@@ -1,5 +1,5 @@
 //
-// Copyright 2023 Stacklok, Inc.
+// Copyright 2023 The Stacklok Authors.
 //
 // Licensed under the Apache License, Version 2.0 (the "License");
 // you may not use this file except in compliance with the License.
@@ -42,6 +42,8 @@ func (s *server) CheckHealth(ctx context.Context, req *pb.HealthRequest) (*pb.He
 }
 
 func webhookHandler(w http.ResponseWriter, r *http.Request) {
+	// TODO: Implement webhook handler
+	//nolint:errcheck
 	w.Write([]byte("OK"))
 }
 
