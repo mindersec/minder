@@ -26,7 +26,10 @@ on:
     - cron: '45 10 * * 1'
 
 permissions:
+  id-token: write
+  actions: read
   contents: read
+  pull-requests: read
   security-events: write
 
 jobs:
