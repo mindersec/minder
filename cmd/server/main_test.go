@@ -21,6 +21,6 @@ import (
 	"github.com/stacklok/mediator/cmd/server/app"
 )
 
-func TestCover(t *testing.T) {
+func TestCobraMain(t *testing.T) {
 	app.Execute()
 }
