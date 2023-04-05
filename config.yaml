@@ -1,0 +1,6 @@
+http_server:
+  host: "127.0.0.1"
+  port: 8080
+grpc_server:
+  host: "127.0.0.1"
+  port: 8090

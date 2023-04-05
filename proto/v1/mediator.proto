@@ -1,0 +1,224 @@
+//
+// Copyright 2023 Stacklok, Inc.
+//
+// Licensed under the Apache License, Version 2.0 (the "License");
+// you may not use this file except in compliance with the License.
+// You may obtain a copy of the License at
+//
+//     http://www.apache.org/licenses/LICENSE-2.0
+//
+// Unless required by applicable law or agreed to in writing, software
+// distributed under the License is distributed on an "AS IS" BASIS,
+//WITHOUT WARRANTIES OR CONDITIONS OF ANY KIND, either express or implied.
+// See the License for the specific language governing permissions and
+// limitations under the License.
+
+syntax = "proto3";
+package dev.stacklok.mediator.v1;
+
+option go_package = "github.com/stacklok/mediator/pkg/generated/protobuf/go";
+
+import "google/api/annotations.proto";
+import "google/protobuf/timestamp.proto";
+
+
+// Simple Health Check Service
+// replies with OK
+service HealthService {
+    rpc CheckHealth (HealthRequest) returns (HealthResponse) {
+        option (google.api.http) = {
+            get: "/api/v1/health"
+        };
+    }
+}
+
+// GitHub App Webhook Service
+service GitHubWebhookService {
+    rpc HandleGitHubWebhook (GitHubWebhookRequest) returns (GitHubWebhookResponse) {
+        option (google.api.http) = {
+            post: "/api/v1/github/hook"
+            body: "*"
+        };
+    }
+}
+
+// GitHub App Callback Service for OAuth2
+service CallBackService {
+    rpc HandleCallBack (CallBackRequest) returns (CallBackResponse) {
+        option (google.api.http) = {
+            post: "/api/v1/callback"
+            body: "*"
+        };
+    }
+}
+
+// Logout of Mediator
+service LogOutService {
+    rpc LogOut (LogOutRequest) returns (LogOutResponse) {
+        option (google.api.http) = {
+            post: "/api/v1/logout"
+            body: "*"
+        };
+    }
+}
+
+// Get GitHub OAuth2 URL
+service AuthUrlService {
+    rpc AuthUrl (AuthUrlRequest) returns (AuthUrlResponse) {
+        option (google.api.http) = {
+            post: "/api/v1/auth/github/url"
+            body: "*"
+        };
+    }
+}
+
+// Verify user has active session to Mediator
+service AuthVerifyService {
+    rpc Verify (AuthVerifyRequest) returns (AuthVerifyResponse) {
+        option (google.api.http) = {
+            post: "/api/v1/auth/verify"
+            body: "*"
+        };
+    }
+}
+
+// Get Vulnerabilities
+service VulnerabilitiesService {
+    rpc GetVulnerabilities (GetVulnerabilitiesRequest) returns (GetVulnerabilitiesResponse) {
+        option (google.api.http) = {
+        get: "/api/v1/vulns"
+        };
+    }
+
+    rpc GetVulnerabilityById (GetVulnerabilityByIdRequest) returns (Vulnerability) {
+        option (google.api.http) = {
+        get: "/api/v1/vulns/{id}"
+        };
+    }
+}
+
+// Get Secrets
+// Note there are different APIs for enterprise or org secrets
+// https://docs.github.com/en/rest/secret-scanning?apiVersion=2022-11-28
+service SecretsService {
+    rpc GetSecrets (GetSecretsRequest) returns (GetSecretsResponse) {
+        option (google.api.http) = {
+        get: "/api/v1/secrets"
+        };
+    }
+
+    rpc GetSecretById (GetSecretByIdRequest) returns (Secret) {
+        option (google.api.http) = {
+        get: "/api/v1/secrets/{id}"
+        };
+    }
+}
+
+// Get Branch Protection Settings
+service BranchProtectionService {
+    rpc GetBranchProtection (GetBranchProtectionRequest) returns (GetBranchProtectionResponse) {
+        option (google.api.http) = {
+        get: "/api/v1/branchprotection"
+        };
+    }
+}
+  
+message HealthRequest {
+}
+
+message HealthResponse {
+    string status = 1;
+}
+
+message CallBackRequest {
+}
+
+message CallBackResponse {
+    string status = 1;
+}
+
+
+message GitHubWebhookRequest {
+}
+
+message GitHubWebhookResponse {
+    string status = 1;
+}
+
+message LogOutRequest {
+}
+
+message LogOutResponse {
+    string status = 1;
+}
+
+message AuthVerifyRequest {
+}
+
+message AuthVerifyResponse {
+    string status = 1;
+}
+
+message AuthUrlRequest {
+}
+
+message AuthUrlResponse {
+    string status = 1;
+}
+
+message GetVulnerabilitiesRequest {
+}
+
+message GetVulnerabilityByIdRequest {
+  string id = 1;
+}
+
+message Vulnerability {
+  // May require adjustment, currently set up for GitHub Security Advisories only
+  uint64 id = 1;
+  int64 github_id = 2;
+  int64 repo_id = 3;
+  string repo_name = 4;
+  string package_name = 5;
+  string severity = 6;
+  string version_affected = 7;
+  string upgrade_version = 8;
+  string ghsaid = 9;
+  string advisroy_url = 10;
+  google.protobuf.Timestamp  scanned_at = 11;
+  google.protobuf.Timestamp  created_at = 12;
+}
+
+message GetVulnerabilitiesResponse {
+  repeated Vulnerability vulns = 1;
+}
+
+message GetSecretsRequest {
+}
+
+message GetSecretsResponse {
+  repeated Secret secrets = 1;
+}
+
+message GetSecretByIdRequest {
+  string id = 1;
+}
+
+message Secret {
+  string id = 1;
+  string name = 2;
+  string description = 3;
+  // Add other relevant fields
+}
+message GetBranchProtectionRequest {
+}
+
+message BranchProtection {
+  string branch = 1;
+  bool is_protected = 2;
+  // Add other relevant fields
+}
+
+message GetBranchProtectionResponse {
+  repeated BranchProtection branch_protections = 1;
+}
