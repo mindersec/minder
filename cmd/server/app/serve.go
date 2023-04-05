@@ -42,6 +42,8 @@ func (s *server) CheckHealth(ctx context.Context, req *pb.HealthRequest) (*pb.He
 }
 
 func webhookHandler(w http.ResponseWriter, r *http.Request) {
+	// TODO: Implement webhook handler
+	//nolint:errcheck
 	w.Write([]byte("OK"))
 }
 
