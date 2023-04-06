@@ -13,6 +13,12 @@
 // See the License for the specific language governing permissions and
 // limitations under the License.
 
+// NOTE: This file is for stubbing out client code for proof of concept
+// purposes. It will / should be removed in the future.
+// Until then, it is not covered by unit tests and should not be used
+// It does make a good example of how to use the generated client code
+// for others to use as a reference.
+
 package app
 
 import (
@@ -67,6 +73,25 @@ func callHealthService(address string) {
 	fmt.Printf("Health service response: %s\n", resp.GetStatus())
 }
 
+func callAuthURLService(address string) {
+	conn, err := grpc.Dial(address, grpc.WithTransportCredentials(insecure.NewCredentials()))
+	if err != nil {
+		log.Fatalf("Error connecting to gRPC server: %v", err)
+	}
+	defer conn.Close()
+
+	client := pb.NewAuthUrlServiceClient(conn)
+	ctx, cancel := context.WithTimeout(context.Background(), time.Second)
+	defer cancel()
+
+	resp, err := client.AuthUrl(ctx, &pb.AuthUrlRequest{})
+	if err != nil {
+		log.Fatalf("Error calling auth URL service: %v", err)
+	}
+
+	fmt.Printf("Auth URL service response: %s\n", resp.GetUrl())
+}
+
 // exampleCmd represents the example command
 var exampleCmd = &cobra.Command{
 	Use:   "example",
@@ -99,6 +124,7 @@ to quickly create a Cobra application.`,
 
 		callWebhookService(fmt.Sprintf("%s:%d", http_host, http_port))
 		callHealthService(fmt.Sprintf("%s:%d", grpc_host, grpc_port))
+		callAuthURLService(fmt.Sprintf("%s:%d", grpc_host, grpc_port))
 	},
 }
 

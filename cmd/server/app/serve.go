@@ -24,22 +24,18 @@ import (
 	"sync"
 
 	pb "github.com/stacklok/mediator/pkg/generated/protobuf/go/proto/v1"
+	"github.com/stacklok/mediator/pkg/services"
 
 	"github.com/grpc-ecosystem/grpc-gateway/v2/runtime"
 	"github.com/spf13/cobra"
 	"github.com/spf13/viper"
+
+	// "golang.org/x/oauth2"
+	// "golang.org/x/oauth2/github"
 	"google.golang.org/grpc"
 	"google.golang.org/grpc/credentials/insecure"
 	"google.golang.org/grpc/reflection"
 )
-
-type server struct {
-	pb.UnimplementedHealthServiceServer
-}
-
-func (s *server) CheckHealth(ctx context.Context, req *pb.HealthRequest) (*pb.HealthResponse, error) {
-	return &pb.HealthResponse{Status: "OK"}, nil
-}
 
 func webhookHandler(w http.ResponseWriter, r *http.Request) {
 	// TODO: Implement webhook handler
@@ -48,13 +44,17 @@ func webhookHandler(w http.ResponseWriter, r *http.Request) {
 }
 
 func startGRPCServer(address string) {
+
 	lis, err := net.Listen("tcp", address)
 	if err != nil {
 		log.Fatalf("failed to listen: %v", err)
 	}
 
 	s := grpc.NewServer()
-	pb.RegisterHealthServiceServer(s, &server{})
+
+	// register the services
+	pb.RegisterHealthServiceServer(s, &services.Server{}) // Update the import statement for the `api` package if necessary
+	pb.RegisterAuthUrlServiceServer(s, &services.Server{})
 	reflection.Register(s)
 
 	log.Printf("Starting gRPC server on %s", address)

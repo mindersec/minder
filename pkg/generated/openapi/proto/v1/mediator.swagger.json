@@ -40,8 +40,8 @@
     "application/json"
   ],
   "paths": {
-    "/api/v1/auth/github/url": {
-      "post": {
+    "/api/v1/auth/url": {
+      "get": {
         "operationId": "AuthUrlService_AuthUrl",
         "responses": {
           "200": {
@@ -57,16 +57,6 @@
             }
           }
         },
-        "parameters": [
-          {
-            "name": "body",
-            "in": "body",
-            "required": true,
-            "schema": {
-              "$ref": "#/definitions/v1AuthUrlRequest"
-            }
-          }
-        ],
         "tags": [
           "AuthUrlService"
         ]
@@ -378,13 +368,13 @@
         }
       }
     },
-    "v1AuthUrlRequest": {
-      "type": "object"
-    },
     "v1AuthUrlResponse": {
       "type": "object",
       "properties": {
         "status": {
+          "type": "string"
+        },
+        "url": {
           "type": "string"
         }
       }
@@ -508,14 +498,46 @@
       "type": "object",
       "properties": {
         "id": {
-          "type": "string"
-        },
-        "name": {
-          "type": "string"
-        },
-        "description": {
           "type": "string",
-          "title": "Add other relevant fields"
+          "format": "uint64",
+          "title": "May require adjustment, currently set up for GitHub Security Advisories only"
+        },
+        "githubId": {
+          "type": "string",
+          "format": "int64"
+        },
+        "repoId": {
+          "type": "string",
+          "format": "int64"
+        },
+        "repoName": {
+          "type": "string"
+        },
+        "packageName": {
+          "type": "string"
+        },
+        "severity": {
+          "type": "string"
+        },
+        "versionAffected": {
+          "type": "string"
+        },
+        "upgradeVersion": {
+          "type": "string"
+        },
+        "ghsaid": {
+          "type": "string"
+        },
+        "advisroyUrl": {
+          "type": "string"
+        },
+        "scannedAt": {
+          "type": "string",
+          "format": "date-time"
+        },
+        "createdAt": {
+          "type": "string",
+          "format": "date-time"
         }
       }
     }
