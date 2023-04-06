@@ -13,9 +13,16 @@
 # See the License for the specific language governing permissions and
 # limitations under the License.
 
+# HTTP & gRPC server configuration
 http_server:
   host: "127.0.0.1"
   port: 8080
 grpc_server:
   host: "127.0.0.1"
   port: 8090
+
+# OAuth2 configuration
+github:
+  client_id: "client_id_test"
+  client_secret: "client_secret_test"
+  redirect_uri: "http://localhost:8080/api/v1/callback"

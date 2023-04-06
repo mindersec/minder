@@ -30,8 +30,6 @@ import (
 	"github.com/spf13/cobra"
 	"github.com/spf13/viper"
 
-	// "golang.org/x/oauth2"
-	// "golang.org/x/oauth2/github"
 	"google.golang.org/grpc"
 	"google.golang.org/grpc/credentials/insecure"
 	"google.golang.org/grpc/reflection"
@@ -53,8 +51,12 @@ func startGRPCServer(address string) {
 	s := grpc.NewServer()
 
 	// register the services
-	pb.RegisterHealthServiceServer(s, &services.Server{}) // Update the import statement for the `api` package if necessary
-	pb.RegisterAuthUrlServiceServer(s, &services.Server{})
+	pb.RegisterHealthServiceServer(s, &services.Server{})
+
+	pb.RegisterAuthUrlServiceServer(s, &services.Server{
+		ClientID:     viper.GetString("github.client_id"),
+		ClientSecret: viper.GetString("github.client_secret"),
+	})
 	reflection.Register(s)
 
 	log.Printf("Starting gRPC server on %s", address)
@@ -74,8 +76,14 @@ func startHTTPServer(address, grpcAddress string) {
 
 	gwmux := runtime.NewServeMux()
 	opts := []grpc.DialOption{grpc.WithTransportCredentials(insecure.NewCredentials())}
+
+	// Register HealthService handler
 	if err := pb.RegisterHealthServiceHandlerFromEndpoint(ctx, gwmux, grpcAddress, opts); err != nil {
 		log.Fatalf("failed to register gateway: %v", err)
+	}
+	// Register AuthUrlService handler
+	if err := pb.RegisterAuthUrlServiceHandlerFromEndpoint(ctx, gwmux, grpcAddress, opts); err != nil {
+		log.Fatalf("failed to register gateway for AuthUrlService: %v", err)
 	}
 
 	mux.Handle("/", gwmux)

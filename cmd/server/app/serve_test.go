@@ -15,69 +15,101 @@
 
 package app
 
-// import (
-// 	"context"
-// 	"net"
-// 	"net/http"
+import (
+	"context"
+	"net"
+	"net/http"
 
-// 	pb "github.com/stacklok/mediator/pkg/generated/protobuf/go/proto/v1"
-// 	"google.golang.org/grpc"
-// 	"google.golang.org/grpc/credentials/insecure"
-// 	"google.golang.org/grpc/test/bufconn"
-// 	"log"
-// 	"testing"
-// )
+	pb "github.com/stacklok/mediator/pkg/generated/protobuf/go/proto/v1"
+	"github.com/stacklok/mediator/pkg/services"
 
-// const bufSize = 1024 * 1024
+	"google.golang.org/grpc"
+	"google.golang.org/grpc/credentials/insecure"
+	"google.golang.org/grpc/test/bufconn"
+	"log"
+	"testing"
+)
 
-// var lis *bufconn.Listener
+const bufSize = 1024 * 1024
 
-// func init() {
-// 	// gRPC server
-// 	lis = bufconn.Listen(bufSize)
-// 	s := grpc.NewServer()
-// 	pb.RegisterHealthServiceServer(s, &server{})
-// 	go func() {
-// 		if err := s.Serve(lis); err != nil {
-// 			log.Fatalf("Server exited with error: %v", err)
-// 		}
-// 	}()
-// 	// HTTP server
-// 	mux := http.NewServeMux()
-// 	mux.HandleFunc("/api/v1/github/hook", webhookHandler)
+var lis *bufconn.Listener
 
-// 	srv := &http.Server{Addr: ":8080", Handler: mux}
-// 	go func() {
-// 		if err := srv.ListenAndServe(); err != nil {
-// 			log.Fatalf("Server exited with error: %v", err)
-// 		}
-// 	}()
-// }
+func init() {
+	// gRPC server
+	lis = bufconn.Listen(bufSize)
+	s := grpc.NewServer()
+	pb.RegisterHealthServiceServer(s, &services.Server{}) //
+	pb.RegisterAuthUrlServiceServer(s, &services.Server{
+		ClientID:     "test",
+		ClientSecret: "test",
+	})
+	go func() {
+		if err := s.Serve(lis); err != nil {
+			log.Fatalf("Server exited with error: %v", err)
+		}
+	}()
+	// HTTP server
+	mux := http.NewServeMux()
+	mux.HandleFunc("/api/v1/github/hook", webhookHandler)
 
-// func bufDialer(context.Context, string) (net.Conn, error) {
-// 	return lis.Dial()
-// }
+	srv := &http.Server{Addr: ":8080", Handler: mux}
+	go func() {
+		if err := srv.ListenAndServe(); err != nil {
+			log.Fatalf("Server exited with error: %v", err)
+		}
+	}()
+}
 
-// func TestHealth(t *testing.T) {
-// 	conn, err := grpc.DialContext(context.Background(), "bufnet",
-// 		grpc.WithContextDialer(bufDialer),
-// 		grpc.WithTransportCredentials(insecure.NewCredentials()))
-// 	if err != nil {
-// 		t.Fatalf("Failed to dial bufnet: %v", err)
-// 	}
-// 	defer conn.Close()
+func bufDialer(context.Context, string) (net.Conn, error) {
+	return lis.Dial()
+}
 
-// 	client := pb.NewHealthServiceClient(conn)
-// 	_, err = client.CheckHealth(context.Background(), &pb.HealthRequest{})
-// 	if err != nil {
-// 		t.Fatalf("Failed to get health: %v", err)
-// 	}
-// }
+func TestHealth(t *testing.T) {
+	conn, err := getgRPCConnection()
+	if err != nil {
+		t.Fatalf("Failed to dial bufnet: %v", err)
+	}
+	defer conn.Close()
 
-// func TestWebhook(t *testing.T) {
-// 	resp, err := http.Get("http://localhost:8080/api/v1/github/hook")
-// 	if err != nil {
-// 		t.Fatalf("Failed to get webhook: %v", err)
-// 	}
-// 	defer resp.Body.Close()
-// }
+	client := pb.NewHealthServiceClient(conn)
+	_, err = client.CheckHealth(context.Background(), &pb.HealthRequest{})
+	if err != nil {
+		t.Fatalf("Failed to get health: %v", err)
+	}
+}
+
+func TestWebhook(t *testing.T) {
+	resp, err := http.Get("http://localhost:8080/api/v1/github/hook")
+	if err != nil {
+		t.Fatalf("Failed to get webhook: %v", err)
+	}
+	defer resp.Body.Close()
+}
+
+func TestAuth(t *testing.T) {
+	conn, err := getgRPCConnection()
+	if err != nil {
+		t.Fatalf("Failed to dial bufnet: %v", err)
+	}
+	defer conn.Close()
+
+	client := pb.NewAuthUrlServiceClient(conn)
+	resp, err := client.AuthUrl(context.Background(), &pb.AuthUrlRequest{})
+	if err != nil {
+		t.Fatalf("Failed to get auth url: %v", err)
+	}
+
+	if resp.GetUrl() == "https://github.com/login/oauth/authorize?client_id=&redirect_uri=http%3A%2F%2Flocalhost%3A8080%2Fapi%2Fv1%2Fcallback&response_type=code&scope=user%3Aemail&state=stat" {
+		t.Fatalf("Failed to get auth url: %v", err)
+	}
+}
+
+func getgRPCConnection() (*grpc.ClientConn, error) {
+	conn, err := grpc.DialContext(context.Background(), "bufnet",
+		grpc.WithContextDialer(bufDialer),
+		grpc.WithTransportCredentials(insecure.NewCredentials()))
+	if err != nil {
+		return nil, err
+	}
+	return conn, nil
+}

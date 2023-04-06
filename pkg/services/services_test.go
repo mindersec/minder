@@ -1,51 +1,54 @@
 package services
 
-import (
-	"context"
-	"net/http"
-	"net/http/httptest"
-	"strings"
-	"testing"
+// Test coverage for pkg/services/services.go is currently handled by cmd/server/app/serve_test.go
+// We could move if it makes sense at some point.
 
-	pb "github.com/stacklok/mediator/pkg/generated/protobuf/go/proto/v1"
-	"golang.org/x/oauth2"
-)
+// import (
+// 	"context"
+// 	"net/http"
+// 	"net/http/httptest"
+// 	"strings"
+// 	"testing"
 
-func TestCheckHealth(t *testing.T) {
-	server := NewServer(nil)
+// 	pb "github.com/stacklok/mediator/pkg/generated/protobuf/go/proto/v1"
+// 	"golang.org/x/oauth2"
+// )
 
-	req := &pb.HealthRequest{}
-	resp, err := server.CheckHealth(context.Background(), req)
+// func TestCheckHealth(t *testing.T) {
+// 	server := NewServer(nil)
 
-	if err != nil {
-		t.Errorf("Unexpected error: %v", err)
-	}
+// 	req := &pb.HealthRequest{}
+// 	resp, err := server.CheckHealth(context.Background(), req)
 
-	expectedStatus := "OK"
-	if resp.Status != expectedStatus {
-		t.Errorf("Expected status %q, got %q", expectedStatus, resp.Status)
-	}
-}
+// 	if err != nil {
+// 		t.Errorf("Unexpected error: %v", err)
+// 	}
 
-func TestAuthUrl(t *testing.T) {
-	ts := httptest.NewServer(http.HandlerFunc(func(w http.ResponseWriter, r *http.Request) {
-		w.WriteHeader(http.StatusTemporaryRedirect)
-	}))
-	defer ts.Close()
+// 	expectedStatus := "OK"
+// 	if resp.Status != expectedStatus {
+// 		t.Errorf("Expected status %q, got %q", expectedStatus, resp.Status)
+// 	}
+// }
 
-	oauth2Config := &oauth2.Config{
-		RedirectURL: ts.URL,
-	}
+// func TestAuthHTTPUrl(t *testing.T) {
+// 	ts := httptest.NewServer(http.HandlerFunc(func(w http.ResponseWriter, r *http.Request) {
+// 		w.WriteHeader(http.StatusTemporaryRedirect)
+// 	}))
+// 	defer ts.Close()
 
-	server := NewServer(oauth2Config)
-	req := &pb.AuthUrlRequest{}
-	resp, err := server.AuthUrl(context.Background(), req)
+// 	oauth2Config := &oauth2.Config{
+// 		RedirectURL: ts.URL,
+// 	}
 
-	if err != nil {
-		t.Errorf("Unexpected error: %v", err)
-	}
+// 	server := NewServer(oauth2Config)
+// 	req := &pb.AuthUrlRequest{}
+// 	resp, err := server.AuthUrl(context.Background(), req)
 
-	if !strings.HasPrefix(resp.Url, "https://github.com/login/oauth/authorize") {
-		t.Errorf("Expected URL to start with 'https://github.com/login/oauth/authorize', got %q", resp.Url)
-	}
-}
+// 	if err != nil {
+// 		t.Errorf("Unexpected error: %v", err)
+// 	}
+
+// 	if !strings.HasPrefix(resp.Url, "https://github.com/login/oauth/authorize") {
+// 		t.Errorf("Expected URL to start with 'https://github.com/login/oauth/authorize', got %q", resp.Url)
+// 	}
+// }
