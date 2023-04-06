@@ -66,8 +66,7 @@ service LogOutService {
 service AuthUrlService {
     rpc AuthUrl (AuthUrlRequest) returns (AuthUrlResponse) {
         option (google.api.http) = {
-            post: "/api/v1/auth/github/url"
-            body: "*"
+            get: "/api/v1/auth/url"
         };
     }
 }
@@ -160,10 +159,12 @@ message AuthVerifyResponse {
 }
 
 message AuthUrlRequest {
+    
 }
 
 message AuthUrlResponse {
     string status = 1;
+    string url = 2;
 }
 
 message GetVulnerabilitiesRequest {

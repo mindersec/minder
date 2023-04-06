@@ -155,14 +155,6 @@ func request_AuthUrlService_AuthUrl_0(ctx context.Context, marshaler runtime.Mar
 	var protoReq AuthUrlRequest
 	var metadata runtime.ServerMetadata
 
-	newReader, berr := utilities.IOReaderFactory(req.Body)
-	if berr != nil {
-		return nil, metadata, status.Errorf(codes.InvalidArgument, "%v", berr)
-	}
-	if err := marshaler.NewDecoder(newReader()).Decode(&protoReq); err != nil && err != io.EOF {
-		return nil, metadata, status.Errorf(codes.InvalidArgument, "%v", err)
-	}
-
 	msg, err := client.AuthUrl(ctx, &protoReq, grpc.Header(&metadata.HeaderMD), grpc.Trailer(&metadata.TrailerMD))
 	return msg, metadata, err
 
@@ -171,14 +163,6 @@ func request_AuthUrlService_AuthUrl_0(ctx context.Context, marshaler runtime.Mar
 func local_request_AuthUrlService_AuthUrl_0(ctx context.Context, marshaler runtime.Marshaler, server AuthUrlServiceServer, req *http.Request, pathParams map[string]string) (proto.Message, runtime.ServerMetadata, error) {
 	var protoReq AuthUrlRequest
 	var metadata runtime.ServerMetadata
-
-	newReader, berr := utilities.IOReaderFactory(req.Body)
-	if berr != nil {
-		return nil, metadata, status.Errorf(codes.InvalidArgument, "%v", berr)
-	}
-	if err := marshaler.NewDecoder(newReader()).Decode(&protoReq); err != nil && err != io.EOF {
-		return nil, metadata, status.Errorf(codes.InvalidArgument, "%v", err)
-	}
 
 	msg, err := server.AuthUrl(ctx, &protoReq)
 	return msg, metadata, err
@@ -519,7 +503,7 @@ func RegisterLogOutServiceHandlerServer(ctx context.Context, mux *runtime.ServeM
 // Note that using this registration option will cause many gRPC library features to stop working. Consider using RegisterAuthUrlServiceHandlerFromEndpoint instead.
 func RegisterAuthUrlServiceHandlerServer(ctx context.Context, mux *runtime.ServeMux, server AuthUrlServiceServer) error {
 
-	mux.Handle("POST", pattern_AuthUrlService_AuthUrl_0, func(w http.ResponseWriter, req *http.Request, pathParams map[string]string) {
+	mux.Handle("GET", pattern_AuthUrlService_AuthUrl_0, func(w http.ResponseWriter, req *http.Request, pathParams map[string]string) {
 		ctx, cancel := context.WithCancel(req.Context())
 		defer cancel()
 		var stream runtime.ServerTransportStream
@@ -527,7 +511,7 @@ func RegisterAuthUrlServiceHandlerServer(ctx context.Context, mux *runtime.Serve
 		inboundMarshaler, outboundMarshaler := runtime.MarshalerForRequest(mux, req)
 		var err error
 		var annotatedContext context.Context
-		annotatedContext, err = runtime.AnnotateIncomingContext(ctx, mux, req, "/dev.stacklok.mediator.v1.AuthUrlService/AuthUrl", runtime.WithHTTPPathPattern("/api/v1/auth/github/url"))
+		annotatedContext, err = runtime.AnnotateIncomingContext(ctx, mux, req, "/dev.stacklok.mediator.v1.AuthUrlService/AuthUrl", runtime.WithHTTPPathPattern("/api/v1/auth/url"))
 		if err != nil {
 			runtime.HTTPError(ctx, mux, outboundMarshaler, w, req, err)
 			return
@@ -1055,13 +1039,13 @@ func RegisterAuthUrlServiceHandler(ctx context.Context, mux *runtime.ServeMux, c
 // "AuthUrlServiceClient" to call the correct interceptors.
 func RegisterAuthUrlServiceHandlerClient(ctx context.Context, mux *runtime.ServeMux, client AuthUrlServiceClient) error {
 
-	mux.Handle("POST", pattern_AuthUrlService_AuthUrl_0, func(w http.ResponseWriter, req *http.Request, pathParams map[string]string) {
+	mux.Handle("GET", pattern_AuthUrlService_AuthUrl_0, func(w http.ResponseWriter, req *http.Request, pathParams map[string]string) {
 		ctx, cancel := context.WithCancel(req.Context())
 		defer cancel()
 		inboundMarshaler, outboundMarshaler := runtime.MarshalerForRequest(mux, req)
 		var err error
 		var annotatedContext context.Context
-		annotatedContext, err = runtime.AnnotateContext(ctx, mux, req, "/dev.stacklok.mediator.v1.AuthUrlService/AuthUrl", runtime.WithHTTPPathPattern("/api/v1/auth/github/url"))
+		annotatedContext, err = runtime.AnnotateContext(ctx, mux, req, "/dev.stacklok.mediator.v1.AuthUrlService/AuthUrl", runtime.WithHTTPPathPattern("/api/v1/auth/url"))
 		if err != nil {
 			runtime.HTTPError(ctx, mux, outboundMarshaler, w, req, err)
 			return
@@ -1081,7 +1065,7 @@ func RegisterAuthUrlServiceHandlerClient(ctx context.Context, mux *runtime.Serve
 }
 
 var (
-	pattern_AuthUrlService_AuthUrl_0 = runtime.MustPattern(runtime.NewPattern(1, []int{2, 0, 2, 1, 2, 2, 2, 3, 2, 4}, []string{"api", "v1", "auth", "github", "url"}, ""))
+	pattern_AuthUrlService_AuthUrl_0 = runtime.MustPattern(runtime.NewPattern(1, []int{2, 0, 2, 1, 2, 2, 2, 3}, []string{"api", "v1", "auth", "url"}, ""))
 )
 
 var (

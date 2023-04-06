@@ -21,6 +21,8 @@ import (
 	"net/http"
 
 	pb "github.com/stacklok/mediator/pkg/generated/protobuf/go/proto/v1"
+	"github.com/stacklok/mediator/pkg/services"
+
 	"google.golang.org/grpc"
 	"google.golang.org/grpc/credentials/insecure"
 	"google.golang.org/grpc/test/bufconn"
@@ -36,7 +38,11 @@ func init() {
 	// gRPC server
 	lis = bufconn.Listen(bufSize)
 	s := grpc.NewServer()
-	pb.RegisterHealthServiceServer(s, &server{})
+	pb.RegisterHealthServiceServer(s, &services.Server{}) //
+	pb.RegisterAuthUrlServiceServer(s, &services.Server{
+		ClientID:     "test",
+		ClientSecret: "test",
+	})
 	go func() {
 		if err := s.Serve(lis); err != nil {
 			log.Fatalf("Server exited with error: %v", err)
@@ -59,9 +65,7 @@ func bufDialer(context.Context, string) (net.Conn, error) {
 }
 
 func TestHealth(t *testing.T) {
-	conn, err := grpc.DialContext(context.Background(), "bufnet",
-		grpc.WithContextDialer(bufDialer),
-		grpc.WithTransportCredentials(insecure.NewCredentials()))
+	conn, err := getgRPCConnection()
 	if err != nil {
 		t.Fatalf("Failed to dial bufnet: %v", err)
 	}
@@ -80,4 +84,32 @@ func TestWebhook(t *testing.T) {
 		t.Fatalf("Failed to get webhook: %v", err)
 	}
 	defer resp.Body.Close()
+}
+
+func TestAuth(t *testing.T) {
+	conn, err := getgRPCConnection()
+	if err != nil {
+		t.Fatalf("Failed to dial bufnet: %v", err)
+	}
+	defer conn.Close()
+
+	client := pb.NewAuthUrlServiceClient(conn)
+	resp, err := client.AuthUrl(context.Background(), &pb.AuthUrlRequest{})
+	if err != nil {
+		t.Fatalf("Failed to get auth url: %v", err)
+	}
+
+	if resp.GetUrl() == "https://github.com/login/oauth/authorize?client_id=&redirect_uri=http%3A%2F%2Flocalhost%3A8080%2Fapi%2Fv1%2Fcallback&response_type=code&scope=user%3Aemail&state=stat" {
+		t.Fatalf("Failed to get auth url: %v", err)
+	}
+}
+
+func getgRPCConnection() (*grpc.ClientConn, error) {
+	conn, err := grpc.DialContext(context.Background(), "bufnet",
+		grpc.WithContextDialer(bufDialer),
+		grpc.WithTransportCredentials(insecure.NewCredentials()))
+	if err != nil {
+		return nil, err
+	}
+	return conn, nil
 }
