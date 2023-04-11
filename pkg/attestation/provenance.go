@@ -18,7 +18,7 @@ package attestation
 import (
 	"time"
 
-	cjson "github.com/docker/go/canonical/json"
+	"encoding/json"
 )
 
 // Provenance is a wrapper around dsse.Envelope
@@ -287,7 +287,7 @@ func (p *Envelope) GetPayload() string {
 // UnmarshalProvenance unmarshals a provenance
 func UnmarshalProvenance(provenance []byte) (*Envelope, error) {
 	prov := &Envelope{}
-	err := cjson.Unmarshal(provenance, prov)
+	err := json.Unmarshal(provenance, prov)
 	if err != nil {
 		return nil, err
 	}
