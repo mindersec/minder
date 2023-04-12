@@ -18,7 +18,7 @@ require (
 	google.golang.org/genproto v0.0.0-20230403163135-c38d8f061ccd
 	google.golang.org/grpc v1.54.0
 	google.golang.org/protobuf v1.30.0
-	mvdan.cc/gofumpt v0.4.0
+	mvdan.cc/gofumpt v0.5.0
 )
 
 require (
