@@ -27,11 +27,13 @@ import (
 	"github.com/stacklok/mediator/pkg/services"
 
 	"github.com/grpc-ecosystem/grpc-gateway/v2/runtime"
+
 	"github.com/spf13/cobra"
 	"github.com/spf13/viper"
 
 	"google.golang.org/grpc"
 	"google.golang.org/grpc/credentials/insecure"
+	"google.golang.org/grpc/metadata"
 	"google.golang.org/grpc/reflection"
 )
 
@@ -42,13 +44,16 @@ func webhookHandler(w http.ResponseWriter, r *http.Request) {
 }
 
 func startGRPCServer(address string) {
-
 	lis, err := net.Listen("tcp", address)
 	if err != nil {
 		log.Fatalf("failed to listen: %v", err)
 	}
 
-	s := grpc.NewServer()
+	log.Println("Initializing logger in level: " + viper.GetString("logging.level"))
+
+	s := grpc.NewServer(
+		grpc.UnaryInterceptor(loggingServerInterceptor),
+	)
 
 	// register the services
 	pb.RegisterHealthServiceServer(s, &services.Server{})
@@ -65,6 +70,28 @@ func startGRPCServer(address string) {
 	}
 }
 
+func loggingServerInterceptor(ctx context.Context, req interface{}, info *grpc.UnaryServerInfo, handler grpc.UnaryHandler) (interface{}, error) {
+	logLevel := viper.GetString("logging.level")
+
+	if logLevel == "debug" {
+		log.Printf("gRPC method called: %s", info.FullMethod)
+		md, ok := metadata.FromIncomingContext(ctx)
+		if ok {
+			for key, values := range md {
+				for _, value := range values {
+					log.Printf("gRPC header received: %s=%s", key, value)
+				}
+			}
+		}
+	} else if logLevel == "info" {
+		log.Printf("gRPC method called: %s", info.FullMethod)
+	}
+
+	resp, err := handler(ctx, req)
+
+	return resp, err
+}
+
 func startHTTPServer(address, grpcAddress string) {
 	mux := http.NewServeMux()
 
@@ -74,7 +101,10 @@ func startHTTPServer(address, grpcAddress string) {
 	ctx, cancel := context.WithCancel(ctx)
 	defer cancel()
 
-	gwmux := runtime.NewServeMux()
+	gwmux := runtime.NewServeMux(
+		runtime.WithIncomingHeaderMatcher(loggingHeaderMatcher),
+		runtime.WithOutgoingHeaderMatcher(loggingHeaderMatcher),
+	)
 	opts := []grpc.DialOption{grpc.WithTransportCredentials(insecure.NewCredentials())}
 
 	// Register HealthService handler
@@ -89,9 +119,20 @@ func startHTTPServer(address, grpcAddress string) {
 	mux.Handle("/", gwmux)
 
 	log.Printf("Starting HTTP server on %s", address)
-	if err := http.ListenAndServe(address, mux); err != nil {
+	if err := http.ListenAndServe(address, loggingMiddleware(mux)); err != nil {
 		log.Fatalf("failed to serve: %v", err)
 	}
+}
+
+func loggingMiddleware(next http.Handler) http.Handler {
+	return http.HandlerFunc(func(w http.ResponseWriter, r *http.Request) {
+		log.Printf("HTTP request received: %s %s", r.Method, r.URL.Path)
+		next.ServeHTTP(w, r)
+	})
+}
+
+func loggingHeaderMatcher(key string) (string, bool) {
+	return key, true
 }
 
 // serveCmd represents the serve command
@@ -146,6 +187,7 @@ func init() {
 	serveCmd.PersistentFlags().Int("http-port", 0, "Server port")
 	serveCmd.PersistentFlags().String("grpc-host", "", "Server host")
 	serveCmd.PersistentFlags().Int("grpc-port", 0, "Server port")
+	serveCmd.PersistentFlags().String("logging", "", "Log Level")
 	if err := viper.BindPFlags(serveCmd.PersistentFlags()); err != nil {
 		log.Fatal(err)
 	}
