@@ -16,7 +16,6 @@ package services
 
 import (
 	"context"
-	"fmt"
 
 	pb "github.com/stacklok/mediator/pkg/generated/protobuf/go/proto/v1"
 	"golang.org/x/oauth2"
@@ -50,7 +49,7 @@ func (s *Server) AuthUrl(ctx context.Context, req *pb.AuthUrlRequest) (*pb.AuthU
 		Scopes:       []string{"user:email"},
 	}
 	url := oauth2Cfg.AuthCodeURL("state")
-	fmt.Println("URL:", url)
+
 	response := &pb.AuthUrlResponse{
 		Url: url,
 	}
