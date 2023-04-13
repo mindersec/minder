@@ -23,9 +23,6 @@ import (
 	"net/http"
 	"sync"
 
-	pb "github.com/stacklok/mediator/pkg/generated/protobuf/go/proto/v1"
-	"github.com/stacklok/mediator/pkg/services"
-
 	"github.com/grpc-ecosystem/grpc-gateway/v2/runtime"
 
 	"github.com/spf13/cobra"
@@ -41,33 +38,6 @@ func webhookHandler(w http.ResponseWriter, r *http.Request) {
 	// TODO: Implement webhook handler
 	//nolint:errcheck
 	w.Write([]byte("OK"))
-}
-
-func startGRPCServer(address string) {
-	lis, err := net.Listen("tcp", address)
-	if err != nil {
-		log.Fatalf("failed to listen: %v", err)
-	}
-
-	log.Println("Initializing logger in level: " + viper.GetString("logging.level"))
-
-	s := grpc.NewServer(
-		grpc.UnaryInterceptor(loggingServerInterceptor),
-	)
-
-	// register the services
-	pb.RegisterHealthServiceServer(s, &services.Server{})
-
-	pb.RegisterAuthUrlServiceServer(s, &services.Server{
-		ClientID:     viper.GetString("github.client_id"),
-		ClientSecret: viper.GetString("github.client_secret"),
-	})
-	reflection.Register(s)
-
-	log.Printf("Starting gRPC server on %s", address)
-	if err := s.Serve(lis); err != nil {
-		log.Fatalf("failed to serve: %v", err)
-	}
 }
 
 func loggingServerInterceptor(ctx context.Context, req interface{}, info *grpc.UnaryServerInfo, handler grpc.UnaryHandler) (interface{}, error) {
@@ -92,6 +62,40 @@ func loggingServerInterceptor(ctx context.Context, req interface{}, info *grpc.U
 	return resp, err
 }
 
+func loggingMiddleware(next http.Handler) http.Handler {
+	return http.HandlerFunc(func(w http.ResponseWriter, r *http.Request) {
+		log.Printf("HTTP request received: %s %s", r.Method, r.URL.Path)
+		next.ServeHTTP(w, r)
+	})
+}
+
+func loggingHeaderMatcher(key string) (string, bool) {
+	return key, true
+}
+
+func startGRPCServer(address string) {
+	lis, err := net.Listen("tcp", address)
+	if err != nil {
+		log.Fatalf("failed to listen: %v", err)
+	}
+
+	log.Println("Initializing logger in level: " + viper.GetString("logging.level"))
+
+	s := grpc.NewServer(
+		grpc.UnaryInterceptor(loggingServerInterceptor),
+	)
+
+	// register the services (declared within register_handlers.go)
+	registerGRPCServices(s)
+
+	reflection.Register(s)
+
+	log.Printf("Starting gRPC server on %s", address)
+	if err := s.Serve(lis); err != nil {
+		log.Fatalf("failed to serve: %v", err)
+	}
+}
+
 func startHTTPServer(address, grpcAddress string) {
 	mux := http.NewServeMux()
 
@@ -107,14 +111,8 @@ func startHTTPServer(address, grpcAddress string) {
 	)
 	opts := []grpc.DialOption{grpc.WithTransportCredentials(insecure.NewCredentials())}
 
-	// Register HealthService handler
-	if err := pb.RegisterHealthServiceHandlerFromEndpoint(ctx, gwmux, grpcAddress, opts); err != nil {
-		log.Fatalf("failed to register gateway: %v", err)
-	}
-	// Register AuthUrlService handler
-	if err := pb.RegisterAuthUrlServiceHandlerFromEndpoint(ctx, gwmux, grpcAddress, opts); err != nil {
-		log.Fatalf("failed to register gateway for AuthUrlService: %v", err)
-	}
+	// register the services (declared within register_handlers.go)
+	registerHandlers(ctx, gwmux, grpcAddress, opts)
 
 	mux.Handle("/", gwmux)
 
@@ -122,17 +120,6 @@ func startHTTPServer(address, grpcAddress string) {
 	if err := http.ListenAndServe(address, loggingMiddleware(mux)); err != nil {
 		log.Fatalf("failed to serve: %v", err)
 	}
-}
-
-func loggingMiddleware(next http.Handler) http.Handler {
-	return http.HandlerFunc(func(w http.ResponseWriter, r *http.Request) {
-		log.Printf("HTTP request received: %s %s", r.Method, r.URL.Path)
-		next.ServeHTTP(w, r)
-	})
-}
-
-func loggingHeaderMatcher(key string) (string, bool) {
-	return key, true
 }
 
 // serveCmd represents the serve command
