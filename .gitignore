@@ -1,0 +1,40 @@
+# Compiled Object files, Static and Dynamic libs (Shared Objects)
+*.o
+*.a
+*.so
+
+# Compiled Go binary files
+*.exe
+*.test
+*.prof
+
+# Generated files
+/bin/
+/pkg/
+/vendor/
+
+# IDE specific files
+.vscode/
+.idea/
+
+# Logs and Temp files
+*.log
+*.log.*
+*.tmp
+
+# Cache and local data
+*.cache
+*.local
+
+# Credentials and secrets
+.env
+.secrets
+
+# OS generated files
+.DS_Store
+Thumbs.db
+
+# Secrets
+config.yaml
+*.pem
+*.key
