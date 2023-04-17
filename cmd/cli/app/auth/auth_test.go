@@ -34,7 +34,7 @@ func (tw *testWriter) Write(p []byte) (n int, err error) {
 func setupConfigFile() string {
 	configFile := "config.yaml"
 	config := []byte(`logging: "info"`)
-	err := os.WriteFile(configFile, config, 0644)
+	err := os.WriteFile(configFile, config, 0o644)
 	if err != nil {
 		panic(err)
 	}
@@ -46,7 +46,6 @@ func removeConfigFile(filename string) {
 }
 
 func TestCobraMain(t *testing.T) {
-
 	tests := []struct {
 		name           string
 		args           []string

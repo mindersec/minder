@@ -17,8 +17,10 @@ package app
 
 import (
 	"context"
+	"log"
 	"net"
 	"net/http"
+	"testing"
 
 	pb "github.com/stacklok/mediator/pkg/generated/protobuf/go/proto/v1"
 	"github.com/stacklok/mediator/pkg/services"
@@ -26,8 +28,6 @@ import (
 	"google.golang.org/grpc"
 	"google.golang.org/grpc/credentials/insecure"
 	"google.golang.org/grpc/test/bufconn"
-	"log"
-	"testing"
 )
 
 const bufSize = 1024 * 1024
