@@ -15,7 +15,10 @@
 
 package main
 
-import "github.com/stacklok/mediator/cmd/cli/app"
+import (
+	"github.com/stacklok/mediator/cmd/cli/app"
+	_ "github.com/stacklok/mediator/cmd/cli/app/auth"
+)
 
 func main() {
 	app.Execute()

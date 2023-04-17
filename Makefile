@@ -31,7 +31,7 @@ clean-gen:
 
 build: ## build golang binary
 	# @go build -ldflags "-X main.version=$(shell git describe --abbrev=0 --tags)" -o bin/$(projectname)
-	CGO_ENABLED=0 go build -trimpath -o ./bin/$(projectname)-ctl ./cmd/cli
+	CGO_ENABLED=0 go build -trimpath -o ./bin/medctl ./cmd/cli
 	CGO_ENABLED=0 go build -trimpath -o ./bin/$(projectname)-server ./cmd/server
 
 run-cli: ## run the app

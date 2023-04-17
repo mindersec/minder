@@ -129,7 +129,7 @@ to quickly create a Cobra application.`,
 }
 
 func init() {
-	rootCmd.AddCommand(exampleCmd)
+	RootCmd.AddCommand(exampleCmd)
 	exampleCmd.PersistentFlags().String("http-host", "", "Server host")
 	exampleCmd.PersistentFlags().Int("http-port", 0, "Server port")
 	exampleCmd.PersistentFlags().String("grpc-host", "", "Server host")
