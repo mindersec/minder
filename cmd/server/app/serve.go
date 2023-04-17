@@ -112,7 +112,7 @@ func startHTTPServer(address, grpcAddress string) {
 	opts := []grpc.DialOption{grpc.WithTransportCredentials(insecure.NewCredentials())}
 
 	// register the services (declared within register_handlers.go)
-	registerHandlers(ctx, gwmux, grpcAddress, opts)
+	registerGatewayHTTPHandlers(ctx, gwmux, grpcAddress, opts)
 
 	mux.Handle("/", gwmux)
 

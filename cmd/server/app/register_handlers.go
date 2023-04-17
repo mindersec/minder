@@ -27,7 +27,7 @@ import (
 	"google.golang.org/grpc"
 )
 
-func registerHandlers(ctx context.Context, gwmux *runtime.ServeMux, grpcAddress string, opts []grpc.DialOption) {
+func registerGatewayHTTPHandlers(ctx context.Context, gwmux *runtime.ServeMux, grpcAddress string, opts []grpc.DialOption) {
 	// Register HealthService handler
 	if err := pb.RegisterHealthServiceHandlerFromEndpoint(ctx, gwmux, grpcAddress, opts); err != nil {
 		log.Fatalf("failed to register gateway: %v", err)
