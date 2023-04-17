@@ -16,9 +16,8 @@
 package attestation
 
 import (
-	"time"
-
 	"encoding/json"
+	"time"
 )
 
 // Provenance is a wrapper around dsse.Envelope

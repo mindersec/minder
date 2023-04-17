@@ -103,7 +103,6 @@ Cobra is a CLI library for Go that empowers applications.
 This application is a tool to generate the needed files
 to quickly create a Cobra application.`,
 	Run: func(cmd *cobra.Command, args []string) {
-
 		http_host := viper.GetString("http_server.host")
 		http_port := viper.GetInt("http_server.port")
 		grpc_host := viper.GetString("grpc_server.host")
@@ -129,7 +128,7 @@ to quickly create a Cobra application.`,
 }
 
 func init() {
-	rootCmd.AddCommand(exampleCmd)
+	RootCmd.AddCommand(exampleCmd)
 	exampleCmd.PersistentFlags().String("http-host", "", "Server host")
 	exampleCmd.PersistentFlags().Int("http-port", 0, "Server port")
 	exampleCmd.PersistentFlags().String("grpc-host", "", "Server host")
