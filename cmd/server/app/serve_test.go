@@ -111,7 +111,6 @@ func TestAuth(t *testing.T) {
 	// loop through the providers array
 	for _, provider := range providers {
 
-		// github
 		resp, err := client.AuthUrl(context.Background(), &pb.AuthUrlRequest{
 			Provider: provider,
 		})
