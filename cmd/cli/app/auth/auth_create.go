@@ -22,12 +22,39 @@
 package auth
 
 import (
+	"context"
 	"fmt"
 	"log"
+	"time"
+
+	pb "github.com/stacklok/mediator/pkg/generated/protobuf/go/proto/v1"
 
 	"github.com/spf13/cobra"
 	"github.com/spf13/viper"
+	"google.golang.org/grpc"
+	"google.golang.org/grpc/credentials/insecure"
 )
+
+func callAuthURLService(address string, provider string) (string, error) {
+	conn, err := grpc.Dial(address, grpc.WithTransportCredentials(insecure.NewCredentials()))
+	if err != nil {
+		return "", fmt.Errorf("error connecting to gRPC server: %v", err)
+	}
+	defer conn.Close()
+
+	client := pb.NewAuthUrlServiceClient(conn)
+	ctx, cancel := context.WithTimeout(context.Background(), time.Second)
+	defer cancel()
+
+	resp, err := client.AuthUrl(ctx, &pb.AuthUrlRequest{
+		Provider: provider,
+	})
+	if err != nil {
+		return "", fmt.Errorf("error calling auth URL service: %v", err)
+	}
+
+	return resp.GetUrl(), nil
+}
 
 // authCmd represents the auth command
 var auth_createCmd = &cobra.Command{
@@ -38,14 +65,43 @@ var auth_createCmd = &cobra.Command{
 e.g. --provider=github. This will then initiate the OAuth2 flow and allow
 mediator to access user account details via the provider / iDP.`,
 	Run: func(cmd *cobra.Command, args []string) {
+		// http_host := viper.GetString("http_server.host")
+		// http_port := viper.GetInt("http_server.port")
+		grpc_host := viper.GetString("grpc_server.host")
+		grpc_port := viper.GetInt("grpc_server.port")
+		provider := viper.GetString("provider")
+
+		// if cmd.Flags().Changed("http-host") {
+		// 	http_host, _ = cmd.Flags().GetString("http-host")
+		// }
+		// if cmd.Flags().Changed("http-port") {
+		// 	http_port, _ = cmd.Flags().GetInt("http-port")
+		// }
+		if cmd.Flags().Changed("grpc-host") {
+			grpc_host, _ = cmd.Flags().GetString("grpc-host")
+		}
+		if cmd.Flags().Changed("grpc-port") {
+			grpc_port, _ = cmd.Flags().GetInt("grpc-port")
+		}
+		if cmd.Flags().Changed("provider") {
+			provider, _ = cmd.Flags().GetString("provider")
+		}
+
 		fmt.Println("auth login called")
-		// provider := viper.GetString("provider")
+
+		fmt.Println("provider: ", provider)
+
+		url, err := callAuthURLService(fmt.Sprintf("%s:%d", grpc_host, grpc_port), provider)
+		if err != nil {
+			log.Fatal(err)
+		}
+		fmt.Println("url: ", url)
 	},
 }
 
 func init() {
 	AuthCmd.AddCommand(auth_createCmd)
-	auth_createCmd.PersistentFlags().String("provider", "", "The OAuth2 provider to use for login")
+
 	if err := viper.BindPFlags(auth_createCmd.PersistentFlags()); err != nil {
 		log.Fatal(err)
 	}

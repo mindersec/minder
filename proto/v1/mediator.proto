@@ -159,7 +159,7 @@ message AuthVerifyResponse {
 }
 
 message AuthUrlRequest {
-    
+    string provider = 1;
 }
 
 message AuthUrlResponse {

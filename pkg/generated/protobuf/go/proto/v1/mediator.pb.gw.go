@@ -151,9 +151,20 @@ func local_request_LogOutService_LogOut_0(ctx context.Context, marshaler runtime
 
 }
 
+var (
+	filter_AuthUrlService_AuthUrl_0 = &utilities.DoubleArray{Encoding: map[string]int{}, Base: []int(nil), Check: []int(nil)}
+)
+
 func request_AuthUrlService_AuthUrl_0(ctx context.Context, marshaler runtime.Marshaler, client AuthUrlServiceClient, req *http.Request, pathParams map[string]string) (proto.Message, runtime.ServerMetadata, error) {
 	var protoReq AuthUrlRequest
 	var metadata runtime.ServerMetadata
+
+	if err := req.ParseForm(); err != nil {
+		return nil, metadata, status.Errorf(codes.InvalidArgument, "%v", err)
+	}
+	if err := runtime.PopulateQueryParameters(&protoReq, req.Form, filter_AuthUrlService_AuthUrl_0); err != nil {
+		return nil, metadata, status.Errorf(codes.InvalidArgument, "%v", err)
+	}
 
 	msg, err := client.AuthUrl(ctx, &protoReq, grpc.Header(&metadata.HeaderMD), grpc.Trailer(&metadata.TrailerMD))
 	return msg, metadata, err
@@ -163,6 +174,13 @@ func request_AuthUrlService_AuthUrl_0(ctx context.Context, marshaler runtime.Mar
 func local_request_AuthUrlService_AuthUrl_0(ctx context.Context, marshaler runtime.Marshaler, server AuthUrlServiceServer, req *http.Request, pathParams map[string]string) (proto.Message, runtime.ServerMetadata, error) {
 	var protoReq AuthUrlRequest
 	var metadata runtime.ServerMetadata
+
+	if err := req.ParseForm(); err != nil {
+		return nil, metadata, status.Errorf(codes.InvalidArgument, "%v", err)
+	}
+	if err := runtime.PopulateQueryParameters(&protoReq, req.Form, filter_AuthUrlService_AuthUrl_0); err != nil {
+		return nil, metadata, status.Errorf(codes.InvalidArgument, "%v", err)
+	}
 
 	msg, err := server.AuthUrl(ctx, &protoReq)
 	return msg, metadata, err
