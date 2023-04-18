@@ -22,8 +22,8 @@ import (
 	"net/http"
 	"testing"
 
+	"github.com/stacklok/mediator/pkg/controlplane"
 	pb "github.com/stacklok/mediator/pkg/generated/protobuf/go/proto/v1"
-	"github.com/stacklok/mediator/pkg/services"
 
 	"google.golang.org/grpc"
 	"google.golang.org/grpc/credentials/insecure"
@@ -38,8 +38,8 @@ func init() {
 	// gRPC server
 	lis = bufconn.Listen(bufSize)
 	s := grpc.NewServer()
-	pb.RegisterHealthServiceServer(s, &services.Server{}) //
-	pb.RegisterAuthUrlServiceServer(s, &services.Server{
+	pb.RegisterHealthServiceServer(s, &controlplane.Server{}) //
+	pb.RegisterAuthUrlServiceServer(s, &controlplane.Server{
 		ClientID:     "test",
 		ClientSecret: "test",
 	})

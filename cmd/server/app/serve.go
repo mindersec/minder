@@ -24,6 +24,7 @@ import (
 	"sync"
 
 	"github.com/grpc-ecosystem/grpc-gateway/v2/runtime"
+	"github.com/stacklok/mediator/pkg/controlplane"
 
 	"github.com/spf13/cobra"
 	"github.com/spf13/viper"
@@ -86,7 +87,7 @@ func startGRPCServer(address string) {
 	)
 
 	// register the services (declared within register_handlers.go)
-	registerGRPCServices(s)
+	controlplane.RegisterGRPCServices(s)
 
 	reflection.Register(s)
 
@@ -112,7 +113,7 @@ func startHTTPServer(address, grpcAddress string) {
 	opts := []grpc.DialOption{grpc.WithTransportCredentials(insecure.NewCredentials())}
 
 	// register the services (declared within register_handlers.go)
-	registerGatewayHTTPHandlers(ctx, gwmux, grpcAddress, opts)
+	controlplane.RegisterGatewayHTTPHandlers(ctx, gwmux, grpcAddress, opts)
 
 	mux.Handle("/", gwmux)
 
