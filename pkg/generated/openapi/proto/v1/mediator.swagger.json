@@ -57,6 +57,14 @@
             }
           }
         },
+        "parameters": [
+          {
+            "name": "provider",
+            "in": "query",
+            "required": false,
+            "type": "string"
+          }
+        ],
         "tags": [
           "AuthUrlService"
         ]

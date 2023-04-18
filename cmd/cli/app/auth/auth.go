@@ -23,10 +23,12 @@ package auth
 
 import (
 	"fmt"
+	"log"
 
 	"github.com/stacklok/mediator/cmd/cli/app"
 
 	"github.com/spf13/cobra"
+	"github.com/spf13/viper"
 )
 
 // authCmd represents the auth command
@@ -42,4 +44,11 @@ var AuthCmd = &cobra.Command{
 
 func init() {
 	app.RootCmd.AddCommand(AuthCmd)
+	AuthCmd.PersistentFlags().String("grpc-host", "", "Server host")
+	AuthCmd.PersistentFlags().Int("grpc-port", 0, "Server port")
+	AuthCmd.PersistentFlags().String("provider", "", "The OAuth2 provider to use for login")
+	if err := viper.BindPFlags(AuthCmd.PersistentFlags()); err != nil {
+		log.Fatal(err)
+	}
+
 }
