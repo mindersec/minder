@@ -64,6 +64,16 @@ func bufDialer(context.Context, string) (net.Conn, error) {
 	return lis.Dial()
 }
 
+func getgRPCConnection() (*grpc.ClientConn, error) {
+	conn, err := grpc.DialContext(context.Background(), "bufnet",
+		grpc.WithContextDialer(bufDialer),
+		grpc.WithTransportCredentials(insecure.NewCredentials()))
+	if err != nil {
+		return nil, err
+	}
+	return conn, nil
+}
+
 func TestHealth(t *testing.T) {
 	conn, err := getgRPCConnection()
 	if err != nil {
@@ -94,22 +104,38 @@ func TestAuth(t *testing.T) {
 	defer conn.Close()
 
 	client := pb.NewAuthUrlServiceClient(conn)
-	resp, err := client.AuthUrl(context.Background(), &pb.AuthUrlRequest{})
-	if err != nil {
-		t.Fatalf("Failed to get auth url: %v", err)
+	// create an array called providers, with values "github" and "gitlab"
+	providers := []string{"github", "google"}
+	badProviders := []string{"bad", "bad2"}
+
+	// loop through the providers array
+	for _, provider := range providers {
+
+		// github
+		resp, err := client.AuthUrl(context.Background(), &pb.AuthUrlRequest{
+			Provider: provider,
+		})
+		if err != nil {
+			t.Fatalf("Failed to get auth url: %v", err)
+		}
+
+		if provider == "github" && resp.GetUrl() == "https://github.com/login/oauth/authorize?client_id=&redirect_uri=http%3A%2F%2Flocalhost%3A8080%2Fapi%2Fv1%2Fcallback&response_type=code&scope=user%3Aemail&state=stat" {
+			t.Fatalf("Failed to get auth url: %v", err)
+		} else
+		// gitlab
+		if provider == "gitlab" && resp.GetUrl() == "https://accounts.google.com/o/oauth2/auth?client_id=&redirect_uri=http%3A%2F%2Flocalhost%3A8080%2Fapi%2Fv1%2Fcallback&response_type=code&scope=user%3Aemail&state=stat" {
+			t.Fatalf("Failed to get auth url: %v", err)
+		}
 	}
 
-	if resp.GetUrl() == "https://github.com/login/oauth/authorize?client_id=&redirect_uri=http%3A%2F%2Flocalhost%3A8080%2Fapi%2Fv1%2Fcallback&response_type=code&scope=user%3Aemail&state=stat" {
-		t.Fatalf("Failed to get auth url: %v", err)
-	}
-}
+	// loop through the badProviders array
+	for _, provider := range badProviders {
 
-func getgRPCConnection() (*grpc.ClientConn, error) {
-	conn, err := grpc.DialContext(context.Background(), "bufnet",
-		grpc.WithContextDialer(bufDialer),
-		grpc.WithTransportCredentials(insecure.NewCredentials()))
-	if err != nil {
-		return nil, err
+		resp, err := client.AuthUrl(context.Background(), &pb.AuthUrlRequest{
+			Provider: provider,
+		})
+		if resp.GetUrl() != "" {
+			t.Fatalf("Failed to get auth url: %v", err)
+		}
 	}
-	return conn, nil
 }
