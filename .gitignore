@@ -10,7 +10,6 @@
 
 # Generated files
 /bin/
-/pkg/
 /vendor/
 
 # IDE specific files
