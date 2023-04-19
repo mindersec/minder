@@ -15,7 +15,18 @@
 
 name: Main
 
-on: [push, pull_request]
+on:
+  workflow_dispatch:
+  push:
+    paths:
+      - '**'
+      - '!**.md'
+      - '!doc/**'
+      - '!**.txt'
+      - '!images/**'
+      - '!LICENSE'
+    branches: ['main', 'release-*']
+  pull_request:
 
 permissions:
   contents: read
