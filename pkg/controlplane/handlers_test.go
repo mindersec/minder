@@ -14,55 +14,76 @@
 
 package controlplane
 
-// Test coverage for pkg/services/services.go is currently handled by cmd/server/app/serve_test.go
-// We could move if it makes sense at some point.
+import (
+	"context"
+	"testing"
 
-// import (
-// 	"context"
-// 	"net/http"
-// 	"net/http/httptest"
-// 	"strings"
-// 	"testing"
+	pb "github.com/stacklok/mediator/pkg/generated/protobuf/go/proto/v1"
 
-// 	pb "github.com/stacklok/mediator/pkg/generated/protobuf/go/proto/v1"
-// 	"golang.org/x/oauth2"
-// )
+	"golang.org/x/oauth2/github"
+	"golang.org/x/oauth2/google"
+)
 
-// func TestCheckHealth(t *testing.T) {
-// 	server := NewServer(nil)
+func TestCheckHealth(t *testing.T) {
+	server := Server{}
 
-// 	req := &pb.HealthRequest{}
-// 	resp, err := server.CheckHealth(context.Background(), req)
+	response, err := server.CheckHealth(context.Background(), &pb.HealthRequest{})
+	if err != nil {
+		t.Errorf("Error in CheckHealth: %v", err)
+	}
 
-// 	if err != nil {
-// 		t.Errorf("Unexpected error: %v", err)
-// 	}
+	if response.Status != "OK" {
+		t.Errorf("Unexpected response from CheckHealth: %v", response)
+	}
+}
 
-// 	expectedStatus := "OK"
-// 	if resp.Status != expectedStatus {
-// 		t.Errorf("Expected status %q, got %q", expectedStatus, resp.Status)
-// 	}
-// }
+func TestGenerateState(t *testing.T) {
+	state, err := generateState(32)
+	if err != nil {
+		t.Errorf("Error in generateState: %v", err)
+	}
 
-// func TestAuthHTTPUrl(t *testing.T) {
-// 	ts := httptest.NewServer(http.HandlerFunc(func(w http.ResponseWriter, r *http.Request) {
-// 		w.WriteHeader(http.StatusTemporaryRedirect)
-// 	}))
-// 	defer ts.Close()
+	if len(state) != 43 {
+		t.Errorf("Unexpected length of state: %v", len(state))
+	}
+}
 
-// 	oauth2Config := &oauth2.Config{
-// 		RedirectURL: ts.URL,
-// 	}
+func TestNewOAuthConfig(t *testing.T) {
+	server := Server{}
 
-// 	server := NewServer(oauth2Config)
-// 	req := &pb.AuthUrlRequest{}
-// 	resp, err := server.AuthUrl(context.Background(), req)
+	config, err := server.newOAuthConfig("google")
+	if err != nil {
+		t.Errorf("Error in newOAuthConfig: %v", err)
+	}
 
-// 	if err != nil {
-// 		t.Errorf("Unexpected error: %v", err)
-// 	}
+	if config.Endpoint != google.Endpoint {
+		t.Errorf("Unexpected endpoint: %v", config.Endpoint)
+	}
 
-// 	if !strings.HasPrefix(resp.Url, "https://github.com/login/oauth/authorize") {
-// 		t.Errorf("Expected URL to start with 'https://github.com/login/oauth/authorize', got %q", resp.Url)
-// 	}
-// }
+	config, err = server.newOAuthConfig("github")
+	if err != nil {
+		t.Errorf("Error in newOAuthConfig: %v", err)
+	}
+
+	if config.Endpoint != github.Endpoint {
+		t.Errorf("Unexpected endpoint: %v", config.Endpoint)
+	}
+
+	_, err = server.newOAuthConfig("invalid")
+	if err == nil {
+		t.Errorf("Expected error in newOAuthConfig, but got nil")
+	}
+}
+
+func TestGetAuthorizationURL(t *testing.T) {
+	server := Server{}
+
+	response, err := server.GetAuthorizationURL(context.Background(), &pb.AuthorizationURLRequest{Provider: "google"})
+	if err != nil {
+		t.Errorf("Error in GetAuthorizationURL: %v", err)
+	}
+
+	if response.Url == "" {
+		t.Errorf("Unexpected response from GetAuthorizationURL: %v", response)
+	}
+}

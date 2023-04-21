@@ -38,8 +38,9 @@ func init() {
 	// gRPC server
 	lis = bufconn.Listen(bufSize)
 	s := grpc.NewServer()
+	// RegisterAuthUrlServiceServer
 	pb.RegisterHealthServiceServer(s, &controlplane.Server{}) //
-	pb.RegisterAuthUrlServiceServer(s, &controlplane.Server{
+	pb.RegisterOAuthServiceServer(s, &controlplane.Server{
 		ClientID:     "test",
 		ClientSecret: "test",
 	})
@@ -103,7 +104,7 @@ func TestAuth(t *testing.T) {
 	}
 	defer conn.Close()
 
-	client := pb.NewAuthUrlServiceClient(conn)
+	client := pb.NewOAuthServiceClient(conn)
 	// create an array called providers, with values "github" and "gitlab"
 	providers := []string{"github", "google"}
 	badProviders := []string{"bad", "bad2"}
@@ -111,7 +112,7 @@ func TestAuth(t *testing.T) {
 	// loop through the providers array
 	for _, provider := range providers {
 
-		resp, err := client.AuthUrl(context.Background(), &pb.AuthUrlRequest{
+		resp, err := client.GetAuthorizationURL(context.Background(), &pb.AuthorizationURLRequest{
 			Provider: provider,
 		})
 		if err != nil {
@@ -130,7 +131,7 @@ func TestAuth(t *testing.T) {
 	// loop through the badProviders array
 	for _, provider := range badProviders {
 
-		resp, err := client.AuthUrl(context.Background(), &pb.AuthUrlRequest{
+		resp, err := client.GetAuthorizationURL(context.Background(), &pb.AuthorizationURLRequest{
 			Provider: provider,
 		})
 		if resp.GetUrl() != "" {

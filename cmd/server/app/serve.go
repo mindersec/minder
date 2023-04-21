@@ -31,7 +31,6 @@ import (
 
 	"google.golang.org/grpc"
 	"google.golang.org/grpc/credentials/insecure"
-	"google.golang.org/grpc/metadata"
 	"google.golang.org/grpc/reflection"
 )
 
@@ -39,39 +38,6 @@ func webhookHandler(w http.ResponseWriter, r *http.Request) {
 	// TODO: Implement webhook handler
 	//nolint:errcheck
 	w.Write([]byte("OK"))
-}
-
-func loggingServerInterceptor(ctx context.Context, req interface{}, info *grpc.UnaryServerInfo, handler grpc.UnaryHandler) (interface{}, error) {
-	logLevel := viper.GetString("logging.level")
-
-	if logLevel == "debug" {
-		log.Printf("gRPC method called: %s", info.FullMethod)
-		md, ok := metadata.FromIncomingContext(ctx)
-		if ok {
-			for key, values := range md {
-				for _, value := range values {
-					log.Printf("gRPC header received: %s=%s", key, value)
-				}
-			}
-		}
-	} else if logLevel == "info" {
-		log.Printf("gRPC method called: %s", info.FullMethod)
-	}
-
-	resp, err := handler(ctx, req)
-
-	return resp, err
-}
-
-func loggingMiddleware(next http.Handler) http.Handler {
-	return http.HandlerFunc(func(w http.ResponseWriter, r *http.Request) {
-		log.Printf("HTTP request received: %s %s", r.Method, r.URL.Path)
-		next.ServeHTTP(w, r)
-	})
-}
-
-func loggingHeaderMatcher(key string) (string, bool) {
-	return key, true
 }
 
 func startGRPCServer(address string) {
@@ -82,9 +48,7 @@ func startGRPCServer(address string) {
 
 	log.Println("Initializing logger in level: " + viper.GetString("logging.level"))
 
-	s := grpc.NewServer(
-		grpc.UnaryInterceptor(loggingServerInterceptor),
-	)
+	s := grpc.NewServer(grpc.Creds(insecure.NewCredentials()))
 
 	// register the services (declared within register_handlers.go)
 	controlplane.RegisterGRPCServices(s)
@@ -106,10 +70,8 @@ func startHTTPServer(address, grpcAddress string) {
 	ctx, cancel := context.WithCancel(ctx)
 	defer cancel()
 
-	gwmux := runtime.NewServeMux(
-		runtime.WithIncomingHeaderMatcher(loggingHeaderMatcher),
-		runtime.WithOutgoingHeaderMatcher(loggingHeaderMatcher),
-	)
+	gwmux := runtime.NewServeMux()
+
 	opts := []grpc.DialOption{grpc.WithTransportCredentials(insecure.NewCredentials())}
 
 	// register the services (declared within register_handlers.go)
@@ -118,7 +80,7 @@ func startHTTPServer(address, grpcAddress string) {
 	mux.Handle("/", gwmux)
 
 	log.Printf("Starting HTTP server on %s", address)
-	if err := http.ListenAndServe(address, loggingMiddleware(mux)); err != nil {
+	if err := http.ListenAndServe(address, mux); err != nil {
 		log.Fatalf("failed to serve: %v", err)
 	}
 }
