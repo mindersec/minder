@@ -190,86 +190,122 @@ var GitHubWebhookService_ServiceDesc = grpc.ServiceDesc{
 	Metadata: "proto/v1/mediator.proto",
 }
 
-// CallBackServiceClient is the client API for CallBackService service.
+// OAuthServiceClient is the client API for OAuthService service.
 //
 // For semantics around ctx use and closing/ending streaming RPCs, please refer to https://pkg.go.dev/google.golang.org/grpc/?tab=doc#ClientConn.NewStream.
-type CallBackServiceClient interface {
-	HandleCallBack(ctx context.Context, in *CallBackRequest, opts ...grpc.CallOption) (*CallBackResponse, error)
+type OAuthServiceClient interface {
+	GetAuthorizationURL(ctx context.Context, in *AuthorizationURLRequest, opts ...grpc.CallOption) (*AuthorizationURLResponse, error)
+	ExchangeCodeForToken(ctx context.Context, in *CodeExchangeRequest, opts ...grpc.CallOption) (*CodeExchangeResponse, error)
 }
 
-type callBackServiceClient struct {
+type oAuthServiceClient struct {
 	cc grpc.ClientConnInterface
 }
 
-func NewCallBackServiceClient(cc grpc.ClientConnInterface) CallBackServiceClient {
-	return &callBackServiceClient{cc}
+func NewOAuthServiceClient(cc grpc.ClientConnInterface) OAuthServiceClient {
+	return &oAuthServiceClient{cc}
 }
 
-func (c *callBackServiceClient) HandleCallBack(ctx context.Context, in *CallBackRequest, opts ...grpc.CallOption) (*CallBackResponse, error) {
-	out := new(CallBackResponse)
-	err := c.cc.Invoke(ctx, "/dev.stacklok.mediator.v1.CallBackService/HandleCallBack", in, out, opts...)
+func (c *oAuthServiceClient) GetAuthorizationURL(ctx context.Context, in *AuthorizationURLRequest, opts ...grpc.CallOption) (*AuthorizationURLResponse, error) {
+	out := new(AuthorizationURLResponse)
+	err := c.cc.Invoke(ctx, "/dev.stacklok.mediator.v1.OAuthService/GetAuthorizationURL", in, out, opts...)
 	if err != nil {
 		return nil, err
 	}
 	return out, nil
 }
 
-// CallBackServiceServer is the server API for CallBackService service.
-// All implementations must embed UnimplementedCallBackServiceServer
+func (c *oAuthServiceClient) ExchangeCodeForToken(ctx context.Context, in *CodeExchangeRequest, opts ...grpc.CallOption) (*CodeExchangeResponse, error) {
+	out := new(CodeExchangeResponse)
+	err := c.cc.Invoke(ctx, "/dev.stacklok.mediator.v1.OAuthService/ExchangeCodeForToken", in, out, opts...)
+	if err != nil {
+		return nil, err
+	}
+	return out, nil
+}
+
+// OAuthServiceServer is the server API for OAuthService service.
+// All implementations must embed UnimplementedOAuthServiceServer
 // for forward compatibility
-type CallBackServiceServer interface {
-	HandleCallBack(context.Context, *CallBackRequest) (*CallBackResponse, error)
-	mustEmbedUnimplementedCallBackServiceServer()
+type OAuthServiceServer interface {
+	GetAuthorizationURL(context.Context, *AuthorizationURLRequest) (*AuthorizationURLResponse, error)
+	ExchangeCodeForToken(context.Context, *CodeExchangeRequest) (*CodeExchangeResponse, error)
+	mustEmbedUnimplementedOAuthServiceServer()
 }
 
-// UnimplementedCallBackServiceServer must be embedded to have forward compatible implementations.
-type UnimplementedCallBackServiceServer struct {
+// UnimplementedOAuthServiceServer must be embedded to have forward compatible implementations.
+type UnimplementedOAuthServiceServer struct {
 }
 
-func (UnimplementedCallBackServiceServer) HandleCallBack(context.Context, *CallBackRequest) (*CallBackResponse, error) {
-	return nil, status.Errorf(codes.Unimplemented, "method HandleCallBack not implemented")
+func (UnimplementedOAuthServiceServer) GetAuthorizationURL(context.Context, *AuthorizationURLRequest) (*AuthorizationURLResponse, error) {
+	return nil, status.Errorf(codes.Unimplemented, "method GetAuthorizationURL not implemented")
 }
-func (UnimplementedCallBackServiceServer) mustEmbedUnimplementedCallBackServiceServer() {}
+func (UnimplementedOAuthServiceServer) ExchangeCodeForToken(context.Context, *CodeExchangeRequest) (*CodeExchangeResponse, error) {
+	return nil, status.Errorf(codes.Unimplemented, "method ExchangeCodeForToken not implemented")
+}
+func (UnimplementedOAuthServiceServer) mustEmbedUnimplementedOAuthServiceServer() {}
 
-// UnsafeCallBackServiceServer may be embedded to opt out of forward compatibility for this service.
-// Use of this interface is not recommended, as added methods to CallBackServiceServer will
+// UnsafeOAuthServiceServer may be embedded to opt out of forward compatibility for this service.
+// Use of this interface is not recommended, as added methods to OAuthServiceServer will
 // result in compilation errors.
-type UnsafeCallBackServiceServer interface {
-	mustEmbedUnimplementedCallBackServiceServer()
+type UnsafeOAuthServiceServer interface {
+	mustEmbedUnimplementedOAuthServiceServer()
 }
 
-func RegisterCallBackServiceServer(s grpc.ServiceRegistrar, srv CallBackServiceServer) {
-	s.RegisterService(&CallBackService_ServiceDesc, srv)
+func RegisterOAuthServiceServer(s grpc.ServiceRegistrar, srv OAuthServiceServer) {
+	s.RegisterService(&OAuthService_ServiceDesc, srv)
 }
 
-func _CallBackService_HandleCallBack_Handler(srv interface{}, ctx context.Context, dec func(interface{}) error, interceptor grpc.UnaryServerInterceptor) (interface{}, error) {
-	in := new(CallBackRequest)
+func _OAuthService_GetAuthorizationURL_Handler(srv interface{}, ctx context.Context, dec func(interface{}) error, interceptor grpc.UnaryServerInterceptor) (interface{}, error) {
+	in := new(AuthorizationURLRequest)
 	if err := dec(in); err != nil {
 		return nil, err
 	}
 	if interceptor == nil {
-		return srv.(CallBackServiceServer).HandleCallBack(ctx, in)
+		return srv.(OAuthServiceServer).GetAuthorizationURL(ctx, in)
 	}
 	info := &grpc.UnaryServerInfo{
 		Server:     srv,
-		FullMethod: "/dev.stacklok.mediator.v1.CallBackService/HandleCallBack",
+		FullMethod: "/dev.stacklok.mediator.v1.OAuthService/GetAuthorizationURL",
 	}
 	handler := func(ctx context.Context, req interface{}) (interface{}, error) {
-		return srv.(CallBackServiceServer).HandleCallBack(ctx, req.(*CallBackRequest))
+		return srv.(OAuthServiceServer).GetAuthorizationURL(ctx, req.(*AuthorizationURLRequest))
 	}
 	return interceptor(ctx, in, info, handler)
 }
 
-// CallBackService_ServiceDesc is the grpc.ServiceDesc for CallBackService service.
+func _OAuthService_ExchangeCodeForToken_Handler(srv interface{}, ctx context.Context, dec func(interface{}) error, interceptor grpc.UnaryServerInterceptor) (interface{}, error) {
+	in := new(CodeExchangeRequest)
+	if err := dec(in); err != nil {
+		return nil, err
+	}
+	if interceptor == nil {
+		return srv.(OAuthServiceServer).ExchangeCodeForToken(ctx, in)
+	}
+	info := &grpc.UnaryServerInfo{
+		Server:     srv,
+		FullMethod: "/dev.stacklok.mediator.v1.OAuthService/ExchangeCodeForToken",
+	}
+	handler := func(ctx context.Context, req interface{}) (interface{}, error) {
+		return srv.(OAuthServiceServer).ExchangeCodeForToken(ctx, req.(*CodeExchangeRequest))
+	}
+	return interceptor(ctx, in, info, handler)
+}
+
+// OAuthService_ServiceDesc is the grpc.ServiceDesc for OAuthService service.
 // It's only intended for direct use with grpc.RegisterService,
 // and not to be introspected or modified (even as a copy)
-var CallBackService_ServiceDesc = grpc.ServiceDesc{
-	ServiceName: "dev.stacklok.mediator.v1.CallBackService",
-	HandlerType: (*CallBackServiceServer)(nil),
+var OAuthService_ServiceDesc = grpc.ServiceDesc{
+	ServiceName: "dev.stacklok.mediator.v1.OAuthService",
+	HandlerType: (*OAuthServiceServer)(nil),
 	Methods: []grpc.MethodDesc{
 		{
-			MethodName: "HandleCallBack",
-			Handler:    _CallBackService_HandleCallBack_Handler,
+			MethodName: "GetAuthorizationURL",
+			Handler:    _OAuthService_GetAuthorizationURL_Handler,
+		},
+		{
+			MethodName: "ExchangeCodeForToken",
+			Handler:    _OAuthService_ExchangeCodeForToken_Handler,
 		},
 	},
 	Streams:  []grpc.StreamDesc{},
@@ -356,92 +392,6 @@ var LogOutService_ServiceDesc = grpc.ServiceDesc{
 		{
 			MethodName: "LogOut",
 			Handler:    _LogOutService_LogOut_Handler,
-		},
-	},
-	Streams:  []grpc.StreamDesc{},
-	Metadata: "proto/v1/mediator.proto",
-}
-
-// AuthUrlServiceClient is the client API for AuthUrlService service.
-//
-// For semantics around ctx use and closing/ending streaming RPCs, please refer to https://pkg.go.dev/google.golang.org/grpc/?tab=doc#ClientConn.NewStream.
-type AuthUrlServiceClient interface {
-	AuthUrl(ctx context.Context, in *AuthUrlRequest, opts ...grpc.CallOption) (*AuthUrlResponse, error)
-}
-
-type authUrlServiceClient struct {
-	cc grpc.ClientConnInterface
-}
-
-func NewAuthUrlServiceClient(cc grpc.ClientConnInterface) AuthUrlServiceClient {
-	return &authUrlServiceClient{cc}
-}
-
-func (c *authUrlServiceClient) AuthUrl(ctx context.Context, in *AuthUrlRequest, opts ...grpc.CallOption) (*AuthUrlResponse, error) {
-	out := new(AuthUrlResponse)
-	err := c.cc.Invoke(ctx, "/dev.stacklok.mediator.v1.AuthUrlService/AuthUrl", in, out, opts...)
-	if err != nil {
-		return nil, err
-	}
-	return out, nil
-}
-
-// AuthUrlServiceServer is the server API for AuthUrlService service.
-// All implementations must embed UnimplementedAuthUrlServiceServer
-// for forward compatibility
-type AuthUrlServiceServer interface {
-	AuthUrl(context.Context, *AuthUrlRequest) (*AuthUrlResponse, error)
-	mustEmbedUnimplementedAuthUrlServiceServer()
-}
-
-// UnimplementedAuthUrlServiceServer must be embedded to have forward compatible implementations.
-type UnimplementedAuthUrlServiceServer struct {
-}
-
-func (UnimplementedAuthUrlServiceServer) AuthUrl(context.Context, *AuthUrlRequest) (*AuthUrlResponse, error) {
-	return nil, status.Errorf(codes.Unimplemented, "method AuthUrl not implemented")
-}
-func (UnimplementedAuthUrlServiceServer) mustEmbedUnimplementedAuthUrlServiceServer() {}
-
-// UnsafeAuthUrlServiceServer may be embedded to opt out of forward compatibility for this service.
-// Use of this interface is not recommended, as added methods to AuthUrlServiceServer will
-// result in compilation errors.
-type UnsafeAuthUrlServiceServer interface {
-	mustEmbedUnimplementedAuthUrlServiceServer()
-}
-
-func RegisterAuthUrlServiceServer(s grpc.ServiceRegistrar, srv AuthUrlServiceServer) {
-	s.RegisterService(&AuthUrlService_ServiceDesc, srv)
-}
-
-func _AuthUrlService_AuthUrl_Handler(srv interface{}, ctx context.Context, dec func(interface{}) error, interceptor grpc.UnaryServerInterceptor) (interface{}, error) {
-	in := new(AuthUrlRequest)
-	if err := dec(in); err != nil {
-		return nil, err
-	}
-	if interceptor == nil {
-		return srv.(AuthUrlServiceServer).AuthUrl(ctx, in)
-	}
-	info := &grpc.UnaryServerInfo{
-		Server:     srv,
-		FullMethod: "/dev.stacklok.mediator.v1.AuthUrlService/AuthUrl",
-	}
-	handler := func(ctx context.Context, req interface{}) (interface{}, error) {
-		return srv.(AuthUrlServiceServer).AuthUrl(ctx, req.(*AuthUrlRequest))
-	}
-	return interceptor(ctx, in, info, handler)
-}
-
-// AuthUrlService_ServiceDesc is the grpc.ServiceDesc for AuthUrlService service.
-// It's only intended for direct use with grpc.RegisterService,
-// and not to be introspected or modified (even as a copy)
-var AuthUrlService_ServiceDesc = grpc.ServiceDesc{
-	ServiceName: "dev.stacklok.mediator.v1.AuthUrlService",
-	HandlerType: (*AuthUrlServiceServer)(nil),
-	Methods: []grpc.MethodDesc{
-		{
-			MethodName: "AuthUrl",
-			Handler:    _AuthUrlService_AuthUrl_Handler,
 		},
 	},
 	Streams:  []grpc.StreamDesc{},

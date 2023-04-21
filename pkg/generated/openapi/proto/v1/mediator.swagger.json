@@ -12,13 +12,10 @@
       "name": "GitHubWebhookService"
     },
     {
-      "name": "CallBackService"
+      "name": "OAuthService"
     },
     {
       "name": "LogOutService"
-    },
-    {
-      "name": "AuthUrlService"
     },
     {
       "name": "AuthVerifyService"
@@ -40,14 +37,56 @@
     "application/json"
   ],
   "paths": {
-    "/api/v1/auth/url": {
+    "/api/v1/auth/callback/{provider}": {
       "get": {
-        "operationId": "AuthUrlService_AuthUrl",
+        "operationId": "OAuthService_ExchangeCodeForToken",
         "responses": {
           "200": {
             "description": "A successful response.",
             "schema": {
-              "$ref": "#/definitions/v1AuthUrlResponse"
+              "$ref": "#/definitions/v1CodeExchangeResponse"
+            }
+          },
+          "default": {
+            "description": "An unexpected error response.",
+            "schema": {
+              "$ref": "#/definitions/rpcStatus"
+            }
+          }
+        },
+        "parameters": [
+          {
+            "name": "provider",
+            "in": "path",
+            "required": true,
+            "type": "string"
+          },
+          {
+            "name": "code",
+            "in": "query",
+            "required": false,
+            "type": "string"
+          },
+          {
+            "name": "redirectUri",
+            "in": "query",
+            "required": false,
+            "type": "string"
+          }
+        ],
+        "tags": [
+          "OAuthService"
+        ]
+      }
+    },
+    "/api/v1/auth/url": {
+      "get": {
+        "operationId": "OAuthService_GetAuthorizationURL",
+        "responses": {
+          "200": {
+            "description": "A successful response.",
+            "schema": {
+              "$ref": "#/definitions/v1AuthorizationURLResponse"
             }
           },
           "default": {
@@ -66,7 +105,7 @@
           }
         ],
         "tags": [
-          "AuthUrlService"
+          "OAuthService"
         ]
       }
     },
@@ -121,38 +160,6 @@
         },
         "tags": [
           "BranchProtectionService"
-        ]
-      }
-    },
-    "/api/v1/callback": {
-      "post": {
-        "operationId": "CallBackService_HandleCallBack",
-        "responses": {
-          "200": {
-            "description": "A successful response.",
-            "schema": {
-              "$ref": "#/definitions/v1CallBackResponse"
-            }
-          },
-          "default": {
-            "description": "An unexpected error response.",
-            "schema": {
-              "$ref": "#/definitions/rpcStatus"
-            }
-          }
-        },
-        "parameters": [
-          {
-            "name": "body",
-            "in": "body",
-            "required": true,
-            "schema": {
-              "$ref": "#/definitions/v1CallBackRequest"
-            }
-          }
-        ],
-        "tags": [
-          "CallBackService"
         ]
       }
     },
@@ -376,17 +383,6 @@
         }
       }
     },
-    "v1AuthUrlResponse": {
-      "type": "object",
-      "properties": {
-        "status": {
-          "type": "string"
-        },
-        "url": {
-          "type": "string"
-        }
-      }
-    },
     "v1AuthVerifyRequest": {
       "type": "object"
     },
@@ -394,6 +390,14 @@
       "type": "object",
       "properties": {
         "status": {
+          "type": "string"
+        }
+      }
+    },
+    "v1AuthorizationURLResponse": {
+      "type": "object",
+      "properties": {
+        "url": {
           "type": "string"
         }
       }
@@ -410,14 +414,18 @@
         }
       }
     },
-    "v1CallBackRequest": {
-      "type": "object"
-    },
-    "v1CallBackResponse": {
+    "v1CodeExchangeResponse": {
       "type": "object",
       "properties": {
-        "status": {
+        "accessToken": {
           "type": "string"
+        },
+        "tokenType": {
+          "type": "string"
+        },
+        "expiresIn": {
+          "type": "string",
+          "format": "int64"
         }
       }
     },

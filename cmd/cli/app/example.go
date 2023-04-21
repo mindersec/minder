@@ -80,11 +80,11 @@ func callAuthURLService(address string) {
 	}
 	defer conn.Close()
 
-	client := pb.NewAuthUrlServiceClient(conn)
+	client := pb.NewOAuthServiceClient(conn)
 	ctx, cancel := context.WithTimeout(context.Background(), time.Second)
 	defer cancel()
 
-	resp, err := client.AuthUrl(ctx, &pb.AuthUrlRequest{})
+	resp, err := client.GetAuthorizationURL(ctx, &pb.AuthorizationURLRequest{})
 	if err != nil {
 		log.Fatalf("Error calling auth URL service: %v", err)
 	}

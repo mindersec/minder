@@ -23,6 +23,8 @@ package controlplane
 
 import (
 	"context"
+	"crypto/rand"
+	"encoding/base64"
 	"fmt"
 
 	pb "github.com/stacklok/mediator/pkg/generated/protobuf/go/proto/v1"
@@ -35,9 +37,21 @@ import (
 
 type Server struct {
 	pb.UnimplementedHealthServiceServer
-	pb.UnimplementedAuthUrlServiceServer
+	pb.UnimplementedOAuthServiceServer
+	OAuth2       *oauth2.Config
 	ClientID     string
 	ClientSecret string
+}
+
+func generateState(n int) (string, error) {
+	randomBytes := make([]byte, n)
+	_, err := rand.Read(randomBytes)
+	if err != nil {
+		return "", err
+	}
+
+	state := base64.RawURLEncoding.EncodeToString(randomBytes)
+	return state, nil
 }
 
 func (s *Server) CheckHealth(ctx context.Context, req *pb.HealthRequest) (*pb.HealthResponse, error) {
@@ -45,7 +59,7 @@ func (s *Server) CheckHealth(ctx context.Context, req *pb.HealthRequest) (*pb.He
 }
 
 func (s *Server) newOAuthConfig(provider string) (*oauth2.Config, error) {
-	fmt.Println("provider: ", provider)
+	// provider = "github"
 	switch provider {
 	case "google":
 		return &oauth2.Config{
@@ -59,7 +73,7 @@ func (s *Server) newOAuthConfig(provider string) (*oauth2.Config, error) {
 		return &oauth2.Config{
 			ClientID:     viper.GetString("github.client_id"),
 			ClientSecret: viper.GetString("github.client_secret"),
-			RedirectURL:  "http://localhost:8080/auth/github/callback",
+			RedirectURL:  "http://localhost:8080/api/v1/auth/callback/github",
 			Scopes:       []string{"user:email"},
 			Endpoint:     github.Endpoint,
 		}, nil
@@ -68,15 +82,42 @@ func (s *Server) newOAuthConfig(provider string) (*oauth2.Config, error) {
 	}
 }
 
-func (s *Server) AuthUrl(ctx context.Context, req *pb.AuthUrlRequest) (*pb.AuthUrlResponse, error) {
+func (s *Server) GetAuthorizationURL(ctx context.Context, req *pb.AuthorizationURLRequest) (*pb.AuthorizationURLResponse, error) {
 	oauthConfig, err := s.newOAuthConfig(req.Provider)
 	if err != nil {
 		return nil, err
 	}
-	url := oauthConfig.AuthCodeURL("state")
+	state, err := generateState(32)
 
-	response := &pb.AuthUrlResponse{
+	if err != nil {
+		fmt.Println("Error generating state:", err)
+		return nil, err
+	}
+	url := oauthConfig.AuthCodeURL(state, oauth2.AccessTypeOffline)
+
+	response := &pb.AuthorizationURLResponse{
 		Url: url,
 	}
 	return response, nil
+}
+
+func (s *Server) ExchangeCodeForToken(ctx context.Context, in *pb.CodeExchangeRequest) (*pb.CodeExchangeResponse, error) {
+
+	oauthConfig, err := s.newOAuthConfig(in.Provider)
+	if err != nil {
+		return nil, err
+	}
+
+	if oauthConfig == nil {
+		return nil, fmt.Errorf("oauth2.Config is nil")
+	}
+
+	token, err := oauthConfig.Exchange(ctx, in.Code)
+	if err != nil {
+		return nil, err
+	}
+
+	fmt.Println("Access Token: ", token.AccessToken)
+
+	return &pb.CodeExchangeResponse{AccessToken: token.AccessToken}, nil
 }

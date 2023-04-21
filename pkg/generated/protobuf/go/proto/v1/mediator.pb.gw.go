@@ -83,36 +83,108 @@ func local_request_GitHubWebhookService_HandleGitHubWebhook_0(ctx context.Contex
 
 }
 
-func request_CallBackService_HandleCallBack_0(ctx context.Context, marshaler runtime.Marshaler, client CallBackServiceClient, req *http.Request, pathParams map[string]string) (proto.Message, runtime.ServerMetadata, error) {
-	var protoReq CallBackRequest
+var (
+	filter_OAuthService_GetAuthorizationURL_0 = &utilities.DoubleArray{Encoding: map[string]int{}, Base: []int(nil), Check: []int(nil)}
+)
+
+func request_OAuthService_GetAuthorizationURL_0(ctx context.Context, marshaler runtime.Marshaler, client OAuthServiceClient, req *http.Request, pathParams map[string]string) (proto.Message, runtime.ServerMetadata, error) {
+	var protoReq AuthorizationURLRequest
 	var metadata runtime.ServerMetadata
 
-	newReader, berr := utilities.IOReaderFactory(req.Body)
-	if berr != nil {
-		return nil, metadata, status.Errorf(codes.InvalidArgument, "%v", berr)
+	if err := req.ParseForm(); err != nil {
+		return nil, metadata, status.Errorf(codes.InvalidArgument, "%v", err)
 	}
-	if err := marshaler.NewDecoder(newReader()).Decode(&protoReq); err != nil && err != io.EOF {
+	if err := runtime.PopulateQueryParameters(&protoReq, req.Form, filter_OAuthService_GetAuthorizationURL_0); err != nil {
 		return nil, metadata, status.Errorf(codes.InvalidArgument, "%v", err)
 	}
 
-	msg, err := client.HandleCallBack(ctx, &protoReq, grpc.Header(&metadata.HeaderMD), grpc.Trailer(&metadata.TrailerMD))
+	msg, err := client.GetAuthorizationURL(ctx, &protoReq, grpc.Header(&metadata.HeaderMD), grpc.Trailer(&metadata.TrailerMD))
 	return msg, metadata, err
 
 }
 
-func local_request_CallBackService_HandleCallBack_0(ctx context.Context, marshaler runtime.Marshaler, server CallBackServiceServer, req *http.Request, pathParams map[string]string) (proto.Message, runtime.ServerMetadata, error) {
-	var protoReq CallBackRequest
+func local_request_OAuthService_GetAuthorizationURL_0(ctx context.Context, marshaler runtime.Marshaler, server OAuthServiceServer, req *http.Request, pathParams map[string]string) (proto.Message, runtime.ServerMetadata, error) {
+	var protoReq AuthorizationURLRequest
 	var metadata runtime.ServerMetadata
 
-	newReader, berr := utilities.IOReaderFactory(req.Body)
-	if berr != nil {
-		return nil, metadata, status.Errorf(codes.InvalidArgument, "%v", berr)
+	if err := req.ParseForm(); err != nil {
+		return nil, metadata, status.Errorf(codes.InvalidArgument, "%v", err)
 	}
-	if err := marshaler.NewDecoder(newReader()).Decode(&protoReq); err != nil && err != io.EOF {
+	if err := runtime.PopulateQueryParameters(&protoReq, req.Form, filter_OAuthService_GetAuthorizationURL_0); err != nil {
 		return nil, metadata, status.Errorf(codes.InvalidArgument, "%v", err)
 	}
 
-	msg, err := server.HandleCallBack(ctx, &protoReq)
+	msg, err := server.GetAuthorizationURL(ctx, &protoReq)
+	return msg, metadata, err
+
+}
+
+var (
+	filter_OAuthService_ExchangeCodeForToken_0 = &utilities.DoubleArray{Encoding: map[string]int{"provider": 0}, Base: []int{1, 2, 0, 0}, Check: []int{0, 1, 2, 2}}
+)
+
+func request_OAuthService_ExchangeCodeForToken_0(ctx context.Context, marshaler runtime.Marshaler, client OAuthServiceClient, req *http.Request, pathParams map[string]string) (proto.Message, runtime.ServerMetadata, error) {
+	var protoReq CodeExchangeRequest
+	var metadata runtime.ServerMetadata
+
+	var (
+		val string
+		ok  bool
+		err error
+		_   = err
+	)
+
+	val, ok = pathParams["provider"]
+	if !ok {
+		return nil, metadata, status.Errorf(codes.InvalidArgument, "missing parameter %s", "provider")
+	}
+
+	protoReq.Provider, err = runtime.String(val)
+	if err != nil {
+		return nil, metadata, status.Errorf(codes.InvalidArgument, "type mismatch, parameter: %s, error: %v", "provider", err)
+	}
+
+	if err := req.ParseForm(); err != nil {
+		return nil, metadata, status.Errorf(codes.InvalidArgument, "%v", err)
+	}
+	if err := runtime.PopulateQueryParameters(&protoReq, req.Form, filter_OAuthService_ExchangeCodeForToken_0); err != nil {
+		return nil, metadata, status.Errorf(codes.InvalidArgument, "%v", err)
+	}
+
+	msg, err := client.ExchangeCodeForToken(ctx, &protoReq, grpc.Header(&metadata.HeaderMD), grpc.Trailer(&metadata.TrailerMD))
+	return msg, metadata, err
+
+}
+
+func local_request_OAuthService_ExchangeCodeForToken_0(ctx context.Context, marshaler runtime.Marshaler, server OAuthServiceServer, req *http.Request, pathParams map[string]string) (proto.Message, runtime.ServerMetadata, error) {
+	var protoReq CodeExchangeRequest
+	var metadata runtime.ServerMetadata
+
+	var (
+		val string
+		ok  bool
+		err error
+		_   = err
+	)
+
+	val, ok = pathParams["provider"]
+	if !ok {
+		return nil, metadata, status.Errorf(codes.InvalidArgument, "missing parameter %s", "provider")
+	}
+
+	protoReq.Provider, err = runtime.String(val)
+	if err != nil {
+		return nil, metadata, status.Errorf(codes.InvalidArgument, "type mismatch, parameter: %s, error: %v", "provider", err)
+	}
+
+	if err := req.ParseForm(); err != nil {
+		return nil, metadata, status.Errorf(codes.InvalidArgument, "%v", err)
+	}
+	if err := runtime.PopulateQueryParameters(&protoReq, req.Form, filter_OAuthService_ExchangeCodeForToken_0); err != nil {
+		return nil, metadata, status.Errorf(codes.InvalidArgument, "%v", err)
+	}
+
+	msg, err := server.ExchangeCodeForToken(ctx, &protoReq)
 	return msg, metadata, err
 
 }
@@ -147,42 +219,6 @@ func local_request_LogOutService_LogOut_0(ctx context.Context, marshaler runtime
 	}
 
 	msg, err := server.LogOut(ctx, &protoReq)
-	return msg, metadata, err
-
-}
-
-var (
-	filter_AuthUrlService_AuthUrl_0 = &utilities.DoubleArray{Encoding: map[string]int{}, Base: []int(nil), Check: []int(nil)}
-)
-
-func request_AuthUrlService_AuthUrl_0(ctx context.Context, marshaler runtime.Marshaler, client AuthUrlServiceClient, req *http.Request, pathParams map[string]string) (proto.Message, runtime.ServerMetadata, error) {
-	var protoReq AuthUrlRequest
-	var metadata runtime.ServerMetadata
-
-	if err := req.ParseForm(); err != nil {
-		return nil, metadata, status.Errorf(codes.InvalidArgument, "%v", err)
-	}
-	if err := runtime.PopulateQueryParameters(&protoReq, req.Form, filter_AuthUrlService_AuthUrl_0); err != nil {
-		return nil, metadata, status.Errorf(codes.InvalidArgument, "%v", err)
-	}
-
-	msg, err := client.AuthUrl(ctx, &protoReq, grpc.Header(&metadata.HeaderMD), grpc.Trailer(&metadata.TrailerMD))
-	return msg, metadata, err
-
-}
-
-func local_request_AuthUrlService_AuthUrl_0(ctx context.Context, marshaler runtime.Marshaler, server AuthUrlServiceServer, req *http.Request, pathParams map[string]string) (proto.Message, runtime.ServerMetadata, error) {
-	var protoReq AuthUrlRequest
-	var metadata runtime.ServerMetadata
-
-	if err := req.ParseForm(); err != nil {
-		return nil, metadata, status.Errorf(codes.InvalidArgument, "%v", err)
-	}
-	if err := runtime.PopulateQueryParameters(&protoReq, req.Form, filter_AuthUrlService_AuthUrl_0); err != nil {
-		return nil, metadata, status.Errorf(codes.InvalidArgument, "%v", err)
-	}
-
-	msg, err := server.AuthUrl(ctx, &protoReq)
 	return msg, metadata, err
 
 }
@@ -447,13 +483,13 @@ func RegisterGitHubWebhookServiceHandlerServer(ctx context.Context, mux *runtime
 	return nil
 }
 
-// RegisterCallBackServiceHandlerServer registers the http handlers for service CallBackService to "mux".
-// UnaryRPC     :call CallBackServiceServer directly.
+// RegisterOAuthServiceHandlerServer registers the http handlers for service OAuthService to "mux".
+// UnaryRPC     :call OAuthServiceServer directly.
 // StreamingRPC :currently unsupported pending https://github.com/grpc/grpc-go/issues/906.
-// Note that using this registration option will cause many gRPC library features to stop working. Consider using RegisterCallBackServiceHandlerFromEndpoint instead.
-func RegisterCallBackServiceHandlerServer(ctx context.Context, mux *runtime.ServeMux, server CallBackServiceServer) error {
+// Note that using this registration option will cause many gRPC library features to stop working. Consider using RegisterOAuthServiceHandlerFromEndpoint instead.
+func RegisterOAuthServiceHandlerServer(ctx context.Context, mux *runtime.ServeMux, server OAuthServiceServer) error {
 
-	mux.Handle("POST", pattern_CallBackService_HandleCallBack_0, func(w http.ResponseWriter, req *http.Request, pathParams map[string]string) {
+	mux.Handle("GET", pattern_OAuthService_GetAuthorizationURL_0, func(w http.ResponseWriter, req *http.Request, pathParams map[string]string) {
 		ctx, cancel := context.WithCancel(req.Context())
 		defer cancel()
 		var stream runtime.ServerTransportStream
@@ -461,12 +497,12 @@ func RegisterCallBackServiceHandlerServer(ctx context.Context, mux *runtime.Serv
 		inboundMarshaler, outboundMarshaler := runtime.MarshalerForRequest(mux, req)
 		var err error
 		var annotatedContext context.Context
-		annotatedContext, err = runtime.AnnotateIncomingContext(ctx, mux, req, "/dev.stacklok.mediator.v1.CallBackService/HandleCallBack", runtime.WithHTTPPathPattern("/api/v1/callback"))
+		annotatedContext, err = runtime.AnnotateIncomingContext(ctx, mux, req, "/dev.stacklok.mediator.v1.OAuthService/GetAuthorizationURL", runtime.WithHTTPPathPattern("/api/v1/auth/url"))
 		if err != nil {
 			runtime.HTTPError(ctx, mux, outboundMarshaler, w, req, err)
 			return
 		}
-		resp, md, err := local_request_CallBackService_HandleCallBack_0(annotatedContext, inboundMarshaler, server, req, pathParams)
+		resp, md, err := local_request_OAuthService_GetAuthorizationURL_0(annotatedContext, inboundMarshaler, server, req, pathParams)
 		md.HeaderMD, md.TrailerMD = metadata.Join(md.HeaderMD, stream.Header()), metadata.Join(md.TrailerMD, stream.Trailer())
 		annotatedContext = runtime.NewServerMetadataContext(annotatedContext, md)
 		if err != nil {
@@ -474,7 +510,32 @@ func RegisterCallBackServiceHandlerServer(ctx context.Context, mux *runtime.Serv
 			return
 		}
 
-		forward_CallBackService_HandleCallBack_0(annotatedContext, mux, outboundMarshaler, w, req, resp, mux.GetForwardResponseOptions()...)
+		forward_OAuthService_GetAuthorizationURL_0(annotatedContext, mux, outboundMarshaler, w, req, resp, mux.GetForwardResponseOptions()...)
+
+	})
+
+	mux.Handle("GET", pattern_OAuthService_ExchangeCodeForToken_0, func(w http.ResponseWriter, req *http.Request, pathParams map[string]string) {
+		ctx, cancel := context.WithCancel(req.Context())
+		defer cancel()
+		var stream runtime.ServerTransportStream
+		ctx = grpc.NewContextWithServerTransportStream(ctx, &stream)
+		inboundMarshaler, outboundMarshaler := runtime.MarshalerForRequest(mux, req)
+		var err error
+		var annotatedContext context.Context
+		annotatedContext, err = runtime.AnnotateIncomingContext(ctx, mux, req, "/dev.stacklok.mediator.v1.OAuthService/ExchangeCodeForToken", runtime.WithHTTPPathPattern("/api/v1/auth/callback/{provider}"))
+		if err != nil {
+			runtime.HTTPError(ctx, mux, outboundMarshaler, w, req, err)
+			return
+		}
+		resp, md, err := local_request_OAuthService_ExchangeCodeForToken_0(annotatedContext, inboundMarshaler, server, req, pathParams)
+		md.HeaderMD, md.TrailerMD = metadata.Join(md.HeaderMD, stream.Header()), metadata.Join(md.TrailerMD, stream.Trailer())
+		annotatedContext = runtime.NewServerMetadataContext(annotatedContext, md)
+		if err != nil {
+			runtime.HTTPError(annotatedContext, mux, outboundMarshaler, w, req, err)
+			return
+		}
+
+		forward_OAuthService_ExchangeCodeForToken_0(annotatedContext, mux, outboundMarshaler, w, req, resp, mux.GetForwardResponseOptions()...)
 
 	})
 
@@ -509,40 +570,6 @@ func RegisterLogOutServiceHandlerServer(ctx context.Context, mux *runtime.ServeM
 		}
 
 		forward_LogOutService_LogOut_0(annotatedContext, mux, outboundMarshaler, w, req, resp, mux.GetForwardResponseOptions()...)
-
-	})
-
-	return nil
-}
-
-// RegisterAuthUrlServiceHandlerServer registers the http handlers for service AuthUrlService to "mux".
-// UnaryRPC     :call AuthUrlServiceServer directly.
-// StreamingRPC :currently unsupported pending https://github.com/grpc/grpc-go/issues/906.
-// Note that using this registration option will cause many gRPC library features to stop working. Consider using RegisterAuthUrlServiceHandlerFromEndpoint instead.
-func RegisterAuthUrlServiceHandlerServer(ctx context.Context, mux *runtime.ServeMux, server AuthUrlServiceServer) error {
-
-	mux.Handle("GET", pattern_AuthUrlService_AuthUrl_0, func(w http.ResponseWriter, req *http.Request, pathParams map[string]string) {
-		ctx, cancel := context.WithCancel(req.Context())
-		defer cancel()
-		var stream runtime.ServerTransportStream
-		ctx = grpc.NewContextWithServerTransportStream(ctx, &stream)
-		inboundMarshaler, outboundMarshaler := runtime.MarshalerForRequest(mux, req)
-		var err error
-		var annotatedContext context.Context
-		annotatedContext, err = runtime.AnnotateIncomingContext(ctx, mux, req, "/dev.stacklok.mediator.v1.AuthUrlService/AuthUrl", runtime.WithHTTPPathPattern("/api/v1/auth/url"))
-		if err != nil {
-			runtime.HTTPError(ctx, mux, outboundMarshaler, w, req, err)
-			return
-		}
-		resp, md, err := local_request_AuthUrlService_AuthUrl_0(annotatedContext, inboundMarshaler, server, req, pathParams)
-		md.HeaderMD, md.TrailerMD = metadata.Join(md.HeaderMD, stream.Header()), metadata.Join(md.TrailerMD, stream.Trailer())
-		annotatedContext = runtime.NewServerMetadataContext(annotatedContext, md)
-		if err != nil {
-			runtime.HTTPError(annotatedContext, mux, outboundMarshaler, w, req, err)
-			return
-		}
-
-		forward_AuthUrlService_AuthUrl_0(annotatedContext, mux, outboundMarshaler, w, req, resp, mux.GetForwardResponseOptions()...)
 
 	})
 
@@ -877,9 +904,9 @@ var (
 	forward_GitHubWebhookService_HandleGitHubWebhook_0 = runtime.ForwardResponseMessage
 )
 
-// RegisterCallBackServiceHandlerFromEndpoint is same as RegisterCallBackServiceHandler but
+// RegisterOAuthServiceHandlerFromEndpoint is same as RegisterOAuthServiceHandler but
 // automatically dials to "endpoint" and closes the connection when "ctx" gets done.
-func RegisterCallBackServiceHandlerFromEndpoint(ctx context.Context, mux *runtime.ServeMux, endpoint string, opts []grpc.DialOption) (err error) {
+func RegisterOAuthServiceHandlerFromEndpoint(ctx context.Context, mux *runtime.ServeMux, endpoint string, opts []grpc.DialOption) (err error) {
 	conn, err := grpc.DialContext(ctx, endpoint, opts...)
 	if err != nil {
 		return err
@@ -899,41 +926,63 @@ func RegisterCallBackServiceHandlerFromEndpoint(ctx context.Context, mux *runtim
 		}()
 	}()
 
-	return RegisterCallBackServiceHandler(ctx, mux, conn)
+	return RegisterOAuthServiceHandler(ctx, mux, conn)
 }
 
-// RegisterCallBackServiceHandler registers the http handlers for service CallBackService to "mux".
+// RegisterOAuthServiceHandler registers the http handlers for service OAuthService to "mux".
 // The handlers forward requests to the grpc endpoint over "conn".
-func RegisterCallBackServiceHandler(ctx context.Context, mux *runtime.ServeMux, conn *grpc.ClientConn) error {
-	return RegisterCallBackServiceHandlerClient(ctx, mux, NewCallBackServiceClient(conn))
+func RegisterOAuthServiceHandler(ctx context.Context, mux *runtime.ServeMux, conn *grpc.ClientConn) error {
+	return RegisterOAuthServiceHandlerClient(ctx, mux, NewOAuthServiceClient(conn))
 }
 
-// RegisterCallBackServiceHandlerClient registers the http handlers for service CallBackService
-// to "mux". The handlers forward requests to the grpc endpoint over the given implementation of "CallBackServiceClient".
-// Note: the gRPC framework executes interceptors within the gRPC handler. If the passed in "CallBackServiceClient"
+// RegisterOAuthServiceHandlerClient registers the http handlers for service OAuthService
+// to "mux". The handlers forward requests to the grpc endpoint over the given implementation of "OAuthServiceClient".
+// Note: the gRPC framework executes interceptors within the gRPC handler. If the passed in "OAuthServiceClient"
 // doesn't go through the normal gRPC flow (creating a gRPC client etc.) then it will be up to the passed in
-// "CallBackServiceClient" to call the correct interceptors.
-func RegisterCallBackServiceHandlerClient(ctx context.Context, mux *runtime.ServeMux, client CallBackServiceClient) error {
+// "OAuthServiceClient" to call the correct interceptors.
+func RegisterOAuthServiceHandlerClient(ctx context.Context, mux *runtime.ServeMux, client OAuthServiceClient) error {
 
-	mux.Handle("POST", pattern_CallBackService_HandleCallBack_0, func(w http.ResponseWriter, req *http.Request, pathParams map[string]string) {
+	mux.Handle("GET", pattern_OAuthService_GetAuthorizationURL_0, func(w http.ResponseWriter, req *http.Request, pathParams map[string]string) {
 		ctx, cancel := context.WithCancel(req.Context())
 		defer cancel()
 		inboundMarshaler, outboundMarshaler := runtime.MarshalerForRequest(mux, req)
 		var err error
 		var annotatedContext context.Context
-		annotatedContext, err = runtime.AnnotateContext(ctx, mux, req, "/dev.stacklok.mediator.v1.CallBackService/HandleCallBack", runtime.WithHTTPPathPattern("/api/v1/callback"))
+		annotatedContext, err = runtime.AnnotateContext(ctx, mux, req, "/dev.stacklok.mediator.v1.OAuthService/GetAuthorizationURL", runtime.WithHTTPPathPattern("/api/v1/auth/url"))
 		if err != nil {
 			runtime.HTTPError(ctx, mux, outboundMarshaler, w, req, err)
 			return
 		}
-		resp, md, err := request_CallBackService_HandleCallBack_0(annotatedContext, inboundMarshaler, client, req, pathParams)
+		resp, md, err := request_OAuthService_GetAuthorizationURL_0(annotatedContext, inboundMarshaler, client, req, pathParams)
 		annotatedContext = runtime.NewServerMetadataContext(annotatedContext, md)
 		if err != nil {
 			runtime.HTTPError(annotatedContext, mux, outboundMarshaler, w, req, err)
 			return
 		}
 
-		forward_CallBackService_HandleCallBack_0(annotatedContext, mux, outboundMarshaler, w, req, resp, mux.GetForwardResponseOptions()...)
+		forward_OAuthService_GetAuthorizationURL_0(annotatedContext, mux, outboundMarshaler, w, req, resp, mux.GetForwardResponseOptions()...)
+
+	})
+
+	mux.Handle("GET", pattern_OAuthService_ExchangeCodeForToken_0, func(w http.ResponseWriter, req *http.Request, pathParams map[string]string) {
+		ctx, cancel := context.WithCancel(req.Context())
+		defer cancel()
+		inboundMarshaler, outboundMarshaler := runtime.MarshalerForRequest(mux, req)
+		var err error
+		var annotatedContext context.Context
+		annotatedContext, err = runtime.AnnotateContext(ctx, mux, req, "/dev.stacklok.mediator.v1.OAuthService/ExchangeCodeForToken", runtime.WithHTTPPathPattern("/api/v1/auth/callback/{provider}"))
+		if err != nil {
+			runtime.HTTPError(ctx, mux, outboundMarshaler, w, req, err)
+			return
+		}
+		resp, md, err := request_OAuthService_ExchangeCodeForToken_0(annotatedContext, inboundMarshaler, client, req, pathParams)
+		annotatedContext = runtime.NewServerMetadataContext(annotatedContext, md)
+		if err != nil {
+			runtime.HTTPError(annotatedContext, mux, outboundMarshaler, w, req, err)
+			return
+		}
+
+		forward_OAuthService_ExchangeCodeForToken_0(annotatedContext, mux, outboundMarshaler, w, req, resp, mux.GetForwardResponseOptions()...)
 
 	})
 
@@ -941,11 +990,15 @@ func RegisterCallBackServiceHandlerClient(ctx context.Context, mux *runtime.Serv
 }
 
 var (
-	pattern_CallBackService_HandleCallBack_0 = runtime.MustPattern(runtime.NewPattern(1, []int{2, 0, 2, 1, 2, 2}, []string{"api", "v1", "callback"}, ""))
+	pattern_OAuthService_GetAuthorizationURL_0 = runtime.MustPattern(runtime.NewPattern(1, []int{2, 0, 2, 1, 2, 2, 2, 3}, []string{"api", "v1", "auth", "url"}, ""))
+
+	pattern_OAuthService_ExchangeCodeForToken_0 = runtime.MustPattern(runtime.NewPattern(1, []int{2, 0, 2, 1, 2, 2, 2, 3, 1, 0, 4, 1, 5, 4}, []string{"api", "v1", "auth", "callback", "provider"}, ""))
 )
 
 var (
-	forward_CallBackService_HandleCallBack_0 = runtime.ForwardResponseMessage
+	forward_OAuthService_GetAuthorizationURL_0 = runtime.ForwardResponseMessage
+
+	forward_OAuthService_ExchangeCodeForToken_0 = runtime.ForwardResponseMessage
 )
 
 // RegisterLogOutServiceHandlerFromEndpoint is same as RegisterLogOutServiceHandler but
@@ -1017,77 +1070,6 @@ var (
 
 var (
 	forward_LogOutService_LogOut_0 = runtime.ForwardResponseMessage
-)
-
-// RegisterAuthUrlServiceHandlerFromEndpoint is same as RegisterAuthUrlServiceHandler but
-// automatically dials to "endpoint" and closes the connection when "ctx" gets done.
-func RegisterAuthUrlServiceHandlerFromEndpoint(ctx context.Context, mux *runtime.ServeMux, endpoint string, opts []grpc.DialOption) (err error) {
-	conn, err := grpc.DialContext(ctx, endpoint, opts...)
-	if err != nil {
-		return err
-	}
-	defer func() {
-		if err != nil {
-			if cerr := conn.Close(); cerr != nil {
-				grpclog.Infof("Failed to close conn to %s: %v", endpoint, cerr)
-			}
-			return
-		}
-		go func() {
-			<-ctx.Done()
-			if cerr := conn.Close(); cerr != nil {
-				grpclog.Infof("Failed to close conn to %s: %v", endpoint, cerr)
-			}
-		}()
-	}()
-
-	return RegisterAuthUrlServiceHandler(ctx, mux, conn)
-}
-
-// RegisterAuthUrlServiceHandler registers the http handlers for service AuthUrlService to "mux".
-// The handlers forward requests to the grpc endpoint over "conn".
-func RegisterAuthUrlServiceHandler(ctx context.Context, mux *runtime.ServeMux, conn *grpc.ClientConn) error {
-	return RegisterAuthUrlServiceHandlerClient(ctx, mux, NewAuthUrlServiceClient(conn))
-}
-
-// RegisterAuthUrlServiceHandlerClient registers the http handlers for service AuthUrlService
-// to "mux". The handlers forward requests to the grpc endpoint over the given implementation of "AuthUrlServiceClient".
-// Note: the gRPC framework executes interceptors within the gRPC handler. If the passed in "AuthUrlServiceClient"
-// doesn't go through the normal gRPC flow (creating a gRPC client etc.) then it will be up to the passed in
-// "AuthUrlServiceClient" to call the correct interceptors.
-func RegisterAuthUrlServiceHandlerClient(ctx context.Context, mux *runtime.ServeMux, client AuthUrlServiceClient) error {
-
-	mux.Handle("GET", pattern_AuthUrlService_AuthUrl_0, func(w http.ResponseWriter, req *http.Request, pathParams map[string]string) {
-		ctx, cancel := context.WithCancel(req.Context())
-		defer cancel()
-		inboundMarshaler, outboundMarshaler := runtime.MarshalerForRequest(mux, req)
-		var err error
-		var annotatedContext context.Context
-		annotatedContext, err = runtime.AnnotateContext(ctx, mux, req, "/dev.stacklok.mediator.v1.AuthUrlService/AuthUrl", runtime.WithHTTPPathPattern("/api/v1/auth/url"))
-		if err != nil {
-			runtime.HTTPError(ctx, mux, outboundMarshaler, w, req, err)
-			return
-		}
-		resp, md, err := request_AuthUrlService_AuthUrl_0(annotatedContext, inboundMarshaler, client, req, pathParams)
-		annotatedContext = runtime.NewServerMetadataContext(annotatedContext, md)
-		if err != nil {
-			runtime.HTTPError(annotatedContext, mux, outboundMarshaler, w, req, err)
-			return
-		}
-
-		forward_AuthUrlService_AuthUrl_0(annotatedContext, mux, outboundMarshaler, w, req, resp, mux.GetForwardResponseOptions()...)
-
-	})
-
-	return nil
-}
-
-var (
-	pattern_AuthUrlService_AuthUrl_0 = runtime.MustPattern(runtime.NewPattern(1, []int{2, 0, 2, 1, 2, 2, 2, 3}, []string{"api", "v1", "auth", "url"}, ""))
-)
-
-var (
-	forward_AuthUrlService_AuthUrl_0 = runtime.ForwardResponseMessage
 )
 
 // RegisterAuthVerifyServiceHandlerFromEndpoint is same as RegisterAuthVerifyServiceHandler but

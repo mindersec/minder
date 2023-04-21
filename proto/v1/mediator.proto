@@ -21,7 +21,6 @@ option go_package = "github.com/stacklok/mediator/pkg/generated/protobuf/go";
 import "google/api/annotations.proto";
 import "google/protobuf/timestamp.proto";
 
-
 // Simple Health Check Service
 // replies with OK
 service HealthService {
@@ -42,12 +41,15 @@ service GitHubWebhookService {
     }
 }
 
-// GitHub App Callback Service for OAuth2
-service CallBackService {
-    rpc HandleCallBack (CallBackRequest) returns (CallBackResponse) {
+service OAuthService {
+    rpc GetAuthorizationURL (AuthorizationURLRequest) returns (AuthorizationURLResponse) {
         option (google.api.http) = {
-            post: "/api/v1/callback"
-            body: "*"
+            get: "/api/v1/auth/url"
+        };
+    }
+    rpc ExchangeCodeForToken (CodeExchangeRequest) returns (CodeExchangeResponse) {
+        option (google.api.http) = {
+            get: "/api/v1/auth/callback/{provider}"
         };
     }
 }
@@ -58,15 +60,6 @@ service LogOutService {
         option (google.api.http) = {
             post: "/api/v1/logout"
             body: "*"
-        };
-    }
-}
-
-// Get GitHub OAuth2 URL
-service AuthUrlService {
-    rpc AuthUrl (AuthUrlRequest) returns (AuthUrlResponse) {
-        option (google.api.http) = {
-            get: "/api/v1/auth/url"
         };
     }
 }
@@ -129,13 +122,25 @@ message HealthResponse {
     string status = 1;
 }
 
-message CallBackRequest {
+message AuthorizationURLRequest {
+    string provider = 1;
 }
 
-message CallBackResponse {
-    string status = 1;
+message AuthorizationURLResponse {
+    string url = 1;
 }
 
+message CodeExchangeRequest {
+    string provider = 1;
+    string code = 2;
+    string redirect_uri = 3;
+}
+
+message CodeExchangeResponse {
+    string access_token = 1;
+    string token_type = 2;
+    int64 expires_in = 3;
+}
 
 message GitHubWebhookRequest {
 }
@@ -156,15 +161,6 @@ message AuthVerifyRequest {
 
 message AuthVerifyResponse {
     string status = 1;
-}
-
-message AuthUrlRequest {
-    string provider = 1;
-}
-
-message AuthUrlResponse {
-    string status = 1;
-    string url = 2;
 }
 
 message GetVulnerabilitiesRequest {
