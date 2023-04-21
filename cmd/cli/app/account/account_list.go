@@ -19,7 +19,7 @@
 // It does make a good example of how to use the generated client code
 // for others to use as a reference.
 
-package auth
+package account
 
 import (
 	"fmt"
@@ -27,8 +27,8 @@ import (
 	"github.com/spf13/cobra"
 )
 
-// authCmd represents the auth command
-var auth_listCmd = &cobra.Command{
+// accountCmd represents the auth command
+var account_listCmd = &cobra.Command{
 	Use:   "list",
 	Short: "List all auth accounts and tokens",
 	Long: `List all tokens and accounts for active or expired, mediator sessions
@@ -40,5 +40,5 @@ var auth_listCmd = &cobra.Command{
 }
 
 func init() {
-	AuthCmd.AddCommand(auth_listCmd)
+	AccountCmd.AddCommand(account_listCmd)
 }

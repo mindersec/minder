@@ -19,7 +19,7 @@
 // It does make a good example of how to use the generated client code
 // for others to use as a reference.
 
-package auth
+package account
 
 import (
 	"context"
@@ -57,8 +57,8 @@ func callAuthURLService(address string, provider string) (string, error) {
 	return resp.GetUrl(), nil
 }
 
-// authCmd represents the auth command
-var auth_createCmd = &cobra.Command{
+// accountCmd represents the auth command
+var account_createCmd = &cobra.Command{
 	Use:   "create",
 	Short: "Create an account in mediator",
 	Long: `This command allows a user to create an account within mediator
@@ -93,9 +93,9 @@ mediator to access user account details via the provider / iDP.`,
 }
 
 func init() {
-	AuthCmd.AddCommand(auth_createCmd)
+	AccountCmd.AddCommand(account_createCmd)
 
-	if err := viper.BindPFlags(auth_createCmd.PersistentFlags()); err != nil {
+	if err := viper.BindPFlags(account_createCmd.PersistentFlags()); err != nil {
 		log.Fatal(err)
 	}
 }
