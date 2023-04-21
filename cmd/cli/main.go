@@ -17,7 +17,7 @@ package main
 
 import (
 	"github.com/stacklok/mediator/cmd/cli/app"
-	_ "github.com/stacklok/mediator/cmd/cli/app/auth"
+	_ "github.com/stacklok/mediator/cmd/cli/app/account"
 )
 
 func main() {

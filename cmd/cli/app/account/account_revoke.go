@@ -19,7 +19,7 @@
 // It does make a good example of how to use the generated client code
 // for others to use as a reference.
 
-package auth
+package account
 
 import (
 	"fmt"
@@ -29,24 +29,35 @@ import (
 	"github.com/spf13/viper"
 )
 
-// authCmd represents the auth command
-var auth_loginCmd = &cobra.Command{
-	Use:   "login",
-	Short: "Login to mediator",
-	Long: `This command allows a user to login to mediator
-, should you require an oauth2 login, then pass in the --provider flag,
-e.g. --provider=github. This will then initiate the OAuth2 flow and allow
-mediator to access user account details via the provider / iDP .`,
+// accountCmd represents the auth command
+var account_revokeCmd = &cobra.Command{
+	Use:   "revoke",
+	Short: "Revoke a token",
+	Long: `Revoke a token within mediator, by expiring the token and removing it
+from the database. If the token is a refresh token, then the associated access
+token will also be revoked.
+
+You can revoke a token by passing in the token itself, or by passing in the
+token ID.
+
+To revoke a token by ID, pass in the --id flag, e.g.
+medctl auth revoke --id=1234
+
+To revoke a token by value, pass in the --token flag, e.g.
+medctl auth revoke --token=1234-1234-1234-1234
+`,
 	Run: func(cmd *cobra.Command, args []string) {
-		fmt.Println("auth login called")
-		// provider := viper.GetString("provider")
+		fmt.Println("account revoke called")
+		// token := viper.GetString("token")
+		// id := viper.GetInt32("id")
 	},
 }
 
 func init() {
-	AuthCmd.AddCommand(auth_loginCmd)
-	auth_loginCmd.PersistentFlags().String("provider", "", "The OAuth2 provider to use for login")
-	if err := viper.BindPFlags(auth_loginCmd.PersistentFlags()); err != nil {
+	AccountCmd.AddCommand(account_revokeCmd)
+	account_revokeCmd.PersistentFlags().String("token", "", "The token to revoke")
+	account_revokeCmd.PersistentFlags().Int32("id", 0, "The ID of the token to revoke")
+	if err := viper.BindPFlags(account_revokeCmd.PersistentFlags()); err != nil {
 		log.Fatal(err)
 	}
 }
