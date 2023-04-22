@@ -22,10 +22,13 @@
 package controlplane
 
 import (
+	"bytes"
 	"context"
 	"crypto/rand"
 	"encoding/base64"
 	"fmt"
+	"net/http"
+	// "os"
 
 	pb "github.com/stacklok/mediator/pkg/generated/protobuf/go/proto/v1"
 	"golang.org/x/oauth2"
@@ -117,7 +120,28 @@ func (s *Server) ExchangeCodeForToken(ctx context.Context, in *pb.CodeExchangeRe
 		return nil, err
 	}
 
-	fmt.Println("Access Token: ", token.AccessToken)
+	// check if the token is valid
+	var requestBody []byte
+	if token.Valid() {
+		requestBody = []byte(`{"status": "success"}`)
+	} else {
+		requestBody = []byte(`{"status": "failure"}`)
+	}
 
-	return &pb.CodeExchangeResponse{AccessToken: token.AccessToken}, nil
+	cliAppURL := "http://localhost:8891/shutdown" // Replace PORT with the appropriate port number
+
+	resp, err := http.Post(cliAppURL, "application/json", bytes.NewBuffer(requestBody))
+	if err != nil {
+		return nil, err
+	}
+	defer resp.Body.Close()
+
+	if resp.StatusCode != http.StatusOK {
+		return nil, fmt.Errorf("failed to send status to CLI application, status code: %d", resp.StatusCode)
+	}
+
+	return &pb.CodeExchangeResponse{
+		AccessToken: token.AccessToken,
+		Status:      "success",
+	}, nil
 }

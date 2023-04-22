@@ -139,7 +139,8 @@ message CodeExchangeRequest {
 message CodeExchangeResponse {
     string access_token = 1;
     string token_type = 2;
-    int64 expires_in = 3;
+    int64  expires_in = 3;
+    string status = 4;
 }
 
 message GitHubWebhookRequest {
