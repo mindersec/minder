@@ -43,20 +43,7 @@ buf mod update
 Mediator can use OAuth2 to authenticate users, support for Google and GitHub is
 currently implemented.
 
-To enable OAuth2, you need to configure the following environment variables:
-
-```bash
-# OAuth2 configuration
-github:
-  client_id: "client_id"
-  client_secret: "client_secret"
-  redirect_uri: "http://localhost:8080/api/v1/auth/callback/github"
-
-google:
-  client_id: "client_id"
-  client_secret: "client_secret"
-  redirect_uri: "http://localhost:8080/api/v1/auth/callback/google"
-```
+To enable OAuth2, you need to configure accounts in the relevant provider.
 
 ## Configure GitHub OAuth2
 
@@ -94,6 +81,8 @@ Follow the official [Google OAuth2 documentation](https://developers.google.com/
 The callback URL should be set to:
 
 `http://localhost:8080/api/v1/auth/callback/google`.
+
+Place these values in the `config.yaml` file:
 
 ```bash
 github:
