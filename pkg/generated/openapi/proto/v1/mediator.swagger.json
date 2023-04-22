@@ -426,6 +426,9 @@
         "expiresIn": {
           "type": "string",
           "format": "int64"
+        },
+        "status": {
+          "type": "string"
         }
       }
     },

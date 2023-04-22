@@ -23,8 +23,13 @@ package account
 
 import (
 	"context"
+	"encoding/json"
 	"fmt"
+	"io/ioutil"
 	"log"
+	"net/http"
+	"os"
+	"sync"
 	"time"
 
 	pb "github.com/stacklok/mediator/pkg/generated/protobuf/go/proto/v1"
@@ -35,6 +40,60 @@ import (
 	"google.golang.org/grpc"
 	"google.golang.org/grpc/credentials/insecure"
 )
+
+type Status struct {
+	Status string `json:"status"`
+}
+
+// callBackServer is a simple HTTP server that listens for a callback from the
+// mediators OAuth service. It will shutdown the server when the correct status
+// is received and save the token to the config file.
+func callBackServer(wg *sync.WaitGroup) {
+	http.HandleFunc("/shutdown", func(w http.ResponseWriter, r *http.Request) {
+		if r.Method != http.MethodPost {
+			http.Error(w, "Method not allowed", http.StatusMethodNotAllowed)
+			return
+		}
+
+		body, err := ioutil.ReadAll(r.Body)
+		if err != nil {
+			http.Error(w, "Error reading request body", http.StatusInternalServerError)
+			return
+		}
+		defer r.Body.Close()
+
+		var status Status
+		err = json.Unmarshal(body, &status)
+		if err != nil {
+			http.Error(w, "Error unmarshaling JSON", http.StatusBadRequest)
+			return
+		}
+
+		if status.Status == "success" {
+			fmt.Println("OAuth flow completed successfully")
+			wg.Done() // Signal that we received the correct status and can shutdown the server.
+		} else if status.Status == "failure" {
+			fmt.Println("OAuth flow failed")
+			wg.Done()
+		} else {
+			http.Error(w, "Invalid status value", http.StatusBadRequest)
+		}
+	})
+
+	server := &http.Server{Addr: ":8891"}
+
+	go func() {
+		wg.Wait()
+		server.Close() // Shutdown the server when the correct status is received.
+	}()
+
+	fmt.Println("Listening for OAuth Login flow to complete...")
+	err := server.ListenAndServe()
+	if err != nil && err != http.ErrServerClosed {
+		fmt.Fprintf(os.Stderr, "Server error: %v\n", err)
+		os.Exit(1)
+	}
+}
 
 func callAuthURLService(address string, provider string) (string, error) {
 	conn, err := grpc.Dial(address, grpc.WithTransportCredentials(insecure.NewCredentials()))
@@ -85,10 +144,19 @@ mediator to access user account details via the provider / iDP.`,
 			log.Fatal(err)
 		}
 
+		// Open the authorization URL in the default browser.
+		fmt.Print("Opening browser to: \n", url+"\n")
+
 		err = browser.OpenURL(url)
 		if err != nil {
 			log.Fatal(err)
 		}
+
+		// Start a local HTTP server to receive the callback from the mediator server.
+		var wg sync.WaitGroup
+		wg.Add(1)
+		callBackServer(&wg)
+		wg.Wait()
 	},
 }
 
