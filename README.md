@@ -8,7 +8,9 @@ Mediator is a platform to secure the software supply chain.
 
 # API
 
-The API is defined [here](https://github.com/stacklok/mediator/blob/main/proto/v1/mediator.proto).
+The API is defined in protobuf [here](https://github.com/stacklok/mediator/blob/main/proto/v1/mediator.proto).
+
+An OpenAPI / swagger spec is generated to [here](https://github.com/stacklok/mediator/blob/main/pkg/generated/openapi/proto/v1/mediator.swagger.json)
 
 It can be accessed over gRPC or HTTP using [gprc-gateway](https://grpc-ecosystem.github.io/grpc-gateway/).
 
