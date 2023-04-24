@@ -5,6 +5,7 @@ go 1.19
 require (
 	github.com/daixiang0/gci v0.10.1
 	github.com/go-critic/go-critic v0.7.0
+	github.com/golang-jwt/jwt/v4 v4.5.0
 	github.com/golangci/golangci-lint v1.52.2
 	github.com/gotesttools/gotestfmt/v2 v2.4.1
 	github.com/grpc-ecosystem/grpc-gateway/v2 v2.15.2

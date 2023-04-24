@@ -28,7 +28,6 @@ import (
 	"encoding/base64"
 	"fmt"
 	"net/http"
-	// "os"
 
 	pb "github.com/stacklok/mediator/pkg/generated/protobuf/go/proto/v1"
 	"golang.org/x/oauth2"
