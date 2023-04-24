@@ -17,7 +17,7 @@ func TestGenerateToken(t *testing.T) {
 		t.Errorf("Expected a non-empty token string")
 	}
 
-	// Check that token expiration time is 24 hours from now
+	// Check that token expiration time is 60 minutes from now
 	expectedExpirationTime := time.Now().Add(60 * time.Minute).Unix()
 
 	t.Log("expectedExpirationTime", expectedExpirationTime)
