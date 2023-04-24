@@ -29,9 +29,7 @@ import (
 	"fmt"
 	"net/http"
 
-	// "github.com/stacklok/mediator/pkg/auth"
 	pb "github.com/stacklok/mediator/pkg/generated/protobuf/go/proto/v1"
-
 	"golang.org/x/oauth2"
 	"golang.org/x/oauth2/github"
 	"golang.org/x/oauth2/google"
@@ -121,8 +119,6 @@ func (s *Server) ExchangeCodeForToken(ctx context.Context, in *pb.CodeExchangeRe
 		return nil, err
 	}
 
-	fmt.Println("Token: ", token.AccessToken)
-
 	// check if the token is valid
 	var requestBody []byte
 	if token.Valid() {
@@ -142,15 +138,6 @@ func (s *Server) ExchangeCodeForToken(ctx context.Context, in *pb.CodeExchangeRe
 	if resp.StatusCode != http.StatusOK {
 		return nil, fmt.Errorf("failed to send status to CLI application, status code: %d", resp.StatusCode)
 	}
-
-	// jwttoken, expiry, err := auth.GenerateToken(123, "testuser", 60)
-
-	// if err != nil {
-	// 	fmt.Println("Error generating JWT token:", err)
-	// 	return nil, err
-	// }
-	// fmt.Println("JWT Token: ", jwttoken)
-	// fmt.Println("Expiry: ", expiry)
 
 	return &pb.CodeExchangeResponse{
 		AccessToken: token.AccessToken,
