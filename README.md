@@ -40,6 +40,33 @@ deps:
 buf mod update
 ```
 
+# Database migrations and tooling
+
+Mediator uses [sqlc](https://sqlc.dev/) to generate Go code from SQL.
+
+The main configuration file is `sqlc.yaml`.
+
+To make changes to the database schema, create a new migration file in the
+`database/migrations` directory.
+
+Add any queries to the `database/queries/sqlc.sql` file.
+
+To generate the Go code, run:
+
+```bash
+sqlc generate
+```
+
+Users will then need to peform a migration
+
+```bash
+make migrateup
+``` 
+
+```bash
+make migratedown
+```
+
 # Configure OAuth2
 
 Mediator can use OAuth2 to authenticate users, support for Google and GitHub is
@@ -92,3 +119,14 @@ github:
   client_secret: "client_secret"
   redirect_uri: "http://localhost:8080/api/v1/auth/callback/google"
 ```
+# Running a development enviroment
+
+Mediator uses a docker-compose file to run the application and its postgres database.
+
+To run the application, run:
+
+```bash
+docker-compose up
+```
+
+The application will be available on `http://localhost:8080` and gRPC on `localhost:8090`.

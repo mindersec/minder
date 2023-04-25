@@ -1,0 +1,7 @@
+DROP TABLE IF EXISTS organisations;
+DROP TABLE IF EXISTS groups;
+DROP TABLE IF EXISTS roles;
+DROP TABLE IF EXISTS group_roles;
+DROP TABLE IF EXISTS users;
+DROP TABLE IF EXISTS user_roles;
+DROP TABLE IF EXISTS access_tokens;
