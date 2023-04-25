@@ -13,25 +13,18 @@
 # See the License for the specific language governing permissions and
 # limitations under the License.
 
-# HTTP & gRPC server configuration
-http_server:
-  host: "127.0.0.1"
-  port: 8080
-grpc_server:
-  host: "127.0.0.1"
-  port: 8090
+FROM golang:1.20.3@sha256:403f48633fb5ebd49f9a2b6ad6719f912df23dae44974a0c9445be331e72ff5e AS builder
+ENV APP_ROOT=/opt/app-root
+ENV GOPATH=$APP_ROOT
 
-# OAuth2 configuration
-github:
-  client_id: "client_id"
-  client_secret: "client_secret"
-  redirect_uri: "http://localhost:8080/api/v1/auth/callback/github"
+WORKDIR $APP_ROOT/src/
+ADD go.mod go.sum $APP_ROOT/src/
+RUN go mod download
 
-google:
-  client_id: "client_id"
-  client_secret: "client_secret"
-  redirect_uri: "http://localhost:8080/api/v1/auth/callback/google"
+# Add source code
+ADD ./ $APP_ROOT/src/
 
-logging:
-  level: "info"
-  format: "text"
+RUN CGO_ENABLED=0 go build -trimpath -o mediator-server ./cmd/server
+
+# Set the binary as the entrypoint of the container
+ENTRYPOINT ["/opt/app-root/src/mediator-server", "serve"]

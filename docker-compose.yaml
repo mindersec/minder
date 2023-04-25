@@ -13,25 +13,20 @@
 # See the License for the specific language governing permissions and
 # limitations under the License.
 
-# HTTP & gRPC server configuration
-http_server:
-  host: "127.0.0.1"
-  port: 8080
-grpc_server:
-  host: "127.0.0.1"
-  port: 8090
-
-# OAuth2 configuration
-github:
-  client_id: "client_id"
-  client_secret: "client_secret"
-  redirect_uri: "http://localhost:8080/api/v1/auth/callback/github"
-
-google:
-  client_id: "client_id"
-  client_secret: "client_secret"
-  redirect_uri: "http://localhost:8080/api/v1/auth/callback/google"
-
-logging:
-  level: "info"
-  format: "text"
+version: '3.2'
+services:
+  mediator:
+    build: .
+    command: [
+      "mediator-server",
+      "serve",
+      "--grpc-host=0.0.0.0",
+      "--grpc-port=8090",
+      "--http-host=0.0.0.0",
+      "--http-port=8080",
+      ]
+    restart: always # keep the server running
+    ports:
+      - "8080:8080"
+      - "8090:8090"
+    image: ghcr.io/stacklok/mediator:latest
