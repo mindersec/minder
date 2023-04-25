@@ -35,3 +35,7 @@ google:
 logging:
   level: "info"
   format: "text"
+
+auth:
+  jwt_key: "secret"
+  expiration: 3600
