@@ -24,6 +24,7 @@ package tools
 //go:generate go install golang.org/x/tools/cmd/goimports
 //go:generate go install golang.org/x/lint/golint
 //go:generate go install github.com/go-critic/go-critic/cmd/gocritic
+//go:generate go install github.com/kyleconroy/sqlc/cmd/sqlc
 
 // nolint
 
@@ -32,6 +33,7 @@ import (
 	_ "github.com/go-critic/go-critic/cmd/gocritic"
 	_ "github.com/golangci/golangci-lint/cmd/golangci-lint"
 	_ "github.com/gotesttools/gotestfmt/v2/cmd/gotestfmt"
+	_ "github.com/kyleconroy/sqlc/cmd/sqlc"
 	_ "golang.org/x/lint/golint"
 	_ "golang.org/x/tools/cmd/goimports"
 	_ "mvdan.cc/gofumpt"

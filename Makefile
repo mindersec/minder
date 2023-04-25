@@ -13,12 +13,11 @@
 # See the License for the specific language governing permissions and
 # limitations under the License.
 
-
 projectname?=mediator
 
 default: help
 
-.PHONY: help gen clean-gen build run-cli run-server bootstrap test clean cover lint pre-commit
+.PHONY: help gen clean-gen build run-cli run-server bootstrap test clean cover lint pre-commit migrateup migratedown
 
 help: ## list makefile targets
 	@grep -E '^[a-zA-Z_-]+:.*?## .*$$' $(MAKEFILE_LIST) | sort | awk 'BEGIN {FS = ":.*?## "}; {printf "\033[36m%-30s\033[0m %s\n", $$1, $$2}'
@@ -58,3 +57,8 @@ lint: ## lint go files
 
 pre-commit:	## run pre-commit hooks
 	pre-commit run --all-files
+
+migrateup:
+	@go run cmd/migrations/main.go migrate up     
+migratedown:
+	@go run cmd/migrations/main.go migrate down     
