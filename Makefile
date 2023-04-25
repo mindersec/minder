@@ -13,7 +13,6 @@
 # See the License for the specific language governing permissions and
 # limitations under the License.
 
-
 projectname?=mediator
 
 default: help
@@ -63,6 +62,3 @@ migrateup:
 	@go run cmd/migrations/main.go migrate up     
 migratedown:
 	@go run cmd/migrations/main.go migrate down     
-
-
-
