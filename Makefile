@@ -17,7 +17,7 @@ projectname?=mediator
 
 default: help
 
-.PHONY: help gen clean-gen build run-cli run-server bootstrap test clean cover lint pre-commit migrateup migratedown
+.PHONY: help gen clean-gen build run-cli run-server bootstrap test clean cover lint pre-commit migrateup migratedown sqlc
 
 help: ## list makefile targets
 	@grep -E '^[a-zA-Z_-]+:.*?## .*$$' $(MAKEFILE_LIST) | sort | awk 'BEGIN {FS = ":.*?## "}; {printf "\033[36m%-30s\033[0m %s\n", $$1, $$2}'
@@ -57,6 +57,9 @@ lint: ## lint go files
 
 pre-commit:	## run pre-commit hooks
 	pre-commit run --all-files
+
+sqlc: ## generate sqlc files
+	sqlc generate
 
 migrateup:
 	@go run cmd/migrations/main.go migrate up     
