@@ -33,8 +33,7 @@ google:
   redirect_uri: "http://localhost:8080/api/v1/auth/callback/google"
 
 logging:
-  level: "info"
-  format: "text"
+  level: "debug"
 
 auth:
   jwt_key: "secret"
