@@ -17,8 +17,8 @@ version: "1"
 packages:
   - name: "db"
     path: "./pkg/db"
-    queries: ".database/queries/"
-    schema: ".database/migrations/"
+    queries: "database/queries/"
+    schema: "database/migrations/"
     engine: "postgresql"
     emit_json_tags: true
     emit_prepared_queries: false
