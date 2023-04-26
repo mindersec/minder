@@ -23,8 +23,8 @@ grpc_server:
 
 # OAuth2 configuration
 github:
-  client_id: "client_id"
-  client_secret: "client_secret"
+  client_id: "8bbe19dc7f35d3a4a94d"
+  client_secret: "02fab6290d74c929fb072da807f8f523e3684596"
   redirect_uri: "http://localhost:8080/api/v1/auth/callback/github"
 
 google:
@@ -33,8 +33,7 @@ google:
   redirect_uri: "http://localhost:8080/api/v1/auth/callback/google"
 
 logging:
-  level: "info"
-  format: "text"
+  level: "debug"
 
 auth:
   jwt_key: "secret"
