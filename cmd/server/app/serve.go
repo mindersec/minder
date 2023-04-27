@@ -93,6 +93,7 @@ func startGRPCServer(address string) {
 }
 
 func startHTTPServer(address, grpcAddress string) {
+
 	mux := http.NewServeMux()
 
 	mux.HandleFunc("/api/v1/github/hook", webhookHandler)

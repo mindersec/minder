@@ -95,6 +95,9 @@ func callBackServer(wg *sync.WaitGroup) {
 	}
 }
 
+// callAuthURLService calls the OAuth service to request the URL to redirect the user to.
+// It accepts a provider string which is the name of the OAuth provider to use.
+// For example, "google" or "github".
 func callAuthURLService(address string, provider string) (string, error) {
 	conn, err := grpc.Dial(address, grpc.WithTransportCredentials(insecure.NewCredentials()))
 	if err != nil {
@@ -108,7 +111,9 @@ func callAuthURLService(address string, provider string) (string, error) {
 
 	resp, err := client.GetAuthorizationURL(ctx, &pb.AuthorizationURLRequest{
 		Provider: provider,
+		Cli:      true,
 	})
+
 	if err != nil {
 		return "", fmt.Errorf("error calling auth URL service: %v", err)
 	}

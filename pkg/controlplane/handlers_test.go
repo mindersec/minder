@@ -51,7 +51,8 @@ func TestGenerateState(t *testing.T) {
 func TestNewOAuthConfig(t *testing.T) {
 	server := Server{}
 
-	config, err := server.newOAuthConfig("google")
+	// Test with CLI set
+	config, err := server.newOAuthConfig("google", true)
 	if err != nil {
 		t.Errorf("Error in newOAuthConfig: %v", err)
 	}
@@ -60,7 +61,8 @@ func TestNewOAuthConfig(t *testing.T) {
 		t.Errorf("Unexpected endpoint: %v", config.Endpoint)
 	}
 
-	config, err = server.newOAuthConfig("github")
+	// Test with CLI set
+	config, err = server.newOAuthConfig("github", true)
 	if err != nil {
 		t.Errorf("Error in newOAuthConfig: %v", err)
 	}
@@ -69,7 +71,27 @@ func TestNewOAuthConfig(t *testing.T) {
 		t.Errorf("Unexpected endpoint: %v", config.Endpoint)
 	}
 
-	_, err = server.newOAuthConfig("invalid")
+	// Test with CLI set
+	config, err = server.newOAuthConfig("google", false)
+	if err != nil {
+		t.Errorf("Error in newOAuthConfig: %v", err)
+	}
+
+	if config.Endpoint != google.Endpoint {
+		t.Errorf("Unexpected endpoint: %v", config.Endpoint)
+	}
+
+	// Test with CLI set
+	config, err = server.newOAuthConfig("github", false)
+	if err != nil {
+		t.Errorf("Error in newOAuthConfig: %v", err)
+	}
+
+	if config.Endpoint != github.Endpoint {
+		t.Errorf("Unexpected endpoint: %v", config.Endpoint)
+	}
+
+	_, err = server.newOAuthConfig("invalid", true)
 	if err == nil {
 		t.Errorf("Expected error in newOAuthConfig, but got nil")
 	}

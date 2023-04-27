@@ -37,14 +37,56 @@
     "application/json"
   ],
   "paths": {
-    "/api/v1/auth/callback/{provider}": {
+    "/api/v1/auth/callback/{provider}/cli": {
       "get": {
-        "operationId": "OAuthService_ExchangeCodeForToken",
+        "operationId": "OAuthService_ExchangeCodeForTokenCLI",
         "responses": {
           "200": {
             "description": "A successful response.",
             "schema": {
-              "$ref": "#/definitions/v1CodeExchangeResponse"
+              "$ref": "#/definitions/v1CodeExchangeResponseCLI"
+            }
+          },
+          "default": {
+            "description": "An unexpected error response.",
+            "schema": {
+              "$ref": "#/definitions/rpcStatus"
+            }
+          }
+        },
+        "parameters": [
+          {
+            "name": "provider",
+            "in": "path",
+            "required": true,
+            "type": "string"
+          },
+          {
+            "name": "code",
+            "in": "query",
+            "required": false,
+            "type": "string"
+          },
+          {
+            "name": "redirectUri",
+            "in": "query",
+            "required": false,
+            "type": "string"
+          }
+        ],
+        "tags": [
+          "OAuthService"
+        ]
+      }
+    },
+    "/api/v1/auth/callback/{provider}/web": {
+      "get": {
+        "operationId": "OAuthService_ExchangeCodeForTokenWEB",
+        "responses": {
+          "200": {
+            "description": "A successful response.",
+            "schema": {
+              "$ref": "#/definitions/v1CodeExchangeResponseWEB"
             }
           },
           "default": {
@@ -102,6 +144,12 @@
             "in": "query",
             "required": false,
             "type": "string"
+          },
+          {
+            "name": "cli",
+            "in": "query",
+            "required": false,
+            "type": "boolean"
           }
         ],
         "tags": [
@@ -414,7 +462,15 @@
         }
       }
     },
-    "v1CodeExchangeResponse": {
+    "v1CodeExchangeResponseCLI": {
+      "type": "object",
+      "properties": {
+        "html": {
+          "type": "string"
+        }
+      }
+    },
+    "v1CodeExchangeResponseWEB": {
       "type": "object",
       "properties": {
         "accessToken": {

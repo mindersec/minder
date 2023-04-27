@@ -195,7 +195,8 @@ var GitHubWebhookService_ServiceDesc = grpc.ServiceDesc{
 // For semantics around ctx use and closing/ending streaming RPCs, please refer to https://pkg.go.dev/google.golang.org/grpc/?tab=doc#ClientConn.NewStream.
 type OAuthServiceClient interface {
 	GetAuthorizationURL(ctx context.Context, in *AuthorizationURLRequest, opts ...grpc.CallOption) (*AuthorizationURLResponse, error)
-	ExchangeCodeForToken(ctx context.Context, in *CodeExchangeRequest, opts ...grpc.CallOption) (*CodeExchangeResponse, error)
+	ExchangeCodeForTokenCLI(ctx context.Context, in *CodeExchangeRequestCLI, opts ...grpc.CallOption) (*CodeExchangeResponseCLI, error)
+	ExchangeCodeForTokenWEB(ctx context.Context, in *CodeExchangeRequestWEB, opts ...grpc.CallOption) (*CodeExchangeResponseWEB, error)
 }
 
 type oAuthServiceClient struct {
@@ -215,9 +216,18 @@ func (c *oAuthServiceClient) GetAuthorizationURL(ctx context.Context, in *Author
 	return out, nil
 }
 
-func (c *oAuthServiceClient) ExchangeCodeForToken(ctx context.Context, in *CodeExchangeRequest, opts ...grpc.CallOption) (*CodeExchangeResponse, error) {
-	out := new(CodeExchangeResponse)
-	err := c.cc.Invoke(ctx, "/dev.stacklok.mediator.v1.OAuthService/ExchangeCodeForToken", in, out, opts...)
+func (c *oAuthServiceClient) ExchangeCodeForTokenCLI(ctx context.Context, in *CodeExchangeRequestCLI, opts ...grpc.CallOption) (*CodeExchangeResponseCLI, error) {
+	out := new(CodeExchangeResponseCLI)
+	err := c.cc.Invoke(ctx, "/dev.stacklok.mediator.v1.OAuthService/ExchangeCodeForTokenCLI", in, out, opts...)
+	if err != nil {
+		return nil, err
+	}
+	return out, nil
+}
+
+func (c *oAuthServiceClient) ExchangeCodeForTokenWEB(ctx context.Context, in *CodeExchangeRequestWEB, opts ...grpc.CallOption) (*CodeExchangeResponseWEB, error) {
+	out := new(CodeExchangeResponseWEB)
+	err := c.cc.Invoke(ctx, "/dev.stacklok.mediator.v1.OAuthService/ExchangeCodeForTokenWEB", in, out, opts...)
 	if err != nil {
 		return nil, err
 	}
@@ -229,7 +239,8 @@ func (c *oAuthServiceClient) ExchangeCodeForToken(ctx context.Context, in *CodeE
 // for forward compatibility
 type OAuthServiceServer interface {
 	GetAuthorizationURL(context.Context, *AuthorizationURLRequest) (*AuthorizationURLResponse, error)
-	ExchangeCodeForToken(context.Context, *CodeExchangeRequest) (*CodeExchangeResponse, error)
+	ExchangeCodeForTokenCLI(context.Context, *CodeExchangeRequestCLI) (*CodeExchangeResponseCLI, error)
+	ExchangeCodeForTokenWEB(context.Context, *CodeExchangeRequestWEB) (*CodeExchangeResponseWEB, error)
 	mustEmbedUnimplementedOAuthServiceServer()
 }
 
@@ -240,8 +251,11 @@ type UnimplementedOAuthServiceServer struct {
 func (UnimplementedOAuthServiceServer) GetAuthorizationURL(context.Context, *AuthorizationURLRequest) (*AuthorizationURLResponse, error) {
 	return nil, status.Errorf(codes.Unimplemented, "method GetAuthorizationURL not implemented")
 }
-func (UnimplementedOAuthServiceServer) ExchangeCodeForToken(context.Context, *CodeExchangeRequest) (*CodeExchangeResponse, error) {
-	return nil, status.Errorf(codes.Unimplemented, "method ExchangeCodeForToken not implemented")
+func (UnimplementedOAuthServiceServer) ExchangeCodeForTokenCLI(context.Context, *CodeExchangeRequestCLI) (*CodeExchangeResponseCLI, error) {
+	return nil, status.Errorf(codes.Unimplemented, "method ExchangeCodeForTokenCLI not implemented")
+}
+func (UnimplementedOAuthServiceServer) ExchangeCodeForTokenWEB(context.Context, *CodeExchangeRequestWEB) (*CodeExchangeResponseWEB, error) {
+	return nil, status.Errorf(codes.Unimplemented, "method ExchangeCodeForTokenWEB not implemented")
 }
 func (UnimplementedOAuthServiceServer) mustEmbedUnimplementedOAuthServiceServer() {}
 
@@ -274,20 +288,38 @@ func _OAuthService_GetAuthorizationURL_Handler(srv interface{}, ctx context.Cont
 	return interceptor(ctx, in, info, handler)
 }
 
-func _OAuthService_ExchangeCodeForToken_Handler(srv interface{}, ctx context.Context, dec func(interface{}) error, interceptor grpc.UnaryServerInterceptor) (interface{}, error) {
-	in := new(CodeExchangeRequest)
+func _OAuthService_ExchangeCodeForTokenCLI_Handler(srv interface{}, ctx context.Context, dec func(interface{}) error, interceptor grpc.UnaryServerInterceptor) (interface{}, error) {
+	in := new(CodeExchangeRequestCLI)
 	if err := dec(in); err != nil {
 		return nil, err
 	}
 	if interceptor == nil {
-		return srv.(OAuthServiceServer).ExchangeCodeForToken(ctx, in)
+		return srv.(OAuthServiceServer).ExchangeCodeForTokenCLI(ctx, in)
 	}
 	info := &grpc.UnaryServerInfo{
 		Server:     srv,
-		FullMethod: "/dev.stacklok.mediator.v1.OAuthService/ExchangeCodeForToken",
+		FullMethod: "/dev.stacklok.mediator.v1.OAuthService/ExchangeCodeForTokenCLI",
 	}
 	handler := func(ctx context.Context, req interface{}) (interface{}, error) {
-		return srv.(OAuthServiceServer).ExchangeCodeForToken(ctx, req.(*CodeExchangeRequest))
+		return srv.(OAuthServiceServer).ExchangeCodeForTokenCLI(ctx, req.(*CodeExchangeRequestCLI))
+	}
+	return interceptor(ctx, in, info, handler)
+}
+
+func _OAuthService_ExchangeCodeForTokenWEB_Handler(srv interface{}, ctx context.Context, dec func(interface{}) error, interceptor grpc.UnaryServerInterceptor) (interface{}, error) {
+	in := new(CodeExchangeRequestWEB)
+	if err := dec(in); err != nil {
+		return nil, err
+	}
+	if interceptor == nil {
+		return srv.(OAuthServiceServer).ExchangeCodeForTokenWEB(ctx, in)
+	}
+	info := &grpc.UnaryServerInfo{
+		Server:     srv,
+		FullMethod: "/dev.stacklok.mediator.v1.OAuthService/ExchangeCodeForTokenWEB",
+	}
+	handler := func(ctx context.Context, req interface{}) (interface{}, error) {
+		return srv.(OAuthServiceServer).ExchangeCodeForTokenWEB(ctx, req.(*CodeExchangeRequestWEB))
 	}
 	return interceptor(ctx, in, info, handler)
 }
@@ -304,8 +336,12 @@ var OAuthService_ServiceDesc = grpc.ServiceDesc{
 			Handler:    _OAuthService_GetAuthorizationURL_Handler,
 		},
 		{
-			MethodName: "ExchangeCodeForToken",
-			Handler:    _OAuthService_ExchangeCodeForToken_Handler,
+			MethodName: "ExchangeCodeForTokenCLI",
+			Handler:    _OAuthService_ExchangeCodeForTokenCLI_Handler,
+		},
+		{
+			MethodName: "ExchangeCodeForTokenWEB",
+			Handler:    _OAuthService_ExchangeCodeForTokenWEB_Handler,
 		},
 	},
 	Streams:  []grpc.StreamDesc{},
