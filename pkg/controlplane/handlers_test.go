@@ -51,7 +51,7 @@ func TestGenerateState(t *testing.T) {
 func TestNewOAuthConfig(t *testing.T) {
 	server := Server{}
 
-	config, err := server.newOAuthConfig("google")
+	config, err := server.newOAuthConfig("google", true)
 	if err != nil {
 		t.Errorf("Error in newOAuthConfig: %v", err)
 	}
@@ -60,7 +60,7 @@ func TestNewOAuthConfig(t *testing.T) {
 		t.Errorf("Unexpected endpoint: %v", config.Endpoint)
 	}
 
-	config, err = server.newOAuthConfig("github")
+	config, err = server.newOAuthConfig("github", true)
 	if err != nil {
 		t.Errorf("Error in newOAuthConfig: %v", err)
 	}
@@ -69,7 +69,7 @@ func TestNewOAuthConfig(t *testing.T) {
 		t.Errorf("Unexpected endpoint: %v", config.Endpoint)
 	}
 
-	_, err = server.newOAuthConfig("invalid")
+	_, err = server.newOAuthConfig("invalid", true)
 	if err == nil {
 		t.Errorf("Expected error in newOAuthConfig, but got nil")
 	}

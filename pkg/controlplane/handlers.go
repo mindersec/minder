@@ -45,6 +45,7 @@ type Server struct {
 	ClientSecret string
 }
 
+// generateState generates a random string of length n, used as the OAuth state
 func generateState(n int) (string, error) {
 	randomBytes := make([]byte, n)
 	_, err := rand.Read(randomBytes)
@@ -56,36 +57,53 @@ func generateState(n int) (string, error) {
 	return state, nil
 }
 
+// CheckHealth is a simple health check for monitoring
 func (s *Server) CheckHealth(ctx context.Context, req *pb.HealthRequest) (*pb.HealthResponse, error) {
 	return &pb.HealthResponse{Status: "OK"}, nil
 }
 
-func (s *Server) newOAuthConfig(provider string) (*oauth2.Config, error) {
-	// provider = "github"
-	switch provider {
-	case "google":
-		return &oauth2.Config{
-			ClientID:     viper.GetString("google.client_id"),
-			ClientSecret: viper.GetString("google.client_secret"),
-			RedirectURL:  "http://localhost:8080/auth/google/callback",
-			Scopes:       []string{"profile", "email"},
-			Endpoint:     google.Endpoint,
-		}, nil
-	case "github":
-		return &oauth2.Config{
-			ClientID:     viper.GetString("github.client_id"),
-			ClientSecret: viper.GetString("github.client_secret"),
-			RedirectURL:  "http://localhost:8080/api/v1/auth/callback/github",
-			Scopes:       []string{"user:email"},
-			Endpoint:     github.Endpoint,
-		}, nil
-	default:
+// newOAuthConfig creates a new OAuth2 config for the given provider
+// and whether the client is a CLI or web client
+func (s *Server) newOAuthConfig(provider string, cli bool) (*oauth2.Config, error) {
+	redirectURL := func(provider string, cli bool) string {
+		if cli {
+			return fmt.Sprintf("http://localhost:8080/api/v1/auth/callback/%s/cli", provider)
+		}
+		return fmt.Sprintf("http://localhost:8080/api/v1/auth/callback/%s/web", provider)
+	}
+
+	scopes := func(provider string) []string {
+		if provider == "google" {
+			return []string{"profile", "email"}
+		}
+		return []string{"user:email"}
+	}
+
+	endpoint := func(provider string) oauth2.Endpoint {
+		if provider == "google" {
+			return google.Endpoint
+		}
+		return github.Endpoint
+	}
+
+	if provider != "google" && provider != "github" {
 		return nil, fmt.Errorf("invalid provider: %s", provider)
 	}
+
+	return &oauth2.Config{
+		ClientID:     viper.GetString(fmt.Sprintf("%s.client_id", provider)),
+		ClientSecret: viper.GetString(fmt.Sprintf("%s.client_secret", provider)),
+		RedirectURL:  redirectURL(provider, cli),
+		Scopes:       scopes(provider),
+		Endpoint:     endpoint(provider),
+	}, nil
 }
 
+// GetAuthorizationURL returns the URL to redirect the user to for authorization
+// and the state to be used for the callback. It accepts a provider string
+// and a boolean indicating whether the client is a CLI or web client
 func (s *Server) GetAuthorizationURL(ctx context.Context, req *pb.AuthorizationURLRequest) (*pb.AuthorizationURLResponse, error) {
-	oauthConfig, err := s.newOAuthConfig(req.Provider)
+	oauthConfig, err := s.newOAuthConfig(req.Provider, req.Cli)
 	if err != nil {
 		return nil, err
 	}
@@ -103,9 +121,10 @@ func (s *Server) GetAuthorizationURL(ctx context.Context, req *pb.AuthorizationU
 	return response, nil
 }
 
-func (s *Server) ExchangeCodeForToken(ctx context.Context, in *pb.CodeExchangeRequest) (*pb.CodeExchangeResponse, error) {
-
-	oauthConfig, err := s.newOAuthConfig(in.Provider)
+// ExchangeCodeForTokenCLI exchanges an OAuth2 code for a token
+// This is specific for CLI clients which require a different
+func (s *Server) ExchangeCodeForTokenCLI(ctx context.Context, in *pb.CodeExchangeRequestCLI) (*pb.CodeExchangeResponseCLI, error) {
+	oauthConfig, err := s.newOAuthConfig(in.Provider, true)
 	if err != nil {
 		return nil, err
 	}
@@ -120,16 +139,16 @@ func (s *Server) ExchangeCodeForToken(ctx context.Context, in *pb.CodeExchangeRe
 	}
 
 	// check if the token is valid
-	var requestBody []byte
+	var status string
 	if token.Valid() {
-		requestBody = []byte(`{"status": "success"}`)
+		status = "success"
 	} else {
-		requestBody = []byte(`{"status": "failure"}`)
+		status = "failure"
 	}
 
 	cliAppURL := "http://localhost:8891/shutdown" // Replace PORT with the appropriate port number
 
-	resp, err := http.Post(cliAppURL, "application/json", bytes.NewBuffer(requestBody))
+	resp, err := http.Post(cliAppURL, "application/json", bytes.NewBuffer([]byte(`{"status": "`+status+`"}`)))
 	if err != nil {
 		return nil, err
 	}
@@ -139,8 +158,38 @@ func (s *Server) ExchangeCodeForToken(ctx context.Context, in *pb.CodeExchangeRe
 		return nil, fmt.Errorf("failed to send status to CLI application, status code: %d", resp.StatusCode)
 	}
 
-	return &pb.CodeExchangeResponse{
+	return &pb.CodeExchangeResponseCLI{
+		Html: "You can now close this window.",
+	}, nil
+}
+
+// ExchangeCodeForTokenWEB exchanges an OAuth2 code for a token and returns
+// a JWT token as a session cookie. This handler is specific for web clients.
+func (s *Server) ExchangeCodeForTokenWEB(ctx context.Context, in *pb.CodeExchangeRequestWEB) (*pb.CodeExchangeResponseWEB, error) {
+	oauthConfig, err := s.newOAuthConfig(in.Provider, false)
+	if err != nil {
+		return nil, err
+	}
+
+	if oauthConfig == nil {
+		return nil, fmt.Errorf("oauth2.Config is nil")
+	}
+
+	token, err := oauthConfig.Exchange(ctx, in.Code)
+	if err != nil {
+		return nil, err
+	}
+
+	// TODO: The below response needs to return as a session cookie containing the JWT token
+	// Once the JWT code is implemented.
+	// http.SetCookie(w, &http.Cookie{
+	// 	Name    "access_token",
+	// 	Value   JWT token,
+	// 	Expires time.Now().Add(24 * time.Hour),
+	// })
+
+	//
+	return &pb.CodeExchangeResponseWEB{
 		AccessToken: token.AccessToken,
-		Status:      "success",
 	}, nil
 }

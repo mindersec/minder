@@ -47,9 +47,14 @@ service OAuthService {
             get: "/api/v1/auth/url"
         };
     }
-    rpc ExchangeCodeForToken (CodeExchangeRequest) returns (CodeExchangeResponse) {
+    rpc ExchangeCodeForTokenCLI (CodeExchangeRequestCLI) returns (CodeExchangeResponseCLI) {
         option (google.api.http) = {
-            get: "/api/v1/auth/callback/{provider}"
+            get: "/api/v1/auth/callback/{provider}/cli"
+        };
+    }
+    rpc ExchangeCodeForTokenWEB (CodeExchangeRequestWEB) returns (CodeExchangeResponseWEB) {
+        option (google.api.http) = {
+            get: "/api/v1/auth/callback/{provider}/web"
         };
     }
 }
@@ -124,24 +129,37 @@ message HealthResponse {
 
 message AuthorizationURLRequest {
     string provider = 1;
+    bool  cli = 2;
 }
 
 message AuthorizationURLResponse {
     string url = 1;
 }
 
-message CodeExchangeRequest {
+message CodeExchangeRequestCLI {
     string provider = 1;
     string code = 2;
     string redirect_uri = 3;
 }
 
-message CodeExchangeResponse {
+message CodeExchangeResponseCLI {
+    string html = 1;
+}
+
+message CodeExchangeRequestWEB{
+    string provider = 1;
+    string code = 2;
+    string redirect_uri = 3;
+}
+
+message CodeExchangeResponseWEB {
     string access_token = 1;
     string token_type = 2;
     int64  expires_in = 3;
     string status = 4;
+    string html = 5;
 }
+
 
 message GitHubWebhookRequest {
 }
