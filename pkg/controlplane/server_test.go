@@ -13,7 +13,7 @@
 // See the License for the specific language governing permissions and
 // limitations under the License.
 
-package app
+package controlplane
 
 import (
 	"context"
@@ -22,7 +22,6 @@ import (
 	"net/http"
 	"testing"
 
-	"github.com/stacklok/mediator/pkg/controlplane"
 	pb "github.com/stacklok/mediator/pkg/generated/protobuf/go/proto/v1"
 
 	"google.golang.org/grpc"
@@ -39,8 +38,8 @@ func init() {
 	lis = bufconn.Listen(bufSize)
 	s := grpc.NewServer()
 	// RegisterAuthUrlServiceServer
-	pb.RegisterHealthServiceServer(s, &controlplane.Server{}) //
-	pb.RegisterOAuthServiceServer(s, &controlplane.Server{
+	pb.RegisterHealthServiceServer(s, &Server{}) //
+	pb.RegisterOAuthServiceServer(s, &Server{
 		ClientID:     "test",
 		ClientSecret: "test",
 	})
@@ -51,7 +50,6 @@ func init() {
 	}()
 	// HTTP server
 	mux := http.NewServeMux()
-	mux.HandleFunc("/api/v1/github/hook", webhookHandler)
 
 	srv := &http.Server{Addr: ":8080", Handler: mux}
 	go func() {
@@ -114,6 +112,7 @@ func TestAuth(t *testing.T) {
 
 		resp, err := client.GetAuthorizationURL(context.Background(), &pb.AuthorizationURLRequest{
 			Provider: provider,
+			Cli:      false,
 		})
 		if err != nil {
 			t.Fatalf("Failed to get auth url: %v", err)
