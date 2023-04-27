@@ -485,9 +485,6 @@
         },
         "status": {
           "type": "string"
-        },
-        "html": {
-          "type": "string"
         }
       }
     },

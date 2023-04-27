@@ -157,7 +157,6 @@ message CodeExchangeResponseWEB {
     string token_type = 2;
     int64  expires_in = 3;
     string status = 4;
-    string html = 5;
 }
 
 
