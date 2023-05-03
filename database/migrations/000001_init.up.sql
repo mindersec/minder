@@ -16,6 +16,7 @@
 CREATE TABLE organisations (
     id SERIAL PRIMARY KEY,
     name TEXT NOT NULL,
+    company TEXT NOT NULL,
     created_at TIMESTAMP NOT NULL DEFAULT NOW(),
     updated_at TIMESTAMP NOT NULL DEFAULT NOW()
 );
@@ -23,7 +24,7 @@ CREATE TABLE organisations (
 -- groups table
 CREATE TABLE groups (
     id SERIAL PRIMARY KEY,
-    organisation_id INTEGER NOT NULL REFERENCES organisations(id) ON DELETE CASCADE,
+    organisation_id INTEGER REFERENCES organisations(id) ON DELETE CASCADE,
     name TEXT NOT NULL,
     created_at TIMESTAMP NOT NULL DEFAULT NOW(),
     updated_at TIMESTAMP NOT NULL DEFAULT NOW()
@@ -82,6 +83,7 @@ CREATE TABLE access_tokens (
 
 -- Unique constraint
 ALTER TABLE access_tokens ADD CONSTRAINT unique_organisation_id UNIQUE (organisation_id);
+ALTER TABLE organisations ADD CONSTRAINT unique_name UNIQUE (name);
 
 -- Indexes
 CREATE INDEX idx_users_email ON users(email);

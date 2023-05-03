@@ -41,7 +41,6 @@ func TestGenerateToken(t *testing.T) {
 	// Check that token expiration time is 60 minutes from now
 	expectedExpirationTime := time.Now().Add(60 * time.Minute).Unix()
 
-	t.Log("expectedExpirationTime", expectedExpirationTime)
 	if tokenExpirationTime != expectedExpirationTime {
 		t.Errorf("Expected token expiration time to be %d, but got %d", expectedExpirationTime, tokenExpirationTime)
 	}
