@@ -41,4 +41,4 @@ auth:
 
 database:
   driver: "postgres"
-  source: "postgresql://postgres:postgres@localhost:5432/postgres?sslmode=disable"
+  source: "postgresql://postgres:postgres@postgres:5432/postgres?sslmode=disable"
