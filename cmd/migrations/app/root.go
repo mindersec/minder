@@ -39,7 +39,6 @@ func Execute() {
 func init() {
 	cobra.OnInitialize(initConfig)
 	// add command available to all sub commands
-	RootCmd.PersistentFlags().BoolP("yes", "y", false, "Answer yes to all questions")
 }
 
 func initConfig() {

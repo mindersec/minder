@@ -38,3 +38,11 @@ logging:
 auth:
   jwt_key: "secret"
   expiration: 3600
+
+database:
+  dbhost: "localhost"
+  dbport: 5432
+  dbuser: postgres
+  dbpass: postgres
+  dbname: postgres
+  sslmode: disable
