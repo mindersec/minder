@@ -11,7 +11,12 @@ import (
 )
 
 const createGroup = `-- name: CreateGroup :one
-INSERT INTO groups (organisation_id, name) VALUES ($1, $2) RETURNING id, organisation_id, name, created_at, updated_at
+INSERT INTO groups (
+    organisation_id, 
+    name
+    ) VALUES (
+        $1, $2
+) RETURNING id, organisation_id, name, created_at, updated_at
 `
 
 type CreateGroupParams struct {
@@ -33,7 +38,8 @@ func (q *Queries) CreateGroup(ctx context.Context, arg CreateGroupParams) (Group
 }
 
 const deleteGroup = `-- name: DeleteGroup :exec
-DELETE FROM groups WHERE id = $1
+DELETE FROM groups
+WHERE id = $1
 `
 
 func (q *Queries) DeleteGroup(ctx context.Context, id int32) error {
@@ -60,10 +66,20 @@ func (q *Queries) GetGroupByID(ctx context.Context, id int32) (Group, error) {
 
 const listGroups = `-- name: ListGroups :many
 SELECT id, organisation_id, name, created_at, updated_at FROM groups
+WHERE organisation_id = $1
+ORDER BY id
+LIMIT $2
+OFFSET $3
 `
 
-func (q *Queries) ListGroups(ctx context.Context) ([]Group, error) {
-	rows, err := q.db.QueryContext(ctx, listGroups)
+type ListGroupsParams struct {
+	OrganisationID sql.NullInt32 `json:"organisation_id"`
+	Limit          int32         `json:"limit"`
+	Offset         int32         `json:"offset"`
+}
+
+func (q *Queries) ListGroups(ctx context.Context, arg ListGroupsParams) ([]Group, error) {
+	rows, err := q.db.QueryContext(ctx, listGroups, arg.OrganisationID, arg.Limit, arg.Offset)
 	if err != nil {
 		return nil, err
 	}
@@ -92,7 +108,9 @@ func (q *Queries) ListGroups(ctx context.Context) ([]Group, error) {
 }
 
 const updateGroup = `-- name: UpdateGroup :one
-UPDATE groups SET organisation_id = $2, name = $3, updated_at = NOW() WHERE id = $1 RETURNING id, organisation_id, name, created_at, updated_at
+UPDATE groups 
+SET organisation_id = $2, name = $3, updated_at = NOW() 
+WHERE id = $1 RETURNING id, organisation_id, name, created_at, updated_at
 `
 
 type UpdateGroupParams struct {

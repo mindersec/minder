@@ -7,15 +7,21 @@ package db
 
 import (
 	"context"
+	"database/sql"
 )
 
 const createRole = `-- name: CreateRole :one
-INSERT INTO roles (organisation_id, name) VALUES ($1, $2) RETURNING id, organisation_id, name, created_at, updated_at
+INSERT INTO roles (
+    organisation_id, 
+    name
+    ) VALUES (
+        $1, $2
+) RETURNING id, organisation_id, name, created_at, updated_at
 `
 
 type CreateRoleParams struct {
-	OrganisationID int32  `json:"organisation_id"`
-	Name           string `json:"name"`
+	OrganisationID sql.NullInt32 `json:"organisation_id"`
+	Name           string        `json:"name"`
 }
 
 func (q *Queries) CreateRole(ctx context.Context, arg CreateRoleParams) (Role, error) {
@@ -59,10 +65,20 @@ func (q *Queries) GetRoleByID(ctx context.Context, id int32) (Role, error) {
 
 const listRoles = `-- name: ListRoles :many
 SELECT id, organisation_id, name, created_at, updated_at FROM roles
+WHERE organisation_id = $1
+ORDER BY id
+LIMIT $2
+OFFSET $3
 `
 
-func (q *Queries) ListRoles(ctx context.Context) ([]Role, error) {
-	rows, err := q.db.QueryContext(ctx, listRoles)
+type ListRolesParams struct {
+	OrganisationID sql.NullInt32 `json:"organisation_id"`
+	Limit          int32         `json:"limit"`
+	Offset         int32         `json:"offset"`
+}
+
+func (q *Queries) ListRoles(ctx context.Context, arg ListRolesParams) ([]Role, error) {
+	rows, err := q.db.QueryContext(ctx, listRoles, arg.OrganisationID, arg.Limit, arg.Offset)
 	if err != nil {
 		return nil, err
 	}
@@ -91,16 +107,19 @@ func (q *Queries) ListRoles(ctx context.Context) ([]Role, error) {
 }
 
 const updateRole = `-- name: UpdateRole :one
-UPDATE roles SET name = $2, updated_at = NOW() WHERE id = $1 RETURNING id, organisation_id, name, created_at, updated_at
+UPDATE roles 
+SET organisation_id = $2, name = $3, updated_at = NOW() 
+WHERE id = $1 RETURNING id, organisation_id, name, created_at, updated_at
 `
 
 type UpdateRoleParams struct {
-	ID   int32  `json:"id"`
-	Name string `json:"name"`
+	ID             int32         `json:"id"`
+	OrganisationID sql.NullInt32 `json:"organisation_id"`
+	Name           string        `json:"name"`
 }
 
 func (q *Queries) UpdateRole(ctx context.Context, arg UpdateRoleParams) (Role, error) {
-	row := q.db.QueryRowContext(ctx, updateRole, arg.ID, arg.Name)
+	row := q.db.QueryRowContext(ctx, updateRole, arg.ID, arg.OrganisationID, arg.Name)
 	var i Role
 	err := row.Scan(
 		&i.ID,

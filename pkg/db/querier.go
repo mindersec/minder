@@ -30,9 +30,9 @@ type Querier interface {
 	GetUserByEmail(ctx context.Context, email string) (User, error)
 	GetUserByID(ctx context.Context, id int32) (User, error)
 	GetUserRoles(ctx context.Context, userID int32) ([]UserRole, error)
-	ListGroups(ctx context.Context) ([]Group, error)
+	ListGroups(ctx context.Context, arg ListGroupsParams) ([]Group, error)
 	ListOrganisations(ctx context.Context, arg ListOrganisationsParams) ([]Organisation, error)
-	ListRoles(ctx context.Context) ([]Role, error)
+	ListRoles(ctx context.Context, arg ListRolesParams) ([]Role, error)
 	ListUsers(ctx context.Context) ([]User, error)
 	RemoveRoleFromGroup(ctx context.Context, arg RemoveRoleFromGroupParams) error
 	RevokeRoleFromUser(ctx context.Context, arg RevokeRoleFromUserParams) error
