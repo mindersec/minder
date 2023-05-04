@@ -62,6 +62,6 @@ sqlc: ## generate sqlc files
 	sqlc generate
 
 migrateup:
-	@go run cmd/migrations/main.go migrate up     
+	@go run cmd/migrations/main.go migrate up --yes     
 migratedown:
-	@go run cmd/migrations/main.go migrate down     
+	@go run cmd/migrations/main.go migrate down

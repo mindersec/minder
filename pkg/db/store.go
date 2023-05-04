@@ -18,31 +18,43 @@
 // Until then, it is not covered by unit tests and should not be used
 // It does make a good example of how to use the generated client code
 // for others to use as a reference.
+
 package db
 
 import (
-	"log"
-	"os"
-	"testing"
-
+	"context"
 	"database/sql"
-
-	_ "github.com/lib/pq"
+	"fmt"
 )
 
-var testQueries *Queries
-var testDB *sql.DB
+// Store provides all functions to execute db queries and transactions
+type Store struct {
+	*Queries
+	db *sql.DB
+}
 
-func TestMain(m *testing.M) {
-	var err error
-	connStr := "user=postgres dbname=postgres password=postgres host=localhost sslmode=disable"
-	testDB, err = sql.Open("postgres", connStr)
+// NewStore creates a new store
+func NewStore(db *sql.DB) *Store {
+	return &Store{
+		Queries: New(db),
+		db:      db,
+	}
+}
+
+func (store *Store) execTx(ctx context.Context, fn func(*Queries) error) error {
+	tx, err := store.db.BeginTx(ctx, nil)
 	if err != nil {
-		log.Fatal("cannot connect to db test instance:", err)
+		return err
 	}
 
-	testQueries = New(testDB)
+	q := New(tx)
+	err = fn(q)
+	if err != nil {
+		if rbErr := tx.Rollback(); rbErr != nil {
+			return fmt.Errorf("tx error: %v, rb error: %v", err, rbErr)
+		}
+		return err
+	}
 
-	// Run tests
-	os.Exit(m.Run())
+	return tx.Commit()
 }
