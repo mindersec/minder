@@ -38,3 +38,7 @@ logging:
 auth:
   jwt_key: "secret"
   expiration: 3600
+
+database:
+  driver: "postgres"
+  source: "postgresql://postgres:postgres@localhost:5432/postgres?sslmode=disable"

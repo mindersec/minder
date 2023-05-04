@@ -119,6 +119,10 @@ jobs:
           # Optional: pass an organization name and repo to use a fork
           org: GoTestTools
           repo: gotestfmt
+      
+      # copy config file into place
+      - name: Copy config file
+        run: cp config/config.yaml ./config.yaml
 
       # Migrate the database
       - name: Migrate database
