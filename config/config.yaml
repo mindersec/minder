@@ -40,5 +40,9 @@ auth:
   expiration: 3600
 
 database:
-  driver: "postgres"
-  source: "postgresql://postgres:postgres@postgres:5432/postgres?sslmode=disable"
+  dbhost: "localhost"
+  dbport: 5432
+  dbuser: postgres
+  dbpass: postgres
+  dbname: postgres
+  sslmode: disable

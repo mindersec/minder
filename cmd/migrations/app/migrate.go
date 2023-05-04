@@ -30,4 +30,11 @@ var migrateCmd = &cobra.Command{
 
 func init() {
 	RootCmd.AddCommand(migrateCmd)
+	migrateCmd.PersistentFlags().BoolP("yes", "y", false, "Answer yes to all questions")
+	migrateCmd.PersistentFlags().StringP("dbhost", "H", "localhost", "Database host")
+	migrateCmd.PersistentFlags().Int("dbport", 5432, "Database port")
+	migrateCmd.PersistentFlags().StringP("dbuser", "u", "postgres", "Database user")
+	migrateCmd.PersistentFlags().StringP("dbpass", "P", "postgres", "Database password")
+	migrateCmd.PersistentFlags().StringP("dbname", "d", "postgres", "Database name")
+	migrateCmd.PersistentFlags().StringP("sslmode", "s", "disable", "Database sslmode")
 }

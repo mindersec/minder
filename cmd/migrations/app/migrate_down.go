@@ -23,6 +23,7 @@ import (
 	_ "github.com/golang-migrate/migrate/v4/database/postgres"
 	_ "github.com/golang-migrate/migrate/v4/source/file"
 	"github.com/spf13/cobra"
+	"github.com/spf13/viper"
 )
 
 var downCmd = &cobra.Command{
@@ -30,6 +31,35 @@ var downCmd = &cobra.Command{
 	Short: "migrate a down a database version",
 	Long:  `Command to downgrade database`,
 	Run: func(cmd *cobra.Command, args []string) {
+
+		dbhost := viper.GetString("database.dbhost")
+		dbport := viper.GetString("database.dbport")
+		dbuser := viper.GetString("database.dbuser")
+		dbpass := viper.GetString("database.dbpass")
+		dbname := viper.GetString("database.dbname")
+		sslmode := viper.GetString("database.sslmode")
+
+		if cmd.Flags().Changed("dbhost") {
+			dbhost, _ = cmd.Flags().GetString("dbhost")
+		}
+		if cmd.Flags().Changed("dbport") {
+			dbport, _ = cmd.Flags().GetString("dbport")
+		}
+		if cmd.Flags().Changed("dbuser") {
+			dbuser, _ = cmd.Flags().GetString("dbuser")
+		}
+		if cmd.Flags().Changed("dbpass") {
+			dbpass, _ = cmd.Flags().GetString("dbpass")
+		}
+		if cmd.Flags().Changed("dbname") {
+			dbname, _ = cmd.Flags().GetString("dbname")
+		}
+		if cmd.Flags().Changed("sslmode") {
+			sslmode, _ = cmd.Flags().GetString("sslmode")
+		}
+
+		connString := fmt.Sprintf("postgres://%s:%s@%s:%s/%s?sslmode=%s", dbuser, dbpass, dbhost, dbport, dbname, sslmode)
+
 		yes, err := cmd.Flags().GetBool("yes")
 		if err != nil {
 			fmt.Printf("Error getting flag yes: %v", err)
@@ -47,7 +77,7 @@ var downCmd = &cobra.Command{
 
 		m, err := migrate.New(
 			"file://database/migrations",
-			"postgres://postgres:postgres@localhost:5432/postgres?sslmode=disable")
+			connString)
 		if err != nil {
 			fmt.Printf("Error while creating migration instance: %v", err)
 		}
