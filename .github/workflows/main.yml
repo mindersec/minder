@@ -47,7 +47,7 @@ jobs:
       - name: Check license headers
         run: |
           set -e
-          addlicense -ignore pkg/generated/* -ignore pkg/db/* -ignore database/query/* -l apache -c 'Stacklok, Inc' -v * 
+          addlicense -ignore **/pkg/generated/* -ignore **/pkg/db/* -ignore **/database/query/* -l apache -c 'Stacklok, Inc' -v * 
           git diff --exit-code
 
   golangci:
