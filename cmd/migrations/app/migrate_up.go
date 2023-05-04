@@ -49,7 +49,7 @@ var upCmd = &cobra.Command{
 
 		m, err := migrate.New(
 			"file://database/migrations",
-			"postgres://postgres:postgres@localhost:5432/postgres?sslmode=disable")
+			"postgres://postgres:postgres@postgres:5432/postgres?sslmode=disable")
 		if err != nil {
 			fmt.Printf("Error while creating migration instance: %v", err)
 		}
