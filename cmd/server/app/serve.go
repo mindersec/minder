@@ -25,30 +25,40 @@ import (
 	"github.com/stacklok/mediator/pkg/controlplane"
 )
 
+// getConfigValue is a helper function that retrieves a configuration value
+// and updates it if the corresponding flag is set.
+//
+// Parameters:
+// - key: The key used to retrieve the configuration value from Viper.
+// - flagName: The flag name used to check if the flag has been set and to retrieve its value.
+// - cmd: The cobra.Command object to access the flags.
+// - defaultValue: A default value used to determine the type of the flag (string, int, etc.).
+//
+// Returns:
+// - The updated configuration value based on the flag, if it is set, or the original value otherwise.
+func getConfigValue(key string, flagName string, cmd *cobra.Command, defaultValue interface{}) interface{} {
+	value := viper.Get(key)
+	if cmd.Flags().Changed(flagName) {
+		switch defaultValue.(type) {
+		case string:
+			value, _ = cmd.Flags().GetString(flagName)
+		case int:
+			value, _ = cmd.Flags().GetInt(flagName)
+		}
+	}
+	return value
+}
+
 var serveCmd = &cobra.Command{
 	Use:   "serve",
 	Short: "Start the mediator platform",
 	Long:  `Starts the mediator platform, which includes the gRPC server and the HTTP gateway.`,
 	Run: func(cmd *cobra.Command, args []string) {
-		http_host := viper.GetString("http_server.host")
-		http_port := viper.GetInt("http_server.port")
-		grpc_host := viper.GetString("grpc_server.host")
-		grpc_port := viper.GetInt("grpc_server.port")
-
-		// If the user has specified a flag, use that value
-		// instead of the one set within the config file
-		if cmd.Flags().Changed("http-host") {
-			http_host, _ = cmd.Flags().GetString("http-host")
-		}
-		if cmd.Flags().Changed("http-port") {
-			http_port, _ = cmd.Flags().GetInt("http-port")
-		}
-		if cmd.Flags().Changed("grpc-host") {
-			grpc_host, _ = cmd.Flags().GetString("grpc-host")
-		}
-		if cmd.Flags().Changed("grpc-port") {
-			grpc_port, _ = cmd.Flags().GetInt("grpc-port")
-		}
+		// populate config and cmd line flags
+		http_host := getConfigValue("http_server.host", "http-host", cmd, "").(string)
+		http_port := getConfigValue("http_server.port", "http-port", cmd, 0).(int)
+		grpc_host := getConfigValue("grpc_server.host", "grpc-host", cmd, "").(string)
+		grpc_port := getConfigValue("grpc_server.port", "grpc-port", cmd, 0).(int)
 
 		httpAddress := fmt.Sprintf("%s:%d", http_host, http_port)
 		grpcAddress := fmt.Sprintf("%s:%d", grpc_host, grpc_port)
