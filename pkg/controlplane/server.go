@@ -17,6 +17,8 @@ package controlplane
 
 import (
 	"context"
+	"database/sql"
+	"fmt"
 	"log"
 	"net"
 	"net/http"
@@ -24,12 +26,35 @@ import (
 	"github.com/grpc-ecosystem/grpc-gateway/v2/runtime"
 
 	"github.com/spf13/viper"
+	"golang.org/x/oauth2"
 
 	"google.golang.org/grpc"
 	"google.golang.org/grpc/credentials/insecure"
 	"google.golang.org/grpc/metadata"
 	"google.golang.org/grpc/reflection"
+
+	_ "github.com/lib/pq"
+
+	"github.com/stacklok/mediator/pkg/db"
+	pb "github.com/stacklok/mediator/pkg/generated/protobuf/go/proto/v1"
 )
+
+type Server struct {
+	store      db.Store
+	grpcServer *grpc.Server
+	pb.UnimplementedHealthServiceServer
+	pb.UnimplementedOAuthServiceServer
+	OAuth2       *oauth2.Config
+	ClientID     string
+	ClientSecret string
+}
+
+func NewServer(store db.Store) *Server {
+	server := &Server{
+		store: store,
+	}
+	return server
+}
 
 func loggingInterceptor(level string) grpc.UnaryServerInterceptor {
 	return func(ctx context.Context, req interface{}, info *grpc.UnaryServerInfo, handler grpc.UnaryHandler) (interface{}, error) {
@@ -50,34 +75,54 @@ func loggingInterceptor(level string) grpc.UnaryServerInterceptor {
 	}
 }
 
-func StartGRPCServer(address string) {
+func (s *Server) StartGRPCServer(address string) {
+	// store := db.NewStore(dbConn)
 	lis, err := net.Listen("tcp", address)
 	if err != nil {
 		log.Fatalf("failed to listen: %v", err)
 	}
 
+	// dbConn := "host=" + viper.GetString("db.host") + " port=" + viper.GetString("db.port") + " user=" + viper.GetString("db.user") + " password=" + viper.GetString("db.password") + " dbname=" + viper.GetString("db.name") + " sslmode=disable"
+	dbConn := "user=postgres dbname=postgres password=postgres host=localhost sslmode=disable"
+	fmt.Println("dbConn: ", dbConn)
+	conn, err := sql.Open("postgres", dbConn)
+	if err != nil {
+		log.Fatal("Cannot connect to DB: ", err)
+	} else {
+		log.Println("Connected to DB")
+	}
+
+	store := db.NewStore(conn)
+
+	server := NewServer(store)
+
+	if err != nil {
+		log.Fatal("Cannot create server: ", err)
+	}
+
 	log.Println("Initializing logger in level: " + viper.GetString("logging.level"))
 
-	var s *grpc.Server
-
 	if viper.GetString("logging.level") == "debug" {
-		s = grpc.NewServer(
+		s.grpcServer = grpc.NewServer(
 			grpc.Creds(insecure.NewCredentials()),
 			grpc.UnaryInterceptor(loggingInterceptor(viper.GetString("logging.level"))),
 		)
 	} else {
-		s = grpc.NewServer(
+		s.grpcServer = grpc.NewServer(
 			grpc.Creds(insecure.NewCredentials()),
 		)
 	}
 
-	// register the services (declared within register_handlers.go)
-	RegisterGRPCServices(s)
+	// Initialize the grpcServer field of the server struct
+	server.grpcServer = s.grpcServer
 
-	reflection.Register(s)
+	// register the services (declared within register_handlers.go)
+	RegisterGRPCServices(server)
+
+	reflection.Register(s.grpcServer)
 
 	log.Printf("Starting gRPC server on %s", address)
-	if err := s.Serve(lis); err != nil {
+	if err := s.grpcServer.Serve(lis); err != nil {
 		log.Fatalf("failed to serve: %v", err)
 	}
 }

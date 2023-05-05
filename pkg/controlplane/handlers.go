@@ -29,6 +29,7 @@ import (
 	"fmt"
 	"net/http"
 
+	"github.com/stacklok/mediator/pkg/db"
 	pb "github.com/stacklok/mediator/pkg/generated/protobuf/go/proto/v1"
 	"golang.org/x/oauth2"
 	"golang.org/x/oauth2/github"
@@ -36,14 +37,6 @@ import (
 
 	"github.com/spf13/viper"
 )
-
-type Server struct {
-	pb.UnimplementedHealthServiceServer
-	pb.UnimplementedOAuthServiceServer
-	OAuth2       *oauth2.Config
-	ClientID     string
-	ClientSecret string
-}
 
 // generateState generates a random string of length n, used as the OAuth state
 func generateState(n int) (string, error) {
@@ -59,6 +52,19 @@ func generateState(n int) (string, error) {
 
 // CheckHealth is a simple health check for monitoring
 func (s *Server) CheckHealth(ctx context.Context, req *pb.HealthRequest) (*pb.HealthResponse, error) {
+
+	newOrg, err := s.store.CreateOrganisation(context.Background(), db.CreateOrganisationParams{
+		Name:    "FUckin eh!",
+		Company: "ya busturd",
+	})
+
+	if err != nil {
+		fmt.Println("DB Error", err)
+		return &pb.HealthResponse{Status: "ERROR"}, err
+	}
+
+	fmt.Println(newOrg)
+
 	return &pb.HealthResponse{Status: "OK"}, nil
 }
 

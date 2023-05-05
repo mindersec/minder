@@ -56,8 +56,11 @@ var serveCmd = &cobra.Command{
 		var wg sync.WaitGroup
 		wg.Add(2)
 
+		s := controlplane.Server{}
+
+		// Start the gRPC and HTTP server in separate goroutines
 		go func() {
-			controlplane.StartGRPCServer(grpcAddress)
+			s.StartGRPCServer(grpcAddress)
 			wg.Done()
 		}()
 

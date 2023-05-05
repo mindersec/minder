@@ -30,6 +30,7 @@ package tools
 // nolint
 
 import (
+	_ "github.com/bufbuild/buf/cmd/buf"
 	_ "github.com/daixiang0/gci"
 	_ "github.com/go-critic/go-critic/cmd/gocritic"
 	_ "github.com/golangci/golangci-lint/cmd/golangci-lint"
@@ -38,5 +39,4 @@ import (
 	_ "golang.org/x/lint/golint"
 	_ "golang.org/x/tools/cmd/goimports"
 	_ "mvdan.cc/gofumpt"
-  _ "github.com/bufbuild/buf/cmd/buf"
 )
