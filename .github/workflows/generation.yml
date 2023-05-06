@@ -2,13 +2,12 @@ on:
   pull_request:
     branches:
       - main
-
 jobs:
-  test-sqlc-generation:
+  test:
     runs-on: ubuntu-latest
     env:
-      GO_VERSION: 1.16
-      SQLC_VERSION: 1.9.0
+      GO_VERSION: 1.19
+      SQLC_VERSION: 1.18.0
     steps:
       - name: Set up Go
         uses: actions/setup-go@v2
@@ -20,6 +19,16 @@ jobs:
           tar xz
           sudo install -m 755 sqlc /usr/local/bin/
       - name: Generate code
-        run: sqlc generate
-      - name: Test
-        run: go test ./...
+        id: generate
+        run: |
+          output=$(sqlc generate -c sqlc.yaml)
+          echo "::set-output name=output::$output"
+      - name: Check for changes
+        run: |
+          changes=$(git status --porcelain)
+          if [ -n "$changes" ]; then
+            echo "There are changes after running sqlc generate. These should be pushed as part of your PR:"
+            echo "$changes"
+            exit 1
+          fi
+      if: ${{ failure() }}
