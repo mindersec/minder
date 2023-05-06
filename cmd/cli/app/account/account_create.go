@@ -33,6 +33,7 @@ import (
 	"time"
 
 	pb "github.com/stacklok/mediator/pkg/generated/protobuf/go/proto/v1"
+	"github.com/stacklok/mediator/pkg/util"
 
 	"github.com/pkg/browser"
 	"github.com/spf13/cobra"
@@ -130,19 +131,10 @@ var account_createCmd = &cobra.Command{
 e.g. --provider=github. This will then initiate the OAuth2 flow and allow
 mediator to access user account details via the provider / iDP.`,
 	Run: func(cmd *cobra.Command, args []string) {
-		grpc_host := viper.GetString("grpc_server.host")
-		grpc_port := viper.GetInt("grpc_server.port")
-		provider := viper.GetString("provider")
 
-		if cmd.Flags().Changed("grpc-host") {
-			grpc_host, _ = cmd.Flags().GetString("grpc-host")
-		}
-		if cmd.Flags().Changed("grpc-port") {
-			grpc_port, _ = cmd.Flags().GetInt("grpc-port")
-		}
-		if cmd.Flags().Changed("provider") {
-			provider, _ = cmd.Flags().GetString("provider")
-		}
+		grpc_host := util.GetConfigValue("grpc_server.host", "grpc-host", cmd, "").(string)
+		grpc_port := util.GetConfigValue("grpc_server.port", "grpc-port", cmd, 0).(int)
+		provider := util.GetConfigValue("provider", "provider", cmd, "").(string)
 
 		url, err := callAuthURLService(fmt.Sprintf("%s:%d", grpc_host, grpc_port), provider)
 		if err != nil {

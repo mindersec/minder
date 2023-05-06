@@ -48,10 +48,6 @@ access token. If you are not logged in, then you will need to pass in the
 `,
 	Run: func(cmd *cobra.Command, args []string) {
 		fmt.Println("auth revoke called")
-		// username := viper.GetString("username")
-		// id := viper.GetInt32("id")
-		// password := viper.GetString("password")
-		// provider := viper.GetString("provider")
 	},
 }
 
