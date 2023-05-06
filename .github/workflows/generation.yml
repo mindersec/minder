@@ -13,11 +13,11 @@ jobs:
         uses: actions/setup-go@v2
         with:
           go-version: ${{ env.GO_VERSION }}
-      - name: Install SQLc
-        run: |
-          curl -L "https://github.com/kyleconroy/sqlc/releases/download/v1.18.0/sqlc_1.18.0_linux_amd64.tar.gz" |
-          tar xz
-          sudo install -m 755 sqlc /usr/local/bin/
+          - name: Install sqlc
+      run: |
+        curl -L https://github.com/kyleconroy/sqlc/releases/download/v1.10.0/sqlc_1.10.0_linux_amd64.tar.gz -o sqlc.tar.gz
+        tar -xzf sqlc.tar.gz
+        sudo mv sqlc /usr/local/bin
       - name: Generate code
         id: generate
         run: |
