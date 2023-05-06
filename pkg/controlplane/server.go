@@ -18,7 +18,6 @@ package controlplane
 import (
 	"context"
 	"database/sql"
-	"fmt"
 	"log"
 	"net"
 	"net/http"
@@ -75,16 +74,13 @@ func loggingInterceptor(level string) grpc.UnaryServerInterceptor {
 	}
 }
 
-func (s *Server) StartGRPCServer(address string) {
+func (s *Server) StartGRPCServer(address string, dbConn string) {
 	// store := db.NewStore(dbConn)
 	lis, err := net.Listen("tcp", address)
 	if err != nil {
 		log.Fatalf("failed to listen: %v", err)
 	}
 
-	// dbConn := "host=" + viper.GetString("db.host") + " port=" + viper.GetString("db.port") + " user=" + viper.GetString("db.user") + " password=" + viper.GetString("db.password") + " dbname=" + viper.GetString("db.name") + " sslmode=disable"
-	dbConn := "user=postgres dbname=postgres password=postgres host=localhost sslmode=disable"
-	fmt.Println("dbConn: ", dbConn)
 	conn, err := sql.Open("postgres", dbConn)
 	if err != nil {
 		log.Fatal("Cannot connect to DB: ", err)
@@ -113,7 +109,6 @@ func (s *Server) StartGRPCServer(address string) {
 		)
 	}
 
-	// Initialize the grpcServer field of the server struct
 	server.grpcServer = s.grpcServer
 
 	// register the services (declared within register_handlers.go)

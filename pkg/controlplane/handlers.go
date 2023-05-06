@@ -29,7 +29,6 @@ import (
 	"fmt"
 	"net/http"
 
-	"github.com/stacklok/mediator/pkg/db"
 	pb "github.com/stacklok/mediator/pkg/generated/protobuf/go/proto/v1"
 	"golang.org/x/oauth2"
 	"golang.org/x/oauth2/github"
@@ -52,19 +51,6 @@ func generateState(n int) (string, error) {
 
 // CheckHealth is a simple health check for monitoring
 func (s *Server) CheckHealth(ctx context.Context, req *pb.HealthRequest) (*pb.HealthResponse, error) {
-
-	newOrg, err := s.store.CreateOrganisation(context.Background(), db.CreateOrganisationParams{
-		Name:    "FUckin eh!",
-		Company: "ya busturd",
-	})
-
-	if err != nil {
-		fmt.Println("DB Error", err)
-		return &pb.HealthResponse{Status: "ERROR"}, err
-	}
-
-	fmt.Println(newOrg)
-
 	return &pb.HealthResponse{Status: "OK"}, nil
 }
 
