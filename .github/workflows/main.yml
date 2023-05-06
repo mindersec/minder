@@ -37,11 +37,10 @@ jobs:
     runs-on: ubuntu-latest
     steps:
       - uses: actions/checkout@8e5e7e5ab8b370d6c329ec480221332ada57f0ab # v3.5.0
-      - name: Extract version of Go to use
-        run: echo "GOVERSION=$(cat Dockerfile|grep golang | awk ' { print $2 } ' | cut -d '@' -f 1 | cut -d ':' -f 2 | uniq)" >> $GITHUB_ENV
+
       - uses: actions/setup-go@4d34df0c2316fe8122ab82dc22947d607c0c91f9 # v4.0.0
         with:
-          go-version: ${{ env.GOVERSION }}
+          go-version:  ${{ env.GO_VERSION }}
       - name: Install addlicense
         run: go install github.com/google/addlicense@v1.0.0
       - name: Check license headers
@@ -57,8 +56,6 @@ jobs:
       - uses: actions/checkout@8e5e7e5ab8b370d6c329ec480221332ada57f0ab # v3.5.0
       - name: deps
         run: sudo apt-get update && sudo apt-get install -yq libpcsclite-dev
-      - name: Extract version of Go to use
-        run: echo "GOVERSION=$(sed -n 's/^go \([0-9.]*\)/\1/p' go.mod)" >> $GITHUB_ENV
       - uses: actions/setup-go@4d34df0c2316fe8122ab82dc22947d607c0c91f9 # v4.0.0
         with:
           go-version: ${{ env.GOVERSION }}
