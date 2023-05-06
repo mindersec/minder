@@ -33,9 +33,10 @@ import (
 
 // A helper function to create a random organisation
 func createRandomOrganisation(t *testing.T) Organisation {
+	seed := time.Now().UnixNano()
 	arg := CreateOrganisationParams{
-		Name:    util.RandomName(),
-		Company: util.RandomName(),
+		Name:    util.RandomName(seed),
+		Company: util.RandomName(seed),
 	}
 
 	organisation, err := testQueries.CreateOrganisation(context.Background(), arg)
@@ -78,12 +79,13 @@ func TestGetOrganisation(t *testing.T) {
 }
 
 func TestUpdateOrganisation(t *testing.T) {
+	seed := time.Now().UnixNano()
 	organisation1 := createRandomOrganisation(t)
 
 	arg := UpdateOrganisationParams{
 		ID:      organisation1.ID,
-		Name:    util.RandomName(),
-		Company: util.RandomName(),
+		Name:    util.RandomName(seed),
+		Company: util.RandomName(seed),
 	}
 
 	organisation2, err := testQueries.UpdateOrganisation(context.Background(), arg)

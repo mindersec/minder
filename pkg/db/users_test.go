@@ -32,16 +32,16 @@ import (
 )
 
 func createRandomUser(t *testing.T, org Organisation) User {
-
+	seed := time.Now().UnixNano()
 	group := createRandomGroup(t, org.ID)
 
 	arg := CreateUserParams{
 		OrganisationID: sql.NullInt32{Int32: org.ID, Valid: true},
 		GroupID:        sql.NullInt32{Int32: group.ID, Valid: true},
-		Email:          util.RandomEmail(),
-		Password:       util.RandomString(10),
-		FirstName:      util.RandomName(),
-		LastName:       util.RandomName(),
+		Email:          util.RandomEmail(seed),
+		Password:       util.RandomString(10, seed),
+		FirstName:      util.RandomName(seed),
+		LastName:       util.RandomName(seed),
 		IsAdmin:        true,
 		IsSuperAdmin:   true,
 	}
@@ -98,6 +98,7 @@ func TestGetUser(t *testing.T) {
 }
 
 func TestUpdateUser(t *testing.T) {
+	seed := time.Now().UnixNano()
 	org := createRandomOrganisation(t)
 	user1 := createRandomUser(t, org)
 
@@ -105,10 +106,10 @@ func TestUpdateUser(t *testing.T) {
 		ID:             user1.ID,
 		OrganisationID: sql.NullInt32{Int32: user1.OrganisationID.Int32, Valid: true},
 		GroupID:        sql.NullInt32{Int32: user1.GroupID.Int32, Valid: true},
-		Email:          util.RandomEmail(),
-		Password:       util.RandomString(10),
-		FirstName:      util.RandomName(),
-		LastName:       util.RandomName(),
+		Email:          util.RandomEmail(seed),
+		Password:       util.RandomString(10, seed),
+		FirstName:      util.RandomName(seed),
+		LastName:       util.RandomName(seed),
 		IsAdmin:        true,
 		IsSuperAdmin:   true,
 	}
