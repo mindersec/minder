@@ -18,12 +18,14 @@ package app
 import (
 	"fmt"
 	"os"
+	"strconv"
+
+	"github.com/stacklok/mediator/pkg/util"
 
 	"github.com/golang-migrate/migrate/v4"
 	_ "github.com/golang-migrate/migrate/v4/database/postgres"
 	_ "github.com/golang-migrate/migrate/v4/source/file"
 	"github.com/spf13/cobra"
-	"github.com/spf13/viper"
 )
 
 // upCmd represents the up command
@@ -33,33 +35,16 @@ var upCmd = &cobra.Command{
 	Long:  `Command to install the latest version of sigwatch`,
 	Run: func(cmd *cobra.Command, args []string) {
 
-		dbhost := viper.GetString("database.dbhost")
-		dbport := viper.GetString("database.dbport")
-		dbuser := viper.GetString("database.dbuser")
-		dbpass := viper.GetString("database.dbpass")
-		dbname := viper.GetString("database.dbname")
-		sslmode := viper.GetString("database.sslmode")
+		// Database configuration
+		dbhost := util.GetConfigValue("database.dbhost", "db-host", cmd, "").(string)
+		dbport := util.GetConfigValue("database.dbport", "db-port", cmd, 5432).(int)
+		dbuser := util.GetConfigValue("database.dbuser", "db-user", cmd, "").(string)
+		dbpass := util.GetConfigValue("database.dbpass", "db-pass", cmd, "").(string)
+		dbname := util.GetConfigValue("database.dbname", "db-name", cmd, "").(string)
+		sslmode := util.GetConfigValue("database.sslmode", "db-sslmode", cmd, "").(string)
 
-		if cmd.Flags().Changed("dbhost") {
-			dbhost, _ = cmd.Flags().GetString("dbhost")
-		}
-		if cmd.Flags().Changed("dbport") {
-			dbport, _ = cmd.Flags().GetString("dbport")
-		}
-		if cmd.Flags().Changed("dbuser") {
-			dbuser, _ = cmd.Flags().GetString("dbuser")
-		}
-		if cmd.Flags().Changed("dbpass") {
-			dbpass, _ = cmd.Flags().GetString("dbpass")
-		}
-		if cmd.Flags().Changed("dbname") {
-			dbname, _ = cmd.Flags().GetString("dbname")
-		}
-		if cmd.Flags().Changed("sslmode") {
-			sslmode, _ = cmd.Flags().GetString("sslmode")
-		}
+		connString := fmt.Sprintf("postgres://%s:%s@%s:%s/%s?sslmode=%s", dbuser, dbpass, dbhost, strconv.Itoa(dbport), dbname, sslmode)
 
-		connString := fmt.Sprintf("postgres://%s:%s@%s:%s/%s?sslmode=%s", dbuser, dbpass, dbhost, dbport, dbname, sslmode)
 		fmt.Println("Connection String: ", connString)
 		yes, err := cmd.Flags().GetBool("yes")
 		if err != nil {
