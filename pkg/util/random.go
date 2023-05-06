@@ -30,27 +30,34 @@ func init() {
 	rand.Seed(time.Now().UnixNano())
 }
 
+// NewRand returns a new instance of rand.Rand with a fixed source.
+func NewRand(seed int64) *rand.Rand {
+	return rand.New(rand.NewSource(seed))
+}
+
 // RandomInt returns a random integer between min and max.
-func RandomInt(min, max int64) int64 {
-	return min + rand.Int63n(max-min+1)
+func RandomInt(min, max int64, seed int64) int64 {
+	r := NewRand(seed)
+	return min + r.Int63n(max-min+1)
 }
 
 // RandomString returns a random string of length n.
-func RandomString(n int) string {
+func RandomString(n int, seed int64) string {
 	const letters = "abcdefghijklmnopqrstuvwxyzABCDEFGHIJKLMNOPQRSTUVWXYZ0123456789"
 	s := make([]byte, n)
+	r := NewRand(seed)
 	for i := range s {
-		s[i] = letters[rand.Intn(len(letters))]
+		s[i] = letters[r.Intn(len(letters))]
 	}
 	return string(s)
 }
 
 // RandomEmail returns a random email address.
-func RandomEmail() string {
-	return RandomString(10) + "@example.com"
+func RandomEmail(seed int64) string {
+	return RandomString(10, seed) + "@example.com"
 }
 
 // RandomName returns a random name.
-func RandomName() string {
-	return RandomString(10)
+func RandomName(seed int64) string {
+	return RandomString(10, seed)
 }
