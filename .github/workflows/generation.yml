@@ -3,7 +3,7 @@ on:
     branches:
       - main
 jobs:
-  test:
+  sqlc-generate:
     runs-on: ubuntu-latest
     env:
       GO_VERSION: 1.19
