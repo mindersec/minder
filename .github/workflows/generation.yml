@@ -31,4 +31,4 @@ jobs:
             echo "$changes"
             exit 1
           fi
-      if: ${{ failure() }}
+    if: ${{ failure() }}
