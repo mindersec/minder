@@ -22,6 +22,7 @@ jobs:
         id: generate
         run: |
           output=$(sqlc generate -c sqlc.yaml)
+          echo "${output}"
           echo "::set-output name=output::$output"
       - name: Check for changes
         run: |
