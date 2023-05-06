@@ -78,9 +78,15 @@ func TestGetConfigValue(t *testing.T) {
 			if tc.flagSet {
 				switch tc.flagValue.(type) {
 				case string:
-					cmd.Flags().Set(tc.flagName, tc.flagValue.(string))
+					err := cmd.Flags().Set(tc.flagName, tc.flagValue.(string))
+					if err != nil {
+						t.Fatalf("Error setting flag %s: %v", tc.flagName, err)
+					}
 				case int:
-					cmd.Flags().Set(tc.flagName, strconv.Itoa(tc.flagValue.(int)))
+					err := cmd.Flags().Set(tc.flagName, strconv.Itoa(tc.flagValue.(int)))
+					if err != nil {
+						t.Fatalf("Error setting flag %s: %v", tc.flagName, err)
+					}
 				}
 			}
 
