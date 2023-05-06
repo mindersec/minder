@@ -4,11 +4,78 @@ Continuous integration | License
 
 # Mediator
 
-Mediator is a platform to secure the software supply chain.
+Mediator is a platform to manage the security of your software supply chain.
 
-# API
+It is currently in early development.
 
-The API is defined in protobuf [here](https://github.com/stacklok/mediator/blob/main/proto/v1/mediator.proto).
+# Get Hacking (Development)
+
+## Prerequisites
+
+- [Go](https://golang.org/doc/install)
+- [Docker](https://docs.docker.com/get-docker/) or..
+- [Podman](https://podman.io/getting-started/installation)
+- [Docker Compose](https://docs.docker.com/compose/install/) or..
+- [Podman Compose](https://github.com/containers/podman-compose#installation)
+
+## Clone the repository
+
+```bash
+git clone git@github.com:stacklok/mediator.git
+```
+
+## Build the application
+
+```bash
+make build
+```
+
+## Run the application
+
+Note that the application requires a database to be running. This can be achieved
+using docker-compose:
+
+```bash
+docker-compose up
+```
+
+Then run the application
+
+```bash
+bin/mediator-server serve
+```
+
+Or direct from source
+
+```bash
+go run cmd/server/main.go serve 
+```
+
+The application will be available on `http://localhost:8080` and gRPC on `localhost:8090`.
+
+## Run the tests
+
+```bash
+make test
+```
+
+## Install tools
+
+```bash
+make bootstrap
+```
+
+## CLI
+
+The CLI is available in the `cmd/cli` directory.
+
+```bash
+go run cmd/cli/main.go --help 
+```
+
+## APIs
+
+The APIs are defined in protobuf [here](https://github.com/stacklok/mediator/blob/main/proto/v1/mediator.proto).
 
 An OpenAPI / swagger spec is generated to [here](https://github.com/stacklok/mediator/blob/main/pkg/generated/openapi/proto/v1/mediator.swagger.json)
 
@@ -21,23 +88,7 @@ We use [buf](https://buf.build/docs/) to generate the gRPC / HTTP stubs (both pr
 To build the stubs, run:
 
 ```bash
-buf generate
-```
-
-Should you introduce a new language, update the `buf.gen.yaml` file
-
-New dependencies can be added to the `buf.yaml` file as follows:
-
-```bash
-version: v1
-name: buf.build/stacklok/mediator
-deps:
-  - buf.build/googleapis/googleapis
-  - buf.build/path/to/dependency
-```
-
-```bash
-buf mod update
+make gen
 ```
 
 # Database migrations and tooling
@@ -54,27 +105,35 @@ Add any queries to the `database/queries/sqlc.sql` file.
 To generate the Go code, run:
 
 ```bash
-sqlc generate
+make sqlc
 ```
 
 Users will then need to peform a migration
 
 ```bash
-make migrateup
+make migrateup 
 ``` 
 
 ```bash
 make migratedown
 ```
 
-# Configure OAuth2
+# Configuration
+
+Mediator uses [viper](https://github.com/spf13/viper) for configuration.
+
+An example configuration file is `config/config.yaml`.
+
+Most values should be quite self explanatory.
+
+## Configure OAuth2
 
 Mediator can use OAuth2 to authenticate users, support for Google and GitHub is
 currently implemented.
 
 To enable OAuth2, you need to configure accounts in the relevant provider.
 
-## Configure GitHub OAuth2
+### Configure GitHub OAuth2
 
 To configure GitHub OAuth2, you need to create a new OAuth2 application in your
 GitHub account. 
@@ -100,7 +159,7 @@ github:
   redirect_uri: "http://localhost:8080/api/v1/auth/callback/github"
 ```
 
-## Configure Google OAuth2
+### Configure Google OAuth2
 
 To configure Google OAuth2, you need to create a new OAuth2 application in your
 Google account. 
@@ -119,14 +178,4 @@ github:
   client_secret: "client_secret"
   redirect_uri: "http://localhost:8080/api/v1/auth/callback/google"
 ```
-# Running a development enviroment
 
-Mediator uses a docker-compose file to run the application and its postgres database.
-
-To run the application, run:
-
-```bash
-docker-compose up
-```
-
-The application will be available on `http://localhost:8080` and gRPC on `localhost:8090`.
