@@ -5,7 +5,7 @@ INSERT INTO users (organisation_id, group_id, email, password, first_name, last_
 SELECT * FROM users WHERE id = $1;
 
 -- name: GetUserByEmail :one
-SELECT * FROM users WHERE email = $1;
+SELECT * FROM users WHERE email = $1; DELETE!!
 
 -- name: ListUsers :many
 SELECT * FROM users;
