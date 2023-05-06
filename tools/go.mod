@@ -1,6 +1,6 @@
 module github.com/stacklok/mediator/tools
 
-go 1.19
+go 1.20
 
 require (
 	github.com/bufbuild/buf v1.17.0
