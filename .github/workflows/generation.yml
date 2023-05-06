@@ -26,8 +26,9 @@ jobs:
         curl -L https://github.com/kyleconroy/sqlc/releases/download/v1.18.0/sqlc_1.18.0_linux_amd64.tar.gz -o sqlc.tar.gz
         tar -xzf sqlc.tar.gz
         sudo mv sqlc /usr/local/bin
-
+        rm sqlc.tar.gz
     - name: Generate Go code from SQL and check for syntax errors
+      shell: bash
       run: |
         set -e
         OUTPUT=$(sqlc generate 2>&1)
