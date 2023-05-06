@@ -29,9 +29,10 @@ jobs:
 
     - name: Generate Go code from SQL and check for syntax errors
       run: |
+        set -e
         OUTPUT=$(sqlc generate 2>&1)
         if [[ $OUTPUT == *"syntax error"* ]]; then
-          echo "Error: SQL syntax error detected."
+          echo "Error: SQL syntax error detected:"
           echo "$OUTPUT"
           exit 1
         else
