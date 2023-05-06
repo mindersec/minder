@@ -37,14 +37,6 @@ import (
 	"github.com/spf13/viper"
 )
 
-type Server struct {
-	pb.UnimplementedHealthServiceServer
-	pb.UnimplementedOAuthServiceServer
-	OAuth2       *oauth2.Config
-	ClientID     string
-	ClientSecret string
-}
-
 // generateState generates a random string of length n, used as the OAuth state
 func generateState(n int) (string, error) {
 	randomBytes := make([]byte, n)

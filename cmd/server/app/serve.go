@@ -18,6 +18,7 @@ package app
 import (
 	"fmt"
 	"log"
+	"strconv"
 	"sync"
 
 	"github.com/spf13/cobra"
@@ -60,14 +61,28 @@ var serveCmd = &cobra.Command{
 		grpc_host := getConfigValue("grpc_server.host", "grpc-host", cmd, "").(string)
 		grpc_port := getConfigValue("grpc_server.port", "grpc-port", cmd, 0).(int)
 
+		// Database configuration
+		dbhost := getConfigValue("database.dbhost", "db-host", cmd, "").(string)
+		dbport := getConfigValue("database.dbport", "db-port", cmd, 0).(int)
+		dbuser := getConfigValue("database.dbuser", "db-user", cmd, "").(string)
+		dbpass := getConfigValue("database.dbpass", "db-pass", cmd, "").(string)
+		dbname := getConfigValue("database.dbname", "db-name", cmd, "").(string)
+		dbsslmode := getConfigValue("database.sslmode", "db-sslmode", cmd, "").(string)
+
+		dBconn := fmt.Sprintf("postgres://%s:%s@%s:%s/%s?sslmode=%s", dbuser, dbpass, dbhost, strconv.Itoa(dbport), dbname, dbsslmode)
+
+		// Set up the addresse strings
 		httpAddress := fmt.Sprintf("%s:%d", http_host, http_port)
 		grpcAddress := fmt.Sprintf("%s:%d", grpc_host, grpc_port)
 
 		var wg sync.WaitGroup
 		wg.Add(2)
 
+		s := controlplane.Server{}
+
+		// Start the gRPC and HTTP server in separate goroutines
 		go func() {
-			controlplane.StartGRPCServer(grpcAddress)
+			s.StartGRPCServer(grpcAddress, dBconn)
 			wg.Done()
 		}()
 
@@ -82,11 +97,17 @@ var serveCmd = &cobra.Command{
 
 func init() {
 	rootCmd.AddCommand(serveCmd)
-	serveCmd.PersistentFlags().String("http-host", "", "Server host")
-	serveCmd.PersistentFlags().Int("http-port", 0, "Server port")
-	serveCmd.PersistentFlags().String("grpc-host", "", "Server host")
-	serveCmd.PersistentFlags().Int("grpc-port", 0, "Server port")
-	serveCmd.PersistentFlags().String("logging", "", "Log Level")
+	serveCmd.Flags().String("http-host", "", "Server host")
+	serveCmd.Flags().Int("http-port", 0, "Server port")
+	serveCmd.Flags().String("grpc-host", "", "Server host")
+	serveCmd.Flags().Int("grpc-port", 0, "Server port")
+	serveCmd.Flags().String("dbhost", "", "Database host")
+	serveCmd.Flags().Int("dbport", 5432, "Database port")
+	serveCmd.Flags().String("dbname", "", "Database name")
+	serveCmd.Flags().String("dbuser", "", "Database user")
+	serveCmd.Flags().String("dbpass", "", "Database password")
+	serveCmd.Flags().String("dbsslmode", "", "Database sslmode")
+	serveCmd.Flags().String("logging", "", "Log Level")
 	if err := viper.BindPFlags(serveCmd.PersistentFlags()); err != nil {
 		log.Fatal(err)
 	}

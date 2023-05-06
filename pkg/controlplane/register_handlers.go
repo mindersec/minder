@@ -41,10 +41,10 @@ func RegisterGatewayHTTPHandlers(ctx context.Context, gwmux *runtime.ServeMux, g
 	}
 }
 
-func RegisterGRPCServices(s *grpc.Server) {
+func RegisterGRPCServices(s *Server) {
 	// Register HealthService handler
-	pb.RegisterHealthServiceServer(s, &Server{})
+	pb.RegisterHealthServiceServer(s.grpcServer, s)
 
 	// Register AuthUrlService handler
-	pb.RegisterOAuthServiceServer(s, &Server{})
+	pb.RegisterOAuthServiceServer(s.grpcServer, s)
 }
