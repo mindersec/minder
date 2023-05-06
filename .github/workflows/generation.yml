@@ -1,34 +1,49 @@
+name: SQLC Generate
+
 on:
+  push:
+    branches:
+      - main
   pull_request:
     branches:
       - main
+
 jobs:
   test:
     runs-on: ubuntu-latest
     env:
       GO_VERSION: 1.19
-      SQLC_VERSION: 1.18.0
+      SQLC_VERSION: 1.17.2
+
     steps:
-      - name: Set up Go
-        uses: actions/setup-go@v2
-        with:
-          go-version: ${{ env.GO_VERSION }}
-      - name: Install SQLc
-        run: |
-          curl -L "https://github.com/kyleconroy/sqlc/releases/download/v${{ env.SQLC_VERSION }}/sqlc_${{ env.SQLC_VERSION }}_linux_amd64.tar.gz" |
-          tar xz
-          sudo install -m 755 sqlc /usr/local/bin/
-      - name: Generate code
-        id: generate
-        run: |
-          output=$(sqlc generate -c sqlc.yaml)
-          echo "::set-output name=output::$output"
-      - name: Check for changes
-        run: |
-          changes=$(git status --porcelain)
-          if [ -n "$changes" ]; then
-            echo "There are changes after running sqlc generate. These should be pushed as part of your PR:"
-            echo "$changes"
-            exit 1
-          fi
-      if: ${{ failure() }}
+    - name: Check out code
+      uses: actions/checkout@v2
+
+    - name: Set up Go
+      uses: actions/setup-go@v2
+      with:
+        go-version: ${{ env.GO_VERSION }}
+
+    - name: Install sqlc
+      run: |
+        curl -L https://github.com/kyleconroy/sqlc/releases/download/v${SQLC_VERSION}/sqlc_${SQLC_VERSION}_linux_amd64.tar.gz -o sqlc.tar.gz
+        tar -xzf sqlc.tar.gz
+        sudo mv sqlc /usr/local/bin
+        rm sqlc.tar.gz
+
+    - name: Generate Go code from SQL and check for syntax errors
+      shell: bash
+      run: |
+        OUTPUT=$(sqlc generate 2>&1) || true
+        if [[ $OUTPUT == *"syntax error"* ]]; then
+          echo "Error: SQL generation failed:"
+          echo "$OUTPUT"
+          exit 1
+        else
+          echo "$OUTPUT"
+        fi
+    
+    - name: Check for uncommitted SQLC changes
+      run: |
+        git diff --exit-code || (echo "Error: Uncommitted changes detected after running 'sqlc generate'. Please commit the changes and try again." && exit 1)
+
