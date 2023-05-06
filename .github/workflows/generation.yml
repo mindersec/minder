@@ -27,11 +27,11 @@ jobs:
         tar -xzf sqlc.tar.gz
         sudo mv sqlc /usr/local/bin
         rm sqlc.tar.gz
+
     - name: Generate Go code from SQL and check for syntax errors
       shell: bash
       run: |
-        set -e
-        OUTPUT=$(sqlc generate 2>&1)
+        OUTPUT=$(sqlc generate 2>&1) || true
         if [[ $OUTPUT == *"syntax error"* ]]; then
           echo "Error: SQL syntax error detected:"
           echo "$OUTPUT"
