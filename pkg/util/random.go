@@ -23,12 +23,7 @@ package util
 
 import (
 	"math/rand"
-	"time"
 )
-
-func init() {
-	rand.Seed(time.Now().UnixNano())
-}
 
 // NewRand returns a new instance of rand.Rand with a fixed source.
 func NewRand(seed int64) *rand.Rand {
