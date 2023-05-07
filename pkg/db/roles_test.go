@@ -24,18 +24,18 @@ package db
 import (
 	"context"
 	"database/sql"
-	// "database/sql"
 	"testing"
-	// "time"
+	"time"
 
 	"github.com/stacklok/mediator/pkg/util"
 	"github.com/stretchr/testify/require"
 )
 
 func createRandomRole(t *testing.T, org int32) Role {
+	seed := time.Now().UnixNano()
 	arg := CreateRoleParams{
 		OrganisationID: sql.NullInt32{Int32: org, Valid: true},
-		Name:           util.RandomName(),
+		Name:           util.RandomName(seed),
 	}
 
 	role, err := testQueries.CreateRole(context.Background(), arg)
@@ -100,12 +100,13 @@ func TestGetRole(t *testing.T) {
 // }
 
 func TestUpdateRole(t *testing.T) {
+	seed := time.Now().UnixNano()
 	org := createRandomOrganisation(t)
 	role1 := createRandomRole(t, org.ID)
 
 	arg := UpdateRoleParams{
 		ID:   role1.ID,
-		Name: util.RandomName(),
+		Name: util.RandomName(seed),
 	}
 
 	role2, err := testQueries.UpdateRole(context.Background(), arg)

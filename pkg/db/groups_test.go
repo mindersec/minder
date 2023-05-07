@@ -25,6 +25,7 @@ import (
 	"context"
 	"database/sql"
 	"testing"
+	"time"
 
 	"github.com/stacklok/mediator/pkg/util"
 
@@ -32,9 +33,10 @@ import (
 )
 
 func createRandomGroup(t *testing.T, org int32) Group {
+	seed := time.Now().UnixNano()
 	arg := CreateGroupParams{
 		OrganisationID: sql.NullInt32{Int32: org, Valid: true},
-		Name:           util.RandomName(),
+		Name:           util.RandomName(seed),
 	}
 
 	group, err := testQueries.CreateGroup(context.Background(), arg)
@@ -97,13 +99,14 @@ func TestListGroups(t *testing.T) {
 }
 
 func TestUpdateGroup(t *testing.T) {
+	seed := time.Now().UnixNano()
 	org := createRandomOrganisation(t)
 	group1 := createRandomGroup(t, org.ID)
 
 	arg := UpdateGroupParams{
 		ID:             group1.ID,
 		OrganisationID: sql.NullInt32{Int32: org.ID, Valid: true},
-		Name:           util.RandomName(),
+		Name:           util.RandomName(seed),
 	}
 
 	group2, err := testQueries.UpdateGroup(context.Background(), arg)

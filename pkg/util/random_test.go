@@ -29,19 +29,22 @@ import (
 func TestRandomInt(t *testing.T) {
 	min := int64(1)
 	max := int64(10)
-	randomInt := RandomInt(min, max)
+	seed := int64(12345)
+	randomInt := RandomInt(min, max, seed)
 	require.GreaterOrEqual(t, randomInt, min)
 	require.LessOrEqual(t, randomInt, max)
 }
 
 func TestRandomString(t *testing.T) {
-	randomString := RandomString(10)
+	seed := int64(12345)
+	randomString := RandomString(10, seed)
 	require.NotEmpty(t, randomString)
 	require.Len(t, randomString, 10)
 }
 
 func TestRandomEmail(t *testing.T) {
-	email := RandomEmail()
+	seed := int64(12345)
+	email := RandomEmail(seed)
 	require.NotEmpty(t, email)
 	require.Contains(t, email, "@")
 	require.Contains(t, email, ".")
@@ -49,7 +52,8 @@ func TestRandomEmail(t *testing.T) {
 }
 
 func TestRandomName(t *testing.T) {
-	name := RandomName()
+	seed := int64(12345)
+	name := RandomName(seed)
 	require.NotEmpty(t, name)
 	require.Len(t, name, 10)
 }
