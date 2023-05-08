@@ -38,7 +38,7 @@ jobs:
     steps:
       - uses: actions/checkout@8e5e7e5ab8b370d6c329ec480221332ada57f0ab # v3.5.0
 
-      - uses: actions/setup-go@4d34df0c2316fe8122ab82dc22947d607c0c91f9 # v4.0.0
+      - uses: actions/setup-go@v4 # v4.0.0
         with:
           go-version: 1.20.0
       - name: Install addlicense
@@ -58,7 +58,7 @@ jobs:
         run: sudo apt-get update && sudo apt-get install -yq libpcsclite-dev
       - name: Extract version of Go to use
         run: echo "GOVERSION=$(sed -n 's/^go \([0-9.]*\)/\1/p' go.mod)" >> $GITHUB_ENV
-      - uses: actions/setup-go@4d34df0c2316fe8122ab82dc22947d607c0c91f9 # v4.0.0
+      - uses: actions/setup-go@v4 # v4.0.0
         with:
           go-version: ${{ env.GOVERSION }}
       - name: golangci-lint
@@ -75,7 +75,7 @@ jobs:
       - uses: actions/checkout@8e5e7e5ab8b370d6c329ec480221332ada57f0ab # v3.5.0
       - name: Extract version of Go to use
         run: echo "GOVERSION=$(sed -n 's/^go \([0-9.]*\)/\1/p' go.mod)" >> $GITHUB_ENV
-      - uses: actions/setup-go@4d34df0c2316fe8122ab82dc22947d607c0c91f9 # v4.0.0
+      - uses: actions/setup-go@v4 # v4.0.0
         with:
           go-version: 1.20.0
       - name: build
@@ -106,7 +106,7 @@ jobs:
 
       # Install Go on the VM running the action.
       - name: Set up Go
-        uses: actions/setup-go@4d34df0c2316fe8122ab82dc22947d607c0c91f9
+        uses: actions/setup-go@v4
         with:
           go-version: 1.20.0
 
