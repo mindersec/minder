@@ -36,7 +36,7 @@ Note that the application requires a database to be running. This can be achieve
 using docker-compose:
 
 ```bash
-docker-compose up
+docker-compose up -d postgres
 ```
 
 Then run the application
