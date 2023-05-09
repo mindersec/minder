@@ -10,7 +10,7 @@ require (
 	github.com/gotesttools/gotestfmt/v2 v2.4.1
 	github.com/kyleconroy/sqlc v1.18.0
 	golang.org/x/lint v0.0.0-20210508222113-6edffad5e616
-	golang.org/x/tools v0.8.0
+	golang.org/x/tools v0.9.0
 	mvdan.cc/gofumpt v0.5.0
 )
 
@@ -220,7 +220,7 @@ require (
 	golang.org/x/exp v0.0.0-20230425010034-47ecfdc1ba53 // indirect
 	golang.org/x/exp/typeparams v0.0.0-20230224173230-c95f2b4c22f2 // indirect
 	golang.org/x/mod v0.10.0 // indirect
-	golang.org/x/net v0.9.0 // indirect
+	golang.org/x/net v0.10.0 // indirect
 	golang.org/x/sync v0.2.0 // indirect
 	golang.org/x/sys v0.8.0 // indirect
 	golang.org/x/term v0.8.0 // indirect
