@@ -57,3 +57,12 @@ func TestRandomName(t *testing.T) {
 	require.NotEmpty(t, name)
 	require.Len(t, name, 10)
 }
+
+func TestRandomURL(t *testing.T) {
+	seed := int64(12345)
+	url := RandomURL(seed)
+	require.NotEmpty(t, url)
+	require.Contains(t, url, "https")
+	require.Contains(t, url, "://")
+	require.Len(t, url, 47)
+}

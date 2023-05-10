@@ -27,9 +27,14 @@ import (
 	"crypto/rand"
 	"encoding/base64"
 	"fmt"
+	"log"
 	"net/http"
+	"strconv"
 
+	"github.com/stacklok/mediator/pkg/accounts"
+	"github.com/stacklok/mediator/pkg/db"
 	pb "github.com/stacklok/mediator/pkg/generated/protobuf/go/proto/v1"
+
 	"golang.org/x/oauth2"
 	"golang.org/x/oauth2/github"
 	"golang.org/x/oauth2/google"
@@ -138,7 +143,43 @@ func (s *Server) ExchangeCodeForTokenCLI(ctx context.Context, in *pb.CodeExchang
 		status = "failure"
 	}
 
-	cliAppURL := "http://localhost:8891/shutdown" // Replace PORT with the appropriate port number
+	cliAppURL := "http://localhost:8891/shutdown"
+
+	// get the user data
+	user, err := accounts.GetUserInfo(oauthConfig, token, in.Provider)
+	if err != nil {
+		return nil, err
+	}
+
+	switch user.(type) {
+	case *accounts.GithubUser:
+		provID := strconv.FormatInt(user.GetID(), 10)
+		_, err := s.store.CreateUser(ctx, db.CreateUserParams{
+			Email:      user.GetEmail(),
+			Name:       user.GetName(),
+			AvatarUrl:  user.GetAvatarURL(),
+			Provider:   "github",
+			ProviderID: provID,
+		})
+		if err != nil {
+			return nil, err
+		}
+	case *accounts.GoogleUser:
+		_, err = s.store.CreateUser(ctx, db.CreateUserParams{
+			Email:      user.GetEmail(),
+			Name:       user.GetName(),
+			AvatarUrl:  user.GetAvatarURL(),
+			Provider:   "google",
+			ProviderID: user.GetSub(),
+		})
+		if err != nil {
+			return nil, err
+		}
+	default:
+		return nil, fmt.Errorf("invalid user type")
+	}
+
+	log.Println("user:", user)
 
 	resp, err := http.Post(cliAppURL, "application/json", bytes.NewBuffer([]byte(`{"status": "`+status+`"}`)))
 	if err != nil {

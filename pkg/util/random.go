@@ -56,3 +56,10 @@ func RandomEmail(seed int64) string {
 func RandomName(seed int64) string {
 	return RandomString(10, seed)
 }
+
+func RandomURL(seed int64) string {
+	prefix := "https://"
+	host := RandomString(10, seed) + ".com"
+	postfix := "/id=something/other=thing"
+	return prefix + host + postfix
+}

@@ -55,8 +55,10 @@ type User struct {
 	GroupID        sql.NullInt32 `json:"group_id"`
 	Email          string        `json:"email"`
 	Password       string        `json:"password"`
-	FirstName      string        `json:"first_name"`
-	LastName       string        `json:"last_name"`
+	Name           string        `json:"name"`
+	AvatarUrl      string        `json:"avatar_url"`
+	Provider       string        `json:"provider"`
+	ProviderID     string        `json:"provider_id"`
 	IsAdmin        bool          `json:"is_admin"`
 	IsSuperAdmin   bool          `json:"is_super_admin"`
 	CreatedAt      time.Time     `json:"created_at"`

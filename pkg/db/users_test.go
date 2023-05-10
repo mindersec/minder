@@ -23,6 +23,7 @@ package db
 import (
 	"context"
 	"database/sql"
+	"fmt"
 	"testing"
 	"time"
 
@@ -40,8 +41,9 @@ func createRandomUser(t *testing.T, org Organisation) User {
 		GroupID:        sql.NullInt32{Int32: group.ID, Valid: true},
 		Email:          util.RandomEmail(seed),
 		Password:       util.RandomString(10, seed),
-		FirstName:      util.RandomName(seed),
-		LastName:       util.RandomName(seed),
+		Name:           util.RandomString(10, seed),
+		AvatarUrl:      util.RandomURL(seed),
+		ProviderID:     fmt.Sprintf("%d", util.RandomInt(1, 1000, seed)),
 		IsAdmin:        true,
 		IsSuperAdmin:   true,
 	}
@@ -54,8 +56,9 @@ func createRandomUser(t *testing.T, org Organisation) User {
 	require.Equal(t, arg.GroupID, user.GroupID)
 	require.Equal(t, arg.Email, user.Email)
 	require.Equal(t, arg.Password, user.Password)
-	require.Equal(t, arg.FirstName, user.FirstName)
-	require.Equal(t, arg.LastName, user.LastName)
+	require.Equal(t, arg.Name, user.Name)
+	require.Equal(t, arg.AvatarUrl, user.AvatarUrl)
+	require.Equal(t, arg.ProviderID, user.ProviderID)
 	require.Equal(t, arg.IsAdmin, user.IsAdmin)
 	require.Equal(t, arg.IsSuperAdmin, user.IsSuperAdmin)
 
@@ -85,8 +88,9 @@ func TestGetUser(t *testing.T) {
 	require.Equal(t, user1.GroupID, user2.GroupID)
 	require.Equal(t, user1.Email, user2.Email)
 	require.Equal(t, user1.Password, user2.Password)
-	require.Equal(t, user1.FirstName, user2.FirstName)
-	require.Equal(t, user1.LastName, user2.LastName)
+	require.Equal(t, user1.Name, user2.Name)
+	require.Equal(t, user1.AvatarUrl, user2.AvatarUrl)
+	require.Equal(t, user1.ProviderID, user2.ProviderID)
 	require.Equal(t, user1.IsAdmin, user2.IsAdmin)
 	require.Equal(t, user1.IsSuperAdmin, user2.IsSuperAdmin)
 
@@ -108,8 +112,9 @@ func TestUpdateUser(t *testing.T) {
 		GroupID:        sql.NullInt32{Int32: user1.GroupID.Int32, Valid: true},
 		Email:          util.RandomEmail(seed),
 		Password:       util.RandomString(10, seed),
-		FirstName:      util.RandomName(seed),
-		LastName:       util.RandomName(seed),
+		Name:           util.RandomName(seed),
+		AvatarUrl:      util.RandomURL(seed),
+		ProviderID:     fmt.Sprintf("%d", util.RandomInt(1, 1000, seed)),
 		IsAdmin:        true,
 		IsSuperAdmin:   true,
 	}
@@ -123,8 +128,9 @@ func TestUpdateUser(t *testing.T) {
 	require.Equal(t, arg.GroupID, user2.GroupID)
 	require.Equal(t, arg.Email, user2.Email)
 	require.Equal(t, arg.Password, user2.Password)
-	require.Equal(t, arg.FirstName, user2.FirstName)
-	require.Equal(t, arg.LastName, user2.LastName)
+	require.Equal(t, arg.Name, user2.Name)
+	require.Equal(t, arg.AvatarUrl, user2.AvatarUrl)
+	require.Equal(t, arg.ProviderID, user2.ProviderID)
 	require.Equal(t, arg.IsAdmin, user2.IsAdmin)
 	require.Equal(t, arg.IsSuperAdmin, user2.IsSuperAdmin)
 
