@@ -10,7 +10,7 @@ require (
 	github.com/gotesttools/gotestfmt/v2 v2.4.1
 	github.com/kyleconroy/sqlc v1.18.0
 	golang.org/x/lint v0.0.0-20210508222113-6edffad5e616
-	golang.org/x/tools v0.9.0
+	golang.org/x/tools v0.9.1
 	mvdan.cc/gofumpt v0.5.0
 )
 
