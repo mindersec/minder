@@ -467,6 +467,9 @@
       "properties": {
         "html": {
           "type": "string"
+        },
+        "jwt": {
+          "type": "string"
         }
       }
     },

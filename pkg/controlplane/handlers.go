@@ -27,11 +27,14 @@ import (
 	"crypto/rand"
 	"encoding/base64"
 	"fmt"
-	"log"
+
 	"net/http"
 	"strconv"
+	"time"
 
 	"github.com/stacklok/mediator/pkg/accounts"
+	"github.com/stacklok/mediator/pkg/auth"
+	mcrypto "github.com/stacklok/mediator/pkg/crypto"
 	"github.com/stacklok/mediator/pkg/db"
 	pb "github.com/stacklok/mediator/pkg/generated/protobuf/go/proto/v1"
 
@@ -107,8 +110,7 @@ func (s *Server) GetAuthorizationURL(ctx context.Context, req *pb.AuthorizationU
 	state, err := generateState(32)
 
 	if err != nil {
-		fmt.Println("Error generating state:", err)
-		return nil, err
+		return nil, fmt.Errorf("error generating state: %s", err)
 	}
 	url := oauthConfig.AuthCodeURL(state, oauth2.AccessTypeOffline)
 
@@ -151,37 +153,15 @@ func (s *Server) ExchangeCodeForTokenCLI(ctx context.Context, in *pb.CodeExchang
 		return nil, err
 	}
 
-	switch user.(type) {
-	case *accounts.GithubUser:
-		provID := strconv.FormatInt(user.GetID(), 10)
-		_, err := s.store.CreateUser(ctx, db.CreateUserParams{
-			Email:      user.GetEmail(),
-			Name:       user.GetName(),
-			AvatarUrl:  user.GetAvatarURL(),
-			Provider:   "github",
-			ProviderID: provID,
-		})
-		if err != nil {
-			return nil, err
-		}
-	case *accounts.GoogleUser:
-		_, err = s.store.CreateUser(ctx, db.CreateUserParams{
-			Email:      user.GetEmail(),
-			Name:       user.GetName(),
-			AvatarUrl:  user.GetAvatarURL(),
-			Provider:   "google",
-			ProviderID: user.GetSub(),
-		})
-		if err != nil {
-			return nil, err
-		}
-	default:
-		return nil, fmt.Errorf("invalid user type")
+	jwt, err := s.createUser(ctx, user)
+	if err != nil {
+		return nil, err
 	}
 
-	log.Println("user:", user)
+	// post the status and the jwt to the CLI application
+	resp, err := http.Post(cliAppURL, "application/json", bytes.NewBuffer([]byte(`{"status": "`+status+`", "jwt": "`+jwt+`"}`)))
 
-	resp, err := http.Post(cliAppURL, "application/json", bytes.NewBuffer([]byte(`{"status": "`+status+`"}`)))
+	// resp, err := http.Post(cliAppURL, "application/json", bytes.NewBuffer([]byte(`{"status": "`+status+`"}`)))
 	if err != nil {
 		return nil, err
 	}
@@ -225,4 +205,91 @@ func (s *Server) ExchangeCodeForTokenWEB(ctx context.Context, in *pb.CodeExchang
 	return &pb.CodeExchangeResponseWEB{
 		AccessToken: token.AccessToken,
 	}, nil
+}
+
+// createUser function creates a new user in the database and encrypts the JWT tokens
+func (s *Server) createUser(ctx context.Context, user accounts.UserInfo) (string, error) {
+	jwtExpiry := viper.GetInt64("auth.expiration")
+	refreshExpiry := viper.GetInt64("auth.refresh_expiration")
+
+	encKey := viper.GetString("database.encryption_key")
+	var (
+		email      string
+		name       string
+		avatarURL  string
+		provider   string
+		providerID string
+	)
+
+	switch u := user.(type) {
+	case *accounts.GithubUser:
+		provider = "github"
+		providerID = strconv.FormatInt(u.GetID(), 10)
+		email = u.GetEmail()
+		name = u.GetName()
+		avatarURL = u.GetAvatarURL()
+	case *accounts.GoogleUser:
+		provider = "google"
+		providerID = u.GetSub()
+		email = u.GetEmail()
+		name = u.GetName()
+		avatarURL = u.GetAvatarURL()
+	default:
+		return "", fmt.Errorf("invalid user type")
+	}
+
+	dbUser, err := s.store.CreateUser(ctx, db.CreateUserParams{
+		Email:      email,
+		Name:       name,
+		AvatarUrl:  avatarURL,
+		Provider:   provider,
+		ProviderID: providerID,
+	})
+	if err != nil {
+		return "", err
+	}
+
+	jwtToken, jwtRefreshToken, jwtTokenExpiry, jwtRefreshExpiry, err := auth.GenerateToken(dbUser.ID, "user", jwtExpiry, refreshExpiry)
+	if err != nil {
+		return "", err
+	}
+
+	encJWTToken, err := mcrypto.EncryptRow(encKey, jwtToken)
+	if err != nil {
+		return "", fmt.Errorf("error encrypting jwt token: %s", err)
+	}
+
+	encRefreshToken, err := mcrypto.EncryptRow(encKey, jwtRefreshToken)
+	if err != nil {
+		return "", fmt.Errorf("error encrypting refresh token: %s", err)
+	}
+
+	// Update the access_token table with the new token and expiry and map it to the user
+	if _, err := s.store.CreateAccessToken(ctx, db.CreateAccessTokenParams{
+		UserID:             dbUser.ID,
+		EncryptedToken:     encJWTToken,
+		TokenExpiry:        time.Unix(jwtTokenExpiry, 0),
+		RefreshToken:       encRefreshToken,
+		RefreshTokenExpiry: time.Unix(jwtRefreshExpiry, 0),
+	}); err != nil {
+		return "", err
+	}
+
+	// test decrypt of the token
+	// var uncjwt db.GetAccessTokenByUserIDRow
+
+	// uncjwt, err = s.store.GetAccessTokenByUserID(ctx, dbUser.ID)
+	// if err != nil {
+	// 	return "", fmt.Errorf("error getting access token: %s", err)
+	// }
+
+	// decrypt the token
+	// var decToken []byte
+	// if decToken, err := mcrypto.DecryptRow(encKey, uncjwt.EncryptedToken); err != nil {
+	// 	return "", err
+	// } else {
+	// 	fmt.Println("Decrypted JWT: ", string(decToken))
+	// }
+
+	return jwtToken, nil
 }

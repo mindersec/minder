@@ -42,8 +42,9 @@ import (
 	"google.golang.org/grpc/credentials/insecure"
 )
 
-type Status struct {
+type Response struct {
 	Status string `json:"status"`
+	Jwt    string `json:"jwt"`
 }
 
 // callBackServer is a simple HTTP server that listens for a callback from the
@@ -63,17 +64,19 @@ func callBackServer(wg *sync.WaitGroup) {
 		}
 		defer r.Body.Close()
 
-		var status Status
-		err = json.Unmarshal(body, &status)
+		var response Response
+		err = json.Unmarshal(body, &response)
 		if err != nil {
 			http.Error(w, "Error unmarshaling JSON", http.StatusBadRequest)
 			return
 		}
 
-		if status.Status == "success" {
+		if response.Status == "success" {
 			fmt.Println("OAuth flow completed successfully")
+			fmt.Println("Saving token to config file...")
+
 			wg.Done() // Signal that we received the correct status and can shutdown the server.
-		} else if status.Status == "failure" {
+		} else if response.Status == "failure" {
 			fmt.Println("OAuth flow failed")
 			wg.Done()
 		} else {

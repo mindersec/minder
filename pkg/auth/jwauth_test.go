@@ -26,46 +26,63 @@ import (
 	"time"
 )
 
+const (
+	testUserID     = 123
+	testKey        = "test_key"
+	testExpiry     = 10   // 10 minutes
+	testRefreshExp = 1440 // 24 hours in minutes
+)
+
 func TestGenerateToken(t *testing.T) {
-
-	tokenString, tokenExpirationTime, err := GenerateToken(123, "secret", 60)
-
-	// Check that token generation succeeds and returns a non-empty token string
+	// Test valid token generation
+	tokenString, refreshTokenString, tokenExp, refreshTokenExp, err := GenerateToken(testUserID, testKey, testExpiry, testRefreshExp)
 	if err != nil {
-		t.Errorf("Unexpected error: %v", err)
+		t.Errorf("Error generating token: %v", err)
 	}
-	if tokenString == "" {
-		t.Errorf("Expected a non-empty token string")
+	if len(tokenString) == 0 || len(refreshTokenString) == 0 {
+		t.Error("Token or refresh token string is empty")
+	}
+	if tokenExp <= time.Now().Unix() || refreshTokenExp <= time.Now().Unix() {
+		t.Error("Token or refresh token has already expired")
+	}
+	if refreshTokenExp <= tokenExp {
+		t.Error("Refresh token expires before access token")
 	}
 
-	// Check that token expiration time is 60 minutes from now
-	expectedExpirationTime := time.Now().Add(60 * time.Minute).Unix()
-
-	if tokenExpirationTime != expectedExpirationTime {
-		t.Errorf("Expected token expiration time to be %d, but got %d", expectedExpirationTime, tokenExpirationTime)
+	// Test error case with invalid key
+	_, _, _, _, err = GenerateToken(testUserID, "", testExpiry, testRefreshExp)
+	if err == nil {
+		t.Error("Expected error with invalid key, but got nil")
+	} else if err.Error() != "invalid key" {
+		t.Errorf("Expected error message 'invalid key', but got '%s'", err.Error())
 	}
 }
 
 func TestVerifyToken(t *testing.T) {
-	// Generate a token for testing
-	tokenString, _, err := GenerateToken(123, "secret", 60)
+	// Test valid token verification
+	tokenString, _, _, _, err := GenerateToken(testUserID, testKey, testExpiry, testRefreshExp)
 	if err != nil {
-		t.Errorf("Unexpected error generating token: %v", err)
+		t.Errorf("Error generating token: %v", err)
 	}
-
-	// Check that token verification succeeds and returns the correct user ID
-	userId, err := VerifyToken(tokenString, "secret")
+	userId, err := VerifyToken(tokenString, testKey)
 	if err != nil {
-		t.Errorf("Unexpected error verifying token: %v", err)
+		t.Errorf("Error verifying token: %v", err)
+	}
+	if userId != testUserID {
+		t.Errorf("Expected user ID %d, but got %d", testUserID, userId)
 	}
 
-	if userId != 123 {
-		t.Errorf("Expected user ID to be %d, but got %d", 123, userId)
-	}
-
-	// Check that token verification fails with an invalid token
-	_, err = VerifyToken("invalid_token", "secret")
+	// Test error case with invalid token string
+	_, err = VerifyToken("invalid_token_string", testKey)
 	if err == nil {
-		t.Errorf("Expected token verification to fail with an invalid token")
+		t.Error("Expected error with invalid token string, but got nil")
+	}
+
+	// Test error case with invalid key
+	_, err = VerifyToken(tokenString, "invalid_key")
+	if err == nil {
+		t.Error("Expected error with invalid key, but got nil")
+	} else {
+		t.Logf("Got expected error with invalid key: %v", err)
 	}
 }

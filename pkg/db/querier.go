@@ -11,17 +11,16 @@ import (
 type Querier interface {
 	AddRoleToGroup(ctx context.Context, arg AddRoleToGroupParams) (GroupRole, error)
 	AssignRoleToUser(ctx context.Context, arg AssignRoleToUserParams) (UserRole, error)
-	CreateAccessToken(ctx context.Context, arg CreateAccessTokenParams) (AccessToken, error)
+	CreateAccessToken(ctx context.Context, arg CreateAccessTokenParams) (UserAccessToken, error)
 	CreateGroup(ctx context.Context, arg CreateGroupParams) (Group, error)
 	CreateOrganisation(ctx context.Context, arg CreateOrganisationParams) (Organisation, error)
 	CreateRole(ctx context.Context, arg CreateRoleParams) (Role, error)
 	CreateUser(ctx context.Context, arg CreateUserParams) (User, error)
-	DeleteAccessToken(ctx context.Context, organisationID int32) error
 	DeleteGroup(ctx context.Context, id int32) error
 	DeleteOrganisation(ctx context.Context, id int32) error
 	DeleteRole(ctx context.Context, id int32) error
 	DeleteUser(ctx context.Context, id int32) error
-	GetAccessTokenByOrganisationID(ctx context.Context, organisationID int32) (AccessToken, error)
+	GetAccessTokenByUserID(ctx context.Context, id int32) (GetAccessTokenByUserIDRow, error)
 	GetGroupByID(ctx context.Context, id int32) (Group, error)
 	GetGroupRoles(ctx context.Context, groupID int32) ([]GroupRole, error)
 	GetOrganisation(ctx context.Context, id int32) (Organisation, error)
@@ -36,7 +35,7 @@ type Querier interface {
 	ListUsers(ctx context.Context) ([]User, error)
 	RemoveRoleFromGroup(ctx context.Context, arg RemoveRoleFromGroupParams) error
 	RevokeRoleFromUser(ctx context.Context, arg RevokeRoleFromUserParams) error
-	UpdateAccessToken(ctx context.Context, arg UpdateAccessTokenParams) (AccessToken, error)
+	UpdateAccessToken(ctx context.Context, arg UpdateAccessTokenParams) (UserAccessToken, error)
 	UpdateGroup(ctx context.Context, arg UpdateGroupParams) (Group, error)
 	UpdateOrganisation(ctx context.Context, arg UpdateOrganisationParams) (Organisation, error)
 	UpdateRole(ctx context.Context, arg UpdateRoleParams) (Role, error)

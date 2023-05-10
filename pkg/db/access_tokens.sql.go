@@ -7,50 +7,68 @@ package db
 
 import (
 	"context"
+	"time"
 )
 
 const createAccessToken = `-- name: CreateAccessToken :one
-INSERT INTO access_tokens (organisation_id, encrypted_token) VALUES ($1, $2) RETURNING id, organisation_id, encrypted_token, created_at, updated_at
+INSERT INTO user_access_tokens (user_id, encrypted_token, token_expiry,refresh_token, refresh_token_expiry) 
+VALUES ($1, $2, $3, $4, $5) 
+RETURNING id, user_id, encrypted_token, refresh_token, token_expiry, refresh_token_expiry, created_at, updated_at
 `
 
 type CreateAccessTokenParams struct {
-	OrganisationID int32  `json:"organisation_id"`
-	EncryptedToken string `json:"encrypted_token"`
+	UserID             int32     `json:"user_id"`
+	EncryptedToken     []byte    `json:"encrypted_token"`
+	TokenExpiry        time.Time `json:"token_expiry"`
+	RefreshToken       []byte    `json:"refresh_token"`
+	RefreshTokenExpiry time.Time `json:"refresh_token_expiry"`
 }
 
-func (q *Queries) CreateAccessToken(ctx context.Context, arg CreateAccessTokenParams) (AccessToken, error) {
-	row := q.db.QueryRowContext(ctx, createAccessToken, arg.OrganisationID, arg.EncryptedToken)
-	var i AccessToken
+func (q *Queries) CreateAccessToken(ctx context.Context, arg CreateAccessTokenParams) (UserAccessToken, error) {
+	row := q.db.QueryRowContext(ctx, createAccessToken,
+		arg.UserID,
+		arg.EncryptedToken,
+		arg.TokenExpiry,
+		arg.RefreshToken,
+		arg.RefreshTokenExpiry,
+	)
+	var i UserAccessToken
 	err := row.Scan(
 		&i.ID,
-		&i.OrganisationID,
+		&i.UserID,
 		&i.EncryptedToken,
+		&i.RefreshToken,
+		&i.TokenExpiry,
+		&i.RefreshTokenExpiry,
 		&i.CreatedAt,
 		&i.UpdatedAt,
 	)
 	return i, err
 }
 
-const deleteAccessToken = `-- name: DeleteAccessToken :exec
-DELETE FROM access_tokens WHERE organisation_id = $1
+const getAccessTokenByUserID = `-- name: GetAccessTokenByUserID :one
+SELECT id, user_id, encrypted_token, refresh_token, created_at, updated_at
+FROM user_access_tokens
+WHERE id = $1
 `
 
-func (q *Queries) DeleteAccessToken(ctx context.Context, organisationID int32) error {
-	_, err := q.db.ExecContext(ctx, deleteAccessToken, organisationID)
-	return err
+type GetAccessTokenByUserIDRow struct {
+	ID             int32     `json:"id"`
+	UserID         int32     `json:"user_id"`
+	EncryptedToken []byte    `json:"encrypted_token"`
+	RefreshToken   []byte    `json:"refresh_token"`
+	CreatedAt      time.Time `json:"created_at"`
+	UpdatedAt      time.Time `json:"updated_at"`
 }
 
-const getAccessTokenByOrganisationID = `-- name: GetAccessTokenByOrganisationID :one
-SELECT id, organisation_id, encrypted_token, created_at, updated_at FROM access_tokens WHERE organisation_id = $1
-`
-
-func (q *Queries) GetAccessTokenByOrganisationID(ctx context.Context, organisationID int32) (AccessToken, error) {
-	row := q.db.QueryRowContext(ctx, getAccessTokenByOrganisationID, organisationID)
-	var i AccessToken
+func (q *Queries) GetAccessTokenByUserID(ctx context.Context, id int32) (GetAccessTokenByUserIDRow, error) {
+	row := q.db.QueryRowContext(ctx, getAccessTokenByUserID, id)
+	var i GetAccessTokenByUserIDRow
 	err := row.Scan(
 		&i.ID,
-		&i.OrganisationID,
+		&i.UserID,
 		&i.EncryptedToken,
+		&i.RefreshToken,
 		&i.CreatedAt,
 		&i.UpdatedAt,
 	)
@@ -58,21 +76,34 @@ func (q *Queries) GetAccessTokenByOrganisationID(ctx context.Context, organisati
 }
 
 const updateAccessToken = `-- name: UpdateAccessToken :one
-UPDATE access_tokens SET encrypted_token = $2, updated_at = NOW() WHERE organisation_id = $1 RETURNING id, organisation_id, encrypted_token, created_at, updated_at
+UPDATE user_access_tokens SET user_id = $1, encrypted_token = $2, token_expiry = $3, refresh_token = $4,  refresh_token_expiry = $5 WHERE id = $4 
+RETURNING id, user_id, encrypted_token, refresh_token, token_expiry, refresh_token_expiry, created_at, updated_at
 `
 
 type UpdateAccessTokenParams struct {
-	OrganisationID int32  `json:"organisation_id"`
-	EncryptedToken string `json:"encrypted_token"`
+	UserID             int32     `json:"user_id"`
+	EncryptedToken     []byte    `json:"encrypted_token"`
+	TokenExpiry        time.Time `json:"token_expiry"`
+	RefreshToken       []byte    `json:"refresh_token"`
+	RefreshTokenExpiry time.Time `json:"refresh_token_expiry"`
 }
 
-func (q *Queries) UpdateAccessToken(ctx context.Context, arg UpdateAccessTokenParams) (AccessToken, error) {
-	row := q.db.QueryRowContext(ctx, updateAccessToken, arg.OrganisationID, arg.EncryptedToken)
-	var i AccessToken
+func (q *Queries) UpdateAccessToken(ctx context.Context, arg UpdateAccessTokenParams) (UserAccessToken, error) {
+	row := q.db.QueryRowContext(ctx, updateAccessToken,
+		arg.UserID,
+		arg.EncryptedToken,
+		arg.TokenExpiry,
+		arg.RefreshToken,
+		arg.RefreshTokenExpiry,
+	)
+	var i UserAccessToken
 	err := row.Scan(
 		&i.ID,
-		&i.OrganisationID,
+		&i.UserID,
 		&i.EncryptedToken,
+		&i.RefreshToken,
+		&i.TokenExpiry,
+		&i.RefreshTokenExpiry,
 		&i.CreatedAt,
 		&i.UpdatedAt,
 	)

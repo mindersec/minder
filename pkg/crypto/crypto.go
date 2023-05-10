@@ -13,16 +13,25 @@
 // See the License for the specific language governing permissions and
 // limitations under the License.
 
-package attestation
+package crypto
 
 import (
+	"crypto/aes"
+	"crypto/cipher"
+	"crypto/rand"
+	"fmt"
+
 	"crypto/ecdsa"
 	"crypto/sha256"
 	"crypto/x509"
 	"encoding/json"
 	"encoding/pem"
 	"errors"
+
+	"io"
 	"time"
+
+	"golang.org/x/crypto/argon2"
 )
 
 func GetCert(envelope []byte) ([]byte, error) {
@@ -78,8 +87,50 @@ func VerifyCertChain(certIn []byte, roots *x509.CertPool) (bool, error) {
 	}
 
 	if _, err := cert.Verify(opts); err != nil {
-		return false, err
+		return false, fmt.Errorf("failed to verify certificate: %w", err)
 	}
 
 	return true, nil
+}
+
+func EncryptRow(key, data string) ([]byte, error) {
+	block, err := aes.NewCipher(deriveKey(key))
+	if err != nil {
+		return nil, fmt.Errorf("failed to create cipher: %w", err)
+	}
+
+	// The IV needs to be unique, but not secure. Therefore it's common to include it at the beginning of the ciphertext.
+	ciphertext := make([]byte, aes.BlockSize+len(data))
+	iv := ciphertext[:aes.BlockSize]
+	if _, err := io.ReadFull(rand.Reader, iv); err != nil {
+		return nil, fmt.Errorf("failed to read random bytes: %w", err)
+	}
+
+	stream := cipher.NewCFBEncrypter(block, iv)
+	stream.XORKeyStream(ciphertext[aes.BlockSize:], []byte(data))
+
+	return ciphertext, nil
+}
+
+// Function to decrypt data using AES
+func DecryptRow(key string, ciphertext []byte) (string, error) {
+	block, err := aes.NewCipher(deriveKey(key))
+	if err != nil {
+		return "", fmt.Errorf("failed to create cipher: %w", err)
+	}
+
+	// The IV needs to be extracted from the ciphertext.
+	iv := ciphertext[:aes.BlockSize]
+	ciphertext = ciphertext[aes.BlockSize:]
+
+	stream := cipher.NewCFBDecrypter(block, iv)
+	stream.XORKeyStream(ciphertext, ciphertext)
+
+	return string(ciphertext), nil
+}
+
+// Function to derive a key from a passphrase using Argon2
+func deriveKey(passphrase string) []byte {
+	salt := []byte("somesalt") // In a real application, you should use a unique salt for each key and save it with the encrypted data.
+	return argon2.IDKey([]byte(passphrase), salt, 1, 64*1024, 4, 32)
 }

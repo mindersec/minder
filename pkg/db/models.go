@@ -9,14 +9,6 @@ import (
 	"time"
 )
 
-type AccessToken struct {
-	ID             int32     `json:"id"`
-	OrganisationID int32     `json:"organisation_id"`
-	EncryptedToken string    `json:"encrypted_token"`
-	CreatedAt      time.Time `json:"created_at"`
-	UpdatedAt      time.Time `json:"updated_at"`
-}
-
 type Group struct {
 	ID             int32         `json:"id"`
 	OrganisationID sql.NullInt32 `json:"organisation_id"`
@@ -63,6 +55,17 @@ type User struct {
 	IsSuperAdmin   bool          `json:"is_super_admin"`
 	CreatedAt      time.Time     `json:"created_at"`
 	UpdatedAt      time.Time     `json:"updated_at"`
+}
+
+type UserAccessToken struct {
+	ID                 int32     `json:"id"`
+	UserID             int32     `json:"user_id"`
+	EncryptedToken     []byte    `json:"encrypted_token"`
+	RefreshToken       []byte    `json:"refresh_token"`
+	TokenExpiry        time.Time `json:"token_expiry"`
+	RefreshTokenExpiry time.Time `json:"refresh_token_expiry"`
+	CreatedAt          time.Time `json:"created_at"`
+	UpdatedAt          time.Time `json:"updated_at"`
 }
 
 type UserRole struct {
