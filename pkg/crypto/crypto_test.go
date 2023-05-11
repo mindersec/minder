@@ -13,7 +13,7 @@
 // See the License for the specific language governing permissions and
 // limitations under the License.
 
-package attestation
+package crypto
 
 import (
 	"crypto/x509"
@@ -52,4 +52,12 @@ func TestCertificateChain(t *testing.T) {
 	verified, err := VerifyCertChain(cert, roots)
 	assert.Nil(t, err)
 	assert.True(t, verified)
+}
+
+func TestDecryptRow(t *testing.T) {
+	encrypted, err := EncryptRow("w00t", "topsecret")
+	assert.Nil(t, err)
+	decrypted, err := DecryptRow("w00t", encrypted)
+	assert.Nil(t, err)
+	assert.Equal(t, "topsecret", decrypted)
 }

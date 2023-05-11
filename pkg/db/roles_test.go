@@ -58,6 +58,8 @@ func TestRole(t *testing.T) {
 
 func TestGetRole(t *testing.T) {
 	org := createRandomOrganisation(t)
+	// group := createRandomGroup(t, org.ID)
+
 	role1 := createRandomRole(t, org.ID)
 
 	role2, err := testQueries.GetRoleByID(context.Background(), role1.ID)
@@ -71,33 +73,6 @@ func TestGetRole(t *testing.T) {
 	require.NotZero(t, role2.CreatedAt)
 	require.NotZero(t, role2.UpdatedAt)
 }
-
-// func TestListRoles(t *testing.T) {
-// 	for i := 0; i < 10; i++ {
-// 		createRandomRole(t, org.ID)
-// 	}
-// }
-
-// func TestListRoles(t *testing.T) {
-// 	org := createRandomOrganisation(t)
-
-// 	for i := 0; i < 10; i++ {
-// 		createRandomRole(t, org.ID)
-// 	}
-
-// 	arg := ListRoleParams{
-// 		OrganisationID: sql.NullInt32{Int32: org.ID, Valid: true},
-// 	}
-
-// 	groups, err := testQueries.ListGroups(context.Background(), arg)
-
-// 	require.NoError(t, err)
-// 	require.Len(t, groups, 5)
-
-// 	for _, group := range groups {
-// 		require.NotEmpty(t, group)
-// 	}
-// }
 
 func TestUpdateRole(t *testing.T) {
 	seed := time.Now().UnixNano()
@@ -134,5 +109,3 @@ func TestDeleteRole(t *testing.T) {
 	require.Error(t, err)
 	require.Empty(t, role2)
 }
-
-// func TestListRolesByGroup(t *testing.T) {

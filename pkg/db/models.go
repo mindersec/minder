@@ -49,17 +49,10 @@ type User struct {
 	GroupID        sql.NullInt32 `json:"group_id"`
 	RoleID         sql.NullInt32 `json:"role_id"`
 	Email          string        `json:"email"`
+	Username       string        `json:"username"`
 	Password       string        `json:"password"`
 	FirstName      string        `json:"first_name"`
 	LastName       string        `json:"last_name"`
 	CreatedAt      time.Time     `json:"created_at"`
 	UpdatedAt      time.Time     `json:"updated_at"`
-}
-
-type UserRole struct {
-	ID        int32     `json:"id"`
-	UserID    int32     `json:"user_id"`
-	RoleID    int32     `json:"role_id"`
-	CreatedAt time.Time `json:"created_at"`
-	UpdatedAt time.Time `json:"updated_at"`
 }

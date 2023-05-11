@@ -56,15 +56,6 @@ CREATE TABLE users (
     updated_at TIMESTAMP NOT NULL DEFAULT NOW()
 );
 
--- user_roles table
-CREATE TABLE user_roles (
-    id SERIAL PRIMARY KEY,
-    user_id INTEGER NOT NULL REFERENCES users(id) ON DELETE CASCADE,
-    role_id INTEGER NOT NULL REFERENCES roles(id) ON DELETE CASCADE,
-    created_at TIMESTAMP NOT NULL DEFAULT NOW(),
-    updated_at TIMESTAMP NOT NULL DEFAULT NOW()
-);
-
 -- access_tokens table
 CREATE TABLE access_tokens (
     id SERIAL PRIMARY KEY,
@@ -96,5 +87,5 @@ VALUES (1, 'Root Group');
 INSERT INTO roles (group_id, name, is_admin)
 VALUES (1, 'Role Role', TRUE);
 
-INSERT INTO users (organisation_id, group_id, role_id, email, password, first_name, last_name)
-VALUES (1, 1, 1, 'root@localhost', 'changeme', 'Root', 'Admin');
+INSERT INTO users (organisation_id, group_id, role_id, email, username, password, first_name, last_name)
+VALUES (1, 1, 1, 'root@localhost', 'root', '$argon2id$v=19$m=0,t=3,p=2$mQDRkaBe7p3pbGvzgFn20Q$GYA0SkpXhVMLwcjRSPKCUpmd4ptMcdUcQ5YTAOnLFKs', 'Root', 'Admin');

@@ -9,7 +9,6 @@ import (
 )
 
 type Querier interface {
-	AssignRoleToUser(ctx context.Context, arg AssignRoleToUserParams) (UserRole, error)
 	CreateAccessToken(ctx context.Context, arg CreateAccessTokenParams) (AccessToken, error)
 	CreateGroup(ctx context.Context, arg CreateGroupParams) (Group, error)
 	CreateOrganisation(ctx context.Context, arg CreateOrganisationParams) (Organisation, error)
@@ -27,12 +26,11 @@ type Querier interface {
 	GetRoleByID(ctx context.Context, id int32) (Role, error)
 	GetUserByEmail(ctx context.Context, email string) (User, error)
 	GetUserByID(ctx context.Context, id int32) (User, error)
-	GetUserRoles(ctx context.Context, userID int32) ([]UserRole, error)
+	GetUserByUserName(ctx context.Context, username string) (User, error)
 	ListGroups(ctx context.Context, arg ListGroupsParams) ([]Group, error)
 	ListOrganisations(ctx context.Context, arg ListOrganisationsParams) ([]Organisation, error)
 	ListRoles(ctx context.Context, arg ListRolesParams) ([]Role, error)
 	ListUsers(ctx context.Context) ([]User, error)
-	RevokeRoleFromUser(ctx context.Context, arg RevokeRoleFromUserParams) error
 	UpdateAccessToken(ctx context.Context, arg UpdateAccessTokenParams) (AccessToken, error)
 	UpdateGroup(ctx context.Context, arg UpdateGroupParams) (Group, error)
 	UpdateOrganisation(ctx context.Context, arg UpdateOrganisationParams) (Organisation, error)

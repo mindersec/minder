@@ -52,29 +52,29 @@ func TestCobraMain(t *testing.T) {
 		expectedOutput string
 	}{
 		{
-			name:           "account command",
-			args:           []string{"account", "--help"},
-			expectedOutput: "account called\n",
+			name:           "auth command",
+			args:           []string{"auth", "--help"},
+			expectedOutput: "auth called\n",
 		},
 		{
-			name:           "account login command",
-			args:           []string{"account", "login", "--help"},
-			expectedOutput: "account login called\n",
+			name:           "auth login command",
+			args:           []string{"auth", "login", "--help"},
+			expectedOutput: "auth login called\n",
 		},
 		{
-			name:           "account list command",
-			args:           []string{"account", "list", "--help"},
-			expectedOutput: "account list called\n",
+			name:           "auth list command",
+			args:           []string{"auth", "list", "--help"},
+			expectedOutput: "auth list called\n",
 		},
 		{
-			name:           "account create command",
-			args:           []string{"account", "create", "--help"},
-			expectedOutput: "account create called\n",
+			name:           "auth create command",
+			args:           []string{"auth", "create", "--help"},
+			expectedOutput: "auth create called\n",
 		},
 		{
-			name:           "account revoke command",
-			args:           []string{"account", "revoke", "--help"},
-			expectedOutput: "account revoke called\n",
+			name:           "auth revoke command",
+			args:           []string{"auth", "revoke", "--help"},
+			expectedOutput: "auth revoke called\n",
 		},
 	}
 
