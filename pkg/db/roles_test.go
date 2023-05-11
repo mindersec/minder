@@ -34,8 +34,8 @@ import (
 func createRandomRole(t *testing.T, org int32) Role {
 	seed := time.Now().UnixNano()
 	arg := CreateRoleParams{
-		OrganisationID: sql.NullInt32{Int32: org, Valid: true},
-		Name:           util.RandomName(seed),
+		GroupID: sql.NullInt32{Int32: org, Valid: true},
+		Name:    util.RandomName(seed),
 	}
 
 	role, err := testQueries.CreateRole(context.Background(), arg)

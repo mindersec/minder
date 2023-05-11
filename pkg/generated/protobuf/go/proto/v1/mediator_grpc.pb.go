@@ -348,6 +348,92 @@ var OAuthService_ServiceDesc = grpc.ServiceDesc{
 	Metadata: "proto/v1/mediator.proto",
 }
 
+// LogInServiceClient is the client API for LogInService service.
+//
+// For semantics around ctx use and closing/ending streaming RPCs, please refer to https://pkg.go.dev/google.golang.org/grpc/?tab=doc#ClientConn.NewStream.
+type LogInServiceClient interface {
+	LogIn(ctx context.Context, in *LogInRequest, opts ...grpc.CallOption) (*LogInResponse, error)
+}
+
+type logInServiceClient struct {
+	cc grpc.ClientConnInterface
+}
+
+func NewLogInServiceClient(cc grpc.ClientConnInterface) LogInServiceClient {
+	return &logInServiceClient{cc}
+}
+
+func (c *logInServiceClient) LogIn(ctx context.Context, in *LogInRequest, opts ...grpc.CallOption) (*LogInResponse, error) {
+	out := new(LogInResponse)
+	err := c.cc.Invoke(ctx, "/dev.stacklok.mediator.v1.LogInService/LogIn", in, out, opts...)
+	if err != nil {
+		return nil, err
+	}
+	return out, nil
+}
+
+// LogInServiceServer is the server API for LogInService service.
+// All implementations must embed UnimplementedLogInServiceServer
+// for forward compatibility
+type LogInServiceServer interface {
+	LogIn(context.Context, *LogInRequest) (*LogInResponse, error)
+	mustEmbedUnimplementedLogInServiceServer()
+}
+
+// UnimplementedLogInServiceServer must be embedded to have forward compatible implementations.
+type UnimplementedLogInServiceServer struct {
+}
+
+func (UnimplementedLogInServiceServer) LogIn(context.Context, *LogInRequest) (*LogInResponse, error) {
+	return nil, status.Errorf(codes.Unimplemented, "method LogIn not implemented")
+}
+func (UnimplementedLogInServiceServer) mustEmbedUnimplementedLogInServiceServer() {}
+
+// UnsafeLogInServiceServer may be embedded to opt out of forward compatibility for this service.
+// Use of this interface is not recommended, as added methods to LogInServiceServer will
+// result in compilation errors.
+type UnsafeLogInServiceServer interface {
+	mustEmbedUnimplementedLogInServiceServer()
+}
+
+func RegisterLogInServiceServer(s grpc.ServiceRegistrar, srv LogInServiceServer) {
+	s.RegisterService(&LogInService_ServiceDesc, srv)
+}
+
+func _LogInService_LogIn_Handler(srv interface{}, ctx context.Context, dec func(interface{}) error, interceptor grpc.UnaryServerInterceptor) (interface{}, error) {
+	in := new(LogInRequest)
+	if err := dec(in); err != nil {
+		return nil, err
+	}
+	if interceptor == nil {
+		return srv.(LogInServiceServer).LogIn(ctx, in)
+	}
+	info := &grpc.UnaryServerInfo{
+		Server:     srv,
+		FullMethod: "/dev.stacklok.mediator.v1.LogInService/LogIn",
+	}
+	handler := func(ctx context.Context, req interface{}) (interface{}, error) {
+		return srv.(LogInServiceServer).LogIn(ctx, req.(*LogInRequest))
+	}
+	return interceptor(ctx, in, info, handler)
+}
+
+// LogInService_ServiceDesc is the grpc.ServiceDesc for LogInService service.
+// It's only intended for direct use with grpc.RegisterService,
+// and not to be introspected or modified (even as a copy)
+var LogInService_ServiceDesc = grpc.ServiceDesc{
+	ServiceName: "dev.stacklok.mediator.v1.LogInService",
+	HandlerType: (*LogInServiceServer)(nil),
+	Methods: []grpc.MethodDesc{
+		{
+			MethodName: "LogIn",
+			Handler:    _LogInService_LogIn_Handler,
+		},
+	},
+	Streams:  []grpc.StreamDesc{},
+	Metadata: "proto/v1/mediator.proto",
+}
+
 // LogOutServiceClient is the client API for LogOutService service.
 //
 // For semantics around ctx use and closing/ending streaming RPCs, please refer to https://pkg.go.dev/google.golang.org/grpc/?tab=doc#ClientConn.NewStream.

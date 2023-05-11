@@ -1,6 +1,6 @@
 -- name: CreateRole :one
 INSERT INTO roles (
-    organisation_id, 
+    group_id, 
     name
     ) VALUES (
         $1, $2
@@ -11,14 +11,14 @@ SELECT * FROM roles WHERE id = $1;
 
 -- name: ListRoles :many
 SELECT * FROM roles
-WHERE organisation_id = $1
+WHERE group_id = $1
 ORDER BY id
 LIMIT $2
 OFFSET $3;
 
 -- name: UpdateRole :one
 UPDATE roles 
-SET organisation_id = $2, name = $3, updated_at = NOW() 
+SET group_id = $2, name = $3, updated_at = NOW() 
 WHERE id = $1 RETURNING *;
 
 

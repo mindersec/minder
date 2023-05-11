@@ -19,7 +19,7 @@
 // It does make a good example of how to use the generated client code
 // for others to use as a reference.
 
-package account
+package auth
 
 import (
 	"fmt"
@@ -29,8 +29,8 @@ import (
 	"github.com/spf13/viper"
 )
 
-// accountCmd represents the auth command
-var account_revokeCmd = &cobra.Command{
+// authCmd represents the auth command
+var auth_revokeCmd = &cobra.Command{
 	Use:   "revoke",
 	Short: "Revoke a token",
 	Long: `Revoke a token within mediator, by expiring the token and removing it
@@ -54,10 +54,10 @@ medctl auth revoke --token=1234-1234-1234-1234
 }
 
 func init() {
-	AccountCmd.AddCommand(account_revokeCmd)
-	account_revokeCmd.PersistentFlags().String("token", "", "The token to revoke")
-	account_revokeCmd.PersistentFlags().Int32("id", 0, "The ID of the token to revoke")
-	if err := viper.BindPFlags(account_revokeCmd.PersistentFlags()); err != nil {
+	AuthCmd.AddCommand(auth_revokeCmd)
+	auth_revokeCmd.PersistentFlags().String("token", "", "The token to revoke")
+	auth_revokeCmd.PersistentFlags().Int32("id", 0, "The ID of the token to revoke")
+	if err := viper.BindPFlags(auth_revokeCmd.PersistentFlags()); err != nil {
 		log.Fatal(err)
 	}
 }

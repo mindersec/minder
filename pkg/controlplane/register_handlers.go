@@ -39,6 +39,12 @@ func RegisterGatewayHTTPHandlers(ctx context.Context, gwmux *runtime.ServeMux, g
 	if err := pb.RegisterOAuthServiceHandlerFromEndpoint(ctx, gwmux, grpcAddress, opts); err != nil {
 		log.Fatalf("failed to register gateway: %v", err)
 	}
+
+	// Register LoginService handler
+	if err := pb.RegisterLogInServiceHandlerFromEndpoint(ctx, gwmux, grpcAddress, opts); err != nil {
+		log.Fatalf("failed to register gateway: %v", err)
+	}
+
 }
 
 func RegisterGRPCServices(s *Server) {
@@ -47,4 +53,7 @@ func RegisterGRPCServices(s *Server) {
 
 	// Register AuthUrlService handler
 	pb.RegisterOAuthServiceServer(s.grpcServer, s)
+
+	// Register the Login service
+	pb.RegisterLogInServiceServer(s.grpcServer, s)
 }

@@ -185,3 +185,8 @@ func (s *Server) ExchangeCodeForTokenWEB(ctx context.Context, in *pb.CodeExchang
 		AccessToken: token.AccessToken,
 	}, nil
 }
+
+func (s *Server) LogIn(ctx context.Context, in *pb.LogInRequest) (*pb.LogInResponse, error) {
+
+	return &pb.LogInResponse{Status: "OK"}, nil
+}

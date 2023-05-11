@@ -15,6 +15,9 @@
       "name": "OAuthService"
     },
     {
+      "name": "LogInService"
+    },
+    {
       "name": "LogOutService"
     },
     {
@@ -118,6 +121,70 @@
         ],
         "tags": [
           "OAuthService"
+        ]
+      }
+    },
+    "/api/v1/auth/login": {
+      "post": {
+        "operationId": "LogInService_LogIn",
+        "responses": {
+          "200": {
+            "description": "A successful response.",
+            "schema": {
+              "$ref": "#/definitions/v1LogInResponse"
+            }
+          },
+          "default": {
+            "description": "An unexpected error response.",
+            "schema": {
+              "$ref": "#/definitions/rpcStatus"
+            }
+          }
+        },
+        "parameters": [
+          {
+            "name": "body",
+            "in": "body",
+            "required": true,
+            "schema": {
+              "$ref": "#/definitions/v1LogInRequest"
+            }
+          }
+        ],
+        "tags": [
+          "LogInService"
+        ]
+      }
+    },
+    "/api/v1/auth/logout": {
+      "post": {
+        "operationId": "LogOutService_LogOut",
+        "responses": {
+          "200": {
+            "description": "A successful response.",
+            "schema": {
+              "$ref": "#/definitions/v1LogOutResponse"
+            }
+          },
+          "default": {
+            "description": "An unexpected error response.",
+            "schema": {
+              "$ref": "#/definitions/rpcStatus"
+            }
+          }
+        },
+        "parameters": [
+          {
+            "name": "body",
+            "in": "body",
+            "required": true,
+            "schema": {
+              "$ref": "#/definitions/v1LogOutRequest"
+            }
+          }
+        ],
+        "tags": [
+          "LogOutService"
         ]
       }
     },
@@ -262,38 +329,6 @@
         },
         "tags": [
           "HealthService"
-        ]
-      }
-    },
-    "/api/v1/logout": {
-      "post": {
-        "operationId": "LogOutService_LogOut",
-        "responses": {
-          "200": {
-            "description": "A successful response.",
-            "schema": {
-              "$ref": "#/definitions/v1LogOutResponse"
-            }
-          },
-          "default": {
-            "description": "An unexpected error response.",
-            "schema": {
-              "$ref": "#/definitions/rpcStatus"
-            }
-          }
-        },
-        "parameters": [
-          {
-            "name": "body",
-            "in": "body",
-            "required": true,
-            "schema": {
-              "$ref": "#/definitions/v1LogOutRequest"
-            }
-          }
-        ],
-        "tags": [
-          "LogOutService"
         ]
       }
     },
@@ -540,6 +575,39 @@
       "properties": {
         "status": {
           "type": "string"
+        }
+      }
+    },
+    "v1LogInRequest": {
+      "type": "object",
+      "properties": {
+        "username": {
+          "type": "string"
+        },
+        "password": {
+          "type": "string"
+        }
+      }
+    },
+    "v1LogInResponse": {
+      "type": "object",
+      "properties": {
+        "status": {
+          "type": "string"
+        },
+        "refreshToken": {
+          "type": "string"
+        },
+        "accessToken": {
+          "type": "string"
+        },
+        "refreshTokenExpiresIn": {
+          "type": "string",
+          "format": "int64"
+        },
+        "accessTokenExpiresIn": {
+          "type": "string",
+          "format": "int64"
         }
       }
     },

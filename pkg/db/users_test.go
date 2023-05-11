@@ -42,8 +42,6 @@ func createRandomUser(t *testing.T, org Organisation) User {
 		Password:       util.RandomString(10, seed),
 		FirstName:      util.RandomName(seed),
 		LastName:       util.RandomName(seed),
-		IsAdmin:        true,
-		IsSuperAdmin:   true,
 	}
 
 	user, err := testQueries.CreateUser(context.Background(), arg)
@@ -56,8 +54,6 @@ func createRandomUser(t *testing.T, org Organisation) User {
 	require.Equal(t, arg.Password, user.Password)
 	require.Equal(t, arg.FirstName, user.FirstName)
 	require.Equal(t, arg.LastName, user.LastName)
-	require.Equal(t, arg.IsAdmin, user.IsAdmin)
-	require.Equal(t, arg.IsSuperAdmin, user.IsSuperAdmin)
 
 	require.NotZero(t, user.ID)
 	require.NotZero(t, user.CreatedAt)
@@ -87,8 +83,6 @@ func TestGetUser(t *testing.T) {
 	require.Equal(t, user1.Password, user2.Password)
 	require.Equal(t, user1.FirstName, user2.FirstName)
 	require.Equal(t, user1.LastName, user2.LastName)
-	require.Equal(t, user1.IsAdmin, user2.IsAdmin)
-	require.Equal(t, user1.IsSuperAdmin, user2.IsSuperAdmin)
 
 	require.NotZero(t, user2.CreatedAt)
 	require.NotZero(t, user2.UpdatedAt)
@@ -110,8 +104,6 @@ func TestUpdateUser(t *testing.T) {
 		Password:       util.RandomString(10, seed),
 		FirstName:      util.RandomName(seed),
 		LastName:       util.RandomName(seed),
-		IsAdmin:        true,
-		IsSuperAdmin:   true,
 	}
 
 	user2, err := testQueries.UpdateUser(context.Background(), arg)
@@ -125,8 +117,6 @@ func TestUpdateUser(t *testing.T) {
 	require.Equal(t, arg.Password, user2.Password)
 	require.Equal(t, arg.FirstName, user2.FirstName)
 	require.Equal(t, arg.LastName, user2.LastName)
-	require.Equal(t, arg.IsAdmin, user2.IsAdmin)
-	require.Equal(t, arg.IsSuperAdmin, user2.IsSuperAdmin)
 
 	require.NotZero(t, user2.CreatedAt)
 	require.NotZero(t, user2.UpdatedAt)
