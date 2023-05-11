@@ -34,10 +34,7 @@ google:
 
 logging:
   level: "debug"
-
-auth:
-  jwt_key: "secret"
-  expiration: 3600
+  format: "text"
 
 database:
   dbhost: "localhost"
@@ -46,3 +43,29 @@ database:
   dbpass: postgres
   dbname: postgres
   sslmode: disable
+  encryption_key: p6ssw0rd
+
+# Crypto (these should be ultimately stored in a secure vault)
+auth:
+  jwt_key: "secret"
+  token_expiry: 3600
+  refresh_expiry: 86400
+
+# Password Salting, these values are using argon2id
+# https://en.wikipedia.org/wiki/Argon2
+# Argon has resistance against side-channel timing attacks and tradeoff attacks
+# but it is computationally expensive.
+# If this is a problematic, we could use bcrypt instead.
+# https://en.wikipedia.org/wiki/Bcrypt
+salt:
+  # The size of the salt (in bytes).
+  salt_size: 16
+  # The number of iterations.
+  hash_length: 32
+  # The amount of time (in seconds) that the hashing should take.
+  hash_time: 1
+  # The amount of memory used by the algorithm (in kibibytes).
+  memory: 64 * 1024
+  # number of parallel threads that can be used during the computation
+  threads: 4
+

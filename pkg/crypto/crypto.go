@@ -1,0 +1,249 @@
+//
+// Copyright 2023 Stacklok, Inc.
+//
+// Licensed under the Apache License, Version 2.0 (the "License");
+// you may not use this file except in compliance with the License.
+// You may obtain a copy of the License at
+//
+//     http://www.apache.org/licenses/LICENSE-2.0
+//
+// Unless required by applicable law or agreed to in writing, software
+// distributed under the License is distributed on an "AS IS" BASIS,
+// WITHOUT WARRANTIES OR CONDITIONS OF ANY KIND, either express or implied.
+// See the License for the specific language governing permissions and
+// limitations under the License.
+
+package crypto
+
+import (
+	"crypto/ecdsa"
+	"crypto/sha256"
+	"crypto/x509"
+	"encoding/base64"
+	"encoding/json"
+	"encoding/pem"
+	"errors"
+	"strings"
+	"time"
+
+	"crypto/aes"
+	"crypto/cipher"
+	"crypto/rand"
+	"crypto/subtle"
+	"fmt"
+	"io"
+
+	"github.com/spf13/viper"
+	"golang.org/x/crypto/argon2"
+)
+
+type params struct {
+	memory      uint32
+	iterations  uint32
+	parallelism uint
+	saltLength  uint32
+	keyLength   uint32
+}
+
+func getParams() *params {
+	return &params{
+		memory:      viper.GetUint32("salt.memory"),
+		iterations:  viper.GetUint32("salt.iterations"),
+		parallelism: viper.GetUint("salt.parallelism"),
+		saltLength:  viper.GetUint32("salt.salt_length"),
+		keyLength:   viper.GetUint32("salt.key_length"),
+	}
+}
+
+var (
+	ErrInvalidHash         = errors.New("the encoded hash is not in the correct format")
+	ErrIncompatibleVersion = errors.New("incompatible version of argon2")
+)
+
+func GetCert(envelope []byte) ([]byte, error) {
+	env := &Envelope{}
+	if err := json.Unmarshal(envelope, env); err != nil {
+		return nil, err
+	}
+	return []byte(env.Signatures[0].Cert), nil
+}
+
+func GetPubKeyFromCert(certIn []byte) (*ecdsa.PublicKey, error) {
+	block, _ := pem.Decode(certIn)
+	if block == nil {
+		return nil, errors.New("failed to parse certificate PEM")
+	}
+
+	cert, err := x509.ParseCertificate(block.Bytes)
+	if err != nil {
+		return nil, errors.New("failed to parse certificate: " + err.Error())
+	}
+
+	pubKey := cert.PublicKey.(*ecdsa.PublicKey)
+	return pubKey, nil
+}
+
+func VerifySignature(pubKey *ecdsa.PublicKey, payload []byte, sig []byte) (bool, error) {
+	hash := sha256.Sum256(payload)
+	verified := ecdsa.VerifyASN1(pubKey, hash[:], sig)
+	return verified, nil
+}
+
+func VerifyCertChain(certIn []byte, roots *x509.CertPool) (bool, error) {
+	block, _ := pem.Decode(certIn)
+	if block == nil {
+		return false, errors.New("failed to parse certificate PEM")
+	}
+
+	cert, err := x509.ParseCertificate(block.Bytes)
+	if err != nil {
+		return false, errors.New("failed to parse certificate: " + err.Error())
+	}
+
+	// combine the roots with the intermediates to get a full chain
+	roots.AppendCertsFromPEM([]byte(certIn))
+
+	opts := x509.VerifyOptions{
+		Roots: roots,
+		// skip expiry check
+		CurrentTime: cert.NotBefore.Add(1 * time.Minute),
+		KeyUsages: []x509.ExtKeyUsage{
+			x509.ExtKeyUsageCodeSigning,
+		},
+	}
+
+	if _, err := cert.Verify(opts); err != nil {
+		return false, err
+	}
+
+	return true, nil
+}
+
+func EncryptRow(key, data string) ([]byte, error) {
+	block, err := aes.NewCipher(deriveKey(key))
+	if err != nil {
+		return nil, fmt.Errorf("failed to create cipher: %w", err)
+	}
+
+	// The IV needs to be unique, but not secure. Therefore it's common to include it at the beginning of the ciphertext.
+	ciphertext := make([]byte, aes.BlockSize+len(data))
+	iv := ciphertext[:aes.BlockSize]
+	if _, err := io.ReadFull(rand.Reader, iv); err != nil {
+		return nil, fmt.Errorf("failed to read random bytes: %w", err)
+	}
+
+	stream := cipher.NewCFBEncrypter(block, iv)
+	stream.XORKeyStream(ciphertext[aes.BlockSize:], []byte(data))
+
+	return ciphertext, nil
+}
+
+// Function to decrypt data using AES
+func DecryptRow(key string, ciphertext []byte) (string, error) {
+	block, err := aes.NewCipher(deriveKey(key))
+	if err != nil {
+		return "", fmt.Errorf("failed to create cipher: %w", err)
+	}
+
+	// The IV needs to be extracted from the ciphertext.
+	iv := ciphertext[:aes.BlockSize]
+	ciphertext = ciphertext[aes.BlockSize:]
+
+	stream := cipher.NewCFBDecrypter(block, iv)
+	stream.XORKeyStream(ciphertext, ciphertext)
+
+	return string(ciphertext), nil
+}
+
+// Function to derive a key from a passphrase using Argon2
+func deriveKey(passphrase string) []byte {
+	salt := []byte("somesalt") // In a real application, you should use a unique salt for each key and save it with the encrypted data.
+	return argon2.IDKey([]byte(passphrase), salt, 1, 64*1024, 4, 32)
+}
+
+func GeneratePasswordHash(password string) (encodedHash string, err error) {
+
+	p := getParams()
+
+	salt, err := generateRandomBytes(p.saltLength)
+	if err != nil {
+		return "", err
+	}
+
+	hash := argon2.IDKey([]byte(password), salt, p.iterations, p.memory, uint8(p.parallelism), p.keyLength)
+
+	// Base64 encode the salt and hashed password.
+	b64Salt := base64.RawStdEncoding.EncodeToString(salt)
+	b64Hash := base64.RawStdEncoding.EncodeToString(hash)
+
+	// Return a string using the standard encoded hash representation.
+	encodedHash = fmt.Sprintf("$argon2id$v=%d$m=%d,t=%d,p=%d$%s$%s", argon2.Version, p.memory, p.iterations, p.parallelism, b64Salt, b64Hash)
+
+	return encodedHash, nil
+}
+
+func generateRandomBytes(n uint32) ([]byte, error) {
+	b := make([]byte, n)
+	_, err := rand.Read(b)
+	if err != nil {
+		return nil, err
+	}
+
+	return b, nil
+}
+
+func VerifyPasswordHash(password, encodedHash string) (match bool, err error) {
+	// Extract the parameters, salt and derived key from the encoded password
+	// hash.
+	p, salt, hash, err := decodeHash(encodedHash)
+	if err != nil {
+		return false, err
+	}
+
+	// Derive the key from the other password using the same parameters.
+	otherHash := argon2.IDKey([]byte(password), salt, p.iterations, p.memory, uint8(p.parallelism), p.keyLength)
+
+	// Check that the contents of the hashed passwords are identical. Note
+	// that we are using the subtle.ConstantTimeCompare() function for this
+	// to help prevent timing attacks.
+	if subtle.ConstantTimeCompare(hash, otherHash) == 1 {
+		return true, nil
+	}
+	return false, nil
+}
+
+func decodeHash(encodedHash string) (p *params, salt, hash []byte, err error) {
+	vals := strings.Split(encodedHash, "$")
+	if len(vals) != 6 {
+		return nil, nil, nil, ErrInvalidHash
+	}
+
+	var version int
+	_, err = fmt.Sscanf(vals[2], "v=%d", &version)
+	if err != nil {
+		return nil, nil, nil, err
+	}
+	if version != argon2.Version {
+		return nil, nil, nil, ErrIncompatibleVersion
+	}
+
+	p = &params{}
+	_, err = fmt.Sscanf(vals[3], "m=%d,t=%d,p=%d", &p.memory, &p.iterations, &p.parallelism)
+	if err != nil {
+		return nil, nil, nil, err
+	}
+
+	salt, err = base64.RawStdEncoding.Strict().DecodeString(vals[4])
+	if err != nil {
+		return nil, nil, nil, err
+	}
+	p.saltLength = uint32(len(salt))
+
+	hash, err = base64.RawStdEncoding.Strict().DecodeString(vals[5])
+	if err != nil {
+		return nil, nil, nil, err
+	}
+	p.keyLength = uint32(len(hash))
+
+	return p, salt, hash, nil
+}

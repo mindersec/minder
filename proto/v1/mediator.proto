@@ -60,10 +60,20 @@ service OAuthService {
 }
 
 // Logout of Mediator
+service LogInService {
+    rpc LogIn (LogInRequest) returns (LogInResponse) {
+        option (google.api.http) = {
+            post: "/api/v1/auth/login"
+            body: "*"
+        };
+    }
+}
+
+// Logout of Mediator
 service LogOutService {
     rpc LogOut (LogOutRequest) returns (LogOutResponse) {
         option (google.api.http) = {
-            post: "/api/v1/logout"
+            post: "/api/v1/auth/logout"
             body: "*"
         };
     }
@@ -166,6 +176,20 @@ message GitHubWebhookRequest {
 message GitHubWebhookResponse {
     string status = 1;
 }
+
+message LogInRequest {
+    string username = 1;
+    string password = 2;
+}
+
+message LogInResponse {
+    string status = 1;
+    string refresh_token = 2;
+    string access_token = 3;
+    int64  refresh_token_expires_in = 4;
+    int64  access_token_expires_in = 5;
+}
+
 
 message LogOutRequest {
 }

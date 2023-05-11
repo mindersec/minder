@@ -9,8 +9,6 @@ import (
 )
 
 type Querier interface {
-	AddRoleToGroup(ctx context.Context, arg AddRoleToGroupParams) (GroupRole, error)
-	AssignRoleToUser(ctx context.Context, arg AssignRoleToUserParams) (UserRole, error)
 	CreateAccessToken(ctx context.Context, arg CreateAccessTokenParams) (AccessToken, error)
 	CreateGroup(ctx context.Context, arg CreateGroupParams) (Group, error)
 	CreateOrganisation(ctx context.Context, arg CreateOrganisationParams) (Organisation, error)
@@ -23,19 +21,16 @@ type Querier interface {
 	DeleteUser(ctx context.Context, id int32) error
 	GetAccessTokenByOrganisationID(ctx context.Context, organisationID int32) (AccessToken, error)
 	GetGroupByID(ctx context.Context, id int32) (Group, error)
-	GetGroupRoles(ctx context.Context, groupID int32) ([]GroupRole, error)
 	GetOrganisation(ctx context.Context, id int32) (Organisation, error)
 	GetOrganisationForUpdate(ctx context.Context, id int32) (Organisation, error)
 	GetRoleByID(ctx context.Context, id int32) (Role, error)
 	GetUserByEmail(ctx context.Context, email string) (User, error)
 	GetUserByID(ctx context.Context, id int32) (User, error)
-	GetUserRoles(ctx context.Context, userID int32) ([]UserRole, error)
+	GetUserByUserName(ctx context.Context, username string) (User, error)
 	ListGroups(ctx context.Context, arg ListGroupsParams) ([]Group, error)
 	ListOrganisations(ctx context.Context, arg ListOrganisationsParams) ([]Organisation, error)
 	ListRoles(ctx context.Context, arg ListRolesParams) ([]Role, error)
 	ListUsers(ctx context.Context) ([]User, error)
-	RemoveRoleFromGroup(ctx context.Context, arg RemoveRoleFromGroupParams) error
-	RevokeRoleFromUser(ctx context.Context, arg RevokeRoleFromUserParams) error
 	UpdateAccessToken(ctx context.Context, arg UpdateAccessTokenParams) (AccessToken, error)
 	UpdateGroup(ctx context.Context, arg UpdateGroupParams) (Group, error)
 	UpdateOrganisation(ctx context.Context, arg UpdateOrganisationParams) (Organisation, error)

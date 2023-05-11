@@ -19,7 +19,7 @@
 // It does make a good example of how to use the generated client code
 // for others to use as a reference.
 
-package account
+package auth
 
 import (
 	"fmt"
@@ -29,8 +29,8 @@ import (
 	"github.com/spf13/viper"
 )
 
-// accountCmd represents the auth command
-var account_deluserCmd = &cobra.Command{
+// authCmd represents the auth command
+var auth_deluserCmd = &cobra.Command{
 	Use:   "delete-user",
 	Short: "Delete a user account within mediator",
 	Long: `Delete a user account within mediator, by removing the user from the
@@ -52,12 +52,12 @@ access token. If you are not logged in, then you will need to pass in the
 }
 
 func init() {
-	AccountCmd.AddCommand(account_deluserCmd)
-	account_deluserCmd.PersistentFlags().String("username", "", "The username to delete")
-	account_deluserCmd.PersistentFlags().Int32("id", 0, "The password for the user to delete")
-	account_deluserCmd.PersistentFlags().String("password", "", "The password for the user to delete")
-	account_deluserCmd.PersistentFlags().String("provider", "", "The provider for the user to delete")
-	if err := viper.BindPFlags(account_deluserCmd.PersistentFlags()); err != nil {
+	AuthCmd.AddCommand(auth_deluserCmd)
+	auth_deluserCmd.PersistentFlags().String("username", "", "The username to delete")
+	auth_deluserCmd.PersistentFlags().Int32("id", 0, "The password for the user to delete")
+	auth_deluserCmd.PersistentFlags().String("password", "", "The password for the user to delete")
+	auth_deluserCmd.PersistentFlags().String("provider", "", "The provider for the user to delete")
+	if err := viper.BindPFlags(auth_deluserCmd.PersistentFlags()); err != nil {
 		log.Fatal(err)
 	}
 }

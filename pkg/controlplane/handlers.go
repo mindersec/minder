@@ -25,11 +25,15 @@ import (
 	"bytes"
 	"context"
 	"crypto/rand"
+	"database/sql"
 	"encoding/base64"
 	"fmt"
 	"net/http"
 
+	"github.com/stacklok/mediator/pkg/auth"
+	mcrypto "github.com/stacklok/mediator/pkg/crypto"
 	pb "github.com/stacklok/mediator/pkg/generated/protobuf/go/proto/v1"
+
 	"golang.org/x/oauth2"
 	"golang.org/x/oauth2/github"
 	"golang.org/x/oauth2/google"
@@ -183,5 +187,44 @@ func (s *Server) ExchangeCodeForTokenWEB(ctx context.Context, in *pb.CodeExchang
 	//
 	return &pb.CodeExchangeResponseWEB{
 		AccessToken: token.AccessToken,
+	}, nil
+}
+
+func (s *Server) LogIn(ctx context.Context, in *pb.LogInRequest) (*pb.LogInResponse, error) {
+
+	user, err := s.store.GetUserByUserName(ctx, in.Username)
+	if err != nil {
+		if err == sql.ErrNoRows {
+			return &pb.LogInResponse{Status: "User not found"}, nil
+		}
+		return nil, err
+	}
+
+	match, err := mcrypto.VerifyPasswordHash(in.Password, user.Password)
+	if err != nil {
+		return nil, err
+	}
+
+	if !match {
+		return &pb.LogInResponse{Status: "Invalid Password"}, nil
+	}
+
+	tokenString, refreshTokenString, tokenExpirationTime, refreshExpirationTime, err := auth.GenerateToken(
+		user.ID,
+		viper.GetString("auth.jwt_key"),
+		viper.GetInt64("auth.token_expiry"),
+		viper.GetInt64("auth.refresh_expiry"),
+	)
+
+	if err != nil {
+		return nil, fmt.Errorf("error generating token: %v", err)
+	}
+
+	return &pb.LogInResponse{
+		Status:                "Success",
+		AccessToken:           tokenString,
+		RefreshToken:          refreshTokenString,
+		AccessTokenExpiresIn:  tokenExpirationTime,
+		RefreshTokenExpiresIn: refreshExpirationTime,
 	}, nil
 }

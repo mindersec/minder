@@ -19,36 +19,26 @@
 // It does make a good example of how to use the generated client code
 // for others to use as a reference.
 
-package account
+package auth
 
 import (
 	"fmt"
-	"log"
-
-	"github.com/stacklok/mediator/cmd/cli/app"
 
 	"github.com/spf13/cobra"
-	"github.com/spf13/viper"
 )
 
-// accountCmd represents the account command
-var AccountCmd = &cobra.Command{
-	Use:   "account",
-	Short: "medctl account commands",
-	Long: `The medctl account command group lets you grant and revoke
-	authorization to accounts within mediators control plane.`,
+// authCmd represents the auth command
+var auth_listCmd = &cobra.Command{
+	Use:   "list",
+	Short: "List all auth accounts and tokens",
+	Long: `List all tokens and accounts for active or expired, mediator sessions
+	including which providers the tokens are associated with and
+	details on expiry.`,
 	Run: func(cmd *cobra.Command, args []string) {
-		fmt.Println("account called")
+		fmt.Println("auth list called")
 	},
 }
 
 func init() {
-	app.RootCmd.AddCommand(AccountCmd)
-	AccountCmd.PersistentFlags().String("grpc-host", "", "Server host")
-	AccountCmd.PersistentFlags().Int("grpc-port", 0, "Server port")
-	AccountCmd.PersistentFlags().String("provider", "", "The OAuth2 provider to use for login")
-	if err := viper.BindPFlags(AccountCmd.PersistentFlags()); err != nil {
-		log.Fatal(err)
-	}
-
+	AuthCmd.AddCommand(auth_listCmd)
 }

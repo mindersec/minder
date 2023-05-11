@@ -43,6 +43,7 @@ type Server struct {
 	grpcServer *grpc.Server
 	pb.UnimplementedHealthServiceServer
 	pb.UnimplementedOAuthServiceServer
+	pb.UnimplementedLogInServiceServer
 	OAuth2       *oauth2.Config
 	ClientID     string
 	ClientSecret string

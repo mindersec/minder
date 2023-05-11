@@ -28,7 +28,11 @@ import (
 	"github.com/golang-jwt/jwt/v4"
 )
 
-func GenerateToken(userId int, key string, expiry int64) (string, int64, error) {
+func GenerateToken(userId int32, key string, expiry int64, refreshExpiry int64) (string, string, int64, int64, error) {
+	if key == "" {
+		return "", "", 0, 0, fmt.Errorf("invalid key")
+	}
+
 	jwtKey := []byte(key)
 	tokenExpirationTime := time.Now().Add(time.Duration(expiry) * time.Minute).Unix()
 
@@ -39,10 +43,23 @@ func GenerateToken(userId int, key string, expiry int64) (string, int64, error) 
 
 	tokenString, err := token.SignedString(jwtKey)
 	if err != nil {
-		return "", 0, err
+		return "", "", 0, 0, err
 	}
 
-	return tokenString, tokenExpirationTime, nil
+	// Create a refresh token that lasts longer than the access token
+	refreshExpirationTime := time.Now().Add(time.Duration(refreshExpiry) * time.Minute).Unix()
+
+	refreshToken := jwt.NewWithClaims(jwt.SigningMethodHS256, jwt.MapClaims{
+		"userId": userId,
+		"exp":    refreshExpirationTime,
+	})
+
+	refreshTokenString, err := refreshToken.SignedString(jwtKey)
+	if err != nil {
+		return "", "", 0, 0, err
+	}
+
+	return tokenString, refreshTokenString, tokenExpirationTime, refreshExpirationTime, nil
 }
 
 func VerifyToken(tokenString string, key string) (uint, error) {
