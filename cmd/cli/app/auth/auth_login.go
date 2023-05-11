@@ -25,7 +25,6 @@ import (
 	"context"
 	"encoding/json"
 	"fmt"
-	"io/ioutil"
 	"os"
 	"path/filepath"
 	"time"
@@ -74,7 +73,7 @@ func saveCredentials(creds Credentials) (string, error) {
 	}
 
 	// Write the JSON data to the file
-	err = ioutil.WriteFile(filePath, credsJSON, 0644)
+	err = os.WriteFile(filePath, credsJSON, 0600)
 	if err != nil {
 		return "", fmt.Errorf("error writing credentials to file: %v", err)
 	}
