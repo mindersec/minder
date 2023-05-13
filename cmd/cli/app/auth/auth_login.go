@@ -121,7 +121,6 @@ var auth_loginCmd = &cobra.Command{
 	Run: func(cmd *cobra.Command, args []string) {
 		grpc_host := util.GetConfigValue("grpc_server.host", "grpc-host", cmd, "").(string)
 		grpc_port := util.GetConfigValue("grpc_server.port", "grpc-port", cmd, 0).(int)
-		// provider := util.GetConfigValue("provider", "provider", cmd, "").(string)
 		username := util.GetConfigValue("username", "username", cmd, "").(string)
 		password := util.GetConfigValue("password", "password", cmd, "").(string)
 

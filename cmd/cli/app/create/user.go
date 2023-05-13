@@ -13,18 +13,29 @@
 // See the License for the specific language governing permissions and
 // limitations under the License.
 
-package main
+package create
 
 import (
-	"github.com/stacklok/mediator/cmd/cli/app"
+	"fmt"
+	"log"
 
-	// Add each subcommand here
-	_ "github.com/stacklok/mediator/cmd/cli/app/auth"
-	_ "github.com/stacklok/mediator/cmd/cli/app/create"
-	_ "github.com/stacklok/mediator/cmd/cli/app/delete"
-	_ "github.com/stacklok/mediator/cmd/cli/app/list"
+	"github.com/spf13/cobra"
+	"github.com/spf13/viper"
 )
 
-func main() {
-	app.Execute()
+var user_createCmd = &cobra.Command{
+	Use:   "user",
+	Short: "medctl create users",
+	Long: `The medctl user subcommand group lets you create new users within
+the mediator controlplane.`,
+	Run: func(cmd *cobra.Command, args []string) {
+		fmt.Println("crate user called")
+	},
+}
+
+func init() {
+	CreateCmd.AddCommand(user_createCmd)
+	if err := viper.BindPFlags(user_createCmd.PersistentFlags()); err != nil {
+		log.Fatal(err)
+	}
 }

@@ -13,18 +13,29 @@
 // See the License for the specific language governing permissions and
 // limitations under the License.
 
-package main
+package create
 
 import (
-	"github.com/stacklok/mediator/cmd/cli/app"
+	"fmt"
+	"log"
 
-	// Add each subcommand here
-	_ "github.com/stacklok/mediator/cmd/cli/app/auth"
-	_ "github.com/stacklok/mediator/cmd/cli/app/create"
-	_ "github.com/stacklok/mediator/cmd/cli/app/delete"
-	_ "github.com/stacklok/mediator/cmd/cli/app/list"
+	"github.com/spf13/cobra"
+	"github.com/spf13/viper"
 )
 
-func main() {
-	app.Execute()
+var group_createCmd = &cobra.Command{
+	Use:   "group",
+	Short: "medctl group commands",
+	Long: `The medctl group subcommand lets you create new groups within
+the mediator controlplane.`,
+	Run: func(cmd *cobra.Command, args []string) {
+		fmt.Println("create group called")
+	},
+}
+
+func init() {
+	CreateCmd.AddCommand(group_createCmd)
+	if err := viper.BindPFlags(group_createCmd.PersistentFlags()); err != nil {
+		log.Fatal(err)
+	}
 }

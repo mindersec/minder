@@ -48,8 +48,6 @@ medctl auth revoke --token=1234-1234-1234-1234
 `,
 	Run: func(cmd *cobra.Command, args []string) {
 		fmt.Println("account revoke called")
-		// token := viper.GetString("token")
-		// id := viper.GetInt32("id")
 	},
 }
 

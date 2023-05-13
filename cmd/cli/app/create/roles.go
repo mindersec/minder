@@ -13,18 +13,29 @@
 // See the License for the specific language governing permissions and
 // limitations under the License.
 
-package main
+package create
 
 import (
-	"github.com/stacklok/mediator/cmd/cli/app"
+	"fmt"
+	"log"
 
-	// Add each subcommand here
-	_ "github.com/stacklok/mediator/cmd/cli/app/auth"
-	_ "github.com/stacklok/mediator/cmd/cli/app/create"
-	_ "github.com/stacklok/mediator/cmd/cli/app/delete"
-	_ "github.com/stacklok/mediator/cmd/cli/app/list"
+	"github.com/spf13/cobra"
+	"github.com/spf13/viper"
 )
 
-func main() {
-	app.Execute()
+var role_createCmd = &cobra.Command{
+	Use:   "role",
+	Short: "medctl role commands",
+	Long: `The medctl role subcommand lets you create new roles within
+the mediator controlplane.`,
+	Run: func(cmd *cobra.Command, args []string) {
+		fmt.Println("create role called")
+	},
+}
+
+func init() {
+	CreateCmd.AddCommand(role_createCmd)
+	if err := viper.BindPFlags(role_createCmd.PersistentFlags()); err != nil {
+		log.Fatal(err)
+	}
 }

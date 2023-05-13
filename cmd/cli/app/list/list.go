@@ -13,13 +13,7 @@
 // See the License for the specific language governing permissions and
 // limitations under the License.
 
-// NOTE: This file is for stubbing out client code for proof of concept
-// purposes. It will / should be removed in the future.
-// Until then, it is not covered by unit tests and should not be used
-// It does make a good example of how to use the generated client code
-// for others to use as a reference.
-
-package auth
+package list
 
 import (
 	"fmt"
@@ -31,21 +25,19 @@ import (
 	"github.com/spf13/viper"
 )
 
-// authCmd represents the account command
-var AuthCmd = &cobra.Command{
-	Use:   "auth",
-	Short: "medctl auth commands",
-	Long: `The medctl auth command group lets you grant and revoke
-	authorization to accounts within mediators control plane.`,
+var ListCmd = &cobra.Command{
+	Use:   "list",
+	Short: "medctl list commands",
+	Long: `The medctl list command group lets you list objects within
+the mediator controlplane.`,
 	Run: func(cmd *cobra.Command, args []string) {
-		fmt.Println("auth called")
+		fmt.Println("list called")
 	},
 }
 
 func init() {
-	app.RootCmd.AddCommand(AuthCmd)
-	AuthCmd.PersistentFlags().String("provider", "", "The OAuth2 provider to use for login")
-	if err := viper.BindPFlags(AuthCmd.PersistentFlags()); err != nil {
+	app.RootCmd.AddCommand(ListCmd)
+	if err := viper.BindPFlags(ListCmd.PersistentFlags()); err != nil {
 		log.Fatal(err)
 	}
 

@@ -13,18 +13,29 @@
 // See the License for the specific language governing permissions and
 // limitations under the License.
 
-package main
+package enroll
 
 import (
-	"github.com/stacklok/mediator/cmd/cli/app"
+	"fmt"
+	"log"
 
-	// Add each subcommand here
-	_ "github.com/stacklok/mediator/cmd/cli/app/auth"
-	_ "github.com/stacklok/mediator/cmd/cli/app/create"
-	_ "github.com/stacklok/mediator/cmd/cli/app/delete"
-	_ "github.com/stacklok/mediator/cmd/cli/app/list"
+	"github.com/spf13/cobra"
+	"github.com/spf13/viper"
 )
 
-func main() {
-	app.Execute()
+var enroll_integrationCmd = &cobra.Command{
+	Use:   "integration",
+	Short: "medctl enroll integration",
+	Long: `The medctl enroll integration subcommand group lets you enroll new 
+integrations within the mediator controlplane.`,
+	Run: func(cmd *cobra.Command, args []string) {
+		fmt.Println("enroll integration called")
+	},
+}
+
+func init() {
+	EnrollCmd.AddCommand(enroll_integrationCmd)
+	if err := viper.BindPFlags(enroll_integrationCmd.PersistentFlags()); err != nil {
+		log.Fatal(err)
+	}
 }

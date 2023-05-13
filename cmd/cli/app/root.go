@@ -40,6 +40,8 @@ func Execute() {
 
 func init() {
 	cobra.OnInitialize(initConfig)
+	RootCmd.PersistentFlags().String("grpc-host", "", "Server host")
+	RootCmd.PersistentFlags().Int("grpc-port", 0, "Server port")
 }
 
 func initConfig() {
