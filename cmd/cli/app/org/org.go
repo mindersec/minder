@@ -19,7 +19,7 @@
 // It does make a good example of how to use the generated client code
 // for others to use as a reference.
 
-package auth
+package org
 
 import (
 	"fmt"
@@ -31,21 +31,19 @@ import (
 	"github.com/spf13/viper"
 )
 
-// authCmd represents the account command
-var AuthCmd = &cobra.Command{
-	Use:   "auth",
-	Short: "Authorize accounts within mediators control plane",
-	Long: `The medctl auth command group lets you grant and revoke
-authorization to accounts within mediators control plane.`,
+var OrgCmd = &cobra.Command{
+	Use:   "org",
+	Short: "Manage organizations within the mediator controlplane",
+	Long: `The medctl org commands manage organizations within the mediator
+controlplane.`,
 	Run: func(cmd *cobra.Command, args []string) {
-		fmt.Println("auth called")
+		fmt.Println("org called")
 	},
 }
 
 func init() {
-	app.RootCmd.AddCommand(AuthCmd)
-
-	if err := viper.BindPFlags(AuthCmd.PersistentFlags()); err != nil {
+	app.RootCmd.AddCommand(OrgCmd)
+	if err := viper.BindPFlags(OrgCmd.PersistentFlags()); err != nil {
 		log.Fatal(err)
 	}
 

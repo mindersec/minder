@@ -39,6 +39,10 @@ func Execute() {
 }
 
 func init() {
+	RootCmd.PersistentFlags().String("grpc-host", "localhost", "Server host")
+	RootCmd.PersistentFlags().Int("grpc-port", 8090, "Server port")
+	RootCmd.PersistentFlags().String("http-host", "localhost", "Server host")
+	RootCmd.PersistentFlags().Int("http-port", 8080, "Server port")
 	cobra.OnInitialize(initConfig)
 }
 
