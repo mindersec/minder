@@ -40,7 +40,8 @@ run-server: ## run the app
 	@go run -ldflags "-X main.version=$(shell git describe --abbrev=0 --tags)"  ./cmd/server
 
 bootstrap: ## install build deps
-	go generate -tags tools tools/tools.go
+	@go install github.com/grpc-ecosystem/grpc-gateway/v2/protoc-gen-grpc-gateway github.com/grpc-ecosystem/grpc-gateway/v2/protoc-gen-openapiv2 google.golang.org/protobuf/cmd/protoc-gen-go google.golang.org/grpc/cmd/protoc-gen-go-grpc
+	go generate -tags tools tools/tools.go 	
 
 test: clean ## display test coverage
 	go test -json -v ./... | gotestfmt
