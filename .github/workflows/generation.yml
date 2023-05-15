@@ -1,4 +1,4 @@
-name: SQLC Generate
+name: Code Generation
 
 on:
   push:
@@ -9,7 +9,16 @@ on:
       - main
 
 jobs:
-  test:
+  proto-breaking-changes:
+    runs-on: ubuntu-latest
+    steps:
+      - uses: actions/checkout@v2
+      - uses: bufbuild/buf-setup-action@v1
+      - uses: bufbuild/buf-breaking-action@v1
+        with:
+          against: 'https://github.com/stacklok/mediator.git#branch=main'
+
+  sqlc-generation:
     runs-on: ubuntu-latest
     env:
       GO_VERSION: 1.20.0
