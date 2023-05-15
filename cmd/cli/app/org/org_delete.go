@@ -19,34 +19,29 @@
 // It does make a good example of how to use the generated client code
 // for others to use as a reference.
 
-package auth
+package org
 
 import (
 	"fmt"
 	"log"
 
-	"github.com/stacklok/mediator/cmd/cli/app"
-
 	"github.com/spf13/cobra"
 	"github.com/spf13/viper"
 )
 
-// authCmd represents the account command
-var AuthCmd = &cobra.Command{
-	Use:   "auth",
-	Short: "Authorize accounts within mediators control plane",
-	Long: `The medctl auth command group lets you grant and revoke
-authorization to accounts within mediators control plane.`,
+var org_deleteCmd = &cobra.Command{
+	Use:   "delete",
+	Short: "Delete an organization within the mediator controlplane",
+	Long: `The medctl org delete subcommand lets you delete organizations
+within the mediator controlplane.`,
 	Run: func(cmd *cobra.Command, args []string) {
-		fmt.Println("auth called")
+		fmt.Println("org delete called")
 	},
 }
 
 func init() {
-	app.RootCmd.AddCommand(AuthCmd)
-
-	if err := viper.BindPFlags(AuthCmd.PersistentFlags()); err != nil {
+	OrgCmd.AddCommand(org_deleteCmd)
+	if err := viper.BindPFlags(org_deleteCmd.PersistentFlags()); err != nil {
 		log.Fatal(err)
 	}
-
 }

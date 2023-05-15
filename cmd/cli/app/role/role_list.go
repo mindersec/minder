@@ -5,7 +5,7 @@
 // you may not use this file except in compliance with the License.
 // You may obtain a copy of the License at
 //
-//     http://www.apache.org/licenses/LICENSE-2.0
+//     http://www.apache.role/licenses/LICENSE-2.0
 //
 // Unless required by applicable law or agreed to in writing, software
 // distributed under the License is distributed on an "AS IS" BASIS,
@@ -19,34 +19,29 @@
 // It does make a good example of how to use the generated client code
 // for others to use as a reference.
 
-package auth
+package role
 
 import (
 	"fmt"
 	"log"
 
-	"github.com/stacklok/mediator/cmd/cli/app"
-
 	"github.com/spf13/cobra"
 	"github.com/spf13/viper"
 )
 
-// authCmd represents the account command
-var AuthCmd = &cobra.Command{
-	Use:   "auth",
-	Short: "Authorize accounts within mediators control plane",
-	Long: `The medctl auth command group lets you grant and revoke
-authorization to accounts within mediators control plane.`,
+var role_listCmd = &cobra.Command{
+	Use:   "list",
+	Short: "list a role within the mediator controlplane",
+	Long: `The medctl role list subcommand lets you list roles within the
+mediator controlplane.`,
 	Run: func(cmd *cobra.Command, args []string) {
-		fmt.Println("auth called")
+		fmt.Println("role list called")
 	},
 }
 
 func init() {
-	app.RootCmd.AddCommand(AuthCmd)
-
-	if err := viper.BindPFlags(AuthCmd.PersistentFlags()); err != nil {
+	RoleCmd.AddCommand(role_listCmd)
+	if err := viper.BindPFlags(role_listCmd.PersistentFlags()); err != nil {
 		log.Fatal(err)
 	}
-
 }

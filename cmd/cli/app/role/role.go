@@ -5,7 +5,7 @@
 // you may not use this file except in compliance with the License.
 // You may obtain a copy of the License at
 //
-//     http://www.apache.org/licenses/LICENSE-2.0
+//     http://www.apache.role/licenses/LICENSE-2.0
 //
 // Unless required by applicable law or agreed to in writing, software
 // distributed under the License is distributed on an "AS IS" BASIS,
@@ -13,17 +13,32 @@
 // See the License for the specific language governing permissions and
 // limitations under the License.
 
-package main
+package role
 
 import (
+	"fmt"
+	"log"
+
 	"github.com/stacklok/mediator/cmd/cli/app"
-	_ "github.com/stacklok/mediator/cmd/cli/app/auth"
-	_ "github.com/stacklok/mediator/cmd/cli/app/group"
-	_ "github.com/stacklok/mediator/cmd/cli/app/org"
-	_ "github.com/stacklok/mediator/cmd/cli/app/role"
-	_ "github.com/stacklok/mediator/cmd/cli/app/user"
+
+	"github.com/spf13/cobra"
+	"github.com/spf13/viper"
 )
 
-func main() {
-	app.Execute()
+var RoleCmd = &cobra.Command{
+	Use:   "role",
+	Short: "Manage roles within the mediator controlplane",
+	Long: `The medctl role commands manage roles within the mediator
+controlplane.`,
+	Run: func(cmd *cobra.Command, args []string) {
+		fmt.Println("role called")
+	},
+}
+
+func init() {
+	app.RootCmd.AddCommand(RoleCmd)
+	if err := viper.BindPFlags(RoleCmd.PersistentFlags()); err != nil {
+		log.Fatal(err)
+	}
+
 }
