@@ -122,9 +122,11 @@ make migratedown
 
 Mediator uses [viper](https://github.com/spf13/viper) for configuration.
 
-An example configuration file is `config/config.yaml`.
+An example configuration file is `config/config.yaml.example`.
 
 Most values should be quite self explanatory.
+
+Before running the app, please copy the content of `config/config.yaml.example` into `$PWD/config.yaml` file, and modify to use your own settings.
 
 ## Configure OAuth2
 

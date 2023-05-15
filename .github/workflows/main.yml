@@ -124,7 +124,7 @@ jobs:
       
       # copy config file into place
       - name: Copy config file
-        run: cp config/config.yaml ./config.yaml
+        run: cp config/config.yaml.example ./config.yaml
 
       # Migrate the database
       - name: Migrate database
