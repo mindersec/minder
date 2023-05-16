@@ -13,18 +13,29 @@
 # See the License for the specific language governing permissions and
 # limitations under the License.
 
-name: CI for pull request
+name: Main
 
 on:
-  pull_request:
-    branches: ["main", "release-*"]
+  push:
+    branches:
+      - main
+      - release-*
     paths-ignore:
       - "**.md"
       - "doc/**"
       - "**.txt"
       - "images/**"
       - "LICENSE"
-      - ".github/**"
+  pull_request:
+    branches:
+      - main
+      - release-*
+    paths-ignore:
+      - "**.md"
+      - "doc/**"
+      - "**.txt"
+      - "images/**"
+      - "LICENSE"
 
 permissions:
   contents: read
