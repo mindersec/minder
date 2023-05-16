@@ -40,11 +40,30 @@ permissions:
   contents: read
 
 jobs:
+  golangci:
+    name: golangci-lint
+    runs-on: ubuntu-latest
+    steps:
+      - uses: actions/checkout@v3 # v3.5.0
+      - name: deps
+        run: sudo apt-get update && sudo apt-get install -yq libpcsclite-dev
+      - name: Extract version of Go to use
+        run: echo "GOVERSION=$(sed -n 's/^go \([0-9.]*\)/\1/p' go.mod)" >> $GITHUB_ENV
+      - uses: actions/setup-go@v4 # v4.0.0
+        with:
+          go-version: ${{ env.GOVERSION }}
+      - name: golangci-lint
+        uses: golangci/golangci-lint-action@08e2f20817b15149a52b5b3ebe7de50aff2ba8c5 # v3.4.0
+        timeout-minutes: 5
+        with:
+          # Required: the version of golangci-lint is required and must be specified without patch version: we always use the latest patch version.
+          version: v1.51.0
+
   license-check:
-    uses: stacklock/mediator/.github/workflows/reusable-jobs/license-check.yml@ca3e5b206f6a89f80b084cef443341f480b1936a
+    uses: ./.github/workflows/reusable-jobs/license-check.yml
   golangci-lint:
-    uses: stacklock/mediator/.github/workflows/reusable-jobs/golangci-lint.yml@ca3e5b206f6a89f80b084cef443341f480b1936a
+    uses: ./.github/workflows/reusable-jobs/golangci-lint.yml
   build:
-    uses: stacklock/mediator/.github/workflows/reusable-jobs/build.yml@ca3e5b206f6a89f80b084cef443341f480b1936a
+    uses: ./.github/workflows/reusable-jobs/build.yml
   test:
-    uses: stacklock/mediator/.github/workflows/reusable-jobs/test.yml@ca3e5b206f6a89f80b084cef443341f480b1936a
+    uses: ./.github/workflows/reusable-jobs/test.yml
