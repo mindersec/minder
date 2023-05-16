@@ -34,12 +34,10 @@ var auth_revokeCmd = &cobra.Command{
 	Use:   "revoke",
 	Short: "Revoke a token",
 	Long: `Revoke a token within mediator, by expiring the token and removing it
-from the database.
+from the database. This is effectively the same as logging out.
 `,
 	Run: func(cmd *cobra.Command, args []string) {
 		fmt.Println("account revoke called")
-		// token := viper.GetString("token")
-		// id := viper.GetInt32("id")
 	},
 }
 
