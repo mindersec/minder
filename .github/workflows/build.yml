@@ -1,7 +1,7 @@
 on:
   workflow_call:
 jobs:
-  build:
+  project_build:
     name: verify build
     runs-on: ubuntu-latest
     steps:
