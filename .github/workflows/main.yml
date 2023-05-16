@@ -16,17 +16,26 @@
 name: Main
 
 on:
-  workflow_dispatch:
   push:
-    paths:
-      - '**'
-      - '!**.md'
-      - '!doc/**'
-      - '!**.txt'
-      - '!images/**'
-      - '!LICENSE'
-    branches: ['main', 'release-*']
+    branches:
+      - main
+      - release-*
+    paths-ignore:
+      - "**.md"
+      - "doc/**"
+      - "**.txt"
+      - "images/**"
+      - "LICENSE"
   pull_request:
+    branches:
+      - main
+      - release-*
+    paths-ignore:
+      - "**.md"
+      - "doc/**"
+      - "**.txt"
+      - "images/**"
+      - "LICENSE"
 
 permissions:
   contents: read
@@ -67,7 +76,7 @@ jobs:
         with:
           # Required: the version of golangci-lint is required and must be specified without patch version: we always use the latest patch version.
           version: v1.51.0
-    
+
   build:
     name: verify build
     runs-on: ubuntu-latest
@@ -116,12 +125,12 @@ jobs:
         with:
           # Optional: pass GITHUB_TOKEN to avoid rate limiting.
           token: ${{ secrets.GITHUB_TOKEN }}
-          # Optional: pass the gotestfmt version you want to run. 
+          # Optional: pass the gotestfmt version you want to run.
           version: v2.0.0
           # Optional: pass an organization name and repo to use a fork
           org: GoTestTools
           repo: gotestfmt
-      
+
       # copy config file into place
       - name: Copy config file
         run: cp config/config.yaml.example ./config.yaml
