@@ -1,0 +1,19 @@
+on:
+  workflow_call:
+jobs:
+  license-check:
+    name: License boilerplate check
+    runs-on: ubuntu-latest
+    steps:
+      - uses: actions/checkout@v3 # v3.5.0
+
+      - uses: actions/setup-go@v4 # v4.0.0
+        with:
+          go-version: 1.20.0
+      - name: Install addlicense
+        run: go install github.com/google/addlicense@v1.0.0
+      - name: Check license headers
+        run: |
+          set -e
+          addlicense -ignore **/pkg/generated/* -ignore **/pkg/db/* -ignore **/database/query/* -l apache -c 'Stacklok, Inc' -v * 
+          git diff --exit-code
