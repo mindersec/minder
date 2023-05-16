@@ -66,6 +66,11 @@ func TestCobraMain(t *testing.T) {
 			args:           []string{"auth", "revoke"},
 			expectedOutput: "auth revoke called\n",
 		},
+		{
+			name:           "auth delete command",
+			args:           []string{"auth", "delete"},
+			expectedOutput: "auth delete called\n",
+		},
 	}
 
 	for _, test := range tests {
