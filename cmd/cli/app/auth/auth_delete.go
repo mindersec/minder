@@ -43,7 +43,7 @@ To delete a user by username, pass in the --username flag, e.g.
 medctl auth delete-user --username=foo
 
 Note: This command will only work if you are logged in as user with a current
-access tokenm, with sufficient privileges. If you peform this command with no
+access token, with sufficient privileges. If you peform this command with no
 --username or --id flag, it will delete the user associated with the current.
 `,
 	Run: func(cmd *cobra.Command, args []string) {
