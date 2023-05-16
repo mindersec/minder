@@ -25,10 +25,10 @@ permissions:
 
 jobs:
   license-check:
-    uses: stacklock/mediator/.github/workflows/license-check.yml@main
+    uses: stacklock/mediator/.github/workflows/reusable-jobs/license-check.yml@main
   golangci-lint:
-    uses: stacklock/mediator/.github/workflows/golangci-lint.yml@main
+    uses: stacklock/mediator/.github/workflows/reusable-jobs/golangci-lint.yml@main
   build:
-    uses: stacklock/mediator/.github/workflows/build.yml@main
+    uses: stacklock/mediator/.github/workflows/reusable-jobs/build.yml@main
   test:
-    uses: stacklock/mediator/.github/workflows/test.yml@main
+    uses: stacklock/mediator/.github/workflows/reusable-jobs/test.yml@main
