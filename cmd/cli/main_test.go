@@ -16,11 +16,60 @@
 package main
 
 import (
+	"os"
 	"testing"
-
 	"github.com/stacklok/mediator/cmd/cli/app"
+	"github.com/spf13/viper"
 )
 
+type testWriter struct {
+	output string
+}
+
+func (tw *testWriter) Write(p []byte) (n int, err error) {
+	tw.output += string(p)
+	return len(p), nil
+}
+
+func setupConfigFile(configFile string) {
+	config := []byte(`logging: "info"`)
+	err := os.WriteFile(configFile, config, 0o644)
+	if err != nil {
+		panic(err)
+	}
+}
+
+func removeConfigFile(filename string) {
+	os.Remove(filename)
+}
+
 func TestCobraMain(t *testing.T) {
-	app.Execute()
+	tests := []struct {
+		name           string
+		args           []string
+		expectedFile   string
+	}{
+		{
+			name:           "pass config flag",
+			args:           []string{"--config", "/tmp/config.yaml", "auth"},
+			expectedFile: 	"/tmp/config.yaml",
+		},
+	}
+
+	for _, test := range tests {
+		t.Run(test.name, func(t *testing.T) {
+			setupConfigFile(test.expectedFile)
+			defer removeConfigFile(test.expectedFile)
+
+			tw := &testWriter{}
+			app.RootCmd.SetOut(tw) // stub to capture eventual output			
+			app.RootCmd.SetArgs(test.args)
+			app.Execute()
+
+			actualConfigFile := viper.ConfigFileUsed()
+			if (actualConfigFile != test.expectedFile) {
+				t.Errorf("Expected config file %s, got %s", actualConfigFile, test.expectedFile)
+			}
+		})
+	}
 }

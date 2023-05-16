@@ -23,17 +23,20 @@ import (
 	"github.com/spf13/viper"
 )
 
-// rootCmd represents the base command when called without any subcommands
-var rootCmd = &cobra.Command{
-	Use:   "mediator-server",
-	Short: "Mediator control plane server",
-	Long:  ``,
-}
+var (
+	cfgFile     string	// config file (default is $PWD/config.yaml)	
+	// rootCmd represents the base command when called without any subcommands
+	RootCmd = &cobra.Command{
+		Use:   "mediator-server",
+		Short: "Mediator control plane server",
+		Long:  ``,
+	}	
+)
 
 // Execute adds all child commands to the root command and sets flags appropriately.
 // This is called by main.main(). It only needs to happen once to the rootCmd.
 func Execute() {
-	err := rootCmd.Execute()
+	err := RootCmd.Execute()
 	if err != nil {
 		os.Exit(1)
 	}
@@ -41,11 +44,18 @@ func Execute() {
 
 func init() {
 	cobra.OnInitialize(initConfig)
+	RootCmd.PersistentFlags().StringVar(&cfgFile, "config", "", "config file (default is $PWD/config.yaml)")
 }
 
 func initConfig() {
-	viper.SetConfigName("config")
-	viper.AddConfigPath(".")
+	if cfgFile != "" {
+		viper.SetConfigFile(cfgFile)
+	} else {
+		// use defaults
+		viper.SetConfigName("config")
+		viper.AddConfigPath(".")
+	}
+	viper.SetConfigType("yaml")
 	viper.AutomaticEnv()
 
 	if err := viper.ReadInConfig(); err != nil {
