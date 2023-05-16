@@ -51,12 +51,13 @@ func init() {
 	}()
 }
 
+// bufDialer is used to mock out the grpc client connection
 func bufDialer(context.Context, string) (net.Conn, error) {
 	return lis.Dial()
 }
 
 func TestSaveCredentials(t *testing.T) {
-	// Arrange
+
 	expectedCreds := Credentials{
 		AccessToken:           "testAccessToken",
 		RefreshToken:          "testRefreshToken",
@@ -66,13 +67,11 @@ func TestSaveCredentials(t *testing.T) {
 
 	os.Setenv("XDG_CONFIG_HOME", "/tmp")
 
-	// Act
 	filePath, err := saveCredentials(expectedCreds)
 	if err != nil {
 		t.Fatalf("saveCredentials returned unexpected error: %v", err)
 	}
 
-	// Assert
 	data, err := os.ReadFile(filePath)
 	if err != nil {
 		t.Fatalf("Failed to read file: %v", err)

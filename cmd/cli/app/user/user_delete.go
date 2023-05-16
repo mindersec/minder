@@ -41,6 +41,7 @@ mediator controlplane.`,
 
 func init() {
 	UserCmd.AddCommand(user_deleteCmd)
+	user_deleteCmd.PersistentFlags().BoolP("force", "f", false, "Force deletion of organization (WARNING: this will delete all resources associated with the user)")
 	if err := viper.BindPFlags(user_deleteCmd.PersistentFlags()); err != nil {
 		log.Fatal(err)
 	}

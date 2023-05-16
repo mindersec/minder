@@ -41,6 +41,10 @@ mediator controlplane.`,
 
 func init() {
 	UserCmd.AddCommand(user_listCmd)
+	user_listCmd.PersistentFlags().BoolP("all", "a", false, "List all users")
+	user_listCmd.PersistentFlags().StringP("org-id", "o", "", "List users by org-id")
+	user_listCmd.PersistentFlags().StringP("group-id", "g", "", "List users by group-id")
+	user_listCmd.PersistentFlags().StringP("user-id", "u", "", "List users by user-id")
 	if err := viper.BindPFlags(user_listCmd.PersistentFlags()); err != nil {
 		log.Fatal(err)
 	}

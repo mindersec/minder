@@ -41,6 +41,8 @@ within the mediator controlplane.`,
 
 func init() {
 	OrgCmd.AddCommand(org_createCmd)
+	org_createCmd.Flags().StringP("name", "n", "", "Name of the organization")
+	org_createCmd.Flags().StringP("company", "c", "", "Company name of the organization")
 	if err := viper.BindPFlags(org_createCmd.PersistentFlags()); err != nil {
 		fmt.Fprintf(os.Stderr, "Error binding flags: %s\n", err)
 	}

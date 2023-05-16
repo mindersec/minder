@@ -41,6 +41,14 @@ within the mediator controlplane.`,
 
 func init() {
 	UserCmd.AddCommand(user_createCmd)
+	user_createCmd.PersistentFlags().StringP("name", "n", "", "Name of user")
+	user_createCmd.PersistentFlags().StringP("email", "e", "", "Email of user")
+	user_createCmd.PersistentFlags().StringP("username", "u", "", "Username of user")
+	user_createCmd.PersistentFlags().StringP("password", "p", "", "Password of user")
+	user_createCmd.PersistentFlags().StringP("first-name", "f", "", "First name of user")
+	user_createCmd.PersistentFlags().StringP("last-name", "l", "", "Last name of user")
+	user_createCmd.PersistentFlags().StringP("group-id", "g", "", "Group ID of user")
+	user_createCmd.PersistentFlags().BoolP("active", "a", false, "Active status of user")
 	if err := viper.BindPFlags(user_createCmd.PersistentFlags()); err != nil {
 		log.Fatal(err)
 	}

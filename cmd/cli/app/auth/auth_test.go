@@ -46,8 +46,6 @@ func removeConfigFile(filename string) {
 }
 
 func TestCobraMain(t *testing.T) {
-	// Each of the following tests can be broken out into their own test file
-	// e.g. auth_test.go, auth_list_test.go, auth_create_test.go, etc.
 	tests := []struct {
 		name           string
 		args           []string

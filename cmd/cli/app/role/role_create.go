@@ -41,6 +41,11 @@ within the mediator controlplane.`,
 
 func init() {
 	RoleCmd.AddCommand(role_createCmd)
+	// flag for name
+	role_createCmd.Flags().StringP("name", "n", "", "Name of the role")
+	role_createCmd.Flags().BoolP("is-admin", "a", false, "Is the role an admin role")
+	role_createCmd.Flags().BoolP("active", "e", true, "Whether the role is active or not")
+
 	if err := viper.BindPFlags(role_createCmd.PersistentFlags()); err != nil {
 		log.Fatal(err)
 	}

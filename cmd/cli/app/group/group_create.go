@@ -41,6 +41,8 @@ the mediator controlplane.`,
 
 func init() {
 	GroupCmd.AddCommand(group_createCmd)
+	group_createCmd.PersistentFlags().StringP("name", "n", "", "Name of the group")
+	group_createCmd.PersistentFlags().BoolP("active", "a", true, "Whether the group is active or not")
 	if err := viper.BindPFlags(group_createCmd.PersistentFlags()); err != nil {
 		fmt.Fprintf(os.Stderr, "Error binding flags: %s\n", err)
 	}
