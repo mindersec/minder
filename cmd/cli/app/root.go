@@ -27,11 +27,11 @@ var (
 	cfgFile     string	// config file (default is $PWD/config.yaml)	
 	// rootCmd represents the base command when called without any subcommands
 	RootCmd = &cobra.Command{
-	Use:   "medctl",
-	Short: "medctl controls mediator via the control plane",
-	Long: `For more information about mediator, please visit:
-	https://docs.stacklok.com/mediator/medctl/overview.html`,
-}
+		Use:   "medctl",
+		Short: "medctl controls mediator via the control plane",
+		Long: `For more information about mediator, please visit:
+		https://docs.stacklok.com/mediator/medctl/overview.html`,
+	}
 )
 
 func Execute() {
