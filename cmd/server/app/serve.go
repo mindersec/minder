@@ -73,7 +73,7 @@ var serveCmd = &cobra.Command{
 }
 
 func init() {
-	rootCmd.AddCommand(serveCmd)
+	RootCmd.AddCommand(serveCmd)
 	serveCmd.Flags().String("http-host", "", "Server host")
 	serveCmd.Flags().Int("http-port", 0, "Server port")
 	serveCmd.Flags().String("grpc-host", "", "Server host")

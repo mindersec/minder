@@ -23,13 +23,16 @@ import (
 	"github.com/spf13/viper"
 )
 
-// rootCmd represents the base command when called without any subcommands
-var RootCmd = &cobra.Command{
-	Use:   "medctl",
-	Short: "medctl controls mediator via the control plane",
-	Long: `For more information about mediator, please visit:
-	https://docs.stacklok.com/mediator/medctl/overview.html`,
-}
+var (
+	cfgFile     string	// config file (default is $PWD/config.yaml)	
+	// rootCmd represents the base command when called without any subcommands
+	RootCmd = &cobra.Command{
+		Use:   "medctl",
+		Short: "medctl controls mediator via the control plane",
+		Long: `For more information about mediator, please visit:
+		https://docs.stacklok.com/mediator/medctl/overview.html`,
+	}
+)
 
 func Execute() {
 	err := RootCmd.Execute()
@@ -44,11 +47,18 @@ func init() {
 	RootCmd.PersistentFlags().String("http-host", "localhost", "Server host")
 	RootCmd.PersistentFlags().Int("http-port", 8080, "Server port")
 	cobra.OnInitialize(initConfig)
+	RootCmd.PersistentFlags().StringVar(&cfgFile, "config", "", "config file (default is $PWD/config.yaml)")
 }
 
 func initConfig() {
-	viper.SetConfigName("config")
-	viper.AddConfigPath(".")
+	if cfgFile != "" {
+		viper.SetConfigFile(cfgFile)
+	} else {
+		// use defaults
+		viper.SetConfigName("config")
+		viper.AddConfigPath(".")
+	}
+	viper.SetConfigType("yaml")
 	viper.AutomaticEnv()
 
 	if err := viper.ReadInConfig(); err != nil {
