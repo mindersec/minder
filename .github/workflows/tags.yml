@@ -25,10 +25,10 @@ permissions:
 
 jobs:
   license-check:
-    uses: ./.github/workflows/reusable-jobs/license-check.yml
+    uses: ./.github/workflows/license-check.yml
   golangci-lint:
-    uses: ./.github/workflows/reusable-jobs/golangci-lint.yml
+    uses: ./.github/workflows/golangci-lint.yml
   build:
-    uses: ./.github/workflows/reusable-jobs/build.yml
+    uses: ./.github/workflows/build.yml
   test:
-    uses: ./.github/workflows/reusable-jobs/test.yml
+    uses: ./.github/workflows/test.yml

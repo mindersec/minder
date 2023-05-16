@@ -1,7 +1,7 @@
 on:
   workflow_call:
 jobs:
-  golangci:
+  golangci-lint:
     name: golangci-lint
     runs-on: ubuntu-latest
     steps:
