@@ -41,6 +41,8 @@ mediator controlplane.`,
 
 func init() {
 	RoleCmd.AddCommand(role_listCmd)
+	role_listCmd.PersistentFlags().BoolP("all", "a", false, "List all roles")
+	role_listCmd.PersistentFlags().StringP("role-id", "r", "", "List roles by role-id")
 	if err := viper.BindPFlags(role_listCmd.PersistentFlags()); err != nil {
 		log.Fatal(err)
 	}

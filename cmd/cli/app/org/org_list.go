@@ -41,6 +41,9 @@ within the mediator controlplane.`,
 
 func init() {
 	OrgCmd.AddCommand(org_listCmd)
+	org_listCmd.PersistentFlags().BoolP("all", "a", false, "List all organizations")
+	org_listCmd.PersistentFlags().StringP("org-id", "o", "", "List organization by org-id")
+
 	if err := viper.BindPFlags(org_listCmd.PersistentFlags()); err != nil {
 		fmt.Fprintf(os.Stderr, "Error binding flags: %s\n", err)
 	}

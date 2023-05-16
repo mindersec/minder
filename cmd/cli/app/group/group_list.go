@@ -41,6 +41,8 @@ the mediator controlplane.`,
 
 func init() {
 	GroupCmd.AddCommand(group_listCmd)
+	group_listCmd.PersistentFlags().BoolP("all", "a", false, "List all groups")
+	group_listCmd.PersistentFlags().StringP("group-id", "g", "", "List groups by group-id")
 	if err := viper.BindPFlags(group_listCmd.PersistentFlags()); err != nil {
 		fmt.Fprintf(os.Stderr, "Error binding flags: %s\n", err)
 	}

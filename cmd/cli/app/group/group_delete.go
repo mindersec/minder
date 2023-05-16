@@ -41,6 +41,9 @@ the mediator controlplane.`,
 
 func init() {
 	GroupCmd.AddCommand(group_deleteCmd)
+	group_deleteCmd.PersistentFlags().BoolP("force", "f", false, "Force deletion of organization (WARNING: this will delete all resources associated with the group)")
+	// flag for group-id
+	group_deleteCmd.PersistentFlags().StringP("group-id", "g", "", "The Group ID to delete")
 	if err := viper.BindPFlags(group_deleteCmd.PersistentFlags()); err != nil {
 		fmt.Fprintf(os.Stderr, "Error binding flags: %s\n", err)
 	}
