@@ -2,6 +2,7 @@ on:
   workflow_call:
 jobs:
   test:
+    name: Unit testing
     runs-on: ubuntu-latest
     services:
       postgres:

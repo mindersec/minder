@@ -2,6 +2,7 @@ on:
   workflow_call:
 jobs:
   build:
+    name: Verify build
     runs-on: ubuntu-latest
     steps:
       - uses: actions/checkout@v3 # v3.5.0
