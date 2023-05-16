@@ -4,9 +4,22 @@ on:
   push:
     branches:
       - main
+      - release-*
+    paths-ignore:
+      - "**.md"
+      - "doc/**"
+      - "**.txt"
+      - "images/**"
+      - "LICENSE"
   pull_request:
     branches:
       - main
+    paths-ignore:
+      - "**.md"
+      - "doc/**"
+      - "**.txt"
+      - "images/**"
+      - "LICENSE"
 
 jobs:
   proto-breaking-changes:
@@ -16,7 +29,7 @@ jobs:
       - uses: bufbuild/buf-setup-action@v1
       - uses: bufbuild/buf-breaking-action@v1
         with:
-          against: 'https://github.com/stacklok/mediator.git#branch=main'
+          against: "https://github.com/stacklok/mediator.git#branch=main"
 
   sqlc-generation:
     runs-on: ubuntu-latest
@@ -25,34 +38,33 @@ jobs:
       SQLC_VERSION: 1.17.2
 
     steps:
-    - name: Check out code
-      uses: actions/checkout@v3
+      - name: Check out code
+        uses: actions/checkout@v3
 
-    - name: Set up Go
-      uses: actions/setup-go@v4
-      with:
-        go-version: 1.20.0
+      - name: Set up Go
+        uses: actions/setup-go@v4
+        with:
+          go-version: 1.20.0
 
-    - name: Install sqlc
-      run: |
-        curl -L https://github.com/kyleconroy/sqlc/releases/download/v${SQLC_VERSION}/sqlc_${SQLC_VERSION}_linux_amd64.tar.gz -o sqlc.tar.gz
-        tar -xzf sqlc.tar.gz
-        sudo mv sqlc /usr/local/bin
-        rm sqlc.tar.gz
+      - name: Install sqlc
+        run: |
+          curl -L https://github.com/kyleconroy/sqlc/releases/download/v${SQLC_VERSION}/sqlc_${SQLC_VERSION}_linux_amd64.tar.gz -o sqlc.tar.gz
+          tar -xzf sqlc.tar.gz
+          sudo mv sqlc /usr/local/bin
+          rm sqlc.tar.gz
 
-    - name: Generate Go code from SQL and check for syntax errors
-      shell: bash
-      run: |
-        OUTPUT=$(sqlc generate 2>&1) || true
-        if [[ $OUTPUT == *"syntax error"* ]]; then
-          echo "Error: SQL generation failed:"
-          echo "$OUTPUT"
-          exit 1
-        else
-          echo "$OUTPUT"
-        fi
-    
-    - name: Check for uncommitted SQLC changes
-      run: |
-        git diff --exit-code || (echo "Error: Uncommitted changes detected after running 'sqlc generate'. Please commit the changes and try again." && exit 1)
+      - name: Generate Go code from SQL and check for syntax errors
+        shell: bash
+        run: |
+          OUTPUT=$(sqlc generate 2>&1) || true
+          if [[ $OUTPUT == *"syntax error"* ]]; then
+            echo "Error: SQL generation failed:"
+            echo "$OUTPUT"
+            exit 1
+          else
+            echo "$OUTPUT"
+          fi
 
+      - name: Check for uncommitted SQLC changes
+        run: |
+          git diff --exit-code || (echo "Error: Uncommitted changes detected after running 'sqlc generate'. Please commit the changes and try again." && exit 1)
