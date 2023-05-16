@@ -34,17 +34,7 @@ var auth_revokeCmd = &cobra.Command{
 	Use:   "revoke",
 	Short: "Revoke a token",
 	Long: `Revoke a token within mediator, by expiring the token and removing it
-from the database. If the token is a refresh token, then the associated access
-token will also be revoked.
-
-You can revoke a token by passing in the token itself, or by passing in the
-token ID.
-
-To revoke a token by ID, pass in the --id flag, e.g.
-medctl auth revoke --id=1234
-
-To revoke a token by value, pass in the --token flag, e.g.
-medctl auth revoke --token=1234-1234-1234-1234
+from the database.
 `,
 	Run: func(cmd *cobra.Command, args []string) {
 		fmt.Println("account revoke called")
@@ -55,8 +45,6 @@ medctl auth revoke --token=1234-1234-1234-1234
 
 func init() {
 	AuthCmd.AddCommand(auth_revokeCmd)
-	auth_revokeCmd.PersistentFlags().String("token", "", "The token to revoke")
-	auth_revokeCmd.PersistentFlags().Int32("id", 0, "The ID of the token to revoke")
 	if err := viper.BindPFlags(auth_revokeCmd.PersistentFlags()); err != nil {
 		fmt.Fprintf(os.Stderr, "Error binding flags: %s\n", err)
 	}
