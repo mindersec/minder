@@ -23,7 +23,7 @@ package group
 
 import (
 	"fmt"
-	"log"
+	"os"
 
 	"github.com/stacklok/mediator/cmd/cli/app"
 
@@ -37,14 +37,14 @@ var GroupCmd = &cobra.Command{
 	Long: `The medctl group commands manage groups within the mediator
 controlplane.`,
 	Run: func(cmd *cobra.Command, args []string) {
-		fmt.Println("group called")
+		cmd.Println("group called")
 	},
 }
 
 func init() {
 	app.RootCmd.AddCommand(GroupCmd)
 	if err := viper.BindPFlags(GroupCmd.PersistentFlags()); err != nil {
-		log.Fatal(err)
+		fmt.Fprintf(os.Stderr, "Error binding flags: %s\n", err)
 	}
 
 }

@@ -23,7 +23,7 @@ package org
 
 import (
 	"fmt"
-	"log"
+	"os"
 
 	"github.com/spf13/cobra"
 	"github.com/spf13/viper"
@@ -35,13 +35,13 @@ var org_createCmd = &cobra.Command{
 	Long: `The medctl org create subcommand lets you create new organizations
 within the mediator controlplane.`,
 	Run: func(cmd *cobra.Command, args []string) {
-		fmt.Println("group create called")
+		cmd.Println("group create called")
 	},
 }
 
 func init() {
 	OrgCmd.AddCommand(org_createCmd)
 	if err := viper.BindPFlags(org_createCmd.PersistentFlags()); err != nil {
-		log.Fatal(err)
+		fmt.Fprintf(os.Stderr, "Error binding flags: %s\n", err)
 	}
 }

@@ -23,7 +23,7 @@ package group
 
 import (
 	"fmt"
-	"log"
+	"os"
 
 	"github.com/spf13/cobra"
 	"github.com/spf13/viper"
@@ -35,13 +35,13 @@ var group_listCmd = &cobra.Command{
 	Long: `The medctl group list subcommand lets you list groups within
 the mediator controlplane.`,
 	Run: func(cmd *cobra.Command, args []string) {
-		fmt.Println("group list called")
+		cmd.Println("group list called")
 	},
 }
 
 func init() {
 	GroupCmd.AddCommand(group_listCmd)
 	if err := viper.BindPFlags(group_listCmd.PersistentFlags()); err != nil {
-		log.Fatal(err)
+		fmt.Fprintf(os.Stderr, "Error binding flags: %s\n", err)
 	}
 }

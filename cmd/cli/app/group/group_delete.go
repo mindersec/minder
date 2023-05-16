@@ -23,7 +23,7 @@ package group
 
 import (
 	"fmt"
-	"log"
+	"os"
 
 	"github.com/spf13/cobra"
 	"github.com/spf13/viper"
@@ -35,13 +35,13 @@ var group_deleteCmd = &cobra.Command{
 	Long: `The medctl group delete subcommand lets you delete groups within
 the mediator controlplane.`,
 	Run: func(cmd *cobra.Command, args []string) {
-		fmt.Println("group delete called")
+		cmd.Println("group delete called")
 	},
 }
 
 func init() {
 	GroupCmd.AddCommand(group_deleteCmd)
 	if err := viper.BindPFlags(group_deleteCmd.PersistentFlags()); err != nil {
-		log.Fatal(err)
+		fmt.Fprintf(os.Stderr, "Error binding flags: %s\n", err)
 	}
 }

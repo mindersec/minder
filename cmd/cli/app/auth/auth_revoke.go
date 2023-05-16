@@ -23,7 +23,7 @@ package auth
 
 import (
 	"fmt"
-	"log"
+	"os"
 
 	"github.com/spf13/cobra"
 	"github.com/spf13/viper"
@@ -58,6 +58,6 @@ func init() {
 	auth_revokeCmd.PersistentFlags().String("token", "", "The token to revoke")
 	auth_revokeCmd.PersistentFlags().Int32("id", 0, "The ID of the token to revoke")
 	if err := viper.BindPFlags(auth_revokeCmd.PersistentFlags()); err != nil {
-		log.Fatal(err)
+		fmt.Fprintf(os.Stderr, "Error binding flags: %s\n", err)
 	}
 }

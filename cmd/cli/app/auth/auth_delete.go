@@ -30,19 +30,33 @@ import (
 )
 
 // authCmd represents the auth command
-var auth_listCmd = &cobra.Command{
-	Use:   "list",
-	Short: "List all auth accounts and tokens",
-	Long: `List all tokens and accounts for active or expired, mediator sessions
-	including which providers the tokens are associated with and
-	details on expiry.`,
+var auth_deluserCmd = &cobra.Command{
+	Use:   "delete-user",
+	Short: "Delete a user account within mediator",
+	Long: `Delete a user account within mediator, by removing the user from the
+database. This will also revoke all tokens associated with the user.
+
+You can delete a user by passing in the user ID, e.g.
+medctl auth delete-user --id=1234
+
+To delete a user by username, pass in the --username flag, e.g.
+medctl auth delete-user --username=foo
+
+Note: This command will only work if you are logged in as user with a current
+access token. If you are not logged in, then you will need to pass in the
+--username flag and the --password flag or the --provider flag.
+`,
 	Run: func(cmd *cobra.Command, args []string) {
-		cmd.Println("auth list called")
+		fmt.Println("auth revoke called")
 	},
 }
 
 func init() {
-	AuthCmd.AddCommand(auth_listCmd)
+	AuthCmd.AddCommand(auth_deluserCmd)
+	auth_deluserCmd.PersistentFlags().String("username", "", "The username to delete")
+	auth_deluserCmd.PersistentFlags().Int32("id", 0, "The password for the user to delete")
+	auth_deluserCmd.PersistentFlags().String("password", "", "The password for the user to delete")
+	auth_deluserCmd.PersistentFlags().String("provider", "", "The provider for the user to delete")
 	if err := viper.BindPFlags(auth_deluserCmd.PersistentFlags()); err != nil {
 		fmt.Fprintf(os.Stderr, "Error binding flags: %s\n", err)
 	}

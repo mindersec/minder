@@ -93,12 +93,6 @@ func TestCobraMain(t *testing.T) {
 			if err := app.RootCmd.Execute(); err != nil {
 				t.Errorf("Error executing command: %v", err)
 			}
-
-			// stub to capture eventual output and compare
-			// or specfic tests according to the output of the command
-			// if got := strings.TrimSpace(tw.output); got != test.expectedOutput {
-			// 	t.Errorf("Expected output: %v, got: %v", test.expectedOutput, got)
-			// }
 		})
 	}
 }

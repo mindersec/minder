@@ -161,6 +161,6 @@ func init() {
 	AuthCmd.AddCommand(auth_createCmd)
 
 	if err := viper.BindPFlags(auth_createCmd.PersistentFlags()); err != nil {
-		log.Fatal(err)
+		fmt.Fprintf(os.Stderr, "Error binding flags: %s\n", err)
 	}
 }

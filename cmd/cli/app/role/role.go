@@ -17,7 +17,7 @@ package role
 
 import (
 	"fmt"
-	"log"
+	"os"
 
 	"github.com/stacklok/mediator/cmd/cli/app"
 
@@ -38,7 +38,6 @@ controlplane.`,
 func init() {
 	app.RootCmd.AddCommand(RoleCmd)
 	if err := viper.BindPFlags(RoleCmd.PersistentFlags()); err != nil {
-		log.Fatal(err)
+		fmt.Fprintf(os.Stderr, "Error binding flags: %s\n", err)
 	}
-
 }
