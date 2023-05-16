@@ -24,6 +24,7 @@ on:
       - "**.txt"
       - "images/**"
       - "LICENSE"
+      - ".github/**"
 
 permissions:
   contents: read
