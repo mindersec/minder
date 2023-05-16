@@ -23,7 +23,7 @@ package org
 
 import (
 	"fmt"
-	"log"
+	"os"
 
 	"github.com/stacklok/mediator/cmd/cli/app"
 
@@ -44,7 +44,6 @@ controlplane.`,
 func init() {
 	app.RootCmd.AddCommand(OrgCmd)
 	if err := viper.BindPFlags(OrgCmd.PersistentFlags()); err != nil {
-		log.Fatal(err)
+		fmt.Fprintf(os.Stderr, "Error binding flags: %s\n", err)
 	}
-
 }

@@ -23,7 +23,7 @@ package auth
 
 import (
 	"fmt"
-	"log"
+	"os"
 
 	"github.com/stacklok/mediator/cmd/cli/app"
 
@@ -46,7 +46,6 @@ func init() {
 	app.RootCmd.AddCommand(AuthCmd)
 
 	if err := viper.BindPFlags(AuthCmd.PersistentFlags()); err != nil {
-		log.Fatal(err)
+		fmt.Fprintf(os.Stderr, "Error binding flags: %s\n", err)
 	}
-
 }

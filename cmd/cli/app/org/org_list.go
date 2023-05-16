@@ -23,7 +23,7 @@ package org
 
 import (
 	"fmt"
-	"log"
+	"os"
 
 	"github.com/spf13/cobra"
 	"github.com/spf13/viper"
@@ -42,6 +42,6 @@ within the mediator controlplane.`,
 func init() {
 	OrgCmd.AddCommand(org_listCmd)
 	if err := viper.BindPFlags(org_listCmd.PersistentFlags()); err != nil {
-		log.Fatal(err)
+		fmt.Fprintf(os.Stderr, "Error binding flags: %s\n", err)
 	}
 }

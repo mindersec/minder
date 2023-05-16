@@ -59,22 +59,22 @@ func TestCobraMain(t *testing.T) {
 	}{
 		{
 			name:           "role command",
-			args:           []string{"role", "--help"},
+			args:           []string{"role"},
 			expectedOutput: "role called\n",
 		},
 		{
 			name:           "role list command",
-			args:           []string{"role", "list", "--help"},
+			args:           []string{"role", "list"},
 			expectedOutput: "role list called\n",
 		},
 		{
 			name:           "role delete command",
-			args:           []string{"role", "delete", "--help"},
+			args:           []string{"role", "delete"},
 			expectedOutput: "role delete called\n",
 		},
 		{
 			name:           "role create command",
-			args:           []string{"role", "create", "--help"},
+			args:           []string{"role", "create"},
 			expectedOutput: "role create called\n",
 		},
 	}
@@ -93,12 +93,6 @@ func TestCobraMain(t *testing.T) {
 			if err := app.RootCmd.Execute(); err != nil {
 				t.Errorf("Error executing command: %v", err)
 			}
-
-			// stub to capture eventual output and compare
-			// or specfic tests according to the output of the command
-			// if got := strings.TrimSpace(tw.output); got != test.expectedOutput {
-			// 	t.Errorf("Expected output: %v, got: %v", test.expectedOutput, got)
-			// }
 		})
 	}
 }

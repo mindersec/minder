@@ -149,6 +149,6 @@ func init() {
 	auth_loginCmd.PersistentFlags().StringP("username", "u", "", "Username to use for authentication")
 	auth_loginCmd.PersistentFlags().StringP("password", "p", "", "Password to use for authentication")
 	if err := viper.BindPFlags(auth_loginCmd.PersistentFlags()); err != nil {
-		fmt.Println("Error binding flags:", err)
+		fmt.Fprintf(os.Stderr, "Error binding flags: %s\n", err)
 	}
 }
