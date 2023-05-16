@@ -83,6 +83,6 @@ func TestVerifyToken(t *testing.T) {
 	if err == nil {
 		t.Error("Expected error with invalid key, but got nil")
 	} else {
-		t.Logf("Got expected error with invalid key: %v", err)
+		t.Logf("Successfully received error when using an invalid key: %v", err)
 	}
 }
