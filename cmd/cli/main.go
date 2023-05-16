@@ -21,7 +21,6 @@ import (
 	_ "github.com/stacklok/mediator/cmd/cli/app/group"
 	_ "github.com/stacklok/mediator/cmd/cli/app/org"
 	_ "github.com/stacklok/mediator/cmd/cli/app/role"
-	_ "github.com/stacklok/mediator/cmd/cli/app/user"
 )
 
 func main() {
