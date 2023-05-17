@@ -13,7 +13,13 @@
 // See the License for the specific language governing permissions and
 // limitations under the License.
 
-package auth
+// NOTE: This file is for stubbing out client code for proof of concept
+// purposes. It will / should be removed in the future.
+// Until then, it is not covered by unit tests and should not be used
+// It does make a good example of how to use the generated client code
+// for others to use as a reference.
+
+package group
 
 import (
 	"os"
@@ -52,24 +58,24 @@ func TestCobraMain(t *testing.T) {
 		expectedOutput string
 	}{
 		{
-			name:           "auth command",
-			args:           []string{"auth"},
-			expectedOutput: "auth called\n",
+			name:           "group command",
+			args:           []string{"group"},
+			expectedOutput: "group called\n",
 		},
 		{
-			name:           "auth list command",
-			args:           []string{"auth", "list"},
-			expectedOutput: "auth list called\n",
+			name:           "group list command",
+			args:           []string{"group", "list"},
+			expectedOutput: "group list called\n",
 		},
 		{
-			name:           "auth revoke command",
-			args:           []string{"auth", "revoke"},
-			expectedOutput: "auth revoke called\n",
+			name:           "group delete command",
+			args:           []string{"group", "delete"},
+			expectedOutput: "group delete called\n",
 		},
 		{
-			name:           "auth delete command",
-			args:           []string{"auth", "delete"},
-			expectedOutput: "auth delete called\n",
+			name:           "group create command",
+			args:           []string{"group", "create"},
+			expectedOutput: "group create called\n",
 		},
 	}
 
@@ -86,6 +92,10 @@ func TestCobraMain(t *testing.T) {
 
 			if err := app.RootCmd.Execute(); err != nil {
 				t.Errorf("Error executing command: %v", err)
+			}
+
+			if tw.output != test.expectedOutput {
+				t.Errorf("Expected %q, got %q", test.expectedOutput, tw.output)
 			}
 		})
 	}

@@ -81,8 +81,8 @@ func saveCredentials(creds Credentials) (string, error) {
 
 }
 
-func getLoginServiceClient(address string, username string, password string) (*Credentials, error) {
-	conn, err := grpc.Dial(address, grpc.WithTransportCredentials(insecure.NewCredentials()))
+func getLoginServiceClient(ctx context.Context, address string, username string, password string, dialOptions ...grpc.DialOption) (*Credentials, error) {
+	conn, err := grpc.DialContext(ctx, address, dialOptions...)
 	if err != nil {
 		return nil, fmt.Errorf("error connecting to server: %v", err)
 	}
@@ -96,10 +96,11 @@ func getLoginServiceClient(address string, username string, password string) (*C
 		Username: username,
 		Password: password,
 	})
+
 	if err != nil {
-		if resp.Status == "error" {
-			return nil, fmt.Errorf("error logging in: %v", err)
-		}
+		return nil, fmt.Errorf("error logging in: %v", err)
+	} else if resp.Status == "error" {
+		return nil, fmt.Errorf("login service returned error status")
 	}
 
 	// marshal the credentials to json
@@ -116,18 +117,19 @@ func getLoginServiceClient(address string, username string, password string) (*C
 // authCmd represents the auth command
 var auth_loginCmd = &cobra.Command{
 	Use:   "login",
-	Short: "Login to mediator",
-	Long:  `Login to the mediator control plane.`,
+	Short: "Login to a mediator control plane.",
+	Long: `Login to a mediator control plane. Upon successful login, credentials
+will be saved to $XDG_CONFIG_HOME/mediator/credentials.json`,
 	Run: func(cmd *cobra.Command, args []string) {
 		grpc_host := util.GetConfigValue("grpc_server.host", "grpc-host", cmd, "").(string)
 		grpc_port := util.GetConfigValue("grpc_server.port", "grpc-port", cmd, 0).(int)
-		// provider := util.GetConfigValue("provider", "provider", cmd, "").(string)
 		username := util.GetConfigValue("username", "username", cmd, "").(string)
 		password := util.GetConfigValue("password", "password", cmd, "").(string)
 
 		address := fmt.Sprintf("%s:%d", grpc_host, grpc_port)
 
-		token, err := getLoginServiceClient(address, username, password)
+		ctx := context.Background()
+		token, err := getLoginServiceClient(ctx, address, username, password, grpc.WithTransportCredentials(insecure.NewCredentials()))
 		if err != nil {
 			fmt.Println(err)
 		}
@@ -147,7 +149,8 @@ func init() {
 	AuthCmd.AddCommand(auth_loginCmd)
 	auth_loginCmd.PersistentFlags().StringP("username", "u", "", "Username to use for authentication")
 	auth_loginCmd.PersistentFlags().StringP("password", "p", "", "Password to use for authentication")
+	auth_loginCmd.PersistentFlags().String("provider", "", "The OAuth2 provider to use for login")
 	if err := viper.BindPFlags(auth_loginCmd.PersistentFlags()); err != nil {
-		fmt.Println("Error binding flags:", err)
+		fmt.Fprintf(os.Stderr, "Error binding flags: %s\n", err)
 	}
 }

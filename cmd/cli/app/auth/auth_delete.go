@@ -31,23 +31,26 @@ import (
 
 // authCmd represents the auth command
 var auth_deluserCmd = &cobra.Command{
-	Use:   "delete-user",
-	Short: "Delete a user account within mediator",
-	Long: `Delete a user account within mediator, by removing the user from the
-database. This will also revoke all tokens associated with the user.
+	Use:   "delete",
+	Short: "Delete a user account within a mediator control plane",
+	Long: `Delete a user account within a mediator control plane, by removing the
+user from the database. This will also revoke any tokens associated with the
+user.
 
-You can delete a user by passing in the user ID, e.g.
-medctl auth delete-user --id=1234
+You can delete a user by passing in the user ID.
 
-To delete a user by username, pass in the --username flag, e.g.
-medctl auth delete-user --username=foo
+medctl auth delete --user-id=1234
 
 Note: This command will only work if you are logged in as user with a current
-access token. If you are not logged in, then you will need to pass in the
---username flag and the --password flag or the --provider flag.
-`,
+access token with sufficient privileges.
+
+Using --force will cascade delete the user, deleting all associated tokens and
+user data. This is not reversible. This includes any repositories owned by the
+user, and any data associated with those repositories.
+
+medctl auth delete --user-id=1234 --force`,
 	Run: func(cmd *cobra.Command, args []string) {
-		fmt.Println("auth revoke called")
+		fmt.Println("auth delete called")
 	},
 }
 

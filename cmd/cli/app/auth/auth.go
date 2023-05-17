@@ -23,7 +23,7 @@ package auth
 
 import (
 	"fmt"
-	"log"
+	"os"
 
 	"github.com/stacklok/mediator/cmd/cli/app"
 
@@ -34,9 +34,9 @@ import (
 // authCmd represents the account command
 var AuthCmd = &cobra.Command{
 	Use:   "auth",
-	Short: "medctl auth commands",
-	Long: `The medctl auth command group lets you grant and revoke
-	authorization to accounts within mediators control plane.`,
+	Short: "Authorize and manage accounts within a mediator control plane",
+	Long: `The medctl auth command group lets you create accounts and grant or revoke
+authorization to existing accounts within a mediator control plane.`,
 	Run: func(cmd *cobra.Command, args []string) {
 		fmt.Println("auth called")
 	},
@@ -44,11 +44,8 @@ var AuthCmd = &cobra.Command{
 
 func init() {
 	app.RootCmd.AddCommand(AuthCmd)
-	AuthCmd.PersistentFlags().String("grpc-host", "", "Server host")
-	AuthCmd.PersistentFlags().Int("grpc-port", 0, "Server port")
-	AuthCmd.PersistentFlags().String("provider", "", "The OAuth2 provider to use for login")
 	if err := viper.BindPFlags(AuthCmd.PersistentFlags()); err != nil {
-		log.Fatal(err)
+		fmt.Fprintf(os.Stderr, "Error binding flags: %s\n", err)
 	}
 
 }

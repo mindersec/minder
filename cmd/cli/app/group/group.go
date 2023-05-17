@@ -19,29 +19,32 @@
 // It does make a good example of how to use the generated client code
 // for others to use as a reference.
 
-package auth
+package group
 
 import (
 	"fmt"
 	"os"
 
+	"github.com/stacklok/mediator/cmd/cli/app"
+
 	"github.com/spf13/cobra"
 	"github.com/spf13/viper"
 )
 
-// authCmd represents the auth command
-var auth_listCmd = &cobra.Command{
-	Use:   "list",
-	Short: "List all auth accounts and tokens",
-	Long:  `List all accounts and tokens for active or expired mediator sessions.`,
+var GroupCmd = &cobra.Command{
+	Use:   "group",
+	Short: "Manage groups within a mediator control plane",
+	Long: `The medctl group commands allow the management of groups within a 
+mediator control plane.`,
 	Run: func(cmd *cobra.Command, args []string) {
-		cmd.Println("auth list called")
+		cmd.Println("group called")
 	},
 }
 
 func init() {
-	AuthCmd.AddCommand(auth_listCmd)
-	if err := viper.BindPFlags(auth_listCmd.PersistentFlags()); err != nil {
+	app.RootCmd.AddCommand(GroupCmd)
+	if err := viper.BindPFlags(GroupCmd.PersistentFlags()); err != nil {
 		fmt.Fprintf(os.Stderr, "Error binding flags: %s\n", err)
 	}
+
 }

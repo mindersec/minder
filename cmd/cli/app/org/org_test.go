@@ -13,7 +13,13 @@
 // See the License for the specific language governing permissions and
 // limitations under the License.
 
-package auth
+// NOTE: This file is for stubbing out client code for proof of concept
+// purposes. It will / should be removed in the future.
+// Until then, it is not covered by unit tests and should not be used
+// It does make a good example of how to use the generated client code
+// for others to use as a reference.
+
+package org
 
 import (
 	"os"
@@ -52,24 +58,24 @@ func TestCobraMain(t *testing.T) {
 		expectedOutput string
 	}{
 		{
-			name:           "auth command",
-			args:           []string{"auth"},
-			expectedOutput: "auth called\n",
+			name:           "org command",
+			args:           []string{"org"},
+			expectedOutput: "org called\n",
 		},
 		{
-			name:           "auth list command",
-			args:           []string{"auth", "list"},
-			expectedOutput: "auth list called\n",
+			name:           "org list command",
+			args:           []string{"org", "list"},
+			expectedOutput: "org list called\n",
 		},
 		{
-			name:           "auth revoke command",
-			args:           []string{"auth", "revoke"},
-			expectedOutput: "auth revoke called\n",
+			name:           "org delete command",
+			args:           []string{"org", "delete"},
+			expectedOutput: "org delete called\n",
 		},
 		{
-			name:           "auth delete command",
-			args:           []string{"auth", "delete"},
-			expectedOutput: "auth delete called\n",
+			name:           "org create command",
+			args:           []string{"org", "create"},
+			expectedOutput: "org create called\n",
 		},
 	}
 
