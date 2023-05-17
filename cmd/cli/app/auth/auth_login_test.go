@@ -33,7 +33,7 @@ import (
 	"reflect"
 	"testing"
 
-	pb "github.com/stacklok/mediator/pkg/generated/protobuf/go/proto/v1"
+	pb "github.com/stacklok/mediator/pkg/generated/protobuf/go/mediator/v1"
 )
 
 const bufSize = 1024 * 1024
