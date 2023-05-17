@@ -53,10 +53,8 @@ access token. If you are not logged in, then you will need to pass in the
 
 func init() {
 	AuthCmd.AddCommand(auth_deluserCmd)
-	auth_deluserCmd.PersistentFlags().String("username", "", "The username to delete")
-	auth_deluserCmd.PersistentFlags().Int32("id", 0, "The password for the user to delete")
-	auth_deluserCmd.PersistentFlags().String("password", "", "The password for the user to delete")
-	auth_deluserCmd.PersistentFlags().String("provider", "", "The provider for the user to delete")
+	auth_deluserCmd.PersistentFlags().Int64("user-id", 0, "The user-id of the user to delete")
+	auth_deluserCmd.PersistentFlags().Bool("force", false, "Force deletion of user without confirmation")
 	if err := viper.BindPFlags(auth_deluserCmd.PersistentFlags()); err != nil {
 		log.Fatal(err)
 	}
