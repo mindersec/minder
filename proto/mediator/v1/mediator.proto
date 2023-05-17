@@ -14,17 +14,17 @@
 // limitations under the License.
 
 syntax = "proto3";
-package dev.stacklok.mediator.v1;
+package mediator.v1;
+import "google/api/annotations.proto";
+import "google/protobuf/timestamp.proto";
 
 option go_package = "github.com/stacklok/mediator/pkg/generated/protobuf/go";
 
-import "google/api/annotations.proto";
-import "google/protobuf/timestamp.proto";
 
 // Simple Health Check Service
 // replies with OK
 service HealthService {
-    rpc CheckHealth (HealthRequest) returns (HealthResponse) {
+    rpc CheckHealth (CheckHealthRequest) returns (CheckHealthResponse) {
         option (google.api.http) = {
             get: "/api/v1/health"
         };
@@ -33,7 +33,7 @@ service HealthService {
 
 // GitHub App Webhook Service
 service GitHubWebhookService {
-    rpc HandleGitHubWebhook (GitHubWebhookRequest) returns (GitHubWebhookResponse) {
+    rpc HandleGitHubWebhook (HandleGitHubWebhookRequest) returns (HandleGitHubWebhookResponse) {
         option (google.api.http) = {
             post: "/api/v1/github/hook"
             body: "*"
@@ -42,17 +42,17 @@ service GitHubWebhookService {
 }
 
 service OAuthService {
-    rpc GetAuthorizationURL (AuthorizationURLRequest) returns (AuthorizationURLResponse) {
+    rpc GetAuthorizationURL (GetAuthorizationURLRequest) returns (GetAuthorizationURLResponse) {
         option (google.api.http) = {
             get: "/api/v1/auth/url"
         };
     }
-    rpc ExchangeCodeForTokenCLI (CodeExchangeRequestCLI) returns (CodeExchangeResponseCLI) {
+    rpc ExchangeCodeForTokenCLI (ExchangeCodeForTokenCLIRequest) returns (ExchangeCodeForTokenCLIResponse) {
         option (google.api.http) = {
             get: "/api/v1/auth/callback/{provider}/cli"
         };
     }
-    rpc ExchangeCodeForTokenWEB (CodeExchangeRequestWEB) returns (CodeExchangeResponseWEB) {
+    rpc ExchangeCodeForTokenWEB (ExchangeCodeForTokenWEBRequest) returns (ExchangeCodeForTokenWEBResponse) {
         option (google.api.http) = {
             get: "/api/v1/auth/callback/{provider}/web"
         };
@@ -81,7 +81,7 @@ service LogOutService {
 
 // Verify user has active session to Mediator
 service AuthVerifyService {
-    rpc Verify (AuthVerifyRequest) returns (AuthVerifyResponse) {
+    rpc Verify (AuthVerifyServiceVerifyRequest) returns (AuthVerifyServiceVerifyResponse) {
         option (google.api.http) = {
             post: "/api/v1/auth/verify"
             body: "*"
@@ -97,7 +97,7 @@ service VulnerabilitiesService {
         };
     }
 
-    rpc GetVulnerabilityById (GetVulnerabilityByIdRequest) returns (Vulnerability) {
+    rpc GetVulnerabilityById (GetVulnerabilityByIdRequest) returns (GetVulnerabilityByIdResponse) {
         option (google.api.http) = {
         get: "/api/v1/vulns/{id}"
         };
@@ -114,7 +114,7 @@ service SecretsService {
         };
     }
 
-    rpc GetSecretById (GetSecretByIdRequest) returns (Secret) {
+    rpc GetSecretById (GetSecretByIdRequest) returns (GetSecretByIdResponse) {
         option (google.api.http) = {
         get: "/api/v1/secrets/{id}"
         };
@@ -130,39 +130,39 @@ service BranchProtectionService {
     }
 }
   
-message HealthRequest {
+message CheckHealthRequest {
 }
 
-message HealthResponse {
+message CheckHealthResponse {
     string status = 1;
 }
 
-message AuthorizationURLRequest {
+message GetAuthorizationURLRequest {
     string provider = 1;
     bool  cli = 2;
 }
 
-message AuthorizationURLResponse {
+message GetAuthorizationURLResponse {
     string url = 1;
 }
 
-message CodeExchangeRequestCLI {
+message ExchangeCodeForTokenCLIRequest {
     string provider = 1;
     string code = 2;
     string redirect_uri = 3;
 }
 
-message CodeExchangeResponseCLI {
+message ExchangeCodeForTokenCLIResponse {
     string html = 1;
 }
 
-message CodeExchangeRequestWEB{
+message ExchangeCodeForTokenWEBRequest{
     string provider = 1;
     string code = 2;
     string redirect_uri = 3;
 }
 
-message CodeExchangeResponseWEB {
+message ExchangeCodeForTokenWEBResponse {
     string access_token = 1;
     string token_type = 2;
     int64  expires_in = 3;
@@ -170,10 +170,10 @@ message CodeExchangeResponseWEB {
 }
 
 
-message GitHubWebhookRequest {
+message HandleGitHubWebhookRequest {
 }
 
-message GitHubWebhookResponse {
+message HandleGitHubWebhookResponse {
     string status = 1;
 }
 
@@ -198,10 +198,10 @@ message LogOutResponse {
     string status = 1;
 }
 
-message AuthVerifyRequest {
+message AuthVerifyServiceVerifyRequest {
 }
 
-message AuthVerifyResponse {
+message AuthVerifyServiceVerifyResponse {
     string status = 1;
 }
 
@@ -212,7 +212,7 @@ message GetVulnerabilityByIdRequest {
   string id = 1;
 }
 
-message Vulnerability {
+message GetVulnerabilityByIdResponse {
   // May require adjustment, currently set up for GitHub Security Advisories only
   uint64 id = 1;
   int64 github_id = 2;
@@ -229,21 +229,21 @@ message Vulnerability {
 }
 
 message GetVulnerabilitiesResponse {
-  repeated Vulnerability vulns = 1;
+  repeated GetVulnerabilityByIdResponse vulns = 1;
 }
 
 message GetSecretsRequest {
 }
 
 message GetSecretsResponse {
-  repeated Secret secrets = 1;
+  repeated GetSecretByIdResponse secrets = 1;
 }
 
 message GetSecretByIdRequest {
   string id = 1;
 }
 
-message Secret {
+message GetSecretByIdResponse {
   string id = 1;
   string name = 2;
   string description = 3;
