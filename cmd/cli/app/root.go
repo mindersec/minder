@@ -24,13 +24,12 @@ import (
 )
 
 var (
-	cfgFile     string	// config file (default is $PWD/config.yaml)	
-	// rootCmd represents the base command when called without any subcommands
+	cfgFile string // config file (default is $PWD/config.yaml)
 	RootCmd = &cobra.Command{
 		Use:   "medctl",
 		Short: "medctl controls mediator via the control plane",
 		Long: `For more information about mediator, please visit:
-		https://docs.stacklok.com/mediator/medctl/overview.html`,
+https://docs.stacklok.com/mediator/medctl/overview.html`,
 	}
 )
 
@@ -43,6 +42,8 @@ func Execute() {
 
 func init() {
 	cobra.OnInitialize(initConfig)
+	RootCmd.PersistentFlags().String("grpc-host", "localhost", "Server host")
+	RootCmd.PersistentFlags().Int("grpc-port", 8090, "Server port")
 	RootCmd.PersistentFlags().StringVar(&cfgFile, "config", "", "config file (default is $PWD/config.yaml)")
 }
 

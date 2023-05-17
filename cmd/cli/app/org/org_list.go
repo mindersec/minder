@@ -19,7 +19,7 @@
 // It does make a good example of how to use the generated client code
 // for others to use as a reference.
 
-package auth
+package org
 
 import (
 	"fmt"
@@ -29,19 +29,22 @@ import (
 	"github.com/spf13/viper"
 )
 
-// authCmd represents the auth command
-var auth_listCmd = &cobra.Command{
+var org_listCmd = &cobra.Command{
 	Use:   "list",
-	Short: "List all auth accounts and tokens",
-	Long:  `List all accounts and tokens for active or expired mediator sessions.`,
+	Short: "List organizations within a mediator control plane",
+	Long: `The medctl org list subcommand lets you list organizations within a
+mediator control plane.`,
 	Run: func(cmd *cobra.Command, args []string) {
-		cmd.Println("auth list called")
+		fmt.Println("org list called")
 	},
 }
 
 func init() {
-	AuthCmd.AddCommand(auth_listCmd)
-	if err := viper.BindPFlags(auth_listCmd.PersistentFlags()); err != nil {
+	OrgCmd.AddCommand(org_listCmd)
+	org_listCmd.PersistentFlags().BoolP("all", "a", false, "List all organizations")
+	org_listCmd.PersistentFlags().StringP("org-id", "o", "", "List organization values by org-id")
+
+	if err := viper.BindPFlags(org_listCmd.PersistentFlags()); err != nil {
 		fmt.Fprintf(os.Stderr, "Error binding flags: %s\n", err)
 	}
 }

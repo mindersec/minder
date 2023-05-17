@@ -125,11 +125,11 @@ func callAuthURLService(address string, provider string) (string, error) {
 // authCmd represents the auth command
 var auth_createCmd = &cobra.Command{
 	Use:   "create",
-	Short: "Create an account in mediator",
-	Long: `This command allows a user to create an account within mediator
-, should you require an oauth2 login, then pass in the --provider flag,
-e.g. --provider=github. This will then initiate the OAuth2 flow and allow
-mediator to access user account details via the provider / iDP.`,
+	Short: "Create an account in a mediator control plane",
+	Long: `Create an account within a mediator control plane. Should you require 
+an OAuth2 login with a provider, then pass in the --provider flag alongside
+--oauth2, e.g. --oauth2 --provider=github. This will then initiate the OAuth2 flow
+and allow mediator to access user account details via the provider / iDP.`,
 	Run: func(cmd *cobra.Command, args []string) {
 
 		grpc_host := util.GetConfigValue("grpc_server.host", "grpc-host", cmd, "").(string)
@@ -159,8 +159,19 @@ mediator to access user account details via the provider / iDP.`,
 
 func init() {
 	AuthCmd.AddCommand(auth_createCmd)
+	auth_createCmd.PersistentFlags().StringP("name", "n", "", "Name of the account")
+	auth_createCmd.PersistentFlags().StringP("email", "e", "", "Email address of the account")
+	auth_createCmd.PersistentFlags().StringP("username", "u", "", "Username of the account")
+	auth_createCmd.PersistentFlags().StringP("password", "p", "", "Password of the account")
+	auth_createCmd.PersistentFlags().StringP("last-name", "l", "", "Last name of the account")
+	auth_createCmd.PersistentFlags().StringP("first-name", "f", "", "First name of the account")
+	auth_createCmd.PersistentFlags().StringP("group-id", "g", "", "Group ID of the account to add to")
+	auth_createCmd.PersistentFlags().StringP("role-id", "i", "", "Role ID of the account to add to")
+	auth_createCmd.PersistentFlags().BoolP("oauth2", "o", false, "Use OAuth2 login flow (must specify --provider)")
+	auth_createCmd.PersistentFlags().BoolP("active", "a", true, "Is the account active")
+	auth_createCmd.PersistentFlags().StringP("provider", "r", "", "OAuth2 provider to use (e.g. google, github)")
 
 	if err := viper.BindPFlags(auth_createCmd.PersistentFlags()); err != nil {
-		log.Fatal(err)
+		fmt.Fprintf(os.Stderr, "Error binding flags: %s\n", err)
 	}
 }
