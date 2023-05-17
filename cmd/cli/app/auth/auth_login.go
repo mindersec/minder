@@ -32,7 +32,7 @@ import (
 	"github.com/spf13/cobra"
 	"github.com/stacklok/mediator/pkg/util"
 
-	pb "github.com/stacklok/mediator/pkg/generated/protobuf/go/proto/v1"
+	pb "github.com/stacklok/mediator/pkg/generated/protobuf/go/mediator/v1"
 
 	"github.com/spf13/viper"
 	"google.golang.org/grpc"

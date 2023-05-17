@@ -32,7 +32,7 @@ import (
 	"sync"
 	"time"
 
-	pb "github.com/stacklok/mediator/pkg/generated/protobuf/go/proto/v1"
+	pb "github.com/stacklok/mediator/pkg/generated/protobuf/go/mediator/v1"
 	"github.com/stacklok/mediator/pkg/util"
 
 	"github.com/pkg/browser"
@@ -110,7 +110,7 @@ func callAuthURLService(address string, provider string) (string, error) {
 	ctx, cancel := context.WithTimeout(context.Background(), time.Second)
 	defer cancel()
 
-	resp, err := client.GetAuthorizationURL(ctx, &pb.AuthorizationURLRequest{
+	resp, err := client.GetAuthorizationURL(ctx, &pb.GetAuthorizationURLRequest{
 		Provider: provider,
 		Cli:      true,
 	})

@@ -35,7 +35,7 @@ import (
 	_ "github.com/lib/pq"
 
 	"github.com/stacklok/mediator/pkg/db"
-	pb "github.com/stacklok/mediator/pkg/generated/protobuf/go/proto/v1"
+	pb "github.com/stacklok/mediator/pkg/generated/protobuf/go/mediator/v1"
 )
 
 type Server struct {

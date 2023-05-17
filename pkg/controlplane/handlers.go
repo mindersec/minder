@@ -32,7 +32,7 @@ import (
 
 	"github.com/stacklok/mediator/pkg/auth"
 	mcrypto "github.com/stacklok/mediator/pkg/crypto"
-	pb "github.com/stacklok/mediator/pkg/generated/protobuf/go/proto/v1"
+	pb "github.com/stacklok/mediator/pkg/generated/protobuf/go/mediator/v1"
 
 	"golang.org/x/oauth2"
 	"golang.org/x/oauth2/github"
@@ -54,8 +54,8 @@ func generateState(n int) (string, error) {
 }
 
 // CheckHealth is a simple health check for monitoring
-func (s *Server) CheckHealth(ctx context.Context, req *pb.HealthRequest) (*pb.HealthResponse, error) {
-	return &pb.HealthResponse{Status: "OK"}, nil
+func (s *Server) CheckHealth(ctx context.Context, req *pb.CheckHealthRequest) (*pb.CheckHealthResponse, error) {
+	return &pb.CheckHealthResponse{Status: "OK"}, nil
 }
 
 // newOAuthConfig creates a new OAuth2 config for the given provider
@@ -98,7 +98,7 @@ func (s *Server) newOAuthConfig(provider string, cli bool) (*oauth2.Config, erro
 // GetAuthorizationURL returns the URL to redirect the user to for authorization
 // and the state to be used for the callback. It accepts a provider string
 // and a boolean indicating whether the client is a CLI or web client
-func (s *Server) GetAuthorizationURL(ctx context.Context, req *pb.AuthorizationURLRequest) (*pb.AuthorizationURLResponse, error) {
+func (s *Server) GetAuthorizationURL(ctx context.Context, req *pb.GetAuthorizationURLRequest) (*pb.GetAuthorizationURLResponse, error) {
 	oauthConfig, err := s.newOAuthConfig(req.Provider, req.Cli)
 	if err != nil {
 		return nil, err
@@ -111,7 +111,7 @@ func (s *Server) GetAuthorizationURL(ctx context.Context, req *pb.AuthorizationU
 	}
 	url := oauthConfig.AuthCodeURL(state, oauth2.AccessTypeOffline)
 
-	response := &pb.AuthorizationURLResponse{
+	response := &pb.GetAuthorizationURLResponse{
 		Url: url,
 	}
 	return response, nil
@@ -119,7 +119,7 @@ func (s *Server) GetAuthorizationURL(ctx context.Context, req *pb.AuthorizationU
 
 // ExchangeCodeForTokenCLI exchanges an OAuth2 code for a token
 // This is specific for CLI clients which require a different
-func (s *Server) ExchangeCodeForTokenCLI(ctx context.Context, in *pb.CodeExchangeRequestCLI) (*pb.CodeExchangeResponseCLI, error) {
+func (s *Server) ExchangeCodeForTokenCLI(ctx context.Context, in *pb.ExchangeCodeForTokenCLIRequest) (*pb.ExchangeCodeForTokenCLIResponse, error) {
 	oauthConfig, err := s.newOAuthConfig(in.Provider, true)
 	if err != nil {
 		return nil, err
@@ -154,14 +154,14 @@ func (s *Server) ExchangeCodeForTokenCLI(ctx context.Context, in *pb.CodeExchang
 		return nil, fmt.Errorf("failed to send status to CLI application, status code: %d", resp.StatusCode)
 	}
 
-	return &pb.CodeExchangeResponseCLI{
+	return &pb.ExchangeCodeForTokenCLIResponse{
 		Html: "You can now close this window.",
 	}, nil
 }
 
 // ExchangeCodeForTokenWEB exchanges an OAuth2 code for a token and returns
 // a JWT token as a session cookie. This handler is specific for web clients.
-func (s *Server) ExchangeCodeForTokenWEB(ctx context.Context, in *pb.CodeExchangeRequestWEB) (*pb.CodeExchangeResponseWEB, error) {
+func (s *Server) ExchangeCodeForTokenWEB(ctx context.Context, in *pb.ExchangeCodeForTokenWEBRequest) (*pb.ExchangeCodeForTokenWEBResponse, error) {
 	oauthConfig, err := s.newOAuthConfig(in.Provider, false)
 	if err != nil {
 		return nil, err
@@ -185,7 +185,7 @@ func (s *Server) ExchangeCodeForTokenWEB(ctx context.Context, in *pb.CodeExchang
 	// })
 
 	//
-	return &pb.CodeExchangeResponseWEB{
+	return &pb.ExchangeCodeForTokenWEBResponse{
 		AccessToken: token.AccessToken,
 	}, nil
 }

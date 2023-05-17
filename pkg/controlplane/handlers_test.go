@@ -18,7 +18,7 @@ import (
 	"context"
 	"testing"
 
-	pb "github.com/stacklok/mediator/pkg/generated/protobuf/go/proto/v1"
+	pb "github.com/stacklok/mediator/pkg/generated/protobuf/go/mediator/v1"
 
 	"golang.org/x/oauth2/github"
 	"golang.org/x/oauth2/google"
@@ -27,7 +27,7 @@ import (
 func TestCheckHealth(t *testing.T) {
 	server := Server{}
 
-	response, err := server.CheckHealth(context.Background(), &pb.HealthRequest{})
+	response, err := server.CheckHealth(context.Background(), &pb.CheckHealthRequest{})
 	if err != nil {
 		t.Errorf("Error in CheckHealth: %v", err)
 	}
@@ -100,7 +100,7 @@ func TestNewOAuthConfig(t *testing.T) {
 func TestGetAuthorizationURL(t *testing.T) {
 	server := Server{}
 
-	response, err := server.GetAuthorizationURL(context.Background(), &pb.AuthorizationURLRequest{Provider: "google"})
+	response, err := server.GetAuthorizationURL(context.Background(), &pb.GetAuthorizationURLRequest{Provider: "google"})
 	if err != nil {
 		t.Errorf("Error in GetAuthorizationURL: %v", err)
 	}

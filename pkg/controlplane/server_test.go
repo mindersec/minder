@@ -22,7 +22,7 @@ import (
 	"net/http"
 	"testing"
 
-	pb "github.com/stacklok/mediator/pkg/generated/protobuf/go/proto/v1"
+	pb "github.com/stacklok/mediator/pkg/generated/protobuf/go/mediator/v1"
 
 	"google.golang.org/grpc"
 	"google.golang.org/grpc/credentials/insecure"
@@ -81,7 +81,7 @@ func TestHealth(t *testing.T) {
 	defer conn.Close()
 
 	client := pb.NewHealthServiceClient(conn)
-	_, err = client.CheckHealth(context.Background(), &pb.HealthRequest{})
+	_, err = client.CheckHealth(context.Background(), &pb.CheckHealthRequest{})
 	if err != nil {
 		t.Fatalf("Failed to get health: %v", err)
 	}
@@ -110,7 +110,7 @@ func TestAuth(t *testing.T) {
 	// loop through the providers array
 	for _, provider := range providers {
 
-		resp, err := client.GetAuthorizationURL(context.Background(), &pb.AuthorizationURLRequest{
+		resp, err := client.GetAuthorizationURL(context.Background(), &pb.GetAuthorizationURLRequest{
 			Provider: provider,
 			Cli:      false,
 		})
@@ -130,7 +130,7 @@ func TestAuth(t *testing.T) {
 	// loop through the badProviders array
 	for _, provider := range badProviders {
 
-		resp, err := client.GetAuthorizationURL(context.Background(), &pb.AuthorizationURLRequest{
+		resp, err := client.GetAuthorizationURL(context.Background(), &pb.GetAuthorizationURLRequest{
 			Provider: provider,
 		})
 		if resp.GetUrl() != "" {

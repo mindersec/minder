@@ -17,7 +17,7 @@
 // versions:
 // - protoc-gen-go-grpc v1.3.0
 // - protoc             (unknown)
-// source: proto/v1/mediator.proto
+// source: mediator/v1/mediator.proto
 
 package _go
 
@@ -34,14 +34,14 @@ import (
 const _ = grpc.SupportPackageIsVersion7
 
 const (
-	HealthService_CheckHealth_FullMethodName = "/dev.stacklok.mediator.v1.HealthService/CheckHealth"
+	HealthService_CheckHealth_FullMethodName = "/mediator.v1.HealthService/CheckHealth"
 )
 
 // HealthServiceClient is the client API for HealthService service.
 //
 // For semantics around ctx use and closing/ending streaming RPCs, please refer to https://pkg.go.dev/google.golang.org/grpc/?tab=doc#ClientConn.NewStream.
 type HealthServiceClient interface {
-	CheckHealth(ctx context.Context, in *HealthRequest, opts ...grpc.CallOption) (*HealthResponse, error)
+	CheckHealth(ctx context.Context, in *CheckHealthRequest, opts ...grpc.CallOption) (*CheckHealthResponse, error)
 }
 
 type healthServiceClient struct {
@@ -52,8 +52,8 @@ func NewHealthServiceClient(cc grpc.ClientConnInterface) HealthServiceClient {
 	return &healthServiceClient{cc}
 }
 
-func (c *healthServiceClient) CheckHealth(ctx context.Context, in *HealthRequest, opts ...grpc.CallOption) (*HealthResponse, error) {
-	out := new(HealthResponse)
+func (c *healthServiceClient) CheckHealth(ctx context.Context, in *CheckHealthRequest, opts ...grpc.CallOption) (*CheckHealthResponse, error) {
+	out := new(CheckHealthResponse)
 	err := c.cc.Invoke(ctx, HealthService_CheckHealth_FullMethodName, in, out, opts...)
 	if err != nil {
 		return nil, err
@@ -65,7 +65,7 @@ func (c *healthServiceClient) CheckHealth(ctx context.Context, in *HealthRequest
 // All implementations must embed UnimplementedHealthServiceServer
 // for forward compatibility
 type HealthServiceServer interface {
-	CheckHealth(context.Context, *HealthRequest) (*HealthResponse, error)
+	CheckHealth(context.Context, *CheckHealthRequest) (*CheckHealthResponse, error)
 	mustEmbedUnimplementedHealthServiceServer()
 }
 
@@ -73,7 +73,7 @@ type HealthServiceServer interface {
 type UnimplementedHealthServiceServer struct {
 }
 
-func (UnimplementedHealthServiceServer) CheckHealth(context.Context, *HealthRequest) (*HealthResponse, error) {
+func (UnimplementedHealthServiceServer) CheckHealth(context.Context, *CheckHealthRequest) (*CheckHealthResponse, error) {
 	return nil, status.Errorf(codes.Unimplemented, "method CheckHealth not implemented")
 }
 func (UnimplementedHealthServiceServer) mustEmbedUnimplementedHealthServiceServer() {}
@@ -90,7 +90,7 @@ func RegisterHealthServiceServer(s grpc.ServiceRegistrar, srv HealthServiceServe
 }
 
 func _HealthService_CheckHealth_Handler(srv interface{}, ctx context.Context, dec func(interface{}) error, interceptor grpc.UnaryServerInterceptor) (interface{}, error) {
-	in := new(HealthRequest)
+	in := new(CheckHealthRequest)
 	if err := dec(in); err != nil {
 		return nil, err
 	}
@@ -102,7 +102,7 @@ func _HealthService_CheckHealth_Handler(srv interface{}, ctx context.Context, de
 		FullMethod: HealthService_CheckHealth_FullMethodName,
 	}
 	handler := func(ctx context.Context, req interface{}) (interface{}, error) {
-		return srv.(HealthServiceServer).CheckHealth(ctx, req.(*HealthRequest))
+		return srv.(HealthServiceServer).CheckHealth(ctx, req.(*CheckHealthRequest))
 	}
 	return interceptor(ctx, in, info, handler)
 }
@@ -111,7 +111,7 @@ func _HealthService_CheckHealth_Handler(srv interface{}, ctx context.Context, de
 // It's only intended for direct use with grpc.RegisterService,
 // and not to be introspected or modified (even as a copy)
 var HealthService_ServiceDesc = grpc.ServiceDesc{
-	ServiceName: "dev.stacklok.mediator.v1.HealthService",
+	ServiceName: "mediator.v1.HealthService",
 	HandlerType: (*HealthServiceServer)(nil),
 	Methods: []grpc.MethodDesc{
 		{
@@ -120,18 +120,18 @@ var HealthService_ServiceDesc = grpc.ServiceDesc{
 		},
 	},
 	Streams:  []grpc.StreamDesc{},
-	Metadata: "proto/v1/mediator.proto",
+	Metadata: "mediator/v1/mediator.proto",
 }
 
 const (
-	GitHubWebhookService_HandleGitHubWebhook_FullMethodName = "/dev.stacklok.mediator.v1.GitHubWebhookService/HandleGitHubWebhook"
+	GitHubWebhookService_HandleGitHubWebhook_FullMethodName = "/mediator.v1.GitHubWebhookService/HandleGitHubWebhook"
 )
 
 // GitHubWebhookServiceClient is the client API for GitHubWebhookService service.
 //
 // For semantics around ctx use and closing/ending streaming RPCs, please refer to https://pkg.go.dev/google.golang.org/grpc/?tab=doc#ClientConn.NewStream.
 type GitHubWebhookServiceClient interface {
-	HandleGitHubWebhook(ctx context.Context, in *GitHubWebhookRequest, opts ...grpc.CallOption) (*GitHubWebhookResponse, error)
+	HandleGitHubWebhook(ctx context.Context, in *HandleGitHubWebhookRequest, opts ...grpc.CallOption) (*HandleGitHubWebhookResponse, error)
 }
 
 type gitHubWebhookServiceClient struct {
@@ -142,8 +142,8 @@ func NewGitHubWebhookServiceClient(cc grpc.ClientConnInterface) GitHubWebhookSer
 	return &gitHubWebhookServiceClient{cc}
 }
 
-func (c *gitHubWebhookServiceClient) HandleGitHubWebhook(ctx context.Context, in *GitHubWebhookRequest, opts ...grpc.CallOption) (*GitHubWebhookResponse, error) {
-	out := new(GitHubWebhookResponse)
+func (c *gitHubWebhookServiceClient) HandleGitHubWebhook(ctx context.Context, in *HandleGitHubWebhookRequest, opts ...grpc.CallOption) (*HandleGitHubWebhookResponse, error) {
+	out := new(HandleGitHubWebhookResponse)
 	err := c.cc.Invoke(ctx, GitHubWebhookService_HandleGitHubWebhook_FullMethodName, in, out, opts...)
 	if err != nil {
 		return nil, err
@@ -155,7 +155,7 @@ func (c *gitHubWebhookServiceClient) HandleGitHubWebhook(ctx context.Context, in
 // All implementations must embed UnimplementedGitHubWebhookServiceServer
 // for forward compatibility
 type GitHubWebhookServiceServer interface {
-	HandleGitHubWebhook(context.Context, *GitHubWebhookRequest) (*GitHubWebhookResponse, error)
+	HandleGitHubWebhook(context.Context, *HandleGitHubWebhookRequest) (*HandleGitHubWebhookResponse, error)
 	mustEmbedUnimplementedGitHubWebhookServiceServer()
 }
 
@@ -163,7 +163,7 @@ type GitHubWebhookServiceServer interface {
 type UnimplementedGitHubWebhookServiceServer struct {
 }
 
-func (UnimplementedGitHubWebhookServiceServer) HandleGitHubWebhook(context.Context, *GitHubWebhookRequest) (*GitHubWebhookResponse, error) {
+func (UnimplementedGitHubWebhookServiceServer) HandleGitHubWebhook(context.Context, *HandleGitHubWebhookRequest) (*HandleGitHubWebhookResponse, error) {
 	return nil, status.Errorf(codes.Unimplemented, "method HandleGitHubWebhook not implemented")
 }
 func (UnimplementedGitHubWebhookServiceServer) mustEmbedUnimplementedGitHubWebhookServiceServer() {}
@@ -180,7 +180,7 @@ func RegisterGitHubWebhookServiceServer(s grpc.ServiceRegistrar, srv GitHubWebho
 }
 
 func _GitHubWebhookService_HandleGitHubWebhook_Handler(srv interface{}, ctx context.Context, dec func(interface{}) error, interceptor grpc.UnaryServerInterceptor) (interface{}, error) {
-	in := new(GitHubWebhookRequest)
+	in := new(HandleGitHubWebhookRequest)
 	if err := dec(in); err != nil {
 		return nil, err
 	}
@@ -192,7 +192,7 @@ func _GitHubWebhookService_HandleGitHubWebhook_Handler(srv interface{}, ctx cont
 		FullMethod: GitHubWebhookService_HandleGitHubWebhook_FullMethodName,
 	}
 	handler := func(ctx context.Context, req interface{}) (interface{}, error) {
-		return srv.(GitHubWebhookServiceServer).HandleGitHubWebhook(ctx, req.(*GitHubWebhookRequest))
+		return srv.(GitHubWebhookServiceServer).HandleGitHubWebhook(ctx, req.(*HandleGitHubWebhookRequest))
 	}
 	return interceptor(ctx, in, info, handler)
 }
@@ -201,7 +201,7 @@ func _GitHubWebhookService_HandleGitHubWebhook_Handler(srv interface{}, ctx cont
 // It's only intended for direct use with grpc.RegisterService,
 // and not to be introspected or modified (even as a copy)
 var GitHubWebhookService_ServiceDesc = grpc.ServiceDesc{
-	ServiceName: "dev.stacklok.mediator.v1.GitHubWebhookService",
+	ServiceName: "mediator.v1.GitHubWebhookService",
 	HandlerType: (*GitHubWebhookServiceServer)(nil),
 	Methods: []grpc.MethodDesc{
 		{
@@ -210,22 +210,22 @@ var GitHubWebhookService_ServiceDesc = grpc.ServiceDesc{
 		},
 	},
 	Streams:  []grpc.StreamDesc{},
-	Metadata: "proto/v1/mediator.proto",
+	Metadata: "mediator/v1/mediator.proto",
 }
 
 const (
-	OAuthService_GetAuthorizationURL_FullMethodName     = "/dev.stacklok.mediator.v1.OAuthService/GetAuthorizationURL"
-	OAuthService_ExchangeCodeForTokenCLI_FullMethodName = "/dev.stacklok.mediator.v1.OAuthService/ExchangeCodeForTokenCLI"
-	OAuthService_ExchangeCodeForTokenWEB_FullMethodName = "/dev.stacklok.mediator.v1.OAuthService/ExchangeCodeForTokenWEB"
+	OAuthService_GetAuthorizationURL_FullMethodName     = "/mediator.v1.OAuthService/GetAuthorizationURL"
+	OAuthService_ExchangeCodeForTokenCLI_FullMethodName = "/mediator.v1.OAuthService/ExchangeCodeForTokenCLI"
+	OAuthService_ExchangeCodeForTokenWEB_FullMethodName = "/mediator.v1.OAuthService/ExchangeCodeForTokenWEB"
 )
 
 // OAuthServiceClient is the client API for OAuthService service.
 //
 // For semantics around ctx use and closing/ending streaming RPCs, please refer to https://pkg.go.dev/google.golang.org/grpc/?tab=doc#ClientConn.NewStream.
 type OAuthServiceClient interface {
-	GetAuthorizationURL(ctx context.Context, in *AuthorizationURLRequest, opts ...grpc.CallOption) (*AuthorizationURLResponse, error)
-	ExchangeCodeForTokenCLI(ctx context.Context, in *CodeExchangeRequestCLI, opts ...grpc.CallOption) (*CodeExchangeResponseCLI, error)
-	ExchangeCodeForTokenWEB(ctx context.Context, in *CodeExchangeRequestWEB, opts ...grpc.CallOption) (*CodeExchangeResponseWEB, error)
+	GetAuthorizationURL(ctx context.Context, in *GetAuthorizationURLRequest, opts ...grpc.CallOption) (*GetAuthorizationURLResponse, error)
+	ExchangeCodeForTokenCLI(ctx context.Context, in *ExchangeCodeForTokenCLIRequest, opts ...grpc.CallOption) (*ExchangeCodeForTokenCLIResponse, error)
+	ExchangeCodeForTokenWEB(ctx context.Context, in *ExchangeCodeForTokenWEBRequest, opts ...grpc.CallOption) (*ExchangeCodeForTokenWEBResponse, error)
 }
 
 type oAuthServiceClient struct {
@@ -236,8 +236,8 @@ func NewOAuthServiceClient(cc grpc.ClientConnInterface) OAuthServiceClient {
 	return &oAuthServiceClient{cc}
 }
 
-func (c *oAuthServiceClient) GetAuthorizationURL(ctx context.Context, in *AuthorizationURLRequest, opts ...grpc.CallOption) (*AuthorizationURLResponse, error) {
-	out := new(AuthorizationURLResponse)
+func (c *oAuthServiceClient) GetAuthorizationURL(ctx context.Context, in *GetAuthorizationURLRequest, opts ...grpc.CallOption) (*GetAuthorizationURLResponse, error) {
+	out := new(GetAuthorizationURLResponse)
 	err := c.cc.Invoke(ctx, OAuthService_GetAuthorizationURL_FullMethodName, in, out, opts...)
 	if err != nil {
 		return nil, err
@@ -245,8 +245,8 @@ func (c *oAuthServiceClient) GetAuthorizationURL(ctx context.Context, in *Author
 	return out, nil
 }
 
-func (c *oAuthServiceClient) ExchangeCodeForTokenCLI(ctx context.Context, in *CodeExchangeRequestCLI, opts ...grpc.CallOption) (*CodeExchangeResponseCLI, error) {
-	out := new(CodeExchangeResponseCLI)
+func (c *oAuthServiceClient) ExchangeCodeForTokenCLI(ctx context.Context, in *ExchangeCodeForTokenCLIRequest, opts ...grpc.CallOption) (*ExchangeCodeForTokenCLIResponse, error) {
+	out := new(ExchangeCodeForTokenCLIResponse)
 	err := c.cc.Invoke(ctx, OAuthService_ExchangeCodeForTokenCLI_FullMethodName, in, out, opts...)
 	if err != nil {
 		return nil, err
@@ -254,8 +254,8 @@ func (c *oAuthServiceClient) ExchangeCodeForTokenCLI(ctx context.Context, in *Co
 	return out, nil
 }
 
-func (c *oAuthServiceClient) ExchangeCodeForTokenWEB(ctx context.Context, in *CodeExchangeRequestWEB, opts ...grpc.CallOption) (*CodeExchangeResponseWEB, error) {
-	out := new(CodeExchangeResponseWEB)
+func (c *oAuthServiceClient) ExchangeCodeForTokenWEB(ctx context.Context, in *ExchangeCodeForTokenWEBRequest, opts ...grpc.CallOption) (*ExchangeCodeForTokenWEBResponse, error) {
+	out := new(ExchangeCodeForTokenWEBResponse)
 	err := c.cc.Invoke(ctx, OAuthService_ExchangeCodeForTokenWEB_FullMethodName, in, out, opts...)
 	if err != nil {
 		return nil, err
@@ -267,9 +267,9 @@ func (c *oAuthServiceClient) ExchangeCodeForTokenWEB(ctx context.Context, in *Co
 // All implementations must embed UnimplementedOAuthServiceServer
 // for forward compatibility
 type OAuthServiceServer interface {
-	GetAuthorizationURL(context.Context, *AuthorizationURLRequest) (*AuthorizationURLResponse, error)
-	ExchangeCodeForTokenCLI(context.Context, *CodeExchangeRequestCLI) (*CodeExchangeResponseCLI, error)
-	ExchangeCodeForTokenWEB(context.Context, *CodeExchangeRequestWEB) (*CodeExchangeResponseWEB, error)
+	GetAuthorizationURL(context.Context, *GetAuthorizationURLRequest) (*GetAuthorizationURLResponse, error)
+	ExchangeCodeForTokenCLI(context.Context, *ExchangeCodeForTokenCLIRequest) (*ExchangeCodeForTokenCLIResponse, error)
+	ExchangeCodeForTokenWEB(context.Context, *ExchangeCodeForTokenWEBRequest) (*ExchangeCodeForTokenWEBResponse, error)
 	mustEmbedUnimplementedOAuthServiceServer()
 }
 
@@ -277,13 +277,13 @@ type OAuthServiceServer interface {
 type UnimplementedOAuthServiceServer struct {
 }
 
-func (UnimplementedOAuthServiceServer) GetAuthorizationURL(context.Context, *AuthorizationURLRequest) (*AuthorizationURLResponse, error) {
+func (UnimplementedOAuthServiceServer) GetAuthorizationURL(context.Context, *GetAuthorizationURLRequest) (*GetAuthorizationURLResponse, error) {
 	return nil, status.Errorf(codes.Unimplemented, "method GetAuthorizationURL not implemented")
 }
-func (UnimplementedOAuthServiceServer) ExchangeCodeForTokenCLI(context.Context, *CodeExchangeRequestCLI) (*CodeExchangeResponseCLI, error) {
+func (UnimplementedOAuthServiceServer) ExchangeCodeForTokenCLI(context.Context, *ExchangeCodeForTokenCLIRequest) (*ExchangeCodeForTokenCLIResponse, error) {
 	return nil, status.Errorf(codes.Unimplemented, "method ExchangeCodeForTokenCLI not implemented")
 }
-func (UnimplementedOAuthServiceServer) ExchangeCodeForTokenWEB(context.Context, *CodeExchangeRequestWEB) (*CodeExchangeResponseWEB, error) {
+func (UnimplementedOAuthServiceServer) ExchangeCodeForTokenWEB(context.Context, *ExchangeCodeForTokenWEBRequest) (*ExchangeCodeForTokenWEBResponse, error) {
 	return nil, status.Errorf(codes.Unimplemented, "method ExchangeCodeForTokenWEB not implemented")
 }
 func (UnimplementedOAuthServiceServer) mustEmbedUnimplementedOAuthServiceServer() {}
@@ -300,7 +300,7 @@ func RegisterOAuthServiceServer(s grpc.ServiceRegistrar, srv OAuthServiceServer)
 }
 
 func _OAuthService_GetAuthorizationURL_Handler(srv interface{}, ctx context.Context, dec func(interface{}) error, interceptor grpc.UnaryServerInterceptor) (interface{}, error) {
-	in := new(AuthorizationURLRequest)
+	in := new(GetAuthorizationURLRequest)
 	if err := dec(in); err != nil {
 		return nil, err
 	}
@@ -312,13 +312,13 @@ func _OAuthService_GetAuthorizationURL_Handler(srv interface{}, ctx context.Cont
 		FullMethod: OAuthService_GetAuthorizationURL_FullMethodName,
 	}
 	handler := func(ctx context.Context, req interface{}) (interface{}, error) {
-		return srv.(OAuthServiceServer).GetAuthorizationURL(ctx, req.(*AuthorizationURLRequest))
+		return srv.(OAuthServiceServer).GetAuthorizationURL(ctx, req.(*GetAuthorizationURLRequest))
 	}
 	return interceptor(ctx, in, info, handler)
 }
 
 func _OAuthService_ExchangeCodeForTokenCLI_Handler(srv interface{}, ctx context.Context, dec func(interface{}) error, interceptor grpc.UnaryServerInterceptor) (interface{}, error) {
-	in := new(CodeExchangeRequestCLI)
+	in := new(ExchangeCodeForTokenCLIRequest)
 	if err := dec(in); err != nil {
 		return nil, err
 	}
@@ -330,13 +330,13 @@ func _OAuthService_ExchangeCodeForTokenCLI_Handler(srv interface{}, ctx context.
 		FullMethod: OAuthService_ExchangeCodeForTokenCLI_FullMethodName,
 	}
 	handler := func(ctx context.Context, req interface{}) (interface{}, error) {
-		return srv.(OAuthServiceServer).ExchangeCodeForTokenCLI(ctx, req.(*CodeExchangeRequestCLI))
+		return srv.(OAuthServiceServer).ExchangeCodeForTokenCLI(ctx, req.(*ExchangeCodeForTokenCLIRequest))
 	}
 	return interceptor(ctx, in, info, handler)
 }
 
 func _OAuthService_ExchangeCodeForTokenWEB_Handler(srv interface{}, ctx context.Context, dec func(interface{}) error, interceptor grpc.UnaryServerInterceptor) (interface{}, error) {
-	in := new(CodeExchangeRequestWEB)
+	in := new(ExchangeCodeForTokenWEBRequest)
 	if err := dec(in); err != nil {
 		return nil, err
 	}
@@ -348,7 +348,7 @@ func _OAuthService_ExchangeCodeForTokenWEB_Handler(srv interface{}, ctx context.
 		FullMethod: OAuthService_ExchangeCodeForTokenWEB_FullMethodName,
 	}
 	handler := func(ctx context.Context, req interface{}) (interface{}, error) {
-		return srv.(OAuthServiceServer).ExchangeCodeForTokenWEB(ctx, req.(*CodeExchangeRequestWEB))
+		return srv.(OAuthServiceServer).ExchangeCodeForTokenWEB(ctx, req.(*ExchangeCodeForTokenWEBRequest))
 	}
 	return interceptor(ctx, in, info, handler)
 }
@@ -357,7 +357,7 @@ func _OAuthService_ExchangeCodeForTokenWEB_Handler(srv interface{}, ctx context.
 // It's only intended for direct use with grpc.RegisterService,
 // and not to be introspected or modified (even as a copy)
 var OAuthService_ServiceDesc = grpc.ServiceDesc{
-	ServiceName: "dev.stacklok.mediator.v1.OAuthService",
+	ServiceName: "mediator.v1.OAuthService",
 	HandlerType: (*OAuthServiceServer)(nil),
 	Methods: []grpc.MethodDesc{
 		{
@@ -374,11 +374,11 @@ var OAuthService_ServiceDesc = grpc.ServiceDesc{
 		},
 	},
 	Streams:  []grpc.StreamDesc{},
-	Metadata: "proto/v1/mediator.proto",
+	Metadata: "mediator/v1/mediator.proto",
 }
 
 const (
-	LogInService_LogIn_FullMethodName = "/dev.stacklok.mediator.v1.LogInService/LogIn"
+	LogInService_LogIn_FullMethodName = "/mediator.v1.LogInService/LogIn"
 )
 
 // LogInServiceClient is the client API for LogInService service.
@@ -455,7 +455,7 @@ func _LogInService_LogIn_Handler(srv interface{}, ctx context.Context, dec func(
 // It's only intended for direct use with grpc.RegisterService,
 // and not to be introspected or modified (even as a copy)
 var LogInService_ServiceDesc = grpc.ServiceDesc{
-	ServiceName: "dev.stacklok.mediator.v1.LogInService",
+	ServiceName: "mediator.v1.LogInService",
 	HandlerType: (*LogInServiceServer)(nil),
 	Methods: []grpc.MethodDesc{
 		{
@@ -464,11 +464,11 @@ var LogInService_ServiceDesc = grpc.ServiceDesc{
 		},
 	},
 	Streams:  []grpc.StreamDesc{},
-	Metadata: "proto/v1/mediator.proto",
+	Metadata: "mediator/v1/mediator.proto",
 }
 
 const (
-	LogOutService_LogOut_FullMethodName = "/dev.stacklok.mediator.v1.LogOutService/LogOut"
+	LogOutService_LogOut_FullMethodName = "/mediator.v1.LogOutService/LogOut"
 )
 
 // LogOutServiceClient is the client API for LogOutService service.
@@ -545,7 +545,7 @@ func _LogOutService_LogOut_Handler(srv interface{}, ctx context.Context, dec fun
 // It's only intended for direct use with grpc.RegisterService,
 // and not to be introspected or modified (even as a copy)
 var LogOutService_ServiceDesc = grpc.ServiceDesc{
-	ServiceName: "dev.stacklok.mediator.v1.LogOutService",
+	ServiceName: "mediator.v1.LogOutService",
 	HandlerType: (*LogOutServiceServer)(nil),
 	Methods: []grpc.MethodDesc{
 		{
@@ -554,18 +554,18 @@ var LogOutService_ServiceDesc = grpc.ServiceDesc{
 		},
 	},
 	Streams:  []grpc.StreamDesc{},
-	Metadata: "proto/v1/mediator.proto",
+	Metadata: "mediator/v1/mediator.proto",
 }
 
 const (
-	AuthVerifyService_Verify_FullMethodName = "/dev.stacklok.mediator.v1.AuthVerifyService/Verify"
+	AuthVerifyService_Verify_FullMethodName = "/mediator.v1.AuthVerifyService/Verify"
 )
 
 // AuthVerifyServiceClient is the client API for AuthVerifyService service.
 //
 // For semantics around ctx use and closing/ending streaming RPCs, please refer to https://pkg.go.dev/google.golang.org/grpc/?tab=doc#ClientConn.NewStream.
 type AuthVerifyServiceClient interface {
-	Verify(ctx context.Context, in *AuthVerifyRequest, opts ...grpc.CallOption) (*AuthVerifyResponse, error)
+	Verify(ctx context.Context, in *AuthVerifyServiceVerifyRequest, opts ...grpc.CallOption) (*AuthVerifyServiceVerifyResponse, error)
 }
 
 type authVerifyServiceClient struct {
@@ -576,8 +576,8 @@ func NewAuthVerifyServiceClient(cc grpc.ClientConnInterface) AuthVerifyServiceCl
 	return &authVerifyServiceClient{cc}
 }
 
-func (c *authVerifyServiceClient) Verify(ctx context.Context, in *AuthVerifyRequest, opts ...grpc.CallOption) (*AuthVerifyResponse, error) {
-	out := new(AuthVerifyResponse)
+func (c *authVerifyServiceClient) Verify(ctx context.Context, in *AuthVerifyServiceVerifyRequest, opts ...grpc.CallOption) (*AuthVerifyServiceVerifyResponse, error) {
+	out := new(AuthVerifyServiceVerifyResponse)
 	err := c.cc.Invoke(ctx, AuthVerifyService_Verify_FullMethodName, in, out, opts...)
 	if err != nil {
 		return nil, err
@@ -589,7 +589,7 @@ func (c *authVerifyServiceClient) Verify(ctx context.Context, in *AuthVerifyRequ
 // All implementations must embed UnimplementedAuthVerifyServiceServer
 // for forward compatibility
 type AuthVerifyServiceServer interface {
-	Verify(context.Context, *AuthVerifyRequest) (*AuthVerifyResponse, error)
+	Verify(context.Context, *AuthVerifyServiceVerifyRequest) (*AuthVerifyServiceVerifyResponse, error)
 	mustEmbedUnimplementedAuthVerifyServiceServer()
 }
 
@@ -597,7 +597,7 @@ type AuthVerifyServiceServer interface {
 type UnimplementedAuthVerifyServiceServer struct {
 }
 
-func (UnimplementedAuthVerifyServiceServer) Verify(context.Context, *AuthVerifyRequest) (*AuthVerifyResponse, error) {
+func (UnimplementedAuthVerifyServiceServer) Verify(context.Context, *AuthVerifyServiceVerifyRequest) (*AuthVerifyServiceVerifyResponse, error) {
 	return nil, status.Errorf(codes.Unimplemented, "method Verify not implemented")
 }
 func (UnimplementedAuthVerifyServiceServer) mustEmbedUnimplementedAuthVerifyServiceServer() {}
@@ -614,7 +614,7 @@ func RegisterAuthVerifyServiceServer(s grpc.ServiceRegistrar, srv AuthVerifyServ
 }
 
 func _AuthVerifyService_Verify_Handler(srv interface{}, ctx context.Context, dec func(interface{}) error, interceptor grpc.UnaryServerInterceptor) (interface{}, error) {
-	in := new(AuthVerifyRequest)
+	in := new(AuthVerifyServiceVerifyRequest)
 	if err := dec(in); err != nil {
 		return nil, err
 	}
@@ -626,7 +626,7 @@ func _AuthVerifyService_Verify_Handler(srv interface{}, ctx context.Context, dec
 		FullMethod: AuthVerifyService_Verify_FullMethodName,
 	}
 	handler := func(ctx context.Context, req interface{}) (interface{}, error) {
-		return srv.(AuthVerifyServiceServer).Verify(ctx, req.(*AuthVerifyRequest))
+		return srv.(AuthVerifyServiceServer).Verify(ctx, req.(*AuthVerifyServiceVerifyRequest))
 	}
 	return interceptor(ctx, in, info, handler)
 }
@@ -635,7 +635,7 @@ func _AuthVerifyService_Verify_Handler(srv interface{}, ctx context.Context, dec
 // It's only intended for direct use with grpc.RegisterService,
 // and not to be introspected or modified (even as a copy)
 var AuthVerifyService_ServiceDesc = grpc.ServiceDesc{
-	ServiceName: "dev.stacklok.mediator.v1.AuthVerifyService",
+	ServiceName: "mediator.v1.AuthVerifyService",
 	HandlerType: (*AuthVerifyServiceServer)(nil),
 	Methods: []grpc.MethodDesc{
 		{
@@ -644,12 +644,12 @@ var AuthVerifyService_ServiceDesc = grpc.ServiceDesc{
 		},
 	},
 	Streams:  []grpc.StreamDesc{},
-	Metadata: "proto/v1/mediator.proto",
+	Metadata: "mediator/v1/mediator.proto",
 }
 
 const (
-	VulnerabilitiesService_GetVulnerabilities_FullMethodName   = "/dev.stacklok.mediator.v1.VulnerabilitiesService/GetVulnerabilities"
-	VulnerabilitiesService_GetVulnerabilityById_FullMethodName = "/dev.stacklok.mediator.v1.VulnerabilitiesService/GetVulnerabilityById"
+	VulnerabilitiesService_GetVulnerabilities_FullMethodName   = "/mediator.v1.VulnerabilitiesService/GetVulnerabilities"
+	VulnerabilitiesService_GetVulnerabilityById_FullMethodName = "/mediator.v1.VulnerabilitiesService/GetVulnerabilityById"
 )
 
 // VulnerabilitiesServiceClient is the client API for VulnerabilitiesService service.
@@ -657,7 +657,7 @@ const (
 // For semantics around ctx use and closing/ending streaming RPCs, please refer to https://pkg.go.dev/google.golang.org/grpc/?tab=doc#ClientConn.NewStream.
 type VulnerabilitiesServiceClient interface {
 	GetVulnerabilities(ctx context.Context, in *GetVulnerabilitiesRequest, opts ...grpc.CallOption) (*GetVulnerabilitiesResponse, error)
-	GetVulnerabilityById(ctx context.Context, in *GetVulnerabilityByIdRequest, opts ...grpc.CallOption) (*Vulnerability, error)
+	GetVulnerabilityById(ctx context.Context, in *GetVulnerabilityByIdRequest, opts ...grpc.CallOption) (*GetVulnerabilityByIdResponse, error)
 }
 
 type vulnerabilitiesServiceClient struct {
@@ -677,8 +677,8 @@ func (c *vulnerabilitiesServiceClient) GetVulnerabilities(ctx context.Context, i
 	return out, nil
 }
 
-func (c *vulnerabilitiesServiceClient) GetVulnerabilityById(ctx context.Context, in *GetVulnerabilityByIdRequest, opts ...grpc.CallOption) (*Vulnerability, error) {
-	out := new(Vulnerability)
+func (c *vulnerabilitiesServiceClient) GetVulnerabilityById(ctx context.Context, in *GetVulnerabilityByIdRequest, opts ...grpc.CallOption) (*GetVulnerabilityByIdResponse, error) {
+	out := new(GetVulnerabilityByIdResponse)
 	err := c.cc.Invoke(ctx, VulnerabilitiesService_GetVulnerabilityById_FullMethodName, in, out, opts...)
 	if err != nil {
 		return nil, err
@@ -691,7 +691,7 @@ func (c *vulnerabilitiesServiceClient) GetVulnerabilityById(ctx context.Context,
 // for forward compatibility
 type VulnerabilitiesServiceServer interface {
 	GetVulnerabilities(context.Context, *GetVulnerabilitiesRequest) (*GetVulnerabilitiesResponse, error)
-	GetVulnerabilityById(context.Context, *GetVulnerabilityByIdRequest) (*Vulnerability, error)
+	GetVulnerabilityById(context.Context, *GetVulnerabilityByIdRequest) (*GetVulnerabilityByIdResponse, error)
 	mustEmbedUnimplementedVulnerabilitiesServiceServer()
 }
 
@@ -702,7 +702,7 @@ type UnimplementedVulnerabilitiesServiceServer struct {
 func (UnimplementedVulnerabilitiesServiceServer) GetVulnerabilities(context.Context, *GetVulnerabilitiesRequest) (*GetVulnerabilitiesResponse, error) {
 	return nil, status.Errorf(codes.Unimplemented, "method GetVulnerabilities not implemented")
 }
-func (UnimplementedVulnerabilitiesServiceServer) GetVulnerabilityById(context.Context, *GetVulnerabilityByIdRequest) (*Vulnerability, error) {
+func (UnimplementedVulnerabilitiesServiceServer) GetVulnerabilityById(context.Context, *GetVulnerabilityByIdRequest) (*GetVulnerabilityByIdResponse, error) {
 	return nil, status.Errorf(codes.Unimplemented, "method GetVulnerabilityById not implemented")
 }
 func (UnimplementedVulnerabilitiesServiceServer) mustEmbedUnimplementedVulnerabilitiesServiceServer() {
@@ -759,7 +759,7 @@ func _VulnerabilitiesService_GetVulnerabilityById_Handler(srv interface{}, ctx c
 // It's only intended for direct use with grpc.RegisterService,
 // and not to be introspected or modified (even as a copy)
 var VulnerabilitiesService_ServiceDesc = grpc.ServiceDesc{
-	ServiceName: "dev.stacklok.mediator.v1.VulnerabilitiesService",
+	ServiceName: "mediator.v1.VulnerabilitiesService",
 	HandlerType: (*VulnerabilitiesServiceServer)(nil),
 	Methods: []grpc.MethodDesc{
 		{
@@ -772,12 +772,12 @@ var VulnerabilitiesService_ServiceDesc = grpc.ServiceDesc{
 		},
 	},
 	Streams:  []grpc.StreamDesc{},
-	Metadata: "proto/v1/mediator.proto",
+	Metadata: "mediator/v1/mediator.proto",
 }
 
 const (
-	SecretsService_GetSecrets_FullMethodName    = "/dev.stacklok.mediator.v1.SecretsService/GetSecrets"
-	SecretsService_GetSecretById_FullMethodName = "/dev.stacklok.mediator.v1.SecretsService/GetSecretById"
+	SecretsService_GetSecrets_FullMethodName    = "/mediator.v1.SecretsService/GetSecrets"
+	SecretsService_GetSecretById_FullMethodName = "/mediator.v1.SecretsService/GetSecretById"
 )
 
 // SecretsServiceClient is the client API for SecretsService service.
@@ -785,7 +785,7 @@ const (
 // For semantics around ctx use and closing/ending streaming RPCs, please refer to https://pkg.go.dev/google.golang.org/grpc/?tab=doc#ClientConn.NewStream.
 type SecretsServiceClient interface {
 	GetSecrets(ctx context.Context, in *GetSecretsRequest, opts ...grpc.CallOption) (*GetSecretsResponse, error)
-	GetSecretById(ctx context.Context, in *GetSecretByIdRequest, opts ...grpc.CallOption) (*Secret, error)
+	GetSecretById(ctx context.Context, in *GetSecretByIdRequest, opts ...grpc.CallOption) (*GetSecretByIdResponse, error)
 }
 
 type secretsServiceClient struct {
@@ -805,8 +805,8 @@ func (c *secretsServiceClient) GetSecrets(ctx context.Context, in *GetSecretsReq
 	return out, nil
 }
 
-func (c *secretsServiceClient) GetSecretById(ctx context.Context, in *GetSecretByIdRequest, opts ...grpc.CallOption) (*Secret, error) {
-	out := new(Secret)
+func (c *secretsServiceClient) GetSecretById(ctx context.Context, in *GetSecretByIdRequest, opts ...grpc.CallOption) (*GetSecretByIdResponse, error) {
+	out := new(GetSecretByIdResponse)
 	err := c.cc.Invoke(ctx, SecretsService_GetSecretById_FullMethodName, in, out, opts...)
 	if err != nil {
 		return nil, err
@@ -819,7 +819,7 @@ func (c *secretsServiceClient) GetSecretById(ctx context.Context, in *GetSecretB
 // for forward compatibility
 type SecretsServiceServer interface {
 	GetSecrets(context.Context, *GetSecretsRequest) (*GetSecretsResponse, error)
-	GetSecretById(context.Context, *GetSecretByIdRequest) (*Secret, error)
+	GetSecretById(context.Context, *GetSecretByIdRequest) (*GetSecretByIdResponse, error)
 	mustEmbedUnimplementedSecretsServiceServer()
 }
 
@@ -830,7 +830,7 @@ type UnimplementedSecretsServiceServer struct {
 func (UnimplementedSecretsServiceServer) GetSecrets(context.Context, *GetSecretsRequest) (*GetSecretsResponse, error) {
 	return nil, status.Errorf(codes.Unimplemented, "method GetSecrets not implemented")
 }
-func (UnimplementedSecretsServiceServer) GetSecretById(context.Context, *GetSecretByIdRequest) (*Secret, error) {
+func (UnimplementedSecretsServiceServer) GetSecretById(context.Context, *GetSecretByIdRequest) (*GetSecretByIdResponse, error) {
 	return nil, status.Errorf(codes.Unimplemented, "method GetSecretById not implemented")
 }
 func (UnimplementedSecretsServiceServer) mustEmbedUnimplementedSecretsServiceServer() {}
@@ -886,7 +886,7 @@ func _SecretsService_GetSecretById_Handler(srv interface{}, ctx context.Context,
 // It's only intended for direct use with grpc.RegisterService,
 // and not to be introspected or modified (even as a copy)
 var SecretsService_ServiceDesc = grpc.ServiceDesc{
-	ServiceName: "dev.stacklok.mediator.v1.SecretsService",
+	ServiceName: "mediator.v1.SecretsService",
 	HandlerType: (*SecretsServiceServer)(nil),
 	Methods: []grpc.MethodDesc{
 		{
@@ -899,11 +899,11 @@ var SecretsService_ServiceDesc = grpc.ServiceDesc{
 		},
 	},
 	Streams:  []grpc.StreamDesc{},
-	Metadata: "proto/v1/mediator.proto",
+	Metadata: "mediator/v1/mediator.proto",
 }
 
 const (
-	BranchProtectionService_GetBranchProtection_FullMethodName = "/dev.stacklok.mediator.v1.BranchProtectionService/GetBranchProtection"
+	BranchProtectionService_GetBranchProtection_FullMethodName = "/mediator.v1.BranchProtectionService/GetBranchProtection"
 )
 
 // BranchProtectionServiceClient is the client API for BranchProtectionService service.
@@ -981,7 +981,7 @@ func _BranchProtectionService_GetBranchProtection_Handler(srv interface{}, ctx c
 // It's only intended for direct use with grpc.RegisterService,
 // and not to be introspected or modified (even as a copy)
 var BranchProtectionService_ServiceDesc = grpc.ServiceDesc{
-	ServiceName: "dev.stacklok.mediator.v1.BranchProtectionService",
+	ServiceName: "mediator.v1.BranchProtectionService",
 	HandlerType: (*BranchProtectionServiceServer)(nil),
 	Methods: []grpc.MethodDesc{
 		{
@@ -990,5 +990,5 @@ var BranchProtectionService_ServiceDesc = grpc.ServiceDesc{
 		},
 	},
 	Streams:  []grpc.StreamDesc{},
-	Metadata: "proto/v1/mediator.proto",
+	Metadata: "mediator/v1/mediator.proto",
 }

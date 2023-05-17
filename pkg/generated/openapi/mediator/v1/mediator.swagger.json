@@ -1,7 +1,7 @@
 {
   "swagger": "2.0",
   "info": {
-    "title": "proto/v1/mediator.proto",
+    "title": "mediator/v1/mediator.proto",
     "version": "version not set"
   },
   "tags": [
@@ -47,7 +47,7 @@
           "200": {
             "description": "A successful response.",
             "schema": {
-              "$ref": "#/definitions/v1CodeExchangeResponseCLI"
+              "$ref": "#/definitions/v1ExchangeCodeForTokenCLIResponse"
             }
           },
           "default": {
@@ -89,7 +89,7 @@
           "200": {
             "description": "A successful response.",
             "schema": {
-              "$ref": "#/definitions/v1CodeExchangeResponseWEB"
+              "$ref": "#/definitions/v1ExchangeCodeForTokenWEBResponse"
             }
           },
           "default": {
@@ -195,7 +195,7 @@
           "200": {
             "description": "A successful response.",
             "schema": {
-              "$ref": "#/definitions/v1AuthorizationURLResponse"
+              "$ref": "#/definitions/v1GetAuthorizationURLResponse"
             }
           },
           "default": {
@@ -231,7 +231,7 @@
           "200": {
             "description": "A successful response.",
             "schema": {
-              "$ref": "#/definitions/v1AuthVerifyResponse"
+              "$ref": "#/definitions/v1AuthVerifyServiceVerifyResponse"
             }
           },
           "default": {
@@ -247,7 +247,7 @@
             "in": "body",
             "required": true,
             "schema": {
-              "$ref": "#/definitions/v1AuthVerifyRequest"
+              "$ref": "#/definitions/v1AuthVerifyServiceVerifyRequest"
             }
           }
         ],
@@ -285,7 +285,7 @@
           "200": {
             "description": "A successful response.",
             "schema": {
-              "$ref": "#/definitions/v1GitHubWebhookResponse"
+              "$ref": "#/definitions/v1HandleGitHubWebhookResponse"
             }
           },
           "default": {
@@ -301,7 +301,7 @@
             "in": "body",
             "required": true,
             "schema": {
-              "$ref": "#/definitions/v1GitHubWebhookRequest"
+              "$ref": "#/definitions/v1HandleGitHubWebhookRequest"
             }
           }
         ],
@@ -317,7 +317,7 @@
           "200": {
             "description": "A successful response.",
             "schema": {
-              "$ref": "#/definitions/v1HealthResponse"
+              "$ref": "#/definitions/v1CheckHealthResponse"
             }
           },
           "default": {
@@ -361,7 +361,7 @@
           "200": {
             "description": "A successful response.",
             "schema": {
-              "$ref": "#/definitions/v1Secret"
+              "$ref": "#/definitions/v1GetSecretByIdResponse"
             }
           },
           "default": {
@@ -413,7 +413,7 @@
           "200": {
             "description": "A successful response.",
             "schema": {
-              "$ref": "#/definitions/v1Vulnerability"
+              "$ref": "#/definitions/v1GetVulnerabilityByIdResponse"
             }
           },
           "default": {
@@ -466,21 +466,13 @@
         }
       }
     },
-    "v1AuthVerifyRequest": {
+    "v1AuthVerifyServiceVerifyRequest": {
       "type": "object"
     },
-    "v1AuthVerifyResponse": {
+    "v1AuthVerifyServiceVerifyResponse": {
       "type": "object",
       "properties": {
         "status": {
-          "type": "string"
-        }
-      }
-    },
-    "v1AuthorizationURLResponse": {
-      "type": "object",
-      "properties": {
-        "url": {
           "type": "string"
         }
       }
@@ -497,7 +489,15 @@
         }
       }
     },
-    "v1CodeExchangeResponseCLI": {
+    "v1CheckHealthResponse": {
+      "type": "object",
+      "properties": {
+        "status": {
+          "type": "string"
+        }
+      }
+    },
+    "v1ExchangeCodeForTokenCLIResponse": {
       "type": "object",
       "properties": {
         "html": {
@@ -505,7 +505,7 @@
         }
       }
     },
-    "v1CodeExchangeResponseWEB": {
+    "v1ExchangeCodeForTokenWEBResponse": {
       "type": "object",
       "properties": {
         "accessToken": {
@@ -523,6 +523,14 @@
         }
       }
     },
+    "v1GetAuthorizationURLResponse": {
+      "type": "object",
+      "properties": {
+        "url": {
+          "type": "string"
+        }
+      }
+    },
     "v1GetBranchProtectionResponse": {
       "type": "object",
       "properties": {
@@ -535,6 +543,21 @@
         }
       }
     },
+    "v1GetSecretByIdResponse": {
+      "type": "object",
+      "properties": {
+        "id": {
+          "type": "string"
+        },
+        "name": {
+          "type": "string"
+        },
+        "description": {
+          "type": "string",
+          "title": "Add other relevant fields"
+        }
+      }
+    },
     "v1GetSecretsResponse": {
       "type": "object",
       "properties": {
@@ -542,7 +565,7 @@
           "type": "array",
           "items": {
             "type": "object",
-            "$ref": "#/definitions/v1Secret"
+            "$ref": "#/definitions/v1GetSecretByIdResponse"
           }
         }
       }
@@ -554,23 +577,62 @@
           "type": "array",
           "items": {
             "type": "object",
-            "$ref": "#/definitions/v1Vulnerability"
+            "$ref": "#/definitions/v1GetVulnerabilityByIdResponse"
           }
         }
       }
     },
-    "v1GitHubWebhookRequest": {
-      "type": "object"
-    },
-    "v1GitHubWebhookResponse": {
+    "v1GetVulnerabilityByIdResponse": {
       "type": "object",
       "properties": {
-        "status": {
+        "id": {
+          "type": "string",
+          "format": "uint64",
+          "title": "May require adjustment, currently set up for GitHub Security Advisories only"
+        },
+        "githubId": {
+          "type": "string",
+          "format": "int64"
+        },
+        "repoId": {
+          "type": "string",
+          "format": "int64"
+        },
+        "repoName": {
           "type": "string"
+        },
+        "packageName": {
+          "type": "string"
+        },
+        "severity": {
+          "type": "string"
+        },
+        "versionAffected": {
+          "type": "string"
+        },
+        "upgradeVersion": {
+          "type": "string"
+        },
+        "ghsaid": {
+          "type": "string"
+        },
+        "advisroyUrl": {
+          "type": "string"
+        },
+        "scannedAt": {
+          "type": "string",
+          "format": "date-time"
+        },
+        "createdAt": {
+          "type": "string",
+          "format": "date-time"
         }
       }
     },
-    "v1HealthResponse": {
+    "v1HandleGitHubWebhookRequest": {
+      "type": "object"
+    },
+    "v1HandleGitHubWebhookResponse": {
       "type": "object",
       "properties": {
         "status": {
@@ -619,68 +681,6 @@
       "properties": {
         "status": {
           "type": "string"
-        }
-      }
-    },
-    "v1Secret": {
-      "type": "object",
-      "properties": {
-        "id": {
-          "type": "string"
-        },
-        "name": {
-          "type": "string"
-        },
-        "description": {
-          "type": "string",
-          "title": "Add other relevant fields"
-        }
-      }
-    },
-    "v1Vulnerability": {
-      "type": "object",
-      "properties": {
-        "id": {
-          "type": "string",
-          "format": "uint64",
-          "title": "May require adjustment, currently set up for GitHub Security Advisories only"
-        },
-        "githubId": {
-          "type": "string",
-          "format": "int64"
-        },
-        "repoId": {
-          "type": "string",
-          "format": "int64"
-        },
-        "repoName": {
-          "type": "string"
-        },
-        "packageName": {
-          "type": "string"
-        },
-        "severity": {
-          "type": "string"
-        },
-        "versionAffected": {
-          "type": "string"
-        },
-        "upgradeVersion": {
-          "type": "string"
-        },
-        "ghsaid": {
-          "type": "string"
-        },
-        "advisroyUrl": {
-          "type": "string"
-        },
-        "scannedAt": {
-          "type": "string",
-          "format": "date-time"
-        },
-        "createdAt": {
-          "type": "string",
-          "format": "date-time"
         }
       }
     }
