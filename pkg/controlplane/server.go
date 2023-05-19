@@ -29,11 +29,11 @@ import (
 
 	"google.golang.org/grpc"
 	"google.golang.org/grpc/credentials/insecure"
-	"google.golang.org/grpc/metadata"
 	"google.golang.org/grpc/reflection"
 
 	_ "github.com/lib/pq" // nolint
 
+	"github.com/stacklok/mediator/internal/logger"
 	"github.com/stacklok/mediator/pkg/db"
 	pb "github.com/stacklok/mediator/pkg/generated/protobuf/go/mediator/v1"
 )
@@ -56,27 +56,7 @@ func NewServer(store db.Store) *Server {
 	return server
 }
 
-func loggingInterceptor(level string) grpc.UnaryServerInterceptor {
-	return func(ctx context.Context, req interface{}, info *grpc.UnaryServerInfo, handler grpc.UnaryHandler) (interface{}, error) {
-		md, ok := metadata.FromIncomingContext(ctx)
-		if ok {
-			for key, values := range md {
-				for _, value := range values {
-					log.Printf("[%s] header received: %s=%s", level, key, value)
-				}
-			}
-		}
-		resp, err := handler(ctx, req)
-		log.Printf("[%s] method called: %s", level, info.FullMethod)
-		log.Printf("[%s] incoming request: %v", level, req)
-
-		log.Printf("[%s] outgoing response: %v", level, resp)
-		return resp, err
-	}
-}
-
 func (s *Server) StartGRPCServer(address string, dbConn string) {
-	// store := db.NewStore(dbConn)
 	lis, err := net.Listen("tcp", address)
 	if err != nil {
 		log.Fatalf("failed to listen: %v", err)
@@ -99,16 +79,12 @@ func (s *Server) StartGRPCServer(address string, dbConn string) {
 
 	log.Println("Initializing logger in level: " + viper.GetString("logging.level"))
 
-	if viper.GetString("logging.level") == "debug" {
-		s.grpcServer = grpc.NewServer(
-			grpc.Creds(insecure.NewCredentials()),
-			grpc.UnaryInterceptor(loggingInterceptor(viper.GetString("logging.level"))),
-		)
-	} else {
-		s.grpcServer = grpc.NewServer(
-			grpc.Creds(insecure.NewCredentials()),
-		)
-	}
+	s.grpcServer = grpc.NewServer(
+		grpc.Creds(insecure.NewCredentials()),
+		grpc.ChainUnaryInterceptor(
+			logger.LoggerInterceptor(viper.GetString("logging.level")),
+		),
+	)
 
 	server.grpcServer = s.grpcServer
 
