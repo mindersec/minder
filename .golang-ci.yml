@@ -1,26 +1,30 @@
-inters-settings:
+linters-settings:
   lll:
     line-length: 130
+  goconst:
+    min-len: 2
+  gocyclo:
+    min-complexity: 10
+  staticcheck:
+    checks: ["ST1020", "ST1021", "ST1022"]
+
 linters:
-  enable-all: true
-  disable:
-    - testpackage
-    - forbidigo
-    - paralleltest
-    - exhaustivestruct
-    - varnamelen
-    - interfacer
-    - maligned
-    - scopelint
-    - golint
-    - varcheck
-    - nosnakecase
-    - deadcode
-    - ifshort
-    - structcheck
-    - rowserrcheck
-    - sqlclosecheck
-    - structcheck
-    - wastedassign
-    - exhaustruct
-    - nolintlint
+  disable-all: true
+  enable:
+    - lll
+    - errcheck
+    - goconst
+    - gocyclo
+    - unparam
+    - gosimple
+    - govet
+    - ineffassign
+    - staticcheck
+    - revive
+    - unused
+
+issues:
+  exclude-rules:
+    - path: '(.+)_test\.go'
+      linters:
+        - lll
