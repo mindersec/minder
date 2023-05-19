@@ -10,7 +10,7 @@ require (
 	github.com/pkg/browser v0.0.0-20210911075715-681adbf594b8
 	github.com/spf13/cobra v1.7.0
 	github.com/spf13/viper v1.15.0
-	github.com/stretchr/testify v1.8.2
+	github.com/stretchr/testify v1.8.3
 	golang.org/x/crypto v0.9.0
 	golang.org/x/oauth2 v0.8.0
 	google.golang.org/genproto v0.0.0-20230403163135-c38d8f061ccd
