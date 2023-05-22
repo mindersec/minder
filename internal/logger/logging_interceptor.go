@@ -20,6 +20,7 @@ import (
 	"log"
 	"os"
 	"path"
+	"runtime/debug"
 	"time"
 
 	"github.com/gogo/protobuf/jsonpb"
@@ -71,6 +72,37 @@ func LogIncomingCall(ctx context.Context, logger *zerolog.Event, method string, 
 			"http.content-type": meta.Get("content-type"),
 			"http.code":         res.Code(),
 			"http.duration":     time.Since(t).String(),
+		})
+	}
+
+}
+
+func LogErrorCall(ctx context.Context, logger *zerolog.Event, method string, t time.Time,
+	req interface{}, res *status.Status, err error) {
+
+	LogTimestamp(logger, t)
+	LogResource(logger, map[string]interface{}{
+		"service": path.Dir(method)[1:],
+		"method":  path.Base(method),
+	})
+
+	meta, ok := metadata.FromIncomingContext(ctx)
+
+	// try to get body from request
+	jsonText, jsonErr := json.Marshal(req)
+
+	if jsonErr != nil {
+		jsonText = []byte("")
+	}
+	if ok {
+		LogAttributes(logger, map[string]interface{}{
+			"http.user_agent":      meta.Get("user-agent"),
+			"http.content-type":    meta.Get("content-type"),
+			"http.code":            res.Code(),
+			"http.body":            jsonText,
+			"http.duration":        time.Since(t).String(),
+			"exception.message":    err.Error(),
+			"exception.stacktrace": debug.Stack(),
 		})
 	}
 
@@ -167,11 +199,13 @@ func Interceptor(logLevel string, logFormat string, logFile string) grpc.UnarySe
 			var logger *zerolog.Event
 			if err != nil {
 				logger = zlog.Error()
+				LogErrorCall(ctx, logger, info.FullMethod, now, req, ret, err)
+				logger.Msg("exception")
 			} else {
 				logger = zlog.Info()
+				LogIncomingCall(ctx, logger, info.FullMethod, now, req, ret)
+				logger.Send()
 			}
-			LogIncomingCall(ctx, logger, info.FullMethod, now, req, ret)
-			logger.Send()
 		}
 		defer file.Close()
 		return resp, err
