@@ -5,7 +5,7 @@ go 1.20
 require (
 	github.com/bufbuild/buf v1.19.0
 	github.com/daixiang0/gci v0.10.1
-	github.com/go-critic/go-critic v0.8.0
+	github.com/go-critic/go-critic v0.8.1
 	github.com/golangci/golangci-lint v1.52.2
 	github.com/gotesttools/gotestfmt/v2 v2.4.1
 	github.com/grpc-ecosystem/grpc-gateway/v2 v2.15.2
