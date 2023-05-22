@@ -18,8 +18,9 @@ package main
 import (
 	"os"
 	"testing"
-	"github.com/stacklok/mediator/cmd/server/app"
+
 	"github.com/spf13/viper"
+	"github.com/stacklok/mediator/cmd/server/app"
 )
 
 type testWriter struct {
@@ -33,7 +34,7 @@ func (tw *testWriter) Write(p []byte) (n int, err error) {
 
 func setupConfigFile(configFile string) {
 	config := []byte(`logging: "info"`)
-	err := os.WriteFile(configFile, config, 0o644)
+	err := os.WriteFile(configFile, config, 0o600)
 	if err != nil {
 		panic(err)
 	}
@@ -45,14 +46,14 @@ func removeConfigFile(filename string) {
 
 func TestCobraMain(t *testing.T) {
 	tests := []struct {
-		name           string
-		args           []string
-		expectedFile   string
+		name         string
+		args         []string
+		expectedFile string
 	}{
 		{
-			name:           "pass config flag",
-			args:           []string{"--config", "/tmp/config.yaml", "completion", "bash"},
-			expectedFile: 	"/tmp/config.yaml",
+			name:         "pass config flag",
+			args:         []string{"--config", "/tmp/config.yaml", "completion", "bash"},
+			expectedFile: "/tmp/config.yaml",
 		},
 	}
 
@@ -67,7 +68,7 @@ func TestCobraMain(t *testing.T) {
 			app.Execute()
 
 			actualConfigFile := viper.ConfigFileUsed()
-			if (actualConfigFile != test.expectedFile) {
+			if actualConfigFile != test.expectedFile {
 				t.Errorf("Expected config file %s, got %s", actualConfigFile, test.expectedFile)
 			}
 		})
