@@ -81,7 +81,7 @@ func callBackServer(wg *sync.WaitGroup) {
 		}
 	})
 
-	server := &http.Server{Addr: ":8891", ReadHeaderTimeout: 2 * time.Second}
+	server := &http.Server{Addr: ":8891", ReadHeaderTimeout: 10 * time.Second}
 
 	go func() {
 		wg.Wait()
