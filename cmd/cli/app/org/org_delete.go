@@ -43,7 +43,8 @@ func init() {
 	OrgCmd.AddCommand(org_deleteCmd)
 	// org-id
 	org_deleteCmd.PersistentFlags().StringP("org-id", "o", "", "Organization ID")
-	org_deleteCmd.PersistentFlags().BoolP("force", "f", false, "Force deletion of organization (WARNING: this will delete all resources associated with the organization))")
+	org_deleteCmd.PersistentFlags().BoolP("force", "f", false,
+		"Force deletion of organization (WARNING: this will delete all resources associated with the organization))")
 	if err := viper.BindPFlags(org_deleteCmd.PersistentFlags()); err != nil {
 		fmt.Fprintf(os.Stderr, "Error binding flags: %s\n", err)
 	}

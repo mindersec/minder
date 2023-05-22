@@ -41,6 +41,9 @@ import (
 	"github.com/spf13/viper"
 )
 
+const Google = "google"
+const Github = "github"
+
 // generateState generates a random string of length n, used as the OAuth state
 func generateState(n int) (string, error) {
 	randomBytes := make([]byte, n)
@@ -54,13 +57,13 @@ func generateState(n int) (string, error) {
 }
 
 // CheckHealth is a simple health check for monitoring
-func (s *Server) CheckHealth(ctx context.Context, req *pb.CheckHealthRequest) (*pb.CheckHealthResponse, error) {
+func (_ *Server) CheckHealth(_ context.Context, _ *pb.CheckHealthRequest) (*pb.CheckHealthResponse, error) {
 	return &pb.CheckHealthResponse{Status: "OK"}, nil
 }
 
 // newOAuthConfig creates a new OAuth2 config for the given provider
 // and whether the client is a CLI or web client
-func (s *Server) newOAuthConfig(provider string, cli bool) (*oauth2.Config, error) {
+func (_ *Server) newOAuthConfig(provider string, cli bool) (*oauth2.Config, error) {
 	redirectURL := func(provider string, cli bool) string {
 		if cli {
 			return fmt.Sprintf("http://localhost:8080/api/v1/auth/callback/%s/cli", provider)
@@ -69,20 +72,20 @@ func (s *Server) newOAuthConfig(provider string, cli bool) (*oauth2.Config, erro
 	}
 
 	scopes := func(provider string) []string {
-		if provider == "google" {
+		if provider == Google {
 			return []string{"profile", "email"}
 		}
 		return []string{"user:email"}
 	}
 
 	endpoint := func(provider string) oauth2.Endpoint {
-		if provider == "google" {
+		if provider == Google {
 			return google.Endpoint
 		}
 		return github.Endpoint
 	}
 
-	if provider != "google" && provider != "github" {
+	if provider != Google && provider != Github {
 		return nil, fmt.Errorf("invalid provider: %s", provider)
 	}
 
@@ -98,7 +101,8 @@ func (s *Server) newOAuthConfig(provider string, cli bool) (*oauth2.Config, erro
 // GetAuthorizationURL returns the URL to redirect the user to for authorization
 // and the state to be used for the callback. It accepts a provider string
 // and a boolean indicating whether the client is a CLI or web client
-func (s *Server) GetAuthorizationURL(ctx context.Context, req *pb.GetAuthorizationURLRequest) (*pb.GetAuthorizationURLResponse, error) {
+func (s *Server) GetAuthorizationURL(_ context.Context,
+	req *pb.GetAuthorizationURLRequest) (*pb.GetAuthorizationURLResponse, error) {
 	oauthConfig, err := s.newOAuthConfig(req.Provider, req.Cli)
 	if err != nil {
 		return nil, err
@@ -119,7 +123,8 @@ func (s *Server) GetAuthorizationURL(ctx context.Context, req *pb.GetAuthorizati
 
 // ExchangeCodeForTokenCLI exchanges an OAuth2 code for a token
 // This is specific for CLI clients which require a different
-func (s *Server) ExchangeCodeForTokenCLI(ctx context.Context, in *pb.ExchangeCodeForTokenCLIRequest) (*pb.ExchangeCodeForTokenCLIResponse, error) {
+func (s *Server) ExchangeCodeForTokenCLI(ctx context.Context,
+	in *pb.ExchangeCodeForTokenCLIRequest) (*pb.ExchangeCodeForTokenCLIResponse, error) {
 	oauthConfig, err := s.newOAuthConfig(in.Provider, true)
 	if err != nil {
 		return nil, err
@@ -161,7 +166,8 @@ func (s *Server) ExchangeCodeForTokenCLI(ctx context.Context, in *pb.ExchangeCod
 
 // ExchangeCodeForTokenWEB exchanges an OAuth2 code for a token and returns
 // a JWT token as a session cookie. This handler is specific for web clients.
-func (s *Server) ExchangeCodeForTokenWEB(ctx context.Context, in *pb.ExchangeCodeForTokenWEBRequest) (*pb.ExchangeCodeForTokenWEBResponse, error) {
+func (s *Server) ExchangeCodeForTokenWEB(ctx context.Context,
+	in *pb.ExchangeCodeForTokenWEBRequest) (*pb.ExchangeCodeForTokenWEBResponse, error) {
 	oauthConfig, err := s.newOAuthConfig(in.Provider, false)
 	if err != nil {
 		return nil, err

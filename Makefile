@@ -56,7 +56,7 @@ cover: ## display test coverage
 	go tool cover -func=coverage.out
 
 lint: ## lint go files
-	golangci-lint run -c .golang-ci.yml
+	golangci-lint run
 
 pre-commit:	## run pre-commit hooks
 	pre-commit run --all-files

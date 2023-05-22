@@ -157,7 +157,9 @@ func DecryptRow(key string, ciphertext []byte) (string, error) {
 
 // Function to derive a key from a passphrase using Argon2
 func deriveKey(passphrase string) []byte {
-	salt := []byte("somesalt") // In a real application, you should use a unique salt for each key and save it with the encrypted data.
+	// In a real application, you should use a unique salt for
+	// each key and save it with the encrypted data.
+	salt := []byte("somesalt")
 	return argon2.IDKey([]byte(passphrase), salt, 1, 64*1024, 4, 32)
 }
 
@@ -177,7 +179,8 @@ func GeneratePasswordHash(password string) (encodedHash string, err error) {
 	b64Hash := base64.RawStdEncoding.EncodeToString(hash)
 
 	// Return a string using the standard encoded hash representation.
-	encodedHash = fmt.Sprintf("$argon2id$v=%d$m=%d,t=%d,p=%d$%s$%s", argon2.Version, p.memory, p.iterations, p.parallelism, b64Salt, b64Hash)
+	encodedHash = fmt.Sprintf("$argon2id$v=%d$m=%d,t=%d,p=%d$%s$%s", argon2.Version,
+		p.memory, p.iterations, p.parallelism, b64Salt, b64Hash)
 
 	return encodedHash, nil
 }

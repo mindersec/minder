@@ -81,7 +81,8 @@ func saveCredentials(creds Credentials) (string, error) {
 
 }
 
-func getLoginServiceClient(ctx context.Context, address string, username string, password string, dialOptions ...grpc.DialOption) (*Credentials, error) {
+func getLoginServiceClient(ctx context.Context, address string, username string, password string,
+	dialOptions ...grpc.DialOption) (*Credentials, error) {
 	conn, err := grpc.DialContext(ctx, address, dialOptions...)
 	if err != nil {
 		return nil, fmt.Errorf("error connecting to server: %v", err)

@@ -23,8 +23,8 @@ import (
 	"github.com/stacklok/mediator/pkg/util"
 
 	"github.com/golang-migrate/migrate/v4"
-	_ "github.com/golang-migrate/migrate/v4/database/postgres"
-	_ "github.com/golang-migrate/migrate/v4/source/file"
+	_ "github.com/golang-migrate/migrate/v4/database/postgres" // nolint
+	_ "github.com/golang-migrate/migrate/v4/source/file"       // nolint
 	"github.com/spf13/cobra"
 )
 

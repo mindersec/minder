@@ -23,6 +23,7 @@ package auth
 import (
 	"context"
 	"encoding/json"
+
 	"google.golang.org/grpc"
 	"google.golang.org/grpc/credentials/insecure"
 	"google.golang.org/grpc/test/bufconn"
@@ -124,7 +125,7 @@ type mockLogInServiceServer struct {
 	pb.UnimplementedLogInServiceServer
 }
 
-func (s *mockLogInServiceServer) LogIn(ctx context.Context, in *pb.LogInRequest) (*pb.LogInResponse, error) {
+func (_ *mockLogInServiceServer) LogIn(_ context.Context, _ *pb.LogInRequest) (*pb.LogInResponse, error) {
 	return &pb.LogInResponse{
 		AccessToken:           "mockAccessToken",
 		RefreshToken:          "mockRefreshToken",

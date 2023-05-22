@@ -21,6 +21,7 @@ import (
 	"net"
 	"net/http"
 	"testing"
+	"time"
 
 	pb "github.com/stacklok/mediator/pkg/generated/protobuf/go/mediator/v1"
 
@@ -51,7 +52,7 @@ func init() {
 	// HTTP server
 	mux := http.NewServeMux()
 
-	srv := &http.Server{Addr: ":8080", Handler: mux}
+	srv := &http.Server{Addr: ":8080", Handler: mux, ReadHeaderTimeout: 10 * time.Second}
 	go func() {
 		if err := srv.ListenAndServe(); err != nil {
 			log.Fatalf("Server exited with error: %v", err)
