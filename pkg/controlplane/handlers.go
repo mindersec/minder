@@ -54,13 +54,13 @@ func generateState(n int) (string, error) {
 }
 
 // CheckHealth is a simple health check for monitoring
-func (s *Server) CheckHealth(ctx context.Context, req *pb.CheckHealthRequest) (*pb.CheckHealthResponse, error) {
+func (_ *Server) CheckHealth(ctx context.Context, req *pb.CheckHealthRequest) (*pb.CheckHealthResponse, error) {
 	return &pb.CheckHealthResponse{Status: "OK"}, nil
 }
 
 // newOAuthConfig creates a new OAuth2 config for the given provider
 // and whether the client is a CLI or web client
-func (s *Server) newOAuthConfig(provider string, cli bool) (*oauth2.Config, error) {
+func (_ *Server) newOAuthConfig(provider string, cli bool) (*oauth2.Config, error) {
 	redirectURL := func(provider string, cli bool) string {
 		if cli {
 			return fmt.Sprintf("http://localhost:8080/api/v1/auth/callback/%s/cli", provider)

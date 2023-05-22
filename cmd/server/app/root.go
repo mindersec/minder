@@ -24,13 +24,13 @@ import (
 )
 
 var (
-	cfgFile     string	// config file (default is $PWD/config.yaml)	
+	cfgFile string // config file (default is $PWD/config.yaml)
 	// rootCmd represents the base command when called without any subcommands
 	RootCmd = &cobra.Command{
 		Use:   "mediator-server",
 		Short: "Mediator control plane server",
 		Long:  ``,
-	}	
+	}
 )
 
 // Execute adds all child commands to the root command and sets flags appropriately.

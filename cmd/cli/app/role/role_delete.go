@@ -42,7 +42,8 @@ mediator control plane.`,
 func init() {
 	RoleCmd.AddCommand(role_deleteCmd)
 	role_deleteCmd.PersistentFlags().StringP("role-id", "r", "", "role-id of role to delete")
-	role_deleteCmd.PersistentFlags().BoolP("force", "f", false, "Force deletion of role (WARNING: this will delete all resources associated with the role)")
+	role_deleteCmd.PersistentFlags().BoolP("force", "f", false,
+		"Force deletion of role (WARNING: this will delete all resources associated with the role)")
 	if err := viper.BindPFlags(role_deleteCmd.PersistentFlags()); err != nil {
 		log.Fatal(err)
 	}

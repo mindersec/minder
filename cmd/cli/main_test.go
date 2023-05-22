@@ -18,8 +18,9 @@ package main
 import (
 	"os"
 	"testing"
-	"github.com/stacklok/mediator/cmd/cli/app"
+
 	"github.com/spf13/viper"
+	"github.com/stacklok/mediator/cmd/cli/app"
 )
 
 type testWriter struct {
@@ -45,14 +46,14 @@ func removeConfigFile(filename string) {
 
 func TestCobraMain(t *testing.T) {
 	tests := []struct {
-		name           string
-		args           []string
-		expectedFile   string
+		name         string
+		args         []string
+		expectedFile string
 	}{
 		{
-			name:           "pass config flag",
-			args:           []string{"--config", "/tmp/config.yaml", "auth"},
-			expectedFile: 	"/tmp/config.yaml",
+			name:         "pass config flag",
+			args:         []string{"--config", "/tmp/config.yaml", "auth"},
+			expectedFile: "/tmp/config.yaml",
 		},
 	}
 
@@ -62,12 +63,12 @@ func TestCobraMain(t *testing.T) {
 			defer removeConfigFile(test.expectedFile)
 
 			tw := &testWriter{}
-			app.RootCmd.SetOut(tw) // stub to capture eventual output			
+			app.RootCmd.SetOut(tw) // stub to capture eventual output
 			app.RootCmd.SetArgs(test.args)
 			app.Execute()
 
 			actualConfigFile := viper.ConfigFileUsed()
-			if (actualConfigFile != test.expectedFile) {
+			if actualConfigFile != test.expectedFile {
 				t.Errorf("Expected config file %s, got %s", actualConfigFile, test.expectedFile)
 			}
 		})

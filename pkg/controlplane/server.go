@@ -32,7 +32,7 @@ import (
 	"google.golang.org/grpc/metadata"
 	"google.golang.org/grpc/reflection"
 
-	_ "github.com/lib/pq"
+	_ "github.com/lib/pq" // nolint
 
 	"github.com/stacklok/mediator/pkg/db"
 	pb "github.com/stacklok/mediator/pkg/generated/protobuf/go/mediator/v1"
