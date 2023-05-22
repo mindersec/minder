@@ -79,10 +79,14 @@ func (s *Server) StartGRPCServer(address string, dbConn string) {
 
 	log.Println("Initializing logger in level: " + viper.GetString("logging.level"))
 
+	viper.SetDefault("logging.level", "debug")
+	viper.SetDefault("logging.format", "json")
+	viper.SetDefault("logging.logFile", "")
+
 	s.grpcServer = grpc.NewServer(
 		grpc.Creds(insecure.NewCredentials()),
 		grpc.ChainUnaryInterceptor(
-			logger.LoggerInterceptor(viper.GetString("logging.level")),
+			logger.Interceptor(viper.GetString("logging.level"), viper.GetString("logging.format"), viper.GetString("logging.logFile")),
 		),
 	)
 

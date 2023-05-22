@@ -34,7 +34,8 @@ google:
 
 logging:
   level: "debug"
-  format: "text"
+  format: "json"
+  #logFile: "/var/log/mediator.log"
 
 database:
   dbhost: "localhost"

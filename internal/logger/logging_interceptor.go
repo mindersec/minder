@@ -17,6 +17,7 @@ package logger
 import (
 	"context"
 	"encoding/json"
+	"log"
 	"os"
 	"path"
 	"time"
@@ -32,6 +33,8 @@ var (
 	Marshaller = &jsonpb.Marshaler{}
 	MaxSize    = 2048000
 )
+
+const Text = "text"
 
 func LogTimestamp(logger *zerolog.Event, t time.Time) {
 	*logger = *logger.Int64("Timestamp", t.UnixNano())
@@ -52,7 +55,8 @@ func LogAttributes(logger *zerolog.Event, dict map[string]interface{}) {
 }
 
 // will logs calls based on https://github.com/open-telemetry/oteps/blob/main/text/logs/0097-log-data-model.md#example-log-records
-func LogIncomingCall(ctx context.Context, logger *zerolog.Event, method string, t time.Time, req interface{}, res *status.Status) {
+func LogIncomingCall(ctx context.Context, logger *zerolog.Event, method string, t time.Time,
+	_ interface{}, res *status.Status) {
 
 	LogTimestamp(logger, t)
 	LogResource(logger, map[string]interface{}{
@@ -60,11 +64,11 @@ func LogIncomingCall(ctx context.Context, logger *zerolog.Event, method string, 
 		"method":  path.Base(method),
 	})
 
-	metadata, ok := metadata.FromIncomingContext(ctx)
+	meta, ok := metadata.FromIncomingContext(ctx)
 	if ok {
 		LogAttributes(logger, map[string]interface{}{
-			"http.user_agent":   metadata.Get("user-agent"),
-			"http.content-type": metadata.Get("content-type"),
+			"http.user_agent":   meta.Get("user-agent"),
+			"http.content-type": meta.Get("content-type"),
 			"http.code":         res.Code(),
 			"http.duration":     time.Since(t).String(),
 		})
@@ -74,7 +78,8 @@ func LogIncomingCall(ctx context.Context, logger *zerolog.Event, method string, 
 
 func LogStatusError(logger *zerolog.Event, err error) {
 	statusErr := status.Convert(err)
-	*logger = *logger.Err(err).Str("status", statusErr.Code().String()).Str("msg", statusErr.Message()).Interface("details", statusErr.Details())
+	*logger = *logger.Err(err).Str("status", statusErr.Code().String()).Str("msg",
+		statusErr.Message()).Interface("details", statusErr.Details())
 }
 
 func ViperLogLevelToZerologLevel(viperLogLevel string) zerolog.Level {
@@ -94,7 +99,7 @@ func ViperLogLevelToZerologLevel(viperLogLevel string) zerolog.Level {
 	}
 }
 
-// LoggerInterceptor creates a gRPC unary server interceptor that logs incoming requests and their responses using Zerolog.
+// Interceptor creates a gRPC unary server interceptor that logs incoming requests and their responses using Zerolog.
 // The interceptor logs the requests with the specified log level.
 //
 // Parameters:
@@ -105,19 +110,55 @@ func ViperLogLevelToZerologLevel(viperLogLevel string) zerolog.Level {
 //
 // Example usage:
 //
-//	logInterceptor := LoggerInterceptor("info")
+//	logInterceptor := Interceptor("info")
 //	server := grpc.NewServer(
 //	  ...
 //	  grpc.UnaryInterceptor(logInterceptor),
 //	  ...
 //	)
-func LoggerInterceptor(logLevel string) grpc.UnaryServerInterceptor {
+func Interceptor(logLevel string, logFormat string, logFile string) grpc.UnaryServerInterceptor {
 	// set log level according to config
 	zlevel := ViperLogLevelToZerologLevel(logLevel)
 	zerolog.SetGlobalLevel(zlevel)
-	zlog := zerolog.New(os.Stdout).With().Timestamp().Logger()
 
 	return func(ctx context.Context, req interface{}, info *grpc.UnaryServerInfo, handler grpc.UnaryHandler) (interface{}, error) {
+		var file *os.File
+		var err error
+		logToFile := false
+		if logFile != "" {
+			file, err = os.OpenFile(logFile, os.O_CREATE|os.O_WRONLY|os.O_APPEND, 0666)
+			if err != nil {
+				log.Println("Failed to open log file, defaulting to stdout")
+			} else {
+				logToFile = true
+			}
+		}
+
+		var consoleWriter zerolog.ConsoleWriter
+		if logFormat == Text {
+			consoleWriter = zerolog.ConsoleWriter{
+				Out: os.Stdout,
+			}
+		}
+
+		var zlog zerolog.Logger
+		// log in json or text format, and log to file if specified
+		if logToFile {
+			var multi zerolog.LevelWriter
+			if logFormat == Text {
+				multi = zerolog.MultiLevelWriter(consoleWriter, file)
+			} else {
+				multi = zerolog.MultiLevelWriter(os.Stdout, file)
+			}
+			zlog = zerolog.New(multi).With().Timestamp().Logger()
+		} else {
+			if logFormat == Text {
+				zlog = zerolog.New(consoleWriter).With().Timestamp().Logger()
+			} else {
+				zlog = zerolog.New(os.Stdout).With().Timestamp().Logger()
+			}
+		}
+
 		now := time.Now()
 		resp, err := handler(ctx, req)
 		ret := status.Convert(err)
@@ -132,6 +173,7 @@ func LoggerInterceptor(logLevel string) grpc.UnaryServerInterceptor {
 			LogIncomingCall(ctx, logger, info.FullMethod, now, req, ret)
 			logger.Send()
 		}
+		defer file.Close()
 		return resp, err
 	}
 }
