@@ -42,6 +42,7 @@ linters-settings:
   gosec:
     excludes:
       - G114 # for the moment we need to use listenandserve that has no support for timeouts
+      - G404 # use unsafe random generator until logic change is discussed
 
 linters:
   disable-all: true

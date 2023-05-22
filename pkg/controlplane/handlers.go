@@ -57,7 +57,7 @@ func generateState(n int) (string, error) {
 }
 
 // CheckHealth is a simple health check for monitoring
-func (_ *Server) CheckHealth(_ context.Context, req *pb.CheckHealthRequest) (*pb.CheckHealthResponse, error) {
+func (_ *Server) CheckHealth(_ context.Context, _ *pb.CheckHealthRequest) (*pb.CheckHealthResponse, error) {
 	return &pb.CheckHealthResponse{Status: "OK"}, nil
 }
 
@@ -101,7 +101,7 @@ func (_ *Server) newOAuthConfig(provider string, cli bool) (*oauth2.Config, erro
 // GetAuthorizationURL returns the URL to redirect the user to for authorization
 // and the state to be used for the callback. It accepts a provider string
 // and a boolean indicating whether the client is a CLI or web client
-func (s *Server) GetAuthorizationURL(ctx context.Context,
+func (s *Server) GetAuthorizationURL(_ context.Context,
 	req *pb.GetAuthorizationURLRequest) (*pb.GetAuthorizationURLResponse, error) {
 	oauthConfig, err := s.newOAuthConfig(req.Provider, req.Cli)
 	if err != nil {
