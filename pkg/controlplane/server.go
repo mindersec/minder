@@ -109,15 +109,21 @@ func (s *Server) StartGRPCServer(address string, dbConn string) {
 	viper.SetDefault("logging.level", "debug")
 	viper.SetDefault("logging.format", "json")
 	viper.SetDefault("logging.logFile", "")
+	viper.SetDefault("tracing.enabled", false)
 
-	interceptorOpt := otelgrpc.WithTracerProvider(otel.GetTracerProvider())
+	// add logger and tracing (if enabled)
+	interceptors := []grpc.UnaryServerInterceptor{}
+	interceptors = append(interceptors, logger.Interceptor(viper.GetString("logging.level"),
+		viper.GetString("logging.format"), viper.GetString("logging.logFile")))
+	addTracing := viper.GetBool("tracing.enabled")
+	if addTracing {
+		interceptorOpt := otelgrpc.WithTracerProvider(otel.GetTracerProvider())
+		interceptors = append(interceptors, otelgrpc.UnaryServerInterceptor(interceptorOpt))
+	}
 
 	s.grpcServer = grpc.NewServer(
 		grpc.Creds(insecure.NewCredentials()),
-		grpc.ChainUnaryInterceptor(
-			otelgrpc.UnaryServerInterceptor(interceptorOpt),
-			logger.Interceptor(viper.GetString("logging.level"), viper.GetString("logging.format"), viper.GetString("logging.logFile")),
-		),
+		grpc.ChainUnaryInterceptor(interceptors...),
 	)
 
 	server.grpcServer = s.grpcServer
