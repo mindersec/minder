@@ -248,8 +248,3 @@ func (s *Server) LogIn(ctx context.Context, in *pb.LogInRequest) (*pb.LogInRespo
 		RefreshTokenExpiresIn: refreshExpirationTime,
 	}, nil
 }
-
-// CheckHealth is a simple health check for monitoring
-func (_ *Server) CreateOrganisation(_ context.Context, _ *pb.CreateOrganisationRequest) (*pb.CreateOrganisationResponse, error) {
-	return &pb.CreateOrganisationResponse{}, nil
-}
