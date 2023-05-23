@@ -52,7 +52,7 @@ func init() {
 	// HTTP server
 	mux := http.NewServeMux()
 
-	srv := &http.Server{Addr: ":8080", Handler: mux, ReadHeaderTimeout: 10 * time.Second}
+	srv := &http.Server{Addr: ":8080", Handler: mux, ReadHeaderTimeout: 20 * time.Second}
 	go func() {
 		if err := srv.ListenAndServe(); err != nil {
 			log.Fatalf("Server exited with error: %v", err)
