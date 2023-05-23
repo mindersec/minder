@@ -27,6 +27,12 @@ import (
 	"github.com/spf13/viper"
 	"golang.org/x/oauth2"
 
+	"go.opentelemetry.io/contrib/instrumentation/google.golang.org/grpc/otelgrpc"
+	"go.opentelemetry.io/otel"
+	stdout "go.opentelemetry.io/otel/exporters/stdout/stdouttrace"
+
+	"go.opentelemetry.io/otel/propagation"
+	sdktrace "go.opentelemetry.io/otel/sdk/trace"
 	"google.golang.org/grpc"
 	"google.golang.org/grpc/credentials/insecure"
 	"google.golang.org/grpc/reflection"
@@ -56,6 +62,27 @@ func NewServer(store db.Store) *Server {
 	return server
 }
 
+func initTracer() (*sdktrace.TracerProvider, error) {
+	// create a stdout exporter to show collected spans out to stdout.
+	exporter, err := stdout.New(stdout.WithPrettyPrint())
+	if err != nil {
+		return nil, err
+	}
+	// for the demonstration, we use AlwaysSmaple sampler to take all spans.
+	// do not use this option in production.
+	viper.SetDefault("tracing.sample_ratio", 0.1)
+	sample_ratio := viper.GetFloat64("tracing.sample_ratio")
+	sampler := sdktrace.ParentBased(sdktrace.TraceIDRatioBased(sample_ratio))
+
+	tp := sdktrace.NewTracerProvider(
+		sdktrace.WithSampler(sampler),
+		sdktrace.WithBatcher(exporter),
+	)
+	otel.SetTracerProvider(tp)
+	otel.SetTextMapPropagator(propagation.TraceContext{})
+	return tp, nil
+}
+
 func (s *Server) StartGRPCServer(address string, dbConn string) {
 	lis, err := net.Listen("tcp", address)
 	if err != nil {
@@ -83,9 +110,12 @@ func (s *Server) StartGRPCServer(address string, dbConn string) {
 	viper.SetDefault("logging.format", "json")
 	viper.SetDefault("logging.logFile", "")
 
+	interceptorOpt := otelgrpc.WithTracerProvider(otel.GetTracerProvider())
+
 	s.grpcServer = grpc.NewServer(
 		grpc.Creds(insecure.NewCredentials()),
 		grpc.ChainUnaryInterceptor(
+			otelgrpc.UnaryServerInterceptor(interceptorOpt),
 			logger.Interceptor(viper.GetString("logging.level"), viper.GetString("logging.format"), viper.GetString("logging.logFile")),
 		),
 	)
@@ -111,8 +141,22 @@ func StartHTTPServer(address, grpcAddress string) {
 	ctx, cancel := context.WithCancel(ctx)
 	defer cancel()
 
-	gwmux := runtime.NewServeMux()
+	viper.SetDefault("tracing.enabled", false)
+	addTracing := viper.GetBool("tracing.enabled")
 
+	if addTracing {
+		tp, err := initTracer()
+		if err != nil {
+			log.Fatalf("failed to initialize TracerProvider: %v", err)
+		}
+		defer func() {
+			if err := tp.Shutdown(context.Background()); err != nil {
+				log.Fatalf("error shutting down TracerProvider: %v", err)
+			}
+		}()
+	}
+
+	gwmux := runtime.NewServeMux()
 	opts := []grpc.DialOption{grpc.WithTransportCredentials(insecure.NewCredentials())}
 
 	// register the services (declared within register_handlers.go)
