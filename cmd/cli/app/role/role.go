@@ -31,7 +31,7 @@ var RoleCmd = &cobra.Command{
 	Long: `The medctl role subcommands allows the management of roles within
 a mediator controlplane.`,
 	Run: func(cmd *cobra.Command, args []string) {
-		fmt.Println("role called")
+		cmd.Println("role called")
 	},
 }
 

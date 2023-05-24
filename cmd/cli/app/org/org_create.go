@@ -55,8 +55,7 @@ within a mediator control plane.`,
 			fmt.Fprintf(os.Stderr, "Error creating organisation: %s\n", err)
 			os.Exit(1)
 		}
-		fmt.Println("Created organisation:", org.Name)
-
+		cmd.Println("Created organisation:", org.Name)
 	},
 }
 

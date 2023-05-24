@@ -23,6 +23,7 @@ package org
 
 import (
 	"context"
+	"fmt"
 	"os"
 	"testing"
 
@@ -41,17 +42,17 @@ func TestCobraMain(t *testing.T) {
 		{
 			name:           "org command",
 			args:           []string{"org"},
-			expectedOutput: "",
+			expectedOutput: "org called\n",
 		},
 		{
 			name:           "org list command",
 			args:           []string{"org", "list"},
-			expectedOutput: "",
+			expectedOutput: "org list called\n",
 		},
 		{
 			name:           "org delete command",
 			args:           []string{"org", "delete"},
-			expectedOutput: "",
+			expectedOutput: "org delete called\n",
 		},
 	}
 
@@ -84,20 +85,25 @@ func TestOrgCreateCmd(t *testing.T) {
 
 	os.Setenv("CONFIG_FILE", configFile)
 
-	// Set up test command and flags
-	testCmd := &cobra.Command{}
+	tw := &util.TestWriter{}
 
+	// Set up test command and flags
 	seed := int64(12345)
+	testCmd := &cobra.Command{}
+	testCmd.SetOut(tw)
+
 	name := util.RandomString(6, seed)
 	company := util.RandomString(6, seed)
 	testCmd.Flags().StringP("name", "n", name, "Name of the organization")
 	testCmd.Flags().StringP("company", "c", company, "Company name of the organization")
 	testCmd.SetContext(context.Background())
-	err := viper.BindPFlags(testCmd.Flags())
-
-	if err != nil {
-		t.Errorf("Error binding flags: %v", err)
-	}
+	viper.BindPFlags(testCmd.Flags())
 
 	org_createCmd.Run(testCmd, []string{})
+
+	output := fmt.Sprintf("Created organisation: %s\n", name)
+	if tw.Output != output {
+		t.Errorf("Expected %q, got %q", output, tw.Output)
+	}
+
 }

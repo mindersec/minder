@@ -40,7 +40,7 @@ user. If a --user-id flag is passed, it will revoke the token for the specified 
 but only if the current user has sufficient privileges.
 `,
 	Run: func(cmd *cobra.Command, args []string) {
-		fmt.Println("account revoke called")
+		cmd.Println("account revoke called")
 	},
 }
 

@@ -38,7 +38,7 @@ var AuthCmd = &cobra.Command{
 	Long: `The medctl auth command group lets you create accounts and grant or revoke
 authorization to existing accounts within a mediator control plane.`,
 	Run: func(cmd *cobra.Command, args []string) {
-		fmt.Println("auth called")
+		cmd.Println("auth called")
 	},
 }
 

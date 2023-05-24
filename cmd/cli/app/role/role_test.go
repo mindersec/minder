@@ -38,22 +38,22 @@ func TestCobraMain(t *testing.T) {
 		{
 			name:           "role command",
 			args:           []string{"role"},
-			expectedOutput: "",
+			expectedOutput: "role called\n",
 		},
 		{
 			name:           "role list command",
 			args:           []string{"role", "list"},
-			expectedOutput: "",
+			expectedOutput: "role list called\n",
 		},
 		{
 			name:           "role delete command",
 			args:           []string{"role", "delete"},
-			expectedOutput: "",
+			expectedOutput: "role delete called\n",
 		},
 		{
 			name:           "role create command",
 			args:           []string{"role", "create"},
-			expectedOutput: "",
+			expectedOutput: "role create called\n",
 		},
 	}
 

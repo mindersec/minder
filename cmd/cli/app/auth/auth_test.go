@@ -32,7 +32,7 @@ func TestCobraMain(t *testing.T) {
 		{
 			name:           "auth command",
 			args:           []string{"auth"},
-			expectedOutput: "",
+			expectedOutput: "auth called\n",
 		},
 		{
 			name:           "auth list command",
@@ -42,12 +42,12 @@ func TestCobraMain(t *testing.T) {
 		{
 			name:           "auth revoke command",
 			args:           []string{"auth", "revoke"},
-			expectedOutput: "",
+			expectedOutput: "auth revoke called\n",
 		},
 		{
 			name:           "auth delete command",
 			args:           []string{"auth", "delete"},
-			expectedOutput: "",
+			expectedOutput: "auth delete called\n",
 		},
 	}
 
