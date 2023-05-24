@@ -103,11 +103,11 @@ func TestGetLoginServiceClient(t *testing.T) {
 			log.Fatalf("Server exited with error: %v", err)
 		}
 	}()
-
 	defer s.Stop()
 
 	ctx := context.Background()
 	creds, err := getLoginServiceClient(ctx, "bufnet", "testUser", "testPass", grpc.WithContextDialer(bufDialer), grpc.WithTransportCredentials(insecure.NewCredentials()))
+
 	if err != nil {
 		t.Fatalf("getLoginServiceClient returned unexpected error: %v", err)
 	}
