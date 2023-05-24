@@ -90,7 +90,15 @@ func (tw *TestWriter) Write(p []byte) (n int, err error) {
 
 func SetupConfigFile() string {
 	configFile := "config.yaml"
-	config := []byte(`logging: "info"`)
+	config := []byte(`
+database:
+  dbhost: "localhost"
+  dbport: 5432
+  dbuser: postgres
+  dbpass: postgres
+  dbname: postgres
+  sslmode: disable
+  encryption_key: p6ssw0rd`)
 	err := os.WriteFile(configFile, config, 0o600)
 	if err != nil {
 		panic(err)

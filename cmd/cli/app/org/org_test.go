@@ -22,9 +22,12 @@
 package org
 
 import (
+	"context"
 	"os"
 	"testing"
 
+	"github.com/spf13/cobra"
+	"github.com/spf13/viper"
 	"github.com/stacklok/mediator/cmd/cli/app"
 	"github.com/stacklok/mediator/pkg/util"
 )
@@ -73,4 +76,28 @@ func TestCobraMain(t *testing.T) {
 
 		})
 	}
+}
+
+func TestOrgCreateCmd(t *testing.T) {
+	configFile := util.SetupConfigFile()
+	defer util.RemoveConfigFile(configFile)
+
+	os.Setenv("CONFIG_FILE", configFile)
+
+	// Set up test command and flags
+	testCmd := &cobra.Command{}
+
+	seed := int64(12345)
+	name := util.RandomString(6, seed)
+	company := util.RandomString(6, seed)
+	testCmd.Flags().StringP("name", "n", name, "Name of the organization")
+	testCmd.Flags().StringP("company", "c", company, "Company name of the organization")
+	testCmd.SetContext(context.Background())
+	err := viper.BindPFlags(testCmd.Flags())
+
+	if err != nil {
+		t.Errorf("Error binding flags: %v", err)
+	}
+
+	org_createCmd.Run(testCmd, []string{})
 }
