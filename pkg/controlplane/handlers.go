@@ -33,6 +33,8 @@ import (
 	"github.com/stacklok/mediator/pkg/auth"
 	mcrypto "github.com/stacklok/mediator/pkg/crypto"
 	pb "github.com/stacklok/mediator/pkg/generated/protobuf/go/mediator/v1"
+	"go.opentelemetry.io/otel/attribute"
+	"go.opentelemetry.io/otel/trace"
 
 	"golang.org/x/oauth2"
 	"golang.org/x/oauth2/github"
@@ -101,8 +103,9 @@ func (_ *Server) newOAuthConfig(provider string, cli bool) (*oauth2.Config, erro
 // GetAuthorizationURL returns the URL to redirect the user to for authorization
 // and the state to be used for the callback. It accepts a provider string
 // and a boolean indicating whether the client is a CLI or web client
-func (s *Server) GetAuthorizationURL(_ context.Context,
+func (s *Server) GetAuthorizationURL(ctx context.Context,
 	req *pb.GetAuthorizationURLRequest) (*pb.GetAuthorizationURLResponse, error) {
+
 	oauthConfig, err := s.newOAuthConfig(req.Provider, req.Cli)
 	if err != nil {
 		return nil, err
@@ -113,8 +116,14 @@ func (s *Server) GetAuthorizationURL(_ context.Context,
 		fmt.Println("Error generating state:", err)
 		return nil, err
 	}
-	url := oauthConfig.AuthCodeURL(state, oauth2.AccessTypeOffline)
 
+	// trace call to AuthCodeURL
+	span := trace.SpanFromContext(ctx)
+	span.SetName("server.GetAuthorizationURL")
+	span.SetAttributes(attribute.Key("provider").String(req.Provider))
+	defer span.End()
+
+	url := oauthConfig.AuthCodeURL(state, oauth2.AccessTypeOffline)
 	response := &pb.GetAuthorizationURLResponse{
 		Url: url,
 	}
@@ -133,6 +142,11 @@ func (s *Server) ExchangeCodeForTokenCLI(ctx context.Context,
 	if oauthConfig == nil {
 		return nil, fmt.Errorf("oauth2.Config is nil")
 	}
+
+	span := trace.SpanFromContext(ctx)
+	span.SetName("server.ExchangeCodeForTokenCLI")
+	span.SetAttributes(attribute.Key("code").String(in.Code))
+	defer span.End()
 
 	token, err := oauthConfig.Exchange(ctx, in.Code)
 	if err != nil {
