@@ -45,7 +45,6 @@ var upCmd = &cobra.Command{
 
 		connString := fmt.Sprintf("postgres://%s:%s@%s:%s/%s?sslmode=%s", dbuser, dbpass, dbhost, strconv.Itoa(dbport), dbname, sslmode)
 
-		fmt.Println("Connection String: ", connString)
 		yes, err := cmd.Flags().GetBool("yes")
 		if err != nil {
 			fmt.Printf("Error while getting yes flag: %v", err)
