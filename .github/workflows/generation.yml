@@ -45,7 +45,7 @@ jobs:
     runs-on: ubuntu-latest
     env:
       GO_VERSION: 1.20.0
-      SQLC_VERSION: 1.17.2
+      SQLC_VERSION: 1.18.0
 
     steps:
       - name: Check out code
