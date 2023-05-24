@@ -15,8 +15,8 @@
 -- organisations table
 CREATE TABLE organisations (
     id SERIAL PRIMARY KEY,
-    name TEXT NOT NULL,
-    company TEXT NOT NULL,
+    name TEXT NOT NULL UNIQUE,
+    company TEXT NOT NULL UNIQUE,
     root_admin_id INT,
     created_at TIMESTAMP NOT NULL DEFAULT NOW(),
     updated_at TIMESTAMP NOT NULL DEFAULT NOW()

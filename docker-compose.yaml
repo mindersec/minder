@@ -24,11 +24,10 @@ services:
       "--grpc-port=8090",
       "--http-host=0.0.0.0",
       "--http-port=8080",
-      "--postgres-host=postgres",
-      "--postgres-port=5432",
-      "--postgres-user=postgres",
-      "--postgres-password=postgres",
-      "--postgres-db=sigwatch",
+      "--db-host=postgres",
+      "--db-port=5432",
+      "--db-user=postgres",
+      "--db-pass=postgres",
       ]
     restart: always # keep the server running
     ports:

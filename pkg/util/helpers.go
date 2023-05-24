@@ -22,6 +22,12 @@
 package util
 
 import (
+	"database/sql"
+	"fmt"
+	"log"
+	"strconv"
+
+	_ "github.com/lib/pq" // nolint
 	"github.com/spf13/cobra"
 	"github.com/spf13/viper"
 )
@@ -47,5 +53,28 @@ func GetConfigValue(key string, flagName string, cmd *cobra.Command, defaultValu
 			value, _ = cmd.Flags().GetInt(flagName)
 		}
 	}
-	return value
+	if value != nil {
+		return value
+	}
+	return defaultValue
+}
+
+func GetDbConnection(cmd *cobra.Command) (*sql.DB, error) {
+	// Database configuration
+	dbhost := GetConfigValue("database.dbhost", "db-host", cmd, "").(string)
+	dbport := GetConfigValue("database.dbport", "db-port", cmd, 0).(int)
+	dbuser := GetConfigValue("database.dbuser", "db-user", cmd, "").(string)
+	dbpass := GetConfigValue("database.dbpass", "db-pass", cmd, "").(string)
+	dbname := GetConfigValue("database.dbname", "db-name", cmd, "").(string)
+	dbsslmode := GetConfigValue("database.sslmode", "db-sslmode", cmd, "").(string)
+
+	dbConn := fmt.Sprintf("postgres://%s:%s@%s:%s/%s?sslmode=%s", dbuser, dbpass, dbhost, strconv.Itoa(dbport), dbname, dbsslmode)
+	conn, err := sql.Open("postgres", dbConn)
+	if err != nil {
+		log.Fatal("Cannot connect to DB: ", err)
+	} else {
+		log.Println("Connected to DB")
+	}
+	return conn, err
+
 }
