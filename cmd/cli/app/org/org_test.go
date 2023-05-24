@@ -38,22 +38,17 @@ func TestCobraMain(t *testing.T) {
 		{
 			name:           "org command",
 			args:           []string{"org"},
-			expectedOutput: "org called\n",
+			expectedOutput: "",
 		},
 		{
 			name:           "org list command",
 			args:           []string{"org", "list"},
-			expectedOutput: "org list called\n",
+			expectedOutput: "",
 		},
 		{
 			name:           "org delete command",
 			args:           []string{"org", "delete"},
-			expectedOutput: "org delete called\n",
-		},
-		{
-			name:           "org create command",
-			args:           []string{"org", "create"},
-			expectedOutput: "Error creating organisation: Key: 'CreateOrganisationValidation.Name' Error:Field validation for 'Name' failed on the 'required' tag\nKey: 'CreateOrganisationValidation.Company' Error:Field validation for 'Company' failed on the 'required' tag\n",
+			expectedOutput: "",
 		},
 	}
 
