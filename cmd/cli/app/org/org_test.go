@@ -97,8 +97,10 @@ func TestOrgCreateCmd(t *testing.T) {
 	testCmd.Flags().StringP("name", "n", name, "Name of the organization")
 	testCmd.Flags().StringP("company", "c", company, "Company name of the organization")
 	testCmd.SetContext(context.Background())
-	viper.BindPFlags(testCmd.Flags())
-
+	err := viper.BindPFlags(testCmd.Flags())
+	if err != nil {
+		t.Errorf("Error binding flags: %v", err)
+	}
 	org_createCmd.Run(testCmd, []string{})
 
 	output := fmt.Sprintf("Created organisation: %s\n", name)
