@@ -16,61 +16,31 @@ package controlplane
 
 import (
 	"context"
-	"reflect"
 	"testing"
+	"time"
 
-	"github.com/stacklok/mediator/pkg/db"
 	pb "github.com/stacklok/mediator/pkg/generated/protobuf/go/mediator/v1"
-	"golang.org/x/oauth2"
-	"google.golang.org/grpc"
+	"github.com/stacklok/mediator/pkg/util"
 )
 
-func TestServer_CreateOrganisation(t *testing.T) {
-	type fields struct {
-		store                                  db.Store
-		grpcServer                             *grpc.Server
-		UnimplementedHealthServiceServer       pb.UnimplementedHealthServiceServer
-		UnimplementedOAuthServiceServer        pb.UnimplementedOAuthServiceServer
-		UnimplementedLogInServiceServer        pb.UnimplementedLogInServiceServer
-		UnimplementedOrganisationServiceServer pb.UnimplementedOrganisationServiceServer
-		OAuth2                                 *oauth2.Config
-		ClientID                               string
-		ClientSecret                           string
+func TestOrganisationCreate(t *testing.T) {
+	conn, err := getgRPCConnection()
+	if err != nil {
+		t.Fatalf("Failed to dial bufnet: %v", err)
 	}
-	type args struct {
-		ctx context.Context
-		in  *pb.CreateOrganisationRequest
+	defer conn.Close()
+
+	client := pb.NewOrganisationServiceClient(conn)
+	seed := time.Now().UnixNano()
+
+	org, err := client.CreateOrganisation(context.Background(), &pb.CreateOrganisationRequest{
+		Name:    util.RandomString(10, seed),
+		Company: util.RandomString(10, seed),
+	})
+
+	if err != nil {
+		t.Fatalf("Failed to create organisation: %v", err)
 	}
-	tests := []struct {
-		name    string
-		fields  fields
-		args    args
-		want    *pb.CreateOrganisationResponse
-		wantErr bool
-	}{
-		// TODO: Add test cases.
-	}
-	for _, tt := range tests {
-		t.Run(tt.name, func(t *testing.T) {
-			s := &Server{
-				store:                                  tt.fields.store,
-				grpcServer:                             tt.fields.grpcServer,
-				UnimplementedHealthServiceServer:       tt.fields.UnimplementedHealthServiceServer,
-				UnimplementedOAuthServiceServer:        tt.fields.UnimplementedOAuthServiceServer,
-				UnimplementedLogInServiceServer:        tt.fields.UnimplementedLogInServiceServer,
-				UnimplementedOrganisationServiceServer: tt.fields.UnimplementedOrganisationServiceServer,
-				OAuth2:                                 tt.fields.OAuth2,
-				ClientID:                               tt.fields.ClientID,
-				ClientSecret:                           tt.fields.ClientSecret,
-			}
-			got, err := s.CreateOrganisation(tt.args.ctx, tt.args.in)
-			if (err != nil) != tt.wantErr {
-				t.Errorf("Server.CreateOrganisation() error = %v, wantErr %v", err, tt.wantErr)
-				return
-			}
-			if !reflect.DeepEqual(got, tt.want) {
-				t.Errorf("Server.CreateOrganisation() = %v, want %v", got, tt.want)
-			}
-		})
-	}
+
+	t.Logf("Created organisation: %v", org)
 }
