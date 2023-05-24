@@ -25,6 +25,7 @@ import (
 	"database/sql"
 	"fmt"
 	"log"
+	"os"
 	"strconv"
 
 	_ "github.com/lib/pq" // nolint
@@ -76,5 +77,27 @@ func GetDbConnection(cmd *cobra.Command) (*sql.DB, error) {
 		log.Println("Connected to DB")
 	}
 	return conn, err
+}
 
+type TestWriter struct {
+	Output string
+}
+
+func (tw *TestWriter) Write(p []byte) (n int, err error) {
+	tw.Output += string(p)
+	return len(p), nil
+}
+
+func SetupConfigFile() string {
+	configFile := "config.yaml"
+	config := []byte(`logging: "info"`)
+	err := os.WriteFile(configFile, config, 0o600)
+	if err != nil {
+		panic(err)
+	}
+	return configFile
+}
+
+func RemoveConfigFile(filename string) {
+	os.Remove(filename)
 }
