@@ -49,6 +49,9 @@ bootstrap: ## install build deps
 test-server: clean ## display test coverage
 	go test -json -v $(shell go list ./... | grep -v /cmd/) | gotestfmt
 
+test-client: clean
+	go test -json -v ./cmd/... | gotestfmt
+
 clean: ## clean up environment
 	rm -rf dist/* & rm -rf bin/*
 

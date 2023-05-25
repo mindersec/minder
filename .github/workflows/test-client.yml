@@ -1,0 +1,47 @@
+on:
+  workflow_call:
+jobs:
+  test:
+    name: Unit testing for client
+    runs-on: ubuntu-latest
+    steps:
+      # Checkout your project with git
+      - name: Checkout
+        uses: actions/checkout@v3
+
+      # Install Go on the VM running the action.
+      - name: Set up Go
+        uses: actions/setup-go@v4
+        with:
+          go-version: 1.20.0
+
+      # Install gotestfmt on the VM running the action.
+      - name: Set up gotestfmt
+        uses: GoTestTools/gotestfmt-action@v2
+        with:
+          # Optional: pass GITHUB_TOKEN to avoid rate limiting.
+          token: ${{ secrets.GITHUB_TOKEN }}
+          # Optional: pass the gotestfmt version you want to run.
+          version: v2.0.0
+          # Optional: pass an organization name and repo to use a fork
+          org: GoTestTools
+          repo: gotestfmt
+
+      # copy config file into place
+      - name: Copy config file
+        run: cp config/config.yaml.example ./config.yaml
+
+      - name: Start services
+        run: docker-compose up -d
+
+      # Migrate the database
+      - name: Migrate database
+        run: make migrateup
+
+      # Run the tests
+      - name: Run tests
+        run: make test-client
+
+      # Stop services
+      - name: Stop services
+        run: docker-compose down
