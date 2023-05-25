@@ -16,13 +16,37 @@ package controlplane
 
 import (
 	"context"
+	"log"
+	"net/http"
 	"testing"
 	"time"
 
 	pb "github.com/stacklok/mediator/pkg/generated/protobuf/go/mediator/v1"
 	"github.com/stacklok/mediator/pkg/util"
+	"google.golang.org/grpc"
+	"google.golang.org/grpc/test/bufconn"
 )
 
+func init() {
+	// gRPC server
+	lis = bufconn.Listen(bufSize)
+	s := grpc.NewServer()
+	pb.RegisterOrganisationServiceServer(s, &Server{})
+	go func() {
+		if err := s.Serve(lis); err != nil {
+			log.Fatalf("Server exited with error: %v", err)
+		}
+	}()
+	// HTTP server
+	mux := http.NewServeMux()
+
+	srv := &http.Server{Addr: ":8080", Handler: mux, ReadHeaderTimeout: 10 * time.Second}
+	go func() {
+		if err := srv.ListenAndServe(); err != nil {
+			log.Fatalf("Server exited with error: %v", err)
+		}
+	}()
+}
 func TestOrganisationCreate(t *testing.T) {
 	conn, err := getgRPCConnection()
 	if err != nil {
