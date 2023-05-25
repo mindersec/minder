@@ -18,6 +18,7 @@ package app
 import (
 	"fmt"
 	"os"
+	"path/filepath"
 
 	"github.com/spf13/cobra"
 	"github.com/spf13/viper"
@@ -53,7 +54,8 @@ func initConfig() {
 	} else {
 		// use defaults
 		viper.SetConfigName("config")
-		viper.AddConfigPath(".")
+		wd, _ := os.Getwd()
+		viper.AddConfigPath(filepath.Dir(wd))
 	}
 	viper.SetConfigType("yaml")
 	viper.AutomaticEnv()

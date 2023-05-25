@@ -16,6 +16,8 @@ package controlplane
 
 import (
 	"context"
+	"os"
+	"path/filepath"
 	"testing"
 	"time"
 
@@ -28,7 +30,8 @@ import (
 func createServer() *Server {
 	// generate config file for the connection
 	viper.SetConfigName("config")
-	viper.AddConfigPath(".")
+	wd, _ := os.Getwd()
+	viper.AddConfigPath(filepath.Dir(wd))
 	viper.SetConfigType("yaml")
 	viper.AutomaticEnv()
 	err := viper.ReadInConfig()
