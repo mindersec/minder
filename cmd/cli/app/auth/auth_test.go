@@ -16,9 +16,9 @@
 package auth
 
 import (
-	"os"
 	"testing"
 
+	"github.com/spf13/viper"
 	"github.com/stacklok/mediator/cmd/cli/app"
 	"github.com/stacklok/mediator/pkg/util"
 )
@@ -53,10 +53,10 @@ func TestCobraMain(t *testing.T) {
 
 	for _, test := range tests {
 		t.Run(test.name, func(t *testing.T) {
-			configFile := util.SetupConfigFile()
-			defer util.RemoveConfigFile(configFile)
-
-			os.Setenv("CONFIG_FILE", configFile)
+			viper.SetConfigName("config")
+			viper.AddConfigPath(".")
+			viper.SetConfigType("yaml")
+			viper.AutomaticEnv()
 
 			tw := &util.TestWriter{}
 			app.RootCmd.SetOut(tw) // stub to capture eventual output

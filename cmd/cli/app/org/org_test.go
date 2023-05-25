@@ -24,7 +24,6 @@ package org
 import (
 	"context"
 	"fmt"
-	"os"
 	"testing"
 
 	"github.com/spf13/cobra"
@@ -58,10 +57,10 @@ func TestCobraMain(t *testing.T) {
 
 	for _, test := range tests {
 		t.Run(test.name, func(t *testing.T) {
-			configFile := util.SetupConfigFile()
-			defer util.RemoveConfigFile(configFile)
-
-			os.Setenv("CONFIG_FILE", configFile)
+			viper.SetConfigName("config")
+			viper.AddConfigPath(".")
+			viper.SetConfigType("yaml")
+			viper.AutomaticEnv()
 
 			tw := &util.TestWriter{}
 			app.RootCmd.SetOut(tw) // stub to capture eventual output
@@ -80,10 +79,10 @@ func TestCobraMain(t *testing.T) {
 }
 
 func TestOrgCreateCmd(t *testing.T) {
-	configFile := util.SetupConfigFile()
-	defer util.RemoveConfigFile(configFile)
-
-	os.Setenv("CONFIG_FILE", configFile)
+	viper.SetConfigName("config")
+	viper.AddConfigPath(".")
+	viper.SetConfigType("yaml")
+	viper.AutomaticEnv()
 
 	tw := &util.TestWriter{}
 

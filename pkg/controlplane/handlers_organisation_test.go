@@ -27,9 +27,14 @@ import (
 
 func createServer() *Server {
 	// generate config file for the connection
-	configFile := util.SetupConfigFile()
-	viper.SetConfigFile(configFile)
-	viper.ReadInConfig()
+	viper.SetConfigName("config")
+	viper.AddConfigPath(".")
+	viper.SetConfigType("yaml")
+	viper.AutomaticEnv()
+	err := viper.ReadInConfig()
+	if err != nil {
+		return nil
+	}
 
 	// retrieve connection string
 	value := viper.AllSettings()["database"]
@@ -38,7 +43,6 @@ func createServer() *Server {
 		return nil
 	}
 	conn, err := util.GetDbConnectionFromConfig(databaseConfig)
-	defer util.RemoveConfigFile(configFile)
 	if err != nil {
 		return nil
 	}
