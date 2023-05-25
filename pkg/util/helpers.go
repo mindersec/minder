@@ -79,6 +79,26 @@ func GetDbConnection(cmd *cobra.Command) (*sql.DB, error) {
 	return conn, err
 }
 
+func GetDbConnectionFromConfig(settings map[string]interface{}) (*sql.DB, error) {
+	fmt.Println(settings)
+	// Database configuration
+	dbhost := settings["dbhost"].(string)
+	dbport := settings["dbport"].(int)
+	dbuser := settings["dbuser"].(string)
+	dbpass := settings["dbpass"].(string)
+	dbname := settings["dbname"].(string)
+	dbsslmode := settings["sslmode"].(string)
+
+	dbConn := fmt.Sprintf("postgres://%s:%s@%s:%s/%s?sslmode=%s", dbuser, dbpass, dbhost, strconv.Itoa(dbport), dbname, dbsslmode)
+	conn, err := sql.Open("postgres", dbConn)
+	if err != nil {
+		log.Fatal("Cannot connect to DB: ", err)
+	} else {
+		log.Println("Connected to DB")
+	}
+	return conn, err
+}
+
 type TestWriter struct {
 	Output string
 }

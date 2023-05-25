@@ -16,6 +16,7 @@ package controlplane
 
 import (
 	"context"
+	"fmt"
 
 	"github.com/stacklok/mediator/internal/organisation"
 	pb "github.com/stacklok/mediator/pkg/generated/protobuf/go/mediator/v1"
@@ -25,6 +26,7 @@ import (
 // CreateOrganisation is a service for creating an organisation
 func (s *Server) CreateOrganisation(ctx context.Context,
 	in *pb.CreateOrganisationRequest) (*pb.CreateOrganisationResponse, error) {
+	fmt.Println(s)
 	org, err := organisation.CreateOrganisation(ctx, s.store, in.GetName(), in.GetCompany())
 	if err != nil {
 		return nil, err
