@@ -19,48 +19,22 @@ import (
 	"testing"
 	"time"
 
-	"github.com/spf13/viper"
-	"github.com/stacklok/mediator/pkg/db"
 	pb "github.com/stacklok/mediator/pkg/generated/protobuf/go/mediator/v1"
 	"github.com/stacklok/mediator/pkg/util"
 )
 
-func createTestServer() *Server {
-	// generate config file for the connection
-	viper.SetConfigName("config")
-	viper.AddConfigPath("../..")
-	viper.SetConfigType("yaml")
-	viper.AutomaticEnv()
-	err := viper.ReadInConfig()
-	if err != nil {
-		return nil
-	}
-
-	// retrieve connection string
-	value := viper.AllSettings()["database"]
-	databaseConfig, ok := value.(map[string]interface{})
-	if !ok {
-		return nil
-	}
-	conn, err := util.GetDbConnectionFromConfig(databaseConfig)
-	if err != nil {
-		return nil
-	}
-
-	store := db.NewStore(conn)
-	server := NewServer(store)
-
-	return server
-}
-
 func TestOrganisationCreate(t *testing.T) {
 	seed := time.Now().UnixNano()
-	server := createTestServer()
-	if server == nil {
-		t.Fatalf("Failed to create server")
-	}
 
-	org, err := server.CreateOrganisation(context.Background(), &pb.CreateOrganisationRequest{
+	conn, err := getgRPCConnection()
+	if err != nil {
+		t.Fatalf("Failed to dial bufnet: %v", err)
+	}
+	defer conn.Close()
+
+	client := pb.NewOrganisationServiceClient(conn)
+
+	org, err := client.CreateOrganisation(context.Background(), &pb.CreateOrganisationRequest{
 		Name:    util.RandomString(10, seed),
 		Company: util.RandomString(10, seed),
 	})
