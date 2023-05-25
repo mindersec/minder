@@ -30,6 +30,8 @@ import (
 	_ "github.com/lib/pq" // nolint
 	"github.com/spf13/cobra"
 	"github.com/spf13/viper"
+	"google.golang.org/grpc"
+	"google.golang.org/grpc/credentials/insecure"
 )
 
 // getConfigValue is a helper function that retrieves a configuration value
@@ -59,27 +61,7 @@ func GetConfigValue(key string, flagName string, cmd *cobra.Command, defaultValu
 	return defaultValue
 }
 
-func GetDbConnection(cmd *cobra.Command) (*sql.DB, error) {
-	// Database configuration
-	dbhost := GetConfigValue("database.dbhost", "db-host", cmd, "").(string)
-	dbport := GetConfigValue("database.dbport", "db-port", cmd, 0).(int)
-	dbuser := GetConfigValue("database.dbuser", "db-user", cmd, "").(string)
-	dbpass := GetConfigValue("database.dbpass", "db-pass", cmd, "").(string)
-	dbname := GetConfigValue("database.dbname", "db-name", cmd, "").(string)
-	dbsslmode := GetConfigValue("database.sslmode", "db-sslmode", cmd, "").(string)
-
-	dbConn := fmt.Sprintf("postgres://%s:%s@%s:%s/%s?sslmode=%s", dbuser, dbpass, dbhost, strconv.Itoa(dbport), dbname, dbsslmode)
-	conn, err := sql.Open("postgres", dbConn)
-	if err != nil {
-		log.Fatal("Cannot connect to DB: ", err)
-	} else {
-		log.Println("Connected to DB")
-	}
-	return conn, err
-}
-
 func GetDbConnectionFromConfig(settings map[string]interface{}) (*sql.DB, error) {
-	fmt.Println(settings)
 	// Database configuration
 	dbhost := settings["dbhost"].(string)
 	dbport := settings["dbport"].(int)
@@ -96,6 +78,19 @@ func GetDbConnectionFromConfig(settings map[string]interface{}) (*sql.DB, error)
 		log.Println("Connected to DB")
 	}
 	return conn, err
+}
+
+func GetGrpcConnection(cmd *cobra.Command) (*grpc.ClientConn, error) {
+	// Database configuration
+	grpc_host := GetConfigValue("grpc_server.host", "grpc-host", cmd, "").(string)
+	grpc_port := GetConfigValue("grpc_server.port", "grpc-port", cmd, 0).(int)
+	address := fmt.Sprintf("%s:%d", grpc_host, grpc_port)
+
+	conn, err := grpc.Dial(address, grpc.WithTransportCredentials(insecure.NewCredentials()))
+	if err != nil {
+		return nil, fmt.Errorf("error connecting to gRPC server: %v", err)
+	}
+	return conn, nil
 }
 
 type TestWriter struct {

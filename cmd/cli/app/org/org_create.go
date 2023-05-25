@@ -22,13 +22,14 @@
 package org
 
 import (
+	"context"
 	"fmt"
 	"os"
+	"time"
 
 	"github.com/spf13/cobra"
 	"github.com/spf13/viper"
-	"github.com/stacklok/mediator/internal/organisation"
-	"github.com/stacklok/mediator/pkg/db"
+	pb "github.com/stacklok/mediator/pkg/generated/protobuf/go/mediator/v1"
 	"github.com/stacklok/mediator/pkg/util"
 )
 
@@ -38,24 +39,32 @@ var org_createCmd = &cobra.Command{
 	Long: `The medctl org create subcommand lets you create new organizations
 within a mediator control plane.`,
 	Run: func(cmd *cobra.Command, args []string) {
-		// call the code for creating an organization
-		dbConn, err := util.GetDbConnection(cmd)
-		if err != nil {
-			fmt.Fprintf(os.Stderr, "Error getting database connection: %s\n", err)
-			os.Exit(1)
-		}
-		store := db.NewStore(dbConn)
-
-		// create the organisation
+		// create the organisation via GRPC
 		name := util.GetConfigValue("name", "name", cmd, "")
 		company := util.GetConfigValue("company", "company", cmd, "")
-		org, err := organisation.CreateOrganisation(cmd.Context(), store, name.(string), company.(string))
+
+		conn, err := util.GetGrpcConnection(cmd)
+		defer conn.Close()
+
+		if err != nil {
+			fmt.Fprintf(os.Stderr, "Error getting grpc connection: %s\n", err)
+			os.Exit(1)
+		}
+
+		client := pb.NewOrganisationServiceClient(conn)
+		ctx, cancel := context.WithTimeout(context.Background(), time.Second)
+		defer cancel()
+
+		resp, err := client.CreateOrganisation(ctx, &pb.CreateOrganisationRequest{
+			Name:    name.(string),
+			Company: company.(string),
+		})
 
 		if err != nil {
 			fmt.Fprintf(os.Stderr, "Error creating organisation: %s\n", err)
 			os.Exit(1)
 		}
-		cmd.Println("Created organisation:", org.Name)
+		cmd.Println("Created organisation:", resp.Name)
 	},
 }
 
