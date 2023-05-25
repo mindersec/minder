@@ -24,12 +24,15 @@ package org
 import (
 	"context"
 	"fmt"
+	"log"
 	"testing"
 
 	"github.com/spf13/cobra"
 	"github.com/spf13/viper"
 	"github.com/stacklok/mediator/cmd/cli/app"
 	"github.com/stacklok/mediator/pkg/util"
+	"google.golang.org/grpc"
+	"google.golang.org/grpc/test/bufconn"
 )
 
 func TestCobraMain(t *testing.T) {
@@ -78,7 +81,23 @@ func TestCobraMain(t *testing.T) {
 	}
 }
 
+const bufSize = 1024 * 1024
+
+var lis *bufconn.Listener
+
 func TestOrgCreateCmd(t *testing.T) {
+	// first create test server and register endpoint
+	s := grpc.NewServer()
+	lis = bufconn.Listen(bufSize)
+
+	go func() {
+		if err := s.Serve(lis); err != nil {
+			log.Fatalf("Server exited with error: %v", err)
+		}
+	}()
+
+	defer s.Stop()
+
 	viper.SetConfigName("config")
 	viper.AddConfigPath("../../../..")
 	viper.SetConfigType("yaml")

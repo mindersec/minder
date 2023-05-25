@@ -16,7 +16,6 @@ package controlplane
 
 import (
 	"context"
-	"fmt"
 	"testing"
 	"time"
 
@@ -27,7 +26,6 @@ import (
 )
 
 func createTestServer() *Server {
-	fmt.Println("i try to create")
 	// generate config file for the connection
 	viper.SetConfigName("config")
 	viper.AddConfigPath("../..")
