@@ -60,7 +60,7 @@ func TestCobraMain(t *testing.T) {
 	for _, test := range tests {
 		t.Run(test.name, func(t *testing.T) {
 			viper.SetConfigName("config")
-			viper.AddConfigPath(".")
+			viper.AddConfigPath("../../../..")
 			viper.SetConfigType("yaml")
 			viper.AutomaticEnv()
 

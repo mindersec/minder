@@ -22,8 +22,6 @@
 package role
 
 import (
-	"os"
-	"path/filepath"
 	"testing"
 
 	"github.com/spf13/viper"
@@ -62,8 +60,7 @@ func TestCobraMain(t *testing.T) {
 	for _, test := range tests {
 		t.Run(test.name, func(t *testing.T) {
 			viper.SetConfigName("config")
-			wd, _ := os.Getwd()
-			viper.AddConfigPath(filepath.Dir(wd))
+			viper.AddConfigPath("../../../..")
 			viper.SetConfigType("yaml")
 			viper.AutomaticEnv()
 

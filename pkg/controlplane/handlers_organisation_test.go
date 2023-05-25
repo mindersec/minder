@@ -16,8 +16,7 @@ package controlplane
 
 import (
 	"context"
-	"os"
-	"path/filepath"
+	"fmt"
 	"testing"
 	"time"
 
@@ -27,11 +26,11 @@ import (
 	"github.com/stacklok/mediator/pkg/util"
 )
 
-func createServer() *Server {
+func createTestServer() *Server {
+	fmt.Println("i try to create")
 	// generate config file for the connection
 	viper.SetConfigName("config")
-	wd, _ := os.Getwd()
-	viper.AddConfigPath(filepath.Dir(wd))
+	viper.AddConfigPath("../..")
 	viper.SetConfigType("yaml")
 	viper.AutomaticEnv()
 	err := viper.ReadInConfig()
@@ -52,12 +51,13 @@ func createServer() *Server {
 
 	store := db.NewStore(conn)
 	server := NewServer(store)
+
 	return server
 }
 
 func TestOrganisationCreate(t *testing.T) {
 	seed := time.Now().UnixNano()
-	server := createServer()
+	server := createTestServer()
 	if server == nil {
 		t.Fatalf("Failed to create server")
 	}
