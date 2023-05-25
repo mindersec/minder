@@ -4,21 +4,6 @@ jobs:
   test:
     name: Unit testing
     runs-on: ubuntu-latest
-    services:
-      postgres:
-        image: postgres
-        env:
-          POSTGRES_USER: postgres
-          POSTGRES_PASSWORD: postgres
-          POSTGRES_DB: postgres
-        options: >-
-          --health-cmd pg_isready
-          --health-interval 10s
-          --health-timeout 5s
-          --health-retries 5
-        ports:
-          - 5432:5432
-
     steps:
       # Checkout your project with git
       - name: Checkout
@@ -46,6 +31,9 @@ jobs:
       - name: Copy config file
         run: cp config/config.yaml.example ./config.yaml
 
+      - name: Spin up services
+        run: docker-compose up -d
+
       # Migrate the database
       - name: Migrate database
         run: make migrateup
@@ -53,3 +41,7 @@ jobs:
       # Run the tests
       - name: Run tests
         run: make test
+
+      # stop services
+      - name: Stop services
+        run: docker-compose down

@@ -29,8 +29,6 @@ import (
 	"github.com/spf13/cobra"
 	"github.com/spf13/viper"
 	"github.com/stacklok/mediator/cmd/cli/app"
-	"github.com/stacklok/mediator/pkg/controlplane"
-	"github.com/stacklok/mediator/pkg/db"
 	"github.com/stacklok/mediator/pkg/util"
 )
 
@@ -80,34 +78,11 @@ func TestCobraMain(t *testing.T) {
 	}
 }
 
-func createTestServer(settings map[string]interface{}) *controlplane.Server {
-	// retrieve connection string
-	value := settings["database"]
-	databaseConfig, ok := value.(map[string]interface{})
-	if !ok {
-		return nil
-	}
-	conn, err := util.GetDbConnectionFromConfig(databaseConfig)
-	if err != nil {
-		return nil
-	}
-
-	store := db.NewStore(conn)
-	server := controlplane.NewServer(store)
-
-	return server
-}
-
 func TestOrgCreateCmd(t *testing.T) {
 	viper.SetConfigName("config")
 	viper.AddConfigPath("../../../..")
 	viper.SetConfigType("yaml")
 	viper.AutomaticEnv()
-
-	server := createTestServer(viper.AllSettings())
-	if server == nil {
-		t.Fatalf("Failed to create server")
-	}
 
 	tw := &util.TestWriter{}
 
