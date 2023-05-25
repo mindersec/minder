@@ -24,15 +24,14 @@ package org
 import (
 	"context"
 	"fmt"
-	"log"
 	"testing"
 
 	"github.com/spf13/cobra"
 	"github.com/spf13/viper"
 	"github.com/stacklok/mediator/cmd/cli/app"
+	"github.com/stacklok/mediator/pkg/controlplane"
+	"github.com/stacklok/mediator/pkg/db"
 	"github.com/stacklok/mediator/pkg/util"
-	"google.golang.org/grpc"
-	"google.golang.org/grpc/test/bufconn"
 )
 
 func TestCobraMain(t *testing.T) {
@@ -81,27 +80,34 @@ func TestCobraMain(t *testing.T) {
 	}
 }
 
-const bufSize = 1024 * 1024
+func createTestServer(settings map[string]interface{}) *controlplane.Server {
+	// retrieve connection string
+	value := settings["database"]
+	databaseConfig, ok := value.(map[string]interface{})
+	if !ok {
+		return nil
+	}
+	conn, err := util.GetDbConnectionFromConfig(databaseConfig)
+	if err != nil {
+		return nil
+	}
 
-var lis *bufconn.Listener
+	store := db.NewStore(conn)
+	server := controlplane.NewServer(store)
+
+	return server
+}
 
 func TestOrgCreateCmd(t *testing.T) {
-	// first create test server and register endpoint
-	s := grpc.NewServer()
-	lis = bufconn.Listen(bufSize)
-
-	go func() {
-		if err := s.Serve(lis); err != nil {
-			log.Fatalf("Server exited with error: %v", err)
-		}
-	}()
-
-	defer s.Stop()
-
 	viper.SetConfigName("config")
 	viper.AddConfigPath("../../../..")
 	viper.SetConfigType("yaml")
 	viper.AutomaticEnv()
+
+	server := createTestServer(viper.AllSettings())
+	if server == nil {
+		t.Fatalf("Failed to create server")
+	}
 
 	tw := &util.TestWriter{}
 
