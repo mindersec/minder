@@ -366,7 +366,7 @@
           "200": {
             "description": "A successful response.",
             "schema": {
-              "$ref": "#/definitions/v1CreateGroupsResponse"
+              "$ref": "#/definitions/v1CreateGroupResponse"
             }
           },
           "default": {
@@ -398,7 +398,7 @@
           "200": {
             "description": "A successful response.",
             "schema": {
-              "$ref": "#/definitions/v1GetGroupByIDResponse"
+              "$ref": "#/definitions/v1GetGroupByIdResponse"
             }
           },
           "default": {
@@ -429,7 +429,7 @@
           "200": {
             "description": "A successful response.",
             "schema": {
-              "$ref": "#/definitions/v1GetGroupByNamesResponse"
+              "$ref": "#/definitions/v1GetGroupByNameResponse"
             }
           },
           "default": {
@@ -687,7 +687,7 @@
       },
       "title": "The CreateGroupRequest message represents a request to create a group"
     },
-    "v1CreateGroupsResponse": {
+    "v1CreateGroupResponse": {
       "type": "object",
       "properties": {
         "groupId": {
@@ -783,7 +783,7 @@
         }
       }
     },
-    "v1GetGroupByIDResponse": {
+    "v1GetGroupByIdResponse": {
       "type": "object",
       "properties": {
         "groupId": {
@@ -798,7 +798,7 @@
         }
       }
     },
-    "v1GetGroupByNamesResponse": {
+    "v1GetGroupByNameResponse": {
       "type": "object",
       "properties": {
         "groupId": {

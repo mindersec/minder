@@ -1028,9 +1028,9 @@ var OrganisationService_ServiceDesc = grpc.ServiceDesc{
 //
 // For semantics around ctx use and closing/ending streaming RPCs, please refer to https://pkg.go.dev/google.golang.org/grpc/?tab=doc#ClientConn.NewStream.
 type GroupServiceClient interface {
-	CreateGroup(ctx context.Context, in *CreateGroupRequest, opts ...grpc.CallOption) (*CreateGroupsResponse, error)
-	GetGroupByName(ctx context.Context, in *GetGroupByNameRequest, opts ...grpc.CallOption) (*GetGroupByNamesResponse, error)
-	GetGroupById(ctx context.Context, in *GetGroupByIdRequest, opts ...grpc.CallOption) (*GetGroupByIDResponse, error)
+	CreateGroup(ctx context.Context, in *CreateGroupRequest, opts ...grpc.CallOption) (*CreateGroupResponse, error)
+	GetGroupByName(ctx context.Context, in *GetGroupByNameRequest, opts ...grpc.CallOption) (*GetGroupByNameResponse, error)
+	GetGroupById(ctx context.Context, in *GetGroupByIdRequest, opts ...grpc.CallOption) (*GetGroupByIdResponse, error)
 	GetGroups(ctx context.Context, in *GetGroupsRequest, opts ...grpc.CallOption) (*GetGroupsResponse, error)
 }
 
@@ -1042,8 +1042,8 @@ func NewGroupServiceClient(cc grpc.ClientConnInterface) GroupServiceClient {
 	return &groupServiceClient{cc}
 }
 
-func (c *groupServiceClient) CreateGroup(ctx context.Context, in *CreateGroupRequest, opts ...grpc.CallOption) (*CreateGroupsResponse, error) {
-	out := new(CreateGroupsResponse)
+func (c *groupServiceClient) CreateGroup(ctx context.Context, in *CreateGroupRequest, opts ...grpc.CallOption) (*CreateGroupResponse, error) {
+	out := new(CreateGroupResponse)
 	err := c.cc.Invoke(ctx, "/mediator.v1.GroupService/CreateGroup", in, out, opts...)
 	if err != nil {
 		return nil, err
@@ -1051,8 +1051,8 @@ func (c *groupServiceClient) CreateGroup(ctx context.Context, in *CreateGroupReq
 	return out, nil
 }
 
-func (c *groupServiceClient) GetGroupByName(ctx context.Context, in *GetGroupByNameRequest, opts ...grpc.CallOption) (*GetGroupByNamesResponse, error) {
-	out := new(GetGroupByNamesResponse)
+func (c *groupServiceClient) GetGroupByName(ctx context.Context, in *GetGroupByNameRequest, opts ...grpc.CallOption) (*GetGroupByNameResponse, error) {
+	out := new(GetGroupByNameResponse)
 	err := c.cc.Invoke(ctx, "/mediator.v1.GroupService/GetGroupByName", in, out, opts...)
 	if err != nil {
 		return nil, err
@@ -1060,8 +1060,8 @@ func (c *groupServiceClient) GetGroupByName(ctx context.Context, in *GetGroupByN
 	return out, nil
 }
 
-func (c *groupServiceClient) GetGroupById(ctx context.Context, in *GetGroupByIdRequest, opts ...grpc.CallOption) (*GetGroupByIDResponse, error) {
-	out := new(GetGroupByIDResponse)
+func (c *groupServiceClient) GetGroupById(ctx context.Context, in *GetGroupByIdRequest, opts ...grpc.CallOption) (*GetGroupByIdResponse, error) {
+	out := new(GetGroupByIdResponse)
 	err := c.cc.Invoke(ctx, "/mediator.v1.GroupService/GetGroupById", in, out, opts...)
 	if err != nil {
 		return nil, err
@@ -1082,9 +1082,9 @@ func (c *groupServiceClient) GetGroups(ctx context.Context, in *GetGroupsRequest
 // All implementations must embed UnimplementedGroupServiceServer
 // for forward compatibility
 type GroupServiceServer interface {
-	CreateGroup(context.Context, *CreateGroupRequest) (*CreateGroupsResponse, error)
-	GetGroupByName(context.Context, *GetGroupByNameRequest) (*GetGroupByNamesResponse, error)
-	GetGroupById(context.Context, *GetGroupByIdRequest) (*GetGroupByIDResponse, error)
+	CreateGroup(context.Context, *CreateGroupRequest) (*CreateGroupResponse, error)
+	GetGroupByName(context.Context, *GetGroupByNameRequest) (*GetGroupByNameResponse, error)
+	GetGroupById(context.Context, *GetGroupByIdRequest) (*GetGroupByIdResponse, error)
 	GetGroups(context.Context, *GetGroupsRequest) (*GetGroupsResponse, error)
 	mustEmbedUnimplementedGroupServiceServer()
 }
@@ -1093,13 +1093,13 @@ type GroupServiceServer interface {
 type UnimplementedGroupServiceServer struct {
 }
 
-func (UnimplementedGroupServiceServer) CreateGroup(context.Context, *CreateGroupRequest) (*CreateGroupsResponse, error) {
+func (UnimplementedGroupServiceServer) CreateGroup(context.Context, *CreateGroupRequest) (*CreateGroupResponse, error) {
 	return nil, status.Errorf(codes.Unimplemented, "method CreateGroup not implemented")
 }
-func (UnimplementedGroupServiceServer) GetGroupByName(context.Context, *GetGroupByNameRequest) (*GetGroupByNamesResponse, error) {
+func (UnimplementedGroupServiceServer) GetGroupByName(context.Context, *GetGroupByNameRequest) (*GetGroupByNameResponse, error) {
 	return nil, status.Errorf(codes.Unimplemented, "method GetGroupByName not implemented")
 }
-func (UnimplementedGroupServiceServer) GetGroupById(context.Context, *GetGroupByIdRequest) (*GetGroupByIDResponse, error) {
+func (UnimplementedGroupServiceServer) GetGroupById(context.Context, *GetGroupByIdRequest) (*GetGroupByIdResponse, error) {
 	return nil, status.Errorf(codes.Unimplemented, "method GetGroupById not implemented")
 }
 func (UnimplementedGroupServiceServer) GetGroups(context.Context, *GetGroupsRequest) (*GetGroupsResponse, error) {
