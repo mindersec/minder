@@ -22,11 +22,16 @@
 package group
 
 import (
+	"context"
 	"fmt"
 	"os"
+	"time"
 
 	"github.com/spf13/cobra"
 	"github.com/spf13/viper"
+
+	pb "github.com/stacklok/mediator/pkg/generated/protobuf/go/mediator/v1"
+	"github.com/stacklok/mediator/pkg/util"
 )
 
 var group_createCmd = &cobra.Command{
@@ -35,14 +40,44 @@ var group_createCmd = &cobra.Command{
 	Long: `The medctl group create subcommand lets you create new groups within
 a mediator control plane.`,
 	Run: func(cmd *cobra.Command, args []string) {
-		cmd.Println("group create called")
+
+		name := util.GetConfigValue("name", "name", cmd, "")
+		description := util.GetConfigValue("description", "description", cmd, "")
+		organisation := util.GetConfigValue("org-id", "org-id", cmd, int32(0)).(int32)
+
+		conn, err := util.GetGrpcConnection(cmd)
+		if err != nil {
+			fmt.Fprintf(os.Stderr, "Error getting grpc connection: %s\n", err)
+			os.Exit(1)
+		}
+		defer conn.Close()
+
+		client := pb.NewGroupServiceClient(conn)
+		ctx, cancel := context.WithTimeout(context.Background(), time.Second)
+		defer cancel()
+
+		resp, err := client.CreateGroup(ctx, &pb.CreateGroupRequest{
+			Name:           name.(string),
+			Description:    description.(string),
+			OrganisationId: organisation,
+		})
+
+		if err != nil {
+			fmt.Fprintf(os.Stderr, "Error creating group: %s\n", err)
+			os.Exit(1)
+		}
+
+		fmt.Printf("Group created: %s\n", resp.String())
+
 	},
 }
 
 func init() {
 	GroupCmd.AddCommand(group_createCmd)
 	group_createCmd.PersistentFlags().StringP("name", "n", "", "Name of the group")
-	group_createCmd.PersistentFlags().BoolP("active", "a", true, "Whether the group is active or not")
+	group_createCmd.PersistentFlags().StringP("description", "d", "", "Description of the group")
+	group_createCmd.PersistentFlags().Int32("org-id", 0, "Organisation ID")
+
 	if err := viper.BindPFlags(group_createCmd.PersistentFlags()); err != nil {
 		fmt.Fprintf(os.Stderr, "Error binding flags: %s\n", err)
 	}

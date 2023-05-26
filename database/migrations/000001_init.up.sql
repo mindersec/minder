@@ -27,9 +27,11 @@ CREATE TABLE groups (
     id SERIAL PRIMARY KEY,
     organisation_id INTEGER REFERENCES organisations(id) ON DELETE CASCADE,
     name TEXT NOT NULL,
+    description TEXT,
     created_at TIMESTAMP NOT NULL DEFAULT NOW(),
     updated_at TIMESTAMP NOT NULL DEFAULT NOW()
 );
+
 
 -- roles table
 CREATE TABLE roles (

@@ -22,11 +22,16 @@
 package group
 
 import (
+	"context"
 	"fmt"
 	"os"
+	"time"
 
 	"github.com/spf13/cobra"
 	"github.com/spf13/viper"
+
+	pb "github.com/stacklok/mediator/pkg/generated/protobuf/go/mediator/v1"
+	"github.com/stacklok/mediator/pkg/util"
 )
 
 var group_listCmd = &cobra.Command{
@@ -35,14 +40,65 @@ var group_listCmd = &cobra.Command{
 	Long: `The medctl group list subcommand lets you list groups within
 a mediator control plane.`,
 	Run: func(cmd *cobra.Command, args []string) {
-		cmd.Println("group list called")
+
+		conn, err := util.GetGrpcConnection(cmd)
+		if err != nil {
+			fmt.Fprintf(os.Stderr, "Error getting grpc connection: %s\n", err)
+			os.Exit(1)
+		}
+		defer conn.Close()
+
+		client := pb.NewGroupServiceClient(conn)
+		ctx, cancel := context.WithTimeout(context.Background(), time.Second)
+		defer cancel()
+
+		// if --group-id is set on cmd, but not --org-id error out
+		if cmd.Flags().Changed("group-id") && !cmd.Flags().Changed("org-id") {
+			fmt.Fprintf(os.Stderr, "Error: --group-id requires --org-id to be set\n")
+			os.Exit(1)
+		}
+
+		all := util.GetConfigValue("all", "all", cmd, false).(bool)
+		groupID := util.GetConfigValue("group-id", "group-id", cmd, int(0)).(int)
+		organisation := util.GetConfigValue("org-id", "org-id", cmd, int(0)).(int)
+		limit := util.GetConfigValue("limit", "limit", cmd, int(0)).(int)
+		offset := util.GetConfigValue("offset", "offset", cmd, int(0)).(int)
+
+		if all {
+			resp, err := client.GetGroups(ctx, &pb.GetGroupsRequest{
+				OrganisationId: int32(organisation),
+				Limit:          int32(limit),
+				Offset:         int32(offset),
+			})
+			if err != nil {
+				fmt.Fprintf(os.Stderr, "Error getting groups: %s\n", err)
+				os.Exit(1)
+			}
+			fmt.Printf("Groups: %v\n", resp)
+		}
+
+		if groupID != 0 {
+			resp, err := client.GetGroupById(ctx, &pb.GetGroupByIdRequest{
+				GroupId: int32(groupID),
+			})
+			if err != nil {
+				fmt.Fprintf(os.Stderr, "Error getting group: %s\n", err)
+				os.Exit(1)
+			}
+			fmt.Printf("Group: %v\n", resp)
+		}
+
 	},
 }
 
 func init() {
 	GroupCmd.AddCommand(group_listCmd)
 	group_listCmd.PersistentFlags().BoolP("all", "a", false, "List all groups")
-	group_listCmd.PersistentFlags().StringP("group-id", "g", "", "List group values by a group-id")
+	group_listCmd.PersistentFlags().Int("group-id", 0, "Group ID")
+	group_listCmd.PersistentFlags().StringP("name", "n", "", "List group values by a name")
+	group_listCmd.PersistentFlags().Int("org-id", 0, "Organisation ID")
+	group_listCmd.PersistentFlags().Int("limit", 10, "Limit number of results")
+	group_listCmd.PersistentFlags().Int("offset", 0, "Offset number of results")
 	if err := viper.BindPFlags(group_listCmd.PersistentFlags()); err != nil {
 		fmt.Fprintf(os.Stderr, "Error binding flags: %s\n", err)
 	}

@@ -53,6 +53,11 @@ func GetConfigValue(key string, flagName string, cmd *cobra.Command, defaultValu
 			value, _ = cmd.Flags().GetString(flagName)
 		case int:
 			value, _ = cmd.Flags().GetInt(flagName)
+		case int32:
+			value, _ = cmd.Flags().GetInt32(flagName)
+		case bool:
+			value, _ = cmd.Flags().GetBool(flagName)
+			// add additional cases here for other types you need to handle
 		}
 	}
 	if value != nil {
