@@ -88,8 +88,8 @@ VALUES ('Root Organization', 'Root Company', 1);
 INSERT INTO groups (organisation_id, name)
 VALUES (1, 'Root Group');
 
-INSERT INTO roles (group_id, name, is_admin)
-VALUES (1, 'Role Role', TRUE);
+INSERT INTO roles (group_id, name, is_admin, is_protected)
+VALUES (1, 'Role Role', TRUE, FALSE);
 
 INSERT INTO users (organisation_id, group_id, role_id, email, username, password, first_name, last_name)
 VALUES (1, 1, 1, 'root@localhost', 'root', '$argon2id$v=19$m=0,t=3,p=2$mQDRkaBe7p3pbGvzgFn20Q$GYA0SkpXhVMLwcjRSPKCUpmd4ptMcdUcQ5YTAOnLFKs', 'Root', 'Admin');

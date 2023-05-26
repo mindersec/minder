@@ -30,14 +30,25 @@ func TestRoleCreate(t *testing.T) {
 		t.Fatalf("Failed to create server")
 	}
 
-	org, err := server.CreateRole(context.Background(), &pb.CreateRoleRequest{
-		GroupId: int32(util.RandomInt(1, 1000, seed)),
+	// create organization and group first
+	org, err := server.CreateOrganisation(context.Background(), &pb.CreateOrganisationRequest{
 		Name:    util.RandomString(10, seed),
+		Company: util.RandomString(10, seed),
+	})
+
+	if err != nil {
+		t.Fatalf("Failed to create organisation: %v", err)
+	}
+
+	role, err := server.CreateRole(context.Background(), &pb.CreateRoleRequest{
+		OrganisationId: org.Id,
+		GroupId:        int32(util.RandomInt(1, 1000, seed)),
+		Name:           util.RandomString(10, seed),
 	})
 
 	if err != nil {
 		t.Fatalf("Failed to create role: %v", err)
 	}
 
-	t.Logf("Created role: %v", org)
+	t.Logf("Created role: %v", role)
 }
