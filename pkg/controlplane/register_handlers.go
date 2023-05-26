@@ -55,6 +55,11 @@ func RegisterGatewayHTTPHandlers(ctx context.Context, gwmux *runtime.ServeMux, g
 		log.Fatalf("failed to register gateway: %v", err)
 	}
 
+	// Register RoleService handler
+	if err := pb.RegisterRoleServiceHandlerFromEndpoint(ctx, gwmux, grpcAddress, opts); err != nil {
+		log.Fatalf("failed to register gateway: %v", err)
+	}
+
 }
 
 func RegisterGRPCServices(s *Server) {
@@ -70,6 +75,12 @@ func RegisterGRPCServices(s *Server) {
 	// Register the Organisation service
 	pb.RegisterOrganisationServiceServer(s.grpcServer, s)
 
+<<<<<<< HEAD
 	// Register the Groups service
 	pb.RegisterGroupServiceServer(s.grpcServer, s)
+=======
+	// Register the Role service
+	pb.RegisterRoleServiceServer(s.grpcServer, s)
+
+>>>>>>> 43aa43f (feat: add role creation support)
 }

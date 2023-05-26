@@ -1,9 +1,11 @@
 -- name: CreateRole :one
 INSERT INTO roles (
     group_id, 
-    name
+    name,
+    is_admin,
+    is_protected
     ) VALUES (
-        $1, $2
+        $1, $2, $3, $4
 ) RETURNING *;
 
 -- name: GetRoleByID :one
@@ -18,7 +20,7 @@ OFFSET $3;
 
 -- name: UpdateRole :one
 UPDATE roles 
-SET group_id = $2, name = $3, updated_at = NOW() 
+SET group_id = $2, name = $3, is_admin = $4, is_protected = $5, updated_at = NOW() 
 WHERE id = $1 RETURNING *;
 
 

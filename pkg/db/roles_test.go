@@ -23,7 +23,6 @@ package db
 
 import (
 	"context"
-	"database/sql"
 	"testing"
 	"time"
 
@@ -34,7 +33,7 @@ import (
 func createRandomRole(t *testing.T, org int32) Role {
 	seed := time.Now().UnixNano()
 	arg := CreateRoleParams{
-		GroupID: sql.NullInt32{Int32: org, Valid: true},
+		GroupID: org,
 		Name:    util.RandomName(seed),
 	}
 
