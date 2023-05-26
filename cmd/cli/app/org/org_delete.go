@@ -35,7 +35,7 @@ var org_deleteCmd = &cobra.Command{
 	Long: `The medctl org delete subcommand lets you delete organizations
 within z mediator control plane.`,
 	Run: func(cmd *cobra.Command, args []string) {
-		fmt.Println("org delete called")
+		cmd.Println("org delete called")
 	},
 }
 

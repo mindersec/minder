@@ -22,7 +22,6 @@
 package role
 
 import (
-	"fmt"
 	"log"
 
 	"github.com/spf13/cobra"
@@ -35,7 +34,7 @@ var role_deleteCmd = &cobra.Command{
 	Long: `The medctl role delete subcommand lets you delete roles within a
 mediator control plane.`,
 	Run: func(cmd *cobra.Command, args []string) {
-		fmt.Println("role delete called")
+		cmd.Println("role delete called")
 	},
 }
 

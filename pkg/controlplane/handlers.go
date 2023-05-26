@@ -211,7 +211,6 @@ func (s *Server) ExchangeCodeForTokenWEB(ctx context.Context,
 }
 
 func (s *Server) LogIn(ctx context.Context, in *pb.LogInRequest) (*pb.LogInResponse, error) {
-
 	user, err := s.store.GetUserByUserName(ctx, in.Username)
 	if err != nil {
 		if err == sql.ErrNoRows {

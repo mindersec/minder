@@ -22,8 +22,16 @@
 package util
 
 import (
+	"database/sql"
+	"fmt"
+	"log"
+	"strconv"
+
+	_ "github.com/lib/pq" // nolint
 	"github.com/spf13/cobra"
 	"github.com/spf13/viper"
+	"google.golang.org/grpc"
+	"google.golang.org/grpc/credentials/insecure"
 )
 
 // getConfigValue is a helper function that retrieves a configuration value
@@ -47,5 +55,49 @@ func GetConfigValue(key string, flagName string, cmd *cobra.Command, defaultValu
 			value, _ = cmd.Flags().GetInt(flagName)
 		}
 	}
-	return value
+	if value != nil {
+		return value
+	}
+	return defaultValue
+}
+
+func GetDbConnectionFromConfig(settings map[string]interface{}) (*sql.DB, error) {
+	// Database configuration
+	dbhost := settings["dbhost"].(string)
+	dbport := settings["dbport"].(int)
+	dbuser := settings["dbuser"].(string)
+	dbpass := settings["dbpass"].(string)
+	dbname := settings["dbname"].(string)
+	dbsslmode := settings["sslmode"].(string)
+
+	dbConn := fmt.Sprintf("postgres://%s:%s@%s:%s/%s?sslmode=%s", dbuser, dbpass, dbhost, strconv.Itoa(dbport), dbname, dbsslmode)
+	conn, err := sql.Open("postgres", dbConn)
+	if err != nil {
+		log.Fatal("Cannot connect to DB: ", err)
+	} else {
+		log.Println("Connected to DB")
+	}
+	return conn, err
+}
+
+func GetGrpcConnection(cmd *cobra.Command) (*grpc.ClientConn, error) {
+	// Database configuration
+	grpc_host := GetConfigValue("grpc_server.host", "grpc-host", cmd, "").(string)
+	grpc_port := GetConfigValue("grpc_server.port", "grpc-port", cmd, 0).(int)
+	address := fmt.Sprintf("%s:%d", grpc_host, grpc_port)
+
+	conn, err := grpc.Dial(address, grpc.WithTransportCredentials(insecure.NewCredentials()))
+	if err != nil {
+		return nil, fmt.Errorf("error connecting to gRPC server: %v", err)
+	}
+	return conn, nil
+}
+
+type TestWriter struct {
+	Output string
+}
+
+func (tw *TestWriter) Write(p []byte) (n int, err error) {
+	tw.Output += string(p)
+	return len(p), nil
 }

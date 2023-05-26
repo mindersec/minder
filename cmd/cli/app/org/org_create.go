@@ -22,11 +22,15 @@
 package org
 
 import (
+	"context"
 	"fmt"
 	"os"
+	"time"
 
 	"github.com/spf13/cobra"
 	"github.com/spf13/viper"
+	pb "github.com/stacklok/mediator/pkg/generated/protobuf/go/mediator/v1"
+	"github.com/stacklok/mediator/pkg/util"
 )
 
 var org_createCmd = &cobra.Command{
@@ -35,7 +39,32 @@ var org_createCmd = &cobra.Command{
 	Long: `The medctl org create subcommand lets you create new organizations
 within a mediator control plane.`,
 	Run: func(cmd *cobra.Command, args []string) {
-		cmd.Println("group create called")
+		// create the organisation via GRPC
+		name := util.GetConfigValue("name", "name", cmd, "")
+		company := util.GetConfigValue("company", "company", cmd, "")
+
+		conn, err := util.GetGrpcConnection(cmd)
+		defer conn.Close()
+
+		if err != nil {
+			fmt.Fprintf(os.Stderr, "Error getting grpc connection: %s\n", err)
+			os.Exit(1)
+		}
+
+		client := pb.NewOrganisationServiceClient(conn)
+		ctx, cancel := context.WithTimeout(context.Background(), time.Second)
+		defer cancel()
+
+		resp, err := client.CreateOrganisation(ctx, &pb.CreateOrganisationRequest{
+			Name:    name.(string),
+			Company: company.(string),
+		})
+
+		if err != nil {
+			fmt.Fprintf(os.Stderr, "Error creating organisation: %s\n", err)
+			os.Exit(1)
+		}
+		cmd.Println("Created organisation:", resp.Name)
 	},
 }
 
@@ -43,6 +72,12 @@ func init() {
 	OrgCmd.AddCommand(org_createCmd)
 	org_createCmd.Flags().StringP("name", "n", "", "Name of the organization")
 	org_createCmd.Flags().StringP("company", "c", "", "Company name of the organization")
+	if err := org_createCmd.MarkFlagRequired("name"); err != nil {
+		fmt.Fprintf(os.Stderr, "Error binding flags: %s\n", err)
+	}
+	if err := org_createCmd.MarkFlagRequired("company"); err != nil {
+		fmt.Fprintf(os.Stderr, "Error binding flags: %s\n", err)
+	}
 	if err := viper.BindPFlags(org_createCmd.PersistentFlags()); err != nil {
 		fmt.Fprintf(os.Stderr, "Error binding flags: %s\n", err)
 	}

@@ -41,17 +41,6 @@ const bufSize = 1024 * 1024
 
 var lis *bufconn.Listener
 
-func init() {
-	lis = bufconn.Listen(bufSize)
-	s := grpc.NewServer()
-	pb.RegisterLogInServiceServer(s, &mockLogInServiceServer{})
-	go func() {
-		if err := s.Serve(lis); err != nil {
-			panic(err)
-		}
-	}()
-}
-
 // bufDialer is used to mock out the grpc client connection
 func bufDialer(context.Context, string) (net.Conn, error) {
 	return lis.Dial()

@@ -35,7 +35,7 @@ var org_listCmd = &cobra.Command{
 	Long: `The medctl org list subcommand lets you list organizations within a
 mediator control plane.`,
 	Run: func(cmd *cobra.Command, args []string) {
-		fmt.Println("org list called")
+		cmd.Println("org list called")
 	},
 }
 

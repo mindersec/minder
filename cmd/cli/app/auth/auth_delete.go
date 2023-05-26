@@ -22,7 +22,6 @@
 package auth
 
 import (
-	"fmt"
 	"log"
 
 	"github.com/spf13/cobra"
@@ -50,7 +49,7 @@ user, and any data associated with those repositories.
 
 medctl auth delete --user-id=1234 --force`,
 	Run: func(cmd *cobra.Command, args []string) {
-		fmt.Println("auth delete called")
+		cmd.Println("auth delete called")
 	},
 }
 

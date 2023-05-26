@@ -22,7 +22,6 @@
 package role
 
 import (
-	"fmt"
 	"log"
 
 	"github.com/spf13/cobra"
@@ -35,7 +34,7 @@ var role_createCmd = &cobra.Command{
 	Long: `The medctl role create subcommand lets you create new roles
 within a mediator control plane.`,
 	Run: func(cmd *cobra.Command, args []string) {
-		fmt.Println("group create called")
+		cmd.Println("role create called")
 	},
 }
 

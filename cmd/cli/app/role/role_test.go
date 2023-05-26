@@ -22,34 +22,12 @@
 package role
 
 import (
-	"os"
 	"testing"
 
+	"github.com/spf13/viper"
 	"github.com/stacklok/mediator/cmd/cli/app"
+	"github.com/stacklok/mediator/pkg/util"
 )
-
-type testWriter struct {
-	output string
-}
-
-func (tw *testWriter) Write(p []byte) (n int, err error) {
-	tw.output += string(p)
-	return len(p), nil
-}
-
-func setupConfigFile() string {
-	configFile := "config.yaml"
-	config := []byte(`logging: "info"`)
-	err := os.WriteFile(configFile, config, 0o600)
-	if err != nil {
-		panic(err)
-	}
-	return configFile
-}
-
-func removeConfigFile(filename string) {
-	os.Remove(filename)
-}
 
 func TestCobraMain(t *testing.T) {
 	tests := []struct {
@@ -81,18 +59,23 @@ func TestCobraMain(t *testing.T) {
 
 	for _, test := range tests {
 		t.Run(test.name, func(t *testing.T) {
-			configFile := setupConfigFile()
-			defer removeConfigFile(configFile)
+			viper.SetConfigName("config")
+			viper.AddConfigPath("../../../..")
+			viper.SetConfigType("yaml")
+			viper.AutomaticEnv()
 
-			os.Setenv("CONFIG_FILE", configFile)
-
-			tw := &testWriter{}
+			tw := &util.TestWriter{}
 			app.RootCmd.SetOut(tw) // stub to capture eventual output
 			app.RootCmd.SetArgs(test.args)
 
 			if err := app.RootCmd.Execute(); err != nil {
 				t.Errorf("Error executing command: %v", err)
 			}
+
+			if tw.Output != test.expectedOutput {
+				t.Errorf("Expected %q, got %q", test.expectedOutput, tw.Output)
+			}
+
 		})
 	}
 }
