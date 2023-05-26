@@ -132,10 +132,16 @@ service BranchProtectionService {
 
 // manage Organisations CRUD
 service OrganisationService {
-    rpc CreateOrganisation (CreateOrganisationRequest) returns (CreateOrganisationResponse) {
+    rpc CreateOrganisation (CreateOrganisationRequest) returns (OrganisationRecord) {
         option (google.api.http) = {
             post: "/api/v1/organisation"
             body: "*"
+        };
+    }
+
+    rpc GetOrganisations (GetOrganisationsRequest) returns (GetOrganisationsResponse) {
+        option (google.api.http) = {
+        get: "/api/v1/organisations"
         };
     }
 }
@@ -316,7 +322,7 @@ message CreateOrganisationRequest {
     string company = 2;
   }
   
-message CreateOrganisationResponse {
+message OrganisationRecord {
     int32 id = 1;
     string name = 2;
     string company = 3;
@@ -397,4 +403,13 @@ message CreateRoleResponse {
     bool is_protected = 6;
     google.protobuf.Timestamp created_at = 7;
     google.protobuf.Timestamp updated_at = 8;    
+}
+
+message GetOrganisationsRequest {
+    optional int32 limit = 1;
+    optional int32 offset = 2;
+}
+
+message GetOrganisationsResponse {
+    repeated OrganisationRecord organisations = 1;
 }

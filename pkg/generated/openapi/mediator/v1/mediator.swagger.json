@@ -484,7 +484,7 @@
           "200": {
             "description": "A successful response.",
             "schema": {
-              "$ref": "#/definitions/v1CreateOrganisationResponse"
+              "$ref": "#/definitions/v1OrganisationRecord"
             }
           },
           "default": {
@@ -502,6 +502,44 @@
             "schema": {
               "$ref": "#/definitions/v1CreateOrganisationRequest"
             }
+          }
+        ],
+        "tags": [
+          "OrganisationService"
+        ]
+      }
+    },
+    "/api/v1/organisations": {
+      "get": {
+        "operationId": "OrganisationService_GetOrganisations",
+        "responses": {
+          "200": {
+            "description": "A successful response.",
+            "schema": {
+              "$ref": "#/definitions/v1GetOrganisationsResponse"
+            }
+          },
+          "default": {
+            "description": "An unexpected error response.",
+            "schema": {
+              "$ref": "#/definitions/rpcStatus"
+            }
+          }
+        },
+        "parameters": [
+          {
+            "name": "limit",
+            "in": "query",
+            "required": false,
+            "type": "integer",
+            "format": "int32"
+          },
+          {
+            "name": "offset",
+            "in": "query",
+            "required": false,
+            "type": "integer",
+            "format": "int32"
           }
         ],
         "tags": [
@@ -749,29 +787,6 @@
       },
       "title": "Organisation service"
     },
-    "v1CreateOrganisationResponse": {
-      "type": "object",
-      "properties": {
-        "id": {
-          "type": "integer",
-          "format": "int32"
-        },
-        "name": {
-          "type": "string"
-        },
-        "company": {
-          "type": "string"
-        },
-        "createdAt": {
-          "type": "string",
-          "format": "date-time"
-        },
-        "updatedAt": {
-          "type": "string",
-          "format": "date-time"
-        }
-      }
-    },
     "v1CreateRoleRequest": {
       "type": "object",
       "properties": {
@@ -913,6 +928,18 @@
         }
       },
       "title": "The GetGroupsResponse message represents a response with an array of groups"
+    },
+    "v1GetOrganisationsResponse": {
+      "type": "object",
+      "properties": {
+        "organisations": {
+          "type": "array",
+          "items": {
+            "type": "object",
+            "$ref": "#/definitions/v1OrganisationRecord"
+          }
+        }
+      }
     },
     "v1GetSecretByIdResponse": {
       "type": "object",
@@ -1067,6 +1094,29 @@
       "properties": {
         "status": {
           "type": "string"
+        }
+      }
+    },
+    "v1OrganisationRecord": {
+      "type": "object",
+      "properties": {
+        "id": {
+          "type": "integer",
+          "format": "int32"
+        },
+        "name": {
+          "type": "string"
+        },
+        "company": {
+          "type": "string"
+        },
+        "createdAt": {
+          "type": "string",
+          "format": "date-time"
+        },
+        "updatedAt": {
+          "type": "string",
+          "format": "date-time"
         }
       }
     }

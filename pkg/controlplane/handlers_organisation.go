@@ -16,6 +16,7 @@ package controlplane
 
 import (
 	"context"
+	"fmt"
 
 	"github.com/go-playground/validator/v10"
 	"github.com/stacklok/mediator/pkg/db"
@@ -30,7 +31,7 @@ type CreateOrganisationValidation struct {
 
 // CreateOrganisation is a service for creating an organisation
 func (s *Server) CreateOrganisation(ctx context.Context,
-	in *pb.CreateOrganisationRequest) (*pb.CreateOrganisationResponse, error) {
+	in *pb.CreateOrganisationRequest) (*pb.OrganisationRecord, error) {
 	// validate that the company and name are not empty
 	validator := validator.New()
 	err := validator.Struct(CreateOrganisationValidation{Name: in.Name, Company: in.Company})
@@ -43,7 +44,44 @@ func (s *Server) CreateOrganisation(ctx context.Context,
 		return nil, err
 	}
 
-	return &pb.CreateOrganisationResponse{Id: org.ID, Name: org.Name,
+	return &pb.OrganisationRecord{Id: org.ID, Name: org.Name,
 		Company: org.Company, CreatedAt: timestamppb.New(org.CreatedAt),
 		UpdatedAt: timestamppb.New(org.UpdatedAt)}, nil
+}
+
+// CreateOrganisation is a service for creating an organisation
+func (s *Server) GetOrganisations(ctx context.Context,
+	in *pb.GetOrganisationsRequest) (*pb.GetOrganisationsResponse, error) {
+
+	// define default values for limit and offset
+	if in.Limit == nil || *in.Limit == -1 {
+		in.Limit = new(int32)
+		*in.Limit = PaginationLimit
+	}
+	if in.Offset == nil {
+		in.Offset = new(int32)
+		*in.Offset = 0
+	}
+
+	orgs, err := s.store.ListOrganisations(ctx, db.ListOrganisationsParams{
+		Limit:  *in.Limit,
+		Offset: *in.Offset,
+	})
+	if err != nil {
+		return nil, fmt.Errorf("failed to get groups: %w", err)
+	}
+
+	var resp pb.GetOrganisationsResponse
+	resp.Organisations = make([]*pb.OrganisationRecord, 0, len(orgs))
+	for _, org := range orgs {
+		resp.Organisations = append(resp.Organisations, &pb.OrganisationRecord{
+			Id:        org.ID,
+			Name:      org.Name,
+			Company:   org.Company,
+			CreatedAt: timestamppb.New(org.CreatedAt),
+			UpdatedAt: timestamppb.New(org.UpdatedAt),
+		})
+	}
+
+	return &resp, nil
 }

@@ -41,11 +41,6 @@ func TestCobraMain(t *testing.T) {
 			expectedOutput: "org called\n",
 		},
 		{
-			name:           "org list command",
-			args:           []string{"org", "list"},
-			expectedOutput: "org list called\n",
-		},
-		{
 			name:           "org delete command",
 			args:           []string{"org", "delete"},
 			expectedOutput: "org delete called\n",

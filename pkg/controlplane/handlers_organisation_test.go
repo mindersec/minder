@@ -162,3 +162,18 @@ func TestCreateOrganisation_gRPC(t *testing.T) {
 		})
 	}
 }
+
+func TestGetOrganisations(t *testing.T) {
+	server := createTestServer()
+	if server == nil {
+		t.Fatalf("Failed to create server")
+	}
+
+	org, err := server.GetOrganisations(context.Background(), &pb.GetOrganisationsRequest{})
+
+	if err != nil {
+		t.Fatalf("Failed to list organisations: %v", err)
+	}
+
+	t.Logf("Retrieved organisations: %d", len(org.Organisations))
+}

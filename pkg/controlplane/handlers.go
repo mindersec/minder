@@ -45,6 +45,7 @@ import (
 
 const Google = "google"
 const Github = "github"
+const PaginationLimit = 10
 
 // generateState generates a random string of length n, used as the OAuth state
 func generateState(n int) (string, error) {
