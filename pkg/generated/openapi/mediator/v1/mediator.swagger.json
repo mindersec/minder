@@ -366,7 +366,7 @@
           "200": {
             "description": "A successful response.",
             "schema": {
-              "$ref": "#/definitions/v1GroupsResponse"
+              "$ref": "#/definitions/v1CreateGroupsResponse"
             }
           },
           "default": {
@@ -398,7 +398,7 @@
           "200": {
             "description": "A successful response.",
             "schema": {
-              "$ref": "#/definitions/v1GroupsResponse"
+              "$ref": "#/definitions/v1GetGroupByIDResponse"
             }
           },
           "default": {
@@ -429,7 +429,7 @@
           "200": {
             "description": "A successful response.",
             "schema": {
-              "$ref": "#/definitions/v1GroupsResponse"
+              "$ref": "#/definitions/v1GetGroupByNamesResponse"
             }
           },
           "default": {
@@ -687,6 +687,21 @@
       },
       "title": "The CreateGroupRequest message represents a request to create a group"
     },
+    "v1CreateGroupsResponse": {
+      "type": "object",
+      "properties": {
+        "groupId": {
+          "type": "integer",
+          "format": "int32"
+        },
+        "name": {
+          "type": "string"
+        },
+        "description": {
+          "type": "string"
+        }
+      }
+    },
     "v1CreateOrganisationRequest": {
       "type": "object",
       "properties": {
@@ -765,6 +780,36 @@
             "type": "object",
             "$ref": "#/definitions/v1BranchProtection"
           }
+        }
+      }
+    },
+    "v1GetGroupByIDResponse": {
+      "type": "object",
+      "properties": {
+        "groupId": {
+          "type": "integer",
+          "format": "int32"
+        },
+        "name": {
+          "type": "string"
+        },
+        "description": {
+          "type": "string"
+        }
+      }
+    },
+    "v1GetGroupByNamesResponse": {
+      "type": "object",
+      "properties": {
+        "groupId": {
+          "type": "integer",
+          "format": "int32"
+        },
+        "name": {
+          "type": "string"
+        },
+        "description": {
+          "type": "string"
         }
       }
     },

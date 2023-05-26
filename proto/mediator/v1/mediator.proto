@@ -142,20 +142,20 @@ service OrganisationService {
 
 // manage Groups CRUD
 service GroupService {
-    rpc CreateGroup (CreateGroupRequest) returns (GroupsResponse) {
+    rpc CreateGroup (CreateGroupRequest) returns (CreateGroupsResponse) {
         option (google.api.http) = {
             post: "/api/v1/group"
             body: "*"
         };
     }
 
-    rpc GetGroupByName (GetGroupByNameRequest) returns (GroupsResponse) {
+    rpc GetGroupByName (GetGroupByNameRequest) returns (GetGroupByNamesResponse) {
         option (google.api.http) = {
             get: "/api/v1/group/name/{name}"
         };
     }
 
-    rpc GetGroupById (GetGroupByIdRequest) returns (GroupsResponse) {
+    rpc GetGroupById (GetGroupByIdRequest) returns (GetGroupByIDResponse) {
         option (google.api.http) = {
             get: "/api/v1/group/id/{group_id}"
         };
@@ -317,12 +317,6 @@ message CreateOrganisationResponse {
 
 // Group service
 
-message GroupsResponse {
-    int32 group_id = 1;
-    string name = 2;
-    string description = 3;
-}
-
 // The CreateGroupRequest message represents a request to create a group
 message CreateGroupRequest {
     int32  organisation_id = 1;
@@ -345,6 +339,32 @@ message GetGroupsRequest {
     int32 organisation_id = 1;
     int32 limit = 2;
     int32 offset = 3;
+}
+
+// BUF does not allow grouping (which is a shame)
+
+message GroupsResponse {
+    int32 group_id = 1;
+    string name = 2;
+    string description = 3;
+}
+
+message  CreateGroupsResponse {
+    int32 group_id = 1;
+    string name = 2;
+    string description = 3;
+}
+
+message GetGroupByNamesResponse {
+    int32 group_id = 1;
+    string name = 2;
+    string description = 3;
+}
+
+message GetGroupByIDResponse {
+    int32 group_id = 1;
+    string name = 2;
+    string description = 3;
 }
 
 // The GetGroupsResponse message represents a response with an array of groups
