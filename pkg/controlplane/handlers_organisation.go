@@ -17,18 +17,32 @@ package controlplane
 import (
 	"context"
 
-	"github.com/stacklok/mediator/internal/organisation"
+	"github.com/go-playground/validator/v10"
+	"github.com/stacklok/mediator/pkg/db"
 	pb "github.com/stacklok/mediator/pkg/generated/protobuf/go/mediator/v1"
 	"google.golang.org/protobuf/types/known/timestamppb"
 )
 
+type CreateOrganisationValidation struct {
+	Name    string `db:"name" validate:"required"`
+	Company string `db:"company" validate:"required"`
+}
+
 // CreateOrganisation is a service for creating an organisation
 func (s *Server) CreateOrganisation(ctx context.Context,
 	in *pb.CreateOrganisationRequest) (*pb.CreateOrganisationResponse, error) {
-	org, err := organisation.CreateOrganisation(ctx, s.store, in.GetName(), in.GetCompany())
+	// validate that the company and name are not empty
+	validator := validator.New()
+	err := validator.Struct(CreateOrganisationValidation{Name: in.Name, Company: in.Company})
 	if err != nil {
 		return nil, err
 	}
+
+	org, err := s.store.CreateOrganisation(ctx, db.CreateOrganisationParams{Name: in.Name, Company: in.Company})
+	if err != nil {
+		return nil, err
+	}
+
 	return &pb.CreateOrganisationResponse{Id: org.ID, Name: org.Name,
 		Company: org.Company, CreatedAt: timestamppb.New(org.CreatedAt),
 		UpdatedAt: timestamppb.New(org.UpdatedAt)}, nil

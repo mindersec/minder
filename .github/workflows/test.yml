@@ -52,4 +52,4 @@ jobs:
 
       # Run the tests
       - name: Run tests
-        run: make test-server
+        run: make test

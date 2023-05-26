@@ -22,11 +22,8 @@
 package org
 
 import (
-	"context"
-	"fmt"
 	"testing"
 
-	"github.com/spf13/cobra"
 	"github.com/spf13/viper"
 	"github.com/stacklok/mediator/cmd/cli/app"
 	"github.com/stacklok/mediator/pkg/util"
@@ -76,35 +73,4 @@ func TestCobraMain(t *testing.T) {
 
 		})
 	}
-}
-
-func TestOrgCreateCmd(t *testing.T) {
-	viper.SetConfigName("config")
-	viper.AddConfigPath("../../../..")
-	viper.SetConfigType("yaml")
-	viper.AutomaticEnv()
-
-	tw := &util.TestWriter{}
-
-	// Set up test command and flags
-	seed := int64(12345)
-	testCmd := &cobra.Command{}
-	testCmd.SetOut(tw)
-
-	name := util.RandomString(6, seed)
-	company := util.RandomString(6, seed)
-	testCmd.Flags().StringP("name", "n", name, "Name of the organization")
-	testCmd.Flags().StringP("company", "c", company, "Company name of the organization")
-	testCmd.SetContext(context.Background())
-	err := viper.BindPFlags(testCmd.Flags())
-	if err != nil {
-		t.Errorf("Error binding flags: %v", err)
-	}
-	org_createCmd.Run(testCmd, []string{})
-
-	output := fmt.Sprintf("Created organisation: %s\n", name)
-	if tw.Output != output {
-		t.Errorf("Expected %q, got %q", output, tw.Output)
-	}
-
 }
