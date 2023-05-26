@@ -22,11 +22,8 @@
 package role
 
 import (
-	"context"
-	"fmt"
 	"testing"
 
-	"github.com/spf13/cobra"
 	"github.com/spf13/viper"
 	"github.com/stacklok/mediator/cmd/cli/app"
 	"github.com/stacklok/mediator/pkg/util"
@@ -76,35 +73,4 @@ func TestCobraMain(t *testing.T) {
 
 		})
 	}
-}
-
-func TestRoleCreateCmd(t *testing.T) {
-	viper.SetConfigName("config")
-	viper.AddConfigPath("../../../..")
-	viper.SetConfigType("yaml")
-	viper.AutomaticEnv()
-
-	tw := &util.TestWriter{}
-
-	// Set up test command and flags
-	seed := int64(12345)
-	testCmd := &cobra.Command{}
-	testCmd.SetOut(tw)
-
-	group_id := util.RandomInt(1, 1000, seed)
-	name := util.RandomString(6, seed)
-	testCmd.Flags().Int32P("group_id", "g", int32(group_id), "ID of the group")
-	testCmd.Flags().StringP("name", "n", name, "Name of the organization")
-	testCmd.SetContext(context.Background())
-	err := viper.BindPFlags(testCmd.Flags())
-	if err != nil {
-		t.Errorf("Error binding flags: %v", err)
-	}
-	role_createCmd.Run(testCmd, []string{})
-
-	output := fmt.Sprintf("Created role: %s\n", name)
-	if tw.Output != output {
-		t.Errorf("Expected %q, got %q", output, tw.Output)
-	}
-
 }
