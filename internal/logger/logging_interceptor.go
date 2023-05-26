@@ -178,7 +178,7 @@ func Interceptor(logLevel string, logFormat string, logFile string) grpc.UnarySe
 		if logToFile {
 			var multi zerolog.LevelWriter
 			if logFormat == Text {
-				multi = zerolog.MultiLevelWriter(consoleWriter, file)
+				multi = zerolog.MultiLevelWriter(consoleWriter, os.Stdout, file)
 			} else {
 				multi = zerolog.MultiLevelWriter(os.Stdout, file)
 			}
