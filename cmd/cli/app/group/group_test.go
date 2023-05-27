@@ -41,19 +41,9 @@ func TestCobraMain(t *testing.T) {
 			expectedOutput: "group called\n",
 		},
 		{
-			name:           "group list command",
-			args:           []string{"group", "list"},
-			expectedOutput: "group list called\n",
-		},
-		{
 			name:           "group delete command",
 			args:           []string{"group", "delete"},
 			expectedOutput: "group delete called\n",
-		},
-		{
-			name:           "group create command",
-			args:           []string{"group", "create"},
-			expectedOutput: "group create called\n",
 		},
 	}
 

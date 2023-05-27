@@ -24,12 +24,8 @@ import (
 )
 
 func (s *Server) CreateGroup(ctx context.Context, req *pb.CreateGroupRequest) (*pb.CreateGroupResponse, error) {
-	fmt.Println("Group Name: ", req.Name)
-	fmt.Println("Organization ID: ", req.OrganisationId)
-	fmt.Println("Description: ", req.Description)
-
 	_, err := s.store.GetGroupByName(ctx, req.Name)
-	// check if group already exists
+
 	if err != nil && err != sql.ErrNoRows {
 		return nil, fmt.Errorf("failed to get group by name: %w", err)
 	} else if err == nil {

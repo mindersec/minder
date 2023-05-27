@@ -77,6 +77,15 @@ func init() {
 	group_createCmd.PersistentFlags().StringP("name", "n", "", "Name of the group")
 	group_createCmd.PersistentFlags().StringP("description", "d", "", "Description of the group")
 	group_createCmd.PersistentFlags().Int32("org-id", 0, "Organisation ID")
+	if err := group_createCmd.MarkPersistentFlagRequired("name"); err != nil {
+		fmt.Fprintf(os.Stderr, "Error marking flag as required: %s\n", err)
+	}
+	if err := group_createCmd.MarkPersistentFlagRequired("description"); err != nil {
+		fmt.Fprintf(os.Stderr, "Error marking flag as required: %s\n", err)
+	}
+	if err := group_createCmd.MarkPersistentFlagRequired("org-id"); err != nil {
+		fmt.Fprintf(os.Stderr, "Error marking flag as required: %s\n", err)
+	}
 
 	if err := viper.BindPFlags(group_createCmd.PersistentFlags()); err != nil {
 		fmt.Fprintf(os.Stderr, "Error binding flags: %s\n", err)
