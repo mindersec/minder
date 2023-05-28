@@ -22,6 +22,7 @@ packages:
     engine: "postgresql"
     emit_json_tags: true
     emit_prepared_queries: false
+    # emit_interface true, will generate functions of query struct types into /db/querier.go
     emit_interface: true
     emit_exact_table_names: false
     emit_empty_slices: true
