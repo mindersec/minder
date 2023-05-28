@@ -35,10 +35,8 @@ func TestCreateOrganisationDBMock(t *testing.T) {
 	ctrl := gomock.NewController(t)
 	defer ctrl.Finish()
 
-	// Create a mock store
 	mockStore := mockdb.NewMockStore(ctrl)
 
-	// Create test data
 	request := &pb.CreateOrganisationRequest{
 		Name:    "TestOrg",
 		Company: "TestCompany",
@@ -52,20 +50,16 @@ func TestCreateOrganisationDBMock(t *testing.T) {
 		UpdatedAt: time.Now(),
 	}
 
-	// Set expectations on the mock store
 	mockStore.EXPECT().
 		CreateOrganisation(gomock.Any(), gomock.Any()).
 		Return(expectedOrg, nil)
 
-	// Create an instance of the server with the mock store
 	server := &Server{
 		store: mockStore,
 	}
 
-	// Call the CreateOrganisation function
 	response, err := server.CreateOrganisation(context.Background(), request)
 
-	// Assert the expected behavior and outcomes
 	assert.NoError(t, err)
 	assert.NotNil(t, response)
 	assert.Equal(t, expectedOrg.ID, response.Id)
@@ -101,7 +95,7 @@ func TestCreateOrganisation_gRPC(t *testing.T) {
 						CreatedAt: time.Now(),
 						UpdatedAt: time.Now(),
 					}, nil).
-					Times(1) // Add the Times(1) expectation to ensure it's called once
+					Times(1)
 			},
 			checkResponse: func(t *testing.T, res *pb.CreateOrganisationResponse, err error) {
 				assert.NoError(t, err)
@@ -154,7 +148,7 @@ func TestCreateOrganisation_gRPC(t *testing.T) {
 	for i := range testCases {
 		tc := testCases[i]
 		t.Run(tc.name, func(t *testing.T) {
-			// Setup
+
 			ctrl := gomock.NewController(t)
 			defer ctrl.Finish()
 
