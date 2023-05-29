@@ -1002,7 +1002,7 @@ const (
 //
 // For semantics around ctx use and closing/ending streaming RPCs, please refer to https://pkg.go.dev/google.golang.org/grpc/?tab=doc#ClientConn.NewStream.
 type OrganisationServiceClient interface {
-	CreateOrganisation(ctx context.Context, in *CreateOrganisationRequest, opts ...grpc.CallOption) (*OrganisationRecord, error)
+	CreateOrganisation(ctx context.Context, in *CreateOrganisationRequest, opts ...grpc.CallOption) (*CreateOrganisationResponse, error)
 	GetOrganisations(ctx context.Context, in *GetOrganisationsRequest, opts ...grpc.CallOption) (*GetOrganisationsResponse, error)
 }
 
@@ -1014,8 +1014,8 @@ func NewOrganisationServiceClient(cc grpc.ClientConnInterface) OrganisationServi
 	return &organisationServiceClient{cc}
 }
 
-func (c *organisationServiceClient) CreateOrganisation(ctx context.Context, in *CreateOrganisationRequest, opts ...grpc.CallOption) (*OrganisationRecord, error) {
-	out := new(OrganisationRecord)
+func (c *organisationServiceClient) CreateOrganisation(ctx context.Context, in *CreateOrganisationRequest, opts ...grpc.CallOption) (*CreateOrganisationResponse, error) {
+	out := new(CreateOrganisationResponse)
 	err := c.cc.Invoke(ctx, OrganisationService_CreateOrganisation_FullMethodName, in, out, opts...)
 	if err != nil {
 		return nil, err
@@ -1036,7 +1036,7 @@ func (c *organisationServiceClient) GetOrganisations(ctx context.Context, in *Ge
 // All implementations must embed UnimplementedOrganisationServiceServer
 // for forward compatibility
 type OrganisationServiceServer interface {
-	CreateOrganisation(context.Context, *CreateOrganisationRequest) (*OrganisationRecord, error)
+	CreateOrganisation(context.Context, *CreateOrganisationRequest) (*CreateOrganisationResponse, error)
 	GetOrganisations(context.Context, *GetOrganisationsRequest) (*GetOrganisationsResponse, error)
 	mustEmbedUnimplementedOrganisationServiceServer()
 }
@@ -1045,7 +1045,7 @@ type OrganisationServiceServer interface {
 type UnimplementedOrganisationServiceServer struct {
 }
 
-func (UnimplementedOrganisationServiceServer) CreateOrganisation(context.Context, *CreateOrganisationRequest) (*OrganisationRecord, error) {
+func (UnimplementedOrganisationServiceServer) CreateOrganisation(context.Context, *CreateOrganisationRequest) (*CreateOrganisationResponse, error) {
 	return nil, status.Errorf(codes.Unimplemented, "method CreateOrganisation not implemented")
 }
 func (UnimplementedOrganisationServiceServer) GetOrganisations(context.Context, *GetOrganisationsRequest) (*GetOrganisationsResponse, error) {

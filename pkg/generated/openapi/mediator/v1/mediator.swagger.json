@@ -484,7 +484,7 @@
           "200": {
             "description": "A successful response.",
             "schema": {
-              "$ref": "#/definitions/v1OrganisationRecord"
+              "$ref": "#/definitions/v1CreateOrganisationResponse"
             }
           },
           "default": {
@@ -786,6 +786,29 @@
         }
       },
       "title": "Organisation service"
+    },
+    "v1CreateOrganisationResponse": {
+      "type": "object",
+      "properties": {
+        "id": {
+          "type": "integer",
+          "format": "int32"
+        },
+        "name": {
+          "type": "string"
+        },
+        "company": {
+          "type": "string"
+        },
+        "createdAt": {
+          "type": "string",
+          "format": "date-time"
+        },
+        "updatedAt": {
+          "type": "string",
+          "format": "date-time"
+        }
+      }
     },
     "v1CreateRoleRequest": {
       "type": "object",
