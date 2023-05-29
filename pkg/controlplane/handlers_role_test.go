@@ -45,7 +45,7 @@ func TestCreateRoleDBMock(t *testing.T) {
 	expectedRole := db.Role{
 		ID:          1,
 		GroupID:     1,
-		Name:        "TestOrg",
+		Name:        "TestRole",
 		IsAdmin:     false,
 		IsProtected: false,
 		CreatedAt:   time.Now(),
@@ -107,7 +107,7 @@ func TestCreateRole_gRPC(t *testing.T) {
 				assert.NoError(t, err)
 				assert.NotNil(t, res)
 				assert.Equal(t, int32(1), res.Id)
-				assert.Equal(t, "TestOrg", res.Name)
+				assert.Equal(t, "TestRole", res.Name)
 				assert.Equal(t, 1, res.GroupId)
 				assert.Equal(t, false, res.IsAdmin)
 				assert.Equal(t, false, res.IsProtected)
@@ -135,7 +135,7 @@ func TestCreateRole_gRPC(t *testing.T) {
 			name: "StoreError",
 			req: &pb.CreateRoleRequest{
 				GroupId: 1,
-				Name:    "TestOrg",
+				Name:    "TestRole",
 			},
 			buildStubs: func(store *mockdb.MockStore) {
 				store.EXPECT().
