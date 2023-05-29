@@ -224,6 +224,21 @@ func (mr *MockStoreMockRecorder) GetGroupByID(arg0, arg1 interface{}) *gomock.Ca
 	return mr.mock.ctrl.RecordCallWithMethodType(mr.mock, "GetGroupByID", reflect.TypeOf((*MockStore)(nil).GetGroupByID), arg0, arg1)
 }
 
+// GetGroupByName mocks base method.
+func (m *MockStore) GetGroupByName(arg0 context.Context, arg1 string) (db.Group, error) {
+	m.ctrl.T.Helper()
+	ret := m.ctrl.Call(m, "GetGroupByName", arg0, arg1)
+	ret0, _ := ret[0].(db.Group)
+	ret1, _ := ret[1].(error)
+	return ret0, ret1
+}
+
+// GetGroupByName indicates an expected call of GetGroupByName.
+func (mr *MockStoreMockRecorder) GetGroupByName(arg0, arg1 interface{}) *gomock.Call {
+	mr.mock.ctrl.T.Helper()
+	return mr.mock.ctrl.RecordCallWithMethodType(mr.mock, "GetGroupByName", reflect.TypeOf((*MockStore)(nil).GetGroupByName), arg0, arg1)
+}
+
 // GetOrganisation mocks base method.
 func (m *MockStore) GetOrganisation(arg0 context.Context, arg1 int32) (db.Organisation, error) {
 	m.ctrl.T.Helper()
