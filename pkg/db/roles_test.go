@@ -86,6 +86,7 @@ func TestUpdateRole(t *testing.T) {
 
 	arg := UpdateRoleParams{
 		ID:      role1.ID,
+		GroupID: group.ID,
 		Name:    util.RandomName(seed),
 		IsAdmin: true,
 	}
