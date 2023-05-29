@@ -118,6 +118,16 @@ make migrateup
 make migratedown
 ```
 
+# Mock
+
+Mediator uses [mockgen](https://github.com/golang/mock) to generate mocks.
+
+To generate the mocks, run:
+
+```bash
+mockgen -package mockdb -destination database/mock/store.go github.com/stacklok/mediator/pkg/db Store
+```
+
 # Configuration
 
 Mediator uses [viper](https://github.com/spf13/viper) for configuration.

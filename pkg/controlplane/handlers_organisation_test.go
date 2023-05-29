@@ -16,58 +16,149 @@ package controlplane
 
 import (
 	"context"
+	"errors"
 	"testing"
 	"time"
 
-	"github.com/spf13/viper"
+	"github.com/golang/mock/gomock"
+
 	"github.com/stacklok/mediator/pkg/db"
+	"github.com/stretchr/testify/assert"
+
+	"google.golang.org/grpc/codes"
+
+	mockdb "github.com/stacklok/mediator/database/mock"
 	pb "github.com/stacklok/mediator/pkg/generated/protobuf/go/mediator/v1"
-	"github.com/stacklok/mediator/pkg/util"
 )
 
-func createTestServer() *Server {
-	// generate config file for the connection
-	viper.SetConfigName("config")
-	viper.AddConfigPath("../..")
-	viper.SetConfigType("yaml")
-	viper.AutomaticEnv()
-	err := viper.ReadInConfig()
-	if err != nil {
-		return nil
+func TestCreateOrganisationDBMock(t *testing.T) {
+	ctrl := gomock.NewController(t)
+	defer ctrl.Finish()
+
+	mockStore := mockdb.NewMockStore(ctrl)
+
+	request := &pb.CreateOrganisationRequest{
+		Name:    "TestOrg",
+		Company: "TestCompany",
 	}
 
-	// retrieve connection string
-	value := viper.AllSettings()["database"]
-	databaseConfig, ok := value.(map[string]interface{})
-	if !ok {
-		return nil
-	}
-	conn, err := util.GetDbConnectionFromConfig(databaseConfig)
-	if err != nil {
-		return nil
+	expectedOrg := db.Organisation{
+		ID:        1,
+		Name:      "TestOrg",
+		Company:   "TestCompany",
+		CreatedAt: time.Now(),
+		UpdatedAt: time.Now(),
 	}
 
-	store := db.NewStore(conn)
-	server := NewServer(store)
+	mockStore.EXPECT().
+		CreateOrganisation(gomock.Any(), gomock.Any()).
+		Return(expectedOrg, nil)
 
-	return server
+	server := &Server{
+		store: mockStore,
+	}
+
+	response, err := server.CreateOrganisation(context.Background(), request)
+
+	assert.NoError(t, err)
+	assert.NotNil(t, response)
+	assert.Equal(t, expectedOrg.ID, response.Id)
+	assert.Equal(t, expectedOrg.Name, response.Name)
+	assert.Equal(t, expectedOrg.Company, response.Company)
+	expectedCreatedAt := expectedOrg.CreatedAt.In(time.UTC)
+	assert.Equal(t, expectedCreatedAt, response.CreatedAt.AsTime().In(time.UTC))
+	expectedUpdatedAt := expectedOrg.UpdatedAt.In(time.UTC)
+	assert.Equal(t, expectedUpdatedAt, response.UpdatedAt.AsTime().In(time.UTC))
 }
 
-func TestOrganisationCreate(t *testing.T) {
-	seed := time.Now().UnixNano()
-	server := createTestServer()
-	if server == nil {
-		t.Fatalf("Failed to create server")
+func TestCreateOrganisation_gRPC(t *testing.T) {
+	testCases := []struct {
+		name               string
+		req                *pb.CreateOrganisationRequest
+		buildStubs         func(store *mockdb.MockStore)
+		checkResponse      func(t *testing.T, res *pb.CreateOrganisationResponse, err error)
+		expectedStatusCode codes.Code
+	}{
+		{
+			name: "Success",
+			req: &pb.CreateOrganisationRequest{
+				Name:    "TestOrg",
+				Company: "TestCompany",
+			},
+			buildStubs: func(store *mockdb.MockStore) {
+				store.EXPECT().
+					CreateOrganisation(gomock.Any(), gomock.Any()).
+					Return(db.Organisation{
+						ID:        1,
+						Name:      "TestOrg",
+						Company:   "TestCompany",
+						CreatedAt: time.Now(),
+						UpdatedAt: time.Now(),
+					}, nil).
+					Times(1)
+			},
+			checkResponse: func(t *testing.T, res *pb.CreateOrganisationResponse, err error) {
+				assert.NoError(t, err)
+				assert.NotNil(t, res)
+				assert.Equal(t, int32(1), res.Id)
+				assert.Equal(t, "TestOrg", res.Name)
+				assert.Equal(t, "TestCompany", res.Company)
+				assert.NotNil(t, res.CreatedAt)
+				assert.NotNil(t, res.UpdatedAt)
+			},
+			expectedStatusCode: codes.OK,
+		},
+		{
+			name: "EmptyRequest",
+			req: &pb.CreateOrganisationRequest{
+				Name:    "",
+				Company: "",
+			},
+			buildStubs: func(store *mockdb.MockStore) {
+				// No expectations, as CreateOrganisation should not be called
+			},
+			checkResponse: func(t *testing.T, res *pb.CreateOrganisationResponse, err error) {
+				// Assert the expected behavior when the request is empty
+				assert.Error(t, err)
+				assert.Nil(t, res)
+			},
+			expectedStatusCode: codes.InvalidArgument,
+		},
+		{
+			name: "StoreError",
+			req: &pb.CreateOrganisationRequest{
+				Name:    "TestOrg",
+				Company: "TestCompany",
+			},
+			buildStubs: func(store *mockdb.MockStore) {
+				store.EXPECT().
+					CreateOrganisation(gomock.Any(), gomock.Any()).
+					Return(db.Organisation{}, errors.New("store error")).
+					Times(1)
+			},
+			checkResponse: func(t *testing.T, res *pb.CreateOrganisationResponse, err error) {
+				// Assert the expected behavior when there's a store error
+				assert.Error(t, err)
+				assert.Nil(t, res)
+			},
+			expectedStatusCode: codes.Internal,
+		},
 	}
 
-	org, err := server.CreateOrganisation(context.Background(), &pb.CreateOrganisationRequest{
-		Name:    util.RandomString(10, seed),
-		Company: util.RandomString(10, seed),
-	})
+	for i := range testCases {
+		tc := testCases[i]
+		t.Run(tc.name, func(t *testing.T) {
 
-	if err != nil {
-		t.Fatalf("Failed to create organisation: %v", err)
+			ctrl := gomock.NewController(t)
+			defer ctrl.Finish()
+
+			mockStore := mockdb.NewMockStore(ctrl)
+			tc.buildStubs(mockStore)
+
+			server := NewServer(mockStore)
+
+			resp, err := server.CreateOrganisation(context.Background(), tc.req)
+			tc.checkResponse(t, resp, err)
+		})
 	}
-
-	t.Logf("Created organisation: %v", org)
 }
