@@ -5,7 +5,7 @@
 // you may not use this file except in compliance with the License.
 // You may obtain a copy of the License at
 //
-//     http://www.apache.role/licenses/LICENSE-2.0
+//     http://www.apache.org/licenses/LICENSE-2.0
 //
 // Unless required by applicable law or agreed to in writing, software
 // distributed under the License is distributed on an "AS IS" BASIS,
@@ -22,30 +22,71 @@
 package role
 
 import (
-	"log"
+	"context"
+	"fmt"
+	"os"
+	"time"
 
 	"github.com/spf13/cobra"
 	"github.com/spf13/viper"
+	pb "github.com/stacklok/mediator/pkg/generated/protobuf/go/mediator/v1"
+	"github.com/stacklok/mediator/pkg/util"
 )
 
 var role_createCmd = &cobra.Command{
 	Use:   "create",
-	Short: "Create an role within a mediator control plane",
-	Long: `The medctl role create subcommand lets you create new roles
+	Short: "Create a role within a mediator control plane",
+	Long: `The medctl role create subcommand lets you create new roles for a group
 within a mediator control plane.`,
 	Run: func(cmd *cobra.Command, args []string) {
-		cmd.Println("role create called")
+		// create the role via GRPC
+		group := util.GetConfigValue("group", "group", cmd, nil)
+		name := util.GetConfigValue("name", "name", cmd, "")
+		isAdmin := util.GetConfigValue("is_admin", "is_admin", cmd, false)
+		isProtected := util.GetConfigValue("is_protected", "is_protected", cmd, false)
+
+		conn, err := util.GetGrpcConnection(cmd)
+		defer conn.Close()
+
+		if err != nil {
+			fmt.Fprintf(os.Stderr, "Error getting grpc connection: %s\n", err)
+			os.Exit(1)
+		}
+
+		client := pb.NewRoleServiceClient(conn)
+		ctx, cancel := context.WithTimeout(context.Background(), time.Second)
+		defer cancel()
+
+		resp, err := client.CreateRole(ctx, &pb.CreateRoleRequest{
+			GroupId:     group.(int32),
+			Name:        name.(string),
+			IsAdmin:     isAdmin.(*bool),
+			IsProtected: isProtected.(*bool),
+		})
+
+		if err != nil {
+			fmt.Fprintf(os.Stderr, "Error creating role: %s\n", err)
+			os.Exit(1)
+		}
+		cmd.Println("Created role:", resp.Name)
 	},
 }
 
 func init() {
 	RoleCmd.AddCommand(role_createCmd)
-	// flag for name
+	role_createCmd.Flags().Uint64P("group", "g", 0, "ID of the group which owns the role")
 	role_createCmd.Flags().StringP("name", "n", "", "Name of the role")
-	role_createCmd.Flags().BoolP("is-admin", "a", false, "Is the role an admin role")
-	role_createCmd.Flags().BoolP("active", "e", true, "Whether the role is active or not")
-
+	role_createCmd.Flags().BoolP("is_admin", "a", false, "Is it an admin role")
+	role_createCmd.Flags().BoolP("is_protected", "p", false, "Is it a protected role")
+	err := role_createCmd.MarkPersistentFlagRequired("group")
+	if err != nil {
+		fmt.Fprintf(os.Stderr, "Error binding flags: %s\n", err)
+	}
+	err = role_createCmd.MarkPersistentFlagRequired("name")
+	if err != nil {
+		fmt.Fprintf(os.Stderr, "Error binding flags: %s\n", err)
+	}
 	if err := viper.BindPFlags(role_createCmd.PersistentFlags()); err != nil {
-		log.Fatal(err)
+		fmt.Fprintf(os.Stderr, "Error binding flags: %s\n", err)
 	}
 }

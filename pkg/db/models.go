@@ -36,12 +36,13 @@ type Organisation struct {
 }
 
 type Role struct {
-	ID        int32         `json:"id"`
-	GroupID   sql.NullInt32 `json:"group_id"`
-	Name      string        `json:"name"`
-	IsAdmin   bool          `json:"is_admin"`
-	CreatedAt time.Time     `json:"created_at"`
-	UpdatedAt time.Time     `json:"updated_at"`
+	ID          int32     `json:"id"`
+	GroupID     int32     `json:"group_id"`
+	Name        string    `json:"name"`
+	IsAdmin     bool      `json:"is_admin"`
+	IsProtected bool      `json:"is_protected"`
+	CreatedAt   time.Time `json:"created_at"`
+	UpdatedAt   time.Time `json:"updated_at"`
 }
 
 type User struct {

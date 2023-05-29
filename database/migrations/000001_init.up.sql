@@ -36,11 +36,13 @@ CREATE TABLE groups (
 -- roles table
 CREATE TABLE roles (
     id SERIAL PRIMARY KEY,
-    group_id INTEGER REFERENCES groups(id) ON DELETE CASCADE,
-    name TEXT NOT NULL,
+    group_id INTEGER NOT NULL REFERENCES groups(id) ON DELETE CASCADE,
+    name TEXT NOT NULL,    
     is_admin BOOLEAN NOT NULL DEFAULT FALSE,
+    is_protected BOOLEAN NOT NULL DEFAULT FALSE,
     created_at TIMESTAMP NOT NULL DEFAULT NOW(),
-    updated_at TIMESTAMP NOT NULL DEFAULT NOW()
+    updated_at TIMESTAMP NOT NULL DEFAULT NOW(),
+    CONSTRAINT unique_role_name_constraint UNIQUE (group_id, name)
 );
 
 -- users table
@@ -86,8 +88,8 @@ VALUES ('Root Organization', 'Root Company', 1);
 INSERT INTO groups (organisation_id, name)
 VALUES (1, 'Root Group');
 
-INSERT INTO roles (group_id, name, is_admin)
-VALUES (1, 'Role Role', TRUE);
+INSERT INTO roles (group_id, name, is_admin, is_protected)
+VALUES (1, 'Role Role', TRUE, FALSE);
 
 INSERT INTO users (organisation_id, group_id, role_id, email, username, password, first_name, last_name)
 VALUES (1, 1, 1, 'root@localhost', 'root', '$argon2id$v=19$m=0,t=3,p=2$mQDRkaBe7p3pbGvzgFn20Q$GYA0SkpXhVMLwcjRSPKCUpmd4ptMcdUcQ5YTAOnLFKs', 'Root', 'Admin');

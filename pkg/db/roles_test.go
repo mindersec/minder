@@ -23,7 +23,6 @@ package db
 
 import (
 	"context"
-	"database/sql"
 	"testing"
 	"time"
 
@@ -31,10 +30,11 @@ import (
 	"github.com/stretchr/testify/require"
 )
 
-func createRandomRole(t *testing.T, org int32) Role {
+// A helper function to create a random role
+func createRandomRole(t *testing.T, group int32) Role {
 	seed := time.Now().UnixNano()
 	arg := CreateRoleParams{
-		GroupID: sql.NullInt32{Int32: org, Valid: true},
+		GroupID: group,
 		Name:    util.RandomName(seed),
 	}
 
@@ -45,6 +45,7 @@ func createRandomRole(t *testing.T, org int32) Role {
 	require.Equal(t, arg.Name, role.Name)
 
 	require.NotZero(t, role.ID)
+	require.NotZero(t, role.GroupID)
 	require.NotZero(t, role.CreatedAt)
 	require.NotZero(t, role.UpdatedAt)
 
@@ -53,14 +54,14 @@ func createRandomRole(t *testing.T, org int32) Role {
 
 func TestRole(t *testing.T) {
 	org := createRandomOrganisation(t)
-	createRandomRole(t, org.ID)
+	group := createRandomGroup(t, org.ID)
+	createRandomRole(t, group.ID)
 }
 
 func TestGetRole(t *testing.T) {
 	org := createRandomOrganisation(t)
-	// group := createRandomGroup(t, org.ID)
-
-	role1 := createRandomRole(t, org.ID)
+	group := createRandomGroup(t, org.ID)
+	role1 := createRandomRole(t, group.ID)
 
 	role2, err := testQueries.GetRoleByID(context.Background(), role1.ID)
 
@@ -68,20 +69,26 @@ func TestGetRole(t *testing.T) {
 	require.NotEmpty(t, role2)
 
 	require.Equal(t, role1.Name, role2.Name)
+	require.Equal(t, role1.GroupID, role2.GroupID)
 
 	require.NotZero(t, role2.ID)
 	require.NotZero(t, role2.CreatedAt)
 	require.NotZero(t, role2.UpdatedAt)
+	require.False(t, role2.IsAdmin)
+	require.False(t, role2.IsProtected)
 }
 
 func TestUpdateRole(t *testing.T) {
 	seed := time.Now().UnixNano()
 	org := createRandomOrganisation(t)
-	role1 := createRandomRole(t, org.ID)
+	group := createRandomGroup(t, org.ID)
+	role1 := createRandomRole(t, group.ID)
 
 	arg := UpdateRoleParams{
-		ID:   role1.ID,
-		Name: util.RandomName(seed),
+		ID:      role1.ID,
+		GroupID: group.ID,
+		Name:    util.RandomName(seed),
+		IsAdmin: true,
 	}
 
 	role2, err := testQueries.UpdateRole(context.Background(), arg)
@@ -90,10 +97,12 @@ func TestUpdateRole(t *testing.T) {
 	require.NotEmpty(t, role2)
 
 	require.Equal(t, role1.ID, role2.ID)
+	require.Equal(t, role1.GroupID, role2.GroupID)
 	require.Equal(t, arg.Name, role2.Name)
 
 	require.NotZero(t, role2.CreatedAt)
 	require.NotZero(t, role2.UpdatedAt)
+	require.True(t, role2.IsAdmin)
 }
 
 func TestDeleteRole(t *testing.T) {
