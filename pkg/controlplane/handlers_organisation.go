@@ -31,7 +31,7 @@ type CreateOrganisationValidation struct {
 
 // CreateOrganisation is a service for creating an organisation
 func (s *Server) CreateOrganisation(ctx context.Context,
-	in *pb.CreateOrganisationRequest) (*pb.OrganisationRecord, error) {
+	in *pb.CreateOrganisationRequest) (*pb.CreateOrganisationResponse, error) {
 	// validate that the company and name are not empty
 	validator := validator.New()
 	err := validator.Struct(CreateOrganisationValidation{Name: in.Name, Company: in.Company})
@@ -44,7 +44,7 @@ func (s *Server) CreateOrganisation(ctx context.Context,
 		return nil, err
 	}
 
-	return &pb.OrganisationRecord{Id: org.ID, Name: org.Name,
+	return &pb.CreateOrganisationResponse{Id: org.ID, Name: org.Name,
 		Company: org.Company, CreatedAt: timestamppb.New(org.CreatedAt),
 		UpdatedAt: timestamppb.New(org.UpdatedAt)}, nil
 }
