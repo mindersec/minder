@@ -38,8 +38,10 @@ func TestCreateRoleDBMock(t *testing.T) {
 	mockStore := mockdb.NewMockStore(ctrl)
 
 	request := &pb.CreateRoleRequest{
-		GroupId: 1,
-		Name:    "TestRole",
+		GroupId:     1,
+		Name:        "TestRole",
+		IsAdmin:     nil,
+		IsProtected: nil,
 	}
 
 	expectedRole := db.Role{

@@ -38,6 +38,16 @@ func (s *Server) CreateRole(ctx context.Context,
 		return nil, err
 	}
 
+	if in.IsAdmin == nil {
+		isAdmin := false
+		in.IsAdmin = &isAdmin
+	}
+
+	if in.IsProtected == nil {
+		isProtected := false
+		in.IsProtected = &isProtected
+	}
+
 	role, err := s.store.CreateRole(ctx, db.CreateRoleParams{GroupID: in.GroupId,
 		Name: in.Name, IsAdmin: *in.IsAdmin, IsProtected: *in.IsProtected})
 	if err != nil {
