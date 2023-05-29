@@ -18,11 +18,12 @@ type AccessToken struct {
 }
 
 type Group struct {
-	ID             int32         `json:"id"`
-	OrganisationID sql.NullInt32 `json:"organisation_id"`
-	Name           string        `json:"name"`
-	CreatedAt      time.Time     `json:"created_at"`
-	UpdatedAt      time.Time     `json:"updated_at"`
+	ID             int32          `json:"id"`
+	OrganisationID sql.NullInt32  `json:"organisation_id"`
+	Name           string         `json:"name"`
+	Description    sql.NullString `json:"description"`
+	CreatedAt      time.Time      `json:"created_at"`
+	UpdatedAt      time.Time      `json:"updated_at"`
 }
 
 type Organisation struct {

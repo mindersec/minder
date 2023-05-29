@@ -139,6 +139,35 @@ service OrganisationService {
         };
     }
 }
+
+// manage Groups CRUD
+service GroupService {
+    rpc CreateGroup (CreateGroupRequest) returns (CreateGroupResponse) {
+        option (google.api.http) = {
+            post: "/api/v1/group"
+            body: "*"
+        };
+    }
+
+    rpc GetGroupByName (GetGroupByNameRequest) returns (GetGroupByNameResponse) {
+        option (google.api.http) = {
+            get: "/api/v1/group/name/{name}"
+        };
+    }
+
+    rpc GetGroupById (GetGroupByIdRequest) returns (GetGroupByIdResponse) {
+        option (google.api.http) = {
+            get: "/api/v1/group/id/{group_id}"
+        };
+    }
+
+    rpc GetGroups (GetGroupsRequest) returns (GetGroupsResponse) {
+        option (google.api.http) = {
+            get: "/api/v1/group"
+        };
+    }
+}
+
   
 message CheckHealthRequest {
 }
@@ -284,4 +313,61 @@ message CreateOrganisationResponse {
     string company = 3;
     google.protobuf.Timestamp created_at = 5;
     google.protobuf.Timestamp updated_at = 6;    
+}
+
+// Group service
+
+// The CreateGroupRequest message represents a request to create a group
+message CreateGroupRequest {
+    int32  organisation_id = 1;
+    string name = 2;
+    string description = 3;
+}
+
+// The GetGroupByNameRequest message represents a request to get a group by name
+message GetGroupByNameRequest {
+    string name = 1;
+}
+
+// The GetGroupByIdRequest message represents a request to get a group by ID
+message GetGroupByIdRequest {
+    int32 group_id = 1;
+}
+
+// The GetGroupsRequest message represents a request to get an array of groups
+message GetGroupsRequest {
+    int32 organisation_id = 1;
+    int32 limit = 2;
+    int32 offset = 3;
+}
+
+// BUF does not allow grouping (which is a shame)
+
+message GroupsResponse {
+    int32 group_id = 1;
+    string name = 2;
+    string description = 3;
+}
+
+message  CreateGroupResponse {
+    int32 group_id = 1;
+    string name = 2;
+    string description = 3;
+}
+
+message GetGroupByNameResponse {
+    int32 group_id = 1;
+    string name = 2;
+    string description = 3;
+}
+
+message GetGroupByIdResponse {
+    int32 group_id = 1;
+    string name = 2;
+    string description = 3;
+}
+
+// The GetGroupsResponse message represents a response with an array of groups
+message GetGroupsResponse {
+    repeated GroupsResponse groups = 1;
 }

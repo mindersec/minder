@@ -21,6 +21,7 @@ type Querier interface {
 	DeleteUser(ctx context.Context, id int32) error
 	GetAccessTokenByOrganisationID(ctx context.Context, organisationID int32) (AccessToken, error)
 	GetGroupByID(ctx context.Context, id int32) (Group, error)
+	GetGroupByName(ctx context.Context, name string) (Group, error)
 	GetOrganisation(ctx context.Context, id int32) (Organisation, error)
 	GetOrganisationForUpdate(ctx context.Context, id int32) (Organisation, error)
 	GetRoleByID(ctx context.Context, id int32) (Role, error)

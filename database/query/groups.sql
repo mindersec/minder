@@ -9,6 +9,9 @@ INSERT INTO groups (
 -- name: GetGroupByID :one
 SELECT * FROM groups WHERE id = $1;
 
+-- name: GetGroupByName :one
+SELECT * FROM groups WHERE name = $1;
+
 -- name: ListGroups :many
 SELECT * FROM groups
 WHERE organisation_id = $1

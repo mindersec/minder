@@ -16,7 +16,7 @@ INSERT INTO groups (
     name
     ) VALUES (
         $1, $2
-) RETURNING id, organisation_id, name, created_at, updated_at
+) RETURNING id, organisation_id, name, description, created_at, updated_at
 `
 
 type CreateGroupParams struct {
@@ -31,6 +31,7 @@ func (q *Queries) CreateGroup(ctx context.Context, arg CreateGroupParams) (Group
 		&i.ID,
 		&i.OrganisationID,
 		&i.Name,
+		&i.Description,
 		&i.CreatedAt,
 		&i.UpdatedAt,
 	)
@@ -48,7 +49,7 @@ func (q *Queries) DeleteGroup(ctx context.Context, id int32) error {
 }
 
 const getGroupByID = `-- name: GetGroupByID :one
-SELECT id, organisation_id, name, created_at, updated_at FROM groups WHERE id = $1
+SELECT id, organisation_id, name, description, created_at, updated_at FROM groups WHERE id = $1
 `
 
 func (q *Queries) GetGroupByID(ctx context.Context, id int32) (Group, error) {
@@ -58,6 +59,25 @@ func (q *Queries) GetGroupByID(ctx context.Context, id int32) (Group, error) {
 		&i.ID,
 		&i.OrganisationID,
 		&i.Name,
+		&i.Description,
+		&i.CreatedAt,
+		&i.UpdatedAt,
+	)
+	return i, err
+}
+
+const getGroupByName = `-- name: GetGroupByName :one
+SELECT id, organisation_id, name, description, created_at, updated_at FROM groups WHERE name = $1
+`
+
+func (q *Queries) GetGroupByName(ctx context.Context, name string) (Group, error) {
+	row := q.db.QueryRowContext(ctx, getGroupByName, name)
+	var i Group
+	err := row.Scan(
+		&i.ID,
+		&i.OrganisationID,
+		&i.Name,
+		&i.Description,
 		&i.CreatedAt,
 		&i.UpdatedAt,
 	)
@@ -65,7 +85,7 @@ func (q *Queries) GetGroupByID(ctx context.Context, id int32) (Group, error) {
 }
 
 const listGroups = `-- name: ListGroups :many
-SELECT id, organisation_id, name, created_at, updated_at FROM groups
+SELECT id, organisation_id, name, description, created_at, updated_at FROM groups
 WHERE organisation_id = $1
 ORDER BY id
 LIMIT $2
@@ -91,6 +111,7 @@ func (q *Queries) ListGroups(ctx context.Context, arg ListGroupsParams) ([]Group
 			&i.ID,
 			&i.OrganisationID,
 			&i.Name,
+			&i.Description,
 			&i.CreatedAt,
 			&i.UpdatedAt,
 		); err != nil {
@@ -110,7 +131,7 @@ func (q *Queries) ListGroups(ctx context.Context, arg ListGroupsParams) ([]Group
 const updateGroup = `-- name: UpdateGroup :one
 UPDATE groups 
 SET organisation_id = $2, name = $3, updated_at = NOW() 
-WHERE id = $1 RETURNING id, organisation_id, name, created_at, updated_at
+WHERE id = $1 RETURNING id, organisation_id, name, description, created_at, updated_at
 `
 
 type UpdateGroupParams struct {
@@ -126,6 +147,7 @@ func (q *Queries) UpdateGroup(ctx context.Context, arg UpdateGroupParams) (Group
 		&i.ID,
 		&i.OrganisationID,
 		&i.Name,
+		&i.Description,
 		&i.CreatedAt,
 		&i.UpdatedAt,
 	)
