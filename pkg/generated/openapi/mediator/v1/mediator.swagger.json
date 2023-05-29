@@ -775,10 +775,6 @@
     "v1CreateRoleRequest": {
       "type": "object",
       "properties": {
-        "organisationId": {
-          "type": "integer",
-          "format": "int32"
-        },
         "groupId": {
           "type": "integer",
           "format": "int32"
