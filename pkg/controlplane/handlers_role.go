@@ -17,18 +17,37 @@ package controlplane
 import (
 	"context"
 
-	"github.com/stacklok/mediator/internal/role"
+	"github.com/go-playground/validator/v10"
+	"github.com/stacklok/mediator/pkg/db"
 	pb "github.com/stacklok/mediator/pkg/generated/protobuf/go/mediator/v1"
 	"google.golang.org/protobuf/types/known/timestamppb"
 )
 
+type CreateRoleValidation struct {
+	GroupId int32  `db:"group_id" validate:"required"`
+	Name    string `db:"name" validate:"required"`
+}
+
 // CreateRole is a service for creating an organisation
 func (s *Server) CreateRole(ctx context.Context,
 	in *pb.CreateRoleRequest) (*pb.CreateRoleResponse, error) {
-	r, err := role.CreateRole(ctx, s.store, in.GroupId, in.Name, in.IsAdmin, in.IsProtected)
+	// validate that the company and name are not empty
+	validator := validator.New()
+	err := validator.Struct(CreateRoleValidation{GroupId: in.GroupId, Name: in.Name})
 	if err != nil {
 		return nil, err
 	}
-	return &pb.CreateRoleResponse{Id: r.ID, GroupId: r.GroupID, Name: r.Name, IsAdmin: r.IsAdmin,
-		IsProtected: r.IsProtected, CreatedAt: timestamppb.New(r.CreatedAt), UpdatedAt: timestamppb.New(r.UpdatedAt)}, nil
+
+	role, err := s.store.CreateRole(ctx, db.CreateRoleParams{GroupID: in.GroupId,
+		Name: in.Name, IsAdmin: *in.IsAdmin, IsProtected: *in.IsProtected})
+	if err != nil {
+		return nil, err
+	}
+
+	return &pb.CreateRoleResponse{Id: role.ID, Name: role.Name,
+		IsAdmin: role.IsAdmin, IsProtected: role.IsProtected,
+		GroupId:   role.GroupID,
+		CreatedAt: timestamppb.New(role.CreatedAt),
+		UpdatedAt: timestamppb.New(role.UpdatedAt)}, nil
+
 }

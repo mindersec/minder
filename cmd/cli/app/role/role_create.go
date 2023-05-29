@@ -36,7 +36,7 @@ import (
 var role_createCmd = &cobra.Command{
 	Use:   "create",
 	Short: "Create a role within a mediator control plane",
-	Long: `The medctl role create subcommand lets you create new roles for an organization
+	Long: `The medctl role create subcommand lets you create new roles for a group
 within a mediator control plane.`,
 	Run: func(cmd *cobra.Command, args []string) {
 		// create the role via GRPC
