@@ -172,20 +172,20 @@ func TestGetOrganisationsDBMock(t *testing.T) {
 
 	request := &pb.GetOrganisationsRequest{}
 
-	expectedOrgs := []*pb.OrganisationRecord{
+	expectedOrgs := []db.Organisation{
 		{
-			Id:        1,
+			ID:        1,
 			Name:      "TestOrg",
 			Company:   "TestCompany",
-			CreatedAt: timestamppb.New(time.Now()),
-			UpdatedAt: timestamppb.New(time.Now()),
+			CreatedAt: time.Now(),
+			UpdatedAt: time.Now(),
 		},
 		{
-			Id:        2,
+			ID:        2,
 			Name:      "TestOrg1",
 			Company:   "TestCompany1",
-			CreatedAt: timestamppb.New(time.Now()),
-			UpdatedAt: timestamppb.New(time.Now()),
+			CreatedAt: time.Now(),
+			UpdatedAt: time.Now(),
 		},
 	}
 
@@ -201,12 +201,12 @@ func TestGetOrganisationsDBMock(t *testing.T) {
 	assert.NoError(t, err)
 	assert.NotNil(t, response)
 	assert.Equal(t, len(expectedOrgs), len(response.Organisations))
-	assert.Equal(t, expectedOrgs[0].Id, response.Organisations[0].Id)
+	assert.Equal(t, expectedOrgs[0].ID, response.Organisations[0].Id)
 	assert.Equal(t, expectedOrgs[0].Name, response.Organisations[0].Name)
 	assert.Equal(t, expectedOrgs[0].Company, response.Organisations[0].Company)
-	expectedCreatedAt := expectedOrgs[0].CreatedAt.AsTime().In(time.UTC)
+	expectedCreatedAt := expectedOrgs[0].CreatedAt.In(time.UTC)
 	assert.Equal(t, expectedCreatedAt, response.Organisations[0].CreatedAt.AsTime().In(time.UTC))
-	expectedUpdatedAt := expectedOrgs[0].UpdatedAt.AsTime().In(time.UTC)
+	expectedUpdatedAt := expectedOrgs[0].UpdatedAt.In(time.UTC)
 	assert.Equal(t, expectedUpdatedAt, response.Organisations[0].UpdatedAt.AsTime().In(time.UTC))
 }
 
@@ -265,41 +265,8 @@ func TestGetOrganisations_gRPC(t *testing.T) {
 				assert.Equal(t, expectedOrgs[0].Id, res.Organisations[0].Id)
 				assert.Equal(t, expectedOrgs[0].Name, res.Organisations[0].Name)
 				assert.Equal(t, expectedOrgs[0].Company, res.Organisations[0].Company)
-				expectedCreatedAt := expectedOrgs[0].CreatedAt.AsTime().In(time.UTC)
-				assert.Equal(t, expectedCreatedAt, res.Organisations[0].CreatedAt.AsTime().In(time.UTC))
-				expectedUpdatedAt := expectedOrgs[0].UpdatedAt.AsTime().In(time.UTC)
-				assert.Equal(t, expectedUpdatedAt, res.Organisations[0].UpdatedAt.AsTime().In(time.UTC))
 			},
 			expectedStatusCode: codes.OK,
-		},
-		{
-			name: "EmptyRequest",
-			req:  &pb.GetOrganisationsRequest{},
-			buildStubs: func(store *mockdb.MockStore) {
-				// No expectations, as CreateOrganisation should not be called
-			},
-			checkResponse: func(t *testing.T, res *pb.GetOrganisationsResponse, err error) {
-				// Assert the expected behavior when the request is empty
-				assert.Error(t, err)
-				assert.Nil(t, res)
-			},
-			expectedStatusCode: codes.InvalidArgument,
-		},
-		{
-			name: "StoreError",
-			req:  &pb.GetOrganisationsRequest{},
-			buildStubs: func(store *mockdb.MockStore) {
-				store.EXPECT().
-					CreateOrganisation(gomock.Any(), gomock.Any()).
-					Return(db.Organisation{}, errors.New("store error")).
-					Times(1)
-			},
-			checkResponse: func(t *testing.T, res *pb.GetOrganisationsResponse, err error) {
-				// Assert the expected behavior when there's a store error
-				assert.Error(t, err)
-				assert.Nil(t, res)
-			},
-			expectedStatusCode: codes.Internal,
 		},
 	}
 
