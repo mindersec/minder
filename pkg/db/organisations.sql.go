@@ -66,14 +66,33 @@ func (q *Queries) GetOrganisation(ctx context.Context, id int32) (Organisation, 
 	return i, err
 }
 
+const getOrganisationByName = `-- name: GetOrganisationByName :one
+SELECT id, name, company, root_admin_id, created_at, updated_at FROM organisations 
+WHERE name = $1 LIMIT 1
+`
+
+func (q *Queries) GetOrganisationByName(ctx context.Context, name string) (Organisation, error) {
+	row := q.db.QueryRowContext(ctx, getOrganisationByName, name)
+	var i Organisation
+	err := row.Scan(
+		&i.ID,
+		&i.Name,
+		&i.Company,
+		&i.RootAdminID,
+		&i.CreatedAt,
+		&i.UpdatedAt,
+	)
+	return i, err
+}
+
 const getOrganisationForUpdate = `-- name: GetOrganisationForUpdate :one
 SELECT id, name, company, root_admin_id, created_at, updated_at FROM organisations
-WHERE id = $1 LIMIT 1
+WHERE name = $1 LIMIT 1
 FOR NO KEY UPDATE
 `
 
-func (q *Queries) GetOrganisationForUpdate(ctx context.Context, id int32) (Organisation, error) {
-	row := q.db.QueryRowContext(ctx, getOrganisationForUpdate, id)
+func (q *Queries) GetOrganisationForUpdate(ctx context.Context, name string) (Organisation, error) {
+	row := q.db.QueryRowContext(ctx, getOrganisationForUpdate, name)
 	var i Organisation
 	err := row.Scan(
 		&i.ID,

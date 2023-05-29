@@ -254,8 +254,23 @@ func (mr *MockStoreMockRecorder) GetOrganisation(arg0, arg1 interface{}) *gomock
 	return mr.mock.ctrl.RecordCallWithMethodType(mr.mock, "GetOrganisation", reflect.TypeOf((*MockStore)(nil).GetOrganisation), arg0, arg1)
 }
 
+// GetOrganisationByName mocks base method.
+func (m *MockStore) GetOrganisationByName(arg0 context.Context, arg1 string) (db.Organisation, error) {
+	m.ctrl.T.Helper()
+	ret := m.ctrl.Call(m, "GetOrganisationByName", arg0, arg1)
+	ret0, _ := ret[0].(db.Organisation)
+	ret1, _ := ret[1].(error)
+	return ret0, ret1
+}
+
+// GetOrganisationByName indicates an expected call of GetOrganisationByName.
+func (mr *MockStoreMockRecorder) GetOrganisationByName(arg0, arg1 interface{}) *gomock.Call {
+	mr.mock.ctrl.T.Helper()
+	return mr.mock.ctrl.RecordCallWithMethodType(mr.mock, "GetOrganisationByName", reflect.TypeOf((*MockStore)(nil).GetOrganisationByName), arg0, arg1)
+}
+
 // GetOrganisationForUpdate mocks base method.
-func (m *MockStore) GetOrganisationForUpdate(arg0 context.Context, arg1 int32) (db.Organisation, error) {
+func (m *MockStore) GetOrganisationForUpdate(arg0 context.Context, arg1 string) (db.Organisation, error) {
 	m.ctrl.T.Helper()
 	ret := m.ctrl.Call(m, "GetOrganisationForUpdate", arg0, arg1)
 	ret0, _ := ret[0].(db.Organisation)
