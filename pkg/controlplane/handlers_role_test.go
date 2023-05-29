@@ -40,9 +40,14 @@ func TestRoleCreate(t *testing.T) {
 		t.Fatalf("Failed to create organisation: %v", err)
 	}
 
+	group, err := server.CreateGroup(context.Background(), &pb.CreateGroupRequest{
+		OrganisationId: org.GetId(),
+		Name:           util.RandomString(10, seed),
+	})
+
 	role, err := server.CreateRole(context.Background(), &pb.CreateRoleRequest{
 		OrganisationId: org.Id,
-		GroupId:        int32(util.RandomInt(1, 1000, seed)),
+		GroupId:        group.GetGroupId(),
 		Name:           util.RandomString(10, seed),
 	})
 
