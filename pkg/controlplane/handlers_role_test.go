@@ -108,7 +108,7 @@ func TestCreateRole_gRPC(t *testing.T) {
 				assert.NotNil(t, res)
 				assert.Equal(t, int32(1), res.Id)
 				assert.Equal(t, "TestRole", res.Name)
-				assert.Equal(t, 1, res.GroupId)
+				assert.Equal(t, int32(1), res.GroupId)
 				assert.Equal(t, false, res.IsAdmin)
 				assert.Equal(t, false, res.IsProtected)
 				assert.NotNil(t, res.CreatedAt)

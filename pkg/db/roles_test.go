@@ -60,9 +60,8 @@ func TestRole(t *testing.T) {
 
 func TestGetRole(t *testing.T) {
 	org := createRandomOrganisation(t)
-	// group := createRandomGroup(t, org.ID)
-
-	role1 := createRandomRole(t, org.ID)
+	group := createRandomGroup(t, org.ID)
+	role1 := createRandomRole(t, group.ID)
 
 	role2, err := testQueries.GetRoleByID(context.Background(), role1.ID)
 
@@ -82,7 +81,8 @@ func TestGetRole(t *testing.T) {
 func TestUpdateRole(t *testing.T) {
 	seed := time.Now().UnixNano()
 	org := createRandomOrganisation(t)
-	role1 := createRandomRole(t, org.ID)
+	group := createRandomGroup(t, org.ID)
+	role1 := createRandomRole(t, group.ID)
 
 	arg := UpdateRoleParams{
 		ID:      role1.ID,
