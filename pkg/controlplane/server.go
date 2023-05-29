@@ -53,6 +53,7 @@ type Server struct {
 	pb.UnimplementedOrganisationServiceServer
 	pb.UnimplementedGroupServiceServer
 	pb.UnimplementedRoleServiceServer
+	pb.UnimplementedUserServiceServer
 	OAuth2       *oauth2.Config
 	ClientID     string
 	ClientSecret string

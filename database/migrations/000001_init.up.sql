@@ -48,14 +48,15 @@ CREATE TABLE roles (
 -- users table
 CREATE TABLE users (
     id SERIAL PRIMARY KEY,
-    organisation_id INTEGER REFERENCES organisations(id) ON DELETE CASCADE,
-    group_id INTEGER REFERENCES groups(id) ON DELETE SET NULL,
-    role_id INTEGER REFERENCES roles(id) ON DELETE SET NULL,
+    organisation_id INTEGER NOT NULL REFERENCES organisations(id) ON DELETE CASCADE,
+    group_id INTEGER NOT NULL REFERENCES groups(id),
+    role_id INTEGER NOT NULL REFERENCES roles(id),
     email TEXT NOT NULL UNIQUE,
     username TEXT NOT NULL UNIQUE,
     password TEXT NOT NULL,
-    first_name TEXT NOT NULL,
-    last_name TEXT NOT NULL,
+    first_name TEXT,
+    last_name TEXT,
+    is_protected BOOLEAN NOT NULL DEFAULT FALSE,
     created_at TIMESTAMP NOT NULL DEFAULT NOW(),
     updated_at TIMESTAMP NOT NULL DEFAULT NOW()
 );

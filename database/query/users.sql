@@ -1,5 +1,5 @@
 -- name: CreateUser :one
-INSERT INTO users (organisation_id, group_id, email, username, password, first_name, last_name) VALUES ($1, $2, $3, $4, $5, $6, $7) RETURNING *;
+INSERT INTO users (organisation_id, group_id, role_id, email, username, password, first_name, last_name, is_protected) VALUES ($1, $2, $3, $4, $5, $6, $7, $8, $9) RETURNING *;
 
 -- name: GetUserByID :one
 SELECT * FROM users WHERE id = $1;
@@ -14,7 +14,7 @@ SELECT * FROM users WHERE username = $1;
 SELECT * FROM users;
 
 -- name: UpdateUser :one
-UPDATE users SET organisation_id = $2, group_id = $3, email = $4, username = $5, password = $6, first_name = $7, last_name = $8, updated_at = NOW() WHERE id = $1 RETURNING *;
+UPDATE users SET organisation_id = $2, group_id = $3, role_id = $4, email = $5, username = $6, password = $7, first_name = $8, last_name = $9, is_protected = $10, updated_at = NOW() WHERE id = $1 RETURNING *;
 
 -- name: DeleteUser :exec
 DELETE FROM users WHERE id = $1;
