@@ -25,19 +25,17 @@ import (
 )
 
 type CreateUserValidation struct {
-	OrganisationId int32  `db:"organisation_id" validate:"required"`
-	RoleId         int32  `db:"role_id" validate:"required"`
-	GroupId        int32  `db:"group_id" validate:"required"`
-	Email          string `db:"email" validate:"required,email"`
-	Username       string `db:"username" validate:"required"`
-	Password       string `validate:"required,min=8,containsany=!@#?*"`
+	RoleId   int32  `db:"role_id" validate:"required"`
+	Email    string `db:"email" validate:"required,email"`
+	Username string `db:"username" validate:"required"`
+	Password string `validate:"required,min=8,containsany=!@#?*"`
 }
 
-func stringToNullString(s string) *sql.NullString {
-	if s == "" {
-		return nil
+func stringToNullString(s *string) *sql.NullString {
+	if s == nil {
+		return &sql.NullString{Valid: false}
 	}
-	return &sql.NullString{String: s, Valid: true}
+	return &sql.NullString{String: *s, Valid: true}
 }
 
 // CreateUser is a service for creating an organisation
@@ -45,8 +43,8 @@ func (s *Server) CreateUser(ctx context.Context,
 	in *pb.CreateUserRequest) (*pb.CreateUserResponse, error) {
 	// validate that the company and name are not empty
 	validator := validator.New()
-	err := validator.Struct(CreateUserValidation{OrganisationId: in.OrganisationId, RoleId: in.RoleId,
-		GroupId: in.GroupId, Email: in.Email, Username: in.Username, Password: in.Password})
+	err := validator.Struct(CreateUserValidation{RoleId: in.RoleId,
+		Email: in.Email, Username: in.Username, Password: in.Password})
 	if err != nil {
 		return nil, err
 	}
@@ -56,15 +54,16 @@ func (s *Server) CreateUser(ctx context.Context,
 		in.IsProtected = &isProtected
 	}
 
-	user, err := s.store.CreateUser(ctx, db.CreateUserParams{OrganisationID: in.OrganisationId, RoleID: in.RoleId,
-		GroupID: in.GroupId, Email: in.Email, Username: in.Username, Password: in.Password,
-		FirstName: *stringToNullString(*in.FirstName), LastName: *stringToNullString(*in.LastName), IsProtected: *in.IsProtected})
+	user, err := s.store.CreateUser(ctx, db.CreateUserParams{RoleID: in.RoleId,
+		Email: in.Email, Username: in.Username, Password: in.Password,
+		FirstName: *stringToNullString(in.FirstName), LastName: *stringToNullString(in.LastName),
+		IsProtected: *in.IsProtected})
 	if err != nil {
 		return nil, err
 	}
 
-	return &pb.CreateUserResponse{Id: user.ID, OrganisationId: user.OrganisationID, RoleId: user.RoleID, GroupId: user.GroupID,
-		Email: user.Email, Username: user.Username, FirstName: &user.FirstName.String, LastName: &user.LastName.String,
+	return &pb.CreateUserResponse{Id: user.ID, RoleId: user.RoleID, Email: user.Email,
+		Username: user.Username, FirstName: &user.FirstName.String, LastName: &user.LastName.String,
 		IsProtected: &user.IsProtected, CreatedAt: timestamppb.New(user.CreatedAt),
 		UpdatedAt: timestamppb.New(user.UpdatedAt)}, nil
 

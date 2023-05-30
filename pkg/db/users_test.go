@@ -44,22 +44,18 @@ func createRandomUser(t *testing.T, org Organisation) User {
 	role := createRandomRole(t, group.ID)
 
 	arg := CreateUserParams{
-		OrganisationID: org.ID,
-		GroupID:        group.ID,
-		RoleID:         role.ID,
-		Email:          util.RandomEmail(seed),
-		Username:       util.RandomString(10, seed),
-		Password:       util.RandomPassword(10, seed),
-		FirstName:      stringToNullString(util.RandomName(seed)),
-		LastName:       stringToNullString(util.RandomName(seed)),
+		RoleID:    role.ID,
+		Email:     util.RandomEmail(seed),
+		Username:  util.RandomString(10, seed),
+		Password:  util.RandomPassword(10, seed),
+		FirstName: stringToNullString(util.RandomName(seed)),
+		LastName:  stringToNullString(util.RandomName(seed)),
 	}
 
 	user, err := testQueries.CreateUser(context.Background(), arg)
 	require.NoError(t, err)
 	require.NotEmpty(t, user)
 
-	require.Equal(t, arg.OrganisationID, user.OrganisationID)
-	require.Equal(t, arg.GroupID, user.GroupID)
 	require.Equal(t, arg.RoleID, user.RoleID)
 	require.Equal(t, arg.Email, user.Email)
 	require.Equal(t, arg.Username, user.Username)
@@ -90,8 +86,6 @@ func TestGetUser(t *testing.T) {
 	require.NotEmpty(t, user2)
 
 	require.Equal(t, user1.ID, user2.ID)
-	require.Equal(t, user1.OrganisationID, user2.OrganisationID)
-	require.Equal(t, user1.GroupID, user2.GroupID)
 	require.Equal(t, user1.RoleID, user2.RoleID)
 	require.Equal(t, user1.Email, user2.Email)
 	require.Equal(t, user1.Username, user2.Username)
@@ -113,15 +107,13 @@ func TestUpdateUser(t *testing.T) {
 	user1 := createRandomUser(t, org)
 
 	arg := UpdateUserParams{
-		ID:             user1.ID,
-		OrganisationID: user1.OrganisationID,
-		GroupID:        user1.GroupID,
-		RoleID:         user1.RoleID,
-		Email:          util.RandomEmail(seed),
-		Username:       util.RandomString(10, seed),
-		Password:       util.RandomString(10, seed),
-		FirstName:      stringToNullString(util.RandomName(seed)),
-		LastName:       stringToNullString(util.RandomName(seed)),
+		ID:        user1.ID,
+		RoleID:    user1.RoleID,
+		Email:     util.RandomEmail(seed),
+		Username:  util.RandomString(10, seed),
+		Password:  util.RandomString(10, seed),
+		FirstName: stringToNullString(util.RandomName(seed)),
+		LastName:  stringToNullString(util.RandomName(seed)),
 	}
 
 	user2, err := testQueries.UpdateUser(context.Background(), arg)
@@ -129,8 +121,6 @@ func TestUpdateUser(t *testing.T) {
 	require.NotEmpty(t, user2)
 
 	require.Equal(t, arg.ID, user2.ID)
-	require.Equal(t, arg.OrganisationID, user2.OrganisationID)
-	require.Equal(t, arg.GroupID, user2.GroupID)
 	require.Equal(t, arg.RoleID, user2.RoleID)
 	require.Equal(t, arg.Email, user2.Email)
 	require.Equal(t, arg.Username, user2.Username)

@@ -38,6 +38,6 @@ a mediator controlplane.`,
 func init() {
 	app.RootCmd.AddCommand(RoleCmd)
 	if err := viper.BindPFlags(RoleCmd.PersistentFlags()); err != nil {
-		fmt.Fprintf(os.Stderr, "Error binding flags: %s\n", err)
+		fmt.Fprintf(os.Stderr, "Error binding flags19: %s\n", err)
 	}
 }

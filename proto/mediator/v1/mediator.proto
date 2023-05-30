@@ -466,28 +466,24 @@ message GetOrganisationByNameResponse {
 
 // User service
 message CreateUserRequest {
-    int32 organisation_id = 1;
-    int32 role_id = 2;
-    int32 group_id = 3;
-    string email = 4;
-    string username = 5;
-    string password = 6;
-    optional string first_name = 7;
-    optional string last_name = 8;
-    optional bool is_protected = 9;
+    int32 role_id = 1;
+    string email = 2;
+    string username = 3;
+    string password = 4;
+    optional string first_name = 5;
+    optional string last_name = 6;
+    optional bool is_protected = 7;
   }
   
 message CreateUserResponse {
     int32 id = 1;
-    int32 organisation_id = 2;
-    int32 role_id = 3;
-    int32 group_id = 4;
-    string email = 5;
-    string username = 6;
-    string password = 7;
-    optional string first_name = 8;
-    optional string last_name = 9;
-    optional bool is_protected = 10;
-    google.protobuf.Timestamp created_at = 11;
-    google.protobuf.Timestamp updated_at = 12;    
+    int32 role_id = 2;
+    string email = 3;
+    string username = 4;
+    string password = 5;
+    optional string first_name = 6;
+    optional string last_name = 7;
+    optional bool is_protected = 8;
+    google.protobuf.Timestamp created_at = 9;
+    google.protobuf.Timestamp updated_at = 10;    
 }

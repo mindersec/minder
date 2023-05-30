@@ -68,7 +68,7 @@ func RandomPassword(n int, seed int64) string {
 
 	// add special chars
 	const chars = "!@#?*"
-	s[len(s)] = chars[r.Intn(len(chars))]
+	s[len(s)-1] = chars[r.Intn(len(chars))]
 
 	return string(s)
 }

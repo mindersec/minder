@@ -11,25 +11,21 @@ import (
 )
 
 const createUser = `-- name: CreateUser :one
-INSERT INTO users (organisation_id, group_id, role_id, email, username, password, first_name, last_name, is_protected) VALUES ($1, $2, $3, $4, $5, $6, $7, $8, $9) RETURNING id, organisation_id, group_id, role_id, email, username, password, first_name, last_name, is_protected, created_at, updated_at
+INSERT INTO users (role_id, email, username, password, first_name, last_name, is_protected) VALUES ($1, $2, $3, $4, $5, $6, $7) RETURNING id, role_id, email, username, password, first_name, last_name, is_protected, created_at, updated_at
 `
 
 type CreateUserParams struct {
-	OrganisationID int32          `json:"organisation_id"`
-	GroupID        int32          `json:"group_id"`
-	RoleID         int32          `json:"role_id"`
-	Email          string         `json:"email"`
-	Username       string         `json:"username"`
-	Password       string         `json:"password"`
-	FirstName      sql.NullString `json:"first_name"`
-	LastName       sql.NullString `json:"last_name"`
-	IsProtected    bool           `json:"is_protected"`
+	RoleID      int32          `json:"role_id"`
+	Email       string         `json:"email"`
+	Username    string         `json:"username"`
+	Password    string         `json:"password"`
+	FirstName   sql.NullString `json:"first_name"`
+	LastName    sql.NullString `json:"last_name"`
+	IsProtected bool           `json:"is_protected"`
 }
 
 func (q *Queries) CreateUser(ctx context.Context, arg CreateUserParams) (User, error) {
 	row := q.db.QueryRowContext(ctx, createUser,
-		arg.OrganisationID,
-		arg.GroupID,
 		arg.RoleID,
 		arg.Email,
 		arg.Username,
@@ -41,8 +37,6 @@ func (q *Queries) CreateUser(ctx context.Context, arg CreateUserParams) (User, e
 	var i User
 	err := row.Scan(
 		&i.ID,
-		&i.OrganisationID,
-		&i.GroupID,
 		&i.RoleID,
 		&i.Email,
 		&i.Username,
@@ -66,7 +60,7 @@ func (q *Queries) DeleteUser(ctx context.Context, id int32) error {
 }
 
 const getUserByEmail = `-- name: GetUserByEmail :one
-SELECT id, organisation_id, group_id, role_id, email, username, password, first_name, last_name, is_protected, created_at, updated_at FROM users WHERE email = $1
+SELECT id, role_id, email, username, password, first_name, last_name, is_protected, created_at, updated_at FROM users WHERE email = $1
 `
 
 func (q *Queries) GetUserByEmail(ctx context.Context, email string) (User, error) {
@@ -74,8 +68,6 @@ func (q *Queries) GetUserByEmail(ctx context.Context, email string) (User, error
 	var i User
 	err := row.Scan(
 		&i.ID,
-		&i.OrganisationID,
-		&i.GroupID,
 		&i.RoleID,
 		&i.Email,
 		&i.Username,
@@ -90,7 +82,7 @@ func (q *Queries) GetUserByEmail(ctx context.Context, email string) (User, error
 }
 
 const getUserByID = `-- name: GetUserByID :one
-SELECT id, organisation_id, group_id, role_id, email, username, password, first_name, last_name, is_protected, created_at, updated_at FROM users WHERE id = $1
+SELECT id, role_id, email, username, password, first_name, last_name, is_protected, created_at, updated_at FROM users WHERE id = $1
 `
 
 func (q *Queries) GetUserByID(ctx context.Context, id int32) (User, error) {
@@ -98,8 +90,6 @@ func (q *Queries) GetUserByID(ctx context.Context, id int32) (User, error) {
 	var i User
 	err := row.Scan(
 		&i.ID,
-		&i.OrganisationID,
-		&i.GroupID,
 		&i.RoleID,
 		&i.Email,
 		&i.Username,
@@ -114,7 +104,7 @@ func (q *Queries) GetUserByID(ctx context.Context, id int32) (User, error) {
 }
 
 const getUserByUserName = `-- name: GetUserByUserName :one
-SELECT id, organisation_id, group_id, role_id, email, username, password, first_name, last_name, is_protected, created_at, updated_at FROM users WHERE username = $1
+SELECT id, role_id, email, username, password, first_name, last_name, is_protected, created_at, updated_at FROM users WHERE username = $1
 `
 
 func (q *Queries) GetUserByUserName(ctx context.Context, username string) (User, error) {
@@ -122,8 +112,6 @@ func (q *Queries) GetUserByUserName(ctx context.Context, username string) (User,
 	var i User
 	err := row.Scan(
 		&i.ID,
-		&i.OrganisationID,
-		&i.GroupID,
 		&i.RoleID,
 		&i.Email,
 		&i.Username,
@@ -138,7 +126,7 @@ func (q *Queries) GetUserByUserName(ctx context.Context, username string) (User,
 }
 
 const listUsers = `-- name: ListUsers :many
-SELECT id, organisation_id, group_id, role_id, email, username, password, first_name, last_name, is_protected, created_at, updated_at FROM users
+SELECT id, role_id, email, username, password, first_name, last_name, is_protected, created_at, updated_at FROM users
 `
 
 func (q *Queries) ListUsers(ctx context.Context) ([]User, error) {
@@ -152,8 +140,6 @@ func (q *Queries) ListUsers(ctx context.Context) ([]User, error) {
 		var i User
 		if err := rows.Scan(
 			&i.ID,
-			&i.OrganisationID,
-			&i.GroupID,
 			&i.RoleID,
 			&i.Email,
 			&i.Username,
@@ -178,27 +164,23 @@ func (q *Queries) ListUsers(ctx context.Context) ([]User, error) {
 }
 
 const updateUser = `-- name: UpdateUser :one
-UPDATE users SET organisation_id = $2, group_id = $3, role_id = $4, email = $5, username = $6, password = $7, first_name = $8, last_name = $9, is_protected = $10, updated_at = NOW() WHERE id = $1 RETURNING id, organisation_id, group_id, role_id, email, username, password, first_name, last_name, is_protected, created_at, updated_at
+UPDATE users SET role_id = $2, email = $3, username = $4, password = $5, first_name = $6, last_name = $7, is_protected = $8, updated_at = NOW() WHERE id = $1 RETURNING id, role_id, email, username, password, first_name, last_name, is_protected, created_at, updated_at
 `
 
 type UpdateUserParams struct {
-	ID             int32          `json:"id"`
-	OrganisationID int32          `json:"organisation_id"`
-	GroupID        int32          `json:"group_id"`
-	RoleID         int32          `json:"role_id"`
-	Email          string         `json:"email"`
-	Username       string         `json:"username"`
-	Password       string         `json:"password"`
-	FirstName      sql.NullString `json:"first_name"`
-	LastName       sql.NullString `json:"last_name"`
-	IsProtected    bool           `json:"is_protected"`
+	ID          int32          `json:"id"`
+	RoleID      int32          `json:"role_id"`
+	Email       string         `json:"email"`
+	Username    string         `json:"username"`
+	Password    string         `json:"password"`
+	FirstName   sql.NullString `json:"first_name"`
+	LastName    sql.NullString `json:"last_name"`
+	IsProtected bool           `json:"is_protected"`
 }
 
 func (q *Queries) UpdateUser(ctx context.Context, arg UpdateUserParams) (User, error) {
 	row := q.db.QueryRowContext(ctx, updateUser,
 		arg.ID,
-		arg.OrganisationID,
-		arg.GroupID,
 		arg.RoleID,
 		arg.Email,
 		arg.Username,
@@ -210,8 +192,6 @@ func (q *Queries) UpdateUser(ctx context.Context, arg UpdateUserParams) (User, e
 	var i User
 	err := row.Scan(
 		&i.ID,
-		&i.OrganisationID,
-		&i.GroupID,
 		&i.RoleID,
 		&i.Email,
 		&i.Username,

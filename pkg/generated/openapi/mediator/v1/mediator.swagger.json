@@ -962,15 +962,7 @@
     "v1CreateUserRequest": {
       "type": "object",
       "properties": {
-        "organisationId": {
-          "type": "integer",
-          "format": "int32"
-        },
         "roleId": {
-          "type": "integer",
-          "format": "int32"
-        },
-        "groupId": {
           "type": "integer",
           "format": "int32"
         },
@@ -1002,15 +994,7 @@
           "type": "integer",
           "format": "int32"
         },
-        "organisationId": {
-          "type": "integer",
-          "format": "int32"
-        },
         "roleId": {
-          "type": "integer",
-          "format": "int32"
-        },
-        "groupId": {
           "type": "integer",
           "format": "int32"
         },
