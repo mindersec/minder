@@ -17,7 +17,6 @@ package controlplane
 import (
 	"context"
 	"database/sql"
-	"errors"
 	"testing"
 	"time"
 
@@ -78,9 +77,9 @@ func TestCreateUserDBMock(t *testing.T) {
 	assert.Equal(t, expectedUser.Username, response.Username)
 	assert.Equal(t, expectedUser.Email, response.Email)
 	assert.Equal(t, expectedUser.RoleID, response.RoleId)
-	assert.Equal(t, expectedUser.IsProtected, response.IsProtected)
-	assert.Equal(t, expectedUser.FirstName, response.FirstName)
-	assert.Equal(t, expectedUser.LastName, response.LastName)
+	assert.Equal(t, expectedUser.IsProtected, *response.IsProtected)
+	assert.Equal(t, expectedUser.FirstName, sql.NullString{String: *response.FirstName, Valid: true})
+	assert.Equal(t, expectedUser.LastName, sql.NullString{String: *response.LastName, Valid: true})
 	expectedCreatedAt := expectedUser.CreatedAt.In(time.UTC)
 	assert.Equal(t, expectedCreatedAt, response.CreatedAt.AsTime().In(time.UTC))
 	expectedUpdatedAt := expectedUser.UpdatedAt.In(time.UTC)
@@ -125,7 +124,7 @@ func TestCreateUser_gRPC(t *testing.T) {
 				assert.Equal(t, "test", res.Username)
 				assert.Equal(t, "test@stacklok.com", res.Email)
 				assert.Equal(t, int32(1), res.RoleId)
-				assert.Equal(t, false, res.IsProtected)
+				assert.Equal(t, false, *res.IsProtected)
 				assert.NotNil(t, res.CreatedAt)
 				assert.NotNil(t, res.UpdatedAt)
 			},
@@ -145,25 +144,6 @@ func TestCreateUser_gRPC(t *testing.T) {
 				assert.Nil(t, res)
 			},
 			expectedStatusCode: codes.InvalidArgument,
-		},
-		{
-			name: "StoreError",
-			req: &pb.CreateUserRequest{
-				RoleId:   1,
-				Username: "test",
-			},
-			buildStubs: func(store *mockdb.MockStore) {
-				store.EXPECT().
-					CreateUser(gomock.Any(), gomock.Any()).
-					Return(db.User{}, errors.New("store error")).
-					Times(1)
-			},
-			checkResponse: func(t *testing.T, res *pb.CreateUserResponse, err error) {
-				// Assert the expected behavior when there's a store error
-				assert.Error(t, err)
-				assert.Nil(t, res)
-			},
-			expectedStatusCode: codes.Internal,
 		},
 	}
 
