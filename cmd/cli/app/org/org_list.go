@@ -116,6 +116,6 @@ func init() {
 	org_listCmd.PersistentFlags().Int32P("offset", "f", 0, "Offset the results returned")
 
 	if err := viper.BindPFlags(org_listCmd.PersistentFlags()); err != nil {
-		fmt.Fprintf(os.Stderr, "Error binding flags14: %s\n", err)
+		fmt.Fprintf(os.Stderr, "Error binding flags: %s\n", err)
 	}
 }
