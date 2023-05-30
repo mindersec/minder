@@ -995,6 +995,7 @@ var BranchProtectionService_ServiceDesc = grpc.ServiceDesc{
 
 const (
 	OrganisationService_CreateOrganisation_FullMethodName = "/mediator.v1.OrganisationService/CreateOrganisation"
+	OrganisationService_GetOrganisations_FullMethodName   = "/mediator.v1.OrganisationService/GetOrganisations"
 )
 
 // OrganisationServiceClient is the client API for OrganisationService service.
@@ -1002,6 +1003,7 @@ const (
 // For semantics around ctx use and closing/ending streaming RPCs, please refer to https://pkg.go.dev/google.golang.org/grpc/?tab=doc#ClientConn.NewStream.
 type OrganisationServiceClient interface {
 	CreateOrganisation(ctx context.Context, in *CreateOrganisationRequest, opts ...grpc.CallOption) (*CreateOrganisationResponse, error)
+	GetOrganisations(ctx context.Context, in *GetOrganisationsRequest, opts ...grpc.CallOption) (*GetOrganisationsResponse, error)
 }
 
 type organisationServiceClient struct {
@@ -1021,11 +1023,21 @@ func (c *organisationServiceClient) CreateOrganisation(ctx context.Context, in *
 	return out, nil
 }
 
+func (c *organisationServiceClient) GetOrganisations(ctx context.Context, in *GetOrganisationsRequest, opts ...grpc.CallOption) (*GetOrganisationsResponse, error) {
+	out := new(GetOrganisationsResponse)
+	err := c.cc.Invoke(ctx, OrganisationService_GetOrganisations_FullMethodName, in, out, opts...)
+	if err != nil {
+		return nil, err
+	}
+	return out, nil
+}
+
 // OrganisationServiceServer is the server API for OrganisationService service.
 // All implementations must embed UnimplementedOrganisationServiceServer
 // for forward compatibility
 type OrganisationServiceServer interface {
 	CreateOrganisation(context.Context, *CreateOrganisationRequest) (*CreateOrganisationResponse, error)
+	GetOrganisations(context.Context, *GetOrganisationsRequest) (*GetOrganisationsResponse, error)
 	mustEmbedUnimplementedOrganisationServiceServer()
 }
 
@@ -1035,6 +1047,9 @@ type UnimplementedOrganisationServiceServer struct {
 
 func (UnimplementedOrganisationServiceServer) CreateOrganisation(context.Context, *CreateOrganisationRequest) (*CreateOrganisationResponse, error) {
 	return nil, status.Errorf(codes.Unimplemented, "method CreateOrganisation not implemented")
+}
+func (UnimplementedOrganisationServiceServer) GetOrganisations(context.Context, *GetOrganisationsRequest) (*GetOrganisationsResponse, error) {
+	return nil, status.Errorf(codes.Unimplemented, "method GetOrganisations not implemented")
 }
 func (UnimplementedOrganisationServiceServer) mustEmbedUnimplementedOrganisationServiceServer() {}
 
@@ -1067,6 +1082,24 @@ func _OrganisationService_CreateOrganisation_Handler(srv interface{}, ctx contex
 	return interceptor(ctx, in, info, handler)
 }
 
+func _OrganisationService_GetOrganisations_Handler(srv interface{}, ctx context.Context, dec func(interface{}) error, interceptor grpc.UnaryServerInterceptor) (interface{}, error) {
+	in := new(GetOrganisationsRequest)
+	if err := dec(in); err != nil {
+		return nil, err
+	}
+	if interceptor == nil {
+		return srv.(OrganisationServiceServer).GetOrganisations(ctx, in)
+	}
+	info := &grpc.UnaryServerInfo{
+		Server:     srv,
+		FullMethod: OrganisationService_GetOrganisations_FullMethodName,
+	}
+	handler := func(ctx context.Context, req interface{}) (interface{}, error) {
+		return srv.(OrganisationServiceServer).GetOrganisations(ctx, req.(*GetOrganisationsRequest))
+	}
+	return interceptor(ctx, in, info, handler)
+}
+
 // OrganisationService_ServiceDesc is the grpc.ServiceDesc for OrganisationService service.
 // It's only intended for direct use with grpc.RegisterService,
 // and not to be introspected or modified (even as a copy)
@@ -1077,6 +1110,10 @@ var OrganisationService_ServiceDesc = grpc.ServiceDesc{
 		{
 			MethodName: "CreateOrganisation",
 			Handler:    _OrganisationService_CreateOrganisation_Handler,
+		},
+		{
+			MethodName: "GetOrganisations",
+			Handler:    _OrganisationService_GetOrganisations_Handler,
 		},
 	},
 	Streams:  []grpc.StreamDesc{},
