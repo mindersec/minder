@@ -53,8 +53,8 @@ var upCmd = &cobra.Command{
 		if !yes {
 			fmt.Print("WARNING: Running this command will change the database structure. Are you want to continue? (y/n): ")
 			var response string
-			_, error := fmt.Scanln(&response)
-			if error != nil {
+			_, err := fmt.Scanln(&response)
+			if err != nil {
 				fmt.Printf("Error while reading user input: %v", err)
 			}
 
