@@ -42,6 +42,7 @@ import (
 	"google.golang.org/grpc/credentials/insecure"
 )
 
+// Status represents the status of the OAuth flow.
 type Status struct {
 	Status string `json:"status"`
 }

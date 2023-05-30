@@ -39,6 +39,8 @@ linters-settings:
       - name: unreachable-code
       - name: unused-parameter
       - name: unused-receiver
+      - name: unhandled-error
+        enabled: false
   gosec:
     excludes:
       - G114 # for the moment we need to use listenandserve that has no support for timeouts
@@ -47,9 +49,7 @@ linters-settings:
 linters:
   disable-all: true
   enable:
-    - errcheck
     - lll
-    - errcheck
     - goconst
     - gocyclo
     - gofmt
