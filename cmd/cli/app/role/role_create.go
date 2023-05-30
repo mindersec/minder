@@ -23,6 +23,7 @@ package role
 
 import (
 	"context"
+	"encoding/json"
 	"fmt"
 	"os"
 	"time"
@@ -40,10 +41,10 @@ var role_createCmd = &cobra.Command{
 within a mediator control plane.`,
 	Run: func(cmd *cobra.Command, args []string) {
 		// create the role via GRPC
-		group := util.GetConfigValue("group", "group", cmd, nil)
+		group := util.GetConfigValue("group-id", "group-id", cmd, int32(0)).(int32)
 		name := util.GetConfigValue("name", "name", cmd, "")
-		isAdmin := util.GetConfigValue("is_admin", "is_admin", cmd, false)
-		isProtected := util.GetConfigValue("is_protected", "is_protected", cmd, false)
+		isAdmin := util.GetConfigValue("is_admin", "is_admin", cmd, false).(bool)
+		isProtected := util.GetConfigValue("is_protected", "is_protected", cmd, false).(bool)
 
 		conn, err := util.GetGrpcConnection(cmd)
 		defer conn.Close()
@@ -57,36 +58,46 @@ within a mediator control plane.`,
 		ctx, cancel := context.WithTimeout(context.Background(), time.Second)
 		defer cancel()
 
+		adminPtr := &isAdmin
+		protectedPtr := &isProtected
+
 		resp, err := client.CreateRole(ctx, &pb.CreateRoleRequest{
-			GroupId:     group.(int32),
+			GroupId:     group,
 			Name:        name.(string),
-			IsAdmin:     isAdmin.(*bool),
-			IsProtected: isProtected.(*bool),
+			IsAdmin:     adminPtr,
+			IsProtected: protectedPtr,
 		})
 
 		if err != nil {
 			fmt.Fprintf(os.Stderr, "Error creating role: %s\n", err)
 			os.Exit(1)
 		}
-		cmd.Println("Created role:", resp.Name)
+
+		role, err := json.Marshal(resp)
+		if err != nil {
+			cmd.Println("Created role: ", resp.Name)
+		} else {
+			cmd.Println("Created role:", string(role))
+		}
 	},
 }
 
 func init() {
 	RoleCmd.AddCommand(role_createCmd)
-	role_createCmd.Flags().Uint64P("group", "g", 0, "ID of the group which owns the role")
-	role_createCmd.Flags().StringP("name", "n", "", "Name of the role")
-	role_createCmd.Flags().BoolP("is_admin", "a", false, "Is it an admin role")
-	role_createCmd.Flags().BoolP("is_protected", "p", false, "Is it a protected role")
-	err := role_createCmd.MarkPersistentFlagRequired("group")
-	if err != nil {
-		fmt.Fprintf(os.Stderr, "Error binding flags: %s\n", err)
+	role_createCmd.PersistentFlags().StringP("name", "n", "", "Name of the role")
+	role_createCmd.PersistentFlags().BoolP("is_protected", "i", false, "Is the role protected")
+	role_createCmd.PersistentFlags().BoolP("is_admin", "a", false, "Is it an admin role")
+	role_createCmd.PersistentFlags().Int32P("group-id", "g", 0, "ID of the group which owns the role")
+	if err := role_createCmd.MarkPersistentFlagRequired("name"); err != nil {
+		fmt.Fprintf(os.Stderr, "Error marking flag as required: %s\n", err)
+		os.Exit(1)
 	}
-	err = role_createCmd.MarkPersistentFlagRequired("name")
-	if err != nil {
-		fmt.Fprintf(os.Stderr, "Error binding flags: %s\n", err)
+	if err := role_createCmd.MarkPersistentFlagRequired("group-id"); err != nil {
+		fmt.Fprintf(os.Stderr, "Error marking flag as required: %s\n", err)
+		os.Exit(1)
 	}
 	if err := viper.BindPFlags(role_createCmd.PersistentFlags()); err != nil {
 		fmt.Fprintf(os.Stderr, "Error binding flags: %s\n", err)
+		os.Exit(1)
 	}
 }
