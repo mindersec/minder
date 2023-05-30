@@ -19,6 +19,7 @@
 // It does make a good example of how to use the generated client code
 // for others to use as a reference.
 
+// Package controlplane contains the gRPC server implementation for the control plane
 package controlplane
 
 import (
@@ -43,8 +44,13 @@ import (
 	"github.com/spf13/viper"
 )
 
+// Google is the name of the Google OAuth provider
 const Google = "google"
+
+// Github is the name of the Github OAuth provider
 const Github = "github"
+
+// PaginationLimit is the maximum number of items that can be returned in a single page
 const PaginationLimit = 10
 
 // generateState generates a random string of length n, used as the OAuth state
@@ -211,6 +217,7 @@ func (s *Server) ExchangeCodeForTokenWEB(ctx context.Context,
 	}, nil
 }
 
+// LogIn logs in a user by verifying the username and password
 func (s *Server) LogIn(ctx context.Context, in *pb.LogInRequest) (*pb.LogInResponse, error) {
 	user, err := s.store.GetUserByUserName(ctx, in.Username)
 	if err != nil {

@@ -12,6 +12,7 @@
 // See the License for the specific language governing permissions and
 // limitations under the License.
 
+// Package logger provides a grpc interceptor that logs the request and response
 package logger
 
 import (
@@ -20,6 +21,7 @@ import (
 	"log"
 	"os"
 	"path"
+	"path/filepath"
 	"runtime/debug"
 	"time"
 
@@ -31,43 +33,47 @@ import (
 )
 
 var (
+	// Marshaller is the marshaller used to marshal the proto messages
 	Marshaller = &jsonpb.Marshaler{}
-	MaxSize    = 2048000
+	// MaxSize is the maximum size of the log message
+	MaxSize = 2048000
 )
 
+// Text is the constant for the text format
 const Text = "text"
 
-func LogTimestamp(logger *zerolog.Event, t time.Time) {
+func logTimestamp(logger *zerolog.Event, t time.Time) {
 	*logger = *logger.Int64("Timestamp", t.UnixNano())
 }
 
-func LogResource(logger *zerolog.Event, dict map[string]interface{}) {
+func logResource(logger *zerolog.Event, dict map[string]interface{}) {
 	jsonData, err := json.Marshal(dict)
 	if err == nil {
 		*logger = *logger.Fields(map[string]interface{}{"Resource": jsonData})
 	}
 }
 
-func LogAttributes(logger *zerolog.Event, dict map[string]interface{}) {
+func logAttributes(logger *zerolog.Event, dict map[string]interface{}) {
 	jsonData, err := json.Marshal(dict)
 	if err == nil {
 		*logger = *logger.Fields(map[string]interface{}{"Attributes": jsonData})
 	}
 }
 
-// will logs calls based on https://github.com/open-telemetry/oteps/blob/main/text/logs/0097-log-data-model.md#example-log-records
+// LogIncomingCall will log calls based on
+// https://github.com/open-telemetry/oteps/blob/main/text/logs/0097-log-data-model.md#example-log-records
 func LogIncomingCall(ctx context.Context, logger *zerolog.Event, method string, t time.Time,
 	_ interface{}, res *status.Status) {
 
-	LogTimestamp(logger, t)
-	LogResource(logger, map[string]interface{}{
+	logTimestamp(logger, t)
+	logResource(logger, map[string]interface{}{
 		"service": path.Dir(method)[1:],
 		"method":  path.Base(method),
 	})
 
 	meta, ok := metadata.FromIncomingContext(ctx)
 	if ok {
-		LogAttributes(logger, map[string]interface{}{
+		logAttributes(logger, map[string]interface{}{
 			"http.user_agent":   meta.Get("user-agent"),
 			"http.content-type": meta.Get("content-type"),
 			"http.code":         res.Code(),
@@ -77,11 +83,12 @@ func LogIncomingCall(ctx context.Context, logger *zerolog.Event, method string, 
 
 }
 
+// LogErrorCall logs calls with errors
 func LogErrorCall(ctx context.Context, logger *zerolog.Event, method string, t time.Time,
 	req interface{}, res *status.Status, err error) {
 
-	LogTimestamp(logger, t)
-	LogResource(logger, map[string]interface{}{
+	logTimestamp(logger, t)
+	logResource(logger, map[string]interface{}{
 		"service": path.Dir(method)[1:],
 		"method":  path.Base(method),
 	})
@@ -95,7 +102,7 @@ func LogErrorCall(ctx context.Context, logger *zerolog.Event, method string, t t
 		jsonText = []byte("")
 	}
 	if ok {
-		LogAttributes(logger, map[string]interface{}{
+		logAttributes(logger, map[string]interface{}{
 			"http.user_agent":      meta.Get("user-agent"),
 			"http.content-type":    meta.Get("content-type"),
 			"http.code":            res.Code(),
@@ -108,13 +115,14 @@ func LogErrorCall(ctx context.Context, logger *zerolog.Event, method string, t t
 
 }
 
+// LogStatusError logs the error as a status error with the specified logger.
 func LogStatusError(logger *zerolog.Event, err error) {
 	statusErr := status.Convert(err)
 	*logger = *logger.Err(err).Str("status", statusErr.Code().String()).Str("msg",
 		statusErr.Message()).Interface("details", statusErr.Details())
 }
 
-func ViperLogLevelToZerologLevel(viperLogLevel string) zerolog.Level {
+func viperLogLevelToZerologLevel(viperLogLevel string) zerolog.Level {
 	switch viperLogLevel {
 	case "debug":
 		return zerolog.DebugLevel
@@ -150,7 +158,7 @@ func ViperLogLevelToZerologLevel(viperLogLevel string) zerolog.Level {
 //	)
 func Interceptor(logLevel string, logFormat string, logFile string) grpc.UnaryServerInterceptor {
 	// set log level according to config
-	zlevel := ViperLogLevelToZerologLevel(logLevel)
+	zlevel := viperLogLevelToZerologLevel(logLevel)
 	zerolog.SetGlobalLevel(zlevel)
 
 	return func(ctx context.Context, req interface{}, info *grpc.UnaryServerInfo, handler grpc.UnaryHandler) (interface{}, error) {
@@ -158,7 +166,8 @@ func Interceptor(logLevel string, logFormat string, logFile string) grpc.UnarySe
 		var err error
 		logToFile := false
 		if logFile != "" {
-			file, err = os.OpenFile(logFile, os.O_CREATE|os.O_WRONLY|os.O_APPEND, 0666)
+			logFile = filepath.Join(logFile, filepath.Clean(logFile))
+			file, err = os.OpenFile(logFile, os.O_CREATE|os.O_WRONLY|os.O_APPEND, 0600)
 			if err != nil {
 				log.Println("Failed to open log file, defaulting to stdout")
 			} else {

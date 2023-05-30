@@ -67,7 +67,10 @@ var downCmd = &cobra.Command{
 		if !yes {
 			fmt.Print("WARNING: Running this command will change the database structure. Are you want to continue? (y/n): ")
 			var response string
-			fmt.Scanln(&response)
+			_, err := fmt.Scanln(&response)
+			if err != nil {
+				fmt.Printf("Error reading response: %v", err)
+			}
 
 			if response == "n" {
 				fmt.Println("Exiting...")

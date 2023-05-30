@@ -28,6 +28,7 @@ import (
 	"github.com/golang-jwt/jwt/v4"
 )
 
+// GenerateToken generates a JWT token
 func GenerateToken(userId int32, key string, expiry int64, refreshExpiry int64) (string, string, int64, int64, error) {
 	if key == "" {
 		return "", "", 0, 0, fmt.Errorf("invalid key")
@@ -62,6 +63,7 @@ func GenerateToken(userId int32, key string, expiry int64, refreshExpiry int64) 
 	return tokenString, refreshTokenString, tokenExpirationTime, refreshExpirationTime, nil
 }
 
+// VerifyToken verifies the token string and returns the user ID
 func VerifyToken(tokenString string, key string) (uint, error) {
 	jwtKey := []byte(key)
 

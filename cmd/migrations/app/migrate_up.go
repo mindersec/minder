@@ -13,6 +13,7 @@
 // See the License for the specific language governing permissions and
 // limitations under the License.
 
+// Package app provides the entrypoint for the mediator migrations
 package app
 
 import (
@@ -52,7 +53,10 @@ var upCmd = &cobra.Command{
 		if !yes {
 			fmt.Print("WARNING: Running this command will change the database structure. Are you want to continue? (y/n): ")
 			var response string
-			fmt.Scanln(&response)
+			_, error := fmt.Scanln(&response)
+			if error != nil {
+				fmt.Printf("Error while reading user input: %v", err)
+			}
 
 			if response == "n" {
 				fmt.Printf("Exiting...")

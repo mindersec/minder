@@ -41,7 +41,10 @@ func setupConfigFile(configFile string) {
 }
 
 func removeConfigFile(filename string) {
-	os.Remove(filename)
+	err := os.Remove(filename)
+	if err != nil {
+		panic(err)
+	}
 }
 
 func TestCobraMain(t *testing.T) {

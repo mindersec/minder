@@ -12,6 +12,7 @@
 // See the License for the specific language governing permissions and
 // limitations under the License.
 
+// Package main provides the entrypoint for the mediator migrations
 package main
 
 import "github.com/stacklok/mediator/cmd/migrations/app"

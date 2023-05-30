@@ -44,6 +44,7 @@ import (
 	pb "github.com/stacklok/mediator/pkg/generated/protobuf/go/mediator/v1"
 )
 
+// Server represents the controlplane server
 type Server struct {
 	store      db.Store
 	grpcServer *grpc.Server
@@ -58,6 +59,7 @@ type Server struct {
 	ClientSecret string
 }
 
+// NewServer creates a new server instance
 func NewServer(store db.Store) *Server {
 	server := &Server{
 		store: store,
@@ -86,6 +88,7 @@ func initTracer() (*sdktrace.TracerProvider, error) {
 	return tp, nil
 }
 
+// StartGRPCServer starts a gRPC server and blocks while serving.
 func (s *Server) StartGRPCServer(address string, dbConn string) {
 	lis, err := net.Listen("tcp", address)
 	if err != nil {
@@ -142,6 +145,7 @@ func (s *Server) StartGRPCServer(address string, dbConn string) {
 	}
 }
 
+// StartHTTPServer starts a HTTP server and registers the gRPC handler mux to it
 func StartHTTPServer(address, grpcAddress string) {
 
 	mux := http.NewServeMux()

@@ -13,6 +13,7 @@
 // See the License for the specific language governing permissions and
 // limitations under the License.
 
+// Package app provides the cli subcommands for managing a mediator control plane
 package app
 
 import (
@@ -25,7 +26,7 @@ import (
 
 var (
 	cfgFile string // config file (default is $PWD/config.yaml)
-	// rootCmd represents the base command when called without any subcommands
+	// RootCmd represents the base command when called without any subcommands
 	RootCmd = &cobra.Command{
 		Use:   "mediator-server",
 		Short: "Mediator control plane server",

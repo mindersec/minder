@@ -23,12 +23,13 @@ import (
 	"github.com/spf13/viper"
 )
 
-// rootCmd represents the base command when called without any subcommands
+// RootCmd represents the base command when called without any subcommands
 var RootCmd = &cobra.Command{
 	Use:   "migratedb",
 	Short: "migratedb allows database migrations",
 }
 
+// Execute adds all child commands to the root command and sets flags appropriately.
 func Execute() {
 	err := RootCmd.Execute()
 	if err != nil {

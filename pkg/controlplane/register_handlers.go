@@ -25,6 +25,7 @@ import (
 	"google.golang.org/grpc"
 )
 
+// RegisterGatewayHTTPHandlers registers the gateway HTTP handlers
 func RegisterGatewayHTTPHandlers(ctx context.Context, gwmux *runtime.ServeMux, grpcAddress string, opts []grpc.DialOption) {
 	// Register HealthService handler
 	if err := pb.RegisterHealthServiceHandlerFromEndpoint(ctx, gwmux, grpcAddress, opts); err != nil {
@@ -62,6 +63,7 @@ func RegisterGatewayHTTPHandlers(ctx context.Context, gwmux *runtime.ServeMux, g
 
 }
 
+// RegisterGRPCServices registers the GRPC services
 func RegisterGRPCServices(s *Server) {
 	// Register HealthService handler
 	pb.RegisterHealthServiceServer(s.grpcServer, s)

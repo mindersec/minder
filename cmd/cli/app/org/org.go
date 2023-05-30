@@ -19,6 +19,7 @@
 // It does make a good example of how to use the generated client code
 // for others to use as a reference.
 
+// package org contains the organization logic for the control plane
 package org
 
 import (
