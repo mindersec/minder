@@ -77,7 +77,6 @@ func TestCreateUserDBMock(t *testing.T) {
 	assert.Equal(t, expectedUser.ID, response.Id)
 	assert.Equal(t, expectedUser.Username, response.Username)
 	assert.Equal(t, expectedUser.Email, response.Email)
-	assert.Equal(t, expectedUser.Password, response.Password)
 	assert.Equal(t, expectedUser.RoleID, response.RoleId)
 	assert.Equal(t, expectedUser.IsProtected, response.IsProtected)
 	assert.Equal(t, expectedUser.FirstName, response.FirstName)
@@ -125,7 +124,6 @@ func TestCreateUser_gRPC(t *testing.T) {
 				assert.Equal(t, int32(1), res.Id)
 				assert.Equal(t, "test", res.Username)
 				assert.Equal(t, "test@stacklok.com", res.Email)
-				assert.Equal(t, "1234567@", res.Password)
 				assert.Equal(t, int32(1), res.RoleId)
 				assert.Equal(t, false, res.IsProtected)
 				assert.NotNil(t, res.CreatedAt)
@@ -157,7 +155,7 @@ func TestCreateUser_gRPC(t *testing.T) {
 			buildStubs: func(store *mockdb.MockStore) {
 				store.EXPECT().
 					CreateUser(gomock.Any(), gomock.Any()).
-					Return(db.Role{}, errors.New("store error")).
+					Return(db.User{}, errors.New("store error")).
 					Times(1)
 			},
 			checkResponse: func(t *testing.T, res *pb.CreateUserResponse, err error) {
