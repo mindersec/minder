@@ -17,10 +17,12 @@ package controlplane
 import (
 	"context"
 	"database/sql"
+	"fmt"
 
 	"github.com/go-playground/validator/v10"
 	"github.com/stacklok/mediator/pkg/db"
 	pb "github.com/stacklok/mediator/pkg/generated/protobuf/go/mediator/v1"
+	"google.golang.org/protobuf/types/known/emptypb"
 	"google.golang.org/protobuf/types/known/timestamppb"
 )
 
@@ -66,5 +68,41 @@ func (s *Server) CreateUser(ctx context.Context,
 		Username: user.Username, FirstName: &user.FirstName.String, LastName: &user.LastName.String,
 		IsProtected: &user.IsProtected, CreatedAt: timestamppb.New(user.CreatedAt),
 		UpdatedAt: timestamppb.New(user.UpdatedAt)}, nil
+}
 
+type deleteUserValidation struct {
+	Id int32 `db:"id" validate:"required"`
+}
+
+// DeleteUser is a service for deleting an user
+func (s *Server) DeleteUser(ctx context.Context,
+	in *pb.DeleteUserRequest) (*emptypb.Empty, error) {
+	validator := validator.New()
+	err := validator.Struct(deleteUserValidation{Id: in.Id})
+	if err != nil {
+		return nil, err
+	}
+
+	// first check if the user exists and is not protected
+	user, err := s.store.GetUserByID(ctx, in.Id)
+	if err != nil {
+		return nil, err
+	}
+
+	if in.Force == nil {
+		isProtected := false
+		in.Force = &isProtected
+	}
+
+	if !*in.Force && user.IsProtected {
+		errcode := fmt.Errorf("cannot delete a protected user")
+		return nil, errcode
+	}
+
+	err = s.store.DeleteUser(ctx, in.Id)
+	if err != nil {
+		return nil, err
+	}
+
+	return &emptypb.Empty{}, nil
 }
