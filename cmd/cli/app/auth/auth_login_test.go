@@ -66,7 +66,7 @@ func TestSaveCredentials(t *testing.T) {
 		t.Fatalf("saveCredentials returned unexpected error: %v", err)
 	}
 
-	filePath = filepath.Join(filePath, filepath.Clean(filePath))
+	filePath = filepath.Clean(filePath)
 	data, err := os.ReadFile(filePath)
 	if err != nil {
 		t.Fatalf("Failed to read file: %v", err)

@@ -166,7 +166,7 @@ func Interceptor(logLevel string, logFormat string, logFile string) grpc.UnarySe
 		var err error
 		logToFile := false
 		if logFile != "" {
-			logFile = filepath.Join(logFile, filepath.Clean(logFile))
+			logFile = filepath.Clean(logFile)
 			file, err = os.OpenFile(logFile, os.O_CREATE|os.O_WRONLY|os.O_APPEND, 0600)
 			if err != nil {
 				log.Println("Failed to open log file, defaulting to stdout")
