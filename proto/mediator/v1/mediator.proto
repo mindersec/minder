@@ -144,6 +144,19 @@ service OrganisationService {
         get: "/api/v1/organisations"
         };
     }
+
+    rpc GetOrganisation (GetOrganisationRequest) returns (GetOrganisationResponse) {
+        option (google.api.http) = {
+            get: "/api/v1/organisations/{organisation_id}"
+            };    
+    }
+
+    rpc GetOrganisationByName (GetOrganisationByNameRequest) returns (GetOrganisationByNameResponse) {
+        option (google.api.http) = {
+            get: "/api/v1/organisations/name/{name}"
+            };    
+    }
+
 }
 
 // manage Groups CRUD
@@ -413,6 +426,7 @@ message CreateRoleResponse {
     google.protobuf.Timestamp updated_at = 8;    
 }
 
+// list organisations
 message GetOrganisationsRequest {
     optional int32 limit = 1;
     optional int32 offset = 2;
@@ -420,4 +434,22 @@ message GetOrganisationsRequest {
 
 message GetOrganisationsResponse {
     repeated OrganisationRecord organisations = 1;
+}
+
+// get organisation by id
+message GetOrganisationRequest {
+    int32 organisation_id = 1;
+}
+
+message GetOrganisationResponse {
+    optional OrganisationRecord organisation = 1;
+}
+
+// get organisation by name
+message GetOrganisationByNameRequest {
+    string name = 1;
+}
+
+message GetOrganisationByNameResponse {
+    optional OrganisationRecord organisation = 1;
 }

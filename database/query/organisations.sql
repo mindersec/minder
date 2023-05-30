@@ -10,9 +10,14 @@ INSERT INTO organisations (
 SELECT * FROM organisations 
 WHERE id = $1 LIMIT 1;
 
+-- name: GetOrganisationByName :one 
+SELECT * FROM organisations 
+WHERE name = $1 LIMIT 1;
+
+
 -- name: GetOrganisationForUpdate :one
 SELECT * FROM organisations
-WHERE id = $1 LIMIT 1
+WHERE name = $1 LIMIT 1
 FOR NO KEY UPDATE;
 
 -- name: ListOrganisations :many

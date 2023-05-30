@@ -49,7 +49,7 @@ func (s *Server) CreateOrganisation(ctx context.Context,
 		UpdatedAt: timestamppb.New(org.UpdatedAt)}, nil
 }
 
-// CreateOrganisation is a service for creating an organisation
+// Get Organisations is a service for listing organisations
 func (s *Server) GetOrganisations(ctx context.Context,
 	in *pb.GetOrganisationsRequest) (*pb.GetOrganisationsResponse, error) {
 
@@ -81,6 +81,54 @@ func (s *Server) GetOrganisations(ctx context.Context,
 			CreatedAt: timestamppb.New(org.CreatedAt),
 			UpdatedAt: timestamppb.New(org.UpdatedAt),
 		})
+	}
+
+	return &resp, nil
+}
+
+// GetOrganisation is a service for getting an organisation
+func (s *Server) GetOrganisation(ctx context.Context,
+	in *pb.GetOrganisationRequest) (*pb.GetOrganisationResponse, error) {
+	if in.GetOrganisationId() <= 0 {
+		return nil, fmt.Errorf("organisation id is required")
+	}
+
+	org, err := s.store.GetOrganisation(ctx, in.OrganisationId)
+	if err != nil {
+		return nil, fmt.Errorf("failed to get organisation: %w", err)
+	}
+
+	var resp pb.GetOrganisationResponse
+	resp.Organisation = &pb.OrganisationRecord{
+		Id:        org.ID,
+		Name:      org.Name,
+		Company:   org.Company,
+		CreatedAt: timestamppb.New(org.CreatedAt),
+		UpdatedAt: timestamppb.New(org.UpdatedAt),
+	}
+
+	return &resp, nil
+}
+
+// GetOrganisationByName is a service for getting an organisation
+func (s *Server) GetOrganisationByName(ctx context.Context,
+	in *pb.GetOrganisationByNameRequest) (*pb.GetOrganisationByNameResponse, error) {
+	if in.GetName() == "" {
+		return nil, fmt.Errorf("organisation name is required")
+	}
+
+	org, err := s.store.GetOrganisationByName(ctx, in.Name)
+	if err != nil {
+		return nil, fmt.Errorf("failed to get organisation: %w", err)
+	}
+
+	var resp pb.GetOrganisationByNameResponse
+	resp.Organisation = &pb.OrganisationRecord{
+		Id:        org.ID,
+		Name:      org.Name,
+		Company:   org.Company,
+		CreatedAt: timestamppb.New(org.CreatedAt),
+		UpdatedAt: timestamppb.New(org.UpdatedAt),
 	}
 
 	return &resp, nil

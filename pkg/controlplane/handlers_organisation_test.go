@@ -287,3 +287,263 @@ func TestGetOrganisations_gRPC(t *testing.T) {
 		})
 	}
 }
+
+func TestGetOrganisationDBMock(t *testing.T) {
+	ctrl := gomock.NewController(t)
+	defer ctrl.Finish()
+
+	mockStore := mockdb.NewMockStore(ctrl)
+
+	request := &pb.GetOrganisationRequest{OrganisationId: 1}
+
+	expectedOrg := db.Organisation{
+		ID:        1,
+		Name:      "TestOrg",
+		Company:   "TestCompany",
+		CreatedAt: time.Now(),
+		UpdatedAt: time.Now(),
+	}
+
+	mockStore.EXPECT().GetOrganisation(gomock.Any(), gomock.Any()).
+		Return(expectedOrg, nil)
+
+	server := &Server{
+		store: mockStore,
+	}
+
+	response, err := server.GetOrganisation(context.Background(), request)
+
+	assert.NoError(t, err)
+	assert.NotNil(t, response)
+	assert.Equal(t, expectedOrg.ID, response.Organisation.Id)
+	assert.Equal(t, expectedOrg.Name, response.Organisation.Name)
+	assert.Equal(t, expectedOrg.Company, response.Organisation.Company)
+	expectedCreatedAt := expectedOrg.CreatedAt.In(time.UTC)
+	assert.Equal(t, expectedCreatedAt, response.Organisation.CreatedAt.AsTime().In(time.UTC))
+	expectedUpdatedAt := expectedOrg.UpdatedAt.In(time.UTC)
+	assert.Equal(t, expectedUpdatedAt, response.Organisation.UpdatedAt.AsTime().In(time.UTC))
+}
+
+func TestGetNonExistingOrganisationDBMock(t *testing.T) {
+	ctrl := gomock.NewController(t)
+	defer ctrl.Finish()
+
+	mockStore := mockdb.NewMockStore(ctrl)
+
+	request := &pb.GetOrganisationRequest{OrganisationId: 5}
+
+	mockStore.EXPECT().GetOrganisation(gomock.Any(), gomock.Any()).
+		Return(db.Organisation{}, nil)
+
+	server := &Server{
+		store: mockStore,
+	}
+
+	response, err := server.GetOrganisation(context.Background(), request)
+
+	assert.NoError(t, err)
+	assert.Equal(t, int32(0), response.Organisation.Id)
+}
+
+func TestGetOrganisation_gRPC(t *testing.T) {
+	testCases := []struct {
+		name               string
+		req                *pb.GetOrganisationRequest
+		buildStubs         func(store *mockdb.MockStore)
+		checkResponse      func(t *testing.T, res *pb.GetOrganisationResponse, err error)
+		expectedStatusCode codes.Code
+	}{
+		{
+			name: "Success",
+			req:  &pb.GetOrganisationRequest{OrganisationId: 1},
+			buildStubs: func(store *mockdb.MockStore) {
+				store.EXPECT().GetOrganisation(gomock.Any(), gomock.Any()).
+					Return(db.Organisation{
+						ID:        1,
+						Name:      "TestOrg",
+						Company:   "TestCompany",
+						CreatedAt: time.Now(),
+						UpdatedAt: time.Now(),
+					}, nil).
+					Times(1)
+			},
+			checkResponse: func(t *testing.T, res *pb.GetOrganisationResponse, err error) {
+				expectedOrg := pb.OrganisationRecord{
+					Id:        1,
+					Name:      "TestOrg",
+					Company:   "TestCompany",
+					CreatedAt: timestamppb.New(time.Now()),
+					UpdatedAt: timestamppb.New(time.Now()),
+				}
+
+				assert.NoError(t, err)
+				assert.NotNil(t, res)
+				assert.Equal(t, expectedOrg.Id, res.Organisation.Id)
+				assert.Equal(t, expectedOrg.Name, res.Organisation.Name)
+				assert.Equal(t, expectedOrg.Company, res.Organisation.Company)
+			},
+			expectedStatusCode: codes.OK,
+		},
+		{
+			name: "NonExisting",
+			req:  &pb.GetOrganisationRequest{OrganisationId: 5},
+			buildStubs: func(store *mockdb.MockStore) {
+				store.EXPECT().GetOrganisation(gomock.Any(), gomock.Any()).
+					Return(db.Organisation{}, nil).
+					Times(1)
+			},
+			checkResponse: func(t *testing.T, res *pb.GetOrganisationResponse, err error) {
+				assert.NoError(t, err)
+				assert.Equal(t, int32(0), res.Organisation.Id)
+			},
+			expectedStatusCode: codes.OK,
+		},
+	}
+
+	for i := range testCases {
+		tc := testCases[i]
+		t.Run(tc.name, func(t *testing.T) {
+
+			ctrl := gomock.NewController(t)
+			defer ctrl.Finish()
+
+			mockStore := mockdb.NewMockStore(ctrl)
+			tc.buildStubs(mockStore)
+
+			server := NewServer(mockStore)
+
+			resp, err := server.GetOrganisation(context.Background(), tc.req)
+			tc.checkResponse(t, resp, err)
+		})
+	}
+}
+
+func TestGetOrganisationByNameDBMock(t *testing.T) {
+	ctrl := gomock.NewController(t)
+	defer ctrl.Finish()
+
+	mockStore := mockdb.NewMockStore(ctrl)
+
+	request := &pb.GetOrganisationByNameRequest{Name: "TestOrg"}
+
+	expectedOrg := db.Organisation{
+		ID:        1,
+		Name:      "TestOrg",
+		Company:   "TestCompany",
+		CreatedAt: time.Now(),
+		UpdatedAt: time.Now(),
+	}
+
+	mockStore.EXPECT().GetOrganisationByName(gomock.Any(), gomock.Any()).
+		Return(expectedOrg, nil)
+
+	server := &Server{
+		store: mockStore,
+	}
+
+	response, err := server.GetOrganisationByName(context.Background(), request)
+
+	assert.NoError(t, err)
+	assert.NotNil(t, response)
+	assert.Equal(t, expectedOrg.ID, response.Organisation.Id)
+	assert.Equal(t, expectedOrg.Name, response.Organisation.Name)
+	assert.Equal(t, expectedOrg.Company, response.Organisation.Company)
+	expectedCreatedAt := expectedOrg.CreatedAt.In(time.UTC)
+	assert.Equal(t, expectedCreatedAt, response.Organisation.CreatedAt.AsTime().In(time.UTC))
+	expectedUpdatedAt := expectedOrg.UpdatedAt.In(time.UTC)
+	assert.Equal(t, expectedUpdatedAt, response.Organisation.UpdatedAt.AsTime().In(time.UTC))
+}
+
+func TestGetNonExistingOrganisationByNameDBMock(t *testing.T) {
+	ctrl := gomock.NewController(t)
+	defer ctrl.Finish()
+
+	mockStore := mockdb.NewMockStore(ctrl)
+
+	request := &pb.GetOrganisationByNameRequest{Name: "Test"}
+
+	mockStore.EXPECT().GetOrganisationByName(gomock.Any(), gomock.Any()).
+		Return(db.Organisation{}, nil)
+
+	server := &Server{
+		store: mockStore,
+	}
+
+	response, err := server.GetOrganisationByName(context.Background(), request)
+
+	assert.NoError(t, err)
+	assert.Equal(t, int32(0), response.Organisation.Id)
+}
+
+func TestGetOrganisationByName_gRPC(t *testing.T) {
+	testCases := []struct {
+		name               string
+		req                *pb.GetOrganisationByNameRequest
+		buildStubs         func(store *mockdb.MockStore)
+		checkResponse      func(t *testing.T, res *pb.GetOrganisationByNameResponse, err error)
+		expectedStatusCode codes.Code
+	}{
+		{
+			name: "Success",
+			req:  &pb.GetOrganisationByNameRequest{Name: "TestOrg"},
+			buildStubs: func(store *mockdb.MockStore) {
+				store.EXPECT().GetOrganisationByName(gomock.Any(), gomock.Any()).
+					Return(db.Organisation{
+						ID:        1,
+						Name:      "TestOrg",
+						Company:   "TestCompany",
+						CreatedAt: time.Now(),
+						UpdatedAt: time.Now(),
+					}, nil).
+					Times(1)
+			},
+			checkResponse: func(t *testing.T, res *pb.GetOrganisationByNameResponse, err error) {
+				expectedOrg := pb.OrganisationRecord{
+					Id:        1,
+					Name:      "TestOrg",
+					Company:   "TestCompany",
+					CreatedAt: timestamppb.New(time.Now()),
+					UpdatedAt: timestamppb.New(time.Now()),
+				}
+
+				assert.NoError(t, err)
+				assert.NotNil(t, res)
+				assert.Equal(t, expectedOrg.Id, res.Organisation.Id)
+				assert.Equal(t, expectedOrg.Name, res.Organisation.Name)
+				assert.Equal(t, expectedOrg.Company, res.Organisation.Company)
+			},
+			expectedStatusCode: codes.OK,
+		},
+		{
+			name: "NonExisting",
+			req:  &pb.GetOrganisationByNameRequest{Name: "test"},
+			buildStubs: func(store *mockdb.MockStore) {
+				store.EXPECT().GetOrganisationByName(gomock.Any(), gomock.Any()).
+					Return(db.Organisation{}, nil).
+					Times(1)
+			},
+			checkResponse: func(t *testing.T, res *pb.GetOrganisationByNameResponse, err error) {
+				assert.NoError(t, err)
+				assert.Equal(t, int32(0), res.Organisation.Id)
+			},
+			expectedStatusCode: codes.OK,
+		},
+	}
+
+	for i := range testCases {
+		tc := testCases[i]
+		t.Run(tc.name, func(t *testing.T) {
+
+			ctrl := gomock.NewController(t)
+			defer ctrl.Finish()
+
+			mockStore := mockdb.NewMockStore(ctrl)
+			tc.buildStubs(mockStore)
+
+			server := NewServer(mockStore)
+
+			resp, err := server.GetOrganisationByName(context.Background(), tc.req)
+			tc.checkResponse(t, resp, err)
+		})
+	}
+}

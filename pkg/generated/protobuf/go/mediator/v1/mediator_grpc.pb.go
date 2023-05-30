@@ -994,8 +994,10 @@ var BranchProtectionService_ServiceDesc = grpc.ServiceDesc{
 }
 
 const (
-	OrganisationService_CreateOrganisation_FullMethodName = "/mediator.v1.OrganisationService/CreateOrganisation"
-	OrganisationService_GetOrganisations_FullMethodName   = "/mediator.v1.OrganisationService/GetOrganisations"
+	OrganisationService_CreateOrganisation_FullMethodName    = "/mediator.v1.OrganisationService/CreateOrganisation"
+	OrganisationService_GetOrganisations_FullMethodName      = "/mediator.v1.OrganisationService/GetOrganisations"
+	OrganisationService_GetOrganisation_FullMethodName       = "/mediator.v1.OrganisationService/GetOrganisation"
+	OrganisationService_GetOrganisationByName_FullMethodName = "/mediator.v1.OrganisationService/GetOrganisationByName"
 )
 
 // OrganisationServiceClient is the client API for OrganisationService service.
@@ -1004,6 +1006,8 @@ const (
 type OrganisationServiceClient interface {
 	CreateOrganisation(ctx context.Context, in *CreateOrganisationRequest, opts ...grpc.CallOption) (*CreateOrganisationResponse, error)
 	GetOrganisations(ctx context.Context, in *GetOrganisationsRequest, opts ...grpc.CallOption) (*GetOrganisationsResponse, error)
+	GetOrganisation(ctx context.Context, in *GetOrganisationRequest, opts ...grpc.CallOption) (*GetOrganisationResponse, error)
+	GetOrganisationByName(ctx context.Context, in *GetOrganisationByNameRequest, opts ...grpc.CallOption) (*GetOrganisationByNameResponse, error)
 }
 
 type organisationServiceClient struct {
@@ -1032,12 +1036,32 @@ func (c *organisationServiceClient) GetOrganisations(ctx context.Context, in *Ge
 	return out, nil
 }
 
+func (c *organisationServiceClient) GetOrganisation(ctx context.Context, in *GetOrganisationRequest, opts ...grpc.CallOption) (*GetOrganisationResponse, error) {
+	out := new(GetOrganisationResponse)
+	err := c.cc.Invoke(ctx, OrganisationService_GetOrganisation_FullMethodName, in, out, opts...)
+	if err != nil {
+		return nil, err
+	}
+	return out, nil
+}
+
+func (c *organisationServiceClient) GetOrganisationByName(ctx context.Context, in *GetOrganisationByNameRequest, opts ...grpc.CallOption) (*GetOrganisationByNameResponse, error) {
+	out := new(GetOrganisationByNameResponse)
+	err := c.cc.Invoke(ctx, OrganisationService_GetOrganisationByName_FullMethodName, in, out, opts...)
+	if err != nil {
+		return nil, err
+	}
+	return out, nil
+}
+
 // OrganisationServiceServer is the server API for OrganisationService service.
 // All implementations must embed UnimplementedOrganisationServiceServer
 // for forward compatibility
 type OrganisationServiceServer interface {
 	CreateOrganisation(context.Context, *CreateOrganisationRequest) (*CreateOrganisationResponse, error)
 	GetOrganisations(context.Context, *GetOrganisationsRequest) (*GetOrganisationsResponse, error)
+	GetOrganisation(context.Context, *GetOrganisationRequest) (*GetOrganisationResponse, error)
+	GetOrganisationByName(context.Context, *GetOrganisationByNameRequest) (*GetOrganisationByNameResponse, error)
 	mustEmbedUnimplementedOrganisationServiceServer()
 }
 
@@ -1050,6 +1074,12 @@ func (UnimplementedOrganisationServiceServer) CreateOrganisation(context.Context
 }
 func (UnimplementedOrganisationServiceServer) GetOrganisations(context.Context, *GetOrganisationsRequest) (*GetOrganisationsResponse, error) {
 	return nil, status.Errorf(codes.Unimplemented, "method GetOrganisations not implemented")
+}
+func (UnimplementedOrganisationServiceServer) GetOrganisation(context.Context, *GetOrganisationRequest) (*GetOrganisationResponse, error) {
+	return nil, status.Errorf(codes.Unimplemented, "method GetOrganisation not implemented")
+}
+func (UnimplementedOrganisationServiceServer) GetOrganisationByName(context.Context, *GetOrganisationByNameRequest) (*GetOrganisationByNameResponse, error) {
+	return nil, status.Errorf(codes.Unimplemented, "method GetOrganisationByName not implemented")
 }
 func (UnimplementedOrganisationServiceServer) mustEmbedUnimplementedOrganisationServiceServer() {}
 
@@ -1100,6 +1130,42 @@ func _OrganisationService_GetOrganisations_Handler(srv interface{}, ctx context.
 	return interceptor(ctx, in, info, handler)
 }
 
+func _OrganisationService_GetOrganisation_Handler(srv interface{}, ctx context.Context, dec func(interface{}) error, interceptor grpc.UnaryServerInterceptor) (interface{}, error) {
+	in := new(GetOrganisationRequest)
+	if err := dec(in); err != nil {
+		return nil, err
+	}
+	if interceptor == nil {
+		return srv.(OrganisationServiceServer).GetOrganisation(ctx, in)
+	}
+	info := &grpc.UnaryServerInfo{
+		Server:     srv,
+		FullMethod: OrganisationService_GetOrganisation_FullMethodName,
+	}
+	handler := func(ctx context.Context, req interface{}) (interface{}, error) {
+		return srv.(OrganisationServiceServer).GetOrganisation(ctx, req.(*GetOrganisationRequest))
+	}
+	return interceptor(ctx, in, info, handler)
+}
+
+func _OrganisationService_GetOrganisationByName_Handler(srv interface{}, ctx context.Context, dec func(interface{}) error, interceptor grpc.UnaryServerInterceptor) (interface{}, error) {
+	in := new(GetOrganisationByNameRequest)
+	if err := dec(in); err != nil {
+		return nil, err
+	}
+	if interceptor == nil {
+		return srv.(OrganisationServiceServer).GetOrganisationByName(ctx, in)
+	}
+	info := &grpc.UnaryServerInfo{
+		Server:     srv,
+		FullMethod: OrganisationService_GetOrganisationByName_FullMethodName,
+	}
+	handler := func(ctx context.Context, req interface{}) (interface{}, error) {
+		return srv.(OrganisationServiceServer).GetOrganisationByName(ctx, req.(*GetOrganisationByNameRequest))
+	}
+	return interceptor(ctx, in, info, handler)
+}
+
 // OrganisationService_ServiceDesc is the grpc.ServiceDesc for OrganisationService service.
 // It's only intended for direct use with grpc.RegisterService,
 // and not to be introspected or modified (even as a copy)
@@ -1114,6 +1180,14 @@ var OrganisationService_ServiceDesc = grpc.ServiceDesc{
 		{
 			MethodName: "GetOrganisations",
 			Handler:    _OrganisationService_GetOrganisations_Handler,
+		},
+		{
+			MethodName: "GetOrganisation",
+			Handler:    _OrganisationService_GetOrganisation_Handler,
+		},
+		{
+			MethodName: "GetOrganisationByName",
+			Handler:    _OrganisationService_GetOrganisationByName_Handler,
 		},
 	},
 	Streams:  []grpc.StreamDesc{},

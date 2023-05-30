@@ -547,6 +547,67 @@
         ]
       }
     },
+    "/api/v1/organisations/name/{name}": {
+      "get": {
+        "operationId": "OrganisationService_GetOrganisationByName",
+        "responses": {
+          "200": {
+            "description": "A successful response.",
+            "schema": {
+              "$ref": "#/definitions/v1GetOrganisationByNameResponse"
+            }
+          },
+          "default": {
+            "description": "An unexpected error response.",
+            "schema": {
+              "$ref": "#/definitions/rpcStatus"
+            }
+          }
+        },
+        "parameters": [
+          {
+            "name": "name",
+            "in": "path",
+            "required": true,
+            "type": "string"
+          }
+        ],
+        "tags": [
+          "OrganisationService"
+        ]
+      }
+    },
+    "/api/v1/organisations/{organisationId}": {
+      "get": {
+        "operationId": "OrganisationService_GetOrganisation",
+        "responses": {
+          "200": {
+            "description": "A successful response.",
+            "schema": {
+              "$ref": "#/definitions/v1GetOrganisationResponse"
+            }
+          },
+          "default": {
+            "description": "An unexpected error response.",
+            "schema": {
+              "$ref": "#/definitions/rpcStatus"
+            }
+          }
+        },
+        "parameters": [
+          {
+            "name": "organisationId",
+            "in": "path",
+            "required": true,
+            "type": "integer",
+            "format": "int32"
+          }
+        ],
+        "tags": [
+          "OrganisationService"
+        ]
+      }
+    },
     "/api/v1/role": {
       "post": {
         "operationId": "RoleService_CreateRole",
@@ -951,6 +1012,22 @@
         }
       },
       "title": "The GetGroupsResponse message represents a response with an array of groups"
+    },
+    "v1GetOrganisationByNameResponse": {
+      "type": "object",
+      "properties": {
+        "organisation": {
+          "$ref": "#/definitions/v1OrganisationRecord"
+        }
+      }
+    },
+    "v1GetOrganisationResponse": {
+      "type": "object",
+      "properties": {
+        "organisation": {
+          "$ref": "#/definitions/v1OrganisationRecord"
+        }
+      }
     },
     "v1GetOrganisationsResponse": {
       "type": "object",
