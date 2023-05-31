@@ -22,7 +22,6 @@ import (
 	"github.com/go-playground/validator/v10"
 	"github.com/stacklok/mediator/pkg/db"
 	pb "github.com/stacklok/mediator/pkg/generated/protobuf/go/mediator/v1"
-	"google.golang.org/protobuf/types/known/emptypb"
 	"google.golang.org/protobuf/types/known/timestamppb"
 )
 
@@ -76,7 +75,7 @@ type deleteUserValidation struct {
 
 // DeleteUser is a service for deleting an user
 func (s *Server) DeleteUser(ctx context.Context,
-	in *pb.DeleteUserRequest) (*emptypb.Empty, error) {
+	in *pb.DeleteUserRequest) (*pb.DeleteUserResponse, error) {
 	validator := validator.New()
 	err := validator.Struct(deleteUserValidation{Id: in.Id})
 	if err != nil {
@@ -104,5 +103,5 @@ func (s *Server) DeleteUser(ctx context.Context,
 		return nil, err
 	}
 
-	return &emptypb.Empty{}, nil
+	return &pb.DeleteUserResponse{}, nil
 }

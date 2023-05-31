@@ -26,7 +26,6 @@ import (
 	"github.com/stretchr/testify/assert"
 
 	"google.golang.org/grpc/codes"
-	"google.golang.org/protobuf/types/known/emptypb"
 
 	mockdb "github.com/stacklok/mediator/database/mock"
 	pb "github.com/stacklok/mediator/pkg/generated/protobuf/go/mediator/v1"
@@ -193,7 +192,7 @@ func TestDeleteUser_gRPC(t *testing.T) {
 		name               string
 		req                *pb.DeleteUserRequest
 		buildStubs         func(store *mockdb.MockStore)
-		checkResponse      func(t *testing.T, res *emptypb.Empty, err error)
+		checkResponse      func(t *testing.T, res *pb.DeleteUserResponse, err error)
 		expectedStatusCode codes.Code
 	}{
 		{
@@ -204,13 +203,13 @@ func TestDeleteUser_gRPC(t *testing.T) {
 			buildStubs: func(store *mockdb.MockStore) {
 				store.EXPECT().
 					DeleteUser(gomock.Any(), gomock.Any()).
-					Return(&emptypb.Empty{}, nil).
+					Return(&pb.DeleteUserResponse{}, nil).
 					Times(1)
 			},
-			checkResponse: func(t *testing.T, res *emptypb.Empty, err error) {
+			checkResponse: func(t *testing.T, res *pb.DeleteUserResponse, err error) {
 				assert.NoError(t, err)
 				assert.NotNil(t, res)
-				assert.Equal(t, &emptypb.Empty{}, res)
+				assert.Equal(t, &pb.DeleteUserResponse{}, res)
 			},
 			expectedStatusCode: codes.OK,
 		},
@@ -222,7 +221,7 @@ func TestDeleteUser_gRPC(t *testing.T) {
 			buildStubs: func(store *mockdb.MockStore) {
 				// No expectations, as CreateRole should not be called
 			},
-			checkResponse: func(t *testing.T, res *emptypb.Empty, err error) {
+			checkResponse: func(t *testing.T, res *pb.DeleteUserResponse, err error) {
 				// Assert the expected behavior when the request is empty
 				assert.Error(t, err)
 				assert.Nil(t, res)
