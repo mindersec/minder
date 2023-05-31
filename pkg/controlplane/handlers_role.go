@@ -67,7 +67,7 @@ type deleteRoleValidation struct {
 	Id int32 `db:"id" validate:"required"`
 }
 
-// DeleteUser is a service for deleting an user
+// DeleteRole is a service for deleting a role
 func (s *Server) DeleteRole(ctx context.Context,
 	in *pb.DeleteRoleRequest) (*pb.DeleteRoleResponse, error) {
 	validator := validator.New()
