@@ -19,13 +19,27 @@ import (
 	"database/sql"
 	"fmt"
 
+	"github.com/go-playground/validator/v10"
 	"github.com/stacklok/mediator/pkg/db"
 	pb "github.com/stacklok/mediator/pkg/generated/protobuf/go/mediator/v1"
+	"google.golang.org/protobuf/types/known/timestamppb"
 )
+
+type createGroupValidation struct {
+	Name           string `db:"name" validate:"required"`
+	OrganisationId int32  `db:"organisation_id" validate:"required"`
+}
 
 // CreateGroup creates a group
 func (s *Server) CreateGroup(ctx context.Context, req *pb.CreateGroupRequest) (*pb.CreateGroupResponse, error) {
-	_, err := s.store.GetGroupByName(ctx, req.Name)
+	// validate that the org and name are not empty
+	validator := validator.New()
+	err := validator.Struct(createGroupValidation{OrganisationId: req.OrganisationId, Name: req.Name})
+	if err != nil {
+		return nil, err
+	}
+
+	_, err = s.store.GetGroupByName(ctx, req.Name)
 
 	if err != nil && err != sql.ErrNoRows {
 		return nil, fmt.Errorf("failed to get group by name: %w", err)
@@ -33,11 +47,16 @@ func (s *Server) CreateGroup(ctx context.Context, req *pb.CreateGroupRequest) (*
 		return nil, fmt.Errorf("group already exists")
 	}
 
-	organizationID := getOrganizationID(req.OrganisationId)
+	if req.IsProtected == nil {
+		isProtected := false
+		req.IsProtected = &isProtected
+	}
 
 	grp, err := s.store.CreateGroup(ctx, db.CreateGroupParams{
-		OrganisationID: organizationID,
+		OrganisationID: req.OrganisationId,
 		Name:           req.Name,
+		Description:    sql.NullString{String: req.Description, Valid: true},
+		IsProtected:    *req.IsProtected,
 	})
 
 	if err != nil {
@@ -46,9 +65,13 @@ func (s *Server) CreateGroup(ctx context.Context, req *pb.CreateGroupRequest) (*
 	fmt.Println("Group ID: ", grp.ID)
 
 	return &pb.CreateGroupResponse{
-		GroupId: grp.ID,
-		Name:    grp.Name,
-	}, nil
+		GroupId:        grp.ID,
+		OrganisationId: grp.OrganisationID,
+		Name:           grp.Name,
+		Description:    grp.Description.String,
+		IsProtected:    grp.IsProtected,
+		CreatedAt:      timestamppb.New(grp.CreatedAt),
+		UpdatedAt:      timestamppb.New(grp.UpdatedAt)}, nil
 }
 
 // GetGroupById returns a group by id
@@ -60,9 +83,11 @@ func (s *Server) GetGroupById(ctx context.Context, req *pb.GetGroupByIdRequest) 
 	}
 
 	return &pb.GetGroupByIdResponse{
-		GroupId:     grp.ID,
-		Name:        grp.Name,
-		Description: grp.Description.String,
+		GroupId:        grp.ID,
+		OrganisationId: grp.OrganisationID,
+		Name:           grp.Name,
+		Description:    grp.Description.String,
+		IsProtected:    grp.IsProtected,
 	}, nil
 }
 
@@ -74,19 +99,19 @@ func (s *Server) GetGroupByName(ctx context.Context, req *pb.GetGroupByNameReque
 	}
 
 	return &pb.GetGroupByNameResponse{
-		GroupId:     grp.ID,
-		Name:        grp.Name,
-		Description: grp.Description.String,
+		GroupId:        grp.ID,
+		OrganisationId: grp.OrganisationID,
+		Name:           grp.Name,
+		Description:    grp.Description.String,
+		IsProtected:    grp.IsProtected,
 	}, nil
 }
 
 // GetGroups returns a list of groups
 func (s *Server) GetGroups(ctx context.Context, req *pb.GetGroupsRequest) (*pb.GetGroupsResponse, error) {
 
-	organizationID := getOrganizationID(req.OrganisationId)
-
 	grps, err := s.store.ListGroups(ctx, db.ListGroupsParams{
-		OrganisationID: organizationID,
+		OrganisationID: req.OrganisationId,
 		Limit:          req.Limit,
 		Offset:         req.Offset,
 	})
@@ -97,21 +122,65 @@ func (s *Server) GetGroups(ctx context.Context, req *pb.GetGroupsRequest) (*pb.G
 	var resp pb.GetGroupsResponse
 	for _, group := range grps {
 		resp.Groups = append(resp.Groups, &pb.GroupsResponse{
-			GroupId: group.ID,
-			Name:    group.Name,
+			GroupId:        group.ID,
+			OrganisationId: group.OrganisationID,
+			Name:           group.Name,
+			Description:    group.Description.String,
+			IsProtected:    group.IsProtected,
 		})
 	}
 
 	return &resp, nil
 }
 
-func getOrganizationID(reqOrganizationID int32) sql.NullInt32 {
-	var organizationID sql.NullInt32
+type deleteGroupValidation struct {
+	Id int32 `db:"id" validate:"required"`
+}
 
-	if reqOrganizationID != 0 {
-		organizationID.Int32 = int32(reqOrganizationID)
-		organizationID.Valid = true
+// DeleteGroup is a handler that deletes a group
+func (s *Server) DeleteGroup(ctx context.Context,
+	in *pb.DeleteGroupRequest) (*pb.DeleteGroupResponse, error) {
+	validator := validator.New()
+	err := validator.Struct(deleteGroupValidation{Id: in.Id})
+	if err != nil {
+		return nil, err
 	}
 
-	return organizationID
+	// first check if the group exists and is not protected
+	group, err := s.store.GetGroupByID(ctx, in.Id)
+	if err != nil {
+		return nil, err
+	}
+
+	if in.Force == nil {
+		isProtected := false
+		in.Force = &isProtected
+	}
+
+	if !*in.Force && group.IsProtected {
+		errcode := fmt.Errorf("cannot delete a protected group")
+		return nil, errcode
+	}
+
+	// if we do not force the deletion, we need to check if there are roles
+	if !*in.Force {
+		// list roles belonging to that role
+		roles, err := s.store.ListRolesByGroupID(ctx, in.Id)
+		if err != nil {
+			return nil, err
+		}
+
+		if len(roles) > 0 {
+			errcode := fmt.Errorf("cannot delete the group, there are roles associated with it")
+			return nil, errcode
+		}
+	}
+
+	// otherwise we delete, and delete roles in cascade
+	err = s.store.DeleteGroup(ctx, in.Id)
+	if err != nil {
+		return nil, err
+	}
+
+	return &pb.DeleteGroupResponse{}, nil
 }

@@ -44,6 +44,7 @@ a mediator control plane.`,
 		name := util.GetConfigValue("name", "name", cmd, "")
 		description := util.GetConfigValue("description", "description", cmd, "")
 		organisation := util.GetConfigValue("org-id", "org-id", cmd, int32(0)).(int32)
+		isProtected := util.GetConfigValue("is_protected", "is_protected", cmd, false).(bool)
 
 		conn, err := util.GetGrpcConnection(cmd)
 		if err != nil {
@@ -56,10 +57,13 @@ a mediator control plane.`,
 		ctx, cancel := context.WithTimeout(context.Background(), time.Second)
 		defer cancel()
 
+		protectedPtr := &isProtected
+
 		resp, err := client.CreateGroup(ctx, &pb.CreateGroupRequest{
 			Name:           name.(string),
 			Description:    description.(string),
 			OrganisationId: organisation,
+			IsProtected:    protectedPtr,
 		})
 
 		if err != nil {
@@ -77,6 +81,8 @@ func init() {
 	group_createCmd.PersistentFlags().StringP("name", "n", "", "Name of the group")
 	group_createCmd.PersistentFlags().StringP("description", "d", "", "Description of the group")
 	group_createCmd.PersistentFlags().Int32("org-id", 0, "Organisation ID")
+	group_createCmd.PersistentFlags().BoolP("is_protected", "i", false, "Is the group protected")
+
 	if err := group_createCmd.MarkPersistentFlagRequired("name"); err != nil {
 		fmt.Fprintf(os.Stderr, "Error marking flag as required: %s\n", err)
 	}

@@ -18,6 +18,9 @@ ORDER BY id
 LIMIT $2
 OFFSET $3;
 
+-- name: ListRolesByGroupID :many
+SELECT * FROM roles WHERE group_id = $1;
+
 -- name: UpdateRole :one
 UPDATE roles 
 SET group_id = $2, name = $3, is_admin = $4, is_protected = $5, updated_at = NOW() 

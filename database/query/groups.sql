@@ -1,9 +1,11 @@
 -- name: CreateGroup :one
 INSERT INTO groups (
-    organisation_id, 
-    name
+    organisation_id,
+    name,
+    description,
+    is_protected
     ) VALUES (
-        $1, $2
+        $1, $2, $3, $4
 ) RETURNING *;
 
 -- name: GetGroupByID :one
@@ -21,7 +23,7 @@ OFFSET $3;
 
 -- name: UpdateGroup :one
 UPDATE groups 
-SET organisation_id = $2, name = $3, updated_at = NOW() 
+SET organisation_id = $2, name = $3, description = $4, is_protected = $5, updated_at = NOW() 
 WHERE id = $1 RETURNING *;
 
 -- name: DeleteGroup :exec

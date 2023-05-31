@@ -185,6 +185,13 @@ service GroupService {
             get: "/api/v1/group"
         };
     }
+
+    rpc DeleteGroup (DeleteGroupRequest) returns (DeleteGroupResponse) {
+        option (google.api.http) = {
+            delete: "/api/v1/group/{id}"
+        };
+
+    }     
 }
 
 // manage Roles CRUD
@@ -382,6 +389,7 @@ message CreateGroupRequest {
     int32  organisation_id = 1;
     string name = 2;
     string description = 3;
+    optional bool is_protected = 4;
 }
 
 // The GetGroupByNameRequest message represents a request to get a group by name
@@ -405,32 +413,61 @@ message GetGroupsRequest {
 
 message GroupsResponse {
     int32 group_id = 1;
-    string name = 2;
-    string description = 3;
+    int32 organisation_id = 2;
+    string name = 3;
+    string description = 4;
+    bool is_protected = 5;
+    google.protobuf.Timestamp created_at = 6;
+    google.protobuf.Timestamp updated_at = 7;    
 }
 
 message  CreateGroupResponse {
     int32 group_id = 1;
-    string name = 2;
-    string description = 3;
+    int32 organisation_id = 2;
+    string name = 3;
+    string description = 4;
+    bool is_protected = 5;
+    google.protobuf.Timestamp created_at = 6;
+    google.protobuf.Timestamp updated_at = 7;    
 }
 
 message GetGroupByNameResponse {
     int32 group_id = 1;
-    string name = 2;
-    string description = 3;
+    int32 organisation_id = 2;
+    string name = 3;
+    string description = 4;
+    bool is_protected = 5;
+    google.protobuf.Timestamp created_at = 6;
+    google.protobuf.Timestamp updated_at = 7;    
 }
 
 message GetGroupByIdResponse {
     int32 group_id = 1;
-    string name = 2;
-    string description = 3;
+    int32 organisation_id = 2;
+    string name = 3;
+    string description = 4;
+    bool is_protected = 5;
+    google.protobuf.Timestamp created_at = 6;
+    google.protobuf.Timestamp updated_at = 7;    
+
 }
 
 // The GetGroupsResponse message represents a response with an array of groups
 message GetGroupsResponse {
     repeated GroupsResponse groups = 1;
 }
+
+// DeleteGroupRequest represents a request to delete a group
+message DeleteGroupRequest {
+    int32 id = 1;
+    optional bool force = 2;
+}
+
+// DeleteGroupResponse represents a response to a delete group request
+message DeleteGroupResponse {
+
+}
+
 // Role service
 message CreateRoleRequest {
     int32 group_id = 1;

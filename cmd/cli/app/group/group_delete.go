@@ -22,30 +22,66 @@
 package group
 
 import (
+	"context"
 	"fmt"
+	"log"
 	"os"
+	"time"
 
 	"github.com/spf13/cobra"
 	"github.com/spf13/viper"
+	pb "github.com/stacklok/mediator/pkg/generated/protobuf/go/mediator/v1"
+	"github.com/stacklok/mediator/pkg/util"
 )
 
 var group_deleteCmd = &cobra.Command{
 	Use:   "delete",
-	Short: "medctl group delete",
-	Long: `The medctl group delete subcommand lets you delete groups within
-a mediator control plane.`,
+	Short: "delete a group within a mediator controlplane",
+	Long: `The medctl group delete subcommand lets you delete groups within a
+mediator control plane.`,
 	Run: func(cmd *cobra.Command, args []string) {
-		cmd.Println("group delete called")
+		// delete the group via GRPC
+		id := util.GetConfigValue("group-id", "group-id", cmd, int32(0)).(int32)
+		force := util.GetConfigValue("force", "force", cmd, false).(bool)
+
+		conn, err := util.GetGrpcConnection(cmd)
+
+		if err != nil {
+			fmt.Fprintf(os.Stderr, "Error getting grpc connection: %s\n", err)
+			os.Exit(1)
+		}
+		defer conn.Close()
+
+		client := pb.NewGroupServiceClient(conn)
+		ctx, cancel := context.WithTimeout(context.Background(), time.Second)
+		defer cancel()
+
+		forcePtr := &force
+		_, err = client.DeleteGroup(ctx, &pb.DeleteGroupRequest{
+			Id:    id,
+			Force: forcePtr,
+		})
+
+		if err != nil {
+			fmt.Fprintf(os.Stderr, "Error deleting group: %s\n", err)
+			os.Exit(1)
+		}
+		cmd.Println("Successfully deleted group with id:", id)
 	},
 }
 
 func init() {
 	GroupCmd.AddCommand(group_deleteCmd)
+	group_deleteCmd.PersistentFlags().Int32P("group-id", "g", 0, "id of group to delete")
 	group_deleteCmd.PersistentFlags().BoolP("force", "f", false,
-		"Force deletion of organization (WARNING: this will delete all resources associated with the group)")
-	// flag for group-id
-	group_deleteCmd.PersistentFlags().StringP("group-id", "g", "", "The Group ID to delete")
+		"Force deletion of group, even if it's protected or has associated roles "+
+			"(WARNING: removing a protected group may cause loosing mediator access)")
+	if err := group_deleteCmd.MarkPersistentFlagRequired("group-id"); err != nil {
+		fmt.Fprintf(os.Stderr, "Error marking flag as required: %s\n", err)
+		os.Exit(1)
+	}
+
 	if err := viper.BindPFlags(group_deleteCmd.PersistentFlags()); err != nil {
-		fmt.Fprintf(os.Stderr, "Error binding flags: %s\n", err)
+		log.Fatal(err)
 	}
 }
