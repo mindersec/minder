@@ -74,7 +74,8 @@ func init() {
 	UserCmd.AddCommand(user_deleteCmd)
 	user_deleteCmd.PersistentFlags().Int32P("user-id", "u", 0, "id of user to delete")
 	user_deleteCmd.PersistentFlags().BoolP("force", "f", false,
-		"Force deletion of user, even if it's protected (WARNING: removing a protected user may cause loss of mediator access and data)")
+		"Force deletion of user, even if it's protected "+
+			"(WARNING: removing a protected user may cause loss of mediator access and data)")
 	if err := user_deleteCmd.MarkPersistentFlagRequired("user-id"); err != nil {
 		fmt.Fprintf(os.Stderr, "Error marking flag as required: %s\n", err)
 		os.Exit(1)
