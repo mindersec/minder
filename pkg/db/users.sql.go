@@ -127,10 +127,20 @@ func (q *Queries) GetUserByUserName(ctx context.Context, username string) (User,
 
 const listUsers = `-- name: ListUsers :many
 SELECT id, role_id, email, username, password, first_name, last_name, is_protected, created_at, updated_at FROM users
+WHERE role_id = $1
+ORDER BY id
+LIMIT $2
+OFFSET $3
 `
 
-func (q *Queries) ListUsers(ctx context.Context) ([]User, error) {
-	rows, err := q.db.QueryContext(ctx, listUsers)
+type ListUsersParams struct {
+	RoleID int32 `json:"role_id"`
+	Limit  int32 `json:"limit"`
+	Offset int32 `json:"offset"`
+}
+
+func (q *Queries) ListUsers(ctx context.Context, arg ListUsersParams) ([]User, error) {
+	rows, err := q.db.QueryContext(ctx, listUsers, arg.RoleID, arg.Limit, arg.Offset)
 	if err != nil {
 		return nil, err
 	}

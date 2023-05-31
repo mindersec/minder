@@ -105,3 +105,130 @@ func (s *Server) DeleteUser(ctx context.Context,
 
 	return &pb.DeleteUserResponse{}, nil
 }
+
+// GetUsers is a service for getting a list of users
+func (s *Server) GetUsers(ctx context.Context,
+	in *pb.GetUsersRequest) (*pb.GetUsersResponse, error) {
+	if in.RoleId == 0 {
+		return nil, fmt.Errorf("role id is required")
+	}
+
+	// define default values for limit and offset
+	if in.Limit == nil || *in.Limit == -1 {
+		in.Limit = new(int32)
+		*in.Limit = PaginationLimit
+	}
+	if in.Offset == nil {
+		in.Offset = new(int32)
+		*in.Offset = 0
+	}
+
+	users, err := s.store.ListUsers(ctx, db.ListUsersParams{
+		RoleID: in.RoleId,
+		Limit:  *in.Limit,
+		Offset: *in.Offset,
+	})
+	if err != nil {
+		return nil, fmt.Errorf("failed to get users: %w", err)
+	}
+
+	var resp pb.GetUsersResponse
+	resp.Users = make([]*pb.UserRecord, 0, len(users))
+	for _, user := range users {
+		resp.Users = append(resp.Users, &pb.UserRecord{
+			Id:          user.ID,
+			RoleId:      user.RoleID,
+			Email:       user.Email,
+			Username:    user.Username,
+			FirstName:   &user.FirstName.String,
+			LastName:    &user.LastName.String,
+			IsProtected: &user.IsProtected,
+			CreatedAt:   timestamppb.New(user.CreatedAt),
+			UpdatedAt:   timestamppb.New(user.UpdatedAt),
+		})
+	}
+
+	return &resp, nil
+}
+
+// GetUser is a service for getting an user
+func (s *Server) GetUser(ctx context.Context,
+	in *pb.GetUserRequest) (*pb.GetUserResponse, error) {
+	if in.UserId == 0 {
+		return nil, fmt.Errorf("user id is required")
+	}
+
+	user, err := s.store.GetUserByID(ctx, in.UserId)
+	if err != nil {
+		return nil, fmt.Errorf("failed to get user: %w", err)
+	}
+
+	var resp pb.GetUserResponse
+	resp.User = &pb.UserRecord{
+		Id:          user.ID,
+		RoleId:      user.RoleID,
+		Email:       user.Email,
+		Username:    user.Username,
+		FirstName:   &user.FirstName.String,
+		LastName:    &user.LastName.String,
+		IsProtected: &user.IsProtected,
+		CreatedAt:   timestamppb.New(user.CreatedAt),
+		UpdatedAt:   timestamppb.New(user.UpdatedAt),
+	}
+
+	return &resp, nil
+}
+
+// GetUserByUsername is a service for getting an user by username
+func (s *Server) GetUserByUsername(ctx context.Context,
+	in *pb.GetUserByUsernameRequest) (*pb.GetUserByUsernameResponse, error) {
+	if in.GetUsername() == "" {
+		return nil, fmt.Errorf("username is required")
+	}
+
+	user, err := s.store.GetUserByUserName(ctx, in.Username)
+	if err != nil {
+		return nil, fmt.Errorf("failed to get user: %w", err)
+	}
+
+	var resp pb.GetUserByUsernameResponse
+	resp.User = &pb.UserRecord{
+		Id:        user.ID,
+		RoleId:    user.RoleID,
+		Email:     user.Email,
+		Username:  user.Username,
+		FirstName: &user.FirstName.String,
+		LastName:  &user.LastName.String,
+		CreatedAt: timestamppb.New(user.CreatedAt),
+		UpdatedAt: timestamppb.New(user.UpdatedAt),
+	}
+
+	return &resp, nil
+}
+
+// GetUserByEmail is a service for getting an user by email
+func (s *Server) GetUserByEmail(ctx context.Context,
+	in *pb.GetUserByEmailRequest) (*pb.GetUserByEmailResponse, error) {
+	if in.GetEmail() == "" {
+		return nil, fmt.Errorf("email is required")
+	}
+
+	user, err := s.store.GetUserByEmail(ctx, in.Email)
+	if err != nil {
+		return nil, fmt.Errorf("failed to get user: %w", err)
+	}
+
+	var resp pb.GetUserByEmailResponse
+	resp.User = &pb.UserRecord{
+		Id:        user.ID,
+		RoleId:    user.RoleID,
+		Email:     user.Email,
+		Username:  user.Username,
+		FirstName: &user.FirstName.String,
+		LastName:  &user.LastName.String,
+		CreatedAt: timestamppb.New(user.CreatedAt),
+		UpdatedAt: timestamppb.New(user.UpdatedAt),
+	}
+
+	return &resp, nil
+}
