@@ -48,7 +48,7 @@ CREATE TABLE roles (
 -- users table
 CREATE TABLE users (
     id SERIAL PRIMARY KEY,
-    role_id INTEGER NOT NULL REFERENCES roles(id),
+    role_id INTEGER NOT NULL REFERENCES roles(id) ON DELETE CASCADE,
     email TEXT NOT NULL UNIQUE,
     username TEXT NOT NULL UNIQUE,
     password TEXT NOT NULL,

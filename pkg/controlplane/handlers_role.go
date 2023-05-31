@@ -16,6 +16,7 @@ package controlplane
 
 import (
 	"context"
+	"fmt"
 
 	"github.com/go-playground/validator/v10"
 	"github.com/stacklok/mediator/pkg/db"
@@ -60,5 +61,43 @@ func (s *Server) CreateRole(ctx context.Context,
 		GroupId:   role.GroupID,
 		CreatedAt: timestamppb.New(role.CreatedAt),
 		UpdatedAt: timestamppb.New(role.UpdatedAt)}, nil
+}
 
+type deleteRoleValidation struct {
+	Id int32 `db:"id" validate:"required"`
+}
+
+// DeleteUser is a service for deleting an user
+func (s *Server) DeleteRole(ctx context.Context,
+	in *pb.DeleteRoleRequest) (*pb.DeleteRoleResponse, error) {
+	validator := validator.New()
+	err := validator.Struct(deleteRoleValidation{Id: in.Id})
+	if err != nil {
+		return nil, err
+	}
+
+	// first check if the role exists and is not protected
+	role, err := s.store.GetRoleByID(ctx, in.Id)
+	if err != nil {
+		return nil, err
+	}
+
+	if in.Force == nil {
+		isProtected := false
+		in.Force = &isProtected
+	}
+
+	if !*in.Force && role.IsProtected {
+		errcode := fmt.Errorf("cannot delete a protected user")
+		return nil, errcode
+	}
+
+	// if role is not protected we need to check if it has any users
+
+	err = s.store.DeleteUser(ctx, in.Id)
+	if err != nil {
+		return nil, err
+	}
+
+	return &pb.DeleteUserResponse{}, nil
 }

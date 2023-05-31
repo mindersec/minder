@@ -13,6 +13,9 @@ SELECT * FROM users WHERE username = $1;
 -- name: ListUsers :many
 SELECT * FROM users;
 
+-- name: ListUsersByRoleID :many
+SELECT * FROM users WHERE role_id = $1;
+
 -- name: UpdateUser :one
 UPDATE users SET role_id = $2, email = $3, username = $4, password = $5, first_name = $6, last_name = $7, is_protected = $8, updated_at = NOW() WHERE id = $1 RETURNING *;
 

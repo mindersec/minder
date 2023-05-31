@@ -163,6 +163,44 @@ func (q *Queries) ListUsers(ctx context.Context) ([]User, error) {
 	return items, nil
 }
 
+const listUsersByRoleID = `-- name: ListUsersByRoleID :many
+SELECT id, role_id, email, username, password, first_name, last_name, is_protected, created_at, updated_at FROM users WHERE role_id = $1
+`
+
+func (q *Queries) ListUsersByRoleID(ctx context.Context, roleID int32) ([]User, error) {
+	rows, err := q.db.QueryContext(ctx, listUsersByRoleID, roleID)
+	if err != nil {
+		return nil, err
+	}
+	defer rows.Close()
+	items := []User{}
+	for rows.Next() {
+		var i User
+		if err := rows.Scan(
+			&i.ID,
+			&i.RoleID,
+			&i.Email,
+			&i.Username,
+			&i.Password,
+			&i.FirstName,
+			&i.LastName,
+			&i.IsProtected,
+			&i.CreatedAt,
+			&i.UpdatedAt,
+		); err != nil {
+			return nil, err
+		}
+		items = append(items, i)
+	}
+	if err := rows.Close(); err != nil {
+		return nil, err
+	}
+	if err := rows.Err(); err != nil {
+		return nil, err
+	}
+	return items, nil
+}
+
 const updateUser = `-- name: UpdateUser :one
 UPDATE users SET role_id = $2, email = $3, username = $4, password = $5, first_name = $6, last_name = $7, is_protected = $8, updated_at = NOW() WHERE id = $1 RETURNING id, role_id, email, username, password, first_name, last_name, is_protected, created_at, updated_at
 `

@@ -643,6 +643,43 @@
         ]
       }
     },
+    "/api/v1/role/{id}": {
+      "delete": {
+        "operationId": "RoleService_DeleteRole",
+        "responses": {
+          "200": {
+            "description": "A successful response.",
+            "schema": {
+              "$ref": "#/definitions/v1DeleteRoleResponse"
+            }
+          },
+          "default": {
+            "description": "An unexpected error response.",
+            "schema": {
+              "$ref": "#/definitions/rpcStatus"
+            }
+          }
+        },
+        "parameters": [
+          {
+            "name": "id",
+            "in": "path",
+            "required": true,
+            "type": "integer",
+            "format": "int32"
+          },
+          {
+            "name": "force",
+            "in": "query",
+            "required": false,
+            "type": "boolean"
+          }
+        ],
+        "tags": [
+          "RoleService"
+        ]
+      }
+    },
     "/api/v1/secrets": {
       "get": {
         "operationId": "SecretsService_GetSecrets",
@@ -1062,6 +1099,9 @@
           "format": "date-time"
         }
       }
+    },
+    "v1DeleteRoleResponse": {
+      "type": "object"
     },
     "v1DeleteUserResponse": {
       "type": "object"
