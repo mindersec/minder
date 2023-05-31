@@ -88,16 +88,29 @@ func (s *Server) DeleteRole(ctx context.Context,
 	}
 
 	if !*in.Force && role.IsProtected {
-		errcode := fmt.Errorf("cannot delete a protected user")
+		errcode := fmt.Errorf("cannot delete a protected role")
 		return nil, errcode
 	}
 
-	// if role is not protected we need to check if it has any users
+	// if we do not force the deletion, we need to check if there are users
+	if !*in.Force {
+		// list users belonging to that role
+		users, err := s.store.ListUsersByRoleID(ctx, in.Id)
+		if err != nil {
+			return nil, err
+		}
 
-	err = s.store.DeleteUser(ctx, in.Id)
+		if len(users) > 0 {
+			errcode := fmt.Errorf("cannot delete the role, there are users associated with it")
+			return nil, errcode
+		}
+	}
+
+	// otherwise we delete, and delete users in cascade
+	err = s.store.DeleteRole(ctx, in.Id)
 	if err != nil {
 		return nil, err
 	}
 
-	return &pb.DeleteUserResponse{}, nil
+	return &pb.DeleteRoleResponse{}, nil
 }

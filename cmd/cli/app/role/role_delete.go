@@ -22,10 +22,16 @@
 package role
 
 import (
+	"context"
+	"fmt"
 	"log"
+	"os"
+	"time"
 
 	"github.com/spf13/cobra"
 	"github.com/spf13/viper"
+	pb "github.com/stacklok/mediator/pkg/generated/protobuf/go/mediator/v1"
+	"github.com/stacklok/mediator/pkg/util"
 )
 
 var role_deleteCmd = &cobra.Command{
@@ -34,15 +40,47 @@ var role_deleteCmd = &cobra.Command{
 	Long: `The medctl role delete subcommand lets you delete roles within a
 mediator control plane.`,
 	Run: func(cmd *cobra.Command, args []string) {
-		cmd.Println("role delete called")
+		// delete the role via GRPC
+		id := util.GetConfigValue("role-id", "role-id", cmd, int32(0)).(int32)
+		force := util.GetConfigValue("force", "force", cmd, false).(bool)
+
+		conn, err := util.GetGrpcConnection(cmd)
+
+		if err != nil {
+			fmt.Fprintf(os.Stderr, "Error getting grpc connection: %s\n", err)
+			os.Exit(1)
+		}
+		defer conn.Close()
+
+		client := pb.NewRoleServiceClient(conn)
+		ctx, cancel := context.WithTimeout(context.Background(), time.Second)
+		defer cancel()
+
+		forcePtr := &force
+		_, err = client.DeleteRole(ctx, &pb.DeleteRoleRequest{
+			Id:    id,
+			Force: forcePtr,
+		})
+
+		if err != nil {
+			fmt.Fprintf(os.Stderr, "Error deleting role: %s\n", err)
+			os.Exit(1)
+		}
+		cmd.Println("Successfully deleted role with id:", id)
 	},
 }
 
 func init() {
 	RoleCmd.AddCommand(role_deleteCmd)
-	role_deleteCmd.PersistentFlags().StringP("role-id", "r", "", "role-id of role to delete")
+	role_deleteCmd.PersistentFlags().Int32P("role-id", "r", 0, "id of role to delete")
 	role_deleteCmd.PersistentFlags().BoolP("force", "f", false,
-		"Force deletion of role (WARNING: this will delete all resources associated with the role)")
+		"Force deletion of role, even if it's protected or has associated users "+
+			"(WARNING: removing a protected role may cause loosing mediator access)")
+	if err := role_deleteCmd.MarkPersistentFlagRequired("role-id"); err != nil {
+		fmt.Fprintf(os.Stderr, "Error marking flag as required: %s\n", err)
+		os.Exit(1)
+	}
+
 	if err := viper.BindPFlags(role_deleteCmd.PersistentFlags()); err != nil {
 		log.Fatal(err)
 	}

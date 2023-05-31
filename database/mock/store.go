@@ -6,7 +6,6 @@ package mockdb
 
 import (
 	context "context"
-	sql "database/sql"
 	reflect "reflect"
 
 	gomock "github.com/golang/mock/gomock"
@@ -406,7 +405,7 @@ func (mr *MockStoreMockRecorder) ListUsers(arg0 interface{}) *gomock.Call {
 }
 
 // ListUsersByRoleID mocks base method.
-func (m *MockStore) ListUsersByRoleID(arg0 context.Context, arg1 sql.NullInt32) ([]db.User, error) {
+func (m *MockStore) ListUsersByRoleID(arg0 context.Context, arg1 int32) ([]db.User, error) {
 	m.ctrl.T.Helper()
 	ret := m.ctrl.Call(m, "ListUsersByRoleID", arg0, arg1)
 	ret0, _ := ret[0].([]db.User)

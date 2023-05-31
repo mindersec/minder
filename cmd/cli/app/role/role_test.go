@@ -45,11 +45,6 @@ func TestCobraMain(t *testing.T) {
 			args:           []string{"role", "list"},
 			expectedOutput: "role list called\n",
 		},
-		{
-			name:           "role delete command",
-			args:           []string{"role", "delete"},
-			expectedOutput: "role delete called\n",
-		},
 	}
 
 	for _, test := range tests {
