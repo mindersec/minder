@@ -48,7 +48,7 @@ CREATE TABLE roles (
 -- users table
 CREATE TABLE users (
     id SERIAL PRIMARY KEY,
-    role_id INTEGER NOT NULL REFERENCES roles(id),
+    role_id INTEGER NOT NULL REFERENCES roles(id) ON DELETE CASCADE,
     email TEXT NOT NULL UNIQUE,
     username TEXT NOT NULL UNIQUE,
     password TEXT NOT NULL,
@@ -88,7 +88,7 @@ INSERT INTO groups (organisation_id, name)
 VALUES (1, 'Root Group');
 
 INSERT INTO roles (group_id, name, is_admin, is_protected)
-VALUES (1, 'Role Role', TRUE, FALSE);
+VALUES (1, 'Role Role', TRUE, TRUE);
 
 INSERT INTO users (role_id, email, username, password, first_name, last_name, is_protected)
 VALUES (1, 'root@localhost', 'root', '$argon2id$v=19$m=0,t=3,p=2$mQDRkaBe7p3pbGvzgFn20Q$GYA0SkpXhVMLwcjRSPKCUpmd4ptMcdUcQ5YTAOnLFKs', 'Root', 'Admin', TRUE);

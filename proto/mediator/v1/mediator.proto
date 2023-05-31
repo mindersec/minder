@@ -195,6 +195,13 @@ service RoleService {
             body: "*"
         };
     }
+
+    rpc DeleteRole (DeleteRoleRequest) returns (DeleteRoleResponse) {
+        option (google.api.http) = {
+            delete: "/api/v1/role/{id}"
+        };
+
+    }    
 }
 
 // manage Users CRUD
@@ -441,6 +448,16 @@ message CreateRoleResponse {
     bool is_protected = 6;
     google.protobuf.Timestamp created_at = 7;
     google.protobuf.Timestamp updated_at = 8;    
+}
+
+// delete role
+message DeleteRoleRequest {
+    int32 id = 1;
+    optional bool force = 2;
+}
+
+message DeleteRoleResponse {
+
 }
 
 // list organisations

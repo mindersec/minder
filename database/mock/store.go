@@ -404,6 +404,21 @@ func (mr *MockStoreMockRecorder) ListUsers(arg0 interface{}) *gomock.Call {
 	return mr.mock.ctrl.RecordCallWithMethodType(mr.mock, "ListUsers", reflect.TypeOf((*MockStore)(nil).ListUsers), arg0)
 }
 
+// ListUsersByRoleID mocks base method.
+func (m *MockStore) ListUsersByRoleID(arg0 context.Context, arg1 int32) ([]db.User, error) {
+	m.ctrl.T.Helper()
+	ret := m.ctrl.Call(m, "ListUsersByRoleID", arg0, arg1)
+	ret0, _ := ret[0].([]db.User)
+	ret1, _ := ret[1].(error)
+	return ret0, ret1
+}
+
+// ListUsersByRoleID indicates an expected call of ListUsersByRoleID.
+func (mr *MockStoreMockRecorder) ListUsersByRoleID(arg0, arg1 interface{}) *gomock.Call {
+	mr.mock.ctrl.T.Helper()
+	return mr.mock.ctrl.RecordCallWithMethodType(mr.mock, "ListUsersByRoleID", reflect.TypeOf((*MockStore)(nil).ListUsersByRoleID), arg0, arg1)
+}
+
 // UpdateAccessToken mocks base method.
 func (m *MockStore) UpdateAccessToken(arg0 context.Context, arg1 db.UpdateAccessTokenParams) (db.AccessToken, error) {
 	m.ctrl.T.Helper()
