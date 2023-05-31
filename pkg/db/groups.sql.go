@@ -141,6 +141,41 @@ func (q *Queries) ListGroups(ctx context.Context, arg ListGroupsParams) ([]Group
 	return items, nil
 }
 
+const listGroupsByOrganisationID = `-- name: ListGroupsByOrganisationID :many
+SELECT id, organisation_id, name, description, is_protected, created_at, updated_at FROM groups WHERE organisation_id = $1
+`
+
+func (q *Queries) ListGroupsByOrganisationID(ctx context.Context, organisationID int32) ([]Group, error) {
+	rows, err := q.db.QueryContext(ctx, listGroupsByOrganisationID, organisationID)
+	if err != nil {
+		return nil, err
+	}
+	defer rows.Close()
+	items := []Group{}
+	for rows.Next() {
+		var i Group
+		if err := rows.Scan(
+			&i.ID,
+			&i.OrganisationID,
+			&i.Name,
+			&i.Description,
+			&i.IsProtected,
+			&i.CreatedAt,
+			&i.UpdatedAt,
+		); err != nil {
+			return nil, err
+		}
+		items = append(items, i)
+	}
+	if err := rows.Close(); err != nil {
+		return nil, err
+	}
+	if err := rows.Err(); err != nil {
+		return nil, err
+	}
+	return items, nil
+}
+
 const updateGroup = `-- name: UpdateGroup :one
 UPDATE groups 
 SET organisation_id = $2, name = $3, description = $4, is_protected = $5, updated_at = NOW() 

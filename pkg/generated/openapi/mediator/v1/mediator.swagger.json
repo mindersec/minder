@@ -549,6 +549,43 @@
         ]
       }
     },
+    "/api/v1/organisation/{id}": {
+      "delete": {
+        "operationId": "OrganisationService_DeleteOrganisation",
+        "responses": {
+          "200": {
+            "description": "A successful response.",
+            "schema": {
+              "$ref": "#/definitions/v1DeleteOrganisationResponse"
+            }
+          },
+          "default": {
+            "description": "An unexpected error response.",
+            "schema": {
+              "$ref": "#/definitions/rpcStatus"
+            }
+          }
+        },
+        "parameters": [
+          {
+            "name": "id",
+            "in": "path",
+            "required": true,
+            "type": "integer",
+            "format": "int32"
+          },
+          {
+            "name": "force",
+            "in": "query",
+            "required": false,
+            "type": "boolean"
+          }
+        ],
+        "tags": [
+          "OrganisationService"
+        ]
+      }
+    },
     "/api/v1/organisations": {
       "get": {
         "operationId": "OrganisationService_GetOrganisations",
@@ -1158,6 +1195,10 @@
     "v1DeleteGroupResponse": {
       "type": "object",
       "title": "DeleteGroupResponse represents a response to a delete group request"
+    },
+    "v1DeleteOrganisationResponse": {
+      "type": "object",
+      "title": "DeleteOrganisationResponse represents a response to a delete organisation request"
     },
     "v1DeleteRoleResponse": {
       "type": "object"

@@ -359,6 +359,21 @@ func (mr *MockStoreMockRecorder) ListGroups(arg0, arg1 interface{}) *gomock.Call
 	return mr.mock.ctrl.RecordCallWithMethodType(mr.mock, "ListGroups", reflect.TypeOf((*MockStore)(nil).ListGroups), arg0, arg1)
 }
 
+// ListGroupsByOrganisationID mocks base method.
+func (m *MockStore) ListGroupsByOrganisationID(arg0 context.Context, arg1 int32) ([]db.Group, error) {
+	m.ctrl.T.Helper()
+	ret := m.ctrl.Call(m, "ListGroupsByOrganisationID", arg0, arg1)
+	ret0, _ := ret[0].([]db.Group)
+	ret1, _ := ret[1].(error)
+	return ret0, ret1
+}
+
+// ListGroupsByOrganisationID indicates an expected call of ListGroupsByOrganisationID.
+func (mr *MockStoreMockRecorder) ListGroupsByOrganisationID(arg0, arg1 interface{}) *gomock.Call {
+	mr.mock.ctrl.T.Helper()
+	return mr.mock.ctrl.RecordCallWithMethodType(mr.mock, "ListGroupsByOrganisationID", reflect.TypeOf((*MockStore)(nil).ListGroupsByOrganisationID), arg0, arg1)
+}
+
 // ListOrganisations mocks base method.
 func (m *MockStore) ListOrganisations(arg0 context.Context, arg1 db.ListOrganisationsParams) ([]db.Organisation, error) {
 	m.ctrl.T.Helper()

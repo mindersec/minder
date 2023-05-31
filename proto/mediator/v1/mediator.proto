@@ -157,6 +157,13 @@ service OrganisationService {
             };    
     }
 
+    rpc DeleteOrganisation (DeleteOrganisationRequest) returns (DeleteOrganisationResponse) {
+        option (google.api.http) = {
+            delete: "/api/v1/organisation/{id}"
+        };
+
+    }     
+
 }
 
 // manage Groups CRUD
@@ -381,6 +388,18 @@ message OrganisationRecord {
     google.protobuf.Timestamp created_at = 5;
     google.protobuf.Timestamp updated_at = 6;    
 }
+
+// DeleteOrganisationRequest represents a request to delete a organisation
+message DeleteOrganisationRequest {
+    int32 id = 1;
+    optional bool force = 2;
+}
+
+// DeleteOrganisationResponse represents a response to a delete organisation request
+message DeleteOrganisationResponse {
+
+}
+
 
 // Group service
 

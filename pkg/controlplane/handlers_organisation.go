@@ -133,3 +133,49 @@ func (s *Server) GetOrganisationByName(ctx context.Context,
 
 	return &resp, nil
 }
+
+type deleteOrganisationValidation struct {
+	Id int32 `db:"id" validate:"required"`
+}
+
+// DeleteOrganisation is a handler that deletes a organisation
+func (s *Server) DeleteOrganisation(ctx context.Context,
+	in *pb.DeleteOrganisationRequest) (*pb.DeleteOrganisationResponse, error) {
+	validator := validator.New()
+	err := validator.Struct(deleteOrganisationValidation{Id: in.Id})
+	if err != nil {
+		return nil, err
+	}
+
+	_, err = s.store.GetOrganisation(ctx, in.Id)
+	if err != nil {
+		return nil, err
+	}
+
+	if in.Force == nil {
+		isProtected := false
+		in.Force = &isProtected
+	}
+
+	// if we do not force the deletion, we need to check if there are groups
+	if !*in.Force {
+		// list groups belonging to that organisation
+		groups, err := s.store.ListGroupsByOrganisationID(ctx, in.Id)
+		if err != nil {
+			return nil, err
+		}
+
+		if len(groups) > 0 {
+			errcode := fmt.Errorf("cannot delete the organisation, there are groups associated with it")
+			return nil, errcode
+		}
+	}
+
+	// otherwise we delete, and delete groups in cascade
+	err = s.store.DeleteOrganisation(ctx, in.Id)
+	if err != nil {
+		return nil, err
+	}
+
+	return &pb.DeleteOrganisationResponse{}, nil
+}
