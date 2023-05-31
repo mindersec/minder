@@ -727,6 +727,43 @@
         ]
       }
     },
+    "/api/v1/user/{id}": {
+      "delete": {
+        "operationId": "UserService_DeleteUser",
+        "responses": {
+          "200": {
+            "description": "A successful response.",
+            "schema": {
+              "$ref": "#/definitions/v1DeleteUserResponse"
+            }
+          },
+          "default": {
+            "description": "An unexpected error response.",
+            "schema": {
+              "$ref": "#/definitions/rpcStatus"
+            }
+          }
+        },
+        "parameters": [
+          {
+            "name": "id",
+            "in": "path",
+            "required": true,
+            "type": "integer",
+            "format": "int32"
+          },
+          {
+            "name": "force",
+            "in": "query",
+            "required": false,
+            "type": "boolean"
+          }
+        ],
+        "tags": [
+          "UserService"
+        ]
+      }
+    },
     "/api/v1/vulns": {
       "get": {
         "operationId": "VulnerabilitiesService_GetVulnerabilities",
@@ -1025,6 +1062,9 @@
           "format": "date-time"
         }
       }
+    },
+    "v1DeleteUserResponse": {
+      "type": "object"
     },
     "v1ExchangeCodeForTokenCLIResponse": {
       "type": "object",

@@ -164,3 +164,106 @@ func TestCreateUser_gRPC(t *testing.T) {
 		})
 	}
 }
+
+func TestDeleteUserDBMock(t *testing.T) {
+	ctrl := gomock.NewController(t)
+	defer ctrl.Finish()
+
+	mockStore := mockdb.NewMockStore(ctrl)
+
+	request := &pb.DeleteUserRequest{Id: 1}
+
+	expectedUser := db.User{
+		ID:          1,
+		RoleID:      1,
+		Email:       "test@stacklok.com",
+		Username:    "test",
+		Password:    "1234567@",
+		FirstName:   sql.NullString{String: "Foo", Valid: true},
+		LastName:    sql.NullString{String: "Bar", Valid: true},
+		IsProtected: false,
+		CreatedAt:   time.Now(),
+		UpdatedAt:   time.Now(),
+	}
+
+	mockStore.EXPECT().
+		GetUserByID(gomock.Any(), gomock.Any()).
+		Return(expectedUser, nil)
+	mockStore.EXPECT().
+		DeleteUser(gomock.Any(), gomock.Any()).
+		Return(nil)
+
+	server := &Server{
+		store: mockStore,
+	}
+
+	response, err := server.DeleteUser(context.Background(), request)
+
+	assert.NoError(t, err)
+	assert.NotNil(t, response)
+}
+
+func TestDeleteUser_gRPC(t *testing.T) {
+	force := true
+
+	testCases := []struct {
+		name               string
+		req                *pb.DeleteUserRequest
+		buildStubs         func(store *mockdb.MockStore)
+		checkResponse      func(t *testing.T, res *pb.DeleteUserResponse, err error)
+		expectedStatusCode codes.Code
+	}{
+		{
+			name: "Success",
+			req: &pb.DeleteUserRequest{
+				Id:    1,
+				Force: &force,
+			},
+			buildStubs: func(store *mockdb.MockStore) {
+				store.EXPECT().
+					GetUserByID(gomock.Any(), gomock.Any()).Return(db.User{}, nil).Times(1)
+				store.EXPECT().
+					DeleteUser(gomock.Any(), gomock.Any()).Return(nil).
+					Times(1)
+			},
+			checkResponse: func(t *testing.T, res *pb.DeleteUserResponse, err error) {
+				assert.NoError(t, err)
+				assert.NotNil(t, res)
+				assert.Equal(t, &pb.DeleteUserResponse{}, res)
+			},
+			expectedStatusCode: codes.OK,
+		},
+		{
+			name: "EmptyRequest",
+			req: &pb.DeleteUserRequest{
+				Id: 0,
+			},
+			buildStubs: func(store *mockdb.MockStore) {
+				// No expectations, as CreateRole should not be called
+			},
+			checkResponse: func(t *testing.T, res *pb.DeleteUserResponse, err error) {
+				// Assert the expected behavior when the request is empty
+				assert.Error(t, err)
+				assert.Nil(t, res)
+			},
+			expectedStatusCode: codes.InvalidArgument,
+		},
+	}
+
+	for i := range testCases {
+		tc := testCases[i]
+		t.Run(tc.name, func(t *testing.T) {
+
+			ctrl := gomock.NewController(t)
+			defer ctrl.Finish()
+
+			mockStore := mockdb.NewMockStore(ctrl)
+			tc.buildStubs(mockStore)
+
+			server := NewServer(mockStore)
+
+			resp, err := server.DeleteUser(context.Background(), tc.req)
+			tc.checkResponse(t, resp, err)
+		})
+	}
+}
