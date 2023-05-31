@@ -17,6 +17,7 @@ syntax = "proto3";
 package mediator.v1;
 import "google/api/annotations.proto";
 import "google/protobuf/timestamp.proto";
+import "google/protobuf/empty.proto";
 
 option go_package = "github.com/stacklok/mediator/pkg/generated/protobuf/go";
 
@@ -204,6 +205,13 @@ service UserService {
             post: "/api/v1/user"
             body: "*"
         };
+    }
+
+    rpc DeleteUser (DeleteUserRequest) returns (google.protobuf.Empty) {
+        option (google.api.http) = {
+            delete: "/api/v1/user/{id}"
+        };
+
     }
 }
 
@@ -486,4 +494,9 @@ message CreateUserResponse {
     optional bool is_protected = 8;
     google.protobuf.Timestamp created_at = 9;
     google.protobuf.Timestamp updated_at = 10;    
+}
+
+message DeleteUserRequest {
+    int32 id = 1;
+    optional bool force = 2;
 }

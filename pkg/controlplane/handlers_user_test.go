@@ -26,6 +26,7 @@ import (
 	"github.com/stretchr/testify/assert"
 
 	"google.golang.org/grpc/codes"
+	"google.golang.org/protobuf/types/known/emptypb"
 
 	mockdb "github.com/stacklok/mediator/database/mock"
 	pb "github.com/stacklok/mediator/pkg/generated/protobuf/go/mediator/v1"
@@ -160,6 +161,89 @@ func TestCreateUser_gRPC(t *testing.T) {
 			server := NewServer(mockStore)
 
 			resp, err := server.CreateUser(context.Background(), tc.req)
+			tc.checkResponse(t, resp, err)
+		})
+	}
+}
+
+func TestDeleteUserDBMock(t *testing.T) {
+	ctrl := gomock.NewController(t)
+	defer ctrl.Finish()
+
+	mockStore := mockdb.NewMockStore(ctrl)
+
+	request := &pb.DeleteUserRequest{Id: 1}
+
+	mockStore.EXPECT().
+		DeleteUser(gomock.Any(), gomock.Any()).
+		Return(nil, nil)
+
+	server := &Server{
+		store: mockStore,
+	}
+
+	response, err := server.DeleteUser(context.Background(), request)
+
+	assert.NoError(t, err)
+	assert.NotNil(t, response)
+}
+
+func TestDeleteUser_gRPC(t *testing.T) {
+	testCases := []struct {
+		name               string
+		req                *pb.DeleteUserRequest
+		buildStubs         func(store *mockdb.MockStore)
+		checkResponse      func(t *testing.T, res *emptypb.Empty, err error)
+		expectedStatusCode codes.Code
+	}{
+		{
+			name: "Success",
+			req: &pb.DeleteUserRequest{
+				Id: 1,
+			},
+			buildStubs: func(store *mockdb.MockStore) {
+				store.EXPECT().
+					DeleteUser(gomock.Any(), gomock.Any()).
+					Return(&emptypb.Empty{}, nil).
+					Times(1)
+			},
+			checkResponse: func(t *testing.T, res *emptypb.Empty, err error) {
+				assert.NoError(t, err)
+				assert.NotNil(t, res)
+				assert.Equal(t, &emptypb.Empty{}, res)
+			},
+			expectedStatusCode: codes.OK,
+		},
+		{
+			name: "EmptyRequest",
+			req: &pb.DeleteUserRequest{
+				Id: 0,
+			},
+			buildStubs: func(store *mockdb.MockStore) {
+				// No expectations, as CreateRole should not be called
+			},
+			checkResponse: func(t *testing.T, res *emptypb.Empty, err error) {
+				// Assert the expected behavior when the request is empty
+				assert.Error(t, err)
+				assert.Nil(t, res)
+			},
+			expectedStatusCode: codes.InvalidArgument,
+		},
+	}
+
+	for i := range testCases {
+		tc := testCases[i]
+		t.Run(tc.name, func(t *testing.T) {
+
+			ctrl := gomock.NewController(t)
+			defer ctrl.Finish()
+
+			mockStore := mockdb.NewMockStore(ctrl)
+			tc.buildStubs(mockStore)
+
+			server := NewServer(mockStore)
+
+			resp, err := server.DeleteUser(context.Background(), tc.req)
 			tc.checkResponse(t, resp, err)
 		})
 	}
