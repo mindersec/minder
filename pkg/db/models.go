@@ -46,15 +46,14 @@ type Role struct {
 }
 
 type User struct {
-	ID             int32         `json:"id"`
-	OrganisationID sql.NullInt32 `json:"organisation_id"`
-	GroupID        sql.NullInt32 `json:"group_id"`
-	RoleID         sql.NullInt32 `json:"role_id"`
-	Email          string        `json:"email"`
-	Username       string        `json:"username"`
-	Password       string        `json:"password"`
-	FirstName      string        `json:"first_name"`
-	LastName       string        `json:"last_name"`
-	CreatedAt      time.Time     `json:"created_at"`
-	UpdatedAt      time.Time     `json:"updated_at"`
+	ID          int32          `json:"id"`
+	RoleID      int32          `json:"role_id"`
+	Email       string         `json:"email"`
+	Username    string         `json:"username"`
+	Password    string         `json:"password"`
+	FirstName   sql.NullString `json:"first_name"`
+	LastName    sql.NullString `json:"last_name"`
+	IsProtected bool           `json:"is_protected"`
+	CreatedAt   time.Time      `json:"created_at"`
+	UpdatedAt   time.Time      `json:"updated_at"`
 }

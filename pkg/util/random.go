@@ -56,3 +56,19 @@ func RandomEmail(seed int64) string {
 func RandomName(seed int64) string {
 	return RandomString(10, seed)
 }
+
+// RandomPassword returns a random password of length n.
+func RandomPassword(n int, seed int64) string {
+	const letters = "abcdefghijklmnopqrstuvwxyzABCDEFGHIJKLMNOPQRSTUVWXYZ0123456789"
+	s := make([]byte, n-1)
+	r := NewRand(seed)
+	for i := range s {
+		s[i] = letters[r.Intn(len(letters))]
+	}
+
+	// add special chars
+	const chars = "!@#?*"
+	s[len(s)-1] = chars[r.Intn(len(chars))]
+
+	return string(s)
+}

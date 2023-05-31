@@ -48,14 +48,13 @@ CREATE TABLE roles (
 -- users table
 CREATE TABLE users (
     id SERIAL PRIMARY KEY,
-    organisation_id INTEGER REFERENCES organisations(id) ON DELETE CASCADE,
-    group_id INTEGER REFERENCES groups(id) ON DELETE SET NULL,
-    role_id INTEGER REFERENCES roles(id) ON DELETE SET NULL,
+    role_id INTEGER NOT NULL REFERENCES roles(id),
     email TEXT NOT NULL UNIQUE,
     username TEXT NOT NULL UNIQUE,
     password TEXT NOT NULL,
-    first_name TEXT NOT NULL,
-    last_name TEXT NOT NULL,
+    first_name TEXT,
+    last_name TEXT,
+    is_protected BOOLEAN NOT NULL DEFAULT FALSE,
     created_at TIMESTAMP NOT NULL DEFAULT NOW(),
     updated_at TIMESTAMP NOT NULL DEFAULT NOW()
 );
@@ -75,7 +74,7 @@ ALTER TABLE organisations ADD CONSTRAINT unique_name UNIQUE (name);
 
 -- Indexes
 CREATE INDEX idx_users_email ON users(email);
-CREATE INDEX idx_users_organisation_id ON users(organisation_id);
+CREATE INDEX idx_users_role_id ON users(role_id);
 CREATE INDEX idx_groups_organisation_id ON groups(organisation_id);
 CREATE INDEX idx_roles_group_id ON roles(group_id);
 CREATE INDEX idx_access_tokens_organisation_id ON access_tokens(organisation_id);
@@ -91,5 +90,5 @@ VALUES (1, 'Root Group');
 INSERT INTO roles (group_id, name, is_admin, is_protected)
 VALUES (1, 'Role Role', TRUE, FALSE);
 
-INSERT INTO users (organisation_id, group_id, role_id, email, username, password, first_name, last_name)
-VALUES (1, 1, 1, 'root@localhost', 'root', '$argon2id$v=19$m=0,t=3,p=2$mQDRkaBe7p3pbGvzgFn20Q$GYA0SkpXhVMLwcjRSPKCUpmd4ptMcdUcQ5YTAOnLFKs', 'Root', 'Admin');
+INSERT INTO users (role_id, email, username, password, first_name, last_name)
+VALUES (1, 'root@localhost', 'root', '$argon2id$v=19$m=0,t=3,p=2$mQDRkaBe7p3pbGvzgFn20Q$GYA0SkpXhVMLwcjRSPKCUpmd4ptMcdUcQ5YTAOnLFKs', 'Root', 'Admin');

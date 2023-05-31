@@ -31,31 +31,38 @@ import (
 	"github.com/stretchr/testify/require"
 )
 
+func stringToNullString(s string) sql.NullString {
+	if s == "" {
+		return sql.NullString{}
+	}
+	return sql.NullString{String: s, Valid: true}
+}
+
 func createRandomUser(t *testing.T, org Organisation) User {
 	seed := time.Now().UnixNano()
 	group := createRandomGroup(t, org.ID)
+	role := createRandomRole(t, group.ID)
 
 	arg := CreateUserParams{
-		OrganisationID: sql.NullInt32{Int32: org.ID, Valid: true},
-		GroupID:        sql.NullInt32{Int32: group.ID, Valid: true},
-		Email:          util.RandomEmail(seed),
-		Username:       util.RandomString(10, seed),
-		Password:       util.RandomString(10, seed),
-		FirstName:      util.RandomName(seed),
-		LastName:       util.RandomName(seed),
+		RoleID:    role.ID,
+		Email:     util.RandomEmail(seed),
+		Username:  util.RandomString(10, seed),
+		Password:  util.RandomPassword(10, seed),
+		FirstName: stringToNullString(util.RandomName(seed)),
+		LastName:  stringToNullString(util.RandomName(seed)),
 	}
 
 	user, err := testQueries.CreateUser(context.Background(), arg)
 	require.NoError(t, err)
 	require.NotEmpty(t, user)
 
-	require.Equal(t, arg.OrganisationID, user.OrganisationID)
-	require.Equal(t, arg.GroupID, user.GroupID)
+	require.Equal(t, arg.RoleID, user.RoleID)
 	require.Equal(t, arg.Email, user.Email)
 	require.Equal(t, arg.Username, user.Username)
 	require.Equal(t, arg.Password, user.Password)
 	require.Equal(t, arg.FirstName, user.FirstName)
 	require.Equal(t, arg.LastName, user.LastName)
+	require.Equal(t, false, user.IsProtected)
 
 	require.NotZero(t, user.ID)
 	require.NotZero(t, user.CreatedAt)
@@ -79,13 +86,13 @@ func TestGetUser(t *testing.T) {
 	require.NotEmpty(t, user2)
 
 	require.Equal(t, user1.ID, user2.ID)
-	require.Equal(t, user1.OrganisationID, user2.OrganisationID)
-	require.Equal(t, user1.GroupID, user2.GroupID)
+	require.Equal(t, user1.RoleID, user2.RoleID)
 	require.Equal(t, user1.Email, user2.Email)
 	require.Equal(t, user1.Username, user2.Username)
 	require.Equal(t, user1.Password, user2.Password)
 	require.Equal(t, user1.FirstName, user2.FirstName)
 	require.Equal(t, user1.LastName, user2.LastName)
+	require.Equal(t, user1.IsProtected, user2.IsProtected)
 
 	require.NotZero(t, user2.CreatedAt)
 	require.NotZero(t, user2.UpdatedAt)
@@ -100,14 +107,13 @@ func TestUpdateUser(t *testing.T) {
 	user1 := createRandomUser(t, org)
 
 	arg := UpdateUserParams{
-		ID:             user1.ID,
-		OrganisationID: sql.NullInt32{Int32: user1.OrganisationID.Int32, Valid: true},
-		GroupID:        sql.NullInt32{Int32: user1.GroupID.Int32, Valid: true},
-		Email:          util.RandomEmail(seed),
-		Username:       util.RandomString(10, seed),
-		Password:       util.RandomString(10, seed),
-		FirstName:      util.RandomName(seed),
-		LastName:       util.RandomName(seed),
+		ID:        user1.ID,
+		RoleID:    user1.RoleID,
+		Email:     util.RandomEmail(seed),
+		Username:  util.RandomString(10, seed),
+		Password:  util.RandomString(10, seed),
+		FirstName: stringToNullString(util.RandomName(seed)),
+		LastName:  stringToNullString(util.RandomName(seed)),
 	}
 
 	user2, err := testQueries.UpdateUser(context.Background(), arg)
@@ -115,13 +121,13 @@ func TestUpdateUser(t *testing.T) {
 	require.NotEmpty(t, user2)
 
 	require.Equal(t, arg.ID, user2.ID)
-	require.Equal(t, arg.OrganisationID, user2.OrganisationID)
-	require.Equal(t, arg.GroupID, user2.GroupID)
+	require.Equal(t, arg.RoleID, user2.RoleID)
 	require.Equal(t, arg.Email, user2.Email)
 	require.Equal(t, arg.Username, user2.Username)
 	require.Equal(t, arg.Password, user2.Password)
 	require.Equal(t, arg.FirstName, user2.FirstName)
 	require.Equal(t, arg.LastName, user2.LastName)
+	require.Equal(t, arg.IsProtected, user2.IsProtected)
 
 	require.NotZero(t, user2.CreatedAt)
 	require.NotZero(t, user2.UpdatedAt)
