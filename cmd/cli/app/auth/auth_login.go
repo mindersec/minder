@@ -39,6 +39,7 @@ import (
 	"google.golang.org/grpc/credentials/insecure"
 )
 
+// Credentials is a struct to hold the access and refresh tokens
 type Credentials struct {
 	AccessToken           string `json:"access_token"`
 	RefreshToken          string `json:"refresh_token"`
@@ -67,7 +68,7 @@ func saveCredentials(creds Credentials) (string, error) {
 
 	filePath := filepath.Join(xdgConfigHome, "mediator", "credentials.json")
 
-	err = os.MkdirAll(filepath.Dir(filePath), 0755)
+	err = os.MkdirAll(filepath.Dir(filePath), 0750)
 	if err != nil {
 		return "", fmt.Errorf("error creating directory: %v", err)
 	}

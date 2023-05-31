@@ -19,6 +19,7 @@
 // It does make a good example of how to use the generated client code
 // for others to use as a reference.
 
+// Package group contains the group logic for the control plane
 package group
 
 import (
@@ -31,6 +32,7 @@ import (
 	"github.com/spf13/viper"
 )
 
+// GroupCmd is the root command for the group subcommands
 var GroupCmd = &cobra.Command{
 	Use:   "group",
 	Short: "Manage groups within a mediator control plane",

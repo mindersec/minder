@@ -13,6 +13,7 @@
 // See the License for the specific language governing permissions and
 // limitations under the License.
 
+// Package main provides the entrypoint for the mediator server
 package main
 
 import "github.com/stacklok/mediator/cmd/server/app"

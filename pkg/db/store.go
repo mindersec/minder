@@ -25,21 +25,24 @@ import (
 	"database/sql"
 )
 
+// Store provides all functions to execute db queries and transactions
 type Store interface {
 	Querier
 	CheckHealth() error
 }
 
+// SQLStore provides all functions to execute SQL queries and transactions
 type SQLStore struct {
 	db *sql.DB
 	*Queries
 }
 
-// Implement queries used in handlers.go
+// CheckHealth checks the health of the database
 func (s *SQLStore) CheckHealth() error {
 	return s.db.Ping()
 }
 
+// NewStore creates a new store
 func NewStore(db *sql.DB) Store {
 	return &SQLStore{
 		db:      db,

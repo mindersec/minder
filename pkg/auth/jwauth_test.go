@@ -19,6 +19,7 @@
 // It does make a good example of how to use the generated client code
 // for others to use as a reference.
 
+// package auth contains the authentication logic for the control plane
 package auth
 
 import (

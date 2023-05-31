@@ -13,6 +13,7 @@
 // See the License for the specific language governing permissions and
 // limitations under the License.
 
+// Package crypto provides cryptographic functions
 package crypto
 
 import (
@@ -56,10 +57,13 @@ func getParams() *params {
 }
 
 var (
-	ErrInvalidHash         = errors.New("the encoded hash is not in the correct format")
+	// ErrInvalidHash is returned when the encoded hash is not in the correct format
+	ErrInvalidHash = errors.New("the encoded hash is not in the correct format")
+	// ErrIncompatibleVersion is returned when the encoded hash was created with a different version of argon2
 	ErrIncompatibleVersion = errors.New("incompatible version of argon2")
 )
 
+// GetCert gets a certificate from an envelope
 func GetCert(envelope []byte) ([]byte, error) {
 	env := &Envelope{}
 	if err := json.Unmarshal(envelope, env); err != nil {
@@ -68,6 +72,7 @@ func GetCert(envelope []byte) ([]byte, error) {
 	return []byte(env.Signatures[0].Cert), nil
 }
 
+// GetPubKeyFromCert gets a public key from a certificate
 func GetPubKeyFromCert(certIn []byte) (*ecdsa.PublicKey, error) {
 	block, _ := pem.Decode(certIn)
 	if block == nil {
@@ -83,12 +88,14 @@ func GetPubKeyFromCert(certIn []byte) (*ecdsa.PublicKey, error) {
 	return pubKey, nil
 }
 
+// VerifySignature verifies a signature
 func VerifySignature(pubKey *ecdsa.PublicKey, payload []byte, sig []byte) (bool, error) {
 	hash := sha256.Sum256(payload)
 	verified := ecdsa.VerifyASN1(pubKey, hash[:], sig)
 	return verified, nil
 }
 
+// VerifyCertChain verifies a certificate chain
 func VerifyCertChain(certIn []byte, roots *x509.CertPool) (bool, error) {
 	block, _ := pem.Decode(certIn)
 	if block == nil {
@@ -119,6 +126,7 @@ func VerifyCertChain(certIn []byte, roots *x509.CertPool) (bool, error) {
 	return true, nil
 }
 
+// EncryptRow encrypts a row of data using AES-CFB.
 func EncryptRow(key, data string) ([]byte, error) {
 	block, err := aes.NewCipher(deriveKey(key))
 	if err != nil {
@@ -138,7 +146,7 @@ func EncryptRow(key, data string) ([]byte, error) {
 	return ciphertext, nil
 }
 
-// Function to decrypt data using AES
+// DecryptRow decrypts a row of data using AES-CFB.
 func DecryptRow(key string, ciphertext []byte) (string, error) {
 	block, err := aes.NewCipher(deriveKey(key))
 	if err != nil {
@@ -163,6 +171,7 @@ func deriveKey(passphrase string) []byte {
 	return argon2.IDKey([]byte(passphrase), salt, 1, 64*1024, 4, 32)
 }
 
+// GeneratePasswordHash generates a hash of a password using Argon2id.
 func GeneratePasswordHash(password string) (encodedHash string, err error) {
 
 	p := getParams()
@@ -195,6 +204,7 @@ func generateRandomBytes(n uint32) ([]byte, error) {
 	return b, nil
 }
 
+// VerifyPasswordHash compares a password with a hash and returns true if
 func VerifyPasswordHash(password, encodedHash string) (match bool, err error) {
 	// Extract the parameters, salt and derived key from the encoded password
 	// hash.

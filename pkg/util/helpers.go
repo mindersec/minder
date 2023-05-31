@@ -19,6 +19,7 @@
 // It does make a good example of how to use the generated client code
 // for others to use as a reference.
 
+// Package util provides helper functions for the mediator CLI.
 package util
 
 import (
@@ -34,7 +35,7 @@ import (
 	"google.golang.org/grpc/credentials/insecure"
 )
 
-// getConfigValue is a helper function that retrieves a configuration value
+// GetConfigValue is a helper function that retrieves a configuration value
 // and updates it if the corresponding flag is set.
 //
 // Parameters:
@@ -66,6 +67,7 @@ func GetConfigValue(key string, flagName string, cmd *cobra.Command, defaultValu
 	return defaultValue
 }
 
+// GetDbConnectionFromConfig is a helper to get a database connection from a viper config
 func GetDbConnectionFromConfig(settings map[string]interface{}) (*sql.DB, error) {
 	// Database configuration
 	dbhost := settings["dbhost"].(string)
@@ -85,6 +87,7 @@ func GetDbConnectionFromConfig(settings map[string]interface{}) (*sql.DB, error)
 	return conn, err
 }
 
+// GetGrpcConnection is a helper for getting a testing connection for grpc
 func GetGrpcConnection(cmd *cobra.Command) (*grpc.ClientConn, error) {
 	// Database configuration
 	grpc_host := GetConfigValue("grpc_server.host", "grpc-host", cmd, "").(string)
@@ -98,6 +101,7 @@ func GetGrpcConnection(cmd *cobra.Command) (*grpc.ClientConn, error) {
 	return conn, nil
 }
 
+// TestWriter is a helper struct for testing
 type TestWriter struct {
 	Output string
 }

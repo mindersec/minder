@@ -19,6 +19,7 @@
 // It does make a good example of how to use the generated client code
 // for others to use as a reference.
 
+// Package org contains the organization logic for the control plane
 package org
 
 import (
@@ -31,6 +32,7 @@ import (
 	"github.com/spf13/viper"
 )
 
+// OrgCmd is the root command for the org subcommands
 var OrgCmd = &cobra.Command{
 	Use:   "org",
 	Short: "Manage organizations within a mediator control plane",

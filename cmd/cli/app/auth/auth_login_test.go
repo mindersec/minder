@@ -23,6 +23,7 @@ package auth
 import (
 	"context"
 	"encoding/json"
+	"path/filepath"
 
 	"google.golang.org/grpc"
 	"google.golang.org/grpc/credentials/insecure"
@@ -55,13 +56,17 @@ func TestSaveCredentials(t *testing.T) {
 		RefreshTokenExpiresIn: 7200,
 	}
 
-	os.Setenv("XDG_CONFIG_HOME", "/tmp")
+	err := os.Setenv("XDG_CONFIG_HOME", "/tmp")
+	if err != nil {
+		t.Fatalf("Failed to set XDG_CONFIG_HOME: %v", err)
+	}
 
 	filePath, err := saveCredentials(expectedCreds)
 	if err != nil {
 		t.Fatalf("saveCredentials returned unexpected error: %v", err)
 	}
 
+	filePath = filepath.Clean(filePath)
 	data, err := os.ReadFile(filePath)
 	if err != nil {
 		t.Fatalf("Failed to read file: %v", err)
@@ -78,7 +83,10 @@ func TestSaveCredentials(t *testing.T) {
 
 	// Clean up ones mess
 	os.Unsetenv("XDG_CONFIG_HOME")
-	os.Remove(filePath)
+	err = os.Remove(filePath)
+	if err != nil {
+		t.Fatalf("Failed to remove file: %v", err)
+	}
 }
 
 func TestGetLoginServiceClient(t *testing.T) {

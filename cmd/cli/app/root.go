@@ -13,6 +13,7 @@
 // See the License for the specific language governing permissions and
 // limitations under the License.
 
+// Package app provides the root command for the medctl CLI
 package app
 
 import (
@@ -25,6 +26,8 @@ import (
 
 var (
 	cfgFile string // config file (default is $PWD/config.yaml)
+
+	// RootCmd represents the base command when called without any subcommands
 	RootCmd = &cobra.Command{
 		Use:   "medctl",
 		Short: "medctl controls mediator via the control plane",
@@ -33,6 +36,7 @@ https://docs.stacklok.com/mediator/medctl/overview.html`,
 	}
 )
 
+// Execute adds all child commands to the root command and sets flags appropriately.
 func Execute() {
 	err := RootCmd.Execute()
 	if err != nil {

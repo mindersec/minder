@@ -24,7 +24,7 @@ import (
 	"google.golang.org/protobuf/types/known/timestamppb"
 )
 
-type CreateOrganisationValidation struct {
+type createOrganisationValidation struct {
 	Name    string `db:"name" validate:"required"`
 	Company string `db:"company" validate:"required"`
 }
@@ -34,7 +34,7 @@ func (s *Server) CreateOrganisation(ctx context.Context,
 	in *pb.CreateOrganisationRequest) (*pb.CreateOrganisationResponse, error) {
 	// validate that the company and name are not empty
 	validator := validator.New()
-	err := validator.Struct(CreateOrganisationValidation{Name: in.Name, Company: in.Company})
+	err := validator.Struct(createOrganisationValidation{Name: in.Name, Company: in.Company})
 	if err != nil {
 		return nil, err
 	}
@@ -49,7 +49,7 @@ func (s *Server) CreateOrganisation(ctx context.Context,
 		UpdatedAt: timestamppb.New(org.UpdatedAt)}, nil
 }
 
-// Get Organisations is a service for listing organisations
+// GetOrganisations is a service for getting a list of organisations
 func (s *Server) GetOrganisations(ctx context.Context,
 	in *pb.GetOrganisationsRequest) (*pb.GetOrganisationsResponse, error) {
 

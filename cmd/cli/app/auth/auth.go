@@ -31,7 +31,7 @@ import (
 	"github.com/spf13/viper"
 )
 
-// authCmd represents the account command
+// AuthCmd represents the account command
 var AuthCmd = &cobra.Command{
 	Use:   "auth",
 	Short: "Authorize and manage accounts within a mediator control plane",

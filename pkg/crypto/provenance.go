@@ -20,19 +20,21 @@ import (
 	"time"
 )
 
-// Provenance is a wrapper around dsse.Envelope
+// Envelope is a wrapper around dsse.Envelope
 type Envelope struct {
 	PayloadType string      `json:"payloadType"`
 	Payload     string      `json:"payload"`
 	Signatures  []Signature `json:"signatures"`
 }
 
+// Signature is a wrapper around dsse.Signature
 type Signature struct {
 	KeyID string `json:"keyid"`
 	Sig   string `json:"sig"`
 	Cert  string `json:"cert"`
 }
 
+// PayLoadSLSA is the payload for SLSA
 type PayLoadSLSA struct {
 	Type          string `json:"_type"`
 	PredicateType string `json:"predicateType"`

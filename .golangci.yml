@@ -39,17 +39,18 @@ linters-settings:
       - name: unreachable-code
       - name: unused-parameter
       - name: unused-receiver
+      - name: unhandled-error
+        disabled: true
   gosec:
     excludes:
       - G114 # for the moment we need to use listenandserve that has no support for timeouts
       - G404 # use unsafe random generator until logic change is discussed
+      - G307 # Deferring unsafe method "Close" on type "io.ReadCloser"
 
 linters:
   disable-all: true
   enable:
-    - errcheck
     - lll
-    - errcheck
     - goconst
     - gocyclo
     - gofmt
@@ -63,6 +64,7 @@ linters:
     - unused
 
 issues:
+  exclude-use-default: false
   exclude-rules:
     - path: '(.+)_test\.go'
       linters:

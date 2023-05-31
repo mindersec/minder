@@ -13,6 +13,7 @@
 // See the License for the specific language governing permissions and
 // limitations under the License.
 
+// Package role provides the cli subcommands for managing roles within a mediator control plane
 package role
 
 import (
@@ -25,6 +26,7 @@ import (
 	"github.com/spf13/viper"
 )
 
+// RoleCmd is the root command for the role subcommands
 var RoleCmd = &cobra.Command{
 	Use:   "role",
 	Short: "Manage roles within a mediator control plane",

@@ -19,6 +19,7 @@
 // It does make a good example of how to use the generated client code
 // for others to use as a reference.
 
+// Package auth contains the auth logic for the control plane
 package auth
 
 import (
@@ -42,6 +43,7 @@ import (
 	"google.golang.org/grpc/credentials/insecure"
 )
 
+// Status represents the status of the OAuth flow.
 type Status struct {
 	Status string `json:"status"`
 }
@@ -85,7 +87,10 @@ func callBackServer(wg *sync.WaitGroup) {
 
 	go func() {
 		wg.Wait()
-		server.Close() // Shutdown the server when the correct status is received.
+		err := server.Close() // Shutdown the server when the correct status is received.
+		if err != nil {
+			fmt.Fprintf(os.Stderr, "Error shutting down server: %v\n", err)
+		}
 	}()
 
 	fmt.Println("Listening for OAuth Login flow to complete...")

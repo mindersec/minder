@@ -23,6 +23,7 @@ import (
 	"google.golang.org/protobuf/types/known/timestamppb"
 )
 
+// CreateRoleValidation is a struct for validating the CreateRole request
 type CreateRoleValidation struct {
 	GroupId int32  `db:"group_id" validate:"required"`
 	Name    string `db:"name" validate:"required"`

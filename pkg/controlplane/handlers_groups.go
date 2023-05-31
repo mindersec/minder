@@ -23,6 +23,7 @@ import (
 	pb "github.com/stacklok/mediator/pkg/generated/protobuf/go/mediator/v1"
 )
 
+// CreateGroup creates a group
 func (s *Server) CreateGroup(ctx context.Context, req *pb.CreateGroupRequest) (*pb.CreateGroupResponse, error) {
 	_, err := s.store.GetGroupByName(ctx, req.Name)
 
@@ -50,6 +51,7 @@ func (s *Server) CreateGroup(ctx context.Context, req *pb.CreateGroupRequest) (*
 	}, nil
 }
 
+// GetGroupById returns a group by id
 func (s *Server) GetGroupById(ctx context.Context, req *pb.GetGroupByIdRequest) (*pb.GetGroupByIdResponse, error) {
 	fmt.Println("Group ID: ", req.GroupId)
 	grp, err := s.store.GetGroupByID(ctx, req.GroupId)
@@ -64,6 +66,7 @@ func (s *Server) GetGroupById(ctx context.Context, req *pb.GetGroupByIdRequest) 
 	}, nil
 }
 
+// GetGroupByName returns a group by name
 func (s *Server) GetGroupByName(ctx context.Context, req *pb.GetGroupByNameRequest) (*pb.GetGroupByNameResponse, error) {
 	grp, err := s.store.GetGroupByName(ctx, req.Name)
 	if err != nil {
@@ -77,6 +80,7 @@ func (s *Server) GetGroupByName(ctx context.Context, req *pb.GetGroupByNameReque
 	}, nil
 }
 
+// GetGroups returns a list of groups
 func (s *Server) GetGroups(ctx context.Context, req *pb.GetGroupsRequest) (*pb.GetGroupsResponse, error) {
 
 	organizationID := getOrganizationID(req.OrganisationId)
