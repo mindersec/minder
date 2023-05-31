@@ -13,7 +13,8 @@
 // See the License for the specific language governing permissions and
 // limitations under the License.
 
-package role
+// Package user provides the user subcommand for the medctl CLI.
+package user
 
 import (
 	"fmt"
@@ -25,6 +26,7 @@ import (
 	"github.com/spf13/viper"
 )
 
+// UserCmd is the root command for the user subcommands.
 var UserCmd = &cobra.Command{
 	Use:   "user",
 	Short: "Manage users within a mediator control plane",

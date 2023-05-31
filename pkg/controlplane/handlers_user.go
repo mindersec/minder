@@ -25,7 +25,7 @@ import (
 	"google.golang.org/protobuf/types/known/timestamppb"
 )
 
-type CreateUserValidation struct {
+type createUserValidation struct {
 	RoleId   int32  `db:"role_id" validate:"required"`
 	Email    string `db:"email" validate:"required,email"`
 	Username string `db:"username" validate:"required"`
@@ -44,7 +44,7 @@ func (s *Server) CreateUser(ctx context.Context,
 	in *pb.CreateUserRequest) (*pb.CreateUserResponse, error) {
 	// validate that the company and name are not empty
 	validator := validator.New()
-	err := validator.Struct(CreateUserValidation{RoleId: in.RoleId,
+	err := validator.Struct(createUserValidation{RoleId: in.RoleId,
 		Email: in.Email, Username: in.Username, Password: in.Password})
 	if err != nil {
 		return nil, err
