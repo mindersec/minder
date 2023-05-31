@@ -1199,6 +1199,7 @@ const (
 	GroupService_GetGroupByName_FullMethodName = "/mediator.v1.GroupService/GetGroupByName"
 	GroupService_GetGroupById_FullMethodName   = "/mediator.v1.GroupService/GetGroupById"
 	GroupService_GetGroups_FullMethodName      = "/mediator.v1.GroupService/GetGroups"
+	GroupService_DeleteGroup_FullMethodName    = "/mediator.v1.GroupService/DeleteGroup"
 )
 
 // GroupServiceClient is the client API for GroupService service.
@@ -1209,6 +1210,7 @@ type GroupServiceClient interface {
 	GetGroupByName(ctx context.Context, in *GetGroupByNameRequest, opts ...grpc.CallOption) (*GetGroupByNameResponse, error)
 	GetGroupById(ctx context.Context, in *GetGroupByIdRequest, opts ...grpc.CallOption) (*GetGroupByIdResponse, error)
 	GetGroups(ctx context.Context, in *GetGroupsRequest, opts ...grpc.CallOption) (*GetGroupsResponse, error)
+	DeleteGroup(ctx context.Context, in *DeleteGroupRequest, opts ...grpc.CallOption) (*DeleteGroupResponse, error)
 }
 
 type groupServiceClient struct {
@@ -1255,6 +1257,15 @@ func (c *groupServiceClient) GetGroups(ctx context.Context, in *GetGroupsRequest
 	return out, nil
 }
 
+func (c *groupServiceClient) DeleteGroup(ctx context.Context, in *DeleteGroupRequest, opts ...grpc.CallOption) (*DeleteGroupResponse, error) {
+	out := new(DeleteGroupResponse)
+	err := c.cc.Invoke(ctx, GroupService_DeleteGroup_FullMethodName, in, out, opts...)
+	if err != nil {
+		return nil, err
+	}
+	return out, nil
+}
+
 // GroupServiceServer is the server API for GroupService service.
 // All implementations must embed UnimplementedGroupServiceServer
 // for forward compatibility
@@ -1263,6 +1274,7 @@ type GroupServiceServer interface {
 	GetGroupByName(context.Context, *GetGroupByNameRequest) (*GetGroupByNameResponse, error)
 	GetGroupById(context.Context, *GetGroupByIdRequest) (*GetGroupByIdResponse, error)
 	GetGroups(context.Context, *GetGroupsRequest) (*GetGroupsResponse, error)
+	DeleteGroup(context.Context, *DeleteGroupRequest) (*DeleteGroupResponse, error)
 	mustEmbedUnimplementedGroupServiceServer()
 }
 
@@ -1281,6 +1293,9 @@ func (UnimplementedGroupServiceServer) GetGroupById(context.Context, *GetGroupBy
 }
 func (UnimplementedGroupServiceServer) GetGroups(context.Context, *GetGroupsRequest) (*GetGroupsResponse, error) {
 	return nil, status.Errorf(codes.Unimplemented, "method GetGroups not implemented")
+}
+func (UnimplementedGroupServiceServer) DeleteGroup(context.Context, *DeleteGroupRequest) (*DeleteGroupResponse, error) {
+	return nil, status.Errorf(codes.Unimplemented, "method DeleteGroup not implemented")
 }
 func (UnimplementedGroupServiceServer) mustEmbedUnimplementedGroupServiceServer() {}
 
@@ -1367,6 +1382,24 @@ func _GroupService_GetGroups_Handler(srv interface{}, ctx context.Context, dec f
 	return interceptor(ctx, in, info, handler)
 }
 
+func _GroupService_DeleteGroup_Handler(srv interface{}, ctx context.Context, dec func(interface{}) error, interceptor grpc.UnaryServerInterceptor) (interface{}, error) {
+	in := new(DeleteGroupRequest)
+	if err := dec(in); err != nil {
+		return nil, err
+	}
+	if interceptor == nil {
+		return srv.(GroupServiceServer).DeleteGroup(ctx, in)
+	}
+	info := &grpc.UnaryServerInfo{
+		Server:     srv,
+		FullMethod: GroupService_DeleteGroup_FullMethodName,
+	}
+	handler := func(ctx context.Context, req interface{}) (interface{}, error) {
+		return srv.(GroupServiceServer).DeleteGroup(ctx, req.(*DeleteGroupRequest))
+	}
+	return interceptor(ctx, in, info, handler)
+}
+
 // GroupService_ServiceDesc is the grpc.ServiceDesc for GroupService service.
 // It's only intended for direct use with grpc.RegisterService,
 // and not to be introspected or modified (even as a copy)
@@ -1389,6 +1422,10 @@ var GroupService_ServiceDesc = grpc.ServiceDesc{
 		{
 			MethodName: "GetGroups",
 			Handler:    _GroupService_GetGroups_Handler,
+		},
+		{
+			MethodName: "DeleteGroup",
+			Handler:    _GroupService_DeleteGroup_Handler,
 		},
 	},
 	Streams:  []grpc.StreamDesc{},

@@ -19,9 +19,10 @@ type AccessToken struct {
 
 type Group struct {
 	ID             int32          `json:"id"`
-	OrganisationID sql.NullInt32  `json:"organisation_id"`
+	OrganisationID int32          `json:"organisation_id"`
 	Name           string         `json:"name"`
 	Description    sql.NullString `json:"description"`
+	IsProtected    bool           `json:"is_protected"`
 	CreatedAt      time.Time      `json:"created_at"`
 	UpdatedAt      time.Time      `json:"updated_at"`
 }

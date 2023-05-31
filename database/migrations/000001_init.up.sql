@@ -25,9 +25,10 @@ CREATE TABLE organisations (
 -- groups table
 CREATE TABLE groups (
     id SERIAL PRIMARY KEY,
-    organisation_id INTEGER REFERENCES organisations(id) ON DELETE CASCADE,
+    organisation_id INTEGER NOT NULL REFERENCES organisations(id) ON DELETE CASCADE,
     name TEXT NOT NULL,
     description TEXT,
+    is_protected BOOLEAN NOT NULL DEFAULT FALSE,
     created_at TIMESTAMP NOT NULL DEFAULT NOW(),
     updated_at TIMESTAMP NOT NULL DEFAULT NOW()
 );
@@ -84,8 +85,8 @@ CREATE INDEX idx_access_tokens_organisation_id ON access_tokens(organisation_id)
 INSERT INTO organisations (name, company, root_admin_id) 
 VALUES ('Root Organization', 'Root Company', 1);
 
-INSERT INTO groups (organisation_id, name)
-VALUES (1, 'Root Group');
+INSERT INTO groups (organisation_id, name, is_protected)
+VALUES (1, 'Root Group', TRUE);
 
 INSERT INTO roles (group_id, name, is_admin, is_protected)
 VALUES (1, 'Role Role', TRUE, TRUE);

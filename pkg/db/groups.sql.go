@@ -12,26 +12,36 @@ import (
 
 const createGroup = `-- name: CreateGroup :one
 INSERT INTO groups (
-    organisation_id, 
-    name
+    organisation_id,
+    name,
+    description,
+    is_protected
     ) VALUES (
-        $1, $2
-) RETURNING id, organisation_id, name, description, created_at, updated_at
+        $1, $2, $3, $4
+) RETURNING id, organisation_id, name, description, is_protected, created_at, updated_at
 `
 
 type CreateGroupParams struct {
-	OrganisationID sql.NullInt32 `json:"organisation_id"`
-	Name           string        `json:"name"`
+	OrganisationID int32          `json:"organisation_id"`
+	Name           string         `json:"name"`
+	Description    sql.NullString `json:"description"`
+	IsProtected    bool           `json:"is_protected"`
 }
 
 func (q *Queries) CreateGroup(ctx context.Context, arg CreateGroupParams) (Group, error) {
-	row := q.db.QueryRowContext(ctx, createGroup, arg.OrganisationID, arg.Name)
+	row := q.db.QueryRowContext(ctx, createGroup,
+		arg.OrganisationID,
+		arg.Name,
+		arg.Description,
+		arg.IsProtected,
+	)
 	var i Group
 	err := row.Scan(
 		&i.ID,
 		&i.OrganisationID,
 		&i.Name,
 		&i.Description,
+		&i.IsProtected,
 		&i.CreatedAt,
 		&i.UpdatedAt,
 	)
@@ -49,7 +59,7 @@ func (q *Queries) DeleteGroup(ctx context.Context, id int32) error {
 }
 
 const getGroupByID = `-- name: GetGroupByID :one
-SELECT id, organisation_id, name, description, created_at, updated_at FROM groups WHERE id = $1
+SELECT id, organisation_id, name, description, is_protected, created_at, updated_at FROM groups WHERE id = $1
 `
 
 func (q *Queries) GetGroupByID(ctx context.Context, id int32) (Group, error) {
@@ -60,6 +70,7 @@ func (q *Queries) GetGroupByID(ctx context.Context, id int32) (Group, error) {
 		&i.OrganisationID,
 		&i.Name,
 		&i.Description,
+		&i.IsProtected,
 		&i.CreatedAt,
 		&i.UpdatedAt,
 	)
@@ -67,7 +78,7 @@ func (q *Queries) GetGroupByID(ctx context.Context, id int32) (Group, error) {
 }
 
 const getGroupByName = `-- name: GetGroupByName :one
-SELECT id, organisation_id, name, description, created_at, updated_at FROM groups WHERE name = $1
+SELECT id, organisation_id, name, description, is_protected, created_at, updated_at FROM groups WHERE name = $1
 `
 
 func (q *Queries) GetGroupByName(ctx context.Context, name string) (Group, error) {
@@ -78,6 +89,7 @@ func (q *Queries) GetGroupByName(ctx context.Context, name string) (Group, error
 		&i.OrganisationID,
 		&i.Name,
 		&i.Description,
+		&i.IsProtected,
 		&i.CreatedAt,
 		&i.UpdatedAt,
 	)
@@ -85,7 +97,7 @@ func (q *Queries) GetGroupByName(ctx context.Context, name string) (Group, error
 }
 
 const listGroups = `-- name: ListGroups :many
-SELECT id, organisation_id, name, description, created_at, updated_at FROM groups
+SELECT id, organisation_id, name, description, is_protected, created_at, updated_at FROM groups
 WHERE organisation_id = $1
 ORDER BY id
 LIMIT $2
@@ -93,9 +105,9 @@ OFFSET $3
 `
 
 type ListGroupsParams struct {
-	OrganisationID sql.NullInt32 `json:"organisation_id"`
-	Limit          int32         `json:"limit"`
-	Offset         int32         `json:"offset"`
+	OrganisationID int32 `json:"organisation_id"`
+	Limit          int32 `json:"limit"`
+	Offset         int32 `json:"offset"`
 }
 
 func (q *Queries) ListGroups(ctx context.Context, arg ListGroupsParams) ([]Group, error) {
@@ -112,6 +124,7 @@ func (q *Queries) ListGroups(ctx context.Context, arg ListGroupsParams) ([]Group
 			&i.OrganisationID,
 			&i.Name,
 			&i.Description,
+			&i.IsProtected,
 			&i.CreatedAt,
 			&i.UpdatedAt,
 		); err != nil {
@@ -130,24 +143,33 @@ func (q *Queries) ListGroups(ctx context.Context, arg ListGroupsParams) ([]Group
 
 const updateGroup = `-- name: UpdateGroup :one
 UPDATE groups 
-SET organisation_id = $2, name = $3, updated_at = NOW() 
-WHERE id = $1 RETURNING id, organisation_id, name, description, created_at, updated_at
+SET organisation_id = $2, name = $3, description = $4, is_protected = $5, updated_at = NOW() 
+WHERE id = $1 RETURNING id, organisation_id, name, description, is_protected, created_at, updated_at
 `
 
 type UpdateGroupParams struct {
-	ID             int32         `json:"id"`
-	OrganisationID sql.NullInt32 `json:"organisation_id"`
-	Name           string        `json:"name"`
+	ID             int32          `json:"id"`
+	OrganisationID int32          `json:"organisation_id"`
+	Name           string         `json:"name"`
+	Description    sql.NullString `json:"description"`
+	IsProtected    bool           `json:"is_protected"`
 }
 
 func (q *Queries) UpdateGroup(ctx context.Context, arg UpdateGroupParams) (Group, error) {
-	row := q.db.QueryRowContext(ctx, updateGroup, arg.ID, arg.OrganisationID, arg.Name)
+	row := q.db.QueryRowContext(ctx, updateGroup,
+		arg.ID,
+		arg.OrganisationID,
+		arg.Name,
+		arg.Description,
+		arg.IsProtected,
+	)
 	var i Group
 	err := row.Scan(
 		&i.ID,
 		&i.OrganisationID,
 		&i.Name,
 		&i.Description,
+		&i.IsProtected,
 		&i.CreatedAt,
 		&i.UpdatedAt,
 	)

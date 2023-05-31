@@ -120,6 +120,41 @@ func (q *Queries) ListRoles(ctx context.Context, arg ListRolesParams) ([]Role, e
 	return items, nil
 }
 
+const listRolesByGroupID = `-- name: ListRolesByGroupID :many
+SELECT id, group_id, name, is_admin, is_protected, created_at, updated_at FROM roles WHERE group_id = $1
+`
+
+func (q *Queries) ListRolesByGroupID(ctx context.Context, groupID int32) ([]Role, error) {
+	rows, err := q.db.QueryContext(ctx, listRolesByGroupID, groupID)
+	if err != nil {
+		return nil, err
+	}
+	defer rows.Close()
+	items := []Role{}
+	for rows.Next() {
+		var i Role
+		if err := rows.Scan(
+			&i.ID,
+			&i.GroupID,
+			&i.Name,
+			&i.IsAdmin,
+			&i.IsProtected,
+			&i.CreatedAt,
+			&i.UpdatedAt,
+		); err != nil {
+			return nil, err
+		}
+		items = append(items, i)
+	}
+	if err := rows.Close(); err != nil {
+		return nil, err
+	}
+	if err := rows.Err(); err != nil {
+		return nil, err
+	}
+	return items, nil
+}
+
 const updateRole = `-- name: UpdateRole :one
 UPDATE roles 
 SET group_id = $2, name = $3, is_admin = $4, is_protected = $5, updated_at = NOW() 

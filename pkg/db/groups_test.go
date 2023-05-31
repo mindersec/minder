@@ -23,7 +23,6 @@ package db
 
 import (
 	"context"
-	"database/sql"
 	"testing"
 	"time"
 
@@ -35,7 +34,7 @@ import (
 func createRandomGroup(t *testing.T, org int32) Group {
 	seed := time.Now().UnixNano()
 	arg := CreateGroupParams{
-		OrganisationID: sql.NullInt32{Int32: org, Valid: true},
+		OrganisationID: org,
 		Name:           util.RandomName(seed),
 	}
 
@@ -83,7 +82,7 @@ func TestListGroups(t *testing.T) {
 	}
 
 	arg := ListGroupsParams{
-		OrganisationID: sql.NullInt32{Int32: org.ID, Valid: true},
+		OrganisationID: org.ID,
 		Limit:          5,
 		Offset:         5,
 	}
@@ -105,7 +104,7 @@ func TestUpdateGroup(t *testing.T) {
 
 	arg := UpdateGroupParams{
 		ID:             group1.ID,
-		OrganisationID: sql.NullInt32{Int32: org.ID, Valid: true},
+		OrganisationID: org.ID,
 		Name:           util.RandomName(seed),
 	}
 
@@ -146,7 +145,7 @@ func TestListGroupsByOrganisation(t *testing.T) {
 	}
 
 	arg := ListGroupsParams{
-		OrganisationID: sql.NullInt32{Int32: org1.ID, Valid: true},
+		OrganisationID: org1.ID,
 		Limit:          5,
 		Offset:         5,
 	}
@@ -158,6 +157,6 @@ func TestListGroupsByOrganisation(t *testing.T) {
 
 	for _, group := range groups {
 		require.NotEmpty(t, group)
-		require.Equal(t, org1.ID, group.OrganisationID.Int32)
+		require.Equal(t, org1.ID, group.OrganisationID)
 	}
 }

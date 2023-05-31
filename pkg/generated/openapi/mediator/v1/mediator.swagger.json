@@ -458,6 +458,43 @@
         ]
       }
     },
+    "/api/v1/group/{id}": {
+      "delete": {
+        "operationId": "GroupService_DeleteGroup",
+        "responses": {
+          "200": {
+            "description": "A successful response.",
+            "schema": {
+              "$ref": "#/definitions/v1DeleteGroupResponse"
+            }
+          },
+          "default": {
+            "description": "An unexpected error response.",
+            "schema": {
+              "$ref": "#/definitions/rpcStatus"
+            }
+          }
+        },
+        "parameters": [
+          {
+            "name": "id",
+            "in": "path",
+            "required": true,
+            "type": "integer",
+            "format": "int32"
+          },
+          {
+            "name": "force",
+            "in": "query",
+            "required": false,
+            "type": "boolean"
+          }
+        ],
+        "tags": [
+          "GroupService"
+        ]
+      }
+    },
     "/api/v1/health": {
       "get": {
         "operationId": "HealthService_CheckHealth",
@@ -926,6 +963,9 @@
         },
         "description": {
           "type": "string"
+        },
+        "isProtected": {
+          "type": "boolean"
         }
       },
       "title": "The CreateGroupRequest message represents a request to create a group"
@@ -937,11 +977,26 @@
           "type": "integer",
           "format": "int32"
         },
+        "organisationId": {
+          "type": "integer",
+          "format": "int32"
+        },
         "name": {
           "type": "string"
         },
         "description": {
           "type": "string"
+        },
+        "isProtected": {
+          "type": "boolean"
+        },
+        "createdAt": {
+          "type": "string",
+          "format": "date-time"
+        },
+        "updatedAt": {
+          "type": "string",
+          "format": "date-time"
         }
       }
     },
@@ -1100,6 +1155,10 @@
         }
       }
     },
+    "v1DeleteGroupResponse": {
+      "type": "object",
+      "title": "DeleteGroupResponse represents a response to a delete group request"
+    },
     "v1DeleteRoleResponse": {
       "type": "object"
     },
@@ -1159,11 +1218,26 @@
           "type": "integer",
           "format": "int32"
         },
+        "organisationId": {
+          "type": "integer",
+          "format": "int32"
+        },
         "name": {
           "type": "string"
         },
         "description": {
           "type": "string"
+        },
+        "isProtected": {
+          "type": "boolean"
+        },
+        "createdAt": {
+          "type": "string",
+          "format": "date-time"
+        },
+        "updatedAt": {
+          "type": "string",
+          "format": "date-time"
         }
       }
     },
@@ -1174,11 +1248,26 @@
           "type": "integer",
           "format": "int32"
         },
+        "organisationId": {
+          "type": "integer",
+          "format": "int32"
+        },
         "name": {
           "type": "string"
         },
         "description": {
           "type": "string"
+        },
+        "isProtected": {
+          "type": "boolean"
+        },
+        "createdAt": {
+          "type": "string",
+          "format": "date-time"
+        },
+        "updatedAt": {
+          "type": "string",
+          "format": "date-time"
         }
       }
     },
@@ -1316,11 +1405,26 @@
           "type": "integer",
           "format": "int32"
         },
+        "organisationId": {
+          "type": "integer",
+          "format": "int32"
+        },
         "name": {
           "type": "string"
         },
         "description": {
           "type": "string"
+        },
+        "isProtected": {
+          "type": "boolean"
+        },
+        "createdAt": {
+          "type": "string",
+          "format": "date-time"
+        },
+        "updatedAt": {
+          "type": "string",
+          "format": "date-time"
         }
       }
     },
