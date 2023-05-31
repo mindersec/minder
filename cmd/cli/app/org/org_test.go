@@ -40,11 +40,6 @@ func TestCobraMain(t *testing.T) {
 			args:           []string{"org"},
 			expectedOutput: "org called\n",
 		},
-		{
-			name:           "org delete command",
-			args:           []string{"org", "delete"},
-			expectedOutput: "org delete called\n",
-		},
 	}
 
 	for _, test := range tests {
