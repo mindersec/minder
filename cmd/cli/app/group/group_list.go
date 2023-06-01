@@ -48,7 +48,6 @@ a mediator control plane.`,
 		}
 	},
 	Run: func(cmd *cobra.Command, args []string) {
-		fmt.Println(viper.AllSettings())
 		conn, err := util.GetGrpcConnection(cmd)
 		if err != nil {
 			fmt.Fprintf(os.Stderr, "Error getting grpc connection: %s\n", err)
