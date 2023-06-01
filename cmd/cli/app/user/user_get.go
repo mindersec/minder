@@ -35,6 +35,38 @@ import (
 	"github.com/spf13/viper"
 )
 
+func getUser(ctx context.Context, client pb.UserServiceClient, queryType string, id int32, username string, email string) (*pb.UserRecord, error) {
+	var err error
+	var userRecord *pb.UserRecord
+
+	if queryType == "id" {
+		// get by id
+		user, err := client.GetUserById(ctx, &pb.GetUserByIdRequest{
+			Id: id,
+		})
+		if err != nil {
+			userRecord = user.User
+		}
+	} else if queryType == "username" {
+		// get by username
+		user, err := client.GetUserByUserName(ctx, &pb.GetUserByUserNameRequest{
+			Username: username,
+		})
+		if err != nil {
+			userRecord = user.User
+		}
+	} else if queryType == "email" {
+		user, err := client.GetUserByEmail(ctx, &pb.GetUserByEmailRequest{
+			Email: email,
+		})
+		if err != nil {
+			userRecord = user.User
+		}
+	}
+
+	return userRecord, err
+}
+
 var user_getCmd = &cobra.Command{
 	Use:   "get",
 	Short: "Get details for an user within a mediator control plane",
@@ -77,62 +109,39 @@ mediator control plane.`,
 			os.Exit(1)
 		}
 
+		var user *pb.UserRecord
 		// get by id
 		if id > 0 {
-			user, err := client.GetUserById(ctx, &pb.GetUserByIdRequest{
-				Id: id,
-			})
-			if err != nil {
-				fmt.Fprintf(os.Stderr, "Error getting user by id: %s\n", err)
-				os.Exit(1)
-			}
-			json, err := json.Marshal(user)
-			if err != nil {
-				fmt.Fprintf(os.Stderr, "Error marshalling user: %s\n", err)
-				os.Exit(1)
-			}
-			fmt.Println(string(json))
+			user, err = getUser(ctx, client, "id", id, "", "")
 		} else if username != "" {
 			// get by username
-			org, err := client.GetUserByUserName(ctx, &pb.GetUserByUserNameRequest{
-				Username: username,
-			})
-			if err != nil {
-				fmt.Fprintf(os.Stderr, "Error getting user by username: %s\n", err)
-				os.Exit(1)
-			}
-			json, err := json.Marshal(org)
-			if err != nil {
-				fmt.Fprintf(os.Stderr, "Error marshalling user: %s\n", err)
-				os.Exit(1)
-			}
-			fmt.Println(string(json))
+			user, err = getUser(ctx, client, "username", 0, username, "")
 		} else if email != "" {
 			// get by email
-			org, err := client.GetUserByEmail(ctx, &pb.GetUserByEmailRequest{
-				Email: email,
-			})
-			if err != nil {
-				fmt.Fprintf(os.Stderr, "Error getting user by email: %s\n", err)
-				os.Exit(1)
-			}
-			json, err := json.Marshal(org)
-			if err != nil {
-				fmt.Fprintf(os.Stderr, "Error marshalling user: %s\n", err)
-				os.Exit(1)
-			}
-			fmt.Println(string(json))
+			user, err = getUser(ctx, client, "email", 0, "", email)
 		}
+
+		if err != nil {
+			fmt.Fprintf(os.Stderr, "Error getting user: %s\n", err)
+			os.Exit(1)
+		}
+		json, err := json.Marshal(user)
+		if err != nil {
+			fmt.Fprintf(os.Stderr, "Error marshalling user: %s\n", err)
+			os.Exit(1)
+		}
+		fmt.Println(string(json))
+
 	},
 }
 
 func init() {
 	UserCmd.AddCommand(user_getCmd)
-	user_getCmd.PersistentFlags().Int32P("id", "i", -1, "ID for the user to query")
-	user_getCmd.PersistentFlags().StringP("username", "u", "", "Username for the user to query")
-	user_getCmd.PersistentFlags().StringP("email", "e", "", "Email for the user to query")
+	user_getCmd.Flags().Int32P("id", "i", -1, "ID for the user to query")
+	user_getCmd.Flags().StringP("username", "u", "", "Username for the user to query")
+	user_getCmd.Flags().StringP("email", "e", "", "Email for the user to query")
 
-	if err := viper.BindPFlags(user_getCmd.PersistentFlags()); err != nil {
+	if err := viper.BindPFlags(user_getCmd.Flags()); err != nil {
 		fmt.Fprintf(os.Stderr, "Error binding flags: %s\n", err)
 	}
 }

@@ -122,16 +122,16 @@ mediator control plane for an specific role.`,
 
 func init() {
 	UserCmd.AddCommand(user_listCmd)
-	user_listCmd.PersistentFlags().Int32P("role-id", "r", 0, "role id to list users for")
-	user_listCmd.PersistentFlags().StringP("output", "o", "", "Output format (json or yaml)")
-	user_listCmd.PersistentFlags().Int32P("limit", "l", -1, "Limit the number of results returned")
-	user_listCmd.PersistentFlags().Int32P("offset", "f", 0, "Offset the results returned")
-	if err := user_listCmd.MarkPersistentFlagRequired("role-id"); err != nil {
+	user_listCmd.Flags().Int32P("role-id", "r", 0, "role id to list users for")
+	user_listCmd.Flags().StringP("output", "o", "", "Output format (json or yaml)")
+	user_listCmd.Flags().Int32P("limit", "l", -1, "Limit the number of results returned")
+	user_listCmd.Flags().Int32P("offset", "f", 0, "Offset the results returned")
+	if err := user_listCmd.MarkFlagRequired("role-id"); err != nil {
 		fmt.Fprintf(os.Stderr, "Error marking flag as required: %s\n", err)
 		os.Exit(1)
 	}
 
-	if err := viper.BindPFlags(user_listCmd.PersistentFlags()); err != nil {
+	if err := viper.BindPFlags(user_listCmd.Flags()); err != nil {
 		fmt.Fprintf(os.Stderr, "Error binding flags: %s\n", err)
 	}
 }
