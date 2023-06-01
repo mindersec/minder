@@ -53,7 +53,7 @@ mediator control plane.`,
 		defer cancel()
 
 		id := viper.GetInt32("id")
-		group_id := viper.GetInt32("group-id")
+		group_id := viper.GetInt32("group_id")
 		name := viper.GetString("name")
 
 		// check for required options
@@ -73,45 +73,43 @@ mediator control plane.`,
 			os.Exit(1)
 		}
 
+		var roleRecord *pb.RoleRecord
 		// get by id
 		if id > 0 {
-			role, err := client.GetRoleById(ctx, &pb.GetRoleByIdRequest{
+			role, _ := client.GetRoleById(ctx, &pb.GetRoleByIdRequest{
 				Id: id,
 			})
-			if err != nil {
-				fmt.Fprintf(os.Stderr, "Error getting role by id: %s\n", err)
-				os.Exit(1)
+			if role != nil {
+				roleRecord = role.Role
 			}
-			json, err := json.Marshal(role)
-			if err != nil {
-				fmt.Fprintf(os.Stderr, "Error marshalling role: %s\n", err)
-				os.Exit(1)
-			}
-			fmt.Println(string(json))
 		} else if name != "" {
 			// get by name
-			org, err := client.GetRoleByName(ctx, &pb.GetRoleByNameRequest{
+			role, _ := client.GetRoleByName(ctx, &pb.GetRoleByNameRequest{
 				GroupId: group_id,
 				Name:    name,
 			})
-			if err != nil {
-				fmt.Fprintf(os.Stderr, "Error getting role by name: %s\n", err)
-				os.Exit(1)
+			if role != nil {
+				roleRecord = role.Role
 			}
-			json, err := json.Marshal(org)
-			if err != nil {
-				fmt.Fprintf(os.Stderr, "Error marshalling role: %s\n", err)
-				os.Exit(1)
-			}
-			fmt.Println(string(json))
 		}
+
+		if roleRecord == nil {
+			fmt.Fprintf(os.Stderr, "Error getting role\n")
+			os.Exit(1)
+		}
+		json, err := json.Marshal(roleRecord)
+		if err != nil {
+			fmt.Fprintf(os.Stderr, "Error marshalling role: %s\n", err)
+			os.Exit(1)
+		}
+		fmt.Println(string(json))
 	},
 }
 
 func init() {
 	RoleCmd.AddCommand(role_getCmd)
 	role_getCmd.Flags().Int32P("id", "i", 0, "ID for the role to query")
-	role_getCmd.Flags().Int32P("group-id", "g", 0, "Group for the role to query")
+	role_getCmd.Flags().Int32P("group_id", "g", 0, "Group ID")
 	role_getCmd.Flags().StringP("name", "n", "", "Name for the role to query")
 
 	if err := viper.BindPFlags(role_getCmd.Flags()); err != nil {
