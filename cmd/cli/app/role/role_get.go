@@ -53,7 +53,7 @@ mediator control plane.`,
 		defer cancel()
 
 		id := viper.GetInt32("id")
-		group_id := viper.GetInt32("group_id")
+		group_id := viper.GetInt32("group-id")
 		name := viper.GetString("name")
 
 		// check for required options
@@ -110,11 +110,11 @@ mediator control plane.`,
 
 func init() {
 	RoleCmd.AddCommand(role_getCmd)
-	role_getCmd.PersistentFlags().Int32P("id", "i", 0, "ID for the role to query")
-	role_getCmd.PersistentFlags().Int32P("group_id", "g", 0, "Group for the role to query")
-	role_getCmd.PersistentFlags().StringP("name", "n", "", "Name for the role to query")
+	role_getCmd.Flags().Int32P("id", "i", 0, "ID for the role to query")
+	role_getCmd.Flags().Int32P("group-id", "g", 0, "Group for the role to query")
+	role_getCmd.Flags().StringP("name", "n", "", "Name for the role to query")
 
-	if err := viper.BindPFlags(role_getCmd.PersistentFlags()); err != nil {
+	if err := viper.BindPFlags(role_getCmd.Flags()); err != nil {
 		fmt.Fprintf(os.Stderr, "Error binding flags: %s\n", err)
 	}
 }
