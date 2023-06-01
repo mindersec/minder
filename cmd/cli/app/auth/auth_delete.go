@@ -55,9 +55,9 @@ medctl auth delete --user-id=1234 --force`,
 
 func init() {
 	AuthCmd.AddCommand(auth_deluserCmd)
-	auth_deluserCmd.PersistentFlags().Int64("user-id", 0, "The user-id of the user to delete")
-	auth_deluserCmd.PersistentFlags().Bool("force", false, "Force deletion of user without confirmation")
-	if err := viper.BindPFlags(auth_deluserCmd.PersistentFlags()); err != nil {
+	auth_deluserCmd.Flags().Int64("user-id", 0, "The user-id of the user to delete")
+	auth_deluserCmd.Flags().Bool("force", false, "Force deletion of user without confirmation")
+	if err := viper.BindPFlags(auth_deluserCmd.Flags()); err != nil {
 		log.Fatal(err)
 	}
 }

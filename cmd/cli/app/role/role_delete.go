@@ -72,16 +72,16 @@ mediator control plane.`,
 
 func init() {
 	RoleCmd.AddCommand(role_deleteCmd)
-	role_deleteCmd.PersistentFlags().Int32P("role-id", "r", 0, "id of role to delete")
-	role_deleteCmd.PersistentFlags().BoolP("force", "f", false,
+	role_deleteCmd.Flags().Int32P("role-id", "r", 0, "id of role to delete")
+	role_deleteCmd.Flags().BoolP("force", "f", false,
 		"Force deletion of role, even if it's protected or has associated users "+
 			"(WARNING: removing a protected role may cause loosing mediator access)")
-	if err := role_deleteCmd.MarkPersistentFlagRequired("role-id"); err != nil {
+	if err := role_deleteCmd.MarkFlagRequired("role-id"); err != nil {
 		fmt.Fprintf(os.Stderr, "Error marking flag as required: %s\n", err)
 		os.Exit(1)
 	}
 
-	if err := viper.BindPFlags(role_deleteCmd.PersistentFlags()); err != nil {
+	if err := viper.BindPFlags(role_deleteCmd.Flags()); err != nil {
 		log.Fatal(err)
 	}
 }

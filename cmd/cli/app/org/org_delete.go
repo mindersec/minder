@@ -72,15 +72,15 @@ mediator control plane.`,
 
 func init() {
 	OrgCmd.AddCommand(org_deleteCmd)
-	org_deleteCmd.PersistentFlags().Int32P("org-id", "o", 0, "id of organisation to delete")
-	org_deleteCmd.PersistentFlags().BoolP("force", "f", false,
+	org_deleteCmd.Flags().Int32P("org-id", "o", 0, "id of organisation to delete")
+	org_deleteCmd.Flags().BoolP("force", "f", false,
 		"Force deletion of organisation, even if it has associated groups")
-	if err := org_deleteCmd.MarkPersistentFlagRequired("org-id"); err != nil {
+	if err := org_deleteCmd.MarkFlagRequired("org-id"); err != nil {
 		fmt.Fprintf(os.Stderr, "Error marking flag as required: %s\n", err)
 		os.Exit(1)
 	}
 
-	if err := viper.BindPFlags(org_deleteCmd.PersistentFlags()); err != nil {
+	if err := viper.BindPFlags(org_deleteCmd.Flags()); err != nil {
 		log.Fatal(err)
 	}
 }

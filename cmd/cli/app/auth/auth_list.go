@@ -41,7 +41,7 @@ var auth_listCmd = &cobra.Command{
 
 func init() {
 	AuthCmd.AddCommand(auth_listCmd)
-	if err := viper.BindPFlags(auth_listCmd.PersistentFlags()); err != nil {
+	if err := viper.BindPFlags(auth_listCmd.Flags()); err != nil {
 		fmt.Fprintf(os.Stderr, "Error binding flags: %s\n", err)
 	}
 }

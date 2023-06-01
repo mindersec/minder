@@ -78,7 +78,7 @@ func init() {
 	if err := org_createCmd.MarkFlagRequired("company"); err != nil {
 		fmt.Fprintf(os.Stderr, "Error binding flags: %s\n", err)
 	}
-	if err := viper.BindPFlags(org_createCmd.PersistentFlags()); err != nil {
+	if err := viper.BindPFlags(org_createCmd.Flags()); err != nil {
 		fmt.Fprintf(os.Stderr, "Error binding flags: %s\n", err)
 	}
 }

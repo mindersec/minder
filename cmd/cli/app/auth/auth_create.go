@@ -164,19 +164,19 @@ and allow mediator to access user account details via the provider / iDP.`,
 
 func init() {
 	AuthCmd.AddCommand(auth_createCmd)
-	auth_createCmd.PersistentFlags().StringP("name", "n", "", "Name of the account")
-	auth_createCmd.PersistentFlags().StringP("email", "e", "", "Email address of the account")
-	auth_createCmd.PersistentFlags().StringP("username", "u", "", "Username of the account")
-	auth_createCmd.PersistentFlags().StringP("password", "p", "", "Password of the account")
-	auth_createCmd.PersistentFlags().StringP("last-name", "l", "", "Last name of the account")
-	auth_createCmd.PersistentFlags().StringP("first-name", "f", "", "First name of the account")
-	auth_createCmd.PersistentFlags().StringP("group-id", "g", "", "Group ID of the account to add to")
-	auth_createCmd.PersistentFlags().StringP("role-id", "i", "", "Role ID of the account to add to")
-	auth_createCmd.PersistentFlags().BoolP("oauth2", "o", false, "Use OAuth2 login flow (must specify --provider)")
-	auth_createCmd.PersistentFlags().BoolP("active", "a", true, "Is the account active")
-	auth_createCmd.PersistentFlags().StringP("provider", "r", "", "OAuth2 provider to use (e.g. google, github)")
+	auth_createCmd.Flags().StringP("name", "n", "", "Name of the account")
+	auth_createCmd.Flags().StringP("email", "e", "", "Email address of the account")
+	auth_createCmd.Flags().StringP("username", "u", "", "Username of the account")
+	auth_createCmd.Flags().StringP("password", "p", "", "Password of the account")
+	auth_createCmd.Flags().StringP("last-name", "l", "", "Last name of the account")
+	auth_createCmd.Flags().StringP("first-name", "f", "", "First name of the account")
+	auth_createCmd.Flags().StringP("group-id", "g", "", "Group ID of the account to add to")
+	auth_createCmd.Flags().StringP("role-id", "i", "", "Role ID of the account to add to")
+	auth_createCmd.Flags().BoolP("oauth2", "o", false, "Use OAuth2 login flow (must specify --provider)")
+	auth_createCmd.Flags().BoolP("active", "a", true, "Is the account active")
+	auth_createCmd.Flags().StringP("provider", "r", "", "OAuth2 provider to use (e.g. google, github)")
 
-	if err := viper.BindPFlags(auth_createCmd.PersistentFlags()); err != nil {
+	if err := viper.BindPFlags(auth_createCmd.Flags()); err != nil {
 		fmt.Fprintf(os.Stderr, "Error binding flags: %s\n", err)
 	}
 }

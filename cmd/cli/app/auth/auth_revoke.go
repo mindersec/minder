@@ -46,7 +46,7 @@ but only if the current user has sufficient privileges.
 
 func init() {
 	AuthCmd.AddCommand(auth_revokeCmd)
-	if err := viper.BindPFlags(auth_revokeCmd.PersistentFlags()); err != nil {
+	if err := viper.BindPFlags(auth_revokeCmd.Flags()); err != nil {
 		fmt.Fprintf(os.Stderr, "Error binding flags: %s\n", err)
 	}
 }

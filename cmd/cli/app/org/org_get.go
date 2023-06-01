@@ -101,10 +101,10 @@ mediator control plane.`,
 
 func init() {
 	OrgCmd.AddCommand(org_getCmd)
-	org_getCmd.PersistentFlags().Int32P("id", "i", -1, "ID for the organisation to query")
-	org_getCmd.PersistentFlags().StringP("name", "n", "", "Name for the organisation to query")
+	org_getCmd.Flags().Int32P("id", "i", -1, "ID for the organisation to query")
+	org_getCmd.Flags().StringP("name", "n", "", "Name for the organisation to query")
 
-	if err := viper.BindPFlags(org_getCmd.PersistentFlags()); err != nil {
+	if err := viper.BindPFlags(org_getCmd.Flags()); err != nil {
 		fmt.Fprintf(os.Stderr, "Error binding flags: %s\n", err)
 	}
 }

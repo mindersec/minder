@@ -84,19 +84,19 @@ within a mediator control plane.`,
 
 func init() {
 	RoleCmd.AddCommand(role_createCmd)
-	role_createCmd.PersistentFlags().StringP("name", "n", "", "Name of the role")
-	role_createCmd.PersistentFlags().BoolP("is_protected", "i", false, "Is the role protected")
-	role_createCmd.PersistentFlags().BoolP("is_admin", "a", false, "Is it an admin role")
-	role_createCmd.PersistentFlags().Int32P("group-id", "g", 0, "ID of the group which owns the role")
-	if err := role_createCmd.MarkPersistentFlagRequired("name"); err != nil {
+	role_createCmd.Flags().StringP("name", "n", "", "Name of the role")
+	role_createCmd.Flags().BoolP("is_protected", "i", false, "Is the role protected")
+	role_createCmd.Flags().BoolP("is_admin", "a", false, "Is it an admin role")
+	role_createCmd.Flags().Int32P("group-id", "g", 0, "ID of the group which owns the role")
+	if err := role_createCmd.MarkFlagRequired("name"); err != nil {
 		fmt.Fprintf(os.Stderr, "Error marking flag as required: %s\n", err)
 		os.Exit(1)
 	}
-	if err := role_createCmd.MarkPersistentFlagRequired("group-id"); err != nil {
+	if err := role_createCmd.MarkFlagRequired("group-id"); err != nil {
 		fmt.Fprintf(os.Stderr, "Error marking flag as required: %s\n", err)
 		os.Exit(1)
 	}
-	if err := viper.BindPFlags(role_createCmd.PersistentFlags()); err != nil {
+	if err := viper.BindPFlags(role_createCmd.Flags()); err != nil {
 		fmt.Fprintf(os.Stderr, "Error binding flags: %s\n", err)
 		os.Exit(1)
 	}
