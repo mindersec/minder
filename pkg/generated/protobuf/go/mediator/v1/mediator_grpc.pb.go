@@ -998,6 +998,7 @@ const (
 	OrganisationService_GetOrganisations_FullMethodName      = "/mediator.v1.OrganisationService/GetOrganisations"
 	OrganisationService_GetOrganisation_FullMethodName       = "/mediator.v1.OrganisationService/GetOrganisation"
 	OrganisationService_GetOrganisationByName_FullMethodName = "/mediator.v1.OrganisationService/GetOrganisationByName"
+	OrganisationService_DeleteOrganisation_FullMethodName    = "/mediator.v1.OrganisationService/DeleteOrganisation"
 )
 
 // OrganisationServiceClient is the client API for OrganisationService service.
@@ -1008,6 +1009,7 @@ type OrganisationServiceClient interface {
 	GetOrganisations(ctx context.Context, in *GetOrganisationsRequest, opts ...grpc.CallOption) (*GetOrganisationsResponse, error)
 	GetOrganisation(ctx context.Context, in *GetOrganisationRequest, opts ...grpc.CallOption) (*GetOrganisationResponse, error)
 	GetOrganisationByName(ctx context.Context, in *GetOrganisationByNameRequest, opts ...grpc.CallOption) (*GetOrganisationByNameResponse, error)
+	DeleteOrganisation(ctx context.Context, in *DeleteOrganisationRequest, opts ...grpc.CallOption) (*DeleteOrganisationResponse, error)
 }
 
 type organisationServiceClient struct {
@@ -1054,6 +1056,15 @@ func (c *organisationServiceClient) GetOrganisationByName(ctx context.Context, i
 	return out, nil
 }
 
+func (c *organisationServiceClient) DeleteOrganisation(ctx context.Context, in *DeleteOrganisationRequest, opts ...grpc.CallOption) (*DeleteOrganisationResponse, error) {
+	out := new(DeleteOrganisationResponse)
+	err := c.cc.Invoke(ctx, OrganisationService_DeleteOrganisation_FullMethodName, in, out, opts...)
+	if err != nil {
+		return nil, err
+	}
+	return out, nil
+}
+
 // OrganisationServiceServer is the server API for OrganisationService service.
 // All implementations must embed UnimplementedOrganisationServiceServer
 // for forward compatibility
@@ -1062,6 +1073,7 @@ type OrganisationServiceServer interface {
 	GetOrganisations(context.Context, *GetOrganisationsRequest) (*GetOrganisationsResponse, error)
 	GetOrganisation(context.Context, *GetOrganisationRequest) (*GetOrganisationResponse, error)
 	GetOrganisationByName(context.Context, *GetOrganisationByNameRequest) (*GetOrganisationByNameResponse, error)
+	DeleteOrganisation(context.Context, *DeleteOrganisationRequest) (*DeleteOrganisationResponse, error)
 	mustEmbedUnimplementedOrganisationServiceServer()
 }
 
@@ -1080,6 +1092,9 @@ func (UnimplementedOrganisationServiceServer) GetOrganisation(context.Context, *
 }
 func (UnimplementedOrganisationServiceServer) GetOrganisationByName(context.Context, *GetOrganisationByNameRequest) (*GetOrganisationByNameResponse, error) {
 	return nil, status.Errorf(codes.Unimplemented, "method GetOrganisationByName not implemented")
+}
+func (UnimplementedOrganisationServiceServer) DeleteOrganisation(context.Context, *DeleteOrganisationRequest) (*DeleteOrganisationResponse, error) {
+	return nil, status.Errorf(codes.Unimplemented, "method DeleteOrganisation not implemented")
 }
 func (UnimplementedOrganisationServiceServer) mustEmbedUnimplementedOrganisationServiceServer() {}
 
@@ -1166,6 +1181,24 @@ func _OrganisationService_GetOrganisationByName_Handler(srv interface{}, ctx con
 	return interceptor(ctx, in, info, handler)
 }
 
+func _OrganisationService_DeleteOrganisation_Handler(srv interface{}, ctx context.Context, dec func(interface{}) error, interceptor grpc.UnaryServerInterceptor) (interface{}, error) {
+	in := new(DeleteOrganisationRequest)
+	if err := dec(in); err != nil {
+		return nil, err
+	}
+	if interceptor == nil {
+		return srv.(OrganisationServiceServer).DeleteOrganisation(ctx, in)
+	}
+	info := &grpc.UnaryServerInfo{
+		Server:     srv,
+		FullMethod: OrganisationService_DeleteOrganisation_FullMethodName,
+	}
+	handler := func(ctx context.Context, req interface{}) (interface{}, error) {
+		return srv.(OrganisationServiceServer).DeleteOrganisation(ctx, req.(*DeleteOrganisationRequest))
+	}
+	return interceptor(ctx, in, info, handler)
+}
+
 // OrganisationService_ServiceDesc is the grpc.ServiceDesc for OrganisationService service.
 // It's only intended for direct use with grpc.RegisterService,
 // and not to be introspected or modified (even as a copy)
@@ -1188,6 +1221,10 @@ var OrganisationService_ServiceDesc = grpc.ServiceDesc{
 		{
 			MethodName: "GetOrganisationByName",
 			Handler:    _OrganisationService_GetOrganisationByName_Handler,
+		},
+		{
+			MethodName: "DeleteOrganisation",
+			Handler:    _OrganisationService_DeleteOrganisation_Handler,
 		},
 	},
 	Streams:  []grpc.StreamDesc{},

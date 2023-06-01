@@ -5,7 +5,7 @@
 // you may not use this file except in compliance with the License.
 // You may obtain a copy of the License at
 //
-//     http://www.apache.org/licenses/LICENSE-2.0
+//     http://www.apache.role/licenses/LICENSE-2.0
 //
 // Unless required by applicable law or agreed to in writing, software
 // distributed under the License is distributed on an "AS IS" BASIS,
@@ -22,30 +22,65 @@
 package org
 
 import (
+	"context"
 	"fmt"
+	"log"
 	"os"
+	"time"
 
 	"github.com/spf13/cobra"
 	"github.com/spf13/viper"
+	pb "github.com/stacklok/mediator/pkg/generated/protobuf/go/mediator/v1"
+	"github.com/stacklok/mediator/pkg/util"
 )
 
 var org_deleteCmd = &cobra.Command{
 	Use:   "delete",
-	Short: "Delete an organization within a mediator control plane",
-	Long: `The medctl org delete subcommand lets you delete organizations
-within z mediator control plane.`,
+	Short: "delete a organisation within a mediator controlplane",
+	Long: `The medctl org delete subcommand lets you delete organisations within a
+mediator control plane.`,
 	Run: func(cmd *cobra.Command, args []string) {
-		cmd.Println("org delete called")
+		// delete the org via GRPC
+		id := util.GetConfigValue("org-id", "org-id", cmd, int32(0)).(int32)
+		force := util.GetConfigValue("force", "force", cmd, false).(bool)
+
+		conn, err := util.GetGrpcConnection(cmd)
+
+		if err != nil {
+			fmt.Fprintf(os.Stderr, "Error getting grpc connection: %s\n", err)
+			os.Exit(1)
+		}
+		defer conn.Close()
+
+		client := pb.NewOrganisationServiceClient(conn)
+		ctx, cancel := context.WithTimeout(context.Background(), time.Second)
+		defer cancel()
+
+		forcePtr := &force
+		_, err = client.DeleteOrganisation(ctx, &pb.DeleteOrganisationRequest{
+			Id:    id,
+			Force: forcePtr,
+		})
+
+		if err != nil {
+			fmt.Fprintf(os.Stderr, "Error deleting organisation: %s\n", err)
+			os.Exit(1)
+		}
+		cmd.Println("Successfully deleted organisation with id:", id)
 	},
 }
 
 func init() {
 	OrgCmd.AddCommand(org_deleteCmd)
-	// org-id
-	org_deleteCmd.PersistentFlags().StringP("org-id", "o", "", "Organization ID")
+	org_deleteCmd.PersistentFlags().Int32P("org-id", "o", 0, "id of organisation to delete")
 	org_deleteCmd.PersistentFlags().BoolP("force", "f", false,
-		"Force deletion of organization (WARNING: this will delete all resources associated with the organization))")
+		"Force deletion of organisation, even if it has associated groups")
+	if err := org_deleteCmd.MarkPersistentFlagRequired("org-id"); err != nil {
+		fmt.Fprintf(os.Stderr, "Error marking flag as required: %s\n", err)
+		os.Exit(1)
+	}
+
 	if err := viper.BindPFlags(org_deleteCmd.PersistentFlags()); err != nil {
-		fmt.Fprintf(os.Stderr, "Error binding flags: %s\n", err)
+		log.Fatal(err)
 	}
 }

@@ -21,6 +21,9 @@ ORDER BY id
 LIMIT $2
 OFFSET $3;
 
+-- name: ListGroupsByOrganisationID :many
+SELECT * FROM groups WHERE organisation_id = $1;
+
 -- name: UpdateGroup :one
 UPDATE groups 
 SET organisation_id = $2, name = $3, description = $4, is_protected = $5, updated_at = NOW() 

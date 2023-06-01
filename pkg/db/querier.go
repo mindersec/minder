@@ -30,6 +30,7 @@ type Querier interface {
 	GetUserByID(ctx context.Context, id int32) (User, error)
 	GetUserByUserName(ctx context.Context, username string) (User, error)
 	ListGroups(ctx context.Context, arg ListGroupsParams) ([]Group, error)
+	ListGroupsByOrganisationID(ctx context.Context, organisationID int32) ([]Group, error)
 	ListOrganisations(ctx context.Context, arg ListOrganisationsParams) ([]Organisation, error)
 	ListRoles(ctx context.Context, arg ListRolesParams) ([]Role, error)
 	ListRolesByGroupID(ctx context.Context, groupID int32) ([]Role, error)

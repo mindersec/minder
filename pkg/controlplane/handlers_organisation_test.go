@@ -547,3 +547,102 @@ func TestGetOrganisationByName_gRPC(t *testing.T) {
 		})
 	}
 }
+
+func TestDeleteOrganisationDBMock(t *testing.T) {
+	ctrl := gomock.NewController(t)
+	defer ctrl.Finish()
+
+	mockStore := mockdb.NewMockStore(ctrl)
+
+	request := &pb.DeleteOrganisationRequest{Id: 1}
+
+	expectedOrg := db.Organisation{
+		ID:        1,
+		Name:      "test",
+		Company:   "test",
+		CreatedAt: time.Now(),
+		UpdatedAt: time.Now(),
+	}
+
+	mockStore.EXPECT().GetOrganisation(gomock.Any(), gomock.Any()).
+		Return(expectedOrg, nil)
+	mockStore.EXPECT().
+		ListGroupsByOrganisationID(gomock.Any(), gomock.Any()).
+		Return([]db.Group{}, nil)
+	mockStore.EXPECT().
+		DeleteOrganisation(gomock.Any(), gomock.Any()).
+		Return(nil)
+
+	server := &Server{
+		store: mockStore,
+	}
+
+	response, err := server.DeleteOrganisation(context.Background(), request)
+
+	assert.NoError(t, err)
+	assert.NotNil(t, response)
+}
+
+func TestDeleteOrganisation_gRPC(t *testing.T) {
+	force := true
+
+	testCases := []struct {
+		name               string
+		req                *pb.DeleteOrganisationRequest
+		buildStubs         func(store *mockdb.MockStore)
+		checkResponse      func(t *testing.T, res *pb.DeleteOrganisationResponse, err error)
+		expectedStatusCode codes.Code
+	}{
+		{
+			name: "Success",
+			req: &pb.DeleteOrganisationRequest{
+				Id:    1,
+				Force: &force,
+			},
+			buildStubs: func(store *mockdb.MockStore) {
+				store.EXPECT().
+					GetOrganisation(gomock.Any(), gomock.Any()).Return(db.Organisation{}, nil).Times(1)
+				store.EXPECT().
+					DeleteOrganisation(gomock.Any(), gomock.Any()).Return(nil).
+					Times(1)
+			},
+			checkResponse: func(t *testing.T, res *pb.DeleteOrganisationResponse, err error) {
+				assert.NoError(t, err)
+				assert.NotNil(t, res)
+				assert.Equal(t, &pb.DeleteOrganisationResponse{}, res)
+			},
+			expectedStatusCode: codes.OK,
+		},
+		{
+			name: "EmptyRequest",
+			req: &pb.DeleteOrganisationRequest{
+				Id: 0,
+			},
+			buildStubs: func(store *mockdb.MockStore) {
+			},
+			checkResponse: func(t *testing.T, res *pb.DeleteOrganisationResponse, err error) {
+				// Assert the expected behavior when the request is empty
+				assert.Error(t, err)
+				assert.Nil(t, res)
+			},
+			expectedStatusCode: codes.InvalidArgument,
+		},
+	}
+
+	for i := range testCases {
+		tc := testCases[i]
+		t.Run(tc.name, func(t *testing.T) {
+
+			ctrl := gomock.NewController(t)
+			defer ctrl.Finish()
+
+			mockStore := mockdb.NewMockStore(ctrl)
+			tc.buildStubs(mockStore)
+
+			server := NewServer(mockStore)
+
+			resp, err := server.DeleteOrganisation(context.Background(), tc.req)
+			tc.checkResponse(t, resp, err)
+		})
+	}
+}
