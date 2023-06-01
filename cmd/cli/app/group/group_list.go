@@ -23,15 +23,18 @@ package group
 
 import (
 	"context"
+	"encoding/json"
 	"fmt"
 	"os"
 	"time"
 
-	"github.com/spf13/cobra"
-	"github.com/spf13/viper"
-
+	"github.com/olekukonko/tablewriter"
 	pb "github.com/stacklok/mediator/pkg/generated/protobuf/go/mediator/v1"
 	"github.com/stacklok/mediator/pkg/util"
+
+	"github.com/spf13/cobra"
+	"github.com/spf13/viper"
+	"gopkg.in/yaml.v3"
 )
 
 var group_listCmd = &cobra.Command{
@@ -45,7 +48,7 @@ a mediator control plane.`,
 		}
 	},
 	Run: func(cmd *cobra.Command, args []string) {
-
+		fmt.Println(viper.AllSettings())
 		conn, err := util.GetGrpcConnection(cmd)
 		if err != nil {
 			fmt.Fprintf(os.Stderr, "Error getting grpc connection: %s\n", err)
@@ -57,60 +60,69 @@ a mediator control plane.`,
 		ctx, cancel := context.WithTimeout(context.Background(), time.Second)
 		defer cancel()
 
-		// org-id is required (later we could change this based on the users
-		// session by mapping user-id to org-id). It may still be useful though
-		// as a user might be able to belong to multiple organisations.
-		if !cmd.Flags().Changed("org-id") {
-			fmt.Fprintf(os.Stderr, "Error: --org-id must be set\n")
+		org := viper.GetInt32("org-id")
+		limit := viper.GetInt32("limit")
+		offset := viper.GetInt32("offset")
+		format := viper.GetString("output")
+
+		if format != "json" && format != "yaml" && format != "" {
+			fmt.Fprintf(os.Stderr, "Error: invalid format: %s\n", format)
+		}
+
+		resp, err := client.GetGroups(ctx, &pb.GetGroupsRequest{
+			OrganisationId: org,
+			Limit:          limit,
+			Offset:         offset,
+		})
+		if err != nil {
+			fmt.Fprintf(os.Stderr, "Error getting groups: %s\n", err)
 			os.Exit(1)
 		}
 
-		name := util.GetConfigValue("name", "name", cmd, "").(string)
-		groupID := util.GetConfigValue("group-id", "group-id", cmd, int(0)).(int)
-		organisation := util.GetConfigValue("org-id", "org-id", cmd, int(0)).(int)
-		limit := util.GetConfigValue("limit", "limit", cmd, int(0)).(int)
-		offset := util.GetConfigValue("offset", "offset", cmd, int(0)).(int)
+		// print output in a table
+		if format == "" {
+			table := tablewriter.NewWriter(os.Stdout)
+			table.SetHeader([]string{"Id", "Organisation", "Name", "Is protected", "Created date", "Updated date"})
 
-		switch {
-		case groupID != 0:
-			resp, err := client.GetGroupById(ctx, &pb.GetGroupByIdRequest{
-				GroupId: int32(groupID),
-			})
+			for _, v := range resp.Groups {
+				row := []string{
+					fmt.Sprintf("%d", v.GroupId),
+					fmt.Sprintf("%d", v.OrganisationId),
+					v.Name,
+					fmt.Sprintf("%t", v.IsProtected),
+					v.GetCreatedAt().AsTime().Format(time.RFC3339),
+					v.GetUpdatedAt().AsTime().Format(time.RFC3339),
+				}
+				table.Append(row)
+			}
+			table.Render()
+		} else if format == "json" {
+			output, err := json.MarshalIndent(resp.Groups, "", "  ")
 			if err != nil {
-				fmt.Fprintf(os.Stderr, "Error getting group: %s\n", err)
+				fmt.Fprintf(os.Stderr, "Error marshalling json: %s\n", err)
 				os.Exit(1)
 			}
-			fmt.Printf("Group: %v\n", resp.Name)
-
-		case name != "":
-			resp, err := client.GetGroupByName(ctx, &pb.GetGroupByNameRequest{
-				Name: name,
-			})
+			fmt.Println(string(output))
+		} else if format == "yaml" {
+			yamlData, err := yaml.Marshal(resp.Groups)
 			if err != nil {
-				fmt.Fprintf(os.Stderr, "Error getting group: %s\n", err)
+				fmt.Fprintf(os.Stderr, "Error marshalling yaml: %s\n", err)
 				os.Exit(1)
 			}
-			fmt.Printf("Group ID: %v\n", resp.GroupId)
+			fmt.Println(string(yamlData))
 
-		default:
-			resp, err := client.GetGroups(ctx, &pb.GetGroupsRequest{
-				OrganisationId: int32(organisation),
-				Limit:          int32(limit),
-				Offset:         int32(offset),
-			})
-			if err != nil {
-				fmt.Fprintf(os.Stderr, "Error getting groups: %s\n", err)
-				os.Exit(1)
-			}
-			fmt.Printf("Groups: %v\n", resp)
 		}
 	},
 }
 
 func init() {
 	GroupCmd.AddCommand(group_listCmd)
-	group_listCmd.Flags().StringP("name", "n", "", "List group values by a name")
-	group_listCmd.Flags().Int("org-id", 0, "Organisation ID")
-	group_listCmd.Flags().Int("limit", 10, "Limit number of results")
-	group_listCmd.Flags().Int("offset", 0, "Offset number of results")
+	group_listCmd.Flags().Int32P("org-id", "i", 0, "org id to list groups for")
+	group_listCmd.Flags().StringP("output", "o", "", "Output format")
+	group_listCmd.Flags().Int32P("limit", "l", -1, "Limit the number of results returned")
+	group_listCmd.Flags().Int32P("offset", "f", 0, "Offset the results returned")
+	if err := group_listCmd.MarkFlagRequired("org-id"); err != nil {
+		fmt.Fprintf(os.Stderr, "Error marking flag as required: %s\n", err)
+		os.Exit(1)
+	}
 }

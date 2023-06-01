@@ -175,6 +175,12 @@ service GroupService {
         };
     }
 
+    rpc GetGroups (GetGroupsRequest) returns (GetGroupsResponse) {
+        option (google.api.http) = {
+            get: "/api/v1/groups/{organisation_id}"
+        };
+    }
+
     rpc GetGroupByName (GetGroupByNameRequest) returns (GetGroupByNameResponse) {
         option (google.api.http) = {
             get: "/api/v1/group/name/{name}"
@@ -184,12 +190,6 @@ service GroupService {
     rpc GetGroupById (GetGroupByIdRequest) returns (GetGroupByIdResponse) {
         option (google.api.http) = {
             get: "/api/v1/group/id/{group_id}"
-        };
-    }
-
-    rpc GetGroups (GetGroupsRequest) returns (GetGroupsResponse) {
-        option (google.api.http) = {
-            get: "/api/v1/group"
         };
     }
 
@@ -500,7 +500,7 @@ message GetGroupsRequest {
 
 // BUF does not allow grouping (which is a shame)
 
-message GroupsResponse {
+message GroupRecord {
     int32 group_id = 1;
     int32 organisation_id = 2;
     string name = 3;
@@ -521,29 +521,16 @@ message  CreateGroupResponse {
 }
 
 message GetGroupByNameResponse {
-    int32 group_id = 1;
-    int32 organisation_id = 2;
-    string name = 3;
-    string description = 4;
-    bool is_protected = 5;
-    google.protobuf.Timestamp created_at = 6;
-    google.protobuf.Timestamp updated_at = 7;    
+    optional GroupRecord group = 1;
 }
 
 message GetGroupByIdResponse {
-    int32 group_id = 1;
-    int32 organisation_id = 2;
-    string name = 3;
-    string description = 4;
-    bool is_protected = 5;
-    google.protobuf.Timestamp created_at = 6;
-    google.protobuf.Timestamp updated_at = 7;    
-
+    optional GroupRecord group = 1;
 }
 
 // The GetGroupsResponse message represents a response with an array of groups
 message GetGroupsResponse {
-    repeated GroupsResponse groups = 1;
+    repeated GroupRecord groups = 1;
 }
 
 // DeleteGroupRequest represents a request to delete a group

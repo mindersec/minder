@@ -323,49 +323,6 @@
       }
     },
     "/api/v1/group": {
-      "get": {
-        "operationId": "GroupService_GetGroups",
-        "responses": {
-          "200": {
-            "description": "A successful response.",
-            "schema": {
-              "$ref": "#/definitions/v1GetGroupsResponse"
-            }
-          },
-          "default": {
-            "description": "An unexpected error response.",
-            "schema": {
-              "$ref": "#/definitions/rpcStatus"
-            }
-          }
-        },
-        "parameters": [
-          {
-            "name": "organisationId",
-            "in": "query",
-            "required": false,
-            "type": "integer",
-            "format": "int32"
-          },
-          {
-            "name": "limit",
-            "in": "query",
-            "required": false,
-            "type": "integer",
-            "format": "int32"
-          },
-          {
-            "name": "offset",
-            "in": "query",
-            "required": false,
-            "type": "integer",
-            "format": "int32"
-          }
-        ],
-        "tags": [
-          "GroupService"
-        ]
-      },
       "post": {
         "operationId": "GroupService_CreateGroup",
         "responses": {
@@ -488,6 +445,51 @@
             "in": "query",
             "required": false,
             "type": "boolean"
+          }
+        ],
+        "tags": [
+          "GroupService"
+        ]
+      }
+    },
+    "/api/v1/groups/{organisationId}": {
+      "get": {
+        "operationId": "GroupService_GetGroups",
+        "responses": {
+          "200": {
+            "description": "A successful response.",
+            "schema": {
+              "$ref": "#/definitions/v1GetGroupsResponse"
+            }
+          },
+          "default": {
+            "description": "An unexpected error response.",
+            "schema": {
+              "$ref": "#/definitions/rpcStatus"
+            }
+          }
+        },
+        "parameters": [
+          {
+            "name": "organisationId",
+            "in": "path",
+            "required": true,
+            "type": "integer",
+            "format": "int32"
+          },
+          {
+            "name": "limit",
+            "in": "query",
+            "required": false,
+            "type": "integer",
+            "format": "int32"
+          },
+          {
+            "name": "offset",
+            "in": "query",
+            "required": false,
+            "type": "integer",
+            "format": "int32"
           }
         ],
         "tags": [
@@ -1496,60 +1498,16 @@
     "v1GetGroupByIdResponse": {
       "type": "object",
       "properties": {
-        "groupId": {
-          "type": "integer",
-          "format": "int32"
-        },
-        "organisationId": {
-          "type": "integer",
-          "format": "int32"
-        },
-        "name": {
-          "type": "string"
-        },
-        "description": {
-          "type": "string"
-        },
-        "isProtected": {
-          "type": "boolean"
-        },
-        "createdAt": {
-          "type": "string",
-          "format": "date-time"
-        },
-        "updatedAt": {
-          "type": "string",
-          "format": "date-time"
+        "group": {
+          "$ref": "#/definitions/v1GroupRecord"
         }
       }
     },
     "v1GetGroupByNameResponse": {
       "type": "object",
       "properties": {
-        "groupId": {
-          "type": "integer",
-          "format": "int32"
-        },
-        "organisationId": {
-          "type": "integer",
-          "format": "int32"
-        },
-        "name": {
-          "type": "string"
-        },
-        "description": {
-          "type": "string"
-        },
-        "isProtected": {
-          "type": "boolean"
-        },
-        "createdAt": {
-          "type": "string",
-          "format": "date-time"
-        },
-        "updatedAt": {
-          "type": "string",
-          "format": "date-time"
+        "group": {
+          "$ref": "#/definitions/v1GroupRecord"
         }
       }
     },
@@ -1560,7 +1518,7 @@
           "type": "array",
           "items": {
             "type": "object",
-            "$ref": "#/definitions/v1GroupsResponse"
+            "$ref": "#/definitions/v1GroupRecord"
           }
         }
       },
@@ -1744,7 +1702,7 @@
         }
       }
     },
-    "v1GroupsResponse": {
+    "v1GroupRecord": {
       "type": "object",
       "properties": {
         "groupId": {
