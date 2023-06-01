@@ -35,7 +35,8 @@ import (
 	"github.com/spf13/viper"
 )
 
-func getUser(ctx context.Context, client pb.UserServiceClient, queryType string, id int32, username string, email string) (*pb.UserRecord, error) {
+func getUser(ctx context.Context, client pb.UserServiceClient, queryType string,
+	id int32, username string, email string) (*pb.UserRecord, error) {
 	var err error
 	var userRecord *pb.UserRecord
 
