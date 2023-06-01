@@ -875,7 +875,7 @@
           "200": {
             "description": "A successful response.",
             "schema": {
-              "$ref": "#/definitions/v1GetUserByUsernameResponse"
+              "$ref": "#/definitions/v1GetUserByUserNameResponse"
             }
           },
           "default": {
@@ -905,7 +905,7 @@
           "200": {
             "description": "A successful response.",
             "schema": {
-              "$ref": "#/definitions/v1GetUserResponse"
+              "$ref": "#/definitions/v1GetUserByIdResponse"
             }
           },
           "default": {
@@ -1522,7 +1522,7 @@
         }
       }
     },
-    "v1GetUserByUsernameResponse": {
+    "v1GetUserByIdResponse": {
       "type": "object",
       "properties": {
         "user": {
@@ -1530,7 +1530,7 @@
         }
       }
     },
-    "v1GetUserResponse": {
+    "v1GetUserByUserNameResponse": {
       "type": "object",
       "properties": {
         "user": {

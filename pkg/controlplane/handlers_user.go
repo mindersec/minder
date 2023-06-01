@@ -153,7 +153,7 @@ func (s *Server) GetUsers(ctx context.Context,
 
 // GetUser is a service for getting an user
 func (s *Server) GetUser(ctx context.Context,
-	in *pb.GetUserRequest) (*pb.GetUserResponse, error) {
+	in *pb.GetUserByIdRequest) (*pb.GetUserByIdResponse, error) {
 	if in.Id == 0 {
 		return nil, fmt.Errorf("user id is required")
 	}
@@ -163,7 +163,7 @@ func (s *Server) GetUser(ctx context.Context,
 		return nil, fmt.Errorf("failed to get user: %w", err)
 	}
 
-	var resp pb.GetUserResponse
+	var resp pb.GetUserByIdResponse
 	resp.User = &pb.UserRecord{
 		Id:          user.ID,
 		RoleId:      user.RoleID,
@@ -181,7 +181,7 @@ func (s *Server) GetUser(ctx context.Context,
 
 // GetUserByUsername is a service for getting an user by username
 func (s *Server) GetUserByUsername(ctx context.Context,
-	in *pb.GetUserByUsernameRequest) (*pb.GetUserByUsernameResponse, error) {
+	in *pb.GetUserByUserNameRequest) (*pb.GetUserByUserNameResponse, error) {
 	if in.GetUsername() == "" {
 		return nil, fmt.Errorf("username is required")
 	}
@@ -191,7 +191,7 @@ func (s *Server) GetUserByUsername(ctx context.Context,
 		return nil, fmt.Errorf("failed to get user: %w", err)
 	}
 
-	var resp pb.GetUserByUsernameResponse
+	var resp pb.GetUserByUserNameResponse
 	resp.User = &pb.UserRecord{
 		Id:        user.ID,
 		RoleId:    user.RoleID,

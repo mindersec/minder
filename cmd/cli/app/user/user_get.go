@@ -79,7 +79,7 @@ mediator control plane.`,
 
 		// get by id
 		if id > 0 {
-			user, err := client.GetUserById(ctx, &pb.GetUserRequest{
+			user, err := client.GetUserById(ctx, &pb.GetUserByIdRequest{
 				Id: id,
 			})
 			if err != nil {
@@ -94,7 +94,7 @@ mediator control plane.`,
 			fmt.Println(string(json))
 		} else if username != "" {
 			// get by username
-			org, err := client.GetUserByUserName(ctx, &pb.GetUserByUsernameRequest{
+			org, err := client.GetUserByUserName(ctx, &pb.GetUserByUserNameRequest{
 				Username: username,
 			})
 			if err != nil {

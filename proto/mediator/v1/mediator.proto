@@ -239,13 +239,13 @@ service UserService {
         };
     }
 
-    rpc GetUserById (GetUserRequest) returns (GetUserResponse) {
+    rpc GetUserById (GetUserByIdRequest) returns (GetUserByIdResponse) {
         option (google.api.http) = {
             get: "/api/v1/user/{id}"
             };    
     }
 
-    rpc GetUserByUserName (GetUserByUsernameRequest) returns (GetUserByUsernameResponse) {
+    rpc GetUserByUserName (GetUserByUserNameRequest) returns (GetUserByUserNameResponse) {
         option (google.api.http) = {
             get: "/api/v1/user/username/{username}"
             };    
@@ -626,20 +626,20 @@ message GetUsersResponse {
 }
 
 // get user by id
-message GetUserRequest {
+message GetUserByIdRequest {
     int32 id = 1;
 }
 
-message GetUserResponse {
+message GetUserByIdResponse {
     optional UserRecord user = 1;
 }
 
 // get user by username
-message GetUserByUsernameRequest {
+message GetUserByUserNameRequest {
     string username = 1;
 }
 
-message GetUserByUsernameResponse {
+message GetUserByUserNameResponse {
     optional UserRecord user = 1;
 }
 

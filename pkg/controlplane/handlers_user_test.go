@@ -416,7 +416,7 @@ func TestGetUserDBMock(t *testing.T) {
 
 	mockStore := mockdb.NewMockStore(ctrl)
 
-	request := &pb.GetUserRequest{Id: 1}
+	request := &pb.GetUserByIdRequest{Id: 1}
 
 	expectedUser := db.User{
 		ID:        1,
@@ -454,7 +454,7 @@ func TestGetNonExistingUserDBMock(t *testing.T) {
 
 	mockStore := mockdb.NewMockStore(ctrl)
 
-	request := &pb.GetUserRequest{Id: 5}
+	request := &pb.GetUserByIdRequest{Id: 5}
 
 	mockStore.EXPECT().GetUserByID(gomock.Any(), gomock.Any()).
 		Return(db.User{}, nil)
@@ -472,14 +472,14 @@ func TestGetNonExistingUserDBMock(t *testing.T) {
 func TestGetUser_gRPC(t *testing.T) {
 	testCases := []struct {
 		name               string
-		req                *pb.GetUserRequest
+		req                *pb.GetUserByIdRequest
 		buildStubs         func(store *mockdb.MockStore)
-		checkResponse      func(t *testing.T, res *pb.GetUserResponse, err error)
+		checkResponse      func(t *testing.T, res *pb.GetUserByIdResponse, err error)
 		expectedStatusCode codes.Code
 	}{
 		{
 			name: "Success",
-			req:  &pb.GetUserRequest{Id: 1},
+			req:  &pb.GetUserByIdRequest{Id: 1},
 			buildStubs: func(store *mockdb.MockStore) {
 				store.EXPECT().GetUserByID(gomock.Any(), gomock.Any()).
 					Return(db.User{
@@ -492,7 +492,7 @@ func TestGetUser_gRPC(t *testing.T) {
 					}, nil).
 					Times(1)
 			},
-			checkResponse: func(t *testing.T, res *pb.GetUserResponse, err error) {
+			checkResponse: func(t *testing.T, res *pb.GetUserByIdResponse, err error) {
 				expectedUser := pb.UserRecord{
 					Id:        1,
 					RoleId:    1,
@@ -513,13 +513,13 @@ func TestGetUser_gRPC(t *testing.T) {
 		},
 		{
 			name: "NonExisting",
-			req:  &pb.GetUserRequest{Id: 5},
+			req:  &pb.GetUserByIdRequest{Id: 5},
 			buildStubs: func(store *mockdb.MockStore) {
 				store.EXPECT().GetUserByID(gomock.Any(), gomock.Any()).
 					Return(db.User{}, nil).
 					Times(1)
 			},
-			checkResponse: func(t *testing.T, res *pb.GetUserResponse, err error) {
+			checkResponse: func(t *testing.T, res *pb.GetUserByIdResponse, err error) {
 				assert.NoError(t, err)
 				assert.Equal(t, int32(0), res.User.Id)
 			},

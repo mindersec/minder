@@ -1286,7 +1286,7 @@ func local_request_UserService_GetUsers_0(ctx context.Context, marshaler runtime
 }
 
 func request_UserService_GetUserById_0(ctx context.Context, marshaler runtime.Marshaler, client UserServiceClient, req *http.Request, pathParams map[string]string) (proto.Message, runtime.ServerMetadata, error) {
-	var protoReq GetUserRequest
+	var protoReq GetUserByIdRequest
 	var metadata runtime.ServerMetadata
 
 	var (
@@ -1312,7 +1312,7 @@ func request_UserService_GetUserById_0(ctx context.Context, marshaler runtime.Ma
 }
 
 func local_request_UserService_GetUserById_0(ctx context.Context, marshaler runtime.Marshaler, server UserServiceServer, req *http.Request, pathParams map[string]string) (proto.Message, runtime.ServerMetadata, error) {
-	var protoReq GetUserRequest
+	var protoReq GetUserByIdRequest
 	var metadata runtime.ServerMetadata
 
 	var (
@@ -1338,7 +1338,7 @@ func local_request_UserService_GetUserById_0(ctx context.Context, marshaler runt
 }
 
 func request_UserService_GetUserByUserName_0(ctx context.Context, marshaler runtime.Marshaler, client UserServiceClient, req *http.Request, pathParams map[string]string) (proto.Message, runtime.ServerMetadata, error) {
-	var protoReq GetUserByUsernameRequest
+	var protoReq GetUserByUserNameRequest
 	var metadata runtime.ServerMetadata
 
 	var (
@@ -1364,7 +1364,7 @@ func request_UserService_GetUserByUserName_0(ctx context.Context, marshaler runt
 }
 
 func local_request_UserService_GetUserByUserName_0(ctx context.Context, marshaler runtime.Marshaler, server UserServiceServer, req *http.Request, pathParams map[string]string) (proto.Message, runtime.ServerMetadata, error) {
-	var protoReq GetUserByUsernameRequest
+	var protoReq GetUserByUserNameRequest
 	var metadata runtime.ServerMetadata
 
 	var (
