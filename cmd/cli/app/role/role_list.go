@@ -115,7 +115,7 @@ mediator control plane for an specific group.`,
 
 func init() {
 	RoleCmd.AddCommand(role_listCmd)
-	role_listCmd.Flags().Int32P("group-id", "r", 0, "group id to list roles for")
+	role_listCmd.Flags().Int32P("group-id", "g", 0, "group id to list roles for")
 	role_listCmd.Flags().StringP("output", "o", "", "Output format (json or yaml)")
 	role_listCmd.Flags().Int32P("limit", "l", -1, "Limit the number of results returned")
 	role_listCmd.Flags().Int32P("offset", "f", 0, "Offset the results returned")
