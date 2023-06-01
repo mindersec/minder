@@ -39,6 +39,11 @@ If no --user-id flag is passed, it will revoke the token for the current logged 
 user. If a --user-id flag is passed, it will revoke the token for the specified user, 
 but only if the current user has sufficient privileges.
 `,
+	PreRun: func(cmd *cobra.Command, args []string) {
+		if err := viper.BindPFlags(cmd.Flags()); err != nil {
+			fmt.Fprintf(os.Stderr, "Error binding flags: %s\n", err)
+		}
+	},
 	Run: func(cmd *cobra.Command, args []string) {
 		cmd.Println("auth revoke called")
 	},
@@ -46,7 +51,4 @@ but only if the current user has sufficient privileges.
 
 func init() {
 	AuthCmd.AddCommand(auth_revokeCmd)
-	if err := viper.BindPFlags(auth_revokeCmd.Flags()); err != nil {
-		fmt.Fprintf(os.Stderr, "Error binding flags: %s\n", err)
-	}
 }

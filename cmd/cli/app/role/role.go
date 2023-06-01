@@ -17,13 +17,9 @@
 package role
 
 import (
-	"fmt"
-	"os"
-
 	"github.com/stacklok/mediator/cmd/cli/app"
 
 	"github.com/spf13/cobra"
-	"github.com/spf13/viper"
 )
 
 // RoleCmd is the root command for the role subcommands
@@ -39,7 +35,4 @@ a mediator controlplane.`,
 
 func init() {
 	app.RootCmd.AddCommand(RoleCmd)
-	if err := viper.BindPFlags(RoleCmd.PersistentFlags()); err != nil {
-		fmt.Fprintf(os.Stderr, "Error binding flags: %s\n", err)
-	}
 }

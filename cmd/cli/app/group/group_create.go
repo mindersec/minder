@@ -39,6 +39,11 @@ var group_createCmd = &cobra.Command{
 	Short: "Create a group within a mediator control plane",
 	Long: `The medctl group create subcommand lets you create new groups within
 a mediator control plane.`,
+	PreRun: func(cmd *cobra.Command, args []string) {
+		if err := viper.BindPFlags(cmd.Flags()); err != nil {
+			fmt.Fprintf(os.Stderr, "Error binding flags: %s\n", err)
+		}
+	},
 	Run: func(cmd *cobra.Command, args []string) {
 
 		name := util.GetConfigValue("name", "name", cmd, "")
@@ -91,9 +96,5 @@ func init() {
 	}
 	if err := group_createCmd.MarkFlagRequired("org-id"); err != nil {
 		fmt.Fprintf(os.Stderr, "Error marking flag as required: %s\n", err)
-	}
-
-	if err := viper.BindPFlags(group_createCmd.Flags()); err != nil {
-		fmt.Fprintf(os.Stderr, "Error binding flags: %s\n", err)
 	}
 }

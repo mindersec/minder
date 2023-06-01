@@ -34,6 +34,11 @@ var auth_listCmd = &cobra.Command{
 	Use:   "list",
 	Short: "List all auth accounts and tokens",
 	Long:  `List all accounts and tokens for active or expired mediator sessions.`,
+	PreRun: func(cmd *cobra.Command, args []string) {
+		if err := viper.BindPFlags(cmd.Flags()); err != nil {
+			fmt.Fprintf(os.Stderr, "Error binding flags: %s\n", err)
+		}
+	},
 	Run: func(cmd *cobra.Command, args []string) {
 		cmd.Println("auth list called")
 	},
@@ -41,7 +46,4 @@ var auth_listCmd = &cobra.Command{
 
 func init() {
 	AuthCmd.AddCommand(auth_listCmd)
-	if err := viper.BindPFlags(auth_listCmd.Flags()); err != nil {
-		fmt.Fprintf(os.Stderr, "Error binding flags: %s\n", err)
-	}
 }

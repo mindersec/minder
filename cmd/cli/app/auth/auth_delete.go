@@ -22,7 +22,8 @@
 package auth
 
 import (
-	"log"
+	"fmt"
+	"os"
 
 	"github.com/spf13/cobra"
 	"github.com/spf13/viper"
@@ -48,6 +49,11 @@ user data. This is not reversible. This includes any repositories owned by the
 user, and any data associated with those repositories.
 
 medctl auth delete --user-id=1234 --force`,
+	PreRun: func(cmd *cobra.Command, args []string) {
+		if err := viper.BindPFlags(cmd.Flags()); err != nil {
+			fmt.Fprintf(os.Stderr, "Error binding flags: %s\n", err)
+		}
+	},
 	Run: func(cmd *cobra.Command, args []string) {
 		cmd.Println("auth delete called")
 	},
@@ -57,7 +63,4 @@ func init() {
 	AuthCmd.AddCommand(auth_deluserCmd)
 	auth_deluserCmd.Flags().Int64("user-id", 0, "The user-id of the user to delete")
 	auth_deluserCmd.Flags().Bool("force", false, "Force deletion of user without confirmation")
-	if err := viper.BindPFlags(auth_deluserCmd.Flags()); err != nil {
-		log.Fatal(err)
-	}
 }

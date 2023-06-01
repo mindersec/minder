@@ -17,13 +17,9 @@
 package user
 
 import (
-	"fmt"
-	"os"
-
 	"github.com/stacklok/mediator/cmd/cli/app"
 
 	"github.com/spf13/cobra"
-	"github.com/spf13/viper"
 )
 
 // UserCmd is the root command for the user subcommands.
@@ -39,7 +35,4 @@ a mediator controlplane.`,
 
 func init() {
 	app.RootCmd.AddCommand(UserCmd)
-	if err := viper.BindPFlags(UserCmd.PersistentFlags()); err != nil {
-		fmt.Fprintf(os.Stderr, "Error binding flags: %s\n", err)
-	}
 }

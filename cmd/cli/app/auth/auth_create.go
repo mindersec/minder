@@ -135,6 +135,11 @@ var auth_createCmd = &cobra.Command{
 an OAuth2 login with a provider, then pass in the --provider flag alongside
 --oauth2, e.g. --oauth2 --provider=github. This will then initiate the OAuth2 flow
 and allow mediator to access user account details via the provider / iDP.`,
+	PreRun: func(cmd *cobra.Command, args []string) {
+		if err := viper.BindPFlags(cmd.Flags()); err != nil {
+			fmt.Fprintf(os.Stderr, "Error binding flags: %s\n", err)
+		}
+	},
 	Run: func(cmd *cobra.Command, args []string) {
 
 		grpc_host := util.GetConfigValue("grpc_server.host", "grpc-host", cmd, "").(string)
@@ -176,7 +181,4 @@ func init() {
 	auth_createCmd.Flags().BoolP("active", "a", true, "Is the account active")
 	auth_createCmd.Flags().StringP("provider", "r", "", "OAuth2 provider to use (e.g. google, github)")
 
-	if err := viper.BindPFlags(auth_createCmd.Flags()); err != nil {
-		fmt.Fprintf(os.Stderr, "Error binding flags: %s\n", err)
-	}
 }

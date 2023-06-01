@@ -39,6 +39,11 @@ var group_listCmd = &cobra.Command{
 	Short: "medctl group list",
 	Long: `The medctl group list subcommand lets you list groups within
 a mediator control plane.`,
+	PreRun: func(cmd *cobra.Command, args []string) {
+		if err := viper.BindPFlags(cmd.Flags()); err != nil {
+			fmt.Fprintf(os.Stderr, "Error binding flags: %s\n", err)
+		}
+	},
 	Run: func(cmd *cobra.Command, args []string) {
 
 		conn, err := util.GetGrpcConnection(cmd)
@@ -109,7 +114,4 @@ func init() {
 	group_listCmd.Flags().Int("org-id", 0, "Organisation ID")
 	group_listCmd.Flags().Int("limit", 10, "Limit number of results")
 	group_listCmd.Flags().Int("offset", 0, "Offset number of results")
-	if err := viper.BindPFlags(group_listCmd.Flags()); err != nil {
-		fmt.Fprintf(os.Stderr, "Error binding flags: %s\n", err)
-	}
 }

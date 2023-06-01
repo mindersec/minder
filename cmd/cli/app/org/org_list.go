@@ -42,6 +42,11 @@ var org_listCmd = &cobra.Command{
 	Short: "List organizations within a mediator control plane",
 	Long: `The medctl org list subcommand lets you list organizations within a
 mediator control plane.`,
+	PreRun: func(cmd *cobra.Command, args []string) {
+		if err := viper.BindPFlags(cmd.Flags()); err != nil {
+			fmt.Fprintf(os.Stderr, "Error binding flags: %s\n", err)
+		}
+	},
 	Run: func(cmd *cobra.Command, args []string) {
 		conn, err := util.GetGrpcConnection(cmd)
 		if err != nil {
@@ -114,8 +119,4 @@ func init() {
 	org_listCmd.Flags().StringP("output", "o", "", "Output format (json or yaml)")
 	org_listCmd.Flags().Int32P("limit", "l", -1, "Limit the number of results returned")
 	org_listCmd.Flags().Int32P("offset", "f", 0, "Offset the results returned")
-
-	if err := viper.BindPFlags(org_listCmd.Flags()); err != nil {
-		fmt.Fprintf(os.Stderr, "Error binding flags: %s\n", err)
-	}
 }

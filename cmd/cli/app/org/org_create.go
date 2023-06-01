@@ -38,6 +38,11 @@ var org_createCmd = &cobra.Command{
 	Short: "Create an organization within a mediator control plane",
 	Long: `The medctl org create subcommand lets you create new organizations
 within a mediator control plane.`,
+	PreRun: func(cmd *cobra.Command, args []string) {
+		if err := viper.BindPFlags(cmd.Flags()); err != nil {
+			fmt.Fprintf(os.Stderr, "Error binding flags: %s\n", err)
+		}
+	},
 	Run: func(cmd *cobra.Command, args []string) {
 		// create the organisation via GRPC
 		name := util.GetConfigValue("name", "name", cmd, "")
@@ -76,9 +81,6 @@ func init() {
 		fmt.Fprintf(os.Stderr, "Error binding flags: %s\n", err)
 	}
 	if err := org_createCmd.MarkFlagRequired("company"); err != nil {
-		fmt.Fprintf(os.Stderr, "Error binding flags: %s\n", err)
-	}
-	if err := viper.BindPFlags(org_createCmd.Flags()); err != nil {
 		fmt.Fprintf(os.Stderr, "Error binding flags: %s\n", err)
 	}
 }

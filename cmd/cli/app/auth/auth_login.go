@@ -122,6 +122,11 @@ var auth_loginCmd = &cobra.Command{
 	Short: "Login to a mediator control plane.",
 	Long: `Login to a mediator control plane. Upon successful login, credentials
 will be saved to $XDG_CONFIG_HOME/mediator/credentials.json`,
+	PreRun: func(cmd *cobra.Command, args []string) {
+		if err := viper.BindPFlags(cmd.Flags()); err != nil {
+			fmt.Fprintf(os.Stderr, "Error binding flags: %s\n", err)
+		}
+	},
 	Run: func(cmd *cobra.Command, args []string) {
 		grpc_host := util.GetConfigValue("grpc_server.host", "grpc-host", cmd, "").(string)
 		grpc_port := util.GetConfigValue("grpc_server.port", "grpc-port", cmd, 0).(int)
@@ -152,7 +157,4 @@ func init() {
 	auth_loginCmd.Flags().StringP("username", "u", "", "Username to use for authentication")
 	auth_loginCmd.Flags().StringP("password", "p", "", "Password to use for authentication")
 	auth_loginCmd.Flags().String("provider", "", "The OAuth2 provider to use for login")
-	if err := viper.BindPFlags(auth_loginCmd.Flags()); err != nil {
-		fmt.Fprintf(os.Stderr, "Error binding flags: %s\n", err)
-	}
 }
