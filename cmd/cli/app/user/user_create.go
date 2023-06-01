@@ -90,36 +90,31 @@ within a mediator control plane.`,
 
 func init() {
 	UserCmd.AddCommand(user_createCmd)
-	user_createCmd.PersistentFlags().StringP("username", "u", "", "Username")
-	user_createCmd.PersistentFlags().StringP("email", "e", "", "E-mail for the user")
-	user_createCmd.PersistentFlags().StringP("password", "p", "", "Password for the user")
-	user_createCmd.PersistentFlags().StringP("firstname", "f", "", "User's first name")
-	user_createCmd.PersistentFlags().StringP("lastname", "l", "", "User's last name")
-	user_createCmd.PersistentFlags().BoolP("is-protected", "i", false, "Is the user protected")
-	user_createCmd.PersistentFlags().Int32P("role-id", "r", 0, "Role ID")
-	if err := user_createCmd.MarkPersistentFlagRequired("username"); err != nil {
+	user_createCmd.Flags().StringP("username", "u", "", "Username")
+	user_createCmd.Flags().StringP("email", "e", "", "E-mail for the user")
+	user_createCmd.Flags().StringP("password", "p", "", "Password for the user")
+	user_createCmd.Flags().StringP("firstname", "f", "", "User's first name")
+	user_createCmd.Flags().StringP("lastname", "l", "", "User's last name")
+	user_createCmd.Flags().BoolP("is-protected", "i", false, "Is the user protected")
+	user_createCmd.Flags().Int32P("role-id", "r", 0, "Role ID")
+	if err := user_createCmd.MarkFlagRequired("username"); err != nil {
 		fmt.Fprintf(os.Stderr, "Error marking flag as required: %s\n", err)
 		os.Exit(1)
 	}
-	if err := user_createCmd.MarkPersistentFlagRequired("email"); err != nil {
+	if err := user_createCmd.MarkFlagRequired("email"); err != nil {
 		fmt.Fprintf(os.Stderr, "Error marking flag as required: %s\n", err)
 		os.Exit(1)
 	}
-	if err := user_createCmd.MarkPersistentFlagRequired("password"); err != nil {
+	if err := user_createCmd.MarkFlagRequired("password"); err != nil {
 		fmt.Fprintf(os.Stderr, "Error marking flag as required: %s\n", err)
 		os.Exit(1)
 	}
-	if err := user_createCmd.MarkPersistentFlagRequired("role-id"); err != nil {
+	if err := user_createCmd.MarkFlagRequired("role-id"); err != nil {
 		fmt.Fprintf(os.Stderr, "Error marking flag as required: %s\n", err)
 		os.Exit(1)
 	}
 
-	if err := viper.BindPFlags(user_createCmd.PersistentFlags()); err != nil {
-		fmt.Fprintf(os.Stderr, "Error binding flags: %s\n", err)
-		os.Exit(1)
-	}
-
-	if err := viper.BindPFlags(user_createCmd.PersistentFlags()); err != nil {
+	if err := viper.BindPFlags(user_createCmd.Flags()); err != nil {
 		fmt.Fprintf(os.Stderr, "Error binding flags: %s\n", err)
 		os.Exit(1)
 	}

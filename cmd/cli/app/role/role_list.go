@@ -40,9 +40,9 @@ mediator control plane.`,
 
 func init() {
 	RoleCmd.AddCommand(role_listCmd)
-	role_listCmd.PersistentFlags().BoolP("all", "a", false, "List all roles")
-	role_listCmd.PersistentFlags().StringP("role-id", "r", "", "List role values by role-id")
-	if err := viper.BindPFlags(role_listCmd.PersistentFlags()); err != nil {
+	role_listCmd.Flags().BoolP("all", "a", false, "List all roles")
+	role_listCmd.Flags().StringP("role-id", "r", "", "List role values by role-id")
+	if err := viper.BindPFlags(role_listCmd.Flags()); err != nil {
 		log.Fatal(err)
 	}
 }

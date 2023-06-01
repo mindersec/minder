@@ -104,12 +104,12 @@ a mediator control plane.`,
 
 func init() {
 	GroupCmd.AddCommand(group_listCmd)
-	group_listCmd.PersistentFlags().Int("group-id", 0, "Group ID")
-	group_listCmd.PersistentFlags().StringP("name", "n", "", "List group values by a name")
-	group_listCmd.PersistentFlags().Int("org-id", 0, "Organisation ID")
-	group_listCmd.PersistentFlags().Int("limit", 10, "Limit number of results")
-	group_listCmd.PersistentFlags().Int("offset", 0, "Offset number of results")
-	if err := viper.BindPFlags(group_listCmd.PersistentFlags()); err != nil {
+	group_listCmd.Flags().Int("group-id", 0, "Group ID")
+	group_listCmd.Flags().StringP("name", "n", "", "List group values by a name")
+	group_listCmd.Flags().Int("org-id", 0, "Organisation ID")
+	group_listCmd.Flags().Int("limit", 10, "Limit number of results")
+	group_listCmd.Flags().Int("offset", 0, "Offset number of results")
+	if err := viper.BindPFlags(group_listCmd.Flags()); err != nil {
 		fmt.Fprintf(os.Stderr, "Error binding flags: %s\n", err)
 	}
 }

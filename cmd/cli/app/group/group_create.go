@@ -78,22 +78,22 @@ a mediator control plane.`,
 
 func init() {
 	GroupCmd.AddCommand(group_createCmd)
-	group_createCmd.PersistentFlags().StringP("name", "n", "", "Name of the group")
-	group_createCmd.PersistentFlags().StringP("description", "d", "", "Description of the group")
-	group_createCmd.PersistentFlags().Int32("org-id", 0, "Organisation ID")
-	group_createCmd.PersistentFlags().BoolP("is_protected", "i", false, "Is the group protected")
+	group_createCmd.Flags().StringP("name", "n", "", "Name of the group")
+	group_createCmd.Flags().StringP("description", "d", "", "Description of the group")
+	group_createCmd.Flags().Int32("org-id", 0, "Organisation ID")
+	group_createCmd.Flags().BoolP("is_protected", "i", false, "Is the group protected")
 
-	if err := group_createCmd.MarkPersistentFlagRequired("name"); err != nil {
+	if err := group_createCmd.MarkFlagRequired("name"); err != nil {
 		fmt.Fprintf(os.Stderr, "Error marking flag as required: %s\n", err)
 	}
-	if err := group_createCmd.MarkPersistentFlagRequired("description"); err != nil {
+	if err := group_createCmd.MarkFlagRequired("description"); err != nil {
 		fmt.Fprintf(os.Stderr, "Error marking flag as required: %s\n", err)
 	}
-	if err := group_createCmd.MarkPersistentFlagRequired("org-id"); err != nil {
+	if err := group_createCmd.MarkFlagRequired("org-id"); err != nil {
 		fmt.Fprintf(os.Stderr, "Error marking flag as required: %s\n", err)
 	}
 
-	if err := viper.BindPFlags(group_createCmd.PersistentFlags()); err != nil {
+	if err := viper.BindPFlags(group_createCmd.Flags()); err != nil {
 		fmt.Fprintf(os.Stderr, "Error binding flags: %s\n", err)
 	}
 }

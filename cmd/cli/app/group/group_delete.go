@@ -72,16 +72,16 @@ mediator control plane.`,
 
 func init() {
 	GroupCmd.AddCommand(group_deleteCmd)
-	group_deleteCmd.PersistentFlags().Int32P("group-id", "g", 0, "id of group to delete")
-	group_deleteCmd.PersistentFlags().BoolP("force", "f", false,
+	group_deleteCmd.Flags().Int32P("group-id", "g", 0, "id of group to delete")
+	group_deleteCmd.Flags().BoolP("force", "f", false,
 		"Force deletion of group, even if it's protected or has associated roles "+
 			"(WARNING: removing a protected group may cause loosing mediator access)")
-	if err := group_deleteCmd.MarkPersistentFlagRequired("group-id"); err != nil {
+	if err := group_deleteCmd.MarkFlagRequired("group-id"); err != nil {
 		fmt.Fprintf(os.Stderr, "Error marking flag as required: %s\n", err)
 		os.Exit(1)
 	}
 
-	if err := viper.BindPFlags(group_deleteCmd.PersistentFlags()); err != nil {
+	if err := viper.BindPFlags(group_deleteCmd.Flags()); err != nil {
 		log.Fatal(err)
 	}
 }

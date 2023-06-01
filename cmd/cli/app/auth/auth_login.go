@@ -149,10 +149,10 @@ will be saved to $XDG_CONFIG_HOME/mediator/credentials.json`,
 
 func init() {
 	AuthCmd.AddCommand(auth_loginCmd)
-	auth_loginCmd.PersistentFlags().StringP("username", "u", "", "Username to use for authentication")
-	auth_loginCmd.PersistentFlags().StringP("password", "p", "", "Password to use for authentication")
-	auth_loginCmd.PersistentFlags().String("provider", "", "The OAuth2 provider to use for login")
-	if err := viper.BindPFlags(auth_loginCmd.PersistentFlags()); err != nil {
+	auth_loginCmd.Flags().StringP("username", "u", "", "Username to use for authentication")
+	auth_loginCmd.Flags().StringP("password", "p", "", "Password to use for authentication")
+	auth_loginCmd.Flags().String("provider", "", "The OAuth2 provider to use for login")
+	if err := viper.BindPFlags(auth_loginCmd.Flags()); err != nil {
 		fmt.Fprintf(os.Stderr, "Error binding flags: %s\n", err)
 	}
 }
