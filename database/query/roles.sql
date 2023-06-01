@@ -11,6 +11,9 @@ INSERT INTO roles (
 -- name: GetRoleByID :one
 SELECT * FROM roles WHERE id = $1;
 
+-- name: GetRoleByName :one
+SELECT * FROM roles WHERE group_id= $1 AND name = $2;
+
 -- name: ListRoles :many
 SELECT * FROM roles
 WHERE group_id = $1

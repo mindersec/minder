@@ -1,0 +1,120 @@
+//
+// Copyright 2023 Stacklok, Inc.
+//
+// Licensed under the Apache License, Version 2.0 (the "License");
+// you may not use this file except in compliance with the License.
+// You may obtain a copy of the License at
+//
+//     http://www.apache.org/licenses/LICENSE-2.0
+//
+// Unless required by applicable law or agreed to in writing, software
+// distributed under the License is distributed on an "AS IS" BASIS,
+// WITHOUT WARRANTIES OR CONDITIONS OF ANY KIND, either express or implied.
+// See the License for the specific language governing permissions and
+// limitations under the License.
+
+// NOTE: This file is for stubbing out client code for proof of concept
+// purposes. It will / should be removed in the future.
+// Until then, it is not covered by unit tests and should not be used
+// It does make a good example of how to use the generated client code
+// for others to use as a reference.
+
+package role
+
+import (
+	"context"
+	"encoding/json"
+	"fmt"
+	"os"
+	"time"
+
+	pb "github.com/stacklok/mediator/pkg/generated/protobuf/go/mediator/v1"
+	"github.com/stacklok/mediator/pkg/util"
+
+	"github.com/spf13/cobra"
+	"github.com/spf13/viper"
+)
+
+var role_getCmd = &cobra.Command{
+	Use:   "get",
+	Short: "Get details for an role within a mediator control plane",
+	Long: `The medctl role get subcommand lets you retrieve details for an role within a
+mediator control plane.`,
+	Run: func(cmd *cobra.Command, args []string) {
+		conn, err := util.GetGrpcConnection(cmd)
+		if err != nil {
+			fmt.Fprintf(os.Stderr, "Error getting grpc connection: %s\n", err)
+			os.Exit(1)
+		}
+		defer conn.Close()
+
+		client := pb.NewRoleServiceClient(conn)
+		ctx, cancel := context.WithTimeout(context.Background(), time.Second)
+		defer cancel()
+
+		id := viper.GetInt32("id")
+		group_id := viper.GetInt32("group_id")
+		name := viper.GetString("name")
+
+		// check for required options
+		if id == 0 && name == "" && group_id == 0 {
+			fmt.Fprintf(os.Stderr, "Error: must specify one of id or group_id+name\n")
+			os.Exit(1)
+		}
+
+		if id > 0 && (name != "" || group_id > 0) {
+			fmt.Fprintf(os.Stderr, "Error: must specify either one of id or group_id+name\n")
+			os.Exit(1)
+		}
+
+		// if name is specified, group_id must also be specified
+		if (name != "" && group_id == 0) || (name == "" && group_id > 0) {
+			fmt.Fprintf(os.Stderr, "Error: must specify both group_id and name\n")
+			os.Exit(1)
+		}
+
+		// get by id
+		if id > 0 {
+			role, err := client.GetRoleById(ctx, &pb.GetRoleByIdRequest{
+				Id: id,
+			})
+			if err != nil {
+				fmt.Fprintf(os.Stderr, "Error getting role by id: %s\n", err)
+				os.Exit(1)
+			}
+			json, err := json.Marshal(role)
+			if err != nil {
+				fmt.Fprintf(os.Stderr, "Error marshalling role: %s\n", err)
+				os.Exit(1)
+			}
+			fmt.Println(string(json))
+		} else if name != "" {
+			// get by name
+			org, err := client.GetRoleByName(ctx, &pb.GetRoleByNameRequest{
+				GroupId: group_id,
+				Name:    name,
+			})
+			if err != nil {
+				fmt.Fprintf(os.Stderr, "Error getting role by name: %s\n", err)
+				os.Exit(1)
+			}
+			json, err := json.Marshal(org)
+			if err != nil {
+				fmt.Fprintf(os.Stderr, "Error marshalling role: %s\n", err)
+				os.Exit(1)
+			}
+			fmt.Println(string(json))
+		}
+	},
+}
+
+func init() {
+	RoleCmd.AddCommand(role_getCmd)
+	role_getCmd.PersistentFlags().Int32P("id", "i", 0, "ID for the role to query")
+	role_getCmd.PersistentFlags().Int32P("group_id", "g", 0, "Group for the role to query")
+	role_getCmd.PersistentFlags().StringP("name", "n", "", "Name for the role to query")
+
+	if err := viper.BindPFlags(role_getCmd.PersistentFlags()); err != nil {
+		fmt.Fprintf(os.Stderr, "Error binding flags: %s\n", err)
+	}
+}
