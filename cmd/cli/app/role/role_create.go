@@ -39,6 +39,11 @@ var role_createCmd = &cobra.Command{
 	Short: "Create a role within a mediator control plane",
 	Long: `The medctl role create subcommand lets you create new roles for a group
 within a mediator control plane.`,
+	PreRun: func(cmd *cobra.Command, args []string) {
+		if err := viper.BindPFlags(cmd.Flags()); err != nil {
+			fmt.Fprintf(os.Stderr, "Error binding flags: %s\n", err)
+		}
+	},
 	Run: func(cmd *cobra.Command, args []string) {
 		// create the role via GRPC
 		group := util.GetConfigValue("group-id", "group-id", cmd, int32(0)).(int32)
@@ -47,6 +52,10 @@ within a mediator control plane.`,
 		isProtected := util.GetConfigValue("is_protected", "is_protected", cmd, false).(bool)
 
 		conn, err := util.GetGrpcConnection(cmd)
+		if err != nil {
+			fmt.Fprintf(os.Stderr, "Error getting grpc connection: %s\n", err)
+			os.Exit(1)
+		}
 		defer conn.Close()
 
 		if err != nil {
@@ -94,10 +103,6 @@ func init() {
 	}
 	if err := role_createCmd.MarkFlagRequired("group-id"); err != nil {
 		fmt.Fprintf(os.Stderr, "Error marking flag as required: %s\n", err)
-		os.Exit(1)
-	}
-	if err := viper.BindPFlags(role_createCmd.Flags()); err != nil {
-		fmt.Fprintf(os.Stderr, "Error binding flags: %s\n", err)
 		os.Exit(1)
 	}
 }

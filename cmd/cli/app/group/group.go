@@ -23,13 +23,9 @@
 package group
 
 import (
-	"fmt"
-	"os"
-
 	"github.com/stacklok/mediator/cmd/cli/app"
 
 	"github.com/spf13/cobra"
-	"github.com/spf13/viper"
 )
 
 // GroupCmd is the root command for the group subcommands
@@ -45,8 +41,4 @@ mediator control plane.`,
 
 func init() {
 	app.RootCmd.AddCommand(GroupCmd)
-	if err := viper.BindPFlags(GroupCmd.PersistentFlags()); err != nil {
-		fmt.Fprintf(os.Stderr, "Error binding flags: %s\n", err)
-	}
-
 }

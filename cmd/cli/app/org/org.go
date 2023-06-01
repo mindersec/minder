@@ -23,13 +23,9 @@
 package org
 
 import (
-	"fmt"
-	"os"
-
 	"github.com/stacklok/mediator/cmd/cli/app"
 
 	"github.com/spf13/cobra"
-	"github.com/spf13/viper"
 )
 
 // OrgCmd is the root command for the org subcommands
@@ -45,7 +41,4 @@ control plane.`,
 
 func init() {
 	app.RootCmd.AddCommand(OrgCmd)
-	if err := viper.BindPFlags(OrgCmd.PersistentFlags()); err != nil {
-		fmt.Fprintf(os.Stderr, "Error binding flags: %s\n", err)
-	}
 }

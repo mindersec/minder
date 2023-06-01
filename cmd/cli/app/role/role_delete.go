@@ -24,7 +24,6 @@ package role
 import (
 	"context"
 	"fmt"
-	"log"
 	"os"
 	"time"
 
@@ -39,6 +38,11 @@ var role_deleteCmd = &cobra.Command{
 	Short: "delete a role within a mediator controlplane",
 	Long: `The medctl role delete subcommand lets you delete roles within a
 mediator control plane.`,
+	PreRun: func(cmd *cobra.Command, args []string) {
+		if err := viper.BindPFlags(cmd.Flags()); err != nil {
+			fmt.Fprintf(os.Stderr, "Error binding flags: %s\n", err)
+		}
+	},
 	Run: func(cmd *cobra.Command, args []string) {
 		// delete the role via GRPC
 		id := util.GetConfigValue("role-id", "role-id", cmd, int32(0)).(int32)
@@ -79,9 +83,5 @@ func init() {
 	if err := role_deleteCmd.MarkFlagRequired("role-id"); err != nil {
 		fmt.Fprintf(os.Stderr, "Error marking flag as required: %s\n", err)
 		os.Exit(1)
-	}
-
-	if err := viper.BindPFlags(role_deleteCmd.Flags()); err != nil {
-		log.Fatal(err)
 	}
 }

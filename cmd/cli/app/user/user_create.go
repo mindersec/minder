@@ -39,6 +39,11 @@ var user_createCmd = &cobra.Command{
 	Short: "Create a user within a mediator control plane",
 	Long: `The medctl user create subcommand lets you create new users for a role
 within a mediator control plane.`,
+	PreRun: func(cmd *cobra.Command, args []string) {
+		if err := viper.BindPFlags(cmd.Flags()); err != nil {
+			fmt.Fprintf(os.Stderr, "Error binding flags: %s\n", err)
+		}
+	},
 	Run: func(cmd *cobra.Command, args []string) {
 		// create the user via GRPC
 		role := util.GetConfigValue("role-id", "role-id", cmd, int32(0)).(int32)
@@ -111,11 +116,6 @@ func init() {
 	}
 	if err := user_createCmd.MarkFlagRequired("role-id"); err != nil {
 		fmt.Fprintf(os.Stderr, "Error marking flag as required: %s\n", err)
-		os.Exit(1)
-	}
-
-	if err := viper.BindPFlags(user_createCmd.Flags()); err != nil {
-		fmt.Fprintf(os.Stderr, "Error binding flags: %s\n", err)
 		os.Exit(1)
 	}
 }

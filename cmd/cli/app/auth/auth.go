@@ -22,13 +22,9 @@
 package auth
 
 import (
-	"fmt"
-	"os"
-
 	"github.com/stacklok/mediator/cmd/cli/app"
 
 	"github.com/spf13/cobra"
-	"github.com/spf13/viper"
 )
 
 // AuthCmd represents the account command
@@ -44,8 +40,4 @@ authorization to existing accounts within a mediator control plane.`,
 
 func init() {
 	app.RootCmd.AddCommand(AuthCmd)
-	if err := viper.BindPFlags(AuthCmd.PersistentFlags()); err != nil {
-		fmt.Fprintf(os.Stderr, "Error binding flags: %s\n", err)
-	}
-
 }
