@@ -151,8 +151,8 @@ func (s *Server) GetUsers(ctx context.Context,
 	return &resp, nil
 }
 
-// GetUser is a service for getting an user
-func (s *Server) GetUser(ctx context.Context,
+// GetUserById is a service for getting a user by id
+func (s *Server) GetUserById(ctx context.Context,
 	in *pb.GetUserByIdRequest) (*pb.GetUserByIdResponse, error) {
 	if in.Id == 0 {
 		return nil, fmt.Errorf("user id is required")

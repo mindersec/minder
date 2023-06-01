@@ -36,8 +36,7 @@ import (
 )
 
 func getUser(ctx context.Context, client pb.UserServiceClient, queryType string,
-	id int32, username string, email string) (*pb.UserRecord, error) {
-	var err error
+	id int32, username string, email string) *pb.UserRecord {
 	var userRecord *pb.UserRecord
 
 	if queryType == "id" {
@@ -45,7 +44,7 @@ func getUser(ctx context.Context, client pb.UserServiceClient, queryType string,
 		user, err := client.GetUserById(ctx, &pb.GetUserByIdRequest{
 			Id: id,
 		})
-		if err != nil {
+		if err == nil {
 			userRecord = user.User
 		}
 	} else if queryType == "username" {
@@ -53,19 +52,19 @@ func getUser(ctx context.Context, client pb.UserServiceClient, queryType string,
 		user, err := client.GetUserByUserName(ctx, &pb.GetUserByUserNameRequest{
 			Username: username,
 		})
-		if err != nil {
+		if err == nil {
 			userRecord = user.User
 		}
 	} else if queryType == "email" {
 		user, err := client.GetUserByEmail(ctx, &pb.GetUserByEmailRequest{
 			Email: email,
 		})
-		if err != nil {
+		if err == nil {
 			userRecord = user.User
 		}
 	}
 
-	return userRecord, err
+	return userRecord
 }
 
 var user_getCmd = &cobra.Command{
@@ -113,17 +112,17 @@ mediator control plane.`,
 		var user *pb.UserRecord
 		// get by id
 		if id > 0 {
-			user, err = getUser(ctx, client, "id", id, "", "")
+			user = getUser(ctx, client, "id", id, "", "")
 		} else if username != "" {
 			// get by username
-			user, err = getUser(ctx, client, "username", 0, username, "")
+			user = getUser(ctx, client, "username", 0, username, "")
 		} else if email != "" {
 			// get by email
-			user, err = getUser(ctx, client, "email", 0, "", email)
+			user = getUser(ctx, client, "email", 0, "", email)
 		}
 
-		if err != nil {
-			fmt.Fprintf(os.Stderr, "Error getting user: %s\n", err)
+		if user == nil {
+			fmt.Fprintf(os.Stderr, "Error getting user\n")
 			os.Exit(1)
 		}
 		json, err := json.Marshal(user)

@@ -434,7 +434,7 @@ func TestGetUserDBMock(t *testing.T) {
 		store: mockStore,
 	}
 
-	response, err := server.GetUser(context.Background(), request)
+	response, err := server.GetUserById(context.Background(), request)
 
 	assert.NoError(t, err)
 	assert.NotNil(t, response)
@@ -463,7 +463,7 @@ func TestGetNonExistingUserDBMock(t *testing.T) {
 		store: mockStore,
 	}
 
-	response, err := server.GetUser(context.Background(), request)
+	response, err := server.GetUserById(context.Background(), request)
 
 	assert.NoError(t, err)
 	assert.Equal(t, int32(0), response.User.Id)
@@ -539,7 +539,7 @@ func TestGetUser_gRPC(t *testing.T) {
 
 			server := NewServer(mockStore)
 
-			resp, err := server.GetUser(context.Background(), tc.req)
+			resp, err := server.GetUserById(context.Background(), tc.req)
 			tc.checkResponse(t, resp, err)
 		})
 	}
