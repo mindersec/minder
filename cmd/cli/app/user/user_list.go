@@ -79,7 +79,8 @@ mediator control plane for an specific role.`,
 		// print output in a table
 		if format == "" {
 			table := tablewriter.NewWriter(os.Stdout)
-			table.SetHeader([]string{"Id", "Role", "Username", "Email", "First name", "Last name", "Is protected", "Created date", "Updated date"})
+			table.SetHeader([]string{"Id", "Role", "Username", "Email", "First name",
+				"Last name", "Is protected", "Created date", "Updated date"})
 
 			for _, v := range resp.Users {
 				if v.IsProtected == nil {

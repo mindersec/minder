@@ -231,8 +231,32 @@ service UserService {
         option (google.api.http) = {
             delete: "/api/v1/user/{id}"
         };
-
     }
+
+    rpc GetUsers (GetUsersRequest) returns (GetUsersResponse) {
+        option (google.api.http) = {
+        get: "/api/v1/users/{role_id}"
+        };
+    }
+
+    rpc GetUserById (GetUserRequest) returns (GetUserResponse) {
+        option (google.api.http) = {
+            get: "/api/v1/user/{id}"
+            };    
+    }
+
+    rpc GetUserByUserName (GetUserByUsernameRequest) returns (GetUserByUsernameResponse) {
+        option (google.api.http) = {
+            get: "/api/v1/user/username/{username}"
+            };    
+    }
+
+    rpc GetUserByEmail (GetUserByEmailRequest) returns (GetUserByEmailResponse) {
+        option (google.api.http) = {
+            get: "/api/v1/user/email/{email}"
+            };    
+    }
+
 }
 
 message CheckHealthRequest {
@@ -574,5 +598,56 @@ message DeleteUserRequest {
 }
 
 message DeleteUserResponse {
+}
 
+// user record to be returned
+message UserRecord {
+    int32 id = 1;
+    int32 role_id = 2;
+    string email = 3;
+    string username = 4;
+    string password = 5;
+    optional string first_name = 6;
+    optional string last_name = 7;
+    optional bool is_protected = 8;
+    google.protobuf.Timestamp created_at = 9;
+    google.protobuf.Timestamp updated_at = 10;    
+}
+
+// list users
+message GetUsersRequest {
+    int32 role_id = 1;
+    optional int32 limit = 2;
+    optional int32 offset = 3;
+}
+
+message GetUsersResponse {
+    repeated UserRecord users = 1;
+}
+
+// get user by id
+message GetUserRequest {
+    int32 id = 1;
+}
+
+message GetUserResponse {
+    optional UserRecord user = 1;
+}
+
+// get user by username
+message GetUserByUsernameRequest {
+    string username = 1;
+}
+
+message GetUserByUsernameResponse {
+    optional UserRecord user = 1;
+}
+
+// get user by email
+message GetUserByEmailRequest {
+    string email = 1;
+}
+
+message GetUserByEmailResponse {
+    optional UserRecord user = 1;
 }

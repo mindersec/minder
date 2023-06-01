@@ -416,7 +416,7 @@ func TestGetUserDBMock(t *testing.T) {
 
 	mockStore := mockdb.NewMockStore(ctrl)
 
-	request := &pb.GetUserRequest{UserId: 1}
+	request := &pb.GetUserRequest{Id: 1}
 
 	expectedUser := db.User{
 		ID:        1,
@@ -454,7 +454,7 @@ func TestGetNonExistingUserDBMock(t *testing.T) {
 
 	mockStore := mockdb.NewMockStore(ctrl)
 
-	request := &pb.GetUserRequest{UserId: 5}
+	request := &pb.GetUserRequest{Id: 5}
 
 	mockStore.EXPECT().GetUserByID(gomock.Any(), gomock.Any()).
 		Return(db.User{}, nil)
@@ -479,7 +479,7 @@ func TestGetUser_gRPC(t *testing.T) {
 	}{
 		{
 			name: "Success",
-			req:  &pb.GetUserRequest{UserId: 1},
+			req:  &pb.GetUserRequest{Id: 1},
 			buildStubs: func(store *mockdb.MockStore) {
 				store.EXPECT().GetUserByID(gomock.Any(), gomock.Any()).
 					Return(db.User{
@@ -513,7 +513,7 @@ func TestGetUser_gRPC(t *testing.T) {
 		},
 		{
 			name: "NonExisting",
-			req:  &pb.GetUserRequest{UserId: 5},
+			req:  &pb.GetUserRequest{Id: 5},
 			buildStubs: func(store *mockdb.MockStore) {
 				store.EXPECT().GetUserByID(gomock.Any(), gomock.Any()).
 					Return(db.User{}, nil).

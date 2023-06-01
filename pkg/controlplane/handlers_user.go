@@ -154,11 +154,11 @@ func (s *Server) GetUsers(ctx context.Context,
 // GetUser is a service for getting an user
 func (s *Server) GetUser(ctx context.Context,
 	in *pb.GetUserRequest) (*pb.GetUserResponse, error) {
-	if in.UserId == 0 {
+	if in.Id == 0 {
 		return nil, fmt.Errorf("user id is required")
 	}
 
-	user, err := s.store.GetUserByID(ctx, in.UserId)
+	user, err := s.store.GetUserByID(ctx, in.Id)
 	if err != nil {
 		return nil, fmt.Errorf("failed to get user: %w", err)
 	}
