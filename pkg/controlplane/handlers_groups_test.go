@@ -27,6 +27,7 @@ import (
 	"github.com/stretchr/testify/assert"
 
 	"google.golang.org/grpc/codes"
+	"google.golang.org/protobuf/types/known/timestamppb"
 
 	mockdb "github.com/stacklok/mediator/database/mock"
 	pb "github.com/stacklok/mediator/pkg/generated/protobuf/go/mediator/v1"
@@ -85,7 +86,7 @@ func TestCreateGroup_gRPC(t *testing.T) {
 			name: "Success",
 			req: &pb.CreateGroupRequest{
 				OrganisationId: 1,
-				Name:           "TestRole",
+				Name:           "TestGroup",
 			},
 			buildStubs: func(store *mockdb.MockStore) {
 				store.EXPECT().GetGroupByName(gomock.Any(), gomock.Any()).Return(db.Group{}, sql.ErrNoRows).Times(1)
@@ -94,7 +95,7 @@ func TestCreateGroup_gRPC(t *testing.T) {
 					Return(db.Group{
 						ID:             1,
 						OrganisationID: 1,
-						Name:           "TestRole",
+						Name:           "TestGroup",
 						IsProtected:    false,
 						CreatedAt:      time.Now(),
 						UpdatedAt:      time.Now(),
@@ -106,7 +107,7 @@ func TestCreateGroup_gRPC(t *testing.T) {
 				assert.NotNil(t, res)
 				assert.Equal(t, int32(1), res.GroupId)
 				assert.Equal(t, int32(1), res.OrganisationId)
-				assert.Equal(t, "TestRole", res.Name)
+				assert.Equal(t, "TestGroup", res.Name)
 				assert.Equal(t, false, res.IsProtected)
 				assert.NotNil(t, res.CreatedAt)
 				assert.NotNil(t, res.UpdatedAt)
@@ -119,7 +120,6 @@ func TestCreateGroup_gRPC(t *testing.T) {
 				Name: "",
 			},
 			buildStubs: func(store *mockdb.MockStore) {
-				// No expectations, as CreateRole should not be called
 			},
 			checkResponse: func(t *testing.T, res *pb.CreateGroupResponse, err error) {
 				// Assert the expected behavior when the request is empty
@@ -132,7 +132,7 @@ func TestCreateGroup_gRPC(t *testing.T) {
 			name: "StoreError",
 			req: &pb.CreateGroupRequest{
 				OrganisationId: 1,
-				Name:           "TestRole",
+				Name:           "TestGroup",
 			},
 			buildStubs: func(store *mockdb.MockStore) {
 				store.EXPECT().
@@ -265,6 +265,264 @@ func TestDeleteGroup_gRPC(t *testing.T) {
 			server := NewServer(mockStore)
 
 			resp, err := server.DeleteGroup(context.Background(), tc.req)
+			tc.checkResponse(t, resp, err)
+		})
+	}
+}
+
+func TestGetGroupsDBMock(t *testing.T) {
+	ctrl := gomock.NewController(t)
+	defer ctrl.Finish()
+
+	mockStore := mockdb.NewMockStore(ctrl)
+
+	request := &pb.GetGroupsRequest{OrganisationId: 1}
+
+	expectedGroups := []db.Group{
+		{
+			ID:             1,
+			OrganisationID: 1,
+			Name:           "test",
+			CreatedAt:      time.Now(),
+			UpdatedAt:      time.Now(),
+		},
+		{
+			ID:             2,
+			OrganisationID: 1,
+			Name:           "test1",
+			IsProtected:    true,
+			CreatedAt:      time.Now(),
+			UpdatedAt:      time.Now(),
+		},
+	}
+
+	mockStore.EXPECT().ListGroups(gomock.Any(), gomock.Any()).
+		Return(expectedGroups, nil)
+
+	server := &Server{
+		store: mockStore,
+	}
+
+	response, err := server.GetGroups(context.Background(), request)
+
+	assert.NoError(t, err)
+	assert.NotNil(t, response)
+	assert.Equal(t, len(expectedGroups), len(response.Groups))
+	assert.Equal(t, expectedGroups[0].ID, response.Groups[0].GroupId)
+	assert.Equal(t, expectedGroups[0].OrganisationID, response.Groups[0].GroupId)
+	assert.Equal(t, expectedGroups[0].Name, response.Groups[0].Name)
+
+	expectedCreatedAt := expectedGroups[0].CreatedAt.In(time.UTC)
+	assert.Equal(t, expectedCreatedAt, response.Groups[0].CreatedAt.AsTime().In(time.UTC))
+	expectedUpdatedAt := expectedGroups[0].UpdatedAt.In(time.UTC)
+	assert.Equal(t, expectedUpdatedAt, response.Groups[0].UpdatedAt.AsTime().In(time.UTC))
+}
+
+func TestGetGroups_gRPC(t *testing.T) {
+	testCases := []struct {
+		name               string
+		req                *pb.GetGroupsRequest
+		buildStubs         func(store *mockdb.MockStore)
+		checkResponse      func(t *testing.T, res *pb.GetGroupsResponse, err error)
+		expectedStatusCode codes.Code
+	}{
+		{
+			name: "Success",
+			req:  &pb.GetGroupsRequest{OrganisationId: 1},
+			buildStubs: func(store *mockdb.MockStore) {
+				store.EXPECT().ListGroups(gomock.Any(), gomock.Any()).
+					Return([]db.Group{
+						{
+							ID:             1,
+							OrganisationID: 1,
+							Name:           "test",
+							CreatedAt:      time.Now(),
+							UpdatedAt:      time.Now(),
+						},
+						{
+							ID:             2,
+							OrganisationID: 1,
+							Name:           "test1",
+							IsProtected:    true,
+							CreatedAt:      time.Now(),
+							UpdatedAt:      time.Now(),
+						},
+					}, nil).
+					Times(1)
+			},
+			checkResponse: func(t *testing.T, res *pb.GetGroupsResponse, err error) {
+				expectedGroups := []*pb.GroupRecord{
+					{
+						GroupId:        1,
+						OrganisationId: 1,
+						Name:           "test",
+						CreatedAt:      timestamppb.New(time.Now()),
+						UpdatedAt:      timestamppb.New(time.Now()),
+					},
+					{
+						GroupId:        2,
+						OrganisationId: 1,
+						Name:           "test1",
+						IsProtected:    true,
+						CreatedAt:      timestamppb.New(time.Now()),
+						UpdatedAt:      timestamppb.New(time.Now()),
+					},
+				}
+
+				assert.NoError(t, err)
+				assert.NotNil(t, res)
+				assert.Equal(t, len(expectedGroups), len(res.Groups))
+				assert.Equal(t, expectedGroups[0].OrganisationId, res.Groups[0].OrganisationId)
+				assert.Equal(t, expectedGroups[0].GroupId, res.Groups[0].GroupId)
+				assert.Equal(t, expectedGroups[0].Name, res.Groups[0].Name)
+			},
+			expectedStatusCode: codes.OK,
+		},
+	}
+
+	for i := range testCases {
+		tc := testCases[i]
+		t.Run(tc.name, func(t *testing.T) {
+
+			ctrl := gomock.NewController(t)
+			defer ctrl.Finish()
+
+			mockStore := mockdb.NewMockStore(ctrl)
+			tc.buildStubs(mockStore)
+
+			server := NewServer(mockStore)
+
+			resp, err := server.GetGroups(context.Background(), tc.req)
+			tc.checkResponse(t, resp, err)
+		})
+	}
+}
+
+func TestGetGroupDBMock(t *testing.T) {
+	ctrl := gomock.NewController(t)
+	defer ctrl.Finish()
+
+	mockStore := mockdb.NewMockStore(ctrl)
+
+	request := &pb.GetGroupByIdRequest{GroupId: 1}
+
+	expectedGroup := db.Group{
+		ID:             1,
+		OrganisationID: 1,
+		Name:           "test",
+		CreatedAt:      time.Now(),
+		UpdatedAt:      time.Now(),
+	}
+
+	mockStore.EXPECT().GetGroupByID(gomock.Any(), gomock.Any()).
+		Return(expectedGroup, nil)
+
+	server := &Server{
+		store: mockStore,
+	}
+
+	response, err := server.GetGroupById(context.Background(), request)
+
+	assert.NoError(t, err)
+	assert.NotNil(t, response)
+	assert.Equal(t, expectedGroup.ID, response.Group.GroupId)
+	assert.Equal(t, expectedGroup.OrganisationID, response.Group.OrganisationId)
+	assert.Equal(t, expectedGroup.Name, response.Group.Name)
+	expectedCreatedAt := expectedGroup.CreatedAt.In(time.UTC)
+	assert.Equal(t, expectedCreatedAt, response.Group.CreatedAt.AsTime().In(time.UTC))
+	expectedUpdatedAt := expectedGroup.UpdatedAt.In(time.UTC)
+	assert.Equal(t, expectedUpdatedAt, response.Group.UpdatedAt.AsTime().In(time.UTC))
+}
+
+func TestGetNonExistingGroupDBMock(t *testing.T) {
+	ctrl := gomock.NewController(t)
+	defer ctrl.Finish()
+
+	mockStore := mockdb.NewMockStore(ctrl)
+
+	request := &pb.GetGroupByIdRequest{GroupId: 5}
+
+	mockStore.EXPECT().GetGroupByID(gomock.Any(), gomock.Any()).
+		Return(db.Group{}, nil)
+
+	server := &Server{
+		store: mockStore,
+	}
+
+	response, err := server.GetGroupById(context.Background(), request)
+
+	assert.NoError(t, err)
+	assert.Equal(t, int32(0), response.Group.GroupId)
+}
+
+func TestGetGroup_gRPC(t *testing.T) {
+	testCases := []struct {
+		name               string
+		req                *pb.GetGroupByIdRequest
+		buildStubs         func(store *mockdb.MockStore)
+		checkResponse      func(t *testing.T, res *pb.GetGroupByIdResponse, err error)
+		expectedStatusCode codes.Code
+	}{
+		{
+			name: "Success",
+			req:  &pb.GetGroupByIdRequest{GroupId: 1},
+			buildStubs: func(store *mockdb.MockStore) {
+				store.EXPECT().GetGroupByID(gomock.Any(), gomock.Any()).
+					Return(db.Group{
+						ID:             1,
+						OrganisationID: 1,
+						Name:           "test",
+						CreatedAt:      time.Now(),
+						UpdatedAt:      time.Now(),
+					}, nil).
+					Times(1)
+			},
+			checkResponse: func(t *testing.T, res *pb.GetGroupByIdResponse, err error) {
+				expectedGroup := pb.GroupRecord{
+					GroupId:        1,
+					OrganisationId: 1,
+					Name:           "test",
+					CreatedAt:      timestamppb.New(time.Now()),
+					UpdatedAt:      timestamppb.New(time.Now()),
+				}
+
+				assert.NoError(t, err)
+				assert.NotNil(t, res)
+				assert.Equal(t, expectedGroup.OrganisationId, res.Group.OrganisationId)
+				assert.Equal(t, expectedGroup.GroupId, res.Group.GroupId)
+				assert.Equal(t, expectedGroup.Name, res.Group.Name)
+			},
+			expectedStatusCode: codes.OK,
+		},
+		{
+			name: "NonExisting",
+			req:  &pb.GetGroupByIdRequest{GroupId: 5},
+			buildStubs: func(store *mockdb.MockStore) {
+				store.EXPECT().GetGroupByID(gomock.Any(), gomock.Any()).
+					Return(db.Group{}, nil).
+					Times(1)
+			},
+			checkResponse: func(t *testing.T, res *pb.GetGroupByIdResponse, err error) {
+				assert.NoError(t, err)
+				assert.Equal(t, int32(0), res.Group.GroupId)
+			},
+			expectedStatusCode: codes.OK,
+		},
+	}
+
+	for i := range testCases {
+		tc := testCases[i]
+		t.Run(tc.name, func(t *testing.T) {
+
+			ctrl := gomock.NewController(t)
+			defer ctrl.Finish()
+
+			mockStore := mockdb.NewMockStore(ctrl)
+			tc.buildStubs(mockStore)
+
+			server := NewServer(mockStore)
+
+			resp, err := server.GetGroupById(context.Background(), tc.req)
 			tc.checkResponse(t, resp, err)
 		})
 	}

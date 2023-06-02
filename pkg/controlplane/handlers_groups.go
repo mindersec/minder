@@ -150,6 +150,8 @@ func (s *Server) GetGroups(ctx context.Context, req *pb.GetGroupsRequest) (*pb.G
 			Name:           group.Name,
 			Description:    group.Description.String,
 			IsProtected:    group.IsProtected,
+			CreatedAt:      timestamppb.New(group.CreatedAt),
+			UpdatedAt:      timestamppb.New(group.UpdatedAt),
 		})
 	}
 
