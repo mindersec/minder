@@ -109,7 +109,6 @@ a mediator control plane.`,
 
 func init() {
 	GroupCmd.AddCommand(group_listCmd)
-	group_listCmd.Flags().Int("group-id", 0, "Group ID")
 	group_listCmd.Flags().StringP("name", "n", "", "List group values by a name")
 	group_listCmd.Flags().Int("org-id", 0, "Organisation ID")
 	group_listCmd.Flags().Int("limit", 10, "Limit number of results")

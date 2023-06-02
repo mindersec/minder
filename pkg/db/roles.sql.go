@@ -75,6 +75,30 @@ func (q *Queries) GetRoleByID(ctx context.Context, id int32) (Role, error) {
 	return i, err
 }
 
+const getRoleByName = `-- name: GetRoleByName :one
+SELECT id, group_id, name, is_admin, is_protected, created_at, updated_at FROM roles WHERE group_id= $1 AND name = $2
+`
+
+type GetRoleByNameParams struct {
+	GroupID int32  `json:"group_id"`
+	Name    string `json:"name"`
+}
+
+func (q *Queries) GetRoleByName(ctx context.Context, arg GetRoleByNameParams) (Role, error) {
+	row := q.db.QueryRowContext(ctx, getRoleByName, arg.GroupID, arg.Name)
+	var i Role
+	err := row.Scan(
+		&i.ID,
+		&i.GroupID,
+		&i.Name,
+		&i.IsAdmin,
+		&i.IsProtected,
+		&i.CreatedAt,
+		&i.UpdatedAt,
+	)
+	return i, err
+}
+
 const listRoles = `-- name: ListRoles :many
 SELECT id, group_id, name, is_admin, is_protected, created_at, updated_at FROM roles
 WHERE group_id = $1

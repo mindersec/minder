@@ -1470,8 +1470,11 @@ var GroupService_ServiceDesc = grpc.ServiceDesc{
 }
 
 const (
-	RoleService_CreateRole_FullMethodName = "/mediator.v1.RoleService/CreateRole"
-	RoleService_DeleteRole_FullMethodName = "/mediator.v1.RoleService/DeleteRole"
+	RoleService_CreateRole_FullMethodName    = "/mediator.v1.RoleService/CreateRole"
+	RoleService_DeleteRole_FullMethodName    = "/mediator.v1.RoleService/DeleteRole"
+	RoleService_GetRoles_FullMethodName      = "/mediator.v1.RoleService/GetRoles"
+	RoleService_GetRoleById_FullMethodName   = "/mediator.v1.RoleService/GetRoleById"
+	RoleService_GetRoleByName_FullMethodName = "/mediator.v1.RoleService/GetRoleByName"
 )
 
 // RoleServiceClient is the client API for RoleService service.
@@ -1480,6 +1483,9 @@ const (
 type RoleServiceClient interface {
 	CreateRole(ctx context.Context, in *CreateRoleRequest, opts ...grpc.CallOption) (*CreateRoleResponse, error)
 	DeleteRole(ctx context.Context, in *DeleteRoleRequest, opts ...grpc.CallOption) (*DeleteRoleResponse, error)
+	GetRoles(ctx context.Context, in *GetRolesRequest, opts ...grpc.CallOption) (*GetRolesResponse, error)
+	GetRoleById(ctx context.Context, in *GetRoleByIdRequest, opts ...grpc.CallOption) (*GetRoleByIdResponse, error)
+	GetRoleByName(ctx context.Context, in *GetRoleByNameRequest, opts ...grpc.CallOption) (*GetRoleByNameResponse, error)
 }
 
 type roleServiceClient struct {
@@ -1508,12 +1514,42 @@ func (c *roleServiceClient) DeleteRole(ctx context.Context, in *DeleteRoleReques
 	return out, nil
 }
 
+func (c *roleServiceClient) GetRoles(ctx context.Context, in *GetRolesRequest, opts ...grpc.CallOption) (*GetRolesResponse, error) {
+	out := new(GetRolesResponse)
+	err := c.cc.Invoke(ctx, RoleService_GetRoles_FullMethodName, in, out, opts...)
+	if err != nil {
+		return nil, err
+	}
+	return out, nil
+}
+
+func (c *roleServiceClient) GetRoleById(ctx context.Context, in *GetRoleByIdRequest, opts ...grpc.CallOption) (*GetRoleByIdResponse, error) {
+	out := new(GetRoleByIdResponse)
+	err := c.cc.Invoke(ctx, RoleService_GetRoleById_FullMethodName, in, out, opts...)
+	if err != nil {
+		return nil, err
+	}
+	return out, nil
+}
+
+func (c *roleServiceClient) GetRoleByName(ctx context.Context, in *GetRoleByNameRequest, opts ...grpc.CallOption) (*GetRoleByNameResponse, error) {
+	out := new(GetRoleByNameResponse)
+	err := c.cc.Invoke(ctx, RoleService_GetRoleByName_FullMethodName, in, out, opts...)
+	if err != nil {
+		return nil, err
+	}
+	return out, nil
+}
+
 // RoleServiceServer is the server API for RoleService service.
 // All implementations must embed UnimplementedRoleServiceServer
 // for forward compatibility
 type RoleServiceServer interface {
 	CreateRole(context.Context, *CreateRoleRequest) (*CreateRoleResponse, error)
 	DeleteRole(context.Context, *DeleteRoleRequest) (*DeleteRoleResponse, error)
+	GetRoles(context.Context, *GetRolesRequest) (*GetRolesResponse, error)
+	GetRoleById(context.Context, *GetRoleByIdRequest) (*GetRoleByIdResponse, error)
+	GetRoleByName(context.Context, *GetRoleByNameRequest) (*GetRoleByNameResponse, error)
 	mustEmbedUnimplementedRoleServiceServer()
 }
 
@@ -1526,6 +1562,15 @@ func (UnimplementedRoleServiceServer) CreateRole(context.Context, *CreateRoleReq
 }
 func (UnimplementedRoleServiceServer) DeleteRole(context.Context, *DeleteRoleRequest) (*DeleteRoleResponse, error) {
 	return nil, status.Errorf(codes.Unimplemented, "method DeleteRole not implemented")
+}
+func (UnimplementedRoleServiceServer) GetRoles(context.Context, *GetRolesRequest) (*GetRolesResponse, error) {
+	return nil, status.Errorf(codes.Unimplemented, "method GetRoles not implemented")
+}
+func (UnimplementedRoleServiceServer) GetRoleById(context.Context, *GetRoleByIdRequest) (*GetRoleByIdResponse, error) {
+	return nil, status.Errorf(codes.Unimplemented, "method GetRoleById not implemented")
+}
+func (UnimplementedRoleServiceServer) GetRoleByName(context.Context, *GetRoleByNameRequest) (*GetRoleByNameResponse, error) {
+	return nil, status.Errorf(codes.Unimplemented, "method GetRoleByName not implemented")
 }
 func (UnimplementedRoleServiceServer) mustEmbedUnimplementedRoleServiceServer() {}
 
@@ -1576,6 +1621,60 @@ func _RoleService_DeleteRole_Handler(srv interface{}, ctx context.Context, dec f
 	return interceptor(ctx, in, info, handler)
 }
 
+func _RoleService_GetRoles_Handler(srv interface{}, ctx context.Context, dec func(interface{}) error, interceptor grpc.UnaryServerInterceptor) (interface{}, error) {
+	in := new(GetRolesRequest)
+	if err := dec(in); err != nil {
+		return nil, err
+	}
+	if interceptor == nil {
+		return srv.(RoleServiceServer).GetRoles(ctx, in)
+	}
+	info := &grpc.UnaryServerInfo{
+		Server:     srv,
+		FullMethod: RoleService_GetRoles_FullMethodName,
+	}
+	handler := func(ctx context.Context, req interface{}) (interface{}, error) {
+		return srv.(RoleServiceServer).GetRoles(ctx, req.(*GetRolesRequest))
+	}
+	return interceptor(ctx, in, info, handler)
+}
+
+func _RoleService_GetRoleById_Handler(srv interface{}, ctx context.Context, dec func(interface{}) error, interceptor grpc.UnaryServerInterceptor) (interface{}, error) {
+	in := new(GetRoleByIdRequest)
+	if err := dec(in); err != nil {
+		return nil, err
+	}
+	if interceptor == nil {
+		return srv.(RoleServiceServer).GetRoleById(ctx, in)
+	}
+	info := &grpc.UnaryServerInfo{
+		Server:     srv,
+		FullMethod: RoleService_GetRoleById_FullMethodName,
+	}
+	handler := func(ctx context.Context, req interface{}) (interface{}, error) {
+		return srv.(RoleServiceServer).GetRoleById(ctx, req.(*GetRoleByIdRequest))
+	}
+	return interceptor(ctx, in, info, handler)
+}
+
+func _RoleService_GetRoleByName_Handler(srv interface{}, ctx context.Context, dec func(interface{}) error, interceptor grpc.UnaryServerInterceptor) (interface{}, error) {
+	in := new(GetRoleByNameRequest)
+	if err := dec(in); err != nil {
+		return nil, err
+	}
+	if interceptor == nil {
+		return srv.(RoleServiceServer).GetRoleByName(ctx, in)
+	}
+	info := &grpc.UnaryServerInfo{
+		Server:     srv,
+		FullMethod: RoleService_GetRoleByName_FullMethodName,
+	}
+	handler := func(ctx context.Context, req interface{}) (interface{}, error) {
+		return srv.(RoleServiceServer).GetRoleByName(ctx, req.(*GetRoleByNameRequest))
+	}
+	return interceptor(ctx, in, info, handler)
+}
+
 // RoleService_ServiceDesc is the grpc.ServiceDesc for RoleService service.
 // It's only intended for direct use with grpc.RegisterService,
 // and not to be introspected or modified (even as a copy)
@@ -1590,6 +1689,18 @@ var RoleService_ServiceDesc = grpc.ServiceDesc{
 		{
 			MethodName: "DeleteRole",
 			Handler:    _RoleService_DeleteRole_Handler,
+		},
+		{
+			MethodName: "GetRoles",
+			Handler:    _RoleService_GetRoles_Handler,
+		},
+		{
+			MethodName: "GetRoleById",
+			Handler:    _RoleService_GetRoleById_Handler,
+		},
+		{
+			MethodName: "GetRoleByName",
+			Handler:    _RoleService_GetRoleByName_Handler,
 		},
 	},
 	Streams:  []grpc.StreamDesc{},

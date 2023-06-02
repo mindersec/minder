@@ -26,6 +26,7 @@ import (
 	"github.com/stretchr/testify/assert"
 
 	"google.golang.org/grpc/codes"
+	"google.golang.org/protobuf/types/known/timestamppb"
 
 	mockdb "github.com/stacklok/mediator/database/mock"
 	pb "github.com/stacklok/mediator/pkg/generated/protobuf/go/mediator/v1"
@@ -270,6 +271,264 @@ func TestDeleteRole_gRPC(t *testing.T) {
 			server := NewServer(mockStore)
 
 			resp, err := server.DeleteRole(context.Background(), tc.req)
+			tc.checkResponse(t, resp, err)
+		})
+	}
+}
+
+func TestGetRolesDBMock(t *testing.T) {
+	ctrl := gomock.NewController(t)
+	defer ctrl.Finish()
+
+	mockStore := mockdb.NewMockStore(ctrl)
+
+	request := &pb.GetRolesRequest{GroupId: 1}
+
+	expectedRoles := []db.Role{
+		{
+			ID:        1,
+			GroupID:   1,
+			Name:      "test",
+			CreatedAt: time.Now(),
+			UpdatedAt: time.Now(),
+		},
+		{
+			ID:          2,
+			GroupID:     1,
+			Name:        "test1",
+			IsProtected: true,
+			CreatedAt:   time.Now(),
+			UpdatedAt:   time.Now(),
+		},
+	}
+
+	mockStore.EXPECT().ListRoles(gomock.Any(), gomock.Any()).
+		Return(expectedRoles, nil)
+
+	server := &Server{
+		store: mockStore,
+	}
+
+	response, err := server.GetRoles(context.Background(), request)
+
+	assert.NoError(t, err)
+	assert.NotNil(t, response)
+	assert.Equal(t, len(expectedRoles), len(response.Roles))
+	assert.Equal(t, expectedRoles[0].ID, response.Roles[0].Id)
+	assert.Equal(t, expectedRoles[0].GroupID, response.Roles[0].GroupId)
+	assert.Equal(t, expectedRoles[0].Name, response.Roles[0].Name)
+
+	expectedCreatedAt := expectedRoles[0].CreatedAt.In(time.UTC)
+	assert.Equal(t, expectedCreatedAt, response.Roles[0].CreatedAt.AsTime().In(time.UTC))
+	expectedUpdatedAt := expectedRoles[0].UpdatedAt.In(time.UTC)
+	assert.Equal(t, expectedUpdatedAt, response.Roles[0].UpdatedAt.AsTime().In(time.UTC))
+}
+
+func TestGetRoles_gRPC(t *testing.T) {
+	testCases := []struct {
+		name               string
+		req                *pb.GetRolesRequest
+		buildStubs         func(store *mockdb.MockStore)
+		checkResponse      func(t *testing.T, res *pb.GetRolesResponse, err error)
+		expectedStatusCode codes.Code
+	}{
+		{
+			name: "Success",
+			req:  &pb.GetRolesRequest{GroupId: 1},
+			buildStubs: func(store *mockdb.MockStore) {
+				store.EXPECT().ListRoles(gomock.Any(), gomock.Any()).
+					Return([]db.Role{
+						{
+							ID:        1,
+							GroupID:   1,
+							Name:      "test",
+							CreatedAt: time.Now(),
+							UpdatedAt: time.Now(),
+						},
+						{
+							ID:          2,
+							GroupID:     1,
+							Name:        "test1",
+							IsProtected: true,
+							CreatedAt:   time.Now(),
+							UpdatedAt:   time.Now(),
+						},
+					}, nil).
+					Times(1)
+			},
+			checkResponse: func(t *testing.T, res *pb.GetRolesResponse, err error) {
+				expectedRoles := []*pb.RoleRecord{
+					{
+						Id:        1,
+						GroupId:   1,
+						Name:      "test",
+						CreatedAt: timestamppb.New(time.Now()),
+						UpdatedAt: timestamppb.New(time.Now()),
+					},
+					{
+						Id:          2,
+						GroupId:     1,
+						Name:        "test1",
+						IsProtected: true,
+						CreatedAt:   timestamppb.New(time.Now()),
+						UpdatedAt:   timestamppb.New(time.Now()),
+					},
+				}
+
+				assert.NoError(t, err)
+				assert.NotNil(t, res)
+				assert.Equal(t, len(expectedRoles), len(res.Roles))
+				assert.Equal(t, expectedRoles[0].Id, res.Roles[0].Id)
+				assert.Equal(t, expectedRoles[0].GroupId, res.Roles[0].GroupId)
+				assert.Equal(t, expectedRoles[0].Name, res.Roles[0].Name)
+			},
+			expectedStatusCode: codes.OK,
+		},
+	}
+
+	for i := range testCases {
+		tc := testCases[i]
+		t.Run(tc.name, func(t *testing.T) {
+
+			ctrl := gomock.NewController(t)
+			defer ctrl.Finish()
+
+			mockStore := mockdb.NewMockStore(ctrl)
+			tc.buildStubs(mockStore)
+
+			server := NewServer(mockStore)
+
+			resp, err := server.GetRoles(context.Background(), tc.req)
+			tc.checkResponse(t, resp, err)
+		})
+	}
+}
+
+func TestGetRoleDBMock(t *testing.T) {
+	ctrl := gomock.NewController(t)
+	defer ctrl.Finish()
+
+	mockStore := mockdb.NewMockStore(ctrl)
+
+	request := &pb.GetRoleByIdRequest{Id: 1}
+
+	expectedRole := db.Role{
+		ID:        1,
+		GroupID:   1,
+		Name:      "test",
+		CreatedAt: time.Now(),
+		UpdatedAt: time.Now(),
+	}
+
+	mockStore.EXPECT().GetRoleByID(gomock.Any(), gomock.Any()).
+		Return(expectedRole, nil)
+
+	server := &Server{
+		store: mockStore,
+	}
+
+	response, err := server.GetRoleById(context.Background(), request)
+
+	assert.NoError(t, err)
+	assert.NotNil(t, response)
+	assert.Equal(t, expectedRole.ID, response.Role.Id)
+	assert.Equal(t, expectedRole.GroupID, response.Role.GroupId)
+	assert.Equal(t, expectedRole.Name, response.Role.Name)
+	expectedCreatedAt := expectedRole.CreatedAt.In(time.UTC)
+	assert.Equal(t, expectedCreatedAt, response.Role.CreatedAt.AsTime().In(time.UTC))
+	expectedUpdatedAt := expectedRole.UpdatedAt.In(time.UTC)
+	assert.Equal(t, expectedUpdatedAt, response.Role.UpdatedAt.AsTime().In(time.UTC))
+}
+
+func TestGetNonExistingRoleDBMock(t *testing.T) {
+	ctrl := gomock.NewController(t)
+	defer ctrl.Finish()
+
+	mockStore := mockdb.NewMockStore(ctrl)
+
+	request := &pb.GetRoleByIdRequest{Id: 5}
+
+	mockStore.EXPECT().GetRoleByID(gomock.Any(), gomock.Any()).
+		Return(db.Role{}, nil)
+
+	server := &Server{
+		store: mockStore,
+	}
+
+	response, err := server.GetRoleById(context.Background(), request)
+
+	assert.NoError(t, err)
+	assert.Equal(t, int32(0), response.Role.Id)
+}
+
+func TestGetRole_gRPC(t *testing.T) {
+	testCases := []struct {
+		name               string
+		req                *pb.GetRoleByIdRequest
+		buildStubs         func(store *mockdb.MockStore)
+		checkResponse      func(t *testing.T, res *pb.GetRoleByIdResponse, err error)
+		expectedStatusCode codes.Code
+	}{
+		{
+			name: "Success",
+			req:  &pb.GetRoleByIdRequest{Id: 1},
+			buildStubs: func(store *mockdb.MockStore) {
+				store.EXPECT().GetRoleByID(gomock.Any(), gomock.Any()).
+					Return(db.Role{
+						ID:        1,
+						GroupID:   1,
+						Name:      "test",
+						CreatedAt: time.Now(),
+						UpdatedAt: time.Now(),
+					}, nil).
+					Times(1)
+			},
+			checkResponse: func(t *testing.T, res *pb.GetRoleByIdResponse, err error) {
+				expectedRole := pb.RoleRecord{
+					Id:        1,
+					GroupId:   1,
+					Name:      "test",
+					CreatedAt: timestamppb.New(time.Now()),
+					UpdatedAt: timestamppb.New(time.Now()),
+				}
+
+				assert.NoError(t, err)
+				assert.NotNil(t, res)
+				assert.Equal(t, expectedRole.Id, res.Role.Id)
+				assert.Equal(t, expectedRole.GroupId, res.Role.GroupId)
+				assert.Equal(t, expectedRole.Name, res.Role.Name)
+			},
+			expectedStatusCode: codes.OK,
+		},
+		{
+			name: "NonExisting",
+			req:  &pb.GetRoleByIdRequest{Id: 5},
+			buildStubs: func(store *mockdb.MockStore) {
+				store.EXPECT().GetRoleByID(gomock.Any(), gomock.Any()).
+					Return(db.Role{}, nil).
+					Times(1)
+			},
+			checkResponse: func(t *testing.T, res *pb.GetRoleByIdResponse, err error) {
+				assert.NoError(t, err)
+				assert.Equal(t, int32(0), res.Role.Id)
+			},
+			expectedStatusCode: codes.OK,
+		},
+	}
+
+	for i := range testCases {
+		tc := testCases[i]
+		t.Run(tc.name, func(t *testing.T) {
+
+			ctrl := gomock.NewController(t)
+			defer ctrl.Finish()
+
+			mockStore := mockdb.NewMockStore(ctrl)
+			tc.buildStubs(mockStore)
+
+			server := NewServer(mockStore)
+
+			resp, err := server.GetRoleById(context.Background(), tc.req)
 			tc.checkResponse(t, resp, err)
 		})
 	}

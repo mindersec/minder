@@ -114,3 +114,101 @@ func (s *Server) DeleteRole(ctx context.Context,
 
 	return &pb.DeleteRoleResponse{}, nil
 }
+
+// GetRoles is a service for getting roles
+func (s *Server) GetRoles(ctx context.Context,
+	in *pb.GetRolesRequest) (*pb.GetRolesResponse, error) {
+	if in.GroupId == 0 {
+		return nil, fmt.Errorf("group id is required")
+	}
+
+	// define default values for limit and offset
+	if in.Limit == nil || *in.Limit == -1 {
+		in.Limit = new(int32)
+		*in.Limit = PaginationLimit
+	}
+	if in.Offset == nil {
+		in.Offset = new(int32)
+		*in.Offset = 0
+	}
+
+	roles, err := s.store.ListRoles(ctx, db.ListRolesParams{
+		GroupID: in.GroupId,
+		Limit:   *in.Limit,
+		Offset:  *in.Offset,
+	})
+	if err != nil {
+		return nil, fmt.Errorf("failed to get roles: %w", err)
+	}
+
+	var resp pb.GetRolesResponse
+	resp.Roles = make([]*pb.RoleRecord, 0, len(roles))
+	for _, role := range roles {
+		resp.Roles = append(resp.Roles, &pb.RoleRecord{
+			Id:          role.ID,
+			GroupId:     role.GroupID,
+			Name:        role.Name,
+			IsAdmin:     role.IsAdmin,
+			IsProtected: role.IsProtected,
+			CreatedAt:   timestamppb.New(role.CreatedAt),
+			UpdatedAt:   timestamppb.New(role.UpdatedAt),
+		})
+	}
+
+	return &resp, nil
+}
+
+// GetRoleById is a service for getting a role by id
+func (s *Server) GetRoleById(ctx context.Context,
+	in *pb.GetRoleByIdRequest) (*pb.GetRoleByIdResponse, error) {
+	if in.Id == 0 {
+		return nil, fmt.Errorf("role id is required")
+	}
+
+	role, err := s.store.GetRoleByID(ctx, in.Id)
+	if err != nil {
+		return nil, fmt.Errorf("failed to get role: %w", err)
+	}
+
+	var resp pb.GetRoleByIdResponse
+	resp.Role = &pb.RoleRecord{
+		Id:          role.ID,
+		GroupId:     role.GroupID,
+		Name:        role.Name,
+		IsAdmin:     role.IsAdmin,
+		IsProtected: role.IsProtected,
+		CreatedAt:   timestamppb.New(role.CreatedAt),
+		UpdatedAt:   timestamppb.New(role.UpdatedAt),
+	}
+
+	return &resp, nil
+}
+
+// GetRoleByName is a service for getting a role by name
+func (s *Server) GetRoleByName(ctx context.Context,
+	in *pb.GetRoleByNameRequest) (*pb.GetRoleByNameResponse, error) {
+	if in.GroupId == 0 {
+		return nil, fmt.Errorf("group id is required")
+	}
+	if in.Name == "" {
+		return nil, fmt.Errorf("role name is required")
+	}
+
+	role, err := s.store.GetRoleByName(ctx, db.GetRoleByNameParams{GroupID: in.GroupId, Name: in.Name})
+	if err != nil {
+		return nil, fmt.Errorf("failed to get role: %w", err)
+	}
+
+	var resp pb.GetRoleByNameResponse
+	resp.Role = &pb.RoleRecord{
+		Id:          role.ID,
+		GroupId:     role.GroupID,
+		Name:        role.Name,
+		IsAdmin:     role.IsAdmin,
+		IsProtected: role.IsProtected,
+		CreatedAt:   timestamppb.New(role.CreatedAt),
+		UpdatedAt:   timestamppb.New(role.UpdatedAt),
+	}
+
+	return &resp, nil
+}
