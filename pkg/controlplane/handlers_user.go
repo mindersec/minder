@@ -31,6 +31,7 @@ type createUserValidation struct {
 	RoleId   int32  `db:"role_id" validate:"required"`
 	Email    string `db:"email" validate:"omitempty,email"`
 	Username string `db:"username" validate:"required"`
+	Password string `validate:"omitempty,min=8,containsany=!@#?*"`
 }
 
 func stringToNullString(s *string) *sql.NullString {
@@ -43,16 +44,20 @@ func stringToNullString(s *string) *sql.NullString {
 // CreateUser is a service for creating an organisation
 func (s *Server) CreateUser(ctx context.Context,
 	in *pb.CreateUserRequest) (*pb.CreateUserResponse, error) {
+
 	// validate that the company and name are not empty, and email is valid if exists
-	var email string
 	validator := validator.New()
-	if in.Email == nil {
-		email = ""
-	} else {
-		email = *in.Email
+	format := createUserValidation{RoleId: in.RoleId, Username: in.Username}
+
+	if in.Email != nil {
+		format.Email = *in.Email
 	}
-	err := validator.Struct(createUserValidation{RoleId: in.RoleId,
-		Email: email, Username: in.Username})
+
+	if in.Password != nil {
+		format.Password = *in.Password
+	}
+
+	err := validator.Struct(format)
 	if err != nil {
 		return nil, err
 	}

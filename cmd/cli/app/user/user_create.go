@@ -90,8 +90,7 @@ within a mediator control plane.`,
 			os.Exit(1)
 		}
 
-		fmt.Println(resp)
-		user, err := json.Marshal(resp)
+		user, err := json.MarshalIndent(resp, "", "  ")
 		if err != nil {
 			cmd.Println("Created user: ", resp.Username)
 		} else {
