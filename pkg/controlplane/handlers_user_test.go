@@ -80,7 +80,7 @@ func TestCreateUserDBMock(t *testing.T) {
 	assert.NotNil(t, response)
 	assert.Equal(t, expectedUser.ID, response.Id)
 	assert.Equal(t, expectedUser.Username, response.Username)
-	assert.Equal(t, expectedUser.Email, response.Email)
+	assert.Equal(t, expectedUser.Email, sql.NullString{String: *response.Email, Valid: true})
 	assert.Equal(t, expectedUser.RoleID, response.RoleId)
 	assert.Equal(t, expectedUser.IsProtected, *response.IsProtected)
 	assert.Equal(t, expectedUser.FirstName, sql.NullString{String: *response.FirstName, Valid: true})
@@ -294,6 +294,7 @@ func TestGetUsersDBMock(t *testing.T) {
 			RoleID:      1,
 			Username:    "test1",
 			FirstName:   sql.NullString{String: "Foo", Valid: true},
+			Email:       sql.NullString{String: "test@stacklok.com", Valid: true},
 			IsProtected: true,
 			CreatedAt:   time.Now(),
 			UpdatedAt:   time.Now(),
@@ -315,8 +316,6 @@ func TestGetUsersDBMock(t *testing.T) {
 	assert.Equal(t, expectedUsers[0].ID, response.Users[0].Id)
 	assert.Equal(t, expectedUsers[0].RoleID, response.Users[0].RoleId)
 	assert.Equal(t, expectedUsers[0].Username, response.Users[0].Username)
-	assert.Equal(t, expectedUsers[0].Email, response.Users[0].Email)
-
 	expectedCreatedAt := expectedUsers[0].CreatedAt.In(time.UTC)
 	assert.Equal(t, expectedCreatedAt, response.Users[0].CreatedAt.AsTime().In(time.UTC))
 	expectedUpdatedAt := expectedUsers[0].UpdatedAt.In(time.UTC)
@@ -366,13 +365,13 @@ func TestGetUsers_gRPC(t *testing.T) {
 						Id:        1,
 						RoleId:    1,
 						Username:  "test",
+						Email:     &emailPtr,
 						CreatedAt: timestamppb.New(time.Now()),
 						UpdatedAt: timestamppb.New(time.Now()),
 					},
 					{
 						Id:          2,
 						RoleId:      1,
-						Email:       &emailPtr,
 						Username:    "test1",
 						FirstName:   &firstNamePtr,
 						IsProtected: &protectedPtr,
