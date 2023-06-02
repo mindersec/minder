@@ -42,6 +42,12 @@ var user_listCmd = &cobra.Command{
 	Short: "List users within a mediator control plane",
 	Long: `The medctl user list subcommand lets you list users within a
 mediator control plane for an specific role.`,
+	PreRun: func(cmd *cobra.Command, args []string) {
+		if err := viper.BindPFlags(cmd.Flags()); err != nil {
+			fmt.Fprintf(os.Stderr, "Error binding flags: %s\n", err)
+		}
+	},
+
 	Run: func(cmd *cobra.Command, args []string) {
 		conn, err := util.GetGrpcConnection(cmd)
 		if err != nil {
@@ -129,9 +135,5 @@ func init() {
 	if err := user_listCmd.MarkFlagRequired("role-id"); err != nil {
 		fmt.Fprintf(os.Stderr, "Error marking flag as required: %s\n", err)
 		os.Exit(1)
-	}
-
-	if err := viper.BindPFlags(user_listCmd.Flags()); err != nil {
-		fmt.Fprintf(os.Stderr, "Error binding flags: %s\n", err)
 	}
 }

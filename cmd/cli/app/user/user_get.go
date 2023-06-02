@@ -72,6 +72,12 @@ var user_getCmd = &cobra.Command{
 	Short: "Get details for an user within a mediator control plane",
 	Long: `The medctl user get subcommand lets you retrieve details for an user within a
 mediator control plane.`,
+	PreRun: func(cmd *cobra.Command, args []string) {
+		if err := viper.BindPFlags(cmd.Flags()); err != nil {
+			fmt.Fprintf(os.Stderr, "Error binding flags: %s\n", err)
+		}
+	},
+
 	Run: func(cmd *cobra.Command, args []string) {
 		conn, err := util.GetGrpcConnection(cmd)
 		if err != nil {
@@ -140,8 +146,4 @@ func init() {
 	user_getCmd.Flags().Int32P("id", "i", -1, "ID for the user to query")
 	user_getCmd.Flags().StringP("username", "u", "", "Username for the user to query")
 	user_getCmd.Flags().StringP("email", "e", "", "Email for the user to query")
-
-	if err := viper.BindPFlags(user_getCmd.Flags()); err != nil {
-		fmt.Fprintf(os.Stderr, "Error binding flags: %s\n", err)
-	}
 }
