@@ -40,6 +40,11 @@ var role_getCmd = &cobra.Command{
 	Short: "Get details for an role within a mediator control plane",
 	Long: `The medctl role get subcommand lets you retrieve details for an role within a
 mediator control plane.`,
+	PreRun: func(cmd *cobra.Command, args []string) {
+		if err := viper.BindPFlags(cmd.Flags()); err != nil {
+			fmt.Fprintf(os.Stderr, "Error binding flags: %s\n", err)
+		}
+	},
 	Run: func(cmd *cobra.Command, args []string) {
 		conn, err := util.GetGrpcConnection(cmd)
 		if err != nil {
@@ -53,7 +58,7 @@ mediator control plane.`,
 		defer cancel()
 
 		id := viper.GetInt32("id")
-		group_id := viper.GetInt32("group_id")
+		group_id := viper.GetInt32("group-id")
 		name := viper.GetString("name")
 
 		// check for required options
@@ -109,10 +114,6 @@ mediator control plane.`,
 func init() {
 	RoleCmd.AddCommand(role_getCmd)
 	role_getCmd.Flags().Int32P("id", "i", 0, "ID for the role to query")
-	role_getCmd.Flags().Int32P("group_id", "g", 0, "Group ID")
+	role_getCmd.Flags().Int32P("group-id", "g", 0, "Group ID")
 	role_getCmd.Flags().StringP("name", "n", "", "Name for the role to query")
-
-	if err := viper.BindPFlags(role_getCmd.Flags()); err != nil {
-		fmt.Fprintf(os.Stderr, "Error binding flags: %s\n", err)
-	}
 }

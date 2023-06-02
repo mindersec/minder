@@ -42,6 +42,11 @@ var role_listCmd = &cobra.Command{
 	Short: "List roles within a mediator control plane",
 	Long: `The medctl role list subcommand lets you list roles within a
 mediator control plane for an specific group.`,
+	PreRun: func(cmd *cobra.Command, args []string) {
+		if err := viper.BindPFlags(cmd.Flags()); err != nil {
+			fmt.Fprintf(os.Stderr, "Error binding flags: %s\n", err)
+		}
+	},
 	Run: func(cmd *cobra.Command, args []string) {
 		conn, err := util.GetGrpcConnection(cmd)
 		if err != nil {
@@ -122,9 +127,5 @@ func init() {
 	if err := role_listCmd.MarkFlagRequired("group-id"); err != nil {
 		fmt.Fprintf(os.Stderr, "Error marking flag as required: %s\n", err)
 		os.Exit(1)
-	}
-
-	if err := viper.BindPFlags(role_listCmd.Flags()); err != nil {
-		fmt.Fprintf(os.Stderr, "Error binding flags: %s\n", err)
 	}
 }
