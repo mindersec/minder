@@ -37,11 +37,10 @@ import (
 	"go.opentelemetry.io/otel/attribute"
 	"go.opentelemetry.io/otel/trace"
 
+	"github.com/spf13/viper"
 	"golang.org/x/oauth2"
 	"golang.org/x/oauth2/github"
 	"golang.org/x/oauth2/google"
-
-	"github.com/spf13/viper"
 )
 
 // Google is the name of the Google OAuth provider
@@ -66,13 +65,13 @@ func generateState(n int) (string, error) {
 }
 
 // CheckHealth is a simple health check for monitoring
-func (_ *Server) CheckHealth(_ context.Context, _ *pb.CheckHealthRequest) (*pb.CheckHealthResponse, error) {
+func (s *Server) CheckHealth(_ context.Context, _ *pb.CheckHealthRequest) (*pb.CheckHealthResponse, error) {
 	return &pb.CheckHealthResponse{Status: "OK"}, nil
 }
 
 // newOAuthConfig creates a new OAuth2 config for the given provider
 // and whether the client is a CLI or web client
-func (_ *Server) newOAuthConfig(provider string, cli bool) (*oauth2.Config, error) {
+func (s *Server) newOAuthConfig(provider string, cli bool) (*oauth2.Config, error) {
 	redirectURL := func(provider string, cli bool) string {
 		if cli {
 			return fmt.Sprintf("http://localhost:8080/api/v1/auth/callback/%s/cli", provider)
@@ -84,7 +83,7 @@ func (_ *Server) newOAuthConfig(provider string, cli bool) (*oauth2.Config, erro
 		if provider == Google {
 			return []string{"profile", "email"}
 		}
-		return []string{"user:email"}
+		return []string{"user:email", "repo", "read:org"}
 	}
 
 	endpoint := func(provider string) oauth2.Endpoint {
@@ -99,8 +98,8 @@ func (_ *Server) newOAuthConfig(provider string, cli bool) (*oauth2.Config, erro
 	}
 
 	return &oauth2.Config{
-		ClientID:     viper.GetString(fmt.Sprintf("%s.client_id", provider)),
-		ClientSecret: viper.GetString(fmt.Sprintf("%s.client_secret", provider)),
+		ClientID:     viper.GetString(fmt.Sprintf("%s-app.client_id", provider)),
+		ClientSecret: viper.GetString(fmt.Sprintf("%s-app.client_secret", provider)),
 		RedirectURL:  redirectURL(provider, cli),
 		Scopes:       scopes(provider),
 		Endpoint:     endpoint(provider),
@@ -141,6 +140,7 @@ func (s *Server) GetAuthorizationURL(ctx context.Context,
 // This is specific for CLI clients which require a different
 func (s *Server) ExchangeCodeForTokenCLI(ctx context.Context,
 	in *pb.ExchangeCodeForTokenCLIRequest) (*pb.ExchangeCodeForTokenCLIResponse, error) {
+
 	oauthConfig, err := s.newOAuthConfig(in.Provider, true)
 	if err != nil {
 		return nil, err
@@ -157,6 +157,7 @@ func (s *Server) ExchangeCodeForTokenCLI(ctx context.Context,
 
 	token, err := oauthConfig.Exchange(ctx, in.Code)
 	if err != nil {
+		fmt.Println("error exchanging code for token:", err)
 		return nil, err
 	}
 
@@ -168,7 +169,7 @@ func (s *Server) ExchangeCodeForTokenCLI(ctx context.Context,
 		status = "failure"
 	}
 
-	cliAppURL := "http://localhost:8891/shutdown" // Replace PORT with the appropriate port number
+	cliAppURL := "http://localhost:8891/shutdown"
 
 	resp, err := http.Post(cliAppURL, "application/json", bytes.NewBuffer([]byte(`{"status": "`+status+`"}`)))
 	if err != nil {
@@ -186,7 +187,8 @@ func (s *Server) ExchangeCodeForTokenCLI(ctx context.Context,
 }
 
 // ExchangeCodeForTokenWEB exchanges an OAuth2 code for a token and returns
-// a JWT token as a session cookie. This handler is specific for web clients.
+// a JWT token as a session cookie. This handler is specific for web clients
+// and is a placeholder until the front end is implemented.
 func (s *Server) ExchangeCodeForTokenWEB(ctx context.Context,
 	in *pb.ExchangeCodeForTokenWEBRequest) (*pb.ExchangeCodeForTokenWEBResponse, error) {
 	oauthConfig, err := s.newOAuthConfig(in.Provider, false)
@@ -198,13 +200,11 @@ func (s *Server) ExchangeCodeForTokenWEB(ctx context.Context,
 		return nil, fmt.Errorf("oauth2.Config is nil")
 	}
 
-	token, err := oauthConfig.Exchange(ctx, in.Code)
+	_, err = oauthConfig.Exchange(ctx, in.Code)
 	if err != nil {
 		return nil, err
 	}
 
-	// TODO: The below response needs to return as a session cookie containing the JWT token
-	// Once the JWT code is implemented.
 	// http.SetCookie(w, &http.Cookie{
 	// 	Name    "access_token",
 	// 	Value   JWT token,
@@ -212,9 +212,7 @@ func (s *Server) ExchangeCodeForTokenWEB(ctx context.Context,
 	// })
 
 	//
-	return &pb.ExchangeCodeForTokenWEBResponse{
-		AccessToken: token.AccessToken,
-	}, nil
+	return &pb.ExchangeCodeForTokenWEBResponse{}, nil
 }
 
 // LogIn logs in a user by verifying the username and password

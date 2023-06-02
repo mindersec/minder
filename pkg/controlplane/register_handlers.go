@@ -65,7 +65,6 @@ func RegisterGatewayHTTPHandlers(ctx context.Context, gwmux *runtime.ServeMux, g
 	if err := pb.RegisterUserServiceHandlerFromEndpoint(ctx, gwmux, grpcAddress, opts); err != nil {
 		log.Fatalf("failed to register gateway: %v", err)
 	}
-
 }
 
 // RegisterGRPCServices registers the GRPC services

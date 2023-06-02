@@ -13,19 +13,30 @@
 // See the License for the specific language governing permissions and
 // limitations under the License.
 
-// Package main provides the entrypoint for the mediator cli
-package main
+package client
 
 import (
-	"github.com/stacklok/mediator/cmd/cli/app"
-	_ "github.com/stacklok/mediator/cmd/cli/app/auth"
-	_ "github.com/stacklok/mediator/cmd/cli/app/enrol"
-	_ "github.com/stacklok/mediator/cmd/cli/app/group"
-	_ "github.com/stacklok/mediator/cmd/cli/app/org"
-	_ "github.com/stacklok/mediator/cmd/cli/app/role"
-	_ "github.com/stacklok/mediator/cmd/cli/app/user"
+	"testing"
+
+	assert "github.com/stretchr/testify/assert"
 )
 
-func main() {
-	app.Execute()
+const (
+	applicationID  int64 = 123456
+	installationID int64 = 123456
+)
+
+func TestGenerateToken(t *testing.T) {
+	a := New(applicationID, installationID, "../../test_files/private.pem")
+
+	client, err := a.GitHubClient()
+	if err != nil {
+		panic(err)
+	}
+
+	// assert that client is a valid client
+	assert.NotNil(t, client)
+	assert.NotNil(t, client.Apps)
+	assert.NotNil(t, client.Apps.Get)
+	assert.NotNil(t, client.Apps.GetInstallation)
 }

@@ -37,6 +37,7 @@ import (
 	"google.golang.org/grpc/credentials/insecure"
 	"google.golang.org/grpc/reflection"
 
+	"github.com/gorilla/sessions"
 	_ "github.com/lib/pq" // nolint
 
 	"github.com/stacklok/mediator/internal/logger"
@@ -58,6 +59,7 @@ type Server struct {
 	OAuth2       *oauth2.Config
 	ClientID     string
 	ClientSecret string
+	Store        sessions.Store
 }
 
 // NewServer creates a new server instance
@@ -66,6 +68,17 @@ func NewServer(store db.Store) *Server {
 		store: store,
 	}
 	return server
+}
+
+func (s *Server) ConnectToDB(dbConn string) (*db.Store, error) {
+	conn, err := sql.Open("postgres", dbConn)
+	if err != nil {
+		log.Fatalf("failed to open DB connection: %v", err)
+		return nil, err
+	}
+
+	store := db.NewStore(conn)
+	return &store, nil
 }
 
 func initTracer() (*sdktrace.TracerProvider, error) {
@@ -90,22 +103,13 @@ func initTracer() (*sdktrace.TracerProvider, error) {
 }
 
 // StartGRPCServer starts a gRPC server and blocks while serving.
-func (s *Server) StartGRPCServer(address string, dbConn string) {
+func (s *Server) StartGRPCServer(address string, store *db.Store) {
 	lis, err := net.Listen("tcp", address)
 	if err != nil {
 		log.Fatalf("failed to listen: %v", err)
 	}
 
-	conn, err := sql.Open("postgres", dbConn)
-	if err != nil {
-		log.Fatal("Cannot connect to DB: ", err)
-	} else {
-		log.Println("Connected to DB")
-	}
-
-	store := db.NewStore(conn)
-
-	server := NewServer(store)
+	server := NewServer(*store)
 
 	if err != nil {
 		log.Fatal("Cannot create server: ", err)
@@ -147,7 +151,7 @@ func (s *Server) StartGRPCServer(address string, dbConn string) {
 }
 
 // StartHTTPServer starts a HTTP server and registers the gRPC handler mux to it
-func StartHTTPServer(address, grpcAddress string) {
+func StartHTTPServer(address, grpcAddress string, store *db.Store) {
 
 	mux := http.NewServeMux()
 
@@ -176,7 +180,18 @@ func StartHTTPServer(address, grpcAddress string) {
 	// register the services (declared within register_handlers.go)
 	RegisterGatewayHTTPHandlers(ctx, gwmux, grpcAddress, opts)
 
+	server := &Server{
+		store: *store, // assuming the Server struct has a Store field
+	}
+
 	mux.Handle("/", gwmux)
+
+	// The following are net.http handlers used for when grpc-gateway will not
+	// play nicely (such as handling redirects etc)
+	// Only use these when you cannot implement the functionality in the
+	// grpc-gateway handlers
+	mux.HandleFunc("/api/v1/github/hook", server.HandleGitHubAppRedirect)
+	mux.HandleFunc("/api/v1/auth/callback", server.HandleGitHubAppCallback)
 
 	log.Printf("Starting HTTP server on %s", address)
 	if err := http.ListenAndServe(address, mux); err != nil {
