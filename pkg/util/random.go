@@ -57,18 +57,51 @@ func RandomName(seed int64) string {
 	return RandomString(10, seed)
 }
 
-// RandomPassword returns a random password of length n.
-func RandomPassword(n int, seed int64) string {
-	const letters = "abcdefghijklmnopqrstuvwxyzABCDEFGHIJKLMNOPQRSTUVWXYZ0123456789"
-	s := make([]byte, n-1)
+// RandomPassword returns a random password.
+func RandomPassword(length int, seed int64) string {
+	// Define character pools
+	upperChars := "ABCDEFGHIJKLMNOPQRSTUVWXYZ"
+	lowerChars := "abcdefghijklmnopqrstuvwxyz"
+	numberChars := "0123456789"
+	specialChars := "!@#$"
+
 	r := NewRand(seed)
-	for i := range s {
-		s[i] = letters[r.Intn(len(letters))]
+
+	// Create a slice to hold the password characters
+	password := make([]byte, length)
+
+	// Determine the number of characters needed from each pool
+	numUpper := 1
+	numLower := 1
+	numNumber := 1
+	numSpecial := 1
+	numRemaining := length - numUpper - numLower - numNumber - numSpecial
+
+	// Fill the password with random characters
+	fillPasswordChars(r, password, upperChars, numUpper)
+	fillPasswordChars(r, password, lowerChars, numLower)
+	fillPasswordChars(r, password, numberChars, numNumber)
+	fillPasswordChars(r, password, specialChars, numSpecial)
+	fillPasswordChars(r, password, upperChars+lowerChars+numberChars+specialChars, numRemaining)
+
+	// Shuffle the password characters
+	r.Shuffle(length, func(i, j int) {
+		password[i], password[j] = password[j], password[i]
+	})
+
+	return string(password)
+}
+
+func fillPasswordChars(r *rand.Rand, password []byte, charset string, count int) {
+	for i := 0; i < count; i++ {
+		randomIndex := r.Intn(len(password))
+		for password[randomIndex] != 0 {
+			randomIndex = r.Intn(len(password))
+		}
+		password[randomIndex] = getRandomChar(r, charset)
 	}
+}
 
-	// add special chars
-	const chars = "!@#?*"
-	s[len(s)-1] = chars[r.Intn(len(chars))]
-
-	return string(s)
+func getRandomChar(r *rand.Rand, charset string) byte {
+	return charset[r.Intn(len(charset))]
 }

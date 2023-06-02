@@ -6,6 +6,7 @@ package db
 
 import (
 	"context"
+	"database/sql"
 )
 
 type Querier interface {
@@ -27,7 +28,7 @@ type Querier interface {
 	GetOrganisationForUpdate(ctx context.Context, name string) (Organisation, error)
 	GetRoleByID(ctx context.Context, id int32) (Role, error)
 	GetRoleByName(ctx context.Context, arg GetRoleByNameParams) (Role, error)
-	GetUserByEmail(ctx context.Context, email string) (User, error)
+	GetUserByEmail(ctx context.Context, email sql.NullString) (User, error)
 	GetUserByID(ctx context.Context, id int32) (User, error)
 	GetUserByUserName(ctx context.Context, username string) (User, error)
 	ListGroups(ctx context.Context, arg ListGroupsParams) ([]Group, error)

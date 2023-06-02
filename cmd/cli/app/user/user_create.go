@@ -47,14 +47,18 @@ within a mediator control plane.`,
 	Run: func(cmd *cobra.Command, args []string) {
 		// create the user via GRPC
 		role := util.GetConfigValue("role-id", "role-id", cmd, int32(0)).(int32)
-		email := util.GetConfigValue("email", "email", cmd, nil)
+		email := util.GetConfigValue("email", "email", cmd, nil).(string)
 		username := util.GetConfigValue("username", "username", cmd, nil)
-		password := util.GetConfigValue("password", "password", cmd, nil)
+		password := util.GetConfigValue("password", "password", cmd, nil).(string)
 		firstName := util.GetConfigValue("firstname", "firstname", cmd, nil).(string)
 		lastName := util.GetConfigValue("lastname", "lastname", cmd, nil).(string)
 		isProtected := util.GetConfigValue("is-protected", "is-protected", cmd, false).(bool)
 
 		conn, err := util.GetGrpcConnection(cmd)
+		if err != nil {
+			fmt.Fprintf(os.Stderr, "Error getting grpc connection: %s\n", err)
+			os.Exit(1)
+		}
 		defer conn.Close()
 
 		if err != nil {
@@ -69,11 +73,13 @@ within a mediator control plane.`,
 		firstNamePtr := &firstName
 		lastNamePtr := &lastName
 		protectedPtr := &isProtected
+		emailPtr := &email
+		passwordPtr := &password
 		resp, err := client.CreateUser(ctx, &pb.CreateUserRequest{
 			RoleId:      role,
-			Email:       email.(string),
+			Email:       emailPtr,
 			Username:    username.(string),
-			Password:    password.(string),
+			Password:    passwordPtr,
 			FirstName:   firstNamePtr,
 			LastName:    lastNamePtr,
 			IsProtected: protectedPtr,
@@ -84,7 +90,7 @@ within a mediator control plane.`,
 			os.Exit(1)
 		}
 
-		user, err := json.Marshal(resp)
+		user, err := json.MarshalIndent(resp, "", "  ")
 		if err != nil {
 			cmd.Println("Created user: ", resp.Username)
 		} else {
@@ -103,14 +109,6 @@ func init() {
 	user_createCmd.Flags().BoolP("is-protected", "i", false, "Is the user protected")
 	user_createCmd.Flags().Int32P("role-id", "r", 0, "Role ID")
 	if err := user_createCmd.MarkFlagRequired("username"); err != nil {
-		fmt.Fprintf(os.Stderr, "Error marking flag as required: %s\n", err)
-		os.Exit(1)
-	}
-	if err := user_createCmd.MarkFlagRequired("email"); err != nil {
-		fmt.Fprintf(os.Stderr, "Error marking flag as required: %s\n", err)
-		os.Exit(1)
-	}
-	if err := user_createCmd.MarkFlagRequired("password"); err != nil {
 		fmt.Fprintf(os.Stderr, "Error marking flag as required: %s\n", err)
 		os.Exit(1)
 	}

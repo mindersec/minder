@@ -16,7 +16,7 @@ INSERT INTO users (role_id, email, username, password, first_name, last_name, is
 
 type CreateUserParams struct {
 	RoleID      int32          `json:"role_id"`
-	Email       string         `json:"email"`
+	Email       sql.NullString `json:"email"`
 	Username    string         `json:"username"`
 	Password    string         `json:"password"`
 	FirstName   sql.NullString `json:"first_name"`
@@ -63,7 +63,7 @@ const getUserByEmail = `-- name: GetUserByEmail :one
 SELECT id, role_id, email, username, password, first_name, last_name, is_protected, created_at, updated_at FROM users WHERE email = $1
 `
 
-func (q *Queries) GetUserByEmail(ctx context.Context, email string) (User, error) {
+func (q *Queries) GetUserByEmail(ctx context.Context, email sql.NullString) (User, error) {
 	row := q.db.QueryRowContext(ctx, getUserByEmail, email)
 	var i User
 	err := row.Scan(
@@ -218,7 +218,7 @@ UPDATE users SET role_id = $2, email = $3, username = $4, password = $5, first_n
 type UpdateUserParams struct {
 	ID          int32          `json:"id"`
 	RoleID      int32          `json:"role_id"`
-	Email       string         `json:"email"`
+	Email       sql.NullString `json:"email"`
 	Username    string         `json:"username"`
 	Password    string         `json:"password"`
 	FirstName   sql.NullString `json:"first_name"`
