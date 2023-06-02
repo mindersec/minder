@@ -76,39 +76,62 @@ func (s *Server) CreateGroup(ctx context.Context, req *pb.CreateGroupRequest) (*
 
 // GetGroupById returns a group by id
 func (s *Server) GetGroupById(ctx context.Context, req *pb.GetGroupByIdRequest) (*pb.GetGroupByIdResponse, error) {
-	fmt.Println("Group ID: ", req.GroupId)
+	if req.GroupId == 0 {
+		return nil, fmt.Errorf("group id cannot be empty")
+	}
+
 	grp, err := s.store.GetGroupByID(ctx, req.GroupId)
 	if err != nil {
 		return nil, fmt.Errorf("failed to get group by id: %w", err)
 	}
 
-	return &pb.GetGroupByIdResponse{
+	var resp pb.GetGroupByIdResponse
+	resp.Group = &pb.GroupRecord{
 		GroupId:        grp.ID,
 		OrganisationId: grp.OrganisationID,
 		Name:           grp.Name,
 		Description:    grp.Description.String,
 		IsProtected:    grp.IsProtected,
-	}, nil
+		CreatedAt:      timestamppb.New(grp.CreatedAt),
+		UpdatedAt:      timestamppb.New(grp.UpdatedAt),
+	}
+	return &resp, nil
 }
 
 // GetGroupByName returns a group by name
 func (s *Server) GetGroupByName(ctx context.Context, req *pb.GetGroupByNameRequest) (*pb.GetGroupByNameResponse, error) {
-	grp, err := s.store.GetGroupByName(ctx, req.Name)
-	if err != nil {
-		return nil, fmt.Errorf("failed to get group by id: %w", err)
+	if req.Name == "" {
+		return nil, fmt.Errorf("group name cannot be empty")
 	}
 
-	return &pb.GetGroupByNameResponse{
+	grp, err := s.store.GetGroupByName(ctx, req.Name)
+	if err != nil {
+		return nil, fmt.Errorf("failed to get group by name: %w", err)
+	}
+
+	var resp pb.GetGroupByNameResponse
+	resp.Group = &pb.GroupRecord{
 		GroupId:        grp.ID,
 		OrganisationId: grp.OrganisationID,
 		Name:           grp.Name,
 		Description:    grp.Description.String,
 		IsProtected:    grp.IsProtected,
-	}, nil
+		CreatedAt:      timestamppb.New(grp.CreatedAt),
+		UpdatedAt:      timestamppb.New(grp.UpdatedAt),
+	}
+	return &resp, nil
 }
 
 // GetGroups returns a list of groups
 func (s *Server) GetGroups(ctx context.Context, req *pb.GetGroupsRequest) (*pb.GetGroupsResponse, error) {
+	if req.OrganisationId == 0 {
+		return nil, fmt.Errorf("organisation id cannot be empty")
+	}
+
+	// define default values for limit and offset
+	if req.Limit == -1 {
+		req.Limit = PaginationLimit
+	}
 
 	grps, err := s.store.ListGroups(ctx, db.ListGroupsParams{
 		OrganisationID: req.OrganisationId,
@@ -121,12 +144,14 @@ func (s *Server) GetGroups(ctx context.Context, req *pb.GetGroupsRequest) (*pb.G
 
 	var resp pb.GetGroupsResponse
 	for _, group := range grps {
-		resp.Groups = append(resp.Groups, &pb.GroupsResponse{
+		resp.Groups = append(resp.Groups, &pb.GroupRecord{
 			GroupId:        group.ID,
 			OrganisationId: group.OrganisationID,
 			Name:           group.Name,
 			Description:    group.Description.String,
 			IsProtected:    group.IsProtected,
+			CreatedAt:      timestamppb.New(group.CreatedAt),
+			UpdatedAt:      timestamppb.New(group.UpdatedAt),
 		})
 	}
 
