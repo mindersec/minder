@@ -57,14 +57,19 @@ var serveCmd = &cobra.Command{
 
 		s := controlplane.Server{}
 
+		store, err := s.ConnectToDB(dBconn)
+		if err != nil {
+			panic(err)
+		}
+
 		// Start the gRPC and HTTP server in separate goroutines
 		go func() {
-			s.StartGRPCServer(grpcAddress, dBconn)
+			s.StartGRPCServer(grpcAddress, store)
 			wg.Done()
 		}()
 
 		go func() {
-			controlplane.StartHTTPServer(httpAddress, grpcAddress)
+			controlplane.StartHTTPServer(httpAddress, grpcAddress, store)
 			wg.Done()
 		}()
 

@@ -83,7 +83,13 @@
             "type": "string"
           },
           {
-            "name": "redirectUri",
+            "name": "installationId",
+            "in": "query",
+            "required": false,
+            "type": "string"
+          },
+          {
+            "name": "setupAction",
             "in": "query",
             "required": false,
             "type": "string"

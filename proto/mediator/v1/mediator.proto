@@ -297,7 +297,8 @@ message GetAuthorizationURLResponse {
 message ExchangeCodeForTokenCLIRequest {
     string provider = 1;
     string code = 2;
-    string redirect_uri = 3;
+    string installation_id = 3;
+    string setup_action = 4;
 }
 
 message ExchangeCodeForTokenCLIResponse {
