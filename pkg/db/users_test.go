@@ -45,7 +45,7 @@ func createRandomUser(t *testing.T, org Organisation) User {
 
 	arg := CreateUserParams{
 		RoleID:    role.ID,
-		Email:     util.RandomEmail(seed),
+		Email:     stringToNullString(util.RandomEmail(seed)),
 		Username:  util.RandomString(10, seed),
 		Password:  util.RandomPassword(10, seed),
 		FirstName: stringToNullString(util.RandomName(seed)),
@@ -109,7 +109,7 @@ func TestUpdateUser(t *testing.T) {
 	arg := UpdateUserParams{
 		ID:        user1.ID,
 		RoleID:    user1.RoleID,
-		Email:     util.RandomEmail(seed),
+		Email:     stringToNullString(util.RandomEmail(seed)),
 		Username:  util.RandomString(10, seed),
 		Password:  util.RandomString(10, seed),
 		FirstName: stringToNullString(util.RandomName(seed)),

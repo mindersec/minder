@@ -18,18 +18,19 @@ import (
 	"context"
 	"database/sql"
 	"fmt"
+	"time"
 
 	"github.com/go-playground/validator/v10"
 	"github.com/stacklok/mediator/pkg/db"
 	pb "github.com/stacklok/mediator/pkg/generated/protobuf/go/mediator/v1"
+	"github.com/stacklok/mediator/pkg/util"
 	"google.golang.org/protobuf/types/known/timestamppb"
 )
 
 type createUserValidation struct {
 	RoleId   int32  `db:"role_id" validate:"required"`
-	Email    string `db:"email" validate:"required,email"`
+	Email    string `db:"email" validate:"omitempty,email"`
 	Username string `db:"username" validate:"required"`
-	Password string `validate:"required,min=8,containsany=!@#?*"`
 }
 
 func stringToNullString(s *string) *sql.NullString {
@@ -42,10 +43,16 @@ func stringToNullString(s *string) *sql.NullString {
 // CreateUser is a service for creating an organisation
 func (s *Server) CreateUser(ctx context.Context,
 	in *pb.CreateUserRequest) (*pb.CreateUserResponse, error) {
-	// validate that the company and name are not empty
+	// validate that the company and name are not empty, and email is valid if exists
+	var email string
 	validator := validator.New()
+	if in.Email == nil {
+		email = ""
+	} else {
+		email = *in.Email
+	}
 	err := validator.Struct(createUserValidation{RoleId: in.RoleId,
-		Email: in.Email, Username: in.Username, Password: in.Password})
+		Email: email, Username: in.Username})
 	if err != nil {
 		return nil, err
 	}
@@ -55,18 +62,31 @@ func (s *Server) CreateUser(ctx context.Context,
 		in.IsProtected = &isProtected
 	}
 
+	// if email is blank, set to null
+	if in.Email != nil && *in.Email == "" {
+		in.Email = nil
+	}
+
+	// if password is not set, we generate a random one
+	seed := time.Now().UnixNano()
+
+	if in.Password == nil || *in.Password == "" {
+		pass := util.RandomPassword(8, seed)
+		in.Password = &pass
+	}
+
 	user, err := s.store.CreateUser(ctx, db.CreateUserParams{RoleID: in.RoleId,
-		Email: in.Email, Username: in.Username, Password: in.Password,
+		Email: *stringToNullString(in.Email), Username: in.Username, Password: *in.Password,
 		FirstName: *stringToNullString(in.FirstName), LastName: *stringToNullString(in.LastName),
 		IsProtected: *in.IsProtected})
 	if err != nil {
 		return nil, err
 	}
 
-	return &pb.CreateUserResponse{Id: user.ID, RoleId: user.RoleID, Email: user.Email,
-		Username: user.Username, FirstName: &user.FirstName.String, LastName: &user.LastName.String,
-		IsProtected: &user.IsProtected, CreatedAt: timestamppb.New(user.CreatedAt),
-		UpdatedAt: timestamppb.New(user.UpdatedAt)}, nil
+	return &pb.CreateUserResponse{Id: user.ID, RoleId: user.RoleID, Email: &user.Email.String,
+		Username: user.Username, Password: *in.Password, FirstName: &user.FirstName.String,
+		LastName: &user.LastName.String, IsProtected: &user.IsProtected,
+		CreatedAt: timestamppb.New(user.CreatedAt), UpdatedAt: timestamppb.New(user.UpdatedAt)}, nil
 }
 
 type deleteUserValidation struct {
@@ -138,7 +158,7 @@ func (s *Server) GetUsers(ctx context.Context,
 		resp.Users = append(resp.Users, &pb.UserRecord{
 			Id:          user.ID,
 			RoleId:      user.RoleID,
-			Email:       user.Email,
+			Email:       &user.Email.String,
 			Username:    user.Username,
 			FirstName:   &user.FirstName.String,
 			LastName:    &user.LastName.String,
@@ -167,7 +187,7 @@ func (s *Server) GetUserById(ctx context.Context,
 	resp.User = &pb.UserRecord{
 		Id:          user.ID,
 		RoleId:      user.RoleID,
-		Email:       user.Email,
+		Email:       &user.Email.String,
 		Username:    user.Username,
 		FirstName:   &user.FirstName.String,
 		LastName:    &user.LastName.String,
@@ -195,7 +215,7 @@ func (s *Server) GetUserByUsername(ctx context.Context,
 	resp.User = &pb.UserRecord{
 		Id:        user.ID,
 		RoleId:    user.RoleID,
-		Email:     user.Email,
+		Email:     &user.Email.String,
 		Username:  user.Username,
 		FirstName: &user.FirstName.String,
 		LastName:  &user.LastName.String,
@@ -213,7 +233,7 @@ func (s *Server) GetUserByEmail(ctx context.Context,
 		return nil, fmt.Errorf("email is required")
 	}
 
-	user, err := s.store.GetUserByEmail(ctx, in.Email)
+	user, err := s.store.GetUserByEmail(ctx, sql.NullString{String: in.Email, Valid: true})
 	if err != nil {
 		return nil, fmt.Errorf("failed to get user: %w", err)
 	}
@@ -222,7 +242,7 @@ func (s *Server) GetUserByEmail(ctx context.Context,
 	resp.User = &pb.UserRecord{
 		Id:        user.ID,
 		RoleId:    user.RoleID,
-		Email:     user.Email,
+		Email:     &user.Email.String,
 		Username:  user.Username,
 		FirstName: &user.FirstName.String,
 		LastName:  &user.LastName.String,

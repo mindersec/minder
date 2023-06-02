@@ -616,9 +616,9 @@ message GetRoleByNameResponse {
 // User service
 message CreateUserRequest {
     int32 role_id = 1;
-    string email = 2;
+    optional string email = 2;
     string username = 3;
-    string password = 4;
+    optional string password = 4;
     optional string first_name = 5;
     optional string last_name = 6;
     optional bool is_protected = 7;
@@ -627,14 +627,14 @@ message CreateUserRequest {
 message CreateUserResponse {
     int32 id = 1;
     int32 role_id = 2;
-    string email = 3;
+    optional string email = 3;
     string username = 4;
     string password = 5;
     optional string first_name = 6;
     optional string last_name = 7;
     optional bool is_protected = 8;
     google.protobuf.Timestamp created_at = 9;
-    google.protobuf.Timestamp updated_at = 10;    
+    google.protobuf.Timestamp updated_at = 10;
 }
 
 message DeleteUserRequest {
@@ -649,7 +649,7 @@ message DeleteUserResponse {
 message UserRecord {
     int32 id = 1;
     int32 role_id = 2;
-    string email = 3;
+    optional string email = 3;
     string username = 4;
     string password = 5;
     optional string first_name = 6;

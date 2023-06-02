@@ -23,6 +23,7 @@ import (
 	"github.com/golang/mock/gomock"
 
 	"github.com/stacklok/mediator/pkg/db"
+	"github.com/stacklok/mediator/pkg/util"
 	"github.com/stretchr/testify/assert"
 
 	"google.golang.org/grpc/codes"
@@ -37,14 +38,17 @@ func TestCreateUserDBMock(t *testing.T) {
 	defer ctrl.Finish()
 
 	mockStore := mockdb.NewMockStore(ctrl)
+	seed := time.Now().UnixNano()
 
 	name := "Foo"
 	lastname := "Bar"
+	email := "test@stacklok.com"
+	password := util.RandomPassword(8, seed)
 	request := &pb.CreateUserRequest{
 		RoleId:    1,
-		Email:     "test@stacklok.com",
+		Email:     &email,
 		Username:  "test",
-		Password:  "1234567@",
+		Password:  &password,
 		FirstName: &name,
 		LastName:  &lastname,
 	}
@@ -52,7 +56,7 @@ func TestCreateUserDBMock(t *testing.T) {
 	expectedUser := db.User{
 		ID:          1,
 		RoleID:      1,
-		Email:       "test@stacklok.com",
+		Email:       sql.NullString{String: "test@stacklok.com", Valid: true},
 		Username:    "test",
 		Password:    "1234567@",
 		FirstName:   sql.NullString{String: "Foo", Valid: true},
@@ -88,6 +92,9 @@ func TestCreateUserDBMock(t *testing.T) {
 }
 
 func TestCreateUser_gRPC(t *testing.T) {
+	seed := time.Now().UnixNano()
+	password := util.RandomPassword(8, seed)
+
 	testCases := []struct {
 		name               string
 		req                *pb.CreateUserRequest
@@ -100,8 +107,7 @@ func TestCreateUser_gRPC(t *testing.T) {
 			req: &pb.CreateUserRequest{
 				RoleId:   1,
 				Username: "test",
-				Email:    "test@stacklok.com",
-				Password: "1234567@",
+				Password: &password,
 			},
 			buildStubs: func(store *mockdb.MockStore) {
 				store.EXPECT().
@@ -110,8 +116,7 @@ func TestCreateUser_gRPC(t *testing.T) {
 						ID:          1,
 						RoleID:      1,
 						Username:    "test",
-						Email:       "test@stacklok.com",
-						Password:    "1234567@",
+						Password:    password,
 						IsProtected: false,
 						CreatedAt:   time.Now(),
 						UpdatedAt:   time.Now(),
@@ -123,7 +128,6 @@ func TestCreateUser_gRPC(t *testing.T) {
 				assert.NotNil(t, res)
 				assert.Equal(t, int32(1), res.Id)
 				assert.Equal(t, "test", res.Username)
-				assert.Equal(t, "test@stacklok.com", res.Email)
 				assert.Equal(t, int32(1), res.RoleId)
 				assert.Equal(t, false, *res.IsProtected)
 				assert.NotNil(t, res.CreatedAt)
@@ -177,7 +181,7 @@ func TestDeleteUserDBMock(t *testing.T) {
 	expectedUser := db.User{
 		ID:          1,
 		RoleID:      1,
-		Email:       "test@stacklok.com",
+		Email:       sql.NullString{String: "test@stacklok.com", Valid: true},
 		Username:    "test",
 		Password:    "1234567@",
 		FirstName:   sql.NullString{String: "Foo", Valid: true},
@@ -281,7 +285,6 @@ func TestGetUsersDBMock(t *testing.T) {
 		{
 			ID:        1,
 			RoleID:    1,
-			Email:     "test@stacklok.com",
 			Username:  "test",
 			CreatedAt: time.Now(),
 			UpdatedAt: time.Now(),
@@ -289,7 +292,6 @@ func TestGetUsersDBMock(t *testing.T) {
 		{
 			ID:          2,
 			RoleID:      1,
-			Email:       "test1@stacklok.com",
 			Username:    "test1",
 			FirstName:   sql.NullString{String: "Foo", Valid: true},
 			IsProtected: true,
@@ -338,7 +340,6 @@ func TestGetUsers_gRPC(t *testing.T) {
 						{
 							ID:        1,
 							RoleID:    1,
-							Email:     "test@stacklok.com",
 							Username:  "test",
 							CreatedAt: time.Now(),
 							UpdatedAt: time.Now(),
@@ -346,7 +347,7 @@ func TestGetUsers_gRPC(t *testing.T) {
 						{
 							ID:          2,
 							RoleID:      1,
-							Email:       "test1@stacklok.com",
+							Email:       sql.NullString{String: "test1@stacklok.com", Valid: true},
 							Username:    "test1",
 							FirstName:   sql.NullString{String: "Foo", Valid: true},
 							IsProtected: true,
@@ -359,11 +360,11 @@ func TestGetUsers_gRPC(t *testing.T) {
 			checkResponse: func(t *testing.T, res *pb.GetUsersResponse, err error) {
 				firstNamePtr := "Foo"
 				protectedPtr := true
+				emailPtr := "test1@stacklok.com"
 				expectedOrgs := []*pb.UserRecord{
 					{
 						Id:        1,
 						RoleId:    1,
-						Email:     "test@stacklok.com",
 						Username:  "test",
 						CreatedAt: timestamppb.New(time.Now()),
 						UpdatedAt: timestamppb.New(time.Now()),
@@ -371,7 +372,7 @@ func TestGetUsers_gRPC(t *testing.T) {
 					{
 						Id:          2,
 						RoleId:      1,
-						Email:       "test1@stacklok.com",
+						Email:       &emailPtr,
 						Username:    "test1",
 						FirstName:   &firstNamePtr,
 						IsProtected: &protectedPtr,
@@ -421,7 +422,6 @@ func TestGetUserDBMock(t *testing.T) {
 	expectedUser := db.User{
 		ID:        1,
 		RoleID:    1,
-		Email:     "test@stacklok.com",
 		Username:  "test",
 		CreatedAt: time.Now(),
 		UpdatedAt: time.Now(),
@@ -441,7 +441,6 @@ func TestGetUserDBMock(t *testing.T) {
 	assert.Equal(t, expectedUser.ID, response.User.Id)
 	assert.Equal(t, expectedUser.RoleID, response.User.RoleId)
 	assert.Equal(t, expectedUser.Username, response.User.Username)
-	assert.Equal(t, expectedUser.Email, response.User.Email)
 	expectedCreatedAt := expectedUser.CreatedAt.In(time.UTC)
 	assert.Equal(t, expectedCreatedAt, response.User.CreatedAt.AsTime().In(time.UTC))
 	expectedUpdatedAt := expectedUser.UpdatedAt.In(time.UTC)
@@ -485,7 +484,6 @@ func TestGetUser_gRPC(t *testing.T) {
 					Return(db.User{
 						ID:        1,
 						RoleID:    1,
-						Email:     "test@stacklok.com",
 						Username:  "test",
 						CreatedAt: time.Now(),
 						UpdatedAt: time.Now(),
@@ -496,7 +494,6 @@ func TestGetUser_gRPC(t *testing.T) {
 				expectedUser := pb.UserRecord{
 					Id:        1,
 					RoleId:    1,
-					Email:     "test@stacklok.com",
 					Username:  "test",
 					CreatedAt: timestamppb.New(time.Now()),
 					UpdatedAt: timestamppb.New(time.Now()),
@@ -507,7 +504,6 @@ func TestGetUser_gRPC(t *testing.T) {
 				assert.Equal(t, expectedUser.Id, res.User.Id)
 				assert.Equal(t, expectedUser.RoleId, res.User.RoleId)
 				assert.Equal(t, expectedUser.Username, res.User.Username)
-				assert.Equal(t, expectedUser.Email, res.User.Email)
 			},
 			expectedStatusCode: codes.OK,
 		},
