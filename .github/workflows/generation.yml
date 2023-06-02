@@ -29,6 +29,8 @@ jobs:
       - uses: actions/checkout@v2
       # Install the `buf` CLI
       - uses: bufbuild/buf-setup-action@v1
+        with:
+          github_token: ${{ secrets.GITHUB_TOKEN }}
       # Lint your Protobuf sources
       - uses: bufbuild/buf-lint-action@v1
 
@@ -37,6 +39,8 @@ jobs:
     steps:
       - uses: actions/checkout@v3
       - uses: bufbuild/buf-setup-action@v1
+        with:
+          github_token: ${{ secrets.GITHUB_TOKEN }}
       - uses: bufbuild/buf-breaking-action@v1
         with:
           against: "https://github.com/stacklok/mediator.git#branch=main"
