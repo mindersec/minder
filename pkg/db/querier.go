@@ -34,7 +34,7 @@ type Querier interface {
 	ListOrganisations(ctx context.Context, arg ListOrganisationsParams) ([]Organisation, error)
 	ListRoles(ctx context.Context, arg ListRolesParams) ([]Role, error)
 	ListRolesByGroupID(ctx context.Context, groupID int32) ([]Role, error)
-	ListUsers(ctx context.Context) ([]User, error)
+	ListUsers(ctx context.Context, arg ListUsersParams) ([]User, error)
 	ListUsersByRoleID(ctx context.Context, roleID int32) ([]User, error)
 	UpdateAccessToken(ctx context.Context, arg UpdateAccessTokenParams) (AccessToken, error)
 	UpdateGroup(ctx context.Context, arg UpdateGroupParams) (Group, error)

@@ -11,7 +11,11 @@ SELECT * FROM users WHERE email = $1;
 SELECT * FROM users WHERE username = $1;
 
 -- name: ListUsers :many
-SELECT * FROM users;
+SELECT * FROM users
+WHERE role_id = $1
+ORDER BY id
+LIMIT $2
+OFFSET $3;
 
 -- name: ListUsersByRoleID :many
 SELECT * FROM users WHERE role_id = $1;

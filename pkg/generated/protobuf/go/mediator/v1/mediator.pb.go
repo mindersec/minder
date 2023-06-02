@@ -3394,6 +3394,522 @@ func (*DeleteUserResponse) Descriptor() ([]byte, []int) {
 	return file_mediator_v1_mediator_proto_rawDescGZIP(), []int{56}
 }
 
+// user record to be returned
+type UserRecord struct {
+	state         protoimpl.MessageState
+	sizeCache     protoimpl.SizeCache
+	unknownFields protoimpl.UnknownFields
+
+	Id          int32                  `protobuf:"varint,1,opt,name=id,proto3" json:"id,omitempty"`
+	RoleId      int32                  `protobuf:"varint,2,opt,name=role_id,json=roleId,proto3" json:"role_id,omitempty"`
+	Email       string                 `protobuf:"bytes,3,opt,name=email,proto3" json:"email,omitempty"`
+	Username    string                 `protobuf:"bytes,4,opt,name=username,proto3" json:"username,omitempty"`
+	Password    string                 `protobuf:"bytes,5,opt,name=password,proto3" json:"password,omitempty"`
+	FirstName   *string                `protobuf:"bytes,6,opt,name=first_name,json=firstName,proto3,oneof" json:"first_name,omitempty"`
+	LastName    *string                `protobuf:"bytes,7,opt,name=last_name,json=lastName,proto3,oneof" json:"last_name,omitempty"`
+	IsProtected *bool                  `protobuf:"varint,8,opt,name=is_protected,json=isProtected,proto3,oneof" json:"is_protected,omitempty"`
+	CreatedAt   *timestamppb.Timestamp `protobuf:"bytes,9,opt,name=created_at,json=createdAt,proto3" json:"created_at,omitempty"`
+	UpdatedAt   *timestamppb.Timestamp `protobuf:"bytes,10,opt,name=updated_at,json=updatedAt,proto3" json:"updated_at,omitempty"`
+}
+
+func (x *UserRecord) Reset() {
+	*x = UserRecord{}
+	if protoimpl.UnsafeEnabled {
+		mi := &file_mediator_v1_mediator_proto_msgTypes[57]
+		ms := protoimpl.X.MessageStateOf(protoimpl.Pointer(x))
+		ms.StoreMessageInfo(mi)
+	}
+}
+
+func (x *UserRecord) String() string {
+	return protoimpl.X.MessageStringOf(x)
+}
+
+func (*UserRecord) ProtoMessage() {}
+
+func (x *UserRecord) ProtoReflect() protoreflect.Message {
+	mi := &file_mediator_v1_mediator_proto_msgTypes[57]
+	if protoimpl.UnsafeEnabled && x != nil {
+		ms := protoimpl.X.MessageStateOf(protoimpl.Pointer(x))
+		if ms.LoadMessageInfo() == nil {
+			ms.StoreMessageInfo(mi)
+		}
+		return ms
+	}
+	return mi.MessageOf(x)
+}
+
+// Deprecated: Use UserRecord.ProtoReflect.Descriptor instead.
+func (*UserRecord) Descriptor() ([]byte, []int) {
+	return file_mediator_v1_mediator_proto_rawDescGZIP(), []int{57}
+}
+
+func (x *UserRecord) GetId() int32 {
+	if x != nil {
+		return x.Id
+	}
+	return 0
+}
+
+func (x *UserRecord) GetRoleId() int32 {
+	if x != nil {
+		return x.RoleId
+	}
+	return 0
+}
+
+func (x *UserRecord) GetEmail() string {
+	if x != nil {
+		return x.Email
+	}
+	return ""
+}
+
+func (x *UserRecord) GetUsername() string {
+	if x != nil {
+		return x.Username
+	}
+	return ""
+}
+
+func (x *UserRecord) GetPassword() string {
+	if x != nil {
+		return x.Password
+	}
+	return ""
+}
+
+func (x *UserRecord) GetFirstName() string {
+	if x != nil && x.FirstName != nil {
+		return *x.FirstName
+	}
+	return ""
+}
+
+func (x *UserRecord) GetLastName() string {
+	if x != nil && x.LastName != nil {
+		return *x.LastName
+	}
+	return ""
+}
+
+func (x *UserRecord) GetIsProtected() bool {
+	if x != nil && x.IsProtected != nil {
+		return *x.IsProtected
+	}
+	return false
+}
+
+func (x *UserRecord) GetCreatedAt() *timestamppb.Timestamp {
+	if x != nil {
+		return x.CreatedAt
+	}
+	return nil
+}
+
+func (x *UserRecord) GetUpdatedAt() *timestamppb.Timestamp {
+	if x != nil {
+		return x.UpdatedAt
+	}
+	return nil
+}
+
+// list users
+type GetUsersRequest struct {
+	state         protoimpl.MessageState
+	sizeCache     protoimpl.SizeCache
+	unknownFields protoimpl.UnknownFields
+
+	RoleId int32  `protobuf:"varint,1,opt,name=role_id,json=roleId,proto3" json:"role_id,omitempty"`
+	Limit  *int32 `protobuf:"varint,2,opt,name=limit,proto3,oneof" json:"limit,omitempty"`
+	Offset *int32 `protobuf:"varint,3,opt,name=offset,proto3,oneof" json:"offset,omitempty"`
+}
+
+func (x *GetUsersRequest) Reset() {
+	*x = GetUsersRequest{}
+	if protoimpl.UnsafeEnabled {
+		mi := &file_mediator_v1_mediator_proto_msgTypes[58]
+		ms := protoimpl.X.MessageStateOf(protoimpl.Pointer(x))
+		ms.StoreMessageInfo(mi)
+	}
+}
+
+func (x *GetUsersRequest) String() string {
+	return protoimpl.X.MessageStringOf(x)
+}
+
+func (*GetUsersRequest) ProtoMessage() {}
+
+func (x *GetUsersRequest) ProtoReflect() protoreflect.Message {
+	mi := &file_mediator_v1_mediator_proto_msgTypes[58]
+	if protoimpl.UnsafeEnabled && x != nil {
+		ms := protoimpl.X.MessageStateOf(protoimpl.Pointer(x))
+		if ms.LoadMessageInfo() == nil {
+			ms.StoreMessageInfo(mi)
+		}
+		return ms
+	}
+	return mi.MessageOf(x)
+}
+
+// Deprecated: Use GetUsersRequest.ProtoReflect.Descriptor instead.
+func (*GetUsersRequest) Descriptor() ([]byte, []int) {
+	return file_mediator_v1_mediator_proto_rawDescGZIP(), []int{58}
+}
+
+func (x *GetUsersRequest) GetRoleId() int32 {
+	if x != nil {
+		return x.RoleId
+	}
+	return 0
+}
+
+func (x *GetUsersRequest) GetLimit() int32 {
+	if x != nil && x.Limit != nil {
+		return *x.Limit
+	}
+	return 0
+}
+
+func (x *GetUsersRequest) GetOffset() int32 {
+	if x != nil && x.Offset != nil {
+		return *x.Offset
+	}
+	return 0
+}
+
+type GetUsersResponse struct {
+	state         protoimpl.MessageState
+	sizeCache     protoimpl.SizeCache
+	unknownFields protoimpl.UnknownFields
+
+	Users []*UserRecord `protobuf:"bytes,1,rep,name=users,proto3" json:"users,omitempty"`
+}
+
+func (x *GetUsersResponse) Reset() {
+	*x = GetUsersResponse{}
+	if protoimpl.UnsafeEnabled {
+		mi := &file_mediator_v1_mediator_proto_msgTypes[59]
+		ms := protoimpl.X.MessageStateOf(protoimpl.Pointer(x))
+		ms.StoreMessageInfo(mi)
+	}
+}
+
+func (x *GetUsersResponse) String() string {
+	return protoimpl.X.MessageStringOf(x)
+}
+
+func (*GetUsersResponse) ProtoMessage() {}
+
+func (x *GetUsersResponse) ProtoReflect() protoreflect.Message {
+	mi := &file_mediator_v1_mediator_proto_msgTypes[59]
+	if protoimpl.UnsafeEnabled && x != nil {
+		ms := protoimpl.X.MessageStateOf(protoimpl.Pointer(x))
+		if ms.LoadMessageInfo() == nil {
+			ms.StoreMessageInfo(mi)
+		}
+		return ms
+	}
+	return mi.MessageOf(x)
+}
+
+// Deprecated: Use GetUsersResponse.ProtoReflect.Descriptor instead.
+func (*GetUsersResponse) Descriptor() ([]byte, []int) {
+	return file_mediator_v1_mediator_proto_rawDescGZIP(), []int{59}
+}
+
+func (x *GetUsersResponse) GetUsers() []*UserRecord {
+	if x != nil {
+		return x.Users
+	}
+	return nil
+}
+
+// get user by id
+type GetUserByIdRequest struct {
+	state         protoimpl.MessageState
+	sizeCache     protoimpl.SizeCache
+	unknownFields protoimpl.UnknownFields
+
+	Id int32 `protobuf:"varint,1,opt,name=id,proto3" json:"id,omitempty"`
+}
+
+func (x *GetUserByIdRequest) Reset() {
+	*x = GetUserByIdRequest{}
+	if protoimpl.UnsafeEnabled {
+		mi := &file_mediator_v1_mediator_proto_msgTypes[60]
+		ms := protoimpl.X.MessageStateOf(protoimpl.Pointer(x))
+		ms.StoreMessageInfo(mi)
+	}
+}
+
+func (x *GetUserByIdRequest) String() string {
+	return protoimpl.X.MessageStringOf(x)
+}
+
+func (*GetUserByIdRequest) ProtoMessage() {}
+
+func (x *GetUserByIdRequest) ProtoReflect() protoreflect.Message {
+	mi := &file_mediator_v1_mediator_proto_msgTypes[60]
+	if protoimpl.UnsafeEnabled && x != nil {
+		ms := protoimpl.X.MessageStateOf(protoimpl.Pointer(x))
+		if ms.LoadMessageInfo() == nil {
+			ms.StoreMessageInfo(mi)
+		}
+		return ms
+	}
+	return mi.MessageOf(x)
+}
+
+// Deprecated: Use GetUserByIdRequest.ProtoReflect.Descriptor instead.
+func (*GetUserByIdRequest) Descriptor() ([]byte, []int) {
+	return file_mediator_v1_mediator_proto_rawDescGZIP(), []int{60}
+}
+
+func (x *GetUserByIdRequest) GetId() int32 {
+	if x != nil {
+		return x.Id
+	}
+	return 0
+}
+
+type GetUserByIdResponse struct {
+	state         protoimpl.MessageState
+	sizeCache     protoimpl.SizeCache
+	unknownFields protoimpl.UnknownFields
+
+	User *UserRecord `protobuf:"bytes,1,opt,name=user,proto3,oneof" json:"user,omitempty"`
+}
+
+func (x *GetUserByIdResponse) Reset() {
+	*x = GetUserByIdResponse{}
+	if protoimpl.UnsafeEnabled {
+		mi := &file_mediator_v1_mediator_proto_msgTypes[61]
+		ms := protoimpl.X.MessageStateOf(protoimpl.Pointer(x))
+		ms.StoreMessageInfo(mi)
+	}
+}
+
+func (x *GetUserByIdResponse) String() string {
+	return protoimpl.X.MessageStringOf(x)
+}
+
+func (*GetUserByIdResponse) ProtoMessage() {}
+
+func (x *GetUserByIdResponse) ProtoReflect() protoreflect.Message {
+	mi := &file_mediator_v1_mediator_proto_msgTypes[61]
+	if protoimpl.UnsafeEnabled && x != nil {
+		ms := protoimpl.X.MessageStateOf(protoimpl.Pointer(x))
+		if ms.LoadMessageInfo() == nil {
+			ms.StoreMessageInfo(mi)
+		}
+		return ms
+	}
+	return mi.MessageOf(x)
+}
+
+// Deprecated: Use GetUserByIdResponse.ProtoReflect.Descriptor instead.
+func (*GetUserByIdResponse) Descriptor() ([]byte, []int) {
+	return file_mediator_v1_mediator_proto_rawDescGZIP(), []int{61}
+}
+
+func (x *GetUserByIdResponse) GetUser() *UserRecord {
+	if x != nil {
+		return x.User
+	}
+	return nil
+}
+
+// get user by username
+type GetUserByUserNameRequest struct {
+	state         protoimpl.MessageState
+	sizeCache     protoimpl.SizeCache
+	unknownFields protoimpl.UnknownFields
+
+	Username string `protobuf:"bytes,1,opt,name=username,proto3" json:"username,omitempty"`
+}
+
+func (x *GetUserByUserNameRequest) Reset() {
+	*x = GetUserByUserNameRequest{}
+	if protoimpl.UnsafeEnabled {
+		mi := &file_mediator_v1_mediator_proto_msgTypes[62]
+		ms := protoimpl.X.MessageStateOf(protoimpl.Pointer(x))
+		ms.StoreMessageInfo(mi)
+	}
+}
+
+func (x *GetUserByUserNameRequest) String() string {
+	return protoimpl.X.MessageStringOf(x)
+}
+
+func (*GetUserByUserNameRequest) ProtoMessage() {}
+
+func (x *GetUserByUserNameRequest) ProtoReflect() protoreflect.Message {
+	mi := &file_mediator_v1_mediator_proto_msgTypes[62]
+	if protoimpl.UnsafeEnabled && x != nil {
+		ms := protoimpl.X.MessageStateOf(protoimpl.Pointer(x))
+		if ms.LoadMessageInfo() == nil {
+			ms.StoreMessageInfo(mi)
+		}
+		return ms
+	}
+	return mi.MessageOf(x)
+}
+
+// Deprecated: Use GetUserByUserNameRequest.ProtoReflect.Descriptor instead.
+func (*GetUserByUserNameRequest) Descriptor() ([]byte, []int) {
+	return file_mediator_v1_mediator_proto_rawDescGZIP(), []int{62}
+}
+
+func (x *GetUserByUserNameRequest) GetUsername() string {
+	if x != nil {
+		return x.Username
+	}
+	return ""
+}
+
+type GetUserByUserNameResponse struct {
+	state         protoimpl.MessageState
+	sizeCache     protoimpl.SizeCache
+	unknownFields protoimpl.UnknownFields
+
+	User *UserRecord `protobuf:"bytes,1,opt,name=user,proto3,oneof" json:"user,omitempty"`
+}
+
+func (x *GetUserByUserNameResponse) Reset() {
+	*x = GetUserByUserNameResponse{}
+	if protoimpl.UnsafeEnabled {
+		mi := &file_mediator_v1_mediator_proto_msgTypes[63]
+		ms := protoimpl.X.MessageStateOf(protoimpl.Pointer(x))
+		ms.StoreMessageInfo(mi)
+	}
+}
+
+func (x *GetUserByUserNameResponse) String() string {
+	return protoimpl.X.MessageStringOf(x)
+}
+
+func (*GetUserByUserNameResponse) ProtoMessage() {}
+
+func (x *GetUserByUserNameResponse) ProtoReflect() protoreflect.Message {
+	mi := &file_mediator_v1_mediator_proto_msgTypes[63]
+	if protoimpl.UnsafeEnabled && x != nil {
+		ms := protoimpl.X.MessageStateOf(protoimpl.Pointer(x))
+		if ms.LoadMessageInfo() == nil {
+			ms.StoreMessageInfo(mi)
+		}
+		return ms
+	}
+	return mi.MessageOf(x)
+}
+
+// Deprecated: Use GetUserByUserNameResponse.ProtoReflect.Descriptor instead.
+func (*GetUserByUserNameResponse) Descriptor() ([]byte, []int) {
+	return file_mediator_v1_mediator_proto_rawDescGZIP(), []int{63}
+}
+
+func (x *GetUserByUserNameResponse) GetUser() *UserRecord {
+	if x != nil {
+		return x.User
+	}
+	return nil
+}
+
+// get user by email
+type GetUserByEmailRequest struct {
+	state         protoimpl.MessageState
+	sizeCache     protoimpl.SizeCache
+	unknownFields protoimpl.UnknownFields
+
+	Email string `protobuf:"bytes,1,opt,name=email,proto3" json:"email,omitempty"`
+}
+
+func (x *GetUserByEmailRequest) Reset() {
+	*x = GetUserByEmailRequest{}
+	if protoimpl.UnsafeEnabled {
+		mi := &file_mediator_v1_mediator_proto_msgTypes[64]
+		ms := protoimpl.X.MessageStateOf(protoimpl.Pointer(x))
+		ms.StoreMessageInfo(mi)
+	}
+}
+
+func (x *GetUserByEmailRequest) String() string {
+	return protoimpl.X.MessageStringOf(x)
+}
+
+func (*GetUserByEmailRequest) ProtoMessage() {}
+
+func (x *GetUserByEmailRequest) ProtoReflect() protoreflect.Message {
+	mi := &file_mediator_v1_mediator_proto_msgTypes[64]
+	if protoimpl.UnsafeEnabled && x != nil {
+		ms := protoimpl.X.MessageStateOf(protoimpl.Pointer(x))
+		if ms.LoadMessageInfo() == nil {
+			ms.StoreMessageInfo(mi)
+		}
+		return ms
+	}
+	return mi.MessageOf(x)
+}
+
+// Deprecated: Use GetUserByEmailRequest.ProtoReflect.Descriptor instead.
+func (*GetUserByEmailRequest) Descriptor() ([]byte, []int) {
+	return file_mediator_v1_mediator_proto_rawDescGZIP(), []int{64}
+}
+
+func (x *GetUserByEmailRequest) GetEmail() string {
+	if x != nil {
+		return x.Email
+	}
+	return ""
+}
+
+type GetUserByEmailResponse struct {
+	state         protoimpl.MessageState
+	sizeCache     protoimpl.SizeCache
+	unknownFields protoimpl.UnknownFields
+
+	User *UserRecord `protobuf:"bytes,1,opt,name=user,proto3,oneof" json:"user,omitempty"`
+}
+
+func (x *GetUserByEmailResponse) Reset() {
+	*x = GetUserByEmailResponse{}
+	if protoimpl.UnsafeEnabled {
+		mi := &file_mediator_v1_mediator_proto_msgTypes[65]
+		ms := protoimpl.X.MessageStateOf(protoimpl.Pointer(x))
+		ms.StoreMessageInfo(mi)
+	}
+}
+
+func (x *GetUserByEmailResponse) String() string {
+	return protoimpl.X.MessageStringOf(x)
+}
+
+func (*GetUserByEmailResponse) ProtoMessage() {}
+
+func (x *GetUserByEmailResponse) ProtoReflect() protoreflect.Message {
+	mi := &file_mediator_v1_mediator_proto_msgTypes[65]
+	if protoimpl.UnsafeEnabled && x != nil {
+		ms := protoimpl.X.MessageStateOf(protoimpl.Pointer(x))
+		if ms.LoadMessageInfo() == nil {
+			ms.StoreMessageInfo(mi)
+		}
+		return ms
+	}
+	return mi.MessageOf(x)
+}
+
+// Deprecated: Use GetUserByEmailResponse.ProtoReflect.Descriptor instead.
+func (*GetUserByEmailResponse) Descriptor() ([]byte, []int) {
+	return file_mediator_v1_mediator_proto_rawDescGZIP(), []int{65}
+}
+
+func (x *GetUserByEmailResponse) GetUser() *UserRecord {
+	if x != nil {
+		return x.User
+	}
+	return nil
+}
+
 var File_mediator_v1_mediator_proto protoreflect.FileDescriptor
 
 var file_mediator_v1_mediator_proto_rawDesc = []byte{
@@ -3812,6 +4328,68 @@ var file_mediator_v1_mediator_proto_rawDesc = []byte{
 	0x20, 0x01, 0x28, 0x08, 0x48, 0x00, 0x52, 0x05, 0x66, 0x6f, 0x72, 0x63, 0x65, 0x88, 0x01, 0x01,
 	0x42, 0x08, 0x0a, 0x06, 0x5f, 0x66, 0x6f, 0x72, 0x63, 0x65, 0x22, 0x14, 0x0a, 0x12, 0x44, 0x65,
 	0x6c, 0x65, 0x74, 0x65, 0x55, 0x73, 0x65, 0x72, 0x52, 0x65, 0x73, 0x70, 0x6f, 0x6e, 0x73, 0x65,
+	0x22, 0x95, 0x03, 0x0a, 0x0a, 0x55, 0x73, 0x65, 0x72, 0x52, 0x65, 0x63, 0x6f, 0x72, 0x64, 0x12,
+	0x0e, 0x0a, 0x02, 0x69, 0x64, 0x18, 0x01, 0x20, 0x01, 0x28, 0x05, 0x52, 0x02, 0x69, 0x64, 0x12,
+	0x17, 0x0a, 0x07, 0x72, 0x6f, 0x6c, 0x65, 0x5f, 0x69, 0x64, 0x18, 0x02, 0x20, 0x01, 0x28, 0x05,
+	0x52, 0x06, 0x72, 0x6f, 0x6c, 0x65, 0x49, 0x64, 0x12, 0x14, 0x0a, 0x05, 0x65, 0x6d, 0x61, 0x69,
+	0x6c, 0x18, 0x03, 0x20, 0x01, 0x28, 0x09, 0x52, 0x05, 0x65, 0x6d, 0x61, 0x69, 0x6c, 0x12, 0x1a,
+	0x0a, 0x08, 0x75, 0x73, 0x65, 0x72, 0x6e, 0x61, 0x6d, 0x65, 0x18, 0x04, 0x20, 0x01, 0x28, 0x09,
+	0x52, 0x08, 0x75, 0x73, 0x65, 0x72, 0x6e, 0x61, 0x6d, 0x65, 0x12, 0x1a, 0x0a, 0x08, 0x70, 0x61,
+	0x73, 0x73, 0x77, 0x6f, 0x72, 0x64, 0x18, 0x05, 0x20, 0x01, 0x28, 0x09, 0x52, 0x08, 0x70, 0x61,
+	0x73, 0x73, 0x77, 0x6f, 0x72, 0x64, 0x12, 0x22, 0x0a, 0x0a, 0x66, 0x69, 0x72, 0x73, 0x74, 0x5f,
+	0x6e, 0x61, 0x6d, 0x65, 0x18, 0x06, 0x20, 0x01, 0x28, 0x09, 0x48, 0x00, 0x52, 0x09, 0x66, 0x69,
+	0x72, 0x73, 0x74, 0x4e, 0x61, 0x6d, 0x65, 0x88, 0x01, 0x01, 0x12, 0x20, 0x0a, 0x09, 0x6c, 0x61,
+	0x73, 0x74, 0x5f, 0x6e, 0x61, 0x6d, 0x65, 0x18, 0x07, 0x20, 0x01, 0x28, 0x09, 0x48, 0x01, 0x52,
+	0x08, 0x6c, 0x61, 0x73, 0x74, 0x4e, 0x61, 0x6d, 0x65, 0x88, 0x01, 0x01, 0x12, 0x26, 0x0a, 0x0c,
+	0x69, 0x73, 0x5f, 0x70, 0x72, 0x6f, 0x74, 0x65, 0x63, 0x74, 0x65, 0x64, 0x18, 0x08, 0x20, 0x01,
+	0x28, 0x08, 0x48, 0x02, 0x52, 0x0b, 0x69, 0x73, 0x50, 0x72, 0x6f, 0x74, 0x65, 0x63, 0x74, 0x65,
+	0x64, 0x88, 0x01, 0x01, 0x12, 0x39, 0x0a, 0x0a, 0x63, 0x72, 0x65, 0x61, 0x74, 0x65, 0x64, 0x5f,
+	0x61, 0x74, 0x18, 0x09, 0x20, 0x01, 0x28, 0x0b, 0x32, 0x1a, 0x2e, 0x67, 0x6f, 0x6f, 0x67, 0x6c,
+	0x65, 0x2e, 0x70, 0x72, 0x6f, 0x74, 0x6f, 0x62, 0x75, 0x66, 0x2e, 0x54, 0x69, 0x6d, 0x65, 0x73,
+	0x74, 0x61, 0x6d, 0x70, 0x52, 0x09, 0x63, 0x72, 0x65, 0x61, 0x74, 0x65, 0x64, 0x41, 0x74, 0x12,
+	0x39, 0x0a, 0x0a, 0x75, 0x70, 0x64, 0x61, 0x74, 0x65, 0x64, 0x5f, 0x61, 0x74, 0x18, 0x0a, 0x20,
+	0x01, 0x28, 0x0b, 0x32, 0x1a, 0x2e, 0x67, 0x6f, 0x6f, 0x67, 0x6c, 0x65, 0x2e, 0x70, 0x72, 0x6f,
+	0x74, 0x6f, 0x62, 0x75, 0x66, 0x2e, 0x54, 0x69, 0x6d, 0x65, 0x73, 0x74, 0x61, 0x6d, 0x70, 0x52,
+	0x09, 0x75, 0x70, 0x64, 0x61, 0x74, 0x65, 0x64, 0x41, 0x74, 0x42, 0x0d, 0x0a, 0x0b, 0x5f, 0x66,
+	0x69, 0x72, 0x73, 0x74, 0x5f, 0x6e, 0x61, 0x6d, 0x65, 0x42, 0x0c, 0x0a, 0x0a, 0x5f, 0x6c, 0x61,
+	0x73, 0x74, 0x5f, 0x6e, 0x61, 0x6d, 0x65, 0x42, 0x0f, 0x0a, 0x0d, 0x5f, 0x69, 0x73, 0x5f, 0x70,
+	0x72, 0x6f, 0x74, 0x65, 0x63, 0x74, 0x65, 0x64, 0x22, 0x77, 0x0a, 0x0f, 0x47, 0x65, 0x74, 0x55,
+	0x73, 0x65, 0x72, 0x73, 0x52, 0x65, 0x71, 0x75, 0x65, 0x73, 0x74, 0x12, 0x17, 0x0a, 0x07, 0x72,
+	0x6f, 0x6c, 0x65, 0x5f, 0x69, 0x64, 0x18, 0x01, 0x20, 0x01, 0x28, 0x05, 0x52, 0x06, 0x72, 0x6f,
+	0x6c, 0x65, 0x49, 0x64, 0x12, 0x19, 0x0a, 0x05, 0x6c, 0x69, 0x6d, 0x69, 0x74, 0x18, 0x02, 0x20,
+	0x01, 0x28, 0x05, 0x48, 0x00, 0x52, 0x05, 0x6c, 0x69, 0x6d, 0x69, 0x74, 0x88, 0x01, 0x01, 0x12,
+	0x1b, 0x0a, 0x06, 0x6f, 0x66, 0x66, 0x73, 0x65, 0x74, 0x18, 0x03, 0x20, 0x01, 0x28, 0x05, 0x48,
+	0x01, 0x52, 0x06, 0x6f, 0x66, 0x66, 0x73, 0x65, 0x74, 0x88, 0x01, 0x01, 0x42, 0x08, 0x0a, 0x06,
+	0x5f, 0x6c, 0x69, 0x6d, 0x69, 0x74, 0x42, 0x09, 0x0a, 0x07, 0x5f, 0x6f, 0x66, 0x66, 0x73, 0x65,
+	0x74, 0x22, 0x41, 0x0a, 0x10, 0x47, 0x65, 0x74, 0x55, 0x73, 0x65, 0x72, 0x73, 0x52, 0x65, 0x73,
+	0x70, 0x6f, 0x6e, 0x73, 0x65, 0x12, 0x2d, 0x0a, 0x05, 0x75, 0x73, 0x65, 0x72, 0x73, 0x18, 0x01,
+	0x20, 0x03, 0x28, 0x0b, 0x32, 0x17, 0x2e, 0x6d, 0x65, 0x64, 0x69, 0x61, 0x74, 0x6f, 0x72, 0x2e,
+	0x76, 0x31, 0x2e, 0x55, 0x73, 0x65, 0x72, 0x52, 0x65, 0x63, 0x6f, 0x72, 0x64, 0x52, 0x05, 0x75,
+	0x73, 0x65, 0x72, 0x73, 0x22, 0x24, 0x0a, 0x12, 0x47, 0x65, 0x74, 0x55, 0x73, 0x65, 0x72, 0x42,
+	0x79, 0x49, 0x64, 0x52, 0x65, 0x71, 0x75, 0x65, 0x73, 0x74, 0x12, 0x0e, 0x0a, 0x02, 0x69, 0x64,
+	0x18, 0x01, 0x20, 0x01, 0x28, 0x05, 0x52, 0x02, 0x69, 0x64, 0x22, 0x50, 0x0a, 0x13, 0x47, 0x65,
+	0x74, 0x55, 0x73, 0x65, 0x72, 0x42, 0x79, 0x49, 0x64, 0x52, 0x65, 0x73, 0x70, 0x6f, 0x6e, 0x73,
+	0x65, 0x12, 0x30, 0x0a, 0x04, 0x75, 0x73, 0x65, 0x72, 0x18, 0x01, 0x20, 0x01, 0x28, 0x0b, 0x32,
+	0x17, 0x2e, 0x6d, 0x65, 0x64, 0x69, 0x61, 0x74, 0x6f, 0x72, 0x2e, 0x76, 0x31, 0x2e, 0x55, 0x73,
+	0x65, 0x72, 0x52, 0x65, 0x63, 0x6f, 0x72, 0x64, 0x48, 0x00, 0x52, 0x04, 0x75, 0x73, 0x65, 0x72,
+	0x88, 0x01, 0x01, 0x42, 0x07, 0x0a, 0x05, 0x5f, 0x75, 0x73, 0x65, 0x72, 0x22, 0x36, 0x0a, 0x18,
+	0x47, 0x65, 0x74, 0x55, 0x73, 0x65, 0x72, 0x42, 0x79, 0x55, 0x73, 0x65, 0x72, 0x4e, 0x61, 0x6d,
+	0x65, 0x52, 0x65, 0x71, 0x75, 0x65, 0x73, 0x74, 0x12, 0x1a, 0x0a, 0x08, 0x75, 0x73, 0x65, 0x72,
+	0x6e, 0x61, 0x6d, 0x65, 0x18, 0x01, 0x20, 0x01, 0x28, 0x09, 0x52, 0x08, 0x75, 0x73, 0x65, 0x72,
+	0x6e, 0x61, 0x6d, 0x65, 0x22, 0x56, 0x0a, 0x19, 0x47, 0x65, 0x74, 0x55, 0x73, 0x65, 0x72, 0x42,
+	0x79, 0x55, 0x73, 0x65, 0x72, 0x4e, 0x61, 0x6d, 0x65, 0x52, 0x65, 0x73, 0x70, 0x6f, 0x6e, 0x73,
+	0x65, 0x12, 0x30, 0x0a, 0x04, 0x75, 0x73, 0x65, 0x72, 0x18, 0x01, 0x20, 0x01, 0x28, 0x0b, 0x32,
+	0x17, 0x2e, 0x6d, 0x65, 0x64, 0x69, 0x61, 0x74, 0x6f, 0x72, 0x2e, 0x76, 0x31, 0x2e, 0x55, 0x73,
+	0x65, 0x72, 0x52, 0x65, 0x63, 0x6f, 0x72, 0x64, 0x48, 0x00, 0x52, 0x04, 0x75, 0x73, 0x65, 0x72,
+	0x88, 0x01, 0x01, 0x42, 0x07, 0x0a, 0x05, 0x5f, 0x75, 0x73, 0x65, 0x72, 0x22, 0x2d, 0x0a, 0x15,
+	0x47, 0x65, 0x74, 0x55, 0x73, 0x65, 0x72, 0x42, 0x79, 0x45, 0x6d, 0x61, 0x69, 0x6c, 0x52, 0x65,
+	0x71, 0x75, 0x65, 0x73, 0x74, 0x12, 0x14, 0x0a, 0x05, 0x65, 0x6d, 0x61, 0x69, 0x6c, 0x18, 0x01,
+	0x20, 0x01, 0x28, 0x09, 0x52, 0x05, 0x65, 0x6d, 0x61, 0x69, 0x6c, 0x22, 0x53, 0x0a, 0x16, 0x47,
+	0x65, 0x74, 0x55, 0x73, 0x65, 0x72, 0x42, 0x79, 0x45, 0x6d, 0x61, 0x69, 0x6c, 0x52, 0x65, 0x73,
+	0x70, 0x6f, 0x6e, 0x73, 0x65, 0x12, 0x30, 0x0a, 0x04, 0x75, 0x73, 0x65, 0x72, 0x18, 0x01, 0x20,
+	0x01, 0x28, 0x0b, 0x32, 0x17, 0x2e, 0x6d, 0x65, 0x64, 0x69, 0x61, 0x74, 0x6f, 0x72, 0x2e, 0x76,
+	0x31, 0x2e, 0x55, 0x73, 0x65, 0x72, 0x52, 0x65, 0x63, 0x6f, 0x72, 0x64, 0x48, 0x00, 0x52, 0x04,
+	0x75, 0x73, 0x65, 0x72, 0x88, 0x01, 0x01, 0x42, 0x07, 0x0a, 0x05, 0x5f, 0x75, 0x73, 0x65, 0x72,
 	0x32, 0x79, 0x0a, 0x0d, 0x48, 0x65, 0x61, 0x6c, 0x74, 0x68, 0x53, 0x65, 0x72, 0x76, 0x69, 0x63,
 	0x65, 0x12, 0x68, 0x0a, 0x0b, 0x43, 0x68, 0x65, 0x63, 0x6b, 0x48, 0x65, 0x61, 0x6c, 0x74, 0x68,
 	0x12, 0x1f, 0x2e, 0x6d, 0x65, 0x64, 0x69, 0x61, 0x74, 0x6f, 0x72, 0x2e, 0x76, 0x31, 0x2e, 0x43,
@@ -4023,7 +4601,7 @@ var file_mediator_v1_mediator_proto_rawDesc = []byte{
 	0x1f, 0x2e, 0x6d, 0x65, 0x64, 0x69, 0x61, 0x74, 0x6f, 0x72, 0x2e, 0x76, 0x31, 0x2e, 0x44, 0x65,
 	0x6c, 0x65, 0x74, 0x65, 0x52, 0x6f, 0x6c, 0x65, 0x52, 0x65, 0x73, 0x70, 0x6f, 0x6e, 0x73, 0x65,
 	0x22, 0x19, 0x82, 0xd3, 0xe4, 0x93, 0x02, 0x13, 0x2a, 0x11, 0x2f, 0x61, 0x70, 0x69, 0x2f, 0x76,
-	0x31, 0x2f, 0x72, 0x6f, 0x6c, 0x65, 0x2f, 0x7b, 0x69, 0x64, 0x7d, 0x32, 0xdf, 0x01, 0x0a, 0x0b,
+	0x31, 0x2f, 0x72, 0x6f, 0x6c, 0x65, 0x2f, 0x7b, 0x69, 0x64, 0x7d, 0x32, 0xc4, 0x05, 0x0a, 0x0b,
 	0x55, 0x73, 0x65, 0x72, 0x53, 0x65, 0x72, 0x76, 0x69, 0x63, 0x65, 0x12, 0x66, 0x0a, 0x0a, 0x43,
 	0x72, 0x65, 0x61, 0x74, 0x65, 0x55, 0x73, 0x65, 0x72, 0x12, 0x1e, 0x2e, 0x6d, 0x65, 0x64, 0x69,
 	0x61, 0x74, 0x6f, 0x72, 0x2e, 0x76, 0x31, 0x2e, 0x43, 0x72, 0x65, 0x61, 0x74, 0x65, 0x55, 0x73,
@@ -4037,11 +4615,42 @@ var file_mediator_v1_mediator_proto_rawDesc = []byte{
 	0x74, 0x1a, 0x1f, 0x2e, 0x6d, 0x65, 0x64, 0x69, 0x61, 0x74, 0x6f, 0x72, 0x2e, 0x76, 0x31, 0x2e,
 	0x44, 0x65, 0x6c, 0x65, 0x74, 0x65, 0x55, 0x73, 0x65, 0x72, 0x52, 0x65, 0x73, 0x70, 0x6f, 0x6e,
 	0x73, 0x65, 0x22, 0x19, 0x82, 0xd3, 0xe4, 0x93, 0x02, 0x13, 0x2a, 0x11, 0x2f, 0x61, 0x70, 0x69,
-	0x2f, 0x76, 0x31, 0x2f, 0x75, 0x73, 0x65, 0x72, 0x2f, 0x7b, 0x69, 0x64, 0x7d, 0x42, 0x38, 0x5a,
-	0x36, 0x67, 0x69, 0x74, 0x68, 0x75, 0x62, 0x2e, 0x63, 0x6f, 0x6d, 0x2f, 0x73, 0x74, 0x61, 0x63,
-	0x6b, 0x6c, 0x6f, 0x6b, 0x2f, 0x6d, 0x65, 0x64, 0x69, 0x61, 0x74, 0x6f, 0x72, 0x2f, 0x70, 0x6b,
-	0x67, 0x2f, 0x67, 0x65, 0x6e, 0x65, 0x72, 0x61, 0x74, 0x65, 0x64, 0x2f, 0x70, 0x72, 0x6f, 0x74,
-	0x6f, 0x62, 0x75, 0x66, 0x2f, 0x67, 0x6f, 0x62, 0x06, 0x70, 0x72, 0x6f, 0x74, 0x6f, 0x33,
+	0x2f, 0x76, 0x31, 0x2f, 0x75, 0x73, 0x65, 0x72, 0x2f, 0x7b, 0x69, 0x64, 0x7d, 0x12, 0x68, 0x0a,
+	0x08, 0x47, 0x65, 0x74, 0x55, 0x73, 0x65, 0x72, 0x73, 0x12, 0x1c, 0x2e, 0x6d, 0x65, 0x64, 0x69,
+	0x61, 0x74, 0x6f, 0x72, 0x2e, 0x76, 0x31, 0x2e, 0x47, 0x65, 0x74, 0x55, 0x73, 0x65, 0x72, 0x73,
+	0x52, 0x65, 0x71, 0x75, 0x65, 0x73, 0x74, 0x1a, 0x1d, 0x2e, 0x6d, 0x65, 0x64, 0x69, 0x61, 0x74,
+	0x6f, 0x72, 0x2e, 0x76, 0x31, 0x2e, 0x47, 0x65, 0x74, 0x55, 0x73, 0x65, 0x72, 0x73, 0x52, 0x65,
+	0x73, 0x70, 0x6f, 0x6e, 0x73, 0x65, 0x22, 0x1f, 0x82, 0xd3, 0xe4, 0x93, 0x02, 0x19, 0x12, 0x17,
+	0x2f, 0x61, 0x70, 0x69, 0x2f, 0x76, 0x31, 0x2f, 0x75, 0x73, 0x65, 0x72, 0x73, 0x2f, 0x7b, 0x72,
+	0x6f, 0x6c, 0x65, 0x5f, 0x69, 0x64, 0x7d, 0x12, 0x6b, 0x0a, 0x0b, 0x47, 0x65, 0x74, 0x55, 0x73,
+	0x65, 0x72, 0x42, 0x79, 0x49, 0x64, 0x12, 0x1f, 0x2e, 0x6d, 0x65, 0x64, 0x69, 0x61, 0x74, 0x6f,
+	0x72, 0x2e, 0x76, 0x31, 0x2e, 0x47, 0x65, 0x74, 0x55, 0x73, 0x65, 0x72, 0x42, 0x79, 0x49, 0x64,
+	0x52, 0x65, 0x71, 0x75, 0x65, 0x73, 0x74, 0x1a, 0x20, 0x2e, 0x6d, 0x65, 0x64, 0x69, 0x61, 0x74,
+	0x6f, 0x72, 0x2e, 0x76, 0x31, 0x2e, 0x47, 0x65, 0x74, 0x55, 0x73, 0x65, 0x72, 0x42, 0x79, 0x49,
+	0x64, 0x52, 0x65, 0x73, 0x70, 0x6f, 0x6e, 0x73, 0x65, 0x22, 0x19, 0x82, 0xd3, 0xe4, 0x93, 0x02,
+	0x13, 0x12, 0x11, 0x2f, 0x61, 0x70, 0x69, 0x2f, 0x76, 0x31, 0x2f, 0x75, 0x73, 0x65, 0x72, 0x2f,
+	0x7b, 0x69, 0x64, 0x7d, 0x12, 0x8c, 0x01, 0x0a, 0x11, 0x47, 0x65, 0x74, 0x55, 0x73, 0x65, 0x72,
+	0x42, 0x79, 0x55, 0x73, 0x65, 0x72, 0x4e, 0x61, 0x6d, 0x65, 0x12, 0x25, 0x2e, 0x6d, 0x65, 0x64,
+	0x69, 0x61, 0x74, 0x6f, 0x72, 0x2e, 0x76, 0x31, 0x2e, 0x47, 0x65, 0x74, 0x55, 0x73, 0x65, 0x72,
+	0x42, 0x79, 0x55, 0x73, 0x65, 0x72, 0x4e, 0x61, 0x6d, 0x65, 0x52, 0x65, 0x71, 0x75, 0x65, 0x73,
+	0x74, 0x1a, 0x26, 0x2e, 0x6d, 0x65, 0x64, 0x69, 0x61, 0x74, 0x6f, 0x72, 0x2e, 0x76, 0x31, 0x2e,
+	0x47, 0x65, 0x74, 0x55, 0x73, 0x65, 0x72, 0x42, 0x79, 0x55, 0x73, 0x65, 0x72, 0x4e, 0x61, 0x6d,
+	0x65, 0x52, 0x65, 0x73, 0x70, 0x6f, 0x6e, 0x73, 0x65, 0x22, 0x28, 0x82, 0xd3, 0xe4, 0x93, 0x02,
+	0x22, 0x12, 0x20, 0x2f, 0x61, 0x70, 0x69, 0x2f, 0x76, 0x31, 0x2f, 0x75, 0x73, 0x65, 0x72, 0x2f,
+	0x75, 0x73, 0x65, 0x72, 0x6e, 0x61, 0x6d, 0x65, 0x2f, 0x7b, 0x75, 0x73, 0x65, 0x72, 0x6e, 0x61,
+	0x6d, 0x65, 0x7d, 0x12, 0x7d, 0x0a, 0x0e, 0x47, 0x65, 0x74, 0x55, 0x73, 0x65, 0x72, 0x42, 0x79,
+	0x45, 0x6d, 0x61, 0x69, 0x6c, 0x12, 0x22, 0x2e, 0x6d, 0x65, 0x64, 0x69, 0x61, 0x74, 0x6f, 0x72,
+	0x2e, 0x76, 0x31, 0x2e, 0x47, 0x65, 0x74, 0x55, 0x73, 0x65, 0x72, 0x42, 0x79, 0x45, 0x6d, 0x61,
+	0x69, 0x6c, 0x52, 0x65, 0x71, 0x75, 0x65, 0x73, 0x74, 0x1a, 0x23, 0x2e, 0x6d, 0x65, 0x64, 0x69,
+	0x61, 0x74, 0x6f, 0x72, 0x2e, 0x76, 0x31, 0x2e, 0x47, 0x65, 0x74, 0x55, 0x73, 0x65, 0x72, 0x42,
+	0x79, 0x45, 0x6d, 0x61, 0x69, 0x6c, 0x52, 0x65, 0x73, 0x70, 0x6f, 0x6e, 0x73, 0x65, 0x22, 0x22,
+	0x82, 0xd3, 0xe4, 0x93, 0x02, 0x1c, 0x12, 0x1a, 0x2f, 0x61, 0x70, 0x69, 0x2f, 0x76, 0x31, 0x2f,
+	0x75, 0x73, 0x65, 0x72, 0x2f, 0x65, 0x6d, 0x61, 0x69, 0x6c, 0x2f, 0x7b, 0x65, 0x6d, 0x61, 0x69,
+	0x6c, 0x7d, 0x42, 0x38, 0x5a, 0x36, 0x67, 0x69, 0x74, 0x68, 0x75, 0x62, 0x2e, 0x63, 0x6f, 0x6d,
+	0x2f, 0x73, 0x74, 0x61, 0x63, 0x6b, 0x6c, 0x6f, 0x6b, 0x2f, 0x6d, 0x65, 0x64, 0x69, 0x61, 0x74,
+	0x6f, 0x72, 0x2f, 0x70, 0x6b, 0x67, 0x2f, 0x67, 0x65, 0x6e, 0x65, 0x72, 0x61, 0x74, 0x65, 0x64,
+	0x2f, 0x70, 0x72, 0x6f, 0x74, 0x6f, 0x62, 0x75, 0x66, 0x2f, 0x67, 0x6f, 0x62, 0x06, 0x70, 0x72,
+	0x6f, 0x74, 0x6f, 0x33,
 }
 
 var (
@@ -4056,7 +4665,7 @@ func file_mediator_v1_mediator_proto_rawDescGZIP() []byte {
 	return file_mediator_v1_mediator_proto_rawDescData
 }
 
-var file_mediator_v1_mediator_proto_msgTypes = make([]protoimpl.MessageInfo, 57)
+var file_mediator_v1_mediator_proto_msgTypes = make([]protoimpl.MessageInfo, 66)
 var file_mediator_v1_mediator_proto_goTypes = []interface{}{
 	(*CheckHealthRequest)(nil),              // 0: mediator.v1.CheckHealthRequest
 	(*CheckHealthResponse)(nil),             // 1: mediator.v1.CheckHealthResponse
@@ -4115,93 +4724,116 @@ var file_mediator_v1_mediator_proto_goTypes = []interface{}{
 	(*CreateUserResponse)(nil),              // 54: mediator.v1.CreateUserResponse
 	(*DeleteUserRequest)(nil),               // 55: mediator.v1.DeleteUserRequest
 	(*DeleteUserResponse)(nil),              // 56: mediator.v1.DeleteUserResponse
-	(*timestamppb.Timestamp)(nil),           // 57: google.protobuf.Timestamp
+	(*UserRecord)(nil),                      // 57: mediator.v1.UserRecord
+	(*GetUsersRequest)(nil),                 // 58: mediator.v1.GetUsersRequest
+	(*GetUsersResponse)(nil),                // 59: mediator.v1.GetUsersResponse
+	(*GetUserByIdRequest)(nil),              // 60: mediator.v1.GetUserByIdRequest
+	(*GetUserByIdResponse)(nil),             // 61: mediator.v1.GetUserByIdResponse
+	(*GetUserByUserNameRequest)(nil),        // 62: mediator.v1.GetUserByUserNameRequest
+	(*GetUserByUserNameResponse)(nil),       // 63: mediator.v1.GetUserByUserNameResponse
+	(*GetUserByEmailRequest)(nil),           // 64: mediator.v1.GetUserByEmailRequest
+	(*GetUserByEmailResponse)(nil),          // 65: mediator.v1.GetUserByEmailResponse
+	(*timestamppb.Timestamp)(nil),           // 66: google.protobuf.Timestamp
 }
 var file_mediator_v1_mediator_proto_depIdxs = []int32{
-	57, // 0: mediator.v1.GetVulnerabilityByIdResponse.scanned_at:type_name -> google.protobuf.Timestamp
-	57, // 1: mediator.v1.GetVulnerabilityByIdResponse.created_at:type_name -> google.protobuf.Timestamp
+	66, // 0: mediator.v1.GetVulnerabilityByIdResponse.scanned_at:type_name -> google.protobuf.Timestamp
+	66, // 1: mediator.v1.GetVulnerabilityByIdResponse.created_at:type_name -> google.protobuf.Timestamp
 	18, // 2: mediator.v1.GetVulnerabilitiesResponse.vulns:type_name -> mediator.v1.GetVulnerabilityByIdResponse
 	23, // 3: mediator.v1.GetSecretsResponse.secrets:type_name -> mediator.v1.GetSecretByIdResponse
 	25, // 4: mediator.v1.GetBranchProtectionResponse.branch_protections:type_name -> mediator.v1.BranchProtection
-	57, // 5: mediator.v1.CreateOrganisationResponse.created_at:type_name -> google.protobuf.Timestamp
-	57, // 6: mediator.v1.CreateOrganisationResponse.updated_at:type_name -> google.protobuf.Timestamp
-	57, // 7: mediator.v1.OrganisationRecord.created_at:type_name -> google.protobuf.Timestamp
-	57, // 8: mediator.v1.OrganisationRecord.updated_at:type_name -> google.protobuf.Timestamp
-	57, // 9: mediator.v1.GroupsResponse.created_at:type_name -> google.protobuf.Timestamp
-	57, // 10: mediator.v1.GroupsResponse.updated_at:type_name -> google.protobuf.Timestamp
-	57, // 11: mediator.v1.CreateGroupResponse.created_at:type_name -> google.protobuf.Timestamp
-	57, // 12: mediator.v1.CreateGroupResponse.updated_at:type_name -> google.protobuf.Timestamp
-	57, // 13: mediator.v1.GetGroupByNameResponse.created_at:type_name -> google.protobuf.Timestamp
-	57, // 14: mediator.v1.GetGroupByNameResponse.updated_at:type_name -> google.protobuf.Timestamp
-	57, // 15: mediator.v1.GetGroupByIdResponse.created_at:type_name -> google.protobuf.Timestamp
-	57, // 16: mediator.v1.GetGroupByIdResponse.updated_at:type_name -> google.protobuf.Timestamp
+	66, // 5: mediator.v1.CreateOrganisationResponse.created_at:type_name -> google.protobuf.Timestamp
+	66, // 6: mediator.v1.CreateOrganisationResponse.updated_at:type_name -> google.protobuf.Timestamp
+	66, // 7: mediator.v1.OrganisationRecord.created_at:type_name -> google.protobuf.Timestamp
+	66, // 8: mediator.v1.OrganisationRecord.updated_at:type_name -> google.protobuf.Timestamp
+	66, // 9: mediator.v1.GroupsResponse.created_at:type_name -> google.protobuf.Timestamp
+	66, // 10: mediator.v1.GroupsResponse.updated_at:type_name -> google.protobuf.Timestamp
+	66, // 11: mediator.v1.CreateGroupResponse.created_at:type_name -> google.protobuf.Timestamp
+	66, // 12: mediator.v1.CreateGroupResponse.updated_at:type_name -> google.protobuf.Timestamp
+	66, // 13: mediator.v1.GetGroupByNameResponse.created_at:type_name -> google.protobuf.Timestamp
+	66, // 14: mediator.v1.GetGroupByNameResponse.updated_at:type_name -> google.protobuf.Timestamp
+	66, // 15: mediator.v1.GetGroupByIdResponse.created_at:type_name -> google.protobuf.Timestamp
+	66, // 16: mediator.v1.GetGroupByIdResponse.updated_at:type_name -> google.protobuf.Timestamp
 	36, // 17: mediator.v1.GetGroupsResponse.groups:type_name -> mediator.v1.GroupsResponse
-	57, // 18: mediator.v1.CreateRoleResponse.created_at:type_name -> google.protobuf.Timestamp
-	57, // 19: mediator.v1.CreateRoleResponse.updated_at:type_name -> google.protobuf.Timestamp
+	66, // 18: mediator.v1.CreateRoleResponse.created_at:type_name -> google.protobuf.Timestamp
+	66, // 19: mediator.v1.CreateRoleResponse.updated_at:type_name -> google.protobuf.Timestamp
 	29, // 20: mediator.v1.GetOrganisationsResponse.organisations:type_name -> mediator.v1.OrganisationRecord
 	29, // 21: mediator.v1.GetOrganisationResponse.organisation:type_name -> mediator.v1.OrganisationRecord
 	29, // 22: mediator.v1.GetOrganisationByNameResponse.organisation:type_name -> mediator.v1.OrganisationRecord
-	57, // 23: mediator.v1.CreateUserResponse.created_at:type_name -> google.protobuf.Timestamp
-	57, // 24: mediator.v1.CreateUserResponse.updated_at:type_name -> google.protobuf.Timestamp
-	0,  // 25: mediator.v1.HealthService.CheckHealth:input_type -> mediator.v1.CheckHealthRequest
-	8,  // 26: mediator.v1.GitHubWebhookService.HandleGitHubWebhook:input_type -> mediator.v1.HandleGitHubWebhookRequest
-	2,  // 27: mediator.v1.OAuthService.GetAuthorizationURL:input_type -> mediator.v1.GetAuthorizationURLRequest
-	4,  // 28: mediator.v1.OAuthService.ExchangeCodeForTokenCLI:input_type -> mediator.v1.ExchangeCodeForTokenCLIRequest
-	6,  // 29: mediator.v1.OAuthService.ExchangeCodeForTokenWEB:input_type -> mediator.v1.ExchangeCodeForTokenWEBRequest
-	10, // 30: mediator.v1.LogInService.LogIn:input_type -> mediator.v1.LogInRequest
-	12, // 31: mediator.v1.LogOutService.LogOut:input_type -> mediator.v1.LogOutRequest
-	14, // 32: mediator.v1.AuthVerifyService.Verify:input_type -> mediator.v1.AuthVerifyServiceVerifyRequest
-	16, // 33: mediator.v1.VulnerabilitiesService.GetVulnerabilities:input_type -> mediator.v1.GetVulnerabilitiesRequest
-	17, // 34: mediator.v1.VulnerabilitiesService.GetVulnerabilityById:input_type -> mediator.v1.GetVulnerabilityByIdRequest
-	20, // 35: mediator.v1.SecretsService.GetSecrets:input_type -> mediator.v1.GetSecretsRequest
-	22, // 36: mediator.v1.SecretsService.GetSecretById:input_type -> mediator.v1.GetSecretByIdRequest
-	24, // 37: mediator.v1.BranchProtectionService.GetBranchProtection:input_type -> mediator.v1.GetBranchProtectionRequest
-	27, // 38: mediator.v1.OrganisationService.CreateOrganisation:input_type -> mediator.v1.CreateOrganisationRequest
-	47, // 39: mediator.v1.OrganisationService.GetOrganisations:input_type -> mediator.v1.GetOrganisationsRequest
-	49, // 40: mediator.v1.OrganisationService.GetOrganisation:input_type -> mediator.v1.GetOrganisationRequest
-	51, // 41: mediator.v1.OrganisationService.GetOrganisationByName:input_type -> mediator.v1.GetOrganisationByNameRequest
-	30, // 42: mediator.v1.OrganisationService.DeleteOrganisation:input_type -> mediator.v1.DeleteOrganisationRequest
-	32, // 43: mediator.v1.GroupService.CreateGroup:input_type -> mediator.v1.CreateGroupRequest
-	33, // 44: mediator.v1.GroupService.GetGroupByName:input_type -> mediator.v1.GetGroupByNameRequest
-	34, // 45: mediator.v1.GroupService.GetGroupById:input_type -> mediator.v1.GetGroupByIdRequest
-	35, // 46: mediator.v1.GroupService.GetGroups:input_type -> mediator.v1.GetGroupsRequest
-	41, // 47: mediator.v1.GroupService.DeleteGroup:input_type -> mediator.v1.DeleteGroupRequest
-	43, // 48: mediator.v1.RoleService.CreateRole:input_type -> mediator.v1.CreateRoleRequest
-	45, // 49: mediator.v1.RoleService.DeleteRole:input_type -> mediator.v1.DeleteRoleRequest
-	53, // 50: mediator.v1.UserService.CreateUser:input_type -> mediator.v1.CreateUserRequest
-	55, // 51: mediator.v1.UserService.DeleteUser:input_type -> mediator.v1.DeleteUserRequest
-	1,  // 52: mediator.v1.HealthService.CheckHealth:output_type -> mediator.v1.CheckHealthResponse
-	9,  // 53: mediator.v1.GitHubWebhookService.HandleGitHubWebhook:output_type -> mediator.v1.HandleGitHubWebhookResponse
-	3,  // 54: mediator.v1.OAuthService.GetAuthorizationURL:output_type -> mediator.v1.GetAuthorizationURLResponse
-	5,  // 55: mediator.v1.OAuthService.ExchangeCodeForTokenCLI:output_type -> mediator.v1.ExchangeCodeForTokenCLIResponse
-	7,  // 56: mediator.v1.OAuthService.ExchangeCodeForTokenWEB:output_type -> mediator.v1.ExchangeCodeForTokenWEBResponse
-	11, // 57: mediator.v1.LogInService.LogIn:output_type -> mediator.v1.LogInResponse
-	13, // 58: mediator.v1.LogOutService.LogOut:output_type -> mediator.v1.LogOutResponse
-	15, // 59: mediator.v1.AuthVerifyService.Verify:output_type -> mediator.v1.AuthVerifyServiceVerifyResponse
-	19, // 60: mediator.v1.VulnerabilitiesService.GetVulnerabilities:output_type -> mediator.v1.GetVulnerabilitiesResponse
-	18, // 61: mediator.v1.VulnerabilitiesService.GetVulnerabilityById:output_type -> mediator.v1.GetVulnerabilityByIdResponse
-	21, // 62: mediator.v1.SecretsService.GetSecrets:output_type -> mediator.v1.GetSecretsResponse
-	23, // 63: mediator.v1.SecretsService.GetSecretById:output_type -> mediator.v1.GetSecretByIdResponse
-	26, // 64: mediator.v1.BranchProtectionService.GetBranchProtection:output_type -> mediator.v1.GetBranchProtectionResponse
-	28, // 65: mediator.v1.OrganisationService.CreateOrganisation:output_type -> mediator.v1.CreateOrganisationResponse
-	48, // 66: mediator.v1.OrganisationService.GetOrganisations:output_type -> mediator.v1.GetOrganisationsResponse
-	50, // 67: mediator.v1.OrganisationService.GetOrganisation:output_type -> mediator.v1.GetOrganisationResponse
-	52, // 68: mediator.v1.OrganisationService.GetOrganisationByName:output_type -> mediator.v1.GetOrganisationByNameResponse
-	31, // 69: mediator.v1.OrganisationService.DeleteOrganisation:output_type -> mediator.v1.DeleteOrganisationResponse
-	37, // 70: mediator.v1.GroupService.CreateGroup:output_type -> mediator.v1.CreateGroupResponse
-	38, // 71: mediator.v1.GroupService.GetGroupByName:output_type -> mediator.v1.GetGroupByNameResponse
-	39, // 72: mediator.v1.GroupService.GetGroupById:output_type -> mediator.v1.GetGroupByIdResponse
-	40, // 73: mediator.v1.GroupService.GetGroups:output_type -> mediator.v1.GetGroupsResponse
-	42, // 74: mediator.v1.GroupService.DeleteGroup:output_type -> mediator.v1.DeleteGroupResponse
-	44, // 75: mediator.v1.RoleService.CreateRole:output_type -> mediator.v1.CreateRoleResponse
-	46, // 76: mediator.v1.RoleService.DeleteRole:output_type -> mediator.v1.DeleteRoleResponse
-	54, // 77: mediator.v1.UserService.CreateUser:output_type -> mediator.v1.CreateUserResponse
-	56, // 78: mediator.v1.UserService.DeleteUser:output_type -> mediator.v1.DeleteUserResponse
-	52, // [52:79] is the sub-list for method output_type
-	25, // [25:52] is the sub-list for method input_type
-	25, // [25:25] is the sub-list for extension type_name
-	25, // [25:25] is the sub-list for extension extendee
-	0,  // [0:25] is the sub-list for field type_name
+	66, // 23: mediator.v1.CreateUserResponse.created_at:type_name -> google.protobuf.Timestamp
+	66, // 24: mediator.v1.CreateUserResponse.updated_at:type_name -> google.protobuf.Timestamp
+	66, // 25: mediator.v1.UserRecord.created_at:type_name -> google.protobuf.Timestamp
+	66, // 26: mediator.v1.UserRecord.updated_at:type_name -> google.protobuf.Timestamp
+	57, // 27: mediator.v1.GetUsersResponse.users:type_name -> mediator.v1.UserRecord
+	57, // 28: mediator.v1.GetUserByIdResponse.user:type_name -> mediator.v1.UserRecord
+	57, // 29: mediator.v1.GetUserByUserNameResponse.user:type_name -> mediator.v1.UserRecord
+	57, // 30: mediator.v1.GetUserByEmailResponse.user:type_name -> mediator.v1.UserRecord
+	0,  // 31: mediator.v1.HealthService.CheckHealth:input_type -> mediator.v1.CheckHealthRequest
+	8,  // 32: mediator.v1.GitHubWebhookService.HandleGitHubWebhook:input_type -> mediator.v1.HandleGitHubWebhookRequest
+	2,  // 33: mediator.v1.OAuthService.GetAuthorizationURL:input_type -> mediator.v1.GetAuthorizationURLRequest
+	4,  // 34: mediator.v1.OAuthService.ExchangeCodeForTokenCLI:input_type -> mediator.v1.ExchangeCodeForTokenCLIRequest
+	6,  // 35: mediator.v1.OAuthService.ExchangeCodeForTokenWEB:input_type -> mediator.v1.ExchangeCodeForTokenWEBRequest
+	10, // 36: mediator.v1.LogInService.LogIn:input_type -> mediator.v1.LogInRequest
+	12, // 37: mediator.v1.LogOutService.LogOut:input_type -> mediator.v1.LogOutRequest
+	14, // 38: mediator.v1.AuthVerifyService.Verify:input_type -> mediator.v1.AuthVerifyServiceVerifyRequest
+	16, // 39: mediator.v1.VulnerabilitiesService.GetVulnerabilities:input_type -> mediator.v1.GetVulnerabilitiesRequest
+	17, // 40: mediator.v1.VulnerabilitiesService.GetVulnerabilityById:input_type -> mediator.v1.GetVulnerabilityByIdRequest
+	20, // 41: mediator.v1.SecretsService.GetSecrets:input_type -> mediator.v1.GetSecretsRequest
+	22, // 42: mediator.v1.SecretsService.GetSecretById:input_type -> mediator.v1.GetSecretByIdRequest
+	24, // 43: mediator.v1.BranchProtectionService.GetBranchProtection:input_type -> mediator.v1.GetBranchProtectionRequest
+	27, // 44: mediator.v1.OrganisationService.CreateOrganisation:input_type -> mediator.v1.CreateOrganisationRequest
+	47, // 45: mediator.v1.OrganisationService.GetOrganisations:input_type -> mediator.v1.GetOrganisationsRequest
+	49, // 46: mediator.v1.OrganisationService.GetOrganisation:input_type -> mediator.v1.GetOrganisationRequest
+	51, // 47: mediator.v1.OrganisationService.GetOrganisationByName:input_type -> mediator.v1.GetOrganisationByNameRequest
+	30, // 48: mediator.v1.OrganisationService.DeleteOrganisation:input_type -> mediator.v1.DeleteOrganisationRequest
+	32, // 49: mediator.v1.GroupService.CreateGroup:input_type -> mediator.v1.CreateGroupRequest
+	33, // 50: mediator.v1.GroupService.GetGroupByName:input_type -> mediator.v1.GetGroupByNameRequest
+	34, // 51: mediator.v1.GroupService.GetGroupById:input_type -> mediator.v1.GetGroupByIdRequest
+	35, // 52: mediator.v1.GroupService.GetGroups:input_type -> mediator.v1.GetGroupsRequest
+	41, // 53: mediator.v1.GroupService.DeleteGroup:input_type -> mediator.v1.DeleteGroupRequest
+	43, // 54: mediator.v1.RoleService.CreateRole:input_type -> mediator.v1.CreateRoleRequest
+	45, // 55: mediator.v1.RoleService.DeleteRole:input_type -> mediator.v1.DeleteRoleRequest
+	53, // 56: mediator.v1.UserService.CreateUser:input_type -> mediator.v1.CreateUserRequest
+	55, // 57: mediator.v1.UserService.DeleteUser:input_type -> mediator.v1.DeleteUserRequest
+	58, // 58: mediator.v1.UserService.GetUsers:input_type -> mediator.v1.GetUsersRequest
+	60, // 59: mediator.v1.UserService.GetUserById:input_type -> mediator.v1.GetUserByIdRequest
+	62, // 60: mediator.v1.UserService.GetUserByUserName:input_type -> mediator.v1.GetUserByUserNameRequest
+	64, // 61: mediator.v1.UserService.GetUserByEmail:input_type -> mediator.v1.GetUserByEmailRequest
+	1,  // 62: mediator.v1.HealthService.CheckHealth:output_type -> mediator.v1.CheckHealthResponse
+	9,  // 63: mediator.v1.GitHubWebhookService.HandleGitHubWebhook:output_type -> mediator.v1.HandleGitHubWebhookResponse
+	3,  // 64: mediator.v1.OAuthService.GetAuthorizationURL:output_type -> mediator.v1.GetAuthorizationURLResponse
+	5,  // 65: mediator.v1.OAuthService.ExchangeCodeForTokenCLI:output_type -> mediator.v1.ExchangeCodeForTokenCLIResponse
+	7,  // 66: mediator.v1.OAuthService.ExchangeCodeForTokenWEB:output_type -> mediator.v1.ExchangeCodeForTokenWEBResponse
+	11, // 67: mediator.v1.LogInService.LogIn:output_type -> mediator.v1.LogInResponse
+	13, // 68: mediator.v1.LogOutService.LogOut:output_type -> mediator.v1.LogOutResponse
+	15, // 69: mediator.v1.AuthVerifyService.Verify:output_type -> mediator.v1.AuthVerifyServiceVerifyResponse
+	19, // 70: mediator.v1.VulnerabilitiesService.GetVulnerabilities:output_type -> mediator.v1.GetVulnerabilitiesResponse
+	18, // 71: mediator.v1.VulnerabilitiesService.GetVulnerabilityById:output_type -> mediator.v1.GetVulnerabilityByIdResponse
+	21, // 72: mediator.v1.SecretsService.GetSecrets:output_type -> mediator.v1.GetSecretsResponse
+	23, // 73: mediator.v1.SecretsService.GetSecretById:output_type -> mediator.v1.GetSecretByIdResponse
+	26, // 74: mediator.v1.BranchProtectionService.GetBranchProtection:output_type -> mediator.v1.GetBranchProtectionResponse
+	28, // 75: mediator.v1.OrganisationService.CreateOrganisation:output_type -> mediator.v1.CreateOrganisationResponse
+	48, // 76: mediator.v1.OrganisationService.GetOrganisations:output_type -> mediator.v1.GetOrganisationsResponse
+	50, // 77: mediator.v1.OrganisationService.GetOrganisation:output_type -> mediator.v1.GetOrganisationResponse
+	52, // 78: mediator.v1.OrganisationService.GetOrganisationByName:output_type -> mediator.v1.GetOrganisationByNameResponse
+	31, // 79: mediator.v1.OrganisationService.DeleteOrganisation:output_type -> mediator.v1.DeleteOrganisationResponse
+	37, // 80: mediator.v1.GroupService.CreateGroup:output_type -> mediator.v1.CreateGroupResponse
+	38, // 81: mediator.v1.GroupService.GetGroupByName:output_type -> mediator.v1.GetGroupByNameResponse
+	39, // 82: mediator.v1.GroupService.GetGroupById:output_type -> mediator.v1.GetGroupByIdResponse
+	40, // 83: mediator.v1.GroupService.GetGroups:output_type -> mediator.v1.GetGroupsResponse
+	42, // 84: mediator.v1.GroupService.DeleteGroup:output_type -> mediator.v1.DeleteGroupResponse
+	44, // 85: mediator.v1.RoleService.CreateRole:output_type -> mediator.v1.CreateRoleResponse
+	46, // 86: mediator.v1.RoleService.DeleteRole:output_type -> mediator.v1.DeleteRoleResponse
+	54, // 87: mediator.v1.UserService.CreateUser:output_type -> mediator.v1.CreateUserResponse
+	56, // 88: mediator.v1.UserService.DeleteUser:output_type -> mediator.v1.DeleteUserResponse
+	59, // 89: mediator.v1.UserService.GetUsers:output_type -> mediator.v1.GetUsersResponse
+	61, // 90: mediator.v1.UserService.GetUserById:output_type -> mediator.v1.GetUserByIdResponse
+	63, // 91: mediator.v1.UserService.GetUserByUserName:output_type -> mediator.v1.GetUserByUserNameResponse
+	65, // 92: mediator.v1.UserService.GetUserByEmail:output_type -> mediator.v1.GetUserByEmailResponse
+	62, // [62:93] is the sub-list for method output_type
+	31, // [31:62] is the sub-list for method input_type
+	31, // [31:31] is the sub-list for extension type_name
+	31, // [31:31] is the sub-list for extension extendee
+	0,  // [0:31] is the sub-list for field type_name
 }
 
 func init() { file_mediator_v1_mediator_proto_init() }
@@ -4894,6 +5526,114 @@ func file_mediator_v1_mediator_proto_init() {
 				return nil
 			}
 		}
+		file_mediator_v1_mediator_proto_msgTypes[57].Exporter = func(v interface{}, i int) interface{} {
+			switch v := v.(*UserRecord); i {
+			case 0:
+				return &v.state
+			case 1:
+				return &v.sizeCache
+			case 2:
+				return &v.unknownFields
+			default:
+				return nil
+			}
+		}
+		file_mediator_v1_mediator_proto_msgTypes[58].Exporter = func(v interface{}, i int) interface{} {
+			switch v := v.(*GetUsersRequest); i {
+			case 0:
+				return &v.state
+			case 1:
+				return &v.sizeCache
+			case 2:
+				return &v.unknownFields
+			default:
+				return nil
+			}
+		}
+		file_mediator_v1_mediator_proto_msgTypes[59].Exporter = func(v interface{}, i int) interface{} {
+			switch v := v.(*GetUsersResponse); i {
+			case 0:
+				return &v.state
+			case 1:
+				return &v.sizeCache
+			case 2:
+				return &v.unknownFields
+			default:
+				return nil
+			}
+		}
+		file_mediator_v1_mediator_proto_msgTypes[60].Exporter = func(v interface{}, i int) interface{} {
+			switch v := v.(*GetUserByIdRequest); i {
+			case 0:
+				return &v.state
+			case 1:
+				return &v.sizeCache
+			case 2:
+				return &v.unknownFields
+			default:
+				return nil
+			}
+		}
+		file_mediator_v1_mediator_proto_msgTypes[61].Exporter = func(v interface{}, i int) interface{} {
+			switch v := v.(*GetUserByIdResponse); i {
+			case 0:
+				return &v.state
+			case 1:
+				return &v.sizeCache
+			case 2:
+				return &v.unknownFields
+			default:
+				return nil
+			}
+		}
+		file_mediator_v1_mediator_proto_msgTypes[62].Exporter = func(v interface{}, i int) interface{} {
+			switch v := v.(*GetUserByUserNameRequest); i {
+			case 0:
+				return &v.state
+			case 1:
+				return &v.sizeCache
+			case 2:
+				return &v.unknownFields
+			default:
+				return nil
+			}
+		}
+		file_mediator_v1_mediator_proto_msgTypes[63].Exporter = func(v interface{}, i int) interface{} {
+			switch v := v.(*GetUserByUserNameResponse); i {
+			case 0:
+				return &v.state
+			case 1:
+				return &v.sizeCache
+			case 2:
+				return &v.unknownFields
+			default:
+				return nil
+			}
+		}
+		file_mediator_v1_mediator_proto_msgTypes[64].Exporter = func(v interface{}, i int) interface{} {
+			switch v := v.(*GetUserByEmailRequest); i {
+			case 0:
+				return &v.state
+			case 1:
+				return &v.sizeCache
+			case 2:
+				return &v.unknownFields
+			default:
+				return nil
+			}
+		}
+		file_mediator_v1_mediator_proto_msgTypes[65].Exporter = func(v interface{}, i int) interface{} {
+			switch v := v.(*GetUserByEmailResponse); i {
+			case 0:
+				return &v.state
+			case 1:
+				return &v.sizeCache
+			case 2:
+				return &v.unknownFields
+			default:
+				return nil
+			}
+		}
 	}
 	file_mediator_v1_mediator_proto_msgTypes[30].OneofWrappers = []interface{}{}
 	file_mediator_v1_mediator_proto_msgTypes[32].OneofWrappers = []interface{}{}
@@ -4906,13 +5646,18 @@ func file_mediator_v1_mediator_proto_init() {
 	file_mediator_v1_mediator_proto_msgTypes[53].OneofWrappers = []interface{}{}
 	file_mediator_v1_mediator_proto_msgTypes[54].OneofWrappers = []interface{}{}
 	file_mediator_v1_mediator_proto_msgTypes[55].OneofWrappers = []interface{}{}
+	file_mediator_v1_mediator_proto_msgTypes[57].OneofWrappers = []interface{}{}
+	file_mediator_v1_mediator_proto_msgTypes[58].OneofWrappers = []interface{}{}
+	file_mediator_v1_mediator_proto_msgTypes[61].OneofWrappers = []interface{}{}
+	file_mediator_v1_mediator_proto_msgTypes[63].OneofWrappers = []interface{}{}
+	file_mediator_v1_mediator_proto_msgTypes[65].OneofWrappers = []interface{}{}
 	type x struct{}
 	out := protoimpl.TypeBuilder{
 		File: protoimpl.DescBuilder{
 			GoPackagePath: reflect.TypeOf(x{}).PkgPath(),
 			RawDescriptor: file_mediator_v1_mediator_proto_rawDesc,
 			NumEnums:      0,
-			NumMessages:   57,
+			NumMessages:   66,
 			NumExtensions: 0,
 			NumServices:   13,
 		},
