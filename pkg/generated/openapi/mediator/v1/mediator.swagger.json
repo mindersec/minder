@@ -1292,6 +1292,9 @@
         },
         "company": {
           "type": "string"
+        },
+        "createDefaultRecords": {
+          "type": "boolean"
         }
       },
       "title": "Organisation service"
@@ -1316,6 +1319,15 @@
         "updatedAt": {
           "type": "string",
           "format": "date-time"
+        },
+        "defaultGroup": {
+          "$ref": "#/definitions/v1GroupRecord"
+        },
+        "defaultRole": {
+          "$ref": "#/definitions/v1RoleRecord"
+        },
+        "defaultUser": {
+          "$ref": "#/definitions/v1UserRecord"
         }
       }
     },
@@ -1730,7 +1742,8 @@
           "type": "string",
           "format": "date-time"
         }
-      }
+      },
+      "title": "BUF does not allow grouping (which is a shame)"
     },
     "v1HandleGitHubWebhookRequest": {
       "type": "object"

@@ -44,9 +44,57 @@ func (s *Server) CreateOrganisation(ctx context.Context,
 		return nil, err
 	}
 
-	return &pb.CreateOrganisationResponse{Id: org.ID, Name: org.Name,
+	response := &pb.CreateOrganisationResponse{Id: org.ID, Name: org.Name,
 		Company: org.Company, CreatedAt: timestamppb.New(org.CreatedAt),
-		UpdatedAt: timestamppb.New(org.UpdatedAt)}, nil
+		UpdatedAt: timestamppb.New(org.UpdatedAt)}
+
+	if in.CreateDefaultRecords {
+		// we need to create the default records for the organisation
+		protectedPtr := true
+		adminPtr := true
+		group, _ := s.CreateGroup(ctx, &pb.CreateGroupRequest{
+			OrganisationId: org.ID,
+			Name:           fmt.Sprintf("%s-admin", org.Name),
+			Description:    fmt.Sprintf("Default admin group for %s", org.Name),
+			IsProtected:    &protectedPtr,
+		})
+
+		if group != nil {
+			grp := pb.GroupRecord{GroupId: group.GroupId, OrganisationId: group.OrganisationId,
+				Name: group.Name, Description: group.Description,
+				IsProtected: group.IsProtected, CreatedAt: group.CreatedAt, UpdatedAt: group.UpdatedAt}
+			response.DefaultGroup = &grp
+
+			// we can create the default role
+			role, _ := s.CreateRole(ctx, &pb.CreateRoleRequest{
+				GroupId:     group.GroupId,
+				Name:        fmt.Sprintf("%s-admin", org.Name),
+				IsAdmin:     &adminPtr,
+				IsProtected: &protectedPtr,
+			})
+
+			if role != nil {
+				rl := pb.RoleRecord{Id: role.Id, GroupId: role.GroupId, Name: role.Name, IsAdmin: role.IsAdmin,
+					IsProtected: role.IsProtected, CreatedAt: role.CreatedAt, UpdatedAt: role.UpdatedAt}
+				response.DefaultRole = &rl
+
+				// we can create the default user
+				user, _ := s.CreateUser(ctx, &pb.CreateUserRequest{
+					RoleId:      role.Id,
+					Username:    fmt.Sprintf("%s-admin", org.Name),
+					IsProtected: &protectedPtr,
+				})
+				if user != nil {
+					usr := pb.UserRecord{Id: user.Id, RoleId: user.RoleId, Username: user.Username,
+						Password: user.Password, IsProtected: user.IsProtected, CreatedAt: user.CreatedAt,
+						UpdatedAt: user.UpdatedAt}
+					response.DefaultUser = &usr
+				}
+			}
+		}
+	}
+
+	return response, nil
 }
 
 // GetOrganisations is a service for getting a list of organisations

@@ -414,6 +414,7 @@ message GetBranchProtectionResponse {
 message CreateOrganisationRequest {
     string name = 1;
     string company = 2;
+    bool create_default_records = 3;
   }
   
 message CreateOrganisationResponse {
@@ -421,7 +422,10 @@ message CreateOrganisationResponse {
     string name = 2;
     string company = 3;
     google.protobuf.Timestamp created_at = 5;
-    google.protobuf.Timestamp updated_at = 6;    
+    google.protobuf.Timestamp updated_at = 6;
+    optional GroupRecord default_group = 7;
+    optional RoleRecord default_role = 8;
+    optional UserRecord default_user = 9;
 }
 
 message OrganisationRecord {
@@ -499,7 +503,6 @@ message GetGroupsRequest {
 }
 
 // BUF does not allow grouping (which is a shame)
-
 message GroupRecord {
     int32 group_id = 1;
     int32 organisation_id = 2;

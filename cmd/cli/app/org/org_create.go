@@ -23,6 +23,7 @@ package org
 
 import (
 	"context"
+	"encoding/json"
 	"fmt"
 	"os"
 	"time"
@@ -47,8 +48,13 @@ within a mediator control plane.`,
 		// create the organisation via GRPC
 		name := util.GetConfigValue("name", "name", cmd, "")
 		company := util.GetConfigValue("company", "company", cmd, "")
+		create := util.GetConfigValue("create-default-records", "create-default-records", cmd, false)
 
 		conn, err := util.GetGrpcConnection(cmd)
+		if err != nil {
+			fmt.Fprintf(os.Stderr, "Error getting grpc connection: %s\n", err)
+			os.Exit(1)
+		}
 		defer conn.Close()
 
 		if err != nil {
@@ -61,15 +67,22 @@ within a mediator control plane.`,
 		defer cancel()
 
 		resp, err := client.CreateOrganisation(ctx, &pb.CreateOrganisationRequest{
-			Name:    name.(string),
-			Company: company.(string),
+			Name:                 name.(string),
+			Company:              company.(string),
+			CreateDefaultRecords: create.(bool),
 		})
 
 		if err != nil {
 			fmt.Fprintf(os.Stderr, "Error creating organisation: %s\n", err)
 			os.Exit(1)
 		}
-		cmd.Println("Created organisation:", resp.Name)
+
+		org, err := json.MarshalIndent(resp, "", "  ")
+		if err != nil {
+			cmd.Println("Created organisation: ", resp.Name)
+		} else {
+			cmd.Println("Created organisation:", string(org))
+		}
 	},
 }
 
@@ -77,6 +90,8 @@ func init() {
 	OrgCmd.AddCommand(org_createCmd)
 	org_createCmd.Flags().StringP("name", "n", "", "Name of the organization")
 	org_createCmd.Flags().StringP("company", "c", "", "Company name of the organization")
+	org_createCmd.Flags().BoolP("create-default-records", "d", false, "Create default records for the organization")
+
 	if err := org_createCmd.MarkFlagRequired("name"); err != nil {
 		fmt.Fprintf(os.Stderr, "Error binding flags: %s\n", err)
 	}
