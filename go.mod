@@ -6,7 +6,7 @@ require (
 	github.com/go-playground/validator/v10 v10.14.0
 	github.com/gogo/protobuf v1.3.2
 	github.com/golang-jwt/jwt/v4 v4.5.0
-	github.com/golang-migrate/migrate/v4 v4.16.0
+	github.com/golang-migrate/migrate/v4 v4.16.1
 	github.com/golang/mock v1.6.0
 	github.com/grpc-ecosystem/grpc-gateway/v2 v2.16.0
 	github.com/lib/pq v1.10.9
