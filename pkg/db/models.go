@@ -11,7 +11,7 @@ import (
 
 type AccessToken struct {
 	ID             int32     `json:"id"`
-	OrganisationID int32     `json:"organisation_id"`
+	OrganizationID int32     `json:"organization_id"`
 	EncryptedToken string    `json:"encrypted_token"`
 	CreatedAt      time.Time `json:"created_at"`
 	UpdatedAt      time.Time `json:"updated_at"`
@@ -19,7 +19,7 @@ type AccessToken struct {
 
 type Group struct {
 	ID             int32          `json:"id"`
-	OrganisationID int32          `json:"organisation_id"`
+	OrganizationID int32          `json:"organization_id"`
 	Name           string         `json:"name"`
 	Description    sql.NullString `json:"description"`
 	IsProtected    bool           `json:"is_protected"`
@@ -27,7 +27,7 @@ type Group struct {
 	UpdatedAt      time.Time      `json:"updated_at"`
 }
 
-type Organisation struct {
+type Organization struct {
 	ID          int32         `json:"id"`
 	Name        string        `json:"name"`
 	Company     string        `json:"company"`

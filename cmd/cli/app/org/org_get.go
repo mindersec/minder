@@ -53,7 +53,7 @@ mediator control plane.`,
 		}
 		defer conn.Close()
 
-		client := pb.NewOrganisationServiceClient(conn)
+		client := pb.NewOrganizationServiceClient(conn)
 		ctx, cancel := context.WithTimeout(context.Background(), time.Second)
 		defer cancel()
 
@@ -68,30 +68,30 @@ mediator control plane.`,
 
 		// get by id or name
 		if id > 0 {
-			org, err := client.GetOrganisation(ctx, &pb.GetOrganisationRequest{
-				OrganisationId: id,
+			org, err := client.GetOrganization(ctx, &pb.GetOrganizationRequest{
+				OrganizationId: id,
 			})
 			if err != nil {
-				fmt.Fprintf(os.Stderr, "Error getting organisation by id: %s\n", err)
+				fmt.Fprintf(os.Stderr, "Error getting organization by id: %s\n", err)
 				os.Exit(1)
 			}
 			json, err := json.Marshal(org)
 			if err != nil {
-				fmt.Fprintf(os.Stderr, "Error marshalling organisation: %s\n", err)
+				fmt.Fprintf(os.Stderr, "Error marshalling organization: %s\n", err)
 				os.Exit(1)
 			}
 			fmt.Println(string(json))
 		} else if name != "" {
-			org, err := client.GetOrganisationByName(ctx, &pb.GetOrganisationByNameRequest{
+			org, err := client.GetOrganizationByName(ctx, &pb.GetOrganizationByNameRequest{
 				Name: name,
 			})
 			if err != nil {
-				fmt.Fprintf(os.Stderr, "Error getting organisation by name: %s\n", err)
+				fmt.Fprintf(os.Stderr, "Error getting organization by name: %s\n", err)
 				os.Exit(1)
 			}
 			json, err := json.Marshal(org)
 			if err != nil {
-				fmt.Fprintf(os.Stderr, "Error marshalling organisation: %s\n", err)
+				fmt.Fprintf(os.Stderr, "Error marshalling organization: %s\n", err)
 				os.Exit(1)
 			}
 			fmt.Println(string(json))
@@ -106,6 +106,6 @@ mediator control plane.`,
 
 func init() {
 	OrgCmd.AddCommand(org_getCmd)
-	org_getCmd.Flags().Int32P("id", "i", -1, "ID for the organisation to query")
-	org_getCmd.Flags().StringP("name", "n", "", "Name for the organisation to query")
+	org_getCmd.Flags().Int32P("id", "i", -1, "ID for the organization to query")
+	org_getCmd.Flags().StringP("name", "n", "", "Name for the organization to query")
 }

@@ -30,7 +30,7 @@ type CreateRoleValidation struct {
 	Name    string `db:"name" validate:"required"`
 }
 
-// CreateRole is a service for creating an organisation
+// CreateRole is a service for creating an organization
 func (s *Server) CreateRole(ctx context.Context,
 	in *pb.CreateRoleRequest) (*pb.CreateRoleResponse, error) {
 	// validate that the company and name are not empty

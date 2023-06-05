@@ -33,7 +33,7 @@
       "name": "BranchProtectionService"
     },
     {
-      "name": "OrganisationService"
+      "name": "OrganizationService"
     },
     {
       "name": "GroupService"
@@ -452,7 +452,7 @@
         ]
       }
     },
-    "/api/v1/groups/{organisationId}": {
+    "/api/v1/groups/{organizationId}": {
       "get": {
         "operationId": "GroupService_GetGroups",
         "responses": {
@@ -471,7 +471,7 @@
         },
         "parameters": [
           {
-            "name": "organisationId",
+            "name": "organizationId",
             "in": "path",
             "required": true,
             "type": "integer",
@@ -519,14 +519,14 @@
         ]
       }
     },
-    "/api/v1/organisation": {
+    "/api/v1/organization": {
       "post": {
-        "operationId": "OrganisationService_CreateOrganisation",
+        "operationId": "OrganizationService_CreateOrganization",
         "responses": {
           "200": {
             "description": "A successful response.",
             "schema": {
-              "$ref": "#/definitions/v1CreateOrganisationResponse"
+              "$ref": "#/definitions/v1CreateOrganizationResponse"
             }
           },
           "default": {
@@ -542,23 +542,23 @@
             "in": "body",
             "required": true,
             "schema": {
-              "$ref": "#/definitions/v1CreateOrganisationRequest"
+              "$ref": "#/definitions/v1CreateOrganizationRequest"
             }
           }
         ],
         "tags": [
-          "OrganisationService"
+          "OrganizationService"
         ]
       }
     },
-    "/api/v1/organisation/{id}": {
+    "/api/v1/organization/{id}": {
       "delete": {
-        "operationId": "OrganisationService_DeleteOrganisation",
+        "operationId": "OrganizationService_DeleteOrganization",
         "responses": {
           "200": {
             "description": "A successful response.",
             "schema": {
-              "$ref": "#/definitions/v1DeleteOrganisationResponse"
+              "$ref": "#/definitions/v1DeleteOrganizationResponse"
             }
           },
           "default": {
@@ -584,18 +584,18 @@
           }
         ],
         "tags": [
-          "OrganisationService"
+          "OrganizationService"
         ]
       }
     },
-    "/api/v1/organisations": {
+    "/api/v1/organizations": {
       "get": {
-        "operationId": "OrganisationService_GetOrganisations",
+        "operationId": "OrganizationService_GetOrganizations",
         "responses": {
           "200": {
             "description": "A successful response.",
             "schema": {
-              "$ref": "#/definitions/v1GetOrganisationsResponse"
+              "$ref": "#/definitions/v1GetOrganizationsResponse"
             }
           },
           "default": {
@@ -622,18 +622,18 @@
           }
         ],
         "tags": [
-          "OrganisationService"
+          "OrganizationService"
         ]
       }
     },
-    "/api/v1/organisations/name/{name}": {
+    "/api/v1/organizations/name/{name}": {
       "get": {
-        "operationId": "OrganisationService_GetOrganisationByName",
+        "operationId": "OrganizationService_GetOrganizationByName",
         "responses": {
           "200": {
             "description": "A successful response.",
             "schema": {
-              "$ref": "#/definitions/v1GetOrganisationByNameResponse"
+              "$ref": "#/definitions/v1GetOrganizationByNameResponse"
             }
           },
           "default": {
@@ -652,18 +652,18 @@
           }
         ],
         "tags": [
-          "OrganisationService"
+          "OrganizationService"
         ]
       }
     },
-    "/api/v1/organisations/{organisationId}": {
+    "/api/v1/organizations/{organizationId}": {
       "get": {
-        "operationId": "OrganisationService_GetOrganisation",
+        "operationId": "OrganizationService_GetOrganization",
         "responses": {
           "200": {
             "description": "A successful response.",
             "schema": {
-              "$ref": "#/definitions/v1GetOrganisationResponse"
+              "$ref": "#/definitions/v1GetOrganizationResponse"
             }
           },
           "default": {
@@ -675,7 +675,7 @@
         },
         "parameters": [
           {
-            "name": "organisationId",
+            "name": "organizationId",
             "in": "path",
             "required": true,
             "type": "integer",
@@ -683,7 +683,7 @@
           }
         ],
         "tags": [
-          "OrganisationService"
+          "OrganizationService"
         ]
       }
     },
@@ -1238,7 +1238,7 @@
     "v1CreateGroupRequest": {
       "type": "object",
       "properties": {
-        "organisationId": {
+        "organizationId": {
           "type": "integer",
           "format": "int32"
         },
@@ -1261,7 +1261,7 @@
           "type": "integer",
           "format": "int32"
         },
-        "organisationId": {
+        "organizationId": {
           "type": "integer",
           "format": "int32"
         },
@@ -1284,7 +1284,7 @@
         }
       }
     },
-    "v1CreateOrganisationRequest": {
+    "v1CreateOrganizationRequest": {
       "type": "object",
       "properties": {
         "name": {
@@ -1297,9 +1297,9 @@
           "type": "boolean"
         }
       },
-      "title": "Organisation service"
+      "title": "Organization service"
     },
-    "v1CreateOrganisationResponse": {
+    "v1CreateOrganizationResponse": {
       "type": "object",
       "properties": {
         "id": {
@@ -1451,9 +1451,9 @@
       "type": "object",
       "title": "DeleteGroupResponse represents a response to a delete group request"
     },
-    "v1DeleteOrganisationResponse": {
+    "v1DeleteOrganizationResponse": {
       "type": "object",
-      "title": "DeleteOrganisationResponse represents a response to a delete organisation request"
+      "title": "DeleteOrganizationResponse represents a response to a delete organization request"
     },
     "v1DeleteRoleResponse": {
       "type": "object"
@@ -1536,30 +1536,30 @@
       },
       "title": "The GetGroupsResponse message represents a response with an array of groups"
     },
-    "v1GetOrganisationByNameResponse": {
+    "v1GetOrganizationByNameResponse": {
       "type": "object",
       "properties": {
-        "organisation": {
-          "$ref": "#/definitions/v1OrganisationRecord"
+        "organization": {
+          "$ref": "#/definitions/v1OrganizationRecord"
         }
       }
     },
-    "v1GetOrganisationResponse": {
+    "v1GetOrganizationResponse": {
       "type": "object",
       "properties": {
-        "organisation": {
-          "$ref": "#/definitions/v1OrganisationRecord"
+        "organization": {
+          "$ref": "#/definitions/v1OrganizationRecord"
         }
       }
     },
-    "v1GetOrganisationsResponse": {
+    "v1GetOrganizationsResponse": {
       "type": "object",
       "properties": {
-        "organisations": {
+        "organizations": {
           "type": "array",
           "items": {
             "type": "object",
-            "$ref": "#/definitions/v1OrganisationRecord"
+            "$ref": "#/definitions/v1OrganizationRecord"
           }
         }
       }
@@ -1721,7 +1721,7 @@
           "type": "integer",
           "format": "int32"
         },
-        "organisationId": {
+        "organizationId": {
           "type": "integer",
           "format": "int32"
         },
@@ -1800,7 +1800,7 @@
         }
       }
     },
-    "v1OrganisationRecord": {
+    "v1OrganizationRecord": {
       "type": "object",
       "properties": {
         "id": {

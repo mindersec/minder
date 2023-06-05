@@ -69,7 +69,7 @@ a mediator control plane.`,
 		}
 
 		resp, err := client.GetGroups(ctx, &pb.GetGroupsRequest{
-			OrganisationId: org,
+			OrganizationId: org,
 			Limit:          limit,
 			Offset:         offset,
 		})
@@ -81,12 +81,12 @@ a mediator control plane.`,
 		// print output in a table
 		if format == "" {
 			table := tablewriter.NewWriter(os.Stdout)
-			table.SetHeader([]string{"Id", "Organisation", "Name", "Is protected", "Created date", "Updated date"})
+			table.SetHeader([]string{"Id", "Organization", "Name", "Is protected", "Created date", "Updated date"})
 
 			for _, v := range resp.Groups {
 				row := []string{
 					fmt.Sprintf("%d", v.GroupId),
-					fmt.Sprintf("%d", v.OrganisationId),
+					fmt.Sprintf("%d", v.OrganizationId),
 					v.Name,
 					fmt.Sprintf("%t", v.IsProtected),
 					v.GetCreatedAt().AsTime().Format(time.RFC3339),

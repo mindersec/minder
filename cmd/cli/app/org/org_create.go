@@ -45,7 +45,7 @@ within a mediator control plane.`,
 		}
 	},
 	Run: func(cmd *cobra.Command, args []string) {
-		// create the organisation via GRPC
+		// create the organization via GRPC
 		name := util.GetConfigValue("name", "name", cmd, "")
 		company := util.GetConfigValue("company", "company", cmd, "")
 		create := util.GetConfigValue("create-default-records", "create-default-records", cmd, false)
@@ -62,26 +62,26 @@ within a mediator control plane.`,
 			os.Exit(1)
 		}
 
-		client := pb.NewOrganisationServiceClient(conn)
+		client := pb.NewOrganizationServiceClient(conn)
 		ctx, cancel := context.WithTimeout(context.Background(), time.Second)
 		defer cancel()
 
-		resp, err := client.CreateOrganisation(ctx, &pb.CreateOrganisationRequest{
+		resp, err := client.CreateOrganization(ctx, &pb.CreateOrganizationRequest{
 			Name:                 name.(string),
 			Company:              company.(string),
 			CreateDefaultRecords: create.(bool),
 		})
 
 		if err != nil {
-			fmt.Fprintf(os.Stderr, "Error creating organisation: %s\n", err)
+			fmt.Fprintf(os.Stderr, "Error creating organization: %s\n", err)
 			os.Exit(1)
 		}
 
 		org, err := json.MarshalIndent(resp, "", "  ")
 		if err != nil {
-			cmd.Println("Created organisation: ", resp.Name)
+			cmd.Println("Created organization: ", resp.Name)
 		} else {
-			cmd.Println("Created organisation:", string(org))
+			cmd.Println("Created organization:", string(org))
 		}
 	},
 }

@@ -48,7 +48,7 @@ a mediator control plane.`,
 
 		name := util.GetConfigValue("name", "name", cmd, "")
 		description := util.GetConfigValue("description", "description", cmd, "")
-		organisation := util.GetConfigValue("org-id", "org-id", cmd, int32(0)).(int32)
+		organization := util.GetConfigValue("org-id", "org-id", cmd, int32(0)).(int32)
 		isProtected := util.GetConfigValue("is_protected", "is_protected", cmd, false).(bool)
 
 		conn, err := util.GetGrpcConnection(cmd)
@@ -67,7 +67,7 @@ a mediator control plane.`,
 		resp, err := client.CreateGroup(ctx, &pb.CreateGroupRequest{
 			Name:           name.(string),
 			Description:    description.(string),
-			OrganisationId: organisation,
+			OrganizationId: organization,
 			IsProtected:    protectedPtr,
 		})
 
@@ -85,7 +85,7 @@ func init() {
 	GroupCmd.AddCommand(group_createCmd)
 	group_createCmd.Flags().StringP("name", "n", "", "Name of the group")
 	group_createCmd.Flags().StringP("description", "d", "", "Description of the group")
-	group_createCmd.Flags().Int32("org-id", 0, "Organisation ID")
+	group_createCmd.Flags().Int32("org-id", 0, "Organization ID")
 	group_createCmd.Flags().BoolP("is_protected", "i", false, "Is the group protected")
 
 	if err := group_createCmd.MarkFlagRequired("name"); err != nil {

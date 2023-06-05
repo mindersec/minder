@@ -13,7 +13,7 @@
 -- limitations under the License.
 
 
-DROP TABLE IF EXISTS organisations;
+DROP TABLE IF EXISTS organizations;
 DROP TABLE IF EXISTS groups;
 DROP TABLE IF EXISTS roles;
 DROP TABLE IF EXISTS users;

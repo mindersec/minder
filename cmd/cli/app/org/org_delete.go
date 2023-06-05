@@ -35,8 +35,8 @@ import (
 
 var org_deleteCmd = &cobra.Command{
 	Use:   "delete",
-	Short: "delete a organisation within a mediator controlplane",
-	Long: `The medctl org delete subcommand lets you delete organisations within a
+	Short: "delete a organization within a mediator controlplane",
+	Long: `The medctl org delete subcommand lets you delete organizations within a
 mediator control plane.`,
 	PreRun: func(cmd *cobra.Command, args []string) {
 		if err := viper.BindPFlags(cmd.Flags()); err != nil {
@@ -56,29 +56,29 @@ mediator control plane.`,
 		}
 		defer conn.Close()
 
-		client := pb.NewOrganisationServiceClient(conn)
+		client := pb.NewOrganizationServiceClient(conn)
 		ctx, cancel := context.WithTimeout(context.Background(), time.Second)
 		defer cancel()
 
 		forcePtr := &force
-		_, err = client.DeleteOrganisation(ctx, &pb.DeleteOrganisationRequest{
+		_, err = client.DeleteOrganization(ctx, &pb.DeleteOrganizationRequest{
 			Id:    id,
 			Force: forcePtr,
 		})
 
 		if err != nil {
-			fmt.Fprintf(os.Stderr, "Error deleting organisation: %s\n", err)
+			fmt.Fprintf(os.Stderr, "Error deleting organization: %s\n", err)
 			os.Exit(1)
 		}
-		cmd.Println("Successfully deleted organisation with id:", id)
+		cmd.Println("Successfully deleted organization with id:", id)
 	},
 }
 
 func init() {
 	OrgCmd.AddCommand(org_deleteCmd)
-	org_deleteCmd.Flags().Int32P("org-id", "o", 0, "id of organisation to delete")
+	org_deleteCmd.Flags().Int32P("org-id", "o", 0, "id of organization to delete")
 	org_deleteCmd.Flags().BoolP("force", "f", false,
-		"Force deletion of organisation, even if it has associated groups")
+		"Force deletion of organization, even if it has associated groups")
 	if err := org_deleteCmd.MarkFlagRequired("org-id"); err != nil {
 		fmt.Fprintf(os.Stderr, "Error marking flag as required: %s\n", err)
 		os.Exit(1)

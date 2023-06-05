@@ -41,7 +41,7 @@ func stringToNullString(s *string) *sql.NullString {
 	return &sql.NullString{String: *s, Valid: true}
 }
 
-// CreateUser is a service for creating an organisation
+// CreateUser is a service for creating an organization
 func (s *Server) CreateUser(ctx context.Context,
 	in *pb.CreateUserRequest) (*pb.CreateUserResponse, error) {
 

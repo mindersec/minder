@@ -38,7 +38,7 @@ func stringToNullString(s string) sql.NullString {
 	return sql.NullString{String: s, Valid: true}
 }
 
-func createRandomUser(t *testing.T, org Organisation) User {
+func createRandomUser(t *testing.T, org Organization) User {
 	seed := time.Now().UnixNano()
 	group := createRandomGroup(t, org.ID)
 	role := createRandomRole(t, group.ID)
@@ -72,12 +72,12 @@ func createRandomUser(t *testing.T, org Organisation) User {
 }
 
 func TestUser(t *testing.T) {
-	org := createRandomOrganisation(t)
+	org := createRandomOrganization(t)
 	createRandomUser(t, org)
 }
 
 func TestGetUser(t *testing.T) {
-	org := createRandomOrganisation(t)
+	org := createRandomOrganization(t)
 	user1 := createRandomUser(t, org)
 
 	user2, err := testQueries.GetUserByID(context.Background(), user1.ID)
@@ -103,7 +103,7 @@ func TestGetUser(t *testing.T) {
 
 func TestUpdateUser(t *testing.T) {
 	seed := time.Now().UnixNano()
-	org := createRandomOrganisation(t)
+	org := createRandomOrganization(t)
 	user1 := createRandomUser(t, org)
 
 	arg := UpdateUserParams{
