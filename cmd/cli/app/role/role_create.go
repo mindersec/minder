@@ -34,6 +34,7 @@ import (
 	"github.com/stacklok/mediator/pkg/util"
 )
 
+// Role_createCmd represents the role create command
 var Role_createCmd = &cobra.Command{
 	Use:   "create",
 	Short: "Create a role within a mediator control plane",

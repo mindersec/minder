@@ -34,6 +34,7 @@ import (
 	"github.com/stacklok/mediator/pkg/util"
 )
 
+// User_createCmd is the command for creating an user
 var User_createCmd = &cobra.Command{
 	Use:   "create",
 	Short: "Create a user within a mediator control plane",

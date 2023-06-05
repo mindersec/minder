@@ -35,6 +35,7 @@ import (
 	"github.com/stacklok/mediator/pkg/util"
 )
 
+// Group_createCmd is the command for creating a group
 var Group_createCmd = &cobra.Command{
 	Use:   "create",
 	Short: "Create a group within a mediator control plane",

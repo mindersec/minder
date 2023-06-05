@@ -21,6 +21,7 @@ import (
 	"fmt"
 	"io/ioutil"
 	"os"
+	"path/filepath"
 	"reflect"
 
 	"github.com/stacklok/mediator/cmd/cli/app"
@@ -35,12 +36,12 @@ import (
 	"github.com/spf13/viper"
 )
 
-type ObjectParameters struct {
+type objectParameters struct {
 	Object     string
 	Parameters map[string]interface{}
 }
 
-func parseContent(data []byte) ([]ObjectParameters, error) {
+func parseContent(data []byte) ([]objectParameters, error) {
 	var objects []map[string]interface{}
 	err := json.Unmarshal(data, &objects)
 	if err != nil {
@@ -51,10 +52,10 @@ func parseContent(data []byte) ([]ObjectParameters, error) {
 		}
 	}
 
-	var ret []ObjectParameters
+	var ret []objectParameters
 	for _, object := range objects {
 		for objectName, objectData := range object {
-			ret = append(ret, ObjectParameters{
+			ret = append(ret, objectParameters{
 				Object:     objectName,
 				Parameters: objectData.(map[string]interface{}),
 			})
@@ -87,6 +88,7 @@ var ApplyCmd = &cobra.Command{
 				os.Exit(1)
 			}
 		} else {
+			f = filepath.Clean(f)
 			data, err = ioutil.ReadFile(f)
 			if err != nil {
 				fmt.Fprintf(os.Stderr, "Error reading file %s: %s\n", f, err)

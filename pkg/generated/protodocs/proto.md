@@ -11,16 +11,16 @@
     - [CheckHealthResponse](#mediator-v1-CheckHealthResponse)
     - [CreateGroupRequest](#mediator-v1-CreateGroupRequest)
     - [CreateGroupResponse](#mediator-v1-CreateGroupResponse)
-    - [CreateOrganisationRequest](#mediator-v1-CreateOrganisationRequest)
-    - [CreateOrganisationResponse](#mediator-v1-CreateOrganisationResponse)
+    - [CreateOrganizationRequest](#mediator-v1-CreateOrganizationRequest)
+    - [CreateOrganizationResponse](#mediator-v1-CreateOrganizationResponse)
     - [CreateRoleRequest](#mediator-v1-CreateRoleRequest)
     - [CreateRoleResponse](#mediator-v1-CreateRoleResponse)
     - [CreateUserRequest](#mediator-v1-CreateUserRequest)
     - [CreateUserResponse](#mediator-v1-CreateUserResponse)
     - [DeleteGroupRequest](#mediator-v1-DeleteGroupRequest)
     - [DeleteGroupResponse](#mediator-v1-DeleteGroupResponse)
-    - [DeleteOrganisationRequest](#mediator-v1-DeleteOrganisationRequest)
-    - [DeleteOrganisationResponse](#mediator-v1-DeleteOrganisationResponse)
+    - [DeleteOrganizationRequest](#mediator-v1-DeleteOrganizationRequest)
+    - [DeleteOrganizationResponse](#mediator-v1-DeleteOrganizationResponse)
     - [DeleteRoleRequest](#mediator-v1-DeleteRoleRequest)
     - [DeleteRoleResponse](#mediator-v1-DeleteRoleResponse)
     - [DeleteUserRequest](#mediator-v1-DeleteUserRequest)
@@ -39,12 +39,12 @@
     - [GetGroupByNameResponse](#mediator-v1-GetGroupByNameResponse)
     - [GetGroupsRequest](#mediator-v1-GetGroupsRequest)
     - [GetGroupsResponse](#mediator-v1-GetGroupsResponse)
-    - [GetOrganisationByNameRequest](#mediator-v1-GetOrganisationByNameRequest)
-    - [GetOrganisationByNameResponse](#mediator-v1-GetOrganisationByNameResponse)
-    - [GetOrganisationRequest](#mediator-v1-GetOrganisationRequest)
-    - [GetOrganisationResponse](#mediator-v1-GetOrganisationResponse)
-    - [GetOrganisationsRequest](#mediator-v1-GetOrganisationsRequest)
-    - [GetOrganisationsResponse](#mediator-v1-GetOrganisationsResponse)
+    - [GetOrganizationByNameRequest](#mediator-v1-GetOrganizationByNameRequest)
+    - [GetOrganizationByNameResponse](#mediator-v1-GetOrganizationByNameResponse)
+    - [GetOrganizationRequest](#mediator-v1-GetOrganizationRequest)
+    - [GetOrganizationResponse](#mediator-v1-GetOrganizationResponse)
+    - [GetOrganizationsRequest](#mediator-v1-GetOrganizationsRequest)
+    - [GetOrganizationsResponse](#mediator-v1-GetOrganizationsResponse)
     - [GetRoleByIdRequest](#mediator-v1-GetRoleByIdRequest)
     - [GetRoleByIdResponse](#mediator-v1-GetRoleByIdResponse)
     - [GetRoleByNameRequest](#mediator-v1-GetRoleByNameRequest)
@@ -74,7 +74,7 @@
     - [LogInResponse](#mediator-v1-LogInResponse)
     - [LogOutRequest](#mediator-v1-LogOutRequest)
     - [LogOutResponse](#mediator-v1-LogOutResponse)
-    - [OrganisationRecord](#mediator-v1-OrganisationRecord)
+    - [OrganizationRecord](#mediator-v1-OrganizationRecord)
     - [RoleRecord](#mediator-v1-RoleRecord)
     - [UserRecord](#mediator-v1-UserRecord)
   
@@ -86,7 +86,7 @@
     - [LogInService](#mediator-v1-LogInService)
     - [LogOutService](#mediator-v1-LogOutService)
     - [OAuthService](#mediator-v1-OAuthService)
-    - [OrganisationService](#mediator-v1-OrganisationService)
+    - [OrganizationService](#mediator-v1-OrganizationService)
     - [RoleService](#mediator-v1-RoleService)
     - [SecretsService](#mediator-v1-SecretsService)
     - [UserService](#mediator-v1-UserService)
@@ -177,7 +177,7 @@ The CreateGroupRequest message represents a request to create a group
 
 | Field | Type | Label | Description |
 | ----- | ---- | ----- | ----------- |
-| organisation_id | [int32](#int32) |  |  |
+| organization_id | [int32](#int32) |  |  |
 | name | [string](#string) |  |  |
 | description | [string](#string) |  |  |
 | is_protected | [bool](#bool) | optional |  |
@@ -196,7 +196,7 @@ The CreateGroupRequest message represents a request to create a group
 | Field | Type | Label | Description |
 | ----- | ---- | ----- | ----------- |
 | group_id | [int32](#int32) |  |  |
-| organisation_id | [int32](#int32) |  |  |
+| organization_id | [int32](#int32) |  |  |
 | name | [string](#string) |  |  |
 | description | [string](#string) |  |  |
 | is_protected | [bool](#bool) |  |  |
@@ -208,10 +208,10 @@ The CreateGroupRequest message represents a request to create a group
 
 
 
-<a name="mediator-v1-CreateOrganisationRequest"></a>
+<a name="mediator-v1-CreateOrganizationRequest"></a>
 
-### CreateOrganisationRequest
-Organisation service
+### CreateOrganizationRequest
+Organization service
 
 
 | Field | Type | Label | Description |
@@ -225,9 +225,9 @@ Organisation service
 
 
 
-<a name="mediator-v1-CreateOrganisationResponse"></a>
+<a name="mediator-v1-CreateOrganizationResponse"></a>
 
-### CreateOrganisationResponse
+### CreateOrganizationResponse
 
 
 
@@ -357,10 +357,10 @@ DeleteGroupResponse represents a response to a delete group request
 
 
 
-<a name="mediator-v1-DeleteOrganisationRequest"></a>
+<a name="mediator-v1-DeleteOrganizationRequest"></a>
 
-### DeleteOrganisationRequest
-DeleteOrganisationRequest represents a request to delete a organisation
+### DeleteOrganizationRequest
+DeleteOrganizationRequest represents a request to delete a organization
 
 
 | Field | Type | Label | Description |
@@ -373,10 +373,10 @@ DeleteOrganisationRequest represents a request to delete a organisation
 
 
 
-<a name="mediator-v1-DeleteOrganisationResponse"></a>
+<a name="mediator-v1-DeleteOrganizationResponse"></a>
 
-### DeleteOrganisationResponse
-DeleteOrganisationResponse represents a response to a delete organisation request
+### DeleteOrganizationResponse
+DeleteOrganizationResponse represents a response to a delete organization request
 
 
 
@@ -626,7 +626,7 @@ The GetGroupsRequest message represents a request to get an array of groups
 
 | Field | Type | Label | Description |
 | ----- | ---- | ----- | ----------- |
-| organisation_id | [int32](#int32) |  |  |
+| organization_id | [int32](#int32) |  |  |
 | limit | [int32](#int32) |  |  |
 | offset | [int32](#int32) |  |  |
 
@@ -650,10 +650,10 @@ The GetGroupsResponse message represents a response with an array of groups
 
 
 
-<a name="mediator-v1-GetOrganisationByNameRequest"></a>
+<a name="mediator-v1-GetOrganizationByNameRequest"></a>
 
-### GetOrganisationByNameRequest
-get organisation by name
+### GetOrganizationByNameRequest
+get organization by name
 
 
 | Field | Type | Label | Description |
@@ -665,55 +665,55 @@ get organisation by name
 
 
 
-<a name="mediator-v1-GetOrganisationByNameResponse"></a>
+<a name="mediator-v1-GetOrganizationByNameResponse"></a>
 
-### GetOrganisationByNameResponse
-
-
-
-| Field | Type | Label | Description |
-| ----- | ---- | ----- | ----------- |
-| organisation | [OrganisationRecord](#mediator-v1-OrganisationRecord) | optional |  |
-
-
-
-
-
-
-<a name="mediator-v1-GetOrganisationRequest"></a>
-
-### GetOrganisationRequest
-get organisation by id
-
-
-| Field | Type | Label | Description |
-| ----- | ---- | ----- | ----------- |
-| organisation_id | [int32](#int32) |  |  |
-
-
-
-
-
-
-<a name="mediator-v1-GetOrganisationResponse"></a>
-
-### GetOrganisationResponse
+### GetOrganizationByNameResponse
 
 
 
 | Field | Type | Label | Description |
 | ----- | ---- | ----- | ----------- |
-| organisation | [OrganisationRecord](#mediator-v1-OrganisationRecord) | optional |  |
+| organization | [OrganizationRecord](#mediator-v1-OrganizationRecord) | optional |  |
 
 
 
 
 
 
-<a name="mediator-v1-GetOrganisationsRequest"></a>
+<a name="mediator-v1-GetOrganizationRequest"></a>
 
-### GetOrganisationsRequest
-list organisations
+### GetOrganizationRequest
+get organization by id
+
+
+| Field | Type | Label | Description |
+| ----- | ---- | ----- | ----------- |
+| organization_id | [int32](#int32) |  |  |
+
+
+
+
+
+
+<a name="mediator-v1-GetOrganizationResponse"></a>
+
+### GetOrganizationResponse
+
+
+
+| Field | Type | Label | Description |
+| ----- | ---- | ----- | ----------- |
+| organization | [OrganizationRecord](#mediator-v1-OrganizationRecord) | optional |  |
+
+
+
+
+
+
+<a name="mediator-v1-GetOrganizationsRequest"></a>
+
+### GetOrganizationsRequest
+list organizations
 
 
 | Field | Type | Label | Description |
@@ -726,15 +726,15 @@ list organisations
 
 
 
-<a name="mediator-v1-GetOrganisationsResponse"></a>
+<a name="mediator-v1-GetOrganizationsResponse"></a>
 
-### GetOrganisationsResponse
+### GetOrganizationsResponse
 
 
 
 | Field | Type | Label | Description |
 | ----- | ---- | ----- | ----------- |
-| organisations | [OrganisationRecord](#mediator-v1-OrganisationRecord) | repeated |  |
+| organizations | [OrganizationRecord](#mediator-v1-OrganizationRecord) | repeated |  |
 
 
 
@@ -1088,7 +1088,7 @@ BUF does not allow grouping (which is a shame)
 | Field | Type | Label | Description |
 | ----- | ---- | ----- | ----------- |
 | group_id | [int32](#int32) |  |  |
-| organisation_id | [int32](#int32) |  |  |
+| organization_id | [int32](#int32) |  |  |
 | name | [string](#string) |  |  |
 | description | [string](#string) |  |  |
 | is_protected | [bool](#bool) |  |  |
@@ -1185,9 +1185,9 @@ BUF does not allow grouping (which is a shame)
 
 
 
-<a name="mediator-v1-OrganisationRecord"></a>
+<a name="mediator-v1-OrganizationRecord"></a>
 
-### OrganisationRecord
+### OrganizationRecord
 
 
 
@@ -1342,18 +1342,18 @@ Logout of Mediator
 | ExchangeCodeForTokenWEB | [ExchangeCodeForTokenWEBRequest](#mediator-v1-ExchangeCodeForTokenWEBRequest) | [ExchangeCodeForTokenWEBResponse](#mediator-v1-ExchangeCodeForTokenWEBResponse) |  |
 
 
-<a name="mediator-v1-OrganisationService"></a>
+<a name="mediator-v1-OrganizationService"></a>
 
-### OrganisationService
-manage Organisations CRUD
+### OrganizationService
+manage Organizations CRUD
 
 | Method Name | Request Type | Response Type | Description |
 | ----------- | ------------ | ------------- | ------------|
-| CreateOrganisation | [CreateOrganisationRequest](#mediator-v1-CreateOrganisationRequest) | [CreateOrganisationResponse](#mediator-v1-CreateOrganisationResponse) |  |
-| GetOrganisations | [GetOrganisationsRequest](#mediator-v1-GetOrganisationsRequest) | [GetOrganisationsResponse](#mediator-v1-GetOrganisationsResponse) |  |
-| GetOrganisation | [GetOrganisationRequest](#mediator-v1-GetOrganisationRequest) | [GetOrganisationResponse](#mediator-v1-GetOrganisationResponse) |  |
-| GetOrganisationByName | [GetOrganisationByNameRequest](#mediator-v1-GetOrganisationByNameRequest) | [GetOrganisationByNameResponse](#mediator-v1-GetOrganisationByNameResponse) |  |
-| DeleteOrganisation | [DeleteOrganisationRequest](#mediator-v1-DeleteOrganisationRequest) | [DeleteOrganisationResponse](#mediator-v1-DeleteOrganisationResponse) |  |
+| CreateOrganization | [CreateOrganizationRequest](#mediator-v1-CreateOrganizationRequest) | [CreateOrganizationResponse](#mediator-v1-CreateOrganizationResponse) |  |
+| GetOrganizations | [GetOrganizationsRequest](#mediator-v1-GetOrganizationsRequest) | [GetOrganizationsResponse](#mediator-v1-GetOrganizationsResponse) |  |
+| GetOrganization | [GetOrganizationRequest](#mediator-v1-GetOrganizationRequest) | [GetOrganizationResponse](#mediator-v1-GetOrganizationResponse) |  |
+| GetOrganizationByName | [GetOrganizationByNameRequest](#mediator-v1-GetOrganizationByNameRequest) | [GetOrganizationByNameResponse](#mediator-v1-GetOrganizationByNameResponse) |  |
+| DeleteOrganization | [DeleteOrganizationRequest](#mediator-v1-DeleteOrganizationRequest) | [DeleteOrganizationResponse](#mediator-v1-DeleteOrganizationResponse) |  |
 
 
 <a name="mediator-v1-RoleService"></a>

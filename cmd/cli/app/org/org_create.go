@@ -34,6 +34,7 @@ import (
 	"github.com/stacklok/mediator/pkg/util"
 )
 
+// Org_createCmd is the command for creating an organization
 var Org_createCmd = &cobra.Command{
 	Use:   "create",
 	Short: "Create an organization within a mediator control plane",
