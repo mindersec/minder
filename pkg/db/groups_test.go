@@ -34,7 +34,7 @@ import (
 func createRandomGroup(t *testing.T, org int32) Group {
 	seed := time.Now().UnixNano()
 	arg := CreateGroupParams{
-		OrganisationID: org,
+		OrganizationID: org,
 		Name:           util.RandomName(seed),
 	}
 
@@ -42,7 +42,7 @@ func createRandomGroup(t *testing.T, org int32) Group {
 	require.NoError(t, err)
 	require.NotEmpty(t, group)
 
-	require.Equal(t, arg.OrganisationID, group.OrganisationID)
+	require.Equal(t, arg.OrganizationID, group.OrganizationID)
 	require.Equal(t, arg.Name, group.Name)
 
 	require.NotZero(t, group.ID)
@@ -53,12 +53,12 @@ func createRandomGroup(t *testing.T, org int32) Group {
 }
 
 func TestGroup(t *testing.T) {
-	org := createRandomOrganisation(t)
+	org := createRandomOrganization(t)
 	createRandomGroup(t, org.ID)
 }
 
 func TestGetGroup(t *testing.T) {
-	org := createRandomOrganisation(t)
+	org := createRandomOrganization(t)
 	group1 := createRandomGroup(t, org.ID)
 
 	group2, err := testQueries.GetGroupByID(context.Background(), group1.ID)
@@ -66,7 +66,7 @@ func TestGetGroup(t *testing.T) {
 	require.NoError(t, err)
 	require.NotEmpty(t, group2)
 
-	require.Equal(t, group1.OrganisationID, group2.OrganisationID)
+	require.Equal(t, group1.OrganizationID, group2.OrganizationID)
 	require.Equal(t, group1.Name, group2.Name)
 
 	require.NotZero(t, group2.ID)
@@ -75,14 +75,14 @@ func TestGetGroup(t *testing.T) {
 }
 
 func TestListGroups(t *testing.T) {
-	org := createRandomOrganisation(t)
+	org := createRandomOrganization(t)
 
 	for i := 0; i < 10; i++ {
 		createRandomGroup(t, org.ID)
 	}
 
 	arg := ListGroupsParams{
-		OrganisationID: org.ID,
+		OrganizationID: org.ID,
 		Limit:          5,
 		Offset:         5,
 	}
@@ -99,12 +99,12 @@ func TestListGroups(t *testing.T) {
 
 func TestUpdateGroup(t *testing.T) {
 	seed := time.Now().UnixNano()
-	org := createRandomOrganisation(t)
+	org := createRandomOrganization(t)
 	group1 := createRandomGroup(t, org.ID)
 
 	arg := UpdateGroupParams{
 		ID:             group1.ID,
-		OrganisationID: org.ID,
+		OrganizationID: org.ID,
 		Name:           util.RandomName(seed),
 	}
 
@@ -113,7 +113,7 @@ func TestUpdateGroup(t *testing.T) {
 	require.NoError(t, err)
 	require.NotEmpty(t, group2)
 
-	require.Equal(t, arg.OrganisationID, group2.OrganisationID)
+	require.Equal(t, arg.OrganizationID, group2.OrganizationID)
 	require.Equal(t, arg.Name, group2.Name)
 
 	require.NotZero(t, group2.ID)
@@ -122,7 +122,7 @@ func TestUpdateGroup(t *testing.T) {
 }
 
 func TestDeleteGroup(t *testing.T) {
-	org := createRandomOrganisation(t)
+	org := createRandomOrganization(t)
 	group1 := createRandomGroup(t, org.ID)
 
 	err := testQueries.DeleteGroup(context.Background(), group1.ID)
@@ -135,9 +135,9 @@ func TestDeleteGroup(t *testing.T) {
 	require.Empty(t, group2)
 }
 
-func TestListGroupsByOrganisation(t *testing.T) {
-	org1 := createRandomOrganisation(t)
-	org2 := createRandomOrganisation(t)
+func TestListGroupsByOrganization(t *testing.T) {
+	org1 := createRandomOrganization(t)
+	org2 := createRandomOrganization(t)
 
 	for i := 0; i < 10; i++ {
 		createRandomGroup(t, org1.ID)
@@ -145,7 +145,7 @@ func TestListGroupsByOrganisation(t *testing.T) {
 	}
 
 	arg := ListGroupsParams{
-		OrganisationID: org1.ID,
+		OrganizationID: org1.ID,
 		Limit:          5,
 		Offset:         5,
 	}
@@ -157,6 +157,6 @@ func TestListGroupsByOrganisation(t *testing.T) {
 
 	for _, group := range groups {
 		require.NotEmpty(t, group)
-		require.Equal(t, org1.ID, group.OrganisationID)
+		require.Equal(t, org1.ID, group.OrganizationID)
 	}
 }

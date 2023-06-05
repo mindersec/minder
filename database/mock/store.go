@@ -80,19 +80,19 @@ func (mr *MockStoreMockRecorder) CreateGroup(arg0, arg1 interface{}) *gomock.Cal
 	return mr.mock.ctrl.RecordCallWithMethodType(mr.mock, "CreateGroup", reflect.TypeOf((*MockStore)(nil).CreateGroup), arg0, arg1)
 }
 
-// CreateOrganisation mocks base method.
-func (m *MockStore) CreateOrganisation(arg0 context.Context, arg1 db.CreateOrganisationParams) (db.Organisation, error) {
+// CreateOrganization mocks base method.
+func (m *MockStore) CreateOrganization(arg0 context.Context, arg1 db.CreateOrganizationParams) (db.Organization, error) {
 	m.ctrl.T.Helper()
-	ret := m.ctrl.Call(m, "CreateOrganisation", arg0, arg1)
-	ret0, _ := ret[0].(db.Organisation)
+	ret := m.ctrl.Call(m, "CreateOrganization", arg0, arg1)
+	ret0, _ := ret[0].(db.Organization)
 	ret1, _ := ret[1].(error)
 	return ret0, ret1
 }
 
-// CreateOrganisation indicates an expected call of CreateOrganisation.
-func (mr *MockStoreMockRecorder) CreateOrganisation(arg0, arg1 interface{}) *gomock.Call {
+// CreateOrganization indicates an expected call of CreateOrganization.
+func (mr *MockStoreMockRecorder) CreateOrganization(arg0, arg1 interface{}) *gomock.Call {
 	mr.mock.ctrl.T.Helper()
-	return mr.mock.ctrl.RecordCallWithMethodType(mr.mock, "CreateOrganisation", reflect.TypeOf((*MockStore)(nil).CreateOrganisation), arg0, arg1)
+	return mr.mock.ctrl.RecordCallWithMethodType(mr.mock, "CreateOrganization", reflect.TypeOf((*MockStore)(nil).CreateOrganization), arg0, arg1)
 }
 
 // CreateRole mocks base method.
@@ -153,18 +153,18 @@ func (mr *MockStoreMockRecorder) DeleteGroup(arg0, arg1 interface{}) *gomock.Cal
 	return mr.mock.ctrl.RecordCallWithMethodType(mr.mock, "DeleteGroup", reflect.TypeOf((*MockStore)(nil).DeleteGroup), arg0, arg1)
 }
 
-// DeleteOrganisation mocks base method.
-func (m *MockStore) DeleteOrganisation(arg0 context.Context, arg1 int32) error {
+// DeleteOrganization mocks base method.
+func (m *MockStore) DeleteOrganization(arg0 context.Context, arg1 int32) error {
 	m.ctrl.T.Helper()
-	ret := m.ctrl.Call(m, "DeleteOrganisation", arg0, arg1)
+	ret := m.ctrl.Call(m, "DeleteOrganization", arg0, arg1)
 	ret0, _ := ret[0].(error)
 	return ret0
 }
 
-// DeleteOrganisation indicates an expected call of DeleteOrganisation.
-func (mr *MockStoreMockRecorder) DeleteOrganisation(arg0, arg1 interface{}) *gomock.Call {
+// DeleteOrganization indicates an expected call of DeleteOrganization.
+func (mr *MockStoreMockRecorder) DeleteOrganization(arg0, arg1 interface{}) *gomock.Call {
 	mr.mock.ctrl.T.Helper()
-	return mr.mock.ctrl.RecordCallWithMethodType(mr.mock, "DeleteOrganisation", reflect.TypeOf((*MockStore)(nil).DeleteOrganisation), arg0, arg1)
+	return mr.mock.ctrl.RecordCallWithMethodType(mr.mock, "DeleteOrganization", reflect.TypeOf((*MockStore)(nil).DeleteOrganization), arg0, arg1)
 }
 
 // DeleteRole mocks base method.
@@ -195,19 +195,19 @@ func (mr *MockStoreMockRecorder) DeleteUser(arg0, arg1 interface{}) *gomock.Call
 	return mr.mock.ctrl.RecordCallWithMethodType(mr.mock, "DeleteUser", reflect.TypeOf((*MockStore)(nil).DeleteUser), arg0, arg1)
 }
 
-// GetAccessTokenByOrganisationID mocks base method.
-func (m *MockStore) GetAccessTokenByOrganisationID(arg0 context.Context, arg1 int32) (db.AccessToken, error) {
+// GetAccessTokenByOrganizationID mocks base method.
+func (m *MockStore) GetAccessTokenByOrganizationID(arg0 context.Context, arg1 int32) (db.AccessToken, error) {
 	m.ctrl.T.Helper()
-	ret := m.ctrl.Call(m, "GetAccessTokenByOrganisationID", arg0, arg1)
+	ret := m.ctrl.Call(m, "GetAccessTokenByOrganizationID", arg0, arg1)
 	ret0, _ := ret[0].(db.AccessToken)
 	ret1, _ := ret[1].(error)
 	return ret0, ret1
 }
 
-// GetAccessTokenByOrganisationID indicates an expected call of GetAccessTokenByOrganisationID.
-func (mr *MockStoreMockRecorder) GetAccessTokenByOrganisationID(arg0, arg1 interface{}) *gomock.Call {
+// GetAccessTokenByOrganizationID indicates an expected call of GetAccessTokenByOrganizationID.
+func (mr *MockStoreMockRecorder) GetAccessTokenByOrganizationID(arg0, arg1 interface{}) *gomock.Call {
 	mr.mock.ctrl.T.Helper()
-	return mr.mock.ctrl.RecordCallWithMethodType(mr.mock, "GetAccessTokenByOrganisationID", reflect.TypeOf((*MockStore)(nil).GetAccessTokenByOrganisationID), arg0, arg1)
+	return mr.mock.ctrl.RecordCallWithMethodType(mr.mock, "GetAccessTokenByOrganizationID", reflect.TypeOf((*MockStore)(nil).GetAccessTokenByOrganizationID), arg0, arg1)
 }
 
 // GetGroupByID mocks base method.
@@ -240,49 +240,49 @@ func (mr *MockStoreMockRecorder) GetGroupByName(arg0, arg1 interface{}) *gomock.
 	return mr.mock.ctrl.RecordCallWithMethodType(mr.mock, "GetGroupByName", reflect.TypeOf((*MockStore)(nil).GetGroupByName), arg0, arg1)
 }
 
-// GetOrganisation mocks base method.
-func (m *MockStore) GetOrganisation(arg0 context.Context, arg1 int32) (db.Organisation, error) {
+// GetOrganization mocks base method.
+func (m *MockStore) GetOrganization(arg0 context.Context, arg1 int32) (db.Organization, error) {
 	m.ctrl.T.Helper()
-	ret := m.ctrl.Call(m, "GetOrganisation", arg0, arg1)
-	ret0, _ := ret[0].(db.Organisation)
+	ret := m.ctrl.Call(m, "GetOrganization", arg0, arg1)
+	ret0, _ := ret[0].(db.Organization)
 	ret1, _ := ret[1].(error)
 	return ret0, ret1
 }
 
-// GetOrganisation indicates an expected call of GetOrganisation.
-func (mr *MockStoreMockRecorder) GetOrganisation(arg0, arg1 interface{}) *gomock.Call {
+// GetOrganization indicates an expected call of GetOrganization.
+func (mr *MockStoreMockRecorder) GetOrganization(arg0, arg1 interface{}) *gomock.Call {
 	mr.mock.ctrl.T.Helper()
-	return mr.mock.ctrl.RecordCallWithMethodType(mr.mock, "GetOrganisation", reflect.TypeOf((*MockStore)(nil).GetOrganisation), arg0, arg1)
+	return mr.mock.ctrl.RecordCallWithMethodType(mr.mock, "GetOrganization", reflect.TypeOf((*MockStore)(nil).GetOrganization), arg0, arg1)
 }
 
-// GetOrganisationByName mocks base method.
-func (m *MockStore) GetOrganisationByName(arg0 context.Context, arg1 string) (db.Organisation, error) {
+// GetOrganizationByName mocks base method.
+func (m *MockStore) GetOrganizationByName(arg0 context.Context, arg1 string) (db.Organization, error) {
 	m.ctrl.T.Helper()
-	ret := m.ctrl.Call(m, "GetOrganisationByName", arg0, arg1)
-	ret0, _ := ret[0].(db.Organisation)
+	ret := m.ctrl.Call(m, "GetOrganizationByName", arg0, arg1)
+	ret0, _ := ret[0].(db.Organization)
 	ret1, _ := ret[1].(error)
 	return ret0, ret1
 }
 
-// GetOrganisationByName indicates an expected call of GetOrganisationByName.
-func (mr *MockStoreMockRecorder) GetOrganisationByName(arg0, arg1 interface{}) *gomock.Call {
+// GetOrganizationByName indicates an expected call of GetOrganizationByName.
+func (mr *MockStoreMockRecorder) GetOrganizationByName(arg0, arg1 interface{}) *gomock.Call {
 	mr.mock.ctrl.T.Helper()
-	return mr.mock.ctrl.RecordCallWithMethodType(mr.mock, "GetOrganisationByName", reflect.TypeOf((*MockStore)(nil).GetOrganisationByName), arg0, arg1)
+	return mr.mock.ctrl.RecordCallWithMethodType(mr.mock, "GetOrganizationByName", reflect.TypeOf((*MockStore)(nil).GetOrganizationByName), arg0, arg1)
 }
 
-// GetOrganisationForUpdate mocks base method.
-func (m *MockStore) GetOrganisationForUpdate(arg0 context.Context, arg1 string) (db.Organisation, error) {
+// GetOrganizationForUpdate mocks base method.
+func (m *MockStore) GetOrganizationForUpdate(arg0 context.Context, arg1 string) (db.Organization, error) {
 	m.ctrl.T.Helper()
-	ret := m.ctrl.Call(m, "GetOrganisationForUpdate", arg0, arg1)
-	ret0, _ := ret[0].(db.Organisation)
+	ret := m.ctrl.Call(m, "GetOrganizationForUpdate", arg0, arg1)
+	ret0, _ := ret[0].(db.Organization)
 	ret1, _ := ret[1].(error)
 	return ret0, ret1
 }
 
-// GetOrganisationForUpdate indicates an expected call of GetOrganisationForUpdate.
-func (mr *MockStoreMockRecorder) GetOrganisationForUpdate(arg0, arg1 interface{}) *gomock.Call {
+// GetOrganizationForUpdate indicates an expected call of GetOrganizationForUpdate.
+func (mr *MockStoreMockRecorder) GetOrganizationForUpdate(arg0, arg1 interface{}) *gomock.Call {
 	mr.mock.ctrl.T.Helper()
-	return mr.mock.ctrl.RecordCallWithMethodType(mr.mock, "GetOrganisationForUpdate", reflect.TypeOf((*MockStore)(nil).GetOrganisationForUpdate), arg0, arg1)
+	return mr.mock.ctrl.RecordCallWithMethodType(mr.mock, "GetOrganizationForUpdate", reflect.TypeOf((*MockStore)(nil).GetOrganizationForUpdate), arg0, arg1)
 }
 
 // GetRoleByID mocks base method.
@@ -375,34 +375,34 @@ func (mr *MockStoreMockRecorder) ListGroups(arg0, arg1 interface{}) *gomock.Call
 	return mr.mock.ctrl.RecordCallWithMethodType(mr.mock, "ListGroups", reflect.TypeOf((*MockStore)(nil).ListGroups), arg0, arg1)
 }
 
-// ListGroupsByOrganisationID mocks base method.
-func (m *MockStore) ListGroupsByOrganisationID(arg0 context.Context, arg1 int32) ([]db.Group, error) {
+// ListGroupsByOrganizationID mocks base method.
+func (m *MockStore) ListGroupsByOrganizationID(arg0 context.Context, arg1 int32) ([]db.Group, error) {
 	m.ctrl.T.Helper()
-	ret := m.ctrl.Call(m, "ListGroupsByOrganisationID", arg0, arg1)
+	ret := m.ctrl.Call(m, "ListGroupsByOrganizationID", arg0, arg1)
 	ret0, _ := ret[0].([]db.Group)
 	ret1, _ := ret[1].(error)
 	return ret0, ret1
 }
 
-// ListGroupsByOrganisationID indicates an expected call of ListGroupsByOrganisationID.
-func (mr *MockStoreMockRecorder) ListGroupsByOrganisationID(arg0, arg1 interface{}) *gomock.Call {
+// ListGroupsByOrganizationID indicates an expected call of ListGroupsByOrganizationID.
+func (mr *MockStoreMockRecorder) ListGroupsByOrganizationID(arg0, arg1 interface{}) *gomock.Call {
 	mr.mock.ctrl.T.Helper()
-	return mr.mock.ctrl.RecordCallWithMethodType(mr.mock, "ListGroupsByOrganisationID", reflect.TypeOf((*MockStore)(nil).ListGroupsByOrganisationID), arg0, arg1)
+	return mr.mock.ctrl.RecordCallWithMethodType(mr.mock, "ListGroupsByOrganizationID", reflect.TypeOf((*MockStore)(nil).ListGroupsByOrganizationID), arg0, arg1)
 }
 
-// ListOrganisations mocks base method.
-func (m *MockStore) ListOrganisations(arg0 context.Context, arg1 db.ListOrganisationsParams) ([]db.Organisation, error) {
+// ListOrganizations mocks base method.
+func (m *MockStore) ListOrganizations(arg0 context.Context, arg1 db.ListOrganizationsParams) ([]db.Organization, error) {
 	m.ctrl.T.Helper()
-	ret := m.ctrl.Call(m, "ListOrganisations", arg0, arg1)
-	ret0, _ := ret[0].([]db.Organisation)
+	ret := m.ctrl.Call(m, "ListOrganizations", arg0, arg1)
+	ret0, _ := ret[0].([]db.Organization)
 	ret1, _ := ret[1].(error)
 	return ret0, ret1
 }
 
-// ListOrganisations indicates an expected call of ListOrganisations.
-func (mr *MockStoreMockRecorder) ListOrganisations(arg0, arg1 interface{}) *gomock.Call {
+// ListOrganizations indicates an expected call of ListOrganizations.
+func (mr *MockStoreMockRecorder) ListOrganizations(arg0, arg1 interface{}) *gomock.Call {
 	mr.mock.ctrl.T.Helper()
-	return mr.mock.ctrl.RecordCallWithMethodType(mr.mock, "ListOrganisations", reflect.TypeOf((*MockStore)(nil).ListOrganisations), arg0, arg1)
+	return mr.mock.ctrl.RecordCallWithMethodType(mr.mock, "ListOrganizations", reflect.TypeOf((*MockStore)(nil).ListOrganizations), arg0, arg1)
 }
 
 // ListRoles mocks base method.
@@ -495,19 +495,19 @@ func (mr *MockStoreMockRecorder) UpdateGroup(arg0, arg1 interface{}) *gomock.Cal
 	return mr.mock.ctrl.RecordCallWithMethodType(mr.mock, "UpdateGroup", reflect.TypeOf((*MockStore)(nil).UpdateGroup), arg0, arg1)
 }
 
-// UpdateOrganisation mocks base method.
-func (m *MockStore) UpdateOrganisation(arg0 context.Context, arg1 db.UpdateOrganisationParams) (db.Organisation, error) {
+// UpdateOrganization mocks base method.
+func (m *MockStore) UpdateOrganization(arg0 context.Context, arg1 db.UpdateOrganizationParams) (db.Organization, error) {
 	m.ctrl.T.Helper()
-	ret := m.ctrl.Call(m, "UpdateOrganisation", arg0, arg1)
-	ret0, _ := ret[0].(db.Organisation)
+	ret := m.ctrl.Call(m, "UpdateOrganization", arg0, arg1)
+	ret0, _ := ret[0].(db.Organization)
 	ret1, _ := ret[1].(error)
 	return ret0, ret1
 }
 
-// UpdateOrganisation indicates an expected call of UpdateOrganisation.
-func (mr *MockStoreMockRecorder) UpdateOrganisation(arg0, arg1 interface{}) *gomock.Call {
+// UpdateOrganization indicates an expected call of UpdateOrganization.
+func (mr *MockStoreMockRecorder) UpdateOrganization(arg0, arg1 interface{}) *gomock.Call {
 	mr.mock.ctrl.T.Helper()
-	return mr.mock.ctrl.RecordCallWithMethodType(mr.mock, "UpdateOrganisation", reflect.TypeOf((*MockStore)(nil).UpdateOrganisation), arg0, arg1)
+	return mr.mock.ctrl.RecordCallWithMethodType(mr.mock, "UpdateOrganization", reflect.TypeOf((*MockStore)(nil).UpdateOrganization), arg0, arg1)
 }
 
 // UpdateRole mocks base method.

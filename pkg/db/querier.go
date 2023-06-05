@@ -12,35 +12,35 @@ import (
 type Querier interface {
 	CreateAccessToken(ctx context.Context, arg CreateAccessTokenParams) (AccessToken, error)
 	CreateGroup(ctx context.Context, arg CreateGroupParams) (Group, error)
-	CreateOrganisation(ctx context.Context, arg CreateOrganisationParams) (Organisation, error)
+	CreateOrganization(ctx context.Context, arg CreateOrganizationParams) (Organization, error)
 	CreateRole(ctx context.Context, arg CreateRoleParams) (Role, error)
 	CreateUser(ctx context.Context, arg CreateUserParams) (User, error)
-	DeleteAccessToken(ctx context.Context, organisationID int32) error
+	DeleteAccessToken(ctx context.Context, organizationID int32) error
 	DeleteGroup(ctx context.Context, id int32) error
-	DeleteOrganisation(ctx context.Context, id int32) error
+	DeleteOrganization(ctx context.Context, id int32) error
 	DeleteRole(ctx context.Context, id int32) error
 	DeleteUser(ctx context.Context, id int32) error
-	GetAccessTokenByOrganisationID(ctx context.Context, organisationID int32) (AccessToken, error)
+	GetAccessTokenByOrganizationID(ctx context.Context, organizationID int32) (AccessToken, error)
 	GetGroupByID(ctx context.Context, id int32) (Group, error)
 	GetGroupByName(ctx context.Context, name string) (Group, error)
-	GetOrganisation(ctx context.Context, id int32) (Organisation, error)
-	GetOrganisationByName(ctx context.Context, name string) (Organisation, error)
-	GetOrganisationForUpdate(ctx context.Context, name string) (Organisation, error)
+	GetOrganization(ctx context.Context, id int32) (Organization, error)
+	GetOrganizationByName(ctx context.Context, name string) (Organization, error)
+	GetOrganizationForUpdate(ctx context.Context, name string) (Organization, error)
 	GetRoleByID(ctx context.Context, id int32) (Role, error)
 	GetRoleByName(ctx context.Context, arg GetRoleByNameParams) (Role, error)
 	GetUserByEmail(ctx context.Context, email sql.NullString) (User, error)
 	GetUserByID(ctx context.Context, id int32) (User, error)
 	GetUserByUserName(ctx context.Context, username string) (User, error)
 	ListGroups(ctx context.Context, arg ListGroupsParams) ([]Group, error)
-	ListGroupsByOrganisationID(ctx context.Context, organisationID int32) ([]Group, error)
-	ListOrganisations(ctx context.Context, arg ListOrganisationsParams) ([]Organisation, error)
+	ListGroupsByOrganizationID(ctx context.Context, organizationID int32) ([]Group, error)
+	ListOrganizations(ctx context.Context, arg ListOrganizationsParams) ([]Organization, error)
 	ListRoles(ctx context.Context, arg ListRolesParams) ([]Role, error)
 	ListRolesByGroupID(ctx context.Context, groupID int32) ([]Role, error)
 	ListUsers(ctx context.Context, arg ListUsersParams) ([]User, error)
 	ListUsersByRoleID(ctx context.Context, roleID int32) ([]User, error)
 	UpdateAccessToken(ctx context.Context, arg UpdateAccessTokenParams) (AccessToken, error)
 	UpdateGroup(ctx context.Context, arg UpdateGroupParams) (Group, error)
-	UpdateOrganisation(ctx context.Context, arg UpdateOrganisationParams) (Organisation, error)
+	UpdateOrganization(ctx context.Context, arg UpdateOrganizationParams) (Organization, error)
 	UpdateRole(ctx context.Context, arg UpdateRoleParams) (Role, error)
 	UpdateUser(ctx context.Context, arg UpdateUserParams) (User, error)
 }

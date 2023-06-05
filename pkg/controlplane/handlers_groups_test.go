@@ -40,7 +40,7 @@ func TestCreateGroupDBMock(t *testing.T) {
 	mockStore := mockdb.NewMockStore(ctrl)
 
 	request := &pb.CreateGroupRequest{
-		OrganisationId: 1,
+		OrganizationId: 1,
 		Name:           "TestGroup",
 		Description:    "TestDescription",
 		IsProtected:    nil,
@@ -48,7 +48,7 @@ func TestCreateGroupDBMock(t *testing.T) {
 
 	expectedGroup := db.Group{
 		ID:             1,
-		OrganisationID: 1,
+		OrganizationID: 1,
 		Name:           "TestGroup",
 		Description:    sql.NullString{String: "TestDescription", Valid: true},
 		IsProtected:    false,
@@ -70,7 +70,7 @@ func TestCreateGroupDBMock(t *testing.T) {
 	assert.NotNil(t, response)
 	assert.Equal(t, expectedGroup.ID, response.GroupId)
 	assert.Equal(t, expectedGroup.Name, response.Name)
-	assert.Equal(t, expectedGroup.OrganisationID, response.OrganisationId)
+	assert.Equal(t, expectedGroup.OrganizationID, response.OrganizationId)
 	assert.Equal(t, expectedGroup.IsProtected, response.IsProtected)
 }
 
@@ -85,7 +85,7 @@ func TestCreateGroup_gRPC(t *testing.T) {
 		{
 			name: "Success",
 			req: &pb.CreateGroupRequest{
-				OrganisationId: 1,
+				OrganizationId: 1,
 				Name:           "TestGroup",
 			},
 			buildStubs: func(store *mockdb.MockStore) {
@@ -94,7 +94,7 @@ func TestCreateGroup_gRPC(t *testing.T) {
 					CreateGroup(gomock.Any(), gomock.Any()).
 					Return(db.Group{
 						ID:             1,
-						OrganisationID: 1,
+						OrganizationID: 1,
 						Name:           "TestGroup",
 						IsProtected:    false,
 						CreatedAt:      time.Now(),
@@ -106,7 +106,7 @@ func TestCreateGroup_gRPC(t *testing.T) {
 				assert.NoError(t, err)
 				assert.NotNil(t, res)
 				assert.Equal(t, int32(1), res.GroupId)
-				assert.Equal(t, int32(1), res.OrganisationId)
+				assert.Equal(t, int32(1), res.OrganizationId)
 				assert.Equal(t, "TestGroup", res.Name)
 				assert.Equal(t, false, res.IsProtected)
 				assert.NotNil(t, res.CreatedAt)
@@ -131,7 +131,7 @@ func TestCreateGroup_gRPC(t *testing.T) {
 		{
 			name: "StoreError",
 			req: &pb.CreateGroupRequest{
-				OrganisationId: 1,
+				OrganizationId: 1,
 				Name:           "TestGroup",
 			},
 			buildStubs: func(store *mockdb.MockStore) {
@@ -179,7 +179,7 @@ func TestDeleteGroupDBMock(t *testing.T) {
 
 	expectedGroup := db.Group{
 		ID:             1,
-		OrganisationID: 1,
+		OrganizationID: 1,
 		Name:           "test",
 		IsProtected:    false,
 		CreatedAt:      time.Now(),
@@ -276,19 +276,19 @@ func TestGetGroupsDBMock(t *testing.T) {
 
 	mockStore := mockdb.NewMockStore(ctrl)
 
-	request := &pb.GetGroupsRequest{OrganisationId: 1}
+	request := &pb.GetGroupsRequest{OrganizationId: 1}
 
 	expectedGroups := []db.Group{
 		{
 			ID:             1,
-			OrganisationID: 1,
+			OrganizationID: 1,
 			Name:           "test",
 			CreatedAt:      time.Now(),
 			UpdatedAt:      time.Now(),
 		},
 		{
 			ID:             2,
-			OrganisationID: 1,
+			OrganizationID: 1,
 			Name:           "test1",
 			IsProtected:    true,
 			CreatedAt:      time.Now(),
@@ -309,7 +309,7 @@ func TestGetGroupsDBMock(t *testing.T) {
 	assert.NotNil(t, response)
 	assert.Equal(t, len(expectedGroups), len(response.Groups))
 	assert.Equal(t, expectedGroups[0].ID, response.Groups[0].GroupId)
-	assert.Equal(t, expectedGroups[0].OrganisationID, response.Groups[0].GroupId)
+	assert.Equal(t, expectedGroups[0].OrganizationID, response.Groups[0].GroupId)
 	assert.Equal(t, expectedGroups[0].Name, response.Groups[0].Name)
 
 	expectedCreatedAt := expectedGroups[0].CreatedAt.In(time.UTC)
@@ -328,20 +328,20 @@ func TestGetGroups_gRPC(t *testing.T) {
 	}{
 		{
 			name: "Success",
-			req:  &pb.GetGroupsRequest{OrganisationId: 1},
+			req:  &pb.GetGroupsRequest{OrganizationId: 1},
 			buildStubs: func(store *mockdb.MockStore) {
 				store.EXPECT().ListGroups(gomock.Any(), gomock.Any()).
 					Return([]db.Group{
 						{
 							ID:             1,
-							OrganisationID: 1,
+							OrganizationID: 1,
 							Name:           "test",
 							CreatedAt:      time.Now(),
 							UpdatedAt:      time.Now(),
 						},
 						{
 							ID:             2,
-							OrganisationID: 1,
+							OrganizationID: 1,
 							Name:           "test1",
 							IsProtected:    true,
 							CreatedAt:      time.Now(),
@@ -354,14 +354,14 @@ func TestGetGroups_gRPC(t *testing.T) {
 				expectedGroups := []*pb.GroupRecord{
 					{
 						GroupId:        1,
-						OrganisationId: 1,
+						OrganizationId: 1,
 						Name:           "test",
 						CreatedAt:      timestamppb.New(time.Now()),
 						UpdatedAt:      timestamppb.New(time.Now()),
 					},
 					{
 						GroupId:        2,
-						OrganisationId: 1,
+						OrganizationId: 1,
 						Name:           "test1",
 						IsProtected:    true,
 						CreatedAt:      timestamppb.New(time.Now()),
@@ -372,7 +372,7 @@ func TestGetGroups_gRPC(t *testing.T) {
 				assert.NoError(t, err)
 				assert.NotNil(t, res)
 				assert.Equal(t, len(expectedGroups), len(res.Groups))
-				assert.Equal(t, expectedGroups[0].OrganisationId, res.Groups[0].OrganisationId)
+				assert.Equal(t, expectedGroups[0].OrganizationId, res.Groups[0].OrganizationId)
 				assert.Equal(t, expectedGroups[0].GroupId, res.Groups[0].GroupId)
 				assert.Equal(t, expectedGroups[0].Name, res.Groups[0].Name)
 			},
@@ -408,7 +408,7 @@ func TestGetGroupDBMock(t *testing.T) {
 
 	expectedGroup := db.Group{
 		ID:             1,
-		OrganisationID: 1,
+		OrganizationID: 1,
 		Name:           "test",
 		CreatedAt:      time.Now(),
 		UpdatedAt:      time.Now(),
@@ -426,7 +426,7 @@ func TestGetGroupDBMock(t *testing.T) {
 	assert.NoError(t, err)
 	assert.NotNil(t, response)
 	assert.Equal(t, expectedGroup.ID, response.Group.GroupId)
-	assert.Equal(t, expectedGroup.OrganisationID, response.Group.OrganisationId)
+	assert.Equal(t, expectedGroup.OrganizationID, response.Group.OrganizationId)
 	assert.Equal(t, expectedGroup.Name, response.Group.Name)
 	expectedCreatedAt := expectedGroup.CreatedAt.In(time.UTC)
 	assert.Equal(t, expectedCreatedAt, response.Group.CreatedAt.AsTime().In(time.UTC))
@@ -470,7 +470,7 @@ func TestGetGroup_gRPC(t *testing.T) {
 				store.EXPECT().GetGroupByID(gomock.Any(), gomock.Any()).
 					Return(db.Group{
 						ID:             1,
-						OrganisationID: 1,
+						OrganizationID: 1,
 						Name:           "test",
 						CreatedAt:      time.Now(),
 						UpdatedAt:      time.Now(),
@@ -480,7 +480,7 @@ func TestGetGroup_gRPC(t *testing.T) {
 			checkResponse: func(t *testing.T, res *pb.GetGroupByIdResponse, err error) {
 				expectedGroup := pb.GroupRecord{
 					GroupId:        1,
-					OrganisationId: 1,
+					OrganizationId: 1,
 					Name:           "test",
 					CreatedAt:      timestamppb.New(time.Now()),
 					UpdatedAt:      timestamppb.New(time.Now()),
@@ -488,7 +488,7 @@ func TestGetGroup_gRPC(t *testing.T) {
 
 				assert.NoError(t, err)
 				assert.NotNil(t, res)
-				assert.Equal(t, expectedGroup.OrganisationId, res.Group.OrganisationId)
+				assert.Equal(t, expectedGroup.OrganizationId, res.Group.OrganizationId)
 				assert.Equal(t, expectedGroup.GroupId, res.Group.GroupId)
 				assert.Equal(t, expectedGroup.Name, res.Group.Name)
 			},

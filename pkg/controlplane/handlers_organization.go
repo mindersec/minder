@@ -24,43 +24,43 @@ import (
 	"google.golang.org/protobuf/types/known/timestamppb"
 )
 
-type createOrganisationValidation struct {
+type createOrganizationValidation struct {
 	Name    string `db:"name" validate:"required"`
 	Company string `db:"company" validate:"required"`
 }
 
-// CreateOrganisation is a service for creating an organisation
-func (s *Server) CreateOrganisation(ctx context.Context,
-	in *pb.CreateOrganisationRequest) (*pb.CreateOrganisationResponse, error) {
+// CreateOrganization is a service for creating an organization
+func (s *Server) CreateOrganization(ctx context.Context,
+	in *pb.CreateOrganizationRequest) (*pb.CreateOrganizationResponse, error) {
 	// validate that the company and name are not empty
 	validator := validator.New()
-	err := validator.Struct(createOrganisationValidation{Name: in.Name, Company: in.Company})
+	err := validator.Struct(createOrganizationValidation{Name: in.Name, Company: in.Company})
 	if err != nil {
 		return nil, err
 	}
 
-	org, err := s.store.CreateOrganisation(ctx, db.CreateOrganisationParams{Name: in.Name, Company: in.Company})
+	org, err := s.store.CreateOrganization(ctx, db.CreateOrganizationParams{Name: in.Name, Company: in.Company})
 	if err != nil {
 		return nil, err
 	}
 
-	response := &pb.CreateOrganisationResponse{Id: org.ID, Name: org.Name,
+	response := &pb.CreateOrganizationResponse{Id: org.ID, Name: org.Name,
 		Company: org.Company, CreatedAt: timestamppb.New(org.CreatedAt),
 		UpdatedAt: timestamppb.New(org.UpdatedAt)}
 
 	if in.CreateDefaultRecords {
-		// we need to create the default records for the organisation
+		// we need to create the default records for the organization
 		protectedPtr := true
 		adminPtr := true
 		group, _ := s.CreateGroup(ctx, &pb.CreateGroupRequest{
-			OrganisationId: org.ID,
+			OrganizationId: org.ID,
 			Name:           fmt.Sprintf("%s-admin", org.Name),
 			Description:    fmt.Sprintf("Default admin group for %s", org.Name),
 			IsProtected:    &protectedPtr,
 		})
 
 		if group != nil {
-			grp := pb.GroupRecord{GroupId: group.GroupId, OrganisationId: group.OrganisationId,
+			grp := pb.GroupRecord{GroupId: group.GroupId, OrganizationId: group.OrganizationId,
 				Name: group.Name, Description: group.Description,
 				IsProtected: group.IsProtected, CreatedAt: group.CreatedAt, UpdatedAt: group.UpdatedAt}
 			response.DefaultGroup = &grp
@@ -97,9 +97,9 @@ func (s *Server) CreateOrganisation(ctx context.Context,
 	return response, nil
 }
 
-// GetOrganisations is a service for getting a list of organisations
-func (s *Server) GetOrganisations(ctx context.Context,
-	in *pb.GetOrganisationsRequest) (*pb.GetOrganisationsResponse, error) {
+// GetOrganizations is a service for getting a list of organizations
+func (s *Server) GetOrganizations(ctx context.Context,
+	in *pb.GetOrganizationsRequest) (*pb.GetOrganizationsResponse, error) {
 
 	// define default values for limit and offset
 	if in.Limit == nil || *in.Limit == -1 {
@@ -111,7 +111,7 @@ func (s *Server) GetOrganisations(ctx context.Context,
 		*in.Offset = 0
 	}
 
-	orgs, err := s.store.ListOrganisations(ctx, db.ListOrganisationsParams{
+	orgs, err := s.store.ListOrganizations(ctx, db.ListOrganizationsParams{
 		Limit:  *in.Limit,
 		Offset: *in.Offset,
 	})
@@ -119,10 +119,10 @@ func (s *Server) GetOrganisations(ctx context.Context,
 		return nil, fmt.Errorf("failed to get groups: %w", err)
 	}
 
-	var resp pb.GetOrganisationsResponse
-	resp.Organisations = make([]*pb.OrganisationRecord, 0, len(orgs))
+	var resp pb.GetOrganizationsResponse
+	resp.Organizations = make([]*pb.OrganizationRecord, 0, len(orgs))
 	for _, org := range orgs {
-		resp.Organisations = append(resp.Organisations, &pb.OrganisationRecord{
+		resp.Organizations = append(resp.Organizations, &pb.OrganizationRecord{
 			Id:        org.ID,
 			Name:      org.Name,
 			Company:   org.Company,
@@ -134,20 +134,20 @@ func (s *Server) GetOrganisations(ctx context.Context,
 	return &resp, nil
 }
 
-// GetOrganisation is a service for getting an organisation
-func (s *Server) GetOrganisation(ctx context.Context,
-	in *pb.GetOrganisationRequest) (*pb.GetOrganisationResponse, error) {
-	if in.GetOrganisationId() <= 0 {
-		return nil, fmt.Errorf("organisation id is required")
+// GetOrganization is a service for getting an organization
+func (s *Server) GetOrganization(ctx context.Context,
+	in *pb.GetOrganizationRequest) (*pb.GetOrganizationResponse, error) {
+	if in.GetOrganizationId() <= 0 {
+		return nil, fmt.Errorf("organization id is required")
 	}
 
-	org, err := s.store.GetOrganisation(ctx, in.OrganisationId)
+	org, err := s.store.GetOrganization(ctx, in.OrganizationId)
 	if err != nil {
-		return nil, fmt.Errorf("failed to get organisation: %w", err)
+		return nil, fmt.Errorf("failed to get organization: %w", err)
 	}
 
-	var resp pb.GetOrganisationResponse
-	resp.Organisation = &pb.OrganisationRecord{
+	var resp pb.GetOrganizationResponse
+	resp.Organization = &pb.OrganizationRecord{
 		Id:        org.ID,
 		Name:      org.Name,
 		Company:   org.Company,
@@ -158,20 +158,20 @@ func (s *Server) GetOrganisation(ctx context.Context,
 	return &resp, nil
 }
 
-// GetOrganisationByName is a service for getting an organisation
-func (s *Server) GetOrganisationByName(ctx context.Context,
-	in *pb.GetOrganisationByNameRequest) (*pb.GetOrganisationByNameResponse, error) {
+// GetOrganizationByName is a service for getting an organization
+func (s *Server) GetOrganizationByName(ctx context.Context,
+	in *pb.GetOrganizationByNameRequest) (*pb.GetOrganizationByNameResponse, error) {
 	if in.GetName() == "" {
-		return nil, fmt.Errorf("organisation name is required")
+		return nil, fmt.Errorf("organization name is required")
 	}
 
-	org, err := s.store.GetOrganisationByName(ctx, in.Name)
+	org, err := s.store.GetOrganizationByName(ctx, in.Name)
 	if err != nil {
-		return nil, fmt.Errorf("failed to get organisation: %w", err)
+		return nil, fmt.Errorf("failed to get organization: %w", err)
 	}
 
-	var resp pb.GetOrganisationByNameResponse
-	resp.Organisation = &pb.OrganisationRecord{
+	var resp pb.GetOrganizationByNameResponse
+	resp.Organization = &pb.OrganizationRecord{
 		Id:        org.ID,
 		Name:      org.Name,
 		Company:   org.Company,
@@ -182,20 +182,20 @@ func (s *Server) GetOrganisationByName(ctx context.Context,
 	return &resp, nil
 }
 
-type deleteOrganisationValidation struct {
+type deleteOrganizationValidation struct {
 	Id int32 `db:"id" validate:"required"`
 }
 
-// DeleteOrganisation is a handler that deletes a organisation
-func (s *Server) DeleteOrganisation(ctx context.Context,
-	in *pb.DeleteOrganisationRequest) (*pb.DeleteOrganisationResponse, error) {
+// DeleteOrganization is a handler that deletes a organization
+func (s *Server) DeleteOrganization(ctx context.Context,
+	in *pb.DeleteOrganizationRequest) (*pb.DeleteOrganizationResponse, error) {
 	validator := validator.New()
-	err := validator.Struct(deleteOrganisationValidation{Id: in.Id})
+	err := validator.Struct(deleteOrganizationValidation{Id: in.Id})
 	if err != nil {
 		return nil, err
 	}
 
-	_, err = s.store.GetOrganisation(ctx, in.Id)
+	_, err = s.store.GetOrganization(ctx, in.Id)
 	if err != nil {
 		return nil, err
 	}
@@ -207,23 +207,23 @@ func (s *Server) DeleteOrganisation(ctx context.Context,
 
 	// if we do not force the deletion, we need to check if there are groups
 	if !*in.Force {
-		// list groups belonging to that organisation
-		groups, err := s.store.ListGroupsByOrganisationID(ctx, in.Id)
+		// list groups belonging to that organization
+		groups, err := s.store.ListGroupsByOrganizationID(ctx, in.Id)
 		if err != nil {
 			return nil, err
 		}
 
 		if len(groups) > 0 {
-			errcode := fmt.Errorf("cannot delete the organisation, there are groups associated with it")
+			errcode := fmt.Errorf("cannot delete the organization, there are groups associated with it")
 			return nil, errcode
 		}
 	}
 
 	// otherwise we delete, and delete groups in cascade
-	err = s.store.DeleteOrganisation(ctx, in.Id)
+	err = s.store.DeleteOrganization(ctx, in.Id)
 	if err != nil {
 		return nil, err
 	}
 
-	return &pb.DeleteOrganisationResponse{}, nil
+	return &pb.DeleteOrganizationResponse{}, nil
 }

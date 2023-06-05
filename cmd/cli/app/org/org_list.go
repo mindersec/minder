@@ -55,7 +55,7 @@ mediator control plane.`,
 		}
 		defer conn.Close()
 
-		client := pb.NewOrganisationServiceClient(conn)
+		client := pb.NewOrganizationServiceClient(conn)
 		ctx, cancel := context.WithTimeout(context.Background(), time.Second)
 		defer cancel()
 
@@ -70,12 +70,12 @@ mediator control plane.`,
 		var limitPtr = &limit
 		var offsetPtr = &offset
 
-		resp, err := client.GetOrganisations(ctx, &pb.GetOrganisationsRequest{
+		resp, err := client.GetOrganizations(ctx, &pb.GetOrganizationsRequest{
 			Limit:  limitPtr,
 			Offset: offsetPtr,
 		})
 		if err != nil {
-			fmt.Fprintf(os.Stderr, "Error getting organisations: %s\n", err)
+			fmt.Fprintf(os.Stderr, "Error getting organizations: %s\n", err)
 			os.Exit(1)
 		}
 
@@ -84,7 +84,7 @@ mediator control plane.`,
 			table := tablewriter.NewWriter(os.Stdout)
 			table.SetHeader([]string{"Id", "Name", "Company", "Created date", "Updated date"})
 
-			for _, v := range resp.Organisations {
+			for _, v := range resp.Organizations {
 				row := []string{
 					fmt.Sprintf("%d", v.Id),
 					v.Name,
@@ -96,14 +96,14 @@ mediator control plane.`,
 			}
 			table.Render()
 		} else if format == "json" {
-			output, err := json.MarshalIndent(resp.Organisations, "", "  ")
+			output, err := json.MarshalIndent(resp.Organizations, "", "  ")
 			if err != nil {
 				fmt.Fprintf(os.Stderr, "Error marshalling json: %s\n", err)
 				os.Exit(1)
 			}
 			fmt.Println(string(output))
 		} else if format == "yaml" {
-			yamlData, err := yaml.Marshal(resp.Organisations)
+			yamlData, err := yaml.Marshal(resp.Organizations)
 			if err != nil {
 				fmt.Fprintf(os.Stderr, "Error marshalling yaml: %s\n", err)
 				os.Exit(1)

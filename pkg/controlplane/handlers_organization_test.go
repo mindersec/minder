@@ -32,18 +32,18 @@ import (
 	pb "github.com/stacklok/mediator/pkg/generated/protobuf/go/mediator/v1"
 )
 
-func TestCreateOrganisationDBMock(t *testing.T) {
+func TestCreateOrganizationDBMock(t *testing.T) {
 	ctrl := gomock.NewController(t)
 	defer ctrl.Finish()
 
 	mockStore := mockdb.NewMockStore(ctrl)
 
-	request := &pb.CreateOrganisationRequest{
+	request := &pb.CreateOrganizationRequest{
 		Name:    "TestOrg",
 		Company: "TestCompany",
 	}
 
-	expectedOrg := db.Organisation{
+	expectedOrg := db.Organization{
 		ID:        1,
 		Name:      "TestOrg",
 		Company:   "TestCompany",
@@ -52,14 +52,14 @@ func TestCreateOrganisationDBMock(t *testing.T) {
 	}
 
 	mockStore.EXPECT().
-		CreateOrganisation(gomock.Any(), gomock.Any()).
+		CreateOrganization(gomock.Any(), gomock.Any()).
 		Return(expectedOrg, nil)
 
 	server := &Server{
 		store: mockStore,
 	}
 
-	response, err := server.CreateOrganisation(context.Background(), request)
+	response, err := server.CreateOrganization(context.Background(), request)
 
 	assert.NoError(t, err)
 	assert.NotNil(t, response)
@@ -72,24 +72,24 @@ func TestCreateOrganisationDBMock(t *testing.T) {
 	assert.Equal(t, expectedUpdatedAt, response.UpdatedAt.AsTime().In(time.UTC))
 }
 
-func TestCreateOrganisation_gRPC(t *testing.T) {
+func TestCreateOrganization_gRPC(t *testing.T) {
 	testCases := []struct {
 		name               string
-		req                *pb.CreateOrganisationRequest
+		req                *pb.CreateOrganizationRequest
 		buildStubs         func(store *mockdb.MockStore)
-		checkResponse      func(t *testing.T, res *pb.CreateOrganisationResponse, err error)
+		checkResponse      func(t *testing.T, res *pb.CreateOrganizationResponse, err error)
 		expectedStatusCode codes.Code
 	}{
 		{
 			name: "Success",
-			req: &pb.CreateOrganisationRequest{
+			req: &pb.CreateOrganizationRequest{
 				Name:    "TestOrg",
 				Company: "TestCompany",
 			},
 			buildStubs: func(store *mockdb.MockStore) {
 				store.EXPECT().
-					CreateOrganisation(gomock.Any(), gomock.Any()).
-					Return(db.Organisation{
+					CreateOrganization(gomock.Any(), gomock.Any()).
+					Return(db.Organization{
 						ID:        1,
 						Name:      "TestOrg",
 						Company:   "TestCompany",
@@ -98,7 +98,7 @@ func TestCreateOrganisation_gRPC(t *testing.T) {
 					}, nil).
 					Times(1)
 			},
-			checkResponse: func(t *testing.T, res *pb.CreateOrganisationResponse, err error) {
+			checkResponse: func(t *testing.T, res *pb.CreateOrganizationResponse, err error) {
 				assert.NoError(t, err)
 				assert.NotNil(t, res)
 				assert.Equal(t, int32(1), res.Id)
@@ -111,14 +111,14 @@ func TestCreateOrganisation_gRPC(t *testing.T) {
 		},
 		{
 			name: "EmptyRequest",
-			req: &pb.CreateOrganisationRequest{
+			req: &pb.CreateOrganizationRequest{
 				Name:    "",
 				Company: "",
 			},
 			buildStubs: func(store *mockdb.MockStore) {
-				// No expectations, as CreateOrganisation should not be called
+				// No expectations, as CreateOrganization should not be called
 			},
-			checkResponse: func(t *testing.T, res *pb.CreateOrganisationResponse, err error) {
+			checkResponse: func(t *testing.T, res *pb.CreateOrganizationResponse, err error) {
 				// Assert the expected behavior when the request is empty
 				assert.Error(t, err)
 				assert.Nil(t, res)
@@ -127,17 +127,17 @@ func TestCreateOrganisation_gRPC(t *testing.T) {
 		},
 		{
 			name: "StoreError",
-			req: &pb.CreateOrganisationRequest{
+			req: &pb.CreateOrganizationRequest{
 				Name:    "TestOrg",
 				Company: "TestCompany",
 			},
 			buildStubs: func(store *mockdb.MockStore) {
 				store.EXPECT().
-					CreateOrganisation(gomock.Any(), gomock.Any()).
-					Return(db.Organisation{}, errors.New("store error")).
+					CreateOrganization(gomock.Any(), gomock.Any()).
+					Return(db.Organization{}, errors.New("store error")).
 					Times(1)
 			},
-			checkResponse: func(t *testing.T, res *pb.CreateOrganisationResponse, err error) {
+			checkResponse: func(t *testing.T, res *pb.CreateOrganizationResponse, err error) {
 				// Assert the expected behavior when there's a store error
 				assert.Error(t, err)
 				assert.Nil(t, res)
@@ -158,21 +158,21 @@ func TestCreateOrganisation_gRPC(t *testing.T) {
 
 			server := NewServer(mockStore)
 
-			resp, err := server.CreateOrganisation(context.Background(), tc.req)
+			resp, err := server.CreateOrganization(context.Background(), tc.req)
 			tc.checkResponse(t, resp, err)
 		})
 	}
 }
 
-func TestGetOrganisationsDBMock(t *testing.T) {
+func TestGetOrganizationsDBMock(t *testing.T) {
 	ctrl := gomock.NewController(t)
 	defer ctrl.Finish()
 
 	mockStore := mockdb.NewMockStore(ctrl)
 
-	request := &pb.GetOrganisationsRequest{}
+	request := &pb.GetOrganizationsRequest{}
 
-	expectedOrgs := []db.Organisation{
+	expectedOrgs := []db.Organization{
 		{
 			ID:        1,
 			Name:      "TestOrg",
@@ -189,41 +189,41 @@ func TestGetOrganisationsDBMock(t *testing.T) {
 		},
 	}
 
-	mockStore.EXPECT().ListOrganisations(gomock.Any(), gomock.Any()).
+	mockStore.EXPECT().ListOrganizations(gomock.Any(), gomock.Any()).
 		Return(expectedOrgs, nil)
 
 	server := &Server{
 		store: mockStore,
 	}
 
-	response, err := server.GetOrganisations(context.Background(), request)
+	response, err := server.GetOrganizations(context.Background(), request)
 
 	assert.NoError(t, err)
 	assert.NotNil(t, response)
-	assert.Equal(t, len(expectedOrgs), len(response.Organisations))
-	assert.Equal(t, expectedOrgs[0].ID, response.Organisations[0].Id)
-	assert.Equal(t, expectedOrgs[0].Name, response.Organisations[0].Name)
-	assert.Equal(t, expectedOrgs[0].Company, response.Organisations[0].Company)
+	assert.Equal(t, len(expectedOrgs), len(response.Organizations))
+	assert.Equal(t, expectedOrgs[0].ID, response.Organizations[0].Id)
+	assert.Equal(t, expectedOrgs[0].Name, response.Organizations[0].Name)
+	assert.Equal(t, expectedOrgs[0].Company, response.Organizations[0].Company)
 	expectedCreatedAt := expectedOrgs[0].CreatedAt.In(time.UTC)
-	assert.Equal(t, expectedCreatedAt, response.Organisations[0].CreatedAt.AsTime().In(time.UTC))
+	assert.Equal(t, expectedCreatedAt, response.Organizations[0].CreatedAt.AsTime().In(time.UTC))
 	expectedUpdatedAt := expectedOrgs[0].UpdatedAt.In(time.UTC)
-	assert.Equal(t, expectedUpdatedAt, response.Organisations[0].UpdatedAt.AsTime().In(time.UTC))
+	assert.Equal(t, expectedUpdatedAt, response.Organizations[0].UpdatedAt.AsTime().In(time.UTC))
 }
 
-func TestGetOrganisations_gRPC(t *testing.T) {
+func TestGetOrganizations_gRPC(t *testing.T) {
 	testCases := []struct {
 		name               string
-		req                *pb.GetOrganisationsRequest
+		req                *pb.GetOrganizationsRequest
 		buildStubs         func(store *mockdb.MockStore)
-		checkResponse      func(t *testing.T, res *pb.GetOrganisationsResponse, err error)
+		checkResponse      func(t *testing.T, res *pb.GetOrganizationsResponse, err error)
 		expectedStatusCode codes.Code
 	}{
 		{
 			name: "Success",
-			req:  &pb.GetOrganisationsRequest{},
+			req:  &pb.GetOrganizationsRequest{},
 			buildStubs: func(store *mockdb.MockStore) {
-				store.EXPECT().ListOrganisations(gomock.Any(), gomock.Any()).
-					Return([]db.Organisation{
+				store.EXPECT().ListOrganizations(gomock.Any(), gomock.Any()).
+					Return([]db.Organization{
 						{
 							ID:        1,
 							Name:      "TestOrg",
@@ -241,8 +241,8 @@ func TestGetOrganisations_gRPC(t *testing.T) {
 					}, nil).
 					Times(1)
 			},
-			checkResponse: func(t *testing.T, res *pb.GetOrganisationsResponse, err error) {
-				expectedOrgs := []*pb.OrganisationRecord{
+			checkResponse: func(t *testing.T, res *pb.GetOrganizationsResponse, err error) {
+				expectedOrgs := []*pb.OrganizationRecord{
 					{
 						Id:        1,
 						Name:      "TestOrg",
@@ -261,10 +261,10 @@ func TestGetOrganisations_gRPC(t *testing.T) {
 
 				assert.NoError(t, err)
 				assert.NotNil(t, res)
-				assert.Equal(t, len(expectedOrgs), len(res.Organisations))
-				assert.Equal(t, expectedOrgs[0].Id, res.Organisations[0].Id)
-				assert.Equal(t, expectedOrgs[0].Name, res.Organisations[0].Name)
-				assert.Equal(t, expectedOrgs[0].Company, res.Organisations[0].Company)
+				assert.Equal(t, len(expectedOrgs), len(res.Organizations))
+				assert.Equal(t, expectedOrgs[0].Id, res.Organizations[0].Id)
+				assert.Equal(t, expectedOrgs[0].Name, res.Organizations[0].Name)
+				assert.Equal(t, expectedOrgs[0].Company, res.Organizations[0].Company)
 			},
 			expectedStatusCode: codes.OK,
 		},
@@ -282,21 +282,21 @@ func TestGetOrganisations_gRPC(t *testing.T) {
 
 			server := NewServer(mockStore)
 
-			resp, err := server.GetOrganisations(context.Background(), tc.req)
+			resp, err := server.GetOrganizations(context.Background(), tc.req)
 			tc.checkResponse(t, resp, err)
 		})
 	}
 }
 
-func TestGetOrganisationDBMock(t *testing.T) {
+func TestGetOrganizationDBMock(t *testing.T) {
 	ctrl := gomock.NewController(t)
 	defer ctrl.Finish()
 
 	mockStore := mockdb.NewMockStore(ctrl)
 
-	request := &pb.GetOrganisationRequest{OrganisationId: 1}
+	request := &pb.GetOrganizationRequest{OrganizationId: 1}
 
-	expectedOrg := db.Organisation{
+	expectedOrg := db.Organization{
 		ID:        1,
 		Name:      "TestOrg",
 		Company:   "TestCompany",
@@ -304,61 +304,61 @@ func TestGetOrganisationDBMock(t *testing.T) {
 		UpdatedAt: time.Now(),
 	}
 
-	mockStore.EXPECT().GetOrganisation(gomock.Any(), gomock.Any()).
+	mockStore.EXPECT().GetOrganization(gomock.Any(), gomock.Any()).
 		Return(expectedOrg, nil)
 
 	server := &Server{
 		store: mockStore,
 	}
 
-	response, err := server.GetOrganisation(context.Background(), request)
+	response, err := server.GetOrganization(context.Background(), request)
 
 	assert.NoError(t, err)
 	assert.NotNil(t, response)
-	assert.Equal(t, expectedOrg.ID, response.Organisation.Id)
-	assert.Equal(t, expectedOrg.Name, response.Organisation.Name)
-	assert.Equal(t, expectedOrg.Company, response.Organisation.Company)
+	assert.Equal(t, expectedOrg.ID, response.Organization.Id)
+	assert.Equal(t, expectedOrg.Name, response.Organization.Name)
+	assert.Equal(t, expectedOrg.Company, response.Organization.Company)
 	expectedCreatedAt := expectedOrg.CreatedAt.In(time.UTC)
-	assert.Equal(t, expectedCreatedAt, response.Organisation.CreatedAt.AsTime().In(time.UTC))
+	assert.Equal(t, expectedCreatedAt, response.Organization.CreatedAt.AsTime().In(time.UTC))
 	expectedUpdatedAt := expectedOrg.UpdatedAt.In(time.UTC)
-	assert.Equal(t, expectedUpdatedAt, response.Organisation.UpdatedAt.AsTime().In(time.UTC))
+	assert.Equal(t, expectedUpdatedAt, response.Organization.UpdatedAt.AsTime().In(time.UTC))
 }
 
-func TestGetNonExistingOrganisationDBMock(t *testing.T) {
+func TestGetNonExistingOrganizationDBMock(t *testing.T) {
 	ctrl := gomock.NewController(t)
 	defer ctrl.Finish()
 
 	mockStore := mockdb.NewMockStore(ctrl)
 
-	request := &pb.GetOrganisationRequest{OrganisationId: 5}
+	request := &pb.GetOrganizationRequest{OrganizationId: 5}
 
-	mockStore.EXPECT().GetOrganisation(gomock.Any(), gomock.Any()).
-		Return(db.Organisation{}, nil)
+	mockStore.EXPECT().GetOrganization(gomock.Any(), gomock.Any()).
+		Return(db.Organization{}, nil)
 
 	server := &Server{
 		store: mockStore,
 	}
 
-	response, err := server.GetOrganisation(context.Background(), request)
+	response, err := server.GetOrganization(context.Background(), request)
 
 	assert.NoError(t, err)
-	assert.Equal(t, int32(0), response.Organisation.Id)
+	assert.Equal(t, int32(0), response.Organization.Id)
 }
 
-func TestGetOrganisation_gRPC(t *testing.T) {
+func TestGetOrganization_gRPC(t *testing.T) {
 	testCases := []struct {
 		name               string
-		req                *pb.GetOrganisationRequest
+		req                *pb.GetOrganizationRequest
 		buildStubs         func(store *mockdb.MockStore)
-		checkResponse      func(t *testing.T, res *pb.GetOrganisationResponse, err error)
+		checkResponse      func(t *testing.T, res *pb.GetOrganizationResponse, err error)
 		expectedStatusCode codes.Code
 	}{
 		{
 			name: "Success",
-			req:  &pb.GetOrganisationRequest{OrganisationId: 1},
+			req:  &pb.GetOrganizationRequest{OrganizationId: 1},
 			buildStubs: func(store *mockdb.MockStore) {
-				store.EXPECT().GetOrganisation(gomock.Any(), gomock.Any()).
-					Return(db.Organisation{
+				store.EXPECT().GetOrganization(gomock.Any(), gomock.Any()).
+					Return(db.Organization{
 						ID:        1,
 						Name:      "TestOrg",
 						Company:   "TestCompany",
@@ -367,8 +367,8 @@ func TestGetOrganisation_gRPC(t *testing.T) {
 					}, nil).
 					Times(1)
 			},
-			checkResponse: func(t *testing.T, res *pb.GetOrganisationResponse, err error) {
-				expectedOrg := pb.OrganisationRecord{
+			checkResponse: func(t *testing.T, res *pb.GetOrganizationResponse, err error) {
+				expectedOrg := pb.OrganizationRecord{
 					Id:        1,
 					Name:      "TestOrg",
 					Company:   "TestCompany",
@@ -378,23 +378,23 @@ func TestGetOrganisation_gRPC(t *testing.T) {
 
 				assert.NoError(t, err)
 				assert.NotNil(t, res)
-				assert.Equal(t, expectedOrg.Id, res.Organisation.Id)
-				assert.Equal(t, expectedOrg.Name, res.Organisation.Name)
-				assert.Equal(t, expectedOrg.Company, res.Organisation.Company)
+				assert.Equal(t, expectedOrg.Id, res.Organization.Id)
+				assert.Equal(t, expectedOrg.Name, res.Organization.Name)
+				assert.Equal(t, expectedOrg.Company, res.Organization.Company)
 			},
 			expectedStatusCode: codes.OK,
 		},
 		{
 			name: "NonExisting",
-			req:  &pb.GetOrganisationRequest{OrganisationId: 5},
+			req:  &pb.GetOrganizationRequest{OrganizationId: 5},
 			buildStubs: func(store *mockdb.MockStore) {
-				store.EXPECT().GetOrganisation(gomock.Any(), gomock.Any()).
-					Return(db.Organisation{}, nil).
+				store.EXPECT().GetOrganization(gomock.Any(), gomock.Any()).
+					Return(db.Organization{}, nil).
 					Times(1)
 			},
-			checkResponse: func(t *testing.T, res *pb.GetOrganisationResponse, err error) {
+			checkResponse: func(t *testing.T, res *pb.GetOrganizationResponse, err error) {
 				assert.NoError(t, err)
-				assert.Equal(t, int32(0), res.Organisation.Id)
+				assert.Equal(t, int32(0), res.Organization.Id)
 			},
 			expectedStatusCode: codes.OK,
 		},
@@ -412,21 +412,21 @@ func TestGetOrganisation_gRPC(t *testing.T) {
 
 			server := NewServer(mockStore)
 
-			resp, err := server.GetOrganisation(context.Background(), tc.req)
+			resp, err := server.GetOrganization(context.Background(), tc.req)
 			tc.checkResponse(t, resp, err)
 		})
 	}
 }
 
-func TestGetOrganisationByNameDBMock(t *testing.T) {
+func TestGetOrganizationByNameDBMock(t *testing.T) {
 	ctrl := gomock.NewController(t)
 	defer ctrl.Finish()
 
 	mockStore := mockdb.NewMockStore(ctrl)
 
-	request := &pb.GetOrganisationByNameRequest{Name: "TestOrg"}
+	request := &pb.GetOrganizationByNameRequest{Name: "TestOrg"}
 
-	expectedOrg := db.Organisation{
+	expectedOrg := db.Organization{
 		ID:        1,
 		Name:      "TestOrg",
 		Company:   "TestCompany",
@@ -434,61 +434,61 @@ func TestGetOrganisationByNameDBMock(t *testing.T) {
 		UpdatedAt: time.Now(),
 	}
 
-	mockStore.EXPECT().GetOrganisationByName(gomock.Any(), gomock.Any()).
+	mockStore.EXPECT().GetOrganizationByName(gomock.Any(), gomock.Any()).
 		Return(expectedOrg, nil)
 
 	server := &Server{
 		store: mockStore,
 	}
 
-	response, err := server.GetOrganisationByName(context.Background(), request)
+	response, err := server.GetOrganizationByName(context.Background(), request)
 
 	assert.NoError(t, err)
 	assert.NotNil(t, response)
-	assert.Equal(t, expectedOrg.ID, response.Organisation.Id)
-	assert.Equal(t, expectedOrg.Name, response.Organisation.Name)
-	assert.Equal(t, expectedOrg.Company, response.Organisation.Company)
+	assert.Equal(t, expectedOrg.ID, response.Organization.Id)
+	assert.Equal(t, expectedOrg.Name, response.Organization.Name)
+	assert.Equal(t, expectedOrg.Company, response.Organization.Company)
 	expectedCreatedAt := expectedOrg.CreatedAt.In(time.UTC)
-	assert.Equal(t, expectedCreatedAt, response.Organisation.CreatedAt.AsTime().In(time.UTC))
+	assert.Equal(t, expectedCreatedAt, response.Organization.CreatedAt.AsTime().In(time.UTC))
 	expectedUpdatedAt := expectedOrg.UpdatedAt.In(time.UTC)
-	assert.Equal(t, expectedUpdatedAt, response.Organisation.UpdatedAt.AsTime().In(time.UTC))
+	assert.Equal(t, expectedUpdatedAt, response.Organization.UpdatedAt.AsTime().In(time.UTC))
 }
 
-func TestGetNonExistingOrganisationByNameDBMock(t *testing.T) {
+func TestGetNonExistingOrganizationByNameDBMock(t *testing.T) {
 	ctrl := gomock.NewController(t)
 	defer ctrl.Finish()
 
 	mockStore := mockdb.NewMockStore(ctrl)
 
-	request := &pb.GetOrganisationByNameRequest{Name: "Test"}
+	request := &pb.GetOrganizationByNameRequest{Name: "Test"}
 
-	mockStore.EXPECT().GetOrganisationByName(gomock.Any(), gomock.Any()).
-		Return(db.Organisation{}, nil)
+	mockStore.EXPECT().GetOrganizationByName(gomock.Any(), gomock.Any()).
+		Return(db.Organization{}, nil)
 
 	server := &Server{
 		store: mockStore,
 	}
 
-	response, err := server.GetOrganisationByName(context.Background(), request)
+	response, err := server.GetOrganizationByName(context.Background(), request)
 
 	assert.NoError(t, err)
-	assert.Equal(t, int32(0), response.Organisation.Id)
+	assert.Equal(t, int32(0), response.Organization.Id)
 }
 
-func TestGetOrganisationByName_gRPC(t *testing.T) {
+func TestGetOrganizationByName_gRPC(t *testing.T) {
 	testCases := []struct {
 		name               string
-		req                *pb.GetOrganisationByNameRequest
+		req                *pb.GetOrganizationByNameRequest
 		buildStubs         func(store *mockdb.MockStore)
-		checkResponse      func(t *testing.T, res *pb.GetOrganisationByNameResponse, err error)
+		checkResponse      func(t *testing.T, res *pb.GetOrganizationByNameResponse, err error)
 		expectedStatusCode codes.Code
 	}{
 		{
 			name: "Success",
-			req:  &pb.GetOrganisationByNameRequest{Name: "TestOrg"},
+			req:  &pb.GetOrganizationByNameRequest{Name: "TestOrg"},
 			buildStubs: func(store *mockdb.MockStore) {
-				store.EXPECT().GetOrganisationByName(gomock.Any(), gomock.Any()).
-					Return(db.Organisation{
+				store.EXPECT().GetOrganizationByName(gomock.Any(), gomock.Any()).
+					Return(db.Organization{
 						ID:        1,
 						Name:      "TestOrg",
 						Company:   "TestCompany",
@@ -497,8 +497,8 @@ func TestGetOrganisationByName_gRPC(t *testing.T) {
 					}, nil).
 					Times(1)
 			},
-			checkResponse: func(t *testing.T, res *pb.GetOrganisationByNameResponse, err error) {
-				expectedOrg := pb.OrganisationRecord{
+			checkResponse: func(t *testing.T, res *pb.GetOrganizationByNameResponse, err error) {
+				expectedOrg := pb.OrganizationRecord{
 					Id:        1,
 					Name:      "TestOrg",
 					Company:   "TestCompany",
@@ -508,23 +508,23 @@ func TestGetOrganisationByName_gRPC(t *testing.T) {
 
 				assert.NoError(t, err)
 				assert.NotNil(t, res)
-				assert.Equal(t, expectedOrg.Id, res.Organisation.Id)
-				assert.Equal(t, expectedOrg.Name, res.Organisation.Name)
-				assert.Equal(t, expectedOrg.Company, res.Organisation.Company)
+				assert.Equal(t, expectedOrg.Id, res.Organization.Id)
+				assert.Equal(t, expectedOrg.Name, res.Organization.Name)
+				assert.Equal(t, expectedOrg.Company, res.Organization.Company)
 			},
 			expectedStatusCode: codes.OK,
 		},
 		{
 			name: "NonExisting",
-			req:  &pb.GetOrganisationByNameRequest{Name: "test"},
+			req:  &pb.GetOrganizationByNameRequest{Name: "test"},
 			buildStubs: func(store *mockdb.MockStore) {
-				store.EXPECT().GetOrganisationByName(gomock.Any(), gomock.Any()).
-					Return(db.Organisation{}, nil).
+				store.EXPECT().GetOrganizationByName(gomock.Any(), gomock.Any()).
+					Return(db.Organization{}, nil).
 					Times(1)
 			},
-			checkResponse: func(t *testing.T, res *pb.GetOrganisationByNameResponse, err error) {
+			checkResponse: func(t *testing.T, res *pb.GetOrganizationByNameResponse, err error) {
 				assert.NoError(t, err)
-				assert.Equal(t, int32(0), res.Organisation.Id)
+				assert.Equal(t, int32(0), res.Organization.Id)
 			},
 			expectedStatusCode: codes.OK,
 		},
@@ -542,21 +542,21 @@ func TestGetOrganisationByName_gRPC(t *testing.T) {
 
 			server := NewServer(mockStore)
 
-			resp, err := server.GetOrganisationByName(context.Background(), tc.req)
+			resp, err := server.GetOrganizationByName(context.Background(), tc.req)
 			tc.checkResponse(t, resp, err)
 		})
 	}
 }
 
-func TestDeleteOrganisationDBMock(t *testing.T) {
+func TestDeleteOrganizationDBMock(t *testing.T) {
 	ctrl := gomock.NewController(t)
 	defer ctrl.Finish()
 
 	mockStore := mockdb.NewMockStore(ctrl)
 
-	request := &pb.DeleteOrganisationRequest{Id: 1}
+	request := &pb.DeleteOrganizationRequest{Id: 1}
 
-	expectedOrg := db.Organisation{
+	expectedOrg := db.Organization{
 		ID:        1,
 		Name:      "test",
 		Company:   "test",
@@ -564,63 +564,63 @@ func TestDeleteOrganisationDBMock(t *testing.T) {
 		UpdatedAt: time.Now(),
 	}
 
-	mockStore.EXPECT().GetOrganisation(gomock.Any(), gomock.Any()).
+	mockStore.EXPECT().GetOrganization(gomock.Any(), gomock.Any()).
 		Return(expectedOrg, nil)
 	mockStore.EXPECT().
-		ListGroupsByOrganisationID(gomock.Any(), gomock.Any()).
+		ListGroupsByOrganizationID(gomock.Any(), gomock.Any()).
 		Return([]db.Group{}, nil)
 	mockStore.EXPECT().
-		DeleteOrganisation(gomock.Any(), gomock.Any()).
+		DeleteOrganization(gomock.Any(), gomock.Any()).
 		Return(nil)
 
 	server := &Server{
 		store: mockStore,
 	}
 
-	response, err := server.DeleteOrganisation(context.Background(), request)
+	response, err := server.DeleteOrganization(context.Background(), request)
 
 	assert.NoError(t, err)
 	assert.NotNil(t, response)
 }
 
-func TestDeleteOrganisation_gRPC(t *testing.T) {
+func TestDeleteOrganization_gRPC(t *testing.T) {
 	force := true
 
 	testCases := []struct {
 		name               string
-		req                *pb.DeleteOrganisationRequest
+		req                *pb.DeleteOrganizationRequest
 		buildStubs         func(store *mockdb.MockStore)
-		checkResponse      func(t *testing.T, res *pb.DeleteOrganisationResponse, err error)
+		checkResponse      func(t *testing.T, res *pb.DeleteOrganizationResponse, err error)
 		expectedStatusCode codes.Code
 	}{
 		{
 			name: "Success",
-			req: &pb.DeleteOrganisationRequest{
+			req: &pb.DeleteOrganizationRequest{
 				Id:    1,
 				Force: &force,
 			},
 			buildStubs: func(store *mockdb.MockStore) {
 				store.EXPECT().
-					GetOrganisation(gomock.Any(), gomock.Any()).Return(db.Organisation{}, nil).Times(1)
+					GetOrganization(gomock.Any(), gomock.Any()).Return(db.Organization{}, nil).Times(1)
 				store.EXPECT().
-					DeleteOrganisation(gomock.Any(), gomock.Any()).Return(nil).
+					DeleteOrganization(gomock.Any(), gomock.Any()).Return(nil).
 					Times(1)
 			},
-			checkResponse: func(t *testing.T, res *pb.DeleteOrganisationResponse, err error) {
+			checkResponse: func(t *testing.T, res *pb.DeleteOrganizationResponse, err error) {
 				assert.NoError(t, err)
 				assert.NotNil(t, res)
-				assert.Equal(t, &pb.DeleteOrganisationResponse{}, res)
+				assert.Equal(t, &pb.DeleteOrganizationResponse{}, res)
 			},
 			expectedStatusCode: codes.OK,
 		},
 		{
 			name: "EmptyRequest",
-			req: &pb.DeleteOrganisationRequest{
+			req: &pb.DeleteOrganizationRequest{
 				Id: 0,
 			},
 			buildStubs: func(store *mockdb.MockStore) {
 			},
-			checkResponse: func(t *testing.T, res *pb.DeleteOrganisationResponse, err error) {
+			checkResponse: func(t *testing.T, res *pb.DeleteOrganizationResponse, err error) {
 				// Assert the expected behavior when the request is empty
 				assert.Error(t, err)
 				assert.Nil(t, res)
@@ -641,7 +641,7 @@ func TestDeleteOrganisation_gRPC(t *testing.T) {
 
 			server := NewServer(mockStore)
 
-			resp, err := server.DeleteOrganisation(context.Background(), tc.req)
+			resp, err := server.DeleteOrganization(context.Background(), tc.req)
 			tc.checkResponse(t, resp, err)
 		})
 	}

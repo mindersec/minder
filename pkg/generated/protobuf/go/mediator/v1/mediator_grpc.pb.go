@@ -994,237 +994,237 @@ var BranchProtectionService_ServiceDesc = grpc.ServiceDesc{
 }
 
 const (
-	OrganisationService_CreateOrganisation_FullMethodName    = "/mediator.v1.OrganisationService/CreateOrganisation"
-	OrganisationService_GetOrganisations_FullMethodName      = "/mediator.v1.OrganisationService/GetOrganisations"
-	OrganisationService_GetOrganisation_FullMethodName       = "/mediator.v1.OrganisationService/GetOrganisation"
-	OrganisationService_GetOrganisationByName_FullMethodName = "/mediator.v1.OrganisationService/GetOrganisationByName"
-	OrganisationService_DeleteOrganisation_FullMethodName    = "/mediator.v1.OrganisationService/DeleteOrganisation"
+	OrganizationService_CreateOrganization_FullMethodName    = "/mediator.v1.OrganizationService/CreateOrganization"
+	OrganizationService_GetOrganizations_FullMethodName      = "/mediator.v1.OrganizationService/GetOrganizations"
+	OrganizationService_GetOrganization_FullMethodName       = "/mediator.v1.OrganizationService/GetOrganization"
+	OrganizationService_GetOrganizationByName_FullMethodName = "/mediator.v1.OrganizationService/GetOrganizationByName"
+	OrganizationService_DeleteOrganization_FullMethodName    = "/mediator.v1.OrganizationService/DeleteOrganization"
 )
 
-// OrganisationServiceClient is the client API for OrganisationService service.
+// OrganizationServiceClient is the client API for OrganizationService service.
 //
 // For semantics around ctx use and closing/ending streaming RPCs, please refer to https://pkg.go.dev/google.golang.org/grpc/?tab=doc#ClientConn.NewStream.
-type OrganisationServiceClient interface {
-	CreateOrganisation(ctx context.Context, in *CreateOrganisationRequest, opts ...grpc.CallOption) (*CreateOrganisationResponse, error)
-	GetOrganisations(ctx context.Context, in *GetOrganisationsRequest, opts ...grpc.CallOption) (*GetOrganisationsResponse, error)
-	GetOrganisation(ctx context.Context, in *GetOrganisationRequest, opts ...grpc.CallOption) (*GetOrganisationResponse, error)
-	GetOrganisationByName(ctx context.Context, in *GetOrganisationByNameRequest, opts ...grpc.CallOption) (*GetOrganisationByNameResponse, error)
-	DeleteOrganisation(ctx context.Context, in *DeleteOrganisationRequest, opts ...grpc.CallOption) (*DeleteOrganisationResponse, error)
+type OrganizationServiceClient interface {
+	CreateOrganization(ctx context.Context, in *CreateOrganizationRequest, opts ...grpc.CallOption) (*CreateOrganizationResponse, error)
+	GetOrganizations(ctx context.Context, in *GetOrganizationsRequest, opts ...grpc.CallOption) (*GetOrganizationsResponse, error)
+	GetOrganization(ctx context.Context, in *GetOrganizationRequest, opts ...grpc.CallOption) (*GetOrganizationResponse, error)
+	GetOrganizationByName(ctx context.Context, in *GetOrganizationByNameRequest, opts ...grpc.CallOption) (*GetOrganizationByNameResponse, error)
+	DeleteOrganization(ctx context.Context, in *DeleteOrganizationRequest, opts ...grpc.CallOption) (*DeleteOrganizationResponse, error)
 }
 
-type organisationServiceClient struct {
+type organizationServiceClient struct {
 	cc grpc.ClientConnInterface
 }
 
-func NewOrganisationServiceClient(cc grpc.ClientConnInterface) OrganisationServiceClient {
-	return &organisationServiceClient{cc}
+func NewOrganizationServiceClient(cc grpc.ClientConnInterface) OrganizationServiceClient {
+	return &organizationServiceClient{cc}
 }
 
-func (c *organisationServiceClient) CreateOrganisation(ctx context.Context, in *CreateOrganisationRequest, opts ...grpc.CallOption) (*CreateOrganisationResponse, error) {
-	out := new(CreateOrganisationResponse)
-	err := c.cc.Invoke(ctx, OrganisationService_CreateOrganisation_FullMethodName, in, out, opts...)
+func (c *organizationServiceClient) CreateOrganization(ctx context.Context, in *CreateOrganizationRequest, opts ...grpc.CallOption) (*CreateOrganizationResponse, error) {
+	out := new(CreateOrganizationResponse)
+	err := c.cc.Invoke(ctx, OrganizationService_CreateOrganization_FullMethodName, in, out, opts...)
 	if err != nil {
 		return nil, err
 	}
 	return out, nil
 }
 
-func (c *organisationServiceClient) GetOrganisations(ctx context.Context, in *GetOrganisationsRequest, opts ...grpc.CallOption) (*GetOrganisationsResponse, error) {
-	out := new(GetOrganisationsResponse)
-	err := c.cc.Invoke(ctx, OrganisationService_GetOrganisations_FullMethodName, in, out, opts...)
+func (c *organizationServiceClient) GetOrganizations(ctx context.Context, in *GetOrganizationsRequest, opts ...grpc.CallOption) (*GetOrganizationsResponse, error) {
+	out := new(GetOrganizationsResponse)
+	err := c.cc.Invoke(ctx, OrganizationService_GetOrganizations_FullMethodName, in, out, opts...)
 	if err != nil {
 		return nil, err
 	}
 	return out, nil
 }
 
-func (c *organisationServiceClient) GetOrganisation(ctx context.Context, in *GetOrganisationRequest, opts ...grpc.CallOption) (*GetOrganisationResponse, error) {
-	out := new(GetOrganisationResponse)
-	err := c.cc.Invoke(ctx, OrganisationService_GetOrganisation_FullMethodName, in, out, opts...)
+func (c *organizationServiceClient) GetOrganization(ctx context.Context, in *GetOrganizationRequest, opts ...grpc.CallOption) (*GetOrganizationResponse, error) {
+	out := new(GetOrganizationResponse)
+	err := c.cc.Invoke(ctx, OrganizationService_GetOrganization_FullMethodName, in, out, opts...)
 	if err != nil {
 		return nil, err
 	}
 	return out, nil
 }
 
-func (c *organisationServiceClient) GetOrganisationByName(ctx context.Context, in *GetOrganisationByNameRequest, opts ...grpc.CallOption) (*GetOrganisationByNameResponse, error) {
-	out := new(GetOrganisationByNameResponse)
-	err := c.cc.Invoke(ctx, OrganisationService_GetOrganisationByName_FullMethodName, in, out, opts...)
+func (c *organizationServiceClient) GetOrganizationByName(ctx context.Context, in *GetOrganizationByNameRequest, opts ...grpc.CallOption) (*GetOrganizationByNameResponse, error) {
+	out := new(GetOrganizationByNameResponse)
+	err := c.cc.Invoke(ctx, OrganizationService_GetOrganizationByName_FullMethodName, in, out, opts...)
 	if err != nil {
 		return nil, err
 	}
 	return out, nil
 }
 
-func (c *organisationServiceClient) DeleteOrganisation(ctx context.Context, in *DeleteOrganisationRequest, opts ...grpc.CallOption) (*DeleteOrganisationResponse, error) {
-	out := new(DeleteOrganisationResponse)
-	err := c.cc.Invoke(ctx, OrganisationService_DeleteOrganisation_FullMethodName, in, out, opts...)
+func (c *organizationServiceClient) DeleteOrganization(ctx context.Context, in *DeleteOrganizationRequest, opts ...grpc.CallOption) (*DeleteOrganizationResponse, error) {
+	out := new(DeleteOrganizationResponse)
+	err := c.cc.Invoke(ctx, OrganizationService_DeleteOrganization_FullMethodName, in, out, opts...)
 	if err != nil {
 		return nil, err
 	}
 	return out, nil
 }
 
-// OrganisationServiceServer is the server API for OrganisationService service.
-// All implementations must embed UnimplementedOrganisationServiceServer
+// OrganizationServiceServer is the server API for OrganizationService service.
+// All implementations must embed UnimplementedOrganizationServiceServer
 // for forward compatibility
-type OrganisationServiceServer interface {
-	CreateOrganisation(context.Context, *CreateOrganisationRequest) (*CreateOrganisationResponse, error)
-	GetOrganisations(context.Context, *GetOrganisationsRequest) (*GetOrganisationsResponse, error)
-	GetOrganisation(context.Context, *GetOrganisationRequest) (*GetOrganisationResponse, error)
-	GetOrganisationByName(context.Context, *GetOrganisationByNameRequest) (*GetOrganisationByNameResponse, error)
-	DeleteOrganisation(context.Context, *DeleteOrganisationRequest) (*DeleteOrganisationResponse, error)
-	mustEmbedUnimplementedOrganisationServiceServer()
+type OrganizationServiceServer interface {
+	CreateOrganization(context.Context, *CreateOrganizationRequest) (*CreateOrganizationResponse, error)
+	GetOrganizations(context.Context, *GetOrganizationsRequest) (*GetOrganizationsResponse, error)
+	GetOrganization(context.Context, *GetOrganizationRequest) (*GetOrganizationResponse, error)
+	GetOrganizationByName(context.Context, *GetOrganizationByNameRequest) (*GetOrganizationByNameResponse, error)
+	DeleteOrganization(context.Context, *DeleteOrganizationRequest) (*DeleteOrganizationResponse, error)
+	mustEmbedUnimplementedOrganizationServiceServer()
 }
 
-// UnimplementedOrganisationServiceServer must be embedded to have forward compatible implementations.
-type UnimplementedOrganisationServiceServer struct {
+// UnimplementedOrganizationServiceServer must be embedded to have forward compatible implementations.
+type UnimplementedOrganizationServiceServer struct {
 }
 
-func (UnimplementedOrganisationServiceServer) CreateOrganisation(context.Context, *CreateOrganisationRequest) (*CreateOrganisationResponse, error) {
-	return nil, status.Errorf(codes.Unimplemented, "method CreateOrganisation not implemented")
+func (UnimplementedOrganizationServiceServer) CreateOrganization(context.Context, *CreateOrganizationRequest) (*CreateOrganizationResponse, error) {
+	return nil, status.Errorf(codes.Unimplemented, "method CreateOrganization not implemented")
 }
-func (UnimplementedOrganisationServiceServer) GetOrganisations(context.Context, *GetOrganisationsRequest) (*GetOrganisationsResponse, error) {
-	return nil, status.Errorf(codes.Unimplemented, "method GetOrganisations not implemented")
+func (UnimplementedOrganizationServiceServer) GetOrganizations(context.Context, *GetOrganizationsRequest) (*GetOrganizationsResponse, error) {
+	return nil, status.Errorf(codes.Unimplemented, "method GetOrganizations not implemented")
 }
-func (UnimplementedOrganisationServiceServer) GetOrganisation(context.Context, *GetOrganisationRequest) (*GetOrganisationResponse, error) {
-	return nil, status.Errorf(codes.Unimplemented, "method GetOrganisation not implemented")
+func (UnimplementedOrganizationServiceServer) GetOrganization(context.Context, *GetOrganizationRequest) (*GetOrganizationResponse, error) {
+	return nil, status.Errorf(codes.Unimplemented, "method GetOrganization not implemented")
 }
-func (UnimplementedOrganisationServiceServer) GetOrganisationByName(context.Context, *GetOrganisationByNameRequest) (*GetOrganisationByNameResponse, error) {
-	return nil, status.Errorf(codes.Unimplemented, "method GetOrganisationByName not implemented")
+func (UnimplementedOrganizationServiceServer) GetOrganizationByName(context.Context, *GetOrganizationByNameRequest) (*GetOrganizationByNameResponse, error) {
+	return nil, status.Errorf(codes.Unimplemented, "method GetOrganizationByName not implemented")
 }
-func (UnimplementedOrganisationServiceServer) DeleteOrganisation(context.Context, *DeleteOrganisationRequest) (*DeleteOrganisationResponse, error) {
-	return nil, status.Errorf(codes.Unimplemented, "method DeleteOrganisation not implemented")
+func (UnimplementedOrganizationServiceServer) DeleteOrganization(context.Context, *DeleteOrganizationRequest) (*DeleteOrganizationResponse, error) {
+	return nil, status.Errorf(codes.Unimplemented, "method DeleteOrganization not implemented")
 }
-func (UnimplementedOrganisationServiceServer) mustEmbedUnimplementedOrganisationServiceServer() {}
+func (UnimplementedOrganizationServiceServer) mustEmbedUnimplementedOrganizationServiceServer() {}
 
-// UnsafeOrganisationServiceServer may be embedded to opt out of forward compatibility for this service.
-// Use of this interface is not recommended, as added methods to OrganisationServiceServer will
+// UnsafeOrganizationServiceServer may be embedded to opt out of forward compatibility for this service.
+// Use of this interface is not recommended, as added methods to OrganizationServiceServer will
 // result in compilation errors.
-type UnsafeOrganisationServiceServer interface {
-	mustEmbedUnimplementedOrganisationServiceServer()
+type UnsafeOrganizationServiceServer interface {
+	mustEmbedUnimplementedOrganizationServiceServer()
 }
 
-func RegisterOrganisationServiceServer(s grpc.ServiceRegistrar, srv OrganisationServiceServer) {
-	s.RegisterService(&OrganisationService_ServiceDesc, srv)
+func RegisterOrganizationServiceServer(s grpc.ServiceRegistrar, srv OrganizationServiceServer) {
+	s.RegisterService(&OrganizationService_ServiceDesc, srv)
 }
 
-func _OrganisationService_CreateOrganisation_Handler(srv interface{}, ctx context.Context, dec func(interface{}) error, interceptor grpc.UnaryServerInterceptor) (interface{}, error) {
-	in := new(CreateOrganisationRequest)
+func _OrganizationService_CreateOrganization_Handler(srv interface{}, ctx context.Context, dec func(interface{}) error, interceptor grpc.UnaryServerInterceptor) (interface{}, error) {
+	in := new(CreateOrganizationRequest)
 	if err := dec(in); err != nil {
 		return nil, err
 	}
 	if interceptor == nil {
-		return srv.(OrganisationServiceServer).CreateOrganisation(ctx, in)
+		return srv.(OrganizationServiceServer).CreateOrganization(ctx, in)
 	}
 	info := &grpc.UnaryServerInfo{
 		Server:     srv,
-		FullMethod: OrganisationService_CreateOrganisation_FullMethodName,
+		FullMethod: OrganizationService_CreateOrganization_FullMethodName,
 	}
 	handler := func(ctx context.Context, req interface{}) (interface{}, error) {
-		return srv.(OrganisationServiceServer).CreateOrganisation(ctx, req.(*CreateOrganisationRequest))
+		return srv.(OrganizationServiceServer).CreateOrganization(ctx, req.(*CreateOrganizationRequest))
 	}
 	return interceptor(ctx, in, info, handler)
 }
 
-func _OrganisationService_GetOrganisations_Handler(srv interface{}, ctx context.Context, dec func(interface{}) error, interceptor grpc.UnaryServerInterceptor) (interface{}, error) {
-	in := new(GetOrganisationsRequest)
+func _OrganizationService_GetOrganizations_Handler(srv interface{}, ctx context.Context, dec func(interface{}) error, interceptor grpc.UnaryServerInterceptor) (interface{}, error) {
+	in := new(GetOrganizationsRequest)
 	if err := dec(in); err != nil {
 		return nil, err
 	}
 	if interceptor == nil {
-		return srv.(OrganisationServiceServer).GetOrganisations(ctx, in)
+		return srv.(OrganizationServiceServer).GetOrganizations(ctx, in)
 	}
 	info := &grpc.UnaryServerInfo{
 		Server:     srv,
-		FullMethod: OrganisationService_GetOrganisations_FullMethodName,
+		FullMethod: OrganizationService_GetOrganizations_FullMethodName,
 	}
 	handler := func(ctx context.Context, req interface{}) (interface{}, error) {
-		return srv.(OrganisationServiceServer).GetOrganisations(ctx, req.(*GetOrganisationsRequest))
+		return srv.(OrganizationServiceServer).GetOrganizations(ctx, req.(*GetOrganizationsRequest))
 	}
 	return interceptor(ctx, in, info, handler)
 }
 
-func _OrganisationService_GetOrganisation_Handler(srv interface{}, ctx context.Context, dec func(interface{}) error, interceptor grpc.UnaryServerInterceptor) (interface{}, error) {
-	in := new(GetOrganisationRequest)
+func _OrganizationService_GetOrganization_Handler(srv interface{}, ctx context.Context, dec func(interface{}) error, interceptor grpc.UnaryServerInterceptor) (interface{}, error) {
+	in := new(GetOrganizationRequest)
 	if err := dec(in); err != nil {
 		return nil, err
 	}
 	if interceptor == nil {
-		return srv.(OrganisationServiceServer).GetOrganisation(ctx, in)
+		return srv.(OrganizationServiceServer).GetOrganization(ctx, in)
 	}
 	info := &grpc.UnaryServerInfo{
 		Server:     srv,
-		FullMethod: OrganisationService_GetOrganisation_FullMethodName,
+		FullMethod: OrganizationService_GetOrganization_FullMethodName,
 	}
 	handler := func(ctx context.Context, req interface{}) (interface{}, error) {
-		return srv.(OrganisationServiceServer).GetOrganisation(ctx, req.(*GetOrganisationRequest))
+		return srv.(OrganizationServiceServer).GetOrganization(ctx, req.(*GetOrganizationRequest))
 	}
 	return interceptor(ctx, in, info, handler)
 }
 
-func _OrganisationService_GetOrganisationByName_Handler(srv interface{}, ctx context.Context, dec func(interface{}) error, interceptor grpc.UnaryServerInterceptor) (interface{}, error) {
-	in := new(GetOrganisationByNameRequest)
+func _OrganizationService_GetOrganizationByName_Handler(srv interface{}, ctx context.Context, dec func(interface{}) error, interceptor grpc.UnaryServerInterceptor) (interface{}, error) {
+	in := new(GetOrganizationByNameRequest)
 	if err := dec(in); err != nil {
 		return nil, err
 	}
 	if interceptor == nil {
-		return srv.(OrganisationServiceServer).GetOrganisationByName(ctx, in)
+		return srv.(OrganizationServiceServer).GetOrganizationByName(ctx, in)
 	}
 	info := &grpc.UnaryServerInfo{
 		Server:     srv,
-		FullMethod: OrganisationService_GetOrganisationByName_FullMethodName,
+		FullMethod: OrganizationService_GetOrganizationByName_FullMethodName,
 	}
 	handler := func(ctx context.Context, req interface{}) (interface{}, error) {
-		return srv.(OrganisationServiceServer).GetOrganisationByName(ctx, req.(*GetOrganisationByNameRequest))
+		return srv.(OrganizationServiceServer).GetOrganizationByName(ctx, req.(*GetOrganizationByNameRequest))
 	}
 	return interceptor(ctx, in, info, handler)
 }
 
-func _OrganisationService_DeleteOrganisation_Handler(srv interface{}, ctx context.Context, dec func(interface{}) error, interceptor grpc.UnaryServerInterceptor) (interface{}, error) {
-	in := new(DeleteOrganisationRequest)
+func _OrganizationService_DeleteOrganization_Handler(srv interface{}, ctx context.Context, dec func(interface{}) error, interceptor grpc.UnaryServerInterceptor) (interface{}, error) {
+	in := new(DeleteOrganizationRequest)
 	if err := dec(in); err != nil {
 		return nil, err
 	}
 	if interceptor == nil {
-		return srv.(OrganisationServiceServer).DeleteOrganisation(ctx, in)
+		return srv.(OrganizationServiceServer).DeleteOrganization(ctx, in)
 	}
 	info := &grpc.UnaryServerInfo{
 		Server:     srv,
-		FullMethod: OrganisationService_DeleteOrganisation_FullMethodName,
+		FullMethod: OrganizationService_DeleteOrganization_FullMethodName,
 	}
 	handler := func(ctx context.Context, req interface{}) (interface{}, error) {
-		return srv.(OrganisationServiceServer).DeleteOrganisation(ctx, req.(*DeleteOrganisationRequest))
+		return srv.(OrganizationServiceServer).DeleteOrganization(ctx, req.(*DeleteOrganizationRequest))
 	}
 	return interceptor(ctx, in, info, handler)
 }
 
-// OrganisationService_ServiceDesc is the grpc.ServiceDesc for OrganisationService service.
+// OrganizationService_ServiceDesc is the grpc.ServiceDesc for OrganizationService service.
 // It's only intended for direct use with grpc.RegisterService,
 // and not to be introspected or modified (even as a copy)
-var OrganisationService_ServiceDesc = grpc.ServiceDesc{
-	ServiceName: "mediator.v1.OrganisationService",
-	HandlerType: (*OrganisationServiceServer)(nil),
+var OrganizationService_ServiceDesc = grpc.ServiceDesc{
+	ServiceName: "mediator.v1.OrganizationService",
+	HandlerType: (*OrganizationServiceServer)(nil),
 	Methods: []grpc.MethodDesc{
 		{
-			MethodName: "CreateOrganisation",
-			Handler:    _OrganisationService_CreateOrganisation_Handler,
+			MethodName: "CreateOrganization",
+			Handler:    _OrganizationService_CreateOrganization_Handler,
 		},
 		{
-			MethodName: "GetOrganisations",
-			Handler:    _OrganisationService_GetOrganisations_Handler,
+			MethodName: "GetOrganizations",
+			Handler:    _OrganizationService_GetOrganizations_Handler,
 		},
 		{
-			MethodName: "GetOrganisation",
-			Handler:    _OrganisationService_GetOrganisation_Handler,
+			MethodName: "GetOrganization",
+			Handler:    _OrganizationService_GetOrganization_Handler,
 		},
 		{
-			MethodName: "GetOrganisationByName",
-			Handler:    _OrganisationService_GetOrganisationByName_Handler,
+			MethodName: "GetOrganizationByName",
+			Handler:    _OrganizationService_GetOrganizationByName_Handler,
 		},
 		{
-			MethodName: "DeleteOrganisation",
-			Handler:    _OrganisationService_DeleteOrganisation_Handler,
+			MethodName: "DeleteOrganization",
+			Handler:    _OrganizationService_DeleteOrganization_Handler,
 		},
 	},
 	Streams:  []grpc.StreamDesc{},

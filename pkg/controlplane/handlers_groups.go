@@ -27,14 +27,14 @@ import (
 
 type createGroupValidation struct {
 	Name           string `db:"name" validate:"required"`
-	OrganisationId int32  `db:"organisation_id" validate:"required"`
+	OrganizationId int32  `db:"organization_id" validate:"required"`
 }
 
 // CreateGroup creates a group
 func (s *Server) CreateGroup(ctx context.Context, req *pb.CreateGroupRequest) (*pb.CreateGroupResponse, error) {
 	// validate that the org and name are not empty
 	validator := validator.New()
-	err := validator.Struct(createGroupValidation{OrganisationId: req.OrganisationId, Name: req.Name})
+	err := validator.Struct(createGroupValidation{OrganizationId: req.OrganizationId, Name: req.Name})
 	if err != nil {
 		return nil, err
 	}
@@ -53,7 +53,7 @@ func (s *Server) CreateGroup(ctx context.Context, req *pb.CreateGroupRequest) (*
 	}
 
 	grp, err := s.store.CreateGroup(ctx, db.CreateGroupParams{
-		OrganisationID: req.OrganisationId,
+		OrganizationID: req.OrganizationId,
 		Name:           req.Name,
 		Description:    sql.NullString{String: req.Description, Valid: true},
 		IsProtected:    *req.IsProtected,
@@ -66,7 +66,7 @@ func (s *Server) CreateGroup(ctx context.Context, req *pb.CreateGroupRequest) (*
 
 	return &pb.CreateGroupResponse{
 		GroupId:        grp.ID,
-		OrganisationId: grp.OrganisationID,
+		OrganizationId: grp.OrganizationID,
 		Name:           grp.Name,
 		Description:    grp.Description.String,
 		IsProtected:    grp.IsProtected,
@@ -88,7 +88,7 @@ func (s *Server) GetGroupById(ctx context.Context, req *pb.GetGroupByIdRequest) 
 	var resp pb.GetGroupByIdResponse
 	resp.Group = &pb.GroupRecord{
 		GroupId:        grp.ID,
-		OrganisationId: grp.OrganisationID,
+		OrganizationId: grp.OrganizationID,
 		Name:           grp.Name,
 		Description:    grp.Description.String,
 		IsProtected:    grp.IsProtected,
@@ -112,7 +112,7 @@ func (s *Server) GetGroupByName(ctx context.Context, req *pb.GetGroupByNameReque
 	var resp pb.GetGroupByNameResponse
 	resp.Group = &pb.GroupRecord{
 		GroupId:        grp.ID,
-		OrganisationId: grp.OrganisationID,
+		OrganizationId: grp.OrganizationID,
 		Name:           grp.Name,
 		Description:    grp.Description.String,
 		IsProtected:    grp.IsProtected,
@@ -124,8 +124,8 @@ func (s *Server) GetGroupByName(ctx context.Context, req *pb.GetGroupByNameReque
 
 // GetGroups returns a list of groups
 func (s *Server) GetGroups(ctx context.Context, req *pb.GetGroupsRequest) (*pb.GetGroupsResponse, error) {
-	if req.OrganisationId == 0 {
-		return nil, fmt.Errorf("organisation id cannot be empty")
+	if req.OrganizationId == 0 {
+		return nil, fmt.Errorf("organization id cannot be empty")
 	}
 
 	// define default values for limit and offset
@@ -134,7 +134,7 @@ func (s *Server) GetGroups(ctx context.Context, req *pb.GetGroupsRequest) (*pb.G
 	}
 
 	grps, err := s.store.ListGroups(ctx, db.ListGroupsParams{
-		OrganisationID: req.OrganisationId,
+		OrganizationID: req.OrganizationId,
 		Limit:          req.Limit,
 		Offset:         req.Offset,
 	})
@@ -146,7 +146,7 @@ func (s *Server) GetGroups(ctx context.Context, req *pb.GetGroupsRequest) (*pb.G
 	for _, group := range grps {
 		resp.Groups = append(resp.Groups, &pb.GroupRecord{
 			GroupId:        group.ID,
-			OrganisationId: group.OrganisationID,
+			OrganizationId: group.OrganizationID,
 			Name:           group.Name,
 			Description:    group.Description.String,
 			IsProtected:    group.IsProtected,
