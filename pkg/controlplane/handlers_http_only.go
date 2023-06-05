@@ -22,6 +22,7 @@ import (
 	"net/http"
 	"strconv"
 
+	"github.com/rs/zerolog/log"
 	"github.com/spf13/viper"
 	mycrypto "github.com/stacklok/mediator/pkg/crypto"
 	"github.com/stacklok/mediator/pkg/ghclient"
@@ -112,6 +113,9 @@ func (s *Server) HandleGitHubAppRedirect(w http.ResponseWriter, r *http.Request)
 // The GitHub App installation ID is obtained from the query string and the
 // encrypted user ID is retrieved from the secure cookie. The GitHub App
 // installation ID and encrypted user ID are then stored in the database.
+// Warning: This code should be heavily vetter before being used in production.
+// The code is not complete and is only meant to be used as a proof of concept.
+// Ideally this should be extented to consider the use of a state parameter
 func (s *Server) HandleGitHubAppCallback(w http.ResponseWriter, r *http.Request) {
 	OAuth2 := &oauth2.Config{
 		ClientID:     viper.GetString("github-app.client_id"),
@@ -123,42 +127,38 @@ func (s *Server) HandleGitHubAppCallback(w http.ResponseWriter, r *http.Request)
 	code := r.URL.Query().Get("code")
 	installationID := r.URL.Query().Get("installation_id")
 
-	token, err := OAuth2.Exchange(context.Background(), code)
+	// Unsure the code can be exchanged for a token using client credentials
+	// If this fails, somethng is wrong
+
+	_, err := OAuth2.Exchange(context.Background(), code)
 	if err != nil {
-		panic(err)
+		log.Error().Err(err).Msg("error exchanging code for token")
 	}
-
-	fmt.Println("Access Token: ", token.AccessToken)
-	fmt.Println("Installation ID", installationID)
-
-	fmt.Fprint(w, html)
 
 	session, err := store.Get(r, "stacklok-mediator")
 	if err != nil {
-		panic(err)
+		log.Error().Err(err).Msg("error getting session")
 	}
 
 	userID, ok := session.Values["mcode"].(string)
 	if !ok {
-		panic("error")
+		log.Error().Err(err).Msg("error getting user ID from session")
 	}
-
-	// fmt.Println("Encrypted User ID: ", encryptedUserID.(string))
 
 	encryptedUserIDBase64, err := base64.StdEncoding.DecodeString(userID)
 	if err != nil {
-		fmt.Println("error decoding:", err)
+		log.Error().Err(err).Msg("error decoding user ID")
 	}
 
-	// // decrypt the encryptedUserID
-	userIDout, err := mycrypto.DecryptRow("key", encryptedUserIDBase64)
+	// The below will give us the User ID which should be stored in the database
+	// along with the GitHub App installation ID. When ready to implement the user
+	// id retrieved from the session token should be stored into the database
+	// along wih the GitHub App installation ID.
+	_, err = mycrypto.DecryptRow("key", encryptedUserIDBase64)
 	if err != nil {
-		fmt.Println("error:", err)
+		log.Error().Err(err).Msg("error decrypting user ID")
 	}
 
-	fmt.Println("Decrypted User ID: ", userIDout)
-
-	// convert installationID to int64
 	installationIDInt, err := strconv.ParseInt(installationID, 10, 64)
 	if err != nil {
 		fmt.Println("error:", err)
@@ -168,6 +168,11 @@ func (s *Server) HandleGitHubAppCallback(w http.ResponseWriter, r *http.Request)
 		fmt.Println("error:", err)
 	}
 
+	// send HTML informative page to user
+	fmt.Fprint(w, html)
+
+	// Create a new GitHub App client using the GitHub App installation ID and our
+	// private key
 	a := client.New(applicationIDInt, installationIDInt, viper.GetString("github-app.private_key_path"))
 	client, _ := a.GitHubClient()
 
