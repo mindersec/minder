@@ -34,7 +34,7 @@ import (
 	"github.com/stacklok/mediator/pkg/util"
 )
 
-var user_createCmd = &cobra.Command{
+var User_createCmd = &cobra.Command{
 	Use:   "create",
 	Short: "Create a user within a mediator control plane",
 	Long: `The medctl user create subcommand lets you create new users for a role
@@ -47,12 +47,17 @@ within a mediator control plane.`,
 	Run: func(cmd *cobra.Command, args []string) {
 		// create the user via GRPC
 		role := util.GetConfigValue("role-id", "role-id", cmd, int32(0)).(int32)
-		email := util.GetConfigValue("email", "email", cmd, nil).(string)
+		email := util.GetConfigValue("email", "email", cmd, nil)
 		username := util.GetConfigValue("username", "username", cmd, nil)
-		password := util.GetConfigValue("password", "password", cmd, nil).(string)
-		firstName := util.GetConfigValue("firstname", "firstname", cmd, nil).(string)
-		lastName := util.GetConfigValue("lastname", "lastname", cmd, nil).(string)
+		password := util.GetConfigValue("password", "password", cmd, nil)
+		firstName := util.GetConfigValue("firstname", "firstname", cmd, nil)
+		lastName := util.GetConfigValue("lastname", "lastname", cmd, nil)
 		isProtected := util.GetConfigValue("is-protected", "is-protected", cmd, false).(bool)
+
+		if username == nil {
+			fmt.Fprintf(os.Stderr, "Error: username is required\n")
+			os.Exit(1)
+		}
 
 		conn, err := util.GetGrpcConnection(cmd)
 		if err != nil {
@@ -70,11 +75,33 @@ within a mediator control plane.`,
 		ctx, cancel := context.WithTimeout(context.Background(), time.Second)
 		defer cancel()
 
-		firstNamePtr := &firstName
-		lastNamePtr := &lastName
 		protectedPtr := &isProtected
-		emailPtr := &email
-		passwordPtr := &password
+
+		var emailPtr *string
+		if email == nil {
+			emailPtr = nil
+		} else {
+			emailPtr = email.(*string)
+		}
+		var passwordPtr *string
+		if password == nil {
+			passwordPtr = nil
+		} else {
+			passwordPtr = password.(*string)
+		}
+		var firstNamePtr *string
+		if firstName == nil {
+			firstNamePtr = nil
+		} else {
+			firstNamePtr = password.(*string)
+		}
+		var lastNamePtr *string
+		if lastName == nil {
+			lastNamePtr = nil
+		} else {
+			lastNamePtr = lastName.(*string)
+		}
+
 		resp, err := client.CreateUser(ctx, &pb.CreateUserRequest{
 			RoleId:      role,
 			Email:       emailPtr,
@@ -100,19 +127,19 @@ within a mediator control plane.`,
 }
 
 func init() {
-	UserCmd.AddCommand(user_createCmd)
-	user_createCmd.Flags().StringP("username", "u", "", "Username")
-	user_createCmd.Flags().StringP("email", "e", "", "E-mail for the user")
-	user_createCmd.Flags().StringP("password", "p", "", "Password for the user")
-	user_createCmd.Flags().StringP("firstname", "f", "", "User's first name")
-	user_createCmd.Flags().StringP("lastname", "l", "", "User's last name")
-	user_createCmd.Flags().BoolP("is-protected", "i", false, "Is the user protected")
-	user_createCmd.Flags().Int32P("role-id", "r", 0, "Role ID")
-	if err := user_createCmd.MarkFlagRequired("username"); err != nil {
+	UserCmd.AddCommand(User_createCmd)
+	User_createCmd.Flags().StringP("username", "u", "", "Username")
+	User_createCmd.Flags().StringP("email", "e", "", "E-mail for the user")
+	User_createCmd.Flags().StringP("password", "p", "", "Password for the user")
+	User_createCmd.Flags().StringP("firstname", "f", "", "User's first name")
+	User_createCmd.Flags().StringP("lastname", "l", "", "User's last name")
+	User_createCmd.Flags().BoolP("is-protected", "i", false, "Is the user protected")
+	User_createCmd.Flags().Int32P("role-id", "r", 0, "Role ID")
+	if err := User_createCmd.MarkFlagRequired("username"); err != nil {
 		fmt.Fprintf(os.Stderr, "Error marking flag as required: %s\n", err)
 		os.Exit(1)
 	}
-	if err := user_createCmd.MarkFlagRequired("role-id"); err != nil {
+	if err := User_createCmd.MarkFlagRequired("role-id"); err != nil {
 		fmt.Fprintf(os.Stderr, "Error marking flag as required: %s\n", err)
 		os.Exit(1)
 	}

@@ -23,6 +23,7 @@ package group
 
 import (
 	"context"
+	"encoding/json"
 	"fmt"
 	"os"
 	"time"
@@ -34,7 +35,7 @@ import (
 	"github.com/stacklok/mediator/pkg/util"
 )
 
-var group_createCmd = &cobra.Command{
+var Group_createCmd = &cobra.Command{
 	Use:   "create",
 	Short: "Create a group within a mediator control plane",
 	Long: `The medctl group create subcommand lets you create new groups within
@@ -76,25 +77,30 @@ a mediator control plane.`,
 			os.Exit(1)
 		}
 
-		fmt.Printf("Group created: %s\n", resp.String())
+		group, err := json.MarshalIndent(resp, "", "  ")
+		if err != nil {
+			cmd.Println("Created group: ", resp.Name)
+		} else {
+			cmd.Println("Created group:", string(group))
+		}
 
 	},
 }
 
 func init() {
-	GroupCmd.AddCommand(group_createCmd)
-	group_createCmd.Flags().StringP("name", "n", "", "Name of the group")
-	group_createCmd.Flags().StringP("description", "d", "", "Description of the group")
-	group_createCmd.Flags().Int32("org-id", 0, "Organization ID")
-	group_createCmd.Flags().BoolP("is_protected", "i", false, "Is the group protected")
+	GroupCmd.AddCommand(Group_createCmd)
+	Group_createCmd.Flags().StringP("name", "n", "", "Name of the group")
+	Group_createCmd.Flags().StringP("description", "d", "", "Description of the group")
+	Group_createCmd.Flags().Int32("org-id", 0, "Organization ID")
+	Group_createCmd.Flags().BoolP("is_protected", "i", false, "Is the group protected")
 
-	if err := group_createCmd.MarkFlagRequired("name"); err != nil {
+	if err := Group_createCmd.MarkFlagRequired("name"); err != nil {
 		fmt.Fprintf(os.Stderr, "Error marking flag as required: %s\n", err)
 	}
-	if err := group_createCmd.MarkFlagRequired("description"); err != nil {
+	if err := Group_createCmd.MarkFlagRequired("description"); err != nil {
 		fmt.Fprintf(os.Stderr, "Error marking flag as required: %s\n", err)
 	}
-	if err := group_createCmd.MarkFlagRequired("org-id"); err != nil {
+	if err := Group_createCmd.MarkFlagRequired("org-id"); err != nil {
 		fmt.Fprintf(os.Stderr, "Error marking flag as required: %s\n", err)
 	}
 }

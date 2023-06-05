@@ -34,7 +34,7 @@ import (
 	"github.com/stacklok/mediator/pkg/util"
 )
 
-var role_createCmd = &cobra.Command{
+var Role_createCmd = &cobra.Command{
 	Use:   "create",
 	Short: "Create a role within a mediator control plane",
 	Long: `The medctl role create subcommand lets you create new roles for a group
@@ -81,8 +81,7 @@ within a mediator control plane.`,
 			fmt.Fprintf(os.Stderr, "Error creating role: %s\n", err)
 			os.Exit(1)
 		}
-
-		role, err := json.Marshal(resp)
+		role, err := json.MarshalIndent(resp, "", "  ")
 		if err != nil {
 			cmd.Println("Created role: ", resp.Name)
 		} else {
@@ -92,16 +91,16 @@ within a mediator control plane.`,
 }
 
 func init() {
-	RoleCmd.AddCommand(role_createCmd)
-	role_createCmd.Flags().StringP("name", "n", "", "Name of the role")
-	role_createCmd.Flags().BoolP("is_protected", "i", false, "Is the role protected")
-	role_createCmd.Flags().BoolP("is_admin", "a", false, "Is it an admin role")
-	role_createCmd.Flags().Int32P("group-id", "g", 0, "ID of the group which owns the role")
-	if err := role_createCmd.MarkFlagRequired("name"); err != nil {
+	RoleCmd.AddCommand(Role_createCmd)
+	Role_createCmd.Flags().StringP("name", "n", "", "Name of the role")
+	Role_createCmd.Flags().BoolP("is_protected", "i", false, "Is the role protected")
+	Role_createCmd.Flags().BoolP("is_admin", "a", false, "Is it an admin role")
+	Role_createCmd.Flags().Int32P("group-id", "g", 0, "ID of the group which owns the role")
+	if err := Role_createCmd.MarkFlagRequired("name"); err != nil {
 		fmt.Fprintf(os.Stderr, "Error marking flag as required: %s\n", err)
 		os.Exit(1)
 	}
-	if err := role_createCmd.MarkFlagRequired("group-id"); err != nil {
+	if err := Role_createCmd.MarkFlagRequired("group-id"); err != nil {
 		fmt.Fprintf(os.Stderr, "Error marking flag as required: %s\n", err)
 		os.Exit(1)
 	}
