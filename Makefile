@@ -26,7 +26,7 @@ gen: ## generate protobuf files
 	buf generate
 
 clean-gen:
-	rm -rf $(shell find pkg/generated -iname "*.go") & rm -rf $(shell find pkg/generated -iname "*.swagger.json")
+	rm -rf $(shell find pkg/generated -iname "*.go") & rm -rf $(shell find pkg/generated -iname "*.swagger.json") & rm -rf pkg/generated/protodocs
 
 build: ## build golang binary
 	# @go build -ldflags "-X main.version=$(shell git describe --abbrev=0 --tags)" -o bin/$(projectname)
