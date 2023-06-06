@@ -22,6 +22,10 @@
 package util
 
 import (
+	crand "crypto/rand"
+	"crypto/rsa"
+	"crypto/x509"
+	"encoding/pem"
 	"math/rand"
 )
 
@@ -104,4 +108,27 @@ func fillPasswordChars(r *rand.Rand, password []byte, charset string, count int)
 
 func getRandomChar(r *rand.Rand, charset string) byte {
 	return charset[r.Intn(len(charset))]
+}
+
+// RandomKeypair returns a random RSA keypair
+func RandomKeypair(length int) ([]byte, []byte) {
+	privateKey, err := rsa.GenerateKey(crand.Reader, length)
+	if err != nil {
+		return nil, nil
+	}
+	publicKey := &privateKey.PublicKey
+
+	privateKeyPEM := &pem.Block{
+		Type:  "RSA PRIVATE KEY",
+		Bytes: x509.MarshalPKCS1PrivateKey(privateKey),
+	}
+	publicKeyPEM := &pem.Block{
+		Type:  "RSA PUBLIC KEY",
+		Bytes: x509.MarshalPKCS1PublicKey(publicKey),
+	}
+	// Encode the PEM block to a string
+	privateKeyString := pem.EncodeToMemory(privateKeyPEM)
+	publicKeyString := pem.EncodeToMemory(publicKeyPEM)
+
+	return privateKeyString, publicKeyString
 }

@@ -29,7 +29,9 @@ import (
 	"database/sql"
 	"encoding/base64"
 	"fmt"
+	"io/ioutil"
 	"net/http"
+	"path/filepath"
 
 	"github.com/stacklok/mediator/pkg/auth"
 	mcrypto "github.com/stacklok/mediator/pkg/crypto"
@@ -236,9 +238,35 @@ func (s *Server) LogIn(ctx context.Context, in *pb.LogInRequest) (*pb.LogInRespo
 		return &pb.LogInResponse{Status: "Invalid Password"}, nil
 	}
 
+	// read private key for generating token and refresh token
+	privateKeyPath := viper.GetString("auth.access_token_private_key")
+	if privateKeyPath == "" {
+		return &pb.LogInResponse{Status: "Failed to read private key"}, nil
+	}
+
+	privateKeyPath = filepath.Clean(privateKeyPath)
+	keyBytes, err := ioutil.ReadFile(privateKeyPath)
+	if err != nil {
+		return &pb.LogInResponse{Status: "Failed to read private key"}, nil
+	}
+
+	refreshPrivateKeyPath := viper.GetString("auth.refresh_token_private_key")
+	if refreshPrivateKeyPath == "" {
+		return &pb.LogInResponse{Status: "Failed to read private key"}, nil
+	}
+
+	refreshPrivateKeyPath = filepath.Clean(refreshPrivateKeyPath)
+	refreshKeyBytes, err := ioutil.ReadFile(refreshPrivateKeyPath)
+	if err != nil {
+		return &pb.LogInResponse{Status: "Failed to read private key"}, nil
+	}
+
+	// Convert the key bytes to a string
 	tokenString, refreshTokenString, tokenExpirationTime, refreshExpirationTime, err := auth.GenerateToken(
 		user.ID,
-		viper.GetString("auth.jwt_key"),
+		user.Username,
+		keyBytes,
+		refreshKeyBytes,
 		viper.GetInt64("auth.token_expiry"),
 		viper.GetInt64("auth.refresh_expiry"),
 	)
