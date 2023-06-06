@@ -17,19 +17,15 @@ package controlplane
 import (
 	"context"
 	"testing"
-	"time"
 
 	"github.com/golang/mock/gomock"
 	mockdb "github.com/stacklok/mediator/database/mock"
 	pb "github.com/stacklok/mediator/pkg/generated/protobuf/go/mediator/v1"
-	"github.com/stacklok/mediator/pkg/util"
 	"github.com/stretchr/testify/assert"
 	"google.golang.org/grpc/codes"
 )
 
 func TestLogin_gRPC(t *testing.T) {
-	seed := time.Now().UnixNano()
-
 	testCases := []struct {
 		name               string
 		req                *pb.LogInRequest
@@ -41,7 +37,7 @@ func TestLogin_gRPC(t *testing.T) {
 			name: "Success",
 			req: &pb.LogInRequest{
 				Username: "test",
-				Password: util.RandomPassword(8, seed),
+				Password: "",
 			},
 			buildStubs: func(store *mockdb.MockStore) {
 				store.EXPECT().

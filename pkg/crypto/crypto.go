@@ -47,6 +47,13 @@ type params struct {
 }
 
 func getParams() *params {
+	// set default values when not set
+	viper.SetDefault("salt.memory", 64*1024)
+	viper.SetDefault("salt.iterations", 3)
+	viper.SetDefault("salt.parallelism", 2)
+	viper.SetDefault("salt.salt_length", 16)
+	viper.SetDefault("salt.key_length", 32)
+
 	return &params{
 		memory:      viper.GetUint32("salt.memory"),
 		iterations:  viper.GetUint32("salt.iterations"),

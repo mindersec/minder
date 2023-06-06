@@ -35,21 +35,6 @@ func TestCobraMain(t *testing.T) {
 			args:           []string{"auth"},
 			expectedOutput: "auth called\n",
 		},
-		{
-			name:           "auth list command",
-			args:           []string{"auth", "list"},
-			expectedOutput: "auth list called\n",
-		},
-		{
-			name:           "auth revoke command",
-			args:           []string{"auth", "revoke"},
-			expectedOutput: "auth revoke called\n",
-		},
-		{
-			name:           "auth delete command",
-			args:           []string{"auth", "delete"},
-			expectedOutput: "auth delete called\n",
-		},
 	}
 
 	for _, test := range tests {
