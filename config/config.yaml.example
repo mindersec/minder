@@ -52,7 +52,10 @@ database:
 
 # Crypto (these should be ultimately stored in a secure vault)
 auth:
-  jwt_key: "secret"
+  access_token_private_key: "$HOME/.ssh/access_token_rsa"
+  access_token_public_key: "$HOME/.ssh/acces_token_rsa.pub"
+  refresh_token_private_key: "$HOME/.ssh/refresh_token_rsa"
+  refresh_token_public_key: "$HOME/.ssh/refresh_token_rsa.pub"
   token_expiry: 3600
   refresh_expiry: 86400
 

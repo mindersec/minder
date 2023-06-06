@@ -22,6 +22,8 @@
 package auth
 
 import (
+	"crypto/x509"
+	"encoding/pem"
 	"fmt"
 	"time"
 
@@ -29,20 +31,25 @@ import (
 )
 
 // GenerateToken generates a JWT token
-func GenerateToken(userId int32, key string, expiry int64, refreshExpiry int64) (string, string, int64, int64, error) {
-	if key == "" {
+func GenerateToken(userId int32, username string, accessPrivateKey []byte, refreshPrivateKey []byte,
+	expiry int64, refreshExpiry int64) (string, string, int64, int64, error) {
+	if accessPrivateKey == nil || refreshPrivateKey == nil {
 		return "", "", 0, 0, fmt.Errorf("invalid key")
 	}
-
-	jwtKey := []byte(key)
 	tokenExpirationTime := time.Now().Add(time.Duration(expiry) * time.Minute).Unix()
 
-	token := jwt.NewWithClaims(jwt.SigningMethodHS256, jwt.MapClaims{
-		"userId": userId,
-		"exp":    tokenExpirationTime,
+	token := jwt.NewWithClaims(jwt.SigningMethodRS256, jwt.MapClaims{
+		"userId":   userId,
+		"username": username,
+		"iat":      time.Now().Unix(),
+		"exp":      tokenExpirationTime,
 	})
 
-	tokenString, err := token.SignedString(jwtKey)
+	accessKey, err := jwt.ParseRSAPrivateKeyFromPEM(accessPrivateKey)
+	if err != nil {
+		return "", "", 0, 0, err
+	}
+	tokenString, err := token.SignedString(accessKey)
 	if err != nil {
 		return "", "", 0, 0, err
 	}
@@ -50,12 +57,19 @@ func GenerateToken(userId int32, key string, expiry int64, refreshExpiry int64) 
 	// Create a refresh token that lasts longer than the access token
 	refreshExpirationTime := time.Now().Add(time.Duration(refreshExpiry) * time.Minute).Unix()
 
-	refreshToken := jwt.NewWithClaims(jwt.SigningMethodHS256, jwt.MapClaims{
-		"userId": userId,
-		"exp":    refreshExpirationTime,
+	refreshToken := jwt.NewWithClaims(jwt.SigningMethodRS256, jwt.MapClaims{
+		"userId":   userId,
+		"username": username,
+		"iat":      time.Now().Unix(),
+		"exp":      refreshExpirationTime,
 	})
 
-	refreshTokenString, err := refreshToken.SignedString(jwtKey)
+	refreshKey, err := jwt.ParseRSAPrivateKeyFromPEM(refreshPrivateKey)
+	if err != nil {
+		return "", "", 0, 0, err
+	}
+
+	refreshTokenString, err := refreshToken.SignedString(refreshKey)
 	if err != nil {
 		return "", "", 0, 0, err
 	}
@@ -64,30 +78,43 @@ func GenerateToken(userId int32, key string, expiry int64, refreshExpiry int64) 
 }
 
 // VerifyToken verifies the token string and returns the user ID
-func VerifyToken(tokenString string, key string) (uint, error) {
-	jwtKey := []byte(key)
+func VerifyToken(tokenString string, publicKey []byte) (uint, string, error) {
+	// extract the pubkey from the pem
+	pubPem, _ := pem.Decode(publicKey)
+	if pubPem == nil {
+		return 0, "", fmt.Errorf("invalid key")
+	}
+	key, err := x509.ParsePKCS1PublicKey(pubPem.Bytes)
+	if err != nil {
+		return 0, "", fmt.Errorf("invalid key")
+	}
 
 	token, err := jwt.Parse(tokenString, func(token *jwt.Token) (interface{}, error) {
-		if _, ok := token.Method.(*jwt.SigningMethodHMAC); !ok {
+		if _, ok := token.Method.(*jwt.SigningMethodRSA); !ok {
 			return nil, fmt.Errorf("unexpected signing method")
 		}
-		return jwtKey, nil
+		return key, nil
 	})
 
 	if err != nil {
-		return 0, err
+		return 0, "", err
 	}
 
 	claims, ok := token.Claims.(jwt.MapClaims)
 	if !ok || !token.Valid {
-		return 0, fmt.Errorf("invalid token")
+		return 0, "", fmt.Errorf("invalid token")
 	}
 
 	userIdFloat, ok := claims["userId"].(float64)
 	if !ok {
-		return 0, fmt.Errorf("invalid user ID format")
+		return 0, "", fmt.Errorf("invalid user ID format")
 	}
 	userId := uint(userIdFloat)
 
-	return userId, nil
+	userName, ok := claims["username"].(string)
+	if !ok {
+		return 0, "", fmt.Errorf("invalid username format")
+	}
+
+	return userId, userName, nil
 }
