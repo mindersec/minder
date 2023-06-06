@@ -19,6 +19,7 @@
 // It does make a good example of how to use the generated client code
 // for others to use as a reference.
 
+// Package auth provides the auth command group for the medctl CLI.
 package auth
 
 import (

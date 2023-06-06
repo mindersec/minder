@@ -24,26 +24,48 @@ package auth
 import (
 	"fmt"
 	"os"
+	"path/filepath"
 
 	"github.com/spf13/cobra"
 	"github.com/spf13/viper"
 )
 
-// authCmd represents the auth command
-var auth_listCmd = &cobra.Command{
-	Use:   "list",
-	Short: "List all auth accounts and tokens",
-	Long:  `List all accounts and tokens for active or expired mediator sessions.`,
+// auth_logoutCmd represents the logout command
+var auth_logoutCmd = &cobra.Command{
+	Use:   "logout",
+	Short: "Logout from mediator control plane.",
+	Long:  `Logout from mediator control plane. Credentials will be removed from $XDG_CONFIG_HOME/mediator/credentials.json`,
 	PreRun: func(cmd *cobra.Command, args []string) {
 		if err := viper.BindPFlags(cmd.Flags()); err != nil {
 			fmt.Fprintf(os.Stderr, "Error binding flags: %s\n", err)
 		}
 	},
 	Run: func(cmd *cobra.Command, args []string) {
-		cmd.Println("auth list called")
+		// Get the XDG_CONFIG_HOME environment variable
+		xdgConfigHome := os.Getenv("XDG_CONFIG_HOME")
+
+		// just delete token from credentials file
+		if xdgConfigHome == "" {
+			homeDir, err := os.UserHomeDir()
+			if err != nil {
+				fmt.Fprintf(os.Stderr, "Error getting home directory: %v\n", err)
+				os.Exit(1)
+			}
+			xdgConfigHome = filepath.Join(homeDir, ".config")
+		}
+
+		filePath := filepath.Join(xdgConfigHome, "mediator", "credentials.json")
+		err := os.Remove(filePath)
+		if err != nil {
+			fmt.Fprintf(os.Stderr, "Error removing credentials file: %v\n", err)
+			os.Exit(1)
+		}
+		fmt.Println("User logged out.")
+
 	},
 }
 
 func init() {
-	AuthCmd.AddCommand(auth_listCmd)
+	AuthCmd.AddCommand(auth_logoutCmd)
+
 }
