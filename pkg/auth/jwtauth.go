@@ -50,10 +50,10 @@ func GenerateToken(userClaims UserClaims, accessPrivateKey []byte, refreshPrivat
 	tokenExpirationTime := time.Now().Add(time.Duration(expiry) * time.Second).Unix()
 
 	token := jwt.NewWithClaims(jwt.SigningMethodRS256, jwt.MapClaims{
-		"userId":  userClaims.UserId,
-		"roleId":  userClaims.RoleId,
-		"groupId": userClaims.GroupId,
-		"orgId":   userClaims.OrganizationId,
+		"userId":  int32(userClaims.UserId),
+		"roleId":  int32(userClaims.RoleId),
+		"groupId": int32(userClaims.GroupId),
+		"orgId":   int32(userClaims.OrganizationId),
 		"isAdmin": userClaims.IsAdmin,
 		"isSuper": userClaims.IsSuperadmin,
 		"iat":     time.Now().Unix(),
@@ -126,10 +126,10 @@ func VerifyToken(tokenString string, publicKey []byte) (UserClaims, error) {
 	}
 
 	// generate claims
-	userClaims.UserId = claims["userId"].(int32)
-	userClaims.RoleId = claims["roleId"].(int32)
-	userClaims.GroupId = claims["groupId"].(int32)
-	userClaims.OrganizationId = claims["orgId"].(int32)
+	userClaims.UserId = int32(claims["userId"].(float64))
+	userClaims.RoleId = int32(claims["roleId"].(float64))
+	userClaims.GroupId = int32(claims["groupId"].(float64))
+	userClaims.OrganizationId = int32(claims["orgId"].(float64))
 	userClaims.IsAdmin = claims["isAdmin"].(bool)
 	userClaims.IsSuperadmin = claims["isSuper"].(bool)
 

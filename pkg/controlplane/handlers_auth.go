@@ -155,21 +155,60 @@ var authBypassMethods = []string{
 	"/mediator.v1.HealthService/CheckHealth",
 }
 
-// MediatorAuthFunc is the auth function for the mediator service
-func MediatorAuthFunc(ctx context.Context) (context.Context, error) {
+var superAdminMethods = []string{
+	"/mediator.v1.OrganizationService/CreateOrganization",
+	"/mediator.v1.OrganizationService/GetOrganizations",
+	"/mediator.v1.OrganizationService/DeleteOrganization",
+}
+
+func canBypassAuth(ctx context.Context) bool {
 	// Extract the gRPC method name from the context
 	method, ok := grpc.Method(ctx)
 	if !ok {
-		return nil, status.Error(codes.Unauthenticated, "No method found")
+		// no method called, can bypass auth
+		return true
 	}
 
 	// Check if the current method is in the list of bypass methods
 	for _, bypassMethod := range authBypassMethods {
 		if bypassMethod == method {
-			// If the method is in the bypass list, return the context as is without authentication
-			log.Info().Msgf("Bypassing authentication for method %s", method)
-			return ctx, nil
+			return true
 		}
+	}
+	return false
+}
+
+func isAuthorized(ctx context.Context, claims auth.UserClaims) bool {
+	// superadmin is authorized to everything
+	if claims.IsSuperadmin {
+		return true
+	}
+	// Extract the gRPC method name from the context
+	method, ok := grpc.Method(ctx)
+	if !ok {
+		// no method called and did not bypass auth, return false
+		return false
+	}
+
+	// check if method is on superadmin ones, and fail
+	for _, bypassMethod := range superAdminMethods {
+		if bypassMethod == method {
+			return false
+		}
+	}
+
+	return true
+
+}
+
+// MediatorAuthFunc is the auth function for the mediator service
+func MediatorAuthFunc(ctx context.Context) (context.Context, error) {
+	// bypass auth
+	canBypass := canBypassAuth(ctx)
+	if canBypass {
+		// If the method is in the bypass list, return the context as is without authentication
+		log.Info().Msgf("Bypassing authentication")
+		return ctx, nil
 	}
 
 	token, err := gauth.AuthFromMD(ctx, "bearer")
@@ -180,6 +219,12 @@ func MediatorAuthFunc(ctx context.Context) (context.Context, error) {
 	claims, err := parseToken(token)
 	if err != nil {
 		return nil, status.Errorf(codes.Unauthenticated, "invalid auth token: %v", err)
+	}
+
+	// Check if the current method needs to have a superadmin role
+	isAuthorized := isAuthorized(ctx, claims)
+	if !isAuthorized {
+		return nil, status.Errorf(codes.PermissionDenied, "user not authorized")
 	}
 
 	return context.WithValue(ctx, tokenInfoKey, claims), nil
