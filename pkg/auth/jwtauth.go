@@ -22,6 +22,7 @@
 package auth
 
 import (
+	"crypto/rsa"
 	"crypto/x509"
 	"encoding/pem"
 	"fmt"
@@ -36,7 +37,7 @@ func GenerateToken(userId int32, username string, accessPrivateKey []byte, refre
 	if accessPrivateKey == nil || refreshPrivateKey == nil {
 		return "", "", 0, 0, fmt.Errorf("invalid key")
 	}
-	tokenExpirationTime := time.Now().Add(time.Duration(expiry) * time.Minute).Unix()
+	tokenExpirationTime := time.Now().Add(time.Duration(expiry) * time.Second).Unix()
 
 	token := jwt.NewWithClaims(jwt.SigningMethodRS256, jwt.MapClaims{
 		"userId":   userId,
@@ -55,7 +56,7 @@ func GenerateToken(userId int32, username string, accessPrivateKey []byte, refre
 	}
 
 	// Create a refresh token that lasts longer than the access token
-	refreshExpirationTime := time.Now().Add(time.Duration(refreshExpiry) * time.Minute).Unix()
+	refreshExpirationTime := time.Now().Add(time.Duration(refreshExpiry) * time.Second).Unix()
 
 	refreshToken := jwt.NewWithClaims(jwt.SigningMethodRS256, jwt.MapClaims{
 		"userId":   userId,
@@ -86,7 +87,12 @@ func VerifyToken(tokenString string, publicKey []byte) (uint, string, error) {
 	}
 	key, err := x509.ParsePKCS1PublicKey(pubPem.Bytes)
 	if err != nil {
-		return 0, "", fmt.Errorf("invalid key")
+		// try another method
+		key1, err := x509.ParsePKIXPublicKey(pubPem.Bytes)
+		if err != nil {
+			return 0, "", fmt.Errorf("invalid key")
+		}
+		key = key1.(*rsa.PublicKey)
 	}
 
 	token, err := jwt.Parse(tokenString, func(token *jwt.Token) (interface{}, error) {
