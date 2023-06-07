@@ -31,6 +31,7 @@ type Querier interface {
 	GetUserByEmail(ctx context.Context, email sql.NullString) (User, error)
 	GetUserByID(ctx context.Context, id int32) (User, error)
 	GetUserByUserName(ctx context.Context, username string) (User, error)
+	GetUserClaims(ctx context.Context, id int32) (GetUserClaimsRow, error)
 	ListGroups(ctx context.Context, arg ListGroupsParams) ([]Group, error)
 	ListGroupsByOrganizationID(ctx context.Context, organizationID int32) ([]Group, error)
 	ListOrganizations(ctx context.Context, arg ListOrganizationsParams) ([]Organization, error)

@@ -125,6 +125,33 @@ func (q *Queries) GetUserByUserName(ctx context.Context, username string) (User,
 	return i, err
 }
 
+const getUserClaims = `-- name: GetUserClaims :one
+SELECT u.id as user_id, u.role_id as role_id, r.is_admin as is_admin, r.group_id as group_id,
+g.organization_id as organization_id FROM users u
+INNER JOIN roles r ON u.role_id = r.id INNER JOIN groups g ON r.group_id = g.id WHERE u.id = $1
+`
+
+type GetUserClaimsRow struct {
+	UserID         int32 `json:"user_id"`
+	RoleID         int32 `json:"role_id"`
+	IsAdmin        bool  `json:"is_admin"`
+	GroupID        int32 `json:"group_id"`
+	OrganizationID int32 `json:"organization_id"`
+}
+
+func (q *Queries) GetUserClaims(ctx context.Context, id int32) (GetUserClaimsRow, error) {
+	row := q.db.QueryRowContext(ctx, getUserClaims, id)
+	var i GetUserClaimsRow
+	err := row.Scan(
+		&i.UserID,
+		&i.RoleID,
+		&i.IsAdmin,
+		&i.GroupID,
+		&i.OrganizationID,
+	)
+	return i, err
+}
+
 const listUsers = `-- name: ListUsers :many
 SELECT id, role_id, email, username, password, first_name, last_name, is_protected, created_at, updated_at FROM users
 WHERE role_id = $1
