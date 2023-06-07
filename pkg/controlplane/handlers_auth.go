@@ -22,10 +22,15 @@ import (
 	"path/filepath"
 
 	"github.com/go-playground/validator/v10"
+	gauth "github.com/grpc-ecosystem/go-grpc-middleware/v2/interceptors/auth"
+	"github.com/rs/zerolog/log"
 	"github.com/spf13/viper"
 	"github.com/stacklok/mediator/pkg/auth"
 	mcrypto "github.com/stacklok/mediator/pkg/crypto"
 	pb "github.com/stacklok/mediator/pkg/generated/protobuf/go/mediator/v1"
+	"google.golang.org/grpc"
+	"google.golang.org/grpc/codes"
+	"google.golang.org/grpc/status"
 )
 
 type loginValidation struct {
@@ -107,4 +112,69 @@ func (s *Server) LogIn(ctx context.Context, in *pb.LogInRequest) (*pb.LogInRespo
 func (_ *Server) LogOut(_ context.Context, _ *pb.LogOutRequest) (*pb.LogOutResponse, error) {
 	// TODO: invalidate token
 	return nil, nil
+}
+
+var tokenInfoKey struct{}
+
+type tokenInfo struct {
+	UserId   int32
+	Username string
+}
+
+func parseToken(token string) (int32, string, error) {
+	// need to read pub key from file
+	publicKeyPath := viper.GetString("auth.access_token_public_key")
+	if publicKeyPath == "" {
+		return 0, "", fmt.Errorf("could not read public key")
+	}
+	pubKeyData, err := ioutil.ReadFile(filepath.Clean(publicKeyPath))
+	if err != nil {
+		return 0, "", fmt.Errorf("failed to read public key file")
+	}
+
+	userId, userName, err := auth.VerifyToken(token, pubKeyData)
+	if err != nil {
+		return 0, "", fmt.Errorf("failed to verify token: %v", err)
+	}
+	return int32(userId), userName, nil
+}
+
+// List of methods that bypass authentication
+var authBypassMethods = []string{
+	"/mediator.v1.LogInService/LogIn",
+	"/mediator.v1.HealthService/CheckHealth",
+}
+
+// MediatorAuthFunc is the auth function for the mediator service
+func MediatorAuthFunc(ctx context.Context) (context.Context, error) {
+	// Extract the gRPC method name from the context
+	method, ok := grpc.Method(ctx)
+	if !ok {
+		return nil, status.Error(codes.Unauthenticated, "No method found")
+	}
+
+	// Check if the current method is in the list of bypass methods
+	for _, bypassMethod := range authBypassMethods {
+		if bypassMethod == method {
+			// If the method is in the bypass list, return the context as is without authentication
+			log.Info().Msgf("Bypassing authentication for method %s", method)
+			return ctx, nil
+		}
+	}
+
+	token, err := gauth.AuthFromMD(ctx, "bearer")
+	if err != nil {
+		return nil, err
+	}
+
+	userId, userName, err := parseToken(token)
+	if err != nil {
+		return nil, status.Errorf(codes.Unauthenticated, "invalid auth token: %v", err)
+	}
+
+	authData := tokenInfo{
+		UserId:   userId,
+		Username: userName,
+	}
+	return context.WithValue(ctx, tokenInfoKey, authData), nil
 }
