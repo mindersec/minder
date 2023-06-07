@@ -34,7 +34,8 @@ import (
 	"github.com/stacklok/mediator/pkg/util"
 )
 
-var org_createCmd = &cobra.Command{
+// Org_createCmd is the command for creating an organization
+var Org_createCmd = &cobra.Command{
 	Use:   "create",
 	Short: "Create an organization within a mediator control plane",
 	Long: `The medctl org create subcommand lets you create new organizations
@@ -87,15 +88,15 @@ within a mediator control plane.`,
 }
 
 func init() {
-	OrgCmd.AddCommand(org_createCmd)
-	org_createCmd.Flags().StringP("name", "n", "", "Name of the organization")
-	org_createCmd.Flags().StringP("company", "c", "", "Company name of the organization")
-	org_createCmd.Flags().BoolP("create-default-records", "d", false, "Create default records for the organization")
+	OrgCmd.AddCommand(Org_createCmd)
+	Org_createCmd.Flags().StringP("name", "n", "", "Name of the organization")
+	Org_createCmd.Flags().StringP("company", "c", "", "Company name of the organization")
+	Org_createCmd.Flags().BoolP("create-default-records", "d", false, "Create default records for the organization")
 
-	if err := org_createCmd.MarkFlagRequired("name"); err != nil {
+	if err := Org_createCmd.MarkFlagRequired("name"); err != nil {
 		fmt.Fprintf(os.Stderr, "Error binding flags: %s\n", err)
 	}
-	if err := org_createCmd.MarkFlagRequired("company"); err != nil {
+	if err := Org_createCmd.MarkFlagRequired("company"); err != nil {
 		fmt.Fprintf(os.Stderr, "Error binding flags: %s\n", err)
 	}
 }
