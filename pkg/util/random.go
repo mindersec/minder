@@ -27,6 +27,8 @@ import (
 	"crypto/x509"
 	"encoding/pem"
 	"math/rand"
+	"os"
+	"path/filepath"
 )
 
 // NewRand returns a new instance of rand.Rand with a fixed source.
@@ -131,4 +133,30 @@ func RandomKeypair(length int) ([]byte, []byte) {
 	publicKeyString := pem.EncodeToMemory(publicKeyPEM)
 
 	return privateKeyString, publicKeyString
+}
+
+// RandomPrivateKeyFile generates a random RSA private key and writes it to a file
+func RandomPrivateKeyFile(length int, filePath string) error {
+	privateKey, err := rsa.GenerateKey(crand.Reader, length)
+	if err != nil {
+		return err
+	}
+	file, err := os.Create(filepath.Clean(filePath))
+	if err != nil {
+		return err
+	}
+	defer file.Close()
+
+	privateKeyBytes := x509.MarshalPKCS1PrivateKey(privateKey)
+	pemBlock := &pem.Block{
+		Type:  "RSA PRIVATE KEY",
+		Bytes: privateKeyBytes,
+	}
+
+	err = pem.Encode(file, pemBlock)
+	if err != nil {
+		return err
+	}
+
+	return nil
 }

@@ -21,6 +21,7 @@ import (
 	"time"
 
 	"github.com/go-playground/validator/v10"
+	mcrypto "github.com/stacklok/mediator/pkg/crypto"
 	"github.com/stacklok/mediator/pkg/db"
 	pb "github.com/stacklok/mediator/pkg/generated/protobuf/go/mediator/v1"
 	"github.com/stacklok/mediator/pkg/util"
@@ -80,8 +81,14 @@ func (s *Server) CreateUser(ctx context.Context,
 		in.Password = &pass
 	}
 
+	// hash the password for storing in the database
+	pHash, err := mcrypto.GeneratePasswordHash(*in.Password)
+	if err != nil {
+		return nil, err
+	}
+
 	user, err := s.store.CreateUser(ctx, db.CreateUserParams{RoleID: in.RoleId,
-		Email: *stringToNullString(in.Email), Username: in.Username, Password: *in.Password,
+		Email: *stringToNullString(in.Email), Username: in.Username, Password: pHash,
 		FirstName: *stringToNullString(in.FirstName), LastName: *stringToNullString(in.LastName),
 		IsProtected: *in.IsProtected})
 	if err != nil {
@@ -222,6 +229,7 @@ func (s *Server) GetUserByUsername(ctx context.Context,
 		RoleId:    user.RoleID,
 		Email:     &user.Email.String,
 		Username:  user.Username,
+		Password:  user.Password,
 		FirstName: &user.FirstName.String,
 		LastName:  &user.LastName.String,
 		CreatedAt: timestamppb.New(user.CreatedAt),

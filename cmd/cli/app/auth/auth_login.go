@@ -35,8 +35,6 @@ import (
 	pb "github.com/stacklok/mediator/pkg/generated/protobuf/go/mediator/v1"
 
 	"github.com/spf13/viper"
-	"google.golang.org/grpc"
-	"google.golang.org/grpc/credentials/insecure"
 )
 
 // Credentials is a struct to hold the access and refresh tokens
@@ -82,41 +80,7 @@ func saveCredentials(creds Credentials) (string, error) {
 
 }
 
-func getLoginServiceClient(ctx context.Context, address string, username string, password string,
-	dialOptions ...grpc.DialOption) (*Credentials, error) {
-	conn, err := grpc.DialContext(ctx, address, dialOptions...)
-	if err != nil {
-		return nil, fmt.Errorf("error connecting to server: %v", err)
-	}
-	defer conn.Close()
-
-	client := pb.NewLogInServiceClient(conn)
-	ctx, cancel := context.WithTimeout(context.Background(), 10*time.Second)
-	defer cancel()
-
-	resp, err := client.LogIn(ctx, &pb.LogInRequest{
-		Username: username,
-		Password: password,
-	})
-
-	if err != nil {
-		return nil, fmt.Errorf("error logging in: %v", err)
-	} else if resp.Status == "error" {
-		return nil, fmt.Errorf("login service returned error status")
-	}
-
-	// marshal the credentials to json
-	creds := Credentials{
-		AccessToken:           resp.AccessToken,
-		RefreshToken:          resp.RefreshToken,
-		AccessTokenExpiresIn:  int(resp.AccessTokenExpiresIn),
-		RefreshTokenExpiresIn: int(resp.RefreshTokenExpiresIn),
-	}
-
-	return &creds, nil
-}
-
-// authCmd represents the auth command
+// auth_loginCmd represents the login command
 var auth_loginCmd = &cobra.Command{
 	Use:   "login",
 	Short: "Login to a mediator control plane.",
@@ -128,21 +92,41 @@ will be saved to $XDG_CONFIG_HOME/mediator/credentials.json`,
 		}
 	},
 	Run: func(cmd *cobra.Command, args []string) {
-		grpc_host := util.GetConfigValue("grpc_server.host", "grpc-host", cmd, "").(string)
-		grpc_port := util.GetConfigValue("grpc_server.port", "grpc-port", cmd, 0).(int)
 		username := util.GetConfigValue("username", "username", cmd, "").(string)
 		password := util.GetConfigValue("password", "password", cmd, "").(string)
 
-		address := fmt.Sprintf("%s:%d", grpc_host, grpc_port)
-
-		ctx := context.Background()
-		token, err := getLoginServiceClient(ctx, address, username, password, grpc.WithTransportCredentials(insecure.NewCredentials()))
+		conn, err := util.GetGrpcConnection(cmd)
 		if err != nil {
-			fmt.Println(err)
+			fmt.Fprintf(os.Stderr, "Error getting grpc connection: %s\n", err)
+			os.Exit(1)
+		}
+		defer conn.Close()
+
+		client := pb.NewLogInServiceClient(conn)
+		ctx, cancel := context.WithTimeout(context.Background(), time.Second)
+		defer cancel()
+
+		// call login endpoint
+		resp, err := client.LogIn(ctx, &pb.LogInRequest{Username: username, Password: password})
+		if err != nil {
+			fmt.Fprintf(os.Stderr, "Error logging in: %s\n", err)
+			os.Exit(1)
+		}
+		if resp.Status != "Success" {
+			fmt.Fprintf(os.Stderr, "Error logging in: %s\n", resp.Status)
+			os.Exit(1)
 		}
 
-		// save to file
-		filePath, err := saveCredentials(*token)
+		// marshal the credentials to json
+		creds := Credentials{
+			AccessToken:           resp.AccessToken,
+			RefreshToken:          resp.RefreshToken,
+			AccessTokenExpiresIn:  int(resp.AccessTokenExpiresIn),
+			RefreshTokenExpiresIn: int(resp.RefreshTokenExpiresIn),
+		}
+
+		// save credentials
+		filePath, err := saveCredentials(creds)
 		if err != nil {
 			fmt.Println(err)
 		}
@@ -156,5 +140,12 @@ func init() {
 	AuthCmd.AddCommand(auth_loginCmd)
 	auth_loginCmd.Flags().StringP("username", "u", "", "Username to use for authentication")
 	auth_loginCmd.Flags().StringP("password", "p", "", "Password to use for authentication")
-	auth_loginCmd.Flags().String("provider", "", "The OAuth2 provider to use for login")
+
+	if err := auth_loginCmd.MarkFlagRequired("username"); err != nil {
+		fmt.Fprintf(os.Stderr, "Error marking flag as required: %s\n", err)
+	}
+	if err := auth_loginCmd.MarkFlagRequired("password"); err != nil {
+		fmt.Fprintf(os.Stderr, "Error marking flag as required: %s\n", err)
+	}
+
 }

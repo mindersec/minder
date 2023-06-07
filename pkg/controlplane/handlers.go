@@ -26,15 +26,10 @@ import (
 	"bytes"
 	"context"
 	"crypto/rand"
-	"database/sql"
 	"encoding/base64"
 	"fmt"
-	"io/ioutil"
 	"net/http"
-	"path/filepath"
 
-	"github.com/stacklok/mediator/pkg/auth"
-	mcrypto "github.com/stacklok/mediator/pkg/crypto"
 	pb "github.com/stacklok/mediator/pkg/generated/protobuf/go/mediator/v1"
 	"go.opentelemetry.io/otel/attribute"
 	"go.opentelemetry.io/otel/trace"
@@ -216,70 +211,5 @@ func (s *Server) ExchangeCodeForTokenWEB(ctx context.Context,
 	//
 	return &pb.ExchangeCodeForTokenWEBResponse{
 		AccessToken: token.AccessToken,
-	}, nil
-}
-
-// LogIn logs in a user by verifying the username and password
-func (s *Server) LogIn(ctx context.Context, in *pb.LogInRequest) (*pb.LogInResponse, error) {
-	user, err := s.store.GetUserByUserName(ctx, in.Username)
-	if err != nil {
-		if err == sql.ErrNoRows {
-			return &pb.LogInResponse{Status: "User not found"}, nil
-		}
-		return nil, err
-	}
-
-	match, err := mcrypto.VerifyPasswordHash(in.Password, user.Password)
-	if err != nil {
-		return nil, err
-	}
-
-	if !match {
-		return &pb.LogInResponse{Status: "Invalid Password"}, nil
-	}
-
-	// read private key for generating token and refresh token
-	privateKeyPath := viper.GetString("auth.access_token_private_key")
-	if privateKeyPath == "" {
-		return &pb.LogInResponse{Status: "Failed to read private key"}, nil
-	}
-
-	privateKeyPath = filepath.Clean(privateKeyPath)
-	keyBytes, err := ioutil.ReadFile(privateKeyPath)
-	if err != nil {
-		return &pb.LogInResponse{Status: "Failed to read private key"}, nil
-	}
-
-	refreshPrivateKeyPath := viper.GetString("auth.refresh_token_private_key")
-	if refreshPrivateKeyPath == "" {
-		return &pb.LogInResponse{Status: "Failed to read private key"}, nil
-	}
-
-	refreshPrivateKeyPath = filepath.Clean(refreshPrivateKeyPath)
-	refreshKeyBytes, err := ioutil.ReadFile(refreshPrivateKeyPath)
-	if err != nil {
-		return &pb.LogInResponse{Status: "Failed to read private key"}, nil
-	}
-
-	// Convert the key bytes to a string
-	tokenString, refreshTokenString, tokenExpirationTime, refreshExpirationTime, err := auth.GenerateToken(
-		user.ID,
-		user.Username,
-		keyBytes,
-		refreshKeyBytes,
-		viper.GetInt64("auth.token_expiry"),
-		viper.GetInt64("auth.refresh_expiry"),
-	)
-
-	if err != nil {
-		return nil, fmt.Errorf("error generating token: %v", err)
-	}
-
-	return &pb.LogInResponse{
-		Status:                "Success",
-		AccessToken:           tokenString,
-		RefreshToken:          refreshTokenString,
-		AccessTokenExpiresIn:  tokenExpirationTime,
-		RefreshTokenExpiresIn: refreshExpirationTime,
 	}, nil
 }
