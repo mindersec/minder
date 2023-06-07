@@ -27,7 +27,6 @@ import (
 	"github.com/spf13/viper"
 	"golang.org/x/oauth2"
 
-	"github.com/grpc-ecosystem/go-grpc-middleware/v2/interceptors/auth"
 	"go.opentelemetry.io/contrib/instrumentation/google.golang.org/grpc/otelgrpc"
 	"go.opentelemetry.io/otel"
 	stdout "go.opentelemetry.io/otel/exporters/stdout/stdouttrace"
@@ -124,7 +123,7 @@ func (s *Server) StartGRPCServer(address string, dbConn string) {
 	interceptors := []grpc.UnaryServerInterceptor{}
 	interceptors = append(interceptors, logger.Interceptor(viper.GetString("logging.level"),
 		viper.GetString("logging.format"), viper.GetString("logging.logFile")))
-	interceptors = append(interceptors, auth.UnaryServerInterceptor(MediatorAuthFunc))
+	interceptors = append(interceptors, AuthUnaryInterceptor)
 	addTracing := viper.GetBool("tracing.enabled")
 	if addTracing {
 		interceptorOpt := otelgrpc.WithTracerProvider(otel.GetTracerProvider())
