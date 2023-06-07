@@ -201,31 +201,32 @@ func isAuthorized(ctx context.Context, claims auth.UserClaims) bool {
 
 }
 
-// MediatorAuthFunc is the auth function for the mediator service
-func MediatorAuthFunc(ctx context.Context) (context.Context, error) {
+func AuthUnaryInterceptor(ctx context.Context, req interface{}, _ *grpc.UnaryServerInfo, handler grpc.UnaryHandler) (any, error) {
+	fmt.Println(ctx)
+	fmt.Println(req)
 	// bypass auth
 	canBypass := canBypassAuth(ctx)
 	if canBypass {
 		// If the method is in the bypass list, return the context as is without authentication
 		log.Info().Msgf("Bypassing authentication")
-		return ctx, nil
+		return handler(ctx, nil)
 	}
 
 	token, err := gauth.AuthFromMD(ctx, "bearer")
 	if err != nil {
-		return nil, err
+		return handler(nil, err)
 	}
 
 	claims, err := parseToken(token)
 	if err != nil {
-		return nil, status.Errorf(codes.Unauthenticated, "invalid auth token: %v", err)
+		return handler(nil, status.Errorf(codes.Unauthenticated, "invalid auth token: %v", err))
 	}
 
 	// Check if the current method needs to have a superadmin role
 	isAuthorized := isAuthorized(ctx, claims)
 	if !isAuthorized {
-		return nil, status.Errorf(codes.PermissionDenied, "user not authorized")
+		return handler(nil, status.Errorf(codes.PermissionDenied, "user not authorized"))
 	}
-
-	return context.WithValue(ctx, tokenInfoKey, claims), nil
+	context := context.WithValue(ctx, tokenInfoKey, claims)
+	return handler(context, req)
 }
