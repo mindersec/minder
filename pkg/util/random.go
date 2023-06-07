@@ -28,6 +28,7 @@ import (
 	"encoding/pem"
 	"math/rand"
 	"os"
+	"path/filepath"
 )
 
 // NewRand returns a new instance of rand.Rand with a fixed source.
@@ -140,7 +141,7 @@ func RandomPrivateKeyFile(length int, filePath string) error {
 	if err != nil {
 		return err
 	}
-	file, err := os.Create(filePath)
+	file, err := os.Create(filepath.Clean(filePath))
 	if err != nil {
 		return err
 	}
