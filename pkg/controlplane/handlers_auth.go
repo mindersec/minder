@@ -48,7 +48,6 @@ func (s *Server) LogIn(ctx context.Context, in *pb.LogInRequest) (*pb.LogInRespo
 		}
 		return nil, err
 	}
-
 	match, _ := mcrypto.VerifyPasswordHash(in.Password, user.Password)
 	if err != nil {
 		return &pb.LogInResponse{Status: "Invalid Password"}, nil
