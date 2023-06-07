@@ -85,10 +85,24 @@ func (s *Server) LogIn(ctx context.Context, in *pb.LogInRequest) (*pb.LogInRespo
 		return &pb.LogInResponse{Status: "Failed to read private key"}, nil
 	}
 
+	// read all information for user claims
+	userInfo, err := s.store.GetUserClaims(ctx, user.ID)
+	if err != nil {
+		return &pb.LogInResponse{Status: "Failed to read user claims"}, nil
+	}
+
+	claims := auth.UserClaims{
+		UserId:         user.ID,
+		RoleId:         userInfo.RoleID,
+		GroupId:        userInfo.GroupID,
+		OrganizationId: userInfo.OrganizationID,
+		IsAdmin:        userInfo.IsAdmin,
+		IsSuperadmin:   (userInfo.OrganizationID == 1 && userInfo.IsAdmin),
+	}
+
 	// Convert the key bytes to a string
 	tokenString, refreshTokenString, tokenExpirationTime, refreshExpirationTime, err := auth.GenerateToken(
-		user.ID,
-		user.Username,
+		claims,
 		keyBytes,
 		refreshKeyBytes,
 		viper.GetInt64("auth.token_expiry"),
@@ -116,27 +130,23 @@ func (_ *Server) LogOut(_ context.Context, _ *pb.LogOutRequest) (*pb.LogOutRespo
 
 var tokenInfoKey struct{}
 
-type tokenInfo struct {
-	UserId   int32
-	Username string
-}
-
-func parseToken(token string) (int32, string, error) {
+func parseToken(token string) (auth.UserClaims, error) {
+	var claims auth.UserClaims
 	// need to read pub key from file
 	publicKeyPath := viper.GetString("auth.access_token_public_key")
 	if publicKeyPath == "" {
-		return 0, "", fmt.Errorf("could not read public key")
+		return claims, fmt.Errorf("could not read public key")
 	}
 	pubKeyData, err := ioutil.ReadFile(filepath.Clean(publicKeyPath))
 	if err != nil {
-		return 0, "", fmt.Errorf("failed to read public key file")
+		return claims, fmt.Errorf("failed to read public key file")
 	}
 
-	userId, userName, err := auth.VerifyToken(token, pubKeyData)
+	userClaims, err := auth.VerifyToken(token, pubKeyData)
 	if err != nil {
-		return 0, "", fmt.Errorf("failed to verify token: %v", err)
+		return claims, fmt.Errorf("failed to verify token: %v", err)
 	}
-	return int32(userId), userName, nil
+	return userClaims, nil
 }
 
 // List of methods that bypass authentication
@@ -167,14 +177,10 @@ func MediatorAuthFunc(ctx context.Context) (context.Context, error) {
 		return nil, err
 	}
 
-	userId, userName, err := parseToken(token)
+	claims, err := parseToken(token)
 	if err != nil {
 		return nil, status.Errorf(codes.Unauthenticated, "invalid auth token: %v", err)
 	}
 
-	authData := tokenInfo{
-		UserId:   userId,
-		Username: userName,
-	}
-	return context.WithValue(ctx, tokenInfoKey, authData), nil
+	return context.WithValue(ctx, tokenInfoKey, claims), nil
 }

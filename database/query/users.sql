@@ -7,6 +7,11 @@ SELECT * FROM users WHERE id = $1;
 -- name: GetUserByEmail :one
 SELECT * FROM users WHERE email = $1;
 
+-- name: GetUserClaims :one
+SELECT u.id as user_id, u.role_id as role_id, r.is_admin as is_admin, r.group_id as group_id,
+g.organization_id as organization_id FROM users u
+INNER JOIN roles r ON u.role_id = r.id INNER JOIN groups g ON r.group_id = g.id WHERE u.id = $1;
+
 -- name: GetUserByUserName :one
 SELECT * FROM users WHERE username = $1;
 

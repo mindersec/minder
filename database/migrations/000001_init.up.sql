@@ -17,7 +17,6 @@ CREATE TABLE organizations (
     id SERIAL PRIMARY KEY,
     name TEXT NOT NULL UNIQUE,
     company TEXT NOT NULL UNIQUE,
-    root_admin_id INT,
     created_at TIMESTAMP NOT NULL DEFAULT NOW(),
     updated_at TIMESTAMP NOT NULL DEFAULT NOW()
 );
@@ -82,8 +81,8 @@ CREATE INDEX idx_access_tokens_organization_id ON access_tokens(organization_id)
 
 -- Create default root organization
 
-INSERT INTO organizations (name, company, root_admin_id) 
-VALUES ('Root Organization', 'Root Company', 1);
+INSERT INTO organizations (name, company) 
+VALUES ('Root Organization', 'Root Company');
 
 INSERT INTO groups (organization_id, name, is_protected)
 VALUES (1, 'Root Group', TRUE);

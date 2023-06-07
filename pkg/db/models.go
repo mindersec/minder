@@ -28,12 +28,11 @@ type Group struct {
 }
 
 type Organization struct {
-	ID          int32         `json:"id"`
-	Name        string        `json:"name"`
-	Company     string        `json:"company"`
-	RootAdminID sql.NullInt32 `json:"root_admin_id"`
-	CreatedAt   time.Time     `json:"created_at"`
-	UpdatedAt   time.Time     `json:"updated_at"`
+	ID        int32     `json:"id"`
+	Name      string    `json:"name"`
+	Company   string    `json:"company"`
+	CreatedAt time.Time `json:"created_at"`
+	UpdatedAt time.Time `json:"updated_at"`
 }
 
 type Role struct {
