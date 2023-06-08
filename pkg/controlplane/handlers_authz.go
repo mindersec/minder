@@ -219,6 +219,9 @@ func isMethodAuthorized(ctx context.Context, claims auth.UserClaims) bool {
 // IsRequestAuthorized checks if the request is authorized
 func IsRequestAuthorized(ctx context.Context, value int32) bool {
 	claims, _ := ctx.Value(TokenInfoKey).(auth.UserClaims)
+	if claims.IsSuperadmin {
+		return true
+	}
 	method, ok := grpc.Method(ctx)
 	if !ok {
 		return false

@@ -22,6 +22,7 @@ import (
 
 	"github.com/golang/mock/gomock"
 
+	"github.com/stacklok/mediator/pkg/auth"
 	"github.com/stacklok/mediator/pkg/db"
 	"github.com/stretchr/testify/assert"
 
@@ -51,15 +52,22 @@ func TestCreateOrganizationDBMock(t *testing.T) {
 		UpdatedAt: time.Now(),
 	}
 
+	// Create a new context and set the claims value
+	ctx := context.WithValue(context.Background(), TokenInfoKey, auth.UserClaims{
+		UserId:       1,
+		IsAdmin:      true,
+		IsSuperadmin: true,
+	})
+
 	mockStore.EXPECT().
-		CreateOrganization(gomock.Any(), gomock.Any()).
+		CreateOrganization(ctx, gomock.Any()).
 		Return(expectedOrg, nil)
 
 	server := &Server{
 		store: mockStore,
 	}
 
-	response, err := server.CreateOrganization(context.Background(), request)
+	response, err := server.CreateOrganization(ctx, request)
 
 	assert.NoError(t, err)
 	assert.NotNil(t, response)
@@ -145,6 +153,12 @@ func TestCreateOrganization_gRPC(t *testing.T) {
 			expectedStatusCode: codes.Internal,
 		},
 	}
+	// Create a new context and set the claims value
+	ctx := context.WithValue(context.Background(), TokenInfoKey, auth.UserClaims{
+		UserId:       1,
+		IsAdmin:      true,
+		IsSuperadmin: true,
+	})
 
 	for i := range testCases {
 		tc := testCases[i]
@@ -158,7 +172,7 @@ func TestCreateOrganization_gRPC(t *testing.T) {
 
 			server := NewServer(mockStore)
 
-			resp, err := server.CreateOrganization(context.Background(), tc.req)
+			resp, err := server.CreateOrganization(ctx, tc.req)
 			tc.checkResponse(t, resp, err)
 		})
 	}
@@ -169,6 +183,12 @@ func TestGetOrganizationsDBMock(t *testing.T) {
 	defer ctrl.Finish()
 
 	mockStore := mockdb.NewMockStore(ctrl)
+	// Create a new context and set the claims value
+	ctx := context.WithValue(context.Background(), TokenInfoKey, auth.UserClaims{
+		UserId:       1,
+		IsAdmin:      true,
+		IsSuperadmin: true,
+	})
 
 	request := &pb.GetOrganizationsRequest{}
 
@@ -189,14 +209,14 @@ func TestGetOrganizationsDBMock(t *testing.T) {
 		},
 	}
 
-	mockStore.EXPECT().ListOrganizations(gomock.Any(), gomock.Any()).
+	mockStore.EXPECT().ListOrganizations(ctx, gomock.Any()).
 		Return(expectedOrgs, nil)
 
 	server := &Server{
 		store: mockStore,
 	}
 
-	response, err := server.GetOrganizations(context.Background(), request)
+	response, err := server.GetOrganizations(ctx, request)
 
 	assert.NoError(t, err)
 	assert.NotNil(t, response)
@@ -270,6 +290,13 @@ func TestGetOrganizations_gRPC(t *testing.T) {
 		},
 	}
 
+	// Create a new context and set the claims value
+	ctx := context.WithValue(context.Background(), TokenInfoKey, auth.UserClaims{
+		UserId:       1,
+		IsAdmin:      true,
+		IsSuperadmin: true,
+	})
+
 	for i := range testCases {
 		tc := testCases[i]
 		t.Run(tc.name, func(t *testing.T) {
@@ -282,7 +309,7 @@ func TestGetOrganizations_gRPC(t *testing.T) {
 
 			server := NewServer(mockStore)
 
-			resp, err := server.GetOrganizations(context.Background(), tc.req)
+			resp, err := server.GetOrganizations(ctx, tc.req)
 			tc.checkResponse(t, resp, err)
 		})
 	}
@@ -304,14 +331,20 @@ func TestGetOrganizationDBMock(t *testing.T) {
 		UpdatedAt: time.Now(),
 	}
 
-	mockStore.EXPECT().GetOrganization(gomock.Any(), gomock.Any()).
+	// Create a new context and set the claims value
+	ctx := context.WithValue(context.Background(), TokenInfoKey, auth.UserClaims{
+		UserId:       1,
+		IsAdmin:      true,
+		IsSuperadmin: true,
+	})
+	mockStore.EXPECT().GetOrganization(ctx, gomock.Any()).
 		Return(expectedOrg, nil)
 
 	server := &Server{
 		store: mockStore,
 	}
 
-	response, err := server.GetOrganization(context.Background(), request)
+	response, err := server.GetOrganization(ctx, request)
 
 	assert.NoError(t, err)
 	assert.NotNil(t, response)
@@ -329,17 +362,23 @@ func TestGetNonExistingOrganizationDBMock(t *testing.T) {
 	defer ctrl.Finish()
 
 	mockStore := mockdb.NewMockStore(ctrl)
+	// Create a new context and set the claims value
+	ctx := context.WithValue(context.Background(), TokenInfoKey, auth.UserClaims{
+		UserId:       1,
+		IsAdmin:      true,
+		IsSuperadmin: true,
+	})
 
 	request := &pb.GetOrganizationRequest{OrganizationId: 5}
 
-	mockStore.EXPECT().GetOrganization(gomock.Any(), gomock.Any()).
+	mockStore.EXPECT().GetOrganization(ctx, gomock.Any()).
 		Return(db.Organization{}, nil)
 
 	server := &Server{
 		store: mockStore,
 	}
 
-	response, err := server.GetOrganization(context.Background(), request)
+	response, err := server.GetOrganization(ctx, request)
 
 	assert.NoError(t, err)
 	assert.Equal(t, int32(0), response.Organization.Id)
@@ -400,6 +439,13 @@ func TestGetOrganization_gRPC(t *testing.T) {
 		},
 	}
 
+	// Create a new context and set the claims value
+	ctx := context.WithValue(context.Background(), TokenInfoKey, auth.UserClaims{
+		UserId:       1,
+		IsAdmin:      true,
+		IsSuperadmin: true,
+	})
+
 	for i := range testCases {
 		tc := testCases[i]
 		t.Run(tc.name, func(t *testing.T) {
@@ -412,7 +458,7 @@ func TestGetOrganization_gRPC(t *testing.T) {
 
 			server := NewServer(mockStore)
 
-			resp, err := server.GetOrganization(context.Background(), tc.req)
+			resp, err := server.GetOrganization(ctx, tc.req)
 			tc.checkResponse(t, resp, err)
 		})
 	}
@@ -433,15 +479,21 @@ func TestGetOrganizationByNameDBMock(t *testing.T) {
 		CreatedAt: time.Now(),
 		UpdatedAt: time.Now(),
 	}
+	// Create a new context and set the claims value
+	ctx := context.WithValue(context.Background(), TokenInfoKey, auth.UserClaims{
+		UserId:       1,
+		IsAdmin:      true,
+		IsSuperadmin: true,
+	})
 
-	mockStore.EXPECT().GetOrganizationByName(gomock.Any(), gomock.Any()).
+	mockStore.EXPECT().GetOrganizationByName(ctx, gomock.Any()).
 		Return(expectedOrg, nil)
 
 	server := &Server{
 		store: mockStore,
 	}
 
-	response, err := server.GetOrganizationByName(context.Background(), request)
+	response, err := server.GetOrganizationByName(ctx, request)
 
 	assert.NoError(t, err)
 	assert.NotNil(t, response)
@@ -461,15 +513,21 @@ func TestGetNonExistingOrganizationByNameDBMock(t *testing.T) {
 	mockStore := mockdb.NewMockStore(ctrl)
 
 	request := &pb.GetOrganizationByNameRequest{Name: "Test"}
+	// Create a new context and set the claims value
+	ctx := context.WithValue(context.Background(), TokenInfoKey, auth.UserClaims{
+		UserId:       1,
+		IsAdmin:      true,
+		IsSuperadmin: true,
+	})
 
-	mockStore.EXPECT().GetOrganizationByName(gomock.Any(), gomock.Any()).
+	mockStore.EXPECT().GetOrganizationByName(ctx, gomock.Any()).
 		Return(db.Organization{}, nil)
 
 	server := &Server{
 		store: mockStore,
 	}
 
-	response, err := server.GetOrganizationByName(context.Background(), request)
+	response, err := server.GetOrganizationByName(ctx, request)
 
 	assert.NoError(t, err)
 	assert.Equal(t, int32(0), response.Organization.Id)
@@ -529,6 +587,12 @@ func TestGetOrganizationByName_gRPC(t *testing.T) {
 			expectedStatusCode: codes.OK,
 		},
 	}
+	// Create a new context and set the claims value
+	ctx := context.WithValue(context.Background(), TokenInfoKey, auth.UserClaims{
+		UserId:       1,
+		IsAdmin:      true,
+		IsSuperadmin: true,
+	})
 
 	for i := range testCases {
 		tc := testCases[i]
@@ -542,7 +606,7 @@ func TestGetOrganizationByName_gRPC(t *testing.T) {
 
 			server := NewServer(mockStore)
 
-			resp, err := server.GetOrganizationByName(context.Background(), tc.req)
+			resp, err := server.GetOrganizationByName(ctx, tc.req)
 			tc.checkResponse(t, resp, err)
 		})
 	}
@@ -553,6 +617,12 @@ func TestDeleteOrganizationDBMock(t *testing.T) {
 	defer ctrl.Finish()
 
 	mockStore := mockdb.NewMockStore(ctrl)
+	// Create a new context and set the claims value
+	ctx := context.WithValue(context.Background(), TokenInfoKey, auth.UserClaims{
+		UserId:       1,
+		IsAdmin:      true,
+		IsSuperadmin: true,
+	})
 
 	request := &pb.DeleteOrganizationRequest{Id: 1}
 
@@ -564,20 +634,20 @@ func TestDeleteOrganizationDBMock(t *testing.T) {
 		UpdatedAt: time.Now(),
 	}
 
-	mockStore.EXPECT().GetOrganization(gomock.Any(), gomock.Any()).
+	mockStore.EXPECT().GetOrganization(ctx, gomock.Any()).
 		Return(expectedOrg, nil)
 	mockStore.EXPECT().
-		ListGroupsByOrganizationID(gomock.Any(), gomock.Any()).
+		ListGroupsByOrganizationID(ctx, gomock.Any()).
 		Return([]db.Group{}, nil)
 	mockStore.EXPECT().
-		DeleteOrganization(gomock.Any(), gomock.Any()).
+		DeleteOrganization(ctx, gomock.Any()).
 		Return(nil)
 
 	server := &Server{
 		store: mockStore,
 	}
 
-	response, err := server.DeleteOrganization(context.Background(), request)
+	response, err := server.DeleteOrganization(ctx, request)
 
 	assert.NoError(t, err)
 	assert.NotNil(t, response)
@@ -629,6 +699,13 @@ func TestDeleteOrganization_gRPC(t *testing.T) {
 		},
 	}
 
+	// Create a new context and set the claims value
+	ctx := context.WithValue(context.Background(), TokenInfoKey, auth.UserClaims{
+		UserId:       1,
+		IsAdmin:      true,
+		IsSuperadmin: true,
+	})
+
 	for i := range testCases {
 		tc := testCases[i]
 		t.Run(tc.name, func(t *testing.T) {
@@ -641,7 +718,7 @@ func TestDeleteOrganization_gRPC(t *testing.T) {
 
 			server := NewServer(mockStore)
 
-			resp, err := server.DeleteOrganization(context.Background(), tc.req)
+			resp, err := server.DeleteOrganization(ctx, tc.req)
 			tc.checkResponse(t, resp, err)
 		})
 	}

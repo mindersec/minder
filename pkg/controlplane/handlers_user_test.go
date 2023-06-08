@@ -22,6 +22,7 @@ import (
 
 	"github.com/golang/mock/gomock"
 
+	"github.com/stacklok/mediator/pkg/auth"
 	"github.com/stacklok/mediator/pkg/db"
 	"github.com/stacklok/mediator/pkg/util"
 	"github.com/stretchr/testify/assert"
@@ -66,15 +67,25 @@ func TestCreateUserDBMock(t *testing.T) {
 		UpdatedAt:   time.Now(),
 	}
 
+	// Create a new context and set the claims value
+	ctx := context.WithValue(context.Background(), TokenInfoKey, auth.UserClaims{
+		UserId:       1,
+		IsAdmin:      true,
+		IsSuperadmin: true,
+	})
+
 	mockStore.EXPECT().
-		CreateUser(gomock.Any(), gomock.Any()).
+		GetRoleByID(ctx, gomock.Any()).Return(db.Role{}, nil)
+
+	mockStore.EXPECT().
+		CreateUser(ctx, gomock.Any()).
 		Return(expectedUser, nil)
 
 	server := &Server{
 		store: mockStore,
 	}
 
-	response, err := server.CreateUser(context.Background(), request)
+	response, err := server.CreateUser(ctx, request)
 
 	assert.NoError(t, err)
 	assert.NotNil(t, response)
@@ -110,6 +121,7 @@ func TestCreateUser_gRPC(t *testing.T) {
 				Password: &password,
 			},
 			buildStubs: func(store *mockdb.MockStore) {
+				store.EXPECT().GetRoleByID(gomock.Any(), gomock.Any()).Return(db.Role{}, nil)
 				store.EXPECT().
 					CreateUser(gomock.Any(), gomock.Any()).
 					Return(db.User{
@@ -152,6 +164,13 @@ func TestCreateUser_gRPC(t *testing.T) {
 		},
 	}
 
+	// Create a new context and set the claims value
+	ctx := context.WithValue(context.Background(), TokenInfoKey, auth.UserClaims{
+		UserId:       1,
+		IsAdmin:      true,
+		IsSuperadmin: true,
+	})
+
 	for i := range testCases {
 		tc := testCases[i]
 		t.Run(tc.name, func(t *testing.T) {
@@ -164,7 +183,7 @@ func TestCreateUser_gRPC(t *testing.T) {
 
 			server := NewServer(mockStore)
 
-			resp, err := server.CreateUser(context.Background(), tc.req)
+			resp, err := server.CreateUser(ctx, tc.req)
 			tc.checkResponse(t, resp, err)
 		})
 	}
@@ -190,19 +209,26 @@ func TestDeleteUserDBMock(t *testing.T) {
 		CreatedAt:   time.Now(),
 		UpdatedAt:   time.Now(),
 	}
+	// Create a new context and set the claims value
+	ctx := context.WithValue(context.Background(), TokenInfoKey, auth.UserClaims{
+		UserId:       1,
+		IsAdmin:      true,
+		IsSuperadmin: true,
+	})
 
+	mockStore.EXPECT().GetRoleByID(gomock.Any(), gomock.Any()).Return(db.Role{}, nil)
 	mockStore.EXPECT().
-		GetUserByID(gomock.Any(), gomock.Any()).
+		GetUserByID(ctx, gomock.Any()).
 		Return(expectedUser, nil)
 	mockStore.EXPECT().
-		DeleteUser(gomock.Any(), gomock.Any()).
+		DeleteUser(ctx, gomock.Any()).
 		Return(nil)
 
 	server := &Server{
 		store: mockStore,
 	}
 
-	response, err := server.DeleteUser(context.Background(), request)
+	response, err := server.DeleteUser(ctx, request)
 
 	assert.NoError(t, err)
 	assert.NotNil(t, response)
@@ -225,6 +251,7 @@ func TestDeleteUser_gRPC(t *testing.T) {
 				Force: &force,
 			},
 			buildStubs: func(store *mockdb.MockStore) {
+				store.EXPECT().GetRoleByID(gomock.Any(), gomock.Any()).Return(db.Role{}, nil)
 				store.EXPECT().
 					GetUserByID(gomock.Any(), gomock.Any()).Return(db.User{}, nil).Times(1)
 				store.EXPECT().
@@ -254,6 +281,12 @@ func TestDeleteUser_gRPC(t *testing.T) {
 			expectedStatusCode: codes.InvalidArgument,
 		},
 	}
+	// Create a new context and set the claims value
+	ctx := context.WithValue(context.Background(), TokenInfoKey, auth.UserClaims{
+		UserId:       1,
+		IsAdmin:      true,
+		IsSuperadmin: true,
+	})
 
 	for i := range testCases {
 		tc := testCases[i]
@@ -267,7 +300,7 @@ func TestDeleteUser_gRPC(t *testing.T) {
 
 			server := NewServer(mockStore)
 
-			resp, err := server.DeleteUser(context.Background(), tc.req)
+			resp, err := server.DeleteUser(ctx, tc.req)
 			tc.checkResponse(t, resp, err)
 		})
 	}
@@ -300,15 +333,23 @@ func TestGetUsersDBMock(t *testing.T) {
 			UpdatedAt:   time.Now(),
 		},
 	}
+	// Create a new context and set the claims value
+	ctx := context.WithValue(context.Background(), TokenInfoKey, auth.UserClaims{
+		UserId:       1,
+		IsAdmin:      true,
+		IsSuperadmin: true,
+	})
 
-	mockStore.EXPECT().ListUsers(gomock.Any(), gomock.Any()).
+	mockStore.EXPECT().GetRoleByID(ctx, gomock.Any()).Return(db.Role{}, nil)
+
+	mockStore.EXPECT().ListUsers(ctx, gomock.Any()).
 		Return(expectedUsers, nil)
 
 	server := &Server{
 		store: mockStore,
 	}
 
-	response, err := server.GetUsers(context.Background(), request)
+	response, err := server.GetUsers(ctx, request)
 
 	assert.NoError(t, err)
 	assert.NotNil(t, response)
@@ -334,6 +375,8 @@ func TestGetUsers_gRPC(t *testing.T) {
 			name: "Success",
 			req:  &pb.GetUsersRequest{RoleId: 1},
 			buildStubs: func(store *mockdb.MockStore) {
+				store.EXPECT().GetRoleByID(gomock.Any(), gomock.Any()).Return(db.Role{}, nil)
+
 				store.EXPECT().ListUsers(gomock.Any(), gomock.Any()).
 					Return([]db.User{
 						{
@@ -391,6 +434,12 @@ func TestGetUsers_gRPC(t *testing.T) {
 			expectedStatusCode: codes.OK,
 		},
 	}
+	// Create a new context and set the claims value
+	ctx := context.WithValue(context.Background(), TokenInfoKey, auth.UserClaims{
+		UserId:       1,
+		IsAdmin:      true,
+		IsSuperadmin: true,
+	})
 
 	for i := range testCases {
 		tc := testCases[i]
@@ -404,7 +453,7 @@ func TestGetUsers_gRPC(t *testing.T) {
 
 			server := NewServer(mockStore)
 
-			resp, err := server.GetUsers(context.Background(), tc.req)
+			resp, err := server.GetUsers(ctx, tc.req)
 			tc.checkResponse(t, resp, err)
 		})
 	}
@@ -425,15 +474,22 @@ func TestGetUserDBMock(t *testing.T) {
 		CreatedAt: time.Now(),
 		UpdatedAt: time.Now(),
 	}
+	// Create a new context and set the claims value
+	ctx := context.WithValue(context.Background(), TokenInfoKey, auth.UserClaims{
+		UserId:       1,
+		IsAdmin:      true,
+		IsSuperadmin: true,
+	})
 
-	mockStore.EXPECT().GetUserByID(gomock.Any(), gomock.Any()).
+	mockStore.EXPECT().GetRoleByID(gomock.Any(), gomock.Any()).Return(db.Role{}, nil)
+	mockStore.EXPECT().GetUserByID(ctx, gomock.Any()).
 		Return(expectedUser, nil)
 
 	server := &Server{
 		store: mockStore,
 	}
 
-	response, err := server.GetUserById(context.Background(), request)
+	response, err := server.GetUserById(ctx, request)
 
 	assert.NoError(t, err)
 	assert.NotNil(t, response)
@@ -453,15 +509,23 @@ func TestGetNonExistingUserDBMock(t *testing.T) {
 	mockStore := mockdb.NewMockStore(ctrl)
 
 	request := &pb.GetUserByIdRequest{Id: 5}
+	// Create a new context and set the claims value
+	ctx := context.WithValue(context.Background(), TokenInfoKey, auth.UserClaims{
+		UserId:       1,
+		IsAdmin:      true,
+		IsSuperadmin: true,
+	})
 
-	mockStore.EXPECT().GetUserByID(gomock.Any(), gomock.Any()).
+	mockStore.EXPECT().GetRoleByID(gomock.Any(), gomock.Any()).Return(db.Role{}, nil)
+
+	mockStore.EXPECT().GetUserByID(ctx, gomock.Any()).
 		Return(db.User{}, nil)
 
 	server := &Server{
 		store: mockStore,
 	}
 
-	response, err := server.GetUserById(context.Background(), request)
+	response, err := server.GetUserById(ctx, request)
 
 	assert.NoError(t, err)
 	assert.Equal(t, int32(0), response.User.Id)
@@ -479,6 +543,8 @@ func TestGetUser_gRPC(t *testing.T) {
 			name: "Success",
 			req:  &pb.GetUserByIdRequest{Id: 1},
 			buildStubs: func(store *mockdb.MockStore) {
+				store.EXPECT().GetRoleByID(gomock.Any(), gomock.Any()).Return(db.Role{}, nil)
+
 				store.EXPECT().GetUserByID(gomock.Any(), gomock.Any()).
 					Return(db.User{
 						ID:        1,
@@ -510,6 +576,8 @@ func TestGetUser_gRPC(t *testing.T) {
 			name: "NonExisting",
 			req:  &pb.GetUserByIdRequest{Id: 5},
 			buildStubs: func(store *mockdb.MockStore) {
+				store.EXPECT().GetRoleByID(gomock.Any(), gomock.Any()).Return(db.Role{}, nil)
+
 				store.EXPECT().GetUserByID(gomock.Any(), gomock.Any()).
 					Return(db.User{}, nil).
 					Times(1)
@@ -521,6 +589,12 @@ func TestGetUser_gRPC(t *testing.T) {
 			expectedStatusCode: codes.OK,
 		},
 	}
+	// Create a new context and set the claims value
+	ctx := context.WithValue(context.Background(), TokenInfoKey, auth.UserClaims{
+		UserId:       1,
+		IsAdmin:      true,
+		IsSuperadmin: true,
+	})
 
 	for i := range testCases {
 		tc := testCases[i]
@@ -534,7 +608,7 @@ func TestGetUser_gRPC(t *testing.T) {
 
 			server := NewServer(mockStore)
 
-			resp, err := server.GetUserById(context.Background(), tc.req)
+			resp, err := server.GetUserById(ctx, tc.req)
 			tc.checkResponse(t, resp, err)
 		})
 	}

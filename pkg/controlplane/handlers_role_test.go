@@ -22,6 +22,7 @@ import (
 
 	"github.com/golang/mock/gomock"
 
+	"github.com/stacklok/mediator/pkg/auth"
 	"github.com/stacklok/mediator/pkg/db"
 	"github.com/stretchr/testify/assert"
 
@@ -54,16 +55,22 @@ func TestCreateRoleDBMock(t *testing.T) {
 		CreatedAt:   time.Now(),
 		UpdatedAt:   time.Now(),
 	}
+	// Create a new context and set the claims value
+	ctx := context.WithValue(context.Background(), TokenInfoKey, auth.UserClaims{
+		UserId:       1,
+		IsAdmin:      true,
+		IsSuperadmin: true,
+	})
 
 	mockStore.EXPECT().
-		CreateRole(gomock.Any(), gomock.Any()).
+		CreateRole(ctx, gomock.Any()).
 		Return(expectedRole, nil)
 
 	server := &Server{
 		store: mockStore,
 	}
 
-	response, err := server.CreateRole(context.Background(), request)
+	response, err := server.CreateRole(ctx, request)
 
 	assert.NoError(t, err)
 	assert.NotNil(t, response)
@@ -154,6 +161,12 @@ func TestCreateRole_gRPC(t *testing.T) {
 			expectedStatusCode: codes.Internal,
 		},
 	}
+	// Create a new context and set the claims value
+	ctx := context.WithValue(context.Background(), TokenInfoKey, auth.UserClaims{
+		UserId:       1,
+		IsAdmin:      true,
+		IsSuperadmin: true,
+	})
 
 	for i := range testCases {
 		tc := testCases[i]
@@ -167,7 +180,7 @@ func TestCreateRole_gRPC(t *testing.T) {
 
 			server := NewServer(mockStore)
 
-			resp, err := server.CreateRole(context.Background(), tc.req)
+			resp, err := server.CreateRole(ctx, tc.req)
 			tc.checkResponse(t, resp, err)
 		})
 	}
@@ -190,22 +203,28 @@ func TestDeleteRoleDBMock(t *testing.T) {
 		CreatedAt:   time.Now(),
 		UpdatedAt:   time.Now(),
 	}
+	// Create a new context and set the claims value
+	ctx := context.WithValue(context.Background(), TokenInfoKey, auth.UserClaims{
+		UserId:       1,
+		IsAdmin:      true,
+		IsSuperadmin: true,
+	})
 
 	mockStore.EXPECT().
-		GetRoleByID(gomock.Any(), gomock.Any()).
+		GetRoleByID(ctx, gomock.Any()).
 		Return(expectedRole, nil)
 	mockStore.EXPECT().
-		ListUsersByRoleID(gomock.Any(), gomock.Any()).
+		ListUsersByRoleID(ctx, gomock.Any()).
 		Return([]db.User{}, nil)
 	mockStore.EXPECT().
-		DeleteRole(gomock.Any(), gomock.Any()).
+		DeleteRole(ctx, gomock.Any()).
 		Return(nil)
 
 	server := &Server{
 		store: mockStore,
 	}
 
-	response, err := server.DeleteRole(context.Background(), request)
+	response, err := server.DeleteRole(ctx, request)
 
 	assert.NoError(t, err)
 	assert.NotNil(t, response)
@@ -257,6 +276,12 @@ func TestDeleteRole_gRPC(t *testing.T) {
 			expectedStatusCode: codes.InvalidArgument,
 		},
 	}
+	// Create a new context and set the claims value
+	ctx := context.WithValue(context.Background(), TokenInfoKey, auth.UserClaims{
+		UserId:       1,
+		IsAdmin:      true,
+		IsSuperadmin: true,
+	})
 
 	for i := range testCases {
 		tc := testCases[i]
@@ -270,7 +295,7 @@ func TestDeleteRole_gRPC(t *testing.T) {
 
 			server := NewServer(mockStore)
 
-			resp, err := server.DeleteRole(context.Background(), tc.req)
+			resp, err := server.DeleteRole(ctx, tc.req)
 			tc.checkResponse(t, resp, err)
 		})
 	}
@@ -301,15 +326,21 @@ func TestGetRolesDBMock(t *testing.T) {
 			UpdatedAt:   time.Now(),
 		},
 	}
+	// Create a new context and set the claims value
+	ctx := context.WithValue(context.Background(), TokenInfoKey, auth.UserClaims{
+		UserId:       1,
+		IsAdmin:      true,
+		IsSuperadmin: true,
+	})
 
-	mockStore.EXPECT().ListRoles(gomock.Any(), gomock.Any()).
+	mockStore.EXPECT().ListRoles(ctx, gomock.Any()).
 		Return(expectedRoles, nil)
 
 	server := &Server{
 		store: mockStore,
 	}
 
-	response, err := server.GetRoles(context.Background(), request)
+	response, err := server.GetRoles(ctx, request)
 
 	assert.NoError(t, err)
 	assert.NotNil(t, response)
@@ -386,6 +417,13 @@ func TestGetRoles_gRPC(t *testing.T) {
 		},
 	}
 
+	// Create a new context and set the claims value
+	ctx := context.WithValue(context.Background(), TokenInfoKey, auth.UserClaims{
+		UserId:       1,
+		IsAdmin:      true,
+		IsSuperadmin: true,
+	})
+
 	for i := range testCases {
 		tc := testCases[i]
 		t.Run(tc.name, func(t *testing.T) {
@@ -398,7 +436,7 @@ func TestGetRoles_gRPC(t *testing.T) {
 
 			server := NewServer(mockStore)
 
-			resp, err := server.GetRoles(context.Background(), tc.req)
+			resp, err := server.GetRoles(ctx, tc.req)
 			tc.checkResponse(t, resp, err)
 		})
 	}
@@ -419,15 +457,21 @@ func TestGetRoleDBMock(t *testing.T) {
 		CreatedAt: time.Now(),
 		UpdatedAt: time.Now(),
 	}
+	// Create a new context and set the claims value
+	ctx := context.WithValue(context.Background(), TokenInfoKey, auth.UserClaims{
+		UserId:       1,
+		IsAdmin:      true,
+		IsSuperadmin: true,
+	})
 
-	mockStore.EXPECT().GetRoleByID(gomock.Any(), gomock.Any()).
+	mockStore.EXPECT().GetRoleByID(ctx, gomock.Any()).
 		Return(expectedRole, nil)
 
 	server := &Server{
 		store: mockStore,
 	}
 
-	response, err := server.GetRoleById(context.Background(), request)
+	response, err := server.GetRoleById(ctx, request)
 
 	assert.NoError(t, err)
 	assert.NotNil(t, response)
@@ -447,15 +491,21 @@ func TestGetNonExistingRoleDBMock(t *testing.T) {
 	mockStore := mockdb.NewMockStore(ctrl)
 
 	request := &pb.GetRoleByIdRequest{Id: 5}
+	// Create a new context and set the claims value
+	ctx := context.WithValue(context.Background(), TokenInfoKey, auth.UserClaims{
+		UserId:       1,
+		IsAdmin:      true,
+		IsSuperadmin: true,
+	})
 
-	mockStore.EXPECT().GetRoleByID(gomock.Any(), gomock.Any()).
+	mockStore.EXPECT().GetRoleByID(ctx, gomock.Any()).
 		Return(db.Role{}, nil)
 
 	server := &Server{
 		store: mockStore,
 	}
 
-	response, err := server.GetRoleById(context.Background(), request)
+	response, err := server.GetRoleById(ctx, request)
 
 	assert.NoError(t, err)
 	assert.Equal(t, int32(0), response.Role.Id)
@@ -515,6 +565,12 @@ func TestGetRole_gRPC(t *testing.T) {
 			expectedStatusCode: codes.OK,
 		},
 	}
+	// Create a new context and set the claims value
+	ctx := context.WithValue(context.Background(), TokenInfoKey, auth.UserClaims{
+		UserId:       1,
+		IsAdmin:      true,
+		IsSuperadmin: true,
+	})
 
 	for i := range testCases {
 		tc := testCases[i]
@@ -528,7 +584,7 @@ func TestGetRole_gRPC(t *testing.T) {
 
 			server := NewServer(mockStore)
 
-			resp, err := server.GetRoleById(context.Background(), tc.req)
+			resp, err := server.GetRoleById(ctx, tc.req)
 			tc.checkResponse(t, resp, err)
 		})
 	}
