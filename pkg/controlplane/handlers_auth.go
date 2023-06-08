@@ -22,15 +22,10 @@ import (
 	"path/filepath"
 
 	"github.com/go-playground/validator/v10"
-	gauth "github.com/grpc-ecosystem/go-grpc-middleware/v2/interceptors/auth"
-	"github.com/rs/zerolog/log"
 	"github.com/spf13/viper"
 	"github.com/stacklok/mediator/pkg/auth"
 	mcrypto "github.com/stacklok/mediator/pkg/crypto"
 	pb "github.com/stacklok/mediator/pkg/generated/protobuf/go/mediator/v1"
-	"google.golang.org/grpc"
-	"google.golang.org/grpc/codes"
-	"google.golang.org/grpc/status"
 )
 
 type loginValidation struct {
@@ -127,6 +122,7 @@ func (_ *Server) LogOut(_ context.Context, _ *pb.LogOutRequest) (*pb.LogOutRespo
 	// TODO: invalidate token
 	return nil, nil
 }
+<<<<<<< HEAD
 
 var tokenInfoKey struct{}
 
@@ -230,3 +226,5 @@ func AuthUnaryInterceptor(ctx context.Context, req interface{}, _ *grpc.UnarySer
 	context := context.WithValue(ctx, tokenInfoKey, claims)
 	return handler(context, req)
 }
+=======
+>>>>>>> 9d03360 (add validation based on method and request)
