@@ -21,6 +21,8 @@ import (
 	"github.com/go-playground/validator/v10"
 	"github.com/stacklok/mediator/pkg/db"
 	pb "github.com/stacklok/mediator/pkg/generated/protobuf/go/mediator/v1"
+	"google.golang.org/grpc/codes"
+	"google.golang.org/grpc/status"
 	"google.golang.org/protobuf/types/known/timestamppb"
 )
 
@@ -146,6 +148,11 @@ func (s *Server) GetOrganization(ctx context.Context,
 		return nil, fmt.Errorf("failed to get organization: %w", err)
 	}
 
+	// check if user is authorized
+	if !IsRequestAuthorized(ctx, org.ID) {
+		return nil, status.Errorf(codes.PermissionDenied, "user is not authorized to access this resource")
+	}
+
 	var resp pb.GetOrganizationResponse
 	resp.Organization = &pb.OrganizationRecord{
 		Id:        org.ID,
@@ -168,6 +175,11 @@ func (s *Server) GetOrganizationByName(ctx context.Context,
 	org, err := s.store.GetOrganizationByName(ctx, in.Name)
 	if err != nil {
 		return nil, fmt.Errorf("failed to get organization: %w", err)
+	}
+
+	// check if user is authorized
+	if !IsRequestAuthorized(ctx, org.ID) {
+		return nil, status.Errorf(codes.PermissionDenied, "user is not authorized to access this resource")
 	}
 
 	var resp pb.GetOrganizationByNameResponse

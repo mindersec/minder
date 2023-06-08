@@ -31,7 +31,8 @@ import (
 	"google.golang.org/grpc/status"
 )
 
-var tokenInfoKey struct{}
+// TokenInfoKey is the key used to store the token info in the context
+var TokenInfoKey struct{}
 
 func parseToken(token string) (auth.UserClaims, error) {
 	var claims auth.UserClaims
@@ -62,78 +63,115 @@ var superAdminMethods = []string{
 	"/mediator.v1.OrganizationService/CreateOrganization",
 	"/mediator.v1.OrganizationService/GetOrganizations",
 	"/mediator.v1.OrganizationService/DeleteOrganization",
-	"/mediator.v1.OrganizationService/GetOrganizationByName",
 }
 
 var resourceAuthorizations = []map[string]map[string]interface{}{
 	{
 		"/mediator.v1.OrganizationService/GetOrganization": {
-			"field":      "OrganizationId",
+			"claimField": "OrganizationId",
+			"isAdmin":    true,
+		},
+	},
+	{
+		"/mediator.v1.OrganizationService/GetOrganizationByName": {
 			"claimField": "OrganizationId",
 			"isAdmin":    false,
 		},
 	},
 	{
 		"/mediator.v1.GroupService/CreateGroup": {
-			"field":      "OrganizationId",
 			"claimField": "OrganizationId",
 			"isAdmin":    true,
 		},
 	},
 	{
 		"/mediator.v1.GroupService/GetGroups": {
-			"field":      "OrganizationId",
 			"claimField": "OrganizationId",
-			"isAdmin":    false,
+			"isAdmin":    true,
+		},
+	},
+	{
+		"/mediator.v1.GroupService/GetGroupByName": {
+			"claimField": "OrganizationId",
+			"isAdmin":    true,
 		},
 	},
 	{
 		"/mediator.v1.OrganizationService/GetGroupById": {
-			"field":      "GroupId",
-			"claimField": "GroupId",
-			"isAdmin":    false,
+			"claimField": "OrganizationId",
+			"isAdmin":    true,
+		},
+	},
+	{
+		"/mediator.v1.GroupService/DeleteGroup": {
+			"claimField": "OrganizationId",
+			"isAdmin":    true,
 		},
 	},
 	{
 		"/mediator.v1.RoleService/CreateRole": {
-			"field":      "GroupId",
+			"claimField": "GroupId",
+			"isAdmin":    true,
+		},
+	},
+	{
+		"/mediator.v1.RoleService/DeleteRole": {
 			"claimField": "GroupId",
 			"isAdmin":    true,
 		},
 	},
 	{
 		"/mediator.v1.RoleService/GetRoles": {
-			"field":      "GroupId",
 			"claimField": "GroupId",
-			"isAdmin":    false,
+			"isAdmin":    true,
 		},
 	},
 	{
 		"/mediator.v1.RoleService/GetRoleById": {
-			"field":      "Id",
-			"claimField": "RoleId",
+			"claimField": "GroupId",
+			"isAdmin":    true,
+		},
+	},
+	{
+		"/mediator.v1.RoleService/GetRoleByName": {
+			"claimField": "GroupId",
 			"isAdmin":    true,
 		},
 	},
 	{
 		"/mediator.v1.UserService/CreateUser": {
-			"field":      "RoleId",
-			"claimField": "RoleId",
+			"claimField": "GroupId",
+			"isAdmin":    true,
+		},
+	},
+	{
+		"/mediator.v1.UserService/DeleteUser": {
+			"claimField": "GroupId",
 			"isAdmin":    true,
 		},
 	},
 	{
 		"/mediator.v1.UserService/GetUsers": {
-			"field":      "RoleId",
-			"claimField": "RoleId",
-			"isAdmin":    false,
+			"claimField": "GroupId",
+			"isAdmin":    true,
 		},
 	},
 	{
 		"/mediator.v1.UserService/GetUserById": {
-			"field":      "Id",
-			"claimField": "UserId",
-			"isAdmin":    false,
+			"claimField": "GroupId",
+			"isAdmin":    true,
+		},
+	},
+	{
+		"/mediator.v1.UserService/GetUserByUserName": {
+			"claimField": "GroupId",
+			"isAdmin":    true,
+		},
+	},
+	{
+		"/mediator.v1.UserService/GetUserByEmail": {
+			"claimField": "GroupId",
+			"isAdmin":    true,
 		},
 	},
 }
@@ -178,8 +216,9 @@ func isMethodAuthorized(ctx context.Context, claims auth.UserClaims) bool {
 
 }
 
-func isRequestAuthorized(ctx context.Context, req interface{}, claims auth.UserClaims) bool {
-	requestValue := reflect.ValueOf(req).Elem()
+// IsRequestAuthorized checks if the request is authorized
+func IsRequestAuthorized(ctx context.Context, value int32) bool {
+	claims, _ := ctx.Value(TokenInfoKey).(auth.UserClaims)
 	method, ok := grpc.Method(ctx)
 	if !ok {
 		return false
@@ -191,16 +230,14 @@ func isRequestAuthorized(ctx context.Context, req interface{}, claims auth.UserC
 			// method matches, now we need to check if the request has the field
 			if path == method {
 				// now check if claims match
-				field := data["field"].(string)
 				claimField := data["claimField"].(string)
 				isAdmin := data["isAdmin"].(bool)
-				fieldValue := requestValue.FieldByName(field).Interface().(int32)
 
 				claimsObj := reflect.ValueOf(claims)
 				claimsValue := claimsObj.FieldByName(claimField).Interface().(int32)
 
 				// if resources do not match, do not authorize
-				if claimsValue != fieldValue {
+				if claimsValue != value {
 					return false
 				}
 
@@ -212,9 +249,10 @@ func isRequestAuthorized(ctx context.Context, req interface{}, claims auth.UserC
 			}
 		}
 	}
-	return false
+	return true
 }
 
+// AuthUnaryInterceptor is a server interceptor for authentication
 func AuthUnaryInterceptor(ctx context.Context, req interface{}, _ *grpc.UnaryServerInfo, handler grpc.UnaryHandler) (any, error) {
 	// bypass auth
 	canBypass := canBypassAuth(ctx)
@@ -235,8 +273,8 @@ func AuthUnaryInterceptor(ctx context.Context, req interface{}, _ *grpc.UnarySer
 	}
 	if claims.IsSuperadmin {
 		// is authorized to everything
-		context := context.WithValue(ctx, tokenInfoKey, claims)
-		return handler(context, req)
+		ctx := context.WithValue(ctx, TokenInfoKey, claims)
+		return handler(ctx, req)
 	}
 
 	// Check if the current method needs to have a superadmin role
@@ -245,13 +283,6 @@ func AuthUnaryInterceptor(ctx context.Context, req interface{}, _ *grpc.UnarySer
 		return nil, status.Errorf(codes.PermissionDenied, "user not authorized")
 	}
 
-	// check at specific resource level
-	isReqAuthorized := isRequestAuthorized(ctx, req, claims)
-	if !isReqAuthorized {
-		return nil, status.Errorf(codes.PermissionDenied, "user not authorized")
-	}
-
-	// now check depending on the method
-	context := context.WithValue(ctx, tokenInfoKey, claims)
-	return handler(context, req)
+	ctx = context.WithValue(ctx, TokenInfoKey, claims)
+	return handler(ctx, req)
 }

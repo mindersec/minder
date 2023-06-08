@@ -25,6 +25,8 @@ import (
 	"github.com/stacklok/mediator/pkg/db"
 	pb "github.com/stacklok/mediator/pkg/generated/protobuf/go/mediator/v1"
 	"github.com/stacklok/mediator/pkg/util"
+	"google.golang.org/grpc/codes"
+	"google.golang.org/grpc/status"
 	"google.golang.org/protobuf/types/known/timestamppb"
 )
 
@@ -87,6 +89,16 @@ func (s *Server) CreateUser(ctx context.Context,
 		return nil, err
 	}
 
+	// we need to check if the role exists and the group it has
+	role, err := s.store.GetRoleByID(ctx, in.RoleId)
+	if err != nil {
+		return nil, status.Errorf(codes.NotFound, "role not found")
+	}
+	// check if user is authorized
+	if !IsRequestAuthorized(ctx, role.GroupID) {
+		return nil, status.Errorf(codes.PermissionDenied, "user is not authorized to access this resource")
+	}
+
 	user, err := s.store.CreateUser(ctx, db.CreateUserParams{RoleID: in.RoleId,
 		Email: *stringToNullString(in.Email), Username: in.Username, Password: pHash,
 		FirstName: *stringToNullString(in.FirstName), LastName: *stringToNullString(in.LastName),
@@ -120,6 +132,16 @@ func (s *Server) DeleteUser(ctx context.Context,
 		return nil, err
 	}
 
+	// need to check the role for the user
+	role, err := s.store.GetRoleByID(ctx, user.RoleID)
+	if err != nil {
+		return nil, status.Errorf(codes.NotFound, "role not found")
+	}
+	// check if user is authorized
+	if !IsRequestAuthorized(ctx, role.GroupID) {
+		return nil, status.Errorf(codes.PermissionDenied, "user is not authorized to access this resource")
+	}
+
 	if in.Force == nil {
 		isProtected := false
 		in.Force = &isProtected
@@ -143,6 +165,16 @@ func (s *Server) GetUsers(ctx context.Context,
 	in *pb.GetUsersRequest) (*pb.GetUsersResponse, error) {
 	if in.RoleId == 0 {
 		return nil, fmt.Errorf("role id is required")
+	}
+
+	// check if role exists
+	role, err := s.store.GetRoleByID(ctx, in.RoleId)
+	if err != nil {
+		return nil, status.Errorf(codes.NotFound, "role not found")
+	}
+	// check if user is authorized
+	if !IsRequestAuthorized(ctx, role.GroupID) {
+		return nil, status.Errorf(codes.PermissionDenied, "user is not authorized to access this resource")
 	}
 
 	// define default values for limit and offset
@@ -195,6 +227,16 @@ func (s *Server) GetUserById(ctx context.Context,
 		return nil, fmt.Errorf("failed to get user: %w", err)
 	}
 
+	// check if role exists
+	role, err := s.store.GetRoleByID(ctx, user.RoleID)
+	if err != nil {
+		return nil, status.Errorf(codes.NotFound, "role not found")
+	}
+	// check if user is authorized
+	if !IsRequestAuthorized(ctx, role.GroupID) {
+		return nil, status.Errorf(codes.PermissionDenied, "user is not authorized to access this resource")
+	}
+
 	var resp pb.GetUserByIdResponse
 	resp.User = &pb.UserRecord{
 		Id:          user.ID,
@@ -223,6 +265,16 @@ func (s *Server) GetUserByUsername(ctx context.Context,
 		return nil, fmt.Errorf("failed to get user: %w", err)
 	}
 
+	// check if role exists
+	role, err := s.store.GetRoleByID(ctx, user.RoleID)
+	if err != nil {
+		return nil, status.Errorf(codes.NotFound, "role not found")
+	}
+	// check if user is authorized
+	if !IsRequestAuthorized(ctx, role.GroupID) {
+		return nil, status.Errorf(codes.PermissionDenied, "user is not authorized to access this resource")
+	}
+
 	var resp pb.GetUserByUserNameResponse
 	resp.User = &pb.UserRecord{
 		Id:        user.ID,
@@ -249,6 +301,16 @@ func (s *Server) GetUserByEmail(ctx context.Context,
 	user, err := s.store.GetUserByEmail(ctx, sql.NullString{String: in.Email, Valid: true})
 	if err != nil {
 		return nil, fmt.Errorf("failed to get user: %w", err)
+	}
+
+	// check if role exists
+	role, err := s.store.GetRoleByID(ctx, user.RoleID)
+	if err != nil {
+		return nil, status.Errorf(codes.NotFound, "role not found")
+	}
+	// check if user is authorized
+	if !IsRequestAuthorized(ctx, role.GroupID) {
+		return nil, status.Errorf(codes.PermissionDenied, "user is not authorized to access this resource")
 	}
 
 	var resp pb.GetUserByEmailResponse

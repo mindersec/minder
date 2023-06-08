@@ -21,6 +21,8 @@ import (
 	"github.com/go-playground/validator/v10"
 	"github.com/stacklok/mediator/pkg/db"
 	pb "github.com/stacklok/mediator/pkg/generated/protobuf/go/mediator/v1"
+	"google.golang.org/grpc/codes"
+	"google.golang.org/grpc/status"
 	"google.golang.org/protobuf/types/known/timestamppb"
 )
 
@@ -38,6 +40,11 @@ func (s *Server) CreateRole(ctx context.Context,
 	err := validator.Struct(CreateRoleValidation{GroupId: in.GroupId, Name: in.Name})
 	if err != nil {
 		return nil, err
+	}
+
+	// check if user is authorized
+	if !IsRequestAuthorized(ctx, in.GroupId) {
+		return nil, status.Errorf(codes.PermissionDenied, "user is not authorized to access this resource")
 	}
 
 	if in.IsAdmin == nil {
@@ -82,6 +89,11 @@ func (s *Server) DeleteRole(ctx context.Context,
 		return nil, err
 	}
 
+	// check if user is authorized
+	if !IsRequestAuthorized(ctx, role.GroupID) {
+		return nil, status.Errorf(codes.PermissionDenied, "user is not authorized to access this resource")
+	}
+
 	if in.Force == nil {
 		isProtected := false
 		in.Force = &isProtected
@@ -120,6 +132,11 @@ func (s *Server) GetRoles(ctx context.Context,
 	in *pb.GetRolesRequest) (*pb.GetRolesResponse, error) {
 	if in.GroupId == 0 {
 		return nil, fmt.Errorf("group id is required")
+	}
+
+	// check if user is authorized
+	if !IsRequestAuthorized(ctx, in.GroupId) {
+		return nil, status.Errorf(codes.PermissionDenied, "user is not authorized to access this resource")
 	}
 
 	// define default values for limit and offset
@@ -168,6 +185,11 @@ func (s *Server) GetRoleById(ctx context.Context,
 	role, err := s.store.GetRoleByID(ctx, in.Id)
 	if err != nil {
 		return nil, fmt.Errorf("failed to get role: %w", err)
+	}
+
+	// check if user is authorized
+	if !IsRequestAuthorized(ctx, role.GroupID) {
+		return nil, status.Errorf(codes.PermissionDenied, "user is not authorized to access this resource")
 	}
 
 	var resp pb.GetRoleByIdResponse
