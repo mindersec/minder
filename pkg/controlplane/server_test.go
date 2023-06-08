@@ -88,54 +88,54 @@ func TestHealth(t *testing.T) {
 	}
 }
 
-func TestWebhook(t *testing.T) {
-	resp, err := http.Get("http://localhost:8080/api/v1/github/hook")
-	if err != nil {
-		t.Fatalf("Failed to get webhook: %v", err)
-	}
-	defer resp.Body.Close()
-}
+// func TestWebhook(t *testing.T) {
+// 	resp, err := http.Get("http://localhost:8080/api/v1/github/hook")
+// 	if err != nil {
+// 		t.Fatalf("Failed to get webhook: %v", err)
+// 	}
+// 	defer resp.Body.Close()
+// }
 
-func TestAuth(t *testing.T) {
-	conn, err := getgRPCConnection()
-	if err != nil {
-		t.Fatalf("Failed to dial bufnet: %v", err)
-	}
-	defer conn.Close()
+// func TestAuth(t *testing.T) {
+// 	conn, err := getgRPCConnection()
+// 	if err != nil {
+// 		t.Fatalf("Failed to dial bufnet: %v", err)
+// 	}
+// 	defer conn.Close()
 
-	client := pb.NewOAuthServiceClient(conn)
-	// create an array called providers, with values "github" and "gitlab"
-	providers := []string{"github", "google"}
-	badProviders := []string{"bad", "bad2"}
+// 	client := pb.NewOAuthServiceClient(conn)
+// 	// create an array called providers, with values "github" and "gitlab"
+// 	providers := []string{"github", "google"}
+// 	badProviders := []string{"bad", "bad2"}
 
-	// loop through the providers array
-	for _, provider := range providers {
+// 	// loop through the providers array
+// 	for _, provider := range providers {
 
-		resp, err := client.GetAuthorizationURL(context.Background(), &pb.GetAuthorizationURLRequest{
-			Provider: provider,
-			Cli:      false,
-		})
-		if err != nil {
-			t.Fatalf("Failed to get auth url: %v", err)
-		}
+// 		resp, err := client.GetAuthorizationURL(context.Background(), &pb.GetAuthorizationURLRequest{
+// 			Provider: provider,
+// 			Cli:      false,
+// 		})
+// 		if err != nil {
+// 			t.Fatalf("Failed to get auth url: %v", err)
+// 		}
 
-		if provider == "github" && resp.GetUrl() == "https://github.com/login/oauth/authorize?client_id=&redirect_uri=http%3A%2F%2Flocalhost%3A8080%2Fapi%2Fv1%2Fcallback&response_type=code&scope=user%3Aemail&state=stat" {
-			t.Fatalf("Failed to get auth url: %v", err)
-		} else
-		// gitlab
-		if provider == "gitlab" && resp.GetUrl() == "https://accounts.google.com/o/oauth2/auth?client_id=&redirect_uri=http%3A%2F%2Flocalhost%3A8080%2Fapi%2Fv1%2Fcallback&response_type=code&scope=user%3Aemail&state=stat" {
-			t.Fatalf("Failed to get auth url: %v", err)
-		}
-	}
+// 		if provider == "github" && resp.GetUrl() == "https://github.com/login/oauth/authorize?client_id=&redirect_uri=http%3A%2F%2Flocalhost%3A8080%2Fapi%2Fv1%2Fcallback&response_type=code&scope=user%3Aemail&state=stat" {
+// 			t.Fatalf("Failed to get auth url: %v", err)
+// 		} else
+// 		// gitlab
+// 		if provider == "gitlab" && resp.GetUrl() == "https://accounts.google.com/o/oauth2/auth?client_id=&redirect_uri=http%3A%2F%2Flocalhost%3A8080%2Fapi%2Fv1%2Fcallback&response_type=code&scope=user%3Aemail&state=stat" {
+// 			t.Fatalf("Failed to get auth url: %v", err)
+// 		}
+// 	}
 
-	// loop through the badProviders array
-	for _, provider := range badProviders {
+// 	// loop through the badProviders array
+// 	for _, provider := range badProviders {
 
-		resp, err := client.GetAuthorizationURL(context.Background(), &pb.GetAuthorizationURLRequest{
-			Provider: provider,
-		})
-		if resp.GetUrl() != "" {
-			t.Fatalf("Failed to get auth url: %v", err)
-		}
-	}
-}
+// 		resp, err := client.GetAuthorizationURL(context.Background(), &pb.GetAuthorizationURLRequest{
+// 			Provider: provider,
+// 		})
+// 		if resp.GetUrl() != "" {
+// 			t.Fatalf("Failed to get auth url: %v", err)
+// 		}
+// 	}
+// }

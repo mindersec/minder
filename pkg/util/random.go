@@ -27,6 +27,7 @@ import (
 	"crypto/x509"
 	"encoding/pem"
 	"math/rand"
+	"net"
 	"os"
 	"path/filepath"
 )
@@ -159,4 +160,15 @@ func RandomPrivateKeyFile(length int, filePath string) error {
 	}
 
 	return nil
+}
+
+func GetRandomPort() (int, error) {
+	listener, err := net.Listen("tcp", ":0")
+	if err != nil {
+		return 0, err
+	}
+	defer listener.Close()
+
+	port := listener.Addr().(*net.TCPAddr).Port
+	return port, nil
 }

@@ -60,7 +60,25 @@ CREATE TABLE users (
     min_token_issued_time TIMESTAMP
 );
 
+-- provider_access_tokens table
+CREATE TABLE provider_access_tokens (
+    id SERIAL PRIMARY KEY,
+    group_id INTEGER NOT NULL REFERENCES groups(id) ON DELETE CASCADE,
+    encrypted_token TEXT NOT NULL,
+    created_at TIMESTAMP NOT NULL DEFAULT NOW(),
+    updated_at TIMESTAMP NOT NULL DEFAULT NOW()
+);
+
+create TABLE session_store (
+    id SERIAL PRIMARY KEY,
+    grp_id INTEGER,
+    port INTEGER,
+    session_state TEXT NOT NULL,
+    created_at TIMESTAMP NOT NULL DEFAULT NOW()
+);
+
 -- Unique constraint
+ALTER TABLE provider_access_tokens ADD CONSTRAINT unique_group_id UNIQUE (group_id);
 ALTER TABLE organizations ADD CONSTRAINT unique_name UNIQUE (name);
 
 -- Indexes
@@ -68,6 +86,7 @@ CREATE INDEX idx_users_email ON users(email);
 CREATE INDEX idx_users_role_id ON users(role_id);
 CREATE INDEX idx_groups_organization_id ON groups(organization_id);
 CREATE INDEX idx_roles_group_id ON roles(group_id);
+CREATE INDEX idx_provider_access_tokens_group_id ON provider_access_tokens(group_id);
 
 -- Create default root organization
 

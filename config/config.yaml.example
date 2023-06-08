@@ -62,6 +62,7 @@ auth:
   refresh_token_public_key: "./.ssh/refresh_token_rsa.pub"
   token_expiry: 3600
   refresh_expiry: 86400
+  session_key: "12345678901234567890123456789012"
 
 # Password Salting, these values are using argon2id
 # https://en.wikipedia.org/wiki/Argon2
@@ -80,3 +81,10 @@ salt:
   salt_length: 16
   # the desired number of returned bytes
   key_length: 32
+
+github-app:
+  external_webhook_url: "https://example.com/api/v1/webhook/github"
+  external_ping_url: "https://example.com/api/v1/health"
+  app:
+    webhook_secret: "p6ssw0rd"
+    private_key_path: "/home/stacklok/mediator/private.pem"

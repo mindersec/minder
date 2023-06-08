@@ -50,6 +50,21 @@ func (mr *MockStoreMockRecorder) CheckHealth() *gomock.Call {
 	return mr.mock.ctrl.RecordCallWithMethodType(mr.mock, "CheckHealth", reflect.TypeOf((*MockStore)(nil).CheckHealth))
 }
 
+// CreateAccessToken mocks base method.
+func (m *MockStore) CreateAccessToken(arg0 context.Context, arg1 db.CreateAccessTokenParams) (db.ProviderAccessToken, error) {
+	m.ctrl.T.Helper()
+	ret := m.ctrl.Call(m, "CreateAccessToken", arg0, arg1)
+	ret0, _ := ret[0].(db.ProviderAccessToken)
+	ret1, _ := ret[1].(error)
+	return ret0, ret1
+}
+
+// CreateAccessToken indicates an expected call of CreateAccessToken.
+func (mr *MockStoreMockRecorder) CreateAccessToken(arg0, arg1 interface{}) *gomock.Call {
+	mr.mock.ctrl.T.Helper()
+	return mr.mock.ctrl.RecordCallWithMethodType(mr.mock, "CreateAccessToken", reflect.TypeOf((*MockStore)(nil).CreateAccessToken), arg0, arg1)
+}
+
 // CreateGroup mocks base method.
 func (m *MockStore) CreateGroup(arg0 context.Context, arg1 db.CreateGroupParams) (db.Group, error) {
 	m.ctrl.T.Helper()
@@ -95,6 +110,21 @@ func (mr *MockStoreMockRecorder) CreateRole(arg0, arg1 interface{}) *gomock.Call
 	return mr.mock.ctrl.RecordCallWithMethodType(mr.mock, "CreateRole", reflect.TypeOf((*MockStore)(nil).CreateRole), arg0, arg1)
 }
 
+// CreateSessionState mocks base method.
+func (m *MockStore) CreateSessionState(arg0 context.Context, arg1 db.CreateSessionStateParams) (db.SessionStore, error) {
+	m.ctrl.T.Helper()
+	ret := m.ctrl.Call(m, "CreateSessionState", arg0, arg1)
+	ret0, _ := ret[0].(db.SessionStore)
+	ret1, _ := ret[1].(error)
+	return ret0, ret1
+}
+
+// CreateSessionState indicates an expected call of CreateSessionState.
+func (mr *MockStoreMockRecorder) CreateSessionState(arg0, arg1 interface{}) *gomock.Call {
+	mr.mock.ctrl.T.Helper()
+	return mr.mock.ctrl.RecordCallWithMethodType(mr.mock, "CreateSessionState", reflect.TypeOf((*MockStore)(nil).CreateSessionState), arg0, arg1)
+}
+
 // CreateUser mocks base method.
 func (m *MockStore) CreateUser(arg0 context.Context, arg1 db.CreateUserParams) (db.User, error) {
 	m.ctrl.T.Helper()
@@ -108,6 +138,34 @@ func (m *MockStore) CreateUser(arg0 context.Context, arg1 db.CreateUserParams) (
 func (mr *MockStoreMockRecorder) CreateUser(arg0, arg1 interface{}) *gomock.Call {
 	mr.mock.ctrl.T.Helper()
 	return mr.mock.ctrl.RecordCallWithMethodType(mr.mock, "CreateUser", reflect.TypeOf((*MockStore)(nil).CreateUser), arg0, arg1)
+}
+
+// DeleteAccessToken mocks base method.
+func (m *MockStore) DeleteAccessToken(arg0 context.Context, arg1 int32) error {
+	m.ctrl.T.Helper()
+	ret := m.ctrl.Call(m, "DeleteAccessToken", arg0, arg1)
+	ret0, _ := ret[0].(error)
+	return ret0
+}
+
+// DeleteAccessToken indicates an expected call of DeleteAccessToken.
+func (mr *MockStoreMockRecorder) DeleteAccessToken(arg0, arg1 interface{}) *gomock.Call {
+	mr.mock.ctrl.T.Helper()
+	return mr.mock.ctrl.RecordCallWithMethodType(mr.mock, "DeleteAccessToken", reflect.TypeOf((*MockStore)(nil).DeleteAccessToken), arg0, arg1)
+}
+
+// DeleteExpiredSessionStates mocks base method.
+func (m *MockStore) DeleteExpiredSessionStates(arg0 context.Context) error {
+	m.ctrl.T.Helper()
+	ret := m.ctrl.Call(m, "DeleteExpiredSessionStates", arg0)
+	ret0, _ := ret[0].(error)
+	return ret0
+}
+
+// DeleteExpiredSessionStates indicates an expected call of DeleteExpiredSessionStates.
+func (mr *MockStoreMockRecorder) DeleteExpiredSessionStates(arg0 interface{}) *gomock.Call {
+	mr.mock.ctrl.T.Helper()
+	return mr.mock.ctrl.RecordCallWithMethodType(mr.mock, "DeleteExpiredSessionStates", reflect.TypeOf((*MockStore)(nil).DeleteExpiredSessionStates), arg0)
 }
 
 // DeleteGroup mocks base method.
@@ -152,6 +210,34 @@ func (mr *MockStoreMockRecorder) DeleteRole(arg0, arg1 interface{}) *gomock.Call
 	return mr.mock.ctrl.RecordCallWithMethodType(mr.mock, "DeleteRole", reflect.TypeOf((*MockStore)(nil).DeleteRole), arg0, arg1)
 }
 
+// DeleteSessionState mocks base method.
+func (m *MockStore) DeleteSessionState(arg0 context.Context, arg1 int32) error {
+	m.ctrl.T.Helper()
+	ret := m.ctrl.Call(m, "DeleteSessionState", arg0, arg1)
+	ret0, _ := ret[0].(error)
+	return ret0
+}
+
+// DeleteSessionState indicates an expected call of DeleteSessionState.
+func (mr *MockStoreMockRecorder) DeleteSessionState(arg0, arg1 interface{}) *gomock.Call {
+	mr.mock.ctrl.T.Helper()
+	return mr.mock.ctrl.RecordCallWithMethodType(mr.mock, "DeleteSessionState", reflect.TypeOf((*MockStore)(nil).DeleteSessionState), arg0, arg1)
+}
+
+// DeleteSessionStateByGroupID mocks base method.
+func (m *MockStore) DeleteSessionStateByGroupID(arg0 context.Context, arg1 sql.NullInt32) error {
+	m.ctrl.T.Helper()
+	ret := m.ctrl.Call(m, "DeleteSessionStateByGroupID", arg0, arg1)
+	ret0, _ := ret[0].(error)
+	return ret0
+}
+
+// DeleteSessionStateByGroupID indicates an expected call of DeleteSessionStateByGroupID.
+func (mr *MockStoreMockRecorder) DeleteSessionStateByGroupID(arg0, arg1 interface{}) *gomock.Call {
+	mr.mock.ctrl.T.Helper()
+	return mr.mock.ctrl.RecordCallWithMethodType(mr.mock, "DeleteSessionStateByGroupID", reflect.TypeOf((*MockStore)(nil).DeleteSessionStateByGroupID), arg0, arg1)
+}
+
 // DeleteUser mocks base method.
 func (m *MockStore) DeleteUser(arg0 context.Context, arg1 int32) error {
 	m.ctrl.T.Helper()
@@ -164,6 +250,21 @@ func (m *MockStore) DeleteUser(arg0 context.Context, arg1 int32) error {
 func (mr *MockStoreMockRecorder) DeleteUser(arg0, arg1 interface{}) *gomock.Call {
 	mr.mock.ctrl.T.Helper()
 	return mr.mock.ctrl.RecordCallWithMethodType(mr.mock, "DeleteUser", reflect.TypeOf((*MockStore)(nil).DeleteUser), arg0, arg1)
+}
+
+// GetAccessTokenByGroupID mocks base method.
+func (m *MockStore) GetAccessTokenByGroupID(arg0 context.Context, arg1 int32) (db.ProviderAccessToken, error) {
+	m.ctrl.T.Helper()
+	ret := m.ctrl.Call(m, "GetAccessTokenByGroupID", arg0, arg1)
+	ret0, _ := ret[0].(db.ProviderAccessToken)
+	ret1, _ := ret[1].(error)
+	return ret0, ret1
+}
+
+// GetAccessTokenByGroupID indicates an expected call of GetAccessTokenByGroupID.
+func (mr *MockStoreMockRecorder) GetAccessTokenByGroupID(arg0, arg1 interface{}) *gomock.Call {
+	mr.mock.ctrl.T.Helper()
+	return mr.mock.ctrl.RecordCallWithMethodType(mr.mock, "GetAccessTokenByGroupID", reflect.TypeOf((*MockStore)(nil).GetAccessTokenByGroupID), arg0, arg1)
 }
 
 // GetGroupByID mocks base method.
@@ -194,6 +295,21 @@ func (m *MockStore) GetGroupByName(arg0 context.Context, arg1 string) (db.Group,
 func (mr *MockStoreMockRecorder) GetGroupByName(arg0, arg1 interface{}) *gomock.Call {
 	mr.mock.ctrl.T.Helper()
 	return mr.mock.ctrl.RecordCallWithMethodType(mr.mock, "GetGroupByName", reflect.TypeOf((*MockStore)(nil).GetGroupByName), arg0, arg1)
+}
+
+// GetGroupIDPortBySessionState mocks base method.
+func (m *MockStore) GetGroupIDPortBySessionState(arg0 context.Context, arg1 string) (db.GetGroupIDPortBySessionStateRow, error) {
+	m.ctrl.T.Helper()
+	ret := m.ctrl.Call(m, "GetGroupIDPortBySessionState", arg0, arg1)
+	ret0, _ := ret[0].(db.GetGroupIDPortBySessionStateRow)
+	ret1, _ := ret[1].(error)
+	return ret0, ret1
+}
+
+// GetGroupIDPortBySessionState indicates an expected call of GetGroupIDPortBySessionState.
+func (mr *MockStoreMockRecorder) GetGroupIDPortBySessionState(arg0, arg1 interface{}) *gomock.Call {
+	mr.mock.ctrl.T.Helper()
+	return mr.mock.ctrl.RecordCallWithMethodType(mr.mock, "GetGroupIDPortBySessionState", reflect.TypeOf((*MockStore)(nil).GetGroupIDPortBySessionState), arg0, arg1)
 }
 
 // GetOrganization mocks base method.
@@ -269,6 +385,36 @@ func (m *MockStore) GetRoleByName(arg0 context.Context, arg1 db.GetRoleByNamePar
 func (mr *MockStoreMockRecorder) GetRoleByName(arg0, arg1 interface{}) *gomock.Call {
 	mr.mock.ctrl.T.Helper()
 	return mr.mock.ctrl.RecordCallWithMethodType(mr.mock, "GetRoleByName", reflect.TypeOf((*MockStore)(nil).GetRoleByName), arg0, arg1)
+}
+
+// GetSessionState mocks base method.
+func (m *MockStore) GetSessionState(arg0 context.Context, arg1 int32) (db.SessionStore, error) {
+	m.ctrl.T.Helper()
+	ret := m.ctrl.Call(m, "GetSessionState", arg0, arg1)
+	ret0, _ := ret[0].(db.SessionStore)
+	ret1, _ := ret[1].(error)
+	return ret0, ret1
+}
+
+// GetSessionState indicates an expected call of GetSessionState.
+func (mr *MockStoreMockRecorder) GetSessionState(arg0, arg1 interface{}) *gomock.Call {
+	mr.mock.ctrl.T.Helper()
+	return mr.mock.ctrl.RecordCallWithMethodType(mr.mock, "GetSessionState", reflect.TypeOf((*MockStore)(nil).GetSessionState), arg0, arg1)
+}
+
+// GetSessionStateByGroupID mocks base method.
+func (m *MockStore) GetSessionStateByGroupID(arg0 context.Context, arg1 sql.NullInt32) (db.SessionStore, error) {
+	m.ctrl.T.Helper()
+	ret := m.ctrl.Call(m, "GetSessionStateByGroupID", arg0, arg1)
+	ret0, _ := ret[0].(db.SessionStore)
+	ret1, _ := ret[1].(error)
+	return ret0, ret1
+}
+
+// GetSessionStateByGroupID indicates an expected call of GetSessionStateByGroupID.
+func (mr *MockStoreMockRecorder) GetSessionStateByGroupID(arg0, arg1 interface{}) *gomock.Call {
+	mr.mock.ctrl.T.Helper()
+	return mr.mock.ctrl.RecordCallWithMethodType(mr.mock, "GetSessionStateByGroupID", reflect.TypeOf((*MockStore)(nil).GetSessionStateByGroupID), arg0, arg1)
 }
 
 // GetUserByEmail mocks base method.
@@ -509,6 +655,21 @@ func (m *MockStore) RevokeUsersTokens(arg0 context.Context) (db.User, error) {
 func (mr *MockStoreMockRecorder) RevokeUsersTokens(arg0 interface{}) *gomock.Call {
 	mr.mock.ctrl.T.Helper()
 	return mr.mock.ctrl.RecordCallWithMethodType(mr.mock, "RevokeUsersTokens", reflect.TypeOf((*MockStore)(nil).RevokeUsersTokens), arg0)
+}
+
+// UpdateAccessToken mocks base method.
+func (m *MockStore) UpdateAccessToken(arg0 context.Context, arg1 db.UpdateAccessTokenParams) (db.ProviderAccessToken, error) {
+	m.ctrl.T.Helper()
+	ret := m.ctrl.Call(m, "UpdateAccessToken", arg0, arg1)
+	ret0, _ := ret[0].(db.ProviderAccessToken)
+	ret1, _ := ret[1].(error)
+	return ret0, ret1
+}
+
+// UpdateAccessToken indicates an expected call of UpdateAccessToken.
+func (mr *MockStoreMockRecorder) UpdateAccessToken(arg0, arg1 interface{}) *gomock.Call {
+	mr.mock.ctrl.T.Helper()
+	return mr.mock.ctrl.RecordCallWithMethodType(mr.mock, "UpdateAccessToken", reflect.TypeOf((*MockStore)(nil).UpdateAccessToken), arg0, arg1)
 }
 
 // UpdateGroup mocks base method.

@@ -26,10 +26,17 @@ import (
 	"bytes"
 	"context"
 	"crypto/rand"
+	"database/sql"
 	"encoding/base64"
+	"encoding/binary"
+	"errors"
 	"fmt"
 	"net/http"
+	"time"
 
+	"github.com/stacklok/mediator/pkg/auth"
+	mcrypto "github.com/stacklok/mediator/pkg/crypto"
+	"github.com/stacklok/mediator/pkg/db"
 	pb "github.com/stacklok/mediator/pkg/generated/protobuf/go/mediator/v1"
 	"go.opentelemetry.io/otel/attribute"
 	"go.opentelemetry.io/otel/trace"
@@ -41,35 +48,61 @@ import (
 	"github.com/spf13/viper"
 )
 
-// Google is the name of the Google OAuth provider
+// OAuth2 Provider Constants
 const Google = "google"
-
-// Github is the name of the Github OAuth provider
 const Github = "github"
 
 // PaginationLimit is the maximum number of items that can be returned in a single page
 const PaginationLimit = 10
 
-// generateState generates a random string of length n, used as the OAuth state
-func generateState(n int) (string, error) {
-	randomBytes := make([]byte, n)
+// Generate a nonce based state for the OAuth2 flow
+func generateNonce() (string, error) {
+	randomBytes := make([]byte, 32)
 	_, err := rand.Read(randomBytes)
 	if err != nil {
 		return "", err
 	}
 
-	state := base64.RawURLEncoding.EncodeToString(randomBytes)
-	return state, nil
+	nonceBytes := make([]byte, 8)
+	timestamp := time.Now().Unix()
+	binary.BigEndian.PutUint64(nonceBytes, uint64(timestamp))
+
+	nonceBytes = append(nonceBytes, randomBytes...)
+	nonce := base64.RawURLEncoding.EncodeToString(nonceBytes)
+	return nonce, nil
+}
+
+// Verify the nonce based state for the OAuth2 flow. If the valid variable is
+// true, the nonce is valid and less than 5 minutes old
+func isNonceValid(nonce string) (bool, error) {
+	nonceBytes, err := base64.RawURLEncoding.DecodeString(nonce)
+	if err != nil {
+		return false, err
+	}
+
+	if len(nonceBytes) < 8 {
+		return false, nil
+	}
+
+	storedTimestamp := int64(binary.BigEndian.Uint64(nonceBytes[:8]))
+	currentTimestamp := time.Now().Unix()
+	timeDiff := currentTimestamp - storedTimestamp
+
+	if timeDiff > viper.GetInt64("auth.nonce_period") { // 5 minutes = 300 seconds
+		return false, nil
+	}
+
+	return true, nil
 }
 
 // CheckHealth is a simple health check for monitoring
-func (_ *Server) CheckHealth(_ context.Context, _ *pb.CheckHealthRequest) (*pb.CheckHealthResponse, error) {
+func (s *Server) CheckHealth(_ context.Context, _ *pb.CheckHealthRequest) (*pb.CheckHealthResponse, error) {
 	return &pb.CheckHealthResponse{Status: "OK"}, nil
 }
 
 // newOAuthConfig creates a new OAuth2 config for the given provider
 // and whether the client is a CLI or web client
-func (_ *Server) newOAuthConfig(provider string, cli bool) (*oauth2.Config, error) {
+func newOAuthConfig(provider string, cli bool) (*oauth2.Config, error) {
 	redirectURL := func(provider string, cli bool) string {
 		if cli {
 			return fmt.Sprintf("http://localhost:8080/api/v1/auth/callback/%s/cli", provider)
@@ -81,7 +114,7 @@ func (_ *Server) newOAuthConfig(provider string, cli bool) (*oauth2.Config, erro
 		if provider == Google {
 			return []string{"profile", "email"}
 		}
-		return []string{"user:email"}
+		return []string{"user:email", "repo"}
 	}
 
 	endpoint := func(provider string) oauth2.Endpoint {
@@ -109,25 +142,60 @@ func (_ *Server) newOAuthConfig(provider string, cli bool) (*oauth2.Config, erro
 // and a boolean indicating whether the client is a CLI or web client
 func (s *Server) GetAuthorizationURL(ctx context.Context,
 	req *pb.GetAuthorizationURLRequest) (*pb.GetAuthorizationURLResponse, error) {
-
-	oauthConfig, err := s.newOAuthConfig(req.Provider, req.Cli)
-	if err != nil {
-		return nil, err
-	}
-	state, err := generateState(32)
-
-	if err != nil {
-		fmt.Println("Error generating state:", err)
-		return nil, err
-	}
-
+	// Configure tracing
 	// trace call to AuthCodeURL
 	span := trace.SpanFromContext(ctx)
 	span.SetName("server.GetAuthorizationURL")
 	span.SetAttributes(attribute.Key("provider").String(req.Provider))
 	defer span.End()
 
+	// Get the user claims from the JWT token
+	claims, _ := ctx.Value(TokenInfoKey).(auth.UserClaims)
+
+	// Create a new OAuth2 config for the given provider
+	oauthConfig, err := newOAuthConfig(req.Provider, req.Cli)
+	if err != nil {
+		return nil, err
+	}
+
+	// Generate a random nonce based state
+	state, err := generateNonce()
+	if err != nil {
+		return nil, err
+	}
+
+	// Delete any existing session state for the user
+	groupID := sql.NullInt32{
+		Int32: claims.GroupId,
+		Valid: true,
+	}
+
+	// Format the port number
+	port := sql.NullInt32{
+		Int32: req.Port,
+		Valid: true,
+	}
+
+	// Delete any existing session state for the group
+	err = s.store.DeleteSessionStateByGroupID(ctx, groupID)
+	if err != nil && !errors.Is(err, sql.ErrNoRows) {
+		return nil, fmt.Errorf("error deleting session state: %w", err)
+	}
+
+	// Insert the new session state into the database along with the user's group ID
+	// retrieved from the JWT token
+	_, err = s.store.CreateSessionState(ctx, db.CreateSessionStateParams{
+		GrpID:        groupID,
+		Port:         port,
+		SessionState: state,
+	})
+	if err != nil {
+		return nil, fmt.Errorf("error inserting session state: %w", err)
+	}
+
+	// Return the authorization URL and state
 	url := oauthConfig.AuthCodeURL(state, oauth2.AccessTypeOffline)
+
 	response := &pb.GetAuthorizationURLResponse{
 		Url: url,
 	}
@@ -135,10 +203,37 @@ func (s *Server) GetAuthorizationURL(ctx context.Context,
 }
 
 // ExchangeCodeForTokenCLI exchanges an OAuth2 code for a token
-// This is specific for CLI clients which require a different
+// This function gathers the state from the database and compares it to the state
+// passed in. If they match, the code is exchanged for a token.
+// This function is used by the CLI client.
 func (s *Server) ExchangeCodeForTokenCLI(ctx context.Context,
 	in *pb.ExchangeCodeForTokenCLIRequest) (*pb.ExchangeCodeForTokenCLIResponse, error) {
-	oauthConfig, err := s.newOAuthConfig(in.Provider, true)
+
+	// Configure tracing
+	span := trace.SpanFromContext(ctx)
+	span.SetName("server.ExchangeCodeForTokenCLI")
+	span.SetAttributes(attribute.Key("code").String(in.Code))
+	defer span.End()
+
+	// Check the nonce to make sure it's valid
+	valid, err := isNonceValid(in.State)
+
+	if err != nil {
+		return nil, fmt.Errorf("error checking nonce: %w", err)
+	}
+
+	if !valid {
+		return nil, fmt.Errorf("invalid nonce")
+	}
+
+	// get groupID from session along with state nonce from the database
+	groupID, err := s.store.GetGroupIDPortBySessionState(ctx, in.State)
+	if err != nil {
+		return nil, fmt.Errorf("error getting groupID by session state: %w", err)
+	}
+
+	// generate a new OAuth2 config for the given provider
+	oauthConfig, err := newOAuthConfig(in.Provider, true)
 	if err != nil {
 		return nil, err
 	}
@@ -147,17 +242,11 @@ func (s *Server) ExchangeCodeForTokenCLI(ctx context.Context,
 		return nil, fmt.Errorf("oauth2.Config is nil")
 	}
 
-	span := trace.SpanFromContext(ctx)
-	span.SetName("server.ExchangeCodeForTokenCLI")
-	span.SetAttributes(attribute.Key("code").String(in.Code))
-	defer span.End()
-
 	token, err := oauthConfig.Exchange(ctx, in.Code)
 	if err != nil {
 		return nil, err
 	}
 
-	// check if the token is valid
 	var status string
 	if token.Valid() {
 		status = "success"
@@ -165,7 +254,31 @@ func (s *Server) ExchangeCodeForTokenCLI(ctx context.Context,
 		status = "failure"
 	}
 
-	cliAppURL := "http://localhost:8891/shutdown" // Replace PORT with the appropriate port number
+	// encode token
+	encryptedToken, err := mcrypto.EncryptRow(viper.GetString("auth.token_key"), token.AccessToken)
+	if err != nil {
+		return nil, err
+	}
+
+	encodedToken := base64.StdEncoding.EncodeToString(encryptedToken)
+
+	// delete token if it exists
+	err = s.store.DeleteAccessToken(ctx, groupID.GrpID.Int32)
+	if err != nil {
+		return nil, fmt.Errorf("error deleting access token: %w", err)
+	}
+
+	_, err = s.store.CreateAccessToken(ctx, db.CreateAccessTokenParams{
+		GroupID:        groupID.GrpID.Int32,
+		EncryptedToken: encodedToken,
+	})
+	if err != nil {
+		return nil, fmt.Errorf("error inserting access token: %w", err)
+	}
+
+	cliAppURL := fmt.Sprintf("http://localhost:%d/shutdown", groupID.Port.Int32)
+
+	// cliAppURL := "http://localhost:8891/shutdown"
 
 	resp, err := http.Post(cliAppURL, "application/json", bytes.NewBuffer([]byte(`{"status": "`+status+`"}`)))
 	if err != nil {
@@ -186,7 +299,7 @@ func (s *Server) ExchangeCodeForTokenCLI(ctx context.Context,
 // a JWT token as a session cookie. This handler is specific for web clients.
 func (s *Server) ExchangeCodeForTokenWEB(ctx context.Context,
 	in *pb.ExchangeCodeForTokenWEBRequest) (*pb.ExchangeCodeForTokenWEBResponse, error) {
-	oauthConfig, err := s.newOAuthConfig(in.Provider, false)
+	oauthConfig, err := newOAuthConfig(in.Provider, false)
 	if err != nil {
 		return nil, err
 	}
@@ -195,21 +308,14 @@ func (s *Server) ExchangeCodeForTokenWEB(ctx context.Context,
 		return nil, fmt.Errorf("oauth2.Config is nil")
 	}
 
-	token, err := oauthConfig.Exchange(ctx, in.Code)
+	// get the token
+	_, err = oauthConfig.Exchange(ctx, in.Code)
 	if err != nil {
 		return nil, err
 	}
 
-	// TODO: The below response needs to return as a session cookie containing the JWT token
-	// Once the JWT code is implemented.
-	// http.SetCookie(w, &http.Cookie{
-	// 	Name    "access_token",
-	// 	Value   JWT token,
-	// 	Expires time.Now().Add(24 * time.Hour),
-	// })
-
-	//
+	// TODO: The below response needs to return as a session cookie
 	return &pb.ExchangeCodeForTokenWEBResponse{
-		AccessToken: token.AccessToken,
+		AccessToken: "access_token",
 	}, nil
 }
