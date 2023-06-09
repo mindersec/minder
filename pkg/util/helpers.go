@@ -141,7 +141,9 @@ func GetGrpcConnection(cmd *cobra.Command) (*grpc.ClientConn, error) {
 	// read the credentials
 	creds, err := LoadCredentials()
 	if err != nil {
-		return nil, fmt.Errorf("error loading credentials: %v", err)
+		if cmd.Use != "login" {
+			return nil, fmt.Errorf("error loading credentials: %v", err)
+		}
 	}
 
 	// generate credentials
