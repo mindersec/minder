@@ -22,6 +22,7 @@
 package auth
 
 import (
+	"crypto/rsa"
 	"crypto/x509"
 	"encoding/pem"
 	"fmt"
@@ -30,19 +31,33 @@ import (
 	"github.com/golang-jwt/jwt/v4"
 )
 
+// UserClaims contains the claims for a user
+type UserClaims struct {
+	UserId         int32
+	RoleId         int32
+	GroupId        int32
+	OrganizationId int32
+	IsAdmin        bool
+	IsSuperadmin   bool
+}
+
 // GenerateToken generates a JWT token
-func GenerateToken(userId int32, username string, accessPrivateKey []byte, refreshPrivateKey []byte,
+func GenerateToken(userClaims UserClaims, accessPrivateKey []byte, refreshPrivateKey []byte,
 	expiry int64, refreshExpiry int64) (string, string, int64, int64, error) {
 	if accessPrivateKey == nil || refreshPrivateKey == nil {
 		return "", "", 0, 0, fmt.Errorf("invalid key")
 	}
-	tokenExpirationTime := time.Now().Add(time.Duration(expiry) * time.Minute).Unix()
+	tokenExpirationTime := time.Now().Add(time.Duration(expiry) * time.Second).Unix()
 
 	token := jwt.NewWithClaims(jwt.SigningMethodRS256, jwt.MapClaims{
-		"userId":   userId,
-		"username": username,
-		"iat":      time.Now().Unix(),
-		"exp":      tokenExpirationTime,
+		"userId":  int32(userClaims.UserId),
+		"roleId":  int32(userClaims.RoleId),
+		"groupId": int32(userClaims.GroupId),
+		"orgId":   int32(userClaims.OrganizationId),
+		"isAdmin": userClaims.IsAdmin,
+		"isSuper": userClaims.IsSuperadmin,
+		"iat":     time.Now().Unix(),
+		"exp":     tokenExpirationTime,
 	})
 
 	accessKey, err := jwt.ParseRSAPrivateKeyFromPEM(accessPrivateKey)
@@ -55,13 +70,12 @@ func GenerateToken(userId int32, username string, accessPrivateKey []byte, refre
 	}
 
 	// Create a refresh token that lasts longer than the access token
-	refreshExpirationTime := time.Now().Add(time.Duration(refreshExpiry) * time.Minute).Unix()
+	refreshExpirationTime := time.Now().Add(time.Duration(refreshExpiry) * time.Second).Unix()
 
 	refreshToken := jwt.NewWithClaims(jwt.SigningMethodRS256, jwt.MapClaims{
-		"userId":   userId,
-		"username": username,
-		"iat":      time.Now().Unix(),
-		"exp":      refreshExpirationTime,
+		"userId": userClaims.UserId,
+		"iat":    time.Now().Unix(),
+		"exp":    refreshExpirationTime,
 	})
 
 	refreshKey, err := jwt.ParseRSAPrivateKeyFromPEM(refreshPrivateKey)
@@ -78,15 +92,21 @@ func GenerateToken(userId int32, username string, accessPrivateKey []byte, refre
 }
 
 // VerifyToken verifies the token string and returns the user ID
-func VerifyToken(tokenString string, publicKey []byte) (uint, string, error) {
+func VerifyToken(tokenString string, publicKey []byte) (UserClaims, error) {
+	var userClaims UserClaims
 	// extract the pubkey from the pem
 	pubPem, _ := pem.Decode(publicKey)
 	if pubPem == nil {
-		return 0, "", fmt.Errorf("invalid key")
+		return userClaims, fmt.Errorf("invalid key")
 	}
 	key, err := x509.ParsePKCS1PublicKey(pubPem.Bytes)
 	if err != nil {
-		return 0, "", fmt.Errorf("invalid key")
+		// try another method
+		key1, err := x509.ParsePKIXPublicKey(pubPem.Bytes)
+		if err != nil {
+			return userClaims, fmt.Errorf("invalid key")
+		}
+		key = key1.(*rsa.PublicKey)
 	}
 
 	token, err := jwt.Parse(tokenString, func(token *jwt.Token) (interface{}, error) {
@@ -97,24 +117,21 @@ func VerifyToken(tokenString string, publicKey []byte) (uint, string, error) {
 	})
 
 	if err != nil {
-		return 0, "", err
+		return userClaims, err
 	}
 
 	claims, ok := token.Claims.(jwt.MapClaims)
 	if !ok || !token.Valid {
-		return 0, "", fmt.Errorf("invalid token")
+		return userClaims, fmt.Errorf("invalid token")
 	}
 
-	userIdFloat, ok := claims["userId"].(float64)
-	if !ok {
-		return 0, "", fmt.Errorf("invalid user ID format")
-	}
-	userId := uint(userIdFloat)
+	// generate claims
+	userClaims.UserId = int32(claims["userId"].(float64))
+	userClaims.RoleId = int32(claims["roleId"].(float64))
+	userClaims.GroupId = int32(claims["groupId"].(float64))
+	userClaims.OrganizationId = int32(claims["orgId"].(float64))
+	userClaims.IsAdmin = claims["isAdmin"].(bool)
+	userClaims.IsSuperadmin = claims["isSuper"].(bool)
 
-	userName, ok := claims["username"].(string)
-	if !ok {
-		return 0, "", fmt.Errorf("invalid username format")
-	}
-
-	return userId, userName, nil
+	return userClaims, nil
 }

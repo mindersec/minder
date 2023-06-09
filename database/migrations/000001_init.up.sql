@@ -17,7 +17,6 @@ CREATE TABLE organizations (
     id SERIAL PRIMARY KEY,
     name TEXT NOT NULL UNIQUE,
     company TEXT NOT NULL UNIQUE,
-    root_admin_id INT,
     created_at TIMESTAMP NOT NULL DEFAULT NOW(),
     updated_at TIMESTAMP NOT NULL DEFAULT NOW()
 );
@@ -82,8 +81,8 @@ CREATE INDEX idx_access_tokens_organization_id ON access_tokens(organization_id)
 
 -- Create default root organization
 
-INSERT INTO organizations (name, company, root_admin_id) 
-VALUES ('Root Organization', 'Root Company', 1);
+INSERT INTO organizations (name, company) 
+VALUES ('Root Organization', 'Root Company');
 
 INSERT INTO groups (organization_id, name, is_protected)
 VALUES (1, 'Root Group', TRUE);
@@ -92,4 +91,4 @@ INSERT INTO roles (group_id, name, is_admin, is_protected)
 VALUES (1, 'Role Role', TRUE, TRUE);
 
 INSERT INTO users (role_id, email, username, password, first_name, last_name, is_protected)
-VALUES (1, 'root@localhost', 'root', '$argon2id$v=19$m=0,t=3,p=2$mQDRkaBe7p3pbGvzgFn20Q$GYA0SkpXhVMLwcjRSPKCUpmd4ptMcdUcQ5YTAOnLFKs', 'Root', 'Admin', TRUE);
+VALUES (1, 'root@localhost', 'root', '$argon2id$v=19$m=16,t=2,p=1$c2VjcmV0aGFzaA$WP4Vqo6QtHBY+n0x99R81Q', 'Root', 'Admin', TRUE);   -- password is P4ssw@rd

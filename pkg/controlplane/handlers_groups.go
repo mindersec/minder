@@ -22,6 +22,8 @@ import (
 	"github.com/go-playground/validator/v10"
 	"github.com/stacklok/mediator/pkg/db"
 	pb "github.com/stacklok/mediator/pkg/generated/protobuf/go/mediator/v1"
+	"google.golang.org/grpc/codes"
+	"google.golang.org/grpc/status"
 	"google.golang.org/protobuf/types/known/timestamppb"
 )
 
@@ -52,6 +54,11 @@ func (s *Server) CreateGroup(ctx context.Context, req *pb.CreateGroupRequest) (*
 		req.IsProtected = &isProtected
 	}
 
+	// check if user is authorized
+	if !IsRequestAuthorized(ctx, req.OrganizationId) {
+		return nil, status.Errorf(codes.PermissionDenied, "user is not authorized to access this resource")
+	}
+
 	grp, err := s.store.CreateGroup(ctx, db.CreateGroupParams{
 		OrganizationID: req.OrganizationId,
 		Name:           req.Name,
@@ -62,16 +69,17 @@ func (s *Server) CreateGroup(ctx context.Context, req *pb.CreateGroupRequest) (*
 	if err != nil {
 		return nil, fmt.Errorf("failed to create group: %w", err)
 	}
-	fmt.Println("Group ID: ", grp.ID)
 
-	return &pb.CreateGroupResponse{
+	resp := &pb.CreateGroupResponse{
 		GroupId:        grp.ID,
 		OrganizationId: grp.OrganizationID,
 		Name:           grp.Name,
 		Description:    grp.Description.String,
 		IsProtected:    grp.IsProtected,
 		CreatedAt:      timestamppb.New(grp.CreatedAt),
-		UpdatedAt:      timestamppb.New(grp.UpdatedAt)}, nil
+		UpdatedAt:      timestamppb.New(grp.UpdatedAt)}
+
+	return resp, nil
 }
 
 // GetGroupById returns a group by id
@@ -95,7 +103,12 @@ func (s *Server) GetGroupById(ctx context.Context, req *pb.GetGroupByIdRequest) 
 		CreatedAt:      timestamppb.New(grp.CreatedAt),
 		UpdatedAt:      timestamppb.New(grp.UpdatedAt),
 	}
-	return &resp, nil
+
+	// check if user is authorized
+	if IsRequestAuthorized(ctx, grp.OrganizationID) {
+		return &resp, nil
+	}
+	return nil, status.Errorf(codes.PermissionDenied, "user is not authorized to access this resource")
 }
 
 // GetGroupByName returns a group by name
@@ -119,7 +132,12 @@ func (s *Server) GetGroupByName(ctx context.Context, req *pb.GetGroupByNameReque
 		CreatedAt:      timestamppb.New(grp.CreatedAt),
 		UpdatedAt:      timestamppb.New(grp.UpdatedAt),
 	}
-	return &resp, nil
+
+	// check if user is authorized
+	if IsRequestAuthorized(ctx, grp.OrganizationID) {
+		return &resp, nil
+	}
+	return nil, status.Errorf(codes.PermissionDenied, "user is not authorized to access this resource")
 }
 
 // GetGroups returns a list of groups
@@ -155,7 +173,11 @@ func (s *Server) GetGroups(ctx context.Context, req *pb.GetGroupsRequest) (*pb.G
 		})
 	}
 
-	return &resp, nil
+	// check if user is authorized
+	if IsRequestAuthorized(ctx, req.OrganizationId) {
+		return &resp, nil
+	}
+	return nil, status.Errorf(codes.PermissionDenied, "user is not authorized to access this resource")
 }
 
 type deleteGroupValidation struct {
@@ -201,11 +223,20 @@ func (s *Server) DeleteGroup(ctx context.Context,
 		}
 	}
 
-	// otherwise we delete, and delete roles in cascade
-	err = s.store.DeleteGroup(ctx, in.Id)
+	// check if group exists
+	grp, err := s.store.GetGroupByID(ctx, in.Id)
 	if err != nil {
-		return nil, err
+		return nil, status.Errorf(codes.NotFound, "group not found")
 	}
 
-	return &pb.DeleteGroupResponse{}, nil
+	// check if user is authorized
+	if IsRequestAuthorized(ctx, grp.OrganizationID) {
+		err = s.store.DeleteGroup(ctx, in.Id)
+		if err != nil {
+			return nil, err
+		}
+
+		return &pb.DeleteGroupResponse{}, nil
+	}
+	return nil, status.Errorf(codes.PermissionDenied, "user is not authorized to access this resource")
 }

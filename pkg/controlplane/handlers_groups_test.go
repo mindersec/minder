@@ -23,6 +23,7 @@ import (
 
 	"github.com/golang/mock/gomock"
 
+	"github.com/stacklok/mediator/pkg/auth"
 	"github.com/stacklok/mediator/pkg/db"
 	"github.com/stretchr/testify/assert"
 
@@ -54,17 +55,24 @@ func TestCreateGroupDBMock(t *testing.T) {
 		IsProtected:    false,
 	}
 
+	// Create a new context and set the claims value
+	ctx := context.WithValue(context.Background(), TokenInfoKey, auth.UserClaims{
+		UserId:       1,
+		IsAdmin:      true,
+		IsSuperadmin: true,
+	})
+
 	mockStore.EXPECT().
-		GetGroupByName(gomock.Any(), gomock.Any()).Return(db.Group{}, sql.ErrNoRows)
+		GetGroupByName(ctx, gomock.Any()).Return(db.Group{}, sql.ErrNoRows)
 	mockStore.EXPECT().
-		CreateGroup(gomock.Any(), gomock.Any()).
+		CreateGroup(ctx, gomock.Any()).
 		Return(expectedGroup, nil)
 
 	server := &Server{
 		store: mockStore,
 	}
 
-	response, err := server.CreateGroup(context.Background(), request)
+	response, err := server.CreateGroup(ctx, request)
 
 	assert.NoError(t, err)
 	assert.NotNil(t, response)
@@ -151,6 +159,13 @@ func TestCreateGroup_gRPC(t *testing.T) {
 		},
 	}
 
+	// Create a new context and set the claims value
+	ctx := context.WithValue(context.Background(), TokenInfoKey, auth.UserClaims{
+		UserId:       1,
+		IsAdmin:      true,
+		IsSuperadmin: true,
+	})
+
 	for i := range testCases {
 		tc := testCases[i]
 		t.Run(tc.name, func(t *testing.T) {
@@ -163,7 +178,7 @@ func TestCreateGroup_gRPC(t *testing.T) {
 
 			server := NewServer(mockStore)
 
-			resp, err := server.CreateGroup(context.Background(), tc.req)
+			resp, err := server.CreateGroup(ctx, tc.req)
 			tc.checkResponse(t, resp, err)
 		})
 	}
@@ -186,21 +201,28 @@ func TestDeleteGroupDBMock(t *testing.T) {
 		UpdatedAt:      time.Now(),
 	}
 
+	// Create a new context and set the claims value
+	ctx := context.WithValue(context.Background(), TokenInfoKey, auth.UserClaims{
+		UserId:       1,
+		IsAdmin:      true,
+		IsSuperadmin: true,
+	})
+
 	mockStore.EXPECT().
 		GetGroupByID(gomock.Any(), gomock.Any()).
-		Return(expectedGroup, nil)
+		Return(expectedGroup, nil).Times(2)
 	mockStore.EXPECT().
-		ListRolesByGroupID(gomock.Any(), gomock.Any()).
+		ListRolesByGroupID(ctx, gomock.Any()).
 		Return([]db.Role{}, nil)
 	mockStore.EXPECT().
-		DeleteGroup(gomock.Any(), gomock.Any()).
+		DeleteGroup(ctx, gomock.Any()).
 		Return(nil)
 
 	server := &Server{
 		store: mockStore,
 	}
 
-	response, err := server.DeleteGroup(context.Background(), request)
+	response, err := server.DeleteGroup(ctx, request)
 
 	assert.NoError(t, err)
 	assert.NotNil(t, response)
@@ -224,7 +246,7 @@ func TestDeleteGroup_gRPC(t *testing.T) {
 			},
 			buildStubs: func(store *mockdb.MockStore) {
 				store.EXPECT().
-					GetGroupByID(gomock.Any(), gomock.Any()).Return(db.Group{}, nil).Times(1)
+					GetGroupByID(gomock.Any(), gomock.Any()).Return(db.Group{}, nil).Times(2)
 				store.EXPECT().
 					DeleteGroup(gomock.Any(), gomock.Any()).Return(nil).
 					Times(1)
@@ -252,6 +274,13 @@ func TestDeleteGroup_gRPC(t *testing.T) {
 		},
 	}
 
+	// Create a new context and set the claims value
+	ctx := context.WithValue(context.Background(), TokenInfoKey, auth.UserClaims{
+		UserId:       1,
+		IsAdmin:      true,
+		IsSuperadmin: true,
+	})
+
 	for i := range testCases {
 		tc := testCases[i]
 		t.Run(tc.name, func(t *testing.T) {
@@ -264,7 +293,7 @@ func TestDeleteGroup_gRPC(t *testing.T) {
 
 			server := NewServer(mockStore)
 
-			resp, err := server.DeleteGroup(context.Background(), tc.req)
+			resp, err := server.DeleteGroup(ctx, tc.req)
 			tc.checkResponse(t, resp, err)
 		})
 	}
@@ -275,6 +304,13 @@ func TestGetGroupsDBMock(t *testing.T) {
 	defer ctrl.Finish()
 
 	mockStore := mockdb.NewMockStore(ctrl)
+
+	// Create a new context and set the claims value
+	ctx := context.WithValue(context.Background(), TokenInfoKey, auth.UserClaims{
+		UserId:       1,
+		IsAdmin:      true,
+		IsSuperadmin: true,
+	})
 
 	request := &pb.GetGroupsRequest{OrganizationId: 1}
 
@@ -296,14 +332,14 @@ func TestGetGroupsDBMock(t *testing.T) {
 		},
 	}
 
-	mockStore.EXPECT().ListGroups(gomock.Any(), gomock.Any()).
+	mockStore.EXPECT().ListGroups(ctx, gomock.Any()).
 		Return(expectedGroups, nil)
 
 	server := &Server{
 		store: mockStore,
 	}
 
-	response, err := server.GetGroups(context.Background(), request)
+	response, err := server.GetGroups(ctx, request)
 
 	assert.NoError(t, err)
 	assert.NotNil(t, response)
@@ -383,6 +419,12 @@ func TestGetGroups_gRPC(t *testing.T) {
 	for i := range testCases {
 		tc := testCases[i]
 		t.Run(tc.name, func(t *testing.T) {
+			// Create a new context and set the claims value
+			ctx := context.WithValue(context.Background(), TokenInfoKey, auth.UserClaims{
+				UserId:       1,
+				IsAdmin:      true,
+				IsSuperadmin: true,
+			})
 
 			ctrl := gomock.NewController(t)
 			defer ctrl.Finish()
@@ -392,7 +434,7 @@ func TestGetGroups_gRPC(t *testing.T) {
 
 			server := NewServer(mockStore)
 
-			resp, err := server.GetGroups(context.Background(), tc.req)
+			resp, err := server.GetGroups(ctx, tc.req)
 			tc.checkResponse(t, resp, err)
 		})
 	}
@@ -405,6 +447,12 @@ func TestGetGroupDBMock(t *testing.T) {
 	mockStore := mockdb.NewMockStore(ctrl)
 
 	request := &pb.GetGroupByIdRequest{GroupId: 1}
+	// Create a new context and set the claims value
+	ctx := context.WithValue(context.Background(), TokenInfoKey, auth.UserClaims{
+		UserId:       1,
+		IsAdmin:      true,
+		IsSuperadmin: true,
+	})
 
 	expectedGroup := db.Group{
 		ID:             1,
@@ -414,14 +462,14 @@ func TestGetGroupDBMock(t *testing.T) {
 		UpdatedAt:      time.Now(),
 	}
 
-	mockStore.EXPECT().GetGroupByID(gomock.Any(), gomock.Any()).
+	mockStore.EXPECT().GetGroupByID(ctx, gomock.Any()).
 		Return(expectedGroup, nil)
 
 	server := &Server{
 		store: mockStore,
 	}
 
-	response, err := server.GetGroupById(context.Background(), request)
+	response, err := server.GetGroupById(ctx, request)
 
 	assert.NoError(t, err)
 	assert.NotNil(t, response)
@@ -441,15 +489,21 @@ func TestGetNonExistingGroupDBMock(t *testing.T) {
 	mockStore := mockdb.NewMockStore(ctrl)
 
 	request := &pb.GetGroupByIdRequest{GroupId: 5}
+	// Create a new context and set the claims value
+	ctx := context.WithValue(context.Background(), TokenInfoKey, auth.UserClaims{
+		UserId:       1,
+		IsAdmin:      true,
+		IsSuperadmin: true,
+	})
 
-	mockStore.EXPECT().GetGroupByID(gomock.Any(), gomock.Any()).
+	mockStore.EXPECT().GetGroupByID(ctx, gomock.Any()).
 		Return(db.Group{}, nil)
 
 	server := &Server{
 		store: mockStore,
 	}
 
-	response, err := server.GetGroupById(context.Background(), request)
+	response, err := server.GetGroupById(ctx, request)
 
 	assert.NoError(t, err)
 	assert.Equal(t, int32(0), response.Group.GroupId)
@@ -510,6 +564,13 @@ func TestGetGroup_gRPC(t *testing.T) {
 		},
 	}
 
+	// Create a new context and set the claims value
+	ctx := context.WithValue(context.Background(), TokenInfoKey, auth.UserClaims{
+		UserId:       1,
+		IsAdmin:      true,
+		IsSuperadmin: true,
+	})
+
 	for i := range testCases {
 		tc := testCases[i]
 		t.Run(tc.name, func(t *testing.T) {
@@ -522,7 +583,7 @@ func TestGetGroup_gRPC(t *testing.T) {
 
 			server := NewServer(mockStore)
 
-			resp, err := server.GetGroupById(context.Background(), tc.req)
+			resp, err := server.GetGroupById(ctx, tc.req)
 			tc.checkResponse(t, resp, err)
 		})
 	}

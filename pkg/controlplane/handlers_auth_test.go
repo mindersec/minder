@@ -72,6 +72,7 @@ func TestLogin_gRPC(t *testing.T) {
 				Password: password,
 			},
 			buildStubs: func(store *mockdb.MockStore) {
+				store.EXPECT().GetUserClaims(gomock.Any(), gomock.Any()).Return(db.GetUserClaimsRow{}, nil)
 				store.EXPECT().
 					GetUserByUserName(gomock.Any(), gomock.Any()).
 					Times(1).Return(user, nil)

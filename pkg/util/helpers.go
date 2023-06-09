@@ -23,9 +23,13 @@
 package util
 
 import (
+	"context"
 	"database/sql"
+	"encoding/json"
 	"fmt"
 	"log"
+	"os"
+	"path/filepath"
 	"strconv"
 
 	_ "github.com/lib/pq" // nolint
@@ -87,6 +91,46 @@ func GetDbConnectionFromConfig(settings map[string]interface{}) (*sql.DB, error)
 	return conn, err
 }
 
+// Credentials is a struct to hold the access and refresh tokens
+type Credentials struct {
+	AccessToken           string `json:"access_token"`
+	RefreshToken          string `json:"refresh_token"`
+	AccessTokenExpiresIn  int    `json:"access_token_expires_in"`
+	RefreshTokenExpiresIn int    `json:"refresh_token_expires_in"`
+}
+
+func getCredentialsPath() (string, error) {
+	// Get the XDG_CONFIG_HOME environment variable
+	xdgConfigHome := os.Getenv("XDG_CONFIG_HOME")
+
+	// If XDG_CONFIG_HOME is not set or empty, use $HOME/.config as the base directory
+	if xdgConfigHome == "" {
+		homeDir, err := os.UserHomeDir()
+		if err != nil {
+			return "", fmt.Errorf("error getting home directory: %v", err)
+		}
+		xdgConfigHome = filepath.Join(homeDir, ".config")
+	}
+
+	filePath := filepath.Join(xdgConfigHome, "mediator", "credentials.json")
+	return filePath, nil
+}
+
+// JWTTokenCredentials is a helper struct for grpc
+type JWTTokenCredentials string
+
+// GetRequestMetadata implements the PerRPCCredentials interface.
+func (jwt JWTTokenCredentials) GetRequestMetadata(_ context.Context, _ ...string) (map[string]string, error) {
+	return map[string]string{
+		"authorization": "Bearer " + string(jwt),
+	}, nil
+}
+
+// RequireTransportSecurity implements the PerRPCCredentials interface.
+func (_ JWTTokenCredentials) RequireTransportSecurity() bool {
+	return false
+}
+
 // GetGrpcConnection is a helper for getting a testing connection for grpc
 func GetGrpcConnection(cmd *cobra.Command) (*grpc.ClientConn, error) {
 	// Database configuration
@@ -94,7 +138,16 @@ func GetGrpcConnection(cmd *cobra.Command) (*grpc.ClientConn, error) {
 	grpc_port := GetConfigValue("grpc_server.port", "grpc-port", cmd, 0).(int)
 	address := fmt.Sprintf("%s:%d", grpc_host, grpc_port)
 
-	conn, err := grpc.Dial(address, grpc.WithTransportCredentials(insecure.NewCredentials()))
+	// read the credentials
+	creds, err := LoadCredentials()
+	if err != nil {
+		return nil, fmt.Errorf("error loading credentials: %v", err)
+	}
+
+	// generate credentials
+
+	conn, err := grpc.Dial(address, grpc.WithTransportCredentials(insecure.NewCredentials()),
+		grpc.WithPerRPCCredentials(JWTTokenCredentials(creds.AccessToken)))
 	if err != nil {
 		return nil, fmt.Errorf("error connecting to gRPC server: %v", err)
 	}
@@ -109,4 +162,51 @@ type TestWriter struct {
 func (tw *TestWriter) Write(p []byte) (n int, err error) {
 	tw.Output += string(p)
 	return len(p), nil
+}
+
+// SaveCredentials saves the credentials to a file
+func SaveCredentials(creds Credentials) (string, error) {
+	// marshal the credentials to json
+	credsJSON, err := json.Marshal(creds)
+	if err != nil {
+		return "", fmt.Errorf("error marshaling credentials: %v", err)
+	}
+
+	filePath, err := getCredentialsPath()
+	if err != nil {
+		return "", fmt.Errorf("error getting credentials path: %v", err)
+	}
+
+	err = os.MkdirAll(filepath.Dir(filePath), 0750)
+	if err != nil {
+		return "", fmt.Errorf("error creating directory: %v", err)
+	}
+
+	// Write the JSON data to the file
+	err = os.WriteFile(filePath, credsJSON, 0600)
+	if err != nil {
+		return "", fmt.Errorf("error writing credentials to file: %v", err)
+	}
+	return filePath, nil
+}
+
+// LoadCredentials loads the credentials from a file
+func LoadCredentials() (Credentials, error) {
+	filePath, err := getCredentialsPath()
+	if err != nil {
+		return Credentials{}, fmt.Errorf("error getting credentials path: %v", err)
+	}
+
+	// Read the file
+	credsJSON, err := os.ReadFile(filepath.Clean(filePath))
+	if err != nil {
+		return Credentials{}, fmt.Errorf("error reading credentials file: %v", err)
+	}
+
+	var creds Credentials
+	err = json.Unmarshal(credsJSON, &creds)
+	if err != nil {
+		return Credentials{}, fmt.Errorf("error unmarshaling credentials: %v", err)
+	}
+	return creds, nil
 }

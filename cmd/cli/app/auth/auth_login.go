@@ -23,10 +23,8 @@ package auth
 
 import (
 	"context"
-	"encoding/json"
 	"fmt"
 	"os"
-	"path/filepath"
 	"time"
 
 	"github.com/spf13/cobra"
@@ -36,49 +34,6 @@ import (
 
 	"github.com/spf13/viper"
 )
-
-// Credentials is a struct to hold the access and refresh tokens
-type Credentials struct {
-	AccessToken           string `json:"access_token"`
-	RefreshToken          string `json:"refresh_token"`
-	AccessTokenExpiresIn  int    `json:"access_token_expires_in"`
-	RefreshTokenExpiresIn int    `json:"refresh_token_expires_in"`
-}
-
-func saveCredentials(creds Credentials) (string, error) {
-	// marshal the credentials to json
-	credsJSON, err := json.Marshal(creds)
-	if err != nil {
-		return "", fmt.Errorf("error marshaling credentials: %v", err)
-	}
-
-	// Get the XDG_CONFIG_HOME environment variable
-	xdgConfigHome := os.Getenv("XDG_CONFIG_HOME")
-
-	// If XDG_CONFIG_HOME is not set or empty, use $HOME/.config as the base directory
-	if xdgConfigHome == "" {
-		homeDir, err := os.UserHomeDir()
-		if err != nil {
-			return "", fmt.Errorf("error getting home directory: %v", err)
-		}
-		xdgConfigHome = filepath.Join(homeDir, ".config")
-	}
-
-	filePath := filepath.Join(xdgConfigHome, "mediator", "credentials.json")
-
-	err = os.MkdirAll(filepath.Dir(filePath), 0750)
-	if err != nil {
-		return "", fmt.Errorf("error creating directory: %v", err)
-	}
-
-	// Write the JSON data to the file
-	err = os.WriteFile(filePath, credsJSON, 0600)
-	if err != nil {
-		return "", fmt.Errorf("error writing credentials to file: %v", err)
-	}
-	return filePath, nil
-
-}
 
 // auth_loginCmd represents the login command
 var auth_loginCmd = &cobra.Command{
@@ -118,7 +73,7 @@ will be saved to $XDG_CONFIG_HOME/mediator/credentials.json`,
 		}
 
 		// marshal the credentials to json
-		creds := Credentials{
+		creds := util.Credentials{
 			AccessToken:           resp.AccessToken,
 			RefreshToken:          resp.RefreshToken,
 			AccessTokenExpiresIn:  int(resp.AccessTokenExpiresIn),
@@ -126,7 +81,7 @@ will be saved to $XDG_CONFIG_HOME/mediator/credentials.json`,
 		}
 
 		// save credentials
-		filePath, err := saveCredentials(creds)
+		filePath, err := util.SaveCredentials(creds)
 		if err != nil {
 			fmt.Println(err)
 		}

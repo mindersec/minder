@@ -123,6 +123,7 @@ func (s *Server) StartGRPCServer(address string, dbConn string) {
 	interceptors := []grpc.UnaryServerInterceptor{}
 	interceptors = append(interceptors, logger.Interceptor(viper.GetString("logging.level"),
 		viper.GetString("logging.format"), viper.GetString("logging.logFile")))
+	interceptors = append(interceptors, AuthUnaryInterceptor)
 	addTracing := viper.GetBool("tracing.enabled")
 	if addTracing {
 		interceptorOpt := otelgrpc.WithTracerProvider(otel.GetTracerProvider())

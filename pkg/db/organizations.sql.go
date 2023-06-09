@@ -15,7 +15,7 @@ INSERT INTO organizations (
     company
 ) VALUES (
     $1, $2
-) RETURNING id, name, company, root_admin_id, created_at, updated_at
+) RETURNING id, name, company, created_at, updated_at
 `
 
 type CreateOrganizationParams struct {
@@ -30,7 +30,6 @@ func (q *Queries) CreateOrganization(ctx context.Context, arg CreateOrganization
 		&i.ID,
 		&i.Name,
 		&i.Company,
-		&i.RootAdminID,
 		&i.CreatedAt,
 		&i.UpdatedAt,
 	)
@@ -48,7 +47,7 @@ func (q *Queries) DeleteOrganization(ctx context.Context, id int32) error {
 }
 
 const getOrganization = `-- name: GetOrganization :one
-SELECT id, name, company, root_admin_id, created_at, updated_at FROM organizations 
+SELECT id, name, company, created_at, updated_at FROM organizations 
 WHERE id = $1 LIMIT 1
 `
 
@@ -59,7 +58,6 @@ func (q *Queries) GetOrganization(ctx context.Context, id int32) (Organization, 
 		&i.ID,
 		&i.Name,
 		&i.Company,
-		&i.RootAdminID,
 		&i.CreatedAt,
 		&i.UpdatedAt,
 	)
@@ -67,7 +65,7 @@ func (q *Queries) GetOrganization(ctx context.Context, id int32) (Organization, 
 }
 
 const getOrganizationByName = `-- name: GetOrganizationByName :one
-SELECT id, name, company, root_admin_id, created_at, updated_at FROM organizations 
+SELECT id, name, company, created_at, updated_at FROM organizations 
 WHERE name = $1 LIMIT 1
 `
 
@@ -78,7 +76,6 @@ func (q *Queries) GetOrganizationByName(ctx context.Context, name string) (Organ
 		&i.ID,
 		&i.Name,
 		&i.Company,
-		&i.RootAdminID,
 		&i.CreatedAt,
 		&i.UpdatedAt,
 	)
@@ -86,7 +83,7 @@ func (q *Queries) GetOrganizationByName(ctx context.Context, name string) (Organ
 }
 
 const getOrganizationForUpdate = `-- name: GetOrganizationForUpdate :one
-SELECT id, name, company, root_admin_id, created_at, updated_at FROM organizations
+SELECT id, name, company, created_at, updated_at FROM organizations
 WHERE name = $1 LIMIT 1
 FOR NO KEY UPDATE
 `
@@ -98,7 +95,6 @@ func (q *Queries) GetOrganizationForUpdate(ctx context.Context, name string) (Or
 		&i.ID,
 		&i.Name,
 		&i.Company,
-		&i.RootAdminID,
 		&i.CreatedAt,
 		&i.UpdatedAt,
 	)
@@ -106,7 +102,7 @@ func (q *Queries) GetOrganizationForUpdate(ctx context.Context, name string) (Or
 }
 
 const listOrganizations = `-- name: ListOrganizations :many
-SELECT id, name, company, root_admin_id, created_at, updated_at FROM organizations
+SELECT id, name, company, created_at, updated_at FROM organizations
 ORDER BY id
 LIMIT $1
 OFFSET $2
@@ -130,7 +126,6 @@ func (q *Queries) ListOrganizations(ctx context.Context, arg ListOrganizationsPa
 			&i.ID,
 			&i.Name,
 			&i.Company,
-			&i.RootAdminID,
 			&i.CreatedAt,
 			&i.UpdatedAt,
 		); err != nil {
@@ -150,7 +145,7 @@ func (q *Queries) ListOrganizations(ctx context.Context, arg ListOrganizationsPa
 const updateOrganization = `-- name: UpdateOrganization :one
 UPDATE organizations
 SET name = $2, company = $3, updated_at = NOW()
-WHERE id = $1 RETURNING id, name, company, root_admin_id, created_at, updated_at
+WHERE id = $1 RETURNING id, name, company, created_at, updated_at
 `
 
 type UpdateOrganizationParams struct {
@@ -166,7 +161,6 @@ func (q *Queries) UpdateOrganization(ctx context.Context, arg UpdateOrganization
 		&i.ID,
 		&i.Name,
 		&i.Company,
-		&i.RootAdminID,
 		&i.CreatedAt,
 		&i.UpdatedAt,
 	)

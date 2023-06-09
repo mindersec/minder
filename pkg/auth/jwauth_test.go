@@ -42,8 +42,10 @@ func TestGenerateToken(t *testing.T) {
 	refresh_key, _ := util.RandomKeypair(2048)
 
 	// Test valid token generation
-	tokenString, refreshTokenString, tokenExp, refreshTokenExp, err := GenerateToken(testUserID,
-		testUsername, access_key, refresh_key, testExpiry, testRefreshExp)
+	claims := UserClaims{
+		UserId: testUserID,
+	}
+	tokenString, refreshTokenString, tokenExp, refreshTokenExp, err := GenerateToken(claims, access_key, refresh_key, testExpiry, testRefreshExp)
 	if err != nil {
 		t.Errorf("Error generating token: %v", err)
 	}
@@ -58,7 +60,7 @@ func TestGenerateToken(t *testing.T) {
 	}
 
 	// Test error case with invalid key
-	_, _, _, _, err = GenerateToken(testUserID, testUsername, nil, nil, testExpiry, testRefreshExp)
+	_, _, _, _, err = GenerateToken(claims, nil, nil, testExpiry, testRefreshExp)
 	if err == nil {
 		t.Error("Expected error with invalid key, but got nil")
 	} else if err.Error() != "invalid key" {
@@ -67,35 +69,36 @@ func TestGenerateToken(t *testing.T) {
 }
 
 func TestVerifyToken(t *testing.T) {
+	claims := UserClaims{
+		UserId: testUserID,
+	}
+
 	// generate test keys
 	access_key, access_pub_key := util.RandomKeypair(2048)
 	refresh_key, _ := util.RandomKeypair(2048)
 
 	// Test valid token verification
-	tokenString, _, _, _, err := GenerateToken(testUserID, testUsername,
-		access_key, refresh_key, testExpiry, testRefreshExp)
+	tokenString, _, _, _, err := GenerateToken(claims, access_key, refresh_key, testExpiry, testRefreshExp)
 	if err != nil {
 		t.Errorf("Error generating token: %v", err)
 	}
-	userId, username, err := VerifyToken(tokenString, access_pub_key)
+	retClaims, err := VerifyToken(tokenString, access_pub_key)
 	if err != nil {
 		t.Errorf("Error verifying token: %v", err)
 	}
-	if userId != testUserID {
-		t.Errorf("Expected user ID %d, but got %d", testUserID, userId)
-	}
-	if username != testUsername {
-		t.Errorf("Expected username %s, but got %s", testUsername, username)
+
+	if retClaims.UserId != testUserID {
+		t.Errorf("Expected user ID %d, but got %d", testUserID, retClaims.UserId)
 	}
 
 	// Test error case with invalid token string
-	_, _, err = VerifyToken("invalid_token_string", access_key)
+	_, err = VerifyToken("invalid_token_string", access_key)
 	if err == nil {
 		t.Error("Expected error with invalid token string, but got nil")
 	}
 
 	// Test error case with invalid key
-	_, _, err = VerifyToken(tokenString, []byte("invalid_key"))
+	_, err = VerifyToken(tokenString, []byte("invalid_key"))
 	if err == nil {
 		t.Error("Expected error with invalid key, but got nil")
 	} else {

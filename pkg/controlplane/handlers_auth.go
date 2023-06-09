@@ -80,10 +80,24 @@ func (s *Server) LogIn(ctx context.Context, in *pb.LogInRequest) (*pb.LogInRespo
 		return &pb.LogInResponse{Status: "Failed to read private key"}, nil
 	}
 
+	// read all information for user claims
+	userInfo, err := s.store.GetUserClaims(ctx, user.ID)
+	if err != nil {
+		return &pb.LogInResponse{Status: "Failed to read user claims"}, nil
+	}
+
+	claims := auth.UserClaims{
+		UserId:         user.ID,
+		RoleId:         userInfo.RoleID,
+		GroupId:        userInfo.GroupID,
+		OrganizationId: userInfo.OrganizationID,
+		IsAdmin:        userInfo.IsAdmin,
+		IsSuperadmin:   (userInfo.OrganizationID == 1 && userInfo.IsAdmin),
+	}
+
 	// Convert the key bytes to a string
 	tokenString, refreshTokenString, tokenExpirationTime, refreshExpirationTime, err := auth.GenerateToken(
-		user.ID,
-		user.Username,
+		claims,
 		keyBytes,
 		refreshKeyBytes,
 		viper.GetInt64("auth.token_expiry"),
