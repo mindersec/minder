@@ -61,7 +61,7 @@ a mediator control plane.`,
 		defer conn.Close()
 
 		client := pb.NewGroupServiceClient(conn)
-		ctx, cancel := context.WithTimeout(context.Background(), time.Second)
+		ctx, cancel := context.WithTimeout(context.Background(), 5*time.Second)
 		defer cancel()
 
 		protectedPtr := &isProtected

@@ -56,20 +56,11 @@ CREATE TABLE users (
     last_name TEXT,
     is_protected BOOLEAN NOT NULL DEFAULT FALSE,
     created_at TIMESTAMP NOT NULL DEFAULT NOW(),
-    updated_at TIMESTAMP NOT NULL DEFAULT NOW()
-);
-
--- access_tokens table
-CREATE TABLE access_tokens (
-    id SERIAL PRIMARY KEY,
-    organization_id INTEGER NOT NULL REFERENCES organizations(id) ON DELETE CASCADE,
-    encrypted_token TEXT NOT NULL,
-    created_at TIMESTAMP NOT NULL DEFAULT NOW(),
-    updated_at TIMESTAMP NOT NULL DEFAULT NOW()
+    updated_at TIMESTAMP NOT NULL DEFAULT NOW(),
+    min_token_issued_time TIMESTAMP
 );
 
 -- Unique constraint
-ALTER TABLE access_tokens ADD CONSTRAINT unique_organization_id UNIQUE (organization_id);
 ALTER TABLE organizations ADD CONSTRAINT unique_name UNIQUE (name);
 
 -- Indexes
@@ -77,7 +68,6 @@ CREATE INDEX idx_users_email ON users(email);
 CREATE INDEX idx_users_role_id ON users(role_id);
 CREATE INDEX idx_groups_organization_id ON groups(organization_id);
 CREATE INDEX idx_roles_group_id ON roles(group_id);
-CREATE INDEX idx_access_tokens_organization_id ON access_tokens(organization_id);
 
 -- Create default root organization
 

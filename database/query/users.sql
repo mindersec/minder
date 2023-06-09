@@ -9,7 +9,7 @@ SELECT * FROM users WHERE email = $1;
 
 -- name: GetUserClaims :one
 SELECT u.id as user_id, u.role_id as role_id, r.is_admin as is_admin, r.group_id as group_id,
-g.organization_id as organization_id FROM users u
+g.organization_id as organization_id, u.min_token_issued_time AS min_token_issued_time FROM users u
 INNER JOIN roles r ON u.role_id = r.id INNER JOIN groups g ON r.group_id = g.id WHERE u.id = $1;
 
 -- name: GetUserByUserName :one
@@ -30,3 +30,18 @@ UPDATE users SET role_id = $2, email = $3, username = $4, password = $5, first_n
 
 -- name: DeleteUser :exec
 DELETE FROM users WHERE id = $1;
+
+-- name: RevokeUserToken :one
+UPDATE users SET min_token_issued_time = NOW() WHERE id = $1 RETURNING *;
+
+-- name: RevokeUsersTokens :one
+UPDATE users SET min_token_issued_time = NOW() RETURNING *;
+
+-- name: RevokeOrganizationUsersTokens :one
+UPDATE users SET min_token_issued_time = NOW() WHERE role_id IN (SELECT id FROM roles WHERE group_id IN (SELECT id FROM groups WHERE organization_id = $1)) RETURNING *;
+
+-- name: RevokeGroupUsersTokens :one
+UPDATE users SET min_token_issued_time = NOW() WHERE role_id IN (SELECT id FROM roles WHERE group_id = $1) RETURNING *;
+
+-- name: RevokeRoleUsersTokens :one
+UPDATE users SET min_token_issued_time = NOW() WHERE role_id = $1 RETURNING *;

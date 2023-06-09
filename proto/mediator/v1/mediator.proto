@@ -59,7 +59,7 @@ service OAuthService {
     }
 }
 
-// Logout of Mediator
+// LogIn to Mediator
 service LogInService {
     rpc LogIn (LogInRequest) returns (LogInResponse) {
         option (google.api.http) = {
@@ -77,6 +77,24 @@ service LogOutService {
             body: "*"
         };
     }
+}
+
+// Revoke access tokens generally
+service RevokeTokensService {
+    rpc RevokeTokens (RevokeTokensRequest) returns (RevokeTokensResponse) {
+        option (google.api.http) = {
+            post: "/api/v1/auth/revoke"
+            body: "*"
+        };
+    }
+
+    rpc RevokeUserToken (RevokeUserTokenRequest) returns (RevokeUserTokenResponse) {
+        option (google.api.http) = {
+            post: "/api/v1/auth/revoke/{user_id}"
+            body: "*"
+        };
+    }
+
 }
 
 // Verify user has active session to Mediator
@@ -331,11 +349,16 @@ message LogInRequest {
 }
 
 message LogInResponse {
-    string status = 1;
+    Status status = 1;
     string refresh_token = 2;
     string access_token = 3;
     int64  refresh_token_expires_in = 4;
     int64  access_token_expires_in = 5;
+}
+
+message Status {
+    int32 code = 1;
+    string message = 2;
 }
 
 
@@ -343,7 +366,22 @@ message LogOutRequest {
 }
 
 message LogOutResponse {
-    string status = 1;
+    Status status = 1;
+}
+
+message RevokeTokensRequest {
+}
+
+message RevokeTokensResponse {
+    Status status = 1;
+}
+
+message RevokeUserTokenRequest {
+    int32 user_id = 1;
+}
+
+message RevokeUserTokenResponse {
+    Status status = 1;
 }
 
 message AuthVerifyServiceVerifyRequest {

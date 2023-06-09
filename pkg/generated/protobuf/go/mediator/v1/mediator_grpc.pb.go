@@ -558,6 +558,133 @@ var LogOutService_ServiceDesc = grpc.ServiceDesc{
 }
 
 const (
+	RevokeTokensService_RevokeTokens_FullMethodName    = "/mediator.v1.RevokeTokensService/RevokeTokens"
+	RevokeTokensService_RevokeUserToken_FullMethodName = "/mediator.v1.RevokeTokensService/RevokeUserToken"
+)
+
+// RevokeTokensServiceClient is the client API for RevokeTokensService service.
+//
+// For semantics around ctx use and closing/ending streaming RPCs, please refer to https://pkg.go.dev/google.golang.org/grpc/?tab=doc#ClientConn.NewStream.
+type RevokeTokensServiceClient interface {
+	RevokeTokens(ctx context.Context, in *RevokeTokensRequest, opts ...grpc.CallOption) (*RevokeTokensResponse, error)
+	RevokeUserToken(ctx context.Context, in *RevokeUserTokenRequest, opts ...grpc.CallOption) (*RevokeUserTokenResponse, error)
+}
+
+type revokeTokensServiceClient struct {
+	cc grpc.ClientConnInterface
+}
+
+func NewRevokeTokensServiceClient(cc grpc.ClientConnInterface) RevokeTokensServiceClient {
+	return &revokeTokensServiceClient{cc}
+}
+
+func (c *revokeTokensServiceClient) RevokeTokens(ctx context.Context, in *RevokeTokensRequest, opts ...grpc.CallOption) (*RevokeTokensResponse, error) {
+	out := new(RevokeTokensResponse)
+	err := c.cc.Invoke(ctx, RevokeTokensService_RevokeTokens_FullMethodName, in, out, opts...)
+	if err != nil {
+		return nil, err
+	}
+	return out, nil
+}
+
+func (c *revokeTokensServiceClient) RevokeUserToken(ctx context.Context, in *RevokeUserTokenRequest, opts ...grpc.CallOption) (*RevokeUserTokenResponse, error) {
+	out := new(RevokeUserTokenResponse)
+	err := c.cc.Invoke(ctx, RevokeTokensService_RevokeUserToken_FullMethodName, in, out, opts...)
+	if err != nil {
+		return nil, err
+	}
+	return out, nil
+}
+
+// RevokeTokensServiceServer is the server API for RevokeTokensService service.
+// All implementations must embed UnimplementedRevokeTokensServiceServer
+// for forward compatibility
+type RevokeTokensServiceServer interface {
+	RevokeTokens(context.Context, *RevokeTokensRequest) (*RevokeTokensResponse, error)
+	RevokeUserToken(context.Context, *RevokeUserTokenRequest) (*RevokeUserTokenResponse, error)
+	mustEmbedUnimplementedRevokeTokensServiceServer()
+}
+
+// UnimplementedRevokeTokensServiceServer must be embedded to have forward compatible implementations.
+type UnimplementedRevokeTokensServiceServer struct {
+}
+
+func (UnimplementedRevokeTokensServiceServer) RevokeTokens(context.Context, *RevokeTokensRequest) (*RevokeTokensResponse, error) {
+	return nil, status.Errorf(codes.Unimplemented, "method RevokeTokens not implemented")
+}
+func (UnimplementedRevokeTokensServiceServer) RevokeUserToken(context.Context, *RevokeUserTokenRequest) (*RevokeUserTokenResponse, error) {
+	return nil, status.Errorf(codes.Unimplemented, "method RevokeUserToken not implemented")
+}
+func (UnimplementedRevokeTokensServiceServer) mustEmbedUnimplementedRevokeTokensServiceServer() {}
+
+// UnsafeRevokeTokensServiceServer may be embedded to opt out of forward compatibility for this service.
+// Use of this interface is not recommended, as added methods to RevokeTokensServiceServer will
+// result in compilation errors.
+type UnsafeRevokeTokensServiceServer interface {
+	mustEmbedUnimplementedRevokeTokensServiceServer()
+}
+
+func RegisterRevokeTokensServiceServer(s grpc.ServiceRegistrar, srv RevokeTokensServiceServer) {
+	s.RegisterService(&RevokeTokensService_ServiceDesc, srv)
+}
+
+func _RevokeTokensService_RevokeTokens_Handler(srv interface{}, ctx context.Context, dec func(interface{}) error, interceptor grpc.UnaryServerInterceptor) (interface{}, error) {
+	in := new(RevokeTokensRequest)
+	if err := dec(in); err != nil {
+		return nil, err
+	}
+	if interceptor == nil {
+		return srv.(RevokeTokensServiceServer).RevokeTokens(ctx, in)
+	}
+	info := &grpc.UnaryServerInfo{
+		Server:     srv,
+		FullMethod: RevokeTokensService_RevokeTokens_FullMethodName,
+	}
+	handler := func(ctx context.Context, req interface{}) (interface{}, error) {
+		return srv.(RevokeTokensServiceServer).RevokeTokens(ctx, req.(*RevokeTokensRequest))
+	}
+	return interceptor(ctx, in, info, handler)
+}
+
+func _RevokeTokensService_RevokeUserToken_Handler(srv interface{}, ctx context.Context, dec func(interface{}) error, interceptor grpc.UnaryServerInterceptor) (interface{}, error) {
+	in := new(RevokeUserTokenRequest)
+	if err := dec(in); err != nil {
+		return nil, err
+	}
+	if interceptor == nil {
+		return srv.(RevokeTokensServiceServer).RevokeUserToken(ctx, in)
+	}
+	info := &grpc.UnaryServerInfo{
+		Server:     srv,
+		FullMethod: RevokeTokensService_RevokeUserToken_FullMethodName,
+	}
+	handler := func(ctx context.Context, req interface{}) (interface{}, error) {
+		return srv.(RevokeTokensServiceServer).RevokeUserToken(ctx, req.(*RevokeUserTokenRequest))
+	}
+	return interceptor(ctx, in, info, handler)
+}
+
+// RevokeTokensService_ServiceDesc is the grpc.ServiceDesc for RevokeTokensService service.
+// It's only intended for direct use with grpc.RegisterService,
+// and not to be introspected or modified (even as a copy)
+var RevokeTokensService_ServiceDesc = grpc.ServiceDesc{
+	ServiceName: "mediator.v1.RevokeTokensService",
+	HandlerType: (*RevokeTokensServiceServer)(nil),
+	Methods: []grpc.MethodDesc{
+		{
+			MethodName: "RevokeTokens",
+			Handler:    _RevokeTokensService_RevokeTokens_Handler,
+		},
+		{
+			MethodName: "RevokeUserToken",
+			Handler:    _RevokeTokensService_RevokeUserToken_Handler,
+		},
+	},
+	Streams:  []grpc.StreamDesc{},
+	Metadata: "mediator/v1/mediator.proto",
+}
+
+const (
 	AuthVerifyService_Verify_FullMethodName = "/mediator.v1.AuthVerifyService/Verify"
 )
 

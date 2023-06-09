@@ -22,33 +22,78 @@
 package auth
 
 import (
+	"context"
 	"fmt"
 	"os"
+	"time"
 
 	"github.com/spf13/cobra"
 	"github.com/spf13/viper"
+	pb "github.com/stacklok/mediator/pkg/generated/protobuf/go/mediator/v1"
+	"github.com/stacklok/mediator/pkg/util"
 )
 
-// authCmd represents the auth command
-var auth_revokeCmd = &cobra.Command{
+// Auth_revokeCmd represents the auth revoke command
+var Auth_revokeCmd = &cobra.Command{
 	Use:   "revoke",
-	Short: "Revoke a token / log out of a mediator session",
-	Long: `Revoke a token within a mediator control plane, by expiring the token 
-and removing it from the database. This is effectively the same as logging out. 
-If no --user-id flag is passed, it will revoke the token for the current logged in
-user. If a --user-id flag is passed, it will revoke the token for the specified user, 
-but only if the current user has sufficient privileges.
-`,
+	Short: "Revoke access tokens",
+	Long:  `It can revoke access tokens for one user or for all.`,
 	PreRun: func(cmd *cobra.Command, args []string) {
 		if err := viper.BindPFlags(cmd.Flags()); err != nil {
 			fmt.Fprintf(os.Stderr, "Error binding flags: %s\n", err)
 		}
 	},
 	Run: func(cmd *cobra.Command, args []string) {
-		cmd.Println("auth revoke called")
+		// check if we need to revoke all tokens or the user one
+		all := util.GetConfigValue("all", "all", cmd, false).(bool)
+		user := viper.GetInt32("user-id")
+
+		if all && user != 0 {
+			fmt.Fprintf(os.Stderr, "Error: you can't use --all and --user-id together\n")
+			os.Exit(1)
+		}
+
+		if !all && user == 0 {
+			fmt.Fprintf(os.Stderr, "Error: you must use either --all or --user-id\n")
+			os.Exit(1)
+		}
+
+		conn, err := util.GetGrpcConnection(cmd)
+		if err != nil {
+			fmt.Fprintf(os.Stderr, "Error getting grpc connection: %s\n", err)
+			os.Exit(1)
+		}
+		defer conn.Close()
+
+		if err != nil {
+			fmt.Fprintf(os.Stderr, "Error getting grpc connection: %s\n", err)
+			os.Exit(1)
+		}
+		ctx, cancel := context.WithTimeout(context.Background(), time.Second)
+		defer cancel()
+
+		client := pb.NewRevokeTokensServiceClient(conn)
+		if all {
+			_, err := client.RevokeTokens(ctx, &pb.RevokeTokensRequest{})
+			if err != nil {
+				fmt.Fprintf(os.Stderr, "Error revoking tokens: %s\n", err)
+				os.Exit(1)
+			}
+			cmd.Println("Revoked all tokens")
+		} else {
+			_, err := client.RevokeUserToken(ctx, &pb.RevokeUserTokenRequest{UserId: user})
+			if err != nil {
+				fmt.Fprintf(os.Stderr, "Error revoking tokens: %s\n", err)
+				os.Exit(1)
+			}
+			cmd.Println("Revoked token for user", user)
+		}
 	},
 }
 
 func init() {
-	AuthCmd.AddCommand(auth_revokeCmd)
+	AuthCmd.AddCommand(Auth_revokeCmd)
+	Auth_revokeCmd.Flags().BoolP("all", "a", false, "Revoke all tokens")
+	Auth_revokeCmd.Flags().Int32P("user-id", "u", 0, "User ID to revoke tokens")
+
 }
