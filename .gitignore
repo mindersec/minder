@@ -41,3 +41,5 @@ Thumbs.db
 
 # asdf
 .tool-versions
+.ssh/
+cmd/server/__debug_bin

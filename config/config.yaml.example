@@ -55,9 +55,10 @@ database:
 # ssh-keygen -t rsa -b 2048 -m PEM -f access_token_rsa
 # Don't add passphrase
 # openssl rsa -in access_token_rsa -pubout -outform PEM -out access_token_rsa.pub
+# Repeat for refresh_token_rsa
 auth:
   access_token_private_key: "./.ssh/access_token_rsa"
-  access_token_public_key: "./.ssh/acces_token_rsa.pub"
+  access_token_public_key: "./.ssh/access_token_rsa.pub"
   refresh_token_private_key: "./.ssh/refresh_token_rsa"
   refresh_token_public_key: "./.ssh/refresh_token_rsa.pub"
   token_expiry: 3600
