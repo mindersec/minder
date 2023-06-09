@@ -16,7 +16,6 @@
 syntax = "proto3";
 package mediator.v1;
 import "google/api/annotations.proto";
-import "google/protobuf/struct.proto";
 import "google/protobuf/timestamp.proto";
 
 option go_package = "github.com/stacklok/mediator/pkg/generated/protobuf/go";
