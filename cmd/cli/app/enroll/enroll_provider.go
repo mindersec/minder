@@ -109,8 +109,11 @@ func callBackServer(port string, wg *sync.WaitGroup) {
 // to the same port between the time we discover it and the time we use it.
 // This is unlikely to happen in practice, but if it does, the user will
 // need to retry the command.
+// Marking a nosec here because we want this to listen on all addresses to
+// ensure a reliable connection chance for the client. This is based on lessons
+// learned from the sigstore CLI.
 func getRandomPort() (int, error) {
-	listener, err := net.Listen("127.0.0.1", "0")
+	listener, err := net.Listen("tcp", ":0") // #nosec
 	if err != nil {
 		return 0, err
 	}
@@ -161,7 +164,10 @@ actions such as adding repositories.`,
 			os.Exit(1)
 		}
 
-		fmt.Printf("Authorization URL: %s\n", resp.GetUrl())
+		fmt.Printf("Your browser will now be opened to: %s\n", resp.GetUrl())
+		fmt.Println("Please follow the instructions on the page to complete the OAuth flow.")
+		fmt.Println("Once the flow is complete, the CLI will close")
+		fmt.Println("If this is a headless environment, please copy and paste the URL into a browser on a different machine.")
 
 		if err := browser.OpenURL(resp.GetUrl()); err != nil {
 			fmt.Fprintf(os.Stderr, "Error opening browser: %s\n", err)
