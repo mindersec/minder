@@ -48,8 +48,10 @@ import (
 	"github.com/spf13/viper"
 )
 
-// OAuth2 Provider Constants
+// Google OAuth2 provider
 const Google = "google"
+
+// Github OAuth2 provider
 const Github = "github"
 
 // PaginationLimit is the maximum number of items that can be returned in a single page
@@ -96,9 +98,16 @@ func isNonceValid(nonce string) (bool, error) {
 }
 
 // CheckHealth is a simple health check for monitoring
+// The lintcheck is disabled because the unused-receiver is required by
+// the implementation. UnimplementedHealthServiceServer is initialized
+// within the Server struct
+//
+//revive:disable:unused-receiver
 func (s *Server) CheckHealth(_ context.Context, _ *pb.CheckHealthRequest) (*pb.CheckHealthResponse, error) {
 	return &pb.CheckHealthResponse{Status: "OK"}, nil
 }
+
+//revive:enable:unused-receiver
 
 // newOAuthConfig creates a new OAuth2 config for the given provider
 // and whether the client is a CLI or web client
@@ -278,9 +287,12 @@ func (s *Server) ExchangeCodeForTokenCLI(ctx context.Context,
 
 	cliAppURL := fmt.Sprintf("http://localhost:%d/shutdown", groupID.Port.Int32)
 
-	// cliAppURL := "http://localhost:8891/shutdown"
-
-	resp, err := http.Post(cliAppURL, "application/json", bytes.NewBuffer([]byte(`{"status": "`+status+`"}`)))
+	// The following is tagged with //nosec as its a false positive. GOSEC alerts
+	// for when URL is constructed from user or external input, but it's not.
+	// the values for 'status' are set above in the server code. For someone
+	// to exploit this, they would need to be able to modify the code of the
+	// and recompile their own version of the application.
+	resp, err := http.Post(cliAppURL, "application/json", bytes.NewBuffer([]byte(`{"status": "`+status+`"}`))) // #nosec
 	if err != nil {
 		return nil, err
 	}
@@ -297,6 +309,11 @@ func (s *Server) ExchangeCodeForTokenCLI(ctx context.Context,
 
 // ExchangeCodeForTokenWEB exchanges an OAuth2 code for a token and returns
 // a JWT token as a session cookie. This handler is specific for web clients.
+// The lint check for this function is disabled because it's a false positive.
+// It will complain about am unsused receiver (s *Server), however this receiver
+// will be used later when we implement the the database store.
+//
+//revive:disable:unused-receiver
 func (s *Server) ExchangeCodeForTokenWEB(ctx context.Context,
 	in *pb.ExchangeCodeForTokenWEBRequest) (*pb.ExchangeCodeForTokenWEBResponse, error) {
 	oauthConfig, err := newOAuthConfig(in.Provider, false)
@@ -319,3 +336,5 @@ func (s *Server) ExchangeCodeForTokenWEB(ctx context.Context,
 		AccessToken: "access_token",
 	}, nil
 }
+
+//revive:enable:unused-receiver

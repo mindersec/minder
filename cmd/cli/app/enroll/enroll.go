@@ -19,6 +19,7 @@
 // It does make a good example of how to use the generated client code
 // for others to use as a reference.
 
+// Package enroll contains the enroll command for the medctl CLI
 package enroll
 
 import (

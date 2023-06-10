@@ -26,6 +26,7 @@ import (
 	"encoding/json"
 	"fmt"
 	"io"
+	"net"
 	"net/http"
 	"os"
 	"sync"
@@ -39,10 +40,13 @@ import (
 	"github.com/spf13/viper"
 )
 
+// Response is the response from the OAuth callback server.
 type Response struct {
 	Status string `json:"status"`
 }
 
+// callBackServer starts a server and handler to listen for the OAuth callback.
+// It will wait for either a success or failure response from the server.
 func callBackServer(port string, wg *sync.WaitGroup) {
 	http.HandleFunc("/shutdown", func(w http.ResponseWriter, r *http.Request) {
 		if r.Method != http.MethodPost {
@@ -76,11 +80,18 @@ func callBackServer(port string, wg *sync.WaitGroup) {
 		}
 	})
 
-	server := &http.Server{Addr: fmt.Sprintf(":%s", port)}
+	server := &http.Server{
+		Addr:              fmt.Sprintf(":%s", port),
+		ReadHeaderTimeout: time.Second * 10, // Set an appropriate timeout value
+	}
 
 	go func() {
 		wg.Wait()
-		server.Close() // Shutdown the server when the correct status is received.
+		err := server.Close()
+		if err != nil {
+			// Handle the error appropriately, such as logging or returning an error message.
+			fmt.Printf("Error closing server: %s", err)
+		}
 	}()
 
 	fmt.Println("Listening for OAuth Login flow to complete on port", port)
@@ -89,6 +100,24 @@ func callBackServer(port string, wg *sync.WaitGroup) {
 		fmt.Fprintf(os.Stderr, "Server error: %v\n", err)
 		os.Exit(1)
 	}
+}
+
+// getRandomPort returns a random port number.
+// The binding address should not need to be configurable
+// as this is a short lived operation just to disover a random available port.
+// Note that there is a possible race condition here if another process binds
+// to the same port between the time we discover it and the time we use it.
+// This is unlikely to happen in practice, but if it does, the user will
+// need to retry the command.
+func getRandomPort() (int, error) {
+	listener, err := net.Listen("127.0.0.1", "0")
+	if err != nil {
+		return 0, err
+	}
+	defer listener.Close()
+
+	port := listener.Addr().(*net.TCPAddr).Port
+	return port, nil
 }
 
 var enrollProviderCmd = &cobra.Command{
