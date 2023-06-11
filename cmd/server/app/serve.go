@@ -16,6 +16,7 @@
 package app
 
 import (
+	"database/sql"
 	"fmt"
 	"log"
 	"strconv"
@@ -24,6 +25,7 @@ import (
 	"github.com/spf13/cobra"
 	"github.com/spf13/viper"
 	"github.com/stacklok/mediator/pkg/controlplane"
+	"github.com/stacklok/mediator/pkg/db"
 	"github.com/stacklok/mediator/pkg/util"
 )
 
@@ -48,6 +50,15 @@ var serveCmd = &cobra.Command{
 
 		dBconn := fmt.Sprintf("postgres://%s:%s@%s:%s/%s?sslmode=%s", dbuser, dbpass, dbhost, strconv.Itoa(dbport), dbname, dbsslmode)
 
+		conn, err := sql.Open("postgres", dBconn)
+		if err != nil {
+			log.Fatal("Cannot connect to DB: ", err)
+		} else {
+			log.Println("Connected to DB")
+		}
+
+		store := db.NewStore(conn)
+
 		// Set up the addresse strings
 		httpAddress := fmt.Sprintf("%s:%d", http_host, http_port)
 		grpcAddress := fmt.Sprintf("%s:%d", grpc_host, grpc_port)
@@ -59,12 +70,12 @@ var serveCmd = &cobra.Command{
 
 		// Start the gRPC and HTTP server in separate goroutines
 		go func() {
-			s.StartGRPCServer(grpcAddress, dBconn)
+			s.StartGRPCServer(grpcAddress, store)
 			wg.Done()
 		}()
 
 		go func() {
-			controlplane.StartHTTPServer(httpAddress, grpcAddress)
+			controlplane.StartHTTPServer(httpAddress, grpcAddress, store)
 			wg.Done()
 		}()
 
