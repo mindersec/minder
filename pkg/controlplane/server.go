@@ -17,7 +17,6 @@ package controlplane
 
 import (
 	"context"
-	"database/sql"
 	"log"
 	"net"
 	"net/http"
@@ -91,20 +90,11 @@ func initTracer() (*sdktrace.TracerProvider, error) {
 }
 
 // StartGRPCServer starts a gRPC server and blocks while serving.
-func (s *Server) StartGRPCServer(address string, dbConn string) {
+func (s *Server) StartGRPCServer(address string, store db.Store) {
 	lis, err := net.Listen("tcp", address)
 	if err != nil {
 		log.Fatalf("failed to listen: %v", err)
 	}
-
-	conn, err := sql.Open("postgres", dbConn)
-	if err != nil {
-		log.Fatal("Cannot connect to DB: ", err)
-	} else {
-		log.Println("Connected to DB")
-	}
-
-	store := db.NewStore(conn)
 
 	server := NewServer(store)
 
@@ -149,7 +139,8 @@ func (s *Server) StartGRPCServer(address string, dbConn string) {
 }
 
 // StartHTTPServer starts a HTTP server and registers the gRPC handler mux to it
-func StartHTTPServer(address, grpcAddress string) {
+// set store as a blank identifier for now as we will use it in the future
+func StartHTTPServer(address, grpcAddress string, _ db.Store) {
 
 	mux := http.NewServeMux()
 
