@@ -27,6 +27,7 @@ import (
 
 	"github.com/gogo/protobuf/jsonpb"
 	"github.com/rs/zerolog"
+	"github.com/stacklok/mediator/pkg/util"
 	"google.golang.org/grpc"
 	"google.golang.org/grpc/metadata"
 	"google.golang.org/grpc/status"
@@ -203,6 +204,8 @@ func Interceptor(logLevel string, logFormat string, logFile string) grpc.UnarySe
 		now := time.Now()
 		resp, err := handler(ctx, req)
 		ret := status.Convert(err)
+		ns := util.GetNiceStatus(ret.Code())
+		maskedErr := status.Error(ns.Code, ns.Name)
 
 		if zlog.Error().Enabled() {
 			var logger *zerolog.Event
@@ -217,6 +220,6 @@ func Interceptor(logLevel string, logFormat string, logFile string) grpc.UnarySe
 			}
 		}
 		defer file.Close()
-		return resp, err
+		return resp, maskedErr
 	}
 }
