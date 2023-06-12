@@ -136,6 +136,49 @@ func RandomKeypair(length int) ([]byte, []byte) {
 	return privateKeyString, publicKeyString
 }
 
+// RandomKeypairFile generates a random RSA keypair and writes it to files
+func RandomKeypairFile(length int, privateFilePath string, publicFilePath string) error {
+	filePriv, err := os.Create(filepath.Clean(privateFilePath))
+	if err != nil {
+		return err
+	}
+	defer filePriv.Close()
+
+	filePub, err := os.Create(filepath.Clean(publicFilePath))
+	if err != nil {
+		return err
+	}
+	defer filePub.Close()
+
+	privateKey, err := rsa.GenerateKey(crand.Reader, length)
+	if err != nil {
+		return err
+	}
+	privateKeyBytes := x509.MarshalPKCS1PrivateKey(privateKey)
+	pemBlock := &pem.Block{
+		Type:  "RSA PRIVATE KEY",
+		Bytes: privateKeyBytes,
+	}
+
+	err = pem.Encode(filePriv, pemBlock)
+	if err != nil {
+		return err
+	}
+
+	publicKey := &privateKey.PublicKey
+	publicKeyPEM := &pem.Block{
+		Type:  "RSA PUBLIC KEY",
+		Bytes: x509.MarshalPKCS1PublicKey(publicKey),
+	}
+
+	err = pem.Encode(filePub, publicKeyPEM)
+	if err != nil {
+		return err
+	}
+
+	return nil
+}
+
 // RandomPrivateKeyFile generates a random RSA private key and writes it to a file
 func RandomPrivateKeyFile(length int, filePath string) error {
 	privateKey, err := rsa.GenerateKey(crand.Reader, length)

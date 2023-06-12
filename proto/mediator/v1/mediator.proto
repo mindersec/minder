@@ -87,6 +87,15 @@ service RevokeTokensService {
 
 }
 
+service RefreshTokenService {
+    rpc RefreshToken (RefreshTokenRequest) returns (RefreshTokenResponse) {
+        option (google.api.http) = {
+            post: "/api/v1/auth/refresh"
+            body: "*"
+        };
+    }
+}
+
 // Verify user has active session to Mediator
 service AuthVerifyService {
     rpc Verify (AuthVerifyServiceVerifyRequest) returns (AuthVerifyServiceVerifyResponse) {
@@ -366,6 +375,17 @@ message RevokeUserTokenRequest {
 
 message RevokeUserTokenResponse {
     Status status = 1;
+}
+
+message RefreshTokenRequest {    
+}
+
+message RefreshTokenResponse {
+    Status status = 1;
+    string refresh_token = 2;
+    string access_token = 3;
+    int64  refresh_token_expires_in = 4;
+    int64  access_token_expires_in = 5;
 }
 
 message AuthVerifyServiceVerifyRequest {

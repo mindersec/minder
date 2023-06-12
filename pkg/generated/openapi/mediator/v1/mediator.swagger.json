@@ -21,6 +21,9 @@
       "name": "RevokeTokensService"
     },
     {
+      "name": "RefreshTokenService"
+    },
+    {
       "name": "AuthVerifyService"
     },
     {
@@ -203,6 +206,38 @@
         ],
         "tags": [
           "LogOutService"
+        ]
+      }
+    },
+    "/api/v1/auth/refresh": {
+      "post": {
+        "operationId": "RefreshTokenService_RefreshToken",
+        "responses": {
+          "200": {
+            "description": "A successful response.",
+            "schema": {
+              "$ref": "#/definitions/v1RefreshTokenResponse"
+            }
+          },
+          "default": {
+            "description": "An unexpected error response.",
+            "schema": {
+              "$ref": "#/definitions/googlerpcStatus"
+            }
+          }
+        },
+        "parameters": [
+          {
+            "name": "body",
+            "in": "body",
+            "required": true,
+            "schema": {
+              "$ref": "#/definitions/v1RefreshTokenRequest"
+            }
+          }
+        ],
+        "tags": [
+          "RefreshTokenService"
         ]
       }
     },
@@ -1873,6 +1908,31 @@
         "updatedAt": {
           "type": "string",
           "format": "date-time"
+        }
+      }
+    },
+    "v1RefreshTokenRequest": {
+      "type": "object"
+    },
+    "v1RefreshTokenResponse": {
+      "type": "object",
+      "properties": {
+        "status": {
+          "$ref": "#/definitions/mediatorv1Status"
+        },
+        "refreshToken": {
+          "type": "string"
+        },
+        "accessToken": {
+          "type": "string"
+        },
+        "refreshTokenExpiresIn": {
+          "type": "string",
+          "format": "int64"
+        },
+        "accessTokenExpiresIn": {
+          "type": "string",
+          "format": "int64"
         }
       }
     },

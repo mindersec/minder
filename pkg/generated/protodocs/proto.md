@@ -73,6 +73,8 @@
     - [LogOutRequest](#mediator-v1-LogOutRequest)
     - [LogOutResponse](#mediator-v1-LogOutResponse)
     - [OrganizationRecord](#mediator-v1-OrganizationRecord)
+    - [RefreshTokenRequest](#mediator-v1-RefreshTokenRequest)
+    - [RefreshTokenResponse](#mediator-v1-RefreshTokenResponse)
     - [RevokeTokensRequest](#mediator-v1-RevokeTokensRequest)
     - [RevokeTokensResponse](#mediator-v1-RevokeTokensResponse)
     - [RevokeUserTokenRequest](#mediator-v1-RevokeUserTokenRequest)
@@ -89,6 +91,7 @@
     - [LogOutService](#mediator-v1-LogOutService)
     - [OAuthService](#mediator-v1-OAuthService)
     - [OrganizationService](#mediator-v1-OrganizationService)
+    - [RefreshTokenService](#mediator-v1-RefreshTokenService)
     - [RevokeTokensService](#mediator-v1-RevokeTokensService)
     - [RoleService](#mediator-v1-RoleService)
     - [SecretsService](#mediator-v1-SecretsService)
@@ -1184,6 +1187,35 @@ BUF does not allow grouping (which is a shame)
 
 
 
+<a name="mediator-v1-RefreshTokenRequest"></a>
+
+### RefreshTokenRequest
+
+
+
+
+
+
+
+<a name="mediator-v1-RefreshTokenResponse"></a>
+
+### RefreshTokenResponse
+
+
+
+| Field | Type | Label | Description |
+| ----- | ---- | ----- | ----------- |
+| status | [Status](#mediator-v1-Status) |  |  |
+| refresh_token | [string](#string) |  |  |
+| access_token | [string](#string) |  |  |
+| refresh_token_expires_in | [int64](#int64) |  |  |
+| access_token_expires_in | [int64](#int64) |  |  |
+
+
+
+
+
+
 <a name="mediator-v1-RevokeTokensRequest"></a>
 
 ### RevokeTokensRequest
@@ -1395,6 +1427,16 @@ manage Organizations CRUD
 | GetOrganization | [GetOrganizationRequest](#mediator-v1-GetOrganizationRequest) | [GetOrganizationResponse](#mediator-v1-GetOrganizationResponse) |  |
 | GetOrganizationByName | [GetOrganizationByNameRequest](#mediator-v1-GetOrganizationByNameRequest) | [GetOrganizationByNameResponse](#mediator-v1-GetOrganizationByNameResponse) |  |
 | DeleteOrganization | [DeleteOrganizationRequest](#mediator-v1-DeleteOrganizationRequest) | [DeleteOrganizationResponse](#mediator-v1-DeleteOrganizationResponse) |  |
+
+
+<a name="mediator-v1-RefreshTokenService"></a>
+
+### RefreshTokenService
+
+
+| Method Name | Request Type | Response Type | Description |
+| ----------- | ------------ | ------------- | ------------|
+| RefreshToken | [RefreshTokenRequest](#mediator-v1-RefreshTokenRequest) | [RefreshTokenResponse](#mediator-v1-RefreshTokenResponse) |  |
 
 
 <a name="mediator-v1-RevokeTokensService"></a>

@@ -73,7 +73,6 @@ func GenerateToken(userClaims UserClaims, accessPrivateKey []byte, refreshPrivat
 
 	// Create a refresh token that lasts longer than the access token
 	refreshExpirationTime := time.Now().Add(time.Duration(refreshExpiry) * time.Second).Unix()
-
 	refreshToken := jwt.NewWithClaims(jwt.SigningMethodRS256, jwt.MapClaims{
 		"userId": userClaims.UserId,
 		"iat":    time.Now().Unix(),
@@ -160,4 +159,54 @@ func VerifyToken(tokenString string, publicKey []byte, store db.Store) (UserClai
 	userClaims.IsSuperadmin = claims["isSuper"].(bool)
 
 	return userClaims, nil
+}
+
+// VerifyRefreshToken verifies the refresh token string and returns the user ID
+func VerifyRefreshToken(tokenString string, publicKey []byte, store db.Store) (int32, error) {
+	// extract the pubkey from the pem
+	pubPem, _ := pem.Decode(publicKey)
+	if pubPem == nil {
+		return 0, fmt.Errorf("invalid key")
+	}
+	key, err := x509.ParsePKCS1PublicKey(pubPem.Bytes)
+	if err != nil {
+		// try another method
+		key1, err := x509.ParsePKIXPublicKey(pubPem.Bytes)
+		if err != nil {
+			return 0, fmt.Errorf("invalid key")
+		}
+		key = key1.(*rsa.PublicKey)
+	}
+
+	token, err := jwt.Parse(tokenString, func(token *jwt.Token) (interface{}, error) {
+		if _, ok := token.Method.(*jwt.SigningMethodRSA); !ok {
+			return nil, fmt.Errorf("unexpected signing method")
+		}
+		return key, nil
+	})
+
+	if err != nil {
+		return 0, err
+	}
+
+	claims, ok := token.Claims.(jwt.MapClaims)
+	if !ok || !token.Valid {
+		return 0, fmt.Errorf("invalid token")
+	}
+
+	// validate that iat is on the past
+	if claims, ok := token.Claims.(jwt.MapClaims); ok {
+		if !claims.VerifyIssuedAt(time.Now().Unix(), true) {
+			return 0, fmt.Errorf("invalid token")
+		}
+	}
+
+	// we have the user id, check if exists
+	userId := int32(claims["userId"].(float64))
+	_, err = store.GetUserByID(context.Background(), userId)
+	if err != nil {
+		return 0, fmt.Errorf("invalid token")
+	}
+
+	return userId, nil
 }
