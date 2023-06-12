@@ -40,13 +40,15 @@ type NiceStatus struct {
 	Details string
 }
 
-// GetStatus get a blank status.
+// GetNiceStatus get a nice status from the code.
 func GetNiceStatus(code codes.Code) *NiceStatus {
 	s := &NiceStatus{}
 	return s.SetCode(code)
 }
 
 // SetCode generates the nice status from the code.
+//
+//nolint:gocyclo
 func (s *NiceStatus) SetCode(code codes.Code) *NiceStatus {
 	s.Code = code
 	switch code {
