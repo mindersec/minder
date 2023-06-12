@@ -69,12 +69,12 @@ will be saved to $XDG_CONFIG_HOME/mediator/credentials.json`,
 			ret := status.Convert(err)
 			ns := util.GetNiceStatus(ret.Code())
 			fmt.Fprintf(os.Stderr, "Error logging in: %s\n", ns)
-			os.Exit(1)
+			os.Exit(int(ret.Code()))
 		}
 		if resp.Status.Code != int32(codes.OK) {
 			util.GetNiceStatus(codes.Code(resp.Status.Code))
 			fmt.Fprintf(os.Stderr, "Error logging in: %s\n", resp.Status)
-			os.Exit(1)
+			os.Exit(int(resp.Status.Code))
 		}
 
 		// marshal the credentials to json
