@@ -138,16 +138,16 @@ func GetGrpcConnection(cmd *cobra.Command) (*grpc.ClientConn, error) {
 	grpc_port := GetConfigValue("grpc_server.port", "grpc-port", cmd, 0).(int)
 	address := fmt.Sprintf("%s:%d", grpc_host, grpc_port)
 
-	// read the credentials
+	// read credentials
+	token := ""
 	creds, err := LoadCredentials()
-	if err != nil {
-		return nil, fmt.Errorf("error loading credentials: %v", err)
+	if err == nil {
+		token = creds.AccessToken
 	}
 
 	// generate credentials
-
 	conn, err := grpc.Dial(address, grpc.WithTransportCredentials(insecure.NewCredentials()),
-		grpc.WithPerRPCCredentials(JWTTokenCredentials(creds.AccessToken)))
+		grpc.WithPerRPCCredentials(JWTTokenCredentials(token)))
 	if err != nil {
 		return nil, fmt.Errorf("error connecting to gRPC server: %v", err)
 	}
