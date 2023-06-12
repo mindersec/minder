@@ -19,7 +19,7 @@ package apply
 import (
 	"encoding/json"
 	"fmt"
-	"io/ioutil"
+	"io"
 	"os"
 	"path/filepath"
 	"reflect"
@@ -82,14 +82,14 @@ var ApplyCmd = &cobra.Command{
 		var err error
 
 		if f == "-" {
-			data, err = ioutil.ReadAll(os.Stdin)
+			data, err = io.ReadAll(os.Stdin)
 			if err != nil {
 				fmt.Fprintf(os.Stderr, "Error reading from stdin: %s\n", err)
 				os.Exit(1)
 			}
 		} else {
 			f = filepath.Clean(f)
-			data, err = ioutil.ReadFile(f)
+			data, err = os.ReadFile(f)
 			if err != nil {
 				fmt.Fprintf(os.Stderr, "Error reading file %s: %s\n", f, err)
 				os.Exit(1)
