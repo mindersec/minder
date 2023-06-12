@@ -61,3 +61,41 @@ func TestDecryptRow(t *testing.T) {
 	assert.Nil(t, err)
 	assert.Equal(t, "topsecret", decrypted)
 }
+
+func TestGenerateNonce(t *testing.T) {
+	state, err := GenerateNonce()
+	if err != nil {
+		t.Errorf("Error in generateState: %v", err)
+	}
+
+	if len(state) != 54 {
+		t.Errorf("Unexpected length of state: %v", len(state))
+	}
+}
+
+func TestIsNonceValid(t *testing.T) {
+	nonce, err := GenerateNonce()
+	if err != nil {
+		t.Errorf("Error in generateState: %v", err)
+	}
+
+	valid, err := IsNonceValid(nonce)
+	if err != nil {
+		t.Errorf("Error in isNonceValid: %v", err)
+	}
+
+	if !valid {
+		t.Errorf("Expected nonce to be valid, got invalid")
+	}
+
+	invalid := "AAAAAGSDmJ_tKMkuUmeoOBdSQGWXq3BE_Zp7IrUFVUau5HcPa-yvzQ"
+
+	valid, err = IsNonceValid(invalid)
+	if err != nil {
+		t.Errorf("Error in isNonceValid: %v", err)
+	}
+
+	if valid {
+		t.Errorf("Expected nonce to be invalid, got valid")
+	}
+}

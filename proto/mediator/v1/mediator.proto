@@ -31,16 +31,6 @@ service HealthService {
     }
 }
 
-// GitHub App Webhook Service
-service GitHubWebhookService {
-    rpc HandleGitHubWebhook (HandleGitHubWebhookRequest) returns (HandleGitHubWebhookResponse) {
-        option (google.api.http) = {
-            post: "/api/v1/github/hook"
-            body: "*"
-        };
-    }
-}
-
 service OAuthService {
     rpc GetAuthorizationURL (GetAuthorizationURLRequest) returns (GetAuthorizationURLResponse) {
         option (google.api.http) = {
@@ -306,6 +296,7 @@ message CheckHealthResponse {
 message GetAuthorizationURLRequest {
     string provider = 1;
     bool  cli = 2;
+    int32  port = 3;
 }
 
 message GetAuthorizationURLResponse {
@@ -315,7 +306,8 @@ message GetAuthorizationURLResponse {
 message ExchangeCodeForTokenCLIRequest {
     string provider = 1;
     string code = 2;
-    string redirect_uri = 3;
+    string state = 3;
+    string redirect_uri = 4;
 }
 
 message ExchangeCodeForTokenCLIResponse {
@@ -333,14 +325,6 @@ message ExchangeCodeForTokenWEBResponse {
     string token_type = 2;
     int64  expires_in = 3;
     string status = 4;
-}
-
-
-message HandleGitHubWebhookRequest {
-}
-
-message HandleGitHubWebhookResponse {
-    string status = 1;
 }
 
 message LogInRequest {

@@ -68,8 +68,6 @@
     - [GetVulnerabilityByIdRequest](#mediator-v1-GetVulnerabilityByIdRequest)
     - [GetVulnerabilityByIdResponse](#mediator-v1-GetVulnerabilityByIdResponse)
     - [GroupRecord](#mediator-v1-GroupRecord)
-    - [HandleGitHubWebhookRequest](#mediator-v1-HandleGitHubWebhookRequest)
-    - [HandleGitHubWebhookResponse](#mediator-v1-HandleGitHubWebhookResponse)
     - [LogInRequest](#mediator-v1-LogInRequest)
     - [LogInResponse](#mediator-v1-LogInResponse)
     - [LogOutRequest](#mediator-v1-LogOutRequest)
@@ -85,7 +83,6 @@
   
     - [AuthVerifyService](#mediator-v1-AuthVerifyService)
     - [BranchProtectionService](#mediator-v1-BranchProtectionService)
-    - [GitHubWebhookService](#mediator-v1-GitHubWebhookService)
     - [GroupService](#mediator-v1-GroupService)
     - [HealthService](#mediator-v1-HealthService)
     - [LogInService](#mediator-v1-LogInService)
@@ -451,6 +448,7 @@ delete role
 | ----- | ---- | ----- | ----------- |
 | provider | [string](#string) |  |  |
 | code | [string](#string) |  |  |
+| state | [string](#string) |  |  |
 | redirect_uri | [string](#string) |  |  |
 
 
@@ -518,6 +516,7 @@ delete role
 | ----- | ---- | ----- | ----------- |
 | provider | [string](#string) |  |  |
 | cli | [bool](#bool) |  |  |
+| port | [int32](#int32) |  |  |
 
 
 
@@ -1106,31 +1105,6 @@ BUF does not allow grouping (which is a shame)
 
 
 
-<a name="mediator-v1-HandleGitHubWebhookRequest"></a>
-
-### HandleGitHubWebhookRequest
-
-
-
-
-
-
-
-<a name="mediator-v1-HandleGitHubWebhookResponse"></a>
-
-### HandleGitHubWebhookResponse
-
-
-
-| Field | Type | Label | Description |
-| ----- | ---- | ----- | ----------- |
-| status | [string](#string) |  |  |
-
-
-
-
-
-
 <a name="mediator-v1-LogInRequest"></a>
 
 ### LogInRequest
@@ -1350,16 +1324,6 @@ Get Branch Protection Settings
 | Method Name | Request Type | Response Type | Description |
 | ----------- | ------------ | ------------- | ------------|
 | GetBranchProtection | [GetBranchProtectionRequest](#mediator-v1-GetBranchProtectionRequest) | [GetBranchProtectionResponse](#mediator-v1-GetBranchProtectionResponse) |  |
-
-
-<a name="mediator-v1-GitHubWebhookService"></a>
-
-### GitHubWebhookService
-GitHub App Webhook Service
-
-| Method Name | Request Type | Response Type | Description |
-| ----------- | ------------ | ------------- | ------------|
-| HandleGitHubWebhook | [HandleGitHubWebhookRequest](#mediator-v1-HandleGitHubWebhookRequest) | [HandleGitHubWebhookResponse](#mediator-v1-HandleGitHubWebhookResponse) |  |
 
 
 <a name="mediator-v1-GroupService"></a>

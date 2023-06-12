@@ -58,6 +58,8 @@ func parseToken(token string, store db.Store) (auth.UserClaims, error) {
 var authBypassMethods = []string{
 	"/mediator.v1.LogInService/LogIn",
 	"/mediator.v1.HealthService/CheckHealth",
+	"/mediator.v1.OAuthService/ExchangeCodeForTokenCLI",
+	"/mediator.v1.OAuthService/ExchangeCodeForTokenWEB",
 }
 
 var superAdminMethods = []string{

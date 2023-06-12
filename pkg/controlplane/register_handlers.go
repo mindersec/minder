@@ -95,5 +95,4 @@ func RegisterGRPCServices(s *Server) {
 
 	// Register the User service
 	pb.RegisterUserServiceServer(s.grpcServer, s)
-
 }

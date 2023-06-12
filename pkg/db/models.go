@@ -27,6 +27,14 @@ type Organization struct {
 	UpdatedAt time.Time `json:"updated_at"`
 }
 
+type ProviderAccessToken struct {
+	ID             int32     `json:"id"`
+	GroupID        int32     `json:"group_id"`
+	EncryptedToken string    `json:"encrypted_token"`
+	CreatedAt      time.Time `json:"created_at"`
+	UpdatedAt      time.Time `json:"updated_at"`
+}
+
 type Role struct {
 	ID          int32     `json:"id"`
 	GroupID     int32     `json:"group_id"`
@@ -35,6 +43,14 @@ type Role struct {
 	IsProtected bool      `json:"is_protected"`
 	CreatedAt   time.Time `json:"created_at"`
 	UpdatedAt   time.Time `json:"updated_at"`
+}
+
+type SessionStore struct {
+	ID           int32         `json:"id"`
+	GrpID        sql.NullInt32 `json:"grp_id"`
+	Port         sql.NullInt32 `json:"port"`
+	SessionState string        `json:"session_state"`
+	CreatedAt    time.Time     `json:"created_at"`
 }
 
 type User struct {

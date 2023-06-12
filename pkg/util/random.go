@@ -27,6 +27,7 @@ import (
 	"crypto/x509"
 	"encoding/pem"
 	"math/rand"
+	"net"
 	"os"
 	"path/filepath"
 )
@@ -159,4 +160,25 @@ func RandomPrivateKeyFile(length int, filePath string) error {
 	}
 
 	return nil
+}
+
+// GetRandomPort returns a random port number.
+// The binding address should not need to be configurable
+// as this is a short lived operation just to disover a random available port.
+// Note that there is a possible race condition here if another process binds
+// to the same port between the time we discover it and the time we use it.
+// This is unlikely to happen in practice, but if it does, the user will
+// need to retry the command.
+// Marking a nosec here because we want this to listen on all addresses to
+// ensure a reliable connection chance for the client. This is based on lessons
+// learned from the sigstore CLI.
+func GetRandomPort() (int, error) {
+	listener, err := net.Listen("tcp", ":0") // #nosec
+	if err != nil {
+		return 0, err
+	}
+	defer listener.Close()
+
+	port := listener.Addr().(*net.TCPAddr).Port
+	return port, nil
 }
