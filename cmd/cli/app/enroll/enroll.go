@@ -28,7 +28,7 @@ import (
 	"github.com/spf13/cobra"
 )
 
-// EnrollCmd is the root command for the org subcommands
+// EnrollCmd is the root command for the enroll subcommands
 var EnrollCmd = &cobra.Command{
 	Use:   "enroll",
 	Short: "Manage enrollments within a mediator control plane",
