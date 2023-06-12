@@ -18,7 +18,7 @@ import (
 	"context"
 	"database/sql"
 	"fmt"
-	"io/ioutil"
+	"os"
 	"path/filepath"
 
 	"github.com/go-playground/validator/v10"
@@ -64,7 +64,7 @@ func (s *Server) LogIn(ctx context.Context, in *pb.LogInRequest) (*pb.LogInRespo
 	}
 
 	privateKeyPath = filepath.Clean(privateKeyPath)
-	keyBytes, err := ioutil.ReadFile(privateKeyPath)
+	keyBytes, err := os.ReadFile(privateKeyPath)
 	if err != nil {
 		return &pb.LogInResponse{Status: "Failed to read private key"}, nil
 	}
@@ -75,7 +75,7 @@ func (s *Server) LogIn(ctx context.Context, in *pb.LogInRequest) (*pb.LogInRespo
 	}
 
 	refreshPrivateKeyPath = filepath.Clean(refreshPrivateKeyPath)
-	refreshKeyBytes, err := ioutil.ReadFile(refreshPrivateKeyPath)
+	refreshKeyBytes, err := os.ReadFile(refreshPrivateKeyPath)
 	if err != nil {
 		return &pb.LogInResponse{Status: "Failed to read private key"}, nil
 	}

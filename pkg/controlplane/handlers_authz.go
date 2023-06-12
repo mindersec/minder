@@ -17,7 +17,7 @@ package controlplane
 import (
 	"context"
 	"fmt"
-	"io/ioutil"
+	"os"
 	"path/filepath"
 	"reflect"
 
@@ -41,7 +41,7 @@ func parseToken(token string) (auth.UserClaims, error) {
 	if publicKeyPath == "" {
 		return claims, fmt.Errorf("could not read public key")
 	}
-	pubKeyData, err := ioutil.ReadFile(filepath.Clean(publicKeyPath))
+	pubKeyData, err := os.ReadFile(filepath.Clean(publicKeyPath))
 	if err != nil {
 		return claims, fmt.Errorf("failed to read public key file")
 	}
