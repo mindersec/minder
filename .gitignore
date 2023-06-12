@@ -37,6 +37,7 @@ Thumbs.db
 *config.yaml
 *.pem
 *.key
+.ssh/
 
 # asdf
 .tool-versions
