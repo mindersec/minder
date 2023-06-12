@@ -200,7 +200,7 @@ func TestRefreshToken_gRPC(t *testing.T) {
 
 	// Create header metadata
 	md := metadata.New(map[string]string{
-		"authorization": "Bearer " + refreshToken,
+		"refresh-token": refreshToken,
 	})
 
 	// Create a new context with added header metadata

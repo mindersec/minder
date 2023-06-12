@@ -22,13 +22,13 @@ import (
 	"path/filepath"
 
 	"github.com/go-playground/validator/v10"
-	gauth "github.com/grpc-ecosystem/go-grpc-middleware/v2/interceptors/auth"
 	"github.com/spf13/viper"
 	"github.com/stacklok/mediator/pkg/auth"
 	mcrypto "github.com/stacklok/mediator/pkg/crypto"
 	"github.com/stacklok/mediator/pkg/db"
 	pb "github.com/stacklok/mediator/pkg/generated/protobuf/go/mediator/v1"
 	"google.golang.org/grpc/codes"
+	"google.golang.org/grpc/metadata"
 	"google.golang.org/grpc/status"
 )
 
@@ -183,12 +183,20 @@ func parseRefreshToken(token string, store db.Store) (int32, error) {
 
 // RefreshToken refreshes the access token
 func (s *Server) RefreshToken(ctx context.Context, _ *pb.RefreshTokenRequest) (*pb.RefreshTokenResponse, error) {
-	token, err := gauth.AuthFromMD(ctx, "bearer")
-	if err != nil {
-		return nil, status.Errorf(codes.Unauthenticated, "no auth token: %v", err)
+	md, ok := metadata.FromIncomingContext(ctx)
+	if !ok {
+		// Metadata not found
+		return nil, status.Errorf(codes.Unauthenticated, "no metadata found")
+	}
+	refresh := ""
+	if tokens := md.Get("refresh-token"); len(tokens) > 0 {
+		refresh = tokens[0]
+	}
+	if refresh == "" {
+		return nil, status.Errorf(codes.Unauthenticated, "no refresh token found")
 	}
 
-	userId, err := parseRefreshToken(token, s.store)
+	userId, err := parseRefreshToken(refresh, s.store)
 	if err != nil {
 		return nil, status.Errorf(codes.Unauthenticated, "invalid token: %v", err)
 	}

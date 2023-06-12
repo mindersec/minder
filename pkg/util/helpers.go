@@ -117,17 +117,21 @@ func getCredentialsPath() (string, error) {
 }
 
 // JWTTokenCredentials is a helper struct for grpc
-type JWTTokenCredentials string
+type JWTTokenCredentials struct {
+	accessToken  string
+	refreshToken string
+}
 
 // GetRequestMetadata implements the PerRPCCredentials interface.
 func (jwt JWTTokenCredentials) GetRequestMetadata(_ context.Context, _ ...string) (map[string]string, error) {
 	return map[string]string{
-		"authorization": "Bearer " + string(jwt),
+		"authorization": "Bearer " + string(jwt.accessToken),
+		"refresh-token": jwt.refreshToken,
 	}, nil
 }
 
 // RequireTransportSecurity implements the PerRPCCredentials interface.
-func (_ JWTTokenCredentials) RequireTransportSecurity() bool {
+func (JWTTokenCredentials) RequireTransportSecurity() bool {
 	return false
 }
 
@@ -140,14 +144,16 @@ func GetGrpcConnection(cmd *cobra.Command) (*grpc.ClientConn, error) {
 
 	// read credentials
 	token := ""
+	refreshToken := ""
 	creds, err := LoadCredentials()
 	if err == nil {
 		token = creds.AccessToken
+		refreshToken = creds.RefreshToken
 	}
 
 	// generate credentials
 	conn, err := grpc.Dial(address, grpc.WithTransportCredentials(insecure.NewCredentials()),
-		grpc.WithPerRPCCredentials(JWTTokenCredentials(token)))
+		grpc.WithPerRPCCredentials(JWTTokenCredentials{accessToken: token, refreshToken: refreshToken}))
 	if err != nil {
 		return nil, fmt.Errorf("error connecting to gRPC server: %v", err)
 	}

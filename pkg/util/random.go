@@ -175,7 +175,6 @@ func RandomKeypairFile(length int, privateFilePath string, publicFilePath string
 	if err != nil {
 		return err
 	}
-
 	return nil
 }
 
