@@ -32,7 +32,7 @@ import (
 var EnrollCmd = &cobra.Command{
 	Use:   "enroll",
 	Short: "Manage enrollments within a mediator control plane",
-	Long: `The medctl org commands manage enrollment of providers, within a mediator
+	Long: `The medctl enroll commands manage enrollment of providers, within a mediator
 control plane.`,
 	Run: func(cmd *cobra.Command, args []string) {
 		cmd.Println("enroll called")
