@@ -25,14 +25,11 @@ package controlplane
 import (
 	"bytes"
 	"context"
-	"crypto/rand"
 	"database/sql"
 	"encoding/base64"
-	"encoding/binary"
 	"errors"
 	"fmt"
 	"net/http"
-	"time"
 
 	"github.com/stacklok/mediator/pkg/auth"
 	mcrypto "github.com/stacklok/mediator/pkg/crypto"
@@ -56,46 +53,6 @@ const Github = "github"
 
 // PaginationLimit is the maximum number of items that can be returned in a single page
 const PaginationLimit = 10
-
-// Generate a nonce based state for the OAuth2 flow
-func generateNonce() (string, error) {
-	randomBytes := make([]byte, 32)
-	_, err := rand.Read(randomBytes)
-	if err != nil {
-		return "", err
-	}
-
-	nonceBytes := make([]byte, 8)
-	timestamp := time.Now().Unix()
-	binary.BigEndian.PutUint64(nonceBytes, uint64(timestamp))
-
-	nonceBytes = append(nonceBytes, randomBytes...)
-	nonce := base64.RawURLEncoding.EncodeToString(nonceBytes)
-	return nonce, nil
-}
-
-// Verify the nonce based state for the OAuth2 flow. If the valid variable is
-// true, the nonce is valid and less than 5 minutes old
-func isNonceValid(nonce string) (bool, error) {
-	nonceBytes, err := base64.RawURLEncoding.DecodeString(nonce)
-	if err != nil {
-		return false, err
-	}
-
-	if len(nonceBytes) < 8 {
-		return false, nil
-	}
-
-	storedTimestamp := int64(binary.BigEndian.Uint64(nonceBytes[:8]))
-	currentTimestamp := time.Now().Unix()
-	timeDiff := currentTimestamp - storedTimestamp
-
-	if timeDiff > viper.GetInt64("auth.nonce_period") { // 5 minutes = 300 seconds
-		return false, nil
-	}
-
-	return true, nil
-}
 
 // CheckHealth is a simple health check for monitoring
 // The lintcheck is disabled because the unused-receiver is required by
@@ -168,7 +125,7 @@ func (s *Server) GetAuthorizationURL(ctx context.Context,
 	}
 
 	// Generate a random nonce based state
-	state, err := generateNonce()
+	state, err := mcrypto.GenerateNonce()
 	if err != nil {
 		return nil, err
 	}
@@ -225,7 +182,7 @@ func (s *Server) ExchangeCodeForTokenCLI(ctx context.Context,
 	defer span.End()
 
 	// Check the nonce to make sure it's valid
-	valid, err := isNonceValid(in.State)
+	valid, err := mcrypto.IsNonceValid(in.State)
 
 	if err != nil {
 		return nil, fmt.Errorf("error checking nonce: %w", err)

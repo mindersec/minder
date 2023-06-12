@@ -21,6 +21,7 @@ import (
 	"crypto/sha256"
 	"crypto/x509"
 	"encoding/base64"
+	"encoding/binary"
 	"encoding/json"
 	"encoding/pem"
 	"errors"
@@ -266,4 +267,44 @@ func decodeHash(encodedHash string) (p *params, salt, hash []byte, err error) {
 	p.keyLength = uint32(len(hash))
 
 	return p, salt, hash, nil
+}
+
+// Generate a nonce based state for the OAuth2 flow
+func GenerateNonce() (string, error) {
+	randomBytes := make([]byte, 32)
+	_, err := rand.Read(randomBytes)
+	if err != nil {
+		return "", err
+	}
+
+	nonceBytes := make([]byte, 8)
+	timestamp := time.Now().Unix()
+	binary.BigEndian.PutUint64(nonceBytes, uint64(timestamp))
+
+	nonceBytes = append(nonceBytes, randomBytes...)
+	nonce := base64.RawURLEncoding.EncodeToString(nonceBytes)
+	return nonce, nil
+}
+
+// Verify the nonce based state for the OAuth2 flow. If the valid variable is
+// true, the nonce is valid and less than 5 minutes old
+func IsNonceValid(nonce string) (bool, error) {
+	nonceBytes, err := base64.RawURLEncoding.DecodeString(nonce)
+	if err != nil {
+		return false, err
+	}
+
+	if len(nonceBytes) < 8 {
+		return false, nil
+	}
+
+	storedTimestamp := int64(binary.BigEndian.Uint64(nonceBytes[:8]))
+	currentTimestamp := time.Now().Unix()
+	timeDiff := currentTimestamp - storedTimestamp
+
+	if timeDiff > viper.GetInt64("auth.nonce_period") { // 5 minutes = 300 seconds
+		return false, nil
+	}
+
+	return true, nil
 }
