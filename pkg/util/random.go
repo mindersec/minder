@@ -162,7 +162,7 @@ func RandomPrivateKeyFile(length int, filePath string) error {
 	return nil
 }
 
-// getRandomPort returns a random port number.
+// GetRandomPort returns a random port number.
 // The binding address should not need to be configurable
 // as this is a short lived operation just to disover a random available port.
 // Note that there is a possible race condition here if another process binds
