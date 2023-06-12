@@ -46,46 +46,46 @@ func (s *Server) LogIn(ctx context.Context, in *pb.LogInRequest) (*pb.LogInRespo
 	user, err := s.store.GetUserByUserName(ctx, in.Username)
 	if err != nil {
 		if err == sql.ErrNoRows {
-			return &pb.LogInResponse{Status: &pb.Status{Code: int32(codes.NotFound), Message: "User and password not found"}}, nil
+			return &pb.LogInResponse{}, status.Error(codes.NotFound, "User and password not found")
 		}
 		return nil, err
 	}
 	match, _ := mcrypto.VerifyPasswordHash(in.Password, user.Password)
 	if err != nil {
-		return &pb.LogInResponse{Status: &pb.Status{Code: int32(codes.NotFound), Message: "User and password not found"}}, nil
+		return &pb.LogInResponse{}, status.Error(codes.NotFound, "User and password not found")
 	}
 
 	if !match {
-		return &pb.LogInResponse{Status: &pb.Status{Code: int32(codes.NotFound), Message: "User and password not found"}}, nil
+		return &pb.LogInResponse{}, status.Error(codes.NotFound, "User and password not found")
 	}
 
 	// read private key for generating token and refresh token
 	privateKeyPath := viper.GetString("auth.access_token_private_key")
 	if privateKeyPath == "" {
-		return &pb.LogInResponse{Status: &pb.Status{Code: int32(codes.Internal), Message: "Failed to generate token"}}, nil
+		return &pb.LogInResponse{}, status.Error(codes.Internal, "Failed to generate token")
 	}
 
 	privateKeyPath = filepath.Clean(privateKeyPath)
 	keyBytes, err := os.ReadFile(privateKeyPath)
 	if err != nil {
-		return &pb.LogInResponse{Status: &pb.Status{Code: int32(codes.Internal), Message: "Failed to generate token"}}, nil
+		return &pb.LogInResponse{}, status.Error(codes.Internal, "Failed to generate token")
 	}
 
 	refreshPrivateKeyPath := viper.GetString("auth.refresh_token_private_key")
 	if refreshPrivateKeyPath == "" {
-		return &pb.LogInResponse{Status: &pb.Status{Code: int32(codes.Internal), Message: "Failed to generate token"}}, nil
+		return &pb.LogInResponse{}, status.Error(codes.Internal, "Failed to generate token")
 	}
 
 	refreshPrivateKeyPath = filepath.Clean(refreshPrivateKeyPath)
 	refreshKeyBytes, err := os.ReadFile(refreshPrivateKeyPath)
 	if err != nil {
-		return &pb.LogInResponse{Status: &pb.Status{Code: int32(codes.Internal), Message: "Failed to generate token"}}, nil
+		return &pb.LogInResponse{}, status.Error(codes.Internal, "Failed to generate token")
 	}
 
 	// read all information for user claims
 	userInfo, err := s.store.GetUserClaims(ctx, user.ID)
 	if err != nil {
-		return &pb.LogInResponse{Status: &pb.Status{Code: int32(codes.Internal), Message: "Failed to generate token"}}, nil
+		return &pb.LogInResponse{}, status.Error(codes.Internal, "Failed to generate token")
 	}
 
 	claims := auth.UserClaims{
@@ -125,32 +125,28 @@ func (s *Server) LogOut(ctx context.Context, _ *pb.LogOutRequest) (*pb.LogOutRes
 	if claims.UserId > 0 {
 		_, err := s.store.RevokeUserToken(ctx, claims.UserId)
 		if err != nil {
-			return &pb.LogOutResponse{Status: &pb.Status{Code: int32(codes.Internal), Message: "Failed to logout"}},
-				status.Errorf(codes.Internal, "Failed to logout")
+			return &pb.LogOutResponse{}, status.Error(codes.Internal, "Failed to logout")
 		}
-		return &pb.LogOutResponse{Status: &pb.Status{Code: int32(codes.OK), Message: "Success"}}, nil
+		return &pb.LogOutResponse{}, status.Error(codes.OK, "Success")
 	}
-	return &pb.LogOutResponse{Status: &pb.Status{Code: int32(codes.Internal), Message: "Failed to logout"}},
-		status.Errorf(codes.Internal, "Failed to logout")
+	return &pb.LogOutResponse{}, status.Error(codes.Internal, "Failed to logout")
 }
 
 // RevokeTokens revokes all the access and refresh tokens
 func (s *Server) RevokeTokens(ctx context.Context, _ *pb.RevokeTokensRequest) (*pb.RevokeTokensResponse, error) {
 	_, err := s.store.RevokeUsersTokens(ctx)
 	if err != nil {
-		return &pb.RevokeTokensResponse{Status: &pb.Status{Code: int32(codes.Internal), Message: "Failed to revoke tokens"}},
-			status.Errorf(codes.Internal, "Failed to revoke tokens")
+		return &pb.RevokeTokensResponse{}, status.Error(codes.Internal, "Failed to revoke tokens")
 	}
-	return &pb.RevokeTokensResponse{Status: &pb.Status{Code: int32(codes.OK), Message: "Success"}}, nil
+	return &pb.RevokeTokensResponse{}, nil
 }
 
 // RevokeUserToken revokes all the access and refresh tokens for a user
 func (s *Server) RevokeUserToken(ctx context.Context, req *pb.RevokeUserTokenRequest) (*pb.RevokeUserTokenResponse, error) {
 	_, err := s.store.RevokeUserToken(ctx, req.UserId)
 	if err != nil {
-		return &pb.RevokeUserTokenResponse{Status: &pb.Status{Code: int32(codes.Internal), Message: "Failed to revoke"}},
-			status.Errorf(codes.Internal, "Failed to revoke")
+		return &pb.RevokeUserTokenResponse{}, status.Error(codes.Internal, "Failed to revoke")
 	}
-	return &pb.RevokeUserTokenResponse{Status: &pb.Status{Code: int32(codes.OK), Message: "Success"}}, nil
+	return &pb.RevokeUserTokenResponse{}, nil
 
 }
