@@ -269,7 +269,7 @@ func decodeHash(encodedHash string) (p *params, salt, hash []byte, err error) {
 	return p, salt, hash, nil
 }
 
-// Generate a nonce based state for the OAuth2 flow
+// GenerateNonce, generate a nonce based state for the OAuth2 flow
 func GenerateNonce() (string, error) {
 	randomBytes := make([]byte, 32)
 	_, err := rand.Read(randomBytes)
@@ -286,7 +286,7 @@ func GenerateNonce() (string, error) {
 	return nonce, nil
 }
 
-// Verify the nonce based state for the OAuth2 flow. If the valid variable is
+// IsNonceValid. Verify the nonce based state for the OAuth2 flow. If the valid variable is
 // true, the nonce is valid and less than 5 minutes old
 func IsNonceValid(nonce string) (bool, error) {
 	nonceBytes, err := base64.RawURLEncoding.DecodeString(nonce)
