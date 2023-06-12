@@ -247,7 +247,7 @@ func (q *Queries) ListUsersByRoleID(ctx context.Context, roleID int32) ([]User, 
 }
 
 const revokeGroupUsersTokens = `-- name: RevokeGroupUsersTokens :one
-UPDATE users SET min_token_issued_time = NOW() WHERE role_id IN (SELECT id FROM roles WHERE group_id = $1) RETURNING id, role_id, email, username, password, first_name, last_name, is_protected, created_at, updated_at, min_token_issued_time
+UPDATE users SET min_token_issued_time = NOW() - INTERVAL '30 seconds' WHERE role_id IN (SELECT id FROM roles WHERE group_id = $1) RETURNING id, role_id, email, username, password, first_name, last_name, is_protected, created_at, updated_at, min_token_issued_time
 `
 
 func (q *Queries) RevokeGroupUsersTokens(ctx context.Context, groupID int32) (User, error) {
@@ -270,7 +270,7 @@ func (q *Queries) RevokeGroupUsersTokens(ctx context.Context, groupID int32) (Us
 }
 
 const revokeOrganizationUsersTokens = `-- name: RevokeOrganizationUsersTokens :one
-UPDATE users SET min_token_issued_time = NOW() WHERE role_id IN (SELECT id FROM roles WHERE group_id IN (SELECT id FROM groups WHERE organization_id = $1)) RETURNING id, role_id, email, username, password, first_name, last_name, is_protected, created_at, updated_at, min_token_issued_time
+UPDATE users SET min_token_issued_time = NOW() - INTERVAL '30 seconds' WHERE role_id IN (SELECT id FROM roles WHERE group_id IN (SELECT id FROM groups WHERE organization_id = $1)) RETURNING id, role_id, email, username, password, first_name, last_name, is_protected, created_at, updated_at, min_token_issued_time
 `
 
 func (q *Queries) RevokeOrganizationUsersTokens(ctx context.Context, organizationID int32) (User, error) {
@@ -293,7 +293,7 @@ func (q *Queries) RevokeOrganizationUsersTokens(ctx context.Context, organizatio
 }
 
 const revokeRoleUsersTokens = `-- name: RevokeRoleUsersTokens :one
-UPDATE users SET min_token_issued_time = NOW() WHERE role_id = $1 RETURNING id, role_id, email, username, password, first_name, last_name, is_protected, created_at, updated_at, min_token_issued_time
+UPDATE users SET min_token_issued_time = NOW() - INTERVAL '30 seconds' WHERE role_id = $1 RETURNING id, role_id, email, username, password, first_name, last_name, is_protected, created_at, updated_at, min_token_issued_time
 `
 
 func (q *Queries) RevokeRoleUsersTokens(ctx context.Context, roleID int32) (User, error) {
@@ -316,7 +316,7 @@ func (q *Queries) RevokeRoleUsersTokens(ctx context.Context, roleID int32) (User
 }
 
 const revokeUserToken = `-- name: RevokeUserToken :one
-UPDATE users SET min_token_issued_time = NOW() WHERE id = $1 RETURNING id, role_id, email, username, password, first_name, last_name, is_protected, created_at, updated_at, min_token_issued_time
+UPDATE users SET min_token_issued_time = NOW() - INTERVAL '30 seconds' WHERE id = $1 RETURNING id, role_id, email, username, password, first_name, last_name, is_protected, created_at, updated_at, min_token_issued_time
 `
 
 func (q *Queries) RevokeUserToken(ctx context.Context, id int32) (User, error) {
@@ -339,7 +339,7 @@ func (q *Queries) RevokeUserToken(ctx context.Context, id int32) (User, error) {
 }
 
 const revokeUsersTokens = `-- name: RevokeUsersTokens :one
-UPDATE users SET min_token_issued_time = NOW() RETURNING id, role_id, email, username, password, first_name, last_name, is_protected, created_at, updated_at, min_token_issued_time
+UPDATE users SET min_token_issued_time = NOW() - INTERVAL '30 seconds' RETURNING id, role_id, email, username, password, first_name, last_name, is_protected, created_at, updated_at, min_token_issued_time
 `
 
 func (q *Queries) RevokeUsersTokens(ctx context.Context) (User, error) {
