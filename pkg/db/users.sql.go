@@ -11,7 +11,7 @@ import (
 )
 
 const createUser = `-- name: CreateUser :one
-INSERT INTO users (role_id, email, username, password, first_name, last_name, is_protected) VALUES ($1, $2, $3, $4, $5, $6, $7) RETURNING id, role_id, email, username, password, first_name, last_name, is_protected, created_at, updated_at
+INSERT INTO users (role_id, email, username, password, first_name, last_name, is_protected) VALUES ($1, $2, $3, $4, $5, $6, $7) RETURNING id, role_id, email, username, password, first_name, last_name, is_protected, created_at, updated_at, min_token_issued_time
 `
 
 type CreateUserParams struct {
@@ -46,6 +46,7 @@ func (q *Queries) CreateUser(ctx context.Context, arg CreateUserParams) (User, e
 		&i.IsProtected,
 		&i.CreatedAt,
 		&i.UpdatedAt,
+		&i.MinTokenIssuedTime,
 	)
 	return i, err
 }
@@ -60,7 +61,7 @@ func (q *Queries) DeleteUser(ctx context.Context, id int32) error {
 }
 
 const getUserByEmail = `-- name: GetUserByEmail :one
-SELECT id, role_id, email, username, password, first_name, last_name, is_protected, created_at, updated_at FROM users WHERE email = $1
+SELECT id, role_id, email, username, password, first_name, last_name, is_protected, created_at, updated_at, min_token_issued_time FROM users WHERE email = $1
 `
 
 func (q *Queries) GetUserByEmail(ctx context.Context, email sql.NullString) (User, error) {
@@ -77,12 +78,13 @@ func (q *Queries) GetUserByEmail(ctx context.Context, email sql.NullString) (Use
 		&i.IsProtected,
 		&i.CreatedAt,
 		&i.UpdatedAt,
+		&i.MinTokenIssuedTime,
 	)
 	return i, err
 }
 
 const getUserByID = `-- name: GetUserByID :one
-SELECT id, role_id, email, username, password, first_name, last_name, is_protected, created_at, updated_at FROM users WHERE id = $1
+SELECT id, role_id, email, username, password, first_name, last_name, is_protected, created_at, updated_at, min_token_issued_time FROM users WHERE id = $1
 `
 
 func (q *Queries) GetUserByID(ctx context.Context, id int32) (User, error) {
@@ -99,12 +101,13 @@ func (q *Queries) GetUserByID(ctx context.Context, id int32) (User, error) {
 		&i.IsProtected,
 		&i.CreatedAt,
 		&i.UpdatedAt,
+		&i.MinTokenIssuedTime,
 	)
 	return i, err
 }
 
 const getUserByUserName = `-- name: GetUserByUserName :one
-SELECT id, role_id, email, username, password, first_name, last_name, is_protected, created_at, updated_at FROM users WHERE username = $1
+SELECT id, role_id, email, username, password, first_name, last_name, is_protected, created_at, updated_at, min_token_issued_time FROM users WHERE username = $1
 `
 
 func (q *Queries) GetUserByUserName(ctx context.Context, username string) (User, error) {
@@ -121,22 +124,24 @@ func (q *Queries) GetUserByUserName(ctx context.Context, username string) (User,
 		&i.IsProtected,
 		&i.CreatedAt,
 		&i.UpdatedAt,
+		&i.MinTokenIssuedTime,
 	)
 	return i, err
 }
 
 const getUserClaims = `-- name: GetUserClaims :one
 SELECT u.id as user_id, u.role_id as role_id, r.is_admin as is_admin, r.group_id as group_id,
-g.organization_id as organization_id FROM users u
+g.organization_id as organization_id, u.min_token_issued_time AS min_token_issued_time FROM users u
 INNER JOIN roles r ON u.role_id = r.id INNER JOIN groups g ON r.group_id = g.id WHERE u.id = $1
 `
 
 type GetUserClaimsRow struct {
-	UserID         int32 `json:"user_id"`
-	RoleID         int32 `json:"role_id"`
-	IsAdmin        bool  `json:"is_admin"`
-	GroupID        int32 `json:"group_id"`
-	OrganizationID int32 `json:"organization_id"`
+	UserID             int32        `json:"user_id"`
+	RoleID             int32        `json:"role_id"`
+	IsAdmin            bool         `json:"is_admin"`
+	GroupID            int32        `json:"group_id"`
+	OrganizationID     int32        `json:"organization_id"`
+	MinTokenIssuedTime sql.NullTime `json:"min_token_issued_time"`
 }
 
 func (q *Queries) GetUserClaims(ctx context.Context, id int32) (GetUserClaimsRow, error) {
@@ -148,12 +153,13 @@ func (q *Queries) GetUserClaims(ctx context.Context, id int32) (GetUserClaimsRow
 		&i.IsAdmin,
 		&i.GroupID,
 		&i.OrganizationID,
+		&i.MinTokenIssuedTime,
 	)
 	return i, err
 }
 
 const listUsers = `-- name: ListUsers :many
-SELECT id, role_id, email, username, password, first_name, last_name, is_protected, created_at, updated_at FROM users
+SELECT id, role_id, email, username, password, first_name, last_name, is_protected, created_at, updated_at, min_token_issued_time FROM users
 WHERE role_id = $1
 ORDER BY id
 LIMIT $2
@@ -186,6 +192,7 @@ func (q *Queries) ListUsers(ctx context.Context, arg ListUsersParams) ([]User, e
 			&i.IsProtected,
 			&i.CreatedAt,
 			&i.UpdatedAt,
+			&i.MinTokenIssuedTime,
 		); err != nil {
 			return nil, err
 		}
@@ -201,7 +208,7 @@ func (q *Queries) ListUsers(ctx context.Context, arg ListUsersParams) ([]User, e
 }
 
 const listUsersByRoleID = `-- name: ListUsersByRoleID :many
-SELECT id, role_id, email, username, password, first_name, last_name, is_protected, created_at, updated_at FROM users WHERE role_id = $1
+SELECT id, role_id, email, username, password, first_name, last_name, is_protected, created_at, updated_at, min_token_issued_time FROM users WHERE role_id = $1
 `
 
 func (q *Queries) ListUsersByRoleID(ctx context.Context, roleID int32) ([]User, error) {
@@ -224,6 +231,7 @@ func (q *Queries) ListUsersByRoleID(ctx context.Context, roleID int32) ([]User, 
 			&i.IsProtected,
 			&i.CreatedAt,
 			&i.UpdatedAt,
+			&i.MinTokenIssuedTime,
 		); err != nil {
 			return nil, err
 		}
@@ -238,8 +246,123 @@ func (q *Queries) ListUsersByRoleID(ctx context.Context, roleID int32) ([]User, 
 	return items, nil
 }
 
+const revokeGroupUsersTokens = `-- name: RevokeGroupUsersTokens :one
+UPDATE users SET min_token_issued_time = NOW() - INTERVAL '30 seconds' WHERE role_id IN (SELECT id FROM roles WHERE group_id = $1) RETURNING id, role_id, email, username, password, first_name, last_name, is_protected, created_at, updated_at, min_token_issued_time
+`
+
+func (q *Queries) RevokeGroupUsersTokens(ctx context.Context, groupID int32) (User, error) {
+	row := q.db.QueryRowContext(ctx, revokeGroupUsersTokens, groupID)
+	var i User
+	err := row.Scan(
+		&i.ID,
+		&i.RoleID,
+		&i.Email,
+		&i.Username,
+		&i.Password,
+		&i.FirstName,
+		&i.LastName,
+		&i.IsProtected,
+		&i.CreatedAt,
+		&i.UpdatedAt,
+		&i.MinTokenIssuedTime,
+	)
+	return i, err
+}
+
+const revokeOrganizationUsersTokens = `-- name: RevokeOrganizationUsersTokens :one
+UPDATE users SET min_token_issued_time = NOW() - INTERVAL '30 seconds' WHERE role_id IN (SELECT id FROM roles WHERE group_id IN (SELECT id FROM groups WHERE organization_id = $1)) RETURNING id, role_id, email, username, password, first_name, last_name, is_protected, created_at, updated_at, min_token_issued_time
+`
+
+func (q *Queries) RevokeOrganizationUsersTokens(ctx context.Context, organizationID int32) (User, error) {
+	row := q.db.QueryRowContext(ctx, revokeOrganizationUsersTokens, organizationID)
+	var i User
+	err := row.Scan(
+		&i.ID,
+		&i.RoleID,
+		&i.Email,
+		&i.Username,
+		&i.Password,
+		&i.FirstName,
+		&i.LastName,
+		&i.IsProtected,
+		&i.CreatedAt,
+		&i.UpdatedAt,
+		&i.MinTokenIssuedTime,
+	)
+	return i, err
+}
+
+const revokeRoleUsersTokens = `-- name: RevokeRoleUsersTokens :one
+UPDATE users SET min_token_issued_time = NOW() - INTERVAL '30 seconds' WHERE role_id = $1 RETURNING id, role_id, email, username, password, first_name, last_name, is_protected, created_at, updated_at, min_token_issued_time
+`
+
+func (q *Queries) RevokeRoleUsersTokens(ctx context.Context, roleID int32) (User, error) {
+	row := q.db.QueryRowContext(ctx, revokeRoleUsersTokens, roleID)
+	var i User
+	err := row.Scan(
+		&i.ID,
+		&i.RoleID,
+		&i.Email,
+		&i.Username,
+		&i.Password,
+		&i.FirstName,
+		&i.LastName,
+		&i.IsProtected,
+		&i.CreatedAt,
+		&i.UpdatedAt,
+		&i.MinTokenIssuedTime,
+	)
+	return i, err
+}
+
+const revokeUserToken = `-- name: RevokeUserToken :one
+UPDATE users SET min_token_issued_time = NOW() - INTERVAL '30 seconds' WHERE id = $1 RETURNING id, role_id, email, username, password, first_name, last_name, is_protected, created_at, updated_at, min_token_issued_time
+`
+
+func (q *Queries) RevokeUserToken(ctx context.Context, id int32) (User, error) {
+	row := q.db.QueryRowContext(ctx, revokeUserToken, id)
+	var i User
+	err := row.Scan(
+		&i.ID,
+		&i.RoleID,
+		&i.Email,
+		&i.Username,
+		&i.Password,
+		&i.FirstName,
+		&i.LastName,
+		&i.IsProtected,
+		&i.CreatedAt,
+		&i.UpdatedAt,
+		&i.MinTokenIssuedTime,
+	)
+	return i, err
+}
+
+const revokeUsersTokens = `-- name: RevokeUsersTokens :one
+UPDATE users SET min_token_issued_time = NOW() - INTERVAL '30 seconds' RETURNING id, role_id, email, username, password, first_name, last_name, is_protected, created_at, updated_at, min_token_issued_time
+`
+
+func (q *Queries) RevokeUsersTokens(ctx context.Context) (User, error) {
+	row := q.db.QueryRowContext(ctx, revokeUsersTokens)
+	var i User
+	err := row.Scan(
+		&i.ID,
+		&i.RoleID,
+		&i.Email,
+		&i.Username,
+		&i.Password,
+		&i.FirstName,
+		&i.LastName,
+		&i.IsProtected,
+		&i.CreatedAt,
+		&i.UpdatedAt,
+		&i.MinTokenIssuedTime,
+	)
+	return i, err
+}
+
 const updateUser = `-- name: UpdateUser :one
-UPDATE users SET role_id = $2, email = $3, username = $4, password = $5, first_name = $6, last_name = $7, is_protected = $8, updated_at = NOW() WHERE id = $1 RETURNING id, role_id, email, username, password, first_name, last_name, is_protected, created_at, updated_at
+UPDATE users SET role_id = $2, email = $3, username = $4, password = $5, first_name = $6, last_name = $7, is_protected = $8, updated_at = NOW() WHERE id = $1 RETURNING id, role_id, email, username, password, first_name, last_name, is_protected, created_at, updated_at, min_token_issued_time
 `
 
 type UpdateUserParams struct {
@@ -276,6 +399,7 @@ func (q *Queries) UpdateUser(ctx context.Context, arg UpdateUserParams) (User, e
 		&i.IsProtected,
 		&i.CreatedAt,
 		&i.UpdatedAt,
+		&i.MinTokenIssuedTime,
 	)
 	return i, err
 }

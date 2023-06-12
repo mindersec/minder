@@ -26,6 +26,7 @@ import (
 	"github.com/rs/zerolog/log"
 	"github.com/spf13/viper"
 	"github.com/stacklok/mediator/pkg/auth"
+	"github.com/stacklok/mediator/pkg/db"
 	"google.golang.org/grpc"
 	"google.golang.org/grpc/codes"
 	"google.golang.org/grpc/status"
@@ -34,7 +35,7 @@ import (
 // TokenInfoKey is the key used to store the token info in the context
 var TokenInfoKey struct{}
 
-func parseToken(token string) (auth.UserClaims, error) {
+func parseToken(token string, store db.Store) (auth.UserClaims, error) {
 	var claims auth.UserClaims
 	// need to read pub key from file
 	publicKeyPath := viper.GetString("auth.access_token_public_key")
@@ -46,7 +47,7 @@ func parseToken(token string) (auth.UserClaims, error) {
 		return claims, fmt.Errorf("failed to read public key file")
 	}
 
-	userClaims, err := auth.VerifyToken(token, pubKeyData)
+	userClaims, err := auth.VerifyToken(token, pubKeyData, store)
 	if err != nil {
 		return claims, fmt.Errorf("failed to verify token: %v", err)
 	}
@@ -63,6 +64,8 @@ var superAdminMethods = []string{
 	"/mediator.v1.OrganizationService/CreateOrganization",
 	"/mediator.v1.OrganizationService/GetOrganizations",
 	"/mediator.v1.OrganizationService/DeleteOrganization",
+	"/mediator.v1.RevokeTokensService/RevokeTokens",
+	"/mediator.v1.RevokeTokensService/RevokeUserToken",
 }
 
 var resourceAuthorizations = []map[string]map[string]interface{}{
@@ -256,7 +259,8 @@ func IsRequestAuthorized(ctx context.Context, value int32) bool {
 }
 
 // AuthUnaryInterceptor is a server interceptor for authentication
-func AuthUnaryInterceptor(ctx context.Context, req interface{}, _ *grpc.UnaryServerInfo, handler grpc.UnaryHandler) (any, error) {
+func AuthUnaryInterceptor(ctx context.Context, req interface{}, info *grpc.UnaryServerInfo,
+	handler grpc.UnaryHandler) (any, error) {
 	// bypass auth
 	canBypass := canBypassAuth(ctx)
 	if canBypass {
@@ -270,7 +274,8 @@ func AuthUnaryInterceptor(ctx context.Context, req interface{}, _ *grpc.UnarySer
 		return nil, status.Errorf(codes.Unauthenticated, "no auth token: %v", err)
 	}
 
-	claims, err := parseToken(token)
+	server := info.Server.(*Server)
+	claims, err := parseToken(token, server.store)
 	if err != nil {
 		return nil, status.Errorf(codes.Unauthenticated, "invalid auth token: %v", err)
 	}

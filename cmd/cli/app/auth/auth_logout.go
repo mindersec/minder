@@ -22,12 +22,16 @@
 package auth
 
 import (
+	"context"
 	"fmt"
 	"os"
-	"path/filepath"
+	"time"
+
+	pb "github.com/stacklok/mediator/pkg/generated/protobuf/go/mediator/v1"
 
 	"github.com/spf13/cobra"
 	"github.com/spf13/viper"
+	"github.com/stacklok/mediator/pkg/util"
 )
 
 // auth_logoutCmd represents the logout command
@@ -41,23 +45,20 @@ var auth_logoutCmd = &cobra.Command{
 		}
 	},
 	Run: func(cmd *cobra.Command, args []string) {
-		// Get the XDG_CONFIG_HOME environment variable
-		xdgConfigHome := os.Getenv("XDG_CONFIG_HOME")
-
-		// just delete token from credentials file
-		if xdgConfigHome == "" {
-			homeDir, err := os.UserHomeDir()
-			if err != nil {
-				fmt.Fprintf(os.Stderr, "Error getting home directory: %v\n", err)
-				os.Exit(1)
-			}
-			xdgConfigHome = filepath.Join(homeDir, ".config")
-		}
-
-		filePath := filepath.Join(xdgConfigHome, "mediator", "credentials.json")
-		err := os.Remove(filePath)
+		conn, err := util.GetGrpcConnection(cmd)
 		if err != nil {
-			fmt.Fprintf(os.Stderr, "Error removing credentials file: %v\n", err)
+			fmt.Fprintf(os.Stderr, "Error getting grpc connection: %s\n", err)
+			os.Exit(1)
+		}
+		defer conn.Close()
+
+		client := pb.NewLogOutServiceClient(conn)
+		ctx, cancel := context.WithTimeout(context.Background(), 5*time.Second)
+		defer cancel()
+
+		_, err = client.LogOut(ctx, &pb.LogOutRequest{})
+		if err != nil {
+			fmt.Fprintf(os.Stderr, "Error logging out: %s\n", err)
 			os.Exit(1)
 		}
 		fmt.Println("User logged out.")

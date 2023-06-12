@@ -24,6 +24,7 @@ import (
 	"github.com/golang/mock/gomock"
 	"github.com/spf13/viper"
 	mockdb "github.com/stacklok/mediator/database/mock"
+	"github.com/stacklok/mediator/pkg/auth"
 	mcrypto "github.com/stacklok/mediator/pkg/crypto"
 	"github.com/stacklok/mediator/pkg/db"
 	pb "github.com/stacklok/mediator/pkg/generated/protobuf/go/mediator/v1"
@@ -80,9 +81,8 @@ func TestLogin_gRPC(t *testing.T) {
 			checkResponse: func(t *testing.T, res *pb.LogInResponse, err error) {
 				assert.NoError(t, err)
 				assert.NotNil(t, res)
-				assert.Equal(t, "Success", res.Status)
+				assert.Equal(t, int32(codes.OK), res.Status.Code)
 			},
-			expectedStatusCode: codes.OK,
 		},
 		{
 			name: "EmptyRequest",
@@ -120,4 +120,48 @@ func TestLogin_gRPC(t *testing.T) {
 
 	_ = os.Remove(filepath.Join(".", "access_token_private.pem"))
 	_ = os.Remove(filepath.Join(".", "refresh_token_private.pem"))
+}
+
+func TestLogout_gRPC(t *testing.T) {
+	ctx := context.WithValue(context.Background(), TokenInfoKey, auth.UserClaims{
+		UserId:       1,
+		IsAdmin:      false,
+		IsSuperadmin: false,
+	})
+
+	ctrl := gomock.NewController(t)
+	defer ctrl.Finish()
+
+	mockStore := mockdb.NewMockStore(ctrl)
+	mockStore.EXPECT().RevokeUserToken(gomock.Any(), gomock.Any())
+
+	server := NewServer(mockStore)
+
+	res, err := server.LogOut(ctx, &pb.LogOutRequest{})
+
+	assert.NoError(t, err)
+	assert.NotNil(t, res)
+	assert.Equal(t, int32(codes.OK), res.Status.Code)
+}
+
+func TestRevokeTokens_gRPC(t *testing.T) {
+	ctx := context.WithValue(context.Background(), TokenInfoKey, auth.UserClaims{
+		UserId:       1,
+		IsAdmin:      false,
+		IsSuperadmin: true,
+	})
+
+	ctrl := gomock.NewController(t)
+	defer ctrl.Finish()
+
+	mockStore := mockdb.NewMockStore(ctrl)
+	mockStore.EXPECT().RevokeUsersTokens(gomock.Any())
+
+	server := NewServer(mockStore)
+
+	res, err := server.RevokeTokens(ctx, &pb.RevokeTokensRequest{})
+
+	assert.NoError(t, err)
+	assert.NotNil(t, res)
+	assert.Equal(t, int32(codes.OK), res.Status.Code)
 }

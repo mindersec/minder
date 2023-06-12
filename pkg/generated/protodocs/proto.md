@@ -75,7 +75,12 @@
     - [LogOutRequest](#mediator-v1-LogOutRequest)
     - [LogOutResponse](#mediator-v1-LogOutResponse)
     - [OrganizationRecord](#mediator-v1-OrganizationRecord)
+    - [RevokeTokensRequest](#mediator-v1-RevokeTokensRequest)
+    - [RevokeTokensResponse](#mediator-v1-RevokeTokensResponse)
+    - [RevokeUserTokenRequest](#mediator-v1-RevokeUserTokenRequest)
+    - [RevokeUserTokenResponse](#mediator-v1-RevokeUserTokenResponse)
     - [RoleRecord](#mediator-v1-RoleRecord)
+    - [Status](#mediator-v1-Status)
     - [UserRecord](#mediator-v1-UserRecord)
   
     - [AuthVerifyService](#mediator-v1-AuthVerifyService)
@@ -87,6 +92,7 @@
     - [LogOutService](#mediator-v1-LogOutService)
     - [OAuthService](#mediator-v1-OAuthService)
     - [OrganizationService](#mediator-v1-OrganizationService)
+    - [RevokeTokensService](#mediator-v1-RevokeTokensService)
     - [RoleService](#mediator-v1-RoleService)
     - [SecretsService](#mediator-v1-SecretsService)
     - [UserService](#mediator-v1-UserService)
@@ -1149,7 +1155,7 @@ BUF does not allow grouping (which is a shame)
 
 | Field | Type | Label | Description |
 | ----- | ---- | ----- | ----------- |
-| status | [string](#string) |  |  |
+| status | [Status](#mediator-v1-Status) |  |  |
 | refresh_token | [string](#string) |  |  |
 | access_token | [string](#string) |  |  |
 | refresh_token_expires_in | [int64](#int64) |  |  |
@@ -1178,7 +1184,7 @@ BUF does not allow grouping (which is a shame)
 
 | Field | Type | Label | Description |
 | ----- | ---- | ----- | ----------- |
-| status | [string](#string) |  |  |
+| status | [Status](#mediator-v1-Status) |  |  |
 
 
 
@@ -1204,6 +1210,61 @@ BUF does not allow grouping (which is a shame)
 
 
 
+<a name="mediator-v1-RevokeTokensRequest"></a>
+
+### RevokeTokensRequest
+
+
+
+
+
+
+
+<a name="mediator-v1-RevokeTokensResponse"></a>
+
+### RevokeTokensResponse
+
+
+
+| Field | Type | Label | Description |
+| ----- | ---- | ----- | ----------- |
+| status | [Status](#mediator-v1-Status) |  |  |
+
+
+
+
+
+
+<a name="mediator-v1-RevokeUserTokenRequest"></a>
+
+### RevokeUserTokenRequest
+
+
+
+| Field | Type | Label | Description |
+| ----- | ---- | ----- | ----------- |
+| user_id | [int32](#int32) |  |  |
+
+
+
+
+
+
+<a name="mediator-v1-RevokeUserTokenResponse"></a>
+
+### RevokeUserTokenResponse
+
+
+
+| Field | Type | Label | Description |
+| ----- | ---- | ----- | ----------- |
+| status | [Status](#mediator-v1-Status) |  |  |
+
+
+
+
+
+
 <a name="mediator-v1-RoleRecord"></a>
 
 ### RoleRecord
@@ -1219,6 +1280,22 @@ BUF does not allow grouping (which is a shame)
 | is_protected | [bool](#bool) |  |  |
 | created_at | [google.protobuf.Timestamp](#google-protobuf-Timestamp) |  |  |
 | updated_at | [google.protobuf.Timestamp](#google-protobuf-Timestamp) |  |  |
+
+
+
+
+
+
+<a name="mediator-v1-Status"></a>
+
+### Status
+
+
+
+| Field | Type | Label | Description |
+| ----- | ---- | ----- | ----------- |
+| code | [int32](#int32) |  |  |
+| message | [string](#string) |  |  |
 
 
 
@@ -1313,7 +1390,7 @@ replies with OK
 <a name="mediator-v1-LogInService"></a>
 
 ### LogInService
-Logout of Mediator
+LogIn to Mediator
 
 | Method Name | Request Type | Response Type | Description |
 | ----------- | ------------ | ------------- | ------------|
@@ -1354,6 +1431,17 @@ manage Organizations CRUD
 | GetOrganization | [GetOrganizationRequest](#mediator-v1-GetOrganizationRequest) | [GetOrganizationResponse](#mediator-v1-GetOrganizationResponse) |  |
 | GetOrganizationByName | [GetOrganizationByNameRequest](#mediator-v1-GetOrganizationByNameRequest) | [GetOrganizationByNameResponse](#mediator-v1-GetOrganizationByNameResponse) |  |
 | DeleteOrganization | [DeleteOrganizationRequest](#mediator-v1-DeleteOrganizationRequest) | [DeleteOrganizationResponse](#mediator-v1-DeleteOrganizationResponse) |  |
+
+
+<a name="mediator-v1-RevokeTokensService"></a>
+
+### RevokeTokensService
+Revoke access tokens generally
+
+| Method Name | Request Type | Response Type | Description |
+| ----------- | ------------ | ------------- | ------------|
+| RevokeTokens | [RevokeTokensRequest](#mediator-v1-RevokeTokensRequest) | [RevokeTokensResponse](#mediator-v1-RevokeTokensResponse) |  |
+| RevokeUserToken | [RevokeUserTokenRequest](#mediator-v1-RevokeUserTokenRequest) | [RevokeUserTokenResponse](#mediator-v1-RevokeUserTokenResponse) |  |
 
 
 <a name="mediator-v1-RoleService"></a>

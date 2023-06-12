@@ -23,9 +23,15 @@
 package auth
 
 import (
+	"context"
+	"database/sql"
 	"testing"
 	"time"
 
+	mockdb "github.com/stacklok/mediator/database/mock"
+
+	"github.com/golang/mock/gomock"
+	"github.com/stacklok/mediator/pkg/db"
 	"github.com/stacklok/mediator/pkg/util"
 )
 
@@ -72,6 +78,9 @@ func TestVerifyToken(t *testing.T) {
 	claims := UserClaims{
 		UserId: testUserID,
 	}
+	ctrl := gomock.NewController(t)
+	defer ctrl.Finish()
+	mockStore := mockdb.NewMockStore(ctrl)
 
 	// generate test keys
 	access_key, access_pub_key := util.RandomKeypair(2048)
@@ -82,7 +91,10 @@ func TestVerifyToken(t *testing.T) {
 	if err != nil {
 		t.Errorf("Error generating token: %v", err)
 	}
-	retClaims, err := VerifyToken(tokenString, access_pub_key)
+
+	mockStore.EXPECT().GetUserByID(context.Background(), gomock.Any())
+
+	retClaims, err := VerifyToken(tokenString, access_pub_key, mockStore)
 	if err != nil {
 		t.Errorf("Error verifying token: %v", err)
 	}
@@ -92,16 +104,43 @@ func TestVerifyToken(t *testing.T) {
 	}
 
 	// Test error case with invalid token string
-	_, err = VerifyToken("invalid_token_string", access_key)
+	_, err = VerifyToken("invalid_token_string", access_key, mockStore)
 	if err == nil {
 		t.Error("Expected error with invalid token string, but got nil")
 	}
 
 	// Test error case with invalid key
-	_, err = VerifyToken(tokenString, []byte("invalid_key"))
+	_, err = VerifyToken(tokenString, []byte("invalid_key"), mockStore)
 	if err == nil {
 		t.Error("Expected error with invalid key, but got nil")
 	} else {
 		t.Logf("Successfully received error when using an invalid key: %v", err)
+	}
+}
+
+func TestVerifyExpiredToken(t *testing.T) {
+	claims := UserClaims{
+		UserId: testUserID,
+	}
+	ctrl := gomock.NewController(t)
+	defer ctrl.Finish()
+	mockStore := mockdb.NewMockStore(ctrl)
+
+	// generate test keys
+	access_key, access_pub_key := util.RandomKeypair(2048)
+	refresh_key, _ := util.RandomKeypair(2048)
+
+	tokenString, _, _, _, err := GenerateToken(claims, access_key, refresh_key, testExpiry, testRefreshExp)
+	if err != nil {
+		t.Errorf("Error generating token: %v", err)
+	}
+
+	currentTime := time.Unix(time.Now().Unix()+3600, 0)
+	mockStore.EXPECT().GetUserByID(context.Background(),
+		gomock.Any()).Return(db.User{MinTokenIssuedTime: sql.NullTime{Time: currentTime, Valid: true}}, nil)
+
+	_, err = VerifyToken(tokenString, access_pub_key, mockStore)
+	if err != nil {
+		t.Logf("Successfully received error when using an expired token: %v", err)
 	}
 }

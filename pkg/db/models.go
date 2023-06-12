@@ -9,14 +9,6 @@ import (
 	"time"
 )
 
-type AccessToken struct {
-	ID             int32     `json:"id"`
-	OrganizationID int32     `json:"organization_id"`
-	EncryptedToken string    `json:"encrypted_token"`
-	CreatedAt      time.Time `json:"created_at"`
-	UpdatedAt      time.Time `json:"updated_at"`
-}
-
 type Group struct {
 	ID             int32          `json:"id"`
 	OrganizationID int32          `json:"organization_id"`
@@ -46,14 +38,15 @@ type Role struct {
 }
 
 type User struct {
-	ID          int32          `json:"id"`
-	RoleID      int32          `json:"role_id"`
-	Email       sql.NullString `json:"email"`
-	Username    string         `json:"username"`
-	Password    string         `json:"password"`
-	FirstName   sql.NullString `json:"first_name"`
-	LastName    sql.NullString `json:"last_name"`
-	IsProtected bool           `json:"is_protected"`
-	CreatedAt   time.Time      `json:"created_at"`
-	UpdatedAt   time.Time      `json:"updated_at"`
+	ID                 int32          `json:"id"`
+	RoleID             int32          `json:"role_id"`
+	Email              sql.NullString `json:"email"`
+	Username           string         `json:"username"`
+	Password           string         `json:"password"`
+	FirstName          sql.NullString `json:"first_name"`
+	LastName           sql.NullString `json:"last_name"`
+	IsProtected        bool           `json:"is_protected"`
+	CreatedAt          time.Time      `json:"created_at"`
+	UpdatedAt          time.Time      `json:"updated_at"`
+	MinTokenIssuedTime sql.NullTime   `json:"min_token_issued_time"`
 }

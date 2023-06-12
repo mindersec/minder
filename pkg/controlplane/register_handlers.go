@@ -62,6 +62,10 @@ func RegisterGatewayHTTPHandlers(ctx context.Context, gwmux *runtime.ServeMux, g
 		log.Fatalf("failed to register gateway: %v", err)
 	}
 
+	// Register Tokens service
+	if err := pb.RegisterRevokeTokensServiceHandlerFromEndpoint(ctx, gwmux, grpcAddress, opts); err != nil {
+		log.Fatalf("failed to register gateway: %v", err)
+	}
 }
 
 // RegisterGRPCServices registers the GRPC services
@@ -77,6 +81,9 @@ func RegisterGRPCServices(s *Server) {
 
 	// Register the Logout service
 	pb.RegisterLogOutServiceServer(s.grpcServer, s)
+
+	// Register the Tokens service
+	pb.RegisterRevokeTokensServiceServer(s.grpcServer, s)
 
 	// Register the Organization service
 	pb.RegisterOrganizationServiceServer(s.grpcServer, s)

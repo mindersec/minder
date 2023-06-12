@@ -29,6 +29,7 @@ import (
 
 	"github.com/spf13/cobra"
 	"github.com/stacklok/mediator/pkg/util"
+	"google.golang.org/grpc/codes"
 
 	pb "github.com/stacklok/mediator/pkg/generated/protobuf/go/mediator/v1"
 
@@ -58,7 +59,7 @@ will be saved to $XDG_CONFIG_HOME/mediator/credentials.json`,
 		defer conn.Close()
 
 		client := pb.NewLogInServiceClient(conn)
-		ctx, cancel := context.WithTimeout(context.Background(), time.Second)
+		ctx, cancel := context.WithTimeout(context.Background(), 5*time.Second)
 		defer cancel()
 
 		// call login endpoint
@@ -67,7 +68,7 @@ will be saved to $XDG_CONFIG_HOME/mediator/credentials.json`,
 			fmt.Fprintf(os.Stderr, "Error logging in: %s\n", err)
 			os.Exit(1)
 		}
-		if resp.Status != "Success" {
+		if resp.Status.Code != int32(codes.OK) {
 			fmt.Fprintf(os.Stderr, "Error logging in: %s\n", resp.Status)
 			os.Exit(1)
 		}

@@ -22,6 +22,7 @@
 package auth
 
 import (
+	"context"
 	"crypto/rsa"
 	"crypto/x509"
 	"encoding/pem"
@@ -29,6 +30,7 @@ import (
 	"time"
 
 	"github.com/golang-jwt/jwt/v4"
+	"github.com/stacklok/mediator/pkg/db"
 )
 
 // UserClaims contains the claims for a user
@@ -92,7 +94,7 @@ func GenerateToken(userClaims UserClaims, accessPrivateKey []byte, refreshPrivat
 }
 
 // VerifyToken verifies the token string and returns the user ID
-func VerifyToken(tokenString string, publicKey []byte) (UserClaims, error) {
+func VerifyToken(tokenString string, publicKey []byte, store db.Store) (UserClaims, error) {
 	var userClaims UserClaims
 	// extract the pubkey from the pem
 	pubPem, _ := pem.Decode(publicKey)
@@ -123,6 +125,30 @@ func VerifyToken(tokenString string, publicKey []byte) (UserClaims, error) {
 	claims, ok := token.Claims.(jwt.MapClaims)
 	if !ok || !token.Valid {
 		return userClaims, fmt.Errorf("invalid token")
+	}
+
+	// validate that iat is on the past
+	if claims, ok := token.Claims.(jwt.MapClaims); ok {
+		if !claims.VerifyIssuedAt(time.Now().Unix(), true) {
+			return userClaims, fmt.Errorf("invalid token")
+		}
+	}
+
+	// we have the user id, read the auth
+	userId := int32(claims["userId"].(float64))
+	user, err := store.GetUserByID(context.Background(), userId)
+	if err != nil {
+		return userClaims, fmt.Errorf("invalid token")
+	}
+
+	// if we have a value in issued at, we compare against iat
+	iat := int64(claims["iat"].(float64))
+	if user.MinTokenIssuedTime.Valid {
+		unitTs := user.MinTokenIssuedTime.Time.Unix()
+		if unitTs > iat {
+			// token was issued after the iat
+			return userClaims, fmt.Errorf("invalid token")
+		}
 	}
 
 	// generate claims
