@@ -61,6 +61,7 @@ linters:
     - ineffassign
     - promlinter
     - revive
+    - staticcheck
     - unused
 
 issues:

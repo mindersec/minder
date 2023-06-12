@@ -49,12 +49,11 @@ mediator control plane.`,
 		force := util.GetConfigValue("force", "force", cmd, false).(bool)
 
 		conn, err := util.GetGrpcConnection(cmd)
-		defer conn.Close()
-
 		if err != nil {
 			fmt.Fprintf(os.Stderr, "Error getting grpc connection: %s\n", err)
 			os.Exit(1)
 		}
+		defer conn.Close()
 
 		client := pb.NewUserServiceClient(conn)
 		ctx, cancel := context.WithTimeout(context.Background(), time.Second)
