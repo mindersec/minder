@@ -162,5 +162,5 @@ actions such as adding repositories.`,
 
 func init() {
 	EnrollCmd.AddCommand(enrollProviderCmd)
-	enrollProviderCmd.Flags().StringP("provider", "n", "", "Name for the organization to query")
+	enrollProviderCmd.Flags().StringP("provider", "n", "", "Name for the provider to enroll")
 }
