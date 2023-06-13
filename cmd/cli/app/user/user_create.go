@@ -128,8 +128,9 @@ within a mediator control plane.`,
 			}
 
 			clientr := pb.NewRoleServiceClient(conn)
+			isAdmin := true
 			respr, err := clientr.CreateRole(ctx, &pb.CreateRoleRequest{GroupId: respg.GroupId,
-				Name: username.(string) + "-role"})
+				Name: username.(string) + "-role", IsAdmin: &isAdmin})
 
 			if err != nil {
 				fmt.Fprintf(os.Stderr, "Error creating role: %s\n", err)
