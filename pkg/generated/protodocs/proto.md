@@ -78,6 +78,8 @@
     - [RevokeUserTokenRequest](#mediator-v1-RevokeUserTokenRequest)
     - [RevokeUserTokenResponse](#mediator-v1-RevokeUserTokenResponse)
     - [RoleRecord](#mediator-v1-RoleRecord)
+    - [UpdatePasswordRequest](#mediator-v1-UpdatePasswordRequest)
+    - [UpdatePasswordResponse](#mediator-v1-UpdatePasswordResponse)
     - [UserRecord](#mediator-v1-UserRecord)
     - [VerifyRequest](#mediator-v1-VerifyRequest)
     - [VerifyResponse](#mediator-v1-VerifyResponse)
@@ -277,6 +279,7 @@ User service
 | first_name | [string](#string) | optional |  |
 | last_name | [string](#string) | optional |  |
 | is_protected | [bool](#bool) | optional |  |
+| needs_password_change | [bool](#bool) | optional |  |
 
 
 
@@ -299,6 +302,7 @@ User service
 | first_name | [string](#string) | optional |  |
 | last_name | [string](#string) | optional |  |
 | is_protected | [bool](#bool) | optional |  |
+| needs_password_change | [bool](#bool) | optional |  |
 | created_at | [google.protobuf.Timestamp](#google-protobuf-Timestamp) |  |  |
 | updated_at | [google.protobuf.Timestamp](#google-protobuf-Timestamp) |  |  |
 
@@ -1243,6 +1247,31 @@ BUF does not allow grouping (which is a shame)
 
 
 
+<a name="mediator-v1-UpdatePasswordRequest"></a>
+
+### UpdatePasswordRequest
+
+
+
+| Field | Type | Label | Description |
+| ----- | ---- | ----- | ----------- |
+| password | [string](#string) |  |  |
+
+
+
+
+
+
+<a name="mediator-v1-UpdatePasswordResponse"></a>
+
+### UpdatePasswordResponse
+
+
+
+
+
+
+
 <a name="mediator-v1-UserRecord"></a>
 
 ### UserRecord
@@ -1259,6 +1288,7 @@ user record to be returned
 | first_name | [string](#string) | optional |  |
 | last_name | [string](#string) | optional |  |
 | is_protected | [bool](#bool) | optional |  |
+| needs_password_change | [bool](#bool) | optional |  |
 | created_at | [google.protobuf.Timestamp](#google-protobuf-Timestamp) |  |  |
 | updated_at | [google.protobuf.Timestamp](#google-protobuf-Timestamp) |  |  |
 
@@ -1414,6 +1444,7 @@ manage Users CRUD
 | GetUserById | [GetUserByIdRequest](#mediator-v1-GetUserByIdRequest) | [GetUserByIdResponse](#mediator-v1-GetUserByIdResponse) |  |
 | GetUserByUserName | [GetUserByUserNameRequest](#mediator-v1-GetUserByUserNameRequest) | [GetUserByUserNameResponse](#mediator-v1-GetUserByUserNameResponse) |  |
 | GetUserByEmail | [GetUserByEmailRequest](#mediator-v1-GetUserByEmailRequest) | [GetUserByEmailResponse](#mediator-v1-GetUserByEmailResponse) |  |
+| UpdatePassword | [UpdatePasswordRequest](#mediator-v1-UpdatePasswordRequest) | [UpdatePasswordResponse](#mediator-v1-UpdatePasswordResponse) |  |
 
 
 <a name="mediator-v1-VulnerabilitiesService"></a>

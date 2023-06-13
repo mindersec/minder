@@ -281,6 +281,12 @@ func AuthUnaryInterceptor(ctx context.Context, req interface{}, info *grpc.Unary
 	if err != nil {
 		return nil, status.Errorf(codes.Unauthenticated, "invalid auth token: %v", err)
 	}
+
+	// check if we need a password change
+	if claims.NeedsPasswordChange {
+		return nil, status.Errorf(codes.Unauthenticated, "password change required")
+	}
+
 	if claims.IsSuperadmin {
 		// is authorized to everything
 		ctx := context.WithValue(ctx, TokenInfoKey, claims)

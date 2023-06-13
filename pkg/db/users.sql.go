@@ -11,17 +11,18 @@ import (
 )
 
 const createUser = `-- name: CreateUser :one
-INSERT INTO users (role_id, email, username, password, first_name, last_name, is_protected) VALUES ($1, $2, $3, $4, $5, $6, $7) RETURNING id, role_id, email, username, password, first_name, last_name, is_protected, created_at, updated_at, min_token_issued_time
+INSERT INTO users (role_id, email, username, password, first_name, last_name, is_protected, needs_password_change) VALUES ($1, $2, $3, $4, $5, $6, $7, $8) RETURNING id, role_id, email, username, password, needs_password_change, first_name, last_name, is_protected, created_at, updated_at, min_token_issued_time
 `
 
 type CreateUserParams struct {
-	RoleID      int32          `json:"role_id"`
-	Email       sql.NullString `json:"email"`
-	Username    string         `json:"username"`
-	Password    string         `json:"password"`
-	FirstName   sql.NullString `json:"first_name"`
-	LastName    sql.NullString `json:"last_name"`
-	IsProtected bool           `json:"is_protected"`
+	RoleID              int32          `json:"role_id"`
+	Email               sql.NullString `json:"email"`
+	Username            string         `json:"username"`
+	Password            string         `json:"password"`
+	FirstName           sql.NullString `json:"first_name"`
+	LastName            sql.NullString `json:"last_name"`
+	IsProtected         bool           `json:"is_protected"`
+	NeedsPasswordChange bool           `json:"needs_password_change"`
 }
 
 func (q *Queries) CreateUser(ctx context.Context, arg CreateUserParams) (User, error) {
@@ -33,6 +34,7 @@ func (q *Queries) CreateUser(ctx context.Context, arg CreateUserParams) (User, e
 		arg.FirstName,
 		arg.LastName,
 		arg.IsProtected,
+		arg.NeedsPasswordChange,
 	)
 	var i User
 	err := row.Scan(
@@ -41,6 +43,7 @@ func (q *Queries) CreateUser(ctx context.Context, arg CreateUserParams) (User, e
 		&i.Email,
 		&i.Username,
 		&i.Password,
+		&i.NeedsPasswordChange,
 		&i.FirstName,
 		&i.LastName,
 		&i.IsProtected,
@@ -61,7 +64,7 @@ func (q *Queries) DeleteUser(ctx context.Context, id int32) error {
 }
 
 const getUserByEmail = `-- name: GetUserByEmail :one
-SELECT id, role_id, email, username, password, first_name, last_name, is_protected, created_at, updated_at, min_token_issued_time FROM users WHERE email = $1
+SELECT id, role_id, email, username, password, needs_password_change, first_name, last_name, is_protected, created_at, updated_at, min_token_issued_time FROM users WHERE email = $1
 `
 
 func (q *Queries) GetUserByEmail(ctx context.Context, email sql.NullString) (User, error) {
@@ -73,6 +76,7 @@ func (q *Queries) GetUserByEmail(ctx context.Context, email sql.NullString) (Use
 		&i.Email,
 		&i.Username,
 		&i.Password,
+		&i.NeedsPasswordChange,
 		&i.FirstName,
 		&i.LastName,
 		&i.IsProtected,
@@ -84,7 +88,7 @@ func (q *Queries) GetUserByEmail(ctx context.Context, email sql.NullString) (Use
 }
 
 const getUserByID = `-- name: GetUserByID :one
-SELECT id, role_id, email, username, password, first_name, last_name, is_protected, created_at, updated_at, min_token_issued_time FROM users WHERE id = $1
+SELECT id, role_id, email, username, password, needs_password_change, first_name, last_name, is_protected, created_at, updated_at, min_token_issued_time FROM users WHERE id = $1
 `
 
 func (q *Queries) GetUserByID(ctx context.Context, id int32) (User, error) {
@@ -96,6 +100,7 @@ func (q *Queries) GetUserByID(ctx context.Context, id int32) (User, error) {
 		&i.Email,
 		&i.Username,
 		&i.Password,
+		&i.NeedsPasswordChange,
 		&i.FirstName,
 		&i.LastName,
 		&i.IsProtected,
@@ -107,7 +112,7 @@ func (q *Queries) GetUserByID(ctx context.Context, id int32) (User, error) {
 }
 
 const getUserByUserName = `-- name: GetUserByUserName :one
-SELECT id, role_id, email, username, password, first_name, last_name, is_protected, created_at, updated_at, min_token_issued_time FROM users WHERE username = $1
+SELECT id, role_id, email, username, password, needs_password_change, first_name, last_name, is_protected, created_at, updated_at, min_token_issued_time FROM users WHERE username = $1
 `
 
 func (q *Queries) GetUserByUserName(ctx context.Context, username string) (User, error) {
@@ -119,6 +124,7 @@ func (q *Queries) GetUserByUserName(ctx context.Context, username string) (User,
 		&i.Email,
 		&i.Username,
 		&i.Password,
+		&i.NeedsPasswordChange,
 		&i.FirstName,
 		&i.LastName,
 		&i.IsProtected,
@@ -131,17 +137,19 @@ func (q *Queries) GetUserByUserName(ctx context.Context, username string) (User,
 
 const getUserClaims = `-- name: GetUserClaims :one
 SELECT u.id as user_id, u.role_id as role_id, r.is_admin as is_admin, r.group_id as group_id,
-g.organization_id as organization_id, u.min_token_issued_time AS min_token_issued_time FROM users u
+g.organization_id as organization_id, u.min_token_issued_time AS min_token_issued_time,
+u.needs_password_change as needs_password_change FROM users u
 INNER JOIN roles r ON u.role_id = r.id INNER JOIN groups g ON r.group_id = g.id WHERE u.id = $1
 `
 
 type GetUserClaimsRow struct {
-	UserID             int32        `json:"user_id"`
-	RoleID             int32        `json:"role_id"`
-	IsAdmin            bool         `json:"is_admin"`
-	GroupID            int32        `json:"group_id"`
-	OrganizationID     int32        `json:"organization_id"`
-	MinTokenIssuedTime sql.NullTime `json:"min_token_issued_time"`
+	UserID              int32        `json:"user_id"`
+	RoleID              int32        `json:"role_id"`
+	IsAdmin             bool         `json:"is_admin"`
+	GroupID             int32        `json:"group_id"`
+	OrganizationID      int32        `json:"organization_id"`
+	MinTokenIssuedTime  sql.NullTime `json:"min_token_issued_time"`
+	NeedsPasswordChange bool         `json:"needs_password_change"`
 }
 
 func (q *Queries) GetUserClaims(ctx context.Context, id int32) (GetUserClaimsRow, error) {
@@ -154,12 +162,13 @@ func (q *Queries) GetUserClaims(ctx context.Context, id int32) (GetUserClaimsRow
 		&i.GroupID,
 		&i.OrganizationID,
 		&i.MinTokenIssuedTime,
+		&i.NeedsPasswordChange,
 	)
 	return i, err
 }
 
 const listUsers = `-- name: ListUsers :many
-SELECT id, role_id, email, username, password, first_name, last_name, is_protected, created_at, updated_at, min_token_issued_time FROM users
+SELECT id, role_id, email, username, password, needs_password_change, first_name, last_name, is_protected, created_at, updated_at, min_token_issued_time FROM users
 WHERE role_id = $1
 ORDER BY id
 LIMIT $2
@@ -187,6 +196,7 @@ func (q *Queries) ListUsers(ctx context.Context, arg ListUsersParams) ([]User, e
 			&i.Email,
 			&i.Username,
 			&i.Password,
+			&i.NeedsPasswordChange,
 			&i.FirstName,
 			&i.LastName,
 			&i.IsProtected,
@@ -208,7 +218,7 @@ func (q *Queries) ListUsers(ctx context.Context, arg ListUsersParams) ([]User, e
 }
 
 const listUsersByRoleID = `-- name: ListUsersByRoleID :many
-SELECT id, role_id, email, username, password, first_name, last_name, is_protected, created_at, updated_at, min_token_issued_time FROM users WHERE role_id = $1
+SELECT id, role_id, email, username, password, needs_password_change, first_name, last_name, is_protected, created_at, updated_at, min_token_issued_time FROM users WHERE role_id = $1
 `
 
 func (q *Queries) ListUsersByRoleID(ctx context.Context, roleID int32) ([]User, error) {
@@ -226,6 +236,7 @@ func (q *Queries) ListUsersByRoleID(ctx context.Context, roleID int32) ([]User, 
 			&i.Email,
 			&i.Username,
 			&i.Password,
+			&i.NeedsPasswordChange,
 			&i.FirstName,
 			&i.LastName,
 			&i.IsProtected,
@@ -247,7 +258,7 @@ func (q *Queries) ListUsersByRoleID(ctx context.Context, roleID int32) ([]User, 
 }
 
 const revokeGroupUsersTokens = `-- name: RevokeGroupUsersTokens :one
-UPDATE users SET min_token_issued_time = NOW() - INTERVAL '30 seconds' WHERE role_id IN (SELECT id FROM roles WHERE group_id = $1) RETURNING id, role_id, email, username, password, first_name, last_name, is_protected, created_at, updated_at, min_token_issued_time
+UPDATE users SET min_token_issued_time = NOW() - INTERVAL '30 seconds' WHERE role_id IN (SELECT id FROM roles WHERE group_id = $1) RETURNING id, role_id, email, username, password, needs_password_change, first_name, last_name, is_protected, created_at, updated_at, min_token_issued_time
 `
 
 func (q *Queries) RevokeGroupUsersTokens(ctx context.Context, groupID int32) (User, error) {
@@ -259,6 +270,7 @@ func (q *Queries) RevokeGroupUsersTokens(ctx context.Context, groupID int32) (Us
 		&i.Email,
 		&i.Username,
 		&i.Password,
+		&i.NeedsPasswordChange,
 		&i.FirstName,
 		&i.LastName,
 		&i.IsProtected,
@@ -270,7 +282,7 @@ func (q *Queries) RevokeGroupUsersTokens(ctx context.Context, groupID int32) (Us
 }
 
 const revokeOrganizationUsersTokens = `-- name: RevokeOrganizationUsersTokens :one
-UPDATE users SET min_token_issued_time = NOW() - INTERVAL '30 seconds' WHERE role_id IN (SELECT id FROM roles WHERE group_id IN (SELECT id FROM groups WHERE organization_id = $1)) RETURNING id, role_id, email, username, password, first_name, last_name, is_protected, created_at, updated_at, min_token_issued_time
+UPDATE users SET min_token_issued_time = NOW() - INTERVAL '30 seconds' WHERE role_id IN (SELECT id FROM roles WHERE group_id IN (SELECT id FROM groups WHERE organization_id = $1)) RETURNING id, role_id, email, username, password, needs_password_change, first_name, last_name, is_protected, created_at, updated_at, min_token_issued_time
 `
 
 func (q *Queries) RevokeOrganizationUsersTokens(ctx context.Context, organizationID int32) (User, error) {
@@ -282,6 +294,7 @@ func (q *Queries) RevokeOrganizationUsersTokens(ctx context.Context, organizatio
 		&i.Email,
 		&i.Username,
 		&i.Password,
+		&i.NeedsPasswordChange,
 		&i.FirstName,
 		&i.LastName,
 		&i.IsProtected,
@@ -293,7 +306,7 @@ func (q *Queries) RevokeOrganizationUsersTokens(ctx context.Context, organizatio
 }
 
 const revokeRoleUsersTokens = `-- name: RevokeRoleUsersTokens :one
-UPDATE users SET min_token_issued_time = NOW() - INTERVAL '30 seconds' WHERE role_id = $1 RETURNING id, role_id, email, username, password, first_name, last_name, is_protected, created_at, updated_at, min_token_issued_time
+UPDATE users SET min_token_issued_time = NOW() - INTERVAL '30 seconds' WHERE role_id = $1 RETURNING id, role_id, email, username, password, needs_password_change, first_name, last_name, is_protected, created_at, updated_at, min_token_issued_time
 `
 
 func (q *Queries) RevokeRoleUsersTokens(ctx context.Context, roleID int32) (User, error) {
@@ -305,6 +318,7 @@ func (q *Queries) RevokeRoleUsersTokens(ctx context.Context, roleID int32) (User
 		&i.Email,
 		&i.Username,
 		&i.Password,
+		&i.NeedsPasswordChange,
 		&i.FirstName,
 		&i.LastName,
 		&i.IsProtected,
@@ -316,7 +330,7 @@ func (q *Queries) RevokeRoleUsersTokens(ctx context.Context, roleID int32) (User
 }
 
 const revokeUserToken = `-- name: RevokeUserToken :one
-UPDATE users SET min_token_issued_time = NOW() - INTERVAL '30 seconds' WHERE id = $1 RETURNING id, role_id, email, username, password, first_name, last_name, is_protected, created_at, updated_at, min_token_issued_time
+UPDATE users SET min_token_issued_time = NOW() - INTERVAL '30 seconds' WHERE id = $1 RETURNING id, role_id, email, username, password, needs_password_change, first_name, last_name, is_protected, created_at, updated_at, min_token_issued_time
 `
 
 func (q *Queries) RevokeUserToken(ctx context.Context, id int32) (User, error) {
@@ -328,6 +342,7 @@ func (q *Queries) RevokeUserToken(ctx context.Context, id int32) (User, error) {
 		&i.Email,
 		&i.Username,
 		&i.Password,
+		&i.NeedsPasswordChange,
 		&i.FirstName,
 		&i.LastName,
 		&i.IsProtected,
@@ -339,7 +354,7 @@ func (q *Queries) RevokeUserToken(ctx context.Context, id int32) (User, error) {
 }
 
 const revokeUsersTokens = `-- name: RevokeUsersTokens :one
-UPDATE users SET min_token_issued_time = NOW() - INTERVAL '30 seconds' RETURNING id, role_id, email, username, password, first_name, last_name, is_protected, created_at, updated_at, min_token_issued_time
+UPDATE users SET min_token_issued_time = NOW() - INTERVAL '30 seconds' RETURNING id, role_id, email, username, password, needs_password_change, first_name, last_name, is_protected, created_at, updated_at, min_token_issued_time
 `
 
 func (q *Queries) RevokeUsersTokens(ctx context.Context) (User, error) {
@@ -351,6 +366,36 @@ func (q *Queries) RevokeUsersTokens(ctx context.Context) (User, error) {
 		&i.Email,
 		&i.Username,
 		&i.Password,
+		&i.NeedsPasswordChange,
+		&i.FirstName,
+		&i.LastName,
+		&i.IsProtected,
+		&i.CreatedAt,
+		&i.UpdatedAt,
+		&i.MinTokenIssuedTime,
+	)
+	return i, err
+}
+
+const updatePassword = `-- name: UpdatePassword :one
+UPDATE users SET password = $2, needs_password_change = FALSE, updated_at = NOW() WHERE id = $1 RETURNING id, role_id, email, username, password, needs_password_change, first_name, last_name, is_protected, created_at, updated_at, min_token_issued_time
+`
+
+type UpdatePasswordParams struct {
+	ID       int32  `json:"id"`
+	Password string `json:"password"`
+}
+
+func (q *Queries) UpdatePassword(ctx context.Context, arg UpdatePasswordParams) (User, error) {
+	row := q.db.QueryRowContext(ctx, updatePassword, arg.ID, arg.Password)
+	var i User
+	err := row.Scan(
+		&i.ID,
+		&i.RoleID,
+		&i.Email,
+		&i.Username,
+		&i.Password,
+		&i.NeedsPasswordChange,
 		&i.FirstName,
 		&i.LastName,
 		&i.IsProtected,
@@ -362,7 +407,7 @@ func (q *Queries) RevokeUsersTokens(ctx context.Context) (User, error) {
 }
 
 const updateUser = `-- name: UpdateUser :one
-UPDATE users SET role_id = $2, email = $3, username = $4, password = $5, first_name = $6, last_name = $7, is_protected = $8, updated_at = NOW() WHERE id = $1 RETURNING id, role_id, email, username, password, first_name, last_name, is_protected, created_at, updated_at, min_token_issued_time
+UPDATE users SET role_id = $2, email = $3, username = $4, password = $5, first_name = $6, last_name = $7, is_protected = $8, updated_at = NOW() WHERE id = $1 RETURNING id, role_id, email, username, password, needs_password_change, first_name, last_name, is_protected, created_at, updated_at, min_token_issued_time
 `
 
 type UpdateUserParams struct {
@@ -394,6 +439,7 @@ func (q *Queries) UpdateUser(ctx context.Context, arg UpdateUserParams) (User, e
 		&i.Email,
 		&i.Username,
 		&i.Password,
+		&i.NeedsPasswordChange,
 		&i.FirstName,
 		&i.LastName,
 		&i.IsProtected,

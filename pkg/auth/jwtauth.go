@@ -35,12 +35,13 @@ import (
 
 // UserClaims contains the claims for a user
 type UserClaims struct {
-	UserId         int32
-	RoleId         int32
-	GroupId        int32
-	OrganizationId int32
-	IsAdmin        bool
-	IsSuperadmin   bool
+	UserId              int32
+	RoleId              int32
+	GroupId             int32
+	OrganizationId      int32
+	IsAdmin             bool
+	IsSuperadmin        bool
+	NeedsPasswordChange bool
 }
 
 // GenerateToken generates a JWT token
@@ -52,14 +53,15 @@ func GenerateToken(userClaims UserClaims, accessPrivateKey []byte, refreshPrivat
 	tokenExpirationTime := time.Now().Add(time.Duration(expiry) * time.Second).Unix()
 
 	token := jwt.NewWithClaims(jwt.SigningMethodRS256, jwt.MapClaims{
-		"userId":  int32(userClaims.UserId),
-		"roleId":  int32(userClaims.RoleId),
-		"groupId": int32(userClaims.GroupId),
-		"orgId":   int32(userClaims.OrganizationId),
-		"isAdmin": userClaims.IsAdmin,
-		"isSuper": userClaims.IsSuperadmin,
-		"iat":     time.Now().Unix(),
-		"exp":     tokenExpirationTime,
+		"userId":              int32(userClaims.UserId),
+		"roleId":              int32(userClaims.RoleId),
+		"groupId":             int32(userClaims.GroupId),
+		"orgId":               int32(userClaims.OrganizationId),
+		"isAdmin":             userClaims.IsAdmin,
+		"isSuper":             userClaims.IsSuperadmin,
+		"iat":                 time.Now().Unix(),
+		"exp":                 tokenExpirationTime,
+		"needsPasswordChange": userClaims.NeedsPasswordChange,
 	})
 
 	accessKey, err := jwt.ParseRSAPrivateKeyFromPEM(accessPrivateKey)
@@ -157,6 +159,7 @@ func VerifyToken(tokenString string, publicKey []byte, store db.Store) (UserClai
 	userClaims.OrganizationId = int32(claims["orgId"].(float64))
 	userClaims.IsAdmin = claims["isAdmin"].(bool)
 	userClaims.IsSuperadmin = claims["isSuper"].(bool)
+	userClaims.NeedsPasswordChange = claims["needsPasswordChange"].(bool)
 
 	return userClaims, nil
 }

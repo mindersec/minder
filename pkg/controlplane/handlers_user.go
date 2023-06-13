@@ -21,6 +21,7 @@ import (
 	"time"
 
 	"github.com/go-playground/validator/v10"
+	"github.com/stacklok/mediator/pkg/auth"
 	mcrypto "github.com/stacklok/mediator/pkg/crypto"
 	"github.com/stacklok/mediator/pkg/db"
 	pb "github.com/stacklok/mediator/pkg/generated/protobuf/go/mediator/v1"
@@ -102,7 +103,7 @@ func (s *Server) CreateUser(ctx context.Context,
 	user, err := s.store.CreateUser(ctx, db.CreateUserParams{RoleID: in.RoleId,
 		Email: *stringToNullString(in.Email), Username: in.Username, Password: pHash,
 		FirstName: *stringToNullString(in.FirstName), LastName: *stringToNullString(in.LastName),
-		IsProtected: *in.IsProtected})
+		IsProtected: *in.IsProtected, NeedsPasswordChange: *in.NeedsPasswordChange})
 	if err != nil {
 		return nil, err
 	}
@@ -110,7 +111,8 @@ func (s *Server) CreateUser(ctx context.Context,
 	return &pb.CreateUserResponse{Id: user.ID, RoleId: user.RoleID, Email: &user.Email.String,
 		Username: user.Username, Password: *in.Password, FirstName: &user.FirstName.String,
 		LastName: &user.LastName.String, IsProtected: &user.IsProtected,
-		CreatedAt: timestamppb.New(user.CreatedAt), UpdatedAt: timestamppb.New(user.UpdatedAt)}, nil
+		NeedsPasswordChange: &user.NeedsPasswordChange, CreatedAt: timestamppb.New(user.CreatedAt),
+		UpdatedAt: timestamppb.New(user.UpdatedAt)}, nil
 }
 
 type deleteUserValidation struct {
@@ -200,15 +202,16 @@ func (s *Server) GetUsers(ctx context.Context,
 	resp.Users = make([]*pb.UserRecord, 0, len(users))
 	for _, user := range users {
 		resp.Users = append(resp.Users, &pb.UserRecord{
-			Id:          user.ID,
-			RoleId:      user.RoleID,
-			Email:       &user.Email.String,
-			Username:    user.Username,
-			FirstName:   &user.FirstName.String,
-			LastName:    &user.LastName.String,
-			IsProtected: &user.IsProtected,
-			CreatedAt:   timestamppb.New(user.CreatedAt),
-			UpdatedAt:   timestamppb.New(user.UpdatedAt),
+			Id:                  user.ID,
+			RoleId:              user.RoleID,
+			Email:               &user.Email.String,
+			Username:            user.Username,
+			FirstName:           &user.FirstName.String,
+			LastName:            &user.LastName.String,
+			IsProtected:         &user.IsProtected,
+			NeedsPasswordChange: &user.NeedsPasswordChange,
+			CreatedAt:           timestamppb.New(user.CreatedAt),
+			UpdatedAt:           timestamppb.New(user.UpdatedAt),
 		})
 	}
 
@@ -239,15 +242,16 @@ func (s *Server) GetUserById(ctx context.Context,
 
 	var resp pb.GetUserByIdResponse
 	resp.User = &pb.UserRecord{
-		Id:          user.ID,
-		RoleId:      user.RoleID,
-		Email:       &user.Email.String,
-		Username:    user.Username,
-		FirstName:   &user.FirstName.String,
-		LastName:    &user.LastName.String,
-		IsProtected: &user.IsProtected,
-		CreatedAt:   timestamppb.New(user.CreatedAt),
-		UpdatedAt:   timestamppb.New(user.UpdatedAt),
+		Id:                  user.ID,
+		RoleId:              user.RoleID,
+		Email:               &user.Email.String,
+		Username:            user.Username,
+		FirstName:           &user.FirstName.String,
+		LastName:            &user.LastName.String,
+		IsProtected:         &user.IsProtected,
+		NeedsPasswordChange: &user.NeedsPasswordChange,
+		CreatedAt:           timestamppb.New(user.CreatedAt),
+		UpdatedAt:           timestamppb.New(user.UpdatedAt),
 	}
 
 	return &resp, nil
@@ -277,15 +281,16 @@ func (s *Server) GetUserByUsername(ctx context.Context,
 
 	var resp pb.GetUserByUserNameResponse
 	resp.User = &pb.UserRecord{
-		Id:        user.ID,
-		RoleId:    user.RoleID,
-		Email:     &user.Email.String,
-		Username:  user.Username,
-		Password:  user.Password,
-		FirstName: &user.FirstName.String,
-		LastName:  &user.LastName.String,
-		CreatedAt: timestamppb.New(user.CreatedAt),
-		UpdatedAt: timestamppb.New(user.UpdatedAt),
+		Id:                  user.ID,
+		RoleId:              user.RoleID,
+		Email:               &user.Email.String,
+		Username:            user.Username,
+		Password:            user.Password,
+		FirstName:           &user.FirstName.String,
+		LastName:            &user.LastName.String,
+		NeedsPasswordChange: &user.NeedsPasswordChange,
+		CreatedAt:           timestamppb.New(user.CreatedAt),
+		UpdatedAt:           timestamppb.New(user.UpdatedAt),
 	}
 
 	return &resp, nil
@@ -315,15 +320,55 @@ func (s *Server) GetUserByEmail(ctx context.Context,
 
 	var resp pb.GetUserByEmailResponse
 	resp.User = &pb.UserRecord{
-		Id:        user.ID,
-		RoleId:    user.RoleID,
-		Email:     &user.Email.String,
-		Username:  user.Username,
-		FirstName: &user.FirstName.String,
-		LastName:  &user.LastName.String,
-		CreatedAt: timestamppb.New(user.CreatedAt),
-		UpdatedAt: timestamppb.New(user.UpdatedAt),
+		Id:                  user.ID,
+		RoleId:              user.RoleID,
+		Email:               &user.Email.String,
+		Username:            user.Username,
+		FirstName:           &user.FirstName.String,
+		LastName:            &user.LastName.String,
+		NeedsPasswordChange: &user.NeedsPasswordChange,
+		CreatedAt:           timestamppb.New(user.CreatedAt),
+		UpdatedAt:           timestamppb.New(user.UpdatedAt),
 	}
 
 	return &resp, nil
+}
+
+type updatePasswordValidation struct {
+	Password string `validate:"min=8,containsany=!@#?*"`
+}
+
+// UpdatePassword is a service for updating a user's password
+func (s *Server) UpdatePassword(ctx context.Context, in *pb.UpdatePasswordRequest) (*pb.UpdatePasswordResponse, error) {
+	claims, _ := ctx.Value(TokenInfoKey).(auth.UserClaims)
+	if claims.UserId == 0 {
+		return nil, status.Errorf(codes.Unauthenticated, "user is not authenticated")
+	}
+
+	// validate password
+	validator := validator.New()
+	err := validator.Struct(updatePasswordValidation{Password: in.Password})
+	if err != nil {
+		return nil, status.Error(codes.InvalidArgument,
+			"password must be at least 8 characters long and contain one of the following characters: !@#?*")
+	}
+
+	// hash the password for storing in the database
+	pHash, err := mcrypto.GeneratePasswordHash(in.Password)
+	if err != nil {
+		return nil, status.Error(codes.Internal, "failed to generate password hash")
+	}
+
+	_, err = s.store.UpdatePassword(ctx, db.UpdatePasswordParams{ID: claims.UserId, Password: pHash})
+	if err != nil {
+		return nil, status.Error(codes.Internal, "failed to update password")
+	}
+
+	// revoke token for the user
+	_, err = s.store.RevokeUserToken(ctx, claims.UserId)
+	if err != nil {
+		return nil, status.Error(codes.Internal, "failed to revoke user token")
+	}
+
+	return &pb.UpdatePasswordResponse{}, nil
 }

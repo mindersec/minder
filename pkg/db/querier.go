@@ -54,6 +54,7 @@ type Querier interface {
 	UpdateAccessToken(ctx context.Context, arg UpdateAccessTokenParams) (ProviderAccessToken, error)
 	UpdateGroup(ctx context.Context, arg UpdateGroupParams) (Group, error)
 	UpdateOrganization(ctx context.Context, arg UpdateOrganizationParams) (Organization, error)
+	UpdatePassword(ctx context.Context, arg UpdatePasswordParams) (User, error)
 	UpdateRole(ctx context.Context, arg UpdateRoleParams) (Role, error)
 	UpdateUser(ctx context.Context, arg UpdateUserParams) (User, error)
 }

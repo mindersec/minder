@@ -52,6 +52,7 @@ CREATE TABLE users (
     email TEXT UNIQUE,
     username TEXT NOT NULL UNIQUE,
     password TEXT NOT NULL,
+    needs_password_change BOOLEAN NOT NULL DEFAULT TRUE,
     first_name TEXT,
     last_name TEXT,
     is_protected BOOLEAN NOT NULL DEFAULT FALSE,
@@ -99,5 +100,5 @@ VALUES (1, 'Root Group', TRUE);
 INSERT INTO roles (group_id, name, is_admin, is_protected)
 VALUES (1, 'Role Role', TRUE, TRUE);
 
-INSERT INTO users (role_id, email, username, password, first_name, last_name, is_protected)
-VALUES (1, 'root@localhost', 'root', '$argon2id$v=19$m=16,t=2,p=1$c2VjcmV0aGFzaA$WP4Vqo6QtHBY+n0x99R81Q', 'Root', 'Admin', TRUE);   -- password is P4ssw@rd
+INSERT INTO users (role_id, email, username, password, first_name, last_name, is_protected, needs_password_change)
+VALUES (1, 'root@localhost', 'root', '$argon2id$v=19$m=16,t=2,p=1$c2VjcmV0aGFzaA$WP4Vqo6QtHBY+n0x99R81Q', 'Root', 'Admin', TRUE, FALSE);   -- password is P4ssw@rd
