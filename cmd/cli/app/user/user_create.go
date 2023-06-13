@@ -138,10 +138,7 @@ within a mediator control plane.`,
 			role = int(respr.Id)
 		}
 
-		client := pb.NewUserServiceClient(conn)
-
 		protectedPtr := &isProtected
-
 		var emailPtr *string
 		if email == nil || email == "" {
 			emailPtr = nil
@@ -173,7 +170,7 @@ within a mediator control plane.`,
 		needsPasswordChangePtr := &needsPasswordChange
 
 		resp, err := client.CreateUser(ctx, &pb.CreateUserRequest{
-			RoleId:              role,
+			RoleId:              int32(role),
 			Email:               emailPtr,
 			Username:            username.(string),
 			Password:            passwordPtr,

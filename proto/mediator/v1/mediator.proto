@@ -681,6 +681,7 @@ message DeleteUserResponse {
 
 message UpdatePasswordRequest {
     string password = 1;
+    string password_confirmation = 2;
 }
 
 message UpdatePasswordResponse {
