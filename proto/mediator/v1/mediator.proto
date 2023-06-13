@@ -17,6 +17,7 @@ syntax = "proto3";
 package mediator.v1;
 import "google/api/annotations.proto";
 import "google/protobuf/timestamp.proto";
+import "google/protobuf/wrappers.proto";
 
 option go_package = "github.com/stacklok/mediator/pkg/generated/protobuf/go";
 
@@ -85,6 +86,15 @@ service RevokeTokensService {
         };
     }
 
+}
+
+service RepositoryService {
+    rpc AddRepository (AddRepositoryRequest) returns (AddRepositoryResponse) {
+        option (google.api.http) = {
+            post: "/api/v1/repository"
+            body: "*"
+        };
+    }
 }
 
 // Verify user has active session to Mediator
@@ -367,6 +377,35 @@ message RevokeUserTokenRequest {
 message RevokeUserTokenResponse {
     Status status = 1;
 }
+
+message AddRepositoryRequest {
+    repeated Repositories repositories = 1;
+    repeated string events = 4;
+}
+
+message Repositories {
+    string owner = 1;
+    string name = 2;
+    int32 repo_id = 3;
+}
+
+message AddRepositoryResponse {
+    repeated RepositoryResult results = 1;
+}
+
+message RepositoryResult {
+    string owner = 1;
+    string repository = 2;
+    int64 hook_id = 3;
+    string hook_url = 4;
+    string deploy_url = 5;
+    google.protobuf.Timestamp created_at = 6;
+    google.protobuf.Timestamp updated_at = 7;
+    string hook_name = 8;
+    string hook_type = 9;
+    bool success = 10;
+    google.protobuf.StringValue error = 11;
+  }
 
 message AuthVerifyServiceVerifyRequest {
 }

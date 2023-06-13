@@ -4,6 +4,8 @@
 ## Table of Contents
 
 - [mediator/v1/mediator.proto](#mediator_v1_mediator-proto)
+    - [AddRepositoryRequest](#mediator-v1-AddRepositoryRequest)
+    - [AddRepositoryResponse](#mediator-v1-AddRepositoryResponse)
     - [AuthVerifyServiceVerifyRequest](#mediator-v1-AuthVerifyServiceVerifyRequest)
     - [AuthVerifyServiceVerifyResponse](#mediator-v1-AuthVerifyServiceVerifyResponse)
     - [BranchProtection](#mediator-v1-BranchProtection)
@@ -73,6 +75,8 @@
     - [LogOutRequest](#mediator-v1-LogOutRequest)
     - [LogOutResponse](#mediator-v1-LogOutResponse)
     - [OrganizationRecord](#mediator-v1-OrganizationRecord)
+    - [Repositories](#mediator-v1-Repositories)
+    - [RepositoryResult](#mediator-v1-RepositoryResult)
     - [RevokeTokensRequest](#mediator-v1-RevokeTokensRequest)
     - [RevokeTokensResponse](#mediator-v1-RevokeTokensResponse)
     - [RevokeUserTokenRequest](#mediator-v1-RevokeUserTokenRequest)
@@ -89,6 +93,7 @@
     - [LogOutService](#mediator-v1-LogOutService)
     - [OAuthService](#mediator-v1-OAuthService)
     - [OrganizationService](#mediator-v1-OrganizationService)
+    - [RepositoryService](#mediator-v1-RepositoryService)
     - [RevokeTokensService](#mediator-v1-RevokeTokensService)
     - [RoleService](#mediator-v1-RoleService)
     - [SecretsService](#mediator-v1-SecretsService)
@@ -103,6 +108,37 @@
 <p align="right"><a href="#top">Top</a></p>
 
 ## mediator/v1/mediator.proto
+
+
+
+<a name="mediator-v1-AddRepositoryRequest"></a>
+
+### AddRepositoryRequest
+
+
+
+| Field | Type | Label | Description |
+| ----- | ---- | ----- | ----------- |
+| repositories | [Repositories](#mediator-v1-Repositories) | repeated |  |
+| events | [string](#string) | repeated |  |
+
+
+
+
+
+
+<a name="mediator-v1-AddRepositoryResponse"></a>
+
+### AddRepositoryResponse
+
+
+
+| Field | Type | Label | Description |
+| ----- | ---- | ----- | ----------- |
+| results | [RepositoryResult](#mediator-v1-RepositoryResult) | repeated |  |
+
+
+
 
 
 
@@ -1184,6 +1220,48 @@ BUF does not allow grouping (which is a shame)
 
 
 
+<a name="mediator-v1-Repositories"></a>
+
+### Repositories
+
+
+
+| Field | Type | Label | Description |
+| ----- | ---- | ----- | ----------- |
+| owner | [string](#string) |  |  |
+| name | [string](#string) |  |  |
+| repo_id | [int32](#int32) |  |  |
+
+
+
+
+
+
+<a name="mediator-v1-RepositoryResult"></a>
+
+### RepositoryResult
+
+
+
+| Field | Type | Label | Description |
+| ----- | ---- | ----- | ----------- |
+| owner | [string](#string) |  |  |
+| repository | [string](#string) |  |  |
+| hook_id | [int64](#int64) |  |  |
+| hook_url | [string](#string) |  |  |
+| deploy_url | [string](#string) |  |  |
+| created_at | [google.protobuf.Timestamp](#google-protobuf-Timestamp) |  |  |
+| updated_at | [google.protobuf.Timestamp](#google-protobuf-Timestamp) |  |  |
+| hook_name | [string](#string) |  |  |
+| hook_type | [string](#string) |  |  |
+| success | [bool](#bool) |  |  |
+| error | [google.protobuf.StringValue](#google-protobuf-StringValue) |  |  |
+
+
+
+
+
+
 <a name="mediator-v1-RevokeTokensRequest"></a>
 
 ### RevokeTokensRequest
@@ -1395,6 +1473,16 @@ manage Organizations CRUD
 | GetOrganization | [GetOrganizationRequest](#mediator-v1-GetOrganizationRequest) | [GetOrganizationResponse](#mediator-v1-GetOrganizationResponse) |  |
 | GetOrganizationByName | [GetOrganizationByNameRequest](#mediator-v1-GetOrganizationByNameRequest) | [GetOrganizationByNameResponse](#mediator-v1-GetOrganizationByNameResponse) |  |
 | DeleteOrganization | [DeleteOrganizationRequest](#mediator-v1-DeleteOrganizationRequest) | [DeleteOrganizationResponse](#mediator-v1-DeleteOrganizationResponse) |  |
+
+
+<a name="mediator-v1-RepositoryService"></a>
+
+### RepositoryService
+
+
+| Method Name | Request Type | Response Type | Description |
+| ----------- | ------------ | ------------- | ------------|
+| AddRepository | [AddRepositoryRequest](#mediator-v1-AddRepositoryRequest) | [AddRepositoryResponse](#mediator-v1-AddRepositoryResponse) |  |
 
 
 <a name="mediator-v1-RevokeTokensService"></a>

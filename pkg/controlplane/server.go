@@ -56,6 +56,7 @@ type Server struct {
 	pb.UnimplementedRoleServiceServer
 	pb.UnimplementedUserServiceServer
 	pb.UnimplementedRevokeTokensServiceServer
+	pb.UnimplementedRepositoryServiceServer
 	OAuth2       *oauth2.Config
 	ClientID     string
 	ClientSecret string
@@ -141,7 +142,7 @@ func (s *Server) StartGRPCServer(address string, store db.Store) {
 
 // StartHTTPServer starts a HTTP server and registers the gRPC handler mux to it
 // set store as a blank identifier for now as we will use it in the future
-func StartHTTPServer(address, grpcAddress string, _ db.Store) {
+func StartHTTPServer(address, grpcAddress string, store db.Store) {
 
 	mux := http.NewServeMux()
 
@@ -171,6 +172,7 @@ func StartHTTPServer(address, grpcAddress string, _ db.Store) {
 	RegisterGatewayHTTPHandlers(ctx, gwmux, grpcAddress, opts)
 
 	mux.Handle("/", gwmux)
+	mux.HandleFunc("/api/v1/webhook/", HandleGitHubWebHook(store))
 
 	log.Printf("Starting HTTP server on %s", address)
 	if err := http.ListenAndServe(address, mux); err != nil {

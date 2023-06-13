@@ -64,6 +64,11 @@ func RandomName(seed int64) string {
 	return RandomString(10, seed)
 }
 
+// RandomURL returns a random URL.
+func RandomURL(seed int64) string {
+	return "http://" + RandomString(10, seed) + ".com"
+}
+
 // RandomPassword returns a random password.
 func RandomPassword(length int, seed int64) string {
 	// Define character pools

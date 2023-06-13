@@ -60,6 +60,7 @@ var authBypassMethods = []string{
 	"/mediator.v1.HealthService/CheckHealth",
 	"/mediator.v1.OAuthService/ExchangeCodeForTokenCLI",
 	"/mediator.v1.OAuthService/ExchangeCodeForTokenWEB",
+	"/mediator.v1.RepositoryService/AddRepository",
 }
 
 var superAdminMethods = []string{

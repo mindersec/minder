@@ -69,6 +69,19 @@ CREATE TABLE provider_access_tokens (
     updated_at TIMESTAMP NOT NULL DEFAULT NOW()
 );
 
+-- repositories table
+create TABLE repositories (
+    id SERIAL PRIMARY KEY,
+    repo_owner TEXT NOT NULL,
+    repo_name TEXT NOT NULL,
+    group_id INTEGER NOT NULL REFERENCES groups(id) ON DELETE CASCADE,
+    webhook_id INTEGER,
+    webhook_url TEXT NOT NULL,
+    deploy_url TEXT NOT NULL UNIQUE,
+    created_at TIMESTAMP NOT NULL DEFAULT NOW(),
+    updated_at TIMESTAMP NOT NULL DEFAULT NOW()
+);
+
 create TABLE session_store (
     id SERIAL PRIMARY KEY,
     grp_id INTEGER,

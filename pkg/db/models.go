@@ -35,6 +35,18 @@ type ProviderAccessToken struct {
 	UpdatedAt      time.Time `json:"updated_at"`
 }
 
+type Repository struct {
+	ID         int32         `json:"id"`
+	RepoOwner  string        `json:"repo_owner"`
+	RepoName   string        `json:"repo_name"`
+	GroupID    int32         `json:"group_id"`
+	WebhookID  sql.NullInt32 `json:"webhook_id"`
+	WebhookUrl string        `json:"webhook_url"`
+	DeployUrl  string        `json:"deploy_url"`
+	CreatedAt  time.Time     `json:"created_at"`
+	UpdatedAt  time.Time     `json:"updated_at"`
+}
+
 type Role struct {
 	ID          int32     `json:"id"`
 	GroupID     int32     `json:"group_id"`
