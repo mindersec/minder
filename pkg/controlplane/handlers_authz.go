@@ -56,7 +56,7 @@ func parseToken(token string, store db.Store) (auth.UserClaims, error) {
 
 // List of methods that bypass authentication
 var authBypassMethods = []string{
-	"/mediator.v1.LogInService/LogIn",
+	"/mediator.v1.AuthService/LogIn",
 	"/mediator.v1.HealthService/CheckHealth",
 	"/mediator.v1.OAuthService/ExchangeCodeForTokenCLI",
 	"/mediator.v1.OAuthService/ExchangeCodeForTokenWEB",
@@ -66,8 +66,8 @@ var superAdminMethods = []string{
 	"/mediator.v1.OrganizationService/CreateOrganization",
 	"/mediator.v1.OrganizationService/GetOrganizations",
 	"/mediator.v1.OrganizationService/DeleteOrganization",
-	"/mediator.v1.RevokeTokensService/RevokeTokens",
-	"/mediator.v1.RevokeTokensService/RevokeUserToken",
+	"/mediator.v1.AuthService/RevokeTokens",
+	"/mediator.v1.AuthService/RevokeUserToken",
 }
 
 var resourceAuthorizations = []map[string]map[string]interface{}{

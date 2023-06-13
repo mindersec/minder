@@ -215,3 +215,12 @@ func (s *Server) RefreshToken(ctx context.Context, _ *pb.RefreshTokenRequest) (*
 		RefreshTokenExpiresIn: refreshTokenExpirationTime,
 	}, nil
 }
+
+// Verify verifies the access token
+func (s *Server) Verify(ctx context.Context, _ *pb.VerifyRequest) (*pb.VerifyResponse, error) {
+	claims, _ := ctx.Value(TokenInfoKey).(auth.UserClaims)
+	if claims.UserId > 0 {
+		return &pb.VerifyResponse{Status: "OK"}, nil
+	}
+	return &pb.VerifyResponse{Status: "KO"}, nil
+}
