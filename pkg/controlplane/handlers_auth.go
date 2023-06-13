@@ -217,7 +217,7 @@ func (s *Server) RefreshToken(ctx context.Context, _ *pb.RefreshTokenRequest) (*
 }
 
 // Verify verifies the access token
-func (s *Server) Verify(ctx context.Context, _ *pb.VerifyRequest) (*pb.VerifyResponse, error) {
+func (*Server) Verify(ctx context.Context, _ *pb.VerifyRequest) (*pb.VerifyResponse, error) {
 	claims, _ := ctx.Value(TokenInfoKey).(auth.UserClaims)
 	if claims.UserId > 0 {
 		return &pb.VerifyResponse{Status: "OK"}, nil
