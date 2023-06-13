@@ -55,16 +55,17 @@ func TestCreateUserDBMock(t *testing.T) {
 	}
 
 	expectedUser := db.User{
-		ID:          1,
-		RoleID:      1,
-		Email:       sql.NullString{String: "test@stacklok.com", Valid: true},
-		Username:    "test",
-		Password:    "1234567@",
-		FirstName:   sql.NullString{String: "Foo", Valid: true},
-		LastName:    sql.NullString{String: "Bar", Valid: true},
-		IsProtected: false,
-		CreatedAt:   time.Now(),
-		UpdatedAt:   time.Now(),
+		ID:                  1,
+		RoleID:              1,
+		Email:               sql.NullString{String: "test@stacklok.com", Valid: true},
+		Username:            "test",
+		Password:            "1234567@",
+		FirstName:           sql.NullString{String: "Foo", Valid: true},
+		LastName:            sql.NullString{String: "Bar", Valid: true},
+		IsProtected:         false,
+		CreatedAt:           time.Now(),
+		UpdatedAt:           time.Now(),
+		NeedsPasswordChange: false,
 	}
 
 	// Create a new context and set the claims value
@@ -184,6 +185,105 @@ func TestCreateUser_gRPC(t *testing.T) {
 			server := NewServer(mockStore)
 
 			resp, err := server.CreateUser(ctx, tc.req)
+			tc.checkResponse(t, resp, err)
+		})
+	}
+}
+
+func TestUpdatePasswordDBMock(t *testing.T) {
+	ctrl := gomock.NewController(t)
+	defer ctrl.Finish()
+
+	mockStore := mockdb.NewMockStore(ctrl)
+	seed := time.Now().UnixNano()
+
+	password := util.RandomPassword(8, seed)
+	request := &pb.UpdatePasswordRequest{Password: password, PasswordConfirmation: password}
+
+	// Create a new context and set the claims value
+	ctx := context.WithValue(context.Background(), TokenInfoKey, auth.UserClaims{
+		UserId:       1,
+		IsAdmin:      false,
+		IsSuperadmin: false,
+	})
+
+	mockStore.EXPECT().GetUserByID(ctx, gomock.Any())
+	mockStore.EXPECT().UpdatePassword(ctx, gomock.Any())
+	mockStore.EXPECT().RevokeUserToken(ctx, gomock.Any())
+
+	server := &Server{
+		store: mockStore,
+	}
+
+	response, err := server.UpdatePassword(ctx, request)
+
+	assert.NoError(t, err)
+	assert.NotNil(t, response)
+}
+
+func TestUpdatePassword_gRPC(t *testing.T) {
+	seed := time.Now().UnixNano()
+	password := util.RandomPassword(8, seed)
+
+	testCases := []struct {
+		name               string
+		req                *pb.UpdatePasswordRequest
+		buildStubs         func(store *mockdb.MockStore)
+		checkResponse      func(t *testing.T, res *pb.UpdatePasswordResponse, err error)
+		expectedStatusCode codes.Code
+	}{
+		{
+			name: "Success",
+			req: &pb.UpdatePasswordRequest{
+				Password:             password,
+				PasswordConfirmation: password,
+			},
+			buildStubs: func(store *mockdb.MockStore) {
+				store.EXPECT().GetUserByID(gomock.Any(), gomock.Any())
+				store.EXPECT().UpdatePassword(gomock.Any(), gomock.Any())
+				store.EXPECT().RevokeUserToken(gomock.Any(), gomock.Any())
+			},
+			checkResponse: func(t *testing.T, res *pb.UpdatePasswordResponse, err error) {
+				assert.NoError(t, err)
+				assert.NotNil(t, res)
+			},
+			expectedStatusCode: codes.OK,
+		},
+		{
+			name: "EmptyRequest",
+			req:  &pb.UpdatePasswordRequest{},
+			buildStubs: func(store *mockdb.MockStore) {
+				// No expectations, as CreateRole should not be called
+			},
+			checkResponse: func(t *testing.T, res *pb.UpdatePasswordResponse, err error) {
+				// Assert the expected behavior when the request is empty
+				assert.Error(t, err)
+				assert.Nil(t, res)
+			},
+			expectedStatusCode: codes.InvalidArgument,
+		},
+	}
+
+	// Create a new context and set the claims value
+	ctx := context.WithValue(context.Background(), TokenInfoKey, auth.UserClaims{
+		UserId:       1,
+		IsAdmin:      false,
+		IsSuperadmin: false,
+	})
+
+	for i := range testCases {
+		tc := testCases[i]
+		t.Run(tc.name, func(t *testing.T) {
+
+			ctrl := gomock.NewController(t)
+			defer ctrl.Finish()
+
+			mockStore := mockdb.NewMockStore(ctrl)
+			tc.buildStubs(mockStore)
+
+			server := NewServer(mockStore)
+
+			resp, err := server.UpdatePassword(ctx, tc.req)
 			tc.checkResponse(t, resp, err)
 		})
 	}

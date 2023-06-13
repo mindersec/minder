@@ -100,10 +100,14 @@ func (s *Server) CreateUser(ctx context.Context,
 		return nil, status.Errorf(codes.PermissionDenied, "user is not authorized to access this resource")
 	}
 
+	needsPassPtr := false
+	if in.NeedsPasswordChange != nil {
+		needsPassPtr = *in.NeedsPasswordChange
+	}
 	user, err := s.store.CreateUser(ctx, db.CreateUserParams{RoleID: in.RoleId,
 		Email: *stringToNullString(in.Email), Username: in.Username, Password: pHash,
 		FirstName: *stringToNullString(in.FirstName), LastName: *stringToNullString(in.LastName),
-		IsProtected: *in.IsProtected, NeedsPasswordChange: *in.NeedsPasswordChange})
+		IsProtected: *in.IsProtected, NeedsPasswordChange: needsPassPtr})
 	if err != nil {
 		return nil, err
 	}
@@ -335,7 +339,8 @@ func (s *Server) GetUserByEmail(ctx context.Context,
 }
 
 type updatePasswordValidation struct {
-	Password string `validate:"min=8,containsany=!@#?*"`
+	Password             string `validate:"min=8,containsany=!@#?*"`
+	PasswordConfirmation string `validate:"min=8,containsany=!@#?*"`
 }
 
 // UpdatePassword is a service for updating a user's password
@@ -347,10 +352,14 @@ func (s *Server) UpdatePassword(ctx context.Context, in *pb.UpdatePasswordReques
 
 	// validate password
 	validator := validator.New()
-	err := validator.Struct(updatePasswordValidation{Password: in.Password})
+	err := validator.Struct(updatePasswordValidation{Password: in.Password, PasswordConfirmation: in.PasswordConfirmation})
 	if err != nil {
 		return nil, status.Error(codes.InvalidArgument,
 			"password must be at least 8 characters long and contain one of the following characters: !@#?*")
+	}
+
+	if in.Password != in.PasswordConfirmation {
+		return nil, status.Error(codes.InvalidArgument, "passwords do not match")
 	}
 
 	// hash the password for storing in the database
@@ -359,13 +368,25 @@ func (s *Server) UpdatePassword(ctx context.Context, in *pb.UpdatePasswordReques
 		return nil, status.Error(codes.Internal, "failed to generate password hash")
 	}
 
+	// check if the previous password was the same
+	user, err := s.store.GetUserByID(ctx, claims.UserId)
+	if err != nil {
+		return nil, status.Error(codes.Internal, "failed to get user")
+	}
+
+	match, _ := mcrypto.VerifyPasswordHash(pHash, user.Password)
+	if match {
+		return nil, status.Error(codes.NotFound, "User and password not found")
+	}
+
 	_, err = s.store.UpdatePassword(ctx, db.UpdatePasswordParams{ID: claims.UserId, Password: pHash})
 	if err != nil {
 		return nil, status.Error(codes.Internal, "failed to update password")
 	}
 
 	// revoke token for the user
-	_, err = s.store.RevokeUserToken(ctx, claims.UserId)
+	_, err = s.store.RevokeUserToken(ctx, db.RevokeUserTokenParams{ID: claims.UserId,
+		MinTokenIssuedTime: sql.NullTime{Time: time.Unix(time.Now().Unix(), 0), Valid: true}})
 	if err != nil {
 		return nil, status.Error(codes.Internal, "failed to revoke user token")
 	}

@@ -283,7 +283,13 @@ func AuthUnaryInterceptor(ctx context.Context, req interface{}, info *grpc.Unary
 	}
 
 	// check if we need a password change
-	if claims.NeedsPasswordChange {
+	method, ok := grpc.Method(ctx)
+	if !ok {
+		// no method called and did not bypass auth, return false
+		return nil, status.Errorf(codes.Unauthenticated, "no method called")
+	}
+
+	if claims.NeedsPasswordChange && method != "/mediator.v1.UserService/UpdatePassword" {
 		return nil, status.Errorf(codes.Unauthenticated, "password change required")
 	}
 

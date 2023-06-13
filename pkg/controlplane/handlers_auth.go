@@ -20,6 +20,7 @@ import (
 	"fmt"
 	"os"
 	"path/filepath"
+	"time"
 
 	"github.com/go-playground/validator/v10"
 	"github.com/spf13/viper"
@@ -122,6 +123,13 @@ func (s *Server) LogIn(ctx context.Context, in *pb.LogInRequest) (*pb.LogInRespo
 	if err != nil {
 		return nil, status.Error(codes.Internal, "Failed to generate token")
 	}
+
+	// update token revoke time
+	_, err = s.store.CleanTokenIat(ctx, claims.UserId)
+	if err != nil {
+		return nil, fmt.Errorf("error updating token revoke time: %v", err)
+	}
+
 	return &pb.LogInResponse{
 		AccessToken:           accessToken,
 		RefreshToken:          refreshToken,
@@ -134,7 +142,8 @@ func (s *Server) LogIn(ctx context.Context, in *pb.LogInRequest) (*pb.LogInRespo
 func (s *Server) LogOut(ctx context.Context, _ *pb.LogOutRequest) (*pb.LogOutResponse, error) {
 	claims, _ := ctx.Value(TokenInfoKey).(auth.UserClaims)
 	if claims.UserId > 0 {
-		_, err := s.store.RevokeUserToken(ctx, claims.UserId)
+		_, err := s.store.RevokeUserToken(ctx, db.RevokeUserTokenParams{ID: claims.UserId,
+			MinTokenIssuedTime: sql.NullTime{Time: time.Unix(time.Now().Unix(), 0), Valid: true}})
 		if err != nil {
 			return &pb.LogOutResponse{}, status.Error(codes.Internal, "Failed to logout")
 		}
@@ -145,7 +154,7 @@ func (s *Server) LogOut(ctx context.Context, _ *pb.LogOutRequest) (*pb.LogOutRes
 
 // RevokeTokens revokes all the access and refresh tokens
 func (s *Server) RevokeTokens(ctx context.Context, _ *pb.RevokeTokensRequest) (*pb.RevokeTokensResponse, error) {
-	_, err := s.store.RevokeUsersTokens(ctx)
+	_, err := s.store.RevokeUsersTokens(ctx, sql.NullTime{Time: time.Unix(time.Now().Unix(), 0), Valid: true})
 	if err != nil {
 		return &pb.RevokeTokensResponse{}, status.Error(codes.Internal, "Failed to revoke tokens")
 	}
@@ -154,7 +163,8 @@ func (s *Server) RevokeTokens(ctx context.Context, _ *pb.RevokeTokensRequest) (*
 
 // RevokeUserToken revokes all the access and refresh tokens for a user
 func (s *Server) RevokeUserToken(ctx context.Context, req *pb.RevokeUserTokenRequest) (*pb.RevokeUserTokenResponse, error) {
-	_, err := s.store.RevokeUserToken(ctx, req.UserId)
+	_, err := s.store.RevokeUserToken(ctx, db.RevokeUserTokenParams{ID: req.UserId,
+		MinTokenIssuedTime: sql.NullTime{Time: time.Unix(time.Now().Unix(), 0), Valid: true}})
 	if err != nil {
 		return &pb.RevokeUserTokenResponse{}, status.Error(codes.Internal, "Failed to revoke")
 	}

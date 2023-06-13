@@ -99,11 +99,7 @@ within a mediator control plane.`,
 		}
 		defer conn.Close()
 
-		if err != nil {
-			fmt.Fprintf(os.Stderr, "Error getting grpc connection: %s\n", err)
-			os.Exit(1)
-		}
-
+		client := pb.NewUserServiceClient(conn)
 		ctx, cancel := context.WithTimeout(context.Background(), time.Second)
 		defer cancel()
 
@@ -209,14 +205,9 @@ func init() {
 	User_createCmd.Flags().StringP("firstname", "f", "", "User's first name")
 	User_createCmd.Flags().StringP("lastname", "l", "", "User's last name")
 	User_createCmd.Flags().BoolP("is-protected", "i", false, "Is the user protected")
-<<<<<<< HEAD
 	User_createCmd.Flags().Int32P("role-id", "r", 0, "Role ID. If empty, will create a single user")
 	User_createCmd.Flags().BoolP("force", "s", false, "Skip confirmation")
-
-=======
 	User_createCmd.Flags().BoolP("needs-password-change", "c", true, "Does the user need to change their password")
-	User_createCmd.Flags().Int32P("role-id", "r", 0, "Role ID")
->>>>>>> c259d5d (feat: force users to update password on first login)
 	if err := User_createCmd.MarkFlagRequired("username"); err != nil {
 		fmt.Fprintf(os.Stderr, "Error marking flag as required: %s\n", err)
 		os.Exit(1)

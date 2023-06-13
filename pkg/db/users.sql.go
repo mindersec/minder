@@ -10,6 +10,30 @@ import (
 	"database/sql"
 )
 
+const cleanTokenIat = `-- name: CleanTokenIat :one
+UPDATE users SET min_token_issued_time = NULL WHERE id = $1 RETURNING id, role_id, email, username, password, needs_password_change, first_name, last_name, is_protected, created_at, updated_at, min_token_issued_time
+`
+
+func (q *Queries) CleanTokenIat(ctx context.Context, id int32) (User, error) {
+	row := q.db.QueryRowContext(ctx, cleanTokenIat, id)
+	var i User
+	err := row.Scan(
+		&i.ID,
+		&i.RoleID,
+		&i.Email,
+		&i.Username,
+		&i.Password,
+		&i.NeedsPasswordChange,
+		&i.FirstName,
+		&i.LastName,
+		&i.IsProtected,
+		&i.CreatedAt,
+		&i.UpdatedAt,
+		&i.MinTokenIssuedTime,
+	)
+	return i, err
+}
+
 const createUser = `-- name: CreateUser :one
 INSERT INTO users (role_id, email, username, password, first_name, last_name, is_protected, needs_password_change) VALUES ($1, $2, $3, $4, $5, $6, $7, $8) RETURNING id, role_id, email, username, password, needs_password_change, first_name, last_name, is_protected, created_at, updated_at, min_token_issued_time
 `
@@ -258,11 +282,16 @@ func (q *Queries) ListUsersByRoleID(ctx context.Context, roleID int32) ([]User, 
 }
 
 const revokeGroupUsersTokens = `-- name: RevokeGroupUsersTokens :one
-UPDATE users SET min_token_issued_time = NOW() - INTERVAL '30 seconds' WHERE role_id IN (SELECT id FROM roles WHERE group_id = $1) RETURNING id, role_id, email, username, password, needs_password_change, first_name, last_name, is_protected, created_at, updated_at, min_token_issued_time
+UPDATE users SET min_token_issued_time = $2 WHERE role_id IN (SELECT id FROM roles WHERE group_id = $1) RETURNING id, role_id, email, username, password, needs_password_change, first_name, last_name, is_protected, created_at, updated_at, min_token_issued_time
 `
 
-func (q *Queries) RevokeGroupUsersTokens(ctx context.Context, groupID int32) (User, error) {
-	row := q.db.QueryRowContext(ctx, revokeGroupUsersTokens, groupID)
+type RevokeGroupUsersTokensParams struct {
+	GroupID            int32        `json:"group_id"`
+	MinTokenIssuedTime sql.NullTime `json:"min_token_issued_time"`
+}
+
+func (q *Queries) RevokeGroupUsersTokens(ctx context.Context, arg RevokeGroupUsersTokensParams) (User, error) {
+	row := q.db.QueryRowContext(ctx, revokeGroupUsersTokens, arg.GroupID, arg.MinTokenIssuedTime)
 	var i User
 	err := row.Scan(
 		&i.ID,
@@ -282,11 +311,16 @@ func (q *Queries) RevokeGroupUsersTokens(ctx context.Context, groupID int32) (Us
 }
 
 const revokeOrganizationUsersTokens = `-- name: RevokeOrganizationUsersTokens :one
-UPDATE users SET min_token_issued_time = NOW() - INTERVAL '30 seconds' WHERE role_id IN (SELECT id FROM roles WHERE group_id IN (SELECT id FROM groups WHERE organization_id = $1)) RETURNING id, role_id, email, username, password, needs_password_change, first_name, last_name, is_protected, created_at, updated_at, min_token_issued_time
+UPDATE users SET min_token_issued_time = $2 WHERE role_id IN (SELECT id FROM roles WHERE group_id IN (SELECT id FROM groups WHERE organization_id = $1)) RETURNING id, role_id, email, username, password, needs_password_change, first_name, last_name, is_protected, created_at, updated_at, min_token_issued_time
 `
 
-func (q *Queries) RevokeOrganizationUsersTokens(ctx context.Context, organizationID int32) (User, error) {
-	row := q.db.QueryRowContext(ctx, revokeOrganizationUsersTokens, organizationID)
+type RevokeOrganizationUsersTokensParams struct {
+	OrganizationID     int32        `json:"organization_id"`
+	MinTokenIssuedTime sql.NullTime `json:"min_token_issued_time"`
+}
+
+func (q *Queries) RevokeOrganizationUsersTokens(ctx context.Context, arg RevokeOrganizationUsersTokensParams) (User, error) {
+	row := q.db.QueryRowContext(ctx, revokeOrganizationUsersTokens, arg.OrganizationID, arg.MinTokenIssuedTime)
 	var i User
 	err := row.Scan(
 		&i.ID,
@@ -306,11 +340,16 @@ func (q *Queries) RevokeOrganizationUsersTokens(ctx context.Context, organizatio
 }
 
 const revokeRoleUsersTokens = `-- name: RevokeRoleUsersTokens :one
-UPDATE users SET min_token_issued_time = NOW() - INTERVAL '30 seconds' WHERE role_id = $1 RETURNING id, role_id, email, username, password, needs_password_change, first_name, last_name, is_protected, created_at, updated_at, min_token_issued_time
+UPDATE users SET min_token_issued_time = $2 WHERE role_id = $1 RETURNING id, role_id, email, username, password, needs_password_change, first_name, last_name, is_protected, created_at, updated_at, min_token_issued_time
 `
 
-func (q *Queries) RevokeRoleUsersTokens(ctx context.Context, roleID int32) (User, error) {
-	row := q.db.QueryRowContext(ctx, revokeRoleUsersTokens, roleID)
+type RevokeRoleUsersTokensParams struct {
+	RoleID             int32        `json:"role_id"`
+	MinTokenIssuedTime sql.NullTime `json:"min_token_issued_time"`
+}
+
+func (q *Queries) RevokeRoleUsersTokens(ctx context.Context, arg RevokeRoleUsersTokensParams) (User, error) {
+	row := q.db.QueryRowContext(ctx, revokeRoleUsersTokens, arg.RoleID, arg.MinTokenIssuedTime)
 	var i User
 	err := row.Scan(
 		&i.ID,
@@ -330,11 +369,16 @@ func (q *Queries) RevokeRoleUsersTokens(ctx context.Context, roleID int32) (User
 }
 
 const revokeUserToken = `-- name: RevokeUserToken :one
-UPDATE users SET min_token_issued_time = NOW() - INTERVAL '30 seconds' WHERE id = $1 RETURNING id, role_id, email, username, password, needs_password_change, first_name, last_name, is_protected, created_at, updated_at, min_token_issued_time
+UPDATE users SET min_token_issued_time = $2 WHERE id = $1 RETURNING id, role_id, email, username, password, needs_password_change, first_name, last_name, is_protected, created_at, updated_at, min_token_issued_time
 `
 
-func (q *Queries) RevokeUserToken(ctx context.Context, id int32) (User, error) {
-	row := q.db.QueryRowContext(ctx, revokeUserToken, id)
+type RevokeUserTokenParams struct {
+	ID                 int32        `json:"id"`
+	MinTokenIssuedTime sql.NullTime `json:"min_token_issued_time"`
+}
+
+func (q *Queries) RevokeUserToken(ctx context.Context, arg RevokeUserTokenParams) (User, error) {
+	row := q.db.QueryRowContext(ctx, revokeUserToken, arg.ID, arg.MinTokenIssuedTime)
 	var i User
 	err := row.Scan(
 		&i.ID,
@@ -354,11 +398,11 @@ func (q *Queries) RevokeUserToken(ctx context.Context, id int32) (User, error) {
 }
 
 const revokeUsersTokens = `-- name: RevokeUsersTokens :one
-UPDATE users SET min_token_issued_time = NOW() - INTERVAL '30 seconds' RETURNING id, role_id, email, username, password, needs_password_change, first_name, last_name, is_protected, created_at, updated_at, min_token_issued_time
+UPDATE users SET min_token_issued_time = $1 RETURNING id, role_id, email, username, password, needs_password_change, first_name, last_name, is_protected, created_at, updated_at, min_token_issued_time
 `
 
-func (q *Queries) RevokeUsersTokens(ctx context.Context) (User, error) {
-	row := q.db.QueryRowContext(ctx, revokeUsersTokens)
+func (q *Queries) RevokeUsersTokens(ctx context.Context, minTokenIssuedTime sql.NullTime) (User, error) {
+	row := q.db.QueryRowContext(ctx, revokeUsersTokens, minTokenIssuedTime)
 	var i User
 	err := row.Scan(
 		&i.ID,

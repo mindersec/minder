@@ -144,9 +144,14 @@ func VerifyToken(tokenString string, publicKey []byte, store db.Store) (UserClai
 
 	// if we have a value in issued at, we compare against iat
 	iat := int64(claims["iat"].(float64))
+	fmt.Println("iat", iat)
+	fmt.Println(user.MinTokenIssuedTime)
 	if user.MinTokenIssuedTime.Valid {
+		fmt.Println("i am valid")
 		unitTs := user.MinTokenIssuedTime.Time.Unix()
+		fmt.Println(unitTs)
 		if unitTs > iat {
+			fmt.Println(unitTs)
 			// token was issued after the iat
 			return userClaims, fmt.Errorf("invalid token")
 		}

@@ -36,16 +36,19 @@ UPDATE users SET password = $2, needs_password_change = FALSE, updated_at = NOW(
 DELETE FROM users WHERE id = $1;
 
 -- name: RevokeUserToken :one
-UPDATE users SET min_token_issued_time = NOW() - INTERVAL '30 seconds' WHERE id = $1 RETURNING *;
+UPDATE users SET min_token_issued_time = $2 WHERE id = $1 RETURNING *;
+
+-- name: CleanTokenIat :one
+UPDATE users SET min_token_issued_time = NULL WHERE id = $1 RETURNING *;
 
 -- name: RevokeUsersTokens :one
-UPDATE users SET min_token_issued_time = NOW() - INTERVAL '30 seconds' RETURNING *;
+UPDATE users SET min_token_issued_time = $1 RETURNING *;
 
 -- name: RevokeOrganizationUsersTokens :one
-UPDATE users SET min_token_issued_time = NOW() - INTERVAL '30 seconds' WHERE role_id IN (SELECT id FROM roles WHERE group_id IN (SELECT id FROM groups WHERE organization_id = $1)) RETURNING *;
+UPDATE users SET min_token_issued_time = $2 WHERE role_id IN (SELECT id FROM roles WHERE group_id IN (SELECT id FROM groups WHERE organization_id = $1)) RETURNING *;
 
 -- name: RevokeGroupUsersTokens :one
-UPDATE users SET min_token_issued_time = NOW() - INTERVAL '30 seconds' WHERE role_id IN (SELECT id FROM roles WHERE group_id = $1) RETURNING *;
+UPDATE users SET min_token_issued_time = $2 WHERE role_id IN (SELECT id FROM roles WHERE group_id = $1) RETURNING *;
 
 -- name: RevokeRoleUsersTokens :one
-UPDATE users SET min_token_issued_time = NOW() - INTERVAL '30 seconds' WHERE role_id = $1 RETURNING *;
+UPDATE users SET min_token_issued_time = $2 WHERE role_id = $1 RETURNING *;
