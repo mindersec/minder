@@ -45,6 +45,12 @@ var Auth_refreshCmd = &cobra.Command{
 		}
 	},
 	Run: func(cmd *cobra.Command, args []string) {
+		// load old credentials
+		oldCreds, err := util.LoadCredentials()
+		if err != nil {
+			fmt.Fprintf(os.Stderr, "Error loading credentials: %s\n", err)
+		}
+
 		conn, err := util.GetGrpcConnection(cmd)
 		if err != nil {
 			fmt.Fprintf(os.Stderr, "Error getting grpc connection: %s\n", err)
@@ -74,12 +80,12 @@ var Auth_refreshCmd = &cobra.Command{
 			os.Exit(1)
 		}
 
-		// marshal the credentials to json
+		// marshal the credentials to json. Only refresh access token
 		creds := util.Credentials{
 			AccessToken:           resp.AccessToken,
-			RefreshToken:          resp.RefreshToken,
+			RefreshToken:          oldCreds.RefreshToken,
 			AccessTokenExpiresIn:  int(resp.AccessTokenExpiresIn),
-			RefreshTokenExpiresIn: int(resp.RefreshTokenExpiresIn),
+			RefreshTokenExpiresIn: oldCreds.RefreshTokenExpiresIn,
 		}
 
 		// save credentials

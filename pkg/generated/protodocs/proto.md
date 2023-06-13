@@ -1177,9 +1177,7 @@ BUF does not allow grouping (which is a shame)
 | Field | Type | Label | Description |
 | ----- | ---- | ----- | ----------- |
 | status | [Status](#mediator-v1-Status) |  |  |
-| refresh_token | [string](#string) |  |  |
 | access_token | [string](#string) |  |  |
-| refresh_token_expires_in | [int64](#int64) |  |  |
 | access_token_expires_in | [int64](#int64) |  |  |
 
 

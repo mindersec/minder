@@ -216,7 +216,6 @@ func TestRefreshToken_gRPC(t *testing.T) {
 	assert.NotNil(t, res)
 	assert.Equal(t, int32(codes.OK), res.Status.Code)
 	assert.NotNil(t, res.AccessToken)
-	assert.NotNil(t, res.RefreshToken)
 
 	_ = os.Remove(filepath.Join(".", viper.Get("auth.refresh_token_private_key").(string)))
 	_ = os.Remove(filepath.Join(".", viper.Get("auth.refresh_token_public_key").(string)))

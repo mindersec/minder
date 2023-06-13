@@ -202,17 +202,15 @@ func (s *Server) RefreshToken(ctx context.Context, _ *pb.RefreshTokenRequest) (*
 	}
 
 	// regenerate and return tokens
-	accessToken, refreshToken, accessTokenExpirationTime, refreshTokenExpirationTime, err := generateToken(ctx, s.store, userId)
+	accessToken, _, accessTokenExpirationTime, _, err := generateToken(ctx, s.store, userId)
 
 	if err != nil {
 		return &pb.RefreshTokenResponse{Status: &pb.Status{Code: int32(codes.Internal), Message: "Failed to generate token"}}, nil
 	}
 	return &pb.RefreshTokenResponse{
-		Status:                &pb.Status{Code: int32(codes.OK), Message: "Success"},
-		AccessToken:           accessToken,
-		RefreshToken:          refreshToken,
-		AccessTokenExpiresIn:  accessTokenExpirationTime,
-		RefreshTokenExpiresIn: refreshTokenExpirationTime,
+		Status:               &pb.Status{Code: int32(codes.OK), Message: "Success"},
+		AccessToken:          accessToken,
+		AccessTokenExpiresIn: accessTokenExpirationTime,
 	}, nil
 }
 

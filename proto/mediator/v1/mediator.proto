@@ -375,10 +375,8 @@ message RefreshTokenRequest {
 
 message RefreshTokenResponse {
     Status status = 1;
-    string refresh_token = 2;
-    string access_token = 3;
-    int64  refresh_token_expires_in = 4;
-    int64  access_token_expires_in = 5;
+    string access_token = 2;
+    int64  access_token_expires_in = 3;
 }
 
 message VerifyRequest {

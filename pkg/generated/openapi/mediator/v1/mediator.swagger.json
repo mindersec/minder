@@ -1903,15 +1903,8 @@
         "status": {
           "$ref": "#/definitions/mediatorv1Status"
         },
-        "refreshToken": {
-          "type": "string"
-        },
         "accessToken": {
           "type": "string"
-        },
-        "refreshTokenExpiresIn": {
-          "type": "string",
-          "format": "int64"
         },
         "accessTokenExpiresIn": {
           "type": "string",
