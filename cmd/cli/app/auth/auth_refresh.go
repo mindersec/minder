@@ -59,7 +59,7 @@ var Auth_refreshCmd = &cobra.Command{
 		ctx, cancel := context.WithTimeout(context.Background(), time.Second)
 		defer cancel()
 
-		client := pb.NewRefreshTokenServiceClient(conn)
+		client := pb.NewAuthServiceClient(conn)
 		if err != nil {
 			fmt.Fprintf(os.Stderr, "Error revoking tokens: %s\n", err)
 			os.Exit(1)

@@ -59,7 +59,7 @@ will be saved to $XDG_CONFIG_HOME/mediator/credentials.json`,
 		}
 		defer conn.Close()
 
-		client := pb.NewLogInServiceClient(conn)
+		client := pb.NewAuthServiceClient(conn)
 		ctx, cancel := context.WithTimeout(context.Background(), 5*time.Second)
 		defer cancel()
 

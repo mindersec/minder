@@ -12,19 +12,7 @@
       "name": "OAuthService"
     },
     {
-      "name": "LogInService"
-    },
-    {
-      "name": "LogOutService"
-    },
-    {
-      "name": "RevokeTokensService"
-    },
-    {
-      "name": "RefreshTokenService"
-    },
-    {
-      "name": "AuthVerifyService"
+      "name": "AuthService"
     },
     {
       "name": "VulnerabilitiesService"
@@ -147,7 +135,8 @@
     },
     "/api/v1/auth/login": {
       "post": {
-        "operationId": "LogInService_LogIn",
+        "summary": "LogIn to Mediator",
+        "operationId": "AuthService_LogIn",
         "responses": {
           "200": {
             "description": "A successful response.",
@@ -173,13 +162,14 @@
           }
         ],
         "tags": [
-          "LogInService"
+          "AuthService"
         ]
       }
     },
     "/api/v1/auth/logout": {
       "post": {
-        "operationId": "LogOutService_LogOut",
+        "summary": "Logout of Mediator",
+        "operationId": "AuthService_LogOut",
         "responses": {
           "200": {
             "description": "A successful response.",
@@ -205,13 +195,14 @@
           }
         ],
         "tags": [
-          "LogOutService"
+          "AuthService"
         ]
       }
     },
     "/api/v1/auth/refresh": {
       "post": {
-        "operationId": "RefreshTokenService_RefreshToken",
+        "summary": "refresh a token",
+        "operationId": "AuthService_RefreshToken",
         "responses": {
           "200": {
             "description": "A successful response.",
@@ -237,13 +228,14 @@
           }
         ],
         "tags": [
-          "RefreshTokenService"
+          "AuthService"
         ]
       }
     },
     "/api/v1/auth/revoke": {
       "post": {
-        "operationId": "RevokeTokensService_RevokeTokens",
+        "summary": "revoke all tokens for all users",
+        "operationId": "AuthService_RevokeTokens",
         "responses": {
           "200": {
             "description": "A successful response.",
@@ -269,13 +261,14 @@
           }
         ],
         "tags": [
-          "RevokeTokensService"
+          "AuthService"
         ]
       }
     },
     "/api/v1/auth/revoke/{userId}": {
       "post": {
-        "operationId": "RevokeTokensService_RevokeUserToken",
+        "summary": "revoke token for an user",
+        "operationId": "AuthService_RevokeUserToken",
         "responses": {
           "200": {
             "description": "A successful response.",
@@ -308,7 +301,7 @@
           }
         ],
         "tags": [
-          "RevokeTokensService"
+          "AuthService"
         ]
       }
     },
@@ -357,12 +350,13 @@
     },
     "/api/v1/auth/verify": {
       "post": {
-        "operationId": "AuthVerifyService_Verify",
+        "summary": "Verify user has active session to Mediator",
+        "operationId": "AuthService_Verify",
         "responses": {
           "200": {
             "description": "A successful response.",
             "schema": {
-              "$ref": "#/definitions/v1AuthVerifyServiceVerifyResponse"
+              "$ref": "#/definitions/v1VerifyResponse"
             }
           },
           "default": {
@@ -378,12 +372,12 @@
             "in": "body",
             "required": true,
             "schema": {
-              "$ref": "#/definitions/v1AuthVerifyServiceVerifyRequest"
+              "$ref": "#/definitions/v1VerifyRequest"
             }
           }
         ],
         "tags": [
-          "AuthVerifyService"
+          "AuthService"
         ]
       }
     },
@@ -1303,17 +1297,6 @@
       },
       "additionalProperties": {}
     },
-    "v1AuthVerifyServiceVerifyRequest": {
-      "type": "object"
-    },
-    "v1AuthVerifyServiceVerifyResponse": {
-      "type": "object",
-      "properties": {
-        "status": {
-          "type": "string"
-        }
-      }
-    },
     "v1BranchProtection": {
       "type": "object",
       "properties": {
@@ -2024,6 +2007,17 @@
         }
       },
       "title": "user record to be returned"
+    },
+    "v1VerifyRequest": {
+      "type": "object"
+    },
+    "v1VerifyResponse": {
+      "type": "object",
+      "properties": {
+        "status": {
+          "type": "string"
+        }
+      }
     }
   }
 }

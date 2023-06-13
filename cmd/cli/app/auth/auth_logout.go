@@ -52,7 +52,7 @@ var auth_logoutCmd = &cobra.Command{
 		}
 		defer conn.Close()
 
-		client := pb.NewLogOutServiceClient(conn)
+		client := pb.NewAuthServiceClient(conn)
 		ctx, cancel := context.WithTimeout(context.Background(), 5*time.Second)
 		defer cancel()
 

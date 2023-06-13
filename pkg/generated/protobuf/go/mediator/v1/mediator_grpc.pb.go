@@ -288,486 +288,286 @@ var OAuthService_ServiceDesc = grpc.ServiceDesc{
 }
 
 const (
-	LogInService_LogIn_FullMethodName = "/mediator.v1.LogInService/LogIn"
+	AuthService_LogIn_FullMethodName           = "/mediator.v1.AuthService/LogIn"
+	AuthService_LogOut_FullMethodName          = "/mediator.v1.AuthService/LogOut"
+	AuthService_RevokeTokens_FullMethodName    = "/mediator.v1.AuthService/RevokeTokens"
+	AuthService_RevokeUserToken_FullMethodName = "/mediator.v1.AuthService/RevokeUserToken"
+	AuthService_RefreshToken_FullMethodName    = "/mediator.v1.AuthService/RefreshToken"
+	AuthService_Verify_FullMethodName          = "/mediator.v1.AuthService/Verify"
 )
 
-// LogInServiceClient is the client API for LogInService service.
+// AuthServiceClient is the client API for AuthService service.
 //
 // For semantics around ctx use and closing/ending streaming RPCs, please refer to https://pkg.go.dev/google.golang.org/grpc/?tab=doc#ClientConn.NewStream.
-type LogInServiceClient interface {
+type AuthServiceClient interface {
+	// LogIn to Mediator
 	LogIn(ctx context.Context, in *LogInRequest, opts ...grpc.CallOption) (*LogInResponse, error)
+	// Logout of Mediator
+	LogOut(ctx context.Context, in *LogOutRequest, opts ...grpc.CallOption) (*LogOutResponse, error)
+	// revoke all tokens for all users
+	RevokeTokens(ctx context.Context, in *RevokeTokensRequest, opts ...grpc.CallOption) (*RevokeTokensResponse, error)
+	// revoke token for an user
+	RevokeUserToken(ctx context.Context, in *RevokeUserTokenRequest, opts ...grpc.CallOption) (*RevokeUserTokenResponse, error)
+	// refresh a token
+	RefreshToken(ctx context.Context, in *RefreshTokenRequest, opts ...grpc.CallOption) (*RefreshTokenResponse, error)
+	// Verify user has active session to Mediator
+	Verify(ctx context.Context, in *VerifyRequest, opts ...grpc.CallOption) (*VerifyResponse, error)
 }
 
-type logInServiceClient struct {
+type authServiceClient struct {
 	cc grpc.ClientConnInterface
 }
 
-func NewLogInServiceClient(cc grpc.ClientConnInterface) LogInServiceClient {
-	return &logInServiceClient{cc}
+func NewAuthServiceClient(cc grpc.ClientConnInterface) AuthServiceClient {
+	return &authServiceClient{cc}
 }
 
-func (c *logInServiceClient) LogIn(ctx context.Context, in *LogInRequest, opts ...grpc.CallOption) (*LogInResponse, error) {
+func (c *authServiceClient) LogIn(ctx context.Context, in *LogInRequest, opts ...grpc.CallOption) (*LogInResponse, error) {
 	out := new(LogInResponse)
-	err := c.cc.Invoke(ctx, LogInService_LogIn_FullMethodName, in, out, opts...)
+	err := c.cc.Invoke(ctx, AuthService_LogIn_FullMethodName, in, out, opts...)
 	if err != nil {
 		return nil, err
 	}
 	return out, nil
 }
 
-// LogInServiceServer is the server API for LogInService service.
-// All implementations must embed UnimplementedLogInServiceServer
+func (c *authServiceClient) LogOut(ctx context.Context, in *LogOutRequest, opts ...grpc.CallOption) (*LogOutResponse, error) {
+	out := new(LogOutResponse)
+	err := c.cc.Invoke(ctx, AuthService_LogOut_FullMethodName, in, out, opts...)
+	if err != nil {
+		return nil, err
+	}
+	return out, nil
+}
+
+func (c *authServiceClient) RevokeTokens(ctx context.Context, in *RevokeTokensRequest, opts ...grpc.CallOption) (*RevokeTokensResponse, error) {
+	out := new(RevokeTokensResponse)
+	err := c.cc.Invoke(ctx, AuthService_RevokeTokens_FullMethodName, in, out, opts...)
+	if err != nil {
+		return nil, err
+	}
+	return out, nil
+}
+
+func (c *authServiceClient) RevokeUserToken(ctx context.Context, in *RevokeUserTokenRequest, opts ...grpc.CallOption) (*RevokeUserTokenResponse, error) {
+	out := new(RevokeUserTokenResponse)
+	err := c.cc.Invoke(ctx, AuthService_RevokeUserToken_FullMethodName, in, out, opts...)
+	if err != nil {
+		return nil, err
+	}
+	return out, nil
+}
+
+func (c *authServiceClient) RefreshToken(ctx context.Context, in *RefreshTokenRequest, opts ...grpc.CallOption) (*RefreshTokenResponse, error) {
+	out := new(RefreshTokenResponse)
+	err := c.cc.Invoke(ctx, AuthService_RefreshToken_FullMethodName, in, out, opts...)
+	if err != nil {
+		return nil, err
+	}
+	return out, nil
+}
+
+func (c *authServiceClient) Verify(ctx context.Context, in *VerifyRequest, opts ...grpc.CallOption) (*VerifyResponse, error) {
+	out := new(VerifyResponse)
+	err := c.cc.Invoke(ctx, AuthService_Verify_FullMethodName, in, out, opts...)
+	if err != nil {
+		return nil, err
+	}
+	return out, nil
+}
+
+// AuthServiceServer is the server API for AuthService service.
+// All implementations must embed UnimplementedAuthServiceServer
 // for forward compatibility
-type LogInServiceServer interface {
+type AuthServiceServer interface {
+	// LogIn to Mediator
 	LogIn(context.Context, *LogInRequest) (*LogInResponse, error)
-	mustEmbedUnimplementedLogInServiceServer()
+	// Logout of Mediator
+	LogOut(context.Context, *LogOutRequest) (*LogOutResponse, error)
+	// revoke all tokens for all users
+	RevokeTokens(context.Context, *RevokeTokensRequest) (*RevokeTokensResponse, error)
+	// revoke token for an user
+	RevokeUserToken(context.Context, *RevokeUserTokenRequest) (*RevokeUserTokenResponse, error)
+	// refresh a token
+	RefreshToken(context.Context, *RefreshTokenRequest) (*RefreshTokenResponse, error)
+	// Verify user has active session to Mediator
+	Verify(context.Context, *VerifyRequest) (*VerifyResponse, error)
+	mustEmbedUnimplementedAuthServiceServer()
 }
 
-// UnimplementedLogInServiceServer must be embedded to have forward compatible implementations.
-type UnimplementedLogInServiceServer struct {
+// UnimplementedAuthServiceServer must be embedded to have forward compatible implementations.
+type UnimplementedAuthServiceServer struct {
 }
 
-func (UnimplementedLogInServiceServer) LogIn(context.Context, *LogInRequest) (*LogInResponse, error) {
+func (UnimplementedAuthServiceServer) LogIn(context.Context, *LogInRequest) (*LogInResponse, error) {
 	return nil, status.Errorf(codes.Unimplemented, "method LogIn not implemented")
 }
-func (UnimplementedLogInServiceServer) mustEmbedUnimplementedLogInServiceServer() {}
+func (UnimplementedAuthServiceServer) LogOut(context.Context, *LogOutRequest) (*LogOutResponse, error) {
+	return nil, status.Errorf(codes.Unimplemented, "method LogOut not implemented")
+}
+func (UnimplementedAuthServiceServer) RevokeTokens(context.Context, *RevokeTokensRequest) (*RevokeTokensResponse, error) {
+	return nil, status.Errorf(codes.Unimplemented, "method RevokeTokens not implemented")
+}
+func (UnimplementedAuthServiceServer) RevokeUserToken(context.Context, *RevokeUserTokenRequest) (*RevokeUserTokenResponse, error) {
+	return nil, status.Errorf(codes.Unimplemented, "method RevokeUserToken not implemented")
+}
+func (UnimplementedAuthServiceServer) RefreshToken(context.Context, *RefreshTokenRequest) (*RefreshTokenResponse, error) {
+	return nil, status.Errorf(codes.Unimplemented, "method RefreshToken not implemented")
+}
+func (UnimplementedAuthServiceServer) Verify(context.Context, *VerifyRequest) (*VerifyResponse, error) {
+	return nil, status.Errorf(codes.Unimplemented, "method Verify not implemented")
+}
+func (UnimplementedAuthServiceServer) mustEmbedUnimplementedAuthServiceServer() {}
 
-// UnsafeLogInServiceServer may be embedded to opt out of forward compatibility for this service.
-// Use of this interface is not recommended, as added methods to LogInServiceServer will
+// UnsafeAuthServiceServer may be embedded to opt out of forward compatibility for this service.
+// Use of this interface is not recommended, as added methods to AuthServiceServer will
 // result in compilation errors.
-type UnsafeLogInServiceServer interface {
-	mustEmbedUnimplementedLogInServiceServer()
+type UnsafeAuthServiceServer interface {
+	mustEmbedUnimplementedAuthServiceServer()
 }
 
-func RegisterLogInServiceServer(s grpc.ServiceRegistrar, srv LogInServiceServer) {
-	s.RegisterService(&LogInService_ServiceDesc, srv)
+func RegisterAuthServiceServer(s grpc.ServiceRegistrar, srv AuthServiceServer) {
+	s.RegisterService(&AuthService_ServiceDesc, srv)
 }
 
-func _LogInService_LogIn_Handler(srv interface{}, ctx context.Context, dec func(interface{}) error, interceptor grpc.UnaryServerInterceptor) (interface{}, error) {
+func _AuthService_LogIn_Handler(srv interface{}, ctx context.Context, dec func(interface{}) error, interceptor grpc.UnaryServerInterceptor) (interface{}, error) {
 	in := new(LogInRequest)
 	if err := dec(in); err != nil {
 		return nil, err
 	}
 	if interceptor == nil {
-		return srv.(LogInServiceServer).LogIn(ctx, in)
+		return srv.(AuthServiceServer).LogIn(ctx, in)
 	}
 	info := &grpc.UnaryServerInfo{
 		Server:     srv,
-		FullMethod: LogInService_LogIn_FullMethodName,
+		FullMethod: AuthService_LogIn_FullMethodName,
 	}
 	handler := func(ctx context.Context, req interface{}) (interface{}, error) {
-		return srv.(LogInServiceServer).LogIn(ctx, req.(*LogInRequest))
+		return srv.(AuthServiceServer).LogIn(ctx, req.(*LogInRequest))
 	}
 	return interceptor(ctx, in, info, handler)
 }
 
-// LogInService_ServiceDesc is the grpc.ServiceDesc for LogInService service.
-// It's only intended for direct use with grpc.RegisterService,
-// and not to be introspected or modified (even as a copy)
-var LogInService_ServiceDesc = grpc.ServiceDesc{
-	ServiceName: "mediator.v1.LogInService",
-	HandlerType: (*LogInServiceServer)(nil),
-	Methods: []grpc.MethodDesc{
-		{
-			MethodName: "LogIn",
-			Handler:    _LogInService_LogIn_Handler,
-		},
-	},
-	Streams:  []grpc.StreamDesc{},
-	Metadata: "mediator/v1/mediator.proto",
-}
-
-const (
-	LogOutService_LogOut_FullMethodName = "/mediator.v1.LogOutService/LogOut"
-)
-
-// LogOutServiceClient is the client API for LogOutService service.
-//
-// For semantics around ctx use and closing/ending streaming RPCs, please refer to https://pkg.go.dev/google.golang.org/grpc/?tab=doc#ClientConn.NewStream.
-type LogOutServiceClient interface {
-	LogOut(ctx context.Context, in *LogOutRequest, opts ...grpc.CallOption) (*LogOutResponse, error)
-}
-
-type logOutServiceClient struct {
-	cc grpc.ClientConnInterface
-}
-
-func NewLogOutServiceClient(cc grpc.ClientConnInterface) LogOutServiceClient {
-	return &logOutServiceClient{cc}
-}
-
-func (c *logOutServiceClient) LogOut(ctx context.Context, in *LogOutRequest, opts ...grpc.CallOption) (*LogOutResponse, error) {
-	out := new(LogOutResponse)
-	err := c.cc.Invoke(ctx, LogOutService_LogOut_FullMethodName, in, out, opts...)
-	if err != nil {
-		return nil, err
-	}
-	return out, nil
-}
-
-// LogOutServiceServer is the server API for LogOutService service.
-// All implementations must embed UnimplementedLogOutServiceServer
-// for forward compatibility
-type LogOutServiceServer interface {
-	LogOut(context.Context, *LogOutRequest) (*LogOutResponse, error)
-	mustEmbedUnimplementedLogOutServiceServer()
-}
-
-// UnimplementedLogOutServiceServer must be embedded to have forward compatible implementations.
-type UnimplementedLogOutServiceServer struct {
-}
-
-func (UnimplementedLogOutServiceServer) LogOut(context.Context, *LogOutRequest) (*LogOutResponse, error) {
-	return nil, status.Errorf(codes.Unimplemented, "method LogOut not implemented")
-}
-func (UnimplementedLogOutServiceServer) mustEmbedUnimplementedLogOutServiceServer() {}
-
-// UnsafeLogOutServiceServer may be embedded to opt out of forward compatibility for this service.
-// Use of this interface is not recommended, as added methods to LogOutServiceServer will
-// result in compilation errors.
-type UnsafeLogOutServiceServer interface {
-	mustEmbedUnimplementedLogOutServiceServer()
-}
-
-func RegisterLogOutServiceServer(s grpc.ServiceRegistrar, srv LogOutServiceServer) {
-	s.RegisterService(&LogOutService_ServiceDesc, srv)
-}
-
-func _LogOutService_LogOut_Handler(srv interface{}, ctx context.Context, dec func(interface{}) error, interceptor grpc.UnaryServerInterceptor) (interface{}, error) {
+func _AuthService_LogOut_Handler(srv interface{}, ctx context.Context, dec func(interface{}) error, interceptor grpc.UnaryServerInterceptor) (interface{}, error) {
 	in := new(LogOutRequest)
 	if err := dec(in); err != nil {
 		return nil, err
 	}
 	if interceptor == nil {
-		return srv.(LogOutServiceServer).LogOut(ctx, in)
+		return srv.(AuthServiceServer).LogOut(ctx, in)
 	}
 	info := &grpc.UnaryServerInfo{
 		Server:     srv,
-		FullMethod: LogOutService_LogOut_FullMethodName,
+		FullMethod: AuthService_LogOut_FullMethodName,
 	}
 	handler := func(ctx context.Context, req interface{}) (interface{}, error) {
-		return srv.(LogOutServiceServer).LogOut(ctx, req.(*LogOutRequest))
+		return srv.(AuthServiceServer).LogOut(ctx, req.(*LogOutRequest))
 	}
 	return interceptor(ctx, in, info, handler)
 }
 
-// LogOutService_ServiceDesc is the grpc.ServiceDesc for LogOutService service.
-// It's only intended for direct use with grpc.RegisterService,
-// and not to be introspected or modified (even as a copy)
-var LogOutService_ServiceDesc = grpc.ServiceDesc{
-	ServiceName: "mediator.v1.LogOutService",
-	HandlerType: (*LogOutServiceServer)(nil),
-	Methods: []grpc.MethodDesc{
-		{
-			MethodName: "LogOut",
-			Handler:    _LogOutService_LogOut_Handler,
-		},
-	},
-	Streams:  []grpc.StreamDesc{},
-	Metadata: "mediator/v1/mediator.proto",
-}
-
-const (
-	RevokeTokensService_RevokeTokens_FullMethodName    = "/mediator.v1.RevokeTokensService/RevokeTokens"
-	RevokeTokensService_RevokeUserToken_FullMethodName = "/mediator.v1.RevokeTokensService/RevokeUserToken"
-)
-
-// RevokeTokensServiceClient is the client API for RevokeTokensService service.
-//
-// For semantics around ctx use and closing/ending streaming RPCs, please refer to https://pkg.go.dev/google.golang.org/grpc/?tab=doc#ClientConn.NewStream.
-type RevokeTokensServiceClient interface {
-	RevokeTokens(ctx context.Context, in *RevokeTokensRequest, opts ...grpc.CallOption) (*RevokeTokensResponse, error)
-	RevokeUserToken(ctx context.Context, in *RevokeUserTokenRequest, opts ...grpc.CallOption) (*RevokeUserTokenResponse, error)
-}
-
-type revokeTokensServiceClient struct {
-	cc grpc.ClientConnInterface
-}
-
-func NewRevokeTokensServiceClient(cc grpc.ClientConnInterface) RevokeTokensServiceClient {
-	return &revokeTokensServiceClient{cc}
-}
-
-func (c *revokeTokensServiceClient) RevokeTokens(ctx context.Context, in *RevokeTokensRequest, opts ...grpc.CallOption) (*RevokeTokensResponse, error) {
-	out := new(RevokeTokensResponse)
-	err := c.cc.Invoke(ctx, RevokeTokensService_RevokeTokens_FullMethodName, in, out, opts...)
-	if err != nil {
-		return nil, err
-	}
-	return out, nil
-}
-
-func (c *revokeTokensServiceClient) RevokeUserToken(ctx context.Context, in *RevokeUserTokenRequest, opts ...grpc.CallOption) (*RevokeUserTokenResponse, error) {
-	out := new(RevokeUserTokenResponse)
-	err := c.cc.Invoke(ctx, RevokeTokensService_RevokeUserToken_FullMethodName, in, out, opts...)
-	if err != nil {
-		return nil, err
-	}
-	return out, nil
-}
-
-// RevokeTokensServiceServer is the server API for RevokeTokensService service.
-// All implementations must embed UnimplementedRevokeTokensServiceServer
-// for forward compatibility
-type RevokeTokensServiceServer interface {
-	RevokeTokens(context.Context, *RevokeTokensRequest) (*RevokeTokensResponse, error)
-	RevokeUserToken(context.Context, *RevokeUserTokenRequest) (*RevokeUserTokenResponse, error)
-	mustEmbedUnimplementedRevokeTokensServiceServer()
-}
-
-// UnimplementedRevokeTokensServiceServer must be embedded to have forward compatible implementations.
-type UnimplementedRevokeTokensServiceServer struct {
-}
-
-func (UnimplementedRevokeTokensServiceServer) RevokeTokens(context.Context, *RevokeTokensRequest) (*RevokeTokensResponse, error) {
-	return nil, status.Errorf(codes.Unimplemented, "method RevokeTokens not implemented")
-}
-func (UnimplementedRevokeTokensServiceServer) RevokeUserToken(context.Context, *RevokeUserTokenRequest) (*RevokeUserTokenResponse, error) {
-	return nil, status.Errorf(codes.Unimplemented, "method RevokeUserToken not implemented")
-}
-func (UnimplementedRevokeTokensServiceServer) mustEmbedUnimplementedRevokeTokensServiceServer() {}
-
-// UnsafeRevokeTokensServiceServer may be embedded to opt out of forward compatibility for this service.
-// Use of this interface is not recommended, as added methods to RevokeTokensServiceServer will
-// result in compilation errors.
-type UnsafeRevokeTokensServiceServer interface {
-	mustEmbedUnimplementedRevokeTokensServiceServer()
-}
-
-func RegisterRevokeTokensServiceServer(s grpc.ServiceRegistrar, srv RevokeTokensServiceServer) {
-	s.RegisterService(&RevokeTokensService_ServiceDesc, srv)
-}
-
-func _RevokeTokensService_RevokeTokens_Handler(srv interface{}, ctx context.Context, dec func(interface{}) error, interceptor grpc.UnaryServerInterceptor) (interface{}, error) {
+func _AuthService_RevokeTokens_Handler(srv interface{}, ctx context.Context, dec func(interface{}) error, interceptor grpc.UnaryServerInterceptor) (interface{}, error) {
 	in := new(RevokeTokensRequest)
 	if err := dec(in); err != nil {
 		return nil, err
 	}
 	if interceptor == nil {
-		return srv.(RevokeTokensServiceServer).RevokeTokens(ctx, in)
+		return srv.(AuthServiceServer).RevokeTokens(ctx, in)
 	}
 	info := &grpc.UnaryServerInfo{
 		Server:     srv,
-		FullMethod: RevokeTokensService_RevokeTokens_FullMethodName,
+		FullMethod: AuthService_RevokeTokens_FullMethodName,
 	}
 	handler := func(ctx context.Context, req interface{}) (interface{}, error) {
-		return srv.(RevokeTokensServiceServer).RevokeTokens(ctx, req.(*RevokeTokensRequest))
+		return srv.(AuthServiceServer).RevokeTokens(ctx, req.(*RevokeTokensRequest))
 	}
 	return interceptor(ctx, in, info, handler)
 }
 
-func _RevokeTokensService_RevokeUserToken_Handler(srv interface{}, ctx context.Context, dec func(interface{}) error, interceptor grpc.UnaryServerInterceptor) (interface{}, error) {
+func _AuthService_RevokeUserToken_Handler(srv interface{}, ctx context.Context, dec func(interface{}) error, interceptor grpc.UnaryServerInterceptor) (interface{}, error) {
 	in := new(RevokeUserTokenRequest)
 	if err := dec(in); err != nil {
 		return nil, err
 	}
 	if interceptor == nil {
-		return srv.(RevokeTokensServiceServer).RevokeUserToken(ctx, in)
+		return srv.(AuthServiceServer).RevokeUserToken(ctx, in)
 	}
 	info := &grpc.UnaryServerInfo{
 		Server:     srv,
-		FullMethod: RevokeTokensService_RevokeUserToken_FullMethodName,
+		FullMethod: AuthService_RevokeUserToken_FullMethodName,
 	}
 	handler := func(ctx context.Context, req interface{}) (interface{}, error) {
-		return srv.(RevokeTokensServiceServer).RevokeUserToken(ctx, req.(*RevokeUserTokenRequest))
+		return srv.(AuthServiceServer).RevokeUserToken(ctx, req.(*RevokeUserTokenRequest))
 	}
 	return interceptor(ctx, in, info, handler)
 }
 
-// RevokeTokensService_ServiceDesc is the grpc.ServiceDesc for RevokeTokensService service.
-// It's only intended for direct use with grpc.RegisterService,
-// and not to be introspected or modified (even as a copy)
-var RevokeTokensService_ServiceDesc = grpc.ServiceDesc{
-	ServiceName: "mediator.v1.RevokeTokensService",
-	HandlerType: (*RevokeTokensServiceServer)(nil),
-	Methods: []grpc.MethodDesc{
-		{
-			MethodName: "RevokeTokens",
-			Handler:    _RevokeTokensService_RevokeTokens_Handler,
-		},
-		{
-			MethodName: "RevokeUserToken",
-			Handler:    _RevokeTokensService_RevokeUserToken_Handler,
-		},
-	},
-	Streams:  []grpc.StreamDesc{},
-	Metadata: "mediator/v1/mediator.proto",
-}
-
-const (
-	RefreshTokenService_RefreshToken_FullMethodName = "/mediator.v1.RefreshTokenService/RefreshToken"
-)
-
-// RefreshTokenServiceClient is the client API for RefreshTokenService service.
-//
-// For semantics around ctx use and closing/ending streaming RPCs, please refer to https://pkg.go.dev/google.golang.org/grpc/?tab=doc#ClientConn.NewStream.
-type RefreshTokenServiceClient interface {
-	RefreshToken(ctx context.Context, in *RefreshTokenRequest, opts ...grpc.CallOption) (*RefreshTokenResponse, error)
-}
-
-type refreshTokenServiceClient struct {
-	cc grpc.ClientConnInterface
-}
-
-func NewRefreshTokenServiceClient(cc grpc.ClientConnInterface) RefreshTokenServiceClient {
-	return &refreshTokenServiceClient{cc}
-}
-
-func (c *refreshTokenServiceClient) RefreshToken(ctx context.Context, in *RefreshTokenRequest, opts ...grpc.CallOption) (*RefreshTokenResponse, error) {
-	out := new(RefreshTokenResponse)
-	err := c.cc.Invoke(ctx, RefreshTokenService_RefreshToken_FullMethodName, in, out, opts...)
-	if err != nil {
-		return nil, err
-	}
-	return out, nil
-}
-
-// RefreshTokenServiceServer is the server API for RefreshTokenService service.
-// All implementations must embed UnimplementedRefreshTokenServiceServer
-// for forward compatibility
-type RefreshTokenServiceServer interface {
-	RefreshToken(context.Context, *RefreshTokenRequest) (*RefreshTokenResponse, error)
-	mustEmbedUnimplementedRefreshTokenServiceServer()
-}
-
-// UnimplementedRefreshTokenServiceServer must be embedded to have forward compatible implementations.
-type UnimplementedRefreshTokenServiceServer struct {
-}
-
-func (UnimplementedRefreshTokenServiceServer) RefreshToken(context.Context, *RefreshTokenRequest) (*RefreshTokenResponse, error) {
-	return nil, status.Errorf(codes.Unimplemented, "method RefreshToken not implemented")
-}
-func (UnimplementedRefreshTokenServiceServer) mustEmbedUnimplementedRefreshTokenServiceServer() {}
-
-// UnsafeRefreshTokenServiceServer may be embedded to opt out of forward compatibility for this service.
-// Use of this interface is not recommended, as added methods to RefreshTokenServiceServer will
-// result in compilation errors.
-type UnsafeRefreshTokenServiceServer interface {
-	mustEmbedUnimplementedRefreshTokenServiceServer()
-}
-
-func RegisterRefreshTokenServiceServer(s grpc.ServiceRegistrar, srv RefreshTokenServiceServer) {
-	s.RegisterService(&RefreshTokenService_ServiceDesc, srv)
-}
-
-func _RefreshTokenService_RefreshToken_Handler(srv interface{}, ctx context.Context, dec func(interface{}) error, interceptor grpc.UnaryServerInterceptor) (interface{}, error) {
+func _AuthService_RefreshToken_Handler(srv interface{}, ctx context.Context, dec func(interface{}) error, interceptor grpc.UnaryServerInterceptor) (interface{}, error) {
 	in := new(RefreshTokenRequest)
 	if err := dec(in); err != nil {
 		return nil, err
 	}
 	if interceptor == nil {
-		return srv.(RefreshTokenServiceServer).RefreshToken(ctx, in)
+		return srv.(AuthServiceServer).RefreshToken(ctx, in)
 	}
 	info := &grpc.UnaryServerInfo{
 		Server:     srv,
-		FullMethod: RefreshTokenService_RefreshToken_FullMethodName,
+		FullMethod: AuthService_RefreshToken_FullMethodName,
 	}
 	handler := func(ctx context.Context, req interface{}) (interface{}, error) {
-		return srv.(RefreshTokenServiceServer).RefreshToken(ctx, req.(*RefreshTokenRequest))
+		return srv.(AuthServiceServer).RefreshToken(ctx, req.(*RefreshTokenRequest))
 	}
 	return interceptor(ctx, in, info, handler)
 }
 
-// RefreshTokenService_ServiceDesc is the grpc.ServiceDesc for RefreshTokenService service.
-// It's only intended for direct use with grpc.RegisterService,
-// and not to be introspected or modified (even as a copy)
-var RefreshTokenService_ServiceDesc = grpc.ServiceDesc{
-	ServiceName: "mediator.v1.RefreshTokenService",
-	HandlerType: (*RefreshTokenServiceServer)(nil),
-	Methods: []grpc.MethodDesc{
-		{
-			MethodName: "RefreshToken",
-			Handler:    _RefreshTokenService_RefreshToken_Handler,
-		},
-	},
-	Streams:  []grpc.StreamDesc{},
-	Metadata: "mediator/v1/mediator.proto",
-}
-
-const (
-	AuthVerifyService_Verify_FullMethodName = "/mediator.v1.AuthVerifyService/Verify"
-)
-
-// AuthVerifyServiceClient is the client API for AuthVerifyService service.
-//
-// For semantics around ctx use and closing/ending streaming RPCs, please refer to https://pkg.go.dev/google.golang.org/grpc/?tab=doc#ClientConn.NewStream.
-type AuthVerifyServiceClient interface {
-	Verify(ctx context.Context, in *AuthVerifyServiceVerifyRequest, opts ...grpc.CallOption) (*AuthVerifyServiceVerifyResponse, error)
-}
-
-type authVerifyServiceClient struct {
-	cc grpc.ClientConnInterface
-}
-
-func NewAuthVerifyServiceClient(cc grpc.ClientConnInterface) AuthVerifyServiceClient {
-	return &authVerifyServiceClient{cc}
-}
-
-func (c *authVerifyServiceClient) Verify(ctx context.Context, in *AuthVerifyServiceVerifyRequest, opts ...grpc.CallOption) (*AuthVerifyServiceVerifyResponse, error) {
-	out := new(AuthVerifyServiceVerifyResponse)
-	err := c.cc.Invoke(ctx, AuthVerifyService_Verify_FullMethodName, in, out, opts...)
-	if err != nil {
-		return nil, err
-	}
-	return out, nil
-}
-
-// AuthVerifyServiceServer is the server API for AuthVerifyService service.
-// All implementations must embed UnimplementedAuthVerifyServiceServer
-// for forward compatibility
-type AuthVerifyServiceServer interface {
-	Verify(context.Context, *AuthVerifyServiceVerifyRequest) (*AuthVerifyServiceVerifyResponse, error)
-	mustEmbedUnimplementedAuthVerifyServiceServer()
-}
-
-// UnimplementedAuthVerifyServiceServer must be embedded to have forward compatible implementations.
-type UnimplementedAuthVerifyServiceServer struct {
-}
-
-func (UnimplementedAuthVerifyServiceServer) Verify(context.Context, *AuthVerifyServiceVerifyRequest) (*AuthVerifyServiceVerifyResponse, error) {
-	return nil, status.Errorf(codes.Unimplemented, "method Verify not implemented")
-}
-func (UnimplementedAuthVerifyServiceServer) mustEmbedUnimplementedAuthVerifyServiceServer() {}
-
-// UnsafeAuthVerifyServiceServer may be embedded to opt out of forward compatibility for this service.
-// Use of this interface is not recommended, as added methods to AuthVerifyServiceServer will
-// result in compilation errors.
-type UnsafeAuthVerifyServiceServer interface {
-	mustEmbedUnimplementedAuthVerifyServiceServer()
-}
-
-func RegisterAuthVerifyServiceServer(s grpc.ServiceRegistrar, srv AuthVerifyServiceServer) {
-	s.RegisterService(&AuthVerifyService_ServiceDesc, srv)
-}
-
-func _AuthVerifyService_Verify_Handler(srv interface{}, ctx context.Context, dec func(interface{}) error, interceptor grpc.UnaryServerInterceptor) (interface{}, error) {
-	in := new(AuthVerifyServiceVerifyRequest)
+func _AuthService_Verify_Handler(srv interface{}, ctx context.Context, dec func(interface{}) error, interceptor grpc.UnaryServerInterceptor) (interface{}, error) {
+	in := new(VerifyRequest)
 	if err := dec(in); err != nil {
 		return nil, err
 	}
 	if interceptor == nil {
-		return srv.(AuthVerifyServiceServer).Verify(ctx, in)
+		return srv.(AuthServiceServer).Verify(ctx, in)
 	}
 	info := &grpc.UnaryServerInfo{
 		Server:     srv,
-		FullMethod: AuthVerifyService_Verify_FullMethodName,
+		FullMethod: AuthService_Verify_FullMethodName,
 	}
 	handler := func(ctx context.Context, req interface{}) (interface{}, error) {
-		return srv.(AuthVerifyServiceServer).Verify(ctx, req.(*AuthVerifyServiceVerifyRequest))
+		return srv.(AuthServiceServer).Verify(ctx, req.(*VerifyRequest))
 	}
 	return interceptor(ctx, in, info, handler)
 }
 
-// AuthVerifyService_ServiceDesc is the grpc.ServiceDesc for AuthVerifyService service.
+// AuthService_ServiceDesc is the grpc.ServiceDesc for AuthService service.
 // It's only intended for direct use with grpc.RegisterService,
 // and not to be introspected or modified (even as a copy)
-var AuthVerifyService_ServiceDesc = grpc.ServiceDesc{
-	ServiceName: "mediator.v1.AuthVerifyService",
-	HandlerType: (*AuthVerifyServiceServer)(nil),
+var AuthService_ServiceDesc = grpc.ServiceDesc{
+	ServiceName: "mediator.v1.AuthService",
+	HandlerType: (*AuthServiceServer)(nil),
 	Methods: []grpc.MethodDesc{
 		{
+			MethodName: "LogIn",
+			Handler:    _AuthService_LogIn_Handler,
+		},
+		{
+			MethodName: "LogOut",
+			Handler:    _AuthService_LogOut_Handler,
+		},
+		{
+			MethodName: "RevokeTokens",
+			Handler:    _AuthService_RevokeTokens_Handler,
+		},
+		{
+			MethodName: "RevokeUserToken",
+			Handler:    _AuthService_RevokeUserToken_Handler,
+		},
+		{
+			MethodName: "RefreshToken",
+			Handler:    _AuthService_RefreshToken_Handler,
+		},
+		{
 			MethodName: "Verify",
-			Handler:    _AuthVerifyService_Verify_Handler,
+			Handler:    _AuthService_Verify_Handler,
 		},
 	},
 	Streams:  []grpc.StreamDesc{},
