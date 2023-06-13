@@ -72,11 +72,7 @@ a mediator control plane.`,
 			OrganizationId: organization,
 			IsProtected:    protectedPtr,
 		})
-
-		if err != nil {
-			fmt.Fprintf(os.Stderr, "Error creating group: %s\n", err)
-			os.Exit(1)
-		}
+		util.ExitNicelyOnError(err, "Error creating group")
 
 		group, err := json.MarshalIndent(resp, "", "  ")
 		if err != nil {

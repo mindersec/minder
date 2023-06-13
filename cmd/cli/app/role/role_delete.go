@@ -50,10 +50,7 @@ mediator control plane.`,
 
 		conn, err := util.GetGrpcConnection(cmd)
 
-		if err != nil {
-			fmt.Fprintf(os.Stderr, "Error getting grpc connection: %s\n", err)
-			os.Exit(1)
-		}
+		util.ExitNicelyOnError(err, "Error getting grpc connection")
 		defer conn.Close()
 
 		client := pb.NewRoleServiceClient(conn)
@@ -66,10 +63,7 @@ mediator control plane.`,
 			Force: forcePtr,
 		})
 
-		if err != nil {
-			fmt.Fprintf(os.Stderr, "Error deleting role: %s\n", err)
-			os.Exit(1)
-		}
+		util.ExitNicelyOnError(err, "Error deleting role")
 		cmd.Println("Successfully deleted role with id:", id)
 	},
 }

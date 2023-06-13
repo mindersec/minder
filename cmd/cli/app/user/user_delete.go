@@ -49,10 +49,8 @@ mediator control plane.`,
 		force := util.GetConfigValue("force", "force", cmd, false).(bool)
 
 		conn, err := util.GetGrpcConnection(cmd)
-		if err != nil {
-			fmt.Fprintf(os.Stderr, "Error getting grpc connection: %s\n", err)
-			os.Exit(1)
-		}
+		util.ExitNicelyOnError(err, "Error getting grpc connection")
+
 		defer conn.Close()
 
 		client := pb.NewUserServiceClient(conn)
@@ -65,10 +63,7 @@ mediator control plane.`,
 			Force: forcePtr,
 		})
 
-		if err != nil {
-			fmt.Fprintf(os.Stderr, "Error deleting user: %s\n", err)
-			os.Exit(1)
-		}
+		util.ExitNicelyOnError(err, "Error deleting user")
 		cmd.Println("Successfully deleted user with id:", id)
 	},
 }

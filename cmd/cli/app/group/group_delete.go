@@ -49,11 +49,8 @@ mediator control plane.`,
 		force := util.GetConfigValue("force", "force", cmd, false).(bool)
 
 		conn, err := util.GetGrpcConnection(cmd)
+		util.ExitNicelyOnError(err, "Error getting grpc connection")
 
-		if err != nil {
-			fmt.Fprintf(os.Stderr, "Error getting grpc connection: %s\n", err)
-			os.Exit(1)
-		}
 		defer conn.Close()
 
 		client := pb.NewGroupServiceClient(conn)
@@ -65,11 +62,8 @@ mediator control plane.`,
 			Id:    id,
 			Force: forcePtr,
 		})
+		util.ExitNicelyOnError(err, "Error deleting group")
 
-		if err != nil {
-			fmt.Fprintf(os.Stderr, "Error deleting group: %s\n", err)
-			os.Exit(1)
-		}
 		cmd.Println("Successfully deleted group with id:", id)
 	},
 }

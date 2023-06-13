@@ -72,19 +72,22 @@ mediator control plane.`,
 		}
 
 		var groupRecord *pb.GroupRecord
+
 		// get by id
 		if id > 0 {
-			group, _ := client.GetGroupById(ctx, &pb.GetGroupByIdRequest{
+			group, err := client.GetGroupById(ctx, &pb.GetGroupByIdRequest{
 				GroupId: id,
 			})
+			util.ExitNicelyOnError(err, "Error getting group")
 			if group != nil {
 				groupRecord = group.Group
 			}
 		} else if name != "" {
 			// get by name
-			group, _ := client.GetGroupByName(ctx, &pb.GetGroupByNameRequest{
+			group, err := client.GetGroupByName(ctx, &pb.GetGroupByNameRequest{
 				Name: name,
 			})
+			util.ExitNicelyOnError(err, "Error getting group")
 			if group != nil {
 				groupRecord = group.Group
 			}

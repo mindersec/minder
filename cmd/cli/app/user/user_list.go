@@ -77,10 +77,7 @@ mediator control plane for an specific role.`,
 			Limit:  limitPtr,
 			Offset: offsetPtr,
 		})
-		if err != nil {
-			fmt.Fprintf(os.Stderr, "Error getting users: %s\n", err)
-			os.Exit(1)
-		}
+		util.ExitNicelyOnError(err, "Error getting users")
 
 		// print output in a table
 		if format == "" {
