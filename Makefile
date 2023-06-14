@@ -66,9 +66,9 @@ sqlc: ## generate sqlc files
 	sqlc generate
 
 migrateup:
-	@go run cmd/migrations/main.go migrate up --yes     
+	@go run cmd/server/main.go migrate up --yes     
 migratedown:
-	@go run cmd/migrations/main.go migrate down
+	@go run cmd/server/main.go migrate down
 
 mock:
 	mockgen -package mockdb -destination database/mock/store.go github.com/stacklok/mediator/pkg/db Store
