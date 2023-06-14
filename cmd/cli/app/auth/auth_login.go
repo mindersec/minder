@@ -29,7 +29,6 @@ import (
 
 	"github.com/spf13/cobra"
 	"github.com/stacklok/mediator/pkg/util"
-	"google.golang.org/grpc/codes"
 	"google.golang.org/grpc/status"
 
 	pb "github.com/stacklok/mediator/pkg/generated/protobuf/go/mediator/v1"
@@ -70,11 +69,6 @@ will be saved to $XDG_CONFIG_HOME/mediator/credentials.json`,
 			ns := util.GetNiceStatus(ret.Code())
 			fmt.Fprintf(os.Stderr, "Error logging in: %s\n", ns)
 			os.Exit(int(ret.Code()))
-		}
-		if resp.Status.Code != int32(codes.OK) {
-			util.GetNiceStatus(codes.Code(resp.Status.Code))
-			fmt.Fprintf(os.Stderr, "Error logging in: %s\n", resp.Status)
-			os.Exit(int(resp.Status.Code))
 		}
 
 		// marshal the credentials to json

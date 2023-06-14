@@ -120,10 +120,9 @@ func (s *Server) LogIn(ctx context.Context, in *pb.LogInRequest) (*pb.LogInRespo
 	accessToken, refreshToken, accessTokenExpirationTime, refreshTokenExpirationTime, err := generateToken(ctx, s.store, user.ID)
 
 	if err != nil {
-		return &pb.LogInResponse{Status: &pb.Status{Code: int32(codes.Internal), Message: "Failed to generate token"}}, nil
+		return nil, status.Error(codes.Internal, "Failed to generate token")
 	}
 	return &pb.LogInResponse{
-		Status:                &pb.Status{Code: int32(codes.OK), Message: "Success"},
 		AccessToken:           accessToken,
 		RefreshToken:          refreshToken,
 		AccessTokenExpiresIn:  accessTokenExpirationTime,
@@ -205,10 +204,9 @@ func (s *Server) RefreshToken(ctx context.Context, _ *pb.RefreshTokenRequest) (*
 	accessToken, _, accessTokenExpirationTime, _, err := generateToken(ctx, s.store, userId)
 
 	if err != nil {
-		return &pb.RefreshTokenResponse{Status: &pb.Status{Code: int32(codes.Internal), Message: "Failed to generate token"}}, nil
+		return nil, status.Errorf(codes.Internal, "Failed to generate token")
 	}
 	return &pb.RefreshTokenResponse{
-		Status:               &pb.Status{Code: int32(codes.OK), Message: "Success"},
 		AccessToken:          accessToken,
 		AccessTokenExpiresIn: accessTokenExpirationTime,
 	}, nil

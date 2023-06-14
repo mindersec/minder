@@ -31,7 +31,6 @@ import (
 	"github.com/spf13/viper"
 	pb "github.com/stacklok/mediator/pkg/generated/protobuf/go/mediator/v1"
 	"github.com/stacklok/mediator/pkg/util"
-	"google.golang.org/grpc/codes"
 )
 
 // Auth_refreshCmd represents the auth refresh command
@@ -49,35 +48,25 @@ var Auth_refreshCmd = &cobra.Command{
 		oldCreds, err := util.LoadCredentials()
 		if err != nil {
 			fmt.Fprintf(os.Stderr, "Error loading credentials: %s\n", err)
+			os.Exit(1)
 		}
 
 		conn, err := util.GetGrpcConnection(cmd)
 		if err != nil {
-			fmt.Fprintf(os.Stderr, "Error getting grpc connection: %s\n", err)
-			os.Exit(1)
+			util.ExitNicelyOnError(err, "Error getting grpc connection")
 		}
 		defer conn.Close()
 
-		if err != nil {
-			fmt.Fprintf(os.Stderr, "Error getting grpc connection: %s\n", err)
-			os.Exit(1)
-		}
 		ctx, cancel := context.WithTimeout(context.Background(), time.Second)
 		defer cancel()
 
 		client := pb.NewAuthServiceClient(conn)
 		if err != nil {
-			fmt.Fprintf(os.Stderr, "Error revoking tokens: %s\n", err)
-			os.Exit(1)
+			util.ExitNicelyOnError(err, "Error getting grpc connection")
 		}
 		resp, err := client.RefreshToken(ctx, &pb.RefreshTokenRequest{})
 		if err != nil {
-			fmt.Fprintf(os.Stderr, "Error revoking tokens: %s\n", err)
-			os.Exit(1)
-		}
-		if resp.Status.Code != int32(codes.OK) {
-			fmt.Fprintf(os.Stderr, "Error refreshing token: %s\n", resp.Status)
-			os.Exit(1)
+			util.ExitNicelyOnError(err, "Error refreshing token")
 		}
 
 		// marshal the credentials to json. Only refresh access token
@@ -91,7 +80,8 @@ var Auth_refreshCmd = &cobra.Command{
 		// save credentials
 		filePath, err := util.SaveCredentials(creds)
 		if err != nil {
-			fmt.Println(err)
+			fmt.Fprintf(os.Stderr, "Error saving credentials: %s\n", err)
+			os.Exit(1)
 		}
 
 		fmt.Printf("Credentials saved to %s\n", filePath)

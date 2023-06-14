@@ -82,7 +82,6 @@ func TestLogin_gRPC(t *testing.T) {
 			checkResponse: func(t *testing.T, res *pb.LogInResponse, err error) {
 				assert.NoError(t, err)
 				assert.NotNil(t, res)
-				assert.Equal(t, int32(codes.OK), res.Status.Code)
 			},
 		},
 		{
@@ -214,7 +213,6 @@ func TestRefreshToken_gRPC(t *testing.T) {
 	res, err := server.RefreshToken(ctx, &pb.RefreshTokenRequest{})
 	assert.NoError(t, err)
 	assert.NotNil(t, res)
-	assert.Equal(t, int32(codes.OK), res.Status.Code)
 	assert.NotNil(t, res.AccessToken)
 
 	_ = os.Remove(filepath.Join(".", viper.Get("auth.refresh_token_private_key").(string)))

@@ -78,7 +78,6 @@
     - [RevokeUserTokenRequest](#mediator-v1-RevokeUserTokenRequest)
     - [RevokeUserTokenResponse](#mediator-v1-RevokeUserTokenResponse)
     - [RoleRecord](#mediator-v1-RoleRecord)
-    - [Status](#mediator-v1-Status)
     - [UserRecord](#mediator-v1-UserRecord)
     - [VerifyRequest](#mediator-v1-VerifyRequest)
     - [VerifyResponse](#mediator-v1-VerifyResponse)
@@ -1103,7 +1102,6 @@ BUF does not allow grouping (which is a shame)
 
 | Field | Type | Label | Description |
 | ----- | ---- | ----- | ----------- |
-| status | [Status](#mediator-v1-Status) |  |  |
 | refresh_token | [string](#string) |  |  |
 | access_token | [string](#string) |  |  |
 | refresh_token_expires_in | [int64](#int64) |  |  |
@@ -1128,11 +1126,6 @@ BUF does not allow grouping (which is a shame)
 
 ### LogOutResponse
 
-
-
-| Field | Type | Label | Description |
-| ----- | ---- | ----- | ----------- |
-| status | [Status](#mediator-v1-Status) |  |  |
 
 
 
@@ -1176,7 +1169,6 @@ BUF does not allow grouping (which is a shame)
 
 | Field | Type | Label | Description |
 | ----- | ---- | ----- | ----------- |
-| status | [Status](#mediator-v1-Status) |  |  |
 | access_token | [string](#string) |  |  |
 | access_token_expires_in | [int64](#int64) |  |  |
 
@@ -1199,11 +1191,6 @@ BUF does not allow grouping (which is a shame)
 
 ### RevokeTokensResponse
 
-
-
-| Field | Type | Label | Description |
-| ----- | ---- | ----- | ----------- |
-| status | [Status](#mediator-v1-Status) |  |  |
 
 
 
@@ -1231,11 +1218,6 @@ BUF does not allow grouping (which is a shame)
 
 
 
-| Field | Type | Label | Description |
-| ----- | ---- | ----- | ----------- |
-| status | [Status](#mediator-v1-Status) |  |  |
-
-
 
 
 
@@ -1255,22 +1237,6 @@ BUF does not allow grouping (which is a shame)
 | is_protected | [bool](#bool) |  |  |
 | created_at | [google.protobuf.Timestamp](#google-protobuf-Timestamp) |  |  |
 | updated_at | [google.protobuf.Timestamp](#google-protobuf-Timestamp) |  |  |
-
-
-
-
-
-
-<a name="mediator-v1-Status"></a>
-
-### Status
-
-
-
-| Field | Type | Label | Description |
-| ----- | ---- | ----- | ----------- |
-| code | [int32](#int32) |  |  |
-| message | [string](#string) |  |  |
 
 
 

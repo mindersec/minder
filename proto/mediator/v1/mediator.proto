@@ -335,31 +335,22 @@ message LogInRequest {
 }
 
 message LogInResponse {
-    Status status = 1;
     string refresh_token = 2;
     string access_token = 3;
     int64  refresh_token_expires_in = 4;
     int64  access_token_expires_in = 5;
 }
 
-message Status {
-    int32 code = 1;
-    string message = 2;
-}
-
-
 message LogOutRequest {
 }
 
 message LogOutResponse {
-    Status status = 1;
 }
 
 message RevokeTokensRequest {
 }
 
 message RevokeTokensResponse {
-    Status status = 1;
 }
 
 message RevokeUserTokenRequest {
@@ -367,14 +358,12 @@ message RevokeUserTokenRequest {
 }
 
 message RevokeUserTokenResponse {
-    Status status = 1;
 }
 
 message RefreshTokenRequest {    
 }
 
 message RefreshTokenResponse {
-    Status status = 1;
     string access_token = 2;
     int64  access_token_expires_in = 3;
 }
