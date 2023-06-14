@@ -20,6 +20,7 @@ import (
 	"fmt"
 	"os"
 	"path/filepath"
+	"time"
 
 	"github.com/go-playground/validator/v10"
 	"github.com/spf13/viper"
@@ -37,34 +38,35 @@ type loginValidation struct {
 	Password string `validate:"min=8,containsany=!@#?*"`
 }
 
-func generateToken(ctx context.Context, store db.Store, userId int32) (string, string, int64, int64, error) {
+func generateToken(ctx context.Context, store db.Store, userId int32) (string, string, int64, int64, auth.UserClaims, error) {
 	// read private key for generating token and refresh token
+	emptyClaims := auth.UserClaims{}
 	privateKeyPath := viper.GetString("auth.access_token_private_key")
 	if privateKeyPath == "" {
-		return "", "", 0, 0, fmt.Errorf("could not read private key")
+		return "", "", 0, 0, emptyClaims, fmt.Errorf("could not read private key")
 	}
 
 	privateKeyPath = filepath.Clean(privateKeyPath)
 	keyBytes, err := os.ReadFile(privateKeyPath)
 	if err != nil {
-		return "", "", 0, 0, fmt.Errorf("failed to generate token")
+		return "", "", 0, 0, emptyClaims, fmt.Errorf("failed to generate token")
 	}
 
 	refreshPrivateKeyPath := viper.GetString("auth.refresh_token_private_key")
 	if refreshPrivateKeyPath == "" {
-		return "", "", 0, 0, fmt.Errorf("failed to generate token")
+		return "", "", 0, 0, emptyClaims, fmt.Errorf("failed to generate token")
 	}
 
 	refreshPrivateKeyPath = filepath.Clean(refreshPrivateKeyPath)
 	refreshKeyBytes, err := os.ReadFile(refreshPrivateKeyPath)
 	if err != nil {
-		return "", "", 0, 0, fmt.Errorf("failed to generate token")
+		return "", "", 0, 0, emptyClaims, fmt.Errorf("failed to generate token")
 	}
 
 	// read all information for user claims
 	userInfo, err := store.GetUserClaims(ctx, userId)
 	if err != nil {
-		return "", "", 0, 0, fmt.Errorf("failed to generate token")
+		return "", "", 0, 0, emptyClaims, fmt.Errorf("failed to generate token")
 	}
 
 	claims := auth.UserClaims{
@@ -86,10 +88,10 @@ func generateToken(ctx context.Context, store db.Store, userId int32) (string, s
 	)
 
 	if err != nil {
-		return "", "", 0, 0, fmt.Errorf("failed to generate token")
+		return "", "", 0, 0, emptyClaims, fmt.Errorf("failed to generate token")
 	}
 
-	return tokenString, refreshTokenString, tokenExpirationTime, refreshExpirationTime, nil
+	return tokenString, refreshTokenString, tokenExpirationTime, refreshExpirationTime, claims, nil
 
 }
 
@@ -117,11 +119,19 @@ func (s *Server) LogIn(ctx context.Context, in *pb.LogInRequest) (*pb.LogInRespo
 		return &pb.LogInResponse{}, status.Error(codes.NotFound, "User and password not found")
 	}
 
-	accessToken, refreshToken, accessTokenExpirationTime, refreshTokenExpirationTime, err := generateToken(ctx, s.store, user.ID)
+	accessToken, refreshToken, accessTokenExpirationTime, refreshTokenExpirationTime,
+		claims, err := generateToken(ctx, s.store, user.ID)
 
 	if err != nil {
 		return nil, status.Error(codes.Internal, "Failed to generate token")
 	}
+
+	// update token revoke time
+	_, err = s.store.CleanTokenIat(ctx, claims.UserId)
+	if err != nil {
+		return nil, fmt.Errorf("error updating token revoke time: %v", err)
+	}
+
 	return &pb.LogInResponse{
 		AccessToken:           accessToken,
 		RefreshToken:          refreshToken,
@@ -134,7 +144,8 @@ func (s *Server) LogIn(ctx context.Context, in *pb.LogInRequest) (*pb.LogInRespo
 func (s *Server) LogOut(ctx context.Context, _ *pb.LogOutRequest) (*pb.LogOutResponse, error) {
 	claims, _ := ctx.Value(TokenInfoKey).(auth.UserClaims)
 	if claims.UserId > 0 {
-		_, err := s.store.RevokeUserToken(ctx, claims.UserId)
+		_, err := s.store.RevokeUserToken(ctx, db.RevokeUserTokenParams{ID: claims.UserId,
+			MinTokenIssuedTime: sql.NullTime{Time: time.Unix(time.Now().Unix(), 0), Valid: true}})
 		if err != nil {
 			return &pb.LogOutResponse{}, status.Error(codes.Internal, "Failed to logout")
 		}
@@ -145,7 +156,7 @@ func (s *Server) LogOut(ctx context.Context, _ *pb.LogOutRequest) (*pb.LogOutRes
 
 // RevokeTokens revokes all the access and refresh tokens
 func (s *Server) RevokeTokens(ctx context.Context, _ *pb.RevokeTokensRequest) (*pb.RevokeTokensResponse, error) {
-	_, err := s.store.RevokeUsersTokens(ctx)
+	_, err := s.store.RevokeUsersTokens(ctx, sql.NullTime{Time: time.Unix(time.Now().Unix(), 0), Valid: true})
 	if err != nil {
 		return &pb.RevokeTokensResponse{}, status.Error(codes.Internal, "Failed to revoke tokens")
 	}
@@ -154,7 +165,8 @@ func (s *Server) RevokeTokens(ctx context.Context, _ *pb.RevokeTokensRequest) (*
 
 // RevokeUserToken revokes all the access and refresh tokens for a user
 func (s *Server) RevokeUserToken(ctx context.Context, req *pb.RevokeUserTokenRequest) (*pb.RevokeUserTokenResponse, error) {
-	_, err := s.store.RevokeUserToken(ctx, req.UserId)
+	_, err := s.store.RevokeUserToken(ctx, db.RevokeUserTokenParams{ID: req.UserId,
+		MinTokenIssuedTime: sql.NullTime{Time: time.Unix(time.Now().Unix(), 0), Valid: true}})
 	if err != nil {
 		return &pb.RevokeUserTokenResponse{}, status.Error(codes.Internal, "Failed to revoke")
 	}
@@ -201,7 +213,7 @@ func (s *Server) RefreshToken(ctx context.Context, _ *pb.RefreshTokenRequest) (*
 	}
 
 	// regenerate and return tokens
-	accessToken, _, accessTokenExpirationTime, _, err := generateToken(ctx, s.store, userId)
+	accessToken, _, accessTokenExpirationTime, _, _, err := generateToken(ctx, s.store, userId)
 
 	if err != nil {
 		return nil, status.Errorf(codes.Internal, "Failed to generate token")

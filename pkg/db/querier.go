@@ -10,6 +10,7 @@ import (
 )
 
 type Querier interface {
+	CleanTokenIat(ctx context.Context, id int32) (User, error)
 	CreateAccessToken(ctx context.Context, arg CreateAccessTokenParams) (ProviderAccessToken, error)
 	CreateGroup(ctx context.Context, arg CreateGroupParams) (Group, error)
 	CreateOrganization(ctx context.Context, arg CreateOrganizationParams) (Organization, error)
@@ -46,14 +47,15 @@ type Querier interface {
 	ListRolesByGroupID(ctx context.Context, groupID int32) ([]Role, error)
 	ListUsers(ctx context.Context, arg ListUsersParams) ([]User, error)
 	ListUsersByRoleID(ctx context.Context, roleID int32) ([]User, error)
-	RevokeGroupUsersTokens(ctx context.Context, groupID int32) (User, error)
-	RevokeOrganizationUsersTokens(ctx context.Context, organizationID int32) (User, error)
-	RevokeRoleUsersTokens(ctx context.Context, roleID int32) (User, error)
-	RevokeUserToken(ctx context.Context, id int32) (User, error)
-	RevokeUsersTokens(ctx context.Context) (User, error)
+	RevokeGroupUsersTokens(ctx context.Context, arg RevokeGroupUsersTokensParams) (User, error)
+	RevokeOrganizationUsersTokens(ctx context.Context, arg RevokeOrganizationUsersTokensParams) (User, error)
+	RevokeRoleUsersTokens(ctx context.Context, arg RevokeRoleUsersTokensParams) (User, error)
+	RevokeUserToken(ctx context.Context, arg RevokeUserTokenParams) (User, error)
+	RevokeUsersTokens(ctx context.Context, minTokenIssuedTime sql.NullTime) (User, error)
 	UpdateAccessToken(ctx context.Context, arg UpdateAccessTokenParams) (ProviderAccessToken, error)
 	UpdateGroup(ctx context.Context, arg UpdateGroupParams) (Group, error)
 	UpdateOrganization(ctx context.Context, arg UpdateOrganizationParams) (Organization, error)
+	UpdatePassword(ctx context.Context, arg UpdatePasswordParams) (User, error)
 	UpdateRole(ctx context.Context, arg UpdateRoleParams) (Role, error)
 	UpdateUser(ctx context.Context, arg UpdateUserParams) (User, error)
 }

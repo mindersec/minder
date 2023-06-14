@@ -76,6 +76,7 @@ within a mediator control plane.`,
 		lastName := util.GetConfigValue("lastname", "lastname", cmd, nil)
 		isProtected := util.GetConfigValue("is-protected", "is-protected", cmd, false).(bool)
 		force := util.GetConfigValue("force", "force", cmd, false).(bool)
+		needsPasswordChange := util.GetConfigValue("needs-password-change", "needs-password-change", cmd, true).(bool)
 
 		if username == nil {
 			fmt.Fprintf(os.Stderr, "Error: username is required\n")
@@ -98,11 +99,7 @@ within a mediator control plane.`,
 		}
 		defer conn.Close()
 
-		if err != nil {
-			fmt.Fprintf(os.Stderr, "Error getting grpc connection: %s\n", err)
-			os.Exit(1)
-		}
-
+		client := pb.NewUserServiceClient(conn)
 		ctx, cancel := context.WithTimeout(context.Background(), time.Second)
 		defer cancel()
 
@@ -141,10 +138,7 @@ within a mediator control plane.`,
 			role = int(respr.Id)
 		}
 
-		client := pb.NewUserServiceClient(conn)
-
 		protectedPtr := &isProtected
-
 		var emailPtr *string
 		if email == nil || email == "" {
 			emailPtr = nil
@@ -173,15 +167,17 @@ within a mediator control plane.`,
 			temp := lastName.(string)
 			lastNamePtr = &temp
 		}
+		needsPasswordChangePtr := &needsPasswordChange
 
 		resp, err := client.CreateUser(ctx, &pb.CreateUserRequest{
-			RoleId:      int32(role),
-			Email:       emailPtr,
-			Username:    username.(string),
-			Password:    passwordPtr,
-			FirstName:   firstNamePtr,
-			LastName:    lastNamePtr,
-			IsProtected: protectedPtr,
+			RoleId:              int32(role),
+			Email:               emailPtr,
+			Username:            username.(string),
+			Password:            passwordPtr,
+			FirstName:           firstNamePtr,
+			LastName:            lastNamePtr,
+			IsProtected:         protectedPtr,
+			NeedsPasswordChange: needsPasswordChangePtr,
 		})
 
 		if err != nil {
@@ -208,7 +204,7 @@ func init() {
 	User_createCmd.Flags().BoolP("is-protected", "i", false, "Is the user protected")
 	User_createCmd.Flags().Int32P("role-id", "r", 0, "Role ID. If empty, will create a single user")
 	User_createCmd.Flags().BoolP("force", "s", false, "Skip confirmation")
-
+	User_createCmd.Flags().BoolP("needs-password-change", "c", true, "Does the user need to change their password")
 	if err := User_createCmd.MarkFlagRequired("username"); err != nil {
 		fmt.Fprintf(os.Stderr, "Error marking flag as required: %s\n", err)
 		os.Exit(1)

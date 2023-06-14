@@ -281,6 +281,18 @@ func AuthUnaryInterceptor(ctx context.Context, req interface{}, info *grpc.Unary
 	if err != nil {
 		return nil, status.Errorf(codes.Unauthenticated, "invalid auth token: %v", err)
 	}
+
+	// check if we need a password change
+	method, ok := grpc.Method(ctx)
+	if !ok {
+		// no method called and did not bypass auth, return false
+		return nil, status.Errorf(codes.Unauthenticated, "no method called")
+	}
+
+	if claims.NeedsPasswordChange && method != "/mediator.v1.UserService/UpdatePassword" {
+		return nil, status.Errorf(codes.Unauthenticated, "password change required")
+	}
+
 	if claims.IsSuperadmin {
 		// is authorized to everything
 		ctx := context.WithValue(ctx, TokenInfoKey, claims)

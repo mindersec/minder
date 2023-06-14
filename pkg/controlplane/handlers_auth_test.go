@@ -78,6 +78,7 @@ func TestLogin_gRPC(t *testing.T) {
 				store.EXPECT().
 					GetUserByUserName(gomock.Any(), gomock.Any()).
 					Times(1).Return(user, nil)
+				store.EXPECT().CleanTokenIat(gomock.Any(), gomock.Any())
 			},
 			checkResponse: func(t *testing.T, res *pb.LogInResponse, err error) {
 				assert.NoError(t, err)
@@ -154,7 +155,7 @@ func TestRevokeTokens_gRPC(t *testing.T) {
 	defer ctrl.Finish()
 
 	mockStore := mockdb.NewMockStore(ctrl)
-	mockStore.EXPECT().RevokeUsersTokens(gomock.Any())
+	mockStore.EXPECT().RevokeUsersTokens(gomock.Any(), gomock.Any())
 
 	server := NewServer(mockStore)
 
@@ -192,7 +193,7 @@ func TestRefreshToken_gRPC(t *testing.T) {
 	// mocked calls
 	mockStoreToken.EXPECT().GetUserClaims(ctxToken, gomock.Any())
 	// generate a token
-	_, refreshToken, _, _, err := generateToken(ctxToken, mockStoreToken, 1)
+	_, refreshToken, _, _, _, err := generateToken(ctxToken, mockStoreToken, 1)
 	if err != nil {
 		t.Fatalf("Error generating token: %v", err)
 	}

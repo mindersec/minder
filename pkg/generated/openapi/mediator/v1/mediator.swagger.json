@@ -1062,6 +1062,38 @@
         ]
       }
     },
+    "/api/v1/user/password": {
+      "post": {
+        "operationId": "UserService_UpdatePassword",
+        "responses": {
+          "200": {
+            "description": "A successful response.",
+            "schema": {
+              "$ref": "#/definitions/v1UpdatePasswordResponse"
+            }
+          },
+          "default": {
+            "description": "An unexpected error response.",
+            "schema": {
+              "$ref": "#/definitions/rpcStatus"
+            }
+          }
+        },
+        "parameters": [
+          {
+            "name": "body",
+            "in": "body",
+            "required": true,
+            "schema": {
+              "$ref": "#/definitions/v1UpdatePasswordRequest"
+            }
+          }
+        ],
+        "tags": [
+          "UserService"
+        ]
+      }
+    },
     "/api/v1/user/username/{username}": {
       "get": {
         "operationId": "UserService_GetUserByUserName",
@@ -1474,6 +1506,9 @@
         },
         "isProtected": {
           "type": "boolean"
+        },
+        "needsPasswordChange": {
+          "type": "boolean"
         }
       },
       "title": "User service"
@@ -1505,6 +1540,9 @@
           "type": "string"
         },
         "isProtected": {
+          "type": "boolean"
+        },
+        "needsPasswordChange": {
           "type": "boolean"
         },
         "createdAt": {
@@ -1928,6 +1966,20 @@
         }
       }
     },
+    "v1UpdatePasswordRequest": {
+      "type": "object",
+      "properties": {
+        "password": {
+          "type": "string"
+        },
+        "passwordConfirmation": {
+          "type": "string"
+        }
+      }
+    },
+    "v1UpdatePasswordResponse": {
+      "type": "object"
+    },
     "v1UserRecord": {
       "type": "object",
       "properties": {
@@ -1955,6 +2007,9 @@
           "type": "string"
         },
         "isProtected": {
+          "type": "boolean"
+        },
+        "needsPasswordChange": {
           "type": "boolean"
         },
         "createdAt": {

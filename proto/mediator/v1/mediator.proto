@@ -286,6 +286,13 @@ service UserService {
             };    
     }
 
+    rpc UpdatePassword (UpdatePasswordRequest) returns (UpdatePasswordResponse) {
+        option (google.api.http) = {
+            post: "/api/v1/user/password"
+            body: "*"
+        };
+    }
+
 }
 
 message CheckHealthRequest {
@@ -647,6 +654,7 @@ message CreateUserRequest {
     optional string first_name = 5;
     optional string last_name = 6;
     optional bool is_protected = 7;
+    optional bool needs_password_change = 8;
   }
   
 message CreateUserResponse {
@@ -658,8 +666,9 @@ message CreateUserResponse {
     optional string first_name = 6;
     optional string last_name = 7;
     optional bool is_protected = 8;
-    google.protobuf.Timestamp created_at = 9;
-    google.protobuf.Timestamp updated_at = 10;
+    optional bool needs_password_change = 9;
+    google.protobuf.Timestamp created_at = 10;
+    google.protobuf.Timestamp updated_at = 11;
 }
 
 message DeleteUserRequest {
@@ -668,6 +677,14 @@ message DeleteUserRequest {
 }
 
 message DeleteUserResponse {
+}
+
+message UpdatePasswordRequest {
+    string password = 1;
+    string password_confirmation = 2;
+}
+
+message UpdatePasswordResponse {
 }
 
 // user record to be returned
@@ -680,8 +697,9 @@ message UserRecord {
     optional string first_name = 6;
     optional string last_name = 7;
     optional bool is_protected = 8;
-    google.protobuf.Timestamp created_at = 9;
-    google.protobuf.Timestamp updated_at = 10;    
+    optional bool needs_password_change = 9;
+    google.protobuf.Timestamp created_at = 10;
+    google.protobuf.Timestamp updated_at = 11;    
 }
 
 // list users
