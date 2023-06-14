@@ -28,6 +28,9 @@ gen: ## generate protobuf files
 clean-gen:
 	rm -rf $(shell find pkg/generated -iname "*.go") & rm -rf $(shell find pkg/generated -iname "*.swagger.json") & rm -rf pkg/generated/protodocs
 
+docs:
+	@go run cmd/cli/main.go docs
+
 build: ## build golang binary
 	# @go build -ldflags "-X main.version=$(shell git describe --abbrev=0 --tags)" -o bin/$(projectname)
 	CGO_ENABLED=0 go build -trimpath -o ./bin/medctl ./cmd/cli
