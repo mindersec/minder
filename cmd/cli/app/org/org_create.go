@@ -72,11 +72,7 @@ within a mediator control plane.`,
 			Company:              company.(string),
 			CreateDefaultRecords: create.(bool),
 		})
-
-		if err != nil {
-			fmt.Fprintf(os.Stderr, "Error creating organization: %s\n", err)
-			os.Exit(1)
-		}
+		util.ExitNicelyOnError(err, "Error creating organization")
 
 		org, err := json.MarshalIndent(resp, "", "  ")
 		if err != nil {

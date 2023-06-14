@@ -80,10 +80,7 @@ mediator control plane.`,
 
 	Run: func(cmd *cobra.Command, args []string) {
 		conn, err := util.GetGrpcConnection(cmd)
-		if err != nil {
-			fmt.Fprintf(os.Stderr, "Error getting grpc connection: %s\n", err)
-			os.Exit(1)
-		}
+		util.ExitNicelyOnError(err, "Error getting grpc connection")
 		defer conn.Close()
 
 		client := pb.NewUserServiceClient(conn)
