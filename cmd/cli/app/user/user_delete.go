@@ -22,10 +22,8 @@
 package user
 
 import (
-	"context"
 	"fmt"
 	"os"
-	"time"
 
 	"github.com/spf13/cobra"
 	"github.com/spf13/viper"
@@ -54,7 +52,7 @@ mediator control plane.`,
 		defer conn.Close()
 
 		client := pb.NewUserServiceClient(conn)
-		ctx, cancel := context.WithTimeout(context.Background(), time.Second)
+		ctx, cancel := util.GetAppContext()
 		defer cancel()
 
 		forcePtr := &force

@@ -22,11 +22,9 @@
 package org
 
 import (
-	"context"
 	"encoding/json"
 	"fmt"
 	"os"
-	"time"
 
 	"github.com/spf13/cobra"
 	"github.com/spf13/viper"
@@ -64,7 +62,7 @@ within a mediator control plane.`,
 		}
 
 		client := pb.NewOrganizationServiceClient(conn)
-		ctx, cancel := context.WithTimeout(context.Background(), time.Second)
+		ctx, cancel := util.GetAppContext()
 		defer cancel()
 
 		resp, err := client.CreateOrganization(ctx, &pb.CreateOrganizationRequest{

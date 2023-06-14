@@ -23,13 +23,11 @@ package user
 
 import (
 	"bufio"
-	"context"
 	"encoding/json"
 	"fmt"
 	"log"
 	"os"
 	"strings"
-	"time"
 
 	"github.com/spf13/cobra"
 	"github.com/spf13/viper"
@@ -93,14 +91,10 @@ within a mediator control plane.`,
 		}
 
 		conn, err := util.GetGrpcConnection(cmd)
-		if err != nil {
-			fmt.Fprintf(os.Stderr, "Error getting grpc connection: %s\n", err)
-			os.Exit(1)
-		}
+		util.ExitNicelyOnError(err, "Error getting grpc connection")
 		defer conn.Close()
 
-		client := pb.NewUserServiceClient(conn)
-		ctx, cancel := context.WithTimeout(context.Background(), time.Second)
+		ctx, cancel := util.GetAppContext()
 		defer cancel()
 
 		// now create the default fields for the user if needed
@@ -110,29 +104,18 @@ within a mediator control plane.`,
 				Name:    username.(string) + "-org",
 				Company: username.(string) + " - Self enrolled",
 			})
-			if err != nil {
-				fmt.Fprintf(os.Stderr, "Error creating organization: %s\n", err)
-				os.Exit(1)
-			}
+			util.ExitNicelyOnError(err, "Error creating organization")
 
 			clientg := pb.NewGroupServiceClient(conn)
 			respg, err := clientg.CreateGroup(ctx, &pb.CreateGroupRequest{OrganizationId: resp.Id,
 				Name: username.(string) + "-group"})
-
-			if err != nil {
-				fmt.Fprintf(os.Stderr, "Error creating group: %s\n", err)
-				os.Exit(1)
-			}
+			util.ExitNicelyOnError(err, "Error creating group")
 
 			clientr := pb.NewRoleServiceClient(conn)
 			isAdmin := true
 			respr, err := clientr.CreateRole(ctx, &pb.CreateRoleRequest{GroupId: respg.GroupId,
 				Name: username.(string) + "-role", IsAdmin: &isAdmin})
-
-			if err != nil {
-				fmt.Fprintf(os.Stderr, "Error creating role: %s\n", err)
-				os.Exit(1)
-			}
+			util.ExitNicelyOnError(err, "Error creating role")
 
 			// now assign the role
 			role = int(respr.Id)
@@ -169,6 +152,7 @@ within a mediator control plane.`,
 		}
 		needsPasswordChangePtr := &needsPasswordChange
 
+		client := pb.NewUserServiceClient(conn)
 		resp, err := client.CreateUser(ctx, &pb.CreateUserRequest{
 			RoleId:              int32(role),
 			Email:               emailPtr,
@@ -179,11 +163,7 @@ within a mediator control plane.`,
 			IsProtected:         protectedPtr,
 			NeedsPasswordChange: needsPasswordChangePtr,
 		})
-
-		if err != nil {
-			fmt.Fprintf(os.Stderr, "Error creating user: %s\n", err)
-			os.Exit(1)
-		}
+		util.ExitNicelyOnError(err, "Error creating user")
 
 		user, err := json.MarshalIndent(resp, "", "  ")
 		if err != nil {

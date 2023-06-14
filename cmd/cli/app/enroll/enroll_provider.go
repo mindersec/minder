@@ -22,7 +22,6 @@
 package enroll
 
 import (
-	"context"
 	"encoding/json"
 	"fmt"
 	"io"
@@ -121,8 +120,7 @@ actions such as adding repositories.`,
 		defer conn.Close()
 
 		client := pb.NewOAuthServiceClient(conn)
-
-		ctx, cancel := context.WithTimeout(context.Background(), 10*time.Second)
+		ctx, cancel := util.GetAppContext()
 		defer cancel()
 
 		// Get random port

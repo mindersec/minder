@@ -22,10 +22,8 @@
 package auth
 
 import (
-	"context"
 	"fmt"
 	"os"
-	"time"
 
 	"github.com/spf13/cobra"
 	"github.com/spf13/viper"
@@ -69,9 +67,9 @@ var Auth_revokeCmd = &cobra.Command{
 			fmt.Fprintf(os.Stderr, "Error getting grpc connection: %s\n", err)
 			os.Exit(1)
 		}
-		ctx, cancel := context.WithTimeout(context.Background(), time.Second)
-		defer cancel()
 
+		ctx, cancel := util.GetAppContext()
+		defer cancel()
 		client := pb.NewAuthServiceClient(conn)
 		if all {
 			_, err := client.RevokeTokens(ctx, &pb.RevokeTokensRequest{})

@@ -31,6 +31,7 @@ import (
 	"os"
 	"path/filepath"
 	"strconv"
+	"time"
 
 	_ "github.com/lib/pq" // nolint
 	"github.com/spf13/cobra"
@@ -251,4 +252,13 @@ func LoadCredentials() (Credentials, error) {
 		return Credentials{}, fmt.Errorf("error unmarshaling credentials: %v", err)
 	}
 	return creds, nil
+}
+
+// GetAppContext is a helper for getting the cmd app context
+func GetAppContext() (context.Context, context.CancelFunc) {
+	viper.SetDefault("cli.context_timeout", 5)
+	timeout := viper.GetInt("cli.context_timeout")
+
+	ctx, cancel := context.WithTimeout(context.Background(), time.Duration(timeout)*time.Second)
+	return ctx, cancel
 }

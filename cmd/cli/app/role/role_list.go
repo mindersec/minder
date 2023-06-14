@@ -22,7 +22,6 @@
 package role
 
 import (
-	"context"
 	"encoding/json"
 	"fmt"
 	"os"
@@ -56,7 +55,7 @@ mediator control plane for an specific group.`,
 		defer conn.Close()
 
 		client := pb.NewRoleServiceClient(conn)
-		ctx, cancel := context.WithTimeout(context.Background(), time.Second)
+		ctx, cancel := util.GetAppContext()
 		defer cancel()
 
 		group := viper.GetInt32("group-id")
