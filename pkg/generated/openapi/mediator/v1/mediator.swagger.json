@@ -12,16 +12,7 @@
       "name": "OAuthService"
     },
     {
-      "name": "LogInService"
-    },
-    {
-      "name": "LogOutService"
-    },
-    {
-      "name": "RevokeTokensService"
-    },
-    {
-      "name": "AuthVerifyService"
+      "name": "AuthService"
     },
     {
       "name": "VulnerabilitiesService"
@@ -65,7 +56,7 @@
           "default": {
             "description": "An unexpected error response.",
             "schema": {
-              "$ref": "#/definitions/googlerpcStatus"
+              "$ref": "#/definitions/rpcStatus"
             }
           }
         },
@@ -113,7 +104,7 @@
           "default": {
             "description": "An unexpected error response.",
             "schema": {
-              "$ref": "#/definitions/googlerpcStatus"
+              "$ref": "#/definitions/rpcStatus"
             }
           }
         },
@@ -144,7 +135,8 @@
     },
     "/api/v1/auth/login": {
       "post": {
-        "operationId": "LogInService_LogIn",
+        "summary": "LogIn to Mediator",
+        "operationId": "AuthService_LogIn",
         "responses": {
           "200": {
             "description": "A successful response.",
@@ -155,7 +147,7 @@
           "default": {
             "description": "An unexpected error response.",
             "schema": {
-              "$ref": "#/definitions/googlerpcStatus"
+              "$ref": "#/definitions/rpcStatus"
             }
           }
         },
@@ -170,13 +162,14 @@
           }
         ],
         "tags": [
-          "LogInService"
+          "AuthService"
         ]
       }
     },
     "/api/v1/auth/logout": {
       "post": {
-        "operationId": "LogOutService_LogOut",
+        "summary": "Logout of Mediator",
+        "operationId": "AuthService_LogOut",
         "responses": {
           "200": {
             "description": "A successful response.",
@@ -187,7 +180,7 @@
           "default": {
             "description": "An unexpected error response.",
             "schema": {
-              "$ref": "#/definitions/googlerpcStatus"
+              "$ref": "#/definitions/rpcStatus"
             }
           }
         },
@@ -202,13 +195,47 @@
           }
         ],
         "tags": [
-          "LogOutService"
+          "AuthService"
+        ]
+      }
+    },
+    "/api/v1/auth/refresh": {
+      "post": {
+        "summary": "refresh a token",
+        "operationId": "AuthService_RefreshToken",
+        "responses": {
+          "200": {
+            "description": "A successful response.",
+            "schema": {
+              "$ref": "#/definitions/v1RefreshTokenResponse"
+            }
+          },
+          "default": {
+            "description": "An unexpected error response.",
+            "schema": {
+              "$ref": "#/definitions/rpcStatus"
+            }
+          }
+        },
+        "parameters": [
+          {
+            "name": "body",
+            "in": "body",
+            "required": true,
+            "schema": {
+              "$ref": "#/definitions/v1RefreshTokenRequest"
+            }
+          }
+        ],
+        "tags": [
+          "AuthService"
         ]
       }
     },
     "/api/v1/auth/revoke": {
       "post": {
-        "operationId": "RevokeTokensService_RevokeTokens",
+        "summary": "revoke all tokens for all users",
+        "operationId": "AuthService_RevokeTokens",
         "responses": {
           "200": {
             "description": "A successful response.",
@@ -219,7 +246,7 @@
           "default": {
             "description": "An unexpected error response.",
             "schema": {
-              "$ref": "#/definitions/googlerpcStatus"
+              "$ref": "#/definitions/rpcStatus"
             }
           }
         },
@@ -234,13 +261,14 @@
           }
         ],
         "tags": [
-          "RevokeTokensService"
+          "AuthService"
         ]
       }
     },
     "/api/v1/auth/revoke/{userId}": {
       "post": {
-        "operationId": "RevokeTokensService_RevokeUserToken",
+        "summary": "revoke token for an user",
+        "operationId": "AuthService_RevokeUserToken",
         "responses": {
           "200": {
             "description": "A successful response.",
@@ -251,7 +279,7 @@
           "default": {
             "description": "An unexpected error response.",
             "schema": {
-              "$ref": "#/definitions/googlerpcStatus"
+              "$ref": "#/definitions/rpcStatus"
             }
           }
         },
@@ -273,7 +301,7 @@
           }
         ],
         "tags": [
-          "RevokeTokensService"
+          "AuthService"
         ]
       }
     },
@@ -290,7 +318,7 @@
           "default": {
             "description": "An unexpected error response.",
             "schema": {
-              "$ref": "#/definitions/googlerpcStatus"
+              "$ref": "#/definitions/rpcStatus"
             }
           }
         },
@@ -322,18 +350,19 @@
     },
     "/api/v1/auth/verify": {
       "post": {
-        "operationId": "AuthVerifyService_Verify",
+        "summary": "Verify user has active session to Mediator",
+        "operationId": "AuthService_Verify",
         "responses": {
           "200": {
             "description": "A successful response.",
             "schema": {
-              "$ref": "#/definitions/v1AuthVerifyServiceVerifyResponse"
+              "$ref": "#/definitions/v1VerifyResponse"
             }
           },
           "default": {
             "description": "An unexpected error response.",
             "schema": {
-              "$ref": "#/definitions/googlerpcStatus"
+              "$ref": "#/definitions/rpcStatus"
             }
           }
         },
@@ -343,12 +372,12 @@
             "in": "body",
             "required": true,
             "schema": {
-              "$ref": "#/definitions/v1AuthVerifyServiceVerifyRequest"
+              "$ref": "#/definitions/v1VerifyRequest"
             }
           }
         ],
         "tags": [
-          "AuthVerifyService"
+          "AuthService"
         ]
       }
     },
@@ -365,7 +394,7 @@
           "default": {
             "description": "An unexpected error response.",
             "schema": {
-              "$ref": "#/definitions/googlerpcStatus"
+              "$ref": "#/definitions/rpcStatus"
             }
           }
         },
@@ -387,7 +416,7 @@
           "default": {
             "description": "An unexpected error response.",
             "schema": {
-              "$ref": "#/definitions/googlerpcStatus"
+              "$ref": "#/definitions/rpcStatus"
             }
           }
         },
@@ -419,7 +448,7 @@
           "default": {
             "description": "An unexpected error response.",
             "schema": {
-              "$ref": "#/definitions/googlerpcStatus"
+              "$ref": "#/definitions/rpcStatus"
             }
           }
         },
@@ -450,7 +479,7 @@
           "default": {
             "description": "An unexpected error response.",
             "schema": {
-              "$ref": "#/definitions/googlerpcStatus"
+              "$ref": "#/definitions/rpcStatus"
             }
           }
         },
@@ -480,7 +509,7 @@
           "default": {
             "description": "An unexpected error response.",
             "schema": {
-              "$ref": "#/definitions/googlerpcStatus"
+              "$ref": "#/definitions/rpcStatus"
             }
           }
         },
@@ -517,7 +546,7 @@
           "default": {
             "description": "An unexpected error response.",
             "schema": {
-              "$ref": "#/definitions/googlerpcStatus"
+              "$ref": "#/definitions/rpcStatus"
             }
           }
         },
@@ -562,7 +591,7 @@
           "default": {
             "description": "An unexpected error response.",
             "schema": {
-              "$ref": "#/definitions/googlerpcStatus"
+              "$ref": "#/definitions/rpcStatus"
             }
           }
         },
@@ -584,7 +613,7 @@
           "default": {
             "description": "An unexpected error response.",
             "schema": {
-              "$ref": "#/definitions/googlerpcStatus"
+              "$ref": "#/definitions/rpcStatus"
             }
           }
         },
@@ -616,7 +645,7 @@
           "default": {
             "description": "An unexpected error response.",
             "schema": {
-              "$ref": "#/definitions/googlerpcStatus"
+              "$ref": "#/definitions/rpcStatus"
             }
           }
         },
@@ -653,7 +682,7 @@
           "default": {
             "description": "An unexpected error response.",
             "schema": {
-              "$ref": "#/definitions/googlerpcStatus"
+              "$ref": "#/definitions/rpcStatus"
             }
           }
         },
@@ -691,7 +720,7 @@
           "default": {
             "description": "An unexpected error response.",
             "schema": {
-              "$ref": "#/definitions/googlerpcStatus"
+              "$ref": "#/definitions/rpcStatus"
             }
           }
         },
@@ -721,7 +750,7 @@
           "default": {
             "description": "An unexpected error response.",
             "schema": {
-              "$ref": "#/definitions/googlerpcStatus"
+              "$ref": "#/definitions/rpcStatus"
             }
           }
         },
@@ -752,7 +781,7 @@
           "default": {
             "description": "An unexpected error response.",
             "schema": {
-              "$ref": "#/definitions/googlerpcStatus"
+              "$ref": "#/definitions/rpcStatus"
             }
           }
         },
@@ -784,7 +813,7 @@
           "default": {
             "description": "An unexpected error response.",
             "schema": {
-              "$ref": "#/definitions/googlerpcStatus"
+              "$ref": "#/definitions/rpcStatus"
             }
           }
         },
@@ -821,7 +850,7 @@
           "default": {
             "description": "An unexpected error response.",
             "schema": {
-              "$ref": "#/definitions/googlerpcStatus"
+              "$ref": "#/definitions/rpcStatus"
             }
           }
         },
@@ -850,7 +879,7 @@
           "default": {
             "description": "An unexpected error response.",
             "schema": {
-              "$ref": "#/definitions/googlerpcStatus"
+              "$ref": "#/definitions/rpcStatus"
             }
           }
         },
@@ -887,7 +916,7 @@
           "default": {
             "description": "An unexpected error response.",
             "schema": {
-              "$ref": "#/definitions/googlerpcStatus"
+              "$ref": "#/definitions/rpcStatus"
             }
           }
         },
@@ -932,7 +961,7 @@
           "default": {
             "description": "An unexpected error response.",
             "schema": {
-              "$ref": "#/definitions/googlerpcStatus"
+              "$ref": "#/definitions/rpcStatus"
             }
           }
         },
@@ -954,7 +983,7 @@
           "default": {
             "description": "An unexpected error response.",
             "schema": {
-              "$ref": "#/definitions/googlerpcStatus"
+              "$ref": "#/definitions/rpcStatus"
             }
           }
         },
@@ -984,7 +1013,7 @@
           "default": {
             "description": "An unexpected error response.",
             "schema": {
-              "$ref": "#/definitions/googlerpcStatus"
+              "$ref": "#/definitions/rpcStatus"
             }
           }
         },
@@ -1016,7 +1045,7 @@
           "default": {
             "description": "An unexpected error response.",
             "schema": {
-              "$ref": "#/definitions/googlerpcStatus"
+              "$ref": "#/definitions/rpcStatus"
             }
           }
         },
@@ -1046,7 +1075,7 @@
           "default": {
             "description": "An unexpected error response.",
             "schema": {
-              "$ref": "#/definitions/googlerpcStatus"
+              "$ref": "#/definitions/rpcStatus"
             }
           }
         },
@@ -1076,7 +1105,7 @@
           "default": {
             "description": "An unexpected error response.",
             "schema": {
-              "$ref": "#/definitions/googlerpcStatus"
+              "$ref": "#/definitions/rpcStatus"
             }
           }
         },
@@ -1105,7 +1134,7 @@
           "default": {
             "description": "An unexpected error response.",
             "schema": {
-              "$ref": "#/definitions/googlerpcStatus"
+              "$ref": "#/definitions/rpcStatus"
             }
           }
         },
@@ -1142,7 +1171,7 @@
           "default": {
             "description": "An unexpected error response.",
             "schema": {
-              "$ref": "#/definitions/googlerpcStatus"
+              "$ref": "#/definitions/rpcStatus"
             }
           }
         },
@@ -1187,7 +1216,7 @@
           "default": {
             "description": "An unexpected error response.",
             "schema": {
-              "$ref": "#/definitions/googlerpcStatus"
+              "$ref": "#/definitions/rpcStatus"
             }
           }
         },
@@ -1209,7 +1238,7 @@
           "default": {
             "description": "An unexpected error response.",
             "schema": {
-              "$ref": "#/definitions/googlerpcStatus"
+              "$ref": "#/definitions/rpcStatus"
             }
           }
         },
@@ -1228,7 +1257,16 @@
     }
   },
   "definitions": {
-    "googlerpcStatus": {
+    "protobufAny": {
+      "type": "object",
+      "properties": {
+        "@type": {
+          "type": "string"
+        }
+      },
+      "additionalProperties": {}
+    },
+    "rpcStatus": {
       "type": "object",
       "properties": {
         "code": {
@@ -1244,38 +1282,6 @@
             "type": "object",
             "$ref": "#/definitions/protobufAny"
           }
-        }
-      }
-    },
-    "mediatorv1Status": {
-      "type": "object",
-      "properties": {
-        "code": {
-          "type": "integer",
-          "format": "int32"
-        },
-        "message": {
-          "type": "string"
-        }
-      }
-    },
-    "protobufAny": {
-      "type": "object",
-      "properties": {
-        "@type": {
-          "type": "string"
-        }
-      },
-      "additionalProperties": {}
-    },
-    "v1AuthVerifyServiceVerifyRequest": {
-      "type": "object"
-    },
-    "v1AuthVerifyServiceVerifyResponse": {
-      "type": "object",
-      "properties": {
-        "status": {
-          "type": "string"
         }
       }
     },
@@ -1823,9 +1829,6 @@
     "v1LogInResponse": {
       "type": "object",
       "properties": {
-        "status": {
-          "$ref": "#/definitions/mediatorv1Status"
-        },
         "refreshToken": {
           "type": "string"
         },
@@ -1846,12 +1849,7 @@
       "type": "object"
     },
     "v1LogOutResponse": {
-      "type": "object",
-      "properties": {
-        "status": {
-          "$ref": "#/definitions/mediatorv1Status"
-        }
-      }
+      "type": "object"
     },
     "v1OrganizationRecord": {
       "type": "object",
@@ -1876,24 +1874,29 @@
         }
       }
     },
+    "v1RefreshTokenRequest": {
+      "type": "object"
+    },
+    "v1RefreshTokenResponse": {
+      "type": "object",
+      "properties": {
+        "accessToken": {
+          "type": "string"
+        },
+        "accessTokenExpiresIn": {
+          "type": "string",
+          "format": "int64"
+        }
+      }
+    },
     "v1RevokeTokensRequest": {
       "type": "object"
     },
     "v1RevokeTokensResponse": {
-      "type": "object",
-      "properties": {
-        "status": {
-          "$ref": "#/definitions/mediatorv1Status"
-        }
-      }
+      "type": "object"
     },
     "v1RevokeUserTokenResponse": {
-      "type": "object",
-      "properties": {
-        "status": {
-          "$ref": "#/definitions/mediatorv1Status"
-        }
-      }
+      "type": "object"
     },
     "v1RoleRecord": {
       "type": "object",
@@ -1964,6 +1967,17 @@
         }
       },
       "title": "user record to be returned"
+    },
+    "v1VerifyRequest": {
+      "type": "object"
+    },
+    "v1VerifyResponse": {
+      "type": "object",
+      "properties": {
+        "status": {
+          "type": "string"
+        }
+      }
     }
   }
 }

@@ -72,7 +72,7 @@ var Auth_revokeCmd = &cobra.Command{
 		ctx, cancel := context.WithTimeout(context.Background(), time.Second)
 		defer cancel()
 
-		client := pb.NewRevokeTokensServiceClient(conn)
+		client := pb.NewAuthServiceClient(conn)
 		if all {
 			_, err := client.RevokeTokens(ctx, &pb.RevokeTokensRequest{})
 			if err != nil {

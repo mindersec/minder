@@ -49,28 +49,24 @@ service OAuthService {
     }
 }
 
-// LogIn to Mediator
-service LogInService {
+service AuthService {
+    // LogIn to Mediator
     rpc LogIn (LogInRequest) returns (LogInResponse) {
         option (google.api.http) = {
             post: "/api/v1/auth/login"
             body: "*"
         };
     }
-}
 
-// Logout of Mediator
-service LogOutService {
+    // Logout of Mediator
     rpc LogOut (LogOutRequest) returns (LogOutResponse) {
         option (google.api.http) = {
             post: "/api/v1/auth/logout"
             body: "*"
         };
     }
-}
 
-// Revoke access tokens generally
-service RevokeTokensService {
+    // revoke all tokens for all users
     rpc RevokeTokens (RevokeTokensRequest) returns (RevokeTokensResponse) {
         option (google.api.http) = {
             post: "/api/v1/auth/revoke"
@@ -78,6 +74,7 @@ service RevokeTokensService {
         };
     }
 
+    // revoke token for an user
     rpc RevokeUserToken (RevokeUserTokenRequest) returns (RevokeUserTokenResponse) {
         option (google.api.http) = {
             post: "/api/v1/auth/revoke/{user_id}"
@@ -85,11 +82,16 @@ service RevokeTokensService {
         };
     }
 
-}
+    // refresh a token
+    rpc RefreshToken (RefreshTokenRequest) returns (RefreshTokenResponse) {
+        option (google.api.http) = {
+            post: "/api/v1/auth/refresh"
+            body: "*"
+        };
+    }
 
-// Verify user has active session to Mediator
-service AuthVerifyService {
-    rpc Verify (AuthVerifyServiceVerifyRequest) returns (AuthVerifyServiceVerifyResponse) {
+    // Verify user has active session to Mediator
+    rpc Verify (VerifyRequest) returns (VerifyResponse) {
         option (google.api.http) = {
             post: "/api/v1/auth/verify"
             body: "*"
@@ -333,31 +335,22 @@ message LogInRequest {
 }
 
 message LogInResponse {
-    Status status = 1;
     string refresh_token = 2;
     string access_token = 3;
     int64  refresh_token_expires_in = 4;
     int64  access_token_expires_in = 5;
 }
 
-message Status {
-    int32 code = 1;
-    string message = 2;
-}
-
-
 message LogOutRequest {
 }
 
 message LogOutResponse {
-    Status status = 1;
 }
 
 message RevokeTokensRequest {
 }
 
 message RevokeTokensResponse {
-    Status status = 1;
 }
 
 message RevokeUserTokenRequest {
@@ -365,13 +358,20 @@ message RevokeUserTokenRequest {
 }
 
 message RevokeUserTokenResponse {
-    Status status = 1;
 }
 
-message AuthVerifyServiceVerifyRequest {
+message RefreshTokenRequest {    
 }
 
-message AuthVerifyServiceVerifyResponse {
+message RefreshTokenResponse {
+    string access_token = 2;
+    int64  access_token_expires_in = 3;
+}
+
+message VerifyRequest {
+}
+
+message VerifyResponse {
     string status = 1;
 }
 

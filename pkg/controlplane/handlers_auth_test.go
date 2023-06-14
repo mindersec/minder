@@ -31,6 +31,7 @@ import (
 	"github.com/stacklok/mediator/pkg/util"
 	"github.com/stretchr/testify/assert"
 	"google.golang.org/grpc/codes"
+	"google.golang.org/grpc/metadata"
 )
 
 func TestLogin_gRPC(t *testing.T) {
@@ -81,7 +82,6 @@ func TestLogin_gRPC(t *testing.T) {
 			checkResponse: func(t *testing.T, res *pb.LogInResponse, err error) {
 				assert.NoError(t, err)
 				assert.NotNil(t, res)
-				assert.Equal(t, int32(codes.OK), res.Status.Code)
 			},
 		},
 		{
@@ -162,4 +162,61 @@ func TestRevokeTokens_gRPC(t *testing.T) {
 
 	assert.NoError(t, err)
 	assert.NotNil(t, res)
+}
+
+func TestRefreshToken_gRPC(t *testing.T) {
+	// prepare keys for signing tokens
+	viper.SetDefault("auth.access_token_private_key", "access_token_private.pem")
+	viper.SetDefault("auth.access_token_public_key", "access_token_public.pem")
+	viper.SetDefault("auth.refresh_token_private_key", "refresh_token_private.pem")
+	viper.SetDefault("auth.refresh_token_public_key", "refresh_token_public.pem")
+	viper.SetDefault("auth.token_expiry", 3600)
+	viper.SetDefault("auth.refresh_expiry", 86400)
+	err := util.RandomKeypairFile(2048, viper.Get("auth.access_token_private_key").(string), viper.Get("auth.access_token_public_key").(string))
+	if err != nil {
+		t.Fatalf("Error generating access token private key: %v", err)
+	}
+
+	err = util.RandomKeypairFile(2048, viper.Get("auth.refresh_token_private_key").(string), viper.Get("auth.refresh_token_public_key").(string))
+	if err != nil {
+		t.Fatalf("Error generating refresh token private key: %v", err)
+	}
+
+	ctrl := gomock.NewController(t)
+	defer ctrl.Finish()
+
+	mockStoreToken := mockdb.NewMockStore(ctrl)
+	mockStore := mockdb.NewMockStore(ctrl)
+
+	ctxToken := context.Background()
+	// mocked calls
+	mockStoreToken.EXPECT().GetUserClaims(ctxToken, gomock.Any())
+	// generate a token
+	_, refreshToken, _, _, err := generateToken(ctxToken, mockStoreToken, 1)
+	if err != nil {
+		t.Fatalf("Error generating token: %v", err)
+	}
+
+	// Create header metadata
+	md := metadata.New(map[string]string{
+		"refresh-token": refreshToken,
+	})
+
+	// Create a new context with added header metadata
+	ctx := context.Background()
+	ctx = metadata.NewIncomingContext(ctx, md)
+	server := NewServer(mockStore)
+	mockStore.EXPECT().GetUserByID(gomock.Any(), gomock.Any())
+	mockStore.EXPECT().GetUserClaims(gomock.Any(), gomock.Any())
+
+	// validate the status of the output
+	res, err := server.RefreshToken(ctx, &pb.RefreshTokenRequest{})
+	assert.NoError(t, err)
+	assert.NotNil(t, res)
+	assert.NotNil(t, res.AccessToken)
+
+	_ = os.Remove(filepath.Join(".", viper.Get("auth.refresh_token_private_key").(string)))
+	_ = os.Remove(filepath.Join(".", viper.Get("auth.refresh_token_public_key").(string)))
+	_ = os.Remove(filepath.Join(".", viper.Get("auth.access_token_private_key").(string)))
+	_ = os.Remove(filepath.Join(".", viper.Get("auth.access_token_public_key").(string)))
 }

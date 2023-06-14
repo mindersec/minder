@@ -4,8 +4,6 @@
 ## Table of Contents
 
 - [mediator/v1/mediator.proto](#mediator_v1_mediator-proto)
-    - [AuthVerifyServiceVerifyRequest](#mediator-v1-AuthVerifyServiceVerifyRequest)
-    - [AuthVerifyServiceVerifyResponse](#mediator-v1-AuthVerifyServiceVerifyResponse)
     - [BranchProtection](#mediator-v1-BranchProtection)
     - [CheckHealthRequest](#mediator-v1-CheckHealthRequest)
     - [CheckHealthResponse](#mediator-v1-CheckHealthResponse)
@@ -73,23 +71,23 @@
     - [LogOutRequest](#mediator-v1-LogOutRequest)
     - [LogOutResponse](#mediator-v1-LogOutResponse)
     - [OrganizationRecord](#mediator-v1-OrganizationRecord)
+    - [RefreshTokenRequest](#mediator-v1-RefreshTokenRequest)
+    - [RefreshTokenResponse](#mediator-v1-RefreshTokenResponse)
     - [RevokeTokensRequest](#mediator-v1-RevokeTokensRequest)
     - [RevokeTokensResponse](#mediator-v1-RevokeTokensResponse)
     - [RevokeUserTokenRequest](#mediator-v1-RevokeUserTokenRequest)
     - [RevokeUserTokenResponse](#mediator-v1-RevokeUserTokenResponse)
     - [RoleRecord](#mediator-v1-RoleRecord)
-    - [Status](#mediator-v1-Status)
     - [UserRecord](#mediator-v1-UserRecord)
+    - [VerifyRequest](#mediator-v1-VerifyRequest)
+    - [VerifyResponse](#mediator-v1-VerifyResponse)
   
-    - [AuthVerifyService](#mediator-v1-AuthVerifyService)
+    - [AuthService](#mediator-v1-AuthService)
     - [BranchProtectionService](#mediator-v1-BranchProtectionService)
     - [GroupService](#mediator-v1-GroupService)
     - [HealthService](#mediator-v1-HealthService)
-    - [LogInService](#mediator-v1-LogInService)
-    - [LogOutService](#mediator-v1-LogOutService)
     - [OAuthService](#mediator-v1-OAuthService)
     - [OrganizationService](#mediator-v1-OrganizationService)
-    - [RevokeTokensService](#mediator-v1-RevokeTokensService)
     - [RoleService](#mediator-v1-RoleService)
     - [SecretsService](#mediator-v1-SecretsService)
     - [UserService](#mediator-v1-UserService)
@@ -103,31 +101,6 @@
 <p align="right"><a href="#top">Top</a></p>
 
 ## mediator/v1/mediator.proto
-
-
-
-<a name="mediator-v1-AuthVerifyServiceVerifyRequest"></a>
-
-### AuthVerifyServiceVerifyRequest
-
-
-
-
-
-
-
-<a name="mediator-v1-AuthVerifyServiceVerifyResponse"></a>
-
-### AuthVerifyServiceVerifyResponse
-
-
-
-| Field | Type | Label | Description |
-| ----- | ---- | ----- | ----------- |
-| status | [string](#string) |  |  |
-
-
-
 
 
 
@@ -1129,7 +1102,6 @@ BUF does not allow grouping (which is a shame)
 
 | Field | Type | Label | Description |
 | ----- | ---- | ----- | ----------- |
-| status | [Status](#mediator-v1-Status) |  |  |
 | refresh_token | [string](#string) |  |  |
 | access_token | [string](#string) |  |  |
 | refresh_token_expires_in | [int64](#int64) |  |  |
@@ -1156,11 +1128,6 @@ BUF does not allow grouping (which is a shame)
 
 
 
-| Field | Type | Label | Description |
-| ----- | ---- | ----- | ----------- |
-| status | [Status](#mediator-v1-Status) |  |  |
-
-
 
 
 
@@ -1184,6 +1151,32 @@ BUF does not allow grouping (which is a shame)
 
 
 
+<a name="mediator-v1-RefreshTokenRequest"></a>
+
+### RefreshTokenRequest
+
+
+
+
+
+
+
+<a name="mediator-v1-RefreshTokenResponse"></a>
+
+### RefreshTokenResponse
+
+
+
+| Field | Type | Label | Description |
+| ----- | ---- | ----- | ----------- |
+| access_token | [string](#string) |  |  |
+| access_token_expires_in | [int64](#int64) |  |  |
+
+
+
+
+
+
 <a name="mediator-v1-RevokeTokensRequest"></a>
 
 ### RevokeTokensRequest
@@ -1198,11 +1191,6 @@ BUF does not allow grouping (which is a shame)
 
 ### RevokeTokensResponse
 
-
-
-| Field | Type | Label | Description |
-| ----- | ---- | ----- | ----------- |
-| status | [Status](#mediator-v1-Status) |  |  |
 
 
 
@@ -1230,11 +1218,6 @@ BUF does not allow grouping (which is a shame)
 
 
 
-| Field | Type | Label | Description |
-| ----- | ---- | ----- | ----------- |
-| status | [Status](#mediator-v1-Status) |  |  |
-
-
 
 
 
@@ -1254,22 +1237,6 @@ BUF does not allow grouping (which is a shame)
 | is_protected | [bool](#bool) |  |  |
 | created_at | [google.protobuf.Timestamp](#google-protobuf-Timestamp) |  |  |
 | updated_at | [google.protobuf.Timestamp](#google-protobuf-Timestamp) |  |  |
-
-
-
-
-
-
-<a name="mediator-v1-Status"></a>
-
-### Status
-
-
-
-| Field | Type | Label | Description |
-| ----- | ---- | ----- | ----------- |
-| code | [int32](#int32) |  |  |
-| message | [string](#string) |  |  |
 
 
 
@@ -1299,21 +1266,51 @@ user record to be returned
 
 
 
- 
+
+<a name="mediator-v1-VerifyRequest"></a>
+
+### VerifyRequest
+
+
+
+
+
+
+
+<a name="mediator-v1-VerifyResponse"></a>
+
+### VerifyResponse
+
+
+
+| Field | Type | Label | Description |
+| ----- | ---- | ----- | ----------- |
+| status | [string](#string) |  |  |
+
+
+
+
 
  
 
  
 
+ 
 
-<a name="mediator-v1-AuthVerifyService"></a>
 
-### AuthVerifyService
-Verify user has active session to Mediator
+<a name="mediator-v1-AuthService"></a>
+
+### AuthService
+
 
 | Method Name | Request Type | Response Type | Description |
 | ----------- | ------------ | ------------- | ------------|
-| Verify | [AuthVerifyServiceVerifyRequest](#mediator-v1-AuthVerifyServiceVerifyRequest) | [AuthVerifyServiceVerifyResponse](#mediator-v1-AuthVerifyServiceVerifyResponse) |  |
+| LogIn | [LogInRequest](#mediator-v1-LogInRequest) | [LogInResponse](#mediator-v1-LogInResponse) | LogIn to Mediator |
+| LogOut | [LogOutRequest](#mediator-v1-LogOutRequest) | [LogOutResponse](#mediator-v1-LogOutResponse) | Logout of Mediator |
+| RevokeTokens | [RevokeTokensRequest](#mediator-v1-RevokeTokensRequest) | [RevokeTokensResponse](#mediator-v1-RevokeTokensResponse) | revoke all tokens for all users |
+| RevokeUserToken | [RevokeUserTokenRequest](#mediator-v1-RevokeUserTokenRequest) | [RevokeUserTokenResponse](#mediator-v1-RevokeUserTokenResponse) | revoke token for an user |
+| RefreshToken | [RefreshTokenRequest](#mediator-v1-RefreshTokenRequest) | [RefreshTokenResponse](#mediator-v1-RefreshTokenResponse) | refresh a token |
+| Verify | [VerifyRequest](#mediator-v1-VerifyRequest) | [VerifyResponse](#mediator-v1-VerifyResponse) | Verify user has active session to Mediator |
 
 
 <a name="mediator-v1-BranchProtectionService"></a>
@@ -1351,26 +1348,6 @@ replies with OK
 | CheckHealth | [CheckHealthRequest](#mediator-v1-CheckHealthRequest) | [CheckHealthResponse](#mediator-v1-CheckHealthResponse) |  |
 
 
-<a name="mediator-v1-LogInService"></a>
-
-### LogInService
-LogIn to Mediator
-
-| Method Name | Request Type | Response Type | Description |
-| ----------- | ------------ | ------------- | ------------|
-| LogIn | [LogInRequest](#mediator-v1-LogInRequest) | [LogInResponse](#mediator-v1-LogInResponse) |  |
-
-
-<a name="mediator-v1-LogOutService"></a>
-
-### LogOutService
-Logout of Mediator
-
-| Method Name | Request Type | Response Type | Description |
-| ----------- | ------------ | ------------- | ------------|
-| LogOut | [LogOutRequest](#mediator-v1-LogOutRequest) | [LogOutResponse](#mediator-v1-LogOutResponse) |  |
-
-
 <a name="mediator-v1-OAuthService"></a>
 
 ### OAuthService
@@ -1395,17 +1372,6 @@ manage Organizations CRUD
 | GetOrganization | [GetOrganizationRequest](#mediator-v1-GetOrganizationRequest) | [GetOrganizationResponse](#mediator-v1-GetOrganizationResponse) |  |
 | GetOrganizationByName | [GetOrganizationByNameRequest](#mediator-v1-GetOrganizationByNameRequest) | [GetOrganizationByNameResponse](#mediator-v1-GetOrganizationByNameResponse) |  |
 | DeleteOrganization | [DeleteOrganizationRequest](#mediator-v1-DeleteOrganizationRequest) | [DeleteOrganizationResponse](#mediator-v1-DeleteOrganizationResponse) |  |
-
-
-<a name="mediator-v1-RevokeTokensService"></a>
-
-### RevokeTokensService
-Revoke access tokens generally
-
-| Method Name | Request Type | Response Type | Description |
-| ----------- | ------------ | ------------- | ------------|
-| RevokeTokens | [RevokeTokensRequest](#mediator-v1-RevokeTokensRequest) | [RevokeTokensResponse](#mediator-v1-RevokeTokensResponse) |  |
-| RevokeUserToken | [RevokeUserTokenRequest](#mediator-v1-RevokeUserTokenRequest) | [RevokeUserTokenResponse](#mediator-v1-RevokeUserTokenResponse) |  |
 
 
 <a name="mediator-v1-RoleService"></a>

@@ -35,6 +35,7 @@ import (
 	_ "github.com/lib/pq" // nolint
 	"github.com/spf13/cobra"
 	"github.com/spf13/viper"
+	pb "github.com/stacklok/mediator/pkg/generated/protobuf/go/mediator/v1"
 	"google.golang.org/grpc"
 	"google.golang.org/grpc/credentials/insecure"
 )
@@ -117,17 +118,21 @@ func getCredentialsPath() (string, error) {
 }
 
 // JWTTokenCredentials is a helper struct for grpc
-type JWTTokenCredentials string
+type JWTTokenCredentials struct {
+	accessToken  string
+	refreshToken string
+}
 
 // GetRequestMetadata implements the PerRPCCredentials interface.
 func (jwt JWTTokenCredentials) GetRequestMetadata(_ context.Context, _ ...string) (map[string]string, error) {
 	return map[string]string{
-		"authorization": "Bearer " + string(jwt),
+		"authorization": "Bearer " + string(jwt.accessToken),
+		"refresh-token": jwt.refreshToken,
 	}, nil
 }
 
 // RequireTransportSecurity implements the PerRPCCredentials interface.
-func (_ JWTTokenCredentials) RequireTransportSecurity() bool {
+func (JWTTokenCredentials) RequireTransportSecurity() bool {
 	return false
 }
 
@@ -140,17 +145,54 @@ func GetGrpcConnection(cmd *cobra.Command) (*grpc.ClientConn, error) {
 
 	// read credentials
 	token := ""
+	refreshToken := ""
+	expirationTime := 0
 	creds, err := LoadCredentials()
 	if err == nil {
 		token = creds.AccessToken
+		refreshToken = creds.RefreshToken
+		expirationTime = creds.RefreshTokenExpiresIn
 	}
 
 	// generate credentials
 	conn, err := grpc.Dial(address, grpc.WithTransportCredentials(insecure.NewCredentials()),
-		grpc.WithPerRPCCredentials(JWTTokenCredentials(token)))
+		grpc.WithPerRPCCredentials(JWTTokenCredentials{accessToken: token, refreshToken: refreshToken}))
 	if err != nil {
 		return nil, fmt.Errorf("error connecting to gRPC server: %v", err)
 	}
+
+	// NOTE: refresh is best effort. We will not error out if it fails
+	// in the case of failure, the credentials won't be refreshed
+	// and user will need to log in again
+
+	// call to verify endpoint
+	client := pb.NewAuthServiceClient(conn)
+	ctx := context.Background()
+	needsRefresh := false
+	if token != "" {
+		result, err := client.Verify(ctx, &pb.VerifyRequest{})
+		if err != nil || result.Status == "KO" {
+			needsRefresh = true
+		}
+	}
+
+	if needsRefresh && refreshToken != "" {
+		// call refresh endpoint
+		result, err := client.RefreshToken(ctx, &pb.RefreshTokenRequest{})
+		if err == nil {
+			// combine the credentials and save them
+			creds := Credentials{
+				AccessToken:           result.AccessToken,
+				RefreshToken:          refreshToken,
+				AccessTokenExpiresIn:  int(result.AccessTokenExpiresIn),
+				RefreshTokenExpiresIn: expirationTime,
+			}
+
+			// save credentials
+			_, _ = SaveCredentials(creds)
+		}
+	}
+
 	return conn, nil
 }
 

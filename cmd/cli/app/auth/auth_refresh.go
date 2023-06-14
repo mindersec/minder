@@ -25,68 +25,69 @@ import (
 	"context"
 	"fmt"
 	"os"
-	"path/filepath"
 	"time"
-
-	pb "github.com/stacklok/mediator/pkg/generated/protobuf/go/mediator/v1"
 
 	"github.com/spf13/cobra"
 	"github.com/spf13/viper"
+	pb "github.com/stacklok/mediator/pkg/generated/protobuf/go/mediator/v1"
 	"github.com/stacklok/mediator/pkg/util"
 )
 
-// auth_logoutCmd represents the logout command
-var auth_logoutCmd = &cobra.Command{
-	Use:   "logout",
-	Short: "Logout from mediator control plane.",
-	Long:  `Logout from mediator control plane. Credentials will be removed from $XDG_CONFIG_HOME/mediator/credentials.json`,
+// Auth_refreshCmd represents the auth refresh command
+var Auth_refreshCmd = &cobra.Command{
+	Use:   "refresh",
+	Short: "Refresh credentials",
+	Long:  `It refreshes credentials for one user`,
 	PreRun: func(cmd *cobra.Command, args []string) {
 		if err := viper.BindPFlags(cmd.Flags()); err != nil {
 			fmt.Fprintf(os.Stderr, "Error binding flags: %s\n", err)
 		}
 	},
 	Run: func(cmd *cobra.Command, args []string) {
+		// load old credentials
+		oldCreds, err := util.LoadCredentials()
+		if err != nil {
+			fmt.Fprintf(os.Stderr, "Error loading credentials: %s\n", err)
+			os.Exit(1)
+		}
+
 		conn, err := util.GetGrpcConnection(cmd)
 		if err != nil {
 			util.ExitNicelyOnError(err, "Error getting grpc connection")
 		}
 		defer conn.Close()
 
-		client := pb.NewAuthServiceClient(conn)
-		ctx, cancel := context.WithTimeout(context.Background(), 5*time.Second)
+		ctx, cancel := context.WithTimeout(context.Background(), time.Second)
 		defer cancel()
 
-		_, err = client.LogOut(ctx, &pb.LogOutRequest{})
+		client := pb.NewAuthServiceClient(conn)
 		if err != nil {
-			fmt.Fprintf(os.Stderr, "Error logging out: %s\n", err)
+			util.ExitNicelyOnError(err, "Error getting grpc connection")
+		}
+		resp, err := client.RefreshToken(ctx, &pb.RefreshTokenRequest{})
+		if err != nil {
+			util.ExitNicelyOnError(err, "Error refreshing token")
+		}
+
+		// marshal the credentials to json. Only refresh access token
+		creds := util.Credentials{
+			AccessToken:           resp.AccessToken,
+			RefreshToken:          oldCreds.RefreshToken,
+			AccessTokenExpiresIn:  int(resp.AccessTokenExpiresIn),
+			RefreshTokenExpiresIn: oldCreds.RefreshTokenExpiresIn,
+		}
+
+		// save credentials
+		filePath, err := util.SaveCredentials(creds)
+		if err != nil {
+			fmt.Fprintf(os.Stderr, "Error saving credentials: %s\n", err)
 			os.Exit(1)
 		}
 
-		// remove credentials file for extra security
-		xdgConfigHome := os.Getenv("XDG_CONFIG_HOME")
-
-		// just delete token from credentials file
-		if xdgConfigHome == "" {
-			homeDir, err := os.UserHomeDir()
-			if err != nil {
-				fmt.Fprintf(os.Stderr, "Error getting home directory: %v\n", err)
-				os.Exit(1)
-			}
-			xdgConfigHome = filepath.Join(homeDir, ".config")
-		}
-
-		filePath := filepath.Join(xdgConfigHome, "mediator", "credentials.json")
-		err = os.Remove(filePath)
-		if err != nil {
-			fmt.Fprintf(os.Stderr, "Error removing credentials file: %v\n", err)
-			os.Exit(1)
-		}
-		fmt.Println("User logged out.")
-
+		fmt.Printf("Credentials saved to %s\n", filePath)
 	},
 }
 
 func init() {
-	AuthCmd.AddCommand(auth_logoutCmd)
-
+	AuthCmd.AddCommand(Auth_refreshCmd)
 }
