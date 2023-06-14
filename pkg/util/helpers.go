@@ -31,6 +31,7 @@ import (
 	"os"
 	"path/filepath"
 	"strconv"
+	"time"
 
 	_ "github.com/lib/pq" // nolint
 	"github.com/spf13/cobra"
@@ -251,4 +252,10 @@ func LoadCredentials() (Credentials, error) {
 		return Credentials{}, fmt.Errorf("error unmarshaling credentials: %v", err)
 	}
 	return creds, nil
+}
+
+// GetAppContext is a helper for getting the cmd app context
+func GetAppContext() (context.Context, context.CancelFunc) {
+	ctx, cancel := context.WithTimeout(context.Background(), 5*time.Second)
+	return ctx, cancel
 }

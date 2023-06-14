@@ -22,7 +22,6 @@
 package user
 
 import (
-	"context"
 	"encoding/json"
 	"fmt"
 	"os"
@@ -57,7 +56,7 @@ mediator control plane for an specific role.`,
 		defer conn.Close()
 
 		client := pb.NewUserServiceClient(conn)
-		ctx, cancel := context.WithTimeout(context.Background(), time.Second)
+		ctx, cancel := util.GetAppContext()
 		defer cancel()
 
 		role := viper.GetInt32("role-id")

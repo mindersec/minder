@@ -22,11 +22,9 @@
 package auth
 
 import (
-	"context"
 	"fmt"
 	"os"
 	"path/filepath"
-	"time"
 
 	pb "github.com/stacklok/mediator/pkg/generated/protobuf/go/mediator/v1"
 
@@ -53,7 +51,7 @@ var auth_logoutCmd = &cobra.Command{
 		defer conn.Close()
 
 		client := pb.NewAuthServiceClient(conn)
-		ctx, cancel := context.WithTimeout(context.Background(), 5*time.Second)
+		ctx, cancel := util.GetAppContext()
 		defer cancel()
 
 		_, err = client.LogOut(ctx, &pb.LogOutRequest{})

@@ -22,11 +22,9 @@
 package group
 
 import (
-	"context"
 	"encoding/json"
 	"fmt"
 	"os"
-	"time"
 
 	pb "github.com/stacklok/mediator/pkg/generated/protobuf/go/mediator/v1"
 	"github.com/stacklok/mediator/pkg/util"
@@ -54,7 +52,7 @@ mediator control plane.`,
 		defer conn.Close()
 
 		client := pb.NewGroupServiceClient(conn)
-		ctx, cancel := context.WithTimeout(context.Background(), time.Second)
+		ctx, cancel := util.GetAppContext()
 		defer cancel()
 
 		id := viper.GetInt32("id")

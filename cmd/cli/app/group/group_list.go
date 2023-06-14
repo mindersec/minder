@@ -22,7 +22,6 @@
 package group
 
 import (
-	"context"
 	"encoding/json"
 	"fmt"
 	"os"
@@ -56,7 +55,7 @@ a mediator control plane.`,
 		defer conn.Close()
 
 		client := pb.NewGroupServiceClient(conn)
-		ctx, cancel := context.WithTimeout(context.Background(), time.Second)
+		ctx, cancel := util.GetAppContext()
 		defer cancel()
 
 		org := viper.GetInt32("org-id")

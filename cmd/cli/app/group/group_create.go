@@ -22,11 +22,9 @@
 package group
 
 import (
-	"context"
 	"encoding/json"
 	"fmt"
 	"os"
-	"time"
 
 	"github.com/spf13/cobra"
 	"github.com/spf13/viper"
@@ -61,7 +59,7 @@ a mediator control plane.`,
 		defer conn.Close()
 
 		client := pb.NewGroupServiceClient(conn)
-		ctx, cancel := context.WithTimeout(context.Background(), 5*time.Second)
+		ctx, cancel := util.GetAppContext()
 		defer cancel()
 
 		protectedPtr := &isProtected

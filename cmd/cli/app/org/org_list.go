@@ -22,7 +22,6 @@
 package org
 
 import (
-	"context"
 	"encoding/json"
 	"fmt"
 	"os"
@@ -56,7 +55,7 @@ mediator control plane.`,
 		defer conn.Close()
 
 		client := pb.NewOrganizationServiceClient(conn)
-		ctx, cancel := context.WithTimeout(context.Background(), time.Second)
+		ctx, cancel := util.GetAppContext()
 		defer cancel()
 
 		limit := viper.GetInt32("limit")
