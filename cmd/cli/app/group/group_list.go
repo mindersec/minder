@@ -73,10 +73,7 @@ a mediator control plane.`,
 			Limit:          limit,
 			Offset:         offset,
 		})
-		if err != nil {
-			fmt.Fprintf(os.Stderr, "Error getting groups: %s\n", err)
-			os.Exit(1)
-		}
+		util.ExitNicelyOnError(err, "Error getting groups")
 
 		// print output in a table
 		if format == "" {

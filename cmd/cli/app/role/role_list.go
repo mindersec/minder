@@ -76,10 +76,7 @@ mediator control plane for an specific group.`,
 			Limit:   limitPtr,
 			Offset:  offsetPtr,
 		})
-		if err != nil {
-			fmt.Fprintf(os.Stderr, "Error getting roles: %s\n", err)
-			os.Exit(1)
-		}
+		util.ExitNicelyOnError(err, "Error getting roles")
 
 		// print output in a table
 		if format == "" {

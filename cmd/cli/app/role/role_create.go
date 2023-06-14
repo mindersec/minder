@@ -77,11 +77,8 @@ within a mediator control plane.`,
 			IsAdmin:     adminPtr,
 			IsProtected: protectedPtr,
 		})
+		util.ExitNicelyOnError(err, "Error creating role")
 
-		if err != nil {
-			fmt.Fprintf(os.Stderr, "Error creating role: %s\n", err)
-			os.Exit(1)
-		}
 		role, err := json.MarshalIndent(resp, "", "  ")
 		if err != nil {
 			cmd.Println("Created role: ", resp.Name)

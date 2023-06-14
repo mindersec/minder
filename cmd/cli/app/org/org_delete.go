@@ -49,11 +49,8 @@ mediator control plane.`,
 		force := util.GetConfigValue("force", "force", cmd, false).(bool)
 
 		conn, err := util.GetGrpcConnection(cmd)
+		util.ExitNicelyOnError(err, "Error getting grpc connection")
 
-		if err != nil {
-			fmt.Fprintf(os.Stderr, "Error getting grpc connection: %s\n", err)
-			os.Exit(1)
-		}
 		defer conn.Close()
 
 		client := pb.NewOrganizationServiceClient(conn)
@@ -66,10 +63,7 @@ mediator control plane.`,
 			Force: forcePtr,
 		})
 
-		if err != nil {
-			fmt.Fprintf(os.Stderr, "Error deleting organization: %s\n", err)
-			os.Exit(1)
-		}
+		util.ExitNicelyOnError(err, "Error deleting organization")
 		cmd.Println("Successfully deleted organization with id:", id)
 	},
 }

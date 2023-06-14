@@ -24,8 +24,11 @@ package util
 
 import (
 	"fmt"
+	"os"
+	"strings"
 
 	"google.golang.org/grpc/codes"
+	"google.golang.org/grpc/status"
 )
 
 // NiceStatus A wrapper around a status to give a better description.
@@ -141,4 +144,19 @@ authentication credentials for the operation.`
 func (s *NiceStatus) String() string {
 	ret := fmt.Sprintf("Code: %d\nName: %s\nDescription: %s\nDetails: %s", s.Code, s.Name, s.Description, s.Details)
 	return ret
+}
+
+// ExitNicelyOnError print a message and exit with the right code
+func ExitNicelyOnError(err error, message string) {
+	if err != nil {
+		ret := status.Convert(err)
+		ns := GetNiceStatus(ret.Code())
+		es := fmt.Sprintf("%s", err)
+		if len(es) > 0 && !strings.Contains(es, "rpc error:") {
+			fmt.Fprintf(os.Stderr, "%s: %s\n", message, es)
+		} else {
+			fmt.Fprintf(os.Stderr, "%s: %s\n", message, ns)
+		}
+		os.Exit(int(ret.Code()))
+	}
 }

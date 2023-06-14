@@ -17,7 +17,6 @@ package controlplane
 import (
 	"context"
 	"database/sql"
-	"fmt"
 
 	"github.com/go-playground/validator/v10"
 	"github.com/stacklok/mediator/pkg/db"
@@ -44,9 +43,9 @@ func (s *Server) CreateGroup(ctx context.Context, req *pb.CreateGroupRequest) (*
 	_, err = s.store.GetGroupByName(ctx, req.Name)
 
 	if err != nil && err != sql.ErrNoRows {
-		return nil, fmt.Errorf("failed to get group by name: %w", err)
+		return nil, status.Errorf(codes.NotFound, "failed to get group by name: %s", err)
 	} else if err == nil {
-		return nil, fmt.Errorf("group already exists")
+		return nil, status.Errorf(codes.AlreadyExists, "group already exists")
 	}
 
 	if req.IsProtected == nil {
@@ -67,7 +66,7 @@ func (s *Server) CreateGroup(ctx context.Context, req *pb.CreateGroupRequest) (*
 	})
 
 	if err != nil {
-		return nil, fmt.Errorf("failed to create group: %w", err)
+		return nil, status.Errorf(codes.Internal, "failed to create group: %s", err)
 	}
 
 	resp := &pb.CreateGroupResponse{
@@ -85,12 +84,12 @@ func (s *Server) CreateGroup(ctx context.Context, req *pb.CreateGroupRequest) (*
 // GetGroupById returns a group by id
 func (s *Server) GetGroupById(ctx context.Context, req *pb.GetGroupByIdRequest) (*pb.GetGroupByIdResponse, error) {
 	if req.GroupId == 0 {
-		return nil, fmt.Errorf("group id cannot be empty")
+		return nil, status.Error(codes.InvalidArgument, "group id cannot be empty")
 	}
 
 	grp, err := s.store.GetGroupByID(ctx, req.GroupId)
 	if err != nil {
-		return nil, fmt.Errorf("failed to get group by id: %w", err)
+		return nil, status.Errorf(codes.NotFound, "failed to get group by id: %s", err)
 	}
 
 	var resp pb.GetGroupByIdResponse
@@ -114,12 +113,12 @@ func (s *Server) GetGroupById(ctx context.Context, req *pb.GetGroupByIdRequest) 
 // GetGroupByName returns a group by name
 func (s *Server) GetGroupByName(ctx context.Context, req *pb.GetGroupByNameRequest) (*pb.GetGroupByNameResponse, error) {
 	if req.Name == "" {
-		return nil, fmt.Errorf("group name cannot be empty")
+		return nil, status.Errorf(codes.InvalidArgument, "group name cannot be empty")
 	}
 
 	grp, err := s.store.GetGroupByName(ctx, req.Name)
 	if err != nil {
-		return nil, fmt.Errorf("failed to get group by name: %w", err)
+		return nil, status.Errorf(codes.NotFound, "failed to get group by name: %s", err)
 	}
 
 	var resp pb.GetGroupByNameResponse
@@ -143,7 +142,7 @@ func (s *Server) GetGroupByName(ctx context.Context, req *pb.GetGroupByNameReque
 // GetGroups returns a list of groups
 func (s *Server) GetGroups(ctx context.Context, req *pb.GetGroupsRequest) (*pb.GetGroupsResponse, error) {
 	if req.OrganizationId == 0 {
-		return nil, fmt.Errorf("organization id cannot be empty")
+		return nil, status.Errorf(codes.InvalidArgument, "organization id cannot be empty")
 	}
 
 	// define default values for limit and offset
@@ -157,7 +156,7 @@ func (s *Server) GetGroups(ctx context.Context, req *pb.GetGroupsRequest) (*pb.G
 		Offset:         req.Offset,
 	})
 	if err != nil {
-		return nil, fmt.Errorf("failed to get groups: %w", err)
+		return nil, status.Errorf(codes.NotFound, "failed to get groups: %s", err)
 	}
 
 	var resp pb.GetGroupsResponse
@@ -205,7 +204,7 @@ func (s *Server) DeleteGroup(ctx context.Context,
 	}
 
 	if !*in.Force && group.IsProtected {
-		errcode := fmt.Errorf("cannot delete a protected group")
+		errcode := status.Errorf(codes.PermissionDenied, "cannot delete a protected group")
 		return nil, errcode
 	}
 
@@ -218,7 +217,7 @@ func (s *Server) DeleteGroup(ctx context.Context,
 		}
 
 		if len(roles) > 0 {
-			errcode := fmt.Errorf("cannot delete the group, there are roles associated with it")
+			errcode := status.Errorf(codes.FailedPrecondition, "cannot delete the group, there are roles associated with it")
 			return nil, errcode
 		}
 	}

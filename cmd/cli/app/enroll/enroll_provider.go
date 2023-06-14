@@ -137,10 +137,7 @@ actions such as adding repositories.`,
 			Cli:      true,
 			Port:     int32(port),
 		})
-		if err != nil {
-			fmt.Fprintf(os.Stderr, "Error getting authorization URL: %s\n", err)
-			os.Exit(1)
-		}
+		util.ExitNicelyOnError(err, "Error getting authorization URL")
 
 		fmt.Printf("Your browser will now be opened to: %s\n", resp.GetUrl())
 		fmt.Println("Please follow the instructions on the page to complete the OAuth flow.")
