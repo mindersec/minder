@@ -45,9 +45,7 @@ var auth_logoutCmd = &cobra.Command{
 	},
 	Run: func(cmd *cobra.Command, args []string) {
 		conn, err := util.GetGrpcConnection(cmd)
-		if err != nil {
-			util.ExitNicelyOnError(err, "Error getting grpc connection")
-		}
+		util.ExitNicelyOnError(err, "Error getting grpc connection")
 		defer conn.Close()
 
 		client := pb.NewAuthServiceClient(conn)

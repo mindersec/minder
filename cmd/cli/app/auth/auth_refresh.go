@@ -52,22 +52,17 @@ var Auth_refreshCmd = &cobra.Command{
 		}
 
 		conn, err := util.GetGrpcConnection(cmd)
-		if err != nil {
-			util.ExitNicelyOnError(err, "Error getting grpc connection")
-		}
+		util.ExitNicelyOnError(err, "Error getting grpc connection")
 		defer conn.Close()
 
 		ctx, cancel := context.WithTimeout(context.Background(), time.Second)
 		defer cancel()
 
 		client := pb.NewAuthServiceClient(conn)
-		if err != nil {
-			util.ExitNicelyOnError(err, "Error getting grpc connection")
-		}
+		util.ExitNicelyOnError(err, "Error getting grpc connection")
+
 		resp, err := client.RefreshToken(ctx, &pb.RefreshTokenRequest{})
-		if err != nil {
-			util.ExitNicelyOnError(err, "Error refreshing token")
-		}
+		util.ExitNicelyOnError(err, "Error refreshing token")
 
 		// marshal the credentials to json. Only refresh access token
 		creds := util.Credentials{

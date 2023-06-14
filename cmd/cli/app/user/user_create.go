@@ -91,9 +91,7 @@ within a mediator control plane.`,
 		}
 
 		conn, err := util.GetGrpcConnection(cmd)
-		if err != nil {
-			util.ExitNicelyOnError(err, "Error getting grpc connection")
-		}
+		util.ExitNicelyOnError(err, "Error getting grpc connection")
 		defer conn.Close()
 
 		ctx, cancel := util.GetAppContext()
@@ -106,26 +104,18 @@ within a mediator control plane.`,
 				Name:    username.(string) + "-org",
 				Company: username.(string) + " - Self enrolled",
 			})
-			if err != nil {
-				util.ExitNicelyOnError(err, "Error creating organization")
-			}
+			util.ExitNicelyOnError(err, "Error creating organization")
 
 			clientg := pb.NewGroupServiceClient(conn)
 			respg, err := clientg.CreateGroup(ctx, &pb.CreateGroupRequest{OrganizationId: resp.Id,
 				Name: username.(string) + "-group"})
-
-			if err != nil {
-				util.ExitNicelyOnError(err, "Error creating group")
-			}
+			util.ExitNicelyOnError(err, "Error creating group")
 
 			clientr := pb.NewRoleServiceClient(conn)
 			isAdmin := true
 			respr, err := clientr.CreateRole(ctx, &pb.CreateRoleRequest{GroupId: respg.GroupId,
 				Name: username.(string) + "-role", IsAdmin: &isAdmin})
-
-			if err != nil {
-				util.ExitNicelyOnError(err, "Error creating role")
-			}
+			util.ExitNicelyOnError(err, "Error creating role")
 
 			// now assign the role
 			role = int(respr.Id)
@@ -173,11 +163,7 @@ within a mediator control plane.`,
 			IsProtected:         protectedPtr,
 			NeedsPasswordChange: needsPasswordChangePtr,
 		})
-
-		if err != nil {
-			util.ExitNicelyOnError(err, "Error creating user")
-			os.Exit(1)
-		}
+		util.ExitNicelyOnError(err, "Error creating user")
 
 		user, err := json.MarshalIndent(resp, "", "  ")
 		if err != nil {

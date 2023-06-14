@@ -49,9 +49,7 @@ var User_updateCmd = &cobra.Command{
 		password_confirmation := util.GetConfigValue("password_confirmation", "password_confirmation", cmd, nil)
 
 		conn, err := util.GetGrpcConnection(cmd)
-		if err != nil {
-			util.ExitNicelyOnError(err, "Error getting grpc connection")
-		}
+		util.ExitNicelyOnError(err, "Error getting grpc connection")
 		defer conn.Close()
 
 		client := pb.NewUserServiceClient(conn)
@@ -62,10 +60,7 @@ var User_updateCmd = &cobra.Command{
 			Password:             password.(string),
 			PasswordConfirmation: password_confirmation.(string),
 		})
-
-		if err != nil {
-			util.ExitNicelyOnError(err, "Error updating user password")
-		}
+		util.ExitNicelyOnError(err, "Error updating user password")
 		cmd.Println("Password updated successfully, please authenticate again with your new credentials.")
 	},
 }
