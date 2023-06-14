@@ -14,6 +14,7 @@ type Querier interface {
 	CreateAccessToken(ctx context.Context, arg CreateAccessTokenParams) (ProviderAccessToken, error)
 	CreateGroup(ctx context.Context, arg CreateGroupParams) (Group, error)
 	CreateOrganization(ctx context.Context, arg CreateOrganizationParams) (Organization, error)
+	CreateRepository(ctx context.Context, arg CreateRepositoryParams) (Repository, error)
 	CreateRole(ctx context.Context, arg CreateRoleParams) (Role, error)
 	CreateSessionState(ctx context.Context, arg CreateSessionStateParams) (SessionStore, error)
 	CreateUser(ctx context.Context, arg CreateUserParams) (User, error)
@@ -21,6 +22,7 @@ type Querier interface {
 	DeleteExpiredSessionStates(ctx context.Context) error
 	DeleteGroup(ctx context.Context, id int32) error
 	DeleteOrganization(ctx context.Context, id int32) error
+	DeleteRepository(ctx context.Context, id int32) error
 	DeleteRole(ctx context.Context, id int32) error
 	DeleteSessionState(ctx context.Context, id int32) error
 	DeleteSessionStateByGroupID(ctx context.Context, grpID sql.NullInt32) error
@@ -32,6 +34,8 @@ type Querier interface {
 	GetOrganization(ctx context.Context, id int32) (Organization, error)
 	GetOrganizationByName(ctx context.Context, name string) (Organization, error)
 	GetOrganizationForUpdate(ctx context.Context, name string) (Organization, error)
+	GetRepositoryByID(ctx context.Context, id int32) (Repository, error)
+	GetRepositoryByRepoName(ctx context.Context, repoName string) (Repository, error)
 	GetRoleByID(ctx context.Context, id int32) (Role, error)
 	GetRoleByName(ctx context.Context, arg GetRoleByNameParams) (Role, error)
 	GetSessionState(ctx context.Context, id int32) (SessionStore, error)
@@ -43,6 +47,8 @@ type Querier interface {
 	ListGroups(ctx context.Context, arg ListGroupsParams) ([]Group, error)
 	ListGroupsByOrganizationID(ctx context.Context, organizationID int32) ([]Group, error)
 	ListOrganizations(ctx context.Context, arg ListOrganizationsParams) ([]Organization, error)
+	ListRepositoriesByGroupID(ctx context.Context, arg ListRepositoriesByGroupIDParams) ([]Repository, error)
+	ListRepositoriesByOwner(ctx context.Context, arg ListRepositoriesByOwnerParams) ([]Repository, error)
 	ListRoles(ctx context.Context, arg ListRolesParams) ([]Role, error)
 	ListRolesByGroupID(ctx context.Context, groupID int32) ([]Role, error)
 	ListUsers(ctx context.Context, arg ListUsersParams) ([]User, error)
@@ -56,6 +62,7 @@ type Querier interface {
 	UpdateGroup(ctx context.Context, arg UpdateGroupParams) (Group, error)
 	UpdateOrganization(ctx context.Context, arg UpdateOrganizationParams) (Organization, error)
 	UpdatePassword(ctx context.Context, arg UpdatePasswordParams) (User, error)
+	UpdateRepository(ctx context.Context, arg UpdateRepositoryParams) (Repository, error)
 	UpdateRole(ctx context.Context, arg UpdateRoleParams) (Role, error)
 	UpdateUser(ctx context.Context, arg UpdateUserParams) (User, error)
 }

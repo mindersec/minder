@@ -110,6 +110,21 @@ func (mr *MockStoreMockRecorder) CreateOrganization(arg0, arg1 interface{}) *gom
 	return mr.mock.ctrl.RecordCallWithMethodType(mr.mock, "CreateOrganization", reflect.TypeOf((*MockStore)(nil).CreateOrganization), arg0, arg1)
 }
 
+// CreateRepository mocks base method.
+func (m *MockStore) CreateRepository(arg0 context.Context, arg1 db.CreateRepositoryParams) (db.Repository, error) {
+	m.ctrl.T.Helper()
+	ret := m.ctrl.Call(m, "CreateRepository", arg0, arg1)
+	ret0, _ := ret[0].(db.Repository)
+	ret1, _ := ret[1].(error)
+	return ret0, ret1
+}
+
+// CreateRepository indicates an expected call of CreateRepository.
+func (mr *MockStoreMockRecorder) CreateRepository(arg0, arg1 interface{}) *gomock.Call {
+	mr.mock.ctrl.T.Helper()
+	return mr.mock.ctrl.RecordCallWithMethodType(mr.mock, "CreateRepository", reflect.TypeOf((*MockStore)(nil).CreateRepository), arg0, arg1)
+}
+
 // CreateRole mocks base method.
 func (m *MockStore) CreateRole(arg0 context.Context, arg1 db.CreateRoleParams) (db.Role, error) {
 	m.ctrl.T.Helper()
@@ -209,6 +224,20 @@ func (m *MockStore) DeleteOrganization(arg0 context.Context, arg1 int32) error {
 func (mr *MockStoreMockRecorder) DeleteOrganization(arg0, arg1 interface{}) *gomock.Call {
 	mr.mock.ctrl.T.Helper()
 	return mr.mock.ctrl.RecordCallWithMethodType(mr.mock, "DeleteOrganization", reflect.TypeOf((*MockStore)(nil).DeleteOrganization), arg0, arg1)
+}
+
+// DeleteRepository mocks base method.
+func (m *MockStore) DeleteRepository(arg0 context.Context, arg1 int32) error {
+	m.ctrl.T.Helper()
+	ret := m.ctrl.Call(m, "DeleteRepository", arg0, arg1)
+	ret0, _ := ret[0].(error)
+	return ret0
+}
+
+// DeleteRepository indicates an expected call of DeleteRepository.
+func (mr *MockStoreMockRecorder) DeleteRepository(arg0, arg1 interface{}) *gomock.Call {
+	mr.mock.ctrl.T.Helper()
+	return mr.mock.ctrl.RecordCallWithMethodType(mr.mock, "DeleteRepository", reflect.TypeOf((*MockStore)(nil).DeleteRepository), arg0, arg1)
 }
 
 // DeleteRole mocks base method.
@@ -370,6 +399,36 @@ func (m *MockStore) GetOrganizationForUpdate(arg0 context.Context, arg1 string) 
 func (mr *MockStoreMockRecorder) GetOrganizationForUpdate(arg0, arg1 interface{}) *gomock.Call {
 	mr.mock.ctrl.T.Helper()
 	return mr.mock.ctrl.RecordCallWithMethodType(mr.mock, "GetOrganizationForUpdate", reflect.TypeOf((*MockStore)(nil).GetOrganizationForUpdate), arg0, arg1)
+}
+
+// GetRepositoryByID mocks base method.
+func (m *MockStore) GetRepositoryByID(arg0 context.Context, arg1 int32) (db.Repository, error) {
+	m.ctrl.T.Helper()
+	ret := m.ctrl.Call(m, "GetRepositoryByID", arg0, arg1)
+	ret0, _ := ret[0].(db.Repository)
+	ret1, _ := ret[1].(error)
+	return ret0, ret1
+}
+
+// GetRepositoryByID indicates an expected call of GetRepositoryByID.
+func (mr *MockStoreMockRecorder) GetRepositoryByID(arg0, arg1 interface{}) *gomock.Call {
+	mr.mock.ctrl.T.Helper()
+	return mr.mock.ctrl.RecordCallWithMethodType(mr.mock, "GetRepositoryByID", reflect.TypeOf((*MockStore)(nil).GetRepositoryByID), arg0, arg1)
+}
+
+// GetRepositoryByRepoName mocks base method.
+func (m *MockStore) GetRepositoryByRepoName(arg0 context.Context, arg1 string) (db.Repository, error) {
+	m.ctrl.T.Helper()
+	ret := m.ctrl.Call(m, "GetRepositoryByRepoName", arg0, arg1)
+	ret0, _ := ret[0].(db.Repository)
+	ret1, _ := ret[1].(error)
+	return ret0, ret1
+}
+
+// GetRepositoryByRepoName indicates an expected call of GetRepositoryByRepoName.
+func (mr *MockStoreMockRecorder) GetRepositoryByRepoName(arg0, arg1 interface{}) *gomock.Call {
+	mr.mock.ctrl.T.Helper()
+	return mr.mock.ctrl.RecordCallWithMethodType(mr.mock, "GetRepositoryByRepoName", reflect.TypeOf((*MockStore)(nil).GetRepositoryByRepoName), arg0, arg1)
 }
 
 // GetRoleByID mocks base method.
@@ -535,6 +594,36 @@ func (m *MockStore) ListOrganizations(arg0 context.Context, arg1 db.ListOrganiza
 func (mr *MockStoreMockRecorder) ListOrganizations(arg0, arg1 interface{}) *gomock.Call {
 	mr.mock.ctrl.T.Helper()
 	return mr.mock.ctrl.RecordCallWithMethodType(mr.mock, "ListOrganizations", reflect.TypeOf((*MockStore)(nil).ListOrganizations), arg0, arg1)
+}
+
+// ListRepositoriesByGroupID mocks base method.
+func (m *MockStore) ListRepositoriesByGroupID(arg0 context.Context, arg1 db.ListRepositoriesByGroupIDParams) ([]db.Repository, error) {
+	m.ctrl.T.Helper()
+	ret := m.ctrl.Call(m, "ListRepositoriesByGroupID", arg0, arg1)
+	ret0, _ := ret[0].([]db.Repository)
+	ret1, _ := ret[1].(error)
+	return ret0, ret1
+}
+
+// ListRepositoriesByGroupID indicates an expected call of ListRepositoriesByGroupID.
+func (mr *MockStoreMockRecorder) ListRepositoriesByGroupID(arg0, arg1 interface{}) *gomock.Call {
+	mr.mock.ctrl.T.Helper()
+	return mr.mock.ctrl.RecordCallWithMethodType(mr.mock, "ListRepositoriesByGroupID", reflect.TypeOf((*MockStore)(nil).ListRepositoriesByGroupID), arg0, arg1)
+}
+
+// ListRepositoriesByOwner mocks base method.
+func (m *MockStore) ListRepositoriesByOwner(arg0 context.Context, arg1 db.ListRepositoriesByOwnerParams) ([]db.Repository, error) {
+	m.ctrl.T.Helper()
+	ret := m.ctrl.Call(m, "ListRepositoriesByOwner", arg0, arg1)
+	ret0, _ := ret[0].([]db.Repository)
+	ret1, _ := ret[1].(error)
+	return ret0, ret1
+}
+
+// ListRepositoriesByOwner indicates an expected call of ListRepositoriesByOwner.
+func (mr *MockStoreMockRecorder) ListRepositoriesByOwner(arg0, arg1 interface{}) *gomock.Call {
+	mr.mock.ctrl.T.Helper()
+	return mr.mock.ctrl.RecordCallWithMethodType(mr.mock, "ListRepositoriesByOwner", reflect.TypeOf((*MockStore)(nil).ListRepositoriesByOwner), arg0, arg1)
 }
 
 // ListRoles mocks base method.
@@ -730,6 +819,21 @@ func (m *MockStore) UpdatePassword(arg0 context.Context, arg1 db.UpdatePasswordP
 func (mr *MockStoreMockRecorder) UpdatePassword(arg0, arg1 interface{}) *gomock.Call {
 	mr.mock.ctrl.T.Helper()
 	return mr.mock.ctrl.RecordCallWithMethodType(mr.mock, "UpdatePassword", reflect.TypeOf((*MockStore)(nil).UpdatePassword), arg0, arg1)
+}
+
+// UpdateRepository mocks base method.
+func (m *MockStore) UpdateRepository(arg0 context.Context, arg1 db.UpdateRepositoryParams) (db.Repository, error) {
+	m.ctrl.T.Helper()
+	ret := m.ctrl.Call(m, "UpdateRepository", arg0, arg1)
+	ret0, _ := ret[0].(db.Repository)
+	ret1, _ := ret[1].(error)
+	return ret0, ret1
+}
+
+// UpdateRepository indicates an expected call of UpdateRepository.
+func (mr *MockStoreMockRecorder) UpdateRepository(arg0, arg1 interface{}) *gomock.Call {
+	mr.mock.ctrl.T.Helper()
+	return mr.mock.ctrl.RecordCallWithMethodType(mr.mock, "UpdateRepository", reflect.TypeOf((*MockStore)(nil).UpdateRepository), arg0, arg1)
 }
 
 // UpdateRole mocks base method.

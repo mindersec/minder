@@ -21,6 +21,9 @@
       "name": "SecretsService"
     },
     {
+      "name": "RepositoryService"
+    },
+    {
       "name": "BranchProtectionService"
     },
     {
@@ -768,6 +771,38 @@
         ]
       }
     },
+    "/api/v1/repository": {
+      "post": {
+        "operationId": "RepositoryService_AddRepository",
+        "responses": {
+          "200": {
+            "description": "A successful response.",
+            "schema": {
+              "$ref": "#/definitions/v1AddRepositoryResponse"
+            }
+          },
+          "default": {
+            "description": "An unexpected error response.",
+            "schema": {
+              "$ref": "#/definitions/rpcStatus"
+            }
+          }
+        },
+        "parameters": [
+          {
+            "name": "body",
+            "in": "body",
+            "required": true,
+            "schema": {
+              "$ref": "#/definitions/v1AddRepositoryRequest"
+            }
+          }
+        ],
+        "tags": [
+          "RepositoryService"
+        ]
+      }
+    },
     "/api/v1/role": {
       "post": {
         "operationId": "RoleService_CreateRole",
@@ -1313,6 +1348,36 @@
           "items": {
             "type": "object",
             "$ref": "#/definitions/protobufAny"
+          }
+        }
+      }
+    },
+    "v1AddRepositoryRequest": {
+      "type": "object",
+      "properties": {
+        "repositories": {
+          "type": "array",
+          "items": {
+            "type": "object",
+            "$ref": "#/definitions/v1Repositories"
+          }
+        },
+        "events": {
+          "type": "array",
+          "items": {
+            "type": "string"
+          }
+        }
+      }
+    },
+    "v1AddRepositoryResponse": {
+      "type": "object",
+      "properties": {
+        "results": {
+          "type": "array",
+          "items": {
+            "type": "object",
+            "$ref": "#/definitions/v1RepositoryResult"
           }
         }
       }
@@ -1924,6 +1989,65 @@
         "accessTokenExpiresIn": {
           "type": "string",
           "format": "int64"
+        }
+      }
+    },
+    "v1Repositories": {
+      "type": "object",
+      "properties": {
+        "owner": {
+          "type": "string"
+        },
+        "name": {
+          "type": "string"
+        },
+        "repoId": {
+          "type": "integer",
+          "format": "int32"
+        }
+      }
+    },
+    "v1RepositoryResult": {
+      "type": "object",
+      "properties": {
+        "owner": {
+          "type": "string"
+        },
+        "repository": {
+          "type": "string"
+        },
+        "hookId": {
+          "type": "string",
+          "format": "int64"
+        },
+        "hookUrl": {
+          "type": "string"
+        },
+        "deployUrl": {
+          "type": "string"
+        },
+        "createdAt": {
+          "type": "string",
+          "format": "date-time"
+        },
+        "updatedAt": {
+          "type": "string",
+          "format": "date-time"
+        },
+        "hookName": {
+          "type": "string"
+        },
+        "hookType": {
+          "type": "string"
+        },
+        "success": {
+          "type": "boolean"
+        },
+        "uuid": {
+          "type": "string"
+        },
+        "error": {
+          "type": "string"
         }
       }
     },

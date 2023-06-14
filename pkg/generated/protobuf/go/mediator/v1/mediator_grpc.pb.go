@@ -830,6 +830,96 @@ var SecretsService_ServiceDesc = grpc.ServiceDesc{
 }
 
 const (
+	RepositoryService_AddRepository_FullMethodName = "/mediator.v1.RepositoryService/AddRepository"
+)
+
+// RepositoryServiceClient is the client API for RepositoryService service.
+//
+// For semantics around ctx use and closing/ending streaming RPCs, please refer to https://pkg.go.dev/google.golang.org/grpc/?tab=doc#ClientConn.NewStream.
+type RepositoryServiceClient interface {
+	AddRepository(ctx context.Context, in *AddRepositoryRequest, opts ...grpc.CallOption) (*AddRepositoryResponse, error)
+}
+
+type repositoryServiceClient struct {
+	cc grpc.ClientConnInterface
+}
+
+func NewRepositoryServiceClient(cc grpc.ClientConnInterface) RepositoryServiceClient {
+	return &repositoryServiceClient{cc}
+}
+
+func (c *repositoryServiceClient) AddRepository(ctx context.Context, in *AddRepositoryRequest, opts ...grpc.CallOption) (*AddRepositoryResponse, error) {
+	out := new(AddRepositoryResponse)
+	err := c.cc.Invoke(ctx, RepositoryService_AddRepository_FullMethodName, in, out, opts...)
+	if err != nil {
+		return nil, err
+	}
+	return out, nil
+}
+
+// RepositoryServiceServer is the server API for RepositoryService service.
+// All implementations must embed UnimplementedRepositoryServiceServer
+// for forward compatibility
+type RepositoryServiceServer interface {
+	AddRepository(context.Context, *AddRepositoryRequest) (*AddRepositoryResponse, error)
+	mustEmbedUnimplementedRepositoryServiceServer()
+}
+
+// UnimplementedRepositoryServiceServer must be embedded to have forward compatible implementations.
+type UnimplementedRepositoryServiceServer struct {
+}
+
+func (UnimplementedRepositoryServiceServer) AddRepository(context.Context, *AddRepositoryRequest) (*AddRepositoryResponse, error) {
+	return nil, status.Errorf(codes.Unimplemented, "method AddRepository not implemented")
+}
+func (UnimplementedRepositoryServiceServer) mustEmbedUnimplementedRepositoryServiceServer() {}
+
+// UnsafeRepositoryServiceServer may be embedded to opt out of forward compatibility for this service.
+// Use of this interface is not recommended, as added methods to RepositoryServiceServer will
+// result in compilation errors.
+type UnsafeRepositoryServiceServer interface {
+	mustEmbedUnimplementedRepositoryServiceServer()
+}
+
+func RegisterRepositoryServiceServer(s grpc.ServiceRegistrar, srv RepositoryServiceServer) {
+	s.RegisterService(&RepositoryService_ServiceDesc, srv)
+}
+
+func _RepositoryService_AddRepository_Handler(srv interface{}, ctx context.Context, dec func(interface{}) error, interceptor grpc.UnaryServerInterceptor) (interface{}, error) {
+	in := new(AddRepositoryRequest)
+	if err := dec(in); err != nil {
+		return nil, err
+	}
+	if interceptor == nil {
+		return srv.(RepositoryServiceServer).AddRepository(ctx, in)
+	}
+	info := &grpc.UnaryServerInfo{
+		Server:     srv,
+		FullMethod: RepositoryService_AddRepository_FullMethodName,
+	}
+	handler := func(ctx context.Context, req interface{}) (interface{}, error) {
+		return srv.(RepositoryServiceServer).AddRepository(ctx, req.(*AddRepositoryRequest))
+	}
+	return interceptor(ctx, in, info, handler)
+}
+
+// RepositoryService_ServiceDesc is the grpc.ServiceDesc for RepositoryService service.
+// It's only intended for direct use with grpc.RegisterService,
+// and not to be introspected or modified (even as a copy)
+var RepositoryService_ServiceDesc = grpc.ServiceDesc{
+	ServiceName: "mediator.v1.RepositoryService",
+	HandlerType: (*RepositoryServiceServer)(nil),
+	Methods: []grpc.MethodDesc{
+		{
+			MethodName: "AddRepository",
+			Handler:    _RepositoryService_AddRepository_Handler,
+		},
+	},
+	Streams:  []grpc.StreamDesc{},
+	Metadata: "mediator/v1/mediator.proto",
+}
+
+const (
 	BranchProtectionService_GetBranchProtection_FullMethodName = "/mediator.v1.BranchProtectionService/GetBranchProtection"
 )
 
