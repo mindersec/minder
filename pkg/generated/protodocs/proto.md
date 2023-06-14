@@ -1256,6 +1256,7 @@ BUF does not allow grouping (which is a shame)
 | Field | Type | Label | Description |
 | ----- | ---- | ----- | ----------- |
 | password | [string](#string) |  |  |
+| password_confirmation | [string](#string) |  |  |
 
 
 

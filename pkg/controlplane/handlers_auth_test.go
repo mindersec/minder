@@ -193,7 +193,7 @@ func TestRefreshToken_gRPC(t *testing.T) {
 	// mocked calls
 	mockStoreToken.EXPECT().GetUserClaims(ctxToken, gomock.Any())
 	// generate a token
-	_, refreshToken, _, _, err := generateToken(ctxToken, mockStoreToken, 1)
+	_, refreshToken, _, _, _, err := generateToken(ctxToken, mockStoreToken, 1)
 	if err != nil {
 		t.Fatalf("Error generating token: %v", err)
 	}

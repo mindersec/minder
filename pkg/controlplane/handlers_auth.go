@@ -38,34 +38,35 @@ type loginValidation struct {
 	Password string `validate:"min=8,containsany=!@#?*"`
 }
 
-func generateToken(ctx context.Context, store db.Store, userId int32) (string, string, int64, int64, error) {
+func generateToken(ctx context.Context, store db.Store, userId int32) (string, string, int64, int64, auth.UserClaims, error) {
 	// read private key for generating token and refresh token
+	emptyClaims := auth.UserClaims{}
 	privateKeyPath := viper.GetString("auth.access_token_private_key")
 	if privateKeyPath == "" {
-		return "", "", 0, 0, fmt.Errorf("could not read private key")
+		return "", "", 0, 0, emptyClaims, fmt.Errorf("could not read private key")
 	}
 
 	privateKeyPath = filepath.Clean(privateKeyPath)
 	keyBytes, err := os.ReadFile(privateKeyPath)
 	if err != nil {
-		return "", "", 0, 0, fmt.Errorf("failed to generate token")
+		return "", "", 0, 0, emptyClaims, fmt.Errorf("failed to generate token")
 	}
 
 	refreshPrivateKeyPath := viper.GetString("auth.refresh_token_private_key")
 	if refreshPrivateKeyPath == "" {
-		return "", "", 0, 0, fmt.Errorf("failed to generate token")
+		return "", "", 0, 0, emptyClaims, fmt.Errorf("failed to generate token")
 	}
 
 	refreshPrivateKeyPath = filepath.Clean(refreshPrivateKeyPath)
 	refreshKeyBytes, err := os.ReadFile(refreshPrivateKeyPath)
 	if err != nil {
-		return "", "", 0, 0, fmt.Errorf("failed to generate token")
+		return "", "", 0, 0, emptyClaims, fmt.Errorf("failed to generate token")
 	}
 
 	// read all information for user claims
 	userInfo, err := store.GetUserClaims(ctx, userId)
 	if err != nil {
-		return "", "", 0, 0, fmt.Errorf("failed to generate token")
+		return "", "", 0, 0, emptyClaims, fmt.Errorf("failed to generate token")
 	}
 
 	claims := auth.UserClaims{
@@ -87,10 +88,10 @@ func generateToken(ctx context.Context, store db.Store, userId int32) (string, s
 	)
 
 	if err != nil {
-		return "", "", 0, 0, fmt.Errorf("failed to generate token")
+		return "", "", 0, 0, emptyClaims, fmt.Errorf("failed to generate token")
 	}
 
-	return tokenString, refreshTokenString, tokenExpirationTime, refreshExpirationTime, nil
+	return tokenString, refreshTokenString, tokenExpirationTime, refreshExpirationTime, claims, nil
 
 }
 
@@ -118,7 +119,8 @@ func (s *Server) LogIn(ctx context.Context, in *pb.LogInRequest) (*pb.LogInRespo
 		return &pb.LogInResponse{}, status.Error(codes.NotFound, "User and password not found")
 	}
 
-	accessToken, refreshToken, accessTokenExpirationTime, refreshTokenExpirationTime, err := generateToken(ctx, s.store, user.ID)
+	accessToken, refreshToken, accessTokenExpirationTime, refreshTokenExpirationTime,
+		claims, err := generateToken(ctx, s.store, user.ID)
 
 	if err != nil {
 		return nil, status.Error(codes.Internal, "Failed to generate token")
@@ -211,7 +213,7 @@ func (s *Server) RefreshToken(ctx context.Context, _ *pb.RefreshTokenRequest) (*
 	}
 
 	// regenerate and return tokens
-	accessToken, _, accessTokenExpirationTime, _, err := generateToken(ctx, s.store, userId)
+	accessToken, _, accessTokenExpirationTime, _, _, err := generateToken(ctx, s.store, userId)
 
 	if err != nil {
 		return nil, status.Errorf(codes.Internal, "Failed to generate token")

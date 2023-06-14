@@ -1971,6 +1971,9 @@
       "properties": {
         "password": {
           "type": "string"
+        },
+        "passwordConfirmation": {
+          "type": "string"
         }
       }
     },
