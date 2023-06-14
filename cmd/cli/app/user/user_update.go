@@ -50,8 +50,7 @@ var User_updateCmd = &cobra.Command{
 
 		conn, err := util.GetGrpcConnection(cmd)
 		if err != nil {
-			fmt.Fprintf(os.Stderr, "Error getting grpc connection: %s\n", err)
-			os.Exit(1)
+			util.ExitNicelyOnError(err, "Error getting grpc connection")
 		}
 		defer conn.Close()
 
@@ -65,8 +64,7 @@ var User_updateCmd = &cobra.Command{
 		})
 
 		if err != nil {
-			fmt.Fprintf(os.Stderr, "Error updating user password: %s\n", err)
-			os.Exit(1)
+			util.ExitNicelyOnError(err, "Error updating user password")
 		}
 		cmd.Println("Password updated successfully, please authenticate again with your new credentials.")
 	},

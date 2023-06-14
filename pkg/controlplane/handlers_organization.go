@@ -88,8 +88,6 @@ func (s *Server) CreateOrganization(ctx context.Context,
 					IsProtected:         &protectedPtr,
 					NeedsPasswordChange: &needsPasswordChange,
 				})
-				fmt.Println("i create user")
-				fmt.Println(user)
 				if user != nil {
 					usr := pb.UserRecord{Id: user.Id, RoleId: user.RoleId, Username: user.Username,
 						Password: user.Password, IsProtected: user.IsProtected, CreatedAt: user.CreatedAt,
