@@ -305,14 +305,24 @@ func RegisterWebHook(
 		}
 		urlUUID := uuid.New().String()
 
+		viper.SetDefault("github-app.external_webhook_url", "")
+		viper.SetDefault("github-app.app.external_ping_url", "")
+		viper.SetDefault("github-app.app.webhook_secret", "")
+
 		url := viper.GetString("github-app.external_webhook_url")
+		ping := viper.GetString("github-app.app.external_ping_url")
+		secret := viper.GetString("github-app.app.webhook_secret")
+		if url == "" || ping == "" || secret == "" {
+			result.Success = false
+			result.Error = fmt.Errorf("github app incorrectly configured")
+		}
 		webhookUrl := fmt.Sprintf("%s/%s", url, urlUUID)
 		hook := &github.Hook{
 			Config: map[string]interface{}{
 				"url":          webhookUrl,
 				"content_type": "json",
-				"ping_url":     viper.GetString("github-app.app.external_ping_url"),
-				"secret":       viper.GetString("github-app.app.webhook_secret"),
+				"ping_url":     ping,
+				"secret":       secret,
 			},
 			Events: events,
 		}
