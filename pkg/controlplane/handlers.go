@@ -27,6 +27,7 @@ import (
 	"context"
 	"database/sql"
 	"encoding/base64"
+	"encoding/json"
 	"errors"
 	"fmt"
 	"net/http"
@@ -220,8 +221,21 @@ func (s *Server) ExchangeCodeForTokenCLI(ctx context.Context,
 		status = "failure"
 	}
 
+	ftoken := &oauth2.Token{
+		AccessToken:  token.AccessToken,
+		TokenType:    token.TokenType,
+		RefreshToken: token.RefreshToken,
+		Expiry:       token.Expiry,
+	}
+
+	// Convert token to JSON
+	jsonData, err := json.Marshal(ftoken)
+	if err != nil {
+		return nil, err
+	}
+
 	// encode token
-	encryptedToken, err := mcrypto.EncryptRow(viper.GetString("auth.token_key"), token.AccessToken)
+	encryptedToken, err := mcrypto.EncryptBytes(viper.GetString("auth.token_key"), jsonData)
 	if err != nil {
 		return nil, err
 	}

@@ -54,12 +54,12 @@ func TestCertificateChain(t *testing.T) {
 	assert.True(t, verified)
 }
 
-func TestDecryptRow(t *testing.T) {
-	encrypted, err := EncryptRow("w00t", "topsecret")
+func TestEncryptDecryptBytes(t *testing.T) {
+	encrypted, err := EncryptBytes("test", []byte("test"))
 	assert.Nil(t, err)
-	decrypted, err := DecryptRow("w00t", encrypted)
+	decrypted, err := DecryptBytes("test", encrypted)
 	assert.Nil(t, err)
-	assert.Equal(t, "topsecret", decrypted)
+	assert.Equal(t, "test", string(decrypted))
 }
 
 func TestGenerateNonce(t *testing.T) {

@@ -134,8 +134,8 @@ func VerifyCertChain(certIn []byte, roots *x509.CertPool) (bool, error) {
 	return true, nil
 }
 
-// EncryptRow encrypts a row of data using AES-CFB.
-func EncryptRow(key, data string) ([]byte, error) {
+// EncryptBytes encrypts a row of data using AES-CFB.
+func EncryptBytes(key string, data []byte) ([]byte, error) {
 	block, err := aes.NewCipher(deriveKey(key))
 	if err != nil {
 		return nil, fmt.Errorf("failed to create cipher: %w", err)
@@ -154,11 +154,11 @@ func EncryptRow(key, data string) ([]byte, error) {
 	return ciphertext, nil
 }
 
-// DecryptRow decrypts a row of data using AES-CFB.
-func DecryptRow(key string, ciphertext []byte) (string, error) {
+// DecryptBytes decrypts a row of data
+func DecryptBytes(key string, ciphertext []byte) ([]byte, error) {
 	block, err := aes.NewCipher(deriveKey(key))
 	if err != nil {
-		return "", fmt.Errorf("failed to create cipher: %w", err)
+		return nil, fmt.Errorf("failed to create cipher: %w", err)
 	}
 
 	// The IV needs to be extracted from the ciphertext.
@@ -168,7 +168,7 @@ func DecryptRow(key string, ciphertext []byte) (string, error) {
 	stream := cipher.NewCFBDecrypter(block, iv)
 	stream.XORKeyStream(ciphertext, ciphertext)
 
-	return string(ciphertext), nil
+	return ciphertext, nil
 }
 
 // Function to derive a key from a passphrase using Argon2
