@@ -154,7 +154,7 @@ func EncryptBytes(key string, data []byte) ([]byte, error) {
 	return ciphertext, nil
 }
 
-// DecryptRow decrypts a row of data using AES-CFB.
+// DecryptBytes decrypts a row of data
 func DecryptBytes(key string, ciphertext []byte) ([]byte, error) {
 	block, err := aes.NewCipher(deriveKey(key))
 	if err != nil {
