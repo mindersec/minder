@@ -13,7 +13,7 @@ jobs:
         uses: actions/labeler@v4
         with:
           repo-token: ${{ secrets.GITHUB_TOKEN }}
-          configuration-path: .github/workflows/actions-config/labeler.yml
+          configuration-path: .github/workflows/actions-config/labeller.yml
           sync-labels: true
 
       - name: Checks if PR needs rebase
