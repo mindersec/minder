@@ -17,50 +17,29 @@ package controlplane
 import (
 	"context"
 	"database/sql"
-	"encoding/base64"
-	"encoding/json"
 
-	"github.com/spf13/viper"
 	"github.com/stacklok/mediator/pkg/auth"
-	mcrypto "github.com/stacklok/mediator/pkg/crypto"
 	"github.com/stacklok/mediator/pkg/db"
 	pb "github.com/stacklok/mediator/pkg/generated/protobuf/go/mediator/v1"
-	"golang.org/x/oauth2"
+	"google.golang.org/grpc/codes"
+	"google.golang.org/grpc/status"
 )
 
 // AddRepository adds repositories to the database and registers a webhook
 func (s *Server) AddRepository(ctx context.Context,
 	in *pb.AddRepositoryRequest) (*pb.AddRepositoryResponse, error) {
-
+	decryptedToken, err := GetProviderAccessToken(ctx, s.store)
 	claims, _ := ctx.Value((TokenInfoKey)).(auth.UserClaims)
 
-	encToken, err := s.store.GetAccessTokenByGroupID(ctx, claims.GroupId)
-	if err != nil {
-		return nil, err
-	}
-
-	// base64 decode the token
-	decodeToken, err := base64.StdEncoding.DecodeString(encToken.EncryptedToken)
-	if err != nil {
-		return nil, err
-	}
-
-	// decrypt the token
-	token, err := mcrypto.DecryptBytes(viper.GetString("auth.token_key"), decodeToken)
-	if err != nil {
-		return nil, err
-	}
-
-	// serialise token *oauth.Token
-
-	var decryptedToken oauth2.Token
-	err = json.Unmarshal(token, &decryptedToken)
 	if err != nil {
 		return nil, err
 	}
 
 	// Unmarshal the in.GetRepositories() into a struct Repository
 	var repositories []Repository
+	if in.GetRepositories() == nil || len(in.GetRepositories()) <= 0 {
+		return nil, status.Errorf(codes.InvalidArgument, "no repositories provided")
+	}
 
 	for _, repository := range in.GetRepositories() {
 		repositories = append(repositories, Repository{

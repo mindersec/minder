@@ -20,6 +20,7 @@ import (
 	"os"
 	"path/filepath"
 	"reflect"
+	"time"
 
 	gauth "github.com/grpc-ecosystem/go-grpc-middleware/v2/interceptors/auth"
 
@@ -179,6 +180,16 @@ var resourceAuthorizations = []map[string]map[string]interface{}{
 			"isAdmin":    true,
 		},
 	},
+	{
+		"/mediator.v1.OAuthService/GetAuthorizationURL": {
+			"claimField": "GroupId",
+			"isAdmin":    true,
+		},
+	},
+}
+
+var githubAuthorizations = []string{
+	"/mediator.v1.RepositoryService/AddRepository",
 }
 
 func canBypassAuth(ctx context.Context) bool {
@@ -260,6 +271,40 @@ func IsRequestAuthorized(ctx context.Context, value int32) bool {
 	return true
 }
 
+func isProviderCallAuthorized(ctx context.Context, store db.Store, provider string) bool {
+	// currently everything is github
+	claims, _ := ctx.Value(TokenInfoKey).(auth.UserClaims)
+	method, ok := grpc.Method(ctx)
+	if !ok {
+		return false
+	}
+
+	for _, item := range githubAuthorizations {
+		if item == method {
+			// check the github token
+			encToken, err := GetProviderAccessToken(ctx, store)
+			if err != nil {
+				return false
+			}
+
+			// check if token is expired
+			if encToken.Expiry.Unix() < time.Now().Unix() {
+				// remove from the database and deny the request
+				_ = store.DeleteAccessToken(ctx, claims.GroupId)
+
+				// remove from github
+				err := auth.DeleteAccessToken(ctx, provider, encToken.AccessToken)
+
+				if err != nil {
+					log.Error().Msgf("Error deleting access token: %v", err)
+				}
+			}
+			return false
+		}
+	}
+	return true
+}
+
 // AuthUnaryInterceptor is a server interceptor for authentication
 func AuthUnaryInterceptor(ctx context.Context, req interface{}, info *grpc.UnaryServerInfo,
 	handler grpc.UnaryHandler) (any, error) {
@@ -295,14 +340,19 @@ func AuthUnaryInterceptor(ctx context.Context, req interface{}, info *grpc.Unary
 
 	if claims.IsSuperadmin {
 		// is authorized to everything
-		ctx := context.WithValue(ctx, TokenInfoKey, claims)
-		return handler(ctx, req)
+		ctx = context.WithValue(ctx, TokenInfoKey, claims)
+	} else {
+		// Check if the current method needs to have a superadmin role
+		isAuthorized := isMethodAuthorized(ctx, claims)
+		if !isAuthorized {
+			return nil, status.Errorf(codes.PermissionDenied, "user not authorized")
+		}
 	}
 
-	// Check if the current method needs to have a superadmin role
-	isAuthorized := isMethodAuthorized(ctx, claims)
-	if !isAuthorized {
-		return nil, status.Errorf(codes.PermissionDenied, "user not authorized")
+	// Check if needs github authorization
+	isGithubAuthorized := isProviderCallAuthorized(ctx, server.store, auth.Github)
+	if !isGithubAuthorized {
+		return nil, status.Errorf(codes.PermissionDenied, "user not authorized to interact with provider")
 	}
 
 	ctx = context.WithValue(ctx, TokenInfoKey, claims)

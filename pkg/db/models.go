@@ -31,6 +31,7 @@ type ProviderAccessToken struct {
 	ID             int32     `json:"id"`
 	GroupID        int32     `json:"group_id"`
 	EncryptedToken string    `json:"encrypted_token"`
+	ExpirationTime time.Time `json:"expiration_time"`
 	CreatedAt      time.Time `json:"created_at"`
 	UpdatedAt      time.Time `json:"updated_at"`
 }
