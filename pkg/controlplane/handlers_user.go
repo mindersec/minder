@@ -35,7 +35,7 @@ type createUserValidation struct {
 	RoleId   int32  `db:"role_id" validate:"required"`
 	Email    string `db:"email" validate:"omitempty,email"`
 	Username string `db:"username" validate:"required"`
-	Password string `validate:"omitempty,min=8,containsany=!@#?*"`
+	Password string `validate:"omitempty,min=8,containsany=.;?&"`
 }
 
 func stringToNullString(s *string) *sql.NullString {
@@ -339,8 +339,8 @@ func (s *Server) GetUserByEmail(ctx context.Context,
 }
 
 type updatePasswordValidation struct {
-	Password             string `validate:"min=8,containsany=_.,:;?&"`
-	PasswordConfirmation string `validate:"min=8,containsany=_.,:;?&"`
+	Password             string `validate:"min=8,containsany=_.;?&"`
+	PasswordConfirmation string `validate:"min=8,containsany=_.;?&"`
 }
 
 // UpdatePassword is a service for updating a user's password

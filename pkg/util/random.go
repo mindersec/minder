@@ -75,7 +75,7 @@ func RandomPassword(length int, seed int64) string {
 	upperChars := "ABCDEFGHIJKLMNOPQRSTUVWXYZ"
 	lowerChars := "abcdefghijklmnopqrstuvwxyz"
 	numberChars := "0123456789"
-	specialChars := "_.,:;?&"
+	specialChars := "_.;?&"
 
 	r := NewRand(seed)
 
