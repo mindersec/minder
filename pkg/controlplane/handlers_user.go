@@ -339,8 +339,8 @@ func (s *Server) GetUserByEmail(ctx context.Context,
 }
 
 type updatePasswordValidation struct {
-	Password             string `validate:"min=8,containsany=!@#?*"`
-	PasswordConfirmation string `validate:"min=8,containsany=!@#?*"`
+	Password             string `validate:"min=8,containsany=_.,:;?&"`
+	PasswordConfirmation string `validate:"min=8,containsany=_.,:;?&"`
 }
 
 // UpdatePassword is a service for updating a user's password
