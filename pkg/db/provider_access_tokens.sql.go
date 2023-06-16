@@ -7,24 +7,27 @@ package db
 
 import (
 	"context"
+	"time"
 )
 
 const createAccessToken = `-- name: CreateAccessToken :one
-INSERT INTO provider_access_tokens (group_id, encrypted_token) VALUES ($1, $2) RETURNING id, group_id, encrypted_token, created_at, updated_at
+INSERT INTO provider_access_tokens (group_id, encrypted_token, expiration_time) VALUES ($1, $2, $3) RETURNING id, group_id, encrypted_token, expiration_time, created_at, updated_at
 `
 
 type CreateAccessTokenParams struct {
-	GroupID        int32  `json:"group_id"`
-	EncryptedToken string `json:"encrypted_token"`
+	GroupID        int32     `json:"group_id"`
+	EncryptedToken string    `json:"encrypted_token"`
+	ExpirationTime time.Time `json:"expiration_time"`
 }
 
 func (q *Queries) CreateAccessToken(ctx context.Context, arg CreateAccessTokenParams) (ProviderAccessToken, error) {
-	row := q.db.QueryRowContext(ctx, createAccessToken, arg.GroupID, arg.EncryptedToken)
+	row := q.db.QueryRowContext(ctx, createAccessToken, arg.GroupID, arg.EncryptedToken, arg.ExpirationTime)
 	var i ProviderAccessToken
 	err := row.Scan(
 		&i.ID,
 		&i.GroupID,
 		&i.EncryptedToken,
+		&i.ExpirationTime,
 		&i.CreatedAt,
 		&i.UpdatedAt,
 	)
@@ -41,7 +44,7 @@ func (q *Queries) DeleteAccessToken(ctx context.Context, groupID int32) error {
 }
 
 const getAccessTokenByGroupID = `-- name: GetAccessTokenByGroupID :one
-SELECT id, group_id, encrypted_token, created_at, updated_at FROM provider_access_tokens WHERE group_id = $1
+SELECT id, group_id, encrypted_token, expiration_time, created_at, updated_at FROM provider_access_tokens WHERE group_id = $1
 `
 
 func (q *Queries) GetAccessTokenByGroupID(ctx context.Context, groupID int32) (ProviderAccessToken, error) {
@@ -51,6 +54,7 @@ func (q *Queries) GetAccessTokenByGroupID(ctx context.Context, groupID int32) (P
 		&i.ID,
 		&i.GroupID,
 		&i.EncryptedToken,
+		&i.ExpirationTime,
 		&i.CreatedAt,
 		&i.UpdatedAt,
 	)
@@ -58,21 +62,23 @@ func (q *Queries) GetAccessTokenByGroupID(ctx context.Context, groupID int32) (P
 }
 
 const updateAccessToken = `-- name: UpdateAccessToken :one
-UPDATE provider_access_tokens SET encrypted_token = $2, updated_at = NOW() WHERE group_id = $1 RETURNING id, group_id, encrypted_token, created_at, updated_at
+UPDATE provider_access_tokens SET encrypted_token = $2, expiration_time = $3, updated_at = NOW() WHERE group_id = $1 RETURNING id, group_id, encrypted_token, expiration_time, created_at, updated_at
 `
 
 type UpdateAccessTokenParams struct {
-	GroupID        int32  `json:"group_id"`
-	EncryptedToken string `json:"encrypted_token"`
+	GroupID        int32     `json:"group_id"`
+	EncryptedToken string    `json:"encrypted_token"`
+	ExpirationTime time.Time `json:"expiration_time"`
 }
 
 func (q *Queries) UpdateAccessToken(ctx context.Context, arg UpdateAccessTokenParams) (ProviderAccessToken, error) {
-	row := q.db.QueryRowContext(ctx, updateAccessToken, arg.GroupID, arg.EncryptedToken)
+	row := q.db.QueryRowContext(ctx, updateAccessToken, arg.GroupID, arg.EncryptedToken, arg.ExpirationTime)
 	var i ProviderAccessToken
 	err := row.Scan(
 		&i.ID,
 		&i.GroupID,
 		&i.EncryptedToken,
+		&i.ExpirationTime,
 		&i.CreatedAt,
 		&i.UpdatedAt,
 	)
