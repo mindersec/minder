@@ -331,6 +331,11 @@ func (s *Server) RevokeOauthGroupToken(ctx context.Context,
 		return nil, status.Errorf(codes.InvalidArgument, "provider not supported: %v", in.Provider)
 	}
 
+	// check if user is authorized
+	if !IsRequestAuthorized(ctx, in.GroupId) {
+		return nil, status.Errorf(codes.PermissionDenied, "user is not authorized to access this resource")
+	}
+
 	// need to read the token for the provider and group
 	token, err := s.store.GetAccessTokenByGroupID(ctx,
 		db.GetAccessTokenByGroupIDParams{Provider: auth.Github, GroupID: in.GroupId})

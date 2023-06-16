@@ -187,6 +187,12 @@ var resourceAuthorizations = []map[string]map[string]interface{}{
 			"isAdmin":    true,
 		},
 	},
+	{
+		"/mediator.v1.OAuthService/RevokeOauthGroupToken": {
+			"claimField": "GroupId",
+			"isAdmin":    true,
+		},
+	},
 }
 
 var githubAuthorizations = []string{
