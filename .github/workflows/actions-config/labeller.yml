@@ -1,0 +1,22 @@
+
+needs-review:
+    - '**'
+    - '.*'
+    - '.*/**'
+
+security-impact:
+    - pkg/auth/**/*
+    - pkg/crypto/**/*
+
+github-actions:
+    - .github/**/*
+
+cli:
+    - cmd/**/*
+
+database:
+    - database/**/*
+    - pkg/db/**/*
+
+proto:
+    - proto/**/*
