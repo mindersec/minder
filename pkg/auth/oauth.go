@@ -26,7 +26,7 @@ import (
 	"fmt"
 	"net/http"
 
-	git "github.com/google/go-github/v53/github"
+	go_github "github.com/google/go-github/v53/github"
 	"github.com/spf13/viper"
 	"golang.org/x/oauth2"
 	"golang.org/x/oauth2/github"
@@ -80,7 +80,7 @@ func NewOAuthConfig(provider string, cli bool) (*oauth2.Config, error) {
 func NewProviderHttpClient(provider string) *http.Client {
 	if provider == Github {
 		hClient := &http.Client{
-			Transport: &git.BasicAuthTransport{
+			Transport: &go_github.BasicAuthTransport{
 				Username: viper.GetString(fmt.Sprintf("%s.client_id", provider)),
 				Password: viper.GetString(fmt.Sprintf("%s.client_secret", provider)),
 			},
@@ -97,7 +97,7 @@ func DeleteAccessToken(ctx context.Context, provider string, token string) error
 		return fmt.Errorf("invalid provider: %s", provider)
 	}
 
-	client := git.NewClient(hClient)
+	client := go_github.NewClient(hClient)
 	client_id := viper.GetString(fmt.Sprintf("%s.client_id", provider))
 	_, err := client.Authorizations.Revoke(ctx, client_id, token)
 
