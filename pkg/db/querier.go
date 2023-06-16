@@ -18,7 +18,7 @@ type Querier interface {
 	CreateRole(ctx context.Context, arg CreateRoleParams) (Role, error)
 	CreateSessionState(ctx context.Context, arg CreateSessionStateParams) (SessionStore, error)
 	CreateUser(ctx context.Context, arg CreateUserParams) (User, error)
-	DeleteAccessToken(ctx context.Context, groupID int32) error
+	DeleteAccessToken(ctx context.Context, arg DeleteAccessTokenParams) error
 	DeleteExpiredSessionStates(ctx context.Context) error
 	DeleteGroup(ctx context.Context, id int32) error
 	DeleteOrganization(ctx context.Context, id int32) error
@@ -27,7 +27,8 @@ type Querier interface {
 	DeleteSessionState(ctx context.Context, id int32) error
 	DeleteSessionStateByGroupID(ctx context.Context, grpID sql.NullInt32) error
 	DeleteUser(ctx context.Context, id int32) error
-	GetAccessTokenByGroupID(ctx context.Context, groupID int32) (ProviderAccessToken, error)
+	GetAccessTokenByGroupID(ctx context.Context, arg GetAccessTokenByGroupIDParams) (ProviderAccessToken, error)
+	GetAccessTokenByProvider(ctx context.Context, provider string) ([]ProviderAccessToken, error)
 	GetGroupByID(ctx context.Context, id int32) (Group, error)
 	GetGroupByName(ctx context.Context, name string) (Group, error)
 	GetGroupIDPortBySessionState(ctx context.Context, sessionState string) (GetGroupIDPortBySessionStateRow, error)

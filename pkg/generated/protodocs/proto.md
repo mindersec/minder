@@ -77,6 +77,10 @@
     - [RefreshTokenResponse](#mediator-v1-RefreshTokenResponse)
     - [Repositories](#mediator-v1-Repositories)
     - [RepositoryResult](#mediator-v1-RepositoryResult)
+    - [RevokeOauthGroupTokenRequest](#mediator-v1-RevokeOauthGroupTokenRequest)
+    - [RevokeOauthGroupTokenResponse](#mediator-v1-RevokeOauthGroupTokenResponse)
+    - [RevokeOauthTokensRequest](#mediator-v1-RevokeOauthTokensRequest)
+    - [RevokeOauthTokensResponse](#mediator-v1-RevokeOauthTokensResponse)
     - [RevokeTokensRequest](#mediator-v1-RevokeTokensRequest)
     - [RevokeTokensResponse](#mediator-v1-RevokeTokensResponse)
     - [RevokeUserTokenRequest](#mediator-v1-RevokeUserTokenRequest)
@@ -1260,6 +1264,62 @@ BUF does not allow grouping (which is a shame)
 
 
 
+<a name="mediator-v1-RevokeOauthGroupTokenRequest"></a>
+
+### RevokeOauthGroupTokenRequest
+
+
+
+| Field | Type | Label | Description |
+| ----- | ---- | ----- | ----------- |
+| provider | [string](#string) |  |  |
+| group_id | [int32](#int32) |  |  |
+
+
+
+
+
+
+<a name="mediator-v1-RevokeOauthGroupTokenResponse"></a>
+
+### RevokeOauthGroupTokenResponse
+
+
+
+
+
+
+
+<a name="mediator-v1-RevokeOauthTokensRequest"></a>
+
+### RevokeOauthTokensRequest
+
+
+
+| Field | Type | Label | Description |
+| ----- | ---- | ----- | ----------- |
+| provider | [string](#string) |  |  |
+
+
+
+
+
+
+<a name="mediator-v1-RevokeOauthTokensResponse"></a>
+
+### RevokeOauthTokensResponse
+
+
+
+| Field | Type | Label | Description |
+| ----- | ---- | ----- | ----------- |
+| revoked_tokens | [int32](#int32) |  |  |
+
+
+
+
+
+
 <a name="mediator-v1-RevokeTokensRequest"></a>
 
 ### RevokeTokensRequest
@@ -1468,6 +1528,8 @@ replies with OK
 | GetAuthorizationURL | [GetAuthorizationURLRequest](#mediator-v1-GetAuthorizationURLRequest) | [GetAuthorizationURLResponse](#mediator-v1-GetAuthorizationURLResponse) |  |
 | ExchangeCodeForTokenCLI | [ExchangeCodeForTokenCLIRequest](#mediator-v1-ExchangeCodeForTokenCLIRequest) | [ExchangeCodeForTokenCLIResponse](#mediator-v1-ExchangeCodeForTokenCLIResponse) |  |
 | ExchangeCodeForTokenWEB | [ExchangeCodeForTokenWEBRequest](#mediator-v1-ExchangeCodeForTokenWEBRequest) | [ExchangeCodeForTokenWEBResponse](#mediator-v1-ExchangeCodeForTokenWEBResponse) |  |
+| RevokeOauthTokens | [RevokeOauthTokensRequest](#mediator-v1-RevokeOauthTokensRequest) | [RevokeOauthTokensResponse](#mediator-v1-RevokeOauthTokensResponse) | revoke all tokens for all users |
+| RevokeOauthGroupToken | [RevokeOauthGroupTokenRequest](#mediator-v1-RevokeOauthGroupTokenRequest) | [RevokeOauthGroupTokenResponse](#mediator-v1-RevokeOauthGroupTokenResponse) | revoke token for a group |
 
 
 <a name="mediator-v1-OrganizationService"></a>

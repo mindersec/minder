@@ -24,6 +24,7 @@ import (
 	"github.com/stacklok/mediator/pkg/auth"
 	"github.com/stacklok/mediator/pkg/db"
 	pb "github.com/stacklok/mediator/pkg/generated/protobuf/go/mediator/v1"
+	"github.com/stretchr/testify/assert"
 	"golang.org/x/oauth2/github"
 	"golang.org/x/oauth2/google"
 	"google.golang.org/grpc/codes"
@@ -137,4 +138,46 @@ func TestGetAuthorizationURL(t *testing.T) {
 			tc.checkResponse(t, res, err)
 		})
 	}
+}
+
+func TestRevokeOauthTokens_gRPC(t *testing.T) {
+	ctx := context.WithValue(context.Background(), TokenInfoKey, auth.UserClaims{
+		UserId:       1,
+		IsAdmin:      false,
+		IsSuperadmin: true,
+	})
+
+	ctrl := gomock.NewController(t)
+	defer ctrl.Finish()
+
+	mockStore := mockdb.NewMockStore(ctrl)
+	mockStore.EXPECT().GetAccessTokenByProvider(gomock.Any(), gomock.Any())
+
+	server := NewServer(mockStore)
+
+	res, err := server.RevokeOauthTokens(ctx, &pb.RevokeOauthTokensRequest{Provider: auth.Github})
+
+	assert.NoError(t, err)
+	assert.NotNil(t, res)
+}
+
+func RevokeOauthGroupToken_gRPC(t *testing.T) {
+	ctx := context.WithValue(context.Background(), TokenInfoKey, auth.UserClaims{
+		UserId:       1,
+		IsAdmin:      false,
+		IsSuperadmin: true,
+	})
+
+	ctrl := gomock.NewController(t)
+	defer ctrl.Finish()
+
+	mockStore := mockdb.NewMockStore(ctrl)
+	mockStore.EXPECT().GetAccessTokenByGroupID(gomock.Any(), gomock.Any())
+
+	server := NewServer(mockStore)
+
+	res, err := server.RevokeOauthGroupToken(ctx, &pb.RevokeOauthGroupTokenRequest{Provider: auth.Github, GroupId: 1})
+
+	assert.NoError(t, err)
+	assert.NotNil(t, res)
 }

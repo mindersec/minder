@@ -69,6 +69,7 @@ var superAdminMethods = []string{
 	"/mediator.v1.OrganizationService/DeleteOrganization",
 	"/mediator.v1.AuthService/RevokeTokens",
 	"/mediator.v1.AuthService/RevokeUserToken",
+	"/mediator.v1.OAuthService/RevokeOauthTokens",
 }
 
 var resourceAuthorizations = []map[string]map[string]interface{}{
@@ -290,7 +291,7 @@ func isProviderCallAuthorized(ctx context.Context, store db.Store, provider stri
 			// check if token is expired
 			if encToken.Expiry.Unix() < time.Now().Unix() {
 				// remove from the database and deny the request
-				_ = store.DeleteAccessToken(ctx, claims.GroupId)
+				_ = store.DeleteAccessToken(ctx, db.DeleteAccessTokenParams{Provider: auth.Github, GroupID: claims.GroupId})
 
 				// remove from github
 				err := auth.DeleteAccessToken(ctx, provider, encToken.AccessToken)
