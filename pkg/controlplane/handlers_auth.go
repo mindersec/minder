@@ -35,7 +35,7 @@ import (
 
 type loginValidation struct {
 	Username string `db:"username" validate:"required"`
-	Password string `validate:"min=8,containsany=_.;?&"`
+	Password string `validate:"min=8,containsany=_.;?&@"`
 }
 
 func generateToken(ctx context.Context, store db.Store, userId int32) (string, string, int64, int64, auth.UserClaims, error) {
