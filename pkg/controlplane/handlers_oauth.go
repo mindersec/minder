@@ -332,10 +332,10 @@ func (s *Server) RevokeOauthGroupToken(ctx context.Context,
 	}
 	return &pb.RevokeOauthGroupTokenResponse{}, nil
 }
-<<<<<<< HEAD
-=======
 
-func (s *Server) StoreProviderToken(ctx context.Context, in *pb.StoreProviderTokenRequest) (*pb.StoreProviderTokenResponse, error) {
+// StoreProviderToken stores the provider token for a group
+func (s *Server) StoreProviderToken(ctx context.Context,
+	in *pb.StoreProviderTokenRequest) (*pb.StoreProviderTokenResponse, error) {
 	if in.Provider != auth.Github {
 		return nil, status.Errorf(codes.InvalidArgument, "provider not supported: %v", in.Provider)
 	}
@@ -358,8 +358,14 @@ func (s *Server) StoreProviderToken(ctx context.Context, in *pb.StoreProviderTok
 	viper.SetDefault("github.access_token_expiry", 86400)
 	expiryTime := time.Now().Add(time.Duration(viper.GetInt("github.access_token_expiry")) * time.Second)
 
+	ftoken := &oauth2.Token{
+		AccessToken:  in.AccessToken,
+		RefreshToken: "",
+		Expiry:       expiryTime,
+	}
+
 	// Convert token to JSON
-	jsonData, err := json.Marshal(in.AccessToken)
+	jsonData, err := json.Marshal(ftoken)
 	if err != nil {
 		return nil, err
 	}
@@ -369,15 +375,7 @@ func (s *Server) StoreProviderToken(ctx context.Context, in *pb.StoreProviderTok
 	if err != nil {
 		return nil, err
 	}
-
 	encodedToken := base64.StdEncoding.EncodeToString(encryptedToken)
-
-	_, err = s.store.CreateAccessToken(ctx, db.CreateAccessTokenParams{
-		GroupID:        claims.GroupId,
-		Provider:       auth.Github,
-		EncryptedToken: encodedToken,
-		ExpirationTime: expiryTime,
-	})
 
 	_, err = s.store.CreateAccessToken(ctx, db.CreateAccessTokenParams{GroupID: claims.GroupId, Provider: in.Provider,
 		EncryptedToken: encodedToken, ExpirationTime: expiryTime})
@@ -387,4 +385,3 @@ func (s *Server) StoreProviderToken(ctx context.Context, in *pb.StoreProviderTok
 	}
 	return &pb.StoreProviderTokenResponse{}, nil
 }
->>>>>>> 50bc989 (feat: allow to pass a pat token to enroll provider)
