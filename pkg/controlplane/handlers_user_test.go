@@ -45,6 +45,7 @@ func TestCreateUserDBMock(t *testing.T) {
 	lastname := "Bar"
 	email := "test@stacklok.com"
 	password := util.RandomPassword(8, seed)
+
 	request := &pb.CreateUserRequest{
 		RoleId:    1,
 		Email:     &email,
@@ -57,9 +58,9 @@ func TestCreateUserDBMock(t *testing.T) {
 	expectedUser := db.User{
 		ID:                  1,
 		RoleID:              1,
-		Email:               sql.NullString{String: "test@stacklok.com", Valid: true},
+		Email:               sql.NullString{String: email, Valid: true},
 		Username:            "test",
-		Password:            "1234567@",
+		Password:            util.RandomPassword(8, seed),
 		FirstName:           sql.NullString{String: "Foo", Valid: true},
 		LastName:            sql.NullString{String: "Bar", Valid: true},
 		IsProtected:         false,
@@ -302,7 +303,7 @@ func TestDeleteUserDBMock(t *testing.T) {
 		RoleID:      1,
 		Email:       sql.NullString{String: "test@stacklok.com", Valid: true},
 		Username:    "test",
-		Password:    "1234567@",
+		Password:    util.RandomPassword(8, time.Now().UnixNano()),
 		FirstName:   sql.NullString{String: "Foo", Valid: true},
 		LastName:    sql.NullString{String: "Bar", Valid: true},
 		IsProtected: false,
