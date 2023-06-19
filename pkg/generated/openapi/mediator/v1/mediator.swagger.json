@@ -352,7 +352,7 @@
       }
     },
     "/api/v1/auth/verify": {
-      "post": {
+      "get": {
         "summary": "Verify user has active session to Mediator",
         "operationId": "AuthService_Verify",
         "responses": {
@@ -369,18 +369,46 @@
             }
           }
         },
+        "tags": [
+          "AuthService"
+        ]
+      }
+    },
+    "/api/v1/auth/verify/{provider}/{timestamp}": {
+      "get": {
+        "summary": "VerifyProviderTokenFrom verifies that a token has been created for a provider since given timestamp",
+        "operationId": "OAuthService_VerifyProviderTokenFrom",
+        "responses": {
+          "200": {
+            "description": "A successful response.",
+            "schema": {
+              "$ref": "#/definitions/v1VerifyProviderTokenFromResponse"
+            }
+          },
+          "default": {
+            "description": "An unexpected error response.",
+            "schema": {
+              "$ref": "#/definitions/rpcStatus"
+            }
+          }
+        },
         "parameters": [
           {
-            "name": "body",
-            "in": "body",
+            "name": "provider",
+            "in": "path",
             "required": true,
-            "schema": {
-              "$ref": "#/definitions/v1VerifyRequest"
-            }
+            "type": "string"
+          },
+          {
+            "name": "timestamp",
+            "in": "path",
+            "required": true,
+            "type": "string",
+            "format": "date-time"
           }
         ],
         "tags": [
-          "AuthService"
+          "OAuthService"
         ]
       }
     },
@@ -2244,8 +2272,13 @@
       },
       "title": "user record to be returned"
     },
-    "v1VerifyRequest": {
-      "type": "object"
+    "v1VerifyProviderTokenFromResponse": {
+      "type": "object",
+      "properties": {
+        "status": {
+          "type": "string"
+        }
+      }
     },
     "v1VerifyResponse": {
       "type": "object",

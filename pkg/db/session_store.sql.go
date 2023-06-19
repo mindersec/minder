@@ -11,7 +11,6 @@ import (
 )
 
 const createSessionState = `-- name: CreateSessionState :one
-
 INSERT INTO session_store (grp_id, port, session_state) VALUES ($1, $2, $3) RETURNING id, grp_id, port, session_state, created_at
 `
 

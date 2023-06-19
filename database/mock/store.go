@@ -326,6 +326,21 @@ func (mr *MockStoreMockRecorder) GetAccessTokenByProvider(arg0, arg1 interface{}
 	return mr.mock.ctrl.RecordCallWithMethodType(mr.mock, "GetAccessTokenByProvider", reflect.TypeOf((*MockStore)(nil).GetAccessTokenByProvider), arg0, arg1)
 }
 
+// GetAccessTokenSinceDate mocks base method.
+func (m *MockStore) GetAccessTokenSinceDate(arg0 context.Context, arg1 db.GetAccessTokenSinceDateParams) (db.ProviderAccessToken, error) {
+	m.ctrl.T.Helper()
+	ret := m.ctrl.Call(m, "GetAccessTokenSinceDate", arg0, arg1)
+	ret0, _ := ret[0].(db.ProviderAccessToken)
+	ret1, _ := ret[1].(error)
+	return ret0, ret1
+}
+
+// GetAccessTokenSinceDate indicates an expected call of GetAccessTokenSinceDate.
+func (mr *MockStoreMockRecorder) GetAccessTokenSinceDate(arg0, arg1 interface{}) *gomock.Call {
+	mr.mock.ctrl.T.Helper()
+	return mr.mock.ctrl.RecordCallWithMethodType(mr.mock, "GetAccessTokenSinceDate", reflect.TypeOf((*MockStore)(nil).GetAccessTokenSinceDate), arg0, arg1)
+}
+
 // GetGroupByID mocks base method.
 func (m *MockStore) GetGroupByID(arg0 context.Context, arg1 int32) (db.Group, error) {
 	m.ctrl.T.Helper()

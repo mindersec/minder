@@ -12,3 +12,6 @@ DELETE FROM provider_access_tokens WHERE provider = $1 AND group_id = $2;
 
 -- name: GetAccessTokenByProvider :many
 SELECT * FROM provider_access_tokens WHERE provider = $1;
+
+-- name: GetAccessTokenSinceDate :one
+SELECT * FROM provider_access_tokens WHERE provider = $1 AND group_id = $2 AND created_at >= $3;

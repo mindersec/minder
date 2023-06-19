@@ -65,6 +65,13 @@ service OAuthService {
         };
     }
 
+    // VerifyProviderTokenFrom verifies that a token has been created for a provider since given timestamp
+    rpc VerifyProviderTokenFrom (VerifyProviderTokenFromRequest) returns (VerifyProviderTokenFromResponse) {
+        option (google.api.http) = {
+            get: "/api/v1/auth/verify/{provider}/{timestamp}"
+        };
+    }
+
 }
 
 service AuthService {
@@ -111,8 +118,7 @@ service AuthService {
     // Verify user has active session to Mediator
     rpc Verify (VerifyRequest) returns (VerifyResponse) {
         option (google.api.http) = {
-            post: "/api/v1/auth/verify"
-            body: "*"
+            get: "/api/v1/auth/verify"
         };
     }
 }
@@ -452,6 +458,15 @@ message VerifyRequest {
 }
 
 message VerifyResponse {
+    string status = 1;
+}
+
+message VerifyProviderTokenFromRequest {
+    string provider = 1;
+    google.protobuf.Timestamp timestamp = 2;
+}
+
+message VerifyProviderTokenFromResponse {
     string status = 1;
 }
 
