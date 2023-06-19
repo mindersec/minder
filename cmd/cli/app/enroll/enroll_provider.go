@@ -44,6 +44,8 @@ type Response struct {
 	Status string `json:"status"`
 }
 
+const MAX_CALLS = 300
+
 // callBackServer starts a server and handler to listen for the OAuth callback.
 // It will wait for either a success or failure response from the server.
 func callBackServer(ctx context.Context, port string, wg *sync.WaitGroup, client pb.OAuthServiceClient, since int64) {
@@ -75,6 +77,8 @@ func callBackServer(ctx context.Context, port string, wg *sync.WaitGroup, client
 	// Start a goroutine for periodic gRPC calls
 	go func() {
 		defer wg.Done()
+		calls := 0
+
 		for {
 			// Perform periodic gRPC calls
 			if stopServer {
@@ -84,11 +88,12 @@ func callBackServer(ctx context.Context, port string, wg *sync.WaitGroup, client
 
 			time.Sleep(time.Second)
 			t := time.Unix(since, 0)
+			calls++
 
 			// todo: check if token has been created. We need an endpoint to pass an state and check if token is created
 			res, err := client.VerifyProviderTokenFrom(ctx,
 				&pb.VerifyProviderTokenFromRequest{Provider: auth.Github, Timestamp: timestamppb.New(t)})
-			if err != nil || res.Status == "OK" {
+			if err != nil || res.Status == "OK" || calls >= MAX_CALLS {
 				stopServer = true
 			}
 		}
