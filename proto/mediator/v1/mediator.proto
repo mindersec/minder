@@ -48,6 +48,23 @@ service OAuthService {
             get: "/api/v1/auth/callback/{provider}/web"
         };
     }
+
+    // revoke all tokens for all users
+    rpc RevokeOauthTokens (RevokeOauthTokensRequest) returns (RevokeOauthTokensResponse) {
+        option (google.api.http) = {
+            post: "/api/v1/auth/{provider}/revoke"
+            body: "*"
+        };
+    }
+
+    // revoke token for a group
+    rpc RevokeOauthGroupToken (RevokeOauthGroupTokenRequest) returns (RevokeOauthGroupTokenResponse) {
+        option (google.api.http) = {
+            post: "/api/v1/auth/{provider}/revoke/{group_id}"
+            body: "*"
+        };
+    }
+
 }
 
 service AuthService {
@@ -375,6 +392,22 @@ message RevokeUserTokenRequest {
 }
 
 message RevokeUserTokenResponse {
+}
+
+message RevokeOauthTokensRequest {
+    string provider = 1;
+}
+
+message RevokeOauthTokensResponse {
+    int32 revoked_tokens = 1;
+}
+
+message RevokeOauthGroupTokenRequest {
+    string provider = 1;
+    int32 group_id = 2;
+}
+
+message RevokeOauthGroupTokenResponse {
 }
 
 message RefreshTokenRequest {    

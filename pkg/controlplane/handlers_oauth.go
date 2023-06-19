@@ -25,6 +25,7 @@ import (
 	"net/http"
 	"time"
 
+	"github.com/rs/zerolog/log"
 	"github.com/spf13/viper"
 	"github.com/stacklok/mediator/pkg/auth"
 	mcrypto "github.com/stacklok/mediator/pkg/crypto"
@@ -33,6 +34,8 @@ import (
 	"go.opentelemetry.io/otel/attribute"
 	"go.opentelemetry.io/otel/trace"
 	"golang.org/x/oauth2"
+	"google.golang.org/grpc/codes"
+	"google.golang.org/grpc/status"
 )
 
 // GetAuthorizationURL returns the URL to redirect the user to for authorization
@@ -144,11 +147,11 @@ func (s *Server) ExchangeCodeForTokenCLI(ctx context.Context,
 		return nil, err
 	}
 
-	var status string
+	var tokenStatus string
 	if token.Valid() {
-		status = "success"
+		tokenStatus = "success"
 	} else {
-		status = "failure"
+		tokenStatus = "failure"
 	}
 
 	// github does not provide refresh token or expiry, set a manual expiry time
@@ -177,13 +180,14 @@ func (s *Server) ExchangeCodeForTokenCLI(ctx context.Context,
 	encodedToken := base64.StdEncoding.EncodeToString(encryptedToken)
 
 	// delete token if it exists
-	err = s.store.DeleteAccessToken(ctx, groupId.GrpID.Int32)
+	err = s.store.DeleteAccessToken(ctx, db.DeleteAccessTokenParams{Provider: auth.Github, GroupID: groupId.GrpID.Int32})
 	if err != nil {
 		return nil, fmt.Errorf("error deleting access token: %w", err)
 	}
 
 	_, err = s.store.CreateAccessToken(ctx, db.CreateAccessTokenParams{
 		GroupID:        groupId.GrpID.Int32,
+		Provider:       auth.Github,
 		EncryptedToken: encodedToken,
 		ExpirationTime: expiryTime,
 	})
@@ -198,7 +202,7 @@ func (s *Server) ExchangeCodeForTokenCLI(ctx context.Context,
 	// the values for 'status' are set above in the server code. For someone
 	// to exploit this, they would need to be able to modify the code of the
 	// and recompile their own version of the application.
-	resp, err := http.Post(cliAppURL, "application/json", bytes.NewBuffer([]byte(`{"status": "`+status+`"}`))) // #nosec
+	resp, err := http.Post(cliAppURL, "application/json", bytes.NewBuffer([]byte(`{"status": "`+tokenStatus+`"}`))) // #nosec
 	if err != nil {
 		return nil, err
 	}
@@ -243,18 +247,11 @@ func (s *Server) ExchangeCodeForTokenWEB(ctx context.Context,
 	}, nil
 }
 
-// GetProviderAccessToken returns the access token for providers
-func GetProviderAccessToken(ctx context.Context, store db.Store) (oauth2.Token, error) {
+func decryptToken(encToken string) (oauth2.Token, error) {
 	var decryptedToken oauth2.Token
-	claims, _ := ctx.Value((TokenInfoKey)).(auth.UserClaims)
-
-	encToken, err := store.GetAccessTokenByGroupID(ctx, claims.GroupId)
-	if err != nil {
-		return decryptedToken, err
-	}
 
 	// base64 decode the token
-	decodeToken, err := base64.StdEncoding.DecodeString(encToken.EncryptedToken)
+	decodeToken, err := base64.StdEncoding.DecodeString(encToken)
 	if err != nil {
 		return decryptedToken, err
 	}
@@ -270,6 +267,94 @@ func GetProviderAccessToken(ctx context.Context, store db.Store) (oauth2.Token, 
 	if err != nil {
 		return decryptedToken, err
 	}
+	return decryptedToken, nil
+}
+
+// GetProviderAccessToken returns the access token for providers
+func GetProviderAccessToken(ctx context.Context, store db.Store) (oauth2.Token, error) {
+	claims, _ := ctx.Value((TokenInfoKey)).(auth.UserClaims)
+
+	encToken, err := store.GetAccessTokenByGroupID(ctx,
+		db.GetAccessTokenByGroupIDParams{Provider: auth.Github, GroupID: claims.GroupId})
+	if err != nil {
+		return oauth2.Token{}, err
+	}
+
+	decryptedToken, err := decryptToken(encToken.EncryptedToken)
+	if err != nil {
+		return oauth2.Token{}, err
+	}
+
+	// base64 decode the token
 	decryptedToken.Expiry = encToken.ExpirationTime
 	return decryptedToken, nil
+}
+
+// RevokeOauthTokens revokes the all oauth tokens for a provider
+func (s *Server) RevokeOauthTokens(ctx context.Context, in *pb.RevokeOauthTokensRequest) (*pb.RevokeOauthTokensResponse, error) {
+	if in.Provider != auth.Github {
+		return nil, status.Errorf(codes.InvalidArgument, "provider not supported: %v", in.Provider)
+	}
+
+	// need to read all tokens from the provider and revoke them
+	tokens, err := s.store.GetAccessTokenByProvider(ctx, auth.Github)
+	if err != nil {
+		return nil, status.Errorf(codes.Internal, "error getting access tokens: %v", err)
+	}
+
+	revoked_tokens := 0
+	for _, token := range tokens {
+		objToken, err := decryptToken(token.EncryptedToken)
+		if err != nil {
+			// just log and continue
+			log.Error().Msgf("error decrypting token: %v", err)
+		} else {
+			// remove token from db
+			_ = s.store.DeleteAccessToken(ctx, db.DeleteAccessTokenParams{Provider: auth.Github, GroupID: token.GroupID})
+
+			// remove from provider
+			err := auth.DeleteAccessToken(ctx, token.Provider, objToken.AccessToken)
+
+			if err != nil {
+				log.Error().Msgf("Error deleting access token: %v", err)
+			}
+			revoked_tokens++
+		}
+	}
+	return &pb.RevokeOauthTokensResponse{RevokedTokens: int32(revoked_tokens)}, nil
+}
+
+// RevokeOauthGroupToken revokes the oauth token for a group
+func (s *Server) RevokeOauthGroupToken(ctx context.Context,
+	in *pb.RevokeOauthGroupTokenRequest) (*pb.RevokeOauthGroupTokenResponse, error) {
+	if in.Provider != auth.Github {
+		return nil, status.Errorf(codes.InvalidArgument, "provider not supported: %v", in.Provider)
+	}
+
+	// check if user is authorized
+	if !IsRequestAuthorized(ctx, in.GroupId) {
+		return nil, status.Errorf(codes.PermissionDenied, "user is not authorized to access this resource")
+	}
+
+	// need to read the token for the provider and group
+	token, err := s.store.GetAccessTokenByGroupID(ctx,
+		db.GetAccessTokenByGroupIDParams{Provider: auth.Github, GroupID: in.GroupId})
+	if err != nil {
+		return nil, status.Errorf(codes.Internal, "error getting access token: %v", err)
+	}
+
+	objToken, err := decryptToken(token.EncryptedToken)
+	if err != nil {
+		return nil, status.Errorf(codes.Internal, "error decrypting token: %v", err)
+	}
+	// remove token from db
+	_ = s.store.DeleteAccessToken(ctx, db.DeleteAccessTokenParams{Provider: auth.Github, GroupID: token.GroupID})
+
+	// remove from provider
+	err = auth.DeleteAccessToken(ctx, token.Provider, objToken.AccessToken)
+
+	if err != nil {
+		log.Error().Msgf("Error deleting access token: %v", err)
+	}
+	return &pb.RevokeOauthGroupTokenResponse{}, nil
 }

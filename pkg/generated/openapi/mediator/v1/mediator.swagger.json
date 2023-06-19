@@ -384,6 +384,91 @@
         ]
       }
     },
+    "/api/v1/auth/{provider}/revoke": {
+      "post": {
+        "summary": "revoke all tokens for all users",
+        "operationId": "OAuthService_RevokeOauthTokens",
+        "responses": {
+          "200": {
+            "description": "A successful response.",
+            "schema": {
+              "$ref": "#/definitions/v1RevokeOauthTokensResponse"
+            }
+          },
+          "default": {
+            "description": "An unexpected error response.",
+            "schema": {
+              "$ref": "#/definitions/rpcStatus"
+            }
+          }
+        },
+        "parameters": [
+          {
+            "name": "provider",
+            "in": "path",
+            "required": true,
+            "type": "string"
+          },
+          {
+            "name": "body",
+            "in": "body",
+            "required": true,
+            "schema": {
+              "type": "object"
+            }
+          }
+        ],
+        "tags": [
+          "OAuthService"
+        ]
+      }
+    },
+    "/api/v1/auth/{provider}/revoke/{groupId}": {
+      "post": {
+        "summary": "revoke token for a group",
+        "operationId": "OAuthService_RevokeOauthGroupToken",
+        "responses": {
+          "200": {
+            "description": "A successful response.",
+            "schema": {
+              "$ref": "#/definitions/v1RevokeOauthGroupTokenResponse"
+            }
+          },
+          "default": {
+            "description": "An unexpected error response.",
+            "schema": {
+              "$ref": "#/definitions/rpcStatus"
+            }
+          }
+        },
+        "parameters": [
+          {
+            "name": "provider",
+            "in": "path",
+            "required": true,
+            "type": "string"
+          },
+          {
+            "name": "groupId",
+            "in": "path",
+            "required": true,
+            "type": "integer",
+            "format": "int32"
+          },
+          {
+            "name": "body",
+            "in": "body",
+            "required": true,
+            "schema": {
+              "type": "object"
+            }
+          }
+        ],
+        "tags": [
+          "OAuthService"
+        ]
+      }
+    },
     "/api/v1/branchprotection": {
       "get": {
         "operationId": "BranchProtectionService_GetBranchProtection",
@@ -2048,6 +2133,18 @@
         },
         "error": {
           "type": "string"
+        }
+      }
+    },
+    "v1RevokeOauthGroupTokenResponse": {
+      "type": "object"
+    },
+    "v1RevokeOauthTokensResponse": {
+      "type": "object",
+      "properties": {
+        "revokedTokens": {
+          "type": "integer",
+          "format": "int32"
         }
       }
     },

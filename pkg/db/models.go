@@ -29,6 +29,7 @@ type Organization struct {
 
 type ProviderAccessToken struct {
 	ID             int32     `json:"id"`
+	Provider       string    `json:"provider"`
 	GroupID        int32     `json:"group_id"`
 	EncryptedToken string    `json:"encrypted_token"`
 	ExpirationTime time.Time `json:"expiration_time"`

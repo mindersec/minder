@@ -127,6 +127,8 @@ const (
 	OAuthService_GetAuthorizationURL_FullMethodName     = "/mediator.v1.OAuthService/GetAuthorizationURL"
 	OAuthService_ExchangeCodeForTokenCLI_FullMethodName = "/mediator.v1.OAuthService/ExchangeCodeForTokenCLI"
 	OAuthService_ExchangeCodeForTokenWEB_FullMethodName = "/mediator.v1.OAuthService/ExchangeCodeForTokenWEB"
+	OAuthService_RevokeOauthTokens_FullMethodName       = "/mediator.v1.OAuthService/RevokeOauthTokens"
+	OAuthService_RevokeOauthGroupToken_FullMethodName   = "/mediator.v1.OAuthService/RevokeOauthGroupToken"
 )
 
 // OAuthServiceClient is the client API for OAuthService service.
@@ -136,6 +138,10 @@ type OAuthServiceClient interface {
 	GetAuthorizationURL(ctx context.Context, in *GetAuthorizationURLRequest, opts ...grpc.CallOption) (*GetAuthorizationURLResponse, error)
 	ExchangeCodeForTokenCLI(ctx context.Context, in *ExchangeCodeForTokenCLIRequest, opts ...grpc.CallOption) (*ExchangeCodeForTokenCLIResponse, error)
 	ExchangeCodeForTokenWEB(ctx context.Context, in *ExchangeCodeForTokenWEBRequest, opts ...grpc.CallOption) (*ExchangeCodeForTokenWEBResponse, error)
+	// revoke all tokens for all users
+	RevokeOauthTokens(ctx context.Context, in *RevokeOauthTokensRequest, opts ...grpc.CallOption) (*RevokeOauthTokensResponse, error)
+	// revoke token for a group
+	RevokeOauthGroupToken(ctx context.Context, in *RevokeOauthGroupTokenRequest, opts ...grpc.CallOption) (*RevokeOauthGroupTokenResponse, error)
 }
 
 type oAuthServiceClient struct {
@@ -173,6 +179,24 @@ func (c *oAuthServiceClient) ExchangeCodeForTokenWEB(ctx context.Context, in *Ex
 	return out, nil
 }
 
+func (c *oAuthServiceClient) RevokeOauthTokens(ctx context.Context, in *RevokeOauthTokensRequest, opts ...grpc.CallOption) (*RevokeOauthTokensResponse, error) {
+	out := new(RevokeOauthTokensResponse)
+	err := c.cc.Invoke(ctx, OAuthService_RevokeOauthTokens_FullMethodName, in, out, opts...)
+	if err != nil {
+		return nil, err
+	}
+	return out, nil
+}
+
+func (c *oAuthServiceClient) RevokeOauthGroupToken(ctx context.Context, in *RevokeOauthGroupTokenRequest, opts ...grpc.CallOption) (*RevokeOauthGroupTokenResponse, error) {
+	out := new(RevokeOauthGroupTokenResponse)
+	err := c.cc.Invoke(ctx, OAuthService_RevokeOauthGroupToken_FullMethodName, in, out, opts...)
+	if err != nil {
+		return nil, err
+	}
+	return out, nil
+}
+
 // OAuthServiceServer is the server API for OAuthService service.
 // All implementations must embed UnimplementedOAuthServiceServer
 // for forward compatibility
@@ -180,6 +204,10 @@ type OAuthServiceServer interface {
 	GetAuthorizationURL(context.Context, *GetAuthorizationURLRequest) (*GetAuthorizationURLResponse, error)
 	ExchangeCodeForTokenCLI(context.Context, *ExchangeCodeForTokenCLIRequest) (*ExchangeCodeForTokenCLIResponse, error)
 	ExchangeCodeForTokenWEB(context.Context, *ExchangeCodeForTokenWEBRequest) (*ExchangeCodeForTokenWEBResponse, error)
+	// revoke all tokens for all users
+	RevokeOauthTokens(context.Context, *RevokeOauthTokensRequest) (*RevokeOauthTokensResponse, error)
+	// revoke token for a group
+	RevokeOauthGroupToken(context.Context, *RevokeOauthGroupTokenRequest) (*RevokeOauthGroupTokenResponse, error)
 	mustEmbedUnimplementedOAuthServiceServer()
 }
 
@@ -195,6 +223,12 @@ func (UnimplementedOAuthServiceServer) ExchangeCodeForTokenCLI(context.Context, 
 }
 func (UnimplementedOAuthServiceServer) ExchangeCodeForTokenWEB(context.Context, *ExchangeCodeForTokenWEBRequest) (*ExchangeCodeForTokenWEBResponse, error) {
 	return nil, status.Errorf(codes.Unimplemented, "method ExchangeCodeForTokenWEB not implemented")
+}
+func (UnimplementedOAuthServiceServer) RevokeOauthTokens(context.Context, *RevokeOauthTokensRequest) (*RevokeOauthTokensResponse, error) {
+	return nil, status.Errorf(codes.Unimplemented, "method RevokeOauthTokens not implemented")
+}
+func (UnimplementedOAuthServiceServer) RevokeOauthGroupToken(context.Context, *RevokeOauthGroupTokenRequest) (*RevokeOauthGroupTokenResponse, error) {
+	return nil, status.Errorf(codes.Unimplemented, "method RevokeOauthGroupToken not implemented")
 }
 func (UnimplementedOAuthServiceServer) mustEmbedUnimplementedOAuthServiceServer() {}
 
@@ -263,6 +297,42 @@ func _OAuthService_ExchangeCodeForTokenWEB_Handler(srv interface{}, ctx context.
 	return interceptor(ctx, in, info, handler)
 }
 
+func _OAuthService_RevokeOauthTokens_Handler(srv interface{}, ctx context.Context, dec func(interface{}) error, interceptor grpc.UnaryServerInterceptor) (interface{}, error) {
+	in := new(RevokeOauthTokensRequest)
+	if err := dec(in); err != nil {
+		return nil, err
+	}
+	if interceptor == nil {
+		return srv.(OAuthServiceServer).RevokeOauthTokens(ctx, in)
+	}
+	info := &grpc.UnaryServerInfo{
+		Server:     srv,
+		FullMethod: OAuthService_RevokeOauthTokens_FullMethodName,
+	}
+	handler := func(ctx context.Context, req interface{}) (interface{}, error) {
+		return srv.(OAuthServiceServer).RevokeOauthTokens(ctx, req.(*RevokeOauthTokensRequest))
+	}
+	return interceptor(ctx, in, info, handler)
+}
+
+func _OAuthService_RevokeOauthGroupToken_Handler(srv interface{}, ctx context.Context, dec func(interface{}) error, interceptor grpc.UnaryServerInterceptor) (interface{}, error) {
+	in := new(RevokeOauthGroupTokenRequest)
+	if err := dec(in); err != nil {
+		return nil, err
+	}
+	if interceptor == nil {
+		return srv.(OAuthServiceServer).RevokeOauthGroupToken(ctx, in)
+	}
+	info := &grpc.UnaryServerInfo{
+		Server:     srv,
+		FullMethod: OAuthService_RevokeOauthGroupToken_FullMethodName,
+	}
+	handler := func(ctx context.Context, req interface{}) (interface{}, error) {
+		return srv.(OAuthServiceServer).RevokeOauthGroupToken(ctx, req.(*RevokeOauthGroupTokenRequest))
+	}
+	return interceptor(ctx, in, info, handler)
+}
+
 // OAuthService_ServiceDesc is the grpc.ServiceDesc for OAuthService service.
 // It's only intended for direct use with grpc.RegisterService,
 // and not to be introspected or modified (even as a copy)
@@ -281,6 +351,14 @@ var OAuthService_ServiceDesc = grpc.ServiceDesc{
 		{
 			MethodName: "ExchangeCodeForTokenWEB",
 			Handler:    _OAuthService_ExchangeCodeForTokenWEB_Handler,
+		},
+		{
+			MethodName: "RevokeOauthTokens",
+			Handler:    _OAuthService_RevokeOauthTokens_Handler,
+		},
+		{
+			MethodName: "RevokeOauthGroupToken",
+			Handler:    _OAuthService_RevokeOauthGroupToken_Handler,
 		},
 	},
 	Streams:  []grpc.StreamDesc{},
