@@ -44,6 +44,7 @@ type Response struct {
 	Status string `json:"status"`
 }
 
+// MAX_CALLS is the maximum number of calls to the gRPC server before stopping.
 const MAX_CALLS = 300
 
 // callBackServer starts a server and handler to listen for the OAuth callback.

@@ -145,13 +145,6 @@ func (s *Server) ExchangeCodeForTokenCLI(ctx context.Context,
 		return nil, err
 	}
 
-	var tokenStatus string
-	if token.Valid() {
-		tokenStatus = "success"
-	} else {
-		tokenStatus = "failure"
-	}
-
 	// github does not provide refresh token or expiry, set a manual expiry time
 	viper.SetDefault("github.access_token_expiry", 86400)
 	expiryTime := time.Now().Add(time.Duration(viper.GetInt("github.access_token_expiry")) * time.Second)
