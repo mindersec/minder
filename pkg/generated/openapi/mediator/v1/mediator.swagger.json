@@ -497,6 +497,49 @@
         ]
       }
     },
+    "/api/v1/auth/{provider}/token": {
+      "post": {
+        "operationId": "OAuthService_StoreProviderToken",
+        "responses": {
+          "200": {
+            "description": "A successful response.",
+            "schema": {
+              "$ref": "#/definitions/v1StoreProviderTokenResponse"
+            }
+          },
+          "default": {
+            "description": "An unexpected error response.",
+            "schema": {
+              "$ref": "#/definitions/rpcStatus"
+            }
+          }
+        },
+        "parameters": [
+          {
+            "name": "provider",
+            "in": "path",
+            "required": true,
+            "type": "string"
+          },
+          {
+            "name": "body",
+            "in": "body",
+            "required": true,
+            "schema": {
+              "type": "object",
+              "properties": {
+                "accessToken": {
+                  "type": "string"
+                }
+              }
+            }
+          }
+        ],
+        "tags": [
+          "OAuthService"
+        ]
+      }
+    },
     "/api/v1/branchprotection": {
       "get": {
         "operationId": "BranchProtectionService_GetBranchProtection",
@@ -2214,6 +2257,9 @@
           "format": "date-time"
         }
       }
+    },
+    "v1StoreProviderTokenResponse": {
+      "type": "object"
     },
     "v1UpdatePasswordRequest": {
       "type": "object",

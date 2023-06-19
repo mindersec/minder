@@ -106,3 +106,23 @@ func DeleteAccessToken(ctx context.Context, provider string, token string) error
 	}
 	return nil
 }
+
+// Checks if a token is valid
+func ValidateProviderToken(ctx context.Context, provider string, token string) error {
+	if provider == Github {
+		// Create an OAuth2 token source with the PAT
+		tokenSource := oauth2.StaticTokenSource(&oauth2.Token{AccessToken: token})
+
+		// Create an authenticated GitHub client
+		oauth2Client := oauth2.NewClient(context.Background(), tokenSource)
+		client := go_github.NewClient(oauth2Client)
+
+		// Make a sample API request to check token validity
+		_, _, err := client.Users.Get(context.Background(), "")
+		if err != nil {
+			return fmt.Errorf("invalid token: %s", err)
+		}
+		return nil
+	}
+	return fmt.Errorf("invalid provider: %s", provider)
+}

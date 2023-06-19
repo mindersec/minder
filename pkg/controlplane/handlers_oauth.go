@@ -332,3 +332,59 @@ func (s *Server) RevokeOauthGroupToken(ctx context.Context,
 	}
 	return &pb.RevokeOauthGroupTokenResponse{}, nil
 }
+<<<<<<< HEAD
+=======
+
+func (s *Server) StoreProviderToken(ctx context.Context, in *pb.StoreProviderTokenRequest) (*pb.StoreProviderTokenResponse, error) {
+	if in.Provider != auth.Github {
+		return nil, status.Errorf(codes.InvalidArgument, "provider not supported: %v", in.Provider)
+	}
+
+	// Get the user claims from the JWT token
+	claims, _ := ctx.Value(TokenInfoKey).(auth.UserClaims)
+
+	// check if user is authorized
+	if !IsRequestAuthorized(ctx, claims.GroupId) {
+		return nil, status.Errorf(codes.PermissionDenied, "user is not authorized to access this resource")
+	}
+
+	// validate token
+	err := auth.ValidateProviderToken(ctx, in.Provider, in.AccessToken)
+	if err != nil {
+		return nil, status.Errorf(codes.InvalidArgument, "invalid token provided")
+	}
+
+	// github does not provide refresh token or expiry, set a manual expiry time
+	viper.SetDefault("github.access_token_expiry", 86400)
+	expiryTime := time.Now().Add(time.Duration(viper.GetInt("github.access_token_expiry")) * time.Second)
+
+	// Convert token to JSON
+	jsonData, err := json.Marshal(in.AccessToken)
+	if err != nil {
+		return nil, err
+	}
+
+	// encode token
+	encryptedToken, err := mcrypto.EncryptBytes(viper.GetString("auth.token_key"), jsonData)
+	if err != nil {
+		return nil, err
+	}
+
+	encodedToken := base64.StdEncoding.EncodeToString(encryptedToken)
+
+	_, err = s.store.CreateAccessToken(ctx, db.CreateAccessTokenParams{
+		GroupID:        claims.GroupId,
+		Provider:       auth.Github,
+		EncryptedToken: encodedToken,
+		ExpirationTime: expiryTime,
+	})
+
+	_, err = s.store.CreateAccessToken(ctx, db.CreateAccessTokenParams{GroupID: claims.GroupId, Provider: in.Provider,
+		EncryptedToken: encodedToken, ExpirationTime: expiryTime})
+
+	if err != nil {
+		return nil, status.Errorf(codes.Internal, "error storing access token: %v", err)
+	}
+	return &pb.StoreProviderTokenResponse{}, nil
+}
+>>>>>>> 50bc989 (feat: allow to pass a pat token to enroll provider)
