@@ -35,7 +35,7 @@ type createUserValidation struct {
 	RoleId   int32  `db:"role_id" validate:"required"`
 	Email    string `db:"email" validate:"omitempty,email"`
 	Username string `db:"username" validate:"required"`
-	Password string `validate:"omitempty,min=8,containsany=.;?&"`
+	Password string `validate:"omitempty,min=8,containsany=_.;?&"`
 }
 
 func stringToNullString(s *string) *sql.NullString {
