@@ -115,12 +115,12 @@ func (q *Queries) GetAccessTokenByProvider(ctx context.Context, provider string)
 }
 
 const updateAccessToken = `-- name: UpdateAccessToken :one
-UPDATE provider_access_tokens SET provider = $2, encrypted_token = $3, expiration_time = $4, updated_at = NOW() WHERE provider = $1 AND group_id = $2 RETURNING id, provider, group_id, encrypted_token, expiration_time, created_at, updated_at
+UPDATE provider_access_tokens SET encrypted_token = $3, expiration_time = $4, updated_at = NOW() WHERE provider = $1 AND group_id = $2 RETURNING id, provider, group_id, encrypted_token, expiration_time, created_at, updated_at
 `
 
 type UpdateAccessTokenParams struct {
 	Provider       string    `json:"provider"`
-	Provider_2     string    `json:"provider_2"`
+	GroupID        int32     `json:"group_id"`
 	EncryptedToken string    `json:"encrypted_token"`
 	ExpirationTime time.Time `json:"expiration_time"`
 }
@@ -128,7 +128,7 @@ type UpdateAccessTokenParams struct {
 func (q *Queries) UpdateAccessToken(ctx context.Context, arg UpdateAccessTokenParams) (ProviderAccessToken, error) {
 	row := q.db.QueryRowContext(ctx, updateAccessToken,
 		arg.Provider,
-		arg.Provider_2,
+		arg.GroupID,
 		arg.EncryptedToken,
 		arg.ExpirationTime,
 	)
