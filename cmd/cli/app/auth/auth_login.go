@@ -50,7 +50,7 @@ will be saved to $XDG_CONFIG_HOME/mediator/credentials.json`,
 		password := util.GetConfigValue("password", "password", cmd, "").(string)
 
 		conn, err := util.GetGrpcConnection(cmd)
-util.ExitNicelyOnError(err, "Error getting grpc connection")
+		util.ExitNicelyOnError(err, "Error getting grpc connection")
 		defer conn.Close()
 
 		client := pb.NewAuthServiceClient(conn)
