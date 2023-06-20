@@ -72,10 +72,6 @@ func init() {
 	user_deleteCmd.Flags().BoolP("force", "f", false,
 		"Force deletion of user, even if it's protected "+
 			"(WARNING: removing a protected user may cause loss of mediator access and data)")
-	if err := user_deleteCmd.MarkFlagRequired("user-id"); err != nil {
-		fmt.Fprintf(os.Stderr, "Error marking flag as required: %s\n", err)
-		os.Exit(1)
-	}
-	err := user_deleteCmd.MarkFlagRequired("org-id")
+	err := user_deleteCmd.MarkFlagRequired("user-id")
 	util.ExitNicelyOnError(err, "Error marking flag as required")
 }

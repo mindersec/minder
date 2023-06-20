@@ -185,6 +185,6 @@ func init() {
 	User_createCmd.Flags().Int32P("role-id", "r", 0, "Role ID. If empty, will create a single user")
 	User_createCmd.Flags().BoolP("force", "s", false, "Skip confirmation")
 	User_createCmd.Flags().BoolP("needs-password-change", "c", true, "Does the user need to change their password")
-	err := User_createCmd.MarkFlagRequired("org-id")
+	err := User_createCmd.MarkFlagRequired("username")
 	util.ExitNicelyOnError(err, "Error marking flag as required")
 }

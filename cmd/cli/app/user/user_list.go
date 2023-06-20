@@ -119,10 +119,6 @@ func init() {
 	user_listCmd.Flags().StringP("output", "o", "", "Output format (json or yaml)")
 	user_listCmd.Flags().Int32P("limit", "l", -1, "Limit the number of results returned")
 	user_listCmd.Flags().Int32P("offset", "f", 0, "Offset the results returned")
-	if err := user_listCmd.MarkFlagRequired("role-id"); err != nil {
-		fmt.Fprintf(os.Stderr, "Error marking flag as required: %s\n", err)
-		os.Exit(1)
-	}
-	err := user_listCmd.MarkFlagRequired("org-id")
+	err := user_listCmd.MarkFlagRequired("role-id")
 	util.ExitNicelyOnError(err, "Error marking flag as required")
 }
