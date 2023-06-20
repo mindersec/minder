@@ -76,4 +76,6 @@ func init() {
 		fmt.Fprintf(os.Stderr, "Error marking flag as required: %s\n", err)
 		os.Exit(1)
 	}
+	err := user_deleteCmd.MarkFlagRequired("org-id")
+	util.ExitNicelyOnError(err, "Error marking flag as required")
 }

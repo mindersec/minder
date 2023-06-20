@@ -53,10 +53,7 @@ var auth_logoutCmd = &cobra.Command{
 		defer cancel()
 
 		_, err = client.LogOut(ctx, &pb.LogOutRequest{})
-		if err != nil {
-			fmt.Fprintf(os.Stderr, "Error logging out: %s\n", err)
-			os.Exit(1)
-		}
+		util.ExitNicelyOnError(err, "Error logging out")
 
 		// remove credentials file for extra security
 		xdgConfigHome := os.Getenv("XDG_CONFIG_HOME")
@@ -64,19 +61,14 @@ var auth_logoutCmd = &cobra.Command{
 		// just delete token from credentials file
 		if xdgConfigHome == "" {
 			homeDir, err := os.UserHomeDir()
-			if err != nil {
-				fmt.Fprintf(os.Stderr, "Error getting home directory: %v\n", err)
-				os.Exit(1)
-			}
+			util.ExitNicelyOnError(err, "Error getting home directory")
 			xdgConfigHome = filepath.Join(homeDir, ".config")
 		}
 
 		filePath := filepath.Join(xdgConfigHome, "mediator", "credentials.json")
 		err = os.Remove(filePath)
-		if err != nil {
-			fmt.Fprintf(os.Stderr, "Error removing credentials file: %v\n", err)
-			os.Exit(1)
-		}
+		util.ExitNicelyOnError(err, "Error removing credentials file")
+
 		fmt.Println("User logged out.")
 
 	},

@@ -57,33 +57,21 @@ var Auth_revokeCmd = &cobra.Command{
 		}
 
 		conn, err := util.GetGrpcConnection(cmd)
-		if err != nil {
-			fmt.Fprintf(os.Stderr, "Error getting grpc connection: %s\n", err)
-			os.Exit(1)
-		}
+		util.ExitNicelyOnError(err, "Error getting grpc connection")
 		defer conn.Close()
 
-		if err != nil {
-			fmt.Fprintf(os.Stderr, "Error getting grpc connection: %s\n", err)
-			os.Exit(1)
-		}
+		util.ExitNicelyOnError(err, "Error getting grpc connection")
 
 		ctx, cancel := util.GetAppContext()
 		defer cancel()
 		client := pb.NewAuthServiceClient(conn)
 		if all {
 			_, err := client.RevokeTokens(ctx, &pb.RevokeTokensRequest{})
-			if err != nil {
-				fmt.Fprintf(os.Stderr, "Error revoking tokens: %s\n", err)
-				os.Exit(1)
-			}
+			util.ExitNicelyOnError(err, "Error revoking tokens")
 			cmd.Println("Revoked all tokens")
 		} else {
 			_, err := client.RevokeUserToken(ctx, &pb.RevokeUserTokenRequest{UserId: user})
-			if err != nil {
-				fmt.Fprintf(os.Stderr, "Error revoking tokens: %s\n", err)
-				os.Exit(1)
-			}
+			util.ExitNicelyOnError(err, "Error revoking tokens")
 			cmd.Println("Revoked token for user", user)
 		}
 	},

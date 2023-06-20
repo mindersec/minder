@@ -71,8 +71,6 @@ func init() {
 	org_deleteCmd.Flags().Int32P("org-id", "o", 0, "id of organization to delete")
 	org_deleteCmd.Flags().BoolP("force", "f", false,
 		"Force deletion of organization, even if it has associated groups")
-	if err := org_deleteCmd.MarkFlagRequired("org-id"); err != nil {
-		fmt.Fprintf(os.Stderr, "Error marking flag as required: %s\n", err)
-		os.Exit(1)
-	}
+	err := org_deleteCmd.MarkFlagRequired("org-id")
+	util.ExitNicelyOnError(err, "Error marking flag as required")
 }

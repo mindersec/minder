@@ -98,10 +98,7 @@ mediator control plane.`,
 			os.Exit(1)
 		}
 		json, err := json.Marshal(roleRecord)
-		if err != nil {
-			fmt.Fprintf(os.Stderr, "Error marshalling role: %s\n", err)
-			os.Exit(1)
-		}
+		util.ExitNicelyOnError(err, "Error marshalling role")
 		fmt.Println(string(json))
 	},
 }

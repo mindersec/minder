@@ -70,10 +70,8 @@ var ApplyCmd = &cobra.Command{
 	Short: "Appy a configuration to a mediator control plane",
 	Long:  `The medctl apply command applies a configuration to a mediator control plane.`,
 	PreRun: func(cmd *cobra.Command, args []string) {
-		if err := viper.BindPFlags(cmd.Flags()); err != nil {
-			fmt.Fprintf(os.Stderr, "Error binding flags: %s\n", err)
-			os.Exit(1)
-		}
+		err := viper.BindPFlags(cmd.Flags())
+		util.ExitNicelyOnError(err, "Error binding flags")
 	},
 	Run: func(cmd *cobra.Command, args []string) {
 		f := util.GetConfigValue("file", "file", cmd, "").(string)
@@ -83,25 +81,16 @@ var ApplyCmd = &cobra.Command{
 
 		if f == "-" {
 			data, err = io.ReadAll(os.Stdin)
-			if err != nil {
-				fmt.Fprintf(os.Stderr, "Error reading from stdin: %s\n", err)
-				os.Exit(1)
-			}
+			util.ExitNicelyOnError(err, "Error reading from stdin")
 		} else {
 			f = filepath.Clean(f)
 			data, err = os.ReadFile(f)
-			if err != nil {
-				fmt.Fprintf(os.Stderr, "Error reading file %s: %s\n", f, err)
-				os.Exit(1)
-			}
+			util.ExitNicelyOnError(err, "Error reading file")
 		}
 
 		// try to unmarshal with json or yaml
 		objects, err := parseContent(data)
-		if err != nil {
-			fmt.Fprintf(os.Stderr, "Error parsing content: %s\n", err)
-			os.Exit(1)
-		}
+		util.ExitNicelyOnError(err, "Error parsing content")
 
 		for _, object := range objects {
 			// iterate over params and set viper values

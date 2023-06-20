@@ -48,10 +48,7 @@ mediator control plane for an specific group.`,
 	},
 	Run: func(cmd *cobra.Command, args []string) {
 		conn, err := util.GetGrpcConnection(cmd)
-		if err != nil {
-			fmt.Fprintf(os.Stderr, "Error getting grpc connection: %s\n", err)
-			os.Exit(1)
-		}
+		util.ExitNicelyOnError(err, "Error getting grpc connection")
 		defer conn.Close()
 
 		client := pb.NewRoleServiceClient(conn)
@@ -97,17 +94,11 @@ mediator control plane for an specific group.`,
 			table.Render()
 		} else if format == "json" {
 			output, err := json.MarshalIndent(resp.Roles, "", "  ")
-			if err != nil {
-				fmt.Fprintf(os.Stderr, "Error marshalling json: %s\n", err)
-				os.Exit(1)
-			}
+			util.ExitNicelyOnError(err, "Error marshalling json")
 			fmt.Println(string(output))
 		} else if format == "yaml" {
 			yamlData, err := yaml.Marshal(resp.Roles)
-			if err != nil {
-				fmt.Fprintf(os.Stderr, "Error marshalling yaml: %s\n", err)
-				os.Exit(1)
-			}
+			util.ExitNicelyOnError(err, "Error marshalling yaml")
 			fmt.Println(string(yamlData))
 
 		}
@@ -120,8 +111,6 @@ func init() {
 	role_listCmd.Flags().StringP("output", "o", "", "Output format (json or yaml)")
 	role_listCmd.Flags().Int32P("limit", "l", -1, "Limit the number of results returned")
 	role_listCmd.Flags().Int32P("offset", "f", 0, "Offset the results returned")
-	if err := role_listCmd.MarkFlagRequired("group-id"); err != nil {
-		fmt.Fprintf(os.Stderr, "Error marking flag as required: %s\n", err)
-		os.Exit(1)
-	}
+	err := role_listCmd.MarkFlagRequired("group-id")
+	util.ExitNicelyOnError(err, "Error marking flag as required")
 }

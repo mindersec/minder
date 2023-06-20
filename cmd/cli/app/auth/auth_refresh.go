@@ -46,10 +46,7 @@ var Auth_refreshCmd = &cobra.Command{
 	Run: func(cmd *cobra.Command, args []string) {
 		// load old credentials
 		oldCreds, err := util.LoadCredentials()
-		if err != nil {
-			fmt.Fprintf(os.Stderr, "Error loading credentials: %s\n", err)
-			os.Exit(1)
-		}
+		util.ExitNicelyOnError(err, "Error loading credentials")
 
 		conn, err := util.GetGrpcConnection(cmd)
 		util.ExitNicelyOnError(err, "Error getting grpc connection")
@@ -74,10 +71,7 @@ var Auth_refreshCmd = &cobra.Command{
 
 		// save credentials
 		filePath, err := util.SaveCredentials(creds)
-		if err != nil {
-			fmt.Fprintf(os.Stderr, "Error saving credentials: %s\n", err)
-			os.Exit(1)
-		}
+		util.ExitNicelyOnError(err, "Error saving credentials")
 
 		fmt.Printf("Credentials saved to %s\n", filePath)
 	},

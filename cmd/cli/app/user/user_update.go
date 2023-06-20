@@ -73,8 +73,6 @@ func init() {
 		fmt.Fprintf(os.Stderr, "Error marking flag as required: %s\n", err)
 		os.Exit(1)
 	}
-	if err := User_updateCmd.MarkFlagRequired("password_confirmation"); err != nil {
-		fmt.Fprintf(os.Stderr, "Error marking flag as required: %s\n", err)
-		os.Exit(1)
-	}
+	err := User_updateCmd.MarkFlagRequired("org-id")
+	util.ExitNicelyOnError(err, "Error marking flag as required")
 }

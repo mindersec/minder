@@ -48,10 +48,7 @@ mediator control plane.`,
 	},
 	Run: func(cmd *cobra.Command, args []string) {
 		conn, err := util.GetGrpcConnection(cmd)
-		if err != nil {
-			fmt.Fprintf(os.Stderr, "Error getting grpc connection: %s\n", err)
-			os.Exit(1)
-		}
+		util.ExitNicelyOnError(err, "Error getting grpc connection")
 		defer conn.Close()
 
 		client := pb.NewOrganizationServiceClient(conn)
@@ -93,17 +90,11 @@ mediator control plane.`,
 			table.Render()
 		} else if format == "json" {
 			output, err := json.MarshalIndent(resp.Organizations, "", "  ")
-			if err != nil {
-				fmt.Fprintf(os.Stderr, "Error marshalling json: %s\n", err)
-				os.Exit(1)
-			}
+			util.ExitNicelyOnError(err, "Error marshalling json")
 			fmt.Println(string(output))
 		} else if format == "yaml" {
 			yamlData, err := yaml.Marshal(resp.Organizations)
-			if err != nil {
-				fmt.Fprintf(os.Stderr, "Error marshalling yaml: %s\n", err)
-				os.Exit(1)
-			}
+			util.ExitNicelyOnError(err, "Error marshalling yaml")
 			fmt.Println(string(yamlData))
 
 		}

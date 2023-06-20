@@ -68,9 +68,9 @@ pre-commit:	## run pre-commit hooks
 sqlc: ## generate sqlc files
 	sqlc generate
 
-migrateup:
+migrateup: ## run migrate up
 	@go run cmd/server/main.go migrate up --yes     
-migratedown:
+migratedown: ## run migrate down
 	@go run cmd/server/main.go migrate down
 
 mock:

@@ -18,10 +18,10 @@ package app
 
 import (
 	"fmt"
-	"os"
 
 	"github.com/spf13/cobra"
 	"github.com/spf13/viper"
+	"github.com/stacklok/mediator/pkg/util"
 )
 
 var (
@@ -38,9 +38,7 @@ var (
 // This is called by main.main(). It only needs to happen once to the rootCmd.
 func Execute() {
 	err := RootCmd.Execute()
-	if err != nil {
-		os.Exit(1)
-	}
+	util.ExitNicelyOnError(err, "Error executing root command")
 }
 
 func init() {

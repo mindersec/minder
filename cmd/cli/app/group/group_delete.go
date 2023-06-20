@@ -72,8 +72,7 @@ func init() {
 	group_deleteCmd.Flags().BoolP("force", "f", false,
 		"Force deletion of group, even if it's protected or has associated roles "+
 			"(WARNING: removing a protected group may cause loosing mediator access)")
-	if err := group_deleteCmd.MarkFlagRequired("group-id"); err != nil {
-		fmt.Fprintf(os.Stderr, "Error marking flag as required: %s\n", err)
-		os.Exit(1)
-	}
+
+	err := group_deleteCmd.MarkFlagRequired("group-id")
+	util.ExitNicelyOnError(err, "Error marking flag as required")
 }

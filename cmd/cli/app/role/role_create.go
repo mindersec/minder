@@ -51,16 +51,10 @@ within a mediator control plane.`,
 		isProtected := util.GetConfigValue("is_protected", "is_protected", cmd, false).(bool)
 
 		conn, err := util.GetGrpcConnection(cmd)
-		if err != nil {
-			fmt.Fprintf(os.Stderr, "Error getting grpc connection: %s\n", err)
-			os.Exit(1)
-		}
+		util.ExitNicelyOnError(err, "Error getting grpc connection")
 		defer conn.Close()
 
-		if err != nil {
-			fmt.Fprintf(os.Stderr, "Error getting grpc connection: %s\n", err)
-			os.Exit(1)
-		}
+		util.ExitNicelyOnError(err, "Error getting grpc connection")
 
 		client := pb.NewRoleServiceClient(conn)
 		ctx, cancel := util.GetAppContext()
