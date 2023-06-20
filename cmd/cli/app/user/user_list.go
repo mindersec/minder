@@ -56,7 +56,8 @@ mediator control plane for an specific role.`,
 		ctx, cancel := util.GetAppContext()
 		defer cancel()
 
-		role := viper.GetInt32("role-id")
+		org := viper.GetInt32("org-id")
+		group := viper.GetInt32("group-id")
 		limit := viper.GetInt32("limit")
 		offset := viper.GetInt32("offset")
 		format := viper.GetString("output")
@@ -65,15 +66,34 @@ mediator control plane for an specific role.`,
 			fmt.Fprintf(os.Stderr, "Error: invalid format: %s\n", format)
 		}
 
+		// if group id is set, ord id cannot be set
+		if (org != 0) && (group != 0) {
+			fmt.Fprintf(os.Stderr, "Error: cannot set both org-id and group-id\n")
+		}
+
 		var limitPtr = &limit
 		var offsetPtr = &offset
 
-		resp, err := client.GetUsers(ctx, &pb.GetUsersRequest{
-			RoleId: role,
-			Limit:  limitPtr,
-			Offset: offsetPtr,
-		})
-		util.ExitNicelyOnError(err, "Error getting users")
+		// call depending on parameters
+		var users []*pb.UserRecord
+
+		if org == 0 && group == 0 {
+			resp, err := client.GetUsers(ctx, &pb.GetUsersRequest{
+				Limit:  limitPtr,
+				Offset: offsetPtr,
+			})
+			util.ExitNicelyOnError(err, "Error getting users")
+			users = resp.Users
+		} else if org != 0 {
+			resp, err := client.GetUsersByOrganization(ctx,
+				&pb.GetUsersByOrganizationRequest{OrganizationId: org, Limit: limitPtr, Offset: offsetPtr})
+			util.ExitNicelyOnError(err, "Error getting users")
+			users = resp.Users
+		} else if group != 0 {
+			resp, err := client.GetUsersByGroup(ctx, &pb.GetUsersByGroupRequest{GroupId: group, Limit: limitPtr, Offset: offsetPtr})
+			util.ExitNicelyOnError(err, "Error getting users")
+			users = resp.Users
+		}
 
 		// print output in a table
 		if format == "" {
@@ -81,14 +101,14 @@ mediator control plane for an specific role.`,
 			table.SetHeader([]string{"Id", "Role", "Username", "Email", "First name",
 				"Last name", "Is protected", "Created date", "Updated date"})
 
-			for _, v := range resp.Users {
+			for _, v := range users {
 				if v.IsProtected == nil {
 					*v.IsProtected = false
 				}
 
 				row := []string{
 					fmt.Sprintf("%d", v.Id),
-					fmt.Sprintf("%d", v.RoleId),
+					fmt.Sprintf("%d", v.OrganizationId),
 					v.Username,
 					*v.Email,
 					*v.FirstName,
@@ -101,11 +121,11 @@ mediator control plane for an specific role.`,
 			}
 			table.Render()
 		} else if format == "json" {
-			output, err := json.MarshalIndent(resp.Users, "", "  ")
+			output, err := json.MarshalIndent(users, "", "  ")
 			util.ExitNicelyOnError(err, "Error marshalling json")
 			fmt.Println(string(output))
 		} else if format == "yaml" {
-			yamlData, err := yaml.Marshal(resp.Users)
+			yamlData, err := yaml.Marshal(users)
 			util.ExitNicelyOnError(err, "Error marshalling yaml")
 			fmt.Println(string(yamlData))
 
@@ -115,10 +135,9 @@ mediator control plane for an specific role.`,
 
 func init() {
 	UserCmd.AddCommand(user_listCmd)
-	user_listCmd.Flags().Int32P("role-id", "r", 0, "role id to list users for")
+	user_listCmd.Flags().Int32P("org-id", "i", 0, "org id to list users for")
+	user_listCmd.Flags().Int32P("group-id", "g", 0, "group id to list users for")
 	user_listCmd.Flags().StringP("output", "o", "", "Output format (json or yaml)")
 	user_listCmd.Flags().Int32P("limit", "l", -1, "Limit the number of results returned")
 	user_listCmd.Flags().Int32P("offset", "f", 0, "Offset the results returned")
-	err := user_listCmd.MarkFlagRequired("role-id")
-	util.ExitNicelyOnError(err, "Error marking flag as required")
 }

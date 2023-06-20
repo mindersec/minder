@@ -35,14 +35,20 @@ import (
 	"google.golang.org/grpc/status"
 )
 
+// RoleInfo contains the role information for a user
+type RoleInfo struct {
+	RoleID         int  `json:"role_id"`
+	IsAdmin        bool `json:"is_admin"`
+	GroupID        int  `json:"group_id"`
+	OrganizationID int  `json:"organization_id"`
+}
+
 // UserClaims contains the claims for a user
 type UserClaims struct {
 	UserId              int32
-	RoleId              int32
-	GroupId             int32
+	GroupIds            []int32
+	Roles               []RoleInfo
 	OrganizationId      int32
-	IsAdmin             bool
-	IsSuperadmin        bool
 	NeedsPasswordChange bool
 }
 
@@ -56,11 +62,9 @@ func GenerateToken(userClaims UserClaims, accessPrivateKey []byte, refreshPrivat
 
 	token := jwt.NewWithClaims(jwt.SigningMethodRS256, jwt.MapClaims{
 		"userId":              int32(userClaims.UserId),
-		"roleId":              int32(userClaims.RoleId),
-		"groupId":             int32(userClaims.GroupId),
+		"roleInfo":            userClaims.Roles,
+		"groupIds":            userClaims.GroupIds,
 		"orgId":               int32(userClaims.OrganizationId),
-		"isAdmin":             userClaims.IsAdmin,
-		"isSuper":             userClaims.IsSuperadmin,
 		"iat":                 time.Now().Unix(),
 		"exp":                 tokenExpirationTime,
 		"needsPasswordChange": userClaims.NeedsPasswordChange,
@@ -155,12 +159,19 @@ func VerifyToken(tokenString string, publicKey []byte, store db.Store) (UserClai
 	}
 
 	// generate claims
+	if roleInfo, ok := claims["roleInfo"].([]RoleInfo); ok {
+		userClaims.Roles = roleInfo
+	} else {
+		userClaims.Roles = []RoleInfo{}
+	}
 	userClaims.UserId = int32(claims["userId"].(float64))
-	userClaims.RoleId = int32(claims["roleId"].(float64))
-	userClaims.GroupId = int32(claims["groupId"].(float64))
+
+	if groupIds, ok := claims["groupIds"].([]int32); ok {
+		userClaims.GroupIds = groupIds
+	} else {
+		userClaims.GroupIds = []int32{}
+	}
 	userClaims.OrganizationId = int32(claims["orgId"].(float64))
-	userClaims.IsAdmin = claims["isAdmin"].(bool)
-	userClaims.IsSuperadmin = claims["isSuper"].(bool)
 	userClaims.NeedsPasswordChange = claims["needsPasswordChange"].(bool)
 
 	return userClaims, nil

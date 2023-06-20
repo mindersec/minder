@@ -69,10 +69,11 @@ func (s *Server) CreateOrganization(ctx context.Context,
 
 			// we can create the default role
 			role, _ := s.CreateRole(ctx, &pb.CreateRoleRequest{
-				GroupId:     group.GroupId,
-				Name:        fmt.Sprintf("%s-admin", org.Name),
-				IsAdmin:     &adminPtr,
-				IsProtected: &protectedPtr,
+				OrganizationId: org.ID,
+				GroupId:        &group.GroupId,
+				Name:           fmt.Sprintf("%s-admin", org.Name),
+				IsAdmin:        &adminPtr,
+				IsProtected:    &protectedPtr,
 			})
 
 			if role != nil {
@@ -83,13 +84,15 @@ func (s *Server) CreateOrganization(ctx context.Context,
 				// we can create the default user
 				needsPasswordChange := true
 				user, _ := s.CreateUser(ctx, &pb.CreateUserRequest{
-					RoleId:              role.Id,
+					OrganizationId:      org.ID,
 					Username:            fmt.Sprintf("%s-admin", org.Name),
 					IsProtected:         &protectedPtr,
 					NeedsPasswordChange: &needsPasswordChange,
+					RoleIds:             []int32{role.Id},
+					GroupIds:            []int32{group.GroupId},
 				})
 				if user != nil {
-					usr := pb.UserRecord{Id: user.Id, RoleId: user.RoleId, Username: user.Username,
+					usr := pb.UserRecord{Id: user.Id, OrganizationId: org.ID, Username: user.Username,
 						Password: user.Password, IsProtected: user.IsProtected, CreatedAt: user.CreatedAt,
 						UpdatedAt: user.UpdatedAt, NeedsPasswordChange: user.NeedsPasswordChange}
 					response.DefaultUser = &usr

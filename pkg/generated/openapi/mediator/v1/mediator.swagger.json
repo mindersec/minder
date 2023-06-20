@@ -71,6 +71,13 @@
             "type": "string"
           },
           {
+            "name": "groupId",
+            "in": "query",
+            "required": false,
+            "type": "integer",
+            "format": "int32"
+          },
+          {
             "name": "code",
             "in": "query",
             "required": false,
@@ -117,6 +124,13 @@
             "in": "path",
             "required": true,
             "type": "string"
+          },
+          {
+            "name": "groupId",
+            "in": "query",
+            "required": false,
+            "type": "integer",
+            "format": "int32"
           },
           {
             "name": "code",
@@ -333,6 +347,13 @@
             "type": "string"
           },
           {
+            "name": "groupId",
+            "in": "query",
+            "required": false,
+            "type": "integer",
+            "format": "int32"
+          },
+          {
             "name": "cli",
             "in": "query",
             "required": false,
@@ -405,6 +426,13 @@
             "required": true,
             "type": "string",
             "format": "date-time"
+          },
+          {
+            "name": "groupId",
+            "in": "query",
+            "required": false,
+            "type": "integer",
+            "format": "int32"
           }
         ],
         "tags": [
@@ -528,6 +556,10 @@
             "schema": {
               "type": "object",
               "properties": {
+                "groupId": {
+                  "type": "integer",
+                  "format": "int32"
+                },
                 "accessToken": {
                   "type": "string"
                 }
@@ -1016,7 +1048,7 @@
             "type": "string"
           },
           {
-            "name": "groupId",
+            "name": "organizationId",
             "in": "query",
             "required": false,
             "type": "integer",
@@ -1094,7 +1126,7 @@
         ]
       }
     },
-    "/api/v1/roles/{groupId}": {
+    "/api/v1/roles": {
       "get": {
         "operationId": "RoleService_GetRoles",
         "responses": {
@@ -1113,7 +1145,97 @@
         },
         "parameters": [
           {
+            "name": "organizationId",
+            "in": "query",
+            "required": false,
+            "type": "integer",
+            "format": "int32"
+          },
+          {
+            "name": "limit",
+            "in": "query",
+            "required": false,
+            "type": "integer",
+            "format": "int32"
+          },
+          {
+            "name": "offset",
+            "in": "query",
+            "required": false,
+            "type": "integer",
+            "format": "int32"
+          }
+        ],
+        "tags": [
+          "RoleService"
+        ]
+      }
+    },
+    "/api/v1/roles/group/{groupId}": {
+      "get": {
+        "operationId": "RoleService_GetRolesByGroup",
+        "responses": {
+          "200": {
+            "description": "A successful response.",
+            "schema": {
+              "$ref": "#/definitions/v1GetRolesByGroupResponse"
+            }
+          },
+          "default": {
+            "description": "An unexpected error response.",
+            "schema": {
+              "$ref": "#/definitions/rpcStatus"
+            }
+          }
+        },
+        "parameters": [
+          {
             "name": "groupId",
+            "in": "path",
+            "required": true,
+            "type": "integer",
+            "format": "int32"
+          },
+          {
+            "name": "limit",
+            "in": "query",
+            "required": false,
+            "type": "integer",
+            "format": "int32"
+          },
+          {
+            "name": "offset",
+            "in": "query",
+            "required": false,
+            "type": "integer",
+            "format": "int32"
+          }
+        ],
+        "tags": [
+          "RoleService"
+        ]
+      }
+    },
+    "/api/v1/roles/organization/{organizationId}": {
+      "get": {
+        "operationId": "RoleService_GetRolesByOrganization",
+        "responses": {
+          "200": {
+            "description": "A successful response.",
+            "schema": {
+              "$ref": "#/definitions/v1GetRolesByOrgResponse"
+            }
+          },
+          "default": {
+            "description": "An unexpected error response.",
+            "schema": {
+              "$ref": "#/definitions/rpcStatus"
+            }
+          }
+        },
+        "parameters": [
+          {
+            "name": "organizationId",
             "in": "path",
             "required": true,
             "type": "integer",
@@ -1381,7 +1503,7 @@
         ]
       }
     },
-    "/api/v1/users/{roleId}": {
+    "/api/v1/users": {
       "get": {
         "operationId": "UserService_GetUsers",
         "responses": {
@@ -1400,7 +1522,90 @@
         },
         "parameters": [
           {
-            "name": "roleId",
+            "name": "limit",
+            "in": "query",
+            "required": false,
+            "type": "integer",
+            "format": "int32"
+          },
+          {
+            "name": "offset",
+            "in": "query",
+            "required": false,
+            "type": "integer",
+            "format": "int32"
+          }
+        ],
+        "tags": [
+          "UserService"
+        ]
+      }
+    },
+    "/api/v1/users/{groupId}": {
+      "get": {
+        "operationId": "UserService_GetUsersByGroup",
+        "responses": {
+          "200": {
+            "description": "A successful response.",
+            "schema": {
+              "$ref": "#/definitions/v1GetUsersByGroupResponse"
+            }
+          },
+          "default": {
+            "description": "An unexpected error response.",
+            "schema": {
+              "$ref": "#/definitions/rpcStatus"
+            }
+          }
+        },
+        "parameters": [
+          {
+            "name": "groupId",
+            "in": "path",
+            "required": true,
+            "type": "integer",
+            "format": "int32"
+          },
+          {
+            "name": "limit",
+            "in": "query",
+            "required": false,
+            "type": "integer",
+            "format": "int32"
+          },
+          {
+            "name": "offset",
+            "in": "query",
+            "required": false,
+            "type": "integer",
+            "format": "int32"
+          }
+        ],
+        "tags": [
+          "UserService"
+        ]
+      }
+    },
+    "/api/v1/users/{organizationId}": {
+      "get": {
+        "operationId": "UserService_GetUsersByOrganization",
+        "responses": {
+          "200": {
+            "description": "A successful response.",
+            "schema": {
+              "$ref": "#/definitions/v1GetUsersByOrganizationResponse"
+            }
+          },
+          "default": {
+            "description": "An unexpected error response.",
+            "schema": {
+              "$ref": "#/definitions/rpcStatus"
+            }
+          }
+        },
+        "parameters": [
+          {
+            "name": "organizationId",
             "in": "path",
             "required": true,
             "type": "integer",
@@ -1511,6 +1716,10 @@
     "v1AddRepositoryRequest": {
       "type": "object",
       "properties": {
+        "groupId": {
+          "type": "integer",
+          "format": "int32"
+        },
         "repositories": {
           "type": "array",
           "items": {
@@ -1657,6 +1866,10 @@
     "v1CreateRoleRequest": {
       "type": "object",
       "properties": {
+        "organizationId": {
+          "type": "integer",
+          "format": "int32"
+        },
         "groupId": {
           "type": "integer",
           "format": "int32"
@@ -1677,6 +1890,10 @@
       "type": "object",
       "properties": {
         "id": {
+          "type": "integer",
+          "format": "int32"
+        },
+        "organizationId": {
           "type": "integer",
           "format": "int32"
         },
@@ -1706,7 +1923,7 @@
     "v1CreateUserRequest": {
       "type": "object",
       "properties": {
-        "roleId": {
+        "organizationId": {
           "type": "integer",
           "format": "int32"
         },
@@ -1730,6 +1947,20 @@
         },
         "needsPasswordChange": {
           "type": "boolean"
+        },
+        "groupIds": {
+          "type": "array",
+          "items": {
+            "type": "integer",
+            "format": "int32"
+          }
+        },
+        "roleIds": {
+          "type": "array",
+          "items": {
+            "type": "integer",
+            "format": "int32"
+          }
         }
       },
       "title": "User service"
@@ -1741,7 +1972,7 @@
           "type": "integer",
           "format": "int32"
         },
-        "roleId": {
+        "organizationId": {
           "type": "integer",
           "format": "int32"
         },
@@ -1909,6 +2140,30 @@
         }
       }
     },
+    "v1GetRolesByGroupResponse": {
+      "type": "object",
+      "properties": {
+        "roles": {
+          "type": "array",
+          "items": {
+            "type": "object",
+            "$ref": "#/definitions/v1RoleRecord"
+          }
+        }
+      }
+    },
+    "v1GetRolesByOrgResponse": {
+      "type": "object",
+      "properties": {
+        "roles": {
+          "type": "array",
+          "items": {
+            "type": "object",
+            "$ref": "#/definitions/v1RoleRecord"
+          }
+        }
+      }
+    },
     "v1GetRolesResponse": {
       "type": "object",
       "properties": {
@@ -1969,6 +2224,30 @@
       "properties": {
         "user": {
           "$ref": "#/definitions/v1UserRecord"
+        }
+      }
+    },
+    "v1GetUsersByGroupResponse": {
+      "type": "object",
+      "properties": {
+        "users": {
+          "type": "array",
+          "items": {
+            "type": "object",
+            "$ref": "#/definitions/v1UserRecord"
+          }
+        }
+      }
+    },
+    "v1GetUsersByOrganizationResponse": {
+      "type": "object",
+      "properties": {
+        "users": {
+          "type": "array",
+          "items": {
+            "type": "object",
+            "$ref": "#/definitions/v1UserRecord"
+          }
         }
       }
     },
@@ -2235,6 +2514,10 @@
           "type": "integer",
           "format": "int32"
         },
+        "organizationId": {
+          "type": "integer",
+          "format": "int32"
+        },
         "groupId": {
           "type": "integer",
           "format": "int32"
@@ -2282,7 +2565,7 @@
           "type": "integer",
           "format": "int32"
         },
-        "roleId": {
+        "organizationId": {
           "type": "integer",
           "format": "int32"
         },

@@ -125,9 +125,11 @@ func TestLogin_gRPC(t *testing.T) {
 
 func TestLogout_gRPC(t *testing.T) {
 	ctx := context.WithValue(context.Background(), TokenInfoKey, auth.UserClaims{
-		UserId:       1,
-		IsAdmin:      false,
-		IsSuperadmin: false,
+		UserId:         1,
+		OrganizationId: 1,
+		GroupIds:       []int32{1},
+		Roles: []auth.RoleInfo{
+			{RoleID: 1, IsAdmin: true, GroupID: 1, OrganizationID: 1}},
 	})
 
 	ctrl := gomock.NewController(t)
@@ -146,9 +148,11 @@ func TestLogout_gRPC(t *testing.T) {
 
 func TestRevokeTokens_gRPC(t *testing.T) {
 	ctx := context.WithValue(context.Background(), TokenInfoKey, auth.UserClaims{
-		UserId:       1,
-		IsAdmin:      false,
-		IsSuperadmin: true,
+		UserId:         1,
+		OrganizationId: 1,
+		GroupIds:       []int32{1},
+		Roles: []auth.RoleInfo{
+			{RoleID: 1, IsAdmin: true, GroupID: 1, OrganizationID: 1}},
 	})
 
 	ctrl := gomock.NewController(t)

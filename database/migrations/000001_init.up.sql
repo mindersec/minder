@@ -36,19 +36,20 @@ CREATE TABLE groups (
 -- roles table
 CREATE TABLE roles (
     id SERIAL PRIMARY KEY,
-    group_id INTEGER NOT NULL REFERENCES groups(id) ON DELETE CASCADE,
+    organization_id INTEGER NOT NULL REFERENCES organizations(id) ON DELETE CASCADE,
+    group_id INTEGER REFERENCES groups(id) ON DELETE CASCADE,
     name TEXT NOT NULL,    
     is_admin BOOLEAN NOT NULL DEFAULT FALSE,
     is_protected BOOLEAN NOT NULL DEFAULT FALSE,
     created_at TIMESTAMP NOT NULL DEFAULT NOW(),
     updated_at TIMESTAMP NOT NULL DEFAULT NOW(),
-    CONSTRAINT unique_role_name_constraint UNIQUE (group_id, name)
+    CONSTRAINT unique_role_name_constraint UNIQUE (organization_id, name)
 );
 
 -- users table
 CREATE TABLE users (
     id SERIAL PRIMARY KEY,
-    role_id INTEGER NOT NULL REFERENCES roles(id) ON DELETE CASCADE,
+    organization_id INTEGER NOT NULL REFERENCES organizations(id) ON DELETE CASCADE,
     email TEXT UNIQUE,
     username TEXT NOT NULL UNIQUE,
     password TEXT NOT NULL,
@@ -59,6 +60,20 @@ CREATE TABLE users (
     created_at TIMESTAMP NOT NULL DEFAULT NOW(),
     updated_at TIMESTAMP NOT NULL DEFAULT NOW(),
     min_token_issued_time TIMESTAMP
+);
+
+-- user/groups
+CREATE TABLE user_groups (
+    id SERIAL PRIMARY KEY,
+    user_id INTEGER NOT NULL REFERENCES users(id) ON DELETE CASCADE,
+    group_id INTEGER NOT NULL REFERENCES groups(id) ON DELETE CASCADE
+);
+
+-- user/roles
+CREATE TABLE user_roles (
+    id SERIAL PRIMARY KEY,
+    user_id INTEGER NOT NULL REFERENCES users(id) ON DELETE CASCADE,
+    role_id INTEGER NOT NULL REFERENCES roles(id) ON DELETE CASCADE
 );
 
 -- provider_access_tokens table
@@ -99,7 +114,7 @@ ALTER TABLE organizations ADD CONSTRAINT unique_name UNIQUE (name);
 
 -- Indexes
 CREATE INDEX idx_users_email ON users(email);
-CREATE INDEX idx_users_role_id ON users(role_id);
+CREATE INDEX idx_users_organization_id ON users(organization_id);
 CREATE INDEX idx_groups_organization_id ON groups(organization_id);
 CREATE INDEX idx_roles_group_id ON roles(group_id);
 CREATE INDEX idx_provider_access_tokens_group_id ON provider_access_tokens(group_id);
@@ -112,8 +127,11 @@ VALUES ('Root Organization', 'Root Company');
 INSERT INTO groups (organization_id, name, is_protected)
 VALUES (1, 'Root Group', TRUE);
 
-INSERT INTO roles (group_id, name, is_admin, is_protected)
+INSERT INTO roles (organization_id, name, is_admin, is_protected)
 VALUES (1, 'Role Role', TRUE, TRUE);
 
-INSERT INTO users (role_id, email, username, password, first_name, last_name, is_protected, needs_password_change)
+INSERT INTO users (organization_id, email, username, password, first_name, last_name, is_protected, needs_password_change)
 VALUES (1, 'root@localhost', 'root', '$argon2id$v=19$m=16,t=2,p=1$c2VjcmV0aGFzaA$WP4Vqo6QtHBY+n0x99R81Q', 'Root', 'Admin', TRUE, FALSE);   -- password is P4ssw@rd
+
+INSERT INTO user_groups (user_id, group_id) VALUES (1, 1);
+INSERT INTO user_roles (user_id, role_id) VALUES (1, 1);

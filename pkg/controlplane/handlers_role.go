@@ -16,6 +16,7 @@ package controlplane
 
 import (
 	"context"
+	"database/sql"
 	"fmt"
 
 	"github.com/go-playground/validator/v10"
@@ -28,8 +29,7 @@ import (
 
 // CreateRoleValidation is a struct for validating the CreateRole request
 type CreateRoleValidation struct {
-	GroupId int32  `db:"group_id" validate:"required"`
-	Name    string `db:"name" validate:"required"`
+	Name string `db:"name" validate:"required"`
 }
 
 // CreateRole is a service for creating an organization
@@ -37,13 +37,13 @@ func (s *Server) CreateRole(ctx context.Context,
 	in *pb.CreateRoleRequest) (*pb.CreateRoleResponse, error) {
 	// validate that the company and name are not empty
 	validator := validator.New()
-	err := validator.Struct(CreateRoleValidation{GroupId: in.GroupId, Name: in.Name})
+	err := validator.Struct(CreateRoleValidation{Name: in.Name})
 	if err != nil {
 		return nil, err
 	}
 
 	// check if user is authorized
-	if !IsRequestAuthorized(ctx, in.GroupId) {
+	if !IsRequestAuthorized(ctx, in.OrganizationId) {
 		return nil, status.Errorf(codes.PermissionDenied, "user is not authorized to access this resource")
 	}
 
@@ -57,17 +57,25 @@ func (s *Server) CreateRole(ctx context.Context,
 		in.IsProtected = &isProtected
 	}
 
-	role, err := s.store.CreateRole(ctx, db.CreateRoleParams{GroupID: in.GroupId,
-		Name: in.Name, IsAdmin: *in.IsAdmin, IsProtected: *in.IsProtected})
+	var group sql.NullInt32
+	if in.GroupId == nil {
+		group = sql.NullInt32{Int32: 0, Valid: false}
+	} else {
+		group = sql.NullInt32{Int32: *in.GroupId, Valid: true}
+	}
+
+	role, err := s.store.CreateRole(ctx, db.CreateRoleParams{OrganizationID: in.OrganizationId,
+		GroupID: group, Name: in.Name, IsAdmin: *in.IsAdmin, IsProtected: *in.IsProtected})
 	if err != nil {
 		return nil, err
 	}
 
 	return &pb.CreateRoleResponse{Id: role.ID, Name: role.Name,
 		IsAdmin: role.IsAdmin, IsProtected: role.IsProtected,
-		GroupId:   role.GroupID,
-		CreatedAt: timestamppb.New(role.CreatedAt),
-		UpdatedAt: timestamppb.New(role.UpdatedAt)}, nil
+		OrganizationId: role.OrganizationID,
+		GroupId:        &role.GroupID.Int32,
+		CreatedAt:      timestamppb.New(role.CreatedAt),
+		UpdatedAt:      timestamppb.New(role.UpdatedAt)}, nil
 }
 
 type deleteRoleValidation struct {
@@ -90,7 +98,7 @@ func (s *Server) DeleteRole(ctx context.Context,
 	}
 
 	// check if user is authorized
-	if !IsRequestAuthorized(ctx, role.GroupID) {
+	if !IsRequestAuthorized(ctx, role.OrganizationID) {
 		return nil, status.Errorf(codes.PermissionDenied, "user is not authorized to access this resource")
 	}
 
@@ -106,8 +114,8 @@ func (s *Server) DeleteRole(ctx context.Context,
 
 	// if we do not force the deletion, we need to check if there are users
 	if !*in.Force {
-		// list users belonging to that role
-		users, err := s.store.ListUsersByRoleID(ctx, in.Id)
+		// list users associated with that role
+		users, err := s.store.ListUsersByRoleId(ctx, in.Id)
 		if err != nil {
 			return nil, err
 		}
@@ -118,7 +126,7 @@ func (s *Server) DeleteRole(ctx context.Context,
 		}
 	}
 
-	// otherwise we delete, and delete users in cascade
+	// otherwise we delete, and delete association in cascade
 	err = s.store.DeleteRole(ctx, in.Id)
 	if err != nil {
 		return nil, err
@@ -130,12 +138,17 @@ func (s *Server) DeleteRole(ctx context.Context,
 // GetRoles is a service for getting roles
 func (s *Server) GetRoles(ctx context.Context,
 	in *pb.GetRolesRequest) (*pb.GetRolesResponse, error) {
+<<<<<<< HEAD
 	if in.GroupId == 0 {
 		return nil, status.Error(codes.InvalidArgument, "group id is required")
+=======
+	if in.OrganizationId == 0 {
+		return nil, fmt.Errorf("organization id is required")
+>>>>>>> dae1c99 (feat: modify organization of users, groups and roles)
 	}
 
 	// check if user is authorized
-	if !IsRequestAuthorized(ctx, in.GroupId) {
+	if !IsRequestAuthorized(ctx, in.OrganizationId) {
 		return nil, status.Errorf(codes.PermissionDenied, "user is not authorized to access this resource")
 	}
 
@@ -150,9 +163,9 @@ func (s *Server) GetRoles(ctx context.Context,
 	}
 
 	roles, err := s.store.ListRoles(ctx, db.ListRolesParams{
-		GroupID: in.GroupId,
-		Limit:   *in.Limit,
-		Offset:  *in.Offset,
+		OrganizationID: in.OrganizationId,
+		Limit:          *in.Limit,
+		Offset:         *in.Offset,
 	})
 	if err != nil {
 		return nil, status.Errorf(codes.Unknown, "failed to get roles: %s", err)
@@ -162,13 +175,14 @@ func (s *Server) GetRoles(ctx context.Context,
 	resp.Roles = make([]*pb.RoleRecord, 0, len(roles))
 	for _, role := range roles {
 		resp.Roles = append(resp.Roles, &pb.RoleRecord{
-			Id:          role.ID,
-			GroupId:     role.GroupID,
-			Name:        role.Name,
-			IsAdmin:     role.IsAdmin,
-			IsProtected: role.IsProtected,
-			CreatedAt:   timestamppb.New(role.CreatedAt),
-			UpdatedAt:   timestamppb.New(role.UpdatedAt),
+			Id:             role.ID,
+			OrganizationId: role.OrganizationID,
+			GroupId:        &role.GroupID.Int32,
+			Name:           role.Name,
+			IsAdmin:        role.IsAdmin,
+			IsProtected:    role.IsProtected,
+			CreatedAt:      timestamppb.New(role.CreatedAt),
+			UpdatedAt:      timestamppb.New(role.UpdatedAt),
 		})
 	}
 
@@ -188,19 +202,20 @@ func (s *Server) GetRoleById(ctx context.Context,
 	}
 
 	// check if user is authorized
-	if !IsRequestAuthorized(ctx, role.GroupID) {
+	if !IsRequestAuthorized(ctx, role.OrganizationID) {
 		return nil, status.Errorf(codes.PermissionDenied, "user is not authorized to access this resource")
 	}
 
 	var resp pb.GetRoleByIdResponse
 	resp.Role = &pb.RoleRecord{
-		Id:          role.ID,
-		GroupId:     role.GroupID,
-		Name:        role.Name,
-		IsAdmin:     role.IsAdmin,
-		IsProtected: role.IsProtected,
-		CreatedAt:   timestamppb.New(role.CreatedAt),
-		UpdatedAt:   timestamppb.New(role.UpdatedAt),
+		Id:             role.ID,
+		OrganizationId: role.OrganizationID,
+		GroupId:        &role.GroupID.Int32,
+		Name:           role.Name,
+		IsAdmin:        role.IsAdmin,
+		IsProtected:    role.IsProtected,
+		CreatedAt:      timestamppb.New(role.CreatedAt),
+		UpdatedAt:      timestamppb.New(role.UpdatedAt),
 	}
 
 	return &resp, nil
@@ -209,27 +224,33 @@ func (s *Server) GetRoleById(ctx context.Context,
 // GetRoleByName is a service for getting a role by name
 func (s *Server) GetRoleByName(ctx context.Context,
 	in *pb.GetRoleByNameRequest) (*pb.GetRoleByNameResponse, error) {
-	if in.GroupId == 0 {
-		return nil, status.Error(codes.InvalidArgument, "group id is required")
+	// check if user is authorized
+	if !IsRequestAuthorized(ctx, in.OrganizationId) {
+		return nil, status.Errorf(codes.PermissionDenied, "user is not authorized to access this resource")
+	}
+
+	if in.OrganizationId == 0 {
+		return nil, fmt.Errorf("organization id is required")
 	}
 	if in.Name == "" {
 		return nil, status.Error(codes.InvalidArgument, "role name is required")
 	}
 
-	role, err := s.store.GetRoleByName(ctx, db.GetRoleByNameParams{GroupID: in.GroupId, Name: in.Name})
+	role, err := s.store.GetRoleByName(ctx, db.GetRoleByNameParams{OrganizationID: in.OrganizationId, Name: in.Name})
 	if err != nil {
 		return nil, status.Errorf(codes.Unknown, "failed to get role: %s", err)
 	}
 
 	var resp pb.GetRoleByNameResponse
 	resp.Role = &pb.RoleRecord{
-		Id:          role.ID,
-		GroupId:     role.GroupID,
-		Name:        role.Name,
-		IsAdmin:     role.IsAdmin,
-		IsProtected: role.IsProtected,
-		CreatedAt:   timestamppb.New(role.CreatedAt),
-		UpdatedAt:   timestamppb.New(role.UpdatedAt),
+		Id:             role.ID,
+		OrganizationId: role.OrganizationID,
+		GroupId:        &role.GroupID.Int32,
+		Name:           role.Name,
+		IsAdmin:        role.IsAdmin,
+		IsProtected:    role.IsProtected,
+		CreatedAt:      timestamppb.New(role.CreatedAt),
+		UpdatedAt:      timestamppb.New(role.UpdatedAt),
 	}
 
 	return &resp, nil

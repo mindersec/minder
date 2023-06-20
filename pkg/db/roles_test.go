@@ -31,11 +31,11 @@ import (
 )
 
 // A helper function to create a random role
-func createRandomRole(t *testing.T, group int32) Role {
+func createRandomRole(t *testing.T, org int32) Role {
 	seed := time.Now().UnixNano()
 	arg := CreateRoleParams{
-		GroupID: group,
-		Name:    util.RandomName(seed),
+		OrganizationID: org,
+		Name:           util.RandomName(seed),
 	}
 
 	role, err := testQueries.CreateRole(context.Background(), arg)
@@ -45,7 +45,7 @@ func createRandomRole(t *testing.T, group int32) Role {
 	require.Equal(t, arg.Name, role.Name)
 
 	require.NotZero(t, role.ID)
-	require.NotZero(t, role.GroupID)
+	require.NotZero(t, role.OrganizationID)
 	require.NotZero(t, role.CreatedAt)
 	require.NotZero(t, role.UpdatedAt)
 
@@ -54,14 +54,12 @@ func createRandomRole(t *testing.T, group int32) Role {
 
 func TestRole(t *testing.T) {
 	org := createRandomOrganization(t)
-	group := createRandomGroup(t, org.ID)
-	createRandomRole(t, group.ID)
+	createRandomRole(t, org.ID)
 }
 
 func TestGetRole(t *testing.T) {
 	org := createRandomOrganization(t)
-	group := createRandomGroup(t, org.ID)
-	role1 := createRandomRole(t, group.ID)
+	role1 := createRandomRole(t, org.ID)
 
 	role2, err := testQueries.GetRoleByID(context.Background(), role1.ID)
 
@@ -81,14 +79,13 @@ func TestGetRole(t *testing.T) {
 func TestUpdateRole(t *testing.T) {
 	seed := time.Now().UnixNano()
 	org := createRandomOrganization(t)
-	group := createRandomGroup(t, org.ID)
-	role1 := createRandomRole(t, group.ID)
+	role1 := createRandomRole(t, org.ID)
 
 	arg := UpdateRoleParams{
-		ID:      role1.ID,
-		GroupID: group.ID,
-		Name:    util.RandomName(seed),
-		IsAdmin: true,
+		ID:             role1.ID,
+		OrganizationID: org.ID,
+		Name:           util.RandomName(seed),
+		IsAdmin:        true,
 	}
 
 	role2, err := testQueries.UpdateRole(context.Background(), arg)

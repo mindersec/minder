@@ -44,7 +44,7 @@ within a mediator control plane.`,
 		}
 	},
 	Run: func(cmd *cobra.Command, args []string) {
-		// create the role via GRPC
+		org := util.GetConfigValue("org-id", "og-id", cmd, int32(0)).(int32)
 		group := util.GetConfigValue("group-id", "group-id", cmd, int32(0)).(int32)
 		name := util.GetConfigValue("name", "name", cmd, "")
 		isAdmin := util.GetConfigValue("is_admin", "is_admin", cmd, false).(bool)
@@ -64,10 +64,11 @@ within a mediator control plane.`,
 		protectedPtr := &isProtected
 
 		resp, err := client.CreateRole(ctx, &pb.CreateRoleRequest{
-			GroupId:     group,
-			Name:        name.(string),
-			IsAdmin:     adminPtr,
-			IsProtected: protectedPtr,
+			OrganizationId: org,
+			GroupId:        &group,
+			Name:           name.(string),
+			IsAdmin:        adminPtr,
+			IsProtected:    protectedPtr,
 		})
 		util.ExitNicelyOnError(err, "Error creating role")
 
@@ -85,12 +86,13 @@ func init() {
 	Role_createCmd.Flags().StringP("name", "n", "", "Name of the role")
 	Role_createCmd.Flags().BoolP("is_protected", "i", false, "Is the role protected")
 	Role_createCmd.Flags().BoolP("is_admin", "a", false, "Is it an admin role")
+	Role_createCmd.Flags().Int32P("org-id", "o", 0, "ID of the organization which owns the role")
 	Role_createCmd.Flags().Int32P("group-id", "g", 0, "ID of the group which owns the role")
 	if err := Role_createCmd.MarkFlagRequired("name"); err != nil {
 		fmt.Fprintf(os.Stderr, "Error marking flag as required: %s\n", err)
 		os.Exit(1)
 	}
-	if err := Role_createCmd.MarkFlagRequired("group-id"); err != nil {
+	if err := Role_createCmd.MarkFlagRequired("org-id"); err != nil {
 		fmt.Fprintf(os.Stderr, "Error marking flag as required: %s\n", err)
 		os.Exit(1)
 	}

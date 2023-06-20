@@ -57,9 +57,11 @@ func TestCreateGroupDBMock(t *testing.T) {
 
 	// Create a new context and set the claims value
 	ctx := context.WithValue(context.Background(), TokenInfoKey, auth.UserClaims{
-		UserId:       1,
-		IsAdmin:      true,
-		IsSuperadmin: true,
+		UserId:         1,
+		OrganizationId: 1,
+		GroupIds:       []int32{1},
+		Roles: []auth.RoleInfo{
+			{RoleID: 1, IsAdmin: true, GroupID: 1, OrganizationID: 1}},
 	})
 
 	mockStore.EXPECT().
@@ -161,9 +163,11 @@ func TestCreateGroup_gRPC(t *testing.T) {
 
 	// Create a new context and set the claims value
 	ctx := context.WithValue(context.Background(), TokenInfoKey, auth.UserClaims{
-		UserId:       1,
-		IsAdmin:      true,
-		IsSuperadmin: true,
+		UserId:         1,
+		OrganizationId: 1,
+		GroupIds:       []int32{1},
+		Roles: []auth.RoleInfo{
+			{RoleID: 1, IsAdmin: true, GroupID: 1, OrganizationID: 1}},
 	})
 
 	for i := range testCases {
@@ -203,9 +207,11 @@ func TestDeleteGroupDBMock(t *testing.T) {
 
 	// Create a new context and set the claims value
 	ctx := context.WithValue(context.Background(), TokenInfoKey, auth.UserClaims{
-		UserId:       1,
-		IsAdmin:      true,
-		IsSuperadmin: true,
+		UserId:         1,
+		OrganizationId: 1,
+		GroupIds:       []int32{1},
+		Roles: []auth.RoleInfo{
+			{RoleID: 1, IsAdmin: true, GroupID: 1, OrganizationID: 1}},
 	})
 
 	mockStore.EXPECT().
@@ -276,9 +282,11 @@ func TestDeleteGroup_gRPC(t *testing.T) {
 
 	// Create a new context and set the claims value
 	ctx := context.WithValue(context.Background(), TokenInfoKey, auth.UserClaims{
-		UserId:       1,
-		IsAdmin:      true,
-		IsSuperadmin: true,
+		UserId:         1,
+		OrganizationId: 1,
+		GroupIds:       []int32{1},
+		Roles: []auth.RoleInfo{
+			{RoleID: 1, IsAdmin: true, GroupID: 1, OrganizationID: 1}},
 	})
 
 	for i := range testCases {
@@ -307,9 +315,11 @@ func TestGetGroupsDBMock(t *testing.T) {
 
 	// Create a new context and set the claims value
 	ctx := context.WithValue(context.Background(), TokenInfoKey, auth.UserClaims{
-		UserId:       1,
-		IsAdmin:      true,
-		IsSuperadmin: true,
+		UserId:         1,
+		OrganizationId: 1,
+		GroupIds:       []int32{1},
+		Roles: []auth.RoleInfo{
+			{RoleID: 1, IsAdmin: true, GroupID: 1, OrganizationID: 1}},
 	})
 
 	request := &pb.GetGroupsRequest{OrganizationId: 1}
@@ -421,9 +431,11 @@ func TestGetGroups_gRPC(t *testing.T) {
 		t.Run(tc.name, func(t *testing.T) {
 			// Create a new context and set the claims value
 			ctx := context.WithValue(context.Background(), TokenInfoKey, auth.UserClaims{
-				UserId:       1,
-				IsAdmin:      true,
-				IsSuperadmin: true,
+				UserId:         1,
+				OrganizationId: 1,
+				GroupIds:       []int32{1},
+				Roles: []auth.RoleInfo{
+					{RoleID: 1, IsAdmin: true, GroupID: 1, OrganizationID: 1}},
 			})
 
 			ctrl := gomock.NewController(t)
@@ -449,9 +461,11 @@ func TestGetGroupDBMock(t *testing.T) {
 	request := &pb.GetGroupByIdRequest{GroupId: 1}
 	// Create a new context and set the claims value
 	ctx := context.WithValue(context.Background(), TokenInfoKey, auth.UserClaims{
-		UserId:       1,
-		IsAdmin:      true,
-		IsSuperadmin: true,
+		UserId:         1,
+		OrganizationId: 1,
+		GroupIds:       []int32{1},
+		Roles: []auth.RoleInfo{
+			{RoleID: 1, IsAdmin: true, GroupID: 1, OrganizationID: 1}},
 	})
 
 	expectedGroup := db.Group{
@@ -491,9 +505,11 @@ func TestGetNonExistingGroupDBMock(t *testing.T) {
 	request := &pb.GetGroupByIdRequest{GroupId: 5}
 	// Create a new context and set the claims value
 	ctx := context.WithValue(context.Background(), TokenInfoKey, auth.UserClaims{
-		UserId:       1,
-		IsAdmin:      true,
-		IsSuperadmin: true,
+		UserId:         1,
+		OrganizationId: 1,
+		GroupIds:       []int32{1},
+		Roles: []auth.RoleInfo{
+			{RoleID: 1, IsAdmin: true, GroupID: 1, OrganizationID: 1}},
 	})
 
 	mockStore.EXPECT().GetGroupByID(ctx, gomock.Any()).
@@ -566,9 +582,11 @@ func TestGetGroup_gRPC(t *testing.T) {
 
 	// Create a new context and set the claims value
 	ctx := context.WithValue(context.Background(), TokenInfoKey, auth.UserClaims{
-		UserId:       1,
-		IsAdmin:      true,
-		IsSuperadmin: true,
+		UserId:         1,
+		OrganizationId: 1,
+		GroupIds:       []int32{1},
+		Roles: []auth.RoleInfo{
+			{RoleID: 1, IsAdmin: true, GroupID: 1, OrganizationID: 1}},
 	})
 
 	for i := range testCases {

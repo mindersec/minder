@@ -40,24 +40,22 @@ func stringToNullString(s string) sql.NullString {
 
 func createRandomUser(t *testing.T, org Organization) User {
 	seed := time.Now().UnixNano()
-	group := createRandomGroup(t, org.ID)
-	role := createRandomRole(t, group.ID)
 
 	arg := CreateUserParams{
-		RoleID:    role.ID,
-		Email:     stringToNullString(util.RandomEmail(seed)),
-		Username:  util.RandomString(10, seed),
-		Password:  util.RandomPassword(10, seed),
-		FirstName: stringToNullString(util.RandomName(seed)),
-		LastName:  stringToNullString(util.RandomName(seed)),
+		OrganizationID: org.ID,
+		Email:          stringToNullString(util.RandomEmail(seed)),
+		Username:       util.RandomString(10, seed),
+		Password:       util.RandomPassword(10, seed),
+		FirstName:      stringToNullString(util.RandomName(seed)),
+		LastName:       stringToNullString(util.RandomName(seed)),
 	}
 
 	user, err := testQueries.CreateUser(context.Background(), arg)
 	require.NoError(t, err)
 	require.NotEmpty(t, user)
 
-	require.Equal(t, arg.RoleID, user.RoleID)
 	require.Equal(t, arg.Email, user.Email)
+	require.Equal(t, arg.OrganizationID, user.OrganizationID)
 	require.Equal(t, arg.Username, user.Username)
 	require.Equal(t, arg.Password, user.Password)
 	require.Equal(t, arg.FirstName, user.FirstName)
@@ -86,7 +84,7 @@ func TestGetUser(t *testing.T) {
 	require.NotEmpty(t, user2)
 
 	require.Equal(t, user1.ID, user2.ID)
-	require.Equal(t, user1.RoleID, user2.RoleID)
+	require.Equal(t, user1.OrganizationID, user2.OrganizationID)
 	require.Equal(t, user1.Email, user2.Email)
 	require.Equal(t, user1.Username, user2.Username)
 	require.Equal(t, user1.Password, user2.Password)
@@ -108,7 +106,6 @@ func TestUpdateUser(t *testing.T) {
 
 	arg := UpdateUserParams{
 		ID:        user1.ID,
-		RoleID:    user1.RoleID,
 		Email:     stringToNullString(util.RandomEmail(seed)),
 		Username:  util.RandomString(10, seed),
 		Password:  util.RandomString(10, seed),
@@ -121,7 +118,6 @@ func TestUpdateUser(t *testing.T) {
 	require.NotEmpty(t, user2)
 
 	require.Equal(t, arg.ID, user2.ID)
-	require.Equal(t, arg.RoleID, user2.RoleID)
 	require.Equal(t, arg.Email, user2.Email)
 	require.Equal(t, arg.Username, user2.Username)
 	require.Equal(t, arg.Password, user2.Password)

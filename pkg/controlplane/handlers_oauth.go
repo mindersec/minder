@@ -40,15 +40,17 @@ import (
 // and a boolean indicating whether the client is a CLI or web client
 func (s *Server) GetAuthorizationURL(ctx context.Context,
 	req *pb.GetAuthorizationURLRequest) (*pb.GetAuthorizationURLResponse, error) {
+	// check if user is authorized
+	if !IsRequestAuthorized(ctx, req.GroupId) {
+		return nil, status.Errorf(codes.PermissionDenied, "user is not authorized to access this resource")
+	}
+
 	// Configure tracing
 	// trace call to AuthCodeURL
 	span := trace.SpanFromContext(ctx)
 	span.SetName("server.GetAuthorizationURL")
 	span.SetAttributes(attribute.Key("provider").String(req.Provider))
 	defer span.End()
-
-	// Get the user claims from the JWT token
-	claims, _ := ctx.Value(TokenInfoKey).(auth.UserClaims)
 
 	// Create a new OAuth2 config for the given provider
 	oauthConfig, err := auth.NewOAuthConfig(req.Provider, req.Cli)
@@ -63,7 +65,7 @@ func (s *Server) GetAuthorizationURL(ctx context.Context,
 	}
 
 	groupID := sql.NullInt32{
-		Int32: claims.GroupId,
+		Int32: req.GroupId,
 		Valid: true,
 	}
 
@@ -244,11 +246,14 @@ func decryptToken(encToken string) (oauth2.Token, error) {
 }
 
 // GetProviderAccessToken returns the access token for providers
-func GetProviderAccessToken(ctx context.Context, store db.Store) (oauth2.Token, error) {
-	claims, _ := ctx.Value((TokenInfoKey)).(auth.UserClaims)
+func GetProviderAccessToken(ctx context.Context, store db.Store, groupId int32) (oauth2.Token, error) {
+	// check if user is authorized
+	if !IsRequestAuthorized(ctx, groupId) {
+		return oauth2.Token{}, status.Errorf(codes.PermissionDenied, "user is not authorized to access this resource")
+	}
 
 	encToken, err := store.GetAccessTokenByGroupID(ctx,
-		db.GetAccessTokenByGroupIDParams{Provider: auth.Github, GroupID: claims.GroupId})
+		db.GetAccessTokenByGroupIDParams{Provider: auth.Github, GroupID: groupId})
 	if err != nil {
 		return oauth2.Token{}, err
 	}
@@ -338,12 +343,13 @@ func (s *Server) StoreProviderToken(ctx context.Context,
 	if in.Provider != auth.Github {
 		return nil, status.Errorf(codes.InvalidArgument, "provider not supported: %v", in.Provider)
 	}
-
-	// Get the user claims from the JWT token
-	claims, _ := ctx.Value(TokenInfoKey).(auth.UserClaims)
+	// check if user is authorized
+	if !IsRequestAuthorized(ctx, in.GroupId) {
+		return nil, status.Errorf(codes.PermissionDenied, "user is not authorized to access this resource")
+	}
 
 	// check if user is authorized
-	if !IsRequestAuthorized(ctx, claims.GroupId) {
+	if !IsRequestAuthorized(ctx, in.GroupId) {
 		return nil, status.Errorf(codes.PermissionDenied, "user is not authorized to access this resource")
 	}
 
@@ -376,7 +382,7 @@ func (s *Server) StoreProviderToken(ctx context.Context,
 	}
 	encodedToken := base64.StdEncoding.EncodeToString(encryptedToken)
 
-	_, err = s.store.CreateAccessToken(ctx, db.CreateAccessTokenParams{GroupID: claims.GroupId, Provider: in.Provider,
+	_, err = s.store.CreateAccessToken(ctx, db.CreateAccessTokenParams{GroupID: in.GroupId, Provider: in.Provider,
 		EncryptedToken: encodedToken, ExpirationTime: expiryTime})
 
 	if err != nil {

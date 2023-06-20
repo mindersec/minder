@@ -32,10 +32,10 @@ import (
 )
 
 type createUserValidation struct {
-	RoleId   int32  `db:"role_id" validate:"required"`
-	Email    string `db:"email" validate:"omitempty,email"`
-	Username string `db:"username" validate:"required"`
-	Password string `validate:"omitempty,min=8,containsany=_.;?&@"`
+	OrganizationId int32  `db:"organization_id" validate:"required"`
+	Email          string `db:"email" validate:"omitempty,email"`
+	Username       string `db:"username" validate:"required"`
+	Password       string `validate:"omitempty,min=8,containsany=_.;?&@"`
 }
 
 func stringToNullString(s *string) *sql.NullString {
@@ -46,12 +46,14 @@ func stringToNullString(s *string) *sql.NullString {
 }
 
 // CreateUser is a service for creating an organization
+//
+//gocyclo:ignore
 func (s *Server) CreateUser(ctx context.Context,
 	in *pb.CreateUserRequest) (*pb.CreateUserResponse, error) {
 
 	// validate that the company and name are not empty, and email is valid if exists
 	validator := validator.New()
-	format := createUserValidation{RoleId: in.RoleId, Username: in.Username}
+	format := createUserValidation{OrganizationId: in.OrganizationId, Username: in.Username}
 
 	if in.Email != nil {
 		format.Email = *in.Email
@@ -90,21 +92,46 @@ func (s *Server) CreateUser(ctx context.Context,
 		return nil, err
 	}
 
-	// we need to check if the role exists and the group it has
-	role, err := s.store.GetRoleByID(ctx, in.RoleId)
-	if err != nil {
-		return nil, status.Errorf(codes.NotFound, "role not found")
-	}
 	// check if user is authorized
-	if !IsRequestAuthorized(ctx, role.GroupID) {
+	if !IsRequestAuthorized(ctx, in.OrganizationId) {
 		return nil, status.Errorf(codes.PermissionDenied, "user is not authorized to access this resource")
+	}
+
+	// if we have group ids we check if they exist
+	if in.GroupIds != nil {
+		for _, id := range in.GroupIds {
+			group, err := s.store.GetGroupByID(ctx, id)
+			if err != nil {
+				return nil, status.Errorf(codes.NotFound, "group not found")
+			}
+
+			// group must belong to org
+			if group.OrganizationID != in.OrganizationId {
+				return nil, status.Errorf(codes.InvalidArgument, "group does not belong to organization")
+			}
+		}
+	}
+
+	// if we have role ids we check if they exist
+	if in.RoleIds != nil {
+		for _, id := range in.RoleIds {
+			role, err := s.store.GetRoleByID(ctx, id)
+			if err != nil {
+				return nil, status.Errorf(codes.NotFound, "role not found")
+			}
+
+			// role must belong to org
+			if role.OrganizationID != in.OrganizationId {
+				return nil, status.Errorf(codes.InvalidArgument, "role does not belong to organization")
+			}
+		}
 	}
 
 	needsPassPtr := false
 	if in.NeedsPasswordChange != nil {
 		needsPassPtr = *in.NeedsPasswordChange
 	}
-	user, err := s.store.CreateUser(ctx, db.CreateUserParams{RoleID: in.RoleId,
+	user, err := s.store.CreateUser(ctx, db.CreateUserParams{OrganizationID: in.OrganizationId,
 		Email: *stringToNullString(in.Email), Username: in.Username, Password: pHash,
 		FirstName: *stringToNullString(in.FirstName), LastName: *stringToNullString(in.LastName),
 		IsProtected: *in.IsProtected, NeedsPasswordChange: needsPassPtr})
@@ -112,7 +139,21 @@ func (s *Server) CreateUser(ctx context.Context,
 		return nil, err
 	}
 
-	return &pb.CreateUserResponse{Id: user.ID, RoleId: user.RoleID, Email: &user.Email.String,
+	// now attach the groups and roles
+	for _, id := range in.GroupIds {
+		_, err := s.store.AddUserGroup(ctx, db.AddUserGroupParams{UserID: user.ID, GroupID: id})
+		if err != nil {
+			return nil, err
+		}
+	}
+	for _, id := range in.RoleIds {
+		_, err := s.store.AddUserRole(ctx, db.AddUserRoleParams{UserID: user.ID, RoleID: id})
+		if err != nil {
+			return nil, err
+		}
+	}
+
+	return &pb.CreateUserResponse{Id: user.ID, OrganizationId: user.OrganizationID, Email: &user.Email.String,
 		Username: user.Username, Password: *in.Password, FirstName: &user.FirstName.String,
 		LastName: &user.LastName.String, IsProtected: &user.IsProtected,
 		NeedsPasswordChange: &user.NeedsPasswordChange, CreatedAt: timestamppb.New(user.CreatedAt),
@@ -138,13 +179,8 @@ func (s *Server) DeleteUser(ctx context.Context,
 		return nil, err
 	}
 
-	// need to check the role for the user
-	role, err := s.store.GetRoleByID(ctx, user.RoleID)
-	if err != nil {
-		return nil, status.Errorf(codes.NotFound, "role not found")
-	}
 	// check if user is authorized
-	if !IsRequestAuthorized(ctx, role.GroupID) {
+	if !IsRequestAuthorized(ctx, user.OrganizationID) {
 		return nil, status.Errorf(codes.PermissionDenied, "user is not authorized to access this resource")
 	}
 
@@ -169,19 +205,6 @@ func (s *Server) DeleteUser(ctx context.Context,
 // GetUsers is a service for getting a list of users
 func (s *Server) GetUsers(ctx context.Context,
 	in *pb.GetUsersRequest) (*pb.GetUsersResponse, error) {
-	if in.RoleId == 0 {
-		return nil, status.Error(codes.InvalidArgument, "role id is required")
-	}
-
-	// check if role exists
-	role, err := s.store.GetRoleByID(ctx, in.RoleId)
-	if err != nil {
-		return nil, status.Errorf(codes.NotFound, "role not found")
-	}
-	// check if user is authorized
-	if !IsRequestAuthorized(ctx, role.GroupID) {
-		return nil, status.Errorf(codes.PermissionDenied, "user is not authorized to access this resource")
-	}
 
 	// define default values for limit and offset
 	if in.Limit == nil || *in.Limit == -1 {
@@ -194,7 +217,6 @@ func (s *Server) GetUsers(ctx context.Context,
 	}
 
 	users, err := s.store.ListUsers(ctx, db.ListUsersParams{
-		RoleID: in.RoleId,
 		Limit:  *in.Limit,
 		Offset: *in.Offset,
 	})
@@ -207,7 +229,7 @@ func (s *Server) GetUsers(ctx context.Context,
 	for _, user := range users {
 		resp.Users = append(resp.Users, &pb.UserRecord{
 			Id:                  user.ID,
-			RoleId:              user.RoleID,
+			OrganizationId:      user.OrganizationID,
 			Email:               &user.Email.String,
 			Username:            user.Username,
 			FirstName:           &user.FirstName.String,
@@ -234,20 +256,15 @@ func (s *Server) GetUserById(ctx context.Context,
 		return nil, status.Errorf(codes.Unknown, "failed to get user: %s", err)
 	}
 
-	// check if role exists
-	role, err := s.store.GetRoleByID(ctx, user.RoleID)
-	if err != nil {
-		return nil, status.Errorf(codes.NotFound, "role not found")
-	}
 	// check if user is authorized
-	if !IsRequestAuthorized(ctx, role.GroupID) {
+	if !IsRequestAuthorized(ctx, user.OrganizationID) {
 		return nil, status.Errorf(codes.PermissionDenied, "user is not authorized to access this resource")
 	}
 
 	var resp pb.GetUserByIdResponse
 	resp.User = &pb.UserRecord{
 		Id:                  user.ID,
-		RoleId:              user.RoleID,
+		OrganizationId:      user.OrganizationID,
 		Email:               &user.Email.String,
 		Username:            user.Username,
 		FirstName:           &user.FirstName.String,
@@ -273,20 +290,15 @@ func (s *Server) GetUserByUsername(ctx context.Context,
 		return nil, status.Errorf(codes.Unknown, "failed to get user: %s", err)
 	}
 
-	// check if role exists
-	role, err := s.store.GetRoleByID(ctx, user.RoleID)
-	if err != nil {
-		return nil, status.Errorf(codes.NotFound, "role not found")
-	}
 	// check if user is authorized
-	if !IsRequestAuthorized(ctx, role.GroupID) {
+	if !IsRequestAuthorized(ctx, user.OrganizationID) {
 		return nil, status.Errorf(codes.PermissionDenied, "user is not authorized to access this resource")
 	}
 
 	var resp pb.GetUserByUserNameResponse
 	resp.User = &pb.UserRecord{
 		Id:                  user.ID,
-		RoleId:              user.RoleID,
+		OrganizationId:      user.OrganizationID,
 		Email:               &user.Email.String,
 		Username:            user.Username,
 		Password:            user.Password,
@@ -312,20 +324,15 @@ func (s *Server) GetUserByEmail(ctx context.Context,
 		return nil, status.Errorf(codes.Unknown, "failed to get user: %s", err)
 	}
 
-	// check if role exists
-	role, err := s.store.GetRoleByID(ctx, user.RoleID)
-	if err != nil {
-		return nil, status.Errorf(codes.NotFound, "role not found")
-	}
 	// check if user is authorized
-	if !IsRequestAuthorized(ctx, role.GroupID) {
+	if !IsRequestAuthorized(ctx, user.OrganizationID) {
 		return nil, status.Errorf(codes.PermissionDenied, "user is not authorized to access this resource")
 	}
 
 	var resp pb.GetUserByEmailResponse
 	resp.User = &pb.UserRecord{
 		Id:                  user.ID,
-		RoleId:              user.RoleID,
+		OrganizationId:      user.OrganizationID,
 		Email:               &user.Email.String,
 		Username:            user.Username,
 		FirstName:           &user.FirstName.String,

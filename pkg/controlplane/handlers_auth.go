@@ -69,13 +69,24 @@ func generateToken(ctx context.Context, store db.Store, userId int32) (string, s
 		return "", "", 0, 0, emptyClaims, fmt.Errorf("failed to generate token")
 	}
 
+	var roles []auth.RoleInfo
+	if roleInfo, ok := userInfo.RoleInfo.([]auth.RoleInfo); ok {
+		roles = roleInfo
+	} else {
+		roles = []auth.RoleInfo{}
+	}
+
+	var groups []int32
+	if userInfo.GroupIds != nil {
+		groups = userInfo.GroupIds.([]int32)
+	} else {
+		groups = []int32{}
+	}
 	claims := auth.UserClaims{
 		UserId:         userId,
-		RoleId:         userInfo.RoleID,
-		GroupId:        userInfo.GroupID,
+		Roles:          roles,
+		GroupIds:       groups,
 		OrganizationId: userInfo.OrganizationID,
-		IsAdmin:        userInfo.IsAdmin,
-		IsSuperadmin:   (userInfo.OrganizationID == 1 && userInfo.IsAdmin),
 	}
 
 	// Convert the key bytes to a string

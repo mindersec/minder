@@ -1641,11 +1641,13 @@ var GroupService_ServiceDesc = grpc.ServiceDesc{
 }
 
 const (
-	RoleService_CreateRole_FullMethodName    = "/mediator.v1.RoleService/CreateRole"
-	RoleService_DeleteRole_FullMethodName    = "/mediator.v1.RoleService/DeleteRole"
-	RoleService_GetRoles_FullMethodName      = "/mediator.v1.RoleService/GetRoles"
-	RoleService_GetRoleById_FullMethodName   = "/mediator.v1.RoleService/GetRoleById"
-	RoleService_GetRoleByName_FullMethodName = "/mediator.v1.RoleService/GetRoleByName"
+	RoleService_CreateRole_FullMethodName             = "/mediator.v1.RoleService/CreateRole"
+	RoleService_DeleteRole_FullMethodName             = "/mediator.v1.RoleService/DeleteRole"
+	RoleService_GetRoles_FullMethodName               = "/mediator.v1.RoleService/GetRoles"
+	RoleService_GetRolesByOrganization_FullMethodName = "/mediator.v1.RoleService/GetRolesByOrganization"
+	RoleService_GetRolesByGroup_FullMethodName        = "/mediator.v1.RoleService/GetRolesByGroup"
+	RoleService_GetRoleById_FullMethodName            = "/mediator.v1.RoleService/GetRoleById"
+	RoleService_GetRoleByName_FullMethodName          = "/mediator.v1.RoleService/GetRoleByName"
 )
 
 // RoleServiceClient is the client API for RoleService service.
@@ -1655,6 +1657,8 @@ type RoleServiceClient interface {
 	CreateRole(ctx context.Context, in *CreateRoleRequest, opts ...grpc.CallOption) (*CreateRoleResponse, error)
 	DeleteRole(ctx context.Context, in *DeleteRoleRequest, opts ...grpc.CallOption) (*DeleteRoleResponse, error)
 	GetRoles(ctx context.Context, in *GetRolesRequest, opts ...grpc.CallOption) (*GetRolesResponse, error)
+	GetRolesByOrganization(ctx context.Context, in *GetRolesByOrgRequest, opts ...grpc.CallOption) (*GetRolesByOrgResponse, error)
+	GetRolesByGroup(ctx context.Context, in *GetRolesByGroupRequest, opts ...grpc.CallOption) (*GetRolesByGroupResponse, error)
 	GetRoleById(ctx context.Context, in *GetRoleByIdRequest, opts ...grpc.CallOption) (*GetRoleByIdResponse, error)
 	GetRoleByName(ctx context.Context, in *GetRoleByNameRequest, opts ...grpc.CallOption) (*GetRoleByNameResponse, error)
 }
@@ -1694,6 +1698,24 @@ func (c *roleServiceClient) GetRoles(ctx context.Context, in *GetRolesRequest, o
 	return out, nil
 }
 
+func (c *roleServiceClient) GetRolesByOrganization(ctx context.Context, in *GetRolesByOrgRequest, opts ...grpc.CallOption) (*GetRolesByOrgResponse, error) {
+	out := new(GetRolesByOrgResponse)
+	err := c.cc.Invoke(ctx, RoleService_GetRolesByOrganization_FullMethodName, in, out, opts...)
+	if err != nil {
+		return nil, err
+	}
+	return out, nil
+}
+
+func (c *roleServiceClient) GetRolesByGroup(ctx context.Context, in *GetRolesByGroupRequest, opts ...grpc.CallOption) (*GetRolesByGroupResponse, error) {
+	out := new(GetRolesByGroupResponse)
+	err := c.cc.Invoke(ctx, RoleService_GetRolesByGroup_FullMethodName, in, out, opts...)
+	if err != nil {
+		return nil, err
+	}
+	return out, nil
+}
+
 func (c *roleServiceClient) GetRoleById(ctx context.Context, in *GetRoleByIdRequest, opts ...grpc.CallOption) (*GetRoleByIdResponse, error) {
 	out := new(GetRoleByIdResponse)
 	err := c.cc.Invoke(ctx, RoleService_GetRoleById_FullMethodName, in, out, opts...)
@@ -1719,6 +1741,8 @@ type RoleServiceServer interface {
 	CreateRole(context.Context, *CreateRoleRequest) (*CreateRoleResponse, error)
 	DeleteRole(context.Context, *DeleteRoleRequest) (*DeleteRoleResponse, error)
 	GetRoles(context.Context, *GetRolesRequest) (*GetRolesResponse, error)
+	GetRolesByOrganization(context.Context, *GetRolesByOrgRequest) (*GetRolesByOrgResponse, error)
+	GetRolesByGroup(context.Context, *GetRolesByGroupRequest) (*GetRolesByGroupResponse, error)
 	GetRoleById(context.Context, *GetRoleByIdRequest) (*GetRoleByIdResponse, error)
 	GetRoleByName(context.Context, *GetRoleByNameRequest) (*GetRoleByNameResponse, error)
 	mustEmbedUnimplementedRoleServiceServer()
@@ -1736,6 +1760,12 @@ func (UnimplementedRoleServiceServer) DeleteRole(context.Context, *DeleteRoleReq
 }
 func (UnimplementedRoleServiceServer) GetRoles(context.Context, *GetRolesRequest) (*GetRolesResponse, error) {
 	return nil, status.Errorf(codes.Unimplemented, "method GetRoles not implemented")
+}
+func (UnimplementedRoleServiceServer) GetRolesByOrganization(context.Context, *GetRolesByOrgRequest) (*GetRolesByOrgResponse, error) {
+	return nil, status.Errorf(codes.Unimplemented, "method GetRolesByOrganization not implemented")
+}
+func (UnimplementedRoleServiceServer) GetRolesByGroup(context.Context, *GetRolesByGroupRequest) (*GetRolesByGroupResponse, error) {
+	return nil, status.Errorf(codes.Unimplemented, "method GetRolesByGroup not implemented")
 }
 func (UnimplementedRoleServiceServer) GetRoleById(context.Context, *GetRoleByIdRequest) (*GetRoleByIdResponse, error) {
 	return nil, status.Errorf(codes.Unimplemented, "method GetRoleById not implemented")
@@ -1810,6 +1840,42 @@ func _RoleService_GetRoles_Handler(srv interface{}, ctx context.Context, dec fun
 	return interceptor(ctx, in, info, handler)
 }
 
+func _RoleService_GetRolesByOrganization_Handler(srv interface{}, ctx context.Context, dec func(interface{}) error, interceptor grpc.UnaryServerInterceptor) (interface{}, error) {
+	in := new(GetRolesByOrgRequest)
+	if err := dec(in); err != nil {
+		return nil, err
+	}
+	if interceptor == nil {
+		return srv.(RoleServiceServer).GetRolesByOrganization(ctx, in)
+	}
+	info := &grpc.UnaryServerInfo{
+		Server:     srv,
+		FullMethod: RoleService_GetRolesByOrganization_FullMethodName,
+	}
+	handler := func(ctx context.Context, req interface{}) (interface{}, error) {
+		return srv.(RoleServiceServer).GetRolesByOrganization(ctx, req.(*GetRolesByOrgRequest))
+	}
+	return interceptor(ctx, in, info, handler)
+}
+
+func _RoleService_GetRolesByGroup_Handler(srv interface{}, ctx context.Context, dec func(interface{}) error, interceptor grpc.UnaryServerInterceptor) (interface{}, error) {
+	in := new(GetRolesByGroupRequest)
+	if err := dec(in); err != nil {
+		return nil, err
+	}
+	if interceptor == nil {
+		return srv.(RoleServiceServer).GetRolesByGroup(ctx, in)
+	}
+	info := &grpc.UnaryServerInfo{
+		Server:     srv,
+		FullMethod: RoleService_GetRolesByGroup_FullMethodName,
+	}
+	handler := func(ctx context.Context, req interface{}) (interface{}, error) {
+		return srv.(RoleServiceServer).GetRolesByGroup(ctx, req.(*GetRolesByGroupRequest))
+	}
+	return interceptor(ctx, in, info, handler)
+}
+
 func _RoleService_GetRoleById_Handler(srv interface{}, ctx context.Context, dec func(interface{}) error, interceptor grpc.UnaryServerInterceptor) (interface{}, error) {
 	in := new(GetRoleByIdRequest)
 	if err := dec(in); err != nil {
@@ -1866,6 +1932,14 @@ var RoleService_ServiceDesc = grpc.ServiceDesc{
 			Handler:    _RoleService_GetRoles_Handler,
 		},
 		{
+			MethodName: "GetRolesByOrganization",
+			Handler:    _RoleService_GetRolesByOrganization_Handler,
+		},
+		{
+			MethodName: "GetRolesByGroup",
+			Handler:    _RoleService_GetRolesByGroup_Handler,
+		},
+		{
 			MethodName: "GetRoleById",
 			Handler:    _RoleService_GetRoleById_Handler,
 		},
@@ -1879,13 +1953,15 @@ var RoleService_ServiceDesc = grpc.ServiceDesc{
 }
 
 const (
-	UserService_CreateUser_FullMethodName        = "/mediator.v1.UserService/CreateUser"
-	UserService_DeleteUser_FullMethodName        = "/mediator.v1.UserService/DeleteUser"
-	UserService_GetUsers_FullMethodName          = "/mediator.v1.UserService/GetUsers"
-	UserService_GetUserById_FullMethodName       = "/mediator.v1.UserService/GetUserById"
-	UserService_GetUserByUserName_FullMethodName = "/mediator.v1.UserService/GetUserByUserName"
-	UserService_GetUserByEmail_FullMethodName    = "/mediator.v1.UserService/GetUserByEmail"
-	UserService_UpdatePassword_FullMethodName    = "/mediator.v1.UserService/UpdatePassword"
+	UserService_CreateUser_FullMethodName             = "/mediator.v1.UserService/CreateUser"
+	UserService_DeleteUser_FullMethodName             = "/mediator.v1.UserService/DeleteUser"
+	UserService_GetUsers_FullMethodName               = "/mediator.v1.UserService/GetUsers"
+	UserService_GetUsersByOrganization_FullMethodName = "/mediator.v1.UserService/GetUsersByOrganization"
+	UserService_GetUsersByGroup_FullMethodName        = "/mediator.v1.UserService/GetUsersByGroup"
+	UserService_GetUserById_FullMethodName            = "/mediator.v1.UserService/GetUserById"
+	UserService_GetUserByUserName_FullMethodName      = "/mediator.v1.UserService/GetUserByUserName"
+	UserService_GetUserByEmail_FullMethodName         = "/mediator.v1.UserService/GetUserByEmail"
+	UserService_UpdatePassword_FullMethodName         = "/mediator.v1.UserService/UpdatePassword"
 )
 
 // UserServiceClient is the client API for UserService service.
@@ -1895,6 +1971,8 @@ type UserServiceClient interface {
 	CreateUser(ctx context.Context, in *CreateUserRequest, opts ...grpc.CallOption) (*CreateUserResponse, error)
 	DeleteUser(ctx context.Context, in *DeleteUserRequest, opts ...grpc.CallOption) (*DeleteUserResponse, error)
 	GetUsers(ctx context.Context, in *GetUsersRequest, opts ...grpc.CallOption) (*GetUsersResponse, error)
+	GetUsersByOrganization(ctx context.Context, in *GetUsersByOrganizationRequest, opts ...grpc.CallOption) (*GetUsersByOrganizationResponse, error)
+	GetUsersByGroup(ctx context.Context, in *GetUsersByGroupRequest, opts ...grpc.CallOption) (*GetUsersByGroupResponse, error)
 	GetUserById(ctx context.Context, in *GetUserByIdRequest, opts ...grpc.CallOption) (*GetUserByIdResponse, error)
 	GetUserByUserName(ctx context.Context, in *GetUserByUserNameRequest, opts ...grpc.CallOption) (*GetUserByUserNameResponse, error)
 	GetUserByEmail(ctx context.Context, in *GetUserByEmailRequest, opts ...grpc.CallOption) (*GetUserByEmailResponse, error)
@@ -1930,6 +2008,24 @@ func (c *userServiceClient) DeleteUser(ctx context.Context, in *DeleteUserReques
 func (c *userServiceClient) GetUsers(ctx context.Context, in *GetUsersRequest, opts ...grpc.CallOption) (*GetUsersResponse, error) {
 	out := new(GetUsersResponse)
 	err := c.cc.Invoke(ctx, UserService_GetUsers_FullMethodName, in, out, opts...)
+	if err != nil {
+		return nil, err
+	}
+	return out, nil
+}
+
+func (c *userServiceClient) GetUsersByOrganization(ctx context.Context, in *GetUsersByOrganizationRequest, opts ...grpc.CallOption) (*GetUsersByOrganizationResponse, error) {
+	out := new(GetUsersByOrganizationResponse)
+	err := c.cc.Invoke(ctx, UserService_GetUsersByOrganization_FullMethodName, in, out, opts...)
+	if err != nil {
+		return nil, err
+	}
+	return out, nil
+}
+
+func (c *userServiceClient) GetUsersByGroup(ctx context.Context, in *GetUsersByGroupRequest, opts ...grpc.CallOption) (*GetUsersByGroupResponse, error) {
+	out := new(GetUsersByGroupResponse)
+	err := c.cc.Invoke(ctx, UserService_GetUsersByGroup_FullMethodName, in, out, opts...)
 	if err != nil {
 		return nil, err
 	}
@@ -1979,6 +2075,8 @@ type UserServiceServer interface {
 	CreateUser(context.Context, *CreateUserRequest) (*CreateUserResponse, error)
 	DeleteUser(context.Context, *DeleteUserRequest) (*DeleteUserResponse, error)
 	GetUsers(context.Context, *GetUsersRequest) (*GetUsersResponse, error)
+	GetUsersByOrganization(context.Context, *GetUsersByOrganizationRequest) (*GetUsersByOrganizationResponse, error)
+	GetUsersByGroup(context.Context, *GetUsersByGroupRequest) (*GetUsersByGroupResponse, error)
 	GetUserById(context.Context, *GetUserByIdRequest) (*GetUserByIdResponse, error)
 	GetUserByUserName(context.Context, *GetUserByUserNameRequest) (*GetUserByUserNameResponse, error)
 	GetUserByEmail(context.Context, *GetUserByEmailRequest) (*GetUserByEmailResponse, error)
@@ -1998,6 +2096,12 @@ func (UnimplementedUserServiceServer) DeleteUser(context.Context, *DeleteUserReq
 }
 func (UnimplementedUserServiceServer) GetUsers(context.Context, *GetUsersRequest) (*GetUsersResponse, error) {
 	return nil, status.Errorf(codes.Unimplemented, "method GetUsers not implemented")
+}
+func (UnimplementedUserServiceServer) GetUsersByOrganization(context.Context, *GetUsersByOrganizationRequest) (*GetUsersByOrganizationResponse, error) {
+	return nil, status.Errorf(codes.Unimplemented, "method GetUsersByOrganization not implemented")
+}
+func (UnimplementedUserServiceServer) GetUsersByGroup(context.Context, *GetUsersByGroupRequest) (*GetUsersByGroupResponse, error) {
+	return nil, status.Errorf(codes.Unimplemented, "method GetUsersByGroup not implemented")
 }
 func (UnimplementedUserServiceServer) GetUserById(context.Context, *GetUserByIdRequest) (*GetUserByIdResponse, error) {
 	return nil, status.Errorf(codes.Unimplemented, "method GetUserById not implemented")
@@ -2074,6 +2178,42 @@ func _UserService_GetUsers_Handler(srv interface{}, ctx context.Context, dec fun
 	}
 	handler := func(ctx context.Context, req interface{}) (interface{}, error) {
 		return srv.(UserServiceServer).GetUsers(ctx, req.(*GetUsersRequest))
+	}
+	return interceptor(ctx, in, info, handler)
+}
+
+func _UserService_GetUsersByOrganization_Handler(srv interface{}, ctx context.Context, dec func(interface{}) error, interceptor grpc.UnaryServerInterceptor) (interface{}, error) {
+	in := new(GetUsersByOrganizationRequest)
+	if err := dec(in); err != nil {
+		return nil, err
+	}
+	if interceptor == nil {
+		return srv.(UserServiceServer).GetUsersByOrganization(ctx, in)
+	}
+	info := &grpc.UnaryServerInfo{
+		Server:     srv,
+		FullMethod: UserService_GetUsersByOrganization_FullMethodName,
+	}
+	handler := func(ctx context.Context, req interface{}) (interface{}, error) {
+		return srv.(UserServiceServer).GetUsersByOrganization(ctx, req.(*GetUsersByOrganizationRequest))
+	}
+	return interceptor(ctx, in, info, handler)
+}
+
+func _UserService_GetUsersByGroup_Handler(srv interface{}, ctx context.Context, dec func(interface{}) error, interceptor grpc.UnaryServerInterceptor) (interface{}, error) {
+	in := new(GetUsersByGroupRequest)
+	if err := dec(in); err != nil {
+		return nil, err
+	}
+	if interceptor == nil {
+		return srv.(UserServiceServer).GetUsersByGroup(ctx, in)
+	}
+	info := &grpc.UnaryServerInfo{
+		Server:     srv,
+		FullMethod: UserService_GetUsersByGroup_FullMethodName,
+	}
+	handler := func(ctx context.Context, req interface{}) (interface{}, error) {
+		return srv.(UserServiceServer).GetUsersByGroup(ctx, req.(*GetUsersByGroupRequest))
 	}
 	return interceptor(ctx, in, info, handler)
 }
@@ -2168,6 +2308,14 @@ var UserService_ServiceDesc = grpc.ServiceDesc{
 		{
 			MethodName: "GetUsers",
 			Handler:    _UserService_GetUsers_Handler,
+		},
+		{
+			MethodName: "GetUsersByOrganization",
+			Handler:    _UserService_GetUsersByOrganization_Handler,
+		},
+		{
+			MethodName: "GetUsersByGroup",
+			Handler:    _UserService_GetUsersByGroup_Handler,
 		},
 		{
 			MethodName: "GetUserById",
