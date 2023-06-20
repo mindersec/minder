@@ -160,12 +160,12 @@ func (q *Queries) GetUserByUserName(ctx context.Context, username string) (User,
 }
 
 const getUserClaims = `-- name: GetUserClaims :one
-SELECT u.id as user_id, g.organization_id as organization_id, u.min_token_issued_time AS min_token_issued_time,
+SELECT u.id as user_id, u.organization_id as organization_id, u.min_token_issued_time AS min_token_issued_time,
 u.needs_password_change as needs_password_change,
-ARRAY_AGG(jsonb_build_object('role_id', roles.id, 'is_admin', roles.is_admin, 'group_id', roles.group_id, 'organization_id', roles.organization_id)) AS role_info,
-ARRAY_AGG(g.id) AS group_ids
- FROM users u
-INNER JOIN roles r ON u.role_id = r.id INNER JOIN groups g ON r.group_id = g.id WHERE u.id = $1
+ARRAY_AGG(jsonb_build_object('role_id', r.id, 'is_admin', r.is_admin, 'group_id', r.group_id, 'organization_id', r.organization_id)) AS role_info,
+ARRAY_AGG(ug.id) AS group_ids
+ FROM users u INNER JOIN user_roles ur ON u.id = ur.user_id INNER JOIN roles r ON ur.role_id = r.id
+ INNER JOIN user_groups ug ON u.id = ug.user_id where u.id = $1 GROUP BY u.id
 `
 
 type GetUserClaimsRow struct {
