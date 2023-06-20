@@ -37,6 +37,8 @@ import (
 
 	"github.com/spf13/viper"
 	"golang.org/x/crypto/argon2"
+	"google.golang.org/grpc/codes"
+	"google.golang.org/grpc/status"
 )
 
 type params struct {
@@ -138,14 +140,14 @@ func VerifyCertChain(certIn []byte, roots *x509.CertPool) (bool, error) {
 func EncryptBytes(key string, data []byte) ([]byte, error) {
 	block, err := aes.NewCipher(deriveKey(key))
 	if err != nil {
-		return nil, fmt.Errorf("failed to create cipher: %w", err)
+		return nil, status.Errorf(codes.Unknown, "failed to create cipher: %s", err)
 	}
 
 	// The IV needs to be unique, but not secure. Therefore it's common to include it at the beginning of the ciphertext.
 	ciphertext := make([]byte, aes.BlockSize+len(data))
 	iv := ciphertext[:aes.BlockSize]
 	if _, err := io.ReadFull(rand.Reader, iv); err != nil {
-		return nil, fmt.Errorf("failed to read random bytes: %w", err)
+		return nil, status.Errorf(codes.Unknown, "failed to read random bytes: %s", err)
 	}
 
 	stream := cipher.NewCFBEncrypter(block, iv)
@@ -158,7 +160,7 @@ func EncryptBytes(key string, data []byte) ([]byte, error) {
 func DecryptBytes(key string, ciphertext []byte) ([]byte, error) {
 	block, err := aes.NewCipher(deriveKey(key))
 	if err != nil {
-		return nil, fmt.Errorf("failed to create cipher: %w", err)
+		return nil, status.Errorf(codes.Unknown, "failed to create cipher: %s", err)
 	}
 
 	// The IV needs to be extracted from the ciphertext.

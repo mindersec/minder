@@ -20,7 +20,6 @@ import (
 	"encoding/base64"
 	"encoding/json"
 	"errors"
-	"fmt"
 	"time"
 
 	"github.com/rs/zerolog/log"
@@ -77,7 +76,7 @@ func (s *Server) GetAuthorizationURL(ctx context.Context,
 	// Delete any existing session state for the group
 	err = s.store.DeleteSessionStateByGroupID(ctx, groupID)
 	if err != nil && !errors.Is(err, sql.ErrNoRows) {
-		return nil, fmt.Errorf("error deleting session state: %w", err)
+		return nil, status.Errorf(codes.Unknown, "error deleting session state: %s", err)
 	}
 
 	// Insert the new session state into the database along with the user's group ID
@@ -88,7 +87,7 @@ func (s *Server) GetAuthorizationURL(ctx context.Context,
 		SessionState: state,
 	})
 	if err != nil {
-		return nil, fmt.Errorf("error inserting session state: %w", err)
+		return nil, status.Errorf(codes.Unknown, "error inserting session state: %s", err)
 	}
 
 	// Return the authorization URL and state
@@ -117,17 +116,17 @@ func (s *Server) ExchangeCodeForTokenCLI(ctx context.Context,
 	valid, err := mcrypto.IsNonceValid(in.State)
 
 	if err != nil {
-		return nil, fmt.Errorf("error checking nonce: %w", err)
+		return nil, status.Errorf(codes.Unknown, "error checking nonce: %s", err)
 	}
 
 	if !valid {
-		return nil, fmt.Errorf("invalid nonce")
+		return nil, status.Error(codes.InvalidArgument, "invalid nonce")
 	}
 
 	// get groupID from session along with state nonce from the database
 	groupId, err := s.store.GetGroupIDPortBySessionState(ctx, in.State)
 	if err != nil {
-		return nil, fmt.Errorf("error getting group ID by session state: %w", err)
+		return nil, status.Errorf(codes.Unknown, "error getting group ID by session state: %s", err)
 	}
 
 	// generate a new OAuth2 config for the given provider
@@ -137,7 +136,7 @@ func (s *Server) ExchangeCodeForTokenCLI(ctx context.Context,
 	}
 
 	if oauthConfig == nil {
-		return nil, fmt.Errorf("oauth2.Config is nil")
+		return nil, status.Error(codes.Unknown, "oauth2.Config is nil")
 	}
 
 	token, err := oauthConfig.Exchange(ctx, in.Code)
@@ -173,7 +172,7 @@ func (s *Server) ExchangeCodeForTokenCLI(ctx context.Context,
 	// delete token if it exists
 	err = s.store.DeleteAccessToken(ctx, db.DeleteAccessTokenParams{Provider: auth.Github, GroupID: groupId.GrpID.Int32})
 	if err != nil {
-		return nil, fmt.Errorf("error deleting access token: %w", err)
+		return nil, status.Errorf(codes.Unknown, "error deleting access token: %s", err)
 	}
 
 	_, err = s.store.CreateAccessToken(ctx, db.CreateAccessTokenParams{
@@ -183,7 +182,7 @@ func (s *Server) ExchangeCodeForTokenCLI(ctx context.Context,
 		ExpirationTime: expiryTime,
 	})
 	if err != nil {
-		return nil, fmt.Errorf("error inserting access token: %w", err)
+		return nil, status.Errorf(codes.Unknown, "error inserting access token: %s", err)
 	}
 
 	return &pb.ExchangeCodeForTokenCLIResponse{
@@ -206,7 +205,7 @@ func (s *Server) ExchangeCodeForTokenWEB(ctx context.Context,
 	}
 
 	if oauthConfig == nil {
-		return nil, fmt.Errorf("oauth2.Config is nil")
+		return nil, status.Error(codes.Unknown, "oauth2.Config is nil")
 	}
 
 	// get the token

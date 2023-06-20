@@ -120,7 +120,7 @@ func (s *Server) GetOrganizations(ctx context.Context,
 		Offset: *in.Offset,
 	})
 	if err != nil {
-		return nil, fmt.Errorf("failed to get groups: %w", err)
+		return nil, status.Errorf(codes.Unknown, "failed to get groups: %s", err)
 	}
 
 	var resp pb.GetOrganizationsResponse
@@ -142,12 +142,12 @@ func (s *Server) GetOrganizations(ctx context.Context,
 func (s *Server) GetOrganization(ctx context.Context,
 	in *pb.GetOrganizationRequest) (*pb.GetOrganizationResponse, error) {
 	if in.GetOrganizationId() <= 0 {
-		return nil, fmt.Errorf("organization id is required")
+		return nil, status.Error(codes.InvalidArgument, "organization id is required")
 	}
 
 	org, err := s.store.GetOrganization(ctx, in.OrganizationId)
 	if err != nil {
-		return nil, fmt.Errorf("failed to get organization: %w", err)
+		return nil, status.Errorf(codes.Unknown, "failed to get organization: %s", err)
 	}
 
 	// check if user is authorized
@@ -171,12 +171,12 @@ func (s *Server) GetOrganization(ctx context.Context,
 func (s *Server) GetOrganizationByName(ctx context.Context,
 	in *pb.GetOrganizationByNameRequest) (*pb.GetOrganizationByNameResponse, error) {
 	if in.GetName() == "" {
-		return nil, fmt.Errorf("organization name is required")
+		return nil, status.Error(codes.InvalidArgument, "organization name is required")
 	}
 
 	org, err := s.store.GetOrganizationByName(ctx, in.Name)
 	if err != nil {
-		return nil, fmt.Errorf("failed to get organization: %w", err)
+		return nil, status.Errorf(codes.Unknown, "failed to get organization: %s", err)
 	}
 
 	// check if user is authorized
