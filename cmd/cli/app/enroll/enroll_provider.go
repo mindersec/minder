@@ -22,16 +22,17 @@
 package enroll
 
 import (
-	"encoding/json"
+	"context"
 	"fmt"
-	"io"
 	"net/http"
 	"os"
 	"sync"
 	"time"
 
+	"github.com/stacklok/mediator/pkg/auth"
 	pb "github.com/stacklok/mediator/pkg/generated/protobuf/go/mediator/v1"
 	"github.com/stacklok/mediator/pkg/util"
+	"google.golang.org/protobuf/types/known/timestamppb"
 
 	"github.com/pkg/browser"
 	"github.com/spf13/cobra"
@@ -43,41 +44,12 @@ type Response struct {
 	Status string `json:"status"`
 }
 
+// MAX_CALLS is the maximum number of calls to the gRPC server before stopping.
+const MAX_CALLS = 300
+
 // callBackServer starts a server and handler to listen for the OAuth callback.
 // It will wait for either a success or failure response from the server.
-func callBackServer(port string, wg *sync.WaitGroup) {
-	http.HandleFunc("/shutdown", func(w http.ResponseWriter, r *http.Request) {
-		if r.Method != http.MethodPost {
-			http.Error(w, "Method not allowed", http.StatusMethodNotAllowed)
-			return
-		}
-
-		body, err := io.ReadAll(r.Body)
-		if err != nil {
-			http.Error(w, "Error reading request body", http.StatusInternalServerError)
-			return
-		}
-		defer r.Body.Close()
-
-		var response Response
-		err = json.Unmarshal(body, &response)
-		if err != nil {
-			http.Error(w, "Error unmarshaling JSON", http.StatusBadRequest)
-			return
-		}
-
-		if response.Status == "success" {
-			fmt.Println("OAuth flow completed successfully")
-
-			wg.Done() // Signal that we received the correct status and can shutdown the server.
-		} else if response.Status == "failure" {
-			fmt.Println("OAuth flow failed")
-			wg.Done()
-		} else {
-			http.Error(w, "Invalid status value", http.StatusBadRequest)
-		}
-	})
-
+func callBackServer(ctx context.Context, port string, wg *sync.WaitGroup, client pb.OAuthServiceClient, since int64) {
 	server := &http.Server{
 		Addr:              fmt.Sprintf(":%s", port),
 		ReadHeaderTimeout: time.Second * 10, // Set an appropriate timeout value
@@ -92,12 +64,42 @@ func callBackServer(port string, wg *sync.WaitGroup) {
 		}
 	}()
 
+	// Start the server in a goroutine
 	fmt.Println("Listening for OAuth Login flow to complete on port", port)
-	err := server.ListenAndServe()
-	if err != nil && err != http.ErrServerClosed {
-		fmt.Fprintf(os.Stderr, "Server error: %v\n", err)
-		os.Exit(1)
-	}
+	go func() {
+		err := server.ListenAndServe()
+		if err != nil && err != http.ErrServerClosed {
+			fmt.Fprintf(os.Stderr, "Server error: %v\n", err)
+			os.Exit(1)
+		}
+	}()
+
+	var stopServer bool
+	// Start a goroutine for periodic gRPC calls
+	go func() {
+		defer wg.Done()
+		calls := 0
+
+		for {
+			// Perform periodic gRPC calls
+			if stopServer {
+				// Check the stop condition and break the loop if necessary
+				break
+			}
+
+			time.Sleep(time.Second)
+			t := time.Unix(since, 0)
+			calls++
+
+			// todo: check if token has been created. We need an endpoint to pass an state and check if token is created
+			res, err := client.VerifyProviderTokenFrom(ctx,
+				&pb.VerifyProviderTokenFromRequest{Provider: auth.Github, Timestamp: timestamppb.New(t)})
+			if err != nil || res.Status == "OK" || calls >= MAX_CALLS {
+				stopServer = true
+			}
+		}
+	}()
+
 }
 
 var enrollProviderCmd = &cobra.Command{
@@ -146,11 +148,12 @@ actions such as adding repositories.`,
 			fmt.Fprintf(os.Stderr, "Error opening browser: %s\n", err)
 			os.Exit(1)
 		}
+		openTime := time.Now().Unix()
 
 		var wg sync.WaitGroup
 		wg.Add(1)
 
-		go callBackServer(fmt.Sprintf("%d", port), &wg)
+		go callBackServer(ctx, fmt.Sprintf("%d", port), &wg, client, openTime)
 		wg.Wait()
 	},
 }

@@ -15,14 +15,12 @@
 package controlplane
 
 import (
-	"bytes"
 	"context"
 	"database/sql"
 	"encoding/base64"
 	"encoding/json"
 	"errors"
 	"fmt"
-	"net/http"
 	"time"
 
 	"github.com/rs/zerolog/log"
@@ -147,13 +145,6 @@ func (s *Server) ExchangeCodeForTokenCLI(ctx context.Context,
 		return nil, err
 	}
 
-	var tokenStatus string
-	if token.Valid() {
-		tokenStatus = "success"
-	} else {
-		tokenStatus = "failure"
-	}
-
 	// github does not provide refresh token or expiry, set a manual expiry time
 	viper.SetDefault("github.access_token_expiry", 86400)
 	expiryTime := time.Now().Add(time.Duration(viper.GetInt("github.access_token_expiry")) * time.Second)
@@ -195,25 +186,8 @@ func (s *Server) ExchangeCodeForTokenCLI(ctx context.Context,
 		return nil, fmt.Errorf("error inserting access token: %w", err)
 	}
 
-	cliAppURL := fmt.Sprintf("http://localhost:%d/shutdown", groupId.Port.Int32)
-
-	// The following is tagged with //nosec as its a false positive. GOSEC alerts
-	// for when URL is constructed from user or external input, but it's not.
-	// the values for 'status' are set above in the server code. For someone
-	// to exploit this, they would need to be able to modify the code of the
-	// and recompile their own version of the application.
-	resp, err := http.Post(cliAppURL, "application/json", bytes.NewBuffer([]byte(`{"status": "`+tokenStatus+`"}`))) // #nosec
-	if err != nil {
-		return nil, err
-	}
-	defer resp.Body.Close()
-
-	if resp.StatusCode != http.StatusOK {
-		return nil, fmt.Errorf("failed to send status to CLI application, status code: %d", resp.StatusCode)
-	}
-
 	return &pb.ExchangeCodeForTokenCLIResponse{
-		Html: "You can now close this window.",
+		Html: "The oauth flow has been completed successfully. You can now close this window.",
 	}, nil
 }
 

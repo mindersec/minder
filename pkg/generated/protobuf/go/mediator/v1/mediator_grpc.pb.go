@@ -129,6 +129,7 @@ const (
 	OAuthService_ExchangeCodeForTokenWEB_FullMethodName = "/mediator.v1.OAuthService/ExchangeCodeForTokenWEB"
 	OAuthService_RevokeOauthTokens_FullMethodName       = "/mediator.v1.OAuthService/RevokeOauthTokens"
 	OAuthService_RevokeOauthGroupToken_FullMethodName   = "/mediator.v1.OAuthService/RevokeOauthGroupToken"
+	OAuthService_VerifyProviderTokenFrom_FullMethodName = "/mediator.v1.OAuthService/VerifyProviderTokenFrom"
 )
 
 // OAuthServiceClient is the client API for OAuthService service.
@@ -142,6 +143,8 @@ type OAuthServiceClient interface {
 	RevokeOauthTokens(ctx context.Context, in *RevokeOauthTokensRequest, opts ...grpc.CallOption) (*RevokeOauthTokensResponse, error)
 	// revoke token for a group
 	RevokeOauthGroupToken(ctx context.Context, in *RevokeOauthGroupTokenRequest, opts ...grpc.CallOption) (*RevokeOauthGroupTokenResponse, error)
+	// VerifyProviderTokenFrom verifies that a token has been created for a provider since given timestamp
+	VerifyProviderTokenFrom(ctx context.Context, in *VerifyProviderTokenFromRequest, opts ...grpc.CallOption) (*VerifyProviderTokenFromResponse, error)
 }
 
 type oAuthServiceClient struct {
@@ -197,6 +200,15 @@ func (c *oAuthServiceClient) RevokeOauthGroupToken(ctx context.Context, in *Revo
 	return out, nil
 }
 
+func (c *oAuthServiceClient) VerifyProviderTokenFrom(ctx context.Context, in *VerifyProviderTokenFromRequest, opts ...grpc.CallOption) (*VerifyProviderTokenFromResponse, error) {
+	out := new(VerifyProviderTokenFromResponse)
+	err := c.cc.Invoke(ctx, OAuthService_VerifyProviderTokenFrom_FullMethodName, in, out, opts...)
+	if err != nil {
+		return nil, err
+	}
+	return out, nil
+}
+
 // OAuthServiceServer is the server API for OAuthService service.
 // All implementations must embed UnimplementedOAuthServiceServer
 // for forward compatibility
@@ -208,6 +220,8 @@ type OAuthServiceServer interface {
 	RevokeOauthTokens(context.Context, *RevokeOauthTokensRequest) (*RevokeOauthTokensResponse, error)
 	// revoke token for a group
 	RevokeOauthGroupToken(context.Context, *RevokeOauthGroupTokenRequest) (*RevokeOauthGroupTokenResponse, error)
+	// VerifyProviderTokenFrom verifies that a token has been created for a provider since given timestamp
+	VerifyProviderTokenFrom(context.Context, *VerifyProviderTokenFromRequest) (*VerifyProviderTokenFromResponse, error)
 	mustEmbedUnimplementedOAuthServiceServer()
 }
 
@@ -229,6 +243,9 @@ func (UnimplementedOAuthServiceServer) RevokeOauthTokens(context.Context, *Revok
 }
 func (UnimplementedOAuthServiceServer) RevokeOauthGroupToken(context.Context, *RevokeOauthGroupTokenRequest) (*RevokeOauthGroupTokenResponse, error) {
 	return nil, status.Errorf(codes.Unimplemented, "method RevokeOauthGroupToken not implemented")
+}
+func (UnimplementedOAuthServiceServer) VerifyProviderTokenFrom(context.Context, *VerifyProviderTokenFromRequest) (*VerifyProviderTokenFromResponse, error) {
+	return nil, status.Errorf(codes.Unimplemented, "method VerifyProviderTokenFrom not implemented")
 }
 func (UnimplementedOAuthServiceServer) mustEmbedUnimplementedOAuthServiceServer() {}
 
@@ -333,6 +350,24 @@ func _OAuthService_RevokeOauthGroupToken_Handler(srv interface{}, ctx context.Co
 	return interceptor(ctx, in, info, handler)
 }
 
+func _OAuthService_VerifyProviderTokenFrom_Handler(srv interface{}, ctx context.Context, dec func(interface{}) error, interceptor grpc.UnaryServerInterceptor) (interface{}, error) {
+	in := new(VerifyProviderTokenFromRequest)
+	if err := dec(in); err != nil {
+		return nil, err
+	}
+	if interceptor == nil {
+		return srv.(OAuthServiceServer).VerifyProviderTokenFrom(ctx, in)
+	}
+	info := &grpc.UnaryServerInfo{
+		Server:     srv,
+		FullMethod: OAuthService_VerifyProviderTokenFrom_FullMethodName,
+	}
+	handler := func(ctx context.Context, req interface{}) (interface{}, error) {
+		return srv.(OAuthServiceServer).VerifyProviderTokenFrom(ctx, req.(*VerifyProviderTokenFromRequest))
+	}
+	return interceptor(ctx, in, info, handler)
+}
+
 // OAuthService_ServiceDesc is the grpc.ServiceDesc for OAuthService service.
 // It's only intended for direct use with grpc.RegisterService,
 // and not to be introspected or modified (even as a copy)
@@ -359,6 +394,10 @@ var OAuthService_ServiceDesc = grpc.ServiceDesc{
 		{
 			MethodName: "RevokeOauthGroupToken",
 			Handler:    _OAuthService_RevokeOauthGroupToken_Handler,
+		},
+		{
+			MethodName: "VerifyProviderTokenFrom",
+			Handler:    _OAuthService_VerifyProviderTokenFrom_Handler,
 		},
 	},
 	Streams:  []grpc.StreamDesc{},

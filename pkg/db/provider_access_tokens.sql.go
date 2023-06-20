@@ -114,6 +114,31 @@ func (q *Queries) GetAccessTokenByProvider(ctx context.Context, provider string)
 	return items, nil
 }
 
+const getAccessTokenSinceDate = `-- name: GetAccessTokenSinceDate :one
+SELECT id, provider, group_id, encrypted_token, expiration_time, created_at, updated_at FROM provider_access_tokens WHERE provider = $1 AND group_id = $2 AND created_at >= $3
+`
+
+type GetAccessTokenSinceDateParams struct {
+	Provider  string    `json:"provider"`
+	GroupID   int32     `json:"group_id"`
+	CreatedAt time.Time `json:"created_at"`
+}
+
+func (q *Queries) GetAccessTokenSinceDate(ctx context.Context, arg GetAccessTokenSinceDateParams) (ProviderAccessToken, error) {
+	row := q.db.QueryRowContext(ctx, getAccessTokenSinceDate, arg.Provider, arg.GroupID, arg.CreatedAt)
+	var i ProviderAccessToken
+	err := row.Scan(
+		&i.ID,
+		&i.Provider,
+		&i.GroupID,
+		&i.EncryptedToken,
+		&i.ExpirationTime,
+		&i.CreatedAt,
+		&i.UpdatedAt,
+	)
+	return i, err
+}
+
 const updateAccessToken = `-- name: UpdateAccessToken :one
 UPDATE provider_access_tokens SET encrypted_token = $3, expiration_time = $4, updated_at = NOW() WHERE provider = $1 AND group_id = $2 RETURNING id, provider, group_id, encrypted_token, expiration_time, created_at, updated_at
 `

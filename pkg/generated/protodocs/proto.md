@@ -89,6 +89,8 @@
     - [UpdatePasswordRequest](#mediator-v1-UpdatePasswordRequest)
     - [UpdatePasswordResponse](#mediator-v1-UpdatePasswordResponse)
     - [UserRecord](#mediator-v1-UserRecord)
+    - [VerifyProviderTokenFromRequest](#mediator-v1-VerifyProviderTokenFromRequest)
+    - [VerifyProviderTokenFromResponse](#mediator-v1-VerifyProviderTokenFromResponse)
     - [VerifyRequest](#mediator-v1-VerifyRequest)
     - [VerifyResponse](#mediator-v1-VerifyResponse)
   
@@ -1437,6 +1439,37 @@ user record to be returned
 
 
 
+<a name="mediator-v1-VerifyProviderTokenFromRequest"></a>
+
+### VerifyProviderTokenFromRequest
+
+
+
+| Field | Type | Label | Description |
+| ----- | ---- | ----- | ----------- |
+| provider | [string](#string) |  |  |
+| timestamp | [google.protobuf.Timestamp](#google-protobuf-Timestamp) |  |  |
+
+
+
+
+
+
+<a name="mediator-v1-VerifyProviderTokenFromResponse"></a>
+
+### VerifyProviderTokenFromResponse
+
+
+
+| Field | Type | Label | Description |
+| ----- | ---- | ----- | ----------- |
+| status | [string](#string) |  |  |
+
+
+
+
+
+
 <a name="mediator-v1-VerifyRequest"></a>
 
 ### VerifyRequest
@@ -1530,6 +1563,7 @@ replies with OK
 | ExchangeCodeForTokenWEB | [ExchangeCodeForTokenWEBRequest](#mediator-v1-ExchangeCodeForTokenWEBRequest) | [ExchangeCodeForTokenWEBResponse](#mediator-v1-ExchangeCodeForTokenWEBResponse) |  |
 | RevokeOauthTokens | [RevokeOauthTokensRequest](#mediator-v1-RevokeOauthTokensRequest) | [RevokeOauthTokensResponse](#mediator-v1-RevokeOauthTokensResponse) | revoke all tokens for all users |
 | RevokeOauthGroupToken | [RevokeOauthGroupTokenRequest](#mediator-v1-RevokeOauthGroupTokenRequest) | [RevokeOauthGroupTokenResponse](#mediator-v1-RevokeOauthGroupTokenResponse) | revoke token for a group |
+| VerifyProviderTokenFrom | [VerifyProviderTokenFromRequest](#mediator-v1-VerifyProviderTokenFromRequest) | [VerifyProviderTokenFromResponse](#mediator-v1-VerifyProviderTokenFromResponse) | VerifyProviderTokenFrom verifies that a token has been created for a provider since given timestamp |
 
 
 <a name="mediator-v1-OrganizationService"></a>
