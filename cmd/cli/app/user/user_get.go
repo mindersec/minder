@@ -128,10 +128,7 @@ mediator control plane.`,
 			os.Exit(1)
 		}
 		json, err := json.Marshal(user)
-		if err != nil {
-			fmt.Fprintf(os.Stderr, "Error marshalling user: %s\n", err)
-			os.Exit(1)
-		}
+		util.ExitNicelyOnError(err, "Error marshalling user")
 		fmt.Println(string(json))
 
 	},

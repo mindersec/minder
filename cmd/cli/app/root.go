@@ -18,10 +18,10 @@ package app
 
 import (
 	"fmt"
-	"os"
 
 	"github.com/spf13/cobra"
 	"github.com/spf13/viper"
+	"github.com/stacklok/mediator/pkg/util"
 )
 
 var (
@@ -39,9 +39,7 @@ https://docs.stacklok.com/mediator/medctl/overview.html`,
 // Execute adds all child commands to the root command and sets flags appropriately.
 func Execute() {
 	err := RootCmd.Execute()
-	if err != nil {
-		os.Exit(1)
-	}
+	util.ExitNicelyOnError(err, "Error on execute")
 }
 
 func init() {

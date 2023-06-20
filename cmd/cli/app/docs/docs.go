@@ -17,10 +17,8 @@
 package apply
 
 import (
-	"fmt"
-	"os"
-
 	"github.com/stacklok/mediator/cmd/cli/app"
+	"github.com/stacklok/mediator/pkg/util"
 
 	"github.com/spf13/cobra"
 	"github.com/spf13/cobra/doc"
@@ -33,10 +31,8 @@ var DocsCmd = &cobra.Command{
 	Short: "Generates documentation for the client",
 	Long:  `Generates documentation for the client.`,
 	PreRun: func(cmd *cobra.Command, args []string) {
-		if err := viper.BindPFlags(cmd.Flags()); err != nil {
-			fmt.Fprintf(os.Stderr, "Error binding flags: %s\n", err)
-			os.Exit(1)
-		}
+		err := viper.BindPFlags(cmd.Flags())
+		util.ExitNicelyOnError(err, "Error binding flags")
 	},
 	Run: func(cmd *cobra.Command, args []string) {
 		err := doc.GenMarkdownTree(app.RootCmd, "./docs/cli")

@@ -66,29 +66,17 @@ mediator control plane.`,
 			org, err := client.GetOrganization(ctx, &pb.GetOrganizationRequest{
 				OrganizationId: id,
 			})
-			if err != nil {
-				fmt.Fprintf(os.Stderr, "Error getting organization by id: %s\n", err)
-				os.Exit(1)
-			}
+			util.ExitNicelyOnError(err, "Error getting organization by id")
 			json, err := json.Marshal(org)
-			if err != nil {
-				fmt.Fprintf(os.Stderr, "Error marshalling organization: %s\n", err)
-				os.Exit(1)
-			}
+			util.ExitNicelyOnError(err, "Error marshalling organization")
 			fmt.Println(string(json))
 		} else if name != "" {
 			org, err := client.GetOrganizationByName(ctx, &pb.GetOrganizationByNameRequest{
 				Name: name,
 			})
-			if err != nil {
-				fmt.Fprintf(os.Stderr, "Error getting organization by name: %s\n", err)
-				os.Exit(1)
-			}
+			util.ExitNicelyOnError(err, "Error getting organization by name")
 			json, err := json.Marshal(org)
-			if err != nil {
-				fmt.Fprintf(os.Stderr, "Error marshalling organization: %s\n", err)
-				os.Exit(1)
-			}
+			util.ExitNicelyOnError(err, "Error marshalling organization")
 			fmt.Println(string(json))
 
 		} else {

@@ -34,7 +34,6 @@ import (
 	"github.com/stacklok/mediator/pkg/util"
 	"google.golang.org/protobuf/types/known/timestamppb"
 
-	"github.com/pkg/browser"
 	"github.com/spf13/cobra"
 	"github.com/spf13/viper"
 )
@@ -68,10 +67,7 @@ func callBackServer(ctx context.Context, port string, wg *sync.WaitGroup, client
 	fmt.Println("Listening for OAuth Login flow to complete on port", port)
 	go func() {
 		err := server.ListenAndServe()
-		if err != nil && err != http.ErrServerClosed {
-			fmt.Fprintf(os.Stderr, "Server error: %v\n", err)
-			os.Exit(1)
-		}
+		util.ExitNicelyOnError(err, "Server error")
 	}()
 
 	var stopServer bool
@@ -122,10 +118,7 @@ actions such as adding repositories.`,
 		pat := util.GetConfigValue("token", "token", cmd, "").(string)
 
 		conn, err := util.GetGrpcConnection(cmd)
-		if err != nil {
-			fmt.Fprintf(os.Stderr, "Error getting grpc connection: %s\n", err)
-			os.Exit(1)
-		}
+		util.ExitNicelyOnError(err, "Error getting grpc connection")
 		defer conn.Close()
 
 		client := pb.NewOAuthServiceClient(conn)
@@ -140,10 +133,7 @@ actions such as adding repositories.`,
 		} else {
 			// Get random port
 			port, err := util.GetRandomPort()
-			if err != nil {
-				fmt.Fprintf(os.Stderr, "Error getting random port: %v\n", err)
-				os.Exit(1)
-			}
+			util.ExitNicelyOnError(err, "Error getting random port")
 
 			resp, err := client.GetAuthorizationURL(ctx, &pb.GetAuthorizationURLRequest{
 				Provider: provider,
@@ -157,10 +147,8 @@ actions such as adding repositories.`,
 			fmt.Println("Once the flow is complete, the CLI will close")
 			fmt.Println("If this is a headless environment, please copy and paste the URL into a browser on a different machine.")
 
-			if err := browser.OpenURL(resp.GetUrl()); err != nil {
-				fmt.Fprintf(os.Stderr, "Error opening browser: %s\n", err)
-				os.Exit(1)
-			}
+			util.ExitNicelyOnError(err, "Error opening browser")
+
 			openTime := time.Now().Unix()
 
 			var wg sync.WaitGroup

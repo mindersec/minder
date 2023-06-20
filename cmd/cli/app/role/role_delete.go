@@ -72,8 +72,6 @@ func init() {
 	role_deleteCmd.Flags().BoolP("force", "f", false,
 		"Force deletion of role, even if it's protected or has associated users "+
 			"(WARNING: removing a protected role may cause loosing mediator access)")
-	if err := role_deleteCmd.MarkFlagRequired("role-id"); err != nil {
-		fmt.Fprintf(os.Stderr, "Error marking flag as required: %s\n", err)
-		os.Exit(1)
-	}
+	err := role_deleteCmd.MarkFlagRequired("role-id")
+	util.ExitNicelyOnError(err, "Error marking flag as required")
 }
