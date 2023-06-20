@@ -46,6 +46,13 @@ service OAuthService {
     rpc ExchangeCodeForTokenWEB (ExchangeCodeForTokenWEBRequest) returns (ExchangeCodeForTokenWEBResponse) {
         option (google.api.http) = {
             get: "/api/v1/auth/callback/{provider}/web"
+        };        
+    }
+
+    rpc StoreProviderToken (StoreProviderTokenRequest) returns (StoreProviderTokenResponse) {
+        option (google.api.http) = {
+            post: "/api/v1/auth/{provider}/token"
+            body: "*"
         };
     }
 
@@ -350,6 +357,14 @@ message ExchangeCodeForTokenCLIRequest {
     string code = 2;
     string state = 3;
     string redirect_uri = 4;
+}
+
+message StoreProviderTokenRequest {
+    string provider = 1;
+    string access_token = 2;
+}
+
+message StoreProviderTokenResponse {    
 }
 
 message ExchangeCodeForTokenCLIResponse {

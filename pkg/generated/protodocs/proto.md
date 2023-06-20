@@ -86,6 +86,8 @@
     - [RevokeUserTokenRequest](#mediator-v1-RevokeUserTokenRequest)
     - [RevokeUserTokenResponse](#mediator-v1-RevokeUserTokenResponse)
     - [RoleRecord](#mediator-v1-RoleRecord)
+    - [StoreProviderTokenRequest](#mediator-v1-StoreProviderTokenRequest)
+    - [StoreProviderTokenResponse](#mediator-v1-StoreProviderTokenResponse)
     - [UpdatePasswordRequest](#mediator-v1-UpdatePasswordRequest)
     - [UpdatePasswordResponse](#mediator-v1-UpdatePasswordResponse)
     - [UserRecord](#mediator-v1-UserRecord)
@@ -1388,6 +1390,32 @@ BUF does not allow grouping (which is a shame)
 
 
 
+<a name="mediator-v1-StoreProviderTokenRequest"></a>
+
+### StoreProviderTokenRequest
+
+
+
+| Field | Type | Label | Description |
+| ----- | ---- | ----- | ----------- |
+| provider | [string](#string) |  |  |
+| access_token | [string](#string) |  |  |
+
+
+
+
+
+
+<a name="mediator-v1-StoreProviderTokenResponse"></a>
+
+### StoreProviderTokenResponse
+
+
+
+
+
+
+
 <a name="mediator-v1-UpdatePasswordRequest"></a>
 
 ### UpdatePasswordRequest
@@ -1561,6 +1589,7 @@ replies with OK
 | GetAuthorizationURL | [GetAuthorizationURLRequest](#mediator-v1-GetAuthorizationURLRequest) | [GetAuthorizationURLResponse](#mediator-v1-GetAuthorizationURLResponse) |  |
 | ExchangeCodeForTokenCLI | [ExchangeCodeForTokenCLIRequest](#mediator-v1-ExchangeCodeForTokenCLIRequest) | [ExchangeCodeForTokenCLIResponse](#mediator-v1-ExchangeCodeForTokenCLIResponse) |  |
 | ExchangeCodeForTokenWEB | [ExchangeCodeForTokenWEBRequest](#mediator-v1-ExchangeCodeForTokenWEBRequest) | [ExchangeCodeForTokenWEBResponse](#mediator-v1-ExchangeCodeForTokenWEBResponse) |  |
+| StoreProviderToken | [StoreProviderTokenRequest](#mediator-v1-StoreProviderTokenRequest) | [StoreProviderTokenResponse](#mediator-v1-StoreProviderTokenResponse) |  |
 | RevokeOauthTokens | [RevokeOauthTokensRequest](#mediator-v1-RevokeOauthTokensRequest) | [RevokeOauthTokensResponse](#mediator-v1-RevokeOauthTokensResponse) | revoke all tokens for all users |
 | RevokeOauthGroupToken | [RevokeOauthGroupTokenRequest](#mediator-v1-RevokeOauthGroupTokenRequest) | [RevokeOauthGroupTokenResponse](#mediator-v1-RevokeOauthGroupTokenResponse) | revoke token for a group |
 | VerifyProviderTokenFrom | [VerifyProviderTokenFromRequest](#mediator-v1-VerifyProviderTokenFromRequest) | [VerifyProviderTokenFromResponse](#mediator-v1-VerifyProviderTokenFromResponse) | VerifyProviderTokenFrom verifies that a token has been created for a provider since given timestamp |

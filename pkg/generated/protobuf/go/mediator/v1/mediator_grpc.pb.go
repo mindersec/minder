@@ -127,6 +127,7 @@ const (
 	OAuthService_GetAuthorizationURL_FullMethodName     = "/mediator.v1.OAuthService/GetAuthorizationURL"
 	OAuthService_ExchangeCodeForTokenCLI_FullMethodName = "/mediator.v1.OAuthService/ExchangeCodeForTokenCLI"
 	OAuthService_ExchangeCodeForTokenWEB_FullMethodName = "/mediator.v1.OAuthService/ExchangeCodeForTokenWEB"
+	OAuthService_StoreProviderToken_FullMethodName      = "/mediator.v1.OAuthService/StoreProviderToken"
 	OAuthService_RevokeOauthTokens_FullMethodName       = "/mediator.v1.OAuthService/RevokeOauthTokens"
 	OAuthService_RevokeOauthGroupToken_FullMethodName   = "/mediator.v1.OAuthService/RevokeOauthGroupToken"
 	OAuthService_VerifyProviderTokenFrom_FullMethodName = "/mediator.v1.OAuthService/VerifyProviderTokenFrom"
@@ -139,6 +140,7 @@ type OAuthServiceClient interface {
 	GetAuthorizationURL(ctx context.Context, in *GetAuthorizationURLRequest, opts ...grpc.CallOption) (*GetAuthorizationURLResponse, error)
 	ExchangeCodeForTokenCLI(ctx context.Context, in *ExchangeCodeForTokenCLIRequest, opts ...grpc.CallOption) (*ExchangeCodeForTokenCLIResponse, error)
 	ExchangeCodeForTokenWEB(ctx context.Context, in *ExchangeCodeForTokenWEBRequest, opts ...grpc.CallOption) (*ExchangeCodeForTokenWEBResponse, error)
+	StoreProviderToken(ctx context.Context, in *StoreProviderTokenRequest, opts ...grpc.CallOption) (*StoreProviderTokenResponse, error)
 	// revoke all tokens for all users
 	RevokeOauthTokens(ctx context.Context, in *RevokeOauthTokensRequest, opts ...grpc.CallOption) (*RevokeOauthTokensResponse, error)
 	// revoke token for a group
@@ -182,6 +184,15 @@ func (c *oAuthServiceClient) ExchangeCodeForTokenWEB(ctx context.Context, in *Ex
 	return out, nil
 }
 
+func (c *oAuthServiceClient) StoreProviderToken(ctx context.Context, in *StoreProviderTokenRequest, opts ...grpc.CallOption) (*StoreProviderTokenResponse, error) {
+	out := new(StoreProviderTokenResponse)
+	err := c.cc.Invoke(ctx, OAuthService_StoreProviderToken_FullMethodName, in, out, opts...)
+	if err != nil {
+		return nil, err
+	}
+	return out, nil
+}
+
 func (c *oAuthServiceClient) RevokeOauthTokens(ctx context.Context, in *RevokeOauthTokensRequest, opts ...grpc.CallOption) (*RevokeOauthTokensResponse, error) {
 	out := new(RevokeOauthTokensResponse)
 	err := c.cc.Invoke(ctx, OAuthService_RevokeOauthTokens_FullMethodName, in, out, opts...)
@@ -216,6 +227,7 @@ type OAuthServiceServer interface {
 	GetAuthorizationURL(context.Context, *GetAuthorizationURLRequest) (*GetAuthorizationURLResponse, error)
 	ExchangeCodeForTokenCLI(context.Context, *ExchangeCodeForTokenCLIRequest) (*ExchangeCodeForTokenCLIResponse, error)
 	ExchangeCodeForTokenWEB(context.Context, *ExchangeCodeForTokenWEBRequest) (*ExchangeCodeForTokenWEBResponse, error)
+	StoreProviderToken(context.Context, *StoreProviderTokenRequest) (*StoreProviderTokenResponse, error)
 	// revoke all tokens for all users
 	RevokeOauthTokens(context.Context, *RevokeOauthTokensRequest) (*RevokeOauthTokensResponse, error)
 	// revoke token for a group
@@ -237,6 +249,9 @@ func (UnimplementedOAuthServiceServer) ExchangeCodeForTokenCLI(context.Context, 
 }
 func (UnimplementedOAuthServiceServer) ExchangeCodeForTokenWEB(context.Context, *ExchangeCodeForTokenWEBRequest) (*ExchangeCodeForTokenWEBResponse, error) {
 	return nil, status.Errorf(codes.Unimplemented, "method ExchangeCodeForTokenWEB not implemented")
+}
+func (UnimplementedOAuthServiceServer) StoreProviderToken(context.Context, *StoreProviderTokenRequest) (*StoreProviderTokenResponse, error) {
+	return nil, status.Errorf(codes.Unimplemented, "method StoreProviderToken not implemented")
 }
 func (UnimplementedOAuthServiceServer) RevokeOauthTokens(context.Context, *RevokeOauthTokensRequest) (*RevokeOauthTokensResponse, error) {
 	return nil, status.Errorf(codes.Unimplemented, "method RevokeOauthTokens not implemented")
@@ -314,6 +329,24 @@ func _OAuthService_ExchangeCodeForTokenWEB_Handler(srv interface{}, ctx context.
 	return interceptor(ctx, in, info, handler)
 }
 
+func _OAuthService_StoreProviderToken_Handler(srv interface{}, ctx context.Context, dec func(interface{}) error, interceptor grpc.UnaryServerInterceptor) (interface{}, error) {
+	in := new(StoreProviderTokenRequest)
+	if err := dec(in); err != nil {
+		return nil, err
+	}
+	if interceptor == nil {
+		return srv.(OAuthServiceServer).StoreProviderToken(ctx, in)
+	}
+	info := &grpc.UnaryServerInfo{
+		Server:     srv,
+		FullMethod: OAuthService_StoreProviderToken_FullMethodName,
+	}
+	handler := func(ctx context.Context, req interface{}) (interface{}, error) {
+		return srv.(OAuthServiceServer).StoreProviderToken(ctx, req.(*StoreProviderTokenRequest))
+	}
+	return interceptor(ctx, in, info, handler)
+}
+
 func _OAuthService_RevokeOauthTokens_Handler(srv interface{}, ctx context.Context, dec func(interface{}) error, interceptor grpc.UnaryServerInterceptor) (interface{}, error) {
 	in := new(RevokeOauthTokensRequest)
 	if err := dec(in); err != nil {
@@ -386,6 +419,10 @@ var OAuthService_ServiceDesc = grpc.ServiceDesc{
 		{
 			MethodName: "ExchangeCodeForTokenWEB",
 			Handler:    _OAuthService_ExchangeCodeForTokenWEB_Handler,
+		},
+		{
+			MethodName: "StoreProviderToken",
+			Handler:    _OAuthService_StoreProviderToken_Handler,
 		},
 		{
 			MethodName: "RevokeOauthTokens",

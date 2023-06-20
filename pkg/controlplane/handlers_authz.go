@@ -305,8 +305,8 @@ func isProviderCallAuthorized(ctx context.Context, store db.Store, provider stri
 				if err != nil {
 					log.Error().Msgf("Error deleting access token: %v", err)
 				}
+				return false
 			}
-			return false
 		}
 	}
 	return true

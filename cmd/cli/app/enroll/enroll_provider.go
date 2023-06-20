@@ -114,6 +114,13 @@ actions such as adding repositories.`,
 		}
 	},
 	Run: func(cmd *cobra.Command, args []string) {
+		provider := util.GetConfigValue("provider", "provider", cmd, "").(string)
+		if provider != auth.Github {
+			fmt.Fprintf(os.Stderr, "Only %s is supported at this time\n", auth.Github)
+			os.Exit(1)
+		}
+		pat := util.GetConfigValue("token", "token", cmd, "").(string)
+
 		conn, err := util.GetGrpcConnection(cmd)
 		if err != nil {
 			fmt.Fprintf(os.Stderr, "Error getting grpc connection: %s\n", err)
@@ -125,40 +132,52 @@ actions such as adding repositories.`,
 		ctx, cancel := util.GetAppContext()
 		defer cancel()
 
-		// Get random port
-		port, err := util.GetRandomPort()
-		if err != nil {
-			fmt.Fprintf(os.Stderr, "Error getting random port: %v\n", err)
-			os.Exit(1)
+		if pat != "" {
+			// use pat for enrollment
+			_, err := client.StoreProviderToken(context.Background(), &pb.StoreProviderTokenRequest{Provider: provider, AccessToken: pat})
+			util.ExitNicelyOnError(err, "Error storing token")
+			fmt.Println("Provider enrolled successfully")
+		} else {
+			// Get random port
+			port, err := util.GetRandomPort()
+			if err != nil {
+				fmt.Fprintf(os.Stderr, "Error getting random port: %v\n", err)
+				os.Exit(1)
+			}
+
+			resp, err := client.GetAuthorizationURL(ctx, &pb.GetAuthorizationURLRequest{
+				Provider: provider,
+				Cli:      true,
+				Port:     int32(port),
+			})
+			util.ExitNicelyOnError(err, "Error getting authorization URL")
+
+			fmt.Printf("Your browser will now be opened to: %s\n", resp.GetUrl())
+			fmt.Println("Please follow the instructions on the page to complete the OAuth flow.")
+			fmt.Println("Once the flow is complete, the CLI will close")
+			fmt.Println("If this is a headless environment, please copy and paste the URL into a browser on a different machine.")
+
+			if err := browser.OpenURL(resp.GetUrl()); err != nil {
+				fmt.Fprintf(os.Stderr, "Error opening browser: %s\n", err)
+				os.Exit(1)
+			}
+			openTime := time.Now().Unix()
+
+			var wg sync.WaitGroup
+			wg.Add(1)
+
+			go callBackServer(ctx, fmt.Sprintf("%d", port), &wg, client, openTime)
+			wg.Wait()
 		}
-
-		resp, err := client.GetAuthorizationURL(ctx, &pb.GetAuthorizationURLRequest{
-			Provider: "github",
-			Cli:      true,
-			Port:     int32(port),
-		})
-		util.ExitNicelyOnError(err, "Error getting authorization URL")
-
-		fmt.Printf("Your browser will now be opened to: %s\n", resp.GetUrl())
-		fmt.Println("Please follow the instructions on the page to complete the OAuth flow.")
-		fmt.Println("Once the flow is complete, the CLI will close")
-		fmt.Println("If this is a headless environment, please copy and paste the URL into a browser on a different machine.")
-
-		if err := browser.OpenURL(resp.GetUrl()); err != nil {
-			fmt.Fprintf(os.Stderr, "Error opening browser: %s\n", err)
-			os.Exit(1)
-		}
-		openTime := time.Now().Unix()
-
-		var wg sync.WaitGroup
-		wg.Add(1)
-
-		go callBackServer(ctx, fmt.Sprintf("%d", port), &wg, client, openTime)
-		wg.Wait()
 	},
 }
 
 func init() {
 	EnrollCmd.AddCommand(enrollProviderCmd)
 	enrollProviderCmd.Flags().StringP("provider", "n", "", "Name for the provider to enroll")
+	enrollProviderCmd.Flags().StringP("token", "t", "", "Personal Access Token (PAT) to use for enrollment")
+	if err := enrollProviderCmd.MarkFlagRequired("provider"); err != nil {
+		fmt.Fprintf(os.Stderr, "Error marking flag as required: %s\n", err)
+	}
+
 }
