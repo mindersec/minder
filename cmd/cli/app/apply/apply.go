@@ -30,6 +30,8 @@ import (
 	"github.com/stacklok/mediator/cmd/cli/app/role"
 	"github.com/stacklok/mediator/cmd/cli/app/user"
 	"github.com/stacklok/mediator/pkg/util"
+	"google.golang.org/grpc/codes"
+	"google.golang.org/grpc/status"
 	"gopkg.in/yaml.v3"
 
 	"github.com/spf13/cobra"
@@ -48,7 +50,7 @@ func parseContent(data []byte) ([]objectParameters, error) {
 		// try with yaml
 		err = yaml.Unmarshal(data, &objects)
 		if err != nil {
-			return nil, fmt.Errorf("failed to parse content: %w", err)
+			return nil, status.Errorf(codes.Unknown, "failed to parse content: %s", err)
 		}
 	}
 

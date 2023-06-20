@@ -170,7 +170,7 @@ func (s *Server) DeleteUser(ctx context.Context,
 func (s *Server) GetUsers(ctx context.Context,
 	in *pb.GetUsersRequest) (*pb.GetUsersResponse, error) {
 	if in.RoleId == 0 {
-		return nil, fmt.Errorf("role id is required")
+		return nil, status.Error(codes.InvalidArgument, "role id is required")
 	}
 
 	// check if role exists
@@ -199,7 +199,7 @@ func (s *Server) GetUsers(ctx context.Context,
 		Offset: *in.Offset,
 	})
 	if err != nil {
-		return nil, fmt.Errorf("failed to get users: %w", err)
+		return nil, status.Errorf(codes.Unknown, "failed to get users: %s", err)
 	}
 
 	var resp pb.GetUsersResponse
@@ -226,12 +226,12 @@ func (s *Server) GetUsers(ctx context.Context,
 func (s *Server) GetUserById(ctx context.Context,
 	in *pb.GetUserByIdRequest) (*pb.GetUserByIdResponse, error) {
 	if in.Id == 0 {
-		return nil, fmt.Errorf("user id is required")
+		return nil, status.Error(codes.InvalidArgument, "user id is required")
 	}
 
 	user, err := s.store.GetUserByID(ctx, in.Id)
 	if err != nil {
-		return nil, fmt.Errorf("failed to get user: %w", err)
+		return nil, status.Errorf(codes.Unknown, "failed to get user: %s", err)
 	}
 
 	// check if role exists
@@ -265,12 +265,12 @@ func (s *Server) GetUserById(ctx context.Context,
 func (s *Server) GetUserByUsername(ctx context.Context,
 	in *pb.GetUserByUserNameRequest) (*pb.GetUserByUserNameResponse, error) {
 	if in.GetUsername() == "" {
-		return nil, fmt.Errorf("username is required")
+		return nil, status.Error(codes.InvalidArgument, "username is required")
 	}
 
 	user, err := s.store.GetUserByUserName(ctx, in.Username)
 	if err != nil {
-		return nil, fmt.Errorf("failed to get user: %w", err)
+		return nil, status.Errorf(codes.Unknown, "failed to get user: %s", err)
 	}
 
 	// check if role exists
@@ -304,12 +304,12 @@ func (s *Server) GetUserByUsername(ctx context.Context,
 func (s *Server) GetUserByEmail(ctx context.Context,
 	in *pb.GetUserByEmailRequest) (*pb.GetUserByEmailResponse, error) {
 	if in.GetEmail() == "" {
-		return nil, fmt.Errorf("email is required")
+		return nil, status.Error(codes.InvalidArgument, "email is required")
 	}
 
 	user, err := s.store.GetUserByEmail(ctx, sql.NullString{String: in.Email, Valid: true})
 	if err != nil {
-		return nil, fmt.Errorf("failed to get user: %w", err)
+		return nil, status.Errorf(codes.Unknown, "failed to get user: %s", err)
 	}
 
 	// check if role exists
@@ -365,30 +365,30 @@ func (s *Server) UpdatePassword(ctx context.Context, in *pb.UpdatePasswordReques
 	// hash the password for storing in the database
 	pHash, err := mcrypto.GeneratePasswordHash(in.Password)
 	if err != nil {
-		return nil, status.Error(codes.Internal, "failed to generate password hash")
+		return nil, status.Errorf(codes.Internal, "failed to generate password hash: %s", err)
 	}
 
 	// check if the previous password was the same
 	user, err := s.store.GetUserByID(ctx, claims.UserId)
 	if err != nil {
-		return nil, status.Error(codes.Internal, "failed to get user")
+		return nil, status.Errorf(codes.Internal, "failed to get user: %s", err)
 	}
 
 	match, _ := mcrypto.VerifyPasswordHash(pHash, user.Password)
 	if match {
-		return nil, status.Error(codes.NotFound, "User and password not found")
+		return nil, status.Errorf(codes.NotFound, "User and password not found: %s", err)
 	}
 
 	_, err = s.store.UpdatePassword(ctx, db.UpdatePasswordParams{ID: claims.UserId, Password: pHash})
 	if err != nil {
-		return nil, status.Error(codes.Internal, "failed to update password")
+		return nil, status.Errorf(codes.Internal, "failed to update password: %s", err)
 	}
 
 	// revoke token for the user
 	_, err = s.store.RevokeUserToken(ctx, db.RevokeUserTokenParams{ID: claims.UserId,
 		MinTokenIssuedTime: sql.NullTime{Time: time.Unix(time.Now().Unix(), 0), Valid: true}})
 	if err != nil {
-		return nil, status.Error(codes.Internal, "failed to revoke user token")
+		return nil, status.Errorf(codes.Internal, "failed to revoke user token: %s", err)
 	}
 
 	return &pb.UpdatePasswordResponse{}, nil

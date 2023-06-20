@@ -131,7 +131,7 @@ func (s *Server) DeleteRole(ctx context.Context,
 func (s *Server) GetRoles(ctx context.Context,
 	in *pb.GetRolesRequest) (*pb.GetRolesResponse, error) {
 	if in.GroupId == 0 {
-		return nil, fmt.Errorf("group id is required")
+		return nil, status.Error(codes.InvalidArgument, "group id is required")
 	}
 
 	// check if user is authorized
@@ -155,7 +155,7 @@ func (s *Server) GetRoles(ctx context.Context,
 		Offset:  *in.Offset,
 	})
 	if err != nil {
-		return nil, fmt.Errorf("failed to get roles: %w", err)
+		return nil, status.Errorf(codes.Unknown, "failed to get roles: %s", err)
 	}
 
 	var resp pb.GetRolesResponse
@@ -179,12 +179,12 @@ func (s *Server) GetRoles(ctx context.Context,
 func (s *Server) GetRoleById(ctx context.Context,
 	in *pb.GetRoleByIdRequest) (*pb.GetRoleByIdResponse, error) {
 	if in.Id == 0 {
-		return nil, fmt.Errorf("role id is required")
+		return nil, status.Error(codes.InvalidArgument, "role id is required")
 	}
 
 	role, err := s.store.GetRoleByID(ctx, in.Id)
 	if err != nil {
-		return nil, fmt.Errorf("failed to get role: %w", err)
+		return nil, status.Errorf(codes.Unknown, "failed to get role: %s", err)
 	}
 
 	// check if user is authorized
@@ -210,15 +210,15 @@ func (s *Server) GetRoleById(ctx context.Context,
 func (s *Server) GetRoleByName(ctx context.Context,
 	in *pb.GetRoleByNameRequest) (*pb.GetRoleByNameResponse, error) {
 	if in.GroupId == 0 {
-		return nil, fmt.Errorf("group id is required")
+		return nil, status.Error(codes.InvalidArgument, "group id is required")
 	}
 	if in.Name == "" {
-		return nil, fmt.Errorf("role name is required")
+		return nil, status.Error(codes.InvalidArgument, "role name is required")
 	}
 
 	role, err := s.store.GetRoleByName(ctx, db.GetRoleByNameParams{GroupID: in.GroupId, Name: in.Name})
 	if err != nil {
-		return nil, fmt.Errorf("failed to get role: %w", err)
+		return nil, status.Errorf(codes.Unknown, "failed to get role: %s", err)
 	}
 
 	var resp pb.GetRoleByNameResponse

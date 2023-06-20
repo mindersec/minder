@@ -31,6 +31,8 @@ import (
 
 	"github.com/golang-jwt/jwt/v4"
 	"github.com/stacklok/mediator/pkg/db"
+	"google.golang.org/grpc/codes"
+	"google.golang.org/grpc/status"
 )
 
 // UserClaims contains the claims for a user
@@ -114,7 +116,7 @@ func VerifyToken(tokenString string, publicKey []byte, store db.Store) (UserClai
 
 	token, err := jwt.Parse(tokenString, func(token *jwt.Token) (interface{}, error) {
 		if _, ok := token.Method.(*jwt.SigningMethodRSA); !ok {
-			return nil, fmt.Errorf("unexpected signing method")
+			return nil, status.Error(codes.InvalidArgument, "unexpected signing method")
 		}
 		return key, nil
 	})
@@ -183,7 +185,7 @@ func VerifyRefreshToken(tokenString string, publicKey []byte, store db.Store) (i
 
 	token, err := jwt.Parse(tokenString, func(token *jwt.Token) (interface{}, error) {
 		if _, ok := token.Method.(*jwt.SigningMethodRSA); !ok {
-			return nil, fmt.Errorf("unexpected signing method")
+			return nil, status.Error(codes.InvalidArgument, "unexpected signing method")
 		}
 		return key, nil
 	})
