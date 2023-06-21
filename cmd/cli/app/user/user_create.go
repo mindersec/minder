@@ -111,6 +111,7 @@ within a mediator control plane.`,
 		// if no roles are provided, no groups need to be provided as well
 		if (len(roles) == 0 && len(groups) > 0) || (len(roles) > 0 && len(groups) == 0) {
 			fmt.Fprintf(os.Stderr, "Error: if you specify roles, you need to specify groups as well\n")
+			os.Exit(1)
 		}
 
 		// if no roles or no groups we need to ask if they want to create a single user
@@ -139,7 +140,7 @@ within a mediator control plane.`,
 		defer cancel()
 
 		// now create the default fields for the user if needed
-		if len(roles) == 0 {
+		if org == 0 {
 			client := pb.NewOrganizationServiceClient(conn)
 			resp, err := client.CreateOrganization(ctx, &pb.CreateOrganizationRequest{
 				Name:    username.(string) + "-org",

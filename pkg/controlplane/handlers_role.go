@@ -243,7 +243,7 @@ func (s *Server) GetRoles(ctx context.Context,
 	return &resp, nil
 }
 
-// GetRoles is a service for getting roles
+// GetRolesByGroup is a service for getting roles for a group
 func (s *Server) GetRolesByGroup(ctx context.Context,
 	in *pb.GetRolesByGroupRequest) (*pb.GetRolesByGroupResponse, error) {
 	if in.GroupId == 0 {

@@ -288,6 +288,7 @@ func isMethodAuthorized(ctx context.Context, claims auth.UserClaims) bool {
 }
 
 // IsRequestAuthorized checks if the request is authorized
+// nolint:gocyclo
 func IsRequestAuthorized(ctx context.Context, value int32) bool {
 	claims, _ := ctx.Value(TokenInfoKey).(auth.UserClaims)
 	if isSuperadmin(claims) {

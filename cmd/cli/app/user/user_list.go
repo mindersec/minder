@@ -66,9 +66,16 @@ mediator control plane for an specific role.`,
 			fmt.Fprintf(os.Stderr, "Error: invalid format: %s\n", format)
 		}
 
-		// if group id is set, ord id cannot be set
+		// need to set either group or org
+		if org == 0 && group == 0 {
+			fmt.Fprintf(os.Stderr, "Error: must set either org-id or group-id\n")
+			os.Exit(1)
+		}
+
+		// if group id is set, org id cannot be set
 		if (org != 0) && (group != 0) {
 			fmt.Fprintf(os.Stderr, "Error: cannot set both org-id and group-id\n")
+			os.Exit(1)
 		}
 
 		var limitPtr = &limit
@@ -77,14 +84,7 @@ mediator control plane for an specific role.`,
 		// call depending on parameters
 		var users []*pb.UserRecord
 
-		if org == 0 && group == 0 {
-			resp, err := client.GetUsers(ctx, &pb.GetUsersRequest{
-				Limit:  limitPtr,
-				Offset: offsetPtr,
-			})
-			util.ExitNicelyOnError(err, "Error getting users")
-			users = resp.Users
-		} else if org != 0 {
+		if org != 0 {
 			resp, err := client.GetUsersByOrganization(ctx,
 				&pb.GetUsersByOrganizationRequest{OrganizationId: org, Limit: limitPtr, Offset: offsetPtr})
 			util.ExitNicelyOnError(err, "Error getting users")

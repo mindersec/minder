@@ -49,7 +49,8 @@ const MAX_CALLS = 300
 
 // callBackServer starts a server and handler to listen for the OAuth callback.
 // It will wait for either a success or failure response from the server.
-func callBackServer(ctx context.Context, provider string, group int32, port string, wg *sync.WaitGroup, client pb.OAuthServiceClient, since int64) {
+func callBackServer(ctx context.Context, provider string, group int32, port string,
+	wg *sync.WaitGroup, client pb.OAuthServiceClient, since int64) {
 	server := &http.Server{
 		Addr:              fmt.Sprintf(":%s", port),
 		ReadHeaderTimeout: time.Second * 10, // Set an appropriate timeout value
@@ -67,7 +68,7 @@ func callBackServer(ctx context.Context, provider string, group int32, port stri
 	// Start the server in a goroutine
 	fmt.Println("Listening for OAuth Login flow to complete on port", port)
 	go func() {
-		server.ListenAndServe()
+		_ = server.ListenAndServe()
 	}()
 
 	var stopServer bool

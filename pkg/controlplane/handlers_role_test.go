@@ -16,6 +16,7 @@ package controlplane
 
 import (
 	"context"
+	"database/sql"
 	"errors"
 	"testing"
 	"time"
@@ -64,6 +65,8 @@ func TestCreateRoleDBMock(t *testing.T) {
 			{RoleID: 1, IsAdmin: true, GroupID: 0, OrganizationID: 1}},
 	})
 
+	mockStore.EXPECT().GetOrganization(ctx, gomock.Any())
+	mockStore.EXPECT().GetGroupByID(ctx, gomock.Any())
 	mockStore.EXPECT().
 		CreateRole(ctx, gomock.Any()).
 		Return(expectedRole, nil)
@@ -78,7 +81,7 @@ func TestCreateRoleDBMock(t *testing.T) {
 	assert.NotNil(t, response)
 	assert.Equal(t, expectedRole.ID, response.Id)
 	assert.Equal(t, expectedRole.Name, response.Name)
-	assert.Equal(t, &expectedRole.GroupID.Int32, response.GroupId)
+	assert.Equal(t, expectedRole.GroupID, sql.NullInt32{Int32: response.GroupId, Valid: false})
 	assert.Equal(t, expectedRole.IsAdmin, response.IsAdmin)
 	assert.Equal(t, expectedRole.IsProtected, response.IsProtected)
 	expectedCreatedAt := expectedRole.CreatedAt.In(time.UTC)
@@ -102,6 +105,8 @@ func TestCreateRole_gRPC(t *testing.T) {
 				Name:           "TestRole",
 			},
 			buildStubs: func(store *mockdb.MockStore) {
+				store.EXPECT().GetOrganization(gomock.Any(), gomock.Any())
+				store.EXPECT().GetGroupByID(gomock.Any(), gomock.Any())
 				store.EXPECT().
 					CreateRole(gomock.Any(), gomock.Any()).
 					Return(db.Role{
@@ -150,6 +155,8 @@ func TestCreateRole_gRPC(t *testing.T) {
 				Name:           "TestRole",
 			},
 			buildStubs: func(store *mockdb.MockStore) {
+				store.EXPECT().GetOrganization(gomock.Any(), gomock.Any())
+				store.EXPECT().GetGroupByID(gomock.Any(), gomock.Any())
 				store.EXPECT().
 					CreateRole(gomock.Any(), gomock.Any()).
 					Return(db.Role{}, errors.New("store error")).

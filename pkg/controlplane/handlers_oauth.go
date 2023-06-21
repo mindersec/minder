@@ -400,7 +400,8 @@ func (s *Server) VerifyProviderTokenFrom(ctx context.Context,
 	fmt.Println("here")
 
 	// check if a token has been created since timestamp
-	token, err := s.store.GetAccessTokenSinceDate(ctx, db.GetAccessTokenSinceDateParams{Provider: in.Provider, GroupID: in.GroupId, CreatedAt: in.Timestamp.AsTime()})
+	token, err := s.store.GetAccessTokenSinceDate(ctx,
+		db.GetAccessTokenSinceDateParams{Provider: in.Provider, GroupID: in.GroupId, CreatedAt: in.Timestamp.AsTime()})
 	fmt.Println(token)
 	if err != nil {
 		if err == sql.ErrNoRows {
