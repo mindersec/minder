@@ -44,13 +44,11 @@ within a mediator control plane.`,
 		}
 	},
 	Run: func(cmd *cobra.Command, args []string) {
-		org := util.GetConfigValue("org-id", "og-id", cmd, int32(0)).(int)
+		org := util.GetConfigValue("org-id", "org-id", cmd, int32(0)).(int)
 		group := util.GetConfigValue("group-id", "group-id", cmd, int32(0))
 		name := util.GetConfigValue("name", "name", cmd, "")
 		isAdmin := viper.GetBool("is_admin")
 		isProtected := viper.GetBool("is_protected")
-		fmt.Println(isAdmin)
-		fmt.Println(isProtected)
 
 		conn, err := util.GetGrpcConnection(cmd)
 		util.ExitNicelyOnError(err, "Error getting grpc connection")
