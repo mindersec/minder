@@ -92,6 +92,11 @@ func (s *Server) GetGroupById(ctx context.Context, req *pb.GetGroupByIdRequest) 
 		return nil, status.Errorf(codes.NotFound, "failed to get group by id: %s", err)
 	}
 
+	// check if user is authorized
+	if !IsRequestAuthorized(ctx, grp.OrganizationID) {
+		return nil, status.Errorf(codes.PermissionDenied, "user is not authorized to access this resource")
+	}
+
 	var resp pb.GetGroupByIdResponse
 	resp.Group = &pb.GroupRecord{
 		GroupId:        grp.ID,
