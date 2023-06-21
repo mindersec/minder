@@ -389,7 +389,6 @@ func (s *Server) StoreProviderToken(ctx context.Context,
 // VerifyProviderTokenFrom verifies the provider token since a timestamp
 func (s *Server) VerifyProviderTokenFrom(ctx context.Context,
 	in *pb.VerifyProviderTokenFromRequest) (*pb.VerifyProviderTokenFromResponse, error) {
-	fmt.Println("in veirfy")
 	if in.Provider != auth.Github {
 		return nil, status.Errorf(codes.InvalidArgument, "provider not supported: %v", in.Provider)
 	}
@@ -397,19 +396,15 @@ func (s *Server) VerifyProviderTokenFrom(ctx context.Context,
 	if !IsRequestAuthorized(ctx, in.GroupId) {
 		return nil, status.Errorf(codes.PermissionDenied, "user is not authorized to access this resource")
 	}
-	fmt.Println("here")
 
 	// check if a token has been created since timestamp
-	token, err := s.store.GetAccessTokenSinceDate(ctx,
+	_, err := s.store.GetAccessTokenSinceDate(ctx,
 		db.GetAccessTokenSinceDateParams{Provider: in.Provider, GroupID: in.GroupId, CreatedAt: in.Timestamp.AsTime()})
-	fmt.Println(token)
 	if err != nil {
 		if err == sql.ErrNoRows {
-			fmt.Println("in no rows")
 			return &pb.VerifyProviderTokenFromResponse{Status: "KO"}, nil
 		}
 		return nil, status.Errorf(codes.Internal, "error getting access token: %v", err)
 	}
-	fmt.Println("ok")
 	return &pb.VerifyProviderTokenFromResponse{Status: "OK"}, nil
 }

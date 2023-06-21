@@ -192,13 +192,8 @@ func (s *Server) DeleteRole(ctx context.Context,
 // GetRoles is a service for getting roles
 func (s *Server) GetRoles(ctx context.Context,
 	in *pb.GetRolesRequest) (*pb.GetRolesResponse, error) {
-<<<<<<< HEAD
-	if in.GroupId == 0 {
-		return nil, status.Error(codes.InvalidArgument, "group id is required")
-=======
 	if in.OrganizationId == 0 {
 		return nil, fmt.Errorf("organization id is required")
->>>>>>> dae1c99 (feat: modify organization of users, groups and roles)
 	}
 
 	// check if user is authorized
