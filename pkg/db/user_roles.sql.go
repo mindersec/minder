@@ -7,6 +7,8 @@ package db
 
 import (
 	"context"
+	"database/sql"
+	"time"
 )
 
 const addUserRole = `-- name: AddUserRole :one
@@ -28,6 +30,59 @@ func (q *Queries) AddUserRole(ctx context.Context, arg AddUserRoleParams) (UserR
 	var i UserRole
 	err := row.Scan(&i.ID, &i.UserID, &i.RoleID)
 	return i, err
+}
+
+const getUserRoles = `-- name: GetUserRoles :many
+SELECT roles.id, organization_id, group_id, name, is_admin, is_protected, created_at, updated_at, user_roles.id, user_id, role_id FROM roles INNER JOIN user_roles ON roles.id = user_roles.role_id WHERE user_roles.user_id = $1
+`
+
+type GetUserRolesRow struct {
+	ID             int32         `json:"id"`
+	OrganizationID int32         `json:"organization_id"`
+	GroupID        sql.NullInt32 `json:"group_id"`
+	Name           string        `json:"name"`
+	IsAdmin        bool          `json:"is_admin"`
+	IsProtected    bool          `json:"is_protected"`
+	CreatedAt      time.Time     `json:"created_at"`
+	UpdatedAt      time.Time     `json:"updated_at"`
+	ID_2           int32         `json:"id_2"`
+	UserID         int32         `json:"user_id"`
+	RoleID         int32         `json:"role_id"`
+}
+
+func (q *Queries) GetUserRoles(ctx context.Context, userID int32) ([]GetUserRolesRow, error) {
+	rows, err := q.db.QueryContext(ctx, getUserRoles, userID)
+	if err != nil {
+		return nil, err
+	}
+	defer rows.Close()
+	items := []GetUserRolesRow{}
+	for rows.Next() {
+		var i GetUserRolesRow
+		if err := rows.Scan(
+			&i.ID,
+			&i.OrganizationID,
+			&i.GroupID,
+			&i.Name,
+			&i.IsAdmin,
+			&i.IsProtected,
+			&i.CreatedAt,
+			&i.UpdatedAt,
+			&i.ID_2,
+			&i.UserID,
+			&i.RoleID,
+		); err != nil {
+			return nil, err
+		}
+		items = append(items, i)
+	}
+	if err := rows.Close(); err != nil {
+		return nil, err
+	}
+	if err := rows.Err(); err != nil {
+		return nil, err
+	}
+	return items, nil
 }
 
 const listUsersByRoleId = `-- name: ListUsersByRoleId :many

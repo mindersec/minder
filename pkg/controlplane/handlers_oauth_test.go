@@ -130,7 +130,7 @@ func TestGetAuthorizationURL(t *testing.T) {
 		OrganizationId: 1,
 		GroupIds:       []int32{1},
 		Roles: []auth.RoleInfo{
-			{RoleID: 1, IsAdmin: true, GroupID: 1, OrganizationID: 1}},
+			{RoleID: 1, IsAdmin: true, GroupID: 0, OrganizationID: 1}},
 	})
 
 	for i := range testCases {
@@ -156,7 +156,7 @@ func TestRevokeOauthTokens_gRPC(t *testing.T) {
 		OrganizationId: 1,
 		GroupIds:       []int32{1},
 		Roles: []auth.RoleInfo{
-			{RoleID: 1, IsAdmin: true, GroupID: 1, OrganizationID: 1}},
+			{RoleID: 1, IsAdmin: true, GroupID: 0, OrganizationID: 1}},
 	})
 
 	ctrl := gomock.NewController(t)
@@ -179,7 +179,7 @@ func RevokeOauthGroupToken_gRPC(t *testing.T) {
 		OrganizationId: 1,
 		GroupIds:       []int32{1},
 		Roles: []auth.RoleInfo{
-			{RoleID: 1, IsAdmin: true, GroupID: 1, OrganizationID: 1}},
+			{RoleID: 1, IsAdmin: true, GroupID: 0, OrganizationID: 1}},
 	})
 
 	ctrl := gomock.NewController(t)

@@ -36,7 +36,7 @@ func TestIsSuperadminAuthorized(t *testing.T) {
 		OrganizationId: 1,
 		GroupIds:       []int32{1},
 		Roles: []auth.RoleInfo{
-			{RoleID: 1, IsAdmin: true, GroupID: 1, OrganizationID: 1}},
+			{RoleID: 1, IsAdmin: true, GroupID: 0, OrganizationID: 1}},
 	})
 
 	mockStore := mockdb.NewMockStore(ctrl)
@@ -63,7 +63,7 @@ func TestIsNonadminAuthorized(t *testing.T) {
 		OrganizationId: 1,
 		GroupIds:       []int32{1},
 		Roles: []auth.RoleInfo{
-			{RoleID: 1, IsAdmin: false, GroupID: 1, OrganizationID: 1}},
+			{RoleID: 1, IsAdmin: false, GroupID: 0, OrganizationID: 1}},
 	})
 
 	mockStore := mockdb.NewMockStore(ctrl)

@@ -213,10 +213,9 @@ func canBypassAuth(ctx context.Context) bool {
 
 // checks if an user is superadmin
 func isSuperadmin(claims auth.UserClaims) bool {
-	// need to check that has a role that belongs to group 1 and has
-	// admin role
+	// need to check that has a role that belongs to org 1 generally and is admin
 	for _, role := range claims.Roles {
-		if role.GroupID == 1 && role.IsAdmin {
+		if role.OrganizationID == 1 && role.GroupID == 0 && role.IsAdmin {
 			return true
 		}
 	}

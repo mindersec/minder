@@ -61,7 +61,7 @@ func TestCreateRoleDBMock(t *testing.T) {
 		OrganizationId: 1,
 		GroupIds:       []int32{1},
 		Roles: []auth.RoleInfo{
-			{RoleID: 1, IsAdmin: true, GroupID: 1, OrganizationID: 1}},
+			{RoleID: 1, IsAdmin: true, GroupID: 0, OrganizationID: 1}},
 	})
 
 	mockStore.EXPECT().
@@ -169,7 +169,7 @@ func TestCreateRole_gRPC(t *testing.T) {
 		OrganizationId: 1,
 		GroupIds:       []int32{1},
 		Roles: []auth.RoleInfo{
-			{RoleID: 1, IsAdmin: true, GroupID: 1, OrganizationID: 1}},
+			{RoleID: 1, IsAdmin: true, GroupID: 0, OrganizationID: 1}},
 	})
 
 	for i := range testCases {
@@ -204,7 +204,7 @@ func TestDeleteRoleDBMock(t *testing.T) {
 		OrganizationId: 1,
 		GroupIds:       []int32{1},
 		Roles: []auth.RoleInfo{
-			{RoleID: 1, IsAdmin: true, GroupID: 1, OrganizationID: 1}},
+			{RoleID: 1, IsAdmin: true, GroupID: 0, OrganizationID: 1}},
 	})
 
 	mockStore.EXPECT().GetRoleByID(ctx, gomock.Any())
@@ -276,7 +276,7 @@ func TestDeleteRole_gRPC(t *testing.T) {
 		OrganizationId: 1,
 		GroupIds:       []int32{1},
 		Roles: []auth.RoleInfo{
-			{RoleID: 1, IsAdmin: true, GroupID: 1, OrganizationID: 1}},
+			{RoleID: 1, IsAdmin: true, GroupID: 0, OrganizationID: 1}},
 	})
 
 	for i := range testCases {
@@ -328,7 +328,7 @@ func TestGetRolesDBMock(t *testing.T) {
 		OrganizationId: 1,
 		GroupIds:       []int32{1},
 		Roles: []auth.RoleInfo{
-			{RoleID: 1, IsAdmin: true, GroupID: 1, OrganizationID: 1}},
+			{RoleID: 1, IsAdmin: true, GroupID: 0, OrganizationID: 1}},
 	})
 
 	mockStore.EXPECT().ListRoles(ctx, gomock.Any()).
@@ -421,7 +421,7 @@ func TestGetRoles_gRPC(t *testing.T) {
 		OrganizationId: 1,
 		GroupIds:       []int32{1},
 		Roles: []auth.RoleInfo{
-			{RoleID: 1, IsAdmin: true, GroupID: 1, OrganizationID: 1}},
+			{RoleID: 1, IsAdmin: true, GroupID: 0, OrganizationID: 1}},
 	})
 
 	for i := range testCases {
@@ -463,7 +463,7 @@ func TestGetRoleDBMock(t *testing.T) {
 		OrganizationId: 1,
 		GroupIds:       []int32{1},
 		Roles: []auth.RoleInfo{
-			{RoleID: 1, IsAdmin: true, GroupID: 1, OrganizationID: 1}},
+			{RoleID: 1, IsAdmin: true, GroupID: 0, OrganizationID: 1}},
 	})
 
 	mockStore.EXPECT().GetRoleByID(ctx, gomock.Any()).
@@ -499,7 +499,7 @@ func TestGetNonExistingRoleDBMock(t *testing.T) {
 		OrganizationId: 1,
 		GroupIds:       []int32{1},
 		Roles: []auth.RoleInfo{
-			{RoleID: 1, IsAdmin: true, GroupID: 1, OrganizationID: 1}},
+			{RoleID: 1, IsAdmin: true, GroupID: 0, OrganizationID: 1}},
 	})
 
 	mockStore.EXPECT().GetRoleByID(ctx, gomock.Any()).
@@ -575,7 +575,7 @@ func TestGetRole_gRPC(t *testing.T) {
 		OrganizationId: 1,
 		GroupIds:       []int32{1},
 		Roles: []auth.RoleInfo{
-			{RoleID: 1, IsAdmin: true, GroupID: 1, OrganizationID: 1}},
+			{RoleID: 1, IsAdmin: true, GroupID: 0, OrganizationID: 1}},
 	})
 
 	for i := range testCases {
