@@ -127,8 +127,9 @@ VALUES ('Root Organization', 'Root Company');
 INSERT INTO groups (organization_id, name, is_protected)
 VALUES (1, 'Root Group', TRUE);
 
+-- superadmin role
 INSERT INTO roles (organization_id, name, is_admin, is_protected)
-VALUES (1, 'Role Role', TRUE, TRUE);
+VALUES (1, 'Superadmin Role', TRUE, TRUE);
 
 INSERT INTO users (organization_id, email, username, password, first_name, last_name, is_protected, needs_password_change)
 VALUES (1, 'root@localhost', 'root', '$argon2id$v=19$m=16,t=2,p=1$c2VjcmV0aGFzaA$WP4Vqo6QtHBY+n0x99R81Q', 'Root', 'Admin', TRUE, FALSE);   -- password is P4ssw@rd

@@ -253,9 +253,15 @@ service GroupService {
 
 // manage Roles CRUD
 service RoleService {
-    rpc CreateRole (CreateRoleRequest) returns (CreateRoleResponse) {
+    rpc CreateRoleByOrganization (CreateRoleByOrganizationRequest) returns (CreateRoleByOrganizationResponse) {
         option (google.api.http) = {
-            post: "/api/v1/role"
+            post: "/api/v1/role/organization"
+            body: "*"
+        };
+    }
+    rpc CreateRoleByGroup (CreateRoleByGroupRequest) returns (CreateRoleByGroupResponse) {
+        option (google.api.http) = {
+            post: "/api/v1/role/group"
             body: "*"
         };
     }
@@ -269,13 +275,7 @@ service RoleService {
     
     rpc GetRoles (GetRolesRequest) returns (GetRolesResponse) {
         option (google.api.http) = {
-        get: "/api/v1/roles"
-        };
-    }
-
-    rpc GetRolesByOrganization (GetRolesByOrgRequest) returns (GetRolesByOrgResponse) {
-        option (google.api.http) = {
-        get: "/api/v1/roles/organization/{organization_id}"
+        get: "/api/v1/roles/{organization_id}"
         };
     }
 
@@ -710,18 +710,35 @@ message DeleteGroupResponse {
 }
 
 // Role service
-message CreateRoleRequest {
+message CreateRoleByOrganizationRequest {
     int32 organization_id = 1;
-    optional int32 group_id = 2;
     string name = 3;
     optional bool is_admin = 4;
     optional bool is_protected = 5;
   }
   
-message CreateRoleResponse {
+message CreateRoleByOrganizationResponse {
     int32 id = 1;
     int32 organization_id = 2;
-    optional int32 group_id = 3;
+    string name = 4;
+    bool is_admin = 5;
+    bool is_protected = 6;
+    google.protobuf.Timestamp created_at = 7;
+    google.protobuf.Timestamp updated_at = 8;    
+}
+
+message CreateRoleByGroupRequest {
+    int32 organization_id = 1;
+    int32 group_id = 2;
+    string name = 3;
+    optional bool is_admin = 4;
+    optional bool is_protected = 5;
+  }
+  
+message CreateRoleByGroupResponse {
+    int32 id = 1;
+    int32 organization_id = 2;
+    int32 group_id = 3;
     string name = 4;
     bool is_admin = 5;
     bool is_protected = 6;
@@ -758,16 +775,6 @@ message GetRolesRequest {
 }
 
 message GetRolesResponse {
-    repeated RoleRecord roles = 1;
-}
-
-message GetRolesByOrgRequest {
-    int32 organization_id = 1;
-    optional int32 limit = 2;
-    optional int32 offset = 3;
-}
-
-message GetRolesByOrgResponse {
     repeated RoleRecord roles = 1;
 }
 

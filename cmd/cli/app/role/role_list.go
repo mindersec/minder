@@ -68,28 +68,25 @@ mediator control plane for an specific group.`,
 		var limitPtr = &limit
 		var offsetPtr = &offset
 
+		// we need to set either org or group
+		if org == 0 && group == 0 {
+			fmt.Fprintf(os.Stderr, "Error: must set either org or group\n")
+			os.Exit(1)
+		}
 		// if group is set , org cannot be set
 		if group != 0 && org != 0 {
 			fmt.Fprintf(os.Stderr, "Error: cannot set both org and group\n")
 			os.Exit(1)
 		}
 
-		// if nothing set, list all roles
 		var roles []*pb.RoleRecord
-		if group == 0 && org == 0 {
-			resp, err := client.GetRoles(ctx, &pb.GetRolesRequest{
-				Limit:  limitPtr,
-				Offset: offsetPtr,
-			})
-			util.ExitNicelyOnError(err, "Error getting roles")
-			roles = resp.Roles
-		} else if group != 0 {
+		if group != 0 {
 			resp, err := client.GetRolesByGroup(ctx, &pb.GetRolesByGroupRequest{GroupId: group, Limit: limitPtr, Offset: offsetPtr})
 			util.ExitNicelyOnError(err, "Error getting roles")
 			roles = resp.Roles
-		} else {
-			resp, err := client.GetRolesByOrganization(ctx,
-				&pb.GetRolesByOrgRequest{OrganizationId: org, Limit: limitPtr, Offset: offsetPtr})
+		} else if org != 0 {
+			resp, err := client.GetRoles(ctx,
+				&pb.GetRolesRequest{OrganizationId: org, Limit: limitPtr, Offset: offsetPtr})
 			util.ExitNicelyOnError(err, "Error getting roles")
 			roles = resp.Roles
 		}

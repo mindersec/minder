@@ -13,8 +13,10 @@
     - [CreateGroupResponse](#mediator-v1-CreateGroupResponse)
     - [CreateOrganizationRequest](#mediator-v1-CreateOrganizationRequest)
     - [CreateOrganizationResponse](#mediator-v1-CreateOrganizationResponse)
-    - [CreateRoleRequest](#mediator-v1-CreateRoleRequest)
-    - [CreateRoleResponse](#mediator-v1-CreateRoleResponse)
+    - [CreateRoleByGroupRequest](#mediator-v1-CreateRoleByGroupRequest)
+    - [CreateRoleByGroupResponse](#mediator-v1-CreateRoleByGroupResponse)
+    - [CreateRoleByOrganizationRequest](#mediator-v1-CreateRoleByOrganizationRequest)
+    - [CreateRoleByOrganizationResponse](#mediator-v1-CreateRoleByOrganizationResponse)
     - [CreateUserRequest](#mediator-v1-CreateUserRequest)
     - [CreateUserResponse](#mediator-v1-CreateUserResponse)
     - [DeleteGroupRequest](#mediator-v1-DeleteGroupRequest)
@@ -51,8 +53,6 @@
     - [GetRoleByNameResponse](#mediator-v1-GetRoleByNameResponse)
     - [GetRolesByGroupRequest](#mediator-v1-GetRolesByGroupRequest)
     - [GetRolesByGroupResponse](#mediator-v1-GetRolesByGroupResponse)
-    - [GetRolesByOrgRequest](#mediator-v1-GetRolesByOrgRequest)
-    - [GetRolesByOrgResponse](#mediator-v1-GetRolesByOrgResponse)
     - [GetRolesRequest](#mediator-v1-GetRolesRequest)
     - [GetRolesResponse](#mediator-v1-GetRolesResponse)
     - [GetSecretByIdRequest](#mediator-v1-GetSecretByIdRequest)
@@ -278,16 +278,16 @@ Organization service
 
 
 
-<a name="mediator-v1-CreateRoleRequest"></a>
+<a name="mediator-v1-CreateRoleByGroupRequest"></a>
 
-### CreateRoleRequest
-Role service
+### CreateRoleByGroupRequest
+
 
 
 | Field | Type | Label | Description |
 | ----- | ---- | ----- | ----------- |
 | organization_id | [int32](#int32) |  |  |
-| group_id | [int32](#int32) | optional |  |
+| group_id | [int32](#int32) |  |  |
 | name | [string](#string) |  |  |
 | is_admin | [bool](#bool) | optional |  |
 | is_protected | [bool](#bool) | optional |  |
@@ -297,9 +297,9 @@ Role service
 
 
 
-<a name="mediator-v1-CreateRoleResponse"></a>
+<a name="mediator-v1-CreateRoleByGroupResponse"></a>
 
-### CreateRoleResponse
+### CreateRoleByGroupResponse
 
 
 
@@ -307,7 +307,46 @@ Role service
 | ----- | ---- | ----- | ----------- |
 | id | [int32](#int32) |  |  |
 | organization_id | [int32](#int32) |  |  |
-| group_id | [int32](#int32) | optional |  |
+| group_id | [int32](#int32) |  |  |
+| name | [string](#string) |  |  |
+| is_admin | [bool](#bool) |  |  |
+| is_protected | [bool](#bool) |  |  |
+| created_at | [google.protobuf.Timestamp](#google-protobuf-Timestamp) |  |  |
+| updated_at | [google.protobuf.Timestamp](#google-protobuf-Timestamp) |  |  |
+
+
+
+
+
+
+<a name="mediator-v1-CreateRoleByOrganizationRequest"></a>
+
+### CreateRoleByOrganizationRequest
+Role service
+
+
+| Field | Type | Label | Description |
+| ----- | ---- | ----- | ----------- |
+| organization_id | [int32](#int32) |  |  |
+| name | [string](#string) |  |  |
+| is_admin | [bool](#bool) | optional |  |
+| is_protected | [bool](#bool) | optional |  |
+
+
+
+
+
+
+<a name="mediator-v1-CreateRoleByOrganizationResponse"></a>
+
+### CreateRoleByOrganizationResponse
+
+
+
+| Field | Type | Label | Description |
+| ----- | ---- | ----- | ----------- |
+| id | [int32](#int32) |  |  |
+| organization_id | [int32](#int32) |  |  |
 | name | [string](#string) |  |  |
 | is_admin | [bool](#bool) |  |  |
 | is_protected | [bool](#bool) |  |  |
@@ -864,38 +903,6 @@ get role by group and name
 <a name="mediator-v1-GetRolesByGroupResponse"></a>
 
 ### GetRolesByGroupResponse
-
-
-
-| Field | Type | Label | Description |
-| ----- | ---- | ----- | ----------- |
-| roles | [RoleRecord](#mediator-v1-RoleRecord) | repeated |  |
-
-
-
-
-
-
-<a name="mediator-v1-GetRolesByOrgRequest"></a>
-
-### GetRolesByOrgRequest
-
-
-
-| Field | Type | Label | Description |
-| ----- | ---- | ----- | ----------- |
-| organization_id | [int32](#int32) |  |  |
-| limit | [int32](#int32) | optional |  |
-| offset | [int32](#int32) | optional |  |
-
-
-
-
-
-
-<a name="mediator-v1-GetRolesByOrgResponse"></a>
-
-### GetRolesByOrgResponse
 
 
 
@@ -1772,10 +1779,10 @@ manage Roles CRUD
 
 | Method Name | Request Type | Response Type | Description |
 | ----------- | ------------ | ------------- | ------------|
-| CreateRole | [CreateRoleRequest](#mediator-v1-CreateRoleRequest) | [CreateRoleResponse](#mediator-v1-CreateRoleResponse) |  |
+| CreateRoleByOrganization | [CreateRoleByOrganizationRequest](#mediator-v1-CreateRoleByOrganizationRequest) | [CreateRoleByOrganizationResponse](#mediator-v1-CreateRoleByOrganizationResponse) |  |
+| CreateRoleByGroup | [CreateRoleByGroupRequest](#mediator-v1-CreateRoleByGroupRequest) | [CreateRoleByGroupResponse](#mediator-v1-CreateRoleByGroupResponse) |  |
 | DeleteRole | [DeleteRoleRequest](#mediator-v1-DeleteRoleRequest) | [DeleteRoleResponse](#mediator-v1-DeleteRoleResponse) |  |
 | GetRoles | [GetRolesRequest](#mediator-v1-GetRolesRequest) | [GetRolesResponse](#mediator-v1-GetRolesResponse) |  |
-| GetRolesByOrganization | [GetRolesByOrgRequest](#mediator-v1-GetRolesByOrgRequest) | [GetRolesByOrgResponse](#mediator-v1-GetRolesByOrgResponse) |  |
 | GetRolesByGroup | [GetRolesByGroupRequest](#mediator-v1-GetRolesByGroupRequest) | [GetRolesByGroupResponse](#mediator-v1-GetRolesByGroupResponse) |  |
 | GetRoleById | [GetRoleByIdRequest](#mediator-v1-GetRoleByIdRequest) | [GetRoleByIdResponse](#mediator-v1-GetRoleByIdResponse) |  |
 | GetRoleByName | [GetRoleByNameRequest](#mediator-v1-GetRoleByNameRequest) | [GetRoleByNameResponse](#mediator-v1-GetRoleByNameResponse) |  |

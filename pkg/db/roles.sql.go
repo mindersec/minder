@@ -153,16 +153,17 @@ func (q *Queries) ListRoles(ctx context.Context, arg ListRolesParams) ([]Role, e
 }
 
 const listRolesByGroupID = `-- name: ListRolesByGroupID :many
-SELECT id, organization_id, group_id, name, is_admin, is_protected, created_at, updated_at FROM roles WHERE organization_id = $1 AND group_id = $2
+SELECT id, organization_id, group_id, name, is_admin, is_protected, created_at, updated_at FROM roles WHERE group_id = $1 ORDER BY id LIMIT $2 OFFSET $3
 `
 
 type ListRolesByGroupIDParams struct {
-	OrganizationID int32         `json:"organization_id"`
-	GroupID        sql.NullInt32 `json:"group_id"`
+	GroupID sql.NullInt32 `json:"group_id"`
+	Limit   int32         `json:"limit"`
+	Offset  int32         `json:"offset"`
 }
 
 func (q *Queries) ListRolesByGroupID(ctx context.Context, arg ListRolesByGroupIDParams) ([]Role, error) {
-	rows, err := q.db.QueryContext(ctx, listRolesByGroupID, arg.OrganizationID, arg.GroupID)
+	rows, err := q.db.QueryContext(ctx, listRolesByGroupID, arg.GroupID, arg.Limit, arg.Offset)
 	if err != nil {
 		return nil, err
 	}

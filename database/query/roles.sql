@@ -23,7 +23,7 @@ LIMIT $2
 OFFSET $3;
 
 -- name: ListRolesByGroupID :many
-SELECT * FROM roles WHERE organization_id = $1 AND group_id = $2;
+SELECT * FROM roles WHERE group_id = $1 ORDER BY id LIMIT $2 OFFSET $3;
 
 -- name: UpdateRole :one
 UPDATE roles 

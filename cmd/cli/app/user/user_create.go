@@ -75,24 +75,32 @@ within a mediator control plane.`,
 		isProtected := util.GetConfigValue("is-protected", "is-protected", cmd, false).(bool)
 		force := util.GetConfigValue("force", "force", cmd, false).(bool)
 		needsPasswordChange := util.GetConfigValue("needs-password-change", "needs-password-change", cmd, true).(bool)
-		org := util.GetConfigValue("org-id", "org-id", cmd, nil).(int32)
+		org := util.GetConfigValue("org-id", "org-id", cmd, nil).(int)
 
 		// convert string of roles to array
-		roleField := util.GetConfigValue("roles", "roles", cmd, nil).(string)
-		roleStr := strings.Split(roleField, ",")
-		roles := make([]int32, len(roleStr))
-		for i, str := range roleStr {
-			number, _ := strconv.ParseInt(str, 10, 32)
-			roles[i] = int32(number)
+		var roles []int32
+		roleField := util.GetConfigValue("roles", "roles", cmd, "").(string)
+		if roleField != "" {
+			roleStr := strings.Split(roleField, ",")
+			for _, str := range roleStr {
+				if str != "" {
+					number, _ := strconv.ParseInt(str, 10, 32)
+					roles = append(roles, int32(number))
+				}
+			}
 		}
 
 		// convert string of groups to array
-		groupField := util.GetConfigValue("groups", "groups", cmd, nil).(string)
-		groupStr := strings.Split(groupField, ",")
-		groups := make([]int32, len(groupStr))
-		for i, str := range groupStr {
-			number, _ := strconv.ParseInt(str, 10, 32)
-			groups[i] = int32(number)
+		groupField := util.GetConfigValue("groups", "groups", cmd, "").(string)
+		var groups []int32
+		if groupField != "" {
+			groupStr := strings.Split(groupField, ",")
+			for _, str := range groupStr {
+				if str != "" {
+					number, _ := strconv.ParseInt(str, 10, 32)
+					groups = append(groups, int32(number))
+				}
+			}
 		}
 
 		if username == nil {
@@ -106,8 +114,17 @@ within a mediator control plane.`,
 		}
 
 		// if no roles or no groups we need to ask if they want to create a single user
-		if (len(roles) == 0 || len(groups) == 0) && !force {
-			confirmed := askForConfirmation("You didn't specify a role id. Do you want to create an user without any organization?")
+		if org == 0 && !force {
+			confirmed := askForConfirmation("You didn't specify any org id. Do you want to create an self enrolled user?")
+			if !confirmed {
+				fmt.Println("User creation cancelled")
+				os.Exit(0)
+			}
+		}
+
+		// if org is set and groups or roles are empty, verify that this is what we want to do
+		if (org != 0 && len(groups) == 0 && len(roles) == 0) && !force {
+			confirmed := askForConfirmation("You didn't specify either groups or roles for the user. Are you sure to continue?")
 			if !confirmed {
 				fmt.Println("User creation cancelled")
 				os.Exit(0)
@@ -135,11 +152,18 @@ within a mediator control plane.`,
 				Name: username.(string) + "-group"})
 			util.ExitNicelyOnError(err, "Error creating group")
 
+			// create role for org and group
 			clientr := pb.NewRoleServiceClient(conn)
 			isAdmin := true
 			groupId := respg.GroupId
-			respr, err := clientr.CreateRole(ctx, &pb.CreateRoleRequest{OrganizationId: resp.Id,
-				GroupId: &groupId, Name: username.(string) + "-role", IsAdmin: &isAdmin})
+
+			respo, err := clientr.CreateRoleByOrganization(ctx, &pb.CreateRoleByOrganizationRequest{OrganizationId: resp.Id,
+				Name: username.(string) + "-admin-org", IsAdmin: &isAdmin})
+			util.ExitNicelyOnError(err, "Error creating role")
+			roles = append(roles, respo.Id)
+
+			respr, err := clientr.CreateRoleByGroup(ctx, &pb.CreateRoleByGroupRequest{OrganizationId: resp.Id,
+				GroupId: groupId, Name: username.(string) + "-admin-role", IsAdmin: &isAdmin})
 			util.ExitNicelyOnError(err, "Error creating role")
 
 			// now assign the role
@@ -179,7 +203,7 @@ within a mediator control plane.`,
 
 		client := pb.NewUserServiceClient(conn)
 		resp, err := client.CreateUser(ctx, &pb.CreateUserRequest{
-			OrganizationId:      org,
+			OrganizationId:      int32(org),
 			Email:               emailPtr,
 			Username:            username.(string),
 			Password:            passwordPtr,
@@ -210,8 +234,8 @@ func init() {
 	User_createCmd.Flags().StringP("lastname", "l", "", "User's last name")
 	User_createCmd.Flags().BoolP("is-protected", "i", false, "Is the user protected")
 	User_createCmd.Flags().Int32P("org-id", "o", 0, "Organization ID for the user")
-	User_createCmd.Flags().Int32P("roles", "r", 0, "Comma separated list of roles")
-	User_createCmd.Flags().Int32P("groups", "g", 0, "Comma separated list of groups")
+	User_createCmd.Flags().StringP("roles", "r", "", "Comma separated list of roles")
+	User_createCmd.Flags().StringP("groups", "g", "", "Comma separated list of groups")
 	User_createCmd.Flags().BoolP("force", "s", false, "Skip confirmation")
 	User_createCmd.Flags().BoolP("needs-password-change", "c", true, "Does the user need to change their password")
 	err := User_createCmd.MarkFlagRequired("username")

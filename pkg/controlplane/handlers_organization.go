@@ -67,17 +67,24 @@ func (s *Server) CreateOrganization(ctx context.Context,
 				IsProtected: group.IsProtected, CreatedAt: group.CreatedAt, UpdatedAt: group.UpdatedAt}
 			response.DefaultGroup = &grp
 
-			// we can create the default role
-			role, _ := s.CreateRole(ctx, &pb.CreateRoleRequest{
+			// we can create the default role for org and for group
+			role, _ := s.CreateRoleByOrganization(ctx, &pb.CreateRoleByOrganizationRequest{
 				OrganizationId: org.ID,
-				GroupId:        &group.GroupId,
-				Name:           fmt.Sprintf("%s-admin", org.Name),
+				Name:           fmt.Sprintf("%s-org-admin", org.Name),
 				IsAdmin:        &adminPtr,
 				IsProtected:    &protectedPtr,
 			})
 
-			if role != nil {
-				rl := pb.RoleRecord{Id: role.Id, GroupId: role.GroupId, Name: role.Name, IsAdmin: role.IsAdmin,
+			roleGroup, _ := s.CreateRoleByGroup(ctx, &pb.CreateRoleByGroupRequest{
+				OrganizationId: org.ID,
+				GroupId:        group.GroupId,
+				Name:           fmt.Sprintf("%s-group-admin", org.Name),
+				IsAdmin:        &adminPtr,
+				IsProtected:    &protectedPtr,
+			})
+
+			if role != nil && roleGroup != nil {
+				rl := pb.RoleRecord{Id: role.Id, Name: role.Name, IsAdmin: role.IsAdmin,
 					IsProtected: role.IsProtected, CreatedAt: role.CreatedAt, UpdatedAt: role.UpdatedAt}
 				response.DefaultRole = &rl
 
@@ -88,7 +95,7 @@ func (s *Server) CreateOrganization(ctx context.Context,
 					Username:            fmt.Sprintf("%s-admin", org.Name),
 					IsProtected:         &protectedPtr,
 					NeedsPasswordChange: &needsPasswordChange,
-					RoleIds:             []int32{role.Id},
+					RoleIds:             []int32{role.Id, roleGroup.Id},
 					GroupIds:            []int32{group.GroupId},
 				})
 				if user != nil {

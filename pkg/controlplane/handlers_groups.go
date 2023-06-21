@@ -216,8 +216,7 @@ func (s *Server) DeleteGroup(ctx context.Context,
 	// if we do not force the deletion, we need to check if there are roles
 	if !*in.Force {
 		// list roles belonging to that role
-		roles, err := s.store.ListRolesByGroupID(ctx, db.ListRolesByGroupIDParams{OrganizationID: group.OrganizationID,
-			GroupID: sql.NullInt32{Int32: group.ID, Valid: true}})
+		roles, err := s.store.ListRolesByGroupID(ctx, db.ListRolesByGroupIDParams{GroupID: sql.NullInt32{Int32: group.ID, Valid: true}})
 		if err != nil {
 			return nil, err
 		}

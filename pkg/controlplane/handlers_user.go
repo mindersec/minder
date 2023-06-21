@@ -244,6 +244,100 @@ func (s *Server) GetUsers(ctx context.Context,
 	return &resp, nil
 }
 
+// GetUsersByOrganization is a service for getting a list of users of an organization
+func (s *Server) GetUsersByOrganization(ctx context.Context,
+	in *pb.GetUsersByOrganizationRequest) (*pb.GetUsersByOrganizationResponse, error) {
+	// check if user is authorized
+	if !IsRequestAuthorized(ctx, in.OrganizationId) {
+		return nil, status.Errorf(codes.PermissionDenied, "user is not authorized to access this resource")
+	}
+
+	// define default values for limit and offset
+	if in.Limit == nil || *in.Limit == -1 {
+		in.Limit = new(int32)
+		*in.Limit = PaginationLimit
+	}
+	if in.Offset == nil {
+		in.Offset = new(int32)
+		*in.Offset = 0
+	}
+
+	users, err := s.store.ListUsersByOrganization(ctx, db.ListUsersByOrganizationParams{
+		OrganizationID: in.OrganizationId,
+		Limit:          *in.Limit,
+		Offset:         *in.Offset,
+	})
+	if err != nil {
+		return nil, fmt.Errorf("failed to get users: %w", err)
+	}
+
+	var resp pb.GetUsersByOrganizationResponse
+	resp.Users = make([]*pb.UserRecord, 0, len(users))
+	for _, user := range users {
+		resp.Users = append(resp.Users, &pb.UserRecord{
+			Id:                  user.ID,
+			OrganizationId:      user.OrganizationID,
+			Email:               &user.Email.String,
+			Username:            user.Username,
+			FirstName:           &user.FirstName.String,
+			LastName:            &user.LastName.String,
+			IsProtected:         &user.IsProtected,
+			NeedsPasswordChange: &user.NeedsPasswordChange,
+			CreatedAt:           timestamppb.New(user.CreatedAt),
+			UpdatedAt:           timestamppb.New(user.UpdatedAt),
+		})
+	}
+
+	return &resp, nil
+}
+
+// GetUsersByGroup is a service for getting a list of users of a group
+func (s *Server) GetUsersByGroup(ctx context.Context,
+	in *pb.GetUsersByGroupRequest) (*pb.GetUsersByGroupResponse, error) {
+	// check if user is authorized
+	if !IsRequestAuthorized(ctx, in.GroupId) {
+		return nil, status.Errorf(codes.PermissionDenied, "user is not authorized to access this resource")
+	}
+
+	// define default values for limit and offset
+	if in.Limit == nil || *in.Limit == -1 {
+		in.Limit = new(int32)
+		*in.Limit = PaginationLimit
+	}
+	if in.Offset == nil {
+		in.Offset = new(int32)
+		*in.Offset = 0
+	}
+
+	users, err := s.store.ListUsersByGroup(ctx, db.ListUsersByGroupParams{
+		GroupID: in.GroupId,
+		Limit:   *in.Limit,
+		Offset:  *in.Offset,
+	})
+	if err != nil {
+		return nil, fmt.Errorf("failed to get users: %w", err)
+	}
+
+	var resp pb.GetUsersByGroupResponse
+	resp.Users = make([]*pb.UserRecord, 0, len(users))
+	for _, user := range users {
+		resp.Users = append(resp.Users, &pb.UserRecord{
+			Id:                  user.ID,
+			OrganizationId:      user.OrganizationID,
+			Email:               &user.Email.String,
+			Username:            user.Username,
+			FirstName:           &user.FirstName.String,
+			LastName:            &user.LastName.String,
+			IsProtected:         &user.IsProtected,
+			NeedsPasswordChange: &user.NeedsPasswordChange,
+			CreatedAt:           timestamppb.New(user.CreatedAt),
+			UpdatedAt:           timestamppb.New(user.UpdatedAt),
+		})
+	}
+
+	return &resp, nil
+}
+
 // GetUserById is a service for getting a user by id
 func (s *Server) GetUserById(ctx context.Context,
 	in *pb.GetUserByIdRequest) (*pb.GetUserByIdResponse, error) {

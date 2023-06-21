@@ -56,7 +56,7 @@ func TestIsNonadminAuthorized(t *testing.T) {
 	ctrl := gomock.NewController(t)
 	defer ctrl.Finish()
 
-	request := &pb.CreateRoleRequest{OrganizationId: 1, Name: "test"}
+	request := &pb.CreateRoleByOrganizationRequest{OrganizationId: 1, Name: "test"}
 	// Create a new context and set the claims value
 	ctx := context.WithValue(context.Background(), TokenInfoKey, auth.UserClaims{
 		UserId:         1,
@@ -72,7 +72,7 @@ func TestIsNonadminAuthorized(t *testing.T) {
 	}
 	mockStore.EXPECT().CreateRole(ctx, gomock.Any()).Times(0)
 
-	_, err := server.CreateRole(ctx, request)
+	_, err := server.CreateRoleByOrganization(ctx, request)
 
 	if err == nil {
 		t.Error("Expected error when user is not authorized, but got nil")

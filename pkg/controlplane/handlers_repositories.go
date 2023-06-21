@@ -28,6 +28,9 @@ import (
 // AddRepository adds repositories to the database and registers a webhook
 func (s *Server) AddRepository(ctx context.Context,
 	in *pb.AddRepositoryRequest) (*pb.AddRepositoryResponse, error) {
+	if in.GroupId == 0 {
+		return nil, status.Errorf(codes.InvalidArgument, "group id cannot be empty")
+	}
 	// check if user is authorized
 	if !IsRequestAuthorized(ctx, in.GroupId) {
 		return nil, status.Errorf(codes.PermissionDenied, "user is not authorized to access this resource")

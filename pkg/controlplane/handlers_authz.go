@@ -19,7 +19,6 @@ import (
 	"fmt"
 	"os"
 	"path/filepath"
-	"reflect"
 	"time"
 
 	gauth "github.com/grpc-ecosystem/go-grpc-middleware/v2/interceptors/auth"
@@ -70,7 +69,7 @@ var superAdminMethods = []string{
 	"/mediator.v1.AuthService/RevokeTokens",
 	"/mediator.v1.AuthService/RevokeUserToken",
 	"/mediator.v1.OAuthService/RevokeOauthTokens",
-	"/mediator.v1.UsersService/GetUsers",
+	"/mediator.v1.UserService/GetUsers",
 }
 
 var resourceAuthorizations = []map[string]map[string]interface{}{
@@ -105,7 +104,7 @@ var resourceAuthorizations = []map[string]map[string]interface{}{
 		},
 	},
 	{
-		"/mediator.v1.OrganizationService/GetGroupById": {
+		"/mediator.v1.GroupService/GetGroupById": {
 			"claimField": "OrganizationId",
 			"isAdmin":    true,
 		},
@@ -117,8 +116,14 @@ var resourceAuthorizations = []map[string]map[string]interface{}{
 		},
 	},
 	{
-		"/mediator.v1.RoleService/CreateRole": {
+		"/mediator.v1.RoleService/CreateRoleByOrganization": {
 			"claimField": "OrganizationId",
+			"isAdmin":    true,
+		},
+	},
+	{
+		"/mediator.v1.RoleService/CreateRoleByGroup": {
+			"claimField": "GroupId",
 			"isAdmin":    true,
 		},
 	},
@@ -131,6 +136,12 @@ var resourceAuthorizations = []map[string]map[string]interface{}{
 	{
 		"/mediator.v1.RoleService/GetRoles": {
 			"claimField": "OrganizationId",
+			"isAdmin":    true,
+		},
+	},
+	{
+		"/mediator.v1.RoleService/GetRolesByGroup": {
+			"claimField": "GroupId",
 			"isAdmin":    true,
 		},
 	},
@@ -155,6 +166,18 @@ var resourceAuthorizations = []map[string]map[string]interface{}{
 	{
 		"/mediator.v1.UserService/DeleteUser": {
 			"claimField": "OrganizationId",
+			"isAdmin":    true,
+		},
+	},
+	{
+		"/mediator.v1.UserService/GetUsersByOrganization": {
+			"claimField": "OrganizationId",
+			"isAdmin":    true,
+		},
+	},
+	{
+		"/mediator.v1.UserService/GetUsersByGroup": {
+			"claimField": "GroupId",
 			"isAdmin":    true,
 		},
 	},
@@ -289,6 +312,11 @@ func IsRequestAuthorized(ctx context.Context, value int32) bool {
 					if claims.OrganizationId != value {
 						return false
 					}
+					// check if is admin of org
+					if isAdmin && !isUserAdmin(claims, "OrganizationId", value) {
+						return false
+					}
+
 				} else if claimField == "GroupId" {
 					// check if user is in the list of groups
 					found := false
@@ -298,24 +326,19 @@ func IsRequestAuthorized(ctx context.Context, value int32) bool {
 							break
 						}
 					}
-					return found
+					if !found {
+						return false
+					}
+
+					// check if is admin of group
+					if isAdmin && !isUserAdmin(claims, "GroupId", value) {
+						return false
+					}
 				} else {
 					// no claim field to match
 					return false
 				}
 
-				claimsObj := reflect.ValueOf(claims)
-				claimsValue := claimsObj.FieldByName(claimField).Interface().(int32)
-
-				// if resources do not match, do not authorize
-				if claimsValue != value {
-					return false
-				}
-
-				// if needs admin role but is not admin, do not authorize
-				if isAdmin && isUserAdmin(claims, claimField, claimsValue) {
-					return false
-				}
 				return true
 			}
 		}

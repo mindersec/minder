@@ -39,7 +39,7 @@ func TestCreateRoleDBMock(t *testing.T) {
 
 	mockStore := mockdb.NewMockStore(ctrl)
 
-	request := &pb.CreateRoleRequest{
+	request := &pb.CreateRoleByGroupRequest{
 		OrganizationId: 1,
 		Name:           "TestRole",
 		IsAdmin:        nil,
@@ -72,7 +72,7 @@ func TestCreateRoleDBMock(t *testing.T) {
 		store: mockStore,
 	}
 
-	response, err := server.CreateRole(ctx, request)
+	response, err := server.CreateRoleByGroup(ctx, request)
 
 	assert.NoError(t, err)
 	assert.NotNil(t, response)
@@ -90,14 +90,14 @@ func TestCreateRoleDBMock(t *testing.T) {
 func TestCreateRole_gRPC(t *testing.T) {
 	testCases := []struct {
 		name               string
-		req                *pb.CreateRoleRequest
+		req                *pb.CreateRoleByGroupRequest
 		buildStubs         func(store *mockdb.MockStore)
-		checkResponse      func(t *testing.T, res *pb.CreateRoleResponse, err error)
+		checkResponse      func(t *testing.T, res *pb.CreateRoleByGroupResponse, err error)
 		expectedStatusCode codes.Code
 	}{
 		{
 			name: "Success",
-			req: &pb.CreateRoleRequest{
+			req: &pb.CreateRoleByGroupRequest{
 				OrganizationId: 1,
 				Name:           "TestRole",
 			},
@@ -115,7 +115,7 @@ func TestCreateRole_gRPC(t *testing.T) {
 					}, nil).
 					Times(1)
 			},
-			checkResponse: func(t *testing.T, res *pb.CreateRoleResponse, err error) {
+			checkResponse: func(t *testing.T, res *pb.CreateRoleByGroupResponse, err error) {
 				assert.NoError(t, err)
 				assert.NotNil(t, res)
 				assert.Equal(t, int32(1), res.Id)
@@ -130,13 +130,13 @@ func TestCreateRole_gRPC(t *testing.T) {
 		},
 		{
 			name: "EmptyRequest",
-			req: &pb.CreateRoleRequest{
+			req: &pb.CreateRoleByGroupRequest{
 				Name: "",
 			},
 			buildStubs: func(store *mockdb.MockStore) {
 				// No expectations, as CreateRole should not be called
 			},
-			checkResponse: func(t *testing.T, res *pb.CreateRoleResponse, err error) {
+			checkResponse: func(t *testing.T, res *pb.CreateRoleByGroupResponse, err error) {
 				// Assert the expected behavior when the request is empty
 				assert.Error(t, err)
 				assert.Nil(t, res)
@@ -145,7 +145,7 @@ func TestCreateRole_gRPC(t *testing.T) {
 		},
 		{
 			name: "StoreError",
-			req: &pb.CreateRoleRequest{
+			req: &pb.CreateRoleByGroupRequest{
 				OrganizationId: 1,
 				Name:           "TestRole",
 			},
@@ -155,7 +155,7 @@ func TestCreateRole_gRPC(t *testing.T) {
 					Return(db.Role{}, errors.New("store error")).
 					Times(1)
 			},
-			checkResponse: func(t *testing.T, res *pb.CreateRoleResponse, err error) {
+			checkResponse: func(t *testing.T, res *pb.CreateRoleByGroupResponse, err error) {
 				// Assert the expected behavior when there's a store error
 				assert.Error(t, err)
 				assert.Nil(t, res)
@@ -184,7 +184,7 @@ func TestCreateRole_gRPC(t *testing.T) {
 
 			server := NewServer(mockStore)
 
-			resp, err := server.CreateRole(ctx, tc.req)
+			resp, err := server.CreateRoleByGroup(ctx, tc.req)
 			tc.checkResponse(t, resp, err)
 		})
 	}
