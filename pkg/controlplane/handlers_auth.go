@@ -39,8 +39,9 @@ type loginValidation struct {
 }
 
 func generateToken(ctx context.Context, store db.Store, userId int32) (string, string, int64, int64, auth.UserClaims, error) {
-	// read private key for generating token and refresh token
 	emptyClaims := auth.UserClaims{}
+
+	// read private key for generating token and refresh token
 	privateKeyPath := viper.GetString("auth.access_token_private_key")
 	if privateKeyPath == "" {
 		return "", "", 0, 0, emptyClaims, fmt.Errorf("could not read private key")
@@ -63,19 +64,9 @@ func generateToken(ctx context.Context, store db.Store, userId int32) (string, s
 		return "", "", 0, 0, emptyClaims, fmt.Errorf("failed to generate token")
 	}
 
-	// read all information for user claims
-	userInfo, err := store.GetUserClaims(ctx, userId)
+	claims, err := auth.GetUserClaims(ctx, store, userId)
 	if err != nil {
 		return "", "", 0, 0, emptyClaims, fmt.Errorf("failed to generate token")
-	}
-
-	claims := auth.UserClaims{
-		UserId:         userId,
-		RoleId:         userInfo.RoleID,
-		GroupId:        userInfo.GroupID,
-		OrganizationId: userInfo.OrganizationID,
-		IsAdmin:        userInfo.IsAdmin,
-		IsSuperadmin:   (userInfo.OrganizationID == 1 && userInfo.IsAdmin),
 	}
 
 	// Convert the key bytes to a string

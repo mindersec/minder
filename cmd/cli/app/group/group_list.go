@@ -38,7 +38,7 @@ import (
 
 var group_listCmd = &cobra.Command{
 	Use:   "list",
-	Short: "medctl group list",
+	Short: "Get list of groups within a mediator control plane",
 	Long: `The medctl group list subcommand lets you list groups within
 a mediator control plane.`,
 	PreRun: func(cmd *cobra.Command, args []string) {

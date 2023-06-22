@@ -123,6 +123,16 @@ func TestGetAuthorizationURL(t *testing.T) {
 			expectedStatusCode: codes.OK,
 		},
 	}
+
+	// Create a new context and set the claims value
+	ctx := context.WithValue(context.Background(), TokenInfoKey, auth.UserClaims{
+		UserId:         1,
+		OrganizationId: 1,
+		GroupIds:       []int32{1},
+		Roles: []auth.RoleInfo{
+			{RoleID: 1, IsAdmin: true, GroupID: 0, OrganizationID: 1}},
+	})
+
 	for i := range testCases {
 		tc := testCases[i]
 		t.Run(tc.name, func(t *testing.T) {
@@ -134,7 +144,7 @@ func TestGetAuthorizationURL(t *testing.T) {
 
 			server := Server{store: store}
 
-			res, err := server.GetAuthorizationURL(context.Background(), tc.req)
+			res, err := server.GetAuthorizationURL(ctx, tc.req)
 			tc.checkResponse(t, res, err)
 		})
 	}
@@ -142,9 +152,11 @@ func TestGetAuthorizationURL(t *testing.T) {
 
 func TestRevokeOauthTokens_gRPC(t *testing.T) {
 	ctx := context.WithValue(context.Background(), TokenInfoKey, auth.UserClaims{
-		UserId:       1,
-		IsAdmin:      false,
-		IsSuperadmin: true,
+		UserId:         1,
+		OrganizationId: 1,
+		GroupIds:       []int32{1},
+		Roles: []auth.RoleInfo{
+			{RoleID: 1, IsAdmin: true, GroupID: 0, OrganizationID: 1}},
 	})
 
 	ctrl := gomock.NewController(t)
@@ -163,9 +175,11 @@ func TestRevokeOauthTokens_gRPC(t *testing.T) {
 
 func RevokeOauthGroupToken_gRPC(t *testing.T) {
 	ctx := context.WithValue(context.Background(), TokenInfoKey, auth.UserClaims{
-		UserId:       1,
-		IsAdmin:      false,
-		IsSuperadmin: true,
+		UserId:         1,
+		OrganizationId: 1,
+		GroupIds:       []int32{1},
+		Roles: []auth.RoleInfo{
+			{RoleID: 1, IsAdmin: true, GroupID: 0, OrganizationID: 1}},
 	})
 
 	ctrl := gomock.NewController(t)

@@ -28,8 +28,21 @@ import (
 // AddRepository adds repositories to the database and registers a webhook
 func (s *Server) AddRepository(ctx context.Context,
 	in *pb.AddRepositoryRequest) (*pb.AddRepositoryResponse, error) {
-	decryptedToken, err := GetProviderAccessToken(ctx, s.store)
-	claims, _ := ctx.Value((TokenInfoKey)).(auth.UserClaims)
+	if in.GroupId == 0 {
+		return nil, status.Errorf(codes.InvalidArgument, "group id cannot be empty")
+	}
+	// check if user is authorized
+	if !IsRequestAuthorized(ctx, in.GroupId) {
+		return nil, status.Errorf(codes.PermissionDenied, "user is not authorized to access this resource")
+	}
+
+	// Check if needs github authorization
+	isGithubAuthorized := IsProviderCallAuthorized(ctx, s.store, auth.Github, in.GroupId)
+	if !isGithubAuthorized {
+		return nil, status.Errorf(codes.PermissionDenied, "user not authorized to interact with provider")
+	}
+
+	decryptedToken, err := GetProviderAccessToken(ctx, s.store, in.GroupId)
 
 	if err != nil {
 		return nil, err
@@ -70,7 +83,7 @@ func (s *Server) AddRepository(ctx context.Context,
 
 		// update the database
 		_, err = s.store.CreateRepository(ctx, db.CreateRepositoryParams{
-			GroupID:    claims.GroupId,
+			GroupID:    in.GroupId,
 			RepoOwner:  result.Owner,
 			RepoName:   result.Repository,
 			WebhookID:  sql.NullInt32{Int32: int32(result.HookID), Valid: true},

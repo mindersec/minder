@@ -36,6 +36,36 @@ func (m *MockStore) EXPECT() *MockStoreMockRecorder {
 	return m.recorder
 }
 
+// AddUserGroup mocks base method.
+func (m *MockStore) AddUserGroup(arg0 context.Context, arg1 db.AddUserGroupParams) (db.UserGroup, error) {
+	m.ctrl.T.Helper()
+	ret := m.ctrl.Call(m, "AddUserGroup", arg0, arg1)
+	ret0, _ := ret[0].(db.UserGroup)
+	ret1, _ := ret[1].(error)
+	return ret0, ret1
+}
+
+// AddUserGroup indicates an expected call of AddUserGroup.
+func (mr *MockStoreMockRecorder) AddUserGroup(arg0, arg1 interface{}) *gomock.Call {
+	mr.mock.ctrl.T.Helper()
+	return mr.mock.ctrl.RecordCallWithMethodType(mr.mock, "AddUserGroup", reflect.TypeOf((*MockStore)(nil).AddUserGroup), arg0, arg1)
+}
+
+// AddUserRole mocks base method.
+func (m *MockStore) AddUserRole(arg0 context.Context, arg1 db.AddUserRoleParams) (db.UserRole, error) {
+	m.ctrl.T.Helper()
+	ret := m.ctrl.Call(m, "AddUserRole", arg0, arg1)
+	ret0, _ := ret[0].(db.UserRole)
+	ret1, _ := ret[1].(error)
+	return ret0, ret1
+}
+
+// AddUserRole indicates an expected call of AddUserRole.
+func (mr *MockStoreMockRecorder) AddUserRole(arg0, arg1 interface{}) *gomock.Call {
+	mr.mock.ctrl.T.Helper()
+	return mr.mock.ctrl.RecordCallWithMethodType(mr.mock, "AddUserRole", reflect.TypeOf((*MockStore)(nil).AddUserRole), arg0, arg1)
+}
+
 // CheckHealth mocks base method.
 func (m *MockStore) CheckHealth() error {
 	m.ctrl.T.Helper()
@@ -566,19 +596,34 @@ func (mr *MockStoreMockRecorder) GetUserByUserName(arg0, arg1 interface{}) *gomo
 	return mr.mock.ctrl.RecordCallWithMethodType(mr.mock, "GetUserByUserName", reflect.TypeOf((*MockStore)(nil).GetUserByUserName), arg0, arg1)
 }
 
-// GetUserClaims mocks base method.
-func (m *MockStore) GetUserClaims(arg0 context.Context, arg1 int32) (db.GetUserClaimsRow, error) {
+// GetUserGroups mocks base method.
+func (m *MockStore) GetUserGroups(arg0 context.Context, arg1 int32) ([]db.GetUserGroupsRow, error) {
 	m.ctrl.T.Helper()
-	ret := m.ctrl.Call(m, "GetUserClaims", arg0, arg1)
-	ret0, _ := ret[0].(db.GetUserClaimsRow)
+	ret := m.ctrl.Call(m, "GetUserGroups", arg0, arg1)
+	ret0, _ := ret[0].([]db.GetUserGroupsRow)
 	ret1, _ := ret[1].(error)
 	return ret0, ret1
 }
 
-// GetUserClaims indicates an expected call of GetUserClaims.
-func (mr *MockStoreMockRecorder) GetUserClaims(arg0, arg1 interface{}) *gomock.Call {
+// GetUserGroups indicates an expected call of GetUserGroups.
+func (mr *MockStoreMockRecorder) GetUserGroups(arg0, arg1 interface{}) *gomock.Call {
 	mr.mock.ctrl.T.Helper()
-	return mr.mock.ctrl.RecordCallWithMethodType(mr.mock, "GetUserClaims", reflect.TypeOf((*MockStore)(nil).GetUserClaims), arg0, arg1)
+	return mr.mock.ctrl.RecordCallWithMethodType(mr.mock, "GetUserGroups", reflect.TypeOf((*MockStore)(nil).GetUserGroups), arg0, arg1)
+}
+
+// GetUserRoles mocks base method.
+func (m *MockStore) GetUserRoles(arg0 context.Context, arg1 int32) ([]db.GetUserRolesRow, error) {
+	m.ctrl.T.Helper()
+	ret := m.ctrl.Call(m, "GetUserRoles", arg0, arg1)
+	ret0, _ := ret[0].([]db.GetUserRolesRow)
+	ret1, _ := ret[1].(error)
+	return ret0, ret1
+}
+
+// GetUserRoles indicates an expected call of GetUserRoles.
+func (mr *MockStoreMockRecorder) GetUserRoles(arg0, arg1 interface{}) *gomock.Call {
+	mr.mock.ctrl.T.Helper()
+	return mr.mock.ctrl.RecordCallWithMethodType(mr.mock, "GetUserRoles", reflect.TypeOf((*MockStore)(nil).GetUserRoles), arg0, arg1)
 }
 
 // ListGroups mocks base method.
@@ -672,7 +717,7 @@ func (mr *MockStoreMockRecorder) ListRoles(arg0, arg1 interface{}) *gomock.Call 
 }
 
 // ListRolesByGroupID mocks base method.
-func (m *MockStore) ListRolesByGroupID(arg0 context.Context, arg1 int32) ([]db.Role, error) {
+func (m *MockStore) ListRolesByGroupID(arg0 context.Context, arg1 db.ListRolesByGroupIDParams) ([]db.Role, error) {
 	m.ctrl.T.Helper()
 	ret := m.ctrl.Call(m, "ListRolesByGroupID", arg0, arg1)
 	ret0, _ := ret[0].([]db.Role)
@@ -701,64 +746,49 @@ func (mr *MockStoreMockRecorder) ListUsers(arg0, arg1 interface{}) *gomock.Call 
 	return mr.mock.ctrl.RecordCallWithMethodType(mr.mock, "ListUsers", reflect.TypeOf((*MockStore)(nil).ListUsers), arg0, arg1)
 }
 
-// ListUsersByRoleID mocks base method.
-func (m *MockStore) ListUsersByRoleID(arg0 context.Context, arg1 int32) ([]db.User, error) {
+// ListUsersByGroup mocks base method.
+func (m *MockStore) ListUsersByGroup(arg0 context.Context, arg1 db.ListUsersByGroupParams) ([]db.User, error) {
 	m.ctrl.T.Helper()
-	ret := m.ctrl.Call(m, "ListUsersByRoleID", arg0, arg1)
+	ret := m.ctrl.Call(m, "ListUsersByGroup", arg0, arg1)
 	ret0, _ := ret[0].([]db.User)
 	ret1, _ := ret[1].(error)
 	return ret0, ret1
 }
 
-// ListUsersByRoleID indicates an expected call of ListUsersByRoleID.
-func (mr *MockStoreMockRecorder) ListUsersByRoleID(arg0, arg1 interface{}) *gomock.Call {
+// ListUsersByGroup indicates an expected call of ListUsersByGroup.
+func (mr *MockStoreMockRecorder) ListUsersByGroup(arg0, arg1 interface{}) *gomock.Call {
 	mr.mock.ctrl.T.Helper()
-	return mr.mock.ctrl.RecordCallWithMethodType(mr.mock, "ListUsersByRoleID", reflect.TypeOf((*MockStore)(nil).ListUsersByRoleID), arg0, arg1)
+	return mr.mock.ctrl.RecordCallWithMethodType(mr.mock, "ListUsersByGroup", reflect.TypeOf((*MockStore)(nil).ListUsersByGroup), arg0, arg1)
 }
 
-// RevokeGroupUsersTokens mocks base method.
-func (m *MockStore) RevokeGroupUsersTokens(arg0 context.Context, arg1 db.RevokeGroupUsersTokensParams) (db.User, error) {
+// ListUsersByOrganization mocks base method.
+func (m *MockStore) ListUsersByOrganization(arg0 context.Context, arg1 db.ListUsersByOrganizationParams) ([]db.User, error) {
 	m.ctrl.T.Helper()
-	ret := m.ctrl.Call(m, "RevokeGroupUsersTokens", arg0, arg1)
-	ret0, _ := ret[0].(db.User)
+	ret := m.ctrl.Call(m, "ListUsersByOrganization", arg0, arg1)
+	ret0, _ := ret[0].([]db.User)
 	ret1, _ := ret[1].(error)
 	return ret0, ret1
 }
 
-// RevokeGroupUsersTokens indicates an expected call of RevokeGroupUsersTokens.
-func (mr *MockStoreMockRecorder) RevokeGroupUsersTokens(arg0, arg1 interface{}) *gomock.Call {
+// ListUsersByOrganization indicates an expected call of ListUsersByOrganization.
+func (mr *MockStoreMockRecorder) ListUsersByOrganization(arg0, arg1 interface{}) *gomock.Call {
 	mr.mock.ctrl.T.Helper()
-	return mr.mock.ctrl.RecordCallWithMethodType(mr.mock, "RevokeGroupUsersTokens", reflect.TypeOf((*MockStore)(nil).RevokeGroupUsersTokens), arg0, arg1)
+	return mr.mock.ctrl.RecordCallWithMethodType(mr.mock, "ListUsersByOrganization", reflect.TypeOf((*MockStore)(nil).ListUsersByOrganization), arg0, arg1)
 }
 
-// RevokeOrganizationUsersTokens mocks base method.
-func (m *MockStore) RevokeOrganizationUsersTokens(arg0 context.Context, arg1 db.RevokeOrganizationUsersTokensParams) (db.User, error) {
+// ListUsersByRoleId mocks base method.
+func (m *MockStore) ListUsersByRoleId(arg0 context.Context, arg1 int32) ([]int32, error) {
 	m.ctrl.T.Helper()
-	ret := m.ctrl.Call(m, "RevokeOrganizationUsersTokens", arg0, arg1)
-	ret0, _ := ret[0].(db.User)
+	ret := m.ctrl.Call(m, "ListUsersByRoleId", arg0, arg1)
+	ret0, _ := ret[0].([]int32)
 	ret1, _ := ret[1].(error)
 	return ret0, ret1
 }
 
-// RevokeOrganizationUsersTokens indicates an expected call of RevokeOrganizationUsersTokens.
-func (mr *MockStoreMockRecorder) RevokeOrganizationUsersTokens(arg0, arg1 interface{}) *gomock.Call {
+// ListUsersByRoleId indicates an expected call of ListUsersByRoleId.
+func (mr *MockStoreMockRecorder) ListUsersByRoleId(arg0, arg1 interface{}) *gomock.Call {
 	mr.mock.ctrl.T.Helper()
-	return mr.mock.ctrl.RecordCallWithMethodType(mr.mock, "RevokeOrganizationUsersTokens", reflect.TypeOf((*MockStore)(nil).RevokeOrganizationUsersTokens), arg0, arg1)
-}
-
-// RevokeRoleUsersTokens mocks base method.
-func (m *MockStore) RevokeRoleUsersTokens(arg0 context.Context, arg1 db.RevokeRoleUsersTokensParams) (db.User, error) {
-	m.ctrl.T.Helper()
-	ret := m.ctrl.Call(m, "RevokeRoleUsersTokens", arg0, arg1)
-	ret0, _ := ret[0].(db.User)
-	ret1, _ := ret[1].(error)
-	return ret0, ret1
-}
-
-// RevokeRoleUsersTokens indicates an expected call of RevokeRoleUsersTokens.
-func (mr *MockStoreMockRecorder) RevokeRoleUsersTokens(arg0, arg1 interface{}) *gomock.Call {
-	mr.mock.ctrl.T.Helper()
-	return mr.mock.ctrl.RecordCallWithMethodType(mr.mock, "RevokeRoleUsersTokens", reflect.TypeOf((*MockStore)(nil).RevokeRoleUsersTokens), arg0, arg1)
+	return mr.mock.ctrl.RecordCallWithMethodType(mr.mock, "ListUsersByRoleId", reflect.TypeOf((*MockStore)(nil).ListUsersByRoleId), arg0, arg1)
 }
 
 // RevokeUserToken mocks base method.

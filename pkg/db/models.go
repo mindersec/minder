@@ -50,13 +50,14 @@ type Repository struct {
 }
 
 type Role struct {
-	ID          int32     `json:"id"`
-	GroupID     int32     `json:"group_id"`
-	Name        string    `json:"name"`
-	IsAdmin     bool      `json:"is_admin"`
-	IsProtected bool      `json:"is_protected"`
-	CreatedAt   time.Time `json:"created_at"`
-	UpdatedAt   time.Time `json:"updated_at"`
+	ID             int32         `json:"id"`
+	OrganizationID int32         `json:"organization_id"`
+	GroupID        sql.NullInt32 `json:"group_id"`
+	Name           string        `json:"name"`
+	IsAdmin        bool          `json:"is_admin"`
+	IsProtected    bool          `json:"is_protected"`
+	CreatedAt      time.Time     `json:"created_at"`
+	UpdatedAt      time.Time     `json:"updated_at"`
 }
 
 type SessionStore struct {
@@ -69,7 +70,7 @@ type SessionStore struct {
 
 type User struct {
 	ID                  int32          `json:"id"`
-	RoleID              int32          `json:"role_id"`
+	OrganizationID      int32          `json:"organization_id"`
 	Email               sql.NullString `json:"email"`
 	Username            string         `json:"username"`
 	Password            string         `json:"password"`
@@ -80,4 +81,16 @@ type User struct {
 	CreatedAt           time.Time      `json:"created_at"`
 	UpdatedAt           time.Time      `json:"updated_at"`
 	MinTokenIssuedTime  sql.NullTime   `json:"min_token_issued_time"`
+}
+
+type UserGroup struct {
+	ID      int32 `json:"id"`
+	UserID  int32 `json:"user_id"`
+	GroupID int32 `json:"group_id"`
+}
+
+type UserRole struct {
+	ID     int32 `json:"id"`
+	UserID int32 `json:"user_id"`
+	RoleID int32 `json:"role_id"`
 }

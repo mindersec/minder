@@ -35,14 +35,20 @@ import (
 	"google.golang.org/grpc/status"
 )
 
+// RoleInfo contains the role information for a user
+type RoleInfo struct {
+	RoleID         int32 `json:"role_id"`
+	IsAdmin        bool  `json:"is_admin"`
+	GroupID        int32 `json:"group_id"`
+	OrganizationID int32 `json:"organization_id"`
+}
+
 // UserClaims contains the claims for a user
 type UserClaims struct {
 	UserId              int32
-	RoleId              int32
-	GroupId             int32
+	GroupIds            []int32
+	Roles               []RoleInfo
 	OrganizationId      int32
-	IsAdmin             bool
-	IsSuperadmin        bool
 	NeedsPasswordChange bool
 }
 
@@ -56,11 +62,9 @@ func GenerateToken(userClaims UserClaims, accessPrivateKey []byte, refreshPrivat
 
 	token := jwt.NewWithClaims(jwt.SigningMethodRS256, jwt.MapClaims{
 		"userId":              int32(userClaims.UserId),
-		"roleId":              int32(userClaims.RoleId),
-		"groupId":             int32(userClaims.GroupId),
+		"roleInfo":            userClaims.Roles,
+		"groupIds":            userClaims.GroupIds,
 		"orgId":               int32(userClaims.OrganizationId),
-		"isAdmin":             userClaims.IsAdmin,
-		"isSuper":             userClaims.IsSuperadmin,
 		"iat":                 time.Now().Unix(),
 		"exp":                 tokenExpirationTime,
 		"needsPasswordChange": userClaims.NeedsPasswordChange,
@@ -97,6 +101,7 @@ func GenerateToken(userClaims UserClaims, accessPrivateKey []byte, refreshPrivat
 }
 
 // VerifyToken verifies the token string and returns the user ID
+// nolint:gocyclo
 func VerifyToken(tokenString string, publicKey []byte, store db.Store) (UserClaims, error) {
 	var userClaims UserClaims
 	// extract the pubkey from the pem
@@ -155,12 +160,29 @@ func VerifyToken(tokenString string, publicKey []byte, store db.Store) (UserClai
 	}
 
 	// generate claims
+	var groups []int32
+	if claims["groupIds"] != nil {
+		for _, g := range claims["groupIds"].([]interface{}) {
+			groups = append(groups, int32(g.(float64)))
+		}
+	}
+	userClaims.GroupIds = groups
+
+	var roles []RoleInfo
+	if claims["roleInfo"] != nil {
+		for _, role := range claims["roleInfo"].([]interface{}) {
+			roleInfo := RoleInfo{RoleID: int32(role.(map[string]interface{})["role_id"].(float64)),
+				IsAdmin:        role.(map[string]interface{})["is_admin"].(bool),
+				GroupID:        int32(role.(map[string]interface{})["group_id"].(float64)),
+				OrganizationID: int32(role.(map[string]interface{})["organization_id"].(float64))}
+
+			roles = append(roles, roleInfo)
+		}
+	}
+	userClaims.Roles = roles
 	userClaims.UserId = int32(claims["userId"].(float64))
-	userClaims.RoleId = int32(claims["roleId"].(float64))
-	userClaims.GroupId = int32(claims["groupId"].(float64))
+
 	userClaims.OrganizationId = int32(claims["orgId"].(float64))
-	userClaims.IsAdmin = claims["isAdmin"].(bool)
-	userClaims.IsSuperadmin = claims["isSuper"].(bool)
 	userClaims.NeedsPasswordChange = claims["needsPasswordChange"].(bool)
 
 	return userClaims, nil
@@ -214,4 +236,45 @@ func VerifyRefreshToken(tokenString string, publicKey []byte, store db.Store) (i
 	}
 
 	return userId, nil
+}
+
+// GetUserClaims returns the user claims for the given user
+func GetUserClaims(ctx context.Context, store db.Store, userId int32) (UserClaims, error) {
+	emptyClaims := UserClaims{}
+
+	// read all information for user claims
+	userInfo, err := store.GetUserByID(ctx, userId)
+	if err != nil {
+		return emptyClaims, fmt.Errorf("failed to read user")
+	}
+
+	// read groups and add id to claims
+	gs, err := store.GetUserGroups(ctx, userId)
+	if err != nil {
+		return emptyClaims, fmt.Errorf("failed to get groups")
+	}
+	var groups []int32
+	for _, g := range gs {
+		groups = append(groups, g.ID)
+	}
+
+	// read roles and add details to claims
+	rs, err := store.GetUserRoles(ctx, userId)
+	if err != nil {
+		return emptyClaims, fmt.Errorf("failed to get roles")
+	}
+
+	var roles []RoleInfo
+	for _, r := range rs {
+		roles = append(roles, RoleInfo{RoleID: r.ID, IsAdmin: r.IsAdmin, GroupID: r.GroupID.Int32, OrganizationID: r.OrganizationID})
+	}
+
+	claims := UserClaims{
+		UserId:         userId,
+		Roles:          roles,
+		GroupIds:       groups,
+		OrganizationId: userInfo.OrganizationID,
+	}
+
+	return claims, nil
 }

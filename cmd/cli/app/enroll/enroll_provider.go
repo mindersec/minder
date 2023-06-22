@@ -29,6 +29,7 @@ import (
 	"sync"
 	"time"
 
+	"github.com/pkg/browser"
 	"github.com/stacklok/mediator/pkg/auth"
 	pb "github.com/stacklok/mediator/pkg/generated/protobuf/go/mediator/v1"
 	"github.com/stacklok/mediator/pkg/util"
@@ -48,7 +49,8 @@ const MAX_CALLS = 300
 
 // callBackServer starts a server and handler to listen for the OAuth callback.
 // It will wait for either a success or failure response from the server.
-func callBackServer(ctx context.Context, port string, wg *sync.WaitGroup, client pb.OAuthServiceClient, since int64) {
+func callBackServer(ctx context.Context, provider string, group int32, port string,
+	wg *sync.WaitGroup, client pb.OAuthServiceClient, since int64) {
 	server := &http.Server{
 		Addr:              fmt.Sprintf(":%s", port),
 		ReadHeaderTimeout: time.Second * 10, // Set an appropriate timeout value
@@ -66,8 +68,7 @@ func callBackServer(ctx context.Context, port string, wg *sync.WaitGroup, client
 	// Start the server in a goroutine
 	fmt.Println("Listening for OAuth Login flow to complete on port", port)
 	go func() {
-		err := server.ListenAndServe()
-		util.ExitNicelyOnError(err, "Server error")
+		_ = server.ListenAndServe()
 	}()
 
 	var stopServer bool
@@ -89,7 +90,7 @@ func callBackServer(ctx context.Context, port string, wg *sync.WaitGroup, client
 
 			// todo: check if token has been created. We need an endpoint to pass an state and check if token is created
 			res, err := client.VerifyProviderTokenFrom(ctx,
-				&pb.VerifyProviderTokenFromRequest{Provider: auth.Github, Timestamp: timestamppb.New(t)})
+				&pb.VerifyProviderTokenFromRequest{Provider: provider, GroupId: group, Timestamp: timestamppb.New(t)})
 			if err != nil || res.Status == "OK" || calls >= MAX_CALLS {
 				stopServer = true
 			}
@@ -115,6 +116,11 @@ actions such as adding repositories.`,
 			fmt.Fprintf(os.Stderr, "Only %s is supported at this time\n", auth.Github)
 			os.Exit(1)
 		}
+		group := util.GetConfigValue("group-id", "group-id", cmd, int32(0)).(int32)
+		if group == 0 {
+			fmt.Fprintf(os.Stderr, "Group must be specified\n")
+			os.Exit(1)
+		}
 		pat := util.GetConfigValue("token", "token", cmd, "").(string)
 
 		conn, err := util.GetGrpcConnection(cmd)
@@ -127,7 +133,8 @@ actions such as adding repositories.`,
 
 		if pat != "" {
 			// use pat for enrollment
-			_, err := client.StoreProviderToken(context.Background(), &pb.StoreProviderTokenRequest{Provider: provider, AccessToken: pat})
+			_, err := client.StoreProviderToken(context.Background(),
+				&pb.StoreProviderTokenRequest{Provider: provider, GroupId: int32(group), AccessToken: pat})
 			util.ExitNicelyOnError(err, "Error storing token")
 			fmt.Println("Provider enrolled successfully")
 		} else {
@@ -137,6 +144,7 @@ actions such as adding repositories.`,
 
 			resp, err := client.GetAuthorizationURL(ctx, &pb.GetAuthorizationURLRequest{
 				Provider: provider,
+				GroupId:  int32(group),
 				Cli:      true,
 				Port:     int32(port),
 			})
@@ -149,12 +157,16 @@ actions such as adding repositories.`,
 
 			util.ExitNicelyOnError(err, "Error opening browser")
 
+			if err := browser.OpenURL(resp.GetUrl()); err != nil {
+				fmt.Fprintf(os.Stderr, "Error opening browser: %s\n", err)
+				os.Exit(1)
+			}
 			openTime := time.Now().Unix()
 
 			var wg sync.WaitGroup
 			wg.Add(1)
 
-			go callBackServer(ctx, fmt.Sprintf("%d", port), &wg, client, openTime)
+			go callBackServer(ctx, provider, group, fmt.Sprintf("%d", port), &wg, client, openTime)
 			wg.Wait()
 		}
 	},
@@ -163,8 +175,12 @@ actions such as adding repositories.`,
 func init() {
 	EnrollCmd.AddCommand(enrollProviderCmd)
 	enrollProviderCmd.Flags().StringP("provider", "n", "", "Name for the provider to enroll")
+	enrollProviderCmd.Flags().Int32P("group-id", "g", 0, "ID of the group for enrolling the provider")
 	enrollProviderCmd.Flags().StringP("token", "t", "", "Personal Access Token (PAT) to use for enrollment")
 	if err := enrollProviderCmd.MarkFlagRequired("provider"); err != nil {
+		fmt.Fprintf(os.Stderr, "Error marking flag as required: %s\n", err)
+	}
+	if err := enrollProviderCmd.MarkFlagRequired("group-id"); err != nil {
 		fmt.Fprintf(os.Stderr, "Error marking flag as required: %s\n", err)
 	}
 

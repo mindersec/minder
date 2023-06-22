@@ -253,9 +253,15 @@ service GroupService {
 
 // manage Roles CRUD
 service RoleService {
-    rpc CreateRole (CreateRoleRequest) returns (CreateRoleResponse) {
+    rpc CreateRoleByOrganization (CreateRoleByOrganizationRequest) returns (CreateRoleByOrganizationResponse) {
         option (google.api.http) = {
-            post: "/api/v1/role"
+            post: "/api/v1/role/organization"
+            body: "*"
+        };
+    }
+    rpc CreateRoleByGroup (CreateRoleByGroupRequest) returns (CreateRoleByGroupResponse) {
+        option (google.api.http) = {
+            post: "/api/v1/role/group"
             body: "*"
         };
     }
@@ -269,7 +275,13 @@ service RoleService {
     
     rpc GetRoles (GetRolesRequest) returns (GetRolesResponse) {
         option (google.api.http) = {
-        get: "/api/v1/roles/{group_id}"
+        get: "/api/v1/roles/{organization_id}"
+        };
+    }
+
+    rpc GetRolesByGroup (GetRolesByGroupRequest) returns (GetRolesByGroupResponse) {
+        option (google.api.http) = {
+        get: "/api/v1/roles/group/{group_id}"
         };
     }
 
@@ -304,7 +316,19 @@ service UserService {
 
     rpc GetUsers (GetUsersRequest) returns (GetUsersResponse) {
         option (google.api.http) = {
-        get: "/api/v1/users/{role_id}"
+        get: "/api/v1/users"
+        };
+    }
+
+    rpc GetUsersByOrganization (GetUsersByOrganizationRequest) returns (GetUsersByOrganizationResponse) {
+        option (google.api.http) = {
+        get: "/api/v1/users/{organization_id}"
+        };
+    }
+
+    rpc GetUsersByGroup (GetUsersByGroupRequest) returns (GetUsersByGroupResponse) {
+        option (google.api.http) = {
+        get: "/api/v1/users/{group_id}"
         };
     }
 
@@ -344,8 +368,9 @@ message CheckHealthResponse {
 
 message GetAuthorizationURLRequest {
     string provider = 1;
-    bool  cli = 2;
-    int32  port = 3;
+    int32 group_id = 2;
+    bool  cli = 3;
+    int32  port = 4;
 }
 
 message GetAuthorizationURLResponse {
@@ -354,14 +379,16 @@ message GetAuthorizationURLResponse {
 
 message ExchangeCodeForTokenCLIRequest {
     string provider = 1;
-    string code = 2;
-    string state = 3;
-    string redirect_uri = 4;
+    int32 group_id = 2;
+    string code = 3;
+    string state = 4;
+    string redirect_uri = 5;
 }
 
 message StoreProviderTokenRequest {
     string provider = 1;
-    string access_token = 2;
+    int32 group_id = 2;
+    string access_token = 3;
 }
 
 message StoreProviderTokenResponse {    
@@ -373,8 +400,9 @@ message ExchangeCodeForTokenCLIResponse {
 
 message ExchangeCodeForTokenWEBRequest{
     string provider = 1;
-    string code = 2;
-    string redirect_uri = 3;
+    int32 group_id = 2;
+    string code = 3;
+    string redirect_uri = 4;
 }
 
 message ExchangeCodeForTokenWEBResponse {
@@ -440,8 +468,9 @@ message RefreshTokenResponse {
 }
 
 message AddRepositoryRequest {
-    repeated Repositories repositories = 1;
-    repeated string events = 4;
+    int32 group_id = 1;
+    repeated Repositories repositories = 2;
+    repeated string events = 3;
 }
 
 message Repositories {
@@ -478,7 +507,8 @@ message VerifyResponse {
 
 message VerifyProviderTokenFromRequest {
     string provider = 1;
-    google.protobuf.Timestamp timestamp = 2;
+    int32 group_id = 2;
+    google.protobuf.Timestamp timestamp = 3;
 }
 
 message VerifyProviderTokenFromResponse {
@@ -680,21 +710,40 @@ message DeleteGroupResponse {
 }
 
 // Role service
-message CreateRoleRequest {
-    int32 group_id = 1;
-    string name = 2;
-    optional bool is_admin = 3;
-    optional bool is_protected = 4;
+message CreateRoleByOrganizationRequest {
+    int32 organization_id = 1;
+    string name = 3;
+    optional bool is_admin = 4;
+    optional bool is_protected = 5;
   }
   
-message CreateRoleResponse {
+message CreateRoleByOrganizationResponse {
     int32 id = 1;
+    int32 organization_id = 2;
+    string name = 4;
+    bool is_admin = 5;
+    bool is_protected = 6;
+    google.protobuf.Timestamp created_at = 7;
+    google.protobuf.Timestamp updated_at = 8;    
+}
+
+message CreateRoleByGroupRequest {
+    int32 organization_id = 1;
     int32 group_id = 2;
     string name = 3;
-    bool is_admin = 4;
-    bool is_protected = 5;
-    google.protobuf.Timestamp created_at = 6;
-    google.protobuf.Timestamp updated_at = 7;    
+    optional bool is_admin = 4;
+    optional bool is_protected = 5;
+  }
+  
+message CreateRoleByGroupResponse {
+    int32 id = 1;
+    int32 organization_id = 2;
+    int32 group_id = 3;
+    string name = 4;
+    bool is_admin = 5;
+    bool is_protected = 6;
+    google.protobuf.Timestamp created_at = 7;
+    google.protobuf.Timestamp updated_at = 8;    
 }
 
 // delete role
@@ -709,22 +758,33 @@ message DeleteRoleResponse {
 
 message RoleRecord {
     int32 id = 1;
-    int32 group_id = 2;
-    string name = 3;
-    bool is_admin = 4;
-    bool is_protected = 5;
-    google.protobuf.Timestamp created_at = 6;
-    google.protobuf.Timestamp updated_at = 7;    
+    int32 organization_id = 2;
+    optional int32 group_id = 3;
+    string name = 4;
+    bool is_admin = 5;
+    bool is_protected = 6;
+    google.protobuf.Timestamp created_at = 7;
+    google.protobuf.Timestamp updated_at = 8;    
 }
 
 // list roles
 message GetRolesRequest {
-    int32 group_id = 1;
+    int32 organization_id = 1;
     optional int32 limit = 2;
     optional int32 offset = 3;
 }
 
 message GetRolesResponse {
+    repeated RoleRecord roles = 1;
+}
+
+message GetRolesByGroupRequest {
+    int32 group_id = 1;
+    optional int32 limit = 2;
+    optional int32 offset = 3;
+}
+
+message GetRolesByGroupResponse {
     repeated RoleRecord roles = 1;
 }
 
@@ -739,7 +799,7 @@ message GetRoleByIdResponse {
 
 // get role by group and name
 message GetRoleByNameRequest {
-    int32 group_id = 1;
+    int32 organization_id = 1;
     string name = 2;
 }
 
@@ -750,7 +810,7 @@ message GetRoleByNameResponse {
 
 // User service
 message CreateUserRequest {
-    int32 role_id = 1;
+    int32 organization_id = 1;
     optional string email = 2;
     string username = 3;
     optional string password = 4;
@@ -758,11 +818,13 @@ message CreateUserRequest {
     optional string last_name = 6;
     optional bool is_protected = 7;
     optional bool needs_password_change = 8;
+    repeated int32 group_ids = 9;
+    repeated int32 role_ids = 10;
   }
   
 message CreateUserResponse {
     int32 id = 1;
-    int32 role_id = 2;
+    int32 organization_id = 2;
     optional string email = 3;
     string username = 4;
     string password = 5;
@@ -793,7 +855,7 @@ message UpdatePasswordResponse {
 // user record to be returned
 message UserRecord {
     int32 id = 1;
-    int32 role_id = 2;
+    int32 organization_id = 2;
     optional string email = 3;
     string username = 4;
     string password = 5;
@@ -807,12 +869,31 @@ message UserRecord {
 
 // list users
 message GetUsersRequest {
-    int32 role_id = 1;
+    optional int32 limit = 3;
+    optional int32 offset = 4;
+}
+
+message GetUsersResponse {
+    repeated UserRecord users = 1;
+}
+
+message GetUsersByOrganizationRequest {
+    int32 organization_id = 1;
     optional int32 limit = 2;
     optional int32 offset = 3;
 }
 
-message GetUsersResponse {
+message GetUsersByOrganizationResponse {
+    repeated UserRecord users = 1;
+}
+
+message GetUsersByGroupRequest {
+    int32 group_id = 1;
+    optional int32 limit = 2;
+    optional int32 offset = 3;
+}
+
+message GetUsersByGroupResponse {
     repeated UserRecord users = 1;
 }
 

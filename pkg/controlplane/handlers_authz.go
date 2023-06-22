@@ -19,7 +19,6 @@ import (
 	"fmt"
 	"os"
 	"path/filepath"
-	"reflect"
 	"time"
 
 	gauth "github.com/grpc-ecosystem/go-grpc-middleware/v2/interceptors/auth"
@@ -70,6 +69,7 @@ var superAdminMethods = []string{
 	"/mediator.v1.AuthService/RevokeTokens",
 	"/mediator.v1.AuthService/RevokeUserToken",
 	"/mediator.v1.OAuthService/RevokeOauthTokens",
+	"/mediator.v1.UserService/GetUsers",
 }
 
 var resourceAuthorizations = []map[string]map[string]interface{}{
@@ -104,7 +104,7 @@ var resourceAuthorizations = []map[string]map[string]interface{}{
 		},
 	},
 	{
-		"/mediator.v1.OrganizationService/GetGroupById": {
+		"/mediator.v1.GroupService/GetGroupById": {
 			"claimField": "OrganizationId",
 			"isAdmin":    true,
 		},
@@ -116,74 +116,92 @@ var resourceAuthorizations = []map[string]map[string]interface{}{
 		},
 	},
 	{
-		"/mediator.v1.RoleService/CreateRole": {
+		"/mediator.v1.RoleService/CreateRoleByOrganization": {
+			"claimField": "OrganizationId",
+			"isAdmin":    true,
+		},
+	},
+	{
+		"/mediator.v1.RoleService/CreateRoleByGroup": {
 			"claimField": "GroupId",
 			"isAdmin":    true,
 		},
 	},
 	{
 		"/mediator.v1.RoleService/DeleteRole": {
-			"claimField": "GroupId",
+			"claimField": "OrganizationId",
 			"isAdmin":    true,
 		},
 	},
 	{
 		"/mediator.v1.RoleService/GetRoles": {
+			"claimField": "OrganizationId",
+			"isAdmin":    true,
+		},
+	},
+	{
+		"/mediator.v1.RoleService/GetRolesByGroup": {
 			"claimField": "GroupId",
 			"isAdmin":    true,
 		},
 	},
 	{
 		"/mediator.v1.RoleService/GetRoleById": {
-			"claimField": "GroupId",
+			"claimField": "OrganizationId",
 			"isAdmin":    true,
 		},
 	},
 	{
 		"/mediator.v1.RoleService/GetRoleByName": {
-			"claimField": "GroupId",
+			"claimField": "OrganizationId",
 			"isAdmin":    true,
 		},
 	},
 	{
 		"/mediator.v1.UserService/CreateUser": {
-			"claimField": "GroupId",
+			"claimField": "OrganizationId",
 			"isAdmin":    true,
 		},
 	},
 	{
 		"/mediator.v1.UserService/DeleteUser": {
-			"claimField": "GroupId",
+			"claimField": "OrganizationId",
 			"isAdmin":    true,
 		},
 	},
 	{
-		"/mediator.v1.UserService/GetUsers": {
+		"/mediator.v1.UserService/GetUsersByOrganization": {
+			"claimField": "OrganizationId",
+			"isAdmin":    true,
+		},
+	},
+	{
+		"/mediator.v1.UserService/GetUsersByGroup": {
 			"claimField": "GroupId",
 			"isAdmin":    true,
 		},
 	},
 	{
 		"/mediator.v1.UserService/GetUserById": {
-			"claimField": "GroupId",
+			"claimField": "OrganizationId",
 			"isAdmin":    true,
 		},
 	},
 	{
 		"/mediator.v1.UserService/GetUserByUserName": {
-			"claimField": "GroupId",
+			"claimField": "OrganizationId",
 			"isAdmin":    true,
 		},
 	},
 	{
 		"/mediator.v1.UserService/GetUserByEmail": {
-			"claimField": "GroupId",
+			"claimField": "OrganizationId",
 			"isAdmin":    true,
 		},
 	},
 	{
 		"/mediator.v1.OAuthService/GetAuthorizationURL": {
-			"claimField": "GroupId",
+			"claimField": "OrganizationId",
 			"isAdmin":    true,
 		},
 	},
@@ -216,9 +234,39 @@ func canBypassAuth(ctx context.Context) bool {
 	return false
 }
 
+// checks if an user is superadmin
+func isSuperadmin(claims auth.UserClaims) bool {
+	// need to check that has a role that belongs to org 1 generally and is admin
+	for _, role := range claims.Roles {
+		if role.OrganizationID == 1 && role.GroupID == 0 && role.IsAdmin {
+			return true
+		}
+	}
+	return false
+}
+
+func isUserAdmin(claims auth.UserClaims, claimsField string, claimsValue int32) bool {
+	if claimsField == "OrganizationId" {
+		// need to check for a role that is only for org and has admin
+		for _, role := range claims.Roles {
+			if role.GroupID == 0 && int32(role.OrganizationID) == claimsValue && role.IsAdmin {
+				return true
+			}
+		}
+	} else if claimsField == "GroupId" {
+		// need to check for a role that is only for group and has admin
+		for _, role := range claims.Roles {
+			if int32(role.GroupID) == claimsValue && role.IsAdmin {
+				return true
+			}
+		}
+	}
+	return false
+}
+
 func isMethodAuthorized(ctx context.Context, claims auth.UserClaims) bool {
 	// superadmin is authorized to everything
-	if claims.IsSuperadmin {
+	if isSuperadmin(claims) {
 		return true
 	}
 	// Extract the gRPC method name from the context
@@ -240,9 +288,10 @@ func isMethodAuthorized(ctx context.Context, claims auth.UserClaims) bool {
 }
 
 // IsRequestAuthorized checks if the request is authorized
+// nolint:gocyclo
 func IsRequestAuthorized(ctx context.Context, value int32) bool {
 	claims, _ := ctx.Value(TokenInfoKey).(auth.UserClaims)
-	if claims.IsSuperadmin {
+	if isSuperadmin(claims) {
 		return true
 	}
 	method, ok := grpc.Method(ctx)
@@ -259,18 +308,38 @@ func IsRequestAuthorized(ctx context.Context, value int32) bool {
 				claimField := data["claimField"].(string)
 				isAdmin := data["isAdmin"].(bool)
 
-				claimsObj := reflect.ValueOf(claims)
-				claimsValue := claimsObj.FieldByName(claimField).Interface().(int32)
+				if claimField == "OrganizationId" {
+					// check if user belongs to same org
+					if claims.OrganizationId != value {
+						return false
+					}
+					// check if is admin of org
+					if isAdmin && !isUserAdmin(claims, "OrganizationId", value) {
+						return false
+					}
 
-				// if resources do not match, do not authorize
-				if claimsValue != value {
+				} else if claimField == "GroupId" {
+					// check if user is in the list of groups
+					found := false
+					for _, group := range claims.GroupIds {
+						if group == value {
+							found = true
+							break
+						}
+					}
+					if !found {
+						return false
+					}
+
+					// check if is admin of group
+					if isAdmin && !isUserAdmin(claims, "GroupId", value) {
+						return false
+					}
+				} else {
+					// no claim field to match
 					return false
 				}
 
-				// if needs admin role but is not admin, do not authorize
-				if isAdmin && !claims.IsAdmin {
-					return false
-				}
 				return true
 			}
 		}
@@ -278,9 +347,9 @@ func IsRequestAuthorized(ctx context.Context, value int32) bool {
 	return true
 }
 
-func isProviderCallAuthorized(ctx context.Context, store db.Store, provider string) bool {
+// IsProviderCallAuthorized checks if the request is authorized
+func IsProviderCallAuthorized(ctx context.Context, store db.Store, provider string, groupId int32) bool {
 	// currently everything is github
-	claims, _ := ctx.Value(TokenInfoKey).(auth.UserClaims)
 	method, ok := grpc.Method(ctx)
 	if !ok {
 		return false
@@ -289,7 +358,7 @@ func isProviderCallAuthorized(ctx context.Context, store db.Store, provider stri
 	for _, item := range githubAuthorizations {
 		if item == method {
 			// check the github token
-			encToken, err := GetProviderAccessToken(ctx, store)
+			encToken, err := GetProviderAccessToken(ctx, store, groupId)
 			if err != nil {
 				return false
 			}
@@ -297,7 +366,7 @@ func isProviderCallAuthorized(ctx context.Context, store db.Store, provider stri
 			// check if token is expired
 			if encToken.Expiry.Unix() < time.Now().Unix() {
 				// remove from the database and deny the request
-				_ = store.DeleteAccessToken(ctx, db.DeleteAccessTokenParams{Provider: auth.Github, GroupID: claims.GroupId})
+				_ = store.DeleteAccessToken(ctx, db.DeleteAccessTokenParams{Provider: auth.Github, GroupID: groupId})
 
 				// remove from github
 				err := auth.DeleteAccessToken(ctx, provider, encToken.AccessToken)
@@ -345,7 +414,7 @@ func AuthUnaryInterceptor(ctx context.Context, req interface{}, info *grpc.Unary
 		return nil, status.Errorf(codes.Unauthenticated, "password change required")
 	}
 
-	if claims.IsSuperadmin {
+	if isSuperadmin(claims) {
 		// is authorized to everything
 		ctx = context.WithValue(ctx, TokenInfoKey, claims)
 	} else {
@@ -354,12 +423,6 @@ func AuthUnaryInterceptor(ctx context.Context, req interface{}, info *grpc.Unary
 		if !isAuthorized {
 			return nil, status.Errorf(codes.PermissionDenied, "user not authorized")
 		}
-	}
-
-	// Check if needs github authorization
-	isGithubAuthorized := isProviderCallAuthorized(ctx, server.store, auth.Github)
-	if !isGithubAuthorized {
-		return nil, status.Errorf(codes.PermissionDenied, "user not authorized to interact with provider")
 	}
 
 	ctx = context.WithValue(ctx, TokenInfoKey, claims)

@@ -55,6 +55,7 @@ mediator control plane for an specific group.`,
 		ctx, cancel := util.GetAppContext()
 		defer cancel()
 
+		org := viper.GetInt32("org-id")
 		group := viper.GetInt32("group-id")
 		limit := viper.GetInt32("limit")
 		offset := viper.GetInt32("offset")
@@ -67,21 +68,38 @@ mediator control plane for an specific group.`,
 		var limitPtr = &limit
 		var offsetPtr = &offset
 
-		resp, err := client.GetRoles(ctx, &pb.GetRolesRequest{
-			GroupId: group,
-			Limit:   limitPtr,
-			Offset:  offsetPtr,
-		})
-		util.ExitNicelyOnError(err, "Error getting roles")
+		// we need to set either org or group
+		if org == 0 && group == 0 {
+			fmt.Fprintf(os.Stderr, "Error: must set either org or group\n")
+			os.Exit(1)
+		}
+		// if group is set , org cannot be set
+		if group != 0 && org != 0 {
+			fmt.Fprintf(os.Stderr, "Error: cannot set both org and group\n")
+			os.Exit(1)
+		}
+
+		var roles []*pb.RoleRecord
+		if group != 0 {
+			resp, err := client.GetRolesByGroup(ctx, &pb.GetRolesByGroupRequest{GroupId: group, Limit: limitPtr, Offset: offsetPtr})
+			util.ExitNicelyOnError(err, "Error getting roles")
+			roles = resp.Roles
+		} else if org != 0 {
+			resp, err := client.GetRoles(ctx,
+				&pb.GetRolesRequest{OrganizationId: org, Limit: limitPtr, Offset: offsetPtr})
+			util.ExitNicelyOnError(err, "Error getting roles")
+			roles = resp.Roles
+		}
 
 		// print output in a table
 		if format == "" {
 			table := tablewriter.NewWriter(os.Stdout)
-			table.SetHeader([]string{"Id", "Group", "Name", "Is admin", "Is protected", "Created date", "Updated date"})
+			table.SetHeader([]string{"Id", "Organization", "Group", "Name", "Is admin", "Is protected", "Created date", "Updated date"})
 
-			for _, v := range resp.Roles {
+			for _, v := range roles {
 				row := []string{
 					fmt.Sprintf("%d", v.Id),
+					fmt.Sprintf("%d", v.OrganizationId),
 					fmt.Sprintf("%d", v.GroupId),
 					v.Name,
 					fmt.Sprintf("%t", v.IsAdmin),
@@ -93,11 +111,11 @@ mediator control plane for an specific group.`,
 			}
 			table.Render()
 		} else if format == "json" {
-			output, err := json.MarshalIndent(resp.Roles, "", "  ")
+			output, err := json.MarshalIndent(roles, "", "  ")
 			util.ExitNicelyOnError(err, "Error marshalling json")
 			fmt.Println(string(output))
 		} else if format == "yaml" {
-			yamlData, err := yaml.Marshal(resp.Roles)
+			yamlData, err := yaml.Marshal(roles)
 			util.ExitNicelyOnError(err, "Error marshalling yaml")
 			fmt.Println(string(yamlData))
 
@@ -107,10 +125,9 @@ mediator control plane for an specific group.`,
 
 func init() {
 	RoleCmd.AddCommand(role_listCmd)
+	role_listCmd.Flags().Int32P("org-id", "i", 0, "org id to list roles for")
 	role_listCmd.Flags().Int32P("group-id", "g", 0, "group id to list roles for")
 	role_listCmd.Flags().StringP("output", "o", "", "Output format (json or yaml)")
 	role_listCmd.Flags().Int32P("limit", "l", -1, "Limit the number of results returned")
 	role_listCmd.Flags().Int32P("offset", "f", 0, "Offset the results returned")
-	err := role_listCmd.MarkFlagRequired("group-id")
-	util.ExitNicelyOnError(err, "Error marking flag as required")
 }

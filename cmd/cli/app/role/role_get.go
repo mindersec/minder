@@ -53,23 +53,23 @@ mediator control plane.`,
 		defer cancel()
 
 		id := viper.GetInt32("id")
-		group_id := viper.GetInt32("group-id")
+		org_id := viper.GetInt32("org-id")
 		name := viper.GetString("name")
 
 		// check for required options
-		if id == 0 && name == "" && group_id == 0 {
-			fmt.Fprintf(os.Stderr, "Error: must specify one of id or group_id+name\n")
+		if id == 0 && name == "" && org_id == 0 {
+			fmt.Fprintf(os.Stderr, "Error: must specify one of id or org_id+name\n")
 			os.Exit(1)
 		}
 
-		if id > 0 && (name != "" || group_id > 0) {
-			fmt.Fprintf(os.Stderr, "Error: must specify either one of id or group_id+name\n")
+		if id > 0 && (name != "" || org_id > 0) {
+			fmt.Fprintf(os.Stderr, "Error: must specify either one of id or org_id+name\n")
 			os.Exit(1)
 		}
 
-		// if name is specified, group_id must also be specified
-		if (name != "" && group_id == 0) || (name == "" && group_id > 0) {
-			fmt.Fprintf(os.Stderr, "Error: must specify both group_id and name\n")
+		// if name is specified, org_id must also be specified
+		if (name != "" && org_id == 0) || (name == "" && org_id > 0) {
+			fmt.Fprintf(os.Stderr, "Error: must specify both org_id and name\n")
 			os.Exit(1)
 		}
 
@@ -85,8 +85,8 @@ mediator control plane.`,
 		} else if name != "" {
 			// get by name
 			role, _ := client.GetRoleByName(ctx, &pb.GetRoleByNameRequest{
-				GroupId: group_id,
-				Name:    name,
+				OrganizationId: org_id,
+				Name:           name,
 			})
 			if role != nil {
 				roleRecord = role.Role
@@ -106,6 +106,6 @@ mediator control plane.`,
 func init() {
 	RoleCmd.AddCommand(role_getCmd)
 	role_getCmd.Flags().Int32P("id", "i", 0, "ID for the role to query")
-	role_getCmd.Flags().Int32P("group-id", "g", 0, "Group ID")
+	role_getCmd.Flags().Int32P("org-id", "o", 0, "Organization ID")
 	role_getCmd.Flags().StringP("name", "n", "", "Name for the role to query")
 }

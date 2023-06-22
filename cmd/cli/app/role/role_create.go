@@ -44,11 +44,11 @@ within a mediator control plane.`,
 		}
 	},
 	Run: func(cmd *cobra.Command, args []string) {
-		// create the role via GRPC
-		group := util.GetConfigValue("group-id", "group-id", cmd, int32(0)).(int32)
+		org := util.GetConfigValue("org-id", "org-id", cmd, int32(0)).(int)
+		group := util.GetConfigValue("group-id", "group-id", cmd, int32(0))
 		name := util.GetConfigValue("name", "name", cmd, "")
-		isAdmin := util.GetConfigValue("is_admin", "is_admin", cmd, false).(bool)
-		isProtected := util.GetConfigValue("is_protected", "is_protected", cmd, false).(bool)
+		isAdmin := viper.GetBool("is_admin")
+		isProtected := viper.GetBool("is_protected")
 
 		conn, err := util.GetGrpcConnection(cmd)
 		util.ExitNicelyOnError(err, "Error getting grpc connection")
@@ -63,20 +63,42 @@ within a mediator control plane.`,
 		adminPtr := &isAdmin
 		protectedPtr := &isProtected
 
-		resp, err := client.CreateRole(ctx, &pb.CreateRoleRequest{
-			GroupId:     group,
-			Name:        name.(string),
-			IsAdmin:     adminPtr,
-			IsProtected: protectedPtr,
-		})
-		util.ExitNicelyOnError(err, "Error creating role")
+		if group == 0 {
+			// create a role by org
+			resp, err := client.CreateRoleByOrganization(ctx, &pb.CreateRoleByOrganizationRequest{
+				OrganizationId: int32(org),
+				Name:           name.(string),
+				IsAdmin:        adminPtr,
+				IsProtected:    protectedPtr,
+			})
+			util.ExitNicelyOnError(err, "Error creating role")
 
-		role, err := json.MarshalIndent(resp, "", "  ")
-		if err != nil {
-			cmd.Println("Created role: ", resp.Name)
+			role, err := json.MarshalIndent(resp, "", "  ")
+			if err != nil {
+				cmd.Println("Created role: ", resp.Name)
+			} else {
+				cmd.Println("Created role:", string(role))
+			}
+
 		} else {
-			cmd.Println("Created role:", string(role))
+			// create a role by group
+			resp, err := client.CreateRoleByGroup(ctx, &pb.CreateRoleByGroupRequest{
+				OrganizationId: int32(org),
+				GroupId:        group.(int32),
+				Name:           name.(string),
+				IsAdmin:        adminPtr,
+				IsProtected:    protectedPtr,
+			})
+			util.ExitNicelyOnError(err, "Error creating role")
+
+			role, err := json.MarshalIndent(resp, "", "  ")
+			if err != nil {
+				cmd.Println("Created role: ", resp.Name)
+			} else {
+				cmd.Println("Created role:", string(role))
+			}
 		}
+
 	},
 }
 
@@ -85,12 +107,13 @@ func init() {
 	Role_createCmd.Flags().StringP("name", "n", "", "Name of the role")
 	Role_createCmd.Flags().BoolP("is_protected", "i", false, "Is the role protected")
 	Role_createCmd.Flags().BoolP("is_admin", "a", false, "Is it an admin role")
+	Role_createCmd.Flags().Int32P("org-id", "o", 0, "ID of the organization which owns the role")
 	Role_createCmd.Flags().Int32P("group-id", "g", 0, "ID of the group which owns the role")
 	if err := Role_createCmd.MarkFlagRequired("name"); err != nil {
 		fmt.Fprintf(os.Stderr, "Error marking flag as required: %s\n", err)
 		os.Exit(1)
 	}
-	if err := Role_createCmd.MarkFlagRequired("group-id"); err != nil {
+	if err := Role_createCmd.MarkFlagRequired("org-id"); err != nil {
 		fmt.Fprintf(os.Stderr, "Error marking flag as required: %s\n", err)
 		os.Exit(1)
 	}

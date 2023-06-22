@@ -74,7 +74,9 @@ func TestLogin_gRPC(t *testing.T) {
 				Password: password,
 			},
 			buildStubs: func(store *mockdb.MockStore) {
-				store.EXPECT().GetUserClaims(gomock.Any(), gomock.Any()).Return(db.GetUserClaimsRow{}, nil)
+				store.EXPECT().GetUserByID(gomock.Any(), gomock.Any())
+				store.EXPECT().GetUserGroups(gomock.Any(), gomock.Any())
+				store.EXPECT().GetUserRoles(gomock.Any(), gomock.Any())
 				store.EXPECT().
 					GetUserByUserName(gomock.Any(), gomock.Any()).
 					Times(1).Return(user, nil)
@@ -125,9 +127,11 @@ func TestLogin_gRPC(t *testing.T) {
 
 func TestLogout_gRPC(t *testing.T) {
 	ctx := context.WithValue(context.Background(), TokenInfoKey, auth.UserClaims{
-		UserId:       1,
-		IsAdmin:      false,
-		IsSuperadmin: false,
+		UserId:         1,
+		OrganizationId: 1,
+		GroupIds:       []int32{1},
+		Roles: []auth.RoleInfo{
+			{RoleID: 1, IsAdmin: true, GroupID: 0, OrganizationID: 1}},
 	})
 
 	ctrl := gomock.NewController(t)
@@ -146,9 +150,11 @@ func TestLogout_gRPC(t *testing.T) {
 
 func TestRevokeTokens_gRPC(t *testing.T) {
 	ctx := context.WithValue(context.Background(), TokenInfoKey, auth.UserClaims{
-		UserId:       1,
-		IsAdmin:      false,
-		IsSuperadmin: true,
+		UserId:         1,
+		OrganizationId: 1,
+		GroupIds:       []int32{1},
+		Roles: []auth.RoleInfo{
+			{RoleID: 1, IsAdmin: true, GroupID: 0, OrganizationID: 1}},
 	})
 
 	ctrl := gomock.NewController(t)
@@ -191,7 +197,9 @@ func TestRefreshToken_gRPC(t *testing.T) {
 
 	ctxToken := context.Background()
 	// mocked calls
-	mockStoreToken.EXPECT().GetUserClaims(ctxToken, gomock.Any())
+	mockStoreToken.EXPECT().GetUserByID(ctxToken, gomock.Any())
+	mockStoreToken.EXPECT().GetUserGroups(ctxToken, gomock.Any())
+	mockStoreToken.EXPECT().GetUserRoles(ctxToken, gomock.Any())
 	// generate a token
 	_, refreshToken, _, _, _, err := generateToken(ctxToken, mockStoreToken, 1)
 	if err != nil {
@@ -207,8 +215,9 @@ func TestRefreshToken_gRPC(t *testing.T) {
 	ctx := context.Background()
 	ctx = metadata.NewIncomingContext(ctx, md)
 	server := NewServer(mockStore)
-	mockStore.EXPECT().GetUserByID(gomock.Any(), gomock.Any())
-	mockStore.EXPECT().GetUserClaims(gomock.Any(), gomock.Any())
+	mockStore.EXPECT().GetUserByID(gomock.Any(), gomock.Any()).Times(2)
+	mockStore.EXPECT().GetUserGroups(gomock.Any(), gomock.Any())
+	mockStore.EXPECT().GetUserRoles(gomock.Any(), gomock.Any())
 
 	// validate the status of the output
 	res, err := server.RefreshToken(ctx, &pb.RefreshTokenRequest{})

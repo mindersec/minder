@@ -32,9 +32,11 @@ func TestIsSuperadminAuthorized(t *testing.T) {
 	request := &pb.GetGroupByIdRequest{GroupId: 1}
 	// Create a new context and set the claims value
 	ctx := context.WithValue(context.Background(), TokenInfoKey, auth.UserClaims{
-		UserId:       1,
-		IsAdmin:      true,
-		IsSuperadmin: true,
+		UserId:         1,
+		OrganizationId: 1,
+		GroupIds:       []int32{1},
+		Roles: []auth.RoleInfo{
+			{RoleID: 1, IsAdmin: true, GroupID: 0, OrganizationID: 1}},
 	})
 
 	mockStore := mockdb.NewMockStore(ctrl)
@@ -54,12 +56,14 @@ func TestIsNonadminAuthorized(t *testing.T) {
 	ctrl := gomock.NewController(t)
 	defer ctrl.Finish()
 
-	request := &pb.CreateRoleRequest{GroupId: 1, Name: "test"}
+	request := &pb.CreateRoleByOrganizationRequest{OrganizationId: 1, Name: "test"}
 	// Create a new context and set the claims value
 	ctx := context.WithValue(context.Background(), TokenInfoKey, auth.UserClaims{
-		UserId:       1,
-		IsAdmin:      false,
-		IsSuperadmin: false,
+		UserId:         1,
+		OrganizationId: 1,
+		GroupIds:       []int32{1},
+		Roles: []auth.RoleInfo{
+			{RoleID: 1, IsAdmin: false, GroupID: 0, OrganizationID: 1}},
 	})
 
 	mockStore := mockdb.NewMockStore(ctrl)
@@ -68,7 +72,7 @@ func TestIsNonadminAuthorized(t *testing.T) {
 	}
 	mockStore.EXPECT().CreateRole(ctx, gomock.Any()).Times(0)
 
-	_, err := server.CreateRole(ctx, request)
+	_, err := server.CreateRoleByOrganization(ctx, request)
 
 	if err == nil {
 		t.Error("Expected error when user is not authorized, but got nil")
@@ -84,9 +88,11 @@ func TestByResourceUnauthorized(t *testing.T) {
 	request := &pb.GetRoleByIdRequest{Id: 1}
 	// Create a new context and set the claims value
 	ctx := context.WithValue(context.Background(), TokenInfoKey, auth.UserClaims{
-		UserId:       1,
-		IsAdmin:      false,
-		IsSuperadmin: false,
+		UserId:         2,
+		OrganizationId: 2,
+		GroupIds:       []int32{1},
+		Roles: []auth.RoleInfo{
+			{RoleID: 2, IsAdmin: true, GroupID: 2, OrganizationID: 2}},
 	})
 
 	mockStore := mockdb.NewMockStore(ctrl)

@@ -13,8 +13,10 @@
     - [CreateGroupResponse](#mediator-v1-CreateGroupResponse)
     - [CreateOrganizationRequest](#mediator-v1-CreateOrganizationRequest)
     - [CreateOrganizationResponse](#mediator-v1-CreateOrganizationResponse)
-    - [CreateRoleRequest](#mediator-v1-CreateRoleRequest)
-    - [CreateRoleResponse](#mediator-v1-CreateRoleResponse)
+    - [CreateRoleByGroupRequest](#mediator-v1-CreateRoleByGroupRequest)
+    - [CreateRoleByGroupResponse](#mediator-v1-CreateRoleByGroupResponse)
+    - [CreateRoleByOrganizationRequest](#mediator-v1-CreateRoleByOrganizationRequest)
+    - [CreateRoleByOrganizationResponse](#mediator-v1-CreateRoleByOrganizationResponse)
     - [CreateUserRequest](#mediator-v1-CreateUserRequest)
     - [CreateUserResponse](#mediator-v1-CreateUserResponse)
     - [DeleteGroupRequest](#mediator-v1-DeleteGroupRequest)
@@ -49,6 +51,8 @@
     - [GetRoleByIdResponse](#mediator-v1-GetRoleByIdResponse)
     - [GetRoleByNameRequest](#mediator-v1-GetRoleByNameRequest)
     - [GetRoleByNameResponse](#mediator-v1-GetRoleByNameResponse)
+    - [GetRolesByGroupRequest](#mediator-v1-GetRolesByGroupRequest)
+    - [GetRolesByGroupResponse](#mediator-v1-GetRolesByGroupResponse)
     - [GetRolesRequest](#mediator-v1-GetRolesRequest)
     - [GetRolesResponse](#mediator-v1-GetRolesResponse)
     - [GetSecretByIdRequest](#mediator-v1-GetSecretByIdRequest)
@@ -61,6 +65,10 @@
     - [GetUserByIdResponse](#mediator-v1-GetUserByIdResponse)
     - [GetUserByUserNameRequest](#mediator-v1-GetUserByUserNameRequest)
     - [GetUserByUserNameResponse](#mediator-v1-GetUserByUserNameResponse)
+    - [GetUsersByGroupRequest](#mediator-v1-GetUsersByGroupRequest)
+    - [GetUsersByGroupResponse](#mediator-v1-GetUsersByGroupResponse)
+    - [GetUsersByOrganizationRequest](#mediator-v1-GetUsersByOrganizationRequest)
+    - [GetUsersByOrganizationResponse](#mediator-v1-GetUsersByOrganizationResponse)
     - [GetUsersRequest](#mediator-v1-GetUsersRequest)
     - [GetUsersResponse](#mediator-v1-GetUsersResponse)
     - [GetVulnerabilitiesRequest](#mediator-v1-GetVulnerabilitiesRequest)
@@ -127,6 +135,7 @@
 
 | Field | Type | Label | Description |
 | ----- | ---- | ----- | ----------- |
+| group_id | [int32](#int32) |  |  |
 | repositories | [Repositories](#mediator-v1-Repositories) | repeated |  |
 | events | [string](#string) | repeated |  |
 
@@ -269,14 +278,15 @@ Organization service
 
 
 
-<a name="mediator-v1-CreateRoleRequest"></a>
+<a name="mediator-v1-CreateRoleByGroupRequest"></a>
 
-### CreateRoleRequest
-Role service
+### CreateRoleByGroupRequest
+
 
 
 | Field | Type | Label | Description |
 | ----- | ---- | ----- | ----------- |
+| organization_id | [int32](#int32) |  |  |
 | group_id | [int32](#int32) |  |  |
 | name | [string](#string) |  |  |
 | is_admin | [bool](#bool) | optional |  |
@@ -287,16 +297,56 @@ Role service
 
 
 
-<a name="mediator-v1-CreateRoleResponse"></a>
+<a name="mediator-v1-CreateRoleByGroupResponse"></a>
 
-### CreateRoleResponse
+### CreateRoleByGroupResponse
 
 
 
 | Field | Type | Label | Description |
 | ----- | ---- | ----- | ----------- |
 | id | [int32](#int32) |  |  |
+| organization_id | [int32](#int32) |  |  |
 | group_id | [int32](#int32) |  |  |
+| name | [string](#string) |  |  |
+| is_admin | [bool](#bool) |  |  |
+| is_protected | [bool](#bool) |  |  |
+| created_at | [google.protobuf.Timestamp](#google-protobuf-Timestamp) |  |  |
+| updated_at | [google.protobuf.Timestamp](#google-protobuf-Timestamp) |  |  |
+
+
+
+
+
+
+<a name="mediator-v1-CreateRoleByOrganizationRequest"></a>
+
+### CreateRoleByOrganizationRequest
+Role service
+
+
+| Field | Type | Label | Description |
+| ----- | ---- | ----- | ----------- |
+| organization_id | [int32](#int32) |  |  |
+| name | [string](#string) |  |  |
+| is_admin | [bool](#bool) | optional |  |
+| is_protected | [bool](#bool) | optional |  |
+
+
+
+
+
+
+<a name="mediator-v1-CreateRoleByOrganizationResponse"></a>
+
+### CreateRoleByOrganizationResponse
+
+
+
+| Field | Type | Label | Description |
+| ----- | ---- | ----- | ----------- |
+| id | [int32](#int32) |  |  |
+| organization_id | [int32](#int32) |  |  |
 | name | [string](#string) |  |  |
 | is_admin | [bool](#bool) |  |  |
 | is_protected | [bool](#bool) |  |  |
@@ -316,7 +366,7 @@ User service
 
 | Field | Type | Label | Description |
 | ----- | ---- | ----- | ----------- |
-| role_id | [int32](#int32) |  |  |
+| organization_id | [int32](#int32) |  |  |
 | email | [string](#string) | optional |  |
 | username | [string](#string) |  |  |
 | password | [string](#string) | optional |  |
@@ -324,6 +374,8 @@ User service
 | last_name | [string](#string) | optional |  |
 | is_protected | [bool](#bool) | optional |  |
 | needs_password_change | [bool](#bool) | optional |  |
+| group_ids | [int32](#int32) | repeated |  |
+| role_ids | [int32](#int32) | repeated |  |
 
 
 
@@ -339,7 +391,7 @@ User service
 | Field | Type | Label | Description |
 | ----- | ---- | ----- | ----------- |
 | id | [int32](#int32) |  |  |
-| role_id | [int32](#int32) |  |  |
+| organization_id | [int32](#int32) |  |  |
 | email | [string](#string) | optional |  |
 | username | [string](#string) |  |  |
 | password | [string](#string) |  |  |
@@ -468,6 +520,7 @@ delete role
 | Field | Type | Label | Description |
 | ----- | ---- | ----- | ----------- |
 | provider | [string](#string) |  |  |
+| group_id | [int32](#int32) |  |  |
 | code | [string](#string) |  |  |
 | state | [string](#string) |  |  |
 | redirect_uri | [string](#string) |  |  |
@@ -501,6 +554,7 @@ delete role
 | Field | Type | Label | Description |
 | ----- | ---- | ----- | ----------- |
 | provider | [string](#string) |  |  |
+| group_id | [int32](#int32) |  |  |
 | code | [string](#string) |  |  |
 | redirect_uri | [string](#string) |  |  |
 
@@ -536,6 +590,7 @@ delete role
 | Field | Type | Label | Description |
 | ----- | ---- | ----- | ----------- |
 | provider | [string](#string) |  |  |
+| group_id | [int32](#int32) |  |  |
 | cli | [bool](#bool) |  |  |
 | port | [int32](#int32) |  |  |
 
@@ -805,7 +860,7 @@ get role by group and name
 
 | Field | Type | Label | Description |
 | ----- | ---- | ----- | ----------- |
-| group_id | [int32](#int32) |  |  |
+| organization_id | [int32](#int32) |  |  |
 | name | [string](#string) |  |  |
 
 
@@ -828,6 +883,38 @@ get role by group and name
 
 
 
+<a name="mediator-v1-GetRolesByGroupRequest"></a>
+
+### GetRolesByGroupRequest
+
+
+
+| Field | Type | Label | Description |
+| ----- | ---- | ----- | ----------- |
+| group_id | [int32](#int32) |  |  |
+| limit | [int32](#int32) | optional |  |
+| offset | [int32](#int32) | optional |  |
+
+
+
+
+
+
+<a name="mediator-v1-GetRolesByGroupResponse"></a>
+
+### GetRolesByGroupResponse
+
+
+
+| Field | Type | Label | Description |
+| ----- | ---- | ----- | ----------- |
+| roles | [RoleRecord](#mediator-v1-RoleRecord) | repeated |  |
+
+
+
+
+
+
 <a name="mediator-v1-GetRolesRequest"></a>
 
 ### GetRolesRequest
@@ -836,7 +923,7 @@ list roles
 
 | Field | Type | Label | Description |
 | ----- | ---- | ----- | ----------- |
-| group_id | [int32](#int32) |  |  |
+| organization_id | [int32](#int32) |  |  |
 | limit | [int32](#int32) | optional |  |
 | offset | [int32](#int32) | optional |  |
 
@@ -1007,6 +1094,70 @@ get user by username
 
 
 
+<a name="mediator-v1-GetUsersByGroupRequest"></a>
+
+### GetUsersByGroupRequest
+
+
+
+| Field | Type | Label | Description |
+| ----- | ---- | ----- | ----------- |
+| group_id | [int32](#int32) |  |  |
+| limit | [int32](#int32) | optional |  |
+| offset | [int32](#int32) | optional |  |
+
+
+
+
+
+
+<a name="mediator-v1-GetUsersByGroupResponse"></a>
+
+### GetUsersByGroupResponse
+
+
+
+| Field | Type | Label | Description |
+| ----- | ---- | ----- | ----------- |
+| users | [UserRecord](#mediator-v1-UserRecord) | repeated |  |
+
+
+
+
+
+
+<a name="mediator-v1-GetUsersByOrganizationRequest"></a>
+
+### GetUsersByOrganizationRequest
+
+
+
+| Field | Type | Label | Description |
+| ----- | ---- | ----- | ----------- |
+| organization_id | [int32](#int32) |  |  |
+| limit | [int32](#int32) | optional |  |
+| offset | [int32](#int32) | optional |  |
+
+
+
+
+
+
+<a name="mediator-v1-GetUsersByOrganizationResponse"></a>
+
+### GetUsersByOrganizationResponse
+
+
+
+| Field | Type | Label | Description |
+| ----- | ---- | ----- | ----------- |
+| users | [UserRecord](#mediator-v1-UserRecord) | repeated |  |
+
+
+
+
+
+
 <a name="mediator-v1-GetUsersRequest"></a>
 
 ### GetUsersRequest
@@ -1015,7 +1166,6 @@ list users
 
 | Field | Type | Label | Description |
 | ----- | ---- | ----- | ----------- |
-| role_id | [int32](#int32) |  |  |
 | limit | [int32](#int32) | optional |  |
 | offset | [int32](#int32) | optional |  |
 
@@ -1378,7 +1528,8 @@ BUF does not allow grouping (which is a shame)
 | Field | Type | Label | Description |
 | ----- | ---- | ----- | ----------- |
 | id | [int32](#int32) |  |  |
-| group_id | [int32](#int32) |  |  |
+| organization_id | [int32](#int32) |  |  |
+| group_id | [int32](#int32) | optional |  |
 | name | [string](#string) |  |  |
 | is_admin | [bool](#bool) |  |  |
 | is_protected | [bool](#bool) |  |  |
@@ -1399,6 +1550,7 @@ BUF does not allow grouping (which is a shame)
 | Field | Type | Label | Description |
 | ----- | ---- | ----- | ----------- |
 | provider | [string](#string) |  |  |
+| group_id | [int32](#int32) |  |  |
 | access_token | [string](#string) |  |  |
 
 
@@ -1451,7 +1603,7 @@ user record to be returned
 | Field | Type | Label | Description |
 | ----- | ---- | ----- | ----------- |
 | id | [int32](#int32) |  |  |
-| role_id | [int32](#int32) |  |  |
+| organization_id | [int32](#int32) |  |  |
 | email | [string](#string) | optional |  |
 | username | [string](#string) |  |  |
 | password | [string](#string) |  |  |
@@ -1476,6 +1628,7 @@ user record to be returned
 | Field | Type | Label | Description |
 | ----- | ---- | ----- | ----------- |
 | provider | [string](#string) |  |  |
+| group_id | [int32](#int32) |  |  |
 | timestamp | [google.protobuf.Timestamp](#google-protobuf-Timestamp) |  |  |
 
 
@@ -1626,9 +1779,11 @@ manage Roles CRUD
 
 | Method Name | Request Type | Response Type | Description |
 | ----------- | ------------ | ------------- | ------------|
-| CreateRole | [CreateRoleRequest](#mediator-v1-CreateRoleRequest) | [CreateRoleResponse](#mediator-v1-CreateRoleResponse) |  |
+| CreateRoleByOrganization | [CreateRoleByOrganizationRequest](#mediator-v1-CreateRoleByOrganizationRequest) | [CreateRoleByOrganizationResponse](#mediator-v1-CreateRoleByOrganizationResponse) |  |
+| CreateRoleByGroup | [CreateRoleByGroupRequest](#mediator-v1-CreateRoleByGroupRequest) | [CreateRoleByGroupResponse](#mediator-v1-CreateRoleByGroupResponse) |  |
 | DeleteRole | [DeleteRoleRequest](#mediator-v1-DeleteRoleRequest) | [DeleteRoleResponse](#mediator-v1-DeleteRoleResponse) |  |
 | GetRoles | [GetRolesRequest](#mediator-v1-GetRolesRequest) | [GetRolesResponse](#mediator-v1-GetRolesResponse) |  |
+| GetRolesByGroup | [GetRolesByGroupRequest](#mediator-v1-GetRolesByGroupRequest) | [GetRolesByGroupResponse](#mediator-v1-GetRolesByGroupResponse) |  |
 | GetRoleById | [GetRoleByIdRequest](#mediator-v1-GetRoleByIdRequest) | [GetRoleByIdResponse](#mediator-v1-GetRoleByIdResponse) |  |
 | GetRoleByName | [GetRoleByNameRequest](#mediator-v1-GetRoleByNameRequest) | [GetRoleByNameResponse](#mediator-v1-GetRoleByNameResponse) |  |
 
@@ -1656,6 +1811,8 @@ manage Users CRUD
 | CreateUser | [CreateUserRequest](#mediator-v1-CreateUserRequest) | [CreateUserResponse](#mediator-v1-CreateUserResponse) |  |
 | DeleteUser | [DeleteUserRequest](#mediator-v1-DeleteUserRequest) | [DeleteUserResponse](#mediator-v1-DeleteUserResponse) |  |
 | GetUsers | [GetUsersRequest](#mediator-v1-GetUsersRequest) | [GetUsersResponse](#mediator-v1-GetUsersResponse) |  |
+| GetUsersByOrganization | [GetUsersByOrganizationRequest](#mediator-v1-GetUsersByOrganizationRequest) | [GetUsersByOrganizationResponse](#mediator-v1-GetUsersByOrganizationResponse) |  |
+| GetUsersByGroup | [GetUsersByGroupRequest](#mediator-v1-GetUsersByGroupRequest) | [GetUsersByGroupResponse](#mediator-v1-GetUsersByGroupResponse) |  |
 | GetUserById | [GetUserByIdRequest](#mediator-v1-GetUserByIdRequest) | [GetUserByIdResponse](#mediator-v1-GetUserByIdResponse) |  |
 | GetUserByUserName | [GetUserByUserNameRequest](#mediator-v1-GetUserByUserNameRequest) | [GetUserByUserNameResponse](#mediator-v1-GetUserByUserNameResponse) |  |
 | GetUserByEmail | [GetUserByEmailRequest](#mediator-v1-GetUserByEmailRequest) | [GetUserByEmailResponse](#mediator-v1-GetUserByEmailResponse) |  |
