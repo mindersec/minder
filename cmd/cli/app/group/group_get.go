@@ -26,12 +26,38 @@ import (
 	"fmt"
 	"os"
 
+	"github.com/stacklok/mediator/cmd/cli/app"
 	pb "github.com/stacklok/mediator/pkg/generated/protobuf/go/mediator/v1"
 	"github.com/stacklok/mediator/pkg/util"
+	"gopkg.in/yaml.v3"
 
 	"github.com/spf13/cobra"
 	"github.com/spf13/viper"
 )
+
+type output struct {
+	Group *pb.GroupRecord  `json:"group"`
+	Roles []*pb.RoleRecord `json:"roles"`
+	Users []*pb.UserRecord `json:"users"`
+}
+
+func printGroup(group *pb.GroupRecord, roles []*pb.RoleRecord, users []*pb.UserRecord, format string) {
+	output := output{
+		Group: group,
+		Roles: roles,
+		Users: users,
+	}
+	if format == app.JSON {
+		output, err := json.MarshalIndent(output, "", "  ")
+		util.ExitNicelyOnError(err, "Error marshalling json")
+		fmt.Println(string(output))
+	} else if format == app.YAML {
+		yamlData, err := yaml.Marshal(output)
+		util.ExitNicelyOnError(err, "Error marshalling yaml")
+		fmt.Println(string(yamlData))
+
+	}
+}
 
 var group_getCmd = &cobra.Command{
 	Use:   "get",
@@ -54,6 +80,13 @@ mediator control plane.`,
 
 		id := viper.GetInt32("id")
 		name := viper.GetString("name")
+		format := util.GetConfigValue("output", "output", cmd, "").(string)
+		if format == "" {
+			format = app.JSON
+		}
+		if format != app.JSON && format != app.YAML && format != "" {
+			fmt.Fprintf(os.Stderr, "Error: invalid format: %s\n", format)
+		}
 
 		// check for required options
 		if id == 0 && name == "" {
@@ -66,35 +99,21 @@ mediator control plane.`,
 			os.Exit(1)
 		}
 
-		var groupRecord *pb.GroupRecord
-
 		// get by id
 		if id > 0 {
 			group, err := client.GetGroupById(ctx, &pb.GetGroupByIdRequest{
 				GroupId: id,
 			})
 			util.ExitNicelyOnError(err, "Error getting group")
-			if group != nil {
-				groupRecord = group.Group
-			}
+			printGroup(group.Group, group.Roles, group.Users, format)
 		} else if name != "" {
 			// get by name
 			group, err := client.GetGroupByName(ctx, &pb.GetGroupByNameRequest{
 				Name: name,
 			})
 			util.ExitNicelyOnError(err, "Error getting group")
-			if group != nil {
-				groupRecord = group.Group
-			}
+			printGroup(group.Group, group.Roles, group.Users, format)
 		}
-
-		if groupRecord == nil {
-			fmt.Fprintf(os.Stderr, "Error getting group\n")
-			os.Exit(1)
-		}
-		json, err := json.Marshal(groupRecord)
-		util.ExitNicelyOnError(err, "Error marshalling group")
-		fmt.Println(string(json))
 	},
 }
 
@@ -103,4 +122,5 @@ func init() {
 	group_getCmd.Flags().Int32P("id", "i", 0, "ID for the role to query")
 	group_getCmd.Flags().Int32P("group-id", "g", 0, "Group ID")
 	group_getCmd.Flags().StringP("name", "n", "", "Name for the role to query")
+	group_getCmd.Flags().StringP("output", "o", "", "Output format (json or yaml)")
 }

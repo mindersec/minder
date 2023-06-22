@@ -31,6 +31,56 @@ type createGroupValidation struct {
 	OrganizationId int32  `db:"organization_id" validate:"required"`
 }
 
+func getGroupDependencies(ctx context.Context, store db.Store, group db.Group) ([]*pb.RoleRecord, []*pb.UserRecord, error) {
+	const MAX_ITEMS = 999
+
+	// get all the roles associated with that group
+	roles, err := store.ListRolesByGroupID(ctx, db.ListRolesByGroupIDParams{GroupID: sql.NullInt32{Int32: group.ID, Valid: true},
+		Limit: MAX_ITEMS, Offset: 0})
+	if err != nil {
+		return nil, nil, err
+	}
+
+	// get all the users associated with that group
+	users, err := store.ListUsersByGroup(ctx, db.ListUsersByGroupParams{GroupID: group.ID, Limit: MAX_ITEMS, Offset: 0})
+	if err != nil {
+		return nil, nil, err
+	}
+
+	// convert to right data type
+	var rolesPB []*pb.RoleRecord
+	for _, role := range roles {
+		rolesPB = append(rolesPB, &pb.RoleRecord{
+			Id:             role.ID,
+			OrganizationId: role.OrganizationID,
+			GroupId:        &role.GroupID.Int32,
+			Name:           role.Name,
+			IsAdmin:        role.IsAdmin,
+			IsProtected:    role.IsProtected,
+			CreatedAt:      timestamppb.New(role.CreatedAt),
+			UpdatedAt:      timestamppb.New(role.UpdatedAt),
+		})
+	}
+
+	var usersPB []*pb.UserRecord
+	for _, user := range users {
+		usersPB = append(usersPB, &pb.UserRecord{
+			Id:                  user.ID,
+			OrganizationId:      user.OrganizationID,
+			Email:               &user.Email.String,
+			FirstName:           &user.FirstName.String,
+			LastName:            &user.LastName.String,
+			Username:            user.Username,
+			IsProtected:         &user.IsProtected,
+			NeedsPasswordChange: &user.NeedsPasswordChange,
+			CreatedAt:           timestamppb.New(user.CreatedAt),
+			UpdatedAt:           timestamppb.New(user.UpdatedAt),
+		})
+	}
+
+	return rolesPB, usersPB, nil
+}
+
 // CreateGroup creates a group
 func (s *Server) CreateGroup(ctx context.Context, req *pb.CreateGroupRequest) (*pb.CreateGroupResponse, error) {
 	// validate that the org and name are not empty
@@ -38,14 +88,6 @@ func (s *Server) CreateGroup(ctx context.Context, req *pb.CreateGroupRequest) (*
 	err := validator.Struct(createGroupValidation{OrganizationId: req.OrganizationId, Name: req.Name})
 	if err != nil {
 		return nil, err
-	}
-
-	_, err = s.store.GetGroupByName(ctx, req.Name)
-
-	if err != nil && err != sql.ErrNoRows {
-		return nil, status.Errorf(codes.NotFound, "failed to get group by name: %s", err)
-	} else if err == nil {
-		return nil, status.Errorf(codes.AlreadyExists, "group already exists")
 	}
 
 	if req.IsProtected == nil {
@@ -97,6 +139,11 @@ func (s *Server) GetGroupById(ctx context.Context, req *pb.GetGroupByIdRequest) 
 		return nil, status.Errorf(codes.PermissionDenied, "user is not authorized to access this resource")
 	}
 
+	roles, users, err := getGroupDependencies(ctx, s.store, grp)
+	if err != nil {
+		return nil, status.Errorf(codes.Unknown, "failed to get group dependencies: %s", err)
+	}
+
 	var resp pb.GetGroupByIdResponse
 	resp.Group = &pb.GroupRecord{
 		GroupId:        grp.ID,
@@ -107,12 +154,10 @@ func (s *Server) GetGroupById(ctx context.Context, req *pb.GetGroupByIdRequest) 
 		CreatedAt:      timestamppb.New(grp.CreatedAt),
 		UpdatedAt:      timestamppb.New(grp.UpdatedAt),
 	}
+	resp.Roles = roles
+	resp.Users = users
 
-	// check if user is authorized
-	if IsRequestAuthorized(ctx, grp.OrganizationID) {
-		return &resp, nil
-	}
-	return nil, status.Errorf(codes.PermissionDenied, "user is not authorized to access this resource")
+	return &resp, nil
 }
 
 // GetGroupByName returns a group by name
@@ -126,6 +171,16 @@ func (s *Server) GetGroupByName(ctx context.Context, req *pb.GetGroupByNameReque
 		return nil, status.Errorf(codes.NotFound, "failed to get group by name: %s", err)
 	}
 
+	// check if user is authorized
+	if !IsRequestAuthorized(ctx, grp.OrganizationID) {
+		return nil, status.Errorf(codes.PermissionDenied, "user is not authorized to access this resource")
+	}
+
+	roles, users, err := getGroupDependencies(ctx, s.store, grp)
+	if err != nil {
+		return nil, status.Errorf(codes.Unknown, "failed to get organization dependencies: %s", err)
+	}
+
 	var resp pb.GetGroupByNameResponse
 	resp.Group = &pb.GroupRecord{
 		GroupId:        grp.ID,
@@ -137,11 +192,11 @@ func (s *Server) GetGroupByName(ctx context.Context, req *pb.GetGroupByNameReque
 		UpdatedAt:      timestamppb.New(grp.UpdatedAt),
 	}
 
-	// check if user is authorized
-	if IsRequestAuthorized(ctx, grp.OrganizationID) {
-		return &resp, nil
-	}
-	return nil, status.Errorf(codes.PermissionDenied, "user is not authorized to access this resource")
+	resp.Roles = roles
+	resp.Users = users
+
+	return &resp, nil
+
 }
 
 // GetGroups returns a list of groups

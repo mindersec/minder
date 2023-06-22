@@ -663,6 +663,8 @@ The GetGroupByIdRequest message represents a request to get a group by ID
 | Field | Type | Label | Description |
 | ----- | ---- | ----- | ----------- |
 | group | [GroupRecord](#mediator-v1-GroupRecord) | optional |  |
+| roles | [RoleRecord](#mediator-v1-RoleRecord) | repeated |  |
+| users | [UserRecord](#mediator-v1-UserRecord) | repeated |  |
 
 
 
@@ -693,6 +695,8 @@ The GetGroupByNameRequest message represents a request to get a group by name
 | Field | Type | Label | Description |
 | ----- | ---- | ----- | ----------- |
 | group | [GroupRecord](#mediator-v1-GroupRecord) | optional |  |
+| roles | [RoleRecord](#mediator-v1-RoleRecord) | repeated |  |
+| users | [UserRecord](#mediator-v1-UserRecord) | repeated |  |
 
 
 
@@ -755,6 +759,9 @@ get organization by name
 | Field | Type | Label | Description |
 | ----- | ---- | ----- | ----------- |
 | organization | [OrganizationRecord](#mediator-v1-OrganizationRecord) | optional |  |
+| groups | [GroupRecord](#mediator-v1-GroupRecord) | repeated |  |
+| roles | [RoleRecord](#mediator-v1-RoleRecord) | repeated |  |
+| users | [UserRecord](#mediator-v1-UserRecord) | repeated |  |
 
 
 
@@ -785,6 +792,9 @@ get organization by id
 | Field | Type | Label | Description |
 | ----- | ---- | ----- | ----------- |
 | organization | [OrganizationRecord](#mediator-v1-OrganizationRecord) | optional |  |
+| groups | [GroupRecord](#mediator-v1-GroupRecord) | repeated |  |
+| roles | [RoleRecord](#mediator-v1-RoleRecord) | repeated |  |
+| users | [UserRecord](#mediator-v1-UserRecord) | repeated |  |
 
 
 
@@ -1028,6 +1038,8 @@ get user by email
 | Field | Type | Label | Description |
 | ----- | ---- | ----- | ----------- |
 | user | [UserRecord](#mediator-v1-UserRecord) | optional |  |
+| groups | [GroupRecord](#mediator-v1-GroupRecord) | repeated |  |
+| roles | [RoleRecord](#mediator-v1-RoleRecord) | repeated |  |
 
 
 
@@ -1058,6 +1070,8 @@ get user by id
 | Field | Type | Label | Description |
 | ----- | ---- | ----- | ----------- |
 | user | [UserRecord](#mediator-v1-UserRecord) | optional |  |
+| groups | [GroupRecord](#mediator-v1-GroupRecord) | repeated |  |
+| roles | [RoleRecord](#mediator-v1-RoleRecord) | repeated |  |
 
 
 
@@ -1088,6 +1102,8 @@ get user by username
 | Field | Type | Label | Description |
 | ----- | ---- | ----- | ----------- |
 | user | [UserRecord](#mediator-v1-UserRecord) | optional |  |
+| groups | [GroupRecord](#mediator-v1-GroupRecord) | repeated |  |
+| roles | [RoleRecord](#mediator-v1-RoleRecord) | repeated |  |
 
 
 
