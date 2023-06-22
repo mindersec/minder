@@ -590,6 +590,8 @@ func TestGetUserDBMock(t *testing.T) {
 
 	mockStore.EXPECT().GetUserByID(ctx, gomock.Any()).
 		Return(expectedUser, nil)
+	mockStore.EXPECT().GetUserRoles(ctx, gomock.Any())
+	mockStore.EXPECT().GetUserGroups(ctx, gomock.Any())
 
 	server := &Server{
 		store: mockStore,
@@ -626,6 +628,8 @@ func TestGetNonExistingUserDBMock(t *testing.T) {
 
 	mockStore.EXPECT().GetUserByID(ctx, gomock.Any()).
 		Return(db.User{}, nil)
+	mockStore.EXPECT().GetUserRoles(ctx, gomock.Any())
+	mockStore.EXPECT().GetUserGroups(ctx, gomock.Any())
 
 	server := &Server{
 		store: mockStore,
@@ -658,6 +662,8 @@ func TestGetUser_gRPC(t *testing.T) {
 						UpdatedAt:      time.Now(),
 					}, nil).
 					Times(1)
+				store.EXPECT().GetUserRoles(gomock.Any(), gomock.Any())
+				store.EXPECT().GetUserGroups(gomock.Any(), gomock.Any())
 			},
 			checkResponse: func(t *testing.T, res *pb.GetUserByIdResponse, err error) {
 				expectedUser := pb.UserRecord{
@@ -683,6 +689,9 @@ func TestGetUser_gRPC(t *testing.T) {
 				store.EXPECT().GetUserByID(gomock.Any(), gomock.Any()).
 					Return(db.User{}, nil).
 					Times(1)
+				store.EXPECT().GetUserRoles(gomock.Any(), gomock.Any())
+				store.EXPECT().GetUserGroups(gomock.Any(), gomock.Any())
+
 			},
 			checkResponse: func(t *testing.T, res *pb.GetUserByIdResponse, err error) {
 				assert.NoError(t, err)

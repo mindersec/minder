@@ -349,6 +349,9 @@ func TestGetOrganizationDBMock(t *testing.T) {
 	})
 	mockStore.EXPECT().GetOrganization(ctx, gomock.Any()).
 		Return(expectedOrg, nil)
+	mockStore.EXPECT().ListGroupsByOrganizationID(ctx, gomock.Any())
+	mockStore.EXPECT().ListRoles(ctx, gomock.Any())
+	mockStore.EXPECT().ListUsersByOrganization(ctx, gomock.Any())
 
 	server := &Server{
 		store: mockStore,
@@ -385,6 +388,9 @@ func TestGetNonExistingOrganizationDBMock(t *testing.T) {
 
 	mockStore.EXPECT().GetOrganization(ctx, gomock.Any()).
 		Return(db.Organization{}, nil)
+	mockStore.EXPECT().ListGroupsByOrganizationID(ctx, gomock.Any())
+	mockStore.EXPECT().ListRoles(ctx, gomock.Any())
+	mockStore.EXPECT().ListUsersByOrganization(ctx, gomock.Any())
 
 	server := &Server{
 		store: mockStore,
@@ -417,6 +423,10 @@ func TestGetOrganization_gRPC(t *testing.T) {
 						UpdatedAt: time.Now(),
 					}, nil).
 					Times(1)
+				store.EXPECT().ListRoles(gomock.Any(), gomock.Any())
+				store.EXPECT().ListGroupsByOrganizationID(gomock.Any(), gomock.Any())
+				store.EXPECT().ListUsersByOrganization(gomock.Any(), gomock.Any())
+
 			},
 			checkResponse: func(t *testing.T, res *pb.GetOrganizationResponse, err error) {
 				expectedOrg := pb.OrganizationRecord{
@@ -442,6 +452,9 @@ func TestGetOrganization_gRPC(t *testing.T) {
 				store.EXPECT().GetOrganization(gomock.Any(), gomock.Any()).
 					Return(db.Organization{}, nil).
 					Times(1)
+				store.EXPECT().ListRoles(gomock.Any(), gomock.Any())
+				store.EXPECT().ListGroupsByOrganizationID(gomock.Any(), gomock.Any())
+				store.EXPECT().ListUsersByOrganization(gomock.Any(), gomock.Any())
 			},
 			checkResponse: func(t *testing.T, res *pb.GetOrganizationResponse, err error) {
 				assert.NoError(t, err)
@@ -504,6 +517,9 @@ func TestGetOrganizationByNameDBMock(t *testing.T) {
 
 	mockStore.EXPECT().GetOrganizationByName(ctx, gomock.Any()).
 		Return(expectedOrg, nil)
+	mockStore.EXPECT().ListGroupsByOrganizationID(ctx, gomock.Any())
+	mockStore.EXPECT().ListRoles(ctx, gomock.Any())
+	mockStore.EXPECT().ListUsersByOrganization(ctx, gomock.Any())
 
 	server := &Server{
 		store: mockStore,
@@ -540,6 +556,9 @@ func TestGetNonExistingOrganizationByNameDBMock(t *testing.T) {
 
 	mockStore.EXPECT().GetOrganizationByName(ctx, gomock.Any()).
 		Return(db.Organization{}, nil)
+	mockStore.EXPECT().ListGroupsByOrganizationID(ctx, gomock.Any())
+	mockStore.EXPECT().ListRoles(ctx, gomock.Any())
+	mockStore.EXPECT().ListUsersByOrganization(ctx, gomock.Any())
 
 	server := &Server{
 		store: mockStore,
@@ -572,6 +591,10 @@ func TestGetOrganizationByName_gRPC(t *testing.T) {
 						UpdatedAt: time.Now(),
 					}, nil).
 					Times(1)
+				store.EXPECT().ListGroupsByOrganizationID(gomock.Any(), gomock.Any())
+				store.EXPECT().ListRoles(gomock.Any(), gomock.Any())
+				store.EXPECT().ListUsersByOrganization(gomock.Any(), gomock.Any())
+
 			},
 			checkResponse: func(t *testing.T, res *pb.GetOrganizationByNameResponse, err error) {
 				expectedOrg := pb.OrganizationRecord{
@@ -597,6 +620,9 @@ func TestGetOrganizationByName_gRPC(t *testing.T) {
 				store.EXPECT().GetOrganizationByName(gomock.Any(), gomock.Any()).
 					Return(db.Organization{}, nil).
 					Times(1)
+				store.EXPECT().ListGroupsByOrganizationID(gomock.Any(), gomock.Any())
+				store.EXPECT().ListRoles(gomock.Any(), gomock.Any())
+				store.EXPECT().ListUsersByOrganization(gomock.Any(), gomock.Any())
 			},
 			checkResponse: func(t *testing.T, res *pb.GetOrganizationByNameResponse, err error) {
 				assert.NoError(t, err)
