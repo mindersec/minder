@@ -44,10 +44,8 @@ run-server: ## run the app
 
 bootstrap: ## install build deps
 	go generate -tags tools tools/tools.go
-	cd tools
-	go mod tidy
-	@go install github.com/grpc-ecosystem/grpc-gateway/v2/protoc-gen-grpc-gateway github.com/grpc-ecosystem/grpc-gateway/v2/protoc-gen-openapiv2 google.golang.org/protobuf/cmd/protoc-gen-go google.golang.org/grpc/cmd/protoc-gen-go-grpc
-	cd ..
+	# N.B. each line runs in a different subshell, so we don't need to undo the 'cd' here
+	cd tools && go mod tidy && go install github.com/grpc-ecosystem/grpc-gateway/v2/protoc-gen-grpc-gateway github.com/grpc-ecosystem/grpc-gateway/v2/protoc-gen-openapiv2 google.golang.org/protobuf/cmd/protoc-gen-go google.golang.org/grpc/cmd/protoc-gen-go-grpc
 
 test: clean ## display test coverage
 	go test -json -v ./... | gotestfmt

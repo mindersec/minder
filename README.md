@@ -18,6 +18,8 @@ It is currently in early development.
 - [Docker Compose](https://docs.docker.com/compose/install/) or..
 - [Podman Compose](https://github.com/containers/podman-compose#installation)
 
+Once you have these and have [cloned the repository](#clone-the-repository), you'll also need to [install the other tools](#install-tools) and make sure that `$HOME/go/bin` is in your `PATH`.
+
 ## Clone the repository
 
 ```bash
