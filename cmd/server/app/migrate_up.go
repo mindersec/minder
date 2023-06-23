@@ -69,9 +69,11 @@ var upCmd = &cobra.Command{
 			connString)
 		if err != nil {
 			fmt.Printf("Error while creating migration instance: %v", err)
+			os.Exit(1)
 		}
 		if err := m.Up(); err != nil {
 			fmt.Printf("Error while migrating database: %v", err)
+			os.Exit(1)
 		}
 		fmt.Println("Database migration completed successfully")
 
