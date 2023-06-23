@@ -27,43 +27,83 @@ import (
 	"fmt"
 	"os"
 
+	"github.com/stacklok/mediator/cmd/cli/app"
 	pb "github.com/stacklok/mediator/pkg/generated/protobuf/go/mediator/v1"
 	"github.com/stacklok/mediator/pkg/util"
+	"gopkg.in/yaml.v3"
 
 	"github.com/spf13/cobra"
 	"github.com/spf13/viper"
 )
 
 func getUser(ctx context.Context, client pb.UserServiceClient, queryType string,
-	id int32, username string, email string) *pb.UserRecord {
+	id int32, username string, email string) (*pb.UserRecord, []*pb.GroupRecord, []*pb.RoleRecord, error) {
 	var userRecord *pb.UserRecord
+	var groups []*pb.GroupRecord
+	var roles []*pb.RoleRecord
 
 	if queryType == "id" {
 		// get by id
 		user, err := client.GetUserById(ctx, &pb.GetUserByIdRequest{
 			Id: id,
 		})
-		if err == nil {
-			userRecord = user.User
+		if err != nil {
+			return nil, nil, nil, err
 		}
+		userRecord = user.User
+		groups = user.Groups
+		roles = user.Roles
+
 	} else if queryType == "username" {
 		// get by username
 		user, err := client.GetUserByUserName(ctx, &pb.GetUserByUserNameRequest{
 			Username: username,
 		})
-		if err == nil {
-			userRecord = user.User
+		if err != nil {
+			return nil, nil, nil, err
 		}
+		userRecord = user.User
+		groups = user.Groups
+		roles = user.Roles
+
 	} else if queryType == "email" {
 		user, err := client.GetUserByEmail(ctx, &pb.GetUserByEmailRequest{
 			Email: email,
 		})
-		if err == nil {
-			userRecord = user.User
+		if err != nil {
+			return nil, nil, nil, err
 		}
+		userRecord = user.User
+		groups = user.Groups
+		roles = user.Roles
+
 	}
 
-	return userRecord
+	return userRecord, groups, roles, nil
+}
+
+type output struct {
+	User   *pb.UserRecord    `json:"user"`
+	Groups []*pb.GroupRecord `json:"groups"`
+	Roles  []*pb.RoleRecord  `json:"roles"`
+}
+
+func printUser(user *pb.UserRecord, groups []*pb.GroupRecord, roles []*pb.RoleRecord, format string) {
+	output := output{
+		User:   user,
+		Groups: groups,
+		Roles:  roles,
+	}
+	if format == app.JSON {
+		output, err := json.MarshalIndent(output, "", "  ")
+		util.ExitNicelyOnError(err, "Error marshalling json")
+		fmt.Println(string(output))
+	} else if format == app.YAML {
+		yamlData, err := yaml.Marshal(output)
+		util.ExitNicelyOnError(err, "Error marshalling yaml")
+		fmt.Println(string(yamlData))
+
+	}
 }
 
 var user_getCmd = &cobra.Command{
@@ -92,6 +132,14 @@ mediator control plane.`,
 		id := viper.GetInt32("id")
 		username := viper.GetString("username")
 		email := viper.GetString("email")
+		format := util.GetConfigValue("output", "output", cmd, "").(string)
+		if format == "" {
+			format = app.JSON
+		}
+		if format != app.JSON && format != app.YAML && format != "" {
+			fmt.Fprintf(os.Stderr, "Error: invalid format: %s\n", format)
+		}
+
 		count := 0
 
 		if id > 0 {
@@ -115,25 +163,24 @@ mediator control plane.`,
 		}
 
 		var user *pb.UserRecord
+		var groups []*pb.GroupRecord
+		var roles []*pb.RoleRecord
 		// get by id
 		if id > 0 {
-			user = getUser(ctx, client, "id", id, "", "")
+			user, groups, roles, err = getUser(ctx, client, "id", id, "", "")
+			util.ExitNicelyOnError(err, "Error getting organization by id")
+			printUser(user, groups, roles, format)
 		} else if username != "" {
 			// get by username
-			user = getUser(ctx, client, "username", 0, username, "")
+			user, groups, roles, err = getUser(ctx, client, "username", 0, username, "")
+			util.ExitNicelyOnError(err, "Error getting organization by id")
+			printUser(user, groups, roles, format)
 		} else if email != "" {
 			// get by email
-			user = getUser(ctx, client, "email", 0, "", email)
+			user, groups, roles, err = getUser(ctx, client, "email", 0, "", email)
+			util.ExitNicelyOnError(err, "Error getting organization by id")
+			printUser(user, groups, roles, format)
 		}
-
-		if user == nil {
-			fmt.Fprintf(os.Stderr, "Error getting user\n")
-			os.Exit(1)
-		}
-		json, err := json.Marshal(user)
-		util.ExitNicelyOnError(err, "Error marshalling user")
-		fmt.Println(string(json))
-
 	},
 }
 
@@ -142,4 +189,5 @@ func init() {
 	user_getCmd.Flags().Int32P("id", "i", -1, "ID for the user to query")
 	user_getCmd.Flags().StringP("username", "u", "", "Username for the user to query")
 	user_getCmd.Flags().StringP("email", "e", "", "Email for the user to query")
+	user_getCmd.Flags().StringP("output", "o", "", "Output format (json or yaml)")
 }

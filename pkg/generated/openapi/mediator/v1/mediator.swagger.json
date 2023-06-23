@@ -2107,6 +2107,20 @@
       "properties": {
         "group": {
           "$ref": "#/definitions/v1GroupRecord"
+        },
+        "roles": {
+          "type": "array",
+          "items": {
+            "type": "object",
+            "$ref": "#/definitions/v1RoleRecord"
+          }
+        },
+        "users": {
+          "type": "array",
+          "items": {
+            "type": "object",
+            "$ref": "#/definitions/v1UserRecord"
+          }
         }
       }
     },
@@ -2115,6 +2129,20 @@
       "properties": {
         "group": {
           "$ref": "#/definitions/v1GroupRecord"
+        },
+        "roles": {
+          "type": "array",
+          "items": {
+            "type": "object",
+            "$ref": "#/definitions/v1RoleRecord"
+          }
+        },
+        "users": {
+          "type": "array",
+          "items": {
+            "type": "object",
+            "$ref": "#/definitions/v1UserRecord"
+          }
         }
       }
     },
@@ -2136,6 +2164,27 @@
       "properties": {
         "organization": {
           "$ref": "#/definitions/v1OrganizationRecord"
+        },
+        "groups": {
+          "type": "array",
+          "items": {
+            "type": "object",
+            "$ref": "#/definitions/v1GroupRecord"
+          }
+        },
+        "roles": {
+          "type": "array",
+          "items": {
+            "type": "object",
+            "$ref": "#/definitions/v1RoleRecord"
+          }
+        },
+        "users": {
+          "type": "array",
+          "items": {
+            "type": "object",
+            "$ref": "#/definitions/v1UserRecord"
+          }
         }
       }
     },
@@ -2144,6 +2193,27 @@
       "properties": {
         "organization": {
           "$ref": "#/definitions/v1OrganizationRecord"
+        },
+        "groups": {
+          "type": "array",
+          "items": {
+            "type": "object",
+            "$ref": "#/definitions/v1GroupRecord"
+          }
+        },
+        "roles": {
+          "type": "array",
+          "items": {
+            "type": "object",
+            "$ref": "#/definitions/v1RoleRecord"
+          }
+        },
+        "users": {
+          "type": "array",
+          "items": {
+            "type": "object",
+            "$ref": "#/definitions/v1UserRecord"
+          }
         }
       }
     },
@@ -2231,6 +2301,20 @@
       "properties": {
         "user": {
           "$ref": "#/definitions/v1UserRecord"
+        },
+        "groups": {
+          "type": "array",
+          "items": {
+            "type": "object",
+            "$ref": "#/definitions/v1GroupRecord"
+          }
+        },
+        "roles": {
+          "type": "array",
+          "items": {
+            "type": "object",
+            "$ref": "#/definitions/v1RoleRecord"
+          }
         }
       }
     },
@@ -2239,6 +2323,20 @@
       "properties": {
         "user": {
           "$ref": "#/definitions/v1UserRecord"
+        },
+        "groups": {
+          "type": "array",
+          "items": {
+            "type": "object",
+            "$ref": "#/definitions/v1GroupRecord"
+          }
+        },
+        "roles": {
+          "type": "array",
+          "items": {
+            "type": "object",
+            "$ref": "#/definitions/v1RoleRecord"
+          }
         }
       }
     },
@@ -2247,6 +2345,20 @@
       "properties": {
         "user": {
           "$ref": "#/definitions/v1UserRecord"
+        },
+        "groups": {
+          "type": "array",
+          "items": {
+            "type": "object",
+            "$ref": "#/definitions/v1GroupRecord"
+          }
+        },
+        "roles": {
+          "type": "array",
+          "items": {
+            "type": "object",
+            "$ref": "#/definitions/v1RoleRecord"
+          }
         }
       }
     },

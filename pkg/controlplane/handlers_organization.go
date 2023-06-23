@@ -148,9 +148,82 @@ func (s *Server) GetOrganizations(ctx context.Context,
 	return &resp, nil
 }
 
+func getOrganizationDependencies(ctx context.Context, store db.Store,
+	org db.Organization) ([]*pb.GroupRecord, []*pb.RoleRecord, []*pb.UserRecord, error) {
+	const MAX_ITEMS = 999
+	// get the groups for the organization
+	groups, err := store.ListGroupsByOrganizationID(ctx, org.ID)
+	if err != nil {
+		return nil, nil, nil, err
+	}
+
+	// get the roles for the organization
+	roles, err := store.ListRoles(ctx, db.ListRolesParams{OrganizationID: org.ID, Limit: MAX_ITEMS, Offset: 0})
+	if err != nil {
+		return nil, nil, nil, err
+	}
+
+	users, err := store.ListUsersByOrganization(ctx,
+		db.ListUsersByOrganizationParams{OrganizationID: org.ID, Limit: MAX_ITEMS, Offset: 0})
+	if err != nil {
+		return nil, nil, nil, err
+	}
+
+	// convert to right data type
+	var groupsPB []*pb.GroupRecord
+	for _, group := range groups {
+		groupsPB = append(groupsPB, &pb.GroupRecord{
+			GroupId:        group.ID,
+			OrganizationId: group.OrganizationID,
+			Name:           group.Name,
+			Description:    group.Description.String,
+			IsProtected:    group.IsProtected,
+			CreatedAt:      timestamppb.New(group.CreatedAt),
+			UpdatedAt:      timestamppb.New(group.UpdatedAt),
+		})
+	}
+
+	var rolesPB []*pb.RoleRecord
+	for _, role := range roles {
+		rolesPB = append(rolesPB, &pb.RoleRecord{
+			Id:             role.ID,
+			OrganizationId: role.OrganizationID,
+			GroupId:        &role.GroupID.Int32,
+			Name:           role.Name,
+			IsAdmin:        role.IsAdmin,
+			IsProtected:    role.IsProtected,
+			CreatedAt:      timestamppb.New(role.CreatedAt),
+			UpdatedAt:      timestamppb.New(role.UpdatedAt),
+		})
+	}
+
+	var usersPB []*pb.UserRecord
+	for _, user := range users {
+		usersPB = append(usersPB, &pb.UserRecord{
+			Id:                  user.ID,
+			OrganizationId:      user.OrganizationID,
+			Email:               &user.Email.String,
+			FirstName:           &user.FirstName.String,
+			LastName:            &user.LastName.String,
+			Username:            user.Username,
+			IsProtected:         &user.IsProtected,
+			NeedsPasswordChange: &user.NeedsPasswordChange,
+			CreatedAt:           timestamppb.New(user.CreatedAt),
+			UpdatedAt:           timestamppb.New(user.UpdatedAt),
+		})
+	}
+
+	return groupsPB, rolesPB, usersPB, nil
+}
+
 // GetOrganization is a service for getting an organization
 func (s *Server) GetOrganization(ctx context.Context,
 	in *pb.GetOrganizationRequest) (*pb.GetOrganizationResponse, error) {
+	// check if user is authorized
+	if !IsRequestAuthorized(ctx, in.OrganizationId) {
+		return nil, status.Errorf(codes.PermissionDenied, "user is not authorized to access this resource")
+	}
+
 	if in.GetOrganizationId() <= 0 {
 		return nil, status.Error(codes.InvalidArgument, "organization id is required")
 	}
@@ -160,9 +233,9 @@ func (s *Server) GetOrganization(ctx context.Context,
 		return nil, status.Errorf(codes.Unknown, "failed to get organization: %s", err)
 	}
 
-	// check if user is authorized
-	if !IsRequestAuthorized(ctx, org.ID) {
-		return nil, status.Errorf(codes.PermissionDenied, "user is not authorized to access this resource")
+	groups, roles, users, err := getOrganizationDependencies(ctx, s.store, org)
+	if err != nil {
+		return nil, status.Errorf(codes.Unknown, "failed to get organization dependencies: %s", err)
 	}
 
 	var resp pb.GetOrganizationResponse
@@ -173,6 +246,9 @@ func (s *Server) GetOrganization(ctx context.Context,
 		CreatedAt: timestamppb.New(org.CreatedAt),
 		UpdatedAt: timestamppb.New(org.UpdatedAt),
 	}
+	resp.Groups = groups
+	resp.Roles = roles
+	resp.Users = users
 
 	return &resp, nil
 }
@@ -194,6 +270,11 @@ func (s *Server) GetOrganizationByName(ctx context.Context,
 		return nil, status.Errorf(codes.PermissionDenied, "user is not authorized to access this resource")
 	}
 
+	groups, roles, users, err := getOrganizationDependencies(ctx, s.store, org)
+	if err != nil {
+		return nil, status.Errorf(codes.Unknown, "failed to get organization dependencies: %s", err)
+	}
+
 	var resp pb.GetOrganizationByNameResponse
 	resp.Organization = &pb.OrganizationRecord{
 		Id:        org.ID,
@@ -202,6 +283,9 @@ func (s *Server) GetOrganizationByName(ctx context.Context,
 		CreatedAt: timestamppb.New(org.CreatedAt),
 		UpdatedAt: timestamppb.New(org.UpdatedAt),
 	}
+	resp.Groups = groups
+	resp.Roles = roles
+	resp.Users = users
 
 	return &resp, nil
 }

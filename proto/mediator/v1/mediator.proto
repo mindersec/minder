@@ -626,6 +626,9 @@ message GetOrganizationRequest {
 
 message GetOrganizationResponse {
     optional OrganizationRecord organization = 1;
+    repeated GroupRecord groups = 2;
+    repeated RoleRecord roles = 3;
+    repeated UserRecord users = 4;
 }
 
 // get organization by name
@@ -635,6 +638,9 @@ message GetOrganizationByNameRequest {
 
 message GetOrganizationByNameResponse {
     optional OrganizationRecord organization = 1;
+    repeated GroupRecord groups = 2;
+    repeated RoleRecord roles = 3;
+    repeated UserRecord users = 4;
 }
 
 // Group service
@@ -687,10 +693,14 @@ message  CreateGroupResponse {
 
 message GetGroupByNameResponse {
     optional GroupRecord group = 1;
+    repeated RoleRecord roles = 2;
+    repeated UserRecord users = 3;
 }
 
 message GetGroupByIdResponse {
     optional GroupRecord group = 1;
+    repeated RoleRecord roles = 2;
+    repeated UserRecord users = 3;
 }
 
 // The GetGroupsResponse message represents a response with an array of groups
@@ -904,6 +914,8 @@ message GetUserByIdRequest {
 
 message GetUserByIdResponse {
     optional UserRecord user = 1;
+    repeated GroupRecord groups = 2;
+    repeated RoleRecord roles = 3;
 }
 
 // get user by username
@@ -913,6 +925,8 @@ message GetUserByUserNameRequest {
 
 message GetUserByUserNameResponse {
     optional UserRecord user = 1;
+    repeated GroupRecord groups = 2;
+    repeated RoleRecord roles = 3;
 }
 
 // get user by email
@@ -922,4 +936,6 @@ message GetUserByEmailRequest {
 
 message GetUserByEmailResponse {
     optional UserRecord user = 1;
+    repeated GroupRecord groups = 2;
+    repeated RoleRecord roles = 3;
 }

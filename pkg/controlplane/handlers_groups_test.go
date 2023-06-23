@@ -65,8 +65,6 @@ func TestCreateGroupDBMock(t *testing.T) {
 	})
 
 	mockStore.EXPECT().
-		GetGroupByName(ctx, gomock.Any()).Return(db.Group{}, sql.ErrNoRows)
-	mockStore.EXPECT().
 		CreateGroup(ctx, gomock.Any()).
 		Return(expectedGroup, nil)
 
@@ -99,7 +97,6 @@ func TestCreateGroup_gRPC(t *testing.T) {
 				Name:           "TestGroup",
 			},
 			buildStubs: func(store *mockdb.MockStore) {
-				store.EXPECT().GetGroupByName(gomock.Any(), gomock.Any()).Return(db.Group{}, sql.ErrNoRows).Times(1)
 				store.EXPECT().
 					CreateGroup(gomock.Any(), gomock.Any()).
 					Return(db.Group{
@@ -145,8 +142,6 @@ func TestCreateGroup_gRPC(t *testing.T) {
 				Name:           "TestGroup",
 			},
 			buildStubs: func(store *mockdb.MockStore) {
-				store.EXPECT().
-					GetGroupByName(gomock.Any(), gomock.Any()).Return(db.Group{}, sql.ErrNoRows).Times(1)
 				store.EXPECT().
 					CreateGroup(gomock.Any(), gomock.Any()).
 					Return(db.Group{}, errors.New("store error")).
@@ -478,6 +473,8 @@ func TestGetGroupDBMock(t *testing.T) {
 
 	mockStore.EXPECT().GetGroupByID(ctx, gomock.Any()).
 		Return(expectedGroup, nil)
+	mockStore.EXPECT().ListRolesByGroupID(ctx, gomock.Any())
+	mockStore.EXPECT().ListUsersByGroup(ctx, gomock.Any())
 
 	server := &Server{
 		store: mockStore,
@@ -514,6 +511,8 @@ func TestGetNonExistingGroupDBMock(t *testing.T) {
 
 	mockStore.EXPECT().GetGroupByID(ctx, gomock.Any()).
 		Return(db.Group{}, nil)
+	mockStore.EXPECT().ListRolesByGroupID(ctx, gomock.Any())
+	mockStore.EXPECT().ListUsersByGroup(ctx, gomock.Any())
 
 	server := &Server{
 		store: mockStore,
@@ -537,6 +536,9 @@ func TestGetGroup_gRPC(t *testing.T) {
 			name: "Success",
 			req:  &pb.GetGroupByIdRequest{GroupId: 1},
 			buildStubs: func(store *mockdb.MockStore) {
+				store.EXPECT().ListRolesByGroupID(gomock.Any(), gomock.Any())
+				store.EXPECT().ListUsersByGroup(gomock.Any(), gomock.Any())
+
 				store.EXPECT().GetGroupByID(gomock.Any(), gomock.Any()).
 					Return(db.Group{
 						ID:             1,
@@ -571,6 +573,9 @@ func TestGetGroup_gRPC(t *testing.T) {
 				store.EXPECT().GetGroupByID(gomock.Any(), gomock.Any()).
 					Return(db.Group{}, nil).
 					Times(1)
+				store.EXPECT().ListRolesByGroupID(gomock.Any(), gomock.Any())
+				store.EXPECT().ListUsersByGroup(gomock.Any(), gomock.Any())
+
 			},
 			checkResponse: func(t *testing.T, res *pb.GetGroupByIdResponse, err error) {
 				assert.NoError(t, err)

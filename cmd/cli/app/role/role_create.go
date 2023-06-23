@@ -44,7 +44,7 @@ within a mediator control plane.`,
 		}
 	},
 	Run: func(cmd *cobra.Command, args []string) {
-		org := util.GetConfigValue("org-id", "org-id", cmd, int32(0)).(int)
+		org := util.GetConfigValue("org-id", "org-id", cmd, int32(0))
 		group := util.GetConfigValue("group-id", "group-id", cmd, int32(0))
 		name := util.GetConfigValue("name", "name", cmd, "")
 		isAdmin := viper.GetBool("is_admin")
@@ -69,7 +69,7 @@ within a mediator control plane.`,
 		if group == 0 {
 			// create a role by org
 			resp, err := client.CreateRoleByOrganization(ctx, &pb.CreateRoleByOrganizationRequest{
-				OrganizationId: int32(org),
+				OrganizationId: org.(int32),
 				Name:           name.(string),
 				IsAdmin:        adminPtr,
 				IsProtected:    protectedPtr,
@@ -86,7 +86,7 @@ within a mediator control plane.`,
 		} else {
 			// create a role by group
 			resp, err := client.CreateRoleByGroup(ctx, &pb.CreateRoleByGroupRequest{
-				OrganizationId: int32(org),
+				OrganizationId: org.(int32),
 				GroupId:        group.(int32),
 				Name:           name.(string),
 				IsAdmin:        adminPtr,

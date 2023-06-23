@@ -338,6 +338,50 @@ func (s *Server) GetUsersByGroup(ctx context.Context,
 	return &resp, nil
 }
 
+func getUserDependencies(ctx context.Context, store db.Store, user db.User) ([]*pb.GroupRecord, []*pb.RoleRecord, error) {
+	// get all the roles associated with that user
+	roles, err := store.GetUserRoles(ctx, user.ID)
+	if err != nil {
+		return nil, nil, err
+	}
+
+	// get all the groups associated with that user
+	groups, err := store.GetUserGroups(ctx, user.ID)
+	if err != nil {
+		return nil, nil, err
+	}
+
+	// convert to right data type
+	var rolesPB []*pb.RoleRecord
+	for _, role := range roles {
+		rolesPB = append(rolesPB, &pb.RoleRecord{
+			Id:             role.ID,
+			OrganizationId: role.OrganizationID,
+			GroupId:        &role.GroupID.Int32,
+			Name:           role.Name,
+			IsAdmin:        role.IsAdmin,
+			IsProtected:    role.IsProtected,
+			CreatedAt:      timestamppb.New(role.CreatedAt),
+			UpdatedAt:      timestamppb.New(role.UpdatedAt),
+		})
+	}
+
+	var groupsPB []*pb.GroupRecord
+	for _, group := range groups {
+		groupsPB = append(groupsPB, &pb.GroupRecord{
+			GroupId:        group.ID,
+			OrganizationId: group.OrganizationID,
+			Name:           group.Name,
+			Description:    group.Description.String,
+			IsProtected:    group.IsProtected,
+			CreatedAt:      timestamppb.New(group.CreatedAt),
+			UpdatedAt:      timestamppb.New(group.UpdatedAt),
+		})
+	}
+
+	return groupsPB, rolesPB, nil
+}
+
 // GetUserById is a service for getting a user by id
 func (s *Server) GetUserById(ctx context.Context,
 	in *pb.GetUserByIdRequest) (*pb.GetUserByIdResponse, error) {
@@ -345,14 +389,19 @@ func (s *Server) GetUserById(ctx context.Context,
 		return nil, status.Error(codes.InvalidArgument, "user id is required")
 	}
 
+	// check if user is authorized
+	if !IsRequestAuthorized(ctx, in.Id) {
+		return nil, status.Errorf(codes.PermissionDenied, "user is not authorized to access this resource")
+	}
+
 	user, err := s.store.GetUserByID(ctx, in.Id)
 	if err != nil {
 		return nil, status.Errorf(codes.Unknown, "failed to get user: %s", err)
 	}
 
-	// check if user is authorized
-	if !IsRequestAuthorized(ctx, user.OrganizationID) {
-		return nil, status.Errorf(codes.PermissionDenied, "user is not authorized to access this resource")
+	groups, roles, err := getUserDependencies(ctx, s.store, user)
+	if err != nil {
+		return nil, status.Errorf(codes.Unknown, "failed to get user dependencies: %s", err)
 	}
 
 	var resp pb.GetUserByIdResponse
@@ -369,11 +418,13 @@ func (s *Server) GetUserById(ctx context.Context,
 		UpdatedAt:           timestamppb.New(user.UpdatedAt),
 	}
 
+	resp.Groups = groups
+	resp.Roles = roles
 	return &resp, nil
 }
 
-// GetUserByUsername is a service for getting an user by username
-func (s *Server) GetUserByUsername(ctx context.Context,
+// GetUserByUserName is a service for getting an user by username
+func (s *Server) GetUserByUserName(ctx context.Context,
 	in *pb.GetUserByUserNameRequest) (*pb.GetUserByUserNameResponse, error) {
 	if in.GetUsername() == "" {
 		return nil, status.Error(codes.InvalidArgument, "username is required")
@@ -387,6 +438,11 @@ func (s *Server) GetUserByUsername(ctx context.Context,
 	// check if user is authorized
 	if !IsRequestAuthorized(ctx, user.OrganizationID) {
 		return nil, status.Errorf(codes.PermissionDenied, "user is not authorized to access this resource")
+	}
+
+	groups, roles, err := getUserDependencies(ctx, s.store, user)
+	if err != nil {
+		return nil, status.Errorf(codes.Unknown, "failed to get user dependencies: %s", err)
 	}
 
 	var resp pb.GetUserByUserNameResponse
@@ -403,6 +459,8 @@ func (s *Server) GetUserByUsername(ctx context.Context,
 		UpdatedAt:           timestamppb.New(user.UpdatedAt),
 	}
 
+	resp.Groups = groups
+	resp.Roles = roles
 	return &resp, nil
 }
 
@@ -435,6 +493,13 @@ func (s *Server) GetUserByEmail(ctx context.Context,
 		CreatedAt:           timestamppb.New(user.CreatedAt),
 		UpdatedAt:           timestamppb.New(user.UpdatedAt),
 	}
+
+	groups, roles, err := getUserDependencies(ctx, s.store, user)
+	if err != nil {
+		return nil, status.Errorf(codes.Unknown, "failed to get user dependencies: %s", err)
+	}
+	resp.Groups = groups
+	resp.Roles = roles
 
 	return &resp, nil
 }

@@ -36,6 +36,12 @@ https://docs.stacklok.com/mediator/medctl/overview.html`,
 	}
 )
 
+// JSON is the json format for output
+const JSON = "json"
+
+// YAML is the yaml format for output
+const YAML = "yaml"
+
 // Execute adds all child commands to the root command and sets flags appropriately.
 func Execute() {
 	err := RootCmd.Execute()

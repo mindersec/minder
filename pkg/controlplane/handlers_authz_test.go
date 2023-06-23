@@ -41,6 +41,8 @@ func TestIsSuperadminAuthorized(t *testing.T) {
 
 	mockStore := mockdb.NewMockStore(ctrl)
 	mockStore.EXPECT().GetGroupByID(ctx, gomock.Any())
+	mockStore.EXPECT().ListRolesByGroupID(ctx, gomock.Any())
+	mockStore.EXPECT().ListUsersByGroup(ctx, gomock.Any())
 
 	server := &Server{
 		store: mockStore,
