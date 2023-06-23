@@ -48,7 +48,10 @@ var User_updateCmd = &cobra.Command{
 		password := util.GetConfigValue("password", "password", cmd, nil)
 		password_confirmation := util.GetConfigValue("password_confirmation", "password_confirmation", cmd, nil)
 
-		conn, err := util.GetGrpcConnection(cmd)
+		grpc_host := util.GetConfigValue("grpc_server.host", "grpc-host", cmd, "").(string)
+		grpc_port := util.GetConfigValue("grpc_server.port", "grpc-port", cmd, 0).(int)
+
+		conn, err := util.GetGrpcConnection(grpc_host, grpc_port)
 		util.ExitNicelyOnError(err, "Error getting grpc connection")
 		defer conn.Close()
 

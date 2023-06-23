@@ -138,10 +138,7 @@ func (JWTTokenCredentials) RequireTransportSecurity() bool {
 }
 
 // GetGrpcConnection is a helper for getting a testing connection for grpc
-func GetGrpcConnection(cmd *cobra.Command) (*grpc.ClientConn, error) {
-	// Database configuration
-	grpc_host := GetConfigValue("grpc_server.host", "grpc-host", cmd, "").(string)
-	grpc_port := GetConfigValue("grpc_server.port", "grpc-port", cmd, 0).(int)
+func GetGrpcConnection(grpc_host string, grpc_port int) (*grpc.ClientConn, error) {
 	address := fmt.Sprintf("%s:%d", grpc_host, grpc_port)
 
 	// read credentials
