@@ -44,29 +44,29 @@ func generateToken(ctx context.Context, store db.Store, userId int32) (string, s
 	// read private key for generating token and refresh token
 	privateKeyPath := viper.GetString("auth.access_token_private_key")
 	if privateKeyPath == "" {
-		return "", "", 0, 0, emptyClaims, fmt.Errorf("could not read private key")
+		return "", "", 0, 0, emptyClaims, fmt.Errorf("could not read private access token key")
 	}
 
 	privateKeyPath = filepath.Clean(privateKeyPath)
 	keyBytes, err := os.ReadFile(privateKeyPath)
 	if err != nil {
-		return "", "", 0, 0, emptyClaims, fmt.Errorf("failed to generate token")
+		return "", "", 0, 0, emptyClaims, fmt.Errorf("failed to read access token key: %s", err)
 	}
 
 	refreshPrivateKeyPath := viper.GetString("auth.refresh_token_private_key")
 	if refreshPrivateKeyPath == "" {
-		return "", "", 0, 0, emptyClaims, fmt.Errorf("failed to generate token")
+		return "", "", 0, 0, emptyClaims, fmt.Errorf("unable to read private refresh token key")
 	}
 
 	refreshPrivateKeyPath = filepath.Clean(refreshPrivateKeyPath)
 	refreshKeyBytes, err := os.ReadFile(refreshPrivateKeyPath)
 	if err != nil {
-		return "", "", 0, 0, emptyClaims, fmt.Errorf("failed to generate token")
+		return "", "", 0, 0, emptyClaims, fmt.Errorf("failed to read refresh token key: %s", err)
 	}
 
 	claims, err := auth.GetUserClaims(ctx, store, userId)
 	if err != nil {
-		return "", "", 0, 0, emptyClaims, fmt.Errorf("failed to generate token")
+		return "", "", 0, 0, emptyClaims, fmt.Errorf("failed to get user claims: %s", err)
 	}
 
 	// Convert the key bytes to a string
@@ -79,7 +79,7 @@ func generateToken(ctx context.Context, store db.Store, userId int32) (string, s
 	)
 
 	if err != nil {
-		return "", "", 0, 0, emptyClaims, fmt.Errorf("failed to generate token")
+		return "", "", 0, 0, emptyClaims, fmt.Errorf("failed to generate token: %s", err)
 	}
 
 	return tokenString, refreshTokenString, tokenExpirationTime, refreshExpirationTime, claims, nil
@@ -101,20 +101,20 @@ func (s *Server) LogIn(ctx context.Context, in *pb.LogInRequest) (*pb.LogInRespo
 		}
 		return nil, err
 	}
-	match, _ := mcrypto.VerifyPasswordHash(in.Password, user.Password)
+	match, err := mcrypto.VerifyPasswordHash(in.Password, user.Password)
 	if err != nil {
-		return &pb.LogInResponse{}, status.Error(codes.NotFound, "User and password not found")
+		return &pb.LogInResponse{}, status.Error(codes.NotFound, fmt.Sprintf("Error hashing password: %s", err))
 	}
 
 	if !match {
-		return &pb.LogInResponse{}, status.Error(codes.NotFound, "User and password not found")
+		return &pb.LogInResponse{}, status.Error(codes.NotFound, "Password hash does not match")
 	}
 
 	accessToken, refreshToken, accessTokenExpirationTime, refreshTokenExpirationTime,
 		claims, err := generateToken(ctx, s.store, user.ID)
 
 	if err != nil {
-		return nil, status.Error(codes.Internal, "Failed to generate token")
+		return nil, status.Error(codes.Internal, fmt.Sprintf("Failed to generate token: %s", err))
 	}
 
 	// update token revoke time
