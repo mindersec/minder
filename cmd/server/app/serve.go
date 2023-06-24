@@ -16,10 +16,9 @@
 package app
 
 import (
-	"database/sql"
 	"fmt"
 	"log"
-	"strconv"
+	"os"
 	"sync"
 
 	"github.com/spf13/cobra"
@@ -36,28 +35,19 @@ var serveCmd = &cobra.Command{
 	Run: func(cmd *cobra.Command, args []string) {
 		// populate config and cmd line flags
 		http_host := util.GetConfigValue("http_server.host", "http-host", cmd, "").(string)
-		http_port := util.GetConfigValue("http_server.port", "http-port", cmd, 0).(int)
+		http_port := util.GetConfigValue("http_server.port", "http-port", cmd, 8080).(int)
 		grpc_host := util.GetConfigValue("grpc_server.host", "grpc-host", cmd, "").(string)
-		grpc_port := util.GetConfigValue("grpc_server.port", "grpc-port", cmd, 0).(int)
+		grpc_port := util.GetConfigValue("grpc_server.port", "grpc-port", cmd, 8090).(int)
 
 		// Database configuration
-		dbhost := util.GetConfigValue("database.dbhost", "db-host", cmd, "").(string)
-		dbport := util.GetConfigValue("database.dbport", "db-port", cmd, 0).(int)
-		dbuser := util.GetConfigValue("database.dbuser", "db-user", cmd, "").(string)
-		dbpass := util.GetConfigValue("database.dbpass", "db-pass", cmd, "").(string)
-		dbname := util.GetConfigValue("database.dbname", "db-name", cmd, "").(string)
-		dbsslmode := util.GetConfigValue("database.sslmode", "db-sslmode", cmd, "").(string)
-
-		dBconn := fmt.Sprintf("postgres://%s:%s@%s:%s/%s?sslmode=%s", dbuser, dbpass, dbhost, strconv.Itoa(dbport), dbname, dbsslmode)
-
-		conn, err := sql.Open("postgres", dBconn)
+		dbConn, _, err := util.GetDbConnectionFromConfig(cmd)
 		if err != nil {
-			log.Fatal("Cannot connect to DB: ", err)
-		} else {
-			log.Println("Connected to DB")
+			fmt.Printf("Unable to connect to database: %v\n", err)
+			os.Exit(1)
 		}
+		defer dbConn.Close()
 
-		store := db.NewStore(conn)
+		store := db.NewStore(dbConn)
 
 		// Set up the addresse strings
 		httpAddress := fmt.Sprintf("%s:%d", http_host, http_port)

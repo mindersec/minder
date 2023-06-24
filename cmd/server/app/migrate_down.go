@@ -23,7 +23,7 @@ import (
 	_ "github.com/golang-migrate/migrate/v4/database/postgres" // nolint
 	_ "github.com/golang-migrate/migrate/v4/source/file"       // nolint
 	"github.com/spf13/cobra"
-	"github.com/spf13/viper"
+	"github.com/stacklok/mediator/pkg/util"
 )
 
 var downCmd = &cobra.Command{
@@ -32,33 +32,12 @@ var downCmd = &cobra.Command{
 	Long:  `Command to downgrade database`,
 	Run: func(cmd *cobra.Command, args []string) {
 
-		dbhost := viper.GetString("database.dbhost")
-		dbport := viper.GetString("database.dbport")
-		dbuser := viper.GetString("database.dbuser")
-		dbpass := viper.GetString("database.dbpass")
-		dbname := viper.GetString("database.dbname")
-		sslmode := viper.GetString("database.sslmode")
-
-		if cmd.Flags().Changed("dbhost") {
-			dbhost, _ = cmd.Flags().GetString("dbhost")
+		dbConn, connString, err := util.GetDbConnectionFromConfig(cmd)
+		if err != nil {
+			fmt.Printf("Unable to connect to database: %v\n", err)
+			os.Exit(1)
 		}
-		if cmd.Flags().Changed("dbport") {
-			dbport, _ = cmd.Flags().GetString("dbport")
-		}
-		if cmd.Flags().Changed("dbuser") {
-			dbuser, _ = cmd.Flags().GetString("dbuser")
-		}
-		if cmd.Flags().Changed("dbpass") {
-			dbpass, _ = cmd.Flags().GetString("dbpass")
-		}
-		if cmd.Flags().Changed("dbname") {
-			dbname, _ = cmd.Flags().GetString("dbname")
-		}
-		if cmd.Flags().Changed("sslmode") {
-			sslmode, _ = cmd.Flags().GetString("sslmode")
-		}
-
-		connString := fmt.Sprintf("postgres://%s:%s@%s:%s/%s?sslmode=%s", dbuser, dbpass, dbhost, dbport, dbname, sslmode)
+		defer dbConn.Close()
 
 		yes, err := cmd.Flags().GetBool("yes")
 		if err != nil {
@@ -69,7 +48,8 @@ var downCmd = &cobra.Command{
 			var response string
 			_, err := fmt.Scanln(&response)
 			if err != nil {
-				fmt.Printf("Error reading response: %v", err)
+				fmt.Printf("Error reading response: %v\n", err)
+				os.Exit(1)
 			}
 
 			if response == "n" {
@@ -82,10 +62,12 @@ var downCmd = &cobra.Command{
 			"file://database/migrations",
 			connString)
 		if err != nil {
-			fmt.Printf("Error while creating migration instance: %v", err)
+			fmt.Printf("Error while creating migration instance: %v\n", err)
+			os.Exit(1)
 		}
 		if err := m.Down(); err != nil {
-			fmt.Printf("Error while migrating database: %v", err)
+			fmt.Printf("Error while migrating database: %v\n", err)
+			os.Exit(1)
 		}
 
 		fmt.Println("Database migration down done with success. All Tables dropped")

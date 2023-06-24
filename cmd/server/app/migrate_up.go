@@ -19,14 +19,12 @@ package app
 import (
 	"fmt"
 	"os"
-	"strconv"
-
-	"github.com/stacklok/mediator/pkg/util"
 
 	"github.com/golang-migrate/migrate/v4"
 	_ "github.com/golang-migrate/migrate/v4/database/postgres" // nolint
 	_ "github.com/golang-migrate/migrate/v4/source/file"       // nolint
 	"github.com/spf13/cobra"
+	"github.com/stacklok/mediator/pkg/util"
 )
 
 // upCmd represents the up command
@@ -35,16 +33,12 @@ var upCmd = &cobra.Command{
 	Short: "migrate the database to the latest version",
 	Long:  `Command to install the latest version of sigwatch`,
 	Run: func(cmd *cobra.Command, args []string) {
-
-		// Database configuration
-		dbhost := util.GetConfigValue("database.dbhost", "db-host", cmd, "").(string)
-		dbport := util.GetConfigValue("database.dbport", "db-port", cmd, 5432).(int)
-		dbuser := util.GetConfigValue("database.dbuser", "db-user", cmd, "").(string)
-		dbpass := util.GetConfigValue("database.dbpass", "db-pass", cmd, "").(string)
-		dbname := util.GetConfigValue("database.dbname", "db-name", cmd, "").(string)
-		sslmode := util.GetConfigValue("database.sslmode", "db-sslmode", cmd, "").(string)
-
-		connString := fmt.Sprintf("postgres://%s:%s@%s:%s/%s?sslmode=%s", dbuser, dbpass, dbhost, strconv.Itoa(dbport), dbname, sslmode)
+		dbConn, connString, err := util.GetDbConnectionFromConfig(cmd)
+		if err != nil {
+			fmt.Printf("Unable to connect to database: %v\n", err)
+			os.Exit(1)
+		}
+		defer dbConn.Close()
 
 		yes, err := cmd.Flags().GetBool("yes")
 		if err != nil {
@@ -55,7 +49,8 @@ var upCmd = &cobra.Command{
 			var response string
 			_, err := fmt.Scanln(&response)
 			if err != nil {
-				fmt.Printf("Error while reading user input: %v", err)
+				fmt.Printf("Error while reading user input: %v\n", err)
+				os.Exit(1)
 			}
 
 			if response == "n" {
@@ -68,10 +63,13 @@ var upCmd = &cobra.Command{
 			"file://database/migrations",
 			connString)
 		if err != nil {
-			fmt.Printf("Error while creating migration instance: %v", err)
+			fmt.Printf("Error while creating migration instance: %v\n", err)
+			os.Exit(1)
 		}
 		if err := m.Up(); err != nil {
-			fmt.Printf("Error while migrating database: %v", err)
+			fmt.Printf("Error while migrating database: %v\n", err)
+			os.Exit(1)
+
 		}
 		fmt.Println("Database migration completed successfully")
 
