@@ -47,7 +47,6 @@ type RestAPI interface {
 // e.g. GetRepositoryGraphInfo(ctx context.Context, owner string, name string) (*RepositoryInfo, error)
 type GraphQLAPI interface {
 	RunQuery(ctx context.Context, query interface{}, variables map[string]interface{}) error
-	// GetRepositoryInfo(ctx context.Context, owner string, name string) (*RepositoryInfo, error)
 }
 
 // RestClient is the struct that contains the GitHub REST API client
@@ -104,7 +103,7 @@ func NewGraphQLClient(ctx context.Context, config GitHubConfig) (GraphQLAPI, err
 	}, nil
 }
 
-// RunQuery executes a GraphQL query using the GitHub GraphQL API client
+// RunQuery executes a GraphQL query
 func (gc *GraphQLClient) RunQuery(ctx context.Context, query interface{}, variables map[string]interface{}) error {
 	return gc.client.Query(ctx, query, variables)
 }
