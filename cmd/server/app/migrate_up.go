@@ -17,6 +17,7 @@
 package app
 
 import (
+	"errors"
 	"fmt"
 	"os"
 
@@ -67,9 +68,12 @@ var upCmd = &cobra.Command{
 			os.Exit(1)
 		}
 		if err := m.Up(); err != nil {
-			fmt.Printf("Error while migrating database: %v\n", err)
-			os.Exit(1)
-
+			if !errors.Is(err, migrate.ErrNoChange) {
+				fmt.Printf("Error while migrating database: %v\n", err)
+				os.Exit(1)
+			} else {
+				fmt.Println("Database already up-to-date")
+			}
 		}
 		fmt.Println("Database migration completed successfully")
 	},
