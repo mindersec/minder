@@ -91,6 +91,7 @@ func GetDbConnectionFromConfig(cmd *cobra.Command) (*sql.DB, string, error) {
 
 	// Ensure we actually connected to the database, per Go docs
 	if err := conn.Ping(); err != nil {
+		//nolint:gosec // Not much we can do about an error here.
 		conn.Close()
 		return nil, "", err
 	}

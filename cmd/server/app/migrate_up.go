@@ -72,7 +72,6 @@ var upCmd = &cobra.Command{
 
 		}
 		fmt.Println("Database migration completed successfully")
-
 	},
 }
 
