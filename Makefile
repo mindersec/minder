@@ -36,16 +36,23 @@ build: ## build golang binary
 	CGO_ENABLED=0 go build -trimpath -o ./bin/medctl ./cmd/cli
 	CGO_ENABLED=0 go build -trimpath -o ./bin/$(projectname)-server ./cmd/server
 
-run-cli: ## run the app
+run-cli: ## run the CLI, needs additional arguments
 	@go run -ldflags "-X main.version=$(shell git describe --abbrev=0 --tags)"  ./cmd/cli
 
 run-server: ## run the app
-	@go run -ldflags "-X main.version=$(shell git describe --abbrev=0 --tags)"  ./cmd/server
+	@go run -ldflags "-X main.version=$(shell git describe --abbrev=0 --tags)"  ./cmd/server serve
 
 bootstrap: ## install build deps
 	go generate -tags tools tools/tools.go
 	# N.B. each line runs in a different subshell, so we don't need to undo the 'cd' here
 	cd tools && go mod tidy && go install github.com/grpc-ecosystem/grpc-gateway/v2/protoc-gen-grpc-gateway github.com/grpc-ecosystem/grpc-gateway/v2/protoc-gen-openapiv2 google.golang.org/protobuf/cmd/protoc-gen-go google.golang.org/grpc/cmd/protoc-gen-go-grpc
+	# Create a config.yaml if it doesn't exist
+	cp -n config/config.yaml.example ./config.yaml
+	# Create keys:
+	mkdir .ssh
+	# No passphrase (-N), don't overwrite existing keys ("n" to prompt)
+	echo n | ssh-keygen -t rsa -b 2048 -N "" -m PEM -f .ssh/access_token_rsa
+	echo n | ssh-keygen -t rsa -b 2048 -N "" -m PEM -f .ssh/refresh_token_rsa
 
 test: clean ## display test coverage
 	go test -json -v ./... | gotestfmt
@@ -70,6 +77,16 @@ migrateup: ## run migrate up
 	@go run cmd/server/main.go migrate up --yes     
 migratedown: ## run migrate down
 	@go run cmd/server/main.go migrate down
+
+dbschema:	## generate database schema with schema spy, monitor file until doc is created and copy it
+	rm -rf database/schema/output
+	mkdir database/schema/output
+	cd database/schema && docker-compose up -d > /dev/null 2>&1
+	while [ ! -f database/schema/output/diagrams/summary/relationships.real.large.png ]; do sleep 1; done
+	sleep 10
+	cp database/schema/output/diagrams/summary/relationships.real.large.png docs/database/schema.png
+	rm -rf database/schema/output
+	cd database/schema && docker compose down
 
 mock:
 	mockgen -package mockdb -destination database/mock/store.go github.com/stacklok/mediator/pkg/db Store

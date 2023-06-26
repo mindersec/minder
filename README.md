@@ -32,16 +32,18 @@ git clone git@github.com:stacklok/mediator.git
 make build
 ```
 
-## Run the application
+## Initialize the database
 
-Note that the application requires a database to be running. This can be achieved
-using docker-compose:
+Both the `mediator` application and the tests need a Postgres database to be running.  For development use, the standard defaults should suffice:
 
 ```bash
 docker-compose up -d postgres
+make migrateup
 ```
 
-Then run the application
+## Run the application
+
+You will need to [initialize the database](#initialize-the-database) before you can start the application.  Then run the application:
 
 ```bash
 bin/mediator-server serve
@@ -50,16 +52,20 @@ bin/mediator-server serve
 Or direct from source
 
 ```bash
-go run cmd/server/main.go serve 
+make run-server
 ```
 
 The application will be available on `http://localhost:8080` and gRPC on `localhost:8090`.
 
 ## Run the tests
 
+Note that you need to have [started the database and loaded the schema](#initialize-the-database) before running the tests:
+
 ```bash
 make test
 ```
+
+You can alse use `make cover` to check coverage.
 
 ## Install tools
 
@@ -74,6 +80,8 @@ The CLI is available in the `cmd/cli` directory.
 ```bash
 go run cmd/cli/main.go --help 
 ```
+
+To start with, you will need to run `cli auth login -u root -p P4ssw@rd` matching the password bootstrapped from the [database initialization](./database/migrations/000001_init.up.sql)
 
 ## APIs
 

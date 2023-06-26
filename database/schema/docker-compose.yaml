@@ -1,0 +1,78 @@
+#
+# Copyright 2023 Stacklok, Inc.
+#
+# Licensed under the Apache License, Version 2.0 (the "License");
+# you may not use this file except in compliance with the License.
+# You may obtain a copy of the License at
+#
+#     http://www.apache.org/licenses/LICENSE-2.0
+#
+# Unless required by applicable law or agreed to in writing, software
+# distributed under the License is distributed on an "AS IS" BASIS,
+# WITHOUT WARRANTIES OR CONDITIONS OF ANY KIND, either express or implied.
+# See the License for the specific language governing permissions and
+# limitations under the License.
+
+version: '3.2'
+services:
+  postgres:
+    container_name: postgres_container
+    image: postgres:14-alpine
+    restart: always
+    environment:
+      POSTGRES_USER: postgres
+      POSTGRES_PASSWORD: postgres
+      POSTGRES_DB: postgres
+    ports:
+      - "5432:5432"
+    healthcheck:
+      test: [ "CMD-SHELL", "pg_isready" ]
+      interval: 10s
+      timeout: 5s
+      retries: 5
+    networks:
+      - app_net
+  migration:
+    build:
+      context: ../../
+      dockerfile: ./Dockerfile
+    entrypoint:
+      [
+        "/opt/app-root/src/mediator-server",
+        "migrate",
+        "up",
+        "--db-host=postgres",
+        "--db-port=5432",
+        "--db-user=postgres",
+        "--db-pass=postgres",
+        "--yes"
+      ]
+    volumes:
+      - ../migrations:/database/migrations
+    links:
+      - postgres
+    depends_on:
+      postgres:
+        condition: service_healthy
+    networks:
+      - app_net
+  schemaspy:
+    image: schemaspy/schemaspy:snapshot
+    volumes:
+      - ./output:/output
+      - ./config:/config
+    container_name: "schemaspy_local"
+    command:
+      [
+        "-configFile",
+        "/config/schemaspy.properties",
+        "-imageformat",
+        "png"
+      ]
+    depends_on:
+      - postgres
+      - migration
+    network_mode: "service:postgres"
+networks:
+  app_net:
+    driver: bridge
