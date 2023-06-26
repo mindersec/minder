@@ -73,24 +73,31 @@ func GetConfigValue(key string, flagName string, cmd *cobra.Command, defaultValu
 	return defaultValue
 }
 
-// GetDbConnectionFromConfig is a helper to get a database connection from a viper config
-func GetDbConnectionFromConfig(settings map[string]interface{}) (*sql.DB, error) {
+// GetDbConnectionFromConfig is a helper to get a database connection and connection string from a viper config
+func GetDbConnectionFromConfig(cmd *cobra.Command) (*sql.DB, string, error) {
 	// Database configuration
-	dbhost := settings["dbhost"].(string)
-	dbport := settings["dbport"].(int)
-	dbuser := settings["dbuser"].(string)
-	dbpass := settings["dbpass"].(string)
-	dbname := settings["dbname"].(string)
-	dbsslmode := settings["sslmode"].(string)
+	dbhost := GetConfigValue("database.dbhost", "db-host", cmd, "localhost").(string)
+	dbport := GetConfigValue("database.dbport", "db-port", cmd, 5432).(int)
+	dbuser := GetConfigValue("database.dbuser", "db-user", cmd, "postgres").(string)
+	dbpass := GetConfigValue("database.dbpass", "db-pass", cmd, "postgres").(string)
+	dbname := GetConfigValue("database.dbname", "db-name", cmd, "mediator").(string)
+	dbsslmode := GetConfigValue("database.sslmode", "db-sslmode", cmd, "disable").(string)
 
 	dbConn := fmt.Sprintf("postgres://%s:%s@%s:%s/%s?sslmode=%s", dbuser, dbpass, dbhost, strconv.Itoa(dbport), dbname, dbsslmode)
 	conn, err := sql.Open("postgres", dbConn)
 	if err != nil {
-		log.Fatal("Cannot connect to DB: ", err)
-	} else {
-		log.Println("Connected to DB")
+		return nil, "", err
 	}
-	return conn, err
+
+	// Ensure we actually connected to the database, per Go docs
+	if err := conn.Ping(); err != nil {
+		//nolint:gosec // Not much we can do about an error here.
+		conn.Close()
+		return nil, "", err
+	}
+
+	log.Println("Connected to DB")
+	return conn, dbConn, err
 }
 
 // Credentials is a struct to hold the access and refresh tokens
