@@ -4,7 +4,7 @@
 // you may not use this file except in compliance with the License.
 // You may obtain a copy of the License at
 //
-//      http://www.apache.org/licenses/LICENSE-2.0
+//	http://www.apache.org/licenses/LICENSE-2.0
 //
 // Unless required by applicable law or agreed to in writing, software
 // distributed under the License is distributed on an "AS IS" BASIS,
@@ -12,116 +12,99 @@
 // See the License for the specific language governing permissions and
 // limitations under the License.
 
-// Package github contains the interfaces required to interact with the
-// github GraphQL and REST APIs.
+// Package github provides a client for interacting with the GitHub API
 package github
 
 import (
 	"context"
+	"net/url"
 
 	"github.com/google/go-github/v52/github"
 	"github.com/shurcooL/graphql"
 	"golang.org/x/oauth2"
 )
 
-// RepositoryInfo is the struct that contains repository information
-type RepositoryInfo struct {
-	Name           graphql.String
-	Description    graphql.String
-	StargazerCount graphql.Int
-	ForkCount      graphql.Int
-	CreatedAt      graphql.String
+// GitHubConfig is the struct that contains the configuration for the GitHub client
+// Token: is the GitHub API token retrieved from the provider_access_tokens table
+// in the database
+// Endpoint: is the GitHub API endpoint
+// If using the public GitHub API, Endpoint can be left blank
+// disable revive linting for this struct as there is nothing wrong with the
+// naming convention
+type GitHubConfig struct { //revive:disable-line:exported
+	Token    string
+	Endpoint string
 }
 
-// RepositoryQuery is the struct that contains the GraphQL query for the repository
-type RepositoryQuery struct {
-	Repository RepositoryInfo `graphql:"repository(owner: $owner, name: $name)"`
+// RestAPI is the interface for interacting with the GitHub REST API
+// Add methods here for interacting with the GitHub Rest API
+// e.g. GetRepositoryRestInfo(ctx context.Context, owner string, name string) (*RepositoryInfo, error)
+type RestAPI interface {
 }
 
-// Client is the interface that defines the methods required to interact
-// with the github GraphQL and REST APIs. We use an interface here so that we
-// can mock the github client for testing.
-type Client interface {
+// GraphQLAPI is the interface for interacting with the GitHub GraphQL API
+// Add methods here for interacting with the GitHub GraphQL API
+// e.g. GetRepositoryGraphInfo(ctx context.Context, owner string, name string) (*RepositoryInfo, error)
+type GraphQLAPI interface {
 	RunQuery(ctx context.Context, query interface{}, variables map[string]interface{}) error
-	GetGraphQLRepositoryInfo(ctx context.Context, owner string, name string) (*RepositoryInfo, error)
-	GetRestAPIRepositoryInfo(ctx context.Context, owner string, name string) (*github.Repository, error)
+	// GetRepositoryInfo(ctx context.Context, owner string, name string) (*RepositoryInfo, error)
 }
 
-// ClientWrapper is the struct that implements graphql and rest API
-// methods
-type ClientWrapper struct {
-	client    *github.Client
-	ghGraphQL *graphql.Client
+// RestClient is the struct that contains the GitHub REST API client
+type RestClient struct {
+	client *github.Client
 }
 
-// GHClient is the struct that contains the github client and implements the
-// Client interface
-type GHClient struct {
-	Client Client
+// GraphQLClient is the struct that contains the GitHub GraphQL API client
+type GraphQLClient struct {
+	client *graphql.Client
 }
 
-// NewClient creates a new github client, this should be initialized once per
-// application and passed around as a dependency. It should be initialized with
-// a valid github token.
-// e.g.
-// githubClient, err := github.NewClient(ctx, token.AccessToken)
-// It can then be used to interact with the github GraphQL and REST APIs.
-// e.g. githubClient.Client.GetGraphQLRepositoryInfo(ctx, owner, name)
-func NewClient(ctx context.Context, token string) (*GHClient, error) {
+// NewRestClient creates a new GitHub REST API client
+// BaseURL defaults to the public GitHub API, if needing to use a customer domain
+// endpoint (as is the case with GitHub Enterprise), set the Endpoint field in
+// the GitHubConfig struct
+func NewRestClient(ctx context.Context, config GitHubConfig) (RestAPI, error) {
 	ts := oauth2.StaticTokenSource(
-		&oauth2.Token{AccessToken: token},
+		&oauth2.Token{AccessToken: config.Token},
 	)
 	tc := oauth2.NewClient(ctx, ts)
 
 	ghClient := github.NewClient(tc)
 
-	ghGraphQL := graphql.NewClient("https://api.github.com/graphql", tc)
-
-	wrapper := &ClientWrapper{
-		client:    ghClient,
-		ghGraphQL: ghGraphQL,
+	if config.Endpoint != "" {
+		parsedURL, err := url.Parse(config.Endpoint)
+		if err != nil {
+			return nil, err
+		}
+		ghClient.BaseURL = parsedURL
 	}
 
-	return &GHClient{
-		Client: wrapper,
+	return &RestClient{
+		client: ghClient,
 	}, nil
 }
 
-// RunQuery is a wrapper around the graphql client RunQuery method that
-// executes the query and returns the result
-func (gcw *ClientWrapper) RunQuery(ctx context.Context, query interface{}, variables map[string]interface{}) error {
-	return gcw.ghGraphQL.Query(ctx, query, variables)
+// NewGraphQLClient creates a new GitHub GraphQL API client
+func NewGraphQLClient(ctx context.Context, config GitHubConfig) (GraphQLAPI, error) {
+	ts := oauth2.StaticTokenSource(
+		&oauth2.Token{AccessToken: config.Token},
+	)
+	tc := oauth2.NewClient(ctx, ts)
+
+	endpoint := config.Endpoint
+	if endpoint == "" {
+		endpoint = "https://api.github.com/graphql"
+	}
+
+	ghGraphQL := graphql.NewClient(endpoint, tc)
+
+	return &GraphQLClient{
+		client: ghGraphQL,
+	}, nil
 }
 
-// GetGraphQLRepositoryInfo returns the repository information for the given
-// owner and name using the github GraphQL API
-// Note: These can be removed, but I left them in for now to show how the
-// GraphQL and REST APIs can be used
-func (gcw *ClientWrapper) GetGraphQLRepositoryInfo(ctx context.Context,
-	owner string,
-	name string) (*RepositoryInfo, error) {
-	var query RepositoryQuery
-	variables := map[string]interface{}{
-		"owner": graphql.String(owner),
-		"name":  graphql.String(name),
-	}
-	err := gcw.RunQuery(ctx, &query, variables)
-	if err != nil {
-		return nil, err
-	}
-	return &query.Repository, nil
-}
-
-// GetRestAPIRepositoryInfo returns the repository information for the given
-// owner and name using the github Rest API
-// Note: These can be removed, but I left them in for now to show how the
-// GraphQL and REST APIs can be used
-func (gcw *ClientWrapper) GetRestAPIRepositoryInfo(ctx context.Context,
-	owner string,
-	name string) (*github.Repository, error) {
-	repo, _, err := gcw.client.Repositories.Get(ctx, owner, name)
-	if err != nil {
-		return nil, err
-	}
-	return repo, nil
+// RunQuery executes a GraphQL query using the GitHub GraphQL API client
+func (gc *GraphQLClient) RunQuery(ctx context.Context, query interface{}, variables map[string]interface{}) error {
+	return gc.client.Query(ctx, query, variables)
 }
