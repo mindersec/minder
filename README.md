@@ -32,6 +32,20 @@ git clone git@github.com:stacklok/mediator.git
 make build
 ```
 
+## Initialize the configuration
+
+Before running the makefile targets, you need to initialize the application's configuration file. You may do so by doing
+
+```bash
+cp config/config.yaml.example config.yaml
+```
+
+Alernatively, you may simply bootstrap the whole development environment, which includes initializing this file with:
+
+```bash
+make bootstrap
+```
+
 ## Initialize the database
 
 Both the `mediator` application and the tests need a Postgres database to be running.  For development use, the standard defaults should suffice:
