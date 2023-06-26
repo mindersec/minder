@@ -71,5 +71,15 @@ migrateup: ## run migrate up
 migratedown: ## run migrate down
 	@go run cmd/server/main.go migrate down
 
+dbschema:	## generate database schema with schema spy, monitor file until doc is created and copy it
+	rm -rf database/schema/output
+	mkdir database/schema/output
+	cd database/schema && docker-compose up -d > /dev/null 2>&1
+	while [ ! -f database/schema/output/diagrams/summary/relationships.real.large.png ]; do sleep 1; done
+	sleep 10
+	cp database/schema/output/diagrams/summary/relationships.real.large.png docs/database/schema.png
+	rm -rf database/schema/output
+	cd database/schema && docker compose down
+
 mock:
 	mockgen -package mockdb -destination database/mock/store.go github.com/stacklok/mediator/pkg/db Store
