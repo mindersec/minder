@@ -27,4 +27,4 @@ ADD ./ $APP_ROOT/src/
 RUN CGO_ENABLED=0 go build -trimpath -o mediator-server ./cmd/server
 
 # Set the binary as the entrypoint of the container
-ENTRYPOINT ["/opt/app-root/src/mediator-server", "serve"]
+ENTRYPOINT ["/opt/app-root/src/mediator-server"]
