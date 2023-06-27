@@ -18,24 +18,38 @@ services:
   mediator:
     build: .
     command: [
-      "mediator-server",
       "serve",
       "--grpc-host=0.0.0.0",
-      "--grpc-port=8090",
       "--http-host=0.0.0.0",
-      "--http-port=8080",
       "--db-host=postgres",
-      "--db-port=5432",
-      "--db-user=postgres",
-      "--db-pass=postgres",
       ]
     restart: always # keep the server running
     ports:
       - "8080:8080"
       - "8090:8090"
     image: ghcr.io/stacklok/mediator:latest
+    volumes:
+      - ./config/config.yaml.example:/opt/apt-root/src/config.yaml
     networks:
       - app_net
+    depends_on:
+      - migrate
+  migrate:
+    build: .
+    command: [
+      "migrate",
+      "up",
+      "--yes",
+      "--db-host=postgres",
+      ]
+    image: ghcr.io/stacklok/mediator:latest
+    volumes:
+      - ./config/config.yaml.example:/opt/apt-root/src/config.yaml
+    networks:
+      - app_net
+    depends_on:
+      postgres:
+        condition: service_healthy
   postgres:
       container_name: postgres_container
       image: postgres:14-alpine
