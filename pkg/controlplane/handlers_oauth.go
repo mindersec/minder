@@ -35,6 +35,17 @@ import (
 	"google.golang.org/grpc/status"
 )
 
+func getDefaultGroup(ctx context.Context) (int32, error) {
+	claims, ok := ctx.Value(TokenInfoKey).(auth.UserClaims)
+	if !ok {
+		return 0, errors.New("cannot get default group")
+	}
+	if len(claims.GroupIds) != 1 {
+		return 0, errors.New("cannot get default group")
+	}
+	return claims.GroupIds[0], nil
+}
+
 // GetAuthorizationURL returns the URL to redirect the user to for authorization
 // and the state to be used for the callback. It accepts a provider string
 // and a boolean indicating whether the client is a CLI or web client
@@ -47,11 +58,11 @@ func (s *Server) GetAuthorizationURL(ctx context.Context,
 
 	// if we do not have a group, check if we can infer it
 	if req.GroupId == 0 {
-		claims, _ := ctx.Value(TokenInfoKey).(auth.UserClaims)
-		if len(claims.GroupIds) != 1 {
+		group, err := getDefaultGroup(ctx)
+		if err != nil {
 			return nil, status.Errorf(codes.InvalidArgument, "cannot infer group id")
 		}
-		req.GroupId = claims.GroupIds[0]
+		req.GroupId = group
 	}
 
 	// Configure tracing
@@ -320,11 +331,11 @@ func (s *Server) RevokeOauthGroupToken(ctx context.Context,
 
 	// if we do not have a group, check if we can infer it
 	if in.GroupId == 0 {
-		claims, _ := ctx.Value(TokenInfoKey).(auth.UserClaims)
-		if len(claims.GroupIds) != 1 {
+		group, err := getDefaultGroup(ctx)
+		if err != nil {
 			return nil, status.Errorf(codes.InvalidArgument, "cannot infer group id")
 		}
-		in.GroupId = claims.GroupIds[0]
+		in.GroupId = group
 	}
 
 	// check if user is authorized
@@ -364,11 +375,11 @@ func (s *Server) StoreProviderToken(ctx context.Context,
 
 	// if we do not have a group, check if we can infer it
 	if in.GroupId == 0 {
-		claims, _ := ctx.Value(TokenInfoKey).(auth.UserClaims)
-		if len(claims.GroupIds) != 1 {
+		group, err := getDefaultGroup(ctx)
+		if err != nil {
 			return nil, status.Errorf(codes.InvalidArgument, "cannot infer group id")
 		}
-		in.GroupId = claims.GroupIds[0]
+		in.GroupId = group
 	}
 
 	// check if user is authorized
@@ -423,11 +434,11 @@ func (s *Server) VerifyProviderTokenFrom(ctx context.Context,
 
 	// if we do not have a group, check if we can infer it
 	if in.GroupId == 0 {
-		claims, _ := ctx.Value(TokenInfoKey).(auth.UserClaims)
-		if len(claims.GroupIds) != 1 {
+		group, err := getDefaultGroup(ctx)
+		if err != nil {
 			return nil, status.Errorf(codes.InvalidArgument, "cannot infer group id")
 		}
-		in.GroupId = claims.GroupIds[0]
+		in.GroupId = group
 	}
 
 	// check if user is authorized
