@@ -56,8 +56,7 @@ func SyncRepositoriesWithDB(ctx context.Context,
 	}
 
 	for _, repo := range repos {
-		existingRepo, err := store.GetRepositoryByRepoName(ctx, *repo.Name)
-
+		existingRepo, err := store.GetRepositoryByRepoID(ctx, int32(*repo.ID))
 		if err != nil {
 			if err == sql.ErrNoRows {
 				// The repository doesn't exist in our DB, let's create it

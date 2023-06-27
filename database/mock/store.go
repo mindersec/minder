@@ -476,6 +476,21 @@ func (mr *MockStoreMockRecorder) GetRepositoryByID(arg0, arg1 interface{}) *gomo
 	return mr.mock.ctrl.RecordCallWithMethodType(mr.mock, "GetRepositoryByID", reflect.TypeOf((*MockStore)(nil).GetRepositoryByID), arg0, arg1)
 }
 
+// GetRepositoryByRepoID mocks base method.
+func (m *MockStore) GetRepositoryByRepoID(arg0 context.Context, arg1 int32) (db.Repository, error) {
+	m.ctrl.T.Helper()
+	ret := m.ctrl.Call(m, "GetRepositoryByRepoID", arg0, arg1)
+	ret0, _ := ret[0].(db.Repository)
+	ret1, _ := ret[1].(error)
+	return ret0, ret1
+}
+
+// GetRepositoryByRepoID indicates an expected call of GetRepositoryByRepoID.
+func (mr *MockStoreMockRecorder) GetRepositoryByRepoID(arg0, arg1 interface{}) *gomock.Call {
+	mr.mock.ctrl.T.Helper()
+	return mr.mock.ctrl.RecordCallWithMethodType(mr.mock, "GetRepositoryByRepoID", reflect.TypeOf((*MockStore)(nil).GetRepositoryByRepoID), arg0, arg1)
+}
+
 // GetRepositoryByRepoName mocks base method.
 func (m *MockStore) GetRepositoryByRepoName(arg0 context.Context, arg1 string) (db.Repository, error) {
 	m.ctrl.T.Helper()

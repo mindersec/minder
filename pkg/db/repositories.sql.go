@@ -99,6 +99,30 @@ func (q *Queries) GetRepositoryByID(ctx context.Context, id int32) (Repository, 
 	return i, err
 }
 
+const getRepositoryByRepoID = `-- name: GetRepositoryByRepoID :one
+SELECT id, repo_owner, repo_name, repo_id, is_private, is_fork, group_id, webhook_id, webhook_url, deploy_url, created_at, updated_at FROM repositories WHERE repo_id = $1
+`
+
+func (q *Queries) GetRepositoryByRepoID(ctx context.Context, repoID int32) (Repository, error) {
+	row := q.db.QueryRowContext(ctx, getRepositoryByRepoID, repoID)
+	var i Repository
+	err := row.Scan(
+		&i.ID,
+		&i.RepoOwner,
+		&i.RepoName,
+		&i.RepoID,
+		&i.IsPrivate,
+		&i.IsFork,
+		&i.GroupID,
+		&i.WebhookID,
+		&i.WebhookUrl,
+		&i.DeployUrl,
+		&i.CreatedAt,
+		&i.UpdatedAt,
+	)
+	return i, err
+}
+
 const getRepositoryByRepoName = `-- name: GetRepositoryByRepoName :one
 SELECT id, repo_owner, repo_name, repo_id, is_private, is_fork, group_id, webhook_id, webhook_url, deploy_url, created_at, updated_at FROM repositories WHERE repo_name = $1
 `
