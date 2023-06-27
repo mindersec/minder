@@ -50,7 +50,7 @@ func SyncRepositoriesWithDB(ctx context.Context,
 
 	// Create a map of the current repositories, so that we can check if a
 	// repository already exists in the database against the fresh results returned from GitHub
-	dbRepoNames := make(map[string]bool)
+	dbRepoNames := make(map[string]bool, len(dbRepos))
 	for _, repo := range dbRepos {
 		dbRepoNames[repo.RepoName] = true
 	}
