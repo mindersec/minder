@@ -901,8 +901,8 @@ func local_request_SecretsService_GetSecretById_0(ctx context.Context, marshaler
 
 }
 
-func request_RepositoryService_AddRepository_0(ctx context.Context, marshaler runtime.Marshaler, client RepositoryServiceClient, req *http.Request, pathParams map[string]string) (proto.Message, runtime.ServerMetadata, error) {
-	var protoReq AddRepositoryRequest
+func request_RepositoryService_RegisterRepository_0(ctx context.Context, marshaler runtime.Marshaler, client RepositoryServiceClient, req *http.Request, pathParams map[string]string) (proto.Message, runtime.ServerMetadata, error) {
+	var protoReq RegisterRepositoryRequest
 	var metadata runtime.ServerMetadata
 
 	newReader, berr := utilities.IOReaderFactory(req.Body)
@@ -913,13 +913,13 @@ func request_RepositoryService_AddRepository_0(ctx context.Context, marshaler ru
 		return nil, metadata, status.Errorf(codes.InvalidArgument, "%v", err)
 	}
 
-	msg, err := client.AddRepository(ctx, &protoReq, grpc.Header(&metadata.HeaderMD), grpc.Trailer(&metadata.TrailerMD))
+	msg, err := client.RegisterRepository(ctx, &protoReq, grpc.Header(&metadata.HeaderMD), grpc.Trailer(&metadata.TrailerMD))
 	return msg, metadata, err
 
 }
 
-func local_request_RepositoryService_AddRepository_0(ctx context.Context, marshaler runtime.Marshaler, server RepositoryServiceServer, req *http.Request, pathParams map[string]string) (proto.Message, runtime.ServerMetadata, error) {
-	var protoReq AddRepositoryRequest
+func local_request_RepositoryService_RegisterRepository_0(ctx context.Context, marshaler runtime.Marshaler, server RepositoryServiceServer, req *http.Request, pathParams map[string]string) (proto.Message, runtime.ServerMetadata, error) {
+	var protoReq RegisterRepositoryRequest
 	var metadata runtime.ServerMetadata
 
 	newReader, berr := utilities.IOReaderFactory(req.Body)
@@ -930,7 +930,43 @@ func local_request_RepositoryService_AddRepository_0(ctx context.Context, marsha
 		return nil, metadata, status.Errorf(codes.InvalidArgument, "%v", err)
 	}
 
-	msg, err := server.AddRepository(ctx, &protoReq)
+	msg, err := server.RegisterRepository(ctx, &protoReq)
+	return msg, metadata, err
+
+}
+
+var (
+	filter_RepositoryService_ListRepositories_0 = &utilities.DoubleArray{Encoding: map[string]int{}, Base: []int(nil), Check: []int(nil)}
+)
+
+func request_RepositoryService_ListRepositories_0(ctx context.Context, marshaler runtime.Marshaler, client RepositoryServiceClient, req *http.Request, pathParams map[string]string) (proto.Message, runtime.ServerMetadata, error) {
+	var protoReq ListRepositoriesRequest
+	var metadata runtime.ServerMetadata
+
+	if err := req.ParseForm(); err != nil {
+		return nil, metadata, status.Errorf(codes.InvalidArgument, "%v", err)
+	}
+	if err := runtime.PopulateQueryParameters(&protoReq, req.Form, filter_RepositoryService_ListRepositories_0); err != nil {
+		return nil, metadata, status.Errorf(codes.InvalidArgument, "%v", err)
+	}
+
+	msg, err := client.ListRepositories(ctx, &protoReq, grpc.Header(&metadata.HeaderMD), grpc.Trailer(&metadata.TrailerMD))
+	return msg, metadata, err
+
+}
+
+func local_request_RepositoryService_ListRepositories_0(ctx context.Context, marshaler runtime.Marshaler, server RepositoryServiceServer, req *http.Request, pathParams map[string]string) (proto.Message, runtime.ServerMetadata, error) {
+	var protoReq ListRepositoriesRequest
+	var metadata runtime.ServerMetadata
+
+	if err := req.ParseForm(); err != nil {
+		return nil, metadata, status.Errorf(codes.InvalidArgument, "%v", err)
+	}
+	if err := runtime.PopulateQueryParameters(&protoReq, req.Form, filter_RepositoryService_ListRepositories_0); err != nil {
+		return nil, metadata, status.Errorf(codes.InvalidArgument, "%v", err)
+	}
+
+	msg, err := server.ListRepositories(ctx, &protoReq)
 	return msg, metadata, err
 
 }
@@ -2846,7 +2882,7 @@ func RegisterSecretsServiceHandlerServer(ctx context.Context, mux *runtime.Serve
 // Note that using this registration option will cause many gRPC library features to stop working. Consider using RegisterRepositoryServiceHandlerFromEndpoint instead.
 func RegisterRepositoryServiceHandlerServer(ctx context.Context, mux *runtime.ServeMux, server RepositoryServiceServer) error {
 
-	mux.Handle("POST", pattern_RepositoryService_AddRepository_0, func(w http.ResponseWriter, req *http.Request, pathParams map[string]string) {
+	mux.Handle("POST", pattern_RepositoryService_RegisterRepository_0, func(w http.ResponseWriter, req *http.Request, pathParams map[string]string) {
 		ctx, cancel := context.WithCancel(req.Context())
 		defer cancel()
 		var stream runtime.ServerTransportStream
@@ -2854,12 +2890,12 @@ func RegisterRepositoryServiceHandlerServer(ctx context.Context, mux *runtime.Se
 		inboundMarshaler, outboundMarshaler := runtime.MarshalerForRequest(mux, req)
 		var err error
 		var annotatedContext context.Context
-		annotatedContext, err = runtime.AnnotateIncomingContext(ctx, mux, req, "/mediator.v1.RepositoryService/AddRepository", runtime.WithHTTPPathPattern("/api/v1/repository"))
+		annotatedContext, err = runtime.AnnotateIncomingContext(ctx, mux, req, "/mediator.v1.RepositoryService/RegisterRepository", runtime.WithHTTPPathPattern("/api/v1/repository"))
 		if err != nil {
 			runtime.HTTPError(ctx, mux, outboundMarshaler, w, req, err)
 			return
 		}
-		resp, md, err := local_request_RepositoryService_AddRepository_0(annotatedContext, inboundMarshaler, server, req, pathParams)
+		resp, md, err := local_request_RepositoryService_RegisterRepository_0(annotatedContext, inboundMarshaler, server, req, pathParams)
 		md.HeaderMD, md.TrailerMD = metadata.Join(md.HeaderMD, stream.Header()), metadata.Join(md.TrailerMD, stream.Trailer())
 		annotatedContext = runtime.NewServerMetadataContext(annotatedContext, md)
 		if err != nil {
@@ -2867,7 +2903,32 @@ func RegisterRepositoryServiceHandlerServer(ctx context.Context, mux *runtime.Se
 			return
 		}
 
-		forward_RepositoryService_AddRepository_0(annotatedContext, mux, outboundMarshaler, w, req, resp, mux.GetForwardResponseOptions()...)
+		forward_RepositoryService_RegisterRepository_0(annotatedContext, mux, outboundMarshaler, w, req, resp, mux.GetForwardResponseOptions()...)
+
+	})
+
+	mux.Handle("GET", pattern_RepositoryService_ListRepositories_0, func(w http.ResponseWriter, req *http.Request, pathParams map[string]string) {
+		ctx, cancel := context.WithCancel(req.Context())
+		defer cancel()
+		var stream runtime.ServerTransportStream
+		ctx = grpc.NewContextWithServerTransportStream(ctx, &stream)
+		inboundMarshaler, outboundMarshaler := runtime.MarshalerForRequest(mux, req)
+		var err error
+		var annotatedContext context.Context
+		annotatedContext, err = runtime.AnnotateIncomingContext(ctx, mux, req, "/mediator.v1.RepositoryService/ListRepositories", runtime.WithHTTPPathPattern("/api/v1/repositories"))
+		if err != nil {
+			runtime.HTTPError(ctx, mux, outboundMarshaler, w, req, err)
+			return
+		}
+		resp, md, err := local_request_RepositoryService_ListRepositories_0(annotatedContext, inboundMarshaler, server, req, pathParams)
+		md.HeaderMD, md.TrailerMD = metadata.Join(md.HeaderMD, stream.Header()), metadata.Join(md.TrailerMD, stream.Trailer())
+		annotatedContext = runtime.NewServerMetadataContext(annotatedContext, md)
+		if err != nil {
+			runtime.HTTPError(annotatedContext, mux, outboundMarshaler, w, req, err)
+			return
+		}
+
+		forward_RepositoryService_ListRepositories_0(annotatedContext, mux, outboundMarshaler, w, req, resp, mux.GetForwardResponseOptions()...)
 
 	})
 
@@ -4325,25 +4386,47 @@ func RegisterRepositoryServiceHandler(ctx context.Context, mux *runtime.ServeMux
 // "RepositoryServiceClient" to call the correct interceptors.
 func RegisterRepositoryServiceHandlerClient(ctx context.Context, mux *runtime.ServeMux, client RepositoryServiceClient) error {
 
-	mux.Handle("POST", pattern_RepositoryService_AddRepository_0, func(w http.ResponseWriter, req *http.Request, pathParams map[string]string) {
+	mux.Handle("POST", pattern_RepositoryService_RegisterRepository_0, func(w http.ResponseWriter, req *http.Request, pathParams map[string]string) {
 		ctx, cancel := context.WithCancel(req.Context())
 		defer cancel()
 		inboundMarshaler, outboundMarshaler := runtime.MarshalerForRequest(mux, req)
 		var err error
 		var annotatedContext context.Context
-		annotatedContext, err = runtime.AnnotateContext(ctx, mux, req, "/mediator.v1.RepositoryService/AddRepository", runtime.WithHTTPPathPattern("/api/v1/repository"))
+		annotatedContext, err = runtime.AnnotateContext(ctx, mux, req, "/mediator.v1.RepositoryService/RegisterRepository", runtime.WithHTTPPathPattern("/api/v1/repository"))
 		if err != nil {
 			runtime.HTTPError(ctx, mux, outboundMarshaler, w, req, err)
 			return
 		}
-		resp, md, err := request_RepositoryService_AddRepository_0(annotatedContext, inboundMarshaler, client, req, pathParams)
+		resp, md, err := request_RepositoryService_RegisterRepository_0(annotatedContext, inboundMarshaler, client, req, pathParams)
 		annotatedContext = runtime.NewServerMetadataContext(annotatedContext, md)
 		if err != nil {
 			runtime.HTTPError(annotatedContext, mux, outboundMarshaler, w, req, err)
 			return
 		}
 
-		forward_RepositoryService_AddRepository_0(annotatedContext, mux, outboundMarshaler, w, req, resp, mux.GetForwardResponseOptions()...)
+		forward_RepositoryService_RegisterRepository_0(annotatedContext, mux, outboundMarshaler, w, req, resp, mux.GetForwardResponseOptions()...)
+
+	})
+
+	mux.Handle("GET", pattern_RepositoryService_ListRepositories_0, func(w http.ResponseWriter, req *http.Request, pathParams map[string]string) {
+		ctx, cancel := context.WithCancel(req.Context())
+		defer cancel()
+		inboundMarshaler, outboundMarshaler := runtime.MarshalerForRequest(mux, req)
+		var err error
+		var annotatedContext context.Context
+		annotatedContext, err = runtime.AnnotateContext(ctx, mux, req, "/mediator.v1.RepositoryService/ListRepositories", runtime.WithHTTPPathPattern("/api/v1/repositories"))
+		if err != nil {
+			runtime.HTTPError(ctx, mux, outboundMarshaler, w, req, err)
+			return
+		}
+		resp, md, err := request_RepositoryService_ListRepositories_0(annotatedContext, inboundMarshaler, client, req, pathParams)
+		annotatedContext = runtime.NewServerMetadataContext(annotatedContext, md)
+		if err != nil {
+			runtime.HTTPError(annotatedContext, mux, outboundMarshaler, w, req, err)
+			return
+		}
+
+		forward_RepositoryService_ListRepositories_0(annotatedContext, mux, outboundMarshaler, w, req, resp, mux.GetForwardResponseOptions()...)
 
 	})
 
@@ -4351,11 +4434,15 @@ func RegisterRepositoryServiceHandlerClient(ctx context.Context, mux *runtime.Se
 }
 
 var (
-	pattern_RepositoryService_AddRepository_0 = runtime.MustPattern(runtime.NewPattern(1, []int{2, 0, 2, 1, 2, 2}, []string{"api", "v1", "repository"}, ""))
+	pattern_RepositoryService_RegisterRepository_0 = runtime.MustPattern(runtime.NewPattern(1, []int{2, 0, 2, 1, 2, 2}, []string{"api", "v1", "repository"}, ""))
+
+	pattern_RepositoryService_ListRepositories_0 = runtime.MustPattern(runtime.NewPattern(1, []int{2, 0, 2, 1, 2, 2}, []string{"api", "v1", "repositories"}, ""))
 )
 
 var (
-	forward_RepositoryService_AddRepository_0 = runtime.ForwardResponseMessage
+	forward_RepositoryService_RegisterRepository_0 = runtime.ForwardResponseMessage
+
+	forward_RepositoryService_ListRepositories_0 = runtime.ForwardResponseMessage
 )
 
 // RegisterBranchProtectionServiceHandlerFromEndpoint is same as RegisterBranchProtectionServiceHandler but

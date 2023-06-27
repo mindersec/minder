@@ -959,14 +959,59 @@
         ]
       }
     },
-    "/api/v1/repository": {
-      "post": {
-        "operationId": "RepositoryService_AddRepository",
+    "/api/v1/repositories": {
+      "get": {
+        "operationId": "RepositoryService_ListRepositories",
         "responses": {
           "200": {
             "description": "A successful response.",
             "schema": {
-              "$ref": "#/definitions/v1AddRepositoryResponse"
+              "$ref": "#/definitions/v1ListRepositoriesResponse"
+            }
+          },
+          "default": {
+            "description": "An unexpected error response.",
+            "schema": {
+              "$ref": "#/definitions/rpcStatus"
+            }
+          }
+        },
+        "parameters": [
+          {
+            "name": "groupId",
+            "in": "query",
+            "required": false,
+            "type": "integer",
+            "format": "int32"
+          },
+          {
+            "name": "limit",
+            "in": "query",
+            "required": false,
+            "type": "integer",
+            "format": "int32"
+          },
+          {
+            "name": "offset",
+            "in": "query",
+            "required": false,
+            "type": "integer",
+            "format": "int32"
+          }
+        ],
+        "tags": [
+          "RepositoryService"
+        ]
+      }
+    },
+    "/api/v1/repository": {
+      "post": {
+        "operationId": "RepositoryService_RegisterRepository",
+        "responses": {
+          "200": {
+            "description": "A successful response.",
+            "schema": {
+              "$ref": "#/definitions/v1RegisterRepositoryResponse"
             }
           },
           "default": {
@@ -982,7 +1027,7 @@
             "in": "body",
             "required": true,
             "schema": {
-              "$ref": "#/definitions/v1AddRepositoryRequest"
+              "$ref": "#/definitions/v1RegisterRepositoryRequest"
             }
           }
         ],
@@ -1696,40 +1741,6 @@
           "items": {
             "type": "object",
             "$ref": "#/definitions/protobufAny"
-          }
-        }
-      }
-    },
-    "v1AddRepositoryRequest": {
-      "type": "object",
-      "properties": {
-        "groupId": {
-          "type": "integer",
-          "format": "int32"
-        },
-        "repositories": {
-          "type": "array",
-          "items": {
-            "type": "object",
-            "$ref": "#/definitions/v1Repositories"
-          }
-        },
-        "events": {
-          "type": "array",
-          "items": {
-            "type": "string"
-          }
-        }
-      }
-    },
-    "v1AddRepositoryResponse": {
-      "type": "object",
-      "properties": {
-        "results": {
-          "type": "array",
-          "items": {
-            "type": "object",
-            "$ref": "#/definitions/v1RepositoryResult"
           }
         }
       }
@@ -2488,6 +2499,18 @@
       },
       "title": "BUF does not allow grouping (which is a shame)"
     },
+    "v1ListRepositoriesResponse": {
+      "type": "object",
+      "properties": {
+        "results": {
+          "type": "array",
+          "items": {
+            "type": "object",
+            "$ref": "#/definitions/v1Repositories"
+          }
+        }
+      }
+    },
     "v1LogInRequest": {
       "type": "object",
       "properties": {
@@ -2562,6 +2585,40 @@
         }
       }
     },
+    "v1RegisterRepositoryRequest": {
+      "type": "object",
+      "properties": {
+        "repositories": {
+          "type": "array",
+          "items": {
+            "type": "object",
+            "$ref": "#/definitions/v1Repositories"
+          }
+        },
+        "events": {
+          "type": "array",
+          "items": {
+            "type": "string"
+          }
+        },
+        "groupId": {
+          "type": "integer",
+          "format": "int32"
+        }
+      }
+    },
+    "v1RegisterRepositoryResponse": {
+      "type": "object",
+      "properties": {
+        "results": {
+          "type": "array",
+          "items": {
+            "type": "object",
+            "$ref": "#/definitions/v1RepositoryResult"
+          }
+        }
+      }
+    },
     "v1Repositories": {
       "type": "object",
       "properties": {
@@ -2570,6 +2627,9 @@
         },
         "name": {
           "type": "string"
+        },
+        "isRegistered": {
+          "type": "boolean"
         },
         "repoId": {
           "type": "integer",
