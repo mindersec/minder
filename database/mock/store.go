@@ -626,6 +626,21 @@ func (mr *MockStoreMockRecorder) GetUserRoles(arg0, arg1 interface{}) *gomock.Ca
 	return mr.mock.ctrl.RecordCallWithMethodType(mr.mock, "GetUserRoles", reflect.TypeOf((*MockStore)(nil).GetUserRoles), arg0, arg1)
 }
 
+// ListAllRepositories mocks base method.
+func (m *MockStore) ListAllRepositories(arg0 context.Context) ([]db.Repository, error) {
+	m.ctrl.T.Helper()
+	ret := m.ctrl.Call(m, "ListAllRepositories", arg0)
+	ret0, _ := ret[0].([]db.Repository)
+	ret1, _ := ret[1].(error)
+	return ret0, ret1
+}
+
+// ListAllRepositories indicates an expected call of ListAllRepositories.
+func (mr *MockStoreMockRecorder) ListAllRepositories(arg0 interface{}) *gomock.Call {
+	mr.mock.ctrl.T.Helper()
+	return mr.mock.ctrl.RecordCallWithMethodType(mr.mock, "ListAllRepositories", reflect.TypeOf((*MockStore)(nil).ListAllRepositories), arg0)
+}
+
 // ListGroups mocks base method.
 func (m *MockStore) ListGroups(arg0 context.Context, arg1 db.ListGroupsParams) ([]db.Group, error) {
 	m.ctrl.T.Helper()
