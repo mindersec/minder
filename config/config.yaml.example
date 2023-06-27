@@ -35,6 +35,9 @@ tracing:
   enabled: false
   #sample_ratio: 0.1
 
+metrics:
+  enabled: false
+
 database:
   dbhost: "localhost"
   dbport: 5432
