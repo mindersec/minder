@@ -52,11 +52,6 @@ var Auth_revokeproviderCmd = &cobra.Command{
 			os.Exit(1)
 		}
 
-		if !all && group == 0 {
-			fmt.Fprintf(os.Stderr, "Error: you must use either --all or --group-id\n")
-			os.Exit(1)
-		}
-
 		grpc_host := util.GetConfigValue("grpc_server.host", "grpc-host", cmd, "").(string)
 		grpc_port := util.GetConfigValue("grpc_server.port", "grpc-port", cmd, 0).(int)
 
@@ -74,7 +69,11 @@ var Auth_revokeproviderCmd = &cobra.Command{
 		} else {
 			_, err := client.RevokeOauthGroupToken(ctx, &pb.RevokeOauthGroupTokenRequest{Provider: provider, GroupId: group})
 			util.ExitNicelyOnError(err, "Error revoking tokens")
-			cmd.Println("Revoked token for group ", group)
+			if group == 0 {
+				cmd.Println("Revoked token for default group")
+			} else {
+				cmd.Println("Revoked token for group ", group)
+			}
 		}
 	},
 }
@@ -83,5 +82,4 @@ func init() {
 	AuthCmd.AddCommand(Auth_revokeproviderCmd)
 	Auth_revokeproviderCmd.Flags().StringP("provider", "n", "", "Name for the provider to revoke tokens for")
 	Auth_revokeproviderCmd.Flags().BoolP("all", "a", false, "Revoke all tokens")
-	Auth_revokeproviderCmd.Flags().Int32P("group-id", "u", 0, "Group ID to revoke tokens for")
 }

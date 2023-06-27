@@ -116,11 +116,7 @@ actions such as adding repositories.`,
 			fmt.Fprintf(os.Stderr, "Only %s is supported at this time\n", auth.Github)
 			os.Exit(1)
 		}
-		group := util.GetConfigValue("group-id", "group-id", cmd, int32(0)).(int32)
-		if group == 0 {
-			fmt.Fprintf(os.Stderr, "Group must be specified\n")
-			os.Exit(1)
-		}
+		group := util.GetConfigValue("group-id", "group-id", cmd, 0).(int)
 		pat := util.GetConfigValue("token", "token", cmd, "").(string)
 
 		grpc_host := util.GetConfigValue("grpc_server.host", "grpc-host", cmd, "").(string)
@@ -169,7 +165,7 @@ actions such as adding repositories.`,
 			var wg sync.WaitGroup
 			wg.Add(1)
 
-			go callBackServer(ctx, provider, group, fmt.Sprintf("%d", port), &wg, client, openTime)
+			go callBackServer(ctx, provider, int32(group), fmt.Sprintf("%d", port), &wg, client, openTime)
 			wg.Wait()
 		}
 	},
@@ -183,8 +179,4 @@ func init() {
 	if err := enrollProviderCmd.MarkFlagRequired("provider"); err != nil {
 		fmt.Fprintf(os.Stderr, "Error marking flag as required: %s\n", err)
 	}
-	if err := enrollProviderCmd.MarkFlagRequired("group-id"); err != nil {
-		fmt.Fprintf(os.Stderr, "Error marking flag as required: %s\n", err)
-	}
-
 }

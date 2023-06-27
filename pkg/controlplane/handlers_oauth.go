@@ -45,6 +45,15 @@ func (s *Server) GetAuthorizationURL(ctx context.Context,
 		return nil, status.Errorf(codes.PermissionDenied, "user is not authorized to access this resource")
 	}
 
+	// if we do not have a group, check if we can infer it
+	if req.GroupId == 0 {
+		claims, _ := ctx.Value(TokenInfoKey).(auth.UserClaims)
+		if len(claims.GroupIds) != 1 {
+			return nil, status.Errorf(codes.InvalidArgument, "cannot infer group id")
+		}
+		req.GroupId = claims.GroupIds[0]
+	}
+
 	// Configure tracing
 	// trace call to AuthCodeURL
 	span := trace.SpanFromContext(ctx)
@@ -309,6 +318,15 @@ func (s *Server) RevokeOauthGroupToken(ctx context.Context,
 		return nil, status.Errorf(codes.InvalidArgument, "provider not supported: %v", in.Provider)
 	}
 
+	// if we do not have a group, check if we can infer it
+	if in.GroupId == 0 {
+		claims, _ := ctx.Value(TokenInfoKey).(auth.UserClaims)
+		if len(claims.GroupIds) != 1 {
+			return nil, status.Errorf(codes.InvalidArgument, "cannot infer group id")
+		}
+		in.GroupId = claims.GroupIds[0]
+	}
+
 	// check if user is authorized
 	if !IsRequestAuthorized(ctx, in.GroupId) {
 		return nil, status.Errorf(codes.PermissionDenied, "user is not authorized to access this resource")
@@ -343,6 +361,16 @@ func (s *Server) StoreProviderToken(ctx context.Context,
 	if in.Provider != auth.Github {
 		return nil, status.Errorf(codes.InvalidArgument, "provider not supported: %v", in.Provider)
 	}
+
+	// if we do not have a group, check if we can infer it
+	if in.GroupId == 0 {
+		claims, _ := ctx.Value(TokenInfoKey).(auth.UserClaims)
+		if len(claims.GroupIds) != 1 {
+			return nil, status.Errorf(codes.InvalidArgument, "cannot infer group id")
+		}
+		in.GroupId = claims.GroupIds[0]
+	}
+
 	// check if user is authorized
 	if !IsRequestAuthorized(ctx, in.GroupId) {
 		return nil, status.Errorf(codes.PermissionDenied, "user is not authorized to access this resource")
@@ -392,6 +420,16 @@ func (s *Server) VerifyProviderTokenFrom(ctx context.Context,
 	if in.Provider != auth.Github {
 		return nil, status.Errorf(codes.InvalidArgument, "provider not supported: %v", in.Provider)
 	}
+
+	// if we do not have a group, check if we can infer it
+	if in.GroupId == 0 {
+		claims, _ := ctx.Value(TokenInfoKey).(auth.UserClaims)
+		if len(claims.GroupIds) != 1 {
+			return nil, status.Errorf(codes.InvalidArgument, "cannot infer group id")
+		}
+		in.GroupId = claims.GroupIds[0]
+	}
+
 	// check if user is authorized
 	if !IsRequestAuthorized(ctx, in.GroupId) {
 		return nil, status.Errorf(codes.PermissionDenied, "user is not authorized to access this resource")
