@@ -47,6 +47,12 @@ services:
       - ./config/config.yaml.example:/opt/apt-root/src/config.yaml
     networks:
       - app_net
+    deploy:
+      restart_policy:
+        condition: on-failure
+        delay: 5s
+        max_attempts: 3
+        window: 120s
     depends_on:
       postgres:
         condition: service_healthy
