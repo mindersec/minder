@@ -35,6 +35,17 @@ import (
 	"google.golang.org/grpc/status"
 )
 
+func getDefaultGroup(ctx context.Context) (int32, error) {
+	claims, ok := ctx.Value(TokenInfoKey).(auth.UserClaims)
+	if !ok {
+		return 0, errors.New("cannot get default group")
+	}
+	if len(claims.GroupIds) != 1 {
+		return 0, errors.New("cannot get default group")
+	}
+	return claims.GroupIds[0], nil
+}
+
 // GetAuthorizationURL returns the URL to redirect the user to for authorization
 // and the state to be used for the callback. It accepts a provider string
 // and a boolean indicating whether the client is a CLI or web client
@@ -43,6 +54,15 @@ func (s *Server) GetAuthorizationURL(ctx context.Context,
 	// check if user is authorized
 	if !IsRequestAuthorized(ctx, req.GroupId) {
 		return nil, status.Errorf(codes.PermissionDenied, "user is not authorized to access this resource")
+	}
+
+	// if we do not have a group, check if we can infer it
+	if req.GroupId == 0 {
+		group, err := getDefaultGroup(ctx)
+		if err != nil {
+			return nil, status.Errorf(codes.InvalidArgument, "cannot infer group id")
+		}
+		req.GroupId = group
 	}
 
 	// Configure tracing
@@ -309,6 +329,15 @@ func (s *Server) RevokeOauthGroupToken(ctx context.Context,
 		return nil, status.Errorf(codes.InvalidArgument, "provider not supported: %v", in.Provider)
 	}
 
+	// if we do not have a group, check if we can infer it
+	if in.GroupId == 0 {
+		group, err := getDefaultGroup(ctx)
+		if err != nil {
+			return nil, status.Errorf(codes.InvalidArgument, "cannot infer group id")
+		}
+		in.GroupId = group
+	}
+
 	// check if user is authorized
 	if !IsRequestAuthorized(ctx, in.GroupId) {
 		return nil, status.Errorf(codes.PermissionDenied, "user is not authorized to access this resource")
@@ -343,6 +372,16 @@ func (s *Server) StoreProviderToken(ctx context.Context,
 	if in.Provider != auth.Github {
 		return nil, status.Errorf(codes.InvalidArgument, "provider not supported: %v", in.Provider)
 	}
+
+	// if we do not have a group, check if we can infer it
+	if in.GroupId == 0 {
+		group, err := getDefaultGroup(ctx)
+		if err != nil {
+			return nil, status.Errorf(codes.InvalidArgument, "cannot infer group id")
+		}
+		in.GroupId = group
+	}
+
 	// check if user is authorized
 	if !IsRequestAuthorized(ctx, in.GroupId) {
 		return nil, status.Errorf(codes.PermissionDenied, "user is not authorized to access this resource")
@@ -392,6 +431,16 @@ func (s *Server) VerifyProviderTokenFrom(ctx context.Context,
 	if in.Provider != auth.Github {
 		return nil, status.Errorf(codes.InvalidArgument, "provider not supported: %v", in.Provider)
 	}
+
+	// if we do not have a group, check if we can infer it
+	if in.GroupId == 0 {
+		group, err := getDefaultGroup(ctx)
+		if err != nil {
+			return nil, status.Errorf(codes.InvalidArgument, "cannot infer group id")
+		}
+		in.GroupId = group
+	}
+
 	// check if user is authorized
 	if !IsRequestAuthorized(ctx, in.GroupId) {
 		return nil, status.Errorf(codes.PermissionDenied, "user is not authorized to access this resource")
