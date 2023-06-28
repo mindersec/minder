@@ -37,7 +37,7 @@ func createRandomRepository(t *testing.T, group int32) Repository {
 		GroupID:    group,
 		RepoOwner:  util.RandomName(seed),
 		RepoName:   util.RandomName(seed),
-		RepoID:     int32(1234),
+		RepoID:     int32(util.RandomInt(0, 1000, seed)),
 		IsPrivate:  false,
 		IsFork:     false,
 		WebhookID:  sql.NullInt32{Int32: 1234, Valid: true},
