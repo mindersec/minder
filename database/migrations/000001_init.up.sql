@@ -91,6 +91,9 @@ create TABLE repositories (
     id SERIAL PRIMARY KEY,
     repo_owner TEXT NOT NULL,
     repo_name TEXT NOT NULL,
+    repo_id INTEGER NOT NULL,
+    is_private BOOLEAN NOT NULL,
+    is_fork BOOLEAN NOT NULL,
     group_id INTEGER NOT NULL REFERENCES groups(id) ON DELETE CASCADE,
     webhook_id INTEGER,
     webhook_url TEXT NOT NULL,
@@ -109,6 +112,7 @@ create TABLE session_store (
 
 -- Unique constraint
 ALTER TABLE provider_access_tokens ADD CONSTRAINT unique_group_id UNIQUE (group_id);
+ALTER TABLE repositories ADD CONSTRAINT unique_repo_id UNIQUE (repo_id);
 
 -- Indexes
 CREATE INDEX organizations_name_lower_idx ON organizations (LOWER(name));
@@ -121,7 +125,7 @@ CREATE INDEX roles_organization_id_name_lower_idx ON roles (organization_id, LOW
 CREATE INDEX idx_provider_access_tokens_group_id ON provider_access_tokens(group_id);
 CREATE INDEX users_organization_id_email_lower_idx ON users (organization_id, LOWER(email));
 CREATE INDEX users_organization_id_username_lower_idx ON users (organization_id, LOWER(username));
-CREATE INDEX repositories_deploy_url_lower_idx ON repositories (LOWER(deploy_url));
+CREATE INDEX repositories_repo_id_idx ON repositories(repo_id);
 
 -- Create default root organization
 
