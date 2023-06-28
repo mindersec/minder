@@ -22,16 +22,18 @@ import (
 	"net/http"
 
 	"github.com/grpc-ecosystem/grpc-gateway/v2/runtime"
-
+	"github.com/prometheus/client_golang/prometheus/promhttp"
 	"github.com/spf13/viper"
-	"golang.org/x/oauth2"
-
 	"go.opentelemetry.io/contrib/instrumentation/google.golang.org/grpc/otelgrpc"
 	"go.opentelemetry.io/otel"
+	"go.opentelemetry.io/otel/exporters/prometheus"
 	stdout "go.opentelemetry.io/otel/exporters/stdout/stdouttrace"
-
 	"go.opentelemetry.io/otel/propagation"
+	sdkmetric "go.opentelemetry.io/otel/sdk/metric"
+	"go.opentelemetry.io/otel/sdk/resource"
 	sdktrace "go.opentelemetry.io/otel/sdk/trace"
+	semconv "go.opentelemetry.io/otel/semconv/v1.17.0"
+	"golang.org/x/oauth2"
 	"google.golang.org/grpc"
 	"google.golang.org/grpc/credentials/insecure"
 	"google.golang.org/grpc/reflection"
@@ -42,6 +44,8 @@ import (
 	"github.com/stacklok/mediator/pkg/db"
 	pb "github.com/stacklok/mediator/pkg/generated/protobuf/go/mediator/v1"
 )
+
+const metricsPath = "/metrics"
 
 // Server represents the controlplane server
 type Server struct {
@@ -86,7 +90,26 @@ func initTracer() (*sdktrace.TracerProvider, error) {
 	)
 	otel.SetTracerProvider(tp)
 	otel.SetTextMapPropagator(propagation.TraceContext{})
+
 	return tp, nil
+}
+
+func initMetrics(r sdkmetric.Reader) *sdkmetric.MeterProvider {
+	// See the go.opentelemetry.io/otel/sdk/resource package for more
+	res := resource.NewWithAttributes(
+		semconv.SchemaURL,
+		semconv.ServiceName("mediator"),
+		// TODO: Make this auto-generated
+		semconv.ServiceVersion("v0.1.0"),
+	)
+	mp := sdkmetric.NewMeterProvider(
+		sdkmetric.WithResource(res),
+		sdkmetric.WithReader(r),
+	)
+
+	otel.SetMeterProvider(mp)
+
+	return mp
 }
 
 // StartGRPCServer starts a gRPC server and blocks while serving.
@@ -114,10 +137,13 @@ func (s *Server) StartGRPCServer(address string, store db.Store) {
 	interceptors = append(interceptors, logger.Interceptor(viper.GetString("logging.level"),
 		viper.GetString("logging.format"), viper.GetString("logging.logFile")))
 	interceptors = append(interceptors, AuthUnaryInterceptor)
+
 	addTracing := viper.GetBool("tracing.enabled")
-	if addTracing {
-		interceptorOpt := otelgrpc.WithTracerProvider(otel.GetTracerProvider())
-		interceptors = append(interceptors, otelgrpc.UnaryServerInterceptor(interceptorOpt))
+	addMetrics := viper.GetBool("metrics.enabled")
+
+	otelGRPCOpts := getOTELGRPCInterceptorOpts(addTracing, addMetrics)
+	if len(otelGRPCOpts) > 0 {
+		interceptors = append(interceptors, otelgrpc.UnaryServerInterceptor(otelGRPCOpts...))
 	}
 
 	s.grpcServer = grpc.NewServer(
@@ -136,6 +162,20 @@ func (s *Server) StartGRPCServer(address string, store db.Store) {
 	if err := s.grpcServer.Serve(lis); err != nil {
 		log.Fatalf("failed to serve: %v", err)
 	}
+}
+
+// getOTELGRPCInterceptorOpts gathers relevant options and
+func getOTELGRPCInterceptorOpts(addTracing, addMetrics bool) []otelgrpc.Option {
+	opts := []otelgrpc.Option{}
+	if addTracing {
+		opts = append(opts, otelgrpc.WithTracerProvider(otel.GetTracerProvider()))
+	}
+
+	if addMetrics {
+		opts = append(opts, otelgrpc.WithMeterProvider(otel.GetMeterProvider()))
+	}
+
+	return opts
 }
 
 // StartHTTPServer starts a HTTP server and registers the gRPC handler mux to it
@@ -161,6 +201,35 @@ func StartHTTPServer(address, grpcAddress string, store db.Store) {
 				log.Fatalf("error shutting down TracerProvider: %v", err)
 			}
 		}()
+	}
+
+	viper.SetDefault("metrics.enabled", false)
+	addMeter := viper.GetBool("metrics.enabled")
+
+	if addMeter {
+		// Pull-based Prometheus exporter
+		prometheusExporter, err := prometheus.New(
+			prometheus.WithNamespace("mediator"),
+		)
+		if err != nil {
+			log.Fatalf("could not initialize metrics: %v", err)
+		}
+
+		defer func() {
+			if err := prometheusExporter.Shutdown(ctx); err != nil {
+				log.Fatalf("error shutting down PrometheusExporter: %v", err)
+			}
+		}()
+
+		mp := initMetrics(prometheusExporter)
+		defer func() {
+			if err := mp.Shutdown(ctx); err != nil {
+				log.Fatalf("error shutting down MeterProvider: %v", err)
+			}
+		}()
+
+		handler := promhttp.Handler()
+		mux.Handle(metricsPath, handler)
 	}
 
 	gwmux := runtime.NewServeMux()
