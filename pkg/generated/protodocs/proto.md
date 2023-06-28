@@ -4,8 +4,6 @@
 ## Table of Contents
 
 - [mediator/v1/mediator.proto](#mediator_v1_mediator-proto)
-    - [AddRepositoryRequest](#mediator-v1-AddRepositoryRequest)
-    - [AddRepositoryResponse](#mediator-v1-AddRepositoryResponse)
     - [BranchProtection](#mediator-v1-BranchProtection)
     - [CheckHealthRequest](#mediator-v1-CheckHealthRequest)
     - [CheckHealthResponse](#mediator-v1-CheckHealthResponse)
@@ -76,6 +74,8 @@
     - [GetVulnerabilityByIdRequest](#mediator-v1-GetVulnerabilityByIdRequest)
     - [GetVulnerabilityByIdResponse](#mediator-v1-GetVulnerabilityByIdResponse)
     - [GroupRecord](#mediator-v1-GroupRecord)
+    - [ListRepositoriesRequest](#mediator-v1-ListRepositoriesRequest)
+    - [ListRepositoriesResponse](#mediator-v1-ListRepositoriesResponse)
     - [LogInRequest](#mediator-v1-LogInRequest)
     - [LogInResponse](#mediator-v1-LogInResponse)
     - [LogOutRequest](#mediator-v1-LogOutRequest)
@@ -83,6 +83,8 @@
     - [OrganizationRecord](#mediator-v1-OrganizationRecord)
     - [RefreshTokenRequest](#mediator-v1-RefreshTokenRequest)
     - [RefreshTokenResponse](#mediator-v1-RefreshTokenResponse)
+    - [RegisterRepositoryRequest](#mediator-v1-RegisterRepositoryRequest)
+    - [RegisterRepositoryResponse](#mediator-v1-RegisterRepositoryResponse)
     - [Repositories](#mediator-v1-Repositories)
     - [RepositoryResult](#mediator-v1-RepositoryResult)
     - [RevokeOauthGroupTokenRequest](#mediator-v1-RevokeOauthGroupTokenRequest)
@@ -124,38 +126,6 @@
 <p align="right"><a href="#top">Top</a></p>
 
 ## mediator/v1/mediator.proto
-
-
-
-<a name="mediator-v1-AddRepositoryRequest"></a>
-
-### AddRepositoryRequest
-
-
-
-| Field | Type | Label | Description |
-| ----- | ---- | ----- | ----------- |
-| group_id | [int32](#int32) |  |  |
-| repositories | [Repositories](#mediator-v1-Repositories) | repeated |  |
-| events | [string](#string) | repeated |  |
-
-
-
-
-
-
-<a name="mediator-v1-AddRepositoryResponse"></a>
-
-### AddRepositoryResponse
-
-
-
-| Field | Type | Label | Description |
-| ----- | ---- | ----- | ----------- |
-| results | [RepositoryResult](#mediator-v1-RepositoryResult) | repeated |  |
-
-
-
 
 
 
@@ -1292,6 +1262,38 @@ BUF does not allow grouping (which is a shame)
 
 
 
+<a name="mediator-v1-ListRepositoriesRequest"></a>
+
+### ListRepositoriesRequest
+
+
+
+| Field | Type | Label | Description |
+| ----- | ---- | ----- | ----------- |
+| group_id | [int32](#int32) |  |  |
+| limit | [int32](#int32) |  |  |
+| offset | [int32](#int32) |  |  |
+
+
+
+
+
+
+<a name="mediator-v1-ListRepositoriesResponse"></a>
+
+### ListRepositoriesResponse
+
+
+
+| Field | Type | Label | Description |
+| ----- | ---- | ----- | ----------- |
+| results | [Repositories](#mediator-v1-Repositories) | repeated |  |
+
+
+
+
+
+
 <a name="mediator-v1-LogInRequest"></a>
 
 ### LogInRequest
@@ -1391,6 +1393,38 @@ BUF does not allow grouping (which is a shame)
 
 
 
+<a name="mediator-v1-RegisterRepositoryRequest"></a>
+
+### RegisterRepositoryRequest
+
+
+
+| Field | Type | Label | Description |
+| ----- | ---- | ----- | ----------- |
+| repositories | [Repositories](#mediator-v1-Repositories) | repeated |  |
+| events | [string](#string) | repeated |  |
+| group_id | [int32](#int32) |  |  |
+
+
+
+
+
+
+<a name="mediator-v1-RegisterRepositoryResponse"></a>
+
+### RegisterRepositoryResponse
+
+
+
+| Field | Type | Label | Description |
+| ----- | ---- | ----- | ----------- |
+| results | [RepositoryResult](#mediator-v1-RepositoryResult) | repeated |  |
+
+
+
+
+
+
 <a name="mediator-v1-Repositories"></a>
 
 ### Repositories
@@ -1401,6 +1435,7 @@ BUF does not allow grouping (which is a shame)
 | ----- | ---- | ----- | ----------- |
 | owner | [string](#string) |  |  |
 | name | [string](#string) |  |  |
+| is_registered | [bool](#bool) |  |  |
 | repo_id | [int32](#int32) |  |  |
 
 
@@ -1785,7 +1820,8 @@ manage Organizations CRUD
 
 | Method Name | Request Type | Response Type | Description |
 | ----------- | ------------ | ------------- | ------------|
-| AddRepository | [AddRepositoryRequest](#mediator-v1-AddRepositoryRequest) | [AddRepositoryResponse](#mediator-v1-AddRepositoryResponse) |  |
+| RegisterRepository | [RegisterRepositoryRequest](#mediator-v1-RegisterRepositoryRequest) | [RegisterRepositoryResponse](#mediator-v1-RegisterRepositoryResponse) |  |
+| ListRepositories | [ListRepositoriesRequest](#mediator-v1-ListRepositoriesRequest) | [ListRepositoriesResponse](#mediator-v1-ListRepositoriesResponse) |  |
 
 
 <a name="mediator-v1-RoleService"></a>

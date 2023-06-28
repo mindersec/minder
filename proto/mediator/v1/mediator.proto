@@ -163,10 +163,15 @@ service SecretsService {
 }
 
 service RepositoryService {
-    rpc AddRepository (AddRepositoryRequest) returns (AddRepositoryResponse) {
+    rpc RegisterRepository (RegisterRepositoryRequest) returns (RegisterRepositoryResponse) {
         option (google.api.http) = {
             post: "/api/v1/repository"
             body: "*"
+        };
+    }
+    rpc ListRepositories (ListRepositoriesRequest) returns (ListRepositoriesResponse) {
+        option (google.api.http) = {
+            get: "/api/v1/repositories"
         };
     }
 }
@@ -467,20 +472,31 @@ message RefreshTokenResponse {
     int64  access_token_expires_in = 3;
 }
 
-message AddRepositoryRequest {
-    int32 group_id = 1;
-    repeated Repositories repositories = 2;
-    repeated string events = 3;
+message RegisterRepositoryRequest {
+    repeated Repositories repositories = 1;
+    repeated string events = 2;
+    int32 group_id = 3;
 }
 
 message Repositories {
     string owner = 1;
     string name = 2;
-    int32 repo_id = 3;
+    bool is_registered = 3;
+    int32 repo_id = 4;
 }
 
-message AddRepositoryResponse {
+message RegisterRepositoryResponse {
     repeated RepositoryResult results = 1;
+}
+
+message ListRepositoriesRequest {
+    int32 group_id = 1;
+    int32 limit = 2;
+    int32 offset = 3;
+}
+
+message ListRepositoriesResponse {
+    repeated Repositories results = 1;
 }
 
 message RepositoryResult {

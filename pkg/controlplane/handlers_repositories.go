@@ -21,13 +21,28 @@ import (
 	"github.com/stacklok/mediator/pkg/auth"
 	"github.com/stacklok/mediator/pkg/db"
 	pb "github.com/stacklok/mediator/pkg/generated/protobuf/go/mediator/v1"
+
 	"google.golang.org/grpc/codes"
 	"google.golang.org/grpc/status"
 )
 
-// AddRepository adds repositories to the database and registers a webhook
-func (s *Server) AddRepository(ctx context.Context,
-	in *pb.AddRepositoryRequest) (*pb.AddRepositoryResponse, error) {
+// RegisterRepository adds repositories to the database and registers a webhook
+// Once a user had enrolled in a group (they have a valid token), they can register
+// repositories to be monitored by the mediator by provisioning a webhook on the
+// repositor(ies).
+// The API is called with a slice of repositories to register and a slice of events
+// e.g.
+//
+//	grpcurl -plaintext -d '{
+//		"repositories": [
+//			{ "owner": "acme", "name": "widgets" },
+//			{ "owner": "acme", "name": "gadgets" }
+//		  ],
+//		  "events": [ "push", "issues" ]
+//	}' 127.0.0.1:8090 mediator.v1.RepositoryService/RegisterRepository
+func (s *Server) RegisterRepository(ctx context.Context,
+	in *pb.RegisterRepositoryRequest) (*pb.RegisterRepositoryResponse, error) {
+
 	if in.GroupId == 0 {
 		return nil, status.Errorf(codes.InvalidArgument, "group id cannot be empty")
 	}
@@ -95,9 +110,50 @@ func (s *Server) AddRepository(ctx context.Context,
 		}
 	}
 
-	response := &pb.AddRepositoryResponse{
+	response := &pb.RegisterRepositoryResponse{
 		Results: results,
 	}
 
 	return response, nil
+}
+
+// ListRepositories returns a list of repositories for a given group
+// This function will typically be called by the client to get a list of
+// repositories that are registered present in the mediator database
+// The API is called with a group id, limit and offset
+func (s *Server) ListRepositories(ctx context.Context,
+	in *pb.ListRepositoriesRequest) (*pb.ListRepositoriesResponse, error) {
+
+	if in.GroupId == 0 {
+		return nil, status.Errorf(codes.InvalidArgument, "group id cannot be empty")
+	}
+	// check if user is authorized
+	if !IsRequestAuthorized(ctx, in.GroupId) {
+		return nil, status.Errorf(codes.PermissionDenied, "user is not authorized to access this resource")
+	}
+
+	repos, err := s.store.ListRepositoriesByGroupID(ctx, db.ListRepositoriesByGroupIDParams{
+		GroupID: in.GroupId,
+		Limit:   in.Limit,
+		Offset:  in.Offset,
+	})
+
+	if err != nil {
+		return nil, err
+	}
+
+	var resp pb.ListRepositoriesResponse
+	var results []*pb.Repositories
+
+	for _, repo := range repos {
+		results = append(results, &pb.Repositories{
+			Owner:        repo.RepoOwner,
+			Name:         repo.RepoName,
+			IsRegistered: repo.WebhookID.Valid,
+		})
+	}
+
+	resp.Results = results
+
+	return &resp, nil
 }
