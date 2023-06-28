@@ -78,9 +78,14 @@ func TestCreateUserDBMock(t *testing.T) {
 			{RoleID: 1, IsAdmin: true, GroupID: 0, OrganizationID: 1}},
 	})
 
+	tx := sql.Tx{}
+	mockStore.EXPECT().BeginTransaction().Return(&tx, nil)
+	mockStore.EXPECT().GetQuerierWithTransaction(gomock.Any()).Return(mockStore)
 	mockStore.EXPECT().
 		CreateUser(ctx, gomock.Any()).
 		Return(expectedUser, nil)
+	mockStore.EXPECT().Commit(gomock.Any())
+	mockStore.EXPECT().Rollback(gomock.Any())
 
 	server := &Server{
 		store: mockStore,
@@ -122,6 +127,10 @@ func TestCreateUser_gRPC(t *testing.T) {
 				Password:       &password,
 			},
 			buildStubs: func(store *mockdb.MockStore) {
+				tx := sql.Tx{}
+				store.EXPECT().BeginTransaction().Return(&tx, nil)
+				store.EXPECT().GetQuerierWithTransaction(gomock.Any()).Return(store)
+
 				store.EXPECT().
 					CreateUser(gomock.Any(), gomock.Any()).
 					Return(db.User{
@@ -134,6 +143,9 @@ func TestCreateUser_gRPC(t *testing.T) {
 						UpdatedAt:      time.Now(),
 					}, nil).
 					Times(1)
+				store.EXPECT().Commit(gomock.Any())
+				store.EXPECT().Rollback(gomock.Any())
+
 			},
 			checkResponse: func(t *testing.T, res *pb.CreateUserResponse, err error) {
 				assert.NoError(t, err)

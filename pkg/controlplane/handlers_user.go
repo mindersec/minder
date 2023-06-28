@@ -132,17 +132,15 @@ func (s *Server) CreateUser(ctx context.Context,
 		needsPassPtr = *in.NeedsPasswordChange
 	}
 
-	sqlStore, ok := s.store.(*db.SQLStore)
-	if !ok {
-		return nil, status.Errorf(codes.Internal, "store is not an SQLStore")
-	}
-
-	tx, err := sqlStore.Db.Begin()
+	tx, err := s.store.BeginTransaction()
 	if err != nil {
 		return nil, status.Errorf(codes.Internal, "failed to begin transaction")
 	}
-	defer tx.Rollback()
-	qtx := sqlStore.Queries.WithTx(tx)
+	defer s.store.Rollback(tx)
+	qtx := s.store.GetQuerierWithTransaction(tx)
+	if qtx == nil {
+		return nil, status.Errorf(codes.Internal, "failed to get transaction")
+	}
 
 	user, err := qtx.CreateUser(ctx, db.CreateUserParams{OrganizationID: in.OrganizationId,
 		Email: *stringToNullString(in.Email), Username: in.Username, Password: pHash,
@@ -165,7 +163,7 @@ func (s *Server) CreateUser(ctx context.Context,
 			return nil, status.Errorf(codes.Internal, "failed to add user to role")
 		}
 	}
-	err = tx.Commit()
+	err = s.store.Commit(tx)
 	if err != nil {
 		return nil, status.Errorf(codes.Internal, "failed to commit transaction")
 	}

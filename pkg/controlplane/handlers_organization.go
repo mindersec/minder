@@ -42,17 +42,15 @@ func (s *Server) CreateOrganization(ctx context.Context,
 		return nil, err
 	}
 
-	sqlStore, ok := s.store.(*db.SQLStore)
-	if !ok {
-		return nil, status.Errorf(codes.Internal, "store is not an SQLStore")
-	}
-
-	tx, err := sqlStore.Db.Begin()
+	tx, err := s.store.BeginTransaction()
 	if err != nil {
 		return nil, status.Errorf(codes.Internal, "failed to begin transaction")
 	}
-	defer tx.Rollback()
-	qtx := sqlStore.Queries.WithTx(tx)
+	defer s.store.Rollback(tx)
+	qtx := s.store.GetQuerierWithTransaction(tx)
+	if qtx == nil {
+		return nil, status.Errorf(codes.Internal, "failed to get transaction")
+	}
 
 	org, err := qtx.CreateOrganization(ctx, db.CreateOrganizationParams{Name: in.Name, Company: in.Company})
 	if err != nil {
@@ -136,16 +134,15 @@ func (s *Server) CreateOrganization(ctx context.Context,
 			}
 		}
 
-		// commit and return
-		err = tx.Commit()
-		if err != nil {
-			return nil, status.Errorf(codes.Internal, "failed to commit transaction")
-		}
-
 		usr := pb.UserRecord{Id: user.ID, OrganizationId: org.ID, Username: user.Username,
 			Password: user.Password, IsProtected: &user.IsProtected, CreatedAt: timestamppb.New(user.CreatedAt),
 			UpdatedAt: timestamppb.New(user.UpdatedAt), NeedsPasswordChange: &user.NeedsPasswordChange}
 		response.DefaultUser = &usr
+	}
+	// commit and return
+	err = s.store.Commit(tx)
+	if err != nil {
+		return nil, status.Errorf(codes.Internal, "failed to commit transaction")
 	}
 
 	return response, nil

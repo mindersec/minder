@@ -66,6 +66,21 @@ func (mr *MockStoreMockRecorder) AddUserRole(arg0, arg1 interface{}) *gomock.Cal
 	return mr.mock.ctrl.RecordCallWithMethodType(mr.mock, "AddUserRole", reflect.TypeOf((*MockStore)(nil).AddUserRole), arg0, arg1)
 }
 
+// BeginTransaction mocks base method.
+func (m *MockStore) BeginTransaction() (*sql.Tx, error) {
+	m.ctrl.T.Helper()
+	ret := m.ctrl.Call(m, "BeginTransaction")
+	ret0, _ := ret[0].(*sql.Tx)
+	ret1, _ := ret[1].(error)
+	return ret0, ret1
+}
+
+// BeginTransaction indicates an expected call of BeginTransaction.
+func (mr *MockStoreMockRecorder) BeginTransaction() *gomock.Call {
+	mr.mock.ctrl.T.Helper()
+	return mr.mock.ctrl.RecordCallWithMethodType(mr.mock, "BeginTransaction", reflect.TypeOf((*MockStore)(nil).BeginTransaction))
+}
+
 // CheckHealth mocks base method.
 func (m *MockStore) CheckHealth() error {
 	m.ctrl.T.Helper()
@@ -93,6 +108,20 @@ func (m *MockStore) CleanTokenIat(arg0 context.Context, arg1 int32) (db.User, er
 func (mr *MockStoreMockRecorder) CleanTokenIat(arg0, arg1 interface{}) *gomock.Call {
 	mr.mock.ctrl.T.Helper()
 	return mr.mock.ctrl.RecordCallWithMethodType(mr.mock, "CleanTokenIat", reflect.TypeOf((*MockStore)(nil).CleanTokenIat), arg0, arg1)
+}
+
+// Commit mocks base method.
+func (m *MockStore) Commit(arg0 *sql.Tx) error {
+	m.ctrl.T.Helper()
+	ret := m.ctrl.Call(m, "Commit", arg0)
+	ret0, _ := ret[0].(error)
+	return ret0
+}
+
+// Commit indicates an expected call of Commit.
+func (mr *MockStoreMockRecorder) Commit(arg0 interface{}) *gomock.Call {
+	mr.mock.ctrl.T.Helper()
+	return mr.mock.ctrl.RecordCallWithMethodType(mr.mock, "Commit", reflect.TypeOf((*MockStore)(nil).Commit), arg0)
 }
 
 // CreateAccessToken mocks base method.
@@ -459,6 +488,20 @@ func (m *MockStore) GetOrganizationForUpdate(arg0 context.Context, arg1 string) 
 func (mr *MockStoreMockRecorder) GetOrganizationForUpdate(arg0, arg1 interface{}) *gomock.Call {
 	mr.mock.ctrl.T.Helper()
 	return mr.mock.ctrl.RecordCallWithMethodType(mr.mock, "GetOrganizationForUpdate", reflect.TypeOf((*MockStore)(nil).GetOrganizationForUpdate), arg0, arg1)
+}
+
+// GetQuerierWithTransaction mocks base method.
+func (m *MockStore) GetQuerierWithTransaction(arg0 *sql.Tx) db.Querier {
+	m.ctrl.T.Helper()
+	ret := m.ctrl.Call(m, "GetQuerierWithTransaction", arg0)
+	ret0, _ := ret[0].(db.Querier)
+	return ret0
+}
+
+// GetQuerierWithTransaction indicates an expected call of GetQuerierWithTransaction.
+func (mr *MockStoreMockRecorder) GetQuerierWithTransaction(arg0 interface{}) *gomock.Call {
+	mr.mock.ctrl.T.Helper()
+	return mr.mock.ctrl.RecordCallWithMethodType(mr.mock, "GetQuerierWithTransaction", reflect.TypeOf((*MockStore)(nil).GetQuerierWithTransaction), arg0)
 }
 
 // GetRepositoryByID mocks base method.
@@ -849,6 +892,20 @@ func (m *MockStore) RevokeUsersTokens(arg0 context.Context, arg1 sql.NullTime) (
 func (mr *MockStoreMockRecorder) RevokeUsersTokens(arg0, arg1 interface{}) *gomock.Call {
 	mr.mock.ctrl.T.Helper()
 	return mr.mock.ctrl.RecordCallWithMethodType(mr.mock, "RevokeUsersTokens", reflect.TypeOf((*MockStore)(nil).RevokeUsersTokens), arg0, arg1)
+}
+
+// Rollback mocks base method.
+func (m *MockStore) Rollback(arg0 *sql.Tx) error {
+	m.ctrl.T.Helper()
+	ret := m.ctrl.Call(m, "Rollback", arg0)
+	ret0, _ := ret[0].(error)
+	return ret0
+}
+
+// Rollback indicates an expected call of Rollback.
+func (mr *MockStoreMockRecorder) Rollback(arg0 interface{}) *gomock.Call {
+	mr.mock.ctrl.T.Helper()
+	return mr.mock.ctrl.RecordCallWithMethodType(mr.mock, "Rollback", reflect.TypeOf((*MockStore)(nil).Rollback), arg0)
 }
 
 // UpdateAccessToken mocks base method.
