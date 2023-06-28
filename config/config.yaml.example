@@ -36,7 +36,7 @@ tracing:
   #sample_ratio: 0.1
 
 metrics:
-  enabled: false
+  enabled: true
 
 database:
   dbhost: "localhost"

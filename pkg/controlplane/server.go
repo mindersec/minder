@@ -203,7 +203,7 @@ func StartHTTPServer(address, grpcAddress string, store db.Store) {
 		}()
 	}
 
-	viper.SetDefault("metrics.enabled", false)
+	viper.SetDefault("metrics.enabled", true)
 	addMeter := viper.GetBool("metrics.enabled")
 
 	if addMeter {
