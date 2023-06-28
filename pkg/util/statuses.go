@@ -23,10 +23,12 @@
 package util
 
 import (
+	"context"
 	"fmt"
 	"os"
 	"strings"
 
+	"google.golang.org/grpc"
 	"google.golang.org/grpc/codes"
 	"google.golang.org/grpc/status"
 )
@@ -147,6 +149,23 @@ func (s *NiceStatus) String() string {
 	return ret
 }
 
+// GRPCStatus makes NiceStatus a valid GRPC status response
+// (see https://godoc.org/google.golang.org/grpc/status#FromError for details)
+func (s *NiceStatus) GRPCStatus() *status.Status {
+	if s == nil {
+		return nil
+	}
+	return status.New(s.Code, s.Details)
+}
+
+// Error implements Golang error
+func (s *NiceStatus) Error() string {
+	if s != nil {
+		return s.String()
+	}
+	return "OK"
+}
+
 // ExitNicelyOnError print a message and exit with the right code
 func ExitNicelyOnError(err error, message string) {
 	if err != nil {
@@ -159,5 +178,27 @@ func ExitNicelyOnError(err error, message string) {
 			fmt.Fprintf(os.Stderr, "%s: %s\n", message, ns)
 		}
 		os.Exit(int(ret.Code()))
+	}
+}
+
+// SanitizingInterceptor sanitized error statuses which do not conform to NiceStatus, ensuring
+// that we don't accidentally leak implementation details over gRPC.
+func SanitizingInterceptor() grpc.UnaryServerInterceptor {
+	// TODO: this has no test coverage!
+	return func(ctx context.Context, req interface{}, info *grpc.UnaryServerInfo, handler grpc.UnaryHandler) (interface{}, error) {
+		ret, err := handler(ctx, req)
+		if err != nil {
+			// If we returned a NiceStatus, pass it through.
+			// TODO: rename NiceStatus to PublicError or the like.
+			if _, ok := err.(*NiceStatus); ok {
+				return ret, err
+			}
+
+			// We didn't explicitly intend to pass the error to the user,
+			// sanitize it through the NiceStatus constructor.
+			asStatus := status.Convert(err)
+			return nil, GetNiceStatus(asStatus.Code())
+		}
+		return ret, err
 	}
 }

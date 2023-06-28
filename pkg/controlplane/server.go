@@ -45,6 +45,7 @@ import (
 	"github.com/stacklok/mediator/internal/logger"
 	"github.com/stacklok/mediator/pkg/db"
 	pb "github.com/stacklok/mediator/pkg/generated/protobuf/go/mediator/v1"
+	"github.com/stacklok/mediator/pkg/util"
 )
 
 const metricsPath = "/metrics"
@@ -139,15 +140,14 @@ func (s *Server) StartGRPCServer(ctx context.Context, address string, store db.S
 	viper.SetDefault("tracing.enabled", false)
 
 	// add logger and tracing (if enabled)
-	interceptors := []grpc.UnaryServerInterceptor{}
-	interceptors = append(interceptors, logger.Interceptor(viper.GetString("logging.level"),
-		viper.GetString("logging.format"), viper.GetString("logging.logFile")))
-	interceptors = append(interceptors, AuthUnaryInterceptor)
-
-	addTracing := viper.GetBool("tracing.enabled")
-	addMetrics := viper.GetBool("metrics.enabled")
-
-	otelGRPCOpts := getOTELGRPCInterceptorOpts(addTracing, addMetrics)
+	interceptors := []grpc.UnaryServerInterceptor{
+		// TODO: this has no test coverage!
+		util.SanitizingInterceptor(),
+		logger.Interceptor(viper.GetString("logging.level"),
+			viper.GetString("logging.format"), viper.GetString("logging.logFile")),
+		AuthUnaryInterceptor,
+	}
+	otelGRPCOpts := getOTELGRPCInterceptorOpts(viper.GetBool("tracing.enabled"), viper.GetBool("metrics.enabled"))
 	if len(otelGRPCOpts) > 0 {
 		interceptors = append(interceptors, otelgrpc.UnaryServerInterceptor(otelGRPCOpts...))
 	}
