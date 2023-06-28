@@ -36,6 +36,8 @@ jobs:
 
   proto-breaking-changes:
     runs-on: ubuntu-latest
+    # TODO(JAORMX): remove this once we declare our protobuf to be stable.
+    continue-on-error: true
     steps:
       - uses: actions/checkout@v3
       - uses: bufbuild/buf-setup-action@v1
