@@ -33,19 +33,19 @@ type Store interface {
 
 // SQLStore provides all functions to execute SQL queries and transactions
 type SQLStore struct {
-	db *sql.DB
+	Db *sql.DB
 	*Queries
 }
 
 // CheckHealth checks the health of the database
 func (s *SQLStore) CheckHealth() error {
-	return s.db.Ping()
+	return s.Db.Ping()
 }
 
 // NewStore creates a new store
 func NewStore(db *sql.DB) Store {
 	return &SQLStore{
-		db:      db,
+		Db:      db,
 		Queries: New(db),
 	}
 }

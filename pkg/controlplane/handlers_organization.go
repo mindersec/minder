@@ -16,6 +16,7 @@ package controlplane
 
 import (
 	"context"
+	"database/sql"
 	"fmt"
 
 	"github.com/go-playground/validator/v10"
@@ -41,9 +42,21 @@ func (s *Server) CreateOrganization(ctx context.Context,
 		return nil, err
 	}
 
-	org, err := s.store.CreateOrganization(ctx, db.CreateOrganizationParams{Name: in.Name, Company: in.Company})
+	sqlStore, ok := s.store.(*db.SQLStore)
+	if !ok {
+		return nil, status.Errorf(codes.Internal, "store is not an SQLStore")
+	}
+
+	tx, err := sqlStore.Db.Begin()
 	if err != nil {
-		return nil, err
+		return nil, status.Errorf(codes.Internal, "failed to begin transaction")
+	}
+	defer tx.Rollback()
+	qtx := sqlStore.Queries.WithTx(tx)
+
+	org, err := qtx.CreateOrganization(ctx, db.CreateOrganizationParams{Name: in.Name, Company: in.Company})
+	if err != nil {
+		return nil, status.Errorf(codes.Internal, "failed to create organization: %v", err)
 	}
 
 	response := &pb.CreateOrganizationResponse{Id: org.ID, Name: org.Name,
@@ -52,60 +65,87 @@ func (s *Server) CreateOrganization(ctx context.Context,
 
 	if in.CreateDefaultRecords {
 		// we need to create the default records for the organization
-		protectedPtr := true
-		adminPtr := true
-		group, _ := s.CreateGroup(ctx, &pb.CreateGroupRequest{
-			OrganizationId: org.ID,
-			Name:           fmt.Sprintf("%s-admin", org.Name),
-			Description:    fmt.Sprintf("Default admin group for %s", org.Name),
-			IsProtected:    &protectedPtr,
+		group, err := qtx.CreateGroup(ctx, db.CreateGroupParams{OrganizationID: org.ID,
+			Name:        fmt.Sprintf("%s-admin", org.Name),
+			Description: sql.NullString{String: fmt.Sprintf("Default admin group for %s", org.Name), Valid: true},
+			IsProtected: true,
+		})
+		if err != nil {
+			return nil, status.Errorf(codes.Internal, "failed to create default group: %v", err)
+		}
+
+		grp := pb.GroupRecord{GroupId: group.ID, OrganizationId: group.OrganizationID,
+			Name: group.Name, Description: group.Description.String,
+			IsProtected: group.IsProtected, CreatedAt: timestamppb.New(group.CreatedAt), UpdatedAt: timestamppb.New(group.UpdatedAt)}
+		response.DefaultGroup = &grp
+
+		// we can create the default role for org and for group
+		role, err := qtx.CreateRole(ctx, db.CreateRoleParams{
+			OrganizationID: org.ID,
+			Name:           fmt.Sprintf("%s-org-admin", org.Name),
+			IsAdmin:        true,
+			IsProtected:    true,
+		})
+		if err != nil {
+			return nil, status.Errorf(codes.Internal, "failed to create default org role: %v", err)
+		}
+
+		roleGroup, err := qtx.CreateRole(ctx, db.CreateRoleParams{
+			OrganizationID: org.ID,
+			GroupID:        sql.NullInt32{Int32: group.ID, Valid: true},
+			Name:           fmt.Sprintf("%s-group-admin", org.Name),
+			IsAdmin:        true,
+			IsProtected:    true,
 		})
 
-		if group != nil {
-			grp := pb.GroupRecord{GroupId: group.GroupId, OrganizationId: group.OrganizationId,
-				Name: group.Name, Description: group.Description,
-				IsProtected: group.IsProtected, CreatedAt: group.CreatedAt, UpdatedAt: group.UpdatedAt}
-			response.DefaultGroup = &grp
+		if err != nil {
+			return nil, status.Errorf(codes.Internal, "failed to create default group role: %v", err)
+		}
 
-			// we can create the default role for org and for group
-			role, _ := s.CreateRoleByOrganization(ctx, &pb.CreateRoleByOrganizationRequest{
-				OrganizationId: org.ID,
-				Name:           fmt.Sprintf("%s-org-admin", org.Name),
-				IsAdmin:        &adminPtr,
-				IsProtected:    &protectedPtr,
-			})
+		rl := pb.RoleRecord{Id: role.ID, OrganizationId: role.OrganizationID, Name: role.Name, IsAdmin: role.IsAdmin,
+			IsProtected: role.IsProtected, CreatedAt: timestamppb.New(role.CreatedAt), UpdatedAt: timestamppb.New(role.UpdatedAt)}
+		rg := pb.RoleRecord{Id: roleGroup.ID, Name: roleGroup.Name, GroupId: &roleGroup.GroupID.Int32,
+			IsAdmin: roleGroup.IsAdmin, IsProtected: roleGroup.IsProtected,
+			CreatedAt: timestamppb.New(roleGroup.CreatedAt), UpdatedAt: timestamppb.New(roleGroup.UpdatedAt)}
+		response.DefaultRoles = []*pb.RoleRecord{&rl, &rg}
 
-			roleGroup, _ := s.CreateRoleByGroup(ctx, &pb.CreateRoleByGroupRequest{
-				OrganizationId: org.ID,
-				GroupId:        group.GroupId,
-				Name:           fmt.Sprintf("%s-group-admin", org.Name),
-				IsAdmin:        &adminPtr,
-				IsProtected:    &protectedPtr,
-			})
+		// we can create the default user
+		user, err := qtx.CreateUser(ctx, db.CreateUserParams{
+			OrganizationID:      org.ID,
+			Username:            fmt.Sprintf("%s-admin", org.Name),
+			IsProtected:         true,
+			NeedsPasswordChange: true,
+		})
 
-			if role != nil && roleGroup != nil {
-				rl := pb.RoleRecord{Id: role.Id, Name: role.Name, IsAdmin: role.IsAdmin,
-					IsProtected: role.IsProtected, CreatedAt: role.CreatedAt, UpdatedAt: role.UpdatedAt}
-				response.DefaultRole = &rl
+		if err != nil {
+			return nil, status.Errorf(codes.Internal, "failed to create default user: %v", err)
+		}
 
-				// we can create the default user
-				needsPasswordChange := true
-				user, _ := s.CreateUser(ctx, &pb.CreateUserRequest{
-					OrganizationId:      org.ID,
-					Username:            fmt.Sprintf("%s-admin", org.Name),
-					IsProtected:         &protectedPtr,
-					NeedsPasswordChange: &needsPasswordChange,
-					RoleIds:             []int32{role.Id, roleGroup.Id},
-					GroupIds:            []int32{group.GroupId},
-				})
-				if user != nil {
-					usr := pb.UserRecord{Id: user.Id, OrganizationId: org.ID, Username: user.Username,
-						Password: user.Password, IsProtected: user.IsProtected, CreatedAt: user.CreatedAt,
-						UpdatedAt: user.UpdatedAt, NeedsPasswordChange: user.NeedsPasswordChange}
-					response.DefaultUser = &usr
-				}
+		// add the user to the group
+		_, err = qtx.AddUserGroup(ctx, db.AddUserGroupParams{UserID: user.ID, GroupID: group.ID})
+		if err != nil {
+			return nil, status.Errorf(codes.Internal, "failed to add user to group: %v", err)
+		}
+
+		// add the user to roles
+		roles := []db.Role{role, roleGroup}
+		for _, r := range roles {
+			_, err = qtx.AddUserRole(ctx, db.AddUserRoleParams{UserID: user.ID, RoleID: r.ID})
+			if err != nil {
+				return nil, status.Errorf(codes.Internal, "failed to add user to role: %v", err)
 			}
 		}
+
+		// commit and return
+		err = tx.Commit()
+		if err != nil {
+			return nil, status.Errorf(codes.Internal, "failed to commit transaction")
+		}
+
+		usr := pb.UserRecord{Id: user.ID, OrganizationId: org.ID, Username: user.Username,
+			Password: user.Password, IsProtected: &user.IsProtected, CreatedAt: timestamppb.New(user.CreatedAt),
+			UpdatedAt: timestamppb.New(user.UpdatedAt), NeedsPasswordChange: &user.NeedsPasswordChange}
+		response.DefaultUser = &usr
 	}
 
 	return response, nil

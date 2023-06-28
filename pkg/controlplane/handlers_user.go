@@ -131,26 +131,43 @@ func (s *Server) CreateUser(ctx context.Context,
 	if in.NeedsPasswordChange != nil {
 		needsPassPtr = *in.NeedsPasswordChange
 	}
-	user, err := s.store.CreateUser(ctx, db.CreateUserParams{OrganizationID: in.OrganizationId,
+
+	sqlStore, ok := s.store.(*db.SQLStore)
+	if !ok {
+		return nil, status.Errorf(codes.Internal, "store is not an SQLStore")
+	}
+
+	tx, err := sqlStore.Db.Begin()
+	if err != nil {
+		return nil, status.Errorf(codes.Internal, "failed to begin transaction")
+	}
+	defer tx.Rollback()
+	qtx := sqlStore.Queries.WithTx(tx)
+
+	user, err := qtx.CreateUser(ctx, db.CreateUserParams{OrganizationID: in.OrganizationId,
 		Email: *stringToNullString(in.Email), Username: in.Username, Password: pHash,
 		FirstName: *stringToNullString(in.FirstName), LastName: *stringToNullString(in.LastName),
 		IsProtected: *in.IsProtected, NeedsPasswordChange: needsPassPtr})
 	if err != nil {
-		return nil, err
+		return nil, status.Errorf(codes.Internal, "failed to create user")
 	}
 
 	// now attach the groups and roles
 	for _, id := range in.GroupIds {
-		_, err := s.store.AddUserGroup(ctx, db.AddUserGroupParams{UserID: user.ID, GroupID: id})
+		_, err := qtx.AddUserGroup(ctx, db.AddUserGroupParams{UserID: user.ID, GroupID: id})
 		if err != nil {
-			return nil, err
+			return nil, status.Errorf(codes.Internal, "failed to add user to group")
 		}
 	}
 	for _, id := range in.RoleIds {
-		_, err := s.store.AddUserRole(ctx, db.AddUserRoleParams{UserID: user.ID, RoleID: id})
+		_, err := qtx.AddUserRole(ctx, db.AddUserRoleParams{UserID: user.ID, RoleID: id})
 		if err != nil {
-			return nil, err
+			return nil, status.Errorf(codes.Internal, "failed to add user to role")
 		}
+	}
+	err = tx.Commit()
+	if err != nil {
+		return nil, status.Errorf(codes.Internal, "failed to commit transaction")
 	}
 
 	return &pb.CreateUserResponse{Id: user.ID, OrganizationId: user.OrganizationID, Email: &user.Email.String,

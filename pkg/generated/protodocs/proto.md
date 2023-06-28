@@ -240,7 +240,7 @@ Organization service
 | created_at | [google.protobuf.Timestamp](#google-protobuf-Timestamp) |  |  |
 | updated_at | [google.protobuf.Timestamp](#google-protobuf-Timestamp) |  |  |
 | default_group | [GroupRecord](#mediator-v1-GroupRecord) | optional |  |
-| default_role | [RoleRecord](#mediator-v1-RoleRecord) | optional |  |
+| default_roles | [RoleRecord](#mediator-v1-RoleRecord) | repeated |  |
 | default_user | [UserRecord](#mediator-v1-UserRecord) | optional |  |
 
 
