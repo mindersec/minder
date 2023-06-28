@@ -19,10 +19,12 @@ import (
 	"fmt"
 	"log"
 	"os"
-	"sync"
+	"os/signal"
 
 	"github.com/spf13/cobra"
 	"github.com/spf13/viper"
+	"golang.org/x/sync/errgroup"
+
 	"github.com/stacklok/mediator/pkg/controlplane"
 	"github.com/stacklok/mediator/pkg/db"
 	"github.com/stacklok/mediator/pkg/util"
@@ -32,7 +34,10 @@ var serveCmd = &cobra.Command{
 	Use:   "serve",
 	Short: "Start the mediator platform",
 	Long:  `Starts the mediator platform, which includes the gRPC server and the HTTP gateway.`,
-	Run: func(cmd *cobra.Command, args []string) {
+	RunE: func(cmd *cobra.Command, args []string) error {
+		ctx, cancel := signal.NotifyContext(cmd.Context(), os.Interrupt)
+		defer cancel()
+
 		// populate config and cmd line flags
 		http_host := util.GetConfigValue("http_server.host", "http-host", cmd, "").(string)
 		http_port := util.GetConfigValue("http_server.port", "http-port", cmd, 8080).(int)
@@ -42,8 +47,7 @@ var serveCmd = &cobra.Command{
 		// Database configuration
 		dbConn, _, err := util.GetDbConnectionFromConfig(cmd)
 		if err != nil {
-			fmt.Printf("Unable to connect to database: %v\n", err)
-			os.Exit(1)
+			return fmt.Errorf("unable to connect to database: %w", err)
 		}
 		defer dbConn.Close()
 
@@ -53,23 +57,20 @@ var serveCmd = &cobra.Command{
 		httpAddress := fmt.Sprintf("%s:%d", http_host, http_port)
 		grpcAddress := fmt.Sprintf("%s:%d", grpc_host, grpc_port)
 
-		var wg sync.WaitGroup
-		wg.Add(2)
+		errg, ctx := errgroup.WithContext(ctx)
 
 		s := controlplane.Server{}
 
 		// Start the gRPC and HTTP server in separate goroutines
-		go func() {
-			s.StartGRPCServer(grpcAddress, store)
-			wg.Done()
-		}()
+		errg.Go(func() error {
+			return s.StartGRPCServer(ctx, grpcAddress, store)
+		})
 
-		go func() {
-			controlplane.StartHTTPServer(httpAddress, grpcAddress, store)
-			wg.Done()
-		}()
+		errg.Go(func() error {
+			return controlplane.StartHTTPServer(ctx, httpAddress, grpcAddress, store)
+		})
 
-		wg.Wait()
+		return errg.Wait()
 	},
 }
 

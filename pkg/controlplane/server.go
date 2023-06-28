@@ -17,9 +17,11 @@ package controlplane
 
 import (
 	"context"
+	"fmt"
 	"log"
 	"net"
 	"net/http"
+	"time"
 
 	"github.com/grpc-ecosystem/grpc-gateway/v2/runtime"
 	"github.com/prometheus/client_golang/prometheus/promhttp"
@@ -46,6 +48,10 @@ import (
 )
 
 const metricsPath = "/metrics"
+
+var (
+	readHeaderTimeout = 2 * time.Second
+)
 
 // Server represents the controlplane server
 type Server struct {
@@ -113,7 +119,7 @@ func initMetrics(r sdkmetric.Reader) *sdkmetric.MeterProvider {
 }
 
 // StartGRPCServer starts a gRPC server and blocks while serving.
-func (s *Server) StartGRPCServer(address string, store db.Store) {
+func (s *Server) StartGRPCServer(ctx context.Context, address string, store db.Store) error {
 	lis, err := net.Listen("tcp", address)
 	if err != nil {
 		log.Fatalf("failed to listen: %v", err)
@@ -158,9 +164,24 @@ func (s *Server) StartGRPCServer(address string, store db.Store) {
 
 	reflection.Register(s.grpcServer)
 
+	errch := make(chan error)
+
 	log.Printf("Starting gRPC server on %s", address)
-	if err := s.grpcServer.Serve(lis); err != nil {
-		log.Fatalf("failed to serve: %v", err)
+
+	go func() {
+		if err := s.grpcServer.Serve(lis); err != nil {
+			errch <- fmt.Errorf("failed to serve: %w", err)
+		}
+	}()
+
+	select {
+	case err := <-errch:
+		log.Printf("GRPC server fatal error: %v\n", err)
+		return err
+	case <-ctx.Done():
+		log.Printf("shutting down 'GRPC server'")
+		s.grpcServer.GracefulStop()
+		return nil
 	}
 }
 
@@ -180,13 +201,9 @@ func getOTELGRPCInterceptorOpts(addTracing, addMetrics bool) []otelgrpc.Option {
 
 // StartHTTPServer starts a HTTP server and registers the gRPC handler mux to it
 // set store as a blank identifier for now as we will use it in the future
-func StartHTTPServer(address, grpcAddress string, store db.Store) {
+func StartHTTPServer(ctx context.Context, address, grpcAddress string, store db.Store) error {
 
 	mux := http.NewServeMux()
-
-	ctx := context.Background()
-	ctx, cancel := context.WithCancel(ctx)
-	defer cancel()
 
 	viper.SetDefault("tracing.enabled", false)
 	addTracing := viper.GetBool("tracing.enabled")
@@ -194,13 +211,11 @@ func StartHTTPServer(address, grpcAddress string, store db.Store) {
 	if addTracing {
 		tp, err := initTracer()
 		if err != nil {
-			log.Fatalf("failed to initialize TracerProvider: %v", err)
+			return fmt.Errorf("failed to initialize TracerProvider: %w", err)
 		}
-		defer func() {
-			if err := tp.Shutdown(context.Background()); err != nil {
-				log.Fatalf("error shutting down TracerProvider: %v", err)
-			}
-		}()
+		defer shutdownHandler("TracerProvider", func(ctx context.Context) error {
+			return tp.Shutdown(ctx)
+		})
 	}
 
 	viper.SetDefault("metrics.enabled", true)
@@ -212,21 +227,13 @@ func StartHTTPServer(address, grpcAddress string, store db.Store) {
 			prometheus.WithNamespace("mediator"),
 		)
 		if err != nil {
-			log.Fatalf("could not initialize metrics: %v", err)
+			return fmt.Errorf("could not initialize metrics: %w", err)
 		}
 
-		defer func() {
-			if err := prometheusExporter.Shutdown(ctx); err != nil {
-				log.Fatalf("error shutting down PrometheusExporter: %v", err)
-			}
-		}()
-
 		mp := initMetrics(prometheusExporter)
-		defer func() {
-			if err := mp.Shutdown(ctx); err != nil {
-				log.Fatalf("error shutting down MeterProvider: %v", err)
-			}
-		}()
+		defer shutdownHandler("MeterProvider", func(ctx context.Context) error {
+			return mp.Shutdown(ctx)
+		})
 
 		handler := promhttp.Handler()
 		mux.Handle(metricsPath, handler)
@@ -241,8 +248,45 @@ func StartHTTPServer(address, grpcAddress string, store db.Store) {
 	mux.Handle("/", gwmux)
 	mux.HandleFunc("/api/v1/webhook/", HandleGitHubWebHook(store))
 
+	errch := make(chan error)
+
 	log.Printf("Starting HTTP server on %s", address)
-	if err := http.ListenAndServe(address, mux); err != nil {
-		log.Fatalf("failed to serve: %v", err)
+
+	server := http.Server{
+		Addr:              address,
+		Handler:           mux,
+		ReadHeaderTimeout: readHeaderTimeout,
+	}
+
+	go func() {
+		if err := server.ListenAndServe(); err != nil {
+			errch <- fmt.Errorf("failed to serve: %w", err)
+		}
+	}()
+
+	select {
+	case err := <-errch:
+		log.Printf("HTTP server fatal error: %v", err)
+		return err
+	case <-ctx.Done():
+		shutdownCtx, shutdownRelease := context.WithTimeout(context.Background(), 5*time.Second)
+		defer shutdownRelease()
+
+		log.Printf("shutting down 'HTTP server'")
+
+		return server.Shutdown(shutdownCtx)
+	}
+}
+
+type shutdowner func(context.Context) error
+
+func shutdownHandler(component string, sdf shutdowner) {
+	shutdownCtx, shutdownRelease := context.WithTimeout(context.Background(), 5*time.Second)
+	defer shutdownRelease()
+
+	log.Printf("shutting down '%s'", component)
+
+	if err := sdf(shutdownCtx); err != nil {
+		log.Fatalf("error shutting down '%s': %+v", component, err)
 	}
 }
