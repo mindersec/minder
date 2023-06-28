@@ -1853,8 +1853,12 @@
         "defaultGroup": {
           "$ref": "#/definitions/v1GroupRecord"
         },
-        "defaultRole": {
-          "$ref": "#/definitions/v1RoleRecord"
+        "defaultRoles": {
+          "type": "array",
+          "items": {
+            "type": "object",
+            "$ref": "#/definitions/v1RoleRecord"
+          }
         },
         "defaultUser": {
           "$ref": "#/definitions/v1UserRecord"

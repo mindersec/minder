@@ -602,7 +602,7 @@ message CreateOrganizationResponse {
     google.protobuf.Timestamp created_at = 5;
     google.protobuf.Timestamp updated_at = 6;
     optional GroupRecord default_group = 7;
-    optional RoleRecord default_role = 8;
+    repeated RoleRecord default_roles = 8;
     optional UserRecord default_user = 9;
 }
 
