@@ -21,6 +21,6 @@ jobs:
       - name: Commit and push changes
         run: |
           BRANCH_NAME="feature/autobranch-$(date +%s)"
-          gh pr create --fill --head $BRANCH_NAME --base ${{github.base_ref}} --title "Update docs after merge"
+          gh pr create --fill --head $BRANCH_NAME --base ${{github.base_ref}}
         env:
           GITHUB_TOKEN: ${{ secrets.GITHUB_TOKEN }}
