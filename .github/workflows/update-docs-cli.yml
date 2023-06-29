@@ -19,8 +19,14 @@ jobs:
 
       # generate PR with the changes
       - name: Commit and push changes
-        run: |
-          BRANCH_NAME="feature/autobranch-$(date +%s)"
-          gh pr create --fill --head $BRANCH_NAME --base main
+        uses: peter-evans/create-pull-request@v5
+	with:
+	  committer: Stacklok <noreply@stacklok.com>
+          author: ${{ github.actor }} <${{ github.actor }}@stacklok.com>
+	  branch-suffix: timestamp
+	  signoff: false
+	  delete-branch: true
+	  title: "Update client docs"
+	  labels: automated pr,docs
         env:
           GITHUB_TOKEN: ${{ secrets.GITHUB_TOKEN }}
