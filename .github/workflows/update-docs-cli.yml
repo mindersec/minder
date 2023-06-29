@@ -1,4 +1,4 @@
-name: Update Docs and Code
+name: Update docs for client
 on:
   push:
     branches:
@@ -21,6 +21,6 @@ jobs:
       - name: Commit and push changes
         run: |
           BRANCH_NAME="feature/autobranch-$(date +%s)"
-          gh pr create --fill --head $BRANCH_NAME --base ${{github.base_ref}}
+          gh pr create --fill --head $BRANCH_NAME --base main
         env:
           GITHUB_TOKEN: ${{ secrets.GITHUB_TOKEN }}
