@@ -23,6 +23,7 @@ jobs:
         shell: bash
         run: |
           cp config/config.yaml.example config.yaml
+          mkdir -p docs/cli
           make docs
 
       - name: Commit and push changes
