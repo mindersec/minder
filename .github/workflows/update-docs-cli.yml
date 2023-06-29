@@ -14,15 +14,13 @@ jobs:
         uses: actions/checkout@v2
 
       - name: Update documentation
-        if: ${{ github.event_name == 'push' && github.ref == 'refs/heads/main' }}
         shell: bash
         run: make docs
 
+      # generate PR with the changes
       - name: Commit and push changes
-        if: ${{ github.event_name == 'push' && github.ref == 'refs/heads/main' }}
         run: |
-          git config user.name "GitHub Actions"
-          git config user.email "<>"
-          git add .  # Add the modified files
-          git diff --cached --quiet || git commit -m "Update docs and code after merge"
-          git push
+          BRANCH_NAME="feature/autobranch-$(date +%s)"
+          gh pr create --fill --head $BRANCH_NAME --base ${{github.base_ref}} --title "Update docs after merge"
+        env:
+          GITHUB_TOKEN: ${{ secrets.GITHUB_TOKEN }}
