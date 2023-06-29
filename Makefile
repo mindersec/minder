@@ -47,12 +47,12 @@ bootstrap: ## install build deps
 	# N.B. each line runs in a different subshell, so we don't need to undo the 'cd' here
 	cd tools && go mod tidy && go install github.com/grpc-ecosystem/grpc-gateway/v2/protoc-gen-grpc-gateway github.com/grpc-ecosystem/grpc-gateway/v2/protoc-gen-openapiv2 google.golang.org/protobuf/cmd/protoc-gen-go google.golang.org/grpc/cmd/protoc-gen-go-grpc
 	# Create a config.yaml if it doesn't exist
-	cp -n config/config.yaml.example ./config.yaml
+	cp -n config/config.yaml.example ./config.yaml || echo "config.yaml already exists, not overwriting"
 	# Create keys:
-	mkdir .ssh
+	mkdir -p .ssh
 	# No passphrase (-N), don't overwrite existing keys ("n" to prompt)
-	echo n | ssh-keygen -t rsa -b 2048 -N "" -m PEM -f .ssh/access_token_rsa
-	echo n | ssh-keygen -t rsa -b 2048 -N "" -m PEM -f .ssh/refresh_token_rsa
+	echo n | ssh-keygen -t rsa -b 2048 -N "" -m PEM -f .ssh/access_token_rsa || true
+	echo n | ssh-keygen -t rsa -b 2048 -N "" -m PEM -f .ssh/refresh_token_rsa || true
 
 test: clean ## display test coverage
 	go test -json -v ./... | gotestfmt
