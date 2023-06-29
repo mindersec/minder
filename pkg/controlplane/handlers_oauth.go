@@ -20,14 +20,18 @@ import (
 	"encoding/base64"
 	"encoding/json"
 	"errors"
+
 	"time"
 
 	"github.com/rs/zerolog/log"
 	"github.com/spf13/viper"
+
+	"github.com/stacklok/mediator/internal/gh/queries"
 	"github.com/stacklok/mediator/pkg/auth"
 	mcrypto "github.com/stacklok/mediator/pkg/crypto"
 	"github.com/stacklok/mediator/pkg/db"
 	pb "github.com/stacklok/mediator/pkg/generated/protobuf/go/mediator/v1"
+	ghclient "github.com/stacklok/mediator/pkg/providers/github"
 	"go.opentelemetry.io/otel/attribute"
 	"go.opentelemetry.io/otel/trace"
 	"golang.org/x/oauth2"
@@ -162,6 +166,32 @@ func (s *Server) ExchangeCodeForTokenCLI(ctx context.Context,
 	}
 
 	token, err := oauthConfig.Exchange(ctx, in.Code)
+	if err != nil {
+		return nil, err
+	}
+
+	// Populate the database with the repositories using the GraphQL API
+	client, err := ghclient.NewRestClient(ctx, ghclient.GitHubConfig{
+		Token: token.AccessToken,
+	})
+	if err != nil {
+		return nil, err
+	}
+
+	isOrg, err := client.CheckIfTokenIsForOrganization(ctx)
+	if err != nil {
+		return nil, err
+	}
+
+	repos, err := client.ListAllRepositories(ctx, isOrg)
+	if err != nil {
+		return nil, err
+	}
+
+	// base64 decode repo.RepoID
+	// repoID, err := base64.StdEncoding.DecodeString(repo.RepoID)
+	// // Insert the repositories into the database
+	err = queries.SyncRepositoriesWithDB(ctx, s.store, repos, groupId.GrpID.Int32)
 	if err != nil {
 		return nil, err
 	}

@@ -36,10 +36,17 @@ type GitHubConfig struct { //revive:disable-line:exported
 	Endpoint string
 }
 
+// RepositoryListResult is a struct that contains the information about a GitHub repository
+type RepositoryListResult struct {
+	Repositories []*github.Repository
+}
+
 // RestAPI is the interface for interacting with the GitHub REST API
 // Add methods here for interacting with the GitHub Rest API
 // e.g. GetRepositoryRestInfo(ctx context.Context, owner string, name string) (*RepositoryInfo, error)
 type RestAPI interface {
+	ListAllRepositories(context.Context, bool) (RepositoryListResult, error)
+	CheckIfTokenIsForOrganization(context.Context) (bool, error)
 }
 
 // GraphQLAPI is the interface for interacting with the GitHub GraphQL API
@@ -47,6 +54,8 @@ type RestAPI interface {
 // e.g. GetRepositoryGraphInfo(ctx context.Context, owner string, name string) (*RepositoryInfo, error)
 type GraphQLAPI interface {
 	RunQuery(ctx context.Context, query interface{}, variables map[string]interface{}) error
+	// GetGraphQLRepositoryInfo(ctx context.Context, owner string, name string) (*RepositoryInfo, error)
+	// GetGraphQListAllRepositories(context.Context) (*RepositoryListResult, error)
 }
 
 // RestClient is the struct that contains the GitHub REST API client
