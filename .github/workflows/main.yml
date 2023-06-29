@@ -13,31 +13,16 @@
 # See the License for the specific language governing permissions and
 # limitations under the License.
 
+# These set of workflows run on every push to the main branch
 name: Main
 on:
   push:
     branches:
       - main
-      - release-*
-    paths-ignore:
-      - "**.md"
-      - "doc/**"
-      - "**.txt"
-      - "images/**"
-      - "LICENSE"
-  pull_request:
-    branches:
-      - main
-      - release-*
-    paths-ignore:
-      - "**.md"
-      - "doc/**"
-      - "**.txt"
-      - "images/**"
-      - "LICENSE"
 
 permissions:
   contents: read
+  packages: write
 
 jobs:
   license-check:
@@ -48,3 +33,5 @@ jobs:
     uses: ./.github/workflows/build.yml
   test:
     uses: ./.github/workflows/test.yml
+  image-build:
+    uses: ./.github/workflows/image-build.yml

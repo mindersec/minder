@@ -13,16 +13,22 @@
 # See the License for the specific language governing permissions and
 # limitations under the License.
 
-name: Tags
-
+# These set of workflows run on every pull request
+name: PR
 on:
-  push:
-    tags:
-      - "*"
+  pull_request:
+    branches:
+      - main
+      - release-*
+    paths-ignore:
+      - "**.md"
+      - "doc/**"
+      - "**.txt"
+      - "images/**"
+      - "LICENSE"
 
 permissions:
   contents: read
-  packages: write
 
 jobs:
   license-check:
