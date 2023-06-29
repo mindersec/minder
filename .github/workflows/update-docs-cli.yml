@@ -24,7 +24,6 @@ jobs:
           committer: GitHub <noreply@github.com>
           author: ${{ github.actor }} <${{ github.actor }}@users.noreply.github.com>
           signoff: false
-          branch-suffix: timestamp
           delete-branch: true
           title: 'Update client docs'
           body: |
