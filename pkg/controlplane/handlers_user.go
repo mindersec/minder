@@ -522,8 +522,7 @@ func (s *Server) GetUserByEmail(ctx context.Context,
 }
 
 // GetUser is a service for getting personal user details
-func (s *Server) GetUser(ctx context.Context,
-	in *pb.GetUserRequest) (*pb.GetUserResponse, error) {
+func (s *Server) GetUser(ctx context.Context, _ *pb.GetUserRequest) (*pb.GetUserResponse, error) {
 	claims, _ := ctx.Value(TokenInfoKey).(auth.UserClaims)
 	// check if user is authorized
 	if !IsRequestAuthorized(ctx, claims.UserId) {

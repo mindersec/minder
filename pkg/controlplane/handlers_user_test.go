@@ -322,7 +322,7 @@ func TestUpdateProfileDBMock(t *testing.T) {
 		OrganizationId: 1,
 		GroupIds:       []int32{1},
 		Roles: []auth.RoleInfo{
-			{RoleID: 1, IsAdmin: false, GroupID: 0, OrganizationID: 1}},
+			{RoleID: 1, IsAdmin: true, GroupID: 0, OrganizationID: 1}},
 	})
 
 	mockStore.EXPECT().UpdateUser(ctx, gomock.Any())
@@ -383,11 +383,12 @@ func TestUpdateProfile_gRPC(t *testing.T) {
 
 	// Create a new context and set the claims value
 	ctx := context.WithValue(context.Background(), TokenInfoKey, auth.UserClaims{
-		UserId:         1,
-		OrganizationId: 1,
-		GroupIds:       []int32{1},
+		UserId:              1,
+		OrganizationId:      1,
+		GroupIds:            []int32{1},
+		NeedsPasswordChange: false,
 		Roles: []auth.RoleInfo{
-			{RoleID: 1, IsAdmin: false, GroupID: 0, OrganizationID: 1}},
+			{RoleID: 1, IsAdmin: true, GroupID: 0, OrganizationID: 1}},
 	})
 
 	for i := range testCases {
