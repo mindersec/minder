@@ -51,7 +51,7 @@ func Execute() {
 func init() {
 	cobra.OnInitialize(initConfig)
 	RootCmd.PersistentFlags().String("grpc-host", "localhost", "Server host")
-	RootCmd.PersistentFlags().Int("grpc-port", 8090, "Server port")
+	RootCmd.PersistentFlags().Int("grpc-port", 8090, "Server port1")
 	RootCmd.PersistentFlags().StringVar(&cfgFile, "config", "", "config file (default is $PWD/config.yaml)")
 }
 
