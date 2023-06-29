@@ -7,7 +7,7 @@ on:
       - 'cmd/cli/**'
 
 jobs:
-  merge-triggered-job:
+  build-docs-cli:
     runs-on: ubuntu-latest
 
     steps:

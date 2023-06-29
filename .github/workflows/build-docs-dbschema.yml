@@ -7,7 +7,7 @@ on:
       - 'database/migrations/**'
 
 jobs:
-  merge-triggered-job:
+  build-docs-dbschema:
     runs-on: ubuntu-latest
 
     steps:
