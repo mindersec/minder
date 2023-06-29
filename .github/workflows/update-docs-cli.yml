@@ -8,6 +8,8 @@ on:
 jobs:
   update-docs-cli:
     runs-on: ubuntu-latest
+    permissions:
+      pull-requests: write
 
     steps:
       - name: Checkout repository
