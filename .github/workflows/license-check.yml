@@ -9,7 +9,7 @@ jobs:
 
       - uses: actions/setup-go@v4 # v4.0.0
         with:
-          go-version: 1.20.0
+          go-version-file: 'go.mod'
       - name: Install addlicense
         run: go install github.com/google/addlicense@v1.0.0
       - name: Check license headers
