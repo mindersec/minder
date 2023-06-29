@@ -19,15 +19,17 @@ jobs:
 
       - name: Commit and push changes
         uses: peter-evans/create-pull-request@v5
-	with:
-	  committer: Stacklok <noreply@stacklok.com>
-          author: ${{ github.actor }} <${{ github.actor }}@stacklok.com>
-	  branch-suffix: timestamp
-	  signoff: false
-	  delete-branch: true
-	  title: "Update client docs"
-	  labels: |
-            automated pr
+        with:
+          commit-message: Update documentation
+          committer: GitHub <noreply@github.com>
+          author: ${{ github.actor }} <${{ github.actor }}@users.noreply.github.com>
+          signoff: false
+          branch-suffix: timestamp
+          delete-branch: true
+          title: 'Update client docs'
+          body: |
+            Update client docs
+          labels: |
             docs
-        env:
-          GITHUB_TOKEN: ${{ secrets.GITHUB_TOKEN }}
+            automated pr
+          draft: false
