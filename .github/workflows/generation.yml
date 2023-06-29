@@ -50,7 +50,6 @@ jobs:
   sqlc-generation:
     runs-on: ubuntu-latest
     env:
-      GO_VERSION: 1.20.0
       SQLC_VERSION: 1.18.0
 
     steps:
@@ -60,7 +59,7 @@ jobs:
       - name: Set up Go
         uses: actions/setup-go@v4
         with:
-          go-version: 1.20.0
+          go-version-file: 'go.mod'
 
       - name: Install sqlc
         run: |
