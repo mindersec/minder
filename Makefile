@@ -79,6 +79,7 @@ migratedown: ## run migrate down
 	@go run cmd/server/main.go migrate down
 
 dbschema:	## generate database schema with schema spy, monitor file until doc is created and copy it
+	mkdir -p database/schema/output && chmod a+w database/schema/output
 	cd database/schema && docker-compose run --rm schemaspy -configFile /config/schemaspy.properties -imageformat png
 	sleep 10
 	cp database/schema/output/diagrams/summary/relationships.real.large.png docs/database/schema.png
