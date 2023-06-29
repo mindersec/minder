@@ -169,7 +169,7 @@ mediator control plane.`,
 		// get by id
 		if id > 0 {
 			user, groups, roles, err = getUser(ctx, client, "id", id, "", "")
-			util.ExitNicelyOnError(err, "Error getting ser by id")
+			util.ExitNicelyOnError(err, "Error getting user by id")
 			printUser(user, groups, roles, format)
 		} else if username != "" {
 			// get by username
