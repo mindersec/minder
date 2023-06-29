@@ -9,7 +9,11 @@ jobs:
   update-docs-cli:
     runs-on: ubuntu-latest
     permissions:
+      actions: read
+      contents: read
+      repository-projects: read
       pull-requests: write
+
 
     steps:
       - name: Checkout repository
