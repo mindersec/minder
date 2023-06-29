@@ -1,0 +1,34 @@
+name: Build dbschema if needed
+on:
+  push:
+    branches:
+      - main
+    paths:
+      - 'database/migrations/**'
+
+jobs:
+  update-docs-dbschema:
+    runs-on: ubuntu-latest
+
+    steps:
+      # Checkout your project with git
+      - name: Checkout
+        uses: actions/checkout@v3
+
+      - name: Install Docker Compose
+        run: |
+          # Install Docker Compose
+          sudo curl -L "https://github.com/docker/compose/releases/latest/download/docker-compose-$(uname -s)-$(uname -m)" -o /usr/local/bin/docker-compose
+          sudo chmod +x /usr/local/bin/docker-compose      
+
+      # generate db schema
+      - name: Generate db schema
+        run: make dbschema
+
+      # generate PR with the changes
+      - name: Commit and push changes
+        run: |
+          BRANCH_NAME="feature/autobranch-$(date +%s)"
+          gh pr create --fill --head $BRANCH_NAME --base ${{github.base_ref}}
+        env:
+          GITHUB_TOKEN: ${{ secrets.GITHUB_TOKEN }}
