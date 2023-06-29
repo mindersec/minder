@@ -83,7 +83,8 @@ dbschema:	## generate database schema with schema spy, monitor file until doc is
 	cd database/schema && docker-compose run --rm schemaspy -configFile /config/schemaspy.properties -imageformat png
 	sleep 10
 	cp database/schema/output/diagrams/summary/relationships.real.large.png docs/database/schema.png
-	cd database/schema && docker compose down && rm -rf output
+	cd database/schema && docker compose down
+	rm -rf database/schema/output
 
 mock:
 	mockgen -package mockdb -destination database/mock/store.go github.com/stacklok/mediator/pkg/db Store
