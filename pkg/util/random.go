@@ -45,7 +45,7 @@ func RandomInt(min, max int64, seed int64) int64 {
 
 // RandomString returns a random string of length n.
 func RandomString(n int, seed int64) string {
-	const letters = "abcdefghijklmnopqrstuvwxyzABCDEFGHIJKLMNOPQRSTUVWXYZ0123456789"
+	const letters = "abcdefghijklmnopqrstuvwxyzABCDEFGHIJKLMNOPQRSTUVWXYZ"
 	s := make([]byte, n)
 	r := NewRand(seed)
 	for i := range s {

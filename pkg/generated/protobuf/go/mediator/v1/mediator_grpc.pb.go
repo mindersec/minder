@@ -1997,8 +1997,10 @@ const (
 	UserService_GetUsersByGroup_FullMethodName        = "/mediator.v1.UserService/GetUsersByGroup"
 	UserService_GetUserById_FullMethodName            = "/mediator.v1.UserService/GetUserById"
 	UserService_GetUserByUserName_FullMethodName      = "/mediator.v1.UserService/GetUserByUserName"
+	UserService_GetUser_FullMethodName                = "/mediator.v1.UserService/GetUser"
 	UserService_GetUserByEmail_FullMethodName         = "/mediator.v1.UserService/GetUserByEmail"
 	UserService_UpdatePassword_FullMethodName         = "/mediator.v1.UserService/UpdatePassword"
+	UserService_UpdateProfile_FullMethodName          = "/mediator.v1.UserService/UpdateProfile"
 )
 
 // UserServiceClient is the client API for UserService service.
@@ -2012,8 +2014,10 @@ type UserServiceClient interface {
 	GetUsersByGroup(ctx context.Context, in *GetUsersByGroupRequest, opts ...grpc.CallOption) (*GetUsersByGroupResponse, error)
 	GetUserById(ctx context.Context, in *GetUserByIdRequest, opts ...grpc.CallOption) (*GetUserByIdResponse, error)
 	GetUserByUserName(ctx context.Context, in *GetUserByUserNameRequest, opts ...grpc.CallOption) (*GetUserByUserNameResponse, error)
+	GetUser(ctx context.Context, in *GetUserRequest, opts ...grpc.CallOption) (*GetUserResponse, error)
 	GetUserByEmail(ctx context.Context, in *GetUserByEmailRequest, opts ...grpc.CallOption) (*GetUserByEmailResponse, error)
 	UpdatePassword(ctx context.Context, in *UpdatePasswordRequest, opts ...grpc.CallOption) (*UpdatePasswordResponse, error)
+	UpdateProfile(ctx context.Context, in *UpdateProfileRequest, opts ...grpc.CallOption) (*UpdateProfileResponse, error)
 }
 
 type userServiceClient struct {
@@ -2087,6 +2091,15 @@ func (c *userServiceClient) GetUserByUserName(ctx context.Context, in *GetUserBy
 	return out, nil
 }
 
+func (c *userServiceClient) GetUser(ctx context.Context, in *GetUserRequest, opts ...grpc.CallOption) (*GetUserResponse, error) {
+	out := new(GetUserResponse)
+	err := c.cc.Invoke(ctx, UserService_GetUser_FullMethodName, in, out, opts...)
+	if err != nil {
+		return nil, err
+	}
+	return out, nil
+}
+
 func (c *userServiceClient) GetUserByEmail(ctx context.Context, in *GetUserByEmailRequest, opts ...grpc.CallOption) (*GetUserByEmailResponse, error) {
 	out := new(GetUserByEmailResponse)
 	err := c.cc.Invoke(ctx, UserService_GetUserByEmail_FullMethodName, in, out, opts...)
@@ -2105,6 +2118,15 @@ func (c *userServiceClient) UpdatePassword(ctx context.Context, in *UpdatePasswo
 	return out, nil
 }
 
+func (c *userServiceClient) UpdateProfile(ctx context.Context, in *UpdateProfileRequest, opts ...grpc.CallOption) (*UpdateProfileResponse, error) {
+	out := new(UpdateProfileResponse)
+	err := c.cc.Invoke(ctx, UserService_UpdateProfile_FullMethodName, in, out, opts...)
+	if err != nil {
+		return nil, err
+	}
+	return out, nil
+}
+
 // UserServiceServer is the server API for UserService service.
 // All implementations must embed UnimplementedUserServiceServer
 // for forward compatibility
@@ -2116,8 +2138,10 @@ type UserServiceServer interface {
 	GetUsersByGroup(context.Context, *GetUsersByGroupRequest) (*GetUsersByGroupResponse, error)
 	GetUserById(context.Context, *GetUserByIdRequest) (*GetUserByIdResponse, error)
 	GetUserByUserName(context.Context, *GetUserByUserNameRequest) (*GetUserByUserNameResponse, error)
+	GetUser(context.Context, *GetUserRequest) (*GetUserResponse, error)
 	GetUserByEmail(context.Context, *GetUserByEmailRequest) (*GetUserByEmailResponse, error)
 	UpdatePassword(context.Context, *UpdatePasswordRequest) (*UpdatePasswordResponse, error)
+	UpdateProfile(context.Context, *UpdateProfileRequest) (*UpdateProfileResponse, error)
 	mustEmbedUnimplementedUserServiceServer()
 }
 
@@ -2146,11 +2170,17 @@ func (UnimplementedUserServiceServer) GetUserById(context.Context, *GetUserByIdR
 func (UnimplementedUserServiceServer) GetUserByUserName(context.Context, *GetUserByUserNameRequest) (*GetUserByUserNameResponse, error) {
 	return nil, status.Errorf(codes.Unimplemented, "method GetUserByUserName not implemented")
 }
+func (UnimplementedUserServiceServer) GetUser(context.Context, *GetUserRequest) (*GetUserResponse, error) {
+	return nil, status.Errorf(codes.Unimplemented, "method GetUser not implemented")
+}
 func (UnimplementedUserServiceServer) GetUserByEmail(context.Context, *GetUserByEmailRequest) (*GetUserByEmailResponse, error) {
 	return nil, status.Errorf(codes.Unimplemented, "method GetUserByEmail not implemented")
 }
 func (UnimplementedUserServiceServer) UpdatePassword(context.Context, *UpdatePasswordRequest) (*UpdatePasswordResponse, error) {
 	return nil, status.Errorf(codes.Unimplemented, "method UpdatePassword not implemented")
+}
+func (UnimplementedUserServiceServer) UpdateProfile(context.Context, *UpdateProfileRequest) (*UpdateProfileResponse, error) {
+	return nil, status.Errorf(codes.Unimplemented, "method UpdateProfile not implemented")
 }
 func (UnimplementedUserServiceServer) mustEmbedUnimplementedUserServiceServer() {}
 
@@ -2291,6 +2321,24 @@ func _UserService_GetUserByUserName_Handler(srv interface{}, ctx context.Context
 	return interceptor(ctx, in, info, handler)
 }
 
+func _UserService_GetUser_Handler(srv interface{}, ctx context.Context, dec func(interface{}) error, interceptor grpc.UnaryServerInterceptor) (interface{}, error) {
+	in := new(GetUserRequest)
+	if err := dec(in); err != nil {
+		return nil, err
+	}
+	if interceptor == nil {
+		return srv.(UserServiceServer).GetUser(ctx, in)
+	}
+	info := &grpc.UnaryServerInfo{
+		Server:     srv,
+		FullMethod: UserService_GetUser_FullMethodName,
+	}
+	handler := func(ctx context.Context, req interface{}) (interface{}, error) {
+		return srv.(UserServiceServer).GetUser(ctx, req.(*GetUserRequest))
+	}
+	return interceptor(ctx, in, info, handler)
+}
+
 func _UserService_GetUserByEmail_Handler(srv interface{}, ctx context.Context, dec func(interface{}) error, interceptor grpc.UnaryServerInterceptor) (interface{}, error) {
 	in := new(GetUserByEmailRequest)
 	if err := dec(in); err != nil {
@@ -2323,6 +2371,24 @@ func _UserService_UpdatePassword_Handler(srv interface{}, ctx context.Context, d
 	}
 	handler := func(ctx context.Context, req interface{}) (interface{}, error) {
 		return srv.(UserServiceServer).UpdatePassword(ctx, req.(*UpdatePasswordRequest))
+	}
+	return interceptor(ctx, in, info, handler)
+}
+
+func _UserService_UpdateProfile_Handler(srv interface{}, ctx context.Context, dec func(interface{}) error, interceptor grpc.UnaryServerInterceptor) (interface{}, error) {
+	in := new(UpdateProfileRequest)
+	if err := dec(in); err != nil {
+		return nil, err
+	}
+	if interceptor == nil {
+		return srv.(UserServiceServer).UpdateProfile(ctx, in)
+	}
+	info := &grpc.UnaryServerInfo{
+		Server:     srv,
+		FullMethod: UserService_UpdateProfile_FullMethodName,
+	}
+	handler := func(ctx context.Context, req interface{}) (interface{}, error) {
+		return srv.(UserServiceServer).UpdateProfile(ctx, req.(*UpdateProfileRequest))
 	}
 	return interceptor(ctx, in, info, handler)
 }
@@ -2363,12 +2429,20 @@ var UserService_ServiceDesc = grpc.ServiceDesc{
 			Handler:    _UserService_GetUserByUserName_Handler,
 		},
 		{
+			MethodName: "GetUser",
+			Handler:    _UserService_GetUser_Handler,
+		},
+		{
 			MethodName: "GetUserByEmail",
 			Handler:    _UserService_GetUserByEmail_Handler,
 		},
 		{
 			MethodName: "UpdatePassword",
 			Handler:    _UserService_UpdatePassword_Handler,
+		},
+		{
+			MethodName: "UpdateProfile",
+			Handler:    _UserService_UpdateProfile_Handler,
 		},
 	},
 	Streams:  []grpc.StreamDesc{},

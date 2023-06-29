@@ -391,28 +391,22 @@ func (q *Queries) UpdatePassword(ctx context.Context, arg UpdatePasswordParams) 
 }
 
 const updateUser = `-- name: UpdateUser :one
-UPDATE users SET email = $2, username = $3, password = $4, first_name = $5, last_name = $6, is_protected = $7, updated_at = NOW() WHERE id = $1 RETURNING id, organization_id, email, username, password, needs_password_change, first_name, last_name, is_protected, created_at, updated_at, min_token_issued_time
+UPDATE users SET email = $2, first_name = $3, last_name = $4, updated_at = NOW() WHERE id = $1 RETURNING id, organization_id, email, username, password, needs_password_change, first_name, last_name, is_protected, created_at, updated_at, min_token_issued_time
 `
 
 type UpdateUserParams struct {
-	ID          int32          `json:"id"`
-	Email       sql.NullString `json:"email"`
-	Username    string         `json:"username"`
-	Password    string         `json:"password"`
-	FirstName   sql.NullString `json:"first_name"`
-	LastName    sql.NullString `json:"last_name"`
-	IsProtected bool           `json:"is_protected"`
+	ID        int32          `json:"id"`
+	Email     sql.NullString `json:"email"`
+	FirstName sql.NullString `json:"first_name"`
+	LastName  sql.NullString `json:"last_name"`
 }
 
 func (q *Queries) UpdateUser(ctx context.Context, arg UpdateUserParams) (User, error) {
 	row := q.db.QueryRowContext(ctx, updateUser,
 		arg.ID,
 		arg.Email,
-		arg.Username,
-		arg.Password,
 		arg.FirstName,
 		arg.LastName,
-		arg.IsProtected,
 	)
 	var i User
 	err := row.Scan(
