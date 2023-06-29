@@ -270,10 +270,11 @@ func GetUserClaims(ctx context.Context, store db.Store, userId int32) (UserClaim
 	}
 
 	claims := UserClaims{
-		UserId:         userId,
-		Roles:          roles,
-		GroupIds:       groups,
-		OrganizationId: userInfo.OrganizationID,
+		UserId:              userId,
+		Roles:               roles,
+		GroupIds:            groups,
+		OrganizationId:      userInfo.OrganizationID,
+		NeedsPasswordChange: userInfo.NeedsPasswordChange,
 	}
 
 	return claims, nil
