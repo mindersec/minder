@@ -1,0 +1,35 @@
+name: Build dbschema if needed
+on:
+  push:
+    branches:
+      - main
+    paths:
+      - 'database/migrations/**'
+
+jobs:
+  update-docs-dbschema:
+    runs-on: ubuntu-latest
+
+    steps:
+      # Checkout your project with git
+      - name: Checkout
+        uses: actions/checkout@v3
+
+      - name: Install Docker Compose
+        run: |
+          # Install Docker Compose
+          sudo curl -L "https://github.com/docker/compose/releases/latest/download/docker-compose-$(uname -s)-$(uname -m)" -o /usr/local/bin/docker-compose
+          sudo chmod +x /usr/local/bin/docker-compose      
+
+      # generate db schema
+      - name: Generate db schema
+        run: make dbschema
+
+      - name: Commit and push changes
+      if: ${{ github.event_name == 'push' && github.ref == 'refs/heads/main' }}
+      run: |
+        git config user.name "GitHub Actions"
+        git config user.email "<>"
+        git add .  # Add the modified files
+        git diff --cached --quiet || git commit -m "Update db schema after merge"
+        git push        

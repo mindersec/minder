@@ -1,0 +1,28 @@
+name: Update Docs and Code
+on:
+  push:
+    branches:
+      - main
+    paths:
+      - 'cmd/cli/**'  
+jobs:
+  update-docs-cli:
+    runs-on: ubuntu-latest
+
+    steps:
+      - name: Checkout repository
+        uses: actions/checkout@v2
+
+      - name: Update documentation
+        if: ${{ github.event_name == 'push' && github.ref == 'refs/heads/main' }}
+        shell: bash
+        run: make docs
+
+      - name: Commit and push changes
+        if: ${{ github.event_name == 'push' && github.ref == 'refs/heads/main' }}
+        run: |
+          git config user.name "GitHub Actions"
+          git config user.email "<>"
+          git add .  # Add the modified files
+          git diff --cached --quiet || git commit -m "Update docs and code after merge"
+          git push
