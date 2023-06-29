@@ -25,10 +25,20 @@ jobs:
       - name: Generate db schema
         run: make dbschema
 
-      # generate PR with the changes
       - name: Commit and push changes
-        run: |
-          BRANCH_NAME="feature/autobranch-$(date +%s)"
-          gh pr create --fill --head $BRANCH_NAME --base main
-        env:
-          GITHUB_TOKEN: ${{ secrets.GITHUB_TOKEN }}
+        uses: peter-evans/create-pull-request@v5
+        with:
+          commit-message: Update db schema documentation
+          committer: GitHub <noreply@github.com>
+          author: ${{ github.actor }} <${{ github.actor }}@users.noreply.github.com>
+          signoff: false
+          branch-suffix: timestamp
+          delete-branch: true
+          title: 'Update db schema documentation'
+          body: |
+            Update db schema documentation
+          labels: |
+            docs
+            automated pr
+          draft: false
+~                       
