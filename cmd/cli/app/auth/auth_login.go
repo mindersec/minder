@@ -84,7 +84,7 @@ will be saved to $XDG_CONFIG_HOME/mediator/credentials.json`,
 
 		fmt.Printf("You have been successfully logged in. Your access credentials saved to %s\n"+
 			"Remember that if that's your first login, you will need to update your password "+
-			"using the user update_password command", filePath)
+			"using the user update --password command", filePath)
 
 	},
 }

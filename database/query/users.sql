@@ -11,7 +11,7 @@ SELECT * FROM users WHERE email = $1;
 SELECT * FROM users WHERE username = $1;
 
 -- name: UpdateUser :one
-UPDATE users SET email = $2, username = $3, password = $4, first_name = $5, last_name = $6, is_protected = $7, updated_at = NOW() WHERE id = $1 RETURNING *;
+UPDATE users SET email = $2, first_name = $3, last_name = $4, updated_at = NOW() WHERE id = $1 RETURNING *;
 
 -- name: UpdatePassword :one
 UPDATE users SET password = $2, needs_password_change = FALSE, updated_at = NOW() WHERE id = $1 RETURNING *;

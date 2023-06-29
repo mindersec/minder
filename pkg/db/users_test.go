@@ -108,7 +108,6 @@ func TestUpdateUser(t *testing.T) {
 		ID:        user1.ID,
 		Email:     stringToNullString(util.RandomEmail(seed)),
 		Username:  util.RandomString(10, seed),
-		Password:  util.RandomString(10, seed),
 		FirstName: stringToNullString(util.RandomName(seed)),
 		LastName:  stringToNullString(util.RandomName(seed)),
 	}
@@ -120,7 +119,6 @@ func TestUpdateUser(t *testing.T) {
 	require.Equal(t, arg.ID, user2.ID)
 	require.Equal(t, arg.Email, user2.Email)
 	require.Equal(t, arg.Username, user2.Username)
-	require.Equal(t, arg.Password, user2.Password)
 	require.Equal(t, arg.FirstName, user2.FirstName)
 	require.Equal(t, arg.LastName, user2.LastName)
 	require.Equal(t, arg.IsProtected, user2.IsProtected)

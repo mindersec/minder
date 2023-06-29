@@ -76,7 +76,14 @@ func getUser(ctx context.Context, client pb.UserServiceClient, queryType string,
 		userRecord = user.User
 		groups = user.Groups
 		roles = user.Roles
-
+	} else if queryType == "personal" {
+		user, err := client.GetUser(ctx, &pb.GetUserRequest{})
+		if err != nil {
+			return nil, nil, nil, err
+		}
+		userRecord = user.User
+		groups = user.Groups
+		roles = user.Roles
 	}
 
 	return userRecord, groups, roles, nil
@@ -151,12 +158,6 @@ mediator control plane.`,
 		if email != "" {
 			count++
 		}
-
-		// check no option selected, or more than one
-		if count == 0 {
-			fmt.Fprintf(os.Stderr, "Error: must specify one of id, username, or email\n")
-			os.Exit(1)
-		}
 		if count > 1 {
 			fmt.Fprintf(os.Stderr, "Error: must specify only one of id, username, or email\n")
 			os.Exit(1)
@@ -168,17 +169,22 @@ mediator control plane.`,
 		// get by id
 		if id > 0 {
 			user, groups, roles, err = getUser(ctx, client, "id", id, "", "")
-			util.ExitNicelyOnError(err, "Error getting organization by id")
+			util.ExitNicelyOnError(err, "Error getting ser by id")
 			printUser(user, groups, roles, format)
 		} else if username != "" {
 			// get by username
 			user, groups, roles, err = getUser(ctx, client, "username", 0, username, "")
-			util.ExitNicelyOnError(err, "Error getting organization by id")
+			util.ExitNicelyOnError(err, "Error getting user by username")
 			printUser(user, groups, roles, format)
 		} else if email != "" {
 			// get by email
 			user, groups, roles, err = getUser(ctx, client, "email", 0, "", email)
-			util.ExitNicelyOnError(err, "Error getting organization by id")
+			util.ExitNicelyOnError(err, "Error getting user by email")
+			printUser(user, groups, roles, format)
+		} else {
+			// just get personal profile
+			user, groups, roles, err = getUser(ctx, client, "personal", 0, "", "")
+			util.ExitNicelyOnError(err, "Error getting personal user")
 			printUser(user, groups, roles, format)
 		}
 	},
