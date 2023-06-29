@@ -194,6 +194,6 @@ func init() {
 	UserCmd.AddCommand(user_getCmd)
 	user_getCmd.Flags().Int32P("id", "i", -1, "ID for the user to query")
 	user_getCmd.Flags().StringP("username", "u", "", "Username for the user to query")
-	user_getCmd.Flags().StringP("email", "e", "", "Email for the user to query")
+	user_getCmd.Flags().StringP("email", "e", "", "Email for the user to query111")
 	user_getCmd.Flags().StringP("output", "o", "", "Output format (json or yaml)")
 }
