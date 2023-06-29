@@ -22,7 +22,7 @@ CREATE TABLE organizations (
 );
 
 -- groups table
-CREATE TABLE groups (
+CREATE TABLE gaaaaroups (
     id SERIAL PRIMARY KEY,
     organization_id INTEGER NOT NULL REFERENCES organizations(id) ON DELETE CASCADE,
     name TEXT NOT NULL,
