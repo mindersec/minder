@@ -27,7 +27,7 @@ services:
     ports:
       - "8080:8080"
       - "8090:8090"
-    image: ghcr.io/stacklok/mediator:latest
+    image: ko://github.com/stacklok/mediator/cmd/server
     networks:
       - app_net
     depends_on:
@@ -40,7 +40,7 @@ services:
       "--yes",
       "--db-host=postgres",
       ]
-    image: ghcr.io/stacklok/mediator:latest
+    image: ko://github.com/stacklok/mediator/cmd/server
     networks:
       - app_net
     deploy:
