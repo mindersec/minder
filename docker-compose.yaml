@@ -28,12 +28,10 @@ services:
       - "8080:8080"
       - "8090:8090"
     image: ghcr.io/stacklok/mediator:latest
-    volumes:
-      - ./config/config.yaml.example:/opt/apt-root/src/config.yaml
     networks:
       - app_net
     depends_on:
-      - migrate
+      - postgres
   migrate:
     build: .
     command: [
@@ -43,8 +41,6 @@ services:
       "--db-host=postgres",
       ]
     image: ghcr.io/stacklok/mediator:latest
-    volumes:
-      - ./config/config.yaml.example:/opt/apt-root/src/config.yaml
     networks:
       - app_net
     deploy:

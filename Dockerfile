@@ -26,5 +26,33 @@ ADD ./ $APP_ROOT/src/
 
 RUN CGO_ENABLED=0 go build -trimpath -o mediator-server ./cmd/server
 
+# Create a "nobody" non-root user for the next image by crafting an /etc/passwd
+# file that the next image can copy in. This is necessary since the next image
+# is based on scratch, which doesn't have adduser, cat, echo, or even sh.
+RUN echo "nobody:x:65534:65534:Nobody:/:" > /etc_passwd
+
+RUN mkdir -p /app
+
+FROM scratch
+
+COPY --chown=65534:65534 --from=builder /app /app
+
+WORKDIR /app
+
+# Copy database directory. This is needed for the migration sub-command to work.
+COPY --chown=65534:65534 --from=builder /opt/app-root/src/database /app/database
+
+COPY --from=builder /opt/app-root/src/mediator-server /usr/bin/mediator-server
+
+# Copy the certs from the builder stage
+COPY --from=builder /etc/ssl/certs/ca-certificates.crt /etc/ssl/certs/
+
+# Copy the /etc_passwd file we created in the builder stage into /etc/passwd in
+# the target stage. This creates a new non-root user as a security best
+# practice.
+COPY --from=builder /etc_passwd /etc/passwd
+
+USER nobody
+
 # Set the binary as the entrypoint of the container
-ENTRYPOINT ["/opt/app-root/src/mediator-server"]
+ENTRYPOINT ["/usr/bin/mediator-server"]
