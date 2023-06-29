@@ -15,7 +15,9 @@ jobs:
 
       - name: Update documentation
         shell: bash
-        run: make docs
+        run: |
+          cp config/config.yaml.example config.yaml
+          make docs
 
       - name: Commit and push changes
         uses: peter-evans/create-pull-request@v5

@@ -1,19 +1,21 @@
-## medctl auth logout
+## medctl auth revoke_provider
 
-Logout from mediator control plane.
+Revoke access tokens for provider
 
 ### Synopsis
 
-Logout from mediator control plane. Credentials will be removed from $XDG_CONFIG_HOME/mediator/credentials.json
+It can revoke access tokens for specific provider.
 
 ```
-medctl auth logout [flags]
+medctl auth revoke_provider [flags]
 ```
 
 ### Options
 
 ```
-  -h, --help   help for logout
+  -a, --all               Revoke all tokens
+  -h, --help              help for revoke_provider
+  -n, --provider string   Name for the provider to revoke tokens for
 ```
 
 ### Options inherited from parent commands
