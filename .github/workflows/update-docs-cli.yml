@@ -4,7 +4,7 @@ on:
     branches:
       - main
     paths:
-      - 'cmd/cli/**'  
+      - "cmd/cli/**"
 jobs:
   update-docs-cli:
     runs-on: ubuntu-latest
@@ -17,14 +17,13 @@ jobs:
       - name: Set up Go
         uses: actions/setup-go@v4
         with:
-          go-version-file: 'go.mod'        
+          go-version-file: "go.mod"
 
       - name: Update documentation
         shell: bash
         run: |
           cp config/config.yaml.example config.yaml
-          mkdir -p docs/cli
-          make docs
+          make cli-docs
 
       - name: Extract Commit SHA and Details
         id: extract_commit_details
@@ -45,7 +44,7 @@ jobs:
           signoff: false
           branch-suffix: timestamp
           delete-branch: true
-          title: 'Auto-generated cli documentation update - ${{ steps.extract_commit_details.outputs.commit_date }}'
+          title: "Auto-generated cli documentation update - ${{ steps.extract_commit_details.outputs.commit_date }}"
           body: |
             ** Source commit **
               - Commit SHA: [${{ steps.extract_commit_details.outputs.commit_sha }}](${{ github.server_url }}/${{ github.repository }}/commit/${{ steps.extract_commit_details.outputs.commit_sha}})

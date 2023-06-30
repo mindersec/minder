@@ -1,0 +1,113 @@
+/**
+ * Any CSS included here will be global. The classic template
+ * bundles Infima by default. Infima is a CSS framework designed to
+ * work well for content-centric websites.
+ */
+
+/* You can override the default Infima variables here. */
+@import url('https://fonts.googleapis.com/css2?family=Roboto&display=swap');
+
+:root {
+  --ifm-font-family-base: 'Roboto';  
+  --ifm-font-size-base: 15px;
+  --ifm-code-font-size: 95%;
+  --ifm-navbar-background-color: #303846;
+  --ifm-navbar-link-color: lightgray  ;
+  --ifm-navbar-link-hover-color: white;
+}
+
+[data-theme='dark'] {
+  --ifm-color-primary: powderblue;
+  --ifm-link-color: powderblue;
+  --ifm-link-hover-color: white;
+  --ifm-color-primary-dark: #606060;
+  --ifm-color-primary-darker: #404040;
+  --ifm-color-primary-darkest: #202020;
+  --ifm-color-primary-light: #909090;
+  --ifm-color-primary-lighter: #b0b0b0;
+  --ifm-color-primary-lightest: white;
+  --ifm-footer-link-color: lightgray;
+  --ifm-footer-link-hover-color: lightgray;
+  --ifm-font-color-base: lightgray;
+  --ifm-heading-color: #f5f5f5;
+  --ifm-menu-color: lightgray;
+  --ifm-footer-background-color: black;
+  --ifm-color-content-secondary: lightgray;
+  --ifm-toc-border-color: #404040;
+  --ifm-color-emphasis-200: #202020;
+  --ifm-color-emphasis-300: #404040;
+  --ifm-color-emphasis-700: white;
+  --ifm-color-emphasis-800: powderblue;
+  --docusaurus-highlighted-code-line-bg: rgba(0, 0, 0, 0.1);
+  --ifm-code-background: #202020;
+  --ifm-dropdown-background-color: #202020;
+  --ifm-color-warning-contrast-background: lightgray;
+}
+
+[data-theme='light'] {
+  --ifm-font-family-base: 'Roboto';  
+  --ifm-font-size-base: 15px;
+  --ifm-color-primary: black;
+}
+
+[data-theme='dark'] body {
+  background-color: black;
+}
+
+[data-theme='dark'] .hero__subtitle {
+  color: lightgray;
+}
+
+.navbar__logo {
+  margin-right: 5rem;
+}
+
+[data-theme='light'] .navbar__item {
+  color: lightgray;
+}
+
+[data-theme='light'] .clean-btn {
+  color: lightgray;
+}
+[data-theme='light'] .clean-btn:hover {
+  background-color: #202020;
+}
+
+[data-theme='dark'] .footer {
+  background-color: #202020;
+}
+
+[data-theme='dark'] .card {
+  background-color: #202020;
+}
+
+h1 {
+  font-size: 2rem;
+}
+
+[data-theme='dark'] h2 {
+  font-size: 1.5rem;
+  color: powderblue;
+}
+
+[data-theme='light'] h2 {
+  font-size: 1.5rem;
+  color: #202020;
+}
+
+[data-theme='dark'] .breadcrumbs__item:not(:last-child):after {
+  content: "›";
+  color: white;
+  margin: 0 0.5rem;
+  font-size: 1rem;
+}
+
+.badge {
+  margin-top: 1rem;
+  margin-bottom: 1rem;
+  --ifm-badge-background-color: powderblue;
+}
+
+[data-theme='dark'].pagination-nav__link {
+  background-color: #202020;
+}
