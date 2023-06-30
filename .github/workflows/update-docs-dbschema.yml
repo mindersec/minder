@@ -9,6 +9,7 @@ on:
 jobs:
   update-docs-dbschema:
     runs-on: ubuntu-latest
+    permissions: write-all
 
     steps:
       # Checkout your project with git
