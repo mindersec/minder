@@ -54,8 +54,6 @@ type RestAPI interface {
 // e.g. GetRepositoryGraphInfo(ctx context.Context, owner string, name string) (*RepositoryInfo, error)
 type GraphQLAPI interface {
 	RunQuery(ctx context.Context, query interface{}, variables map[string]interface{}) error
-	// GetGraphQLRepositoryInfo(ctx context.Context, owner string, name string) (*RepositoryInfo, error)
-	// GetGraphQListAllRepositories(context.Context) (*RepositoryListResult, error)
 }
 
 // RestClient is the struct that contains the GitHub REST API client

@@ -188,8 +188,6 @@ func (s *Server) ExchangeCodeForTokenCLI(ctx context.Context,
 		return nil, err
 	}
 
-	// base64 decode repo.RepoID
-	// repoID, err := base64.StdEncoding.DecodeString(repo.RepoID)
 	// // Insert the repositories into the database
 	err = queries.SyncRepositoriesWithDB(ctx, s.store, repos, groupId.GrpID.Int32)
 	if err != nil {
