@@ -204,7 +204,7 @@ func getOTELGRPCInterceptorOpts(addTracing, addMetrics bool) []otelgrpc.Option {
 
 // StartHTTPServer starts a HTTP server and registers the gRPC handler mux to it
 // set store as a blank identifier for now as we will use it in the future
-func StartHTTPServer(ctx context.Context, address, grpcAddress string, store db.Store) error {
+func StartHTTPServer(ctx context.Context, address, grpcAddress string, _ db.Store) error {
 
 	mux := http.NewServeMux()
 
@@ -303,12 +303,13 @@ func shutdownHandler(component string, sdf shutdowner) {
 
 // setUpWatermill isolates the watermill setup code
 // TODO: pass in logger
+// TODO: figure out the right package for this
 func setUpWatermill() (*message.Router, message.Publisher, error) {
-	var logger watermill.LoggerAdapter = nil
-	router, err := message.NewRouter(message.RouterConfig{}, logger)
+	var l watermill.LoggerAdapter = nil
+	router, err := message.NewRouter(message.RouterConfig{}, l)
 	if err != nil {
 		return nil, nil, err
 	}
-	publisher := gochannel.NewGoChannel(gochannel.Config{}, logger)
+	publisher := gochannel.NewGoChannel(gochannel.Config{}, l)
 	return router, publisher, nil
 }

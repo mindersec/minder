@@ -141,8 +141,9 @@ func TestHandleWebHook(t *testing.T) {
 	}
 	addr := fmt.Sprintf("localhost:%d", port)
 	server := &http.Server{
-		Addr:    fmt.Sprintf(":%d", port),
-		Handler: hook,
+		Addr:              fmt.Sprintf(":%d", port),
+		Handler:           hook,
+		ReadHeaderTimeout: 1 * time.Second,
 	}
 	go server.ListenAndServe()
 
@@ -189,7 +190,7 @@ func TestHandleWebHook(t *testing.T) {
 	assert.Equal(t, "package", received.Metadata["type"])
 	assert.Equal(t, "https://api.github.com/", received.Metadata["source"])
 
-	p.Close()
+	assert.NoError(t, p.Close())
 }
 
 func TestAll(t *testing.T) {
