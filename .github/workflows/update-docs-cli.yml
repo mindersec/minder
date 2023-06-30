@@ -33,6 +33,9 @@ jobs:
           COMMIT_SHA="${{ github.sha }}"
           COMMIT_DATE=$(git show -s --format=%cd --date=format:'%Y-%m-%d %H:%M:%S' $commit_sha)
           COMMIT_AUTHOR=$(git show -s --format='%an' $commit_sha)
+          echo "commit_sha=$COMMIT_SHA" >> $GITHUB_OUTPUT
+          echo "commit_date=$COMMIT_DATE" >> $GITHUB_OUTPUT
+          echo "commit_author=$COMMIT_AUTHOR" >> $GITHUB_OUTPUT
 
       - name: Commit and push changes
         uses: peter-evans/create-pull-request@v5
@@ -46,9 +49,9 @@ jobs:
           title: 'Auto-generated cli documentation update - ${COMMIT_DATE}'
           body: |
             ** Source commit **
-             - Commit SHA: [${$COMMIT_SHA}](${{ github.server_url }}/${{ github.repository }}/commit/${COMMIT_SHA})
-            - Date: ${COMMIT_DATE}
-            - Author: ${COMMIT_AUTHOR}
+             - Commit SHA: [${{ steps.extract_commit_details.outputs.commit_sha }}](${{ github.server_url }}/${{ github.repository }}/commit/${{ steps.extract_commit_details.outputs.commit_sha}})
+            - Date: ${{ steps.extract_commit_details.output.commit_date }}
+            - Author: ${{ steps.extract_commit_details.output.commit_author }}
 
           labels: |
             docs
