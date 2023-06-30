@@ -46,12 +46,12 @@ jobs:
           signoff: false
           branch-suffix: timestamp
           delete-branch: true
-          title: 'Auto-generated cli documentation update - ${COMMIT_DATE}'
+          title: 'Auto-generated cli documentation update - ${{ steps.extract_commit_details.output.commit_date }}'
           body: |
             ** Source commit **
              - Commit SHA: [${{ steps.extract_commit_details.outputs.commit_sha }}](${{ github.server_url }}/${{ github.repository }}/commit/${{ steps.extract_commit_details.outputs.commit_sha}})
-            - Date: ${{ steps.extract_commit_details.output.commit_date }}
-            - Author: ${{ steps.extract_commit_details.output.commit_author }}
+            - Date: ${{ steps.extract_commit_details.outputs.commit_date }}
+            - Author: ${{ steps.extract_commit_details.outputs.commit_author }}
 
           labels: |
             docs
