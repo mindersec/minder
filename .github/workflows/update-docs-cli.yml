@@ -30,12 +30,9 @@ jobs:
       - name: Extract Commit SHA and Details
         id: extract_commit_details
         run: |
-          commit_sha="${{ github.sha }}"
-          commit_date=$(git show -s --format=%cd --date=format:'%Y-%m-%d %H:%M:%S' $commit_sha)
-          commit_author=$(git show -s --format='%an' $commit_sha)
-          echo "$commit_sha" >> $COMMIT_SHA
-          echo "$commit_date" >> $COMMIT_DATE
-          echo "$commit_author" >> $COMMIT_AUTHOR
+          COMMIT_SHA="${{ github.sha }}"
+          COMMIT_DATE=$(git show -s --format=%cd --date=format:'%Y-%m-%d %H:%M:%S' $commit_sha)
+          COMMIT_AUTHOR=$(git show -s --format='%an' $commit_sha)
 
       - name: Commit and push changes
         uses: peter-evans/create-pull-request@v5
