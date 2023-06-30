@@ -17,7 +17,7 @@ projectname?=mediator
 
 default: help
 
-.PHONY: help gen clean-gen build run-cli run-server bootstrap test clean cover lint pre-commit migrateup migratedown sqlc mock
+.PHONY: help gen clean-gen build run-cli run-server bootstrap test clean cover lint pre-commit migrateup migratedown sqlc mock docs
 
 help: ## list makefile targets
 	@grep -E '^[a-zA-Z_-]+:.*?## .*$$' $(MAKEFILE_LIST) | sort | awk 'BEGIN {FS = ":.*?## "}; {printf "\033[36m%-30s\033[0m %s\n", $$1, $$2}'
@@ -79,10 +79,11 @@ migratedown: ## run migrate down
 	@go run cmd/server/main.go migrate down
 
 dbschema:	## generate database schema with schema spy, monitor file until doc is created and copy it
-	cd database/schema && docker-compose run --rm schemaspy -configFile /config/schemaspy.properties -imageformat png
+	mkdir -p database/schema/output && chmod a+w database/schema/output
+	cd database/schema && docker-compose run -u 1001:1001 --rm schemaspy -configFile /config/schemaspy.properties -imageformat png
 	sleep 10
 	cp database/schema/output/diagrams/summary/relationships.real.large.png docs/database/schema.png
-	cd database/schema && docker compose down && rm -rf output
+	cd database/schema && docker compose down -v && rm -rf output
 
 mock:
 	mockgen -package mockdb -destination database/mock/store.go github.com/stacklok/mediator/pkg/db Store
