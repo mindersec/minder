@@ -128,11 +128,7 @@ func (s *UnitTestSuite) TestHandleGitHubWebHook() {
 
 func TestHandleWebHook(t *testing.T) {
 	p := gochannel.NewGoChannel(gochannel.Config{}, nil)
-<<<<<<< HEAD
 	queued, err := p.Subscribe(context.Background(), "package")
-=======
-	queued, err := p.Subscribe(context.Background(), "github-webhook")
->>>>>>> b1074b6 (Convert webhooks to use Watermill for async publishing)
 	if err != nil {
 		t.Fatal(err)
 	}

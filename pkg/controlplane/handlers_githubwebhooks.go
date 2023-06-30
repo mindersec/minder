@@ -86,21 +86,6 @@ func HandleGitHubWebHook(p message.Publisher) http.HandlerFunc {
 			return
 		}
 
-		// Parse the payload into the appropriate event type
-		// See https://pkg.go.dev/github.com/google/go-github/v53/github#ParseWebHook
-		// event, err := github.ParseWebHook(github.WebHookType(r), payload)
-		// if err != nil {
-		// 	fmt.Printf("Error parsing webhook payload: %v", err)
-		// 	w.WriteHeader(http.StatusBadRequest)
-		// 	return
-		// }
-		//		ghEvent, ok := event.(github.Event)
-		//		if !ok {
-		//			fmt.Printf("Error casting webhook payload to github.Event, type is %Y", event)
-		//			w.WriteHeader(http.StatusBadRequest)
-		//			return
-		//		}
-
 		// TODO: extract sender and event time from payload portably
 		m := message.NewMessage(uuid.New().String(), payload)
 		m.Metadata.Set("id", github.DeliveryID(r))
@@ -109,11 +94,7 @@ func HandleGitHubWebHook(p message.Publisher) http.HandlerFunc {
 		// m.Metadata.Set("subject", ghEvent.GetRepo().GetFullName())
 		// m.Metadata.Set("time", ghEvent.GetCreatedAt().String())
 
-<<<<<<< HEAD
 		if err := p.Publish(m.Metadata["type"], m); err != nil {
-=======
-		if err := p.Publish("github-webhook", m); err != nil {
->>>>>>> b1074b6 (Convert webhooks to use Watermill for async publishing)
 			fmt.Printf("Error publishing message: %v", err)
 			w.WriteHeader(http.StatusInternalServerError)
 			return
