@@ -23,6 +23,9 @@ import (
 	"net/http"
 	"time"
 
+	"github.com/ThreeDotsLabs/watermill"
+	"github.com/ThreeDotsLabs/watermill/message"
+	"github.com/ThreeDotsLabs/watermill/pubsub/gochannel"
 	"github.com/grpc-ecosystem/grpc-gateway/v2/runtime"
 	"github.com/prometheus/client_golang/prometheus/promhttp"
 	"github.com/spf13/viper"
@@ -239,6 +242,13 @@ func StartHTTPServer(ctx context.Context, address, grpcAddress string, store db.
 		mux.Handle(metricsPath, handler)
 	}
 
+	// TODO: enable registering handlers with the router (arg 0)
+	_, publisher, err := setUpWatermill()
+	if err != nil {
+		log.Printf("Failed to set up watermill: %v", err)
+		return err
+	}
+
 	gwmux := runtime.NewServeMux()
 	opts := []grpc.DialOption{grpc.WithTransportCredentials(insecure.NewCredentials())}
 
@@ -246,7 +256,7 @@ func StartHTTPServer(ctx context.Context, address, grpcAddress string, store db.
 	RegisterGatewayHTTPHandlers(ctx, gwmux, grpcAddress, opts)
 
 	mux.Handle("/", gwmux)
-	mux.HandleFunc("/api/v1/webhook/", HandleGitHubWebHook(store))
+	mux.HandleFunc("/api/v1/webhook/", HandleGitHubWebHook(publisher))
 
 	errch := make(chan error)
 
@@ -289,4 +299,16 @@ func shutdownHandler(component string, sdf shutdowner) {
 	if err := sdf(shutdownCtx); err != nil {
 		log.Fatalf("error shutting down '%s': %+v", component, err)
 	}
+}
+
+// setUpWatermill isolates the watermill setup code
+// TODO: pass in logger
+func setUpWatermill() (*message.Router, message.Publisher, error) {
+	var logger watermill.LoggerAdapter = nil
+	router, err := message.NewRouter(message.RouterConfig{}, logger)
+	if err != nil {
+		return nil, nil, err
+	}
+	publisher := gochannel.NewGoChannel(gochannel.Config{}, logger)
+	return router, publisher, nil
 }

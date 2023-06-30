@@ -21,11 +21,19 @@
 package controlplane
 
 import (
+	"bytes"
 	"context"
+	"fmt"
+	"net/http"
 	"testing"
 	"time"
 
+	"encoding/json"
+
+	"github.com/ThreeDotsLabs/watermill/pubsub/gochannel"
+	"github.com/google/go-cmp/cmp"
 	"github.com/google/go-github/v53/github"
+	"github.com/stacklok/mediator/pkg/util"
 	"github.com/stretchr/testify/assert"
 	"github.com/stretchr/testify/mock"
 	"github.com/stretchr/testify/require"
@@ -116,6 +124,76 @@ func (s *UnitTestSuite) TestHandleGitHubWebHook() {
 	assert.Equal(s.T(), "owner1", results[0].Owner)
 	assert.Equal(s.T(), int64(0), results[0].HookID)
 	assert.NotEmpty(s.T(), results[0].DeployURL)
+}
+
+func TestHandleWebHook(t *testing.T) {
+	p := gochannel.NewGoChannel(gochannel.Config{}, nil)
+<<<<<<< HEAD
+	queued, err := p.Subscribe(context.Background(), "package")
+=======
+	queued, err := p.Subscribe(context.Background(), "github-webhook")
+>>>>>>> b1074b6 (Convert webhooks to use Watermill for async publishing)
+	if err != nil {
+		t.Fatal(err)
+	}
+	defer p.Close()
+
+	hook := HandleGitHubWebHook(p)
+	port, err := util.GetRandomPort()
+	if err != nil {
+		t.Fatal(err)
+	}
+	addr := fmt.Sprintf("localhost:%d", port)
+	server := &http.Server{
+		Addr:    fmt.Sprintf(":%d", port),
+		Handler: hook,
+	}
+	go server.ListenAndServe()
+
+	event := github.PackageEvent{
+		Action: github.String("published"),
+		Package: &github.Package{
+			Name:        github.String("mediator"),
+			PackageType: github.String("container"),
+		},
+		Repo: &github.Repository{
+			Name: github.String("stacklok/mediator"),
+		},
+		Org: &github.Organization{
+			Login: github.String("stacklok"),
+		},
+	}
+	packageJson, err := json.Marshal(event)
+	if err != nil {
+		t.Fatal(err)
+	}
+
+	client := &http.Client{}
+	req, err := http.NewRequest("POST", fmt.Sprintf("http://%s", addr), bytes.NewBuffer(packageJson))
+	if err != nil {
+		t.Fatal(err)
+	}
+	req.Header.Add("X-GitHub-Event", "package")
+	req.Header.Add("X-GitHub-Delivery", "12345")
+	req.Header.Add("Content-Type", "application/json")
+	resp, err := client.Do(req)
+	if err != nil {
+		t.Fatal(err)
+	}
+	if resp.StatusCode != http.StatusOK {
+		t.Fatalf("expected status code %d, got %d", http.StatusOK, resp.StatusCode)
+	}
+
+	received := <-queued
+
+	if diff := cmp.Diff(string(packageJson), string(received.Payload)); diff != "" {
+		t.Fatalf("payload mismatch (-want +got):\n%s", diff)
+	}
+	assert.Equal(t, "12345", received.Metadata["id"])
+	assert.Equal(t, "package", received.Metadata["type"])
+	assert.Equal(t, "https://api.github.com/", received.Metadata["source"])
+
+	p.Close()
 }
 
 func TestAll(t *testing.T) {
