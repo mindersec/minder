@@ -1,4 +1,3 @@
-// a
 // Copyright 2023 Stacklok, Inc.
 //
 // Licensed under the Apache License, Version 2.0 (the "License");
@@ -51,7 +50,7 @@ func Execute() {
 func init() {
 	cobra.OnInitialize(initConfig)
 	RootCmd.PersistentFlags().String("grpc-host", "localhost", "Server host")
-	RootCmd.PersistentFlags().Int("grpc-port", 8090, "Server port3")
+	RootCmd.PersistentFlags().Int("grpc-port", 8090, "Server port4")
 	RootCmd.PersistentFlags().StringVar(&cfgFile, "config", "", "config file (default is $PWD/config.yaml)")
 }
 
