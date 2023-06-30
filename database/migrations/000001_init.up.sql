@@ -13,7 +13,7 @@
 -- limitations under the License.
 
 
--- test1
+-- test2
 -- organizations table
 CREATE TABLE organizations (
     id SERIAL PRIMARY KEY,
