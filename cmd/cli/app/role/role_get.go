@@ -36,7 +36,7 @@ import (
 var role_getCmd = &cobra.Command{
 	Use:   "get",
 	Short: "Get details for an role within a mediator control plane",
-	Long: `The medctl role get subcommand lets you retrieve details for an role within a
+	Long: `The medic role get subcommand lets you retrieve details for an role within a
 mediator control plane.`,
 	PreRun: func(cmd *cobra.Command, args []string) {
 		if err := viper.BindPFlags(cmd.Flags()); err != nil {

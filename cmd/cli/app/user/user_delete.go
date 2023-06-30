@@ -34,7 +34,7 @@ import (
 var user_deleteCmd = &cobra.Command{
 	Use:   "delete",
 	Short: "delete a user within a mediator controlplane",
-	Long: `The medctl user delete subcommand lets you delete users within a
+	Long: `The medic user delete subcommand lets you delete users within a
 mediator control plane.`,
 	PreRun: func(cmd *cobra.Command, args []string) {
 		if err := viper.BindPFlags(cmd.Flags()); err != nil {

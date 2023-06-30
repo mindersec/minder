@@ -37,7 +37,7 @@ import (
 var User_updateCmd = &cobra.Command{
 	Use:   "update",
 	Short: "Update a user within a mediator control plane",
-	Long:  `The medctl user update subcommand allows to modify the details of an user.`,
+	Long:  `The medic user update subcommand allows to modify the details of an user.`,
 	PreRun: func(cmd *cobra.Command, args []string) {
 		if err := viper.BindPFlags(cmd.Flags()); err != nil {
 			fmt.Fprintf(os.Stderr, "Error binding flags: %s\n", err)

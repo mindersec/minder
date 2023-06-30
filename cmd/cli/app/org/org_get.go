@@ -65,7 +65,7 @@ func printOrganization(org *pb.OrganizationRecord, groups []*pb.GroupRecord,
 var org_getCmd = &cobra.Command{
 	Use:   "get",
 	Short: "Get details for an organization within a mediator control plane",
-	Long: `The medctl org get subcommand lets you retrieve details for an organization within a
+	Long: `The medic org get subcommand lets you retrieve details for an organization within a
 mediator control plane.`,
 	PreRun: func(cmd *cobra.Command, args []string) {
 		if err := viper.BindPFlags(cmd.Flags()); err != nil {

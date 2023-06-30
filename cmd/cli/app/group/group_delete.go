@@ -34,7 +34,7 @@ import (
 var group_deleteCmd = &cobra.Command{
 	Use:   "delete",
 	Short: "delete a group within a mediator controlplane",
-	Long: `The medctl group delete subcommand lets you delete groups within a
+	Long: `The medic group delete subcommand lets you delete groups within a
 mediator control plane.`,
 	PreRun: func(cmd *cobra.Command, args []string) {
 		if err := viper.BindPFlags(cmd.Flags()); err != nil {
