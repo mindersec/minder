@@ -27,6 +27,18 @@ jobs:
           mkdir -p docs/cli
           make docs
 
+      - name: Extract Commit SHA and Details
+        id: extract_commit_details
+        run: |
+          commit_sha="${{ github.event.pull_request.head.sha }}"
+          commit_date=$(git show -s --format=%cd --date=format:'%Y-%m-%d %H:%M:%S' $commit_sha)
+          commit_author=$(git show -s --format='%an' $commit_sha)
+          commit_branch=$(git branch -a --contains $commit_sha --sort=committerdate | tail -1 | awk '{print $NF}')
+          echo "::set-output name=commit_sha::$commit_sha"
+          echo "::set-output name=commit_date::$commit_date"
+          echo "::set-output name=commit_author::$commit_author"
+          echo "::set-output name=commit_branch::$commit_branch"
+
       - name: Commit and push changes
         uses: peter-evans/create-pull-request@v5
         with:
@@ -36,9 +48,13 @@ jobs:
           signoff: false
           branch-suffix: timestamp
           delete-branch: true
-          title: 'Update client docs'
+          title: 'Auto-generated cli documentation update - ${{ steps.extract_commit_details.outputs.commit_branch }}'
           body: |
-            Update client docs
+            ** Source commit **
+             - Commit SHA: [${{ steps.extract_commit_details.outputs.commit_sha }}](${{ github.event.pull_request.head.repo.html_url }}/commit/${{ steps.extract_commit_details.outputs.commit_sha }})
+            - Date: ${{ steps.extract_commit_details.outputs.commit_date }}
+            - Author: ${{ steps.extract_commit_details.outputs.commit_author }}
+
           labels: |
             docs
             automated pr
