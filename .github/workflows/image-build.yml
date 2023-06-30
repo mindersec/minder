@@ -9,13 +9,9 @@ jobs:
       - name: Checkout
         uses: actions/checkout@v3
 
-      - name: Login to ghcr.io
-        uses: docker/login-action@v2
-        with:
-          registry: ghcr.io
-          username: ${{ github.actor }}
-          password: ${{ secrets.GITHUB_TOKEN }}
-
       - uses: ko-build/setup-ko@v0.6
-      - run: ko build --platform=all ./cmd/server --image-label=org.opencontainers.image.source=https://github.com/stacklok/mediator,org.opencontainers.image.title="Stacklok Mediator",org.opencontainers.image.licenses=Apache-2.0,org.opencontainers.image.vendor=Stacklok
+
+      - run: |
+          ko build --platform=all --push=${{ github.ref == 'refs/heads/main' }} ./cmd/server \
+            --image-label=org.opencontainers.image.source=https://github.com/stacklok/mediator,org.opencontainers.image.title="Stacklok Mediator",org.opencontainers.image.licenses=Apache-2.0,org.opencontainers.image.vendor=Stacklok
 
