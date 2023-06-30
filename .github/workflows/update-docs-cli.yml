@@ -30,10 +30,10 @@ jobs:
       - name: Extract Commit SHA and Details
         id: extract_commit_details
         run: |
-          commit_sha="${{ github.event.pull_request.head.sha }}"
+          commit_sha="${{ github.sha }}"
           commit_date=$(git show -s --format=%cd --date=format:'%Y-%m-%d %H:%M:%S' $commit_sha)
           commit_author=$(git show -s --format='%an' $commit_sha)
-          commit_branch=$(git branch -a --contains $commit_sha --sort=committerdate | tail -1 | awk '{print $NF}')
+          commit_branch="${{github.ref}}"
           echo "::set-output name=commit_sha::$commit_sha"
           echo "::set-output name=commit_date::$commit_date"
           echo "::set-output name=commit_author::$commit_author"
