@@ -27,8 +27,8 @@ import (
 
 	"github.com/gogo/protobuf/jsonpb"
 	"github.com/rs/zerolog"
-	"github.com/stacklok/mediator/pkg/util"
 	"google.golang.org/grpc"
+	"google.golang.org/grpc/codes"
 	"google.golang.org/grpc/metadata"
 	"google.golang.org/grpc/status"
 )
@@ -64,7 +64,7 @@ func logAttributes(logger *zerolog.Event, dict map[string]interface{}) {
 // LogIncomingCall will log calls based on
 // https://github.com/open-telemetry/oteps/blob/main/text/logs/0097-log-data-model.md#example-log-records
 func LogIncomingCall(ctx context.Context, logger *zerolog.Event, method string, t time.Time,
-	_ interface{}, res *status.Status) {
+	_ interface{}) {
 
 	logTimestamp(logger, t)
 	logResource(logger, map[string]interface{}{
@@ -77,7 +77,7 @@ func LogIncomingCall(ctx context.Context, logger *zerolog.Event, method string, 
 		logAttributes(logger, map[string]interface{}{
 			"http.user_agent":   meta.Get("user-agent"),
 			"http.content-type": meta.Get("content-type"),
-			"http.code":         res.Code(),
+			"http.code":         codes.OK,
 			"http.duration":     time.Since(t).String(),
 		})
 	}
@@ -86,7 +86,7 @@ func LogIncomingCall(ctx context.Context, logger *zerolog.Event, method string, 
 
 // LogErrorCall logs calls with errors
 func LogErrorCall(ctx context.Context, logger *zerolog.Event, method string, t time.Time,
-	req interface{}, res *status.Status, err error) {
+	req interface{}, err error) {
 
 	logTimestamp(logger, t)
 	logResource(logger, map[string]interface{}{
@@ -95,6 +95,8 @@ func LogErrorCall(ctx context.Context, logger *zerolog.Event, method string, t t
 	})
 
 	meta, ok := metadata.FromIncomingContext(ctx)
+
+	res := status.Convert(err)
 
 	// try to get body from request
 	jsonText, jsonErr := json.Marshal(req)
@@ -203,23 +205,20 @@ func Interceptor(logLevel string, logFormat string, logFile string) grpc.UnarySe
 
 		now := time.Now()
 		resp, err := handler(ctx, req)
-		ret := status.Convert(err)
-		ns := util.GetNiceStatus(ret.Code())
-		maskedErr := status.Error(ns.Code, ns.Name)
 
 		if zlog.Error().Enabled() {
 			var logger *zerolog.Event
 			if err != nil {
 				logger = zlog.Error()
-				LogErrorCall(ctx, logger, info.FullMethod, now, req, ret, err)
+				LogErrorCall(ctx, logger, info.FullMethod, now, req, err)
 				logger.Msg("exception")
 			} else {
 				logger = zlog.Info()
-				LogIncomingCall(ctx, logger, info.FullMethod, now, req, ret)
+				LogIncomingCall(ctx, logger, info.FullMethod, now, req)
 				logger.Send()
 			}
 		}
 		defer file.Close()
-		return resp, maskedErr
+		return resp, err
 	}
 }

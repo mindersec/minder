@@ -36,19 +36,17 @@ services:
     build:
       context: ../../
       dockerfile: ./Dockerfile
-    entrypoint:
+    command:
       [
-        "/opt/app-root/src/mediator-server",
         "migrate",
         "up",
+        "--yes",
         "--db-host=postgres",
-        "--db-port=5432",
-        "--db-user=postgres",
-        "--db-pass=postgres",
-        "--yes"
+        "--db-name=postgres"
       ]
     volumes:
       - ../migrations:/database/migrations
+      - ./output:/output
     links:
       - postgres
     depends_on:
@@ -62,13 +60,6 @@ services:
       - ./output:/output
       - ./config:/config
     container_name: "schemaspy_local"
-    command:
-      [
-        "-configFile",
-        "/config/schemaspy.properties",
-        "-imageformat",
-        "png"
-      ]
     depends_on:
       - postgres
       - migration

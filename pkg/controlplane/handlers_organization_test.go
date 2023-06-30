@@ -16,6 +16,7 @@ package controlplane
 
 import (
 	"context"
+	"database/sql"
 	"errors"
 	"testing"
 	"time"
@@ -61,9 +62,13 @@ func TestCreateOrganizationDBMock(t *testing.T) {
 			{RoleID: 1, IsAdmin: true, GroupID: 0, OrganizationID: 1}},
 	})
 
+	tx := sql.Tx{}
+	mockStore.EXPECT().BeginTransaction().Return(&tx, nil)
+	mockStore.EXPECT().GetQuerierWithTransaction(gomock.Any()).Return(mockStore)
 	mockStore.EXPECT().
-		CreateOrganization(ctx, gomock.Any()).
-		Return(expectedOrg, nil)
+		CreateOrganization(ctx, gomock.Any()).Return(expectedOrg, nil)
+	mockStore.EXPECT().Commit(gomock.Any())
+	mockStore.EXPECT().Rollback(gomock.Any())
 
 	server := &Server{
 		store: mockStore,
@@ -97,6 +102,8 @@ func TestCreateOrganization_gRPC(t *testing.T) {
 				Company: "TestCompany",
 			},
 			buildStubs: func(store *mockdb.MockStore) {
+				store.EXPECT().BeginTransaction()
+				store.EXPECT().GetQuerierWithTransaction(gomock.Any()).Return(store)
 				store.EXPECT().
 					CreateOrganization(gomock.Any(), gomock.Any()).
 					Return(db.Organization{
@@ -107,6 +114,8 @@ func TestCreateOrganization_gRPC(t *testing.T) {
 						UpdatedAt: time.Now(),
 					}, nil).
 					Times(1)
+				store.EXPECT().Commit(gomock.Any())
+				store.EXPECT().Rollback(gomock.Any())
 			},
 			checkResponse: func(t *testing.T, res *pb.CreateOrganizationResponse, err error) {
 				assert.NoError(t, err)
@@ -142,10 +151,14 @@ func TestCreateOrganization_gRPC(t *testing.T) {
 				Company: "TestCompany",
 			},
 			buildStubs: func(store *mockdb.MockStore) {
+				store.EXPECT().BeginTransaction()
+				store.EXPECT().GetQuerierWithTransaction(gomock.Any()).Return(store)
+
 				store.EXPECT().
 					CreateOrganization(gomock.Any(), gomock.Any()).
 					Return(db.Organization{}, errors.New("store error")).
 					Times(1)
+				store.EXPECT().Rollback(gomock.Any())
 			},
 			checkResponse: func(t *testing.T, res *pb.CreateOrganizationResponse, err error) {
 				// Assert the expected behavior when there's a store error

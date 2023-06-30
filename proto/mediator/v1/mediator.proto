@@ -349,6 +349,12 @@ service UserService {
             };    
     }
 
+    rpc GetUser (GetUserRequest) returns (GetUserResponse) {
+        option (google.api.http) = {
+            get: "/api/v1/user"
+            };
+    }
+
     rpc GetUserByEmail (GetUserByEmailRequest) returns (GetUserByEmailResponse) {
         option (google.api.http) = {
             get: "/api/v1/user/email/{email}"
@@ -358,6 +364,13 @@ service UserService {
     rpc UpdatePassword (UpdatePasswordRequest) returns (UpdatePasswordResponse) {
         option (google.api.http) = {
             post: "/api/v1/user/password"
+            body: "*"
+        };
+    }
+
+    rpc UpdateProfile (UpdateProfileRequest) returns (UpdateProfileResponse) {
+        option (google.api.http) = {
+            post: "/api/v1/user/profile"
             body: "*"
         };
     }
@@ -602,7 +615,7 @@ message CreateOrganizationResponse {
     google.protobuf.Timestamp created_at = 5;
     google.protobuf.Timestamp updated_at = 6;
     optional GroupRecord default_group = 7;
-    optional RoleRecord default_role = 8;
+    repeated RoleRecord default_roles = 8;
     optional UserRecord default_user = 9;
 }
 
@@ -878,6 +891,15 @@ message UpdatePasswordRequest {
 message UpdatePasswordResponse {
 }
 
+message UpdateProfileRequest {
+    optional string email = 1;
+    optional string first_name = 2;
+    optional string last_name = 3;
+}
+
+message UpdateProfileResponse {
+}
+
 // user record to be returned
 message UserRecord {
     int32 id = 1;
@@ -951,6 +973,16 @@ message GetUserByEmailRequest {
 }
 
 message GetUserByEmailResponse {
+    optional UserRecord user = 1;
+    repeated GroupRecord groups = 2;
+    repeated RoleRecord roles = 3;
+}
+
+// get user
+message GetUserRequest {
+}
+
+message GetUserResponse {
     optional UserRecord user = 1;
     repeated GroupRecord groups = 2;
     repeated RoleRecord roles = 3;

@@ -1,0 +1,26 @@
+name: Update Docs and Code
+on:
+  push:
+    branches:
+      - main
+    paths:
+      - 'cmd/cli/**'  
+jobs:
+  update-docs-cli:
+    runs-on: ubuntu-latest
+
+    steps:
+      - name: Checkout repository
+        uses: actions/checkout@v2
+
+      - name: Update documentation
+        shell: bash
+        run: make docs
+
+      # generate PR with the changes
+      - name: Commit and push changes
+        run: |
+          BRANCH_NAME="feature/autobranch-$(date +%s)"
+          gh pr create --fill --head $BRANCH_NAME --base ${{github.base_ref}}
+        env:
+          GITHUB_TOKEN: ${{ secrets.GITHUB_TOKEN }}

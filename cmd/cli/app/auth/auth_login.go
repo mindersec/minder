@@ -63,8 +63,8 @@ will be saved to $XDG_CONFIG_HOME/mediator/credentials.json`,
 		resp, err := client.LogIn(ctx, &pb.LogInRequest{Username: username, Password: password})
 		if err != nil {
 			ret := status.Convert(err)
-			ns := util.GetNiceStatus(ret.Code())
-			fmt.Fprintf(os.Stderr, "Error logging in: %s\n", ns)
+			fmt.Fprintf(os.Stderr, "Error logging in: Code: %d\nName: %s\nDetails: %s\n", ret.Code(), ret.Code().String(), ret.Message())
+
 			os.Exit(int(ret.Code()))
 		}
 
@@ -84,7 +84,7 @@ will be saved to $XDG_CONFIG_HOME/mediator/credentials.json`,
 
 		fmt.Printf("You have been successfully logged in. Your access credentials saved to %s\n"+
 			"Remember that if that's your first login, you will need to update your password "+
-			"using the user update_password command", filePath)
+			"using the user update --password command", filePath)
 
 	},
 }

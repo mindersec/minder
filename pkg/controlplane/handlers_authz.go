@@ -194,6 +194,18 @@ var resourceAuthorizations = []map[string]map[string]interface{}{
 		},
 	},
 	{
+		"/mediator.v1.UserService/GetUser": {
+			"claimField": "UserId",
+			"isAdmin":    false,
+		},
+	},
+	{
+		"/mediator.v1.UserService/UpdateUser": {
+			"claimField": "UserId",
+			"isAdmin":    false,
+		},
+	},
+	{
 		"/mediator.v1.UserService/GetUserByEmail": {
 			"claimField": "OrganizationId",
 			"isAdmin":    true,
@@ -345,6 +357,11 @@ func IsRequestAuthorized(ctx context.Context, value int32) bool {
 
 					// check if is admin of group
 					if isAdmin && !isUserAdmin(claims, "GroupId", value) {
+						return false
+					}
+				} else if claimField == "UserId" {
+					// check that user id is not 0
+					if claims.UserId == 0 {
 						return false
 					}
 				} else {

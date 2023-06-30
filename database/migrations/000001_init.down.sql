@@ -13,7 +13,12 @@
 -- limitations under the License.
 
 
-DROP TABLE IF EXISTS organizations;
-DROP TABLE IF EXISTS groups;
-DROP TABLE IF EXISTS roles;
+DROP TABLE IF EXISTS session_store;
+DROP TABLE IF EXISTS repositories;
+DROP TABLE IF EXISTS provider_access_tokens;
+DROP TABLE IF EXISTS user_roles;
+DROP TABLE IF EXISTS user_groups;
 DROP TABLE IF EXISTS users;
+DROP TABLE IF EXISTS roles;
+DROP TABLE IF EXISTS groups;
+DROP TABLE IF EXISTS organizations;

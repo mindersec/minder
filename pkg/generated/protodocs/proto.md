@@ -63,6 +63,8 @@
     - [GetUserByIdResponse](#mediator-v1-GetUserByIdResponse)
     - [GetUserByUserNameRequest](#mediator-v1-GetUserByUserNameRequest)
     - [GetUserByUserNameResponse](#mediator-v1-GetUserByUserNameResponse)
+    - [GetUserRequest](#mediator-v1-GetUserRequest)
+    - [GetUserResponse](#mediator-v1-GetUserResponse)
     - [GetUsersByGroupRequest](#mediator-v1-GetUsersByGroupRequest)
     - [GetUsersByGroupResponse](#mediator-v1-GetUsersByGroupResponse)
     - [GetUsersByOrganizationRequest](#mediator-v1-GetUsersByOrganizationRequest)
@@ -100,6 +102,8 @@
     - [StoreProviderTokenResponse](#mediator-v1-StoreProviderTokenResponse)
     - [UpdatePasswordRequest](#mediator-v1-UpdatePasswordRequest)
     - [UpdatePasswordResponse](#mediator-v1-UpdatePasswordResponse)
+    - [UpdateProfileRequest](#mediator-v1-UpdateProfileRequest)
+    - [UpdateProfileResponse](#mediator-v1-UpdateProfileResponse)
     - [UserRecord](#mediator-v1-UserRecord)
     - [VerifyProviderTokenFromRequest](#mediator-v1-VerifyProviderTokenFromRequest)
     - [VerifyProviderTokenFromResponse](#mediator-v1-VerifyProviderTokenFromResponse)
@@ -240,7 +244,7 @@ Organization service
 | created_at | [google.protobuf.Timestamp](#google-protobuf-Timestamp) |  |  |
 | updated_at | [google.protobuf.Timestamp](#google-protobuf-Timestamp) |  |  |
 | default_group | [GroupRecord](#mediator-v1-GroupRecord) | optional |  |
-| default_role | [RoleRecord](#mediator-v1-RoleRecord) | optional |  |
+| default_roles | [RoleRecord](#mediator-v1-RoleRecord) | repeated |  |
 | default_user | [UserRecord](#mediator-v1-UserRecord) | optional |  |
 
 
@@ -1080,6 +1084,33 @@ get user by username
 
 
 
+<a name="mediator-v1-GetUserRequest"></a>
+
+### GetUserRequest
+get user
+
+
+
+
+
+
+<a name="mediator-v1-GetUserResponse"></a>
+
+### GetUserResponse
+
+
+
+| Field | Type | Label | Description |
+| ----- | ---- | ----- | ----------- |
+| user | [UserRecord](#mediator-v1-UserRecord) | optional |  |
+| groups | [GroupRecord](#mediator-v1-GroupRecord) | repeated |  |
+| roles | [RoleRecord](#mediator-v1-RoleRecord) | repeated |  |
+
+
+
+
+
+
 <a name="mediator-v1-GetUsersByGroupRequest"></a>
 
 ### GetUsersByGroupRequest
@@ -1645,6 +1676,33 @@ BUF does not allow grouping (which is a shame)
 
 
 
+<a name="mediator-v1-UpdateProfileRequest"></a>
+
+### UpdateProfileRequest
+
+
+
+| Field | Type | Label | Description |
+| ----- | ---- | ----- | ----------- |
+| email | [string](#string) | optional |  |
+| first_name | [string](#string) | optional |  |
+| last_name | [string](#string) | optional |  |
+
+
+
+
+
+
+<a name="mediator-v1-UpdateProfileResponse"></a>
+
+### UpdateProfileResponse
+
+
+
+
+
+
+
 <a name="mediator-v1-UserRecord"></a>
 
 ### UserRecord
@@ -1867,8 +1925,10 @@ manage Users CRUD
 | GetUsersByGroup | [GetUsersByGroupRequest](#mediator-v1-GetUsersByGroupRequest) | [GetUsersByGroupResponse](#mediator-v1-GetUsersByGroupResponse) |  |
 | GetUserById | [GetUserByIdRequest](#mediator-v1-GetUserByIdRequest) | [GetUserByIdResponse](#mediator-v1-GetUserByIdResponse) |  |
 | GetUserByUserName | [GetUserByUserNameRequest](#mediator-v1-GetUserByUserNameRequest) | [GetUserByUserNameResponse](#mediator-v1-GetUserByUserNameResponse) |  |
+| GetUser | [GetUserRequest](#mediator-v1-GetUserRequest) | [GetUserResponse](#mediator-v1-GetUserResponse) |  |
 | GetUserByEmail | [GetUserByEmailRequest](#mediator-v1-GetUserByEmailRequest) | [GetUserByEmailResponse](#mediator-v1-GetUserByEmailResponse) |  |
 | UpdatePassword | [UpdatePasswordRequest](#mediator-v1-UpdatePasswordRequest) | [UpdatePasswordResponse](#mediator-v1-UpdatePasswordResponse) |  |
+| UpdateProfile | [UpdateProfileRequest](#mediator-v1-UpdateProfileRequest) | [UpdateProfileResponse](#mediator-v1-UpdateProfileResponse) |  |
 
 
 <a name="mediator-v1-VulnerabilitiesService"></a>

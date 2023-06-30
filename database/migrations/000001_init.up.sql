@@ -115,17 +115,17 @@ ALTER TABLE provider_access_tokens ADD CONSTRAINT unique_group_id UNIQUE (group_
 ALTER TABLE repositories ADD CONSTRAINT unique_repo_id UNIQUE (repo_id);
 
 -- Indexes
-CREATE INDEX organizations_name_lower_idx ON organizations (LOWER(name));
-CREATE INDEX organizations_company_lower_idx ON organizations (LOWER(company));
-CREATE INDEX idx_users_email ON users(email);
+CREATE UNIQUE INDEX organizations_name_lower_idx ON organizations (LOWER(name));
+CREATE UNIQUE INDEX organizations_company_lower_idx ON organizations (LOWER(company));
 CREATE INDEX idx_users_organization_id ON users(organization_id);
 CREATE INDEX idx_groups_organization_id ON groups(organization_id);
 CREATE INDEX idx_roles_group_id ON roles(group_id);
-CREATE INDEX roles_organization_id_name_lower_idx ON roles (organization_id, LOWER(name));
+CREATE UNIQUE INDEX roles_organization_id_name_lower_idx ON roles (organization_id, LOWER(name));
 CREATE INDEX idx_provider_access_tokens_group_id ON provider_access_tokens(group_id);
-CREATE INDEX users_organization_id_email_lower_idx ON users (organization_id, LOWER(email));
-CREATE INDEX users_organization_id_username_lower_idx ON users (organization_id, LOWER(username));
-CREATE INDEX repositories_repo_id_idx ON repositories(repo_id);
+CREATE UNIQUE INDEX users_organization_id_email_lower_idx ON users (organization_id, LOWER(email));
+CREATE UNIQUE INDEX users_organization_id_username_lower_idx ON users (organization_id, LOWER(username));
+CREATE UNIQUE INDEX repositories_repo_id_idx ON repositories(repo_id);
+
 
 -- Create default root organization
 

@@ -78,9 +78,14 @@ func TestCreateUserDBMock(t *testing.T) {
 			{RoleID: 1, IsAdmin: true, GroupID: 0, OrganizationID: 1}},
 	})
 
+	tx := sql.Tx{}
+	mockStore.EXPECT().BeginTransaction().Return(&tx, nil)
+	mockStore.EXPECT().GetQuerierWithTransaction(gomock.Any()).Return(mockStore)
 	mockStore.EXPECT().
 		CreateUser(ctx, gomock.Any()).
 		Return(expectedUser, nil)
+	mockStore.EXPECT().Commit(gomock.Any())
+	mockStore.EXPECT().Rollback(gomock.Any())
 
 	server := &Server{
 		store: mockStore,
@@ -122,6 +127,10 @@ func TestCreateUser_gRPC(t *testing.T) {
 				Password:       &password,
 			},
 			buildStubs: func(store *mockdb.MockStore) {
+				tx := sql.Tx{}
+				store.EXPECT().BeginTransaction().Return(&tx, nil)
+				store.EXPECT().GetQuerierWithTransaction(gomock.Any()).Return(store)
+
 				store.EXPECT().
 					CreateUser(gomock.Any(), gomock.Any()).
 					Return(db.User{
@@ -134,6 +143,9 @@ func TestCreateUser_gRPC(t *testing.T) {
 						UpdatedAt:      time.Now(),
 					}, nil).
 					Times(1)
+				store.EXPECT().Commit(gomock.Any())
+				store.EXPECT().Rollback(gomock.Any())
+
 			},
 			checkResponse: func(t *testing.T, res *pb.CreateUserResponse, err error) {
 				assert.NoError(t, err)
@@ -289,6 +301,109 @@ func TestUpdatePassword_gRPC(t *testing.T) {
 			server := NewServer(mockStore)
 
 			resp, err := server.UpdatePassword(ctx, tc.req)
+			tc.checkResponse(t, resp, err)
+		})
+	}
+}
+
+func TestUpdateProfileDBMock(t *testing.T) {
+	ctrl := gomock.NewController(t)
+	defer ctrl.Finish()
+
+	mockStore := mockdb.NewMockStore(ctrl)
+	seed := time.Now().UnixNano()
+
+	email := util.RandomEmail(seed)
+	name := util.RandomName(seed)
+
+	// Create a new context and set the claims value
+	ctx := context.WithValue(context.Background(), TokenInfoKey, auth.UserClaims{
+		UserId:         1,
+		OrganizationId: 1,
+		GroupIds:       []int32{1},
+		Roles: []auth.RoleInfo{
+			{RoleID: 1, IsAdmin: true, GroupID: 0, OrganizationID: 1}},
+	})
+
+	mockStore.EXPECT().UpdateUser(ctx, gomock.Any())
+
+	server := &Server{
+		store: mockStore,
+	}
+
+	response, err := server.store.UpdateUser(ctx, db.UpdateUserParams{ID: 1, Email: sql.NullString{String: email, Valid: true},
+		FirstName: sql.NullString{String: name, Valid: true}})
+
+	assert.NoError(t, err)
+	assert.NotNil(t, response)
+}
+
+func TestUpdateProfile_gRPC(t *testing.T) {
+	seed := time.Now().UnixNano()
+	email := util.RandomEmail(seed)
+	name := util.RandomName(seed)
+
+	testCases := []struct {
+		name               string
+		req                *pb.UpdateProfileRequest
+		buildStubs         func(store *mockdb.MockStore)
+		checkResponse      func(t *testing.T, res *pb.UpdateProfileResponse, err error)
+		expectedStatusCode codes.Code
+	}{
+		{
+			name: "Success",
+			req: &pb.UpdateProfileRequest{
+				Email:     &email,
+				FirstName: &name,
+			},
+			buildStubs: func(store *mockdb.MockStore) {
+				store.EXPECT().GetUserByID(gomock.Any(), gomock.Any())
+				store.EXPECT().UpdateUser(gomock.Any(), gomock.Any())
+			},
+			checkResponse: func(t *testing.T, res *pb.UpdateProfileResponse, err error) {
+				assert.NoError(t, err)
+				assert.NotNil(t, res)
+			},
+			expectedStatusCode: codes.OK,
+		},
+		{
+			name: "EmptyRequest",
+			req:  &pb.UpdateProfileRequest{},
+			buildStubs: func(store *mockdb.MockStore) {
+				// No expectations, as CreateRole should not be called
+			},
+			checkResponse: func(t *testing.T, res *pb.UpdateProfileResponse, err error) {
+				// Assert the expected behavior when the request is empty
+				assert.Error(t, err)
+				assert.Nil(t, res)
+			},
+			expectedStatusCode: codes.InvalidArgument,
+		},
+	}
+
+	// Create a new context and set the claims value
+	ctx := context.WithValue(context.Background(), TokenInfoKey, auth.UserClaims{
+		UserId:              1,
+		OrganizationId:      1,
+		GroupIds:            []int32{1},
+		NeedsPasswordChange: false,
+		Roles: []auth.RoleInfo{
+			{RoleID: 1, IsAdmin: true, GroupID: 0, OrganizationID: 1}},
+	})
+
+	for i := range testCases {
+		tc := testCases[i]
+		t.Run(tc.name, func(t *testing.T) {
+
+			ctrl := gomock.NewController(t)
+			defer ctrl.Finish()
+
+			mockStore := mockdb.NewMockStore(ctrl)
+			tc.buildStubs(mockStore)
+
+			server := NewServer(mockStore)
+
+			resp, err := server.UpdateProfile(ctx, tc.req)
 			tc.checkResponse(t, resp, err)
 		})
 	}

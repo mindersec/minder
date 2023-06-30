@@ -45,9 +45,18 @@ var User_updateCmd = &cobra.Command{
 	},
 	Run: func(cmd *cobra.Command, args []string) {
 		// create the user via GRPC
-		password := util.GetConfigValue("password", "password", cmd, nil)
-		password_confirmation := util.GetConfigValue("password_confirmation", "password_confirmation", cmd, nil)
+		password := util.GetConfigValue("password", "password", cmd, "").(string)
+		password_confirmation := util.GetConfigValue("password_confirmation", "password_confirmation", cmd, "").(string)
 
+		email := util.GetConfigValue("email", "email", cmd, "").(string)
+		first_name := util.GetConfigValue("firstname", "firstname", cmd, "").(string)
+		last_name := util.GetConfigValue("lastname", "lastname", cmd, "").(string)
+
+		// user needs to update at least one of those fields
+		if password == "" && email == "" && first_name == "" && last_name == "" {
+			fmt.Fprint(os.Stderr, "Error: Must provide at least one of the following: password, email, first_name, last_name")
+			os.Exit(1)
+		}
 		grpc_host := util.GetConfigValue("grpc_server.host", "grpc-host", cmd, "").(string)
 		grpc_port := util.GetConfigValue("grpc_server.port", "grpc-port", cmd, 0).(int)
 
@@ -59,23 +68,54 @@ var User_updateCmd = &cobra.Command{
 		ctx, cancel := context.WithTimeout(context.Background(), 10*time.Second)
 		defer cancel()
 
-		_, err = client.UpdatePassword(ctx, &pb.UpdatePasswordRequest{
-			Password:             password.(string),
-			PasswordConfirmation: password_confirmation.(string),
-		})
-		util.ExitNicelyOnError(err, "Error updating user password")
-		cmd.Println("Password updated successfully, please authenticate again with your new credentials.")
+		// if password is set, password_confirmation must be set
+		if (password != "" && password_confirmation == "") || (password == "" && password_confirmation != "") {
+			fmt.Fprint(os.Stderr, "Error: Must provide both password and password_confirmation")
+			os.Exit(1)
+		}
+
+		// need to choose between password or profile fields
+		if password != "" && (email != "" || first_name != "" || last_name != "") {
+			fmt.Fprint(os.Stderr, "Error: Cannot update both password and profile fields")
+			os.Exit(1)
+		}
+
+		// check if we need to update password
+		if password != "" && password_confirmation != "" {
+			_, err = client.UpdatePassword(ctx, &pb.UpdatePasswordRequest{
+				Password:             password,
+				PasswordConfirmation: password_confirmation,
+			})
+			util.ExitNicelyOnError(err, "Error updating user password")
+			cmd.Println("Password updated successfully, please authenticate again with your new credentials.")
+		} else {
+			// need to update profile
+			req := pb.UpdateProfileRequest{}
+			if email != "" {
+				req.Email = &email
+			}
+			if first_name != "" {
+				req.FirstName = &first_name
+			}
+			if last_name != "" {
+				req.LastName = &last_name
+			}
+			_, err = client.UpdateProfile(ctx, &req)
+			if err != nil {
+				fmt.Fprintf(os.Stderr, "Error updating user profile: %s\n", err)
+				os.Exit(1)
+			}
+			cmd.Println("Profile updated successfully.")
+		}
+
 	},
 }
 
 func init() {
 	UserCmd.AddCommand(User_updateCmd)
-	User_updateCmd.Flags().StringP("password", "p", "", "Password for the user")
-	User_updateCmd.Flags().StringP("password_confirmation", "c", "", "Password confirmation for the user")
-	if err := User_updateCmd.MarkFlagRequired("password"); err != nil {
-		fmt.Fprintf(os.Stderr, "Error marking flag as required: %s\n", err)
-		os.Exit(1)
-	}
-	err := User_updateCmd.MarkFlagRequired("password_confirmation")
-	util.ExitNicelyOnError(err, "Error marking flag as required")
+	User_updateCmd.Flags().StringP("password", "p", "", "Password")
+	User_updateCmd.Flags().StringP("password_confirmation", "c", "", "Password confirmation")
+	User_updateCmd.Flags().StringP("email", "e", "", "Email for your profile")
+	User_updateCmd.Flags().StringP("firstname", "f", "", "First name for your profile")
+	User_updateCmd.Flags().StringP("lastname", "l", "", "Last name for your profile")
 }

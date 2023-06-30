@@ -34,6 +34,8 @@ import (
 type createUserValidation struct {
 	OrganizationId int32  `db:"organization_id" validate:"required"`
 	Email          string `db:"email" validate:"omitempty,email"`
+	FirstName      string `db:"first_name" validate:"omitempty,alphaunicode"`
+	LastName       string `db:"last_name" validate:"omitempty,alphaunicode"`
 	Username       string `db:"username" validate:"required"`
 	Password       string `validate:"omitempty,min=8,containsany=_.;?&@"`
 }
@@ -131,26 +133,41 @@ func (s *Server) CreateUser(ctx context.Context,
 	if in.NeedsPasswordChange != nil {
 		needsPassPtr = *in.NeedsPasswordChange
 	}
-	user, err := s.store.CreateUser(ctx, db.CreateUserParams{OrganizationID: in.OrganizationId,
+
+	tx, err := s.store.BeginTransaction()
+	if err != nil {
+		return nil, status.Errorf(codes.Internal, "failed to begin transaction")
+	}
+	defer s.store.Rollback(tx)
+	qtx := s.store.GetQuerierWithTransaction(tx)
+	if qtx == nil {
+		return nil, status.Errorf(codes.Internal, "failed to get transaction")
+	}
+
+	user, err := qtx.CreateUser(ctx, db.CreateUserParams{OrganizationID: in.OrganizationId,
 		Email: *stringToNullString(in.Email), Username: in.Username, Password: pHash,
 		FirstName: *stringToNullString(in.FirstName), LastName: *stringToNullString(in.LastName),
 		IsProtected: *in.IsProtected, NeedsPasswordChange: needsPassPtr})
 	if err != nil {
-		return nil, err
+		return nil, status.Errorf(codes.Internal, "failed to create user")
 	}
 
 	// now attach the groups and roles
 	for _, id := range in.GroupIds {
-		_, err := s.store.AddUserGroup(ctx, db.AddUserGroupParams{UserID: user.ID, GroupID: id})
+		_, err := qtx.AddUserGroup(ctx, db.AddUserGroupParams{UserID: user.ID, GroupID: id})
 		if err != nil {
-			return nil, err
+			return nil, status.Errorf(codes.Internal, "failed to add user to group")
 		}
 	}
 	for _, id := range in.RoleIds {
-		_, err := s.store.AddUserRole(ctx, db.AddUserRoleParams{UserID: user.ID, RoleID: id})
+		_, err := qtx.AddUserRole(ctx, db.AddUserRoleParams{UserID: user.ID, RoleID: id})
 		if err != nil {
-			return nil, err
+			return nil, status.Errorf(codes.Internal, "failed to add user to role")
 		}
+	}
+	err = s.store.Commit(tx)
+	if err != nil {
+		return nil, status.Errorf(codes.Internal, "failed to commit transaction")
 	}
 
 	return &pb.CreateUserResponse{Id: user.ID, OrganizationId: user.OrganizationID, Email: &user.Email.String,
@@ -504,6 +521,43 @@ func (s *Server) GetUserByEmail(ctx context.Context,
 	return &resp, nil
 }
 
+// GetUser is a service for getting personal user details
+func (s *Server) GetUser(ctx context.Context, _ *pb.GetUserRequest) (*pb.GetUserResponse, error) {
+	claims, _ := ctx.Value(TokenInfoKey).(auth.UserClaims)
+	// check if user is authorized
+	if !IsRequestAuthorized(ctx, claims.UserId) {
+		return nil, status.Errorf(codes.PermissionDenied, "user is not authorized to access this resource")
+	}
+
+	// check if user exists
+	user, err := s.store.GetUserByID(ctx, claims.UserId)
+	if err != nil {
+		return nil, status.Errorf(codes.Internal, "failed to get user: %s", err)
+	}
+
+	var resp pb.GetUserResponse
+	resp.User = &pb.UserRecord{
+		Id:                  user.ID,
+		OrganizationId:      user.OrganizationID,
+		Email:               &user.Email.String,
+		Username:            user.Username,
+		FirstName:           &user.FirstName.String,
+		LastName:            &user.LastName.String,
+		NeedsPasswordChange: &user.NeedsPasswordChange,
+		CreatedAt:           timestamppb.New(user.CreatedAt),
+		UpdatedAt:           timestamppb.New(user.UpdatedAt),
+	}
+
+	groups, roles, err := getUserDependencies(ctx, s.store, user)
+	if err != nil {
+		return nil, status.Errorf(codes.Unknown, "failed to get user dependencies: %s", err)
+	}
+	resp.Groups = groups
+	resp.Roles = roles
+
+	return &resp, nil
+}
+
 type updatePasswordValidation struct {
 	Password             string `validate:"min=8,containsany=_.;?&@"`
 	PasswordConfirmation string `validate:"min=8,containsany=_.;?&@"`
@@ -512,8 +566,9 @@ type updatePasswordValidation struct {
 // UpdatePassword is a service for updating a user's password
 func (s *Server) UpdatePassword(ctx context.Context, in *pb.UpdatePasswordRequest) (*pb.UpdatePasswordResponse, error) {
 	claims, _ := ctx.Value(TokenInfoKey).(auth.UserClaims)
-	if claims.UserId == 0 {
-		return nil, status.Errorf(codes.Unauthenticated, "user is not authenticated")
+	// check if user is authorized
+	if !IsRequestAuthorized(ctx, claims.UserId) {
+		return nil, status.Errorf(codes.PermissionDenied, "user is not authorized to access this resource")
 	}
 
 	// validate password
@@ -558,4 +613,70 @@ func (s *Server) UpdatePassword(ctx context.Context, in *pb.UpdatePasswordReques
 	}
 
 	return &pb.UpdatePasswordResponse{}, nil
+}
+
+type updateProfileValidation struct {
+	Email     string `db:"email" validate:"omitempty,email"`
+	FirstName string `db:"first_name" validate:"omitempty,alphaunicode"`
+	LastName  string `db:"last_name" validate:"omitempty,alphaunicode"`
+}
+
+// UpdateProfile is a service for updating a user's profile
+//
+//gocyclo:ignore
+func (s *Server) UpdateProfile(ctx context.Context, in *pb.UpdateProfileRequest) (*pb.UpdateProfileResponse, error) {
+	claims, _ := ctx.Value(TokenInfoKey).(auth.UserClaims)
+	// check if user is authorized
+	if !IsRequestAuthorized(ctx, claims.UserId) {
+		return nil, status.Errorf(codes.PermissionDenied, "user is not authorized to access this resource")
+	}
+
+	// validate that at least one field is being updated
+	if (in.Email == nil || *in.Email == "") && (in.FirstName == nil || *in.FirstName == "") &&
+		(in.LastName == nil || *in.LastName == "") {
+		return nil, status.Errorf(codes.InvalidArgument, "at least one field must be updated")
+	}
+
+	updateProfileValidation := updateProfileValidation{}
+	if in.Email != nil {
+		updateProfileValidation.Email = *in.Email
+	}
+	if in.FirstName != nil {
+		updateProfileValidation.FirstName = *in.FirstName
+	}
+	if in.LastName != nil {
+		updateProfileValidation.LastName = *in.LastName
+	}
+	validator := validator.New()
+	err := validator.Struct(updateProfileValidation)
+	if err != nil {
+		return nil, status.Error(codes.InvalidArgument, "invalid fields for updating profile")
+	}
+
+	// get details of user
+	user, err := s.store.GetUserByID(ctx, claims.UserId)
+	if err != nil {
+		return nil, status.Errorf(codes.Internal, "failed to get user: %s", err)
+	}
+
+	// now update the modified fields
+	if in.Email != nil && *in.Email != "" {
+		user.Email = sql.NullString{String: *in.Email, Valid: true}
+	}
+	if in.FirstName != nil && *in.FirstName != "" {
+		user.FirstName = sql.NullString{String: *in.FirstName, Valid: true}
+	}
+	if in.LastName != nil && *in.LastName != "" {
+		user.LastName = sql.NullString{String: *in.LastName, Valid: true}
+	}
+
+	_, err = s.store.UpdateUser(ctx, db.UpdateUserParams{ID: claims.UserId, Email: user.Email,
+		FirstName: user.FirstName, LastName: user.LastName})
+
+	if err != nil {
+		return nil, status.Errorf(codes.Internal, "failed to update user: %s", err)
+	}
+
+	// return updated details
+	return &pb.UpdateProfileResponse{}, nil
 }
