@@ -32,7 +32,7 @@ import (
 var RepoCmd = &cobra.Command{
 	Use:   "repo",
 	Short: "Manage repositories within a mediator control plane",
-	Long: `The medctl repo commands allow the management of repositories within a 
+	Long: `The medic repo commands allow the management of repositories within a 
 mediator control plane.`,
 	Run: func(cmd *cobra.Command, args []string) {
 		cmd.Println("repo called")

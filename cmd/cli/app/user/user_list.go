@@ -39,7 +39,7 @@ import (
 var user_listCmd = &cobra.Command{
 	Use:   "list",
 	Short: "List users within a mediator control plane",
-	Long: `The medctl user list subcommand lets you list users within a
+	Long: `The medic user list subcommand lets you list users within a
 mediator control plane for an specific role.`,
 	PreRun: func(cmd *cobra.Command, args []string) {
 		if err := viper.BindPFlags(cmd.Flags()); err != nil {

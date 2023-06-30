@@ -102,7 +102,7 @@ func callBackServer(ctx context.Context, provider string, group int32, port stri
 var enrollProviderCmd = &cobra.Command{
 	Use:   "provider",
 	Short: "Enroll a provider within the mediator control plane",
-	Long: `The medctl enroll provider command allows a user to enroll a provider
+	Long: `The medic enroll provider command allows a user to enroll a provider
 such as GitHub into the mediator control plane. Once enrolled, users can perform
 actions such as adding repositories.`,
 	PreRun: func(cmd *cobra.Command, args []string) {

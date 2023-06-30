@@ -36,7 +36,7 @@ import (
 var Org_createCmd = &cobra.Command{
 	Use:   "create",
 	Short: "Create an organization within a mediator control plane",
-	Long: `The medctl org create subcommand lets you create new organizations
+	Long: `The medic org create subcommand lets you create new organizations
 within a mediator control plane.`,
 	PreRun: func(cmd *cobra.Command, args []string) {
 		if err := viper.BindPFlags(cmd.Flags()); err != nil {

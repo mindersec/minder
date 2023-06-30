@@ -39,7 +39,7 @@ import (
 var org_listCmd = &cobra.Command{
 	Use:   "list",
 	Short: "List organizations within a mediator control plane",
-	Long: `The medctl org list subcommand lets you list organizations within a
+	Long: `The medic org list subcommand lets you list organizations within a
 mediator control plane.`,
 	PreRun: func(cmd *cobra.Command, args []string) {
 		if err := viper.BindPFlags(cmd.Flags()); err != nil {
