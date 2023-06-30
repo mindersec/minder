@@ -9,11 +9,11 @@ jobs:
 
       - uses: actions/setup-go@v4 # v4.0.0
         with:
-          go-version-file: 'go.mod'
+          go-version-file: "go.mod"
       - name: Install addlicense
         run: go install github.com/google/addlicense@v1.0.0
       - name: Check license headers
         run: |
           set -e
-          addlicense -ignore **/pkg/generated/* -ignore **/pkg/db/* -ignore **/database/query/* -l apache -c 'Stacklok, Inc' -v * 
+          addlicense -ignore **/pkg/generated/* -ignore **/pkg/db/* -ignore **/database/query/* **/docs/docs/* **/docs/src/* **/docs/static/* -l apache -c 'Stacklok, Inc' -v * 
           git diff --exit-code
