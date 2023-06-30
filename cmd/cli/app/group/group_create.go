@@ -37,7 +37,7 @@ import (
 var Group_createCmd = &cobra.Command{
 	Use:   "create",
 	Short: "Create a group within a mediator control plane",
-	Long: `The medctl group create subcommand lets you create new groups within
+	Long: `The medic group create subcommand lets you create new groups within
 a mediator control plane.`,
 	PreRun: func(cmd *cobra.Command, args []string) {
 		if err := viper.BindPFlags(cmd.Flags()); err != nil {

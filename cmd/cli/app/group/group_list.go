@@ -39,7 +39,7 @@ import (
 var group_listCmd = &cobra.Command{
 	Use:   "list",
 	Short: "Get list of groups within a mediator control plane",
-	Long: `The medctl group list subcommand lets you list groups within
+	Long: `The medic group list subcommand lets you list groups within
 a mediator control plane.`,
 	PreRun: func(cmd *cobra.Command, args []string) {
 		if err := viper.BindPFlags(cmd.Flags()); err != nil {

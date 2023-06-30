@@ -13,7 +13,7 @@
 // See the License for the specific language governing permissions and
 // limitations under the License.
 
-// Package apply provides the apply command for the medctl CLI
+// Package apply provides the apply command for the medic CLI
 package apply
 
 import (

@@ -19,8 +19,8 @@
 // It does make a good example of how to use the generated client code
 // for others to use as a reference.
 
-// Package org contains the organization logic for the control plane
-package org
+// Package repo contains the repo logic for the control plane
+package repo
 
 import (
 	"github.com/stacklok/mediator/cmd/cli/app"
@@ -28,17 +28,17 @@ import (
 	"github.com/spf13/cobra"
 )
 
-// OrgCmd is the root command for the org subcommands
-var OrgCmd = &cobra.Command{
-	Use:   "org",
-	Short: "Manage organizations within a mediator control plane",
-	Long: `The medic org commands manage organizations within a mediator
-control plane.`,
+// RepoCmd is the root command for the repo subcommands
+var RepoCmd = &cobra.Command{
+	Use:   "repo",
+	Short: "Manage repositories within a mediator control plane",
+	Long: `The medic repo commands allow the management of repositories within a 
+mediator control plane.`,
 	Run: func(cmd *cobra.Command, args []string) {
-		cmd.Println("org called")
+		cmd.Println("repo called")
 	},
 }
 
 func init() {
-	app.RootCmd.AddCommand(OrgCmd)
+	app.RootCmd.AddCommand(RepoCmd)
 }

@@ -26,7 +26,7 @@ import (
 var RoleCmd = &cobra.Command{
 	Use:   "role",
 	Short: "Manage roles within a mediator control plane",
-	Long: `The medctl role subcommands allows the management of roles within
+	Long: `The medic role subcommands allows the management of roles within
 a mediator controlplane.`,
 	Run: func(cmd *cobra.Command, args []string) {
 		cmd.Println("role called")

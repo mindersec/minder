@@ -34,7 +34,7 @@ import (
 var org_deleteCmd = &cobra.Command{
 	Use:   "delete",
 	Short: "delete a organization within a mediator controlplane",
-	Long: `The medctl org delete subcommand lets you delete organizations within a
+	Long: `The medic org delete subcommand lets you delete organizations within a
 mediator control plane.`,
 	PreRun: func(cmd *cobra.Command, args []string) {
 		if err := viper.BindPFlags(cmd.Flags()); err != nil {

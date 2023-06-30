@@ -116,7 +116,7 @@ func printUser(user *pb.UserRecord, groups []*pb.GroupRecord, roles []*pb.RoleRe
 var user_getCmd = &cobra.Command{
 	Use:   "get",
 	Short: "Get details for an user within a mediator control plane",
-	Long: `The medctl user get subcommand lets you retrieve details for an user within a
+	Long: `The medic user get subcommand lets you retrieve details for an user within a
 mediator control plane.`,
 	PreRun: func(cmd *cobra.Command, args []string) {
 		if err := viper.BindPFlags(cmd.Flags()); err != nil {
