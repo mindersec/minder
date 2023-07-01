@@ -39,7 +39,7 @@ service OAuthService {
             get: "/api/v1/auth/url"
         };
     }
-    rpc ExchangeCodeForTokenCLI (ExchangeCodeForTokenCLIRequest) returns (google.api.HttpBody) {
+    rpc ExchangeCodeForTokenCLI (ExchangeCodeForTokenCLIRequest) returns (google.api.HttpBody) { // protolint:disable:this
         option (google.api.http) = {
             get: "/api/v1/auth/callback/{provider}/cli"
         };
