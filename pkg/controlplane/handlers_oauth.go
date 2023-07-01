@@ -35,9 +35,39 @@ import (
 	"go.opentelemetry.io/otel/attribute"
 	"go.opentelemetry.io/otel/trace"
 	"golang.org/x/oauth2"
+	"google.golang.org/genproto/googleapis/api/httpbody"
 	"google.golang.org/grpc/codes"
 	"google.golang.org/grpc/status"
 )
+
+var html = `
+	<!DOCTYPE html>
+	<html>
+	<head>
+		<meta charset="UTF-8">
+		<title>Mediator</title>
+		<style>
+			body {
+				background-color: #ffffff;
+				font-family: Arial, sans-serif;
+				text-align: center;
+				margin-top: 20vh;
+			}
+
+			h1 {
+				font-weight: bold;
+				font-size: 32px;
+				color: #000000;
+				margin-bottom: 20px;
+			}
+		</style>
+	</head>
+	<body>
+		<h1>Mediator enrollment complete</h1>
+		<p>You can now close this window and return to the CLI.</p>
+	</body>
+	</html>
+`
 
 func getDefaultGroup(ctx context.Context) (int32, error) {
 	claims, ok := ctx.Value(TokenInfoKey).(auth.UserClaims)
@@ -130,7 +160,7 @@ func (s *Server) GetAuthorizationURL(ctx context.Context,
 // passed in. If they match, the code is exchanged for a token.
 // This function is used by the CLI client.
 func (s *Server) ExchangeCodeForTokenCLI(ctx context.Context,
-	in *pb.ExchangeCodeForTokenCLIRequest) (*pb.ExchangeCodeForTokenCLIResponse, error) {
+	in *pb.ExchangeCodeForTokenCLIRequest) (*httpbody.HttpBody, error) {
 
 	// Configure tracing
 	span := trace.SpanFromContext(ctx)
@@ -235,8 +265,9 @@ func (s *Server) ExchangeCodeForTokenCLI(ctx context.Context,
 		return nil, status.Errorf(codes.Unknown, "error inserting access token: %s", err)
 	}
 
-	return &pb.ExchangeCodeForTokenCLIResponse{
-		Html: "The oauth flow has been completed successfully. You can now close this window.",
+	return &httpbody.HttpBody{
+		ContentType: "text/html",
+		Data:        []byte(html),
 	}, nil
 }
 
