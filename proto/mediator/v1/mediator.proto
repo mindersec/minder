@@ -494,7 +494,6 @@ message RegisterRepositoryRequest {
 message Repositories {
     string owner = 1;
     string name = 2;
-    bool is_registered = 3;
     int32 repo_id = 4;
 }
 
@@ -515,17 +514,19 @@ message ListRepositoriesResponse {
 message RepositoryResult {
     string owner = 1;
     string repository = 2;
-    int64 hook_id = 3;
-    string hook_url = 4;
-    string deploy_url = 5;
-    google.protobuf.Timestamp created_at = 6;
-    google.protobuf.Timestamp updated_at = 7;
-    string hook_name = 8;
-    string hook_type = 9;
-    bool success = 10;
-    string uuid = 11;
-    google.protobuf.StringValue error = 12;
+    int32 repo_id = 3;
+    int64 hook_id = 4;
+    string hook_url = 5;
+    string deploy_url = 6;
+    google.protobuf.Timestamp created_at = 7;
+    google.protobuf.Timestamp updated_at = 8;
+    string hook_name = 9;
+    string hook_type = 10;
+    bool success = 11;
+    string uuid = 12;
+    google.protobuf.StringValue error = 13;
 }
+
 
 message VerifyRequest {
 }

@@ -39,8 +39,9 @@ import (
 
 // Repository represents a GitHub repository
 type Repository struct {
-	Owner string
-	Repo  string
+	Owner  string
+	Repo   string
+	RepoID int32
 }
 
 // RegistrationStatus gathers the status of the webhook call for each repository
@@ -53,6 +54,7 @@ type RegistrationStatus struct {
 type RepositoryResult struct {
 	Owner      string
 	Repository string
+	RepoID     int32
 	HookID     int64
 	HookURL    string
 	DeployURL  string
@@ -337,6 +339,7 @@ func RegisterWebHook(
 		regResult := RepositoryResult{
 			Repository: repo.Repo,
 			Owner:      repo.Owner,
+			RepoID:     repo.RepoID,
 			HookID:     mhook.GetID(),
 			HookURL:    mhook.GetURL(),
 			DeployURL:  webhookUrl,
