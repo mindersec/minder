@@ -346,3 +346,59 @@ func (q *Queries) UpdateRepository(ctx context.Context, arg UpdateRepositoryPara
 	)
 	return i, err
 }
+
+const updateRepositoryByID = `-- name: UpdateRepositoryByID :one
+UPDATE repositories 
+SET group_id = $2,
+repo_owner = $3,
+repo_name = $4,
+is_private = $5,
+is_fork = $6,
+webhook_id = $7,
+webhook_url = $8,
+deploy_url = $9, 
+updated_at = NOW() 
+WHERE repo_id = $1 RETURNING id, repo_owner, repo_name, repo_id, is_private, is_fork, group_id, webhook_id, webhook_url, deploy_url, created_at, updated_at
+`
+
+type UpdateRepositoryByIDParams struct {
+	RepoID     int32         `json:"repo_id"`
+	GroupID    int32         `json:"group_id"`
+	RepoOwner  string        `json:"repo_owner"`
+	RepoName   string        `json:"repo_name"`
+	IsPrivate  bool          `json:"is_private"`
+	IsFork     bool          `json:"is_fork"`
+	WebhookID  sql.NullInt32 `json:"webhook_id"`
+	WebhookUrl string        `json:"webhook_url"`
+	DeployUrl  string        `json:"deploy_url"`
+}
+
+func (q *Queries) UpdateRepositoryByID(ctx context.Context, arg UpdateRepositoryByIDParams) (Repository, error) {
+	row := q.db.QueryRowContext(ctx, updateRepositoryByID,
+		arg.RepoID,
+		arg.GroupID,
+		arg.RepoOwner,
+		arg.RepoName,
+		arg.IsPrivate,
+		arg.IsFork,
+		arg.WebhookID,
+		arg.WebhookUrl,
+		arg.DeployUrl,
+	)
+	var i Repository
+	err := row.Scan(
+		&i.ID,
+		&i.RepoOwner,
+		&i.RepoName,
+		&i.RepoID,
+		&i.IsPrivate,
+		&i.IsFork,
+		&i.GroupID,
+		&i.WebhookID,
+		&i.WebhookUrl,
+		&i.DeployUrl,
+		&i.CreatedAt,
+		&i.UpdatedAt,
+	)
+	return i, err
+}

@@ -71,8 +71,9 @@ func (s *Server) RegisterRepository(ctx context.Context,
 
 	for _, repository := range in.GetRepositories() {
 		repositories = append(repositories, Repository{
-			Owner: repository.GetOwner(),
-			Repo:  repository.GetName(),
+			Owner:  repository.GetOwner(),
+			Repo:   repository.GetName(),
+			RepoID: repository.GetRepoId(), // Handle the RepoID here.
 		})
 	}
 
@@ -88,8 +89,10 @@ func (s *Server) RegisterRepository(ctx context.Context,
 		pbResult := &pb.RepositoryResult{
 			Owner:      result.Owner,
 			Repository: result.Repository,
+			RepoId:     result.RepoID,
 			HookId:     result.HookID,
 			HookUrl:    result.HookURL,
+			HookName:   result.HookName,
 			DeployUrl:  result.DeployURL,
 			Success:    result.Success,
 			Uuid:       result.HookUUID,
@@ -97,9 +100,14 @@ func (s *Server) RegisterRepository(ctx context.Context,
 		results = append(results, pbResult)
 
 		// update the database
-		_, err = s.store.UpdateRepository(ctx, db.UpdateRepositoryParams{
+		_, err = s.store.UpdateRepositoryByID(ctx, db.UpdateRepositoryByIDParams{
 			WebhookID:  sql.NullInt32{Int32: int32(result.HookID), Valid: true},
 			WebhookUrl: result.HookURL,
+			GroupID:    in.GroupId,
+			RepoOwner:  result.Owner,
+			RepoName:   result.Repository,
+			RepoID:     result.RepoID,
+			DeployUrl:  result.DeployURL,
 		})
 		if err != nil {
 			return nil, err
@@ -143,10 +151,9 @@ func (s *Server) ListRepositories(ctx context.Context,
 
 	for _, repo := range repos {
 		results = append(results, &pb.Repositories{
-			Owner:        repo.RepoOwner,
-			Name:         repo.RepoName,
-			RepoId:       repo.RepoID,
-			IsRegistered: repo.WebhookID.Valid,
+			Owner:  repo.RepoOwner,
+			Name:   repo.RepoName,
+			RepoId: repo.RepoID,
 		})
 	}
 

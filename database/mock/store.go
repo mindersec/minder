@@ -983,6 +983,21 @@ func (mr *MockStoreMockRecorder) UpdateRepository(arg0, arg1 interface{}) *gomoc
 	return mr.mock.ctrl.RecordCallWithMethodType(mr.mock, "UpdateRepository", reflect.TypeOf((*MockStore)(nil).UpdateRepository), arg0, arg1)
 }
 
+// UpdateRepositoryByID mocks base method.
+func (m *MockStore) UpdateRepositoryByID(arg0 context.Context, arg1 db.UpdateRepositoryByIDParams) (db.Repository, error) {
+	m.ctrl.T.Helper()
+	ret := m.ctrl.Call(m, "UpdateRepositoryByID", arg0, arg1)
+	ret0, _ := ret[0].(db.Repository)
+	ret1, _ := ret[1].(error)
+	return ret0, ret1
+}
+
+// UpdateRepositoryByID indicates an expected call of UpdateRepositoryByID.
+func (mr *MockStoreMockRecorder) UpdateRepositoryByID(arg0, arg1 interface{}) *gomock.Call {
+	mr.mock.ctrl.T.Helper()
+	return mr.mock.ctrl.RecordCallWithMethodType(mr.mock, "UpdateRepositoryByID", reflect.TypeOf((*MockStore)(nil).UpdateRepositoryByID), arg0, arg1)
+}
+
 // UpdateRole mocks base method.
 func (m *MockStore) UpdateRole(arg0 context.Context, arg1 db.UpdateRoleParams) (db.Role, error) {
 	m.ctrl.T.Helper()

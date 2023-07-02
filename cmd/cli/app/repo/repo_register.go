@@ -74,13 +74,16 @@ var repo_registerCmd = &cobra.Command{
 		var allSelectedRepos []string
 
 		repoNames := make([]string, len(listResp.Results))
+		repoIDs := make(map[string]int32) // Map of repo names to IDs
+
 		for i, repo := range listResp.Results {
 			repoNames[i] = fmt.Sprintf("%s/%s", repo.Owner, repo.Name)
+			repoIDs[repoNames[i]] = repo.RepoId
 		}
 
 		var selectedRepos []string
 		prompt := &survey.MultiSelect{
-			Message:  "Choose a repository:",
+			Message:  "Select repositories to register with mediator: \n",
 			Options:  repoNames,
 			PageSize: 20, // PageSize determins how many options are shown at once, restricted by limit flag
 		}
@@ -101,8 +104,9 @@ var repo_registerCmd = &cobra.Command{
 				os.Exit(1)
 			}
 			repoProtos[i] = &pb.Repositories{
-				Owner: splitRepo[0],
-				Name:  splitRepo[1],
+				Owner:  splitRepo[0],
+				Name:   splitRepo[1],
+				RepoId: repoIDs[repo], // This line is new, it sets the ID from the map
 			}
 		}
 
@@ -113,15 +117,15 @@ var repo_registerCmd = &cobra.Command{
 			GroupId:      groupID,
 		}
 
-		fmt.Printf("Registering repositories: %v\n", allSelectedRepos)
-
 		registerResp, err := client.RegisterRepository(context.Background(), request)
 		if err != nil {
 			fmt.Fprintf(os.Stderr, "Error registering repositories: %s\n", err)
 			os.Exit(1)
 		}
 
-		fmt.Printf("Registered repositories successfully. Response: %v\n", registerResp.Results)
+		for _, repo := range registerResp.Results {
+			fmt.Printf("Registered repository: %s/%s\n", repo.Owner, repo.Repository)
+		}
 
 	},
 }

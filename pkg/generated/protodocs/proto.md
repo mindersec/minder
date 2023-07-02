@@ -1466,7 +1466,6 @@ BUF does not allow grouping (which is a shame)
 | ----- | ---- | ----- | ----------- |
 | owner | [string](#string) |  |  |
 | name | [string](#string) |  |  |
-| is_registered | [bool](#bool) |  |  |
 | repo_id | [int32](#int32) |  |  |
 
 
@@ -1484,6 +1483,7 @@ BUF does not allow grouping (which is a shame)
 | ----- | ---- | ----- | ----------- |
 | owner | [string](#string) |  |  |
 | repository | [string](#string) |  |  |
+| repo_id | [int32](#int32) |  |  |
 | hook_id | [int64](#int64) |  |  |
 | hook_url | [string](#string) |  |  |
 | deploy_url | [string](#string) |  |  |
