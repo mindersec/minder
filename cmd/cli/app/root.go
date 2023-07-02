@@ -13,7 +13,7 @@
 // See the License for the specific language governing permissions and
 // limitations under the License.
 
-// Package app provides the root command for the medctl CLI
+// Package app provides the root command for the medic CLI
 package app
 
 import (
@@ -29,10 +29,10 @@ var (
 
 	// RootCmd represents the base command when called without any subcommands
 	RootCmd = &cobra.Command{
-		Use:   "medctl",
-		Short: "medctl controls mediator via the control plane",
+		Use:   "medic",
+		Short: "medic controls mediator via the control plane",
 		Long: `For more information about mediator, please visit:
-https://docs.stacklok.com/mediator/medctl/overview.html`,
+https://docs.stacklok.com/mediator/medic/overview.html`,
 	}
 )
 

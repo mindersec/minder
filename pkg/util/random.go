@@ -19,7 +19,7 @@
 // It does make a good example of how to use the generated client code
 // for others to use as a reference.
 
-// Package util/random contains utility functions largely for unit testing.
+// Package util contains utility functions largely for unit testing.
 // WARNING: Do not use the functions in this package that generate random / seeds
 // for any security related purposes, outside of testing.
 package util

@@ -19,7 +19,7 @@
 // It does make a good example of how to use the generated client code
 // for others to use as a reference.
 
-// Package auth provides the auth command group for the medctl CLI.
+// Package auth provides the auth command group for the medic CLI.
 package auth
 
 import (
@@ -32,7 +32,7 @@ import (
 var AuthCmd = &cobra.Command{
 	Use:   "auth",
 	Short: "Authorize and manage accounts within a mediator control plane",
-	Long: `The medctl auth command group lets you create accounts and grant or revoke
+	Long: `The medic auth command group lets you create accounts and grant or revoke
 authorization to existing accounts within a mediator control plane.`,
 	Run: func(cmd *cobra.Command, args []string) {
 		cmd.Println("auth called")

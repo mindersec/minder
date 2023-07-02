@@ -48,6 +48,7 @@
   "paths": {
     "/api/v1/auth/callback/{provider}/cli": {
       "get": {
+        "summary": "protolint:disable:this",
         "operationId": "OAuthService_ExchangeCodeForTokenCLI",
         "responses": {
           "200": {
@@ -2723,9 +2724,6 @@
         "name": {
           "type": "string"
         },
-        "isRegistered": {
-          "type": "boolean"
-        },
         "repoId": {
           "type": "integer",
           "format": "int32"
@@ -2740,6 +2738,10 @@
         },
         "repository": {
           "type": "string"
+        },
+        "repoId": {
+          "type": "integer",
+          "format": "int32"
         },
         "hookId": {
           "type": "string",

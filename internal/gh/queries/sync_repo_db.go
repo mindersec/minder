@@ -30,7 +30,7 @@ import (
 // check if the repository already exists in the database, and if it does,
 // we check if it needs to be updated.
 // If it doesn't exist, we create it.
-// This function will be called on initial enrollment by the client (medctl enroll ...),
+// This function will be called on initial enrollment by the client (medic enroll ...),
 // It can then later be called to sync the repositories with the database.
 // In time this maybe better suited to a stored procedure.
 // Bench marking this function should 0.8sec for an initial sync of 360 new repos.

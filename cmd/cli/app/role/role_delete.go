@@ -34,7 +34,7 @@ import (
 var role_deleteCmd = &cobra.Command{
 	Use:   "delete",
 	Short: "delete a role within a mediator controlplane",
-	Long: `The medctl role delete subcommand lets you delete roles within a
+	Long: `The medic role delete subcommand lets you delete roles within a
 mediator control plane.`,
 	PreRun: func(cmd *cobra.Command, args []string) {
 		if err := viper.BindPFlags(cmd.Flags()); err != nil {

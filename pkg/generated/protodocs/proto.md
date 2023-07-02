@@ -1466,7 +1466,6 @@ BUF does not allow grouping (which is a shame)
 | ----- | ---- | ----- | ----------- |
 | owner | [string](#string) |  |  |
 | name | [string](#string) |  |  |
-| is_registered | [bool](#bool) |  |  |
 | repo_id | [int32](#int32) |  |  |
 
 
@@ -1484,6 +1483,7 @@ BUF does not allow grouping (which is a shame)
 | ----- | ---- | ----- | ----------- |
 | owner | [string](#string) |  |  |
 | repository | [string](#string) |  |  |
+| repo_id | [int32](#int32) |  |  |
 | hook_id | [int64](#int64) |  |  |
 | hook_url | [string](#string) |  |  |
 | deploy_url | [string](#string) |  |  |
@@ -1849,7 +1849,7 @@ replies with OK
 | Method Name | Request Type | Response Type | Description |
 | ----------- | ------------ | ------------- | ------------|
 | GetAuthorizationURL | [GetAuthorizationURLRequest](#mediator-v1-GetAuthorizationURLRequest) | [GetAuthorizationURLResponse](#mediator-v1-GetAuthorizationURLResponse) |  |
-| ExchangeCodeForTokenCLI | [ExchangeCodeForTokenCLIRequest](#mediator-v1-ExchangeCodeForTokenCLIRequest) | [.google.api.HttpBody](#google-api-HttpBody) |  |
+| ExchangeCodeForTokenCLI | [ExchangeCodeForTokenCLIRequest](#mediator-v1-ExchangeCodeForTokenCLIRequest) | [.google.api.HttpBody](#google-api-HttpBody) | protolint:disable:this |
 | ExchangeCodeForTokenWEB | [ExchangeCodeForTokenWEBRequest](#mediator-v1-ExchangeCodeForTokenWEBRequest) | [ExchangeCodeForTokenWEBResponse](#mediator-v1-ExchangeCodeForTokenWEBResponse) |  |
 | StoreProviderToken | [StoreProviderTokenRequest](#mediator-v1-StoreProviderTokenRequest) | [StoreProviderTokenResponse](#mediator-v1-StoreProviderTokenResponse) |  |
 | RevokeOauthTokens | [RevokeOauthTokensRequest](#mediator-v1-RevokeOauthTokensRequest) | [RevokeOauthTokensResponse](#mediator-v1-RevokeOauthTokensResponse) | revoke all tokens for all users |

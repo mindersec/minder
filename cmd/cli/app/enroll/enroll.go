@@ -19,7 +19,7 @@
 // It does make a good example of how to use the generated client code
 // for others to use as a reference.
 
-// Package enroll contains the enroll command for the medctl CLI
+// Package enroll contains the enroll command for the medic CLI
 package enroll
 
 import (
@@ -32,7 +32,7 @@ import (
 var EnrollCmd = &cobra.Command{
 	Use:   "enroll",
 	Short: "Manage enrollments within a mediator control plane",
-	Long: `The medctl enroll commands manage enrollment of providers, within a mediator
+	Long: `The medic enroll commands manage enrollment of providers, within a mediator
 control plane.`,
 	Run: func(cmd *cobra.Command, args []string) {
 		cmd.Println("enroll called")
