@@ -40,7 +40,7 @@ func createRandomRepository(t *testing.T, group int32) Repository {
 		RepoID:     int32(util.RandomInt(0, 1000, seed)),
 		IsPrivate:  false,
 		IsFork:     false,
-		WebhookID:  sql.NullInt32{Int32: 1234, Valid: true},
+		WebhookID:  sql.NullInt32{Int32: int32(util.RandomInt(0, 1000, seed)), Valid: true},
 		WebhookUrl: util.RandomURL(seed),
 		DeployUrl:  util.RandomURL(seed),
 	}
@@ -161,6 +161,41 @@ func TestUpdateRepository(t *testing.T) {
 	}
 
 	repo2, err := testQueries.UpdateRepository(context.Background(), arg)
+	require.NoError(t, err)
+	require.NotEmpty(t, repo2)
+
+	require.Equal(t, repo1.ID, repo2.ID)
+	require.Equal(t, repo1.GroupID, repo2.GroupID)
+	require.Equal(t, repo1.RepoOwner, repo2.RepoOwner)
+	require.Equal(t, repo1.RepoName, repo2.RepoName)
+	require.Equal(t, repo1.RepoID, repo2.RepoID)
+	require.Equal(t, repo1.IsPrivate, repo2.IsPrivate)
+	require.Equal(t, repo1.IsFork, repo2.IsFork)
+	require.Equal(t, arg.WebhookID, repo2.WebhookID)
+	require.Equal(t, repo1.WebhookUrl, repo2.WebhookUrl)
+	require.Equal(t, repo1.DeployUrl, repo2.DeployUrl)
+	require.Equal(t, repo1.CreatedAt, repo2.CreatedAt)
+	require.NotEqual(t, repo1.UpdatedAt, repo2.UpdatedAt)
+}
+
+func TestUpdateRepositoryByRepoId(t *testing.T) {
+	org := createRandomOrganization(t)
+	group := createRandomGroup(t, org.ID)
+	repo1 := createRandomRepository(t, group.ID)
+
+	arg := UpdateRepositoryByIDParams{
+		RepoID:     repo1.RepoID,
+		GroupID:    repo1.GroupID,
+		RepoOwner:  repo1.RepoOwner,
+		RepoName:   repo1.RepoName,
+		IsPrivate:  repo1.IsPrivate,
+		IsFork:     repo1.IsFork,
+		WebhookID:  sql.NullInt32{Int32: 1234, Valid: true},
+		WebhookUrl: repo1.WebhookUrl,
+		DeployUrl:  repo1.DeployUrl,
+	}
+
+	repo2, err := testQueries.UpdateRepositoryByID(context.Background(), arg)
 	require.NoError(t, err)
 	require.NotEmpty(t, repo2)
 
