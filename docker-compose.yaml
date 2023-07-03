@@ -39,6 +39,7 @@ services:
       "up",
       "--yes",
       "--db-host=postgres",
+      "--db-name=postgres",
       ]
     image: ghcr.io/stacklok/mediator:latest
     networks:
