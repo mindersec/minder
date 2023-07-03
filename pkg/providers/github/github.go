@@ -19,7 +19,7 @@ import (
 	"context"
 	"net/url"
 
-	"github.com/google/go-github/v52/github"
+	"github.com/google/go-github/v53/github"
 	"github.com/shurcooL/graphql"
 	"golang.org/x/oauth2"
 )

@@ -18,7 +18,7 @@ package github
 import (
 	"context"
 
-	"github.com/google/go-github/v52/github"
+	"github.com/google/go-github/v53/github"
 )
 
 // ListAllRepositories returns a list of all repositories for the authenticated user
