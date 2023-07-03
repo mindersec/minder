@@ -22,12 +22,16 @@ services:
       "--grpc-host=0.0.0.0",
       "--http-host=0.0.0.0",
       "--db-host=postgres",
+      "--config=/app/config.yaml"
       ]
     restart: always # keep the server running
     ports:
       - "8080:8080"
       - "8090:8090"
     image: ghcr.io/stacklok/mediator:latest
+    volumes:
+          - ./config.yaml:/app/config.yaml
+          - .ssh:/app/.ssh
     networks:
       - app_net
     depends_on:
