@@ -1304,6 +1304,7 @@ BUF does not allow grouping (which is a shame)
 | group_id | [int32](#int32) |  |  |
 | limit | [int32](#int32) |  |  |
 | offset | [int32](#int32) |  |  |
+| filter_registered | [bool](#bool) |  |  |
 
 
 
