@@ -68,7 +68,6 @@ const config = {
       {
         docs: {
           sidebarPath: require.resolve('./sidebars.js'),
-          path: '../',
           routeBasePath: '/',
         },
         theme: {
