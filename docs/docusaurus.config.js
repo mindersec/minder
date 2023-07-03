@@ -26,7 +26,7 @@ const redocusaurus = [
     specs: [
       {
         id: 'mediator-api',
-        spec: './docs/openapi/mediator/v1/mediator.swagger.json',
+        spec: './pkg/generated/openapi/mediator/v1/mediator.swagger.json',
         route: '/api',
       },
     ],
