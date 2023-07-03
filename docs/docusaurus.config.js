@@ -26,7 +26,7 @@ const redocusaurus = [
     specs: [
       {
         id: 'mediator-api',
-        spec: './docs/openapi/mediator/v1/mediator.swagger.json',
+        spec: './pkg/generated/openapi/mediator/v1/mediator.swagger.json',
         route: '/api',
       },
     ],
@@ -44,7 +44,7 @@ const config = {
   url: 'https://stacklok.github.io',
   // Set the /<baseUrl>/ pathname under which your site is served
   // For GitHub pages deployment, it is often '/<projectName>/'
-  baseUrl: '/mediator',
+  baseUrl: '/',
 
   // GitHub pages deployment config.
   // If you aren't using GitHub pages, you don't need these.
@@ -119,7 +119,7 @@ const config = {
             items: [
               {
                 label: 'Mediator',
-                to: '/mediator',
+                to: '/',
               },
             ],
           },
