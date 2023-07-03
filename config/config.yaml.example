@@ -38,7 +38,7 @@ database:
   dbport: 5432
   dbuser: postgres
   dbpass: postgres
-  dbname: postgres
+  dbname: mediator
   sslmode: disable
   encryption_key: p6ssw0rd
 
