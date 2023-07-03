@@ -13,31 +13,5 @@
 # See the License for the specific language governing permissions and
 # limitations under the License.
 
-# These set of workflows run on every pull request
-name: PR
-on:
-  pull_request:
-    branches:
-      - main
-      - release-*
-    paths-ignore:
-      - "**.md"
-      - "docs/**"
-      - "**.txt"
-      - "images/**"
-      - "LICENSE"
-
-permissions:
-  contents: read
-
-jobs:
-  license-check:
-    uses: ./.github/workflows/license-check.yml
-  golangci-lint:
-    uses: ./.github/workflows/golangci-lint.yml
-  build:
-    uses: ./.github/workflows/build.yml
-  test:
-    uses: ./.github/workflows/test.yml
-  image-build:
-    uses: ./.github/workflows/image-build.yml
+features.openapi:
+  hideDownloadButton: true

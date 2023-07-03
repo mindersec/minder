@@ -17,7 +17,7 @@ projectname?=mediator
 
 default: help
 
-.PHONY: help gen clean-gen build run-cli run-server bootstrap test clean cover lint pre-commit migrateup migratedown sqlc mock docs
+.PHONY: help gen clean-gen build run-cli run-server bootstrap test clean cover lint pre-commit migrateup migratedown sqlc mock cli-docs
 
 help: ## list makefile targets
 	@grep -E '^[a-zA-Z_-]+:.*?## .*$$' $(MAKEFILE_LIST) | sort | awk 'BEGIN {FS = ":.*?## "}; {printf "\033[36m%-30s\033[0m %s\n", $$1, $$2}'
@@ -28,7 +28,8 @@ gen: ## generate protobuf files
 clean-gen:
 	rm -rf $(shell find pkg/generated -iname "*.go") & rm -rf $(shell find pkg/generated -iname "*.swagger.json") & rm -rf pkg/generated/protodocs
 
-docs:
+cli-docs:
+	@mkdir -p docs/docs/cli
 	@go run cmd/cli/main.go docs
 
 build: ## build golang binary
@@ -82,7 +83,7 @@ dbschema:	## generate database schema with schema spy, monitor file until doc is
 	mkdir -p database/schema/output && chmod a+w database/schema/output
 	cd database/schema && docker-compose run -u 1001:1001 --rm schemaspy -configFile /config/schemaspy.properties -imageformat png
 	sleep 10
-	cp database/schema/output/diagrams/summary/relationships.real.large.png docs/database/schema.png
+	cp database/schema/output/diagrams/summary/relationships.real.large.png docs/static/img/mediator/schema.png
 	cd database/schema && docker compose down -v && rm -rf output
 
 mock:
