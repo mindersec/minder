@@ -494,7 +494,7 @@ message RegisterRepositoryRequest {
 message Repositories {
     string owner = 1;
     string name = 2;
-    int32 repo_id = 4;
+    int32 repo_id = 3;
 }
 
 message RegisterRepositoryResponse {
