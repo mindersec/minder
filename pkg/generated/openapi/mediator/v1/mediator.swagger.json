@@ -997,6 +997,12 @@
             "required": false,
             "type": "integer",
             "format": "int32"
+          },
+          {
+            "name": "filterRegistered",
+            "in": "query",
+            "required": false,
+            "type": "boolean"
           }
         ],
         "tags": [

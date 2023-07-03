@@ -149,12 +149,26 @@ func (s *Server) ListRepositories(ctx context.Context,
 	var resp pb.ListRepositoriesResponse
 	var results []*pb.Repositories
 
-	for _, repo := range repos {
-		results = append(results, &pb.Repositories{
-			Owner:  repo.RepoOwner,
-			Name:   repo.RepoName,
-			RepoId: repo.RepoID,
-		})
+	// Do not return results containing the webhook (e.g. registered), if the
+	// client is not interested
+	if in.FilterRegistered {
+		for _, repo := range repos {
+			if repo.WebhookUrl == "" {
+				results = append(results, &pb.Repositories{
+					Owner:  repo.RepoOwner,
+					Name:   repo.RepoName,
+					RepoId: repo.RepoID,
+				})
+			}
+		}
+	} else {
+		for _, repo := range repos {
+			results = append(results, &pb.Repositories{
+				Owner:  repo.RepoOwner,
+				Name:   repo.RepoName,
+				RepoId: repo.RepoID,
+			})
+		}
 	}
 
 	resp.Results = results
