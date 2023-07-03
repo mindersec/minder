@@ -52,7 +52,7 @@ const sidebars = {
     {
       type: 'link',
       label: 'API documentation',
-      href: '/mediator/api',
+      href: '/api',
     },
     {
       type: 'doc',
