@@ -119,7 +119,7 @@ const config = {
             items: [
               {
                 label: 'Mediator',
-                to: '/mediator',
+                to: '/',
               },
             ],
           },
