@@ -57,7 +57,7 @@ const sidebars = {
     {
       type: 'doc',
       label: 'Proto documentation',
-      id: 'proto/mediator/v1/proto',
+      id: 'protodocs/proto',
     },
     {
       type: 'category',
