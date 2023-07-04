@@ -24,6 +24,7 @@ services:
       "--db-host=postgres",
       "--config=/app/config.yaml"
       ]
+    user: 65534
     restart: always # keep the server running
     ports:
       - "8080:8080"
@@ -44,6 +45,7 @@ services:
       "--yes",
       "--db-host=postgres",
       ]
+    user: 65534
     image: ghcr.io/stacklok/mediator:latest
     networks:
       - app_net
