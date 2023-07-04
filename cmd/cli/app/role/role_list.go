@@ -39,7 +39,7 @@ import (
 var role_listCmd = &cobra.Command{
 	Use:   "list",
 	Short: "List roles within a mediator control plane",
-	Long: `The medctl role list subcommand lets you list roles within a
+	Long: `The medic role list subcommand lets you list roles within a
 mediator control plane for an specific group.`,
 	PreRun: func(cmd *cobra.Command, args []string) {
 		if err := viper.BindPFlags(cmd.Flags()); err != nil {

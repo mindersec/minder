@@ -997,6 +997,12 @@
             "required": false,
             "type": "integer",
             "format": "int32"
+          },
+          {
+            "name": "filterRegistered",
+            "in": "query",
+            "required": false,
+            "type": "boolean"
           }
         ],
         "tags": [
@@ -2706,9 +2712,6 @@
         "name": {
           "type": "string"
         },
-        "isRegistered": {
-          "type": "boolean"
-        },
         "repoId": {
           "type": "integer",
           "format": "int32"
@@ -2723,6 +2726,10 @@
         },
         "repository": {
           "type": "string"
+        },
+        "repoId": {
+          "type": "integer",
+          "format": "int32"
         },
         "hookId": {
           "type": "string",

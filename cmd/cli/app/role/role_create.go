@@ -36,7 +36,7 @@ import (
 var Role_createCmd = &cobra.Command{
 	Use:   "create",
 	Short: "Create a role within a mediator control plane",
-	Long: `The medctl role create subcommand lets you create new roles for a group
+	Long: `The medic role create subcommand lets you create new roles for a group
 within a mediator control plane.`,
 	PreRun: func(cmd *cobra.Command, args []string) {
 		if err := viper.BindPFlags(cmd.Flags()); err != nil {

@@ -21,11 +21,6 @@ grpc_server:
   host: "127.0.0.1"
   port: 8090
 
-# OAuth2 configuration
-github:
-  client_id: "client_id"
-  client_secret: "client_secret"
-
 logging:
   level: "debug"
   format: "json"
@@ -43,7 +38,7 @@ database:
   dbport: 5432
   dbuser: postgres
   dbpass: postgres
-  dbname: postgres
+  dbname: mediator
   sslmode: disable
   encryption_key: p6ssw0rd
 
@@ -80,9 +75,19 @@ salt:
   # the desired number of returned bytes
   key_length: 32
 
-github-app:
+# Webhook Configuration
+# change example.com to an exposed IP / domain
+# webhook_secret is set withing the webhook sent to github. Github then signs
+# the payload sent to mediator and mediator verifies.
+webhook-config:
   external_webhook_url: "https://example.com/api/v1/webhook/github"
   external_ping_url: "https://example.com/api/v1/health"
-  app:
-    webhook_secret: "p6ssw0rd"
-    private_key_path: "/home/stacklok/mediator/private.pem"
+  webhook_secret: "your-password"
+
+# OAuth2 Configuration (used during enrollment)
+# These values are to be set within the GitHub OAuth2 App page
+github:
+    client_id: "abcde....."
+    client_secret: "abcde....."
+    payload_secret: "your-password"
+    redirect_uri: "http://localhost:8080/api/v1/auth/callback/github"

@@ -58,7 +58,7 @@ func askForConfirmation(prompt string) bool {
 var User_createCmd = &cobra.Command{
 	Use:   "create",
 	Short: "Create a user within a mediator control plane",
-	Long: `The medctl user create subcommand lets you create new users for a role
+	Long: `The medic user create subcommand lets you create new users for a role
 within a mediator control plane.`,
 	PreRun: func(cmd *cobra.Command, args []string) {
 		if err := viper.BindPFlags(cmd.Flags()); err != nil {

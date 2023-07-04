@@ -32,7 +32,7 @@ import (
 var GroupCmd = &cobra.Command{
 	Use:   "group",
 	Short: "Manage groups within a mediator control plane",
-	Long: `The medctl group commands allow the management of groups within a 
+	Long: `The medic group commands allow the management of groups within a 
 mediator control plane.`,
 	Run: func(cmd *cobra.Command, args []string) {
 		cmd.Println("group called")

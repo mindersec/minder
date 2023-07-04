@@ -52,6 +52,20 @@ deploy_url = $10,
 updated_at = NOW() 
 WHERE id = $1 RETURNING *;
 
+-- name: UpdateRepositoryByID :one
+UPDATE repositories 
+SET group_id = $2,
+repo_owner = $3,
+repo_name = $4,
+is_private = $5,
+is_fork = $6,
+webhook_id = $7,
+webhook_url = $8,
+deploy_url = $9, 
+updated_at = NOW() 
+WHERE repo_id = $1 RETURNING *;
+
+
 -- name: DeleteRepository :exec
 DELETE FROM repositories
 WHERE id = $1;

@@ -32,7 +32,7 @@ import (
 var OrgCmd = &cobra.Command{
 	Use:   "org",
 	Short: "Manage organizations within a mediator control plane",
-	Long: `The medctl org commands manage organizations within a mediator
+	Long: `The medic org commands manage organizations within a mediator
 control plane.`,
 	Run: func(cmd *cobra.Command, args []string) {
 		cmd.Println("org called")

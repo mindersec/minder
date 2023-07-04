@@ -13,7 +13,7 @@
 // See the License for the specific language governing permissions and
 // limitations under the License.
 
-// Package apply provides the apply command for the medctl CLI
+// Package apply provides the apply command for the medic CLI
 package apply
 
 import (
@@ -70,7 +70,7 @@ func parseContent(data []byte) ([]objectParameters, error) {
 var ApplyCmd = &cobra.Command{
 	Use:   "apply (-f FILENAME)",
 	Short: "Appy a configuration to a mediator control plane",
-	Long:  `The medctl apply command applies a configuration to a mediator control plane.`,
+	Long:  `The medic apply command applies a configuration to a mediator control plane.`,
 	PreRun: func(cmd *cobra.Command, args []string) {
 		err := viper.BindPFlags(cmd.Flags())
 		util.ExitNicelyOnError(err, "Error binding flags")

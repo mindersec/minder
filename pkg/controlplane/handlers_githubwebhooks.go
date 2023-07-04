@@ -39,8 +39,9 @@ import (
 
 // Repository represents a GitHub repository
 type Repository struct {
-	Owner string
-	Repo  string
+	Owner  string
+	Repo   string
+	RepoID int32
 }
 
 // RegistrationStatus gathers the status of the webhook call for each repository
@@ -53,6 +54,7 @@ type RegistrationStatus struct {
 type RepositoryResult struct {
 	Owner      string
 	Repository string
+	RepoID     int32
 	HookID     int64
 	HookURL    string
 	DeployURL  string
@@ -79,7 +81,7 @@ func HandleGitHubWebHook(p message.Publisher) http.HandlerFunc {
 		segments := strings.Split(r.URL.Path, "/")
 		_ = segments[len(segments)-1]
 
-		payload, err := github.ValidatePayload(r, []byte(viper.GetString("github-app.app.webhook_secret")))
+		payload, err := github.ValidatePayload(r, []byte(viper.GetString("webhook-config.webhook_secret")))
 		if err != nil {
 			fmt.Printf("Error validating webhook payload: %v", err)
 			w.WriteHeader(http.StatusBadRequest)
@@ -130,13 +132,13 @@ func RegisterWebHook(
 		}
 		urlUUID := uuid.New().String()
 
-		viper.SetDefault("github-app.external_webhook_url", "")
-		viper.SetDefault("github-app.app.external_ping_url", "")
-		viper.SetDefault("github-app.app.webhook_secret", "")
+		viper.SetDefault("webhook-config.external_webhook_url", "")
+		viper.SetDefault("webhook-config.external_ping_url", "")
+		viper.SetDefault("webhook-config.webhook_secret", "")
 
-		url := viper.GetString("github-app.external_webhook_url")
-		ping := viper.GetString("github-app.app.external_ping_url")
-		secret := viper.GetString("github-app.app.webhook_secret")
+		url := viper.GetString("webhook-config.external_webhook_url")
+		ping := viper.GetString("webhook-config.external_ping_url")
+		secret := viper.GetString("webhook-config.webhook_secret")
 		if url == "" || ping == "" || secret == "" {
 			result.Success = false
 			result.Error = fmt.Errorf("github app incorrectly configured")
@@ -162,6 +164,7 @@ func RegisterWebHook(
 		regResult := RepositoryResult{
 			Repository: repo.Repo,
 			Owner:      repo.Owner,
+			RepoID:     repo.RepoID,
 			HookID:     mhook.GetID(),
 			HookURL:    mhook.GetURL(),
 			DeployURL:  webhookUrl,

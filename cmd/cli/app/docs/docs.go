@@ -13,7 +13,7 @@
 // See the License for the specific language governing permissions and
 // limitations under the License.
 
-// Package apply provides the apply command for the medctl CLI
+// Package apply provides the apply command for the medic CLI
 package apply
 
 import (
@@ -35,7 +35,7 @@ var DocsCmd = &cobra.Command{
 		util.ExitNicelyOnError(err, "Error binding flags")
 	},
 	Run: func(cmd *cobra.Command, args []string) {
-		err := doc.GenMarkdownTree(app.RootCmd, "./docs/cli")
+		err := doc.GenMarkdownTree(app.RootCmd, "./docs/docs/cli")
 		if err != nil {
 			panic(err)
 		}

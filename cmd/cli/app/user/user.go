@@ -13,7 +13,7 @@
 // See the License for the specific language governing permissions and
 // limitations under the License.
 
-// Package user provides the user subcommand for the medctl CLI.
+// Package user provides the user subcommand for the medic CLI.
 package user
 
 import (
@@ -26,7 +26,7 @@ import (
 var UserCmd = &cobra.Command{
 	Use:   "user",
 	Short: "Manage users within a mediator control plane",
-	Long: `The medctl user subcommands allows the management of users within
+	Long: `The medic user subcommands allows the management of users within
 a mediator controlplane.`,
 	Run: func(cmd *cobra.Command, args []string) {
 		cmd.Println("user called")

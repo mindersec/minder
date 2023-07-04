@@ -1,26 +1,56 @@
-name: Update Docs and Code
+name: Update docs for client
 on:
   push:
     branches:
       - main
     paths:
-      - 'cmd/cli/**'  
+      - "cmd/cli/**"
 jobs:
   update-docs-cli:
     runs-on: ubuntu-latest
+    permissions: write-all
 
     steps:
       - name: Checkout repository
-        uses: actions/checkout@v2
+        uses: actions/checkout@v3
+
+      - name: Set up Go
+        uses: actions/setup-go@v4
+        with:
+          go-version-file: "go.mod"
 
       - name: Update documentation
         shell: bash
-        run: make docs
-
-      # generate PR with the changes
-      - name: Commit and push changes
         run: |
-          BRANCH_NAME="feature/autobranch-$(date +%s)"
-          gh pr create --fill --head $BRANCH_NAME --base ${{github.base_ref}}
-        env:
-          GITHUB_TOKEN: ${{ secrets.GITHUB_TOKEN }}
+          cp config/config.yaml.example config.yaml
+          make cli-docs
+
+      - name: Extract Commit SHA and Details
+        id: extract_commit_details
+        run: |
+          COMMIT_SHA="${{ github.sha }}"
+          COMMIT_DATE=$(git show -s --format=%cd --date=format:'%Y-%m-%d %H:%M:%S' $commit_sha)
+          COMMIT_AUTHOR=$(git show -s --format='%an' $commit_sha)
+          echo "commit_sha=$COMMIT_SHA" >> $GITHUB_OUTPUT
+          echo "commit_date=$COMMIT_DATE" >> $GITHUB_OUTPUT
+          echo "commit_author=$COMMIT_AUTHOR" >> $GITHUB_OUTPUT
+
+      - name: Commit and push changes
+        uses: peter-evans/create-pull-request@v5
+        with:
+          commit-message: Update documentation
+          committer: GitHub <noreply@github.com>
+          author: ${{ github.actor }} <${{ github.actor }}@users.noreply.github.com>
+          signoff: false
+          branch-suffix: timestamp
+          delete-branch: true
+          title: "Auto-generated cli documentation update - ${{ steps.extract_commit_details.outputs.commit_date }}"
+          body: |
+            ** Source commit **
+              - Commit SHA: [${{ steps.extract_commit_details.outputs.commit_sha }}](${{ github.server_url }}/${{ github.repository }}/commit/${{ steps.extract_commit_details.outputs.commit_sha}})
+            - Date: ${{ steps.extract_commit_details.outputs.commit_date }}
+            - Author: ${{ steps.extract_commit_details.outputs.commit_author }}
+          labels: |
+            docs
+            automated pr
+          draft: false
