@@ -1,0 +1,25 @@
+name: docker-compose-lint
+on:
+  workflow_call:
+  pull_request:
+    branches:
+      - main
+    paths:
+      - 'docker-compose.yaml'
+      - '.github/workflows/docker-compose-lint.yml'
+permissions:
+  contents: read
+jobs:
+  docker-compose-lint:
+    runs-on: ubuntu-latest
+    steps:
+      - uses: actions/checkout@v3
+      - name: Fetch docker-compose schema
+        run: |
+          curl -sSL https://raw.githubusercontent.com/compose-spec/compose-spec/master/schema/compose-spec.json -o compose-spec.json
+      - name: Lint docker-compose.yml
+        uses: thiagodnf/yaml-schema-checker@v0.0.10
+        with:
+          jsonSchemaFile: compose-spec.json
+          yamlFiles: |
+            docker-compose.yaml
