@@ -34,8 +34,8 @@ var OrgCmd = &cobra.Command{
 	Short: "Manage organizations within a mediator control plane",
 	Long: `The medic org commands manage organizations within a mediator
 control plane.`,
-	Run: func(cmd *cobra.Command, args []string) {
-		cmd.Println("org called")
+	RunE: func(cmd *cobra.Command, args []string) error {
+		return cmd.Usage()
 	},
 }
 

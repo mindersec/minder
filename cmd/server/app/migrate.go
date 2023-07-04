@@ -27,7 +27,8 @@ var migrateCmd = &cobra.Command{
 	Use:   "migrate",
 	Short: "Database migration tool",
 	Long:  `Use tool with a combination of up to down to migrate the database.`,
-	Run: func(cmd *cobra.Command, args []string) {
+	RunE: func(cmd *cobra.Command, args []string) error {
+		return cmd.Usage()
 	},
 }
 
