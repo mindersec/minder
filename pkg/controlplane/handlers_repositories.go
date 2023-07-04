@@ -46,6 +46,11 @@ func (s *Server) RegisterRepository(ctx context.Context,
 		return nil, status.Errorf(codes.InvalidArgument, "provider not supported: %v", in.Provider)
 	}
 
+	// if we have set no events, give an error
+	if len(in.Events) == 0 {
+		return nil, status.Errorf(codes.InvalidArgument, "no events provided")
+	}
+
 	// if we do not have a group, check if we can infer it
 	if in.GroupId == 0 {
 		group, err := auth.GetDefaultGroup(ctx)
