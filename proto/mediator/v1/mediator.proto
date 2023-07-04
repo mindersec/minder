@@ -486,9 +486,10 @@ message RefreshTokenResponse {
 }
 
 message RegisterRepositoryRequest {
-    repeated Repositories repositories = 1;
-    repeated string events = 2;
-    int32 group_id = 3;
+    string provider = 1;
+    int32 group_id = 2;
+    repeated Repositories repositories = 3;
+    repeated string events = 5;
 }
 
 message Repositories {
@@ -502,10 +503,11 @@ message RegisterRepositoryResponse {
 }
 
 message ListRepositoriesRequest {
-    int32 group_id = 1;
-    int32 limit = 2;
-    int32 offset = 3;
-    bool filter_registered = 4;
+    string provider = 1;
+    int32 group_id = 2;
+    int32 limit = 3;
+    int32 offset = 4;
+    bool filter_registered = 5;
 }
 
 message ListRepositoriesResponse {

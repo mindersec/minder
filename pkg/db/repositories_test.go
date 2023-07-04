@@ -34,6 +34,7 @@ import (
 func createRandomRepository(t *testing.T, group int32) Repository {
 	seed := time.Now().UnixNano()
 	arg := CreateRepositoryParams{
+		Provider:   "github",
 		GroupID:    group,
 		RepoOwner:  util.RandomName(seed),
 		RepoName:   util.RandomName(seed),
@@ -49,6 +50,7 @@ func createRandomRepository(t *testing.T, group int32) Repository {
 	require.NoError(t, err)
 	require.NotEmpty(t, repo)
 
+	require.Equal(t, arg.Provider, repo.Provider)
 	require.Equal(t, arg.GroupID, repo.GroupID)
 	require.Equal(t, arg.RepoOwner, repo.RepoOwner)
 	require.Equal(t, arg.RepoName, repo.RepoName)
@@ -82,6 +84,7 @@ func TestGetRepositoryByID(t *testing.T) {
 	require.NotEmpty(t, repo2)
 
 	require.Equal(t, repo1.ID, repo2.ID)
+	require.Equal(t, repo1.Provider, repo2.Provider)
 	require.Equal(t, repo1.GroupID, repo2.GroupID)
 	require.Equal(t, repo1.RepoOwner, repo2.RepoOwner)
 	require.Equal(t, repo1.RepoName, repo2.RepoName)
@@ -100,11 +103,12 @@ func TestGetRepositoryByRepoName(t *testing.T) {
 	group := createRandomGroup(t, org.ID)
 	repo1 := createRandomRepository(t, group.ID)
 
-	repo2, err := testQueries.GetRepositoryByRepoName(context.Background(), repo1.RepoName)
+	repo2, err := testQueries.GetRepositoryByRepoName(context.Background(), GetRepositoryByRepoNameParams{Provider: "github", RepoName: repo1.RepoName})
 	require.NoError(t, err)
 	require.NotEmpty(t, repo2)
 
 	require.Equal(t, repo1.ID, repo2.ID)
+	require.Equal(t, repo1.Provider, repo2.Provider)
 	require.Equal(t, repo1.GroupID, repo2.GroupID)
 	require.Equal(t, repo1.RepoOwner, repo2.RepoOwner)
 	require.Equal(t, repo1.RepoName, repo2.RepoName)
@@ -127,9 +131,10 @@ func TestListRepositoriesByGroupID(t *testing.T) {
 	}
 
 	arg := ListRepositoriesByGroupIDParams{
-		GroupID: group.ID,
-		Limit:   5,
-		Offset:  5,
+		Provider: "github",
+		GroupID:  group.ID,
+		Limit:    5,
+		Offset:   5,
 	}
 
 	repos, err := testQueries.ListRepositoriesByGroupID(context.Background(), arg)
@@ -149,6 +154,7 @@ func TestUpdateRepository(t *testing.T) {
 
 	arg := UpdateRepositoryParams{
 		ID:         repo1.ID,
+		Provider:   "github",
 		GroupID:    repo1.GroupID,
 		RepoOwner:  repo1.RepoOwner,
 		RepoName:   repo1.RepoName,
@@ -165,6 +171,7 @@ func TestUpdateRepository(t *testing.T) {
 	require.NotEmpty(t, repo2)
 
 	require.Equal(t, repo1.ID, repo2.ID)
+	require.Equal(t, repo1.Provider, repo2.Provider)
 	require.Equal(t, repo1.GroupID, repo2.GroupID)
 	require.Equal(t, repo1.RepoOwner, repo2.RepoOwner)
 	require.Equal(t, repo1.RepoName, repo2.RepoName)
@@ -185,6 +192,7 @@ func TestUpdateRepositoryByRepoId(t *testing.T) {
 
 	arg := UpdateRepositoryByIDParams{
 		RepoID:     repo1.RepoID,
+		Provider:   "github",
 		GroupID:    repo1.GroupID,
 		RepoOwner:  repo1.RepoOwner,
 		RepoName:   repo1.RepoName,
@@ -200,6 +208,7 @@ func TestUpdateRepositoryByRepoId(t *testing.T) {
 	require.NotEmpty(t, repo2)
 
 	require.Equal(t, repo1.ID, repo2.ID)
+	require.Equal(t, repo1.Provider, repo2.Provider)
 	require.Equal(t, repo1.GroupID, repo2.GroupID)
 	require.Equal(t, repo1.RepoOwner, repo2.RepoOwner)
 	require.Equal(t, repo1.RepoName, repo2.RepoName)

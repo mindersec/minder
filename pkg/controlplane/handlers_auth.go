@@ -133,7 +133,7 @@ func (s *Server) LogIn(ctx context.Context, in *pb.LogInRequest) (*pb.LogInRespo
 
 // LogOut logs out a user by invalidating the access and refresh token
 func (s *Server) LogOut(ctx context.Context, _ *pb.LogOutRequest) (*pb.LogOutResponse, error) {
-	claims, _ := ctx.Value(TokenInfoKey).(auth.UserClaims)
+	claims, _ := ctx.Value(auth.TokenInfoKey).(auth.UserClaims)
 	if claims.UserId > 0 {
 		_, err := s.store.RevokeUserToken(ctx, db.RevokeUserTokenParams{ID: claims.UserId,
 			MinTokenIssuedTime: sql.NullTime{Time: time.Unix(time.Now().Unix(), 0), Valid: true}})
@@ -217,7 +217,7 @@ func (s *Server) RefreshToken(ctx context.Context, _ *pb.RefreshTokenRequest) (*
 
 // Verify verifies the access token
 func (*Server) Verify(ctx context.Context, _ *pb.VerifyRequest) (*pb.VerifyResponse, error) {
-	claims, _ := ctx.Value(TokenInfoKey).(auth.UserClaims)
+	claims, _ := ctx.Value(auth.TokenInfoKey).(auth.UserClaims)
 	if claims.UserId > 0 {
 		return &pb.VerifyResponse{Status: "OK"}, nil
 	}

@@ -39,10 +39,11 @@ import (
 func SyncRepositoriesWithDB(ctx context.Context,
 	store db.Store,
 	result ghclient.RepositoryListResult,
-	groupId int32) error {
+	provider string, groupId int32) error {
 	// Get all existing repositories from the database by group ID
 	dbRepos, err := store.ListRepositoriesByGroupID(ctx, db.ListRepositoriesByGroupIDParams{
-		GroupID: groupId,
+		Provider: provider,
+		GroupID:  groupId,
 	})
 	if err != nil {
 		return fmt.Errorf("error retrieving list of repositories: %w", err)
@@ -58,11 +59,13 @@ func SyncRepositoriesWithDB(ctx context.Context,
 	// Iterate over the repositories returned from GitHub
 	for _, repo := range result.Repositories {
 		// Check if the repository already exists in the database by Repo ID
-		existingRepo, err := store.GetRepositoryByRepoID(ctx, int32(*repo.ID))
+		existingRepo, err := store.GetRepositoryByRepoID(ctx,
+			db.GetRepositoryByRepoIDParams{Provider: provider, RepoID: int32(*repo.ID)})
 		if err != nil {
 			if err == sql.ErrNoRows {
 				// The repository doesn't exist in our DB, let's create it
 				_, err = store.CreateRepository(ctx, db.CreateRepositoryParams{
+					Provider:  provider,
 					GroupID:   groupId,
 					RepoOwner: string(*repo.Owner.Login),
 					RepoName:  string(*repo.Name),
@@ -86,6 +89,7 @@ func SyncRepositoriesWithDB(ctx context.Context,
 				existingRepo.IsFork != bool(*repo.Fork) {
 				fmt.Println("updating repository for repo ID: with repo Name: ", *repo.ID, *repo.Name)
 				_, err = store.UpdateRepository(ctx, db.UpdateRepositoryParams{
+					Provider:  provider,
 					GroupID:   existingRepo.GroupID,
 					RepoOwner: string(*repo.Owner.Login),
 					RepoName:  string(*repo.Name),
@@ -108,7 +112,7 @@ func SyncRepositoriesWithDB(ctx context.Context,
 	for repoID := range dbRepoIDs {
 
 		// Get repository by ID and delete it
-		repoToDelete, err := store.GetRepositoryByRepoID(ctx, repoID)
+		repoToDelete, err := store.GetRepositoryByRepoID(ctx, db.GetRepositoryByRepoIDParams{Provider: provider, RepoID: repoID})
 		if err != nil {
 			return fmt.Errorf("failed to get repository ID to delete: %w", err)
 		}
