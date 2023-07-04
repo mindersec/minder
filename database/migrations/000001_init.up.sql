@@ -89,12 +89,13 @@ CREATE TABLE provider_access_tokens (
 -- repositories table
 create TABLE repositories (
     id SERIAL PRIMARY KEY,
+    provider TEXT NOT NULL,
+    group_id INTEGER NOT NULL REFERENCES groups(id) ON DELETE CASCADE,
     repo_owner TEXT NOT NULL,
     repo_name TEXT NOT NULL,
     repo_id INTEGER NOT NULL,
     is_private BOOLEAN NOT NULL,
     is_fork BOOLEAN NOT NULL,
-    group_id INTEGER NOT NULL REFERENCES groups(id) ON DELETE CASCADE,
     webhook_id INTEGER,
     webhook_url TEXT NOT NULL,
     deploy_url TEXT NOT NULL,
@@ -104,6 +105,7 @@ create TABLE repositories (
 
 create TABLE session_store (
     id SERIAL PRIMARY KEY,
+    provider TEXT NOT NULL,
     grp_id INTEGER,
     port INTEGER,
     session_state TEXT NOT NULL,

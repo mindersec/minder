@@ -39,17 +39,6 @@ import (
 	"google.golang.org/grpc/status"
 )
 
-func getDefaultGroup(ctx context.Context) (int32, error) {
-	claims, ok := ctx.Value(TokenInfoKey).(auth.UserClaims)
-	if !ok {
-		return 0, errors.New("cannot get default group")
-	}
-	if len(claims.GroupIds) != 1 {
-		return 0, errors.New("cannot get default group")
-	}
-	return claims.GroupIds[0], nil
-}
-
 // GetAuthorizationURL returns the URL to redirect the user to for authorization
 // and the state to be used for the callback. It accepts a provider string
 // and a boolean indicating whether the client is a CLI or web client
@@ -62,7 +51,7 @@ func (s *Server) GetAuthorizationURL(ctx context.Context,
 
 	// if we do not have a group, check if we can infer it
 	if req.GroupId == 0 {
-		group, err := getDefaultGroup(ctx)
+		group, err := auth.GetDefaultGroup(ctx)
 		if err != nil {
 			return nil, status.Errorf(codes.InvalidArgument, "cannot infer group id")
 		}
@@ -100,7 +89,7 @@ func (s *Server) GetAuthorizationURL(ctx context.Context,
 	}
 
 	// Delete any existing session state for the group
-	err = s.store.DeleteSessionStateByGroupID(ctx, groupID)
+	err = s.store.DeleteSessionStateByGroupID(ctx, db.DeleteSessionStateByGroupIDParams{Provider: req.Provider, GrpID: groupID})
 	if err != nil && !errors.Is(err, sql.ErrNoRows) {
 		return nil, status.Errorf(codes.Unknown, "error deleting session state: %s", err)
 	}
@@ -108,6 +97,7 @@ func (s *Server) GetAuthorizationURL(ctx context.Context,
 	// Insert the new session state into the database along with the user's group ID
 	// retrieved from the JWT token
 	_, err = s.store.CreateSessionState(ctx, db.CreateSessionStateParams{
+		Provider:     req.Provider,
 		GrpID:        groupID,
 		Port:         port,
 		SessionState: state,
@@ -189,7 +179,7 @@ func (s *Server) ExchangeCodeForTokenCLI(ctx context.Context,
 	}
 
 	// // Insert the repositories into the database
-	err = queries.SyncRepositoriesWithDB(ctx, s.store, repos, groupId.GrpID.Int32)
+	err = queries.SyncRepositoriesWithDB(ctx, s.store, repos, in.Provider, groupId.GrpID.Int32)
 	if err != nil {
 		return nil, err
 	}
@@ -294,14 +284,14 @@ func decryptToken(encToken string) (oauth2.Token, error) {
 }
 
 // GetProviderAccessToken returns the access token for providers
-func GetProviderAccessToken(ctx context.Context, store db.Store, groupId int32) (oauth2.Token, error) {
+func GetProviderAccessToken(ctx context.Context, store db.Store, provider string, groupId int32) (oauth2.Token, error) {
 	// check if user is authorized
 	if !IsRequestAuthorized(ctx, groupId) {
 		return oauth2.Token{}, status.Errorf(codes.PermissionDenied, "user is not authorized to access this resource")
 	}
 
 	encToken, err := store.GetAccessTokenByGroupID(ctx,
-		db.GetAccessTokenByGroupIDParams{Provider: auth.Github, GroupID: groupId})
+		db.GetAccessTokenByGroupIDParams{Provider: provider, GroupID: groupId})
 	if err != nil {
 		return oauth2.Token{}, err
 	}
@@ -359,7 +349,7 @@ func (s *Server) RevokeOauthGroupToken(ctx context.Context,
 
 	// if we do not have a group, check if we can infer it
 	if in.GroupId == 0 {
-		group, err := getDefaultGroup(ctx)
+		group, err := auth.GetDefaultGroup(ctx)
 		if err != nil {
 			return nil, status.Errorf(codes.InvalidArgument, "cannot infer group id")
 		}
@@ -403,7 +393,7 @@ func (s *Server) StoreProviderToken(ctx context.Context,
 
 	// if we do not have a group, check if we can infer it
 	if in.GroupId == 0 {
-		group, err := getDefaultGroup(ctx)
+		group, err := auth.GetDefaultGroup(ctx)
 		if err != nil {
 			return nil, status.Errorf(codes.InvalidArgument, "cannot infer group id")
 		}
@@ -462,7 +452,7 @@ func (s *Server) VerifyProviderTokenFrom(ctx context.Context,
 
 	// if we do not have a group, check if we can infer it
 	if in.GroupId == 0 {
-		group, err := getDefaultGroup(ctx)
+		group, err := auth.GetDefaultGroup(ctx)
 		if err != nil {
 			return nil, status.Errorf(codes.InvalidArgument, "cannot infer group id")
 		}

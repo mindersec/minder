@@ -27,7 +27,7 @@ type Querier interface {
 	DeleteRepository(ctx context.Context, id int32) error
 	DeleteRole(ctx context.Context, id int32) error
 	DeleteSessionState(ctx context.Context, id int32) error
-	DeleteSessionStateByGroupID(ctx context.Context, grpID sql.NullInt32) error
+	DeleteSessionStateByGroupID(ctx context.Context, arg DeleteSessionStateByGroupIDParams) error
 	DeleteUser(ctx context.Context, id int32) error
 	GetAccessTokenByGroupID(ctx context.Context, arg GetAccessTokenByGroupIDParams) (ProviderAccessToken, error)
 	GetAccessTokenByProvider(ctx context.Context, provider string) ([]ProviderAccessToken, error)
@@ -39,8 +39,8 @@ type Querier interface {
 	GetOrganizationByName(ctx context.Context, name string) (Organization, error)
 	GetOrganizationForUpdate(ctx context.Context, name string) (Organization, error)
 	GetRepositoryByID(ctx context.Context, id int32) (Repository, error)
-	GetRepositoryByRepoID(ctx context.Context, repoID int32) (Repository, error)
-	GetRepositoryByRepoName(ctx context.Context, repoName string) (Repository, error)
+	GetRepositoryByRepoID(ctx context.Context, arg GetRepositoryByRepoIDParams) (Repository, error)
+	GetRepositoryByRepoName(ctx context.Context, arg GetRepositoryByRepoNameParams) (Repository, error)
 	GetRoleByID(ctx context.Context, id int32) (Role, error)
 	GetRoleByName(ctx context.Context, arg GetRoleByNameParams) (Role, error)
 	GetSessionState(ctx context.Context, id int32) (SessionStore, error)
@@ -50,7 +50,7 @@ type Querier interface {
 	GetUserByUserName(ctx context.Context, username string) (User, error)
 	GetUserGroups(ctx context.Context, userID int32) ([]GetUserGroupsRow, error)
 	GetUserRoles(ctx context.Context, userID int32) ([]GetUserRolesRow, error)
-	ListAllRepositories(ctx context.Context) ([]Repository, error)
+	ListAllRepositories(ctx context.Context, provider string) ([]Repository, error)
 	ListGroups(ctx context.Context, arg ListGroupsParams) ([]Group, error)
 	ListGroupsByOrganizationID(ctx context.Context, organizationID int32) ([]Group, error)
 	ListOrganizations(ctx context.Context, arg ListOrganizationsParams) ([]Organization, error)

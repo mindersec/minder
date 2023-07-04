@@ -32,9 +32,6 @@ import (
 	"google.golang.org/grpc/status"
 )
 
-// TokenInfoKey is the key used to store the token info in the context
-var TokenInfoKey struct{}
-
 func parseToken(token string, store db.Store) (auth.UserClaims, error) {
 	var claims auth.UserClaims
 	// need to read pub key from file
@@ -314,7 +311,7 @@ func isMethodAuthorized(ctx context.Context, claims auth.UserClaims) bool {
 // IsRequestAuthorized checks if the request is authorized
 // nolint:gocyclo
 func IsRequestAuthorized(ctx context.Context, value int32) bool {
-	claims, _ := ctx.Value(TokenInfoKey).(auth.UserClaims)
+	claims, _ := ctx.Value(auth.TokenInfoKey).(auth.UserClaims)
 	if isSuperadmin(claims) {
 		return true
 	}
@@ -387,7 +384,7 @@ func IsProviderCallAuthorized(ctx context.Context, store db.Store, provider stri
 	for _, item := range githubAuthorizations {
 		if item == method {
 			// check the github token
-			encToken, err := GetProviderAccessToken(ctx, store, groupId)
+			encToken, err := GetProviderAccessToken(ctx, store, provider, groupId)
 			if err != nil {
 				return false
 			}
@@ -445,7 +442,7 @@ func AuthUnaryInterceptor(ctx context.Context, req interface{}, info *grpc.Unary
 
 	if isSuperadmin(claims) {
 		// is authorized to everything
-		ctx = context.WithValue(ctx, TokenInfoKey, claims)
+		ctx = context.WithValue(ctx, auth.TokenInfoKey, claims)
 	} else {
 		// Check if the current method needs to have a superadmin role
 		isAuthorized := isMethodAuthorized(ctx, claims)
@@ -454,6 +451,6 @@ func AuthUnaryInterceptor(ctx context.Context, req interface{}, info *grpc.Unary
 		}
 	}
 
-	ctx = context.WithValue(ctx, TokenInfoKey, claims)
+	ctx = context.WithValue(ctx, auth.TokenInfoKey, claims)
 	return handler(ctx, req)
 }

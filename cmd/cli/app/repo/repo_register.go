@@ -24,13 +24,15 @@ package repo
 import (
 	"context"
 	"fmt"
+	"os"
+	"strings"
+
 	"github.com/AlecAivazis/survey/v2"
 	"github.com/spf13/cobra"
 	"github.com/spf13/viper"
+	"github.com/stacklok/mediator/pkg/auth"
 	pb "github.com/stacklok/mediator/pkg/generated/protobuf/go/mediator/v1"
 	"github.com/stacklok/mediator/pkg/util"
-	"os"
-	"strings"
 )
 
 // repo_registerCmd represents the register command to register a repo with the
@@ -49,6 +51,11 @@ var repo_registerCmd = &cobra.Command{
 		grpc_host := util.GetConfigValue("grpc_server.host", "grpc-host", cmd, "").(string)
 		grpc_port := util.GetConfigValue("grpc_server.port", "grpc-port", cmd, 0).(int)
 
+		provider := util.GetConfigValue("provider", "provider", cmd, "").(string)
+		if provider != auth.Github {
+			fmt.Fprintf(os.Stderr, "Only %s is supported at this time\n", auth.Github)
+			os.Exit(1)
+		}
 		groupID := viper.GetInt32("group-id")
 		limit := viper.GetInt32("limit")
 		offset := viper.GetInt32("offset")
@@ -62,7 +69,8 @@ var repo_registerCmd = &cobra.Command{
 		defer cancel()
 
 		listResp, err := client.ListRepositories(ctx, &pb.ListRepositoriesRequest{
-			GroupId:          groupID,
+			Provider:         provider,
+			GroupId:          int32(groupID),
 			Limit:            int32(limit),
 			Offset:           int32(offset),
 			FilterRegistered: true,
@@ -113,9 +121,10 @@ var repo_registerCmd = &cobra.Command{
 
 		// Construct the RegisterRepositoryRequest
 		request := &pb.RegisterRepositoryRequest{
+			Provider:     provider,
 			Repositories: repoProtos,
 			Events:       nil, // Nil results in all events being registered
-			GroupId:      groupID,
+			GroupId:      int32(groupID),
 		}
 
 		registerResp, err := client.RegisterRepository(context.Background(), request)
@@ -134,8 +143,12 @@ var repo_registerCmd = &cobra.Command{
 func init() {
 	RepoCmd.AddCommand(repo_registerCmd)
 	var reposFlag string
+	repo_registerCmd.Flags().StringP("provider", "n", "", "Name for the provider to enroll")
 	repo_registerCmd.Flags().Int32P("group-id", "g", 0, "ID of the group for repo registration")
 	repo_registerCmd.Flags().Int32P("limit", "l", 20, "Number of repos to display per page")
 	repo_registerCmd.Flags().Int32P("offset", "o", 0, "Offset of the repos to display")
 	repo_registerCmd.Flags().StringVar(&reposFlag, "repo", "", "List of key-value pairs")
+	if err := repo_registerCmd.MarkFlagRequired("provider"); err != nil {
+		fmt.Fprintf(os.Stderr, "Error marking flag as required: %s\n", err)
+	}
 }
