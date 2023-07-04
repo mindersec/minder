@@ -25,6 +25,7 @@ import (
 	"github.com/spf13/viper"
 	"golang.org/x/sync/errgroup"
 
+	"github.com/stacklok/mediator/internal/config"
 	"github.com/stacklok/mediator/pkg/controlplane"
 	"github.com/stacklok/mediator/pkg/db"
 	"github.com/stacklok/mediator/pkg/util"
@@ -38,11 +39,10 @@ var serveCmd = &cobra.Command{
 		ctx, cancel := signal.NotifyContext(cmd.Context(), os.Interrupt)
 		defer cancel()
 
-		// populate config and cmd line flags
-		http_host := util.GetConfigValue("http_server.host", "http-host", cmd, "").(string)
-		http_port := util.GetConfigValue("http_server.port", "http-port", cmd, 8080).(int)
-		grpc_host := util.GetConfigValue("grpc_server.host", "grpc-host", cmd, "").(string)
-		grpc_port := util.GetConfigValue("grpc_server.port", "grpc-port", cmd, 8090).(int)
+		cfg, err := config.ReadConfigFromViper(viper.GetViper())
+		if err != nil {
+			return fmt.Errorf("unable to read config: %w", err)
+		}
 
 		// Database configuration
 		dbConn, _, err := util.GetDbConnectionFromConfig(cmd)
@@ -54,8 +54,8 @@ var serveCmd = &cobra.Command{
 		store := db.NewStore(dbConn)
 
 		// Set up the addresse strings
-		httpAddress := fmt.Sprintf("%s:%d", http_host, http_port)
-		grpcAddress := fmt.Sprintf("%s:%d", grpc_host, grpc_port)
+		httpAddress := fmt.Sprintf("%s:%d", cfg.HTTPServer.Host, cfg.HTTPServer.Port)
+		grpcAddress := fmt.Sprintf("%s:%d", cfg.GRPCServer.Host, cfg.GRPCServer.Port)
 
 		errg, ctx := errgroup.WithContext(ctx)
 
@@ -76,10 +76,9 @@ var serveCmd = &cobra.Command{
 
 func init() {
 	RootCmd.AddCommand(serveCmd)
-	serveCmd.Flags().String("http-host", "", "Server host")
-	serveCmd.Flags().Int("http-port", 0, "Server port")
-	serveCmd.Flags().String("grpc-host", "", "Server host")
-	serveCmd.Flags().Int("grpc-port", 0, "Server port")
+	if err := config.RegisterFlags(viper.GetViper(), serveCmd.Flags()); err != nil {
+		log.Fatal(err)
+	}
 	serveCmd.Flags().String("db-host", "", "Database host")
 	serveCmd.Flags().Int("db-port", 5432, "Database port")
 	serveCmd.Flags().String("db-name", "", "Database name")
