@@ -54,7 +54,7 @@ auth:
   refresh_token_public_key: "./.ssh/refresh_token_rsa.pub"
   token_expiry: 3600
   refresh_expiry: 86400
-  nonce: 3600
+  nonce_period: 3600
   session_key: "12345678901234567890123456789012"
 
 # Password Salting, these values are using argon2id
