@@ -126,7 +126,7 @@ func TestLogin_gRPC(t *testing.T) {
 }
 
 func TestLogout_gRPC(t *testing.T) {
-	ctx := context.WithValue(context.Background(), TokenInfoKey, auth.UserClaims{
+	ctx := context.WithValue(context.Background(), auth.TokenInfoKey, auth.UserClaims{
 		UserId:         1,
 		OrganizationId: 1,
 		GroupIds:       []int32{1},
@@ -149,7 +149,7 @@ func TestLogout_gRPC(t *testing.T) {
 }
 
 func TestRevokeTokens_gRPC(t *testing.T) {
-	ctx := context.WithValue(context.Background(), TokenInfoKey, auth.UserClaims{
+	ctx := context.WithValue(context.Background(), auth.TokenInfoKey, auth.UserClaims{
 		UserId:         1,
 		OrganizationId: 1,
 		GroupIds:       []int32{1},

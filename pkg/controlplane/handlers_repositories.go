@@ -42,22 +42,31 @@ import (
 //	}' 127.0.0.1:8090 mediator.v1.RepositoryService/RegisterRepository
 func (s *Server) RegisterRepository(ctx context.Context,
 	in *pb.RegisterRepositoryRequest) (*pb.RegisterRepositoryResponse, error) {
-
-	if in.GroupId == 0 {
-		return nil, status.Errorf(codes.InvalidArgument, "group id cannot be empty")
+	if in.Provider != auth.Github {
+		return nil, status.Errorf(codes.InvalidArgument, "provider not supported: %v", in.Provider)
 	}
+
+	// if we do not have a group, check if we can infer it
+	if in.GroupId == 0 {
+		group, err := auth.GetDefaultGroup(ctx)
+		if err != nil {
+			return nil, status.Errorf(codes.InvalidArgument, "cannot infer group id")
+		}
+		in.GroupId = group
+	}
+
 	// check if user is authorized
 	if !IsRequestAuthorized(ctx, in.GroupId) {
 		return nil, status.Errorf(codes.PermissionDenied, "user is not authorized to access this resource")
 	}
 
 	// Check if needs github authorization
-	isGithubAuthorized := IsProviderCallAuthorized(ctx, s.store, auth.Github, in.GroupId)
+	isGithubAuthorized := IsProviderCallAuthorized(ctx, s.store, in.Provider, in.GroupId)
 	if !isGithubAuthorized {
 		return nil, status.Errorf(codes.PermissionDenied, "user not authorized to interact with provider")
 	}
 
-	decryptedToken, err := GetProviderAccessToken(ctx, s.store, in.GroupId)
+	decryptedToken, err := GetProviderAccessToken(ctx, s.store, in.Provider, in.GroupId)
 
 	if err != nil {
 		return nil, err
@@ -103,6 +112,7 @@ func (s *Server) RegisterRepository(ctx context.Context,
 		_, err = s.store.UpdateRepositoryByID(ctx, db.UpdateRepositoryByIDParams{
 			WebhookID:  sql.NullInt32{Int32: int32(result.HookID), Valid: true},
 			WebhookUrl: result.HookURL,
+			Provider:   in.Provider,
 			GroupID:    in.GroupId,
 			RepoOwner:  result.Owner,
 			RepoName:   result.Repository,
@@ -127,19 +137,29 @@ func (s *Server) RegisterRepository(ctx context.Context,
 // The API is called with a group id, limit and offset
 func (s *Server) ListRepositories(ctx context.Context,
 	in *pb.ListRepositoriesRequest) (*pb.ListRepositoriesResponse, error) {
-
-	if in.GroupId == 0 {
-		return nil, status.Errorf(codes.InvalidArgument, "group id cannot be empty")
+	if in.Provider != auth.Github {
+		return nil, status.Errorf(codes.InvalidArgument, "provider not supported: %v", in.Provider)
 	}
+
+	// if we do not have a group, check if we can infer it
+	if in.GroupId == 0 {
+		group, err := auth.GetDefaultGroup(ctx)
+		if err != nil {
+			return nil, status.Errorf(codes.InvalidArgument, "cannot infer group id")
+		}
+		in.GroupId = group
+	}
+
 	// check if user is authorized
 	if !IsRequestAuthorized(ctx, in.GroupId) {
 		return nil, status.Errorf(codes.PermissionDenied, "user is not authorized to access this resource")
 	}
 
 	repos, err := s.store.ListRepositoriesByGroupID(ctx, db.ListRepositoriesByGroupIDParams{
-		GroupID: in.GroupId,
-		Limit:   in.Limit,
-		Offset:  in.Offset,
+		Provider: in.Provider,
+		GroupID:  in.GroupId,
+		Limit:    in.Limit,
+		Offset:   in.Offset,
 	})
 
 	if err != nil {

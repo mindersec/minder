@@ -31,7 +31,7 @@ func TestIsSuperadminAuthorized(t *testing.T) {
 
 	request := &pb.GetGroupByIdRequest{GroupId: 1}
 	// Create a new context and set the claims value
-	ctx := context.WithValue(context.Background(), TokenInfoKey, auth.UserClaims{
+	ctx := context.WithValue(context.Background(), auth.TokenInfoKey, auth.UserClaims{
 		UserId:         1,
 		OrganizationId: 1,
 		GroupIds:       []int32{1},
@@ -60,7 +60,7 @@ func TestIsNonadminAuthorized(t *testing.T) {
 
 	request := &pb.CreateRoleByOrganizationRequest{OrganizationId: 1, Name: "test"}
 	// Create a new context and set the claims value
-	ctx := context.WithValue(context.Background(), TokenInfoKey, auth.UserClaims{
+	ctx := context.WithValue(context.Background(), auth.TokenInfoKey, auth.UserClaims{
 		UserId:         1,
 		OrganizationId: 1,
 		GroupIds:       []int32{1},
@@ -89,7 +89,7 @@ func TestByResourceUnauthorized(t *testing.T) {
 
 	request := &pb.GetRoleByIdRequest{Id: 1}
 	// Create a new context and set the claims value
-	ctx := context.WithValue(context.Background(), TokenInfoKey, auth.UserClaims{
+	ctx := context.WithValue(context.Background(), auth.TokenInfoKey, auth.UserClaims{
 		UserId:         2,
 		OrganizationId: 2,
 		GroupIds:       []int32{1},

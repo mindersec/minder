@@ -1301,6 +1301,7 @@ BUF does not allow grouping (which is a shame)
 
 | Field | Type | Label | Description |
 | ----- | ---- | ----- | ----------- |
+| provider | [string](#string) |  |  |
 | group_id | [int32](#int32) |  |  |
 | limit | [int32](#int32) |  |  |
 | offset | [int32](#int32) |  |  |
@@ -1433,9 +1434,10 @@ BUF does not allow grouping (which is a shame)
 
 | Field | Type | Label | Description |
 | ----- | ---- | ----- | ----------- |
+| provider | [string](#string) |  |  |
+| group_id | [int32](#int32) |  |  |
 | repositories | [Repositories](#mediator-v1-Repositories) | repeated |  |
 | events | [string](#string) | repeated |  |
-| group_id | [int32](#int32) |  |  |
 
 
 

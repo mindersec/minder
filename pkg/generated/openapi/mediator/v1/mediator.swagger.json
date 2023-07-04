@@ -979,6 +979,12 @@
         },
         "parameters": [
           {
+            "name": "provider",
+            "in": "query",
+            "required": false,
+            "type": "string"
+          },
+          {
             "name": "groupId",
             "in": "query",
             "required": false,
@@ -2690,6 +2696,13 @@
     "v1RegisterRepositoryRequest": {
       "type": "object",
       "properties": {
+        "provider": {
+          "type": "string"
+        },
+        "groupId": {
+          "type": "integer",
+          "format": "int32"
+        },
         "repositories": {
           "type": "array",
           "items": {
@@ -2702,10 +2715,6 @@
           "items": {
             "type": "string"
           }
-        },
-        "groupId": {
-          "type": "integer",
-          "format": "int32"
         }
       }
     },

@@ -39,12 +39,13 @@ type ProviderAccessToken struct {
 
 type Repository struct {
 	ID         int32         `json:"id"`
+	Provider   string        `json:"provider"`
+	GroupID    int32         `json:"group_id"`
 	RepoOwner  string        `json:"repo_owner"`
 	RepoName   string        `json:"repo_name"`
 	RepoID     int32         `json:"repo_id"`
 	IsPrivate  bool          `json:"is_private"`
 	IsFork     bool          `json:"is_fork"`
-	GroupID    int32         `json:"group_id"`
 	WebhookID  sql.NullInt32 `json:"webhook_id"`
 	WebhookUrl string        `json:"webhook_url"`
 	DeployUrl  string        `json:"deploy_url"`
@@ -65,6 +66,7 @@ type Role struct {
 
 type SessionStore struct {
 	ID           int32         `json:"id"`
+	Provider     string        `json:"provider"`
 	GrpID        sql.NullInt32 `json:"grp_id"`
 	Port         sql.NullInt32 `json:"port"`
 	SessionState string        `json:"session_state"`
