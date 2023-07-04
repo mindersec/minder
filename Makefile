@@ -54,6 +54,8 @@ bootstrap: ## install build deps
 	# No passphrase (-N), don't overwrite existing keys ("n" to prompt)
 	echo n | ssh-keygen -t rsa -b 2048 -N "" -m PEM -f .ssh/access_token_rsa || true
 	echo n | ssh-keygen -t rsa -b 2048 -N "" -m PEM -f .ssh/refresh_token_rsa || true
+	openssl rsa -in .ssh/access_token_rsa -pubout -outform PEM -out .ssh/access_token_rsa.pub
+	openssl rsa -in .ssh/refresh_token_rsa -pubout -outform PEM -out .ssh/refresh_token_rsa.pub
 
 test: clean ## display test coverage
 	go test -json -v ./... | gotestfmt
