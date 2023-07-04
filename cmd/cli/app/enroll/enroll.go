@@ -34,8 +34,8 @@ var EnrollCmd = &cobra.Command{
 	Short: "Manage enrollments within a mediator control plane",
 	Long: `The medic enroll commands manage enrollment of providers, within a mediator
 control plane.`,
-	Run: func(cmd *cobra.Command, args []string) {
-		cmd.Println("enroll called")
+	RunE: func(cmd *cobra.Command, args []string) error {
+		return cmd.Usage()
 	},
 }
 
