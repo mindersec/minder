@@ -62,9 +62,10 @@ var repo_registerCmd = &cobra.Command{
 		defer cancel()
 
 		listResp, err := client.ListRepositories(ctx, &pb.ListRepositoriesRequest{
-			GroupId: groupID,
-			Limit:   int32(limit),
-			Offset:  int32(offset),
+			GroupId:          groupID,
+			Limit:            int32(limit),
+			Offset:           int32(offset),
+			FilterRegistered: true,
 		})
 		if err != nil {
 			fmt.Fprintf(os.Stderr, "Error getting repo of repos: %s\n", err)

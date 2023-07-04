@@ -22,7 +22,7 @@ on:
       - release-*
     paths-ignore:
       - "**.md"
-      - "doc/**"
+      - "docs/**"
       - "**.txt"
       - "images/**"
       - "LICENSE"

@@ -35,7 +35,7 @@ var DocsCmd = &cobra.Command{
 		util.ExitNicelyOnError(err, "Error binding flags")
 	},
 	Run: func(cmd *cobra.Command, args []string) {
-		err := doc.GenMarkdownTree(app.RootCmd, "./docs/cli")
+		err := doc.GenMarkdownTree(app.RootCmd, "./docs/docs/cli")
 		if err != nil {
 			panic(err)
 		}
