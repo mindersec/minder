@@ -43,6 +43,21 @@ run-cli: ## run the CLI, needs additional arguments
 run-server: ## run the app
 	@go run -ldflags "-X main.version=$(shell git describe --abbrev=0 --tags)"  ./cmd/server serve
 
+# Unfortunately, we need OS detection for docker-compose
+OS := $(shell uname -s)
+ARCH := $(shell uname -m)
+
+run-docker:  ## run the app under docker
+    # podman (at least) doesn't seem to like multi-arch images, and sometimes picks the wrong one (e.g. amd64 on arm64)
+    # ko resolve will fill in the image: field in the compose file, but it adds a yaml document separator
+	ko resolve --platform linux/$(ARCH) -f docker-compose.yaml | sed 's/^--*$$//' > .resolved-compose.yaml
+	# MacOS can't tolerate the ":z" flag, Linux needs it.  https://github.com/containers/podman-compose/issues/509
+ifeq ($(OS),Darwin)
+	sed -i '' 's/:z$$//' .resolved-compose.yaml
+endif
+	podman-compose -f .resolved-compose.yaml down && podman-compose -f .resolved-compose.yaml up
+	rm .resolved-compose.yaml*
+
 bootstrap: ## install build deps
 	go generate -tags tools tools/tools.go
 	# N.B. each line runs in a different subshell, so we don't need to undo the 'cd' here

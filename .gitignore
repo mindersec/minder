@@ -42,8 +42,10 @@ Thumbs.db
 # asdf
 .tool-versions
 
+# Mediator-specific files
 .ssh/
 cmd/server/__debug_bin
+.resolved-compose.yaml
 
 # docusaurus
 docs/node_modules

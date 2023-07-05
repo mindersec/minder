@@ -16,13 +16,13 @@
 version: '3.2'
 services:
   mediator:
-    build: .
     command: [
       "serve",
       "--grpc-host=0.0.0.0",
       "--http-host=0.0.0.0",
       "--db-host=postgres",
-      "--config=$KO_DATA_PATH/config.yaml"
+      "--config=/app/config.yaml"
+
       ]
     restart: always # keep the server running
     ports:
@@ -31,15 +31,24 @@ services:
     image: ko://github.com/stacklok/mediator/cmd/server
     volumes:
           - ./config.yaml:/app/config.yaml:z
-          - .ssh:/app/.ssh:z
+          - ./.ssh:/app/.ssh:z
     environment:
-      - KO_DATA_PATH=/app
+      - KO_DATA_PATH=/app/
+      # Use viper environment variables to set specific paths to keys;
+      # these values are relative paths in config.yaml, but it's not clear
+      # what they are relative _to_...
+      - AUTH.ACCESS_TOKEN_PRIVATE_KEY=/app/.ssh/access_token_rsa
+      - AUTH.ACCESS_TOKEN_PUBLIC_KEY=/app/.ssh/access_token_rsa.pub
+      - AUTH.REFRESH_TOKEN_PRIVATE_KEY=/app/.ssh/refresh_token_rsa
+      - AUTH.REFRESH_TOKEN_PUBLIC_KEY=/app/.ssh/refresh_token_rsa.pub
     networks:
       - app_net
     depends_on:
-      - postgres
+      postgres:
+        condition: service_healthy
+#      migrate:
+#        condition: service_completed_successfully
   migrate:
-    build: .
     command: [
       "migrate",
       "up",
@@ -49,8 +58,9 @@ services:
     image: ko://github.com/stacklok/mediator/cmd/server
     volumes:
           - ./config.yaml:/app/config.yaml:z
+          - ./database/migrations:/app/database/migrations:z
     environment:
-      - KO_DATA_PATH=/app
+      - KO_DATA_PATH=/app/
     networks:
       - app_net
     deploy:
