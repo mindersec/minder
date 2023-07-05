@@ -55,7 +55,7 @@ run-docker:  ## run the app under docker
 ifeq ($(OS),Darwin)
 	sed -i '' 's/:z$$//' .resolved-compose.yaml
 endif
-	podman-compose -f .resolved-compose.yaml down && podman-compose -f .resolved-compose.yaml up
+	podman-compose -f .resolved-compose.yaml down && podman-compose -f .resolved-compose.yaml up $(services)
 	rm .resolved-compose.yaml*
 
 bootstrap: ## install build deps

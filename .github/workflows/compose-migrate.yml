@@ -18,8 +18,11 @@ jobs:
     - name: Checkout
       uses: actions/checkout@v3
 
+    - name: Install ko
+      uses: ko-build/setup-ko@v0.6
+
     - name: Start containers
-      run: docker-compose up -d --build
+      run: make run-docker services="-d postgres migrate"
     
     - name: Wait for the migrations to complete
       timeout-minutes: 1
