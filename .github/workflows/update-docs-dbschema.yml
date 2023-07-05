@@ -1,5 +1,6 @@
 name: Build dbschema if needed
 on:
+  workflow_dispatch:
   push:
     branches:
       - main
