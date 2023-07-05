@@ -34,8 +34,8 @@ var AuthCmd = &cobra.Command{
 	Short: "Authorize and manage accounts within a mediator control plane",
 	Long: `The medic auth command group lets you create accounts and grant or revoke
 authorization to existing accounts within a mediator control plane.`,
-	Run: func(cmd *cobra.Command, args []string) {
-		cmd.Println("auth called")
+	RunE: func(cmd *cobra.Command, args []string) error {
+		return cmd.Usage()
 	},
 }
 

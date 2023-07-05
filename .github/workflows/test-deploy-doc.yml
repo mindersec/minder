@@ -1,0 +1,26 @@
+name: Test deployment
+
+on:
+  workflow_call:
+  pull_request:
+    branches:
+      - main
+    paths:
+      - "docs/**"
+
+jobs:
+  test-deploy:
+    name: Test deployment
+    runs-on: ubuntu-latest
+    steps:
+      - uses: actions/checkout@v3
+      - uses: actions/setup-node@v3
+        with:
+          node-version: 18
+
+      - name: Install dependencies
+        run: yarn install --frozen-lockfile
+        working-directory: ./docs
+      - name: Test build website
+        run: yarn build
+        working-directory: ./docs

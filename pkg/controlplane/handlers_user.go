@@ -523,7 +523,7 @@ func (s *Server) GetUserByEmail(ctx context.Context,
 
 // GetUser is a service for getting personal user details
 func (s *Server) GetUser(ctx context.Context, _ *pb.GetUserRequest) (*pb.GetUserResponse, error) {
-	claims, _ := ctx.Value(TokenInfoKey).(auth.UserClaims)
+	claims, _ := ctx.Value(auth.TokenInfoKey).(auth.UserClaims)
 	// check if user is authorized
 	if !IsRequestAuthorized(ctx, claims.UserId) {
 		return nil, status.Errorf(codes.PermissionDenied, "user is not authorized to access this resource")
@@ -565,7 +565,7 @@ type updatePasswordValidation struct {
 
 // UpdatePassword is a service for updating a user's password
 func (s *Server) UpdatePassword(ctx context.Context, in *pb.UpdatePasswordRequest) (*pb.UpdatePasswordResponse, error) {
-	claims, _ := ctx.Value(TokenInfoKey).(auth.UserClaims)
+	claims, _ := ctx.Value(auth.TokenInfoKey).(auth.UserClaims)
 	// check if user is authorized
 	if !IsRequestAuthorized(ctx, claims.UserId) {
 		return nil, status.Errorf(codes.PermissionDenied, "user is not authorized to access this resource")
@@ -625,7 +625,7 @@ type updateProfileValidation struct {
 //
 //gocyclo:ignore
 func (s *Server) UpdateProfile(ctx context.Context, in *pb.UpdateProfileRequest) (*pb.UpdateProfileResponse, error) {
-	claims, _ := ctx.Value(TokenInfoKey).(auth.UserClaims)
+	claims, _ := ctx.Value(auth.TokenInfoKey).(auth.UserClaims)
 	// check if user is authorized
 	if !IsRequestAuthorized(ctx, claims.UserId) {
 		return nil, status.Errorf(codes.PermissionDenied, "user is not authorized to access this resource")

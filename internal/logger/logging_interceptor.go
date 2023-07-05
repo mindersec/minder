@@ -112,7 +112,7 @@ func LogErrorCall(ctx context.Context, logger *zerolog.Event, method string, t t
 			"http.body":            jsonText,
 			"http.duration":        time.Since(t).String(),
 			"exception.message":    err.Error(),
-			"exception.stacktrace": debug.Stack(),
+			"exception.stacktrace": string(debug.Stack()),
 		})
 	}
 

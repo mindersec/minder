@@ -28,8 +28,8 @@ var UserCmd = &cobra.Command{
 	Short: "Manage users within a mediator control plane",
 	Long: `The medic user subcommands allows the management of users within
 a mediator controlplane.`,
-	Run: func(cmd *cobra.Command, args []string) {
-		cmd.Println("user called")
+	RunE: func(cmd *cobra.Command, args []string) error {
+		return cmd.Usage()
 	},
 }
 

@@ -44,3 +44,8 @@ Thumbs.db
 
 .ssh/
 cmd/server/__debug_bin
+
+# docusaurus
+docs/node_modules
+docs/build
+docs/.docusaurus

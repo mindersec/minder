@@ -22,12 +22,18 @@ services:
       "--grpc-host=0.0.0.0",
       "--http-host=0.0.0.0",
       "--db-host=postgres",
+      "--config=$KO_DATA_PATH/config.yaml"
       ]
     restart: always # keep the server running
     ports:
       - "8080:8080"
       - "8090:8090"
     image: ko://github.com/stacklok/mediator/cmd/server
+    volumes:
+          - ./config.yaml:/app/config.yaml:z
+          - .ssh:/app/.ssh:z
+    environment:
+      - KO_DATA_PATH=/app
     networks:
       - app_net
     depends_on:
@@ -41,6 +47,10 @@ services:
       "--db-host=postgres",
       ]
     image: ko://github.com/stacklok/mediator/cmd/server
+    volumes:
+          - ./config.yaml:/app/config.yaml:z
+    environment:
+      - KO_DATA_PATH=/app
     networks:
       - app_net
     deploy:

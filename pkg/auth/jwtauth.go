@@ -26,6 +26,7 @@ import (
 	"crypto/rsa"
 	"crypto/x509"
 	"encoding/pem"
+	"errors"
 	"fmt"
 	"time"
 
@@ -278,4 +279,19 @@ func GetUserClaims(ctx context.Context, store db.Store, userId int32) (UserClaim
 	}
 
 	return claims, nil
+}
+
+// TokenInfoKey is the key used to store the token info in the context
+var TokenInfoKey struct{}
+
+// GetDefaultGroup returns the default group id for the user
+func GetDefaultGroup(ctx context.Context) (int32, error) {
+	claims, ok := ctx.Value(TokenInfoKey).(UserClaims)
+	if !ok {
+		return 0, errors.New("cannot get default group")
+	}
+	if len(claims.GroupIds) != 1 {
+		return 0, errors.New("cannot get default group")
+	}
+	return claims.GroupIds[0], nil
 }

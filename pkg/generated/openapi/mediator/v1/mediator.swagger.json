@@ -978,6 +978,12 @@
         },
         "parameters": [
           {
+            "name": "provider",
+            "in": "query",
+            "required": false,
+            "type": "string"
+          },
+          {
             "name": "groupId",
             "in": "query",
             "required": false,
@@ -997,6 +1003,12 @@
             "required": false,
             "type": "integer",
             "format": "int32"
+          },
+          {
+            "name": "filterRegistered",
+            "in": "query",
+            "required": false,
+            "type": "boolean"
           }
         ],
         "tags": [
@@ -2666,6 +2678,13 @@
     "v1RegisterRepositoryRequest": {
       "type": "object",
       "properties": {
+        "provider": {
+          "type": "string"
+        },
+        "groupId": {
+          "type": "integer",
+          "format": "int32"
+        },
         "repositories": {
           "type": "array",
           "items": {
@@ -2678,10 +2697,6 @@
           "items": {
             "type": "string"
           }
-        },
-        "groupId": {
-          "type": "integer",
-          "format": "int32"
         }
       }
     },
@@ -2706,9 +2721,6 @@
         "name": {
           "type": "string"
         },
-        "isRegistered": {
-          "type": "boolean"
-        },
         "repoId": {
           "type": "integer",
           "format": "int32"
@@ -2723,6 +2735,10 @@
         },
         "repository": {
           "type": "string"
+        },
+        "repoId": {
+          "type": "integer",
+          "format": "int32"
         },
         "hookId": {
           "type": "string",

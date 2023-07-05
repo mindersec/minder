@@ -42,22 +42,36 @@ import (
 //	}' 127.0.0.1:8090 mediator.v1.RepositoryService/RegisterRepository
 func (s *Server) RegisterRepository(ctx context.Context,
 	in *pb.RegisterRepositoryRequest) (*pb.RegisterRepositoryResponse, error) {
-
-	if in.GroupId == 0 {
-		return nil, status.Errorf(codes.InvalidArgument, "group id cannot be empty")
+	if in.Provider != auth.Github {
+		return nil, status.Errorf(codes.InvalidArgument, "provider not supported: %v", in.Provider)
 	}
+
+	// if we have set no events, give an error
+	if len(in.Events) == 0 {
+		return nil, status.Errorf(codes.InvalidArgument, "no events provided")
+	}
+
+	// if we do not have a group, check if we can infer it
+	if in.GroupId == 0 {
+		group, err := auth.GetDefaultGroup(ctx)
+		if err != nil {
+			return nil, status.Errorf(codes.InvalidArgument, "cannot infer group id")
+		}
+		in.GroupId = group
+	}
+
 	// check if user is authorized
 	if !IsRequestAuthorized(ctx, in.GroupId) {
 		return nil, status.Errorf(codes.PermissionDenied, "user is not authorized to access this resource")
 	}
 
 	// Check if needs github authorization
-	isGithubAuthorized := IsProviderCallAuthorized(ctx, s.store, auth.Github, in.GroupId)
+	isGithubAuthorized := IsProviderCallAuthorized(ctx, s.store, in.Provider, in.GroupId)
 	if !isGithubAuthorized {
 		return nil, status.Errorf(codes.PermissionDenied, "user not authorized to interact with provider")
 	}
 
-	decryptedToken, err := GetProviderAccessToken(ctx, s.store, in.GroupId)
+	decryptedToken, err := GetProviderAccessToken(ctx, s.store, in.Provider, in.GroupId)
 
 	if err != nil {
 		return nil, err
@@ -71,8 +85,9 @@ func (s *Server) RegisterRepository(ctx context.Context,
 
 	for _, repository := range in.GetRepositories() {
 		repositories = append(repositories, Repository{
-			Owner: repository.GetOwner(),
-			Repo:  repository.GetName(),
+			Owner:  repository.GetOwner(),
+			Repo:   repository.GetName(),
+			RepoID: repository.GetRepoId(), // Handle the RepoID here.
 		})
 	}
 
@@ -88,8 +103,10 @@ func (s *Server) RegisterRepository(ctx context.Context,
 		pbResult := &pb.RepositoryResult{
 			Owner:      result.Owner,
 			Repository: result.Repository,
+			RepoId:     result.RepoID,
 			HookId:     result.HookID,
 			HookUrl:    result.HookURL,
+			HookName:   result.HookName,
 			DeployUrl:  result.DeployURL,
 			Success:    result.Success,
 			Uuid:       result.HookUUID,
@@ -97,9 +114,15 @@ func (s *Server) RegisterRepository(ctx context.Context,
 		results = append(results, pbResult)
 
 		// update the database
-		_, err = s.store.UpdateRepository(ctx, db.UpdateRepositoryParams{
+		_, err = s.store.UpdateRepositoryByID(ctx, db.UpdateRepositoryByIDParams{
 			WebhookID:  sql.NullInt32{Int32: int32(result.HookID), Valid: true},
 			WebhookUrl: result.HookURL,
+			Provider:   in.Provider,
+			GroupID:    in.GroupId,
+			RepoOwner:  result.Owner,
+			RepoName:   result.Repository,
+			RepoID:     result.RepoID,
+			DeployUrl:  result.DeployURL,
 		})
 		if err != nil {
 			return nil, err
@@ -119,19 +142,29 @@ func (s *Server) RegisterRepository(ctx context.Context,
 // The API is called with a group id, limit and offset
 func (s *Server) ListRepositories(ctx context.Context,
 	in *pb.ListRepositoriesRequest) (*pb.ListRepositoriesResponse, error) {
-
-	if in.GroupId == 0 {
-		return nil, status.Errorf(codes.InvalidArgument, "group id cannot be empty")
+	if in.Provider != auth.Github {
+		return nil, status.Errorf(codes.InvalidArgument, "provider not supported: %v", in.Provider)
 	}
+
+	// if we do not have a group, check if we can infer it
+	if in.GroupId == 0 {
+		group, err := auth.GetDefaultGroup(ctx)
+		if err != nil {
+			return nil, status.Errorf(codes.InvalidArgument, "cannot infer group id")
+		}
+		in.GroupId = group
+	}
+
 	// check if user is authorized
 	if !IsRequestAuthorized(ctx, in.GroupId) {
 		return nil, status.Errorf(codes.PermissionDenied, "user is not authorized to access this resource")
 	}
 
 	repos, err := s.store.ListRepositoriesByGroupID(ctx, db.ListRepositoriesByGroupIDParams{
-		GroupID: in.GroupId,
-		Limit:   in.Limit,
-		Offset:  in.Offset,
+		Provider: in.Provider,
+		GroupID:  in.GroupId,
+		Limit:    in.Limit,
+		Offset:   in.Offset,
 	})
 
 	if err != nil {
@@ -141,13 +174,26 @@ func (s *Server) ListRepositories(ctx context.Context,
 	var resp pb.ListRepositoriesResponse
 	var results []*pb.Repositories
 
-	for _, repo := range repos {
-		results = append(results, &pb.Repositories{
-			Owner:        repo.RepoOwner,
-			Name:         repo.RepoName,
-			RepoId:       repo.RepoID,
-			IsRegistered: repo.WebhookID.Valid,
-		})
+	// Do not return results containing the webhook (e.g. registered), if the
+	// client is not interested
+	if in.FilterRegistered {
+		for _, repo := range repos {
+			if repo.WebhookUrl == "" {
+				results = append(results, &pb.Repositories{
+					Owner:  repo.RepoOwner,
+					Name:   repo.RepoName,
+					RepoId: repo.RepoID,
+				})
+			}
+		}
+	} else {
+		for _, repo := range repos {
+			results = append(results, &pb.Repositories{
+				Owner:  repo.RepoOwner,
+				Name:   repo.RepoName,
+				RepoId: repo.RepoID,
+			})
+		}
 	}
 
 	resp.Results = results

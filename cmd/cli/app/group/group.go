@@ -34,8 +34,8 @@ var GroupCmd = &cobra.Command{
 	Short: "Manage groups within a mediator control plane",
 	Long: `The medic group commands allow the management of groups within a 
 mediator control plane.`,
-	Run: func(cmd *cobra.Command, args []string) {
-		cmd.Println("group called")
+	RunE: func(cmd *cobra.Command, args []string) error {
+		return cmd.Usage()
 	},
 }
 

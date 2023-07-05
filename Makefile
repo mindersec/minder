@@ -17,7 +17,7 @@ projectname?=mediator
 
 default: help
 
-.PHONY: help gen clean-gen build run-cli run-server bootstrap test clean cover lint pre-commit migrateup migratedown sqlc mock docs
+.PHONY: help gen clean-gen build run-cli run-server bootstrap test clean cover lint pre-commit migrateup migratedown sqlc mock cli-docs
 
 help: ## list makefile targets
 	@grep -E '^[a-zA-Z_-]+:.*?## .*$$' $(MAKEFILE_LIST) | sort | awk 'BEGIN {FS = ":.*?## "}; {printf "\033[36m%-30s\033[0m %s\n", $$1, $$2}'
@@ -28,7 +28,8 @@ gen: ## generate protobuf files
 clean-gen:
 	rm -rf $(shell find pkg/generated -iname "*.go") & rm -rf $(shell find pkg/generated -iname "*.swagger.json") & rm -rf pkg/generated/protodocs
 
-docs:
+cli-docs:
+	@mkdir -p docs/docs/cli
 	@go run cmd/cli/main.go docs
 
 build: ## build golang binary
@@ -53,6 +54,8 @@ bootstrap: ## install build deps
 	# No passphrase (-N), don't overwrite existing keys ("n" to prompt)
 	echo n | ssh-keygen -t rsa -b 2048 -N "" -m PEM -f .ssh/access_token_rsa || true
 	echo n | ssh-keygen -t rsa -b 2048 -N "" -m PEM -f .ssh/refresh_token_rsa || true
+	openssl rsa -in .ssh/access_token_rsa -pubout -outform PEM -out .ssh/access_token_rsa.pub
+	openssl rsa -in .ssh/refresh_token_rsa -pubout -outform PEM -out .ssh/refresh_token_rsa.pub
 
 test: clean ## display test coverage
 	go test -json -v ./... | gotestfmt
@@ -82,7 +85,7 @@ dbschema:	## generate database schema with schema spy, monitor file until doc is
 	mkdir -p database/schema/output && chmod a+w database/schema/output
 	cd database/schema && docker-compose run -u 1001:1001 --rm schemaspy -configFile /config/schemaspy.properties -imageformat png
 	sleep 10
-	cp database/schema/output/diagrams/summary/relationships.real.large.png docs/database/schema.png
+	cp database/schema/output/diagrams/summary/relationships.real.large.png docs/static/img/mediator/schema.png
 	cd database/schema && docker compose down -v && rm -rf output
 
 mock:
