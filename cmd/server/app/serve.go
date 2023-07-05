@@ -28,7 +28,6 @@ import (
 	"github.com/stacklok/mediator/internal/config"
 	"github.com/stacklok/mediator/pkg/controlplane"
 	"github.com/stacklok/mediator/pkg/db"
-	"github.com/stacklok/mediator/pkg/util"
 )
 
 var serveCmd = &cobra.Command{
@@ -45,7 +44,7 @@ var serveCmd = &cobra.Command{
 		}
 
 		// Database configuration
-		dbConn, _, err := util.GetDbConnectionFromConfig(cmd)
+		dbConn, _, err := cfg.Database.GetDBConnection()
 		if err != nil {
 			return fmt.Errorf("unable to connect to database: %w", err)
 		}
@@ -76,17 +75,14 @@ var serveCmd = &cobra.Command{
 
 func init() {
 	RootCmd.AddCommand(serveCmd)
-	if err := config.RegisterFlags(viper.GetViper(), serveCmd.Flags()); err != nil {
+	v := viper.GetViper()
+	if err := controlplane.RegisterHTTPServerFlags(v, serveCmd.Flags()); err != nil {
 		log.Fatal(err)
 	}
-	serveCmd.Flags().String("db-host", "", "Database host")
-	serveCmd.Flags().Int("db-port", 5432, "Database port")
-	serveCmd.Flags().String("db-name", "", "Database name")
-	serveCmd.Flags().String("db-user", "", "Database user")
-	serveCmd.Flags().String("db-pass", "", "Database password")
-	serveCmd.Flags().String("db-sslmode", "", "Database sslmode")
+
+	if err := controlplane.RegisterGRPCServerFlags(v, serveCmd.Flags()); err != nil {
+		log.Fatal(err)
+	}
+
 	serveCmd.Flags().String("logging", "", "Log Level")
-	if err := viper.BindPFlags(serveCmd.PersistentFlags()); err != nil {
-		log.Fatal(err)
-	}
 }

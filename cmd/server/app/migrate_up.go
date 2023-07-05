@@ -25,7 +25,8 @@ import (
 	_ "github.com/golang-migrate/migrate/v4/database/postgres" // nolint
 	_ "github.com/golang-migrate/migrate/v4/source/file"       // nolint
 	"github.com/spf13/cobra"
-	"github.com/stacklok/mediator/pkg/util"
+	"github.com/spf13/viper"
+	"github.com/stacklok/mediator/internal/config"
 )
 
 // upCmd represents the up command
@@ -33,11 +34,16 @@ var upCmd = &cobra.Command{
 	Use:   "up",
 	Short: "migrate the database to the latest version",
 	Long:  `Command to install the latest version of sigwatch`,
-	Run: func(cmd *cobra.Command, args []string) {
-		dbConn, connString, err := util.GetDbConnectionFromConfig(cmd)
+	RunE: func(cmd *cobra.Command, args []string) error {
+		cfg, err := config.ReadConfigFromViper(viper.GetViper())
 		if err != nil {
-			fmt.Printf("Unable to connect to database: %v\n", err)
-			os.Exit(1)
+			return fmt.Errorf("unable to read config: %w", err)
+		}
+
+		// Database configuration
+		dbConn, connString, err := cfg.Database.GetDBConnection()
+		if err != nil {
+			return fmt.Errorf("unable to connect to database: %w", err)
 		}
 		defer dbConn.Close()
 
@@ -50,13 +56,12 @@ var upCmd = &cobra.Command{
 			var response string
 			_, err := fmt.Scanln(&response)
 			if err != nil {
-				fmt.Printf("Error while reading user input: %v\n", err)
-				os.Exit(1)
+				return fmt.Errorf("error while reading user input: %w", err)
 			}
 
 			if response == "n" {
 				fmt.Printf("Exiting...")
-				os.Exit(0)
+				return nil
 			}
 		}
 
@@ -76,6 +81,7 @@ var upCmd = &cobra.Command{
 			}
 		}
 		fmt.Println("Database migration completed successfully")
+		return nil
 	},
 }
 
