@@ -16,10 +16,7 @@
 package app
 
 import (
-	"log"
-
 	"github.com/spf13/cobra"
-	"github.com/spf13/viper"
 )
 
 // migrateCmd represents the migrate command
@@ -27,20 +24,12 @@ var migrateCmd = &cobra.Command{
 	Use:   "migrate",
 	Short: "Database migration tool",
 	Long:  `Use tool with a combination of up to down to migrate the database.`,
-	Run: func(cmd *cobra.Command, args []string) {
+	RunE: func(cmd *cobra.Command, args []string) error {
+		return cmd.Usage()
 	},
 }
 
 func init() {
 	RootCmd.AddCommand(migrateCmd)
 	migrateCmd.PersistentFlags().BoolP("yes", "y", false, "Answer yes to all questions")
-	migrateCmd.PersistentFlags().StringP("db-host", "H", "localhost", "Database host")
-	migrateCmd.PersistentFlags().Int("db-port", 5432, "Database port")
-	migrateCmd.PersistentFlags().StringP("db-user", "u", "postgres", "Database user")
-	migrateCmd.PersistentFlags().StringP("db-pass", "P", "postgres", "Database password")
-	migrateCmd.PersistentFlags().StringP("db-name", "d", "postgres", "Database name")
-	migrateCmd.PersistentFlags().StringP("sslmode", "s", "disable", "Database sslmode")
-	if err := viper.BindPFlags(migrateCmd.PersistentFlags()); err != nil {
-		log.Fatal(err)
-	}
 }

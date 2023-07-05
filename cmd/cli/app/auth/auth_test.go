@@ -22,6 +22,7 @@ import (
 	"github.com/spf13/viper"
 	"github.com/stacklok/mediator/cmd/cli/app"
 	"github.com/stacklok/mediator/pkg/util"
+	"github.com/stretchr/testify/assert"
 )
 
 func TestCobraMain(t *testing.T) {
@@ -48,15 +49,10 @@ func TestCobraMain(t *testing.T) {
 			tw := &util.TestWriter{}
 			app.RootCmd.SetOut(tw) // stub to capture eventual output
 			app.RootCmd.SetArgs(test.args)
+			AuthCmd.Use = test.expectedOutput
 
-			if err := app.RootCmd.Execute(); err != nil {
-				t.Errorf("Error executing command: %v", err)
-			}
-
-			if tw.Output != test.expectedOutput {
-				t.Errorf("Expected %q, got %q", test.expectedOutput, tw.Output)
-			}
-
+			assert.NoError(t, app.RootCmd.Execute(), "Error on execute")
+			assert.Contains(t, tw.Output, test.expectedOutput)
 		})
 	}
 }

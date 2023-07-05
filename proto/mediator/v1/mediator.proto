@@ -491,7 +491,7 @@ message RegisterRepositoryRequest {
     string provider = 1;
     int32 group_id = 2;
     repeated Repositories repositories = 3;
-    repeated string events = 5;
+    repeated string events = 4;
 }
 
 message Repositories {

@@ -28,8 +28,8 @@ var RoleCmd = &cobra.Command{
 	Short: "Manage roles within a mediator control plane",
 	Long: `The medic role subcommands allows the management of roles within
 a mediator controlplane.`,
-	Run: func(cmd *cobra.Command, args []string) {
-		cmd.Println("role called")
+	RunE: func(cmd *cobra.Command, args []string) error {
+		return cmd.Usage()
 	},
 }
 
