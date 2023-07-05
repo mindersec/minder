@@ -47,7 +47,7 @@ run-server: ## run the app
 OS := $(shell uname -s)
 ARCH := $(shell uname -m)
 
-run-docker:  ## run the app under docker
+run-docker:  ## run the app under docker.  If you use podman, maybe try a symlink?
     # podman (at least) doesn't seem to like multi-arch images, and sometimes picks the wrong one (e.g. amd64 on arm64)
     # ko resolve will fill in the image: field in the compose file, but it adds a yaml document separator
 	ko resolve --platform linux/$(ARCH) -f docker-compose.yaml | sed 's/^--*$$//' > .resolved-compose.yaml
@@ -55,7 +55,7 @@ run-docker:  ## run the app under docker
 ifeq ($(OS),Darwin)
 	sed -i '' 's/:z$$//' .resolved-compose.yaml
 endif
-	podman-compose -f .resolved-compose.yaml down && podman-compose -f .resolved-compose.yaml up $(services)
+	docker-compose -f .resolved-compose.yaml down && docker-compose -f .resolved-compose.yaml up $(services)
 	rm .resolved-compose.yaml*
 
 bootstrap: ## install build deps
