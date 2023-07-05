@@ -4,11 +4,12 @@ on:
     branches:
       - main
     paths:
-      - 'database/migrations/**'
+      - "database/migrations/**"
 
 jobs:
   update-docs-dbschema:
     runs-on: ubuntu-latest
+    permissions: write-all
 
     steps:
       # Checkout your project with git
@@ -19,7 +20,7 @@ jobs:
         run: |
           # Install Docker Compose
           sudo curl -L "https://github.com/docker/compose/releases/latest/download/docker-compose-$(uname -s)-$(uname -m)" -o /usr/local/bin/docker-compose
-          sudo chmod +x /usr/local/bin/docker-compose      
+          sudo chmod +x /usr/local/bin/docker-compose
 
       # generate db schema
       - name: Generate db schema
@@ -34,7 +35,7 @@ jobs:
           echo "commit_sha=$COMMIT_SHA" >> $GITHUB_OUTPUT
           echo "commit_date=$COMMIT_DATE" >> $GITHUB_OUTPUT
           echo "commit_author=$COMMIT_AUTHOR" >> $GITHUB_OUTPUT
-          
+
       - name: Commit and push changes
         uses: peter-evans/create-pull-request@v5
         with:
@@ -44,7 +45,7 @@ jobs:
           signoff: false
           branch-suffix: timestamp
           delete-branch: true
-          title: 'Auto-generated DB schema update - ${{ steps.extract_commit_details.outputs.commit_date }}'
+          title: "Auto-generated DB schema update - ${{ steps.extract_commit_details.outputs.commit_date }}"
           body: |
             ** Source commit **
              - Commit SHA: [${{ steps.extract_commit_details.outputs.commit_sha }}](${{ github.server_url }}/${{ github.repository }}/commit/${{ steps.extract_commit_details.outputs.commit_sha}})
