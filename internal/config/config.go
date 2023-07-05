@@ -18,16 +18,17 @@
 package config
 
 import (
-	"github.com/spf13/pflag"
 	"github.com/spf13/viper"
 
 	"github.com/stacklok/mediator/pkg/controlplane"
+	"github.com/stacklok/mediator/pkg/db"
 )
 
 // Config is the top-level configuration structure.
 type Config struct {
 	HTTPServer controlplane.HTTPServerConfig `mapstructure:"http_server"`
 	GRPCServer controlplane.GRPCServerConfig `mapstructure:"grpc_server"`
+	Database   db.Config                     `mapstructure:"database"`
 }
 
 // ReadConfigFromViper reads the configuration from the given Viper instance.
@@ -38,13 +39,4 @@ func ReadConfigFromViper(v *viper.Viper) (*Config, error) {
 		return nil, err
 	}
 	return &cfg, nil
-}
-
-// RegisterFlags registers all flags for the given Viper instance.
-func RegisterFlags(v *viper.Viper, flags *pflag.FlagSet) error {
-	if err := controlplane.RegisterHTTPServerFlags(v, flags); err != nil {
-		return err
-	}
-
-	return controlplane.RegisterGRPCServerFlags(v, flags)
 }

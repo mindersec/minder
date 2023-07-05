@@ -23,19 +23,24 @@ import (
 	_ "github.com/golang-migrate/migrate/v4/database/postgres" // nolint
 	_ "github.com/golang-migrate/migrate/v4/source/file"       // nolint
 	"github.com/spf13/cobra"
-	"github.com/stacklok/mediator/pkg/util"
+	"github.com/spf13/viper"
+	"github.com/stacklok/mediator/internal/config"
 )
 
 var downCmd = &cobra.Command{
 	Use:   "down",
 	Short: "migrate a down a database version",
 	Long:  `Command to downgrade database`,
-	Run: func(cmd *cobra.Command, args []string) {
-
-		dbConn, connString, err := util.GetDbConnectionFromConfig(cmd)
+	RunE: func(cmd *cobra.Command, args []string) error {
+		cfg, err := config.ReadConfigFromViper(viper.GetViper())
 		if err != nil {
-			fmt.Printf("Unable to connect to database: %v\n", err)
-			os.Exit(1)
+			return fmt.Errorf("unable to read config: %w", err)
+		}
+
+		// Database configuration
+		dbConn, connString, err := cfg.Database.GetDBConnection()
+		if err != nil {
+			return fmt.Errorf("unable to connect to database: %w", err)
 		}
 		defer dbConn.Close()
 
@@ -48,13 +53,12 @@ var downCmd = &cobra.Command{
 			var response string
 			_, err := fmt.Scanln(&response)
 			if err != nil {
-				fmt.Printf("Error reading response: %v\n", err)
-				os.Exit(1)
+				return fmt.Errorf("error reading response: %w", err)
 			}
 
 			if response == "n" {
 				fmt.Println("Exiting...")
-				os.Exit(0)
+				return nil
 			}
 		}
 
@@ -71,6 +75,7 @@ var downCmd = &cobra.Command{
 		}
 
 		fmt.Println("Database migration down done with success. All Tables dropped")
+		return nil
 	},
 }
 
