@@ -305,6 +305,7 @@ func WriteToFile(out string, content []byte, perms fs.FileMode) error {
 	return nil
 }
 
+// GetPassFromTerm gets a password from the terminal
 func GetPassFromTerm(confirm bool) ([]byte, error) {
 	fmt.Print("Enter password for private key: ")
 

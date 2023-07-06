@@ -28,6 +28,7 @@ import (
 	"google.golang.org/grpc/status"
 )
 
+// CreateKeyPair creates a new key pair for a given group
 func (s *Server) CreateKeyPair(ctx context.Context, req *pb.CreateKeyPairRequest) (*pb.CreateKeyPairResponse, error) {
 	// check if user is authorized
 	if !IsRequestAuthorized(ctx, req.GroupId) {
@@ -48,14 +49,14 @@ func (s *Server) CreateKeyPair(ctx context.Context, req *pb.CreateKeyPairRequest
 		return nil, err
 	}
 
-	uuid := uuid.New()
+	uuid_key_id := uuid.New()
 
 	keys, err := s.store.CreateSigningKey(ctx, db.CreateSigningKeyParams{
 		GroupID:       req.GroupId,
 		PrivateKey:    base64.RawStdEncoding.EncodeToString(priv),
 		PublicKey:     base64.RawStdEncoding.EncodeToString(pub),
 		Passphrase:    pHash,
-		KeyIdentifier: (uuid.String()),
+		KeyIdentifier: (uuid_key_id.String()),
 	})
 
 	return &pb.CreateKeyPairResponse{

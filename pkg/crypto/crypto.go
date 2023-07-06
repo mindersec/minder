@@ -287,47 +287,7 @@ func IsNonceValid(nonce string) (bool, error) {
 }
 
 // GenerateKeyPair generates a public/private key pair and encrypts
-// the private key with a passphrase
-// func GenerateKeyPair(passphrase string) ([]byte, []byte, error) {
-// 	signer, private, err := signature.NewDefaultECDSASignerVerifier()
-// 	if err != nil {
-// 		panic(err)
-// 	}
-
-// 	pub, err := signer.PublicKey()
-// 	if err != nil {
-// 		panic(err)
-// 	}
-
-// 	pubBytes, err := x509.MarshalPKIXPublicKey(pub)
-// 	if err != nil {
-// 		panic(err)
-// 	}
-
-// 	x509Encoded, err := x509.MarshalPKCS8PrivateKey(private)
-// 	if err != nil {
-// 		panic(err)
-// 	}
-
-// 	// Encrypt the private key with NACL secretbox
-// 	encBytes, err := encrypted.Encrypt(x509Encoded, []byte(passphrase))
-// 	if err != nil {
-// 		return nil, nil, err
-// 	}
-
-// 	PublicKey := pem.EncodeToMemory(&pem.Block{
-// 		Type:  "PUBLIC KEY",
-// 		Bytes: pubBytes,
-// 	})
-
-// 	PrivateKey := pem.EncodeToMemory(&pem.Block{
-// 		Type:  "PRIVATE KEY",
-// 		Bytes: encBytes,
-// 	})
-
-// 	return PrivateKey, PublicKey, nil
-// }
-
+// the private key with a passphrase (using NACL secretbox).
 func GenerateKeyPair(passphrase string) ([]byte, []byte, error) {
 	signer, private, err := signature.NewDefaultECDSASignerVerifier()
 	if err != nil {
