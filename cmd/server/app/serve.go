@@ -68,6 +68,10 @@ var serveCmd = &cobra.Command{
 			return s.StartHTTPServer(ctx)
 		})
 
+		errg.Go(func() error {
+			return s.HandleEvents(ctx)
+		})
+
 		return errg.Wait()
 	},
 }
