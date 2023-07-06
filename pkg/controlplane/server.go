@@ -43,6 +43,7 @@ import (
 
 	"github.com/stacklok/mediator/internal/config"
 	"github.com/stacklok/mediator/internal/events"
+	ghevts "github.com/stacklok/mediator/internal/gh/events"
 	"github.com/stacklok/mediator/internal/logger"
 	"github.com/stacklok/mediator/pkg/db"
 	pb "github.com/stacklok/mediator/pkg/generated/protobuf/go/mediator/v1"
@@ -274,7 +275,7 @@ func (s *Server) StartHTTPServer(ctx context.Context) error {
 
 // HandleEvents starts the event handler and blocks while handling events.
 func (s *Server) HandleEvents(ctx context.Context) error {
-	// TODO: Subscribe to events
+	s.evt.SubscribeAll(ghevts.GetRegistrar())
 
 	return s.evt.Run(ctx)
 }

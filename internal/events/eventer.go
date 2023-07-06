@@ -110,3 +110,10 @@ func (e *Eventer) Subscribe(
 		handler.Impl,
 	)
 }
+
+// SubscribeAll subscribes to all the topics in the registrar
+func (e *Eventer) SubscribeAll(r *Registrar) {
+	r.Walk(func(topic string, handler MessageHandler) {
+		e.Subscribe(topic, handler)
+	})
+}
