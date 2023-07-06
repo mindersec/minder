@@ -16,6 +16,7 @@ type Querier interface {
 	CreateAccessToken(ctx context.Context, arg CreateAccessTokenParams) (ProviderAccessToken, error)
 	CreateGroup(ctx context.Context, arg CreateGroupParams) (Group, error)
 	CreateOrganization(ctx context.Context, arg CreateOrganizationParams) (Organization, error)
+	CreatePolicy(ctx context.Context, arg CreatePolicyParams) (Policy, error)
 	CreateRepository(ctx context.Context, arg CreateRepositoryParams) (Repository, error)
 	CreateRole(ctx context.Context, arg CreateRoleParams) (Role, error)
 	CreateSessionState(ctx context.Context, arg CreateSessionStateParams) (SessionStore, error)
@@ -24,6 +25,7 @@ type Querier interface {
 	DeleteExpiredSessionStates(ctx context.Context) error
 	DeleteGroup(ctx context.Context, id int32) error
 	DeleteOrganization(ctx context.Context, id int32) error
+	DeletePolicy(ctx context.Context, id int32) error
 	DeleteRepository(ctx context.Context, id int32) error
 	DeleteRole(ctx context.Context, id int32) error
 	DeleteSessionState(ctx context.Context, id int32) error
@@ -38,6 +40,7 @@ type Querier interface {
 	GetOrganization(ctx context.Context, id int32) (Organization, error)
 	GetOrganizationByName(ctx context.Context, name string) (Organization, error)
 	GetOrganizationForUpdate(ctx context.Context, name string) (Organization, error)
+	GetPolicyByID(ctx context.Context, id int32) (Policy, error)
 	GetRepositoryByID(ctx context.Context, id int32) (Repository, error)
 	GetRepositoryByRepoID(ctx context.Context, arg GetRepositoryByRepoIDParams) (Repository, error)
 	GetRepositoryByRepoName(ctx context.Context, arg GetRepositoryByRepoNameParams) (Repository, error)
@@ -54,6 +57,7 @@ type Querier interface {
 	ListGroups(ctx context.Context, arg ListGroupsParams) ([]Group, error)
 	ListGroupsByOrganizationID(ctx context.Context, organizationID int32) ([]Group, error)
 	ListOrganizations(ctx context.Context, arg ListOrganizationsParams) ([]Organization, error)
+	ListPoliciesByGroupID(ctx context.Context, arg ListPoliciesByGroupIDParams) ([]Policy, error)
 	ListRepositoriesByGroupID(ctx context.Context, arg ListRepositoriesByGroupIDParams) ([]Repository, error)
 	ListRepositoriesByOwner(ctx context.Context, arg ListRepositoriesByOwnerParams) ([]Repository, error)
 	ListRoles(ctx context.Context, arg ListRolesParams) ([]Role, error)

@@ -169,6 +169,21 @@ func (mr *MockStoreMockRecorder) CreateOrganization(arg0, arg1 interface{}) *gom
 	return mr.mock.ctrl.RecordCallWithMethodType(mr.mock, "CreateOrganization", reflect.TypeOf((*MockStore)(nil).CreateOrganization), arg0, arg1)
 }
 
+// CreatePolicy mocks base method.
+func (m *MockStore) CreatePolicy(arg0 context.Context, arg1 db.CreatePolicyParams) (db.Policy, error) {
+	m.ctrl.T.Helper()
+	ret := m.ctrl.Call(m, "CreatePolicy", arg0, arg1)
+	ret0, _ := ret[0].(db.Policy)
+	ret1, _ := ret[1].(error)
+	return ret0, ret1
+}
+
+// CreatePolicy indicates an expected call of CreatePolicy.
+func (mr *MockStoreMockRecorder) CreatePolicy(arg0, arg1 interface{}) *gomock.Call {
+	mr.mock.ctrl.T.Helper()
+	return mr.mock.ctrl.RecordCallWithMethodType(mr.mock, "CreatePolicy", reflect.TypeOf((*MockStore)(nil).CreatePolicy), arg0, arg1)
+}
+
 // CreateRepository mocks base method.
 func (m *MockStore) CreateRepository(arg0 context.Context, arg1 db.CreateRepositoryParams) (db.Repository, error) {
 	m.ctrl.T.Helper()
@@ -283,6 +298,20 @@ func (m *MockStore) DeleteOrganization(arg0 context.Context, arg1 int32) error {
 func (mr *MockStoreMockRecorder) DeleteOrganization(arg0, arg1 interface{}) *gomock.Call {
 	mr.mock.ctrl.T.Helper()
 	return mr.mock.ctrl.RecordCallWithMethodType(mr.mock, "DeleteOrganization", reflect.TypeOf((*MockStore)(nil).DeleteOrganization), arg0, arg1)
+}
+
+// DeletePolicy mocks base method.
+func (m *MockStore) DeletePolicy(arg0 context.Context, arg1 int32) error {
+	m.ctrl.T.Helper()
+	ret := m.ctrl.Call(m, "DeletePolicy", arg0, arg1)
+	ret0, _ := ret[0].(error)
+	return ret0
+}
+
+// DeletePolicy indicates an expected call of DeletePolicy.
+func (mr *MockStoreMockRecorder) DeletePolicy(arg0, arg1 interface{}) *gomock.Call {
+	mr.mock.ctrl.T.Helper()
+	return mr.mock.ctrl.RecordCallWithMethodType(mr.mock, "DeletePolicy", reflect.TypeOf((*MockStore)(nil).DeletePolicy), arg0, arg1)
 }
 
 // DeleteRepository mocks base method.
@@ -488,6 +517,21 @@ func (m *MockStore) GetOrganizationForUpdate(arg0 context.Context, arg1 string) 
 func (mr *MockStoreMockRecorder) GetOrganizationForUpdate(arg0, arg1 interface{}) *gomock.Call {
 	mr.mock.ctrl.T.Helper()
 	return mr.mock.ctrl.RecordCallWithMethodType(mr.mock, "GetOrganizationForUpdate", reflect.TypeOf((*MockStore)(nil).GetOrganizationForUpdate), arg0, arg1)
+}
+
+// GetPolicyByID mocks base method.
+func (m *MockStore) GetPolicyByID(arg0 context.Context, arg1 int32) (db.Policy, error) {
+	m.ctrl.T.Helper()
+	ret := m.ctrl.Call(m, "GetPolicyByID", arg0, arg1)
+	ret0, _ := ret[0].(db.Policy)
+	ret1, _ := ret[1].(error)
+	return ret0, ret1
+}
+
+// GetPolicyByID indicates an expected call of GetPolicyByID.
+func (mr *MockStoreMockRecorder) GetPolicyByID(arg0, arg1 interface{}) *gomock.Call {
+	mr.mock.ctrl.T.Helper()
+	return mr.mock.ctrl.RecordCallWithMethodType(mr.mock, "GetPolicyByID", reflect.TypeOf((*MockStore)(nil).GetPolicyByID), arg0, arg1)
 }
 
 // GetQuerierWithTransaction mocks base method.
@@ -742,6 +786,21 @@ func (m *MockStore) ListOrganizations(arg0 context.Context, arg1 db.ListOrganiza
 func (mr *MockStoreMockRecorder) ListOrganizations(arg0, arg1 interface{}) *gomock.Call {
 	mr.mock.ctrl.T.Helper()
 	return mr.mock.ctrl.RecordCallWithMethodType(mr.mock, "ListOrganizations", reflect.TypeOf((*MockStore)(nil).ListOrganizations), arg0, arg1)
+}
+
+// ListPoliciesByGroupID mocks base method.
+func (m *MockStore) ListPoliciesByGroupID(arg0 context.Context, arg1 db.ListPoliciesByGroupIDParams) ([]db.Policy, error) {
+	m.ctrl.T.Helper()
+	ret := m.ctrl.Call(m, "ListPoliciesByGroupID", arg0, arg1)
+	ret0, _ := ret[0].([]db.Policy)
+	ret1, _ := ret[1].(error)
+	return ret0, ret1
+}
+
+// ListPoliciesByGroupID indicates an expected call of ListPoliciesByGroupID.
+func (mr *MockStoreMockRecorder) ListPoliciesByGroupID(arg0, arg1 interface{}) *gomock.Call {
+	mr.mock.ctrl.T.Helper()
+	return mr.mock.ctrl.RecordCallWithMethodType(mr.mock, "ListPoliciesByGroupID", reflect.TypeOf((*MockStore)(nil).ListPoliciesByGroupID), arg0, arg1)
 }
 
 // ListRepositoriesByGroupID mocks base method.

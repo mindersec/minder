@@ -232,6 +232,30 @@ var resourceAuthorizations = []map[string]map[string]interface{}{
 			"isAdmin":    true,
 		},
 	},
+	{
+		"/mediator.v1.PolicyService/CreatePolicy": {
+			"claimField": "GroupId",
+			"isAdmin":    true,
+		},
+	},
+	{
+		"/mediator.v1.PolicyService/DeletePolicy": {
+			"claimField": "GroupId",
+			"isAdmin":    true,
+		},
+	},
+	{
+		"/mediator.v1.PolicyService/GetPolicies": {
+			"claimField": "GroupId",
+			"isAdmin":    true,
+		},
+	},
+	{
+		"/mediator.v1.PolicyService/GetPolicy": {
+			"claimField": "GroupId",
+			"isAdmin":    true,
+		},
+	},
 }
 
 var githubAuthorizations = []string{

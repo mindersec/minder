@@ -112,6 +112,22 @@ create TABLE session_store (
     created_at TIMESTAMP NOT NULL DEFAULT NOW()
 );
 
+-- policies table
+create type policy_type as enum (
+    'POLICY_TYPE_UNSPECIFIED',
+    'POLICY_TYPE_BRANCH_PROTECTION'
+);
+
+create table policies (
+    id SERIAL PRIMARY KEY,
+    provider TEXT NOT NULL,
+    group_id INTEGER NOT NULL REFERENCES groups(id) ON DELETE CASCADE,
+    policy_type policy_type NOT NULL,
+    policy_definition TEXT NOT NULL,
+    created_at TIMESTAMP NOT NULL DEFAULT NOW(),
+    updated_at TIMESTAMP NOT NULL DEFAULT NOW()
+);
+
 -- Unique constraint
 ALTER TABLE provider_access_tokens ADD CONSTRAINT unique_group_id UNIQUE (group_id);
 ALTER TABLE repositories ADD CONSTRAINT unique_repo_id UNIQUE (repo_id);
@@ -127,6 +143,7 @@ CREATE INDEX idx_provider_access_tokens_group_id ON provider_access_tokens(group
 CREATE UNIQUE INDEX users_organization_id_email_lower_idx ON users (organization_id, LOWER(email));
 CREATE UNIQUE INDEX users_organization_id_username_lower_idx ON users (organization_id, LOWER(username));
 CREATE UNIQUE INDEX repositories_repo_id_idx ON repositories(repo_id);
+CREATE UNIQUE INDEX policies_group_id_policy_type_idx ON policies(provider, group_id, policy_type);
 
 
 -- Create default root organization
