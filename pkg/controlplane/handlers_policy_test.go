@@ -26,6 +26,7 @@ import (
 	"github.com/stacklok/mediator/pkg/auth"
 	"github.com/stacklok/mediator/pkg/db"
 	"github.com/stretchr/testify/assert"
+	"github.com/stretchr/testify/require"
 
 	"google.golang.org/grpc/codes"
 
@@ -163,7 +164,8 @@ func TestCreatePolicy_gRPC(t *testing.T) {
 			mockStore := mockdb.NewMockStore(ctrl)
 			tc.buildStubs(mockStore)
 
-			server := NewServer(mockStore, &config.Config{})
+			server, err := NewServer(mockStore, &config.Config{})
+			require.NoError(t, err, "failed to create test server")
 
 			resp, err := server.CreatePolicy(ctx, tc.req)
 			tc.checkResponse(t, resp, err)
@@ -264,7 +266,8 @@ func TestDeletePolicy_gRPC(t *testing.T) {
 			mockStore := mockdb.NewMockStore(ctrl)
 			tc.buildStubs(mockStore)
 
-			server := NewServer(mockStore, &config.Config{})
+			server, err := NewServer(mockStore, &config.Config{})
+			require.NoError(t, err, "failed to create test server")
 
 			resp, err := server.DeletePolicy(ctx, tc.req)
 			tc.checkResponse(t, resp, err)
@@ -390,7 +393,8 @@ func TestGetPolicies_gRPC(t *testing.T) {
 			mockStore := mockdb.NewMockStore(ctrl)
 			tc.buildStubs(mockStore)
 
-			server := NewServer(mockStore, &config.Config{})
+			server, err := NewServer(mockStore, &config.Config{})
+			require.NoError(t, err, "failed to create test server")
 
 			resp, err := server.GetPolicies(ctx, tc.req)
 			tc.checkResponse(t, resp, err)

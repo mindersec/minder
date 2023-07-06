@@ -27,6 +27,7 @@ import (
 	"github.com/stacklok/mediator/pkg/auth"
 	"github.com/stacklok/mediator/pkg/db"
 	"github.com/stretchr/testify/assert"
+	"github.com/stretchr/testify/require"
 
 	"google.golang.org/grpc/codes"
 	"google.golang.org/protobuf/types/known/timestamppb"
@@ -190,7 +191,8 @@ func TestCreateRole_gRPC(t *testing.T) {
 			mockStore := mockdb.NewMockStore(ctrl)
 			tc.buildStubs(mockStore)
 
-			server := NewServer(mockStore, &config.Config{})
+			server, err := NewServer(mockStore, &config.Config{})
+			require.NoError(t, err, "failed to create test server")
 
 			resp, err := server.CreateRoleByGroup(ctx, tc.req)
 			tc.checkResponse(t, resp, err)
@@ -297,7 +299,8 @@ func TestDeleteRole_gRPC(t *testing.T) {
 			mockStore := mockdb.NewMockStore(ctrl)
 			tc.buildStubs(mockStore)
 
-			server := NewServer(mockStore, &config.Config{})
+			server, err := NewServer(mockStore, &config.Config{})
+			require.NoError(t, err, "failed to create test server")
 
 			resp, err := server.DeleteRole(ctx, tc.req)
 			tc.checkResponse(t, resp, err)
@@ -442,7 +445,8 @@ func TestGetRoles_gRPC(t *testing.T) {
 			mockStore := mockdb.NewMockStore(ctrl)
 			tc.buildStubs(mockStore)
 
-			server := NewServer(mockStore, &config.Config{})
+			server, err := NewServer(mockStore, &config.Config{})
+			require.NoError(t, err, "failed to create test server")
 
 			resp, err := server.GetRoles(ctx, tc.req)
 			tc.checkResponse(t, resp, err)
@@ -596,7 +600,8 @@ func TestGetRole_gRPC(t *testing.T) {
 			mockStore := mockdb.NewMockStore(ctrl)
 			tc.buildStubs(mockStore)
 
-			server := NewServer(mockStore, &config.Config{})
+			server, err := NewServer(mockStore, &config.Config{})
+			require.NoError(t, err, "failed to create test server")
 
 			resp, err := server.GetRoleById(ctx, tc.req)
 			tc.checkResponse(t, resp, err)

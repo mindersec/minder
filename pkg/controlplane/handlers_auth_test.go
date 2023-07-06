@@ -24,6 +24,7 @@ import (
 	"github.com/golang/mock/gomock"
 	"github.com/spf13/viper"
 	"github.com/stretchr/testify/assert"
+	"github.com/stretchr/testify/require"
 	"google.golang.org/grpc/codes"
 	"google.golang.org/grpc/metadata"
 
@@ -117,7 +118,8 @@ func TestLogin_gRPC(t *testing.T) {
 			mockStore := mockdb.NewMockStore(ctrl)
 			tc.buildStubs(mockStore)
 
-			server := NewServer(mockStore, &config.Config{})
+			server, err := NewServer(mockStore, &config.Config{})
+			require.NoError(t, err, "failed to create test server")
 
 			resp, err := server.LogIn(context.Background(), tc.req)
 			tc.checkResponse(t, resp, err)
@@ -143,7 +145,8 @@ func TestLogout_gRPC(t *testing.T) {
 	mockStore := mockdb.NewMockStore(ctrl)
 	mockStore.EXPECT().RevokeUserToken(gomock.Any(), gomock.Any())
 
-	server := NewServer(mockStore, &config.Config{})
+	server, err := NewServer(mockStore, &config.Config{})
+	require.NoError(t, err, "failed to create test server")
 
 	res, err := server.LogOut(ctx, &pb.LogOutRequest{})
 
@@ -166,7 +169,8 @@ func TestRevokeTokens_gRPC(t *testing.T) {
 	mockStore := mockdb.NewMockStore(ctrl)
 	mockStore.EXPECT().RevokeUsersTokens(gomock.Any(), gomock.Any())
 
-	server := NewServer(mockStore, &config.Config{})
+	server, err := NewServer(mockStore, &config.Config{})
+	require.NoError(t, err, "failed to create test server")
 
 	res, err := server.RevokeTokens(ctx, &pb.RevokeTokensRequest{})
 
@@ -217,7 +221,8 @@ func TestRefreshToken_gRPC(t *testing.T) {
 	// Create a new context with added header metadata
 	ctx := context.Background()
 	ctx = metadata.NewIncomingContext(ctx, md)
-	server := NewServer(mockStore, &config.Config{})
+	server, err := NewServer(mockStore, &config.Config{})
+	require.NoError(t, err, "failed to create test server")
 	mockStore.EXPECT().GetUserByID(gomock.Any(), gomock.Any()).Times(2)
 	mockStore.EXPECT().GetUserGroups(gomock.Any(), gomock.Any())
 	mockStore.EXPECT().GetUserRoles(gomock.Any(), gomock.Any())
