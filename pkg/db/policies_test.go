@@ -35,7 +35,7 @@ func createRandomPolicy(t *testing.T, group int32) Policy {
 		Provider:         "github",
 		GroupID:          group,
 		PolicyType:       PolicyTypePOLICYTYPEBRANCHPROTECTION,
-		PolicyDefinition: json.RawMessage(""),
+		PolicyDefinition: json.RawMessage(`{"key": "value"}`),
 	}
 
 	policy, err := testQueries.CreatePolicy(context.Background(), arg)
@@ -45,7 +45,7 @@ func createRandomPolicy(t *testing.T, group int32) Policy {
 	require.Equal(t, arg.GroupID, policy.GroupID)
 	require.Equal(t, arg.Provider, policy.Provider)
 	require.Equal(t, arg.PolicyType, policy.PolicyType)
-	require.Equal(t, policy.PolicyDefinition, "key: value\n")
+	require.Equal(t, policy.PolicyDefinition, json.RawMessage(`{"key": "value"}`))
 	require.NotZero(t, policy.CreatedAt)
 	require.NotZero(t, policy.UpdatedAt)
 
