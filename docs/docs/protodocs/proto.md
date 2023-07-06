@@ -11,6 +11,8 @@
     - [CreateGroupResponse](#mediator-v1-CreateGroupResponse)
     - [CreateOrganizationRequest](#mediator-v1-CreateOrganizationRequest)
     - [CreateOrganizationResponse](#mediator-v1-CreateOrganizationResponse)
+    - [CreatePolicyRequest](#mediator-v1-CreatePolicyRequest)
+    - [CreatePolicyResponse](#mediator-v1-CreatePolicyResponse)
     - [CreateRoleByGroupRequest](#mediator-v1-CreateRoleByGroupRequest)
     - [CreateRoleByGroupResponse](#mediator-v1-CreateRoleByGroupResponse)
     - [CreateRoleByOrganizationRequest](#mediator-v1-CreateRoleByOrganizationRequest)
@@ -21,6 +23,8 @@
     - [DeleteGroupResponse](#mediator-v1-DeleteGroupResponse)
     - [DeleteOrganizationRequest](#mediator-v1-DeleteOrganizationRequest)
     - [DeleteOrganizationResponse](#mediator-v1-DeleteOrganizationResponse)
+    - [DeletePolicyRequest](#mediator-v1-DeletePolicyRequest)
+    - [DeletePolicyResponse](#mediator-v1-DeletePolicyResponse)
     - [DeleteRoleRequest](#mediator-v1-DeleteRoleRequest)
     - [DeleteRoleResponse](#mediator-v1-DeleteRoleResponse)
     - [DeleteUserRequest](#mediator-v1-DeleteUserRequest)
@@ -45,6 +49,10 @@
     - [GetOrganizationResponse](#mediator-v1-GetOrganizationResponse)
     - [GetOrganizationsRequest](#mediator-v1-GetOrganizationsRequest)
     - [GetOrganizationsResponse](#mediator-v1-GetOrganizationsResponse)
+    - [GetPoliciesRequest](#mediator-v1-GetPoliciesRequest)
+    - [GetPoliciesResponse](#mediator-v1-GetPoliciesResponse)
+    - [GetPolicyByIdRequest](#mediator-v1-GetPolicyByIdRequest)
+    - [GetPolicyByIdResponse](#mediator-v1-GetPolicyByIdResponse)
     - [GetRoleByIdRequest](#mediator-v1-GetRoleByIdRequest)
     - [GetRoleByIdResponse](#mediator-v1-GetRoleByIdResponse)
     - [GetRoleByNameRequest](#mediator-v1-GetRoleByNameRequest)
@@ -83,6 +91,7 @@
     - [LogOutRequest](#mediator-v1-LogOutRequest)
     - [LogOutResponse](#mediator-v1-LogOutResponse)
     - [OrganizationRecord](#mediator-v1-OrganizationRecord)
+    - [PolicyRecord](#mediator-v1-PolicyRecord)
     - [RefreshTokenRequest](#mediator-v1-RefreshTokenRequest)
     - [RefreshTokenResponse](#mediator-v1-RefreshTokenResponse)
     - [RegisterRepositoryRequest](#mediator-v1-RegisterRepositoryRequest)
@@ -110,12 +119,15 @@
     - [VerifyRequest](#mediator-v1-VerifyRequest)
     - [VerifyResponse](#mediator-v1-VerifyResponse)
   
+    - [PolicyType](#mediator-v1-PolicyType)
+  
     - [AuthService](#mediator-v1-AuthService)
     - [BranchProtectionService](#mediator-v1-BranchProtectionService)
     - [GroupService](#mediator-v1-GroupService)
     - [HealthService](#mediator-v1-HealthService)
     - [OAuthService](#mediator-v1-OAuthService)
     - [OrganizationService](#mediator-v1-OrganizationService)
+    - [PolicyService](#mediator-v1-PolicyService)
     - [RepositoryService](#mediator-v1-RepositoryService)
     - [RoleService](#mediator-v1-RoleService)
     - [SecretsService](#mediator-v1-SecretsService)
@@ -246,6 +258,39 @@ Organization service
 | default_group | [GroupRecord](#mediator-v1-GroupRecord) | optional |  |
 | default_roles | [RoleRecord](#mediator-v1-RoleRecord) | repeated |  |
 | default_user | [UserRecord](#mediator-v1-UserRecord) | optional |  |
+
+
+
+
+
+
+<a name="mediator-v1-CreatePolicyRequest"></a>
+
+### CreatePolicyRequest
+Policy service
+
+
+| Field | Type | Label | Description |
+| ----- | ---- | ----- | ----------- |
+| provider | [string](#string) |  |  |
+| group_id | [int32](#int32) |  |  |
+| type | [PolicyType](#mediator-v1-PolicyType) |  |  |
+| policy_definition | [string](#string) |  |  |
+
+
+
+
+
+
+<a name="mediator-v1-CreatePolicyResponse"></a>
+
+### CreatePolicyResponse
+
+
+
+| Field | Type | Label | Description |
+| ----- | ---- | ----- | ----------- |
+| policy | [PolicyRecord](#mediator-v1-PolicyRecord) |  |  |
 
 
 
@@ -427,6 +472,31 @@ DeleteOrganizationRequest represents a request to delete a organization
 
 ### DeleteOrganizationResponse
 DeleteOrganizationResponse represents a response to a delete organization request
+
+
+
+
+
+
+<a name="mediator-v1-DeletePolicyRequest"></a>
+
+### DeletePolicyRequest
+
+
+
+| Field | Type | Label | Description |
+| ----- | ---- | ----- | ----------- |
+| id | [int32](#int32) |  |  |
+
+
+
+
+
+
+<a name="mediator-v1-DeletePolicyResponse"></a>
+
+### DeletePolicyResponse
+
 
 
 
@@ -800,6 +870,69 @@ list organizations
 | Field | Type | Label | Description |
 | ----- | ---- | ----- | ----------- |
 | organizations | [OrganizationRecord](#mediator-v1-OrganizationRecord) | repeated |  |
+
+
+
+
+
+
+<a name="mediator-v1-GetPoliciesRequest"></a>
+
+### GetPoliciesRequest
+list policies
+
+
+| Field | Type | Label | Description |
+| ----- | ---- | ----- | ----------- |
+| provider | [string](#string) |  |  |
+| group_id | [int32](#int32) |  |  |
+| limit | [int32](#int32) | optional |  |
+| offset | [int32](#int32) | optional |  |
+
+
+
+
+
+
+<a name="mediator-v1-GetPoliciesResponse"></a>
+
+### GetPoliciesResponse
+
+
+
+| Field | Type | Label | Description |
+| ----- | ---- | ----- | ----------- |
+| policies | [PolicyRecord](#mediator-v1-PolicyRecord) | repeated |  |
+
+
+
+
+
+
+<a name="mediator-v1-GetPolicyByIdRequest"></a>
+
+### GetPolicyByIdRequest
+get policy by id
+
+
+| Field | Type | Label | Description |
+| ----- | ---- | ----- | ----------- |
+| id | [int32](#int32) |  |  |
+
+
+
+
+
+
+<a name="mediator-v1-GetPolicyByIdResponse"></a>
+
+### GetPolicyByIdResponse
+in the future it can include status and violation details for the policy
+
+
+| Field | Type | Label | Description |
+| ----- | ---- | ----- | ----------- |
+| policy | [PolicyRecord](#mediator-v1-PolicyRecord) | optional |  |
 
 
 
@@ -1400,6 +1533,27 @@ BUF does not allow grouping (which is a shame)
 
 
 
+<a name="mediator-v1-PolicyRecord"></a>
+
+### PolicyRecord
+policy record to be returned
+
+
+| Field | Type | Label | Description |
+| ----- | ---- | ----- | ----------- |
+| id | [int32](#int32) |  |  |
+| provider | [string](#string) |  |  |
+| group_id | [int32](#int32) |  |  |
+| type | [PolicyType](#mediator-v1-PolicyType) |  |  |
+| policy_definition | [string](#string) |  |  |
+| created_at | [google.protobuf.Timestamp](#google-protobuf-Timestamp) |  |  |
+| updated_at | [google.protobuf.Timestamp](#google-protobuf-Timestamp) |  |  |
+
+
+
+
+
+
 <a name="mediator-v1-RefreshTokenRequest"></a>
 
 ### RefreshTokenRequest
@@ -1789,6 +1943,18 @@ user record to be returned
 
  
 
+
+<a name="mediator-v1-PolicyType"></a>
+
+### PolicyType
+Policy type enum
+
+| Name | Number | Description |
+| ---- | ------ | ----------- |
+| POLICY_TYPE_UNSPECIFIED | 0 |  |
+| POLICY_TYPE_BRANCH_PROTECTION | 1 |  |
+
+
  
 
  
@@ -1872,6 +2038,19 @@ manage Organizations CRUD
 | GetOrganization | [GetOrganizationRequest](#mediator-v1-GetOrganizationRequest) | [GetOrganizationResponse](#mediator-v1-GetOrganizationResponse) |  |
 | GetOrganizationByName | [GetOrganizationByNameRequest](#mediator-v1-GetOrganizationByNameRequest) | [GetOrganizationByNameResponse](#mediator-v1-GetOrganizationByNameResponse) |  |
 | DeleteOrganization | [DeleteOrganizationRequest](#mediator-v1-DeleteOrganizationRequest) | [DeleteOrganizationResponse](#mediator-v1-DeleteOrganizationResponse) |  |
+
+
+<a name="mediator-v1-PolicyService"></a>
+
+### PolicyService
+
+
+| Method Name | Request Type | Response Type | Description |
+| ----------- | ------------ | ------------- | ------------|
+| CreatePolicy | [CreatePolicyRequest](#mediator-v1-CreatePolicyRequest) | [CreatePolicyResponse](#mediator-v1-CreatePolicyResponse) |  |
+| DeletePolicy | [DeletePolicyRequest](#mediator-v1-DeletePolicyRequest) | [DeletePolicyResponse](#mediator-v1-DeletePolicyResponse) |  |
+| GetPolicies | [GetPoliciesRequest](#mediator-v1-GetPoliciesRequest) | [GetPoliciesResponse](#mediator-v1-GetPoliciesResponse) |  |
+| GetPolicyById | [GetPolicyByIdRequest](#mediator-v1-GetPolicyByIdRequest) | [GetPolicyByIdResponse](#mediator-v1-GetPolicyByIdResponse) |  |
 
 
 <a name="mediator-v1-RepositoryService"></a>

@@ -377,6 +377,33 @@ service UserService {
 
 }
 
+service PolicyService {
+    rpc CreatePolicy (CreatePolicyRequest) returns (CreatePolicyResponse) {
+        option (google.api.http) = {
+            post: "/api/v1/policy"
+            body: "*"
+        };
+    }
+
+    rpc DeletePolicy (DeletePolicyRequest) returns (DeletePolicyResponse) {
+        option (google.api.http) = {
+            delete: "/api/v1/policy/{id}"
+        };
+    }
+
+    rpc GetPolicies (GetPoliciesRequest) returns (GetPoliciesResponse) {
+        option (google.api.http) = {
+        get: "/api/v1/policies"
+        };
+    }
+
+    rpc GetPolicyById (GetPolicyByIdRequest) returns (GetPolicyByIdResponse) {
+        option (google.api.http) = {
+            get: "/api/v1/policy/{id}"
+            };    
+    }
+}
+
 message CheckHealthRequest {
 }
 
@@ -990,4 +1017,62 @@ message GetUserResponse {
     optional UserRecord user = 1;
     repeated GroupRecord groups = 2;
     repeated RoleRecord roles = 3;
+}
+
+// Policy type enum
+enum PolicyType {
+    POLICY_TYPE_UNSPECIFIED = 0;
+    POLICY_TYPE_BRANCH_PROTECTION = 1;
+}
+
+// Policy service
+message CreatePolicyRequest {
+    string provider = 1;
+    int32 group_id = 2;
+    PolicyType type = 3; 
+    string policy_definition = 4;
+}
+  
+// policy record to be returned
+message PolicyRecord {
+    int32 id = 1;
+    string provider = 2;
+    int32 group_id = 3;
+    PolicyType type = 4; 
+    string policy_definition = 5;
+    google.protobuf.Timestamp created_at = 6;
+    google.protobuf.Timestamp updated_at = 7;    
+}
+
+message CreatePolicyResponse {
+    PolicyRecord policy = 1;
+}
+
+message DeletePolicyRequest {
+    int32 id = 1;
+}
+
+message DeletePolicyResponse {
+}
+
+// list policies
+message GetPoliciesRequest {
+    string provider = 1;
+    int32 group_id = 2;
+    optional int32 limit = 3;
+    optional int32 offset = 4;
+}
+
+message GetPoliciesResponse {
+    repeated PolicyRecord policies = 1;
+}
+
+// get policy by id
+message GetPolicyByIdRequest {
+    int32 id = 1;
+}
+
+// in the future it can include status and violation details for the policy
+message GetPolicyByIdResponse {
+    optional PolicyRecord policy = 1;
 }

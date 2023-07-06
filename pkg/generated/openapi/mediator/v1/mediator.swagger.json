@@ -37,6 +37,9 @@
     },
     {
       "name": "UserService"
+    },
+    {
+      "name": "PolicyService"
     }
   ],
   "consumes": [
@@ -956,6 +959,149 @@
         ],
         "tags": [
           "OrganizationService"
+        ]
+      }
+    },
+    "/api/v1/policies": {
+      "get": {
+        "operationId": "PolicyService_GetPolicies",
+        "responses": {
+          "200": {
+            "description": "A successful response.",
+            "schema": {
+              "$ref": "#/definitions/v1GetPoliciesResponse"
+            }
+          },
+          "default": {
+            "description": "An unexpected error response.",
+            "schema": {
+              "$ref": "#/definitions/rpcStatus"
+            }
+          }
+        },
+        "parameters": [
+          {
+            "name": "provider",
+            "in": "query",
+            "required": false,
+            "type": "string"
+          },
+          {
+            "name": "groupId",
+            "in": "query",
+            "required": false,
+            "type": "integer",
+            "format": "int32"
+          },
+          {
+            "name": "limit",
+            "in": "query",
+            "required": false,
+            "type": "integer",
+            "format": "int32"
+          },
+          {
+            "name": "offset",
+            "in": "query",
+            "required": false,
+            "type": "integer",
+            "format": "int32"
+          }
+        ],
+        "tags": [
+          "PolicyService"
+        ]
+      }
+    },
+    "/api/v1/policy": {
+      "post": {
+        "operationId": "PolicyService_CreatePolicy",
+        "responses": {
+          "200": {
+            "description": "A successful response.",
+            "schema": {
+              "$ref": "#/definitions/v1CreatePolicyResponse"
+            }
+          },
+          "default": {
+            "description": "An unexpected error response.",
+            "schema": {
+              "$ref": "#/definitions/rpcStatus"
+            }
+          }
+        },
+        "parameters": [
+          {
+            "name": "body",
+            "in": "body",
+            "required": true,
+            "schema": {
+              "$ref": "#/definitions/v1CreatePolicyRequest"
+            }
+          }
+        ],
+        "tags": [
+          "PolicyService"
+        ]
+      }
+    },
+    "/api/v1/policy/{id}": {
+      "get": {
+        "operationId": "PolicyService_GetPolicyById",
+        "responses": {
+          "200": {
+            "description": "A successful response.",
+            "schema": {
+              "$ref": "#/definitions/v1GetPolicyByIdResponse"
+            }
+          },
+          "default": {
+            "description": "An unexpected error response.",
+            "schema": {
+              "$ref": "#/definitions/rpcStatus"
+            }
+          }
+        },
+        "parameters": [
+          {
+            "name": "id",
+            "in": "path",
+            "required": true,
+            "type": "integer",
+            "format": "int32"
+          }
+        ],
+        "tags": [
+          "PolicyService"
+        ]
+      },
+      "delete": {
+        "operationId": "PolicyService_DeletePolicy",
+        "responses": {
+          "200": {
+            "description": "A successful response.",
+            "schema": {
+              "$ref": "#/definitions/v1DeletePolicyResponse"
+            }
+          },
+          "default": {
+            "description": "An unexpected error response.",
+            "schema": {
+              "$ref": "#/definitions/rpcStatus"
+            }
+          }
+        },
+        "parameters": [
+          {
+            "name": "id",
+            "in": "path",
+            "required": true,
+            "type": "integer",
+            "format": "int32"
+          }
+        ],
+        "tags": [
+          "PolicyService"
         ]
       }
     },
@@ -1929,6 +2075,33 @@
         }
       }
     },
+    "v1CreatePolicyRequest": {
+      "type": "object",
+      "properties": {
+        "provider": {
+          "type": "string"
+        },
+        "groupId": {
+          "type": "integer",
+          "format": "int32"
+        },
+        "type": {
+          "$ref": "#/definitions/v1PolicyType"
+        },
+        "policyDefinition": {
+          "type": "string"
+        }
+      },
+      "title": "Policy service"
+    },
+    "v1CreatePolicyResponse": {
+      "type": "object",
+      "properties": {
+        "policy": {
+          "$ref": "#/definitions/v1PolicyRecord"
+        }
+      }
+    },
     "v1CreateRoleByGroupRequest": {
       "type": "object",
       "properties": {
@@ -2129,6 +2302,9 @@
       "type": "object",
       "title": "DeleteOrganizationResponse represents a response to a delete organization request"
     },
+    "v1DeletePolicyResponse": {
+      "type": "object"
+    },
     "v1DeleteRoleResponse": {
       "type": "object"
     },
@@ -2307,6 +2483,27 @@
           }
         }
       }
+    },
+    "v1GetPoliciesResponse": {
+      "type": "object",
+      "properties": {
+        "policies": {
+          "type": "array",
+          "items": {
+            "type": "object",
+            "$ref": "#/definitions/v1PolicyRecord"
+          }
+        }
+      }
+    },
+    "v1GetPolicyByIdResponse": {
+      "type": "object",
+      "properties": {
+        "policy": {
+          "$ref": "#/definitions/v1PolicyRecord"
+        }
+      },
+      "title": "in the future it can include status and violation details for the policy"
     },
     "v1GetRoleByIdResponse": {
       "type": "object",
@@ -2659,6 +2856,46 @@
           "format": "date-time"
         }
       }
+    },
+    "v1PolicyRecord": {
+      "type": "object",
+      "properties": {
+        "id": {
+          "type": "integer",
+          "format": "int32"
+        },
+        "provider": {
+          "type": "string"
+        },
+        "groupId": {
+          "type": "integer",
+          "format": "int32"
+        },
+        "type": {
+          "$ref": "#/definitions/v1PolicyType"
+        },
+        "policyDefinition": {
+          "type": "string"
+        },
+        "createdAt": {
+          "type": "string",
+          "format": "date-time"
+        },
+        "updatedAt": {
+          "type": "string",
+          "format": "date-time"
+        }
+      },
+      "title": "policy record to be returned"
+    },
+    "v1PolicyType": {
+      "type": "string",
+      "enum": [
+        "POLICY_TYPE_UNSPECIFIED",
+        "POLICY_TYPE_BRANCH_PROTECTION"
+      ],
+      "default": "POLICY_TYPE_UNSPECIFIED",
+      "title": "Policy type enum"
     },
     "v1RefreshTokenRequest": {
       "type": "object"
