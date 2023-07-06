@@ -16,6 +16,7 @@ package controlplane
 
 import (
 	"context"
+	"encoding/json"
 	"testing"
 	"time"
 
@@ -49,7 +50,7 @@ func TestCreatePolicyDBMock(t *testing.T) {
 		Provider:         "github",
 		GroupID:          1,
 		PolicyType:       db.PolicyTypePOLICYTYPEBRANCHPROTECTION,
-		PolicyDefinition: "key: value",
+		PolicyDefinition: json.RawMessage(`{"key": "value"}`),
 		CreatedAt:        time.Now(),
 		UpdatedAt:        time.Now(),
 	}
@@ -77,8 +78,8 @@ func TestCreatePolicyDBMock(t *testing.T) {
 	assert.Equal(t, expectedPolicy.ID, response.Policy.Id)
 	assert.Equal(t, expectedPolicy.GroupID, response.Policy.GroupId)
 	assert.Equal(t, expectedPolicy.Provider, response.Policy.Provider)
-	assert.Equal(t, expectedPolicy.PolicyType, db.PolicyType("POLICY_TYPE_BRANCH_PROTECTION"))
-	assert.Equal(t, expectedPolicy.PolicyDefinition, response.Policy.PolicyDefinition)
+	assert.Equal(t, response.Policy.Type, pb.PolicyType_POLICY_TYPE_BRANCH_PROTECTION)
+	assert.Equal(t, response.Policy.PolicyDefinition, "key: value\n")
 	expectedCreatedAt := expectedPolicy.CreatedAt.In(time.UTC)
 	assert.Equal(t, expectedCreatedAt, response.Policy.CreatedAt.AsTime().In(time.UTC))
 	expectedUpdatedAt := expectedPolicy.UpdatedAt.In(time.UTC)
@@ -109,7 +110,7 @@ func TestCreatePolicy_gRPC(t *testing.T) {
 						Provider:         "github",
 						GroupID:          1,
 						PolicyType:       db.PolicyTypePOLICYTYPEBRANCHPROTECTION,
-						PolicyDefinition: "key: value",
+						PolicyDefinition: json.RawMessage(`{"key": "value"}`),
 						CreatedAt:        time.Now(),
 						UpdatedAt:        time.Now(),
 					}, nil).
@@ -122,7 +123,7 @@ func TestCreatePolicy_gRPC(t *testing.T) {
 				assert.Equal(t, int32(1), res.Policy.GroupId)
 				assert.Equal(t, "github", res.Policy.Provider)
 				assert.Equal(t, pb.PolicyType_POLICY_TYPE_BRANCH_PROTECTION, res.Policy.Type)
-				assert.Equal(t, "key: value", res.Policy.PolicyDefinition)
+				assert.Equal(t, "key: value\n", res.Policy.PolicyDefinition)
 				assert.NotNil(t, res.Policy.CreatedAt)
 				assert.NotNil(t, res.Policy.UpdatedAt)
 			},
@@ -284,7 +285,7 @@ func TestGetPoliciesDBMock(t *testing.T) {
 			Provider:         "github",
 			GroupID:          1,
 			PolicyType:       db.PolicyTypePOLICYTYPEBRANCHPROTECTION,
-			PolicyDefinition: "key: value",
+			PolicyDefinition: json.RawMessage(`{"key": "value"}`),
 			CreatedAt:        time.Now(),
 			UpdatedAt:        time.Now(),
 		},
@@ -313,8 +314,8 @@ func TestGetPoliciesDBMock(t *testing.T) {
 	assert.Equal(t, expectedPolicies[0].ID, response.Policies[0].Id)
 	assert.Equal(t, expectedPolicies[0].Provider, response.Policies[0].Provider)
 	assert.Equal(t, expectedPolicies[0].GroupID, response.Policies[0].GroupId)
-	assert.Equal(t, expectedPolicies[0].PolicyType, db.PolicyType("POLICY_TYPE_BRANCH_PROTECTION"))
-	assert.Equal(t, expectedPolicies[0].PolicyDefinition, response.Policies[0].PolicyDefinition)
+	assert.Equal(t, response.Policies[0].Type, pb.PolicyType_POLICY_TYPE_BRANCH_PROTECTION)
+	assert.Equal(t, response.Policies[0].PolicyDefinition, "key: value\n")
 }
 
 func TestGetPolicies_gRPC(t *testing.T) {
@@ -336,7 +337,7 @@ func TestGetPolicies_gRPC(t *testing.T) {
 							Provider:         "github",
 							GroupID:          1,
 							PolicyType:       db.PolicyTypePOLICYTYPEBRANCHPROTECTION,
-							PolicyDefinition: "key: value",
+							PolicyDefinition: json.RawMessage(`{"key": "value"}`),
 							CreatedAt:        time.Now(),
 							UpdatedAt:        time.Now(),
 						},
@@ -350,7 +351,7 @@ func TestGetPolicies_gRPC(t *testing.T) {
 						Provider:         "github",
 						GroupID:          1,
 						PolicyType:       db.PolicyTypePOLICYTYPEBRANCHPROTECTION,
-						PolicyDefinition: "key: value",
+						PolicyDefinition: json.RawMessage(`{"key": "value"}`),
 						CreatedAt:        time.Now(),
 						UpdatedAt:        time.Now(),
 					},
@@ -362,8 +363,8 @@ func TestGetPolicies_gRPC(t *testing.T) {
 				assert.Equal(t, expectedPolicies[0].ID, res.Policies[0].Id)
 				assert.Equal(t, expectedPolicies[0].Provider, res.Policies[0].Provider)
 				assert.Equal(t, expectedPolicies[0].GroupID, res.Policies[0].GroupId)
-				assert.Equal(t, expectedPolicies[0].PolicyType, db.PolicyType("POLICY_TYPE_BRANCH_PROTECTION"))
-				assert.Equal(t, expectedPolicies[0].PolicyDefinition, res.Policies[0].PolicyDefinition)
+				assert.Equal(t, res.Policies[0].Type, pb.PolicyType_POLICY_TYPE_BRANCH_PROTECTION)
+				assert.Equal(t, res.Policies[0].PolicyDefinition, "key: value\n")
 			},
 			expectedStatusCode: codes.OK,
 		},

@@ -7,6 +7,7 @@ package db
 import (
 	"database/sql"
 	"database/sql/driver"
+	"encoding/json"
 	"fmt"
 	"time"
 )
@@ -72,13 +73,13 @@ type Organization struct {
 }
 
 type Policy struct {
-	ID               int32      `json:"id"`
-	Provider         string     `json:"provider"`
-	GroupID          int32      `json:"group_id"`
-	PolicyType       PolicyType `json:"policy_type"`
-	PolicyDefinition string     `json:"policy_definition"`
-	CreatedAt        time.Time  `json:"created_at"`
-	UpdatedAt        time.Time  `json:"updated_at"`
+	ID               int32           `json:"id"`
+	Provider         string          `json:"provider"`
+	GroupID          int32           `json:"group_id"`
+	PolicyType       PolicyType      `json:"policy_type"`
+	PolicyDefinition json.RawMessage `json:"policy_definition"`
+	CreatedAt        time.Time       `json:"created_at"`
+	UpdatedAt        time.Time       `json:"updated_at"`
 }
 
 type ProviderAccessToken struct {

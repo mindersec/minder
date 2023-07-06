@@ -123,7 +123,7 @@ create table policies (
     provider TEXT NOT NULL,
     group_id INTEGER NOT NULL REFERENCES groups(id) ON DELETE CASCADE,
     policy_type policy_type NOT NULL,
-    policy_definition TEXT NOT NULL,
+    policy_definition JSONB NOT NULL,
     created_at TIMESTAMP NOT NULL DEFAULT NOW(),
     updated_at TIMESTAMP NOT NULL DEFAULT NOW()
 );
