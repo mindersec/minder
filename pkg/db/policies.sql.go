@@ -7,6 +7,7 @@ package db
 
 import (
 	"context"
+	"database/sql"
 	"encoding/json"
 	"time"
 )
@@ -60,7 +61,7 @@ const getPolicyByID = `-- name: GetPolicyByID :one
 SELECT policies.id as id, policies.provider as provider, group_id, policies.policy_type as policy_type,
 policy_definition, policy_types.policy_type as policy_type_name,
 policies.created_at as created_at, policies.updated_at as updated_at FROM policies
-INNER JOIN policy_types ON policy_types.id = policies.policy_type WHERE policies.id = $1
+LEFT OUTER JOIN policy_types ON policy_types.id = policies.policy_type WHERE policies.id = $1
 `
 
 type GetPolicyByIDRow struct {
@@ -69,7 +70,7 @@ type GetPolicyByIDRow struct {
 	GroupID          int32           `json:"group_id"`
 	PolicyType       int32           `json:"policy_type"`
 	PolicyDefinition json.RawMessage `json:"policy_definition"`
-	PolicyTypeName   string          `json:"policy_type_name"`
+	PolicyTypeName   sql.NullString  `json:"policy_type_name"`
 	CreatedAt        time.Time       `json:"created_at"`
 	UpdatedAt        time.Time       `json:"updated_at"`
 }
@@ -94,7 +95,7 @@ const listPoliciesByGroupID = `-- name: ListPoliciesByGroupID :many
 SELECT policies.id as id, policies.provider as provider, group_id, policies.policy_type as policy_type,
 policy_definition, policy_types.policy_type as policy_type_name,
 policies.created_at as created_at, policies.updated_at as updated_at FROM policies
-INNER JOIN policy_types ON policy_types.id = policies.policy_type
+LEFT OUTER JOIN policy_types ON policy_types.id = policies.policy_type
 WHERE policies.provider = $1 AND group_id = $2
 ORDER BY id
 LIMIT $3
@@ -114,7 +115,7 @@ type ListPoliciesByGroupIDRow struct {
 	GroupID          int32           `json:"group_id"`
 	PolicyType       int32           `json:"policy_type"`
 	PolicyDefinition json.RawMessage `json:"policy_definition"`
-	PolicyTypeName   string          `json:"policy_type_name"`
+	PolicyTypeName   sql.NullString  `json:"policy_type_name"`
 	CreatedAt        time.Time       `json:"created_at"`
 	UpdatedAt        time.Time       `json:"updated_at"`
 }
