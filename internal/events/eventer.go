@@ -90,30 +90,22 @@ func (e *Eventer) Run(ctx context.Context) error {
 	return e.Router.Run(ctx)
 }
 
-// MessageHandler is a wrapper to allow us to easily swap
-// between NoPublishHandlerFunc and HandlerFunc as needed.
-//
-// Note that the Subscribe function would still need an update.
-type MessageHandler struct {
-	Impl message.NoPublishHandlerFunc
-}
-
 // Subscribe subscribes to a topic and handles incoming messages
 func (e *Eventer) Subscribe(
 	topic string,
-	handler MessageHandler,
+	handler message.NoPublishHandlerFunc,
 ) {
 	e.Router.AddNoPublisherHandler(
 		topic,
 		topic,
 		e.WebhookSubscriber,
-		handler.Impl,
+		handler,
 	)
 }
 
 // SubscribeAll subscribes to all the topics in the registrar
 func (e *Eventer) SubscribeAll(r *Registrar) {
-	r.Walk(func(topic string, handler MessageHandler) {
+	r.Walk(func(topic string, handler message.NoPublishHandlerFunc) {
 		e.Subscribe(topic, handler)
 	})
 }

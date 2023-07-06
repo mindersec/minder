@@ -17,7 +17,12 @@
 // the GitHub provider supports.
 package events
 
-import "github.com/stacklok/mediator/internal/events"
+import (
+	"log"
+
+	"github.com/ThreeDotsLabs/watermill/message"
+	"github.com/stacklok/mediator/internal/events"
+)
 
 var (
 	reg *events.Registrar
@@ -30,7 +35,7 @@ func init() {
 func initRegistrar() (r *events.Registrar) {
 	r = events.NewRegistrar()
 
-	// TODO: register all the handlers here
+	r.RegisterHandler("security_and_analysis", handleSecurityAndAnalysisEvent)
 
 	return r
 }
@@ -38,4 +43,9 @@ func initRegistrar() (r *events.Registrar) {
 // GetRegistrar returns the registrar for GitHub events
 func GetRegistrar() *events.Registrar {
 	return reg
+}
+
+func handleSecurityAndAnalysisEvent(msg *message.Message) error {
+	log.Printf("Got a security_and_analysis event: %v", msg)
+	return nil
 }
