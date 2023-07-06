@@ -34,7 +34,7 @@ func createRandomPolicy(t *testing.T, group int32) Policy {
 	arg := CreatePolicyParams{
 		Provider:         "github",
 		GroupID:          group,
-		PolicyType:       PolicyTypePOLICYTYPEBRANCHPROTECTION,
+		PolicyType:       1,
 		PolicyDefinition: json.RawMessage(`{"key": "value"}`),
 	}
 

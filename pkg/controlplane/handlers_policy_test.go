@@ -43,7 +43,7 @@ func TestCreatePolicyDBMock(t *testing.T) {
 	request := &pb.CreatePolicyRequest{
 		Provider:         "github",
 		GroupId:          1,
-		Type:             pb.PolicyType_POLICY_TYPE_BRANCH_PROTECTION,
+		Type:             "branch_protection",
 		PolicyDefinition: "key: value",
 	}
 
@@ -51,10 +51,14 @@ func TestCreatePolicyDBMock(t *testing.T) {
 		ID:               1,
 		Provider:         "github",
 		GroupID:          1,
-		PolicyType:       db.PolicyTypePOLICYTYPEBRANCHPROTECTION,
+		PolicyType:       1,
 		PolicyDefinition: json.RawMessage(`{"key": "value"}`),
 		CreatedAt:        time.Now(),
 		UpdatedAt:        time.Now(),
+	}
+
+	policyTypes := []db.PolicyType{
+		{ID: 1, PolicyType: "branch_protection"},
 	}
 	// Create a new context and set the claims value
 	ctx := context.WithValue(context.Background(), auth.TokenInfoKey, auth.UserClaims{
@@ -65,6 +69,7 @@ func TestCreatePolicyDBMock(t *testing.T) {
 			{RoleID: 1, IsAdmin: true, GroupID: 0, OrganizationID: 1}},
 	})
 
+	mockStore.EXPECT().GetPolicyTypes(ctx, gomock.Any()).Return(policyTypes, nil)
 	mockStore.EXPECT().
 		CreatePolicy(ctx, gomock.Any()).
 		Return(expectedPolicy, nil)
@@ -80,7 +85,7 @@ func TestCreatePolicyDBMock(t *testing.T) {
 	assert.Equal(t, expectedPolicy.ID, response.Policy.Id)
 	assert.Equal(t, expectedPolicy.GroupID, response.Policy.GroupId)
 	assert.Equal(t, expectedPolicy.Provider, response.Policy.Provider)
-	assert.Equal(t, response.Policy.Type, pb.PolicyType_POLICY_TYPE_BRANCH_PROTECTION)
+	assert.Equal(t, response.Policy.Type, "branch_protection")
 	assert.Equal(t, response.Policy.PolicyDefinition, "key: value\n")
 	expectedCreatedAt := expectedPolicy.CreatedAt.In(time.UTC)
 	assert.Equal(t, expectedCreatedAt, response.Policy.CreatedAt.AsTime().In(time.UTC))
@@ -101,17 +106,21 @@ func TestCreatePolicy_gRPC(t *testing.T) {
 			req: &pb.CreatePolicyRequest{
 				Provider:         "github",
 				GroupId:          1,
-				Type:             pb.PolicyType_POLICY_TYPE_BRANCH_PROTECTION,
+				Type:             "branch_protection",
 				PolicyDefinition: "key: value",
 			},
 			buildStubs: func(store *mockdb.MockStore) {
+				policyTypes := []db.PolicyType{
+					{ID: 1, PolicyType: "branch_protection"},
+				}
+				store.EXPECT().GetPolicyTypes(gomock.Any(), gomock.Any()).Return(policyTypes, nil)
 				store.EXPECT().
 					CreatePolicy(gomock.Any(), gomock.Any()).
 					Return(db.Policy{
 						ID:               1,
 						Provider:         "github",
 						GroupID:          1,
-						PolicyType:       db.PolicyTypePOLICYTYPEBRANCHPROTECTION,
+						PolicyType:       1,
 						PolicyDefinition: json.RawMessage(`{"key": "value"}`),
 						CreatedAt:        time.Now(),
 						UpdatedAt:        time.Now(),
@@ -124,7 +133,7 @@ func TestCreatePolicy_gRPC(t *testing.T) {
 				assert.Equal(t, int32(1), res.Policy.Id)
 				assert.Equal(t, int32(1), res.Policy.GroupId)
 				assert.Equal(t, "github", res.Policy.Provider)
-				assert.Equal(t, pb.PolicyType_POLICY_TYPE_BRANCH_PROTECTION, res.Policy.Type)
+				assert.Equal(t, "branch_protection", res.Policy.Type)
 				assert.Equal(t, "key: value\n", res.Policy.PolicyDefinition)
 				assert.NotNil(t, res.Policy.CreatedAt)
 				assert.NotNil(t, res.Policy.UpdatedAt)
@@ -219,7 +228,7 @@ func TestDeletePolicy_gRPC(t *testing.T) {
 				Id: 1,
 			},
 			buildStubs: func(store *mockdb.MockStore) {
-				store.EXPECT().GetPolicyByID(gomock.Any(), gomock.Any()).Return(db.Policy{}, nil).Times(1)
+				store.EXPECT().GetPolicyByID(gomock.Any(), gomock.Any())
 				store.EXPECT().
 					DeletePolicy(gomock.Any(), gomock.Any()).Return(nil).
 					Times(1)
@@ -283,12 +292,12 @@ func TestGetPoliciesDBMock(t *testing.T) {
 
 	request := &pb.GetPoliciesRequest{Provider: "github", GroupId: 1}
 
-	expectedPolicies := []db.Policy{
+	expectedPolicies := []db.ListPoliciesByGroupIDRow{
 		{
 			ID:               1,
 			Provider:         "github",
 			GroupID:          1,
-			PolicyType:       db.PolicyTypePOLICYTYPEBRANCHPROTECTION,
+			PolicyType:       1,
 			PolicyDefinition: json.RawMessage(`{"key": "value"}`),
 			CreatedAt:        time.Now(),
 			UpdatedAt:        time.Now(),
@@ -303,8 +312,7 @@ func TestGetPoliciesDBMock(t *testing.T) {
 			{RoleID: 1, IsAdmin: true, GroupID: 0, OrganizationID: 1}},
 	})
 
-	mockStore.EXPECT().ListPoliciesByGroupID(ctx, gomock.Any()).
-		Return(expectedPolicies, nil)
+	mockStore.EXPECT().ListPoliciesByGroupID(ctx, gomock.Any()).Return(expectedPolicies, nil)
 
 	server := &Server{
 		store: mockStore,
@@ -318,7 +326,6 @@ func TestGetPoliciesDBMock(t *testing.T) {
 	assert.Equal(t, expectedPolicies[0].ID, response.Policies[0].Id)
 	assert.Equal(t, expectedPolicies[0].Provider, response.Policies[0].Provider)
 	assert.Equal(t, expectedPolicies[0].GroupID, response.Policies[0].GroupId)
-	assert.Equal(t, response.Policies[0].Type, pb.PolicyType_POLICY_TYPE_BRANCH_PROTECTION)
 	assert.Equal(t, response.Policies[0].PolicyDefinition, "key: value\n")
 }
 
@@ -334,27 +341,29 @@ func TestGetPolicies_gRPC(t *testing.T) {
 			name: "Success",
 			req:  &pb.GetPoliciesRequest{Provider: "github", GroupId: 1},
 			buildStubs: func(store *mockdb.MockStore) {
-				store.EXPECT().ListPoliciesByGroupID(gomock.Any(), gomock.Any()).
-					Return([]db.Policy{
-						{
-							ID:               1,
-							Provider:         "github",
-							GroupID:          1,
-							PolicyType:       db.PolicyTypePOLICYTYPEBRANCHPROTECTION,
-							PolicyDefinition: json.RawMessage(`{"key": "value"}`),
-							CreatedAt:        time.Now(),
-							UpdatedAt:        time.Now(),
-						},
-					}, nil).
-					Times(1)
-			},
-			checkResponse: func(t *testing.T, res *pb.GetPoliciesResponse, err error) {
-				expectedPolicies := []db.Policy{
+				expectedPolicies := []db.ListPoliciesByGroupIDRow{
 					{
 						ID:               1,
 						Provider:         "github",
 						GroupID:          1,
-						PolicyType:       db.PolicyTypePOLICYTYPEBRANCHPROTECTION,
+						PolicyType:       1,
+						PolicyDefinition: json.RawMessage(`{"key": "value"}`),
+						CreatedAt:        time.Now(),
+						UpdatedAt:        time.Now(),
+					},
+				}
+
+				store.EXPECT().ListPoliciesByGroupID(gomock.Any(), gomock.Any()).
+					Return(expectedPolicies, nil).
+					Times(1)
+			},
+			checkResponse: func(t *testing.T, res *pb.GetPoliciesResponse, err error) {
+				expectedPolicies := []db.ListPoliciesByGroupIDRow{
+					{
+						ID:               1,
+						Provider:         "github",
+						GroupID:          1,
+						PolicyType:       1,
 						PolicyDefinition: json.RawMessage(`{"key": "value"}`),
 						CreatedAt:        time.Now(),
 						UpdatedAt:        time.Now(),
@@ -367,7 +376,6 @@ func TestGetPolicies_gRPC(t *testing.T) {
 				assert.Equal(t, expectedPolicies[0].ID, res.Policies[0].Id)
 				assert.Equal(t, expectedPolicies[0].Provider, res.Policies[0].Provider)
 				assert.Equal(t, expectedPolicies[0].GroupID, res.Policies[0].GroupId)
-				assert.Equal(t, res.Policies[0].Type, pb.PolicyType_POLICY_TYPE_BRANCH_PROTECTION)
 				assert.Equal(t, res.Policies[0].PolicyDefinition, "key: value\n")
 			},
 			expectedStatusCode: codes.OK,

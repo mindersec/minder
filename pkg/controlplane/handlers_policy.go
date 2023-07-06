@@ -16,12 +16,12 @@ package controlplane
 
 import (
 	"context"
-	"encoding/json"
 
 	"github.com/go-playground/validator/v10"
 	"github.com/stacklok/mediator/pkg/auth"
 	"github.com/stacklok/mediator/pkg/db"
 	pb "github.com/stacklok/mediator/pkg/generated/protobuf/go/mediator/v1"
+	"github.com/stacklok/mediator/pkg/util"
 	"google.golang.org/grpc/codes"
 	"google.golang.org/grpc/status"
 	"google.golang.org/protobuf/types/known/timestamppb"
@@ -47,21 +47,10 @@ func validPolicySchema(fl validator.FieldLevel) bool {
 
 // CreatePolicyValidation is a struct for validating the CreatePolicy request
 type CreatePolicyValidation struct {
-	Provider string        `db:"provider" validate:"required"`
-	GroupId  int32         `db:"group_id" validate:"required"`
-	Type     pb.PolicyType `db:"type" validate:"required"`
-	Policy   string        `db:"policy" validate:"required,validPolicySchema"`
-}
-
-func convertToProtoPolicyType(policyType db.PolicyType) pb.PolicyType {
-	switch policyType {
-	case db.PolicyTypePOLICYTYPEUNSPECIFIED:
-		return pb.PolicyType_POLICY_TYPE_UNSPECIFIED
-	case db.PolicyTypePOLICYTYPEBRANCHPROTECTION:
-		return pb.PolicyType_POLICY_TYPE_BRANCH_PROTECTION
-	default:
-		return pb.PolicyType_POLICY_TYPE_UNSPECIFIED
-	}
+	Provider string `db:"provider" validate:"required"`
+	GroupId  int32  `db:"group_id" validate:"required"`
+	Type     string `db:"type" validate:"required"`
+	Policy   string `db:"policy" validate:"required,validPolicySchema"`
 }
 
 // CreatePolicy creates a policy for a group
@@ -87,7 +76,7 @@ func (s *Server) CreatePolicy(ctx context.Context,
 	}
 
 	err = validator.Struct(CreatePolicyValidation{Provider: in.Provider, GroupId: in.GroupId,
-		Type: *in.Type.Enum(), Policy: in.PolicyDefinition})
+		Type: in.Type, Policy: in.PolicyDefinition})
 	if err != nil {
 		return nil, status.Errorf(codes.InvalidArgument, "invalid request: %v", err)
 	}
@@ -97,38 +86,42 @@ func (s *Server) CreatePolicy(ctx context.Context,
 		return nil, status.Errorf(codes.PermissionDenied, "user is not authorized to access this resource")
 	}
 
-	// convert yaml to json
-	var yamlData interface{}
-	err = yaml.Unmarshal([]byte(in.PolicyDefinition), &yamlData)
+	// check if type is valid
+	policies, err := s.store.GetPolicyTypes(ctx, in.Provider)
 	if err != nil {
-		return nil, status.Errorf(codes.InvalidArgument, "invalid policy definition: %v", err)
+		return nil, status.Errorf(codes.Internal, "cannot get policy types: %v", err)
 	}
-	jsonData, err := json.Marshal(yamlData)
+	typeId := int32(0)
+	for _, policy := range policies {
+		if policy.PolicyType == in.Type {
+			typeId = policy.ID
+			break
+		}
+	}
+	if typeId == 0 {
+		return nil, status.Errorf(codes.InvalidArgument, "invalid policy type: %v", in.Type)
+	}
+
+	// convert yaml to json
+	jsonData, err := util.ConvertYamlToJson(in.PolicyDefinition)
 	if err != nil {
 		return nil, status.Errorf(codes.InvalidArgument, "invalid policy definition: %v", err)
 	}
 
 	policy, err := s.store.CreatePolicy(ctx, db.CreatePolicyParams{Provider: in.Provider, GroupID: in.GroupId,
-		PolicyType: db.PolicyType(in.Type.Enum().String()), PolicyDefinition: jsonData})
+		PolicyType: typeId, PolicyDefinition: jsonData})
 	if err != nil {
 		return nil, status.Errorf(codes.Internal, "cannot create policy: %v", err)
 	}
 
 	// convert returned policy to yaml
-	var jsonDataNew interface{}
-	err = json.Unmarshal(policy.PolicyDefinition, &jsonDataNew)
+	yamlStr, err := util.ConvertJsonToYaml(policy.PolicyDefinition)
 	if err != nil {
 		return nil, status.Errorf(codes.Internal, "cannot extract policy information: %v", err)
 	}
 
-	yamlDataNew, err := yaml.Marshal(jsonDataNew)
-	if err != nil {
-		return nil, status.Errorf(codes.Internal, "cannot convert policy to yaml: %v", err)
-	}
-	yamlStr := string(yamlDataNew)
-
 	return &pb.CreatePolicyResponse{Policy: &pb.PolicyRecord{Id: policy.ID, Provider: policy.Provider, GroupId: policy.GroupID,
-		Type: convertToProtoPolicyType(policy.PolicyType), PolicyDefinition: yamlStr,
+		Type: in.Type, PolicyDefinition: yamlStr,
 		CreatedAt: timestamppb.New(policy.CreatedAt), UpdatedAt: timestamppb.New(policy.UpdatedAt)}}, nil
 }
 
@@ -209,24 +202,16 @@ func (s *Server) GetPolicies(ctx context.Context,
 	var resp pb.GetPoliciesResponse
 	resp.Policies = make([]*pb.PolicyRecord, 0, len(policies))
 	for _, policy := range policies {
-		// convert returned policy to yaml
-		var jsonDataNew interface{}
-		err = json.Unmarshal(policy.PolicyDefinition, &jsonDataNew)
+		yamlStr, err := util.ConvertJsonToYaml(policy.PolicyDefinition)
 		if err != nil {
 			return nil, status.Errorf(codes.Internal, "cannot extract policy information: %v", err)
 		}
-
-		yamlDataNew, err := yaml.Marshal(jsonDataNew)
-		if err != nil {
-			return nil, status.Errorf(codes.Internal, "cannot convert policy to yaml: %v", err)
-		}
-		yamlStr := string(yamlDataNew)
 
 		resp.Policies = append(resp.Policies, &pb.PolicyRecord{
 			Id:               policy.ID,
 			Provider:         policy.Provider,
 			GroupId:          policy.GroupID,
-			Type:             convertToProtoPolicyType(policy.PolicyType),
+			Type:             policy.PolicyTypeName,
 			PolicyDefinition: yamlStr,
 			CreatedAt:        timestamppb.New(policy.CreatedAt),
 			UpdatedAt:        timestamppb.New(policy.UpdatedAt),
@@ -254,27 +239,44 @@ func (s *Server) GetPolicyById(ctx context.Context,
 	}
 
 	// convert returned policy to yaml
-	var jsonDataNew interface{}
-	err = json.Unmarshal(policy.PolicyDefinition, &jsonDataNew)
+	yamlStr, err := util.ConvertJsonToYaml(policy.PolicyDefinition)
 	if err != nil {
 		return nil, status.Errorf(codes.Internal, "cannot extract policy information: %v", err)
 	}
-
-	yamlDataNew, err := yaml.Marshal(jsonDataNew)
-	if err != nil {
-		return nil, status.Errorf(codes.Internal, "cannot convert policy to yaml: %v", err)
-	}
-	yamlStr := string(yamlDataNew)
 
 	var resp pb.GetPolicyByIdResponse
 	resp.Policy = &pb.PolicyRecord{
 		Id:               policy.ID,
 		Provider:         policy.Provider,
 		GroupId:          policy.GroupID,
-		Type:             convertToProtoPolicyType(policy.PolicyType),
+		Type:             policy.PolicyTypeName,
 		PolicyDefinition: yamlStr,
 		CreatedAt:        timestamppb.New(policy.CreatedAt),
 		UpdatedAt:        timestamppb.New(policy.UpdatedAt),
 	}
+	return &resp, nil
+}
+
+// GetPolicyTypes is a method to get all policy types
+func (s *Server) GetPolicyTypes(ctx context.Context, in *pb.GetPolicyTypesRequest) (*pb.GetPolicyTypesResponse, error) {
+	if in.Provider != auth.Github {
+		return nil, status.Errorf(codes.InvalidArgument, "provider not supported: %v", in.Provider)
+	}
+	types, err := s.store.GetPolicyTypes(ctx, in.Provider)
+	if err != nil {
+		return nil, status.Errorf(codes.Unknown, "failed to get policy types: %s", err)
+	}
+
+	var resp pb.GetPolicyTypesResponse
+	resp.PolicyTypes = make([]*pb.PolicyTypeRecord, 0, len(types))
+	for _, policyType := range types {
+		resp.PolicyTypes = append(resp.PolicyTypes, &pb.PolicyTypeRecord{Provider: policyType.Provider,
+			PolicyType:  policyType.PolicyType,
+			Description: &policyType.Description.String, JsonSchema: string(policyType.JsonSchema),
+			Version: policyType.Version, CreatedAt: timestamppb.New(policyType.CreatedAt),
+			UpdatedAt: timestamppb.New(policyType.UpdatedAt),
+		})
+	}
+
 	return &resp, nil
 }

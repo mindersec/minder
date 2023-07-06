@@ -1105,6 +1105,72 @@
         ]
       }
     },
+    "/api/v1/policy_type/{type}": {
+      "get": {
+        "operationId": "PolicyService_GetPolicyType",
+        "responses": {
+          "200": {
+            "description": "A successful response.",
+            "schema": {
+              "$ref": "#/definitions/v1GetPolicyTypeResponse"
+            }
+          },
+          "default": {
+            "description": "An unexpected error response.",
+            "schema": {
+              "$ref": "#/definitions/rpcStatus"
+            }
+          }
+        },
+        "parameters": [
+          {
+            "name": "type",
+            "in": "path",
+            "required": true,
+            "type": "string"
+          },
+          {
+            "name": "provider",
+            "in": "query",
+            "required": false,
+            "type": "string"
+          }
+        ],
+        "tags": [
+          "PolicyService"
+        ]
+      }
+    },
+    "/api/v1/policy_types": {
+      "get": {
+        "operationId": "PolicyService_GetPolicyTypes",
+        "responses": {
+          "200": {
+            "description": "A successful response.",
+            "schema": {
+              "$ref": "#/definitions/v1GetPolicyTypesResponse"
+            }
+          },
+          "default": {
+            "description": "An unexpected error response.",
+            "schema": {
+              "$ref": "#/definitions/rpcStatus"
+            }
+          }
+        },
+        "parameters": [
+          {
+            "name": "provider",
+            "in": "query",
+            "required": false,
+            "type": "string"
+          }
+        ],
+        "tags": [
+          "PolicyService"
+        ]
+      }
+    },
     "/api/v1/repositories": {
       "get": {
         "operationId": "RepositoryService_ListRepositories",
@@ -2137,7 +2203,7 @@
           "format": "int32"
         },
         "type": {
-          "$ref": "#/definitions/v1PolicyType"
+          "type": "string"
         },
         "policyDefinition": {
           "type": "string"
@@ -2556,6 +2622,26 @@
       },
       "title": "in the future it can include status and violation details for the policy"
     },
+    "v1GetPolicyTypeResponse": {
+      "type": "object",
+      "properties": {
+        "policyType": {
+          "$ref": "#/definitions/v1PolicyTypeRecord"
+        }
+      }
+    },
+    "v1GetPolicyTypesResponse": {
+      "type": "object",
+      "properties": {
+        "policyTypes": {
+          "type": "array",
+          "items": {
+            "type": "object",
+            "$ref": "#/definitions/v1PolicyTypeRecord"
+          }
+        }
+      }
+    },
     "v1GetRepositoryResponse": {
       "type": "object",
       "properties": {
@@ -2971,7 +3057,7 @@
           "format": "int32"
         },
         "type": {
-          "$ref": "#/definitions/v1PolicyType"
+          "type": "string"
         },
         "policyDefinition": {
           "type": "string"
@@ -2987,14 +3073,34 @@
       },
       "title": "policy record to be returned"
     },
-    "v1PolicyType": {
-      "type": "string",
-      "enum": [
-        "POLICY_TYPE_UNSPECIFIED",
-        "POLICY_TYPE_BRANCH_PROTECTION"
-      ],
-      "default": "POLICY_TYPE_UNSPECIFIED",
-      "title": "Policy type enum"
+    "v1PolicyTypeRecord": {
+      "type": "object",
+      "properties": {
+        "provider": {
+          "type": "string"
+        },
+        "policyType": {
+          "type": "string"
+        },
+        "description": {
+          "type": "string"
+        },
+        "jsonSchema": {
+          "type": "string"
+        },
+        "version": {
+          "type": "string"
+        },
+        "createdAt": {
+          "type": "string",
+          "format": "date-time"
+        },
+        "updatedAt": {
+          "type": "string",
+          "format": "date-time"
+        }
+      },
+      "title": "policy type record to be returned"
     },
     "v1RefreshTokenRequest": {
       "type": "object"

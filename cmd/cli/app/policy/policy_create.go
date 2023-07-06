@@ -74,18 +74,29 @@ within a mediator control plane.`,
 		ctx, cancel := util.GetAppContext()
 		defer cancel()
 
-		// convert string for policy type to enum
-		policy := pb.PolicyType(pb.PolicyType_value[policyType])
-		if policy == pb.PolicyType_POLICY_TYPE_UNSPECIFIED {
-			fmt.Fprintf(os.Stderr, "Invalid policy type: %s\n", policyType)
+		policyTypes, err := client.GetPolicyTypes(ctx, &pb.GetPolicyTypesRequest{Provider: provider.(string)})
+		util.ExitNicelyOnError(err, "Error getting policy types")
+
+		// check if the policy type is valid
+		found := false
+		validTypes := make([]string, len(policyTypes.PolicyTypes))
+		for _, t := range policyTypes.PolicyTypes {
+			validTypes = append(validTypes, t.PolicyType)
+			if policyType == t.PolicyType {
+				found = true
+				break
+			}
+		}
+		if !found {
+			fmt.Fprintf(os.Stderr, "Invalid policy type - valid policy types are: %v\n", validTypes)
 			os.Exit(1)
 		}
 
-		// create a role by group
+		// create a policy
 		resp, err := client.CreatePolicy(ctx, &pb.CreatePolicyRequest{
 			Provider:         provider.(string),
 			GroupId:          group,
-			Type:             policy,
+			Type:             policyType,
 			PolicyDefinition: string(data),
 		})
 		util.ExitNicelyOnError(err, "Error creating policy")
@@ -104,8 +115,9 @@ func init() {
 	PolicyCmd.AddCommand(Policy_createCmd)
 	Policy_createCmd.Flags().StringP("provider", "n", "", "Provider (github)")
 	Policy_createCmd.Flags().Int32P("group-id", "g", 0, "ID of the group to where the policy belongs")
-	Policy_createCmd.Flags().StringP("type", "t", "", "Type of policy")
+	Policy_createCmd.Flags().StringP("type", "t", "", "Type of policy - must be one valid policy type")
 	Policy_createCmd.Flags().StringP("file", "f", "", "Path to the YAML defining the policy (or - for stdin)")
+
 	if err := Policy_createCmd.MarkFlagRequired("file"); err != nil {
 		fmt.Fprintf(os.Stderr, "Error binding flags: %s\n", err)
 	}

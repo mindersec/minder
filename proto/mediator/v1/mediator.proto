@@ -383,6 +383,18 @@ service UserService {
 }
 
 service PolicyService {
+    rpc GetPolicyType (GetPolicyTypeRequest) returns (GetPolicyTypeResponse) {
+        option (google.api.http) = {
+            get: "/api/v1/policy_type/{type}"
+            };
+    }
+
+    rpc GetPolicyTypes (GetPolicyTypesRequest) returns (GetPolicyTypesResponse) {
+        option (google.api.http) = {
+            get: "/api/v1/policy_types"
+            };
+    }
+
     rpc CreatePolicy (CreatePolicyRequest) returns (CreatePolicyResponse) {
         option (google.api.http) = {
             post: "/api/v1/policy"
@@ -1060,17 +1072,11 @@ message GetUserResponse {
     repeated RoleRecord roles = 3;
 }
 
-// Policy type enum
-enum PolicyType {
-    POLICY_TYPE_UNSPECIFIED = 0;
-    POLICY_TYPE_BRANCH_PROTECTION = 1;
-}
-
 // Policy service
 message CreatePolicyRequest {
     string provider = 1;
     int32 group_id = 2;
-    PolicyType type = 3; 
+    string type = 3; 
     string policy_definition = 4;
 }
   
@@ -1079,7 +1085,7 @@ message PolicyRecord {
     int32 id = 1;
     string provider = 2;
     int32 group_id = 3;
-    PolicyType type = 4; 
+    string type = 4; 
     string policy_definition = 5;
     google.protobuf.Timestamp created_at = 6;
     google.protobuf.Timestamp updated_at = 7;    
@@ -1116,4 +1122,43 @@ message GetPolicyByIdRequest {
 // in the future it can include status and violation details for the policy
 message GetPolicyByIdResponse {
     optional PolicyRecord policy = 1;
+}
+
+// policy type record to be returned
+message PolicyTypeRecord {
+    string provider = 1;
+    string policy_type = 2;
+    optional string description = 3;
+    string json_schema = 4;
+    string version = 5;
+    google.protobuf.Timestamp created_at = 6;
+    google.protobuf.Timestamp updated_at = 7;    
+}
+
+// get policy type
+message GetPolicyTypeRequest {
+    string provider = 1;
+    string type = 2;
+}
+
+message GetPolicyTypeResponse {
+    optional PolicyTypeRecord policy_type = 1;
+}
+
+// get policy type by id
+message GetPolicyTypeByIdRequest {
+    string id = 1;
+}
+
+message GetPolicyTypeByIdResponse {
+    optional PolicyTypeRecord policy_type = 1;
+}
+
+// get policy types
+message GetPolicyTypesRequest {
+    string provider = 1;
+}
+
+message GetPolicyTypesResponse {
+    repeated PolicyTypeRecord policy_types = 1;
 }

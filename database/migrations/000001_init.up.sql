@@ -112,17 +112,23 @@ create TABLE session_store (
     created_at TIMESTAMP NOT NULL DEFAULT NOW()
 );
 
--- policies table
-create type policy_type as enum (
-    'POLICY_TYPE_UNSPECIFIED',
-    'POLICY_TYPE_BRANCH_PROTECTION'
+-- policy type
+create table policy_types (
+    id SERIAL PRIMARY KEY,
+    provider TEXT NOT NULL,
+    policy_type VARCHAR(50) NOT NULL,
+    description TEXT,
+    json_schema JSONB NOT NULL,
+    version varchar(20) NOT NULL,
+    created_at TIMESTAMP NOT NULL DEFAULT NOW(),
+    updated_at TIMESTAMP NOT NULL DEFAULT NOW()
 );
 
 create table policies (
     id SERIAL PRIMARY KEY,
     provider TEXT NOT NULL,
     group_id INTEGER NOT NULL REFERENCES groups(id) ON DELETE CASCADE,
-    policy_type policy_type NOT NULL,
+    policy_type INTEGER NOT NULL REFERENCES policy_types ON DELETE CASCADE,
     policy_definition JSONB NOT NULL,
     created_at TIMESTAMP NOT NULL DEFAULT NOW(),
     updated_at TIMESTAMP NOT NULL DEFAULT NOW()
@@ -144,7 +150,7 @@ CREATE UNIQUE INDEX users_organization_id_email_lower_idx ON users (organization
 CREATE UNIQUE INDEX users_organization_id_username_lower_idx ON users (organization_id, LOWER(username));
 CREATE UNIQUE INDEX repositories_repo_id_idx ON repositories(repo_id);
 CREATE UNIQUE INDEX policies_group_id_policy_type_idx ON policies(provider, group_id, policy_type);
-
+CREATE UNIQUE INDEX policy_types_idx ON policy_types(provider, policy_type);
 
 -- Create default root organization
 
@@ -163,3 +169,52 @@ VALUES (1, 'root@localhost', 'root', '$argon2id$v=19$m=16,t=2,p=1$c2VjcmV0aGFzaA
 
 INSERT INTO user_groups (user_id, group_id) VALUES (1, 1);
 INSERT INTO user_roles (user_id, role_id) VALUES (1, 1);
+
+-- policy types
+-- todo: read content from external files
+INSERT INTO policy_types (provider, policy_type, description, json_schema, version) VALUES
+('github', 'branch_protection', 'Policy type to enforce branch protection rules on a repo', '
+{
+	"type": "object",
+	"properties": {
+		"branches": {
+			"type": "array",
+			"items": {
+				"type": "object",
+				"properties": {
+					"name": {"type": "string"},
+					"rules": {
+						"type": "object",
+						"properties": {
+							"pull_request_reviews_enforcement_level": {"type": "array", "items": {"type": "string"}},
+							"required_approving_review_count": {"type": "integer"},
+							"dismiss_stale_reviews_on_push": {"type": "boolean"},
+							"require_code_owner_review": {"type": "boolean"},
+							"authorized_dismissal_actors_only": {"type": "boolean"},
+							"required_status_checks": {"type": "array", "items": {"type": "string"}},
+							"required_status_checks_enforcement_level": {"type": "array", "items": {"type": "string"}},
+							"strict_required_status_checks_policy": {"type": "boolean"},
+							"signature_requirement_enforcement_level": {"type": "array", "items": {"type": "string"}},
+							"linear_history_requirement_enforcement_level": {"type": "array", "items": {"type": "string"}},
+							"admin_enforced": {"type": "boolean"},
+							"create_protected": {"type": "boolean"},
+							"allow_force_pushes_enforcement_level": {"type": "array", "items": {"type": "string"}},
+							"allow_deletions_enforcement_level": {"type": "array", "items": {"type": "string"}},
+							"merge_queue_enforcement_level": {"type": "array", "items": {"type": "string"}},
+							"required_deployments_enforcement_level": {"type": "array", "items": {"type": "string"}},
+							"required_conversation_resolution_level": {"type": "array", "items": {"type": "string"}},
+							"authorized_actors_only": {"type": "boolean"},
+							"authorized_actor_names": {"type": "array", "items": {"type": "string"}},
+							"require_last_push_approval": {"type": "boolean"}
+						},
+						"required": [
+						]
+					}
+				},
+				"required": ["name", "rules"]
+			}
+		}
+	},
+	"required": ["branches"]
+}
+', '1.0.0');

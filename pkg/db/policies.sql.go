@@ -8,6 +8,7 @@ package db
 import (
 	"context"
 	"encoding/json"
+	"time"
 )
 
 const createPolicy = `-- name: CreatePolicy :one
@@ -21,7 +22,7 @@ INSERT INTO policies (
 type CreatePolicyParams struct {
 	Provider         string          `json:"provider"`
 	GroupID          int32           `json:"group_id"`
-	PolicyType       PolicyType      `json:"policy_type"`
+	PolicyType       int32           `json:"policy_type"`
 	PolicyDefinition json.RawMessage `json:"policy_definition"`
 }
 
@@ -56,18 +57,33 @@ func (q *Queries) DeletePolicy(ctx context.Context, id int32) error {
 }
 
 const getPolicyByID = `-- name: GetPolicyByID :one
-SELECT id, provider, group_id, policy_type, policy_definition, created_at, updated_at FROM policies WHERE id = $1
+SELECT policies.id as id, policies.provider as provider, group_id, policies.policy_type as policy_type,
+policy_definition, policy_types.policy_type as policy_type_name,
+policies.created_at as created_at, policies.updated_at as updated_at FROM policies
+INNER JOIN policy_types ON policy_types.id = policies.policy_type WHERE policies.id = $1
 `
 
-func (q *Queries) GetPolicyByID(ctx context.Context, id int32) (Policy, error) {
+type GetPolicyByIDRow struct {
+	ID               int32           `json:"id"`
+	Provider         string          `json:"provider"`
+	GroupID          int32           `json:"group_id"`
+	PolicyType       int32           `json:"policy_type"`
+	PolicyDefinition json.RawMessage `json:"policy_definition"`
+	PolicyTypeName   string          `json:"policy_type_name"`
+	CreatedAt        time.Time       `json:"created_at"`
+	UpdatedAt        time.Time       `json:"updated_at"`
+}
+
+func (q *Queries) GetPolicyByID(ctx context.Context, id int32) (GetPolicyByIDRow, error) {
 	row := q.db.QueryRowContext(ctx, getPolicyByID, id)
-	var i Policy
+	var i GetPolicyByIDRow
 	err := row.Scan(
 		&i.ID,
 		&i.Provider,
 		&i.GroupID,
 		&i.PolicyType,
 		&i.PolicyDefinition,
+		&i.PolicyTypeName,
 		&i.CreatedAt,
 		&i.UpdatedAt,
 	)
@@ -75,8 +91,11 @@ func (q *Queries) GetPolicyByID(ctx context.Context, id int32) (Policy, error) {
 }
 
 const listPoliciesByGroupID = `-- name: ListPoliciesByGroupID :many
-SELECT id, provider, group_id, policy_type, policy_definition, created_at, updated_at FROM policies
-WHERE provider = $1 AND group_id = $2
+SELECT policies.id as id, policies.provider as provider, group_id, policies.policy_type as policy_type,
+policy_definition, policy_types.policy_type as policy_type_name,
+policies.created_at as created_at, policies.updated_at as updated_at FROM policies
+INNER JOIN policy_types ON policy_types.id = policies.policy_type
+WHERE policies.provider = $1 AND group_id = $2
 ORDER BY id
 LIMIT $3
 OFFSET $4
@@ -89,7 +108,18 @@ type ListPoliciesByGroupIDParams struct {
 	Offset   int32  `json:"offset"`
 }
 
-func (q *Queries) ListPoliciesByGroupID(ctx context.Context, arg ListPoliciesByGroupIDParams) ([]Policy, error) {
+type ListPoliciesByGroupIDRow struct {
+	ID               int32           `json:"id"`
+	Provider         string          `json:"provider"`
+	GroupID          int32           `json:"group_id"`
+	PolicyType       int32           `json:"policy_type"`
+	PolicyDefinition json.RawMessage `json:"policy_definition"`
+	PolicyTypeName   string          `json:"policy_type_name"`
+	CreatedAt        time.Time       `json:"created_at"`
+	UpdatedAt        time.Time       `json:"updated_at"`
+}
+
+func (q *Queries) ListPoliciesByGroupID(ctx context.Context, arg ListPoliciesByGroupIDParams) ([]ListPoliciesByGroupIDRow, error) {
 	rows, err := q.db.QueryContext(ctx, listPoliciesByGroupID,
 		arg.Provider,
 		arg.GroupID,
@@ -100,15 +130,16 @@ func (q *Queries) ListPoliciesByGroupID(ctx context.Context, arg ListPoliciesByG
 		return nil, err
 	}
 	defer rows.Close()
-	items := []Policy{}
+	items := []ListPoliciesByGroupIDRow{}
 	for rows.Next() {
-		var i Policy
+		var i ListPoliciesByGroupIDRow
 		if err := rows.Scan(
 			&i.ID,
 			&i.Provider,
 			&i.GroupID,
 			&i.PolicyType,
 			&i.PolicyDefinition,
+			&i.PolicyTypeName,
 			&i.CreatedAt,
 			&i.UpdatedAt,
 		); err != nil {
