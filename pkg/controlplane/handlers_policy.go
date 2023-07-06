@@ -16,6 +16,7 @@ package controlplane
 
 import (
 	"context"
+	"encoding/json"
 
 	"github.com/go-playground/validator/v10"
 	"github.com/stacklok/mediator/pkg/auth"
@@ -96,14 +97,38 @@ func (s *Server) CreatePolicy(ctx context.Context,
 		return nil, status.Errorf(codes.PermissionDenied, "user is not authorized to access this resource")
 	}
 
-	policy, err := s.store.CreatePolicy(ctx, db.CreatePolicyParams{Provider: in.Provider, GroupID: in.GroupId,
-		PolicyType: db.PolicyType(in.Type.Enum().String()), PolicyDefinition: in.PolicyDefinition})
+	// convert yaml to json
+	var yamlData interface{}
+	err = yaml.Unmarshal([]byte(in.PolicyDefinition), &yamlData)
 	if err != nil {
-		return nil, err
+		return nil, status.Errorf(codes.InvalidArgument, "invalid policy definition: %v", err)
+	}
+	jsonData, err := json.Marshal(yamlData)
+	if err != nil {
+		return nil, status.Errorf(codes.InvalidArgument, "invalid policy definition: %v", err)
 	}
 
+	policy, err := s.store.CreatePolicy(ctx, db.CreatePolicyParams{Provider: in.Provider, GroupID: in.GroupId,
+		PolicyType: db.PolicyType(in.Type.Enum().String()), PolicyDefinition: jsonData})
+	if err != nil {
+		return nil, status.Errorf(codes.Internal, "cannot create policy: %v", err)
+	}
+
+	// convert returned policy to yaml
+	var jsonDataNew interface{}
+	err = json.Unmarshal(policy.PolicyDefinition, &jsonDataNew)
+	if err != nil {
+		return nil, status.Errorf(codes.Internal, "cannot extract policy information: %v", err)
+	}
+
+	yamlDataNew, err := yaml.Marshal(jsonDataNew)
+	if err != nil {
+		return nil, status.Errorf(codes.Internal, "cannot convert policy to yaml: %v", err)
+	}
+	yamlStr := string(yamlDataNew)
+
 	return &pb.CreatePolicyResponse{Policy: &pb.PolicyRecord{Id: policy.ID, Provider: policy.Provider, GroupId: policy.GroupID,
-		Type: convertToProtoPolicyType(policy.PolicyType), PolicyDefinition: string(policy.PolicyDefinition),
+		Type: convertToProtoPolicyType(policy.PolicyType), PolicyDefinition: yamlStr,
 		CreatedAt: timestamppb.New(policy.CreatedAt), UpdatedAt: timestamppb.New(policy.UpdatedAt)}}, nil
 }
 
@@ -184,12 +209,25 @@ func (s *Server) GetPolicies(ctx context.Context,
 	var resp pb.GetPoliciesResponse
 	resp.Policies = make([]*pb.PolicyRecord, 0, len(policies))
 	for _, policy := range policies {
+		// convert returned policy to yaml
+		var jsonDataNew interface{}
+		err = json.Unmarshal(policy.PolicyDefinition, &jsonDataNew)
+		if err != nil {
+			return nil, status.Errorf(codes.Internal, "cannot extract policy information: %v", err)
+		}
+
+		yamlDataNew, err := yaml.Marshal(jsonDataNew)
+		if err != nil {
+			return nil, status.Errorf(codes.Internal, "cannot convert policy to yaml: %v", err)
+		}
+		yamlStr := string(yamlDataNew)
+
 		resp.Policies = append(resp.Policies, &pb.PolicyRecord{
 			Id:               policy.ID,
 			Provider:         policy.Provider,
 			GroupId:          policy.GroupID,
 			Type:             convertToProtoPolicyType(policy.PolicyType),
-			PolicyDefinition: string(policy.PolicyDefinition),
+			PolicyDefinition: yamlStr,
 			CreatedAt:        timestamppb.New(policy.CreatedAt),
 			UpdatedAt:        timestamppb.New(policy.UpdatedAt),
 		})
@@ -215,13 +253,26 @@ func (s *Server) GetPolicyById(ctx context.Context,
 		return nil, status.Errorf(codes.PermissionDenied, "user is not authorized to access this resource")
 	}
 
+	// convert returned policy to yaml
+	var jsonDataNew interface{}
+	err = json.Unmarshal(policy.PolicyDefinition, &jsonDataNew)
+	if err != nil {
+		return nil, status.Errorf(codes.Internal, "cannot extract policy information: %v", err)
+	}
+
+	yamlDataNew, err := yaml.Marshal(jsonDataNew)
+	if err != nil {
+		return nil, status.Errorf(codes.Internal, "cannot convert policy to yaml: %v", err)
+	}
+	yamlStr := string(yamlDataNew)
+
 	var resp pb.GetPolicyByIdResponse
 	resp.Policy = &pb.PolicyRecord{
 		Id:               policy.ID,
 		Provider:         policy.Provider,
 		GroupId:          policy.GroupID,
 		Type:             convertToProtoPolicyType(policy.PolicyType),
-		PolicyDefinition: string(policy.PolicyDefinition),
+		PolicyDefinition: yamlStr,
 		CreatedAt:        timestamppb.New(policy.CreatedAt),
 		UpdatedAt:        timestamppb.New(policy.UpdatedAt),
 	}

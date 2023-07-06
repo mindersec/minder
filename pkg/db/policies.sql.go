@@ -7,6 +7,7 @@ package db
 
 import (
 	"context"
+	"encoding/json"
 )
 
 const createPolicy = `-- name: CreatePolicy :one
@@ -14,14 +15,14 @@ INSERT INTO policies (
     provider,
     group_id,
     policy_type,
-    policy_definition) VALUES ($1, $2, $3, $4) RETURNING id, provider, group_id, policy_type, policy_definition, created_at, updated_at
+    policy_definition) VALUES ($1, $2, $3, $4::jsonb) RETURNING id, provider, group_id, policy_type, policy_definition, created_at, updated_at
 `
 
 type CreatePolicyParams struct {
-	Provider         string     `json:"provider"`
-	GroupID          int32      `json:"group_id"`
-	PolicyType       PolicyType `json:"policy_type"`
-	PolicyDefinition string     `json:"policy_definition"`
+	Provider         string          `json:"provider"`
+	GroupID          int32           `json:"group_id"`
+	PolicyType       PolicyType      `json:"policy_type"`
+	PolicyDefinition json.RawMessage `json:"policy_definition"`
 }
 
 func (q *Queries) CreatePolicy(ctx context.Context, arg CreatePolicyParams) (Policy, error) {
