@@ -40,6 +40,9 @@
     },
     {
       "name": "PolicyService"
+    },
+    {
+      "name": "KeyService"
     }
   ],
   "consumes": [
@@ -791,6 +794,66 @@
         },
         "tags": [
           "HealthService"
+        ]
+      }
+    },
+    "/api/v1/key": {
+      "get": {
+        "operationId": "KeyService_GetPublicKey",
+        "responses": {
+          "200": {
+            "description": "A successful response.",
+            "schema": {
+              "$ref": "#/definitions/v1GetPublicKeyResponse"
+            }
+          },
+          "default": {
+            "description": "An unexpected error response.",
+            "schema": {
+              "$ref": "#/definitions/rpcStatus"
+            }
+          }
+        },
+        "parameters": [
+          {
+            "name": "keyIdentifier",
+            "in": "query",
+            "required": false,
+            "type": "string"
+          }
+        ],
+        "tags": [
+          "KeyService"
+        ]
+      },
+      "post": {
+        "operationId": "KeyService_CreateKeyPair",
+        "responses": {
+          "200": {
+            "description": "A successful response.",
+            "schema": {
+              "$ref": "#/definitions/v1CreateKeyPairResponse"
+            }
+          },
+          "default": {
+            "description": "An unexpected error response.",
+            "schema": {
+              "$ref": "#/definitions/rpcStatus"
+            }
+          }
+        },
+        "parameters": [
+          {
+            "name": "body",
+            "in": "body",
+            "required": true,
+            "schema": {
+              "$ref": "#/definitions/v1CreateKeyPairRequest"
+            }
+          }
+        ],
+        "tags": [
+          "KeyService"
         ]
       }
     },
@@ -2141,6 +2204,29 @@
         }
       }
     },
+    "v1CreateKeyPairRequest": {
+      "type": "object",
+      "properties": {
+        "passphrase": {
+          "type": "string"
+        },
+        "groupId": {
+          "type": "integer",
+          "format": "int32"
+        }
+      }
+    },
+    "v1CreateKeyPairResponse": {
+      "type": "object",
+      "properties": {
+        "keyIdentifier": {
+          "type": "string"
+        },
+        "publicKey": {
+          "type": "string"
+        }
+      }
+    },
     "v1CreateOrganizationRequest": {
       "type": "object",
       "properties": {
@@ -2639,6 +2725,14 @@
             "type": "object",
             "$ref": "#/definitions/v1PolicyTypeRecord"
           }
+        }
+      }
+    },
+    "v1GetPublicKeyResponse": {
+      "type": "object",
+      "properties": {
+        "publicKey": {
+          "type": "string"
         }
       }
     },

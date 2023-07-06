@@ -23,6 +23,7 @@ import (
 	_ "github.com/stacklok/mediator/cmd/cli/app/docs"
 	_ "github.com/stacklok/mediator/cmd/cli/app/enroll"
 	_ "github.com/stacklok/mediator/cmd/cli/app/group"
+	_ "github.com/stacklok/mediator/cmd/cli/app/keys"
 	_ "github.com/stacklok/mediator/cmd/cli/app/org"
 	_ "github.com/stacklok/mediator/cmd/cli/app/policy"
 	_ "github.com/stacklok/mediator/cmd/cli/app/policy_type"

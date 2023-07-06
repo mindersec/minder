@@ -421,6 +421,20 @@ service PolicyService {
     }
 }
 
+service KeyService {
+    rpc GetPublicKey (GetPublicKeyRequest) returns (GetPublicKeyResponse) {
+        option (google.api.http) = {
+            get: "/api/v1/key"
+        };
+    }
+    rpc CreateKeyPair (CreateKeyPairRequest) returns (CreateKeyPairResponse) {
+        option (google.api.http) = {
+            post: "/api/v1/key"
+            body: "*"
+        };
+    }
+}
+
 message CheckHealthRequest {
 }
 
@@ -1163,4 +1177,21 @@ message GetPolicyTypesRequest {
 
 message GetPolicyTypesResponse {
     repeated PolicyTypeRecord policy_types = 1;
+}
+message GetPublicKeyRequest {
+    string key_identifier = 1;
+}
+
+message GetPublicKeyResponse {
+    string public_key = 1;
+}
+
+message CreateKeyPairRequest {
+    string passphrase = 1;
+    int32 group_id = 2;
+}
+
+message CreateKeyPairResponse {
+    string key_identifier = 1;
+    string public_key = 2;
 }

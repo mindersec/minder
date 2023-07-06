@@ -25,16 +25,21 @@ package util
 import (
 	"context"
 	"encoding/json"
+	"errors"
 	"fmt"
+	"io/fs"
 	"net"
 	"os"
 	"path/filepath"
+	"strings"
+	"syscall"
 	"time"
 
 	_ "github.com/lib/pq" // nolint
 	"github.com/spf13/cobra"
 	"github.com/spf13/viper"
 	pb "github.com/stacklok/mediator/pkg/generated/protobuf/go/mediator/v1"
+	"golang.org/x/term"
 	"google.golang.org/grpc"
 	"google.golang.org/grpc/credentials/insecure"
 	"gopkg.in/yaml.v3"
@@ -288,4 +293,46 @@ func ConvertJsonToYaml(content json.RawMessage) (string, error) {
 	}
 	yamlStr := string(yamlDataNew)
 	return yamlStr, nil
+// WriteToFile writes the content to a file if the out parameter is not empty.
+func WriteToFile(out string, content []byte, perms fs.FileMode) error {
+	if out != "" {
+		err := os.WriteFile(out, content, perms)
+		if err != nil {
+			return fmt.Errorf("error writingto file: %s", err)
+		}
+	}
+
+	return nil
+}
+
+func GetPassFromTerm(confirm bool) ([]byte, error) {
+	fmt.Print("Enter password for private key: ")
+
+	pw1, err := term.ReadPassword(int(syscall.Stdin))
+	if err != nil {
+		return nil, err
+	}
+	fmt.Println()
+
+	if !confirm {
+		return pw1, nil
+	}
+
+	fmt.Print("Enter password for private key again: ")
+	confirmpw, err := term.ReadPassword(int(syscall.Stdin))
+	fmt.Println()
+
+	if err != nil {
+		return nil, err
+	}
+
+	if !bytesEqual(pw1, confirmpw) {
+		return nil, errors.New("passwords do not match")
+	}
+
+	return pw1, nil
+}
+
+func bytesEqual(a, b []byte) bool {
+	return strings.EqualFold(strings.TrimSpace(string(a)), strings.TrimSpace(string(b)))
 }

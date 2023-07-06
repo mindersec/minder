@@ -35,8 +35,10 @@ import (
 	"fmt"
 	"io"
 
+	"github.com/sigstore/sigstore/pkg/signature"
 	"github.com/spf13/viper"
 	"github.com/stacklok/mediator/internal/config"
+	"github.com/theupdateframework/go-tuf/encrypted"
 	"golang.org/x/crypto/argon2"
 	"google.golang.org/grpc/codes"
 	"google.golang.org/grpc/status"
@@ -282,4 +284,86 @@ func IsNonceValid(nonce string) (bool, error) {
 	}
 
 	return true, nil
+}
+
+// GenerateKeyPair generates a public/private key pair and encrypts
+// the private key with a passphrase
+// func GenerateKeyPair(passphrase string) ([]byte, []byte, error) {
+// 	signer, private, err := signature.NewDefaultECDSASignerVerifier()
+// 	if err != nil {
+// 		panic(err)
+// 	}
+
+// 	pub, err := signer.PublicKey()
+// 	if err != nil {
+// 		panic(err)
+// 	}
+
+// 	pubBytes, err := x509.MarshalPKIXPublicKey(pub)
+// 	if err != nil {
+// 		panic(err)
+// 	}
+
+// 	x509Encoded, err := x509.MarshalPKCS8PrivateKey(private)
+// 	if err != nil {
+// 		panic(err)
+// 	}
+
+// 	// Encrypt the private key with NACL secretbox
+// 	encBytes, err := encrypted.Encrypt(x509Encoded, []byte(passphrase))
+// 	if err != nil {
+// 		return nil, nil, err
+// 	}
+
+// 	PublicKey := pem.EncodeToMemory(&pem.Block{
+// 		Type:  "PUBLIC KEY",
+// 		Bytes: pubBytes,
+// 	})
+
+// 	PrivateKey := pem.EncodeToMemory(&pem.Block{
+// 		Type:  "PRIVATE KEY",
+// 		Bytes: encBytes,
+// 	})
+
+// 	return PrivateKey, PublicKey, nil
+// }
+
+func GenerateKeyPair(passphrase string) ([]byte, []byte, error) {
+	signer, private, err := signature.NewDefaultECDSASignerVerifier()
+	if err != nil {
+		panic(err)
+	}
+
+	pub, err := signer.PublicKey()
+	if err != nil {
+		panic(err)
+	}
+
+	pubBytes, err := x509.MarshalPKIXPublicKey(pub)
+	if err != nil {
+		panic(err)
+	}
+
+	privateBytes, err := x509.MarshalECPrivateKey(private)
+	if err != nil {
+		panic(err)
+	}
+
+	// Encrypt the private key with NACL secretbox
+	encBytes, err := encrypted.Encrypt(privateBytes, []byte(passphrase))
+	if err != nil {
+		return nil, nil, err
+	}
+
+	PublicKey := pem.EncodeToMemory(&pem.Block{
+		Type:  "PUBLIC KEY",
+		Bytes: pubBytes,
+	})
+
+	PrivateKey := pem.EncodeToMemory(&pem.Block{
+		Type:  "PRIVATE KEY",
+		Bytes: encBytes,
+	})
+
+	return PrivateKey, PublicKey, nil
 }

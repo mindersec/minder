@@ -9,6 +9,8 @@
     - [CheckHealthResponse](#mediator-v1-CheckHealthResponse)
     - [CreateGroupRequest](#mediator-v1-CreateGroupRequest)
     - [CreateGroupResponse](#mediator-v1-CreateGroupResponse)
+    - [CreateKeyPairRequest](#mediator-v1-CreateKeyPairRequest)
+    - [CreateKeyPairResponse](#mediator-v1-CreateKeyPairResponse)
     - [CreateOrganizationRequest](#mediator-v1-CreateOrganizationRequest)
     - [CreateOrganizationResponse](#mediator-v1-CreateOrganizationResponse)
     - [CreatePolicyRequest](#mediator-v1-CreatePolicyRequest)
@@ -59,6 +61,8 @@
     - [GetPolicyTypeResponse](#mediator-v1-GetPolicyTypeResponse)
     - [GetPolicyTypesRequest](#mediator-v1-GetPolicyTypesRequest)
     - [GetPolicyTypesResponse](#mediator-v1-GetPolicyTypesResponse)
+    - [GetPublicKeyRequest](#mediator-v1-GetPublicKeyRequest)
+    - [GetPublicKeyResponse](#mediator-v1-GetPublicKeyResponse)
     - [GetRepositoryRequest](#mediator-v1-GetRepositoryRequest)
     - [GetRepositoryResponse](#mediator-v1-GetRepositoryResponse)
     - [GetRoleByIdRequest](#mediator-v1-GetRoleByIdRequest)
@@ -135,6 +139,7 @@
     - [BranchProtectionService](#mediator-v1-BranchProtectionService)
     - [GroupService](#mediator-v1-GroupService)
     - [HealthService](#mediator-v1-HealthService)
+    - [KeyService](#mediator-v1-KeyService)
     - [OAuthService](#mediator-v1-OAuthService)
     - [OrganizationService](#mediator-v1-OrganizationService)
     - [PolicyService](#mediator-v1-PolicyService)
@@ -229,6 +234,38 @@ The CreateGroupRequest message represents a request to create a group
 | is_protected | [bool](#bool) |  |  |
 | created_at | [google.protobuf.Timestamp](#google-protobuf-Timestamp) |  |  |
 | updated_at | [google.protobuf.Timestamp](#google-protobuf-Timestamp) |  |  |
+
+
+
+
+
+
+<a name="mediator-v1-CreateKeyPairRequest"></a>
+
+### CreateKeyPairRequest
+
+
+
+| Field | Type | Label | Description |
+| ----- | ---- | ----- | ----------- |
+| passphrase | [string](#string) |  |  |
+| group_id | [int32](#int32) |  |  |
+
+
+
+
+
+
+<a name="mediator-v1-CreateKeyPairResponse"></a>
+
+### CreateKeyPairResponse
+
+
+
+| Field | Type | Label | Description |
+| ----- | ---- | ----- | ----------- |
+| key_identifier | [string](#string) |  |  |
+| public_key | [string](#string) |  |  |
 
 
 
@@ -1034,6 +1071,36 @@ get policy types
 | Field | Type | Label | Description |
 | ----- | ---- | ----- | ----------- |
 | policy_types | [PolicyTypeRecord](#mediator-v1-PolicyTypeRecord) | repeated |  |
+
+
+
+
+
+
+<a name="mediator-v1-GetPublicKeyRequest"></a>
+
+### GetPublicKeyRequest
+
+
+
+| Field | Type | Label | Description |
+| ----- | ---- | ----- | ----------- |
+| key_identifier | [string](#string) |  |  |
+
+
+
+
+
+
+<a name="mediator-v1-GetPublicKeyResponse"></a>
+
+### GetPublicKeyResponse
+
+
+
+| Field | Type | Label | Description |
+| ----- | ---- | ----- | ----------- |
+| public_key | [string](#string) |  |  |
 
 
 
@@ -2194,6 +2261,17 @@ replies with OK
 | Method Name | Request Type | Response Type | Description |
 | ----------- | ------------ | ------------- | ------------|
 | CheckHealth | [CheckHealthRequest](#mediator-v1-CheckHealthRequest) | [CheckHealthResponse](#mediator-v1-CheckHealthResponse) |  |
+
+
+<a name="mediator-v1-KeyService"></a>
+
+### KeyService
+
+
+| Method Name | Request Type | Response Type | Description |
+| ----------- | ------------ | ------------- | ------------|
+| GetPublicKey | [GetPublicKeyRequest](#mediator-v1-GetPublicKeyRequest) | [GetPublicKeyResponse](#mediator-v1-GetPublicKeyResponse) |  |
+| CreateKeyPair | [CreateKeyPairRequest](#mediator-v1-CreateKeyPairRequest) | [CreateKeyPairResponse](#mediator-v1-CreateKeyPairResponse) |  |
 
 
 <a name="mediator-v1-OAuthService"></a>
