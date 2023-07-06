@@ -23,9 +23,6 @@ import (
 	"net/http"
 	"time"
 
-	"github.com/ThreeDotsLabs/watermill"
-	"github.com/ThreeDotsLabs/watermill/message"
-	"github.com/ThreeDotsLabs/watermill/pubsub/gochannel"
 	"github.com/grpc-ecosystem/grpc-gateway/v2/runtime"
 	"github.com/prometheus/client_golang/prometheus/promhttp"
 	"go.opentelemetry.io/contrib/instrumentation/google.golang.org/grpc/otelgrpc"
@@ -45,6 +42,7 @@ import (
 	_ "github.com/lib/pq" // nolint
 
 	"github.com/stacklok/mediator/internal/config"
+	"github.com/stacklok/mediator/internal/events"
 	"github.com/stacklok/mediator/internal/logger"
 	"github.com/stacklok/mediator/pkg/db"
 	pb "github.com/stacklok/mediator/pkg/generated/protobuf/go/mediator/v1"
@@ -61,6 +59,7 @@ var (
 type Server struct {
 	store      db.Store
 	cfg        *config.Config
+	evt        *events.Eventer
 	grpcServer *grpc.Server
 	pb.UnimplementedHealthServiceServer
 	pb.UnimplementedOAuthServiceServer
@@ -77,12 +76,19 @@ type Server struct {
 }
 
 // NewServer creates a new server instance
-func NewServer(store db.Store, cfg *config.Config) *Server {
-	server := &Server{
+func NewServer(store db.Store, cfg *config.Config) (*Server, error) {
+	// TODO: enable registering handlers with the router (arg 0)
+	evt, err := events.SetUpEventer()
+	if err != nil {
+		log.Printf("Failed to set up eventer: %v", err)
+		return nil, err
+	}
+
+	return &Server{
 		store: store,
 		cfg:   cfg,
-	}
-	return server
+		evt:   evt,
+	}, nil
 }
 
 func (s *Server) initTracer() (*sdktrace.TracerProvider, error) {
@@ -227,13 +233,6 @@ func (s *Server) StartHTTPServer(ctx context.Context) error {
 		mux.Handle(metricsPath, handler)
 	}
 
-	// TODO: enable registering handlers with the router (arg 0)
-	_, publisher, err := setUpWatermill()
-	if err != nil {
-		log.Printf("Failed to set up watermill: %v", err)
-		return err
-	}
-
 	gwmux := runtime.NewServeMux()
 	opts := []grpc.DialOption{grpc.WithTransportCredentials(insecure.NewCredentials())}
 
@@ -241,7 +240,7 @@ func (s *Server) StartHTTPServer(ctx context.Context) error {
 	RegisterGatewayHTTPHandlers(ctx, gwmux, s.cfg.GRPCServer.GetAddress(), opts)
 
 	mux.Handle("/", gwmux)
-	mux.HandleFunc("/api/v1/webhook/", HandleGitHubWebHook(publisher))
+	mux.HandleFunc("/api/v1/webhook/", HandleGitHubWebHook(s.evt.WebhookPublisher))
 
 	errch := make(chan error)
 
@@ -273,6 +272,13 @@ func (s *Server) StartHTTPServer(ctx context.Context) error {
 	}
 }
 
+// HandleEvents starts the event handler and blocks while handling events.
+func (s *Server) HandleEvents(ctx context.Context) error {
+	// TODO: Subscribe to events
+
+	return s.evt.Run(ctx)
+}
+
 type shutdowner func(context.Context) error
 
 func shutdownHandler(component string, sdf shutdowner) {
@@ -284,17 +290,4 @@ func shutdownHandler(component string, sdf shutdowner) {
 	if err := sdf(shutdownCtx); err != nil {
 		log.Fatalf("error shutting down '%s': %+v", component, err)
 	}
-}
-
-// setUpWatermill isolates the watermill setup code
-// TODO: pass in logger
-// TODO: figure out the right package for this
-func setUpWatermill() (*message.Router, message.Publisher, error) {
-	var l watermill.LoggerAdapter = nil
-	router, err := message.NewRouter(message.RouterConfig{}, l)
-	if err != nil {
-		return nil, nil, err
-	}
-	publisher := gochannel.NewGoChannel(gochannel.Config{}, l)
-	return router, publisher, nil
 }

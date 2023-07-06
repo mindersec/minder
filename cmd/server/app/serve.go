@@ -54,7 +54,10 @@ var serveCmd = &cobra.Command{
 
 		errg, ctx := errgroup.WithContext(ctx)
 
-		s := controlplane.NewServer(store, cfg)
+		s, err := controlplane.NewServer(store, cfg)
+		if err != nil {
+			return fmt.Errorf("unable to create server: %w", err)
+		}
 
 		// Start the gRPC and HTTP server in separate goroutines
 		errg.Go(func() error {

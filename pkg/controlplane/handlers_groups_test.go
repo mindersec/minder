@@ -27,6 +27,7 @@ import (
 	"github.com/stacklok/mediator/pkg/auth"
 	"github.com/stacklok/mediator/pkg/db"
 	"github.com/stretchr/testify/assert"
+	"github.com/stretchr/testify/require"
 
 	"google.golang.org/grpc/codes"
 	"google.golang.org/protobuf/types/known/timestamppb"
@@ -176,7 +177,8 @@ func TestCreateGroup_gRPC(t *testing.T) {
 			mockStore := mockdb.NewMockStore(ctrl)
 			tc.buildStubs(mockStore)
 
-			server := NewServer(mockStore, &config.Config{})
+			server, err := NewServer(mockStore, &config.Config{})
+			require.NoError(t, err, "failed to create test server")
 
 			resp, err := server.CreateGroup(ctx, tc.req)
 			tc.checkResponse(t, resp, err)
@@ -295,7 +297,8 @@ func TestDeleteGroup_gRPC(t *testing.T) {
 			mockStore := mockdb.NewMockStore(ctrl)
 			tc.buildStubs(mockStore)
 
-			server := NewServer(mockStore, &config.Config{})
+			server, err := NewServer(mockStore, &config.Config{})
+			require.NoError(t, err, "failed to create test server")
 
 			resp, err := server.DeleteGroup(ctx, tc.req)
 			tc.checkResponse(t, resp, err)
@@ -440,7 +443,8 @@ func TestGetGroups_gRPC(t *testing.T) {
 			mockStore := mockdb.NewMockStore(ctrl)
 			tc.buildStubs(mockStore)
 
-			server := NewServer(mockStore, &config.Config{})
+			server, err := NewServer(mockStore, &config.Config{})
+			require.NoError(t, err, "failed to create test server")
 
 			resp, err := server.GetGroups(ctx, tc.req)
 			tc.checkResponse(t, resp, err)
@@ -605,7 +609,8 @@ func TestGetGroup_gRPC(t *testing.T) {
 			mockStore := mockdb.NewMockStore(ctrl)
 			tc.buildStubs(mockStore)
 
-			server := NewServer(mockStore, &config.Config{})
+			server, err := NewServer(mockStore, &config.Config{})
+			require.NoError(t, err, "failed to create test server")
 
 			resp, err := server.GetGroupById(ctx, tc.req)
 			tc.checkResponse(t, resp, err)

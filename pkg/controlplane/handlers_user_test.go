@@ -27,6 +27,7 @@ import (
 	"github.com/stacklok/mediator/pkg/db"
 	"github.com/stacklok/mediator/pkg/util"
 	"github.com/stretchr/testify/assert"
+	"github.com/stretchr/testify/require"
 
 	"google.golang.org/grpc/codes"
 	"google.golang.org/protobuf/types/known/timestamppb"
@@ -198,9 +199,10 @@ func TestCreateUser_gRPC(t *testing.T) {
 
 			mockStore := mockdb.NewMockStore(ctrl)
 			tc.buildStubs(mockStore)
-			server := NewServer(mockStore, &config.Config{
+			server, err := NewServer(mockStore, &config.Config{
 				Salt: config.GetCryptoConfigWithDefaults(),
 			})
+			require.NoError(t, err, "failed to create test server")
 
 			resp, err := server.CreateUser(ctx, tc.req)
 			tc.checkResponse(t, resp, err)
@@ -306,9 +308,10 @@ func TestUpdatePassword_gRPC(t *testing.T) {
 			mockStore := mockdb.NewMockStore(ctrl)
 			tc.buildStubs(mockStore)
 
-			server := NewServer(mockStore, &config.Config{
+			server, err := NewServer(mockStore, &config.Config{
 				Salt: config.GetCryptoConfigWithDefaults(),
 			})
+			require.NoError(t, err, "failed to create test server")
 
 			resp, err := server.UpdatePassword(ctx, tc.req)
 			tc.checkResponse(t, resp, err)
@@ -414,9 +417,10 @@ func TestUpdateProfile_gRPC(t *testing.T) {
 			mockStore := mockdb.NewMockStore(ctrl)
 			tc.buildStubs(mockStore)
 
-			server := NewServer(mockStore, &config.Config{
+			server, err := NewServer(mockStore, &config.Config{
 				Salt: config.GetCryptoConfigWithDefaults(),
 			})
+			require.NoError(t, err, "failed to create test server")
 
 			resp, err := server.UpdateProfile(ctx, tc.req)
 			tc.checkResponse(t, resp, err)
@@ -538,9 +542,10 @@ func TestDeleteUser_gRPC(t *testing.T) {
 			mockStore := mockdb.NewMockStore(ctrl)
 			tc.buildStubs(mockStore)
 
-			server := NewServer(mockStore, &config.Config{
+			server, err := NewServer(mockStore, &config.Config{
 				Salt: config.GetCryptoConfigWithDefaults(),
 			})
+			require.NoError(t, err, "failed to create test server")
 
 			resp, err := server.DeleteUser(ctx, tc.req)
 			tc.checkResponse(t, resp, err)
@@ -694,9 +699,10 @@ func TestGetUsers_gRPC(t *testing.T) {
 			mockStore := mockdb.NewMockStore(ctrl)
 			tc.buildStubs(mockStore)
 
-			server := NewServer(mockStore, &config.Config{
+			server, err := NewServer(mockStore, &config.Config{
 				Salt: config.GetCryptoConfigWithDefaults(),
 			})
+			require.NoError(t, err, "failed to create test server")
 
 			resp, err := server.GetUsers(ctx, tc.req)
 			tc.checkResponse(t, resp, err)
@@ -865,9 +871,10 @@ func TestGetUser_gRPC(t *testing.T) {
 			mockStore := mockdb.NewMockStore(ctrl)
 			tc.buildStubs(mockStore)
 
-			server := NewServer(mockStore, &config.Config{
+			server, err := NewServer(mockStore, &config.Config{
 				Salt: config.GetCryptoConfigWithDefaults(),
 			})
+			require.NoError(t, err, "failed to create test server")
 
 			resp, err := server.GetUserById(ctx, tc.req)
 			tc.checkResponse(t, resp, err)
