@@ -13,7 +13,7 @@
 // See the License for the specific language governing permissions and
 // limitations under the License.
 
-package db
+package config
 
 import (
 	"database/sql"
@@ -26,8 +26,8 @@ import (
 	"github.com/stacklok/mediator/pkg/util"
 )
 
-// Config is the configuration for the database
-type Config struct {
+// DatabaseConfig is the configuration for the database
+type DatabaseConfig struct {
 	Host          string `mapstructure:"dbhost"`
 	Port          int    `mapstructure:"dbport"`
 	User          string `mapstructure:"dbuser"`
@@ -38,13 +38,13 @@ type Config struct {
 }
 
 // GetDBURI returns the database URI
-func (c *Config) GetDBURI() string {
+func (c *DatabaseConfig) GetDBURI() string {
 	return fmt.Sprintf("postgres://%s:%s@%s:%d/%s?sslmode=%s",
 		c.User, c.Password, c.Host, c.Port, c.Name, c.SSLMode)
 }
 
 // GetDBConnection returns a connection to the database
-func (c *Config) GetDBConnection() (*sql.DB, string, error) {
+func (c *DatabaseConfig) GetDBConnection() (*sql.DB, string, error) {
 	conn, err := sql.Open("postgres", c.GetDBURI())
 	if err != nil {
 		return nil, "", err
@@ -61,8 +61,8 @@ func (c *Config) GetDBConnection() (*sql.DB, string, error) {
 	return conn, c.GetDBURI(), err
 }
 
-// RegisterFlags registers the flags for the database configuration
-func RegisterFlags(v *viper.Viper, flags *pflag.FlagSet) error {
+// RegisterDatabaseFlags registers the flags for the database configuration
+func RegisterDatabaseFlags(v *viper.Viper, flags *pflag.FlagSet) error {
 	err := util.BindConfigFlagWithShort(
 		v, flags, "database.dbhost", "db-host", "H", "localhost", "Database host", flags.StringP)
 	if err != nil {

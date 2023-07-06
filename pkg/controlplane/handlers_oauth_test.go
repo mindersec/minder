@@ -21,6 +21,7 @@ import (
 
 	"github.com/golang/mock/gomock"
 	mockdb "github.com/stacklok/mediator/database/mock"
+	"github.com/stacklok/mediator/internal/config"
 	"github.com/stacklok/mediator/pkg/auth"
 	"github.com/stacklok/mediator/pkg/db"
 	pb "github.com/stacklok/mediator/pkg/generated/protobuf/go/mediator/v1"
@@ -33,43 +34,43 @@ import (
 func TestNewOAuthConfig(t *testing.T) {
 
 	// Test with CLI set
-	config, err := auth.NewOAuthConfig("google", true)
+	cfg, err := auth.NewOAuthConfig("google", true)
 	if err != nil {
 		t.Errorf("Error in newOAuthConfig: %v", err)
 	}
 
-	if config.Endpoint != google.Endpoint {
-		t.Errorf("Unexpected endpoint: %v", config.Endpoint)
+	if cfg.Endpoint != google.Endpoint {
+		t.Errorf("Unexpected endpoint: %v", cfg.Endpoint)
 	}
 
 	// Test with CLI set
-	config, err = auth.NewOAuthConfig("github", true)
+	cfg, err = auth.NewOAuthConfig("github", true)
 	if err != nil {
 		t.Errorf("Error in newOAuthConfig: %v", err)
 	}
 
-	if config.Endpoint != github.Endpoint {
-		t.Errorf("Unexpected endpoint: %v", config.Endpoint)
+	if cfg.Endpoint != github.Endpoint {
+		t.Errorf("Unexpected endpoint: %v", cfg.Endpoint)
 	}
 
 	// Test with CLI set
-	config, err = auth.NewOAuthConfig("google", false)
+	cfg, err = auth.NewOAuthConfig("google", false)
 	if err != nil {
 		t.Errorf("Error in newOAuthConfig: %v", err)
 	}
 
-	if config.Endpoint != google.Endpoint {
-		t.Errorf("Unexpected endpoint: %v", config.Endpoint)
+	if cfg.Endpoint != google.Endpoint {
+		t.Errorf("Unexpected endpoint: %v", cfg.Endpoint)
 	}
 
 	// Test with CLI set
-	config, err = auth.NewOAuthConfig("github", false)
+	cfg, err = auth.NewOAuthConfig("github", false)
 	if err != nil {
 		t.Errorf("Error in newOAuthConfig: %v", err)
 	}
 
-	if config.Endpoint != github.Endpoint {
-		t.Errorf("Unexpected endpoint: %v", config.Endpoint)
+	if cfg.Endpoint != github.Endpoint {
+		t.Errorf("Unexpected endpoint: %v", cfg.Endpoint)
 	}
 
 	_, err = auth.NewOAuthConfig("invalid", true)
@@ -165,7 +166,7 @@ func TestRevokeOauthTokens_gRPC(t *testing.T) {
 	mockStore := mockdb.NewMockStore(ctrl)
 	mockStore.EXPECT().GetAccessTokenByProvider(gomock.Any(), gomock.Any())
 
-	server := NewServer(mockStore)
+	server := NewServer(mockStore, &config.Config{})
 
 	res, err := server.RevokeOauthTokens(ctx, &pb.RevokeOauthTokensRequest{Provider: auth.Github})
 
@@ -188,7 +189,7 @@ func RevokeOauthGroupToken_gRPC(t *testing.T) {
 	mockStore := mockdb.NewMockStore(ctrl)
 	mockStore.EXPECT().GetAccessTokenByGroupID(gomock.Any(), gomock.Any())
 
-	server := NewServer(mockStore)
+	server := NewServer(mockStore, &config.Config{})
 
 	res, err := server.RevokeOauthGroupToken(ctx, &pb.RevokeOauthGroupTokenRequest{Provider: auth.Github, GroupId: 1})
 

@@ -23,6 +23,7 @@ import (
 
 	"github.com/golang/mock/gomock"
 
+	"github.com/stacklok/mediator/internal/config"
 	"github.com/stacklok/mediator/pkg/auth"
 	"github.com/stacklok/mediator/pkg/db"
 	"github.com/stretchr/testify/assert"
@@ -189,7 +190,7 @@ func TestCreateRole_gRPC(t *testing.T) {
 			mockStore := mockdb.NewMockStore(ctrl)
 			tc.buildStubs(mockStore)
 
-			server := NewServer(mockStore)
+			server := NewServer(mockStore, &config.Config{})
 
 			resp, err := server.CreateRoleByGroup(ctx, tc.req)
 			tc.checkResponse(t, resp, err)
@@ -296,7 +297,7 @@ func TestDeleteRole_gRPC(t *testing.T) {
 			mockStore := mockdb.NewMockStore(ctrl)
 			tc.buildStubs(mockStore)
 
-			server := NewServer(mockStore)
+			server := NewServer(mockStore, &config.Config{})
 
 			resp, err := server.DeleteRole(ctx, tc.req)
 			tc.checkResponse(t, resp, err)
@@ -441,7 +442,7 @@ func TestGetRoles_gRPC(t *testing.T) {
 			mockStore := mockdb.NewMockStore(ctrl)
 			tc.buildStubs(mockStore)
 
-			server := NewServer(mockStore)
+			server := NewServer(mockStore, &config.Config{})
 
 			resp, err := server.GetRoles(ctx, tc.req)
 			tc.checkResponse(t, resp, err)
@@ -595,7 +596,7 @@ func TestGetRole_gRPC(t *testing.T) {
 			mockStore := mockdb.NewMockStore(ctrl)
 			tc.buildStubs(mockStore)
 
-			server := NewServer(mockStore)
+			server := NewServer(mockStore, &config.Config{})
 
 			resp, err := server.GetRoleById(ctx, tc.req)
 			tc.checkResponse(t, resp, err)

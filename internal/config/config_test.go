@@ -24,7 +24,6 @@ import (
 	"github.com/stretchr/testify/require"
 
 	"github.com/stacklok/mediator/internal/config"
-	"github.com/stacklok/mediator/pkg/controlplane"
 )
 
 func TestReadValidConfig(t *testing.T) {
@@ -68,8 +67,8 @@ grpc_server:
 	v := viper.New()
 	flags := pflag.NewFlagSet("test", pflag.ContinueOnError)
 
-	require.NoError(t, controlplane.RegisterHTTPServerFlags(v, flags), "Unexpected error")
-	require.NoError(t, controlplane.RegisterGRPCServerFlags(v, flags), "Unexpected error")
+	require.NoError(t, config.RegisterHTTPServerFlags(v, flags), "Unexpected error")
+	require.NoError(t, config.RegisterGRPCServerFlags(v, flags), "Unexpected error")
 
 	v.SetConfigType("yaml")
 	require.NoError(t, v.ReadConfig(cfgbuf), "Unexpected error")
@@ -100,8 +99,8 @@ grpc_server:
 	v := viper.New()
 	flags := pflag.NewFlagSet("test", pflag.ContinueOnError)
 
-	require.NoError(t, controlplane.RegisterHTTPServerFlags(v, flags), "Unexpected error")
-	require.NoError(t, controlplane.RegisterGRPCServerFlags(v, flags), "Unexpected error")
+	require.NoError(t, config.RegisterHTTPServerFlags(v, flags), "Unexpected error")
+	require.NoError(t, config.RegisterGRPCServerFlags(v, flags), "Unexpected error")
 
 	require.NoError(t, flags.Parse([]string{"--http-host=foo", "--http-port=1234", "--grpc-host=bar", "--grpc-port=5678"}))
 

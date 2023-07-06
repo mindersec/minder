@@ -22,6 +22,7 @@ import (
 
 	"github.com/golang/mock/gomock"
 
+	"github.com/stacklok/mediator/internal/config"
 	"github.com/stacklok/mediator/pkg/auth"
 	"github.com/stacklok/mediator/pkg/db"
 	"github.com/stacklok/mediator/pkg/util"
@@ -89,6 +90,9 @@ func TestCreateUserDBMock(t *testing.T) {
 
 	server := &Server{
 		store: mockStore,
+		cfg: &config.Config{
+			Salt: config.GetCryptoConfigWithDefaults(),
+		},
 	}
 
 	response, err := server.CreateUser(ctx, request)
@@ -194,8 +198,9 @@ func TestCreateUser_gRPC(t *testing.T) {
 
 			mockStore := mockdb.NewMockStore(ctrl)
 			tc.buildStubs(mockStore)
-
-			server := NewServer(mockStore)
+			server := NewServer(mockStore, &config.Config{
+				Salt: config.GetCryptoConfigWithDefaults(),
+			})
 
 			resp, err := server.CreateUser(ctx, tc.req)
 			tc.checkResponse(t, resp, err)
@@ -228,6 +233,9 @@ func TestUpdatePasswordDBMock(t *testing.T) {
 
 	server := &Server{
 		store: mockStore,
+		cfg: &config.Config{
+			Salt: config.GetCryptoConfigWithDefaults(),
+		},
 	}
 
 	response, err := server.UpdatePassword(ctx, request)
@@ -298,7 +306,9 @@ func TestUpdatePassword_gRPC(t *testing.T) {
 			mockStore := mockdb.NewMockStore(ctrl)
 			tc.buildStubs(mockStore)
 
-			server := NewServer(mockStore)
+			server := NewServer(mockStore, &config.Config{
+				Salt: config.GetCryptoConfigWithDefaults(),
+			})
 
 			resp, err := server.UpdatePassword(ctx, tc.req)
 			tc.checkResponse(t, resp, err)
@@ -329,6 +339,9 @@ func TestUpdateProfileDBMock(t *testing.T) {
 
 	server := &Server{
 		store: mockStore,
+		cfg: &config.Config{
+			Salt: config.GetCryptoConfigWithDefaults(),
+		},
 	}
 
 	response, err := server.store.UpdateUser(ctx, db.UpdateUserParams{ID: 1, Email: sql.NullString{String: email, Valid: true},
@@ -401,7 +414,9 @@ func TestUpdateProfile_gRPC(t *testing.T) {
 			mockStore := mockdb.NewMockStore(ctrl)
 			tc.buildStubs(mockStore)
 
-			server := NewServer(mockStore)
+			server := NewServer(mockStore, &config.Config{
+				Salt: config.GetCryptoConfigWithDefaults(),
+			})
 
 			resp, err := server.UpdateProfile(ctx, tc.req)
 			tc.checkResponse(t, resp, err)
@@ -447,6 +462,9 @@ func TestDeleteUserDBMock(t *testing.T) {
 
 	server := &Server{
 		store: mockStore,
+		cfg: &config.Config{
+			Salt: config.GetCryptoConfigWithDefaults(),
+		},
 	}
 
 	response, err := server.DeleteUser(ctx, request)
@@ -520,7 +538,9 @@ func TestDeleteUser_gRPC(t *testing.T) {
 			mockStore := mockdb.NewMockStore(ctrl)
 			tc.buildStubs(mockStore)
 
-			server := NewServer(mockStore)
+			server := NewServer(mockStore, &config.Config{
+				Salt: config.GetCryptoConfigWithDefaults(),
+			})
 
 			resp, err := server.DeleteUser(ctx, tc.req)
 			tc.checkResponse(t, resp, err)
@@ -567,6 +587,9 @@ func TestGetUsersDBMock(t *testing.T) {
 
 	server := &Server{
 		store: mockStore,
+		cfg: &config.Config{
+			Salt: config.GetCryptoConfigWithDefaults(),
+		},
 	}
 
 	response, err := server.GetUsers(ctx, request)
@@ -671,7 +694,9 @@ func TestGetUsers_gRPC(t *testing.T) {
 			mockStore := mockdb.NewMockStore(ctrl)
 			tc.buildStubs(mockStore)
 
-			server := NewServer(mockStore)
+			server := NewServer(mockStore, &config.Config{
+				Salt: config.GetCryptoConfigWithDefaults(),
+			})
 
 			resp, err := server.GetUsers(ctx, tc.req)
 			tc.checkResponse(t, resp, err)
@@ -710,6 +735,9 @@ func TestGetUserDBMock(t *testing.T) {
 
 	server := &Server{
 		store: mockStore,
+		cfg: &config.Config{
+			Salt: config.GetCryptoConfigWithDefaults(),
+		},
 	}
 
 	response, err := server.GetUserById(ctx, request)
@@ -748,6 +776,9 @@ func TestGetNonExistingUserDBMock(t *testing.T) {
 
 	server := &Server{
 		store: mockStore,
+		cfg: &config.Config{
+			Salt: config.GetCryptoConfigWithDefaults(),
+		},
 	}
 
 	response, err := server.GetUserById(ctx, request)
@@ -834,7 +865,9 @@ func TestGetUser_gRPC(t *testing.T) {
 			mockStore := mockdb.NewMockStore(ctrl)
 			tc.buildStubs(mockStore)
 
-			server := NewServer(mockStore)
+			server := NewServer(mockStore, &config.Config{
+				Salt: config.GetCryptoConfigWithDefaults(),
+			})
 
 			resp, err := server.GetUserById(ctx, tc.req)
 			tc.checkResponse(t, resp, err)

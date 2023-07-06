@@ -28,7 +28,6 @@ import (
 	"github.com/ThreeDotsLabs/watermill/pubsub/gochannel"
 	"github.com/grpc-ecosystem/grpc-gateway/v2/runtime"
 	"github.com/prometheus/client_golang/prometheus/promhttp"
-	"github.com/spf13/viper"
 	"go.opentelemetry.io/contrib/instrumentation/google.golang.org/grpc/otelgrpc"
 	"go.opentelemetry.io/otel"
 	"go.opentelemetry.io/otel/exporters/prometheus"
@@ -45,6 +44,7 @@ import (
 
 	_ "github.com/lib/pq" // nolint
 
+	"github.com/stacklok/mediator/internal/config"
 	"github.com/stacklok/mediator/internal/logger"
 	"github.com/stacklok/mediator/pkg/db"
 	pb "github.com/stacklok/mediator/pkg/generated/protobuf/go/mediator/v1"
@@ -60,6 +60,7 @@ var (
 // Server represents the controlplane server
 type Server struct {
 	store      db.Store
+	cfg        *config.Config
 	grpcServer *grpc.Server
 	pb.UnimplementedHealthServiceServer
 	pb.UnimplementedOAuthServiceServer
@@ -76,23 +77,21 @@ type Server struct {
 }
 
 // NewServer creates a new server instance
-func NewServer(store db.Store) *Server {
+func NewServer(store db.Store, cfg *config.Config) *Server {
 	server := &Server{
 		store: store,
+		cfg:   cfg,
 	}
 	return server
 }
 
-func initTracer() (*sdktrace.TracerProvider, error) {
+func (s *Server) initTracer() (*sdktrace.TracerProvider, error) {
 	// create a stdout exporter to show collected spans out to stdout.
 	exporter, err := stdout.New(stdout.WithPrettyPrint())
 	if err != nil {
 		return nil, err
 	}
-	// for the demonstration, we use AlwaysSmaple sampler to take all spans.
-	// do not use this option in production.
-	viper.SetDefault("tracing.sample_ratio", 0.1)
-	sample_ratio := viper.GetFloat64("tracing.sample_ratio")
+	sample_ratio := s.cfg.Tracing.SampleRatio
 	sampler := sdktrace.ParentBased(sdktrace.TraceIDRatioBased(sample_ratio))
 
 	tp := sdktrace.NewTracerProvider(
@@ -124,34 +123,23 @@ func initMetrics(r sdkmetric.Reader) *sdkmetric.MeterProvider {
 }
 
 // StartGRPCServer starts a gRPC server and blocks while serving.
-func (s *Server) StartGRPCServer(ctx context.Context, address string, store db.Store) error {
-	lis, err := net.Listen("tcp", address)
+func (s *Server) StartGRPCServer(ctx context.Context) error {
+	lis, err := net.Listen("tcp", s.cfg.GRPCServer.GetAddress())
 	if err != nil {
 		log.Fatalf("failed to listen: %v", err)
 	}
 
-	server := NewServer(store)
-
-	if err != nil {
-		log.Fatal("Cannot create server: ", err)
-	}
-
-	log.Println("Initializing logger in level: " + viper.GetString("logging.level"))
-
-	viper.SetDefault("logging.level", "debug")
-	viper.SetDefault("logging.format", "json")
-	viper.SetDefault("logging.logFile", "")
-	viper.SetDefault("tracing.enabled", false)
+	log.Println("Initializing logger in level: " + s.cfg.LoggingConfig.Level)
 
 	// add logger and tracing (if enabled)
 	interceptors := []grpc.UnaryServerInterceptor{
 		// TODO: this has no test coverage!
 		util.SanitizingInterceptor(),
-		logger.Interceptor(viper.GetString("logging.level"),
-			viper.GetString("logging.format"), viper.GetString("logging.logFile")),
+		logger.Interceptor(s.cfg.LoggingConfig.Level,
+			s.cfg.LoggingConfig.Format, s.cfg.LoggingConfig.LogFile),
 		AuthUnaryInterceptor,
 	}
-	otelGRPCOpts := getOTELGRPCInterceptorOpts(viper.GetBool("tracing.enabled"), viper.GetBool("metrics.enabled"))
+	otelGRPCOpts := s.getOTELGRPCInterceptorOpts()
 	if len(otelGRPCOpts) > 0 {
 		interceptors = append(interceptors, otelgrpc.UnaryServerInterceptor(otelGRPCOpts...))
 	}
@@ -161,16 +149,14 @@ func (s *Server) StartGRPCServer(ctx context.Context, address string, store db.S
 		grpc.ChainUnaryInterceptor(interceptors...),
 	)
 
-	server.grpcServer = s.grpcServer
-
 	// register the services (declared within register_handlers.go)
-	RegisterGRPCServices(server)
+	RegisterGRPCServices(s)
 
 	reflection.Register(s.grpcServer)
 
 	errch := make(chan error)
 
-	log.Printf("Starting gRPC server on %s", address)
+	log.Printf("Starting gRPC server on %s", s.cfg.GRPCServer.GetAddress())
 
 	go func() {
 		if err := s.grpcServer.Serve(lis); err != nil {
@@ -190,13 +176,13 @@ func (s *Server) StartGRPCServer(ctx context.Context, address string, store db.S
 }
 
 // getOTELGRPCInterceptorOpts gathers relevant options and
-func getOTELGRPCInterceptorOpts(addTracing, addMetrics bool) []otelgrpc.Option {
+func (s *Server) getOTELGRPCInterceptorOpts() []otelgrpc.Option {
 	opts := []otelgrpc.Option{}
-	if addTracing {
+	if s.cfg.Tracing.Enabled {
 		opts = append(opts, otelgrpc.WithTracerProvider(otel.GetTracerProvider()))
 	}
 
-	if addMetrics {
+	if s.cfg.Metrics.Enabled {
 		opts = append(opts, otelgrpc.WithMeterProvider(otel.GetMeterProvider()))
 	}
 
@@ -205,15 +191,14 @@ func getOTELGRPCInterceptorOpts(addTracing, addMetrics bool) []otelgrpc.Option {
 
 // StartHTTPServer starts a HTTP server and registers the gRPC handler mux to it
 // set store as a blank identifier for now as we will use it in the future
-func StartHTTPServer(ctx context.Context, address, grpcAddress string, _ db.Store) error {
+func (s *Server) StartHTTPServer(ctx context.Context) error {
 
 	mux := http.NewServeMux()
 
-	viper.SetDefault("tracing.enabled", false)
-	addTracing := viper.GetBool("tracing.enabled")
+	addTracing := s.cfg.Tracing.Enabled
 
 	if addTracing {
-		tp, err := initTracer()
+		tp, err := s.initTracer()
 		if err != nil {
 			return fmt.Errorf("failed to initialize TracerProvider: %w", err)
 		}
@@ -222,8 +207,7 @@ func StartHTTPServer(ctx context.Context, address, grpcAddress string, _ db.Stor
 		})
 	}
 
-	viper.SetDefault("metrics.enabled", true)
-	addMeter := viper.GetBool("metrics.enabled")
+	addMeter := s.cfg.Metrics.Enabled
 
 	if addMeter {
 		// Pull-based Prometheus exporter
@@ -254,17 +238,17 @@ func StartHTTPServer(ctx context.Context, address, grpcAddress string, _ db.Stor
 	opts := []grpc.DialOption{grpc.WithTransportCredentials(insecure.NewCredentials())}
 
 	// register the services (declared within register_handlers.go)
-	RegisterGatewayHTTPHandlers(ctx, gwmux, grpcAddress, opts)
+	RegisterGatewayHTTPHandlers(ctx, gwmux, s.cfg.GRPCServer.GetAddress(), opts)
 
 	mux.Handle("/", gwmux)
 	mux.HandleFunc("/api/v1/webhook/", HandleGitHubWebHook(publisher))
 
 	errch := make(chan error)
 
-	log.Printf("Starting HTTP server on %s", address)
+	log.Printf("Starting HTTP server on %s", s.cfg.HTTPServer.GetAddress())
 
 	server := http.Server{
-		Addr:              address,
+		Addr:              s.cfg.HTTPServer.GetAddress(),
 		Handler:           mux,
 		ReadHeaderTimeout: readHeaderTimeout,
 	}

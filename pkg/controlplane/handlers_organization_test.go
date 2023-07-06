@@ -23,6 +23,7 @@ import (
 
 	"github.com/golang/mock/gomock"
 
+	"github.com/stacklok/mediator/internal/config"
 	"github.com/stacklok/mediator/pkg/auth"
 	"github.com/stacklok/mediator/pkg/db"
 	"github.com/stretchr/testify/assert"
@@ -187,7 +188,7 @@ func TestCreateOrganization_gRPC(t *testing.T) {
 			mockStore := mockdb.NewMockStore(ctrl)
 			tc.buildStubs(mockStore)
 
-			server := NewServer(mockStore)
+			server := NewServer(mockStore, &config.Config{})
 
 			resp, err := server.CreateOrganization(ctx, tc.req)
 			tc.checkResponse(t, resp, err)
@@ -328,7 +329,7 @@ func TestGetOrganizations_gRPC(t *testing.T) {
 			mockStore := mockdb.NewMockStore(ctrl)
 			tc.buildStubs(mockStore)
 
-			server := NewServer(mockStore)
+			server := NewServer(mockStore, &config.Config{})
 
 			resp, err := server.GetOrganizations(ctx, tc.req)
 			tc.checkResponse(t, resp, err)
@@ -496,7 +497,7 @@ func TestGetOrganization_gRPC(t *testing.T) {
 			mockStore := mockdb.NewMockStore(ctrl)
 			tc.buildStubs(mockStore)
 
-			server := NewServer(mockStore)
+			server := NewServer(mockStore, &config.Config{})
 
 			resp, err := server.GetOrganization(ctx, tc.req)
 			tc.checkResponse(t, resp, err)
@@ -663,7 +664,7 @@ func TestGetOrganizationByName_gRPC(t *testing.T) {
 			mockStore := mockdb.NewMockStore(ctrl)
 			tc.buildStubs(mockStore)
 
-			server := NewServer(mockStore)
+			server := NewServer(mockStore, &config.Config{})
 
 			resp, err := server.GetOrganizationByName(ctx, tc.req)
 			tc.checkResponse(t, resp, err)
@@ -779,7 +780,7 @@ func TestDeleteOrganization_gRPC(t *testing.T) {
 			mockStore := mockdb.NewMockStore(ctrl)
 			tc.buildStubs(mockStore)
 
-			server := NewServer(mockStore)
+			server := NewServer(mockStore, &config.Config{})
 
 			resp, err := server.DeleteOrganization(ctx, tc.req)
 			tc.checkResponse(t, resp, err)

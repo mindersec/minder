@@ -89,7 +89,7 @@ func (s *Server) CreateUser(ctx context.Context,
 	}
 
 	// hash the password for storing in the database
-	pHash, err := mcrypto.GeneratePasswordHash(*in.Password)
+	pHash, err := mcrypto.GeneratePasswordHash(*in.Password, &s.cfg.Salt)
 	if err != nil {
 		return nil, err
 	}
@@ -584,7 +584,7 @@ func (s *Server) UpdatePassword(ctx context.Context, in *pb.UpdatePasswordReques
 	}
 
 	// hash the password for storing in the database
-	pHash, err := mcrypto.GeneratePasswordHash(in.Password)
+	pHash, err := mcrypto.GeneratePasswordHash(in.Password, &s.cfg.Salt)
 	if err != nil {
 		return nil, status.Errorf(codes.Internal, "failed to generate password hash: %s", err)
 	}

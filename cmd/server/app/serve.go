@@ -52,21 +52,17 @@ var serveCmd = &cobra.Command{
 
 		store := db.NewStore(dbConn)
 
-		// Set up the addresse strings
-		httpAddress := fmt.Sprintf("%s:%d", cfg.HTTPServer.Host, cfg.HTTPServer.Port)
-		grpcAddress := fmt.Sprintf("%s:%d", cfg.GRPCServer.Host, cfg.GRPCServer.Port)
-
 		errg, ctx := errgroup.WithContext(ctx)
 
-		s := controlplane.Server{}
+		s := controlplane.NewServer(store, cfg)
 
 		// Start the gRPC and HTTP server in separate goroutines
 		errg.Go(func() error {
-			return s.StartGRPCServer(ctx, grpcAddress, store)
+			return s.StartGRPCServer(ctx)
 		})
 
 		errg.Go(func() error {
-			return controlplane.StartHTTPServer(ctx, httpAddress, grpcAddress, store)
+			return s.StartHTTPServer(ctx)
 		})
 
 		return errg.Wait()
@@ -75,12 +71,14 @@ var serveCmd = &cobra.Command{
 
 func init() {
 	RootCmd.AddCommand(serveCmd)
+
 	v := viper.GetViper()
-	if err := controlplane.RegisterHTTPServerFlags(v, serveCmd.Flags()); err != nil {
+
+	if err := config.RegisterHTTPServerFlags(v, serveCmd.Flags()); err != nil {
 		log.Fatal(err)
 	}
 
-	if err := controlplane.RegisterGRPCServerFlags(v, serveCmd.Flags()); err != nil {
+	if err := config.RegisterGRPCServerFlags(v, serveCmd.Flags()); err != nil {
 		log.Fatal(err)
 	}
 
