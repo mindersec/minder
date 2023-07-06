@@ -19,6 +19,8 @@ package events
 
 import (
 	"context"
+	"reflect"
+	"runtime"
 	"time"
 
 	"github.com/ThreeDotsLabs/watermill"
@@ -26,6 +28,31 @@ import (
 	"github.com/ThreeDotsLabs/watermill/message/router/middleware"
 	"github.com/ThreeDotsLabs/watermill/pubsub/gochannel"
 )
+
+// type Handler is an alias for the watermill handler type
+type Handler = message.NoPublishHandlerFunc
+
+// Registrar provides an interface which allows an event router to expose
+// itself to event consumers.
+type Registrar interface {
+	// Register requests that the message router calls handler for each message on topic.
+	// It is valid to call Register multiple times with the same topic and different handler
+	// functions, or to call Register multiple times with different topics and the same
+	// handler function.  It's allowed to call Register with both argument the same, but
+	// then events will be delivered twice to the handler, which is probably not what you want.
+	Register(topic string, handler Handler)
+
+	// HandleAll registers all the consumers with the registrar
+	// TODO: should this be a different interface?
+	ConsumeEvents(consumers ...Consumer)
+}
+
+// Consumer is an interface implemented by components which wish to consume events.
+// Once a component has implemented the consumer interface, it can be registered with an
+// event router using the HandleAll interface.
+type Consumer interface {
+	Register(Registrar)
+}
 
 // Eventer is a wrapper over the relevant eventing objects in such
 // a way that they can be easily accessible and configurable.
@@ -38,9 +65,11 @@ type Eventer struct {
 	// TODO: We'll have a Final publisher that will publish to the final topic
 }
 
-// SetUpEventer creates an Eventer object which isolates the watermill setup code
+var _ Registrar = (*Eventer)(nil)
+
+// Setup creates an Eventer object which isolates the watermill setup code
 // TODO: pass in logger
-func SetUpEventer() (*Eventer, error) {
+func Setup() (*Eventer, error) {
 	l := watermill.NewStdLogger(false, false)
 	router, err := message.NewRouter(message.RouterConfig{}, l)
 	if err != nil {
@@ -79,28 +108,28 @@ func (e *Eventer) Close() error {
 	return e.Router.Close()
 }
 
-// Run runs the router
+// Run runs the router, and returns a close function.
 func (e *Eventer) Run(ctx context.Context) error {
-	defer e.Close()
 	return e.Router.Run(ctx)
 }
 
 // Subscribe subscribes to a topic and handles incoming messages
-func (e *Eventer) Subscribe(
+func (e *Eventer) Register(
 	topic string,
 	handler message.NoPublishHandlerFunc,
 ) {
+	// From https://stackoverflow.com/questions/7052693/how-to-get-the-name-of-a-function-in-go
+	funcName := runtime.FuncForPC(reflect.ValueOf(handler).Pointer()).Name()
 	e.Router.AddNoPublisherHandler(
-		topic,
+		funcName,
 		topic,
 		e.WebhookSubscriber,
 		handler,
 	)
 }
 
-// SubscribeAll subscribes to all the topics in the registrar
-func (e *Eventer) SubscribeAll(r *Registrar) {
-	r.Walk(func(topic string, handler message.NoPublishHandlerFunc) {
-		e.Subscribe(topic, handler)
-	})
+func (e *Eventer) ConsumeEvents(consumers ...Consumer) {
+	for _, c := range consumers {
+		c.Register(e)
+	}
 }

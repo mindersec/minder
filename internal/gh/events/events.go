@@ -22,27 +22,24 @@ import (
 
 	"github.com/ThreeDotsLabs/watermill/message"
 	"github.com/stacklok/mediator/internal/events"
+	"github.com/stacklok/mediator/pkg/db"
 )
 
-var (
-	reg *events.Registrar
-)
-
-func init() {
-	reg = initRegistrar()
+type sampleHandler struct {
+	// This is a sample field that does nothing; this could be (for example)
+	// a github client API handle
+	store db.Store
 }
 
-func initRegistrar() (r *events.Registrar) {
-	r = events.NewRegistrar()
-
-	r.RegisterHandler("security_and_analysis", handleSecurityAndAnalysisEvent)
-
-	return r
+// SampleHandler implements the Consumer interface
+func (h *sampleHandler) Register(r events.Registrar) {
+	r.Register("security_and_analysis", handleSecurityAndAnalysisEvent)
 }
 
-// GetRegistrar returns the registrar for GitHub events
-func GetRegistrar() *events.Registrar {
-	return reg
+func NewHandler(store db.Store) events.Consumer {
+	return &sampleHandler{
+		store: store,
+	}
 }
 
 func handleSecurityAndAnalysisEvent(msg *message.Message) error {
