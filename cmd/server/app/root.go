@@ -22,7 +22,8 @@ import (
 
 	"github.com/spf13/cobra"
 	"github.com/spf13/viper"
-	"github.com/stacklok/mediator/pkg/db"
+
+	"github.com/stacklok/mediator/internal/config"
 	"github.com/stacklok/mediator/pkg/util"
 )
 
@@ -46,12 +47,14 @@ func Execute() {
 func init() {
 	cobra.OnInitialize(initConfig)
 	RootCmd.PersistentFlags().StringVar(&cfgFile, "config", "", "config file (default is $PWD/config.yaml)")
-	if err := db.RegisterFlags(viper.GetViper(), RootCmd.PersistentFlags()); err != nil {
+	if err := config.RegisterDatabaseFlags(viper.GetViper(), RootCmd.PersistentFlags()); err != nil {
 		log.Fatal(err)
 	}
 }
 
 func initConfig() {
+	config.SetViperDefaults(viper.GetViper())
+
 	if cfgFile != "" {
 		viper.SetConfigFile(cfgFile)
 	} else {

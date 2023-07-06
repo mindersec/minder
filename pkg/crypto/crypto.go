@@ -36,35 +36,11 @@ import (
 	"io"
 
 	"github.com/spf13/viper"
+	"github.com/stacklok/mediator/internal/config"
 	"golang.org/x/crypto/argon2"
 	"google.golang.org/grpc/codes"
 	"google.golang.org/grpc/status"
 )
-
-type params struct {
-	memory      uint32
-	iterations  uint32
-	parallelism uint
-	saltLength  uint32
-	keyLength   uint32
-}
-
-func getParams() *params {
-	// set default values when not set
-	viper.SetDefault("salt.memory", 64*1024)
-	viper.SetDefault("salt.iterations", 3)
-	viper.SetDefault("salt.parallelism", 2)
-	viper.SetDefault("salt.salt_length", 16)
-	viper.SetDefault("salt.key_length", 32)
-
-	return &params{
-		memory:      viper.GetUint32("salt.memory"),
-		iterations:  viper.GetUint32("salt.iterations"),
-		parallelism: viper.GetUint("salt.parallelism"),
-		saltLength:  viper.GetUint32("salt.salt_length"),
-		keyLength:   viper.GetUint32("salt.key_length"),
-	}
-}
 
 var (
 	// ErrInvalidHash is returned when the encoded hash is not in the correct format
@@ -182,16 +158,14 @@ func deriveKey(passphrase string) []byte {
 }
 
 // GeneratePasswordHash generates a hash of a password using Argon2id.
-func GeneratePasswordHash(password string) (encodedHash string, err error) {
+func GeneratePasswordHash(password string, p *config.CryptoConfig) (encodedHash string, err error) {
 
-	p := getParams()
-
-	salt, err := generateRandomBytes(p.saltLength)
+	salt, err := generateRandomBytes(p.SaltLength)
 	if err != nil {
 		return "", err
 	}
 
-	hash := argon2.IDKey([]byte(password), salt, p.iterations, p.memory, uint8(p.parallelism), p.keyLength)
+	hash := argon2.IDKey([]byte(password), salt, p.Iterations, p.Memory, uint8(p.Parallelism), p.KeyLength)
 
 	// Base64 encode the salt and hashed password.
 	b64Salt := base64.RawStdEncoding.EncodeToString(salt)
@@ -199,7 +173,7 @@ func GeneratePasswordHash(password string) (encodedHash string, err error) {
 
 	// Return a string using the standard encoded hash representation.
 	encodedHash = fmt.Sprintf("$argon2id$v=%d$m=%d,t=%d,p=%d$%s$%s", argon2.Version,
-		p.memory, p.iterations, p.parallelism, b64Salt, b64Hash)
+		p.Memory, p.Iterations, p.Parallelism, b64Salt, b64Hash)
 
 	return encodedHash, nil
 }
@@ -224,7 +198,7 @@ func VerifyPasswordHash(password, encodedHash string) (match bool, err error) {
 	}
 
 	// Derive the key from the other password using the same parameters.
-	otherHash := argon2.IDKey([]byte(password), salt, p.iterations, p.memory, uint8(p.parallelism), p.keyLength)
+	otherHash := argon2.IDKey([]byte(password), salt, p.Iterations, p.Memory, uint8(p.Parallelism), p.KeyLength)
 
 	// Check that the contents of the hashed passwords are identical. Note
 	// that we are using the subtle.ConstantTimeCompare() function for this
@@ -235,7 +209,7 @@ func VerifyPasswordHash(password, encodedHash string) (match bool, err error) {
 	return false, nil
 }
 
-func decodeHash(encodedHash string) (p *params, salt, hash []byte, err error) {
+func decodeHash(encodedHash string) (p *config.CryptoConfig, salt, hash []byte, err error) {
 	vals := strings.Split(encodedHash, "$")
 	if len(vals) != 6 {
 		return nil, nil, nil, ErrInvalidHash
@@ -250,8 +224,8 @@ func decodeHash(encodedHash string) (p *params, salt, hash []byte, err error) {
 		return nil, nil, nil, ErrIncompatibleVersion
 	}
 
-	p = &params{}
-	_, err = fmt.Sscanf(vals[3], "m=%d,t=%d,p=%d", &p.memory, &p.iterations, &p.parallelism)
+	p = &config.CryptoConfig{}
+	_, err = fmt.Sscanf(vals[3], "m=%d,t=%d,p=%d", &p.Memory, &p.Iterations, &p.Parallelism)
 	if err != nil {
 		return nil, nil, nil, err
 	}
@@ -260,13 +234,13 @@ func decodeHash(encodedHash string) (p *params, salt, hash []byte, err error) {
 	if err != nil {
 		return nil, nil, nil, err
 	}
-	p.saltLength = uint32(len(salt))
+	p.SaltLength = uint32(len(salt))
 
 	hash, err = base64.RawStdEncoding.Strict().DecodeString(vals[5])
 	if err != nil {
 		return nil, nil, nil, err
 	}
-	p.keyLength = uint32(len(hash))
+	p.KeyLength = uint32(len(hash))
 
 	return p, salt, hash, nil
 }

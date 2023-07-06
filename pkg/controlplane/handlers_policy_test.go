@@ -22,6 +22,7 @@ import (
 
 	"github.com/golang/mock/gomock"
 
+	"github.com/stacklok/mediator/internal/config"
 	"github.com/stacklok/mediator/pkg/auth"
 	"github.com/stacklok/mediator/pkg/db"
 	"github.com/stretchr/testify/assert"
@@ -162,7 +163,7 @@ func TestCreatePolicy_gRPC(t *testing.T) {
 			mockStore := mockdb.NewMockStore(ctrl)
 			tc.buildStubs(mockStore)
 
-			server := NewServer(mockStore)
+			server := NewServer(mockStore, &config.Config{})
 
 			resp, err := server.CreatePolicy(ctx, tc.req)
 			tc.checkResponse(t, resp, err)
@@ -263,7 +264,7 @@ func TestDeletePolicy_gRPC(t *testing.T) {
 			mockStore := mockdb.NewMockStore(ctrl)
 			tc.buildStubs(mockStore)
 
-			server := NewServer(mockStore)
+			server := NewServer(mockStore, &config.Config{})
 
 			resp, err := server.DeletePolicy(ctx, tc.req)
 			tc.checkResponse(t, resp, err)
@@ -389,7 +390,7 @@ func TestGetPolicies_gRPC(t *testing.T) {
 			mockStore := mockdb.NewMockStore(ctrl)
 			tc.buildStubs(mockStore)
 
-			server := NewServer(mockStore)
+			server := NewServer(mockStore, &config.Config{})
 
 			resp, err := server.GetPolicies(ctx, tc.req)
 			tc.checkResponse(t, resp, err)

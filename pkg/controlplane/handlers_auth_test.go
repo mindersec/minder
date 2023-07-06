@@ -23,21 +23,24 @@ import (
 
 	"github.com/golang/mock/gomock"
 	"github.com/spf13/viper"
+	"github.com/stretchr/testify/assert"
+	"google.golang.org/grpc/codes"
+	"google.golang.org/grpc/metadata"
+
 	mockdb "github.com/stacklok/mediator/database/mock"
+	"github.com/stacklok/mediator/internal/config"
 	"github.com/stacklok/mediator/pkg/auth"
 	mcrypto "github.com/stacklok/mediator/pkg/crypto"
 	"github.com/stacklok/mediator/pkg/db"
 	pb "github.com/stacklok/mediator/pkg/generated/protobuf/go/mediator/v1"
 	"github.com/stacklok/mediator/pkg/util"
-	"github.com/stretchr/testify/assert"
-	"google.golang.org/grpc/codes"
-	"google.golang.org/grpc/metadata"
 )
 
 func TestLogin_gRPC(t *testing.T) {
 	seed := time.Now().UnixNano()
 	password := util.RandomPassword(8, seed)
-	hash, err := mcrypto.GeneratePasswordHash(password)
+	cryptcfg := config.GetCryptoConfigWithDefaults()
+	hash, err := mcrypto.GeneratePasswordHash(password, &cryptcfg)
 	if err != nil {
 		t.Fatalf("Error generating password hash: %v", err)
 	}
@@ -114,7 +117,7 @@ func TestLogin_gRPC(t *testing.T) {
 			mockStore := mockdb.NewMockStore(ctrl)
 			tc.buildStubs(mockStore)
 
-			server := NewServer(mockStore)
+			server := NewServer(mockStore, &config.Config{})
 
 			resp, err := server.LogIn(context.Background(), tc.req)
 			tc.checkResponse(t, resp, err)
@@ -140,7 +143,7 @@ func TestLogout_gRPC(t *testing.T) {
 	mockStore := mockdb.NewMockStore(ctrl)
 	mockStore.EXPECT().RevokeUserToken(gomock.Any(), gomock.Any())
 
-	server := NewServer(mockStore)
+	server := NewServer(mockStore, &config.Config{})
 
 	res, err := server.LogOut(ctx, &pb.LogOutRequest{})
 
@@ -163,7 +166,7 @@ func TestRevokeTokens_gRPC(t *testing.T) {
 	mockStore := mockdb.NewMockStore(ctrl)
 	mockStore.EXPECT().RevokeUsersTokens(gomock.Any(), gomock.Any())
 
-	server := NewServer(mockStore)
+	server := NewServer(mockStore, &config.Config{})
 
 	res, err := server.RevokeTokens(ctx, &pb.RevokeTokensRequest{})
 
@@ -214,7 +217,7 @@ func TestRefreshToken_gRPC(t *testing.T) {
 	// Create a new context with added header metadata
 	ctx := context.Background()
 	ctx = metadata.NewIncomingContext(ctx, md)
-	server := NewServer(mockStore)
+	server := NewServer(mockStore, &config.Config{})
 	mockStore.EXPECT().GetUserByID(gomock.Any(), gomock.Any()).Times(2)
 	mockStore.EXPECT().GetUserGroups(gomock.Any(), gomock.Any())
 	mockStore.EXPECT().GetUserRoles(gomock.Any(), gomock.Any())
