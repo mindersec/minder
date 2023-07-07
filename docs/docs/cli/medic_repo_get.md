@@ -1,24 +1,23 @@
-## medic repo register
+## medic repo get
 
-Register a repo with the mediator control plane
+Get repository in the mediator control plane
 
 ### Synopsis
 
-Repo register is used to register a repo with the mediator control plane
+Repo get is used to get a repo with the mediator control plane
 
 ```
-medic repo register [flags]
+medic repo get [flags]
 ```
 
 ### Options
 
 ```
   -g, --group-id int32    ID of the group for repo registration
-  -h, --help              help for register
-  -l, --limit int32       Number of repos to display per page (default 20)
-  -o, --offset int32      Offset of the repos to display
+  -h, --help              help for get
+  -f, --output string     Output format (json or yaml)
   -n, --provider string   Name for the provider to enroll
-      --repo string       List of key-value pairs
+  -r, --repo-id int32     ID of the repo to query
 ```
 
 ### Options inherited from parent commands
