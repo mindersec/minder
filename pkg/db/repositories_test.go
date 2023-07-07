@@ -31,7 +31,21 @@ import (
 	"github.com/stretchr/testify/require"
 )
 
-func createRandomRepository(t *testing.T, group int32) Repository {
+type RepositoryOption func(*CreateRepositoryParams)
+
+func deleteRepositoryByRepoId(params CreateRepositoryParams) error {
+	repo, err := testQueries.GetRepositoryByRepoID(
+		context.Background(), GetRepositoryByRepoIDParams{Provider: params.Provider, RepoID: params.RepoID})
+	if err == sql.ErrNoRows {
+		return nil
+	}
+	if err != nil {
+		return err
+	}
+	return testQueries.DeleteRepository(context.Background(), repo.ID)
+}
+
+func createRandomRepository(t *testing.T, group int32, opts ...RepositoryOption) Repository {
 	seed := time.Now().UnixNano()
 	arg := CreateRepositoryParams{
 		Provider:   "github",
@@ -45,6 +59,13 @@ func createRandomRepository(t *testing.T, group int32) Repository {
 		WebhookUrl: util.RandomURL(seed),
 		DeployUrl:  util.RandomURL(seed),
 	}
+	// Allow arbitrary fixups to the Repository
+	for _, o := range opts {
+		o(&arg)
+	}
+
+	// Avoid unique constraint violation
+	require.NoError(t, deleteRepositoryByRepoId(arg))
 
 	repo, err := testQueries.CreateRepository(context.Background(), arg)
 	require.NoError(t, err)
@@ -126,8 +147,10 @@ func TestListRepositoriesByGroupID(t *testing.T) {
 	org := createRandomOrganization(t)
 	group := createRandomGroup(t, org.ID)
 
-	for i := 0; i < 10; i++ {
-		createRandomRepository(t, group.ID)
+	for i := int32(1001); i < 1020; i++ {
+		createRandomRepository(t, group.ID, func(r *CreateRepositoryParams) {
+			r.RepoID = int32(i)
+		})
 	}
 
 	arg := ListRepositoriesByGroupIDParams{
