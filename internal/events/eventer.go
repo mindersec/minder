@@ -118,6 +118,9 @@ func (e *Eventer) Close() error {
 func (e *Eventer) Run(ctx context.Context) error {
 	return e.router.Run(ctx)
 }
+func (e *Eventer) Running() chan struct{} {
+	return e.router.Running()
+}
 
 // Publish implements message.Publisher
 func (e *Eventer) Publish(topic string, messages ...*message.Message) error {

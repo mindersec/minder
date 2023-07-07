@@ -119,12 +119,9 @@ func TestEventer(t *testing.T) {
 				eventer.ConsumeEvents(&local)
 			}
 
-			go func() {
-				if err := eventer.Run(context.Background()); err != nil {
-					t.Errorf("Run() error = %v", err)
-				}
-			}()
+			go eventer.Run(context.Background())
 			defer eventer.Close()
+			<-eventer.Running()
 
 			for _, pair := range tt.publish {
 				if err := eventer.Publish(pair.topic, pair.msg); err != nil {
