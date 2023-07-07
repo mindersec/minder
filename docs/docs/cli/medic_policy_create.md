@@ -18,7 +18,8 @@ medic policy create [flags]
   -g, --group-id int32    ID of the group to where the policy belongs
   -h, --help              help for create
   -n, --provider string   Provider (github)
-  -t, --type string       Type of policy
+  -t, --type string       Type of policy - must be one valid policy type.
+                          	Please check valid policy types with: medic policy_types list command
 ```
 
 ### Options inherited from parent commands
