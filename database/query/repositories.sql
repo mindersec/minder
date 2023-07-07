@@ -20,6 +20,9 @@ SELECT * FROM repositories WHERE provider = $1 AND repo_id = $2;
 -- name: GetRepositoryByRepoName :one
 SELECT * FROM repositories WHERE provider = $1 AND repo_name = $2;
 
+-- name: GetRepositoryByIDAndGroup :one
+SELECT * FROM repositories WHERE provider = $1 AND repo_id = $2 AND group_id = $3;
+
 -- name: ListRepositoriesByGroupID :many
 SELECT * FROM repositories
 WHERE provider = $1 AND group_id = $2

@@ -223,7 +223,13 @@ var resourceAuthorizations = []map[string]map[string]interface{}{
 	{
 		"/mediator.v1.RepositoryService/ListRepositories": {
 			"claimField": "GroupId",
-			"isAdmin":    true,
+			"isAdmin":    false,
+		},
+	},
+	{
+		"/mediator.v1.RepositoryService/GetRepository": {
+			"claimField": "GroupId",
+			"isAdmin":    false,
 		},
 	},
 	{

@@ -42,6 +42,7 @@ type Querier interface {
 	GetOrganizationForUpdate(ctx context.Context, name string) (Organization, error)
 	GetPolicyByID(ctx context.Context, id int32) (Policy, error)
 	GetRepositoryByID(ctx context.Context, id int32) (Repository, error)
+	GetRepositoryByIDAndGroup(ctx context.Context, arg GetRepositoryByIDAndGroupParams) (Repository, error)
 	GetRepositoryByRepoID(ctx context.Context, arg GetRepositoryByRepoIDParams) (Repository, error)
 	GetRepositoryByRepoName(ctx context.Context, arg GetRepositoryByRepoNameParams) (Repository, error)
 	GetRoleByID(ctx context.Context, id int32) (Role, error)

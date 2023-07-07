@@ -1151,10 +1151,17 @@
             "format": "int32"
           },
           {
-            "name": "filterRegistered",
+            "name": "filter",
             "in": "query",
             "required": false,
-            "type": "boolean"
+            "type": "string",
+            "enum": [
+              "REPO_FILTER_SHOW_UNSPECIFIED",
+              "REPO_FILTER_SHOW_ALL",
+              "REPO_FILTER_SHOW_NOT_REGISTERED_ONLY",
+              "REPO_FILTER_SHOW_REGISTERED_ONLY"
+            ],
+            "default": "REPO_FILTER_SHOW_UNSPECIFIED"
           }
         ],
         "tags": [
@@ -1187,6 +1194,50 @@
             "schema": {
               "$ref": "#/definitions/v1RegisterRepositoryRequest"
             }
+          }
+        ],
+        "tags": [
+          "RepositoryService"
+        ]
+      }
+    },
+    "/api/v1/repository/{repositoryId}": {
+      "get": {
+        "operationId": "RepositoryService_GetRepository",
+        "responses": {
+          "200": {
+            "description": "A successful response.",
+            "schema": {
+              "$ref": "#/definitions/v1GetRepositoryResponse"
+            }
+          },
+          "default": {
+            "description": "An unexpected error response.",
+            "schema": {
+              "$ref": "#/definitions/rpcStatus"
+            }
+          }
+        },
+        "parameters": [
+          {
+            "name": "repositoryId",
+            "in": "path",
+            "required": true,
+            "type": "integer",
+            "format": "int32"
+          },
+          {
+            "name": "provider",
+            "in": "query",
+            "required": false,
+            "type": "string"
+          },
+          {
+            "name": "groupId",
+            "in": "query",
+            "required": false,
+            "type": "integer",
+            "format": "int32"
           }
         ],
         "tags": [
@@ -2505,6 +2556,35 @@
       },
       "title": "in the future it can include status and violation details for the policy"
     },
+    "v1GetRepositoryResponse": {
+      "type": "object",
+      "properties": {
+        "owner": {
+          "type": "string"
+        },
+        "repository": {
+          "type": "string"
+        },
+        "repoId": {
+          "type": "integer",
+          "format": "int32"
+        },
+        "hookUrl": {
+          "type": "string"
+        },
+        "createdAt": {
+          "type": "string",
+          "format": "date-time"
+        },
+        "updatedAt": {
+          "type": "string",
+          "format": "date-time"
+        },
+        "registered": {
+          "type": "boolean"
+        }
+      }
+    },
     "v1GetRoleByIdResponse": {
       "type": "object",
       "properties": {
@@ -2786,6 +2866,25 @@
       },
       "title": "BUF does not allow grouping (which is a shame)"
     },
+    "v1ListRepositories": {
+      "type": "object",
+      "properties": {
+        "owner": {
+          "type": "string"
+        },
+        "name": {
+          "type": "string"
+        },
+        "repoId": {
+          "type": "integer",
+          "format": "int32"
+        },
+        "registered": {
+          "type": "boolean"
+        }
+      },
+      "description": "ListRepositories is used for displaying repository list data that\nis relevant to users. It is not used for registering repositories.\nDue to protobuf limitations, we cannot use the same Repositories for\nlisting repositories and registering repositories."
+    },
     "v1ListRepositoriesResponse": {
       "type": "object",
       "properties": {
@@ -2793,7 +2892,7 @@
           "type": "array",
           "items": {
             "type": "object",
-            "$ref": "#/definitions/v1Repositories"
+            "$ref": "#/definitions/v1ListRepositories"
           }
         }
       }
@@ -2949,6 +3048,17 @@
         }
       }
     },
+    "v1RepoFilter": {
+      "type": "string",
+      "enum": [
+        "REPO_FILTER_SHOW_UNSPECIFIED",
+        "REPO_FILTER_SHOW_ALL",
+        "REPO_FILTER_SHOW_NOT_REGISTERED_ONLY",
+        "REPO_FILTER_SHOW_REGISTERED_ONLY"
+      ],
+      "default": "REPO_FILTER_SHOW_UNSPECIFIED",
+      "title": "Repo filter enum"
+    },
     "v1Repositories": {
       "type": "object",
       "properties": {
@@ -3009,6 +3119,9 @@
         },
         "error": {
           "type": "string"
+        },
+        "registered": {
+          "type": "boolean"
         }
       }
     },

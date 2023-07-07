@@ -53,6 +53,8 @@
     - [GetPoliciesResponse](#mediator-v1-GetPoliciesResponse)
     - [GetPolicyByIdRequest](#mediator-v1-GetPolicyByIdRequest)
     - [GetPolicyByIdResponse](#mediator-v1-GetPolicyByIdResponse)
+    - [GetRepositoryRequest](#mediator-v1-GetRepositoryRequest)
+    - [GetRepositoryResponse](#mediator-v1-GetRepositoryResponse)
     - [GetRoleByIdRequest](#mediator-v1-GetRoleByIdRequest)
     - [GetRoleByIdResponse](#mediator-v1-GetRoleByIdResponse)
     - [GetRoleByNameRequest](#mediator-v1-GetRoleByNameRequest)
@@ -84,6 +86,7 @@
     - [GetVulnerabilityByIdRequest](#mediator-v1-GetVulnerabilityByIdRequest)
     - [GetVulnerabilityByIdResponse](#mediator-v1-GetVulnerabilityByIdResponse)
     - [GroupRecord](#mediator-v1-GroupRecord)
+    - [ListRepositories](#mediator-v1-ListRepositories)
     - [ListRepositoriesRequest](#mediator-v1-ListRepositoriesRequest)
     - [ListRepositoriesResponse](#mediator-v1-ListRepositoriesResponse)
     - [LogInRequest](#mediator-v1-LogInRequest)
@@ -120,6 +123,7 @@
     - [VerifyResponse](#mediator-v1-VerifyResponse)
   
     - [PolicyType](#mediator-v1-PolicyType)
+    - [RepoFilter](#mediator-v1-RepoFilter)
   
     - [AuthService](#mediator-v1-AuthService)
     - [BranchProtectionService](#mediator-v1-BranchProtectionService)
@@ -939,6 +943,44 @@ in the future it can include status and violation details for the policy
 
 
 
+<a name="mediator-v1-GetRepositoryRequest"></a>
+
+### GetRepositoryRequest
+
+
+
+| Field | Type | Label | Description |
+| ----- | ---- | ----- | ----------- |
+| repository_id | [int32](#int32) |  |  |
+| provider | [string](#string) |  |  |
+| group_id | [int32](#int32) |  |  |
+
+
+
+
+
+
+<a name="mediator-v1-GetRepositoryResponse"></a>
+
+### GetRepositoryResponse
+
+
+
+| Field | Type | Label | Description |
+| ----- | ---- | ----- | ----------- |
+| owner | [string](#string) |  |  |
+| repository | [string](#string) |  |  |
+| repo_id | [int32](#int32) |  |  |
+| hook_url | [string](#string) |  |  |
+| created_at | [google.protobuf.Timestamp](#google-protobuf-Timestamp) |  |  |
+| updated_at | [google.protobuf.Timestamp](#google-protobuf-Timestamp) |  |  |
+| registered | [bool](#bool) |  |  |
+
+
+
+
+
+
 <a name="mediator-v1-GetRoleByIdRequest"></a>
 
 ### GetRoleByIdRequest
@@ -1426,6 +1468,27 @@ BUF does not allow grouping (which is a shame)
 
 
 
+<a name="mediator-v1-ListRepositories"></a>
+
+### ListRepositories
+ListRepositories is used for displaying repository list data that
+is relevant to users. It is not used for registering repositories.
+Due to protobuf limitations, we cannot use the same Repositories for
+listing repositories and registering repositories.
+
+
+| Field | Type | Label | Description |
+| ----- | ---- | ----- | ----------- |
+| owner | [string](#string) |  |  |
+| name | [string](#string) |  |  |
+| repo_id | [int32](#int32) |  |  |
+| registered | [bool](#bool) |  |  |
+
+
+
+
+
+
 <a name="mediator-v1-ListRepositoriesRequest"></a>
 
 ### ListRepositoriesRequest
@@ -1438,7 +1501,7 @@ BUF does not allow grouping (which is a shame)
 | group_id | [int32](#int32) |  |  |
 | limit | [int32](#int32) |  |  |
 | offset | [int32](#int32) |  |  |
-| filter_registered | [bool](#bool) |  |  |
+| filter | [RepoFilter](#mediator-v1-RepoFilter) |  |  |
 
 
 
@@ -1453,7 +1516,7 @@ BUF does not allow grouping (which is a shame)
 
 | Field | Type | Label | Description |
 | ----- | ---- | ----- | ----------- |
-| results | [Repositories](#mediator-v1-Repositories) | repeated |  |
+| results | [ListRepositories](#mediator-v1-ListRepositories) | repeated |  |
 
 
 
@@ -1651,6 +1714,7 @@ policy record to be returned
 | success | [bool](#bool) |  |  |
 | uuid | [string](#string) |  |  |
 | error | [google.protobuf.StringValue](#google-protobuf-StringValue) |  |  |
+| registered | [bool](#bool) |  |  |
 
 
 
@@ -1955,6 +2019,20 @@ Policy type enum
 | POLICY_TYPE_BRANCH_PROTECTION | 1 |  |
 
 
+
+<a name="mediator-v1-RepoFilter"></a>
+
+### RepoFilter
+Repo filter enum
+
+| Name | Number | Description |
+| ---- | ------ | ----------- |
+| REPO_FILTER_SHOW_UNSPECIFIED | 0 |  |
+| REPO_FILTER_SHOW_ALL | 1 |  |
+| REPO_FILTER_SHOW_NOT_REGISTERED_ONLY | 2 |  |
+| REPO_FILTER_SHOW_REGISTERED_ONLY | 3 |  |
+
+
  
 
  
@@ -2062,6 +2140,7 @@ manage Organizations CRUD
 | ----------- | ------------ | ------------- | ------------|
 | RegisterRepository | [RegisterRepositoryRequest](#mediator-v1-RegisterRepositoryRequest) | [RegisterRepositoryResponse](#mediator-v1-RegisterRepositoryResponse) |  |
 | ListRepositories | [ListRepositoriesRequest](#mediator-v1-ListRepositoriesRequest) | [ListRepositoriesResponse](#mediator-v1-ListRepositoriesResponse) |  |
+| GetRepository | [GetRepositoryRequest](#mediator-v1-GetRepositoryRequest) | [GetRepositoryResponse](#mediator-v1-GetRepositoryResponse) |  |
 
 
 <a name="mediator-v1-RoleService"></a>
