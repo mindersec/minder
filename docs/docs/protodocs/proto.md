@@ -1728,6 +1728,7 @@ policy type record to be returned
 | description | [string](#string) | optional |  |
 | json_schema | [string](#string) |  |  |
 | version | [string](#string) |  |  |
+| default_schema | [string](#string) |  |  |
 | created_at | [google.protobuf.Timestamp](#google-protobuf-Timestamp) |  |  |
 | updated_at | [google.protobuf.Timestamp](#google-protobuf-Timestamp) |  |  |
 

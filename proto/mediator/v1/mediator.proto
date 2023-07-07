@@ -1132,8 +1132,9 @@ message PolicyTypeRecord {
     optional string description = 4;
     string json_schema = 5;
     string version = 6;
-    google.protobuf.Timestamp created_at = 7;
-    google.protobuf.Timestamp updated_at = 8;    
+    string default_schema = 7;
+    google.protobuf.Timestamp created_at = 8;
+    google.protobuf.Timestamp updated_at = 9;    
 }
 
 // get policy type

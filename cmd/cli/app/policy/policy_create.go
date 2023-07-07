@@ -50,17 +50,32 @@ within a mediator control plane.`,
 		group := viper.GetInt32("group-id")
 		policyType := util.GetConfigValue("type", "type", cmd, "").(string)
 		f := util.GetConfigValue("file", "file", cmd, "").(string)
+		default_schema := util.GetConfigValue("default", "default", cmd, false).(bool)
 
 		var data []byte
 		var err error
 
-		if f == "-" {
-			data, err = io.ReadAll(os.Stdin)
-			util.ExitNicelyOnError(err, "Error reading from stdin")
-		} else {
-			f = filepath.Clean(f)
-			data, err = os.ReadFile(f)
-			util.ExitNicelyOnError(err, "Error reading file")
+		// if default is set, file cannot be set
+		if default_schema && f != "" {
+			fmt.Fprintf(os.Stderr, "Error: cannot set both default and file\n")
+			os.Exit(1)
+		}
+
+		// either file or default must be set
+		if !default_schema && f == "" {
+			fmt.Fprintf(os.Stderr, "Error: must set either default or file\n")
+			os.Exit(1)
+		}
+
+		if f != "" {
+			if f == "-" {
+				data, err = io.ReadAll(os.Stdin)
+				util.ExitNicelyOnError(err, "Error reading from stdin")
+			} else {
+				f = filepath.Clean(f)
+				data, err = os.ReadFile(f)
+				util.ExitNicelyOnError(err, "Error reading file")
+			}
 		}
 
 		grpc_host := util.GetConfigValue("grpc_server.host", "grpc-host", cmd, "").(string)
@@ -78,18 +93,25 @@ within a mediator control plane.`,
 		util.ExitNicelyOnError(err, "Error getting policy types")
 
 		// check if the policy type is valid
-		found := false
+		var foundPolicyType *pb.PolicyTypeRecord
 		validTypes := make([]string, len(policyTypes.PolicyTypes))
 		for _, t := range policyTypes.PolicyTypes {
 			validTypes = append(validTypes, t.PolicyType)
 			if policyType == t.PolicyType {
-				found = true
+				// get complete policy details
+				p, err := client.GetPolicyType(ctx, &pb.GetPolicyTypeRequest{Provider: provider.(string), Type: policyType})
+				util.ExitNicelyOnError(err, "Error getting policy type")
+				foundPolicyType = p.PolicyType
 				break
 			}
 		}
-		if !found {
+		if foundPolicyType == nil {
 			fmt.Fprintf(os.Stderr, "Invalid policy type - valid policy types are: %v\n", validTypes)
 			os.Exit(1)
+		}
+
+		if default_schema {
+			data = []byte(foundPolicyType.DefaultSchema)
 		}
 
 		// create a policy
@@ -117,11 +139,8 @@ func init() {
 	Policy_createCmd.Flags().Int32P("group-id", "g", 0, "ID of the group to where the policy belongs")
 	Policy_createCmd.Flags().StringP("type", "t", "", `Type of policy - must be one valid policy type.
 	Please check valid policy types with: medic policy_types list command`)
+	Policy_createCmd.Flags().BoolP("default", "d", false, "Use default and recommended schema for the policy.")
 	Policy_createCmd.Flags().StringP("file", "f", "", "Path to the YAML defining the policy (or - for stdin)")
-
-	if err := Policy_createCmd.MarkFlagRequired("file"); err != nil {
-		fmt.Fprintf(os.Stderr, "Error binding flags: %s\n", err)
-	}
 
 	if err := Policy_createCmd.MarkFlagRequired("provider"); err != nil {
 		fmt.Fprintf(os.Stderr, "Error marking flag as required: %s\n", err)
@@ -131,9 +150,4 @@ func init() {
 		fmt.Fprintf(os.Stderr, "Error marking flag as required: %s\n", err)
 		os.Exit(1)
 	}
-	if err := Policy_createCmd.MarkFlagRequired("file"); err != nil {
-		fmt.Fprintf(os.Stderr, "Error marking flag as required: %s\n", err)
-		os.Exit(1)
-	}
-
 }

@@ -46,6 +46,17 @@ func readPolicyTypeSchema(provider string, policyType string, version string) (s
 	return string(schema), nil
 }
 
+func readDefaultPolicyTypeSchema(provider string, policyType string, version string) (string, error) {
+	filePath := filepath.Join("policy_types", provider, policyType, version, "default.yaml")
+
+	// Read the file contents
+	schema, err := embeddedFiles.ReadFile(filepath.Clean(filePath))
+	if err != nil {
+		return "", err
+	}
+	return string(schema), nil
+}
+
 type policyStructure struct {
 	YAMLContent string `yaml:"yaml_content"`
 }
@@ -316,7 +327,8 @@ func (s *Server) GetPolicyTypes(ctx context.Context, in *pb.GetPolicyTypesReques
 		resp.PolicyTypes = append(resp.PolicyTypes, &pb.PolicyTypeRecord{
 			Id: policyType.ID, Provider: policyType.Provider,
 			PolicyType:  policyType.PolicyType,
-			Description: &policyType.Description.String, JsonSchema: "",
+			Description: &policyType.Description.String,
+			JsonSchema:  "", DefaultSchema: "",
 			Version: policyType.Version, CreatedAt: timestamppb.New(policyType.CreatedAt),
 			UpdatedAt: timestamppb.New(policyType.UpdatedAt),
 		})
@@ -336,11 +348,17 @@ func (s *Server) GetPolicyType(ctx context.Context, in *pb.GetPolicyTypeRequest)
 	}
 	schema, err := readPolicyTypeSchema(policyType.Provider, policyType.PolicyType, policyType.Version)
 	if err != nil {
-		return nil, status.Errorf(codes.Unknown, "failed to get policy schemas: %s", err)
+		return nil, status.Errorf(codes.Unknown, "failed to get policy type schemas: %s", err)
+	}
+
+	default_schema, err := readDefaultPolicyTypeSchema(policyType.Provider, policyType.PolicyType, policyType.Version)
+	if err != nil {
+		return nil, status.Errorf(codes.Unknown, "failed to get default policy schemas: %s", err)
 	}
 
 	return &pb.GetPolicyTypeResponse{PolicyType: &pb.PolicyTypeRecord{Id: policyType.ID, Provider: policyType.Provider,
-		PolicyType: policyType.PolicyType, Description: &policyType.Description.String, JsonSchema: schema,
+		PolicyType: policyType.PolicyType, Description: &policyType.Description.String,
+		JsonSchema: schema, DefaultSchema: default_schema,
 		Version: policyType.Version, CreatedAt: timestamppb.New(policyType.CreatedAt),
 		UpdatedAt: timestamppb.New(policyType.UpdatedAt)}}, nil
 }

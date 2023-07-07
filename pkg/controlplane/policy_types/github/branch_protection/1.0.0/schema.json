@@ -10,26 +10,58 @@
 					"rules": {
 						"type": "object",
 						"properties": {
-							"pull_request_reviews_enforcement_level": {"type": "string", "enum": ["off", "non_admins", "everyone"]},
-							"required_approving_review_count": {"type": "integer"},
-							"dismiss_stale_reviews_on_push": {"type": "boolean"},
-							"require_code_owner_review": {"type": "boolean"},
-							"authorized_dismissal_actors_only": {"type": "boolean"},
-							"required_status_checks": {"type": "array", "items": {"type": "string"}},
-							"required_status_checks_enforcement_level": {"type": "string", "enum": ["off", "non_admins", "everyone"]},
-							"strict_required_status_checks_policy": {"type": "boolean"},
-							"signature_requirement_enforcement_level": {"type": "string", "enum": ["off", "non_admins", "everyone"]},
-							"linear_history_requirement_enforcement_level": {"type": "string", "enum": ["off", "non_admins", "everyone"]},
-							"admin_enforced": {"type": "boolean"},
-							"create_protected": {"type": "boolean"},
-							"allow_force_pushes_enforcement_level": {"type": "string", "enum": ["off", "non_admins", "everyone"]},
-							"allow_deletions_enforcement_level": {"type": "string", "enum": ["off", "non_admins", "everyone"]},
-							"merge_queue_enforcement_level": {"type": "string", "enum": ["off", "non_admins", "everyone"]},
-							"required_deployments_enforcement_level": {"type": "string", "enum": ["off", "non_admins", "everyone"]},
-							"required_conversation_resolution_level": {"type": "string", "enum": ["off", "non_admins", "everyone"]},
-							"authorized_actors_only": {"type": "boolean"},
-							"authorized_actor_names": {"type": "array", "items": {"type": "string"}},
-							"require_last_push_approval": {"type": "boolean"}
+							"enforce_admins": {
+									"type": "boolean",
+									"description": "Set to true to enforce required status checks for repository administrators"
+							},
+							"required_pull_request_reviews": {
+								"type": "object",
+									"dismiss_stale_reviews": {
+										"description": "Set to true if you want to automatically dismiss approving reviews when someone pushes a new commit.",
+										"type": "boolean"
+									},
+									"require_code_owner_reviews": {
+										"description": "Set to true if you want to automatically dismiss approving reviews when someone pushes a new commit.",
+										"type": "boolean"
+									},
+									"required_approving_review_count": {
+										"description": "Specify the number of reviewers required to approve pull requests. Use a number between 1 and 6 or 0 to not require reviewers.",
+										"type": "integer"
+									},
+									"require_last_push_approval": {
+										"description": "Whether the most recent push must be approved by someone other than the person who pushed it.",
+										"type": "boolean",
+										"default": false
+									}
+							},
+							"required_signatures": {
+								"type": "boolean",
+								"description": "Wether this branch requires signed commits"
+							},
+							"required_linear_history": {
+								"type": "boolean",
+								"description": "Enforces a linear commit Git history, which prevents anyone from pushing merge commits to a branch."
+							},
+							"allow_force_pushes": {
+								"type": "boolean",
+								"description": "Permits force pushes to the protected branch by anyone with write access to the repository."
+							},
+							"allow_deletions": {
+								"type": "boolean",
+								"description": "Allows deletion of the protected branch by anyone with write access to the repository."
+							},
+							"required_conversation_resolution": {
+								"type": "boolean",
+								"description": "Requires all conversations on code to be resolved before a pull request can be merged into a branch that matches this rule."
+							},
+							"lock_branch": {
+								"type": "boolean",								
+								"description": "Whether to set the branch as read-only. If this is true, users will not be able to push to the branch."
+							},
+							"allow_fork_syncing": {
+								"type": "boolean",
+								"description": "Whether users can pull changes from upstream when the branch is locked. Set to `true` to allow fork syncing. Set to `false` to prevent fork syncing."
+							}
 						},
 						"required": [
 						]
