@@ -1,123 +1,34 @@
 ---
 id: mediator_intro
-title: Mediator introduction
+title: Mediator
 sidebar_position: 1
 slug: /
 displayed_sidebar: mediator
 ---
 
-# Mediator
+![mediator logo](./images/mediator.png)
 
-Mediator is a platform to manage the security of your software supply chain.
+# What is Mediator?
 
-It is currently in early development.
+Mediator is an open platform to manage the security of your software supply chain.
 
-# Get Hacking (Development)
+Mediator unifiess the security of your software supply chain by providing a single
+place to manage your security policies, and a central location to view and remediate
+the results.
 
-## Prerequisites
+Mediator is designed to be extensible, allowing you to integrate with your existing
+tooling and processes.
 
-- [Go](https://golang.org/doc/install)
-- [Docker](https://docs.docker.com/get-docker/) or..
-- [Podman](https://podman.io/getting-started/installation)
-- [Docker Compose](https://docs.docker.com/compose/install/) or..
-- [Podman Compose](https://github.com/containers/podman-compose#installation)
+## Features
 
-## Clone the repository
+- **GitHub integration** - Mediator integrates with GitHub to provide a single
+  place to manage your repository security posture.
+- **Policy management** - Mediator allows you to define security policies for your
+    software supply chain.
+- **Attestation and Provenance** - Mediator integrates with [sigstore](https://sigstore.dev/)
+    [in-toto](https://in-toto.io/), [slsa](https://slsa.dev) and the
+    [the-update-framework](https://theupdateframework.io/) to provide a way to verify the provenance of your software supply chain.
 
-```bash
-git clone git@github.com:stacklok/mediator.git
-```
+## Status
 
-## Build the application
-
-```bash
-make build
-```
-
-## Run the application
-
-Note that the application requires a database to be running. This can be achieved
-using docker-compose:
-
-```bash
-docker-compose up -d postgres
-```
-
-Then run the application
-
-```bash
-bin/mediator-server serve
-```
-
-Or direct from source
-
-```bash
-go run cmd/server/main.go serve
-```
-
-The application will be available on `http://localhost:8080` and gRPC on `localhost:8090`.
-
-## Run the tests
-
-```bash
-make test
-```
-
-## Install tools
-
-```bash
-make bootstrap
-```
-
-## CLI
-
-The CLI is available in the `cmd/cli` directory.
-
-```bash
-go run cmd/cli/main.go --help
-```
-
-## APIs
-
-The APIs are defined in protobuf [here](https://github.com/stacklok/mediator/blob/main/proto/mediator/v1/mediator.proto).
-
-An OpenAPI / swagger spec is generated to [here](https://github.com/stacklok/mediator/blob/main/pkg/generated/openapi/proto/mediator/v1/mediator.swagger.json)
-
-It can be accessed over gRPC or HTTP using [gprc-gateway](https://grpc-ecosystem.github.io/grpc-gateway/).
-
-## How to generate protobuf stubs
-
-We use [buf](https://buf.build/docs/) to generate the gRPC / HTTP stubs (both protobuf and openAPI).
-
-To build the stubs, run:
-
-```bash
-make gen
-```
-
-# Database migrations and tooling
-
-Mediator uses [sqlc](https://sqlc.dev/) to generate Go code from SQL.
-
-The main configuration file is `sqlc.yaml`.
-
-To make changes to the database schema, create a new migration file in the
-`database/migrations` directory.
-
-Add any queries to the `database/queries/sqlc.sql` file.
-
-To generate the Go code, run:
-
-```bash
-make sqlc
-```
-
-Users will then need to peform a migration
-
-```bash
-make migrateup
-```
-
-```bash
-make migratedown
-```
+Mediator is currently in early development.
