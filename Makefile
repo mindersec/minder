@@ -17,12 +17,19 @@ projectname?=mediator
 
 # Unfortunately, we need OS detection for docker-compose
 OS := $(shell uname -s)
-# Container runtime
-ifeq ($(OS), Linux)
-    DOCKER?=podman
-else ifeq ($(OS), Darwin)
+
+# Container runtime detection
+ifeq (, $(shell which podman))
     DOCKER?=docker
+else
+    DOCKER?=podman
 endif
+
+# Services to run in docker-compose. Defaults to all
+SERVICES?=
+
+# Additional arguments to pass to docker-compose
+COMPOSE_ARGS?=-d
 
 default: help
 
@@ -62,7 +69,8 @@ run-docker:  ## run the app under docker.
 ifeq ($(OS),Darwin)
 	sed -i '' 's/:z$$//' .resolved-compose.yaml
 endif
-	$(DOCKER)-compose -f .resolved-compose.yaml down && $(DOCKER)-compose -f .resolved-compose.yaml up $(services)
+	@echo "Running docker-compose up $(SERVICES)"
+	$(DOCKER)-compose -f .resolved-compose.yaml down && $(DOCKER)-compose -f .resolved-compose.yaml up $(COMPOSE_ARGS) $(SERVICES)
 	rm .resolved-compose.yaml*
 
 bootstrap: ## install build deps
