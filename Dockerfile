@@ -42,9 +42,6 @@ WORKDIR /app
 # Copy database directory. This is needed for the migration sub-command to work.
 COPY --chown=65534:65534 --from=builder /opt/app-root/src/database /app/database
 
-# Copy policies directory. This is needed to parse policy schemas
-COPY --chown=65534:65534 --from=builder /opt/app-root/src/config/policy_types /app/config/policy_types
-
 COPY --from=builder /opt/app-root/src/mediator-server /usr/bin/mediator-server
 
 # Copy the certs from the builder stage

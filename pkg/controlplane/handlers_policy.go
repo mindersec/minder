@@ -16,8 +16,9 @@ package controlplane
 
 import (
 	"context"
-	"os"
 	"path/filepath"
+
+	"embed"
 
 	"github.com/go-playground/validator/v10"
 	"github.com/stacklok/mediator/pkg/auth"
@@ -30,6 +31,20 @@ import (
 	"google.golang.org/protobuf/types/known/timestamppb"
 	"gopkg.in/yaml.v3"
 )
+
+//go:embed policy_types/*
+var embeddedFiles embed.FS
+
+func readPolicyTypeSchema(provider string, policyType string, version string) (string, error) {
+	filePath := filepath.Join("policy_types", provider, policyType, version, "schema.json")
+
+	// Read the file contents
+	schema, err := embeddedFiles.ReadFile(filepath.Clean(filePath))
+	if err != nil {
+		return "", err
+	}
+	return string(schema), nil
+}
 
 type policyStructure struct {
 	YAMLContent string `yaml:"yaml_content"`
@@ -114,7 +129,7 @@ func (s *Server) CreatePolicy(ctx context.Context,
 	}
 
 	// read schema
-	jsonSchema, err := readPolicyTypeSchema(policyType.Provider, policyType.PolicyType, policyType.Version)
+	jsonSchema, err := readPolicyTypeSchema(in.Provider, in.Type, policyType.Version)
 	if err != nil {
 		return nil, status.Errorf(codes.Internal, "cannot read policy type schema: %v", err)
 	}
@@ -282,21 +297,6 @@ func (s *Server) GetPolicyById(ctx context.Context,
 		UpdatedAt:        timestamppb.New(policy.UpdatedAt),
 	}
 	return &resp, nil
-}
-
-func readPolicyTypeSchema(provider string, policyType string, version string) (string, error) {
-	wd, err := os.Getwd()
-	if err != nil {
-		return "", err
-	}
-	filePath := filepath.Join(wd, "config", "policy_types", provider, policyType, version, "schema.json")
-
-	// Read the file contents
-	schema, err := os.ReadFile(filepath.Clean(filePath))
-	if err != nil {
-		return "", err
-	}
-	return string(schema), nil
 }
 
 // GetPolicyTypes is a method to get all policy types

@@ -34,6 +34,22 @@ import (
 	pb "github.com/stacklok/mediator/pkg/generated/protobuf/go/mediator/v1"
 )
 
+const policyDefinitionJson = `{
+  "branches": [
+    {
+      "name": "main",
+      "rules": {
+        "pull_request_reviews_enforcement_level": "everyone"
+      }
+    }
+  ]
+}`
+const policyDefinition = `branches:
+    - name: main
+      rules:
+        pull_request_reviews_enforcement_level: everyone
+`
+
 func TestCreatePolicyDBMock(t *testing.T) {
 	ctrl := gomock.NewController(t)
 	defer ctrl.Finish()
@@ -44,7 +60,7 @@ func TestCreatePolicyDBMock(t *testing.T) {
 		Provider:         "github",
 		GroupId:          1,
 		Type:             "branch_protection",
-		PolicyDefinition: "key: value",
+		PolicyDefinition: policyDefinitionJson,
 	}
 
 	expectedPolicy := db.Policy{
@@ -52,13 +68,13 @@ func TestCreatePolicyDBMock(t *testing.T) {
 		Provider:         "github",
 		GroupID:          1,
 		PolicyType:       1,
-		PolicyDefinition: json.RawMessage(`{"key": "value"}`),
+		PolicyDefinition: json.RawMessage(policyDefinitionJson),
 		CreatedAt:        time.Now(),
 		UpdatedAt:        time.Now(),
 	}
 
 	policyTypes := []db.PolicyType{
-		{ID: 1, PolicyType: "branch_protection"},
+		{ID: 1, Provider: auth.Github, PolicyType: "branch_protection", Version: "1.0.0"},
 	}
 	// Create a new context and set the claims value
 	ctx := context.WithValue(context.Background(), auth.TokenInfoKey, auth.UserClaims{
@@ -86,7 +102,7 @@ func TestCreatePolicyDBMock(t *testing.T) {
 	assert.Equal(t, expectedPolicy.GroupID, response.Policy.GroupId)
 	assert.Equal(t, expectedPolicy.Provider, response.Policy.Provider)
 	assert.Equal(t, response.Policy.Type, "branch_protection")
-	assert.Equal(t, response.Policy.PolicyDefinition, "key: value\n")
+	assert.Equal(t, response.Policy.PolicyDefinition, policyDefinition)
 	expectedCreatedAt := expectedPolicy.CreatedAt.In(time.UTC)
 	assert.Equal(t, expectedCreatedAt, response.Policy.CreatedAt.AsTime().In(time.UTC))
 	expectedUpdatedAt := expectedPolicy.UpdatedAt.In(time.UTC)
@@ -107,11 +123,11 @@ func TestCreatePolicy_gRPC(t *testing.T) {
 				Provider:         "github",
 				GroupId:          1,
 				Type:             "branch_protection",
-				PolicyDefinition: "key: value",
+				PolicyDefinition: policyDefinitionJson,
 			},
 			buildStubs: func(store *mockdb.MockStore) {
 				policyTypes := []db.PolicyType{
-					{ID: 1, PolicyType: "branch_protection"},
+					{ID: 1, Provider: auth.Github, PolicyType: "branch_protection", Version: "1.0.0"},
 				}
 				store.EXPECT().GetPolicyTypes(gomock.Any(), gomock.Any()).Return(policyTypes, nil)
 				store.EXPECT().
@@ -121,7 +137,7 @@ func TestCreatePolicy_gRPC(t *testing.T) {
 						Provider:         "github",
 						GroupID:          1,
 						PolicyType:       1,
-						PolicyDefinition: json.RawMessage(`{"key": "value"}`),
+						PolicyDefinition: json.RawMessage(policyDefinitionJson),
 						CreatedAt:        time.Now(),
 						UpdatedAt:        time.Now(),
 					}, nil).
@@ -134,7 +150,7 @@ func TestCreatePolicy_gRPC(t *testing.T) {
 				assert.Equal(t, int32(1), res.Policy.GroupId)
 				assert.Equal(t, "github", res.Policy.Provider)
 				assert.Equal(t, "branch_protection", res.Policy.Type)
-				assert.Equal(t, "key: value\n", res.Policy.PolicyDefinition)
+				assert.Equal(t, policyDefinition, res.Policy.PolicyDefinition)
 				assert.NotNil(t, res.Policy.CreatedAt)
 				assert.NotNil(t, res.Policy.UpdatedAt)
 			},
@@ -298,7 +314,7 @@ func TestGetPoliciesDBMock(t *testing.T) {
 			Provider:         "github",
 			GroupID:          1,
 			PolicyType:       1,
-			PolicyDefinition: json.RawMessage(`{"key": "value"}`),
+			PolicyDefinition: json.RawMessage(policyDefinitionJson),
 			CreatedAt:        time.Now(),
 			UpdatedAt:        time.Now(),
 		},
@@ -326,7 +342,7 @@ func TestGetPoliciesDBMock(t *testing.T) {
 	assert.Equal(t, expectedPolicies[0].ID, response.Policies[0].Id)
 	assert.Equal(t, expectedPolicies[0].Provider, response.Policies[0].Provider)
 	assert.Equal(t, expectedPolicies[0].GroupID, response.Policies[0].GroupId)
-	assert.Equal(t, response.Policies[0].PolicyDefinition, "key: value\n")
+	assert.Equal(t, response.Policies[0].PolicyDefinition, policyDefinition)
 }
 
 func TestGetPolicies_gRPC(t *testing.T) {
@@ -347,7 +363,7 @@ func TestGetPolicies_gRPC(t *testing.T) {
 						Provider:         "github",
 						GroupID:          1,
 						PolicyType:       1,
-						PolicyDefinition: json.RawMessage(`{"key": "value"}`),
+						PolicyDefinition: json.RawMessage(policyDefinitionJson),
 						CreatedAt:        time.Now(),
 						UpdatedAt:        time.Now(),
 					},
@@ -376,7 +392,7 @@ func TestGetPolicies_gRPC(t *testing.T) {
 				assert.Equal(t, expectedPolicies[0].ID, res.Policies[0].Id)
 				assert.Equal(t, expectedPolicies[0].Provider, res.Policies[0].Provider)
 				assert.Equal(t, expectedPolicies[0].GroupID, res.Policies[0].GroupId)
-				assert.Equal(t, res.Policies[0].PolicyDefinition, "key: value\n")
+				assert.Equal(t, res.Policies[0].PolicyDefinition, policyDefinition)
 			},
 			expectedStatusCode: codes.OK,
 		},
