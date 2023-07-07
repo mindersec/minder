@@ -58,6 +58,7 @@ mediator control plane.`,
 		provider := viper.GetString("provider")
 		policy_type := viper.GetString("type")
 		schema := util.GetConfigValue("schema", "schema", cmd, false).(bool)
+		default_schema := util.GetConfigValue("default_schema", "default_schema", cmd, false).(bool)
 
 		policy, err := client.GetPolicyType(ctx, &pb.GetPolicyTypeRequest{Provider: provider, Type: policy_type})
 		util.ExitNicelyOnError(err, "Error getting policy")
@@ -78,6 +79,8 @@ mediator control plane.`,
 		// format schema to look nice
 		if schema {
 			fmt.Printf("%+v\n", string(jsonS))
+		} else if default_schema {
+			fmt.Printf("%+v\n", string(policy.PolicyType.DefaultSchema))
 		} else {
 			policy.PolicyType.JsonSchema = string(jsonS)
 
@@ -93,6 +96,7 @@ func init() {
 	policy_type_getCmd.Flags().StringP("provider", "p", "", "Provider for the policy type")
 	policy_type_getCmd.Flags().StringP("type", "t", "", "Type of the policy")
 	policy_type_getCmd.Flags().BoolP("schema", "s", false, "Only get the json schema in a readable format")
+	policy_type_getCmd.Flags().BoolP("default_schema", "d", false, "Only get the default schema in a readable format")
 	if err := policy_type_getCmd.MarkFlagRequired("provider"); err != nil {
 		fmt.Fprintf(os.Stderr, "Error marking flag as required: %s\n", err)
 		os.Exit(1)

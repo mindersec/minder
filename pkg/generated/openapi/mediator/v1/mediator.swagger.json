@@ -3095,6 +3095,9 @@
         "version": {
           "type": "string"
         },
+        "defaultSchema": {
+          "type": "string"
+        },
         "createdAt": {
           "type": "string",
           "format": "date-time"
