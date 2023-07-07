@@ -26,7 +26,7 @@ else
 endif
 
 # Services to run in docker-compose. Defaults to all
-SERVICES?=
+services?=
 
 # Additional arguments to pass to docker-compose
 COMPOSE_ARGS?=-d
@@ -69,8 +69,8 @@ run-docker:  ## run the app under docker.
 ifeq ($(OS),Darwin)
 	sed -i '' 's/:z$$//' .resolved-compose.yaml
 endif
-	@echo "Running docker-compose up $(SERVICES)"
-	$(COMPOSE) -f .resolved-compose.yaml down && $(COMPOSE) -f .resolved-compose.yaml up $(COMPOSE_ARGS) $(SERVICES)
+	@echo "Running docker-compose up $(services)"
+	$(COMPOSE) -f .resolved-compose.yaml down && $(COMPOSE) -f .resolved-compose.yaml up $(COMPOSE_ARGS) $(services)
 	rm .resolved-compose.yaml*
 
 bootstrap: ## install build deps
