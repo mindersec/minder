@@ -71,6 +71,17 @@ make run-server
 
 The application will be available on `http://localhost:8080` and gRPC on `localhost:8090`.
 
+## Running the server under Compose:
+
+**NOTE: the command will be either `docker-compose` or `podman-compose`, depending on which tool you installed.**  You'll need to install the [`ko`](https://ko.build/install/) tool do the build and run.
+
+```bash
+# The repo to push to; "ko.local" is a special string meaning your local Docker repo
+KO_DOCKER_REPO=ko.local
+# ko adds YAML document separators at the end of each document, which docker-compose doesn't like
+docker-compose -f <(ko resolve -f docker-compose.yaml | sed 's/^---$//') up
+```
+
 ## Run the tests
 
 Note that you need to have [started the database and loaded the schema](#initialize-the-database) before running the tests:

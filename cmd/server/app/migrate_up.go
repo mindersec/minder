@@ -65,11 +65,10 @@ var upCmd = &cobra.Command{
 			}
 		}
 
-		m, err := migrate.New(
-			"file://database/migrations",
-			connString)
+		configPath := os.ExpandEnv("file://${KO_DATA_PATH}database/migrations")
+		m, err := migrate.New(configPath, connString)
 		if err != nil {
-			fmt.Printf("Error while creating migration instance: %v\n", err)
+			fmt.Printf("Error while creating migration instance (%s): %v\n", configPath, err)
 			os.Exit(1)
 		}
 		if err := m.Up(); err != nil {
