@@ -19,10 +19,10 @@ projectname?=mediator
 OS := $(shell uname -s)
 
 # Container runtime detection
-ifeq (, $(shell which podman))
-    DOCKER?=docker
+ifeq (, $(shell which podman-compose))
+    COMPOSE?=docker-compose
 else
-    DOCKER?=podman
+    COMPOSE?=podman-compose
 endif
 
 # Services to run in docker-compose. Defaults to all
@@ -70,7 +70,7 @@ ifeq ($(OS),Darwin)
 	sed -i '' 's/:z$$//' .resolved-compose.yaml
 endif
 	@echo "Running docker-compose up $(SERVICES)"
-	$(DOCKER)-compose -f .resolved-compose.yaml down && $(DOCKER)-compose -f .resolved-compose.yaml up $(COMPOSE_ARGS) $(SERVICES)
+	$(COMPOSE) -f .resolved-compose.yaml down && $(COMPOSE) -f .resolved-compose.yaml up $(COMPOSE_ARGS) $(SERVICES)
 	rm .resolved-compose.yaml*
 
 bootstrap: ## install build deps
@@ -113,10 +113,10 @@ migratedown: ## run migrate down
 
 dbschema:	## generate database schema with schema spy, monitor file until doc is created and copy it
 	mkdir -p database/schema/output && chmod a+w database/schema/output
-	cd database/schema && $(DOCKER)-compose run -u 1001:1001 --rm schemaspy -configFile /config/schemaspy.properties -imageformat png
+	cd database/schema && $(COMPOSE) run -u 1001:1001 --rm schemaspy -configFile /config/schemaspy.properties -imageformat png
 	sleep 10
 	cp database/schema/output/diagrams/summary/relationships.real.large.png docs/static/img/mediator/schema.png
-	cd database/schema && $(DOCKER)-compose down -v && rm -rf output
+	cd database/schema && $(COMPOSE) down -v && rm -rf output
 
 mock:
 	mockgen -package mockdb -destination database/mock/store.go github.com/stacklok/mediator/pkg/db Store
