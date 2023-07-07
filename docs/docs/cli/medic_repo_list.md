@@ -1,24 +1,24 @@
-## medic repo register
+## medic repo list
 
-Register a repo with the mediator control plane
+List repositories in the mediator control plane
 
 ### Synopsis
 
-Repo register is used to register a repo with the mediator control plane
+Repo list is used to register a repo with the mediator control plane
 
 ```
-medic repo register [flags]
+medic repo list [flags]
 ```
 
 ### Options
 
 ```
   -g, --group-id int32    ID of the group for repo registration
-  -h, --help              help for register
+  -h, --help              help for list
   -l, --limit int32       Number of repos to display per page (default 20)
   -o, --offset int32      Offset of the repos to display
+  -f, --output string     Output format (json or yaml)
   -n, --provider string   Name for the provider to enroll
-      --repo string       List of key-value pairs
 ```
 
 ### Options inherited from parent commands
