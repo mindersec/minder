@@ -19,6 +19,7 @@ package events
 
 import (
 	"context"
+	"fmt"
 	"reflect"
 	"runtime"
 	"time"
@@ -29,7 +30,8 @@ import (
 	"github.com/ThreeDotsLabs/watermill/pubsub/gochannel"
 )
 
-// type Handler is an alias for the watermill handler type
+// Handler is an alias for the watermill handler type, which is both wordy and may be
+// detail we don't want to expose.
 type Handler = message.NoPublishHandlerFunc
 
 // Registrar provides an interface which allows an event router to expose
@@ -57,21 +59,23 @@ type Consumer interface {
 // Eventer is a wrapper over the relevant eventing objects in such
 // a way that they can be easily accessible and configurable.
 type Eventer struct {
-	Router *message.Router
-	// WebhookPublisher will gather events coming into the webhook and publish them
-	WebhookPublisher message.Publisher
-	// WebhookSubscriber will subscribe to the webhook topic and handle incoming events
-	WebhookSubscriber message.Subscriber
+	router *message.Router
+	// webhookPublisher will gather events coming into the webhook and publish them
+	webhookPublisher message.Publisher
+	// webhookSubscriber will subscribe to the webhook topic and handle incoming events
+	webhookSubscriber message.Subscriber
 	// TODO: We'll have a Final publisher that will publish to the final topic
 }
 
 var _ Registrar = (*Eventer)(nil)
+var _ message.Publisher = (*Eventer)(nil)
 
 // Setup creates an Eventer object which isolates the watermill setup code
 // TODO: pass in logger
 func Setup() (*Eventer, error) {
 	l := watermill.NewStdLogger(false, false)
-	router, err := message.NewRouter(message.RouterConfig{}, l)
+	// TODO: parameterize CloseTimeout for testing
+	router, err := message.NewRouter(message.RouterConfig{CloseTimeout: time.Second * 2}, l)
 	if err != nil {
 		return nil, err
 	}
@@ -94,40 +98,48 @@ func Setup() (*Eventer, error) {
 		middleware.Recoverer,
 	)
 
-	webhpubsub := gochannel.NewGoChannel(gochannel.Config{}, l)
+	webhpubsub := gochannel.NewGoChannel(gochannel.Config{
+		Persistent: true,
+	}, l)
 
 	return &Eventer{
-		Router:            router,
-		WebhookPublisher:  webhpubsub,
-		WebhookSubscriber: webhpubsub,
+		router:            router,
+		webhookPublisher:  webhpubsub,
+		webhookSubscriber: webhpubsub,
 	}, nil
 }
 
 // Close closes the router
 func (e *Eventer) Close() error {
-	return e.Router.Close()
+	return e.router.Close()
 }
 
-// Run runs the router, and returns a close function.
+// Run runs the router, blocks until the router is closed
 func (e *Eventer) Run(ctx context.Context) error {
-	return e.Router.Run(ctx)
+	return e.router.Run(ctx)
 }
 
-// Subscribe subscribes to a topic and handles incoming messages
+// Publish implements message.Publisher
+func (e *Eventer) Publish(topic string, messages ...*message.Message) error {
+	return e.webhookPublisher.Publish(topic, messages...)
+}
+
+// Register subscribes to a topic and handles incoming messages
 func (e *Eventer) Register(
 	topic string,
 	handler message.NoPublishHandlerFunc,
 ) {
 	// From https://stackoverflow.com/questions/7052693/how-to-get-the-name-of-a-function-in-go
-	funcName := runtime.FuncForPC(reflect.ValueOf(handler).Pointer()).Name()
-	e.Router.AddNoPublisherHandler(
+	funcName := fmt.Sprintf("%s-%s", runtime.FuncForPC(reflect.ValueOf(handler).Pointer()).Name(), topic)
+	e.router.AddNoPublisherHandler(
 		funcName,
 		topic,
-		e.WebhookSubscriber,
+		e.webhookSubscriber,
 		handler,
 	)
 }
 
+// ConsumeEvents allows registration of multiple consumers easily
 func (e *Eventer) ConsumeEvents(consumers ...Consumer) {
 	for _, c := range consumers {
 		c.Register(e)

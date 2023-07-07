@@ -252,7 +252,7 @@ func (s *Server) StartHTTPServer(ctx context.Context) error {
 	RegisterGatewayHTTPHandlers(ctx, gwmux, s.cfg.GRPCServer.GetAddress(), opts)
 
 	mux.Handle("/", gwmux)
-	mux.HandleFunc("/api/v1/webhook/", HandleGitHubWebHook(s.evt.WebhookPublisher))
+	mux.HandleFunc("/api/v1/webhook/", HandleGitHubWebHook(s.evt))
 
 	errch := make(chan error)
 
