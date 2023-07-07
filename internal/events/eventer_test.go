@@ -17,7 +17,6 @@ package events_test
 
 import (
 	"context"
-	"fmt"
 	"testing"
 
 	"github.com/ThreeDotsLabs/watermill/message"
@@ -45,7 +44,6 @@ func (f *fakeConsumer) Register(r events.Registrar) {
 func fakeHandler(id string, out chan eventPair) events.Handler {
 	return func(msg *message.Message) error {
 		out <- eventPair{id, msg.Copy()}
-		fmt.Printf("Stored for %q\n", id)
 		return nil
 	}
 }

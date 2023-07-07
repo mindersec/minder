@@ -75,7 +75,7 @@ var _ message.Publisher = (*Eventer)(nil)
 func Setup() (*Eventer, error) {
 	l := watermill.NewStdLogger(false, false)
 	// TODO: parameterize CloseTimeout for testing
-	router, err := message.NewRouter(message.RouterConfig{CloseTimeout: time.Second * 2}, l)
+	router, err := message.NewRouter(message.RouterConfig{CloseTimeout: time.Second * 10}, l)
 	if err != nil {
 		return nil, err
 	}
