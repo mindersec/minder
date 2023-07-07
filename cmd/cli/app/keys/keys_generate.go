@@ -45,17 +45,24 @@ mediator control plane for an specific group.`,
 		}
 	},
 	Run: func(cmd *cobra.Command, args []string) {
-		pass, err := util.GetPassFromTerm(true)
-		if err != nil {
-			fmt.Fprintf(os.Stderr, "Error getting password: %s\n", err)
-			os.Exit(1)
-		}
-		fmt.Println()
 
 		grpc_host := util.GetConfigValue("grpc_server.host", "grpc-host", cmd, "").(string)
 		grpc_port := util.GetConfigValue("grpc_server.port", "grpc-port", cmd, 0).(int)
 		group_id := util.GetConfigValue("group-id", "group-id", cmd, int32(0))
 		out := util.GetConfigValue("output", "output", cmd, "").(string)
+		pass := util.GetConfigValue("passphrase", "passphrase", cmd, "").(string)
+		var passphrase []byte
+
+		if pass == "" {
+			var err error
+			passphrase, err = util.GetPassFromTerm(true)
+			if err != nil {
+				util.ExitNicelyOnError(err, "error getting password")
+			}
+			fmt.Println()
+		} else {
+			passphrase = []byte(pass)
+		}
 
 		conn, err := util.GetGrpcConnection(grpc_host, grpc_port)
 		util.ExitNicelyOnError(err, "Error getting grpc connection")
@@ -66,25 +73,22 @@ mediator control plane for an specific group.`,
 		defer cancel()
 
 		keyResp, err := client.CreateKeyPair(ctx, &pb.CreateKeyPairRequest{
-			Passphrase: base64.RawStdEncoding.EncodeToString(pass),
+			Passphrase: base64.RawStdEncoding.EncodeToString(passphrase),
 			GroupId:    group_id.(int32),
 		})
 		if err != nil {
-			fmt.Fprintf(os.Stderr, "error calling create keys: %s\n", err)
-			os.Exit(1)
+			util.ExitNicelyOnError(err, "Error calling create keys")
 		}
 
 		decodedPublicKey, err := base64.RawStdEncoding.DecodeString(keyResp.PublicKey)
 		if err != nil {
-			fmt.Fprintf(os.Stderr, "error decoding public key: %s\n", err)
-			os.Exit(1)
+			util.ExitNicelyOnError(err, "Error decoding public key:")
 		}
 
 		if out != "" {
 			err = util.WriteToFile(out, decodedPublicKey, 0644)
 			if err != nil {
-				fmt.Fprintf(os.Stderr, "error writing public key to file: %s\n", err)
-				os.Exit(1)
+				util.ExitNicelyOnError(err, "Error writing public key to file")
 			}
 		}
 
@@ -94,7 +98,6 @@ mediator control plane for an specific group.`,
 		table.SetHeader([]string{"Status", "Key Indentifier"})
 		table.Append([]string{"Success", keyResp.KeyIdentifier})
 		table.Render()
-
 	},
 }
 
@@ -102,4 +105,5 @@ func init() {
 	KeysCmd.AddCommand(genKeys_listCmd)
 	genKeys_listCmd.Flags().Int32P("group-id", "g", 0, "group id to list roles for")
 	genKeys_listCmd.Flags().StringP("output", "o", "", "Output public key to file")
+	genKeys_listCmd.Flags().StringP("passphrase", "p", "", "Passphrase to use for key generation")
 }

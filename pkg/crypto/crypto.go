@@ -291,22 +291,22 @@ func IsNonceValid(nonce string) (bool, error) {
 func GenerateKeyPair(passphrase string) ([]byte, []byte, error) {
 	signer, private, err := signature.NewDefaultECDSASignerVerifier()
 	if err != nil {
-		panic(err)
+		return nil, nil, err
 	}
 
 	pub, err := signer.PublicKey()
 	if err != nil {
-		panic(err)
+		return nil, nil, err
 	}
 
 	pubBytes, err := x509.MarshalPKIXPublicKey(pub)
 	if err != nil {
-		panic(err)
+		return nil, nil, err
 	}
 
 	privateBytes, err := x509.MarshalECPrivateKey(private)
 	if err != nil {
-		panic(err)
+		return nil, nil, err
 	}
 
 	// Encrypt the private key with NACL secretbox

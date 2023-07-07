@@ -298,7 +298,7 @@ func WriteToFile(out string, content []byte, perms fs.FileMode) error {
 	if out != "" {
 		err := os.WriteFile(out, content, perms)
 		if err != nil {
-			return fmt.Errorf("error writingto file: %s", err)
+			return fmt.Errorf("error writing to file: %s", err)
 		}
 	}
 
