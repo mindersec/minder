@@ -68,13 +68,15 @@ var repo_registerCmd = &cobra.Command{
 		ctx, cancel := util.GetAppContext()
 		defer cancel()
 
-		listResp, err := client.ListRepositories(ctx, &pb.ListRepositoriesRequest{
-			Provider:         provider,
-			GroupId:          int32(groupID),
-			Limit:            int32(limit),
-			Offset:           int32(offset),
-			FilterRegistered: true,
-		})
+		req := &pb.ListRepositoriesRequest{
+			Provider: provider,
+			GroupId:  int32(groupID),
+			Limit:    int32(limit),
+			Offset:   int32(offset),
+			Filter:   pb.RepoFilter_REPO_FILTER_SHOW_NOT_REGISTERED_ONLY,
+		}
+
+		listResp, err := client.ListRepositories(ctx, req)
 		if err != nil {
 			fmt.Fprintf(os.Stderr, "Error getting repo of repos: %s\n", err)
 			os.Exit(1)

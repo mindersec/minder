@@ -24,6 +24,7 @@ import (
 
 	"google.golang.org/grpc/codes"
 	"google.golang.org/grpc/status"
+	"google.golang.org/protobuf/types/known/timestamppb"
 )
 
 // RegisterRepository adds repositories to the database and registers a webhook
@@ -172,26 +173,36 @@ func (s *Server) ListRepositories(ctx context.Context,
 	}
 
 	var resp pb.ListRepositoriesResponse
-	var results []*pb.Repositories
+	var results []*pb.ListRepositories
 
-	// Do not return results containing the webhook (e.g. registered), if the
-	// client is not interested
-	if in.FilterRegistered {
-		for _, repo := range repos {
-			if repo.WebhookUrl == "" {
-				results = append(results, &pb.Repositories{
-					Owner:  repo.RepoOwner,
-					Name:   repo.RepoName,
-					RepoId: repo.RepoID,
-				})
-			}
+	var filterCondition func(*db.Repository) bool
+
+	switch in.Filter {
+	case pb.RepoFilter_REPO_FILTER_SHOW_UNSPECIFIED:
+		return nil, status.Errorf(codes.InvalidArgument, "filter not specified")
+	case pb.RepoFilter_REPO_FILTER_SHOW_ALL:
+		filterCondition = func(_ *db.Repository) bool {
+			return true
 		}
-	} else {
-		for _, repo := range repos {
-			results = append(results, &pb.Repositories{
-				Owner:  repo.RepoOwner,
-				Name:   repo.RepoName,
-				RepoId: repo.RepoID,
+	case pb.RepoFilter_REPO_FILTER_SHOW_NOT_REGISTERED_ONLY:
+		filterCondition = func(repo *db.Repository) bool {
+			return repo.WebhookUrl == ""
+		}
+	case pb.RepoFilter_REPO_FILTER_SHOW_REGISTERED_ONLY:
+		filterCondition = func(repo *db.Repository) bool {
+			return repo.WebhookUrl != ""
+		}
+	}
+
+	for _, repo := range repos {
+		repo := repo
+
+		if filterCondition(&repo) {
+			results = append(results, &pb.ListRepositories{
+				Owner:      repo.RepoOwner,
+				Name:       repo.RepoName,
+				RepoId:     repo.RepoID,
+				Registered: repo.WebhookUrl != "",
 			})
 		}
 	}
@@ -199,4 +210,54 @@ func (s *Server) ListRepositories(ctx context.Context,
 	resp.Results = results
 
 	return &resp, nil
+}
+
+// GetRepository returns information about a repository.
+// This function will typically be called by the client to get a
+// repository which is already registered and present in the mediator database
+// The API is called with a group id
+func (s *Server) GetRepository(ctx context.Context,
+	in *pb.GetRepositoryRequest) (*pb.GetRepositoryResponse, error) {
+	if in.Provider != auth.Github {
+		return nil, status.Errorf(codes.InvalidArgument, "provider not supported: %v", in.Provider)
+	}
+
+	// if we do not have a group, check if we can infer it
+	if in.GroupId == 0 {
+		group, err := auth.GetDefaultGroup(ctx)
+		if err != nil {
+			return nil, status.Errorf(codes.InvalidArgument, "cannot infer group id")
+		}
+		in.GroupId = group
+	}
+
+	// check if user is authorized
+	if !IsRequestAuthorized(ctx, in.GroupId) {
+		return nil, status.Errorf(codes.PermissionDenied, "user is not authorized to access this resource")
+	}
+
+	repo, err := s.store.GetRepositoryByIDAndGroup(ctx, db.GetRepositoryByIDAndGroupParams{
+		RepoID:   in.RepositoryId,
+		Provider: in.Provider,
+		GroupID:  in.GroupId,
+	})
+
+	if err == sql.ErrNoRows {
+		return nil, status.Errorf(codes.NotFound, "repository not found")
+	} else if err != nil {
+		return nil, err
+	}
+
+	createdAt := timestamppb.New(repo.CreatedAt)
+	updatedat := timestamppb.New(repo.UpdatedAt)
+
+	return &pb.GetRepositoryResponse{
+		Owner:      repo.RepoOwner,
+		Repository: repo.RepoName,
+		RepoId:     repo.RepoID,
+		Registered: repo.WebhookUrl != "",
+		CreatedAt:  createdAt,
+		UpdatedAt:  updatedat,
+		HookUrl:    repo.WebhookUrl,
+	}, nil
 }

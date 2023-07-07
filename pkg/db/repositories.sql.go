@@ -104,6 +104,37 @@ func (q *Queries) GetRepositoryByID(ctx context.Context, id int32) (Repository, 
 	return i, err
 }
 
+const getRepositoryByIDAndGroup = `-- name: GetRepositoryByIDAndGroup :one
+SELECT id, provider, group_id, repo_owner, repo_name, repo_id, is_private, is_fork, webhook_id, webhook_url, deploy_url, created_at, updated_at FROM repositories WHERE provider = $1 AND repo_id = $2 AND group_id = $3
+`
+
+type GetRepositoryByIDAndGroupParams struct {
+	Provider string `json:"provider"`
+	RepoID   int32  `json:"repo_id"`
+	GroupID  int32  `json:"group_id"`
+}
+
+func (q *Queries) GetRepositoryByIDAndGroup(ctx context.Context, arg GetRepositoryByIDAndGroupParams) (Repository, error) {
+	row := q.db.QueryRowContext(ctx, getRepositoryByIDAndGroup, arg.Provider, arg.RepoID, arg.GroupID)
+	var i Repository
+	err := row.Scan(
+		&i.ID,
+		&i.Provider,
+		&i.GroupID,
+		&i.RepoOwner,
+		&i.RepoName,
+		&i.RepoID,
+		&i.IsPrivate,
+		&i.IsFork,
+		&i.WebhookID,
+		&i.WebhookUrl,
+		&i.DeployUrl,
+		&i.CreatedAt,
+		&i.UpdatedAt,
+	)
+	return i, err
+}
+
 const getRepositoryByRepoID = `-- name: GetRepositoryByRepoID :one
 SELECT id, provider, group_id, repo_owner, repo_name, repo_id, is_private, is_fork, webhook_id, webhook_url, deploy_url, created_at, updated_at FROM repositories WHERE provider = $1 AND repo_id = $2
 `

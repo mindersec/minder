@@ -986,6 +986,7 @@ var SecretsService_ServiceDesc = grpc.ServiceDesc{
 const (
 	RepositoryService_RegisterRepository_FullMethodName = "/mediator.v1.RepositoryService/RegisterRepository"
 	RepositoryService_ListRepositories_FullMethodName   = "/mediator.v1.RepositoryService/ListRepositories"
+	RepositoryService_GetRepository_FullMethodName      = "/mediator.v1.RepositoryService/GetRepository"
 )
 
 // RepositoryServiceClient is the client API for RepositoryService service.
@@ -994,6 +995,7 @@ const (
 type RepositoryServiceClient interface {
 	RegisterRepository(ctx context.Context, in *RegisterRepositoryRequest, opts ...grpc.CallOption) (*RegisterRepositoryResponse, error)
 	ListRepositories(ctx context.Context, in *ListRepositoriesRequest, opts ...grpc.CallOption) (*ListRepositoriesResponse, error)
+	GetRepository(ctx context.Context, in *GetRepositoryRequest, opts ...grpc.CallOption) (*GetRepositoryResponse, error)
 }
 
 type repositoryServiceClient struct {
@@ -1022,12 +1024,22 @@ func (c *repositoryServiceClient) ListRepositories(ctx context.Context, in *List
 	return out, nil
 }
 
+func (c *repositoryServiceClient) GetRepository(ctx context.Context, in *GetRepositoryRequest, opts ...grpc.CallOption) (*GetRepositoryResponse, error) {
+	out := new(GetRepositoryResponse)
+	err := c.cc.Invoke(ctx, RepositoryService_GetRepository_FullMethodName, in, out, opts...)
+	if err != nil {
+		return nil, err
+	}
+	return out, nil
+}
+
 // RepositoryServiceServer is the server API for RepositoryService service.
 // All implementations must embed UnimplementedRepositoryServiceServer
 // for forward compatibility
 type RepositoryServiceServer interface {
 	RegisterRepository(context.Context, *RegisterRepositoryRequest) (*RegisterRepositoryResponse, error)
 	ListRepositories(context.Context, *ListRepositoriesRequest) (*ListRepositoriesResponse, error)
+	GetRepository(context.Context, *GetRepositoryRequest) (*GetRepositoryResponse, error)
 	mustEmbedUnimplementedRepositoryServiceServer()
 }
 
@@ -1040,6 +1052,9 @@ func (UnimplementedRepositoryServiceServer) RegisterRepository(context.Context, 
 }
 func (UnimplementedRepositoryServiceServer) ListRepositories(context.Context, *ListRepositoriesRequest) (*ListRepositoriesResponse, error) {
 	return nil, status.Errorf(codes.Unimplemented, "method ListRepositories not implemented")
+}
+func (UnimplementedRepositoryServiceServer) GetRepository(context.Context, *GetRepositoryRequest) (*GetRepositoryResponse, error) {
+	return nil, status.Errorf(codes.Unimplemented, "method GetRepository not implemented")
 }
 func (UnimplementedRepositoryServiceServer) mustEmbedUnimplementedRepositoryServiceServer() {}
 
@@ -1090,6 +1105,24 @@ func _RepositoryService_ListRepositories_Handler(srv interface{}, ctx context.Co
 	return interceptor(ctx, in, info, handler)
 }
 
+func _RepositoryService_GetRepository_Handler(srv interface{}, ctx context.Context, dec func(interface{}) error, interceptor grpc.UnaryServerInterceptor) (interface{}, error) {
+	in := new(GetRepositoryRequest)
+	if err := dec(in); err != nil {
+		return nil, err
+	}
+	if interceptor == nil {
+		return srv.(RepositoryServiceServer).GetRepository(ctx, in)
+	}
+	info := &grpc.UnaryServerInfo{
+		Server:     srv,
+		FullMethod: RepositoryService_GetRepository_FullMethodName,
+	}
+	handler := func(ctx context.Context, req interface{}) (interface{}, error) {
+		return srv.(RepositoryServiceServer).GetRepository(ctx, req.(*GetRepositoryRequest))
+	}
+	return interceptor(ctx, in, info, handler)
+}
+
 // RepositoryService_ServiceDesc is the grpc.ServiceDesc for RepositoryService service.
 // It's only intended for direct use with grpc.RegisterService,
 // and not to be introspected or modified (even as a copy)
@@ -1104,6 +1137,10 @@ var RepositoryService_ServiceDesc = grpc.ServiceDesc{
 		{
 			MethodName: "ListRepositories",
 			Handler:    _RepositoryService_ListRepositories_Handler,
+		},
+		{
+			MethodName: "GetRepository",
+			Handler:    _RepositoryService_GetRepository_Handler,
 		},
 	},
 	Streams:  []grpc.StreamDesc{},

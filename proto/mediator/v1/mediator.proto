@@ -174,6 +174,11 @@ service RepositoryService {
             get: "/api/v1/repositories"
         };
     }
+    rpc GetRepository (GetRepositoryRequest) returns (GetRepositoryResponse) {
+        option (google.api.http) = {
+            get: "/api/v1/repository/{repository_id}"
+        };
+    }
 }
 
 // Get Branch Protection Settings
@@ -525,8 +530,33 @@ message Repositories {
     int32 repo_id = 3;
 }
 
+// ListRepositories is used for displaying repository list data that
+// is relevant to users. It is not used for registering repositories.
+// Due to protobuf limitations, we cannot use the same Repositories for
+// listing repositories and registering repositories.
+message ListRepositories {
+    string owner = 1;
+    string name = 2;
+    int32 repo_id = 3;
+    bool registered = 4;
+}
+
 message RegisterRepositoryResponse {
     repeated RepositoryResult results = 1;
+}
+
+message GetRepositoryRequest {
+    int32 repository_id = 1;
+    string provider = 2;
+    int32 group_id = 3;
+}
+
+// Repo filter enum
+enum RepoFilter {
+    REPO_FILTER_SHOW_UNSPECIFIED = 0;
+    REPO_FILTER_SHOW_ALL = 1;
+    REPO_FILTER_SHOW_NOT_REGISTERED_ONLY = 2;
+    REPO_FILTER_SHOW_REGISTERED_ONLY = 3;
 }
 
 message ListRepositoriesRequest {
@@ -534,11 +564,21 @@ message ListRepositoriesRequest {
     int32 group_id = 2;
     int32 limit = 3;
     int32 offset = 4;
-    bool filter_registered = 5;
+    RepoFilter filter = 5;
 }
 
 message ListRepositoriesResponse {
-    repeated Repositories results = 1;
+    repeated ListRepositories results = 1;
+}
+
+message GetRepositoryResponse {
+    string owner = 1;
+    string repository = 2;
+    int32 repo_id = 3;
+    string hook_url = 4;
+    google.protobuf.Timestamp created_at = 5;
+    google.protobuf.Timestamp updated_at = 6;
+    bool registered = 7;
 }
 
 message RepositoryResult {
@@ -555,6 +595,7 @@ message RepositoryResult {
     bool success = 11;
     string uuid = 12;
     google.protobuf.StringValue error = 13;
+    bool registered = 14;
 }
 
 
