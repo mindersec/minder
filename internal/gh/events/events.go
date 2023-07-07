@@ -31,11 +31,12 @@ type sampleHandler struct {
 	store db.Store
 }
 
-// SampleHandler implements the Consumer interface
-func (h *sampleHandler) Register(r events.Registrar) {
+// Register implements the Consumer interface.
+func (_ *sampleHandler) Register(r events.Registrar) {
 	r.Register("security_and_analysis", handleSecurityAndAnalysisEvent)
 }
 
+// NewHandler acts as a constructor for the sampleHandler.
 func NewHandler(store db.Store) events.Consumer {
 	return &sampleHandler{
 		store: store,

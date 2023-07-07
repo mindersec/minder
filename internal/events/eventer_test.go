@@ -117,10 +117,15 @@ func TestEventer(t *testing.T) {
 				if c.makeHandler == nil {
 					c.makeHandler = fakeHandler
 				}
-				eventer.ConsumeEvents(&c)
+				local := c // Avoid aliasing
+				eventer.ConsumeEvents(&local)
 			}
 
-			go func() { eventer.Run(context.Background()) }()
+			go func() {
+				if err := eventer.Run(context.Background()); err != nil {
+					t.Errorf("Run() error = %v", err)
+				}
+			}()
 			defer eventer.Close()
 
 			for _, pair := range tt.publish {
@@ -142,7 +147,9 @@ func TestEventer(t *testing.T) {
 				received[got.topic] = append(received[got.topic], got.msg.Copy())
 			}
 
-			eventer.Close()
+			if err := eventer.Close(); err != nil {
+				t.Errorf("Close() error = %v", err)
+			}
 			for topic, msgs := range tt.want {
 				if len(msgs) != len(received[topic]) {
 					t.Errorf("wanted %d messages for topic %q, got %d", len(msgs), topic, len(received[topic]))

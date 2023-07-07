@@ -117,7 +117,7 @@ func (s *Server) Register(topic string, handler events.Handler) {
 	s.evt.Register(topic, handler)
 }
 
-// HandleAll implements events.Registrar
+// ConsumeEvents implements events.Registrar
 func (s *Server) ConsumeEvents(c ...events.Consumer) {
 	s.evt.ConsumeEvents(c...)
 }
