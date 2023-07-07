@@ -118,6 +118,9 @@ func (e *Eventer) Close() error {
 func (e *Eventer) Run(ctx context.Context) error {
 	return e.router.Run(ctx)
 }
+
+// Running returns a channel which allows you to wait until the
+// event router has started.
 func (e *Eventer) Running() chan struct{} {
 	return e.router.Running()
 }
