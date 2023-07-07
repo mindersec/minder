@@ -158,9 +158,12 @@ func TestKeysHandler_gRPC(t *testing.T) {
 			mockStore := mockdb.NewMockStore(ctrl)
 			tc.buildStubs(mockStore)
 
-			server := NewServer(mockStore, &config.Config{
-				Salt: config.GetCryptoConfigWithDefaults(),
-			})
+			server := &Server{
+				store: mockStore,
+				cfg: &config.Config{
+					Salt: config.GetCryptoConfigWithDefaults(),
+				},
+			}
 
 			response, err := server.CreateKeyPair(ctx, tc.request)
 			tc.checkResponse(t, response, err)
