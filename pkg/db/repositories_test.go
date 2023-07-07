@@ -33,7 +33,7 @@ import (
 
 type RepositoryOption func(*CreateRepositoryParams)
 
-func deleteRepositoryByRepoId(t *testing.T, params CreateRepositoryParams) error {
+func deleteRepositoryByRepoId(params CreateRepositoryParams) error {
 	repo, err := testQueries.GetRepositoryByRepoID(
 		context.Background(), GetRepositoryByRepoIDParams{Provider: params.Provider, RepoID: params.RepoID})
 	if err == sql.ErrNoRows {
@@ -65,7 +65,7 @@ func createRandomRepository(t *testing.T, group int32, opts ...RepositoryOption)
 	}
 
 	// Avoid unique constraint violation
-	require.NoError(t, deleteRepositoryByRepoId(t, arg))
+	require.NoError(t, deleteRepositoryByRepoId(arg))
 
 	repo, err := testQueries.CreateRepository(context.Background(), arg)
 	require.NoError(t, err)
@@ -148,8 +148,6 @@ func TestListRepositoriesByGroupID(t *testing.T) {
 	group := createRandomGroup(t, org.ID)
 
 	for i := int32(1001); i < 1020; i++ {
-
-		testQueries.DeleteRepository(context.Background(), i)
 		createRandomRepository(t, group.ID, func(r *CreateRepositoryParams) {
 			r.RepoID = int32(i)
 		})
