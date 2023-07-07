@@ -115,7 +115,8 @@ func init() {
 	PolicyCmd.AddCommand(Policy_createCmd)
 	Policy_createCmd.Flags().StringP("provider", "n", "", "Provider (github)")
 	Policy_createCmd.Flags().Int32P("group-id", "g", 0, "ID of the group to where the policy belongs")
-	Policy_createCmd.Flags().StringP("type", "t", "", "Type of policy - must be one valid policy type")
+	Policy_createCmd.Flags().StringP("type", "t", "", `Type of policy - must be one valid policy type.
+	Please check valid policy types with: medic policy_types list command`)
 	Policy_createCmd.Flags().StringP("file", "f", "", "Path to the YAML defining the policy (or - for stdin)")
 
 	if err := Policy_createCmd.MarkFlagRequired("file"); err != nil {

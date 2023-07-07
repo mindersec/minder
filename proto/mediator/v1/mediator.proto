@@ -1126,13 +1126,14 @@ message GetPolicyByIdResponse {
 
 // policy type record to be returned
 message PolicyTypeRecord {
-    string provider = 1;
-    string policy_type = 2;
-    optional string description = 3;
-    string json_schema = 4;
-    string version = 5;
-    google.protobuf.Timestamp created_at = 6;
-    google.protobuf.Timestamp updated_at = 7;    
+    int32 id = 1;
+    string provider = 2;
+    string policy_type = 3;
+    optional string description = 4;
+    string json_schema = 5;
+    string version = 6;
+    google.protobuf.Timestamp created_at = 7;
+    google.protobuf.Timestamp updated_at = 8;    
 }
 
 // get policy type

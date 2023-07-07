@@ -8,48 +8,8 @@ package db
 import (
 	"context"
 	"database/sql"
-	"encoding/json"
 	"time"
 )
-
-const createPolicyType = `-- name: CreatePolicyType :one
-INSERT INTO policy_types (
-  provider,
-  policy_type,
-  description,
-  json_schema,
-  version) VALUES ($1, $2, $3, $4, $5) RETURNING id, provider, policy_type, description, json_schema, version, created_at, updated_at
-`
-
-type CreatePolicyTypeParams struct {
-	Provider    string          `json:"provider"`
-	PolicyType  string          `json:"policy_type"`
-	Description sql.NullString  `json:"description"`
-	JsonSchema  json.RawMessage `json:"json_schema"`
-	Version     string          `json:"version"`
-}
-
-func (q *Queries) CreatePolicyType(ctx context.Context, arg CreatePolicyTypeParams) (PolicyType, error) {
-	row := q.db.QueryRowContext(ctx, createPolicyType,
-		arg.Provider,
-		arg.PolicyType,
-		arg.Description,
-		arg.JsonSchema,
-		arg.Version,
-	)
-	var i PolicyType
-	err := row.Scan(
-		&i.ID,
-		&i.Provider,
-		&i.PolicyType,
-		&i.Description,
-		&i.JsonSchema,
-		&i.Version,
-		&i.CreatedAt,
-		&i.UpdatedAt,
-	)
-	return i, err
-}
 
 const deletePolicyType = `-- name: DeletePolicyType :exec
 DELETE FROM policy_types WHERE policy_type = $1
@@ -61,27 +21,22 @@ func (q *Queries) DeletePolicyType(ctx context.Context, policyType string) error
 }
 
 const getPolicyType = `-- name: GetPolicyType :one
-SELECT id, policy_type, description, json_schema, version, created_at, updated_at FROM policy_types WHERE provider = $1 AND policy_type = $1
+SELECT id, provider, policy_type, description, version, created_at, updated_at FROM policy_types WHERE provider = $1 AND policy_type = $2
 `
 
-type GetPolicyTypeRow struct {
-	ID          int32           `json:"id"`
-	PolicyType  string          `json:"policy_type"`
-	Description sql.NullString  `json:"description"`
-	JsonSchema  json.RawMessage `json:"json_schema"`
-	Version     string          `json:"version"`
-	CreatedAt   time.Time       `json:"created_at"`
-	UpdatedAt   time.Time       `json:"updated_at"`
+type GetPolicyTypeParams struct {
+	Provider   string `json:"provider"`
+	PolicyType string `json:"policy_type"`
 }
 
-func (q *Queries) GetPolicyType(ctx context.Context, provider string) (GetPolicyTypeRow, error) {
-	row := q.db.QueryRowContext(ctx, getPolicyType, provider)
-	var i GetPolicyTypeRow
+func (q *Queries) GetPolicyType(ctx context.Context, arg GetPolicyTypeParams) (PolicyType, error) {
+	row := q.db.QueryRowContext(ctx, getPolicyType, arg.Provider, arg.PolicyType)
+	var i PolicyType
 	err := row.Scan(
 		&i.ID,
+		&i.Provider,
 		&i.PolicyType,
 		&i.Description,
-		&i.JsonSchema,
 		&i.Version,
 		&i.CreatedAt,
 		&i.UpdatedAt,
@@ -90,17 +45,16 @@ func (q *Queries) GetPolicyType(ctx context.Context, provider string) (GetPolicy
 }
 
 const getPolicyTypeById = `-- name: GetPolicyTypeById :one
-SELECT id, policy_type, description, json_schema, version, created_at, updated_at FROM policy_types WHERE id = $1
+SELECT id, policy_type, description, version, created_at, updated_at FROM policy_types WHERE id = $1
 `
 
 type GetPolicyTypeByIdRow struct {
-	ID          int32           `json:"id"`
-	PolicyType  string          `json:"policy_type"`
-	Description sql.NullString  `json:"description"`
-	JsonSchema  json.RawMessage `json:"json_schema"`
-	Version     string          `json:"version"`
-	CreatedAt   time.Time       `json:"created_at"`
-	UpdatedAt   time.Time       `json:"updated_at"`
+	ID          int32          `json:"id"`
+	PolicyType  string         `json:"policy_type"`
+	Description sql.NullString `json:"description"`
+	Version     string         `json:"version"`
+	CreatedAt   time.Time      `json:"created_at"`
+	UpdatedAt   time.Time      `json:"updated_at"`
 }
 
 func (q *Queries) GetPolicyTypeById(ctx context.Context, id int32) (GetPolicyTypeByIdRow, error) {
@@ -110,7 +64,6 @@ func (q *Queries) GetPolicyTypeById(ctx context.Context, id int32) (GetPolicyTyp
 		&i.ID,
 		&i.PolicyType,
 		&i.Description,
-		&i.JsonSchema,
 		&i.Version,
 		&i.CreatedAt,
 		&i.UpdatedAt,
@@ -119,7 +72,7 @@ func (q *Queries) GetPolicyTypeById(ctx context.Context, id int32) (GetPolicyTyp
 }
 
 const getPolicyTypes = `-- name: GetPolicyTypes :many
-SELECT id, provider, policy_type, description, json_schema, version, created_at, updated_at FROM policy_types WHERE provider = $1 ORDER BY policy_type
+SELECT id, provider, policy_type, description, version, created_at, updated_at FROM policy_types WHERE provider = $1 ORDER BY policy_type
 `
 
 func (q *Queries) GetPolicyTypes(ctx context.Context, provider string) ([]PolicyType, error) {
@@ -136,7 +89,6 @@ func (q *Queries) GetPolicyTypes(ctx context.Context, provider string) ([]Policy
 			&i.Provider,
 			&i.PolicyType,
 			&i.Description,
-			&i.JsonSchema,
 			&i.Version,
 			&i.CreatedAt,
 			&i.UpdatedAt,

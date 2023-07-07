@@ -19,7 +19,7 @@
 // It does make a good example of how to use the generated client code
 // for others to use as a reference.
 
-package policy
+package policy_type
 
 import (
 	"encoding/json"
@@ -36,11 +36,11 @@ import (
 	"gopkg.in/yaml.v3"
 )
 
-var policy_listCmd = &cobra.Command{
+var policy_type_listCmd = &cobra.Command{
 	Use:   "list",
-	Short: "List policies within a mediator control plane",
-	Long: `The medic policy list subcommand lets you list policies within a
-mediator control plane for an specific group.`,
+	Short: "List policy types for a provider within a mediator control plane",
+	Long: `The medic policy_type list subcommand lets you list policy types within a
+mediator control plane for an specific provider.`,
 	PreRun: func(cmd *cobra.Command, args []string) {
 		if err := viper.BindPFlags(cmd.Flags()); err != nil {
 			fmt.Fprintf(os.Stderr, "Error binding flags: %s\n", err)
@@ -59,33 +59,27 @@ mediator control plane for an specific group.`,
 		defer cancel()
 
 		provider := viper.GetString("provider")
-		group := viper.GetInt32("group-id")
-		limit := viper.GetInt32("limit")
-		offset := viper.GetInt32("offset")
 		format := viper.GetString("output")
 
 		if format != "json" && format != "yaml" && format != "" {
 			fmt.Fprintf(os.Stderr, "Error: invalid format: %s\n", format)
 		}
 
-		var limitPtr = &limit
-		var offsetPtr = &offset
-
-		resp, err := client.GetPolicies(ctx, &pb.GetPoliciesRequest{Provider: provider,
-			GroupId: group, Limit: limitPtr, Offset: offsetPtr})
-		util.ExitNicelyOnError(err, "Error getting policies")
+		resp, err := client.GetPolicyTypes(ctx, &pb.GetPolicyTypesRequest{Provider: provider})
+		util.ExitNicelyOnError(err, "Error getting policy types")
 
 		// print output in a table
 		if format == "" {
 			table := tablewriter.NewWriter(os.Stdout)
-			table.SetHeader([]string{"Id", "Provider", "Group", "Type", "Created date", "Updated date"})
+			table.SetHeader([]string{"Id", "Provider", "Type", "Description", "Version", "Created date", "Updated date"})
 
-			for _, v := range resp.Policies {
+			for _, v := range resp.PolicyTypes {
 				row := []string{
 					fmt.Sprintf("%d", v.Id),
 					v.Provider,
-					fmt.Sprintf("%d", v.GroupId),
-					v.Type,
+					v.PolicyType,
+					*v.Description,
+					v.Version,
 					v.GetCreatedAt().AsTime().Format(time.RFC3339),
 					v.GetUpdatedAt().AsTime().Format(time.RFC3339),
 				}
@@ -93,11 +87,11 @@ mediator control plane for an specific group.`,
 			}
 			table.Render()
 		} else if format == "json" {
-			output, err := json.MarshalIndent(resp.Policies, "", "  ")
+			output, err := json.MarshalIndent(resp.PolicyTypes, "", "  ")
 			util.ExitNicelyOnError(err, "Error marshalling json")
 			fmt.Println(string(output))
 		} else if format == "yaml" {
-			yamlData, err := yaml.Marshal(resp.Policies)
+			yamlData, err := yaml.Marshal(resp.PolicyTypes)
 			util.ExitNicelyOnError(err, "Error marshalling yaml")
 			fmt.Println(string(yamlData))
 
@@ -106,14 +100,11 @@ mediator control plane for an specific group.`,
 }
 
 func init() {
-	PolicyCmd.AddCommand(policy_listCmd)
-	policy_listCmd.Flags().StringP("provider", "p", "", "Provider to list policies for")
-	policy_listCmd.Flags().Int32P("group-id", "g", 0, "group id to list roles for")
-	policy_listCmd.Flags().StringP("output", "o", "", "Output format (json or yaml)")
-	policy_listCmd.Flags().Int32P("limit", "l", -1, "Limit the number of results returned")
-	policy_listCmd.Flags().Int32P("offset", "f", 0, "Offset the results returned")
+	PolicyTypeCmd.AddCommand(policy_type_listCmd)
+	policy_type_listCmd.Flags().StringP("provider", "p", "", "Provider to list policies for")
+	policy_type_listCmd.Flags().StringP("output", "o", "", "Output format (json or yaml)")
 
-	if err := policy_listCmd.MarkFlagRequired("provider"); err != nil {
+	if err := policy_type_listCmd.MarkFlagRequired("provider"); err != nil {
 		fmt.Fprintf(os.Stderr, "Error marking flag as required: %s\n", err)
 		os.Exit(1)
 	}

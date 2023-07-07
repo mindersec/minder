@@ -16,12 +16,15 @@ package controlplane
 
 import (
 	"context"
+	"os"
+	"path/filepath"
 
 	"github.com/go-playground/validator/v10"
 	"github.com/stacklok/mediator/pkg/auth"
 	"github.com/stacklok/mediator/pkg/db"
 	pb "github.com/stacklok/mediator/pkg/generated/protobuf/go/mediator/v1"
 	"github.com/stacklok/mediator/pkg/util"
+	"github.com/xeipuuv/gojsonschema"
 	"google.golang.org/grpc/codes"
 	"google.golang.org/grpc/status"
 	"google.golang.org/protobuf/types/known/timestamppb"
@@ -54,6 +57,7 @@ type CreatePolicyValidation struct {
 }
 
 // CreatePolicy creates a policy for a group
+// nolint: gocyclo
 func (s *Server) CreatePolicy(ctx context.Context,
 	in *pb.CreatePolicyRequest) (*pb.CreatePolicyResponse, error) {
 	validator := validator.New()
@@ -91,14 +95,15 @@ func (s *Server) CreatePolicy(ctx context.Context,
 	if err != nil {
 		return nil, status.Errorf(codes.Internal, "cannot get policy types: %v", err)
 	}
-	typeId := int32(0)
+
+	policyType := db.PolicyType{}
 	for _, policy := range policies {
 		if policy.PolicyType == in.Type {
-			typeId = policy.ID
+			policyType = policy
 			break
 		}
 	}
-	if typeId == 0 {
+	if policyType == (db.PolicyType{}) {
 		return nil, status.Errorf(codes.InvalidArgument, "invalid policy type: %v", in.Type)
 	}
 
@@ -108,8 +113,30 @@ func (s *Server) CreatePolicy(ctx context.Context,
 		return nil, status.Errorf(codes.InvalidArgument, "invalid policy definition: %v", err)
 	}
 
+	// read schema
+	jsonSchema, err := readPolicyTypeSchema(policyType.Provider, policyType.PolicyType, policyType.Version)
+	if err != nil {
+		return nil, status.Errorf(codes.Internal, "cannot read policy type schema: %v", err)
+	}
+
+	// validate against json schema
+	schemaLoader := gojsonschema.NewStringLoader(jsonSchema)
+	schema, err := gojsonschema.NewSchema(schemaLoader)
+	if err != nil {
+		return nil, status.Errorf(codes.Internal, "cannot create json schema: %v", err)
+	}
+	documentLoader := gojsonschema.NewStringLoader(string(jsonData))
+	result, err := schema.Validate(documentLoader)
+	if err != nil {
+		return nil, status.Errorf(codes.Internal, "cannot validate json schema: %v", err)
+	}
+
+	if !result.Valid() {
+		return nil, status.Errorf(codes.InvalidArgument, "invalid policy definition: %v", result.Errors())
+	}
+
 	policy, err := s.store.CreatePolicy(ctx, db.CreatePolicyParams{Provider: in.Provider, GroupID: in.GroupId,
-		PolicyType: typeId, PolicyDefinition: jsonData})
+		PolicyType: policyType.ID, PolicyDefinition: jsonData})
 	if err != nil {
 		return nil, status.Errorf(codes.Internal, "cannot create policy: %v", err)
 	}
@@ -257,6 +284,21 @@ func (s *Server) GetPolicyById(ctx context.Context,
 	return &resp, nil
 }
 
+func readPolicyTypeSchema(provider string, policyType string, version string) (string, error) {
+	wd, err := os.Getwd()
+	if err != nil {
+		return "", err
+	}
+	filePath := filepath.Join(wd, "config", "policy_types", provider, policyType, version, "schema.json")
+
+	// Read the file contents
+	schema, err := os.ReadFile(filepath.Clean(filePath))
+	if err != nil {
+		return "", err
+	}
+	return string(schema), nil
+}
+
 // GetPolicyTypes is a method to get all policy types
 func (s *Server) GetPolicyTypes(ctx context.Context, in *pb.GetPolicyTypesRequest) (*pb.GetPolicyTypesResponse, error) {
 	if in.Provider != auth.Github {
@@ -270,13 +312,35 @@ func (s *Server) GetPolicyTypes(ctx context.Context, in *pb.GetPolicyTypesReques
 	var resp pb.GetPolicyTypesResponse
 	resp.PolicyTypes = make([]*pb.PolicyTypeRecord, 0, len(types))
 	for _, policyType := range types {
-		resp.PolicyTypes = append(resp.PolicyTypes, &pb.PolicyTypeRecord{Provider: policyType.Provider,
+		// in list, we do not return json schema to optimize the response
+		resp.PolicyTypes = append(resp.PolicyTypes, &pb.PolicyTypeRecord{
+			Id: policyType.ID, Provider: policyType.Provider,
 			PolicyType:  policyType.PolicyType,
-			Description: &policyType.Description.String, JsonSchema: string(policyType.JsonSchema),
+			Description: &policyType.Description.String, JsonSchema: "",
 			Version: policyType.Version, CreatedAt: timestamppb.New(policyType.CreatedAt),
 			UpdatedAt: timestamppb.New(policyType.UpdatedAt),
 		})
 	}
 
 	return &resp, nil
+}
+
+// GetPolicyType is a method to get a policy type by id
+func (s *Server) GetPolicyType(ctx context.Context, in *pb.GetPolicyTypeRequest) (*pb.GetPolicyTypeResponse, error) {
+	if in.Provider != auth.Github {
+		return nil, status.Errorf(codes.InvalidArgument, "provider not supported: %v", in.Provider)
+	}
+	policyType, err := s.store.GetPolicyType(ctx, db.GetPolicyTypeParams{Provider: in.Provider, PolicyType: in.Type})
+	if err != nil {
+		return nil, status.Errorf(codes.Unknown, "failed to get policy types: %s", err)
+	}
+	schema, err := readPolicyTypeSchema(policyType.Provider, policyType.PolicyType, policyType.Version)
+	if err != nil {
+		return nil, status.Errorf(codes.Unknown, "failed to get policy schemas: %s", err)
+	}
+
+	return &pb.GetPolicyTypeResponse{PolicyType: &pb.PolicyTypeRecord{Id: policyType.ID, Provider: policyType.Provider,
+		PolicyType: policyType.PolicyType, Description: &policyType.Description.String, JsonSchema: schema,
+		Version: policyType.Version, CreatedAt: timestamppb.New(policyType.CreatedAt),
+		UpdatedAt: timestamppb.New(policyType.UpdatedAt)}}, nil
 }

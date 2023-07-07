@@ -39,14 +39,13 @@ type Policy struct {
 }
 
 type PolicyType struct {
-	ID          int32           `json:"id"`
-	Provider    string          `json:"provider"`
-	PolicyType  string          `json:"policy_type"`
-	Description sql.NullString  `json:"description"`
-	JsonSchema  json.RawMessage `json:"json_schema"`
-	Version     string          `json:"version"`
-	CreatedAt   time.Time       `json:"created_at"`
-	UpdatedAt   time.Time       `json:"updated_at"`
+	ID          int32          `json:"id"`
+	Provider    string         `json:"provider"`
+	PolicyType  string         `json:"policy_type"`
+	Description sql.NullString `json:"description"`
+	Version     string         `json:"version"`
+	CreatedAt   time.Time      `json:"created_at"`
+	UpdatedAt   time.Time      `json:"updated_at"`
 }
 
 type ProviderAccessToken struct {

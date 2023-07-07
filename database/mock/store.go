@@ -184,21 +184,6 @@ func (mr *MockStoreMockRecorder) CreatePolicy(arg0, arg1 interface{}) *gomock.Ca
 	return mr.mock.ctrl.RecordCallWithMethodType(mr.mock, "CreatePolicy", reflect.TypeOf((*MockStore)(nil).CreatePolicy), arg0, arg1)
 }
 
-// CreatePolicyType mocks base method.
-func (m *MockStore) CreatePolicyType(arg0 context.Context, arg1 db.CreatePolicyTypeParams) (db.PolicyType, error) {
-	m.ctrl.T.Helper()
-	ret := m.ctrl.Call(m, "CreatePolicyType", arg0, arg1)
-	ret0, _ := ret[0].(db.PolicyType)
-	ret1, _ := ret[1].(error)
-	return ret0, ret1
-}
-
-// CreatePolicyType indicates an expected call of CreatePolicyType.
-func (mr *MockStoreMockRecorder) CreatePolicyType(arg0, arg1 interface{}) *gomock.Call {
-	mr.mock.ctrl.T.Helper()
-	return mr.mock.ctrl.RecordCallWithMethodType(mr.mock, "CreatePolicyType", reflect.TypeOf((*MockStore)(nil).CreatePolicyType), arg0, arg1)
-}
-
 // CreateRepository mocks base method.
 func (m *MockStore) CreateRepository(arg0 context.Context, arg1 db.CreateRepositoryParams) (db.Repository, error) {
 	m.ctrl.T.Helper()
@@ -564,10 +549,10 @@ func (mr *MockStoreMockRecorder) GetPolicyByID(arg0, arg1 interface{}) *gomock.C
 }
 
 // GetPolicyType mocks base method.
-func (m *MockStore) GetPolicyType(arg0 context.Context, arg1 string) (db.GetPolicyTypeRow, error) {
+func (m *MockStore) GetPolicyType(arg0 context.Context, arg1 db.GetPolicyTypeParams) (db.PolicyType, error) {
 	m.ctrl.T.Helper()
 	ret := m.ctrl.Call(m, "GetPolicyType", arg0, arg1)
-	ret0, _ := ret[0].(db.GetPolicyTypeRow)
+	ret0, _ := ret[0].(db.PolicyType)
 	ret1, _ := ret[1].(error)
 	return ret0, ret1
 }

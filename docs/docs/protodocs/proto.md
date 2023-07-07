@@ -1722,6 +1722,7 @@ policy type record to be returned
 
 | Field | Type | Label | Description |
 | ----- | ---- | ----- | ----------- |
+| id | [int32](#int32) |  |  |
 | provider | [string](#string) |  |  |
 | policy_type | [string](#string) |  |  |
 | description | [string](#string) | optional |  |
