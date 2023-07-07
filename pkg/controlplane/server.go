@@ -43,7 +43,6 @@ import (
 
 	"github.com/stacklok/mediator/internal/config"
 	"github.com/stacklok/mediator/internal/events"
-	ghevts "github.com/stacklok/mediator/internal/gh/events"
 	"github.com/stacklok/mediator/internal/logger"
 	"github.com/stacklok/mediator/pkg/db"
 	pb "github.com/stacklok/mediator/pkg/generated/protobuf/go/mediator/v1"
@@ -79,7 +78,7 @@ type Server struct {
 // NewServer creates a new server instance
 func NewServer(store db.Store, cfg *config.Config) (*Server, error) {
 	// TODO: enable registering handlers with the router (arg 0)
-	evt, err := events.SetUpEventer()
+	evt, err := events.Setup()
 	if err != nil {
 		log.Printf("Failed to set up eventer: %v", err)
 		return nil, err
@@ -91,6 +90,8 @@ func NewServer(store db.Store, cfg *config.Config) (*Server, error) {
 		evt:   evt,
 	}, nil
 }
+
+var _ (events.Registrar) = (*Server)(nil)
 
 func (s *Server) initTracer() (*sdktrace.TracerProvider, error) {
 	// create a stdout exporter to show collected spans out to stdout.
@@ -109,6 +110,16 @@ func (s *Server) initTracer() (*sdktrace.TracerProvider, error) {
 	otel.SetTextMapPropagator(propagation.TraceContext{})
 
 	return tp, nil
+}
+
+// Register implements events.Registrar
+func (s *Server) Register(topic string, handler events.Handler) {
+	s.evt.Register(topic, handler)
+}
+
+// ConsumeEvents implements events.Registrar
+func (s *Server) ConsumeEvents(c ...events.Consumer) {
+	s.evt.ConsumeEvents(c...)
 }
 
 func initMetrics(r sdkmetric.Reader) *sdkmetric.MeterProvider {
@@ -241,7 +252,7 @@ func (s *Server) StartHTTPServer(ctx context.Context) error {
 	RegisterGatewayHTTPHandlers(ctx, gwmux, s.cfg.GRPCServer.GetAddress(), opts)
 
 	mux.Handle("/", gwmux)
-	mux.HandleFunc("/api/v1/webhook/", HandleGitHubWebHook(s.evt.WebhookPublisher))
+	mux.HandleFunc("/api/v1/webhook/", HandleGitHubWebHook(s.evt))
 
 	errch := make(chan error)
 
@@ -274,10 +285,11 @@ func (s *Server) StartHTTPServer(ctx context.Context) error {
 }
 
 // HandleEvents starts the event handler and blocks while handling events.
-func (s *Server) HandleEvents(ctx context.Context) error {
-	s.evt.SubscribeAll(ghevts.GetRegistrar())
-
-	return s.evt.Run(ctx)
+func (s *Server) HandleEvents(ctx context.Context) func() error {
+	return func() error {
+		defer s.evt.Close()
+		return s.evt.Run(ctx)
+	}
 }
 
 type shutdowner func(context.Context) error
