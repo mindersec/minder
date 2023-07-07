@@ -314,6 +314,20 @@ func (mr *MockStoreMockRecorder) DeletePolicy(arg0, arg1 interface{}) *gomock.Ca
 	return mr.mock.ctrl.RecordCallWithMethodType(mr.mock, "DeletePolicy", reflect.TypeOf((*MockStore)(nil).DeletePolicy), arg0, arg1)
 }
 
+// DeletePolicyType mocks base method.
+func (m *MockStore) DeletePolicyType(arg0 context.Context, arg1 string) error {
+	m.ctrl.T.Helper()
+	ret := m.ctrl.Call(m, "DeletePolicyType", arg0, arg1)
+	ret0, _ := ret[0].(error)
+	return ret0
+}
+
+// DeletePolicyType indicates an expected call of DeletePolicyType.
+func (mr *MockStoreMockRecorder) DeletePolicyType(arg0, arg1 interface{}) *gomock.Call {
+	mr.mock.ctrl.T.Helper()
+	return mr.mock.ctrl.RecordCallWithMethodType(mr.mock, "DeletePolicyType", reflect.TypeOf((*MockStore)(nil).DeletePolicyType), arg0, arg1)
+}
+
 // DeleteRepository mocks base method.
 func (m *MockStore) DeleteRepository(arg0 context.Context, arg1 int32) error {
 	m.ctrl.T.Helper()
@@ -520,10 +534,10 @@ func (mr *MockStoreMockRecorder) GetOrganizationForUpdate(arg0, arg1 interface{}
 }
 
 // GetPolicyByID mocks base method.
-func (m *MockStore) GetPolicyByID(arg0 context.Context, arg1 int32) (db.Policy, error) {
+func (m *MockStore) GetPolicyByID(arg0 context.Context, arg1 int32) (db.GetPolicyByIDRow, error) {
 	m.ctrl.T.Helper()
 	ret := m.ctrl.Call(m, "GetPolicyByID", arg0, arg1)
-	ret0, _ := ret[0].(db.Policy)
+	ret0, _ := ret[0].(db.GetPolicyByIDRow)
 	ret1, _ := ret[1].(error)
 	return ret0, ret1
 }
@@ -532,6 +546,51 @@ func (m *MockStore) GetPolicyByID(arg0 context.Context, arg1 int32) (db.Policy, 
 func (mr *MockStoreMockRecorder) GetPolicyByID(arg0, arg1 interface{}) *gomock.Call {
 	mr.mock.ctrl.T.Helper()
 	return mr.mock.ctrl.RecordCallWithMethodType(mr.mock, "GetPolicyByID", reflect.TypeOf((*MockStore)(nil).GetPolicyByID), arg0, arg1)
+}
+
+// GetPolicyType mocks base method.
+func (m *MockStore) GetPolicyType(arg0 context.Context, arg1 db.GetPolicyTypeParams) (db.PolicyType, error) {
+	m.ctrl.T.Helper()
+	ret := m.ctrl.Call(m, "GetPolicyType", arg0, arg1)
+	ret0, _ := ret[0].(db.PolicyType)
+	ret1, _ := ret[1].(error)
+	return ret0, ret1
+}
+
+// GetPolicyType indicates an expected call of GetPolicyType.
+func (mr *MockStoreMockRecorder) GetPolicyType(arg0, arg1 interface{}) *gomock.Call {
+	mr.mock.ctrl.T.Helper()
+	return mr.mock.ctrl.RecordCallWithMethodType(mr.mock, "GetPolicyType", reflect.TypeOf((*MockStore)(nil).GetPolicyType), arg0, arg1)
+}
+
+// GetPolicyTypeById mocks base method.
+func (m *MockStore) GetPolicyTypeById(arg0 context.Context, arg1 int32) (db.GetPolicyTypeByIdRow, error) {
+	m.ctrl.T.Helper()
+	ret := m.ctrl.Call(m, "GetPolicyTypeById", arg0, arg1)
+	ret0, _ := ret[0].(db.GetPolicyTypeByIdRow)
+	ret1, _ := ret[1].(error)
+	return ret0, ret1
+}
+
+// GetPolicyTypeById indicates an expected call of GetPolicyTypeById.
+func (mr *MockStoreMockRecorder) GetPolicyTypeById(arg0, arg1 interface{}) *gomock.Call {
+	mr.mock.ctrl.T.Helper()
+	return mr.mock.ctrl.RecordCallWithMethodType(mr.mock, "GetPolicyTypeById", reflect.TypeOf((*MockStore)(nil).GetPolicyTypeById), arg0, arg1)
+}
+
+// GetPolicyTypes mocks base method.
+func (m *MockStore) GetPolicyTypes(arg0 context.Context, arg1 string) ([]db.PolicyType, error) {
+	m.ctrl.T.Helper()
+	ret := m.ctrl.Call(m, "GetPolicyTypes", arg0, arg1)
+	ret0, _ := ret[0].([]db.PolicyType)
+	ret1, _ := ret[1].(error)
+	return ret0, ret1
+}
+
+// GetPolicyTypes indicates an expected call of GetPolicyTypes.
+func (mr *MockStoreMockRecorder) GetPolicyTypes(arg0, arg1 interface{}) *gomock.Call {
+	mr.mock.ctrl.T.Helper()
+	return mr.mock.ctrl.RecordCallWithMethodType(mr.mock, "GetPolicyTypes", reflect.TypeOf((*MockStore)(nil).GetPolicyTypes), arg0, arg1)
 }
 
 // GetQuerierWithTransaction mocks base method.
@@ -804,10 +863,10 @@ func (mr *MockStoreMockRecorder) ListOrganizations(arg0, arg1 interface{}) *gomo
 }
 
 // ListPoliciesByGroupID mocks base method.
-func (m *MockStore) ListPoliciesByGroupID(arg0 context.Context, arg1 db.ListPoliciesByGroupIDParams) ([]db.Policy, error) {
+func (m *MockStore) ListPoliciesByGroupID(arg0 context.Context, arg1 db.ListPoliciesByGroupIDParams) ([]db.ListPoliciesByGroupIDRow, error) {
 	m.ctrl.T.Helper()
 	ret := m.ctrl.Call(m, "ListPoliciesByGroupID", arg0, arg1)
-	ret0, _ := ret[0].([]db.Policy)
+	ret0, _ := ret[0].([]db.ListPoliciesByGroupIDRow)
 	ret1, _ := ret[1].(error)
 	return ret0, ret1
 }

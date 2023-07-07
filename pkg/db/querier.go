@@ -26,6 +26,7 @@ type Querier interface {
 	DeleteGroup(ctx context.Context, id int32) error
 	DeleteOrganization(ctx context.Context, id int32) error
 	DeletePolicy(ctx context.Context, id int32) error
+	DeletePolicyType(ctx context.Context, policyType string) error
 	DeleteRepository(ctx context.Context, id int32) error
 	DeleteRole(ctx context.Context, id int32) error
 	DeleteSessionState(ctx context.Context, id int32) error
@@ -40,7 +41,10 @@ type Querier interface {
 	GetOrganization(ctx context.Context, id int32) (Organization, error)
 	GetOrganizationByName(ctx context.Context, name string) (Organization, error)
 	GetOrganizationForUpdate(ctx context.Context, name string) (Organization, error)
-	GetPolicyByID(ctx context.Context, id int32) (Policy, error)
+	GetPolicyByID(ctx context.Context, id int32) (GetPolicyByIDRow, error)
+	GetPolicyType(ctx context.Context, arg GetPolicyTypeParams) (PolicyType, error)
+	GetPolicyTypeById(ctx context.Context, id int32) (GetPolicyTypeByIdRow, error)
+	GetPolicyTypes(ctx context.Context, provider string) ([]PolicyType, error)
 	GetRepositoryByID(ctx context.Context, id int32) (Repository, error)
 	GetRepositoryByIDAndGroup(ctx context.Context, arg GetRepositoryByIDAndGroupParams) (Repository, error)
 	GetRepositoryByRepoID(ctx context.Context, arg GetRepositoryByRepoIDParams) (Repository, error)
@@ -58,7 +62,7 @@ type Querier interface {
 	ListGroups(ctx context.Context, arg ListGroupsParams) ([]Group, error)
 	ListGroupsByOrganizationID(ctx context.Context, organizationID int32) ([]Group, error)
 	ListOrganizations(ctx context.Context, arg ListOrganizationsParams) ([]Organization, error)
-	ListPoliciesByGroupID(ctx context.Context, arg ListPoliciesByGroupIDParams) ([]Policy, error)
+	ListPoliciesByGroupID(ctx context.Context, arg ListPoliciesByGroupIDParams) ([]ListPoliciesByGroupIDRow, error)
 	ListRepositoriesByGroupID(ctx context.Context, arg ListRepositoriesByGroupIDParams) ([]Repository, error)
 	ListRepositoriesByOwner(ctx context.Context, arg ListRepositoriesByOwnerParams) ([]Repository, error)
 	ListRoles(ctx context.Context, arg ListRolesParams) ([]Role, error)

@@ -2487,16 +2487,20 @@ var UserService_ServiceDesc = grpc.ServiceDesc{
 }
 
 const (
-	PolicyService_CreatePolicy_FullMethodName  = "/mediator.v1.PolicyService/CreatePolicy"
-	PolicyService_DeletePolicy_FullMethodName  = "/mediator.v1.PolicyService/DeletePolicy"
-	PolicyService_GetPolicies_FullMethodName   = "/mediator.v1.PolicyService/GetPolicies"
-	PolicyService_GetPolicyById_FullMethodName = "/mediator.v1.PolicyService/GetPolicyById"
+	PolicyService_GetPolicyType_FullMethodName  = "/mediator.v1.PolicyService/GetPolicyType"
+	PolicyService_GetPolicyTypes_FullMethodName = "/mediator.v1.PolicyService/GetPolicyTypes"
+	PolicyService_CreatePolicy_FullMethodName   = "/mediator.v1.PolicyService/CreatePolicy"
+	PolicyService_DeletePolicy_FullMethodName   = "/mediator.v1.PolicyService/DeletePolicy"
+	PolicyService_GetPolicies_FullMethodName    = "/mediator.v1.PolicyService/GetPolicies"
+	PolicyService_GetPolicyById_FullMethodName  = "/mediator.v1.PolicyService/GetPolicyById"
 )
 
 // PolicyServiceClient is the client API for PolicyService service.
 //
 // For semantics around ctx use and closing/ending streaming RPCs, please refer to https://pkg.go.dev/google.golang.org/grpc/?tab=doc#ClientConn.NewStream.
 type PolicyServiceClient interface {
+	GetPolicyType(ctx context.Context, in *GetPolicyTypeRequest, opts ...grpc.CallOption) (*GetPolicyTypeResponse, error)
+	GetPolicyTypes(ctx context.Context, in *GetPolicyTypesRequest, opts ...grpc.CallOption) (*GetPolicyTypesResponse, error)
 	CreatePolicy(ctx context.Context, in *CreatePolicyRequest, opts ...grpc.CallOption) (*CreatePolicyResponse, error)
 	DeletePolicy(ctx context.Context, in *DeletePolicyRequest, opts ...grpc.CallOption) (*DeletePolicyResponse, error)
 	GetPolicies(ctx context.Context, in *GetPoliciesRequest, opts ...grpc.CallOption) (*GetPoliciesResponse, error)
@@ -2509,6 +2513,24 @@ type policyServiceClient struct {
 
 func NewPolicyServiceClient(cc grpc.ClientConnInterface) PolicyServiceClient {
 	return &policyServiceClient{cc}
+}
+
+func (c *policyServiceClient) GetPolicyType(ctx context.Context, in *GetPolicyTypeRequest, opts ...grpc.CallOption) (*GetPolicyTypeResponse, error) {
+	out := new(GetPolicyTypeResponse)
+	err := c.cc.Invoke(ctx, PolicyService_GetPolicyType_FullMethodName, in, out, opts...)
+	if err != nil {
+		return nil, err
+	}
+	return out, nil
+}
+
+func (c *policyServiceClient) GetPolicyTypes(ctx context.Context, in *GetPolicyTypesRequest, opts ...grpc.CallOption) (*GetPolicyTypesResponse, error) {
+	out := new(GetPolicyTypesResponse)
+	err := c.cc.Invoke(ctx, PolicyService_GetPolicyTypes_FullMethodName, in, out, opts...)
+	if err != nil {
+		return nil, err
+	}
+	return out, nil
 }
 
 func (c *policyServiceClient) CreatePolicy(ctx context.Context, in *CreatePolicyRequest, opts ...grpc.CallOption) (*CreatePolicyResponse, error) {
@@ -2551,6 +2573,8 @@ func (c *policyServiceClient) GetPolicyById(ctx context.Context, in *GetPolicyBy
 // All implementations must embed UnimplementedPolicyServiceServer
 // for forward compatibility
 type PolicyServiceServer interface {
+	GetPolicyType(context.Context, *GetPolicyTypeRequest) (*GetPolicyTypeResponse, error)
+	GetPolicyTypes(context.Context, *GetPolicyTypesRequest) (*GetPolicyTypesResponse, error)
 	CreatePolicy(context.Context, *CreatePolicyRequest) (*CreatePolicyResponse, error)
 	DeletePolicy(context.Context, *DeletePolicyRequest) (*DeletePolicyResponse, error)
 	GetPolicies(context.Context, *GetPoliciesRequest) (*GetPoliciesResponse, error)
@@ -2562,6 +2586,12 @@ type PolicyServiceServer interface {
 type UnimplementedPolicyServiceServer struct {
 }
 
+func (UnimplementedPolicyServiceServer) GetPolicyType(context.Context, *GetPolicyTypeRequest) (*GetPolicyTypeResponse, error) {
+	return nil, status.Errorf(codes.Unimplemented, "method GetPolicyType not implemented")
+}
+func (UnimplementedPolicyServiceServer) GetPolicyTypes(context.Context, *GetPolicyTypesRequest) (*GetPolicyTypesResponse, error) {
+	return nil, status.Errorf(codes.Unimplemented, "method GetPolicyTypes not implemented")
+}
 func (UnimplementedPolicyServiceServer) CreatePolicy(context.Context, *CreatePolicyRequest) (*CreatePolicyResponse, error) {
 	return nil, status.Errorf(codes.Unimplemented, "method CreatePolicy not implemented")
 }
@@ -2585,6 +2615,42 @@ type UnsafePolicyServiceServer interface {
 
 func RegisterPolicyServiceServer(s grpc.ServiceRegistrar, srv PolicyServiceServer) {
 	s.RegisterService(&PolicyService_ServiceDesc, srv)
+}
+
+func _PolicyService_GetPolicyType_Handler(srv interface{}, ctx context.Context, dec func(interface{}) error, interceptor grpc.UnaryServerInterceptor) (interface{}, error) {
+	in := new(GetPolicyTypeRequest)
+	if err := dec(in); err != nil {
+		return nil, err
+	}
+	if interceptor == nil {
+		return srv.(PolicyServiceServer).GetPolicyType(ctx, in)
+	}
+	info := &grpc.UnaryServerInfo{
+		Server:     srv,
+		FullMethod: PolicyService_GetPolicyType_FullMethodName,
+	}
+	handler := func(ctx context.Context, req interface{}) (interface{}, error) {
+		return srv.(PolicyServiceServer).GetPolicyType(ctx, req.(*GetPolicyTypeRequest))
+	}
+	return interceptor(ctx, in, info, handler)
+}
+
+func _PolicyService_GetPolicyTypes_Handler(srv interface{}, ctx context.Context, dec func(interface{}) error, interceptor grpc.UnaryServerInterceptor) (interface{}, error) {
+	in := new(GetPolicyTypesRequest)
+	if err := dec(in); err != nil {
+		return nil, err
+	}
+	if interceptor == nil {
+		return srv.(PolicyServiceServer).GetPolicyTypes(ctx, in)
+	}
+	info := &grpc.UnaryServerInfo{
+		Server:     srv,
+		FullMethod: PolicyService_GetPolicyTypes_FullMethodName,
+	}
+	handler := func(ctx context.Context, req interface{}) (interface{}, error) {
+		return srv.(PolicyServiceServer).GetPolicyTypes(ctx, req.(*GetPolicyTypesRequest))
+	}
+	return interceptor(ctx, in, info, handler)
 }
 
 func _PolicyService_CreatePolicy_Handler(srv interface{}, ctx context.Context, dec func(interface{}) error, interceptor grpc.UnaryServerInterceptor) (interface{}, error) {
@@ -2666,6 +2732,14 @@ var PolicyService_ServiceDesc = grpc.ServiceDesc{
 	ServiceName: "mediator.v1.PolicyService",
 	HandlerType: (*PolicyServiceServer)(nil),
 	Methods: []grpc.MethodDesc{
+		{
+			MethodName: "GetPolicyType",
+			Handler:    _PolicyService_GetPolicyType_Handler,
+		},
+		{
+			MethodName: "GetPolicyTypes",
+			Handler:    _PolicyService_GetPolicyTypes_Handler,
+		},
 		{
 			MethodName: "CreatePolicy",
 			Handler:    _PolicyService_CreatePolicy_Handler,

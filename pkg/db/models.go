@@ -6,53 +6,9 @@ package db
 
 import (
 	"database/sql"
-	"database/sql/driver"
 	"encoding/json"
-	"fmt"
 	"time"
 )
-
-type PolicyType string
-
-const (
-	PolicyTypePOLICYTYPEUNSPECIFIED      PolicyType = "POLICY_TYPE_UNSPECIFIED"
-	PolicyTypePOLICYTYPEBRANCHPROTECTION PolicyType = "POLICY_TYPE_BRANCH_PROTECTION"
-)
-
-func (e *PolicyType) Scan(src interface{}) error {
-	switch s := src.(type) {
-	case []byte:
-		*e = PolicyType(s)
-	case string:
-		*e = PolicyType(s)
-	default:
-		return fmt.Errorf("unsupported scan type for PolicyType: %T", src)
-	}
-	return nil
-}
-
-type NullPolicyType struct {
-	PolicyType PolicyType
-	Valid      bool // Valid is true if PolicyType is not NULL
-}
-
-// Scan implements the Scanner interface.
-func (ns *NullPolicyType) Scan(value interface{}) error {
-	if value == nil {
-		ns.PolicyType, ns.Valid = "", false
-		return nil
-	}
-	ns.Valid = true
-	return ns.PolicyType.Scan(value)
-}
-
-// Value implements the driver Valuer interface.
-func (ns NullPolicyType) Value() (driver.Value, error) {
-	if !ns.Valid {
-		return nil, nil
-	}
-	return string(ns.PolicyType), nil
-}
 
 type Group struct {
 	ID             int32          `json:"id"`
@@ -76,10 +32,20 @@ type Policy struct {
 	ID               int32           `json:"id"`
 	Provider         string          `json:"provider"`
 	GroupID          int32           `json:"group_id"`
-	PolicyType       PolicyType      `json:"policy_type"`
+	PolicyType       int32           `json:"policy_type"`
 	PolicyDefinition json.RawMessage `json:"policy_definition"`
 	CreatedAt        time.Time       `json:"created_at"`
 	UpdatedAt        time.Time       `json:"updated_at"`
+}
+
+type PolicyType struct {
+	ID          int32          `json:"id"`
+	Provider    string         `json:"provider"`
+	PolicyType  string         `json:"policy_type"`
+	Description sql.NullString `json:"description"`
+	Version     string         `json:"version"`
+	CreatedAt   time.Time      `json:"created_at"`
+	UpdatedAt   time.Time      `json:"updated_at"`
 }
 
 type ProviderAccessToken struct {

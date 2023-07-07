@@ -25,6 +25,7 @@ import (
 	_ "github.com/stacklok/mediator/cmd/cli/app/group"
 	_ "github.com/stacklok/mediator/cmd/cli/app/org"
 	_ "github.com/stacklok/mediator/cmd/cli/app/policy"
+	_ "github.com/stacklok/mediator/cmd/cli/app/policy_type"
 	_ "github.com/stacklok/mediator/cmd/cli/app/repo"
 	_ "github.com/stacklok/mediator/cmd/cli/app/role"
 	_ "github.com/stacklok/mediator/cmd/cli/app/user"

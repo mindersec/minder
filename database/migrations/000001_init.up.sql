@@ -112,17 +112,22 @@ create TABLE session_store (
     created_at TIMESTAMP NOT NULL DEFAULT NOW()
 );
 
--- policies table
-create type policy_type as enum (
-    'POLICY_TYPE_UNSPECIFIED',
-    'POLICY_TYPE_BRANCH_PROTECTION'
+-- policy type
+create table policy_types (
+    id SERIAL PRIMARY KEY,
+    provider TEXT NOT NULL,
+    policy_type VARCHAR(50) NOT NULL,
+    description TEXT,
+    version varchar(20) NOT NULL,
+    created_at TIMESTAMP NOT NULL DEFAULT NOW(),
+    updated_at TIMESTAMP NOT NULL DEFAULT NOW()
 );
 
 create table policies (
     id SERIAL PRIMARY KEY,
     provider TEXT NOT NULL,
     group_id INTEGER NOT NULL REFERENCES groups(id) ON DELETE CASCADE,
-    policy_type policy_type NOT NULL,
+    policy_type INTEGER NOT NULL REFERENCES policy_types ON DELETE CASCADE,
     policy_definition JSONB NOT NULL,
     created_at TIMESTAMP NOT NULL DEFAULT NOW(),
     updated_at TIMESTAMP NOT NULL DEFAULT NOW()
@@ -144,7 +149,7 @@ CREATE UNIQUE INDEX users_organization_id_email_lower_idx ON users (organization
 CREATE UNIQUE INDEX users_organization_id_username_lower_idx ON users (organization_id, LOWER(username));
 CREATE UNIQUE INDEX repositories_repo_id_idx ON repositories(repo_id);
 CREATE UNIQUE INDEX policies_group_id_policy_type_idx ON policies(provider, group_id, policy_type);
-
+CREATE UNIQUE INDEX policy_types_idx ON policy_types(provider, policy_type);
 
 -- Create default root organization
 
@@ -163,3 +168,7 @@ VALUES (1, 'root@localhost', 'root', '$argon2id$v=19$m=16,t=2,p=1$c2VjcmV0aGFzaA
 
 INSERT INTO user_groups (user_id, group_id) VALUES (1, 1);
 INSERT INTO user_roles (user_id, role_id) VALUES (1, 1);
+
+-- policy types
+INSERT INTO policy_types (provider, policy_type, description, version) VALUES
+('github', 'branch_protection', 'Policy type to enforce branch protection rules on a repo', '1.0.0');

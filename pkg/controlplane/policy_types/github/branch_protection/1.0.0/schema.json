@@ -1,0 +1,43 @@
+{
+	"type": "object",
+	"properties": {
+		"branches": {
+			"type": "array",
+			"items": {
+				"type": "object",
+				"properties": {
+					"name": {"type": "string"},
+					"rules": {
+						"type": "object",
+						"properties": {
+							"pull_request_reviews_enforcement_level": {"type": "string", "enum": ["off", "non_admins", "everyone"]},
+							"required_approving_review_count": {"type": "integer"},
+							"dismiss_stale_reviews_on_push": {"type": "boolean"},
+							"require_code_owner_review": {"type": "boolean"},
+							"authorized_dismissal_actors_only": {"type": "boolean"},
+							"required_status_checks": {"type": "array", "items": {"type": "string"}},
+							"required_status_checks_enforcement_level": {"type": "string", "enum": ["off", "non_admins", "everyone"]},
+							"strict_required_status_checks_policy": {"type": "boolean"},
+							"signature_requirement_enforcement_level": {"type": "string", "enum": ["off", "non_admins", "everyone"]},
+							"linear_history_requirement_enforcement_level": {"type": "string", "enum": ["off", "non_admins", "everyone"]},
+							"admin_enforced": {"type": "boolean"},
+							"create_protected": {"type": "boolean"},
+							"allow_force_pushes_enforcement_level": {"type": "string", "enum": ["off", "non_admins", "everyone"]},
+							"allow_deletions_enforcement_level": {"type": "string", "enum": ["off", "non_admins", "everyone"]},
+							"merge_queue_enforcement_level": {"type": "string", "enum": ["off", "non_admins", "everyone"]},
+							"required_deployments_enforcement_level": {"type": "string", "enum": ["off", "non_admins", "everyone"]},
+							"required_conversation_resolution_level": {"type": "string", "enum": ["off", "non_admins", "everyone"]},
+							"authorized_actors_only": {"type": "boolean"},
+							"authorized_actor_names": {"type": "array", "items": {"type": "string"}},
+							"require_last_push_approval": {"type": "boolean"}
+						},
+						"required": [
+						]
+					}
+				},
+				"required": ["name", "rules"]
+			}
+		}
+	},
+	"required": ["branches"]
+}
