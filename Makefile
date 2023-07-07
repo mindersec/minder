@@ -15,6 +15,22 @@
 
 projectname?=mediator
 
+# Unfortunately, we need OS detection for docker-compose
+OS := $(shell uname -s)
+
+# Container runtime detection
+ifeq (, $(shell which podman-compose))
+    COMPOSE?=docker-compose
+else
+    COMPOSE?=podman-compose
+endif
+
+# Services to run in docker-compose. Defaults to all
+services?=
+
+# Additional arguments to pass to docker-compose
+COMPOSE_ARGS?=-d
+
 default: help
 
 .PHONY: help gen clean-gen build run-cli run-server bootstrap test clean cover lint pre-commit migrateup migratedown sqlc mock cli-docs
@@ -43,11 +59,9 @@ run-cli: ## run the CLI, needs additional arguments
 run-server: ## run the app
 	@go run -ldflags "-X main.version=$(shell git describe --abbrev=0 --tags)"  ./cmd/server serve
 
-# Unfortunately, we need OS detection for docker-compose
-OS := $(shell uname -s)
 DOCKERARCH := $(shell uname -m | sed 's/x86_64/amd64/' | sed 's/aarch64/arm64/')
 
-run-docker:  ## run the app under docker.  If you use podman, maybe try a symlink?
+run-docker:  ## run the app under docker.
     # podman (at least) doesn't seem to like multi-arch images, and sometimes picks the wrong one (e.g. amd64 on arm64)
     # ko resolve will fill in the image: field in the compose file, but it adds a yaml document separator
 	ko resolve --platform linux/$(DOCKERARCH) -f docker-compose.yaml | sed 's/^--*$$//' > .resolved-compose.yaml
@@ -55,7 +69,8 @@ run-docker:  ## run the app under docker.  If you use podman, maybe try a symlin
 ifeq ($(OS),Darwin)
 	sed -i '' 's/:z$$//' .resolved-compose.yaml
 endif
-	docker-compose -f .resolved-compose.yaml down && docker-compose -f .resolved-compose.yaml up $(services)
+	@echo "Running docker-compose up $(services)"
+	$(COMPOSE) -f .resolved-compose.yaml down && $(COMPOSE) -f .resolved-compose.yaml up $(COMPOSE_ARGS) $(services)
 	rm .resolved-compose.yaml*
 
 bootstrap: ## install build deps
@@ -98,10 +113,10 @@ migratedown: ## run migrate down
 
 dbschema:	## generate database schema with schema spy, monitor file until doc is created and copy it
 	mkdir -p database/schema/output && chmod a+w database/schema/output
-	cd database/schema && docker-compose run -u 1001:1001 --rm schemaspy -configFile /config/schemaspy.properties -imageformat png
+	cd database/schema && $(COMPOSE) run -u 1001:1001 --rm schemaspy -configFile /config/schemaspy.properties -imageformat png
 	sleep 10
 	cp database/schema/output/diagrams/summary/relationships.real.large.png docs/static/img/mediator/schema.png
-	cd database/schema && docker compose down -v && rm -rf output
+	cd database/schema && $(COMPOSE) down -v && rm -rf output
 
 mock:
 	mockgen -package mockdb -destination database/mock/store.go github.com/stacklok/mediator/pkg/db Store
