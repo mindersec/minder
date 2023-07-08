@@ -22,7 +22,7 @@ file.
 
 ## Prerequisites
 
-- [Go .120](https://golang.org/doc/install)
+- [Go 1.20](https://golang.org/doc/install)
 - [PostgreSQL](https://www.postgresql.org/download/)
 
 ## Download the latest release
@@ -99,7 +99,7 @@ openssl rsa -in access_token_rsa -pubout -outform PEM -out access_token_rsa.pub
 openssl rsa -in access_token_rsa -pubout -outform PEM -out access_token_rsa.pub
 ```
 
-These keys should be placed in the `.ssh` directory, from where you will run the `mediator-server` binary. Alternatively, you can specify the location of the keys in the `~/.mediator.yaml` file.
+These keys should be placed in the `.ssh` directory, from where you will run the `mediator-server` binary. Alternatively, you can specify the location of the keys in the `./config.yaml` file.
 
 ```yaml
 auth:

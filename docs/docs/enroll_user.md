@@ -8,18 +8,20 @@ displayed_sidebar: mediator
 
 # Getting Started (Enroll User)
 
-Now that you have configured your OAuth provider, you can enroll a user into Mediator.
+Now that you have [configured your OAuth provider](./config_oauth), you can enroll a user into Mediator.
 
 ## Prerequisites
 
 * The `medic` CLI application
+* A [running mediator instance](./get_started)
+* [OAuth Configured](./config_oauth)
 
 ## Login as a user
 
-1. Run the `medic` CLI application
+1. Log in with username and password.  By default, `medic` will run against localhost, but this can be changed in `config.yaml` in your local directory.
 
 ```bash
-auth login --username root --password password
+medic auth login --username root --password password
 ```
 
 > __Note__: The default username and password are `root` and `P4ssw@rd` respectively. You should change these immediately.
