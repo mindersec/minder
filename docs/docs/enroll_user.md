@@ -29,11 +29,11 @@ medic auth login --username root --password password
 2. Enroll a user with the given provider
 
 ```bash
-medic  enroll provider --provider github --group-id=1
+medic  enroll provider --provider github
 ```
 
-> __Note__: The `group-id` is the ID of the group you wish to enroll the user into. 
-
+> __Note__: If you require registration to occur outside of the default group (`1`), then provide the `--group-id` flag. The same applies to the following commands.
+> 
 A browser session will open, and you will be prompted to login to your GitHub. Once you have granted mediator access, you will be redirected back, and the user will be enrolled. The `medic` CLI application will report the session is complete.
 
 ## Register repositories
@@ -41,29 +41,27 @@ A browser session will open, and you will be prompted to login to your GitHub. O
 Now that you have enrolled with GitHub as a provider, you can now register repositories. We will use the `repo` command.
 
 ```bash
-medic repo register -g 1 --provider github 
+medic repo register --provider github 
 ```
-
-> __Note__: The `group-id` is the ID of the group you wish to register the repository into.
 
 You can also register a repository (or set of repositories) by name:
 
 ```bash
-medic repo register -g 1 --provider github --repo "owner:repo1,owner:repo2"
+medic repo register --provider github --repo "owner:repo1,owner:repo2"
 ```
 
-A webhook will now be created in each repository, and all will be registered in Mediator. Any events that now occur in the repository will be sent to Mediator, and processed accordingly.
+A webhook will now be created in each repository, and selected repositories will be considered registered within Mediator. Any events that now occur in any registered repository will be sent to Mediator, and processed accordingly.
 
 ## List and Get Repositories
 
 You can list all repositories registered in Mediator:
 
 ```bash
-medic repo list -n github -g 1
+medic repo list -n github
 ```
 
 You can also get a specific repository:
 
 ```bash
-medic repo get -n github -g 1 -r {$repo_id}
+medic repo get -n github -r {$repo_id}
 ```
