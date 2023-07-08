@@ -29,6 +29,6 @@ Mediator uses OAuth2 to authenticate users. This means that you will need to con
 6. Select "Register Application"
 7. Generate a client secret
 7. Copy the "Client ID" , "Client Secret" and "Authorization callback URL" values
-into your `~/.mediator.yaml` file, under the `oauth` section.
+   into your `./config.yaml` file, under the `github` section.
 
 ![github oauth2 page](./images/github-settings-application.png)
