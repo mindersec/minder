@@ -14,6 +14,7 @@ medic policy_type get [flags]
 ### Options
 
 ```
+  -d, --default_schema    Only get the default schema in a readable format
   -h, --help              help for get
   -p, --provider string   Provider for the policy type
   -s, --schema            Only get the json schema in a readable format

@@ -14,6 +14,7 @@ medic policy create [flags]
 ### Options
 
 ```
+  -d, --default           Use default and recommended schema for the policy.
   -f, --file string       Path to the YAML defining the policy (or - for stdin)
   -g, --group-id int32    ID of the group to where the policy belongs
   -h, --help              help for create
