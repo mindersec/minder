@@ -33,6 +33,7 @@ import (
 	"github.com/stacklok/mediator/pkg/db"
 	pb "github.com/stacklok/mediator/pkg/generated/protobuf/go/mediator/v1"
 	ghclient "github.com/stacklok/mediator/pkg/providers/github"
+	"github.com/stacklok/mediator/pkg/util"
 	"go.opentelemetry.io/otel/attribute"
 	"go.opentelemetry.io/otel/trace"
 	"golang.org/x/oauth2"
@@ -41,6 +42,20 @@ import (
 	"google.golang.org/grpc/status"
 )
 
+<<<<<<< HEAD
+=======
+func getDefaultGroup(ctx context.Context) (int32, error) {
+	claims, ok := ctx.Value(TokenInfoKey).(auth.UserClaims)
+	if !ok {
+		return 0, errors.New("cannot get default group")
+	}
+	if len(claims.GroupIds) != 1 {
+		return 0, errors.New("cannot get default group")
+	}
+	return claims.GroupIds[0], nil
+}
+
+>>>>>>> 3a11c75 (Add HTML to dedicated file)
 // GetAuthorizationURL returns the URL to redirect the user to for authorization
 // and the state to be used for the callback. It accepts a provider string
 // and a boolean indicating whether the client is a CLI or web client
@@ -229,7 +244,11 @@ func (s *Server) ExchangeCodeForTokenCLI(ctx context.Context,
 
 	return &httpbody.HttpBody{
 		ContentType: "text/html",
+<<<<<<< HEAD
 		Data:        []byte(static.InteractiveSuccessHTML),
+=======
+		Data:        []byte(util.SessionHTML),
+>>>>>>> 3a11c75 (Add HTML to dedicated file)
 	}, nil
 }
 
