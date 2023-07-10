@@ -49,13 +49,20 @@ This will create two binaries, `bin/mediator-server` and `bin/medic`.
 
 You may now copy these into a location on your path, or run them directly from the `bin` directory.
 
-You will also need a configuration file. You can copy the example configuration file from `configs/config.yaml.example` to `~/.mediator.yaml`.
+You will also need a configuration file. You can copy the example configuration file from `configs/config.yaml.example` to `~/.config.yaml`.
+
+If you prefer to use a different file name or location, you can specify this using the `--config` 
+flag, e.g. `mediator-server --config /file/path/mediator.yaml serve` when you later run the application.
+
+```bash
+
+```bash
 
 ## Database creation
 
 Mediator requires a PostgreSQL database to be running. You can install this locally, or use a container.
 
-Should you install locally, you will need to set certain configuration options in your `~/.mediator.yaml` file, to reflect your local database configuration.
+Should you install locally, you will need to set certain configuration options in your `~/.config.yaml` file, to reflect your local database configuration.
 
 ```yaml
 database:

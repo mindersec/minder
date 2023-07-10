@@ -34,7 +34,7 @@ Note that the application requires a database to be running. This can be achieve
 using docker-compose:
 
 ```bash
-docker-compose up -d postgres
+services=postgres make run-docker
 ```
 
 Then run the application
@@ -86,6 +86,7 @@ We use [buf](https://buf.build/docs/) to generate the gRPC / HTTP stubs (both pr
 To build the stubs, run:
 
 ```bash
+make clean-gen
 make gen
 ```
 

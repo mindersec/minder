@@ -32,7 +32,7 @@ medic auth login --username root --password password
 medic  enroll provider --provider github
 ```
 
-> __Note__: If you require registration to occur outside of the default group (`1`), then provide the `--group-id` flag. The same applies to the following commands.
+> __Note__: Provide the `--group-id` flag, if your user belongs to multiple groups. For this example, we will use the default group `1`, so we do not need to provide the flag.
 > 
 A browser session will open, and you will be prompted to login to your GitHub. Once you have granted mediator access, you will be redirected back, and the user will be enrolled. The `medic` CLI application will report the session is complete.
 
