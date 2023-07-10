@@ -71,14 +71,7 @@ jobs:
       - name: Generate Go code from SQL and check for syntax errors
         shell: bash
         run: |
-          OUTPUT=$(sqlc generate 2>&1) || true
-          if [[ $OUTPUT == *"syntax error"* ]]; then
-            echo "Error: SQL generation failed:"
-            echo "$OUTPUT"
-            exit 1
-          else
-            echo "$OUTPUT"
-          fi
+          sqlc generate
 
       - name: Check for uncommitted SQLC changes
         run: |
