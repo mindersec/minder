@@ -49,8 +49,6 @@ jobs:
 
   sqlc-generation:
     runs-on: ubuntu-latest
-    env:
-      SQLC_VERSION: 1.18.0
 
     steps:
       - name: Check out code
@@ -61,24 +59,14 @@ jobs:
         with:
           go-version-file: "go.mod"
 
-      - name: Install sqlc
+      - name: Make bootstrap
         run: |
-          curl -L https://github.com/kyleconroy/sqlc/releases/download/v${SQLC_VERSION}/sqlc_${SQLC_VERSION}_linux_amd64.tar.gz -o sqlc.tar.gz
-          tar -xzf sqlc.tar.gz
-          sudo mv sqlc /usr/local/bin
-          rm sqlc.tar.gz
+          make bootstrap
 
       - name: Generate Go code from SQL and check for syntax errors
         shell: bash
         run: |
-          OUTPUT=$(sqlc generate 2>&1) || true
-          if [[ $OUTPUT == *"syntax error"* ]]; then
-            echo "Error: SQL generation failed:"
-            echo "$OUTPUT"
-            exit 1
-          else
-            echo "$OUTPUT"
-          fi
+          make sqlc
 
       - name: Check for uncommitted SQLC changes
         run: |
