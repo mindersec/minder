@@ -41,3 +41,5 @@ jobs:
     uses: ./.github/workflows/test.yml
   image-build:
     uses: ./.github/workflows/image-build.yml
+  tools:
+    uses: ./.github/workflows/tools.yml

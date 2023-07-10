@@ -1,0 +1,41 @@
+---
+# This workflow is meant to verify that our helper tooling works as expected.
+name: tools
+on:
+  workflow_call:
+permissions:
+  contents: read
+jobs:
+  sqlc:
+    name: sqlc
+    runs-on: ubuntu-latest
+    services:
+      postgres:
+        image: postgres
+        env:
+          POSTGRES_USER: postgres
+          POSTGRES_PASSWORD: postgres
+          POSTGRES_DB: mediator
+        options: >-
+          --health-cmd pg_isready
+          --health-interval 10s
+          --health-timeout 5s
+          --health-retries 5
+        ports:
+          - 5432:5432
+    steps:
+      - uses: actions/checkout@v3
+
+      - uses: actions/setup-go@v4
+        with:
+          go-version-file: 'go.mod'
+          cache: false
+
+      - name: Run make bootstrap
+        run: make bootstrap
+
+      - name: Run make sqlc
+        run: make sqlc
+    
+      - name: Fail if sqlc is not up to date
+        run: git diff --exit-code
