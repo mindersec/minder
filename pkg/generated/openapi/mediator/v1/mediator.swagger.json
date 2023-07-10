@@ -51,6 +51,7 @@
   "paths": {
     "/api/v1/auth/callback/{provider}/cli": {
       "get": {
+        "summary": "buf:lint:ignore RPC_RESPONSE_STANDARD_NAME",
         "operationId": "OAuthService_ExchangeCodeForTokenCLI",
         "responses": {
           "200": {
