@@ -25,8 +25,8 @@ import (
 	"github.com/spf13/viper"
 	"gopkg.in/yaml.v3"
 
-	"github.com/stacklok/mediator/pkg/auth"
 	pb "github.com/stacklok/mediator/pkg/generated/protobuf/go/mediator/v1"
+	github "github.com/stacklok/mediator/pkg/providers/github"
 	"github.com/stacklok/mediator/pkg/util"
 )
 
@@ -47,8 +47,8 @@ var repo_listCmd = &cobra.Command{
 		grpc_port := util.GetConfigValue("grpc_server.port", "grpc-port", cmd, 0).(int)
 
 		provider := util.GetConfigValue("provider", "provider", cmd, "").(string)
-		if provider != auth.Github {
-			return fmt.Errorf("only %s is supported at this time", auth.Github)
+		if provider != github.Github {
+			return fmt.Errorf("only %s is supported at this time", github.Github)
 		}
 		groupID := viper.GetInt32("group-id")
 		limit := viper.GetInt32("limit")

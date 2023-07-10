@@ -84,3 +84,13 @@ func (c *RestClient) CheckIfTokenIsForOrganization(ctx context.Context) (bool, e
 
 	return false, nil
 }
+
+// ListAllRepositories returns a list of all repositories for the authenticated user
+// Two APIs are available, contigent on whether the token is for a user or an organization
+func (c *RestClient) GetBranchProtection(ctx context.Context, owner string, repo_name string, branch_name string) (github.Protection, error) {
+	protection, _, err := c.client.Repositories.GetBranchProtection(ctx, owner, repo_name, branch_name)
+	if err != nil {
+		return github.Protection{}, err
+	}
+	return *protection, nil
+}

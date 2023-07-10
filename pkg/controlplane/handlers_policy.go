@@ -24,6 +24,8 @@ import (
 	"github.com/stacklok/mediator/pkg/auth"
 	"github.com/stacklok/mediator/pkg/db"
 	pb "github.com/stacklok/mediator/pkg/generated/protobuf/go/mediator/v1"
+	github "github.com/stacklok/mediator/pkg/providers/github"
+
 	"github.com/stacklok/mediator/pkg/util"
 	"github.com/xeipuuv/gojsonschema"
 	"google.golang.org/grpc/codes"
@@ -92,7 +94,7 @@ func (s *Server) CreatePolicy(ctx context.Context,
 		return nil, status.Errorf(codes.Internal, "cannot register validation: %v", err)
 	}
 
-	if in.Provider != auth.Github {
+	if in.Provider != github.Github {
 		return nil, status.Errorf(codes.InvalidArgument, "provider not supported: %v", in.Provider)
 	}
 
@@ -214,7 +216,7 @@ func (s *Server) DeletePolicy(ctx context.Context,
 func (s *Server) GetPolicies(ctx context.Context,
 	in *pb.GetPoliciesRequest) (*pb.GetPoliciesResponse, error) {
 
-	if in.Provider != auth.Github {
+	if in.Provider != github.Github {
 		return nil, status.Errorf(codes.InvalidArgument, "provider not supported: %v", in.Provider)
 	}
 
@@ -312,7 +314,7 @@ func (s *Server) GetPolicyById(ctx context.Context,
 
 // GetPolicyTypes is a method to get all policy types
 func (s *Server) GetPolicyTypes(ctx context.Context, in *pb.GetPolicyTypesRequest) (*pb.GetPolicyTypesResponse, error) {
-	if in.Provider != auth.Github {
+	if in.Provider != github.Github {
 		return nil, status.Errorf(codes.InvalidArgument, "provider not supported: %v", in.Provider)
 	}
 	types, err := s.store.GetPolicyTypes(ctx, in.Provider)
@@ -339,7 +341,7 @@ func (s *Server) GetPolicyTypes(ctx context.Context, in *pb.GetPolicyTypesReques
 
 // GetPolicyType is a method to get a policy type by id
 func (s *Server) GetPolicyType(ctx context.Context, in *pb.GetPolicyTypeRequest) (*pb.GetPolicyTypeResponse, error) {
-	if in.Provider != auth.Github {
+	if in.Provider != github.Github {
 		return nil, status.Errorf(codes.InvalidArgument, "provider not supported: %v", in.Provider)
 	}
 	policyType, err := s.store.GetPolicyType(ctx, db.GetPolicyTypeParams{Provider: in.Provider, PolicyType: in.Type})

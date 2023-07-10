@@ -21,6 +21,7 @@ import (
 	"github.com/stacklok/mediator/pkg/auth"
 	"github.com/stacklok/mediator/pkg/db"
 	pb "github.com/stacklok/mediator/pkg/generated/protobuf/go/mediator/v1"
+	github "github.com/stacklok/mediator/pkg/providers/github"
 
 	"google.golang.org/grpc/codes"
 	"google.golang.org/grpc/status"
@@ -43,7 +44,7 @@ import (
 //	}' 127.0.0.1:8090 mediator.v1.RepositoryService/RegisterRepository
 func (s *Server) RegisterRepository(ctx context.Context,
 	in *pb.RegisterRepositoryRequest) (*pb.RegisterRepositoryResponse, error) {
-	if in.Provider != auth.Github {
+	if in.Provider != github.Github {
 		return nil, status.Errorf(codes.InvalidArgument, "provider not supported: %v", in.Provider)
 	}
 
@@ -143,7 +144,7 @@ func (s *Server) RegisterRepository(ctx context.Context,
 // The API is called with a group id, limit and offset
 func (s *Server) ListRepositories(ctx context.Context,
 	in *pb.ListRepositoriesRequest) (*pb.ListRepositoriesResponse, error) {
-	if in.Provider != auth.Github {
+	if in.Provider != github.Github {
 		return nil, status.Errorf(codes.InvalidArgument, "provider not supported: %v", in.Provider)
 	}
 
@@ -218,7 +219,7 @@ func (s *Server) ListRepositories(ctx context.Context,
 // The API is called with a group id
 func (s *Server) GetRepository(ctx context.Context,
 	in *pb.GetRepositoryRequest) (*pb.GetRepositoryResponse, error) {
-	if in.Provider != auth.Github {
+	if in.Provider != github.Github {
 		return nil, status.Errorf(codes.InvalidArgument, "provider not supported: %v", in.Provider)
 	}
 

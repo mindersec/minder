@@ -57,6 +57,56 @@ func (q *Queries) DeletePolicy(ctx context.Context, id int32) error {
 	return err
 }
 
+const getPoliciesByRepoAndType = `-- name: GetPoliciesByRepoAndType :many
+SELECT p.id, p.provider, p.group_id, p.policy_type, p.policy_definition FROM repositories r
+INNER JOIN policies p ON p.provider=r.provider AND p.group_id=r.group_id AND
+p.policy_type=(SELECT id FROM policy_types pt WHERE pt.provider=p.provider AND pt.policy_type=$2)
+WHERE r.provider = $1 AND r.repo_id = $3
+`
+
+type GetPoliciesByRepoAndTypeParams struct {
+	Provider   string `json:"provider"`
+	PolicyType string `json:"policy_type"`
+	RepoID     int32  `json:"repo_id"`
+}
+
+type GetPoliciesByRepoAndTypeRow struct {
+	ID               int32           `json:"id"`
+	Provider         string          `json:"provider"`
+	GroupID          int32           `json:"group_id"`
+	PolicyType       int32           `json:"policy_type"`
+	PolicyDefinition json.RawMessage `json:"policy_definition"`
+}
+
+func (q *Queries) GetPoliciesByRepoAndType(ctx context.Context, arg GetPoliciesByRepoAndTypeParams) ([]GetPoliciesByRepoAndTypeRow, error) {
+	rows, err := q.db.QueryContext(ctx, getPoliciesByRepoAndType, arg.Provider, arg.PolicyType, arg.RepoID)
+	if err != nil {
+		return nil, err
+	}
+	defer rows.Close()
+	items := []GetPoliciesByRepoAndTypeRow{}
+	for rows.Next() {
+		var i GetPoliciesByRepoAndTypeRow
+		if err := rows.Scan(
+			&i.ID,
+			&i.Provider,
+			&i.GroupID,
+			&i.PolicyType,
+			&i.PolicyDefinition,
+		); err != nil {
+			return nil, err
+		}
+		items = append(items, i)
+	}
+	if err := rows.Close(); err != nil {
+		return nil, err
+	}
+	if err := rows.Err(); err != nil {
+		return nil, err
+	}
+	return items, nil
+}
+
 const getPolicyByID = `-- name: GetPolicyByID :one
 SELECT policies.id as id, policies.provider as provider, group_id, policies.policy_type as policy_type,
 policy_definition, policy_types.policy_type as policy_type_name,

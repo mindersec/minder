@@ -60,7 +60,7 @@ var serveCmd = &cobra.Command{
 			return fmt.Errorf("unable to create server: %w", err)
 		}
 
-		s.ConsumeEvents(ghevents.NewHandler(store))
+		s.ConsumeEvents(ghevents.NewHandler(ctx, store))
 
 		// Start the gRPC and HTTP server in separate goroutines
 		errg.Go(func() error {

@@ -32,6 +32,7 @@ import (
 	"github.com/stacklok/mediator/pkg/db"
 	pb "github.com/stacklok/mediator/pkg/generated/protobuf/go/mediator/v1"
 	ghclient "github.com/stacklok/mediator/pkg/providers/github"
+	github "github.com/stacklok/mediator/pkg/providers/github"
 	"go.opentelemetry.io/otel/attribute"
 	"go.opentelemetry.io/otel/trace"
 	"golang.org/x/oauth2"
@@ -210,14 +211,14 @@ func (s *Server) ExchangeCodeForTokenCLI(ctx context.Context,
 	encodedToken := base64.StdEncoding.EncodeToString(encryptedToken)
 
 	// delete token if it exists
-	err = s.store.DeleteAccessToken(ctx, db.DeleteAccessTokenParams{Provider: auth.Github, GroupID: groupId.GrpID.Int32})
+	err = s.store.DeleteAccessToken(ctx, db.DeleteAccessTokenParams{Provider: ghclient.Github, GroupID: groupId.GrpID.Int32})
 	if err != nil {
 		return nil, status.Errorf(codes.Unknown, "error deleting access token: %s", err)
 	}
 
 	_, err = s.store.CreateAccessToken(ctx, db.CreateAccessTokenParams{
 		GroupID:        groupId.GrpID.Int32,
-		Provider:       auth.Github,
+		Provider:       ghclient.Github,
 		EncryptedToken: encodedToken,
 		ExpirationTime: expiryTime,
 	})
@@ -308,12 +309,12 @@ func GetProviderAccessToken(ctx context.Context, store db.Store, provider string
 
 // RevokeOauthTokens revokes the all oauth tokens for a provider
 func (s *Server) RevokeOauthTokens(ctx context.Context, in *pb.RevokeOauthTokensRequest) (*pb.RevokeOauthTokensResponse, error) {
-	if in.Provider != auth.Github {
+	if in.Provider != github.Github {
 		return nil, status.Errorf(codes.InvalidArgument, "provider not supported: %v", in.Provider)
 	}
 
 	// need to read all tokens from the provider and revoke them
-	tokens, err := s.store.GetAccessTokenByProvider(ctx, auth.Github)
+	tokens, err := s.store.GetAccessTokenByProvider(ctx, github.Github)
 	if err != nil {
 		return nil, status.Errorf(codes.Internal, "error getting access tokens: %v", err)
 	}
@@ -326,7 +327,7 @@ func (s *Server) RevokeOauthTokens(ctx context.Context, in *pb.RevokeOauthTokens
 			log.Error().Msgf("error decrypting token: %v", err)
 		} else {
 			// remove token from db
-			_ = s.store.DeleteAccessToken(ctx, db.DeleteAccessTokenParams{Provider: auth.Github, GroupID: token.GroupID})
+			_ = s.store.DeleteAccessToken(ctx, db.DeleteAccessTokenParams{Provider: ghclient.Github, GroupID: token.GroupID})
 
 			// remove from provider
 			err := auth.DeleteAccessToken(ctx, token.Provider, objToken.AccessToken)
@@ -343,7 +344,7 @@ func (s *Server) RevokeOauthTokens(ctx context.Context, in *pb.RevokeOauthTokens
 // RevokeOauthGroupToken revokes the oauth token for a group
 func (s *Server) RevokeOauthGroupToken(ctx context.Context,
 	in *pb.RevokeOauthGroupTokenRequest) (*pb.RevokeOauthGroupTokenResponse, error) {
-	if in.Provider != auth.Github {
+	if in.Provider != ghclient.Github {
 		return nil, status.Errorf(codes.InvalidArgument, "provider not supported: %v", in.Provider)
 	}
 
@@ -363,7 +364,7 @@ func (s *Server) RevokeOauthGroupToken(ctx context.Context,
 
 	// need to read the token for the provider and group
 	token, err := s.store.GetAccessTokenByGroupID(ctx,
-		db.GetAccessTokenByGroupIDParams{Provider: auth.Github, GroupID: in.GroupId})
+		db.GetAccessTokenByGroupIDParams{Provider: ghclient.Github, GroupID: in.GroupId})
 	if err != nil {
 		return nil, status.Errorf(codes.Internal, "error getting access token: %v", err)
 	}
@@ -373,7 +374,7 @@ func (s *Server) RevokeOauthGroupToken(ctx context.Context,
 		return nil, status.Errorf(codes.Internal, "error decrypting token: %v", err)
 	}
 	// remove token from db
-	_ = s.store.DeleteAccessToken(ctx, db.DeleteAccessTokenParams{Provider: auth.Github, GroupID: token.GroupID})
+	_ = s.store.DeleteAccessToken(ctx, db.DeleteAccessTokenParams{Provider: ghclient.Github, GroupID: token.GroupID})
 
 	// remove from provider
 	err = auth.DeleteAccessToken(ctx, token.Provider, objToken.AccessToken)
@@ -387,7 +388,7 @@ func (s *Server) RevokeOauthGroupToken(ctx context.Context,
 // StoreProviderToken stores the provider token for a group
 func (s *Server) StoreProviderToken(ctx context.Context,
 	in *pb.StoreProviderTokenRequest) (*pb.StoreProviderTokenResponse, error) {
-	if in.Provider != auth.Github {
+	if in.Provider != ghclient.Github {
 		return nil, status.Errorf(codes.InvalidArgument, "provider not supported: %v", in.Provider)
 	}
 
@@ -446,7 +447,7 @@ func (s *Server) StoreProviderToken(ctx context.Context,
 // VerifyProviderTokenFrom verifies the provider token since a timestamp
 func (s *Server) VerifyProviderTokenFrom(ctx context.Context,
 	in *pb.VerifyProviderTokenFromRequest) (*pb.VerifyProviderTokenFromResponse, error) {
-	if in.Provider != auth.Github {
+	if in.Provider != ghclient.Github {
 		return nil, status.Errorf(codes.InvalidArgument, "provider not supported: %v", in.Provider)
 	}
 

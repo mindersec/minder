@@ -32,6 +32,7 @@ import (
 
 	mockdb "github.com/stacklok/mediator/database/mock"
 	pb "github.com/stacklok/mediator/pkg/generated/protobuf/go/mediator/v1"
+	github "github.com/stacklok/mediator/pkg/providers/github"
 )
 
 const policyDefinitionJson = `{
@@ -74,7 +75,7 @@ func TestCreatePolicyDBMock(t *testing.T) {
 	}
 
 	policyTypes := []db.PolicyType{
-		{ID: 1, Provider: auth.Github, PolicyType: "branch_protection", Version: "1.0.0"},
+		{ID: 1, Provider: github.Github, PolicyType: "branch_protection", Version: "1.0.0"},
 	}
 	// Create a new context and set the claims value
 	ctx := context.WithValue(context.Background(), auth.TokenInfoKey, auth.UserClaims{
@@ -127,7 +128,7 @@ func TestCreatePolicy_gRPC(t *testing.T) {
 			},
 			buildStubs: func(store *mockdb.MockStore) {
 				policyTypes := []db.PolicyType{
-					{ID: 1, Provider: auth.Github, PolicyType: "branch_protection", Version: "1.0.0"},
+					{ID: 1, Provider: github.Github, PolicyType: "branch_protection", Version: "1.0.0"},
 				}
 				store.EXPECT().GetPolicyTypes(gomock.Any(), gomock.Any()).Return(policyTypes, nil)
 				store.EXPECT().

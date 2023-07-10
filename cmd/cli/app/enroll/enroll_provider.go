@@ -30,8 +30,8 @@ import (
 	"time"
 
 	"github.com/pkg/browser"
-	"github.com/stacklok/mediator/pkg/auth"
 	pb "github.com/stacklok/mediator/pkg/generated/protobuf/go/mediator/v1"
+	github "github.com/stacklok/mediator/pkg/providers/github"
 	"github.com/stacklok/mediator/pkg/util"
 	"google.golang.org/protobuf/types/known/timestamppb"
 
@@ -112,8 +112,8 @@ actions such as adding repositories.`,
 	},
 	Run: func(cmd *cobra.Command, args []string) {
 		provider := util.GetConfigValue("provider", "provider", cmd, "").(string)
-		if provider != auth.Github {
-			fmt.Fprintf(os.Stderr, "Only %s is supported at this time\n", auth.Github)
+		if provider != github.Github {
+			fmt.Fprintf(os.Stderr, "Only %s is supported at this time\n", github.Github)
 			os.Exit(1)
 		}
 		group := util.GetConfigValue("group-id", "group-id", cmd, 0).(int)

@@ -30,8 +30,8 @@ import (
 	"github.com/AlecAivazis/survey/v2"
 	"github.com/spf13/cobra"
 	"github.com/spf13/viper"
-	"github.com/stacklok/mediator/pkg/auth"
 	pb "github.com/stacklok/mediator/pkg/generated/protobuf/go/mediator/v1"
+	github "github.com/stacklok/mediator/pkg/providers/github"
 	"github.com/stacklok/mediator/pkg/util"
 )
 
@@ -52,8 +52,8 @@ var repo_registerCmd = &cobra.Command{
 		grpc_port := util.GetConfigValue("grpc_server.port", "grpc-port", cmd, 0).(int)
 
 		provider := util.GetConfigValue("provider", "provider", cmd, "").(string)
-		if provider != auth.Github {
-			fmt.Fprintf(os.Stderr, "Only %s is supported at this time\n", auth.Github)
+		if provider != github.Github {
+			fmt.Fprintf(os.Stderr, "Only %s is supported at this time\n", github.Github)
 			os.Exit(1)
 		}
 		groupID := viper.GetInt32("group-id")

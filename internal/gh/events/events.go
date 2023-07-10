@@ -18,6 +18,8 @@
 package events
 
 import (
+	"context"
+	"fmt"
 	"log"
 
 	"github.com/ThreeDotsLabs/watermill/message"
@@ -28,22 +30,39 @@ import (
 type sampleHandler struct {
 	// This is a sample field that does nothing; this could be (for example)
 	// a github client API handle
+	ctx   context.Context
 	store db.Store
 }
 
 // Register implements the Consumer interface.
-func (_ *sampleHandler) Register(r events.Registrar) {
-	r.Register("security_and_analysis", handleSecurityAndAnalysisEvent)
+func (s *sampleHandler) Register(r events.Registrar) {
+	r.Register("security_and_analysis", s.handleSecurityAndAnalysisEvent)
+	r.Register("branch_protection_rule", s.handleBranchProtectionEventGithub)
 }
 
 // NewHandler acts as a constructor for the sampleHandler.
-func NewHandler(store db.Store) events.Consumer {
+func NewHandler(ctx context.Context, store db.Store) events.Consumer {
 	return &sampleHandler{
+		ctx:   ctx,
 		store: store,
 	}
 }
 
-func handleSecurityAndAnalysisEvent(msg *message.Message) error {
+func (s *sampleHandler) handleSecurityAndAnalysisEvent(msg *message.Message) error {
 	log.Printf("Got a security_and_analysis event: %v", msg)
+	return nil
+}
+
+func (s *sampleHandler) handleBranchProtectionEventGithub(msg *message.Message) error {
+	fmt.Println("here")
+	fmt.Println(s.ctx)
+	fmt.Println("store")
+	fmt.Println(s.store)
+	err := ParseBranchProtectionEventGithub(s.ctx, s.store, msg)
+	if err != nil {
+		fmt.Println("error in parse branch")
+		fmt.Println(err)
+		return err
+	}
 	return nil
 }
