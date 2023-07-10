@@ -293,6 +293,8 @@ func ConvertJsonToYaml(content json.RawMessage) (string, error) {
 	}
 	yamlStr := string(yamlDataNew)
 	return yamlStr, nil
+}
+
 // WriteToFile writes the content to a file if the out parameter is not empty.
 func WriteToFile(out string, content []byte, perms fs.FileMode) error {
 	if out != "" {
