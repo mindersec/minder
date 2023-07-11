@@ -157,11 +157,11 @@ func checkBranchDifferences(rules SchemaJsonBranchesElemRules, protection *githu
 	differences := make([]Differences, 0)
 
 	// check and compare fields, appending differences found
-	if rules.AllowDeletions != nil && rules.AllowDeletions != &protection.AllowDeletions.Enabled {
+	if rules.AllowDeletions != nil && *rules.AllowDeletions != protection.AllowDeletions.Enabled {
 		differences = append(differences, Differences{Field: "AllowDeletions",
 			ActualValue: protection.AllowDeletions.Enabled, ExpectedValue: rules.AllowDeletions})
 	}
-	if rules.AllowForcePushes != nil && rules.AllowForcePushes != &protection.AllowForcePushes.Enabled {
+	if rules.AllowForcePushes != nil && *rules.AllowForcePushes != protection.AllowForcePushes.Enabled {
 		differences = append(differences, Differences{Field: "AllowForcePushes",
 			ActualValue: protection.AllowForcePushes.Enabled, ExpectedValue: rules.AllowForcePushes})
 	}
@@ -169,7 +169,7 @@ func checkBranchDifferences(rules SchemaJsonBranchesElemRules, protection *githu
 		differences = append(differences, Differences{Field: "AllowForkSyncing",
 			ActualValue: protection.AllowForkSyncing.Enabled, ExpectedValue: rules.AllowForkSyncing})
 	}
-	if rules.EnforceAdmins != nil && rules.EnforceAdmins != &protection.EnforceAdmins.Enabled {
+	if rules.EnforceAdmins != nil && *rules.EnforceAdmins != protection.EnforceAdmins.Enabled {
 		differences = append(differences, Differences{Field: "EnforceAdmins",
 			ActualValue: protection.EnforceAdmins.Enabled, ExpectedValue: rules.EnforceAdmins})
 	}
@@ -178,11 +178,11 @@ func checkBranchDifferences(rules SchemaJsonBranchesElemRules, protection *githu
 			ActualValue: protection.LockBranch.Enabled, ExpectedValue: rules.LockBranch})
 	}
 	if rules.RequiredConversationResolution != nil &&
-		rules.RequiredConversationResolution != &protection.RequiredConversationResolution.Enabled {
+		*rules.RequiredConversationResolution != protection.RequiredConversationResolution.Enabled {
 		differences = append(differences, Differences{Field: "RequiredConversationResolution",
 			ActualValue: protection.RequiredConversationResolution.Enabled, ExpectedValue: rules.RequiredConversationResolution})
 	}
-	if rules.RequiredLinearHistory != nil && rules.RequiredLinearHistory != &protection.RequireLinearHistory.Enabled {
+	if rules.RequiredLinearHistory != nil && *rules.RequiredLinearHistory != protection.RequireLinearHistory.Enabled {
 		differences = append(differences, Differences{Field: "RequiredLinearHistory",
 			ActualValue: protection.RequireLinearHistory.Enabled, ExpectedValue: rules.RequiredLinearHistory})
 	}
@@ -204,12 +204,15 @@ func checkBranchDifferences(rules SchemaJsonBranchesElemRules, protection *githu
 					ActualValue:   protection.RequiredPullRequestReviews.RequireCodeOwnerReviews,
 					ExpectedValue: rules.RequiredPullRequestReviews["require_code_owner_reviews"]})
 			}
-			if rules.RequiredPullRequestReviews["required_approving_review_count"] != nil &&
-				rules.RequiredPullRequestReviews["required_approving_review_count"] !=
-					protection.RequiredPullRequestReviews.RequiredApprovingReviewCount {
-				differences = append(differences, Differences{Field: "RequiredPullRequestReviews.required_approving_review_count",
-					ActualValue:   protection.RequiredPullRequestReviews.RequiredApprovingReviewCount,
-					ExpectedValue: rules.RequiredPullRequestReviews["required_approving_review_count"]})
+			if rules.RequiredPullRequestReviews["required_approving_review_count"] != nil {
+				count, ok := rules.RequiredPullRequestReviews["required_approving_review_count"].(float64)
+				if ok {
+					if int(count) != protection.RequiredPullRequestReviews.RequiredApprovingReviewCount {
+						differences = append(differences, Differences{Field: "RequiredPullRequestReviews.required_approving_review_count",
+							ActualValue:   protection.RequiredPullRequestReviews.RequiredApprovingReviewCount,
+							ExpectedValue: rules.RequiredPullRequestReviews["required_approving_review_count"]})
+					}
+				}
 			}
 			if rules.RequiredPullRequestReviews["require_last_push_approval"] != nil &&
 				rules.RequiredPullRequestReviews["require_last_push_approval"] !=
