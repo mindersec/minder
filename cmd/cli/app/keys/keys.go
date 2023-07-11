@@ -26,10 +26,10 @@ import (
 var KeysCmd = &cobra.Command{
 	Use:   "keys",
 	Short: "Manage keys within a mediator control plane",
-	Long: `The medic keys command allows the management of keys within
-a mediator controlplane.`,
-	Run: func(cmd *cobra.Command, args []string) {
-		cmd.Println("keys called")
+	Long: `The medic keys command allows the management of keys within a 
+mediator controlplane.`,
+	RunE: func(cmd *cobra.Command, args []string) error {
+		return cmd.Usage()
 	},
 }
 

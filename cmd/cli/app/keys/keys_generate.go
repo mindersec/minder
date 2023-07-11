@@ -44,7 +44,7 @@ mediator control plane for an specific group.`,
 			fmt.Fprintf(os.Stderr, "Error binding flags: %s\n", err)
 		}
 	},
-	Run: func(cmd *cobra.Command, args []string) {
+	RunE: func(cmd *cobra.Command, args []string) error {
 
 		grpc_host := util.GetConfigValue("grpc_server.host", "grpc-host", cmd, "").(string)
 		grpc_port := util.GetConfigValue("grpc_server.port", "grpc-port", cmd, 0).(int)
@@ -98,6 +98,8 @@ mediator control plane for an specific group.`,
 		table.SetHeader([]string{"Status", "Key Indentifier"})
 		table.Append([]string{"Success", keyResp.KeyIdentifier})
 		table.Render()
+
+		return nil
 	},
 }
 
