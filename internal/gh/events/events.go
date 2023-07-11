@@ -40,7 +40,7 @@ func (s *sampleHandler) Register(r events.Registrar) {
 }
 
 // NewHandler acts as a constructor for the sampleHandler.
-func NewHandler(ctx context.Context, store db.Store) events.Consumer {
+func NewHandler(store db.Store) events.Consumer {
 	return &sampleHandler{
 		store: store,
 	}
