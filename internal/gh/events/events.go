@@ -30,7 +30,6 @@ import (
 type sampleHandler struct {
 	// This is a sample field that does nothing; this could be (for example)
 	// a github client API handle
-	ctx   context.Context
 	store db.Store
 }
 
@@ -43,7 +42,6 @@ func (s *sampleHandler) Register(r events.Registrar) {
 // NewHandler acts as a constructor for the sampleHandler.
 func NewHandler(ctx context.Context, store db.Store) events.Consumer {
 	return &sampleHandler{
-		ctx:   ctx,
 		store: store,
 	}
 }
@@ -54,7 +52,7 @@ func (*sampleHandler) handleSecurityAndAnalysisEvent(msg *message.Message) error
 }
 
 func (s *sampleHandler) handleBranchProtectionEventGithub(msg *message.Message) error {
-	err := reconcilers.ParseBranchProtectionEventGithub(s.ctx, s.store, msg)
+	err := reconcilers.ParseBranchProtectionEventGithub(context.Background(), s.store, msg)
 	if err != nil {
 		return err
 	}
