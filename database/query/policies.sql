@@ -24,3 +24,10 @@ OFFSET $4;
 -- name: DeletePolicy :exec
 DELETE FROM policies
 WHERE id = $1;
+
+-- name: GetPoliciesByRepoAndType :many
+SELECT p.id, p.provider, p.group_id, p.policy_type, p.policy_definition FROM repositories r
+INNER JOIN policies p ON p.provider=r.provider AND p.group_id=r.group_id AND
+p.policy_type=(SELECT id FROM policy_types pt WHERE pt.provider=p.provider AND pt.policy_type=$2)
+WHERE r.provider = $1 AND r.repo_id = $3;
+

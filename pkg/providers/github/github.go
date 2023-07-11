@@ -36,6 +36,9 @@ type GitHubConfig struct { //revive:disable-line:exported
 	Endpoint string
 }
 
+// Github is the string that represents the GitHub provider
+const Github = "github"
+
 // RepositoryListResult is a struct that contains the information about a GitHub repository
 type RepositoryListResult struct {
 	Repositories []*github.Repository
@@ -47,6 +50,7 @@ type RepositoryListResult struct {
 type RestAPI interface {
 	ListAllRepositories(context.Context, bool) (RepositoryListResult, error)
 	CheckIfTokenIsForOrganization(context.Context) (bool, error)
+	GetBranchProtection(context.Context, string, string, string) (*github.Protection, error)
 }
 
 // GraphQLAPI is the interface for interacting with the GitHub GraphQL API

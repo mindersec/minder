@@ -41,6 +41,7 @@ type Querier interface {
 	GetOrganization(ctx context.Context, id int32) (Organization, error)
 	GetOrganizationByName(ctx context.Context, name string) (Organization, error)
 	GetOrganizationForUpdate(ctx context.Context, name string) (Organization, error)
+	GetPoliciesByRepoAndType(ctx context.Context, arg GetPoliciesByRepoAndTypeParams) ([]GetPoliciesByRepoAndTypeRow, error)
 	GetPolicyByID(ctx context.Context, id int32) (GetPolicyByIDRow, error)
 	GetPolicyType(ctx context.Context, arg GetPolicyTypeParams) (PolicyType, error)
 	GetPolicyTypeById(ctx context.Context, id int32) (GetPolicyTypeByIdRow, error)

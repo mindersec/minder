@@ -84,3 +84,13 @@ func (c *RestClient) CheckIfTokenIsForOrganization(ctx context.Context) (bool, e
 
 	return false, nil
 }
+
+// GetBranchProtection returns the branch protection for a given branch
+func (c *RestClient) GetBranchProtection(ctx context.Context, owner string,
+	repo_name string, branch_name string) (*github.Protection, error) {
+	protection, _, err := c.client.Repositories.GetBranchProtection(ctx, owner, repo_name, branch_name)
+	if err != nil {
+		return nil, err
+	}
+	return protection, nil
+}

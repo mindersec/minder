@@ -22,6 +22,7 @@ import (
 	"time"
 
 	gauth "github.com/grpc-ecosystem/go-grpc-middleware/v2/interceptors/auth"
+	github "github.com/stacklok/mediator/pkg/providers/github"
 
 	"github.com/rs/zerolog/log"
 	"github.com/spf13/viper"
@@ -414,7 +415,7 @@ func IsProviderCallAuthorized(ctx context.Context, store db.Store, provider stri
 	for _, item := range githubAuthorizations {
 		if item == method {
 			// check the github token
-			encToken, err := GetProviderAccessToken(ctx, store, provider, groupId)
+			encToken, err := GetProviderAccessToken(ctx, store, provider, groupId, true)
 			if err != nil {
 				return false
 			}
@@ -422,7 +423,7 @@ func IsProviderCallAuthorized(ctx context.Context, store db.Store, provider stri
 			// check if token is expired
 			if encToken.Expiry.Unix() < time.Now().Unix() {
 				// remove from the database and deny the request
-				_ = store.DeleteAccessToken(ctx, db.DeleteAccessTokenParams{Provider: auth.Github, GroupID: groupId})
+				_ = store.DeleteAccessToken(ctx, db.DeleteAccessTokenParams{Provider: github.Github, GroupID: groupId})
 
 				// remove from github
 				err := auth.DeleteAccessToken(ctx, provider, encToken.AccessToken)

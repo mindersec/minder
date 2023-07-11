@@ -18,10 +18,12 @@
 package events
 
 import (
+	"context"
 	"log"
 
 	"github.com/ThreeDotsLabs/watermill/message"
 	"github.com/stacklok/mediator/internal/events"
+	"github.com/stacklok/mediator/internal/reconcilers"
 	"github.com/stacklok/mediator/pkg/db"
 )
 
@@ -32,8 +34,9 @@ type sampleHandler struct {
 }
 
 // Register implements the Consumer interface.
-func (_ *sampleHandler) Register(r events.Registrar) {
-	r.Register("security_and_analysis", handleSecurityAndAnalysisEvent)
+func (s *sampleHandler) Register(r events.Registrar) {
+	r.Register("security_and_analysis", s.handleSecurityAndAnalysisEvent)
+	r.Register("branch_protection_rule", s.handleBranchProtectionEventGithub)
 }
 
 // NewHandler acts as a constructor for the sampleHandler.
@@ -43,7 +46,15 @@ func NewHandler(store db.Store) events.Consumer {
 	}
 }
 
-func handleSecurityAndAnalysisEvent(msg *message.Message) error {
+func (*sampleHandler) handleSecurityAndAnalysisEvent(msg *message.Message) error {
 	log.Printf("Got a security_and_analysis event: %v", msg)
+	return nil
+}
+
+func (s *sampleHandler) handleBranchProtectionEventGithub(msg *message.Message) error {
+	err := reconcilers.ParseBranchProtectionEventGithub(context.Background(), s.store, msg)
+	if err != nil {
+		return err
+	}
 	return nil
 }
