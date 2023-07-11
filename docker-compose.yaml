@@ -16,19 +16,20 @@
 version: '3.2'
 services:
   mediator:
+    build: .
+    image: mediator:latest
+
     command: [
       "serve",
       "--grpc-host=0.0.0.0",
       "--http-host=0.0.0.0",
       "--db-host=postgres",
       "--config=/app/config.yaml"
-
       ]
     restart: always # keep the server running
     ports:
       - "8080:8080"
       - "8090:8090"
-    image: ko://github.com/stacklok/mediator/cmd/server
     volumes:
           - ./config.yaml:/app/config.yaml:z
           - ./.ssh:/app/.ssh:z
@@ -49,13 +50,15 @@ services:
 #      migrate:
 #        condition: service_completed_successfully
   migrate:
+    build: .
+    image: mediator:latest
+
     command: [
       "migrate",
       "up",
       "--yes",
       "--db-host=postgres",
       ]
-    image: ko://github.com/stacklok/mediator/cmd/server
     volumes:
           - ./config.yaml:/app/config.yaml:z
           - ./database/migrations:/app/database/migrations:z
