@@ -19,11 +19,11 @@ package events
 
 import (
 	"context"
-	"fmt"
 	"log"
 
 	"github.com/ThreeDotsLabs/watermill/message"
 	"github.com/stacklok/mediator/internal/events"
+	"github.com/stacklok/mediator/internal/reconcilers"
 	"github.com/stacklok/mediator/pkg/db"
 )
 
@@ -48,20 +48,14 @@ func NewHandler(ctx context.Context, store db.Store) events.Consumer {
 	}
 }
 
-func (s *sampleHandler) handleSecurityAndAnalysisEvent(msg *message.Message) error {
+func (*sampleHandler) handleSecurityAndAnalysisEvent(msg *message.Message) error {
 	log.Printf("Got a security_and_analysis event: %v", msg)
 	return nil
 }
 
 func (s *sampleHandler) handleBranchProtectionEventGithub(msg *message.Message) error {
-	fmt.Println("here")
-	fmt.Println(s.ctx)
-	fmt.Println("store")
-	fmt.Println(s.store)
-	err := ParseBranchProtectionEventGithub(s.ctx, s.store, msg)
+	err := reconcilers.ParseBranchProtectionEventGithub(s.ctx, s.store, msg)
 	if err != nil {
-		fmt.Println("error in parse branch")
-		fmt.Println(err)
 		return err
 	}
 	return nil

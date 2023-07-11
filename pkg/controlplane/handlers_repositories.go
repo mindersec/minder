@@ -73,7 +73,7 @@ func (s *Server) RegisterRepository(ctx context.Context,
 		return nil, status.Errorf(codes.PermissionDenied, "user not authorized to interact with provider")
 	}
 
-	decryptedToken, err := GetProviderAccessToken(ctx, s.store, in.Provider, in.GroupId)
+	decryptedToken, err := GetProviderAccessToken(ctx, s.store, in.Provider, in.GroupId, true)
 
 	if err != nil {
 		return nil, err

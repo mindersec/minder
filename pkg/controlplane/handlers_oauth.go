@@ -32,7 +32,6 @@ import (
 	"github.com/stacklok/mediator/pkg/db"
 	pb "github.com/stacklok/mediator/pkg/generated/protobuf/go/mediator/v1"
 	ghclient "github.com/stacklok/mediator/pkg/providers/github"
-	github "github.com/stacklok/mediator/pkg/providers/github"
 	"go.opentelemetry.io/otel/attribute"
 	"go.opentelemetry.io/otel/trace"
 	"golang.org/x/oauth2"
@@ -285,9 +284,10 @@ func decryptToken(encToken string) (oauth2.Token, error) {
 }
 
 // GetProviderAccessToken returns the access token for providers
-func GetProviderAccessToken(ctx context.Context, store db.Store, provider string, groupId int32) (oauth2.Token, error) {
+func GetProviderAccessToken(ctx context.Context, store db.Store, provider string,
+	groupId int32, checkAuthz bool) (oauth2.Token, error) {
 	// check if user is authorized
-	if !IsRequestAuthorized(ctx, groupId) {
+	if checkAuthz && !IsRequestAuthorized(ctx, groupId) {
 		return oauth2.Token{}, status.Errorf(codes.PermissionDenied, "user is not authorized to access this resource")
 	}
 
@@ -309,12 +309,12 @@ func GetProviderAccessToken(ctx context.Context, store db.Store, provider string
 
 // RevokeOauthTokens revokes the all oauth tokens for a provider
 func (s *Server) RevokeOauthTokens(ctx context.Context, in *pb.RevokeOauthTokensRequest) (*pb.RevokeOauthTokensResponse, error) {
-	if in.Provider != github.Github {
+	if in.Provider != ghclient.Github {
 		return nil, status.Errorf(codes.InvalidArgument, "provider not supported: %v", in.Provider)
 	}
 
 	// need to read all tokens from the provider and revoke them
-	tokens, err := s.store.GetAccessTokenByProvider(ctx, github.Github)
+	tokens, err := s.store.GetAccessTokenByProvider(ctx, ghclient.Github)
 	if err != nil {
 		return nil, status.Errorf(codes.Internal, "error getting access tokens: %v", err)
 	}
