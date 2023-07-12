@@ -254,13 +254,31 @@ var resourceAuthorizations = []map[string]map[string]interface{}{
 	{
 		"/mediator.v1.PolicyService/GetPolicies": {
 			"claimField": "GroupId",
-			"isAdmin":    true,
+			"isAdmin":    false,
 		},
 	},
 	{
 		"/mediator.v1.PolicyService/GetPolicy": {
 			"claimField": "GroupId",
-			"isAdmin":    true,
+			"isAdmin":    false,
+		},
+	},
+	{
+		"/mediator.v1.PolicyService/GetPolicyStatus": {
+			"claimField": "GroupId",
+			"isAdmin":    false,
+		},
+	},
+	{
+		"/mediator.v1.PolicyService/GetPolicyViolations": {
+			"claimField": "GroupId",
+			"isAdmin":    false,
+		},
+	},
+	{
+		"/mediator.v1.PolicyService/GetPolicyViolationsById": {
+			"claimField": "GroupId",
+			"isAdmin":    false,
 		},
 	},
 	{

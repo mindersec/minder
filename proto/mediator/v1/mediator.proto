@@ -419,6 +419,24 @@ service PolicyService {
             get: "/api/v1/policy/{id}"
             };    
     }
+
+    rpc GetPolicyStatus (GetPolicyStatusRequest) returns (GetPolicyStatusResponse) {
+        option (google.api.http) = {
+            get: "/api/v1/policy_status/{id}"
+            };    
+    }
+
+    rpc GetPolicyViolationsById (GetPolicyViolationsByIdRequest) returns (GetPolicyViolationsByIdResponse) {
+        option (google.api.http) = {
+            get: "/api/v1/policy_violations/{id}"
+            };    
+    }
+
+    rpc GetPolicyViolations (GetPolicyViolationsRequest) returns (GetPolicyViolationsResponse) {
+        option (google.api.http) = {
+            get: "/api/v1/policy_violations/provider/{provider}/group/{group_id}"
+            };    
+    }    
 }
 
 service KeyService {
@@ -1133,9 +1151,58 @@ message GetPolicyByIdRequest {
     int32 id = 1;
 }
 
-// in the future it can include status and violation details for the policy
 message GetPolicyByIdResponse {
     optional PolicyRecord policy = 1;
+}
+
+// get policy violation status
+message PolicyRepoStatus {
+    string policy_type = 1;
+    int32 repo_id = 2;
+    string repo_owner = 3;
+    string repo_name = 4;
+    string policy_status = 5;
+    google.protobuf.Timestamp last_updated = 6;
+}
+
+// get policy violation details
+message PolicyViolation {
+    string policy_type = 1;
+    int32 repo_id = 2;
+    string repo_owner = 3;
+    string repo_name = 4;
+    string metadata = 5;
+    string violation = 6;
+    google.protobuf.Timestamp created_at = 7;    
+}
+
+message GetPolicyStatusRequest {
+    int32 id = 1;
+}
+
+message GetPolicyStatusResponse {
+    repeated PolicyRepoStatus policy_repo_status = 1;
+}
+
+message GetPolicyViolationsByIdRequest {
+    int32 id = 1;
+    optional int32 limit = 2;
+    optional int32 offset = 3;
+}
+
+message GetPolicyViolationsByIdResponse {
+    repeated PolicyViolation policy_violation = 1;
+}
+
+message GetPolicyViolationsRequest {
+    string provider = 1;
+    int32 group_id = 2;
+    optional int32 limit = 3;
+    optional int32 offset = 4;
+}
+
+message GetPolicyViolationsResponse {
+    repeated PolicyViolation policy_violation = 1;
 }
 
 // policy type record to be returned

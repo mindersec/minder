@@ -13,9 +13,6 @@
 // See the License for the specific language governing permissions and
 // limitations under the License.
 
-// Package events provides implementations of all the event handlers
-// the GitHub provider supports.
-
 // Package reconcilers provides implementations of all the reconcilers
 package reconcilers
 
@@ -26,6 +23,7 @@ import (
 
 	"github.com/ThreeDotsLabs/watermill/message"
 	github "github.com/google/go-github/v53/github"
+	"github.com/rs/zerolog/log"
 	"github.com/stacklok/mediator/pkg/controlplane"
 	"github.com/stacklok/mediator/pkg/db"
 	ghclient "github.com/stacklok/mediator/pkg/providers/github"
@@ -232,6 +230,7 @@ func checkBranchDifferences(rules SchemaJsonBranchesElemRules, protection *githu
 }
 
 // ParseBranchProtectionEventGithub parses a branch protection event from GitHub
+// nolint:gocyclo
 func ParseBranchProtectionEventGithub(ctx context.Context, store db.Store, msg *message.Message) error {
 	var event github.BranchProtectionRuleEvent
 	err := json.Unmarshal([]byte(msg.Payload), &event)
@@ -249,6 +248,13 @@ func ParseBranchProtectionEventGithub(ctx context.Context, store db.Store, msg *
 	if len(policies) == 0 {
 		// no need to act, we do not have policies
 		return nil
+	}
+
+	// check if repository exists
+	repo, err := store.GetRepositoryByRepoID(ctx, db.GetRepositoryByRepoIDParams{Provider: ghclient.Github,
+		RepoID: int32(*event.Rule.RepositoryID)})
+	if err != nil {
+		return err
 	}
 
 	// reconcile branch protection
@@ -272,14 +278,36 @@ func ParseBranchProtectionEventGithub(ctx context.Context, store db.Store, msg *
 				if targetBranch.Name == *event.Rule.Name {
 					differences := checkBranchDifferences(targetBranch.Rules, branch)
 
-					// print differences
+					// store differences
 					if len(differences) > 0 {
-						fmt.Println("differences found")
+						log.Info().Msgf("Policy violated for %s/%s:%s", *event.Repo.Owner.Login, *event.Repo.Name, *event.Rule.Name)
+
+						// inform about policy status and violation
+						err := store.UpdatePolicyStatus(ctx, db.UpdatePolicyStatusParams{RepositoryID: repo.ID,
+							PolicyID: policy.ID, PolicyStatus: db.PolicyStatusTypesFailure})
+						if err != nil {
+							return err
+						}
 						result, err := json.MarshalIndent(differences, "", "  ")
 						if err != nil {
 							return err
 						}
-						fmt.Println(string(result))
+
+						metadata := map[string]interface{}{
+							"branch":           *event.Rule.Name,
+							"repository_id":    *event.Rule.RepositoryID,
+							"repository_owner": *event.Repo.Owner.Login,
+							"repository_name":  *event.Repo.Name,
+						}
+						mresult, err := json.MarshalIndent(metadata, "", "  ")
+						if err != nil {
+							return err
+						}
+						_, err = store.CreatePolicyViolation(ctx, db.CreatePolicyViolationParams{RepositoryID: repo.ID,
+							PolicyID: policy.ID, Metadata: json.RawMessage(mresult), Violation: json.RawMessage(result)})
+						if err != nil {
+							return err
+						}
 					}
 				}
 			}

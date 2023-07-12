@@ -20,17 +20,16 @@ import (
 	"path/filepath"
 
 	"github.com/go-playground/validator/v10"
+	"github.com/stacklok/mediator/internal/util"
+	"github.com/stacklok/mediator/pkg/auth"
+	"github.com/stacklok/mediator/pkg/db"
+	pb "github.com/stacklok/mediator/pkg/generated/protobuf/go/mediator/v1"
+	ghclient "github.com/stacklok/mediator/pkg/providers/github"
 	"github.com/xeipuuv/gojsonschema"
 	"google.golang.org/grpc/codes"
 	"google.golang.org/grpc/status"
 	"google.golang.org/protobuf/types/known/timestamppb"
 	"gopkg.in/yaml.v3"
-
-	"github.com/stacklok/mediator/internal/util"
-	"github.com/stacklok/mediator/pkg/auth"
-	"github.com/stacklok/mediator/pkg/db"
-	pb "github.com/stacklok/mediator/pkg/generated/protobuf/go/mediator/v1"
-	github "github.com/stacklok/mediator/pkg/providers/github"
 )
 
 //go:embed policy_types/*
@@ -93,7 +92,7 @@ func (s *Server) CreatePolicy(ctx context.Context,
 		return nil, status.Errorf(codes.Internal, "cannot register validation: %v", err)
 	}
 
-	if in.Provider != github.Github {
+	if in.Provider != ghclient.Github {
 		return nil, status.Errorf(codes.InvalidArgument, "provider not supported: %v", in.Provider)
 	}
 
@@ -215,7 +214,7 @@ func (s *Server) DeletePolicy(ctx context.Context,
 func (s *Server) GetPolicies(ctx context.Context,
 	in *pb.GetPoliciesRequest) (*pb.GetPoliciesResponse, error) {
 
-	if in.Provider != github.Github {
+	if in.Provider != ghclient.Github {
 		return nil, status.Errorf(codes.InvalidArgument, "provider not supported: %v", in.Provider)
 	}
 
@@ -313,7 +312,7 @@ func (s *Server) GetPolicyById(ctx context.Context,
 
 // GetPolicyTypes is a method to get all policy types
 func (s *Server) GetPolicyTypes(ctx context.Context, in *pb.GetPolicyTypesRequest) (*pb.GetPolicyTypesResponse, error) {
-	if in.Provider != github.Github {
+	if in.Provider != ghclient.Github {
 		return nil, status.Errorf(codes.InvalidArgument, "provider not supported: %v", in.Provider)
 	}
 	types, err := s.store.GetPolicyTypes(ctx, in.Provider)
@@ -340,7 +339,7 @@ func (s *Server) GetPolicyTypes(ctx context.Context, in *pb.GetPolicyTypesReques
 
 // GetPolicyType is a method to get a policy type by id
 func (s *Server) GetPolicyType(ctx context.Context, in *pb.GetPolicyTypeRequest) (*pb.GetPolicyTypeResponse, error) {
-	if in.Provider != github.Github {
+	if in.Provider != ghclient.Github {
 		return nil, status.Errorf(codes.InvalidArgument, "provider not supported: %v", in.Provider)
 	}
 	policyType, err := s.store.GetPolicyType(ctx, db.GetPolicyTypeParams{Provider: in.Provider, PolicyType: in.Type})
@@ -362,4 +361,139 @@ func (s *Server) GetPolicyType(ctx context.Context, in *pb.GetPolicyTypeRequest)
 		JsonSchema: schema, DefaultSchema: default_schema,
 		Version: policyType.Version, CreatedAt: timestamppb.New(policyType.CreatedAt),
 		UpdatedAt: timestamppb.New(policyType.UpdatedAt)}}, nil
+}
+
+// GetPolicyStatus is a method to get policy status
+func (s *Server) GetPolicyStatus(ctx context.Context, in *pb.GetPolicyStatusRequest) (*pb.GetPolicyStatusResponse, error) {
+	if in.Id == 0 {
+		return nil, status.Error(codes.InvalidArgument, "policy id is required")
+	}
+
+	policy, err := s.store.GetPolicyByID(ctx, in.Id)
+	if err != nil {
+		return nil, status.Errorf(codes.Unknown, "failed to get policy: %s", err)
+	}
+
+	// check if user is authorized
+	if !IsRequestAuthorized(ctx, policy.GroupID) {
+		return nil, status.Errorf(codes.PermissionDenied, "user is not authorized to access this resource")
+	}
+
+	// read policy status
+	policy_status, err := s.store.GetPolicyStatus(ctx, in.Id)
+	if err != nil {
+		return nil, status.Errorf(codes.Unknown, "failed to get policy status: %s", err)
+	}
+	var resp pb.GetPolicyStatusResponse
+	resp.PolicyRepoStatus = make([]*pb.PolicyRepoStatus, 0, len(policy_status))
+	for _, policy := range policy_status {
+		resp.PolicyRepoStatus = append(resp.PolicyRepoStatus, &pb.PolicyRepoStatus{
+			PolicyType:   policy.PolicyType,
+			RepoId:       policy.RepoID,
+			RepoOwner:    policy.RepoOwner,
+			RepoName:     policy.RepoName,
+			PolicyStatus: string(policy.PolicyStatus),
+			LastUpdated:  timestamppb.New(policy.LastUpdated),
+		})
+	}
+
+	return &resp, nil
+
+}
+
+// GetPolicyViolationsById is a method to get policy violations by policy id
+func (s *Server) GetPolicyViolationsById(ctx context.Context,
+	in *pb.GetPolicyViolationsByIdRequest) (*pb.GetPolicyViolationsByIdResponse, error) {
+	if in.Id == 0 {
+		return nil, status.Error(codes.InvalidArgument, "policy id is required")
+	}
+
+	policy, err := s.store.GetPolicyByID(ctx, in.Id)
+	if err != nil {
+		return nil, status.Errorf(codes.Unknown, "failed to get policy: %s", err)
+	}
+
+	// check if user is authorized
+	if !IsRequestAuthorized(ctx, policy.GroupID) {
+		return nil, status.Errorf(codes.PermissionDenied, "user is not authorized to access this resource")
+	}
+
+	// define default values for limit and offset
+	if in.Limit == nil || *in.Limit == -1 {
+		in.Limit = new(int32)
+		*in.Limit = PaginationLimit
+	}
+	if in.Offset == nil {
+		in.Offset = new(int32)
+		*in.Offset = 0
+	}
+	// read policy violations
+	policy_violations, err := s.store.GetPolicyViolationsById(ctx,
+		db.GetPolicyViolationsByIdParams{ID: in.Id, Limit: *in.Limit, Offset: *in.Offset})
+	if err != nil {
+		return nil, status.Errorf(codes.Unknown, "failed to get policy violation: %s", err)
+	}
+	var resp pb.GetPolicyViolationsByIdResponse
+	resp.PolicyViolation = make([]*pb.PolicyViolation, 0, len(policy_violations))
+	for _, policy := range policy_violations {
+		resp.PolicyViolation = append(resp.PolicyViolation, &pb.PolicyViolation{
+			PolicyType: policy.PolicyType,
+			RepoId:     policy.RepoID,
+			RepoOwner:  policy.RepoOwner,
+			RepoName:   policy.RepoName,
+			Metadata:   string(policy.Metadata),
+			Violation:  string(policy.Violation),
+			CreatedAt:  timestamppb.New(policy.CreatedAt),
+		})
+	}
+
+	return &resp, nil
+
+}
+
+// GetPolicyViolations is a method to get policy violations by provider and group
+func (s *Server) GetPolicyViolations(ctx context.Context,
+	in *pb.GetPolicyViolationsRequest) (*pb.GetPolicyViolationsResponse, error) {
+	// provider and group are required
+	if in.Provider == "" || in.GroupId == 0 {
+		return nil, status.Error(codes.InvalidArgument, "provider and group are required")
+	}
+
+	// check if user is authorized
+	if !IsRequestAuthorized(ctx, in.GroupId) {
+		return nil, status.Errorf(codes.PermissionDenied, "user is not authorized to access this resource")
+	}
+
+	// define default values for limit and offset
+	if in.Limit == nil || *in.Limit == -1 {
+		in.Limit = new(int32)
+		*in.Limit = PaginationLimit
+	}
+	if in.Offset == nil {
+		in.Offset = new(int32)
+		*in.Offset = 0
+	}
+
+	policy_violations, err := s.store.GetPolicyViolations(ctx,
+		db.GetPolicyViolationsParams{Provider: in.Provider, GroupID: in.GroupId, Limit: *in.Limit, Offset: *in.Offset})
+	if err != nil {
+		return nil, status.Errorf(codes.Unknown, "failed to get policy: %s", err)
+	}
+
+	var resp pb.GetPolicyViolationsResponse
+	resp.PolicyViolation = make([]*pb.PolicyViolation, 0, len(policy_violations))
+	for _, policy := range policy_violations {
+		resp.PolicyViolation = append(resp.PolicyViolation, &pb.PolicyViolation{
+			PolicyType: policy.PolicyType,
+			RepoId:     policy.RepoID,
+			RepoOwner:  policy.RepoOwner,
+			RepoName:   policy.RepoName,
+			Metadata:   string(policy.Metadata),
+			Violation:  string(policy.Violation),
+			CreatedAt:  timestamppb.New(policy.CreatedAt),
+		})
+	}
+
+	return &resp, nil
+
 }
