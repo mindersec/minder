@@ -17,31 +17,31 @@
 package crypto
 
 import (
+	"crypto/aes"
+	"crypto/cipher"
 	"crypto/ecdsa"
+	"crypto/rand"
 	"crypto/sha256"
+	"crypto/subtle"
 	"crypto/x509"
 	"encoding/base64"
 	"encoding/binary"
 	"encoding/json"
 	"encoding/pem"
 	"errors"
+	"fmt"
+	"io"
 	"strings"
 	"time"
 
-	"crypto/aes"
-	"crypto/cipher"
-	"crypto/rand"
-	"crypto/subtle"
-	"fmt"
-	"io"
-
 	"github.com/sigstore/sigstore/pkg/signature"
 	"github.com/spf13/viper"
-	"github.com/stacklok/mediator/internal/config"
 	"github.com/theupdateframework/go-tuf/encrypted"
 	"golang.org/x/crypto/argon2"
 	"google.golang.org/grpc/codes"
 	"google.golang.org/grpc/status"
+
+	"github.com/stacklok/mediator/internal/config"
 )
 
 var (

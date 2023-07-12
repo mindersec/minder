@@ -30,13 +30,13 @@ import (
 	"time"
 
 	"github.com/pkg/browser"
+	"github.com/spf13/cobra"
+	"github.com/spf13/viper"
+	"google.golang.org/protobuf/types/known/timestamppb"
+
 	"github.com/stacklok/mediator/internal/util"
 	pb "github.com/stacklok/mediator/pkg/generated/protobuf/go/mediator/v1"
 	github "github.com/stacklok/mediator/pkg/providers/github"
-	"google.golang.org/protobuf/types/known/timestamppb"
-
-	"github.com/spf13/cobra"
-	"github.com/spf13/viper"
 )
 
 // Response is the response from the OAuth callback server.

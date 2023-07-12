@@ -23,11 +23,11 @@ import (
 	"testing"
 	"time"
 
-	pb "github.com/stacklok/mediator/pkg/generated/protobuf/go/mediator/v1"
-
 	"google.golang.org/grpc"
 	"google.golang.org/grpc/credentials/insecure"
 	"google.golang.org/grpc/test/bufconn"
+
+	pb "github.com/stacklok/mediator/pkg/generated/protobuf/go/mediator/v1"
 )
 
 const bufSize = 1024 * 1024

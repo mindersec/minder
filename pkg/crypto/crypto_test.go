@@ -22,7 +22,6 @@ import (
 	"testing"
 
 	"github.com/stretchr/testify/assert"
-	// "github.com/theupdateframework/go-tuf/encrypted"
 )
 
 func TestGetCert(t *testing.T) {

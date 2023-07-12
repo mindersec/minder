@@ -22,6 +22,7 @@ import (
 	"log"
 
 	"github.com/ThreeDotsLabs/watermill/message"
+
 	"github.com/stacklok/mediator/internal/events"
 	"github.com/stacklok/mediator/internal/reconcilers"
 	"github.com/stacklok/mediator/pkg/db"

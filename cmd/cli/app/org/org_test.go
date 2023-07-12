@@ -25,9 +25,10 @@ import (
 	"testing"
 
 	"github.com/spf13/viper"
+	"github.com/stretchr/testify/assert"
+
 	"github.com/stacklok/mediator/cmd/cli/app"
 	"github.com/stacklok/mediator/internal/util"
-	"github.com/stretchr/testify/assert"
 )
 
 func TestCobraMain(t *testing.T) {

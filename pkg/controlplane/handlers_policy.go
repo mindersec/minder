@@ -16,22 +16,21 @@ package controlplane
 
 import (
 	"context"
+	"embed"
 	"path/filepath"
 
-	"embed"
-
 	"github.com/go-playground/validator/v10"
-	"github.com/stacklok/mediator/pkg/auth"
-	"github.com/stacklok/mediator/pkg/db"
-	pb "github.com/stacklok/mediator/pkg/generated/protobuf/go/mediator/v1"
-	github "github.com/stacklok/mediator/pkg/providers/github"
-
-	"github.com/stacklok/mediator/internal/util"
 	"github.com/xeipuuv/gojsonschema"
 	"google.golang.org/grpc/codes"
 	"google.golang.org/grpc/status"
 	"google.golang.org/protobuf/types/known/timestamppb"
 	"gopkg.in/yaml.v3"
+
+	"github.com/stacklok/mediator/internal/util"
+	"github.com/stacklok/mediator/pkg/auth"
+	"github.com/stacklok/mediator/pkg/db"
+	pb "github.com/stacklok/mediator/pkg/generated/protobuf/go/mediator/v1"
+	github "github.com/stacklok/mediator/pkg/providers/github"
 )
 
 //go:embed policy_types/*

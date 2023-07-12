@@ -20,6 +20,7 @@ import (
 	"testing"
 
 	"github.com/ThreeDotsLabs/watermill/message"
+
 	"github.com/stacklok/mediator/internal/events"
 )
 

@@ -26,9 +26,9 @@ import (
 	"testing"
 	"time"
 
-	"github.com/stacklok/mediator/internal/util"
-
 	"github.com/stretchr/testify/require"
+
+	"github.com/stacklok/mediator/internal/util"
 )
 
 func stringToNullString(s string) sql.NullString {

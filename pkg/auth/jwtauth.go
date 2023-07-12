@@ -31,9 +31,10 @@ import (
 	"time"
 
 	"github.com/golang-jwt/jwt/v4"
-	"github.com/stacklok/mediator/pkg/db"
 	"google.golang.org/grpc/codes"
 	"google.golang.org/grpc/status"
+
+	"github.com/stacklok/mediator/pkg/db"
 )
 
 // RoleInfo contains the role information for a user

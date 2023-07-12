@@ -26,13 +26,13 @@ import (
 	"fmt"
 	"os"
 
+	"github.com/spf13/cobra"
+	"github.com/spf13/viper"
+	"gopkg.in/yaml.v3"
+
 	"github.com/stacklok/mediator/cmd/cli/app"
 	"github.com/stacklok/mediator/internal/util"
 	pb "github.com/stacklok/mediator/pkg/generated/protobuf/go/mediator/v1"
-	"gopkg.in/yaml.v3"
-
-	"github.com/spf13/cobra"
-	"github.com/spf13/viper"
 )
 
 type output struct {
