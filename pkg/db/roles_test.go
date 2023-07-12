@@ -26,8 +26,9 @@ import (
 	"testing"
 	"time"
 
-	"github.com/stacklok/mediator/internal/util"
 	"github.com/stretchr/testify/require"
+
+	"github.com/stacklok/mediator/internal/util"
 )
 
 // A helper function to create a random role

@@ -7,6 +7,11 @@ linters-settings:
     line-length: 130
   gocyclo:
     min-complexity: 15
+  gci:
+    sections:
+      - standard
+      - default
+      - prefix(github.com/stacklok/mediator)
   revive:
     # see https://github.com/mgechev/revive#available-rules for details.
     ignore-generated-header: true
@@ -55,6 +60,7 @@ linters:
     - gocyclo
     - gofmt
     - gosec
+    - gci
     - unparam
     - gosimple
     - govet

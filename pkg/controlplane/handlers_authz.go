@@ -22,15 +22,15 @@ import (
 	"time"
 
 	gauth "github.com/grpc-ecosystem/go-grpc-middleware/v2/interceptors/auth"
-	github "github.com/stacklok/mediator/pkg/providers/github"
-
 	"github.com/rs/zerolog/log"
 	"github.com/spf13/viper"
-	"github.com/stacklok/mediator/pkg/auth"
-	"github.com/stacklok/mediator/pkg/db"
 	"google.golang.org/grpc"
 	"google.golang.org/grpc/codes"
 	"google.golang.org/grpc/status"
+
+	"github.com/stacklok/mediator/pkg/auth"
+	"github.com/stacklok/mediator/pkg/db"
+	github "github.com/stacklok/mediator/pkg/providers/github"
 )
 
 func parseToken(token string, store db.Store) (auth.UserClaims, error) {

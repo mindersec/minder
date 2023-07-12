@@ -23,22 +23,22 @@ package controlplane
 import (
 	"bytes"
 	"context"
+	"encoding/json"
 	"fmt"
 	"net/http"
 	"testing"
 	"time"
 
-	"encoding/json"
-
 	"github.com/ThreeDotsLabs/watermill/pubsub/gochannel"
 	"github.com/google/go-cmp/cmp"
 	"github.com/google/go-github/v53/github"
-	"github.com/stacklok/mediator/internal/util"
 	"github.com/stretchr/testify/assert"
 	"github.com/stretchr/testify/mock"
 	"github.com/stretchr/testify/require"
 	"github.com/stretchr/testify/suite"
 	"golang.org/x/oauth2"
+
+	"github.com/stacklok/mediator/internal/util"
 )
 
 // MockClient is a mock implementation of the GitHub client.

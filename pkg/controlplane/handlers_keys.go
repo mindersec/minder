@@ -19,13 +19,14 @@ import (
 	// "database/sql"
 	"encoding/base64"
 
-	mcrypto "github.com/stacklok/mediator/pkg/crypto"
-	"github.com/stacklok/mediator/pkg/db"
 	// "github.com/stacklok/mediator/pkg/db"
 	"github.com/google/uuid"
-	pb "github.com/stacklok/mediator/pkg/generated/protobuf/go/mediator/v1"
 	"google.golang.org/grpc/codes"
 	"google.golang.org/grpc/status"
+
+	mcrypto "github.com/stacklok/mediator/pkg/crypto"
+	"github.com/stacklok/mediator/pkg/db"
+	pb "github.com/stacklok/mediator/pkg/generated/protobuf/go/mediator/v1"
 )
 
 // CreateKeyPair creates a new key pair for a given group

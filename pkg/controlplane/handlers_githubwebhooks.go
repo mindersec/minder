@@ -30,12 +30,11 @@ import (
 	"strings"
 	"time"
 
+	"github.com/ThreeDotsLabs/watermill/message"
 	"github.com/google/go-github/v53/github"
 	"github.com/google/uuid"
 	"github.com/spf13/viper"
 	"golang.org/x/oauth2"
-
-	"github.com/ThreeDotsLabs/watermill/message"
 )
 
 // Repository represents a GitHub repository

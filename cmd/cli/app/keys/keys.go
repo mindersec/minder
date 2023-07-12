@@ -17,9 +17,9 @@
 package keys
 
 import (
-	"github.com/stacklok/mediator/cmd/cli/app"
-
 	"github.com/spf13/cobra"
+
+	"github.com/stacklok/mediator/cmd/cli/app"
 )
 
 // KeysCmd is the root command for the role subcommands

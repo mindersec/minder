@@ -21,11 +21,10 @@
 package db
 
 import (
+	"database/sql"
 	"log"
 	"os"
 	"testing"
-
-	"database/sql"
 
 	_ "github.com/lib/pq"
 )

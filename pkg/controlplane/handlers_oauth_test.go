@@ -20,18 +20,18 @@ import (
 	"testing"
 
 	"github.com/golang/mock/gomock"
+	"github.com/stretchr/testify/assert"
+	"github.com/stretchr/testify/require"
+	"golang.org/x/oauth2/github"
+	"golang.org/x/oauth2/google"
+	"google.golang.org/grpc/codes"
+
 	mockdb "github.com/stacklok/mediator/database/mock"
 	"github.com/stacklok/mediator/internal/config"
 	"github.com/stacklok/mediator/pkg/auth"
 	"github.com/stacklok/mediator/pkg/db"
 	pb "github.com/stacklok/mediator/pkg/generated/protobuf/go/mediator/v1"
 	ghclient "github.com/stacklok/mediator/pkg/providers/github"
-
-	"github.com/stretchr/testify/assert"
-	"github.com/stretchr/testify/require"
-	"golang.org/x/oauth2/github"
-	"golang.org/x/oauth2/google"
-	"google.golang.org/grpc/codes"
 )
 
 func TestNewOAuthConfig(t *testing.T) {

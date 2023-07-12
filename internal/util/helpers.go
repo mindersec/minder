@@ -38,11 +38,12 @@ import (
 	_ "github.com/lib/pq" // nolint
 	"github.com/spf13/cobra"
 	"github.com/spf13/viper"
-	pb "github.com/stacklok/mediator/pkg/generated/protobuf/go/mediator/v1"
 	"golang.org/x/term"
 	"google.golang.org/grpc"
 	"google.golang.org/grpc/credentials/insecure"
 	"gopkg.in/yaml.v3"
+
+	pb "github.com/stacklok/mediator/pkg/generated/protobuf/go/mediator/v1"
 )
 
 // GetConfigValue is a helper function that retrieves a configuration value

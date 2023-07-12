@@ -27,8 +27,9 @@ import (
 	"testing"
 	"time"
 
-	"github.com/stacklok/mediator/internal/util"
 	"github.com/stretchr/testify/require"
+
+	"github.com/stacklok/mediator/internal/util"
 )
 
 type RepositoryOption func(*CreateRepositoryParams)

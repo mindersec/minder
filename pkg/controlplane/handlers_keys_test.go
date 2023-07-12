@@ -16,19 +16,17 @@ package controlplane
 
 import (
 	"context"
-
 	"testing"
 	"time"
 
 	"github.com/golang/mock/gomock"
+	"github.com/stretchr/testify/assert"
 	"google.golang.org/grpc/codes"
 
+	mockdb "github.com/stacklok/mediator/database/mock"
 	"github.com/stacklok/mediator/internal/config"
 	"github.com/stacklok/mediator/pkg/auth"
 	"github.com/stacklok/mediator/pkg/db"
-	"github.com/stretchr/testify/assert"
-
-	mockdb "github.com/stacklok/mediator/database/mock"
 	pb "github.com/stacklok/mediator/pkg/generated/protobuf/go/mediator/v1"
 )
 

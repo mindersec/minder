@@ -19,10 +19,10 @@ import (
 	"context"
 	"log"
 
-	pb "github.com/stacklok/mediator/pkg/generated/protobuf/go/mediator/v1"
-
 	"github.com/grpc-ecosystem/grpc-gateway/v2/runtime"
 	"google.golang.org/grpc"
+
+	pb "github.com/stacklok/mediator/pkg/generated/protobuf/go/mediator/v1"
 )
 
 // RegisterGatewayHTTPHandlers registers the gateway HTTP handlers

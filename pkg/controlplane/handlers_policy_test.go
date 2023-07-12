@@ -21,16 +21,14 @@ import (
 	"time"
 
 	"github.com/golang/mock/gomock"
-
-	"github.com/stacklok/mediator/internal/config"
-	"github.com/stacklok/mediator/pkg/auth"
-	"github.com/stacklok/mediator/pkg/db"
 	"github.com/stretchr/testify/assert"
 	"github.com/stretchr/testify/require"
-
 	"google.golang.org/grpc/codes"
 
 	mockdb "github.com/stacklok/mediator/database/mock"
+	"github.com/stacklok/mediator/internal/config"
+	"github.com/stacklok/mediator/pkg/auth"
+	"github.com/stacklok/mediator/pkg/db"
 	pb "github.com/stacklok/mediator/pkg/generated/protobuf/go/mediator/v1"
 	github "github.com/stacklok/mediator/pkg/providers/github"
 )

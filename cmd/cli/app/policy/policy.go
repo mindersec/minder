@@ -17,9 +17,9 @@
 package policy
 
 import (
-	"github.com/stacklok/mediator/cmd/cli/app"
-
 	"github.com/spf13/cobra"
+
+	"github.com/stacklok/mediator/cmd/cli/app"
 )
 
 // PolicyCmd is the root command for the policy subcommands
