@@ -20,6 +20,7 @@ type Querier interface {
 	CreateRepository(ctx context.Context, arg CreateRepositoryParams) (Repository, error)
 	CreateRole(ctx context.Context, arg CreateRoleParams) (Role, error)
 	CreateSessionState(ctx context.Context, arg CreateSessionStateParams) (SessionStore, error)
+	CreateSigningKey(ctx context.Context, arg CreateSigningKeyParams) (SigningKey, error)
 	CreateUser(ctx context.Context, arg CreateUserParams) (User, error)
 	DeleteAccessToken(ctx context.Context, arg DeleteAccessTokenParams) error
 	DeleteExpiredSessionStates(ctx context.Context) error
@@ -31,6 +32,7 @@ type Querier interface {
 	DeleteRole(ctx context.Context, id int32) error
 	DeleteSessionState(ctx context.Context, id int32) error
 	DeleteSessionStateByGroupID(ctx context.Context, arg DeleteSessionStateByGroupIDParams) error
+	DeleteSigningKey(ctx context.Context, arg DeleteSigningKeyParams) error
 	DeleteUser(ctx context.Context, id int32) error
 	GetAccessTokenByGroupID(ctx context.Context, arg GetAccessTokenByGroupIDParams) (ProviderAccessToken, error)
 	GetAccessTokenByProvider(ctx context.Context, provider string) ([]ProviderAccessToken, error)
@@ -54,6 +56,8 @@ type Querier interface {
 	GetRoleByName(ctx context.Context, arg GetRoleByNameParams) (Role, error)
 	GetSessionState(ctx context.Context, id int32) (SessionStore, error)
 	GetSessionStateByGroupID(ctx context.Context, grpID sql.NullInt32) (SessionStore, error)
+	GetSigningKeyByGroupID(ctx context.Context, groupID int32) (SigningKey, error)
+	GetSigningKeyByIdentifier(ctx context.Context, keyIdentifier string) (SigningKey, error)
 	GetUserByEmail(ctx context.Context, email sql.NullString) (User, error)
 	GetUserByID(ctx context.Context, id int32) (User, error)
 	GetUserByUserName(ctx context.Context, username string) (User, error)

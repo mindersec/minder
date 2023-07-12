@@ -86,6 +86,18 @@ CREATE TABLE provider_access_tokens (
     updated_at TIMESTAMP NOT NULL DEFAULT NOW()
 );
 
+-- signing_keys table
+CREATE TABLE signing_keys (
+    id SERIAL PRIMARY KEY,
+    group_id INTEGER NOT NULL REFERENCES groups(id) ON DELETE CASCADE,
+    private_key TEXT NOT NULL,
+    public_key TEXT NOT NULL,
+    passphrase TEXT NOT NULL,
+    key_identifier TEXT NOT NULL,
+    created_at TIMESTAMP NOT NULL DEFAULT NOW(),
+    updated_at TIMESTAMP NOT NULL DEFAULT NOW()
+);
+
 -- repositories table
 create TABLE repositories (
     id SERIAL PRIMARY KEY,
@@ -136,6 +148,7 @@ create table policies (
 -- Unique constraint
 ALTER TABLE provider_access_tokens ADD CONSTRAINT unique_group_id UNIQUE (group_id);
 ALTER TABLE repositories ADD CONSTRAINT unique_repo_id UNIQUE (repo_id);
+ALTER TABLE signing_keys ADD CONSTRAINT unique_key_identifier UNIQUE (key_identifier);
 
 -- Indexes
 CREATE UNIQUE INDEX organizations_name_lower_idx ON organizations (LOWER(name));

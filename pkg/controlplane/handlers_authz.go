@@ -263,6 +263,12 @@ var resourceAuthorizations = []map[string]map[string]interface{}{
 			"isAdmin":    true,
 		},
 	},
+	{
+		"/mediator.v1.KeyService/CreateKeyPair": {
+			"claimField": "GroupId",
+			"isAdmin":    true,
+		},
+	},
 }
 
 var githubAuthorizations = []string{
