@@ -67,7 +67,7 @@ mediator control plane.`,
 		id := viper.GetInt32("id")
 		status := util.GetConfigValue("status", "status", cmd, false).(bool)
 		if status {
-			resp, err := client.GetPolicyStatus(ctx, &pb.GetPolicyStatusRequest{Id: id})
+			resp, err := client.GetPolicyStatusById(ctx, &pb.GetPolicyStatusByIdRequest{PolicyId: id})
 			util.ExitNicelyOnError(err, "Error getting policy status")
 
 			// print results

@@ -2487,15 +2487,16 @@ var UserService_ServiceDesc = grpc.ServiceDesc{
 }
 
 const (
-	PolicyService_GetPolicyType_FullMethodName           = "/mediator.v1.PolicyService/GetPolicyType"
-	PolicyService_GetPolicyTypes_FullMethodName          = "/mediator.v1.PolicyService/GetPolicyTypes"
-	PolicyService_CreatePolicy_FullMethodName            = "/mediator.v1.PolicyService/CreatePolicy"
-	PolicyService_DeletePolicy_FullMethodName            = "/mediator.v1.PolicyService/DeletePolicy"
-	PolicyService_GetPolicies_FullMethodName             = "/mediator.v1.PolicyService/GetPolicies"
-	PolicyService_GetPolicyById_FullMethodName           = "/mediator.v1.PolicyService/GetPolicyById"
-	PolicyService_GetPolicyStatus_FullMethodName         = "/mediator.v1.PolicyService/GetPolicyStatus"
-	PolicyService_GetPolicyViolationsById_FullMethodName = "/mediator.v1.PolicyService/GetPolicyViolationsById"
-	PolicyService_GetPolicyViolations_FullMethodName     = "/mediator.v1.PolicyService/GetPolicyViolations"
+	PolicyService_GetPolicyType_FullMethodName              = "/mediator.v1.PolicyService/GetPolicyType"
+	PolicyService_GetPolicyTypes_FullMethodName             = "/mediator.v1.PolicyService/GetPolicyTypes"
+	PolicyService_CreatePolicy_FullMethodName               = "/mediator.v1.PolicyService/CreatePolicy"
+	PolicyService_DeletePolicy_FullMethodName               = "/mediator.v1.PolicyService/DeletePolicy"
+	PolicyService_GetPolicies_FullMethodName                = "/mediator.v1.PolicyService/GetPolicies"
+	PolicyService_GetPolicyById_FullMethodName              = "/mediator.v1.PolicyService/GetPolicyById"
+	PolicyService_GetPolicyStatusById_FullMethodName        = "/mediator.v1.PolicyService/GetPolicyStatusById"
+	PolicyService_GetPolicyStatusByGroup_FullMethodName     = "/mediator.v1.PolicyService/GetPolicyStatusByGroup"
+	PolicyService_GetPolicyViolationsById_FullMethodName    = "/mediator.v1.PolicyService/GetPolicyViolationsById"
+	PolicyService_GetPolicyViolationsByGroup_FullMethodName = "/mediator.v1.PolicyService/GetPolicyViolationsByGroup"
 )
 
 // PolicyServiceClient is the client API for PolicyService service.
@@ -2508,9 +2509,10 @@ type PolicyServiceClient interface {
 	DeletePolicy(ctx context.Context, in *DeletePolicyRequest, opts ...grpc.CallOption) (*DeletePolicyResponse, error)
 	GetPolicies(ctx context.Context, in *GetPoliciesRequest, opts ...grpc.CallOption) (*GetPoliciesResponse, error)
 	GetPolicyById(ctx context.Context, in *GetPolicyByIdRequest, opts ...grpc.CallOption) (*GetPolicyByIdResponse, error)
-	GetPolicyStatus(ctx context.Context, in *GetPolicyStatusRequest, opts ...grpc.CallOption) (*GetPolicyStatusResponse, error)
+	GetPolicyStatusById(ctx context.Context, in *GetPolicyStatusByIdRequest, opts ...grpc.CallOption) (*GetPolicyStatusByIdResponse, error)
+	GetPolicyStatusByGroup(ctx context.Context, in *GetPolicyStatusByGroupRequest, opts ...grpc.CallOption) (*GetPolicyStatusByGroupResponse, error)
 	GetPolicyViolationsById(ctx context.Context, in *GetPolicyViolationsByIdRequest, opts ...grpc.CallOption) (*GetPolicyViolationsByIdResponse, error)
-	GetPolicyViolations(ctx context.Context, in *GetPolicyViolationsRequest, opts ...grpc.CallOption) (*GetPolicyViolationsResponse, error)
+	GetPolicyViolationsByGroup(ctx context.Context, in *GetPolicyViolationsByGroupRequest, opts ...grpc.CallOption) (*GetPolicyViolationsByGroupResponse, error)
 }
 
 type policyServiceClient struct {
@@ -2575,9 +2577,18 @@ func (c *policyServiceClient) GetPolicyById(ctx context.Context, in *GetPolicyBy
 	return out, nil
 }
 
-func (c *policyServiceClient) GetPolicyStatus(ctx context.Context, in *GetPolicyStatusRequest, opts ...grpc.CallOption) (*GetPolicyStatusResponse, error) {
-	out := new(GetPolicyStatusResponse)
-	err := c.cc.Invoke(ctx, PolicyService_GetPolicyStatus_FullMethodName, in, out, opts...)
+func (c *policyServiceClient) GetPolicyStatusById(ctx context.Context, in *GetPolicyStatusByIdRequest, opts ...grpc.CallOption) (*GetPolicyStatusByIdResponse, error) {
+	out := new(GetPolicyStatusByIdResponse)
+	err := c.cc.Invoke(ctx, PolicyService_GetPolicyStatusById_FullMethodName, in, out, opts...)
+	if err != nil {
+		return nil, err
+	}
+	return out, nil
+}
+
+func (c *policyServiceClient) GetPolicyStatusByGroup(ctx context.Context, in *GetPolicyStatusByGroupRequest, opts ...grpc.CallOption) (*GetPolicyStatusByGroupResponse, error) {
+	out := new(GetPolicyStatusByGroupResponse)
+	err := c.cc.Invoke(ctx, PolicyService_GetPolicyStatusByGroup_FullMethodName, in, out, opts...)
 	if err != nil {
 		return nil, err
 	}
@@ -2593,9 +2604,9 @@ func (c *policyServiceClient) GetPolicyViolationsById(ctx context.Context, in *G
 	return out, nil
 }
 
-func (c *policyServiceClient) GetPolicyViolations(ctx context.Context, in *GetPolicyViolationsRequest, opts ...grpc.CallOption) (*GetPolicyViolationsResponse, error) {
-	out := new(GetPolicyViolationsResponse)
-	err := c.cc.Invoke(ctx, PolicyService_GetPolicyViolations_FullMethodName, in, out, opts...)
+func (c *policyServiceClient) GetPolicyViolationsByGroup(ctx context.Context, in *GetPolicyViolationsByGroupRequest, opts ...grpc.CallOption) (*GetPolicyViolationsByGroupResponse, error) {
+	out := new(GetPolicyViolationsByGroupResponse)
+	err := c.cc.Invoke(ctx, PolicyService_GetPolicyViolationsByGroup_FullMethodName, in, out, opts...)
 	if err != nil {
 		return nil, err
 	}
@@ -2612,9 +2623,10 @@ type PolicyServiceServer interface {
 	DeletePolicy(context.Context, *DeletePolicyRequest) (*DeletePolicyResponse, error)
 	GetPolicies(context.Context, *GetPoliciesRequest) (*GetPoliciesResponse, error)
 	GetPolicyById(context.Context, *GetPolicyByIdRequest) (*GetPolicyByIdResponse, error)
-	GetPolicyStatus(context.Context, *GetPolicyStatusRequest) (*GetPolicyStatusResponse, error)
+	GetPolicyStatusById(context.Context, *GetPolicyStatusByIdRequest) (*GetPolicyStatusByIdResponse, error)
+	GetPolicyStatusByGroup(context.Context, *GetPolicyStatusByGroupRequest) (*GetPolicyStatusByGroupResponse, error)
 	GetPolicyViolationsById(context.Context, *GetPolicyViolationsByIdRequest) (*GetPolicyViolationsByIdResponse, error)
-	GetPolicyViolations(context.Context, *GetPolicyViolationsRequest) (*GetPolicyViolationsResponse, error)
+	GetPolicyViolationsByGroup(context.Context, *GetPolicyViolationsByGroupRequest) (*GetPolicyViolationsByGroupResponse, error)
 	mustEmbedUnimplementedPolicyServiceServer()
 }
 
@@ -2640,14 +2652,17 @@ func (UnimplementedPolicyServiceServer) GetPolicies(context.Context, *GetPolicie
 func (UnimplementedPolicyServiceServer) GetPolicyById(context.Context, *GetPolicyByIdRequest) (*GetPolicyByIdResponse, error) {
 	return nil, status.Errorf(codes.Unimplemented, "method GetPolicyById not implemented")
 }
-func (UnimplementedPolicyServiceServer) GetPolicyStatus(context.Context, *GetPolicyStatusRequest) (*GetPolicyStatusResponse, error) {
-	return nil, status.Errorf(codes.Unimplemented, "method GetPolicyStatus not implemented")
+func (UnimplementedPolicyServiceServer) GetPolicyStatusById(context.Context, *GetPolicyStatusByIdRequest) (*GetPolicyStatusByIdResponse, error) {
+	return nil, status.Errorf(codes.Unimplemented, "method GetPolicyStatusById not implemented")
+}
+func (UnimplementedPolicyServiceServer) GetPolicyStatusByGroup(context.Context, *GetPolicyStatusByGroupRequest) (*GetPolicyStatusByGroupResponse, error) {
+	return nil, status.Errorf(codes.Unimplemented, "method GetPolicyStatusByGroup not implemented")
 }
 func (UnimplementedPolicyServiceServer) GetPolicyViolationsById(context.Context, *GetPolicyViolationsByIdRequest) (*GetPolicyViolationsByIdResponse, error) {
 	return nil, status.Errorf(codes.Unimplemented, "method GetPolicyViolationsById not implemented")
 }
-func (UnimplementedPolicyServiceServer) GetPolicyViolations(context.Context, *GetPolicyViolationsRequest) (*GetPolicyViolationsResponse, error) {
-	return nil, status.Errorf(codes.Unimplemented, "method GetPolicyViolations not implemented")
+func (UnimplementedPolicyServiceServer) GetPolicyViolationsByGroup(context.Context, *GetPolicyViolationsByGroupRequest) (*GetPolicyViolationsByGroupResponse, error) {
+	return nil, status.Errorf(codes.Unimplemented, "method GetPolicyViolationsByGroup not implemented")
 }
 func (UnimplementedPolicyServiceServer) mustEmbedUnimplementedPolicyServiceServer() {}
 
@@ -2770,20 +2785,38 @@ func _PolicyService_GetPolicyById_Handler(srv interface{}, ctx context.Context, 
 	return interceptor(ctx, in, info, handler)
 }
 
-func _PolicyService_GetPolicyStatus_Handler(srv interface{}, ctx context.Context, dec func(interface{}) error, interceptor grpc.UnaryServerInterceptor) (interface{}, error) {
-	in := new(GetPolicyStatusRequest)
+func _PolicyService_GetPolicyStatusById_Handler(srv interface{}, ctx context.Context, dec func(interface{}) error, interceptor grpc.UnaryServerInterceptor) (interface{}, error) {
+	in := new(GetPolicyStatusByIdRequest)
 	if err := dec(in); err != nil {
 		return nil, err
 	}
 	if interceptor == nil {
-		return srv.(PolicyServiceServer).GetPolicyStatus(ctx, in)
+		return srv.(PolicyServiceServer).GetPolicyStatusById(ctx, in)
 	}
 	info := &grpc.UnaryServerInfo{
 		Server:     srv,
-		FullMethod: PolicyService_GetPolicyStatus_FullMethodName,
+		FullMethod: PolicyService_GetPolicyStatusById_FullMethodName,
 	}
 	handler := func(ctx context.Context, req interface{}) (interface{}, error) {
-		return srv.(PolicyServiceServer).GetPolicyStatus(ctx, req.(*GetPolicyStatusRequest))
+		return srv.(PolicyServiceServer).GetPolicyStatusById(ctx, req.(*GetPolicyStatusByIdRequest))
+	}
+	return interceptor(ctx, in, info, handler)
+}
+
+func _PolicyService_GetPolicyStatusByGroup_Handler(srv interface{}, ctx context.Context, dec func(interface{}) error, interceptor grpc.UnaryServerInterceptor) (interface{}, error) {
+	in := new(GetPolicyStatusByGroupRequest)
+	if err := dec(in); err != nil {
+		return nil, err
+	}
+	if interceptor == nil {
+		return srv.(PolicyServiceServer).GetPolicyStatusByGroup(ctx, in)
+	}
+	info := &grpc.UnaryServerInfo{
+		Server:     srv,
+		FullMethod: PolicyService_GetPolicyStatusByGroup_FullMethodName,
+	}
+	handler := func(ctx context.Context, req interface{}) (interface{}, error) {
+		return srv.(PolicyServiceServer).GetPolicyStatusByGroup(ctx, req.(*GetPolicyStatusByGroupRequest))
 	}
 	return interceptor(ctx, in, info, handler)
 }
@@ -2806,20 +2839,20 @@ func _PolicyService_GetPolicyViolationsById_Handler(srv interface{}, ctx context
 	return interceptor(ctx, in, info, handler)
 }
 
-func _PolicyService_GetPolicyViolations_Handler(srv interface{}, ctx context.Context, dec func(interface{}) error, interceptor grpc.UnaryServerInterceptor) (interface{}, error) {
-	in := new(GetPolicyViolationsRequest)
+func _PolicyService_GetPolicyViolationsByGroup_Handler(srv interface{}, ctx context.Context, dec func(interface{}) error, interceptor grpc.UnaryServerInterceptor) (interface{}, error) {
+	in := new(GetPolicyViolationsByGroupRequest)
 	if err := dec(in); err != nil {
 		return nil, err
 	}
 	if interceptor == nil {
-		return srv.(PolicyServiceServer).GetPolicyViolations(ctx, in)
+		return srv.(PolicyServiceServer).GetPolicyViolationsByGroup(ctx, in)
 	}
 	info := &grpc.UnaryServerInfo{
 		Server:     srv,
-		FullMethod: PolicyService_GetPolicyViolations_FullMethodName,
+		FullMethod: PolicyService_GetPolicyViolationsByGroup_FullMethodName,
 	}
 	handler := func(ctx context.Context, req interface{}) (interface{}, error) {
-		return srv.(PolicyServiceServer).GetPolicyViolations(ctx, req.(*GetPolicyViolationsRequest))
+		return srv.(PolicyServiceServer).GetPolicyViolationsByGroup(ctx, req.(*GetPolicyViolationsByGroupRequest))
 	}
 	return interceptor(ctx, in, info, handler)
 }
@@ -2856,16 +2889,20 @@ var PolicyService_ServiceDesc = grpc.ServiceDesc{
 			Handler:    _PolicyService_GetPolicyById_Handler,
 		},
 		{
-			MethodName: "GetPolicyStatus",
-			Handler:    _PolicyService_GetPolicyStatus_Handler,
+			MethodName: "GetPolicyStatusById",
+			Handler:    _PolicyService_GetPolicyStatusById_Handler,
+		},
+		{
+			MethodName: "GetPolicyStatusByGroup",
+			Handler:    _PolicyService_GetPolicyStatusByGroup_Handler,
 		},
 		{
 			MethodName: "GetPolicyViolationsById",
 			Handler:    _PolicyService_GetPolicyViolationsById_Handler,
 		},
 		{
-			MethodName: "GetPolicyViolations",
-			Handler:    _PolicyService_GetPolicyViolations_Handler,
+			MethodName: "GetPolicyViolationsByGroup",
+			Handler:    _PolicyService_GetPolicyViolationsByGroup_Handler,
 		},
 	},
 	Streams:  []grpc.StreamDesc{},

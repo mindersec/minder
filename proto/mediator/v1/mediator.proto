@@ -420,11 +420,17 @@ service PolicyService {
             };    
     }
 
-    rpc GetPolicyStatus (GetPolicyStatusRequest) returns (GetPolicyStatusResponse) {
+    rpc GetPolicyStatusById (GetPolicyStatusByIdRequest) returns (GetPolicyStatusByIdResponse) {
         option (google.api.http) = {
-            get: "/api/v1/policy_status/{id}"
+            get: "/api/v1/policy/{policy_id}/status"
             };    
     }
+
+    rpc GetPolicyStatusByGroup (GetPolicyStatusByGroupRequest) returns (GetPolicyStatusByGroupResponse) {
+        option (google.api.http) = {
+            get: "/api/v1/policy_status/provider/{provider}/group/{group_id}"
+            };    
+    }    
 
     rpc GetPolicyViolationsById (GetPolicyViolationsByIdRequest) returns (GetPolicyViolationsByIdResponse) {
         option (google.api.http) = {
@@ -432,7 +438,7 @@ service PolicyService {
             };    
     }
 
-    rpc GetPolicyViolations (GetPolicyViolationsRequest) returns (GetPolicyViolationsResponse) {
+    rpc GetPolicyViolationsByGroup (GetPolicyViolationsByGroupRequest) returns (GetPolicyViolationsByGroupResponse) {
         option (google.api.http) = {
             get: "/api/v1/policy_violations/provider/{provider}/group/{group_id}"
             };    
@@ -1176,11 +1182,20 @@ message PolicyViolation {
     google.protobuf.Timestamp created_at = 7;    
 }
 
-message GetPolicyStatusRequest {
-    int32 id = 1;
+message GetPolicyStatusByIdRequest {
+    int32 policy_id = 1;
 }
 
-message GetPolicyStatusResponse {
+message GetPolicyStatusByIdResponse {
+    repeated PolicyRepoStatus policy_repo_status = 1;
+}
+
+message GetPolicyStatusByGroupRequest {
+    string provider = 1;
+    int32 group_id = 2;
+}
+
+message GetPolicyStatusByGroupResponse {
     repeated PolicyRepoStatus policy_repo_status = 1;
 }
 
@@ -1194,14 +1209,14 @@ message GetPolicyViolationsByIdResponse {
     repeated PolicyViolation policy_violation = 1;
 }
 
-message GetPolicyViolationsRequest {
+message GetPolicyViolationsByGroupRequest {
     string provider = 1;
     int32 group_id = 2;
     optional int32 limit = 3;
     optional int32 offset = 4;
 }
 
-message GetPolicyViolationsResponse {
+message GetPolicyViolationsByGroupResponse {
     repeated PolicyViolation policy_violation = 1;
 }
 

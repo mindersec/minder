@@ -363,13 +363,14 @@ func (s *Server) GetPolicyType(ctx context.Context, in *pb.GetPolicyTypeRequest)
 		UpdatedAt: timestamppb.New(policyType.UpdatedAt)}}, nil
 }
 
-// GetPolicyStatus is a method to get policy status
-func (s *Server) GetPolicyStatus(ctx context.Context, in *pb.GetPolicyStatusRequest) (*pb.GetPolicyStatusResponse, error) {
-	if in.Id == 0 {
+// GetPolicyStatusById is a method to get policy status
+func (s *Server) GetPolicyStatusById(ctx context.Context,
+	in *pb.GetPolicyStatusByIdRequest) (*pb.GetPolicyStatusByIdResponse, error) {
+	if in.PolicyId == 0 {
 		return nil, status.Error(codes.InvalidArgument, "policy id is required")
 	}
 
-	policy, err := s.store.GetPolicyByID(ctx, in.Id)
+	policy, err := s.store.GetPolicyByID(ctx, in.PolicyId)
 	if err != nil {
 		return nil, status.Errorf(codes.Unknown, "failed to get policy: %s", err)
 	}
@@ -380,11 +381,11 @@ func (s *Server) GetPolicyStatus(ctx context.Context, in *pb.GetPolicyStatusRequ
 	}
 
 	// read policy status
-	policy_status, err := s.store.GetPolicyStatus(ctx, in.Id)
+	policy_status, err := s.store.GetPolicyStatusById(ctx, in.PolicyId)
 	if err != nil {
 		return nil, status.Errorf(codes.Unknown, "failed to get policy status: %s", err)
 	}
-	var resp pb.GetPolicyStatusResponse
+	var resp pb.GetPolicyStatusByIdResponse
 	resp.PolicyRepoStatus = make([]*pb.PolicyRepoStatus, 0, len(policy_status))
 	for _, policy := range policy_status {
 		resp.PolicyRepoStatus = append(resp.PolicyRepoStatus, &pb.PolicyRepoStatus{
@@ -399,6 +400,43 @@ func (s *Server) GetPolicyStatus(ctx context.Context, in *pb.GetPolicyStatusRequ
 
 	return &resp, nil
 
+}
+
+// GetPolicyStatusByGroup is a method to get policy status for a group
+func (s *Server) GetPolicyStatusByGroup(ctx context.Context,
+	in *pb.GetPolicyStatusByGroupRequest) (*pb.GetPolicyStatusByGroupResponse, error) {
+	if in.Provider == "" || in.GroupId == 0 {
+		return nil, status.Error(codes.InvalidArgument, "provider and group id are required")
+	}
+	if in.Provider != ghclient.Github {
+		return nil, status.Errorf(codes.InvalidArgument, "provider not supported: %v", in.Provider)
+	}
+
+	// check if user is authorized
+	if !IsRequestAuthorized(ctx, in.GroupId) {
+		return nil, status.Errorf(codes.PermissionDenied, "user is not authorized to access this resource")
+	}
+
+	// read policy status
+	policy_status, err := s.store.GetPolicyStatusByGroup(ctx,
+		db.GetPolicyStatusByGroupParams{Provider: in.Provider, GroupID: in.GroupId})
+	if err != nil {
+		return nil, status.Errorf(codes.Unknown, "failed to get policy status: %s", err)
+	}
+	var resp pb.GetPolicyStatusByGroupResponse
+	resp.PolicyRepoStatus = make([]*pb.PolicyRepoStatus, 0, len(policy_status))
+	for _, policy := range policy_status {
+		resp.PolicyRepoStatus = append(resp.PolicyRepoStatus, &pb.PolicyRepoStatus{
+			PolicyType:   policy.PolicyType,
+			RepoId:       policy.RepoID,
+			RepoOwner:    policy.RepoOwner,
+			RepoName:     policy.RepoName,
+			PolicyStatus: string(policy.PolicyStatus),
+			LastUpdated:  timestamppb.New(policy.LastUpdated),
+		})
+	}
+
+	return &resp, nil
 }
 
 // GetPolicyViolationsById is a method to get policy violations by policy id
@@ -451,9 +489,9 @@ func (s *Server) GetPolicyViolationsById(ctx context.Context,
 
 }
 
-// GetPolicyViolations is a method to get policy violations by provider and group
-func (s *Server) GetPolicyViolations(ctx context.Context,
-	in *pb.GetPolicyViolationsRequest) (*pb.GetPolicyViolationsResponse, error) {
+// GetPolicyViolationsByGroup is a method to get policy violations by group
+func (s *Server) GetPolicyViolationsByGroup(ctx context.Context,
+	in *pb.GetPolicyViolationsByGroupRequest) (*pb.GetPolicyViolationsByGroupResponse, error) {
 	// provider and group are required
 	if in.Provider == "" || in.GroupId == 0 {
 		return nil, status.Error(codes.InvalidArgument, "provider and group are required")
@@ -480,7 +518,7 @@ func (s *Server) GetPolicyViolations(ctx context.Context,
 		return nil, status.Errorf(codes.Unknown, "failed to get policy: %s", err)
 	}
 
-	var resp pb.GetPolicyViolationsResponse
+	var resp pb.GetPolicyViolationsByGroupResponse
 	resp.PolicyViolation = make([]*pb.PolicyViolation, 0, len(policy_violations))
 	for _, policy := range policy_violations {
 		resp.PolicyViolation = append(resp.PolicyViolation, &pb.PolicyViolation{

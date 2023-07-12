@@ -55,18 +55,20 @@
     - [GetPoliciesResponse](#mediator-v1-GetPoliciesResponse)
     - [GetPolicyByIdRequest](#mediator-v1-GetPolicyByIdRequest)
     - [GetPolicyByIdResponse](#mediator-v1-GetPolicyByIdResponse)
-    - [GetPolicyStatusRequest](#mediator-v1-GetPolicyStatusRequest)
-    - [GetPolicyStatusResponse](#mediator-v1-GetPolicyStatusResponse)
+    - [GetPolicyStatusByGroupRequest](#mediator-v1-GetPolicyStatusByGroupRequest)
+    - [GetPolicyStatusByGroupResponse](#mediator-v1-GetPolicyStatusByGroupResponse)
+    - [GetPolicyStatusByIdRequest](#mediator-v1-GetPolicyStatusByIdRequest)
+    - [GetPolicyStatusByIdResponse](#mediator-v1-GetPolicyStatusByIdResponse)
     - [GetPolicyTypeByIdRequest](#mediator-v1-GetPolicyTypeByIdRequest)
     - [GetPolicyTypeByIdResponse](#mediator-v1-GetPolicyTypeByIdResponse)
     - [GetPolicyTypeRequest](#mediator-v1-GetPolicyTypeRequest)
     - [GetPolicyTypeResponse](#mediator-v1-GetPolicyTypeResponse)
     - [GetPolicyTypesRequest](#mediator-v1-GetPolicyTypesRequest)
     - [GetPolicyTypesResponse](#mediator-v1-GetPolicyTypesResponse)
+    - [GetPolicyViolationsByGroupRequest](#mediator-v1-GetPolicyViolationsByGroupRequest)
+    - [GetPolicyViolationsByGroupResponse](#mediator-v1-GetPolicyViolationsByGroupResponse)
     - [GetPolicyViolationsByIdRequest](#mediator-v1-GetPolicyViolationsByIdRequest)
     - [GetPolicyViolationsByIdResponse](#mediator-v1-GetPolicyViolationsByIdResponse)
-    - [GetPolicyViolationsRequest](#mediator-v1-GetPolicyViolationsRequest)
-    - [GetPolicyViolationsResponse](#mediator-v1-GetPolicyViolationsResponse)
     - [GetPublicKeyRequest](#mediator-v1-GetPublicKeyRequest)
     - [GetPublicKeyResponse](#mediator-v1-GetPublicKeyResponse)
     - [GetRepositoryRequest](#mediator-v1-GetRepositoryRequest)
@@ -994,24 +996,55 @@ get policy by id
 
 
 
-<a name="mediator-v1-GetPolicyStatusRequest"></a>
+<a name="mediator-v1-GetPolicyStatusByGroupRequest"></a>
 
-### GetPolicyStatusRequest
+### GetPolicyStatusByGroupRequest
 
 
 
 | Field | Type | Label | Description |
 | ----- | ---- | ----- | ----------- |
-| id | [int32](#int32) |  |  |
+| provider | [string](#string) |  |  |
+| group_id | [int32](#int32) |  |  |
 
 
 
 
 
 
-<a name="mediator-v1-GetPolicyStatusResponse"></a>
+<a name="mediator-v1-GetPolicyStatusByGroupResponse"></a>
 
-### GetPolicyStatusResponse
+### GetPolicyStatusByGroupResponse
+
+
+
+| Field | Type | Label | Description |
+| ----- | ---- | ----- | ----------- |
+| policy_repo_status | [PolicyRepoStatus](#mediator-v1-PolicyRepoStatus) | repeated |  |
+
+
+
+
+
+
+<a name="mediator-v1-GetPolicyStatusByIdRequest"></a>
+
+### GetPolicyStatusByIdRequest
+
+
+
+| Field | Type | Label | Description |
+| ----- | ---- | ----- | ----------- |
+| policy_id | [int32](#int32) |  |  |
+
+
+
+
+
+
+<a name="mediator-v1-GetPolicyStatusByIdResponse"></a>
+
+### GetPolicyStatusByIdResponse
 
 
 
@@ -1115,6 +1148,39 @@ get policy types
 
 
 
+<a name="mediator-v1-GetPolicyViolationsByGroupRequest"></a>
+
+### GetPolicyViolationsByGroupRequest
+
+
+
+| Field | Type | Label | Description |
+| ----- | ---- | ----- | ----------- |
+| provider | [string](#string) |  |  |
+| group_id | [int32](#int32) |  |  |
+| limit | [int32](#int32) | optional |  |
+| offset | [int32](#int32) | optional |  |
+
+
+
+
+
+
+<a name="mediator-v1-GetPolicyViolationsByGroupResponse"></a>
+
+### GetPolicyViolationsByGroupResponse
+
+
+
+| Field | Type | Label | Description |
+| ----- | ---- | ----- | ----------- |
+| policy_violation | [PolicyViolation](#mediator-v1-PolicyViolation) | repeated |  |
+
+
+
+
+
+
 <a name="mediator-v1-GetPolicyViolationsByIdRequest"></a>
 
 ### GetPolicyViolationsByIdRequest
@@ -1135,39 +1201,6 @@ get policy types
 <a name="mediator-v1-GetPolicyViolationsByIdResponse"></a>
 
 ### GetPolicyViolationsByIdResponse
-
-
-
-| Field | Type | Label | Description |
-| ----- | ---- | ----- | ----------- |
-| policy_violation | [PolicyViolation](#mediator-v1-PolicyViolation) | repeated |  |
-
-
-
-
-
-
-<a name="mediator-v1-GetPolicyViolationsRequest"></a>
-
-### GetPolicyViolationsRequest
-
-
-
-| Field | Type | Label | Description |
-| ----- | ---- | ----- | ----------- |
-| provider | [string](#string) |  |  |
-| group_id | [int32](#int32) |  |  |
-| limit | [int32](#int32) | optional |  |
-| offset | [int32](#int32) | optional |  |
-
-
-
-
-
-
-<a name="mediator-v1-GetPolicyViolationsResponse"></a>
-
-### GetPolicyViolationsResponse
 
 
 
@@ -2461,9 +2494,10 @@ manage Organizations CRUD
 | DeletePolicy | [DeletePolicyRequest](#mediator-v1-DeletePolicyRequest) | [DeletePolicyResponse](#mediator-v1-DeletePolicyResponse) |  |
 | GetPolicies | [GetPoliciesRequest](#mediator-v1-GetPoliciesRequest) | [GetPoliciesResponse](#mediator-v1-GetPoliciesResponse) |  |
 | GetPolicyById | [GetPolicyByIdRequest](#mediator-v1-GetPolicyByIdRequest) | [GetPolicyByIdResponse](#mediator-v1-GetPolicyByIdResponse) |  |
-| GetPolicyStatus | [GetPolicyStatusRequest](#mediator-v1-GetPolicyStatusRequest) | [GetPolicyStatusResponse](#mediator-v1-GetPolicyStatusResponse) |  |
+| GetPolicyStatusById | [GetPolicyStatusByIdRequest](#mediator-v1-GetPolicyStatusByIdRequest) | [GetPolicyStatusByIdResponse](#mediator-v1-GetPolicyStatusByIdResponse) |  |
+| GetPolicyStatusByGroup | [GetPolicyStatusByGroupRequest](#mediator-v1-GetPolicyStatusByGroupRequest) | [GetPolicyStatusByGroupResponse](#mediator-v1-GetPolicyStatusByGroupResponse) |  |
 | GetPolicyViolationsById | [GetPolicyViolationsByIdRequest](#mediator-v1-GetPolicyViolationsByIdRequest) | [GetPolicyViolationsByIdResponse](#mediator-v1-GetPolicyViolationsByIdResponse) |  |
-| GetPolicyViolations | [GetPolicyViolationsRequest](#mediator-v1-GetPolicyViolationsRequest) | [GetPolicyViolationsResponse](#mediator-v1-GetPolicyViolationsResponse) |  |
+| GetPolicyViolationsByGroup | [GetPolicyViolationsByGroupRequest](#mediator-v1-GetPolicyViolationsByGroupRequest) | [GetPolicyViolationsByGroupResponse](#mediator-v1-GetPolicyViolationsByGroupResponse) |  |
 
 
 <a name="mediator-v1-RepositoryService"></a>

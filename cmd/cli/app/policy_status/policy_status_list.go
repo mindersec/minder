@@ -19,25 +19,27 @@
 // It does make a good example of how to use the generated client code
 // for others to use as a reference.
 
-package policy_violation
+package policy_status
 
 import (
 	"encoding/json"
 	"fmt"
 	"os"
+	"time"
 
-	"github.com/stacklok/mediator/internal/util"
-	pb "github.com/stacklok/mediator/pkg/generated/protobuf/go/mediator/v1"
-
+	"github.com/olekukonko/tablewriter"
 	"github.com/spf13/cobra"
 	"github.com/spf13/viper"
 	"gopkg.in/yaml.v3"
+
+	"github.com/stacklok/mediator/internal/util"
+	pb "github.com/stacklok/mediator/pkg/generated/protobuf/go/mediator/v1"
 )
 
-var policyviolation_listCmd = &cobra.Command{
+var policystatus_listCmd = &cobra.Command{
 	Use:   "list",
-	Short: "List policy violations within a mediator control plane",
-	Long: `The medic policy_violation list subcommand lets you list policy violations within a
+	Short: "List policy status within a mediator control plane",
+	Long: `The medic policy_status list subcommand lets you list policy status within a
 mediator control plane for an specific provider/group or policy id.`,
 	PreRun: func(cmd *cobra.Command, args []string) {
 		if err := viper.BindPFlags(cmd.Flags()); err != nil {
@@ -59,11 +61,9 @@ mediator control plane for an specific provider/group or policy id.`,
 		provider := viper.GetString("provider")
 		group := viper.GetInt32("group-id")
 		policy_id := viper.GetInt32("policy-id")
-		limit := viper.GetInt32("limit")
-		offset := viper.GetInt32("offset")
 		format := viper.GetString("output")
 
-		if format != "json" && format != "yaml" {
+		if format != "json" && format != "yaml" && format != "" {
 			fmt.Fprintf(os.Stderr, "Error: invalid format: %s\n", format)
 		}
 
@@ -83,30 +83,44 @@ mediator control plane for an specific provider/group or policy id.`,
 			os.Exit(1)
 		}
 
-		var limitPtr = &limit
-		var offsetPtr = &offset
-
 		// check if we go via id or provider/group
-		var violations []*pb.PolicyViolation
+		var status []*pb.PolicyRepoStatus
 		if policy_id != 0 {
-			resp, err := client.GetPolicyViolationsById(ctx,
-				&pb.GetPolicyViolationsByIdRequest{Id: policy_id, Limit: limitPtr, Offset: offsetPtr})
-			util.ExitNicelyOnError(err, "Error getting policies")
-			violations = resp.PolicyViolation
+			resp, err := client.GetPolicyStatusById(ctx,
+				&pb.GetPolicyStatusByIdRequest{PolicyId: policy_id})
+			util.ExitNicelyOnError(err, "Error getting policy status")
+			status = resp.PolicyRepoStatus
 		} else {
-			resp, err := client.GetPolicyViolationsByGroup(ctx,
-				&pb.GetPolicyViolationsByGroupRequest{Provider: provider, GroupId: group, Limit: limitPtr, Offset: offsetPtr})
+			resp, err := client.GetPolicyStatusByGroup(ctx,
+				&pb.GetPolicyStatusByGroupRequest{Provider: provider, GroupId: group})
 			util.ExitNicelyOnError(err, "Error getting policies")
-			violations = resp.PolicyViolation
+			status = resp.PolicyRepoStatus
 		}
 
 		// print output (only json or yaml due to the nature of the data)
-		if format == "json" {
-			output, err := json.MarshalIndent(violations, "", "  ")
+		if format == "" {
+			table := tablewriter.NewWriter(os.Stdout)
+			table.SetHeader([]string{"Policy type", "Repo ID", "Repo owner", "Repo name", "Policy status", "Last updated"})
+
+			for _, v := range status {
+				row := []string{
+					v.PolicyType,
+					fmt.Sprintf("%d", v.GetRepoId()),
+					v.RepoOwner,
+					v.RepoName,
+					v.PolicyStatus,
+					v.LastUpdated.AsTime().Format(time.RFC3339),
+				}
+				table.Append(row)
+			}
+			table.Render()
+
+		} else if format == "json" {
+			output, err := json.MarshalIndent(status, "", "  ")
 			util.ExitNicelyOnError(err, "Error marshalling json")
 			fmt.Println(string(output))
 		} else if format == "yaml" {
-			yamlData, err := yaml.Marshal(violations)
+			yamlData, err := yaml.Marshal(status)
 			util.ExitNicelyOnError(err, "Error marshalling yaml")
 			fmt.Println(string(yamlData))
 
@@ -115,11 +129,9 @@ mediator control plane for an specific provider/group or policy id.`,
 }
 
 func init() {
-	PolicyViolationCmd.AddCommand(policyviolation_listCmd)
-	policyviolation_listCmd.Flags().StringP("provider", "p", "", "Provider to list policy violations for")
-	policyviolation_listCmd.Flags().Int32P("group-id", "g", 0, "group id to list policy violations for")
-	policyviolation_listCmd.Flags().Int32P("policy-id", "i", 0, "policy id to list policy violations for")
-	policyviolation_listCmd.Flags().StringP("output", "o", "json", "Output format (json or yaml)")
-	policyviolation_listCmd.Flags().Int32P("limit", "l", -1, "Limit the number of results returned")
-	policyviolation_listCmd.Flags().Int32P("offset", "f", 0, "Offset the results returned")
+	PolicyStatusCmd.AddCommand(policystatus_listCmd)
+	policystatus_listCmd.Flags().StringP("provider", "p", "", "Provider to list policy violations for")
+	policystatus_listCmd.Flags().Int32P("group-id", "g", 0, "group id to list policy violations for")
+	policystatus_listCmd.Flags().Int32P("policy-id", "i", 0, "policy id to list policy violations for")
+	policystatus_listCmd.Flags().StringP("output", "o", "", "Output format (json or yaml)")
 }

@@ -1168,14 +1168,14 @@
         ]
       }
     },
-    "/api/v1/policy_status/{id}": {
+    "/api/v1/policy/{policyId}/status": {
       "get": {
-        "operationId": "PolicyService_GetPolicyStatus",
+        "operationId": "PolicyService_GetPolicyStatusById",
         "responses": {
           "200": {
             "description": "A successful response.",
             "schema": {
-              "$ref": "#/definitions/v1GetPolicyStatusResponse"
+              "$ref": "#/definitions/v1GetPolicyStatusByIdResponse"
             }
           },
           "default": {
@@ -1187,7 +1187,44 @@
         },
         "parameters": [
           {
-            "name": "id",
+            "name": "policyId",
+            "in": "path",
+            "required": true,
+            "type": "integer",
+            "format": "int32"
+          }
+        ],
+        "tags": [
+          "PolicyService"
+        ]
+      }
+    },
+    "/api/v1/policy_status/provider/{provider}/group/{groupId}": {
+      "get": {
+        "operationId": "PolicyService_GetPolicyStatusByGroup",
+        "responses": {
+          "200": {
+            "description": "A successful response.",
+            "schema": {
+              "$ref": "#/definitions/v1GetPolicyStatusByGroupResponse"
+            }
+          },
+          "default": {
+            "description": "An unexpected error response.",
+            "schema": {
+              "$ref": "#/definitions/rpcStatus"
+            }
+          }
+        },
+        "parameters": [
+          {
+            "name": "provider",
+            "in": "path",
+            "required": true,
+            "type": "string"
+          },
+          {
+            "name": "groupId",
             "in": "path",
             "required": true,
             "type": "integer",
@@ -1267,12 +1304,12 @@
     },
     "/api/v1/policy_violations/provider/{provider}/group/{groupId}": {
       "get": {
-        "operationId": "PolicyService_GetPolicyViolations",
+        "operationId": "PolicyService_GetPolicyViolationsByGroup",
         "responses": {
           "200": {
             "description": "A successful response.",
             "schema": {
-              "$ref": "#/definitions/v1GetPolicyViolationsResponse"
+              "$ref": "#/definitions/v1GetPolicyViolationsByGroupResponse"
             }
           },
           "default": {
@@ -2834,7 +2871,19 @@
         }
       }
     },
-    "v1GetPolicyStatusResponse": {
+    "v1GetPolicyStatusByGroupResponse": {
+      "type": "object",
+      "properties": {
+        "policyRepoStatus": {
+          "type": "array",
+          "items": {
+            "type": "object",
+            "$ref": "#/definitions/v1PolicyRepoStatus"
+          }
+        }
+      }
+    },
+    "v1GetPolicyStatusByIdResponse": {
       "type": "object",
       "properties": {
         "policyRepoStatus": {
@@ -2866,7 +2915,7 @@
         }
       }
     },
-    "v1GetPolicyViolationsByIdResponse": {
+    "v1GetPolicyViolationsByGroupResponse": {
       "type": "object",
       "properties": {
         "policyViolation": {
@@ -2878,7 +2927,7 @@
         }
       }
     },
-    "v1GetPolicyViolationsResponse": {
+    "v1GetPolicyViolationsByIdResponse": {
       "type": "object",
       "properties": {
         "policyViolation": {

@@ -10,16 +10,21 @@ import (
 	"time"
 )
 
-const getPolicyStatus = `-- name: GetPolicyStatus :many
+const getPolicyStatusByGroup = `-- name: GetPolicyStatusByGroup :many
 SELECT pt.policy_type, r.id as repo_id, r.repo_owner, r.repo_name,
 ps.policy_status, ps.last_updated FROM policy_status ps
 INNER JOIN policies p ON p.id = ps.policy_id
 INNER JOIN repositories r ON r.id = ps.repository_id
 INNER JOIN policy_types pt ON pt.id = p.policy_type
-WHERE p.id = $1
+WHERE p.provider = $1 AND p.group_id = $2
 `
 
-type GetPolicyStatusRow struct {
+type GetPolicyStatusByGroupParams struct {
+	Provider string `json:"provider"`
+	GroupID  int32  `json:"group_id"`
+}
+
+type GetPolicyStatusByGroupRow struct {
 	PolicyType   string            `json:"policy_type"`
 	RepoID       int32             `json:"repo_id"`
 	RepoOwner    string            `json:"repo_owner"`
@@ -28,15 +33,63 @@ type GetPolicyStatusRow struct {
 	LastUpdated  time.Time         `json:"last_updated"`
 }
 
-func (q *Queries) GetPolicyStatus(ctx context.Context, id int32) ([]GetPolicyStatusRow, error) {
-	rows, err := q.db.QueryContext(ctx, getPolicyStatus, id)
+func (q *Queries) GetPolicyStatusByGroup(ctx context.Context, arg GetPolicyStatusByGroupParams) ([]GetPolicyStatusByGroupRow, error) {
+	rows, err := q.db.QueryContext(ctx, getPolicyStatusByGroup, arg.Provider, arg.GroupID)
 	if err != nil {
 		return nil, err
 	}
 	defer rows.Close()
-	items := []GetPolicyStatusRow{}
+	items := []GetPolicyStatusByGroupRow{}
 	for rows.Next() {
-		var i GetPolicyStatusRow
+		var i GetPolicyStatusByGroupRow
+		if err := rows.Scan(
+			&i.PolicyType,
+			&i.RepoID,
+			&i.RepoOwner,
+			&i.RepoName,
+			&i.PolicyStatus,
+			&i.LastUpdated,
+		); err != nil {
+			return nil, err
+		}
+		items = append(items, i)
+	}
+	if err := rows.Close(); err != nil {
+		return nil, err
+	}
+	if err := rows.Err(); err != nil {
+		return nil, err
+	}
+	return items, nil
+}
+
+const getPolicyStatusById = `-- name: GetPolicyStatusById :many
+SELECT pt.policy_type, r.id as repo_id, r.repo_owner, r.repo_name,
+ps.policy_status, ps.last_updated FROM policy_status ps
+INNER JOIN policies p ON p.id = ps.policy_id
+INNER JOIN repositories r ON r.id = ps.repository_id
+INNER JOIN policy_types pt ON pt.id = p.policy_type
+WHERE p.id = $1
+`
+
+type GetPolicyStatusByIdRow struct {
+	PolicyType   string            `json:"policy_type"`
+	RepoID       int32             `json:"repo_id"`
+	RepoOwner    string            `json:"repo_owner"`
+	RepoName     string            `json:"repo_name"`
+	PolicyStatus PolicyStatusTypes `json:"policy_status"`
+	LastUpdated  time.Time         `json:"last_updated"`
+}
+
+func (q *Queries) GetPolicyStatusById(ctx context.Context, id int32) ([]GetPolicyStatusByIdRow, error) {
+	rows, err := q.db.QueryContext(ctx, getPolicyStatusById, id)
+	if err != nil {
+		return nil, err
+	}
+	defer rows.Close()
+	items := []GetPolicyStatusByIdRow{}
+	for rows.Next() {
+		var i GetPolicyStatusByIdRow
 		if err := rows.Scan(
 			&i.PolicyType,
 			&i.RepoID,

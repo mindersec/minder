@@ -431,9 +431,9 @@ func TestGetPolicyStatusDBMock(t *testing.T) {
 
 	mockStore := mockdb.NewMockStore(ctrl)
 
-	request := &pb.GetPolicyStatusRequest{Id: 1}
+	request := &pb.GetPolicyStatusByIdRequest{PolicyId: 1}
 
-	expectedStatus := []db.GetPolicyStatusRow{
+	expectedStatus := []db.GetPolicyStatusByIdRow{
 		{
 			PolicyType:   "branch_protection",
 			RepoID:       1,
@@ -454,13 +454,13 @@ func TestGetPolicyStatusDBMock(t *testing.T) {
 	})
 
 	mockStore.EXPECT().GetPolicyByID(ctx, gomock.Any())
-	mockStore.EXPECT().GetPolicyStatus(ctx, gomock.Any()).Return(expectedStatus, nil)
+	mockStore.EXPECT().GetPolicyStatusById(ctx, gomock.Any()).Return(expectedStatus, nil)
 
 	server := &Server{
 		store: mockStore,
 	}
 
-	response, err := server.GetPolicyStatus(ctx, request)
+	response, err := server.GetPolicyStatusById(ctx, request)
 
 	assert.NoError(t, err)
 	assert.NotNil(t, response)
@@ -475,16 +475,16 @@ func TestGetPolicyStatusDBMock(t *testing.T) {
 func TestGetPolicyStatus_gRPC(t *testing.T) {
 	testCases := []struct {
 		name               string
-		req                *pb.GetPolicyStatusRequest
+		req                *pb.GetPolicyStatusByIdRequest
 		buildStubs         func(store *mockdb.MockStore)
-		checkResponse      func(t *testing.T, res *pb.GetPolicyStatusResponse, err error)
+		checkResponse      func(t *testing.T, res *pb.GetPolicyStatusByIdResponse, err error)
 		expectedStatusCode codes.Code
 	}{
 		{
 			name: "Success",
-			req:  &pb.GetPolicyStatusRequest{Id: 1},
+			req:  &pb.GetPolicyStatusByIdRequest{PolicyId: 1},
 			buildStubs: func(store *mockdb.MockStore) {
-				expectedStatus := []db.GetPolicyStatusRow{
+				expectedStatus := []db.GetPolicyStatusByIdRow{
 					{
 						PolicyType:   "branch_protection",
 						RepoID:       1,
@@ -496,12 +496,12 @@ func TestGetPolicyStatus_gRPC(t *testing.T) {
 				}
 
 				store.EXPECT().GetPolicyByID(gomock.Any(), gomock.Any())
-				store.EXPECT().GetPolicyStatus(gomock.Any(), gomock.Any()).
+				store.EXPECT().GetPolicyStatusById(gomock.Any(), gomock.Any()).
 					Return(expectedStatus, nil).
 					Times(1)
 			},
-			checkResponse: func(t *testing.T, res *pb.GetPolicyStatusResponse, err error) {
-				expectedStatus := []db.GetPolicyStatusRow{
+			checkResponse: func(t *testing.T, res *pb.GetPolicyStatusByIdResponse, err error) {
+				expectedStatus := []db.GetPolicyStatusByIdRow{
 					{
 						PolicyType:   "branch_protection",
 						RepoID:       1,
@@ -547,7 +547,7 @@ func TestGetPolicyStatus_gRPC(t *testing.T) {
 			server, err := NewServer(mockStore, &config.Config{})
 			require.NoError(t, err, "failed to create test server")
 
-			resp, err := server.GetPolicyStatus(ctx, tc.req)
+			resp, err := server.GetPolicyStatusById(ctx, tc.req)
 			tc.checkResponse(t, resp, err)
 		})
 	}
@@ -685,13 +685,13 @@ func TestGetViolationsById_gRPC(t *testing.T) {
 	}
 }
 
-func TestGetPolicyViolationsDBMock(t *testing.T) {
+func TestGetPolicyViolationsByGroupDBMock(t *testing.T) {
 	ctrl := gomock.NewController(t)
 	defer ctrl.Finish()
 
 	mockStore := mockdb.NewMockStore(ctrl)
 
-	request := &pb.GetPolicyViolationsRequest{Provider: github.Github, GroupId: 1}
+	request := &pb.GetPolicyViolationsByGroupRequest{Provider: github.Github, GroupId: 1}
 
 	expectedViolations := []db.GetPolicyViolationsRow{
 		{
@@ -720,7 +720,7 @@ func TestGetPolicyViolationsDBMock(t *testing.T) {
 		store: mockStore,
 	}
 
-	response, err := server.GetPolicyViolations(ctx, request)
+	response, err := server.GetPolicyViolationsByGroup(ctx, request)
 
 	assert.NoError(t, err)
 	assert.NotNil(t, response)
@@ -736,14 +736,14 @@ func TestGetPolicyViolationsDBMock(t *testing.T) {
 func TestGetViolations_gRPC(t *testing.T) {
 	testCases := []struct {
 		name               string
-		req                *pb.GetPolicyViolationsRequest
+		req                *pb.GetPolicyViolationsByGroupRequest
 		buildStubs         func(store *mockdb.MockStore)
-		checkResponse      func(t *testing.T, res *pb.GetPolicyViolationsResponse, err error)
+		checkResponse      func(t *testing.T, res *pb.GetPolicyViolationsByGroupResponse, err error)
 		expectedStatusCode codes.Code
 	}{
 		{
 			name: "Success",
-			req:  &pb.GetPolicyViolationsRequest{Provider: github.Github, GroupId: 1},
+			req:  &pb.GetPolicyViolationsByGroupRequest{Provider: github.Github, GroupId: 1},
 			buildStubs: func(store *mockdb.MockStore) {
 				store.EXPECT().GetPolicyViolations(gomock.Any(), gomock.Any()).
 					Return([]db.GetPolicyViolationsRow{
@@ -759,7 +759,7 @@ func TestGetViolations_gRPC(t *testing.T) {
 					}, nil).
 					Times(1)
 			},
-			checkResponse: func(t *testing.T, res *pb.GetPolicyViolationsResponse, err error) {
+			checkResponse: func(t *testing.T, res *pb.GetPolicyViolationsByGroupResponse, err error) {
 				expectedViolations := []db.GetPolicyViolationsRow{
 					{
 						PolicyType: "branch_protection",
@@ -809,7 +809,7 @@ func TestGetViolations_gRPC(t *testing.T) {
 			server, err := NewServer(mockStore, &config.Config{})
 			require.NoError(t, err, "failed to create test server")
 
-			resp, err := server.GetPolicyViolations(ctx, tc.req)
+			resp, err := server.GetPolicyViolationsByGroup(ctx, tc.req)
 			tc.checkResponse(t, resp, err)
 		})
 	}

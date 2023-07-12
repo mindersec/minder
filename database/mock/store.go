@@ -607,19 +607,34 @@ func (mr *MockStoreMockRecorder) GetPolicyByID(arg0, arg1 interface{}) *gomock.C
 	return mr.mock.ctrl.RecordCallWithMethodType(mr.mock, "GetPolicyByID", reflect.TypeOf((*MockStore)(nil).GetPolicyByID), arg0, arg1)
 }
 
-// GetPolicyStatus mocks base method.
-func (m *MockStore) GetPolicyStatus(arg0 context.Context, arg1 int32) ([]db.GetPolicyStatusRow, error) {
+// GetPolicyStatusByGroup mocks base method.
+func (m *MockStore) GetPolicyStatusByGroup(arg0 context.Context, arg1 db.GetPolicyStatusByGroupParams) ([]db.GetPolicyStatusByGroupRow, error) {
 	m.ctrl.T.Helper()
-	ret := m.ctrl.Call(m, "GetPolicyStatus", arg0, arg1)
-	ret0, _ := ret[0].([]db.GetPolicyStatusRow)
+	ret := m.ctrl.Call(m, "GetPolicyStatusByGroup", arg0, arg1)
+	ret0, _ := ret[0].([]db.GetPolicyStatusByGroupRow)
 	ret1, _ := ret[1].(error)
 	return ret0, ret1
 }
 
-// GetPolicyStatus indicates an expected call of GetPolicyStatus.
-func (mr *MockStoreMockRecorder) GetPolicyStatus(arg0, arg1 interface{}) *gomock.Call {
+// GetPolicyStatusByGroup indicates an expected call of GetPolicyStatusByGroup.
+func (mr *MockStoreMockRecorder) GetPolicyStatusByGroup(arg0, arg1 interface{}) *gomock.Call {
 	mr.mock.ctrl.T.Helper()
-	return mr.mock.ctrl.RecordCallWithMethodType(mr.mock, "GetPolicyStatus", reflect.TypeOf((*MockStore)(nil).GetPolicyStatus), arg0, arg1)
+	return mr.mock.ctrl.RecordCallWithMethodType(mr.mock, "GetPolicyStatusByGroup", reflect.TypeOf((*MockStore)(nil).GetPolicyStatusByGroup), arg0, arg1)
+}
+
+// GetPolicyStatusById mocks base method.
+func (m *MockStore) GetPolicyStatusById(arg0 context.Context, arg1 int32) ([]db.GetPolicyStatusByIdRow, error) {
+	m.ctrl.T.Helper()
+	ret := m.ctrl.Call(m, "GetPolicyStatusById", arg0, arg1)
+	ret0, _ := ret[0].([]db.GetPolicyStatusByIdRow)
+	ret1, _ := ret[1].(error)
+	return ret0, ret1
+}
+
+// GetPolicyStatusById indicates an expected call of GetPolicyStatusById.
+func (mr *MockStoreMockRecorder) GetPolicyStatusById(arg0, arg1 interface{}) *gomock.Call {
+	mr.mock.ctrl.T.Helper()
+	return mr.mock.ctrl.RecordCallWithMethodType(mr.mock, "GetPolicyStatusById", reflect.TypeOf((*MockStore)(nil).GetPolicyStatusById), arg0, arg1)
 }
 
 // GetPolicyType mocks base method.
