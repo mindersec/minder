@@ -41,7 +41,6 @@ import (
 	"golang.org/x/term"
 	"google.golang.org/grpc"
 	"google.golang.org/grpc/credentials/insecure"
-	"gopkg.in/yaml.v3"
 
 	pb "github.com/stacklok/mediator/pkg/generated/protobuf/go/mediator/v1"
 )
@@ -264,36 +263,6 @@ func GetRandomPort() (int, error) {
 
 	port := listener.Addr().(*net.TCPAddr).Port
 	return port, nil
-}
-
-// ConvertYamlToJson converts yaml to json
-func ConvertYamlToJson(content string) (json.RawMessage, error) {
-	var yamlData interface{}
-	err := yaml.Unmarshal([]byte(content), &yamlData)
-	if err != nil {
-		return nil, err
-	}
-	jsonData, err := json.Marshal(yamlData)
-	if err != nil {
-		return nil, err
-	}
-	return jsonData, nil
-}
-
-// ConvertJsonToYaml converts json to yaml
-func ConvertJsonToYaml(content json.RawMessage) (string, error) {
-	var jsonDataNew interface{}
-	err := json.Unmarshal(content, &jsonDataNew)
-	if err != nil {
-		return "", err
-	}
-
-	yamlDataNew, err := yaml.Marshal(jsonDataNew)
-	if err != nil {
-		return "", err
-	}
-	yamlStr := string(yamlDataNew)
-	return yamlStr, nil
 }
 
 // WriteToFile writes the content to a file if the out parameter is not empty.

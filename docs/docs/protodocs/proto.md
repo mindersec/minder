@@ -115,6 +115,7 @@
     - [LogInResponse](#mediator-v1-LogInResponse)
     - [LogOutRequest](#mediator-v1-LogOutRequest)
     - [LogOutResponse](#mediator-v1-LogOutResponse)
+    - [OrganizationContext](#mediator-v1-OrganizationContext)
     - [OrganizationRecord](#mediator-v1-OrganizationRecord)
     - [PolicyRecord](#mediator-v1-PolicyRecord)
     - [PolicyRepoStatus](#mediator-v1-PolicyRepoStatus)
@@ -135,6 +136,13 @@
     - [RevokeUserTokenRequest](#mediator-v1-RevokeUserTokenRequest)
     - [RevokeUserTokenResponse](#mediator-v1-RevokeUserTokenResponse)
     - [RoleRecord](#mediator-v1-RoleRecord)
+    - [RuleType](#mediator-v1-RuleType)
+    - [RuleType.Definition](#mediator-v1-RuleType-Definition)
+    - [RuleType.Definition.DataIngest](#mediator-v1-RuleType-Definition-DataIngest)
+    - [RuleType.Definition.DataIngest.DataEntry](#mediator-v1-RuleType-Definition-DataIngest-DataEntry)
+    - [RuleType.Definition.DataIngest.DataIngestDef](#mediator-v1-RuleType-Definition-DataIngest-DataIngestDef)
+    - [RuleType.Definition.DataIngest.RestType](#mediator-v1-RuleType-Definition-DataIngest-RestType)
+    - [RuleType.Definition.RuleSchemaEntry](#mediator-v1-RuleType-Definition-RuleSchemaEntry)
     - [StoreProviderTokenRequest](#mediator-v1-StoreProviderTokenRequest)
     - [StoreProviderTokenResponse](#mediator-v1-StoreProviderTokenResponse)
     - [UpdatePasswordRequest](#mediator-v1-UpdatePasswordRequest)
@@ -1945,6 +1953,22 @@ listing repositories and registering repositories.
 
 
 
+<a name="mediator-v1-OrganizationContext"></a>
+
+### OrganizationContext
+
+
+
+| Field | Type | Label | Description |
+| ----- | ---- | ----- | ----------- |
+| provider | [string](#string) |  |  |
+| organization | [string](#string) |  |  |
+
+
+
+
+
+
 <a name="mediator-v1-OrganizationRecord"></a>
 
 ### OrganizationRecord
@@ -2270,6 +2294,126 @@ get policy violation details
 | is_protected | [bool](#bool) |  |  |
 | created_at | [google.protobuf.Timestamp](#google-protobuf-Timestamp) |  |  |
 | updated_at | [google.protobuf.Timestamp](#google-protobuf-Timestamp) |  |  |
+
+
+
+
+
+
+<a name="mediator-v1-RuleType"></a>
+
+### RuleType
+RuleType defines rules that may or may not be user defined.
+The version is assumed from the folder&#39;s version.
+
+
+| Field | Type | Label | Description |
+| ----- | ---- | ----- | ----------- |
+| name | [string](#string) |  |  |
+| context | [OrganizationContext](#mediator-v1-OrganizationContext) |  |  |
+| def | [RuleType.Definition](#mediator-v1-RuleType-Definition) |  |  |
+
+
+
+
+
+
+<a name="mediator-v1-RuleType-Definition"></a>
+
+### RuleType.Definition
+
+
+
+| Field | Type | Label | Description |
+| ----- | ---- | ----- | ----------- |
+| in_entity | [string](#string) |  |  |
+| rule_schema | [RuleType.Definition.RuleSchemaEntry](#mediator-v1-RuleType-Definition-RuleSchemaEntry) | repeated |  |
+| data_ingest | [RuleType.Definition.DataIngest](#mediator-v1-RuleType-Definition-DataIngest) |  |  |
+
+
+
+
+
+
+<a name="mediator-v1-RuleType-Definition-DataIngest"></a>
+
+### RuleType.Definition.DataIngest
+
+
+
+| Field | Type | Label | Description |
+| ----- | ---- | ----- | ----------- |
+| type | [string](#string) |  | We currently only support REST |
+| rest | [RuleType.Definition.DataIngest.RestType](#mediator-v1-RuleType-Definition-DataIngest-RestType) |  |  |
+| key_type | [string](#string) |  |  |
+| data | [RuleType.Definition.DataIngest.DataEntry](#mediator-v1-RuleType-Definition-DataIngest-DataEntry) | repeated |  |
+
+
+
+
+
+
+<a name="mediator-v1-RuleType-Definition-DataIngest-DataEntry"></a>
+
+### RuleType.Definition.DataIngest.DataEntry
+
+
+
+| Field | Type | Label | Description |
+| ----- | ---- | ----- | ----------- |
+| key | [string](#string) |  |  |
+| value | [RuleType.Definition.DataIngest.DataIngestDef](#mediator-v1-RuleType-Definition-DataIngest-DataIngestDef) |  |  |
+
+
+
+
+
+
+<a name="mediator-v1-RuleType-Definition-DataIngest-DataIngestDef"></a>
+
+### RuleType.Definition.DataIngest.DataIngestDef
+
+
+
+| Field | Type | Label | Description |
+| ----- | ---- | ----- | ----------- |
+| type | [string](#string) |  |  |
+| def | [string](#string) |  |  |
+
+
+
+
+
+
+<a name="mediator-v1-RuleType-Definition-DataIngest-RestType"></a>
+
+### RuleType.Definition.DataIngest.RestType
+
+
+
+| Field | Type | Label | Description |
+| ----- | ---- | ----- | ----------- |
+| url | [string](#string) |  |  |
+| method | [string](#string) |  |  |
+| headers | [string](#string) | repeated |  |
+| body | [string](#string) |  |  |
+| parse | [string](#string) |  |  |
+
+
+
+
+
+
+<a name="mediator-v1-RuleType-Definition-RuleSchemaEntry"></a>
+
+### RuleType.Definition.RuleSchemaEntry
+
+
+
+| Field | Type | Label | Description |
+| ----- | ---- | ----- | ----------- |
+| key | [string](#string) |  |  |
+| value | [google.protobuf.Struct](#google-protobuf-Struct) |  |  |
 
 
 

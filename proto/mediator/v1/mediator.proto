@@ -18,6 +18,8 @@ package mediator.v1;
 import "google/api/annotations.proto";
 import "google/protobuf/timestamp.proto";
 import "google/protobuf/wrappers.proto";
+import "google/protobuf/struct.proto";
+
 
 option go_package = "github.com/stacklok/mediator/pkg/generated/protobuf/go";
 
@@ -1310,3 +1312,41 @@ message CreateKeyPairResponse {
     string key_identifier = 1;
     string public_key = 2;
 }
+
+message OrganizationContext {
+    string provider = 1;
+    string organization = 2;
+}
+
+// RuleType defines rules that may or may not be user defined.
+// The version is assumed from the folder's version.
+ message RuleType {
+     string name = 1;
+     OrganizationContext context = 2;
+     message Definition {
+         string in_entity = 1;
+         map<string, google.protobuf.Struct> rule_schema = 2;
+         message DataIngest {
+             // We currently only support REST
+             string type = 1;
+             message RestType {
+                 string url = 1;
+                 string method = 2;
+                 repeated string headers = 3;
+                 string body = 4;
+                 string parse = 5;
+             }
+             oneof data_ingest_type {
+                 RestType rest = 2;
+             }
+             string key_type = 3;
+             message DataIngestDef {
+                 string type = 1;
+                 string def = 2;
+             }
+             map<string, DataIngestDef> data = 4;
+         }
+         DataIngest data_ingest = 3;
+     }
+     Definition def = 3;
+ }

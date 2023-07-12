@@ -31,6 +31,7 @@ import (
 	_ "github.com/stacklok/mediator/cmd/cli/app/policy_violation"
 	_ "github.com/stacklok/mediator/cmd/cli/app/repo"
 	_ "github.com/stacklok/mediator/cmd/cli/app/role"
+	_ "github.com/stacklok/mediator/cmd/cli/app/rule_type"
 	_ "github.com/stacklok/mediator/cmd/cli/app/user"
 )
 
