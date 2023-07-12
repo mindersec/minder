@@ -46,8 +46,12 @@ func NewHandler(store db.Store) events.Consumer {
 	}
 }
 
-func (*sampleHandler) handleSecurityAndAnalysisEvent(msg *message.Message) error {
-	log.Printf("Got a security_and_analysis event: %v", msg)
+func (s *sampleHandler) handleSecurityAndAnalysisEvent(msg *message.Message) error {
+	err := reconcilers.ParseSecretScanningEventGithub(context.Background(), s.store, msg)
+	if err != nil {
+		log.Printf("error parsing secret scanning event: %v", err)
+		return err
+	}
 	return nil
 }
 

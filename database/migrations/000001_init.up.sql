@@ -185,3 +185,5 @@ INSERT INTO user_roles (user_id, role_id) VALUES (1, 1);
 -- policy types
 INSERT INTO policy_types (provider, policy_type, description, version) VALUES
 ('github', 'branch_protection', 'Policy type to enforce branch protection rules on a repo', '1.0.0');
+INSERT INTO policy_types (provider, policy_type, description, version) VALUES
+('github', 'secret_scanning', 'Policy type to enforce secret scanning a repo', '1.0.0');

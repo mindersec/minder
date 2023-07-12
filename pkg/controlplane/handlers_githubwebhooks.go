@@ -25,6 +25,7 @@ package controlplane
 import (
 	"context"
 	"fmt"
+	"log"
 	"net/http"
 	"strings"
 	"time"
@@ -95,6 +96,7 @@ func HandleGitHubWebHook(p message.Publisher) http.HandlerFunc {
 		m.Metadata.Set("type", github.WebHookType(r))
 		// m.Metadata.Set("subject", ghEvent.GetRepo().GetFullName())
 		// m.Metadata.Set("time", ghEvent.GetCreatedAt().String())
+		log.Printf("publishing of type: %s", m.Metadata["type"])
 
 		if err := p.Publish(m.Metadata["type"], m); err != nil {
 			fmt.Printf("Error publishing message: %v", err)
