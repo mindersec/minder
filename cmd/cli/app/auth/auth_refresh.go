@@ -29,8 +29,8 @@ import (
 
 	"github.com/spf13/cobra"
 	"github.com/spf13/viper"
-	pb "github.com/stacklok/mediator/pkg/generated/protobuf/go/mediator/v1"
 	"github.com/stacklok/mediator/internal/util"
+	pb "github.com/stacklok/mediator/pkg/generated/protobuf/go/mediator/v1"
 )
 
 // Auth_refreshCmd represents the auth refresh command

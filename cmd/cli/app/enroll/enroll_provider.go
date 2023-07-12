@@ -30,9 +30,9 @@ import (
 	"time"
 
 	"github.com/pkg/browser"
+	"github.com/stacklok/mediator/internal/util"
 	pb "github.com/stacklok/mediator/pkg/generated/protobuf/go/mediator/v1"
 	github "github.com/stacklok/mediator/pkg/providers/github"
-	"github.com/stacklok/mediator/internal/util"
 	"google.golang.org/protobuf/types/known/timestamppb"
 
 	"github.com/spf13/cobra"
