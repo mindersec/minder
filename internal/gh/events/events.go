@@ -19,12 +19,12 @@ package events
 
 import (
 	"context"
+	"log"
 
 	"github.com/ThreeDotsLabs/watermill/message"
 	"github.com/stacklok/mediator/internal/events"
 	"github.com/stacklok/mediator/internal/reconcilers"
 	"github.com/stacklok/mediator/pkg/db"
-	"google.golang.org/appengine/log"
 )
 
 type sampleHandler struct {
@@ -49,7 +49,7 @@ func NewHandler(store db.Store) events.Consumer {
 func (s *sampleHandler) handleSecurityAndAnalysisEvent(msg *message.Message) error {
 	err := reconcilers.ParseSecretScanningEventGithub(context.Background(), s.store, msg)
 	if err != nil {
-		log.Errorf(context.Background(), "error parsing secret scanning event: %v", err)
+		log.Printf("error parsing secret scanning event: %v", err)
 		return err
 	}
 	return nil
