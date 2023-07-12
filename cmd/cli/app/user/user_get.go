@@ -28,8 +28,8 @@ import (
 	"os"
 
 	"github.com/stacklok/mediator/cmd/cli/app"
+	"github.com/stacklok/mediator/internal/util"
 	pb "github.com/stacklok/mediator/pkg/generated/protobuf/go/mediator/v1"
-	"github.com/stacklok/mediator/pkg/util"
 	"gopkg.in/yaml.v3"
 
 	"github.com/spf13/cobra"

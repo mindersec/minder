@@ -27,8 +27,8 @@ import (
 	"os"
 
 	"github.com/olekukonko/tablewriter"
+	"github.com/stacklok/mediator/internal/util"
 	pb "github.com/stacklok/mediator/pkg/generated/protobuf/go/mediator/v1"
-	"github.com/stacklok/mediator/pkg/util"
 
 	"github.com/spf13/cobra"
 	"github.com/spf13/viper"

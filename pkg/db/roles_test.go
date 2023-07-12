@@ -26,7 +26,7 @@ import (
 	"testing"
 	"time"
 
-	"github.com/stacklok/mediator/pkg/util"
+	"github.com/stacklok/mediator/internal/util"
 	"github.com/stretchr/testify/require"
 )
 

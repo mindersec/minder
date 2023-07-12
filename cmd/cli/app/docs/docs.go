@@ -18,7 +18,7 @@ package apply
 
 import (
 	"github.com/stacklok/mediator/cmd/cli/app"
-	"github.com/stacklok/mediator/pkg/util"
+	"github.com/stacklok/mediator/internal/util"
 
 	"github.com/spf13/cobra"
 	"github.com/spf13/cobra/doc"
