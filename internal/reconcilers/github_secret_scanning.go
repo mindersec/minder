@@ -94,6 +94,11 @@ func ParseSecretScanningEventGithub(ctx context.Context, store db.Store, msg *me
 		return fmt.Errorf("failed to get policies for repo %d: %w", repoID, err)
 	}
 
+	if len(policies) == 0 {
+		log.Printf("No secret scanning policies for %s/%s", *event.Repo.Owner.Login, *event.Repo.Name)
+		return nil
+	}
+
 	// reconcile secret scanning
 	for _, policy := range policies {
 		repo, err := getRepoState(ctx, store, policy.GroupID, *event.Repo.Owner.Login, *event.Repo.Name)
