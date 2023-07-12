@@ -25,7 +25,7 @@ import (
 	mcrypto "github.com/stacklok/mediator/pkg/crypto"
 	"github.com/stacklok/mediator/pkg/db"
 	pb "github.com/stacklok/mediator/pkg/generated/protobuf/go/mediator/v1"
-	"github.com/stacklok/mediator/pkg/util"
+	"github.com/stacklok/mediator/internal/util"
 	"google.golang.org/grpc/codes"
 	"google.golang.org/grpc/status"
 	"google.golang.org/protobuf/types/known/timestamppb"

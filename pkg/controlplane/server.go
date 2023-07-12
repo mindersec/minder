@@ -46,7 +46,7 @@ import (
 	"github.com/stacklok/mediator/internal/logger"
 	"github.com/stacklok/mediator/pkg/db"
 	pb "github.com/stacklok/mediator/pkg/generated/protobuf/go/mediator/v1"
-	"github.com/stacklok/mediator/pkg/util"
+	"github.com/stacklok/mediator/internal/util"
 )
 
 const metricsPath = "/metrics"

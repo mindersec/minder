@@ -32,7 +32,7 @@ import (
 
 	"github.com/golang/mock/gomock"
 	"github.com/stacklok/mediator/pkg/db"
-	"github.com/stacklok/mediator/pkg/util"
+	"github.com/stacklok/mediator/internal/util"
 )
 
 const (

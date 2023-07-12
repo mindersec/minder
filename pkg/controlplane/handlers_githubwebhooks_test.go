@@ -33,7 +33,7 @@ import (
 	"github.com/ThreeDotsLabs/watermill/pubsub/gochannel"
 	"github.com/google/go-cmp/cmp"
 	"github.com/google/go-github/v53/github"
-	"github.com/stacklok/mediator/pkg/util"
+	"github.com/stacklok/mediator/internal/util"
 	"github.com/stretchr/testify/assert"
 	"github.com/stretchr/testify/mock"
 	"github.com/stretchr/testify/require"

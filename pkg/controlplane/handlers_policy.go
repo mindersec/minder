@@ -26,7 +26,7 @@ import (
 	pb "github.com/stacklok/mediator/pkg/generated/protobuf/go/mediator/v1"
 	github "github.com/stacklok/mediator/pkg/providers/github"
 
-	"github.com/stacklok/mediator/pkg/util"
+	"github.com/stacklok/mediator/internal/util"
 	"github.com/xeipuuv/gojsonschema"
 	"google.golang.org/grpc/codes"
 	"google.golang.org/grpc/status"

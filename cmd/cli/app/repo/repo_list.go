@@ -27,7 +27,7 @@ import (
 
 	pb "github.com/stacklok/mediator/pkg/generated/protobuf/go/mediator/v1"
 	github "github.com/stacklok/mediator/pkg/providers/github"
-	"github.com/stacklok/mediator/pkg/util"
+	"github.com/stacklok/mediator/internal/util"
 )
 
 // repo_listCmd represents the list command to list repos with the

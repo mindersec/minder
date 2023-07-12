@@ -29,7 +29,7 @@ import (
 	"github.com/stacklok/mediator/cmd/cli/app/org"
 	"github.com/stacklok/mediator/cmd/cli/app/role"
 	"github.com/stacklok/mediator/cmd/cli/app/user"
-	"github.com/stacklok/mediator/pkg/util"
+	"github.com/stacklok/mediator/internal/util"
 	"google.golang.org/grpc/codes"
 	"google.golang.org/grpc/status"
 	"gopkg.in/yaml.v3"

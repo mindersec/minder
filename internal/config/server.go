@@ -21,7 +21,7 @@ import (
 	"github.com/spf13/pflag"
 	"github.com/spf13/viper"
 
-	"github.com/stacklok/mediator/pkg/util"
+	"github.com/stacklok/mediator/internal/util"
 )
 
 // HTTPServerConfig is the configuration for the HTTP server

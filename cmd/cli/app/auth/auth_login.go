@@ -26,7 +26,7 @@ import (
 	"os"
 
 	"github.com/spf13/cobra"
-	"github.com/stacklok/mediator/pkg/util"
+	"github.com/stacklok/mediator/internal/util"
 	"google.golang.org/grpc/status"
 
 	pb "github.com/stacklok/mediator/pkg/generated/protobuf/go/mediator/v1"
