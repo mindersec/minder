@@ -48,6 +48,7 @@ type RepositoryListResult struct {
 // Add methods here for interacting with the GitHub Rest API
 // e.g. GetRepositoryRestInfo(ctx context.Context, owner string, name string) (*RepositoryInfo, error)
 type RestAPI interface {
+	GetRepository(context.Context, string, string) (*github.Repository, error)
 	ListAllRepositories(context.Context, bool) (RepositoryListResult, error)
 	CheckIfTokenIsForOrganization(context.Context) (bool, error)
 	GetBranchProtection(context.Context, string, string, string) (*github.Protection, error)

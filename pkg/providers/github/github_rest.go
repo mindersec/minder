@@ -17,6 +17,7 @@ package github
 
 import (
 	"context"
+	"fmt"
 
 	"github.com/google/go-github/v53/github"
 )
@@ -67,6 +68,17 @@ func (c *RestClient) ListAllRepositories(ctx context.Context, isOrg bool) (Repos
 	return RepositoryListResult{
 		Repositories: allRepos,
 	}, nil
+}
+
+// GetRepository returns a single repository for the authenticated user
+func (c *RestClient) GetRepository(ctx context.Context, owner, name string) (*github.Repository, error) {
+	// create a slice to hold the repositories
+	repo, _, err := c.client.Repositories.Get(ctx, owner, name)
+	if err != nil {
+		return nil, fmt.Errorf("error getting repository: %w", err)
+	}
+
+	return repo, nil
 }
 
 // CheckIfTokenIsForOrganization is to determine if the token is for a user or an organization

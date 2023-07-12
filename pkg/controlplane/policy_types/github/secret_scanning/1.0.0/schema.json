@@ -1,0 +1,10 @@
+{
+	"type": "object",
+	"properties": {
+		"secret_scanning_enabled": {
+			"type": "boolean",
+			"default": true
+		}
+	},
+	"required": ["secret_scanning_enabled"]
+}
