@@ -200,6 +200,7 @@ func (s *Server) ListRepositories(ctx context.Context,
 
 		if filterCondition(&repo) {
 			results = append(results, &pb.ListRepositories{
+				Id:         repo.ID,
 				Owner:      repo.RepoOwner,
 				Name:       repo.RepoName,
 				RepoId:     repo.RepoID,
@@ -253,6 +254,7 @@ func (s *Server) GetRepository(ctx context.Context,
 	updatedat := timestamppb.New(repo.UpdatedAt)
 
 	return &pb.GetRepositoryResponse{
+		Id:         repo.ID,
 		Owner:      repo.RepoOwner,
 		Repository: repo.RepoName,
 		RepoId:     repo.RepoID,

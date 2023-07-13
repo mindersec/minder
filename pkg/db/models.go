@@ -6,9 +6,53 @@ package db
 
 import (
 	"database/sql"
+	"database/sql/driver"
 	"encoding/json"
+	"fmt"
 	"time"
 )
+
+type PolicyStatusTypes string
+
+const (
+	PolicyStatusTypesSuccess PolicyStatusTypes = "success"
+	PolicyStatusTypesFailure PolicyStatusTypes = "failure"
+)
+
+func (e *PolicyStatusTypes) Scan(src interface{}) error {
+	switch s := src.(type) {
+	case []byte:
+		*e = PolicyStatusTypes(s)
+	case string:
+		*e = PolicyStatusTypes(s)
+	default:
+		return fmt.Errorf("unsupported scan type for PolicyStatusTypes: %T", src)
+	}
+	return nil
+}
+
+type NullPolicyStatusTypes struct {
+	PolicyStatusTypes PolicyStatusTypes `json:"policy_status_types"`
+	Valid             bool              `json:"valid"` // Valid is true if PolicyStatusTypes is not NULL
+}
+
+// Scan implements the Scanner interface.
+func (ns *NullPolicyStatusTypes) Scan(value interface{}) error {
+	if value == nil {
+		ns.PolicyStatusTypes, ns.Valid = "", false
+		return nil
+	}
+	ns.Valid = true
+	return ns.PolicyStatusTypes.Scan(value)
+}
+
+// Value implements the driver Valuer interface.
+func (ns NullPolicyStatusTypes) Value() (driver.Value, error) {
+	if !ns.Valid {
+		return nil, nil
+	}
+	return string(ns.PolicyStatusTypes), nil
+}
 
 type Group struct {
 	ID             int32          `json:"id"`
@@ -38,6 +82,14 @@ type Policy struct {
 	UpdatedAt        time.Time       `json:"updated_at"`
 }
 
+type PolicyStatus struct {
+	ID           int32             `json:"id"`
+	RepositoryID int32             `json:"repository_id"`
+	PolicyID     int32             `json:"policy_id"`
+	PolicyStatus PolicyStatusTypes `json:"policy_status"`
+	LastUpdated  time.Time         `json:"last_updated"`
+}
+
 type PolicyType struct {
 	ID          int32          `json:"id"`
 	Provider    string         `json:"provider"`
@@ -46,6 +98,15 @@ type PolicyType struct {
 	Version     string         `json:"version"`
 	CreatedAt   time.Time      `json:"created_at"`
 	UpdatedAt   time.Time      `json:"updated_at"`
+}
+
+type PolicyViolation struct {
+	ID           int32           `json:"id"`
+	RepositoryID int32           `json:"repository_id"`
+	PolicyID     int32           `json:"policy_id"`
+	Metadata     json.RawMessage `json:"metadata"`
+	Violation    json.RawMessage `json:"violation"`
+	CreatedAt    time.Time       `json:"created_at"`
 }
 
 type ProviderAccessToken struct {

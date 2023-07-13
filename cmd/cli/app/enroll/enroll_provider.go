@@ -36,7 +36,7 @@ import (
 
 	"github.com/stacklok/mediator/internal/util"
 	pb "github.com/stacklok/mediator/pkg/generated/protobuf/go/mediator/v1"
-	github "github.com/stacklok/mediator/pkg/providers/github"
+	ghclient "github.com/stacklok/mediator/pkg/providers/github"
 )
 
 // Response is the response from the OAuth callback server.
@@ -112,8 +112,8 @@ actions such as adding repositories.`,
 	},
 	Run: func(cmd *cobra.Command, args []string) {
 		provider := util.GetConfigValue("provider", "provider", cmd, "").(string)
-		if provider != github.Github {
-			fmt.Fprintf(os.Stderr, "Only %s is supported at this time\n", github.Github)
+		if provider != ghclient.Github {
+			fmt.Fprintf(os.Stderr, "Only %s is supported at this time\n", ghclient.Github)
 			os.Exit(1)
 		}
 		group := util.GetConfigValue("group-id", "group-id", cmd, 0).(int)

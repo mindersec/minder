@@ -87,10 +87,11 @@ var repo_listCmd = &cobra.Command{
 		switch format {
 		case "", "table":
 			table := tablewriter.NewWriter(os.Stdout)
-			table.SetHeader([]string{"Id", "Name"})
+			table.SetHeader([]string{"Id", "Provider Id", "Name"})
 
 			for _, v := range resp.Results {
 				row := []string{
+					fmt.Sprintf("%d", v.Id),
 					fmt.Sprintf("%d", v.GetRepoId()),
 					fmt.Sprintf("%s/%s", v.GetOwner(), v.GetName()),
 				}
