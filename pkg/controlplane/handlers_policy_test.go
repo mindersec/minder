@@ -425,7 +425,7 @@ func TestGetPolicies_gRPC(t *testing.T) {
 	}
 }
 
-func TestGetPolicyStatusDBMock(t *testing.T) {
+func TestGetPolicyStatusByIdDBMock(t *testing.T) {
 	ctrl := gomock.NewController(t)
 	defer ctrl.Finish()
 
@@ -472,7 +472,7 @@ func TestGetPolicyStatusDBMock(t *testing.T) {
 	assert.Equal(t, "success", response.PolicyRepoStatus[0].PolicyStatus)
 }
 
-func TestGetPolicyStatus_gRPC(t *testing.T) {
+func TestGetPolicyStatusById_gRPC(t *testing.T) {
 	testCases := []struct {
 		name               string
 		req                *pb.GetPolicyStatusByIdRequest
@@ -548,6 +548,134 @@ func TestGetPolicyStatus_gRPC(t *testing.T) {
 			require.NoError(t, err, "failed to create test server")
 
 			resp, err := server.GetPolicyStatusById(ctx, tc.req)
+			tc.checkResponse(t, resp, err)
+		})
+	}
+}
+
+func TestGetPolicyStatusByRepositoryIdDBMock(t *testing.T) {
+	ctrl := gomock.NewController(t)
+	defer ctrl.Finish()
+
+	mockStore := mockdb.NewMockStore(ctrl)
+
+	request := &pb.GetPolicyStatusByRepositoryRequest{RepositoryId: 1}
+
+	expectedStatus := []db.GetPolicyStatusByRepositoryIdRow{
+		{
+			PolicyType:   "branch_protection",
+			RepoID:       1,
+			RepoOwner:    "foo",
+			RepoName:     "bar",
+			PolicyStatus: "success",
+			LastUpdated:  time.Now(),
+		},
+	}
+
+	// Create a new context and set the claims value
+	ctx := context.WithValue(context.Background(), auth.TokenInfoKey, auth.UserClaims{
+		UserId:         1,
+		OrganizationId: 1,
+		GroupIds:       []int32{1},
+		Roles: []auth.RoleInfo{
+			{RoleID: 1, IsAdmin: true, GroupID: 0, OrganizationID: 1}},
+	})
+
+	mockStore.EXPECT().GetRepositoryByID(ctx, gomock.Any())
+	mockStore.EXPECT().GetPolicyStatusByRepositoryId(ctx, gomock.Any()).Return(expectedStatus, nil)
+
+	server := &Server{
+		store: mockStore,
+	}
+
+	response, err := server.GetPolicyStatusByRepository(ctx, request)
+
+	assert.NoError(t, err)
+	assert.NotNil(t, response)
+	assert.Equal(t, len(expectedStatus), len(response.PolicyRepoStatus))
+	assert.Equal(t, expectedStatus[0].PolicyType, response.PolicyRepoStatus[0].PolicyType)
+	assert.Equal(t, expectedStatus[0].RepoID, response.PolicyRepoStatus[0].RepoId)
+	assert.Equal(t, expectedStatus[0].RepoOwner, response.PolicyRepoStatus[0].RepoOwner)
+	assert.Equal(t, expectedStatus[0].RepoName, response.PolicyRepoStatus[0].RepoName)
+	assert.Equal(t, "success", response.PolicyRepoStatus[0].PolicyStatus)
+}
+
+func TestGetPolicyStatusByRepositoryId_gRPC(t *testing.T) {
+	testCases := []struct {
+		name               string
+		req                *pb.GetPolicyStatusByRepositoryRequest
+		buildStubs         func(store *mockdb.MockStore)
+		checkResponse      func(t *testing.T, res *pb.GetPolicyStatusByRepositoryResponse, err error)
+		expectedStatusCode codes.Code
+	}{
+		{
+			name: "Success",
+			req:  &pb.GetPolicyStatusByRepositoryRequest{RepositoryId: 1},
+			buildStubs: func(store *mockdb.MockStore) {
+				expectedStatus := []db.GetPolicyStatusByRepositoryIdRow{
+					{
+						PolicyType:   "branch_protection",
+						RepoID:       1,
+						RepoOwner:    "foo",
+						RepoName:     "bar",
+						PolicyStatus: "success",
+						LastUpdated:  time.Now(),
+					},
+				}
+
+				store.EXPECT().GetRepositoryByID(gomock.Any(), gomock.Any())
+				store.EXPECT().GetPolicyStatusByRepositoryId(gomock.Any(), gomock.Any()).
+					Return(expectedStatus, nil).
+					Times(1)
+			},
+			checkResponse: func(t *testing.T, res *pb.GetPolicyStatusByRepositoryResponse, err error) {
+				expectedStatus := []db.GetPolicyStatusByRepositoryIdRow{
+					{
+						PolicyType:   "branch_protection",
+						RepoID:       1,
+						RepoOwner:    "foo",
+						RepoName:     "bar",
+						PolicyStatus: db.PolicyStatusTypes("success"),
+						LastUpdated:  time.Now(),
+					},
+				}
+
+				assert.NoError(t, err)
+				assert.NotNil(t, res)
+				assert.Equal(t, len(expectedStatus), len(res.PolicyRepoStatus))
+				assert.Equal(t, expectedStatus[0].PolicyType, res.PolicyRepoStatus[0].PolicyType)
+				assert.Equal(t, expectedStatus[0].RepoID, res.PolicyRepoStatus[0].RepoId)
+				assert.Equal(t, expectedStatus[0].RepoOwner, res.PolicyRepoStatus[0].RepoOwner)
+				assert.Equal(t, expectedStatus[0].RepoName, res.PolicyRepoStatus[0].RepoName)
+				assert.Equal(t, "success", res.PolicyRepoStatus[0].PolicyStatus)
+			},
+			expectedStatusCode: codes.OK,
+		},
+	}
+
+	// Create a new context and set the claims value
+	ctx := context.WithValue(context.Background(), auth.TokenInfoKey, auth.UserClaims{
+		UserId:         1,
+		OrganizationId: 1,
+		GroupIds:       []int32{1},
+		Roles: []auth.RoleInfo{
+			{RoleID: 1, IsAdmin: true, GroupID: 0, OrganizationID: 1}},
+	})
+
+	for i := range testCases {
+		tc := testCases[i]
+		t.Run(tc.name, func(t *testing.T) {
+
+			ctrl := gomock.NewController(t)
+			defer ctrl.Finish()
+
+			mockStore := mockdb.NewMockStore(ctrl)
+			tc.buildStubs(mockStore)
+
+			server, err := NewServer(mockStore, &config.Config{})
+			require.NoError(t, err, "failed to create test server")
+
+			resp, err := server.GetPolicyStatusByRepository(ctx, tc.req)
 			tc.checkResponse(t, resp, err)
 		})
 	}
@@ -693,7 +821,7 @@ func TestGetPolicyViolationsByGroupDBMock(t *testing.T) {
 
 	request := &pb.GetPolicyViolationsByGroupRequest{Provider: github.Github, GroupId: 1}
 
-	expectedViolations := []db.GetPolicyViolationsRow{
+	expectedViolations := []db.GetPolicyViolationsByGroupRow{
 		{
 			PolicyType: "branch_protection",
 			RepoID:     1,
@@ -713,7 +841,7 @@ func TestGetPolicyViolationsByGroupDBMock(t *testing.T) {
 			{RoleID: 1, IsAdmin: true, GroupID: 0, OrganizationID: 1}},
 	})
 
-	mockStore.EXPECT().GetPolicyViolations(ctx, gomock.Any()).
+	mockStore.EXPECT().GetPolicyViolationsByGroup(ctx, gomock.Any()).
 		Return(expectedViolations, nil)
 
 	server := &Server{
@@ -733,7 +861,7 @@ func TestGetPolicyViolationsByGroupDBMock(t *testing.T) {
 	assert.Equal(t, `{"foo": "bar"}`, response.PolicyViolation[0].Metadata)
 }
 
-func TestGetViolations_gRPC(t *testing.T) {
+func TestGetViolationsByGroup_gRPC(t *testing.T) {
 	testCases := []struct {
 		name               string
 		req                *pb.GetPolicyViolationsByGroupRequest
@@ -745,8 +873,8 @@ func TestGetViolations_gRPC(t *testing.T) {
 			name: "Success",
 			req:  &pb.GetPolicyViolationsByGroupRequest{Provider: github.Github, GroupId: 1},
 			buildStubs: func(store *mockdb.MockStore) {
-				store.EXPECT().GetPolicyViolations(gomock.Any(), gomock.Any()).
-					Return([]db.GetPolicyViolationsRow{
+				store.EXPECT().GetPolicyViolationsByGroup(gomock.Any(), gomock.Any()).
+					Return([]db.GetPolicyViolationsByGroupRow{
 						{
 							PolicyType: "branch_protection",
 							RepoID:     1,
@@ -760,7 +888,7 @@ func TestGetViolations_gRPC(t *testing.T) {
 					Times(1)
 			},
 			checkResponse: func(t *testing.T, res *pb.GetPolicyViolationsByGroupResponse, err error) {
-				expectedViolations := []db.GetPolicyViolationsRow{
+				expectedViolations := []db.GetPolicyViolationsByGroupRow{
 					{
 						PolicyType: "branch_protection",
 						RepoID:     1,
@@ -810,6 +938,138 @@ func TestGetViolations_gRPC(t *testing.T) {
 			require.NoError(t, err, "failed to create test server")
 
 			resp, err := server.GetPolicyViolationsByGroup(ctx, tc.req)
+			tc.checkResponse(t, resp, err)
+		})
+	}
+}
+
+func TestGetPolicyViolationsByRepositoryDBMock(t *testing.T) {
+	ctrl := gomock.NewController(t)
+	defer ctrl.Finish()
+
+	mockStore := mockdb.NewMockStore(ctrl)
+
+	request := &pb.GetPolicyViolationsByRepositoryRequest{RepositoryId: 1}
+
+	expectedViolations := []db.GetPolicyViolationsByRepositoryIdRow{
+		{
+			PolicyType: "branch_protection",
+			RepoID:     1,
+			RepoOwner:  "foo",
+			RepoName:   "bar",
+			Metadata:   json.RawMessage(`{"foo": "bar"}`),
+			Violation:  json.RawMessage(`{"key": "value"}`),
+			CreatedAt:  time.Now(),
+		},
+	}
+	// Create a new context and set the claims value
+	ctx := context.WithValue(context.Background(), auth.TokenInfoKey, auth.UserClaims{
+		UserId:         1,
+		OrganizationId: 1,
+		GroupIds:       []int32{1},
+		Roles: []auth.RoleInfo{
+			{RoleID: 1, IsAdmin: true, GroupID: 0, OrganizationID: 1}},
+	})
+
+	mockStore.EXPECT().GetRepositoryByID(ctx, gomock.Any())
+	mockStore.EXPECT().GetPolicyViolationsByRepositoryId(ctx, gomock.Any()).
+		Return(expectedViolations, nil)
+
+	server := &Server{
+		store: mockStore,
+	}
+
+	response, err := server.GetPolicyViolationsByRepositoryId(ctx, request)
+
+	assert.NoError(t, err)
+	assert.NotNil(t, response)
+	assert.Equal(t, len(expectedViolations), len(response.PolicyViolation))
+	assert.Equal(t, expectedViolations[0].PolicyType, response.PolicyViolation[0].PolicyType)
+	assert.Equal(t, expectedViolations[0].RepoID, response.PolicyViolation[0].RepoId)
+	assert.Equal(t, expectedViolations[0].RepoOwner, response.PolicyViolation[0].RepoOwner)
+	assert.Equal(t, expectedViolations[0].RepoName, response.PolicyViolation[0].RepoName)
+	assert.Equal(t, `{"key": "value"}`, response.PolicyViolation[0].Violation)
+	assert.Equal(t, `{"foo": "bar"}`, response.PolicyViolation[0].Metadata)
+}
+
+func TestGetViolationsByRepositoryId_gRPC(t *testing.T) {
+	testCases := []struct {
+		name               string
+		req                *pb.GetPolicyViolationsByRepositoryRequest
+		buildStubs         func(store *mockdb.MockStore)
+		checkResponse      func(t *testing.T, res *pb.GetPolicyViolationsByRepositoryResponse, err error)
+		expectedStatusCode codes.Code
+	}{
+		{
+			name: "Success",
+			req:  &pb.GetPolicyViolationsByRepositoryRequest{RepositoryId: 1},
+			buildStubs: func(store *mockdb.MockStore) {
+				store.EXPECT().GetRepositoryByID(gomock.Any(), gomock.Any())
+				store.EXPECT().GetPolicyViolationsByRepositoryId(gomock.Any(), gomock.Any()).
+					Return([]db.GetPolicyViolationsByRepositoryIdRow{
+						{
+							PolicyType: "branch_protection",
+							RepoID:     1,
+							RepoOwner:  "foo",
+							RepoName:   "bar",
+							Metadata:   json.RawMessage(`{"foo": "bar"}`),
+							Violation:  json.RawMessage(`{"key": "value"}`),
+							CreatedAt:  time.Now(),
+						},
+					}, nil).
+					Times(1)
+			},
+			checkResponse: func(t *testing.T, res *pb.GetPolicyViolationsByRepositoryResponse, err error) {
+				expectedViolations := []db.GetPolicyViolationsByRepositoryIdRow{
+					{
+						PolicyType: "branch_protection",
+						RepoID:     1,
+						RepoOwner:  "foo",
+						RepoName:   "bar",
+						Metadata:   json.RawMessage(`{"foo": "bar"}`),
+						Violation:  json.RawMessage(`{"key": "value"}`),
+						CreatedAt:  time.Now(),
+					},
+				}
+
+				assert.NoError(t, err)
+				assert.NotNil(t, res)
+				assert.Equal(t, len(expectedViolations), len(res.PolicyViolation))
+				assert.Equal(t, len(expectedViolations), len(res.PolicyViolation))
+				assert.Equal(t, expectedViolations[0].PolicyType, res.PolicyViolation[0].PolicyType)
+				assert.Equal(t, expectedViolations[0].RepoID, res.PolicyViolation[0].RepoId)
+				assert.Equal(t, expectedViolations[0].RepoOwner, res.PolicyViolation[0].RepoOwner)
+				assert.Equal(t, expectedViolations[0].RepoName, res.PolicyViolation[0].RepoName)
+				assert.Equal(t, `{"key": "value"}`, res.PolicyViolation[0].Violation)
+				assert.Equal(t, `{"foo": "bar"}`, res.PolicyViolation[0].Metadata)
+			},
+			expectedStatusCode: codes.OK,
+		},
+	}
+
+	// Create a new context and set the claims value
+	ctx := context.WithValue(context.Background(), auth.TokenInfoKey, auth.UserClaims{
+		UserId:         1,
+		OrganizationId: 1,
+		GroupIds:       []int32{1},
+		Roles: []auth.RoleInfo{
+			{RoleID: 1, IsAdmin: true, GroupID: 0, OrganizationID: 1}},
+	})
+
+	for i := range testCases {
+		tc := testCases[i]
+		t.Run(tc.name, func(t *testing.T) {
+
+			ctrl := gomock.NewController(t)
+			defer ctrl.Finish()
+
+			mockStore := mockdb.NewMockStore(ctrl)
+			tc.buildStubs(mockStore)
+
+			server, err := NewServer(mockStore, &config.Config{})
+			require.NoError(t, err, "failed to create test server")
+
+			resp, err := server.GetPolicyViolationsByRepositoryId(ctx, tc.req)
 			tc.checkResponse(t, resp, err)
 		})
 	}

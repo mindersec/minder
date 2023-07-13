@@ -1199,6 +1199,14 @@ message GetPolicyStatusByGroupResponse {
     repeated PolicyRepoStatus policy_repo_status = 1;
 }
 
+message GetPolicyStatusByRepositoryRequest {
+    int32 repository_id = 1;
+}
+
+message GetPolicyStatusByRepositoryResponse {
+    repeated PolicyRepoStatus policy_repo_status = 1;
+}
+
 message GetPolicyViolationsByIdRequest {
     int32 id = 1;
     optional int32 limit = 2;
@@ -1219,6 +1227,17 @@ message GetPolicyViolationsByGroupRequest {
 message GetPolicyViolationsByGroupResponse {
     repeated PolicyViolation policy_violation = 1;
 }
+
+message GetPolicyViolationsByRepositoryRequest {
+    int32 repository_id = 1;
+    optional int32 limit = 2;
+    optional int32 offset = 3;
+}
+
+message GetPolicyViolationsByRepositoryResponse {
+    repeated PolicyViolation policy_violation = 1;
+}
+
 
 // policy type record to be returned
 message PolicyTypeRecord {

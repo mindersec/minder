@@ -111,6 +111,54 @@ func (q *Queries) GetPolicyStatusById(ctx context.Context, id int32) ([]GetPolic
 	return items, nil
 }
 
+const getPolicyStatusByRepositoryId = `-- name: GetPolicyStatusByRepositoryId :many
+SELECT pt.policy_type, r.id as repo_id, r.repo_owner, r.repo_name,
+ps.policy_status, ps.last_updated FROM policy_status ps
+INNER JOIN policies p ON p.id = ps.policy_id
+INNER JOIN repositories r ON r.id = ps.repository_id
+INNER JOIN policy_types pt ON pt.id = p.policy_type
+WHERE r.id = $1
+`
+
+type GetPolicyStatusByRepositoryIdRow struct {
+	PolicyType   string            `json:"policy_type"`
+	RepoID       int32             `json:"repo_id"`
+	RepoOwner    string            `json:"repo_owner"`
+	RepoName     string            `json:"repo_name"`
+	PolicyStatus PolicyStatusTypes `json:"policy_status"`
+	LastUpdated  time.Time         `json:"last_updated"`
+}
+
+func (q *Queries) GetPolicyStatusByRepositoryId(ctx context.Context, id int32) ([]GetPolicyStatusByRepositoryIdRow, error) {
+	rows, err := q.db.QueryContext(ctx, getPolicyStatusByRepositoryId, id)
+	if err != nil {
+		return nil, err
+	}
+	defer rows.Close()
+	items := []GetPolicyStatusByRepositoryIdRow{}
+	for rows.Next() {
+		var i GetPolicyStatusByRepositoryIdRow
+		if err := rows.Scan(
+			&i.PolicyType,
+			&i.RepoID,
+			&i.RepoOwner,
+			&i.RepoName,
+			&i.PolicyStatus,
+			&i.LastUpdated,
+		); err != nil {
+			return nil, err
+		}
+		items = append(items, i)
+	}
+	if err := rows.Close(); err != nil {
+		return nil, err
+	}
+	if err := rows.Err(); err != nil {
+		return nil, err
+	}
+	return items, nil
+}
+
 const updatePolicyStatus = `-- name: UpdatePolicyStatus :exec
 INSERT INTO policy_status (repository_id, policy_id, policy_status, last_updated) VALUES ($1, $2, $3, NOW())
 ON CONFLICT (repository_id, policy_id) DO UPDATE SET policy_status = $3, last_updated = NOW()

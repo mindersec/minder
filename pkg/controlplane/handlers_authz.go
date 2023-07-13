@@ -264,19 +264,37 @@ var resourceAuthorizations = []map[string]map[string]interface{}{
 		},
 	},
 	{
-		"/mediator.v1.PolicyService/GetPolicyStatus": {
+		"/mediator.v1.PolicyService/GetPolicyStatusById": {
 			"claimField": "GroupId",
 			"isAdmin":    false,
 		},
 	},
 	{
-		"/mediator.v1.PolicyService/GetPolicyViolations": {
+		"/mediator.v1.PolicyService/GetPolicyStatusByGroup": {
+			"claimField": "GroupId",
+			"isAdmin":    false,
+		},
+	},
+	{
+		"/mediator.v1.PolicyService/GetPolicyStatusByRepository": {
 			"claimField": "GroupId",
 			"isAdmin":    false,
 		},
 	},
 	{
 		"/mediator.v1.PolicyService/GetPolicyViolationsById": {
+			"claimField": "GroupId",
+			"isAdmin":    false,
+		},
+	},
+	{
+		"/mediator.v1.PolicyService/GetPolicyViolationsByGroup": {
+			"claimField": "GroupId",
+			"isAdmin":    false,
+		},
+	},
+	{
+		"/mediator.v1.PolicyService/GetPolicyViolationsByRepository": {
 			"claimField": "GroupId",
 			"isAdmin":    false,
 		},

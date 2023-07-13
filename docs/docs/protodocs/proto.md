@@ -59,6 +59,8 @@
     - [GetPolicyStatusByGroupResponse](#mediator-v1-GetPolicyStatusByGroupResponse)
     - [GetPolicyStatusByIdRequest](#mediator-v1-GetPolicyStatusByIdRequest)
     - [GetPolicyStatusByIdResponse](#mediator-v1-GetPolicyStatusByIdResponse)
+    - [GetPolicyStatusByRepositoryRequest](#mediator-v1-GetPolicyStatusByRepositoryRequest)
+    - [GetPolicyStatusByRepositoryResponse](#mediator-v1-GetPolicyStatusByRepositoryResponse)
     - [GetPolicyTypeByIdRequest](#mediator-v1-GetPolicyTypeByIdRequest)
     - [GetPolicyTypeByIdResponse](#mediator-v1-GetPolicyTypeByIdResponse)
     - [GetPolicyTypeRequest](#mediator-v1-GetPolicyTypeRequest)
@@ -69,6 +71,8 @@
     - [GetPolicyViolationsByGroupResponse](#mediator-v1-GetPolicyViolationsByGroupResponse)
     - [GetPolicyViolationsByIdRequest](#mediator-v1-GetPolicyViolationsByIdRequest)
     - [GetPolicyViolationsByIdResponse](#mediator-v1-GetPolicyViolationsByIdResponse)
+    - [GetPolicyViolationsByRepositoryRequest](#mediator-v1-GetPolicyViolationsByRepositoryRequest)
+    - [GetPolicyViolationsByRepositoryResponse](#mediator-v1-GetPolicyViolationsByRepositoryResponse)
     - [GetPublicKeyRequest](#mediator-v1-GetPublicKeyRequest)
     - [GetPublicKeyResponse](#mediator-v1-GetPublicKeyResponse)
     - [GetRepositoryRequest](#mediator-v1-GetRepositoryRequest)
@@ -1057,6 +1061,36 @@ get policy by id
 
 
 
+<a name="mediator-v1-GetPolicyStatusByRepositoryRequest"></a>
+
+### GetPolicyStatusByRepositoryRequest
+
+
+
+| Field | Type | Label | Description |
+| ----- | ---- | ----- | ----------- |
+| repository_id | [int32](#int32) |  |  |
+
+
+
+
+
+
+<a name="mediator-v1-GetPolicyStatusByRepositoryResponse"></a>
+
+### GetPolicyStatusByRepositoryResponse
+
+
+
+| Field | Type | Label | Description |
+| ----- | ---- | ----- | ----------- |
+| policy_repo_status | [PolicyRepoStatus](#mediator-v1-PolicyRepoStatus) | repeated |  |
+
+
+
+
+
+
 <a name="mediator-v1-GetPolicyTypeByIdRequest"></a>
 
 ### GetPolicyTypeByIdRequest
@@ -1201,6 +1235,38 @@ get policy types
 <a name="mediator-v1-GetPolicyViolationsByIdResponse"></a>
 
 ### GetPolicyViolationsByIdResponse
+
+
+
+| Field | Type | Label | Description |
+| ----- | ---- | ----- | ----------- |
+| policy_violation | [PolicyViolation](#mediator-v1-PolicyViolation) | repeated |  |
+
+
+
+
+
+
+<a name="mediator-v1-GetPolicyViolationsByRepositoryRequest"></a>
+
+### GetPolicyViolationsByRepositoryRequest
+
+
+
+| Field | Type | Label | Description |
+| ----- | ---- | ----- | ----------- |
+| repository_id | [int32](#int32) |  |  |
+| limit | [int32](#int32) | optional |  |
+| offset | [int32](#int32) | optional |  |
+
+
+
+
+
+
+<a name="mediator-v1-GetPolicyViolationsByRepositoryResponse"></a>
+
+### GetPolicyViolationsByRepositoryResponse
 
 
 

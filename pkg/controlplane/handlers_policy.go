@@ -439,6 +439,45 @@ func (s *Server) GetPolicyStatusByGroup(ctx context.Context,
 	return &resp, nil
 }
 
+// GetPolicyStatusByRepository is a method to get policy status for a repository
+func (s *Server) GetPolicyStatusByRepository(ctx context.Context,
+	in *pb.GetPolicyStatusByRepositoryRequest) (*pb.GetPolicyStatusByRepositoryResponse, error) {
+	if in.RepositoryId == 0 {
+		return nil, status.Error(codes.InvalidArgument, "repository id is required")
+	}
+
+	repo, err := s.store.GetRepositoryByID(ctx, in.RepositoryId)
+	if err != nil {
+		return nil, status.Errorf(codes.Unknown, "failed to get repository: %s", err)
+	}
+
+	// check if user is authorized
+	if !IsRequestAuthorized(ctx, repo.GroupID) {
+		return nil, status.Errorf(codes.PermissionDenied, "user is not authorized to access this resource")
+	}
+
+	// read policy status for repo
+	policy_status, err := s.store.GetPolicyStatusByRepositoryId(ctx, in.RepositoryId)
+	if err != nil {
+		return nil, status.Errorf(codes.Unknown, "failed to get policy status: %s", err)
+	}
+	var resp pb.GetPolicyStatusByRepositoryResponse
+	resp.PolicyRepoStatus = make([]*pb.PolicyRepoStatus, 0, len(policy_status))
+	for _, policy := range policy_status {
+		resp.PolicyRepoStatus = append(resp.PolicyRepoStatus, &pb.PolicyRepoStatus{
+			PolicyType:   policy.PolicyType,
+			RepoId:       policy.RepoID,
+			RepoOwner:    policy.RepoOwner,
+			RepoName:     policy.RepoName,
+			PolicyStatus: string(policy.PolicyStatus),
+			LastUpdated:  timestamppb.New(policy.LastUpdated),
+		})
+	}
+
+	return &resp, nil
+
+}
+
 // GetPolicyViolationsById is a method to get policy violations by policy id
 func (s *Server) GetPolicyViolationsById(ctx context.Context,
 	in *pb.GetPolicyViolationsByIdRequest) (*pb.GetPolicyViolationsByIdResponse, error) {
@@ -489,6 +528,56 @@ func (s *Server) GetPolicyViolationsById(ctx context.Context,
 
 }
 
+// GetPolicyViolationsByRepositoryId is a method to get policy violations by repository id
+func (s *Server) GetPolicyViolationsByRepositoryId(ctx context.Context,
+	in *pb.GetPolicyViolationsByRepositoryRequest) (*pb.GetPolicyViolationsByRepositoryResponse, error) {
+	if in.RepositoryId == 0 {
+		return nil, status.Error(codes.InvalidArgument, "repository id is required")
+	}
+
+	repo, err := s.store.GetRepositoryByID(ctx, in.RepositoryId)
+	if err != nil {
+		return nil, status.Errorf(codes.Unknown, "failed to get repository: %s", err)
+	}
+
+	// check if user is authorized
+	if !IsRequestAuthorized(ctx, repo.GroupID) {
+		return nil, status.Errorf(codes.PermissionDenied, "user is not authorized to access this resource")
+	}
+
+	// define default values for limit and offset
+	if in.Limit == nil || *in.Limit == -1 {
+		in.Limit = new(int32)
+		*in.Limit = PaginationLimit
+	}
+	if in.Offset == nil {
+		in.Offset = new(int32)
+		*in.Offset = 0
+	}
+	// read policy violations
+	policy_violations, err := s.store.GetPolicyViolationsByRepositoryId(ctx,
+		db.GetPolicyViolationsByRepositoryIdParams{ID: in.RepositoryId, Limit: *in.Limit, Offset: *in.Offset})
+	if err != nil {
+		return nil, status.Errorf(codes.Unknown, "failed to get policy violation: %s", err)
+	}
+	var resp pb.GetPolicyViolationsByRepositoryResponse
+	resp.PolicyViolation = make([]*pb.PolicyViolation, 0, len(policy_violations))
+	for _, policy := range policy_violations {
+		resp.PolicyViolation = append(resp.PolicyViolation, &pb.PolicyViolation{
+			PolicyType: policy.PolicyType,
+			RepoId:     policy.RepoID,
+			RepoOwner:  policy.RepoOwner,
+			RepoName:   policy.RepoName,
+			Metadata:   string(policy.Metadata),
+			Violation:  string(policy.Violation),
+			CreatedAt:  timestamppb.New(policy.CreatedAt),
+		})
+	}
+
+	return &resp, nil
+
+}
+
 // GetPolicyViolationsByGroup is a method to get policy violations by group
 func (s *Server) GetPolicyViolationsByGroup(ctx context.Context,
 	in *pb.GetPolicyViolationsByGroupRequest) (*pb.GetPolicyViolationsByGroupResponse, error) {
@@ -512,8 +601,8 @@ func (s *Server) GetPolicyViolationsByGroup(ctx context.Context,
 		*in.Offset = 0
 	}
 
-	policy_violations, err := s.store.GetPolicyViolations(ctx,
-		db.GetPolicyViolationsParams{Provider: in.Provider, GroupID: in.GroupId, Limit: *in.Limit, Offset: *in.Offset})
+	policy_violations, err := s.store.GetPolicyViolationsByGroup(ctx,
+		db.GetPolicyViolationsByGroupParams{Provider: in.Provider, GroupID: in.GroupId, Limit: *in.Limit, Offset: *in.Offset})
 	if err != nil {
 		return nil, status.Errorf(codes.Unknown, "failed to get policy: %s", err)
 	}

@@ -7448,6 +7448,100 @@ func (x *GetPolicyStatusByGroupResponse) GetPolicyRepoStatus() []*PolicyRepoStat
 	return nil
 }
 
+type GetPolicyStatusByRepositoryRequest struct {
+	state         protoimpl.MessageState
+	sizeCache     protoimpl.SizeCache
+	unknownFields protoimpl.UnknownFields
+
+	RepositoryId int32 `protobuf:"varint,1,opt,name=repository_id,json=repositoryId,proto3" json:"repository_id,omitempty"`
+}
+
+func (x *GetPolicyStatusByRepositoryRequest) Reset() {
+	*x = GetPolicyStatusByRepositoryRequest{}
+	if protoimpl.UnsafeEnabled {
+		mi := &file_mediator_v1_mediator_proto_msgTypes[123]
+		ms := protoimpl.X.MessageStateOf(protoimpl.Pointer(x))
+		ms.StoreMessageInfo(mi)
+	}
+}
+
+func (x *GetPolicyStatusByRepositoryRequest) String() string {
+	return protoimpl.X.MessageStringOf(x)
+}
+
+func (*GetPolicyStatusByRepositoryRequest) ProtoMessage() {}
+
+func (x *GetPolicyStatusByRepositoryRequest) ProtoReflect() protoreflect.Message {
+	mi := &file_mediator_v1_mediator_proto_msgTypes[123]
+	if protoimpl.UnsafeEnabled && x != nil {
+		ms := protoimpl.X.MessageStateOf(protoimpl.Pointer(x))
+		if ms.LoadMessageInfo() == nil {
+			ms.StoreMessageInfo(mi)
+		}
+		return ms
+	}
+	return mi.MessageOf(x)
+}
+
+// Deprecated: Use GetPolicyStatusByRepositoryRequest.ProtoReflect.Descriptor instead.
+func (*GetPolicyStatusByRepositoryRequest) Descriptor() ([]byte, []int) {
+	return file_mediator_v1_mediator_proto_rawDescGZIP(), []int{123}
+}
+
+func (x *GetPolicyStatusByRepositoryRequest) GetRepositoryId() int32 {
+	if x != nil {
+		return x.RepositoryId
+	}
+	return 0
+}
+
+type GetPolicyStatusByRepositoryResponse struct {
+	state         protoimpl.MessageState
+	sizeCache     protoimpl.SizeCache
+	unknownFields protoimpl.UnknownFields
+
+	PolicyRepoStatus []*PolicyRepoStatus `protobuf:"bytes,1,rep,name=policy_repo_status,json=policyRepoStatus,proto3" json:"policy_repo_status,omitempty"`
+}
+
+func (x *GetPolicyStatusByRepositoryResponse) Reset() {
+	*x = GetPolicyStatusByRepositoryResponse{}
+	if protoimpl.UnsafeEnabled {
+		mi := &file_mediator_v1_mediator_proto_msgTypes[124]
+		ms := protoimpl.X.MessageStateOf(protoimpl.Pointer(x))
+		ms.StoreMessageInfo(mi)
+	}
+}
+
+func (x *GetPolicyStatusByRepositoryResponse) String() string {
+	return protoimpl.X.MessageStringOf(x)
+}
+
+func (*GetPolicyStatusByRepositoryResponse) ProtoMessage() {}
+
+func (x *GetPolicyStatusByRepositoryResponse) ProtoReflect() protoreflect.Message {
+	mi := &file_mediator_v1_mediator_proto_msgTypes[124]
+	if protoimpl.UnsafeEnabled && x != nil {
+		ms := protoimpl.X.MessageStateOf(protoimpl.Pointer(x))
+		if ms.LoadMessageInfo() == nil {
+			ms.StoreMessageInfo(mi)
+		}
+		return ms
+	}
+	return mi.MessageOf(x)
+}
+
+// Deprecated: Use GetPolicyStatusByRepositoryResponse.ProtoReflect.Descriptor instead.
+func (*GetPolicyStatusByRepositoryResponse) Descriptor() ([]byte, []int) {
+	return file_mediator_v1_mediator_proto_rawDescGZIP(), []int{124}
+}
+
+func (x *GetPolicyStatusByRepositoryResponse) GetPolicyRepoStatus() []*PolicyRepoStatus {
+	if x != nil {
+		return x.PolicyRepoStatus
+	}
+	return nil
+}
+
 type GetPolicyViolationsByIdRequest struct {
 	state         protoimpl.MessageState
 	sizeCache     protoimpl.SizeCache
@@ -7461,7 +7555,7 @@ type GetPolicyViolationsByIdRequest struct {
 func (x *GetPolicyViolationsByIdRequest) Reset() {
 	*x = GetPolicyViolationsByIdRequest{}
 	if protoimpl.UnsafeEnabled {
-		mi := &file_mediator_v1_mediator_proto_msgTypes[123]
+		mi := &file_mediator_v1_mediator_proto_msgTypes[125]
 		ms := protoimpl.X.MessageStateOf(protoimpl.Pointer(x))
 		ms.StoreMessageInfo(mi)
 	}
@@ -7474,7 +7568,7 @@ func (x *GetPolicyViolationsByIdRequest) String() string {
 func (*GetPolicyViolationsByIdRequest) ProtoMessage() {}
 
 func (x *GetPolicyViolationsByIdRequest) ProtoReflect() protoreflect.Message {
-	mi := &file_mediator_v1_mediator_proto_msgTypes[123]
+	mi := &file_mediator_v1_mediator_proto_msgTypes[125]
 	if protoimpl.UnsafeEnabled && x != nil {
 		ms := protoimpl.X.MessageStateOf(protoimpl.Pointer(x))
 		if ms.LoadMessageInfo() == nil {
@@ -7487,7 +7581,7 @@ func (x *GetPolicyViolationsByIdRequest) ProtoReflect() protoreflect.Message {
 
 // Deprecated: Use GetPolicyViolationsByIdRequest.ProtoReflect.Descriptor instead.
 func (*GetPolicyViolationsByIdRequest) Descriptor() ([]byte, []int) {
-	return file_mediator_v1_mediator_proto_rawDescGZIP(), []int{123}
+	return file_mediator_v1_mediator_proto_rawDescGZIP(), []int{125}
 }
 
 func (x *GetPolicyViolationsByIdRequest) GetId() int32 {
@@ -7522,7 +7616,7 @@ type GetPolicyViolationsByIdResponse struct {
 func (x *GetPolicyViolationsByIdResponse) Reset() {
 	*x = GetPolicyViolationsByIdResponse{}
 	if protoimpl.UnsafeEnabled {
-		mi := &file_mediator_v1_mediator_proto_msgTypes[124]
+		mi := &file_mediator_v1_mediator_proto_msgTypes[126]
 		ms := protoimpl.X.MessageStateOf(protoimpl.Pointer(x))
 		ms.StoreMessageInfo(mi)
 	}
@@ -7535,7 +7629,7 @@ func (x *GetPolicyViolationsByIdResponse) String() string {
 func (*GetPolicyViolationsByIdResponse) ProtoMessage() {}
 
 func (x *GetPolicyViolationsByIdResponse) ProtoReflect() protoreflect.Message {
-	mi := &file_mediator_v1_mediator_proto_msgTypes[124]
+	mi := &file_mediator_v1_mediator_proto_msgTypes[126]
 	if protoimpl.UnsafeEnabled && x != nil {
 		ms := protoimpl.X.MessageStateOf(protoimpl.Pointer(x))
 		if ms.LoadMessageInfo() == nil {
@@ -7548,7 +7642,7 @@ func (x *GetPolicyViolationsByIdResponse) ProtoReflect() protoreflect.Message {
 
 // Deprecated: Use GetPolicyViolationsByIdResponse.ProtoReflect.Descriptor instead.
 func (*GetPolicyViolationsByIdResponse) Descriptor() ([]byte, []int) {
-	return file_mediator_v1_mediator_proto_rawDescGZIP(), []int{124}
+	return file_mediator_v1_mediator_proto_rawDescGZIP(), []int{126}
 }
 
 func (x *GetPolicyViolationsByIdResponse) GetPolicyViolation() []*PolicyViolation {
@@ -7572,7 +7666,7 @@ type GetPolicyViolationsByGroupRequest struct {
 func (x *GetPolicyViolationsByGroupRequest) Reset() {
 	*x = GetPolicyViolationsByGroupRequest{}
 	if protoimpl.UnsafeEnabled {
-		mi := &file_mediator_v1_mediator_proto_msgTypes[125]
+		mi := &file_mediator_v1_mediator_proto_msgTypes[127]
 		ms := protoimpl.X.MessageStateOf(protoimpl.Pointer(x))
 		ms.StoreMessageInfo(mi)
 	}
@@ -7585,7 +7679,7 @@ func (x *GetPolicyViolationsByGroupRequest) String() string {
 func (*GetPolicyViolationsByGroupRequest) ProtoMessage() {}
 
 func (x *GetPolicyViolationsByGroupRequest) ProtoReflect() protoreflect.Message {
-	mi := &file_mediator_v1_mediator_proto_msgTypes[125]
+	mi := &file_mediator_v1_mediator_proto_msgTypes[127]
 	if protoimpl.UnsafeEnabled && x != nil {
 		ms := protoimpl.X.MessageStateOf(protoimpl.Pointer(x))
 		if ms.LoadMessageInfo() == nil {
@@ -7598,7 +7692,7 @@ func (x *GetPolicyViolationsByGroupRequest) ProtoReflect() protoreflect.Message 
 
 // Deprecated: Use GetPolicyViolationsByGroupRequest.ProtoReflect.Descriptor instead.
 func (*GetPolicyViolationsByGroupRequest) Descriptor() ([]byte, []int) {
-	return file_mediator_v1_mediator_proto_rawDescGZIP(), []int{125}
+	return file_mediator_v1_mediator_proto_rawDescGZIP(), []int{127}
 }
 
 func (x *GetPolicyViolationsByGroupRequest) GetProvider() string {
@@ -7640,7 +7734,7 @@ type GetPolicyViolationsByGroupResponse struct {
 func (x *GetPolicyViolationsByGroupResponse) Reset() {
 	*x = GetPolicyViolationsByGroupResponse{}
 	if protoimpl.UnsafeEnabled {
-		mi := &file_mediator_v1_mediator_proto_msgTypes[126]
+		mi := &file_mediator_v1_mediator_proto_msgTypes[128]
 		ms := protoimpl.X.MessageStateOf(protoimpl.Pointer(x))
 		ms.StoreMessageInfo(mi)
 	}
@@ -7653,7 +7747,7 @@ func (x *GetPolicyViolationsByGroupResponse) String() string {
 func (*GetPolicyViolationsByGroupResponse) ProtoMessage() {}
 
 func (x *GetPolicyViolationsByGroupResponse) ProtoReflect() protoreflect.Message {
-	mi := &file_mediator_v1_mediator_proto_msgTypes[126]
+	mi := &file_mediator_v1_mediator_proto_msgTypes[128]
 	if protoimpl.UnsafeEnabled && x != nil {
 		ms := protoimpl.X.MessageStateOf(protoimpl.Pointer(x))
 		if ms.LoadMessageInfo() == nil {
@@ -7666,10 +7760,120 @@ func (x *GetPolicyViolationsByGroupResponse) ProtoReflect() protoreflect.Message
 
 // Deprecated: Use GetPolicyViolationsByGroupResponse.ProtoReflect.Descriptor instead.
 func (*GetPolicyViolationsByGroupResponse) Descriptor() ([]byte, []int) {
-	return file_mediator_v1_mediator_proto_rawDescGZIP(), []int{126}
+	return file_mediator_v1_mediator_proto_rawDescGZIP(), []int{128}
 }
 
 func (x *GetPolicyViolationsByGroupResponse) GetPolicyViolation() []*PolicyViolation {
+	if x != nil {
+		return x.PolicyViolation
+	}
+	return nil
+}
+
+type GetPolicyViolationsByRepositoryRequest struct {
+	state         protoimpl.MessageState
+	sizeCache     protoimpl.SizeCache
+	unknownFields protoimpl.UnknownFields
+
+	RepositoryId int32  `protobuf:"varint,1,opt,name=repository_id,json=repositoryId,proto3" json:"repository_id,omitempty"`
+	Limit        *int32 `protobuf:"varint,2,opt,name=limit,proto3,oneof" json:"limit,omitempty"`
+	Offset       *int32 `protobuf:"varint,3,opt,name=offset,proto3,oneof" json:"offset,omitempty"`
+}
+
+func (x *GetPolicyViolationsByRepositoryRequest) Reset() {
+	*x = GetPolicyViolationsByRepositoryRequest{}
+	if protoimpl.UnsafeEnabled {
+		mi := &file_mediator_v1_mediator_proto_msgTypes[129]
+		ms := protoimpl.X.MessageStateOf(protoimpl.Pointer(x))
+		ms.StoreMessageInfo(mi)
+	}
+}
+
+func (x *GetPolicyViolationsByRepositoryRequest) String() string {
+	return protoimpl.X.MessageStringOf(x)
+}
+
+func (*GetPolicyViolationsByRepositoryRequest) ProtoMessage() {}
+
+func (x *GetPolicyViolationsByRepositoryRequest) ProtoReflect() protoreflect.Message {
+	mi := &file_mediator_v1_mediator_proto_msgTypes[129]
+	if protoimpl.UnsafeEnabled && x != nil {
+		ms := protoimpl.X.MessageStateOf(protoimpl.Pointer(x))
+		if ms.LoadMessageInfo() == nil {
+			ms.StoreMessageInfo(mi)
+		}
+		return ms
+	}
+	return mi.MessageOf(x)
+}
+
+// Deprecated: Use GetPolicyViolationsByRepositoryRequest.ProtoReflect.Descriptor instead.
+func (*GetPolicyViolationsByRepositoryRequest) Descriptor() ([]byte, []int) {
+	return file_mediator_v1_mediator_proto_rawDescGZIP(), []int{129}
+}
+
+func (x *GetPolicyViolationsByRepositoryRequest) GetRepositoryId() int32 {
+	if x != nil {
+		return x.RepositoryId
+	}
+	return 0
+}
+
+func (x *GetPolicyViolationsByRepositoryRequest) GetLimit() int32 {
+	if x != nil && x.Limit != nil {
+		return *x.Limit
+	}
+	return 0
+}
+
+func (x *GetPolicyViolationsByRepositoryRequest) GetOffset() int32 {
+	if x != nil && x.Offset != nil {
+		return *x.Offset
+	}
+	return 0
+}
+
+type GetPolicyViolationsByRepositoryResponse struct {
+	state         protoimpl.MessageState
+	sizeCache     protoimpl.SizeCache
+	unknownFields protoimpl.UnknownFields
+
+	PolicyViolation []*PolicyViolation `protobuf:"bytes,1,rep,name=policy_violation,json=policyViolation,proto3" json:"policy_violation,omitempty"`
+}
+
+func (x *GetPolicyViolationsByRepositoryResponse) Reset() {
+	*x = GetPolicyViolationsByRepositoryResponse{}
+	if protoimpl.UnsafeEnabled {
+		mi := &file_mediator_v1_mediator_proto_msgTypes[130]
+		ms := protoimpl.X.MessageStateOf(protoimpl.Pointer(x))
+		ms.StoreMessageInfo(mi)
+	}
+}
+
+func (x *GetPolicyViolationsByRepositoryResponse) String() string {
+	return protoimpl.X.MessageStringOf(x)
+}
+
+func (*GetPolicyViolationsByRepositoryResponse) ProtoMessage() {}
+
+func (x *GetPolicyViolationsByRepositoryResponse) ProtoReflect() protoreflect.Message {
+	mi := &file_mediator_v1_mediator_proto_msgTypes[130]
+	if protoimpl.UnsafeEnabled && x != nil {
+		ms := protoimpl.X.MessageStateOf(protoimpl.Pointer(x))
+		if ms.LoadMessageInfo() == nil {
+			ms.StoreMessageInfo(mi)
+		}
+		return ms
+	}
+	return mi.MessageOf(x)
+}
+
+// Deprecated: Use GetPolicyViolationsByRepositoryResponse.ProtoReflect.Descriptor instead.
+func (*GetPolicyViolationsByRepositoryResponse) Descriptor() ([]byte, []int) {
+	return file_mediator_v1_mediator_proto_rawDescGZIP(), []int{130}
+}
+
+func (x *GetPolicyViolationsByRepositoryResponse) GetPolicyViolation() []*PolicyViolation {
 	if x != nil {
 		return x.PolicyViolation
 	}
@@ -7696,7 +7900,7 @@ type PolicyTypeRecord struct {
 func (x *PolicyTypeRecord) Reset() {
 	*x = PolicyTypeRecord{}
 	if protoimpl.UnsafeEnabled {
-		mi := &file_mediator_v1_mediator_proto_msgTypes[127]
+		mi := &file_mediator_v1_mediator_proto_msgTypes[131]
 		ms := protoimpl.X.MessageStateOf(protoimpl.Pointer(x))
 		ms.StoreMessageInfo(mi)
 	}
@@ -7709,7 +7913,7 @@ func (x *PolicyTypeRecord) String() string {
 func (*PolicyTypeRecord) ProtoMessage() {}
 
 func (x *PolicyTypeRecord) ProtoReflect() protoreflect.Message {
-	mi := &file_mediator_v1_mediator_proto_msgTypes[127]
+	mi := &file_mediator_v1_mediator_proto_msgTypes[131]
 	if protoimpl.UnsafeEnabled && x != nil {
 		ms := protoimpl.X.MessageStateOf(protoimpl.Pointer(x))
 		if ms.LoadMessageInfo() == nil {
@@ -7722,7 +7926,7 @@ func (x *PolicyTypeRecord) ProtoReflect() protoreflect.Message {
 
 // Deprecated: Use PolicyTypeRecord.ProtoReflect.Descriptor instead.
 func (*PolicyTypeRecord) Descriptor() ([]byte, []int) {
-	return file_mediator_v1_mediator_proto_rawDescGZIP(), []int{127}
+	return file_mediator_v1_mediator_proto_rawDescGZIP(), []int{131}
 }
 
 func (x *PolicyTypeRecord) GetId() int32 {
@@ -7801,7 +8005,7 @@ type GetPolicyTypeRequest struct {
 func (x *GetPolicyTypeRequest) Reset() {
 	*x = GetPolicyTypeRequest{}
 	if protoimpl.UnsafeEnabled {
-		mi := &file_mediator_v1_mediator_proto_msgTypes[128]
+		mi := &file_mediator_v1_mediator_proto_msgTypes[132]
 		ms := protoimpl.X.MessageStateOf(protoimpl.Pointer(x))
 		ms.StoreMessageInfo(mi)
 	}
@@ -7814,7 +8018,7 @@ func (x *GetPolicyTypeRequest) String() string {
 func (*GetPolicyTypeRequest) ProtoMessage() {}
 
 func (x *GetPolicyTypeRequest) ProtoReflect() protoreflect.Message {
-	mi := &file_mediator_v1_mediator_proto_msgTypes[128]
+	mi := &file_mediator_v1_mediator_proto_msgTypes[132]
 	if protoimpl.UnsafeEnabled && x != nil {
 		ms := protoimpl.X.MessageStateOf(protoimpl.Pointer(x))
 		if ms.LoadMessageInfo() == nil {
@@ -7827,7 +8031,7 @@ func (x *GetPolicyTypeRequest) ProtoReflect() protoreflect.Message {
 
 // Deprecated: Use GetPolicyTypeRequest.ProtoReflect.Descriptor instead.
 func (*GetPolicyTypeRequest) Descriptor() ([]byte, []int) {
-	return file_mediator_v1_mediator_proto_rawDescGZIP(), []int{128}
+	return file_mediator_v1_mediator_proto_rawDescGZIP(), []int{132}
 }
 
 func (x *GetPolicyTypeRequest) GetProvider() string {
@@ -7855,7 +8059,7 @@ type GetPolicyTypeResponse struct {
 func (x *GetPolicyTypeResponse) Reset() {
 	*x = GetPolicyTypeResponse{}
 	if protoimpl.UnsafeEnabled {
-		mi := &file_mediator_v1_mediator_proto_msgTypes[129]
+		mi := &file_mediator_v1_mediator_proto_msgTypes[133]
 		ms := protoimpl.X.MessageStateOf(protoimpl.Pointer(x))
 		ms.StoreMessageInfo(mi)
 	}
@@ -7868,7 +8072,7 @@ func (x *GetPolicyTypeResponse) String() string {
 func (*GetPolicyTypeResponse) ProtoMessage() {}
 
 func (x *GetPolicyTypeResponse) ProtoReflect() protoreflect.Message {
-	mi := &file_mediator_v1_mediator_proto_msgTypes[129]
+	mi := &file_mediator_v1_mediator_proto_msgTypes[133]
 	if protoimpl.UnsafeEnabled && x != nil {
 		ms := protoimpl.X.MessageStateOf(protoimpl.Pointer(x))
 		if ms.LoadMessageInfo() == nil {
@@ -7881,7 +8085,7 @@ func (x *GetPolicyTypeResponse) ProtoReflect() protoreflect.Message {
 
 // Deprecated: Use GetPolicyTypeResponse.ProtoReflect.Descriptor instead.
 func (*GetPolicyTypeResponse) Descriptor() ([]byte, []int) {
-	return file_mediator_v1_mediator_proto_rawDescGZIP(), []int{129}
+	return file_mediator_v1_mediator_proto_rawDescGZIP(), []int{133}
 }
 
 func (x *GetPolicyTypeResponse) GetPolicyType() *PolicyTypeRecord {
@@ -7903,7 +8107,7 @@ type GetPolicyTypeByIdRequest struct {
 func (x *GetPolicyTypeByIdRequest) Reset() {
 	*x = GetPolicyTypeByIdRequest{}
 	if protoimpl.UnsafeEnabled {
-		mi := &file_mediator_v1_mediator_proto_msgTypes[130]
+		mi := &file_mediator_v1_mediator_proto_msgTypes[134]
 		ms := protoimpl.X.MessageStateOf(protoimpl.Pointer(x))
 		ms.StoreMessageInfo(mi)
 	}
@@ -7916,7 +8120,7 @@ func (x *GetPolicyTypeByIdRequest) String() string {
 func (*GetPolicyTypeByIdRequest) ProtoMessage() {}
 
 func (x *GetPolicyTypeByIdRequest) ProtoReflect() protoreflect.Message {
-	mi := &file_mediator_v1_mediator_proto_msgTypes[130]
+	mi := &file_mediator_v1_mediator_proto_msgTypes[134]
 	if protoimpl.UnsafeEnabled && x != nil {
 		ms := protoimpl.X.MessageStateOf(protoimpl.Pointer(x))
 		if ms.LoadMessageInfo() == nil {
@@ -7929,7 +8133,7 @@ func (x *GetPolicyTypeByIdRequest) ProtoReflect() protoreflect.Message {
 
 // Deprecated: Use GetPolicyTypeByIdRequest.ProtoReflect.Descriptor instead.
 func (*GetPolicyTypeByIdRequest) Descriptor() ([]byte, []int) {
-	return file_mediator_v1_mediator_proto_rawDescGZIP(), []int{130}
+	return file_mediator_v1_mediator_proto_rawDescGZIP(), []int{134}
 }
 
 func (x *GetPolicyTypeByIdRequest) GetId() string {
@@ -7950,7 +8154,7 @@ type GetPolicyTypeByIdResponse struct {
 func (x *GetPolicyTypeByIdResponse) Reset() {
 	*x = GetPolicyTypeByIdResponse{}
 	if protoimpl.UnsafeEnabled {
-		mi := &file_mediator_v1_mediator_proto_msgTypes[131]
+		mi := &file_mediator_v1_mediator_proto_msgTypes[135]
 		ms := protoimpl.X.MessageStateOf(protoimpl.Pointer(x))
 		ms.StoreMessageInfo(mi)
 	}
@@ -7963,7 +8167,7 @@ func (x *GetPolicyTypeByIdResponse) String() string {
 func (*GetPolicyTypeByIdResponse) ProtoMessage() {}
 
 func (x *GetPolicyTypeByIdResponse) ProtoReflect() protoreflect.Message {
-	mi := &file_mediator_v1_mediator_proto_msgTypes[131]
+	mi := &file_mediator_v1_mediator_proto_msgTypes[135]
 	if protoimpl.UnsafeEnabled && x != nil {
 		ms := protoimpl.X.MessageStateOf(protoimpl.Pointer(x))
 		if ms.LoadMessageInfo() == nil {
@@ -7976,7 +8180,7 @@ func (x *GetPolicyTypeByIdResponse) ProtoReflect() protoreflect.Message {
 
 // Deprecated: Use GetPolicyTypeByIdResponse.ProtoReflect.Descriptor instead.
 func (*GetPolicyTypeByIdResponse) Descriptor() ([]byte, []int) {
-	return file_mediator_v1_mediator_proto_rawDescGZIP(), []int{131}
+	return file_mediator_v1_mediator_proto_rawDescGZIP(), []int{135}
 }
 
 func (x *GetPolicyTypeByIdResponse) GetPolicyType() *PolicyTypeRecord {
@@ -7998,7 +8202,7 @@ type GetPolicyTypesRequest struct {
 func (x *GetPolicyTypesRequest) Reset() {
 	*x = GetPolicyTypesRequest{}
 	if protoimpl.UnsafeEnabled {
-		mi := &file_mediator_v1_mediator_proto_msgTypes[132]
+		mi := &file_mediator_v1_mediator_proto_msgTypes[136]
 		ms := protoimpl.X.MessageStateOf(protoimpl.Pointer(x))
 		ms.StoreMessageInfo(mi)
 	}
@@ -8011,7 +8215,7 @@ func (x *GetPolicyTypesRequest) String() string {
 func (*GetPolicyTypesRequest) ProtoMessage() {}
 
 func (x *GetPolicyTypesRequest) ProtoReflect() protoreflect.Message {
-	mi := &file_mediator_v1_mediator_proto_msgTypes[132]
+	mi := &file_mediator_v1_mediator_proto_msgTypes[136]
 	if protoimpl.UnsafeEnabled && x != nil {
 		ms := protoimpl.X.MessageStateOf(protoimpl.Pointer(x))
 		if ms.LoadMessageInfo() == nil {
@@ -8024,7 +8228,7 @@ func (x *GetPolicyTypesRequest) ProtoReflect() protoreflect.Message {
 
 // Deprecated: Use GetPolicyTypesRequest.ProtoReflect.Descriptor instead.
 func (*GetPolicyTypesRequest) Descriptor() ([]byte, []int) {
-	return file_mediator_v1_mediator_proto_rawDescGZIP(), []int{132}
+	return file_mediator_v1_mediator_proto_rawDescGZIP(), []int{136}
 }
 
 func (x *GetPolicyTypesRequest) GetProvider() string {
@@ -8045,7 +8249,7 @@ type GetPolicyTypesResponse struct {
 func (x *GetPolicyTypesResponse) Reset() {
 	*x = GetPolicyTypesResponse{}
 	if protoimpl.UnsafeEnabled {
-		mi := &file_mediator_v1_mediator_proto_msgTypes[133]
+		mi := &file_mediator_v1_mediator_proto_msgTypes[137]
 		ms := protoimpl.X.MessageStateOf(protoimpl.Pointer(x))
 		ms.StoreMessageInfo(mi)
 	}
@@ -8058,7 +8262,7 @@ func (x *GetPolicyTypesResponse) String() string {
 func (*GetPolicyTypesResponse) ProtoMessage() {}
 
 func (x *GetPolicyTypesResponse) ProtoReflect() protoreflect.Message {
-	mi := &file_mediator_v1_mediator_proto_msgTypes[133]
+	mi := &file_mediator_v1_mediator_proto_msgTypes[137]
 	if protoimpl.UnsafeEnabled && x != nil {
 		ms := protoimpl.X.MessageStateOf(protoimpl.Pointer(x))
 		if ms.LoadMessageInfo() == nil {
@@ -8071,7 +8275,7 @@ func (x *GetPolicyTypesResponse) ProtoReflect() protoreflect.Message {
 
 // Deprecated: Use GetPolicyTypesResponse.ProtoReflect.Descriptor instead.
 func (*GetPolicyTypesResponse) Descriptor() ([]byte, []int) {
-	return file_mediator_v1_mediator_proto_rawDescGZIP(), []int{133}
+	return file_mediator_v1_mediator_proto_rawDescGZIP(), []int{137}
 }
 
 func (x *GetPolicyTypesResponse) GetPolicyTypes() []*PolicyTypeRecord {
@@ -8092,7 +8296,7 @@ type GetPublicKeyRequest struct {
 func (x *GetPublicKeyRequest) Reset() {
 	*x = GetPublicKeyRequest{}
 	if protoimpl.UnsafeEnabled {
-		mi := &file_mediator_v1_mediator_proto_msgTypes[134]
+		mi := &file_mediator_v1_mediator_proto_msgTypes[138]
 		ms := protoimpl.X.MessageStateOf(protoimpl.Pointer(x))
 		ms.StoreMessageInfo(mi)
 	}
@@ -8105,7 +8309,7 @@ func (x *GetPublicKeyRequest) String() string {
 func (*GetPublicKeyRequest) ProtoMessage() {}
 
 func (x *GetPublicKeyRequest) ProtoReflect() protoreflect.Message {
-	mi := &file_mediator_v1_mediator_proto_msgTypes[134]
+	mi := &file_mediator_v1_mediator_proto_msgTypes[138]
 	if protoimpl.UnsafeEnabled && x != nil {
 		ms := protoimpl.X.MessageStateOf(protoimpl.Pointer(x))
 		if ms.LoadMessageInfo() == nil {
@@ -8118,7 +8322,7 @@ func (x *GetPublicKeyRequest) ProtoReflect() protoreflect.Message {
 
 // Deprecated: Use GetPublicKeyRequest.ProtoReflect.Descriptor instead.
 func (*GetPublicKeyRequest) Descriptor() ([]byte, []int) {
-	return file_mediator_v1_mediator_proto_rawDescGZIP(), []int{134}
+	return file_mediator_v1_mediator_proto_rawDescGZIP(), []int{138}
 }
 
 func (x *GetPublicKeyRequest) GetKeyIdentifier() string {
@@ -8139,7 +8343,7 @@ type GetPublicKeyResponse struct {
 func (x *GetPublicKeyResponse) Reset() {
 	*x = GetPublicKeyResponse{}
 	if protoimpl.UnsafeEnabled {
-		mi := &file_mediator_v1_mediator_proto_msgTypes[135]
+		mi := &file_mediator_v1_mediator_proto_msgTypes[139]
 		ms := protoimpl.X.MessageStateOf(protoimpl.Pointer(x))
 		ms.StoreMessageInfo(mi)
 	}
@@ -8152,7 +8356,7 @@ func (x *GetPublicKeyResponse) String() string {
 func (*GetPublicKeyResponse) ProtoMessage() {}
 
 func (x *GetPublicKeyResponse) ProtoReflect() protoreflect.Message {
-	mi := &file_mediator_v1_mediator_proto_msgTypes[135]
+	mi := &file_mediator_v1_mediator_proto_msgTypes[139]
 	if protoimpl.UnsafeEnabled && x != nil {
 		ms := protoimpl.X.MessageStateOf(protoimpl.Pointer(x))
 		if ms.LoadMessageInfo() == nil {
@@ -8165,7 +8369,7 @@ func (x *GetPublicKeyResponse) ProtoReflect() protoreflect.Message {
 
 // Deprecated: Use GetPublicKeyResponse.ProtoReflect.Descriptor instead.
 func (*GetPublicKeyResponse) Descriptor() ([]byte, []int) {
-	return file_mediator_v1_mediator_proto_rawDescGZIP(), []int{135}
+	return file_mediator_v1_mediator_proto_rawDescGZIP(), []int{139}
 }
 
 func (x *GetPublicKeyResponse) GetPublicKey() string {
@@ -8187,7 +8391,7 @@ type CreateKeyPairRequest struct {
 func (x *CreateKeyPairRequest) Reset() {
 	*x = CreateKeyPairRequest{}
 	if protoimpl.UnsafeEnabled {
-		mi := &file_mediator_v1_mediator_proto_msgTypes[136]
+		mi := &file_mediator_v1_mediator_proto_msgTypes[140]
 		ms := protoimpl.X.MessageStateOf(protoimpl.Pointer(x))
 		ms.StoreMessageInfo(mi)
 	}
@@ -8200,7 +8404,7 @@ func (x *CreateKeyPairRequest) String() string {
 func (*CreateKeyPairRequest) ProtoMessage() {}
 
 func (x *CreateKeyPairRequest) ProtoReflect() protoreflect.Message {
-	mi := &file_mediator_v1_mediator_proto_msgTypes[136]
+	mi := &file_mediator_v1_mediator_proto_msgTypes[140]
 	if protoimpl.UnsafeEnabled && x != nil {
 		ms := protoimpl.X.MessageStateOf(protoimpl.Pointer(x))
 		if ms.LoadMessageInfo() == nil {
@@ -8213,7 +8417,7 @@ func (x *CreateKeyPairRequest) ProtoReflect() protoreflect.Message {
 
 // Deprecated: Use CreateKeyPairRequest.ProtoReflect.Descriptor instead.
 func (*CreateKeyPairRequest) Descriptor() ([]byte, []int) {
-	return file_mediator_v1_mediator_proto_rawDescGZIP(), []int{136}
+	return file_mediator_v1_mediator_proto_rawDescGZIP(), []int{140}
 }
 
 func (x *CreateKeyPairRequest) GetPassphrase() string {
@@ -8242,7 +8446,7 @@ type CreateKeyPairResponse struct {
 func (x *CreateKeyPairResponse) Reset() {
 	*x = CreateKeyPairResponse{}
 	if protoimpl.UnsafeEnabled {
-		mi := &file_mediator_v1_mediator_proto_msgTypes[137]
+		mi := &file_mediator_v1_mediator_proto_msgTypes[141]
 		ms := protoimpl.X.MessageStateOf(protoimpl.Pointer(x))
 		ms.StoreMessageInfo(mi)
 	}
@@ -8255,7 +8459,7 @@ func (x *CreateKeyPairResponse) String() string {
 func (*CreateKeyPairResponse) ProtoMessage() {}
 
 func (x *CreateKeyPairResponse) ProtoReflect() protoreflect.Message {
-	mi := &file_mediator_v1_mediator_proto_msgTypes[137]
+	mi := &file_mediator_v1_mediator_proto_msgTypes[141]
 	if protoimpl.UnsafeEnabled && x != nil {
 		ms := protoimpl.X.MessageStateOf(protoimpl.Pointer(x))
 		if ms.LoadMessageInfo() == nil {
@@ -8268,7 +8472,7 @@ func (x *CreateKeyPairResponse) ProtoReflect() protoreflect.Message {
 
 // Deprecated: Use CreateKeyPairResponse.ProtoReflect.Descriptor instead.
 func (*CreateKeyPairResponse) Descriptor() ([]byte, []int) {
-	return file_mediator_v1_mediator_proto_rawDescGZIP(), []int{137}
+	return file_mediator_v1_mediator_proto_rawDescGZIP(), []int{141}
 }
 
 func (x *CreateKeyPairResponse) GetKeyIdentifier() string {
@@ -9250,34 +9454,63 @@ var file_mediator_v1_mediator_proto_rawDesc = []byte{
 	0x74, 0x61, 0x74, 0x75, 0x73, 0x18, 0x01, 0x20, 0x03, 0x28, 0x0b, 0x32, 0x1d, 0x2e, 0x6d, 0x65,
 	0x64, 0x69, 0x61, 0x74, 0x6f, 0x72, 0x2e, 0x76, 0x31, 0x2e, 0x50, 0x6f, 0x6c, 0x69, 0x63, 0x79,
 	0x52, 0x65, 0x70, 0x6f, 0x53, 0x74, 0x61, 0x74, 0x75, 0x73, 0x52, 0x10, 0x70, 0x6f, 0x6c, 0x69,
-	0x63, 0x79, 0x52, 0x65, 0x70, 0x6f, 0x53, 0x74, 0x61, 0x74, 0x75, 0x73, 0x22, 0x7d, 0x0a, 0x1e,
-	0x47, 0x65, 0x74, 0x50, 0x6f, 0x6c, 0x69, 0x63, 0x79, 0x56, 0x69, 0x6f, 0x6c, 0x61, 0x74, 0x69,
-	0x6f, 0x6e, 0x73, 0x42, 0x79, 0x49, 0x64, 0x52, 0x65, 0x71, 0x75, 0x65, 0x73, 0x74, 0x12, 0x0e,
-	0x0a, 0x02, 0x69, 0x64, 0x18, 0x01, 0x20, 0x01, 0x28, 0x05, 0x52, 0x02, 0x69, 0x64, 0x12, 0x19,
-	0x0a, 0x05, 0x6c, 0x69, 0x6d, 0x69, 0x74, 0x18, 0x02, 0x20, 0x01, 0x28, 0x05, 0x48, 0x00, 0x52,
-	0x05, 0x6c, 0x69, 0x6d, 0x69, 0x74, 0x88, 0x01, 0x01, 0x12, 0x1b, 0x0a, 0x06, 0x6f, 0x66, 0x66,
-	0x73, 0x65, 0x74, 0x18, 0x03, 0x20, 0x01, 0x28, 0x05, 0x48, 0x01, 0x52, 0x06, 0x6f, 0x66, 0x66,
-	0x73, 0x65, 0x74, 0x88, 0x01, 0x01, 0x42, 0x08, 0x0a, 0x06, 0x5f, 0x6c, 0x69, 0x6d, 0x69, 0x74,
-	0x42, 0x09, 0x0a, 0x07, 0x5f, 0x6f, 0x66, 0x66, 0x73, 0x65, 0x74, 0x22, 0x6a, 0x0a, 0x1f, 0x47,
+	0x63, 0x79, 0x52, 0x65, 0x70, 0x6f, 0x53, 0x74, 0x61, 0x74, 0x75, 0x73, 0x22, 0x49, 0x0a, 0x22,
+	0x47, 0x65, 0x74, 0x50, 0x6f, 0x6c, 0x69, 0x63, 0x79, 0x53, 0x74, 0x61, 0x74, 0x75, 0x73, 0x42,
+	0x79, 0x52, 0x65, 0x70, 0x6f, 0x73, 0x69, 0x74, 0x6f, 0x72, 0x79, 0x52, 0x65, 0x71, 0x75, 0x65,
+	0x73, 0x74, 0x12, 0x23, 0x0a, 0x0d, 0x72, 0x65, 0x70, 0x6f, 0x73, 0x69, 0x74, 0x6f, 0x72, 0x79,
+	0x5f, 0x69, 0x64, 0x18, 0x01, 0x20, 0x01, 0x28, 0x05, 0x52, 0x0c, 0x72, 0x65, 0x70, 0x6f, 0x73,
+	0x69, 0x74, 0x6f, 0x72, 0x79, 0x49, 0x64, 0x22, 0x72, 0x0a, 0x23, 0x47, 0x65, 0x74, 0x50, 0x6f,
+	0x6c, 0x69, 0x63, 0x79, 0x53, 0x74, 0x61, 0x74, 0x75, 0x73, 0x42, 0x79, 0x52, 0x65, 0x70, 0x6f,
+	0x73, 0x69, 0x74, 0x6f, 0x72, 0x79, 0x52, 0x65, 0x73, 0x70, 0x6f, 0x6e, 0x73, 0x65, 0x12, 0x4b,
+	0x0a, 0x12, 0x70, 0x6f, 0x6c, 0x69, 0x63, 0x79, 0x5f, 0x72, 0x65, 0x70, 0x6f, 0x5f, 0x73, 0x74,
+	0x61, 0x74, 0x75, 0x73, 0x18, 0x01, 0x20, 0x03, 0x28, 0x0b, 0x32, 0x1d, 0x2e, 0x6d, 0x65, 0x64,
+	0x69, 0x61, 0x74, 0x6f, 0x72, 0x2e, 0x76, 0x31, 0x2e, 0x50, 0x6f, 0x6c, 0x69, 0x63, 0x79, 0x52,
+	0x65, 0x70, 0x6f, 0x53, 0x74, 0x61, 0x74, 0x75, 0x73, 0x52, 0x10, 0x70, 0x6f, 0x6c, 0x69, 0x63,
+	0x79, 0x52, 0x65, 0x70, 0x6f, 0x53, 0x74, 0x61, 0x74, 0x75, 0x73, 0x22, 0x7d, 0x0a, 0x1e, 0x47,
 	0x65, 0x74, 0x50, 0x6f, 0x6c, 0x69, 0x63, 0x79, 0x56, 0x69, 0x6f, 0x6c, 0x61, 0x74, 0x69, 0x6f,
-	0x6e, 0x73, 0x42, 0x79, 0x49, 0x64, 0x52, 0x65, 0x73, 0x70, 0x6f, 0x6e, 0x73, 0x65, 0x12, 0x47,
-	0x0a, 0x10, 0x70, 0x6f, 0x6c, 0x69, 0x63, 0x79, 0x5f, 0x76, 0x69, 0x6f, 0x6c, 0x61, 0x74, 0x69,
-	0x6f, 0x6e, 0x18, 0x01, 0x20, 0x03, 0x28, 0x0b, 0x32, 0x1c, 0x2e, 0x6d, 0x65, 0x64, 0x69, 0x61,
-	0x74, 0x6f, 0x72, 0x2e, 0x76, 0x31, 0x2e, 0x50, 0x6f, 0x6c, 0x69, 0x63, 0x79, 0x56, 0x69, 0x6f,
-	0x6c, 0x61, 0x74, 0x69, 0x6f, 0x6e, 0x52, 0x0f, 0x70, 0x6f, 0x6c, 0x69, 0x63, 0x79, 0x56, 0x69,
-	0x6f, 0x6c, 0x61, 0x74, 0x69, 0x6f, 0x6e, 0x22, 0xa7, 0x01, 0x0a, 0x21, 0x47, 0x65, 0x74, 0x50,
-	0x6f, 0x6c, 0x69, 0x63, 0x79, 0x56, 0x69, 0x6f, 0x6c, 0x61, 0x74, 0x69, 0x6f, 0x6e, 0x73, 0x42,
-	0x79, 0x47, 0x72, 0x6f, 0x75, 0x70, 0x52, 0x65, 0x71, 0x75, 0x65, 0x73, 0x74, 0x12, 0x1a, 0x0a,
-	0x08, 0x70, 0x72, 0x6f, 0x76, 0x69, 0x64, 0x65, 0x72, 0x18, 0x01, 0x20, 0x01, 0x28, 0x09, 0x52,
-	0x08, 0x70, 0x72, 0x6f, 0x76, 0x69, 0x64, 0x65, 0x72, 0x12, 0x19, 0x0a, 0x08, 0x67, 0x72, 0x6f,
-	0x75, 0x70, 0x5f, 0x69, 0x64, 0x18, 0x02, 0x20, 0x01, 0x28, 0x05, 0x52, 0x07, 0x67, 0x72, 0x6f,
-	0x75, 0x70, 0x49, 0x64, 0x12, 0x19, 0x0a, 0x05, 0x6c, 0x69, 0x6d, 0x69, 0x74, 0x18, 0x03, 0x20,
-	0x01, 0x28, 0x05, 0x48, 0x00, 0x52, 0x05, 0x6c, 0x69, 0x6d, 0x69, 0x74, 0x88, 0x01, 0x01, 0x12,
-	0x1b, 0x0a, 0x06, 0x6f, 0x66, 0x66, 0x73, 0x65, 0x74, 0x18, 0x04, 0x20, 0x01, 0x28, 0x05, 0x48,
-	0x01, 0x52, 0x06, 0x6f, 0x66, 0x66, 0x73, 0x65, 0x74, 0x88, 0x01, 0x01, 0x42, 0x08, 0x0a, 0x06,
-	0x5f, 0x6c, 0x69, 0x6d, 0x69, 0x74, 0x42, 0x09, 0x0a, 0x07, 0x5f, 0x6f, 0x66, 0x66, 0x73, 0x65,
-	0x74, 0x22, 0x6d, 0x0a, 0x22, 0x47, 0x65, 0x74, 0x50, 0x6f, 0x6c, 0x69, 0x63, 0x79, 0x56, 0x69,
-	0x6f, 0x6c, 0x61, 0x74, 0x69, 0x6f, 0x6e, 0x73, 0x42, 0x79, 0x47, 0x72, 0x6f, 0x75, 0x70, 0x52,
+	0x6e, 0x73, 0x42, 0x79, 0x49, 0x64, 0x52, 0x65, 0x71, 0x75, 0x65, 0x73, 0x74, 0x12, 0x0e, 0x0a,
+	0x02, 0x69, 0x64, 0x18, 0x01, 0x20, 0x01, 0x28, 0x05, 0x52, 0x02, 0x69, 0x64, 0x12, 0x19, 0x0a,
+	0x05, 0x6c, 0x69, 0x6d, 0x69, 0x74, 0x18, 0x02, 0x20, 0x01, 0x28, 0x05, 0x48, 0x00, 0x52, 0x05,
+	0x6c, 0x69, 0x6d, 0x69, 0x74, 0x88, 0x01, 0x01, 0x12, 0x1b, 0x0a, 0x06, 0x6f, 0x66, 0x66, 0x73,
+	0x65, 0x74, 0x18, 0x03, 0x20, 0x01, 0x28, 0x05, 0x48, 0x01, 0x52, 0x06, 0x6f, 0x66, 0x66, 0x73,
+	0x65, 0x74, 0x88, 0x01, 0x01, 0x42, 0x08, 0x0a, 0x06, 0x5f, 0x6c, 0x69, 0x6d, 0x69, 0x74, 0x42,
+	0x09, 0x0a, 0x07, 0x5f, 0x6f, 0x66, 0x66, 0x73, 0x65, 0x74, 0x22, 0x6a, 0x0a, 0x1f, 0x47, 0x65,
+	0x74, 0x50, 0x6f, 0x6c, 0x69, 0x63, 0x79, 0x56, 0x69, 0x6f, 0x6c, 0x61, 0x74, 0x69, 0x6f, 0x6e,
+	0x73, 0x42, 0x79, 0x49, 0x64, 0x52, 0x65, 0x73, 0x70, 0x6f, 0x6e, 0x73, 0x65, 0x12, 0x47, 0x0a,
+	0x10, 0x70, 0x6f, 0x6c, 0x69, 0x63, 0x79, 0x5f, 0x76, 0x69, 0x6f, 0x6c, 0x61, 0x74, 0x69, 0x6f,
+	0x6e, 0x18, 0x01, 0x20, 0x03, 0x28, 0x0b, 0x32, 0x1c, 0x2e, 0x6d, 0x65, 0x64, 0x69, 0x61, 0x74,
+	0x6f, 0x72, 0x2e, 0x76, 0x31, 0x2e, 0x50, 0x6f, 0x6c, 0x69, 0x63, 0x79, 0x56, 0x69, 0x6f, 0x6c,
+	0x61, 0x74, 0x69, 0x6f, 0x6e, 0x52, 0x0f, 0x70, 0x6f, 0x6c, 0x69, 0x63, 0x79, 0x56, 0x69, 0x6f,
+	0x6c, 0x61, 0x74, 0x69, 0x6f, 0x6e, 0x22, 0xa7, 0x01, 0x0a, 0x21, 0x47, 0x65, 0x74, 0x50, 0x6f,
+	0x6c, 0x69, 0x63, 0x79, 0x56, 0x69, 0x6f, 0x6c, 0x61, 0x74, 0x69, 0x6f, 0x6e, 0x73, 0x42, 0x79,
+	0x47, 0x72, 0x6f, 0x75, 0x70, 0x52, 0x65, 0x71, 0x75, 0x65, 0x73, 0x74, 0x12, 0x1a, 0x0a, 0x08,
+	0x70, 0x72, 0x6f, 0x76, 0x69, 0x64, 0x65, 0x72, 0x18, 0x01, 0x20, 0x01, 0x28, 0x09, 0x52, 0x08,
+	0x70, 0x72, 0x6f, 0x76, 0x69, 0x64, 0x65, 0x72, 0x12, 0x19, 0x0a, 0x08, 0x67, 0x72, 0x6f, 0x75,
+	0x70, 0x5f, 0x69, 0x64, 0x18, 0x02, 0x20, 0x01, 0x28, 0x05, 0x52, 0x07, 0x67, 0x72, 0x6f, 0x75,
+	0x70, 0x49, 0x64, 0x12, 0x19, 0x0a, 0x05, 0x6c, 0x69, 0x6d, 0x69, 0x74, 0x18, 0x03, 0x20, 0x01,
+	0x28, 0x05, 0x48, 0x00, 0x52, 0x05, 0x6c, 0x69, 0x6d, 0x69, 0x74, 0x88, 0x01, 0x01, 0x12, 0x1b,
+	0x0a, 0x06, 0x6f, 0x66, 0x66, 0x73, 0x65, 0x74, 0x18, 0x04, 0x20, 0x01, 0x28, 0x05, 0x48, 0x01,
+	0x52, 0x06, 0x6f, 0x66, 0x66, 0x73, 0x65, 0x74, 0x88, 0x01, 0x01, 0x42, 0x08, 0x0a, 0x06, 0x5f,
+	0x6c, 0x69, 0x6d, 0x69, 0x74, 0x42, 0x09, 0x0a, 0x07, 0x5f, 0x6f, 0x66, 0x66, 0x73, 0x65, 0x74,
+	0x22, 0x6d, 0x0a, 0x22, 0x47, 0x65, 0x74, 0x50, 0x6f, 0x6c, 0x69, 0x63, 0x79, 0x56, 0x69, 0x6f,
+	0x6c, 0x61, 0x74, 0x69, 0x6f, 0x6e, 0x73, 0x42, 0x79, 0x47, 0x72, 0x6f, 0x75, 0x70, 0x52, 0x65,
+	0x73, 0x70, 0x6f, 0x6e, 0x73, 0x65, 0x12, 0x47, 0x0a, 0x10, 0x70, 0x6f, 0x6c, 0x69, 0x63, 0x79,
+	0x5f, 0x76, 0x69, 0x6f, 0x6c, 0x61, 0x74, 0x69, 0x6f, 0x6e, 0x18, 0x01, 0x20, 0x03, 0x28, 0x0b,
+	0x32, 0x1c, 0x2e, 0x6d, 0x65, 0x64, 0x69, 0x61, 0x74, 0x6f, 0x72, 0x2e, 0x76, 0x31, 0x2e, 0x50,
+	0x6f, 0x6c, 0x69, 0x63, 0x79, 0x56, 0x69, 0x6f, 0x6c, 0x61, 0x74, 0x69, 0x6f, 0x6e, 0x52, 0x0f,
+	0x70, 0x6f, 0x6c, 0x69, 0x63, 0x79, 0x56, 0x69, 0x6f, 0x6c, 0x61, 0x74, 0x69, 0x6f, 0x6e, 0x22,
+	0x9a, 0x01, 0x0a, 0x26, 0x47, 0x65, 0x74, 0x50, 0x6f, 0x6c, 0x69, 0x63, 0x79, 0x56, 0x69, 0x6f,
+	0x6c, 0x61, 0x74, 0x69, 0x6f, 0x6e, 0x73, 0x42, 0x79, 0x52, 0x65, 0x70, 0x6f, 0x73, 0x69, 0x74,
+	0x6f, 0x72, 0x79, 0x52, 0x65, 0x71, 0x75, 0x65, 0x73, 0x74, 0x12, 0x23, 0x0a, 0x0d, 0x72, 0x65,
+	0x70, 0x6f, 0x73, 0x69, 0x74, 0x6f, 0x72, 0x79, 0x5f, 0x69, 0x64, 0x18, 0x01, 0x20, 0x01, 0x28,
+	0x05, 0x52, 0x0c, 0x72, 0x65, 0x70, 0x6f, 0x73, 0x69, 0x74, 0x6f, 0x72, 0x79, 0x49, 0x64, 0x12,
+	0x19, 0x0a, 0x05, 0x6c, 0x69, 0x6d, 0x69, 0x74, 0x18, 0x02, 0x20, 0x01, 0x28, 0x05, 0x48, 0x00,
+	0x52, 0x05, 0x6c, 0x69, 0x6d, 0x69, 0x74, 0x88, 0x01, 0x01, 0x12, 0x1b, 0x0a, 0x06, 0x6f, 0x66,
+	0x66, 0x73, 0x65, 0x74, 0x18, 0x03, 0x20, 0x01, 0x28, 0x05, 0x48, 0x01, 0x52, 0x06, 0x6f, 0x66,
+	0x66, 0x73, 0x65, 0x74, 0x88, 0x01, 0x01, 0x42, 0x08, 0x0a, 0x06, 0x5f, 0x6c, 0x69, 0x6d, 0x69,
+	0x74, 0x42, 0x09, 0x0a, 0x07, 0x5f, 0x6f, 0x66, 0x66, 0x73, 0x65, 0x74, 0x22, 0x72, 0x0a, 0x27,
+	0x47, 0x65, 0x74, 0x50, 0x6f, 0x6c, 0x69, 0x63, 0x79, 0x56, 0x69, 0x6f, 0x6c, 0x61, 0x74, 0x69,
+	0x6f, 0x6e, 0x73, 0x42, 0x79, 0x52, 0x65, 0x70, 0x6f, 0x73, 0x69, 0x74, 0x6f, 0x72, 0x79, 0x52,
 	0x65, 0x73, 0x70, 0x6f, 0x6e, 0x73, 0x65, 0x12, 0x47, 0x0a, 0x10, 0x70, 0x6f, 0x6c, 0x69, 0x63,
 	0x79, 0x5f, 0x76, 0x69, 0x6f, 0x6c, 0x61, 0x74, 0x69, 0x6f, 0x6e, 0x18, 0x01, 0x20, 0x03, 0x28,
 	0x0b, 0x32, 0x1c, 0x2e, 0x6d, 0x65, 0x64, 0x69, 0x61, 0x74, 0x6f, 0x72, 0x2e, 0x76, 0x31, 0x2e,
@@ -9897,173 +10130,177 @@ func file_mediator_v1_mediator_proto_rawDescGZIP() []byte {
 }
 
 var file_mediator_v1_mediator_proto_enumTypes = make([]protoimpl.EnumInfo, 1)
-var file_mediator_v1_mediator_proto_msgTypes = make([]protoimpl.MessageInfo, 138)
+var file_mediator_v1_mediator_proto_msgTypes = make([]protoimpl.MessageInfo, 142)
 var file_mediator_v1_mediator_proto_goTypes = []interface{}{
-	(RepoFilter)(0),                            // 0: mediator.v1.RepoFilter
-	(*CheckHealthRequest)(nil),                 // 1: mediator.v1.CheckHealthRequest
-	(*CheckHealthResponse)(nil),                // 2: mediator.v1.CheckHealthResponse
-	(*GetAuthorizationURLRequest)(nil),         // 3: mediator.v1.GetAuthorizationURLRequest
-	(*GetAuthorizationURLResponse)(nil),        // 4: mediator.v1.GetAuthorizationURLResponse
-	(*ExchangeCodeForTokenCLIRequest)(nil),     // 5: mediator.v1.ExchangeCodeForTokenCLIRequest
-	(*StoreProviderTokenRequest)(nil),          // 6: mediator.v1.StoreProviderTokenRequest
-	(*StoreProviderTokenResponse)(nil),         // 7: mediator.v1.StoreProviderTokenResponse
-	(*ExchangeCodeForTokenCLIResponse)(nil),    // 8: mediator.v1.ExchangeCodeForTokenCLIResponse
-	(*ExchangeCodeForTokenWEBRequest)(nil),     // 9: mediator.v1.ExchangeCodeForTokenWEBRequest
-	(*ExchangeCodeForTokenWEBResponse)(nil),    // 10: mediator.v1.ExchangeCodeForTokenWEBResponse
-	(*LogInRequest)(nil),                       // 11: mediator.v1.LogInRequest
-	(*LogInResponse)(nil),                      // 12: mediator.v1.LogInResponse
-	(*LogOutRequest)(nil),                      // 13: mediator.v1.LogOutRequest
-	(*LogOutResponse)(nil),                     // 14: mediator.v1.LogOutResponse
-	(*RevokeTokensRequest)(nil),                // 15: mediator.v1.RevokeTokensRequest
-	(*RevokeTokensResponse)(nil),               // 16: mediator.v1.RevokeTokensResponse
-	(*RevokeUserTokenRequest)(nil),             // 17: mediator.v1.RevokeUserTokenRequest
-	(*RevokeUserTokenResponse)(nil),            // 18: mediator.v1.RevokeUserTokenResponse
-	(*RevokeOauthTokensRequest)(nil),           // 19: mediator.v1.RevokeOauthTokensRequest
-	(*RevokeOauthTokensResponse)(nil),          // 20: mediator.v1.RevokeOauthTokensResponse
-	(*RevokeOauthGroupTokenRequest)(nil),       // 21: mediator.v1.RevokeOauthGroupTokenRequest
-	(*RevokeOauthGroupTokenResponse)(nil),      // 22: mediator.v1.RevokeOauthGroupTokenResponse
-	(*RefreshTokenRequest)(nil),                // 23: mediator.v1.RefreshTokenRequest
-	(*RefreshTokenResponse)(nil),               // 24: mediator.v1.RefreshTokenResponse
-	(*RegisterRepositoryRequest)(nil),          // 25: mediator.v1.RegisterRepositoryRequest
-	(*Repositories)(nil),                       // 26: mediator.v1.Repositories
-	(*ListRepositories)(nil),                   // 27: mediator.v1.ListRepositories
-	(*RegisterRepositoryResponse)(nil),         // 28: mediator.v1.RegisterRepositoryResponse
-	(*GetRepositoryRequest)(nil),               // 29: mediator.v1.GetRepositoryRequest
-	(*ListRepositoriesRequest)(nil),            // 30: mediator.v1.ListRepositoriesRequest
-	(*ListRepositoriesResponse)(nil),           // 31: mediator.v1.ListRepositoriesResponse
-	(*GetRepositoryResponse)(nil),              // 32: mediator.v1.GetRepositoryResponse
-	(*RepositoryResult)(nil),                   // 33: mediator.v1.RepositoryResult
-	(*VerifyRequest)(nil),                      // 34: mediator.v1.VerifyRequest
-	(*VerifyResponse)(nil),                     // 35: mediator.v1.VerifyResponse
-	(*VerifyProviderTokenFromRequest)(nil),     // 36: mediator.v1.VerifyProviderTokenFromRequest
-	(*VerifyProviderTokenFromResponse)(nil),    // 37: mediator.v1.VerifyProviderTokenFromResponse
-	(*GetVulnerabilitiesRequest)(nil),          // 38: mediator.v1.GetVulnerabilitiesRequest
-	(*GetVulnerabilityByIdRequest)(nil),        // 39: mediator.v1.GetVulnerabilityByIdRequest
-	(*GetVulnerabilityByIdResponse)(nil),       // 40: mediator.v1.GetVulnerabilityByIdResponse
-	(*GetVulnerabilitiesResponse)(nil),         // 41: mediator.v1.GetVulnerabilitiesResponse
-	(*GetSecretsRequest)(nil),                  // 42: mediator.v1.GetSecretsRequest
-	(*GetSecretsResponse)(nil),                 // 43: mediator.v1.GetSecretsResponse
-	(*GetSecretByIdRequest)(nil),               // 44: mediator.v1.GetSecretByIdRequest
-	(*GetSecretByIdResponse)(nil),              // 45: mediator.v1.GetSecretByIdResponse
-	(*GetBranchProtectionRequest)(nil),         // 46: mediator.v1.GetBranchProtectionRequest
-	(*BranchProtection)(nil),                   // 47: mediator.v1.BranchProtection
-	(*GetBranchProtectionResponse)(nil),        // 48: mediator.v1.GetBranchProtectionResponse
-	(*CreateOrganizationRequest)(nil),          // 49: mediator.v1.CreateOrganizationRequest
-	(*CreateOrganizationResponse)(nil),         // 50: mediator.v1.CreateOrganizationResponse
-	(*OrganizationRecord)(nil),                 // 51: mediator.v1.OrganizationRecord
-	(*DeleteOrganizationRequest)(nil),          // 52: mediator.v1.DeleteOrganizationRequest
-	(*DeleteOrganizationResponse)(nil),         // 53: mediator.v1.DeleteOrganizationResponse
-	(*GetOrganizationsRequest)(nil),            // 54: mediator.v1.GetOrganizationsRequest
-	(*GetOrganizationsResponse)(nil),           // 55: mediator.v1.GetOrganizationsResponse
-	(*GetOrganizationRequest)(nil),             // 56: mediator.v1.GetOrganizationRequest
-	(*GetOrganizationResponse)(nil),            // 57: mediator.v1.GetOrganizationResponse
-	(*GetOrganizationByNameRequest)(nil),       // 58: mediator.v1.GetOrganizationByNameRequest
-	(*GetOrganizationByNameResponse)(nil),      // 59: mediator.v1.GetOrganizationByNameResponse
-	(*CreateGroupRequest)(nil),                 // 60: mediator.v1.CreateGroupRequest
-	(*GetGroupByNameRequest)(nil),              // 61: mediator.v1.GetGroupByNameRequest
-	(*GetGroupByIdRequest)(nil),                // 62: mediator.v1.GetGroupByIdRequest
-	(*GetGroupsRequest)(nil),                   // 63: mediator.v1.GetGroupsRequest
-	(*GroupRecord)(nil),                        // 64: mediator.v1.GroupRecord
-	(*CreateGroupResponse)(nil),                // 65: mediator.v1.CreateGroupResponse
-	(*GetGroupByNameResponse)(nil),             // 66: mediator.v1.GetGroupByNameResponse
-	(*GetGroupByIdResponse)(nil),               // 67: mediator.v1.GetGroupByIdResponse
-	(*GetGroupsResponse)(nil),                  // 68: mediator.v1.GetGroupsResponse
-	(*DeleteGroupRequest)(nil),                 // 69: mediator.v1.DeleteGroupRequest
-	(*DeleteGroupResponse)(nil),                // 70: mediator.v1.DeleteGroupResponse
-	(*CreateRoleByOrganizationRequest)(nil),    // 71: mediator.v1.CreateRoleByOrganizationRequest
-	(*CreateRoleByOrganizationResponse)(nil),   // 72: mediator.v1.CreateRoleByOrganizationResponse
-	(*CreateRoleByGroupRequest)(nil),           // 73: mediator.v1.CreateRoleByGroupRequest
-	(*CreateRoleByGroupResponse)(nil),          // 74: mediator.v1.CreateRoleByGroupResponse
-	(*DeleteRoleRequest)(nil),                  // 75: mediator.v1.DeleteRoleRequest
-	(*DeleteRoleResponse)(nil),                 // 76: mediator.v1.DeleteRoleResponse
-	(*RoleRecord)(nil),                         // 77: mediator.v1.RoleRecord
-	(*GetRolesRequest)(nil),                    // 78: mediator.v1.GetRolesRequest
-	(*GetRolesResponse)(nil),                   // 79: mediator.v1.GetRolesResponse
-	(*GetRolesByGroupRequest)(nil),             // 80: mediator.v1.GetRolesByGroupRequest
-	(*GetRolesByGroupResponse)(nil),            // 81: mediator.v1.GetRolesByGroupResponse
-	(*GetRoleByIdRequest)(nil),                 // 82: mediator.v1.GetRoleByIdRequest
-	(*GetRoleByIdResponse)(nil),                // 83: mediator.v1.GetRoleByIdResponse
-	(*GetRoleByNameRequest)(nil),               // 84: mediator.v1.GetRoleByNameRequest
-	(*GetRoleByNameResponse)(nil),              // 85: mediator.v1.GetRoleByNameResponse
-	(*CreateUserRequest)(nil),                  // 86: mediator.v1.CreateUserRequest
-	(*CreateUserResponse)(nil),                 // 87: mediator.v1.CreateUserResponse
-	(*DeleteUserRequest)(nil),                  // 88: mediator.v1.DeleteUserRequest
-	(*DeleteUserResponse)(nil),                 // 89: mediator.v1.DeleteUserResponse
-	(*UpdatePasswordRequest)(nil),              // 90: mediator.v1.UpdatePasswordRequest
-	(*UpdatePasswordResponse)(nil),             // 91: mediator.v1.UpdatePasswordResponse
-	(*UpdateProfileRequest)(nil),               // 92: mediator.v1.UpdateProfileRequest
-	(*UpdateProfileResponse)(nil),              // 93: mediator.v1.UpdateProfileResponse
-	(*UserRecord)(nil),                         // 94: mediator.v1.UserRecord
-	(*GetUsersRequest)(nil),                    // 95: mediator.v1.GetUsersRequest
-	(*GetUsersResponse)(nil),                   // 96: mediator.v1.GetUsersResponse
-	(*GetUsersByOrganizationRequest)(nil),      // 97: mediator.v1.GetUsersByOrganizationRequest
-	(*GetUsersByOrganizationResponse)(nil),     // 98: mediator.v1.GetUsersByOrganizationResponse
-	(*GetUsersByGroupRequest)(nil),             // 99: mediator.v1.GetUsersByGroupRequest
-	(*GetUsersByGroupResponse)(nil),            // 100: mediator.v1.GetUsersByGroupResponse
-	(*GetUserByIdRequest)(nil),                 // 101: mediator.v1.GetUserByIdRequest
-	(*GetUserByIdResponse)(nil),                // 102: mediator.v1.GetUserByIdResponse
-	(*GetUserByUserNameRequest)(nil),           // 103: mediator.v1.GetUserByUserNameRequest
-	(*GetUserByUserNameResponse)(nil),          // 104: mediator.v1.GetUserByUserNameResponse
-	(*GetUserByEmailRequest)(nil),              // 105: mediator.v1.GetUserByEmailRequest
-	(*GetUserByEmailResponse)(nil),             // 106: mediator.v1.GetUserByEmailResponse
-	(*GetUserRequest)(nil),                     // 107: mediator.v1.GetUserRequest
-	(*GetUserResponse)(nil),                    // 108: mediator.v1.GetUserResponse
-	(*CreatePolicyRequest)(nil),                // 109: mediator.v1.CreatePolicyRequest
-	(*PolicyRecord)(nil),                       // 110: mediator.v1.PolicyRecord
-	(*CreatePolicyResponse)(nil),               // 111: mediator.v1.CreatePolicyResponse
-	(*DeletePolicyRequest)(nil),                // 112: mediator.v1.DeletePolicyRequest
-	(*DeletePolicyResponse)(nil),               // 113: mediator.v1.DeletePolicyResponse
-	(*GetPoliciesRequest)(nil),                 // 114: mediator.v1.GetPoliciesRequest
-	(*GetPoliciesResponse)(nil),                // 115: mediator.v1.GetPoliciesResponse
-	(*GetPolicyByIdRequest)(nil),               // 116: mediator.v1.GetPolicyByIdRequest
-	(*GetPolicyByIdResponse)(nil),              // 117: mediator.v1.GetPolicyByIdResponse
-	(*PolicyRepoStatus)(nil),                   // 118: mediator.v1.PolicyRepoStatus
-	(*PolicyViolation)(nil),                    // 119: mediator.v1.PolicyViolation
-	(*GetPolicyStatusByIdRequest)(nil),         // 120: mediator.v1.GetPolicyStatusByIdRequest
-	(*GetPolicyStatusByIdResponse)(nil),        // 121: mediator.v1.GetPolicyStatusByIdResponse
-	(*GetPolicyStatusByGroupRequest)(nil),      // 122: mediator.v1.GetPolicyStatusByGroupRequest
-	(*GetPolicyStatusByGroupResponse)(nil),     // 123: mediator.v1.GetPolicyStatusByGroupResponse
-	(*GetPolicyViolationsByIdRequest)(nil),     // 124: mediator.v1.GetPolicyViolationsByIdRequest
-	(*GetPolicyViolationsByIdResponse)(nil),    // 125: mediator.v1.GetPolicyViolationsByIdResponse
-	(*GetPolicyViolationsByGroupRequest)(nil),  // 126: mediator.v1.GetPolicyViolationsByGroupRequest
-	(*GetPolicyViolationsByGroupResponse)(nil), // 127: mediator.v1.GetPolicyViolationsByGroupResponse
-	(*PolicyTypeRecord)(nil),                   // 128: mediator.v1.PolicyTypeRecord
-	(*GetPolicyTypeRequest)(nil),               // 129: mediator.v1.GetPolicyTypeRequest
-	(*GetPolicyTypeResponse)(nil),              // 130: mediator.v1.GetPolicyTypeResponse
-	(*GetPolicyTypeByIdRequest)(nil),           // 131: mediator.v1.GetPolicyTypeByIdRequest
-	(*GetPolicyTypeByIdResponse)(nil),          // 132: mediator.v1.GetPolicyTypeByIdResponse
-	(*GetPolicyTypesRequest)(nil),              // 133: mediator.v1.GetPolicyTypesRequest
-	(*GetPolicyTypesResponse)(nil),             // 134: mediator.v1.GetPolicyTypesResponse
-	(*GetPublicKeyRequest)(nil),                // 135: mediator.v1.GetPublicKeyRequest
-	(*GetPublicKeyResponse)(nil),               // 136: mediator.v1.GetPublicKeyResponse
-	(*CreateKeyPairRequest)(nil),               // 137: mediator.v1.CreateKeyPairRequest
-	(*CreateKeyPairResponse)(nil),              // 138: mediator.v1.CreateKeyPairResponse
-	(*timestamppb.Timestamp)(nil),              // 139: google.protobuf.Timestamp
-	(*wrapperspb.StringValue)(nil),             // 140: google.protobuf.StringValue
+	(RepoFilter)(0),                                 // 0: mediator.v1.RepoFilter
+	(*CheckHealthRequest)(nil),                      // 1: mediator.v1.CheckHealthRequest
+	(*CheckHealthResponse)(nil),                     // 2: mediator.v1.CheckHealthResponse
+	(*GetAuthorizationURLRequest)(nil),              // 3: mediator.v1.GetAuthorizationURLRequest
+	(*GetAuthorizationURLResponse)(nil),             // 4: mediator.v1.GetAuthorizationURLResponse
+	(*ExchangeCodeForTokenCLIRequest)(nil),          // 5: mediator.v1.ExchangeCodeForTokenCLIRequest
+	(*StoreProviderTokenRequest)(nil),               // 6: mediator.v1.StoreProviderTokenRequest
+	(*StoreProviderTokenResponse)(nil),              // 7: mediator.v1.StoreProviderTokenResponse
+	(*ExchangeCodeForTokenCLIResponse)(nil),         // 8: mediator.v1.ExchangeCodeForTokenCLIResponse
+	(*ExchangeCodeForTokenWEBRequest)(nil),          // 9: mediator.v1.ExchangeCodeForTokenWEBRequest
+	(*ExchangeCodeForTokenWEBResponse)(nil),         // 10: mediator.v1.ExchangeCodeForTokenWEBResponse
+	(*LogInRequest)(nil),                            // 11: mediator.v1.LogInRequest
+	(*LogInResponse)(nil),                           // 12: mediator.v1.LogInResponse
+	(*LogOutRequest)(nil),                           // 13: mediator.v1.LogOutRequest
+	(*LogOutResponse)(nil),                          // 14: mediator.v1.LogOutResponse
+	(*RevokeTokensRequest)(nil),                     // 15: mediator.v1.RevokeTokensRequest
+	(*RevokeTokensResponse)(nil),                    // 16: mediator.v1.RevokeTokensResponse
+	(*RevokeUserTokenRequest)(nil),                  // 17: mediator.v1.RevokeUserTokenRequest
+	(*RevokeUserTokenResponse)(nil),                 // 18: mediator.v1.RevokeUserTokenResponse
+	(*RevokeOauthTokensRequest)(nil),                // 19: mediator.v1.RevokeOauthTokensRequest
+	(*RevokeOauthTokensResponse)(nil),               // 20: mediator.v1.RevokeOauthTokensResponse
+	(*RevokeOauthGroupTokenRequest)(nil),            // 21: mediator.v1.RevokeOauthGroupTokenRequest
+	(*RevokeOauthGroupTokenResponse)(nil),           // 22: mediator.v1.RevokeOauthGroupTokenResponse
+	(*RefreshTokenRequest)(nil),                     // 23: mediator.v1.RefreshTokenRequest
+	(*RefreshTokenResponse)(nil),                    // 24: mediator.v1.RefreshTokenResponse
+	(*RegisterRepositoryRequest)(nil),               // 25: mediator.v1.RegisterRepositoryRequest
+	(*Repositories)(nil),                            // 26: mediator.v1.Repositories
+	(*ListRepositories)(nil),                        // 27: mediator.v1.ListRepositories
+	(*RegisterRepositoryResponse)(nil),              // 28: mediator.v1.RegisterRepositoryResponse
+	(*GetRepositoryRequest)(nil),                    // 29: mediator.v1.GetRepositoryRequest
+	(*ListRepositoriesRequest)(nil),                 // 30: mediator.v1.ListRepositoriesRequest
+	(*ListRepositoriesResponse)(nil),                // 31: mediator.v1.ListRepositoriesResponse
+	(*GetRepositoryResponse)(nil),                   // 32: mediator.v1.GetRepositoryResponse
+	(*RepositoryResult)(nil),                        // 33: mediator.v1.RepositoryResult
+	(*VerifyRequest)(nil),                           // 34: mediator.v1.VerifyRequest
+	(*VerifyResponse)(nil),                          // 35: mediator.v1.VerifyResponse
+	(*VerifyProviderTokenFromRequest)(nil),          // 36: mediator.v1.VerifyProviderTokenFromRequest
+	(*VerifyProviderTokenFromResponse)(nil),         // 37: mediator.v1.VerifyProviderTokenFromResponse
+	(*GetVulnerabilitiesRequest)(nil),               // 38: mediator.v1.GetVulnerabilitiesRequest
+	(*GetVulnerabilityByIdRequest)(nil),             // 39: mediator.v1.GetVulnerabilityByIdRequest
+	(*GetVulnerabilityByIdResponse)(nil),            // 40: mediator.v1.GetVulnerabilityByIdResponse
+	(*GetVulnerabilitiesResponse)(nil),              // 41: mediator.v1.GetVulnerabilitiesResponse
+	(*GetSecretsRequest)(nil),                       // 42: mediator.v1.GetSecretsRequest
+	(*GetSecretsResponse)(nil),                      // 43: mediator.v1.GetSecretsResponse
+	(*GetSecretByIdRequest)(nil),                    // 44: mediator.v1.GetSecretByIdRequest
+	(*GetSecretByIdResponse)(nil),                   // 45: mediator.v1.GetSecretByIdResponse
+	(*GetBranchProtectionRequest)(nil),              // 46: mediator.v1.GetBranchProtectionRequest
+	(*BranchProtection)(nil),                        // 47: mediator.v1.BranchProtection
+	(*GetBranchProtectionResponse)(nil),             // 48: mediator.v1.GetBranchProtectionResponse
+	(*CreateOrganizationRequest)(nil),               // 49: mediator.v1.CreateOrganizationRequest
+	(*CreateOrganizationResponse)(nil),              // 50: mediator.v1.CreateOrganizationResponse
+	(*OrganizationRecord)(nil),                      // 51: mediator.v1.OrganizationRecord
+	(*DeleteOrganizationRequest)(nil),               // 52: mediator.v1.DeleteOrganizationRequest
+	(*DeleteOrganizationResponse)(nil),              // 53: mediator.v1.DeleteOrganizationResponse
+	(*GetOrganizationsRequest)(nil),                 // 54: mediator.v1.GetOrganizationsRequest
+	(*GetOrganizationsResponse)(nil),                // 55: mediator.v1.GetOrganizationsResponse
+	(*GetOrganizationRequest)(nil),                  // 56: mediator.v1.GetOrganizationRequest
+	(*GetOrganizationResponse)(nil),                 // 57: mediator.v1.GetOrganizationResponse
+	(*GetOrganizationByNameRequest)(nil),            // 58: mediator.v1.GetOrganizationByNameRequest
+	(*GetOrganizationByNameResponse)(nil),           // 59: mediator.v1.GetOrganizationByNameResponse
+	(*CreateGroupRequest)(nil),                      // 60: mediator.v1.CreateGroupRequest
+	(*GetGroupByNameRequest)(nil),                   // 61: mediator.v1.GetGroupByNameRequest
+	(*GetGroupByIdRequest)(nil),                     // 62: mediator.v1.GetGroupByIdRequest
+	(*GetGroupsRequest)(nil),                        // 63: mediator.v1.GetGroupsRequest
+	(*GroupRecord)(nil),                             // 64: mediator.v1.GroupRecord
+	(*CreateGroupResponse)(nil),                     // 65: mediator.v1.CreateGroupResponse
+	(*GetGroupByNameResponse)(nil),                  // 66: mediator.v1.GetGroupByNameResponse
+	(*GetGroupByIdResponse)(nil),                    // 67: mediator.v1.GetGroupByIdResponse
+	(*GetGroupsResponse)(nil),                       // 68: mediator.v1.GetGroupsResponse
+	(*DeleteGroupRequest)(nil),                      // 69: mediator.v1.DeleteGroupRequest
+	(*DeleteGroupResponse)(nil),                     // 70: mediator.v1.DeleteGroupResponse
+	(*CreateRoleByOrganizationRequest)(nil),         // 71: mediator.v1.CreateRoleByOrganizationRequest
+	(*CreateRoleByOrganizationResponse)(nil),        // 72: mediator.v1.CreateRoleByOrganizationResponse
+	(*CreateRoleByGroupRequest)(nil),                // 73: mediator.v1.CreateRoleByGroupRequest
+	(*CreateRoleByGroupResponse)(nil),               // 74: mediator.v1.CreateRoleByGroupResponse
+	(*DeleteRoleRequest)(nil),                       // 75: mediator.v1.DeleteRoleRequest
+	(*DeleteRoleResponse)(nil),                      // 76: mediator.v1.DeleteRoleResponse
+	(*RoleRecord)(nil),                              // 77: mediator.v1.RoleRecord
+	(*GetRolesRequest)(nil),                         // 78: mediator.v1.GetRolesRequest
+	(*GetRolesResponse)(nil),                        // 79: mediator.v1.GetRolesResponse
+	(*GetRolesByGroupRequest)(nil),                  // 80: mediator.v1.GetRolesByGroupRequest
+	(*GetRolesByGroupResponse)(nil),                 // 81: mediator.v1.GetRolesByGroupResponse
+	(*GetRoleByIdRequest)(nil),                      // 82: mediator.v1.GetRoleByIdRequest
+	(*GetRoleByIdResponse)(nil),                     // 83: mediator.v1.GetRoleByIdResponse
+	(*GetRoleByNameRequest)(nil),                    // 84: mediator.v1.GetRoleByNameRequest
+	(*GetRoleByNameResponse)(nil),                   // 85: mediator.v1.GetRoleByNameResponse
+	(*CreateUserRequest)(nil),                       // 86: mediator.v1.CreateUserRequest
+	(*CreateUserResponse)(nil),                      // 87: mediator.v1.CreateUserResponse
+	(*DeleteUserRequest)(nil),                       // 88: mediator.v1.DeleteUserRequest
+	(*DeleteUserResponse)(nil),                      // 89: mediator.v1.DeleteUserResponse
+	(*UpdatePasswordRequest)(nil),                   // 90: mediator.v1.UpdatePasswordRequest
+	(*UpdatePasswordResponse)(nil),                  // 91: mediator.v1.UpdatePasswordResponse
+	(*UpdateProfileRequest)(nil),                    // 92: mediator.v1.UpdateProfileRequest
+	(*UpdateProfileResponse)(nil),                   // 93: mediator.v1.UpdateProfileResponse
+	(*UserRecord)(nil),                              // 94: mediator.v1.UserRecord
+	(*GetUsersRequest)(nil),                         // 95: mediator.v1.GetUsersRequest
+	(*GetUsersResponse)(nil),                        // 96: mediator.v1.GetUsersResponse
+	(*GetUsersByOrganizationRequest)(nil),           // 97: mediator.v1.GetUsersByOrganizationRequest
+	(*GetUsersByOrganizationResponse)(nil),          // 98: mediator.v1.GetUsersByOrganizationResponse
+	(*GetUsersByGroupRequest)(nil),                  // 99: mediator.v1.GetUsersByGroupRequest
+	(*GetUsersByGroupResponse)(nil),                 // 100: mediator.v1.GetUsersByGroupResponse
+	(*GetUserByIdRequest)(nil),                      // 101: mediator.v1.GetUserByIdRequest
+	(*GetUserByIdResponse)(nil),                     // 102: mediator.v1.GetUserByIdResponse
+	(*GetUserByUserNameRequest)(nil),                // 103: mediator.v1.GetUserByUserNameRequest
+	(*GetUserByUserNameResponse)(nil),               // 104: mediator.v1.GetUserByUserNameResponse
+	(*GetUserByEmailRequest)(nil),                   // 105: mediator.v1.GetUserByEmailRequest
+	(*GetUserByEmailResponse)(nil),                  // 106: mediator.v1.GetUserByEmailResponse
+	(*GetUserRequest)(nil),                          // 107: mediator.v1.GetUserRequest
+	(*GetUserResponse)(nil),                         // 108: mediator.v1.GetUserResponse
+	(*CreatePolicyRequest)(nil),                     // 109: mediator.v1.CreatePolicyRequest
+	(*PolicyRecord)(nil),                            // 110: mediator.v1.PolicyRecord
+	(*CreatePolicyResponse)(nil),                    // 111: mediator.v1.CreatePolicyResponse
+	(*DeletePolicyRequest)(nil),                     // 112: mediator.v1.DeletePolicyRequest
+	(*DeletePolicyResponse)(nil),                    // 113: mediator.v1.DeletePolicyResponse
+	(*GetPoliciesRequest)(nil),                      // 114: mediator.v1.GetPoliciesRequest
+	(*GetPoliciesResponse)(nil),                     // 115: mediator.v1.GetPoliciesResponse
+	(*GetPolicyByIdRequest)(nil),                    // 116: mediator.v1.GetPolicyByIdRequest
+	(*GetPolicyByIdResponse)(nil),                   // 117: mediator.v1.GetPolicyByIdResponse
+	(*PolicyRepoStatus)(nil),                        // 118: mediator.v1.PolicyRepoStatus
+	(*PolicyViolation)(nil),                         // 119: mediator.v1.PolicyViolation
+	(*GetPolicyStatusByIdRequest)(nil),              // 120: mediator.v1.GetPolicyStatusByIdRequest
+	(*GetPolicyStatusByIdResponse)(nil),             // 121: mediator.v1.GetPolicyStatusByIdResponse
+	(*GetPolicyStatusByGroupRequest)(nil),           // 122: mediator.v1.GetPolicyStatusByGroupRequest
+	(*GetPolicyStatusByGroupResponse)(nil),          // 123: mediator.v1.GetPolicyStatusByGroupResponse
+	(*GetPolicyStatusByRepositoryRequest)(nil),      // 124: mediator.v1.GetPolicyStatusByRepositoryRequest
+	(*GetPolicyStatusByRepositoryResponse)(nil),     // 125: mediator.v1.GetPolicyStatusByRepositoryResponse
+	(*GetPolicyViolationsByIdRequest)(nil),          // 126: mediator.v1.GetPolicyViolationsByIdRequest
+	(*GetPolicyViolationsByIdResponse)(nil),         // 127: mediator.v1.GetPolicyViolationsByIdResponse
+	(*GetPolicyViolationsByGroupRequest)(nil),       // 128: mediator.v1.GetPolicyViolationsByGroupRequest
+	(*GetPolicyViolationsByGroupResponse)(nil),      // 129: mediator.v1.GetPolicyViolationsByGroupResponse
+	(*GetPolicyViolationsByRepositoryRequest)(nil),  // 130: mediator.v1.GetPolicyViolationsByRepositoryRequest
+	(*GetPolicyViolationsByRepositoryResponse)(nil), // 131: mediator.v1.GetPolicyViolationsByRepositoryResponse
+	(*PolicyTypeRecord)(nil),                        // 132: mediator.v1.PolicyTypeRecord
+	(*GetPolicyTypeRequest)(nil),                    // 133: mediator.v1.GetPolicyTypeRequest
+	(*GetPolicyTypeResponse)(nil),                   // 134: mediator.v1.GetPolicyTypeResponse
+	(*GetPolicyTypeByIdRequest)(nil),                // 135: mediator.v1.GetPolicyTypeByIdRequest
+	(*GetPolicyTypeByIdResponse)(nil),               // 136: mediator.v1.GetPolicyTypeByIdResponse
+	(*GetPolicyTypesRequest)(nil),                   // 137: mediator.v1.GetPolicyTypesRequest
+	(*GetPolicyTypesResponse)(nil),                  // 138: mediator.v1.GetPolicyTypesResponse
+	(*GetPublicKeyRequest)(nil),                     // 139: mediator.v1.GetPublicKeyRequest
+	(*GetPublicKeyResponse)(nil),                    // 140: mediator.v1.GetPublicKeyResponse
+	(*CreateKeyPairRequest)(nil),                    // 141: mediator.v1.CreateKeyPairRequest
+	(*CreateKeyPairResponse)(nil),                   // 142: mediator.v1.CreateKeyPairResponse
+	(*timestamppb.Timestamp)(nil),                   // 143: google.protobuf.Timestamp
+	(*wrapperspb.StringValue)(nil),                  // 144: google.protobuf.StringValue
 }
 var file_mediator_v1_mediator_proto_depIdxs = []int32{
 	26,  // 0: mediator.v1.RegisterRepositoryRequest.repositories:type_name -> mediator.v1.Repositories
 	33,  // 1: mediator.v1.RegisterRepositoryResponse.results:type_name -> mediator.v1.RepositoryResult
 	0,   // 2: mediator.v1.ListRepositoriesRequest.filter:type_name -> mediator.v1.RepoFilter
 	27,  // 3: mediator.v1.ListRepositoriesResponse.results:type_name -> mediator.v1.ListRepositories
-	139, // 4: mediator.v1.GetRepositoryResponse.created_at:type_name -> google.protobuf.Timestamp
-	139, // 5: mediator.v1.GetRepositoryResponse.updated_at:type_name -> google.protobuf.Timestamp
-	139, // 6: mediator.v1.RepositoryResult.created_at:type_name -> google.protobuf.Timestamp
-	139, // 7: mediator.v1.RepositoryResult.updated_at:type_name -> google.protobuf.Timestamp
-	140, // 8: mediator.v1.RepositoryResult.error:type_name -> google.protobuf.StringValue
-	139, // 9: mediator.v1.VerifyProviderTokenFromRequest.timestamp:type_name -> google.protobuf.Timestamp
-	139, // 10: mediator.v1.GetVulnerabilityByIdResponse.scanned_at:type_name -> google.protobuf.Timestamp
-	139, // 11: mediator.v1.GetVulnerabilityByIdResponse.created_at:type_name -> google.protobuf.Timestamp
+	143, // 4: mediator.v1.GetRepositoryResponse.created_at:type_name -> google.protobuf.Timestamp
+	143, // 5: mediator.v1.GetRepositoryResponse.updated_at:type_name -> google.protobuf.Timestamp
+	143, // 6: mediator.v1.RepositoryResult.created_at:type_name -> google.protobuf.Timestamp
+	143, // 7: mediator.v1.RepositoryResult.updated_at:type_name -> google.protobuf.Timestamp
+	144, // 8: mediator.v1.RepositoryResult.error:type_name -> google.protobuf.StringValue
+	143, // 9: mediator.v1.VerifyProviderTokenFromRequest.timestamp:type_name -> google.protobuf.Timestamp
+	143, // 10: mediator.v1.GetVulnerabilityByIdResponse.scanned_at:type_name -> google.protobuf.Timestamp
+	143, // 11: mediator.v1.GetVulnerabilityByIdResponse.created_at:type_name -> google.protobuf.Timestamp
 	40,  // 12: mediator.v1.GetVulnerabilitiesResponse.vulns:type_name -> mediator.v1.GetVulnerabilityByIdResponse
 	45,  // 13: mediator.v1.GetSecretsResponse.secrets:type_name -> mediator.v1.GetSecretByIdResponse
 	47,  // 14: mediator.v1.GetBranchProtectionResponse.branch_protections:type_name -> mediator.v1.BranchProtection
-	139, // 15: mediator.v1.CreateOrganizationResponse.created_at:type_name -> google.protobuf.Timestamp
-	139, // 16: mediator.v1.CreateOrganizationResponse.updated_at:type_name -> google.protobuf.Timestamp
+	143, // 15: mediator.v1.CreateOrganizationResponse.created_at:type_name -> google.protobuf.Timestamp
+	143, // 16: mediator.v1.CreateOrganizationResponse.updated_at:type_name -> google.protobuf.Timestamp
 	64,  // 17: mediator.v1.CreateOrganizationResponse.default_group:type_name -> mediator.v1.GroupRecord
 	77,  // 18: mediator.v1.CreateOrganizationResponse.default_roles:type_name -> mediator.v1.RoleRecord
 	94,  // 19: mediator.v1.CreateOrganizationResponse.default_user:type_name -> mediator.v1.UserRecord
-	139, // 20: mediator.v1.OrganizationRecord.created_at:type_name -> google.protobuf.Timestamp
-	139, // 21: mediator.v1.OrganizationRecord.updated_at:type_name -> google.protobuf.Timestamp
+	143, // 20: mediator.v1.OrganizationRecord.created_at:type_name -> google.protobuf.Timestamp
+	143, // 21: mediator.v1.OrganizationRecord.updated_at:type_name -> google.protobuf.Timestamp
 	51,  // 22: mediator.v1.GetOrganizationsResponse.organizations:type_name -> mediator.v1.OrganizationRecord
 	51,  // 23: mediator.v1.GetOrganizationResponse.organization:type_name -> mediator.v1.OrganizationRecord
 	64,  // 24: mediator.v1.GetOrganizationResponse.groups:type_name -> mediator.v1.GroupRecord
@@ -10073,10 +10310,10 @@ var file_mediator_v1_mediator_proto_depIdxs = []int32{
 	64,  // 28: mediator.v1.GetOrganizationByNameResponse.groups:type_name -> mediator.v1.GroupRecord
 	77,  // 29: mediator.v1.GetOrganizationByNameResponse.roles:type_name -> mediator.v1.RoleRecord
 	94,  // 30: mediator.v1.GetOrganizationByNameResponse.users:type_name -> mediator.v1.UserRecord
-	139, // 31: mediator.v1.GroupRecord.created_at:type_name -> google.protobuf.Timestamp
-	139, // 32: mediator.v1.GroupRecord.updated_at:type_name -> google.protobuf.Timestamp
-	139, // 33: mediator.v1.CreateGroupResponse.created_at:type_name -> google.protobuf.Timestamp
-	139, // 34: mediator.v1.CreateGroupResponse.updated_at:type_name -> google.protobuf.Timestamp
+	143, // 31: mediator.v1.GroupRecord.created_at:type_name -> google.protobuf.Timestamp
+	143, // 32: mediator.v1.GroupRecord.updated_at:type_name -> google.protobuf.Timestamp
+	143, // 33: mediator.v1.CreateGroupResponse.created_at:type_name -> google.protobuf.Timestamp
+	143, // 34: mediator.v1.CreateGroupResponse.updated_at:type_name -> google.protobuf.Timestamp
 	64,  // 35: mediator.v1.GetGroupByNameResponse.group:type_name -> mediator.v1.GroupRecord
 	77,  // 36: mediator.v1.GetGroupByNameResponse.roles:type_name -> mediator.v1.RoleRecord
 	94,  // 37: mediator.v1.GetGroupByNameResponse.users:type_name -> mediator.v1.UserRecord
@@ -10084,20 +10321,20 @@ var file_mediator_v1_mediator_proto_depIdxs = []int32{
 	77,  // 39: mediator.v1.GetGroupByIdResponse.roles:type_name -> mediator.v1.RoleRecord
 	94,  // 40: mediator.v1.GetGroupByIdResponse.users:type_name -> mediator.v1.UserRecord
 	64,  // 41: mediator.v1.GetGroupsResponse.groups:type_name -> mediator.v1.GroupRecord
-	139, // 42: mediator.v1.CreateRoleByOrganizationResponse.created_at:type_name -> google.protobuf.Timestamp
-	139, // 43: mediator.v1.CreateRoleByOrganizationResponse.updated_at:type_name -> google.protobuf.Timestamp
-	139, // 44: mediator.v1.CreateRoleByGroupResponse.created_at:type_name -> google.protobuf.Timestamp
-	139, // 45: mediator.v1.CreateRoleByGroupResponse.updated_at:type_name -> google.protobuf.Timestamp
-	139, // 46: mediator.v1.RoleRecord.created_at:type_name -> google.protobuf.Timestamp
-	139, // 47: mediator.v1.RoleRecord.updated_at:type_name -> google.protobuf.Timestamp
+	143, // 42: mediator.v1.CreateRoleByOrganizationResponse.created_at:type_name -> google.protobuf.Timestamp
+	143, // 43: mediator.v1.CreateRoleByOrganizationResponse.updated_at:type_name -> google.protobuf.Timestamp
+	143, // 44: mediator.v1.CreateRoleByGroupResponse.created_at:type_name -> google.protobuf.Timestamp
+	143, // 45: mediator.v1.CreateRoleByGroupResponse.updated_at:type_name -> google.protobuf.Timestamp
+	143, // 46: mediator.v1.RoleRecord.created_at:type_name -> google.protobuf.Timestamp
+	143, // 47: mediator.v1.RoleRecord.updated_at:type_name -> google.protobuf.Timestamp
 	77,  // 48: mediator.v1.GetRolesResponse.roles:type_name -> mediator.v1.RoleRecord
 	77,  // 49: mediator.v1.GetRolesByGroupResponse.roles:type_name -> mediator.v1.RoleRecord
 	77,  // 50: mediator.v1.GetRoleByIdResponse.role:type_name -> mediator.v1.RoleRecord
 	77,  // 51: mediator.v1.GetRoleByNameResponse.role:type_name -> mediator.v1.RoleRecord
-	139, // 52: mediator.v1.CreateUserResponse.created_at:type_name -> google.protobuf.Timestamp
-	139, // 53: mediator.v1.CreateUserResponse.updated_at:type_name -> google.protobuf.Timestamp
-	139, // 54: mediator.v1.UserRecord.created_at:type_name -> google.protobuf.Timestamp
-	139, // 55: mediator.v1.UserRecord.updated_at:type_name -> google.protobuf.Timestamp
+	143, // 52: mediator.v1.CreateUserResponse.created_at:type_name -> google.protobuf.Timestamp
+	143, // 53: mediator.v1.CreateUserResponse.updated_at:type_name -> google.protobuf.Timestamp
+	143, // 54: mediator.v1.UserRecord.created_at:type_name -> google.protobuf.Timestamp
+	143, // 55: mediator.v1.UserRecord.updated_at:type_name -> google.protobuf.Timestamp
 	94,  // 56: mediator.v1.GetUsersResponse.users:type_name -> mediator.v1.UserRecord
 	94,  // 57: mediator.v1.GetUsersByOrganizationResponse.users:type_name -> mediator.v1.UserRecord
 	94,  // 58: mediator.v1.GetUsersByGroupResponse.users:type_name -> mediator.v1.UserRecord
@@ -10113,151 +10350,153 @@ var file_mediator_v1_mediator_proto_depIdxs = []int32{
 	94,  // 68: mediator.v1.GetUserResponse.user:type_name -> mediator.v1.UserRecord
 	64,  // 69: mediator.v1.GetUserResponse.groups:type_name -> mediator.v1.GroupRecord
 	77,  // 70: mediator.v1.GetUserResponse.roles:type_name -> mediator.v1.RoleRecord
-	139, // 71: mediator.v1.PolicyRecord.created_at:type_name -> google.protobuf.Timestamp
-	139, // 72: mediator.v1.PolicyRecord.updated_at:type_name -> google.protobuf.Timestamp
+	143, // 71: mediator.v1.PolicyRecord.created_at:type_name -> google.protobuf.Timestamp
+	143, // 72: mediator.v1.PolicyRecord.updated_at:type_name -> google.protobuf.Timestamp
 	110, // 73: mediator.v1.CreatePolicyResponse.policy:type_name -> mediator.v1.PolicyRecord
 	110, // 74: mediator.v1.GetPoliciesResponse.policies:type_name -> mediator.v1.PolicyRecord
 	110, // 75: mediator.v1.GetPolicyByIdResponse.policy:type_name -> mediator.v1.PolicyRecord
-	139, // 76: mediator.v1.PolicyRepoStatus.last_updated:type_name -> google.protobuf.Timestamp
-	139, // 77: mediator.v1.PolicyViolation.created_at:type_name -> google.protobuf.Timestamp
+	143, // 76: mediator.v1.PolicyRepoStatus.last_updated:type_name -> google.protobuf.Timestamp
+	143, // 77: mediator.v1.PolicyViolation.created_at:type_name -> google.protobuf.Timestamp
 	118, // 78: mediator.v1.GetPolicyStatusByIdResponse.policy_repo_status:type_name -> mediator.v1.PolicyRepoStatus
 	118, // 79: mediator.v1.GetPolicyStatusByGroupResponse.policy_repo_status:type_name -> mediator.v1.PolicyRepoStatus
-	119, // 80: mediator.v1.GetPolicyViolationsByIdResponse.policy_violation:type_name -> mediator.v1.PolicyViolation
-	119, // 81: mediator.v1.GetPolicyViolationsByGroupResponse.policy_violation:type_name -> mediator.v1.PolicyViolation
-	139, // 82: mediator.v1.PolicyTypeRecord.created_at:type_name -> google.protobuf.Timestamp
-	139, // 83: mediator.v1.PolicyTypeRecord.updated_at:type_name -> google.protobuf.Timestamp
-	128, // 84: mediator.v1.GetPolicyTypeResponse.policy_type:type_name -> mediator.v1.PolicyTypeRecord
-	128, // 85: mediator.v1.GetPolicyTypeByIdResponse.policy_type:type_name -> mediator.v1.PolicyTypeRecord
-	128, // 86: mediator.v1.GetPolicyTypesResponse.policy_types:type_name -> mediator.v1.PolicyTypeRecord
-	1,   // 87: mediator.v1.HealthService.CheckHealth:input_type -> mediator.v1.CheckHealthRequest
-	3,   // 88: mediator.v1.OAuthService.GetAuthorizationURL:input_type -> mediator.v1.GetAuthorizationURLRequest
-	5,   // 89: mediator.v1.OAuthService.ExchangeCodeForTokenCLI:input_type -> mediator.v1.ExchangeCodeForTokenCLIRequest
-	9,   // 90: mediator.v1.OAuthService.ExchangeCodeForTokenWEB:input_type -> mediator.v1.ExchangeCodeForTokenWEBRequest
-	6,   // 91: mediator.v1.OAuthService.StoreProviderToken:input_type -> mediator.v1.StoreProviderTokenRequest
-	19,  // 92: mediator.v1.OAuthService.RevokeOauthTokens:input_type -> mediator.v1.RevokeOauthTokensRequest
-	21,  // 93: mediator.v1.OAuthService.RevokeOauthGroupToken:input_type -> mediator.v1.RevokeOauthGroupTokenRequest
-	36,  // 94: mediator.v1.OAuthService.VerifyProviderTokenFrom:input_type -> mediator.v1.VerifyProviderTokenFromRequest
-	11,  // 95: mediator.v1.AuthService.LogIn:input_type -> mediator.v1.LogInRequest
-	13,  // 96: mediator.v1.AuthService.LogOut:input_type -> mediator.v1.LogOutRequest
-	15,  // 97: mediator.v1.AuthService.RevokeTokens:input_type -> mediator.v1.RevokeTokensRequest
-	17,  // 98: mediator.v1.AuthService.RevokeUserToken:input_type -> mediator.v1.RevokeUserTokenRequest
-	23,  // 99: mediator.v1.AuthService.RefreshToken:input_type -> mediator.v1.RefreshTokenRequest
-	34,  // 100: mediator.v1.AuthService.Verify:input_type -> mediator.v1.VerifyRequest
-	38,  // 101: mediator.v1.VulnerabilitiesService.GetVulnerabilities:input_type -> mediator.v1.GetVulnerabilitiesRequest
-	39,  // 102: mediator.v1.VulnerabilitiesService.GetVulnerabilityById:input_type -> mediator.v1.GetVulnerabilityByIdRequest
-	42,  // 103: mediator.v1.SecretsService.GetSecrets:input_type -> mediator.v1.GetSecretsRequest
-	44,  // 104: mediator.v1.SecretsService.GetSecretById:input_type -> mediator.v1.GetSecretByIdRequest
-	25,  // 105: mediator.v1.RepositoryService.RegisterRepository:input_type -> mediator.v1.RegisterRepositoryRequest
-	30,  // 106: mediator.v1.RepositoryService.ListRepositories:input_type -> mediator.v1.ListRepositoriesRequest
-	29,  // 107: mediator.v1.RepositoryService.GetRepository:input_type -> mediator.v1.GetRepositoryRequest
-	46,  // 108: mediator.v1.BranchProtectionService.GetBranchProtection:input_type -> mediator.v1.GetBranchProtectionRequest
-	49,  // 109: mediator.v1.OrganizationService.CreateOrganization:input_type -> mediator.v1.CreateOrganizationRequest
-	54,  // 110: mediator.v1.OrganizationService.GetOrganizations:input_type -> mediator.v1.GetOrganizationsRequest
-	56,  // 111: mediator.v1.OrganizationService.GetOrganization:input_type -> mediator.v1.GetOrganizationRequest
-	58,  // 112: mediator.v1.OrganizationService.GetOrganizationByName:input_type -> mediator.v1.GetOrganizationByNameRequest
-	52,  // 113: mediator.v1.OrganizationService.DeleteOrganization:input_type -> mediator.v1.DeleteOrganizationRequest
-	60,  // 114: mediator.v1.GroupService.CreateGroup:input_type -> mediator.v1.CreateGroupRequest
-	63,  // 115: mediator.v1.GroupService.GetGroups:input_type -> mediator.v1.GetGroupsRequest
-	61,  // 116: mediator.v1.GroupService.GetGroupByName:input_type -> mediator.v1.GetGroupByNameRequest
-	62,  // 117: mediator.v1.GroupService.GetGroupById:input_type -> mediator.v1.GetGroupByIdRequest
-	69,  // 118: mediator.v1.GroupService.DeleteGroup:input_type -> mediator.v1.DeleteGroupRequest
-	71,  // 119: mediator.v1.RoleService.CreateRoleByOrganization:input_type -> mediator.v1.CreateRoleByOrganizationRequest
-	73,  // 120: mediator.v1.RoleService.CreateRoleByGroup:input_type -> mediator.v1.CreateRoleByGroupRequest
-	75,  // 121: mediator.v1.RoleService.DeleteRole:input_type -> mediator.v1.DeleteRoleRequest
-	78,  // 122: mediator.v1.RoleService.GetRoles:input_type -> mediator.v1.GetRolesRequest
-	80,  // 123: mediator.v1.RoleService.GetRolesByGroup:input_type -> mediator.v1.GetRolesByGroupRequest
-	82,  // 124: mediator.v1.RoleService.GetRoleById:input_type -> mediator.v1.GetRoleByIdRequest
-	84,  // 125: mediator.v1.RoleService.GetRoleByName:input_type -> mediator.v1.GetRoleByNameRequest
-	86,  // 126: mediator.v1.UserService.CreateUser:input_type -> mediator.v1.CreateUserRequest
-	88,  // 127: mediator.v1.UserService.DeleteUser:input_type -> mediator.v1.DeleteUserRequest
-	95,  // 128: mediator.v1.UserService.GetUsers:input_type -> mediator.v1.GetUsersRequest
-	97,  // 129: mediator.v1.UserService.GetUsersByOrganization:input_type -> mediator.v1.GetUsersByOrganizationRequest
-	99,  // 130: mediator.v1.UserService.GetUsersByGroup:input_type -> mediator.v1.GetUsersByGroupRequest
-	101, // 131: mediator.v1.UserService.GetUserById:input_type -> mediator.v1.GetUserByIdRequest
-	103, // 132: mediator.v1.UserService.GetUserByUserName:input_type -> mediator.v1.GetUserByUserNameRequest
-	107, // 133: mediator.v1.UserService.GetUser:input_type -> mediator.v1.GetUserRequest
-	105, // 134: mediator.v1.UserService.GetUserByEmail:input_type -> mediator.v1.GetUserByEmailRequest
-	90,  // 135: mediator.v1.UserService.UpdatePassword:input_type -> mediator.v1.UpdatePasswordRequest
-	92,  // 136: mediator.v1.UserService.UpdateProfile:input_type -> mediator.v1.UpdateProfileRequest
-	129, // 137: mediator.v1.PolicyService.GetPolicyType:input_type -> mediator.v1.GetPolicyTypeRequest
-	133, // 138: mediator.v1.PolicyService.GetPolicyTypes:input_type -> mediator.v1.GetPolicyTypesRequest
-	109, // 139: mediator.v1.PolicyService.CreatePolicy:input_type -> mediator.v1.CreatePolicyRequest
-	112, // 140: mediator.v1.PolicyService.DeletePolicy:input_type -> mediator.v1.DeletePolicyRequest
-	114, // 141: mediator.v1.PolicyService.GetPolicies:input_type -> mediator.v1.GetPoliciesRequest
-	116, // 142: mediator.v1.PolicyService.GetPolicyById:input_type -> mediator.v1.GetPolicyByIdRequest
-	120, // 143: mediator.v1.PolicyService.GetPolicyStatusById:input_type -> mediator.v1.GetPolicyStatusByIdRequest
-	122, // 144: mediator.v1.PolicyService.GetPolicyStatusByGroup:input_type -> mediator.v1.GetPolicyStatusByGroupRequest
-	124, // 145: mediator.v1.PolicyService.GetPolicyViolationsById:input_type -> mediator.v1.GetPolicyViolationsByIdRequest
-	126, // 146: mediator.v1.PolicyService.GetPolicyViolationsByGroup:input_type -> mediator.v1.GetPolicyViolationsByGroupRequest
-	135, // 147: mediator.v1.KeyService.GetPublicKey:input_type -> mediator.v1.GetPublicKeyRequest
-	137, // 148: mediator.v1.KeyService.CreateKeyPair:input_type -> mediator.v1.CreateKeyPairRequest
-	2,   // 149: mediator.v1.HealthService.CheckHealth:output_type -> mediator.v1.CheckHealthResponse
-	4,   // 150: mediator.v1.OAuthService.GetAuthorizationURL:output_type -> mediator.v1.GetAuthorizationURLResponse
-	8,   // 151: mediator.v1.OAuthService.ExchangeCodeForTokenCLI:output_type -> mediator.v1.ExchangeCodeForTokenCLIResponse
-	10,  // 152: mediator.v1.OAuthService.ExchangeCodeForTokenWEB:output_type -> mediator.v1.ExchangeCodeForTokenWEBResponse
-	7,   // 153: mediator.v1.OAuthService.StoreProviderToken:output_type -> mediator.v1.StoreProviderTokenResponse
-	20,  // 154: mediator.v1.OAuthService.RevokeOauthTokens:output_type -> mediator.v1.RevokeOauthTokensResponse
-	22,  // 155: mediator.v1.OAuthService.RevokeOauthGroupToken:output_type -> mediator.v1.RevokeOauthGroupTokenResponse
-	37,  // 156: mediator.v1.OAuthService.VerifyProviderTokenFrom:output_type -> mediator.v1.VerifyProviderTokenFromResponse
-	12,  // 157: mediator.v1.AuthService.LogIn:output_type -> mediator.v1.LogInResponse
-	14,  // 158: mediator.v1.AuthService.LogOut:output_type -> mediator.v1.LogOutResponse
-	16,  // 159: mediator.v1.AuthService.RevokeTokens:output_type -> mediator.v1.RevokeTokensResponse
-	18,  // 160: mediator.v1.AuthService.RevokeUserToken:output_type -> mediator.v1.RevokeUserTokenResponse
-	24,  // 161: mediator.v1.AuthService.RefreshToken:output_type -> mediator.v1.RefreshTokenResponse
-	35,  // 162: mediator.v1.AuthService.Verify:output_type -> mediator.v1.VerifyResponse
-	41,  // 163: mediator.v1.VulnerabilitiesService.GetVulnerabilities:output_type -> mediator.v1.GetVulnerabilitiesResponse
-	40,  // 164: mediator.v1.VulnerabilitiesService.GetVulnerabilityById:output_type -> mediator.v1.GetVulnerabilityByIdResponse
-	43,  // 165: mediator.v1.SecretsService.GetSecrets:output_type -> mediator.v1.GetSecretsResponse
-	45,  // 166: mediator.v1.SecretsService.GetSecretById:output_type -> mediator.v1.GetSecretByIdResponse
-	28,  // 167: mediator.v1.RepositoryService.RegisterRepository:output_type -> mediator.v1.RegisterRepositoryResponse
-	31,  // 168: mediator.v1.RepositoryService.ListRepositories:output_type -> mediator.v1.ListRepositoriesResponse
-	32,  // 169: mediator.v1.RepositoryService.GetRepository:output_type -> mediator.v1.GetRepositoryResponse
-	48,  // 170: mediator.v1.BranchProtectionService.GetBranchProtection:output_type -> mediator.v1.GetBranchProtectionResponse
-	50,  // 171: mediator.v1.OrganizationService.CreateOrganization:output_type -> mediator.v1.CreateOrganizationResponse
-	55,  // 172: mediator.v1.OrganizationService.GetOrganizations:output_type -> mediator.v1.GetOrganizationsResponse
-	57,  // 173: mediator.v1.OrganizationService.GetOrganization:output_type -> mediator.v1.GetOrganizationResponse
-	59,  // 174: mediator.v1.OrganizationService.GetOrganizationByName:output_type -> mediator.v1.GetOrganizationByNameResponse
-	53,  // 175: mediator.v1.OrganizationService.DeleteOrganization:output_type -> mediator.v1.DeleteOrganizationResponse
-	65,  // 176: mediator.v1.GroupService.CreateGroup:output_type -> mediator.v1.CreateGroupResponse
-	68,  // 177: mediator.v1.GroupService.GetGroups:output_type -> mediator.v1.GetGroupsResponse
-	66,  // 178: mediator.v1.GroupService.GetGroupByName:output_type -> mediator.v1.GetGroupByNameResponse
-	67,  // 179: mediator.v1.GroupService.GetGroupById:output_type -> mediator.v1.GetGroupByIdResponse
-	70,  // 180: mediator.v1.GroupService.DeleteGroup:output_type -> mediator.v1.DeleteGroupResponse
-	72,  // 181: mediator.v1.RoleService.CreateRoleByOrganization:output_type -> mediator.v1.CreateRoleByOrganizationResponse
-	74,  // 182: mediator.v1.RoleService.CreateRoleByGroup:output_type -> mediator.v1.CreateRoleByGroupResponse
-	76,  // 183: mediator.v1.RoleService.DeleteRole:output_type -> mediator.v1.DeleteRoleResponse
-	79,  // 184: mediator.v1.RoleService.GetRoles:output_type -> mediator.v1.GetRolesResponse
-	81,  // 185: mediator.v1.RoleService.GetRolesByGroup:output_type -> mediator.v1.GetRolesByGroupResponse
-	83,  // 186: mediator.v1.RoleService.GetRoleById:output_type -> mediator.v1.GetRoleByIdResponse
-	85,  // 187: mediator.v1.RoleService.GetRoleByName:output_type -> mediator.v1.GetRoleByNameResponse
-	87,  // 188: mediator.v1.UserService.CreateUser:output_type -> mediator.v1.CreateUserResponse
-	89,  // 189: mediator.v1.UserService.DeleteUser:output_type -> mediator.v1.DeleteUserResponse
-	96,  // 190: mediator.v1.UserService.GetUsers:output_type -> mediator.v1.GetUsersResponse
-	98,  // 191: mediator.v1.UserService.GetUsersByOrganization:output_type -> mediator.v1.GetUsersByOrganizationResponse
-	100, // 192: mediator.v1.UserService.GetUsersByGroup:output_type -> mediator.v1.GetUsersByGroupResponse
-	102, // 193: mediator.v1.UserService.GetUserById:output_type -> mediator.v1.GetUserByIdResponse
-	104, // 194: mediator.v1.UserService.GetUserByUserName:output_type -> mediator.v1.GetUserByUserNameResponse
-	108, // 195: mediator.v1.UserService.GetUser:output_type -> mediator.v1.GetUserResponse
-	106, // 196: mediator.v1.UserService.GetUserByEmail:output_type -> mediator.v1.GetUserByEmailResponse
-	91,  // 197: mediator.v1.UserService.UpdatePassword:output_type -> mediator.v1.UpdatePasswordResponse
-	93,  // 198: mediator.v1.UserService.UpdateProfile:output_type -> mediator.v1.UpdateProfileResponse
-	130, // 199: mediator.v1.PolicyService.GetPolicyType:output_type -> mediator.v1.GetPolicyTypeResponse
-	134, // 200: mediator.v1.PolicyService.GetPolicyTypes:output_type -> mediator.v1.GetPolicyTypesResponse
-	111, // 201: mediator.v1.PolicyService.CreatePolicy:output_type -> mediator.v1.CreatePolicyResponse
-	113, // 202: mediator.v1.PolicyService.DeletePolicy:output_type -> mediator.v1.DeletePolicyResponse
-	115, // 203: mediator.v1.PolicyService.GetPolicies:output_type -> mediator.v1.GetPoliciesResponse
-	117, // 204: mediator.v1.PolicyService.GetPolicyById:output_type -> mediator.v1.GetPolicyByIdResponse
-	121, // 205: mediator.v1.PolicyService.GetPolicyStatusById:output_type -> mediator.v1.GetPolicyStatusByIdResponse
-	123, // 206: mediator.v1.PolicyService.GetPolicyStatusByGroup:output_type -> mediator.v1.GetPolicyStatusByGroupResponse
-	125, // 207: mediator.v1.PolicyService.GetPolicyViolationsById:output_type -> mediator.v1.GetPolicyViolationsByIdResponse
-	127, // 208: mediator.v1.PolicyService.GetPolicyViolationsByGroup:output_type -> mediator.v1.GetPolicyViolationsByGroupResponse
-	136, // 209: mediator.v1.KeyService.GetPublicKey:output_type -> mediator.v1.GetPublicKeyResponse
-	138, // 210: mediator.v1.KeyService.CreateKeyPair:output_type -> mediator.v1.CreateKeyPairResponse
-	149, // [149:211] is the sub-list for method output_type
-	87,  // [87:149] is the sub-list for method input_type
-	87,  // [87:87] is the sub-list for extension type_name
-	87,  // [87:87] is the sub-list for extension extendee
-	0,   // [0:87] is the sub-list for field type_name
+	118, // 80: mediator.v1.GetPolicyStatusByRepositoryResponse.policy_repo_status:type_name -> mediator.v1.PolicyRepoStatus
+	119, // 81: mediator.v1.GetPolicyViolationsByIdResponse.policy_violation:type_name -> mediator.v1.PolicyViolation
+	119, // 82: mediator.v1.GetPolicyViolationsByGroupResponse.policy_violation:type_name -> mediator.v1.PolicyViolation
+	119, // 83: mediator.v1.GetPolicyViolationsByRepositoryResponse.policy_violation:type_name -> mediator.v1.PolicyViolation
+	143, // 84: mediator.v1.PolicyTypeRecord.created_at:type_name -> google.protobuf.Timestamp
+	143, // 85: mediator.v1.PolicyTypeRecord.updated_at:type_name -> google.protobuf.Timestamp
+	132, // 86: mediator.v1.GetPolicyTypeResponse.policy_type:type_name -> mediator.v1.PolicyTypeRecord
+	132, // 87: mediator.v1.GetPolicyTypeByIdResponse.policy_type:type_name -> mediator.v1.PolicyTypeRecord
+	132, // 88: mediator.v1.GetPolicyTypesResponse.policy_types:type_name -> mediator.v1.PolicyTypeRecord
+	1,   // 89: mediator.v1.HealthService.CheckHealth:input_type -> mediator.v1.CheckHealthRequest
+	3,   // 90: mediator.v1.OAuthService.GetAuthorizationURL:input_type -> mediator.v1.GetAuthorizationURLRequest
+	5,   // 91: mediator.v1.OAuthService.ExchangeCodeForTokenCLI:input_type -> mediator.v1.ExchangeCodeForTokenCLIRequest
+	9,   // 92: mediator.v1.OAuthService.ExchangeCodeForTokenWEB:input_type -> mediator.v1.ExchangeCodeForTokenWEBRequest
+	6,   // 93: mediator.v1.OAuthService.StoreProviderToken:input_type -> mediator.v1.StoreProviderTokenRequest
+	19,  // 94: mediator.v1.OAuthService.RevokeOauthTokens:input_type -> mediator.v1.RevokeOauthTokensRequest
+	21,  // 95: mediator.v1.OAuthService.RevokeOauthGroupToken:input_type -> mediator.v1.RevokeOauthGroupTokenRequest
+	36,  // 96: mediator.v1.OAuthService.VerifyProviderTokenFrom:input_type -> mediator.v1.VerifyProviderTokenFromRequest
+	11,  // 97: mediator.v1.AuthService.LogIn:input_type -> mediator.v1.LogInRequest
+	13,  // 98: mediator.v1.AuthService.LogOut:input_type -> mediator.v1.LogOutRequest
+	15,  // 99: mediator.v1.AuthService.RevokeTokens:input_type -> mediator.v1.RevokeTokensRequest
+	17,  // 100: mediator.v1.AuthService.RevokeUserToken:input_type -> mediator.v1.RevokeUserTokenRequest
+	23,  // 101: mediator.v1.AuthService.RefreshToken:input_type -> mediator.v1.RefreshTokenRequest
+	34,  // 102: mediator.v1.AuthService.Verify:input_type -> mediator.v1.VerifyRequest
+	38,  // 103: mediator.v1.VulnerabilitiesService.GetVulnerabilities:input_type -> mediator.v1.GetVulnerabilitiesRequest
+	39,  // 104: mediator.v1.VulnerabilitiesService.GetVulnerabilityById:input_type -> mediator.v1.GetVulnerabilityByIdRequest
+	42,  // 105: mediator.v1.SecretsService.GetSecrets:input_type -> mediator.v1.GetSecretsRequest
+	44,  // 106: mediator.v1.SecretsService.GetSecretById:input_type -> mediator.v1.GetSecretByIdRequest
+	25,  // 107: mediator.v1.RepositoryService.RegisterRepository:input_type -> mediator.v1.RegisterRepositoryRequest
+	30,  // 108: mediator.v1.RepositoryService.ListRepositories:input_type -> mediator.v1.ListRepositoriesRequest
+	29,  // 109: mediator.v1.RepositoryService.GetRepository:input_type -> mediator.v1.GetRepositoryRequest
+	46,  // 110: mediator.v1.BranchProtectionService.GetBranchProtection:input_type -> mediator.v1.GetBranchProtectionRequest
+	49,  // 111: mediator.v1.OrganizationService.CreateOrganization:input_type -> mediator.v1.CreateOrganizationRequest
+	54,  // 112: mediator.v1.OrganizationService.GetOrganizations:input_type -> mediator.v1.GetOrganizationsRequest
+	56,  // 113: mediator.v1.OrganizationService.GetOrganization:input_type -> mediator.v1.GetOrganizationRequest
+	58,  // 114: mediator.v1.OrganizationService.GetOrganizationByName:input_type -> mediator.v1.GetOrganizationByNameRequest
+	52,  // 115: mediator.v1.OrganizationService.DeleteOrganization:input_type -> mediator.v1.DeleteOrganizationRequest
+	60,  // 116: mediator.v1.GroupService.CreateGroup:input_type -> mediator.v1.CreateGroupRequest
+	63,  // 117: mediator.v1.GroupService.GetGroups:input_type -> mediator.v1.GetGroupsRequest
+	61,  // 118: mediator.v1.GroupService.GetGroupByName:input_type -> mediator.v1.GetGroupByNameRequest
+	62,  // 119: mediator.v1.GroupService.GetGroupById:input_type -> mediator.v1.GetGroupByIdRequest
+	69,  // 120: mediator.v1.GroupService.DeleteGroup:input_type -> mediator.v1.DeleteGroupRequest
+	71,  // 121: mediator.v1.RoleService.CreateRoleByOrganization:input_type -> mediator.v1.CreateRoleByOrganizationRequest
+	73,  // 122: mediator.v1.RoleService.CreateRoleByGroup:input_type -> mediator.v1.CreateRoleByGroupRequest
+	75,  // 123: mediator.v1.RoleService.DeleteRole:input_type -> mediator.v1.DeleteRoleRequest
+	78,  // 124: mediator.v1.RoleService.GetRoles:input_type -> mediator.v1.GetRolesRequest
+	80,  // 125: mediator.v1.RoleService.GetRolesByGroup:input_type -> mediator.v1.GetRolesByGroupRequest
+	82,  // 126: mediator.v1.RoleService.GetRoleById:input_type -> mediator.v1.GetRoleByIdRequest
+	84,  // 127: mediator.v1.RoleService.GetRoleByName:input_type -> mediator.v1.GetRoleByNameRequest
+	86,  // 128: mediator.v1.UserService.CreateUser:input_type -> mediator.v1.CreateUserRequest
+	88,  // 129: mediator.v1.UserService.DeleteUser:input_type -> mediator.v1.DeleteUserRequest
+	95,  // 130: mediator.v1.UserService.GetUsers:input_type -> mediator.v1.GetUsersRequest
+	97,  // 131: mediator.v1.UserService.GetUsersByOrganization:input_type -> mediator.v1.GetUsersByOrganizationRequest
+	99,  // 132: mediator.v1.UserService.GetUsersByGroup:input_type -> mediator.v1.GetUsersByGroupRequest
+	101, // 133: mediator.v1.UserService.GetUserById:input_type -> mediator.v1.GetUserByIdRequest
+	103, // 134: mediator.v1.UserService.GetUserByUserName:input_type -> mediator.v1.GetUserByUserNameRequest
+	107, // 135: mediator.v1.UserService.GetUser:input_type -> mediator.v1.GetUserRequest
+	105, // 136: mediator.v1.UserService.GetUserByEmail:input_type -> mediator.v1.GetUserByEmailRequest
+	90,  // 137: mediator.v1.UserService.UpdatePassword:input_type -> mediator.v1.UpdatePasswordRequest
+	92,  // 138: mediator.v1.UserService.UpdateProfile:input_type -> mediator.v1.UpdateProfileRequest
+	133, // 139: mediator.v1.PolicyService.GetPolicyType:input_type -> mediator.v1.GetPolicyTypeRequest
+	137, // 140: mediator.v1.PolicyService.GetPolicyTypes:input_type -> mediator.v1.GetPolicyTypesRequest
+	109, // 141: mediator.v1.PolicyService.CreatePolicy:input_type -> mediator.v1.CreatePolicyRequest
+	112, // 142: mediator.v1.PolicyService.DeletePolicy:input_type -> mediator.v1.DeletePolicyRequest
+	114, // 143: mediator.v1.PolicyService.GetPolicies:input_type -> mediator.v1.GetPoliciesRequest
+	116, // 144: mediator.v1.PolicyService.GetPolicyById:input_type -> mediator.v1.GetPolicyByIdRequest
+	120, // 145: mediator.v1.PolicyService.GetPolicyStatusById:input_type -> mediator.v1.GetPolicyStatusByIdRequest
+	122, // 146: mediator.v1.PolicyService.GetPolicyStatusByGroup:input_type -> mediator.v1.GetPolicyStatusByGroupRequest
+	126, // 147: mediator.v1.PolicyService.GetPolicyViolationsById:input_type -> mediator.v1.GetPolicyViolationsByIdRequest
+	128, // 148: mediator.v1.PolicyService.GetPolicyViolationsByGroup:input_type -> mediator.v1.GetPolicyViolationsByGroupRequest
+	139, // 149: mediator.v1.KeyService.GetPublicKey:input_type -> mediator.v1.GetPublicKeyRequest
+	141, // 150: mediator.v1.KeyService.CreateKeyPair:input_type -> mediator.v1.CreateKeyPairRequest
+	2,   // 151: mediator.v1.HealthService.CheckHealth:output_type -> mediator.v1.CheckHealthResponse
+	4,   // 152: mediator.v1.OAuthService.GetAuthorizationURL:output_type -> mediator.v1.GetAuthorizationURLResponse
+	8,   // 153: mediator.v1.OAuthService.ExchangeCodeForTokenCLI:output_type -> mediator.v1.ExchangeCodeForTokenCLIResponse
+	10,  // 154: mediator.v1.OAuthService.ExchangeCodeForTokenWEB:output_type -> mediator.v1.ExchangeCodeForTokenWEBResponse
+	7,   // 155: mediator.v1.OAuthService.StoreProviderToken:output_type -> mediator.v1.StoreProviderTokenResponse
+	20,  // 156: mediator.v1.OAuthService.RevokeOauthTokens:output_type -> mediator.v1.RevokeOauthTokensResponse
+	22,  // 157: mediator.v1.OAuthService.RevokeOauthGroupToken:output_type -> mediator.v1.RevokeOauthGroupTokenResponse
+	37,  // 158: mediator.v1.OAuthService.VerifyProviderTokenFrom:output_type -> mediator.v1.VerifyProviderTokenFromResponse
+	12,  // 159: mediator.v1.AuthService.LogIn:output_type -> mediator.v1.LogInResponse
+	14,  // 160: mediator.v1.AuthService.LogOut:output_type -> mediator.v1.LogOutResponse
+	16,  // 161: mediator.v1.AuthService.RevokeTokens:output_type -> mediator.v1.RevokeTokensResponse
+	18,  // 162: mediator.v1.AuthService.RevokeUserToken:output_type -> mediator.v1.RevokeUserTokenResponse
+	24,  // 163: mediator.v1.AuthService.RefreshToken:output_type -> mediator.v1.RefreshTokenResponse
+	35,  // 164: mediator.v1.AuthService.Verify:output_type -> mediator.v1.VerifyResponse
+	41,  // 165: mediator.v1.VulnerabilitiesService.GetVulnerabilities:output_type -> mediator.v1.GetVulnerabilitiesResponse
+	40,  // 166: mediator.v1.VulnerabilitiesService.GetVulnerabilityById:output_type -> mediator.v1.GetVulnerabilityByIdResponse
+	43,  // 167: mediator.v1.SecretsService.GetSecrets:output_type -> mediator.v1.GetSecretsResponse
+	45,  // 168: mediator.v1.SecretsService.GetSecretById:output_type -> mediator.v1.GetSecretByIdResponse
+	28,  // 169: mediator.v1.RepositoryService.RegisterRepository:output_type -> mediator.v1.RegisterRepositoryResponse
+	31,  // 170: mediator.v1.RepositoryService.ListRepositories:output_type -> mediator.v1.ListRepositoriesResponse
+	32,  // 171: mediator.v1.RepositoryService.GetRepository:output_type -> mediator.v1.GetRepositoryResponse
+	48,  // 172: mediator.v1.BranchProtectionService.GetBranchProtection:output_type -> mediator.v1.GetBranchProtectionResponse
+	50,  // 173: mediator.v1.OrganizationService.CreateOrganization:output_type -> mediator.v1.CreateOrganizationResponse
+	55,  // 174: mediator.v1.OrganizationService.GetOrganizations:output_type -> mediator.v1.GetOrganizationsResponse
+	57,  // 175: mediator.v1.OrganizationService.GetOrganization:output_type -> mediator.v1.GetOrganizationResponse
+	59,  // 176: mediator.v1.OrganizationService.GetOrganizationByName:output_type -> mediator.v1.GetOrganizationByNameResponse
+	53,  // 177: mediator.v1.OrganizationService.DeleteOrganization:output_type -> mediator.v1.DeleteOrganizationResponse
+	65,  // 178: mediator.v1.GroupService.CreateGroup:output_type -> mediator.v1.CreateGroupResponse
+	68,  // 179: mediator.v1.GroupService.GetGroups:output_type -> mediator.v1.GetGroupsResponse
+	66,  // 180: mediator.v1.GroupService.GetGroupByName:output_type -> mediator.v1.GetGroupByNameResponse
+	67,  // 181: mediator.v1.GroupService.GetGroupById:output_type -> mediator.v1.GetGroupByIdResponse
+	70,  // 182: mediator.v1.GroupService.DeleteGroup:output_type -> mediator.v1.DeleteGroupResponse
+	72,  // 183: mediator.v1.RoleService.CreateRoleByOrganization:output_type -> mediator.v1.CreateRoleByOrganizationResponse
+	74,  // 184: mediator.v1.RoleService.CreateRoleByGroup:output_type -> mediator.v1.CreateRoleByGroupResponse
+	76,  // 185: mediator.v1.RoleService.DeleteRole:output_type -> mediator.v1.DeleteRoleResponse
+	79,  // 186: mediator.v1.RoleService.GetRoles:output_type -> mediator.v1.GetRolesResponse
+	81,  // 187: mediator.v1.RoleService.GetRolesByGroup:output_type -> mediator.v1.GetRolesByGroupResponse
+	83,  // 188: mediator.v1.RoleService.GetRoleById:output_type -> mediator.v1.GetRoleByIdResponse
+	85,  // 189: mediator.v1.RoleService.GetRoleByName:output_type -> mediator.v1.GetRoleByNameResponse
+	87,  // 190: mediator.v1.UserService.CreateUser:output_type -> mediator.v1.CreateUserResponse
+	89,  // 191: mediator.v1.UserService.DeleteUser:output_type -> mediator.v1.DeleteUserResponse
+	96,  // 192: mediator.v1.UserService.GetUsers:output_type -> mediator.v1.GetUsersResponse
+	98,  // 193: mediator.v1.UserService.GetUsersByOrganization:output_type -> mediator.v1.GetUsersByOrganizationResponse
+	100, // 194: mediator.v1.UserService.GetUsersByGroup:output_type -> mediator.v1.GetUsersByGroupResponse
+	102, // 195: mediator.v1.UserService.GetUserById:output_type -> mediator.v1.GetUserByIdResponse
+	104, // 196: mediator.v1.UserService.GetUserByUserName:output_type -> mediator.v1.GetUserByUserNameResponse
+	108, // 197: mediator.v1.UserService.GetUser:output_type -> mediator.v1.GetUserResponse
+	106, // 198: mediator.v1.UserService.GetUserByEmail:output_type -> mediator.v1.GetUserByEmailResponse
+	91,  // 199: mediator.v1.UserService.UpdatePassword:output_type -> mediator.v1.UpdatePasswordResponse
+	93,  // 200: mediator.v1.UserService.UpdateProfile:output_type -> mediator.v1.UpdateProfileResponse
+	134, // 201: mediator.v1.PolicyService.GetPolicyType:output_type -> mediator.v1.GetPolicyTypeResponse
+	138, // 202: mediator.v1.PolicyService.GetPolicyTypes:output_type -> mediator.v1.GetPolicyTypesResponse
+	111, // 203: mediator.v1.PolicyService.CreatePolicy:output_type -> mediator.v1.CreatePolicyResponse
+	113, // 204: mediator.v1.PolicyService.DeletePolicy:output_type -> mediator.v1.DeletePolicyResponse
+	115, // 205: mediator.v1.PolicyService.GetPolicies:output_type -> mediator.v1.GetPoliciesResponse
+	117, // 206: mediator.v1.PolicyService.GetPolicyById:output_type -> mediator.v1.GetPolicyByIdResponse
+	121, // 207: mediator.v1.PolicyService.GetPolicyStatusById:output_type -> mediator.v1.GetPolicyStatusByIdResponse
+	123, // 208: mediator.v1.PolicyService.GetPolicyStatusByGroup:output_type -> mediator.v1.GetPolicyStatusByGroupResponse
+	127, // 209: mediator.v1.PolicyService.GetPolicyViolationsById:output_type -> mediator.v1.GetPolicyViolationsByIdResponse
+	129, // 210: mediator.v1.PolicyService.GetPolicyViolationsByGroup:output_type -> mediator.v1.GetPolicyViolationsByGroupResponse
+	140, // 211: mediator.v1.KeyService.GetPublicKey:output_type -> mediator.v1.GetPublicKeyResponse
+	142, // 212: mediator.v1.KeyService.CreateKeyPair:output_type -> mediator.v1.CreateKeyPairResponse
+	151, // [151:213] is the sub-list for method output_type
+	89,  // [89:151] is the sub-list for method input_type
+	89,  // [89:89] is the sub-list for extension type_name
+	89,  // [89:89] is the sub-list for extension extendee
+	0,   // [0:89] is the sub-list for field type_name
 }
 
 func init() { file_mediator_v1_mediator_proto_init() }
@@ -11743,7 +11982,7 @@ func file_mediator_v1_mediator_proto_init() {
 			}
 		}
 		file_mediator_v1_mediator_proto_msgTypes[123].Exporter = func(v interface{}, i int) interface{} {
-			switch v := v.(*GetPolicyViolationsByIdRequest); i {
+			switch v := v.(*GetPolicyStatusByRepositoryRequest); i {
 			case 0:
 				return &v.state
 			case 1:
@@ -11755,7 +11994,7 @@ func file_mediator_v1_mediator_proto_init() {
 			}
 		}
 		file_mediator_v1_mediator_proto_msgTypes[124].Exporter = func(v interface{}, i int) interface{} {
-			switch v := v.(*GetPolicyViolationsByIdResponse); i {
+			switch v := v.(*GetPolicyStatusByRepositoryResponse); i {
 			case 0:
 				return &v.state
 			case 1:
@@ -11767,7 +12006,7 @@ func file_mediator_v1_mediator_proto_init() {
 			}
 		}
 		file_mediator_v1_mediator_proto_msgTypes[125].Exporter = func(v interface{}, i int) interface{} {
-			switch v := v.(*GetPolicyViolationsByGroupRequest); i {
+			switch v := v.(*GetPolicyViolationsByIdRequest); i {
 			case 0:
 				return &v.state
 			case 1:
@@ -11779,7 +12018,7 @@ func file_mediator_v1_mediator_proto_init() {
 			}
 		}
 		file_mediator_v1_mediator_proto_msgTypes[126].Exporter = func(v interface{}, i int) interface{} {
-			switch v := v.(*GetPolicyViolationsByGroupResponse); i {
+			switch v := v.(*GetPolicyViolationsByIdResponse); i {
 			case 0:
 				return &v.state
 			case 1:
@@ -11791,7 +12030,7 @@ func file_mediator_v1_mediator_proto_init() {
 			}
 		}
 		file_mediator_v1_mediator_proto_msgTypes[127].Exporter = func(v interface{}, i int) interface{} {
-			switch v := v.(*PolicyTypeRecord); i {
+			switch v := v.(*GetPolicyViolationsByGroupRequest); i {
 			case 0:
 				return &v.state
 			case 1:
@@ -11803,7 +12042,7 @@ func file_mediator_v1_mediator_proto_init() {
 			}
 		}
 		file_mediator_v1_mediator_proto_msgTypes[128].Exporter = func(v interface{}, i int) interface{} {
-			switch v := v.(*GetPolicyTypeRequest); i {
+			switch v := v.(*GetPolicyViolationsByGroupResponse); i {
 			case 0:
 				return &v.state
 			case 1:
@@ -11815,7 +12054,7 @@ func file_mediator_v1_mediator_proto_init() {
 			}
 		}
 		file_mediator_v1_mediator_proto_msgTypes[129].Exporter = func(v interface{}, i int) interface{} {
-			switch v := v.(*GetPolicyTypeResponse); i {
+			switch v := v.(*GetPolicyViolationsByRepositoryRequest); i {
 			case 0:
 				return &v.state
 			case 1:
@@ -11827,7 +12066,7 @@ func file_mediator_v1_mediator_proto_init() {
 			}
 		}
 		file_mediator_v1_mediator_proto_msgTypes[130].Exporter = func(v interface{}, i int) interface{} {
-			switch v := v.(*GetPolicyTypeByIdRequest); i {
+			switch v := v.(*GetPolicyViolationsByRepositoryResponse); i {
 			case 0:
 				return &v.state
 			case 1:
@@ -11839,7 +12078,7 @@ func file_mediator_v1_mediator_proto_init() {
 			}
 		}
 		file_mediator_v1_mediator_proto_msgTypes[131].Exporter = func(v interface{}, i int) interface{} {
-			switch v := v.(*GetPolicyTypeByIdResponse); i {
+			switch v := v.(*PolicyTypeRecord); i {
 			case 0:
 				return &v.state
 			case 1:
@@ -11851,7 +12090,7 @@ func file_mediator_v1_mediator_proto_init() {
 			}
 		}
 		file_mediator_v1_mediator_proto_msgTypes[132].Exporter = func(v interface{}, i int) interface{} {
-			switch v := v.(*GetPolicyTypesRequest); i {
+			switch v := v.(*GetPolicyTypeRequest); i {
 			case 0:
 				return &v.state
 			case 1:
@@ -11863,7 +12102,7 @@ func file_mediator_v1_mediator_proto_init() {
 			}
 		}
 		file_mediator_v1_mediator_proto_msgTypes[133].Exporter = func(v interface{}, i int) interface{} {
-			switch v := v.(*GetPolicyTypesResponse); i {
+			switch v := v.(*GetPolicyTypeResponse); i {
 			case 0:
 				return &v.state
 			case 1:
@@ -11875,7 +12114,7 @@ func file_mediator_v1_mediator_proto_init() {
 			}
 		}
 		file_mediator_v1_mediator_proto_msgTypes[134].Exporter = func(v interface{}, i int) interface{} {
-			switch v := v.(*GetPublicKeyRequest); i {
+			switch v := v.(*GetPolicyTypeByIdRequest); i {
 			case 0:
 				return &v.state
 			case 1:
@@ -11887,7 +12126,7 @@ func file_mediator_v1_mediator_proto_init() {
 			}
 		}
 		file_mediator_v1_mediator_proto_msgTypes[135].Exporter = func(v interface{}, i int) interface{} {
-			switch v := v.(*GetPublicKeyResponse); i {
+			switch v := v.(*GetPolicyTypeByIdResponse); i {
 			case 0:
 				return &v.state
 			case 1:
@@ -11899,7 +12138,7 @@ func file_mediator_v1_mediator_proto_init() {
 			}
 		}
 		file_mediator_v1_mediator_proto_msgTypes[136].Exporter = func(v interface{}, i int) interface{} {
-			switch v := v.(*CreateKeyPairRequest); i {
+			switch v := v.(*GetPolicyTypesRequest); i {
 			case 0:
 				return &v.state
 			case 1:
@@ -11911,6 +12150,54 @@ func file_mediator_v1_mediator_proto_init() {
 			}
 		}
 		file_mediator_v1_mediator_proto_msgTypes[137].Exporter = func(v interface{}, i int) interface{} {
+			switch v := v.(*GetPolicyTypesResponse); i {
+			case 0:
+				return &v.state
+			case 1:
+				return &v.sizeCache
+			case 2:
+				return &v.unknownFields
+			default:
+				return nil
+			}
+		}
+		file_mediator_v1_mediator_proto_msgTypes[138].Exporter = func(v interface{}, i int) interface{} {
+			switch v := v.(*GetPublicKeyRequest); i {
+			case 0:
+				return &v.state
+			case 1:
+				return &v.sizeCache
+			case 2:
+				return &v.unknownFields
+			default:
+				return nil
+			}
+		}
+		file_mediator_v1_mediator_proto_msgTypes[139].Exporter = func(v interface{}, i int) interface{} {
+			switch v := v.(*GetPublicKeyResponse); i {
+			case 0:
+				return &v.state
+			case 1:
+				return &v.sizeCache
+			case 2:
+				return &v.unknownFields
+			default:
+				return nil
+			}
+		}
+		file_mediator_v1_mediator_proto_msgTypes[140].Exporter = func(v interface{}, i int) interface{} {
+			switch v := v.(*CreateKeyPairRequest); i {
+			case 0:
+				return &v.state
+			case 1:
+				return &v.sizeCache
+			case 2:
+				return &v.unknownFields
+			default:
+				return nil
+			}
+		}
+		file_mediator_v1_mediator_proto_msgTypes[141].Exporter = func(v interface{}, i int) interface{} {
 			switch v := v.(*CreateKeyPairResponse); i {
 			case 0:
 				return &v.state
@@ -11954,18 +12241,19 @@ func file_mediator_v1_mediator_proto_init() {
 	file_mediator_v1_mediator_proto_msgTypes[107].OneofWrappers = []interface{}{}
 	file_mediator_v1_mediator_proto_msgTypes[113].OneofWrappers = []interface{}{}
 	file_mediator_v1_mediator_proto_msgTypes[116].OneofWrappers = []interface{}{}
-	file_mediator_v1_mediator_proto_msgTypes[123].OneofWrappers = []interface{}{}
 	file_mediator_v1_mediator_proto_msgTypes[125].OneofWrappers = []interface{}{}
 	file_mediator_v1_mediator_proto_msgTypes[127].OneofWrappers = []interface{}{}
 	file_mediator_v1_mediator_proto_msgTypes[129].OneofWrappers = []interface{}{}
 	file_mediator_v1_mediator_proto_msgTypes[131].OneofWrappers = []interface{}{}
+	file_mediator_v1_mediator_proto_msgTypes[133].OneofWrappers = []interface{}{}
+	file_mediator_v1_mediator_proto_msgTypes[135].OneofWrappers = []interface{}{}
 	type x struct{}
 	out := protoimpl.TypeBuilder{
 		File: protoimpl.DescBuilder{
 			GoPackagePath: reflect.TypeOf(x{}).PkgPath(),
 			RawDescriptor: file_mediator_v1_mediator_proto_rawDesc,
 			NumEnums:      1,
-			NumMessages:   138,
+			NumMessages:   142,
 			NumExtensions: 0,
 			NumServices:   13,
 		},

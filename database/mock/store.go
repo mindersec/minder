@@ -637,6 +637,21 @@ func (mr *MockStoreMockRecorder) GetPolicyStatusById(arg0, arg1 interface{}) *go
 	return mr.mock.ctrl.RecordCallWithMethodType(mr.mock, "GetPolicyStatusById", reflect.TypeOf((*MockStore)(nil).GetPolicyStatusById), arg0, arg1)
 }
 
+// GetPolicyStatusByRepositoryId mocks base method.
+func (m *MockStore) GetPolicyStatusByRepositoryId(arg0 context.Context, arg1 int32) ([]db.GetPolicyStatusByRepositoryIdRow, error) {
+	m.ctrl.T.Helper()
+	ret := m.ctrl.Call(m, "GetPolicyStatusByRepositoryId", arg0, arg1)
+	ret0, _ := ret[0].([]db.GetPolicyStatusByRepositoryIdRow)
+	ret1, _ := ret[1].(error)
+	return ret0, ret1
+}
+
+// GetPolicyStatusByRepositoryId indicates an expected call of GetPolicyStatusByRepositoryId.
+func (mr *MockStoreMockRecorder) GetPolicyStatusByRepositoryId(arg0, arg1 interface{}) *gomock.Call {
+	mr.mock.ctrl.T.Helper()
+	return mr.mock.ctrl.RecordCallWithMethodType(mr.mock, "GetPolicyStatusByRepositoryId", reflect.TypeOf((*MockStore)(nil).GetPolicyStatusByRepositoryId), arg0, arg1)
+}
+
 // GetPolicyType mocks base method.
 func (m *MockStore) GetPolicyType(arg0 context.Context, arg1 db.GetPolicyTypeParams) (db.PolicyType, error) {
 	m.ctrl.T.Helper()
@@ -682,19 +697,19 @@ func (mr *MockStoreMockRecorder) GetPolicyTypes(arg0, arg1 interface{}) *gomock.
 	return mr.mock.ctrl.RecordCallWithMethodType(mr.mock, "GetPolicyTypes", reflect.TypeOf((*MockStore)(nil).GetPolicyTypes), arg0, arg1)
 }
 
-// GetPolicyViolations mocks base method.
-func (m *MockStore) GetPolicyViolations(arg0 context.Context, arg1 db.GetPolicyViolationsParams) ([]db.GetPolicyViolationsRow, error) {
+// GetPolicyViolationsByGroup mocks base method.
+func (m *MockStore) GetPolicyViolationsByGroup(arg0 context.Context, arg1 db.GetPolicyViolationsByGroupParams) ([]db.GetPolicyViolationsByGroupRow, error) {
 	m.ctrl.T.Helper()
-	ret := m.ctrl.Call(m, "GetPolicyViolations", arg0, arg1)
-	ret0, _ := ret[0].([]db.GetPolicyViolationsRow)
+	ret := m.ctrl.Call(m, "GetPolicyViolationsByGroup", arg0, arg1)
+	ret0, _ := ret[0].([]db.GetPolicyViolationsByGroupRow)
 	ret1, _ := ret[1].(error)
 	return ret0, ret1
 }
 
-// GetPolicyViolations indicates an expected call of GetPolicyViolations.
-func (mr *MockStoreMockRecorder) GetPolicyViolations(arg0, arg1 interface{}) *gomock.Call {
+// GetPolicyViolationsByGroup indicates an expected call of GetPolicyViolationsByGroup.
+func (mr *MockStoreMockRecorder) GetPolicyViolationsByGroup(arg0, arg1 interface{}) *gomock.Call {
 	mr.mock.ctrl.T.Helper()
-	return mr.mock.ctrl.RecordCallWithMethodType(mr.mock, "GetPolicyViolations", reflect.TypeOf((*MockStore)(nil).GetPolicyViolations), arg0, arg1)
+	return mr.mock.ctrl.RecordCallWithMethodType(mr.mock, "GetPolicyViolationsByGroup", reflect.TypeOf((*MockStore)(nil).GetPolicyViolationsByGroup), arg0, arg1)
 }
 
 // GetPolicyViolationsById mocks base method.
@@ -710,6 +725,21 @@ func (m *MockStore) GetPolicyViolationsById(arg0 context.Context, arg1 db.GetPol
 func (mr *MockStoreMockRecorder) GetPolicyViolationsById(arg0, arg1 interface{}) *gomock.Call {
 	mr.mock.ctrl.T.Helper()
 	return mr.mock.ctrl.RecordCallWithMethodType(mr.mock, "GetPolicyViolationsById", reflect.TypeOf((*MockStore)(nil).GetPolicyViolationsById), arg0, arg1)
+}
+
+// GetPolicyViolationsByRepositoryId mocks base method.
+func (m *MockStore) GetPolicyViolationsByRepositoryId(arg0 context.Context, arg1 db.GetPolicyViolationsByRepositoryIdParams) ([]db.GetPolicyViolationsByRepositoryIdRow, error) {
+	m.ctrl.T.Helper()
+	ret := m.ctrl.Call(m, "GetPolicyViolationsByRepositoryId", arg0, arg1)
+	ret0, _ := ret[0].([]db.GetPolicyViolationsByRepositoryIdRow)
+	ret1, _ := ret[1].(error)
+	return ret0, ret1
+}
+
+// GetPolicyViolationsByRepositoryId indicates an expected call of GetPolicyViolationsByRepositoryId.
+func (mr *MockStoreMockRecorder) GetPolicyViolationsByRepositoryId(arg0, arg1 interface{}) *gomock.Call {
+	mr.mock.ctrl.T.Helper()
+	return mr.mock.ctrl.RecordCallWithMethodType(mr.mock, "GetPolicyViolationsByRepositoryId", reflect.TypeOf((*MockStore)(nil).GetPolicyViolationsByRepositoryId), arg0, arg1)
 }
 
 // GetQuerierWithTransaction mocks base method.

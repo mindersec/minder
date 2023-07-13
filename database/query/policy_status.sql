@@ -17,3 +17,11 @@ INNER JOIN policies p ON p.id = ps.policy_id
 INNER JOIN repositories r ON r.id = ps.repository_id
 INNER JOIN policy_types pt ON pt.id = p.policy_type
 WHERE p.provider = $1 AND p.group_id = $2;
+
+-- name: GetPolicyStatusByRepositoryId :many
+SELECT pt.policy_type, r.id as repo_id, r.repo_owner, r.repo_name,
+ps.policy_status, ps.last_updated FROM policy_status ps
+INNER JOIN policies p ON p.id = ps.policy_id
+INNER JOIN repositories r ON r.id = ps.repository_id
+INNER JOIN policy_types pt ON pt.id = p.policy_type
+WHERE r.id = $1;
