@@ -38,9 +38,8 @@ var testCmd = &cobra.Command{
 	Short: "test a rule type definition",
 	Long:  `The 'rule_type test' subcommand allows you test a rule type definition`,
 	RunE: func(cmd *cobra.Command, args []string) error {
-		// read file
 		fpath := cmd.Flag("file")
-		// repo := cmd.Flag("repo")
+		epath := cmd.Flag("entity")
 
 		rt, err := readRuleTypeFromFile(fpath.Value.String())
 		if err != nil {
@@ -48,6 +47,11 @@ var testCmd = &cobra.Command{
 		}
 
 		fmt.Printf("Rule Type: %+v\n", rt)
+
+		e, err = readEntityFromFile(epath.Value.String(), rt.Def.InEntity)
+		if err != nil {
+			return fmt.Errorf("error reading entity from file: %w", err)
+		}
 
 		_, err = getProviderClient(context.Background(), rt)
 		if err != nil {
@@ -76,6 +80,38 @@ func readRuleTypeFromFile(fpath string) (*pb.RuleType, error) {
 	}
 
 	return r, nil
+}
+
+// readEntityFromFile reads an entity from a file and returns it as a protobuf
+// golang structure.
+// TODO: We probably want to move this code to a utility once we land the server
+// side code.
+func readEntityFromFile(fpath string, entType string) (any, error) {
+	f, err := os.Open(filepath.Clean(fpath))
+	if err != nil {
+		return nil, fmt.Errorf("error opening file: %w", err)
+	}
+
+	// We transcode to JSON so we can decode it straight to the protobuf structure
+	w := &bytes.Buffer{}
+	if err := util.TranscodeYAMLToJSON(f, w); err != nil {
+		return nil, fmt.Errorf("error converting yaml to json: %w", err)
+	}
+
+	var out any
+
+	switch entType {
+	case "repository":
+		out = &pb.GetRepositoryResponse{}
+	default:
+		return nil, fmt.Errorf("unknown entity type: %s", entType)
+	}
+
+	if err := json.NewDecoder(w).Decode(out); err != nil {
+		return nil, fmt.Errorf("error decoding json: %w", err)
+	}
+
+	return out, nil
 }
 
 // getProviderClient returns a client for the provider specified in the rule type
@@ -111,8 +147,8 @@ func init() {
 	// bind environment variable
 	viper.SetEnvKeyReplacer(strings.NewReplacer(".", "_"))
 
-	testCmd.Flags().StringP("repo", "r", "", "repository to verify")
-	if err := testCmd.MarkFlagRequired("repo"); err != nil {
+	testCmd.Flags().StringP("entity", "e", "", "YAML file containing the entity to test the rule against")
+	if err := testCmd.MarkFlagRequired("entity"); err != nil {
 		fmt.Fprintf(os.Stderr, "Error marking flag as required: %s\n", err)
 		os.Exit(1)
 	}
