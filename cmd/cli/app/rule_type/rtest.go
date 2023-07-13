@@ -45,7 +45,7 @@ func init() {
 	ruleTypeCmd.AddCommand(testCmd)
 	testCmd.Flags().StringP("rule-type", "r", "", "file to read rule type definition from")
 	testCmd.Flags().StringP("entity", "e", "", "YAML file containing the entity to test the rule against")
-	testCmd.Flags().StringP("fragment", "f", "", "YAML file containing a fragment of policy to test the rule against")
+	testCmd.Flags().StringP("policy", "p", "", "YAML file containing a policy to test the rule against")
 	testCmd.Flags().StringP("token", "t", "", "token to authenticate to the provider."+
 		"Can also be set via the AUTH_TOKEN environment variable.")
 
@@ -70,7 +70,7 @@ func init() {
 func testCmdRun(cmd *cobra.Command, _ []string) error {
 	rtpath := cmd.Flag("rule-type")
 	epath := cmd.Flag("entity")
-	fpath := cmd.Flag("fragment")
+	ppath := cmd.Flag("policy")
 
 	rt, err := readRuleTypeFromFile(rtpath.Value.String())
 	if err != nil {
@@ -84,9 +84,14 @@ func testCmdRun(cmd *cobra.Command, _ []string) error {
 		return fmt.Errorf("error reading entity from file: %w", err)
 	}
 
-	frag, err := readFragmentFromFile(fpath.Value.String())
+	p, err := readPolicyFromFile(ppath.Value.String())
 	if err != nil {
 		return fmt.Errorf("error reading fragment from file: %w", err)
+	}
+
+	frag, err := getRelevantFragment(rt, p)
+	if err != nil {
+		return fmt.Errorf("error getting relevant fragment: %w", err)
 	}
 
 	client, err := getProviderClient(context.Background(), rt)
@@ -164,7 +169,7 @@ func readEntityFromFile(fpath string, entType string) (any, error) {
 	return out, nil
 }
 
-func readFragmentFromFile(fpath string) (any, error) {
+func readPolicyFromFile(fpath string) (map[string]any, error) {
 	f, err := os.Open(filepath.Clean(fpath))
 	if err != nil {
 		return nil, fmt.Errorf("error opening file: %w", err)
@@ -175,13 +180,76 @@ func readFragmentFromFile(fpath string) (any, error) {
 		return nil, fmt.Errorf("error converting yaml to json: %w", err)
 	}
 
-	var out any
+	var out map[string]any
 
 	if err := json.NewDecoder(w).Decode(&out); err != nil {
 		return nil, fmt.Errorf("error decoding json: %w", err)
 	}
 
 	return out, nil
+}
+
+// getRelevantFragment returns the relevant fragment for the rule type
+// Note that this will eventually be replaced by a proper parser for pipeline
+// policies.
+// TODO: This should be moved to a policy package and we should have some
+// generic interface for policies.
+func getRelevantFragment(rt *pb.RuleType, p map[string]any) (any, error) {
+	// We get the relevant entity for the rule type
+	entityPolicyRaw, ok := p[rt.Def.InEntity]
+	if !ok {
+		return nil, fmt.Errorf("policy does not contain entity: %s", rt.Def.InEntity)
+	}
+
+	pipelineContext, ok := p["context"].(map[string]any)
+	if !ok {
+		return nil, fmt.Errorf("policy does not contain context")
+	}
+
+	defaultProvider, ok := pipelineContext["default-provider"].(string)
+	if !ok {
+		return nil, fmt.Errorf("policy does not contain valid default provider")
+	}
+
+	// cast to contextual rules which is an array
+	contextualRules, ok := entityPolicyRaw.([]any)
+	if !ok {
+		return nil, fmt.Errorf("policy entity is not an array")
+	}
+
+	if len(contextualRules) == 0 {
+		return nil, fmt.Errorf("policy entity array is empty")
+	}
+
+	// We get the relevant fragment for the rule type
+	for idx := range contextualRules {
+		ruleSet, ok := contextualRules[idx].(map[string]any)
+		if !ok {
+			return nil, fmt.Errorf("policy entity is not an object")
+		}
+
+		prov, ok := ruleSet["context"].(string)
+		if !ok {
+			return nil, fmt.Errorf("policy entity context is not a string")
+		}
+
+		if len(prov) == 0 {
+			prov = defaultProvider
+		}
+
+		if prov != rt.Context.Provider {
+			continue
+		}
+
+		rules, ok := ruleSet["rules"].(map[string]any)
+		if !ok {
+			return nil, fmt.Errorf("policy entity rules is not an object")
+		}
+
+		return rules, nil
+	}
+
+	return nil, fmt.Errorf("policy does not contain rules for provider: %s", rt.Context.Provider)
 }
 
 // getProviderClient returns a client for the provider specified in the rule type
