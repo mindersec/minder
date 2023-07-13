@@ -211,7 +211,7 @@ const listUsersByGroup = `-- name: ListUsersByGroup :many
 SELECT users.id, users.organization_id, users.email, users.username, users.password, users.needs_password_change, users.first_name, users.last_name, users.is_protected, users.created_at, users.updated_at, users.min_token_issued_time FROM users
 JOIN user_groups ON users.id = user_groups.user_id
 WHERE user_groups.group_id = $1
-ORDER BY id
+ORDER BY users.id
 LIMIT $2
 OFFSET $3
 `
