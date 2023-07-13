@@ -35,10 +35,11 @@ import (
 
 // TestCmd is the root command for the rule subcommands
 var testCmd = &cobra.Command{
-	Use:   "test",
-	Short: "test a rule type definition",
-	Long:  `The 'rule_type test' subcommand allows you test a rule type definition`,
-	RunE:  testCmdRun,
+	Use:          "test",
+	Short:        "test a rule type definition",
+	Long:         `The 'rule_type test' subcommand allows you test a rule type definition`,
+	RunE:         testCmdRun,
+	SilenceUsage: true,
 }
 
 func init() {
