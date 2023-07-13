@@ -50,7 +50,7 @@ jobs:
   sqlc-generation:
     runs-on: ubuntu-latest
     env:
-      GOPROXY: https://proxy.golang.org/cached-only,https://proxy.golang.org
+      GOPROXY: https://proxy.golang.org,direct
     steps:
       - name: Check out code
         uses: actions/checkout@v3
