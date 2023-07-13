@@ -77,9 +77,7 @@ func testCmdRun(cmd *cobra.Command, _ []string) error {
 		return fmt.Errorf("error reading rule type from file: %w", err)
 	}
 
-	fmt.Printf("Rule Type: %+v\n", rt)
-
-	_, err = readEntityFromFile(epath.Value.String(), rt.Def.InEntity)
+	ent, err := readEntityFromFile(epath.Value.String(), rt.Def.InEntity)
 	if err != nil {
 		return fmt.Errorf("error reading entity from file: %w", err)
 	}
@@ -109,10 +107,16 @@ func testCmdRun(cmd *cobra.Command, _ []string) error {
 		return fmt.Errorf("error validating fragment against schema: %w", err)
 	}
 
-	fmt.Printf("Valid: %t\n", *valid)
+	fmt.Printf("Policy valid according to the JSON schema: %t\n", *valid)
 	if err != nil {
 		fmt.Printf("Error: %s\n", err)
 	}
+
+	if err := eng.Eval(cmd.Context(), ent, frag); err != nil {
+		return fmt.Errorf("error evaluating rule type: %w", err)
+	}
+
+	fmt.Printf("The rule type is valid and the entity conforms to it\n")
 
 	return nil
 }

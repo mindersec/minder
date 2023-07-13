@@ -1326,27 +1326,25 @@ message OrganizationContext {
      message Definition {
          string in_entity = 1;
          map<string, google.protobuf.Struct> rule_schema = 2;
-         message DataIngest {
+         message DataEval {
              // We currently only support REST
              string type = 1;
              message RestType {
-                 string url = 1;
+                 string endpoint = 1;
                  string method = 2;
                  repeated string headers = 3;
-                 string body = 4;
+                 optional string body = 4;
                  string parse = 5;
              }
-             oneof data_ingest_type {
-                 RestType rest = 2;
-             }
-             string key_type = 3;
-             message DataIngestDef {
+             optional RestType rest = 3;
+             string key_type = 4;
+             message DataEvalDef {
                  string type = 1;
                  string def = 2;
              }
-             map<string, DataIngestDef> data = 4;
+             map<string, DataEvalDef> data = 5;
          }
-         DataIngest data_ingest = 3;
+         DataEval data_eval = 3;
      }
      Definition def = 3;
  }

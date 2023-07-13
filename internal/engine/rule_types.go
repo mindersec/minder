@@ -16,6 +16,7 @@
 package engine
 
 import (
+	"context"
 	"fmt"
 	"strings"
 
@@ -47,6 +48,9 @@ type RuleTypeEngine struct {
 	// schema is the schema that this rule type must conform to
 	schema *gojsonschema.Schema
 
+	// rdi is the rule data ingest engine
+	rdi RuleDataIngest
+
 	rt *pb.RuleType
 	// TODO(JAORMX): We need to have an abstract client interface
 	cli ghclient.RestAPI
@@ -61,6 +65,11 @@ func NewRuleTypeEngine(rt *pb.RuleType, cli ghclient.RestAPI) (*RuleTypeEngine, 
 		return nil, fmt.Errorf("cannot create json schema: %w", err)
 	}
 
+	rdi, err := NewRuleDataIngest(rt, cli)
+	if err != nil {
+		return nil, fmt.Errorf("cannot create rule data ingest: %w", err)
+	}
+
 	return &RuleTypeEngine{
 		Meta: RuleMeta{
 			Name:         rt.Name,
@@ -68,6 +77,7 @@ func NewRuleTypeEngine(rt *pb.RuleType, cli ghclient.RestAPI) (*RuleTypeEngine, 
 			Organization: rt.Context.Organization,
 		},
 		schema: schema,
+		rdi:    rdi,
 		rt:     rt,
 		cli:    cli,
 	}, nil
@@ -102,4 +112,9 @@ func (r *RuleTypeEngine) ValidateAgainstSchema(contextualPolicy any) (*bool, err
 	}
 
 	return &out, nil
+}
+
+// Eval runs the rule type engine against the given entity
+func (r *RuleTypeEngine) Eval(ctx context.Context, ent any, pol any) error {
+	return r.rdi.Eval(ctx, ent, pol)
 }

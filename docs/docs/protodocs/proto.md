@@ -138,10 +138,10 @@
     - [RoleRecord](#mediator-v1-RoleRecord)
     - [RuleType](#mediator-v1-RuleType)
     - [RuleType.Definition](#mediator-v1-RuleType-Definition)
-    - [RuleType.Definition.DataIngest](#mediator-v1-RuleType-Definition-DataIngest)
-    - [RuleType.Definition.DataIngest.DataEntry](#mediator-v1-RuleType-Definition-DataIngest-DataEntry)
-    - [RuleType.Definition.DataIngest.DataIngestDef](#mediator-v1-RuleType-Definition-DataIngest-DataIngestDef)
-    - [RuleType.Definition.DataIngest.RestType](#mediator-v1-RuleType-Definition-DataIngest-RestType)
+    - [RuleType.Definition.DataEval](#mediator-v1-RuleType-Definition-DataEval)
+    - [RuleType.Definition.DataEval.DataEntry](#mediator-v1-RuleType-Definition-DataEval-DataEntry)
+    - [RuleType.Definition.DataEval.DataEvalDef](#mediator-v1-RuleType-Definition-DataEval-DataEvalDef)
+    - [RuleType.Definition.DataEval.RestType](#mediator-v1-RuleType-Definition-DataEval-RestType)
     - [RuleType.Definition.RuleSchemaEntry](#mediator-v1-RuleType-Definition-RuleSchemaEntry)
     - [StoreProviderTokenRequest](#mediator-v1-StoreProviderTokenRequest)
     - [StoreProviderTokenResponse](#mediator-v1-StoreProviderTokenResponse)
@@ -2328,50 +2328,50 @@ The version is assumed from the folder&#39;s version.
 | ----- | ---- | ----- | ----------- |
 | in_entity | [string](#string) |  |  |
 | rule_schema | [RuleType.Definition.RuleSchemaEntry](#mediator-v1-RuleType-Definition-RuleSchemaEntry) | repeated |  |
-| data_ingest | [RuleType.Definition.DataIngest](#mediator-v1-RuleType-Definition-DataIngest) |  |  |
+| data_eval | [RuleType.Definition.DataEval](#mediator-v1-RuleType-Definition-DataEval) |  |  |
 
 
 
 
 
 
-<a name="mediator-v1-RuleType-Definition-DataIngest"></a>
+<a name="mediator-v1-RuleType-Definition-DataEval"></a>
 
-### RuleType.Definition.DataIngest
+### RuleType.Definition.DataEval
 
 
 
 | Field | Type | Label | Description |
 | ----- | ---- | ----- | ----------- |
 | type | [string](#string) |  | We currently only support REST |
-| rest | [RuleType.Definition.DataIngest.RestType](#mediator-v1-RuleType-Definition-DataIngest-RestType) |  |  |
+| rest | [RuleType.Definition.DataEval.RestType](#mediator-v1-RuleType-Definition-DataEval-RestType) | optional |  |
 | key_type | [string](#string) |  |  |
-| data | [RuleType.Definition.DataIngest.DataEntry](#mediator-v1-RuleType-Definition-DataIngest-DataEntry) | repeated |  |
+| data | [RuleType.Definition.DataEval.DataEntry](#mediator-v1-RuleType-Definition-DataEval-DataEntry) | repeated |  |
 
 
 
 
 
 
-<a name="mediator-v1-RuleType-Definition-DataIngest-DataEntry"></a>
+<a name="mediator-v1-RuleType-Definition-DataEval-DataEntry"></a>
 
-### RuleType.Definition.DataIngest.DataEntry
+### RuleType.Definition.DataEval.DataEntry
 
 
 
 | Field | Type | Label | Description |
 | ----- | ---- | ----- | ----------- |
 | key | [string](#string) |  |  |
-| value | [RuleType.Definition.DataIngest.DataIngestDef](#mediator-v1-RuleType-Definition-DataIngest-DataIngestDef) |  |  |
+| value | [RuleType.Definition.DataEval.DataEvalDef](#mediator-v1-RuleType-Definition-DataEval-DataEvalDef) |  |  |
 
 
 
 
 
 
-<a name="mediator-v1-RuleType-Definition-DataIngest-DataIngestDef"></a>
+<a name="mediator-v1-RuleType-Definition-DataEval-DataEvalDef"></a>
 
-### RuleType.Definition.DataIngest.DataIngestDef
+### RuleType.Definition.DataEval.DataEvalDef
 
 
 
@@ -2385,18 +2385,18 @@ The version is assumed from the folder&#39;s version.
 
 
 
-<a name="mediator-v1-RuleType-Definition-DataIngest-RestType"></a>
+<a name="mediator-v1-RuleType-Definition-DataEval-RestType"></a>
 
-### RuleType.Definition.DataIngest.RestType
+### RuleType.Definition.DataEval.RestType
 
 
 
 | Field | Type | Label | Description |
 | ----- | ---- | ----- | ----------- |
-| url | [string](#string) |  |  |
+| endpoint | [string](#string) |  |  |
 | method | [string](#string) |  |  |
 | headers | [string](#string) | repeated |  |
-| body | [string](#string) |  |  |
+| body | [string](#string) | optional |  |
 | parse | [string](#string) |  |  |
 
 

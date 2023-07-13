@@ -1,0 +1,30 @@
+---
+version: v1
+type: pipeline-policy
+name: acme-github-policy
+context:
+  organization: ACME
+  default-provider: github
+repository:
+  - context: github
+    rules:
+      secret_scanning_enabled: true
+      user_defined_rule_1:
+        foo: bar
+      User_defined_rule_2: false
+ci-environment:
+  - rules:  # Not specifying a context takes the default context
+      no_org_wide_github_action_permissions: true
+artifact:
+  - context: github
+    rules:
+      ctlog_entry:
+        state: exists
+        rekor: 'https://rekor.acme.dev/'
+        fulcio: 'https://fulcio.acme.dev/'
+  - context: quay
+    rules:
+      ctlog_entry:
+        state: exists
+        rekor: 'https://rekor.acme.dev/'
+        fulcio: 'https://fulcio.acme.dev/'
