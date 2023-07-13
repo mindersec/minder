@@ -110,7 +110,7 @@ func testCmdRun(cmd *cobra.Command, _ []string) error {
 
 	fmt.Printf("Policy valid according to the JSON schema: %t\n", *valid)
 	if err != nil {
-		fmt.Printf("Error: %s\n", err)
+		return fmt.Errorf("Error: %s\n", err)
 	}
 
 	if err := eng.Eval(cmd.Context(), ent, frag); err != nil {
