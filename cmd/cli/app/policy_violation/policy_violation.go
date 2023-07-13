@@ -17,9 +17,9 @@
 package policy_violation
 
 import (
-	"github.com/stacklok/mediator/cmd/cli/app"
-
 	"github.com/spf13/cobra"
+
+	"github.com/stacklok/mediator/cmd/cli/app"
 )
 
 // PolicyViolationCmd is the root command for the policy_violation subcommands

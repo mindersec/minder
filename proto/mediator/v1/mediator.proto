@@ -432,6 +432,12 @@ service PolicyService {
             };    
     }    
 
+    rpc GetPolicyStatusByRepository (GetPolicyStatusByRepositoryRequest) returns (GetPolicyStatusByRepositoryResponse) {
+        option (google.api.http) = {
+            get: "/api/v1/policy_status/repository/{repository_id}"
+            };    
+    }    
+
     rpc GetPolicyViolationsById (GetPolicyViolationsByIdRequest) returns (GetPolicyViolationsByIdResponse) {
         option (google.api.http) = {
             get: "/api/v1/policy_violations/{id}"
@@ -441,6 +447,12 @@ service PolicyService {
     rpc GetPolicyViolationsByGroup (GetPolicyViolationsByGroupRequest) returns (GetPolicyViolationsByGroupResponse) {
         option (google.api.http) = {
             get: "/api/v1/policy_violations/provider/{provider}/group/{group_id}"
+            };    
+    }    
+
+    rpc GetPolicyViolationsByRepository (GetPolicyViolationsByRepositoryRequest) returns (GetPolicyViolationsByRepositoryResponse) {
+        option (google.api.http) = {
+            get: "/api/v1/policy_violations/repository/{repository_id}"
             };    
     }    
 }
@@ -585,10 +597,11 @@ message Repositories {
 // Due to protobuf limitations, we cannot use the same Repositories for
 // listing repositories and registering repositories.
 message ListRepositories {
-    string owner = 1;
-    string name = 2;
-    int32 repo_id = 3;
-    bool registered = 4;
+    int32 id = 1;
+    string owner = 2;
+    string name = 3;
+    int32 repo_id = 4;
+    bool registered = 5;
 }
 
 message RegisterRepositoryResponse {
@@ -622,13 +635,14 @@ message ListRepositoriesResponse {
 }
 
 message GetRepositoryResponse {
-    string owner = 1;
-    string repository = 2;
-    int32 repo_id = 3;
-    string hook_url = 4;
-    google.protobuf.Timestamp created_at = 5;
-    google.protobuf.Timestamp updated_at = 6;
-    bool registered = 7;
+    int32 id = 1;
+    string owner = 2;
+    string repository = 3;
+    int32 repo_id = 4;
+    string hook_url = 5;
+    google.protobuf.Timestamp created_at = 6;
+    google.protobuf.Timestamp updated_at = 7;
+    bool registered = 8;
 }
 
 message RepositoryResult {

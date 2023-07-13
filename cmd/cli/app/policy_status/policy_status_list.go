@@ -61,24 +61,36 @@ mediator control plane for an specific provider/group or policy id.`,
 		provider := viper.GetString("provider")
 		group := viper.GetInt32("group-id")
 		policy_id := viper.GetInt32("policy-id")
+		repo_id := viper.GetInt32("repo-id")
 		format := viper.GetString("output")
 
 		if format != "json" && format != "yaml" && format != "" {
 			fmt.Fprintf(os.Stderr, "Error: invalid format: %s\n", format)
 		}
 
-		// if policy_id is set, provider and group cannot be set
-		if policy_id != 0 && (provider != "" || group != 0) {
-			fmt.Fprintf(os.Stderr, "Error: policy-id cannot be set with provider or group-id\n")
+		flags_set := 0
+		if policy_id != 0 {
+			flags_set++
+		}
+		if repo_id != 0 {
+			flags_set++
+		}
+		if provider != "" {
+			flags_set++
+		}
+		if flags_set > 1 {
+			fmt.Fprintf(os.Stderr, "Error: only one of policy-id, repo-id or provider/group-id can be set\n")
 			os.Exit(1)
 		}
-		// if provider is set, group needs to be set
-		if (provider != "" && group == 0) || (provider == "" && group != 0) {
+
+		// if group is set, provider needs to be set
+		if group != 0 && provider == "" {
 			fmt.Fprintf(os.Stderr, "Error: provider and group-id must be set together\n")
 			os.Exit(1)
 		}
-		// at least one of policy_id or provider/group needs to be set
-		if policy_id == 0 && provider == "" && group == 0 {
+
+		// at least one of policy_id, repo-id or group needs to be set
+		if policy_id == 0 && repo_id == 0 && group == 0 {
 			fmt.Fprintf(os.Stderr, "Error: policy-id or provider/group-id must be set\n")
 			os.Exit(1)
 		}
@@ -89,6 +101,10 @@ mediator control plane for an specific provider/group or policy id.`,
 			resp, err := client.GetPolicyStatusById(ctx,
 				&pb.GetPolicyStatusByIdRequest{PolicyId: policy_id})
 			util.ExitNicelyOnError(err, "Error getting policy status")
+			status = resp.PolicyRepoStatus
+		} else if repo_id != 0 {
+			resp, err := client.GetPolicyStatusByRepository(ctx, &pb.GetPolicyStatusByRepositoryRequest{RepositoryId: repo_id})
+			util.ExitNicelyOnError(err, "Error getting policies")
 			status = resp.PolicyRepoStatus
 		} else {
 			resp, err := client.GetPolicyStatusByGroup(ctx,
@@ -133,5 +149,6 @@ func init() {
 	policystatus_listCmd.Flags().StringP("provider", "p", "", "Provider to list policy violations for")
 	policystatus_listCmd.Flags().Int32P("group-id", "g", 0, "group id to list policy violations for")
 	policystatus_listCmd.Flags().Int32P("policy-id", "i", 0, "policy id to list policy violations for")
+	policystatus_listCmd.Flags().Int32P("repo-id", "r", 0, "repo id to list policy violations for")
 	policystatus_listCmd.Flags().StringP("output", "o", "", "Output format (json or yaml)")
 }

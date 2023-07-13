@@ -979,7 +979,7 @@ func TestGetPolicyViolationsByRepositoryDBMock(t *testing.T) {
 		store: mockStore,
 	}
 
-	response, err := server.GetPolicyViolationsByRepositoryId(ctx, request)
+	response, err := server.GetPolicyViolationsByRepository(ctx, request)
 
 	assert.NoError(t, err)
 	assert.NotNil(t, response)
@@ -1069,7 +1069,7 @@ func TestGetViolationsByRepositoryId_gRPC(t *testing.T) {
 			server, err := NewServer(mockStore, &config.Config{})
 			require.NoError(t, err, "failed to create test server")
 
-			resp, err := server.GetPolicyViolationsByRepositoryId(ctx, tc.req)
+			resp, err := server.GetPolicyViolationsByRepository(ctx, tc.req)
 			tc.checkResponse(t, resp, err)
 		})
 	}

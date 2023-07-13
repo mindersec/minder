@@ -1334,6 +1334,7 @@ get policy types
 
 | Field | Type | Label | Description |
 | ----- | ---- | ----- | ----------- |
+| id | [int32](#int32) |  |  |
 | owner | [string](#string) |  |  |
 | repository | [string](#string) |  |  |
 | repo_id | [int32](#int32) |  |  |
@@ -1845,6 +1846,7 @@ listing repositories and registering repositories.
 
 | Field | Type | Label | Description |
 | ----- | ---- | ----- | ----------- |
+| id | [int32](#int32) |  |  |
 | owner | [string](#string) |  |  |
 | name | [string](#string) |  |  |
 | repo_id | [int32](#int32) |  |  |
@@ -2562,8 +2564,10 @@ manage Organizations CRUD
 | GetPolicyById | [GetPolicyByIdRequest](#mediator-v1-GetPolicyByIdRequest) | [GetPolicyByIdResponse](#mediator-v1-GetPolicyByIdResponse) |  |
 | GetPolicyStatusById | [GetPolicyStatusByIdRequest](#mediator-v1-GetPolicyStatusByIdRequest) | [GetPolicyStatusByIdResponse](#mediator-v1-GetPolicyStatusByIdResponse) |  |
 | GetPolicyStatusByGroup | [GetPolicyStatusByGroupRequest](#mediator-v1-GetPolicyStatusByGroupRequest) | [GetPolicyStatusByGroupResponse](#mediator-v1-GetPolicyStatusByGroupResponse) |  |
+| GetPolicyStatusByRepository | [GetPolicyStatusByRepositoryRequest](#mediator-v1-GetPolicyStatusByRepositoryRequest) | [GetPolicyStatusByRepositoryResponse](#mediator-v1-GetPolicyStatusByRepositoryResponse) |  |
 | GetPolicyViolationsById | [GetPolicyViolationsByIdRequest](#mediator-v1-GetPolicyViolationsByIdRequest) | [GetPolicyViolationsByIdResponse](#mediator-v1-GetPolicyViolationsByIdResponse) |  |
 | GetPolicyViolationsByGroup | [GetPolicyViolationsByGroupRequest](#mediator-v1-GetPolicyViolationsByGroupRequest) | [GetPolicyViolationsByGroupResponse](#mediator-v1-GetPolicyViolationsByGroupResponse) |  |
+| GetPolicyViolationsByRepository | [GetPolicyViolationsByRepositoryRequest](#mediator-v1-GetPolicyViolationsByRepositoryRequest) | [GetPolicyViolationsByRepositoryResponse](#mediator-v1-GetPolicyViolationsByRepositoryResponse) |  |
 
 
 <a name="mediator-v1-RepositoryService"></a>

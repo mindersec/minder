@@ -19,12 +19,14 @@ import (
 	"encoding/json"
 	"fmt"
 	"os"
+	"time"
 
 	"github.com/olekukonko/tablewriter"
 	"github.com/spf13/cobra"
 	"github.com/spf13/viper"
 	"gopkg.in/yaml.v3"
 
+	"github.com/stacklok/mediator/cmd/cli/app"
 	"github.com/stacklok/mediator/internal/util"
 	pb "github.com/stacklok/mediator/pkg/generated/protobuf/go/mediator/v1"
 	github "github.com/stacklok/mediator/pkg/providers/github"
@@ -88,29 +90,62 @@ var repo_getCmd = &cobra.Command{
 			os.Exit(1)
 		}
 
-		switch format {
-		case formatDefault, formatTable:
-			table := tablewriter.NewWriter(os.Stdout)
-			table.SetHeader([]string{"Id", "Name", "HookUrl", "Registered", "CreatedAt", "UpdatedAt"})
+		status := util.GetConfigValue("status", "status", cmd, false).(bool)
+		if status {
+			clientPolicy := pb.NewPolicyServiceClient(conn)
 
-			row := []string{
-				fmt.Sprintf("%d", resp.GetRepoId()),
-				fmt.Sprintf("%s/%s", resp.GetOwner(), resp.GetRepository()),
-				resp.GetHookUrl(),
-				fmt.Sprintf("%t", resp.GetRegistered()),
-				resp.GetCreatedAt().AsTime().String(),
-				resp.GetUpdatedAt().AsTime().String(),
+			resp, err := clientPolicy.GetPolicyStatusByRepository(ctx, &pb.GetPolicyStatusByRepositoryRequest{RepositoryId: resp.Id})
+			util.ExitNicelyOnError(err, "Error getting policy status for repo")
+
+			// print results
+			if format == "" {
+				table := tablewriter.NewWriter(os.Stdout)
+				table.SetHeader([]string{"Policy type", "Status", "Last updated"})
+
+				for _, v := range resp.PolicyRepoStatus {
+					row := []string{
+						v.PolicyType,
+						v.PolicyStatus,
+						v.GetLastUpdated().AsTime().Format(time.RFC3339),
+					}
+					table.Append(row)
+				}
+				table.Render()
+			} else if format == app.JSON {
+				output, err := json.MarshalIndent(resp.PolicyRepoStatus, "", "  ")
+				util.ExitNicelyOnError(err, "Error marshalling json")
+				fmt.Println(string(output))
+			} else if format == app.YAML {
+				yamlData, err := yaml.Marshal(resp.PolicyRepoStatus)
+				util.ExitNicelyOnError(err, "Error marshalling yaml")
+				fmt.Println(string(yamlData))
 			}
-			table.Append(row)
-			table.Render()
-		case formatJSON:
-			output, err := json.MarshalIndent(resp, "", "  ")
-			util.ExitNicelyOnError(err, "Error marshalling json")
-			fmt.Println(string(output))
-		case formatYAML:
-			yamlData, err := yaml.Marshal(resp)
-			util.ExitNicelyOnError(err, "Error marshalling yaml")
-			fmt.Println(string(yamlData))
+
+		} else {
+			switch format {
+			case formatDefault, formatTable:
+				table := tablewriter.NewWriter(os.Stdout)
+				table.SetHeader([]string{"Id", "Name", "HookUrl", "Registered", "CreatedAt", "UpdatedAt"})
+
+				row := []string{
+					fmt.Sprintf("%d", resp.GetRepoId()),
+					fmt.Sprintf("%s/%s", resp.GetOwner(), resp.GetRepository()),
+					resp.GetHookUrl(),
+					fmt.Sprintf("%t", resp.GetRegistered()),
+					resp.GetCreatedAt().AsTime().String(),
+					resp.GetUpdatedAt().AsTime().String(),
+				}
+				table.Append(row)
+				table.Render()
+			case formatJSON:
+				output, err := json.MarshalIndent(resp, "", "  ")
+				util.ExitNicelyOnError(err, "Error marshalling json")
+				fmt.Println(string(output))
+			case formatYAML:
+				yamlData, err := yaml.Marshal(resp)
+				util.ExitNicelyOnError(err, "Error marshalling yaml")
+				fmt.Println(string(yamlData))
+			}
 		}
 		return nil
 	},
@@ -122,6 +157,8 @@ func init() {
 	repo_getCmd.Flags().StringP("provider", "n", "", "Name for the provider to enroll")
 	repo_getCmd.Flags().Int32P("group-id", "g", 0, "ID of the group for repo registration")
 	repo_getCmd.Flags().Int32P("repo-id", "r", 0, "ID of the repo to query")
+	repo_getCmd.Flags().BoolP("status", "s", false, "Only return the status of the policies associated to this repo")
+
 	if err := repo_getCmd.MarkFlagRequired("provider"); err != nil {
 		fmt.Fprintf(os.Stderr, "Error marking flag as required: %s\n", err)
 	}

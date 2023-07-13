@@ -20,16 +20,17 @@ import (
 	"path/filepath"
 
 	"github.com/go-playground/validator/v10"
-	"github.com/stacklok/mediator/internal/util"
-	"github.com/stacklok/mediator/pkg/auth"
-	"github.com/stacklok/mediator/pkg/db"
-	pb "github.com/stacklok/mediator/pkg/generated/protobuf/go/mediator/v1"
-	ghclient "github.com/stacklok/mediator/pkg/providers/github"
 	"github.com/xeipuuv/gojsonschema"
 	"google.golang.org/grpc/codes"
 	"google.golang.org/grpc/status"
 	"google.golang.org/protobuf/types/known/timestamppb"
 	"gopkg.in/yaml.v3"
+
+	"github.com/stacklok/mediator/internal/util"
+	"github.com/stacklok/mediator/pkg/auth"
+	"github.com/stacklok/mediator/pkg/db"
+	pb "github.com/stacklok/mediator/pkg/generated/protobuf/go/mediator/v1"
+	ghclient "github.com/stacklok/mediator/pkg/providers/github"
 )
 
 //go:embed policy_types/*
@@ -528,8 +529,8 @@ func (s *Server) GetPolicyViolationsById(ctx context.Context,
 
 }
 
-// GetPolicyViolationsByRepositoryId is a method to get policy violations by repository id
-func (s *Server) GetPolicyViolationsByRepositoryId(ctx context.Context,
+// GetPolicyViolationsByRepository is a method to get policy violations by repository id
+func (s *Server) GetPolicyViolationsByRepository(ctx context.Context,
 	in *pb.GetPolicyViolationsByRepositoryRequest) (*pb.GetPolicyViolationsByRepositoryResponse, error) {
 	if in.RepositoryId == 0 {
 		return nil, status.Error(codes.InvalidArgument, "repository id is required")
