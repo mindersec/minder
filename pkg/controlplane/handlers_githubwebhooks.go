@@ -27,6 +27,7 @@ import (
 	"fmt"
 	"log"
 	"net/http"
+	urlparser "net/url"
 	"strings"
 	"time"
 
@@ -145,6 +146,12 @@ func RegisterWebHook(
 			result.Error = fmt.Errorf("github app incorrectly configured")
 		}
 		webhookUrl := fmt.Sprintf("%s/%s", url, urlUUID)
+		parsedOriginalURL, err := urlparser.Parse(webhookUrl)
+		if err != nil {
+			result.Success = false
+			result.Error = err
+		}
+
 		hook := &github.Hook{
 			Config: map[string]interface{}{
 				"url":          webhookUrl,
@@ -153,6 +160,31 @@ func RegisterWebHook(
 				"secret":       secret,
 			},
 			Events: events,
+		}
+
+		// if we have an existing hook for same repo, delete it
+		hooks, _, err := client.Repositories.ListHooks(ctx, repo.Owner, repo.Repo, nil)
+		if err != nil {
+			result.Success = false
+			result.Error = err
+		}
+		for _, h := range hooks {
+			config_url := h.Config["url"].(string)
+			if config_url != "" {
+				parsedURL, err := urlparser.Parse(config_url)
+				if err != nil {
+					result.Success = false
+					result.Error = err
+				}
+				if parsedURL.Host == parsedOriginalURL.Host {
+					// it is our hook, we can remove it
+					_, err = client.Repositories.DeleteHook(ctx, repo.Owner, repo.Repo, h.GetID())
+					if err != nil {
+						result.Success = false
+						result.Error = err
+					}
+				}
+			}
 		}
 
 		// Attempt to register webhook
