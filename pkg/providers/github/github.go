@@ -56,6 +56,7 @@ type RestAPI interface {
 	// NewRequest allows for building raw and custom requests
 	NewRequest(method, urlStr string, body any, opts ...github.RequestOption) (*http.Request, error)
 	Do(ctx context.Context, req *http.Request, v any) (*github.Response, error)
+	ListAllPackages(context.Context, bool) (PackageListResult, error)
 }
 
 // GraphQLAPI is the interface for interacting with the GitHub GraphQL API

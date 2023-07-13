@@ -24,6 +24,7 @@ import (
 	_ "github.com/stacklok/mediator/cmd/cli/app/group"
 	_ "github.com/stacklok/mediator/cmd/cli/app/keys"
 	_ "github.com/stacklok/mediator/cmd/cli/app/org"
+	_ "github.com/stacklok/mediator/cmd/cli/app/pkg"
 	_ "github.com/stacklok/mediator/cmd/cli/app/policy"
 	_ "github.com/stacklok/mediator/cmd/cli/app/policy_status"
 	_ "github.com/stacklok/mediator/cmd/cli/app/provider"

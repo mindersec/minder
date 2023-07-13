@@ -34,6 +34,33 @@ service HealthService {
     }
 }
 
+service PackageService {
+    rpc ListPackages (ListPackagesRequest) returns (ListPackagesResponse) {
+        option (google.api.http) = {
+            get: "/api/v1/packages"
+        };
+    }
+}
+
+message ListPackagesRequest {
+    string provider = 1;
+    int32 group_id = 2;
+    int32 limit = 3;
+    int32 offset = 4;
+}
+
+message ListPackagesResponse {
+    repeated Packages results = 1;
+}
+
+message Packages {
+    string owner = 1;
+    string name = 2;
+    int64 pkg_id = 3;
+    string image_digest = 4;
+}
+
+
 service OAuthService {
     rpc GetAuthorizationURL (GetAuthorizationURLRequest) returns (GetAuthorizationURLResponse) {
         option (google.api.http) = {

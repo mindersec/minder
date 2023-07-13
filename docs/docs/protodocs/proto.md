@@ -103,6 +103,8 @@
     - [GetVulnerabilityByIdRequest](#mediator-v1-GetVulnerabilityByIdRequest)
     - [GetVulnerabilityByIdResponse](#mediator-v1-GetVulnerabilityByIdResponse)
     - [GroupRecord](#mediator-v1-GroupRecord)
+    - [ListPackagesRequest](#mediator-v1-ListPackagesRequest)
+    - [ListPackagesResponse](#mediator-v1-ListPackagesResponse)
     - [ListPoliciesRequest](#mediator-v1-ListPoliciesRequest)
     - [ListPoliciesResponse](#mediator-v1-ListPoliciesResponse)
     - [ListRepositoriesRequest](#mediator-v1-ListRepositoriesRequest)
@@ -114,6 +116,7 @@
     - [LogOutRequest](#mediator-v1-LogOutRequest)
     - [LogOutResponse](#mediator-v1-LogOutResponse)
     - [OrganizationRecord](#mediator-v1-OrganizationRecord)
+    - [Packages](#mediator-v1-Packages)
     - [PipelinePolicy](#mediator-v1-PipelinePolicy)
     - [PipelinePolicy.ContextualRuleSet](#mediator-v1-PipelinePolicy-ContextualRuleSet)
     - [PipelinePolicy.Rule](#mediator-v1-PipelinePolicy-Rule)
@@ -177,6 +180,7 @@
     - [KeyService](#mediator-v1-KeyService)
     - [OAuthService](#mediator-v1-OAuthService)
     - [OrganizationService](#mediator-v1-OrganizationService)
+    - [PackageService](#mediator-v1-PackageService)
     - [PolicyService](#mediator-v1-PolicyService)
     - [RepositoryService](#mediator-v1-RepositoryService)
     - [RoleService](#mediator-v1-RoleService)
@@ -1765,6 +1769,39 @@ BUF does not allow grouping (which is a shame)
 
 
 
+<a name="mediator-v1-ListPackagesRequest"></a>
+
+### ListPackagesRequest
+
+
+
+| Field | Type | Label | Description |
+| ----- | ---- | ----- | ----------- |
+| provider | [string](#string) |  |  |
+| group_id | [int32](#int32) |  |  |
+| limit | [int32](#int32) |  |  |
+| offset | [int32](#int32) |  |  |
+
+
+
+
+
+
+<a name="mediator-v1-ListPackagesResponse"></a>
+
+### ListPackagesResponse
+
+
+
+| Field | Type | Label | Description |
+| ----- | ---- | ----- | ----------- |
+| results | [Packages](#mediator-v1-Packages) | repeated |  |
+
+
+
+
+
+
 <a name="mediator-v1-ListPoliciesRequest"></a>
 
 ### ListPoliciesRequest
@@ -1926,6 +1963,24 @@ ListRuleTypesResponse is the response to list rule types.
 | company | [string](#string) |  |  |
 | created_at | [google.protobuf.Timestamp](#google-protobuf-Timestamp) |  |  |
 | updated_at | [google.protobuf.Timestamp](#google-protobuf-Timestamp) |  |  |
+
+
+
+
+
+
+<a name="mediator-v1-Packages"></a>
+
+### Packages
+
+
+
+| Field | Type | Label | Description |
+| ----- | ---- | ----- | ----------- |
+| owner | [string](#string) |  |  |
+| name | [string](#string) |  |  |
+| pkg_id | [int64](#int64) |  |  |
+| image_digest | [string](#string) |  |  |
 
 
 
@@ -2899,6 +2954,16 @@ manage Organizations CRUD
 | GetOrganization | [GetOrganizationRequest](#mediator-v1-GetOrganizationRequest) | [GetOrganizationResponse](#mediator-v1-GetOrganizationResponse) |  |
 | GetOrganizationByName | [GetOrganizationByNameRequest](#mediator-v1-GetOrganizationByNameRequest) | [GetOrganizationByNameResponse](#mediator-v1-GetOrganizationByNameResponse) |  |
 | DeleteOrganization | [DeleteOrganizationRequest](#mediator-v1-DeleteOrganizationRequest) | [DeleteOrganizationResponse](#mediator-v1-DeleteOrganizationResponse) |  |
+
+
+<a name="mediator-v1-PackageService"></a>
+
+### PackageService
+
+
+| Method Name | Request Type | Response Type | Description |
+| ----------- | ------------ | ------------- | ------------|
+| ListPackages | [ListPackagesRequest](#mediator-v1-ListPackagesRequest) | [ListPackagesResponse](#mediator-v1-ListPackagesResponse) |  |
 
 
 <a name="mediator-v1-PolicyService"></a>

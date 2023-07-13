@@ -72,8 +72,8 @@ func RegisterGatewayHTTPHandlers(ctx context.Context, gwmux *runtime.ServeMux, g
 		log.Fatalf("failed to register gateway: %v", err)
 	}
 
-	// Register the KeyService service
-	if err := pb.RegisterKeyServiceHandlerFromEndpoint(ctx, gwmux, grpcAddress, opts); err != nil {
+	// Register the Package service
+	if err := pb.RegisterPackageServiceHandlerFromEndpoint(ctx, gwmux, grpcAddress, opts); err != nil {
 		log.Fatalf("failed to register gateway: %v", err)
 	}
 }
@@ -106,6 +106,6 @@ func RegisterGRPCServices(s *Server) {
 	// Register the Policy service
 	pb.RegisterPolicyServiceServer(s.grpcServer, s)
 
-	// Register the Key service
-	pb.RegisterKeyServiceServer(s.grpcServer, s)
+	// Register the Package service
+	pb.RegisterPackageServiceServer(s.grpcServer, s)
 }

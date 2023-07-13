@@ -9,6 +9,9 @@
       "name": "HealthService"
     },
     {
+      "name": "PackageService"
+    },
+    {
       "name": "OAuthService"
     },
     {
@@ -1031,6 +1034,57 @@
         ],
         "tags": [
           "OrganizationService"
+        ]
+      }
+    },
+    "/api/v1/packages": {
+      "get": {
+        "operationId": "PackageService_ListPackages",
+        "responses": {
+          "200": {
+            "description": "A successful response.",
+            "schema": {
+              "$ref": "#/definitions/v1ListPackagesResponse"
+            }
+          },
+          "default": {
+            "description": "An unexpected error response.",
+            "schema": {
+              "$ref": "#/definitions/rpcStatus"
+            }
+          }
+        },
+        "parameters": [
+          {
+            "name": "provider",
+            "in": "query",
+            "required": false,
+            "type": "string"
+          },
+          {
+            "name": "groupId",
+            "in": "query",
+            "required": false,
+            "type": "integer",
+            "format": "int32"
+          },
+          {
+            "name": "limit",
+            "in": "query",
+            "required": false,
+            "type": "integer",
+            "format": "int32"
+          },
+          {
+            "name": "offset",
+            "in": "query",
+            "required": false,
+            "type": "integer",
+            "format": "int32"
+          }
+        ],
+        "tags": [
+          "PackageService"
         ]
       }
     },
@@ -3607,6 +3661,18 @@
       },
       "title": "BUF does not allow grouping (which is a shame)"
     },
+    "v1ListPackagesResponse": {
+      "type": "object",
+      "properties": {
+        "results": {
+          "type": "array",
+          "items": {
+            "type": "object",
+            "$ref": "#/definitions/v1Packages"
+          }
+        }
+      }
+    },
     "v1ListPoliciesResponse": {
       "type": "object",
       "properties": {
@@ -3701,6 +3767,24 @@
         "updatedAt": {
           "type": "string",
           "format": "date-time"
+        }
+      }
+    },
+    "v1Packages": {
+      "type": "object",
+      "properties": {
+        "owner": {
+          "type": "string"
+        },
+        "name": {
+          "type": "string"
+        },
+        "pkgId": {
+          "type": "string",
+          "format": "int64"
+        },
+        "imageDigest": {
+          "type": "string"
         }
       }
     },

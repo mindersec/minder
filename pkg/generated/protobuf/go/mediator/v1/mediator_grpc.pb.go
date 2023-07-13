@@ -124,6 +124,96 @@ var HealthService_ServiceDesc = grpc.ServiceDesc{
 }
 
 const (
+	PackageService_ListPackages_FullMethodName = "/mediator.v1.PackageService/ListPackages"
+)
+
+// PackageServiceClient is the client API for PackageService service.
+//
+// For semantics around ctx use and closing/ending streaming RPCs, please refer to https://pkg.go.dev/google.golang.org/grpc/?tab=doc#ClientConn.NewStream.
+type PackageServiceClient interface {
+	ListPackages(ctx context.Context, in *ListPackagesRequest, opts ...grpc.CallOption) (*ListPackagesResponse, error)
+}
+
+type packageServiceClient struct {
+	cc grpc.ClientConnInterface
+}
+
+func NewPackageServiceClient(cc grpc.ClientConnInterface) PackageServiceClient {
+	return &packageServiceClient{cc}
+}
+
+func (c *packageServiceClient) ListPackages(ctx context.Context, in *ListPackagesRequest, opts ...grpc.CallOption) (*ListPackagesResponse, error) {
+	out := new(ListPackagesResponse)
+	err := c.cc.Invoke(ctx, PackageService_ListPackages_FullMethodName, in, out, opts...)
+	if err != nil {
+		return nil, err
+	}
+	return out, nil
+}
+
+// PackageServiceServer is the server API for PackageService service.
+// All implementations must embed UnimplementedPackageServiceServer
+// for forward compatibility
+type PackageServiceServer interface {
+	ListPackages(context.Context, *ListPackagesRequest) (*ListPackagesResponse, error)
+	mustEmbedUnimplementedPackageServiceServer()
+}
+
+// UnimplementedPackageServiceServer must be embedded to have forward compatible implementations.
+type UnimplementedPackageServiceServer struct {
+}
+
+func (UnimplementedPackageServiceServer) ListPackages(context.Context, *ListPackagesRequest) (*ListPackagesResponse, error) {
+	return nil, status.Errorf(codes.Unimplemented, "method ListPackages not implemented")
+}
+func (UnimplementedPackageServiceServer) mustEmbedUnimplementedPackageServiceServer() {}
+
+// UnsafePackageServiceServer may be embedded to opt out of forward compatibility for this service.
+// Use of this interface is not recommended, as added methods to PackageServiceServer will
+// result in compilation errors.
+type UnsafePackageServiceServer interface {
+	mustEmbedUnimplementedPackageServiceServer()
+}
+
+func RegisterPackageServiceServer(s grpc.ServiceRegistrar, srv PackageServiceServer) {
+	s.RegisterService(&PackageService_ServiceDesc, srv)
+}
+
+func _PackageService_ListPackages_Handler(srv interface{}, ctx context.Context, dec func(interface{}) error, interceptor grpc.UnaryServerInterceptor) (interface{}, error) {
+	in := new(ListPackagesRequest)
+	if err := dec(in); err != nil {
+		return nil, err
+	}
+	if interceptor == nil {
+		return srv.(PackageServiceServer).ListPackages(ctx, in)
+	}
+	info := &grpc.UnaryServerInfo{
+		Server:     srv,
+		FullMethod: PackageService_ListPackages_FullMethodName,
+	}
+	handler := func(ctx context.Context, req interface{}) (interface{}, error) {
+		return srv.(PackageServiceServer).ListPackages(ctx, req.(*ListPackagesRequest))
+	}
+	return interceptor(ctx, in, info, handler)
+}
+
+// PackageService_ServiceDesc is the grpc.ServiceDesc for PackageService service.
+// It's only intended for direct use with grpc.RegisterService,
+// and not to be introspected or modified (even as a copy)
+var PackageService_ServiceDesc = grpc.ServiceDesc{
+	ServiceName: "mediator.v1.PackageService",
+	HandlerType: (*PackageServiceServer)(nil),
+	Methods: []grpc.MethodDesc{
+		{
+			MethodName: "ListPackages",
+			Handler:    _PackageService_ListPackages_Handler,
+		},
+	},
+	Streams:  []grpc.StreamDesc{},
+	Metadata: "mediator/v1/mediator.proto",
+}
+
+const (
 	OAuthService_GetAuthorizationURL_FullMethodName     = "/mediator.v1.OAuthService/GetAuthorizationURL"
 	OAuthService_ExchangeCodeForTokenCLI_FullMethodName = "/mediator.v1.OAuthService/ExchangeCodeForTokenCLI"
 	OAuthService_ExchangeCodeForTokenWEB_FullMethodName = "/mediator.v1.OAuthService/ExchangeCodeForTokenWEB"

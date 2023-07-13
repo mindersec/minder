@@ -17,7 +17,6 @@ package github
 
 import (
 	"context"
-	"fmt"
 	"net/http"
 
 	"github.com/google/go-github/v53/github"
@@ -72,15 +71,29 @@ func (c *RestClient) ListAllRepositories(ctx context.Context, isOrg bool, owner 
 	}, nil
 }
 
-// GetRepository returns a single repository for the authenticated user
-func (c *RestClient) GetRepository(ctx context.Context, owner, name string) (*github.Repository, error) {
-	// create a slice to hold the repositories
-	repo, _, err := c.client.Repositories.Get(ctx, owner, name)
+// ListAllPackages returns a list of all packages for the authenticated user
+// Two APIs are available, contigent on whether the token is for a user or an organization
+type PackageListResult struct {
+	Packages []*github.Package
+}
+
+func (c *RestClient) ListAllPackages(ctx context.Context, isOrg bool) (PackageListResult, error) {
+	opt := &github.PackageListOptions{
+		ListOptions: github.ListOptions{
+			Page:    1,
+			PerPage: 5,
+		},
+		PackageType: github.String("container"),
+	}
+	// create a slice to hold the packages
+	packages, _, err := c.client.Users.ListPackages(ctx, "lukehinds", opt)
 	if err != nil {
-		return nil, fmt.Errorf("error getting repository: %w", err)
+		return PackageListResult{}, err
 	}
 
-	return repo, nil
+	return PackageListResult{
+		Packages: packages,
+	}, nil
 }
 
 // GetBranchProtection returns the branch protection for a given branch

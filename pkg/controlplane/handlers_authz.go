@@ -68,6 +68,7 @@ var superAdminMethods = []string{
 	"/mediator.v1.AuthService/RevokeUserToken",
 	"/mediator.v1.OAuthService/RevokeOauthTokens",
 	"/mediator.v1.UserService/GetUsers",
+	"/mediator.v1.PackageService/ListPackages",
 }
 
 var resourceAuthorizations = []map[string]map[string]interface{}{
@@ -321,6 +322,12 @@ var resourceAuthorizations = []map[string]map[string]interface{}{
 		"/mediator.v1.KeyService/CreateKeyPair": {
 			"claimField": "GroupId",
 			"isAdmin":    true,
+		},
+	},
+	{
+		"/mediator.v1.PackageService/ListPackages": {
+			"claimField": "GroupId",
+			"isAdmin":    false,
 		},
 	},
 }
