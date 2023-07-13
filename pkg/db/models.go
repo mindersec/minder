@@ -32,8 +32,8 @@ func (e *PolicyStatusTypes) Scan(src interface{}) error {
 }
 
 type NullPolicyStatusTypes struct {
-	PolicyStatusTypes PolicyStatusTypes
-	Valid             bool // Valid is true if PolicyStatusTypes is not NULL
+	PolicyStatusTypes PolicyStatusTypes `json:"policy_status_types"`
+	Valid             bool              `json:"valid"` // Valid is true if PolicyStatusTypes is not NULL
 }
 
 // Scan implements the Scanner interface.
