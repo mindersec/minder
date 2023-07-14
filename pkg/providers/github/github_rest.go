@@ -17,6 +17,7 @@ package github
 
 import (
 	"context"
+	"fmt"
 	"net/http"
 
 	"github.com/google/go-github/v53/github"
@@ -94,6 +95,33 @@ func (c *RestClient) ListAllPackages(ctx context.Context, isOrg bool) (PackageLi
 	return PackageListResult{
 		Packages: packages,
 	}, nil
+}
+
+// GetRepository returns a single repository for the authenticated user
+func (c *RestClient) GetRepository(ctx context.Context, owner, name string) (*github.Repository, error) {
+	// create a slice to hold the repositories
+	repo, _, err := c.client.Repositories.Get(ctx, owner, name)
+	if err != nil {
+		return nil, fmt.Errorf("error getting repository: %w", err)
+	}
+
+	return repo, nil
+}
+
+// CheckIfTokenIsForOrganization is to determine if the token is for a user or an organization
+// TODO: There may be more efficient ways to do this, then calling the API,
+// perhaps during the enrollment process
+func (c *RestClient) CheckIfTokenIsForOrganization(ctx context.Context) (bool, error) {
+	user, _, err := c.client.Users.Get(ctx, "")
+	if err != nil {
+		return false, err
+	}
+
+	if *user.Type == "Organization" {
+		return true, nil
+	}
+
+	return false, nil
 }
 
 // GetBranchProtection returns the branch protection for a given branch

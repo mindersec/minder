@@ -19,13 +19,13 @@
 // It does make a good example of how to use the generated client code
 // for others to use as a reference.
 
-// Package pkgs contains the pkgs logic for the control plane
+// Package pkg contains the pkgs logic for the control plane
 package pkg
 
 import (
-	"github.com/stacklok/mediator/cmd/cli/app"
-
 	"github.com/spf13/cobra"
+
+	"github.com/stacklok/mediator/cmd/cli/app"
 )
 
 // PackagesCmd is the root command for the repo subcommands

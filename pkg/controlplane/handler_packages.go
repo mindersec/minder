@@ -18,13 +18,13 @@ import (
 	"context"
 	"fmt"
 
+	"google.golang.org/grpc/codes"
+	"google.golang.org/grpc/status"
+
 	"github.com/stacklok/mediator/pkg/auth"
 	pb "github.com/stacklok/mediator/pkg/generated/protobuf/go/mediator/v1"
 	"github.com/stacklok/mediator/pkg/oci"
 	ghclient "github.com/stacklok/mediator/pkg/providers/github"
-
-	"google.golang.org/grpc/codes"
-	"google.golang.org/grpc/status"
 )
 
 type ImageRef struct {
@@ -56,7 +56,7 @@ func (s *Server) ListPackages(ctx context.Context, in *pb.ListPackagesRequest) (
 		return nil, status.Errorf(codes.PermissionDenied, "user not authorized to interact with provider")
 	}
 
-	decryptedToken, err := GetProviderAccessToken(ctx, s.store, in.Provider, in.GroupId)
+	decryptedToken, err := GetProviderAccessToken(ctx, s.store, in.Provider, in.GroupId, true)
 	if err != nil {
 		return nil, err
 	}

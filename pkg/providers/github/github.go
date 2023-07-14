@@ -17,7 +17,6 @@ package github
 
 import (
 	"context"
-	"net/http"
 	"net/url"
 
 	"github.com/google/go-github/v53/github"
@@ -52,10 +51,6 @@ type RestAPI interface {
 	GetRepository(context.Context, string, string) (*github.Repository, error)
 	ListAllRepositories(context.Context, bool, string) (RepositoryListResult, error)
 	GetBranchProtection(context.Context, string, string, string) (*github.Protection, error)
-
-	// NewRequest allows for building raw and custom requests
-	NewRequest(method, urlStr string, body any, opts ...github.RequestOption) (*http.Request, error)
-	Do(ctx context.Context, req *http.Request, v any) (*github.Response, error)
 	ListAllPackages(context.Context, bool) (PackageListResult, error)
 }
 
