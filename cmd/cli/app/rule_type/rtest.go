@@ -107,11 +107,14 @@ func testCmdRun(cmd *cobra.Command, _ []string) error {
 		return fmt.Errorf("no rules found with type %s", rt.Name)
 	}
 
+	return runEvaluationForFragments(eng, ent, frags)
+}
+
+func runEvaluationForFragments(eng *engine.RuleTypeEngine, ent any, frags []map[string]any) error {
 	for idx := range frags {
 		frag := frags[idx]
 
-		var def map[string]any = nil
-		var params map[string]any = nil
+		var def, params map[string]any
 
 		if _, ok := frag["def"]; !ok {
 			return fmt.Errorf("fragment does not contain def")
@@ -139,7 +142,7 @@ func testCmdRun(cmd *cobra.Command, _ []string) error {
 			return fmt.Errorf("error: %s", err)
 		}
 
-		if err := eng.Eval(cmd.Context(), ent, def, params); err != nil {
+		if err := eng.Eval(context.Background(), ent, def, params); err != nil {
 			return fmt.Errorf("error evaluating rule type: %w", err)
 		}
 
@@ -226,6 +229,8 @@ func readPolicyFromFile(fpath string) (map[string]any, error) {
 // policies.
 // TODO: This should be moved to a policy package and we should have some
 // generic interface for policies.
+//
+//nolint:gocyclo // this is temporary code
 func getRelevantFragments(rt *pb.RuleType, p map[string]any) ([]map[string]any, error) {
 	out := []map[string]any{}
 	// We get the relevant entity for the rule type
