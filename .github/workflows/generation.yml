@@ -70,4 +70,4 @@ jobs:
 
       - name: Check for uncommitted SQLC changes
         run: |
-          git diff --exit-code || (echo "Error: Uncommitted changes detected after running 'sqlc generate'. Please commit the changes and try again." && exit 1)
+          git diff --exit-code -I 'sqlc v*' || (echo "Error: Uncommitted changes detected after running 'sqlc generate'. Please commit the changes and try again." && exit 1)
