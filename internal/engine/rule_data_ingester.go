@@ -36,7 +36,7 @@ import (
 // It allows for different mechanisms for ingesting data
 // in order to evaluate a rule.
 type RuleDataIngest interface {
-	Eval(ctx context.Context, ent any, pol any) error
+	Eval(ctx context.Context, ent any, pol, params map[string]any) error
 }
 
 // NewRuleDataIngest creates a new rule data ingest based no the given rule
@@ -93,10 +93,23 @@ func NewRestRuleDataIngest(
 	}, nil
 }
 
+// RestEndpointTemplateParams is the parameters for the REST endpoint template
+type RestEndpointTemplateParams struct {
+	// Entity is the entity to be evaluated
+	Entity any
+	// Params are the parameters to be used in the template
+	Params map[string]any
+}
+
 // Eval evaluates the rule type against the given entity and policy
-func (rdi *RestRuleDataIngest) Eval(ctx context.Context, ent any, pol any) error {
+func (rdi *RestRuleDataIngest) Eval(ctx context.Context, ent any, pol, params map[string]any) error {
 	endpoint := new(bytes.Buffer)
-	if err := rdi.endpointTemplate.Execute(endpoint, ent); err != nil {
+	retp := &RestEndpointTemplateParams{
+		Entity: ent,
+		Params: params,
+	}
+
+	if err := rdi.endpointTemplate.Execute(endpoint, retp); err != nil {
 		return fmt.Errorf("cannot execute endpoint template: %w", err)
 	}
 

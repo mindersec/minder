@@ -115,6 +115,6 @@ func (r *RuleTypeEngine) ValidateAgainstSchema(contextualPolicy any) (*bool, err
 }
 
 // Eval runs the rule type engine against the given entity
-func (r *RuleTypeEngine) Eval(ctx context.Context, ent any, pol any) error {
-	return r.rdi.Eval(ctx, ent, pol)
+func (r *RuleTypeEngine) Eval(ctx context.Context, ent any, pol, params map[string]any) error {
+	return r.rdi.Eval(ctx, ent, pol, params)
 }

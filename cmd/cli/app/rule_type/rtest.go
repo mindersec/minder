@@ -88,7 +88,7 @@ func testCmdRun(cmd *cobra.Command, _ []string) error {
 		return fmt.Errorf("error reading fragment from file: %w", err)
 	}
 
-	frag, err := getRelevantFragment(rt, p)
+	frags, err := getRelevantFragments(rt, p)
 	if err != nil {
 		return fmt.Errorf("error getting relevant fragment: %w", err)
 	}
@@ -103,21 +103,48 @@ func testCmdRun(cmd *cobra.Command, _ []string) error {
 		return fmt.Errorf("error creating rule type engine: %w", err)
 	}
 
-	valid, err := eng.ValidateAgainstSchema(frag)
-	if valid == nil {
-		return fmt.Errorf("error validating fragment against schema: %w", err)
+	if len(frags) == 0 {
+		return fmt.Errorf("no rules found with type %s", rt.Name)
 	}
 
-	fmt.Printf("Policy valid according to the JSON schema: %t\n", *valid)
-	if err != nil {
-		return fmt.Errorf("error: %s", err)
-	}
+	for idx := range frags {
+		frag := frags[idx]
 
-	if err := eng.Eval(cmd.Context(), ent, frag); err != nil {
-		return fmt.Errorf("error evaluating rule type: %w", err)
-	}
+		var def map[string]any = nil
+		var params map[string]any = nil
 
-	fmt.Printf("The rule type is valid and the entity conforms to it\n")
+		if _, ok := frag["def"]; !ok {
+			return fmt.Errorf("fragment does not contain def")
+		}
+
+		def, ok := frag["def"].(map[string]any)
+		if !ok {
+			return fmt.Errorf("error casting def to map")
+		}
+
+		if _, ok := frag["params"]; ok {
+			params, ok = frag["params"].(map[string]any)
+			if !ok {
+				return fmt.Errorf("error casting params to map")
+			}
+		}
+
+		valid, err := eng.ValidateAgainstSchema(def)
+		if valid == nil {
+			return fmt.Errorf("error validating fragment against schema: %w", err)
+		}
+
+		fmt.Printf("Policy valid according to the JSON schema: %t\n", *valid)
+		if err != nil {
+			return fmt.Errorf("error: %s", err)
+		}
+
+		if err := eng.Eval(cmd.Context(), ent, def, params); err != nil {
+			return fmt.Errorf("error evaluating rule type: %w", err)
+		}
+
+		fmt.Printf("The rule type is valid and the entity conforms to it\n")
+	}
 
 	return nil
 }
@@ -194,12 +221,13 @@ func readPolicyFromFile(fpath string) (map[string]any, error) {
 	return out, nil
 }
 
-// getRelevantFragment returns the relevant fragment for the rule type
+// getRelevantFragments returns the relevant fragments for the rule type
 // Note that this will eventually be replaced by a proper parser for pipeline
 // policies.
 // TODO: This should be moved to a policy package and we should have some
 // generic interface for policies.
-func getRelevantFragment(rt *pb.RuleType, p map[string]any) (any, error) {
+func getRelevantFragments(rt *pb.RuleType, p map[string]any) ([]map[string]any, error) {
+	out := []map[string]any{}
 	// We get the relevant entity for the rule type
 	entityPolicyRaw, ok := p[rt.Def.InEntity]
 	if !ok {
@@ -246,12 +274,28 @@ func getRelevantFragment(rt *pb.RuleType, p map[string]any) (any, error) {
 			continue
 		}
 
-		rules, ok := ruleSet["rules"].(map[string]any)
+		rules, ok := ruleSet["rules"].([]any)
 		if !ok {
-			return nil, fmt.Errorf("policy entity rules is not an object")
+			return nil, fmt.Errorf("policy entity rules is not an array")
 		}
 
-		return rules, nil
+		for idx := range rules {
+			rule, ok := rules[idx].(map[string]any)
+			if !ok {
+				return nil, fmt.Errorf("policy entity rule at index %d is not an object", idx)
+			}
+
+			typ, ok := rule["type"].(string)
+			if !ok {
+				return nil, fmt.Errorf("policy entity rule at index %d does not have a valid type", idx)
+			}
+
+			if typ == rt.Name {
+				out = append(out, rule)
+			}
+		}
+
+		return out, nil
 	}
 
 	return nil, fmt.Errorf("policy does not contain rules for provider: %s", rt.Context.Provider)
