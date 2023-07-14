@@ -15,3 +15,22 @@ jobs:
           ko build --platform=linux/amd64,linux/arm64 --push=${{ github.ref == 'refs/heads/main' }} ./cmd/server \
             --image-label=org.opencontainers.image.source=https://github.com/stacklok/mediator,org.opencontainers.image.title="Stacklok Mediator",org.opencontainers.image.licenses=Apache-2.0,org.opencontainers.image.vendor=Stacklok
 
+  docker-image:
+    name: Check docker image build
+    runs-on: ubuntu-latest
+
+    steps:
+      - name: Checkout
+        uses: actions/checkout@v3
+
+      - name: Set up Docker Buildx
+        uses: docker/setup-buildx-action@v2
+
+      - name: Test build on x86
+        id: docker_build
+        uses: docker/build-push-action@v4
+        with:
+          context: .
+          file: Dockerfile
+          platforms: linux/amd64
+          push: false  # Only attempt to build, to verify the Dockerfile is working
