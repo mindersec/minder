@@ -11,10 +11,12 @@ displayed_sidebar: mediator
 In order to detect security deviations from repositories or other entities, Mediator is relying on the concepts of **Policy** and **Violations**.
 A policy is a definition of a verification we want to do on an entity in a pipeline. By default, Mediator offers a different set
 of **policy types**, covering different aspects of security: repositories, branches, packages, etc...
+A **policy** is an instance of a policy type applied to an specific group, with the relevant settings filled in.
 
-When a policy is created for an specific entity, but this entity is not matching what's expected, a **Violation** is raised. When a violation
-happens, the overall **Policy status** for this specific entity changes, becoming failed. User can check the reason for this violation
-and take remediation actions to don't violate the policy anymore.
+When a policy is created for an specific entity, a continuous monitoring for the related objects start. An object can be a repository,
+a branch, a package... depending on the policy definition. When an specific object is not matching what's expected,
+a **Violation** is raised. When a violation happens, the overall **Policy status** for this specific entity changes,
+becoming failed. User can check the reason for this violation and take remediation actions to comply with the policy.
 
 ## Prerequisites
 
@@ -96,7 +98,7 @@ This specific policy will monitor the `main` branch for all related repositories
 place, requiring reviews from code owners and a minimum of 2 approvals before landing. It will also require
 that force pushes and deletions are disabled for the `main` branch.
 
-When a policy for a provider and group is created, any repos registered for the same provider are group,
+When a policy for a provider and group is created, any repos registered for the same provider and group,
 are being observed. Each time that there is a change on the repo that causes a policy violation,
 the event is triggered and the violation is being captured.
 
