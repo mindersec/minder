@@ -211,9 +211,9 @@ func getRelevantFragment(rt *pb.RuleType, p map[string]any) (any, error) {
 		return nil, fmt.Errorf("policy does not contain context")
 	}
 
-	defaultProvider, ok := pipelineContext["default-provider"].(string)
+	defaultProvider, ok := pipelineContext["provider"].(string)
 	if !ok {
-		return nil, fmt.Errorf("policy does not contain valid default provider")
+		return nil, fmt.Errorf("policy does not contain valid provider")
 	}
 
 	// cast to contextual rules which is an array

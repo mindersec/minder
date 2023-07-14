@@ -4,7 +4,7 @@ type: pipeline-policy
 name: acme-github-policy
 context:
   organization: ACME
-  default-provider: github
+  provider: github
 repository:
   - context: github
     rules:
