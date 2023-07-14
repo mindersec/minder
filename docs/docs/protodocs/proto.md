@@ -75,6 +75,8 @@
     - [GetPolicyViolationsByRepositoryResponse](#mediator-v1-GetPolicyViolationsByRepositoryResponse)
     - [GetPublicKeyRequest](#mediator-v1-GetPublicKeyRequest)
     - [GetPublicKeyResponse](#mediator-v1-GetPublicKeyResponse)
+    - [GetRepositoryByNameRequest](#mediator-v1-GetRepositoryByNameRequest)
+    - [GetRepositoryByNameResponse](#mediator-v1-GetRepositoryByNameResponse)
     - [GetRepositoryRequest](#mediator-v1-GetRepositoryRequest)
     - [GetRepositoryResponse](#mediator-v1-GetRepositoryResponse)
     - [GetRoleByIdRequest](#mediator-v1-GetRoleByIdRequest)
@@ -108,7 +110,6 @@
     - [GetVulnerabilityByIdRequest](#mediator-v1-GetVulnerabilityByIdRequest)
     - [GetVulnerabilityByIdResponse](#mediator-v1-GetVulnerabilityByIdResponse)
     - [GroupRecord](#mediator-v1-GroupRecord)
-    - [ListRepositories](#mediator-v1-ListRepositories)
     - [ListRepositoriesRequest](#mediator-v1-ListRepositoriesRequest)
     - [ListRepositoriesResponse](#mediator-v1-ListRepositoriesResponse)
     - [LogInRequest](#mediator-v1-LogInRequest)
@@ -126,6 +127,7 @@
     - [RegisterRepositoryRequest](#mediator-v1-RegisterRepositoryRequest)
     - [RegisterRepositoryResponse](#mediator-v1-RegisterRepositoryResponse)
     - [Repositories](#mediator-v1-Repositories)
+    - [RepositoryRecord](#mediator-v1-RepositoryRecord)
     - [RepositoryResult](#mediator-v1-RepositoryResult)
     - [RevokeOauthGroupTokenRequest](#mediator-v1-RevokeOauthGroupTokenRequest)
     - [RevokeOauthGroupTokenResponse](#mediator-v1-RevokeOauthGroupTokenResponse)
@@ -1317,6 +1319,37 @@ get policy types
 
 
 
+<a name="mediator-v1-GetRepositoryByNameRequest"></a>
+
+### GetRepositoryByNameRequest
+
+
+
+| Field | Type | Label | Description |
+| ----- | ---- | ----- | ----------- |
+| provider | [string](#string) |  |  |
+| name | [string](#string) |  |  |
+
+
+
+
+
+
+<a name="mediator-v1-GetRepositoryByNameResponse"></a>
+
+### GetRepositoryByNameResponse
+
+
+
+| Field | Type | Label | Description |
+| ----- | ---- | ----- | ----------- |
+| repository | [RepositoryRecord](#mediator-v1-RepositoryRecord) |  |  |
+
+
+
+
+
+
 <a name="mediator-v1-GetRepositoryRequest"></a>
 
 ### GetRepositoryRequest
@@ -1326,8 +1359,6 @@ get policy types
 | Field | Type | Label | Description |
 | ----- | ---- | ----- | ----------- |
 | repository_id | [int32](#int32) |  |  |
-| provider | [string](#string) |  |  |
-| group_id | [int32](#int32) |  |  |
 
 
 
@@ -1342,14 +1373,7 @@ get policy types
 
 | Field | Type | Label | Description |
 | ----- | ---- | ----- | ----------- |
-| id | [int32](#int32) |  |  |
-| owner | [string](#string) |  |  |
-| repository | [string](#string) |  |  |
-| repo_id | [int32](#int32) |  |  |
-| hook_url | [string](#string) |  |  |
-| created_at | [google.protobuf.Timestamp](#google-protobuf-Timestamp) |  |  |
-| updated_at | [google.protobuf.Timestamp](#google-protobuf-Timestamp) |  |  |
-| registered | [bool](#bool) |  |  |
+| repository | [RepositoryRecord](#mediator-v1-RepositoryRecord) |  |  |
 
 
 
@@ -1843,28 +1867,6 @@ BUF does not allow grouping (which is a shame)
 
 
 
-<a name="mediator-v1-ListRepositories"></a>
-
-### ListRepositories
-ListRepositories is used for displaying repository list data that
-is relevant to users. It is not used for registering repositories.
-Due to protobuf limitations, we cannot use the same Repositories for
-listing repositories and registering repositories.
-
-
-| Field | Type | Label | Description |
-| ----- | ---- | ----- | ----------- |
-| id | [int32](#int32) |  |  |
-| owner | [string](#string) |  |  |
-| name | [string](#string) |  |  |
-| repo_id | [int32](#int32) |  |  |
-| registered | [bool](#bool) |  |  |
-
-
-
-
-
-
 <a name="mediator-v1-ListRepositoriesRequest"></a>
 
 ### ListRepositoriesRequest
@@ -1892,7 +1894,7 @@ listing repositories and registering repositories.
 
 | Field | Type | Label | Description |
 | ----- | ---- | ----- | ----------- |
-| results | [ListRepositories](#mediator-v1-ListRepositories) | repeated |  |
+| results | [RepositoryRecord](#mediator-v1-RepositoryRecord) | repeated |  |
 
 
 
@@ -2143,6 +2145,32 @@ get policy violation details
 | owner | [string](#string) |  |  |
 | name | [string](#string) |  |  |
 | repo_id | [int32](#int32) |  |  |
+
+
+
+
+
+
+<a name="mediator-v1-RepositoryRecord"></a>
+
+### RepositoryRecord
+RepositoryRecord is used for registering repositories.
+
+
+| Field | Type | Label | Description |
+| ----- | ---- | ----- | ----------- |
+| id | [int32](#int32) |  |  |
+| provider | [string](#string) |  |  |
+| group_id | [int32](#int32) |  |  |
+| owner | [string](#string) |  |  |
+| name | [string](#string) |  |  |
+| repo_id | [int32](#int32) |  |  |
+| is_private | [bool](#bool) |  |  |
+| is_fork | [bool](#bool) |  |  |
+| hook_url | [string](#string) |  |  |
+| deploy_url | [string](#string) |  |  |
+| created_at | [google.protobuf.Timestamp](#google-protobuf-Timestamp) |  |  |
+| updated_at | [google.protobuf.Timestamp](#google-protobuf-Timestamp) |  |  |
 
 
 
@@ -2723,7 +2751,8 @@ manage Organizations CRUD
 | ----------- | ------------ | ------------- | ------------|
 | RegisterRepository | [RegisterRepositoryRequest](#mediator-v1-RegisterRepositoryRequest) | [RegisterRepositoryResponse](#mediator-v1-RegisterRepositoryResponse) |  |
 | ListRepositories | [ListRepositoriesRequest](#mediator-v1-ListRepositoriesRequest) | [ListRepositoriesResponse](#mediator-v1-ListRepositoriesResponse) |  |
-| GetRepository | [GetRepositoryRequest](#mediator-v1-GetRepositoryRequest) | [GetRepositoryResponse](#mediator-v1-GetRepositoryResponse) |  |
+| GetRepositoryById | [GetRepositoryRequest](#mediator-v1-GetRepositoryRequest) | [GetRepositoryResponse](#mediator-v1-GetRepositoryResponse) |  |
+| GetRepositoryByName | [GetRepositoryByNameRequest](#mediator-v1-GetRepositoryByNameRequest) | [GetRepositoryByNameResponse](#mediator-v1-GetRepositoryByNameResponse) |  |
 
 
 <a name="mediator-v1-RoleService"></a>
