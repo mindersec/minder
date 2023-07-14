@@ -984,9 +984,10 @@ var SecretsService_ServiceDesc = grpc.ServiceDesc{
 }
 
 const (
-	RepositoryService_RegisterRepository_FullMethodName = "/mediator.v1.RepositoryService/RegisterRepository"
-	RepositoryService_ListRepositories_FullMethodName   = "/mediator.v1.RepositoryService/ListRepositories"
-	RepositoryService_GetRepository_FullMethodName      = "/mediator.v1.RepositoryService/GetRepository"
+	RepositoryService_RegisterRepository_FullMethodName  = "/mediator.v1.RepositoryService/RegisterRepository"
+	RepositoryService_ListRepositories_FullMethodName    = "/mediator.v1.RepositoryService/ListRepositories"
+	RepositoryService_GetRepositoryById_FullMethodName   = "/mediator.v1.RepositoryService/GetRepositoryById"
+	RepositoryService_GetRepositoryByName_FullMethodName = "/mediator.v1.RepositoryService/GetRepositoryByName"
 )
 
 // RepositoryServiceClient is the client API for RepositoryService service.
@@ -995,7 +996,8 @@ const (
 type RepositoryServiceClient interface {
 	RegisterRepository(ctx context.Context, in *RegisterRepositoryRequest, opts ...grpc.CallOption) (*RegisterRepositoryResponse, error)
 	ListRepositories(ctx context.Context, in *ListRepositoriesRequest, opts ...grpc.CallOption) (*ListRepositoriesResponse, error)
-	GetRepository(ctx context.Context, in *GetRepositoryRequest, opts ...grpc.CallOption) (*GetRepositoryResponse, error)
+	GetRepositoryById(ctx context.Context, in *GetRepositoryByIdRequest, opts ...grpc.CallOption) (*GetRepositoryByIdResponse, error)
+	GetRepositoryByName(ctx context.Context, in *GetRepositoryByNameRequest, opts ...grpc.CallOption) (*GetRepositoryByNameResponse, error)
 }
 
 type repositoryServiceClient struct {
@@ -1024,9 +1026,18 @@ func (c *repositoryServiceClient) ListRepositories(ctx context.Context, in *List
 	return out, nil
 }
 
-func (c *repositoryServiceClient) GetRepository(ctx context.Context, in *GetRepositoryRequest, opts ...grpc.CallOption) (*GetRepositoryResponse, error) {
-	out := new(GetRepositoryResponse)
-	err := c.cc.Invoke(ctx, RepositoryService_GetRepository_FullMethodName, in, out, opts...)
+func (c *repositoryServiceClient) GetRepositoryById(ctx context.Context, in *GetRepositoryByIdRequest, opts ...grpc.CallOption) (*GetRepositoryByIdResponse, error) {
+	out := new(GetRepositoryByIdResponse)
+	err := c.cc.Invoke(ctx, RepositoryService_GetRepositoryById_FullMethodName, in, out, opts...)
+	if err != nil {
+		return nil, err
+	}
+	return out, nil
+}
+
+func (c *repositoryServiceClient) GetRepositoryByName(ctx context.Context, in *GetRepositoryByNameRequest, opts ...grpc.CallOption) (*GetRepositoryByNameResponse, error) {
+	out := new(GetRepositoryByNameResponse)
+	err := c.cc.Invoke(ctx, RepositoryService_GetRepositoryByName_FullMethodName, in, out, opts...)
 	if err != nil {
 		return nil, err
 	}
@@ -1039,7 +1050,8 @@ func (c *repositoryServiceClient) GetRepository(ctx context.Context, in *GetRepo
 type RepositoryServiceServer interface {
 	RegisterRepository(context.Context, *RegisterRepositoryRequest) (*RegisterRepositoryResponse, error)
 	ListRepositories(context.Context, *ListRepositoriesRequest) (*ListRepositoriesResponse, error)
-	GetRepository(context.Context, *GetRepositoryRequest) (*GetRepositoryResponse, error)
+	GetRepositoryById(context.Context, *GetRepositoryByIdRequest) (*GetRepositoryByIdResponse, error)
+	GetRepositoryByName(context.Context, *GetRepositoryByNameRequest) (*GetRepositoryByNameResponse, error)
 	mustEmbedUnimplementedRepositoryServiceServer()
 }
 
@@ -1053,8 +1065,11 @@ func (UnimplementedRepositoryServiceServer) RegisterRepository(context.Context, 
 func (UnimplementedRepositoryServiceServer) ListRepositories(context.Context, *ListRepositoriesRequest) (*ListRepositoriesResponse, error) {
 	return nil, status.Errorf(codes.Unimplemented, "method ListRepositories not implemented")
 }
-func (UnimplementedRepositoryServiceServer) GetRepository(context.Context, *GetRepositoryRequest) (*GetRepositoryResponse, error) {
-	return nil, status.Errorf(codes.Unimplemented, "method GetRepository not implemented")
+func (UnimplementedRepositoryServiceServer) GetRepositoryById(context.Context, *GetRepositoryByIdRequest) (*GetRepositoryByIdResponse, error) {
+	return nil, status.Errorf(codes.Unimplemented, "method GetRepositoryById not implemented")
+}
+func (UnimplementedRepositoryServiceServer) GetRepositoryByName(context.Context, *GetRepositoryByNameRequest) (*GetRepositoryByNameResponse, error) {
+	return nil, status.Errorf(codes.Unimplemented, "method GetRepositoryByName not implemented")
 }
 func (UnimplementedRepositoryServiceServer) mustEmbedUnimplementedRepositoryServiceServer() {}
 
@@ -1105,20 +1120,38 @@ func _RepositoryService_ListRepositories_Handler(srv interface{}, ctx context.Co
 	return interceptor(ctx, in, info, handler)
 }
 
-func _RepositoryService_GetRepository_Handler(srv interface{}, ctx context.Context, dec func(interface{}) error, interceptor grpc.UnaryServerInterceptor) (interface{}, error) {
-	in := new(GetRepositoryRequest)
+func _RepositoryService_GetRepositoryById_Handler(srv interface{}, ctx context.Context, dec func(interface{}) error, interceptor grpc.UnaryServerInterceptor) (interface{}, error) {
+	in := new(GetRepositoryByIdRequest)
 	if err := dec(in); err != nil {
 		return nil, err
 	}
 	if interceptor == nil {
-		return srv.(RepositoryServiceServer).GetRepository(ctx, in)
+		return srv.(RepositoryServiceServer).GetRepositoryById(ctx, in)
 	}
 	info := &grpc.UnaryServerInfo{
 		Server:     srv,
-		FullMethod: RepositoryService_GetRepository_FullMethodName,
+		FullMethod: RepositoryService_GetRepositoryById_FullMethodName,
 	}
 	handler := func(ctx context.Context, req interface{}) (interface{}, error) {
-		return srv.(RepositoryServiceServer).GetRepository(ctx, req.(*GetRepositoryRequest))
+		return srv.(RepositoryServiceServer).GetRepositoryById(ctx, req.(*GetRepositoryByIdRequest))
+	}
+	return interceptor(ctx, in, info, handler)
+}
+
+func _RepositoryService_GetRepositoryByName_Handler(srv interface{}, ctx context.Context, dec func(interface{}) error, interceptor grpc.UnaryServerInterceptor) (interface{}, error) {
+	in := new(GetRepositoryByNameRequest)
+	if err := dec(in); err != nil {
+		return nil, err
+	}
+	if interceptor == nil {
+		return srv.(RepositoryServiceServer).GetRepositoryByName(ctx, in)
+	}
+	info := &grpc.UnaryServerInfo{
+		Server:     srv,
+		FullMethod: RepositoryService_GetRepositoryByName_FullMethodName,
+	}
+	handler := func(ctx context.Context, req interface{}) (interface{}, error) {
+		return srv.(RepositoryServiceServer).GetRepositoryByName(ctx, req.(*GetRepositoryByNameRequest))
 	}
 	return interceptor(ctx, in, info, handler)
 }
@@ -1139,8 +1172,12 @@ var RepositoryService_ServiceDesc = grpc.ServiceDesc{
 			Handler:    _RepositoryService_ListRepositories_Handler,
 		},
 		{
-			MethodName: "GetRepository",
-			Handler:    _RepositoryService_GetRepository_Handler,
+			MethodName: "GetRepositoryById",
+			Handler:    _RepositoryService_GetRepositoryById_Handler,
+		},
+		{
+			MethodName: "GetRepositoryByName",
+			Handler:    _RepositoryService_GetRepositoryByName_Handler,
 		},
 	},
 	Streams:  []grpc.StreamDesc{},
@@ -2487,12 +2524,18 @@ var UserService_ServiceDesc = grpc.ServiceDesc{
 }
 
 const (
-	PolicyService_GetPolicyType_FullMethodName  = "/mediator.v1.PolicyService/GetPolicyType"
-	PolicyService_GetPolicyTypes_FullMethodName = "/mediator.v1.PolicyService/GetPolicyTypes"
-	PolicyService_CreatePolicy_FullMethodName   = "/mediator.v1.PolicyService/CreatePolicy"
-	PolicyService_DeletePolicy_FullMethodName   = "/mediator.v1.PolicyService/DeletePolicy"
-	PolicyService_GetPolicies_FullMethodName    = "/mediator.v1.PolicyService/GetPolicies"
-	PolicyService_GetPolicyById_FullMethodName  = "/mediator.v1.PolicyService/GetPolicyById"
+	PolicyService_GetPolicyType_FullMethodName                   = "/mediator.v1.PolicyService/GetPolicyType"
+	PolicyService_GetPolicyTypes_FullMethodName                  = "/mediator.v1.PolicyService/GetPolicyTypes"
+	PolicyService_CreatePolicy_FullMethodName                    = "/mediator.v1.PolicyService/CreatePolicy"
+	PolicyService_DeletePolicy_FullMethodName                    = "/mediator.v1.PolicyService/DeletePolicy"
+	PolicyService_GetPolicies_FullMethodName                     = "/mediator.v1.PolicyService/GetPolicies"
+	PolicyService_GetPolicyById_FullMethodName                   = "/mediator.v1.PolicyService/GetPolicyById"
+	PolicyService_GetPolicyStatusById_FullMethodName             = "/mediator.v1.PolicyService/GetPolicyStatusById"
+	PolicyService_GetPolicyStatusByGroup_FullMethodName          = "/mediator.v1.PolicyService/GetPolicyStatusByGroup"
+	PolicyService_GetPolicyStatusByRepository_FullMethodName     = "/mediator.v1.PolicyService/GetPolicyStatusByRepository"
+	PolicyService_GetPolicyViolationsById_FullMethodName         = "/mediator.v1.PolicyService/GetPolicyViolationsById"
+	PolicyService_GetPolicyViolationsByGroup_FullMethodName      = "/mediator.v1.PolicyService/GetPolicyViolationsByGroup"
+	PolicyService_GetPolicyViolationsByRepository_FullMethodName = "/mediator.v1.PolicyService/GetPolicyViolationsByRepository"
 )
 
 // PolicyServiceClient is the client API for PolicyService service.
@@ -2505,6 +2548,12 @@ type PolicyServiceClient interface {
 	DeletePolicy(ctx context.Context, in *DeletePolicyRequest, opts ...grpc.CallOption) (*DeletePolicyResponse, error)
 	GetPolicies(ctx context.Context, in *GetPoliciesRequest, opts ...grpc.CallOption) (*GetPoliciesResponse, error)
 	GetPolicyById(ctx context.Context, in *GetPolicyByIdRequest, opts ...grpc.CallOption) (*GetPolicyByIdResponse, error)
+	GetPolicyStatusById(ctx context.Context, in *GetPolicyStatusByIdRequest, opts ...grpc.CallOption) (*GetPolicyStatusByIdResponse, error)
+	GetPolicyStatusByGroup(ctx context.Context, in *GetPolicyStatusByGroupRequest, opts ...grpc.CallOption) (*GetPolicyStatusByGroupResponse, error)
+	GetPolicyStatusByRepository(ctx context.Context, in *GetPolicyStatusByRepositoryRequest, opts ...grpc.CallOption) (*GetPolicyStatusByRepositoryResponse, error)
+	GetPolicyViolationsById(ctx context.Context, in *GetPolicyViolationsByIdRequest, opts ...grpc.CallOption) (*GetPolicyViolationsByIdResponse, error)
+	GetPolicyViolationsByGroup(ctx context.Context, in *GetPolicyViolationsByGroupRequest, opts ...grpc.CallOption) (*GetPolicyViolationsByGroupResponse, error)
+	GetPolicyViolationsByRepository(ctx context.Context, in *GetPolicyViolationsByRepositoryRequest, opts ...grpc.CallOption) (*GetPolicyViolationsByRepositoryResponse, error)
 }
 
 type policyServiceClient struct {
@@ -2569,6 +2618,60 @@ func (c *policyServiceClient) GetPolicyById(ctx context.Context, in *GetPolicyBy
 	return out, nil
 }
 
+func (c *policyServiceClient) GetPolicyStatusById(ctx context.Context, in *GetPolicyStatusByIdRequest, opts ...grpc.CallOption) (*GetPolicyStatusByIdResponse, error) {
+	out := new(GetPolicyStatusByIdResponse)
+	err := c.cc.Invoke(ctx, PolicyService_GetPolicyStatusById_FullMethodName, in, out, opts...)
+	if err != nil {
+		return nil, err
+	}
+	return out, nil
+}
+
+func (c *policyServiceClient) GetPolicyStatusByGroup(ctx context.Context, in *GetPolicyStatusByGroupRequest, opts ...grpc.CallOption) (*GetPolicyStatusByGroupResponse, error) {
+	out := new(GetPolicyStatusByGroupResponse)
+	err := c.cc.Invoke(ctx, PolicyService_GetPolicyStatusByGroup_FullMethodName, in, out, opts...)
+	if err != nil {
+		return nil, err
+	}
+	return out, nil
+}
+
+func (c *policyServiceClient) GetPolicyStatusByRepository(ctx context.Context, in *GetPolicyStatusByRepositoryRequest, opts ...grpc.CallOption) (*GetPolicyStatusByRepositoryResponse, error) {
+	out := new(GetPolicyStatusByRepositoryResponse)
+	err := c.cc.Invoke(ctx, PolicyService_GetPolicyStatusByRepository_FullMethodName, in, out, opts...)
+	if err != nil {
+		return nil, err
+	}
+	return out, nil
+}
+
+func (c *policyServiceClient) GetPolicyViolationsById(ctx context.Context, in *GetPolicyViolationsByIdRequest, opts ...grpc.CallOption) (*GetPolicyViolationsByIdResponse, error) {
+	out := new(GetPolicyViolationsByIdResponse)
+	err := c.cc.Invoke(ctx, PolicyService_GetPolicyViolationsById_FullMethodName, in, out, opts...)
+	if err != nil {
+		return nil, err
+	}
+	return out, nil
+}
+
+func (c *policyServiceClient) GetPolicyViolationsByGroup(ctx context.Context, in *GetPolicyViolationsByGroupRequest, opts ...grpc.CallOption) (*GetPolicyViolationsByGroupResponse, error) {
+	out := new(GetPolicyViolationsByGroupResponse)
+	err := c.cc.Invoke(ctx, PolicyService_GetPolicyViolationsByGroup_FullMethodName, in, out, opts...)
+	if err != nil {
+		return nil, err
+	}
+	return out, nil
+}
+
+func (c *policyServiceClient) GetPolicyViolationsByRepository(ctx context.Context, in *GetPolicyViolationsByRepositoryRequest, opts ...grpc.CallOption) (*GetPolicyViolationsByRepositoryResponse, error) {
+	out := new(GetPolicyViolationsByRepositoryResponse)
+	err := c.cc.Invoke(ctx, PolicyService_GetPolicyViolationsByRepository_FullMethodName, in, out, opts...)
+	if err != nil {
+		return nil, err
+	}
+	return out, nil
+}
+
 // PolicyServiceServer is the server API for PolicyService service.
 // All implementations must embed UnimplementedPolicyServiceServer
 // for forward compatibility
@@ -2579,6 +2682,12 @@ type PolicyServiceServer interface {
 	DeletePolicy(context.Context, *DeletePolicyRequest) (*DeletePolicyResponse, error)
 	GetPolicies(context.Context, *GetPoliciesRequest) (*GetPoliciesResponse, error)
 	GetPolicyById(context.Context, *GetPolicyByIdRequest) (*GetPolicyByIdResponse, error)
+	GetPolicyStatusById(context.Context, *GetPolicyStatusByIdRequest) (*GetPolicyStatusByIdResponse, error)
+	GetPolicyStatusByGroup(context.Context, *GetPolicyStatusByGroupRequest) (*GetPolicyStatusByGroupResponse, error)
+	GetPolicyStatusByRepository(context.Context, *GetPolicyStatusByRepositoryRequest) (*GetPolicyStatusByRepositoryResponse, error)
+	GetPolicyViolationsById(context.Context, *GetPolicyViolationsByIdRequest) (*GetPolicyViolationsByIdResponse, error)
+	GetPolicyViolationsByGroup(context.Context, *GetPolicyViolationsByGroupRequest) (*GetPolicyViolationsByGroupResponse, error)
+	GetPolicyViolationsByRepository(context.Context, *GetPolicyViolationsByRepositoryRequest) (*GetPolicyViolationsByRepositoryResponse, error)
 	mustEmbedUnimplementedPolicyServiceServer()
 }
 
@@ -2603,6 +2712,24 @@ func (UnimplementedPolicyServiceServer) GetPolicies(context.Context, *GetPolicie
 }
 func (UnimplementedPolicyServiceServer) GetPolicyById(context.Context, *GetPolicyByIdRequest) (*GetPolicyByIdResponse, error) {
 	return nil, status.Errorf(codes.Unimplemented, "method GetPolicyById not implemented")
+}
+func (UnimplementedPolicyServiceServer) GetPolicyStatusById(context.Context, *GetPolicyStatusByIdRequest) (*GetPolicyStatusByIdResponse, error) {
+	return nil, status.Errorf(codes.Unimplemented, "method GetPolicyStatusById not implemented")
+}
+func (UnimplementedPolicyServiceServer) GetPolicyStatusByGroup(context.Context, *GetPolicyStatusByGroupRequest) (*GetPolicyStatusByGroupResponse, error) {
+	return nil, status.Errorf(codes.Unimplemented, "method GetPolicyStatusByGroup not implemented")
+}
+func (UnimplementedPolicyServiceServer) GetPolicyStatusByRepository(context.Context, *GetPolicyStatusByRepositoryRequest) (*GetPolicyStatusByRepositoryResponse, error) {
+	return nil, status.Errorf(codes.Unimplemented, "method GetPolicyStatusByRepository not implemented")
+}
+func (UnimplementedPolicyServiceServer) GetPolicyViolationsById(context.Context, *GetPolicyViolationsByIdRequest) (*GetPolicyViolationsByIdResponse, error) {
+	return nil, status.Errorf(codes.Unimplemented, "method GetPolicyViolationsById not implemented")
+}
+func (UnimplementedPolicyServiceServer) GetPolicyViolationsByGroup(context.Context, *GetPolicyViolationsByGroupRequest) (*GetPolicyViolationsByGroupResponse, error) {
+	return nil, status.Errorf(codes.Unimplemented, "method GetPolicyViolationsByGroup not implemented")
+}
+func (UnimplementedPolicyServiceServer) GetPolicyViolationsByRepository(context.Context, *GetPolicyViolationsByRepositoryRequest) (*GetPolicyViolationsByRepositoryResponse, error) {
+	return nil, status.Errorf(codes.Unimplemented, "method GetPolicyViolationsByRepository not implemented")
 }
 func (UnimplementedPolicyServiceServer) mustEmbedUnimplementedPolicyServiceServer() {}
 
@@ -2725,6 +2852,114 @@ func _PolicyService_GetPolicyById_Handler(srv interface{}, ctx context.Context, 
 	return interceptor(ctx, in, info, handler)
 }
 
+func _PolicyService_GetPolicyStatusById_Handler(srv interface{}, ctx context.Context, dec func(interface{}) error, interceptor grpc.UnaryServerInterceptor) (interface{}, error) {
+	in := new(GetPolicyStatusByIdRequest)
+	if err := dec(in); err != nil {
+		return nil, err
+	}
+	if interceptor == nil {
+		return srv.(PolicyServiceServer).GetPolicyStatusById(ctx, in)
+	}
+	info := &grpc.UnaryServerInfo{
+		Server:     srv,
+		FullMethod: PolicyService_GetPolicyStatusById_FullMethodName,
+	}
+	handler := func(ctx context.Context, req interface{}) (interface{}, error) {
+		return srv.(PolicyServiceServer).GetPolicyStatusById(ctx, req.(*GetPolicyStatusByIdRequest))
+	}
+	return interceptor(ctx, in, info, handler)
+}
+
+func _PolicyService_GetPolicyStatusByGroup_Handler(srv interface{}, ctx context.Context, dec func(interface{}) error, interceptor grpc.UnaryServerInterceptor) (interface{}, error) {
+	in := new(GetPolicyStatusByGroupRequest)
+	if err := dec(in); err != nil {
+		return nil, err
+	}
+	if interceptor == nil {
+		return srv.(PolicyServiceServer).GetPolicyStatusByGroup(ctx, in)
+	}
+	info := &grpc.UnaryServerInfo{
+		Server:     srv,
+		FullMethod: PolicyService_GetPolicyStatusByGroup_FullMethodName,
+	}
+	handler := func(ctx context.Context, req interface{}) (interface{}, error) {
+		return srv.(PolicyServiceServer).GetPolicyStatusByGroup(ctx, req.(*GetPolicyStatusByGroupRequest))
+	}
+	return interceptor(ctx, in, info, handler)
+}
+
+func _PolicyService_GetPolicyStatusByRepository_Handler(srv interface{}, ctx context.Context, dec func(interface{}) error, interceptor grpc.UnaryServerInterceptor) (interface{}, error) {
+	in := new(GetPolicyStatusByRepositoryRequest)
+	if err := dec(in); err != nil {
+		return nil, err
+	}
+	if interceptor == nil {
+		return srv.(PolicyServiceServer).GetPolicyStatusByRepository(ctx, in)
+	}
+	info := &grpc.UnaryServerInfo{
+		Server:     srv,
+		FullMethod: PolicyService_GetPolicyStatusByRepository_FullMethodName,
+	}
+	handler := func(ctx context.Context, req interface{}) (interface{}, error) {
+		return srv.(PolicyServiceServer).GetPolicyStatusByRepository(ctx, req.(*GetPolicyStatusByRepositoryRequest))
+	}
+	return interceptor(ctx, in, info, handler)
+}
+
+func _PolicyService_GetPolicyViolationsById_Handler(srv interface{}, ctx context.Context, dec func(interface{}) error, interceptor grpc.UnaryServerInterceptor) (interface{}, error) {
+	in := new(GetPolicyViolationsByIdRequest)
+	if err := dec(in); err != nil {
+		return nil, err
+	}
+	if interceptor == nil {
+		return srv.(PolicyServiceServer).GetPolicyViolationsById(ctx, in)
+	}
+	info := &grpc.UnaryServerInfo{
+		Server:     srv,
+		FullMethod: PolicyService_GetPolicyViolationsById_FullMethodName,
+	}
+	handler := func(ctx context.Context, req interface{}) (interface{}, error) {
+		return srv.(PolicyServiceServer).GetPolicyViolationsById(ctx, req.(*GetPolicyViolationsByIdRequest))
+	}
+	return interceptor(ctx, in, info, handler)
+}
+
+func _PolicyService_GetPolicyViolationsByGroup_Handler(srv interface{}, ctx context.Context, dec func(interface{}) error, interceptor grpc.UnaryServerInterceptor) (interface{}, error) {
+	in := new(GetPolicyViolationsByGroupRequest)
+	if err := dec(in); err != nil {
+		return nil, err
+	}
+	if interceptor == nil {
+		return srv.(PolicyServiceServer).GetPolicyViolationsByGroup(ctx, in)
+	}
+	info := &grpc.UnaryServerInfo{
+		Server:     srv,
+		FullMethod: PolicyService_GetPolicyViolationsByGroup_FullMethodName,
+	}
+	handler := func(ctx context.Context, req interface{}) (interface{}, error) {
+		return srv.(PolicyServiceServer).GetPolicyViolationsByGroup(ctx, req.(*GetPolicyViolationsByGroupRequest))
+	}
+	return interceptor(ctx, in, info, handler)
+}
+
+func _PolicyService_GetPolicyViolationsByRepository_Handler(srv interface{}, ctx context.Context, dec func(interface{}) error, interceptor grpc.UnaryServerInterceptor) (interface{}, error) {
+	in := new(GetPolicyViolationsByRepositoryRequest)
+	if err := dec(in); err != nil {
+		return nil, err
+	}
+	if interceptor == nil {
+		return srv.(PolicyServiceServer).GetPolicyViolationsByRepository(ctx, in)
+	}
+	info := &grpc.UnaryServerInfo{
+		Server:     srv,
+		FullMethod: PolicyService_GetPolicyViolationsByRepository_FullMethodName,
+	}
+	handler := func(ctx context.Context, req interface{}) (interface{}, error) {
+		return srv.(PolicyServiceServer).GetPolicyViolationsByRepository(ctx, req.(*GetPolicyViolationsByRepositoryRequest))
+	}
+	return interceptor(ctx, in, info, handler)
+}
+
 // PolicyService_ServiceDesc is the grpc.ServiceDesc for PolicyService service.
 // It's only intended for direct use with grpc.RegisterService,
 // and not to be introspected or modified (even as a copy)
@@ -2755,6 +2990,157 @@ var PolicyService_ServiceDesc = grpc.ServiceDesc{
 		{
 			MethodName: "GetPolicyById",
 			Handler:    _PolicyService_GetPolicyById_Handler,
+		},
+		{
+			MethodName: "GetPolicyStatusById",
+			Handler:    _PolicyService_GetPolicyStatusById_Handler,
+		},
+		{
+			MethodName: "GetPolicyStatusByGroup",
+			Handler:    _PolicyService_GetPolicyStatusByGroup_Handler,
+		},
+		{
+			MethodName: "GetPolicyStatusByRepository",
+			Handler:    _PolicyService_GetPolicyStatusByRepository_Handler,
+		},
+		{
+			MethodName: "GetPolicyViolationsById",
+			Handler:    _PolicyService_GetPolicyViolationsById_Handler,
+		},
+		{
+			MethodName: "GetPolicyViolationsByGroup",
+			Handler:    _PolicyService_GetPolicyViolationsByGroup_Handler,
+		},
+		{
+			MethodName: "GetPolicyViolationsByRepository",
+			Handler:    _PolicyService_GetPolicyViolationsByRepository_Handler,
+		},
+	},
+	Streams:  []grpc.StreamDesc{},
+	Metadata: "mediator/v1/mediator.proto",
+}
+
+const (
+	KeyService_GetPublicKey_FullMethodName  = "/mediator.v1.KeyService/GetPublicKey"
+	KeyService_CreateKeyPair_FullMethodName = "/mediator.v1.KeyService/CreateKeyPair"
+)
+
+// KeyServiceClient is the client API for KeyService service.
+//
+// For semantics around ctx use and closing/ending streaming RPCs, please refer to https://pkg.go.dev/google.golang.org/grpc/?tab=doc#ClientConn.NewStream.
+type KeyServiceClient interface {
+	GetPublicKey(ctx context.Context, in *GetPublicKeyRequest, opts ...grpc.CallOption) (*GetPublicKeyResponse, error)
+	CreateKeyPair(ctx context.Context, in *CreateKeyPairRequest, opts ...grpc.CallOption) (*CreateKeyPairResponse, error)
+}
+
+type keyServiceClient struct {
+	cc grpc.ClientConnInterface
+}
+
+func NewKeyServiceClient(cc grpc.ClientConnInterface) KeyServiceClient {
+	return &keyServiceClient{cc}
+}
+
+func (c *keyServiceClient) GetPublicKey(ctx context.Context, in *GetPublicKeyRequest, opts ...grpc.CallOption) (*GetPublicKeyResponse, error) {
+	out := new(GetPublicKeyResponse)
+	err := c.cc.Invoke(ctx, KeyService_GetPublicKey_FullMethodName, in, out, opts...)
+	if err != nil {
+		return nil, err
+	}
+	return out, nil
+}
+
+func (c *keyServiceClient) CreateKeyPair(ctx context.Context, in *CreateKeyPairRequest, opts ...grpc.CallOption) (*CreateKeyPairResponse, error) {
+	out := new(CreateKeyPairResponse)
+	err := c.cc.Invoke(ctx, KeyService_CreateKeyPair_FullMethodName, in, out, opts...)
+	if err != nil {
+		return nil, err
+	}
+	return out, nil
+}
+
+// KeyServiceServer is the server API for KeyService service.
+// All implementations must embed UnimplementedKeyServiceServer
+// for forward compatibility
+type KeyServiceServer interface {
+	GetPublicKey(context.Context, *GetPublicKeyRequest) (*GetPublicKeyResponse, error)
+	CreateKeyPair(context.Context, *CreateKeyPairRequest) (*CreateKeyPairResponse, error)
+	mustEmbedUnimplementedKeyServiceServer()
+}
+
+// UnimplementedKeyServiceServer must be embedded to have forward compatible implementations.
+type UnimplementedKeyServiceServer struct {
+}
+
+func (UnimplementedKeyServiceServer) GetPublicKey(context.Context, *GetPublicKeyRequest) (*GetPublicKeyResponse, error) {
+	return nil, status.Errorf(codes.Unimplemented, "method GetPublicKey not implemented")
+}
+func (UnimplementedKeyServiceServer) CreateKeyPair(context.Context, *CreateKeyPairRequest) (*CreateKeyPairResponse, error) {
+	return nil, status.Errorf(codes.Unimplemented, "method CreateKeyPair not implemented")
+}
+func (UnimplementedKeyServiceServer) mustEmbedUnimplementedKeyServiceServer() {}
+
+// UnsafeKeyServiceServer may be embedded to opt out of forward compatibility for this service.
+// Use of this interface is not recommended, as added methods to KeyServiceServer will
+// result in compilation errors.
+type UnsafeKeyServiceServer interface {
+	mustEmbedUnimplementedKeyServiceServer()
+}
+
+func RegisterKeyServiceServer(s grpc.ServiceRegistrar, srv KeyServiceServer) {
+	s.RegisterService(&KeyService_ServiceDesc, srv)
+}
+
+func _KeyService_GetPublicKey_Handler(srv interface{}, ctx context.Context, dec func(interface{}) error, interceptor grpc.UnaryServerInterceptor) (interface{}, error) {
+	in := new(GetPublicKeyRequest)
+	if err := dec(in); err != nil {
+		return nil, err
+	}
+	if interceptor == nil {
+		return srv.(KeyServiceServer).GetPublicKey(ctx, in)
+	}
+	info := &grpc.UnaryServerInfo{
+		Server:     srv,
+		FullMethod: KeyService_GetPublicKey_FullMethodName,
+	}
+	handler := func(ctx context.Context, req interface{}) (interface{}, error) {
+		return srv.(KeyServiceServer).GetPublicKey(ctx, req.(*GetPublicKeyRequest))
+	}
+	return interceptor(ctx, in, info, handler)
+}
+
+func _KeyService_CreateKeyPair_Handler(srv interface{}, ctx context.Context, dec func(interface{}) error, interceptor grpc.UnaryServerInterceptor) (interface{}, error) {
+	in := new(CreateKeyPairRequest)
+	if err := dec(in); err != nil {
+		return nil, err
+	}
+	if interceptor == nil {
+		return srv.(KeyServiceServer).CreateKeyPair(ctx, in)
+	}
+	info := &grpc.UnaryServerInfo{
+		Server:     srv,
+		FullMethod: KeyService_CreateKeyPair_FullMethodName,
+	}
+	handler := func(ctx context.Context, req interface{}) (interface{}, error) {
+		return srv.(KeyServiceServer).CreateKeyPair(ctx, req.(*CreateKeyPairRequest))
+	}
+	return interceptor(ctx, in, info, handler)
+}
+
+// KeyService_ServiceDesc is the grpc.ServiceDesc for KeyService service.
+// It's only intended for direct use with grpc.RegisterService,
+// and not to be introspected or modified (even as a copy)
+var KeyService_ServiceDesc = grpc.ServiceDesc{
+	ServiceName: "mediator.v1.KeyService",
+	HandlerType: (*KeyServiceServer)(nil),
+	Methods: []grpc.MethodDesc{
+		{
+			MethodName: "GetPublicKey",
+			Handler:    _KeyService_GetPublicKey_Handler,
+		},
+		{
+			MethodName: "CreateKeyPair",
+			Handler:    _KeyService_CreateKeyPair_Handler,
 		},
 	},
 	Streams:  []grpc.StreamDesc{},

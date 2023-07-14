@@ -19,10 +19,10 @@ import (
 	"context"
 	"log"
 
-	pb "github.com/stacklok/mediator/pkg/generated/protobuf/go/mediator/v1"
-
 	"github.com/grpc-ecosystem/grpc-gateway/v2/runtime"
 	"google.golang.org/grpc"
+
+	pb "github.com/stacklok/mediator/pkg/generated/protobuf/go/mediator/v1"
 )
 
 // RegisterGatewayHTTPHandlers registers the gateway HTTP handlers
@@ -71,6 +71,11 @@ func RegisterGatewayHTTPHandlers(ctx context.Context, gwmux *runtime.ServeMux, g
 	if err := pb.RegisterPolicyServiceHandlerFromEndpoint(ctx, gwmux, grpcAddress, opts); err != nil {
 		log.Fatalf("failed to register gateway: %v", err)
 	}
+
+	// Register the KeyService service
+	if err := pb.RegisterKeyServiceHandlerFromEndpoint(ctx, gwmux, grpcAddress, opts); err != nil {
+		log.Fatalf("failed to register gateway: %v", err)
+	}
 }
 
 // RegisterGRPCServices registers the GRPC services
@@ -101,4 +106,6 @@ func RegisterGRPCServices(s *Server) {
 	// Register the Policy service
 	pb.RegisterPolicyServiceServer(s.grpcServer, s)
 
+	// Register the Key service
+	pb.RegisterKeyServiceServer(s.grpcServer, s)
 }

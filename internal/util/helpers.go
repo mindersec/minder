@@ -25,19 +25,24 @@ package util
 import (
 	"context"
 	"encoding/json"
+	"errors"
 	"fmt"
+	"io/fs"
 	"net"
 	"os"
 	"path/filepath"
+	"strings"
+	"syscall"
 	"time"
 
 	_ "github.com/lib/pq" // nolint
 	"github.com/spf13/cobra"
 	"github.com/spf13/viper"
-	pb "github.com/stacklok/mediator/pkg/generated/protobuf/go/mediator/v1"
+	"golang.org/x/term"
 	"google.golang.org/grpc"
 	"google.golang.org/grpc/credentials/insecure"
-	"gopkg.in/yaml.v3"
+
+	pb "github.com/stacklok/mediator/pkg/generated/protobuf/go/mediator/v1"
 )
 
 // GetConfigValue is a helper function that retrieves a configuration value
@@ -260,32 +265,47 @@ func GetRandomPort() (int, error) {
 	return port, nil
 }
 
-// ConvertYamlToJson converts yaml to json
-func ConvertYamlToJson(content string) (json.RawMessage, error) {
-	var yamlData interface{}
-	err := yaml.Unmarshal([]byte(content), &yamlData)
-	if err != nil {
-		return nil, err
+// WriteToFile writes the content to a file if the out parameter is not empty.
+func WriteToFile(out string, content []byte, perms fs.FileMode) error {
+	if out != "" {
+		err := os.WriteFile(out, content, perms)
+		if err != nil {
+			return fmt.Errorf("error writing to file: %s", err)
+		}
 	}
-	jsonData, err := json.Marshal(yamlData)
-	if err != nil {
-		return nil, err
-	}
-	return jsonData, nil
+
+	return nil
 }
 
-// ConvertJsonToYaml converts json to yaml
-func ConvertJsonToYaml(content json.RawMessage) (string, error) {
-	var jsonDataNew interface{}
-	err := json.Unmarshal(content, &jsonDataNew)
+// GetPassFromTerm gets a password from the terminal
+func GetPassFromTerm(confirm bool) ([]byte, error) {
+	fmt.Print("Enter password for private key: ")
+
+	pw1, err := term.ReadPassword(int(syscall.Stdin))
 	if err != nil {
-		return "", err
+		return nil, err
+	}
+	fmt.Println()
+
+	if !confirm {
+		return pw1, nil
 	}
 
-	yamlDataNew, err := yaml.Marshal(jsonDataNew)
+	fmt.Print("Enter password for private key again: ")
+	confirmpw, err := term.ReadPassword(int(syscall.Stdin))
+	fmt.Println()
+
 	if err != nil {
-		return "", err
+		return nil, err
 	}
-	yamlStr := string(yamlDataNew)
-	return yamlStr, nil
+
+	if !bytesEqual(pw1, confirmpw) {
+		return nil, errors.New("passwords do not match")
+	}
+
+	return pw1, nil
+}
+
+func bytesEqual(a, b []byte) bool {
+	return strings.EqualFold(strings.TrimSpace(string(a)), strings.TrimSpace(string(b)))
 }

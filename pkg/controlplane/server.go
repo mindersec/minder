@@ -24,6 +24,7 @@ import (
 	"time"
 
 	"github.com/grpc-ecosystem/grpc-gateway/v2/runtime"
+	_ "github.com/lib/pq" // nolint
 	"github.com/prometheus/client_golang/prometheus/promhttp"
 	"go.opentelemetry.io/contrib/instrumentation/google.golang.org/grpc/otelgrpc"
 	"go.opentelemetry.io/otel"
@@ -44,9 +45,9 @@ import (
 	"github.com/stacklok/mediator/internal/config"
 	"github.com/stacklok/mediator/internal/events"
 	"github.com/stacklok/mediator/internal/logger"
+	"github.com/stacklok/mediator/internal/util"
 	"github.com/stacklok/mediator/pkg/db"
 	pb "github.com/stacklok/mediator/pkg/generated/protobuf/go/mediator/v1"
-	"github.com/stacklok/mediator/pkg/util"
 )
 
 const metricsPath = "/metrics"
@@ -70,6 +71,7 @@ type Server struct {
 	pb.UnimplementedUserServiceServer
 	pb.UnimplementedRepositoryServiceServer
 	pb.UnimplementedPolicyServiceServer
+	pb.UnimplementedKeyServiceServer
 	OAuth2       *oauth2.Config
 	ClientID     string
 	ClientSecret string

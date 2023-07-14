@@ -1,0 +1,104 @@
+---
+# Note that we would create 
+version: v1
+type: rule-type
+name: branch_protection
+context:
+  provider: github
+  organization: ACME
+def:
+  # Defines the section of the pipeline the rule will appear in.
+  # This will affect the template that is used to render multiple parts
+  # of the rule.
+  in_entity: repository
+  # Defines the schema for writing a rule with this rule being checked
+  rule_schema:
+    properties:
+      branch_protection":
+        type: "object"
+        properties:
+          enforce_admins:
+            type: boolean
+            description: "Set to true to enforce required status checks for repository administrators"
+          required_pull_request_reviews:
+            type: object
+            properties:
+              dismiss_stale_reviews:
+                description: "Set to true if you want to automatically dismiss approving reviews when someone pushes a new commit."
+                type: boolean
+              require_code_owner_reviews:
+                description: "Set to true if you want to automatically dismiss approving reviews when someone pushes a new commit."
+                type: boolean
+              required_approving_review_count:
+                description: "Specify the number of reviewers required to approve pull requests. Use a number between 1 and 6 or 0 to not require reviewers."
+                type: integer
+              require_last_push_approval:
+                description: "Whether the most recent push must be approved by someone other than the person who pushed it."
+                type: boolean
+                default: false
+          required_signatures:
+            type: boolean
+            description: "Wether this branch requires signed commits"
+          required_linear_history:
+            type: boolean
+            description: "Enforces a linear commit Git history, which prevents anyone from pushing merge commits to a branch."
+          allow_force_pushes:
+            type: boolean
+            description: "Permits force pushes to the protected branch by anyone with write access to the repository."
+          allow_deletions:
+            type: boolean
+            description: "Allows deletion of the protected branch by anyone with write access to the repository."
+          required_conversation_resolution:
+            type: boolean
+            description: "Requires all conversations on code to be resolved before a pull request can be merged into a branch that matches this rule."
+          lock_branch:
+            type: boolean
+            description: "Whether to set the branch as read-only. If this is true, users will not be able to push to the branch."
+          allow_fork_syncing:
+            type: boolean
+            description: "Whether users can pull changes from upstream when the branch is locked. Set to `true` to allow fork syncing. Set to `false` to prevent fork syncing."
+  # Defines the configuration for both ingesting and evaluating the rule.
+  data_eval:
+    type: rest
+    rest:
+      # This is the path to the data source. Given that this will evaluate
+      # for each repository in the organization, we use a template that
+      # will be evaluated for each repository. The structure to use is the
+      # protobuf structure for the entity that is being evaluated.
+      endpoint: '/repos/{{.Entity.Owner}}/{{.Entity.Repository}}/branches/{{ index .Params "branch" }}/protection'
+      # This is the method to use to retrieve the data. It should already default to JSON
+      parse: json
+    key-type: jq
+    data:
+      # This key is meant to denote where the info will be
+      # persisted in the aspect itself.
+      ".required_pull_request_reviews.dismiss_stale_reviews":
+        # This denotes where the information will be retrieved from
+        # the data source.
+        type: jq
+        def: '.required_pull_request_reviews.dismiss_stale_reviews'
+      ".required_pull_request_reviews.require_code_owner_reviews":
+        # This denotes where the information will be retrieved from
+        # the data source.
+        type: jq
+        def: '.required_pull_request_reviews.require_code_owner_reviews'
+      ".required_pull_request_reviews.required_approving_review_count":
+        # This denotes where the information will be retrieved from
+        # the data source.
+        type: jq
+        def: '.required_pull_request_reviews.required_approving_review_count'
+      ".required_linear_history":
+        # This denotes where the information will be retrieved from
+        # the data source.
+        type: jq
+        def: '.required_linear_history.enabled'
+      ".allow_force_pushes":
+        # This denotes where the information will be retrieved from
+        # the data source.
+        type: jq
+        def: '.allow_force_pushes.enabled'
+      ".allow_deletions":
+        # This denotes where the information will be retrieved from
+        # the data source.
+        type: jq
+        def: '.allow_deletions.enabled'

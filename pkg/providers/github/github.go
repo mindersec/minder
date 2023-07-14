@@ -17,6 +17,7 @@ package github
 
 import (
 	"context"
+	"net/http"
 	"net/url"
 
 	"github.com/google/go-github/v53/github"
@@ -48,9 +49,14 @@ type RepositoryListResult struct {
 // Add methods here for interacting with the GitHub Rest API
 // e.g. GetRepositoryRestInfo(ctx context.Context, owner string, name string) (*RepositoryInfo, error)
 type RestAPI interface {
+	GetRepository(context.Context, string, string) (*github.Repository, error)
 	ListAllRepositories(context.Context, bool) (RepositoryListResult, error)
 	CheckIfTokenIsForOrganization(context.Context) (bool, error)
 	GetBranchProtection(context.Context, string, string, string) (*github.Protection, error)
+
+	// NewRequest allows for building raw and custom requests
+	NewRequest(method, urlStr string, body any, opts ...github.RequestOption) (*http.Request, error)
+	Do(ctx context.Context, req *http.Request, v any) (*github.Response, error)
 }
 
 // GraphQLAPI is the interface for interacting with the GitHub GraphQL API

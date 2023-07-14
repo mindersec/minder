@@ -25,12 +25,16 @@ import (
 	"encoding/json"
 	"fmt"
 	"os"
+	"time"
 
-	pb "github.com/stacklok/mediator/pkg/generated/protobuf/go/mediator/v1"
-	"github.com/stacklok/mediator/pkg/util"
-
+	"github.com/olekukonko/tablewriter"
 	"github.com/spf13/cobra"
 	"github.com/spf13/viper"
+	"gopkg.in/yaml.v3"
+
+	"github.com/stacklok/mediator/cmd/cli/app"
+	"github.com/stacklok/mediator/internal/util"
+	pb "github.com/stacklok/mediator/pkg/generated/protobuf/go/mediator/v1"
 )
 
 var policy_getCmd = &cobra.Command{
@@ -47,6 +51,12 @@ mediator control plane.`,
 		grpc_host := util.GetConfigValue("grpc_server.host", "grpc-host", cmd, "").(string)
 		grpc_port := util.GetConfigValue("grpc_server.port", "grpc-port", cmd, 0).(int)
 
+		format := viper.GetString("output")
+
+		if format != app.JSON && format != app.YAML && format != "" {
+			fmt.Fprintf(os.Stderr, "Error: invalid format: %s\n", format)
+		}
+
 		conn, err := util.GetGrpcConnection(grpc_host, grpc_port)
 		util.ExitNicelyOnError(err, "Error getting grpc connection")
 		defer conn.Close()
@@ -56,18 +66,61 @@ mediator control plane.`,
 		defer cancel()
 
 		id := viper.GetInt32("id")
-		policy, err := client.GetPolicyById(ctx, &pb.GetPolicyByIdRequest{Id: id})
-		util.ExitNicelyOnError(err, "Error getting policy")
+		status := util.GetConfigValue("status", "status", cmd, false).(bool)
+		if status {
+			resp, err := client.GetPolicyStatusById(ctx, &pb.GetPolicyStatusByIdRequest{PolicyId: id})
+			util.ExitNicelyOnError(err, "Error getting policy status")
 
-		json, err := json.MarshalIndent(policy.Policy, "", "  ")
-		util.ExitNicelyOnError(err, "Error marshalling policy")
-		fmt.Println(string(json))
+			// print results
+			if format == "" {
+				table := tablewriter.NewWriter(os.Stdout)
+				table.SetHeader([]string{"Policy type", "Repo ID", "Repo owner", "Repo Name", "Status", "Last updated"})
+
+				for _, v := range resp.PolicyRepoStatus {
+					row := []string{
+						v.PolicyType,
+						fmt.Sprintf("%d", v.RepoId),
+						v.RepoOwner,
+						v.RepoName,
+						v.PolicyStatus,
+						v.GetLastUpdated().AsTime().Format(time.RFC3339),
+					}
+					table.Append(row)
+				}
+				table.Render()
+			} else if format == app.JSON {
+				output, err := json.MarshalIndent(resp.PolicyRepoStatus, "", "  ")
+				util.ExitNicelyOnError(err, "Error marshalling json")
+				fmt.Println(string(output))
+			} else if format == app.YAML {
+				yamlData, err := yaml.Marshal(resp.PolicyRepoStatus)
+				util.ExitNicelyOnError(err, "Error marshalling yaml")
+				fmt.Println(string(yamlData))
+			}
+
+		} else {
+			policy, err := client.GetPolicyById(ctx, &pb.GetPolicyByIdRequest{Id: id})
+			util.ExitNicelyOnError(err, "Error getting policy")
+
+			if format == app.YAML {
+				yamlData, err := yaml.Marshal(policy.Policy)
+				util.ExitNicelyOnError(err, "Error marshalling yaml")
+				fmt.Println(string(yamlData))
+			} else {
+				json, err := json.MarshalIndent(policy.Policy, "", "  ")
+				util.ExitNicelyOnError(err, "Error marshalling policy")
+				fmt.Println(string(json))
+			}
+		}
 	},
 }
 
 func init() {
 	PolicyCmd.AddCommand(policy_getCmd)
 	policy_getCmd.Flags().Int32P("id", "i", 0, "ID for the policy to query")
+	policy_getCmd.Flags().BoolP("status", "s", false, "Only return the status of the policy for all the associated repos")
+	policy_getCmd.Flags().StringP("output", "o", "", "Output format (json or yaml)")
+
 	if err := policy_getCmd.MarkFlagRequired("id"); err != nil {
 		fmt.Fprintf(os.Stderr, "Error marking flag as required: %s\n", err)
 		os.Exit(1)

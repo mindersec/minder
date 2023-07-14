@@ -20,11 +20,12 @@ import (
 	"fmt"
 
 	"github.com/go-playground/validator/v10"
-	"github.com/stacklok/mediator/pkg/db"
-	pb "github.com/stacklok/mediator/pkg/generated/protobuf/go/mediator/v1"
 	"google.golang.org/grpc/codes"
 	"google.golang.org/grpc/status"
 	"google.golang.org/protobuf/types/known/timestamppb"
+
+	"github.com/stacklok/mediator/pkg/db"
+	pb "github.com/stacklok/mediator/pkg/generated/protobuf/go/mediator/v1"
 )
 
 type createOrganizationValidation struct {

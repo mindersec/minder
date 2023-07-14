@@ -27,8 +27,9 @@ import (
 	"testing"
 	"time"
 
-	"github.com/stacklok/mediator/pkg/util"
 	"github.com/stretchr/testify/require"
+
+	"github.com/stacklok/mediator/internal/util"
 )
 
 type RepositoryOption func(*CreateRepositoryParams)
@@ -124,7 +125,7 @@ func TestGetRepositoryByRepoName(t *testing.T) {
 	group := createRandomGroup(t, org.ID)
 	repo1 := createRandomRepository(t, group.ID)
 
-	repo2, err := testQueries.GetRepositoryByRepoName(context.Background(), GetRepositoryByRepoNameParams{Provider: "github", RepoName: repo1.RepoName})
+	repo2, err := testQueries.GetRepositoryByRepoName(context.Background(), GetRepositoryByRepoNameParams{Provider: "github", RepoOwner: repo1.RepoOwner, RepoName: repo1.RepoName})
 	require.NoError(t, err)
 	require.NotEmpty(t, repo2)
 

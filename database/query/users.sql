@@ -45,7 +45,7 @@ OFFSET $3;
 SELECT users.* FROM users
 JOIN user_groups ON users.id = user_groups.user_id
 WHERE user_groups.group_id = $1
-ORDER BY id
+ORDER BY users.id
 LIMIT $2
 OFFSET $3;
 

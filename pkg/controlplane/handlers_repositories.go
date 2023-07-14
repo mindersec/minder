@@ -17,15 +17,16 @@ package controlplane
 import (
 	"context"
 	"database/sql"
+	"strings"
+
+	"google.golang.org/grpc/codes"
+	"google.golang.org/grpc/status"
+	"google.golang.org/protobuf/types/known/timestamppb"
 
 	"github.com/stacklok/mediator/pkg/auth"
 	"github.com/stacklok/mediator/pkg/db"
 	pb "github.com/stacklok/mediator/pkg/generated/protobuf/go/mediator/v1"
 	github "github.com/stacklok/mediator/pkg/providers/github"
-
-	"google.golang.org/grpc/codes"
-	"google.golang.org/grpc/status"
-	"google.golang.org/protobuf/types/known/timestamppb"
 )
 
 // RegisterRepository adds repositories to the database and registers a webhook
@@ -174,7 +175,7 @@ func (s *Server) ListRepositories(ctx context.Context,
 	}
 
 	var resp pb.ListRepositoriesResponse
-	var results []*pb.ListRepositories
+	var results []*pb.RepositoryRecord
 
 	var filterCondition func(*db.Repository) bool
 
@@ -199,11 +200,19 @@ func (s *Server) ListRepositories(ctx context.Context,
 		repo := repo
 
 		if filterCondition(&repo) {
-			results = append(results, &pb.ListRepositories{
-				Owner:      repo.RepoOwner,
-				Name:       repo.RepoName,
-				RepoId:     repo.RepoID,
-				Registered: repo.WebhookUrl != "",
+			results = append(results, &pb.RepositoryRecord{
+				Id:        repo.ID,
+				Provider:  repo.Provider,
+				GroupId:   repo.GroupID,
+				Owner:     repo.RepoOwner,
+				Name:      repo.RepoName,
+				RepoId:    repo.RepoID,
+				IsPrivate: repo.IsPrivate,
+				IsFork:    repo.IsFork,
+				HookUrl:   repo.WebhookUrl,
+				DeployUrl: repo.DeployUrl,
+				CreatedAt: timestamppb.New(repo.CreatedAt),
+				UpdatedAt: timestamppb.New(repo.UpdatedAt),
 			})
 		}
 	}
@@ -213,52 +222,89 @@ func (s *Server) ListRepositories(ctx context.Context,
 	return &resp, nil
 }
 
-// GetRepository returns information about a repository.
+// GetRepositoryById returns a repository for a given repository id
+func (s *Server) GetRepositoryById(ctx context.Context,
+	in *pb.GetRepositoryByIdRequest) (*pb.GetRepositoryByIdResponse, error) {
+	// check if we get an id
+	if in.RepositoryId == 0 {
+		return nil, status.Errorf(codes.InvalidArgument, "repository id not specified")
+	}
+	// read the repository
+	repo, err := s.store.GetRepositoryByID(ctx, in.RepositoryId)
+	if err == sql.ErrNoRows {
+		return nil, status.Errorf(codes.NotFound, "repository not found")
+	} else if err != nil {
+		return nil, status.Errorf(codes.Internal, "cannot read repository: %v", err)
+	}
+
+	// check if user is authorized
+	if !IsRequestAuthorized(ctx, repo.GroupID) {
+		return nil, status.Errorf(codes.PermissionDenied, "user is not authorized to access this resource")
+	}
+
+	createdAt := timestamppb.New(repo.CreatedAt)
+	updatedat := timestamppb.New(repo.UpdatedAt)
+
+	return &pb.GetRepositoryByIdResponse{Repository: &pb.RepositoryRecord{
+		Id:        repo.ID,
+		Provider:  repo.Provider,
+		GroupId:   repo.GroupID,
+		Owner:     repo.RepoOwner,
+		Name:      repo.RepoName,
+		RepoId:    repo.RepoID,
+		IsPrivate: repo.IsPrivate,
+		IsFork:    repo.IsFork,
+		HookUrl:   repo.WebhookUrl,
+		DeployUrl: repo.DeployUrl,
+		CreatedAt: createdAt,
+		UpdatedAt: updatedat,
+	}}, nil
+}
+
+// GetRepositoryByName returns information about a repository.
 // This function will typically be called by the client to get a
 // repository which is already registered and present in the mediator database
 // The API is called with a group id
-func (s *Server) GetRepository(ctx context.Context,
-	in *pb.GetRepositoryRequest) (*pb.GetRepositoryResponse, error) {
+func (s *Server) GetRepositoryByName(ctx context.Context,
+	in *pb.GetRepositoryByNameRequest) (*pb.GetRepositoryByNameResponse, error) {
 	if in.Provider != github.Github {
 		return nil, status.Errorf(codes.InvalidArgument, "provider not supported: %v", in.Provider)
 	}
 
-	// if we do not have a group, check if we can infer it
-	if in.GroupId == 0 {
-		group, err := auth.GetDefaultGroup(ctx)
-		if err != nil {
-			return nil, status.Errorf(codes.InvalidArgument, "cannot infer group id")
-		}
-		in.GroupId = group
+	// split repo name in owner and name
+	fragments := strings.Split(in.Name, "/")
+	if len(fragments) != 2 {
+		return nil, status.Errorf(codes.InvalidArgument, "invalid repository name, needs to have the format: owner/name")
 	}
 
-	// check if user is authorized
-	if !IsRequestAuthorized(ctx, in.GroupId) {
-		return nil, status.Errorf(codes.PermissionDenied, "user is not authorized to access this resource")
-	}
-
-	repo, err := s.store.GetRepositoryByIDAndGroup(ctx, db.GetRepositoryByIDAndGroupParams{
-		RepoID:   in.RepositoryId,
-		Provider: in.Provider,
-		GroupID:  in.GroupId,
-	})
+	repo, err := s.store.GetRepositoryByRepoName(ctx,
+		db.GetRepositoryByRepoNameParams{Provider: in.Provider, RepoOwner: fragments[0], RepoName: fragments[1]})
 
 	if err == sql.ErrNoRows {
 		return nil, status.Errorf(codes.NotFound, "repository not found")
 	} else if err != nil {
 		return nil, err
 	}
+	// check if user is authorized
+	if !IsRequestAuthorized(ctx, repo.GroupID) {
+		return nil, status.Errorf(codes.PermissionDenied, "user is not authorized to access this resource")
+	}
 
 	createdAt := timestamppb.New(repo.CreatedAt)
 	updatedat := timestamppb.New(repo.UpdatedAt)
 
-	return &pb.GetRepositoryResponse{
-		Owner:      repo.RepoOwner,
-		Repository: repo.RepoName,
-		RepoId:     repo.RepoID,
-		Registered: repo.WebhookUrl != "",
-		CreatedAt:  createdAt,
-		UpdatedAt:  updatedat,
-		HookUrl:    repo.WebhookUrl,
-	}, nil
+	return &pb.GetRepositoryByNameResponse{Repository: &pb.RepositoryRecord{
+		Id:        repo.ID,
+		Provider:  repo.Provider,
+		GroupId:   repo.GroupID,
+		Owner:     repo.RepoOwner,
+		Name:      repo.RepoName,
+		RepoId:    repo.RepoID,
+		IsPrivate: repo.IsPrivate,
+		IsFork:    repo.IsFork,
+		HookUrl:   repo.WebhookUrl,
+		DeployUrl: repo.DeployUrl,
+		CreatedAt: createdAt,
+		UpdatedAt: updatedat,
+	}}, nil
 }

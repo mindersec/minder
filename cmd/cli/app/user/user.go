@@ -17,9 +17,9 @@
 package user
 
 import (
-	"github.com/stacklok/mediator/cmd/cli/app"
-
 	"github.com/spf13/cobra"
+
+	"github.com/stacklok/mediator/cmd/cli/app"
 )
 
 // UserCmd is the root command for the user subcommands.

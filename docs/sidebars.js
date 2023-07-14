@@ -50,6 +50,31 @@ const sidebars = {
       id: 'mediator_intro',
     },
     {
+      type: 'doc',
+      label: 'Getting Started (Run the Server)',
+      id: 'get_started',
+    },
+    {
+      type: 'doc',
+      label: 'Getting Started (Configure OAuth Provider)',
+      id: 'config_oauth',
+    },
+    {
+      type: 'doc',
+      label: 'Getting Started (Enroll User & Register Repositories)',
+      id: 'enroll_user',
+    },
+    {
+      type: 'doc',
+      label: 'Getting Started (Manage policies and violations)',
+      id: 'manage_policies',
+    },
+    {
+      type: 'doc',
+      label: 'Developer Guide',
+      id: 'get_hacking',
+    },
+    {
       type: 'link',
       label: 'API documentation',
       href: '/api',

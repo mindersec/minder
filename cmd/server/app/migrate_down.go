@@ -24,6 +24,7 @@ import (
 	_ "github.com/golang-migrate/migrate/v4/source/file"       // nolint
 	"github.com/spf13/cobra"
 	"github.com/spf13/viper"
+
 	"github.com/stacklok/mediator/internal/config"
 )
 

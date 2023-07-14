@@ -26,12 +26,11 @@ import (
 	"os"
 
 	"github.com/spf13/cobra"
-	"github.com/stacklok/mediator/pkg/util"
+	"github.com/spf13/viper"
 	"google.golang.org/grpc/status"
 
+	"github.com/stacklok/mediator/internal/util"
 	pb "github.com/stacklok/mediator/pkg/generated/protobuf/go/mediator/v1"
-
-	"github.com/spf13/viper"
 )
 
 // auth_loginCmd represents the login command

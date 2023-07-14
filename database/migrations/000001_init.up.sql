@@ -86,6 +86,18 @@ CREATE TABLE provider_access_tokens (
     updated_at TIMESTAMP NOT NULL DEFAULT NOW()
 );
 
+-- signing_keys table
+CREATE TABLE signing_keys (
+    id SERIAL PRIMARY KEY,
+    group_id INTEGER NOT NULL REFERENCES groups(id) ON DELETE CASCADE,
+    private_key TEXT NOT NULL,
+    public_key TEXT NOT NULL,
+    passphrase TEXT NOT NULL,
+    key_identifier TEXT NOT NULL,
+    created_at TIMESTAMP NOT NULL DEFAULT NOW(),
+    updated_at TIMESTAMP NOT NULL DEFAULT NOW()
+);
+
 -- repositories table
 create TABLE repositories (
     id SERIAL PRIMARY KEY,
@@ -133,9 +145,28 @@ create table policies (
     updated_at TIMESTAMP NOT NULL DEFAULT NOW()
 );
 
+create type policy_status_types as enum ('success', 'failure');
+create table policy_status (
+    id SERIAL PRIMARY KEY,
+    repository_id INTEGER NOT NULL REFERENCES repositories(id) ON DELETE CASCADE,
+    policy_id INTEGER NOT NULL REFERENCES policies(id) ON DELETE CASCADE,
+    policy_status policy_status_types NOT NULL,
+    last_updated TIMESTAMP NOT NULL DEFAULT NOW()
+);
+
+create table policy_violations (
+    id SERIAL PRIMARY KEY,
+    repository_id INTEGER NOT NULL REFERENCES repositories(id) ON DELETE CASCADE,
+    policy_id INTEGER NOT NULL REFERENCES policies(id) ON DELETE CASCADE,
+    metadata JSONB NOT NULL,
+    violation JSONB NOT NULL,
+    created_at TIMESTAMP NOT NULL DEFAULT NOW()
+);
+
 -- Unique constraint
 ALTER TABLE provider_access_tokens ADD CONSTRAINT unique_group_id UNIQUE (group_id);
 ALTER TABLE repositories ADD CONSTRAINT unique_repo_id UNIQUE (repo_id);
+ALTER TABLE signing_keys ADD CONSTRAINT unique_key_identifier UNIQUE (key_identifier);
 
 -- Indexes
 CREATE UNIQUE INDEX organizations_name_lower_idx ON organizations (LOWER(name));
@@ -150,6 +181,7 @@ CREATE UNIQUE INDEX users_organization_id_username_lower_idx ON users (organizat
 CREATE UNIQUE INDEX repositories_repo_id_idx ON repositories(repo_id);
 CREATE UNIQUE INDEX policies_group_id_policy_type_idx ON policies(provider, group_id, policy_type);
 CREATE UNIQUE INDEX policy_types_idx ON policy_types(provider, policy_type);
+CREATE UNIQUE INDEX policy_status_idx ON policy_status(repository_id, policy_id);
 
 -- Create default root organization
 
@@ -172,3 +204,5 @@ INSERT INTO user_roles (user_id, role_id) VALUES (1, 1);
 -- policy types
 INSERT INTO policy_types (provider, policy_type, description, version) VALUES
 ('github', 'branch_protection', 'Policy type to enforce branch protection rules on a repo', '1.0.0');
+INSERT INTO policy_types (provider, policy_type, description, version) VALUES
+('github', 'secret_scanning', 'Policy type to enforce secret scanning a repo', '1.0.0');

@@ -22,15 +22,15 @@ import (
 	"time"
 
 	gauth "github.com/grpc-ecosystem/go-grpc-middleware/v2/interceptors/auth"
-	github "github.com/stacklok/mediator/pkg/providers/github"
-
 	"github.com/rs/zerolog/log"
 	"github.com/spf13/viper"
-	"github.com/stacklok/mediator/pkg/auth"
-	"github.com/stacklok/mediator/pkg/db"
 	"google.golang.org/grpc"
 	"google.golang.org/grpc/codes"
 	"google.golang.org/grpc/status"
+
+	"github.com/stacklok/mediator/pkg/auth"
+	"github.com/stacklok/mediator/pkg/db"
+	github "github.com/stacklok/mediator/pkg/providers/github"
 )
 
 func parseToken(token string, store db.Store) (auth.UserClaims, error) {
@@ -228,7 +228,13 @@ var resourceAuthorizations = []map[string]map[string]interface{}{
 		},
 	},
 	{
-		"/mediator.v1.RepositoryService/GetRepository": {
+		"/mediator.v1.RepositoryService/GetRepositoryById": {
+			"claimField": "GroupId",
+			"isAdmin":    false,
+		},
+	},
+	{
+		"/mediator.v1.RepositoryService/GetRepositoryByName": {
 			"claimField": "GroupId",
 			"isAdmin":    false,
 		},
@@ -254,11 +260,53 @@ var resourceAuthorizations = []map[string]map[string]interface{}{
 	{
 		"/mediator.v1.PolicyService/GetPolicies": {
 			"claimField": "GroupId",
-			"isAdmin":    true,
+			"isAdmin":    false,
 		},
 	},
 	{
 		"/mediator.v1.PolicyService/GetPolicy": {
+			"claimField": "GroupId",
+			"isAdmin":    false,
+		},
+	},
+	{
+		"/mediator.v1.PolicyService/GetPolicyStatusById": {
+			"claimField": "GroupId",
+			"isAdmin":    false,
+		},
+	},
+	{
+		"/mediator.v1.PolicyService/GetPolicyStatusByGroup": {
+			"claimField": "GroupId",
+			"isAdmin":    false,
+		},
+	},
+	{
+		"/mediator.v1.PolicyService/GetPolicyStatusByRepository": {
+			"claimField": "GroupId",
+			"isAdmin":    false,
+		},
+	},
+	{
+		"/mediator.v1.PolicyService/GetPolicyViolationsById": {
+			"claimField": "GroupId",
+			"isAdmin":    false,
+		},
+	},
+	{
+		"/mediator.v1.PolicyService/GetPolicyViolationsByGroup": {
+			"claimField": "GroupId",
+			"isAdmin":    false,
+		},
+	},
+	{
+		"/mediator.v1.PolicyService/GetPolicyViolationsByRepository": {
+			"claimField": "GroupId",
+			"isAdmin":    false,
+		},
+	},
+	{
+		"/mediator.v1.KeyService/CreateKeyPair": {
 			"claimField": "GroupId",
 			"isAdmin":    true,
 		},

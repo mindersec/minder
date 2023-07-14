@@ -16,6 +16,7 @@
 package crypto
 
 import (
+	// "crypto/ecdsa"
 	"crypto/x509"
 	"encoding/pem"
 	"testing"
@@ -97,5 +98,49 @@ func TestIsNonceValid(t *testing.T) {
 
 	if valid {
 		t.Errorf("Expected nonce to be invalid, got valid")
+	}
+}
+
+func TestGenerateKeyPair(t *testing.T) {
+	passphrase := "passphrase"
+
+	privKey, publicKey, err := GenerateKeyPair(passphrase)
+	if err != nil {
+		t.Errorf("Error in generateKeyPair: %v", err)
+	}
+
+	if privKey == nil {
+		t.Errorf("Expected private key to be generated, got nil")
+	}
+
+	if publicKey == nil {
+		t.Errorf("Expected public key to be generated, got nil")
+	}
+
+	block, _ := pem.Decode(publicKey)
+	if block == nil || block.Type != "PUBLIC KEY" {
+		t.Errorf("Failed to decode PEM block containing public key")
+		return
+	}
+
+	ecdsaPubKey, err := x509.ParsePKIXPublicKey(block.Bytes)
+	if err != nil {
+		t.Errorf("Failed to parse DER encoded public key: %v", err)
+		return
+	}
+
+	ecdsaPubKeyBytes, err := x509.MarshalPKIXPublicKey(ecdsaPubKey)
+	if err != nil {
+		t.Errorf("Failed to marshal ECDSA public key: %v", err)
+		return
+	}
+
+	ecdsaPubKeyPem := pem.EncodeToMemory(&pem.Block{
+		Type:  "PUBLIC KEY",
+		Bytes: ecdsaPubKeyBytes,
+	})
+
+	if string(publicKey) != string(ecdsaPubKeyPem) {
+		t.Errorf("Expected public key to match, got %v", string(publicKey))
 	}
 }

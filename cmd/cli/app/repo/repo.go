@@ -23,9 +23,9 @@
 package repo
 
 import (
-	"github.com/stacklok/mediator/cmd/cli/app"
-
 	"github.com/spf13/cobra"
+
+	"github.com/stacklok/mediator/cmd/cli/app"
 )
 
 // RepoCmd is the root command for the repo subcommands

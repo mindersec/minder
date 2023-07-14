@@ -19,10 +19,11 @@ import (
 	"testing"
 
 	"github.com/golang/mock/gomock"
+	"github.com/stretchr/testify/assert"
+
 	mockdb "github.com/stacklok/mediator/database/mock"
 	"github.com/stacklok/mediator/pkg/auth"
 	pb "github.com/stacklok/mediator/pkg/generated/protobuf/go/mediator/v1"
-	"github.com/stretchr/testify/assert"
 )
 
 func TestIsSuperadminAuthorized(t *testing.T) {

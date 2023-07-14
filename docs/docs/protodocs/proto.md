@@ -9,6 +9,8 @@
     - [CheckHealthResponse](#mediator-v1-CheckHealthResponse)
     - [CreateGroupRequest](#mediator-v1-CreateGroupRequest)
     - [CreateGroupResponse](#mediator-v1-CreateGroupResponse)
+    - [CreateKeyPairRequest](#mediator-v1-CreateKeyPairRequest)
+    - [CreateKeyPairResponse](#mediator-v1-CreateKeyPairResponse)
     - [CreateOrganizationRequest](#mediator-v1-CreateOrganizationRequest)
     - [CreateOrganizationResponse](#mediator-v1-CreateOrganizationResponse)
     - [CreatePolicyRequest](#mediator-v1-CreatePolicyRequest)
@@ -53,14 +55,30 @@
     - [GetPoliciesResponse](#mediator-v1-GetPoliciesResponse)
     - [GetPolicyByIdRequest](#mediator-v1-GetPolicyByIdRequest)
     - [GetPolicyByIdResponse](#mediator-v1-GetPolicyByIdResponse)
+    - [GetPolicyStatusByGroupRequest](#mediator-v1-GetPolicyStatusByGroupRequest)
+    - [GetPolicyStatusByGroupResponse](#mediator-v1-GetPolicyStatusByGroupResponse)
+    - [GetPolicyStatusByIdRequest](#mediator-v1-GetPolicyStatusByIdRequest)
+    - [GetPolicyStatusByIdResponse](#mediator-v1-GetPolicyStatusByIdResponse)
+    - [GetPolicyStatusByRepositoryRequest](#mediator-v1-GetPolicyStatusByRepositoryRequest)
+    - [GetPolicyStatusByRepositoryResponse](#mediator-v1-GetPolicyStatusByRepositoryResponse)
     - [GetPolicyTypeByIdRequest](#mediator-v1-GetPolicyTypeByIdRequest)
     - [GetPolicyTypeByIdResponse](#mediator-v1-GetPolicyTypeByIdResponse)
     - [GetPolicyTypeRequest](#mediator-v1-GetPolicyTypeRequest)
     - [GetPolicyTypeResponse](#mediator-v1-GetPolicyTypeResponse)
     - [GetPolicyTypesRequest](#mediator-v1-GetPolicyTypesRequest)
     - [GetPolicyTypesResponse](#mediator-v1-GetPolicyTypesResponse)
-    - [GetRepositoryRequest](#mediator-v1-GetRepositoryRequest)
-    - [GetRepositoryResponse](#mediator-v1-GetRepositoryResponse)
+    - [GetPolicyViolationsByGroupRequest](#mediator-v1-GetPolicyViolationsByGroupRequest)
+    - [GetPolicyViolationsByGroupResponse](#mediator-v1-GetPolicyViolationsByGroupResponse)
+    - [GetPolicyViolationsByIdRequest](#mediator-v1-GetPolicyViolationsByIdRequest)
+    - [GetPolicyViolationsByIdResponse](#mediator-v1-GetPolicyViolationsByIdResponse)
+    - [GetPolicyViolationsByRepositoryRequest](#mediator-v1-GetPolicyViolationsByRepositoryRequest)
+    - [GetPolicyViolationsByRepositoryResponse](#mediator-v1-GetPolicyViolationsByRepositoryResponse)
+    - [GetPublicKeyRequest](#mediator-v1-GetPublicKeyRequest)
+    - [GetPublicKeyResponse](#mediator-v1-GetPublicKeyResponse)
+    - [GetRepositoryByIdRequest](#mediator-v1-GetRepositoryByIdRequest)
+    - [GetRepositoryByIdResponse](#mediator-v1-GetRepositoryByIdResponse)
+    - [GetRepositoryByNameRequest](#mediator-v1-GetRepositoryByNameRequest)
+    - [GetRepositoryByNameResponse](#mediator-v1-GetRepositoryByNameResponse)
     - [GetRoleByIdRequest](#mediator-v1-GetRoleByIdRequest)
     - [GetRoleByIdResponse](#mediator-v1-GetRoleByIdResponse)
     - [GetRoleByNameRequest](#mediator-v1-GetRoleByNameRequest)
@@ -92,21 +110,24 @@
     - [GetVulnerabilityByIdRequest](#mediator-v1-GetVulnerabilityByIdRequest)
     - [GetVulnerabilityByIdResponse](#mediator-v1-GetVulnerabilityByIdResponse)
     - [GroupRecord](#mediator-v1-GroupRecord)
-    - [ListRepositories](#mediator-v1-ListRepositories)
     - [ListRepositoriesRequest](#mediator-v1-ListRepositoriesRequest)
     - [ListRepositoriesResponse](#mediator-v1-ListRepositoriesResponse)
     - [LogInRequest](#mediator-v1-LogInRequest)
     - [LogInResponse](#mediator-v1-LogInResponse)
     - [LogOutRequest](#mediator-v1-LogOutRequest)
     - [LogOutResponse](#mediator-v1-LogOutResponse)
+    - [OrganizationContext](#mediator-v1-OrganizationContext)
     - [OrganizationRecord](#mediator-v1-OrganizationRecord)
     - [PolicyRecord](#mediator-v1-PolicyRecord)
+    - [PolicyRepoStatus](#mediator-v1-PolicyRepoStatus)
     - [PolicyTypeRecord](#mediator-v1-PolicyTypeRecord)
+    - [PolicyViolation](#mediator-v1-PolicyViolation)
     - [RefreshTokenRequest](#mediator-v1-RefreshTokenRequest)
     - [RefreshTokenResponse](#mediator-v1-RefreshTokenResponse)
     - [RegisterRepositoryRequest](#mediator-v1-RegisterRepositoryRequest)
     - [RegisterRepositoryResponse](#mediator-v1-RegisterRepositoryResponse)
     - [Repositories](#mediator-v1-Repositories)
+    - [RepositoryRecord](#mediator-v1-RepositoryRecord)
     - [RepositoryResult](#mediator-v1-RepositoryResult)
     - [RevokeOauthGroupTokenRequest](#mediator-v1-RevokeOauthGroupTokenRequest)
     - [RevokeOauthGroupTokenResponse](#mediator-v1-RevokeOauthGroupTokenResponse)
@@ -117,6 +138,13 @@
     - [RevokeUserTokenRequest](#mediator-v1-RevokeUserTokenRequest)
     - [RevokeUserTokenResponse](#mediator-v1-RevokeUserTokenResponse)
     - [RoleRecord](#mediator-v1-RoleRecord)
+    - [RuleType](#mediator-v1-RuleType)
+    - [RuleType.Definition](#mediator-v1-RuleType-Definition)
+    - [RuleType.Definition.DataEval](#mediator-v1-RuleType-Definition-DataEval)
+    - [RuleType.Definition.DataEval.DataEntry](#mediator-v1-RuleType-Definition-DataEval-DataEntry)
+    - [RuleType.Definition.DataEval.DataEvalDef](#mediator-v1-RuleType-Definition-DataEval-DataEvalDef)
+    - [RuleType.Definition.DataEval.RestType](#mediator-v1-RuleType-Definition-DataEval-RestType)
+    - [RuleType.Definition.RuleSchemaEntry](#mediator-v1-RuleType-Definition-RuleSchemaEntry)
     - [StoreProviderTokenRequest](#mediator-v1-StoreProviderTokenRequest)
     - [StoreProviderTokenResponse](#mediator-v1-StoreProviderTokenResponse)
     - [UpdatePasswordRequest](#mediator-v1-UpdatePasswordRequest)
@@ -135,6 +163,7 @@
     - [BranchProtectionService](#mediator-v1-BranchProtectionService)
     - [GroupService](#mediator-v1-GroupService)
     - [HealthService](#mediator-v1-HealthService)
+    - [KeyService](#mediator-v1-KeyService)
     - [OAuthService](#mediator-v1-OAuthService)
     - [OrganizationService](#mediator-v1-OrganizationService)
     - [PolicyService](#mediator-v1-PolicyService)
@@ -229,6 +258,38 @@ The CreateGroupRequest message represents a request to create a group
 | is_protected | [bool](#bool) |  |  |
 | created_at | [google.protobuf.Timestamp](#google-protobuf-Timestamp) |  |  |
 | updated_at | [google.protobuf.Timestamp](#google-protobuf-Timestamp) |  |  |
+
+
+
+
+
+
+<a name="mediator-v1-CreateKeyPairRequest"></a>
+
+### CreateKeyPairRequest
+
+
+
+| Field | Type | Label | Description |
+| ----- | ---- | ----- | ----------- |
+| passphrase | [string](#string) |  |  |
+| group_id | [int32](#int32) |  |  |
+
+
+
+
+
+
+<a name="mediator-v1-CreateKeyPairResponse"></a>
+
+### CreateKeyPairResponse
+
+
+
+| Field | Type | Label | Description |
+| ----- | ---- | ----- | ----------- |
+| key_identifier | [string](#string) |  |  |
+| public_key | [string](#string) |  |  |
 
 
 
@@ -937,12 +998,103 @@ get policy by id
 <a name="mediator-v1-GetPolicyByIdResponse"></a>
 
 ### GetPolicyByIdResponse
-in the future it can include status and violation details for the policy
+
 
 
 | Field | Type | Label | Description |
 | ----- | ---- | ----- | ----------- |
 | policy | [PolicyRecord](#mediator-v1-PolicyRecord) | optional |  |
+
+
+
+
+
+
+<a name="mediator-v1-GetPolicyStatusByGroupRequest"></a>
+
+### GetPolicyStatusByGroupRequest
+
+
+
+| Field | Type | Label | Description |
+| ----- | ---- | ----- | ----------- |
+| provider | [string](#string) |  |  |
+| group_id | [int32](#int32) |  |  |
+
+
+
+
+
+
+<a name="mediator-v1-GetPolicyStatusByGroupResponse"></a>
+
+### GetPolicyStatusByGroupResponse
+
+
+
+| Field | Type | Label | Description |
+| ----- | ---- | ----- | ----------- |
+| policy_repo_status | [PolicyRepoStatus](#mediator-v1-PolicyRepoStatus) | repeated |  |
+
+
+
+
+
+
+<a name="mediator-v1-GetPolicyStatusByIdRequest"></a>
+
+### GetPolicyStatusByIdRequest
+
+
+
+| Field | Type | Label | Description |
+| ----- | ---- | ----- | ----------- |
+| policy_id | [int32](#int32) |  |  |
+
+
+
+
+
+
+<a name="mediator-v1-GetPolicyStatusByIdResponse"></a>
+
+### GetPolicyStatusByIdResponse
+
+
+
+| Field | Type | Label | Description |
+| ----- | ---- | ----- | ----------- |
+| policy_repo_status | [PolicyRepoStatus](#mediator-v1-PolicyRepoStatus) | repeated |  |
+
+
+
+
+
+
+<a name="mediator-v1-GetPolicyStatusByRepositoryRequest"></a>
+
+### GetPolicyStatusByRepositoryRequest
+
+
+
+| Field | Type | Label | Description |
+| ----- | ---- | ----- | ----------- |
+| repository_id | [int32](#int32) |  |  |
+
+
+
+
+
+
+<a name="mediator-v1-GetPolicyStatusByRepositoryResponse"></a>
+
+### GetPolicyStatusByRepositoryResponse
+
+
+
+| Field | Type | Label | Description |
+| ----- | ---- | ----- | ----------- |
+| policy_repo_status | [PolicyRepoStatus](#mediator-v1-PolicyRepoStatus) | repeated |  |
 
 
 
@@ -1040,38 +1192,188 @@ get policy types
 
 
 
-<a name="mediator-v1-GetRepositoryRequest"></a>
+<a name="mediator-v1-GetPolicyViolationsByGroupRequest"></a>
 
-### GetRepositoryRequest
+### GetPolicyViolationsByGroupRequest
+
+
+
+| Field | Type | Label | Description |
+| ----- | ---- | ----- | ----------- |
+| provider | [string](#string) |  |  |
+| group_id | [int32](#int32) |  |  |
+| limit | [int32](#int32) | optional |  |
+| offset | [int32](#int32) | optional |  |
+
+
+
+
+
+
+<a name="mediator-v1-GetPolicyViolationsByGroupResponse"></a>
+
+### GetPolicyViolationsByGroupResponse
+
+
+
+| Field | Type | Label | Description |
+| ----- | ---- | ----- | ----------- |
+| policy_violation | [PolicyViolation](#mediator-v1-PolicyViolation) | repeated |  |
+
+
+
+
+
+
+<a name="mediator-v1-GetPolicyViolationsByIdRequest"></a>
+
+### GetPolicyViolationsByIdRequest
+
+
+
+| Field | Type | Label | Description |
+| ----- | ---- | ----- | ----------- |
+| id | [int32](#int32) |  |  |
+| limit | [int32](#int32) | optional |  |
+| offset | [int32](#int32) | optional |  |
+
+
+
+
+
+
+<a name="mediator-v1-GetPolicyViolationsByIdResponse"></a>
+
+### GetPolicyViolationsByIdResponse
+
+
+
+| Field | Type | Label | Description |
+| ----- | ---- | ----- | ----------- |
+| policy_violation | [PolicyViolation](#mediator-v1-PolicyViolation) | repeated |  |
+
+
+
+
+
+
+<a name="mediator-v1-GetPolicyViolationsByRepositoryRequest"></a>
+
+### GetPolicyViolationsByRepositoryRequest
 
 
 
 | Field | Type | Label | Description |
 | ----- | ---- | ----- | ----------- |
 | repository_id | [int32](#int32) |  |  |
-| provider | [string](#string) |  |  |
-| group_id | [int32](#int32) |  |  |
+| limit | [int32](#int32) | optional |  |
+| offset | [int32](#int32) | optional |  |
 
 
 
 
 
 
-<a name="mediator-v1-GetRepositoryResponse"></a>
+<a name="mediator-v1-GetPolicyViolationsByRepositoryResponse"></a>
 
-### GetRepositoryResponse
+### GetPolicyViolationsByRepositoryResponse
 
 
 
 | Field | Type | Label | Description |
 | ----- | ---- | ----- | ----------- |
-| owner | [string](#string) |  |  |
-| repository | [string](#string) |  |  |
-| repo_id | [int32](#int32) |  |  |
-| hook_url | [string](#string) |  |  |
-| created_at | [google.protobuf.Timestamp](#google-protobuf-Timestamp) |  |  |
-| updated_at | [google.protobuf.Timestamp](#google-protobuf-Timestamp) |  |  |
-| registered | [bool](#bool) |  |  |
+| policy_violation | [PolicyViolation](#mediator-v1-PolicyViolation) | repeated |  |
+
+
+
+
+
+
+<a name="mediator-v1-GetPublicKeyRequest"></a>
+
+### GetPublicKeyRequest
+
+
+
+| Field | Type | Label | Description |
+| ----- | ---- | ----- | ----------- |
+| key_identifier | [string](#string) |  |  |
+
+
+
+
+
+
+<a name="mediator-v1-GetPublicKeyResponse"></a>
+
+### GetPublicKeyResponse
+
+
+
+| Field | Type | Label | Description |
+| ----- | ---- | ----- | ----------- |
+| public_key | [string](#string) |  |  |
+
+
+
+
+
+
+<a name="mediator-v1-GetRepositoryByIdRequest"></a>
+
+### GetRepositoryByIdRequest
+
+
+
+| Field | Type | Label | Description |
+| ----- | ---- | ----- | ----------- |
+| repository_id | [int32](#int32) |  |  |
+
+
+
+
+
+
+<a name="mediator-v1-GetRepositoryByIdResponse"></a>
+
+### GetRepositoryByIdResponse
+
+
+
+| Field | Type | Label | Description |
+| ----- | ---- | ----- | ----------- |
+| repository | [RepositoryRecord](#mediator-v1-RepositoryRecord) |  |  |
+
+
+
+
+
+
+<a name="mediator-v1-GetRepositoryByNameRequest"></a>
+
+### GetRepositoryByNameRequest
+
+
+
+| Field | Type | Label | Description |
+| ----- | ---- | ----- | ----------- |
+| provider | [string](#string) |  |  |
+| name | [string](#string) |  |  |
+
+
+
+
+
+
+<a name="mediator-v1-GetRepositoryByNameResponse"></a>
+
+### GetRepositoryByNameResponse
+
+
+
+| Field | Type | Label | Description |
+| ----- | ---- | ----- | ----------- |
+| repository | [RepositoryRecord](#mediator-v1-RepositoryRecord) |  |  |
 
 
 
@@ -1565,27 +1867,6 @@ BUF does not allow grouping (which is a shame)
 
 
 
-<a name="mediator-v1-ListRepositories"></a>
-
-### ListRepositories
-ListRepositories is used for displaying repository list data that
-is relevant to users. It is not used for registering repositories.
-Due to protobuf limitations, we cannot use the same Repositories for
-listing repositories and registering repositories.
-
-
-| Field | Type | Label | Description |
-| ----- | ---- | ----- | ----------- |
-| owner | [string](#string) |  |  |
-| name | [string](#string) |  |  |
-| repo_id | [int32](#int32) |  |  |
-| registered | [bool](#bool) |  |  |
-
-
-
-
-
-
 <a name="mediator-v1-ListRepositoriesRequest"></a>
 
 ### ListRepositoriesRequest
@@ -1613,7 +1894,7 @@ listing repositories and registering repositories.
 
 | Field | Type | Label | Description |
 | ----- | ---- | ----- | ----------- |
-| results | [ListRepositories](#mediator-v1-ListRepositories) | repeated |  |
+| results | [RepositoryRecord](#mediator-v1-RepositoryRecord) | repeated |  |
 
 
 
@@ -1674,6 +1955,22 @@ listing repositories and registering repositories.
 
 
 
+<a name="mediator-v1-OrganizationContext"></a>
+
+### OrganizationContext
+
+
+
+| Field | Type | Label | Description |
+| ----- | ---- | ----- | ----------- |
+| provider | [string](#string) |  |  |
+| organization | [string](#string) |  |  |
+
+
+
+
+
+
 <a name="mediator-v1-OrganizationRecord"></a>
 
 ### OrganizationRecord
@@ -1714,6 +2011,26 @@ policy record to be returned
 
 
 
+<a name="mediator-v1-PolicyRepoStatus"></a>
+
+### PolicyRepoStatus
+get policy violation status
+
+
+| Field | Type | Label | Description |
+| ----- | ---- | ----- | ----------- |
+| policy_type | [string](#string) |  |  |
+| repo_id | [int32](#int32) |  |  |
+| repo_owner | [string](#string) |  |  |
+| repo_name | [string](#string) |  |  |
+| policy_status | [string](#string) |  |  |
+| last_updated | [google.protobuf.Timestamp](#google-protobuf-Timestamp) |  |  |
+
+
+
+
+
+
 <a name="mediator-v1-PolicyTypeRecord"></a>
 
 ### PolicyTypeRecord
@@ -1731,6 +2048,27 @@ policy type record to be returned
 | default_schema | [string](#string) |  |  |
 | created_at | [google.protobuf.Timestamp](#google-protobuf-Timestamp) |  |  |
 | updated_at | [google.protobuf.Timestamp](#google-protobuf-Timestamp) |  |  |
+
+
+
+
+
+
+<a name="mediator-v1-PolicyViolation"></a>
+
+### PolicyViolation
+get policy violation details
+
+
+| Field | Type | Label | Description |
+| ----- | ---- | ----- | ----------- |
+| policy_type | [string](#string) |  |  |
+| repo_id | [int32](#int32) |  |  |
+| repo_owner | [string](#string) |  |  |
+| repo_name | [string](#string) |  |  |
+| metadata | [string](#string) |  |  |
+| violation | [string](#string) |  |  |
+| created_at | [google.protobuf.Timestamp](#google-protobuf-Timestamp) |  |  |
 
 
 
@@ -1807,6 +2145,32 @@ policy type record to be returned
 | owner | [string](#string) |  |  |
 | name | [string](#string) |  |  |
 | repo_id | [int32](#int32) |  |  |
+
+
+
+
+
+
+<a name="mediator-v1-RepositoryRecord"></a>
+
+### RepositoryRecord
+RepositoryRecord is used for registering repositories.
+
+
+| Field | Type | Label | Description |
+| ----- | ---- | ----- | ----------- |
+| id | [int32](#int32) |  |  |
+| provider | [string](#string) |  |  |
+| group_id | [int32](#int32) |  |  |
+| owner | [string](#string) |  |  |
+| name | [string](#string) |  |  |
+| repo_id | [int32](#int32) |  |  |
+| is_private | [bool](#bool) |  |  |
+| is_fork | [bool](#bool) |  |  |
+| hook_url | [string](#string) |  |  |
+| deploy_url | [string](#string) |  |  |
+| created_at | [google.protobuf.Timestamp](#google-protobuf-Timestamp) |  |  |
+| updated_at | [google.protobuf.Timestamp](#google-protobuf-Timestamp) |  |  |
 
 
 
@@ -1958,6 +2322,126 @@ policy type record to be returned
 | is_protected | [bool](#bool) |  |  |
 | created_at | [google.protobuf.Timestamp](#google-protobuf-Timestamp) |  |  |
 | updated_at | [google.protobuf.Timestamp](#google-protobuf-Timestamp) |  |  |
+
+
+
+
+
+
+<a name="mediator-v1-RuleType"></a>
+
+### RuleType
+RuleType defines rules that may or may not be user defined.
+The version is assumed from the folder&#39;s version.
+
+
+| Field | Type | Label | Description |
+| ----- | ---- | ----- | ----------- |
+| name | [string](#string) |  |  |
+| context | [OrganizationContext](#mediator-v1-OrganizationContext) |  |  |
+| def | [RuleType.Definition](#mediator-v1-RuleType-Definition) |  |  |
+
+
+
+
+
+
+<a name="mediator-v1-RuleType-Definition"></a>
+
+### RuleType.Definition
+
+
+
+| Field | Type | Label | Description |
+| ----- | ---- | ----- | ----------- |
+| in_entity | [string](#string) |  |  |
+| rule_schema | [RuleType.Definition.RuleSchemaEntry](#mediator-v1-RuleType-Definition-RuleSchemaEntry) | repeated |  |
+| data_eval | [RuleType.Definition.DataEval](#mediator-v1-RuleType-Definition-DataEval) |  |  |
+
+
+
+
+
+
+<a name="mediator-v1-RuleType-Definition-DataEval"></a>
+
+### RuleType.Definition.DataEval
+
+
+
+| Field | Type | Label | Description |
+| ----- | ---- | ----- | ----------- |
+| type | [string](#string) |  | We currently only support REST |
+| rest | [RuleType.Definition.DataEval.RestType](#mediator-v1-RuleType-Definition-DataEval-RestType) | optional |  |
+| key_type | [string](#string) |  |  |
+| data | [RuleType.Definition.DataEval.DataEntry](#mediator-v1-RuleType-Definition-DataEval-DataEntry) | repeated |  |
+
+
+
+
+
+
+<a name="mediator-v1-RuleType-Definition-DataEval-DataEntry"></a>
+
+### RuleType.Definition.DataEval.DataEntry
+
+
+
+| Field | Type | Label | Description |
+| ----- | ---- | ----- | ----------- |
+| key | [string](#string) |  |  |
+| value | [RuleType.Definition.DataEval.DataEvalDef](#mediator-v1-RuleType-Definition-DataEval-DataEvalDef) |  |  |
+
+
+
+
+
+
+<a name="mediator-v1-RuleType-Definition-DataEval-DataEvalDef"></a>
+
+### RuleType.Definition.DataEval.DataEvalDef
+
+
+
+| Field | Type | Label | Description |
+| ----- | ---- | ----- | ----------- |
+| type | [string](#string) |  |  |
+| def | [string](#string) |  |  |
+
+
+
+
+
+
+<a name="mediator-v1-RuleType-Definition-DataEval-RestType"></a>
+
+### RuleType.Definition.DataEval.RestType
+
+
+
+| Field | Type | Label | Description |
+| ----- | ---- | ----- | ----------- |
+| endpoint | [string](#string) |  |  |
+| method | [string](#string) |  |  |
+| headers | [string](#string) | repeated |  |
+| body | [string](#string) | optional |  |
+| parse | [string](#string) |  |  |
+
+
+
+
+
+
+<a name="mediator-v1-RuleType-Definition-RuleSchemaEntry"></a>
+
+### RuleType.Definition.RuleSchemaEntry
+
+
+
+| Field | Type | Label | Description |
+| ----- | ---- | ----- | ----------- |
+| key | [string](#string) |  |  |
+| value | [google.protobuf.Struct](#google-protobuf-Struct) |  |  |
 
 
 
@@ -2196,6 +2680,17 @@ replies with OK
 | CheckHealth | [CheckHealthRequest](#mediator-v1-CheckHealthRequest) | [CheckHealthResponse](#mediator-v1-CheckHealthResponse) |  |
 
 
+<a name="mediator-v1-KeyService"></a>
+
+### KeyService
+
+
+| Method Name | Request Type | Response Type | Description |
+| ----------- | ------------ | ------------- | ------------|
+| GetPublicKey | [GetPublicKeyRequest](#mediator-v1-GetPublicKeyRequest) | [GetPublicKeyResponse](#mediator-v1-GetPublicKeyResponse) |  |
+| CreateKeyPair | [CreateKeyPairRequest](#mediator-v1-CreateKeyPairRequest) | [CreateKeyPairResponse](#mediator-v1-CreateKeyPairResponse) |  |
+
+
 <a name="mediator-v1-OAuthService"></a>
 
 ### OAuthService
@@ -2239,6 +2734,12 @@ manage Organizations CRUD
 | DeletePolicy | [DeletePolicyRequest](#mediator-v1-DeletePolicyRequest) | [DeletePolicyResponse](#mediator-v1-DeletePolicyResponse) |  |
 | GetPolicies | [GetPoliciesRequest](#mediator-v1-GetPoliciesRequest) | [GetPoliciesResponse](#mediator-v1-GetPoliciesResponse) |  |
 | GetPolicyById | [GetPolicyByIdRequest](#mediator-v1-GetPolicyByIdRequest) | [GetPolicyByIdResponse](#mediator-v1-GetPolicyByIdResponse) |  |
+| GetPolicyStatusById | [GetPolicyStatusByIdRequest](#mediator-v1-GetPolicyStatusByIdRequest) | [GetPolicyStatusByIdResponse](#mediator-v1-GetPolicyStatusByIdResponse) |  |
+| GetPolicyStatusByGroup | [GetPolicyStatusByGroupRequest](#mediator-v1-GetPolicyStatusByGroupRequest) | [GetPolicyStatusByGroupResponse](#mediator-v1-GetPolicyStatusByGroupResponse) |  |
+| GetPolicyStatusByRepository | [GetPolicyStatusByRepositoryRequest](#mediator-v1-GetPolicyStatusByRepositoryRequest) | [GetPolicyStatusByRepositoryResponse](#mediator-v1-GetPolicyStatusByRepositoryResponse) |  |
+| GetPolicyViolationsById | [GetPolicyViolationsByIdRequest](#mediator-v1-GetPolicyViolationsByIdRequest) | [GetPolicyViolationsByIdResponse](#mediator-v1-GetPolicyViolationsByIdResponse) |  |
+| GetPolicyViolationsByGroup | [GetPolicyViolationsByGroupRequest](#mediator-v1-GetPolicyViolationsByGroupRequest) | [GetPolicyViolationsByGroupResponse](#mediator-v1-GetPolicyViolationsByGroupResponse) |  |
+| GetPolicyViolationsByRepository | [GetPolicyViolationsByRepositoryRequest](#mediator-v1-GetPolicyViolationsByRepositoryRequest) | [GetPolicyViolationsByRepositoryResponse](#mediator-v1-GetPolicyViolationsByRepositoryResponse) |  |
 
 
 <a name="mediator-v1-RepositoryService"></a>
@@ -2250,7 +2751,8 @@ manage Organizations CRUD
 | ----------- | ------------ | ------------- | ------------|
 | RegisterRepository | [RegisterRepositoryRequest](#mediator-v1-RegisterRepositoryRequest) | [RegisterRepositoryResponse](#mediator-v1-RegisterRepositoryResponse) |  |
 | ListRepositories | [ListRepositoriesRequest](#mediator-v1-ListRepositoriesRequest) | [ListRepositoriesResponse](#mediator-v1-ListRepositoriesResponse) |  |
-| GetRepository | [GetRepositoryRequest](#mediator-v1-GetRepositoryRequest) | [GetRepositoryResponse](#mediator-v1-GetRepositoryResponse) |  |
+| GetRepositoryById | [GetRepositoryByIdRequest](#mediator-v1-GetRepositoryByIdRequest) | [GetRepositoryByIdResponse](#mediator-v1-GetRepositoryByIdResponse) |  |
+| GetRepositoryByName | [GetRepositoryByNameRequest](#mediator-v1-GetRepositoryByNameRequest) | [GetRepositoryByNameResponse](#mediator-v1-GetRepositoryByNameResponse) |  |
 
 
 <a name="mediator-v1-RoleService"></a>

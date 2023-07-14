@@ -40,6 +40,9 @@
     },
     {
       "name": "PolicyService"
+    },
+    {
+      "name": "KeyService"
     }
   ],
   "consumes": [
@@ -794,6 +797,66 @@
         ]
       }
     },
+    "/api/v1/key": {
+      "get": {
+        "operationId": "KeyService_GetPublicKey",
+        "responses": {
+          "200": {
+            "description": "A successful response.",
+            "schema": {
+              "$ref": "#/definitions/v1GetPublicKeyResponse"
+            }
+          },
+          "default": {
+            "description": "An unexpected error response.",
+            "schema": {
+              "$ref": "#/definitions/rpcStatus"
+            }
+          }
+        },
+        "parameters": [
+          {
+            "name": "keyIdentifier",
+            "in": "query",
+            "required": false,
+            "type": "string"
+          }
+        ],
+        "tags": [
+          "KeyService"
+        ]
+      },
+      "post": {
+        "operationId": "KeyService_CreateKeyPair",
+        "responses": {
+          "200": {
+            "description": "A successful response.",
+            "schema": {
+              "$ref": "#/definitions/v1CreateKeyPairResponse"
+            }
+          },
+          "default": {
+            "description": "An unexpected error response.",
+            "schema": {
+              "$ref": "#/definitions/rpcStatus"
+            }
+          }
+        },
+        "parameters": [
+          {
+            "name": "body",
+            "in": "body",
+            "required": true,
+            "schema": {
+              "$ref": "#/definitions/v1CreateKeyPairRequest"
+            }
+          }
+        ],
+        "tags": [
+          "KeyService"
+        ]
+      }
+    },
     "/api/v1/organization": {
       "post": {
         "operationId": "OrganizationService_CreateOrganization",
@@ -1105,6 +1168,105 @@
         ]
       }
     },
+    "/api/v1/policy/{policyId}/status": {
+      "get": {
+        "operationId": "PolicyService_GetPolicyStatusById",
+        "responses": {
+          "200": {
+            "description": "A successful response.",
+            "schema": {
+              "$ref": "#/definitions/v1GetPolicyStatusByIdResponse"
+            }
+          },
+          "default": {
+            "description": "An unexpected error response.",
+            "schema": {
+              "$ref": "#/definitions/rpcStatus"
+            }
+          }
+        },
+        "parameters": [
+          {
+            "name": "policyId",
+            "in": "path",
+            "required": true,
+            "type": "integer",
+            "format": "int32"
+          }
+        ],
+        "tags": [
+          "PolicyService"
+        ]
+      }
+    },
+    "/api/v1/policy_status/provider/{provider}/group/{groupId}": {
+      "get": {
+        "operationId": "PolicyService_GetPolicyStatusByGroup",
+        "responses": {
+          "200": {
+            "description": "A successful response.",
+            "schema": {
+              "$ref": "#/definitions/v1GetPolicyStatusByGroupResponse"
+            }
+          },
+          "default": {
+            "description": "An unexpected error response.",
+            "schema": {
+              "$ref": "#/definitions/rpcStatus"
+            }
+          }
+        },
+        "parameters": [
+          {
+            "name": "provider",
+            "in": "path",
+            "required": true,
+            "type": "string"
+          },
+          {
+            "name": "groupId",
+            "in": "path",
+            "required": true,
+            "type": "integer",
+            "format": "int32"
+          }
+        ],
+        "tags": [
+          "PolicyService"
+        ]
+      }
+    },
+    "/api/v1/policy_status/repository/{repositoryId}": {
+      "get": {
+        "operationId": "PolicyService_GetPolicyStatusByRepository",
+        "responses": {
+          "200": {
+            "description": "A successful response.",
+            "schema": {
+              "$ref": "#/definitions/v1GetPolicyStatusByRepositoryResponse"
+            }
+          },
+          "default": {
+            "description": "An unexpected error response.",
+            "schema": {
+              "$ref": "#/definitions/rpcStatus"
+            }
+          }
+        },
+        "parameters": [
+          {
+            "name": "repositoryId",
+            "in": "path",
+            "required": true,
+            "type": "integer",
+            "format": "int32"
+          }
+        ],
+        "tags": [
+          "PolicyService"
+        ]
+      }
+    },
     "/api/v1/policy_type/{type}": {
       "get": {
         "operationId": "PolicyService_GetPolicyType",
@@ -1164,6 +1326,147 @@
             "in": "query",
             "required": false,
             "type": "string"
+          }
+        ],
+        "tags": [
+          "PolicyService"
+        ]
+      }
+    },
+    "/api/v1/policy_violations/provider/{provider}/group/{groupId}": {
+      "get": {
+        "operationId": "PolicyService_GetPolicyViolationsByGroup",
+        "responses": {
+          "200": {
+            "description": "A successful response.",
+            "schema": {
+              "$ref": "#/definitions/v1GetPolicyViolationsByGroupResponse"
+            }
+          },
+          "default": {
+            "description": "An unexpected error response.",
+            "schema": {
+              "$ref": "#/definitions/rpcStatus"
+            }
+          }
+        },
+        "parameters": [
+          {
+            "name": "provider",
+            "in": "path",
+            "required": true,
+            "type": "string"
+          },
+          {
+            "name": "groupId",
+            "in": "path",
+            "required": true,
+            "type": "integer",
+            "format": "int32"
+          },
+          {
+            "name": "limit",
+            "in": "query",
+            "required": false,
+            "type": "integer",
+            "format": "int32"
+          },
+          {
+            "name": "offset",
+            "in": "query",
+            "required": false,
+            "type": "integer",
+            "format": "int32"
+          }
+        ],
+        "tags": [
+          "PolicyService"
+        ]
+      }
+    },
+    "/api/v1/policy_violations/repository/{repositoryId}": {
+      "get": {
+        "operationId": "PolicyService_GetPolicyViolationsByRepository",
+        "responses": {
+          "200": {
+            "description": "A successful response.",
+            "schema": {
+              "$ref": "#/definitions/v1GetPolicyViolationsByRepositoryResponse"
+            }
+          },
+          "default": {
+            "description": "An unexpected error response.",
+            "schema": {
+              "$ref": "#/definitions/rpcStatus"
+            }
+          }
+        },
+        "parameters": [
+          {
+            "name": "repositoryId",
+            "in": "path",
+            "required": true,
+            "type": "integer",
+            "format": "int32"
+          },
+          {
+            "name": "limit",
+            "in": "query",
+            "required": false,
+            "type": "integer",
+            "format": "int32"
+          },
+          {
+            "name": "offset",
+            "in": "query",
+            "required": false,
+            "type": "integer",
+            "format": "int32"
+          }
+        ],
+        "tags": [
+          "PolicyService"
+        ]
+      }
+    },
+    "/api/v1/policy_violations/{id}": {
+      "get": {
+        "operationId": "PolicyService_GetPolicyViolationsById",
+        "responses": {
+          "200": {
+            "description": "A successful response.",
+            "schema": {
+              "$ref": "#/definitions/v1GetPolicyViolationsByIdResponse"
+            }
+          },
+          "default": {
+            "description": "An unexpected error response.",
+            "schema": {
+              "$ref": "#/definitions/rpcStatus"
+            }
+          }
+        },
+        "parameters": [
+          {
+            "name": "id",
+            "in": "path",
+            "required": true,
+            "type": "integer",
+            "format": "int32"
+          },
+          {
+            "name": "limit",
+            "in": "query",
+            "required": false,
+            "type": "integer",
+            "format": "int32"
+          },
+          {
+            "name": "offset",
+            "in": "query",
+            "required": false,
+            "type": "integer",
+            "format": "int32"
           }
         ],
         "tags": [
@@ -1267,14 +1570,50 @@
         ]
       }
     },
-    "/api/v1/repository/{repositoryId}": {
+    "/api/v1/repository/provider/{provider}/name/{name}": {
       "get": {
-        "operationId": "RepositoryService_GetRepository",
+        "operationId": "RepositoryService_GetRepositoryByName",
         "responses": {
           "200": {
             "description": "A successful response.",
             "schema": {
-              "$ref": "#/definitions/v1GetRepositoryResponse"
+              "$ref": "#/definitions/v1GetRepositoryByNameResponse"
+            }
+          },
+          "default": {
+            "description": "An unexpected error response.",
+            "schema": {
+              "$ref": "#/definitions/rpcStatus"
+            }
+          }
+        },
+        "parameters": [
+          {
+            "name": "provider",
+            "in": "path",
+            "required": true,
+            "type": "string"
+          },
+          {
+            "name": "name",
+            "in": "path",
+            "required": true,
+            "type": "string"
+          }
+        ],
+        "tags": [
+          "RepositoryService"
+        ]
+      }
+    },
+    "/api/v1/repository/{repositoryId}": {
+      "get": {
+        "operationId": "RepositoryService_GetRepositoryById",
+        "responses": {
+          "200": {
+            "description": "A successful response.",
+            "schema": {
+              "$ref": "#/definitions/v1GetRepositoryByIdResponse"
             }
           },
           "default": {
@@ -1289,19 +1628,6 @@
             "name": "repositoryId",
             "in": "path",
             "required": true,
-            "type": "integer",
-            "format": "int32"
-          },
-          {
-            "name": "provider",
-            "in": "query",
-            "required": false,
-            "type": "string"
-          },
-          {
-            "name": "groupId",
-            "in": "query",
-            "required": false,
             "type": "integer",
             "format": "int32"
           }
@@ -2141,6 +2467,29 @@
         }
       }
     },
+    "v1CreateKeyPairRequest": {
+      "type": "object",
+      "properties": {
+        "passphrase": {
+          "type": "string"
+        },
+        "groupId": {
+          "type": "integer",
+          "format": "int32"
+        }
+      }
+    },
+    "v1CreateKeyPairResponse": {
+      "type": "object",
+      "properties": {
+        "keyIdentifier": {
+          "type": "string"
+        },
+        "publicKey": {
+          "type": "string"
+        }
+      }
+    },
     "v1CreateOrganizationRequest": {
       "type": "object",
       "properties": {
@@ -2619,8 +2968,43 @@
         "policy": {
           "$ref": "#/definitions/v1PolicyRecord"
         }
-      },
-      "title": "in the future it can include status and violation details for the policy"
+      }
+    },
+    "v1GetPolicyStatusByGroupResponse": {
+      "type": "object",
+      "properties": {
+        "policyRepoStatus": {
+          "type": "array",
+          "items": {
+            "type": "object",
+            "$ref": "#/definitions/v1PolicyRepoStatus"
+          }
+        }
+      }
+    },
+    "v1GetPolicyStatusByIdResponse": {
+      "type": "object",
+      "properties": {
+        "policyRepoStatus": {
+          "type": "array",
+          "items": {
+            "type": "object",
+            "$ref": "#/definitions/v1PolicyRepoStatus"
+          }
+        }
+      }
+    },
+    "v1GetPolicyStatusByRepositoryResponse": {
+      "type": "object",
+      "properties": {
+        "policyRepoStatus": {
+          "type": "array",
+          "items": {
+            "type": "object",
+            "$ref": "#/definitions/v1PolicyRepoStatus"
+          }
+        }
+      }
     },
     "v1GetPolicyTypeResponse": {
       "type": "object",
@@ -2642,32 +3026,63 @@
         }
       }
     },
-    "v1GetRepositoryResponse": {
+    "v1GetPolicyViolationsByGroupResponse": {
       "type": "object",
       "properties": {
-        "owner": {
+        "policyViolation": {
+          "type": "array",
+          "items": {
+            "type": "object",
+            "$ref": "#/definitions/v1PolicyViolation"
+          }
+        }
+      }
+    },
+    "v1GetPolicyViolationsByIdResponse": {
+      "type": "object",
+      "properties": {
+        "policyViolation": {
+          "type": "array",
+          "items": {
+            "type": "object",
+            "$ref": "#/definitions/v1PolicyViolation"
+          }
+        }
+      }
+    },
+    "v1GetPolicyViolationsByRepositoryResponse": {
+      "type": "object",
+      "properties": {
+        "policyViolation": {
+          "type": "array",
+          "items": {
+            "type": "object",
+            "$ref": "#/definitions/v1PolicyViolation"
+          }
+        }
+      }
+    },
+    "v1GetPublicKeyResponse": {
+      "type": "object",
+      "properties": {
+        "publicKey": {
           "type": "string"
-        },
+        }
+      }
+    },
+    "v1GetRepositoryByIdResponse": {
+      "type": "object",
+      "properties": {
         "repository": {
-          "type": "string"
-        },
-        "repoId": {
-          "type": "integer",
-          "format": "int32"
-        },
-        "hookUrl": {
-          "type": "string"
-        },
-        "createdAt": {
-          "type": "string",
-          "format": "date-time"
-        },
-        "updatedAt": {
-          "type": "string",
-          "format": "date-time"
-        },
-        "registered": {
-          "type": "boolean"
+          "$ref": "#/definitions/v1RepositoryRecord"
+        }
+      }
+    },
+    "v1GetRepositoryByNameResponse": {
+      "type": "object",
+      "properties": {
+        "repository": {
+          "$ref": "#/definitions/v1RepositoryRecord"
         }
       }
     },
@@ -2952,25 +3367,6 @@
       },
       "title": "BUF does not allow grouping (which is a shame)"
     },
-    "v1ListRepositories": {
-      "type": "object",
-      "properties": {
-        "owner": {
-          "type": "string"
-        },
-        "name": {
-          "type": "string"
-        },
-        "repoId": {
-          "type": "integer",
-          "format": "int32"
-        },
-        "registered": {
-          "type": "boolean"
-        }
-      },
-      "description": "ListRepositories is used for displaying repository list data that\nis relevant to users. It is not used for registering repositories.\nDue to protobuf limitations, we cannot use the same Repositories for\nlisting repositories and registering repositories."
-    },
     "v1ListRepositoriesResponse": {
       "type": "object",
       "properties": {
@@ -2978,7 +3374,7 @@
           "type": "array",
           "items": {
             "type": "object",
-            "$ref": "#/definitions/v1ListRepositories"
+            "$ref": "#/definitions/v1RepositoryRecord"
           }
         }
       }
@@ -3073,6 +3469,32 @@
       },
       "title": "policy record to be returned"
     },
+    "v1PolicyRepoStatus": {
+      "type": "object",
+      "properties": {
+        "policyType": {
+          "type": "string"
+        },
+        "repoId": {
+          "type": "integer",
+          "format": "int32"
+        },
+        "repoOwner": {
+          "type": "string"
+        },
+        "repoName": {
+          "type": "string"
+        },
+        "policyStatus": {
+          "type": "string"
+        },
+        "lastUpdated": {
+          "type": "string",
+          "format": "date-time"
+        }
+      },
+      "title": "get policy violation status"
+    },
     "v1PolicyTypeRecord": {
       "type": "object",
       "properties": {
@@ -3108,6 +3530,35 @@
         }
       },
       "title": "policy type record to be returned"
+    },
+    "v1PolicyViolation": {
+      "type": "object",
+      "properties": {
+        "policyType": {
+          "type": "string"
+        },
+        "repoId": {
+          "type": "integer",
+          "format": "int32"
+        },
+        "repoOwner": {
+          "type": "string"
+        },
+        "repoName": {
+          "type": "string"
+        },
+        "metadata": {
+          "type": "string"
+        },
+        "violation": {
+          "type": "string"
+        },
+        "createdAt": {
+          "type": "string",
+          "format": "date-time"
+        }
+      },
+      "title": "get policy violation details"
     },
     "v1RefreshTokenRequest": {
       "type": "object"
@@ -3186,6 +3637,53 @@
           "format": "int32"
         }
       }
+    },
+    "v1RepositoryRecord": {
+      "type": "object",
+      "properties": {
+        "id": {
+          "type": "integer",
+          "format": "int32"
+        },
+        "provider": {
+          "type": "string"
+        },
+        "groupId": {
+          "type": "integer",
+          "format": "int32"
+        },
+        "owner": {
+          "type": "string"
+        },
+        "name": {
+          "type": "string"
+        },
+        "repoId": {
+          "type": "integer",
+          "format": "int32"
+        },
+        "isPrivate": {
+          "type": "boolean"
+        },
+        "isFork": {
+          "type": "boolean"
+        },
+        "hookUrl": {
+          "type": "string"
+        },
+        "deployUrl": {
+          "type": "string"
+        },
+        "createdAt": {
+          "type": "string",
+          "format": "date-time"
+        },
+        "updatedAt": {
+          "type": "string",
+          "format": "date-time"
+        }
+      },
+      "description": "RepositoryRecord is used for registering repositories."
     },
     "v1RepositoryResult": {
       "type": "object",

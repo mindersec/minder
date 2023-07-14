@@ -24,18 +24,18 @@ import (
 	"path/filepath"
 	"reflect"
 
+	"github.com/spf13/cobra"
+	"github.com/spf13/viper"
+	"google.golang.org/grpc/codes"
+	"google.golang.org/grpc/status"
+	"gopkg.in/yaml.v3"
+
 	"github.com/stacklok/mediator/cmd/cli/app"
 	"github.com/stacklok/mediator/cmd/cli/app/group"
 	"github.com/stacklok/mediator/cmd/cli/app/org"
 	"github.com/stacklok/mediator/cmd/cli/app/role"
 	"github.com/stacklok/mediator/cmd/cli/app/user"
-	"github.com/stacklok/mediator/pkg/util"
-	"google.golang.org/grpc/codes"
-	"google.golang.org/grpc/status"
-	"gopkg.in/yaml.v3"
-
-	"github.com/spf13/cobra"
-	"github.com/spf13/viper"
+	"github.com/stacklok/mediator/internal/util"
 )
 
 type objectParameters struct {

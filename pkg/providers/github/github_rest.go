@@ -17,6 +17,8 @@ package github
 
 import (
 	"context"
+	"fmt"
+	"net/http"
 
 	"github.com/google/go-github/v53/github"
 )
@@ -69,6 +71,17 @@ func (c *RestClient) ListAllRepositories(ctx context.Context, isOrg bool) (Repos
 	}, nil
 }
 
+// GetRepository returns a single repository for the authenticated user
+func (c *RestClient) GetRepository(ctx context.Context, owner, name string) (*github.Repository, error) {
+	// create a slice to hold the repositories
+	repo, _, err := c.client.Repositories.Get(ctx, owner, name)
+	if err != nil {
+		return nil, fmt.Errorf("error getting repository: %w", err)
+	}
+
+	return repo, nil
+}
+
 // CheckIfTokenIsForOrganization is to determine if the token is for a user or an organization
 // TODO: There may be more efficient ways to do this, then calling the API,
 // perhaps during the enrollment process
@@ -93,4 +106,17 @@ func (c *RestClient) GetBranchProtection(ctx context.Context, owner string,
 		return nil, err
 	}
 	return protection, nil
+}
+
+// NewRequest creates an API request. A relative URL can be provided in urlStr,
+// which will be resolved to the BaseURL of the Client. Relative URLS should
+// always be specified without a preceding slash. If specified, the value
+// pointed to by body is JSON encoded and included as the request body.
+func (c *RestClient) NewRequest(method, url string, body interface{}, opts ...github.RequestOption) (*http.Request, error) {
+	return c.client.NewRequest(method, url, body, opts...)
+}
+
+// Do sends an API request and returns the API response.
+func (c *RestClient) Do(ctx context.Context, req *http.Request, v interface{}) (*github.Response, error) {
+	return c.client.Do(ctx, req, v)
 }

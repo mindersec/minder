@@ -63,8 +63,9 @@ DOCKERARCH := $(shell uname -m | sed 's/x86_64/amd64/' | sed 's/aarch64/arm64/')
 
 run-docker:  ## run the app under docker.
 	# podman (at least) doesn't seem to like multi-arch images, and sometimes picks the wrong one (e.g. amd64 on arm64)
+	# We also need to remove the build: directives to use ko builds
 	# ko resolve will fill in the image: field in the compose file, but it adds a yaml document separator
-	ko resolve --base-import-paths --platform linux/$(DOCKERARCH) -f docker-compose.yaml | sed 's/^--*$$//' > .resolved-compose.yaml
+	sed -e '/^  *build:/d'  -e 's|  image: mediator:latest|  image: ko://github.com/stacklok/mediator/cmd/server|' docker-compose.yaml | ko resolve --base-import-paths --platform linux/$(DOCKERARCH) -f - | sed 's/^--*$$//' > .resolved-compose.yaml
 	# MacOS can't tolerate the ":z" flag, Linux needs it.  https://github.com/containers/podman-compose/issues/509
 ifeq ($(OS),Darwin)
 	sed -i '' 's/:z$$//' .resolved-compose.yaml
@@ -90,6 +91,8 @@ bootstrap: ## install build deps
 	echo n | ssh-keygen -t rsa -b 2048 -N "" -m PEM -f .ssh/refresh_token_rsa || true
 	openssl rsa -in .ssh/access_token_rsa -pubout -outform PEM -out .ssh/access_token_rsa.pub
 	openssl rsa -in .ssh/refresh_token_rsa -pubout -outform PEM -out .ssh/refresh_token_rsa.pub
+	# Make sure the keys are readable by the docker user
+	chmod 644 .ssh/*
 
 test: clean ## display test coverage
 	go test -json -v ./... | gotestfmt

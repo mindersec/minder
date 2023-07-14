@@ -28,11 +28,11 @@ import (
 	"testing"
 	"time"
 
-	mockdb "github.com/stacklok/mediator/database/mock"
-
 	"github.com/golang/mock/gomock"
+
+	mockdb "github.com/stacklok/mediator/database/mock"
+	"github.com/stacklok/mediator/internal/util"
 	"github.com/stacklok/mediator/pkg/db"
-	"github.com/stacklok/mediator/pkg/util"
 )
 
 const (

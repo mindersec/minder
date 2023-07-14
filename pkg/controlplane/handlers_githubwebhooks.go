@@ -25,16 +25,17 @@ package controlplane
 import (
 	"context"
 	"fmt"
+	"log"
 	"net/http"
+	urlparser "net/url"
 	"strings"
 	"time"
 
+	"github.com/ThreeDotsLabs/watermill/message"
 	"github.com/google/go-github/v53/github"
 	"github.com/google/uuid"
 	"github.com/spf13/viper"
 	"golang.org/x/oauth2"
-
-	"github.com/ThreeDotsLabs/watermill/message"
 )
 
 // Repository represents a GitHub repository
@@ -95,6 +96,7 @@ func HandleGitHubWebHook(p message.Publisher) http.HandlerFunc {
 		m.Metadata.Set("type", github.WebHookType(r))
 		// m.Metadata.Set("subject", ghEvent.GetRepo().GetFullName())
 		// m.Metadata.Set("time", ghEvent.GetCreatedAt().String())
+		log.Printf("publishing of type: %s", m.Metadata["type"])
 
 		if err := p.Publish(m.Metadata["type"], m); err != nil {
 			fmt.Printf("Error publishing message: %v", err)
@@ -144,6 +146,12 @@ func RegisterWebHook(
 			result.Error = fmt.Errorf("github app incorrectly configured")
 		}
 		webhookUrl := fmt.Sprintf("%s/%s", url, urlUUID)
+		parsedOriginalURL, err := urlparser.Parse(webhookUrl)
+		if err != nil {
+			result.Success = false
+			result.Error = err
+		}
+
 		hook := &github.Hook{
 			Config: map[string]interface{}{
 				"url":          webhookUrl,
@@ -152,6 +160,31 @@ func RegisterWebHook(
 				"secret":       secret,
 			},
 			Events: events,
+		}
+
+		// if we have an existing hook for same repo, delete it
+		hooks, _, err := client.Repositories.ListHooks(ctx, repo.Owner, repo.Repo, nil)
+		if err != nil {
+			result.Success = false
+			result.Error = err
+		}
+		for _, h := range hooks {
+			config_url := h.Config["url"].(string)
+			if config_url != "" {
+				parsedURL, err := urlparser.Parse(config_url)
+				if err != nil {
+					result.Success = false
+					result.Error = err
+				}
+				if parsedURL.Host == parsedOriginalURL.Host {
+					// it is our hook, we can remove it
+					_, err = client.Repositories.DeleteHook(ctx, repo.Owner, repo.Repo, h.GetID())
+					if err != nil {
+						result.Success = false
+						result.Error = err
+					}
+				}
+			}
 		}
 
 		// Attempt to register webhook

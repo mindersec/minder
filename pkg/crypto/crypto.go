@@ -17,29 +17,31 @@
 package crypto
 
 import (
+	"crypto/aes"
+	"crypto/cipher"
 	"crypto/ecdsa"
+	"crypto/rand"
 	"crypto/sha256"
+	"crypto/subtle"
 	"crypto/x509"
 	"encoding/base64"
 	"encoding/binary"
 	"encoding/json"
 	"encoding/pem"
 	"errors"
+	"fmt"
+	"io"
 	"strings"
 	"time"
 
-	"crypto/aes"
-	"crypto/cipher"
-	"crypto/rand"
-	"crypto/subtle"
-	"fmt"
-	"io"
-
+	"github.com/sigstore/sigstore/pkg/signature"
 	"github.com/spf13/viper"
-	"github.com/stacklok/mediator/internal/config"
+	"github.com/theupdateframework/go-tuf/encrypted"
 	"golang.org/x/crypto/argon2"
 	"google.golang.org/grpc/codes"
 	"google.golang.org/grpc/status"
+
+	"github.com/stacklok/mediator/internal/config"
 )
 
 var (
@@ -282,4 +284,46 @@ func IsNonceValid(nonce string) (bool, error) {
 	}
 
 	return true, nil
+}
+
+// GenerateKeyPair generates a public/private key pair and encrypts
+// the private key with a passphrase (using NACL secretbox).
+func GenerateKeyPair(passphrase string) ([]byte, []byte, error) {
+	signer, private, err := signature.NewDefaultECDSASignerVerifier()
+	if err != nil {
+		return nil, nil, err
+	}
+
+	pub, err := signer.PublicKey()
+	if err != nil {
+		return nil, nil, err
+	}
+
+	pubBytes, err := x509.MarshalPKIXPublicKey(pub)
+	if err != nil {
+		return nil, nil, err
+	}
+
+	privateBytes, err := x509.MarshalECPrivateKey(private)
+	if err != nil {
+		return nil, nil, err
+	}
+
+	// Encrypt the private key with NACL secretbox
+	encBytes, err := encrypted.Encrypt(privateBytes, []byte(passphrase))
+	if err != nil {
+		return nil, nil, err
+	}
+
+	PublicKey := pem.EncodeToMemory(&pem.Block{
+		Type:  "PUBLIC KEY",
+		Bytes: pubBytes,
+	})
+
+	PrivateKey := pem.EncodeToMemory(&pem.Block{
+		Type:  "PRIVATE KEY",
+		Bytes: encBytes,
+	})
+
+	return PrivateKey, PublicKey, nil
 }
