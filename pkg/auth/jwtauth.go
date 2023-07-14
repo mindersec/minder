@@ -108,14 +108,14 @@ func VerifyToken(tokenString string, publicKey []byte, store db.Store) (UserClai
 	// extract the pubkey from the pem
 	pubPem, _ := pem.Decode(publicKey)
 	if pubPem == nil {
-		return userClaims, fmt.Errorf("invalid key")
+		return userClaims, fmt.Errorf("invalid PEM data")
 	}
 	key, err := x509.ParsePKCS1PublicKey(pubPem.Bytes)
 	if err != nil {
 		// try another method
 		key1, err := x509.ParsePKIXPublicKey(pubPem.Bytes)
 		if err != nil {
-			return userClaims, fmt.Errorf("invalid key")
+			return userClaims, fmt.Errorf("could not find PKCS1 or PKIX public key")
 		}
 		key = key1.(*rsa.PublicKey)
 	}
@@ -139,7 +139,7 @@ func VerifyToken(tokenString string, publicKey []byte, store db.Store) (UserClai
 	// validate that iat is on the past
 	if claims, ok := token.Claims.(jwt.MapClaims); ok {
 		if !claims.VerifyIssuedAt(time.Now().Unix(), true) {
-			return userClaims, fmt.Errorf("invalid token")
+			return userClaims, fmt.Errorf("token used before issued")
 		}
 	}
 
@@ -147,7 +147,7 @@ func VerifyToken(tokenString string, publicKey []byte, store db.Store) (UserClai
 	userId := int32(claims["userId"].(float64))
 	user, err := store.GetUserByID(context.Background(), userId)
 	if err != nil {
-		return userClaims, fmt.Errorf("invalid token")
+		return userClaims, fmt.Errorf("unknown userId")
 	}
 
 	// if we have a value in issued at, we compare against iat
@@ -156,7 +156,7 @@ func VerifyToken(tokenString string, publicKey []byte, store db.Store) (UserClai
 		unitTs := user.MinTokenIssuedTime.Time.Unix()
 		if unitTs > iat {
 			// token was issued after the iat
-			return userClaims, fmt.Errorf("invalid token")
+			return userClaims, fmt.Errorf("token issued after iat=%d", iat)
 		}
 	}
 
