@@ -18,7 +18,6 @@
 package events
 
 import (
-	"context"
 	"log"
 
 	"github.com/ThreeDotsLabs/watermill/message"
@@ -52,7 +51,7 @@ func (*sampleHandler) handleSecurityAndAnalysisEvent(msg *message.Message) error
 }
 
 func (s *sampleHandler) handleBranchProtectionEventGithub(msg *message.Message) error {
-	err := reconcilers.ParseBranchProtectionEventGithub(context.Background(), s.store, msg)
+	err := reconcilers.ParseBranchProtectionEventGithub(msg.Context(), s.store, msg)
 	if err != nil {
 		return err
 	}

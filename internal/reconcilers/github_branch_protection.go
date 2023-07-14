@@ -13,9 +13,6 @@
 // See the License for the specific language governing permissions and
 // limitations under the License.
 
-// Package events provides implementations of all the event handlers
-// the GitHub provider supports.
-
 // Package reconcilers provides implementations of all the reconcilers
 package reconcilers
 
@@ -86,18 +83,17 @@ func (j *SchemaJsonBranchesElem) UnmarshalJSON(b []byte) error {
 	if err := json.Unmarshal(b, &raw); err != nil {
 		return err
 	}
-	if v, ok := raw["name"]; !ok || v == nil {
-		return fmt.Errorf("field name in SchemaJsonBranchesElem: required")
-	}
 	if v, ok := raw["rules"]; !ok || v == nil {
 		return fmt.Errorf("field rules in SchemaJsonBranchesElem: required")
 	}
-	type Plain SchemaJsonBranchesElem
-	var plain Plain
+	var plain SchemaJsonBranchesElem
 	if err := json.Unmarshal(b, &plain); err != nil {
 		return err
 	}
-	*j = SchemaJsonBranchesElem(plain)
+	if plain.Name == "" {
+		return fmt.Errorf("field name in SchemaJsonBranchesElem: required to be nonempty")
+	}
+	*j = plain
 	return nil
 }
 
@@ -116,12 +112,11 @@ func (j *SchemaJson) unmarshalJSON(b []byte) error {
 	if v, ok := raw["branches"]; !ok || v == nil {
 		return fmt.Errorf("field branches in SchemaJson: required")
 	}
-	type Plain SchemaJson
-	var plain Plain
+	var plain SchemaJson
 	if err := json.Unmarshal(b, &plain); err != nil {
 		return err
 	}
-	*j = SchemaJson(plain)
+	*j = plain
 	return nil
 }
 
@@ -205,8 +200,7 @@ func checkBranchDifferences(rules SchemaJsonBranchesElemRules, protection *githu
 					ExpectedValue: rules.RequiredPullRequestReviews["require_code_owner_reviews"]})
 			}
 			if rules.RequiredPullRequestReviews["required_approving_review_count"] != nil {
-				count, ok := rules.RequiredPullRequestReviews["required_approving_review_count"].(float64)
-				if ok {
+				if count, ok := rules.RequiredPullRequestReviews["required_approving_review_count"].(float64); ok {
 					if int(count) != protection.RequiredPullRequestReviews.RequiredApprovingReviewCount {
 						differences = append(differences, Differences{Field: "RequiredPullRequestReviews.required_approving_review_count",
 							ActualValue:   protection.RequiredPullRequestReviews.RequiredApprovingReviewCount,
@@ -234,8 +228,7 @@ func checkBranchDifferences(rules SchemaJsonBranchesElemRules, protection *githu
 // ParseBranchProtectionEventGithub parses a branch protection event from GitHub
 func ParseBranchProtectionEventGithub(ctx context.Context, store db.Store, msg *message.Message) error {
 	var event github.BranchProtectionRuleEvent
-	err := json.Unmarshal([]byte(msg.Payload), &event)
-	if err != nil {
+	if err := json.Unmarshal([]byte(msg.Payload), &event); err != nil {
 		return err
 	}
 
@@ -262,8 +255,7 @@ func ParseBranchProtectionEventGithub(ctx context.Context, store db.Store, msg *
 		if branch != nil {
 			// read policy and extract the relevant branch content
 			var policyData SchemaJson
-			err = policyData.unmarshalJSON(policy.PolicyDefinition)
-			if err != nil {
+			if err := policyData.unmarshalJSON(policy.PolicyDefinition); err != nil {
 				return err
 			}
 
