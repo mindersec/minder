@@ -18,7 +18,6 @@
 package events
 
 import (
-	"context"
 	"log"
 
 	"github.com/ThreeDotsLabs/watermill/message"
@@ -48,7 +47,7 @@ func NewHandler(store db.Store) events.Consumer {
 }
 
 func (s *sampleHandler) handleSecurityAndAnalysisEvent(msg *message.Message) error {
-	err := reconcilers.ParseSecretScanningEventGithub(context.Background(), s.store, msg)
+	err := reconcilers.ParseSecretScanningEventGithub(msg.Context(), s.store, msg)
 	if err != nil {
 		log.Printf("error parsing secret scanning event: %v", err)
 		return err
@@ -57,7 +56,7 @@ func (s *sampleHandler) handleSecurityAndAnalysisEvent(msg *message.Message) err
 }
 
 func (s *sampleHandler) handleBranchProtectionEventGithub(msg *message.Message) error {
-	err := reconcilers.ParseBranchProtectionEventGithub(context.Background(), s.store, msg)
+	err := reconcilers.ParseBranchProtectionEventGithub(msg.Context(), s.store, msg)
 	if err != nil {
 		return err
 	}
