@@ -1570,14 +1570,50 @@
         ]
       }
     },
-    "/api/v1/repository/{repositoryId}": {
+    "/api/v1/repository/provider/{provider}/name/{name}": {
       "get": {
-        "operationId": "RepositoryService_GetRepository",
+        "operationId": "RepositoryService_GetRepositoryByName",
         "responses": {
           "200": {
             "description": "A successful response.",
             "schema": {
-              "$ref": "#/definitions/v1GetRepositoryResponse"
+              "$ref": "#/definitions/v1GetRepositoryByNameResponse"
+            }
+          },
+          "default": {
+            "description": "An unexpected error response.",
+            "schema": {
+              "$ref": "#/definitions/rpcStatus"
+            }
+          }
+        },
+        "parameters": [
+          {
+            "name": "provider",
+            "in": "path",
+            "required": true,
+            "type": "string"
+          },
+          {
+            "name": "name",
+            "in": "path",
+            "required": true,
+            "type": "string"
+          }
+        ],
+        "tags": [
+          "RepositoryService"
+        ]
+      }
+    },
+    "/api/v1/repository/{repositoryId}": {
+      "get": {
+        "operationId": "RepositoryService_GetRepositoryById",
+        "responses": {
+          "200": {
+            "description": "A successful response.",
+            "schema": {
+              "$ref": "#/definitions/v1GetRepositoryByIdResponse"
             }
           },
           "default": {
@@ -1592,19 +1628,6 @@
             "name": "repositoryId",
             "in": "path",
             "required": true,
-            "type": "integer",
-            "format": "int32"
-          },
-          {
-            "name": "provider",
-            "in": "query",
-            "required": false,
-            "type": "string"
-          },
-          {
-            "name": "groupId",
-            "in": "query",
-            "required": false,
             "type": "integer",
             "format": "int32"
           }
@@ -3047,36 +3070,19 @@
         }
       }
     },
-    "v1GetRepositoryResponse": {
+    "v1GetRepositoryByIdResponse": {
       "type": "object",
       "properties": {
-        "id": {
-          "type": "integer",
-          "format": "int32"
-        },
-        "owner": {
-          "type": "string"
-        },
         "repository": {
-          "type": "string"
-        },
-        "repoId": {
-          "type": "integer",
-          "format": "int32"
-        },
-        "hookUrl": {
-          "type": "string"
-        },
-        "createdAt": {
-          "type": "string",
-          "format": "date-time"
-        },
-        "updatedAt": {
-          "type": "string",
-          "format": "date-time"
-        },
-        "registered": {
-          "type": "boolean"
+          "$ref": "#/definitions/v1RepositoryRecord"
+        }
+      }
+    },
+    "v1GetRepositoryByNameResponse": {
+      "type": "object",
+      "properties": {
+        "repository": {
+          "$ref": "#/definitions/v1RepositoryRecord"
         }
       }
     },
@@ -3361,29 +3367,6 @@
       },
       "title": "BUF does not allow grouping (which is a shame)"
     },
-    "v1ListRepositories": {
-      "type": "object",
-      "properties": {
-        "id": {
-          "type": "integer",
-          "format": "int32"
-        },
-        "owner": {
-          "type": "string"
-        },
-        "name": {
-          "type": "string"
-        },
-        "repoId": {
-          "type": "integer",
-          "format": "int32"
-        },
-        "registered": {
-          "type": "boolean"
-        }
-      },
-      "description": "ListRepositories is used for displaying repository list data that\nis relevant to users. It is not used for registering repositories.\nDue to protobuf limitations, we cannot use the same Repositories for\nlisting repositories and registering repositories."
-    },
     "v1ListRepositoriesResponse": {
       "type": "object",
       "properties": {
@@ -3391,7 +3374,7 @@
           "type": "array",
           "items": {
             "type": "object",
-            "$ref": "#/definitions/v1ListRepositories"
+            "$ref": "#/definitions/v1RepositoryRecord"
           }
         }
       }
@@ -3654,6 +3637,53 @@
           "format": "int32"
         }
       }
+    },
+    "v1RepositoryRecord": {
+      "type": "object",
+      "properties": {
+        "id": {
+          "type": "integer",
+          "format": "int32"
+        },
+        "provider": {
+          "type": "string"
+        },
+        "groupId": {
+          "type": "integer",
+          "format": "int32"
+        },
+        "owner": {
+          "type": "string"
+        },
+        "name": {
+          "type": "string"
+        },
+        "repoId": {
+          "type": "integer",
+          "format": "int32"
+        },
+        "isPrivate": {
+          "type": "boolean"
+        },
+        "isFork": {
+          "type": "boolean"
+        },
+        "hookUrl": {
+          "type": "string"
+        },
+        "deployUrl": {
+          "type": "string"
+        },
+        "createdAt": {
+          "type": "string",
+          "format": "date-time"
+        },
+        "updatedAt": {
+          "type": "string",
+          "format": "date-time"
+        }
+      },
+      "description": "RepositoryRecord is used for registering repositories."
     },
     "v1RepositoryResult": {
       "type": "object",

@@ -176,9 +176,15 @@ service RepositoryService {
             get: "/api/v1/repositories"
         };
     }
-    rpc GetRepository (GetRepositoryRequest) returns (GetRepositoryResponse) {
+    rpc GetRepositoryById (GetRepositoryByIdRequest) returns (GetRepositoryByIdResponse) {
         option (google.api.http) = {
             get: "/api/v1/repository/{repository_id}"
+        };
+    }
+
+    rpc GetRepositoryByName (GetRepositoryByNameRequest) returns (GetRepositoryByNameResponse) {
+        option (google.api.http) = {
+            get: "/api/v1/repository/provider/{provider}/name/{name}"
         };
     }
 }
@@ -594,26 +600,58 @@ message Repositories {
     int32 repo_id = 3;
 }
 
-// ListRepositories is used for displaying repository list data that
-// is relevant to users. It is not used for registering repositories.
-// Due to protobuf limitations, we cannot use the same Repositories for
-// listing repositories and registering repositories.
-message ListRepositories {
-    int32 id = 1;
-    string owner = 2;
-    string name = 3;
-    int32 repo_id = 4;
-    bool registered = 5;
+message RepositoryResult {
+    string owner = 1;
+    string repository = 2;
+    int32 repo_id = 3;
+    int64 hook_id = 4;
+    string hook_url = 5;
+    string deploy_url = 6;
+    google.protobuf.Timestamp created_at = 7;
+    google.protobuf.Timestamp updated_at = 8;
+    string hook_name = 9;
+    string hook_type = 10;
+    bool success = 11;
+    string uuid = 12;
+    google.protobuf.StringValue error = 13;
+    bool registered = 14;
 }
 
 message RegisterRepositoryResponse {
     repeated RepositoryResult results = 1;
 }
 
-message GetRepositoryRequest {
-    int32 repository_id = 1;
+// RepositoryRecord is used for registering repositories.
+message RepositoryRecord {
+    int32 id = 1;
     string provider = 2;
     int32 group_id = 3;
+    string owner = 4;
+    string name = 5;
+    int32 repo_id = 6;
+    bool is_private = 7;
+    bool is_fork = 8;
+    string hook_url = 9;
+    string deploy_url = 10;
+    google.protobuf.Timestamp created_at = 11;
+    google.protobuf.Timestamp updated_at = 12;
+}
+
+message GetRepositoryByIdRequest {
+    int32 repository_id = 1;
+}
+
+message GetRepositoryByIdResponse {
+    RepositoryRecord repository = 1;
+}
+
+message GetRepositoryByNameRequest {
+    string provider = 1;
+    string name = 3;
+}
+
+message GetRepositoryByNameResponse {
+    RepositoryRecord repository = 1;
 }
 
 // Repo filter enum
@@ -633,37 +671,8 @@ message ListRepositoriesRequest {
 }
 
 message ListRepositoriesResponse {
-    repeated ListRepositories results = 1;
+    repeated RepositoryRecord results = 1;
 }
-
-message GetRepositoryResponse {
-    int32 id = 1;
-    string owner = 2;
-    string repository = 3;
-    int32 repo_id = 4;
-    string hook_url = 5;
-    google.protobuf.Timestamp created_at = 6;
-    google.protobuf.Timestamp updated_at = 7;
-    bool registered = 8;
-}
-
-message RepositoryResult {
-    string owner = 1;
-    string repository = 2;
-    int32 repo_id = 3;
-    int64 hook_id = 4;
-    string hook_url = 5;
-    string deploy_url = 6;
-    google.protobuf.Timestamp created_at = 7;
-    google.protobuf.Timestamp updated_at = 8;
-    string hook_name = 9;
-    string hook_type = 10;
-    bool success = 11;
-    string uuid = 12;
-    google.protobuf.StringValue error = 13;
-    bool registered = 14;
-}
-
 
 message VerifyRequest {
 }
