@@ -80,7 +80,7 @@ func (s *Server) ListPackages(ctx context.Context, in *pb.ListPackagesRequest) (
 	for _, pkg := range pkgList.Packages {
 		pkgURI := fmt.Sprintf("ghcr.io/%s/%s", *pkg.Owner.Login, *pkg.Name)
 
-		imageDigest, err := oci.GetImageManifest(pkgURI, "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")
+		imageDigest, err := oci.GetImageManifest(pkgURI, decryptedToken.AccessToken)
 		if err != nil {
 			return nil, err
 		}

@@ -21,10 +21,17 @@ func GetImageManifest(imageRef string, token string) (v1.Manifest, error) {
 		return v1.Manifest{}, fmt.Errorf("error parsing image url: %w", err)
 	}
 
-	img, err := remote.Image(ref, remote.WithAuthFromKeychain(authn.DefaultKeychain))
+	auth := &authn.Bearer{Token: token}
+
+	img, err := remote.Image(ref, remote.WithAuth(auth))
 	if err != nil {
 		return v1.Manifest{}, fmt.Errorf("error getting image: %w", err)
 	}
+
+	// img, err := remote.Image(ref, remote.WithAuthFromKeychain(authn.DefaultKeychain))
+	// if err != nil {
+	// 	return v1.Manifest{}, fmt.Errorf("error getting image: %w", err)
+	// }
 
 	manifest, err := img.Manifest()
 	if err != nil {
