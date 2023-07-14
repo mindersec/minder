@@ -224,7 +224,7 @@ func (s *Server) ListRepositories(ctx context.Context,
 
 // GetRepositoryById returns a repository for a given repository id
 func (s *Server) GetRepositoryById(ctx context.Context,
-	in *pb.GetRepositoryRequest) (*pb.GetRepositoryResponse, error) {
+	in *pb.GetRepositoryByIdRequest) (*pb.GetRepositoryByIdResponse, error) {
 	// check if we get an id
 	if in.RepositoryId == 0 {
 		return nil, status.Errorf(codes.InvalidArgument, "repository id not specified")
@@ -245,7 +245,7 @@ func (s *Server) GetRepositoryById(ctx context.Context,
 	createdAt := timestamppb.New(repo.CreatedAt)
 	updatedat := timestamppb.New(repo.UpdatedAt)
 
-	return &pb.GetRepositoryResponse{Repository: &pb.RepositoryRecord{
+	return &pb.GetRepositoryByIdResponse{Repository: &pb.RepositoryRecord{
 		Id:        repo.ID,
 		Provider:  repo.Provider,
 		GroupId:   repo.GroupID,

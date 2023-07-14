@@ -176,7 +176,7 @@ service RepositoryService {
             get: "/api/v1/repositories"
         };
     }
-    rpc GetRepositoryById (GetRepositoryRequest) returns (GetRepositoryResponse) {
+    rpc GetRepositoryById (GetRepositoryByIdRequest) returns (GetRepositoryByIdResponse) {
         option (google.api.http) = {
             get: "/api/v1/repository/{repository_id}"
         };
@@ -637,11 +637,11 @@ message RepositoryRecord {
     google.protobuf.Timestamp updated_at = 12;
 }
 
-message GetRepositoryRequest {
+message GetRepositoryByIdRequest {
     int32 repository_id = 1;
 }
 
-message GetRepositoryResponse {
+message GetRepositoryByIdResponse {
     RepositoryRecord repository = 1;
 }
 

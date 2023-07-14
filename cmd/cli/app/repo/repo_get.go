@@ -94,7 +94,7 @@ var repo_getCmd = &cobra.Command{
 		// check repo by id
 		var repository *pb.RepositoryRecord
 		if repoid != 0 {
-			resp, err := client.GetRepositoryById(ctx, &pb.GetRepositoryRequest{
+			resp, err := client.GetRepositoryById(ctx, &pb.GetRepositoryByIdRequest{
 				RepositoryId: repoid,
 			})
 			util.ExitNicelyOnError(err, "Error getting repo by id")

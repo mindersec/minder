@@ -75,10 +75,10 @@
     - [GetPolicyViolationsByRepositoryResponse](#mediator-v1-GetPolicyViolationsByRepositoryResponse)
     - [GetPublicKeyRequest](#mediator-v1-GetPublicKeyRequest)
     - [GetPublicKeyResponse](#mediator-v1-GetPublicKeyResponse)
+    - [GetRepositoryByIdRequest](#mediator-v1-GetRepositoryByIdRequest)
+    - [GetRepositoryByIdResponse](#mediator-v1-GetRepositoryByIdResponse)
     - [GetRepositoryByNameRequest](#mediator-v1-GetRepositoryByNameRequest)
     - [GetRepositoryByNameResponse](#mediator-v1-GetRepositoryByNameResponse)
-    - [GetRepositoryRequest](#mediator-v1-GetRepositoryRequest)
-    - [GetRepositoryResponse](#mediator-v1-GetRepositoryResponse)
     - [GetRoleByIdRequest](#mediator-v1-GetRoleByIdRequest)
     - [GetRoleByIdResponse](#mediator-v1-GetRoleByIdResponse)
     - [GetRoleByNameRequest](#mediator-v1-GetRoleByNameRequest)
@@ -1319,6 +1319,36 @@ get policy types
 
 
 
+<a name="mediator-v1-GetRepositoryByIdRequest"></a>
+
+### GetRepositoryByIdRequest
+
+
+
+| Field | Type | Label | Description |
+| ----- | ---- | ----- | ----------- |
+| repository_id | [int32](#int32) |  |  |
+
+
+
+
+
+
+<a name="mediator-v1-GetRepositoryByIdResponse"></a>
+
+### GetRepositoryByIdResponse
+
+
+
+| Field | Type | Label | Description |
+| ----- | ---- | ----- | ----------- |
+| repository | [RepositoryRecord](#mediator-v1-RepositoryRecord) |  |  |
+
+
+
+
+
+
 <a name="mediator-v1-GetRepositoryByNameRequest"></a>
 
 ### GetRepositoryByNameRequest
@@ -1338,36 +1368,6 @@ get policy types
 <a name="mediator-v1-GetRepositoryByNameResponse"></a>
 
 ### GetRepositoryByNameResponse
-
-
-
-| Field | Type | Label | Description |
-| ----- | ---- | ----- | ----------- |
-| repository | [RepositoryRecord](#mediator-v1-RepositoryRecord) |  |  |
-
-
-
-
-
-
-<a name="mediator-v1-GetRepositoryRequest"></a>
-
-### GetRepositoryRequest
-
-
-
-| Field | Type | Label | Description |
-| ----- | ---- | ----- | ----------- |
-| repository_id | [int32](#int32) |  |  |
-
-
-
-
-
-
-<a name="mediator-v1-GetRepositoryResponse"></a>
-
-### GetRepositoryResponse
 
 
 
@@ -2751,7 +2751,7 @@ manage Organizations CRUD
 | ----------- | ------------ | ------------- | ------------|
 | RegisterRepository | [RegisterRepositoryRequest](#mediator-v1-RegisterRepositoryRequest) | [RegisterRepositoryResponse](#mediator-v1-RegisterRepositoryResponse) |  |
 | ListRepositories | [ListRepositoriesRequest](#mediator-v1-ListRepositoriesRequest) | [ListRepositoriesResponse](#mediator-v1-ListRepositoriesResponse) |  |
-| GetRepositoryById | [GetRepositoryRequest](#mediator-v1-GetRepositoryRequest) | [GetRepositoryResponse](#mediator-v1-GetRepositoryResponse) |  |
+| GetRepositoryById | [GetRepositoryByIdRequest](#mediator-v1-GetRepositoryByIdRequest) | [GetRepositoryByIdResponse](#mediator-v1-GetRepositoryByIdResponse) |  |
 | GetRepositoryByName | [GetRepositoryByNameRequest](#mediator-v1-GetRepositoryByNameRequest) | [GetRepositoryByNameResponse](#mediator-v1-GetRepositoryByNameResponse) |  |
 
 

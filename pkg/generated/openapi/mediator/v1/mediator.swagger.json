@@ -1613,7 +1613,7 @@
           "200": {
             "description": "A successful response.",
             "schema": {
-              "$ref": "#/definitions/v1GetRepositoryResponse"
+              "$ref": "#/definitions/v1GetRepositoryByIdResponse"
             }
           },
           "default": {
@@ -3070,7 +3070,7 @@
         }
       }
     },
-    "v1GetRepositoryByNameResponse": {
+    "v1GetRepositoryByIdResponse": {
       "type": "object",
       "properties": {
         "repository": {
@@ -3078,7 +3078,7 @@
         }
       }
     },
-    "v1GetRepositoryResponse": {
+    "v1GetRepositoryByNameResponse": {
       "type": "object",
       "properties": {
         "repository": {

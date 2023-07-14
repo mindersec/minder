@@ -972,7 +972,7 @@ func local_request_RepositoryService_ListRepositories_0(ctx context.Context, mar
 }
 
 func request_RepositoryService_GetRepositoryById_0(ctx context.Context, marshaler runtime.Marshaler, client RepositoryServiceClient, req *http.Request, pathParams map[string]string) (proto.Message, runtime.ServerMetadata, error) {
-	var protoReq GetRepositoryRequest
+	var protoReq GetRepositoryByIdRequest
 	var metadata runtime.ServerMetadata
 
 	var (
@@ -998,7 +998,7 @@ func request_RepositoryService_GetRepositoryById_0(ctx context.Context, marshale
 }
 
 func local_request_RepositoryService_GetRepositoryById_0(ctx context.Context, marshaler runtime.Marshaler, server RepositoryServiceServer, req *http.Request, pathParams map[string]string) (proto.Message, runtime.ServerMetadata, error) {
-	var protoReq GetRepositoryRequest
+	var protoReq GetRepositoryByIdRequest
 	var metadata runtime.ServerMetadata
 
 	var (
