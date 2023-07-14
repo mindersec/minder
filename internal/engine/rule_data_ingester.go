@@ -139,7 +139,8 @@ func (rdi *RestRuleDataIngest) Eval(ctx context.Context, ent any, pol any) error
 
 		// Deep compare
 		if !reflect.DeepEqual(policyVal, dataVal) {
-			return fmt.Errorf("data does not match policy: got %v, want %v", dataVal, policyVal)
+			return fmt.Errorf("data does not match policy: for path %s got %v, want %v",
+				key, dataVal, policyVal)
 		}
 	}
 
