@@ -66,6 +66,11 @@ const sidebars = {
     },
     {
       type: 'doc',
+      label: 'Getting Started (Manage policies and violations)',
+      id: 'manage_policies',
+    },
+    {
+      type: 'doc',
       label: 'Developer Guide',
       id: 'get_hacking',
     },

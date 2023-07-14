@@ -87,13 +87,14 @@ var repo_listCmd = &cobra.Command{
 		switch format {
 		case "", "table":
 			table := tablewriter.NewWriter(os.Stdout)
-			table.SetHeader([]string{"Id", "Provider Id", "Name"})
+			table.SetHeader([]string{"Id", "Group ID", "Provider Id", "Name"})
 
 			for _, v := range resp.Results {
 				row := []string{
 					fmt.Sprintf("%d", v.Id),
+					fmt.Sprintf("%d", v.GroupId),
 					fmt.Sprintf("%d", v.GetRepoId()),
-					fmt.Sprintf("%s/%s", v.GetOwner(), v.GetName()),
+					fmt.Sprintf("%s/%s", v.GetRepoOwner(), v.GetRepoName()),
 				}
 				table.Append(row)
 			}
@@ -119,9 +120,6 @@ func init() {
 	repo_listCmd.Flags().Int32P("limit", "l", 20, "Number of repos to display per page")
 	repo_listCmd.Flags().Int32P("offset", "o", 0, "Offset of the repos to display")
 	if err := repo_listCmd.MarkFlagRequired("provider"); err != nil {
-		fmt.Fprintf(os.Stderr, "Error marking flag as required: %s\n", err)
-	}
-	if err := repo_listCmd.MarkFlagRequired("group-id"); err != nil {
 		fmt.Fprintf(os.Stderr, "Error marking flag as required: %s\n", err)
 	}
 }

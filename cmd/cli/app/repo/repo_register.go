@@ -25,6 +25,7 @@ import (
 	"context"
 	"fmt"
 	"os"
+	"strconv"
 	"strings"
 
 	"github.com/AlecAivazis/survey/v2"
@@ -89,8 +90,13 @@ var repo_registerCmd = &cobra.Command{
 		repoIDs := make(map[string]int32) // Map of repo names to IDs
 
 		for i, repo := range listResp.Results {
-			repoNames[i] = fmt.Sprintf("%s/%s", repo.Owner, repo.Name)
-			repoIDs[repoNames[i]] = repo.RepoId
+			repoNames[i] = fmt.Sprintf("%s/%s", repo.RepoOwner, repo.RepoName)
+			repo_id, err := strconv.Atoi(repo.RepoId)
+			if err != nil {
+				fmt.Fprintf(os.Stderr, "Error converting repo ID to int: %s\n", err)
+				os.Exit(1)
+			}
+			repoIDs[repoNames[i]] = repo_id
 		}
 
 		var selectedRepos []string
