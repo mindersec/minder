@@ -35,6 +35,8 @@ var DocsCmd = &cobra.Command{
 		util.ExitNicelyOnError(err, "Error binding flags")
 	},
 	Run: func(cmd *cobra.Command, args []string) {
+		// We auto-generate the docs daily, so don't include the date at the bottom.
+		app.RootCmd.DisableAutoGenTag = true
 		err := doc.GenMarkdownTree(app.RootCmd, "./docs/docs/cli")
 		if err != nil {
 			panic(err)
