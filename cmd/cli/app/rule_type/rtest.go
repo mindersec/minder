@@ -192,7 +192,7 @@ func readEntityFromFile(fpath string, entType string) (any, error) {
 
 	switch entType {
 	case "repository":
-		out = &pb.GetRepositoryByIdResponse{}
+		out = &pb.RepositoryResult{}
 	default:
 		return nil, fmt.Errorf("unknown entity type: %s", entType)
 	}
