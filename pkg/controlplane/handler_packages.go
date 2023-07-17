@@ -20,6 +20,7 @@ import (
 
 	"google.golang.org/grpc/codes"
 	"google.golang.org/grpc/status"
+	"google.golang.org/protobuf/types/known/timestamppb"
 
 	"github.com/stacklok/mediator/pkg/auth"
 	pb "github.com/stacklok/mediator/pkg/generated/protobuf/go/mediator/v1"
@@ -27,10 +28,12 @@ import (
 	ghclient "github.com/stacklok/mediator/pkg/providers/github"
 )
 
+// ImageRef is a reference to an image
 type ImageRef struct {
 	URI string
 }
 
+// ListPackages lists all packages
 func (s *Server) ListPackages(ctx context.Context, in *pb.ListPackagesRequest) (*pb.ListPackagesResponse, error) {
 	if in.Provider != auth.Github {
 		return nil, status.Errorf(codes.InvalidArgument, "provider not supported: %v", in.Provider)
@@ -70,37 +73,52 @@ func (s *Server) ListPackages(ctx context.Context, in *pb.ListPackagesRequest) (
 	}
 
 	var results []*pb.Packages
-	var images []*ImageRef
 
-	pkgList, err := client.ListAllPackages(ctx, false)
+	pkgList, err := client.ListAllContainers(ctx, false)
+	if err != nil {
+		return nil, err
+	}
+
+	user, err := client.GetAuthenticatedUser(ctx)
 	if err != nil {
 		return nil, err
 	}
 
 	for _, pkg := range pkgList.Packages {
-		pkgURI := fmt.Sprintf("ghcr.io/%s/%s", *pkg.Owner.Login, *pkg.Name)
-
-		imageDigest, err := oci.GetImageManifest(pkgURI, decryptedToken.AccessToken)
+		tags := pkg.LastVersion.Metadata.Container.Tags
+		if len(tags) == 0 {
+			// we cannot check images without tags
+			continue
+		}
+		manifest, err := oci.GetImageManifest(*pkg.Package.Owner.Login, *pkg.Package.Name, tags, *user.Login, decryptedToken.AccessToken)
 		if err != nil {
 			return nil, err
 		}
 
-		images = append(images, &ImageRef{
-			URI: fmt.Sprintf("%s@%s", pkgURI, imageDigest),
-		})
+		// check if singed
+		for _, layer := range manifest.Layers {
+			fmt.Println(layer)
+		}
 
-		//
+		latest_tag := ""
+		if pkg.LastVersion.Metadata.Container.Tags != nil && len(pkg.LastVersion.Metadata.Container.Tags) > 0 {
+			latest_tag = pkg.LastVersion.Metadata.Container.Tags[0]
+		}
+
+		createdAt := pkg.LastVersion.CreatedAt
+
 		results = append(results, &pb.Packages{
-
-			Owner: *pkg.Owner.Login,
-			Name:  *pkg.Name,
-			PkgId: *pkg.ID,
+			Owner: *pkg.Package.Owner.Login,
+			Name:  *pkg.Package.Name,
+			PkgId: *pkg.Package.ID,
+			LastVersion: &pb.PackageVersion{
+				VersionId: *pkg.LastVersion.Version,
+				Tag:       latest_tag,
+				Sha256:    *pkg.LastVersion.Name,
+				IsSigned:  false,
+				CreatedAt: timestamppb.New(createdAt.Time),
+			},
 		})
-	}
-
-	for _, image := range images {
-		// check if image exists in
-		fmt.Println(image.URI)
 	}
 
 	return &pb.ListPackagesResponse{

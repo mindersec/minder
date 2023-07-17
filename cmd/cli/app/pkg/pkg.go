@@ -28,7 +28,7 @@ import (
 	"github.com/stacklok/mediator/cmd/cli/app"
 )
 
-// PackagesCmd is the root command for the repo subcommands
+// PkgCmd is the root command for the pkg subcommands
 var PkgCmd = &cobra.Command{
 	Use:   "pkg",
 	Short: "Manage repositories within a mediator control plane",

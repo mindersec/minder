@@ -128,7 +128,4 @@ func init() {
 	if err := pkg_listCmd.MarkFlagRequired("provider"); err != nil {
 		fmt.Fprintf(os.Stderr, "Error marking flag as required: %s\n", err)
 	}
-	if err := pkg_listCmd.MarkFlagRequired("group-id"); err != nil {
-		fmt.Fprintf(os.Stderr, "Error marking flag as required: %s\n", err)
-	}
 }

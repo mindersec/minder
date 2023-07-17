@@ -116,6 +116,7 @@
     - [LogOutRequest](#mediator-v1-LogOutRequest)
     - [LogOutResponse](#mediator-v1-LogOutResponse)
     - [OrganizationRecord](#mediator-v1-OrganizationRecord)
+    - [PackageVersion](#mediator-v1-PackageVersion)
     - [Packages](#mediator-v1-Packages)
     - [PipelinePolicy](#mediator-v1-PipelinePolicy)
     - [PipelinePolicy.ContextualRuleSet](#mediator-v1-PipelinePolicy-ContextualRuleSet)
@@ -1969,6 +1970,25 @@ ListRuleTypesResponse is the response to list rule types.
 
 
 
+<a name="mediator-v1-PackageVersion"></a>
+
+### PackageVersion
+
+
+
+| Field | Type | Label | Description |
+| ----- | ---- | ----- | ----------- |
+| version_id | [string](#string) |  |  |
+| tag | [string](#string) |  |  |
+| sha256 | [string](#string) |  |  |
+| is_signed | [bool](#bool) |  |  |
+| created_at | [google.protobuf.Timestamp](#google-protobuf-Timestamp) |  |  |
+
+
+
+
+
+
 <a name="mediator-v1-Packages"></a>
 
 ### Packages
@@ -1980,7 +2000,7 @@ ListRuleTypesResponse is the response to list rule types.
 | owner | [string](#string) |  |  |
 | name | [string](#string) |  |  |
 | pkg_id | [int64](#int64) |  |  |
-| image_digest | [string](#string) |  |  |
+| last_version | [PackageVersion](#mediator-v1-PackageVersion) |  |  |
 
 
 

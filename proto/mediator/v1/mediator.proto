@@ -53,11 +53,18 @@ message ListPackagesResponse {
     repeated Packages results = 1;
 }
 
+message PackageVersion {
+    string version_id = 1;
+    string tag = 2;
+    string sha256 = 3;
+    bool is_signed = 4;
+    google.protobuf.Timestamp created_at = 5;
+}
 message Packages {
     string owner = 1;
     string name = 2;
     int64 pkg_id = 3;
-    string image_digest = 4;
+    PackageVersion last_version = 4;
 }
 
 

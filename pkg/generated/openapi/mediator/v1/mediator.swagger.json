@@ -3770,6 +3770,27 @@
         }
       }
     },
+    "v1PackageVersion": {
+      "type": "object",
+      "properties": {
+        "versionId": {
+          "type": "string"
+        },
+        "tag": {
+          "type": "string"
+        },
+        "sha256": {
+          "type": "string"
+        },
+        "isSigned": {
+          "type": "boolean"
+        },
+        "createdAt": {
+          "type": "string",
+          "format": "date-time"
+        }
+      }
+    },
     "v1Packages": {
       "type": "object",
       "properties": {
@@ -3783,8 +3804,8 @@
           "type": "string",
           "format": "int64"
         },
-        "imageDigest": {
-          "type": "string"
+        "lastVersion": {
+          "$ref": "#/definitions/v1PackageVersion"
         }
       }
     },

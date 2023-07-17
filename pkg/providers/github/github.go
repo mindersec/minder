@@ -48,10 +48,11 @@ type RepositoryListResult struct {
 // Add methods here for interacting with the GitHub Rest API
 // e.g. GetRepositoryRestInfo(ctx context.Context, owner string, name string) (*RepositoryInfo, error)
 type RestAPI interface {
+	GetAuthenticatedUser(context.Context) (*github.User, error)
 	GetRepository(context.Context, string, string) (*github.Repository, error)
 	ListAllRepositories(context.Context, bool, string) (RepositoryListResult, error)
 	GetBranchProtection(context.Context, string, string, string) (*github.Protection, error)
-	ListAllPackages(context.Context, bool) (PackageListResult, error)
+	ListAllContainers(context.Context, bool) (PackageListResult, error)
 }
 
 // GraphQLAPI is the interface for interacting with the GitHub GraphQL API
