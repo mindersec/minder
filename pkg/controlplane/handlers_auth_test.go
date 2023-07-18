@@ -16,7 +16,6 @@ package controlplane
 
 import (
 	"context"
-	"os"
 	"path/filepath"
 	"testing"
 	"time"
@@ -54,19 +53,17 @@ func TestLogin_gRPC(t *testing.T) {
 		Password: hash,
 	}
 
-	// prepare keys for signing tokens
-	viper.SetDefault("auth.access_token_private_key", "access_token_private.pem")
-	viper.SetDefault("auth.refresh_token_private_key", "refresh_token_private.pem")
-	err = util.RandomPrivateKeyFile(2048, "access_token_private.pem")
-	require.NoError(t, err, "Error generating access token private key")
-	err = util.RandomPrivateKeyFile(2048, "refresh_token_private.pem")
-	require.NoError(t, err, "Error generating refresh token private key")
+	tmpdir := t.TempDir()
+	atpPath := filepath.Join(tmpdir, "access_token_private.pem")
+	rtpPath := filepath.Join(tmpdir, "refresh_token_private.pem")
 
-	t.Cleanup(func() {
-		t.Log("Cleaning up keys")
-		_ = os.Remove(filepath.Join(".", "access_token_private.pem"))
-		_ = os.Remove(filepath.Join(".", "refresh_token_private.pem"))
-	})
+	// prepare keys for signing tokens
+	viper.SetDefault("auth.access_token_private_key", atpPath)
+	viper.SetDefault("auth.refresh_token_private_key", rtpPath)
+	err = util.RandomPrivateKeyFile(2048, atpPath)
+	require.NoError(t, err, "Error generating access token private key")
+	err = util.RandomPrivateKeyFile(2048, rtpPath)
+	require.NoError(t, err, "Error generating refresh token private key")
 
 	testCases := []struct {
 		name               string
@@ -191,25 +188,24 @@ func TestRevokeTokens_gRPC(t *testing.T) {
 func TestRefreshToken_gRPC(t *testing.T) {
 	t.Parallel()
 
+	tmpdir := t.TempDir()
+	atPrivPath := filepath.Join(tmpdir, "access_token_private.pem")
+	atPubPath := filepath.Join(tmpdir, "access_token_public.pem")
+	rtPrivPath := filepath.Join(tmpdir, "refresh_token_private.pem")
+	rtPubPath := filepath.Join(tmpdir, "refresh_token_public.pem")
+
 	// prepare keys for signing tokens
-	viper.SetDefault("auth.access_token_private_key", "access_token_private.pem")
-	viper.SetDefault("auth.access_token_public_key", "access_token_public.pem")
-	viper.SetDefault("auth.refresh_token_private_key", "refresh_token_private.pem")
-	viper.SetDefault("auth.refresh_token_public_key", "refresh_token_public.pem")
+	viper.SetDefault("auth.access_token_private_key", atPrivPath)
+	viper.SetDefault("auth.access_token_public_key", atPubPath)
+	viper.SetDefault("auth.refresh_token_private_key", rtPrivPath)
+	viper.SetDefault("auth.refresh_token_public_key", rtPubPath)
 	viper.SetDefault("auth.token_expiry", 3600)
 	viper.SetDefault("auth.refresh_expiry", 86400)
-	err := util.RandomKeypairFile(2048, viper.Get("auth.access_token_private_key").(string), viper.Get("auth.access_token_public_key").(string))
-	require.NoError(t, err, "Error generating access token private key")
+	err := util.RandomKeypairFile(2048, atPrivPath, atPubPath)
+	require.NoError(t, err, "Error generating access token key pair")
 
-	err = util.RandomKeypairFile(2048, viper.Get("auth.refresh_token_private_key").(string), viper.Get("auth.refresh_token_public_key").(string))
-	require.NoError(t, err, "Error generating refresh token private key")
-
-	t.Cleanup(func() {
-		_ = os.Remove(filepath.Join(".", viper.Get("auth.refresh_token_private_key").(string)))
-		_ = os.Remove(filepath.Join(".", viper.Get("auth.refresh_token_public_key").(string)))
-		_ = os.Remove(filepath.Join(".", viper.Get("auth.access_token_private_key").(string)))
-		_ = os.Remove(filepath.Join(".", viper.Get("auth.access_token_public_key").(string)))
-	})
+	err = util.RandomKeypairFile(2048, rtPrivPath, rtPubPath)
+	require.NoError(t, err, "Error generating refresh token key pair")
 
 	ctrl := gomock.NewController(t)
 	defer ctrl.Finish()
