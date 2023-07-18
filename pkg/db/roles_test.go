@@ -33,6 +33,8 @@ import (
 
 // A helper function to create a random role
 func createRandomRole(t *testing.T, org int32) Role {
+	t.Helper()
+
 	seed := time.Now().UnixNano()
 	arg := CreateRoleParams{
 		OrganizationID: org,
@@ -54,11 +56,15 @@ func createRandomRole(t *testing.T, org int32) Role {
 }
 
 func TestRole(t *testing.T) {
+	t.Parallel()
+
 	org := createRandomOrganization(t)
 	createRandomRole(t, org.ID)
 }
 
 func TestGetRole(t *testing.T) {
+	t.Parallel()
+
 	org := createRandomOrganization(t)
 	role1 := createRandomRole(t, org.ID)
 
@@ -78,6 +84,8 @@ func TestGetRole(t *testing.T) {
 }
 
 func TestUpdateRole(t *testing.T) {
+	t.Parallel()
+
 	seed := time.Now().UnixNano()
 	org := createRandomOrganization(t)
 	role1 := createRandomRole(t, org.ID)
@@ -104,6 +112,8 @@ func TestUpdateRole(t *testing.T) {
 }
 
 func TestDeleteRole(t *testing.T) {
+	t.Parallel()
+
 	org := createRandomOrganization(t)
 	role1 := createRandomRole(t, org.ID)
 

@@ -49,6 +49,8 @@ func removeConfigFile(filename string) {
 }
 
 func TestCobraMain(t *testing.T) {
+	t.Parallel()
+
 	tests := []struct {
 		name         string
 		args         []string
@@ -62,7 +64,11 @@ func TestCobraMain(t *testing.T) {
 	}
 
 	for _, test := range tests {
+		test := test
+
 		t.Run(test.name, func(t *testing.T) {
+			t.Parallel()
+
 			setupConfigFile(test.expectedFile)
 			defer removeConfigFile(test.expectedFile)
 

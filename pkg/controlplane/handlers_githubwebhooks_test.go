@@ -48,6 +48,8 @@ type MockClient struct {
 
 // RunUnitTestSuite runs the unit test suite.
 func RunUnitTestSuite(t *testing.T) {
+	t.Helper()
+
 	suite.Run(t, new(UnitTestSuite))
 }
 
@@ -127,6 +129,8 @@ func (s *UnitTestSuite) TestHandleGitHubWebHook() {
 }
 
 func TestHandleWebHook(t *testing.T) {
+	t.Parallel()
+
 	p := gochannel.NewGoChannel(gochannel.Config{}, nil)
 	queued, err := p.Subscribe(context.Background(), "package")
 	if err != nil {
@@ -194,6 +198,8 @@ func TestHandleWebHook(t *testing.T) {
 }
 
 func TestAll(t *testing.T) {
+	t.Parallel()
+
 	RunUnitTestSuite(t)
 	// Call other test runner functions for additional test suites
 }

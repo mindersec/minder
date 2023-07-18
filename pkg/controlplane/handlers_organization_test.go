@@ -35,6 +35,8 @@ import (
 )
 
 func TestCreateOrganizationDBMock(t *testing.T) {
+	t.Parallel()
+
 	ctrl := gomock.NewController(t)
 	defer ctrl.Finish()
 
@@ -88,6 +90,8 @@ func TestCreateOrganizationDBMock(t *testing.T) {
 }
 
 func TestCreateOrganization_gRPC(t *testing.T) {
+	t.Parallel()
+
 	testCases := []struct {
 		name               string
 		req                *pb.CreateOrganizationRequest
@@ -118,6 +122,8 @@ func TestCreateOrganization_gRPC(t *testing.T) {
 				store.EXPECT().Rollback(gomock.Any())
 			},
 			checkResponse: func(t *testing.T, res *pb.CreateOrganizationResponse, err error) {
+				t.Helper()
+
 				assert.NoError(t, err)
 				assert.NotNil(t, res)
 				assert.Equal(t, int32(1), res.Id)
@@ -138,6 +144,8 @@ func TestCreateOrganization_gRPC(t *testing.T) {
 				// No expectations, as CreateOrganization should not be called
 			},
 			checkResponse: func(t *testing.T, res *pb.CreateOrganizationResponse, err error) {
+				t.Helper()
+
 				// Assert the expected behavior when the request is empty
 				assert.Error(t, err)
 				assert.Nil(t, res)
@@ -161,6 +169,8 @@ func TestCreateOrganization_gRPC(t *testing.T) {
 				store.EXPECT().Rollback(gomock.Any())
 			},
 			checkResponse: func(t *testing.T, res *pb.CreateOrganizationResponse, err error) {
+				t.Helper()
+
 				// Assert the expected behavior when there's a store error
 				assert.Error(t, err)
 				assert.Nil(t, res)
@@ -180,6 +190,7 @@ func TestCreateOrganization_gRPC(t *testing.T) {
 	for i := range testCases {
 		tc := testCases[i]
 		t.Run(tc.name, func(t *testing.T) {
+			t.Parallel()
 
 			ctrl := gomock.NewController(t)
 			defer ctrl.Finish()
@@ -197,6 +208,8 @@ func TestCreateOrganization_gRPC(t *testing.T) {
 }
 
 func TestGetOrganizationsDBMock(t *testing.T) {
+	t.Parallel()
+
 	ctrl := gomock.NewController(t)
 	defer ctrl.Finish()
 
@@ -251,6 +264,8 @@ func TestGetOrganizationsDBMock(t *testing.T) {
 }
 
 func TestGetOrganizations_gRPC(t *testing.T) {
+	t.Parallel()
+
 	testCases := []struct {
 		name               string
 		req                *pb.GetOrganizationsRequest
@@ -282,6 +297,8 @@ func TestGetOrganizations_gRPC(t *testing.T) {
 					Times(1)
 			},
 			checkResponse: func(t *testing.T, res *pb.GetOrganizationsResponse, err error) {
+				t.Helper()
+
 				expectedOrgs := []*pb.OrganizationRecord{
 					{
 						Id:        1,
@@ -322,6 +339,7 @@ func TestGetOrganizations_gRPC(t *testing.T) {
 	for i := range testCases {
 		tc := testCases[i]
 		t.Run(tc.name, func(t *testing.T) {
+			t.Parallel()
 
 			ctrl := gomock.NewController(t)
 			defer ctrl.Finish()
@@ -339,6 +357,8 @@ func TestGetOrganizations_gRPC(t *testing.T) {
 }
 
 func TestGetOrganizationDBMock(t *testing.T) {
+	t.Parallel()
+
 	ctrl := gomock.NewController(t)
 	defer ctrl.Finish()
 
@@ -386,6 +406,8 @@ func TestGetOrganizationDBMock(t *testing.T) {
 }
 
 func TestGetNonExistingOrganizationDBMock(t *testing.T) {
+	t.Parallel()
+
 	ctrl := gomock.NewController(t)
 	defer ctrl.Finish()
 
@@ -418,6 +440,8 @@ func TestGetNonExistingOrganizationDBMock(t *testing.T) {
 }
 
 func TestGetOrganization_gRPC(t *testing.T) {
+	t.Parallel()
+
 	testCases := []struct {
 		name               string
 		req                *pb.GetOrganizationRequest
@@ -444,6 +468,8 @@ func TestGetOrganization_gRPC(t *testing.T) {
 
 			},
 			checkResponse: func(t *testing.T, res *pb.GetOrganizationResponse, err error) {
+				t.Helper()
+
 				expectedOrg := pb.OrganizationRecord{
 					Id:        1,
 					Name:      "TestOrg",
@@ -472,6 +498,8 @@ func TestGetOrganization_gRPC(t *testing.T) {
 				store.EXPECT().ListUsersByOrganization(gomock.Any(), gomock.Any())
 			},
 			checkResponse: func(t *testing.T, res *pb.GetOrganizationResponse, err error) {
+				t.Helper()
+
 				assert.NoError(t, err)
 				assert.Equal(t, int32(0), res.Organization.Id)
 			},
@@ -491,6 +519,7 @@ func TestGetOrganization_gRPC(t *testing.T) {
 	for i := range testCases {
 		tc := testCases[i]
 		t.Run(tc.name, func(t *testing.T) {
+			t.Parallel()
 
 			ctrl := gomock.NewController(t)
 			defer ctrl.Finish()
@@ -508,6 +537,8 @@ func TestGetOrganization_gRPC(t *testing.T) {
 }
 
 func TestGetOrganizationByNameDBMock(t *testing.T) {
+	t.Parallel()
+
 	ctrl := gomock.NewController(t)
 	defer ctrl.Finish()
 
@@ -555,6 +586,8 @@ func TestGetOrganizationByNameDBMock(t *testing.T) {
 }
 
 func TestGetNonExistingOrganizationByNameDBMock(t *testing.T) {
+	t.Parallel()
+
 	ctrl := gomock.NewController(t)
 	defer ctrl.Finish()
 
@@ -587,6 +620,8 @@ func TestGetNonExistingOrganizationByNameDBMock(t *testing.T) {
 }
 
 func TestGetOrganizationByName_gRPC(t *testing.T) {
+	t.Parallel()
+
 	testCases := []struct {
 		name               string
 		req                *pb.GetOrganizationByNameRequest
@@ -613,6 +648,8 @@ func TestGetOrganizationByName_gRPC(t *testing.T) {
 
 			},
 			checkResponse: func(t *testing.T, res *pb.GetOrganizationByNameResponse, err error) {
+				t.Helper()
+
 				expectedOrg := pb.OrganizationRecord{
 					Id:        1,
 					Name:      "TestOrg",
@@ -641,6 +678,8 @@ func TestGetOrganizationByName_gRPC(t *testing.T) {
 				store.EXPECT().ListUsersByOrganization(gomock.Any(), gomock.Any())
 			},
 			checkResponse: func(t *testing.T, res *pb.GetOrganizationByNameResponse, err error) {
+				t.Helper()
+
 				assert.NoError(t, err)
 				assert.Equal(t, int32(0), res.Organization.Id)
 			},
@@ -659,6 +698,7 @@ func TestGetOrganizationByName_gRPC(t *testing.T) {
 	for i := range testCases {
 		tc := testCases[i]
 		t.Run(tc.name, func(t *testing.T) {
+			t.Parallel()
 
 			ctrl := gomock.NewController(t)
 			defer ctrl.Finish()
@@ -676,6 +716,8 @@ func TestGetOrganizationByName_gRPC(t *testing.T) {
 }
 
 func TestDeleteOrganizationDBMock(t *testing.T) {
+	t.Parallel()
+
 	ctrl := gomock.NewController(t)
 	defer ctrl.Finish()
 
@@ -719,6 +761,8 @@ func TestDeleteOrganizationDBMock(t *testing.T) {
 }
 
 func TestDeleteOrganization_gRPC(t *testing.T) {
+	t.Parallel()
+
 	force := true
 
 	testCases := []struct {
@@ -742,6 +786,8 @@ func TestDeleteOrganization_gRPC(t *testing.T) {
 					Times(1)
 			},
 			checkResponse: func(t *testing.T, res *pb.DeleteOrganizationResponse, err error) {
+				t.Helper()
+
 				assert.NoError(t, err)
 				assert.NotNil(t, res)
 				assert.Equal(t, &pb.DeleteOrganizationResponse{}, res)
@@ -756,6 +802,8 @@ func TestDeleteOrganization_gRPC(t *testing.T) {
 			buildStubs: func(store *mockdb.MockStore) {
 			},
 			checkResponse: func(t *testing.T, res *pb.DeleteOrganizationResponse, err error) {
+				t.Helper()
+
 				// Assert the expected behavior when the request is empty
 				assert.Error(t, err)
 				assert.Nil(t, res)
@@ -776,6 +824,7 @@ func TestDeleteOrganization_gRPC(t *testing.T) {
 	for i := range testCases {
 		tc := testCases[i]
 		t.Run(tc.name, func(t *testing.T) {
+			t.Parallel()
 
 			ctrl := gomock.NewController(t)
 			defer ctrl.Finish()

@@ -31,6 +31,8 @@ import (
 
 // A helper function to create a random policy
 func createRandomPolicy(t *testing.T, group int32) Policy {
+	t.Helper()
+
 	arg := CreatePolicyParams{
 		Provider:         "github",
 		GroupID:          group,
@@ -53,12 +55,16 @@ func createRandomPolicy(t *testing.T, group int32) Policy {
 }
 
 func TestPolicy(t *testing.T) {
+	t.Parallel()
+
 	org := createRandomOrganization(t)
 	group := createRandomGroup(t, org.ID)
 	createRandomPolicy(t, group.ID)
 }
 
 func TestGetPolicy(t *testing.T) {
+	t.Parallel()
+
 	org := createRandomOrganization(t)
 	group := createRandomGroup(t, org.ID)
 	policy1 := createRandomPolicy(t, group.ID)
@@ -78,6 +84,8 @@ func TestGetPolicy(t *testing.T) {
 }
 
 func TestDeletePolicy(t *testing.T) {
+	t.Parallel()
+
 	org := createRandomOrganization(t)
 	group := createRandomGroup(t, org.ID)
 	policy := createRandomPolicy(t, group.ID)

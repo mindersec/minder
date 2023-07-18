@@ -35,6 +35,8 @@ import (
 )
 
 func TestCreateGroupDBMock(t *testing.T) {
+	t.Parallel()
+
 	ctrl := gomock.NewController(t)
 	defer ctrl.Finish()
 
@@ -83,6 +85,8 @@ func TestCreateGroupDBMock(t *testing.T) {
 }
 
 func TestCreateGroup_gRPC(t *testing.T) {
+	t.Parallel()
+
 	testCases := []struct {
 		name               string
 		req                *pb.CreateGroupRequest
@@ -110,6 +114,8 @@ func TestCreateGroup_gRPC(t *testing.T) {
 					Times(1)
 			},
 			checkResponse: func(t *testing.T, res *pb.CreateGroupResponse, err error) {
+				t.Helper()
+
 				assert.NoError(t, err)
 				assert.NotNil(t, res)
 				assert.Equal(t, int32(1), res.GroupId)
@@ -129,6 +135,8 @@ func TestCreateGroup_gRPC(t *testing.T) {
 			buildStubs: func(store *mockdb.MockStore) {
 			},
 			checkResponse: func(t *testing.T, res *pb.CreateGroupResponse, err error) {
+				t.Helper()
+
 				// Assert the expected behavior when the request is empty
 				assert.Error(t, err)
 				assert.Nil(t, res)
@@ -148,6 +156,8 @@ func TestCreateGroup_gRPC(t *testing.T) {
 					Times(1)
 			},
 			checkResponse: func(t *testing.T, res *pb.CreateGroupResponse, err error) {
+				t.Helper()
+
 				// Assert the expected behavior when there's a store error
 				assert.Error(t, err)
 				assert.Nil(t, res)
@@ -168,6 +178,7 @@ func TestCreateGroup_gRPC(t *testing.T) {
 	for i := range testCases {
 		tc := testCases[i]
 		t.Run(tc.name, func(t *testing.T) {
+			t.Parallel()
 
 			ctrl := gomock.NewController(t)
 			defer ctrl.Finish()
@@ -185,6 +196,8 @@ func TestCreateGroup_gRPC(t *testing.T) {
 }
 
 func TestDeleteGroupDBMock(t *testing.T) {
+	t.Parallel()
+
 	ctrl := gomock.NewController(t)
 	defer ctrl.Finish()
 
@@ -231,6 +244,8 @@ func TestDeleteGroupDBMock(t *testing.T) {
 }
 
 func TestDeleteGroup_gRPC(t *testing.T) {
+	t.Parallel()
+
 	force := true
 
 	testCases := []struct {
@@ -254,6 +269,8 @@ func TestDeleteGroup_gRPC(t *testing.T) {
 					Times(1)
 			},
 			checkResponse: func(t *testing.T, res *pb.DeleteGroupResponse, err error) {
+				t.Helper()
+
 				assert.NoError(t, err)
 				assert.NotNil(t, res)
 				assert.Equal(t, &pb.DeleteGroupResponse{}, res)
@@ -268,6 +285,8 @@ func TestDeleteGroup_gRPC(t *testing.T) {
 			buildStubs: func(store *mockdb.MockStore) {
 			},
 			checkResponse: func(t *testing.T, res *pb.DeleteGroupResponse, err error) {
+				t.Helper()
+
 				// Assert the expected behavior when the request is empty
 				assert.Error(t, err)
 				assert.Nil(t, res)
@@ -288,6 +307,7 @@ func TestDeleteGroup_gRPC(t *testing.T) {
 	for i := range testCases {
 		tc := testCases[i]
 		t.Run(tc.name, func(t *testing.T) {
+			t.Parallel()
 
 			ctrl := gomock.NewController(t)
 			defer ctrl.Finish()
@@ -305,6 +325,8 @@ func TestDeleteGroup_gRPC(t *testing.T) {
 }
 
 func TestGetGroupsDBMock(t *testing.T) {
+	t.Parallel()
+
 	ctrl := gomock.NewController(t)
 	defer ctrl.Finish()
 
@@ -362,6 +384,8 @@ func TestGetGroupsDBMock(t *testing.T) {
 }
 
 func TestGetGroups_gRPC(t *testing.T) {
+	t.Parallel()
+
 	testCases := []struct {
 		name               string
 		req                *pb.GetGroupsRequest
@@ -394,6 +418,8 @@ func TestGetGroups_gRPC(t *testing.T) {
 					Times(1)
 			},
 			checkResponse: func(t *testing.T, res *pb.GetGroupsResponse, err error) {
+				t.Helper()
+
 				expectedGroups := []*pb.GroupRecord{
 					{
 						GroupId:        1,
@@ -426,6 +452,8 @@ func TestGetGroups_gRPC(t *testing.T) {
 	for i := range testCases {
 		tc := testCases[i]
 		t.Run(tc.name, func(t *testing.T) {
+			t.Parallel()
+
 			// Create a new context and set the claims value
 			ctx := context.WithValue(context.Background(), auth.TokenInfoKey, auth.UserClaims{
 				UserId:         1,
@@ -451,6 +479,8 @@ func TestGetGroups_gRPC(t *testing.T) {
 }
 
 func TestGetGroupDBMock(t *testing.T) {
+	t.Parallel()
+
 	ctrl := gomock.NewController(t)
 	defer ctrl.Finish()
 
@@ -497,6 +527,8 @@ func TestGetGroupDBMock(t *testing.T) {
 }
 
 func TestGetNonExistingGroupDBMock(t *testing.T) {
+	t.Parallel()
+
 	ctrl := gomock.NewController(t)
 	defer ctrl.Finish()
 
@@ -528,6 +560,8 @@ func TestGetNonExistingGroupDBMock(t *testing.T) {
 }
 
 func TestGetGroup_gRPC(t *testing.T) {
+	t.Parallel()
+
 	testCases := []struct {
 		name               string
 		req                *pb.GetGroupByIdRequest
@@ -553,6 +587,8 @@ func TestGetGroup_gRPC(t *testing.T) {
 					Times(1)
 			},
 			checkResponse: func(t *testing.T, res *pb.GetGroupByIdResponse, err error) {
+				t.Helper()
+
 				expectedGroup := pb.GroupRecord{
 					GroupId:        1,
 					OrganizationId: 1,
@@ -581,6 +617,8 @@ func TestGetGroup_gRPC(t *testing.T) {
 
 			},
 			checkResponse: func(t *testing.T, res *pb.GetGroupByIdResponse, err error) {
+				t.Helper()
+
 				assert.NoError(t, err)
 				assert.Equal(t, int32(0), res.Group.GroupId)
 			},
@@ -600,6 +638,7 @@ func TestGetGroup_gRPC(t *testing.T) {
 	for i := range testCases {
 		tc := testCases[i]
 		t.Run(tc.name, func(t *testing.T) {
+			t.Parallel()
 
 			ctrl := gomock.NewController(t)
 			defer ctrl.Finish()

@@ -22,6 +22,7 @@ import (
 )
 
 func TestCheckHealth(t *testing.T) {
+	t.Parallel()
 
 	server := Server{}
 	response, err := server.CheckHealth(context.Background(), &pb.CheckHealthRequest{})

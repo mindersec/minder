@@ -35,6 +35,8 @@ import (
 )
 
 func TestCreateUserDBMock(t *testing.T) {
+	t.Parallel()
+
 	ctrl := gomock.NewController(t)
 	defer ctrl.Finish()
 
@@ -112,6 +114,8 @@ func TestCreateUserDBMock(t *testing.T) {
 }
 
 func TestCreateUser_gRPC(t *testing.T) {
+	t.Parallel()
+
 	seed := time.Now().UnixNano()
 	password := util.RandomPassword(8, seed)
 
@@ -151,6 +155,8 @@ func TestCreateUser_gRPC(t *testing.T) {
 
 			},
 			checkResponse: func(t *testing.T, res *pb.CreateUserResponse, err error) {
+				t.Helper()
+
 				assert.NoError(t, err)
 				assert.NotNil(t, res)
 				assert.Equal(t, int32(1), res.Id)
@@ -171,6 +177,8 @@ func TestCreateUser_gRPC(t *testing.T) {
 				// No expectations, as CreateRole should not be called
 			},
 			checkResponse: func(t *testing.T, res *pb.CreateUserResponse, err error) {
+				t.Helper()
+
 				// Assert the expected behavior when the request is empty
 				assert.Error(t, err)
 				assert.Nil(t, res)
@@ -191,6 +199,7 @@ func TestCreateUser_gRPC(t *testing.T) {
 	for i := range testCases {
 		tc := testCases[i]
 		t.Run(tc.name, func(t *testing.T) {
+			t.Parallel()
 
 			ctrl := gomock.NewController(t)
 			defer ctrl.Finish()
@@ -209,6 +218,8 @@ func TestCreateUser_gRPC(t *testing.T) {
 }
 
 func TestUpdatePasswordDBMock(t *testing.T) {
+	t.Parallel()
+
 	ctrl := gomock.NewController(t)
 	defer ctrl.Finish()
 
@@ -245,6 +256,8 @@ func TestUpdatePasswordDBMock(t *testing.T) {
 }
 
 func TestUpdatePassword_gRPC(t *testing.T) {
+	t.Parallel()
+
 	seed := time.Now().UnixNano()
 	password := util.RandomPassword(8, seed)
 
@@ -267,6 +280,8 @@ func TestUpdatePassword_gRPC(t *testing.T) {
 				store.EXPECT().RevokeUserToken(gomock.Any(), gomock.Any())
 			},
 			checkResponse: func(t *testing.T, res *pb.UpdatePasswordResponse, err error) {
+				t.Helper()
+
 				assert.NoError(t, err)
 				assert.NotNil(t, res)
 			},
@@ -279,6 +294,8 @@ func TestUpdatePassword_gRPC(t *testing.T) {
 				// No expectations, as CreateRole should not be called
 			},
 			checkResponse: func(t *testing.T, res *pb.UpdatePasswordResponse, err error) {
+				t.Helper()
+
 				// Assert the expected behavior when the request is empty
 				assert.Error(t, err)
 				assert.Nil(t, res)
@@ -299,6 +316,7 @@ func TestUpdatePassword_gRPC(t *testing.T) {
 	for i := range testCases {
 		tc := testCases[i]
 		t.Run(tc.name, func(t *testing.T) {
+			t.Parallel()
 
 			ctrl := gomock.NewController(t)
 			defer ctrl.Finish()
@@ -318,6 +336,8 @@ func TestUpdatePassword_gRPC(t *testing.T) {
 }
 
 func TestUpdateProfileDBMock(t *testing.T) {
+	t.Parallel()
+
 	ctrl := gomock.NewController(t)
 	defer ctrl.Finish()
 
@@ -353,6 +373,8 @@ func TestUpdateProfileDBMock(t *testing.T) {
 }
 
 func TestUpdateProfile_gRPC(t *testing.T) {
+	t.Parallel()
+
 	seed := time.Now().UnixNano()
 	email := util.RandomEmail(seed)
 	name := util.RandomName(seed)
@@ -375,6 +397,8 @@ func TestUpdateProfile_gRPC(t *testing.T) {
 				store.EXPECT().UpdateUser(gomock.Any(), gomock.Any())
 			},
 			checkResponse: func(t *testing.T, res *pb.UpdateProfileResponse, err error) {
+				t.Helper()
+
 				assert.NoError(t, err)
 				assert.NotNil(t, res)
 			},
@@ -387,6 +411,8 @@ func TestUpdateProfile_gRPC(t *testing.T) {
 				// No expectations, as CreateRole should not be called
 			},
 			checkResponse: func(t *testing.T, res *pb.UpdateProfileResponse, err error) {
+				t.Helper()
+
 				// Assert the expected behavior when the request is empty
 				assert.Error(t, err)
 				assert.Nil(t, res)
@@ -408,6 +434,7 @@ func TestUpdateProfile_gRPC(t *testing.T) {
 	for i := range testCases {
 		tc := testCases[i]
 		t.Run(tc.name, func(t *testing.T) {
+			t.Parallel()
 
 			ctrl := gomock.NewController(t)
 			defer ctrl.Finish()
@@ -427,6 +454,8 @@ func TestUpdateProfile_gRPC(t *testing.T) {
 }
 
 func TestDeleteUserDBMock(t *testing.T) {
+	t.Parallel()
+
 	ctrl := gomock.NewController(t)
 	defer ctrl.Finish()
 
@@ -476,6 +505,8 @@ func TestDeleteUserDBMock(t *testing.T) {
 }
 
 func TestDeleteUser_gRPC(t *testing.T) {
+	t.Parallel()
+
 	force := true
 
 	testCases := []struct {
@@ -499,6 +530,8 @@ func TestDeleteUser_gRPC(t *testing.T) {
 					Times(1)
 			},
 			checkResponse: func(t *testing.T, res *pb.DeleteUserResponse, err error) {
+				t.Helper()
+
 				assert.NoError(t, err)
 				assert.NotNil(t, res)
 				assert.Equal(t, &pb.DeleteUserResponse{}, res)
@@ -514,6 +547,8 @@ func TestDeleteUser_gRPC(t *testing.T) {
 				// No expectations, as CreateRole should not be called
 			},
 			checkResponse: func(t *testing.T, res *pb.DeleteUserResponse, err error) {
+				t.Helper()
+
 				// Assert the expected behavior when the request is empty
 				assert.Error(t, err)
 				assert.Nil(t, res)
@@ -533,6 +568,7 @@ func TestDeleteUser_gRPC(t *testing.T) {
 	for i := range testCases {
 		tc := testCases[i]
 		t.Run(tc.name, func(t *testing.T) {
+			t.Parallel()
 
 			ctrl := gomock.NewController(t)
 			defer ctrl.Finish()
@@ -552,6 +588,8 @@ func TestDeleteUser_gRPC(t *testing.T) {
 }
 
 func TestGetUsersDBMock(t *testing.T) {
+	t.Parallel()
+
 	ctrl := gomock.NewController(t)
 	defer ctrl.Finish()
 
@@ -610,6 +648,8 @@ func TestGetUsersDBMock(t *testing.T) {
 }
 
 func TestGetUsers_gRPC(t *testing.T) {
+	t.Parallel()
+
 	testCases := []struct {
 		name               string
 		req                *pb.GetUsersRequest
@@ -644,6 +684,8 @@ func TestGetUsers_gRPC(t *testing.T) {
 					Times(1)
 			},
 			checkResponse: func(t *testing.T, res *pb.GetUsersResponse, err error) {
+				t.Helper()
+
 				firstNamePtr := "Foo"
 				protectedPtr := true
 				emailPtr := "test1@stacklok.com"
@@ -690,6 +732,7 @@ func TestGetUsers_gRPC(t *testing.T) {
 	for i := range testCases {
 		tc := testCases[i]
 		t.Run(tc.name, func(t *testing.T) {
+			t.Parallel()
 
 			ctrl := gomock.NewController(t)
 			defer ctrl.Finish()
@@ -709,6 +752,8 @@ func TestGetUsers_gRPC(t *testing.T) {
 }
 
 func TestGetUserDBMock(t *testing.T) {
+	t.Parallel()
+
 	ctrl := gomock.NewController(t)
 	defer ctrl.Finish()
 
@@ -758,6 +803,8 @@ func TestGetUserDBMock(t *testing.T) {
 }
 
 func TestGetNonExistingUserDBMock(t *testing.T) {
+	t.Parallel()
+
 	ctrl := gomock.NewController(t)
 	defer ctrl.Finish()
 
@@ -792,6 +839,8 @@ func TestGetNonExistingUserDBMock(t *testing.T) {
 }
 
 func TestGetUser_gRPC(t *testing.T) {
+	t.Parallel()
+
 	testCases := []struct {
 		name               string
 		req                *pb.GetUserByIdRequest
@@ -816,6 +865,8 @@ func TestGetUser_gRPC(t *testing.T) {
 				store.EXPECT().GetUserGroups(gomock.Any(), gomock.Any())
 			},
 			checkResponse: func(t *testing.T, res *pb.GetUserByIdResponse, err error) {
+				t.Helper()
+
 				expectedUser := pb.UserRecord{
 					Id:             1,
 					OrganizationId: 1,
@@ -844,6 +895,8 @@ func TestGetUser_gRPC(t *testing.T) {
 
 			},
 			checkResponse: func(t *testing.T, res *pb.GetUserByIdResponse, err error) {
+				t.Helper()
+
 				assert.NoError(t, err)
 				assert.Equal(t, int32(0), res.User.Id)
 			},
@@ -862,6 +915,7 @@ func TestGetUser_gRPC(t *testing.T) {
 	for i := range testCases {
 		tc := testCases[i]
 		t.Run(tc.name, func(t *testing.T) {
+			t.Parallel()
 
 			ctrl := gomock.NewController(t)
 			defer ctrl.Finish()

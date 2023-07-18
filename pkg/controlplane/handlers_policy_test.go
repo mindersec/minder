@@ -50,6 +50,8 @@ const policyDefinition = `branches:
 `
 
 func TestCreatePolicyDBMock(t *testing.T) {
+	t.Parallel()
+
 	ctrl := gomock.NewController(t)
 	defer ctrl.Finish()
 
@@ -109,6 +111,8 @@ func TestCreatePolicyDBMock(t *testing.T) {
 }
 
 func TestCreatePolicy_gRPC(t *testing.T) {
+	t.Parallel()
+
 	testCases := []struct {
 		name               string
 		req                *pb.CreatePolicyRequest
@@ -143,6 +147,8 @@ func TestCreatePolicy_gRPC(t *testing.T) {
 					Times(1)
 			},
 			checkResponse: func(t *testing.T, res *pb.CreatePolicyResponse, err error) {
+				t.Helper()
+
 				assert.NoError(t, err)
 				assert.NotNil(t, res)
 				assert.Equal(t, int32(1), res.Policy.Id)
@@ -162,6 +168,8 @@ func TestCreatePolicy_gRPC(t *testing.T) {
 				// No expectations, as CreateRole should not be called
 			},
 			checkResponse: func(t *testing.T, res *pb.CreatePolicyResponse, err error) {
+				t.Helper()
+
 				// Assert the expected behavior when the request is empty
 				assert.Error(t, err)
 				assert.Nil(t, res)
@@ -181,6 +189,7 @@ func TestCreatePolicy_gRPC(t *testing.T) {
 	for i := range testCases {
 		tc := testCases[i]
 		t.Run(tc.name, func(t *testing.T) {
+			t.Parallel()
 
 			ctrl := gomock.NewController(t)
 			defer ctrl.Finish()
@@ -198,6 +207,8 @@ func TestCreatePolicy_gRPC(t *testing.T) {
 }
 
 func TestDeletePolicyDBMock(t *testing.T) {
+	t.Parallel()
+
 	ctrl := gomock.NewController(t)
 	defer ctrl.Finish()
 
@@ -230,6 +241,8 @@ func TestDeletePolicyDBMock(t *testing.T) {
 }
 
 func TestDeletePolicy_gRPC(t *testing.T) {
+	t.Parallel()
+
 	testCases := []struct {
 		name               string
 		req                *pb.DeletePolicyRequest
@@ -249,6 +262,8 @@ func TestDeletePolicy_gRPC(t *testing.T) {
 					Times(1)
 			},
 			checkResponse: func(t *testing.T, res *pb.DeletePolicyResponse, err error) {
+				t.Helper()
+
 				assert.NoError(t, err)
 				assert.NotNil(t, res)
 				assert.Equal(t, &pb.DeletePolicyResponse{}, res)
@@ -264,6 +279,8 @@ func TestDeletePolicy_gRPC(t *testing.T) {
 				// No expectations, as CreateRole should not be called
 			},
 			checkResponse: func(t *testing.T, res *pb.DeletePolicyResponse, err error) {
+				t.Helper()
+
 				// Assert the expected behavior when the request is empty
 				assert.Error(t, err)
 				assert.Nil(t, res)
@@ -283,6 +300,7 @@ func TestDeletePolicy_gRPC(t *testing.T) {
 	for i := range testCases {
 		tc := testCases[i]
 		t.Run(tc.name, func(t *testing.T) {
+			t.Parallel()
 
 			ctrl := gomock.NewController(t)
 			defer ctrl.Finish()
@@ -300,6 +318,8 @@ func TestDeletePolicy_gRPC(t *testing.T) {
 }
 
 func TestGetPoliciesDBMock(t *testing.T) {
+	t.Parallel()
+
 	ctrl := gomock.NewController(t)
 	defer ctrl.Finish()
 
@@ -345,6 +365,8 @@ func TestGetPoliciesDBMock(t *testing.T) {
 }
 
 func TestGetPolicies_gRPC(t *testing.T) {
+	t.Parallel()
+
 	testCases := []struct {
 		name               string
 		req                *pb.GetPoliciesRequest
@@ -373,6 +395,8 @@ func TestGetPolicies_gRPC(t *testing.T) {
 					Times(1)
 			},
 			checkResponse: func(t *testing.T, res *pb.GetPoliciesResponse, err error) {
+				t.Helper()
+
 				expectedPolicies := []db.ListPoliciesByGroupIDRow{
 					{
 						ID:               1,
@@ -409,6 +433,7 @@ func TestGetPolicies_gRPC(t *testing.T) {
 	for i := range testCases {
 		tc := testCases[i]
 		t.Run(tc.name, func(t *testing.T) {
+			t.Parallel()
 
 			ctrl := gomock.NewController(t)
 			defer ctrl.Finish()
@@ -426,6 +451,8 @@ func TestGetPolicies_gRPC(t *testing.T) {
 }
 
 func TestGetPolicyStatusByIdDBMock(t *testing.T) {
+	t.Parallel()
+
 	ctrl := gomock.NewController(t)
 	defer ctrl.Finish()
 
@@ -473,6 +500,8 @@ func TestGetPolicyStatusByIdDBMock(t *testing.T) {
 }
 
 func TestGetPolicyStatusById_gRPC(t *testing.T) {
+	t.Parallel()
+
 	testCases := []struct {
 		name               string
 		req                *pb.GetPolicyStatusByIdRequest
@@ -501,6 +530,8 @@ func TestGetPolicyStatusById_gRPC(t *testing.T) {
 					Times(1)
 			},
 			checkResponse: func(t *testing.T, res *pb.GetPolicyStatusByIdResponse, err error) {
+				t.Helper()
+
 				expectedStatus := []db.GetPolicyStatusByIdRow{
 					{
 						PolicyType:   "branch_protection",
@@ -537,6 +568,7 @@ func TestGetPolicyStatusById_gRPC(t *testing.T) {
 	for i := range testCases {
 		tc := testCases[i]
 		t.Run(tc.name, func(t *testing.T) {
+			t.Parallel()
 
 			ctrl := gomock.NewController(t)
 			defer ctrl.Finish()
@@ -554,6 +586,8 @@ func TestGetPolicyStatusById_gRPC(t *testing.T) {
 }
 
 func TestGetPolicyStatusByRepositoryIdDBMock(t *testing.T) {
+	t.Parallel()
+
 	ctrl := gomock.NewController(t)
 	defer ctrl.Finish()
 
@@ -601,6 +635,8 @@ func TestGetPolicyStatusByRepositoryIdDBMock(t *testing.T) {
 }
 
 func TestGetPolicyStatusByRepositoryId_gRPC(t *testing.T) {
+	t.Parallel()
+
 	testCases := []struct {
 		name               string
 		req                *pb.GetPolicyStatusByRepositoryRequest
@@ -629,6 +665,8 @@ func TestGetPolicyStatusByRepositoryId_gRPC(t *testing.T) {
 					Times(1)
 			},
 			checkResponse: func(t *testing.T, res *pb.GetPolicyStatusByRepositoryResponse, err error) {
+				t.Helper()
+
 				expectedStatus := []db.GetPolicyStatusByRepositoryIdRow{
 					{
 						PolicyType:   "branch_protection",
@@ -665,6 +703,7 @@ func TestGetPolicyStatusByRepositoryId_gRPC(t *testing.T) {
 	for i := range testCases {
 		tc := testCases[i]
 		t.Run(tc.name, func(t *testing.T) {
+			t.Parallel()
 
 			ctrl := gomock.NewController(t)
 			defer ctrl.Finish()
@@ -682,6 +721,8 @@ func TestGetPolicyStatusByRepositoryId_gRPC(t *testing.T) {
 }
 
 func TestGetPolicyViolationsByIdDBMock(t *testing.T) {
+	t.Parallel()
+
 	ctrl := gomock.NewController(t)
 	defer ctrl.Finish()
 
@@ -731,6 +772,8 @@ func TestGetPolicyViolationsByIdDBMock(t *testing.T) {
 }
 
 func TestGetViolationsById_gRPC(t *testing.T) {
+	t.Parallel()
+
 	testCases := []struct {
 		name               string
 		req                *pb.GetPolicyViolationsByIdRequest
@@ -758,6 +801,8 @@ func TestGetViolationsById_gRPC(t *testing.T) {
 					Times(1)
 			},
 			checkResponse: func(t *testing.T, res *pb.GetPolicyViolationsByIdResponse, err error) {
+				t.Helper()
+
 				expectedViolations := []db.GetPolicyViolationsByIdRow{
 					{
 						PolicyType: "branch_protection",
@@ -797,6 +842,7 @@ func TestGetViolationsById_gRPC(t *testing.T) {
 	for i := range testCases {
 		tc := testCases[i]
 		t.Run(tc.name, func(t *testing.T) {
+			t.Parallel()
 
 			ctrl := gomock.NewController(t)
 			defer ctrl.Finish()
@@ -814,6 +860,8 @@ func TestGetViolationsById_gRPC(t *testing.T) {
 }
 
 func TestGetPolicyViolationsByGroupDBMock(t *testing.T) {
+	t.Parallel()
+
 	ctrl := gomock.NewController(t)
 	defer ctrl.Finish()
 
@@ -862,6 +910,8 @@ func TestGetPolicyViolationsByGroupDBMock(t *testing.T) {
 }
 
 func TestGetViolationsByGroup_gRPC(t *testing.T) {
+	t.Parallel()
+
 	testCases := []struct {
 		name               string
 		req                *pb.GetPolicyViolationsByGroupRequest
@@ -888,6 +938,8 @@ func TestGetViolationsByGroup_gRPC(t *testing.T) {
 					Times(1)
 			},
 			checkResponse: func(t *testing.T, res *pb.GetPolicyViolationsByGroupResponse, err error) {
+				t.Helper()
+
 				expectedViolations := []db.GetPolicyViolationsByGroupRow{
 					{
 						PolicyType: "branch_protection",
@@ -927,6 +979,7 @@ func TestGetViolationsByGroup_gRPC(t *testing.T) {
 	for i := range testCases {
 		tc := testCases[i]
 		t.Run(tc.name, func(t *testing.T) {
+			t.Parallel()
 
 			ctrl := gomock.NewController(t)
 			defer ctrl.Finish()
@@ -944,6 +997,8 @@ func TestGetViolationsByGroup_gRPC(t *testing.T) {
 }
 
 func TestGetPolicyViolationsByRepositoryDBMock(t *testing.T) {
+	t.Parallel()
+
 	ctrl := gomock.NewController(t)
 	defer ctrl.Finish()
 
@@ -993,6 +1048,8 @@ func TestGetPolicyViolationsByRepositoryDBMock(t *testing.T) {
 }
 
 func TestGetViolationsByRepositoryId_gRPC(t *testing.T) {
+	t.Parallel()
+
 	testCases := []struct {
 		name               string
 		req                *pb.GetPolicyViolationsByRepositoryRequest
@@ -1020,6 +1077,8 @@ func TestGetViolationsByRepositoryId_gRPC(t *testing.T) {
 					Times(1)
 			},
 			checkResponse: func(t *testing.T, res *pb.GetPolicyViolationsByRepositoryResponse, err error) {
+				t.Helper()
+
 				expectedViolations := []db.GetPolicyViolationsByRepositoryIdRow{
 					{
 						PolicyType: "branch_protection",
@@ -1059,6 +1118,7 @@ func TestGetViolationsByRepositoryId_gRPC(t *testing.T) {
 	for i := range testCases {
 		tc := testCases[i]
 		t.Run(tc.name, func(t *testing.T) {
+			t.Parallel()
 
 			ctrl := gomock.NewController(t)
 			defer ctrl.Finish()

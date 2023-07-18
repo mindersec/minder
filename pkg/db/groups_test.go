@@ -32,6 +32,8 @@ import (
 )
 
 func createRandomGroup(t *testing.T, org int32) Group {
+	t.Helper()
+
 	seed := time.Now().UnixNano()
 	arg := CreateGroupParams{
 		OrganizationID: org,
@@ -53,11 +55,15 @@ func createRandomGroup(t *testing.T, org int32) Group {
 }
 
 func TestGroup(t *testing.T) {
+	t.Parallel()
+
 	org := createRandomOrganization(t)
 	createRandomGroup(t, org.ID)
 }
 
 func TestGetGroup(t *testing.T) {
+	t.Parallel()
+
 	org := createRandomOrganization(t)
 	group1 := createRandomGroup(t, org.ID)
 
@@ -75,6 +81,8 @@ func TestGetGroup(t *testing.T) {
 }
 
 func TestListGroups(t *testing.T) {
+	t.Parallel()
+
 	org := createRandomOrganization(t)
 
 	for i := 0; i < 10; i++ {
@@ -98,6 +106,8 @@ func TestListGroups(t *testing.T) {
 }
 
 func TestUpdateGroup(t *testing.T) {
+	t.Parallel()
+
 	seed := time.Now().UnixNano()
 	org := createRandomOrganization(t)
 	group1 := createRandomGroup(t, org.ID)
@@ -122,6 +132,8 @@ func TestUpdateGroup(t *testing.T) {
 }
 
 func TestDeleteGroup(t *testing.T) {
+	t.Parallel()
+
 	org := createRandomOrganization(t)
 	group1 := createRandomGroup(t, org.ID)
 
@@ -136,6 +148,8 @@ func TestDeleteGroup(t *testing.T) {
 }
 
 func TestListGroupsByOrganization(t *testing.T) {
+	t.Parallel()
+
 	org1 := createRandomOrganization(t)
 	org2 := createRandomOrganization(t)
 

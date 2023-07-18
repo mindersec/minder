@@ -65,10 +65,13 @@ linters:
     - gosimple
     - govet
     - ineffassign
+    - paralleltest
     - promlinter
     - revive
     - staticcheck
     - unused
+    - thelper
+    - tparallel
 
 issues:
   exclude-use-default: false

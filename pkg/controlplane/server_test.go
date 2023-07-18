@@ -75,6 +75,8 @@ func getgRPCConnection() (*grpc.ClientConn, error) {
 }
 
 func TestHealth(t *testing.T) {
+	t.Parallel()
+
 	conn, err := getgRPCConnection()
 	if err != nil {
 		t.Fatalf("Failed to dial bufnet: %v", err)
@@ -89,6 +91,8 @@ func TestHealth(t *testing.T) {
 }
 
 func TestWebhook(t *testing.T) {
+	t.Parallel()
+
 	resp, err := http.Get("http://localhost:8080/api/v1/github/hook")
 	if err != nil {
 		t.Fatalf("Failed to get webhook: %v", err)

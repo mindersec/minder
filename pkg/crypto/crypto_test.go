@@ -25,12 +25,16 @@ import (
 )
 
 func TestGetCert(t *testing.T) {
+	t.Parallel()
+
 	cert, err := GetCert([]byte(provenance))
 	assert.Nil(t, err)
 	assert.Contains(t, string(cert), "-----BEGIN CERTIFICATE-----")
 }
 
 func TestGetPubKeyFromCert(t *testing.T) {
+	t.Parallel()
+
 	cert, err := GetCert([]byte(provenance))
 	assert.Nil(t, err)
 	pubKey, err := GetPubKeyFromCert(cert)
@@ -47,6 +51,8 @@ func TestGetPubKeyFromCert(t *testing.T) {
 }
 
 func TestCertificateChain(t *testing.T) {
+	t.Parallel()
+
 	roots := x509.NewCertPool()
 	cert, err := GetCert([]byte(provenance))
 	assert.Nil(t, err)
@@ -56,6 +62,8 @@ func TestCertificateChain(t *testing.T) {
 }
 
 func TestEncryptDecryptBytes(t *testing.T) {
+	t.Parallel()
+
 	encrypted, err := EncryptBytes("test", []byte("test"))
 	assert.Nil(t, err)
 	decrypted, err := DecryptBytes("test", encrypted)
@@ -64,6 +72,8 @@ func TestEncryptDecryptBytes(t *testing.T) {
 }
 
 func TestGenerateNonce(t *testing.T) {
+	t.Parallel()
+
 	state, err := GenerateNonce()
 	if err != nil {
 		t.Errorf("Error in generateState: %v", err)
@@ -75,6 +85,8 @@ func TestGenerateNonce(t *testing.T) {
 }
 
 func TestIsNonceValid(t *testing.T) {
+	t.Parallel()
+
 	nonce, err := GenerateNonce()
 	if err != nil {
 		t.Errorf("Error in generateState: %v", err)
@@ -102,6 +114,8 @@ func TestIsNonceValid(t *testing.T) {
 }
 
 func TestGenerateKeyPair(t *testing.T) {
+	t.Parallel()
+
 	passphrase := "passphrase"
 
 	privKey, publicKey, err := GenerateKeyPair(passphrase)
