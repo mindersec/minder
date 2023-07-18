@@ -20,6 +20,7 @@ import (
 	"encoding/json"
 	"fmt"
 	"io"
+	"strings"
 
 	"github.com/stacklok/mediator/internal/util"
 	pb "github.com/stacklok/mediator/pkg/generated/protobuf/go/mediator/v1"
@@ -143,4 +144,33 @@ func validateRule(r *pb.PipelinePolicy_Rule) error {
 	}
 
 	return nil
+}
+
+// GetRulesForEntity returns the rules for the given entity
+func GetRulesForEntity(p *pb.PipelinePolicy, entity string) ([]*pb.PipelinePolicy_ContextualRuleSet, error) {
+	switch strings.ToLower(entity) {
+	case "repository":
+		return p.Repository, nil
+	case "build_environment":
+		return p.BuildEnvironment, nil
+	case "artifact":
+		return p.Artifact, nil
+	default:
+		return nil, fmt.Errorf("unknown entity: %s", entity)
+	}
+}
+
+// FilterRulesForType filters the rules for the given rule type.
+func FilterRulesForType(cr []*pb.PipelinePolicy_ContextualRuleSet, rt *pb.RuleType) ([]*pb.PipelinePolicy_Rule, error) {
+	out := make([]*pb.PipelinePolicy_Rule, 0)
+
+	for _, r := range cr {
+		for _, rule := range r.Rules {
+			if rule.Type == rt.Name {
+				out = append(out, rule)
+			}
+		}
+	}
+
+	return out, nil
 }
