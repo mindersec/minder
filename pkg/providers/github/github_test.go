@@ -22,6 +22,8 @@ import (
 )
 
 func TestNewRestClient(t *testing.T) {
+	t.Parallel()
+
 	client, err := NewRestClient(context.Background(), GitHubConfig{
 		Token:    "token",
 		Endpoint: "https://api.github.com",
@@ -31,6 +33,8 @@ func TestNewRestClient(t *testing.T) {
 }
 
 func TestNewGraphQLClient(t *testing.T) {
+	t.Parallel()
+
 	client, err := NewGraphQLClient(context.Background(), GitHubConfig{
 		Token:    "token",
 		Endpoint: "https://api.github.com/graphql",

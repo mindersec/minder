@@ -38,6 +38,8 @@ import (
 )
 
 func TestLogin_gRPC(t *testing.T) {
+	t.Parallel()
+
 	seed := time.Now().UnixNano()
 	password := util.RandomPassword(8, seed)
 	cryptcfg := config.GetCryptoConfigWithDefaults()
@@ -111,6 +113,7 @@ func TestLogin_gRPC(t *testing.T) {
 	for i := range testCases {
 		tc := testCases[i]
 		t.Run(tc.name, func(t *testing.T) {
+			t.Parallel()
 
 			ctrl := gomock.NewController(t)
 			defer ctrl.Finish()
@@ -131,6 +134,8 @@ func TestLogin_gRPC(t *testing.T) {
 }
 
 func TestLogout_gRPC(t *testing.T) {
+	t.Parallel()
+
 	ctx := context.WithValue(context.Background(), auth.TokenInfoKey, auth.UserClaims{
 		UserId:         1,
 		OrganizationId: 1,
@@ -155,6 +160,8 @@ func TestLogout_gRPC(t *testing.T) {
 }
 
 func TestRevokeTokens_gRPC(t *testing.T) {
+	t.Parallel()
+
 	ctx := context.WithValue(context.Background(), auth.TokenInfoKey, auth.UserClaims{
 		UserId:         1,
 		OrganizationId: 1,
@@ -179,6 +186,8 @@ func TestRevokeTokens_gRPC(t *testing.T) {
 }
 
 func TestRefreshToken_gRPC(t *testing.T) {
+	t.Parallel()
+
 	// prepare keys for signing tokens
 	viper.SetDefault("auth.access_token_private_key", "access_token_private.pem")
 	viper.SetDefault("auth.access_token_public_key", "access_token_public.pem")

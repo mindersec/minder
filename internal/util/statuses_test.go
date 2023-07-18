@@ -24,6 +24,8 @@ import (
 )
 
 func TestNiceStatusCreation(t *testing.T) {
+	t.Parallel()
+
 	s := GetNiceStatus(codes.OK)
 	require.Equal(t, codes.OK, s.Code)
 	require.Equal(t, "OK", s.Name)

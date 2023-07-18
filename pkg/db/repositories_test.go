@@ -47,6 +47,8 @@ func deleteRepositoryByRepoId(params CreateRepositoryParams) error {
 }
 
 func createRandomRepository(t *testing.T, group int32, opts ...RepositoryOption) Repository {
+	t.Helper()
+
 	seed := time.Now().UnixNano()
 	arg := CreateRepositoryParams{
 		Provider:   "github",
@@ -91,12 +93,16 @@ func createRandomRepository(t *testing.T, group int32, opts ...RepositoryOption)
 }
 
 func TestRepository(t *testing.T) {
+	t.Parallel()
+
 	org := createRandomOrganization(t)
 	group := createRandomGroup(t, org.ID)
 	createRandomRepository(t, group.ID)
 }
 
 func TestGetRepositoryByID(t *testing.T) {
+	t.Parallel()
+
 	org := createRandomOrganization(t)
 	group := createRandomGroup(t, org.ID)
 	repo1 := createRandomRepository(t, group.ID)
@@ -121,6 +127,8 @@ func TestGetRepositoryByID(t *testing.T) {
 }
 
 func TestGetRepositoryByRepoName(t *testing.T) {
+	t.Parallel()
+
 	org := createRandomOrganization(t)
 	group := createRandomGroup(t, org.ID)
 	repo1 := createRandomRepository(t, group.ID)
@@ -145,6 +153,8 @@ func TestGetRepositoryByRepoName(t *testing.T) {
 }
 
 func TestListRepositoriesByGroupID(t *testing.T) {
+	t.Parallel()
+
 	org := createRandomOrganization(t)
 	group := createRandomGroup(t, org.ID)
 
@@ -172,6 +182,8 @@ func TestListRepositoriesByGroupID(t *testing.T) {
 }
 
 func TestUpdateRepository(t *testing.T) {
+	t.Parallel()
+
 	org := createRandomOrganization(t)
 	group := createRandomGroup(t, org.ID)
 	repo1 := createRandomRepository(t, group.ID)
@@ -210,6 +222,8 @@ func TestUpdateRepository(t *testing.T) {
 }
 
 func TestUpdateRepositoryByRepoId(t *testing.T) {
+	t.Parallel()
+
 	org := createRandomOrganization(t)
 	group := createRandomGroup(t, org.ID)
 	repo1 := createRandomRepository(t, group.ID)
@@ -247,6 +261,8 @@ func TestUpdateRepositoryByRepoId(t *testing.T) {
 }
 
 func TestDeleteRepository(t *testing.T) {
+	t.Parallel()
+
 	org := createRandomOrganization(t)
 	group := createRandomGroup(t, org.ID)
 	repo1 := createRandomRepository(t, group.ID)

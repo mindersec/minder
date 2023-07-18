@@ -19,6 +19,7 @@ import (
 	"testing"
 
 	"github.com/stretchr/testify/assert"
+	"github.com/stretchr/testify/require"
 )
 
 const provenance = `{
@@ -34,9 +35,9 @@ const provenance = `{
   }`
 
 func TestUnMarshallAnGetPayload(t *testing.T) {
+	t.Parallel()
+
 	prov, err := UnmarshalProvenance([]byte(provenance))
-	if err != nil {
-		t.Fatal(err)
-	}
+	require.NoError(t, err, "error unmarshalling provenance")
 	assert.Contains(t, prov.Payload, "eyJfdHlwZSI6Imh0dHB", "payload should contain the expected value")
 }

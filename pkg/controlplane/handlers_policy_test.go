@@ -50,6 +50,8 @@ const policyDefinition = `branches:
 `
 
 func TestCreatePolicyDBMock(t *testing.T) {
+	t.Parallel()
+
 	ctrl := gomock.NewController(t)
 	defer ctrl.Finish()
 
@@ -109,6 +111,8 @@ func TestCreatePolicyDBMock(t *testing.T) {
 }
 
 func TestCreatePolicy_gRPC(t *testing.T) {
+	t.Parallel()
+
 	testCases := []struct {
 		name               string
 		req                *pb.CreatePolicyRequest
@@ -181,6 +185,7 @@ func TestCreatePolicy_gRPC(t *testing.T) {
 	for i := range testCases {
 		tc := testCases[i]
 		t.Run(tc.name, func(t *testing.T) {
+			t.Parallel()
 
 			ctrl := gomock.NewController(t)
 			defer ctrl.Finish()
@@ -198,6 +203,8 @@ func TestCreatePolicy_gRPC(t *testing.T) {
 }
 
 func TestDeletePolicyDBMock(t *testing.T) {
+	t.Parallel()
+
 	ctrl := gomock.NewController(t)
 	defer ctrl.Finish()
 
@@ -230,6 +237,8 @@ func TestDeletePolicyDBMock(t *testing.T) {
 }
 
 func TestDeletePolicy_gRPC(t *testing.T) {
+	t.Parallel()
+
 	testCases := []struct {
 		name               string
 		req                *pb.DeletePolicyRequest
@@ -283,6 +292,7 @@ func TestDeletePolicy_gRPC(t *testing.T) {
 	for i := range testCases {
 		tc := testCases[i]
 		t.Run(tc.name, func(t *testing.T) {
+			t.Parallel()
 
 			ctrl := gomock.NewController(t)
 			defer ctrl.Finish()
@@ -300,6 +310,8 @@ func TestDeletePolicy_gRPC(t *testing.T) {
 }
 
 func TestGetPoliciesDBMock(t *testing.T) {
+	t.Parallel()
+
 	ctrl := gomock.NewController(t)
 	defer ctrl.Finish()
 
@@ -345,6 +357,8 @@ func TestGetPoliciesDBMock(t *testing.T) {
 }
 
 func TestGetPolicies_gRPC(t *testing.T) {
+	t.Parallel()
+
 	testCases := []struct {
 		name               string
 		req                *pb.GetPoliciesRequest
@@ -409,6 +423,7 @@ func TestGetPolicies_gRPC(t *testing.T) {
 	for i := range testCases {
 		tc := testCases[i]
 		t.Run(tc.name, func(t *testing.T) {
+			t.Parallel()
 
 			ctrl := gomock.NewController(t)
 			defer ctrl.Finish()
@@ -426,6 +441,8 @@ func TestGetPolicies_gRPC(t *testing.T) {
 }
 
 func TestGetPolicyStatusByIdDBMock(t *testing.T) {
+	t.Parallel()
+
 	ctrl := gomock.NewController(t)
 	defer ctrl.Finish()
 
@@ -473,6 +490,8 @@ func TestGetPolicyStatusByIdDBMock(t *testing.T) {
 }
 
 func TestGetPolicyStatusById_gRPC(t *testing.T) {
+	t.Parallel()
+
 	testCases := []struct {
 		name               string
 		req                *pb.GetPolicyStatusByIdRequest
@@ -537,6 +556,7 @@ func TestGetPolicyStatusById_gRPC(t *testing.T) {
 	for i := range testCases {
 		tc := testCases[i]
 		t.Run(tc.name, func(t *testing.T) {
+			t.Parallel()
 
 			ctrl := gomock.NewController(t)
 			defer ctrl.Finish()
@@ -554,6 +574,8 @@ func TestGetPolicyStatusById_gRPC(t *testing.T) {
 }
 
 func TestGetPolicyStatusByRepositoryIdDBMock(t *testing.T) {
+	t.Parallel()
+
 	ctrl := gomock.NewController(t)
 	defer ctrl.Finish()
 
@@ -601,6 +623,8 @@ func TestGetPolicyStatusByRepositoryIdDBMock(t *testing.T) {
 }
 
 func TestGetPolicyStatusByRepositoryId_gRPC(t *testing.T) {
+	t.Parallel()
+
 	testCases := []struct {
 		name               string
 		req                *pb.GetPolicyStatusByRepositoryRequest
@@ -665,6 +689,7 @@ func TestGetPolicyStatusByRepositoryId_gRPC(t *testing.T) {
 	for i := range testCases {
 		tc := testCases[i]
 		t.Run(tc.name, func(t *testing.T) {
+			t.Parallel()
 
 			ctrl := gomock.NewController(t)
 			defer ctrl.Finish()
@@ -682,6 +707,8 @@ func TestGetPolicyStatusByRepositoryId_gRPC(t *testing.T) {
 }
 
 func TestGetPolicyViolationsByIdDBMock(t *testing.T) {
+	t.Parallel()
+
 	ctrl := gomock.NewController(t)
 	defer ctrl.Finish()
 
@@ -731,6 +758,8 @@ func TestGetPolicyViolationsByIdDBMock(t *testing.T) {
 }
 
 func TestGetViolationsById_gRPC(t *testing.T) {
+	t.Parallel()
+
 	testCases := []struct {
 		name               string
 		req                *pb.GetPolicyViolationsByIdRequest
@@ -797,6 +826,7 @@ func TestGetViolationsById_gRPC(t *testing.T) {
 	for i := range testCases {
 		tc := testCases[i]
 		t.Run(tc.name, func(t *testing.T) {
+			t.Parallel()
 
 			ctrl := gomock.NewController(t)
 			defer ctrl.Finish()
@@ -814,6 +844,8 @@ func TestGetViolationsById_gRPC(t *testing.T) {
 }
 
 func TestGetPolicyViolationsByGroupDBMock(t *testing.T) {
+	t.Parallel()
+
 	ctrl := gomock.NewController(t)
 	defer ctrl.Finish()
 
@@ -862,6 +894,8 @@ func TestGetPolicyViolationsByGroupDBMock(t *testing.T) {
 }
 
 func TestGetViolationsByGroup_gRPC(t *testing.T) {
+	t.Parallel()
+
 	testCases := []struct {
 		name               string
 		req                *pb.GetPolicyViolationsByGroupRequest
@@ -927,6 +961,7 @@ func TestGetViolationsByGroup_gRPC(t *testing.T) {
 	for i := range testCases {
 		tc := testCases[i]
 		t.Run(tc.name, func(t *testing.T) {
+			t.Parallel()
 
 			ctrl := gomock.NewController(t)
 			defer ctrl.Finish()
@@ -944,6 +979,8 @@ func TestGetViolationsByGroup_gRPC(t *testing.T) {
 }
 
 func TestGetPolicyViolationsByRepositoryDBMock(t *testing.T) {
+	t.Parallel()
+
 	ctrl := gomock.NewController(t)
 	defer ctrl.Finish()
 
@@ -993,6 +1030,8 @@ func TestGetPolicyViolationsByRepositoryDBMock(t *testing.T) {
 }
 
 func TestGetViolationsByRepositoryId_gRPC(t *testing.T) {
+	t.Parallel()
+
 	testCases := []struct {
 		name               string
 		req                *pb.GetPolicyViolationsByRepositoryRequest
@@ -1059,6 +1098,7 @@ func TestGetViolationsByRepositoryId_gRPC(t *testing.T) {
 	for i := range testCases {
 		tc := testCases[i]
 		t.Run(tc.name, func(t *testing.T) {
+			t.Parallel()
 
 			ctrl := gomock.NewController(t)
 			defer ctrl.Finish()

@@ -35,6 +35,7 @@ import (
 )
 
 func TestNewOAuthConfig(t *testing.T) {
+	t.Parallel()
 
 	// Test with CLI set
 	cfg, err := auth.NewOAuthConfig("google", true)
@@ -83,6 +84,8 @@ func TestNewOAuthConfig(t *testing.T) {
 }
 
 func TestGetAuthorizationURL(t *testing.T) {
+	t.Parallel()
+
 	state := "test"
 	grpID := sql.NullInt32{Int32: 1, Valid: true}
 	port := sql.NullInt32{Int32: 8080, Valid: true}
@@ -140,6 +143,8 @@ func TestGetAuthorizationURL(t *testing.T) {
 	for i := range testCases {
 		tc := testCases[i]
 		t.Run(tc.name, func(t *testing.T) {
+			t.Parallel()
+
 			ctrl := gomock.NewController(t)
 			defer ctrl.Finish()
 
@@ -155,6 +160,8 @@ func TestGetAuthorizationURL(t *testing.T) {
 }
 
 func TestRevokeOauthTokens_gRPC(t *testing.T) {
+	t.Parallel()
+
 	ctx := context.WithValue(context.Background(), auth.TokenInfoKey, auth.UserClaims{
 		UserId:         1,
 		OrganizationId: 1,
@@ -179,6 +186,8 @@ func TestRevokeOauthTokens_gRPC(t *testing.T) {
 }
 
 func RevokeOauthGroupToken_gRPC(t *testing.T) {
+	t.Helper()
+
 	ctx := context.WithValue(context.Background(), auth.TokenInfoKey, auth.UserClaims{
 		UserId:         1,
 		OrganizationId: 1,

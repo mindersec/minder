@@ -39,6 +39,8 @@ func stringToNullString(s string) sql.NullString {
 }
 
 func createRandomUser(t *testing.T, org Organization) User {
+	t.Helper()
+
 	seed := time.Now().UnixNano()
 
 	arg := CreateUserParams{
@@ -70,11 +72,15 @@ func createRandomUser(t *testing.T, org Organization) User {
 }
 
 func TestUser(t *testing.T) {
+	t.Parallel()
+
 	org := createRandomOrganization(t)
 	createRandomUser(t, org)
 }
 
 func TestGetUser(t *testing.T) {
+	t.Parallel()
+
 	org := createRandomOrganization(t)
 	user1 := createRandomUser(t, org)
 
@@ -100,6 +106,8 @@ func TestGetUser(t *testing.T) {
 }
 
 func TestUpdateUser(t *testing.T) {
+	t.Parallel()
+
 	seed := time.Now().UnixNano()
 	org := createRandomOrganization(t)
 	user1 := createRandomUser(t, org)

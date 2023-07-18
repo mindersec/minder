@@ -31,6 +31,8 @@ import (
 )
 
 func TestKeysHandler(t *testing.T) {
+	t.Parallel()
+
 	ctrl := gomock.NewController(t)
 	defer ctrl.Finish()
 
@@ -86,6 +88,8 @@ func TestKeysHandler(t *testing.T) {
 }
 
 func TestKeysHandler_gRPC(t *testing.T) {
+	t.Parallel()
+
 	testCases := []struct {
 		name               string
 		request            *pb.CreateKeyPairRequest
@@ -149,6 +153,7 @@ func TestKeysHandler_gRPC(t *testing.T) {
 	for i := range testCases {
 		tc := testCases[i]
 		t.Run(tc.name, func(t *testing.T) {
+			t.Parallel()
 
 			ctrl := gomock.NewController(t)
 			defer ctrl.Finish()

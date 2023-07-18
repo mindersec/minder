@@ -35,6 +35,8 @@ import (
 )
 
 func TestCreateOrganizationDBMock(t *testing.T) {
+	t.Parallel()
+
 	ctrl := gomock.NewController(t)
 	defer ctrl.Finish()
 
@@ -88,6 +90,8 @@ func TestCreateOrganizationDBMock(t *testing.T) {
 }
 
 func TestCreateOrganization_gRPC(t *testing.T) {
+	t.Parallel()
+
 	testCases := []struct {
 		name               string
 		req                *pb.CreateOrganizationRequest
@@ -180,6 +184,7 @@ func TestCreateOrganization_gRPC(t *testing.T) {
 	for i := range testCases {
 		tc := testCases[i]
 		t.Run(tc.name, func(t *testing.T) {
+			t.Parallel()
 
 			ctrl := gomock.NewController(t)
 			defer ctrl.Finish()
@@ -197,6 +202,8 @@ func TestCreateOrganization_gRPC(t *testing.T) {
 }
 
 func TestGetOrganizationsDBMock(t *testing.T) {
+	t.Parallel()
+
 	ctrl := gomock.NewController(t)
 	defer ctrl.Finish()
 
@@ -251,6 +258,8 @@ func TestGetOrganizationsDBMock(t *testing.T) {
 }
 
 func TestGetOrganizations_gRPC(t *testing.T) {
+	t.Parallel()
+
 	testCases := []struct {
 		name               string
 		req                *pb.GetOrganizationsRequest
@@ -322,6 +331,7 @@ func TestGetOrganizations_gRPC(t *testing.T) {
 	for i := range testCases {
 		tc := testCases[i]
 		t.Run(tc.name, func(t *testing.T) {
+			t.Parallel()
 
 			ctrl := gomock.NewController(t)
 			defer ctrl.Finish()
@@ -339,6 +349,8 @@ func TestGetOrganizations_gRPC(t *testing.T) {
 }
 
 func TestGetOrganizationDBMock(t *testing.T) {
+	t.Parallel()
+
 	ctrl := gomock.NewController(t)
 	defer ctrl.Finish()
 
@@ -386,6 +398,8 @@ func TestGetOrganizationDBMock(t *testing.T) {
 }
 
 func TestGetNonExistingOrganizationDBMock(t *testing.T) {
+	t.Parallel()
+
 	ctrl := gomock.NewController(t)
 	defer ctrl.Finish()
 
@@ -418,6 +432,8 @@ func TestGetNonExistingOrganizationDBMock(t *testing.T) {
 }
 
 func TestGetOrganization_gRPC(t *testing.T) {
+	t.Parallel()
+
 	testCases := []struct {
 		name               string
 		req                *pb.GetOrganizationRequest
@@ -491,6 +507,7 @@ func TestGetOrganization_gRPC(t *testing.T) {
 	for i := range testCases {
 		tc := testCases[i]
 		t.Run(tc.name, func(t *testing.T) {
+			t.Parallel()
 
 			ctrl := gomock.NewController(t)
 			defer ctrl.Finish()
@@ -508,6 +525,8 @@ func TestGetOrganization_gRPC(t *testing.T) {
 }
 
 func TestGetOrganizationByNameDBMock(t *testing.T) {
+	t.Parallel()
+
 	ctrl := gomock.NewController(t)
 	defer ctrl.Finish()
 
@@ -555,6 +574,8 @@ func TestGetOrganizationByNameDBMock(t *testing.T) {
 }
 
 func TestGetNonExistingOrganizationByNameDBMock(t *testing.T) {
+	t.Parallel()
+
 	ctrl := gomock.NewController(t)
 	defer ctrl.Finish()
 
@@ -587,6 +608,8 @@ func TestGetNonExistingOrganizationByNameDBMock(t *testing.T) {
 }
 
 func TestGetOrganizationByName_gRPC(t *testing.T) {
+	t.Parallel()
+
 	testCases := []struct {
 		name               string
 		req                *pb.GetOrganizationByNameRequest
@@ -659,6 +682,7 @@ func TestGetOrganizationByName_gRPC(t *testing.T) {
 	for i := range testCases {
 		tc := testCases[i]
 		t.Run(tc.name, func(t *testing.T) {
+			t.Parallel()
 
 			ctrl := gomock.NewController(t)
 			defer ctrl.Finish()
@@ -676,6 +700,8 @@ func TestGetOrganizationByName_gRPC(t *testing.T) {
 }
 
 func TestDeleteOrganizationDBMock(t *testing.T) {
+	t.Parallel()
+
 	ctrl := gomock.NewController(t)
 	defer ctrl.Finish()
 
@@ -719,6 +745,8 @@ func TestDeleteOrganizationDBMock(t *testing.T) {
 }
 
 func TestDeleteOrganization_gRPC(t *testing.T) {
+	t.Parallel()
+
 	force := true
 
 	testCases := []struct {
@@ -776,6 +804,7 @@ func TestDeleteOrganization_gRPC(t *testing.T) {
 	for i := range testCases {
 		tc := testCases[i]
 		t.Run(tc.name, func(t *testing.T) {
+			t.Parallel()
 
 			ctrl := gomock.NewController(t)
 			defer ctrl.Finish()

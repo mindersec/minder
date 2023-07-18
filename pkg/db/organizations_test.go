@@ -34,6 +34,8 @@ import (
 
 // A helper function to create a random organization
 func createRandomOrganization(t *testing.T) Organization {
+	t.Helper()
+
 	seed := time.Now().UnixNano()
 	arg := CreateOrganizationParams{
 		Name:    util.RandomName(seed),
@@ -56,10 +58,14 @@ func createRandomOrganization(t *testing.T) Organization {
 
 // Create a random organization
 func TestOrganization(t *testing.T) {
+	t.Parallel()
+
 	createRandomOrganization(t)
 }
 
 func TestGetOrganization(t *testing.T) {
+	t.Parallel()
+
 	organization1 := createRandomOrganization(t)
 
 	organization2, err := testQueries.GetOrganization(context.Background(), organization1.ID)
@@ -80,6 +86,8 @@ func TestGetOrganization(t *testing.T) {
 }
 
 func TestUpdateOrganization(t *testing.T) {
+	t.Parallel()
+
 	seed := time.Now().UnixNano()
 	organization1 := createRandomOrganization(t)
 
@@ -105,6 +113,8 @@ func TestUpdateOrganization(t *testing.T) {
 }
 
 func TestDeleteOrganization(t *testing.T) {
+	t.Parallel()
+
 	organization1 := createRandomOrganization(t)
 
 	err := testQueries.DeleteOrganization(context.Background(), organization1.ID)
@@ -117,6 +127,8 @@ func TestDeleteOrganization(t *testing.T) {
 }
 
 func TestListOrganizations(t *testing.T) {
+	t.Parallel()
+
 	for i := 0; i < 10; i++ {
 		createRandomOrganization(t)
 	}

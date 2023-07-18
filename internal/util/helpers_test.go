@@ -25,6 +25,8 @@ import (
 )
 
 func TestGetConfigValue(t *testing.T) {
+	t.Parallel()
+
 	testCases := []struct {
 		name         string
 		key          string
@@ -64,7 +66,11 @@ func TestGetConfigValue(t *testing.T) {
 	}
 
 	for _, tc := range testCases {
+		tc := tc
+
 		t.Run(tc.name, func(t *testing.T) {
+			t.Parallel()
+
 			viper.Set(tc.key, tc.defaultValue)
 
 			cmd := &cobra.Command{}

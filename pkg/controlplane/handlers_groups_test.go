@@ -35,6 +35,8 @@ import (
 )
 
 func TestCreateGroupDBMock(t *testing.T) {
+	t.Parallel()
+
 	ctrl := gomock.NewController(t)
 	defer ctrl.Finish()
 
@@ -83,6 +85,8 @@ func TestCreateGroupDBMock(t *testing.T) {
 }
 
 func TestCreateGroup_gRPC(t *testing.T) {
+	t.Parallel()
+
 	testCases := []struct {
 		name               string
 		req                *pb.CreateGroupRequest
@@ -168,6 +172,7 @@ func TestCreateGroup_gRPC(t *testing.T) {
 	for i := range testCases {
 		tc := testCases[i]
 		t.Run(tc.name, func(t *testing.T) {
+			t.Parallel()
 
 			ctrl := gomock.NewController(t)
 			defer ctrl.Finish()
@@ -185,6 +190,8 @@ func TestCreateGroup_gRPC(t *testing.T) {
 }
 
 func TestDeleteGroupDBMock(t *testing.T) {
+	t.Parallel()
+
 	ctrl := gomock.NewController(t)
 	defer ctrl.Finish()
 
@@ -231,6 +238,8 @@ func TestDeleteGroupDBMock(t *testing.T) {
 }
 
 func TestDeleteGroup_gRPC(t *testing.T) {
+	t.Parallel()
+
 	force := true
 
 	testCases := []struct {
@@ -288,6 +297,7 @@ func TestDeleteGroup_gRPC(t *testing.T) {
 	for i := range testCases {
 		tc := testCases[i]
 		t.Run(tc.name, func(t *testing.T) {
+			t.Parallel()
 
 			ctrl := gomock.NewController(t)
 			defer ctrl.Finish()
@@ -305,6 +315,8 @@ func TestDeleteGroup_gRPC(t *testing.T) {
 }
 
 func TestGetGroupsDBMock(t *testing.T) {
+	t.Parallel()
+
 	ctrl := gomock.NewController(t)
 	defer ctrl.Finish()
 
@@ -362,6 +374,8 @@ func TestGetGroupsDBMock(t *testing.T) {
 }
 
 func TestGetGroups_gRPC(t *testing.T) {
+	t.Parallel()
+
 	testCases := []struct {
 		name               string
 		req                *pb.GetGroupsRequest
@@ -426,6 +440,8 @@ func TestGetGroups_gRPC(t *testing.T) {
 	for i := range testCases {
 		tc := testCases[i]
 		t.Run(tc.name, func(t *testing.T) {
+			t.Parallel()
+
 			// Create a new context and set the claims value
 			ctx := context.WithValue(context.Background(), auth.TokenInfoKey, auth.UserClaims{
 				UserId:         1,
@@ -451,6 +467,8 @@ func TestGetGroups_gRPC(t *testing.T) {
 }
 
 func TestGetGroupDBMock(t *testing.T) {
+	t.Parallel()
+
 	ctrl := gomock.NewController(t)
 	defer ctrl.Finish()
 
@@ -497,6 +515,8 @@ func TestGetGroupDBMock(t *testing.T) {
 }
 
 func TestGetNonExistingGroupDBMock(t *testing.T) {
+	t.Parallel()
+
 	ctrl := gomock.NewController(t)
 	defer ctrl.Finish()
 
@@ -528,6 +548,8 @@ func TestGetNonExistingGroupDBMock(t *testing.T) {
 }
 
 func TestGetGroup_gRPC(t *testing.T) {
+	t.Parallel()
+
 	testCases := []struct {
 		name               string
 		req                *pb.GetGroupByIdRequest
@@ -600,6 +622,7 @@ func TestGetGroup_gRPC(t *testing.T) {
 	for i := range testCases {
 		tc := testCases[i]
 		t.Run(tc.name, func(t *testing.T) {
+			t.Parallel()
 
 			ctrl := gomock.NewController(t)
 			defer ctrl.Finish()

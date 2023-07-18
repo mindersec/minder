@@ -35,6 +35,8 @@ import (
 )
 
 func TestCreateRoleDBMock(t *testing.T) {
+	t.Parallel()
+
 	ctrl := gomock.NewController(t)
 	defer ctrl.Finish()
 
@@ -91,6 +93,8 @@ func TestCreateRoleDBMock(t *testing.T) {
 }
 
 func TestCreateRole_gRPC(t *testing.T) {
+	t.Parallel()
+
 	testCases := []struct {
 		name               string
 		req                *pb.CreateRoleByGroupRequest
@@ -182,6 +186,7 @@ func TestCreateRole_gRPC(t *testing.T) {
 	for i := range testCases {
 		tc := testCases[i]
 		t.Run(tc.name, func(t *testing.T) {
+			t.Parallel()
 
 			ctrl := gomock.NewController(t)
 			defer ctrl.Finish()
@@ -199,6 +204,8 @@ func TestCreateRole_gRPC(t *testing.T) {
 }
 
 func TestDeleteRoleDBMock(t *testing.T) {
+	t.Parallel()
+
 	ctrl := gomock.NewController(t)
 	defer ctrl.Finish()
 
@@ -233,6 +240,8 @@ func TestDeleteRoleDBMock(t *testing.T) {
 }
 
 func TestDeleteRole_gRPC(t *testing.T) {
+	t.Parallel()
+
 	force := true
 
 	testCases := []struct {
@@ -290,6 +299,7 @@ func TestDeleteRole_gRPC(t *testing.T) {
 	for i := range testCases {
 		tc := testCases[i]
 		t.Run(tc.name, func(t *testing.T) {
+			t.Parallel()
 
 			ctrl := gomock.NewController(t)
 			defer ctrl.Finish()
@@ -307,6 +317,8 @@ func TestDeleteRole_gRPC(t *testing.T) {
 }
 
 func TestGetRolesDBMock(t *testing.T) {
+	t.Parallel()
+
 	ctrl := gomock.NewController(t)
 	defer ctrl.Finish()
 
@@ -363,6 +375,8 @@ func TestGetRolesDBMock(t *testing.T) {
 }
 
 func TestGetRoles_gRPC(t *testing.T) {
+	t.Parallel()
+
 	testCases := []struct {
 		name               string
 		req                *pb.GetRolesRequest
@@ -436,6 +450,7 @@ func TestGetRoles_gRPC(t *testing.T) {
 	for i := range testCases {
 		tc := testCases[i]
 		t.Run(tc.name, func(t *testing.T) {
+			t.Parallel()
 
 			ctrl := gomock.NewController(t)
 			defer ctrl.Finish()
@@ -453,6 +468,8 @@ func TestGetRoles_gRPC(t *testing.T) {
 }
 
 func TestGetRoleDBMock(t *testing.T) {
+	t.Parallel()
+
 	ctrl := gomock.NewController(t)
 	defer ctrl.Finish()
 
@@ -497,6 +514,8 @@ func TestGetRoleDBMock(t *testing.T) {
 }
 
 func TestGetNonExistingRoleDBMock(t *testing.T) {
+	t.Parallel()
+
 	ctrl := gomock.NewController(t)
 	defer ctrl.Finish()
 
@@ -526,6 +545,8 @@ func TestGetNonExistingRoleDBMock(t *testing.T) {
 }
 
 func TestGetRole_gRPC(t *testing.T) {
+	t.Parallel()
+
 	testCases := []struct {
 		name               string
 		req                *pb.GetRoleByIdRequest
@@ -591,6 +612,7 @@ func TestGetRole_gRPC(t *testing.T) {
 	for i := range testCases {
 		tc := testCases[i]
 		t.Run(tc.name, func(t *testing.T) {
+			t.Parallel()
 
 			ctrl := gomock.NewController(t)
 			defer ctrl.Finish()

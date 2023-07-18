@@ -28,6 +28,8 @@ import (
 )
 
 func TestRandomInt(t *testing.T) {
+	t.Parallel()
+
 	min := int64(1)
 	max := int64(10)
 	seed := int64(12345)
@@ -37,6 +39,7 @@ func TestRandomInt(t *testing.T) {
 }
 
 func TestRandomString(t *testing.T) {
+	t.Parallel()
 	seed := int64(12345)
 	randomString := RandomString(10, seed)
 	require.NotEmpty(t, randomString)
@@ -44,6 +47,8 @@ func TestRandomString(t *testing.T) {
 }
 
 func TestRandomEmail(t *testing.T) {
+	t.Parallel()
+
 	seed := int64(12345)
 	email := RandomEmail(seed)
 	require.NotEmpty(t, email)
@@ -53,6 +58,8 @@ func TestRandomEmail(t *testing.T) {
 }
 
 func TestRandomName(t *testing.T) {
+	t.Parallel()
+
 	seed := int64(12345)
 	name := RandomName(seed)
 	require.NotEmpty(t, name)

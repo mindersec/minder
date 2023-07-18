@@ -27,6 +27,8 @@ import (
 )
 
 func TestIsSuperadminAuthorized(t *testing.T) {
+	t.Parallel()
+
 	ctrl := gomock.NewController(t)
 	defer ctrl.Finish()
 
@@ -56,6 +58,8 @@ func TestIsSuperadminAuthorized(t *testing.T) {
 }
 
 func TestIsNonadminAuthorized(t *testing.T) {
+	t.Parallel()
+
 	ctrl := gomock.NewController(t)
 	defer ctrl.Finish()
 
@@ -85,6 +89,8 @@ func TestIsNonadminAuthorized(t *testing.T) {
 }
 
 func TestByResourceUnauthorized(t *testing.T) {
+	t.Parallel()
+
 	ctrl := gomock.NewController(t)
 	defer ctrl.Finish()
 

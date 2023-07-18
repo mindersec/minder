@@ -43,6 +43,8 @@ const (
 )
 
 func TestGenerateToken(t *testing.T) {
+	t.Parallel()
+
 	// generate test keys
 	access_key, _ := util.RandomKeypair(2048)
 	refresh_key, _ := util.RandomKeypair(2048)
@@ -75,6 +77,8 @@ func TestGenerateToken(t *testing.T) {
 }
 
 func TestVerifyToken(t *testing.T) {
+	t.Parallel()
+
 	claims := UserClaims{
 		UserId: testUserID,
 	}
@@ -119,6 +123,8 @@ func TestVerifyToken(t *testing.T) {
 }
 
 func TestVerifyExpiredToken(t *testing.T) {
+	t.Parallel()
+
 	claims := UserClaims{
 		UserId: testUserID,
 	}
