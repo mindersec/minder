@@ -1322,16 +1322,19 @@ message CreateKeyPairResponse {
     string public_key = 2;
 }
 
-message OrganizationContext {
+// Context defines the context in which a rule is evaluated.
+// this normally refers to a combination of the provider, organization and group.
+message Context {
     string provider = 1;
-    string organization = 2;
+    optional string organization = 2;
+    optional string group = 3;
 }
 
 // RuleType defines rules that may or may not be user defined.
 // The version is assumed from the folder's version.
  message RuleType {
      string name = 1;
-     OrganizationContext context = 2;
+     Context context = 2;
      message Definition {
          string in_entity = 1;
          map<string, google.protobuf.Struct> rule_schema = 2;
@@ -1356,4 +1359,38 @@ message OrganizationContext {
          DataEval data_eval = 3;
      }
      Definition def = 3;
+ }
+
+ // PipelinePolicy defines a policy that is user defined.
+ message PipelinePolicy {
+    // name is the name of the policy instance.
+    string name = 1;
+    // context is the context in which the policy is evaluated.
+    Context context = 2;
+
+    // Rule defines the individual call of a certain rule type.
+    message Rule {
+        // type is the type of the rule to be instantiated.
+        string type = 1;
+        // params are the parameters that are passed to the rule.
+        // This is optional and depends on the rule type.
+        google.protobuf.Struct params = 2;
+        // def is the definition of the rule.
+        // This depends on the rule type.
+        google.protobuf.Struct def = 3;
+    }
+
+    // ContextualRuleSet defines a set of rules that are evaluated in a certain context.
+    message ContextualRuleSet {
+        // context is the context in which the rules are evaluated.
+        // This refers to the provider.
+        optional string context = 1;
+        // rule is the set of rules that are evaluated.
+        repeated Rule rules = 2;
+    }
+
+    // These are the entities that one could set in the pipeline policy.
+    repeated ContextualRuleSet repository = 3;
+    repeated ContextualRuleSet build_environment = 4;
+    repeated ContextualRuleSet artifact = 5;
  }
