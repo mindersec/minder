@@ -125,6 +125,8 @@ func TestCreateRole_gRPC(t *testing.T) {
 					Times(1)
 			},
 			checkResponse: func(t *testing.T, res *pb.CreateRoleByGroupResponse, err error) {
+				t.Helper()
+
 				assert.NoError(t, err)
 				assert.NotNil(t, res)
 				assert.Equal(t, int32(1), res.Id)
@@ -146,6 +148,8 @@ func TestCreateRole_gRPC(t *testing.T) {
 				// No expectations, as CreateRole should not be called
 			},
 			checkResponse: func(t *testing.T, res *pb.CreateRoleByGroupResponse, err error) {
+				t.Helper()
+
 				// Assert the expected behavior when the request is empty
 				assert.Error(t, err)
 				assert.Nil(t, res)
@@ -167,6 +171,8 @@ func TestCreateRole_gRPC(t *testing.T) {
 					Times(1)
 			},
 			checkResponse: func(t *testing.T, res *pb.CreateRoleByGroupResponse, err error) {
+				t.Helper()
+
 				// Assert the expected behavior when there's a store error
 				assert.Error(t, err)
 				assert.Nil(t, res)
@@ -265,6 +271,8 @@ func TestDeleteRole_gRPC(t *testing.T) {
 					Times(1)
 			},
 			checkResponse: func(t *testing.T, res *pb.DeleteRoleResponse, err error) {
+				t.Helper()
+
 				assert.NoError(t, err)
 				assert.NotNil(t, res)
 				assert.Equal(t, &pb.DeleteRoleResponse{}, res)
@@ -280,6 +288,8 @@ func TestDeleteRole_gRPC(t *testing.T) {
 				// No expectations, as CreateRole should not be called
 			},
 			checkResponse: func(t *testing.T, res *pb.DeleteRoleResponse, err error) {
+				t.Helper()
+
 				// Assert the expected behavior when the request is empty
 				assert.Error(t, err)
 				assert.Nil(t, res)
@@ -409,6 +419,8 @@ func TestGetRoles_gRPC(t *testing.T) {
 					Times(1)
 			},
 			checkResponse: func(t *testing.T, res *pb.GetRolesResponse, err error) {
+				t.Helper()
+
 				expectedRoles := []*pb.RoleRecord{
 					{
 						Id:             1,
@@ -569,6 +581,8 @@ func TestGetRole_gRPC(t *testing.T) {
 					Times(1)
 			},
 			checkResponse: func(t *testing.T, res *pb.GetRoleByIdResponse, err error) {
+				t.Helper()
+
 				expectedRole := pb.RoleRecord{
 					Id:             1,
 					OrganizationId: 1,
@@ -594,6 +608,8 @@ func TestGetRole_gRPC(t *testing.T) {
 					Times(1)
 			},
 			checkResponse: func(t *testing.T, res *pb.GetRoleByIdResponse, err error) {
+				t.Helper()
+
 				assert.NoError(t, err)
 				assert.Equal(t, int32(0), res.Role.Id)
 			},

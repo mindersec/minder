@@ -147,6 +147,8 @@ func TestCreatePolicy_gRPC(t *testing.T) {
 					Times(1)
 			},
 			checkResponse: func(t *testing.T, res *pb.CreatePolicyResponse, err error) {
+				t.Helper()
+
 				assert.NoError(t, err)
 				assert.NotNil(t, res)
 				assert.Equal(t, int32(1), res.Policy.Id)
@@ -166,6 +168,8 @@ func TestCreatePolicy_gRPC(t *testing.T) {
 				// No expectations, as CreateRole should not be called
 			},
 			checkResponse: func(t *testing.T, res *pb.CreatePolicyResponse, err error) {
+				t.Helper()
+
 				// Assert the expected behavior when the request is empty
 				assert.Error(t, err)
 				assert.Nil(t, res)
@@ -258,6 +262,8 @@ func TestDeletePolicy_gRPC(t *testing.T) {
 					Times(1)
 			},
 			checkResponse: func(t *testing.T, res *pb.DeletePolicyResponse, err error) {
+				t.Helper()
+
 				assert.NoError(t, err)
 				assert.NotNil(t, res)
 				assert.Equal(t, &pb.DeletePolicyResponse{}, res)
@@ -273,6 +279,8 @@ func TestDeletePolicy_gRPC(t *testing.T) {
 				// No expectations, as CreateRole should not be called
 			},
 			checkResponse: func(t *testing.T, res *pb.DeletePolicyResponse, err error) {
+				t.Helper()
+
 				// Assert the expected behavior when the request is empty
 				assert.Error(t, err)
 				assert.Nil(t, res)
@@ -387,6 +395,8 @@ func TestGetPolicies_gRPC(t *testing.T) {
 					Times(1)
 			},
 			checkResponse: func(t *testing.T, res *pb.GetPoliciesResponse, err error) {
+				t.Helper()
+
 				expectedPolicies := []db.ListPoliciesByGroupIDRow{
 					{
 						ID:               1,
@@ -520,6 +530,8 @@ func TestGetPolicyStatusById_gRPC(t *testing.T) {
 					Times(1)
 			},
 			checkResponse: func(t *testing.T, res *pb.GetPolicyStatusByIdResponse, err error) {
+				t.Helper()
+
 				expectedStatus := []db.GetPolicyStatusByIdRow{
 					{
 						PolicyType:   "branch_protection",
@@ -653,6 +665,8 @@ func TestGetPolicyStatusByRepositoryId_gRPC(t *testing.T) {
 					Times(1)
 			},
 			checkResponse: func(t *testing.T, res *pb.GetPolicyStatusByRepositoryResponse, err error) {
+				t.Helper()
+
 				expectedStatus := []db.GetPolicyStatusByRepositoryIdRow{
 					{
 						PolicyType:   "branch_protection",
@@ -787,6 +801,8 @@ func TestGetViolationsById_gRPC(t *testing.T) {
 					Times(1)
 			},
 			checkResponse: func(t *testing.T, res *pb.GetPolicyViolationsByIdResponse, err error) {
+				t.Helper()
+
 				expectedViolations := []db.GetPolicyViolationsByIdRow{
 					{
 						PolicyType: "branch_protection",
@@ -922,6 +938,8 @@ func TestGetViolationsByGroup_gRPC(t *testing.T) {
 					Times(1)
 			},
 			checkResponse: func(t *testing.T, res *pb.GetPolicyViolationsByGroupResponse, err error) {
+				t.Helper()
+
 				expectedViolations := []db.GetPolicyViolationsByGroupRow{
 					{
 						PolicyType: "branch_protection",
@@ -1059,6 +1077,8 @@ func TestGetViolationsByRepositoryId_gRPC(t *testing.T) {
 					Times(1)
 			},
 			checkResponse: func(t *testing.T, res *pb.GetPolicyViolationsByRepositoryResponse, err error) {
+				t.Helper()
+
 				expectedViolations := []db.GetPolicyViolationsByRepositoryIdRow{
 					{
 						PolicyType: "branch_protection",

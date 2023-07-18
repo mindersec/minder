@@ -114,6 +114,8 @@ func TestCreateGroup_gRPC(t *testing.T) {
 					Times(1)
 			},
 			checkResponse: func(t *testing.T, res *pb.CreateGroupResponse, err error) {
+				t.Helper()
+
 				assert.NoError(t, err)
 				assert.NotNil(t, res)
 				assert.Equal(t, int32(1), res.GroupId)
@@ -133,6 +135,8 @@ func TestCreateGroup_gRPC(t *testing.T) {
 			buildStubs: func(store *mockdb.MockStore) {
 			},
 			checkResponse: func(t *testing.T, res *pb.CreateGroupResponse, err error) {
+				t.Helper()
+
 				// Assert the expected behavior when the request is empty
 				assert.Error(t, err)
 				assert.Nil(t, res)
@@ -152,6 +156,8 @@ func TestCreateGroup_gRPC(t *testing.T) {
 					Times(1)
 			},
 			checkResponse: func(t *testing.T, res *pb.CreateGroupResponse, err error) {
+				t.Helper()
+
 				// Assert the expected behavior when there's a store error
 				assert.Error(t, err)
 				assert.Nil(t, res)
@@ -263,6 +269,8 @@ func TestDeleteGroup_gRPC(t *testing.T) {
 					Times(1)
 			},
 			checkResponse: func(t *testing.T, res *pb.DeleteGroupResponse, err error) {
+				t.Helper()
+
 				assert.NoError(t, err)
 				assert.NotNil(t, res)
 				assert.Equal(t, &pb.DeleteGroupResponse{}, res)
@@ -277,6 +285,8 @@ func TestDeleteGroup_gRPC(t *testing.T) {
 			buildStubs: func(store *mockdb.MockStore) {
 			},
 			checkResponse: func(t *testing.T, res *pb.DeleteGroupResponse, err error) {
+				t.Helper()
+
 				// Assert the expected behavior when the request is empty
 				assert.Error(t, err)
 				assert.Nil(t, res)
@@ -408,6 +418,8 @@ func TestGetGroups_gRPC(t *testing.T) {
 					Times(1)
 			},
 			checkResponse: func(t *testing.T, res *pb.GetGroupsResponse, err error) {
+				t.Helper()
+
 				expectedGroups := []*pb.GroupRecord{
 					{
 						GroupId:        1,
@@ -575,6 +587,8 @@ func TestGetGroup_gRPC(t *testing.T) {
 					Times(1)
 			},
 			checkResponse: func(t *testing.T, res *pb.GetGroupByIdResponse, err error) {
+				t.Helper()
+
 				expectedGroup := pb.GroupRecord{
 					GroupId:        1,
 					OrganizationId: 1,
@@ -603,6 +617,8 @@ func TestGetGroup_gRPC(t *testing.T) {
 
 			},
 			checkResponse: func(t *testing.T, res *pb.GetGroupByIdResponse, err error) {
+				t.Helper()
+
 				assert.NoError(t, err)
 				assert.Equal(t, int32(0), res.Group.GroupId)
 			},

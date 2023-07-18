@@ -118,6 +118,8 @@ func TestGetAuthorizationURL(t *testing.T) {
 			},
 
 			checkResponse: func(t *testing.T, res *pb.GetAuthorizationURLResponse, err error) {
+				t.Helper()
+
 				if err != nil {
 					t.Errorf("Unexpected error: %v", err)
 				}

@@ -89,6 +89,8 @@ func TestLogin_gRPC(t *testing.T) {
 				store.EXPECT().CleanTokenIat(gomock.Any(), gomock.Any())
 			},
 			checkResponse: func(t *testing.T, res *pb.LogInResponse, err error) {
+				t.Helper()
+
 				assert.NoError(t, err)
 				assert.NotNil(t, res)
 			},
@@ -102,6 +104,8 @@ func TestLogin_gRPC(t *testing.T) {
 				// No expectations, as CreateRole should not be called
 			},
 			checkResponse: func(t *testing.T, res *pb.LogInResponse, err error) {
+				t.Helper()
+
 				// Assert the expected behavior when the request is empty
 				assert.Error(t, err)
 				assert.Nil(t, res)

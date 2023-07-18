@@ -120,6 +120,8 @@ func TestKeysHandler_gRPC(t *testing.T) {
 				)
 			},
 			checkResponse: func(t *testing.T, response *pb.CreateKeyPairResponse, err error) {
+				t.Helper()
+
 				assert.NoError(t, err)
 				assert.NotNil(t, response.PublicKey)
 				assert.NotNil(t, response.KeyIdentifier)
@@ -136,6 +138,8 @@ func TestKeysHandler_gRPC(t *testing.T) {
 				store.EXPECT().CreateSigningKey(gomock.Any(), gomock.Any()).Return(db.SigningKey{}, assert.AnError)
 			},
 			checkResponse: func(t *testing.T, response *pb.CreateKeyPairResponse, err error) {
+				t.Helper()
+
 				assert.Error(t, err)
 			},
 			expectedStatusCode: codes.Internal,

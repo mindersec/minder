@@ -122,6 +122,8 @@ func TestCreateOrganization_gRPC(t *testing.T) {
 				store.EXPECT().Rollback(gomock.Any())
 			},
 			checkResponse: func(t *testing.T, res *pb.CreateOrganizationResponse, err error) {
+				t.Helper()
+
 				assert.NoError(t, err)
 				assert.NotNil(t, res)
 				assert.Equal(t, int32(1), res.Id)
@@ -142,6 +144,8 @@ func TestCreateOrganization_gRPC(t *testing.T) {
 				// No expectations, as CreateOrganization should not be called
 			},
 			checkResponse: func(t *testing.T, res *pb.CreateOrganizationResponse, err error) {
+				t.Helper()
+
 				// Assert the expected behavior when the request is empty
 				assert.Error(t, err)
 				assert.Nil(t, res)
@@ -165,6 +169,8 @@ func TestCreateOrganization_gRPC(t *testing.T) {
 				store.EXPECT().Rollback(gomock.Any())
 			},
 			checkResponse: func(t *testing.T, res *pb.CreateOrganizationResponse, err error) {
+				t.Helper()
+
 				// Assert the expected behavior when there's a store error
 				assert.Error(t, err)
 				assert.Nil(t, res)
@@ -291,6 +297,8 @@ func TestGetOrganizations_gRPC(t *testing.T) {
 					Times(1)
 			},
 			checkResponse: func(t *testing.T, res *pb.GetOrganizationsResponse, err error) {
+				t.Helper()
+
 				expectedOrgs := []*pb.OrganizationRecord{
 					{
 						Id:        1,
@@ -460,6 +468,8 @@ func TestGetOrganization_gRPC(t *testing.T) {
 
 			},
 			checkResponse: func(t *testing.T, res *pb.GetOrganizationResponse, err error) {
+				t.Helper()
+
 				expectedOrg := pb.OrganizationRecord{
 					Id:        1,
 					Name:      "TestOrg",
@@ -488,6 +498,8 @@ func TestGetOrganization_gRPC(t *testing.T) {
 				store.EXPECT().ListUsersByOrganization(gomock.Any(), gomock.Any())
 			},
 			checkResponse: func(t *testing.T, res *pb.GetOrganizationResponse, err error) {
+				t.Helper()
+
 				assert.NoError(t, err)
 				assert.Equal(t, int32(0), res.Organization.Id)
 			},
@@ -636,6 +648,8 @@ func TestGetOrganizationByName_gRPC(t *testing.T) {
 
 			},
 			checkResponse: func(t *testing.T, res *pb.GetOrganizationByNameResponse, err error) {
+				t.Helper()
+
 				expectedOrg := pb.OrganizationRecord{
 					Id:        1,
 					Name:      "TestOrg",
@@ -664,6 +678,8 @@ func TestGetOrganizationByName_gRPC(t *testing.T) {
 				store.EXPECT().ListUsersByOrganization(gomock.Any(), gomock.Any())
 			},
 			checkResponse: func(t *testing.T, res *pb.GetOrganizationByNameResponse, err error) {
+				t.Helper()
+
 				assert.NoError(t, err)
 				assert.Equal(t, int32(0), res.Organization.Id)
 			},
@@ -770,6 +786,8 @@ func TestDeleteOrganization_gRPC(t *testing.T) {
 					Times(1)
 			},
 			checkResponse: func(t *testing.T, res *pb.DeleteOrganizationResponse, err error) {
+				t.Helper()
+
 				assert.NoError(t, err)
 				assert.NotNil(t, res)
 				assert.Equal(t, &pb.DeleteOrganizationResponse{}, res)
@@ -784,6 +802,8 @@ func TestDeleteOrganization_gRPC(t *testing.T) {
 			buildStubs: func(store *mockdb.MockStore) {
 			},
 			checkResponse: func(t *testing.T, res *pb.DeleteOrganizationResponse, err error) {
+				t.Helper()
+
 				// Assert the expected behavior when the request is empty
 				assert.Error(t, err)
 				assert.Nil(t, res)
