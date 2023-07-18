@@ -36,8 +36,8 @@ import (
 	pb "github.com/stacklok/mediator/pkg/generated/protobuf/go/mediator/v1"
 )
 
+// nolint // This function is serial for some reason and doesn't work with t.Parallel()
 func TestLogin_gRPC(t *testing.T) {
-	t.Parallel()
 
 	seed := time.Now().UnixNano()
 	password := util.RandomPassword(8, seed)
@@ -115,8 +115,8 @@ func TestLogin_gRPC(t *testing.T) {
 
 	for i := range testCases {
 		tc := testCases[i]
+		//nolint // This function is serial for some reason and doesn't work with t.Parallel()
 		t.Run(tc.name, func(t *testing.T) {
-			t.Parallel()
 
 			ctrl := gomock.NewController(t)
 			defer ctrl.Finish()
