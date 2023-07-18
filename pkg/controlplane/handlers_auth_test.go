@@ -198,14 +198,17 @@ func TestRefreshToken_gRPC(t *testing.T) {
 	viper.SetDefault("auth.token_expiry", 3600)
 	viper.SetDefault("auth.refresh_expiry", 86400)
 	err := util.RandomKeypairFile(2048, viper.Get("auth.access_token_private_key").(string), viper.Get("auth.access_token_public_key").(string))
-	if err != nil {
-		t.Fatalf("Error generating access token private key: %v", err)
-	}
+	require.NoError(t, err, "Error generating access token private key")
 
 	err = util.RandomKeypairFile(2048, viper.Get("auth.refresh_token_private_key").(string), viper.Get("auth.refresh_token_public_key").(string))
-	if err != nil {
-		t.Fatalf("Error generating refresh token private key: %v", err)
-	}
+	require.NoError(t, err, "Error generating refresh token private key")
+
+	t.Cleanup(func() {
+		_ = os.Remove(filepath.Join(".", viper.Get("auth.refresh_token_private_key").(string)))
+		_ = os.Remove(filepath.Join(".", viper.Get("auth.refresh_token_public_key").(string)))
+		_ = os.Remove(filepath.Join(".", viper.Get("auth.access_token_private_key").(string)))
+		_ = os.Remove(filepath.Join(".", viper.Get("auth.access_token_public_key").(string)))
+	})
 
 	ctrl := gomock.NewController(t)
 	defer ctrl.Finish()
@@ -244,8 +247,4 @@ func TestRefreshToken_gRPC(t *testing.T) {
 	assert.NotNil(t, res)
 	assert.NotNil(t, res.AccessToken)
 
-	_ = os.Remove(filepath.Join(".", viper.Get("auth.refresh_token_private_key").(string)))
-	_ = os.Remove(filepath.Join(".", viper.Get("auth.refresh_token_public_key").(string)))
-	_ = os.Remove(filepath.Join(".", viper.Get("auth.access_token_private_key").(string)))
-	_ = os.Remove(filepath.Join(".", viper.Get("auth.access_token_public_key").(string)))
 }
