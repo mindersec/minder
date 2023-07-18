@@ -63,6 +63,7 @@ func TestLogin_gRPC(t *testing.T) {
 	require.NoError(t, err, "Error generating refresh token private key")
 
 	t.Cleanup(func() {
+		t.Log("Cleaning up keys")
 		_ = os.Remove(filepath.Join(".", "access_token_private.pem"))
 		_ = os.Remove(filepath.Join(".", "refresh_token_private.pem"))
 	})
