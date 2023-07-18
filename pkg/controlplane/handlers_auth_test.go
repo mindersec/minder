@@ -58,13 +58,14 @@ func TestLogin_gRPC(t *testing.T) {
 	viper.SetDefault("auth.access_token_private_key", "access_token_private.pem")
 	viper.SetDefault("auth.refresh_token_private_key", "refresh_token_private.pem")
 	err = util.RandomPrivateKeyFile(2048, "access_token_private.pem")
-	if err != nil {
-		t.Fatalf("Error generating access token private key: %v", err)
-	}
+	require.NoError(t, err, "Error generating access token private key")
 	err = util.RandomPrivateKeyFile(2048, "refresh_token_private.pem")
-	if err != nil {
-		t.Fatalf("Error generating refresh token private key: %v", err)
-	}
+	require.NoError(t, err, "Error generating refresh token private key")
+
+	t.Cleanup(func() {
+		_ = os.Remove(filepath.Join(".", "access_token_private.pem"))
+		_ = os.Remove(filepath.Join(".", "refresh_token_private.pem"))
+	})
 
 	testCases := []struct {
 		name               string
@@ -132,9 +133,6 @@ func TestLogin_gRPC(t *testing.T) {
 			tc.checkResponse(t, resp, err)
 		})
 	}
-
-	_ = os.Remove(filepath.Join(".", "access_token_private.pem"))
-	_ = os.Remove(filepath.Join(".", "refresh_token_private.pem"))
 }
 
 func TestLogout_gRPC(t *testing.T) {
