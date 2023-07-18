@@ -88,7 +88,7 @@ func testCmdRun(cmd *cobra.Command, _ []string) error {
 		return fmt.Errorf("error reading fragment from file: %w", err)
 	}
 
-	frags, err := getRelevantFragments(rt, p)
+	rules, err := getRelevantRules(rt, p)
 	if err != nil {
 		return fmt.Errorf("error getting relevant fragment: %w", err)
 	}
@@ -103,38 +103,29 @@ func testCmdRun(cmd *cobra.Command, _ []string) error {
 		return fmt.Errorf("error creating rule type engine: %w", err)
 	}
 
-	if len(frags) == 0 {
+	if len(rules) == 0 {
 		return fmt.Errorf("no rules found with type %s", rt.Name)
 	}
 
-	return runEvaluationForFragments(eng, ent, frags)
+	return runEvaluationForRules(eng, ent, rules)
 }
 
-func runEvaluationForFragments(eng *engine.RuleTypeEngine, ent any, frags []map[string]any) error {
+func runEvaluationForRules(eng *engine.RuleTypeEngine, ent any, frags []*pb.PipelinePolicy_Rule) error {
 	for idx := range frags {
 		frag := frags[idx]
 
-		var def, params map[string]any
-
-		if _, ok := frag["def"]; !ok {
-			return fmt.Errorf("fragment does not contain def")
-		}
-
-		def, ok := frag["def"].(map[string]any)
-		if !ok {
-			return fmt.Errorf("error casting def to map")
-		}
-
-		if _, ok := frag["params"]; ok {
-			params, ok = frag["params"].(map[string]any)
-			if !ok {
-				return fmt.Errorf("error casting params to map")
-			}
-		}
-
+		// We already do validation of the rule definition when parsing.
+		// It's safe to simply
+		def := frag.Def.AsMap()
 		valid, err := eng.ValidateAgainstSchema(def)
 		if valid == nil {
-			return fmt.Errorf("error validating fragment against schema: %w", err)
+			return fmt.Errorf("error validating rule against schema: %w", err)
+		}
+
+		p := frag.GetParams()
+		var params map[string]any
+		if p != nil {
+			params = p.AsMap()
 		}
 
 		fmt.Printf("Policy valid according to the JSON schema: %t\n", *valid)
@@ -204,106 +195,28 @@ func readEntityFromFile(fpath string, entType string) (any, error) {
 	return out, nil
 }
 
-func readPolicyFromFile(fpath string) (map[string]any, error) {
+func readPolicyFromFile(fpath string) (*pb.PipelinePolicy, error) {
 	f, err := os.Open(filepath.Clean(fpath))
 	if err != nil {
 		return nil, fmt.Errorf("error opening file: %w", err)
 	}
 
-	w := &bytes.Buffer{}
-	if err := util.TranscodeYAMLToJSON(f, w); err != nil {
-		return nil, fmt.Errorf("error converting yaml to json: %w", err)
+	if filepath.Ext(fpath) == ".json" {
+		return engine.ParseJSON(f)
 	}
 
-	var out map[string]any
-
-	if err := json.NewDecoder(w).Decode(&out); err != nil {
-		return nil, fmt.Errorf("error decoding json: %w", err)
-	}
-
-	return out, nil
+	// parse yaml by default
+	return engine.ParseYAML(f)
 }
 
-// getRelevantFragments returns the relevant fragments for the rule type
-// Note that this will eventually be replaced by a proper parser for pipeline
-// policies.
-// TODO: This should be moved to a policy package and we should have some
-// generic interface for policies.
-//
-//nolint:gocyclo // this is temporary code
-func getRelevantFragments(rt *pb.RuleType, p map[string]any) ([]map[string]any, error) {
-	out := []map[string]any{}
-	// We get the relevant entity for the rule type
-	entityPolicyRaw, ok := p[rt.Def.InEntity]
-	if !ok {
-		return nil, fmt.Errorf("policy does not contain entity: %s", rt.Def.InEntity)
+// getRelevantRules returns the relevant rules for the rule type
+func getRelevantRules(rt *pb.RuleType, p *pb.PipelinePolicy) ([]*pb.PipelinePolicy_Rule, error) {
+	contextualRules, err := engine.GetRulesForEntity(p, rt.Def.InEntity)
+	if err != nil {
+		return nil, fmt.Errorf("error getting rules for entity: %w", err)
 	}
 
-	pipelineContext, ok := p["context"].(map[string]any)
-	if !ok {
-		return nil, fmt.Errorf("policy does not contain context")
-	}
-
-	defaultProvider, ok := pipelineContext["provider"].(string)
-	if !ok {
-		return nil, fmt.Errorf("policy does not contain valid provider")
-	}
-
-	// cast to contextual rules which is an array
-	contextualRules, ok := entityPolicyRaw.([]any)
-	if !ok {
-		return nil, fmt.Errorf("policy entity is not an array")
-	}
-
-	if len(contextualRules) == 0 {
-		return nil, fmt.Errorf("policy entity array is empty")
-	}
-
-	// We get the relevant fragment for the rule type
-	for idx := range contextualRules {
-		ruleSet, ok := contextualRules[idx].(map[string]any)
-		if !ok {
-			return nil, fmt.Errorf("policy entity is not an object")
-		}
-
-		prov, ok := ruleSet["context"].(string)
-		if !ok {
-			return nil, fmt.Errorf("policy entity context is not a string")
-		}
-
-		if len(prov) == 0 {
-			prov = defaultProvider
-		}
-
-		if prov != rt.Context.Provider {
-			continue
-		}
-
-		rules, ok := ruleSet["rules"].([]any)
-		if !ok {
-			return nil, fmt.Errorf("policy entity rules is not an array")
-		}
-
-		for idx := range rules {
-			rule, ok := rules[idx].(map[string]any)
-			if !ok {
-				return nil, fmt.Errorf("policy entity rule at index %d is not an object", idx)
-			}
-
-			typ, ok := rule["type"].(string)
-			if !ok {
-				return nil, fmt.Errorf("policy entity rule at index %d does not have a valid type", idx)
-			}
-
-			if typ == rt.Name {
-				out = append(out, rule)
-			}
-		}
-
-		return out, nil
-	}
-
-	return nil, fmt.Errorf("policy does not contain rules for provider: %s", rt.Context.Provider)
+	return engine.FilterRulesForType(contextualRules, rt)
 }
 
 // getProviderClient returns a client for the provider specified in the rule type

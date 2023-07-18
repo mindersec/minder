@@ -26,6 +26,12 @@ import (
 	pb "github.com/stacklok/mediator/pkg/generated/protobuf/go/mediator/v1"
 )
 
+var (
+	defaultOrg      = "ACME"
+	defaultProvider = "github"
+	quayProvider    = "quay"
+)
+
 func comparePolicies(t *testing.T, a *pb.PipelinePolicy, b *pb.PipelinePolicy) {
 	t.Helper()
 
@@ -112,10 +118,6 @@ func compareStructs(t *testing.T, a *structpb.Struct, b *structpb.Struct) {
 
 func TestParseYAML(t *testing.T) {
 	t.Parallel()
-
-	defaultOrg := "ACME"
-	defaultProvider := "github"
-	quayProvider := "quay"
 
 	tests := []struct {
 		name    string
@@ -393,6 +395,445 @@ repository:
 			require.NoError(t, err, "ParseYAML should not have errored")
 
 			comparePolicies(t, tt.want, got)
+		})
+	}
+}
+
+func TestGetRulesForEntity(t *testing.T) {
+	t.Parallel()
+
+	pol := &pb.PipelinePolicy{
+		Name: "acme-github-policy",
+		Context: &pb.Context{
+			Organization: &defaultOrg,
+			Provider:     "github",
+		},
+		Repository: []*pb.PipelinePolicy_ContextualRuleSet{
+			{
+				Context: &defaultProvider,
+				Rules: []*pb.PipelinePolicy_Rule{
+					{
+						Type: "secret_scanning",
+						Def: &structpb.Struct{
+							Fields: map[string]*structpb.Value{
+								"enabled": {
+									Kind: &structpb.Value_BoolValue{
+										BoolValue: true,
+									},
+								},
+							},
+						},
+					},
+				},
+			},
+		},
+		BuildEnvironment: []*pb.PipelinePolicy_ContextualRuleSet{
+			{
+				Rules: []*pb.PipelinePolicy_Rule{
+					{
+						Type: "no_org_wide_github_action_permissions",
+						Def: &structpb.Struct{
+							Fields: map[string]*structpb.Value{
+								"enabled": {
+									Kind: &structpb.Value_BoolValue{
+										BoolValue: true,
+									},
+								},
+							},
+						},
+					},
+				},
+			},
+		},
+		Artifact: []*pb.PipelinePolicy_ContextualRuleSet{
+			{
+				Rules: []*pb.PipelinePolicy_Rule{
+					{
+						Type: "ctlog_entry",
+						Params: &structpb.Struct{
+							Fields: map[string]*structpb.Value{
+								"rekor": {
+									Kind: &structpb.Value_StringValue{
+										StringValue: "https://rekor.acme.dev/",
+									},
+								},
+								"fulcio": {
+									Kind: &structpb.Value_StringValue{
+										StringValue: "https://fulcio.acme.dev/",
+									},
+								},
+								"tuf": {
+									Kind: &structpb.Value_StringValue{
+										StringValue: "https://tuf.acme.dev/",
+									},
+								},
+							},
+						},
+						Def: &structpb.Struct{
+							Fields: map[string]*structpb.Value{
+								"state": {
+									Kind: &structpb.Value_StringValue{
+										StringValue: "exists",
+									},
+								},
+							},
+						},
+					},
+				},
+			},
+			{
+				Context: &quayProvider,
+				Rules: []*pb.PipelinePolicy_Rule{
+					{
+						Type: "ctlog_entry",
+						Params: &structpb.Struct{
+							Fields: map[string]*structpb.Value{
+								"rekor": {
+									Kind: &structpb.Value_StringValue{
+										StringValue: "https://rekor.acme.dev/",
+									},
+								},
+								"fulcio": {
+									Kind: &structpb.Value_StringValue{
+										StringValue: "https://fulcio.acme.dev/",
+									},
+								},
+								"tuf": {
+									Kind: &structpb.Value_StringValue{
+										StringValue: "https://tuf.acme.dev/",
+									},
+								},
+							},
+						},
+						Def: &structpb.Struct{
+							Fields: map[string]*structpb.Value{
+								"state": {
+									Kind: &structpb.Value_StringValue{
+										StringValue: "exists",
+									},
+								},
+							},
+						},
+					},
+				},
+			},
+		},
+	}
+
+	type args struct {
+		p      *pb.PipelinePolicy
+		entity string
+	}
+	tests := []struct {
+		name    string
+		args    args
+		want    []*pb.PipelinePolicy_ContextualRuleSet
+		wantErr bool
+	}{
+		{
+			name: "valid rules for repository",
+			args: args{
+				p:      pol,
+				entity: "repository",
+			},
+			want: []*pb.PipelinePolicy_ContextualRuleSet{
+				{
+					Context: &defaultProvider,
+					Rules: []*pb.PipelinePolicy_Rule{
+						{
+							Type: "secret_scanning",
+							Def: &structpb.Struct{
+								Fields: map[string]*structpb.Value{
+									"enabled": {
+										Kind: &structpb.Value_BoolValue{
+											BoolValue: true,
+										},
+									},
+								},
+							},
+						},
+					},
+				},
+			},
+		},
+		{
+			name: "valid rules for build environment",
+			args: args{
+				p:      pol,
+				entity: "build_environment",
+			},
+			want: []*pb.PipelinePolicy_ContextualRuleSet{
+				{
+					Rules: []*pb.PipelinePolicy_Rule{
+						{
+							Type: "no_org_wide_github_action_permissions",
+							Def: &structpb.Struct{
+								Fields: map[string]*structpb.Value{
+									"enabled": {
+										Kind: &structpb.Value_BoolValue{
+											BoolValue: true,
+										},
+									},
+								},
+							},
+						},
+					},
+				},
+			},
+		},
+		{
+			name: "valid rules for artifacts",
+			args: args{
+				p:      pol,
+				entity: "artifact",
+			},
+			want: []*pb.PipelinePolicy_ContextualRuleSet{
+				{
+					Rules: []*pb.PipelinePolicy_Rule{
+						{
+							Type: "ctlog_entry",
+							Params: &structpb.Struct{
+								Fields: map[string]*structpb.Value{
+									"rekor": {
+										Kind: &structpb.Value_StringValue{
+											StringValue: "https://rekor.acme.dev/",
+										},
+									},
+									"fulcio": {
+										Kind: &structpb.Value_StringValue{
+											StringValue: "https://fulcio.acme.dev/",
+										},
+									},
+									"tuf": {
+										Kind: &structpb.Value_StringValue{
+											StringValue: "https://tuf.acme.dev/",
+										},
+									},
+								},
+							},
+							Def: &structpb.Struct{
+								Fields: map[string]*structpb.Value{
+									"state": {
+										Kind: &structpb.Value_StringValue{
+											StringValue: "exists",
+										},
+									},
+								},
+							},
+						},
+					},
+				},
+				{
+					Context: &quayProvider,
+					Rules: []*pb.PipelinePolicy_Rule{
+						{
+							Type: "ctlog_entry",
+							Params: &structpb.Struct{
+								Fields: map[string]*structpb.Value{
+									"rekor": {
+										Kind: &structpb.Value_StringValue{
+											StringValue: "https://rekor.acme.dev/",
+										},
+									},
+									"fulcio": {
+										Kind: &structpb.Value_StringValue{
+											StringValue: "https://fulcio.acme.dev/",
+										},
+									},
+									"tuf": {
+										Kind: &structpb.Value_StringValue{
+											StringValue: "https://tuf.acme.dev/",
+										},
+									},
+								},
+							},
+							Def: &structpb.Struct{
+								Fields: map[string]*structpb.Value{
+									"state": {
+										Kind: &structpb.Value_StringValue{
+											StringValue: "exists",
+										},
+									},
+								},
+							},
+						},
+					},
+				},
+			},
+		},
+	}
+	for _, tt := range tests {
+		tt := tt
+
+		t.Run(tt.name, func(t *testing.T) {
+			t.Parallel()
+
+			got, err := engine.GetRulesForEntity(tt.args.p, tt.args.entity)
+			if tt.wantErr {
+				require.Error(t, err, "should have gotten error")
+				return
+			}
+
+			compareEntityRules(t, tt.want, got)
+		})
+	}
+}
+
+func TestFilterRulesForType(t *testing.T) {
+	t.Parallel()
+
+	crs := []*pb.PipelinePolicy_ContextualRuleSet{
+		{
+			Rules: []*pb.PipelinePolicy_Rule{
+				{
+					Type: "secret_scanning",
+					Def: &structpb.Struct{
+						Fields: map[string]*structpb.Value{
+							"enabled": {
+								Kind: &structpb.Value_BoolValue{
+									BoolValue: true,
+								},
+							},
+						},
+					},
+				},
+				{
+					Type: "no_org_wide_github_action_permissions",
+					Def: &structpb.Struct{
+						Fields: map[string]*structpb.Value{
+							"enabled": {
+								Kind: &structpb.Value_BoolValue{
+									BoolValue: true,
+								},
+							},
+						},
+					},
+				},
+				{
+					Type: "ctlog_entry",
+					Params: &structpb.Struct{
+						Fields: map[string]*structpb.Value{
+							"rekor": {
+								Kind: &structpb.Value_StringValue{
+									StringValue: "https://rekor.acme.dev/",
+								},
+							},
+							"fulcio": {
+								Kind: &structpb.Value_StringValue{
+									StringValue: "https://fulcio.acme.dev/",
+								},
+							},
+							"tuf": {
+								Kind: &structpb.Value_StringValue{
+									StringValue: "https://tuf.acme.dev/",
+								},
+							},
+						},
+					},
+					Def: &structpb.Struct{
+						Fields: map[string]*structpb.Value{
+							"state": {
+								Kind: &structpb.Value_StringValue{
+									StringValue: "exists",
+								},
+							},
+						},
+					},
+				},
+			},
+		},
+		{
+			Context: &quayProvider,
+			Rules: []*pb.PipelinePolicy_Rule{
+				{
+					Type: "ctlog_entry",
+					Params: &structpb.Struct{
+						Fields: map[string]*structpb.Value{
+							"rekor": {
+								Kind: &structpb.Value_StringValue{
+									StringValue: "https://rekor.acme.dev/",
+								},
+							},
+							"fulcio": {
+								Kind: &structpb.Value_StringValue{
+									StringValue: "https://fulcio.acme.dev/",
+								},
+							},
+							"tuf": {
+								Kind: &structpb.Value_StringValue{
+									StringValue: "https://tuf.acme.dev/",
+								},
+							},
+						},
+					},
+					Def: &structpb.Struct{
+						Fields: map[string]*structpb.Value{
+							"state": {
+								Kind: &structpb.Value_StringValue{
+									StringValue: "exists",
+								},
+							},
+						},
+					},
+				},
+			},
+		},
+	}
+
+	type args struct {
+		cr []*pb.PipelinePolicy_ContextualRuleSet
+		rt *pb.RuleType
+	}
+	tests := []struct {
+		name    string
+		args    args
+		wantLen int
+		wantErr bool
+	}{
+		{
+			name: "valid filter for secret scanning",
+			args: args{
+				cr: crs,
+				rt: &pb.RuleType{
+					Name: "secret_scanning",
+				},
+			},
+			wantLen: 1,
+		},
+		{
+			name: "valid filter for no_org_wide_github_action_permissions",
+			args: args{
+				cr: crs,
+				rt: &pb.RuleType{
+					Name: "no_org_wide_github_action_permissions",
+				},
+			},
+			wantLen: 1,
+		},
+		{
+			name: "valid filter for ctlog_entry",
+			args: args{
+				cr: crs,
+				rt: &pb.RuleType{
+					Name: "ctlog_entry",
+				},
+			},
+			wantLen: 2,
+		},
+	}
+	for _, tt := range tests {
+		tt := tt
+
+		t.Run(tt.name, func(t *testing.T) {
+			t.Parallel()
+
+			got, err := engine.FilterRulesForType(tt.args.cr, tt.args.rt)
+			if tt.wantErr {
+				require.Error(t, err, "should have gotten error")
+				return
+			}
+
+			require.Equal(t, tt.wantLen, len(got), "should have gotten the expected number of rules")
 		})
 	}
 }
