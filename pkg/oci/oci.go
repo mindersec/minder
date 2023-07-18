@@ -19,7 +19,6 @@ import (
 	"fmt"
 
 	"github.com/google/go-containerregistry/pkg/authn"
-	"github.com/google/go-containerregistry/pkg/name"
 	registry_name "github.com/google/go-containerregistry/pkg/name"
 	v1 "github.com/google/go-containerregistry/pkg/v1"
 	"github.com/google/go-containerregistry/pkg/v1/remote"
@@ -34,6 +33,7 @@ func (g githubAuthenticator) Authorization() (*authn.AuthConfig, error) {
 	}, nil
 }
 
+// REGISTRY is the default registry to use
 const REGISTRY = "ghcr.io"
 
 // GetImageManifest returns the manifest for the given image
@@ -57,33 +57,8 @@ func GetImageManifest(owner string, name string, tags []string, username string,
 	return *manifest, nil
 }
 
-// GetImageDigest returns the digest for the given image
-func GetImageDigest(imageRef string, token string) (v1.Hash, error) {
-	ref, err := name.ParseReference(imageRef)
-	if err != nil {
-		return v1.Hash{}, fmt.Errorf("error parsing reference url: %w", err)
-	}
-
-	if err != nil {
-		return v1.Hash{}, fmt.Errorf("error parsing image url: %w", err)
-	}
-
-	// auth := &authn.Bearer{Token: token}
-
-	img, err := remote.Image(ref, remote.WithAuthFromKeychain(authn.DefaultKeychain))
-	if err != nil {
-		return v1.Hash{}, fmt.Errorf("error getting image: %w", err)
-	}
-
-	digest, err := img.Digest()
-	if err != nil {
-		fmt.Printf("Error retrieving image digest: %v", err)
-	}
-	return digest, nil
-}
-
 // GetImageConfig returns the config for the given image
-func GetImageConfig(image name.Reference) (v1.ConfigFile, error) {
+func GetImageConfig(image registry_name.Reference) (v1.ConfigFile, error) {
 	img, err := remote.Image(image)
 	if err != nil {
 		return v1.ConfigFile{}, fmt.Errorf("error getting image: %w", err)
@@ -98,7 +73,7 @@ func GetImageConfig(image name.Reference) (v1.ConfigFile, error) {
 }
 
 // GetImageLayers returns the layers for the given image
-func GetImageLayers(image name.Reference) ([]v1.Layer, error) {
+func GetImageLayers(image registry_name.Reference) ([]v1.Layer, error) {
 	img, err := remote.Image(image)
 	if err != nil {
 		return nil, fmt.Errorf("error getting image: %w", err)
@@ -113,7 +88,7 @@ func GetImageLayers(image name.Reference) ([]v1.Layer, error) {
 }
 
 // GetImageLayerByDigest returns the layer for the given image and digest
-func GetImageLayerByDigest(image name.Reference, digest string) (v1.Layer, error) {
+func GetImageLayerByDigest(image registry_name.Reference, digest string) (v1.Layer, error) {
 	img, err := remote.Image(image)
 	if err != nil {
 		return nil, fmt.Errorf("error getting image: %w", err)

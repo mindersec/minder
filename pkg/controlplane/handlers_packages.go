@@ -16,7 +16,6 @@ package controlplane
 
 import (
 	"context"
-	"fmt"
 
 	"google.golang.org/grpc/codes"
 	"google.golang.org/grpc/status"
@@ -34,6 +33,7 @@ type ImageRef struct {
 }
 
 // ListPackages lists all packages
+// nolint: gocyclo
 func (s *Server) ListPackages(ctx context.Context, in *pb.ListPackagesRequest) (*pb.ListPackagesResponse, error) {
 	if in.Provider != auth.Github {
 		return nil, status.Errorf(codes.InvalidArgument, "provider not supported: %v", in.Provider)
@@ -74,7 +74,7 @@ func (s *Server) ListPackages(ctx context.Context, in *pb.ListPackagesRequest) (
 
 	var results []*pb.Packages
 
-	pkgList, err := client.ListAllContainers(ctx, false)
+	pkgList, err := client.ListAllPackages(ctx, false)
 	if err != nil {
 		return nil, err
 	}
@@ -85,40 +85,48 @@ func (s *Server) ListPackages(ctx context.Context, in *pb.ListPackagesRequest) (
 	}
 
 	for _, pkg := range pkgList.Packages {
-		tags := pkg.LastVersion.Metadata.Container.Tags
-		if len(tags) == 0 {
-			// we cannot check images without tags
-			continue
-		}
-		manifest, err := oci.GetImageManifest(*pkg.Package.Owner.Login, *pkg.Package.Name, tags, *user.Login, decryptedToken.AccessToken)
-		if err != nil {
-			return nil, err
-		}
+		if pkg.LastVersion != nil {
+			tags := pkg.LastVersion.Metadata.Container.Tags
+			if len(tags) == 0 {
+				// we cannot check images without tags
+				continue
+			}
+			manifest, err := oci.GetImageManifest(*pkg.Package.Owner.Login, *pkg.Package.Name,
+				tags, *user.Login, decryptedToken.AccessToken)
+			if err != nil {
+				return nil, err
+			}
+			// check if signed
+			signed := false
+			for _, layer := range manifest.Layers {
+				if layer.MediaType == "application/vnd.dev.cosign.simplesigning.v1+json" {
+					signed = true
+				}
+			}
 
-		// check if singed
-		for _, layer := range manifest.Layers {
-			fmt.Println(layer)
+			latest_tag := ""
+			if pkg.LastVersion.Metadata.Container.Tags != nil && len(pkg.LastVersion.Metadata.Container.Tags) > 0 {
+				latest_tag = pkg.LastVersion.Metadata.Container.Tags[0]
+			}
+
+			var created *timestamppb.Timestamp
+			if pkg.LastVersion.CreatedAt != nil {
+				created = timestamppb.New(pkg.LastVersion.CreatedAt.Time)
+			}
+
+			results = append(results, &pb.Packages{
+				Owner: *pkg.Package.Owner.Login,
+				Name:  *pkg.Package.Name,
+				PkgId: *pkg.Package.ID,
+				LastVersion: &pb.PackageVersion{
+					VersionId: int32(*pkg.LastVersion.ID),
+					Tag:       latest_tag,
+					IsSigned:  signed,
+					CreatedAt: created,
+				},
+			})
 		}
-
-		latest_tag := ""
-		if pkg.LastVersion.Metadata.Container.Tags != nil && len(pkg.LastVersion.Metadata.Container.Tags) > 0 {
-			latest_tag = pkg.LastVersion.Metadata.Container.Tags[0]
-		}
-
-		createdAt := pkg.LastVersion.CreatedAt
-
-		results = append(results, &pb.Packages{
-			Owner: *pkg.Package.Owner.Login,
-			Name:  *pkg.Package.Name,
-			PkgId: *pkg.Package.ID,
-			LastVersion: &pb.PackageVersion{
-				VersionId: *pkg.LastVersion.Version,
-				Tag:       latest_tag,
-				Sha256:    *pkg.LastVersion.Name,
-				IsSigned:  false,
-				CreatedAt: timestamppb.New(createdAt.Time),
-			},
-		})
+		return &pb.ListPackagesResponse{Results: results}, nil
 	}
 
 	return &pb.ListPackagesResponse{

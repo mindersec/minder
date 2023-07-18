@@ -19,6 +19,7 @@ import (
 	"encoding/json"
 	"fmt"
 	"os"
+	"time"
 
 	"github.com/olekukonko/tablewriter"
 	"github.com/spf13/cobra"
@@ -29,13 +30,6 @@ import (
 	"github.com/stacklok/mediator/pkg/auth"
 	pb "github.com/stacklok/mediator/pkg/generated/protobuf/go/mediator/v1"
 )
-
-// const (
-// 	formatJSON    = "json"
-// 	formatYAML    = "yaml"
-// 	formatTable   = "table"
-// 	formatDefault = "" // it actually defaults to table
-// )
 
 // repo_listCmd represents the list command to list repos with the
 // mediator control plane
@@ -95,13 +89,16 @@ var pkg_listCmd = &cobra.Command{
 		case "", "table":
 			table := tablewriter.NewWriter(os.Stdout)
 
-			table.SetHeader([]string{"Package ID", "Name", "Signed"})
+			table.SetHeader([]string{"Package ID", "Name", "Latest version ID", "Latest tag",
+				"Latest tag is signed", "Latest tag creation date"})
 
-			for _, pkg := range packages.GetResults() {
-				pkgURI := fmt.Sprintf("ghcr.io/%s/%s", pkg.GetOwner(), pkg.GetName())
-				pkgID := fmt.Sprintf("%d", pkg.PkgId)
-				signed := "false"
-				table.Append([]string{pkgID, pkgURI, signed})
+			for _, pkg_item := range packages.Results {
+				pkgURI := fmt.Sprintf("ghcr.io/%s/%s", pkg_item.GetOwner(), pkg_item.GetName())
+				pkgID := fmt.Sprintf("%d", pkg_item.PkgId)
+				versionId := fmt.Sprintf("%d", pkg_item.LastVersion.VersionId)
+				signed := fmt.Sprintf("%t", pkg_item.LastVersion.IsSigned)
+				table.Append([]string{pkgID, pkgURI, versionId, pkg_item.LastVersion.Tag, signed,
+					pkg_item.LastVersion.CreatedAt.AsTime().Format(time.RFC3339)})
 			}
 
 			table.Render()

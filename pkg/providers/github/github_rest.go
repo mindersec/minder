@@ -18,6 +18,7 @@ package github
 import (
 	"context"
 	"fmt"
+	"net/http"
 
 	"github.com/google/go-github/v53/github"
 )
@@ -71,6 +72,7 @@ func (c *RestClient) ListAllRepositories(ctx context.Context, isOrg bool, owner 
 	}, nil
 }
 
+// PackageResult holds the results of a package query and the latest version
 type PackageResult struct {
 	Package     *github.Package
 	LastVersion *github.PackageVersion
@@ -81,8 +83,8 @@ type PackageListResult struct {
 	Packages []*PackageResult
 }
 
-// ListAllPackages returns a list of all packages of type container for the authenticated user
-func (c *RestClient) ListAllContainers(ctx context.Context, isOrg bool) (PackageListResult, error) {
+// ListAllPackages returns a list of all packages for the authenticated user
+func (c *RestClient) ListAllPackages(ctx context.Context, isOrg bool) (PackageListResult, error) {
 	opt := &github.PackageListOptions{
 		ListOptions: github.ListOptions{
 			Page:    1,
@@ -199,4 +201,17 @@ func (c *RestClient) GetAuthenticatedUser(ctx context.Context) (*github.User, er
 		return nil, err
 	}
 	return user, nil
+}
+
+// NewRequest creates an API request. A relative URL can be provided in urlStr,
+// which will be resolved to the BaseURL of the Client. Relative URLS should
+// always be specified without a preceding slash. If specified, the value
+// pointed to by body is JSON encoded and included as the request body.
+func (c *RestClient) NewRequest(method, url string, body interface{}, opts ...github.RequestOption) (*http.Request, error) {
+	return c.client.NewRequest(method, url, body, opts...)
+}
+
+// Do sends an API request and returns the API response.
+func (c *RestClient) Do(ctx context.Context, req *http.Request, v interface{}) (*github.Response, error) {
+	return c.client.Do(ctx, req, v)
 }

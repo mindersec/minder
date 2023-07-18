@@ -54,11 +54,10 @@ message ListPackagesResponse {
 }
 
 message PackageVersion {
-    string version_id = 1;
+    int32 version_id = 1;
     string tag = 2;
-    string sha256 = 3;
-    bool is_signed = 4;
-    google.protobuf.Timestamp created_at = 5;
+    bool is_signed = 3;
+    google.protobuf.Timestamp created_at = 4;
 }
 message Packages {
     string owner = 1;

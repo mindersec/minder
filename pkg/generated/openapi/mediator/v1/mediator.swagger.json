@@ -3774,12 +3774,10 @@
       "type": "object",
       "properties": {
         "versionId": {
-          "type": "string"
+          "type": "integer",
+          "format": "int32"
         },
         "tag": {
-          "type": "string"
-        },
-        "sha256": {
           "type": "string"
         },
         "isSigned": {

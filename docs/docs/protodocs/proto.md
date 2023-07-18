@@ -1978,9 +1978,8 @@ ListRuleTypesResponse is the response to list rule types.
 
 | Field | Type | Label | Description |
 | ----- | ---- | ----- | ----------- |
-| version_id | [string](#string) |  |  |
+| version_id | [int32](#int32) |  |  |
 | tag | [string](#string) |  |  |
-| sha256 | [string](#string) |  |  |
 | is_signed | [bool](#bool) |  |  |
 | created_at | [google.protobuf.Timestamp](#google-protobuf-Timestamp) |  |  |
 
