@@ -34,11 +34,16 @@ type RuleMeta struct {
 	// Provider is the ID of the provider that this rule is for
 	Provider string
 	// Organization is the ID of the organization that this rule is for
-	Organization string
+	Organization *string
+	// Group is the ID of the group that this rule is for
+	Group *string
 }
 
 func (r *RuleMeta) String() string {
-	return fmt.Sprintf("%s/%s/%s", r.Provider, r.Organization, r.Name)
+	if r.Group != nil {
+		return fmt.Sprintf("%s/group/%s/%s", r.Provider, *r.Group, r.Name)
+	}
+	return fmt.Sprintf("%s/org/%s/%s", r.Provider, *r.Organization, r.Name)
 }
 
 // RuleTypeEngine is the engine for a rule type
@@ -70,17 +75,31 @@ func NewRuleTypeEngine(rt *pb.RuleType, cli ghclient.RestAPI) (*RuleTypeEngine, 
 		return nil, fmt.Errorf("cannot create rule data ingest: %w", err)
 	}
 
-	return &RuleTypeEngine{
+	rte := &RuleTypeEngine{
 		Meta: RuleMeta{
-			Name:         rt.Name,
-			Provider:     rt.Context.Provider,
-			Organization: rt.Context.Organization,
+			Name:     rt.Name,
+			Provider: rt.Context.Provider,
 		},
 		schema: schema,
 		rdi:    rdi,
 		rt:     rt,
 		cli:    cli,
-	}, nil
+	}
+
+	// Set organization if it exists
+	if rt.Context.Organization != nil && *rt.Context.Organization != "" {
+		// We need to clone the string because the pointer is to a string literal
+		// and we don't want to modify that
+		org := strings.Clone(*rt.Context.Organization)
+		rte.Meta.Organization = &org
+	} else if rt.Context.Group != nil && *rt.Context.Group != "" {
+		grp := strings.Clone(*rt.Context.Group)
+		rte.Meta.Group = &grp
+	} else {
+		return nil, fmt.Errorf("rule type context must have an organization or group")
+	}
+
+	return rte, nil
 }
 
 // GetID returns the ID of the rule type. The ID is meant to be

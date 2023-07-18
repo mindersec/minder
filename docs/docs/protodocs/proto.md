@@ -7,6 +7,7 @@
     - [BranchProtection](#mediator-v1-BranchProtection)
     - [CheckHealthRequest](#mediator-v1-CheckHealthRequest)
     - [CheckHealthResponse](#mediator-v1-CheckHealthResponse)
+    - [Context](#mediator-v1-Context)
     - [CreateGroupRequest](#mediator-v1-CreateGroupRequest)
     - [CreateGroupResponse](#mediator-v1-CreateGroupResponse)
     - [CreateKeyPairRequest](#mediator-v1-CreateKeyPairRequest)
@@ -116,8 +117,10 @@
     - [LogInResponse](#mediator-v1-LogInResponse)
     - [LogOutRequest](#mediator-v1-LogOutRequest)
     - [LogOutResponse](#mediator-v1-LogOutResponse)
-    - [OrganizationContext](#mediator-v1-OrganizationContext)
     - [OrganizationRecord](#mediator-v1-OrganizationRecord)
+    - [PipelinePolicy](#mediator-v1-PipelinePolicy)
+    - [PipelinePolicy.ContextualRuleSet](#mediator-v1-PipelinePolicy-ContextualRuleSet)
+    - [PipelinePolicy.Rule](#mediator-v1-PipelinePolicy-Rule)
     - [PolicyRecord](#mediator-v1-PolicyRecord)
     - [PolicyRepoStatus](#mediator-v1-PolicyRepoStatus)
     - [PolicyTypeRecord](#mediator-v1-PolicyTypeRecord)
@@ -219,6 +222,24 @@
 | Field | Type | Label | Description |
 | ----- | ---- | ----- | ----------- |
 | status | [string](#string) |  |  |
+
+
+
+
+
+
+<a name="mediator-v1-Context"></a>
+
+### Context
+Context defines the context in which a rule is evaluated.
+this normally refers to a combination of the provider, organization and group.
+
+
+| Field | Type | Label | Description |
+| ----- | ---- | ----- | ----------- |
+| provider | [string](#string) |  |  |
+| organization | [string](#string) | optional |  |
+| group | [string](#string) | optional |  |
 
 
 
@@ -1955,22 +1976,6 @@ BUF does not allow grouping (which is a shame)
 
 
 
-<a name="mediator-v1-OrganizationContext"></a>
-
-### OrganizationContext
-
-
-
-| Field | Type | Label | Description |
-| ----- | ---- | ----- | ----------- |
-| provider | [string](#string) |  |  |
-| organization | [string](#string) |  |  |
-
-
-
-
-
-
 <a name="mediator-v1-OrganizationRecord"></a>
 
 ### OrganizationRecord
@@ -1984,6 +1989,58 @@ BUF does not allow grouping (which is a shame)
 | company | [string](#string) |  |  |
 | created_at | [google.protobuf.Timestamp](#google-protobuf-Timestamp) |  |  |
 | updated_at | [google.protobuf.Timestamp](#google-protobuf-Timestamp) |  |  |
+
+
+
+
+
+
+<a name="mediator-v1-PipelinePolicy"></a>
+
+### PipelinePolicy
+PipelinePolicy defines a policy that is user defined.
+
+
+| Field | Type | Label | Description |
+| ----- | ---- | ----- | ----------- |
+| name | [string](#string) |  | name is the name of the policy instance. |
+| context | [Context](#mediator-v1-Context) |  | context is the context in which the policy is evaluated. |
+| repository | [PipelinePolicy.ContextualRuleSet](#mediator-v1-PipelinePolicy-ContextualRuleSet) | repeated | These are the entities that one could set in the pipeline policy. |
+| build_environment | [PipelinePolicy.ContextualRuleSet](#mediator-v1-PipelinePolicy-ContextualRuleSet) | repeated |  |
+| artifact | [PipelinePolicy.ContextualRuleSet](#mediator-v1-PipelinePolicy-ContextualRuleSet) | repeated |  |
+
+
+
+
+
+
+<a name="mediator-v1-PipelinePolicy-ContextualRuleSet"></a>
+
+### PipelinePolicy.ContextualRuleSet
+ContextualRuleSet defines a set of rules that are evaluated in a certain context.
+
+
+| Field | Type | Label | Description |
+| ----- | ---- | ----- | ----------- |
+| context | [string](#string) | optional | context is the context in which the rules are evaluated. This refers to the provider. |
+| rules | [PipelinePolicy.Rule](#mediator-v1-PipelinePolicy-Rule) | repeated | rule is the set of rules that are evaluated. |
+
+
+
+
+
+
+<a name="mediator-v1-PipelinePolicy-Rule"></a>
+
+### PipelinePolicy.Rule
+Rule defines the individual call of a certain rule type.
+
+
+| Field | Type | Label | Description |
+| ----- | ---- | ----- | ----------- |
+| type | [string](#string) |  | type is the type of the rule to be instantiated. |
+| params | [google.protobuf.Struct](#google-protobuf-Struct) |  | params are the parameters that are passed to the rule. This is optional and depends on the rule type. |
+| def | [google.protobuf.Struct](#google-protobuf-Struct) |  | def is the definition of the rule. This depends on the rule type. |
 
 
 
@@ -2338,7 +2395,7 @@ The version is assumed from the folder&#39;s version.
 | Field | Type | Label | Description |
 | ----- | ---- | ----- | ----------- |
 | name | [string](#string) |  |  |
-| context | [OrganizationContext](#mediator-v1-OrganizationContext) |  |  |
+| context | [Context](#mediator-v1-Context) |  |  |
 | def | [RuleType.Definition](#mediator-v1-RuleType-Definition) |  |  |
 
 
