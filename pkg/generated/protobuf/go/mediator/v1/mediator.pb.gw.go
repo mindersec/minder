@@ -50,37 +50,37 @@ func local_request_HealthService_CheckHealth_0(ctx context.Context, marshaler ru
 }
 
 var (
-	filter_PackageService_ListPackages_0 = &utilities.DoubleArray{Encoding: map[string]int{}, Base: []int(nil), Check: []int(nil)}
+	filter_ArtifactService_ListArtifacts_0 = &utilities.DoubleArray{Encoding: map[string]int{}, Base: []int(nil), Check: []int(nil)}
 )
 
-func request_PackageService_ListPackages_0(ctx context.Context, marshaler runtime.Marshaler, client PackageServiceClient, req *http.Request, pathParams map[string]string) (proto.Message, runtime.ServerMetadata, error) {
-	var protoReq ListPackagesRequest
+func request_ArtifactService_ListArtifacts_0(ctx context.Context, marshaler runtime.Marshaler, client ArtifactServiceClient, req *http.Request, pathParams map[string]string) (proto.Message, runtime.ServerMetadata, error) {
+	var protoReq ListArtifactsRequest
 	var metadata runtime.ServerMetadata
 
 	if err := req.ParseForm(); err != nil {
 		return nil, metadata, status.Errorf(codes.InvalidArgument, "%v", err)
 	}
-	if err := runtime.PopulateQueryParameters(&protoReq, req.Form, filter_PackageService_ListPackages_0); err != nil {
+	if err := runtime.PopulateQueryParameters(&protoReq, req.Form, filter_ArtifactService_ListArtifacts_0); err != nil {
 		return nil, metadata, status.Errorf(codes.InvalidArgument, "%v", err)
 	}
 
-	msg, err := client.ListPackages(ctx, &protoReq, grpc.Header(&metadata.HeaderMD), grpc.Trailer(&metadata.TrailerMD))
+	msg, err := client.ListArtifacts(ctx, &protoReq, grpc.Header(&metadata.HeaderMD), grpc.Trailer(&metadata.TrailerMD))
 	return msg, metadata, err
 
 }
 
-func local_request_PackageService_ListPackages_0(ctx context.Context, marshaler runtime.Marshaler, server PackageServiceServer, req *http.Request, pathParams map[string]string) (proto.Message, runtime.ServerMetadata, error) {
-	var protoReq ListPackagesRequest
+func local_request_ArtifactService_ListArtifacts_0(ctx context.Context, marshaler runtime.Marshaler, server ArtifactServiceServer, req *http.Request, pathParams map[string]string) (proto.Message, runtime.ServerMetadata, error) {
+	var protoReq ListArtifactsRequest
 	var metadata runtime.ServerMetadata
 
 	if err := req.ParseForm(); err != nil {
 		return nil, metadata, status.Errorf(codes.InvalidArgument, "%v", err)
 	}
-	if err := runtime.PopulateQueryParameters(&protoReq, req.Form, filter_PackageService_ListPackages_0); err != nil {
+	if err := runtime.PopulateQueryParameters(&protoReq, req.Form, filter_ArtifactService_ListArtifacts_0); err != nil {
 		return nil, metadata, status.Errorf(codes.InvalidArgument, "%v", err)
 	}
 
-	msg, err := server.ListPackages(ctx, &protoReq)
+	msg, err := server.ListArtifacts(ctx, &protoReq)
 	return msg, metadata, err
 
 }
@@ -3463,13 +3463,13 @@ func RegisterHealthServiceHandlerServer(ctx context.Context, mux *runtime.ServeM
 	return nil
 }
 
-// RegisterPackageServiceHandlerServer registers the http handlers for service PackageService to "mux".
-// UnaryRPC     :call PackageServiceServer directly.
+// RegisterArtifactServiceHandlerServer registers the http handlers for service ArtifactService to "mux".
+// UnaryRPC     :call ArtifactServiceServer directly.
 // StreamingRPC :currently unsupported pending https://github.com/grpc/grpc-go/issues/906.
-// Note that using this registration option will cause many gRPC library features to stop working. Consider using RegisterPackageServiceHandlerFromEndpoint instead.
-func RegisterPackageServiceHandlerServer(ctx context.Context, mux *runtime.ServeMux, server PackageServiceServer) error {
+// Note that using this registration option will cause many gRPC library features to stop working. Consider using RegisterArtifactServiceHandlerFromEndpoint instead.
+func RegisterArtifactServiceHandlerServer(ctx context.Context, mux *runtime.ServeMux, server ArtifactServiceServer) error {
 
-	mux.Handle("GET", pattern_PackageService_ListPackages_0, func(w http.ResponseWriter, req *http.Request, pathParams map[string]string) {
+	mux.Handle("GET", pattern_ArtifactService_ListArtifacts_0, func(w http.ResponseWriter, req *http.Request, pathParams map[string]string) {
 		ctx, cancel := context.WithCancel(req.Context())
 		defer cancel()
 		var stream runtime.ServerTransportStream
@@ -3477,12 +3477,12 @@ func RegisterPackageServiceHandlerServer(ctx context.Context, mux *runtime.Serve
 		inboundMarshaler, outboundMarshaler := runtime.MarshalerForRequest(mux, req)
 		var err error
 		var annotatedContext context.Context
-		annotatedContext, err = runtime.AnnotateIncomingContext(ctx, mux, req, "/mediator.v1.PackageService/ListPackages", runtime.WithHTTPPathPattern("/api/v1/packages"))
+		annotatedContext, err = runtime.AnnotateIncomingContext(ctx, mux, req, "/mediator.v1.ArtifactService/ListArtifacts", runtime.WithHTTPPathPattern("/api/v1/artifacts"))
 		if err != nil {
 			runtime.HTTPError(ctx, mux, outboundMarshaler, w, req, err)
 			return
 		}
-		resp, md, err := local_request_PackageService_ListPackages_0(annotatedContext, inboundMarshaler, server, req, pathParams)
+		resp, md, err := local_request_ArtifactService_ListArtifacts_0(annotatedContext, inboundMarshaler, server, req, pathParams)
 		md.HeaderMD, md.TrailerMD = metadata.Join(md.HeaderMD, stream.Header()), metadata.Join(md.TrailerMD, stream.Trailer())
 		annotatedContext = runtime.NewServerMetadataContext(annotatedContext, md)
 		if err != nil {
@@ -3490,7 +3490,7 @@ func RegisterPackageServiceHandlerServer(ctx context.Context, mux *runtime.Serve
 			return
 		}
 
-		forward_PackageService_ListPackages_0(annotatedContext, mux, outboundMarshaler, w, req, resp, mux.GetForwardResponseOptions()...)
+		forward_ArtifactService_ListArtifacts_0(annotatedContext, mux, outboundMarshaler, w, req, resp, mux.GetForwardResponseOptions()...)
 
 	})
 
@@ -5301,9 +5301,9 @@ var (
 	forward_HealthService_CheckHealth_0 = runtime.ForwardResponseMessage
 )
 
-// RegisterPackageServiceHandlerFromEndpoint is same as RegisterPackageServiceHandler but
+// RegisterArtifactServiceHandlerFromEndpoint is same as RegisterArtifactServiceHandler but
 // automatically dials to "endpoint" and closes the connection when "ctx" gets done.
-func RegisterPackageServiceHandlerFromEndpoint(ctx context.Context, mux *runtime.ServeMux, endpoint string, opts []grpc.DialOption) (err error) {
+func RegisterArtifactServiceHandlerFromEndpoint(ctx context.Context, mux *runtime.ServeMux, endpoint string, opts []grpc.DialOption) (err error) {
 	conn, err := grpc.DialContext(ctx, endpoint, opts...)
 	if err != nil {
 		return err
@@ -5323,41 +5323,41 @@ func RegisterPackageServiceHandlerFromEndpoint(ctx context.Context, mux *runtime
 		}()
 	}()
 
-	return RegisterPackageServiceHandler(ctx, mux, conn)
+	return RegisterArtifactServiceHandler(ctx, mux, conn)
 }
 
-// RegisterPackageServiceHandler registers the http handlers for service PackageService to "mux".
+// RegisterArtifactServiceHandler registers the http handlers for service ArtifactService to "mux".
 // The handlers forward requests to the grpc endpoint over "conn".
-func RegisterPackageServiceHandler(ctx context.Context, mux *runtime.ServeMux, conn *grpc.ClientConn) error {
-	return RegisterPackageServiceHandlerClient(ctx, mux, NewPackageServiceClient(conn))
+func RegisterArtifactServiceHandler(ctx context.Context, mux *runtime.ServeMux, conn *grpc.ClientConn) error {
+	return RegisterArtifactServiceHandlerClient(ctx, mux, NewArtifactServiceClient(conn))
 }
 
-// RegisterPackageServiceHandlerClient registers the http handlers for service PackageService
-// to "mux". The handlers forward requests to the grpc endpoint over the given implementation of "PackageServiceClient".
-// Note: the gRPC framework executes interceptors within the gRPC handler. If the passed in "PackageServiceClient"
+// RegisterArtifactServiceHandlerClient registers the http handlers for service ArtifactService
+// to "mux". The handlers forward requests to the grpc endpoint over the given implementation of "ArtifactServiceClient".
+// Note: the gRPC framework executes interceptors within the gRPC handler. If the passed in "ArtifactServiceClient"
 // doesn't go through the normal gRPC flow (creating a gRPC client etc.) then it will be up to the passed in
-// "PackageServiceClient" to call the correct interceptors.
-func RegisterPackageServiceHandlerClient(ctx context.Context, mux *runtime.ServeMux, client PackageServiceClient) error {
+// "ArtifactServiceClient" to call the correct interceptors.
+func RegisterArtifactServiceHandlerClient(ctx context.Context, mux *runtime.ServeMux, client ArtifactServiceClient) error {
 
-	mux.Handle("GET", pattern_PackageService_ListPackages_0, func(w http.ResponseWriter, req *http.Request, pathParams map[string]string) {
+	mux.Handle("GET", pattern_ArtifactService_ListArtifacts_0, func(w http.ResponseWriter, req *http.Request, pathParams map[string]string) {
 		ctx, cancel := context.WithCancel(req.Context())
 		defer cancel()
 		inboundMarshaler, outboundMarshaler := runtime.MarshalerForRequest(mux, req)
 		var err error
 		var annotatedContext context.Context
-		annotatedContext, err = runtime.AnnotateContext(ctx, mux, req, "/mediator.v1.PackageService/ListPackages", runtime.WithHTTPPathPattern("/api/v1/packages"))
+		annotatedContext, err = runtime.AnnotateContext(ctx, mux, req, "/mediator.v1.ArtifactService/ListArtifacts", runtime.WithHTTPPathPattern("/api/v1/artifacts"))
 		if err != nil {
 			runtime.HTTPError(ctx, mux, outboundMarshaler, w, req, err)
 			return
 		}
-		resp, md, err := request_PackageService_ListPackages_0(annotatedContext, inboundMarshaler, client, req, pathParams)
+		resp, md, err := request_ArtifactService_ListArtifacts_0(annotatedContext, inboundMarshaler, client, req, pathParams)
 		annotatedContext = runtime.NewServerMetadataContext(annotatedContext, md)
 		if err != nil {
 			runtime.HTTPError(annotatedContext, mux, outboundMarshaler, w, req, err)
 			return
 		}
 
-		forward_PackageService_ListPackages_0(annotatedContext, mux, outboundMarshaler, w, req, resp, mux.GetForwardResponseOptions()...)
+		forward_ArtifactService_ListArtifacts_0(annotatedContext, mux, outboundMarshaler, w, req, resp, mux.GetForwardResponseOptions()...)
 
 	})
 
@@ -5365,11 +5365,11 @@ func RegisterPackageServiceHandlerClient(ctx context.Context, mux *runtime.Serve
 }
 
 var (
-	pattern_PackageService_ListPackages_0 = runtime.MustPattern(runtime.NewPattern(1, []int{2, 0, 2, 1, 2, 2}, []string{"api", "v1", "packages"}, ""))
+	pattern_ArtifactService_ListArtifacts_0 = runtime.MustPattern(runtime.NewPattern(1, []int{2, 0, 2, 1, 2, 2}, []string{"api", "v1", "artifacts"}, ""))
 )
 
 var (
-	forward_PackageService_ListPackages_0 = runtime.ForwardResponseMessage
+	forward_ArtifactService_ListArtifacts_0 = runtime.ForwardResponseMessage
 )
 
 // RegisterOAuthServiceHandlerFromEndpoint is same as RegisterOAuthServiceHandler but

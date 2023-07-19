@@ -4,6 +4,7 @@
 ## Table of Contents
 
 - [mediator/v1/mediator.proto](#mediator_v1_mediator-proto)
+    - [Artifact](#mediator-v1-Artifact)
     - [BranchProtection](#mediator-v1-BranchProtection)
     - [CheckHealthRequest](#mediator-v1-CheckHealthRequest)
     - [CheckHealthResponse](#mediator-v1-CheckHealthResponse)
@@ -103,8 +104,8 @@
     - [GetVulnerabilityByIdRequest](#mediator-v1-GetVulnerabilityByIdRequest)
     - [GetVulnerabilityByIdResponse](#mediator-v1-GetVulnerabilityByIdResponse)
     - [GroupRecord](#mediator-v1-GroupRecord)
-    - [ListPackagesRequest](#mediator-v1-ListPackagesRequest)
-    - [ListPackagesResponse](#mediator-v1-ListPackagesResponse)
+    - [ListArtifactsRequest](#mediator-v1-ListArtifactsRequest)
+    - [ListArtifactsResponse](#mediator-v1-ListArtifactsResponse)
     - [ListPoliciesRequest](#mediator-v1-ListPoliciesRequest)
     - [ListPoliciesResponse](#mediator-v1-ListPoliciesResponse)
     - [ListRepositoriesRequest](#mediator-v1-ListRepositoriesRequest)
@@ -116,8 +117,6 @@
     - [LogOutRequest](#mediator-v1-LogOutRequest)
     - [LogOutResponse](#mediator-v1-LogOutResponse)
     - [OrganizationRecord](#mediator-v1-OrganizationRecord)
-    - [PackageVersion](#mediator-v1-PackageVersion)
-    - [Packages](#mediator-v1-Packages)
     - [PipelinePolicy](#mediator-v1-PipelinePolicy)
     - [PipelinePolicy.ContextualRuleSet](#mediator-v1-PipelinePolicy-ContextualRuleSet)
     - [PipelinePolicy.Rule](#mediator-v1-PipelinePolicy-Rule)
@@ -174,6 +173,7 @@
     - [Provider.Definition.ClientTypes.Type](#mediator-v1-Provider-Definition-ClientTypes-Type)
     - [RepoFilter](#mediator-v1-RepoFilter)
   
+    - [ArtifactService](#mediator-v1-ArtifactService)
     - [AuthService](#mediator-v1-AuthService)
     - [BranchProtectionService](#mediator-v1-BranchProtectionService)
     - [GroupService](#mediator-v1-GroupService)
@@ -181,7 +181,6 @@
     - [KeyService](#mediator-v1-KeyService)
     - [OAuthService](#mediator-v1-OAuthService)
     - [OrganizationService](#mediator-v1-OrganizationService)
-    - [PackageService](#mediator-v1-PackageService)
     - [PolicyService](#mediator-v1-PolicyService)
     - [RepositoryService](#mediator-v1-RepositoryService)
     - [RoleService](#mediator-v1-RoleService)
@@ -197,6 +196,28 @@
 <p align="right"><a href="#top">Top</a></p>
 
 ## mediator/v1/mediator.proto
+
+
+
+<a name="mediator-v1-Artifact"></a>
+
+### Artifact
+
+
+
+| Field | Type | Label | Description |
+| ----- | ---- | ----- | ----------- |
+| artifact_id | [int64](#int64) |  |  |
+| owner | [string](#string) |  |  |
+| name | [string](#string) |  |  |
+| type | [string](#string) |  |  |
+| visibility | [string](#string) |  |  |
+| repository | [string](#string) |  |  |
+| created_at | [google.protobuf.Timestamp](#google-protobuf-Timestamp) |  |  |
+| updated_at | [google.protobuf.Timestamp](#google-protobuf-Timestamp) |  |  |
+
+
+
 
 
 
@@ -1770,9 +1791,9 @@ BUF does not allow grouping (which is a shame)
 
 
 
-<a name="mediator-v1-ListPackagesRequest"></a>
+<a name="mediator-v1-ListArtifactsRequest"></a>
 
-### ListPackagesRequest
+### ListArtifactsRequest
 
 
 
@@ -1780,6 +1801,7 @@ BUF does not allow grouping (which is a shame)
 | ----- | ---- | ----- | ----------- |
 | provider | [string](#string) |  |  |
 | group_id | [int32](#int32) |  |  |
+| artifact_type | [string](#string) |  |  |
 | limit | [int32](#int32) |  |  |
 | offset | [int32](#int32) |  |  |
 
@@ -1788,15 +1810,15 @@ BUF does not allow grouping (which is a shame)
 
 
 
-<a name="mediator-v1-ListPackagesResponse"></a>
+<a name="mediator-v1-ListArtifactsResponse"></a>
 
-### ListPackagesResponse
+### ListArtifactsResponse
 
 
 
 | Field | Type | Label | Description |
 | ----- | ---- | ----- | ----------- |
-| results | [Packages](#mediator-v1-Packages) | repeated |  |
+| results | [Artifact](#mediator-v1-Artifact) | repeated |  |
 
 
 
@@ -1964,42 +1986,6 @@ ListRuleTypesResponse is the response to list rule types.
 | company | [string](#string) |  |  |
 | created_at | [google.protobuf.Timestamp](#google-protobuf-Timestamp) |  |  |
 | updated_at | [google.protobuf.Timestamp](#google-protobuf-Timestamp) |  |  |
-
-
-
-
-
-
-<a name="mediator-v1-PackageVersion"></a>
-
-### PackageVersion
-
-
-
-| Field | Type | Label | Description |
-| ----- | ---- | ----- | ----------- |
-| version_id | [int32](#int32) |  |  |
-| tag | [string](#string) |  |  |
-| is_signed | [bool](#bool) |  |  |
-| created_at | [google.protobuf.Timestamp](#google-protobuf-Timestamp) |  |  |
-
-
-
-
-
-
-<a name="mediator-v1-Packages"></a>
-
-### Packages
-
-
-
-| Field | Type | Label | Description |
-| ----- | ---- | ----- | ----------- |
-| owner | [string](#string) |  |  |
-| name | [string](#string) |  |  |
-| pkg_id | [int64](#int64) |  |  |
-| last_version | [PackageVersion](#mediator-v1-PackageVersion) |  |  |
 
 
 
@@ -2884,6 +2870,16 @@ Repo filter enum
  
 
 
+<a name="mediator-v1-ArtifactService"></a>
+
+### ArtifactService
+
+
+| Method Name | Request Type | Response Type | Description |
+| ----------- | ------------ | ------------- | ------------|
+| ListArtifacts | [ListArtifactsRequest](#mediator-v1-ListArtifactsRequest) | [ListArtifactsResponse](#mediator-v1-ListArtifactsResponse) |  |
+
+
 <a name="mediator-v1-AuthService"></a>
 
 ### AuthService
@@ -2973,16 +2969,6 @@ manage Organizations CRUD
 | GetOrganization | [GetOrganizationRequest](#mediator-v1-GetOrganizationRequest) | [GetOrganizationResponse](#mediator-v1-GetOrganizationResponse) |  |
 | GetOrganizationByName | [GetOrganizationByNameRequest](#mediator-v1-GetOrganizationByNameRequest) | [GetOrganizationByNameResponse](#mediator-v1-GetOrganizationByNameResponse) |  |
 | DeleteOrganization | [DeleteOrganizationRequest](#mediator-v1-DeleteOrganizationRequest) | [DeleteOrganizationResponse](#mediator-v1-DeleteOrganizationResponse) |  |
-
-
-<a name="mediator-v1-PackageService"></a>
-
-### PackageService
-
-
-| Method Name | Request Type | Response Type | Description |
-| ----------- | ------------ | ------------- | ------------|
-| ListPackages | [ListPackagesRequest](#mediator-v1-ListPackagesRequest) | [ListPackagesResponse](#mediator-v1-ListPackagesResponse) |  |
 
 
 <a name="mediator-v1-PolicyService"></a>

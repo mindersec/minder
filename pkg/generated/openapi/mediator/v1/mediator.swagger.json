@@ -9,7 +9,7 @@
       "name": "HealthService"
     },
     {
-      "name": "PackageService"
+      "name": "ArtifactService"
     },
     {
       "name": "OAuthService"
@@ -55,6 +55,63 @@
     "application/json"
   ],
   "paths": {
+    "/api/v1/artifacts": {
+      "get": {
+        "operationId": "ArtifactService_ListArtifacts",
+        "responses": {
+          "200": {
+            "description": "A successful response.",
+            "schema": {
+              "$ref": "#/definitions/v1ListArtifactsResponse"
+            }
+          },
+          "default": {
+            "description": "An unexpected error response.",
+            "schema": {
+              "$ref": "#/definitions/rpcStatus"
+            }
+          }
+        },
+        "parameters": [
+          {
+            "name": "provider",
+            "in": "query",
+            "required": false,
+            "type": "string"
+          },
+          {
+            "name": "groupId",
+            "in": "query",
+            "required": false,
+            "type": "integer",
+            "format": "int32"
+          },
+          {
+            "name": "artifactType",
+            "in": "query",
+            "required": false,
+            "type": "string"
+          },
+          {
+            "name": "limit",
+            "in": "query",
+            "required": false,
+            "type": "integer",
+            "format": "int32"
+          },
+          {
+            "name": "offset",
+            "in": "query",
+            "required": false,
+            "type": "integer",
+            "format": "int32"
+          }
+        ],
+        "tags": [
+          "ArtifactService"
+        ]
+      }
+    },
     "/api/v1/auth/callback/{provider}/cli": {
       "get": {
         "operationId": "OAuthService_ExchangeCodeForTokenCLI",
@@ -1034,57 +1091,6 @@
         ],
         "tags": [
           "OrganizationService"
-        ]
-      }
-    },
-    "/api/v1/packages": {
-      "get": {
-        "operationId": "PackageService_ListPackages",
-        "responses": {
-          "200": {
-            "description": "A successful response.",
-            "schema": {
-              "$ref": "#/definitions/v1ListPackagesResponse"
-            }
-          },
-          "default": {
-            "description": "An unexpected error response.",
-            "schema": {
-              "$ref": "#/definitions/rpcStatus"
-            }
-          }
-        },
-        "parameters": [
-          {
-            "name": "provider",
-            "in": "query",
-            "required": false,
-            "type": "string"
-          },
-          {
-            "name": "groupId",
-            "in": "query",
-            "required": false,
-            "type": "integer",
-            "format": "int32"
-          },
-          {
-            "name": "limit",
-            "in": "query",
-            "required": false,
-            "type": "integer",
-            "format": "int32"
-          },
-          {
-            "name": "offset",
-            "in": "query",
-            "required": false,
-            "type": "integer",
-            "format": "int32"
-          }
-        ],
-        "tags": [
-          "PackageService"
         ]
       }
     },
@@ -2732,6 +2738,38 @@
         }
       }
     },
+    "v1Artifact": {
+      "type": "object",
+      "properties": {
+        "artifactId": {
+          "type": "string",
+          "format": "int64"
+        },
+        "owner": {
+          "type": "string"
+        },
+        "name": {
+          "type": "string"
+        },
+        "type": {
+          "type": "string"
+        },
+        "visibility": {
+          "type": "string"
+        },
+        "repository": {
+          "type": "string"
+        },
+        "createdAt": {
+          "type": "string",
+          "format": "date-time"
+        },
+        "updatedAt": {
+          "type": "string",
+          "format": "date-time"
+        }
+      }
+    },
     "v1BranchProtection": {
       "type": "object",
       "properties": {
@@ -3661,14 +3699,14 @@
       },
       "title": "BUF does not allow grouping (which is a shame)"
     },
-    "v1ListPackagesResponse": {
+    "v1ListArtifactsResponse": {
       "type": "object",
       "properties": {
         "results": {
           "type": "array",
           "items": {
             "type": "object",
-            "$ref": "#/definitions/v1Packages"
+            "$ref": "#/definitions/v1Artifact"
           }
         }
       }
@@ -3767,43 +3805,6 @@
         "updatedAt": {
           "type": "string",
           "format": "date-time"
-        }
-      }
-    },
-    "v1PackageVersion": {
-      "type": "object",
-      "properties": {
-        "versionId": {
-          "type": "integer",
-          "format": "int32"
-        },
-        "tag": {
-          "type": "string"
-        },
-        "isSigned": {
-          "type": "boolean"
-        },
-        "createdAt": {
-          "type": "string",
-          "format": "date-time"
-        }
-      }
-    },
-    "v1Packages": {
-      "type": "object",
-      "properties": {
-        "owner": {
-          "type": "string"
-        },
-        "name": {
-          "type": "string"
-        },
-        "pkgId": {
-          "type": "string",
-          "format": "int64"
-        },
-        "lastVersion": {
-          "$ref": "#/definitions/v1PackageVersion"
         }
       }
     },

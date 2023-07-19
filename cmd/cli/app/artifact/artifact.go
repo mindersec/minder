@@ -19,8 +19,8 @@
 // It does make a good example of how to use the generated client code
 // for others to use as a reference.
 
-// Package pkg contains the pkgs logic for the control plane
-package pkg
+// Package artifact provides the artifact subcommands
+package artifact
 
 import (
 	"github.com/spf13/cobra"
@@ -28,17 +28,16 @@ import (
 	"github.com/stacklok/mediator/cmd/cli/app"
 )
 
-// PkgCmd is the root command for the pkg subcommands
-var PkgCmd = &cobra.Command{
-	Use:   "pkg",
+// ArtifactCmd is the artifact subcommand
+var ArtifactCmd = &cobra.Command{
+	Use:   "artifact",
 	Short: "Manage repositories within a mediator control plane",
-	Long: `The medic pkg commands allow the management of repositories within a 
-mediator control plane.`,
+	Long:  `The medic artifact commands allow the management of artifacts within a mediator control plane`,
 	RunE: func(cmd *cobra.Command, args []string) error {
 		return cmd.Usage()
 	},
 }
 
 func init() {
-	app.RootCmd.AddCommand(PkgCmd)
+	app.RootCmd.AddCommand(ArtifactCmd)
 }

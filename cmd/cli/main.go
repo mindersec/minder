@@ -19,12 +19,12 @@ package main
 import (
 	"github.com/stacklok/mediator/cmd/cli/app"
 	_ "github.com/stacklok/mediator/cmd/cli/app/apply"
+	_ "github.com/stacklok/mediator/cmd/cli/app/artifact"
 	_ "github.com/stacklok/mediator/cmd/cli/app/auth"
 	_ "github.com/stacklok/mediator/cmd/cli/app/docs"
 	_ "github.com/stacklok/mediator/cmd/cli/app/group"
 	_ "github.com/stacklok/mediator/cmd/cli/app/keys"
 	_ "github.com/stacklok/mediator/cmd/cli/app/org"
-	_ "github.com/stacklok/mediator/cmd/cli/app/pkg"
 	_ "github.com/stacklok/mediator/cmd/cli/app/policy"
 	_ "github.com/stacklok/mediator/cmd/cli/app/policy_status"
 	_ "github.com/stacklok/mediator/cmd/cli/app/provider"

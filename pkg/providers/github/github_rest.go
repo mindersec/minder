@@ -72,81 +72,43 @@ func (c *RestClient) ListAllRepositories(ctx context.Context, isOrg bool, owner 
 	}, nil
 }
 
-// PackageResult holds the results of a package query and the latest version
-type PackageResult struct {
-	Package     *github.Package
-	LastVersion *github.PackageVersion
-}
-
 // PackageListResult is a struct to hold the results of a package list
 type PackageListResult struct {
-	Packages []*PackageResult
+	Packages []*github.Package
 }
 
 // ListAllPackages returns a list of all packages for the authenticated user
-func (c *RestClient) ListAllPackages(ctx context.Context, isOrg bool) (PackageListResult, error) {
+func (c *RestClient) ListAllPackages(ctx context.Context, isOrg bool, artifactType string) (PackageListResult, error) {
 	opt := &github.PackageListOptions{
+		PackageType: &artifactType,
 		ListOptions: github.ListOptions{
 			Page:    1,
 			PerPage: 100,
 		},
-		PackageType: github.String("container"),
 	}
-
-	optVersion := &github.PackageListOptions{
-		ListOptions: github.ListOptions{
-			Page:    1,
-			PerPage: 1,
-		},
-	}
-
 	user, err := c.GetAuthenticatedUser(ctx)
 	if err != nil {
 		return PackageListResult{}, err
 	}
 
 	// create a slice to hold the containers
-	var allContainers []*PackageResult
+	var allContainers []*github.Package
 	for {
-		var containers []*github.Package
+		var artifacts []*github.Package
 		var resp *github.Response
 		var err error
 
 		if isOrg {
-			containers, resp, err = c.client.Organizations.ListPackages(ctx, "", opt)
+			artifacts, resp, err = c.client.Organizations.ListPackages(ctx, "", opt)
 		} else {
-			containers, resp, err = c.client.Users.ListPackages(ctx, *user.Login, opt)
+			artifacts, resp, err = c.client.Users.ListPackages(ctx, *user.Login, opt)
 		}
 
 		if err != nil {
 			return PackageListResult{}, err
 		}
 
-		// read last version of each container
-		for _, container := range containers {
-			// list all versions of the container
-			var versions []*github.PackageVersion
-			if isOrg {
-				versions, _, err = c.client.Organizations.PackageGetAllVersions(ctx, "", *container.PackageType, *container.Name, optVersion)
-			} else {
-				versions, _, err = c.client.Users.PackageGetAllVersions(ctx, "", *container.PackageType, *container.Name, optVersion)
-			}
-			if err != nil {
-				return PackageListResult{}, err
-			}
-
-			if len(versions) > 0 {
-				allContainers = append(allContainers, &PackageResult{
-					Package:     container,
-					LastVersion: versions[0],
-				})
-			} else {
-				allContainers = append(allContainers, &PackageResult{
-					Package:     container,
-					LastVersion: nil,
-				})
-			}
-		}
+		allContainers = append(allContainers, artifacts...)
 
 		if resp.NextPage == 0 {
 			break

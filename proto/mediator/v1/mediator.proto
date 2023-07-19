@@ -34,38 +34,36 @@ service HealthService {
     }
 }
 
-service PackageService {
-    rpc ListPackages (ListPackagesRequest) returns (ListPackagesResponse) {
+service ArtifactService {
+    rpc ListArtifacts (ListArtifactsRequest) returns (ListArtifactsResponse) {
         option (google.api.http) = {
-            get: "/api/v1/packages"
+            get: "/api/v1/artifacts"
         };
     }
 }
 
-message ListPackagesRequest {
+message ListArtifactsRequest {
     string provider = 1;
     int32 group_id = 2;
-    int32 limit = 3;
-    int32 offset = 4;
+    string artifact_type = 3;
+    int32 limit = 4;
+    int32 offset = 5;
 }
 
-message ListPackagesResponse {
-    repeated Packages results = 1;
+message ListArtifactsResponse {
+    repeated Artifact results = 1;
 }
 
-message PackageVersion {
-    int32 version_id = 1;
-    string tag = 2;
-    bool is_signed = 3;
-    google.protobuf.Timestamp created_at = 4;
+message Artifact {
+    int64 artifact_id = 1;
+    string owner = 2;
+    string name = 3;
+    string type = 4;
+    string visibility = 5;
+    string repository = 6;
+    google.protobuf.Timestamp created_at = 7;
+    google.protobuf.Timestamp updated_at = 8;
 }
-message Packages {
-    string owner = 1;
-    string name = 2;
-    int64 pkg_id = 3;
-    PackageVersion last_version = 4;
-}
-
 
 service OAuthService {
     rpc GetAuthorizationURL (GetAuthorizationURLRequest) returns (GetAuthorizationURLResponse) {

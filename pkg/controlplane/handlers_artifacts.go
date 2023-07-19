@@ -23,20 +23,29 @@ import (
 
 	"github.com/stacklok/mediator/pkg/auth"
 	pb "github.com/stacklok/mediator/pkg/generated/protobuf/go/mediator/v1"
-	"github.com/stacklok/mediator/pkg/oci"
 	ghclient "github.com/stacklok/mediator/pkg/providers/github"
 )
 
-// ImageRef is a reference to an image
-type ImageRef struct {
-	URI string
-}
+// ARTIFACT_TYPES is a list of supported artifact types
+var ARTIFACT_TYPES = []string{"npm", "maven", "rubygems", "docker", "nuget", "container"}
 
-// ListPackages lists all packages
-// nolint: gocyclo
-func (s *Server) ListPackages(ctx context.Context, in *pb.ListPackagesRequest) (*pb.ListPackagesResponse, error) {
+// ListArtifacts lists all artifacts for a given group and provider
+// nolint:gocyclo
+func (s *Server) ListArtifacts(ctx context.Context, in *pb.ListArtifactsRequest) (*pb.ListArtifactsResponse, error) {
 	if in.Provider != auth.Github {
 		return nil, status.Errorf(codes.InvalidArgument, "provider not supported: %v", in.Provider)
+	}
+
+	// validate artifact
+	valid := false
+	for _, s := range ARTIFACT_TYPES {
+		if in.ArtifactType == s {
+			valid = true
+			break
+		}
+	}
+	if !valid {
+		return nil, status.Errorf(codes.InvalidArgument, "artifact type not supported: %v", in.ArtifactType)
 	}
 
 	// if we do not have a group, check if we can infer it
@@ -46,6 +55,11 @@ func (s *Server) ListPackages(ctx context.Context, in *pb.ListPackagesRequest) (
 			return nil, status.Errorf(codes.InvalidArgument, "cannot infer group id")
 		}
 		in.GroupId = group
+	}
+
+	// define default values for limit and offset
+	if in.Limit == -1 {
+		in.Limit = PaginationLimit
 	}
 
 	// check if user is authorized
@@ -72,64 +86,41 @@ func (s *Server) ListPackages(ctx context.Context, in *pb.ListPackagesRequest) (
 		return nil, err
 	}
 
-	var results []*pb.Packages
-
-	pkgList, err := client.ListAllPackages(ctx, false)
-	if err != nil {
-		return nil, err
-	}
+	var results []*pb.Artifact
 
 	user, err := client.GetAuthenticatedUser(ctx)
 	if err != nil {
 		return nil, err
 	}
-
-	for _, pkg := range pkgList.Packages {
-		if pkg.LastVersion != nil {
-			tags := pkg.LastVersion.Metadata.Container.Tags
-			if len(tags) == 0 {
-				// we cannot check images without tags
-				continue
-			}
-			manifest, err := oci.GetImageManifest(*pkg.Package.Owner.Login, *pkg.Package.Name,
-				tags, *user.Login, decryptedToken.AccessToken)
-			if err != nil {
-				return nil, err
-			}
-			// check if signed
-			signed := false
-			for _, layer := range manifest.Layers {
-				if layer.MediaType == "application/vnd.dev.cosign.simplesigning.v1+json" {
-					signed = true
-				}
-			}
-
-			latest_tag := ""
-			if pkg.LastVersion.Metadata.Container.Tags != nil && len(pkg.LastVersion.Metadata.Container.Tags) > 0 {
-				latest_tag = pkg.LastVersion.Metadata.Container.Tags[0]
-			}
-
-			var created *timestamppb.Timestamp
-			if pkg.LastVersion.CreatedAt != nil {
-				created = timestamppb.New(pkg.LastVersion.CreatedAt.Time)
-			}
-
-			results = append(results, &pb.Packages{
-				Owner: *pkg.Package.Owner.Login,
-				Name:  *pkg.Package.Name,
-				PkgId: *pkg.Package.ID,
-				LastVersion: &pb.PackageVersion{
-					VersionId: int32(*pkg.LastVersion.ID),
-					Tag:       latest_tag,
-					IsSigned:  signed,
-					CreatedAt: created,
-				},
-			})
-		}
-		return &pb.ListPackagesResponse{Results: results}, nil
+	isOrg := (*user.Type == "Organization")
+	pkgList, err := client.ListAllPackages(ctx, isOrg, in.ArtifactType)
+	if err != nil {
+		return nil, err
 	}
 
-	return &pb.ListPackagesResponse{
+	for _, pkg := range pkgList.Packages {
+		results = append(results, &pb.Artifact{
+			ArtifactId: pkg.GetID(),
+			Owner:      *pkg.GetOwner().Login,
+			Name:       pkg.GetName(),
+			Type:       pkg.GetPackageType(),
+			Repository: pkg.GetRepository().GetFullName(),
+			Visibility: pkg.GetVisibility(),
+			CreatedAt:  timestamppb.New(pkg.GetCreatedAt().Time),
+			UpdatedAt:  timestamppb.New(pkg.GetUpdatedAt().Time),
+		})
+	}
+
+	// slice the results according to start and limit
+	if in.Offset > int32(len(results)) {
+		return &pb.ListArtifactsResponse{}, nil
+	}
+	limit := in.Offset + in.Limit
+	if limit > int32(len(results)) {
+		limit = int32(len(results)) - in.Offset
+	}
+	results = results[in.Offset:limit]
+	return &pb.ListArtifactsResponse{
 		Results: results,
 	}, nil
 }

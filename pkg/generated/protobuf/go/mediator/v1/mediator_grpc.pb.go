@@ -124,89 +124,89 @@ var HealthService_ServiceDesc = grpc.ServiceDesc{
 }
 
 const (
-	PackageService_ListPackages_FullMethodName = "/mediator.v1.PackageService/ListPackages"
+	ArtifactService_ListArtifacts_FullMethodName = "/mediator.v1.ArtifactService/ListArtifacts"
 )
 
-// PackageServiceClient is the client API for PackageService service.
+// ArtifactServiceClient is the client API for ArtifactService service.
 //
 // For semantics around ctx use and closing/ending streaming RPCs, please refer to https://pkg.go.dev/google.golang.org/grpc/?tab=doc#ClientConn.NewStream.
-type PackageServiceClient interface {
-	ListPackages(ctx context.Context, in *ListPackagesRequest, opts ...grpc.CallOption) (*ListPackagesResponse, error)
+type ArtifactServiceClient interface {
+	ListArtifacts(ctx context.Context, in *ListArtifactsRequest, opts ...grpc.CallOption) (*ListArtifactsResponse, error)
 }
 
-type packageServiceClient struct {
+type artifactServiceClient struct {
 	cc grpc.ClientConnInterface
 }
 
-func NewPackageServiceClient(cc grpc.ClientConnInterface) PackageServiceClient {
-	return &packageServiceClient{cc}
+func NewArtifactServiceClient(cc grpc.ClientConnInterface) ArtifactServiceClient {
+	return &artifactServiceClient{cc}
 }
 
-func (c *packageServiceClient) ListPackages(ctx context.Context, in *ListPackagesRequest, opts ...grpc.CallOption) (*ListPackagesResponse, error) {
-	out := new(ListPackagesResponse)
-	err := c.cc.Invoke(ctx, PackageService_ListPackages_FullMethodName, in, out, opts...)
+func (c *artifactServiceClient) ListArtifacts(ctx context.Context, in *ListArtifactsRequest, opts ...grpc.CallOption) (*ListArtifactsResponse, error) {
+	out := new(ListArtifactsResponse)
+	err := c.cc.Invoke(ctx, ArtifactService_ListArtifacts_FullMethodName, in, out, opts...)
 	if err != nil {
 		return nil, err
 	}
 	return out, nil
 }
 
-// PackageServiceServer is the server API for PackageService service.
-// All implementations must embed UnimplementedPackageServiceServer
+// ArtifactServiceServer is the server API for ArtifactService service.
+// All implementations must embed UnimplementedArtifactServiceServer
 // for forward compatibility
-type PackageServiceServer interface {
-	ListPackages(context.Context, *ListPackagesRequest) (*ListPackagesResponse, error)
-	mustEmbedUnimplementedPackageServiceServer()
+type ArtifactServiceServer interface {
+	ListArtifacts(context.Context, *ListArtifactsRequest) (*ListArtifactsResponse, error)
+	mustEmbedUnimplementedArtifactServiceServer()
 }
 
-// UnimplementedPackageServiceServer must be embedded to have forward compatible implementations.
-type UnimplementedPackageServiceServer struct {
+// UnimplementedArtifactServiceServer must be embedded to have forward compatible implementations.
+type UnimplementedArtifactServiceServer struct {
 }
 
-func (UnimplementedPackageServiceServer) ListPackages(context.Context, *ListPackagesRequest) (*ListPackagesResponse, error) {
-	return nil, status.Errorf(codes.Unimplemented, "method ListPackages not implemented")
+func (UnimplementedArtifactServiceServer) ListArtifacts(context.Context, *ListArtifactsRequest) (*ListArtifactsResponse, error) {
+	return nil, status.Errorf(codes.Unimplemented, "method ListArtifacts not implemented")
 }
-func (UnimplementedPackageServiceServer) mustEmbedUnimplementedPackageServiceServer() {}
+func (UnimplementedArtifactServiceServer) mustEmbedUnimplementedArtifactServiceServer() {}
 
-// UnsafePackageServiceServer may be embedded to opt out of forward compatibility for this service.
-// Use of this interface is not recommended, as added methods to PackageServiceServer will
+// UnsafeArtifactServiceServer may be embedded to opt out of forward compatibility for this service.
+// Use of this interface is not recommended, as added methods to ArtifactServiceServer will
 // result in compilation errors.
-type UnsafePackageServiceServer interface {
-	mustEmbedUnimplementedPackageServiceServer()
+type UnsafeArtifactServiceServer interface {
+	mustEmbedUnimplementedArtifactServiceServer()
 }
 
-func RegisterPackageServiceServer(s grpc.ServiceRegistrar, srv PackageServiceServer) {
-	s.RegisterService(&PackageService_ServiceDesc, srv)
+func RegisterArtifactServiceServer(s grpc.ServiceRegistrar, srv ArtifactServiceServer) {
+	s.RegisterService(&ArtifactService_ServiceDesc, srv)
 }
 
-func _PackageService_ListPackages_Handler(srv interface{}, ctx context.Context, dec func(interface{}) error, interceptor grpc.UnaryServerInterceptor) (interface{}, error) {
-	in := new(ListPackagesRequest)
+func _ArtifactService_ListArtifacts_Handler(srv interface{}, ctx context.Context, dec func(interface{}) error, interceptor grpc.UnaryServerInterceptor) (interface{}, error) {
+	in := new(ListArtifactsRequest)
 	if err := dec(in); err != nil {
 		return nil, err
 	}
 	if interceptor == nil {
-		return srv.(PackageServiceServer).ListPackages(ctx, in)
+		return srv.(ArtifactServiceServer).ListArtifacts(ctx, in)
 	}
 	info := &grpc.UnaryServerInfo{
 		Server:     srv,
-		FullMethod: PackageService_ListPackages_FullMethodName,
+		FullMethod: ArtifactService_ListArtifacts_FullMethodName,
 	}
 	handler := func(ctx context.Context, req interface{}) (interface{}, error) {
-		return srv.(PackageServiceServer).ListPackages(ctx, req.(*ListPackagesRequest))
+		return srv.(ArtifactServiceServer).ListArtifacts(ctx, req.(*ListArtifactsRequest))
 	}
 	return interceptor(ctx, in, info, handler)
 }
 
-// PackageService_ServiceDesc is the grpc.ServiceDesc for PackageService service.
+// ArtifactService_ServiceDesc is the grpc.ServiceDesc for ArtifactService service.
 // It's only intended for direct use with grpc.RegisterService,
 // and not to be introspected or modified (even as a copy)
-var PackageService_ServiceDesc = grpc.ServiceDesc{
-	ServiceName: "mediator.v1.PackageService",
-	HandlerType: (*PackageServiceServer)(nil),
+var ArtifactService_ServiceDesc = grpc.ServiceDesc{
+	ServiceName: "mediator.v1.ArtifactService",
+	HandlerType: (*ArtifactServiceServer)(nil),
 	Methods: []grpc.MethodDesc{
 		{
-			MethodName: "ListPackages",
-			Handler:    _PackageService_ListPackages_Handler,
+			MethodName: "ListArtifacts",
+			Handler:    _ArtifactService_ListArtifacts_Handler,
 		},
 	},
 	Streams:  []grpc.StreamDesc{},
