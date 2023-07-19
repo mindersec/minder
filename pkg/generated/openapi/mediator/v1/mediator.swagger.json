@@ -2691,25 +2691,20 @@
       },
       "description": "DataEval defines how the data is evaluated."
     },
-    "RuleTypeDefinition": {
+    "mediatorv1Context": {
       "type": "object",
       "properties": {
-        "inEntity": {
-          "type": "string",
-          "description": "in_entity is the entity in which the rule is evaluated.\nThis can be repository, build_environment or artifact."
+        "provider": {
+          "type": "string"
         },
-        "ruleSchema": {
-          "type": "object",
-          "additionalProperties": {
-            "type": "object"
-          },
-          "description": "rule_schema is the schema of the rule. This is expressed in JSON Schema."
+        "organization": {
+          "type": "string"
         },
-        "dataEval": {
-          "$ref": "#/definitions/DefinitionDataEval"
+        "group": {
+          "type": "string"
         }
       },
-      "description": "Definition defines the rule type. It encompases the schema and the data evaluation."
+      "description": "Context defines the context in which a rule is evaluated.\nthis normally refers to a combination of the provider, organization and group."
     },
     "protobufAny": {
       "type": "object",
@@ -2766,21 +2761,6 @@
           "type": "string"
         }
       }
-    },
-    "v1Context": {
-      "type": "object",
-      "properties": {
-        "provider": {
-          "type": "string"
-        },
-        "organization": {
-          "type": "string"
-        },
-        "group": {
-          "type": "string"
-        }
-      },
-      "description": "Context defines the context in which a rule is evaluated.\nthis normally refers to a combination of the provider, organization and group."
     },
     "v1CreateGroupRequest": {
       "type": "object",
@@ -4226,15 +4206,35 @@
           "description": "name is the name of the rule type."
         },
         "context": {
-          "$ref": "#/definitions/v1Context",
+          "$ref": "#/definitions/mediatorv1Context",
           "description": "context is the context in which the rule is evaluated."
         },
         "def": {
-          "$ref": "#/definitions/RuleTypeDefinition",
+          "$ref": "#/definitions/v1RuleTypeDefinition",
           "description": "def is the definition of the rule type."
         }
       },
       "description": "RuleType defines rules that may or may not be user defined.\nThe version is assumed from the folder's version."
+    },
+    "v1RuleTypeDefinition": {
+      "type": "object",
+      "properties": {
+        "inEntity": {
+          "type": "string",
+          "description": "in_entity is the entity in which the rule is evaluated.\nThis can be repository, build_environment or artifact."
+        },
+        "ruleSchema": {
+          "type": "object",
+          "additionalProperties": {
+            "type": "object"
+          },
+          "description": "rule_schema is the schema of the rule. This is expressed in JSON Schema."
+        },
+        "dataEval": {
+          "$ref": "#/definitions/DefinitionDataEval"
+        }
+      },
+      "description": "Definition defines the rule type. It encompases the schema and the data evaluation."
     },
     "v1StoreProviderTokenResponse": {
       "type": "object"
