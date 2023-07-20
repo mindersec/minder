@@ -8661,9 +8661,12 @@ type RuleType struct {
 	sizeCache     protoimpl.SizeCache
 	unknownFields protoimpl.UnknownFields
 
-	Name    string               `protobuf:"bytes,1,opt,name=name,proto3" json:"name,omitempty"`
-	Context *Context             `protobuf:"bytes,2,opt,name=context,proto3" json:"context,omitempty"`
-	Def     *RuleType_Definition `protobuf:"bytes,3,opt,name=def,proto3" json:"def,omitempty"`
+	// name is the name of the rule type.
+	Name string `protobuf:"bytes,1,opt,name=name,proto3" json:"name,omitempty"`
+	// context is the context in which the rule is evaluated.
+	Context *Context `protobuf:"bytes,2,opt,name=context,proto3" json:"context,omitempty"`
+	// def is the definition of the rule type.
+	Def *RuleType_Definition `protobuf:"bytes,3,opt,name=def,proto3" json:"def,omitempty"`
 }
 
 func (x *RuleType) Reset() {
@@ -8802,12 +8805,16 @@ func (x *PipelinePolicy) GetArtifact() []*PipelinePolicy_ContextualRuleSet {
 	return nil
 }
 
+// Definition defines the rule type. It encompases the schema and the data evaluation.
 type RuleType_Definition struct {
 	state         protoimpl.MessageState
 	sizeCache     protoimpl.SizeCache
 	unknownFields protoimpl.UnknownFields
 
-	InEntity   string                        `protobuf:"bytes,1,opt,name=in_entity,json=inEntity,proto3" json:"in_entity,omitempty"`
+	// in_entity is the entity in which the rule is evaluated.
+	// This can be repository, build_environment or artifact.
+	InEntity string `protobuf:"bytes,1,opt,name=in_entity,json=inEntity,proto3" json:"in_entity,omitempty"`
+	// rule_schema is the schema of the rule. This is expressed in JSON Schema.
 	RuleSchema map[string]*structpb.Struct   `protobuf:"bytes,2,rep,name=rule_schema,json=ruleSchema,proto3" json:"rule_schema,omitempty" protobuf_key:"bytes,1,opt,name=key,proto3" protobuf_val:"bytes,2,opt,name=value,proto3"`
 	DataEval   *RuleType_Definition_DataEval `protobuf:"bytes,3,opt,name=data_eval,json=dataEval,proto3" json:"data_eval,omitempty"`
 }
@@ -8865,16 +8872,26 @@ func (x *RuleType_Definition) GetDataEval() *RuleType_Definition_DataEval {
 	return nil
 }
 
+// DataEval defines how the data is evaluated.
 type RuleType_Definition_DataEval struct {
 	state         protoimpl.MessageState
 	sizeCache     protoimpl.SizeCache
 	unknownFields protoimpl.UnknownFields
 
-	// We currently only support REST
-	Type    string                                               `protobuf:"bytes,1,opt,name=type,proto3" json:"type,omitempty"`
-	Rest    *RuleType_Definition_DataEval_RestType               `protobuf:"bytes,3,opt,name=rest,proto3,oneof" json:"rest,omitempty"`
-	KeyType string                                               `protobuf:"bytes,4,opt,name=key_type,json=keyType,proto3" json:"key_type,omitempty"`
-	Data    map[string]*RuleType_Definition_DataEval_DataEvalDef `protobuf:"bytes,5,rep,name=data,proto3" json:"data,omitempty" protobuf_key:"bytes,1,opt,name=key,proto3" protobuf_val:"bytes,2,opt,name=value,proto3"`
+	// type is the type of the data evaluation.
+	// we currently support rest.
+	Type string `protobuf:"bytes,1,opt,name=type,proto3" json:"type,omitempty"`
+	// rest is the rest data evaluation.
+	// this is only used if the type is rest.
+	Rest *RuleType_Definition_DataEval_RestType `protobuf:"bytes,3,opt,name=rest,proto3,oneof" json:"rest,omitempty"`
+	// key_type is the type of the key for each data item.
+	// This is used to index the data.
+	// Currently only `jq` is supported.
+	KeyType string `protobuf:"bytes,4,opt,name=key_type,json=keyType,proto3" json:"key_type,omitempty"`
+	// data is the data evaluation definition.
+	// each key is a piece of data coming from the policy
+	// to be evaluated. The value is the definition of the data evaluation.
+	Data map[string]*RuleType_Definition_DataEval_DataEvalDef `protobuf:"bytes,5,rep,name=data,proto3" json:"data,omitempty" protobuf_key:"bytes,1,opt,name=key,proto3" protobuf_val:"bytes,2,opt,name=value,proto3"`
 }
 
 func (x *RuleType_Definition_DataEval) Reset() {
@@ -8937,16 +8954,27 @@ func (x *RuleType_Definition_DataEval) GetData() map[string]*RuleType_Definition
 	return nil
 }
 
+// RestType defines the rest data evaluation.
+// This is used to fetch data from a REST endpoint.
 type RuleType_Definition_DataEval_RestType struct {
 	state         protoimpl.MessageState
 	sizeCache     protoimpl.SizeCache
 	unknownFields protoimpl.UnknownFields
 
-	Endpoint string   `protobuf:"bytes,1,opt,name=endpoint,proto3" json:"endpoint,omitempty"`
-	Method   string   `protobuf:"bytes,2,opt,name=method,proto3" json:"method,omitempty"`
-	Headers  []string `protobuf:"bytes,3,rep,name=headers,proto3" json:"headers,omitempty"`
-	Body     *string  `protobuf:"bytes,4,opt,name=body,proto3,oneof" json:"body,omitempty"`
-	Parse    string   `protobuf:"bytes,5,opt,name=parse,proto3" json:"parse,omitempty"`
+	// endpoint is the endpoint to fetch data from.
+	// This can be a URL or the path on the API.bool
+	// This is a required field and must be set.
+	// This is also evaluated via a template which allows
+	// us dynamically fill in the values.
+	Endpoint string `protobuf:"bytes,1,opt,name=endpoint,proto3" json:"endpoint,omitempty"`
+	// method is the method to use to fetch data.
+	Method string `protobuf:"bytes,2,opt,name=method,proto3" json:"method,omitempty"`
+	// headers are the headers to be sent to the endpoint.
+	Headers []string `protobuf:"bytes,3,rep,name=headers,proto3" json:"headers,omitempty"`
+	// body is the body to be sent to the endpoint.
+	Body *string `protobuf:"bytes,4,opt,name=body,proto3,oneof" json:"body,omitempty"`
+	// parse is the parsing mechanism to be used to parse the data.
+	Parse string `protobuf:"bytes,5,opt,name=parse,proto3" json:"parse,omitempty"`
 }
 
 func (x *RuleType_Definition_DataEval_RestType) Reset() {
@@ -9016,13 +9044,21 @@ func (x *RuleType_Definition_DataEval_RestType) GetParse() string {
 	return ""
 }
 
+// DataEvalDef defines the data evaluation definition.
+// This pertains to the way we traverse data from the upstream
+// endpoint and how we compare it to the rule.
+// the type is the way we traverse and evaluate the data from the
+// upstream endpoint. The def is the definition of the data evaluation.
+// e.g. the actual jq expression.
 type RuleType_Definition_DataEval_DataEvalDef struct {
 	state         protoimpl.MessageState
 	sizeCache     protoimpl.SizeCache
 	unknownFields protoimpl.UnknownFields
 
+	// type is the type of the data evaluation.
 	Type string `protobuf:"bytes,1,opt,name=type,proto3" json:"type,omitempty"`
-	Def  string `protobuf:"bytes,2,opt,name=def,proto3" json:"def,omitempty"`
+	// def is the definition of the data evaluation.
+	Def string `protobuf:"bytes,2,opt,name=def,proto3" json:"def,omitempty"`
 }
 
 func (x *RuleType_Definition_DataEval_DataEvalDef) Reset() {

@@ -2394,9 +2394,9 @@ The version is assumed from the folder&#39;s version.
 
 | Field | Type | Label | Description |
 | ----- | ---- | ----- | ----------- |
-| name | [string](#string) |  |  |
-| context | [Context](#mediator-v1-Context) |  |  |
-| def | [RuleType.Definition](#mediator-v1-RuleType-Definition) |  |  |
+| name | [string](#string) |  | name is the name of the rule type. |
+| context | [Context](#mediator-v1-Context) |  | context is the context in which the rule is evaluated. |
+| def | [RuleType.Definition](#mediator-v1-RuleType-Definition) |  | def is the definition of the rule type. |
 
 
 
@@ -2406,13 +2406,13 @@ The version is assumed from the folder&#39;s version.
 <a name="mediator-v1-RuleType-Definition"></a>
 
 ### RuleType.Definition
-
+Definition defines the rule type. It encompases the schema and the data evaluation.
 
 
 | Field | Type | Label | Description |
 | ----- | ---- | ----- | ----------- |
-| in_entity | [string](#string) |  |  |
-| rule_schema | [RuleType.Definition.RuleSchemaEntry](#mediator-v1-RuleType-Definition-RuleSchemaEntry) | repeated |  |
+| in_entity | [string](#string) |  | in_entity is the entity in which the rule is evaluated. This can be repository, build_environment or artifact. |
+| rule_schema | [RuleType.Definition.RuleSchemaEntry](#mediator-v1-RuleType-Definition-RuleSchemaEntry) | repeated | rule_schema is the schema of the rule. This is expressed in JSON Schema. |
 | data_eval | [RuleType.Definition.DataEval](#mediator-v1-RuleType-Definition-DataEval) |  |  |
 
 
@@ -2423,15 +2423,15 @@ The version is assumed from the folder&#39;s version.
 <a name="mediator-v1-RuleType-Definition-DataEval"></a>
 
 ### RuleType.Definition.DataEval
-
+DataEval defines how the data is evaluated.
 
 
 | Field | Type | Label | Description |
 | ----- | ---- | ----- | ----------- |
-| type | [string](#string) |  | We currently only support REST |
-| rest | [RuleType.Definition.DataEval.RestType](#mediator-v1-RuleType-Definition-DataEval-RestType) | optional |  |
-| key_type | [string](#string) |  |  |
-| data | [RuleType.Definition.DataEval.DataEntry](#mediator-v1-RuleType-Definition-DataEval-DataEntry) | repeated |  |
+| type | [string](#string) |  | type is the type of the data evaluation. we currently support rest. |
+| rest | [RuleType.Definition.DataEval.RestType](#mediator-v1-RuleType-Definition-DataEval-RestType) | optional | rest is the rest data evaluation. this is only used if the type is rest. |
+| key_type | [string](#string) |  | key_type is the type of the key for each data item. This is used to index the data. Currently only `jq` is supported. |
+| data | [RuleType.Definition.DataEval.DataEntry](#mediator-v1-RuleType-Definition-DataEval-DataEntry) | repeated | data is the data evaluation definition. each key is a piece of data coming from the policy to be evaluated. The value is the definition of the data evaluation. |
 
 
 
@@ -2457,13 +2457,18 @@ The version is assumed from the folder&#39;s version.
 <a name="mediator-v1-RuleType-Definition-DataEval-DataEvalDef"></a>
 
 ### RuleType.Definition.DataEval.DataEvalDef
-
+DataEvalDef defines the data evaluation definition.
+This pertains to the way we traverse data from the upstream
+endpoint and how we compare it to the rule.
+the type is the way we traverse and evaluate the data from the
+upstream endpoint. The def is the definition of the data evaluation.
+e.g. the actual jq expression.
 
 
 | Field | Type | Label | Description |
 | ----- | ---- | ----- | ----------- |
-| type | [string](#string) |  |  |
-| def | [string](#string) |  |  |
+| type | [string](#string) |  | type is the type of the data evaluation. |
+| def | [string](#string) |  | def is the definition of the data evaluation. |
 
 
 
@@ -2473,16 +2478,17 @@ The version is assumed from the folder&#39;s version.
 <a name="mediator-v1-RuleType-Definition-DataEval-RestType"></a>
 
 ### RuleType.Definition.DataEval.RestType
-
+RestType defines the rest data evaluation.
+This is used to fetch data from a REST endpoint.
 
 
 | Field | Type | Label | Description |
 | ----- | ---- | ----- | ----------- |
-| endpoint | [string](#string) |  |  |
-| method | [string](#string) |  |  |
-| headers | [string](#string) | repeated |  |
-| body | [string](#string) | optional |  |
-| parse | [string](#string) |  |  |
+| endpoint | [string](#string) |  | endpoint is the endpoint to fetch data from. This can be a URL or the path on the API.bool This is a required field and must be set. This is also evaluated via a template which allows us dynamically fill in the values. |
+| method | [string](#string) |  | method is the method to use to fetch data. |
+| headers | [string](#string) | repeated | headers are the headers to be sent to the endpoint. |
+| body | [string](#string) | optional | body is the body to be sent to the endpoint. |
+| parse | [string](#string) |  | parse is the parsing mechanism to be used to parse the data. |
 
 
 
