@@ -2333,6 +2333,7 @@ an organization.
 | Field | Type | Label | Description |
 | ----- | ---- | ----- | ----------- |
 | organization | [string](#string) |  |  |
+| group | [string](#string) |  |  |
 
 
 

@@ -1372,6 +1372,7 @@ message Provider {
     // an organization.
     message Context {
         string organization = 1;
+        string group = 2;
     }
 
     Context context = 2;
