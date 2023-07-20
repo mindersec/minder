@@ -27,7 +27,15 @@ updates:
     directory: "/"
     schedule:
       interval: "daily"
-  - package-ecosystem: 'npm'
-    directory: 'docs'
+  - package-ecosystem: "npm"
+    directory: "docs"
     schedule:
-      interval: 'daily'
+      interval: "daily"
+    ignore:
+      # facebook/docusaurus#4029 suggests MDX v2 will only be in the v3 release.
+      # facebook/docusaurus#9053 has some more details on the migration.
+      - dependency-name: "@mdx-js/react"
+        update-types: ["version-update:semver-major"]
+      # facebook/docusaurus#8940 docusaurus uses v1
+      - dependency-name: "prism-react-renderer"
+        update-types: ["version-update:semver-major"]
