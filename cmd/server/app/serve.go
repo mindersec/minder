@@ -45,7 +45,7 @@ var serveCmd = &cobra.Command{
 		}
 
 		// Database configuration
-		dbConn, _, err := cfg.Database.GetDBConnection()
+		dbConn, _, err := cfg.Database.GetDBConnection(ctx)
 		if err != nil {
 			return fmt.Errorf("unable to connect to database: %w", err)
 		}
