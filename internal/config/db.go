@@ -21,7 +21,6 @@ import (
 	"fmt"
 	"sync"
 
-	"github.com/aws/aws-sdk-go-v2/aws"
 	"github.com/aws/aws-sdk-go-v2/config"
 	"github.com/aws/aws-sdk-go-v2/feature/rds/auth"
 	"github.com/rs/zerolog"
@@ -43,21 +42,23 @@ type DatabaseConfig struct {
 
 	// credential configuration from environment
 	credsOnce sync.Once
-	creds     *aws.Config
 
 	// connection string
 	connString string
 }
 
-func (c *DatabaseConfig) GetDBCreds(ctx context.Context) string {
-	config, err := config.LoadDefaultConfig(ctx)
+// getDBCreds fetches the database credentials from the AWS environment or
+// returns the statically-configured password from DatabaseConfig if not in
+// a cloud environment.
+func (c *DatabaseConfig) getDBCreds(ctx context.Context) string {
+	cfg, err := config.LoadDefaultConfig(ctx)
 	if err != nil {
 		// May not be running on AWS, so skip
 		zerolog.Ctx(ctx).Warn().Err(err).Msg("Unable to load AWS config")
 		return c.Password
 	}
 	authToken, err := auth.BuildAuthToken(
-		ctx, fmt.Sprintf("%s:%d", c.Host, c.Port), "us-east-1", c.User, config.Credentials)
+		ctx, fmt.Sprintf("%s:%d", c.Host, c.Port), "us-east-1", c.User, cfg.Credentials)
 	if err != nil {
 		zerolog.Ctx(ctx).Err(err).Msg("Unable to build auth token")
 		return c.Password
@@ -68,7 +69,7 @@ func (c *DatabaseConfig) GetDBCreds(ctx context.Context) string {
 // GetDBURI returns the database URI
 func (c *DatabaseConfig) GetDBURI(ctx context.Context) string {
 	c.credsOnce.Do(func() {
-		authToken := c.GetDBCreds(ctx)
+		authToken := c.getDBCreds(ctx)
 
 		c.connString = fmt.Sprintf("postgres://%s:%s@%s:%d/%s?sslmode=%s",
 			c.User, authToken, c.Host, c.Port, c.Name, c.SSLMode)
