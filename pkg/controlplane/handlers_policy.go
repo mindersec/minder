@@ -625,3 +625,35 @@ func (s *Server) GetPolicyViolationsByGroup(ctx context.Context,
 	return &resp, nil
 
 }
+
+// Rule type CRUD
+
+// ListRuleTypes is a method to list all rule types for a given context
+func (s *Server) ListRuleTypes(ctx context.Context, in *pb.ListRuleTypesRequest) (*pb.ListRuleTypesResponse, error) {
+	return nil, status.Errorf(codes.Unknown, "Unimplemented")
+}
+
+// GetRuleTypeByName is a method to get a rule type by name
+func (s *Server) GetRuleTypeByName(ctx context.Context, in *pb.GetRuleTypeByNameRequest) (*pb.GetRuleTypeByNameResponse, error) {
+	return nil, status.Errorf(codes.Unknown, "Unimplemented")
+}
+
+// GetRuleTypeById is a method to get a rule type by id
+func (s *Server) GetRuleTypeById(ctx context.Context, in *pb.GetRuleTypeByIdRequest) (*pb.GetRuleTypeByIdResponse, error) {
+	return nil, status.Errorf(codes.Unknown, "Unimplemented")
+}
+
+// CreateRuleType is a method to create a rule type
+func (s *Server) CreateRuleType(ctx context.Context, in *pb.CreateRuleTypeRequest) (*pb.CreateRuleTypeResponse, error) {
+	return nil, status.Errorf(codes.Unknown, "Unimplemented")
+}
+
+// UpdateRuleType is a method to update a rule type
+func (s *Server) UpdateRuleType(ctx context.Context, in *pb.UpdateRuleTypeRequest) (*pb.UpdateRuleTypeResponse, error) {
+	return nil, status.Errorf(codes.Unknown, "Unimplemented")
+}
+
+// DeleteRuleType is a method to delete a rule type
+func (s *Server) DeleteRuleType(ctx context.Context, in *pb.DeleteRuleTypeRequest) (*pb.DeleteRuleTypeResponse, error) {
+	return nil, status.Errorf(codes.Unknown, "Unimplemented")
+}
