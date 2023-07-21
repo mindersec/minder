@@ -149,14 +149,11 @@ func (s *Server) StartGRPCServer(ctx context.Context) error {
 		log.Fatalf("failed to listen: %v", err)
 	}
 
-	log.Println("Initializing logger in level: " + s.cfg.LoggingConfig.Level)
-
 	// add logger and tracing (if enabled)
 	interceptors := []grpc.UnaryServerInterceptor{
 		// TODO: this has no test coverage!
 		util.SanitizingInterceptor(),
-		logger.Interceptor(s.cfg.LoggingConfig.Level,
-			s.cfg.LoggingConfig.Format, s.cfg.LoggingConfig.LogFile),
+		logger.Interceptor(),
 		AuthUnaryInterceptor,
 	}
 	otelGRPCOpts := s.getOTELGRPCInterceptorOpts()

@@ -21,12 +21,14 @@ import (
 	"os"
 	"os/signal"
 
+	"github.com/rs/zerolog"
 	"github.com/spf13/cobra"
 	"github.com/spf13/viper"
 	"golang.org/x/sync/errgroup"
 
 	"github.com/stacklok/mediator/internal/config"
 	ghevents "github.com/stacklok/mediator/internal/gh/events"
+	"github.com/stacklok/mediator/internal/logger"
 	"github.com/stacklok/mediator/pkg/controlplane"
 	"github.com/stacklok/mediator/pkg/db"
 )
@@ -36,6 +38,7 @@ var serveCmd = &cobra.Command{
 	Short: "Start the mediator platform",
 	Long:  `Starts the mediator platform, which includes the gRPC server and the HTTP gateway.`,
 	RunE: func(cmd *cobra.Command, args []string) error {
+
 		ctx, cancel := signal.NotifyContext(cmd.Context(), os.Interrupt)
 		defer cancel()
 
@@ -43,6 +46,9 @@ var serveCmd = &cobra.Command{
 		if err != nil {
 			return fmt.Errorf("unable to read config: %w", err)
 		}
+
+		ctx = logger.FromFlags(cfg.LoggingConfig).WithContext(ctx)
+		zerolog.Ctx(ctx).Info().Msgf("Initializing logger in level: %s", cfg.LoggingConfig.Level)
 
 		// Database configuration
 		dbConn, _, err := cfg.Database.GetDBConnection()
