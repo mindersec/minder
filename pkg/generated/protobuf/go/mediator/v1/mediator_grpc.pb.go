@@ -2536,6 +2536,11 @@ const (
 	PolicyService_GetPolicyViolationsById_FullMethodName         = "/mediator.v1.PolicyService/GetPolicyViolationsById"
 	PolicyService_GetPolicyViolationsByGroup_FullMethodName      = "/mediator.v1.PolicyService/GetPolicyViolationsByGroup"
 	PolicyService_GetPolicyViolationsByRepository_FullMethodName = "/mediator.v1.PolicyService/GetPolicyViolationsByRepository"
+	PolicyService_ListRuleTypes_FullMethodName                   = "/mediator.v1.PolicyService/ListRuleTypes"
+	PolicyService_GetRuleTypeByName_FullMethodName               = "/mediator.v1.PolicyService/GetRuleTypeByName"
+	PolicyService_GetRuleTypeById_FullMethodName                 = "/mediator.v1.PolicyService/GetRuleTypeById"
+	PolicyService_CreateRuleType_FullMethodName                  = "/mediator.v1.PolicyService/CreateRuleType"
+	PolicyService_DeleteRuleType_FullMethodName                  = "/mediator.v1.PolicyService/DeleteRuleType"
 )
 
 // PolicyServiceClient is the client API for PolicyService service.
@@ -2554,6 +2559,11 @@ type PolicyServiceClient interface {
 	GetPolicyViolationsById(ctx context.Context, in *GetPolicyViolationsByIdRequest, opts ...grpc.CallOption) (*GetPolicyViolationsByIdResponse, error)
 	GetPolicyViolationsByGroup(ctx context.Context, in *GetPolicyViolationsByGroupRequest, opts ...grpc.CallOption) (*GetPolicyViolationsByGroupResponse, error)
 	GetPolicyViolationsByRepository(ctx context.Context, in *GetPolicyViolationsByRepositoryRequest, opts ...grpc.CallOption) (*GetPolicyViolationsByRepositoryResponse, error)
+	ListRuleTypes(ctx context.Context, in *ListRuleTypesRequest, opts ...grpc.CallOption) (*ListRuleTypesResponse, error)
+	GetRuleTypeByName(ctx context.Context, in *GetRuleTypeByNameRequest, opts ...grpc.CallOption) (*GetRuleTypeByNameResponse, error)
+	GetRuleTypeById(ctx context.Context, in *GetRuleTypeByIdRequest, opts ...grpc.CallOption) (*GetRuleTypeByIdResponse, error)
+	CreateRuleType(ctx context.Context, in *CreateRuleTypeRequest, opts ...grpc.CallOption) (*CreateRuleTypeResponse, error)
+	DeleteRuleType(ctx context.Context, in *DeleteRuleTypeRequest, opts ...grpc.CallOption) (*DeleteRuleTypeResponse, error)
 }
 
 type policyServiceClient struct {
@@ -2672,6 +2682,51 @@ func (c *policyServiceClient) GetPolicyViolationsByRepository(ctx context.Contex
 	return out, nil
 }
 
+func (c *policyServiceClient) ListRuleTypes(ctx context.Context, in *ListRuleTypesRequest, opts ...grpc.CallOption) (*ListRuleTypesResponse, error) {
+	out := new(ListRuleTypesResponse)
+	err := c.cc.Invoke(ctx, PolicyService_ListRuleTypes_FullMethodName, in, out, opts...)
+	if err != nil {
+		return nil, err
+	}
+	return out, nil
+}
+
+func (c *policyServiceClient) GetRuleTypeByName(ctx context.Context, in *GetRuleTypeByNameRequest, opts ...grpc.CallOption) (*GetRuleTypeByNameResponse, error) {
+	out := new(GetRuleTypeByNameResponse)
+	err := c.cc.Invoke(ctx, PolicyService_GetRuleTypeByName_FullMethodName, in, out, opts...)
+	if err != nil {
+		return nil, err
+	}
+	return out, nil
+}
+
+func (c *policyServiceClient) GetRuleTypeById(ctx context.Context, in *GetRuleTypeByIdRequest, opts ...grpc.CallOption) (*GetRuleTypeByIdResponse, error) {
+	out := new(GetRuleTypeByIdResponse)
+	err := c.cc.Invoke(ctx, PolicyService_GetRuleTypeById_FullMethodName, in, out, opts...)
+	if err != nil {
+		return nil, err
+	}
+	return out, nil
+}
+
+func (c *policyServiceClient) CreateRuleType(ctx context.Context, in *CreateRuleTypeRequest, opts ...grpc.CallOption) (*CreateRuleTypeResponse, error) {
+	out := new(CreateRuleTypeResponse)
+	err := c.cc.Invoke(ctx, PolicyService_CreateRuleType_FullMethodName, in, out, opts...)
+	if err != nil {
+		return nil, err
+	}
+	return out, nil
+}
+
+func (c *policyServiceClient) DeleteRuleType(ctx context.Context, in *DeleteRuleTypeRequest, opts ...grpc.CallOption) (*DeleteRuleTypeResponse, error) {
+	out := new(DeleteRuleTypeResponse)
+	err := c.cc.Invoke(ctx, PolicyService_DeleteRuleType_FullMethodName, in, out, opts...)
+	if err != nil {
+		return nil, err
+	}
+	return out, nil
+}
+
 // PolicyServiceServer is the server API for PolicyService service.
 // All implementations must embed UnimplementedPolicyServiceServer
 // for forward compatibility
@@ -2688,6 +2743,11 @@ type PolicyServiceServer interface {
 	GetPolicyViolationsById(context.Context, *GetPolicyViolationsByIdRequest) (*GetPolicyViolationsByIdResponse, error)
 	GetPolicyViolationsByGroup(context.Context, *GetPolicyViolationsByGroupRequest) (*GetPolicyViolationsByGroupResponse, error)
 	GetPolicyViolationsByRepository(context.Context, *GetPolicyViolationsByRepositoryRequest) (*GetPolicyViolationsByRepositoryResponse, error)
+	ListRuleTypes(context.Context, *ListRuleTypesRequest) (*ListRuleTypesResponse, error)
+	GetRuleTypeByName(context.Context, *GetRuleTypeByNameRequest) (*GetRuleTypeByNameResponse, error)
+	GetRuleTypeById(context.Context, *GetRuleTypeByIdRequest) (*GetRuleTypeByIdResponse, error)
+	CreateRuleType(context.Context, *CreateRuleTypeRequest) (*CreateRuleTypeResponse, error)
+	DeleteRuleType(context.Context, *DeleteRuleTypeRequest) (*DeleteRuleTypeResponse, error)
 	mustEmbedUnimplementedPolicyServiceServer()
 }
 
@@ -2730,6 +2790,21 @@ func (UnimplementedPolicyServiceServer) GetPolicyViolationsByGroup(context.Conte
 }
 func (UnimplementedPolicyServiceServer) GetPolicyViolationsByRepository(context.Context, *GetPolicyViolationsByRepositoryRequest) (*GetPolicyViolationsByRepositoryResponse, error) {
 	return nil, status.Errorf(codes.Unimplemented, "method GetPolicyViolationsByRepository not implemented")
+}
+func (UnimplementedPolicyServiceServer) ListRuleTypes(context.Context, *ListRuleTypesRequest) (*ListRuleTypesResponse, error) {
+	return nil, status.Errorf(codes.Unimplemented, "method ListRuleTypes not implemented")
+}
+func (UnimplementedPolicyServiceServer) GetRuleTypeByName(context.Context, *GetRuleTypeByNameRequest) (*GetRuleTypeByNameResponse, error) {
+	return nil, status.Errorf(codes.Unimplemented, "method GetRuleTypeByName not implemented")
+}
+func (UnimplementedPolicyServiceServer) GetRuleTypeById(context.Context, *GetRuleTypeByIdRequest) (*GetRuleTypeByIdResponse, error) {
+	return nil, status.Errorf(codes.Unimplemented, "method GetRuleTypeById not implemented")
+}
+func (UnimplementedPolicyServiceServer) CreateRuleType(context.Context, *CreateRuleTypeRequest) (*CreateRuleTypeResponse, error) {
+	return nil, status.Errorf(codes.Unimplemented, "method CreateRuleType not implemented")
+}
+func (UnimplementedPolicyServiceServer) DeleteRuleType(context.Context, *DeleteRuleTypeRequest) (*DeleteRuleTypeResponse, error) {
+	return nil, status.Errorf(codes.Unimplemented, "method DeleteRuleType not implemented")
 }
 func (UnimplementedPolicyServiceServer) mustEmbedUnimplementedPolicyServiceServer() {}
 
@@ -2960,6 +3035,96 @@ func _PolicyService_GetPolicyViolationsByRepository_Handler(srv interface{}, ctx
 	return interceptor(ctx, in, info, handler)
 }
 
+func _PolicyService_ListRuleTypes_Handler(srv interface{}, ctx context.Context, dec func(interface{}) error, interceptor grpc.UnaryServerInterceptor) (interface{}, error) {
+	in := new(ListRuleTypesRequest)
+	if err := dec(in); err != nil {
+		return nil, err
+	}
+	if interceptor == nil {
+		return srv.(PolicyServiceServer).ListRuleTypes(ctx, in)
+	}
+	info := &grpc.UnaryServerInfo{
+		Server:     srv,
+		FullMethod: PolicyService_ListRuleTypes_FullMethodName,
+	}
+	handler := func(ctx context.Context, req interface{}) (interface{}, error) {
+		return srv.(PolicyServiceServer).ListRuleTypes(ctx, req.(*ListRuleTypesRequest))
+	}
+	return interceptor(ctx, in, info, handler)
+}
+
+func _PolicyService_GetRuleTypeByName_Handler(srv interface{}, ctx context.Context, dec func(interface{}) error, interceptor grpc.UnaryServerInterceptor) (interface{}, error) {
+	in := new(GetRuleTypeByNameRequest)
+	if err := dec(in); err != nil {
+		return nil, err
+	}
+	if interceptor == nil {
+		return srv.(PolicyServiceServer).GetRuleTypeByName(ctx, in)
+	}
+	info := &grpc.UnaryServerInfo{
+		Server:     srv,
+		FullMethod: PolicyService_GetRuleTypeByName_FullMethodName,
+	}
+	handler := func(ctx context.Context, req interface{}) (interface{}, error) {
+		return srv.(PolicyServiceServer).GetRuleTypeByName(ctx, req.(*GetRuleTypeByNameRequest))
+	}
+	return interceptor(ctx, in, info, handler)
+}
+
+func _PolicyService_GetRuleTypeById_Handler(srv interface{}, ctx context.Context, dec func(interface{}) error, interceptor grpc.UnaryServerInterceptor) (interface{}, error) {
+	in := new(GetRuleTypeByIdRequest)
+	if err := dec(in); err != nil {
+		return nil, err
+	}
+	if interceptor == nil {
+		return srv.(PolicyServiceServer).GetRuleTypeById(ctx, in)
+	}
+	info := &grpc.UnaryServerInfo{
+		Server:     srv,
+		FullMethod: PolicyService_GetRuleTypeById_FullMethodName,
+	}
+	handler := func(ctx context.Context, req interface{}) (interface{}, error) {
+		return srv.(PolicyServiceServer).GetRuleTypeById(ctx, req.(*GetRuleTypeByIdRequest))
+	}
+	return interceptor(ctx, in, info, handler)
+}
+
+func _PolicyService_CreateRuleType_Handler(srv interface{}, ctx context.Context, dec func(interface{}) error, interceptor grpc.UnaryServerInterceptor) (interface{}, error) {
+	in := new(CreateRuleTypeRequest)
+	if err := dec(in); err != nil {
+		return nil, err
+	}
+	if interceptor == nil {
+		return srv.(PolicyServiceServer).CreateRuleType(ctx, in)
+	}
+	info := &grpc.UnaryServerInfo{
+		Server:     srv,
+		FullMethod: PolicyService_CreateRuleType_FullMethodName,
+	}
+	handler := func(ctx context.Context, req interface{}) (interface{}, error) {
+		return srv.(PolicyServiceServer).CreateRuleType(ctx, req.(*CreateRuleTypeRequest))
+	}
+	return interceptor(ctx, in, info, handler)
+}
+
+func _PolicyService_DeleteRuleType_Handler(srv interface{}, ctx context.Context, dec func(interface{}) error, interceptor grpc.UnaryServerInterceptor) (interface{}, error) {
+	in := new(DeleteRuleTypeRequest)
+	if err := dec(in); err != nil {
+		return nil, err
+	}
+	if interceptor == nil {
+		return srv.(PolicyServiceServer).DeleteRuleType(ctx, in)
+	}
+	info := &grpc.UnaryServerInfo{
+		Server:     srv,
+		FullMethod: PolicyService_DeleteRuleType_FullMethodName,
+	}
+	handler := func(ctx context.Context, req interface{}) (interface{}, error) {
+		return srv.(PolicyServiceServer).DeleteRuleType(ctx, req.(*DeleteRuleTypeRequest))
+	}
+	return interceptor(ctx, in, info, handler)
+}
+
 // PolicyService_ServiceDesc is the grpc.ServiceDesc for PolicyService service.
 // It's only intended for direct use with grpc.RegisterService,
 // and not to be introspected or modified (even as a copy)
@@ -3014,6 +3179,26 @@ var PolicyService_ServiceDesc = grpc.ServiceDesc{
 		{
 			MethodName: "GetPolicyViolationsByRepository",
 			Handler:    _PolicyService_GetPolicyViolationsByRepository_Handler,
+		},
+		{
+			MethodName: "ListRuleTypes",
+			Handler:    _PolicyService_ListRuleTypes_Handler,
+		},
+		{
+			MethodName: "GetRuleTypeByName",
+			Handler:    _PolicyService_GetRuleTypeByName_Handler,
+		},
+		{
+			MethodName: "GetRuleTypeById",
+			Handler:    _PolicyService_GetRuleTypeById_Handler,
+		},
+		{
+			MethodName: "CreateRuleType",
+			Handler:    _PolicyService_CreateRuleType_Handler,
+		},
+		{
+			MethodName: "DeleteRuleType",
+			Handler:    _PolicyService_DeleteRuleType_Handler,
 		},
 	},
 	Streams:  []grpc.StreamDesc{},

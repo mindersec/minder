@@ -20,6 +20,8 @@
     - [CreateRoleByGroupResponse](#mediator-v1-CreateRoleByGroupResponse)
     - [CreateRoleByOrganizationRequest](#mediator-v1-CreateRoleByOrganizationRequest)
     - [CreateRoleByOrganizationResponse](#mediator-v1-CreateRoleByOrganizationResponse)
+    - [CreateRuleTypeRequest](#mediator-v1-CreateRuleTypeRequest)
+    - [CreateRuleTypeResponse](#mediator-v1-CreateRuleTypeResponse)
     - [CreateUserRequest](#mediator-v1-CreateUserRequest)
     - [CreateUserResponse](#mediator-v1-CreateUserResponse)
     - [DeleteGroupRequest](#mediator-v1-DeleteGroupRequest)
@@ -30,6 +32,8 @@
     - [DeletePolicyResponse](#mediator-v1-DeletePolicyResponse)
     - [DeleteRoleRequest](#mediator-v1-DeleteRoleRequest)
     - [DeleteRoleResponse](#mediator-v1-DeleteRoleResponse)
+    - [DeleteRuleTypeRequest](#mediator-v1-DeleteRuleTypeRequest)
+    - [DeleteRuleTypeResponse](#mediator-v1-DeleteRuleTypeResponse)
     - [DeleteUserRequest](#mediator-v1-DeleteUserRequest)
     - [DeleteUserResponse](#mediator-v1-DeleteUserResponse)
     - [ExchangeCodeForTokenCLIRequest](#mediator-v1-ExchangeCodeForTokenCLIRequest)
@@ -88,6 +92,10 @@
     - [GetRolesByGroupResponse](#mediator-v1-GetRolesByGroupResponse)
     - [GetRolesRequest](#mediator-v1-GetRolesRequest)
     - [GetRolesResponse](#mediator-v1-GetRolesResponse)
+    - [GetRuleTypeByIdRequest](#mediator-v1-GetRuleTypeByIdRequest)
+    - [GetRuleTypeByIdResponse](#mediator-v1-GetRuleTypeByIdResponse)
+    - [GetRuleTypeByNameRequest](#mediator-v1-GetRuleTypeByNameRequest)
+    - [GetRuleTypeByNameResponse](#mediator-v1-GetRuleTypeByNameResponse)
     - [GetSecretByIdRequest](#mediator-v1-GetSecretByIdRequest)
     - [GetSecretByIdResponse](#mediator-v1-GetSecretByIdResponse)
     - [GetSecretsRequest](#mediator-v1-GetSecretsRequest)
@@ -113,6 +121,8 @@
     - [GroupRecord](#mediator-v1-GroupRecord)
     - [ListRepositoriesRequest](#mediator-v1-ListRepositoriesRequest)
     - [ListRepositoriesResponse](#mediator-v1-ListRepositoriesResponse)
+    - [ListRuleTypesRequest](#mediator-v1-ListRuleTypesRequest)
+    - [ListRuleTypesResponse](#mediator-v1-ListRuleTypesResponse)
     - [LogInRequest](#mediator-v1-LogInRequest)
     - [LogInResponse](#mediator-v1-LogInResponse)
     - [LogOutRequest](#mediator-v1-LogOutRequest)
@@ -469,6 +479,36 @@ Role service
 
 
 
+<a name="mediator-v1-CreateRuleTypeRequest"></a>
+
+### CreateRuleTypeRequest
+CreateRuleTypeRequest is the request to create a rule type.
+
+
+| Field | Type | Label | Description |
+| ----- | ---- | ----- | ----------- |
+| rule_type | [RuleType](#mediator-v1-RuleType) |  | rule_type is the rule type to be created. |
+
+
+
+
+
+
+<a name="mediator-v1-CreateRuleTypeResponse"></a>
+
+### CreateRuleTypeResponse
+CreateRuleTypeResponse is the response to create a rule type.
+
+
+| Field | Type | Label | Description |
+| ----- | ---- | ----- | ----------- |
+| rule_type | [RuleType](#mediator-v1-RuleType) |  | rule_type is the rule type that was created. |
+
+
+
+
+
+
 <a name="mediator-v1-CreateUserRequest"></a>
 
 ### CreateUserRequest
@@ -615,6 +655,32 @@ delete role
 
 ### DeleteRoleResponse
 
+
+
+
+
+
+
+<a name="mediator-v1-DeleteRuleTypeRequest"></a>
+
+### DeleteRuleTypeRequest
+DeleteRuleTypeRequest is the request to delete a rule type.
+
+
+| Field | Type | Label | Description |
+| ----- | ---- | ----- | ----------- |
+| context | [Context](#mediator-v1-Context) |  | context is the context in which the rule type is evaluated. |
+| id | [string](#string) |  | id is the id of the rule type to be deleted. |
+
+
+
+
+
+
+<a name="mediator-v1-DeleteRuleTypeResponse"></a>
+
+### DeleteRuleTypeResponse
+DeleteRuleTypeResponse is the response to delete a rule type.
 
 
 
@@ -1526,6 +1592,68 @@ list roles
 
 
 
+<a name="mediator-v1-GetRuleTypeByIdRequest"></a>
+
+### GetRuleTypeByIdRequest
+GetRuleTypeByIdRequest is the request to get a rule type by id.
+
+
+| Field | Type | Label | Description |
+| ----- | ---- | ----- | ----------- |
+| context | [Context](#mediator-v1-Context) |  | context is the context in which the rule type is evaluated. |
+| id | [string](#string) |  | id is the id of the rule type. |
+
+
+
+
+
+
+<a name="mediator-v1-GetRuleTypeByIdResponse"></a>
+
+### GetRuleTypeByIdResponse
+GetRuleTypeByIdResponse is the response to get a rule type by id.
+
+
+| Field | Type | Label | Description |
+| ----- | ---- | ----- | ----------- |
+| rule_type | [RuleType](#mediator-v1-RuleType) |  | rule_type is the rule type. |
+
+
+
+
+
+
+<a name="mediator-v1-GetRuleTypeByNameRequest"></a>
+
+### GetRuleTypeByNameRequest
+GetRuleTypeByNameRequest is the request to get a rule type by name.
+
+
+| Field | Type | Label | Description |
+| ----- | ---- | ----- | ----------- |
+| context | [Context](#mediator-v1-Context) |  | context is the context in which the rule type is evaluated. |
+| name | [string](#string) |  | name is the name of the rule type. |
+
+
+
+
+
+
+<a name="mediator-v1-GetRuleTypeByNameResponse"></a>
+
+### GetRuleTypeByNameResponse
+GetRuleTypeByNameResponse is the response to get a rule type by name.
+
+
+| Field | Type | Label | Description |
+| ----- | ---- | ----- | ----------- |
+| rule_type | [RuleType](#mediator-v1-RuleType) |  | rule_type is the rule type. |
+
+
+
+
+
+
 <a name="mediator-v1-GetSecretByIdRequest"></a>
 
 ### GetSecretByIdRequest
@@ -1916,6 +2044,36 @@ BUF does not allow grouping (which is a shame)
 | Field | Type | Label | Description |
 | ----- | ---- | ----- | ----------- |
 | results | [RepositoryRecord](#mediator-v1-RepositoryRecord) | repeated |  |
+
+
+
+
+
+
+<a name="mediator-v1-ListRuleTypesRequest"></a>
+
+### ListRuleTypesRequest
+ListRuleTypesRequest is the request to list rule types.
+
+
+| Field | Type | Label | Description |
+| ----- | ---- | ----- | ----------- |
+| context | [Context](#mediator-v1-Context) |  | context is the context in which the rule types are evaluated. |
+
+
+
+
+
+
+<a name="mediator-v1-ListRuleTypesResponse"></a>
+
+### ListRuleTypesResponse
+ListRuleTypesResponse is the response to list rule types.
+
+
+| Field | Type | Label | Description |
+| ----- | ---- | ----- | ----------- |
+| rule_types | [RuleType](#mediator-v1-RuleType) | repeated | rule_types is the list of rule types. |
 
 
 
@@ -2394,9 +2552,9 @@ The version is assumed from the folder&#39;s version.
 
 | Field | Type | Label | Description |
 | ----- | ---- | ----- | ----------- |
-| name | [string](#string) |  |  |
-| context | [Context](#mediator-v1-Context) |  |  |
-| def | [RuleType.Definition](#mediator-v1-RuleType-Definition) |  |  |
+| name | [string](#string) |  | name is the name of the rule type. |
+| context | [Context](#mediator-v1-Context) |  | context is the context in which the rule is evaluated. |
+| def | [RuleType.Definition](#mediator-v1-RuleType-Definition) |  | def is the definition of the rule type. |
 
 
 
@@ -2406,13 +2564,13 @@ The version is assumed from the folder&#39;s version.
 <a name="mediator-v1-RuleType-Definition"></a>
 
 ### RuleType.Definition
-
+Definition defines the rule type. It encompases the schema and the data evaluation.
 
 
 | Field | Type | Label | Description |
 | ----- | ---- | ----- | ----------- |
-| in_entity | [string](#string) |  |  |
-| rule_schema | [RuleType.Definition.RuleSchemaEntry](#mediator-v1-RuleType-Definition-RuleSchemaEntry) | repeated |  |
+| in_entity | [string](#string) |  | in_entity is the entity in which the rule is evaluated. This can be repository, build_environment or artifact. |
+| rule_schema | [RuleType.Definition.RuleSchemaEntry](#mediator-v1-RuleType-Definition-RuleSchemaEntry) | repeated | rule_schema is the schema of the rule. This is expressed in JSON Schema. |
 | data_eval | [RuleType.Definition.DataEval](#mediator-v1-RuleType-Definition-DataEval) |  |  |
 
 
@@ -2423,15 +2581,15 @@ The version is assumed from the folder&#39;s version.
 <a name="mediator-v1-RuleType-Definition-DataEval"></a>
 
 ### RuleType.Definition.DataEval
-
+DataEval defines how the data is evaluated.
 
 
 | Field | Type | Label | Description |
 | ----- | ---- | ----- | ----------- |
-| type | [string](#string) |  | We currently only support REST |
-| rest | [RuleType.Definition.DataEval.RestType](#mediator-v1-RuleType-Definition-DataEval-RestType) | optional |  |
-| key_type | [string](#string) |  |  |
-| data | [RuleType.Definition.DataEval.DataEntry](#mediator-v1-RuleType-Definition-DataEval-DataEntry) | repeated |  |
+| type | [string](#string) |  | type is the type of the data evaluation. we currently support rest. |
+| rest | [RuleType.Definition.DataEval.RestType](#mediator-v1-RuleType-Definition-DataEval-RestType) | optional | rest is the rest data evaluation. this is only used if the type is rest. |
+| key_type | [string](#string) |  | key_type is the type of the key for each data item. This is used to index the data. Currently only `jq` is supported. |
+| data | [RuleType.Definition.DataEval.DataEntry](#mediator-v1-RuleType-Definition-DataEval-DataEntry) | repeated | data is the data evaluation definition. each key is a piece of data coming from the policy to be evaluated. The value is the definition of the data evaluation. |
 
 
 
@@ -2457,13 +2615,18 @@ The version is assumed from the folder&#39;s version.
 <a name="mediator-v1-RuleType-Definition-DataEval-DataEvalDef"></a>
 
 ### RuleType.Definition.DataEval.DataEvalDef
-
+DataEvalDef defines the data evaluation definition.
+This pertains to the way we traverse data from the upstream
+endpoint and how we compare it to the rule.
+the type is the way we traverse and evaluate the data from the
+upstream endpoint. The def is the definition of the data evaluation.
+e.g. the actual jq expression.
 
 
 | Field | Type | Label | Description |
 | ----- | ---- | ----- | ----------- |
-| type | [string](#string) |  |  |
-| def | [string](#string) |  |  |
+| type | [string](#string) |  | type is the type of the data evaluation. |
+| def | [string](#string) |  | def is the definition of the data evaluation. |
 
 
 
@@ -2473,16 +2636,17 @@ The version is assumed from the folder&#39;s version.
 <a name="mediator-v1-RuleType-Definition-DataEval-RestType"></a>
 
 ### RuleType.Definition.DataEval.RestType
-
+RestType defines the rest data evaluation.
+This is used to fetch data from a REST endpoint.
 
 
 | Field | Type | Label | Description |
 | ----- | ---- | ----- | ----------- |
-| endpoint | [string](#string) |  |  |
-| method | [string](#string) |  |  |
-| headers | [string](#string) | repeated |  |
-| body | [string](#string) | optional |  |
-| parse | [string](#string) |  |  |
+| endpoint | [string](#string) |  | endpoint is the endpoint to fetch data from. This can be a URL or the path on the API.bool This is a required field and must be set. This is also evaluated via a template which allows us dynamically fill in the values. |
+| method | [string](#string) |  | method is the method to use to fetch data. |
+| headers | [string](#string) | repeated | headers are the headers to be sent to the endpoint. |
+| body | [string](#string) | optional | body is the body to be sent to the endpoint. |
+| parse | [string](#string) |  | parse is the parsing mechanism to be used to parse the data. |
 
 
 
@@ -2797,6 +2961,11 @@ manage Organizations CRUD
 | GetPolicyViolationsById | [GetPolicyViolationsByIdRequest](#mediator-v1-GetPolicyViolationsByIdRequest) | [GetPolicyViolationsByIdResponse](#mediator-v1-GetPolicyViolationsByIdResponse) |  |
 | GetPolicyViolationsByGroup | [GetPolicyViolationsByGroupRequest](#mediator-v1-GetPolicyViolationsByGroupRequest) | [GetPolicyViolationsByGroupResponse](#mediator-v1-GetPolicyViolationsByGroupResponse) |  |
 | GetPolicyViolationsByRepository | [GetPolicyViolationsByRepositoryRequest](#mediator-v1-GetPolicyViolationsByRepositoryRequest) | [GetPolicyViolationsByRepositoryResponse](#mediator-v1-GetPolicyViolationsByRepositoryResponse) |  |
+| ListRuleTypes | [ListRuleTypesRequest](#mediator-v1-ListRuleTypesRequest) | [ListRuleTypesResponse](#mediator-v1-ListRuleTypesResponse) |  |
+| GetRuleTypeByName | [GetRuleTypeByNameRequest](#mediator-v1-GetRuleTypeByNameRequest) | [GetRuleTypeByNameResponse](#mediator-v1-GetRuleTypeByNameResponse) |  |
+| GetRuleTypeById | [GetRuleTypeByIdRequest](#mediator-v1-GetRuleTypeByIdRequest) | [GetRuleTypeByIdResponse](#mediator-v1-GetRuleTypeByIdResponse) |  |
+| CreateRuleType | [CreateRuleTypeRequest](#mediator-v1-CreateRuleTypeRequest) | [CreateRuleTypeResponse](#mediator-v1-CreateRuleTypeResponse) |  |
+| DeleteRuleType | [DeleteRuleTypeRequest](#mediator-v1-DeleteRuleTypeRequest) | [DeleteRuleTypeResponse](#mediator-v1-DeleteRuleTypeResponse) |  |
 
 
 <a name="mediator-v1-RepositoryService"></a>
