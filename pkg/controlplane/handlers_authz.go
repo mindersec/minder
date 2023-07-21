@@ -22,7 +22,7 @@ import (
 	"time"
 
 	gauth "github.com/grpc-ecosystem/go-grpc-middleware/v2/interceptors/auth"
-	"github.com/rs/zerolog/log"
+	"github.com/rs/zerolog"
 	"github.com/spf13/viper"
 	"google.golang.org/grpc"
 	"google.golang.org/grpc/codes"
@@ -477,7 +477,7 @@ func IsProviderCallAuthorized(ctx context.Context, store db.Store, provider stri
 				err := auth.DeleteAccessToken(ctx, provider, encToken.AccessToken)
 
 				if err != nil {
-					log.Error().Msgf("Error deleting access token: %v", err)
+					zerolog.Ctx(ctx).Error().Msgf("Error deleting access token: %v", err)
 				}
 				return false
 			}
@@ -493,7 +493,7 @@ func AuthUnaryInterceptor(ctx context.Context, req interface{}, info *grpc.Unary
 	canBypass := canBypassAuth(ctx)
 	if canBypass {
 		// If the method is in the bypass list, return the context as is without authentication
-		log.Info().Msgf("Bypassing authentication")
+		zerolog.Ctx(ctx).Info().Msgf("Bypassing authentication")
 		return handler(ctx, req)
 	}
 
