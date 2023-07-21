@@ -146,6 +146,16 @@ type Role struct {
 	UpdatedAt      time.Time     `json:"updated_at"`
 }
 
+type RuleType struct {
+	ID         int32           `json:"id"`
+	Provider   string          `json:"provider"`
+	GroupID    int32           `json:"group_id"`
+	RuleType   string          `json:"rule_type"`
+	Definition json.RawMessage `json:"definition"`
+	CreatedAt  time.Time       `json:"created_at"`
+	UpdatedAt  time.Time       `json:"updated_at"`
+}
+
 type SessionStore struct {
 	ID           int32         `json:"id"`
 	Provider     string        `json:"provider"`
