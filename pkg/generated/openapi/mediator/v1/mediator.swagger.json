@@ -1894,6 +1894,226 @@
         ]
       }
     },
+    "/api/v1/rule_type": {
+      "post": {
+        "operationId": "PolicyService_CreateRuleType",
+        "responses": {
+          "200": {
+            "description": "A successful response.",
+            "schema": {
+              "$ref": "#/definitions/v1CreateRuleTypeResponse"
+            }
+          },
+          "default": {
+            "description": "An unexpected error response.",
+            "schema": {
+              "$ref": "#/definitions/rpcStatus"
+            }
+          }
+        },
+        "parameters": [
+          {
+            "name": "body",
+            "description": "CreateRuleTypeRequest is the request to create a rule type.",
+            "in": "body",
+            "required": true,
+            "schema": {
+              "$ref": "#/definitions/v1CreateRuleTypeRequest"
+            }
+          }
+        ],
+        "tags": [
+          "PolicyService"
+        ]
+      }
+    },
+    "/api/v1/rule_type/name/{name}": {
+      "get": {
+        "operationId": "PolicyService_GetRuleTypeByName",
+        "responses": {
+          "200": {
+            "description": "A successful response.",
+            "schema": {
+              "$ref": "#/definitions/v1GetRuleTypeByNameResponse"
+            }
+          },
+          "default": {
+            "description": "An unexpected error response.",
+            "schema": {
+              "$ref": "#/definitions/rpcStatus"
+            }
+          }
+        },
+        "parameters": [
+          {
+            "name": "name",
+            "description": "name is the name of the rule type.",
+            "in": "path",
+            "required": true,
+            "type": "string"
+          },
+          {
+            "name": "context.provider",
+            "in": "query",
+            "required": false,
+            "type": "string"
+          },
+          {
+            "name": "context.organization",
+            "in": "query",
+            "required": false,
+            "type": "string"
+          },
+          {
+            "name": "context.group",
+            "in": "query",
+            "required": false,
+            "type": "string"
+          }
+        ],
+        "tags": [
+          "PolicyService"
+        ]
+      }
+    },
+    "/api/v1/rule_type/{id}": {
+      "get": {
+        "operationId": "PolicyService_GetRuleTypeById",
+        "responses": {
+          "200": {
+            "description": "A successful response.",
+            "schema": {
+              "$ref": "#/definitions/v1GetRuleTypeByIdResponse"
+            }
+          },
+          "default": {
+            "description": "An unexpected error response.",
+            "schema": {
+              "$ref": "#/definitions/rpcStatus"
+            }
+          }
+        },
+        "parameters": [
+          {
+            "name": "id",
+            "description": "id is the id of the rule type.",
+            "in": "path",
+            "required": true,
+            "type": "string"
+          },
+          {
+            "name": "context.provider",
+            "in": "query",
+            "required": false,
+            "type": "string"
+          },
+          {
+            "name": "context.organization",
+            "in": "query",
+            "required": false,
+            "type": "string"
+          },
+          {
+            "name": "context.group",
+            "in": "query",
+            "required": false,
+            "type": "string"
+          }
+        ],
+        "tags": [
+          "PolicyService"
+        ]
+      },
+      "delete": {
+        "operationId": "PolicyService_DeleteRuleType",
+        "responses": {
+          "200": {
+            "description": "A successful response.",
+            "schema": {
+              "$ref": "#/definitions/v1DeleteRuleTypeResponse"
+            }
+          },
+          "default": {
+            "description": "An unexpected error response.",
+            "schema": {
+              "$ref": "#/definitions/rpcStatus"
+            }
+          }
+        },
+        "parameters": [
+          {
+            "name": "id",
+            "description": "id is the id of the rule type to be deleted.",
+            "in": "path",
+            "required": true,
+            "type": "string"
+          },
+          {
+            "name": "context.provider",
+            "in": "query",
+            "required": false,
+            "type": "string"
+          },
+          {
+            "name": "context.organization",
+            "in": "query",
+            "required": false,
+            "type": "string"
+          },
+          {
+            "name": "context.group",
+            "in": "query",
+            "required": false,
+            "type": "string"
+          }
+        ],
+        "tags": [
+          "PolicyService"
+        ]
+      }
+    },
+    "/api/v1/rule_types": {
+      "get": {
+        "operationId": "PolicyService_ListRuleTypes",
+        "responses": {
+          "200": {
+            "description": "A successful response.",
+            "schema": {
+              "$ref": "#/definitions/v1ListRuleTypesResponse"
+            }
+          },
+          "default": {
+            "description": "An unexpected error response.",
+            "schema": {
+              "$ref": "#/definitions/rpcStatus"
+            }
+          }
+        },
+        "parameters": [
+          {
+            "name": "context.provider",
+            "in": "query",
+            "required": false,
+            "type": "string"
+          },
+          {
+            "name": "context.organization",
+            "in": "query",
+            "required": false,
+            "type": "string"
+          },
+          {
+            "name": "context.group",
+            "in": "query",
+            "required": false,
+            "type": "string"
+          }
+        ],
+        "tags": [
+          "PolicyService"
+        ]
+      }
+    },
     "/api/v1/secrets": {
       "get": {
         "operationId": "SecretsService_GetSecrets",
@@ -2370,6 +2590,94 @@
     }
   },
   "definitions": {
+    "DataEvalDataEvalDef": {
+      "type": "object",
+      "properties": {
+        "type": {
+          "type": "string",
+          "description": "type is the type of the data evaluation."
+        },
+        "def": {
+          "type": "string",
+          "description": "def is the definition of the data evaluation."
+        }
+      },
+      "description": "DataEvalDef defines the data evaluation definition.\nThis pertains to the way we traverse data from the upstream\nendpoint and how we compare it to the rule.\nthe type is the way we traverse and evaluate the data from the\nupstream endpoint. The def is the definition of the data evaluation.\ne.g. the actual jq expression."
+    },
+    "DataEvalRestType": {
+      "type": "object",
+      "properties": {
+        "endpoint": {
+          "type": "string",
+          "description": "endpoint is the endpoint to fetch data from.\nThis can be a URL or the path on the API.bool\nThis is a required field and must be set.\nThis is also evaluated via a template which allows\nus dynamically fill in the values."
+        },
+        "method": {
+          "type": "string",
+          "description": "method is the method to use to fetch data."
+        },
+        "headers": {
+          "type": "array",
+          "items": {
+            "type": "string"
+          },
+          "description": "headers are the headers to be sent to the endpoint."
+        },
+        "body": {
+          "type": "string",
+          "description": "body is the body to be sent to the endpoint."
+        },
+        "parse": {
+          "type": "string",
+          "description": "parse is the parsing mechanism to be used to parse the data."
+        }
+      },
+      "description": "RestType defines the rest data evaluation.\nThis is used to fetch data from a REST endpoint."
+    },
+    "DefinitionDataEval": {
+      "type": "object",
+      "properties": {
+        "type": {
+          "type": "string",
+          "description": "type is the type of the data evaluation.\nwe currently support rest."
+        },
+        "rest": {
+          "$ref": "#/definitions/DataEvalRestType",
+          "description": "rest is the rest data evaluation.\nthis is only used if the type is rest."
+        },
+        "keyType": {
+          "type": "string",
+          "description": "key_type is the type of the key for each data item.\nThis is used to index the data.\nCurrently only `jq` is supported."
+        },
+        "data": {
+          "type": "object",
+          "additionalProperties": {
+            "$ref": "#/definitions/DataEvalDataEvalDef"
+          },
+          "description": "data is the data evaluation definition.\neach key is a piece of data coming from the policy\nto be evaluated. The value is the definition of the data evaluation."
+        }
+      },
+      "description": "DataEval defines how the data is evaluated."
+    },
+    "RuleTypeDefinition": {
+      "type": "object",
+      "properties": {
+        "inEntity": {
+          "type": "string",
+          "description": "in_entity is the entity in which the rule is evaluated.\nThis can be repository, build_environment or artifact."
+        },
+        "ruleSchema": {
+          "type": "object",
+          "additionalProperties": {
+            "type": "object"
+          },
+          "description": "rule_schema is the schema of the rule. This is expressed in JSON Schema."
+        },
+        "dataEval": {
+          "$ref": "#/definitions/DefinitionDataEval"
+        }
+      },
+      "description": "Definition defines the rule type. It encompases the schema and the data evaluation."
+    },
     "protobufAny": {
       "type": "object",
       "properties": {
@@ -2378,6 +2686,14 @@
         }
       },
       "additionalProperties": {}
+    },
+    "protobufNullValue": {
+      "type": "string",
+      "enum": [
+        "NULL_VALUE"
+      ],
+      "default": "NULL_VALUE",
+      "description": "`NullValue` is a singleton enumeration to represent the null value for the\n`Value` type union.\n\n The JSON representation for `NullValue` is JSON `null`.\n\n - NULL_VALUE: Null value."
     },
     "rpcStatus": {
       "type": "object",
@@ -2417,6 +2733,21 @@
           "type": "string"
         }
       }
+    },
+    "v1Context": {
+      "type": "object",
+      "properties": {
+        "provider": {
+          "type": "string"
+        },
+        "organization": {
+          "type": "string"
+        },
+        "group": {
+          "type": "string"
+        }
+      },
+      "description": "Context defines the context in which a rule is evaluated.\nthis normally refers to a combination of the provider, organization and group."
     },
     "v1CreateGroupRequest": {
       "type": "object",
@@ -2673,6 +3004,26 @@
         }
       }
     },
+    "v1CreateRuleTypeRequest": {
+      "type": "object",
+      "properties": {
+        "ruleType": {
+          "$ref": "#/definitions/v1RuleType",
+          "description": "rule_type is the rule type to be created."
+        }
+      },
+      "description": "CreateRuleTypeRequest is the request to create a rule type."
+    },
+    "v1CreateRuleTypeResponse": {
+      "type": "object",
+      "properties": {
+        "ruleType": {
+          "$ref": "#/definitions/v1RuleType",
+          "description": "rule_type is the rule type that was created."
+        }
+      },
+      "description": "CreateRuleTypeResponse is the response to create a rule type."
+    },
     "v1CreateUserRequest": {
       "type": "object",
       "properties": {
@@ -2773,6 +3124,10 @@
     },
     "v1DeleteRoleResponse": {
       "type": "object"
+    },
+    "v1DeleteRuleTypeResponse": {
+      "type": "object",
+      "description": "DeleteRuleTypeResponse is the response to delete a rule type."
     },
     "v1DeleteUserResponse": {
       "type": "object"
@@ -3126,6 +3481,26 @@
         }
       }
     },
+    "v1GetRuleTypeByIdResponse": {
+      "type": "object",
+      "properties": {
+        "ruleType": {
+          "$ref": "#/definitions/v1RuleType",
+          "description": "rule_type is the rule type."
+        }
+      },
+      "description": "GetRuleTypeByIdResponse is the response to get a rule type by id."
+    },
+    "v1GetRuleTypeByNameResponse": {
+      "type": "object",
+      "properties": {
+        "ruleType": {
+          "$ref": "#/definitions/v1RuleType",
+          "description": "rule_type is the rule type."
+        }
+      },
+      "description": "GetRuleTypeByNameResponse is the response to get a rule type by name."
+    },
     "v1GetSecretByIdResponse": {
       "type": "object",
       "properties": {
@@ -3378,6 +3753,20 @@
           }
         }
       }
+    },
+    "v1ListRuleTypesResponse": {
+      "type": "object",
+      "properties": {
+        "ruleTypes": {
+          "type": "array",
+          "items": {
+            "type": "object",
+            "$ref": "#/definitions/v1RuleType"
+          },
+          "description": "rule_types is the list of rule types."
+        }
+      },
+      "description": "ListRuleTypesResponse is the response to list rule types."
     },
     "v1LogInRequest": {
       "type": "object",
@@ -3790,6 +4179,24 @@
           "format": "date-time"
         }
       }
+    },
+    "v1RuleType": {
+      "type": "object",
+      "properties": {
+        "name": {
+          "type": "string",
+          "description": "name is the name of the rule type."
+        },
+        "context": {
+          "$ref": "#/definitions/v1Context",
+          "description": "context is the context in which the rule is evaluated."
+        },
+        "def": {
+          "$ref": "#/definitions/RuleTypeDefinition",
+          "description": "def is the definition of the rule type."
+        }
+      },
+      "description": "RuleType defines rules that may or may not be user defined.\nThe version is assumed from the folder's version."
     },
     "v1StoreProviderTokenResponse": {
       "type": "object"

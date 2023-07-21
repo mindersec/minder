@@ -463,6 +463,37 @@ service PolicyService {
             get: "/api/v1/policy_violations/repository/{repository_id}"
             };    
     }    
+
+    rpc ListRuleTypes (ListRuleTypesRequest) returns (ListRuleTypesResponse) {
+        option (google.api.http) = {
+            get: "/api/v1/rule_types"
+            };    
+    }
+
+    rpc GetRuleTypeByName (GetRuleTypeByNameRequest) returns (GetRuleTypeByNameResponse) {
+        option (google.api.http) = {
+            get: "/api/v1/rule_type/name/{name}"
+            };    
+    }
+
+    rpc GetRuleTypeById (GetRuleTypeByIdRequest) returns (GetRuleTypeByIdResponse) {
+        option (google.api.http) = {
+            get: "/api/v1/rule_type/{id}"
+            };    
+    }
+
+    rpc CreateRuleType (CreateRuleTypeRequest) returns (CreateRuleTypeResponse) {
+        option (google.api.http) = {
+            post: "/api/v1/rule_type"
+            body: "*"
+        };
+    }
+
+    rpc DeleteRuleType (DeleteRuleTypeRequest) returns (DeleteRuleTypeResponse) {
+        option (google.api.http) = {
+            delete: "/api/v1/rule_type/{id}"
+        };
+    }
 }
 
 service KeyService {
@@ -1329,6 +1360,74 @@ message Context {
     optional string organization = 2;
     optional string group = 3;
 }
+
+// --- START RuleType CRUD definitions
+
+// ListRuleTypesRequest is the request to list rule types.
+message ListRuleTypesRequest {
+    // context is the context in which the rule types are evaluated.
+    Context context = 1;
+}
+
+// ListRuleTypesResponse is the response to list rule types.
+message ListRuleTypesResponse {
+    // rule_types is the list of rule types.
+    repeated RuleType rule_types = 1;
+}
+
+// GetRuleTypeByNameRequest is the request to get a rule type by name.
+message GetRuleTypeByNameRequest {
+    // context is the context in which the rule type is evaluated.
+    Context context = 1;
+    // name is the name of the rule type.
+    string name = 2;
+}
+
+// GetRuleTypeByNameResponse is the response to get a rule type by name.
+message GetRuleTypeByNameResponse {
+    // rule_type is the rule type.
+    RuleType rule_type = 1;
+}
+
+// GetRuleTypeByIdRequest is the request to get a rule type by id.
+message GetRuleTypeByIdRequest {
+    // context is the context in which the rule type is evaluated.
+    Context context = 1;
+    // id is the id of the rule type.
+    string id = 2;
+}
+
+// GetRuleTypeByIdResponse is the response to get a rule type by id.
+message GetRuleTypeByIdResponse {
+    // rule_type is the rule type.
+    RuleType rule_type = 1;
+}
+
+// CreateRuleTypeRequest is the request to create a rule type.
+message CreateRuleTypeRequest {
+    // rule_type is the rule type to be created.
+    RuleType rule_type = 1;
+}
+
+// CreateRuleTypeResponse is the response to create a rule type.
+message CreateRuleTypeResponse {
+    // rule_type is the rule type that was created.
+    RuleType rule_type = 1;
+}
+
+// DeleteRuleTypeRequest is the request to delete a rule type.
+message DeleteRuleTypeRequest {
+    // context is the context in which the rule type is evaluated.
+    Context context = 1;
+    // id is the id of the rule type to be deleted.
+    string id = 2;
+}
+
+// DeleteRuleTypeResponse is the response to delete a rule type.
+message DeleteRuleTypeResponse {
+}
+
+// --- END RuleType CRUD definitions
 
 // RuleType defines rules that may or may not be user defined.
 // The version is assumed from the folder's version.

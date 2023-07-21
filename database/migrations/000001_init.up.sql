@@ -163,6 +163,16 @@ create table policy_violations (
     created_at TIMESTAMP NOT NULL DEFAULT NOW()
 );
 
+create table rule_type (
+    id SERIAL PRIMARY KEY,
+    provider TEXT NOT NULL,
+    group_id INTEGER NOT NULL REFERENCES groups(id) ON DELETE CASCADE,
+    rule_type VARCHAR(50) NOT NULL,
+    definition JSONB NOT NULL,
+    created_at TIMESTAMP NOT NULL DEFAULT NOW(),
+    updated_at TIMESTAMP NOT NULL DEFAULT NOW(),
+);
+
 -- Unique constraint
 ALTER TABLE provider_access_tokens ADD CONSTRAINT unique_group_id UNIQUE (group_id);
 ALTER TABLE repositories ADD CONSTRAINT unique_repo_id UNIQUE (repo_id);
@@ -182,6 +192,7 @@ CREATE UNIQUE INDEX repositories_repo_id_idx ON repositories(repo_id);
 CREATE UNIQUE INDEX policies_group_id_policy_type_idx ON policies(provider, group_id, policy_type);
 CREATE UNIQUE INDEX policy_types_idx ON policy_types(provider, policy_type);
 CREATE UNIQUE INDEX policy_status_idx ON policy_status(repository_id, policy_id);
+CREATE UNIQUE INDEX rule_type_idx ON rule_type(provider, group_id, rule_type);
 
 -- Create default root organization
 
