@@ -489,6 +489,13 @@ service PolicyService {
         };
     }
 
+    rpc UpdateRuleType (UpdateRuleTypeRequest) returns (UpdateRuleTypeResponse) {
+        option (google.api.http) = {
+            put: "/api/v1/rule_type/{id}"
+            body: "*"
+        };
+    }
+
     rpc DeleteRuleType (DeleteRuleTypeRequest) returns (DeleteRuleTypeResponse) {
         option (google.api.http) = {
             delete: "/api/v1/rule_type/{id}"
@@ -1412,6 +1419,20 @@ message CreateRuleTypeRequest {
 // CreateRuleTypeResponse is the response to create a rule type.
 message CreateRuleTypeResponse {
     // rule_type is the rule type that was created.
+    RuleType rule_type = 1;
+}
+
+// UpdateRuleTypeRequest is the request to update a rule type.
+message UpdateRuleTypeRequest {
+    // id is the id of the rule type to be updated.
+    string id = 1;
+    // rule_type is the rule type to be updated.
+    RuleType rule_type = 2;
+}
+
+// UpdateRuleTypeResponse is the response to update a rule type.
+message UpdateRuleTypeResponse {
+    // rule_type is the rule type that was updated.
     RuleType rule_type = 1;
 }
 

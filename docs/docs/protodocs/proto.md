@@ -164,6 +164,8 @@
     - [UpdatePasswordResponse](#mediator-v1-UpdatePasswordResponse)
     - [UpdateProfileRequest](#mediator-v1-UpdateProfileRequest)
     - [UpdateProfileResponse](#mediator-v1-UpdateProfileResponse)
+    - [UpdateRuleTypeRequest](#mediator-v1-UpdateRuleTypeRequest)
+    - [UpdateRuleTypeResponse](#mediator-v1-UpdateRuleTypeResponse)
     - [UserRecord](#mediator-v1-UserRecord)
     - [VerifyProviderTokenFromRequest](#mediator-v1-VerifyProviderTokenFromRequest)
     - [VerifyProviderTokenFromResponse](#mediator-v1-VerifyProviderTokenFromResponse)
@@ -2749,6 +2751,37 @@ This is used to fetch data from a REST endpoint.
 
 
 
+<a name="mediator-v1-UpdateRuleTypeRequest"></a>
+
+### UpdateRuleTypeRequest
+UpdateRuleTypeRequest is the request to update a rule type.
+
+
+| Field | Type | Label | Description |
+| ----- | ---- | ----- | ----------- |
+| id | [string](#string) |  | id is the id of the rule type to be updated. |
+| rule_type | [RuleType](#mediator-v1-RuleType) |  | rule_type is the rule type to be updated. |
+
+
+
+
+
+
+<a name="mediator-v1-UpdateRuleTypeResponse"></a>
+
+### UpdateRuleTypeResponse
+UpdateRuleTypeResponse is the response to update a rule type.
+
+
+| Field | Type | Label | Description |
+| ----- | ---- | ----- | ----------- |
+| rule_type | [RuleType](#mediator-v1-RuleType) |  | rule_type is the rule type that was updated. |
+
+
+
+
+
+
 <a name="mediator-v1-UserRecord"></a>
 
 ### UserRecord
@@ -2965,6 +2998,7 @@ manage Organizations CRUD
 | GetRuleTypeByName | [GetRuleTypeByNameRequest](#mediator-v1-GetRuleTypeByNameRequest) | [GetRuleTypeByNameResponse](#mediator-v1-GetRuleTypeByNameResponse) |  |
 | GetRuleTypeById | [GetRuleTypeByIdRequest](#mediator-v1-GetRuleTypeByIdRequest) | [GetRuleTypeByIdResponse](#mediator-v1-GetRuleTypeByIdResponse) |  |
 | CreateRuleType | [CreateRuleTypeRequest](#mediator-v1-CreateRuleTypeRequest) | [CreateRuleTypeResponse](#mediator-v1-CreateRuleTypeResponse) |  |
+| UpdateRuleType | [UpdateRuleTypeRequest](#mediator-v1-UpdateRuleTypeRequest) | [UpdateRuleTypeResponse](#mediator-v1-UpdateRuleTypeResponse) |  |
 | DeleteRuleType | [DeleteRuleTypeRequest](#mediator-v1-DeleteRuleTypeRequest) | [DeleteRuleTypeResponse](#mediator-v1-DeleteRuleTypeResponse) |  |
 
 

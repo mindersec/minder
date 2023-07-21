@@ -2540,6 +2540,7 @@ const (
 	PolicyService_GetRuleTypeByName_FullMethodName               = "/mediator.v1.PolicyService/GetRuleTypeByName"
 	PolicyService_GetRuleTypeById_FullMethodName                 = "/mediator.v1.PolicyService/GetRuleTypeById"
 	PolicyService_CreateRuleType_FullMethodName                  = "/mediator.v1.PolicyService/CreateRuleType"
+	PolicyService_UpdateRuleType_FullMethodName                  = "/mediator.v1.PolicyService/UpdateRuleType"
 	PolicyService_DeleteRuleType_FullMethodName                  = "/mediator.v1.PolicyService/DeleteRuleType"
 )
 
@@ -2563,6 +2564,7 @@ type PolicyServiceClient interface {
 	GetRuleTypeByName(ctx context.Context, in *GetRuleTypeByNameRequest, opts ...grpc.CallOption) (*GetRuleTypeByNameResponse, error)
 	GetRuleTypeById(ctx context.Context, in *GetRuleTypeByIdRequest, opts ...grpc.CallOption) (*GetRuleTypeByIdResponse, error)
 	CreateRuleType(ctx context.Context, in *CreateRuleTypeRequest, opts ...grpc.CallOption) (*CreateRuleTypeResponse, error)
+	UpdateRuleType(ctx context.Context, in *UpdateRuleTypeRequest, opts ...grpc.CallOption) (*UpdateRuleTypeResponse, error)
 	DeleteRuleType(ctx context.Context, in *DeleteRuleTypeRequest, opts ...grpc.CallOption) (*DeleteRuleTypeResponse, error)
 }
 
@@ -2718,6 +2720,15 @@ func (c *policyServiceClient) CreateRuleType(ctx context.Context, in *CreateRule
 	return out, nil
 }
 
+func (c *policyServiceClient) UpdateRuleType(ctx context.Context, in *UpdateRuleTypeRequest, opts ...grpc.CallOption) (*UpdateRuleTypeResponse, error) {
+	out := new(UpdateRuleTypeResponse)
+	err := c.cc.Invoke(ctx, PolicyService_UpdateRuleType_FullMethodName, in, out, opts...)
+	if err != nil {
+		return nil, err
+	}
+	return out, nil
+}
+
 func (c *policyServiceClient) DeleteRuleType(ctx context.Context, in *DeleteRuleTypeRequest, opts ...grpc.CallOption) (*DeleteRuleTypeResponse, error) {
 	out := new(DeleteRuleTypeResponse)
 	err := c.cc.Invoke(ctx, PolicyService_DeleteRuleType_FullMethodName, in, out, opts...)
@@ -2747,6 +2758,7 @@ type PolicyServiceServer interface {
 	GetRuleTypeByName(context.Context, *GetRuleTypeByNameRequest) (*GetRuleTypeByNameResponse, error)
 	GetRuleTypeById(context.Context, *GetRuleTypeByIdRequest) (*GetRuleTypeByIdResponse, error)
 	CreateRuleType(context.Context, *CreateRuleTypeRequest) (*CreateRuleTypeResponse, error)
+	UpdateRuleType(context.Context, *UpdateRuleTypeRequest) (*UpdateRuleTypeResponse, error)
 	DeleteRuleType(context.Context, *DeleteRuleTypeRequest) (*DeleteRuleTypeResponse, error)
 	mustEmbedUnimplementedPolicyServiceServer()
 }
@@ -2802,6 +2814,9 @@ func (UnimplementedPolicyServiceServer) GetRuleTypeById(context.Context, *GetRul
 }
 func (UnimplementedPolicyServiceServer) CreateRuleType(context.Context, *CreateRuleTypeRequest) (*CreateRuleTypeResponse, error) {
 	return nil, status.Errorf(codes.Unimplemented, "method CreateRuleType not implemented")
+}
+func (UnimplementedPolicyServiceServer) UpdateRuleType(context.Context, *UpdateRuleTypeRequest) (*UpdateRuleTypeResponse, error) {
+	return nil, status.Errorf(codes.Unimplemented, "method UpdateRuleType not implemented")
 }
 func (UnimplementedPolicyServiceServer) DeleteRuleType(context.Context, *DeleteRuleTypeRequest) (*DeleteRuleTypeResponse, error) {
 	return nil, status.Errorf(codes.Unimplemented, "method DeleteRuleType not implemented")
@@ -3107,6 +3122,24 @@ func _PolicyService_CreateRuleType_Handler(srv interface{}, ctx context.Context,
 	return interceptor(ctx, in, info, handler)
 }
 
+func _PolicyService_UpdateRuleType_Handler(srv interface{}, ctx context.Context, dec func(interface{}) error, interceptor grpc.UnaryServerInterceptor) (interface{}, error) {
+	in := new(UpdateRuleTypeRequest)
+	if err := dec(in); err != nil {
+		return nil, err
+	}
+	if interceptor == nil {
+		return srv.(PolicyServiceServer).UpdateRuleType(ctx, in)
+	}
+	info := &grpc.UnaryServerInfo{
+		Server:     srv,
+		FullMethod: PolicyService_UpdateRuleType_FullMethodName,
+	}
+	handler := func(ctx context.Context, req interface{}) (interface{}, error) {
+		return srv.(PolicyServiceServer).UpdateRuleType(ctx, req.(*UpdateRuleTypeRequest))
+	}
+	return interceptor(ctx, in, info, handler)
+}
+
 func _PolicyService_DeleteRuleType_Handler(srv interface{}, ctx context.Context, dec func(interface{}) error, interceptor grpc.UnaryServerInterceptor) (interface{}, error) {
 	in := new(DeleteRuleTypeRequest)
 	if err := dec(in); err != nil {
@@ -3195,6 +3228,10 @@ var PolicyService_ServiceDesc = grpc.ServiceDesc{
 		{
 			MethodName: "CreateRuleType",
 			Handler:    _PolicyService_CreateRuleType_Handler,
+		},
+		{
+			MethodName: "UpdateRuleType",
+			Handler:    _PolicyService_UpdateRuleType_Handler,
 		},
 		{
 			MethodName: "DeleteRuleType",
