@@ -163,7 +163,7 @@ create table policy_violations (
     created_at TIMESTAMP NOT NULL DEFAULT NOW()
 );
 
-create table rule_type (
+CREATE TABLE rule_type (
     id SERIAL PRIMARY KEY,
     provider TEXT NOT NULL,
     group_id INTEGER NOT NULL REFERENCES groups(id) ON DELETE CASCADE,
