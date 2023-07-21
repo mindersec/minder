@@ -99,7 +99,7 @@ CREATE TABLE signing_keys (
 );
 
 -- repositories table
-create TABLE repositories (
+CREATE TABLE repositories (
     id SERIAL PRIMARY KEY,
     provider TEXT NOT NULL,
     group_id INTEGER NOT NULL REFERENCES groups(id) ON DELETE CASCADE,
@@ -115,7 +115,7 @@ create TABLE repositories (
     updated_at TIMESTAMP NOT NULL DEFAULT NOW()
 );
 
-create TABLE session_store (
+CREATE TABLE session_store (
     id SERIAL PRIMARY KEY,
     provider TEXT NOT NULL,
     grp_id INTEGER,
@@ -125,7 +125,7 @@ create TABLE session_store (
 );
 
 -- policy type
-create table policy_types (
+CREATE TABLE policy_types (
     id SERIAL PRIMARY KEY,
     provider TEXT NOT NULL,
     policy_type VARCHAR(50) NOT NULL,
@@ -135,7 +135,7 @@ create table policy_types (
     updated_at TIMESTAMP NOT NULL DEFAULT NOW()
 );
 
-create table policies (
+CREATE TABLE policies (
     id SERIAL PRIMARY KEY,
     provider TEXT NOT NULL,
     group_id INTEGER NOT NULL REFERENCES groups(id) ON DELETE CASCADE,
@@ -146,7 +146,7 @@ create table policies (
 );
 
 create type policy_status_types as enum ('success', 'failure');
-create table policy_status (
+CREATE TABLE policy_status (
     id SERIAL PRIMARY KEY,
     repository_id INTEGER NOT NULL REFERENCES repositories(id) ON DELETE CASCADE,
     policy_id INTEGER NOT NULL REFERENCES policies(id) ON DELETE CASCADE,
@@ -154,7 +154,7 @@ create table policy_status (
     last_updated TIMESTAMP NOT NULL DEFAULT NOW()
 );
 
-create table policy_violations (
+CREATE TABLE policy_violations (
     id SERIAL PRIMARY KEY,
     repository_id INTEGER NOT NULL REFERENCES repositories(id) ON DELETE CASCADE,
     policy_id INTEGER NOT NULL REFERENCES policies(id) ON DELETE CASCADE,
