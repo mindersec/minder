@@ -170,7 +170,7 @@ create table rule_type (
     rule_type VARCHAR(50) NOT NULL,
     definition JSONB NOT NULL,
     created_at TIMESTAMP NOT NULL DEFAULT NOW(),
-    updated_at TIMESTAMP NOT NULL DEFAULT NOW(),
+    updated_at TIMESTAMP NOT NULL DEFAULT NOW()
 );
 
 -- Unique constraint
