@@ -21,6 +21,7 @@ import (
 	"path/filepath"
 
 	"github.com/rs/zerolog"
+
 	"github.com/stacklok/mediator/internal/config"
 )
 
