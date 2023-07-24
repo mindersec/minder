@@ -23,6 +23,7 @@ import (
 	"strings"
 
 	"github.com/xeipuuv/gojsonschema"
+	"google.golang.org/protobuf/encoding/protojson"
 
 	"github.com/stacklok/mediator/pkg/db"
 	pb "github.com/stacklok/mediator/pkg/generated/protobuf/go/mediator/v1"
@@ -157,7 +158,7 @@ func DBRuleDefFromPB(def *pb.RuleType_Definition) ([]byte, error) {
 func RuleDefFromDB(r *db.RuleType) (*pb.RuleType_Definition, error) {
 	def := &pb.RuleType_Definition{}
 
-	if err := json.Unmarshal(r.Definition, def); err != nil {
+	if err := protojson.Unmarshal(r.Definition, def); err != nil {
 		return nil, fmt.Errorf("cannot unmarshal rule type definition: %w", err)
 	}
 	return def, nil
