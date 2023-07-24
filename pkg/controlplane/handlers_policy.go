@@ -633,6 +633,7 @@ func (s *Server) GetPolicyViolationsByGroup(ctx context.Context,
 // Rule type CRUD
 
 // ensureDefaultGroupForContext ensures a valid group is set in the context or sets the default group
+// if the group is not set in the incoming entity context, it'll set it.
 func (s *Server) ensureDefaultGroupForContext(ctx context.Context, in *pb.Context) error {
 	// Group is already set
 	if in.Group != nil && *in.Group != "" {
