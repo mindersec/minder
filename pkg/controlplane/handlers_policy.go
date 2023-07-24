@@ -814,7 +814,10 @@ func (s *Server) CreateRuleType(ctx context.Context, crt *pb.CreateRuleTypeReque
 		return nil, status.Errorf(codes.Unknown, "failed to get rule type: %s", err)
 	}
 
-	// TODO: should we do more validations on the PB?
+	if err := engine.ValidateRuleTypeDefinition(in.GetDef()); err != nil {
+		return nil, status.Errorf(codes.InvalidArgument, "invalid rule type definition: %v", err)
+	}
+
 	def, err := engine.DBRuleDefFromPB(in.GetDef())
 	if err != nil {
 		return nil, fmt.Errorf("cannot convert rule definition to db: %v", err)
@@ -868,7 +871,10 @@ func (s *Server) UpdateRuleType(ctx context.Context, urt *pb.UpdateRuleTypeReque
 		return nil, status.Errorf(codes.Unknown, "failed to get rule type: %s", err)
 	}
 
-	// TODO: should we do more validations on the PB?
+	if err := engine.ValidateRuleTypeDefinition(in.GetDef()); err != nil {
+		return nil, status.Errorf(codes.InvalidArgument, "invalid rule type definition: %v", err)
+	}
+
 	def, err := engine.DBRuleDefFromPB(in.GetDef())
 	if err != nil {
 		return nil, fmt.Errorf("cannot convert rule definition to db: %v", err)

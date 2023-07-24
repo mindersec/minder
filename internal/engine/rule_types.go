@@ -18,6 +18,7 @@ package engine
 import (
 	"context"
 	"encoding/json"
+	"errors"
 	"fmt"
 	"strings"
 
@@ -26,6 +27,11 @@ import (
 	"github.com/stacklok/mediator/pkg/db"
 	pb "github.com/stacklok/mediator/pkg/generated/protobuf/go/mediator/v1"
 	ghclient "github.com/stacklok/mediator/pkg/providers/github"
+)
+
+var (
+	// ErrInvalidRuleTypeDefinition is returned when a rule type definition is invalid
+	ErrInvalidRuleTypeDefinition = errors.New("invalid rule type definition")
 )
 
 // RuleMeta is the metadata for a rule
@@ -178,4 +184,29 @@ func RuleTypePBFromDB(rt *db.RuleType, ectx *EntityContext) (*pb.RuleType, error
 		},
 		Def: def,
 	}, nil
+}
+
+// ValidateRuleTypeDefinition validates a rule type definition
+func ValidateRuleTypeDefinition(def *pb.RuleType_Definition) error {
+	if def == nil {
+		return fmt.Errorf("%w: rule type definition is nil", ErrInvalidRuleTypeDefinition)
+	}
+
+	if !IsValidEntity(def.InEntity) {
+		return fmt.Errorf("%w: invalid entity type: %s", ErrInvalidRuleTypeDefinition, def.InEntity)
+	}
+
+	if def.RuleSchema == nil {
+		return fmt.Errorf("%w: rule schema is nil", ErrInvalidRuleTypeDefinition)
+	}
+
+	if def.DataEval == nil {
+		return fmt.Errorf("%w: data evaluation is nil", ErrInvalidRuleTypeDefinition)
+	}
+
+	if def.DataEval.Data == nil {
+		return fmt.Errorf("%w: data evaluation data is nil", ErrInvalidRuleTypeDefinition)
+	}
+
+	return nil
 }
