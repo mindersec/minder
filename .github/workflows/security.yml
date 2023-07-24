@@ -1,0 +1,17 @@
+on:
+  workflow_call:
+jobs:
+  security-scan:
+    runs-on: ubuntu-latest
+    steps:
+      - name: Checkout
+        uses: actions/checkout@v3
+
+      - name: Security Scan
+        uses: aquasecurity/trivy-action@master  # Trivy Action doesn't have a stable release yet
+        with:
+          scan-type: 'fs'
+          scanners: vuln,secret
+          trivy-config: .trivy.yml
+          exit-code: 1
+          ignore-unfixed: true
