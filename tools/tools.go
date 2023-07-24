@@ -26,6 +26,7 @@ package tools
 //go:generate go install github.com/go-critic/go-critic/cmd/gocritic
 //go:generate go install github.com/kyleconroy/sqlc/cmd/sqlc
 //go:generate go install github.com/bufbuild/buf/cmd/buf
+//go:generate go install go.uber.org/mock/mockgen
 
 // nolint
 
@@ -38,6 +39,7 @@ import (
 	_ "github.com/grpc-ecosystem/grpc-gateway/v2/protoc-gen-grpc-gateway"
 	_ "github.com/grpc-ecosystem/grpc-gateway/v2/protoc-gen-openapiv2"
 	_ "github.com/kyleconroy/sqlc/cmd/sqlc"
+	_ "go.uber.org/mock/mockgen"
 	_ "golang.org/x/lint/golint"
 	_ "golang.org/x/tools/cmd/goimports"
 	_ "google.golang.org/grpc/cmd/protoc-gen-go-grpc"
