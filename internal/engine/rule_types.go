@@ -17,11 +17,13 @@ package engine
 
 import (
 	"context"
+	"encoding/json"
 	"fmt"
 	"strings"
 
 	"github.com/xeipuuv/gojsonschema"
 
+	"github.com/stacklok/mediator/pkg/db"
 	pb "github.com/stacklok/mediator/pkg/generated/protobuf/go/mediator/v1"
 	ghclient "github.com/stacklok/mediator/pkg/providers/github"
 )
@@ -136,4 +138,41 @@ func (r *RuleTypeEngine) ValidateAgainstSchema(contextualPolicy any) (*bool, err
 // Eval runs the rule type engine against the given entity
 func (r *RuleTypeEngine) Eval(ctx context.Context, ent any, pol, params map[string]any) error {
 	return r.rdi.Eval(ctx, ent, pol, params)
+}
+
+// RuleDefFromPB converts a protobuf rule type definition to a database
+// rule type definition
+func DBRuleDefFromPB(def *pb.RuleType_Definition) ([]byte, error) {
+	return json.Marshal(def)
+}
+
+// RuleDefFromDB converts a rule type definition from the database to a protobuf
+// rule type definition
+func RuleDefFromDB(r *db.RuleType) (*pb.RuleType_Definition, error) {
+	def := &pb.RuleType_Definition{}
+
+	if err := json.Unmarshal(r.Definition, def); err != nil {
+		return nil, fmt.Errorf("cannot unmarshal rule type definition: %w", err)
+	}
+	return nil, nil
+}
+
+// RuleTypePBFromDB converts a rule type from the database to a protobuf
+// rule type
+func RuleTypePBFromDB(rt *db.RuleType, ectx *EntityContext) (*pb.RuleType, error) {
+	gname := ectx.GetGroup().GetName()
+
+	def, err := RuleDefFromDB(rt)
+	if err != nil {
+		return nil, fmt.Errorf("cannot get rule type definition: %w", err)
+	}
+
+	return &pb.RuleType{
+		Name: rt.Name,
+		Context: &pb.Context{
+			Provider: ectx.GetProvider(),
+			Group:    &gname,
+		},
+		Def: def,
+	}, nil
 }

@@ -151,7 +151,6 @@ type RuleType struct {
 	Name       string          `json:"name"`
 	Provider   string          `json:"provider"`
 	GroupID    int32           `json:"group_id"`
-	RuleType   string          `json:"rule_type"`
 	Definition json.RawMessage `json:"definition"`
 	CreatedAt  time.Time       `json:"created_at"`
 	UpdatedAt  time.Time       `json:"updated_at"`

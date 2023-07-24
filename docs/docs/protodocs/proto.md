@@ -672,7 +672,7 @@ DeleteRuleTypeRequest is the request to delete a rule type.
 | Field | Type | Label | Description |
 | ----- | ---- | ----- | ----------- |
 | context | [Context](#mediator-v1-Context) |  | context is the context in which the rule type is evaluated. |
-| id | [string](#string) |  | id is the id of the rule type to be deleted. |
+| id | [int32](#int32) |  | id is the id of the rule type to be deleted. |
 
 
 
@@ -1603,7 +1603,7 @@ GetRuleTypeByIdRequest is the request to get a rule type by id.
 | Field | Type | Label | Description |
 | ----- | ---- | ----- | ----------- |
 | context | [Context](#mediator-v1-Context) |  | context is the context in which the rule type is evaluated. |
-| id | [string](#string) |  | id is the id of the rule type. |
+| id | [int32](#int32) |  | id is the id of the rule type. |
 
 
 
@@ -2759,7 +2759,6 @@ UpdateRuleTypeRequest is the request to update a rule type.
 
 | Field | Type | Label | Description |
 | ----- | ---- | ----- | ----------- |
-| id | [string](#string) |  | id is the id of the rule type to be updated. |
 | rule_type | [RuleType](#mediator-v1-RuleType) |  | rule_type is the rule type to be updated. |
 
 
