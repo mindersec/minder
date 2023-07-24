@@ -148,6 +148,7 @@ type Role struct {
 
 type RuleType struct {
 	ID         int32           `json:"id"`
+	Name       string          `json:"name"`
 	Provider   string          `json:"provider"`
 	GroupID    int32           `json:"group_id"`
 	RuleType   string          `json:"rule_type"`

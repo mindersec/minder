@@ -12,13 +12,15 @@ import (
 
 const createRuleType = `-- name: CreateRuleType :one
 INSERT INTO rule_type (
+    name,
     provider,
     group_id,
     rule_type,
-    definition) VALUES ($1, $2, $3, $4::jsonb) RETURNING id, provider, group_id, rule_type, definition, created_at, updated_at
+    definition) VALUES ($1, $2, $3, $4, $5::jsonb) RETURNING id, name, provider, group_id, rule_type, definition, created_at, updated_at
 `
 
 type CreateRuleTypeParams struct {
+	Name       string          `json:"name"`
 	Provider   string          `json:"provider"`
 	GroupID    int32           `json:"group_id"`
 	RuleType   string          `json:"rule_type"`
@@ -27,6 +29,7 @@ type CreateRuleTypeParams struct {
 
 func (q *Queries) CreateRuleType(ctx context.Context, arg CreateRuleTypeParams) (RuleType, error) {
 	row := q.db.QueryRowContext(ctx, createRuleType,
+		arg.Name,
 		arg.Provider,
 		arg.GroupID,
 		arg.RuleType,
@@ -35,6 +38,7 @@ func (q *Queries) CreateRuleType(ctx context.Context, arg CreateRuleTypeParams) 
 	var i RuleType
 	err := row.Scan(
 		&i.ID,
+		&i.Name,
 		&i.Provider,
 		&i.GroupID,
 		&i.RuleType,
@@ -55,7 +59,7 @@ func (q *Queries) DeleteRuleType(ctx context.Context, id int32) error {
 }
 
 const getRuleTypeByID = `-- name: GetRuleTypeByID :one
-SELECT id, provider, group_id, rule_type, definition, created_at, updated_at FROM rule_type WHERE id = $1
+SELECT id, name, provider, group_id, rule_type, definition, created_at, updated_at FROM rule_type WHERE id = $1
 `
 
 func (q *Queries) GetRuleTypeByID(ctx context.Context, id int32) (RuleType, error) {
@@ -63,6 +67,7 @@ func (q *Queries) GetRuleTypeByID(ctx context.Context, id int32) (RuleType, erro
 	var i RuleType
 	err := row.Scan(
 		&i.ID,
+		&i.Name,
 		&i.Provider,
 		&i.GroupID,
 		&i.RuleType,
@@ -74,20 +79,21 @@ func (q *Queries) GetRuleTypeByID(ctx context.Context, id int32) (RuleType, erro
 }
 
 const getRuleTypeByName = `-- name: GetRuleTypeByName :one
-SELECT id, provider, group_id, rule_type, definition, created_at, updated_at FROM rule_type WHERE provider = $1 AND group_id = $2 AND rule_type = $3
+SELECT id, name, provider, group_id, rule_type, definition, created_at, updated_at FROM rule_type WHERE provider = $1 AND group_id = $2 AND name = $3
 `
 
 type GetRuleTypeByNameParams struct {
 	Provider string `json:"provider"`
 	GroupID  int32  `json:"group_id"`
-	RuleType string `json:"rule_type"`
+	Name     string `json:"name"`
 }
 
 func (q *Queries) GetRuleTypeByName(ctx context.Context, arg GetRuleTypeByNameParams) (RuleType, error) {
-	row := q.db.QueryRowContext(ctx, getRuleTypeByName, arg.Provider, arg.GroupID, arg.RuleType)
+	row := q.db.QueryRowContext(ctx, getRuleTypeByName, arg.Provider, arg.GroupID, arg.Name)
 	var i RuleType
 	err := row.Scan(
 		&i.ID,
+		&i.Name,
 		&i.Provider,
 		&i.GroupID,
 		&i.RuleType,
@@ -99,7 +105,7 @@ func (q *Queries) GetRuleTypeByName(ctx context.Context, arg GetRuleTypeByNamePa
 }
 
 const listRuleTypesByProviderAndGroup = `-- name: ListRuleTypesByProviderAndGroup :many
-SELECT id, provider, group_id, rule_type, definition, created_at, updated_at FROM rule_type WHERE provider = $1 AND group_id = $2
+SELECT id, name, provider, group_id, rule_type, definition, created_at, updated_at FROM rule_type WHERE provider = $1 AND group_id = $2
 `
 
 type ListRuleTypesByProviderAndGroupParams struct {
@@ -118,6 +124,7 @@ func (q *Queries) ListRuleTypesByProviderAndGroup(ctx context.Context, arg ListR
 		var i RuleType
 		if err := rows.Scan(
 			&i.ID,
+			&i.Name,
 			&i.Provider,
 			&i.GroupID,
 			&i.RuleType,

@@ -165,6 +165,7 @@ CREATE TABLE policy_violations (
 
 CREATE TABLE rule_type (
     id SERIAL PRIMARY KEY,
+    name TEXT NOT NULL,
     provider TEXT NOT NULL,
     group_id INTEGER NOT NULL REFERENCES groups(id) ON DELETE CASCADE,
     rule_type VARCHAR(50) NOT NULL,
