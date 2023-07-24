@@ -31,6 +31,7 @@ import (
 	"time"
 
 	"github.com/golang-jwt/jwt/v4"
+	"golang.org/x/exp/slices"
 	"google.golang.org/grpc/codes"
 	"google.golang.org/grpc/status"
 
@@ -303,10 +304,6 @@ func IsAuthorizedForGroup(ctx context.Context, groupId int32) bool {
 	if !ok {
 		return false
 	}
-	for _, g := range claims.GroupIds {
-		if g == groupId {
-			return true
-		}
-	}
-	return false
+
+	return slices.Contains(claims.GroupIds, groupId)
 }
