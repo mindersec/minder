@@ -34,9 +34,9 @@ import (
 	"strings"
 	"time"
 
+	"github.com/secure-systems-lab/go-securesystemslib/encrypted"
 	"github.com/sigstore/sigstore/pkg/signature"
 	"github.com/spf13/viper"
-	"github.com/theupdateframework/go-tuf/encrypted"
 	"golang.org/x/crypto/argon2"
 	"google.golang.org/grpc/codes"
 	"google.golang.org/grpc/status"
