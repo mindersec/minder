@@ -160,7 +160,7 @@ func RuleDefFromDB(r *db.RuleType) (*pb.RuleType_Definition, error) {
 	if err := json.Unmarshal(r.Definition, def); err != nil {
 		return nil, fmt.Errorf("cannot unmarshal rule type definition: %w", err)
 	}
-	return nil, nil
+	return def, nil
 }
 
 // RuleTypePBFromDB converts a rule type from the database to a protobuf
