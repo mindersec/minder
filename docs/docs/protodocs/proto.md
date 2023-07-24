@@ -2554,6 +2554,7 @@ The version is assumed from the folder&#39;s version.
 
 | Field | Type | Label | Description |
 | ----- | ---- | ----- | ----------- |
+| id | [int32](#int32) | optional | id is the id of the rule type. This is mostly optional and is set by the server. |
 | name | [string](#string) |  | name is the name of the rule type. |
 | context | [Context](#mediator-v1-Context) |  | context is the context in which the rule is evaluated. |
 | def | [RuleType.Definition](#mediator-v1-RuleType-Definition) |  | def is the definition of the rule type. |

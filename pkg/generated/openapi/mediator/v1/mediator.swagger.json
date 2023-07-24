@@ -4216,6 +4216,11 @@
     "v1RuleType": {
       "type": "object",
       "properties": {
+        "id": {
+          "type": "integer",
+          "format": "int32",
+          "description": "id is the id of the rule type.\nThis is mostly optional and is set by the server."
+        },
         "name": {
           "type": "string",
           "description": "name is the name of the rule type."

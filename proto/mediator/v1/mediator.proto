@@ -1451,10 +1451,15 @@ message DeleteRuleTypeResponse {
 // RuleType defines rules that may or may not be user defined.
 // The version is assumed from the folder's version.
 message RuleType {
+    // id is the id of the rule type.
+    // This is mostly optional and is set by the server.
+    optional int32 id = 1;
+
     // name is the name of the rule type.
-    string name = 1;
+    string name = 2;
+
     // context is the context in which the rule is evaluated.
-    Context context = 2;
+    Context context = 3;
 
     // Definition defines the rule type. It encompases the schema and the data evaluation.
     message Definition {
@@ -1526,7 +1531,7 @@ message RuleType {
     }
 
     // def is the definition of the rule type.
-    Definition def = 3;
+    Definition def = 4;
 }
 
  // PipelinePolicy defines a policy that is user defined.

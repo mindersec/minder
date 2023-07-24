@@ -167,7 +167,10 @@ func RuleTypePBFromDB(rt *db.RuleType, ectx *EntityContext) (*pb.RuleType, error
 		return nil, fmt.Errorf("cannot get rule type definition: %w", err)
 	}
 
+	id := rt.ID
+
 	return &pb.RuleType{
+		Id:   &id,
 		Name: rt.Name,
 		Context: &pb.Context{
 			Provider: ectx.GetProvider(),
