@@ -80,8 +80,10 @@ bootstrap: ## install build deps
 	cd tools && go mod tidy && go install \
 		github.com/grpc-ecosystem/grpc-gateway/v2/protoc-gen-grpc-gateway \
 		github.com/grpc-ecosystem/grpc-gateway/v2/protoc-gen-openapiv2 \
-			google.golang.org/protobuf/cmd/protoc-gen-go google.golang.org/grpc/cmd/protoc-gen-go-grpc \
-			github.com/kyleconroy/sqlc
+		google.golang.org/protobuf/cmd/protoc-gen-go \
+		google.golang.org/grpc/cmd/protoc-gen-go-grpc \
+		github.com/kyleconroy/sqlc \
+		go.uber.org/mock/mockgen
 	# Create a config.yaml if it doesn't exist
 	cp -n config/config.yaml.example ./config.yaml || echo "config.yaml already exists, not overwriting"
 	# Create keys:
