@@ -630,7 +630,18 @@ func (s *Server) GetPolicyViolationsByGroup(ctx context.Context,
 
 // ListRuleTypes is a method to list all rule types for a given context
 func (s *Server) ListRuleTypes(ctx context.Context, in *pb.ListRuleTypesRequest) (*pb.ListRuleTypesResponse, error) {
-	return nil, status.Errorf(codes.Unknown, "Unimplemented")
+	if in.Context.Provider != ghclient.Github {
+		return nil, status.Errorf(codes.InvalidArgument, "provider not supported: %v", in.Context.Provider)
+	}
+
+	// set default group if not set
+	if in.Context.GroupId == 0 {
+		group, err := auth.GetDefaultGroup(ctx)
+		if err != nil {
+			return nil, status.Errorf(codes.InvalidArgument, "cannot infer group id")
+		}
+		in.Context.GroupId = group
+	}
 }
 
 // GetRuleTypeByName is a method to get a rule type by name
