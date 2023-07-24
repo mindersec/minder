@@ -12,6 +12,6 @@ jobs:
         with:
           scan-type: 'fs'
           scanners: vuln,secret
-          severity: HIGH,CRITICAL
+          trivy-config: .trivy.yml
           exit-code: 1
           ignore-unfixed: true
