@@ -869,16 +869,16 @@ func (s *Server) UpdateRuleType(ctx context.Context, urt *pb.UpdateRuleTypeReque
 		if errors.Is(err, sql.ErrNoRows) {
 			return nil, status.Errorf(codes.NotFound, "rule type %s not found", in.GetName())
 		}
-		return nil, status.Errorf(codes.Unknown, "failed to get rule type: %s", err)
+		return nil, status.Errorf(codes.Internal, "failed to get rule type: %s", err)
 	}
 
 	if err := engine.ValidateRuleTypeDefinition(in.GetDef()); err != nil {
-		return nil, status.Errorf(codes.InvalidArgument, "invalid rule type definition: %v", err)
+		return nil, status.Errorf(codes.Unavailable, "invalid rule type definition: %s", err)
 	}
 
 	def, err := engine.DBRuleDefFromPB(in.GetDef())
 	if err != nil {
-		return nil, fmt.Errorf("cannot convert rule definition to db: %v", err)
+		return nil, status.Errorf(codes.Internal, "cannot convert rule definition to db: %s", err)
 	}
 
 	err = s.store.UpdateRuleType(ctx, db.UpdateRuleTypeParams{
