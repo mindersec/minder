@@ -297,14 +297,7 @@ func GetDefaultGroup(ctx context.Context) (int32, error) {
 	return claims.GroupIds[0], nil
 }
 
-func GetGroups(ctx context.Context) ([]int32, error) {
-	claims, ok := ctx.Value(TokenInfoKey).(UserClaims)
-	if !ok {
-		return nil, errors.New("cannot get groups")
-	}
-	return claims.GroupIds, nil
-}
-
+// IsAuthorizedForGroup returns true if the user is authorized for the given group
 func IsAuthorizedForGroup(ctx context.Context, groupId int32) bool {
 	claims, ok := ctx.Value(TokenInfoKey).(UserClaims)
 	if !ok {

@@ -140,7 +140,7 @@ func (r *RuleTypeEngine) Eval(ctx context.Context, ent any, pol, params map[stri
 	return r.rdi.Eval(ctx, ent, pol, params)
 }
 
-// RuleDefFromPB converts a protobuf rule type definition to a database
+// DBRuleDefFromPB converts a protobuf rule type definition to a database
 // rule type definition
 func DBRuleDefFromPB(def *pb.RuleType_Definition) ([]byte, error) {
 	return json.Marshal(def)

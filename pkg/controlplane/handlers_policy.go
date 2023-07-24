@@ -654,7 +654,7 @@ func (s *Server) ensureDefaultGroupForContext(ctx context.Context, in *pb.Contex
 }
 
 // verifyValidGroup verifies that the group is valid and the user is authorized to access it
-func (s *Server) verifyValidGroup(ctx context.Context, in *engine.EntityContext) error {
+func verifyValidGroup(ctx context.Context, in *engine.EntityContext) error {
 	if !auth.IsAuthorizedForGroup(ctx, in.GetGroup().GetID()) {
 		return status.Errorf(codes.PermissionDenied, "user is not authorized to access this resource")
 	}
@@ -677,7 +677,7 @@ func (s *Server) ListRuleTypes(ctx context.Context, in *pb.ListRuleTypesRequest)
 		return nil, fmt.Errorf("cannot get context from input: %v", err)
 	}
 
-	if err := s.verifyValidGroup(ctx, entityCtx); err != nil {
+	if err := verifyValidGroup(ctx, entityCtx); err != nil {
 		return nil, err
 	}
 
@@ -691,7 +691,8 @@ func (s *Server) ListRuleTypes(ctx context.Context, in *pb.ListRuleTypesRequest)
 
 	resp := &pb.ListRuleTypesResponse{}
 
-	for _, rt := range lrt {
+	for idx := range lrt {
+		rt := lrt[idx]
 		rtpb, err := engine.RuleTypePBFromDB(&rt, entityCtx)
 		if err != nil {
 			return nil, fmt.Errorf("cannot convert rule type %s to pb: %v", rt.Name, err)
@@ -718,7 +719,7 @@ func (s *Server) GetRuleTypeByName(ctx context.Context, in *pb.GetRuleTypeByName
 		return nil, fmt.Errorf("cannot get context from input: %v", err)
 	}
 
-	if err := s.verifyValidGroup(ctx, entityCtx); err != nil {
+	if err := verifyValidGroup(ctx, entityCtx); err != nil {
 		return nil, err
 	}
 
@@ -758,7 +759,7 @@ func (s *Server) GetRuleTypeById(ctx context.Context, in *pb.GetRuleTypeByIdRequ
 		return nil, fmt.Errorf("cannot get context from input: %v", err)
 	}
 
-	if err := s.verifyValidGroup(ctx, entityCtx); err != nil {
+	if err := verifyValidGroup(ctx, entityCtx); err != nil {
 		return nil, err
 	}
 
@@ -796,7 +797,7 @@ func (s *Server) CreateRuleType(ctx context.Context, crt *pb.CreateRuleTypeReque
 		return nil, fmt.Errorf("cannot get context from input: %v", err)
 	}
 
-	if err := s.verifyValidGroup(ctx, entityCtx); err != nil {
+	if err := verifyValidGroup(ctx, entityCtx); err != nil {
 		return nil, err
 	}
 
@@ -851,7 +852,7 @@ func (s *Server) UpdateRuleType(ctx context.Context, urt *pb.UpdateRuleTypeReque
 		return nil, fmt.Errorf("cannot get context from input: %v", err)
 	}
 
-	if err := s.verifyValidGroup(ctx, entityCtx); err != nil {
+	if err := verifyValidGroup(ctx, entityCtx); err != nil {
 		return nil, err
 	}
 
@@ -901,7 +902,7 @@ func (s *Server) DeleteRuleType(ctx context.Context, in *pb.DeleteRuleTypeReques
 		return nil, fmt.Errorf("cannot get context from input: %v", err)
 	}
 
-	if err := s.verifyValidGroup(ctx, entityCtx); err != nil {
+	if err := verifyValidGroup(ctx, entityCtx); err != nil {
 		return nil, err
 	}
 
