@@ -47,7 +47,7 @@ jobs:
         with:
           against: "https://github.com/stacklok/mediator.git#branch=main"
 
-  sqlc-generation:
+  code-generation:
     runs-on: ubuntu-latest
 
     steps:
@@ -70,4 +70,13 @@ jobs:
 
       - name: Check for uncommitted SQLC changes
         run: |
-          git diff --exit-code || (echo "Error: Uncommitted changes detected after running 'sqlc generate'. Please commit the changes and try again." && exit 1)
+          git diff --exit-code || (echo "Error: Uncommitted changes detected after running 'make sqlc'. Please commit the changes and try again." && exit 1)
+
+      - name: Generate Go code for mocks
+        shell: bash
+        run: |
+          make mock
+
+      - name: Check for uncommitted Mock changes
+        run: |
+          git diff --exit-code || (echo "Error: Uncommitted changes detected after running 'make mock'. Please commit the changes and try again." && exit 1)
