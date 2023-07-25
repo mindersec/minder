@@ -13,6 +13,8 @@
 -- limitations under the License.
 
 -- projects table
+-- TODO(jaosorior): We should look back at our primary key strategy. I
+-- chose to use UUIDs but we want to look at alternatives.
 CREATE TABLE projects (
     id UUID NOT NULL DEFAULT gen_random_uuid() PRIMARY KEY,
     name TEXT NOT NULL,
