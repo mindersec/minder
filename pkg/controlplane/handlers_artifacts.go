@@ -17,6 +17,7 @@ package controlplane
 import (
 	"context"
 	"fmt"
+	"time"
 
 	"google.golang.org/grpc/codes"
 	"google.golang.org/grpc/status"
@@ -24,12 +25,16 @@ import (
 	"k8s.io/apimachinery/pkg/util/sets"
 
 	"github.com/stacklok/mediator/pkg/auth"
+	"github.com/stacklok/mediator/pkg/container"
 	pb "github.com/stacklok/mediator/pkg/generated/protobuf/go/mediator/v1"
 	ghclient "github.com/stacklok/mediator/pkg/providers/github"
 )
 
 // ARTIFACT_TYPES is a list of supported artifact types
 var ARTIFACT_TYPES = sets.New[string]("npm", "maven", "rubygems", "docker", "nuget", "container")
+
+// REGISTRY is the default registry to use
+var REGISTRY = "ghcr.io"
 
 // ListArtifacts lists all artifacts for a given group and provider
 // nolint:gocyclo
@@ -114,6 +119,7 @@ func (s *Server) ListArtifacts(ctx context.Context, in *pb.ListArtifactsRequest)
 }
 
 // GetArtifactByName gets an artifact by type and name
+// nolint:gocyclo
 func (s *Server) GetArtifactByName(ctx context.Context, in *pb.GetArtifactByNameRequest) (*pb.GetArtifactByNameResponse, error) {
 	if in.Provider != auth.Github {
 		return nil, status.Errorf(codes.InvalidArgument, "provider not supported: %v", in.Provider)
@@ -158,79 +164,103 @@ func (s *Server) GetArtifactByName(ctx context.Context, in *pb.GetArtifactByName
 
 	user, err := client.GetAuthenticatedUser(ctx)
 	if err != nil {
-		return nil, err
+		return nil, status.Errorf(codes.Internal, "cannot get authenticated user")
 	}
 	isOrg := (*user.Type == "Organization")
-	pkg, versions, err := client.GetPackageByName(ctx, isOrg, in.ArtifactType, in.Name, int(in.LatestVersions))
+	pkg, err := client.GetPackageByName(ctx, isOrg, in.ArtifactType, in.Name)
 	if err != nil {
-		return nil, err
+		return nil, status.Errorf(codes.Internal, "cannot get package")
 	}
 
-	// TODO: we only cover versions for container at the moment
-	art_versions := make([]*pb.ArtifactVersion, len(versions))
-	if in.ArtifactType == "container" {
-		for _, version := range versions {
-			tags := version.Metadata.GetContainer().Tags
-			fmt.Println(tags)
+	// get versions
+	versions, err := client.GetPackageVersions(ctx, isOrg, in.ArtifactType, in.Name)
+	if err != nil {
+		return nil, status.Errorf(codes.Internal, "cannot get package versions")
+	}
 
-			//tag := ""
-			/*if len(tags) > 0 {
-				tag = tags[0]
+	final_versions := []*pb.ArtifactVersion{}
+	for _, version := range versions {
+		// first try to read the manifest
+		imageRef := fmt.Sprintf("%s/%s/%s@%s", REGISTRY, *pkg.GetOwner().Login, pkg.GetName(), version.GetName())
+		manifest, err := container.GetImageManifest(imageRef, user.GetLogin(), decryptedToken.AccessToken)
+		if err != nil {
+			// we do not have a manifest, so we cannot add it to versions
+			continue
+		}
 
-				// having the tag, we can get more information about this image
-				manifest, err := oci.GetImageManifest(*pkg.GetOwner().Login, pkg.GetName(), tag, user.GetLogin(), decryptedToken.AccessToken)
-				if err != nil {
-					return nil, status.Errorf(codes.Internal, "cannot get image manifest")
+		// need to check if we have a cosign layer, then we skip it
+		is_signature := false
+		if manifest.Layers != nil {
+			for _, layer := range manifest.Layers {
+				if layer.MediaType == "application/vnd.dev.cosign.simplesigning.v1+json" {
+					is_signature = true
+					break
 				}
+			}
+		}
+		if is_signature {
+			continue
+		}
 
-				// try to find the cosign layer
-				is_signed := false
-				signature := ""
-				signature_digest := ""
-				log_id := int32(0)
-				for _, layer := range manifest.Layers {
-					result, _ := json.MarshalIndent(layer, "", "  ")
+		current_version := &pb.ArtifactVersion{}
+		current_version.IsVerified = false
+		current_version.IsBundleVerified = false
+		current_version.VersionId = version.GetID()
+		current_version.Tags = version.Metadata.Container.Tags
+		current_version.Sha = version.GetName()
+		current_version.CreatedAt = timestamppb.New(version.GetCreatedAt().Time)
 
-					if layer.MediaType == "application/vnd.dev.cosign.simplesigning.v1+json" {
+		// get information about signature
+		signature, err := container.GetSignatureTag(REGISTRY, *pkg.GetOwner().Login, pkg.GetName(), version.GetName())
 
-						is_signed = true
-						signature_digest = layer.Digest.String()
-						signature = layer.Annotations["dev.cosignproject.cosign/signature"]
+		// an image is signed if we can find a signature tag for it
+		current_version.IsSigned = (err == nil && signature != "")
 
-						rawMessage := layer.Annotations["dev.sigstore.cosign/bundle"]
-						var bundleData map[string]interface{}
-						rawData := json.RawMessage(rawMessage)
-						err := json.Unmarshal(rawData, &bundleData)
-						if err == nil {
-							payload := bundleData["Payload"].(map[string]interface{})
-							if payload != nil {
-								current_log, ok := payload["logIndex"]
-								if ok {
-									log_id = int32(current_log.(float64))
-								}
-							}
-						}
+		// if there is a signature, we can move forward and retrieve details
+		if current_version.IsSigned {
+			// we need to extract manifest from the signature
+			manifest, err := container.GetImageManifest(signature, user.GetLogin(), decryptedToken.AccessToken)
+			if err == nil && manifest.Layers != nil {
+				identity, issuer, err := container.ExtractIdentityFromCertificate(manifest)
+				if err == nil && identity != "" && issuer != "" {
+					current_version.CertIdentity = &identity
+					current_version.CertIssuer = &issuer
 
-						cert := layer.Annotations["dev.sigstore.cosign/certificate"]
-						chain := layer.Annotations["dev.sigstore.cosign/chain"]
-						is_verified, err := oci.CheckSignatureVerification(*pkg.GetOwner().Login, pkg.GetName(), tag, cert, chain)
-						fmt.Println(is_verified)
+					// we have issuer and identity, we can verify the image
+					verified, bundleVerified, imageKeys, err := container.VerifyFromIdentity(ctx, REGISTRY,
+						*pkg.GetOwner().Login, pkg.GetName(), version.GetName(), identity, issuer)
+					if err == nil {
+						// we can add information for the image
+						current_version.IsVerified = verified
+						current_version.IsBundleVerified = bundleVerified
 
-						break
+						log_id := imageKeys["RekorLogID"].(string)
+						current_version.RekorLogId = &log_id
+
+						log_index := int32(imageKeys["RekorLogIndex"].(int64))
+						current_version.RekorLogIndex = &log_index
+
+						signature_time := timestamppb.New(time.Unix(imageKeys["SignatureTime"].(int64), 0))
+						current_version.SignatureTime = signature_time
+
+						workflow_name := imageKeys["WorkflowName"].(string)
+						current_version.GithubWorkflowName = &workflow_name
+
+						workflow_repository := imageKeys["WorkflowRepository"].(string)
+						current_version.GithubWorkflowRepository = &workflow_repository
+
+						workflow_sha := imageKeys["WorkflowSha"].(string)
+						current_version.GithubWorkflowCommitSha = &workflow_sha
+
+						workflow_trigger := imageKeys["WorkflowTrigger"].(string)
+						current_version.GithubWorkflowTrigger = &workflow_trigger
 					}
 				}
-				art_versions[i] = &pb.ArtifactVersion{
-					VersionId:       version.GetID(),
-					Tag:             tag,
-					Sha:             *version.Name,
-					CreatedAt:       timestamppb.New(version.CreatedAt.Time),
-					UpdatedAt:       timestamppb.New(version.UpdatedAt.Time),
-					IsSigned:        is_signed,
-					Signature:       signature,
-					SignatureDigest: signature_digest,
-					RekorLogId:      log_id,
-				}
-			}*/
+			}
+		}
+		final_versions = append(final_versions, current_version)
+		if len(final_versions) == int(in.LatestVersions) {
+			break
 		}
 	}
 
@@ -244,6 +274,6 @@ func (s *Server) GetArtifactByName(ctx context.Context, in *pb.GetArtifactByName
 		CreatedAt:  timestamppb.New(pkg.GetCreatedAt().Time),
 		UpdatedAt:  timestamppb.New(pkg.GetUpdatedAt().Time),
 	},
-		Versions: art_versions,
+		Versions: final_versions,
 	}, nil
 }

@@ -87,7 +87,8 @@ func init() {
 	ArtifactCmd.AddCommand(artifact_getCmd)
 	artifact_getCmd.Flags().StringP("provider", "p", "", "Name for the provider to enroll")
 	artifact_getCmd.Flags().Int32P("group-id", "g", 0, "ID of the group for repo registration")
-	artifact_getCmd.Flags().StringP("type", "t", "", "Type of the artifact to get info from (npm, maven, rubygems, docker, nuget, container)")
+	artifact_getCmd.Flags().StringP("type", "t", "",
+		"Type of the artifact to get info from (npm, maven, rubygems, docker, nuget, container)")
 	artifact_getCmd.Flags().StringP("name", "n", "", "Name of the artifact to get info from")
 	artifact_getCmd.Flags().Int32P("latest-versions", "v", 1, "Latest artifact versions to retrieve")
 	if err := artifact_getCmd.MarkFlagRequired("provider"); err != nil {

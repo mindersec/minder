@@ -2833,8 +2833,11 @@
           "type": "string",
           "format": "int64"
         },
-        "tag": {
-          "type": "string"
+        "tags": {
+          "type": "array",
+          "items": {
+            "type": "string"
+          }
         },
         "sha": {
           "type": "string"
@@ -2842,21 +2845,42 @@
         "isSigned": {
           "type": "boolean"
         },
-        "signature": {
+        "isVerified": {
+          "type": "boolean"
+        },
+        "isBundleVerified": {
+          "type": "boolean"
+        },
+        "certIdentity": {
           "type": "string"
         },
-        "signatureDigest": {
+        "certIssuer": {
           "type": "string"
         },
         "rekorLogId": {
+          "type": "string"
+        },
+        "rekorLogIndex": {
           "type": "integer",
           "format": "int32"
         },
-        "createdAt": {
+        "signatureTime": {
           "type": "string",
           "format": "date-time"
         },
-        "updatedAt": {
+        "githubWorkflowName": {
+          "type": "string"
+        },
+        "githubWorkflowRepository": {
+          "type": "string"
+        },
+        "githubWorkflowCommitSha": {
+          "type": "string"
+        },
+        "githubWorkflowTrigger": {
+          "type": "string"
+        },
+        "createdAt": {
           "type": "string",
           "format": "date-time"
         }

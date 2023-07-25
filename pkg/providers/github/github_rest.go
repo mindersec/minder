@@ -78,7 +78,8 @@ type PackageListResult struct {
 }
 
 // ListAllPackages returns a list of all packages for the authenticated user
-func (c *RestClient) ListAllPackages(ctx context.Context, isOrg bool, artifactType string, pageNumber int, itemsPerPage int) (PackageListResult, error) {
+func (c *RestClient) ListAllPackages(ctx context.Context, isOrg bool, artifactType string,
+	pageNumber int, itemsPerPage int) (PackageListResult, error) {
 	opt := &github.PackageListOptions{
 		PackageType: &artifactType,
 		ListOptions: github.ListOptions{
@@ -118,50 +119,58 @@ func (c *RestClient) ListAllPackages(ctx context.Context, isOrg bool, artifactTy
 	return PackageListResult{Packages: allContainers}, nil
 }
 
-func (c *RestClient) GetPackageByName(ctx context.Context, isOrg bool, package_type string, package_name string, latest_versions int) (*github.Package, []*github.PackageVersion, error) {
+// GetPackageByName returns a single package for the authenticated user or for the org
+func (c *RestClient) GetPackageByName(ctx context.Context, isOrg bool, package_type string,
+	package_name string) (*github.Package, error) {
 	var pkg *github.Package
 	var err error
-	var versions []*github.PackageVersion
 
 	if isOrg {
 		pkg, _, err = c.client.Organizations.GetPackage(ctx, "", package_type, package_name)
 		if err != nil {
-			return nil, nil, err
-		}
-		if latest_versions > 0 {
-			versions, _, err = c.client.Organizations.PackageGetAllVersions(ctx, "", package_type, package_name, &github.PackageListOptions{
-				ListOptions: github.ListOptions{
-					PerPage: latest_versions,
-					Page:    1,
-				},
-			})
-			if err != nil {
-				return nil, nil, err
-			}
+			return nil, err
 		}
 	} else {
 		user, err := c.GetAuthenticatedUser(ctx)
 		if err != nil {
-			return nil, nil, err
+			return nil, err
 		}
 
 		pkg, _, err = c.client.Users.GetPackage(ctx, user.GetLogin(), package_type, package_name)
 		if err != nil {
-			return nil, nil, err
-		}
-		if latest_versions > 0 {
-			versions, _, err = c.client.Users.PackageGetAllVersions(ctx, user.GetLogin(), package_type, package_name, &github.PackageListOptions{
-				ListOptions: github.ListOptions{
-					PerPage: latest_versions,
-					Page:    1,
-				},
-			})
-			if err != nil {
-				return nil, nil, err
-			}
+			return nil, err
 		}
 	}
-	return pkg, versions, nil
+	return pkg, nil
+}
+
+// GetPackageVersions returns a list of all package versions for the authenticated user or org
+func (c *RestClient) GetPackageVersions(ctx context.Context, isOrg bool, package_type string,
+	package_name string) ([]*github.PackageVersion, error) {
+	var versions []*github.PackageVersion
+	var err error
+	state := "active"
+
+	if isOrg {
+		versions, _, err = c.client.Organizations.PackageGetAllVersions(ctx, "", package_type,
+			package_name, &github.PackageListOptions{PackageType: &package_type, State: &state})
+		if err != nil {
+			return nil, err
+		}
+	} else {
+		user, err := c.GetAuthenticatedUser(ctx)
+		if err != nil {
+			return nil, err
+		}
+
+		versions, _, err = c.client.Users.PackageGetAllVersions(ctx, user.GetLogin(), package_type,
+			package_name, &github.PackageListOptions{PackageType: &package_type, State: &state})
+		if err != nil {
+			return nil, err
+		}
+	}
+
+	return versions, nil
 }
 
 // GetRepository returns a single repository for the authenticated user

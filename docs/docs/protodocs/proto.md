@@ -233,14 +233,21 @@
 | Field | Type | Label | Description |
 | ----- | ---- | ----- | ----------- |
 | version_id | [int64](#int64) |  |  |
-| tag | [string](#string) |  |  |
+| tags | [string](#string) | repeated |  |
 | sha | [string](#string) |  |  |
 | is_signed | [bool](#bool) |  |  |
-| signature | [string](#string) |  |  |
-| signature_digest | [string](#string) |  |  |
-| rekor_log_id | [int32](#int32) |  |  |
+| is_verified | [bool](#bool) |  |  |
+| is_bundle_verified | [bool](#bool) |  |  |
+| cert_identity | [string](#string) | optional |  |
+| cert_issuer | [string](#string) | optional |  |
+| rekor_log_id | [string](#string) | optional |  |
+| rekor_log_index | [int32](#int32) | optional |  |
+| signature_time | [google.protobuf.Timestamp](#google-protobuf-Timestamp) | optional |  |
+| github_workflow_name | [string](#string) | optional |  |
+| github_workflow_repository | [string](#string) | optional |  |
+| github_workflow_commit_sha | [string](#string) | optional |  |
+| github_workflow_trigger | [string](#string) | optional |  |
 | created_at | [google.protobuf.Timestamp](#google-protobuf-Timestamp) |  |  |
-| updated_at | [google.protobuf.Timestamp](#google-protobuf-Timestamp) |  |  |
 
 
 
