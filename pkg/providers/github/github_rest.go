@@ -78,17 +78,13 @@ type PackageListResult struct {
 }
 
 // ListAllPackages returns a list of all packages for the authenticated user
-func (c *RestClient) ListAllPackages(ctx context.Context, isOrg bool, artifactType string) (PackageListResult, error) {
+func (c *RestClient) ListAllPackages(ctx context.Context, isOrg bool, artifactType string, pageNumber int, itemsPerPage int) (PackageListResult, error) {
 	opt := &github.PackageListOptions{
 		PackageType: &artifactType,
 		ListOptions: github.ListOptions{
-			Page:    1,
-			PerPage: 100,
+			Page:    pageNumber,
+			PerPage: itemsPerPage,
 		},
-	}
-	user, err := c.GetAuthenticatedUser(ctx)
-	if err != nil {
-		return PackageListResult{}, err
 	}
 
 	// create a slice to hold the containers
@@ -101,9 +97,12 @@ func (c *RestClient) ListAllPackages(ctx context.Context, isOrg bool, artifactTy
 		if isOrg {
 			artifacts, resp, err = c.client.Organizations.ListPackages(ctx, "", opt)
 		} else {
-			artifacts, resp, err = c.client.Users.ListPackages(ctx, *user.Login, opt)
+			user, err1 := c.GetAuthenticatedUser(ctx)
+			if err1 != nil {
+				return PackageListResult{}, err1
+			}
+			artifacts, resp, err = c.client.Users.ListPackages(ctx, user.GetLogin(), opt)
 		}
-
 		if err != nil {
 			return PackageListResult{}, err
 		}
@@ -119,8 +118,54 @@ func (c *RestClient) ListAllPackages(ctx context.Context, isOrg bool, artifactTy
 	return PackageListResult{Packages: allContainers}, nil
 }
 
+func (c *RestClient) GetPackageByName(ctx context.Context, isOrg bool, package_type string, package_name string, latest_versions int) (*github.Package, []*github.PackageVersion, error) {
+	var pkg *github.Package
+	var err error
+	var versions []*github.PackageVersion
+
+	if isOrg {
+		pkg, _, err = c.client.Organizations.GetPackage(ctx, "", package_type, package_name)
+		if err != nil {
+			return nil, nil, err
+		}
+		if latest_versions > 0 {
+			versions, _, err = c.client.Organizations.PackageGetAllVersions(ctx, "", package_type, package_name, &github.PackageListOptions{
+				ListOptions: github.ListOptions{
+					PerPage: latest_versions,
+					Page:    1,
+				},
+			})
+			if err != nil {
+				return nil, nil, err
+			}
+		}
+	} else {
+		user, err := c.GetAuthenticatedUser(ctx)
+		if err != nil {
+			return nil, nil, err
+		}
+
+		pkg, _, err = c.client.Users.GetPackage(ctx, user.GetLogin(), package_type, package_name)
+		if err != nil {
+			return nil, nil, err
+		}
+		if latest_versions > 0 {
+			versions, _, err = c.client.Users.PackageGetAllVersions(ctx, user.GetLogin(), package_type, package_name, &github.PackageListOptions{
+				ListOptions: github.ListOptions{
+					PerPage: latest_versions,
+					Page:    1,
+				},
+			})
+			if err != nil {
+				return nil, nil, err
+			}
+		}
+	}
+	return pkg, versions, nil
+}
+
 // GetRepository returns a single repository for the authenticated user
-func (c *RestClient) GetRepository(ctx context.Context, owner, name string) (*github.Repository, error) {
+func (c *RestClient) GetRepository(ctx context.Context, owner string, name string) (*github.Repository, error) {
 	// create a slice to hold the repositories
 	repo, _, err := c.client.Repositories.Get(ctx, owner, name)
 	if err != nil {

@@ -5,6 +5,7 @@
 
 - [mediator/v1/mediator.proto](#mediator_v1_mediator-proto)
     - [Artifact](#mediator-v1-Artifact)
+    - [ArtifactVersion](#mediator-v1-ArtifactVersion)
     - [BranchProtection](#mediator-v1-BranchProtection)
     - [CheckHealthRequest](#mediator-v1-CheckHealthRequest)
     - [CheckHealthResponse](#mediator-v1-CheckHealthResponse)
@@ -41,6 +42,8 @@
     - [ExchangeCodeForTokenCLIResponse](#mediator-v1-ExchangeCodeForTokenCLIResponse)
     - [ExchangeCodeForTokenWEBRequest](#mediator-v1-ExchangeCodeForTokenWEBRequest)
     - [ExchangeCodeForTokenWEBResponse](#mediator-v1-ExchangeCodeForTokenWEBResponse)
+    - [GetArtifactByNameRequest](#mediator-v1-GetArtifactByNameRequest)
+    - [GetArtifactByNameResponse](#mediator-v1-GetArtifactByNameResponse)
     - [GetAuthorizationURLRequest](#mediator-v1-GetAuthorizationURLRequest)
     - [GetAuthorizationURLResponse](#mediator-v1-GetAuthorizationURLResponse)
     - [GetBranchProtectionRequest](#mediator-v1-GetBranchProtectionRequest)
@@ -213,6 +216,29 @@
 | type | [string](#string) |  |  |
 | visibility | [string](#string) |  |  |
 | repository | [string](#string) |  |  |
+| created_at | [google.protobuf.Timestamp](#google-protobuf-Timestamp) |  |  |
+| updated_at | [google.protobuf.Timestamp](#google-protobuf-Timestamp) |  |  |
+
+
+
+
+
+
+<a name="mediator-v1-ArtifactVersion"></a>
+
+### ArtifactVersion
+
+
+
+| Field | Type | Label | Description |
+| ----- | ---- | ----- | ----------- |
+| version_id | [int64](#int64) |  |  |
+| tag | [string](#string) |  |  |
+| sha | [string](#string) |  |  |
+| is_signed | [bool](#bool) |  |  |
+| signature | [string](#string) |  |  |
+| signature_digest | [string](#string) |  |  |
+| rekor_log_id | [int32](#int32) |  |  |
 | created_at | [google.protobuf.Timestamp](#google-protobuf-Timestamp) |  |  |
 | updated_at | [google.protobuf.Timestamp](#google-protobuf-Timestamp) |  |  |
 
@@ -799,6 +825,41 @@ DeleteRuleTypeResponse is the response to delete a rule type.
 | token_type | [string](#string) |  |  |
 | expires_in | [int64](#int64) |  |  |
 | status | [string](#string) |  |  |
+
+
+
+
+
+
+<a name="mediator-v1-GetArtifactByNameRequest"></a>
+
+### GetArtifactByNameRequest
+
+
+
+| Field | Type | Label | Description |
+| ----- | ---- | ----- | ----------- |
+| provider | [string](#string) |  |  |
+| group_id | [int32](#int32) |  |  |
+| artifact_type | [string](#string) |  |  |
+| name | [string](#string) |  |  |
+| latest_versions | [int32](#int32) |  |  |
+
+
+
+
+
+
+<a name="mediator-v1-GetArtifactByNameResponse"></a>
+
+### GetArtifactByNameResponse
+
+
+
+| Field | Type | Label | Description |
+| ----- | ---- | ----- | ----------- |
+| artifact | [Artifact](#mediator-v1-Artifact) |  |  |
+| versions | [ArtifactVersion](#mediator-v1-ArtifactVersion) | repeated |  |
 
 
 
@@ -2878,6 +2939,7 @@ Repo filter enum
 | Method Name | Request Type | Response Type | Description |
 | ----------- | ------------ | ------------- | ------------|
 | ListArtifacts | [ListArtifactsRequest](#mediator-v1-ListArtifactsRequest) | [ListArtifactsResponse](#mediator-v1-ListArtifactsResponse) |  |
+| GetArtifactByName | [GetArtifactByNameRequest](#mediator-v1-GetArtifactByNameRequest) | [GetArtifactByNameResponse](#mediator-v1-GetArtifactByNameResponse) |  |
 
 
 <a name="mediator-v1-AuthService"></a>

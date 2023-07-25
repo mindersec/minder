@@ -40,6 +40,12 @@ service ArtifactService {
             get: "/api/v1/artifacts"
         };
     }
+
+    rpc GetArtifactByName (GetArtifactByNameRequest) returns (GetArtifactByNameResponse) {
+        option (google.api.http) = {
+            get: "/api/v1/provider/{provider}/type/{artifact_type}/name/{name}"
+            };    
+    }
 }
 
 message ListArtifactsRequest {
@@ -63,6 +69,32 @@ message Artifact {
     string repository = 6;
     google.protobuf.Timestamp created_at = 7;
     google.protobuf.Timestamp updated_at = 8;
+}
+
+message ArtifactVersion {
+    int64 version_id = 1;
+    string tag = 2;
+    string sha = 3;
+    bool is_signed = 4;
+    string signature = 5;
+    string signature_digest = 6;
+    int32 rekor_log_id = 7;
+    google.protobuf.Timestamp created_at = 8;
+    google.protobuf.Timestamp updated_at = 9;
+
+}
+
+message GetArtifactByNameRequest {
+    string provider = 1;
+    int32 group_id = 2;
+    string artifact_type = 3;
+    string name = 4;
+    int32 latest_versions = 5;
+}
+
+message GetArtifactByNameResponse {
+    Artifact artifact = 1;
+    repeated ArtifactVersion versions = 2;
 }
 
 service OAuthService {

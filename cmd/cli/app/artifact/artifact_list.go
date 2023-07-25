@@ -92,12 +92,12 @@ var artifact_listCmd = &cobra.Command{
 		case "", "table":
 			table := tablewriter.NewWriter(os.Stdout)
 
-			table.SetHeader([]string{"ID", "Type", "Name", "Repository", "Visibility", "Last created", "Last updated"})
+			table.SetHeader([]string{"ID", "Type", "Owner", "Name", "Repository", "Visibility", "Last created", "Last updated"})
 
 			for _, artifact_item := range artifacts.Results {
 				table.Append([]string{
 					fmt.Sprintf("%d", artifact_item.ArtifactId), artifact_item.Type,
-					fmt.Sprintf("%s/%s", artifact_item.GetOwner(), artifact_item.GetName()),
+					artifact_item.GetOwner(), artifact_item.GetName(),
 					artifact_item.Repository,
 					artifact_item.Visibility,
 					artifact_item.CreatedAt.AsTime().Format(time.RFC3339),

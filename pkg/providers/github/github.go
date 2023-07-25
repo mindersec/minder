@@ -53,7 +53,8 @@ type RestAPI interface {
 	GetRepository(context.Context, string, string) (*github.Repository, error)
 	ListAllRepositories(context.Context, bool, string) (RepositoryListResult, error)
 	GetBranchProtection(context.Context, string, string, string) (*github.Protection, error)
-	ListAllPackages(context.Context, bool, string) (PackageListResult, error)
+	ListAllPackages(context.Context, bool, string, int, int) (PackageListResult, error)
+	GetPackageByName(context.Context, bool, string, string, int) (*github.Package, []*github.PackageVersion, error)
 
 	// NewRequest allows for building raw and custom requests
 	NewRequest(method, urlStr string, body any, opts ...github.RequestOption) (*http.Request, error)

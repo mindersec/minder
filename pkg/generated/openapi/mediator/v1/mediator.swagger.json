@@ -1365,6 +1365,62 @@
         ]
       }
     },
+    "/api/v1/provider/{provider}/type/{artifactType}/name/{name}": {
+      "get": {
+        "operationId": "ArtifactService_GetArtifactByName",
+        "responses": {
+          "200": {
+            "description": "A successful response.",
+            "schema": {
+              "$ref": "#/definitions/v1GetArtifactByNameResponse"
+            }
+          },
+          "default": {
+            "description": "An unexpected error response.",
+            "schema": {
+              "$ref": "#/definitions/rpcStatus"
+            }
+          }
+        },
+        "parameters": [
+          {
+            "name": "provider",
+            "in": "path",
+            "required": true,
+            "type": "string"
+          },
+          {
+            "name": "artifactType",
+            "in": "path",
+            "required": true,
+            "type": "string"
+          },
+          {
+            "name": "name",
+            "in": "path",
+            "required": true,
+            "type": "string"
+          },
+          {
+            "name": "groupId",
+            "in": "query",
+            "required": false,
+            "type": "integer",
+            "format": "int32"
+          },
+          {
+            "name": "latestVersions",
+            "in": "query",
+            "required": false,
+            "type": "integer",
+            "format": "int32"
+          }
+        ],
+        "tags": [
+          "ArtifactService"
+        ]
+      }
+    },
     "/api/v1/repositories/provider/{provider}": {
       "get": {
         "operationId": "RepositoryService_ListRepositories",
@@ -2770,6 +2826,42 @@
         }
       }
     },
+    "v1ArtifactVersion": {
+      "type": "object",
+      "properties": {
+        "versionId": {
+          "type": "string",
+          "format": "int64"
+        },
+        "tag": {
+          "type": "string"
+        },
+        "sha": {
+          "type": "string"
+        },
+        "isSigned": {
+          "type": "boolean"
+        },
+        "signature": {
+          "type": "string"
+        },
+        "signatureDigest": {
+          "type": "string"
+        },
+        "rekorLogId": {
+          "type": "integer",
+          "format": "int32"
+        },
+        "createdAt": {
+          "type": "string",
+          "format": "date-time"
+        },
+        "updatedAt": {
+          "type": "string",
+          "format": "date-time"
+        }
+      }
+    },
     "v1BranchProtection": {
       "type": "object",
       "properties": {
@@ -3186,6 +3278,21 @@
         },
         "status": {
           "type": "string"
+        }
+      }
+    },
+    "v1GetArtifactByNameResponse": {
+      "type": "object",
+      "properties": {
+        "artifact": {
+          "$ref": "#/definitions/v1Artifact"
+        },
+        "versions": {
+          "type": "array",
+          "items": {
+            "type": "object",
+            "$ref": "#/definitions/v1ArtifactVersion"
+          }
         }
       }
     },
