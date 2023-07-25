@@ -10,6 +10,8 @@ import (
 	"encoding/json"
 	"fmt"
 	"time"
+
+	"github.com/google/uuid"
 )
 
 type PolicyStatusTypes string
@@ -107,6 +109,15 @@ type PolicyViolation struct {
 	Metadata     json.RawMessage `json:"metadata"`
 	Violation    json.RawMessage `json:"violation"`
 	CreatedAt    time.Time       `json:"created_at"`
+}
+
+type Project struct {
+	ID        uuid.UUID       `json:"id"`
+	Name      string          `json:"name"`
+	Metadata  json.RawMessage `json:"metadata"`
+	ParentID  uuid.NullUUID   `json:"parent_id"`
+	CreatedAt time.Time       `json:"created_at"`
+	UpdatedAt time.Time       `json:"updated_at"`
 }
 
 type ProviderAccessToken struct {
