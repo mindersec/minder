@@ -19,9 +19,7 @@ import (
 	"encoding/json"
 	"fmt"
 	"os"
-	"time"
 
-	"github.com/olekukonko/tablewriter"
 	"github.com/spf13/cobra"
 	"github.com/spf13/viper"
 	"gopkg.in/yaml.v3"
@@ -112,35 +110,7 @@ var repo_getCmd = &cobra.Command{
 
 		status := util.GetConfigValue("status", "status", cmd, false).(bool)
 		if status {
-			clientPolicy := pb.NewPolicyServiceClient(conn)
-
-			resp, err := clientPolicy.GetPolicyStatusByRepository(ctx, &pb.GetPolicyStatusByRepositoryRequest{RepositoryId: repository.Id})
-			util.ExitNicelyOnError(err, "Error getting policy status for repo")
-
-			// print results
-			if format == "" {
-				table := tablewriter.NewWriter(os.Stdout)
-				table.SetHeader([]string{"Policy type", "Status", "Last updated"})
-
-				for _, v := range resp.PolicyRepoStatus {
-					row := []string{
-						v.PolicyType,
-						v.PolicyStatus,
-						v.GetLastUpdated().AsTime().Format(time.RFC3339),
-					}
-					table.Append(row)
-				}
-				table.Render()
-			} else if format == app.JSON {
-				output, err := json.MarshalIndent(resp.PolicyRepoStatus, "", "  ")
-				util.ExitNicelyOnError(err, "Error marshalling json")
-				fmt.Println(string(output))
-			} else if format == app.YAML {
-				yamlData, err := yaml.Marshal(resp.PolicyRepoStatus)
-				util.ExitNicelyOnError(err, "Error marshalling yaml")
-				fmt.Println(string(yamlData))
-			}
-
+			// TODO: implement this
 		} else {
 			// print result just in JSON or YAML
 			if format == "" || format == formatJSON {

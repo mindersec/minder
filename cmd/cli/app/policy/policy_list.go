@@ -25,9 +25,7 @@ import (
 	"encoding/json"
 	"fmt"
 	"os"
-	"time"
 
-	"github.com/olekukonko/tablewriter"
 	"github.com/spf13/cobra"
 	"github.com/spf13/viper"
 	"gopkg.in/yaml.v3"
@@ -46,12 +44,15 @@ mediator control plane for an specific group.`,
 			fmt.Fprintf(os.Stderr, "Error binding flags: %s\n", err)
 		}
 	},
-	Run: func(cmd *cobra.Command, args []string) {
+	RunE: func(cmd *cobra.Command, args []string) error {
 		grpc_host := util.GetConfigValue("grpc_server.host", "grpc-host", cmd, "").(string)
 		grpc_port := util.GetConfigValue("grpc_server.port", "grpc-port", cmd, 0).(int)
+		format := viper.GetString("output")
 
 		conn, err := util.GetGrpcConnection(grpc_host, grpc_port)
-		util.ExitNicelyOnError(err, "Error getting grpc connection")
+		if err != nil {
+			return fmt.Errorf("error getting grpc connection: %w", err)
+		}
 		defer conn.Close()
 
 		client := pb.NewPolicyServiceClient(conn)
@@ -59,59 +60,47 @@ mediator control plane for an specific group.`,
 		defer cancel()
 
 		provider := viper.GetString("provider")
-		group := viper.GetInt32("group-id")
-		limit := viper.GetInt32("limit")
-		offset := viper.GetInt32("offset")
-		format := viper.GetString("output")
 
-		if format != "json" && format != "yaml" && format != "" {
+		if format != "json" && format != "yaml" {
 			fmt.Fprintf(os.Stderr, "Error: invalid format: %s\n", format)
 		}
 
-		var limitPtr = &limit
-		var offsetPtr = &offset
+		resp, err := client.ListPolicies(ctx, &pb.ListPoliciesRequest{
+			Context: &pb.Context{
+				Provider: provider,
+				// TODO set up group if specified
+				// Currently it's inferred from the authorization token
+			},
+		})
+		if err != nil {
+			return fmt.Errorf("error getting policies: %w", err)
+		}
 
-		resp, err := client.GetPolicies(ctx, &pb.GetPoliciesRequest{Provider: provider,
-			GroupId: group, Limit: limitPtr, Offset: offsetPtr})
-		util.ExitNicelyOnError(err, "Error getting policies")
-
-		// print output in a table
-		if format == "" {
-			table := tablewriter.NewWriter(os.Stdout)
-			table.SetHeader([]string{"Id", "Provider", "Group", "Type", "Created date", "Updated date"})
-
-			for _, v := range resp.Policies {
-				row := []string{
-					fmt.Sprintf("%d", v.Id),
-					v.Provider,
-					fmt.Sprintf("%d", v.GroupId),
-					v.Type,
-					v.GetCreatedAt().AsTime().Format(time.RFC3339),
-					v.GetUpdatedAt().AsTime().Format(time.RFC3339),
-				}
-				table.Append(row)
-			}
-			table.Render()
-		} else if format == "json" {
+		if format == "json" {
 			output, err := json.MarshalIndent(resp.Policies, "", "  ")
-			util.ExitNicelyOnError(err, "Error marshalling json")
+			if err != nil {
+				return fmt.Errorf("error marshalling json: %w", err)
+			}
 			fmt.Println(string(output))
 		} else if format == "yaml" {
 			yamlData, err := yaml.Marshal(resp.Policies)
-			util.ExitNicelyOnError(err, "Error marshalling yaml")
+			if err != nil {
+				return fmt.Errorf("error marshalling yaml: %w", err)
+			}
 			fmt.Println(string(yamlData))
-
 		}
+
+		// this is unreachable
+		return nil
 	},
 }
 
 func init() {
 	PolicyCmd.AddCommand(policy_listCmd)
 	policy_listCmd.Flags().StringP("provider", "p", "", "Provider to list policies for")
-	policy_listCmd.Flags().Int32P("group-id", "g", 0, "group id to list roles for")
 	policy_listCmd.Flags().StringP("output", "o", "", "Output format (json or yaml)")
-	policy_listCmd.Flags().Int32P("limit", "l", -1, "Limit the number of results returned")
-	policy_listCmd.Flags().Int32P("offset", "f", 0, "Offset the results returned")
+	// TODO: Take group ID into account
+	// policy_listCmd.Flags().Int32P("group-id", "g", 0, "group id to list roles for")
 
 	if err := policy_listCmd.MarkFlagRequired("provider"); err != nil {
 		fmt.Fprintf(os.Stderr, "Error marking flag as required: %s\n", err)

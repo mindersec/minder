@@ -17,620 +17,50 @@ package controlplane
 import (
 	"context"
 	"database/sql"
-	"embed"
+	"encoding/json"
 	"errors"
 	"fmt"
-	"path/filepath"
+	"log"
 
-	"github.com/go-playground/validator/v10"
-	"github.com/xeipuuv/gojsonschema"
 	"google.golang.org/grpc/codes"
 	"google.golang.org/grpc/status"
-	"google.golang.org/protobuf/types/known/timestamppb"
-	"gopkg.in/yaml.v3"
 
 	"github.com/stacklok/mediator/internal/engine"
-	"github.com/stacklok/mediator/internal/util"
 	"github.com/stacklok/mediator/pkg/auth"
 	"github.com/stacklok/mediator/pkg/db"
 	pb "github.com/stacklok/mediator/pkg/generated/protobuf/go/mediator/v1"
 	ghclient "github.com/stacklok/mediator/pkg/providers/github"
 )
 
-//go:embed policy_types/*
-var embeddedFiles embed.FS
-
-func readPolicyTypeSchema(provider string, policyType string, version string) (string, error) {
-	filePath := filepath.Join("policy_types", provider, policyType, version, "schema.json")
-
-	// Read the file contents
-	schema, err := embeddedFiles.ReadFile(filepath.Clean(filePath))
-	if err != nil {
-		return "", err
-	}
-	return string(schema), nil
-}
-
-func readDefaultPolicyTypeSchema(provider string, policyType string, version string) (string, error) {
-	filePath := filepath.Join("policy_types", provider, policyType, version, "default.yaml")
-
-	// Read the file contents
-	schema, err := embeddedFiles.ReadFile(filepath.Clean(filePath))
-	if err != nil {
-		return "", err
-	}
-	return string(schema), nil
-}
-
-type policyStructure struct {
-	YAMLContent string `yaml:"yaml_content"`
-}
-
-func validPolicySchema(fl validator.FieldLevel) bool {
-	// for the moment we check if it is a valid yaml
-	// in the future we could validate against some schema based on policy type
-	value, ok := fl.Field().Interface().(string)
-	if !ok {
-		return false
-	}
-
-	var temp policyStructure
-	err := yaml.Unmarshal([]byte(value), &temp)
-	return err == nil
-}
-
-// CreatePolicyValidation is a struct for validating the CreatePolicy request
-type CreatePolicyValidation struct {
-	Provider string `db:"provider" validate:"required"`
-	GroupId  int32  `db:"group_id" validate:"required"`
-	Type     string `db:"type" validate:"required"`
-	Policy   string `db:"policy" validate:"required,validPolicySchema"`
-}
-
-// CreatePolicy creates a policy for a group
-// nolint: gocyclo
-func (s *Server) CreatePolicy(ctx context.Context,
-	in *pb.CreatePolicyRequest) (*pb.CreatePolicyResponse, error) {
-	validator := validator.New()
-	err := validator.RegisterValidation("validPolicySchema", validPolicySchema)
-	if err != nil {
-		return nil, status.Errorf(codes.Internal, "cannot register validation: %v", err)
-	}
-
+// authAndContextValidation is a helper function to initialize entity context info and validate input
+// It also sets up the needed information in the `in` entity context that's needed for the rest of the flow
+// Note that this also does an authorization check.
+func (s *Server) authAndContextValidation(ctx context.Context, in *pb.Context) (context.Context, error) {
 	if in.Provider != ghclient.Github {
-		return nil, status.Errorf(codes.InvalidArgument, "provider not supported: %v", in.Provider)
+		return ctx, fmt.Errorf("provider not supported: %s", in.Provider)
 	}
 
-	// set default group if not set
-	if in.GroupId == 0 {
-		group, err := auth.GetDefaultGroup(ctx)
-		if err != nil {
-			return nil, status.Errorf(codes.InvalidArgument, "cannot infer group id")
-		}
-		in.GroupId = group
+	if in == nil {
+		return ctx, fmt.Errorf("context cannot be nil")
 	}
 
-	err = validator.Struct(CreatePolicyValidation{Provider: in.Provider, GroupId: in.GroupId,
-		Type: in.Type, Policy: in.PolicyDefinition})
+	if err := s.ensureDefaultGroupForContext(ctx, in); err != nil {
+		return ctx, err
+	}
+
+	entityCtx, err := engine.GetContextFromInput(ctx, in, s.store)
 	if err != nil {
-		return nil, status.Errorf(codes.InvalidArgument, "invalid request: %v", err)
+		return ctx, fmt.Errorf("cannot get context from input: %v", err)
 	}
 
-	// check if user is authorized
-	if !IsRequestAuthorized(ctx, in.GroupId) {
-		return nil, status.Errorf(codes.PermissionDenied, "user is not authorized to access this resource")
+	if err := verifyValidGroup(ctx, entityCtx); err != nil {
+		return ctx, err
 	}
 
-	// check if type is valid
-	policies, err := s.store.GetPolicyTypes(ctx, in.Provider)
-	if err != nil {
-		return nil, status.Errorf(codes.Internal, "cannot get policy types: %v", err)
-	}
+	newCtx := context.WithValue(ctx, engine.EntityContextKey, entityCtx)
 
-	policyType := db.PolicyType{}
-	for _, policy := range policies {
-		if policy.PolicyType == in.Type {
-			policyType = policy
-			break
-		}
-	}
-	if policyType == (db.PolicyType{}) {
-		return nil, status.Errorf(codes.InvalidArgument, "invalid policy type: %v", in.Type)
-	}
-
-	// convert yaml to json
-	jsonData, err := util.ConvertYamlToJson(in.PolicyDefinition)
-	if err != nil {
-		return nil, status.Errorf(codes.InvalidArgument, "invalid policy definition: %v", err)
-	}
-
-	// read schema
-	jsonSchema, err := readPolicyTypeSchema(in.Provider, in.Type, policyType.Version)
-	if err != nil {
-		return nil, status.Errorf(codes.Internal, "cannot read policy type schema: %v", err)
-	}
-
-	// validate against json schema
-	schemaLoader := gojsonschema.NewStringLoader(jsonSchema)
-	schema, err := gojsonschema.NewSchema(schemaLoader)
-	if err != nil {
-		return nil, status.Errorf(codes.Internal, "cannot create json schema: %v", err)
-	}
-	documentLoader := gojsonschema.NewStringLoader(string(jsonData))
-	result, err := schema.Validate(documentLoader)
-	if err != nil {
-		return nil, status.Errorf(codes.Internal, "cannot validate json schema: %v", err)
-	}
-
-	if !result.Valid() {
-		return nil, status.Errorf(codes.InvalidArgument, "invalid policy definition: %v", result.Errors())
-	}
-
-	policy, err := s.store.CreatePolicy(ctx, db.CreatePolicyParams{Provider: in.Provider, GroupID: in.GroupId,
-		PolicyType: policyType.ID, PolicyDefinition: jsonData})
-	if err != nil {
-		return nil, status.Errorf(codes.Internal, "cannot create policy: %v", err)
-	}
-
-	// convert returned policy to yaml
-	yamlStr, err := util.ConvertJsonToYaml(policy.PolicyDefinition)
-	if err != nil {
-		return nil, status.Errorf(codes.Internal, "cannot extract policy information: %v", err)
-	}
-
-	return &pb.CreatePolicyResponse{Policy: &pb.PolicyRecord{Id: policy.ID, Provider: policy.Provider, GroupId: policy.GroupID,
-		Type: in.Type, PolicyDefinition: yamlStr,
-		CreatedAt: timestamppb.New(policy.CreatedAt), UpdatedAt: timestamppb.New(policy.UpdatedAt)}}, nil
+	return newCtx, nil
 }
-
-type deletePolicyValidation struct {
-	Id int32 `db:"id" validate:"required"`
-}
-
-// DeletePolicy is a method to delete a policy
-func (s *Server) DeletePolicy(ctx context.Context,
-	in *pb.DeletePolicyRequest) (*pb.DeletePolicyResponse, error) {
-	validator := validator.New()
-	err := validator.Struct(deletePolicyValidation{Id: in.Id})
-	if err != nil {
-		return nil, err
-	}
-
-	// first check if the policy exists and is not protected
-	policy, err := s.store.GetPolicyByID(ctx, in.Id)
-	if err != nil {
-		return nil, err
-	}
-
-	// check if user is authorized
-	if !IsRequestAuthorized(ctx, policy.GroupID) {
-		return nil, status.Errorf(codes.PermissionDenied, "user is not authorized to access this resource")
-	}
-
-	err = s.store.DeletePolicy(ctx, in.Id)
-	if err != nil {
-		return nil, err
-	}
-
-	return &pb.DeletePolicyResponse{}, nil
-}
-
-// GetPolicies is a method to get all policies for a group
-func (s *Server) GetPolicies(ctx context.Context,
-	in *pb.GetPoliciesRequest) (*pb.GetPoliciesResponse, error) {
-
-	if in.Provider != ghclient.Github {
-		return nil, status.Errorf(codes.InvalidArgument, "provider not supported: %v", in.Provider)
-	}
-
-	// set default group if not set
-	if in.GroupId == 0 {
-		group, err := auth.GetDefaultGroup(ctx)
-		if err != nil {
-			return nil, status.Errorf(codes.InvalidArgument, "cannot infer group id")
-		}
-		in.GroupId = group
-	}
-
-	// check if user is authorized
-	if !IsRequestAuthorized(ctx, in.GroupId) {
-		return nil, status.Errorf(codes.PermissionDenied, "user is not authorized to access this resource")
-	}
-
-	// define default values for limit and offset
-	if in.Limit == nil || *in.Limit == -1 {
-		in.Limit = new(int32)
-		*in.Limit = PaginationLimit
-	}
-	if in.Offset == nil {
-		in.Offset = new(int32)
-		*in.Offset = 0
-	}
-
-	policies, err := s.store.ListPoliciesByGroupID(ctx, db.ListPoliciesByGroupIDParams{
-		Provider: in.Provider,
-		GroupID:  in.GroupId,
-		Limit:    *in.Limit,
-		Offset:   *in.Offset,
-	})
-	if err != nil {
-		return nil, status.Errorf(codes.Unknown, "failed to get policies: %s", err)
-	}
-
-	var resp pb.GetPoliciesResponse
-	resp.Policies = make([]*pb.PolicyRecord, 0, len(policies))
-	for _, policy := range policies {
-		yamlStr, err := util.ConvertJsonToYaml(policy.PolicyDefinition)
-		if err != nil {
-			return nil, status.Errorf(codes.Internal, "cannot extract policy information: %v", err)
-		}
-
-		resp.Policies = append(resp.Policies, &pb.PolicyRecord{
-			Id:               policy.ID,
-			Provider:         policy.Provider,
-			GroupId:          policy.GroupID,
-			Type:             policy.PolicyTypeName.String,
-			PolicyDefinition: yamlStr,
-			CreatedAt:        timestamppb.New(policy.CreatedAt),
-			UpdatedAt:        timestamppb.New(policy.UpdatedAt),
-		})
-	}
-
-	return &resp, nil
-}
-
-// GetPolicyById is a method to get a policy by id
-func (s *Server) GetPolicyById(ctx context.Context,
-	in *pb.GetPolicyByIdRequest) (*pb.GetPolicyByIdResponse, error) {
-	if in.Id == 0 {
-		return nil, status.Error(codes.InvalidArgument, "policy id is required")
-	}
-
-	policy, err := s.store.GetPolicyByID(ctx, in.Id)
-	if err != nil {
-		return nil, status.Errorf(codes.Unknown, "failed to get policy: %s", err)
-	}
-
-	// check if user is authorized
-	if !IsRequestAuthorized(ctx, policy.GroupID) {
-		return nil, status.Errorf(codes.PermissionDenied, "user is not authorized to access this resource")
-	}
-
-	// convert returned policy to yaml
-	yamlStr, err := util.ConvertJsonToYaml(policy.PolicyDefinition)
-	if err != nil {
-		return nil, status.Errorf(codes.Internal, "cannot extract policy information: %v", err)
-	}
-
-	var resp pb.GetPolicyByIdResponse
-	resp.Policy = &pb.PolicyRecord{
-		Id:               policy.ID,
-		Provider:         policy.Provider,
-		GroupId:          policy.GroupID,
-		Type:             policy.PolicyTypeName.String,
-		PolicyDefinition: yamlStr,
-		CreatedAt:        timestamppb.New(policy.CreatedAt),
-		UpdatedAt:        timestamppb.New(policy.UpdatedAt),
-	}
-	return &resp, nil
-}
-
-// GetPolicyTypes is a method to get all policy types
-func (s *Server) GetPolicyTypes(ctx context.Context, in *pb.GetPolicyTypesRequest) (*pb.GetPolicyTypesResponse, error) {
-	if in.Provider != ghclient.Github {
-		return nil, status.Errorf(codes.InvalidArgument, "provider not supported: %v", in.Provider)
-	}
-	types, err := s.store.GetPolicyTypes(ctx, in.Provider)
-	if err != nil {
-		return nil, status.Errorf(codes.Unknown, "failed to get policy types: %s", err)
-	}
-
-	var resp pb.GetPolicyTypesResponse
-	resp.PolicyTypes = make([]*pb.PolicyTypeRecord, 0, len(types))
-	for _, policyType := range types {
-		// in list, we do not return json schema to optimize the response
-		resp.PolicyTypes = append(resp.PolicyTypes, &pb.PolicyTypeRecord{
-			Id: policyType.ID, Provider: policyType.Provider,
-			PolicyType:  policyType.PolicyType,
-			Description: &policyType.Description.String,
-			JsonSchema:  "", DefaultSchema: "",
-			Version: policyType.Version, CreatedAt: timestamppb.New(policyType.CreatedAt),
-			UpdatedAt: timestamppb.New(policyType.UpdatedAt),
-		})
-	}
-
-	return &resp, nil
-}
-
-// GetPolicyType is a method to get a policy type by id
-func (s *Server) GetPolicyType(ctx context.Context, in *pb.GetPolicyTypeRequest) (*pb.GetPolicyTypeResponse, error) {
-	if in.Provider != ghclient.Github {
-		return nil, status.Errorf(codes.InvalidArgument, "provider not supported: %v", in.Provider)
-	}
-	policyType, err := s.store.GetPolicyType(ctx, db.GetPolicyTypeParams{Provider: in.Provider, PolicyType: in.Type})
-	if err != nil {
-		return nil, status.Errorf(codes.Unknown, "failed to get policy types: %s", err)
-	}
-	schema, err := readPolicyTypeSchema(policyType.Provider, policyType.PolicyType, policyType.Version)
-	if err != nil {
-		return nil, status.Errorf(codes.Unknown, "failed to get policy type schemas: %s", err)
-	}
-
-	default_schema, err := readDefaultPolicyTypeSchema(policyType.Provider, policyType.PolicyType, policyType.Version)
-	if err != nil {
-		return nil, status.Errorf(codes.Unknown, "failed to get default policy schemas: %s", err)
-	}
-
-	return &pb.GetPolicyTypeResponse{PolicyType: &pb.PolicyTypeRecord{Id: policyType.ID, Provider: policyType.Provider,
-		PolicyType: policyType.PolicyType, Description: &policyType.Description.String,
-		JsonSchema: schema, DefaultSchema: default_schema,
-		Version: policyType.Version, CreatedAt: timestamppb.New(policyType.CreatedAt),
-		UpdatedAt: timestamppb.New(policyType.UpdatedAt)}}, nil
-}
-
-// GetPolicyStatusById is a method to get policy status
-func (s *Server) GetPolicyStatusById(ctx context.Context,
-	in *pb.GetPolicyStatusByIdRequest) (*pb.GetPolicyStatusByIdResponse, error) {
-	if in.PolicyId == 0 {
-		return nil, status.Error(codes.InvalidArgument, "policy id is required")
-	}
-
-	policy, err := s.store.GetPolicyByID(ctx, in.PolicyId)
-	if err != nil {
-		return nil, status.Errorf(codes.Unknown, "failed to get policy: %s", err)
-	}
-
-	// check if user is authorized
-	if !IsRequestAuthorized(ctx, policy.GroupID) {
-		return nil, status.Errorf(codes.PermissionDenied, "user is not authorized to access this resource")
-	}
-
-	// read policy status
-	policy_status, err := s.store.GetPolicyStatusById(ctx, in.PolicyId)
-	if err != nil {
-		return nil, status.Errorf(codes.Unknown, "failed to get policy status: %s", err)
-	}
-	var resp pb.GetPolicyStatusByIdResponse
-	resp.PolicyRepoStatus = make([]*pb.PolicyRepoStatus, 0, len(policy_status))
-	for _, policy := range policy_status {
-		resp.PolicyRepoStatus = append(resp.PolicyRepoStatus, &pb.PolicyRepoStatus{
-			PolicyType:   policy.PolicyType,
-			RepoId:       policy.RepoID,
-			RepoOwner:    policy.RepoOwner,
-			RepoName:     policy.RepoName,
-			PolicyStatus: string(policy.PolicyStatus),
-			LastUpdated:  timestamppb.New(policy.LastUpdated),
-		})
-	}
-
-	return &resp, nil
-
-}
-
-// GetPolicyStatusByGroup is a method to get policy status for a group
-func (s *Server) GetPolicyStatusByGroup(ctx context.Context,
-	in *pb.GetPolicyStatusByGroupRequest) (*pb.GetPolicyStatusByGroupResponse, error) {
-	if in.Provider == "" || in.GroupId == 0 {
-		return nil, status.Error(codes.InvalidArgument, "provider and group id are required")
-	}
-	if in.Provider != ghclient.Github {
-		return nil, status.Errorf(codes.InvalidArgument, "provider not supported: %v", in.Provider)
-	}
-
-	// check if user is authorized
-	if !IsRequestAuthorized(ctx, in.GroupId) {
-		return nil, status.Errorf(codes.PermissionDenied, "user is not authorized to access this resource")
-	}
-
-	// read policy status
-	policy_status, err := s.store.GetPolicyStatusByGroup(ctx,
-		db.GetPolicyStatusByGroupParams{Provider: in.Provider, GroupID: in.GroupId})
-	if err != nil {
-		return nil, status.Errorf(codes.Unknown, "failed to get policy status: %s", err)
-	}
-	var resp pb.GetPolicyStatusByGroupResponse
-	resp.PolicyRepoStatus = make([]*pb.PolicyRepoStatus, 0, len(policy_status))
-	for _, policy := range policy_status {
-		resp.PolicyRepoStatus = append(resp.PolicyRepoStatus, &pb.PolicyRepoStatus{
-			PolicyType:   policy.PolicyType,
-			RepoId:       policy.RepoID,
-			RepoOwner:    policy.RepoOwner,
-			RepoName:     policy.RepoName,
-			PolicyStatus: string(policy.PolicyStatus),
-			LastUpdated:  timestamppb.New(policy.LastUpdated),
-		})
-	}
-
-	return &resp, nil
-}
-
-// GetPolicyStatusByRepository is a method to get policy status for a repository
-func (s *Server) GetPolicyStatusByRepository(ctx context.Context,
-	in *pb.GetPolicyStatusByRepositoryRequest) (*pb.GetPolicyStatusByRepositoryResponse, error) {
-	if in.RepositoryId == 0 {
-		return nil, status.Error(codes.InvalidArgument, "repository id is required")
-	}
-
-	repo, err := s.store.GetRepositoryByID(ctx, in.RepositoryId)
-	if err != nil {
-		return nil, status.Errorf(codes.Unknown, "failed to get repository: %s", err)
-	}
-
-	// check if user is authorized
-	if !IsRequestAuthorized(ctx, repo.GroupID) {
-		return nil, status.Errorf(codes.PermissionDenied, "user is not authorized to access this resource")
-	}
-
-	// read policy status for repo
-	policy_status, err := s.store.GetPolicyStatusByRepositoryId(ctx, in.RepositoryId)
-	if err != nil {
-		return nil, status.Errorf(codes.Unknown, "failed to get policy status: %s", err)
-	}
-	var resp pb.GetPolicyStatusByRepositoryResponse
-	resp.PolicyRepoStatus = make([]*pb.PolicyRepoStatus, 0, len(policy_status))
-	for _, policy := range policy_status {
-		resp.PolicyRepoStatus = append(resp.PolicyRepoStatus, &pb.PolicyRepoStatus{
-			PolicyType:   policy.PolicyType,
-			RepoId:       policy.RepoID,
-			RepoOwner:    policy.RepoOwner,
-			RepoName:     policy.RepoName,
-			PolicyStatus: string(policy.PolicyStatus),
-			LastUpdated:  timestamppb.New(policy.LastUpdated),
-		})
-	}
-
-	return &resp, nil
-
-}
-
-// GetPolicyViolationsById is a method to get policy violations by policy id
-func (s *Server) GetPolicyViolationsById(ctx context.Context,
-	in *pb.GetPolicyViolationsByIdRequest) (*pb.GetPolicyViolationsByIdResponse, error) {
-	if in.Id == 0 {
-		return nil, status.Error(codes.InvalidArgument, "policy id is required")
-	}
-
-	policy, err := s.store.GetPolicyByID(ctx, in.Id)
-	if err != nil {
-		return nil, status.Errorf(codes.Unknown, "failed to get policy: %s", err)
-	}
-
-	// check if user is authorized
-	if !IsRequestAuthorized(ctx, policy.GroupID) {
-		return nil, status.Errorf(codes.PermissionDenied, "user is not authorized to access this resource")
-	}
-
-	// define default values for limit and offset
-	if in.Limit == nil || *in.Limit == -1 {
-		in.Limit = new(int32)
-		*in.Limit = PaginationLimit
-	}
-	if in.Offset == nil {
-		in.Offset = new(int32)
-		*in.Offset = 0
-	}
-	// read policy violations
-	policy_violations, err := s.store.GetPolicyViolationsById(ctx,
-		db.GetPolicyViolationsByIdParams{ID: in.Id, Limit: *in.Limit, Offset: *in.Offset})
-	if err != nil {
-		return nil, status.Errorf(codes.Unknown, "failed to get policy violation: %s", err)
-	}
-	var resp pb.GetPolicyViolationsByIdResponse
-	resp.PolicyViolation = make([]*pb.PolicyViolation, 0, len(policy_violations))
-	for _, policy := range policy_violations {
-		resp.PolicyViolation = append(resp.PolicyViolation, &pb.PolicyViolation{
-			PolicyType: policy.PolicyType,
-			RepoId:     policy.RepoID,
-			RepoOwner:  policy.RepoOwner,
-			RepoName:   policy.RepoName,
-			Metadata:   string(policy.Metadata),
-			Violation:  string(policy.Violation),
-			CreatedAt:  timestamppb.New(policy.CreatedAt),
-		})
-	}
-
-	return &resp, nil
-
-}
-
-// GetPolicyViolationsByRepository is a method to get policy violations by repository id
-func (s *Server) GetPolicyViolationsByRepository(ctx context.Context,
-	in *pb.GetPolicyViolationsByRepositoryRequest) (*pb.GetPolicyViolationsByRepositoryResponse, error) {
-	if in.RepositoryId == 0 {
-		return nil, status.Error(codes.InvalidArgument, "repository id is required")
-	}
-
-	repo, err := s.store.GetRepositoryByID(ctx, in.RepositoryId)
-	if err != nil {
-		return nil, status.Errorf(codes.Unknown, "failed to get repository: %s", err)
-	}
-
-	// check if user is authorized
-	if !IsRequestAuthorized(ctx, repo.GroupID) {
-		return nil, status.Errorf(codes.PermissionDenied, "user is not authorized to access this resource")
-	}
-
-	// define default values for limit and offset
-	if in.Limit == nil || *in.Limit == -1 {
-		in.Limit = new(int32)
-		*in.Limit = PaginationLimit
-	}
-	if in.Offset == nil {
-		in.Offset = new(int32)
-		*in.Offset = 0
-	}
-	// read policy violations
-	policy_violations, err := s.store.GetPolicyViolationsByRepositoryId(ctx,
-		db.GetPolicyViolationsByRepositoryIdParams{ID: in.RepositoryId, Limit: *in.Limit, Offset: *in.Offset})
-	if err != nil {
-		return nil, status.Errorf(codes.Unknown, "failed to get policy violation: %s", err)
-	}
-	var resp pb.GetPolicyViolationsByRepositoryResponse
-	resp.PolicyViolation = make([]*pb.PolicyViolation, 0, len(policy_violations))
-	for _, policy := range policy_violations {
-		resp.PolicyViolation = append(resp.PolicyViolation, &pb.PolicyViolation{
-			PolicyType: policy.PolicyType,
-			RepoId:     policy.RepoID,
-			RepoOwner:  policy.RepoOwner,
-			RepoName:   policy.RepoName,
-			Metadata:   string(policy.Metadata),
-			Violation:  string(policy.Violation),
-			CreatedAt:  timestamppb.New(policy.CreatedAt),
-		})
-	}
-
-	return &resp, nil
-
-}
-
-// GetPolicyViolationsByGroup is a method to get policy violations by group
-func (s *Server) GetPolicyViolationsByGroup(ctx context.Context,
-	in *pb.GetPolicyViolationsByGroupRequest) (*pb.GetPolicyViolationsByGroupResponse, error) {
-	// provider and group are required
-	if in.Provider == "" || in.GroupId == 0 {
-		return nil, status.Error(codes.InvalidArgument, "provider and group are required")
-	}
-
-	// check if user is authorized
-	if !IsRequestAuthorized(ctx, in.GroupId) {
-		return nil, status.Errorf(codes.PermissionDenied, "user is not authorized to access this resource")
-	}
-
-	// define default values for limit and offset
-	if in.Limit == nil || *in.Limit == -1 {
-		in.Limit = new(int32)
-		*in.Limit = PaginationLimit
-	}
-	if in.Offset == nil {
-		in.Offset = new(int32)
-		*in.Offset = 0
-	}
-
-	policy_violations, err := s.store.GetPolicyViolationsByGroup(ctx,
-		db.GetPolicyViolationsByGroupParams{Provider: in.Provider, GroupID: in.GroupId, Limit: *in.Limit, Offset: *in.Offset})
-	if err != nil {
-		return nil, status.Errorf(codes.Unknown, "failed to get policy: %s", err)
-	}
-
-	var resp pb.GetPolicyViolationsByGroupResponse
-	resp.PolicyViolation = make([]*pb.PolicyViolation, 0, len(policy_violations))
-	for _, policy := range policy_violations {
-		resp.PolicyViolation = append(resp.PolicyViolation, &pb.PolicyViolation{
-			PolicyType: policy.PolicyType,
-			RepoId:     policy.RepoID,
-			RepoOwner:  policy.RepoOwner,
-			RepoName:   policy.RepoName,
-			Metadata:   string(policy.Metadata),
-			Violation:  string(policy.Violation),
-			CreatedAt:  timestamppb.New(policy.CreatedAt),
-		})
-	}
-
-	return &resp, nil
-
-}
-
-// Rule type CRUD
 
 // ensureDefaultGroupForContext ensures a valid group is set in the context or sets the default group
 // if the group is not set in the incoming entity context, it'll set it.
@@ -655,6 +85,7 @@ func (s *Server) ensureDefaultGroupForContext(ctx context.Context, in *pb.Contex
 }
 
 // verifyValidGroup verifies that the group is valid and the user is authorized to access it
+// TODO: This will have to change once we have the hierarchy tree in place.
 func verifyValidGroup(ctx context.Context, in *engine.EntityContext) error {
 	if !auth.IsAuthorizedForGroup(ctx, in.GetGroup().GetID()) {
 		return status.Errorf(codes.PermissionDenied, "user is not authorized to access this resource")
@@ -663,24 +94,298 @@ func verifyValidGroup(ctx context.Context, in *engine.EntityContext) error {
 	return nil
 }
 
+// CreatePolicy creates a policy for a group
+func (s *Server) CreatePolicy(ctx context.Context,
+	cpr *pb.CreatePolicyRequest) (*pb.CreatePolicyResponse, error) {
+	in := cpr.GetPolicy()
+
+	newCtx, err := s.authAndContextValidation(ctx, in.GetContext())
+	if err != nil {
+		return nil, status.Errorf(codes.InvalidArgument, "error ensuring default group: %v", err)
+	}
+
+	entityCtx := newCtx.Value(engine.EntityContextKey).(*engine.EntityContext)
+
+	if err := engine.ValidatePolicy(in); err != nil {
+		return nil, status.Errorf(codes.InvalidArgument, "invalid policy: %v", err)
+	}
+
+	var lastRule string
+	err = engine.TraverseAllRulesForPipeline(in, func(r *pb.PipelinePolicy_Rule) error {
+		// TODO: This will need to be updated to support
+		// the hierarchy tree once that's settled in.
+		_, err := s.store.GetRuleTypeByName(ctx, db.GetRuleTypeByNameParams{
+			Provider: in.GetContext().GetProvider(),
+			GroupID:  entityCtx.GetGroup().GetID(),
+			Name:     r.GetType(),
+		})
+
+		lastRule = r.GetType()
+
+		return err
+	})
+
+	if err != nil {
+		if errors.Is(err, sql.ErrNoRows) {
+			return nil, status.Errorf(codes.InvalidArgument, "policy contained unexistent rule: %s", lastRule)
+		}
+
+		log.Printf("error getting rule type: %v", err)
+		return nil, status.Errorf(codes.Internal, "error creating policy")
+	}
+
+	// Now that we know it's valid, let's persist it!
+	tx, err := s.store.BeginTransaction()
+	if err != nil {
+		log.Printf("error starting transaction: %v", err)
+		return nil, status.Errorf(codes.Internal, "error creating policy")
+	}
+	defer s.store.Rollback(tx)
+
+	qtx := s.store.GetQuerierWithTransaction(tx)
+
+	// Create policy
+	policy, err := qtx.CreatePolicy(ctx, db.CreatePolicyParams{
+		Provider: in.GetContext().GetProvider(),
+		GroupID:  entityCtx.GetGroup().GetID(),
+		Name:     in.GetName(),
+	})
+	if err != nil {
+		log.Printf("error creating policy: %v", err)
+		return nil, status.Errorf(codes.Internal, "error creating policy")
+	}
+
+	// Create entity rules entries
+	for ent, entRules := range map[engine.EntityType][]*pb.PipelinePolicy_ContextualRuleSet{
+		engine.RepositoryEntity:       in.GetRepository(),
+		engine.ArtifactEntity:         in.GetBuildEnvironment(),
+		engine.BuildEnvironmentEntity: in.GetArtifact(),
+	} {
+		if err := createPolicyRulesForEntity(ctx, ent, &policy, qtx, entRules); err != nil {
+			return nil, err
+		}
+	}
+
+	return nil, nil
+}
+
+func createPolicyRulesForEntity(
+	ctx context.Context,
+	entity engine.EntityType,
+	policy *db.Policy,
+	qtx db.Querier,
+	rules []*pb.PipelinePolicy_ContextualRuleSet,
+) error {
+	marshalled, err := json.Marshal(rules)
+	if err != nil {
+		log.Printf("error marshalling %s rules: %v", entity, err)
+		return status.Errorf(codes.Internal, "error creating policy")
+	}
+	_, err = qtx.CreatePolicyForEntity(ctx, db.CreatePolicyForEntityParams{
+		PolicyID:        policy.ID,
+		Entity:          "repository",
+		ContextualRules: marshalled,
+	})
+
+	return err
+}
+
+// DeletePolicy is a method to delete a policy
+func (s *Server) DeletePolicy(ctx context.Context,
+	in *pb.DeletePolicyRequest) (*pb.DeletePolicyResponse, error) {
+	_, err := s.authAndContextValidation(ctx, in.GetContext())
+	if err != nil {
+		return nil, status.Errorf(codes.InvalidArgument, "error ensuring default group: %v", err)
+	}
+
+	if in.Id == 0 {
+		return nil, status.Error(codes.InvalidArgument, "policy id is required")
+	}
+
+	err = s.store.DeletePolicy(ctx, in.Id)
+	if err != nil {
+		return nil, err
+	}
+
+	return &pb.DeletePolicyResponse{}, nil
+}
+
+// ListPolicies is a method to get all policies for a group
+func (s *Server) ListPolicies(ctx context.Context,
+	in *pb.ListPoliciesRequest) (*pb.ListPoliciesResponse, error) {
+	newCtx, err := s.authAndContextValidation(ctx, in.GetContext())
+	if err != nil {
+		return nil, status.Errorf(codes.InvalidArgument, "error ensuring default group: %v", err)
+	}
+
+	entityCtx := newCtx.Value(engine.EntityContextKey).(*engine.EntityContext)
+
+	policies, err := s.store.ListPoliciesByGroupID(ctx, entityCtx.Group.ID)
+	if err != nil {
+		return nil, status.Errorf(codes.Unknown, "failed to get policies: %s", err)
+	}
+
+	var resp pb.ListPoliciesResponse
+	resp.Policies = make([]*pb.PipelinePolicy, 0, len(policies))
+	for _, policy := range engine.MergeDatabaseListIntoPolicies(policies, entityCtx) {
+		resp.Policies = append(resp.Policies, policy)
+	}
+
+	return &resp, nil
+}
+
+// GetPolicyById is a method to get a policy by id
+func (s *Server) GetPolicyById(ctx context.Context,
+	in *pb.GetPolicyByIdRequest) (*pb.GetPolicyByIdResponse, error) {
+	newCtx, err := s.authAndContextValidation(ctx, in.GetContext())
+	if err != nil {
+		return nil, status.Errorf(codes.InvalidArgument, "error ensuring default group: %v", err)
+	}
+
+	entityCtx := newCtx.Value(engine.EntityContextKey).(*engine.EntityContext)
+
+	if in.Id == 0 {
+		return nil, status.Error(codes.InvalidArgument, "policy id is required")
+	}
+
+	policies, err := s.store.GetPolicyByGroupAndID(ctx, db.GetPolicyByGroupAndIDParams{
+		GroupID: entityCtx.Group.ID,
+		ID:      in.Id,
+	})
+	if err != nil {
+		return nil, status.Errorf(codes.Unknown, "failed to get policy: %s", err)
+	}
+
+	var resp pb.GetPolicyByIdResponse
+	pols := engine.MergeDatabaseGetIntoPolicies(policies, entityCtx)
+	if len(pols) == 0 || len(pols) > 1 {
+		return nil, status.Errorf(codes.Unknown, "failed to get policy: %s", err)
+	}
+
+	// This should be only one policy
+	for _, policy := range pols {
+		resp.Policy = policy
+	}
+
+	return &resp, nil
+}
+
+// GetPolicyStatusById is a method to get policy status
+func (s *Server) GetPolicyStatusById(ctx context.Context,
+	in *pb.GetPolicyStatusByIdRequest) (*pb.GetPolicyStatusByIdResponse, error) {
+	newCtx, err := s.authAndContextValidation(ctx, in.GetContext())
+	if err != nil {
+		return nil, status.Errorf(codes.InvalidArgument, "error ensuring default group: %v", err)
+	}
+
+	entityCtx := newCtx.Value(engine.EntityContextKey).(*engine.EntityContext)
+
+	if in.PolicyId == 0 {
+		return nil, status.Error(codes.InvalidArgument, "policy id is required")
+	}
+
+	dbstat, err := s.store.GetPolicyStatusByIdAndGroup(newCtx, db.GetPolicyStatusByIdAndGroupParams{
+		GroupID: entityCtx.Group.ID,
+		ID:      in.PolicyId,
+	})
+	if err != nil {
+		if errors.Is(err, sql.ErrNoRows) {
+			return nil, status.Errorf(codes.NotFound, "policy status not found")
+		}
+		return nil, status.Errorf(codes.Unknown, "failed to get policy: %s", err)
+	}
+
+	var rulestats []*pb.RuleEvaluationStatus
+
+	if in.All {
+		rulestats = make([]*pb.RuleEvaluationStatus, 0)
+
+		dbrulestat, err := s.store.ListRuleEvaluationStatusForRepositoriesByPolicyId(newCtx, in.PolicyId)
+		if err != nil && !errors.Is(err, sql.ErrNoRows) {
+			return nil, status.Errorf(codes.Unknown, "failed to get policy: %s", err)
+		}
+
+		if len(dbrulestat) > 0 {
+			for _, rs := range dbrulestat {
+				rulestats = append(rulestats, &pb.RuleEvaluationStatus{
+					PolicyId: in.PolicyId,
+					RuleId:   rs.RuleTypeID,
+					RuleName: rs.Name,
+					Entity:   engine.RepositoryEntity.String(),
+					Status:   string(rs.EvalStatus),
+					EntityInfo: map[string]string{
+						"repository_id": fmt.Sprintf("%d", rs.RepositoryID.Int32),
+						"repo_name":     rs.RepoName,
+						"repo_owner":    rs.RepoOwner,
+						"provider":      rs.Provider,
+					},
+				})
+			}
+		}
+
+		// TODO: Add other entities once we have database entries for them
+	}
+
+	res := &pb.GetPolicyStatusByIdResponse{}
+
+	res.PolicyStatus = &pb.PolicyStatus{
+		PolicyId:     dbstat.ID,
+		PolicyName:   dbstat.Name,
+		PolicyStatus: string(dbstat.PolicyStatus),
+	}
+
+	if len(rulestats) > 0 {
+		res.RuleEvaluationStatus = rulestats
+	}
+
+	return nil, nil
+
+}
+
+// GetPolicyStatusByGroup is a method to get policy status for a group
+func (s *Server) GetPolicyStatusByGroup(ctx context.Context,
+	in *pb.GetPolicyStatusByGroupRequest) (*pb.GetPolicyStatusByGroupResponse, error) {
+	newCtx, err := s.authAndContextValidation(ctx, in.GetContext())
+	if err != nil {
+		return nil, status.Errorf(codes.InvalidArgument, "error ensuring default group: %v", err)
+	}
+
+	entityCtx := newCtx.Value(engine.EntityContextKey).(*engine.EntityContext)
+
+	// read policy status
+	dbstats, err := s.store.GetPolicyStatusByGroup(ctx, entityCtx.Group.ID)
+	if err != nil {
+		if errors.Is(err, sql.ErrNoRows) {
+			return nil, status.Errorf(codes.NotFound, "policy statuses not found for group")
+		}
+		return nil, status.Errorf(codes.Unknown, "failed to get policy status: %s", err)
+	}
+
+	res := &pb.GetPolicyStatusByGroupResponse{}
+
+	res.PolicyStatus = make([]*pb.PolicyStatus, 0, len(dbstats))
+
+	for _, dbstat := range dbstats {
+		res.PolicyStatus = append(res.PolicyStatus, &pb.PolicyStatus{
+			PolicyId:     dbstat.ID,
+			PolicyName:   dbstat.Name,
+			PolicyStatus: string(dbstat.PolicyStatus),
+		})
+	}
+
+	return res, nil
+}
+
+// Rule type CRUD
+
 // ListRuleTypes is a method to list all rule types for a given context
 func (s *Server) ListRuleTypes(ctx context.Context, in *pb.ListRuleTypesRequest) (*pb.ListRuleTypesResponse, error) {
-	if in.Context.Provider != ghclient.Github {
-		return nil, status.Errorf(codes.InvalidArgument, "provider not supported: %v", in.Context.Provider)
-	}
-
-	if err := s.ensureDefaultGroupForContext(ctx, in.GetContext()); err != nil {
-		return nil, err
-	}
-
-	entityCtx, err := engine.GetContextFromInput(ctx, in.GetContext(), s.store)
+	newCtx, err := s.authAndContextValidation(ctx, in.GetContext())
 	if err != nil {
-		return nil, fmt.Errorf("cannot get context from input: %v", err)
+		return nil, status.Errorf(codes.InvalidArgument, "error ensuring default group: %v", err)
 	}
 
-	if err := verifyValidGroup(ctx, entityCtx); err != nil {
-		return nil, err
-	}
+	entityCtx := newCtx.Value(engine.EntityContextKey).(*engine.EntityContext)
 
 	lrt, err := s.store.ListRuleTypesByProviderAndGroup(ctx, db.ListRuleTypesByProviderAndGroupParams{
 		Provider: entityCtx.GetProvider(),
@@ -707,22 +412,12 @@ func (s *Server) ListRuleTypes(ctx context.Context, in *pb.ListRuleTypesRequest)
 
 // GetRuleTypeByName is a method to get a rule type by name
 func (s *Server) GetRuleTypeByName(ctx context.Context, in *pb.GetRuleTypeByNameRequest) (*pb.GetRuleTypeByNameResponse, error) {
-	if in.Context.Provider != ghclient.Github {
-		return nil, status.Errorf(codes.InvalidArgument, "provider not supported: %v", in.Context.Provider)
-	}
-
-	if err := s.ensureDefaultGroupForContext(ctx, in.GetContext()); err != nil {
-		return nil, err
-	}
-
-	entityCtx, err := engine.GetContextFromInput(ctx, in.GetContext(), s.store)
+	newCtx, err := s.authAndContextValidation(ctx, in.GetContext())
 	if err != nil {
-		return nil, fmt.Errorf("cannot get context from input: %v", err)
+		return nil, status.Errorf(codes.InvalidArgument, "error ensuring default group: %v", err)
 	}
 
-	if err := verifyValidGroup(ctx, entityCtx); err != nil {
-		return nil, err
-	}
+	entityCtx := newCtx.Value(engine.EntityContextKey).(*engine.EntityContext)
 
 	resp := &pb.GetRuleTypeByNameResponse{}
 
@@ -747,22 +442,12 @@ func (s *Server) GetRuleTypeByName(ctx context.Context, in *pb.GetRuleTypeByName
 
 // GetRuleTypeById is a method to get a rule type by id
 func (s *Server) GetRuleTypeById(ctx context.Context, in *pb.GetRuleTypeByIdRequest) (*pb.GetRuleTypeByIdResponse, error) {
-	if in.Context.Provider != ghclient.Github {
-		return nil, status.Errorf(codes.InvalidArgument, "provider not supported: %v", in.Context.Provider)
-	}
-
-	if err := s.ensureDefaultGroupForContext(ctx, in.GetContext()); err != nil {
-		return nil, err
-	}
-
-	entityCtx, err := engine.GetContextFromInput(ctx, in.GetContext(), s.store)
+	newCtx, err := s.authAndContextValidation(ctx, in.GetContext())
 	if err != nil {
-		return nil, fmt.Errorf("cannot get context from input: %v", err)
+		return nil, status.Errorf(codes.InvalidArgument, "error ensuring default group: %v", err)
 	}
 
-	if err := verifyValidGroup(ctx, entityCtx); err != nil {
-		return nil, err
-	}
+	entityCtx := newCtx.Value(engine.EntityContextKey).(*engine.EntityContext)
 
 	resp := &pb.GetRuleTypeByIdResponse{}
 
@@ -785,22 +470,12 @@ func (s *Server) GetRuleTypeById(ctx context.Context, in *pb.GetRuleTypeByIdRequ
 func (s *Server) CreateRuleType(ctx context.Context, crt *pb.CreateRuleTypeRequest) (*pb.CreateRuleTypeResponse, error) {
 	in := crt.GetRuleType()
 
-	if in.Context.Provider != ghclient.Github {
-		return nil, status.Errorf(codes.InvalidArgument, "provider not supported: %v", in.Context.Provider)
-	}
-
-	if err := s.ensureDefaultGroupForContext(ctx, in.GetContext()); err != nil {
-		return nil, err
-	}
-
-	entityCtx, err := engine.GetContextFromInput(ctx, in.GetContext(), s.store)
+	newCtx, err := s.authAndContextValidation(ctx, in.GetContext())
 	if err != nil {
-		return nil, fmt.Errorf("cannot get context from input: %v", err)
+		return nil, status.Errorf(codes.InvalidArgument, "error ensuring default group: %v", err)
 	}
 
-	if err := verifyValidGroup(ctx, entityCtx); err != nil {
-		return nil, err
-	}
+	entityCtx := newCtx.Value(engine.EntityContextKey).(*engine.EntityContext)
 
 	_, err = s.store.GetRuleTypeByName(ctx, db.GetRuleTypeByNameParams{
 		Provider: entityCtx.GetProvider(),
@@ -843,22 +518,12 @@ func (s *Server) CreateRuleType(ctx context.Context, crt *pb.CreateRuleTypeReque
 func (s *Server) UpdateRuleType(ctx context.Context, urt *pb.UpdateRuleTypeRequest) (*pb.UpdateRuleTypeResponse, error) {
 	in := urt.GetRuleType()
 
-	if in.Context.Provider != ghclient.Github {
-		return nil, status.Errorf(codes.InvalidArgument, "provider not supported: %v", in.Context.Provider)
-	}
-
-	if err := s.ensureDefaultGroupForContext(ctx, in.GetContext()); err != nil {
-		return nil, err
-	}
-
-	entityCtx, err := engine.GetContextFromInput(ctx, in.GetContext(), s.store)
+	newCtx, err := s.authAndContextValidation(ctx, in.GetContext())
 	if err != nil {
-		return nil, fmt.Errorf("cannot get context from input: %v", err)
+		return nil, status.Errorf(codes.InvalidArgument, "error ensuring default group: %v", err)
 	}
 
-	if err := verifyValidGroup(ctx, entityCtx); err != nil {
-		return nil, err
-	}
+	entityCtx := newCtx.Value(engine.EntityContextKey).(*engine.EntityContext)
 
 	rtdb, err := s.store.GetRuleTypeByName(ctx, db.GetRuleTypeByNameParams{
 		Provider: entityCtx.GetProvider(),
@@ -896,24 +561,12 @@ func (s *Server) UpdateRuleType(ctx context.Context, urt *pb.UpdateRuleTypeReque
 
 // DeleteRuleType is a method to delete a rule type
 func (s *Server) DeleteRuleType(ctx context.Context, in *pb.DeleteRuleTypeRequest) (*pb.DeleteRuleTypeResponse, error) {
-	if in.Context.Provider != ghclient.Github {
-		return nil, status.Errorf(codes.InvalidArgument, "provider not supported: %v", in.Context.Provider)
-	}
-
-	if err := s.ensureDefaultGroupForContext(ctx, in.GetContext()); err != nil {
-		return nil, err
-	}
-
-	entityCtx, err := engine.GetContextFromInput(ctx, in.GetContext(), s.store)
+	newCtx, err := s.authAndContextValidation(ctx, in.GetContext())
 	if err != nil {
-		return nil, fmt.Errorf("cannot get context from input: %v", err)
+		return nil, status.Errorf(codes.InvalidArgument, "error ensuring default group: %v", err)
 	}
 
-	if err := verifyValidGroup(ctx, entityCtx); err != nil {
-		return nil, err
-	}
-
-	err = s.store.DeleteRuleType(ctx, in.GetId())
+	err = s.store.DeleteRuleType(newCtx, in.GetId())
 	if err != nil {
 		if errors.Is(err, sql.ErrNoRows) {
 			return nil, status.Errorf(codes.NotFound, "rule type %d not found", in.GetId())

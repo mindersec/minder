@@ -15,21 +15,45 @@
 
 package engine
 
+import "github.com/stacklok/mediator/pkg/db"
+
+// EntityType is the type of entity
+type EntityType string
+
 // Entity types
 const (
 	// RepositoryEntity is a repository entity
-	RepositoryEntity = "repository"
+	RepositoryEntity EntityType = "repository"
 	// BuildEnvironmentEntity is a build environment entity
-	BuildEnvironmentEntity = "build_environment"
+	BuildEnvironmentEntity EntityType = "build_environment"
 	// ArtifactEntity is an artifact entity
-	ArtifactEntity = "artifact"
+	ArtifactEntity EntityType = "artifact"
 )
 
+// String returns the string representation of the entity type
+func (e EntityType) String() string {
+	return string(e)
+}
+
 // IsValidEntity returns true if the entity type is valid
-func IsValidEntity(entity string) bool {
+func IsValidEntity(entity EntityType) bool {
 	switch entity {
 	case RepositoryEntity, BuildEnvironmentEntity, ArtifactEntity:
 		return true
 	}
 	return false
+}
+
+// EntityTypeFromDB returns the entity type from the database entity
+func EntityTypeFromDB(entity db.Entities) EntityType {
+	switch entity {
+	case db.EntitiesRepository:
+		return RepositoryEntity
+	case db.EntitiesBuildEnvironment:
+		return BuildEnvironmentEntity
+	case db.EntitiesArtifact:
+		return ArtifactEntity
+	default:
+		return ""
+	}
 }

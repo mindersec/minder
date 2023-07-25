@@ -20,9 +20,12 @@ import (
 	"encoding/json"
 	"fmt"
 	"io"
-	"strings"
+	"log"
+	"os"
+	"path/filepath"
 
 	"github.com/stacklok/mediator/internal/util"
+	"github.com/stacklok/mediator/pkg/db"
 	pb "github.com/stacklok/mediator/pkg/generated/protobuf/go/mediator/v1"
 )
 
@@ -55,6 +58,28 @@ func ParseJSON(r io.Reader) (*pb.PipelinePolicy, error) {
 	}
 
 	return &out, nil
+}
+
+// ReadPolicyFromFile reads a pipeline policy from a file and returns it as a protobuf
+func ReadPolicyFromFile(fpath string) (*pb.PipelinePolicy, error) {
+	f, err := os.Open(filepath.Clean(fpath))
+	if err != nil {
+		return nil, fmt.Errorf("error opening file: %w", err)
+	}
+
+	defer f.Close()
+
+	if filepath.Ext(fpath) == ".json" {
+		return ParseJSON(f)
+	}
+
+	// parse yaml by default
+	return ReadYAMLPolicyFromReader(f)
+}
+
+// ReadYAMLPolicyFromReader reads a pipeline policy from a reader and returns it as a protobuf
+func ReadYAMLPolicyFromReader(r io.Reader) (*pb.PipelinePolicy, error) {
+	return ParseYAML(r)
 }
 
 // ValidatePolicy validates a pipeline policy
@@ -147,30 +172,127 @@ func validateRule(r *pb.PipelinePolicy_Rule) error {
 }
 
 // GetRulesForEntity returns the rules for the given entity
-func GetRulesForEntity(p *pb.PipelinePolicy, entity string) ([]*pb.PipelinePolicy_ContextualRuleSet, error) {
-	switch strings.ToLower(entity) {
-	case "repository":
+func GetRulesForEntity(p *pb.PipelinePolicy, entity EntityType) ([]*pb.PipelinePolicy_ContextualRuleSet, error) {
+	switch entity {
+	case RepositoryEntity:
 		return p.Repository, nil
-	case "build_environment":
+	case BuildEnvironmentEntity:
 		return p.BuildEnvironment, nil
-	case "artifact":
+	case ArtifactEntity:
 		return p.Artifact, nil
 	default:
 		return nil, fmt.Errorf("unknown entity: %s", entity)
 	}
 }
 
-// FilterRulesForType filters the rules for the given rule type.
-func FilterRulesForType(cr []*pb.PipelinePolicy_ContextualRuleSet, rt *pb.RuleType) ([]*pb.PipelinePolicy_Rule, error) {
-	out := make([]*pb.PipelinePolicy_Rule, 0)
+// TraverseAllRulesForPipeline traverses all rules for the given pipeline policy
+func TraverseAllRulesForPipeline(p *pb.PipelinePolicy, fn func(*pb.PipelinePolicy_Rule) error) error {
+	if err := TraverseRules(p.Repository, fn); err != nil {
+		return fmt.Errorf("error traversing repository rules: %w", err)
+	}
 
+	if err := TraverseRules(p.BuildEnvironment, fn); err != nil {
+		return fmt.Errorf("error traversing build environment rules: %w", err)
+	}
+
+	if err := TraverseRules(p.Artifact, fn); err != nil {
+		return fmt.Errorf("error traversing artifact rules: %w", err)
+	}
+
+	return nil
+}
+
+// TraverseRules traverses the rules and calls the given function for each rule
+func TraverseRules(cr []*pb.PipelinePolicy_ContextualRuleSet, fn func(*pb.PipelinePolicy_Rule) error) error {
 	for _, r := range cr {
 		for _, rule := range r.Rules {
-			if rule.Type == rt.Name {
-				out = append(out, rule)
+			if err := fn(rule); err != nil {
+				return err
 			}
 		}
 	}
 
-	return out, nil
+	return nil
+}
+
+// MergeDatabaseListIntoPolicies merges the database list policies into the given
+// policies map. This assumes that the policies belong to the same group.
+//
+// TODO(jaosorior): This will have to consider the project tree once we	migrate to that
+func MergeDatabaseListIntoPolicies(ppl []db.ListPoliciesByGroupIDRow, ectx *EntityContext) map[string]*pb.PipelinePolicy {
+	policies := map[string]*pb.PipelinePolicy{}
+
+	for idx := range ppl {
+		p := ppl[idx]
+
+		rowInfoToPolicyMap(p.Entity, p.Name, p.Provider, p.ContextualRules, ectx, policies)
+	}
+
+	return policies
+}
+
+// MergeDatabaseGetIntoPolicies merges the database get policies into the given
+// policies map. This assumes that the policies belong to the same group.
+//
+// TODO(jaosorior): This will have to consider the project tree once we migrate to that
+func MergeDatabaseGetIntoPolicies(ppl []db.GetPolicyByGroupAndIDRow, ectx *EntityContext) map[string]*pb.PipelinePolicy {
+	policies := map[string]*pb.PipelinePolicy{}
+
+	for idx := range ppl {
+		p := ppl[idx]
+
+		policies = rowInfoToPolicyMap(p.Entity, p.Name, p.Provider, p.ContextualRules, ectx, policies)
+	}
+
+	return policies
+}
+
+// rowInfoToPolicyMap adds the database row information to the given map of
+// policies. This assumes that the policies belong to the same group.
+// Note that this function is thought to be called from scpecific Merge functions
+// and thus the logic is targetted to that.
+func rowInfoToPolicyMap(
+	entity db.Entities,
+	name string,
+	provider string,
+	contextualRules json.RawMessage,
+	ectx *EntityContext,
+	in map[string]*pb.PipelinePolicy,
+) map[string]*pb.PipelinePolicy {
+	if !IsValidEntity(EntityTypeFromDB(entity)) {
+		log.Printf("unknown entity found in database: %s", entity)
+		return in
+	}
+
+	if _, ok := in[name]; !ok {
+		in[name] = &pb.PipelinePolicy{
+			Name: name,
+			Context: &pb.Context{
+				Provider: provider,
+				Group:    &ectx.Group.Name,
+			},
+		}
+	}
+
+	var ruleset []*pb.PipelinePolicy_ContextualRuleSet
+
+	parsedContextualRules := []*pb.PipelinePolicy_ContextualRuleSet{}
+	if err := json.Unmarshal(contextualRules, &parsedContextualRules); err != nil {
+		// We merely print the error and continue. This is because the user
+		// can't do anything about it and it's not a critical error.
+		log.Printf("error unmarshalling contextual rules; there is corruption in the database: %s", err)
+		return in
+	}
+	ruleset = append(ruleset, parsedContextualRules...)
+
+	switch EntityTypeFromDB(entity) {
+	case RepositoryEntity:
+		in[name].Repository = ruleset
+	case BuildEnvironmentEntity:
+		in[name].BuildEnvironment = ruleset
+	case ArtifactEntity:
+		in[name].Artifact = ruleset
+	}
+
+	return in
 }

@@ -47,14 +47,14 @@ mediator control plane.`,
 			fmt.Fprintf(os.Stderr, "Error binding flags: %s\n", err)
 		}
 	},
-	Run: func(cmd *cobra.Command, args []string) {
+	RunE: func(cmd *cobra.Command, args []string) error {
 		grpc_host := util.GetConfigValue("grpc_server.host", "grpc-host", cmd, "").(string)
 		grpc_port := util.GetConfigValue("grpc_server.port", "grpc-port", cmd, 0).(int)
-
+		provider := viper.GetString("provider")
 		format := viper.GetString("output")
 
 		if format != app.JSON && format != app.YAML && format != "" {
-			fmt.Fprintf(os.Stderr, "Error: invalid format: %s\n", format)
+			return fmt.Errorf("error: invalid format: %s", format)
 		}
 
 		conn, err := util.GetGrpcConnection(grpc_host, grpc_port)
@@ -68,50 +68,68 @@ mediator control plane.`,
 		id := viper.GetInt32("id")
 		status := util.GetConfigValue("status", "status", cmd, false).(bool)
 		if status {
-			resp, err := client.GetPolicyStatusById(ctx, &pb.GetPolicyStatusByIdRequest{PolicyId: id})
+			resp, err := client.GetPolicyStatusById(ctx, &pb.GetPolicyStatusByIdRequest{
+				Context: &pb.Context{
+					Provider: provider,
+					// TODO set up group if specified
+					// Currently it's inferred from the authorization token
+				},
+				PolicyId: id,
+			})
 			util.ExitNicelyOnError(err, "Error getting policy status")
 
 			// print results
 			if format == "" {
 				table := tablewriter.NewWriter(os.Stdout)
-				table.SetHeader([]string{"Policy type", "Repo ID", "Repo owner", "Repo Name", "Status", "Last updated"})
+				table.SetHeader([]string{"Policy ID", "Policy Name", "Status", "Last updated"})
 
-				for _, v := range resp.PolicyRepoStatus {
-					row := []string{
-						v.PolicyType,
-						fmt.Sprintf("%d", v.RepoId),
-						v.RepoOwner,
-						v.RepoName,
-						v.PolicyStatus,
-						v.GetLastUpdated().AsTime().Format(time.RFC3339),
-					}
-					table.Append(row)
+				st := resp.GetPolicyStatus()
+				row := []string{
+					fmt.Sprintf("%d", st.PolicyId),
+					st.PolicyName,
+					st.PolicyStatus,
+					st.GetLastUpdated().AsTime().Format(time.RFC3339),
 				}
+				table.Append(row)
 				table.Render()
 			} else if format == app.JSON {
-				output, err := json.MarshalIndent(resp.PolicyRepoStatus, "", "  ")
+				output, err := json.MarshalIndent(resp, "", "  ")
 				util.ExitNicelyOnError(err, "Error marshalling json")
 				fmt.Println(string(output))
 			} else if format == app.YAML {
-				yamlData, err := yaml.Marshal(resp.PolicyRepoStatus)
+				yamlData, err := yaml.Marshal(resp)
 				util.ExitNicelyOnError(err, "Error marshalling yaml")
 				fmt.Println(string(yamlData))
 			}
 
-		} else {
-			policy, err := client.GetPolicyById(ctx, &pb.GetPolicyByIdRequest{Id: id})
-			util.ExitNicelyOnError(err, "Error getting policy")
-
-			if format == app.YAML {
-				yamlData, err := yaml.Marshal(policy.Policy)
-				util.ExitNicelyOnError(err, "Error marshalling yaml")
-				fmt.Println(string(yamlData))
-			} else {
-				json, err := json.MarshalIndent(policy.Policy, "", "  ")
-				util.ExitNicelyOnError(err, "Error marshalling policy")
-				fmt.Println(string(json))
-			}
+			return nil
 		}
+
+		policy, err := client.GetPolicyById(ctx, &pb.GetPolicyByIdRequest{
+			Context: &pb.Context{
+				Provider: provider,
+				// TODO set up group if specified
+				// Currently it's inferred from the authorization token
+			},
+			Id: id,
+		})
+		util.ExitNicelyOnError(err, "Error getting policy")
+
+		if format == app.YAML {
+			yamlData, err := yaml.Marshal(policy.Policy)
+			if err != nil {
+				return fmt.Errorf("error marshalling yaml: %w", err)
+			}
+			fmt.Println(string(yamlData))
+		}
+
+		json, err := json.MarshalIndent(policy.Policy, "", "  ")
+		if err != nil {
+			return fmt.Errorf("error marshalling json: %w", err)
+		}
+		fmt.Println(string(json))
+
+		return nil
 	},
 }
 
@@ -120,6 +138,8 @@ func init() {
 	policy_getCmd.Flags().Int32P("id", "i", 0, "ID for the policy to query")
 	policy_getCmd.Flags().BoolP("status", "s", false, "Only return the status of the policy for all the associated repos")
 	policy_getCmd.Flags().StringP("output", "o", "", "Output format (json or yaml)")
+	policy_getCmd.Flags().StringP("provider", "p", "github", "Provider for the policy")
+	// TODO set up group if specified
 
 	if err := policy_getCmd.MarkFlagRequired("id"); err != nil {
 		fmt.Fprintf(os.Stderr, "Error marking flag as required: %s\n", err)

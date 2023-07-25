@@ -391,18 +391,6 @@ service UserService {
 }
 
 service PolicyService {
-    rpc GetPolicyType (GetPolicyTypeRequest) returns (GetPolicyTypeResponse) {
-        option (google.api.http) = {
-            get: "/api/v1/policy_type/{type}"
-            };
-    }
-
-    rpc GetPolicyTypes (GetPolicyTypesRequest) returns (GetPolicyTypesResponse) {
-        option (google.api.http) = {
-            get: "/api/v1/policy_types"
-            };
-    }
-
     rpc CreatePolicy (CreatePolicyRequest) returns (CreatePolicyResponse) {
         option (google.api.http) = {
             post: "/api/v1/policy"
@@ -416,7 +404,7 @@ service PolicyService {
         };
     }
 
-    rpc GetPolicies (GetPoliciesRequest) returns (GetPoliciesResponse) {
+    rpc ListPolicies (ListPoliciesRequest) returns (ListPoliciesResponse) {
         option (google.api.http) = {
         get: "/api/v1/policies"
         };
@@ -436,31 +424,7 @@ service PolicyService {
 
     rpc GetPolicyStatusByGroup (GetPolicyStatusByGroupRequest) returns (GetPolicyStatusByGroupResponse) {
         option (google.api.http) = {
-            get: "/api/v1/policy_status/provider/{provider}/group/{group_id}"
-            };    
-    }    
-
-    rpc GetPolicyStatusByRepository (GetPolicyStatusByRepositoryRequest) returns (GetPolicyStatusByRepositoryResponse) {
-        option (google.api.http) = {
-            get: "/api/v1/policy_status/repository/{repository_id}"
-            };    
-    }    
-
-    rpc GetPolicyViolationsById (GetPolicyViolationsByIdRequest) returns (GetPolicyViolationsByIdResponse) {
-        option (google.api.http) = {
-            get: "/api/v1/policy_violations/{id}"
-            };    
-    }
-
-    rpc GetPolicyViolationsByGroup (GetPolicyViolationsByGroupRequest) returns (GetPolicyViolationsByGroupResponse) {
-        option (google.api.http) = {
-            get: "/api/v1/policy_violations/provider/{provider}/group/{group_id}"
-            };    
-    }    
-
-    rpc GetPolicyViolationsByRepository (GetPolicyViolationsByRepositoryRequest) returns (GetPolicyViolationsByRepositoryResponse) {
-        option (google.api.http) = {
-            get: "/api/v1/policy_violations/repository/{repository_id}"
+            get: "/api/v1/policy_status"
             };    
     }    
 
@@ -1175,173 +1139,103 @@ message GetUserResponse {
 
 // Policy service
 message CreatePolicyRequest {
-    string provider = 1;
-    int32 group_id = 2;
-    string type = 3; 
-    string policy_definition = 4;
+    PipelinePolicy policy = 1;
 }
   
-// policy record to be returned
-message PolicyRecord {
-    int32 id = 1;
-    string provider = 2;
-    int32 group_id = 3;
-    string type = 4; 
-    string policy_definition = 5;
-    google.protobuf.Timestamp created_at = 6;
-    google.protobuf.Timestamp updated_at = 7;    
-}
-
 message CreatePolicyResponse {
-    PolicyRecord policy = 1;
+    PipelinePolicy policy = 1;
 }
 
 message DeletePolicyRequest {
-    int32 id = 1;
+    // context is the context in which the rule type is evaluated.
+    Context context = 1;
+    // id is the id of the policy to delete
+    int32 id = 2;
 }
 
 message DeletePolicyResponse {
 }
 
 // list policies
-message GetPoliciesRequest {
-    string provider = 1;
-    int32 group_id = 2;
-    optional int32 limit = 3;
-    optional int32 offset = 4;
+message ListPoliciesRequest {
+    // context is the context which contains the policies
+    Context context = 1;
 }
 
-message GetPoliciesResponse {
-    repeated PolicyRecord policies = 1;
+message ListPoliciesResponse {
+    repeated PipelinePolicy policies = 1;
 }
 
 // get policy by id
 message GetPolicyByIdRequest {
-    int32 id = 1;
+    // context is the context which contains the policies
+    Context context = 1;
+    // id is the id of the policy to get
+    int32 id = 2;
 }
 
 message GetPolicyByIdResponse {
-    optional PolicyRecord policy = 1;
+    PipelinePolicy policy = 1;
 }
 
-// get policy violation status
-message PolicyRepoStatus {
-    string policy_type = 1;
-    int32 repo_id = 2;
-    string repo_owner = 3;
-    string repo_name = 4;
-    string policy_status = 5;
+// get the overall policy status
+message PolicyStatus {
+    // policy_id is the id of the policy
+    int32 policy_id = 1;
+    // policy_name is the name of the policy
+    string policy_name = 2;
+    // policy_status is the status of the policy
+    string policy_status = 3;
+    // last_updated is the last time the policy was updated
+    google.protobuf.Timestamp last_updated = 4;
+}
+
+// get the status of the rules for a given policy
+message RuleEvaluationStatus {
+    // policy_id is the id of the policy
+    int32 policy_id = 1;
+    // rule_id is the id of the rule
+    int32 rule_id = 2;
+    // rule_name is the name of the rule
+    string rule_name = 3;
+    // entity is the entity that was evaluated
+    string entity = 4;
+    // status is the status of the evaluation
+    string status = 5;
+    // last_updated is the last time the policy was updated
     google.protobuf.Timestamp last_updated = 6;
-}
-
-// get policy violation details
-message PolicyViolation {
-    string policy_type = 1;
-    int32 repo_id = 2;
-    string repo_owner = 3;
-    string repo_name = 4;
-    string metadata = 5;
-    string violation = 6;
-    google.protobuf.Timestamp created_at = 7;    
+    // entity_info is the information about the entity
+    map<string, string> entity_info = 7;
 }
 
 message GetPolicyStatusByIdRequest {
-    int32 policy_id = 1;
+    // context is the context in which the rule type is evaluated.
+    Context context = 1;
+    // id is the id of the policy to get
+    int32 policy_id = 2;
+
+    // all is a flag to indicate if all rule statuses should be returned
+    bool all = 3;
 }
 
 message GetPolicyStatusByIdResponse {
-    repeated PolicyRepoStatus policy_repo_status = 1;
+    // policy_status is the status of the policy
+    PolicyStatus policy_status = 1;
+
+    // rule_evaluation_status is the status of the rules
+    repeated RuleEvaluationStatus rule_evaluation_status = 2;
 }
 
 message GetPolicyStatusByGroupRequest {
-    string provider = 1;
-    int32 group_id = 2;
+    // context is the context in which the rule type is evaluated.
+    Context context = 1;
 }
 
 message GetPolicyStatusByGroupResponse {
-    repeated PolicyRepoStatus policy_repo_status = 1;
+    // policy_status is the status of the policy
+    repeated PolicyStatus policy_status = 1;
 }
 
-message GetPolicyStatusByRepositoryRequest {
-    int32 repository_id = 1;
-}
-
-message GetPolicyStatusByRepositoryResponse {
-    repeated PolicyRepoStatus policy_repo_status = 1;
-}
-
-message GetPolicyViolationsByIdRequest {
-    int32 id = 1;
-    optional int32 limit = 2;
-    optional int32 offset = 3;
-}
-
-message GetPolicyViolationsByIdResponse {
-    repeated PolicyViolation policy_violation = 1;
-}
-
-message GetPolicyViolationsByGroupRequest {
-    string provider = 1;
-    int32 group_id = 2;
-    optional int32 limit = 3;
-    optional int32 offset = 4;
-}
-
-message GetPolicyViolationsByGroupResponse {
-    repeated PolicyViolation policy_violation = 1;
-}
-
-message GetPolicyViolationsByRepositoryRequest {
-    int32 repository_id = 1;
-    optional int32 limit = 2;
-    optional int32 offset = 3;
-}
-
-message GetPolicyViolationsByRepositoryResponse {
-    repeated PolicyViolation policy_violation = 1;
-}
-
-
-// policy type record to be returned
-message PolicyTypeRecord {
-    int32 id = 1;
-    string provider = 2;
-    string policy_type = 3;
-    optional string description = 4;
-    string json_schema = 5;
-    string version = 6;
-    string default_schema = 7;
-    google.protobuf.Timestamp created_at = 8;
-    google.protobuf.Timestamp updated_at = 9;    
-}
-
-// get policy type
-message GetPolicyTypeRequest {
-    string provider = 1;
-    string type = 2;
-}
-
-message GetPolicyTypeResponse {
-    optional PolicyTypeRecord policy_type = 1;
-}
-
-// get policy type by id
-message GetPolicyTypeByIdRequest {
-    string id = 1;
-}
-
-message GetPolicyTypeByIdResponse {
-    optional PolicyTypeRecord policy_type = 1;
-}
-
-// get policy types
-message GetPolicyTypesRequest {
-    string provider = 1;
-}
-
-message GetPolicyTypesResponse {
-    repeated PolicyTypeRecord policy_types = 1;
-}
 message GetPublicKeyRequest {
     string key_identifier = 1;
 }
@@ -1618,10 +1512,15 @@ message RuleType {
 
  // PipelinePolicy defines a policy that is user defined.
  message PipelinePolicy {
-    // name is the name of the policy instance.
-    string name = 1;
     // context is the context in which the policy is evaluated.
-    Context context = 2;
+    Context context = 1;
+
+    // id is the id of the policy.
+    // This is optional and is set by the system.
+    optional int32 id = 2;
+
+    // name is the name of the policy instance.
+    string name = 3;
 
     // Rule defines the individual call of a certain rule type.
     message Rule {
@@ -1645,7 +1544,7 @@ message RuleType {
     }
 
     // These are the entities that one could set in the pipeline policy.
-    repeated ContextualRuleSet repository = 3;
-    repeated ContextualRuleSet build_environment = 4;
-    repeated ContextualRuleSet artifact = 5;
+    repeated ContextualRuleSet repository = 4;
+    repeated ContextualRuleSet build_environment = 5;
+    repeated ContextualRuleSet artifact = 6;
  }

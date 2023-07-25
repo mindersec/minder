@@ -19,7 +19,7 @@ type Querier interface {
 	CreateGroup(ctx context.Context, arg CreateGroupParams) (Group, error)
 	CreateOrganization(ctx context.Context, arg CreateOrganizationParams) (Organization, error)
 	CreatePolicy(ctx context.Context, arg CreatePolicyParams) (Policy, error)
-	CreatePolicyViolation(ctx context.Context, arg CreatePolicyViolationParams) (PolicyViolation, error)
+	CreatePolicyForEntity(ctx context.Context, arg CreatePolicyForEntityParams) (EntityPolicy, error)
 	CreateProject(ctx context.Context, arg CreateProjectParams) (Project, error)
 	CreateRepository(ctx context.Context, arg CreateRepositoryParams) (Repository, error)
 	CreateRole(ctx context.Context, arg CreateRoleParams) (Role, error)
@@ -32,7 +32,6 @@ type Querier interface {
 	DeleteGroup(ctx context.Context, id int32) error
 	DeleteOrganization(ctx context.Context, id int32) error
 	DeletePolicy(ctx context.Context, id int32) error
-	DeletePolicyType(ctx context.Context, policyType string) error
 	DeleteProject(ctx context.Context, id uuid.UUID) ([]DeleteProjectRow, error)
 	DeleteRepository(ctx context.Context, id int32) error
 	DeleteRole(ctx context.Context, id int32) error
@@ -53,17 +52,10 @@ type Querier interface {
 	GetOrganizationForUpdate(ctx context.Context, name string) (Organization, error)
 	GetParentProjects(ctx context.Context, id uuid.UUID) ([]uuid.UUID, error)
 	GetParentProjectsUntil(ctx context.Context, arg GetParentProjectsUntilParams) ([]uuid.UUID, error)
-	GetPoliciesByRepoAndType(ctx context.Context, arg GetPoliciesByRepoAndTypeParams) ([]GetPoliciesByRepoAndTypeRow, error)
-	GetPolicyByID(ctx context.Context, id int32) (GetPolicyByIDRow, error)
-	GetPolicyStatusByGroup(ctx context.Context, arg GetPolicyStatusByGroupParams) ([]GetPolicyStatusByGroupRow, error)
-	GetPolicyStatusById(ctx context.Context, id int32) ([]GetPolicyStatusByIdRow, error)
-	GetPolicyStatusByRepositoryId(ctx context.Context, id int32) ([]GetPolicyStatusByRepositoryIdRow, error)
-	GetPolicyType(ctx context.Context, arg GetPolicyTypeParams) (PolicyType, error)
-	GetPolicyTypeById(ctx context.Context, id int32) (GetPolicyTypeByIdRow, error)
-	GetPolicyTypes(ctx context.Context, provider string) ([]PolicyType, error)
-	GetPolicyViolationsByGroup(ctx context.Context, arg GetPolicyViolationsByGroupParams) ([]GetPolicyViolationsByGroupRow, error)
-	GetPolicyViolationsById(ctx context.Context, arg GetPolicyViolationsByIdParams) ([]GetPolicyViolationsByIdRow, error)
-	GetPolicyViolationsByRepositoryId(ctx context.Context, arg GetPolicyViolationsByRepositoryIdParams) ([]GetPolicyViolationsByRepositoryIdRow, error)
+	GetPolicyByGroupAndID(ctx context.Context, arg GetPolicyByGroupAndIDParams) ([]GetPolicyByGroupAndIDRow, error)
+	GetPolicyByGroupAndName(ctx context.Context, arg GetPolicyByGroupAndNameParams) ([]GetPolicyByGroupAndNameRow, error)
+	GetPolicyStatusByGroup(ctx context.Context, groupID int32) ([]GetPolicyStatusByGroupRow, error)
+	GetPolicyStatusByIdAndGroup(ctx context.Context, arg GetPolicyStatusByIdAndGroupParams) (GetPolicyStatusByIdAndGroupRow, error)
 	GetProjectByID(ctx context.Context, id uuid.UUID) (Project, error)
 	GetRepositoryByID(ctx context.Context, id int32) (Repository, error)
 	GetRepositoryByIDAndGroup(ctx context.Context, arg GetRepositoryByIDAndGroupParams) (Repository, error)
@@ -87,11 +79,13 @@ type Querier interface {
 	ListGroups(ctx context.Context, arg ListGroupsParams) ([]Group, error)
 	ListGroupsByOrganizationID(ctx context.Context, organizationID int32) ([]Group, error)
 	ListOrganizations(ctx context.Context, arg ListOrganizationsParams) ([]Organization, error)
-	ListPoliciesByGroupID(ctx context.Context, arg ListPoliciesByGroupIDParams) ([]ListPoliciesByGroupIDRow, error)
+	ListPoliciesByGroupID(ctx context.Context, groupID int32) ([]ListPoliciesByGroupIDRow, error)
 	ListRepositoriesByGroupID(ctx context.Context, arg ListRepositoriesByGroupIDParams) ([]Repository, error)
 	ListRepositoriesByOwner(ctx context.Context, arg ListRepositoriesByOwnerParams) ([]Repository, error)
 	ListRoles(ctx context.Context, arg ListRolesParams) ([]Role, error)
 	ListRolesByGroupID(ctx context.Context, arg ListRolesByGroupIDParams) ([]Role, error)
+	ListRuleEvaluationStatusForRepositoriesByPolicyId(ctx context.Context, policyID int32) ([]ListRuleEvaluationStatusForRepositoriesByPolicyIdRow, error)
+	ListRuleEvaluationStatusForRepositoryByPolicyId(ctx context.Context, arg ListRuleEvaluationStatusForRepositoryByPolicyIdParams) ([]ListRuleEvaluationStatusForRepositoryByPolicyIdRow, error)
 	ListRuleTypesByProviderAndGroup(ctx context.Context, arg ListRuleTypesByProviderAndGroupParams) ([]RuleType, error)
 	ListUsers(ctx context.Context, arg ListUsersParams) ([]User, error)
 	ListUsersByGroup(ctx context.Context, arg ListUsersByGroupParams) ([]User, error)

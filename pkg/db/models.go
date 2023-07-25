@@ -14,46 +14,98 @@ import (
 	"github.com/google/uuid"
 )
 
-type PolicyStatusTypes string
+type Entities string
 
 const (
-	PolicyStatusTypesSuccess PolicyStatusTypes = "success"
-	PolicyStatusTypesFailure PolicyStatusTypes = "failure"
+	EntitiesRepository       Entities = "repository"
+	EntitiesBuildEnvironment Entities = "build_environment"
+	EntitiesArtifact         Entities = "artifact"
 )
 
-func (e *PolicyStatusTypes) Scan(src interface{}) error {
+func (e *Entities) Scan(src interface{}) error {
 	switch s := src.(type) {
 	case []byte:
-		*e = PolicyStatusTypes(s)
+		*e = Entities(s)
 	case string:
-		*e = PolicyStatusTypes(s)
+		*e = Entities(s)
 	default:
-		return fmt.Errorf("unsupported scan type for PolicyStatusTypes: %T", src)
+		return fmt.Errorf("unsupported scan type for Entities: %T", src)
 	}
 	return nil
 }
 
-type NullPolicyStatusTypes struct {
-	PolicyStatusTypes PolicyStatusTypes `json:"policy_status_types"`
-	Valid             bool              `json:"valid"` // Valid is true if PolicyStatusTypes is not NULL
+type NullEntities struct {
+	Entities Entities `json:"entities"`
+	Valid    bool     `json:"valid"` // Valid is true if Entities is not NULL
 }
 
 // Scan implements the Scanner interface.
-func (ns *NullPolicyStatusTypes) Scan(value interface{}) error {
+func (ns *NullEntities) Scan(value interface{}) error {
 	if value == nil {
-		ns.PolicyStatusTypes, ns.Valid = "", false
+		ns.Entities, ns.Valid = "", false
 		return nil
 	}
 	ns.Valid = true
-	return ns.PolicyStatusTypes.Scan(value)
+	return ns.Entities.Scan(value)
 }
 
 // Value implements the driver Valuer interface.
-func (ns NullPolicyStatusTypes) Value() (driver.Value, error) {
+func (ns NullEntities) Value() (driver.Value, error) {
 	if !ns.Valid {
 		return nil, nil
 	}
-	return string(ns.PolicyStatusTypes), nil
+	return string(ns.Entities), nil
+}
+
+type EvalStatusTypes string
+
+const (
+	EvalStatusTypesSuccess EvalStatusTypes = "success"
+	EvalStatusTypesFailure EvalStatusTypes = "failure"
+)
+
+func (e *EvalStatusTypes) Scan(src interface{}) error {
+	switch s := src.(type) {
+	case []byte:
+		*e = EvalStatusTypes(s)
+	case string:
+		*e = EvalStatusTypes(s)
+	default:
+		return fmt.Errorf("unsupported scan type for EvalStatusTypes: %T", src)
+	}
+	return nil
+}
+
+type NullEvalStatusTypes struct {
+	EvalStatusTypes EvalStatusTypes `json:"eval_status_types"`
+	Valid           bool            `json:"valid"` // Valid is true if EvalStatusTypes is not NULL
+}
+
+// Scan implements the Scanner interface.
+func (ns *NullEvalStatusTypes) Scan(value interface{}) error {
+	if value == nil {
+		ns.EvalStatusTypes, ns.Valid = "", false
+		return nil
+	}
+	ns.Valid = true
+	return ns.EvalStatusTypes.Scan(value)
+}
+
+// Value implements the driver Valuer interface.
+func (ns NullEvalStatusTypes) Value() (driver.Value, error) {
+	if !ns.Valid {
+		return nil, nil
+	}
+	return string(ns.EvalStatusTypes), nil
+}
+
+type EntityPolicy struct {
+	ID              int32           `json:"id"`
+	Entity          Entities        `json:"entity"`
+	PolicyID        int32           `json:"policy_id"`
+	ContextualRules json.RawMessage `json:"contextual_rules"`
+	CreatedAt       time.Time       `json:"created_at"`
+	UpdatedAt       time.Time       `json:"updated_at"`
 }
 
 type Group struct {
@@ -75,40 +127,31 @@ type Organization struct {
 }
 
 type Policy struct {
-	ID               int32           `json:"id"`
-	Provider         string          `json:"provider"`
-	GroupID          int32           `json:"group_id"`
-	PolicyType       int32           `json:"policy_type"`
-	PolicyDefinition json.RawMessage `json:"policy_definition"`
-	CreatedAt        time.Time       `json:"created_at"`
-	UpdatedAt        time.Time       `json:"updated_at"`
+	ID        int32     `json:"id"`
+	Name      string    `json:"name"`
+	Provider  string    `json:"provider"`
+	GroupID   int32     `json:"group_id"`
+	CreatedAt time.Time `json:"created_at"`
+	UpdatedAt time.Time `json:"updated_at"`
 }
 
 type PolicyStatus struct {
-	ID           int32             `json:"id"`
-	RepositoryID int32             `json:"repository_id"`
-	PolicyID     int32             `json:"policy_id"`
-	PolicyStatus PolicyStatusTypes `json:"policy_status"`
-	LastUpdated  time.Time         `json:"last_updated"`
-}
-
-type PolicyType struct {
-	ID          int32          `json:"id"`
-	Provider    string         `json:"provider"`
-	PolicyType  string         `json:"policy_type"`
-	Description sql.NullString `json:"description"`
-	Version     string         `json:"version"`
-	CreatedAt   time.Time      `json:"created_at"`
-	UpdatedAt   time.Time      `json:"updated_at"`
+	ID           int32           `json:"id"`
+	PolicyID     int32           `json:"policy_id"`
+	PolicyStatus EvalStatusTypes `json:"policy_status"`
+	LastUpdated  time.Time       `json:"last_updated"`
 }
 
 type PolicyViolation struct {
 	ID           int32           `json:"id"`
-	RepositoryID int32           `json:"repository_id"`
+	Entity       Entities        `json:"entity"`
 	PolicyID     int32           `json:"policy_id"`
+	RuleTypeID   int32           `json:"rule_type_id"`
 	Metadata     json.RawMessage `json:"metadata"`
 	Violation    json.RawMessage `json:"violation"`
+	RepositoryID sql.NullInt32   `json:"repository_id"`
 	CreatedAt    time.Time       `json:"created_at"`
+	LastUpdated  time.Time       `json:"last_updated"`
 }
 
 type Project struct {
@@ -155,6 +198,16 @@ type Role struct {
 	IsProtected    bool          `json:"is_protected"`
 	CreatedAt      time.Time     `json:"created_at"`
 	UpdatedAt      time.Time     `json:"updated_at"`
+}
+
+type RuleEvaluationStatus struct {
+	ID           int32           `json:"id"`
+	Entity       Entities        `json:"entity"`
+	PolicyID     int32           `json:"policy_id"`
+	RuleTypeID   int32           `json:"rule_type_id"`
+	EvalStatus   EvalStatusTypes `json:"eval_status"`
+	RepositoryID sql.NullInt32   `json:"repository_id"`
+	LastUpdated  time.Time       `json:"last_updated"`
 }
 
 type RuleType struct {

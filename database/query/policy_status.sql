@@ -1,27 +1,27 @@
 -- name: UpdatePolicyStatus :exec
-INSERT INTO policy_status (repository_id, policy_id, policy_status, last_updated) VALUES ($1, $2, $3, NOW())
-ON CONFLICT (repository_id, policy_id) DO UPDATE SET policy_status = $3, last_updated = NOW();
+INSERT INTO policy_status (policy_id, policy_status, last_updated) VALUES ($1, $2, NOW())
+ON CONFLICT (policy_id) DO UPDATE SET policy_status = $2, last_updated = NOW();
 
--- name: GetPolicyStatusById :many
-SELECT pt.policy_type, r.id as repo_id, r.repo_owner, r.repo_name,
-ps.policy_status, ps.last_updated FROM policy_status ps
+-- name: GetPolicyStatusByIdAndGroup :one
+SELECT p.id, p.name, ps.policy_status, ps.last_updated FROM policy_status ps
 INNER JOIN policies p ON p.id = ps.policy_id
-INNER JOIN repositories r ON r.id = ps.repository_id
-INNER JOIN policy_types pt ON pt.id = p.policy_type
-WHERE p.id = $1;
+WHERE p.id = $1 AND p.group_id = $2;
 
 -- name: GetPolicyStatusByGroup :many
-SELECT pt.policy_type, r.id as repo_id, r.repo_owner, r.repo_name,
-ps.policy_status, ps.last_updated FROM policy_status ps
+SELECT p.id, p.name, ps.policy_status, ps.last_updated FROM policy_status ps
 INNER JOIN policies p ON p.id = ps.policy_id
-INNER JOIN repositories r ON r.id = ps.repository_id
-INNER JOIN policy_types pt ON pt.id = p.policy_type
-WHERE p.provider = $1 AND p.group_id = $2;
+WHERE p.group_id = $1;
 
--- name: GetPolicyStatusByRepositoryId :many
-SELECT pt.policy_type, r.id as repo_id, r.repo_owner, r.repo_name,
-ps.policy_status, ps.last_updated FROM policy_status ps
-INNER JOIN policies p ON p.id = ps.policy_id
-INNER JOIN repositories r ON r.id = ps.repository_id
-INNER JOIN policy_types pt ON pt.id = p.policy_type
-WHERE r.id = $1;
+-- name: ListRuleEvaluationStatusForRepositoriesByPolicyId :many
+SELECT res.eval_status, res.last_updated, res.repository_id, repo.repo_name, repo.repo_owner, repo.provider, rt.name, rt.id as rule_type_id
+FROM rule_evaluation_status res
+INNER JOIN repositories repo ON repo.id = res.repository_id
+INNER JOIN rule_type rt ON rt.id = res.rule_type_id
+WHERE res.entity = 'repository' AND res.policy_id = $1;
+
+-- name: ListRuleEvaluationStatusForRepositoryByPolicyId :many
+SELECT res.eval_status, res.last_updated, res.repository_id, repo.repo_name, repo.repo_owner, repo.provider, rt.name, rt.id as rule_type_id
+FROM rule_evaluation_status res
+INNER JOIN repositories repo ON repo.id = res.repository_id
+INNER JOIN rule_type rt ON rt.id = res.rule_type_id
+WHERE res.entity = 'repository' AND res.policy_id = $1 AND repo.id = $2 ;

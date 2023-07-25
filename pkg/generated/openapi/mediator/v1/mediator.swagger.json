@@ -1027,12 +1027,12 @@
     },
     "/api/v1/policies": {
       "get": {
-        "operationId": "PolicyService_GetPolicies",
+        "operationId": "PolicyService_ListPolicies",
         "responses": {
           "200": {
             "description": "A successful response.",
             "schema": {
-              "$ref": "#/definitions/v1GetPoliciesResponse"
+              "$ref": "#/definitions/v1ListPoliciesResponse"
             }
           },
           "default": {
@@ -1044,31 +1044,22 @@
         },
         "parameters": [
           {
-            "name": "provider",
+            "name": "context.provider",
             "in": "query",
             "required": false,
             "type": "string"
           },
           {
-            "name": "groupId",
+            "name": "context.organization",
             "in": "query",
             "required": false,
-            "type": "integer",
-            "format": "int32"
+            "type": "string"
           },
           {
-            "name": "limit",
+            "name": "context.group",
             "in": "query",
             "required": false,
-            "type": "integer",
-            "format": "int32"
-          },
-          {
-            "name": "offset",
-            "in": "query",
-            "required": false,
-            "type": "integer",
-            "format": "int32"
+            "type": "string"
           }
         ],
         "tags": [
@@ -1128,10 +1119,29 @@
         "parameters": [
           {
             "name": "id",
+            "description": "id is the id of the policy to get",
             "in": "path",
             "required": true,
             "type": "integer",
             "format": "int32"
+          },
+          {
+            "name": "context.provider",
+            "in": "query",
+            "required": false,
+            "type": "string"
+          },
+          {
+            "name": "context.organization",
+            "in": "query",
+            "required": false,
+            "type": "string"
+          },
+          {
+            "name": "context.group",
+            "in": "query",
+            "required": false,
+            "type": "string"
           }
         ],
         "tags": [
@@ -1157,10 +1167,29 @@
         "parameters": [
           {
             "name": "id",
+            "description": "id is the id of the policy to delete",
             "in": "path",
             "required": true,
             "type": "integer",
             "format": "int32"
+          },
+          {
+            "name": "context.provider",
+            "in": "query",
+            "required": false,
+            "type": "string"
+          },
+          {
+            "name": "context.organization",
+            "in": "query",
+            "required": false,
+            "type": "string"
+          },
+          {
+            "name": "context.group",
+            "in": "query",
+            "required": false,
+            "type": "string"
           }
         ],
         "tags": [
@@ -1188,10 +1217,36 @@
         "parameters": [
           {
             "name": "policyId",
+            "description": "id is the id of the policy to get",
             "in": "path",
             "required": true,
             "type": "integer",
             "format": "int32"
+          },
+          {
+            "name": "context.provider",
+            "in": "query",
+            "required": false,
+            "type": "string"
+          },
+          {
+            "name": "context.organization",
+            "in": "query",
+            "required": false,
+            "type": "string"
+          },
+          {
+            "name": "context.group",
+            "in": "query",
+            "required": false,
+            "type": "string"
+          },
+          {
+            "name": "all",
+            "description": "all is a flag to indicate if all rule statuses should be returned",
+            "in": "query",
+            "required": false,
+            "type": "boolean"
           }
         ],
         "tags": [
@@ -1199,7 +1254,7 @@
         ]
       }
     },
-    "/api/v1/policy_status/provider/{provider}/group/{groupId}": {
+    "/api/v1/policy_status": {
       "get": {
         "operationId": "PolicyService_GetPolicyStatusByGroup",
         "responses": {
@@ -1218,255 +1273,22 @@
         },
         "parameters": [
           {
-            "name": "provider",
-            "in": "path",
-            "required": true,
-            "type": "string"
-          },
-          {
-            "name": "groupId",
-            "in": "path",
-            "required": true,
-            "type": "integer",
-            "format": "int32"
-          }
-        ],
-        "tags": [
-          "PolicyService"
-        ]
-      }
-    },
-    "/api/v1/policy_status/repository/{repositoryId}": {
-      "get": {
-        "operationId": "PolicyService_GetPolicyStatusByRepository",
-        "responses": {
-          "200": {
-            "description": "A successful response.",
-            "schema": {
-              "$ref": "#/definitions/v1GetPolicyStatusByRepositoryResponse"
-            }
-          },
-          "default": {
-            "description": "An unexpected error response.",
-            "schema": {
-              "$ref": "#/definitions/rpcStatus"
-            }
-          }
-        },
-        "parameters": [
-          {
-            "name": "repositoryId",
-            "in": "path",
-            "required": true,
-            "type": "integer",
-            "format": "int32"
-          }
-        ],
-        "tags": [
-          "PolicyService"
-        ]
-      }
-    },
-    "/api/v1/policy_type/{type}": {
-      "get": {
-        "operationId": "PolicyService_GetPolicyType",
-        "responses": {
-          "200": {
-            "description": "A successful response.",
-            "schema": {
-              "$ref": "#/definitions/v1GetPolicyTypeResponse"
-            }
-          },
-          "default": {
-            "description": "An unexpected error response.",
-            "schema": {
-              "$ref": "#/definitions/rpcStatus"
-            }
-          }
-        },
-        "parameters": [
-          {
-            "name": "type",
-            "in": "path",
-            "required": true,
-            "type": "string"
-          },
-          {
-            "name": "provider",
+            "name": "context.provider",
             "in": "query",
             "required": false,
             "type": "string"
-          }
-        ],
-        "tags": [
-          "PolicyService"
-        ]
-      }
-    },
-    "/api/v1/policy_types": {
-      "get": {
-        "operationId": "PolicyService_GetPolicyTypes",
-        "responses": {
-          "200": {
-            "description": "A successful response.",
-            "schema": {
-              "$ref": "#/definitions/v1GetPolicyTypesResponse"
-            }
           },
-          "default": {
-            "description": "An unexpected error response.",
-            "schema": {
-              "$ref": "#/definitions/rpcStatus"
-            }
-          }
-        },
-        "parameters": [
           {
-            "name": "provider",
+            "name": "context.organization",
             "in": "query",
             "required": false,
             "type": "string"
-          }
-        ],
-        "tags": [
-          "PolicyService"
-        ]
-      }
-    },
-    "/api/v1/policy_violations/provider/{provider}/group/{groupId}": {
-      "get": {
-        "operationId": "PolicyService_GetPolicyViolationsByGroup",
-        "responses": {
-          "200": {
-            "description": "A successful response.",
-            "schema": {
-              "$ref": "#/definitions/v1GetPolicyViolationsByGroupResponse"
-            }
           },
-          "default": {
-            "description": "An unexpected error response.",
-            "schema": {
-              "$ref": "#/definitions/rpcStatus"
-            }
-          }
-        },
-        "parameters": [
           {
-            "name": "provider",
-            "in": "path",
-            "required": true,
+            "name": "context.group",
+            "in": "query",
+            "required": false,
             "type": "string"
-          },
-          {
-            "name": "groupId",
-            "in": "path",
-            "required": true,
-            "type": "integer",
-            "format": "int32"
-          },
-          {
-            "name": "limit",
-            "in": "query",
-            "required": false,
-            "type": "integer",
-            "format": "int32"
-          },
-          {
-            "name": "offset",
-            "in": "query",
-            "required": false,
-            "type": "integer",
-            "format": "int32"
-          }
-        ],
-        "tags": [
-          "PolicyService"
-        ]
-      }
-    },
-    "/api/v1/policy_violations/repository/{repositoryId}": {
-      "get": {
-        "operationId": "PolicyService_GetPolicyViolationsByRepository",
-        "responses": {
-          "200": {
-            "description": "A successful response.",
-            "schema": {
-              "$ref": "#/definitions/v1GetPolicyViolationsByRepositoryResponse"
-            }
-          },
-          "default": {
-            "description": "An unexpected error response.",
-            "schema": {
-              "$ref": "#/definitions/rpcStatus"
-            }
-          }
-        },
-        "parameters": [
-          {
-            "name": "repositoryId",
-            "in": "path",
-            "required": true,
-            "type": "integer",
-            "format": "int32"
-          },
-          {
-            "name": "limit",
-            "in": "query",
-            "required": false,
-            "type": "integer",
-            "format": "int32"
-          },
-          {
-            "name": "offset",
-            "in": "query",
-            "required": false,
-            "type": "integer",
-            "format": "int32"
-          }
-        ],
-        "tags": [
-          "PolicyService"
-        ]
-      }
-    },
-    "/api/v1/policy_violations/{id}": {
-      "get": {
-        "operationId": "PolicyService_GetPolicyViolationsById",
-        "responses": {
-          "200": {
-            "description": "A successful response.",
-            "schema": {
-              "$ref": "#/definitions/v1GetPolicyViolationsByIdResponse"
-            }
-          },
-          "default": {
-            "description": "An unexpected error response.",
-            "schema": {
-              "$ref": "#/definitions/rpcStatus"
-            }
-          }
-        },
-        "parameters": [
-          {
-            "name": "id",
-            "in": "path",
-            "required": true,
-            "type": "integer",
-            "format": "int32"
-          },
-          {
-            "name": "limit",
-            "in": "query",
-            "required": false,
-            "type": "integer",
-            "format": "int32"
-          },
-          {
-            "name": "offset",
-            "in": "query",
-            "required": false,
-            "type": "integer",
-            "format": "int32"
           }
         ],
         "tags": [
@@ -2691,6 +2513,42 @@
       },
       "description": "DataEval defines how the data is evaluated."
     },
+    "PipelinePolicyContextualRuleSet": {
+      "type": "object",
+      "properties": {
+        "context": {
+          "type": "string",
+          "description": "context is the context in which the rules are evaluated.\nThis refers to the provider."
+        },
+        "rules": {
+          "type": "array",
+          "items": {
+            "type": "object",
+            "$ref": "#/definitions/PipelinePolicyRule"
+          },
+          "description": "rule is the set of rules that are evaluated."
+        }
+      },
+      "description": "ContextualRuleSet defines a set of rules that are evaluated in a certain context."
+    },
+    "PipelinePolicyRule": {
+      "type": "object",
+      "properties": {
+        "type": {
+          "type": "string",
+          "description": "type is the type of the rule to be instantiated."
+        },
+        "params": {
+          "type": "object",
+          "description": "params are the parameters that are passed to the rule.\nThis is optional and depends on the rule type."
+        },
+        "def": {
+          "type": "object",
+          "description": "def is the definition of the rule.\nThis depends on the rule type."
+        }
+      },
+      "description": "Rule defines the individual call of a certain rule type."
+    },
     "mediatorv1Context": {
       "type": "object",
       "properties": {
@@ -2888,18 +2746,8 @@
     "v1CreatePolicyRequest": {
       "type": "object",
       "properties": {
-        "provider": {
-          "type": "string"
-        },
-        "groupId": {
-          "type": "integer",
-          "format": "int32"
-        },
-        "type": {
-          "type": "string"
-        },
-        "policyDefinition": {
-          "type": "string"
+        "policy": {
+          "$ref": "#/definitions/v1PipelinePolicy"
         }
       },
       "title": "Policy service"
@@ -2908,7 +2756,7 @@
       "type": "object",
       "properties": {
         "policy": {
-          "$ref": "#/definitions/v1PolicyRecord"
+          "$ref": "#/definitions/v1PipelinePolicy"
         }
       }
     },
@@ -3318,115 +3166,41 @@
         }
       }
     },
-    "v1GetPoliciesResponse": {
-      "type": "object",
-      "properties": {
-        "policies": {
-          "type": "array",
-          "items": {
-            "type": "object",
-            "$ref": "#/definitions/v1PolicyRecord"
-          }
-        }
-      }
-    },
     "v1GetPolicyByIdResponse": {
       "type": "object",
       "properties": {
         "policy": {
-          "$ref": "#/definitions/v1PolicyRecord"
+          "$ref": "#/definitions/v1PipelinePolicy"
         }
       }
     },
     "v1GetPolicyStatusByGroupResponse": {
       "type": "object",
       "properties": {
-        "policyRepoStatus": {
+        "policyStatus": {
           "type": "array",
           "items": {
             "type": "object",
-            "$ref": "#/definitions/v1PolicyRepoStatus"
-          }
+            "$ref": "#/definitions/v1PolicyStatus"
+          },
+          "title": "policy_status is the status of the policy"
         }
       }
     },
     "v1GetPolicyStatusByIdResponse": {
       "type": "object",
       "properties": {
-        "policyRepoStatus": {
+        "policyStatus": {
+          "$ref": "#/definitions/v1PolicyStatus",
+          "title": "policy_status is the status of the policy"
+        },
+        "ruleEvaluationStatus": {
           "type": "array",
           "items": {
             "type": "object",
-            "$ref": "#/definitions/v1PolicyRepoStatus"
-          }
-        }
-      }
-    },
-    "v1GetPolicyStatusByRepositoryResponse": {
-      "type": "object",
-      "properties": {
-        "policyRepoStatus": {
-          "type": "array",
-          "items": {
-            "type": "object",
-            "$ref": "#/definitions/v1PolicyRepoStatus"
-          }
-        }
-      }
-    },
-    "v1GetPolicyTypeResponse": {
-      "type": "object",
-      "properties": {
-        "policyType": {
-          "$ref": "#/definitions/v1PolicyTypeRecord"
-        }
-      }
-    },
-    "v1GetPolicyTypesResponse": {
-      "type": "object",
-      "properties": {
-        "policyTypes": {
-          "type": "array",
-          "items": {
-            "type": "object",
-            "$ref": "#/definitions/v1PolicyTypeRecord"
-          }
-        }
-      }
-    },
-    "v1GetPolicyViolationsByGroupResponse": {
-      "type": "object",
-      "properties": {
-        "policyViolation": {
-          "type": "array",
-          "items": {
-            "type": "object",
-            "$ref": "#/definitions/v1PolicyViolation"
-          }
-        }
-      }
-    },
-    "v1GetPolicyViolationsByIdResponse": {
-      "type": "object",
-      "properties": {
-        "policyViolation": {
-          "type": "array",
-          "items": {
-            "type": "object",
-            "$ref": "#/definitions/v1PolicyViolation"
-          }
-        }
-      }
-    },
-    "v1GetPolicyViolationsByRepositoryResponse": {
-      "type": "object",
-      "properties": {
-        "policyViolation": {
-          "type": "array",
-          "items": {
-            "type": "object",
-            "$ref": "#/definitions/v1PolicyViolation"
-          }
+            "$ref": "#/definitions/v1RuleEvaluationStatus"
+          },
+          "title": "rule_evaluation_status is the status of the rules"
         }
       }
     },
@@ -3755,6 +3529,18 @@
       },
       "title": "BUF does not allow grouping (which is a shame)"
     },
+    "v1ListPoliciesResponse": {
+      "type": "object",
+      "properties": {
+        "policies": {
+          "type": "array",
+          "items": {
+            "type": "object",
+            "$ref": "#/definitions/v1PipelinePolicy"
+          }
+        }
+      }
+    },
     "v1ListRepositoriesResponse": {
       "type": "object",
       "properties": {
@@ -3840,127 +3626,70 @@
         }
       }
     },
-    "v1PolicyRecord": {
+    "v1PipelinePolicy": {
       "type": "object",
       "properties": {
+        "context": {
+          "$ref": "#/definitions/mediatorv1Context",
+          "description": "context is the context in which the policy is evaluated."
+        },
         "id": {
           "type": "integer",
-          "format": "int32"
+          "format": "int32",
+          "description": "id is the id of the policy.\nThis is optional and is set by the system."
         },
-        "provider": {
-          "type": "string"
-        },
-        "groupId": {
-          "type": "integer",
-          "format": "int32"
-        },
-        "type": {
-          "type": "string"
-        },
-        "policyDefinition": {
-          "type": "string"
-        },
-        "createdAt": {
+        "name": {
           "type": "string",
-          "format": "date-time"
+          "description": "name is the name of the policy instance."
         },
-        "updatedAt": {
-          "type": "string",
-          "format": "date-time"
+        "repository": {
+          "type": "array",
+          "items": {
+            "type": "object",
+            "$ref": "#/definitions/PipelinePolicyContextualRuleSet"
+          },
+          "description": "These are the entities that one could set in the pipeline policy."
+        },
+        "buildEnvironment": {
+          "type": "array",
+          "items": {
+            "type": "object",
+            "$ref": "#/definitions/PipelinePolicyContextualRuleSet"
+          }
+        },
+        "artifact": {
+          "type": "array",
+          "items": {
+            "type": "object",
+            "$ref": "#/definitions/PipelinePolicyContextualRuleSet"
+          }
         }
       },
-      "title": "policy record to be returned"
+      "description": "PipelinePolicy defines a policy that is user defined."
     },
-    "v1PolicyRepoStatus": {
+    "v1PolicyStatus": {
       "type": "object",
       "properties": {
-        "policyType": {
-          "type": "string"
-        },
-        "repoId": {
+        "policyId": {
           "type": "integer",
-          "format": "int32"
+          "format": "int32",
+          "title": "policy_id is the id of the policy"
         },
-        "repoOwner": {
-          "type": "string"
-        },
-        "repoName": {
-          "type": "string"
+        "policyName": {
+          "type": "string",
+          "title": "policy_name is the name of the policy"
         },
         "policyStatus": {
-          "type": "string"
+          "type": "string",
+          "title": "policy_status is the status of the policy"
         },
         "lastUpdated": {
           "type": "string",
-          "format": "date-time"
+          "format": "date-time",
+          "title": "last_updated is the last time the policy was updated"
         }
       },
-      "title": "get policy violation status"
-    },
-    "v1PolicyTypeRecord": {
-      "type": "object",
-      "properties": {
-        "id": {
-          "type": "integer",
-          "format": "int32"
-        },
-        "provider": {
-          "type": "string"
-        },
-        "policyType": {
-          "type": "string"
-        },
-        "description": {
-          "type": "string"
-        },
-        "jsonSchema": {
-          "type": "string"
-        },
-        "version": {
-          "type": "string"
-        },
-        "defaultSchema": {
-          "type": "string"
-        },
-        "createdAt": {
-          "type": "string",
-          "format": "date-time"
-        },
-        "updatedAt": {
-          "type": "string",
-          "format": "date-time"
-        }
-      },
-      "title": "policy type record to be returned"
-    },
-    "v1PolicyViolation": {
-      "type": "object",
-      "properties": {
-        "policyType": {
-          "type": "string"
-        },
-        "repoId": {
-          "type": "integer",
-          "format": "int32"
-        },
-        "repoOwner": {
-          "type": "string"
-        },
-        "repoName": {
-          "type": "string"
-        },
-        "metadata": {
-          "type": "string"
-        },
-        "violation": {
-          "type": "string"
-        },
-        "createdAt": {
-          "type": "string",
-          "format": "date-time"
-        }
-      },
-      "title": "get policy violation details"
+      "title": "get the overall policy status"
     },
     "v1RefreshTokenRequest": {
       "type": "object"
@@ -4192,6 +3921,46 @@
           "format": "date-time"
         }
       }
+    },
+    "v1RuleEvaluationStatus": {
+      "type": "object",
+      "properties": {
+        "policyId": {
+          "type": "integer",
+          "format": "int32",
+          "title": "policy_id is the id of the policy"
+        },
+        "ruleId": {
+          "type": "integer",
+          "format": "int32",
+          "title": "rule_id is the id of the rule"
+        },
+        "ruleName": {
+          "type": "string",
+          "title": "rule_name is the name of the rule"
+        },
+        "entity": {
+          "type": "string",
+          "title": "entity is the entity that was evaluated"
+        },
+        "status": {
+          "type": "string",
+          "title": "status is the status of the evaluation"
+        },
+        "lastUpdated": {
+          "type": "string",
+          "format": "date-time",
+          "title": "last_updated is the last time the policy was updated"
+        },
+        "entityInfo": {
+          "type": "object",
+          "additionalProperties": {
+            "type": "string"
+          },
+          "title": "entity_info is the information about the entity"
+        }
+      },
+      "title": "get the status of the rules for a given policy"
     },
     "v1RuleType": {
       "type": "object",

@@ -31,6 +31,7 @@ import (
 	"github.com/spf13/cobra"
 	"github.com/spf13/viper"
 
+	"github.com/stacklok/mediator/internal/engine"
 	"github.com/stacklok/mediator/internal/util"
 	pb "github.com/stacklok/mediator/pkg/generated/protobuf/go/mediator/v1"
 )
@@ -46,37 +47,29 @@ within a mediator control plane.`,
 			fmt.Fprintf(os.Stderr, "Error binding flags: %s\n", err)
 		}
 	},
-	Run: func(cmd *cobra.Command, args []string) {
-		provider := util.GetConfigValue("provider", "provider", cmd, "")
-		group := viper.GetInt32("group-id")
-		policyType := util.GetConfigValue("type", "type", cmd, "").(string)
+	RunE: func(cmd *cobra.Command, args []string) error {
 		f := util.GetConfigValue("file", "file", cmd, "").(string)
-		default_schema := util.GetConfigValue("default", "default", cmd, false).(bool)
 
-		var data []byte
 		var err error
 
-		// if default is set, file cannot be set
-		if default_schema && f != "" {
-			fmt.Fprintf(os.Stderr, "Error: cannot set both default and file\n")
-			os.Exit(1)
+		var preader io.Reader
+
+		if f == "" {
+			return fmt.Errorf("error: file must be set")
 		}
 
-		// either file or default must be set
-		if !default_schema && f == "" {
-			fmt.Fprintf(os.Stderr, "Error: must set either default or file\n")
-			os.Exit(1)
-		}
-
-		if f != "" {
-			if f == "-" {
-				data, err = io.ReadAll(os.Stdin)
-				util.ExitNicelyOnError(err, "Error reading from stdin")
-			} else {
-				f = filepath.Clean(f)
-				data, err = os.ReadFile(f)
-				util.ExitNicelyOnError(err, "Error reading file")
+		if f == "-" {
+			preader = os.Stdin
+		} else {
+			f = filepath.Clean(f)
+			fopen, err := os.Open(f)
+			if err != nil {
+				return fmt.Errorf("error opening file: %w", err)
 			}
+
+			defer fopen.Close()
+
+			preader = fopen
 		}
 
 		grpc_host := util.GetConfigValue("grpc_server.host", "grpc-host", cmd, "").(string)
@@ -90,39 +83,18 @@ within a mediator control plane.`,
 		ctx, cancel := util.GetAppContext()
 		defer cancel()
 
-		policyTypes, err := client.GetPolicyTypes(ctx, &pb.GetPolicyTypesRequest{Provider: provider.(string)})
-		util.ExitNicelyOnError(err, "Error getting policy types")
-
-		// check if the policy type is valid
-		var foundPolicyType *pb.PolicyTypeRecord
-		validTypes := make([]string, len(policyTypes.PolicyTypes))
-		for _, t := range policyTypes.PolicyTypes {
-			validTypes = append(validTypes, t.PolicyType)
-			if policyType == t.PolicyType {
-				// get complete policy details
-				p, err := client.GetPolicyType(ctx, &pb.GetPolicyTypeRequest{Provider: provider.(string), Type: policyType})
-				util.ExitNicelyOnError(err, "Error getting policy type")
-				foundPolicyType = p.PolicyType
-				break
-			}
-		}
-		if foundPolicyType == nil {
-			fmt.Fprintf(os.Stderr, "Invalid policy type - valid policy types are: %v\n", validTypes)
-			os.Exit(1)
-		}
-
-		if default_schema {
-			data = []byte(foundPolicyType.DefaultSchema)
+		p, err := engine.ReadYAMLPolicyFromReader(preader)
+		if err != nil {
+			return fmt.Errorf("error reading fragment from file: %w", err)
 		}
 
 		// create a policy
 		resp, err := client.CreatePolicy(ctx, &pb.CreatePolicyRequest{
-			Provider:         provider.(string),
-			GroupId:          group,
-			Type:             policyType,
-			PolicyDefinition: string(data),
+			Policy: p,
 		})
-		util.ExitNicelyOnError(err, "Error creating policy")
+		if err != nil {
+			return fmt.Errorf("error creating policy: %w", err)
+		}
 
 		pol, err := json.MarshalIndent(resp, "", "  ")
 		if err != nil {
@@ -131,24 +103,11 @@ within a mediator control plane.`,
 			cmd.Println("Created policy:", string(pol))
 		}
 
+		return nil
 	},
 }
 
 func init() {
 	PolicyCmd.AddCommand(Policy_createCmd)
-	Policy_createCmd.Flags().StringP("provider", "n", "", "Provider (github)")
-	Policy_createCmd.Flags().Int32P("group-id", "g", 0, "ID of the group to where the policy belongs")
-	Policy_createCmd.Flags().StringP("type", "t", "", `Type of policy - must be one valid policy type.
-	Please check valid policy types with: medic policy_types list command`)
-	Policy_createCmd.Flags().BoolP("default", "d", false, "Use default and recommended schema for the policy.")
 	Policy_createCmd.Flags().StringP("file", "f", "", "Path to the YAML defining the policy (or - for stdin)")
-
-	if err := Policy_createCmd.MarkFlagRequired("provider"); err != nil {
-		fmt.Fprintf(os.Stderr, "Error marking flag as required: %s\n", err)
-		os.Exit(1)
-	}
-	if err := Policy_createCmd.MarkFlagRequired("type"); err != nil {
-		fmt.Fprintf(os.Stderr, "Error marking flag as required: %s\n", err)
-		os.Exit(1)
-	}
 }

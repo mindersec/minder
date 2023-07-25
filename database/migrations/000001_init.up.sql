@@ -136,45 +136,6 @@ CREATE TABLE session_store (
     created_at TIMESTAMP NOT NULL DEFAULT NOW()
 );
 
--- policy type
-CREATE TABLE policy_types (
-    id SERIAL PRIMARY KEY,
-    provider TEXT NOT NULL,
-    policy_type VARCHAR(50) NOT NULL,
-    description TEXT,
-    version varchar(20) NOT NULL,
-    created_at TIMESTAMP NOT NULL DEFAULT NOW(),
-    updated_at TIMESTAMP NOT NULL DEFAULT NOW()
-);
-
-CREATE TABLE policies (
-    id SERIAL PRIMARY KEY,
-    provider TEXT NOT NULL,
-    group_id INTEGER NOT NULL REFERENCES groups(id) ON DELETE CASCADE,
-    policy_type INTEGER NOT NULL REFERENCES policy_types ON DELETE CASCADE,
-    policy_definition JSONB NOT NULL,
-    created_at TIMESTAMP NOT NULL DEFAULT NOW(),
-    updated_at TIMESTAMP NOT NULL DEFAULT NOW()
-);
-
-create type policy_status_types as enum ('success', 'failure');
-CREATE TABLE policy_status (
-    id SERIAL PRIMARY KEY,
-    repository_id INTEGER NOT NULL REFERENCES repositories(id) ON DELETE CASCADE,
-    policy_id INTEGER NOT NULL REFERENCES policies(id) ON DELETE CASCADE,
-    policy_status policy_status_types NOT NULL,
-    last_updated TIMESTAMP NOT NULL DEFAULT NOW()
-);
-
-CREATE TABLE policy_violations (
-    id SERIAL PRIMARY KEY,
-    repository_id INTEGER NOT NULL REFERENCES repositories(id) ON DELETE CASCADE,
-    policy_id INTEGER NOT NULL REFERENCES policies(id) ON DELETE CASCADE,
-    metadata JSONB NOT NULL,
-    violation JSONB NOT NULL,
-    created_at TIMESTAMP NOT NULL DEFAULT NOW()
-);
-
 CREATE TABLE rule_type (
     id SERIAL PRIMARY KEY,
     name TEXT NOT NULL,
@@ -183,6 +144,68 @@ CREATE TABLE rule_type (
     definition JSONB NOT NULL,
     created_at TIMESTAMP NOT NULL DEFAULT NOW(),
     updated_at TIMESTAMP NOT NULL DEFAULT NOW()
+);
+
+CREATE TABLE policies (
+    id SERIAL PRIMARY KEY,
+    name TEXT NOT NULL,
+    provider TEXT NOT NULL,
+    group_id INTEGER NOT NULL REFERENCES groups(id) ON DELETE CASCADE,
+    created_at TIMESTAMP NOT NULL DEFAULT NOW(),
+    updated_at TIMESTAMP NOT NULL DEFAULT NOW()
+);
+
+CREATE TYPE entities as enum ('repository', 'build_environment', 'artifact');
+
+CREATE TABLE entity_policies (
+    id SERIAL PRIMARY KEY,
+    entity entities NOT NULL,
+    policy_id INTEGER NOT NULL REFERENCES policies(id) ON DELETE CASCADE,
+    contextual_rules JSONB NOT NULL,
+    created_at TIMESTAMP NOT NULL DEFAULT NOW(),
+    updated_at TIMESTAMP NOT NULL DEFAULT NOW()
+);
+
+create type eval_status_types as enum ('success', 'failure');
+
+-- This table will be used to track the overall status of a policy evaluation
+CREATE TABLE policy_status (
+    id SERIAL PRIMARY KEY,
+    policy_id INTEGER NOT NULL REFERENCES policies(id) ON DELETE CASCADE,
+    policy_status eval_status_types NOT NULL,
+    last_updated TIMESTAMP NOT NULL DEFAULT NOW()
+);
+
+-- This table will be used to track the status of each rule evaluation
+-- for a given policy
+CREATE TABLE rule_evaluation_status (
+    id SERIAL PRIMARY KEY,
+    entity entities NOT NULL,
+    policy_id INTEGER NOT NULL REFERENCES policies(id) ON DELETE CASCADE,
+    rule_type_id INTEGER NOT NULL REFERENCES rule_type(id) ON DELETE CASCADE,
+    eval_status eval_status_types NOT NULL,
+    -- polimorphic references. A status may be associated with a repository, build environment or artifact
+    repository_id INTEGER REFERENCES repositories(id) ON DELETE CASCADE,
+    -- These will be added later
+    -- artifact_id INTEGER REFERENCES artifacts(id) ON DELETE CASCADE,
+    -- build_environment_id INTEGER REFERENCES build_environments(id) ON DELETE CASCADE,
+    last_updated TIMESTAMP NOT NULL DEFAULT NOW()
+);
+
+CREATE TABLE policy_violations (
+    id SERIAL PRIMARY KEY,
+    entity entities NOT NULL,
+    policy_id INTEGER NOT NULL REFERENCES policies(id) ON DELETE CASCADE,
+    rule_type_id INTEGER NOT NULL REFERENCES rule_type(id) ON DELETE CASCADE,
+    metadata JSONB NOT NULL,
+    violation JSONB NOT NULL,
+    -- polimorphic references. A status may be associated with a repository, build environment or artifact
+    repository_id INTEGER REFERENCES repositories(id) ON DELETE CASCADE,
+    -- These will be added later
+    -- artifact_id INTEGER REFERENCES artifacts(id) ON DELETE CASCADE,
+    -- build_environment_id INTEGER REFERENCES build_environments(id) ON DELETE CASCADE,
+    created_at TIMESTAMP NOT NULL DEFAULT NOW(),
+    last_updated TIMESTAMP NOT NULL DEFAULT NOW()
 );
 
 -- Constraint to ensure we don't have a cycle in the project tree
@@ -204,10 +227,25 @@ CREATE INDEX idx_provider_access_tokens_group_id ON provider_access_tokens(group
 CREATE UNIQUE INDEX users_organization_id_email_lower_idx ON users (organization_id, LOWER(email));
 CREATE UNIQUE INDEX users_organization_id_username_lower_idx ON users (organization_id, LOWER(username));
 CREATE UNIQUE INDEX repositories_repo_id_idx ON repositories(repo_id);
-CREATE UNIQUE INDEX policies_group_id_policy_type_idx ON policies(provider, group_id, policy_type);
-CREATE UNIQUE INDEX policy_types_idx ON policy_types(provider, policy_type);
-CREATE UNIQUE INDEX policy_status_idx ON policy_status(repository_id, policy_id);
+CREATE UNIQUE INDEX policies_group_id_policy_name_idx ON policies(provider, group_id, name);
+CREATE UNIQUE INDEX entity_policies_entity_policy_id_idx ON entity_policies(entity, policy_id);
 CREATE UNIQUE INDEX rule_type_idx ON rule_type(provider, group_id, name);
+
+-- triggers
+
+-- Ensure violations and statuses are deleted if a repository is deleted
+CREATE OR REPLACE FUNCTION delete_violations_and_statuses() RETURNS TRIGGER AS $$
+BEGIN
+    DELETE FROM policy_violations WHERE repository_id = OLD.id;
+    DELETE FROM rule_evaluation_status WHERE repository_id = OLD.id;
+    RETURN OLD;
+END;
+$$ LANGUAGE plpgsql;
+
+CREATE TRIGGER delete_violations_and_statuses
+    BEFORE DELETE ON repositories
+    FOR EACH ROW
+    EXECUTE PROCEDURE delete_violations_and_statuses();
 
 -- Create default root project
 INSERT INTO projects (name, metadata) VALUES ('Root Project', '{}');
@@ -229,9 +267,3 @@ VALUES (1, 'root@localhost', 'root', '$argon2id$v=19$m=16,t=2,p=1$c2VjcmV0aGFzaA
 
 INSERT INTO user_groups (user_id, group_id) VALUES (1, 1);
 INSERT INTO user_roles (user_id, role_id) VALUES (1, 1);
-
--- policy types
-INSERT INTO policy_types (provider, policy_type, description, version) VALUES
-('github', 'branch_protection', 'Policy type to enforce branch protection rules on a repo', '1.0.0');
-INSERT INTO policy_types (provider, policy_type, description, version) VALUES
-('github', 'secret_scanning', 'Policy type to enforce secret scanning a repo', '1.0.0');

@@ -22,6 +22,14 @@ import (
 	pb "github.com/stacklok/mediator/pkg/generated/protobuf/go/mediator/v1"
 )
 
+type key int
+
+const (
+	// EntityContextKey is the key used to store the entity context in the golang Context
+	// object for a given API call.
+	EntityContextKey key = iota
+)
+
 // Group is a construct relevant to an entity's context.
 // This is relevant for getting the full information about an entity.
 type Group struct {
