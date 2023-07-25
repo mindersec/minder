@@ -489,6 +489,13 @@ service PolicyService {
         };
     }
 
+    rpc UpdateRuleType (UpdateRuleTypeRequest) returns (UpdateRuleTypeResponse) {
+        option (google.api.http) = {
+            put: "/api/v1/rule_type"
+            body: "*"
+        };
+    }
+
     rpc DeleteRuleType (DeleteRuleTypeRequest) returns (DeleteRuleTypeResponse) {
         option (google.api.http) = {
             delete: "/api/v1/rule_type/{id}"
@@ -1394,7 +1401,7 @@ message GetRuleTypeByIdRequest {
     // context is the context in which the rule type is evaluated.
     Context context = 1;
     // id is the id of the rule type.
-    string id = 2;
+    int32 id = 2;
 }
 
 // GetRuleTypeByIdResponse is the response to get a rule type by id.
@@ -1415,12 +1422,24 @@ message CreateRuleTypeResponse {
     RuleType rule_type = 1;
 }
 
+// UpdateRuleTypeRequest is the request to update a rule type.
+message UpdateRuleTypeRequest {
+    // rule_type is the rule type to be updated.
+    RuleType rule_type = 2;
+}
+
+// UpdateRuleTypeResponse is the response to update a rule type.
+message UpdateRuleTypeResponse {
+    // rule_type is the rule type that was updated.
+    RuleType rule_type = 1;
+}
+
 // DeleteRuleTypeRequest is the request to delete a rule type.
 message DeleteRuleTypeRequest {
     // context is the context in which the rule type is evaluated.
     Context context = 1;
     // id is the id of the rule type to be deleted.
-    string id = 2;
+    int32 id = 2;
 }
 
 // DeleteRuleTypeResponse is the response to delete a rule type.
@@ -1432,10 +1451,15 @@ message DeleteRuleTypeResponse {
 // RuleType defines rules that may or may not be user defined.
 // The version is assumed from the folder's version.
 message RuleType {
+    // id is the id of the rule type.
+    // This is mostly optional and is set by the server.
+    optional int32 id = 1;
+
     // name is the name of the rule type.
-    string name = 1;
+    string name = 2;
+
     // context is the context in which the rule is evaluated.
-    Context context = 2;
+    Context context = 3;
 
     // Definition defines the rule type. It encompases the schema and the data evaluation.
     message Definition {
@@ -1507,7 +1531,7 @@ message RuleType {
     }
 
     // def is the definition of the rule type.
-    Definition def = 3;
+    Definition def = 4;
 }
 
  // PipelinePolicy defines a policy that is user defined.

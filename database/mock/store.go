@@ -229,6 +229,21 @@ func (mr *MockStoreMockRecorder) CreateRole(arg0, arg1 interface{}) *gomock.Call
 	return mr.mock.ctrl.RecordCallWithMethodType(mr.mock, "CreateRole", reflect.TypeOf((*MockStore)(nil).CreateRole), arg0, arg1)
 }
 
+// CreateRuleType mocks base method.
+func (m *MockStore) CreateRuleType(arg0 context.Context, arg1 db.CreateRuleTypeParams) (db.RuleType, error) {
+	m.ctrl.T.Helper()
+	ret := m.ctrl.Call(m, "CreateRuleType", arg0, arg1)
+	ret0, _ := ret[0].(db.RuleType)
+	ret1, _ := ret[1].(error)
+	return ret0, ret1
+}
+
+// CreateRuleType indicates an expected call of CreateRuleType.
+func (mr *MockStoreMockRecorder) CreateRuleType(arg0, arg1 interface{}) *gomock.Call {
+	mr.mock.ctrl.T.Helper()
+	return mr.mock.ctrl.RecordCallWithMethodType(mr.mock, "CreateRuleType", reflect.TypeOf((*MockStore)(nil).CreateRuleType), arg0, arg1)
+}
+
 // CreateSessionState mocks base method.
 func (m *MockStore) CreateSessionState(arg0 context.Context, arg1 db.CreateSessionStateParams) (db.SessionStore, error) {
 	m.ctrl.T.Helper()
@@ -384,6 +399,20 @@ func (m *MockStore) DeleteRole(arg0 context.Context, arg1 int32) error {
 func (mr *MockStoreMockRecorder) DeleteRole(arg0, arg1 interface{}) *gomock.Call {
 	mr.mock.ctrl.T.Helper()
 	return mr.mock.ctrl.RecordCallWithMethodType(mr.mock, "DeleteRole", reflect.TypeOf((*MockStore)(nil).DeleteRole), arg0, arg1)
+}
+
+// DeleteRuleType mocks base method.
+func (m *MockStore) DeleteRuleType(arg0 context.Context, arg1 int32) error {
+	m.ctrl.T.Helper()
+	ret := m.ctrl.Call(m, "DeleteRuleType", arg0, arg1)
+	ret0, _ := ret[0].(error)
+	return ret0
+}
+
+// DeleteRuleType indicates an expected call of DeleteRuleType.
+func (mr *MockStoreMockRecorder) DeleteRuleType(arg0, arg1 interface{}) *gomock.Call {
+	mr.mock.ctrl.T.Helper()
+	return mr.mock.ctrl.RecordCallWithMethodType(mr.mock, "DeleteRuleType", reflect.TypeOf((*MockStore)(nil).DeleteRuleType), arg0, arg1)
 }
 
 // DeleteSessionState mocks base method.
@@ -846,6 +875,36 @@ func (mr *MockStoreMockRecorder) GetRoleByName(arg0, arg1 interface{}) *gomock.C
 	return mr.mock.ctrl.RecordCallWithMethodType(mr.mock, "GetRoleByName", reflect.TypeOf((*MockStore)(nil).GetRoleByName), arg0, arg1)
 }
 
+// GetRuleTypeByID mocks base method.
+func (m *MockStore) GetRuleTypeByID(arg0 context.Context, arg1 int32) (db.RuleType, error) {
+	m.ctrl.T.Helper()
+	ret := m.ctrl.Call(m, "GetRuleTypeByID", arg0, arg1)
+	ret0, _ := ret[0].(db.RuleType)
+	ret1, _ := ret[1].(error)
+	return ret0, ret1
+}
+
+// GetRuleTypeByID indicates an expected call of GetRuleTypeByID.
+func (mr *MockStoreMockRecorder) GetRuleTypeByID(arg0, arg1 interface{}) *gomock.Call {
+	mr.mock.ctrl.T.Helper()
+	return mr.mock.ctrl.RecordCallWithMethodType(mr.mock, "GetRuleTypeByID", reflect.TypeOf((*MockStore)(nil).GetRuleTypeByID), arg0, arg1)
+}
+
+// GetRuleTypeByName mocks base method.
+func (m *MockStore) GetRuleTypeByName(arg0 context.Context, arg1 db.GetRuleTypeByNameParams) (db.RuleType, error) {
+	m.ctrl.T.Helper()
+	ret := m.ctrl.Call(m, "GetRuleTypeByName", arg0, arg1)
+	ret0, _ := ret[0].(db.RuleType)
+	ret1, _ := ret[1].(error)
+	return ret0, ret1
+}
+
+// GetRuleTypeByName indicates an expected call of GetRuleTypeByName.
+func (mr *MockStoreMockRecorder) GetRuleTypeByName(arg0, arg1 interface{}) *gomock.Call {
+	mr.mock.ctrl.T.Helper()
+	return mr.mock.ctrl.RecordCallWithMethodType(mr.mock, "GetRuleTypeByName", reflect.TypeOf((*MockStore)(nil).GetRuleTypeByName), arg0, arg1)
+}
+
 // GetSessionState mocks base method.
 func (m *MockStore) GetSessionState(arg0 context.Context, arg1 int32) (db.SessionStore, error) {
 	m.ctrl.T.Helper()
@@ -1116,6 +1175,21 @@ func (mr *MockStoreMockRecorder) ListRolesByGroupID(arg0, arg1 interface{}) *gom
 	return mr.mock.ctrl.RecordCallWithMethodType(mr.mock, "ListRolesByGroupID", reflect.TypeOf((*MockStore)(nil).ListRolesByGroupID), arg0, arg1)
 }
 
+// ListRuleTypesByProviderAndGroup mocks base method.
+func (m *MockStore) ListRuleTypesByProviderAndGroup(arg0 context.Context, arg1 db.ListRuleTypesByProviderAndGroupParams) ([]db.RuleType, error) {
+	m.ctrl.T.Helper()
+	ret := m.ctrl.Call(m, "ListRuleTypesByProviderAndGroup", arg0, arg1)
+	ret0, _ := ret[0].([]db.RuleType)
+	ret1, _ := ret[1].(error)
+	return ret0, ret1
+}
+
+// ListRuleTypesByProviderAndGroup indicates an expected call of ListRuleTypesByProviderAndGroup.
+func (mr *MockStoreMockRecorder) ListRuleTypesByProviderAndGroup(arg0, arg1 interface{}) *gomock.Call {
+	mr.mock.ctrl.T.Helper()
+	return mr.mock.ctrl.RecordCallWithMethodType(mr.mock, "ListRuleTypesByProviderAndGroup", reflect.TypeOf((*MockStore)(nil).ListRuleTypesByProviderAndGroup), arg0, arg1)
+}
+
 // ListUsers mocks base method.
 func (m *MockStore) ListUsers(arg0 context.Context, arg1 db.ListUsersParams) ([]db.User, error) {
 	m.ctrl.T.Helper()
@@ -1337,6 +1411,20 @@ func (m *MockStore) UpdateRole(arg0 context.Context, arg1 db.UpdateRoleParams) (
 func (mr *MockStoreMockRecorder) UpdateRole(arg0, arg1 interface{}) *gomock.Call {
 	mr.mock.ctrl.T.Helper()
 	return mr.mock.ctrl.RecordCallWithMethodType(mr.mock, "UpdateRole", reflect.TypeOf((*MockStore)(nil).UpdateRole), arg0, arg1)
+}
+
+// UpdateRuleType mocks base method.
+func (m *MockStore) UpdateRuleType(arg0 context.Context, arg1 db.UpdateRuleTypeParams) error {
+	m.ctrl.T.Helper()
+	ret := m.ctrl.Call(m, "UpdateRuleType", arg0, arg1)
+	ret0, _ := ret[0].(error)
+	return ret0
+}
+
+// UpdateRuleType indicates an expected call of UpdateRuleType.
+func (mr *MockStoreMockRecorder) UpdateRuleType(arg0, arg1 interface{}) *gomock.Call {
+	mr.mock.ctrl.T.Helper()
+	return mr.mock.ctrl.RecordCallWithMethodType(mr.mock, "UpdateRuleType", reflect.TypeOf((*MockStore)(nil).UpdateRuleType), arg0, arg1)
 }
 
 // UpdateUser mocks base method.

@@ -1925,6 +1925,37 @@
         "tags": [
           "PolicyService"
         ]
+      },
+      "put": {
+        "operationId": "PolicyService_UpdateRuleType",
+        "responses": {
+          "200": {
+            "description": "A successful response.",
+            "schema": {
+              "$ref": "#/definitions/v1UpdateRuleTypeResponse"
+            }
+          },
+          "default": {
+            "description": "An unexpected error response.",
+            "schema": {
+              "$ref": "#/definitions/rpcStatus"
+            }
+          }
+        },
+        "parameters": [
+          {
+            "name": "body",
+            "description": "UpdateRuleTypeRequest is the request to update a rule type.",
+            "in": "body",
+            "required": true,
+            "schema": {
+              "$ref": "#/definitions/v1UpdateRuleTypeRequest"
+            }
+          }
+        ],
+        "tags": [
+          "PolicyService"
+        ]
       }
     },
     "/api/v1/rule_type/name/{name}": {
@@ -1999,7 +2030,8 @@
             "description": "id is the id of the rule type.",
             "in": "path",
             "required": true,
-            "type": "string"
+            "type": "integer",
+            "format": "int32"
           },
           {
             "name": "context.provider",
@@ -2046,7 +2078,8 @@
             "description": "id is the id of the rule type to be deleted.",
             "in": "path",
             "required": true,
-            "type": "string"
+            "type": "integer",
+            "format": "int32"
           },
           {
             "name": "context.provider",
@@ -4183,6 +4216,11 @@
     "v1RuleType": {
       "type": "object",
       "properties": {
+        "id": {
+          "type": "integer",
+          "format": "int32",
+          "description": "id is the id of the rule type.\nThis is mostly optional and is set by the server."
+        },
         "name": {
           "type": "string",
           "description": "name is the name of the rule type."
@@ -4231,6 +4269,26 @@
     },
     "v1UpdateProfileResponse": {
       "type": "object"
+    },
+    "v1UpdateRuleTypeRequest": {
+      "type": "object",
+      "properties": {
+        "ruleType": {
+          "$ref": "#/definitions/v1RuleType",
+          "description": "rule_type is the rule type to be updated."
+        }
+      },
+      "description": "UpdateRuleTypeRequest is the request to update a rule type."
+    },
+    "v1UpdateRuleTypeResponse": {
+      "type": "object",
+      "properties": {
+        "ruleType": {
+          "$ref": "#/definitions/v1RuleType",
+          "description": "rule_type is the rule type that was updated."
+        }
+      },
+      "description": "UpdateRuleTypeResponse is the response to update a rule type."
     },
     "v1UserRecord": {
       "type": "object",

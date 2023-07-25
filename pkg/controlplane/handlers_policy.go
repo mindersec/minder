@@ -16,7 +16,10 @@ package controlplane
 
 import (
 	"context"
+	"database/sql"
 	"embed"
+	"errors"
+	"fmt"
 	"path/filepath"
 
 	"github.com/go-playground/validator/v10"
@@ -26,6 +29,7 @@ import (
 	"google.golang.org/protobuf/types/known/timestamppb"
 	"gopkg.in/yaml.v3"
 
+	"github.com/stacklok/mediator/internal/engine"
 	"github.com/stacklok/mediator/internal/util"
 	"github.com/stacklok/mediator/pkg/auth"
 	"github.com/stacklok/mediator/pkg/db"
@@ -624,4 +628,298 @@ func (s *Server) GetPolicyViolationsByGroup(ctx context.Context,
 
 	return &resp, nil
 
+}
+
+// Rule type CRUD
+
+// ensureDefaultGroupForContext ensures a valid group is set in the context or sets the default group
+// if the group is not set in the incoming entity context, it'll set it.
+func (s *Server) ensureDefaultGroupForContext(ctx context.Context, in *pb.Context) error {
+	// Group is already set
+	if in.Group != nil && *in.Group != "" {
+		return nil
+	}
+
+	gid, err := auth.GetDefaultGroup(ctx)
+	if err != nil {
+		return status.Errorf(codes.InvalidArgument, "cannot infer group id")
+	}
+
+	g, err := s.store.GetGroupByID(ctx, gid)
+	if err != nil {
+		return status.Errorf(codes.InvalidArgument, "cannot infer group id")
+	}
+
+	in.Group = &g.Name
+	return nil
+}
+
+// verifyValidGroup verifies that the group is valid and the user is authorized to access it
+func verifyValidGroup(ctx context.Context, in *engine.EntityContext) error {
+	if !auth.IsAuthorizedForGroup(ctx, in.GetGroup().GetID()) {
+		return status.Errorf(codes.PermissionDenied, "user is not authorized to access this resource")
+	}
+
+	return nil
+}
+
+// ListRuleTypes is a method to list all rule types for a given context
+func (s *Server) ListRuleTypes(ctx context.Context, in *pb.ListRuleTypesRequest) (*pb.ListRuleTypesResponse, error) {
+	if in.Context.Provider != ghclient.Github {
+		return nil, status.Errorf(codes.InvalidArgument, "provider not supported: %v", in.Context.Provider)
+	}
+
+	if err := s.ensureDefaultGroupForContext(ctx, in.GetContext()); err != nil {
+		return nil, err
+	}
+
+	entityCtx, err := engine.GetContextFromInput(ctx, in.GetContext(), s.store)
+	if err != nil {
+		return nil, fmt.Errorf("cannot get context from input: %v", err)
+	}
+
+	if err := verifyValidGroup(ctx, entityCtx); err != nil {
+		return nil, err
+	}
+
+	lrt, err := s.store.ListRuleTypesByProviderAndGroup(ctx, db.ListRuleTypesByProviderAndGroupParams{
+		Provider: entityCtx.GetProvider(),
+		GroupID:  entityCtx.GetGroup().GetID(),
+	})
+	if err != nil {
+		return nil, status.Errorf(codes.Unknown, "failed to get rule types: %s", err)
+	}
+
+	resp := &pb.ListRuleTypesResponse{}
+
+	for idx := range lrt {
+		rt := lrt[idx]
+		rtpb, err := engine.RuleTypePBFromDB(&rt, entityCtx)
+		if err != nil {
+			return nil, fmt.Errorf("cannot convert rule type %s to pb: %v", rt.Name, err)
+		}
+
+		resp.RuleTypes = append(resp.RuleTypes, rtpb)
+	}
+
+	return resp, nil
+}
+
+// GetRuleTypeByName is a method to get a rule type by name
+func (s *Server) GetRuleTypeByName(ctx context.Context, in *pb.GetRuleTypeByNameRequest) (*pb.GetRuleTypeByNameResponse, error) {
+	if in.Context.Provider != ghclient.Github {
+		return nil, status.Errorf(codes.InvalidArgument, "provider not supported: %v", in.Context.Provider)
+	}
+
+	if err := s.ensureDefaultGroupForContext(ctx, in.GetContext()); err != nil {
+		return nil, err
+	}
+
+	entityCtx, err := engine.GetContextFromInput(ctx, in.GetContext(), s.store)
+	if err != nil {
+		return nil, fmt.Errorf("cannot get context from input: %v", err)
+	}
+
+	if err := verifyValidGroup(ctx, entityCtx); err != nil {
+		return nil, err
+	}
+
+	resp := &pb.GetRuleTypeByNameResponse{}
+
+	rtdb, err := s.store.GetRuleTypeByName(ctx, db.GetRuleTypeByNameParams{
+		Provider: entityCtx.GetProvider(),
+		GroupID:  entityCtx.GetGroup().GetID(),
+		Name:     in.GetName(),
+	})
+	if err != nil {
+		return nil, status.Errorf(codes.Unknown, "failed to get rule type: %s", err)
+	}
+
+	rt, err := engine.RuleTypePBFromDB(&rtdb, entityCtx)
+	if err != nil {
+		return nil, fmt.Errorf("cannot convert rule type %s to pb: %v", rtdb.Name, err)
+	}
+
+	resp.RuleType = rt
+
+	return resp, nil
+}
+
+// GetRuleTypeById is a method to get a rule type by id
+func (s *Server) GetRuleTypeById(ctx context.Context, in *pb.GetRuleTypeByIdRequest) (*pb.GetRuleTypeByIdResponse, error) {
+	if in.Context.Provider != ghclient.Github {
+		return nil, status.Errorf(codes.InvalidArgument, "provider not supported: %v", in.Context.Provider)
+	}
+
+	if err := s.ensureDefaultGroupForContext(ctx, in.GetContext()); err != nil {
+		return nil, err
+	}
+
+	entityCtx, err := engine.GetContextFromInput(ctx, in.GetContext(), s.store)
+	if err != nil {
+		return nil, fmt.Errorf("cannot get context from input: %v", err)
+	}
+
+	if err := verifyValidGroup(ctx, entityCtx); err != nil {
+		return nil, err
+	}
+
+	resp := &pb.GetRuleTypeByIdResponse{}
+
+	rtdb, err := s.store.GetRuleTypeByID(ctx, in.GetId())
+	if err != nil {
+		return nil, status.Errorf(codes.Unknown, "failed to get rule type: %s", err)
+	}
+
+	rt, err := engine.RuleTypePBFromDB(&rtdb, entityCtx)
+	if err != nil {
+		return nil, fmt.Errorf("cannot convert rule type %s to pb: %v", rtdb.Name, err)
+	}
+
+	resp.RuleType = rt
+
+	return resp, nil
+}
+
+// CreateRuleType is a method to create a rule type
+func (s *Server) CreateRuleType(ctx context.Context, crt *pb.CreateRuleTypeRequest) (*pb.CreateRuleTypeResponse, error) {
+	in := crt.GetRuleType()
+
+	if in.Context.Provider != ghclient.Github {
+		return nil, status.Errorf(codes.InvalidArgument, "provider not supported: %v", in.Context.Provider)
+	}
+
+	if err := s.ensureDefaultGroupForContext(ctx, in.GetContext()); err != nil {
+		return nil, err
+	}
+
+	entityCtx, err := engine.GetContextFromInput(ctx, in.GetContext(), s.store)
+	if err != nil {
+		return nil, fmt.Errorf("cannot get context from input: %v", err)
+	}
+
+	if err := verifyValidGroup(ctx, entityCtx); err != nil {
+		return nil, err
+	}
+
+	_, err = s.store.GetRuleTypeByName(ctx, db.GetRuleTypeByNameParams{
+		Provider: entityCtx.GetProvider(),
+		GroupID:  entityCtx.GetGroup().GetID(),
+		Name:     in.GetName(),
+	})
+	if err == nil {
+		return nil, status.Errorf(codes.AlreadyExists, "rule type %s already exists", in.GetName())
+	}
+
+	if !errors.Is(err, sql.ErrNoRows) {
+		return nil, status.Errorf(codes.Unknown, "failed to get rule type: %s", err)
+	}
+
+	if err := engine.ValidateRuleTypeDefinition(in.GetDef()); err != nil {
+		return nil, status.Errorf(codes.InvalidArgument, "invalid rule type definition: %v", err)
+	}
+
+	def, err := engine.DBRuleDefFromPB(in.GetDef())
+	if err != nil {
+		return nil, fmt.Errorf("cannot convert rule definition to db: %v", err)
+	}
+
+	_, err = s.store.CreateRuleType(ctx, db.CreateRuleTypeParams{
+		Name:       in.GetName(),
+		Provider:   entityCtx.GetProvider(),
+		GroupID:    entityCtx.GetGroup().GetID(),
+		Definition: def,
+	})
+	if err != nil {
+		return nil, status.Errorf(codes.Unknown, "failed to create rule type: %s", err)
+	}
+
+	return &pb.CreateRuleTypeResponse{
+		RuleType: in,
+	}, nil
+}
+
+// UpdateRuleType is a method to update a rule type
+func (s *Server) UpdateRuleType(ctx context.Context, urt *pb.UpdateRuleTypeRequest) (*pb.UpdateRuleTypeResponse, error) {
+	in := urt.GetRuleType()
+
+	if in.Context.Provider != ghclient.Github {
+		return nil, status.Errorf(codes.InvalidArgument, "provider not supported: %v", in.Context.Provider)
+	}
+
+	if err := s.ensureDefaultGroupForContext(ctx, in.GetContext()); err != nil {
+		return nil, err
+	}
+
+	entityCtx, err := engine.GetContextFromInput(ctx, in.GetContext(), s.store)
+	if err != nil {
+		return nil, fmt.Errorf("cannot get context from input: %v", err)
+	}
+
+	if err := verifyValidGroup(ctx, entityCtx); err != nil {
+		return nil, err
+	}
+
+	rtdb, err := s.store.GetRuleTypeByName(ctx, db.GetRuleTypeByNameParams{
+		Provider: entityCtx.GetProvider(),
+		GroupID:  entityCtx.GetGroup().GetID(),
+		Name:     in.GetName(),
+	})
+	if err != nil {
+		if errors.Is(err, sql.ErrNoRows) {
+			return nil, status.Errorf(codes.NotFound, "rule type %s not found", in.GetName())
+		}
+		return nil, status.Errorf(codes.Internal, "failed to get rule type: %s", err)
+	}
+
+	if err := engine.ValidateRuleTypeDefinition(in.GetDef()); err != nil {
+		return nil, status.Errorf(codes.Unavailable, "invalid rule type definition: %s", err)
+	}
+
+	def, err := engine.DBRuleDefFromPB(in.GetDef())
+	if err != nil {
+		return nil, status.Errorf(codes.Internal, "cannot convert rule definition to db: %s", err)
+	}
+
+	err = s.store.UpdateRuleType(ctx, db.UpdateRuleTypeParams{
+		ID:         rtdb.ID,
+		Definition: def,
+	})
+	if err != nil {
+		return nil, status.Errorf(codes.Unknown, "failed to create rule type: %s", err)
+	}
+
+	return &pb.UpdateRuleTypeResponse{
+		RuleType: in,
+	}, nil
+}
+
+// DeleteRuleType is a method to delete a rule type
+func (s *Server) DeleteRuleType(ctx context.Context, in *pb.DeleteRuleTypeRequest) (*pb.DeleteRuleTypeResponse, error) {
+	if in.Context.Provider != ghclient.Github {
+		return nil, status.Errorf(codes.InvalidArgument, "provider not supported: %v", in.Context.Provider)
+	}
+
+	if err := s.ensureDefaultGroupForContext(ctx, in.GetContext()); err != nil {
+		return nil, err
+	}
+
+	entityCtx, err := engine.GetContextFromInput(ctx, in.GetContext(), s.store)
+	if err != nil {
+		return nil, fmt.Errorf("cannot get context from input: %v", err)
+	}
+
+	if err := verifyValidGroup(ctx, entityCtx); err != nil {
+		return nil, err
+	}
+
+	err = s.store.DeleteRuleType(ctx, in.GetId())
+	if err != nil {
+		if errors.Is(err, sql.ErrNoRows) {
+			return nil, status.Errorf(codes.NotFound, "rule type %d not found", in.GetId())
+		}
+		return nil, status.Errorf(codes.Unknown, "failed to delete rule type: %s", err)
+	}
+
+	return nil, nil
 }

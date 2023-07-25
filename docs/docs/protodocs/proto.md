@@ -164,6 +164,8 @@
     - [UpdatePasswordResponse](#mediator-v1-UpdatePasswordResponse)
     - [UpdateProfileRequest](#mediator-v1-UpdateProfileRequest)
     - [UpdateProfileResponse](#mediator-v1-UpdateProfileResponse)
+    - [UpdateRuleTypeRequest](#mediator-v1-UpdateRuleTypeRequest)
+    - [UpdateRuleTypeResponse](#mediator-v1-UpdateRuleTypeResponse)
     - [UserRecord](#mediator-v1-UserRecord)
     - [VerifyProviderTokenFromRequest](#mediator-v1-VerifyProviderTokenFromRequest)
     - [VerifyProviderTokenFromResponse](#mediator-v1-VerifyProviderTokenFromResponse)
@@ -670,7 +672,7 @@ DeleteRuleTypeRequest is the request to delete a rule type.
 | Field | Type | Label | Description |
 | ----- | ---- | ----- | ----------- |
 | context | [Context](#mediator-v1-Context) |  | context is the context in which the rule type is evaluated. |
-| id | [string](#string) |  | id is the id of the rule type to be deleted. |
+| id | [int32](#int32) |  | id is the id of the rule type to be deleted. |
 
 
 
@@ -1601,7 +1603,7 @@ GetRuleTypeByIdRequest is the request to get a rule type by id.
 | Field | Type | Label | Description |
 | ----- | ---- | ----- | ----------- |
 | context | [Context](#mediator-v1-Context) |  | context is the context in which the rule type is evaluated. |
-| id | [string](#string) |  | id is the id of the rule type. |
+| id | [int32](#int32) |  | id is the id of the rule type. |
 
 
 
@@ -2552,6 +2554,7 @@ The version is assumed from the folder&#39;s version.
 
 | Field | Type | Label | Description |
 | ----- | ---- | ----- | ----------- |
+| id | [int32](#int32) | optional | id is the id of the rule type. This is mostly optional and is set by the server. |
 | name | [string](#string) |  | name is the name of the rule type. |
 | context | [Context](#mediator-v1-Context) |  | context is the context in which the rule is evaluated. |
 | def | [RuleType.Definition](#mediator-v1-RuleType-Definition) |  | def is the definition of the rule type. |
@@ -2743,6 +2746,36 @@ This is used to fetch data from a REST endpoint.
 
 ### UpdateProfileResponse
 
+
+
+
+
+
+
+<a name="mediator-v1-UpdateRuleTypeRequest"></a>
+
+### UpdateRuleTypeRequest
+UpdateRuleTypeRequest is the request to update a rule type.
+
+
+| Field | Type | Label | Description |
+| ----- | ---- | ----- | ----------- |
+| rule_type | [RuleType](#mediator-v1-RuleType) |  | rule_type is the rule type to be updated. |
+
+
+
+
+
+
+<a name="mediator-v1-UpdateRuleTypeResponse"></a>
+
+### UpdateRuleTypeResponse
+UpdateRuleTypeResponse is the response to update a rule type.
+
+
+| Field | Type | Label | Description |
+| ----- | ---- | ----- | ----------- |
+| rule_type | [RuleType](#mediator-v1-RuleType) |  | rule_type is the rule type that was updated. |
 
 
 
@@ -2965,6 +2998,7 @@ manage Organizations CRUD
 | GetRuleTypeByName | [GetRuleTypeByNameRequest](#mediator-v1-GetRuleTypeByNameRequest) | [GetRuleTypeByNameResponse](#mediator-v1-GetRuleTypeByNameResponse) |  |
 | GetRuleTypeById | [GetRuleTypeByIdRequest](#mediator-v1-GetRuleTypeByIdRequest) | [GetRuleTypeByIdResponse](#mediator-v1-GetRuleTypeByIdResponse) |  |
 | CreateRuleType | [CreateRuleTypeRequest](#mediator-v1-CreateRuleTypeRequest) | [CreateRuleTypeResponse](#mediator-v1-CreateRuleTypeResponse) |  |
+| UpdateRuleType | [UpdateRuleTypeRequest](#mediator-v1-UpdateRuleTypeRequest) | [UpdateRuleTypeResponse](#mediator-v1-UpdateRuleTypeResponse) |  |
 | DeleteRuleType | [DeleteRuleTypeRequest](#mediator-v1-DeleteRuleTypeRequest) | [DeleteRuleTypeResponse](#mediator-v1-DeleteRuleTypeResponse) |  |
 
 

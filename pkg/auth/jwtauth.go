@@ -31,6 +31,7 @@ import (
 	"time"
 
 	"github.com/golang-jwt/jwt/v4"
+	"golang.org/x/exp/slices"
 	"google.golang.org/grpc/codes"
 	"google.golang.org/grpc/status"
 
@@ -295,4 +296,14 @@ func GetDefaultGroup(ctx context.Context) (int32, error) {
 		return 0, errors.New("cannot get default group")
 	}
 	return claims.GroupIds[0], nil
+}
+
+// IsAuthorizedForGroup returns true if the user is authorized for the given group
+func IsAuthorizedForGroup(ctx context.Context, groupId int32) bool {
+	claims, ok := ctx.Value(TokenInfoKey).(UserClaims)
+	if !ok {
+		return false
+	}
+
+	return slices.Contains(claims.GroupIds, groupId)
 }

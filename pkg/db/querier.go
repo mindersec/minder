@@ -20,6 +20,7 @@ type Querier interface {
 	CreatePolicyViolation(ctx context.Context, arg CreatePolicyViolationParams) (PolicyViolation, error)
 	CreateRepository(ctx context.Context, arg CreateRepositoryParams) (Repository, error)
 	CreateRole(ctx context.Context, arg CreateRoleParams) (Role, error)
+	CreateRuleType(ctx context.Context, arg CreateRuleTypeParams) (RuleType, error)
 	CreateSessionState(ctx context.Context, arg CreateSessionStateParams) (SessionStore, error)
 	CreateSigningKey(ctx context.Context, arg CreateSigningKeyParams) (SigningKey, error)
 	CreateUser(ctx context.Context, arg CreateUserParams) (User, error)
@@ -31,6 +32,7 @@ type Querier interface {
 	DeletePolicyType(ctx context.Context, policyType string) error
 	DeleteRepository(ctx context.Context, id int32) error
 	DeleteRole(ctx context.Context, id int32) error
+	DeleteRuleType(ctx context.Context, id int32) error
 	DeleteSessionState(ctx context.Context, id int32) error
 	DeleteSessionStateByGroupID(ctx context.Context, arg DeleteSessionStateByGroupIDParams) error
 	DeleteSigningKey(ctx context.Context, arg DeleteSigningKeyParams) error
@@ -61,6 +63,8 @@ type Querier interface {
 	GetRepositoryByRepoName(ctx context.Context, arg GetRepositoryByRepoNameParams) (Repository, error)
 	GetRoleByID(ctx context.Context, id int32) (Role, error)
 	GetRoleByName(ctx context.Context, arg GetRoleByNameParams) (Role, error)
+	GetRuleTypeByID(ctx context.Context, id int32) (RuleType, error)
+	GetRuleTypeByName(ctx context.Context, arg GetRuleTypeByNameParams) (RuleType, error)
 	GetSessionState(ctx context.Context, id int32) (SessionStore, error)
 	GetSessionStateByGroupID(ctx context.Context, grpID sql.NullInt32) (SessionStore, error)
 	GetSigningKeyByGroupID(ctx context.Context, groupID int32) (SigningKey, error)
@@ -79,6 +83,7 @@ type Querier interface {
 	ListRepositoriesByOwner(ctx context.Context, arg ListRepositoriesByOwnerParams) ([]Repository, error)
 	ListRoles(ctx context.Context, arg ListRolesParams) ([]Role, error)
 	ListRolesByGroupID(ctx context.Context, arg ListRolesByGroupIDParams) ([]Role, error)
+	ListRuleTypesByProviderAndGroup(ctx context.Context, arg ListRuleTypesByProviderAndGroupParams) ([]RuleType, error)
 	ListUsers(ctx context.Context, arg ListUsersParams) ([]User, error)
 	ListUsersByGroup(ctx context.Context, arg ListUsersByGroupParams) ([]User, error)
 	ListUsersByOrganization(ctx context.Context, arg ListUsersByOrganizationParams) ([]User, error)
@@ -93,6 +98,7 @@ type Querier interface {
 	UpdateRepository(ctx context.Context, arg UpdateRepositoryParams) (Repository, error)
 	UpdateRepositoryByID(ctx context.Context, arg UpdateRepositoryByIDParams) (Repository, error)
 	UpdateRole(ctx context.Context, arg UpdateRoleParams) (Role, error)
+	UpdateRuleType(ctx context.Context, arg UpdateRuleTypeParams) error
 	UpdateUser(ctx context.Context, arg UpdateUserParams) (User, error)
 }
 
