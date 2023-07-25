@@ -7,11 +7,15 @@ INSERT INTO projects (
     $1, $2, sqlc.arg(metadata)::jsonb
 ) RETURNING *;
 
+-- name: GetRootProjects :many
+SELECT * FROM projects
+WHERE parent_id IS NULL;
+
 -- name: GetProjectByID :one
-SELECT id, name, parent_id, metadata, created_at, updated_at FROM projects
+SELECT * FROM projects
 WHERE id = $1;
 
--- name: GetParents :many
+-- name: GetParentProjects :many
 WITH RECURSIVE get_parents AS (
     SELECT id, parent_id, created_at FROM projects 
     WHERE projects.id = $1
@@ -26,7 +30,7 @@ WITH RECURSIVE get_parents AS (
 )
 SELECT id FROM get_parents;
 
--- name: GetParentsUntil :many
+-- name: GetParentProjectsUntil :many
 WITH RECURSIVE get_parents_until AS (
     SELECT id, parent_id, created_at FROM projects 
     WHERE projects.id = $1
@@ -42,7 +46,7 @@ WITH RECURSIVE get_parents_until AS (
 )
 SELECT id FROM get_parents_until;
 
--- name: GetChildren :many
+-- name: GetChildrenProjects :many
 WITH RECURSIVE get_children AS (
     SELECT id, parent_id, created_at FROM projects 
     WHERE projects.id = $1
@@ -57,6 +61,7 @@ WITH RECURSIVE get_children AS (
 )
 SELECT id FROM get_children;
 
+
 -- name: DeleteProject :many
 WITH RECURSIVE get_children AS (
     SELECT id, parent_id FROM projects
@@ -64,7 +69,7 @@ WITH RECURSIVE get_children AS (
 
     UNION
 
-    SELECT p.id, d.parent_id FROM projects d
+    SELECT p.id, p.parent_id FROM projects p
     INNER JOIN get_children gc ON p.parent_id = gc.id
 )
 DELETE FROM projects

@@ -50,7 +50,7 @@ WITH RECURSIVE get_children AS (
 
     UNION
 
-    SELECT p.id, d.parent_id FROM projects d
+    SELECT p.id, p.parent_id FROM projects p
     INNER JOIN get_children gc ON p.parent_id = gc.id
 )
 DELETE FROM projects
@@ -97,7 +97,7 @@ func (q *Queries) DeleteProject(ctx context.Context, id uuid.UUID) ([]DeleteProj
 	return items, nil
 }
 
-const getChildren = `-- name: GetChildren :many
+const getChildrenProjects = `-- name: GetChildrenProjects :many
 WITH RECURSIVE get_children AS (
     SELECT id, parent_id, created_at FROM projects 
     WHERE projects.id = $1
@@ -113,8 +113,8 @@ WITH RECURSIVE get_children AS (
 SELECT id FROM get_children
 `
 
-func (q *Queries) GetChildren(ctx context.Context, id uuid.UUID) ([]uuid.UUID, error) {
-	rows, err := q.db.QueryContext(ctx, getChildren, id)
+func (q *Queries) GetChildrenProjects(ctx context.Context, id uuid.UUID) ([]uuid.UUID, error) {
+	rows, err := q.db.QueryContext(ctx, getChildrenProjects, id)
 	if err != nil {
 		return nil, err
 	}
@@ -136,7 +136,7 @@ func (q *Queries) GetChildren(ctx context.Context, id uuid.UUID) ([]uuid.UUID, e
 	return items, nil
 }
 
-const getParents = `-- name: GetParents :many
+const getParentProjects = `-- name: GetParentProjects :many
 WITH RECURSIVE get_parents AS (
     SELECT id, parent_id, created_at FROM projects 
     WHERE projects.id = $1
@@ -152,8 +152,8 @@ WITH RECURSIVE get_parents AS (
 SELECT id FROM get_parents
 `
 
-func (q *Queries) GetParents(ctx context.Context, id uuid.UUID) ([]uuid.UUID, error) {
-	rows, err := q.db.QueryContext(ctx, getParents, id)
+func (q *Queries) GetParentProjects(ctx context.Context, id uuid.UUID) ([]uuid.UUID, error) {
+	rows, err := q.db.QueryContext(ctx, getParentProjects, id)
 	if err != nil {
 		return nil, err
 	}
@@ -175,7 +175,7 @@ func (q *Queries) GetParents(ctx context.Context, id uuid.UUID) ([]uuid.UUID, er
 	return items, nil
 }
 
-const getParentsUntil = `-- name: GetParentsUntil :many
+const getParentProjectsUntil = `-- name: GetParentProjectsUntil :many
 WITH RECURSIVE get_parents_until AS (
     SELECT id, parent_id, created_at FROM projects 
     WHERE projects.id = $1
@@ -192,13 +192,13 @@ WITH RECURSIVE get_parents_until AS (
 SELECT id FROM get_parents_until
 `
 
-type GetParentsUntilParams struct {
+type GetParentProjectsUntilParams struct {
 	ID   uuid.UUID `json:"id"`
 	ID_2 uuid.UUID `json:"id_2"`
 }
 
-func (q *Queries) GetParentsUntil(ctx context.Context, arg GetParentsUntilParams) ([]uuid.UUID, error) {
-	rows, err := q.db.QueryContext(ctx, getParentsUntil, arg.ID, arg.ID_2)
+func (q *Queries) GetParentProjectsUntil(ctx context.Context, arg GetParentProjectsUntilParams) ([]uuid.UUID, error) {
+	rows, err := q.db.QueryContext(ctx, getParentProjectsUntil, arg.ID, arg.ID_2)
 	if err != nil {
 		return nil, err
 	}
@@ -221,29 +221,55 @@ func (q *Queries) GetParentsUntil(ctx context.Context, arg GetParentsUntilParams
 }
 
 const getProjectByID = `-- name: GetProjectByID :one
-SELECT id, name, parent_id, metadata, created_at, updated_at FROM projects
+SELECT id, name, metadata, parent_id, created_at, updated_at FROM projects
 WHERE id = $1
 `
 
-type GetProjectByIDRow struct {
-	ID        uuid.UUID       `json:"id"`
-	Name      string          `json:"name"`
-	ParentID  uuid.NullUUID   `json:"parent_id"`
-	Metadata  json.RawMessage `json:"metadata"`
-	CreatedAt time.Time       `json:"created_at"`
-	UpdatedAt time.Time       `json:"updated_at"`
-}
-
-func (q *Queries) GetProjectByID(ctx context.Context, id uuid.UUID) (GetProjectByIDRow, error) {
+func (q *Queries) GetProjectByID(ctx context.Context, id uuid.UUID) (Project, error) {
 	row := q.db.QueryRowContext(ctx, getProjectByID, id)
-	var i GetProjectByIDRow
+	var i Project
 	err := row.Scan(
 		&i.ID,
 		&i.Name,
-		&i.ParentID,
 		&i.Metadata,
+		&i.ParentID,
 		&i.CreatedAt,
 		&i.UpdatedAt,
 	)
 	return i, err
+}
+
+const getRootProjects = `-- name: GetRootProjects :many
+SELECT id, name, metadata, parent_id, created_at, updated_at FROM projects
+WHERE parent_id IS NULL
+`
+
+func (q *Queries) GetRootProjects(ctx context.Context) ([]Project, error) {
+	rows, err := q.db.QueryContext(ctx, getRootProjects)
+	if err != nil {
+		return nil, err
+	}
+	defer rows.Close()
+	items := []Project{}
+	for rows.Next() {
+		var i Project
+		if err := rows.Scan(
+			&i.ID,
+			&i.Name,
+			&i.Metadata,
+			&i.ParentID,
+			&i.CreatedAt,
+			&i.UpdatedAt,
+		); err != nil {
+			return nil, err
+		}
+		items = append(items, i)
+	}
+	if err := rows.Close(); err != nil {
+		return nil, err
+	}
+	if err := rows.Err(); err != nil {
+		return nil, err
+	}
+	return items, nil
 }
