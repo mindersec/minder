@@ -30,6 +30,8 @@ import (
 	"github.com/stacklok/mediator/internal/util"
 )
 
+const awsCredsProvider = "aws"
+
 // DatabaseConfig is the configuration for the database
 type DatabaseConfig struct {
 	Host          string `mapstructure:"dbhost"`
@@ -39,6 +41,12 @@ type DatabaseConfig struct {
 	Name          string `mapstructure:"dbname"`
 	SSLMode       string `mapstructure:"sslmode"`
 	EncryptionKey string `mapstructure:"encryption_key"`
+
+	// If set, use credentials from the specified cloud provider.
+	// Currently supported values are `aws`
+	CloudProviderCredentials string `mapstructure:"cloud_provider_credentials"`
+
+	AWSRegion string `mapstructure:"aws_region"`
 
 	// credential configuration from environment
 	credsOnce sync.Once
@@ -51,19 +59,26 @@ type DatabaseConfig struct {
 // returns the statically-configured password from DatabaseConfig if not in
 // a cloud environment.
 func (c *DatabaseConfig) getDBCreds(ctx context.Context) string {
-	cfg, err := config.LoadDefaultConfig(ctx)
-	if err != nil {
-		// May not be running on AWS, so skip
-		zerolog.Ctx(ctx).Warn().Err(err).Msg("Unable to load AWS config")
+	if c.CloudProviderCredentials == "" {
 		return c.Password
 	}
-	authToken, err := auth.BuildAuthToken(
-		ctx, fmt.Sprintf("%s:%d", c.Host, c.Port), "us-east-1", c.User, cfg.Credentials)
-	if err != nil {
-		zerolog.Ctx(ctx).Err(err).Msg("Unable to build auth token")
-		return c.Password
+	if c.CloudProviderCredentials == awsCredsProvider {
+		cfg, err := config.LoadDefaultConfig(ctx)
+		if err != nil {
+			// May not be running on AWS, so skip
+			zerolog.Ctx(ctx).Warn().Err(err).Msg("Unable to load AWS config")
+			return c.Password
+		}
+		authToken, err := auth.BuildAuthToken(
+			ctx, fmt.Sprintf("%s:%d", c.Host, c.Port), c.AWSRegion, c.User, cfg.Credentials)
+		if err != nil {
+			zerolog.Ctx(ctx).Err(err).Msg("Unable to build auth token")
+			return c.Password
+		}
+		return authToken
 	}
-	return authToken
+	zerolog.Ctx(ctx).Info().Msgf("Unrecoginized cloud provider %q, using password", c.CloudProviderCredentials)
+	return c.Password
 }
 
 // GetDBURI returns the database URI
