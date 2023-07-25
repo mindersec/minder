@@ -12,6 +12,18 @@
 -- See the License for the specific language governing permissions and
 -- limitations under the License.
 
+-- projects table
+-- TODO(jaosorior): We should look back at our primary key strategy. I
+-- chose to use UUIDs but we want to look at alternatives.
+CREATE TABLE projects (
+    id UUID NOT NULL DEFAULT gen_random_uuid() PRIMARY KEY,
+    name TEXT NOT NULL,
+    metadata JSONB NOT NULL,
+    parent_id UUID REFERENCES projects(id) ON DELETE CASCADE,
+    created_at TIMESTAMP NOT NULL DEFAULT NOW(),
+    updated_at TIMESTAMP NOT NULL DEFAULT NOW()
+);
+
 -- organizations table
 CREATE TABLE organizations (
     id SERIAL PRIMARY KEY,
@@ -173,6 +185,9 @@ CREATE TABLE rule_type (
     updated_at TIMESTAMP NOT NULL DEFAULT NOW()
 );
 
+-- Constraint to ensure we don't have a cycle in the project tree
+ALTER TABLE projects ADD CONSTRAINT parent_child_not_equal CHECK (id != parent_id);
+
 -- Unique constraint
 ALTER TABLE provider_access_tokens ADD CONSTRAINT unique_group_id UNIQUE (group_id);
 ALTER TABLE repositories ADD CONSTRAINT unique_repo_id UNIQUE (repo_id);
@@ -193,6 +208,9 @@ CREATE UNIQUE INDEX policies_group_id_policy_type_idx ON policies(provider, grou
 CREATE UNIQUE INDEX policy_types_idx ON policy_types(provider, policy_type);
 CREATE UNIQUE INDEX policy_status_idx ON policy_status(repository_id, policy_id);
 CREATE UNIQUE INDEX rule_type_idx ON rule_type(provider, group_id, name);
+
+-- Create default root project
+INSERT INTO projects (name, metadata) VALUES ('Root Project', '{}');
 
 -- Create default root organization
 

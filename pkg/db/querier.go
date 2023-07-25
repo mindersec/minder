@@ -7,6 +7,8 @@ package db
 import (
 	"context"
 	"database/sql"
+
+	"github.com/google/uuid"
 )
 
 type Querier interface {
@@ -18,6 +20,7 @@ type Querier interface {
 	CreateOrganization(ctx context.Context, arg CreateOrganizationParams) (Organization, error)
 	CreatePolicy(ctx context.Context, arg CreatePolicyParams) (Policy, error)
 	CreatePolicyViolation(ctx context.Context, arg CreatePolicyViolationParams) (PolicyViolation, error)
+	CreateProject(ctx context.Context, arg CreateProjectParams) (Project, error)
 	CreateRepository(ctx context.Context, arg CreateRepositoryParams) (Repository, error)
 	CreateRole(ctx context.Context, arg CreateRoleParams) (Role, error)
 	CreateRuleType(ctx context.Context, arg CreateRuleTypeParams) (RuleType, error)
@@ -30,6 +33,7 @@ type Querier interface {
 	DeleteOrganization(ctx context.Context, id int32) error
 	DeletePolicy(ctx context.Context, id int32) error
 	DeletePolicyType(ctx context.Context, policyType string) error
+	DeleteProject(ctx context.Context, id uuid.UUID) ([]DeleteProjectRow, error)
 	DeleteRepository(ctx context.Context, id int32) error
 	DeleteRole(ctx context.Context, id int32) error
 	DeleteRuleType(ctx context.Context, id int32) error
@@ -40,12 +44,15 @@ type Querier interface {
 	GetAccessTokenByGroupID(ctx context.Context, arg GetAccessTokenByGroupIDParams) (ProviderAccessToken, error)
 	GetAccessTokenByProvider(ctx context.Context, provider string) ([]ProviderAccessToken, error)
 	GetAccessTokenSinceDate(ctx context.Context, arg GetAccessTokenSinceDateParams) (ProviderAccessToken, error)
+	GetChildrenProjects(ctx context.Context, id uuid.UUID) ([]uuid.UUID, error)
 	GetGroupByID(ctx context.Context, id int32) (Group, error)
 	GetGroupByName(ctx context.Context, name string) (Group, error)
 	GetGroupIDPortBySessionState(ctx context.Context, sessionState string) (GetGroupIDPortBySessionStateRow, error)
 	GetOrganization(ctx context.Context, id int32) (Organization, error)
 	GetOrganizationByName(ctx context.Context, name string) (Organization, error)
 	GetOrganizationForUpdate(ctx context.Context, name string) (Organization, error)
+	GetParentProjects(ctx context.Context, id uuid.UUID) ([]uuid.UUID, error)
+	GetParentProjectsUntil(ctx context.Context, arg GetParentProjectsUntilParams) ([]uuid.UUID, error)
 	GetPoliciesByRepoAndType(ctx context.Context, arg GetPoliciesByRepoAndTypeParams) ([]GetPoliciesByRepoAndTypeRow, error)
 	GetPolicyByID(ctx context.Context, id int32) (GetPolicyByIDRow, error)
 	GetPolicyStatusByGroup(ctx context.Context, arg GetPolicyStatusByGroupParams) ([]GetPolicyStatusByGroupRow, error)
@@ -57,12 +64,14 @@ type Querier interface {
 	GetPolicyViolationsByGroup(ctx context.Context, arg GetPolicyViolationsByGroupParams) ([]GetPolicyViolationsByGroupRow, error)
 	GetPolicyViolationsById(ctx context.Context, arg GetPolicyViolationsByIdParams) ([]GetPolicyViolationsByIdRow, error)
 	GetPolicyViolationsByRepositoryId(ctx context.Context, arg GetPolicyViolationsByRepositoryIdParams) ([]GetPolicyViolationsByRepositoryIdRow, error)
+	GetProjectByID(ctx context.Context, id uuid.UUID) (Project, error)
 	GetRepositoryByID(ctx context.Context, id int32) (Repository, error)
 	GetRepositoryByIDAndGroup(ctx context.Context, arg GetRepositoryByIDAndGroupParams) (Repository, error)
 	GetRepositoryByRepoID(ctx context.Context, arg GetRepositoryByRepoIDParams) (Repository, error)
 	GetRepositoryByRepoName(ctx context.Context, arg GetRepositoryByRepoNameParams) (Repository, error)
 	GetRoleByID(ctx context.Context, id int32) (Role, error)
 	GetRoleByName(ctx context.Context, arg GetRoleByNameParams) (Role, error)
+	GetRootProjects(ctx context.Context) ([]Project, error)
 	GetRuleTypeByID(ctx context.Context, id int32) (RuleType, error)
 	GetRuleTypeByName(ctx context.Context, arg GetRuleTypeByNameParams) (RuleType, error)
 	GetSessionState(ctx context.Context, id int32) (SessionStore, error)
