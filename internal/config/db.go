@@ -16,15 +16,21 @@
 package config
 
 import (
+	"context"
 	"database/sql"
 	"fmt"
-	"log"
+	"sync"
 
+	"github.com/aws/aws-sdk-go-v2/config"
+	"github.com/aws/aws-sdk-go-v2/feature/rds/auth"
+	"github.com/rs/zerolog"
 	"github.com/spf13/pflag"
 	"github.com/spf13/viper"
 
 	"github.com/stacklok/mediator/internal/util"
 )
+
+const awsCredsProvider = "aws"
 
 // DatabaseConfig is the configuration for the database
 type DatabaseConfig struct {
@@ -35,17 +41,62 @@ type DatabaseConfig struct {
 	Name          string `mapstructure:"dbname"`
 	SSLMode       string `mapstructure:"sslmode"`
 	EncryptionKey string `mapstructure:"encryption_key"`
+
+	// If set, use credentials from the specified cloud provider.
+	// Currently supported values are `aws`
+	CloudProviderCredentials string `mapstructure:"cloud_provider_credentials"`
+
+	AWSRegion string `mapstructure:"aws_region"`
+
+	// credential configuration from environment
+	credsOnce sync.Once
+
+	// connection string
+	connString string
+}
+
+// getDBCreds fetches the database credentials from the AWS environment or
+// returns the statically-configured password from DatabaseConfig if not in
+// a cloud environment.
+func (c *DatabaseConfig) getDBCreds(ctx context.Context) string {
+	if c.CloudProviderCredentials == "" {
+		return c.Password
+	}
+	if c.CloudProviderCredentials == awsCredsProvider {
+		cfg, err := config.LoadDefaultConfig(ctx)
+		if err != nil {
+			// May not be running on AWS, so skip
+			zerolog.Ctx(ctx).Warn().Err(err).Msg("Unable to load AWS config")
+			return c.Password
+		}
+		authToken, err := auth.BuildAuthToken(
+			ctx, fmt.Sprintf("%s:%d", c.Host, c.Port), c.AWSRegion, c.User, cfg.Credentials)
+		if err != nil {
+			zerolog.Ctx(ctx).Err(err).Msg("Unable to build auth token")
+			return c.Password
+		}
+		return authToken
+	}
+	zerolog.Ctx(ctx).Info().Msgf("Unrecoginized cloud provider %q, using password", c.CloudProviderCredentials)
+	return c.Password
 }
 
 // GetDBURI returns the database URI
-func (c *DatabaseConfig) GetDBURI() string {
-	return fmt.Sprintf("postgres://%s:%s@%s:%d/%s?sslmode=%s",
-		c.User, c.Password, c.Host, c.Port, c.Name, c.SSLMode)
+func (c *DatabaseConfig) GetDBURI(ctx context.Context) string {
+	c.credsOnce.Do(func() {
+		authToken := c.getDBCreds(ctx)
+
+		c.connString = fmt.Sprintf("postgres://%s:%s@%s:%d/%s?sslmode=%s",
+			c.User, authToken, c.Host, c.Port, c.Name, c.SSLMode)
+	})
+
+	return c.connString
 }
 
 // GetDBConnection returns a connection to the database
-func (c *DatabaseConfig) GetDBConnection() (*sql.DB, string, error) {
-	conn, err := sql.Open("postgres", c.GetDBURI())
+func (c *DatabaseConfig) GetDBConnection(ctx context.Context) (*sql.DB, string, error) {
+	uri := c.GetDBURI(ctx)
+	conn, err := sql.Open("postgres", uri)
 	if err != nil {
 		return nil, "", err
 	}
@@ -57,8 +108,8 @@ func (c *DatabaseConfig) GetDBConnection() (*sql.DB, string, error) {
 		return nil, "", err
 	}
 
-	log.Println("Connected to DB")
-	return conn, c.GetDBURI(), err
+	zerolog.Ctx(ctx).Info().Msg("Connected to DB")
+	return conn, uri, err
 }
 
 // RegisterDatabaseFlags registers the flags for the database configuration

@@ -17,6 +17,7 @@
 package app
 
 import (
+	"context"
 	"errors"
 	"fmt"
 	"os"
@@ -42,7 +43,7 @@ var upCmd = &cobra.Command{
 		}
 
 		// Database configuration
-		dbConn, connString, err := cfg.Database.GetDBConnection()
+		dbConn, connString, err := cfg.Database.GetDBConnection(context.Background())
 		if err != nil {
 			return fmt.Errorf("unable to connect to database: %w", err)
 		}
