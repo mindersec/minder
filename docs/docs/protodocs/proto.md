@@ -135,6 +135,12 @@
     - [PolicyRepoStatus](#mediator-v1-PolicyRepoStatus)
     - [PolicyTypeRecord](#mediator-v1-PolicyTypeRecord)
     - [PolicyViolation](#mediator-v1-PolicyViolation)
+    - [Provider](#mediator-v1-Provider)
+    - [Provider.Context](#mediator-v1-Provider-Context)
+    - [Provider.Definition](#mediator-v1-Provider-Definition)
+    - [Provider.Definition.Auth](#mediator-v1-Provider-Definition-Auth)
+    - [Provider.Definition.Auth.OAuth2](#mediator-v1-Provider-Definition-Auth-OAuth2)
+    - [Provider.Definition.ClientTypes](#mediator-v1-Provider-Definition-ClientTypes)
     - [RefreshTokenRequest](#mediator-v1-RefreshTokenRequest)
     - [RefreshTokenResponse](#mediator-v1-RefreshTokenResponse)
     - [RegisterRepositoryRequest](#mediator-v1-RegisterRepositoryRequest)
@@ -172,6 +178,9 @@
     - [VerifyRequest](#mediator-v1-VerifyRequest)
     - [VerifyResponse](#mediator-v1-VerifyResponse)
   
+    - [Entity](#mediator-v1-Entity)
+    - [Provider.Definition.Auth.Type](#mediator-v1-Provider-Definition-Auth-Type)
+    - [Provider.Definition.ClientTypes.Type](#mediator-v1-Provider-Definition-ClientTypes-Type)
     - [RepoFilter](#mediator-v1-RepoFilter)
   
     - [AuthService](#mediator-v1-AuthService)
@@ -2292,6 +2301,115 @@ get policy violation details
 
 
 
+<a name="mediator-v1-Provider"></a>
+
+### Provider
+Provider defines a provider that is used to connect to a certain service.
+This is used to define the context in which a rule is evaluated and serves
+as a data ingestion point. They are top level entities and are scoped to
+an organization.
+
+
+| Field | Type | Label | Description |
+| ----- | ---- | ----- | ----------- |
+| name | [string](#string) |  |  |
+| context | [Provider.Context](#mediator-v1-Provider-Context) |  |  |
+| def | [Provider.Definition](#mediator-v1-Provider-Definition) |  |  |
+
+
+
+
+
+
+<a name="mediator-v1-Provider-Context"></a>
+
+### Provider.Context
+Context defines the context in which a provider is evaluated.
+Given thta a provider is a top level entity, it may only be scoped to
+an organization.
+
+
+| Field | Type | Label | Description |
+| ----- | ---- | ----- | ----------- |
+| organization | [string](#string) |  |  |
+| group | [string](#string) |  |  |
+
+
+
+
+
+
+<a name="mediator-v1-Provider-Definition"></a>
+
+### Provider.Definition
+Definition defines the definition of the provider.
+This is used to define the connection to the provider.
+
+
+| Field | Type | Label | Description |
+| ----- | ---- | ----- | ----------- |
+| endpoint | [string](#string) |  |  |
+| auth | [Provider.Definition.Auth](#mediator-v1-Provider-Definition-Auth) |  |  |
+| client_types | [Provider.Definition.ClientTypes](#mediator-v1-Provider-Definition-ClientTypes) |  | ClientTypes defines the client types that are supported by the provider. |
+| entities | [Entity](#mediator-v1-Entity) | repeated | entities defines the entities that are supported by the provider. |
+
+
+
+
+
+
+<a name="mediator-v1-Provider-Definition-Auth"></a>
+
+### Provider.Definition.Auth
+Auth defines the authentication mechanism to be used.
+
+
+| Field | Type | Label | Description |
+| ----- | ---- | ----- | ----------- |
+| type | [Provider.Definition.Auth.Type](#mediator-v1-Provider-Definition-Auth-Type) |  |  |
+| oauth2 | [Provider.Definition.Auth.OAuth2](#mediator-v1-Provider-Definition-Auth-OAuth2) | optional |  |
+
+
+
+
+
+
+<a name="mediator-v1-Provider-Definition-Auth-OAuth2"></a>
+
+### Provider.Definition.Auth.OAuth2
+OAuth2 defines the OAuth2 authentication mechanism.
+
+
+| Field | Type | Label | Description |
+| ----- | ---- | ----- | ----------- |
+| client_id | [string](#string) |  |  |
+| client_secret | [string](#string) |  |  |
+| redirect_uri | [string](#string) |  |  |
+| auth_url | [string](#string) |  |  |
+| token_url | [string](#string) |  |  |
+| scope | [string](#string) |  |  |
+
+
+
+
+
+
+<a name="mediator-v1-Provider-Definition-ClientTypes"></a>
+
+### Provider.Definition.ClientTypes
+ClientTypes defines the client types that are supported by the provider.
+This is used to define the types of clients that are supported by the provider.
+
+
+| Field | Type | Label | Description |
+| ----- | ---- | ----- | ----------- |
+| types | [Provider.Definition.ClientTypes.Type](#mediator-v1-Provider-Definition-ClientTypes-Type) | repeated |  |
+
+
+
+
+
+
 <a name="mediator-v1-RefreshTokenRequest"></a>
 
 ### RefreshTokenRequest
@@ -2864,6 +2982,47 @@ user record to be returned
 
 
  
+
+
+<a name="mediator-v1-Entity"></a>
+
+### Entity
+Entity defines the entity that is supported by the provider.
+
+| Name | Number | Description |
+| ---- | ------ | ----------- |
+| ENTITY_UNSPECIFIED | 0 |  |
+| ENTITY_REPOSITORIES | 1 |  |
+| ENTITY_BUILD_ENVIRONMENTS | 2 |  |
+| ENTITY_ARTIFACTS | 3 |  |
+
+
+
+<a name="mediator-v1-Provider-Definition-Auth-Type"></a>
+
+### Provider.Definition.Auth.Type
+
+
+| Name | Number | Description |
+| ---- | ------ | ----------- |
+| TYPE_UNSPECIFIED | 0 |  |
+| TYPE_OAUTH2 | 1 | TYPE_OAUTH2 defines the OAuth2 authentication mechanism.
+
+These are left as references of what we could implement BASIC = 2; TOKEN = 3; |
+
+
+
+<a name="mediator-v1-Provider-Definition-ClientTypes-Type"></a>
+
+### Provider.Definition.ClientTypes.Type
+Type defines the type of client that is supported by the provider.
+
+| Name | Number | Description |
+| ---- | ------ | ----------- |
+| TYPE_UNSPECIFIED | 0 |  |
+| TYPE_REST | 1 |  |
+| TYPE_GRAPHQL | 2 |  |
+
 
 
 <a name="mediator-v1-RepoFilter"></a>

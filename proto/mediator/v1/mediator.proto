@@ -1360,6 +1360,88 @@ message CreateKeyPairResponse {
     string public_key = 2;
 }
 
+// Entity defines the entity that is supported by the provider.
+enum Entity {
+    ENTITY_UNSPECIFIED = 0;
+    ENTITY_REPOSITORIES = 1;
+    ENTITY_BUILD_ENVIRONMENTS = 2;
+    ENTITY_ARTIFACTS = 3;
+}
+
+
+// Provider defines a provider that is used to connect to a certain service.
+// This is used to define the context in which a rule is evaluated and serves
+// as a data ingestion point. They are top level entities and are scoped to
+// an organization.
+message Provider {
+    string name = 1;
+
+    // Context defines the context in which a provider is evaluated.
+    // Given thta a provider is a top level entity, it may only be scoped to
+    // an organization.
+    message Context {
+        string organization = 1;
+        string group = 2;
+    }
+
+    Context context = 2;
+
+    // Definition defines the definition of the provider.
+    // This is used to define the connection to the provider.
+    message Definition {
+        string endpoint = 1;
+
+        // Auth defines the authentication mechanism to be used.
+        message Auth {
+            enum Type {
+                TYPE_UNSPECIFIED = 0;
+                // TYPE_OAUTH2 defines the OAuth2 authentication mechanism.
+                TYPE_OAUTH2 = 1;
+                // These are left as references of what we could implement
+                // BASIC = 2;
+                // TOKEN = 3;
+            }
+
+            Type type = 1;
+
+            // OAuth2 defines the OAuth2 authentication mechanism.
+            message OAuth2 {
+                string client_id = 1;
+                string client_secret = 2;
+                string redirect_uri = 3;
+                string auth_url = 4;
+                string token_url = 5;
+                string scope = 6;
+            }
+
+            optional OAuth2 oauth2 = 2;
+        }
+
+        Auth auth = 2;
+
+        // ClientTypes defines the client types that are supported by the provider.
+        // This is used to define the types of clients that are supported by the provider.
+        message ClientTypes {
+            // Type defines the type of client that is supported by the provider.
+            enum Type {
+                TYPE_UNSPECIFIED = 0;
+                TYPE_REST = 1;
+                TYPE_GRAPHQL = 2;
+            }
+
+            repeated Type types = 1;
+        }
+
+        // ClientTypes defines the client types that are supported by the provider.
+        ClientTypes client_types = 3;
+
+        // entities defines the entities that are supported by the provider.
+        repeated Entity entities = 4;
+    }
+
+    Definition def = 3;
+}
+
 // Context defines the context in which a rule is evaluated.
 // this normally refers to a combination of the provider, organization and group.
 message Context {
