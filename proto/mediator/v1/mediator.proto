@@ -463,6 +463,44 @@ service PolicyService {
             get: "/api/v1/policy_violations/repository/{repository_id}"
             };    
     }    
+
+    rpc ListRuleTypes (ListRuleTypesRequest) returns (ListRuleTypesResponse) {
+        option (google.api.http) = {
+            get: "/api/v1/rule_types"
+            };    
+    }
+
+    rpc GetRuleTypeByName (GetRuleTypeByNameRequest) returns (GetRuleTypeByNameResponse) {
+        option (google.api.http) = {
+            get: "/api/v1/rule_type/name/{name}"
+            };    
+    }
+
+    rpc GetRuleTypeById (GetRuleTypeByIdRequest) returns (GetRuleTypeByIdResponse) {
+        option (google.api.http) = {
+            get: "/api/v1/rule_type/{id}"
+            };    
+    }
+
+    rpc CreateRuleType (CreateRuleTypeRequest) returns (CreateRuleTypeResponse) {
+        option (google.api.http) = {
+            post: "/api/v1/rule_type"
+            body: "*"
+        };
+    }
+
+    rpc UpdateRuleType (UpdateRuleTypeRequest) returns (UpdateRuleTypeResponse) {
+        option (google.api.http) = {
+            put: "/api/v1/rule_type"
+            body: "*"
+        };
+    }
+
+    rpc DeleteRuleType (DeleteRuleTypeRequest) returns (DeleteRuleTypeResponse) {
+        option (google.api.http) = {
+            delete: "/api/v1/rule_type/{id}"
+        };
+    }
 }
 
 service KeyService {
@@ -1322,6 +1360,88 @@ message CreateKeyPairResponse {
     string public_key = 2;
 }
 
+// Entity defines the entity that is supported by the provider.
+enum Entity {
+    ENTITY_UNSPECIFIED = 0;
+    ENTITY_REPOSITORIES = 1;
+    ENTITY_BUILD_ENVIRONMENTS = 2;
+    ENTITY_ARTIFACTS = 3;
+}
+
+
+// Provider defines a provider that is used to connect to a certain service.
+// This is used to define the context in which a rule is evaluated and serves
+// as a data ingestion point. They are top level entities and are scoped to
+// an organization.
+message Provider {
+    string name = 1;
+
+    // Context defines the context in which a provider is evaluated.
+    // Given thta a provider is a top level entity, it may only be scoped to
+    // an organization.
+    message Context {
+        string organization = 1;
+        string group = 2;
+    }
+
+    Context context = 2;
+
+    // Definition defines the definition of the provider.
+    // This is used to define the connection to the provider.
+    message Definition {
+        string endpoint = 1;
+
+        // Auth defines the authentication mechanism to be used.
+        message Auth {
+            enum Type {
+                TYPE_UNSPECIFIED = 0;
+                // TYPE_OAUTH2 defines the OAuth2 authentication mechanism.
+                TYPE_OAUTH2 = 1;
+                // These are left as references of what we could implement
+                // BASIC = 2;
+                // TOKEN = 3;
+            }
+
+            Type type = 1;
+
+            // OAuth2 defines the OAuth2 authentication mechanism.
+            message OAuth2 {
+                string client_id = 1;
+                string client_secret = 2;
+                string redirect_uri = 3;
+                string auth_url = 4;
+                string token_url = 5;
+                string scope = 6;
+            }
+
+            optional OAuth2 oauth2 = 2;
+        }
+
+        Auth auth = 2;
+
+        // ClientTypes defines the client types that are supported by the provider.
+        // This is used to define the types of clients that are supported by the provider.
+        message ClientTypes {
+            // Type defines the type of client that is supported by the provider.
+            enum Type {
+                TYPE_UNSPECIFIED = 0;
+                TYPE_REST = 1;
+                TYPE_GRAPHQL = 2;
+            }
+
+            repeated Type types = 1;
+        }
+
+        // ClientTypes defines the client types that are supported by the provider.
+        ClientTypes client_types = 3;
+
+        // entities defines the entities that are supported by the provider.
+        repeated Entity entities = 4;
+    }
+
+    Definition def = 3;
+}
+
 // Context defines the context in which a rule is evaluated.
 // this normally refers to a combination of the provider, organization and group.
 message Context {
@@ -1330,36 +1450,171 @@ message Context {
     optional string group = 3;
 }
 
+// --- START RuleType CRUD definitions
+
+// ListRuleTypesRequest is the request to list rule types.
+message ListRuleTypesRequest {
+    // context is the context in which the rule types are evaluated.
+    Context context = 1;
+}
+
+// ListRuleTypesResponse is the response to list rule types.
+message ListRuleTypesResponse {
+    // rule_types is the list of rule types.
+    repeated RuleType rule_types = 1;
+}
+
+// GetRuleTypeByNameRequest is the request to get a rule type by name.
+message GetRuleTypeByNameRequest {
+    // context is the context in which the rule type is evaluated.
+    Context context = 1;
+    // name is the name of the rule type.
+    string name = 2;
+}
+
+// GetRuleTypeByNameResponse is the response to get a rule type by name.
+message GetRuleTypeByNameResponse {
+    // rule_type is the rule type.
+    RuleType rule_type = 1;
+}
+
+// GetRuleTypeByIdRequest is the request to get a rule type by id.
+message GetRuleTypeByIdRequest {
+    // context is the context in which the rule type is evaluated.
+    Context context = 1;
+    // id is the id of the rule type.
+    int32 id = 2;
+}
+
+// GetRuleTypeByIdResponse is the response to get a rule type by id.
+message GetRuleTypeByIdResponse {
+    // rule_type is the rule type.
+    RuleType rule_type = 1;
+}
+
+// CreateRuleTypeRequest is the request to create a rule type.
+message CreateRuleTypeRequest {
+    // rule_type is the rule type to be created.
+    RuleType rule_type = 1;
+}
+
+// CreateRuleTypeResponse is the response to create a rule type.
+message CreateRuleTypeResponse {
+    // rule_type is the rule type that was created.
+    RuleType rule_type = 1;
+}
+
+// UpdateRuleTypeRequest is the request to update a rule type.
+message UpdateRuleTypeRequest {
+    // rule_type is the rule type to be updated.
+    RuleType rule_type = 2;
+}
+
+// UpdateRuleTypeResponse is the response to update a rule type.
+message UpdateRuleTypeResponse {
+    // rule_type is the rule type that was updated.
+    RuleType rule_type = 1;
+}
+
+// DeleteRuleTypeRequest is the request to delete a rule type.
+message DeleteRuleTypeRequest {
+    // context is the context in which the rule type is evaluated.
+    Context context = 1;
+    // id is the id of the rule type to be deleted.
+    int32 id = 2;
+}
+
+// DeleteRuleTypeResponse is the response to delete a rule type.
+message DeleteRuleTypeResponse {
+}
+
+// --- END RuleType CRUD definitions
+
 // RuleType defines rules that may or may not be user defined.
 // The version is assumed from the folder's version.
- message RuleType {
-     string name = 1;
-     Context context = 2;
-     message Definition {
-         string in_entity = 1;
-         map<string, google.protobuf.Struct> rule_schema = 2;
-         message DataEval {
-             // We currently only support REST
-             string type = 1;
-             message RestType {
-                 string endpoint = 1;
-                 string method = 2;
-                 repeated string headers = 3;
-                 optional string body = 4;
-                 string parse = 5;
-             }
-             optional RestType rest = 3;
-             string key_type = 4;
-             message DataEvalDef {
-                 string type = 1;
-                 string def = 2;
-             }
-             map<string, DataEvalDef> data = 5;
-         }
-         DataEval data_eval = 3;
-     }
-     Definition def = 3;
- }
+message RuleType {
+    // id is the id of the rule type.
+    // This is mostly optional and is set by the server.
+    optional int32 id = 1;
+
+    // name is the name of the rule type.
+    string name = 2;
+
+    // context is the context in which the rule is evaluated.
+    Context context = 3;
+
+    // Definition defines the rule type. It encompases the schema and the data evaluation.
+    message Definition {
+        // in_entity is the entity in which the rule is evaluated.
+        // This can be repository, build_environment or artifact.
+        string in_entity = 1;
+
+        // rule_schema is the schema of the rule. This is expressed in JSON Schema.
+        map<string, google.protobuf.Struct> rule_schema = 2;
+
+        // DataEval defines how the data is evaluated.
+        message DataEval {
+            // type is the type of the data evaluation.
+            // we currently support rest.
+            string type = 1;
+
+            // RestType defines the rest data evaluation.
+            // This is used to fetch data from a REST endpoint.
+            message RestType {
+                // endpoint is the endpoint to fetch data from.
+                // This can be a URL or the path on the API.bool
+                // This is a required field and must be set.
+                // This is also evaluated via a template which allows
+                // us dynamically fill in the values.
+                string endpoint = 1;
+
+                // method is the method to use to fetch data.
+                string method = 2;
+
+                // headers are the headers to be sent to the endpoint.
+                repeated string headers = 3;
+
+                // body is the body to be sent to the endpoint.
+                optional string body = 4;
+
+                // parse is the parsing mechanism to be used to parse the data.
+                string parse = 5;
+            }
+
+            // rest is the rest data evaluation.
+            // this is only used if the type is rest.
+            optional RestType rest = 3;
+
+            // key_type is the type of the key for each data item.
+            // This is used to index the data.
+            // Currently only `jq` is supported.
+            string key_type = 4;
+
+            // DataEvalDef defines the data evaluation definition.
+            // This pertains to the way we traverse data from the upstream
+            // endpoint and how we compare it to the rule.
+            // the type is the way we traverse and evaluate the data from the
+            // upstream endpoint. The def is the definition of the data evaluation.
+            // e.g. the actual jq expression.
+            message DataEvalDef {
+                // type is the type of the data evaluation.
+                string type = 1;
+
+                // def is the definition of the data evaluation.
+                string def = 2;
+            }
+
+            // data is the data evaluation definition.
+            // each key is a piece of data coming from the policy
+            // to be evaluated. The value is the definition of the data evaluation.
+            map<string, DataEvalDef> data = 5;
+        }
+        DataEval data_eval = 3;
+    }
+
+    // def is the definition of the rule type.
+    Definition def = 4;
+}
 
  // PipelinePolicy defines a policy that is user defined.
  message PipelinePolicy {

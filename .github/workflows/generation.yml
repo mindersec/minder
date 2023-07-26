@@ -34,18 +34,17 @@ jobs:
       # Lint your Protobuf sources
       - uses: bufbuild/buf-lint-action@v1
 
-  proto-breaking-changes:
-    runs-on: ubuntu-latest
-    # TODO(JAORMX): remove this once we declare our protobuf to be stable.
-    continue-on-error: true
-    steps:
-      - uses: actions/checkout@v3
-      - uses: bufbuild/buf-setup-action@v1
-        with:
-          github_token: ${{ secrets.GITHUB_TOKEN }}
-      - uses: bufbuild/buf-breaking-action@v1
-        with:
-          against: "https://github.com/stacklok/mediator.git#branch=main"
+  # TODO(jaosorior): Re-enable this once we have a stable API.
+  # proto-breaking-changes:
+  #   runs-on: ubuntu-latest
+  #   steps:
+  #     - uses: actions/checkout@v3
+  #     - uses: bufbuild/buf-setup-action@v1
+  #       with:
+  #         github_token: ${{ secrets.GITHUB_TOKEN }}
+  #     - uses: bufbuild/buf-breaking-action@v1
+  #       with:
+  #         against: "https://github.com/stacklok/mediator.git#branch=main"
 
   sqlc-generation:
     runs-on: ubuntu-latest

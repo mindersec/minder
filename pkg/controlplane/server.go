@@ -24,7 +24,7 @@ import (
 	"time"
 
 	"github.com/grpc-ecosystem/grpc-gateway/v2/runtime"
-	_ "github.com/lib/pq" // nolint
+	_ "github.com/lib/pq" // This is required for the postgres driver
 	"github.com/prometheus/client_golang/prometheus/promhttp"
 	"go.opentelemetry.io/contrib/instrumentation/google.golang.org/grpc/otelgrpc"
 	"go.opentelemetry.io/otel"
@@ -39,8 +39,6 @@ import (
 	"google.golang.org/grpc"
 	"google.golang.org/grpc/credentials/insecure"
 	"google.golang.org/grpc/reflection"
-
-	_ "github.com/lib/pq" // nolint
 
 	"github.com/stacklok/mediator/internal/config"
 	"github.com/stacklok/mediator/internal/events"
@@ -149,14 +147,11 @@ func (s *Server) StartGRPCServer(ctx context.Context) error {
 		log.Fatalf("failed to listen: %v", err)
 	}
 
-	log.Println("Initializing logger in level: " + s.cfg.LoggingConfig.Level)
-
 	// add logger and tracing (if enabled)
 	interceptors := []grpc.UnaryServerInterceptor{
 		// TODO: this has no test coverage!
 		util.SanitizingInterceptor(),
-		logger.Interceptor(s.cfg.LoggingConfig.Level,
-			s.cfg.LoggingConfig.Format, s.cfg.LoggingConfig.LogFile),
+		logger.Interceptor(),
 		AuthUnaryInterceptor,
 	}
 	otelGRPCOpts := s.getOTELGRPCInterceptorOpts()

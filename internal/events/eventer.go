@@ -24,10 +24,11 @@ import (
 	"runtime"
 	"time"
 
-	"github.com/ThreeDotsLabs/watermill"
 	"github.com/ThreeDotsLabs/watermill/message"
 	"github.com/ThreeDotsLabs/watermill/message/router/middleware"
 	"github.com/ThreeDotsLabs/watermill/pubsub/gochannel"
+	"github.com/alexdrl/zerowater"
+	"github.com/rs/zerolog"
 )
 
 // Handler is an alias for the watermill handler type, which is both wordy and may be
@@ -73,7 +74,8 @@ var _ message.Publisher = (*Eventer)(nil)
 // Setup creates an Eventer object which isolates the watermill setup code
 // TODO: pass in logger
 func Setup() (*Eventer, error) {
-	l := watermill.NewStdLogger(false, false)
+	l := zerowater.NewZerologLoggerAdapter(
+		zerolog.Ctx(context.TODO()).With().Str("component", "watermill").Logger())
 	// TODO: parameterize CloseTimeout for testing
 	router, err := message.NewRouter(message.RouterConfig{CloseTimeout: time.Second * 10}, l)
 	if err != nil {

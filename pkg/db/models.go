@@ -10,6 +10,8 @@ import (
 	"encoding/json"
 	"fmt"
 	"time"
+
+	"github.com/google/uuid"
 )
 
 type PolicyStatusTypes string
@@ -109,6 +111,15 @@ type PolicyViolation struct {
 	CreatedAt    time.Time       `json:"created_at"`
 }
 
+type Project struct {
+	ID        uuid.UUID       `json:"id"`
+	Name      string          `json:"name"`
+	Metadata  json.RawMessage `json:"metadata"`
+	ParentID  uuid.NullUUID   `json:"parent_id"`
+	CreatedAt time.Time       `json:"created_at"`
+	UpdatedAt time.Time       `json:"updated_at"`
+}
+
 type ProviderAccessToken struct {
 	ID             int32     `json:"id"`
 	Provider       string    `json:"provider"`
@@ -144,6 +155,16 @@ type Role struct {
 	IsProtected    bool          `json:"is_protected"`
 	CreatedAt      time.Time     `json:"created_at"`
 	UpdatedAt      time.Time     `json:"updated_at"`
+}
+
+type RuleType struct {
+	ID         int32           `json:"id"`
+	Name       string          `json:"name"`
+	Provider   string          `json:"provider"`
+	GroupID    int32           `json:"group_id"`
+	Definition json.RawMessage `json:"definition"`
+	CreatedAt  time.Time       `json:"created_at"`
+	UpdatedAt  time.Time       `json:"updated_at"`
 }
 
 type SessionStore struct {

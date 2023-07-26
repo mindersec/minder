@@ -1,0 +1,15 @@
+---
+exit-code: 1
+severity:
+  # Same as '--severity'
+  # Default is 'UNKNOWN,LOW,MEDIUM,HIGH,CRITICAL'
+  - HIGH
+  - CRITICAL
+scan:
+  # Same as '--skip-dirs'
+  # Default is empty
+  skip-dirs:
+    - docs/
+  security-checks:
+    - vuln
+    - secret

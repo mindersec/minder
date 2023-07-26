@@ -12,6 +12,18 @@
 -- See the License for the specific language governing permissions and
 -- limitations under the License.
 
+-- projects table
+-- TODO(jaosorior): We should look back at our primary key strategy. I
+-- chose to use UUIDs but we want to look at alternatives.
+CREATE TABLE projects (
+    id UUID NOT NULL DEFAULT gen_random_uuid() PRIMARY KEY,
+    name TEXT NOT NULL,
+    metadata JSONB NOT NULL,
+    parent_id UUID REFERENCES projects(id) ON DELETE CASCADE,
+    created_at TIMESTAMP NOT NULL DEFAULT NOW(),
+    updated_at TIMESTAMP NOT NULL DEFAULT NOW()
+);
+
 -- organizations table
 CREATE TABLE organizations (
     id SERIAL PRIMARY KEY,
@@ -99,7 +111,7 @@ CREATE TABLE signing_keys (
 );
 
 -- repositories table
-create TABLE repositories (
+CREATE TABLE repositories (
     id SERIAL PRIMARY KEY,
     provider TEXT NOT NULL,
     group_id INTEGER NOT NULL REFERENCES groups(id) ON DELETE CASCADE,
@@ -115,7 +127,7 @@ create TABLE repositories (
     updated_at TIMESTAMP NOT NULL DEFAULT NOW()
 );
 
-create TABLE session_store (
+CREATE TABLE session_store (
     id SERIAL PRIMARY KEY,
     provider TEXT NOT NULL,
     grp_id INTEGER,
@@ -125,7 +137,7 @@ create TABLE session_store (
 );
 
 -- policy type
-create table policy_types (
+CREATE TABLE policy_types (
     id SERIAL PRIMARY KEY,
     provider TEXT NOT NULL,
     policy_type VARCHAR(50) NOT NULL,
@@ -135,7 +147,7 @@ create table policy_types (
     updated_at TIMESTAMP NOT NULL DEFAULT NOW()
 );
 
-create table policies (
+CREATE TABLE policies (
     id SERIAL PRIMARY KEY,
     provider TEXT NOT NULL,
     group_id INTEGER NOT NULL REFERENCES groups(id) ON DELETE CASCADE,
@@ -146,7 +158,7 @@ create table policies (
 );
 
 create type policy_status_types as enum ('success', 'failure');
-create table policy_status (
+CREATE TABLE policy_status (
     id SERIAL PRIMARY KEY,
     repository_id INTEGER NOT NULL REFERENCES repositories(id) ON DELETE CASCADE,
     policy_id INTEGER NOT NULL REFERENCES policies(id) ON DELETE CASCADE,
@@ -154,7 +166,7 @@ create table policy_status (
     last_updated TIMESTAMP NOT NULL DEFAULT NOW()
 );
 
-create table policy_violations (
+CREATE TABLE policy_violations (
     id SERIAL PRIMARY KEY,
     repository_id INTEGER NOT NULL REFERENCES repositories(id) ON DELETE CASCADE,
     policy_id INTEGER NOT NULL REFERENCES policies(id) ON DELETE CASCADE,
@@ -162,6 +174,19 @@ create table policy_violations (
     violation JSONB NOT NULL,
     created_at TIMESTAMP NOT NULL DEFAULT NOW()
 );
+
+CREATE TABLE rule_type (
+    id SERIAL PRIMARY KEY,
+    name TEXT NOT NULL,
+    provider TEXT NOT NULL,
+    group_id INTEGER NOT NULL REFERENCES groups(id) ON DELETE CASCADE,
+    definition JSONB NOT NULL,
+    created_at TIMESTAMP NOT NULL DEFAULT NOW(),
+    updated_at TIMESTAMP NOT NULL DEFAULT NOW()
+);
+
+-- Constraint to ensure we don't have a cycle in the project tree
+ALTER TABLE projects ADD CONSTRAINT parent_child_not_equal CHECK (id != parent_id);
 
 -- Unique constraint
 ALTER TABLE provider_access_tokens ADD CONSTRAINT unique_group_id UNIQUE (group_id);
@@ -182,6 +207,10 @@ CREATE UNIQUE INDEX repositories_repo_id_idx ON repositories(repo_id);
 CREATE UNIQUE INDEX policies_group_id_policy_type_idx ON policies(provider, group_id, policy_type);
 CREATE UNIQUE INDEX policy_types_idx ON policy_types(provider, policy_type);
 CREATE UNIQUE INDEX policy_status_idx ON policy_status(repository_id, policy_id);
+CREATE UNIQUE INDEX rule_type_idx ON rule_type(provider, group_id, name);
+
+-- Create default root project
+INSERT INTO projects (name, metadata) VALUES ('Root Project', '{}');
 
 -- Create default root organization
 
