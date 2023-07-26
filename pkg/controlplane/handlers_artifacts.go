@@ -213,14 +213,12 @@ func (s *Server) GetArtifactByName(ctx context.Context, in *pb.GetArtifactByName
 		// get information about signature
 		signature, err := container.GetSignatureTag(REGISTRY, *pkg.GetOwner().Login, pkg.GetName(), version.GetName())
 
-		// an image is signed if we can find a signature tag for it
-		current_version.IsSigned = (err == nil && signature != "")
-
 		// if there is a signature, we can move forward and retrieve details
-		if current_version.IsSigned {
+		if err == nil && signature != "" {
 			// we need to extract manifest from the signature
 			manifest, err := container.GetImageManifest(signature, user.GetLogin(), decryptedToken.AccessToken)
 			if err == nil && manifest.Layers != nil {
+				current_version.IsSigned = true
 				identity, issuer, err := container.ExtractIdentityFromCertificate(manifest)
 				if err == nil && identity != "" && issuer != "" {
 					current_version.CertIdentity = &identity
