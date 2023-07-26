@@ -1360,6 +1360,15 @@ message CreateKeyPairResponse {
     string public_key = 2;
 }
 
+// Entity defines the entity that is supported by the provider.
+enum Entity {
+    ENTITY_UNSPECIFIED = 0;
+    ENTITY_REPOSITORIES = 1;
+    ENTITY_BUILD_ENVIRONMENTS = 2;
+    ENTITY_ARTIFACTS = 3;
+}
+
+
 // Provider defines a provider that is used to connect to a certain service.
 // This is used to define the context in which a rule is evaluated and serves
 // as a data ingestion point. They are top level entities and are scoped to
@@ -1423,21 +1432,11 @@ message Provider {
             repeated Type types = 1;
         }
 
+        // ClientTypes defines the client types that are supported by the provider.
         ClientTypes client_types = 3;
 
-        // Entities defines the entities that are supported by the provider.
-        // This is used to define the entities that are supported by the provider.
-        message Entities {
-            // Entity defines the entity that is supported by the provider.
-            enum Entity {
-                ENTITY_UNSPECIFIED = 0;
-                ENTITY_REPOSITORIES = 1;
-                ENTITY_BUILD_ENVIRONMENTS = 2;
-                ENTITY_ARTIFACTS = 3;
-            }
-
-            repeated Entity entities = 1;
-        }
+        // entities defines the entities that are supported by the provider.
+        repeated Entity entities = 4;
     }
 
     Definition def = 3;

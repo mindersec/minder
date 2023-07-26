@@ -141,7 +141,6 @@
     - [Provider.Definition.Auth](#mediator-v1-Provider-Definition-Auth)
     - [Provider.Definition.Auth.OAuth2](#mediator-v1-Provider-Definition-Auth-OAuth2)
     - [Provider.Definition.ClientTypes](#mediator-v1-Provider-Definition-ClientTypes)
-    - [Provider.Definition.Entities](#mediator-v1-Provider-Definition-Entities)
     - [RefreshTokenRequest](#mediator-v1-RefreshTokenRequest)
     - [RefreshTokenResponse](#mediator-v1-RefreshTokenResponse)
     - [RegisterRepositoryRequest](#mediator-v1-RegisterRepositoryRequest)
@@ -179,9 +178,9 @@
     - [VerifyRequest](#mediator-v1-VerifyRequest)
     - [VerifyResponse](#mediator-v1-VerifyResponse)
   
+    - [Entity](#mediator-v1-Entity)
     - [Provider.Definition.Auth.Type](#mediator-v1-Provider-Definition-Auth-Type)
     - [Provider.Definition.ClientTypes.Type](#mediator-v1-Provider-Definition-ClientTypes-Type)
-    - [Provider.Definition.Entities.Entity](#mediator-v1-Provider-Definition-Entities-Entity)
     - [RepoFilter](#mediator-v1-RepoFilter)
   
     - [AuthService](#mediator-v1-AuthService)
@@ -2351,7 +2350,8 @@ This is used to define the connection to the provider.
 | ----- | ---- | ----- | ----------- |
 | endpoint | [string](#string) |  |  |
 | auth | [Provider.Definition.Auth](#mediator-v1-Provider-Definition-Auth) |  |  |
-| client_types | [Provider.Definition.ClientTypes](#mediator-v1-Provider-Definition-ClientTypes) |  |  |
+| client_types | [Provider.Definition.ClientTypes](#mediator-v1-Provider-Definition-ClientTypes) |  | ClientTypes defines the client types that are supported by the provider. |
+| entities | [Entity](#mediator-v1-Entity) | repeated | entities defines the entities that are supported by the provider. |
 
 
 
@@ -2404,22 +2404,6 @@ This is used to define the types of clients that are supported by the provider.
 | Field | Type | Label | Description |
 | ----- | ---- | ----- | ----------- |
 | types | [Provider.Definition.ClientTypes.Type](#mediator-v1-Provider-Definition-ClientTypes-Type) | repeated |  |
-
-
-
-
-
-
-<a name="mediator-v1-Provider-Definition-Entities"></a>
-
-### Provider.Definition.Entities
-Entities defines the entities that are supported by the provider.
-This is used to define the entities that are supported by the provider.
-
-
-| Field | Type | Label | Description |
-| ----- | ---- | ----- | ----------- |
-| entities | [Provider.Definition.Entities.Entity](#mediator-v1-Provider-Definition-Entities-Entity) | repeated |  |
 
 
 
@@ -3000,6 +2984,20 @@ user record to be returned
  
 
 
+<a name="mediator-v1-Entity"></a>
+
+### Entity
+Entity defines the entity that is supported by the provider.
+
+| Name | Number | Description |
+| ---- | ------ | ----------- |
+| ENTITY_UNSPECIFIED | 0 |  |
+| ENTITY_REPOSITORIES | 1 |  |
+| ENTITY_BUILD_ENVIRONMENTS | 2 |  |
+| ENTITY_ARTIFACTS | 3 |  |
+
+
+
 <a name="mediator-v1-Provider-Definition-Auth-Type"></a>
 
 ### Provider.Definition.Auth.Type
@@ -3024,20 +3022,6 @@ Type defines the type of client that is supported by the provider.
 | TYPE_UNSPECIFIED | 0 |  |
 | TYPE_REST | 1 |  |
 | TYPE_GRAPHQL | 2 |  |
-
-
-
-<a name="mediator-v1-Provider-Definition-Entities-Entity"></a>
-
-### Provider.Definition.Entities.Entity
-Entity defines the entity that is supported by the provider.
-
-| Name | Number | Description |
-| ---- | ------ | ----------- |
-| ENTITY_UNSPECIFIED | 0 |  |
-| ENTITY_REPOSITORIES | 1 |  |
-| ENTITY_BUILD_ENVIRONMENTS | 2 |  |
-| ENTITY_ARTIFACTS | 3 |  |
 
 
 
