@@ -166,6 +166,11 @@ func (s *Server) CreatePolicy(ctx context.Context,
 		}
 	}
 
+	if err := tx.Commit(); err != nil {
+		log.Printf("error committing transaction: %v", err)
+		return nil, status.Errorf(codes.Internal, "error creating policy")
+	}
+
 	in.Id = &policy.ID
 
 	return &pb.CreatePolicyResponse{
