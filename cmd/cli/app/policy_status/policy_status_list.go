@@ -116,6 +116,8 @@ mediator control plane for an specific provider/group or policy id.`,
 		}
 
 		enc := yaml.NewEncoder(os.Stdout)
+		enc.SetIndent(2)
+
 		if err := enc.Encode(status); err != nil {
 			return fmt.Errorf("error marshalling yaml: %w", err)
 		}

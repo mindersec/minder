@@ -78,11 +78,14 @@ mediator control plane.`,
 		}
 
 		if format == app.YAML {
-			yamlData, err := yaml.Marshal(rtype.RuleType)
-			if err != nil {
+			enc := yaml.NewEncoder(os.Stdout)
+			enc.SetIndent(2)
+
+			if enc.Encode(rtype.RuleType); err != nil {
 				return fmt.Errorf("error marshalling yaml: %w", err)
 			}
-			fmt.Println(string(yamlData))
+
+			return nil
 		}
 
 		json, err := json.MarshalIndent(rtype.RuleType, "", "  ")
@@ -98,7 +101,7 @@ mediator control plane.`,
 func init() {
 	ruleTypeCmd.AddCommand(ruleType_getCmd)
 	ruleType_getCmd.Flags().Int32P("id", "i", 0, "ID for the policy to query")
-	ruleType_getCmd.Flags().StringP("output", "o", "", "Output format (json or yaml)")
+	ruleType_getCmd.Flags().StringP("output", "o", app.YAML, "Output format (json or yaml)")
 	ruleType_getCmd.Flags().StringP("provider", "p", "github", "Provider for the policy")
 	// TODO set up group if specified
 
