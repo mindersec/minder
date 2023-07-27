@@ -81,7 +81,7 @@ mediator control plane.`,
 			enc := yaml.NewEncoder(os.Stdout)
 			enc.SetIndent(2)
 
-			if enc.Encode(rtype.RuleType); err != nil {
+			if err := enc.Encode(rtype.RuleType); err != nil {
 				return fmt.Errorf("error marshalling yaml: %w", err)
 			}
 
