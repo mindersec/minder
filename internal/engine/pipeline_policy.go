@@ -225,7 +225,7 @@ func MergeDatabaseListIntoPolicies(ppl []db.ListPoliciesByGroupIDRow, ectx *Enti
 	for idx := range ppl {
 		p := ppl[idx]
 
-		rowInfoToPolicyMap(p.Entity, p.Name, p.Provider, p.ContextualRules, ectx, policies)
+		rowInfoToPolicyMap(p.Entity, p.ID, p.Name, p.Provider, p.ContextualRules, ectx, policies)
 	}
 
 	return policies
@@ -241,7 +241,7 @@ func MergeDatabaseGetIntoPolicies(ppl []db.GetPolicyByGroupAndIDRow, ectx *Entit
 	for idx := range ppl {
 		p := ppl[idx]
 
-		policies = rowInfoToPolicyMap(p.Entity, p.Name, p.Provider, p.ContextualRules, ectx, policies)
+		policies = rowInfoToPolicyMap(p.Entity, p.ID, p.Name, p.Provider, p.ContextualRules, ectx, policies)
 	}
 
 	return policies
@@ -253,6 +253,7 @@ func MergeDatabaseGetIntoPolicies(ppl []db.GetPolicyByGroupAndIDRow, ectx *Entit
 // and thus the logic is targetted to that.
 func rowInfoToPolicyMap(
 	entity db.Entities,
+	policyID int32,
 	name string,
 	provider string,
 	contextualRules json.RawMessage,
@@ -266,6 +267,7 @@ func rowInfoToPolicyMap(
 
 	if _, ok := in[name]; !ok {
 		in[name] = &pb.PipelinePolicy{
+			Id:   &policyID,
 			Name: name,
 			Context: &pb.Context{
 				Provider: provider,
