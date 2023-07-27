@@ -166,7 +166,11 @@ func (s *Server) CreatePolicy(ctx context.Context,
 		}
 	}
 
-	return nil, nil
+	in.Id = &policy.ID
+
+	return &pb.CreatePolicyResponse{
+		Policy: in,
+	}, nil
 }
 
 func createPolicyRulesForEntity(
@@ -338,7 +342,7 @@ func (s *Server) GetPolicyStatusById(ctx context.Context,
 		res.RuleEvaluationStatus = rulestats
 	}
 
-	return nil, nil
+	return res, nil
 
 }
 
@@ -574,5 +578,5 @@ func (s *Server) DeleteRuleType(ctx context.Context, in *pb.DeleteRuleTypeReques
 		return nil, status.Errorf(codes.Unknown, "failed to delete rule type: %s", err)
 	}
 
-	return nil, nil
+	return &pb.DeleteRuleTypeResponse{}, nil
 }

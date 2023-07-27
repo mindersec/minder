@@ -228,7 +228,6 @@ CREATE UNIQUE INDEX users_organization_id_email_lower_idx ON users (organization
 CREATE UNIQUE INDEX users_organization_id_username_lower_idx ON users (organization_id, LOWER(username));
 CREATE UNIQUE INDEX repositories_repo_id_idx ON repositories(repo_id);
 CREATE UNIQUE INDEX policies_group_id_policy_name_idx ON policies(provider, group_id, name);
-CREATE UNIQUE INDEX entity_policies_entity_policy_id_idx ON entity_policies(entity, policy_id);
 CREATE UNIQUE INDEX rule_type_idx ON rule_type(provider, group_id, name);
 
 -- triggers
