@@ -185,6 +185,10 @@ func createPolicyRulesForEntity(
 	qtx db.Querier,
 	rules []*pb.PipelinePolicy_ContextualRuleSet,
 ) error {
+	if rules == nil {
+		return nil
+	}
+
 	marshalled, err := json.Marshal(rules)
 	if err != nil {
 		log.Printf("error marshalling %s rules: %v", entity, err)
