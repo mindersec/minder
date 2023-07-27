@@ -98,7 +98,7 @@ mediator control plane for an specific group.`,
 func init() {
 	ruleTypeCmd.AddCommand(ruleType_listCmd)
 	ruleType_listCmd.Flags().StringP("provider", "p", "", "Provider to list rule types for")
-	ruleType_listCmd.Flags().StringP("output", "o", "", "Output format (json or yaml)")
+	ruleType_listCmd.Flags().StringP("output", "o", "yaml", "Output format (json or yaml)")
 	// TODO: Take group ID into account
 	// ruleType_listCmd.Flags().Int32P("group-id", "g", 0, "group id to list roles for")
 
