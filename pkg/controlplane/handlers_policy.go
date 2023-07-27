@@ -114,15 +114,42 @@ func (s *Server) CreatePolicy(ctx context.Context,
 	err = engine.TraverseAllRulesForPipeline(in, func(r *pb.PipelinePolicy_Rule) error {
 		// TODO: This will need to be updated to support
 		// the hierarchy tree once that's settled in.
-		_, err := s.store.GetRuleTypeByName(ctx, db.GetRuleTypeByNameParams{
+		rtdb, err := s.store.GetRuleTypeByName(ctx, db.GetRuleTypeByNameParams{
 			Provider: in.GetContext().GetProvider(),
 			GroupID:  entityCtx.GetGroup().GetID(),
 			Name:     r.GetType(),
 		})
+		if err != nil {
+			log.Printf("error getting rule type: %v", err)
+			return fmt.Errorf("error creating policy")
+		}
+
+		rtyppb, err := engine.RuleTypePBFromDB(&rtdb, entityCtx)
+		if err != nil {
+			log.Printf("cannot convert rule type %s to pb: %v", rtdb.Name, err)
+			return fmt.Errorf("cannot convert rule type %s to pb: %v", rtdb.Name, err)
+		}
+
+		rval, err := engine.NewRuleValidator(rtyppb)
+		if err != nil {
+			log.Printf("error creating rule validator: %v", err)
+			return fmt.Errorf("error creating rule validator: %v", err)
+		}
+
+		valid, err := rval.ValidateAgainstSchema(r)
+		if valid == nil {
+			log.Printf("error validating rule: %v", err)
+			return fmt.Errorf("error validating rule: %v", err)
+		}
+
+		if !*valid {
+			log.Printf("rule wasn't valid: %v", err)
+			return fmt.Errorf("invalid rule: %v", err)
+		}
 
 		lastRule = r.GetType()
 
-		return err
+		return nil
 	})
 
 	if err != nil {
