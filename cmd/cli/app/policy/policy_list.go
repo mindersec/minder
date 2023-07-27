@@ -83,11 +83,12 @@ mediator control plane for an specific group.`,
 			}
 			fmt.Println(string(output))
 		} else if format == "yaml" {
-			yamlData, err := yaml.Marshal(resp.Policies)
-			if err != nil {
+			enc := yaml.NewEncoder(os.Stdout)
+			enc.SetIndent(2)
+
+			if err := enc.Encode(resp.Policies); err != nil {
 				return fmt.Errorf("error marshalling yaml: %w", err)
 			}
-			fmt.Println(string(yamlData))
 		}
 
 		// this is unreachable
