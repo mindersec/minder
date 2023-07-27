@@ -98,7 +98,7 @@ mediator control plane for an specific group.`,
 func init() {
 	PolicyCmd.AddCommand(policy_listCmd)
 	policy_listCmd.Flags().StringP("provider", "p", "", "Provider to list policies for")
-	policy_listCmd.Flags().StringP("output", "o", "", "Output format (json or yaml)")
+	policy_listCmd.Flags().StringP("output", "o", "yaml", "Output format (json or yaml)")
 	// TODO: Take group ID into account
 	// policy_listCmd.Flags().Int32P("group-id", "g", 0, "group id to list roles for")
 
