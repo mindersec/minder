@@ -39,6 +39,21 @@ type RuleDataIngest interface {
 	Eval(ctx context.Context, ent any, pol, params map[string]any) error
 }
 
+// EvaluationError is the error returned when a rule evaluation fails
+type EvaluationError struct {
+	msg string
+}
+
+// NewEvaluationError creates a new evaluation error
+func NewEvaluationError(sfmt string, args ...any) *EvaluationError {
+	msg := fmt.Sprintf(sfmt, args...)
+	return &EvaluationError{msg: msg}
+}
+
+func (e *EvaluationError) Error() string {
+	return fmt.Sprintf("evaluation error: %s", e.msg)
+}
+
 // NewRuleDataIngest creates a new rule data ingest based no the given rule
 // type definition.
 func NewRuleDataIngest(rt *pb.RuleType, cli ghclient.RestAPI) (RuleDataIngest, error) {
@@ -152,7 +167,7 @@ func (rdi *RestRuleDataIngest) Eval(ctx context.Context, ent any, pol, params ma
 
 		// Deep compare
 		if !reflect.DeepEqual(policyVal, dataVal) {
-			return fmt.Errorf("data does not match policy: for path %s got %v, want %v",
+			return NewEvaluationError("data does not match policy: for path %s got %v, want %v",
 				key, dataVal, policyVal)
 		}
 	}

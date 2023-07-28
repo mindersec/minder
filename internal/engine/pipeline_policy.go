@@ -204,6 +204,11 @@ func TraverseAllRulesForPipeline(p *pb.PipelinePolicy, fn func(*pb.PipelinePolic
 
 // TraverseRules traverses the rules and calls the given function for each rule
 func TraverseRules(cr []*pb.PipelinePolicy_ContextualRuleSet, fn func(*pb.PipelinePolicy_Rule) error) error {
+	// no rules
+	if cr == nil {
+		return nil
+	}
+
 	for _, r := range cr {
 		for _, rule := range r.Rules {
 			if err := fn(rule); err != nil {

@@ -36,6 +36,10 @@ import (
 	"github.com/google/uuid"
 	"github.com/spf13/viper"
 	"golang.org/x/oauth2"
+
+	"github.com/stacklok/mediator/internal/engine"
+	// TODO(jaosorior): This should be moved to the provider package
+	ghclient "github.com/stacklok/mediator/pkg/providers/github"
 )
 
 // Repository represents a GitHub repository
@@ -89,16 +93,27 @@ func HandleGitHubWebHook(p message.Publisher) http.HandlerFunc {
 			return
 		}
 
+		typ := github.WebHookType(r)
+		if typ == "ping" {
+			log.Printf("ping received")
+			return
+		}
+
 		// TODO: extract sender and event time from payload portably
 		m := message.NewMessage(uuid.New().String(), payload)
 		m.Metadata.Set("id", github.DeliveryID(r))
+
+		// TODO(jaosorior): When extracting the source we should also match
+		// the relevant provider and signal
+		m.Metadata.Set("provider", ghclient.Github)
 		m.Metadata.Set("source", "https://api.github.com/") // TODO: handle other sources
+
 		m.Metadata.Set("type", github.WebHookType(r))
 		// m.Metadata.Set("subject", ghEvent.GetRepo().GetFullName())
 		// m.Metadata.Set("time", ghEvent.GetCreatedAt().String())
 		log.Printf("publishing of type: %s", m.Metadata["type"])
 
-		if err := p.Publish(m.Metadata["type"], m); err != nil {
+		if err := p.Publish(engine.InternalWebhookEventTopic, m); err != nil {
 			fmt.Printf("Error publishing message: %v", err)
 			w.WriteHeader(http.StatusInternalServerError)
 			return

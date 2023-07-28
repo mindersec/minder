@@ -259,29 +259,6 @@ func (s *Server) ExchangeCodeForTokenWEB(ctx context.Context,
 	}, nil
 }
 
-func decryptToken(encToken string) (oauth2.Token, error) {
-	var decryptedToken oauth2.Token
-
-	// base64 decode the token
-	decodeToken, err := base64.StdEncoding.DecodeString(encToken)
-	if err != nil {
-		return decryptedToken, err
-	}
-
-	// decrypt the token
-	token, err := mcrypto.DecryptBytes(viper.GetString("auth.token_key"), decodeToken)
-	if err != nil {
-		return decryptedToken, err
-	}
-
-	// serialise token *oauth.Token
-	err = json.Unmarshal(token, &decryptedToken)
-	if err != nil {
-		return decryptedToken, err
-	}
-	return decryptedToken, nil
-}
-
 // GetProviderAccessToken returns the access token for providers
 func GetProviderAccessToken(ctx context.Context, store db.Store, provider string,
 	groupId int32, checkAuthz bool) (oauth2.Token, error) {
@@ -296,7 +273,7 @@ func GetProviderAccessToken(ctx context.Context, store db.Store, provider string
 		return oauth2.Token{}, err
 	}
 
-	decryptedToken, err := decryptToken(encToken.EncryptedToken)
+	decryptedToken, err := mcrypto.DecryptOAuthToken(encToken.EncryptedToken)
 	if err != nil {
 		return oauth2.Token{}, err
 	}
@@ -320,7 +297,7 @@ func (s *Server) RevokeOauthTokens(ctx context.Context, in *pb.RevokeOauthTokens
 
 	revoked_tokens := 0
 	for _, token := range tokens {
-		objToken, err := decryptToken(token.EncryptedToken)
+		objToken, err := mcrypto.DecryptOAuthToken(token.EncryptedToken)
 		if err != nil {
 			// just log and continue
 			log.Error().Msgf("error decrypting token: %v", err)
@@ -368,7 +345,7 @@ func (s *Server) RevokeOauthGroupToken(ctx context.Context,
 		return nil, status.Errorf(codes.Internal, "error getting access token: %v", err)
 	}
 
-	objToken, err := decryptToken(token.EncryptedToken)
+	objToken, err := mcrypto.DecryptOAuthToken(token.EncryptedToken)
 	if err != nil {
 		return nil, status.Errorf(codes.Internal, "error decrypting token: %v", err)
 	}

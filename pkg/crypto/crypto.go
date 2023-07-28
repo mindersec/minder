@@ -38,6 +38,7 @@ import (
 	"github.com/sigstore/sigstore/pkg/signature"
 	"github.com/spf13/viper"
 	"golang.org/x/crypto/argon2"
+	"golang.org/x/oauth2"
 	"google.golang.org/grpc/codes"
 	"google.golang.org/grpc/status"
 
@@ -132,6 +133,30 @@ func EncryptBytes(key string, data []byte) ([]byte, error) {
 	stream.XORKeyStream(ciphertext[aes.BlockSize:], []byte(data))
 
 	return ciphertext, nil
+}
+
+// DecryptOAuthToken decrypts an encrypted oauth token
+func DecryptOAuthToken(encToken string) (oauth2.Token, error) {
+	var decryptedToken oauth2.Token
+
+	// base64 decode the token
+	decodeToken, err := base64.StdEncoding.DecodeString(encToken)
+	if err != nil {
+		return decryptedToken, err
+	}
+
+	// decrypt the token
+	token, err := DecryptBytes(viper.GetString("auth.token_key"), decodeToken)
+	if err != nil {
+		return decryptedToken, err
+	}
+
+	// serialise token *oauth.Token
+	err = json.Unmarshal(token, &decryptedToken)
+	if err != nil {
+		return decryptedToken, err
+	}
+	return decryptedToken, nil
 }
 
 // DecryptBytes decrypts a row of data
