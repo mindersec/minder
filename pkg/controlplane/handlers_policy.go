@@ -44,9 +44,6 @@ func (s *Server) authAndContextValidation(ctx context.Context, in *pb.Context) (
 		return ctx, fmt.Errorf("provider not supported: %s", in.Provider)
 	}
 
-	if in == nil {
-		return ctx, fmt.Errorf("context cannot be nil")
-	}
 
 	if err := s.ensureDefaultGroupForContext(ctx, in); err != nil {
 		return ctx, err
