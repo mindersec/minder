@@ -361,15 +361,14 @@ func (s *Server) GetPolicyStatusById(ctx context.Context,
 		// TODO: Add other entities once we have database entries for them
 	}
 
-	res := &pb.GetPolicyStatusByIdResponse{}
-
-	res.PolicyStatus = &pb.PolicyStatus{
-		PolicyId:     dbstat.ID,
-		PolicyName:   dbstat.Name,
-		PolicyStatus: string(dbstat.PolicyStatus),
+	res := &pb.GetPolicyStatusByIdResponse{
+		PolicyStatus: &pb.PolicyStatus{
+			PolicyId:     dbstat.ID,
+			PolicyName:   dbstat.Name,
+			PolicyStatus: string(dbstat.PolicyStatus),
+		},
+		RuleEvaluationStatus: rulestats,
 	}
-
-	res.RuleEvaluationStatus = rulestats
 
 	return res, nil
 
