@@ -132,9 +132,9 @@ mediator control plane for an specific provider/group or policy id.`,
 
 func init() {
 	PolicyStatusCmd.AddCommand(policystatus_listCmd)
-	policystatus_listCmd.Flags().StringP("provider", "p", "github", "Provider to list policy violations for")
-	policystatus_listCmd.Flags().StringP("group", "g", "", "group id to list policy violations for")
-	policystatus_listCmd.Flags().Int32P("policy", "i", 0, "policy id to list policy violations for")
+	policystatus_listCmd.Flags().StringP("provider", "p", "github", "Provider to list policy status for")
+	policystatus_listCmd.Flags().StringP("group", "g", "", "group id to list policy status for")
+	policystatus_listCmd.Flags().Int32P("policy", "i", 0, "policy id to list policy status for")
 	policystatus_listCmd.Flags().StringP("output", "o", "yaml", "Output format (json or yaml)")
 	policystatus_listCmd.Flags().BoolP("all", "a", false, "List all policy violations")
 }

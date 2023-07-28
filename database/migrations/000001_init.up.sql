@@ -193,22 +193,6 @@ CREATE TABLE rule_evaluation_status (
     last_updated TIMESTAMP NOT NULL DEFAULT NOW()
 );
 
-CREATE TABLE policy_violations (
-    id SERIAL PRIMARY KEY,
-    entity entities NOT NULL,
-    policy_id INTEGER NOT NULL REFERENCES policies(id) ON DELETE CASCADE,
-    rule_type_id INTEGER NOT NULL REFERENCES rule_type(id) ON DELETE CASCADE,
-    metadata JSONB NOT NULL,
-    violation JSONB NOT NULL,
-    -- polimorphic references. A status may be associated with a repository, build environment or artifact
-    repository_id INTEGER REFERENCES repositories(id) ON DELETE CASCADE,
-    -- These will be added later
-    -- artifact_id INTEGER REFERENCES artifacts(id) ON DELETE CASCADE,
-    -- build_environment_id INTEGER REFERENCES build_environments(id) ON DELETE CASCADE,
-    created_at TIMESTAMP NOT NULL DEFAULT NOW(),
-    last_updated TIMESTAMP NOT NULL DEFAULT NOW()
-);
-
 -- Constraint to ensure we don't have a cycle in the project tree
 ALTER TABLE projects ADD CONSTRAINT parent_child_not_equal CHECK (id != parent_id);
 
@@ -233,19 +217,18 @@ CREATE UNIQUE INDEX rule_type_idx ON rule_type(provider, group_id, name);
 
 -- triggers
 
--- Ensure violations and statuses are deleted if a repository is deleted
-CREATE OR REPLACE FUNCTION delete_violations_and_statuses() RETURNS TRIGGER AS $$
+-- Ensure statuses are deleted if a repository is deleted
+CREATE OR REPLACE FUNCTION delete_eval_statuses() RETURNS TRIGGER AS $$
 BEGIN
-    DELETE FROM policy_violations WHERE repository_id = OLD.id;
     DELETE FROM rule_evaluation_status WHERE repository_id = OLD.id;
     RETURN OLD;
 END;
 $$ LANGUAGE plpgsql;
 
-CREATE TRIGGER delete_violations_and_statuses
+CREATE TRIGGER delete_eval_statuses
     BEFORE DELETE ON repositories
     FOR EACH ROW
-    EXECUTE PROCEDURE delete_violations_and_statuses();
+    EXECUTE PROCEDURE delete_eval_statuses();
 
 -- Create a default status for a policy when it's created
 CREATE OR REPLACE FUNCTION create_default_policy_status() RETURNS TRIGGER AS $$

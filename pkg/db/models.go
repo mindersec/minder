@@ -145,18 +145,6 @@ type PolicyStatus struct {
 	LastUpdated  time.Time       `json:"last_updated"`
 }
 
-type PolicyViolation struct {
-	ID           int32           `json:"id"`
-	Entity       Entities        `json:"entity"`
-	PolicyID     int32           `json:"policy_id"`
-	RuleTypeID   int32           `json:"rule_type_id"`
-	Metadata     json.RawMessage `json:"metadata"`
-	Violation    json.RawMessage `json:"violation"`
-	RepositoryID sql.NullInt32   `json:"repository_id"`
-	CreatedAt    time.Time       `json:"created_at"`
-	LastUpdated  time.Time       `json:"last_updated"`
-}
-
 type Project struct {
 	ID        uuid.UUID       `json:"id"`
 	Name      string          `json:"name"`
