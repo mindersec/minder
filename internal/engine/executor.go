@@ -325,8 +325,7 @@ func parseRepoID(repoID any) (int32, error) {
 }
 
 func errorAsEvalStatus(err error) db.EvalStatusTypes {
-	asErr := &EvaluationError{}
-	if errors.As(err, &asErr) {
+	if errors.Is(err, ErrEvaluationFailed) {
 		return db.EvalStatusTypesFailure
 	} else if err != nil {
 		return db.EvalStatusTypesError
