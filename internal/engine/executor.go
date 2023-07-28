@@ -192,6 +192,8 @@ func (e *Executor) handleRuleExecution(
 	ectx *EntityContext,
 	rule *pb.PipelinePolicy_Rule,
 ) error {
+	log.Printf("Evaluating rule: %s for policy %d", rule.Type, policyID)
+
 	dbrt, err := e.querier.GetRuleTypeByName(ctx, db.GetRuleTypeByNameParams{
 		Provider: prov,
 		GroupID:  ectx.Group.ID,
