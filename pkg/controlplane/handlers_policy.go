@@ -394,9 +394,9 @@ func (s *Server) GetPolicyStatusByGroup(ctx context.Context,
 		return nil, status.Errorf(codes.Unknown, "failed to get policy status: %s", err)
 	}
 
-	res := &pb.GetPolicyStatusByGroupResponse{}
-
-	res.PolicyStatus = make([]*pb.PolicyStatus, 0, len(dbstats))
+	res := &pb.GetPolicyStatusByGroupResponse{
+		PolicyStatus: make([]*pb.PolicyStatus, 0, len(dbstats)),
+	}
 
 	for _, dbstat := range dbstats {
 		res.PolicyStatus = append(res.PolicyStatus, &pb.PolicyStatus{
