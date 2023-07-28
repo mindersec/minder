@@ -36,6 +36,10 @@ import (
 // It also sets up the needed information in the `in` entity context that's needed for the rest of the flow
 // Note that this also does an authorization check.
 func (s *Server) authAndContextValidation(ctx context.Context, in *pb.Context) (context.Context, error) {
+	if in == nil {
+		return ctx, fmt.Errorf("context cannot be nil")
+	}
+
 	if in.Provider != ghclient.Github {
 		return ctx, fmt.Errorf("provider not supported: %s", in.Provider)
 	}
