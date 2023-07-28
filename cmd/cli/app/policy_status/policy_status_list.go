@@ -54,7 +54,7 @@ mediator control plane for an specific provider/group or policy id.`,
 
 		provider := viper.GetString("provider")
 		group := viper.GetString("group")
-		policy_id := viper.GetInt32("policy-id")
+		policy_id := viper.GetInt32("policy")
 		format := viper.GetString("output")
 		all := viper.GetBool("all")
 
