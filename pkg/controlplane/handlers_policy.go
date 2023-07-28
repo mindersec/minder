@@ -44,7 +44,6 @@ func (s *Server) authAndContextValidation(ctx context.Context, in *pb.Context) (
 		return ctx, fmt.Errorf("provider not supported: %s", in.Provider)
 	}
 
-
 	if err := s.ensureDefaultGroupForContext(ctx, in); err != nil {
 		return ctx, err
 	}
@@ -121,30 +120,25 @@ func (s *Server) CreatePolicy(ctx context.Context,
 			Name:     r.GetType(),
 		})
 		if err != nil {
-			log.Printf("error getting rule type: %v", err)
 			return fmt.Errorf("error creating policy")
 		}
 
 		rtyppb, err := engine.RuleTypePBFromDB(&rtdb, entityCtx)
 		if err != nil {
-			log.Printf("cannot convert rule type %s to pb: %v", rtdb.Name, err)
 			return fmt.Errorf("cannot convert rule type %s to pb: %v", rtdb.Name, err)
 		}
 
 		rval, err := engine.NewRuleValidator(rtyppb)
 		if err != nil {
-			log.Printf("error creating rule validator: %v", err)
 			return fmt.Errorf("error creating rule validator: %v", err)
 		}
 
 		valid, err := rval.ValidateAgainstSchema(r)
 		if valid == nil {
-			log.Printf("error validating rule: %v", err)
 			return fmt.Errorf("error validating rule: %v", err)
 		}
 
 		if !*valid {
-			log.Printf("rule wasn't valid: %v", err)
 			return fmt.Errorf("invalid rule: %v", err)
 		}
 
