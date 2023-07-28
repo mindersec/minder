@@ -27,8 +27,22 @@ type key int
 const (
 	// EntityContextKey is the key used to store the entity context in the golang Context
 	// object for a given API call.
-	EntityContextKey key = iota
+	entityContextKey key = iota
 )
+
+// WithEntityContext stores an EntityContext in the current context.
+func WithEntityContext(ctx context.Context, c *EntityContext) context.Context {
+	return context.WithValue(ctx, entityContextKey, c)
+}
+
+// EntityFromContext extracts the current EntityContext, WHICH MAY BE NIL!
+func EntityFromContext(ctx context.Context) *EntityContext {
+	ec, ok := ctx.Value(entityContextKey).(*EntityContext)
+	if !ok {
+		return nil
+	}
+	return ec
+}
 
 // Group is a construct relevant to an entity's context.
 // This is relevant for getting the full information about an entity.

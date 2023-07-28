@@ -35,20 +35,20 @@ import (
 // authAndContextValidation is a helper function to initialize entity context info and validate input
 // It also sets up the needed information in the `in` entity context that's needed for the rest of the flow
 // Note that this also does an authorization check.
-func (s *Server) authAndContextValidation(ctx context.Context, in *pb.Context) (context.Context, error) {
-	if in == nil {
+func (s *Server) authAndContextValidation(ctx context.Context, inout *pb.Context) (context.Context, error) {
+	if inout == nil {
 		return ctx, fmt.Errorf("context cannot be nil")
 	}
 
-	if in.Provider != ghclient.Github {
-		return ctx, fmt.Errorf("provider not supported: %s", in.Provider)
+	if inout.Provider != ghclient.Github {
+		return ctx, fmt.Errorf("provider not supported: %s", inout.Provider)
 	}
 
-	if err := s.ensureDefaultGroupForContext(ctx, in); err != nil {
+	if err := s.ensureDefaultGroupForContext(ctx, inout); err != nil {
 		return ctx, err
 	}
 
-	entityCtx, err := engine.GetContextFromInput(ctx, in, s.store)
+	entityCtx, err := engine.GetContextFromInput(ctx, inout, s.store)
 	if err != nil {
 		return ctx, fmt.Errorf("cannot get context from input: %v", err)
 	}
@@ -57,16 +57,14 @@ func (s *Server) authAndContextValidation(ctx context.Context, in *pb.Context) (
 		return ctx, err
 	}
 
-	newCtx := context.WithValue(ctx, engine.EntityContextKey, entityCtx)
-
-	return newCtx, nil
+	return engine.WithEntityContext(ctx, entityCtx), nil
 }
 
 // ensureDefaultGroupForContext ensures a valid group is set in the context or sets the default group
 // if the group is not set in the incoming entity context, it'll set it.
 func (s *Server) ensureDefaultGroupForContext(ctx context.Context, inout *pb.Context) error {
 	// Group is already set
-	if inout.Group != nil && *inout.Group != "" {
+	if inout.GetGroup() != "" {
 		return nil
 	}
 
@@ -99,18 +97,17 @@ func (s *Server) CreatePolicy(ctx context.Context,
 	cpr *pb.CreatePolicyRequest) (*pb.CreatePolicyResponse, error) {
 	in := cpr.GetPolicy()
 
-	newCtx, err := s.authAndContextValidation(ctx, in.GetContext())
+	ctx, err := s.authAndContextValidation(ctx, in.GetContext())
 	if err != nil {
 		return nil, status.Errorf(codes.InvalidArgument, "error ensuring default group: %v", err)
 	}
 
-	entityCtx := newCtx.Value(engine.EntityContextKey).(*engine.EntityContext)
+	entityCtx := engine.EntityFromContext(ctx)
 
 	if err := engine.ValidatePolicy(in); err != nil {
 		return nil, status.Errorf(codes.InvalidArgument, "invalid policy: %v", err)
 	}
 
-	var lastRule string
 	err = engine.TraverseAllRulesForPipeline(in, func(r *pb.PipelinePolicy_Rule) error {
 		// TODO: This will need to be updated to support
 		// the hierarchy tree once that's settled in.
@@ -125,31 +122,25 @@ func (s *Server) CreatePolicy(ctx context.Context,
 
 		rtyppb, err := engine.RuleTypePBFromDB(&rtdb, entityCtx)
 		if err != nil {
-			return fmt.Errorf("cannot convert rule type %s to pb: %v", rtdb.Name, err)
+			return fmt.Errorf("cannot convert rule type %s to pb: %w", rtdb.Name, err)
 		}
 
 		rval, err := engine.NewRuleValidator(rtyppb)
 		if err != nil {
-			return fmt.Errorf("error creating rule validator: %v", err)
+			return fmt.Errorf("error creating rule validator: %w", err)
 		}
 
-		valid, err := rval.ValidateAgainstSchema(r)
-		if valid == nil {
-			return fmt.Errorf("error validating rule: %v", err)
+		if err := rval.ValidateAgainstSchema(r); err != nil {
+			return fmt.Errorf("error validating rule: %w", err)
 		}
-
-		if !*valid {
-			return fmt.Errorf("invalid rule: %v", err)
-		}
-
-		lastRule = r.GetType()
 
 		return nil
 	})
 
 	if err != nil {
-		if errors.Is(err, sql.ErrNoRows) {
-			return nil, status.Errorf(codes.InvalidArgument, "policy contained unexistent rule: %s", lastRule)
+		var violation *engine.RuleValidationError
+		if errors.As(err, &violation) {
+			return nil, status.Errorf(codes.InvalidArgument, "policy contained invalid rule: %s", violation.RuleType)
 		}
 
 		log.Printf("error getting rule type: %v", err)
@@ -248,12 +239,12 @@ func (s *Server) DeletePolicy(ctx context.Context,
 // ListPolicies is a method to get all policies for a group
 func (s *Server) ListPolicies(ctx context.Context,
 	in *pb.ListPoliciesRequest) (*pb.ListPoliciesResponse, error) {
-	newCtx, err := s.authAndContextValidation(ctx, in.GetContext())
+	ctx, err := s.authAndContextValidation(ctx, in.GetContext())
 	if err != nil {
 		return nil, status.Errorf(codes.InvalidArgument, "error ensuring default group: %v", err)
 	}
 
-	entityCtx := newCtx.Value(engine.EntityContextKey).(*engine.EntityContext)
+	entityCtx := engine.EntityFromContext(ctx)
 
 	policies, err := s.store.ListPoliciesByGroupID(ctx, entityCtx.Group.ID)
 	if err != nil {
@@ -272,12 +263,12 @@ func (s *Server) ListPolicies(ctx context.Context,
 // GetPolicyById is a method to get a policy by id
 func (s *Server) GetPolicyById(ctx context.Context,
 	in *pb.GetPolicyByIdRequest) (*pb.GetPolicyByIdResponse, error) {
-	newCtx, err := s.authAndContextValidation(ctx, in.GetContext())
+	ctx, err := s.authAndContextValidation(ctx, in.GetContext())
 	if err != nil {
 		return nil, status.Errorf(codes.InvalidArgument, "error ensuring default group: %v", err)
 	}
 
-	entityCtx := newCtx.Value(engine.EntityContextKey).(*engine.EntityContext)
+	entityCtx := engine.EntityFromContext(ctx)
 
 	if in.Id == 0 {
 		return nil, status.Error(codes.InvalidArgument, "policy id is required")
@@ -310,18 +301,18 @@ func (s *Server) GetPolicyById(ctx context.Context,
 // GetPolicyStatusById is a method to get policy status
 func (s *Server) GetPolicyStatusById(ctx context.Context,
 	in *pb.GetPolicyStatusByIdRequest) (*pb.GetPolicyStatusByIdResponse, error) {
-	newCtx, err := s.authAndContextValidation(ctx, in.GetContext())
+	ctx, err := s.authAndContextValidation(ctx, in.GetContext())
 	if err != nil {
 		return nil, status.Errorf(codes.InvalidArgument, "error ensuring default group: %v", err)
 	}
 
-	entityCtx := newCtx.Value(engine.EntityContextKey).(*engine.EntityContext)
+	entityCtx := engine.EntityFromContext(ctx)
 
 	if in.PolicyId == 0 {
 		return nil, status.Error(codes.InvalidArgument, "policy id is required")
 	}
 
-	dbstat, err := s.store.GetPolicyStatusByIdAndGroup(newCtx, db.GetPolicyStatusByIdAndGroupParams{
+	dbstat, err := s.store.GetPolicyStatusByIdAndGroup(ctx, db.GetPolicyStatusByIdAndGroupParams{
 		GroupID: entityCtx.Group.ID,
 		ID:      in.PolicyId,
 	})
@@ -335,13 +326,13 @@ func (s *Server) GetPolicyStatusById(ctx context.Context,
 	var rulestats []*pb.RuleEvaluationStatus
 
 	if in.All {
-		rulestats = make([]*pb.RuleEvaluationStatus, 0)
 
-		dbrulestat, err := s.store.ListRuleEvaluationStatusForRepositoriesByPolicyId(newCtx, in.PolicyId)
+		dbrulestat, err := s.store.ListRuleEvaluationStatusForRepositoriesByPolicyId(ctx, in.PolicyId)
 		if err != nil && !errors.Is(err, sql.ErrNoRows) {
 			return nil, status.Errorf(codes.Unknown, "failed to get policy: %s", err)
 		}
 
+		rulestats = make([]*pb.RuleEvaluationStatus, 0, len(dbrulestat))
 		for _, rs := range dbrulestat {
 			rulestats = append(rulestats, &pb.RuleEvaluationStatus{
 				PolicyId: in.PolicyId,
@@ -377,12 +368,12 @@ func (s *Server) GetPolicyStatusById(ctx context.Context,
 // GetPolicyStatusByGroup is a method to get policy status for a group
 func (s *Server) GetPolicyStatusByGroup(ctx context.Context,
 	in *pb.GetPolicyStatusByGroupRequest) (*pb.GetPolicyStatusByGroupResponse, error) {
-	newCtx, err := s.authAndContextValidation(ctx, in.GetContext())
+	ctx, err := s.authAndContextValidation(ctx, in.GetContext())
 	if err != nil {
 		return nil, status.Errorf(codes.InvalidArgument, "error ensuring default group: %v", err)
 	}
 
-	entityCtx := newCtx.Value(engine.EntityContextKey).(*engine.EntityContext)
+	entityCtx := engine.EntityFromContext(ctx)
 
 	// read policy status
 	dbstats, err := s.store.GetPolicyStatusByGroup(ctx, entityCtx.Group.ID)
@@ -412,12 +403,12 @@ func (s *Server) GetPolicyStatusByGroup(ctx context.Context,
 
 // ListRuleTypes is a method to list all rule types for a given context
 func (s *Server) ListRuleTypes(ctx context.Context, in *pb.ListRuleTypesRequest) (*pb.ListRuleTypesResponse, error) {
-	newCtx, err := s.authAndContextValidation(ctx, in.GetContext())
+	ctx, err := s.authAndContextValidation(ctx, in.GetContext())
 	if err != nil {
 		return nil, status.Errorf(codes.InvalidArgument, "error ensuring default group: %v", err)
 	}
 
-	entityCtx := newCtx.Value(engine.EntityContextKey).(*engine.EntityContext)
+	entityCtx := engine.EntityFromContext(ctx)
 
 	lrt, err := s.store.ListRuleTypesByProviderAndGroup(ctx, db.ListRuleTypesByProviderAndGroupParams{
 		Provider: entityCtx.GetProvider(),
@@ -444,12 +435,12 @@ func (s *Server) ListRuleTypes(ctx context.Context, in *pb.ListRuleTypesRequest)
 
 // GetRuleTypeByName is a method to get a rule type by name
 func (s *Server) GetRuleTypeByName(ctx context.Context, in *pb.GetRuleTypeByNameRequest) (*pb.GetRuleTypeByNameResponse, error) {
-	newCtx, err := s.authAndContextValidation(ctx, in.GetContext())
+	ctx, err := s.authAndContextValidation(ctx, in.GetContext())
 	if err != nil {
 		return nil, status.Errorf(codes.InvalidArgument, "error ensuring default group: %v", err)
 	}
 
-	entityCtx := newCtx.Value(engine.EntityContextKey).(*engine.EntityContext)
+	entityCtx := engine.EntityFromContext(ctx)
 
 	resp := &pb.GetRuleTypeByNameResponse{}
 
@@ -474,12 +465,12 @@ func (s *Server) GetRuleTypeByName(ctx context.Context, in *pb.GetRuleTypeByName
 
 // GetRuleTypeById is a method to get a rule type by id
 func (s *Server) GetRuleTypeById(ctx context.Context, in *pb.GetRuleTypeByIdRequest) (*pb.GetRuleTypeByIdResponse, error) {
-	newCtx, err := s.authAndContextValidation(ctx, in.GetContext())
+	ctx, err := s.authAndContextValidation(ctx, in.GetContext())
 	if err != nil {
 		return nil, status.Errorf(codes.InvalidArgument, "error ensuring default group: %v", err)
 	}
 
-	entityCtx := newCtx.Value(engine.EntityContextKey).(*engine.EntityContext)
+	entityCtx := engine.EntityFromContext(ctx)
 
 	resp := &pb.GetRuleTypeByIdResponse{}
 
@@ -502,12 +493,12 @@ func (s *Server) GetRuleTypeById(ctx context.Context, in *pb.GetRuleTypeByIdRequ
 func (s *Server) CreateRuleType(ctx context.Context, crt *pb.CreateRuleTypeRequest) (*pb.CreateRuleTypeResponse, error) {
 	in := crt.GetRuleType()
 
-	newCtx, err := s.authAndContextValidation(ctx, in.GetContext())
+	ctx, err := s.authAndContextValidation(ctx, in.GetContext())
 	if err != nil {
 		return nil, status.Errorf(codes.InvalidArgument, "error ensuring default group: %v", err)
 	}
 
-	entityCtx := newCtx.Value(engine.EntityContextKey).(*engine.EntityContext)
+	entityCtx := engine.EntityFromContext(ctx)
 
 	_, err = s.store.GetRuleTypeByName(ctx, db.GetRuleTypeByNameParams{
 		Provider: entityCtx.GetProvider(),
@@ -550,12 +541,12 @@ func (s *Server) CreateRuleType(ctx context.Context, crt *pb.CreateRuleTypeReque
 func (s *Server) UpdateRuleType(ctx context.Context, urt *pb.UpdateRuleTypeRequest) (*pb.UpdateRuleTypeResponse, error) {
 	in := urt.GetRuleType()
 
-	newCtx, err := s.authAndContextValidation(ctx, in.GetContext())
+	ctx, err := s.authAndContextValidation(ctx, in.GetContext())
 	if err != nil {
 		return nil, status.Errorf(codes.InvalidArgument, "error ensuring default group: %v", err)
 	}
 
-	entityCtx := newCtx.Value(engine.EntityContextKey).(*engine.EntityContext)
+	entityCtx := engine.EntityFromContext(ctx)
 
 	rtdb, err := s.store.GetRuleTypeByName(ctx, db.GetRuleTypeByNameParams{
 		Provider: entityCtx.GetProvider(),
@@ -593,12 +584,12 @@ func (s *Server) UpdateRuleType(ctx context.Context, urt *pb.UpdateRuleTypeReque
 
 // DeleteRuleType is a method to delete a rule type
 func (s *Server) DeleteRuleType(ctx context.Context, in *pb.DeleteRuleTypeRequest) (*pb.DeleteRuleTypeResponse, error) {
-	newCtx, err := s.authAndContextValidation(ctx, in.GetContext())
+	ctx, err := s.authAndContextValidation(ctx, in.GetContext())
 	if err != nil {
 		return nil, status.Errorf(codes.InvalidArgument, "error ensuring default group: %v", err)
 	}
 
-	err = s.store.DeleteRuleType(newCtx, in.GetId())
+	err = s.store.DeleteRuleType(ctx, in.GetId())
 	if err != nil {
 		if errors.Is(err, sql.ErrNoRows) {
 			return nil, status.Errorf(codes.NotFound, "rule type %d not found", in.GetId())

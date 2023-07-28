@@ -1487,3 +1487,17 @@ func (mr *MockStoreMockRecorder) UpdateUser(arg0, arg1 interface{}) *gomock.Call
 	mr.mock.ctrl.T.Helper()
 	return mr.mock.ctrl.RecordCallWithMethodType(mr.mock, "UpdateUser", reflect.TypeOf((*MockStore)(nil).UpdateUser), arg0, arg1)
 }
+
+// UpsertRuleEvaluationStatusForRepository mocks base method.
+func (m *MockStore) UpsertRuleEvaluationStatusForRepository(arg0 context.Context, arg1 db.UpsertRuleEvaluationStatusForRepositoryParams) error {
+	m.ctrl.T.Helper()
+	ret := m.ctrl.Call(m, "UpsertRuleEvaluationStatusForRepository", arg0, arg1)
+	ret0, _ := ret[0].(error)
+	return ret0
+}
+
+// UpsertRuleEvaluationStatusForRepository indicates an expected call of UpsertRuleEvaluationStatusForRepository.
+func (mr *MockStoreMockRecorder) UpsertRuleEvaluationStatusForRepository(arg0, arg1 interface{}) *gomock.Call {
+	mr.mock.ctrl.T.Helper()
+	return mr.mock.ctrl.RecordCallWithMethodType(mr.mock, "UpsertRuleEvaluationStatusForRepository", reflect.TypeOf((*MockStore)(nil).UpsertRuleEvaluationStatusForRepository), arg0, arg1)
+}

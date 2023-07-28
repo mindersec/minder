@@ -78,27 +78,23 @@ func NewRuleValidator(rt *pb.RuleType) (*RuleValidator, error) {
 
 // ValidateAgainstSchema validates the given contextual policy against the
 // schema for this rule type
-func (r *RuleValidator) ValidateAgainstSchema(contextualPolicy any) (*bool, error) {
+func (r *RuleValidator) ValidateAgainstSchema(contextualPolicy any) error {
 	documentLoader := gojsonschema.NewGoLoader(contextualPolicy)
 	result, err := r.schema.Validate(documentLoader)
 	if err != nil {
-		return nil, fmt.Errorf("cannot validate json schema: %v", err)
+		return fmt.Errorf("cannot validate json schema: %v", err)
 	}
 
-	out := result.Valid()
-
-	if !out {
-		description := ""
+	if !result.Valid() {
+		problems := make([]string, 0, len(result.Errors()))
 		for _, desc := range result.Errors() {
-			description += fmt.Sprintf("%s\n", desc)
+			problems = append(problems, desc.String())
 		}
 
-		description = strings.TrimSpace(description)
-
-		return &out, fmt.Errorf("invalid json schema: %s", description)
+		return fmt.Errorf("invalid json schema: %s", strings.TrimSpace(strings.Join(problems, "\n")))
 	}
 
-	return &out, nil
+	return nil
 }
 
 // RuleTypeEngine is the engine for a rule type
@@ -162,7 +158,7 @@ func (r *RuleTypeEngine) GetID() string {
 
 // ValidateAgainstSchema validates the given contextual policy against the
 // schema for this rule type
-func (r *RuleTypeEngine) ValidateAgainstSchema(contextualPolicy any) (*bool, error) {
+func (r *RuleTypeEngine) ValidateAgainstSchema(contextualPolicy any) error {
 	return r.rval.ValidateAgainstSchema(contextualPolicy)
 }
 

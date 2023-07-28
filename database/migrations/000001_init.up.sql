@@ -214,6 +214,7 @@ CREATE UNIQUE INDEX users_organization_id_username_lower_idx ON users (organizat
 CREATE UNIQUE INDEX repositories_repo_id_idx ON repositories(repo_id);
 CREATE UNIQUE INDEX policies_group_id_policy_name_idx ON policies(provider, group_id, name);
 CREATE UNIQUE INDEX rule_type_idx ON rule_type(provider, group_id, name);
+CREATE UNIQUE INDEX rule_evaluation_status_results_idx ON rule_evaluation_status(policy_id, repository_id, entity, rule_type_id);
 
 -- triggers
 

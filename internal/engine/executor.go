@@ -21,6 +21,7 @@ import (
 	"errors"
 	"fmt"
 	"log"
+	"strconv"
 
 	"github.com/ThreeDotsLabs/watermill/message"
 	"google.golang.org/protobuf/types/known/timestamppb"
@@ -76,7 +77,7 @@ func (e *Executor) handleWebhookEvent(msg *message.Message) error {
 		return nil
 	}
 
-	ctx := context.Background()
+	ctx := msg.Context()
 
 	// TODO(jaosorior): Handle events that are not repository events
 	// TODO(jaosorior): get provider from database
@@ -173,10 +174,16 @@ func (e *Executor) handleRepoEvent(ctx context.Context, prov string, payload map
 
 		// Let's evaluate all the rules for this policy
 		err = TraverseRules(relevant, func(rule *pb.PipelinePolicy_Rule) error {
-			return e.handleRuleExecution(ctx, *pol.Id, prov, cli, repo, ectx, rule,
-				func(rt *pb.RuleType, err error) error {
-					return e.createOrUpdateRepositoryEvalStatus(ctx, *pol.Id, dbrepo.ID, *rt.Id, err)
-				})
+			rt, rte, err := e.getEvaluator(ctx, *pol.Id, prov, cli, ectx, rule)
+			if err != nil {
+				return err
+			}
+
+			if err := rte.Eval(ctx, repo, rule.Def.AsMap(), rule.Params.AsMap()); err != nil {
+				return err
+			}
+
+			return e.createOrUpdateRepositoryEvalStatus(ctx, *pol.Id, dbrepo.ID, *rt.Id, err)
 		})
 		if err != nil {
 			return fmt.Errorf("error traversing rules for policy %d: %w", pol.Id, err)
@@ -187,20 +194,14 @@ func (e *Executor) handleRepoEvent(ctx context.Context, prov string, payload map
 	return nil
 }
 
-// statusUpdateFunc is a function that updates the status of a rule evaluation
-// It receives the rule type that was evaluated and the error that was returned by the rule evaluation.
-type statusUpdateFunc func(*pb.RuleType, error) error
-
-func (e *Executor) handleRuleExecution(
+func (e *Executor) getEvaluator(
 	ctx context.Context,
 	policyID int32,
 	prov string,
 	cli ghclient.RestAPI,
-	ent any,
 	ectx *EntityContext,
 	rule *pb.PipelinePolicy_Rule,
-	statusUpdater statusUpdateFunc,
-) error {
+) (*pb.RuleType, *RuleTypeEngine, error) {
 	log.Printf("Evaluating rule: %s for policy %d", rule.Type, policyID)
 
 	dbrt, err := e.querier.GetRuleTypeByName(ctx, db.GetRuleTypeByNameParams{
@@ -210,31 +211,22 @@ func (e *Executor) handleRuleExecution(
 	})
 
 	if err != nil {
-		return fmt.Errorf("error getting rule type when traversing policy %d: %w", policyID, err)
+		return nil, nil, fmt.Errorf("error getting rule type when traversing policy %d: %w", policyID, err)
 	}
 
 	rt, err := RuleTypePBFromDB(&dbrt, ectx)
 	if err != nil {
-		return fmt.Errorf("error parsing rule type when traversing policy %d: %w", policyID, err)
+		return nil, nil, fmt.Errorf("error parsing rule type when traversing policy %d: %w", policyID, err)
 	}
 
 	// TODO(jaosorior): Rule types should be cached in memory so
 	// we don't have to query the database for each rule.
 	rte, err := NewRuleTypeEngine(rt, cli)
 	if err != nil {
-		return fmt.Errorf("error creating rule type engine: %w", err)
+		return nil, nil, fmt.Errorf("error creating rule type engine: %w", err)
 	}
 
-	// This came from the database, so it should be valid.
-	def := rule.Def.AsMap()
-	p := rule.GetParams()
-
-	var params map[string]any
-	if p != nil {
-		params = p.AsMap()
-	}
-
-	return statusUpdater(rt, rte.Eval(ctx, ent, def, params))
+	return rt, rte, nil
 }
 
 func (e *Executor) buildClient(
@@ -270,38 +262,15 @@ func (e *Executor) createOrUpdateRepositoryEvalStatus(
 	ruleTypeID int32,
 	evalErr error,
 ) error {
-	// Check if status exists
-	stat, err := e.querier.GetRuleEvaluationStatusForRepository(ctx, db.GetRuleEvaluationStatusForRepositoryParams{
+	return e.querier.UpsertRuleEvaluationStatusForRepository(ctx, db.UpsertRuleEvaluationStatusForRepositoryParams{
 		PolicyID: policyID,
 		RepositoryID: sql.NullInt32{
 			Int32: repoID,
 			Valid: true,
 		},
 		RuleTypeID: ruleTypeID,
-	})
-
-	if err != nil {
-		if errors.Is(err, sql.ErrNoRows) {
-			// Create status
-			return e.querier.CreateRuleEvaluationStatusForRepository(ctx, db.CreateRuleEvaluationStatusForRepositoryParams{
-				PolicyID: policyID,
-				RepositoryID: sql.NullInt32{
-					Int32: repoID,
-					Valid: true,
-				},
-				RuleTypeID: ruleTypeID,
-				EvalStatus: errorAsEvalStatus(evalErr),
-				Details:    errorAsDetails(evalErr),
-			})
-		}
-
-		return fmt.Errorf("error getting rule evaluation status: %w", err)
-	}
-
-	return e.querier.UpdateRuleEvaluationStatusForRepository(ctx, db.UpdateRuleEvaluationStatusForRepositoryParams{
 		EvalStatus: errorAsEvalStatus(evalErr),
 		Details:    errorAsDetails(evalErr),
-		ID:         stat.ID,
 	})
 }
 
@@ -313,12 +282,11 @@ func parseRepoID(repoID any) (int32, error) {
 		return int32(v), nil
 	case string:
 		// convert string to int
-		var asInt int32
-		_, err := fmt.Sscan("100", &asInt)
+		asInt32, err := strconv.ParseInt(v, 10, 16)
 		if err != nil {
 			return 0, fmt.Errorf("error converting string to int: %w", err)
 		}
-		return asInt, nil
+		return int32(asInt32), nil
 	default:
 		return 0, fmt.Errorf("unknown type for repoID: %T", v)
 	}

@@ -34,6 +34,24 @@ var (
 	ErrValidationFailed = fmt.Errorf("validation failed")
 )
 
+// RuleValidationError is used to report errors from evaluating a rule, including
+// attribution of the particular error encountered.
+type RuleValidationError struct {
+	Err string
+	// RuleType is a rule name
+	RuleType string
+}
+
+// String implements fmt.Stringer
+func (e *RuleValidationError) String() string {
+	return fmt.Sprintf("error in rule %q: %s", e.RuleType, e.Err)
+}
+
+// Error implements error.Error
+func (e *RuleValidationError) Error() string {
+	return e.String()
+}
+
 // ParseYAML parses a YAML pipeline policy and validates it
 func ParseYAML(r io.Reader) (*pb.PipelinePolicy, error) {
 	w := &bytes.Buffer{}
@@ -203,16 +221,13 @@ func TraverseAllRulesForPipeline(p *pb.PipelinePolicy, fn func(*pb.PipelinePolic
 }
 
 // TraverseRules traverses the rules and calls the given function for each rule
+// TODO: do we want to collect and return _all_ errors, rather than just the first,
+// to prevent whack-a-mole fixing?
 func TraverseRules(cr []*pb.PipelinePolicy_ContextualRuleSet, fn func(*pb.PipelinePolicy_Rule) error) error {
-	// no rules
-	if cr == nil {
-		return nil
-	}
-
 	for _, r := range cr {
 		for _, rule := range r.Rules {
 			if err := fn(rule); err != nil {
-				return err
+				return &RuleValidationError{err.Error(), rule.GetType()}
 			}
 		}
 	}
@@ -230,7 +245,11 @@ func MergeDatabaseListIntoPolicies(ppl []db.ListPoliciesByGroupIDRow, ectx *Enti
 	for idx := range ppl {
 		p := ppl[idx]
 
-		rowInfoToPolicyMap(p.Entity, p.ID, p.Name, p.Provider, p.ContextualRules, ectx, policies)
+		// NOTE: names are unique within a given Provider & Group ID (Unique index),
+		// so we don't need to worry about collisions.
+		if pm := rowInfoToPolicyMap(p.Entity, p.ID, p.Name, p.Provider, p.ContextualRules, ectx); pm != nil {
+			policies[p.Name] = pm
+		}
 	}
 
 	return policies
@@ -246,7 +265,11 @@ func MergeDatabaseGetIntoPolicies(ppl []db.GetPolicyByGroupAndIDRow, ectx *Entit
 	for idx := range ppl {
 		p := ppl[idx]
 
-		policies = rowInfoToPolicyMap(p.Entity, p.ID, p.Name, p.Provider, p.ContextualRules, ectx, policies)
+		// NOTE: names are unique within a given Provider & Group ID (Unique index),
+		// so we don't need to worry about collisions.
+		if pm := rowInfoToPolicyMap(p.Entity, p.ID, p.Name, p.Provider, p.ContextualRules, ectx); pm != nil {
+			policies[p.Name] = pm
+		}
 	}
 
 	return policies
@@ -263,43 +286,39 @@ func rowInfoToPolicyMap(
 	provider string,
 	contextualRules json.RawMessage,
 	ectx *EntityContext,
-	in map[string]*pb.PipelinePolicy,
-) map[string]*pb.PipelinePolicy {
+	// in map[string]*pb.PipelinePolicy,
+) *pb.PipelinePolicy {
 	if !IsValidEntity(EntityTypeFromDB(entity)) {
 		log.Printf("unknown entity found in database: %s", entity)
-		return in
+		return nil
 	}
 
-	if _, ok := in[name]; !ok {
-		in[name] = &pb.PipelinePolicy{
-			Id:   &policyID,
-			Name: name,
-			Context: &pb.Context{
-				Provider: provider,
-				Group:    &ectx.Group.Name,
-			},
-		}
+	result := &pb.PipelinePolicy{
+		Id:   &policyID,
+		Name: name,
+		Context: &pb.Context{
+			Provider: provider,
+			Group:    &ectx.Group.Name,
+		},
 	}
 
 	var ruleset []*pb.PipelinePolicy_ContextualRuleSet
 
-	parsedContextualRules := []*pb.PipelinePolicy_ContextualRuleSet{}
-	if err := json.Unmarshal(contextualRules, &parsedContextualRules); err != nil {
+	if err := json.Unmarshal(contextualRules, &ruleset); err != nil {
 		// We merely print the error and continue. This is because the user
 		// can't do anything about it and it's not a critical error.
 		log.Printf("error unmarshalling contextual rules; there is corruption in the database: %s", err)
-		return in
+		return nil
 	}
-	ruleset = append(ruleset, parsedContextualRules...)
 
 	switch EntityTypeFromDB(entity) {
 	case RepositoryEntity:
-		in[name].Repository = ruleset
+		result.Repository = ruleset
 	case BuildEnvironmentEntity:
-		in[name].BuildEnvironment = ruleset
+		result.BuildEnvironment = ruleset
 	case ArtifactEntity:
-		in[name].Artifact = ruleset
+		result.Artifact = ruleset
 	}
 
-	return in
+	return result
 }

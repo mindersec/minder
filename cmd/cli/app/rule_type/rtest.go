@@ -117,21 +117,13 @@ func runEvaluationForRules(eng *engine.RuleTypeEngine, ent any, frags []*pb.Pipe
 		// We already do validation of the rule definition when parsing.
 		// It's safe to simply
 		def := frag.Def.AsMap()
-		valid, err := eng.ValidateAgainstSchema(def)
-		if valid == nil {
+		err := eng.ValidateAgainstSchema(def)
+		if err != nil {
 			return fmt.Errorf("error validating rule against schema: %w", err)
 		}
+		fmt.Printf("Policy valid according to the JSON schema!\n")
 
-		p := frag.GetParams()
-		var params map[string]any
-		if p != nil {
-			params = p.AsMap()
-		}
-
-		fmt.Printf("Policy valid according to the JSON schema: %t\n", *valid)
-		if err != nil {
-			return fmt.Errorf("error: %s", err)
-		}
+		params := frag.GetParams().AsMap()
 
 		if err := eng.Eval(context.Background(), ent, def, params); err != nil {
 			return fmt.Errorf("error evaluating rule type: %w", err)
