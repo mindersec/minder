@@ -1,6 +1,22 @@
--- name: UpdatePolicyStatus :exec
-INSERT INTO policy_status (policy_id, policy_status, last_updated) VALUES ($1, $2, NOW())
-ON CONFLICT (policy_id) DO UPDATE SET policy_status = $2, last_updated = NOW();
+-- name: UpdateRuleEvaluationStatusForRepository :exec
+UPDATE rule_evaluation_status 
+    SET eval_status = $1, details = $2, last_updated = NOW()
+    WHERE id = $3;
+
+-- name: CreateRuleEvaluationStatusForRepository :exec
+INSERT INTO rule_evaluation_status (
+    policy_id,
+    repository_id,
+    rule_type_id,
+    entity,
+    eval_status,
+    details,
+    last_updated
+) VALUES ($1, $2, $3, 'repository', $4, $5, NOW());
+
+-- name: GetRuleEvaluationStatusForRepository :one
+SELECT * FROM rule_evaluation_status
+WHERE policy_id = $1 AND entity = 'repository' AND repository_id = $2 AND rule_type_id = $3;
 
 -- name: GetPolicyStatusByIdAndGroup :one
 SELECT p.id, p.name, ps.policy_status, ps.last_updated FROM policy_status ps

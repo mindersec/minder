@@ -245,6 +245,20 @@ func (mr *MockStoreMockRecorder) CreateRole(arg0, arg1 interface{}) *gomock.Call
 	return mr.mock.ctrl.RecordCallWithMethodType(mr.mock, "CreateRole", reflect.TypeOf((*MockStore)(nil).CreateRole), arg0, arg1)
 }
 
+// CreateRuleEvaluationStatusForRepository mocks base method.
+func (m *MockStore) CreateRuleEvaluationStatusForRepository(arg0 context.Context, arg1 db.CreateRuleEvaluationStatusForRepositoryParams) error {
+	m.ctrl.T.Helper()
+	ret := m.ctrl.Call(m, "CreateRuleEvaluationStatusForRepository", arg0, arg1)
+	ret0, _ := ret[0].(error)
+	return ret0
+}
+
+// CreateRuleEvaluationStatusForRepository indicates an expected call of CreateRuleEvaluationStatusForRepository.
+func (mr *MockStoreMockRecorder) CreateRuleEvaluationStatusForRepository(arg0, arg1 interface{}) *gomock.Call {
+	mr.mock.ctrl.T.Helper()
+	return mr.mock.ctrl.RecordCallWithMethodType(mr.mock, "CreateRuleEvaluationStatusForRepository", reflect.TypeOf((*MockStore)(nil).CreateRuleEvaluationStatusForRepository), arg0, arg1)
+}
+
 // CreateRuleType mocks base method.
 func (m *MockStore) CreateRuleType(arg0 context.Context, arg1 db.CreateRuleTypeParams) (db.RuleType, error) {
 	m.ctrl.T.Helper()
@@ -862,6 +876,21 @@ func (mr *MockStoreMockRecorder) GetRootProjects(arg0 interface{}) *gomock.Call 
 	return mr.mock.ctrl.RecordCallWithMethodType(mr.mock, "GetRootProjects", reflect.TypeOf((*MockStore)(nil).GetRootProjects), arg0)
 }
 
+// GetRuleEvaluationStatusForRepository mocks base method.
+func (m *MockStore) GetRuleEvaluationStatusForRepository(arg0 context.Context, arg1 db.GetRuleEvaluationStatusForRepositoryParams) (db.RuleEvaluationStatus, error) {
+	m.ctrl.T.Helper()
+	ret := m.ctrl.Call(m, "GetRuleEvaluationStatusForRepository", arg0, arg1)
+	ret0, _ := ret[0].(db.RuleEvaluationStatus)
+	ret1, _ := ret[1].(error)
+	return ret0, ret1
+}
+
+// GetRuleEvaluationStatusForRepository indicates an expected call of GetRuleEvaluationStatusForRepository.
+func (mr *MockStoreMockRecorder) GetRuleEvaluationStatusForRepository(arg0, arg1 interface{}) *gomock.Call {
+	mr.mock.ctrl.T.Helper()
+	return mr.mock.ctrl.RecordCallWithMethodType(mr.mock, "GetRuleEvaluationStatusForRepository", reflect.TypeOf((*MockStore)(nil).GetRuleEvaluationStatusForRepository), arg0, arg1)
+}
+
 // GetRuleTypeByID mocks base method.
 func (m *MockStore) GetRuleTypeByID(arg0 context.Context, arg1 int32) (db.RuleType, error) {
 	m.ctrl.T.Helper()
@@ -1371,20 +1400,6 @@ func (mr *MockStoreMockRecorder) UpdatePassword(arg0, arg1 interface{}) *gomock.
 	return mr.mock.ctrl.RecordCallWithMethodType(mr.mock, "UpdatePassword", reflect.TypeOf((*MockStore)(nil).UpdatePassword), arg0, arg1)
 }
 
-// UpdatePolicyStatus mocks base method.
-func (m *MockStore) UpdatePolicyStatus(arg0 context.Context, arg1 db.UpdatePolicyStatusParams) error {
-	m.ctrl.T.Helper()
-	ret := m.ctrl.Call(m, "UpdatePolicyStatus", arg0, arg1)
-	ret0, _ := ret[0].(error)
-	return ret0
-}
-
-// UpdatePolicyStatus indicates an expected call of UpdatePolicyStatus.
-func (mr *MockStoreMockRecorder) UpdatePolicyStatus(arg0, arg1 interface{}) *gomock.Call {
-	mr.mock.ctrl.T.Helper()
-	return mr.mock.ctrl.RecordCallWithMethodType(mr.mock, "UpdatePolicyStatus", reflect.TypeOf((*MockStore)(nil).UpdatePolicyStatus), arg0, arg1)
-}
-
 // UpdateRepository mocks base method.
 func (m *MockStore) UpdateRepository(arg0 context.Context, arg1 db.UpdateRepositoryParams) (db.Repository, error) {
 	m.ctrl.T.Helper()
@@ -1428,6 +1443,20 @@ func (m *MockStore) UpdateRole(arg0 context.Context, arg1 db.UpdateRoleParams) (
 func (mr *MockStoreMockRecorder) UpdateRole(arg0, arg1 interface{}) *gomock.Call {
 	mr.mock.ctrl.T.Helper()
 	return mr.mock.ctrl.RecordCallWithMethodType(mr.mock, "UpdateRole", reflect.TypeOf((*MockStore)(nil).UpdateRole), arg0, arg1)
+}
+
+// UpdateRuleEvaluationStatusForRepository mocks base method.
+func (m *MockStore) UpdateRuleEvaluationStatusForRepository(arg0 context.Context, arg1 db.UpdateRuleEvaluationStatusForRepositoryParams) error {
+	m.ctrl.T.Helper()
+	ret := m.ctrl.Call(m, "UpdateRuleEvaluationStatusForRepository", arg0, arg1)
+	ret0, _ := ret[0].(error)
+	return ret0
+}
+
+// UpdateRuleEvaluationStatusForRepository indicates an expected call of UpdateRuleEvaluationStatusForRepository.
+func (mr *MockStoreMockRecorder) UpdateRuleEvaluationStatusForRepository(arg0, arg1 interface{}) *gomock.Call {
+	mr.mock.ctrl.T.Helper()
+	return mr.mock.ctrl.RecordCallWithMethodType(mr.mock, "UpdateRuleEvaluationStatusForRepository", reflect.TypeOf((*MockStore)(nil).UpdateRuleEvaluationStatusForRepository), arg0, arg1)
 }
 
 // UpdateRuleType mocks base method.

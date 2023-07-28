@@ -23,6 +23,7 @@ type Querier interface {
 	CreateProject(ctx context.Context, arg CreateProjectParams) (Project, error)
 	CreateRepository(ctx context.Context, arg CreateRepositoryParams) (Repository, error)
 	CreateRole(ctx context.Context, arg CreateRoleParams) (Role, error)
+	CreateRuleEvaluationStatusForRepository(ctx context.Context, arg CreateRuleEvaluationStatusForRepositoryParams) error
 	CreateRuleType(ctx context.Context, arg CreateRuleTypeParams) (RuleType, error)
 	CreateSessionState(ctx context.Context, arg CreateSessionStateParams) (SessionStore, error)
 	CreateSigningKey(ctx context.Context, arg CreateSigningKeyParams) (SigningKey, error)
@@ -64,6 +65,7 @@ type Querier interface {
 	GetRoleByID(ctx context.Context, id int32) (Role, error)
 	GetRoleByName(ctx context.Context, arg GetRoleByNameParams) (Role, error)
 	GetRootProjects(ctx context.Context) ([]Project, error)
+	GetRuleEvaluationStatusForRepository(ctx context.Context, arg GetRuleEvaluationStatusForRepositoryParams) (RuleEvaluationStatus, error)
 	GetRuleTypeByID(ctx context.Context, id int32) (RuleType, error)
 	GetRuleTypeByName(ctx context.Context, arg GetRuleTypeByNameParams) (RuleType, error)
 	GetSessionState(ctx context.Context, id int32) (SessionStore, error)
@@ -97,10 +99,10 @@ type Querier interface {
 	UpdateGroup(ctx context.Context, arg UpdateGroupParams) (Group, error)
 	UpdateOrganization(ctx context.Context, arg UpdateOrganizationParams) (Organization, error)
 	UpdatePassword(ctx context.Context, arg UpdatePasswordParams) (User, error)
-	UpdatePolicyStatus(ctx context.Context, arg UpdatePolicyStatusParams) error
 	UpdateRepository(ctx context.Context, arg UpdateRepositoryParams) (Repository, error)
 	UpdateRepositoryByID(ctx context.Context, arg UpdateRepositoryByIDParams) (Repository, error)
 	UpdateRole(ctx context.Context, arg UpdateRoleParams) (Role, error)
+	UpdateRuleEvaluationStatusForRepository(ctx context.Context, arg UpdateRuleEvaluationStatusForRepositoryParams) error
 	UpdateRuleType(ctx context.Context, arg UpdateRuleTypeParams) error
 	UpdateUser(ctx context.Context, arg UpdateUserParams) (User, error)
 }

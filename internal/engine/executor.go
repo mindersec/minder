@@ -173,7 +173,10 @@ func (e *Executor) handleRepoEvent(ctx context.Context, prov string, payload map
 
 		// Let's evaluate all the rules for this policy
 		err = TraverseRules(relevant, func(rule *pb.PipelinePolicy_Rule) error {
-			return e.handleRuleExecution(ctx, *pol.Id, prov, cli, repo, ectx, rule)
+			return e.handleRuleExecution(ctx, *pol.Id, prov, cli, repo, ectx, rule,
+				func(rt *pb.RuleType, err error) error {
+					return e.createOrUpdateRepositoryEvalStatus(ctx, *pol.Id, dbrepo.ID, *rt.Id, err)
+				})
 		})
 		if err != nil {
 			return fmt.Errorf("error traversing rules for policy %d: %w", pol.Id, err)
@@ -183,6 +186,11 @@ func (e *Executor) handleRepoEvent(ctx context.Context, prov string, payload map
 
 	return nil
 }
+
+// statusUpdateFunc is a function that updates the status of a rule evaluation
+// It receives the rule type that was evaluated and the error that was returned by the rule evaluation.
+type statusUpdateFunc func(*pb.RuleType, error) error
+
 func (e *Executor) handleRuleExecution(
 	ctx context.Context,
 	policyID int32,
@@ -191,6 +199,7 @@ func (e *Executor) handleRuleExecution(
 	ent any,
 	ectx *EntityContext,
 	rule *pb.PipelinePolicy_Rule,
+	statusUpdater statusUpdateFunc,
 ) error {
 	log.Printf("Evaluating rule: %s for policy %d", rule.Type, policyID)
 
@@ -225,20 +234,7 @@ func (e *Executor) handleRuleExecution(
 		params = p.AsMap()
 	}
 
-	err = rte.Eval(ctx, ent, def, params)
-
-	asErr := &EvaluationError{}
-	if errors.As(err, &asErr) {
-		log.Printf("error evaluating rule: %s", asErr.Error())
-		return nil
-	}
-
-	if err != nil {
-		return fmt.Errorf("error evaluating rule: %w", err)
-	}
-
-	log.Printf("rule %s evaluated successfully", rule.Type)
-	return nil
+	return statusUpdater(rt, rte.Eval(ctx, ent, def, params))
 }
 
 func (e *Executor) buildClient(
@@ -267,6 +263,48 @@ func (e *Executor) buildClient(
 	return cli, nil
 }
 
+func (e *Executor) createOrUpdateRepositoryEvalStatus(
+	ctx context.Context,
+	policyID int32,
+	repoID int32,
+	ruleTypeID int32,
+	evalErr error,
+) error {
+	// Check if status exists
+	stat, err := e.querier.GetRuleEvaluationStatusForRepository(ctx, db.GetRuleEvaluationStatusForRepositoryParams{
+		PolicyID: policyID,
+		RepositoryID: sql.NullInt32{
+			Int32: repoID,
+			Valid: true,
+		},
+		RuleTypeID: ruleTypeID,
+	})
+
+	if err != nil {
+		if errors.Is(err, sql.ErrNoRows) {
+			// Create status
+			return e.querier.CreateRuleEvaluationStatusForRepository(ctx, db.CreateRuleEvaluationStatusForRepositoryParams{
+				PolicyID: policyID,
+				RepositoryID: sql.NullInt32{
+					Int32: repoID,
+					Valid: true,
+				},
+				RuleTypeID: ruleTypeID,
+				EvalStatus: errorAsEvalStatus(evalErr),
+				Details:    errorAsDetails(evalErr),
+			})
+		}
+
+		return fmt.Errorf("error getting rule evaluation status: %w", err)
+	}
+
+	return e.querier.UpdateRuleEvaluationStatusForRepository(ctx, db.UpdateRuleEvaluationStatusForRepositoryParams{
+		EvalStatus: errorAsEvalStatus(evalErr),
+		Details:    errorAsDetails(evalErr),
+		ID:         stat.ID,
+	})
+}
+
 func parseRepoID(repoID any) (int32, error) {
 	switch v := repoID.(type) {
 	case int32:
@@ -284,4 +322,22 @@ func parseRepoID(repoID any) (int32, error) {
 	default:
 		return 0, fmt.Errorf("unknown type for repoID: %T", v)
 	}
+}
+
+func errorAsEvalStatus(err error) db.EvalStatusTypes {
+	asErr := &EvaluationError{}
+	if errors.As(err, &asErr) {
+		return db.EvalStatusTypesFailure
+	} else if err != nil {
+		return db.EvalStatusTypesError
+	}
+	return db.EvalStatusTypesSuccess
+}
+
+func errorAsDetails(err error) string {
+	if err != nil {
+		return err.Error()
+	}
+
+	return ""
 }

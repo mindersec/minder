@@ -11,6 +11,37 @@ import (
 	"time"
 )
 
+const createRuleEvaluationStatusForRepository = `-- name: CreateRuleEvaluationStatusForRepository :exec
+INSERT INTO rule_evaluation_status (
+    policy_id,
+    repository_id,
+    rule_type_id,
+    entity,
+    eval_status,
+    details,
+    last_updated
+) VALUES ($1, $2, $3, 'repository', $4, $5, NOW())
+`
+
+type CreateRuleEvaluationStatusForRepositoryParams struct {
+	PolicyID     int32           `json:"policy_id"`
+	RepositoryID sql.NullInt32   `json:"repository_id"`
+	RuleTypeID   int32           `json:"rule_type_id"`
+	EvalStatus   EvalStatusTypes `json:"eval_status"`
+	Details      string          `json:"details"`
+}
+
+func (q *Queries) CreateRuleEvaluationStatusForRepository(ctx context.Context, arg CreateRuleEvaluationStatusForRepositoryParams) error {
+	_, err := q.db.ExecContext(ctx, createRuleEvaluationStatusForRepository,
+		arg.PolicyID,
+		arg.RepositoryID,
+		arg.RuleTypeID,
+		arg.EvalStatus,
+		arg.Details,
+	)
+	return err
+}
+
 const getPolicyStatusByGroup = `-- name: GetPolicyStatusByGroup :many
 SELECT p.id, p.name, ps.policy_status, ps.last_updated FROM policy_status ps
 INNER JOIN policies p ON p.id = ps.policy_id
@@ -77,6 +108,33 @@ func (q *Queries) GetPolicyStatusByIdAndGroup(ctx context.Context, arg GetPolicy
 		&i.ID,
 		&i.Name,
 		&i.PolicyStatus,
+		&i.LastUpdated,
+	)
+	return i, err
+}
+
+const getRuleEvaluationStatusForRepository = `-- name: GetRuleEvaluationStatusForRepository :one
+SELECT id, entity, policy_id, rule_type_id, eval_status, repository_id, details, last_updated FROM rule_evaluation_status
+WHERE policy_id = $1 AND entity = 'repository' AND repository_id = $2 AND rule_type_id = $3
+`
+
+type GetRuleEvaluationStatusForRepositoryParams struct {
+	PolicyID     int32         `json:"policy_id"`
+	RepositoryID sql.NullInt32 `json:"repository_id"`
+	RuleTypeID   int32         `json:"rule_type_id"`
+}
+
+func (q *Queries) GetRuleEvaluationStatusForRepository(ctx context.Context, arg GetRuleEvaluationStatusForRepositoryParams) (RuleEvaluationStatus, error) {
+	row := q.db.QueryRowContext(ctx, getRuleEvaluationStatusForRepository, arg.PolicyID, arg.RepositoryID, arg.RuleTypeID)
+	var i RuleEvaluationStatus
+	err := row.Scan(
+		&i.ID,
+		&i.Entity,
+		&i.PolicyID,
+		&i.RuleTypeID,
+		&i.EvalStatus,
+		&i.RepositoryID,
+		&i.Details,
 		&i.LastUpdated,
 	)
 	return i, err
@@ -189,17 +247,19 @@ func (q *Queries) ListRuleEvaluationStatusForRepositoryByPolicyId(ctx context.Co
 	return items, nil
 }
 
-const updatePolicyStatus = `-- name: UpdatePolicyStatus :exec
-INSERT INTO policy_status (policy_id, policy_status, last_updated) VALUES ($1, $2, NOW())
-ON CONFLICT (policy_id) DO UPDATE SET policy_status = $2, last_updated = NOW()
+const updateRuleEvaluationStatusForRepository = `-- name: UpdateRuleEvaluationStatusForRepository :exec
+UPDATE rule_evaluation_status 
+    SET eval_status = $1, details = $2, last_updated = NOW()
+    WHERE id = $3
 `
 
-type UpdatePolicyStatusParams struct {
-	PolicyID     int32           `json:"policy_id"`
-	PolicyStatus EvalStatusTypes `json:"policy_status"`
+type UpdateRuleEvaluationStatusForRepositoryParams struct {
+	EvalStatus EvalStatusTypes `json:"eval_status"`
+	Details    string          `json:"details"`
+	ID         int32           `json:"id"`
 }
 
-func (q *Queries) UpdatePolicyStatus(ctx context.Context, arg UpdatePolicyStatusParams) error {
-	_, err := q.db.ExecContext(ctx, updatePolicyStatus, arg.PolicyID, arg.PolicyStatus)
+func (q *Queries) UpdateRuleEvaluationStatusForRepository(ctx context.Context, arg UpdateRuleEvaluationStatusForRepositoryParams) error {
+	_, err := q.db.ExecContext(ctx, updateRuleEvaluationStatusForRepository, arg.EvalStatus, arg.Details, arg.ID)
 	return err
 }

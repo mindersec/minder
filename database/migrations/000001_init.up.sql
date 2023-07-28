@@ -166,7 +166,7 @@ CREATE TABLE entity_policies (
     updated_at TIMESTAMP NOT NULL DEFAULT NOW()
 );
 
-create type eval_status_types as enum ('success', 'failure');
+create type eval_status_types as enum ('success', 'failure', 'error', 'skipped', 'pending');
 
 -- This table will be used to track the overall status of a policy evaluation
 CREATE TABLE policy_status (
@@ -189,6 +189,7 @@ CREATE TABLE rule_evaluation_status (
     -- These will be added later
     -- artifact_id INTEGER REFERENCES artifacts(id) ON DELETE CASCADE,
     -- build_environment_id INTEGER REFERENCES build_environments(id) ON DELETE CASCADE,
+    details TEXT NOT NULL,
     last_updated TIMESTAMP NOT NULL DEFAULT NOW()
 );
 
@@ -245,6 +246,50 @@ CREATE TRIGGER delete_violations_and_statuses
     BEFORE DELETE ON repositories
     FOR EACH ROW
     EXECUTE PROCEDURE delete_violations_and_statuses();
+
+-- Create a default status for a policy when it's created
+CREATE OR REPLACE FUNCTION create_default_policy_status() RETURNS TRIGGER AS $$
+BEGIN
+    INSERT INTO policy_status (policy_id, policy_status, last_updated) VALUES (NEW.id, 'pending', NOW());
+    RETURN NEW;
+END;
+$$ LANGUAGE plpgsql;
+
+CREATE TRIGGER create_default_policy_status
+    AFTER INSERT ON policies
+    FOR EACH ROW
+    EXECUTE PROCEDURE create_default_policy_status();
+
+-- Update overall policy status if a rule evaluation status is updated
+-- error takes precedence over failure, failure takes precedence over success
+CREATE OR REPLACE FUNCTION update_policy_status() RETURNS TRIGGER AS $$
+BEGIN
+    -- keep error if policy had errored
+    IF (NEW.eval_status = 'error') THEN
+        UPDATE policy_status SET policy_status = 'error', last_updated = NOW() WHERE policy_id = NEW.policy_id;
+    -- mark status as successful if all evaluations are successful or skipped
+    ELSEIF NOT EXISTS (SELECT * FROM rule_evaluation_status WHERE policy_id = NEW.policy_id AND eval_status != 'success' AND eval_status != 'skipped') THEN
+        UPDATE policy_status SET policy_status = 'success', last_updated = NOW() WHERE policy_id = NEW.policy_id;
+    -- mark policy as successful if it was pending and the new status is success
+    ELSEIF (NEW.eval_status = 'success') THEN
+        UPDATE policy_status SET policy_status = 'success', last_updated = NOW() WHERE policy_id = NEW.policy_id AND policy_status = 'pending';
+    -- mark status as failed if it was successful or pending and the new status is failure
+    ELSEIF (NEW.eval_status = 'failure') THEN
+        UPDATE policy_status SET policy_status = 'failure', last_updated = NOW()
+        WHERE policy_id = NEW.policy_id AND (policy_status = 'success' OR policy_status = 'pending') AND NEW.eval_status = 'failure';
+    -- only mark policy run as skipped if every evaluation was skipped
+    ELSEIF (NEW.eval_status = 'skipped') THEN
+        UPDATE policy_status SET policy_status = 'skipped', last_updated = NOW()
+        WHERE policy_id = NEW.policy_id AND NOT EXISTS (SELECT * FROM rule_evaluation_status WHERE policy_id = NEW.policy_id AND eval_status != 'skipped');
+    END IF;
+    RETURN NEW;
+END;
+$$ LANGUAGE plpgsql;
+
+CREATE TRIGGER update_policy_status
+    AFTER INSERT OR UPDATE ON rule_evaluation_status
+    FOR EACH ROW
+    EXECUTE PROCEDURE update_policy_status();
 
 -- Create default root project
 INSERT INTO projects (name, metadata) VALUES ('Root Project', '{}');

@@ -62,6 +62,9 @@ type EvalStatusTypes string
 const (
 	EvalStatusTypesSuccess EvalStatusTypes = "success"
 	EvalStatusTypesFailure EvalStatusTypes = "failure"
+	EvalStatusTypesError   EvalStatusTypes = "error"
+	EvalStatusTypesSkipped EvalStatusTypes = "skipped"
+	EvalStatusTypesPending EvalStatusTypes = "pending"
 )
 
 func (e *EvalStatusTypes) Scan(src interface{}) error {
@@ -207,6 +210,7 @@ type RuleEvaluationStatus struct {
 	RuleTypeID   int32           `json:"rule_type_id"`
 	EvalStatus   EvalStatusTypes `json:"eval_status"`
 	RepositoryID sql.NullInt32   `json:"repository_id"`
+	Details      string          `json:"details"`
 	LastUpdated  time.Time       `json:"last_updated"`
 }
 
