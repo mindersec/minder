@@ -293,7 +293,9 @@ func (s *Server) GetPolicyById(ctx context.Context,
 
 	var resp pb.GetPolicyByIdResponse
 	pols := engine.MergeDatabaseGetIntoPolicies(policies, entityCtx)
-	if len(pols) == 0 || len(pols) > 1 {
+	if len(pols) == 0 {
+		return nil, status.Errorf(codes.NotFound, "policy not found")
+	} else if len(pols) > 1 {
 		return nil, status.Errorf(codes.Unknown, "failed to get policy: %s", err)
 	}
 
