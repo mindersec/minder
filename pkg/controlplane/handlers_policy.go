@@ -64,9 +64,9 @@ func (s *Server) authAndContextValidation(ctx context.Context, in *pb.Context) (
 
 // ensureDefaultGroupForContext ensures a valid group is set in the context or sets the default group
 // if the group is not set in the incoming entity context, it'll set it.
-func (s *Server) ensureDefaultGroupForContext(ctx context.Context, in *pb.Context) error {
+func (s *Server) ensureDefaultGroupForContext(ctx context.Context, inout *pb.Context) error {
 	// Group is already set
-	if in.Group != nil && *in.Group != "" {
+	if inout.Group != nil && *inout.Group != "" {
 		return nil
 	}
 
@@ -80,7 +80,7 @@ func (s *Server) ensureDefaultGroupForContext(ctx context.Context, in *pb.Contex
 		return status.Errorf(codes.InvalidArgument, "cannot infer group id")
 	}
 
-	in.Group = &g.Name
+	inout.Group = &g.Name
 	return nil
 }
 
