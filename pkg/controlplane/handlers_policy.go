@@ -342,22 +342,20 @@ func (s *Server) GetPolicyStatusById(ctx context.Context,
 			return nil, status.Errorf(codes.Unknown, "failed to get policy: %s", err)
 		}
 
-		if len(dbrulestat) > 0 {
-			for _, rs := range dbrulestat {
-				rulestats = append(rulestats, &pb.RuleEvaluationStatus{
-					PolicyId: in.PolicyId,
-					RuleId:   rs.RuleTypeID,
-					RuleName: rs.Name,
-					Entity:   engine.RepositoryEntity.String(),
-					Status:   string(rs.EvalStatus),
-					EntityInfo: map[string]string{
-						"repository_id": fmt.Sprintf("%d", rs.RepositoryID.Int32),
-						"repo_name":     rs.RepoName,
-						"repo_owner":    rs.RepoOwner,
-						"provider":      rs.Provider,
-					},
-				})
-			}
+		for _, rs := range dbrulestat {
+			rulestats = append(rulestats, &pb.RuleEvaluationStatus{
+				PolicyId: in.PolicyId,
+				RuleId:   rs.RuleTypeID,
+				RuleName: rs.Name,
+				Entity:   engine.RepositoryEntity.String(),
+				Status:   string(rs.EvalStatus),
+				EntityInfo: map[string]string{
+					"repository_id": fmt.Sprintf("%d", rs.RepositoryID.Int32),
+					"repo_name":     rs.RepoName,
+					"repo_owner":    rs.RepoOwner,
+					"provider":      rs.Provider,
+				},
+			})
 		}
 
 		// TODO: Add other entities once we have database entries for them
@@ -371,9 +369,7 @@ func (s *Server) GetPolicyStatusById(ctx context.Context,
 		PolicyStatus: string(dbstat.PolicyStatus),
 	}
 
-	if len(rulestats) > 0 {
-		res.RuleEvaluationStatus = rulestats
-	}
+	res.RuleEvaluationStatus = rulestats
 
 	return res, nil
 
