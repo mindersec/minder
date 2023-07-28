@@ -274,7 +274,8 @@ BEGIN
     ELSEIF (NEW.eval_status = 'success') THEN
         UPDATE policy_status SET policy_status = 'success', last_updated = NOW() WHERE policy_id = NEW.policy_id AND policy_status = 'pending';
     -- mark status as failed if it was successful or pending and the new status is failure
-    ELSEIF (NEW.eval_status = 'failure') THEN
+    -- and there are no errors
+    ELSEIF (NEW.eval_status = 'failure') AND NOT EXISTS (SELECT * FROM rule_evaluation_status WHERE policy_id = NEW.policy_id and eval_status = 'error') THEN
         UPDATE policy_status SET policy_status = 'failure', last_updated = NOW()
         WHERE policy_id = NEW.policy_id AND (policy_status = 'success' OR policy_status = 'pending') AND NEW.eval_status = 'failure';
     -- only mark policy run as skipped if every evaluation was skipped
