@@ -179,10 +179,7 @@ func (e *Executor) handleRepoEvent(ctx context.Context, prov string, payload map
 				return err
 			}
 
-			if err := rte.Eval(ctx, repo, rule.Def.AsMap(), rule.Params.AsMap()); err != nil {
-				return err
-			}
-
+			err = rte.Eval(ctx, repo, rule.Def.AsMap(), rule.Params.AsMap())
 			return e.createOrUpdateRepositoryEvalStatus(ctx, *pol.Id, dbrepo.ID, *rt.Id, err)
 		})
 		if err != nil {
