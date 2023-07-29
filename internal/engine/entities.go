@@ -28,6 +28,8 @@ const (
 	BuildEnvironmentEntity EntityType = "build_environment"
 	// ArtifactEntity is an artifact entity
 	ArtifactEntity EntityType = "artifact"
+	// UnknownEntity is an explicitly unknown entity
+	UnknownEntity EntityType = "unknown"
 )
 
 // String returns the string representation of the entity type
@@ -54,6 +56,6 @@ func EntityTypeFromDB(entity db.Entities) EntityType {
 	case db.EntitiesArtifact:
 		return ArtifactEntity
 	default:
-		return ""
+		return UnknownEntity
 	}
 }

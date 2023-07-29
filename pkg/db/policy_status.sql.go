@@ -263,3 +263,42 @@ func (q *Queries) UpdateRuleEvaluationStatusForRepository(ctx context.Context, a
 	_, err := q.db.ExecContext(ctx, updateRuleEvaluationStatusForRepository, arg.EvalStatus, arg.Details, arg.ID)
 	return err
 }
+
+const upsertRuleEvaluationStatusForRepository = `-- name: UpsertRuleEvaluationStatusForRepository :exec
+INSERT INTO rule_evaluation_status (
+    policy_id,
+    repository_id,
+    rule_type_id,
+    entity,
+    eval_status,
+    details,
+    last_updated
+) VALUES ($1, $2, $3, 'repository', $4, $5, NOW())
+ON CONFLICT(policy_id, repository_id, entity, rule_type_id) DO UPDATE SET
+    eval_status = $4,
+    details = $5,
+    last_updated = NOW()
+WHERE rule_evaluation_status.policy_id = $1
+  AND rule_evaluation_status.repository_id = $2
+  AND rule_evaluation_status.entity = 'repository'
+  AND rule_evaluation_status.rule_type_id = $3
+`
+
+type UpsertRuleEvaluationStatusForRepositoryParams struct {
+	PolicyID     int32           `json:"policy_id"`
+	RepositoryID sql.NullInt32   `json:"repository_id"`
+	RuleTypeID   int32           `json:"rule_type_id"`
+	EvalStatus   EvalStatusTypes `json:"eval_status"`
+	Details      string          `json:"details"`
+}
+
+func (q *Queries) UpsertRuleEvaluationStatusForRepository(ctx context.Context, arg UpsertRuleEvaluationStatusForRepositoryParams) error {
+	_, err := q.db.ExecContext(ctx, upsertRuleEvaluationStatusForRepository,
+		arg.PolicyID,
+		arg.RepositoryID,
+		arg.RuleTypeID,
+		arg.EvalStatus,
+		arg.Details,
+	)
+	return err
+}

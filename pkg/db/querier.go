@@ -105,6 +105,7 @@ type Querier interface {
 	UpdateRuleEvaluationStatusForRepository(ctx context.Context, arg UpdateRuleEvaluationStatusForRepositoryParams) error
 	UpdateRuleType(ctx context.Context, arg UpdateRuleTypeParams) error
 	UpdateUser(ctx context.Context, arg UpdateUserParams) (User, error)
+	UpsertRuleEvaluationStatusForRepository(ctx context.Context, arg UpsertRuleEvaluationStatusForRepositoryParams) error
 }
 
 var _ Querier = (*Queries)(nil)
