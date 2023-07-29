@@ -130,7 +130,7 @@ func (s *Server) CreatePolicy(ctx context.Context,
 			return fmt.Errorf("error creating rule validator: %w", err)
 		}
 
-		if err := rval.ValidateAgainstSchema(r); err != nil {
+		if err := rval.ValidateAgainstSchema(r.Def); err != nil {
 			return fmt.Errorf("error validating rule: %w", err)
 		}
 
