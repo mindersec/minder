@@ -13,7 +13,7 @@
 // See the License for the specific language governing permissions and
 // limitations under the License.
 
-package policy
+package rule_type
 
 import (
 	"fmt"
@@ -26,10 +26,10 @@ import (
 	pb "github.com/stacklok/mediator/pkg/generated/protobuf/go/mediator/v1"
 )
 
-var policy_deleteCmd = &cobra.Command{
+var ruleType_deleteCmd = &cobra.Command{
 	Use:   "delete",
-	Short: "delete a policy within a mediator controlplane",
-	Long: `The medic policy delete subcommand lets you delete policies within a
+	Short: "delete a rule type within a mediator controlplane",
+	Long: `The medic rule type delete subcommand lets you delete policies within a
 mediator control plane.`,
 	PreRun: func(cmd *cobra.Command, args []string) {
 		if err := viper.BindPFlags(cmd.Flags()); err != nil {
@@ -42,7 +42,6 @@ mediator control plane.`,
 
 		grpc_host := util.GetConfigValue("grpc_server.host", "grpc-host", cmd, "").(string)
 		grpc_port := util.GetConfigValue("grpc_server.port", "grpc-port", cmd, 0).(int)
-		provider := viper.GetString("provider")
 
 		conn, err := util.GetGrpcConnection(grpc_host, grpc_port)
 
@@ -53,11 +52,9 @@ mediator control plane.`,
 		ctx, cancel := util.GetAppContext()
 		defer cancel()
 
-		_, err = client.DeletePolicy(ctx, &pb.DeletePolicyRequest{
-			Context: &pb.Context{
-				Provider: provider,
-			},
-			Id: id,
+		_, err = client.DeleteRuleType(ctx, &pb.DeleteRuleTypeRequest{
+			Context: &pb.Context{},
+			Id:      id,
 		})
 
 		util.ExitNicelyOnError(err, "Error deleting policy")
@@ -66,10 +63,8 @@ mediator control plane.`,
 }
 
 func init() {
-	PolicyCmd.AddCommand(policy_deleteCmd)
-	policy_deleteCmd.Flags().Int32P("id", "i", 0, "id of policy to delete")
-	policy_deleteCmd.Flags().StringP("provider", "p", "github", "Provider for the policy")
-	err := policy_deleteCmd.MarkFlagRequired("id")
+	ruleTypeCmd.AddCommand(ruleType_deleteCmd)
+	ruleType_deleteCmd.Flags().Int32P("id", "i", 0, "id of rule type to delete")
+	err := ruleType_deleteCmd.MarkFlagRequired("id")
 	util.ExitNicelyOnError(err, "Error marking flag as required")
-	// TODO: add a flag for the policy name
 }

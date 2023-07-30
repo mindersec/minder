@@ -83,7 +83,7 @@ func testCmdRun(cmd *cobra.Command, _ []string) error {
 		return fmt.Errorf("error reading entity from file: %w", err)
 	}
 
-	p, err := readPolicyFromFile(ppath.Value.String())
+	p, err := engine.ReadPolicyFromFile(ppath.Value.String())
 	if err != nil {
 		return fmt.Errorf("error reading fragment from file: %w", err)
 	}
@@ -117,21 +117,13 @@ func runEvaluationForRules(eng *engine.RuleTypeEngine, ent any, frags []*pb.Pipe
 		// We already do validation of the rule definition when parsing.
 		// It's safe to simply
 		def := frag.Def.AsMap()
-		valid, err := eng.ValidateAgainstSchema(def)
-		if valid == nil {
+		err := eng.ValidateAgainstSchema(def)
+		if err != nil {
 			return fmt.Errorf("error validating rule against schema: %w", err)
 		}
+		fmt.Printf("Policy valid according to the JSON schema!\n")
 
-		p := frag.GetParams()
-		var params map[string]any
-		if p != nil {
-			params = p.AsMap()
-		}
-
-		fmt.Printf("Policy valid according to the JSON schema: %t\n", *valid)
-		if err != nil {
-			return fmt.Errorf("error: %s", err)
-		}
+		params := frag.GetParams().AsMap()
 
 		if err := eng.Eval(context.Background(), ent, def, params); err != nil {
 			return fmt.Errorf("error evaluating rule type: %w", err)
@@ -195,28 +187,27 @@ func readEntityFromFile(fpath string, entType string) (any, error) {
 	return out, nil
 }
 
-func readPolicyFromFile(fpath string) (*pb.PipelinePolicy, error) {
-	f, err := os.Open(filepath.Clean(fpath))
-	if err != nil {
-		return nil, fmt.Errorf("error opening file: %w", err)
-	}
-
-	if filepath.Ext(fpath) == ".json" {
-		return engine.ParseJSON(f)
-	}
-
-	// parse yaml by default
-	return engine.ParseYAML(f)
-}
-
 // getRelevantRules returns the relevant rules for the rule type
 func getRelevantRules(rt *pb.RuleType, p *pb.PipelinePolicy) ([]*pb.PipelinePolicy_Rule, error) {
-	contextualRules, err := engine.GetRulesForEntity(p, rt.Def.InEntity)
+	contextualRules, err := engine.GetRulesForEntity(p, engine.EntityType(rt.Def.InEntity))
 	if err != nil {
 		return nil, fmt.Errorf("error getting rules for entity: %w", err)
 	}
 
-	return engine.FilterRulesForType(contextualRules, rt)
+	rules := []*pb.PipelinePolicy_Rule{}
+	err = engine.TraverseRules(contextualRules, func(r *pb.PipelinePolicy_Rule) error {
+		if r.Type == rt.Name {
+			rules = append(rules, r)
+		}
+		return nil
+	})
+
+	// This shouldn't happen
+	if err != nil {
+		return nil, fmt.Errorf("error traversing rules: %w", err)
+	}
+
+	return rules, nil
 }
 
 // getProviderClient returns a client for the provider specified in the rule type

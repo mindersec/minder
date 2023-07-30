@@ -38,6 +38,7 @@ import (
 	"github.com/stretchr/testify/suite"
 	"golang.org/x/oauth2"
 
+	"github.com/stacklok/mediator/internal/engine"
 	"github.com/stacklok/mediator/internal/util"
 )
 
@@ -132,7 +133,7 @@ func TestHandleWebHook(t *testing.T) {
 	t.Parallel()
 
 	p := gochannel.NewGoChannel(gochannel.Config{}, nil)
-	queued, err := p.Subscribe(context.Background(), "package")
+	queued, err := p.Subscribe(context.Background(), engine.InternalWebhookEventTopic)
 	if err != nil {
 		t.Fatal(err)
 	}

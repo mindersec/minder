@@ -19,6 +19,7 @@ import (
 	"bytes"
 	"context"
 	"encoding/json"
+	"errors"
 	"fmt"
 	"log"
 	"net/http"
@@ -37,6 +38,15 @@ import (
 // in order to evaluate a rule.
 type RuleDataIngest interface {
 	Eval(ctx context.Context, ent any, pol, params map[string]any) error
+}
+
+// ErrEvaluationFailed is an error that occurs during evaluation of a rule.
+var ErrEvaluationFailed = errors.New("evaluation error")
+
+// NewErrEvaluationFailed creates a new evaluation error
+func NewErrEvaluationFailed(sfmt string, args ...any) error {
+	msg := fmt.Sprintf(sfmt, args...)
+	return fmt.Errorf("%w: %s", ErrEvaluationFailed, msg)
 }
 
 // NewRuleDataIngest creates a new rule data ingest based no the given rule
@@ -152,7 +162,7 @@ func (rdi *RestRuleDataIngest) Eval(ctx context.Context, ent any, pol, params ma
 
 		// Deep compare
 		if !reflect.DeepEqual(policyVal, dataVal) {
-			return fmt.Errorf("data does not match policy: for path %s got %v, want %v",
+			return NewErrEvaluationFailed("data does not match policy: for path %s got %v, want %v",
 				key, dataVal, policyVal)
 		}
 	}

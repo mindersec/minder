@@ -258,13 +258,13 @@ var resourceAuthorizations = []map[string]map[string]interface{}{
 		},
 	},
 	{
-		"/mediator.v1.PolicyService/GetPolicies": {
+		"/mediator.v1.PolicyService/ListPolicies": {
 			"claimField": "GroupId",
 			"isAdmin":    false,
 		},
 	},
 	{
-		"/mediator.v1.PolicyService/GetPolicy": {
+		"/mediator.v1.PolicyService/GetPolicyById": {
 			"claimField": "GroupId",
 			"isAdmin":    false,
 		},
@@ -282,27 +282,39 @@ var resourceAuthorizations = []map[string]map[string]interface{}{
 		},
 	},
 	{
-		"/mediator.v1.PolicyService/GetPolicyStatusByRepository": {
+		"/mediator.v1.PolicyService/ListRuleTypes": {
 			"claimField": "GroupId",
 			"isAdmin":    false,
 		},
 	},
 	{
-		"/mediator.v1.PolicyService/GetPolicyViolationsById": {
+		"/mediator.v1.PolicyService/GetRuleTypeByName": {
 			"claimField": "GroupId",
 			"isAdmin":    false,
 		},
 	},
 	{
-		"/mediator.v1.PolicyService/GetPolicyViolationsByGroup": {
+		"/mediator.v1.PolicyService/GetRuleTypeById": {
 			"claimField": "GroupId",
 			"isAdmin":    false,
 		},
 	},
 	{
-		"/mediator.v1.PolicyService/GetPolicyViolationsByRepository": {
+		"/mediator.v1.PolicyService/CreateRuleType": {
 			"claimField": "GroupId",
-			"isAdmin":    false,
+			"isAdmin":    true,
+		},
+	},
+	{
+		"/mediator.v1.PolicyService/UpdateRuleType": {
+			"claimField": "GroupId",
+			"isAdmin":    true,
+		},
+	},
+	{
+		"/mediator.v1.PolicyService/DeleteRuleType": {
+			"claimField": "GroupId",
+			"isAdmin":    true,
 		},
 	},
 	{

@@ -27,7 +27,7 @@ import (
 	"golang.org/x/sync/errgroup"
 
 	"github.com/stacklok/mediator/internal/config"
-	ghevents "github.com/stacklok/mediator/internal/gh/events"
+	"github.com/stacklok/mediator/internal/engine"
 	"github.com/stacklok/mediator/internal/logger"
 	"github.com/stacklok/mediator/pkg/controlplane"
 	"github.com/stacklok/mediator/pkg/db"
@@ -66,7 +66,7 @@ var serveCmd = &cobra.Command{
 			return fmt.Errorf("unable to create server: %w", err)
 		}
 
-		s.ConsumeEvents(ghevents.NewHandler(store))
+		s.ConsumeEvents(engine.NewExecutor(store))
 
 		// Start the gRPC and HTTP server in separate goroutines
 		errg.Go(func() error {

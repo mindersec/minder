@@ -522,7 +522,7 @@ func TestGetRulesForEntity(t *testing.T) {
 
 	type args struct {
 		p      *pb.PipelinePolicy
-		entity string
+		entity engine.EntityType
 	}
 	tests := []struct {
 		name    string
@@ -827,7 +827,13 @@ func TestFilterRulesForType(t *testing.T) {
 		t.Run(tt.name, func(t *testing.T) {
 			t.Parallel()
 
-			got, err := engine.FilterRulesForType(tt.args.cr, tt.args.rt)
+			got := []*pb.PipelinePolicy_Rule{}
+			err := engine.TraverseRules(tt.args.cr, func(pp *pb.PipelinePolicy_Rule) error {
+				if pp.Type == tt.args.rt.Name {
+					got = append(got, pp)
+				}
+				return nil
+			})
 			if tt.wantErr {
 				require.Error(t, err, "should have gotten error")
 				return

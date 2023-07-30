@@ -23,27 +23,27 @@ repository:
           allow_force_pushes: false
           allow_deletions: false
           allow_fork_syncing: true
-build_environment:
-  - rules:  # Not specifying a context takes the default context
-      - type: no_org_wide_github_action_permissions
-        def:
-          enabled: true
-artifact:
-  - context: github
-    rules:
-      - type: ctlog_entry
-        params:
-          rekor: 'https://rekor.acme.dev/'
-          fulcio: 'https://fulcio.acme.dev/'
-          tuf: 'https://tuf.acme.dev/'
-        def:
-          state: exists
-  - context: quay
-    rules:
-      - type: ctlog_entry
-        params:
-          rekor: 'https://rekor.acme.dev/'
-          fulcio: 'https://fulcio.acme.dev/'
-          tuf: 'https://tuf.acme.dev/'
-        def:
-          state: exists
+# build_environment:
+#   - rules:  # Not specifying a context takes the default context
+#       - type: no_org_wide_github_action_permissions
+#         def:
+#           enabled: true
+# artifact:
+#   - context: github
+#     rules:
+#       - type: ctlog_entry
+#         params:
+#           rekor: 'https://rekor.acme.dev/'
+#           fulcio: 'https://fulcio.acme.dev/'
+#           tuf: 'https://tuf.acme.dev/'
+#         def:
+#           state: exists
+#   - context: quay
+#     rules:
+#       - type: ctlog_entry
+#         params:
+#           rekor: 'https://rekor.acme.dev/'
+#           fulcio: 'https://fulcio.acme.dev/'
+#           tuf: 'https://tuf.acme.dev/'
+#         def:
+#           state: exists

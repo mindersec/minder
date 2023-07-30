@@ -48,6 +48,7 @@ type RuleMeta struct {
 	Group *string
 }
 
+// String returns a string representation of the rule meta
 func (r *RuleMeta) String() string {
 	if r.Group != nil {
 		return fmt.Sprintf("%s/group/%s/%s", r.Provider, *r.Group, r.Name)
@@ -55,15 +56,55 @@ func (r *RuleMeta) String() string {
 	return fmt.Sprintf("%s/org/%s/%s", r.Provider, *r.Organization, r.Name)
 }
 
+// RuleValidator validates a rule against a schema
+type RuleValidator struct {
+	// schema is the schema that this rule type must conform to
+	schema *gojsonschema.Schema
+}
+
+// NewRuleValidator creates a new rule validator
+func NewRuleValidator(rt *pb.RuleType) (*RuleValidator, error) {
+	// Load schema
+	schemaLoader := gojsonschema.NewGoLoader(rt.Def.RuleSchema)
+	schema, err := gojsonschema.NewSchema(schemaLoader)
+	if err != nil {
+		return nil, fmt.Errorf("cannot create json schema: %w", err)
+	}
+
+	return &RuleValidator{
+		schema: schema,
+	}, nil
+}
+
+// ValidateAgainstSchema validates the given contextual policy against the
+// schema for this rule type
+func (r *RuleValidator) ValidateAgainstSchema(contextualPolicy any) error {
+	documentLoader := gojsonschema.NewGoLoader(contextualPolicy)
+	result, err := r.schema.Validate(documentLoader)
+	if err != nil {
+		return fmt.Errorf("cannot validate json schema: %v", err)
+	}
+
+	if !result.Valid() {
+		problems := make([]string, 0, len(result.Errors()))
+		for _, desc := range result.Errors() {
+			problems = append(problems, desc.String())
+		}
+
+		return fmt.Errorf("invalid json schema: %s", strings.TrimSpace(strings.Join(problems, "\n")))
+	}
+
+	return nil
+}
+
 // RuleTypeEngine is the engine for a rule type
 type RuleTypeEngine struct {
 	Meta RuleMeta
 
-	// schema is the schema that this rule type must conform to
-	schema *gojsonschema.Schema
-
 	// rdi is the rule data ingest engine
 	rdi RuleDataIngest
+
+	rval *RuleValidator
 
 	rt *pb.RuleType
 	// TODO(JAORMX): We need to have an abstract client interface
@@ -72,11 +113,9 @@ type RuleTypeEngine struct {
 
 // NewRuleTypeEngine creates a new rule type engine
 func NewRuleTypeEngine(rt *pb.RuleType, cli ghclient.RestAPI) (*RuleTypeEngine, error) {
-	// Load schema
-	schemaLoader := gojsonschema.NewGoLoader(rt.Def.RuleSchema)
-	schema, err := gojsonschema.NewSchema(schemaLoader)
+	rval, err := NewRuleValidator(rt)
 	if err != nil {
-		return nil, fmt.Errorf("cannot create json schema: %w", err)
+		return nil, fmt.Errorf("cannot create rule validator: %w", err)
 	}
 
 	rdi, err := NewRuleDataIngest(rt, cli)
@@ -89,10 +128,10 @@ func NewRuleTypeEngine(rt *pb.RuleType, cli ghclient.RestAPI) (*RuleTypeEngine, 
 			Name:     rt.Name,
 			Provider: rt.Context.Provider,
 		},
-		schema: schema,
-		rdi:    rdi,
-		rt:     rt,
-		cli:    cli,
+		rval: rval,
+		rdi:  rdi,
+		rt:   rt,
+		cli:  cli,
 	}
 
 	// Set organization if it exists
@@ -119,27 +158,8 @@ func (r *RuleTypeEngine) GetID() string {
 
 // ValidateAgainstSchema validates the given contextual policy against the
 // schema for this rule type
-func (r *RuleTypeEngine) ValidateAgainstSchema(contextualPolicy any) (*bool, error) {
-	documentLoader := gojsonschema.NewGoLoader(contextualPolicy)
-	result, err := r.schema.Validate(documentLoader)
-	if err != nil {
-		return nil, fmt.Errorf("cannot validate json schema: %v", err)
-	}
-
-	out := result.Valid()
-
-	if !out {
-		description := ""
-		for _, desc := range result.Errors() {
-			description += fmt.Sprintf("%s\n", desc)
-		}
-
-		description = strings.TrimSpace(description)
-
-		return &out, fmt.Errorf("invalid json schema: %s", description)
-	}
-
-	return &out, nil
+func (r *RuleTypeEngine) ValidateAgainstSchema(contextualPolicy any) error {
+	return r.rval.ValidateAgainstSchema(contextualPolicy)
 }
 
 // Eval runs the rule type engine against the given entity
@@ -193,7 +213,7 @@ func ValidateRuleTypeDefinition(def *pb.RuleType_Definition) error {
 		return fmt.Errorf("%w: rule type definition is nil", ErrInvalidRuleTypeDefinition)
 	}
 
-	if !IsValidEntity(def.InEntity) {
+	if !IsValidEntity(EntityType(def.InEntity)) {
 		return fmt.Errorf("%w: invalid entity type: %s", ErrInvalidRuleTypeDefinition, def.InEntity)
 	}
 

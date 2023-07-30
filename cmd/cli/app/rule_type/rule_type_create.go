@@ -13,9 +13,10 @@
 // See the License for the specific language governing permissions and
 // limitations under the License.
 
-package policy
+package rule_type
 
 import (
+	"bytes"
 	"encoding/json"
 	"fmt"
 	"io"
@@ -25,16 +26,15 @@ import (
 	"github.com/spf13/cobra"
 	"github.com/spf13/viper"
 
-	"github.com/stacklok/mediator/internal/engine"
 	"github.com/stacklok/mediator/internal/util"
 	pb "github.com/stacklok/mediator/pkg/generated/protobuf/go/mediator/v1"
 )
 
-// Policy_createCmd represents the policy create command
-var Policy_createCmd = &cobra.Command{
+// RuleType_createCmd represents the policy create command
+var RuleType_createCmd = &cobra.Command{
 	Use:   "create",
-	Short: "Create a policy within a mediator control plane",
-	Long: `The medic policy create subcommand lets you create new policies for a group
+	Short: "Create a rule type within a mediator control plane",
+	Long: `The medic rule type create subcommand lets you create new policies for a group
 within a mediator control plane.`,
 	PreRun: func(cmd *cobra.Command, args []string) {
 		if err := viper.BindPFlags(cmd.Flags()); err != nil {
@@ -77,24 +77,30 @@ within a mediator control plane.`,
 		ctx, cancel := util.GetAppContext()
 		defer cancel()
 
-		p, err := engine.ReadYAMLPolicyFromReader(preader)
-		if err != nil {
-			return fmt.Errorf("error reading fragment from file: %w", err)
+		// We transcode to JSON so we can decode it straight to the protobuf structure
+		w := &bytes.Buffer{}
+		if err := util.TranscodeYAMLToJSON(preader, w); err != nil {
+			return fmt.Errorf("error converting yaml to json: %w", err)
+		}
+
+		r := &pb.RuleType{}
+		if err := json.NewDecoder(w).Decode(r); err != nil {
+			return fmt.Errorf("error decoding json: %w", err)
 		}
 
 		// create a policy
-		resp, err := client.CreatePolicy(ctx, &pb.CreatePolicyRequest{
-			Policy: p,
+		resp, err := client.CreateRuleType(ctx, &pb.CreateRuleTypeRequest{
+			RuleType: r,
 		})
 		if err != nil {
-			return fmt.Errorf("error creating policy: %w", err)
+			return fmt.Errorf("error creating rule type: %w", err)
 		}
 
-		pol, err := json.MarshalIndent(resp, "", "  ")
+		rul, err := json.MarshalIndent(resp, "", "  ")
 		if err != nil {
-			cmd.Println("Created policy: ", resp.Policy.Id)
+			cmd.Println("Created rule type: ", resp.RuleType.Id)
 		} else {
-			cmd.Println("Created policy:", string(pol))
+			cmd.Println("Created rule type:", string(rul))
 		}
 
 		return nil
@@ -102,6 +108,6 @@ within a mediator control plane.`,
 }
 
 func init() {
-	PolicyCmd.AddCommand(Policy_createCmd)
-	Policy_createCmd.Flags().StringP("file", "f", "", "Path to the YAML defining the policy (or - for stdin)")
+	ruleTypeCmd.AddCommand(RuleType_createCmd)
+	RuleType_createCmd.Flags().StringP("file", "f", "", "Path to the YAML defining the rule type (or - for stdin)")
 }

@@ -13,7 +13,7 @@
 // See the License for the specific language governing permissions and
 // limitations under the License.
 
-package policy
+package rule_type
 
 import (
 	"encoding/json"
@@ -28,10 +28,10 @@ import (
 	pb "github.com/stacklok/mediator/pkg/generated/protobuf/go/mediator/v1"
 )
 
-var policy_listCmd = &cobra.Command{
+var ruleType_listCmd = &cobra.Command{
 	Use:   "list",
-	Short: "List policies within a mediator control plane",
-	Long: `The medic policy list subcommand lets you list policies within a
+	Short: "List rule types within a mediator control plane",
+	Long: `The medic rule_type list subcommand lets you list rule type within a
 mediator control plane for an specific group.`,
 	PreRun: func(cmd *cobra.Command, args []string) {
 		if err := viper.BindPFlags(cmd.Flags()); err != nil {
@@ -59,7 +59,7 @@ mediator control plane for an specific group.`,
 			fmt.Fprintf(os.Stderr, "Error: invalid format: %s\n", format)
 		}
 
-		resp, err := client.ListPolicies(ctx, &pb.ListPoliciesRequest{
+		resp, err := client.ListRuleTypes(ctx, &pb.ListRuleTypesRequest{
 			Context: &pb.Context{
 				Provider: provider,
 				// TODO set up group if specified
@@ -71,7 +71,7 @@ mediator control plane for an specific group.`,
 		}
 
 		if format == "json" {
-			output, err := json.MarshalIndent(resp.Policies, "", "  ")
+			output, err := json.MarshalIndent(resp.RuleTypes, "", "  ")
 			if err != nil {
 				return fmt.Errorf("error marshalling json: %w", err)
 			}
@@ -80,7 +80,7 @@ mediator control plane for an specific group.`,
 			enc := yaml.NewEncoder(os.Stdout)
 			enc.SetIndent(2)
 
-			if err := enc.Encode(resp.Policies); err != nil {
+			if err := enc.Encode(resp.RuleTypes); err != nil {
 				return fmt.Errorf("error marshalling yaml: %w", err)
 			}
 		}
@@ -91,13 +91,13 @@ mediator control plane for an specific group.`,
 }
 
 func init() {
-	PolicyCmd.AddCommand(policy_listCmd)
-	policy_listCmd.Flags().StringP("provider", "p", "", "Provider to list policies for")
-	policy_listCmd.Flags().StringP("output", "o", "yaml", "Output format (json or yaml)")
+	ruleTypeCmd.AddCommand(ruleType_listCmd)
+	ruleType_listCmd.Flags().StringP("provider", "p", "", "Provider to list rule types for")
+	ruleType_listCmd.Flags().StringP("output", "o", "yaml", "Output format (json or yaml)")
 	// TODO: Take group ID into account
-	// policy_listCmd.Flags().Int32P("group-id", "g", 0, "group id to list roles for")
+	// ruleType_listCmd.Flags().Int32P("group-id", "g", 0, "group id to list roles for")
 
-	if err := policy_listCmd.MarkFlagRequired("provider"); err != nil {
+	if err := ruleType_listCmd.MarkFlagRequired("provider"); err != nil {
 		fmt.Fprintf(os.Stderr, "Error marking flag as required: %s\n", err)
 		os.Exit(1)
 	}
