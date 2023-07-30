@@ -28,7 +28,6 @@ https://docs.stacklok.com/mediator/medic/overview.html
 * [medic org](medic_org.md)	 - Manage organizations within a mediator control plane
 * [medic policy](medic_policy.md)	 - Manage policies within a mediator control plane
 * [medic policy_status](medic_policy_status.md)	 - Manage policy status within a mediator control plane
-* [medic policy_type](medic_policy_type.md)	 - Manage policy types within a mediator control plane
 * [medic repo](medic_repo.md)	 - Manage repositories within a mediator control plane
 * [medic role](medic_role.md)	 - Manage roles within a mediator control plane
 * [medic rule_type](medic_rule_type.md)	 - Manage rule types within a mediator control plane

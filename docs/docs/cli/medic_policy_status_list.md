@@ -14,12 +14,12 @@ medic policy_status list [flags]
 ### Options
 
 ```
-  -g, --group-id int32    group id to list policy violations for
+  -a, --all               List all policy violations
+  -g, --group string      group id to list policy status for
   -h, --help              help for list
-  -o, --output string     Output format (json or yaml)
-  -i, --policy-id int32   policy id to list policy violations for
-  -p, --provider string   Provider to list policy violations for
-  -r, --repo-id int32     repo id to list policy violations for
+  -o, --output string     Output format (json or yaml) (default "yaml")
+  -i, --policy int32      policy id to list policy status for
+  -p, --provider string   Provider to list policy status for (default "github")
 ```
 
 ### Options inherited from parent commands

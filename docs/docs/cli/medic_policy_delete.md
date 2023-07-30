@@ -14,8 +14,9 @@ medic policy delete [flags]
 ### Options
 
 ```
-  -h, --help       help for delete
-  -i, --id int32   id of policy to delete
+  -h, --help              help for delete
+  -i, --id int32          id of policy to delete
+  -p, --provider string   Provider for the policy (default "github")
 ```
 
 ### Options inherited from parent commands
