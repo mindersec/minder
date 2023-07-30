@@ -1,14 +1,14 @@
-## medic policy list
+## medic rule_type list
 
-List policies within a mediator control plane
+List rule types within a mediator control plane
 
 ### Synopsis
 
-The medic policy list subcommand lets you list policies within a
+The medic rule_type list subcommand lets you list rule type within a
 mediator control plane for an specific group.
 
 ```
-medic policy list [flags]
+medic rule_type list [flags]
 ```
 
 ### Options
@@ -16,7 +16,7 @@ medic policy list [flags]
 ```
   -h, --help              help for list
   -o, --output string     Output format (json or yaml) (default "yaml")
-  -p, --provider string   Provider to list policies for
+  -p, --provider string   Provider to list rule types for
 ```
 
 ### Options inherited from parent commands
@@ -29,5 +29,5 @@ medic policy list [flags]
 
 ### SEE ALSO
 
-* [medic policy](medic_policy.md)	 - Manage policies within a mediator control plane
+* [medic rule_type](medic_rule_type.md)	 - Manage rule types within a mediator control plane
 

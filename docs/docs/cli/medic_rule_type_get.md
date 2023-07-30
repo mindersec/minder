@@ -1,14 +1,14 @@
-## medic policy get
+## medic rule_type get
 
-Get details for a policy within a mediator control plane
+Get details for a rule type within a mediator control plane
 
 ### Synopsis
 
-The medic policy get subcommand lets you retrieve details for a policy within a
+The medic rule_type get subcommand lets you retrieve details for a rule type within a
 mediator control plane.
 
 ```
-medic policy get [flags]
+medic rule_type get [flags]
 ```
 
 ### Options
@@ -16,9 +16,8 @@ medic policy get [flags]
 ```
   -h, --help              help for get
   -i, --id int32          ID for the policy to query
-  -o, --output string     Output format (json or yaml)
+  -o, --output string     Output format (json or yaml) (default "yaml")
   -p, --provider string   Provider for the policy (default "github")
-  -s, --status            Only return the status of the policy for all the associated repos
 ```
 
 ### Options inherited from parent commands
@@ -31,5 +30,5 @@ medic policy get [flags]
 
 ### SEE ALSO
 
-* [medic policy](medic_policy.md)	 - Manage policies within a mediator control plane
+* [medic rule_type](medic_rule_type.md)	 - Manage rule types within a mediator control plane
 

@@ -1,20 +1,20 @@
-## medic policy create
+## medic rule_type create
 
-Create a policy within a mediator control plane
+Create a rule type within a mediator control plane
 
 ### Synopsis
 
-The medic policy create subcommand lets you create new policies for a group
+The medic rule type create subcommand lets you create new policies for a group
 within a mediator control plane.
 
 ```
-medic policy create [flags]
+medic rule_type create [flags]
 ```
 
 ### Options
 
 ```
-  -f, --file string   Path to the YAML defining the policy (or - for stdin)
+  -f, --file string   Path to the YAML defining the rule type (or - for stdin)
   -h, --help          help for create
 ```
 
@@ -28,5 +28,5 @@ medic policy create [flags]
 
 ### SEE ALSO
 
-* [medic policy](medic_policy.md)	 - Manage policies within a mediator control plane
+* [medic rule_type](medic_rule_type.md)	 - Manage rule types within a mediator control plane
 
