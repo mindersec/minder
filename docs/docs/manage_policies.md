@@ -8,15 +8,106 @@ displayed_sidebar: mediator
 
 # Getting Started (Manage policies)
 
-In order to detect security deviations from repositories or other entities, Mediator is relying on the concepts of **Policy** and **Violations**.
-A policy is a definition of a verification we want to do on an entity in a pipeline. By default, Mediator offers a different set
-of **policy types**, covering different aspects of security: repositories, branches, packages, etc...
+In order to detect security deviations from repositories or other entities, Mediator is relying on the concepts of **Policies**.
+A policy is a definition of a verification we want to do on an entity in a pipeline.
 A **policy** is an instance of a policy type applied to an specific group, with the relevant settings filled in.
 
-When a policy is created for an specific entity, a continuous monitoring for the related objects start. An object can be a repository,
+An example policy is the following:
+
+```yaml
+---
+version: v1
+type: pipeline-policy
+name: acme-github-policy
+context:
+  organization: ACME
+  provider: github
+repository:
+  - context: github
+    rules:
+      - type: secret_scanning
+        def:
+          enabled: true
+      - type: branch_protection
+        params:
+          branch: main
+        def:
+          required_pull_request_reviews:
+            dismiss_stale_reviews: true
+            require_code_owner_reviews: true
+            required_approving_review_count: 1
+          required_linear_history: true
+          allow_force_pushes: false
+          allow_deletions: false
+          allow_fork_syncing: true
+```
+
+The full example is available in the [examples directory](https://github.com/stacklok/mediator/blob/main/examples/github/policies/policy.yaml).
+
+This policy is checking that secret scanning is enabled for all repositories belonging to the ACME organization,
+and that the `main` branch is protected, requiring at least one approval from a code owner before landing a pull request.
+
+You'll notice that this policy calls two different rules: `secret_scanning` and `branch_protection`.
+
+Rules can be instantiated from rule types, and they are the ones that are actually doing the verification.
+
+A rule type is a definition of a verification we want to do on an entity in a pipeline.
+
+An example rule type is the following:
+
+```yaml
+---
+version: v1
+type: rule-type
+name: secret_scanning
+context:
+  provider: github
+  organization: ACME
+def:
+  # Defines the section of the pipeline the rule will appear in.
+  # This will affect the template that is used to render multiple parts
+  # of the rule.
+  in_entity: repository
+  # Defines the schema for writing a rule with this rule being checked
+  rule_schema:
+    properties:
+      enabled:
+        type: boolean
+        default: true
+  # Defines the configuration for both ingesting and evaluating the rule.
+  data_eval:
+    type: rest
+    rest:
+      # This is the path to the data source. Given that this will evaluate
+      # for each repository in the organization, we use a template that
+      # will be evaluated for each repository. The structure to use is the
+      # protobuf structure for the entity that is being evaluated.
+      endpoint: '/repos/{{.Entity.Owner}}/{{.Entity.Repository}}'
+      # This is the method to use to retrieve the data. It should already default to JSON
+      parse: json
+    key-type: jq
+    data:
+      # This key is meant to denote where the info will be
+      # persisted in the aspect itself.
+      ".enabled":
+        # This denotes where the information will be retrieved from
+        # the data source.
+        type: jq
+        def: '.security_and_analysis.secret_scanning.status == "enabled"'
+```
+
+The full example is available in the [examples directory](https://github.com/stacklok/mediator/tree/main/examples/github/rule-types)
+
+This rule type is checking that secret scanning is enabled for all repositories belonging to the ACME organization.
+
+The rule type defines how the upstream GitHub API is to be queried, and how the data is to be evaluated.
+It also defines how instances of this rule will be validated against the rule schema.
+
+When a policy is created for an specific group, a continuous monitoring for the related objects start. An object can be a repository,
 a branch, a package... depending on the policy definition. When an specific object is not matching what's expected,
-a **Violation** is raised. When a violation happens, the overall **Policy status** for this specific entity changes,
-becoming failed. User can check the reason for this violation and take remediation actions to comply with the policy.
+a violation is presented via the policy's **status**. When a violation happens, the overall **Policy status** for this specific entity changes,
+becoming failed. There is also individual statuses for each rule evaluation. User can check the reason for this violation and take remediation
+actions to comply with the policy.
 
 ## Prerequisites
 
@@ -25,13 +116,9 @@ becoming failed. User can check the reason for this violation and take remediati
 - [OAuth Configured](./config_oauth)
 - [At least one repository is registered for Mediator](./enroll_user.md)
 
-## List policy types
+## List rule types
 
-A policy is associated to a policy type, and a given group ID. Then the policy checks are propagated
-against all the repositories belonging to an specific group. A policy type is associated
-to an specific provider (currently Github).
-
-Covered policy types are now:
+Covered rule types are now:
 
 - branch_protection: controls the branch protection rules on a repo
 - secret_scanning: enforces secret scanning for a repo
@@ -39,25 +126,26 @@ Covered policy types are now:
 You can list all policy types registered in Mediator:
 
 ```bash
-medic policy_type list --provider github
+medic rule_type list --provider github
 ```
 
-The format of the policy is being given by the `jsonschema` provided in the policy type.
-
-You can get the schema of a policy type with:
-
-```bash
-medic policy_type get --provider github --type branch_protection --schema
-```
-
-By default, a policy type is providing some recommended default values, so users can create policies
+By default, a rule type is providing some recommended default values, so users can create policies
 by using those defaults without having to create a new policy from scratch.
 
-You can get the policy type default values with:
+## Create a rule type
+
+Before creating a policy, we need to ensure that all rule types exist in mediator.
+
+A rule type can be created by pointing to a file containing the rule type definition:
 
 ```bash
-medic policy_type get --provider github --type branch_protection --default_schema
+medic rule_type create -f ./examples/github/rule-types/secret_scanning.yaml
 ```
+
+Where `secret_scanning.yaml` may look as the example above.
+
+Once all the relevant rule types are available for our group, we may take them into use
+by creating a policy.
 
 ## Create a policy
 
@@ -68,30 +156,13 @@ A policy needs to be associated with a provider and a group ID, and it will be a
 repositories belonging to that group.
 The policy can be created by using the provided defaults, or by providing a new one stored on a file.
 
-For creating based on default ones:
-
-```bash
-medic policy create --provider github --type branch_protection --default
-```
-
 For creating based on a file:
 
 ```bash
-medic policy create --provider github --type branch_protection --file policy.yaml
+medic policy create --provider github -f ./examples/github/policies/policy.yaml
 ```
 
-Where `policy.yaml` has the following format, based on the provided json schema:
-
-```yaml
-branches:
-  - name: main
-    rules:
-      required_pull_request_reviews:
-        require_code_owner_reviews: true
-        required_approving_review_count: 2
-      allow_force_pushes: false
-      allow_deletions: false
-```
+Where `policy.yaml` may look as the example above.
 
 When an specific setting is not provided, the value of this setting is not compared against the policy.
 This specific policy will monitor the `main` branch for all related repositories, checking that pull request enforcement is on
@@ -99,8 +170,7 @@ place, requiring reviews from code owners and a minimum of 2 approvals before la
 that force pushes and deletions are disabled for the `main` branch.
 
 When a policy for a provider and group is created, any repos registered for the same provider and group,
-are being observed. Each time that there is a change on the repo that causes a policy violation,
-the event is triggered and the violation is being captured.
+are being observed. Each time that there is a change on the repo that causes the policy status to be updated.
 
 ## List policy status
 
@@ -131,75 +201,3 @@ or
 ```bash
 medic policy get --id 1 --status --output yaml
 ```
-
-3. For an specific repository:
-
-```bash
- medic policy_status list --repo-id 19
-```
-
-Where repo-id is the internal ID of the repository. That can be retrieved with:
-
-```bash
-medic repo list --provider github --group-id 1
-```
-
-Status for a repo can also be retrieved with:
-
-```bash
-medic repo get --repo-id 64671386 -g 1 --provider github --status
-```
-
-Where `repo-id` is the repo ID for the provider.
-
-## List policy violations
-
-Client can also retrieve the historical of policy violations. A policy violation entry
-will inform about:
-
-- policy type
-- internal repository ID
-- repository owner
-- repository name
-- metadata: details of the entity that is violated (branch, provider repo id..)
-- violation: detailed list of field and expected vs actual value
-
-The historical of policy violations can also be retrieved by client, at different levels:
-
-1. Globally per provider and group, listing all related policy status:
-
-```bash
-medic policy_violation list --provider github --group-id 1 --output yaml
-```
-
-2. For an specific policy:
-
-```bash
-medic policy_status list --policy-id 1
-```
-
-or
-
-```bash
-medic policy get --id 1 --status --output yaml
-```
-
-3. For an specific repository:
-
-```bash
- medic policy_status list --repo-id 19
-```
-
-Where repo-id is the internal ID of the repository. That can be retrieved with:
-
-```bash
-medic repo list --provider github --group-id 1
-```
-
-Status for a repo can also be retrieved with:
-
-```bash
-medic repo get --repo-id 64671386 -g 1 --provider github --status
-```
-
-Where `repo-id` is the repo ID for the provider.
