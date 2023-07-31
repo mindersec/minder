@@ -23,6 +23,10 @@ repository:
           allow_force_pushes: false
           allow_deletions: false
           allow_fork_syncing: true
+      - type: actions_permissions
+        def:
+          enabled: true
+          allowed_actions: selected
 # build_environment:
 #   - rules:  # Not specifying a context takes the default context
 #       - type: no_org_wide_github_action_permissions
