@@ -11,6 +11,9 @@ repository:
       - type: secret_scanning
         def:
           enabled: true
+      - type: secret_push_protection
+        def:
+          enabled: true
       - type: branch_protection
         params:
           branch: main
