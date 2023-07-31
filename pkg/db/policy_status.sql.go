@@ -141,7 +141,7 @@ func (q *Queries) GetRuleEvaluationStatusForRepository(ctx context.Context, arg 
 }
 
 const listRuleEvaluationStatusForRepositoriesByPolicyId = `-- name: ListRuleEvaluationStatusForRepositoriesByPolicyId :many
-SELECT res.eval_status, res.last_updated, res.repository_id, repo.repo_name, repo.repo_owner, repo.provider, rt.name, rt.id as rule_type_id
+SELECT res.eval_status as eval_status, res.last_updated as last_updated, res.details as details, res.repository_id as repository_id, repo.repo_name as repo_name, repo.repo_owner as repo_owner, repo.provider as provider, rt.name as rule_type_name, rt.id as rule_type_id
 FROM rule_evaluation_status res
 INNER JOIN repositories repo ON repo.id = res.repository_id
 INNER JOIN rule_type rt ON rt.id = res.rule_type_id
@@ -151,11 +151,12 @@ WHERE res.entity = 'repository' AND res.policy_id = $1
 type ListRuleEvaluationStatusForRepositoriesByPolicyIdRow struct {
 	EvalStatus   EvalStatusTypes `json:"eval_status"`
 	LastUpdated  time.Time       `json:"last_updated"`
+	Details      string          `json:"details"`
 	RepositoryID sql.NullInt32   `json:"repository_id"`
 	RepoName     string          `json:"repo_name"`
 	RepoOwner    string          `json:"repo_owner"`
 	Provider     string          `json:"provider"`
-	Name         string          `json:"name"`
+	RuleTypeName string          `json:"rule_type_name"`
 	RuleTypeID   int32           `json:"rule_type_id"`
 }
 
@@ -171,11 +172,12 @@ func (q *Queries) ListRuleEvaluationStatusForRepositoriesByPolicyId(ctx context.
 		if err := rows.Scan(
 			&i.EvalStatus,
 			&i.LastUpdated,
+			&i.Details,
 			&i.RepositoryID,
 			&i.RepoName,
 			&i.RepoOwner,
 			&i.Provider,
-			&i.Name,
+			&i.RuleTypeName,
 			&i.RuleTypeID,
 		); err != nil {
 			return nil, err
@@ -192,7 +194,7 @@ func (q *Queries) ListRuleEvaluationStatusForRepositoriesByPolicyId(ctx context.
 }
 
 const listRuleEvaluationStatusForRepositoryByPolicyId = `-- name: ListRuleEvaluationStatusForRepositoryByPolicyId :many
-SELECT res.eval_status, res.last_updated, res.repository_id, repo.repo_name, repo.repo_owner, repo.provider, rt.name, rt.id as rule_type_id
+SELECT res.eval_status as eval_status, res.last_updated as last_updated, res.details as details, res.repository_id as repository_id, repo.repo_name as repo_name, repo.repo_owner as repo_owner, repo.provider as provider, rt.name as rule_type_name, rt.id as rule_type_id
 FROM rule_evaluation_status res
 INNER JOIN repositories repo ON repo.id = res.repository_id
 INNER JOIN rule_type rt ON rt.id = res.rule_type_id
@@ -207,11 +209,12 @@ type ListRuleEvaluationStatusForRepositoryByPolicyIdParams struct {
 type ListRuleEvaluationStatusForRepositoryByPolicyIdRow struct {
 	EvalStatus   EvalStatusTypes `json:"eval_status"`
 	LastUpdated  time.Time       `json:"last_updated"`
+	Details      string          `json:"details"`
 	RepositoryID sql.NullInt32   `json:"repository_id"`
 	RepoName     string          `json:"repo_name"`
 	RepoOwner    string          `json:"repo_owner"`
 	Provider     string          `json:"provider"`
-	Name         string          `json:"name"`
+	RuleTypeName string          `json:"rule_type_name"`
 	RuleTypeID   int32           `json:"rule_type_id"`
 }
 
@@ -227,11 +230,12 @@ func (q *Queries) ListRuleEvaluationStatusForRepositoryByPolicyId(ctx context.Co
 		if err := rows.Scan(
 			&i.EvalStatus,
 			&i.LastUpdated,
+			&i.Details,
 			&i.RepositoryID,
 			&i.RepoName,
 			&i.RepoOwner,
 			&i.Provider,
-			&i.Name,
+			&i.RuleTypeName,
 			&i.RuleTypeID,
 		); err != nil {
 			return nil, err

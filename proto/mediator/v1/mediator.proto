@@ -1206,6 +1206,8 @@ message RuleEvaluationStatus {
     google.protobuf.Timestamp last_updated = 6;
     // entity_info is the information about the entity
     map<string, string> entity_info = 7;
+    // details is the description of the evaluation if any
+    string details = 8;
 }
 
 message GetPolicyStatusByIdRequest {

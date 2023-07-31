@@ -3958,6 +3958,10 @@
             "type": "string"
           },
           "title": "entity_info is the information about the entity"
+        },
+        "details": {
+          "type": "string",
+          "title": "details is the description of the evaluation if any"
         }
       },
       "title": "get the status of the rules for a given policy"
