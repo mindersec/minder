@@ -179,8 +179,8 @@ func (e *Executor) handleRepoEvent(ctx context.Context, prov string, payload map
 				return err
 			}
 
-			err = rte.Eval(ctx, repo, rule.Def.AsMap(), rule.Params.AsMap())
-			return e.createOrUpdateRepositoryEvalStatus(ctx, *pol.Id, dbrepo.ID, *rt.Id, err)
+			return e.createOrUpdateRepositoryEvalStatus(ctx, *pol.Id, dbrepo.ID, *rt.Id,
+				rte.Eval(ctx, repo, rule.Def.AsMap(), rule.Params.AsMap()))
 		})
 		if err != nil {
 			return fmt.Errorf("error traversing rules for policy %d: %w", pol.Id, err)

@@ -2377,6 +2377,7 @@ get the status of the rules for a given policy
 | status | [string](#string) |  | status is the status of the evaluation |
 | last_updated | [google.protobuf.Timestamp](#google-protobuf-Timestamp) |  | last_updated is the last time the policy was updated |
 | entity_info | [RuleEvaluationStatus.EntityInfoEntry](#mediator-v1-RuleEvaluationStatus-EntityInfoEntry) | repeated | entity_info is the information about the entity |
+| details | [string](#string) |  | details is the description of the evaluation if any |
 
 
 

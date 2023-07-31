@@ -334,19 +334,22 @@ func (s *Server) GetPolicyStatusById(ctx context.Context,
 
 		rulestats = make([]*pb.RuleEvaluationStatus, 0, len(dbrulestat))
 		for _, rs := range dbrulestat {
-			rulestats = append(rulestats, &pb.RuleEvaluationStatus{
+			st := &pb.RuleEvaluationStatus{
 				PolicyId: in.PolicyId,
 				RuleId:   rs.RuleTypeID,
-				RuleName: rs.Name,
+				RuleName: rs.RuleTypeName,
 				Entity:   engine.RepositoryEntity.String(),
 				Status:   string(rs.EvalStatus),
+				Details:  rs.Details,
 				EntityInfo: map[string]string{
 					"repository_id": fmt.Sprintf("%d", rs.RepositoryID.Int32),
 					"repo_name":     rs.RepoName,
 					"repo_owner":    rs.RepoOwner,
 					"provider":      rs.Provider,
 				},
-			})
+			}
+
+			rulestats = append(rulestats, st)
 		}
 
 		// TODO: Add other entities once we have database entries for them

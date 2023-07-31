@@ -48,14 +48,14 @@ INNER JOIN policies p ON p.id = ps.policy_id
 WHERE p.group_id = $1;
 
 -- name: ListRuleEvaluationStatusForRepositoriesByPolicyId :many
-SELECT res.eval_status, res.last_updated, res.repository_id, repo.repo_name, repo.repo_owner, repo.provider, rt.name, rt.id as rule_type_id
+SELECT res.eval_status as eval_status, res.last_updated as last_updated, res.details as details, res.repository_id as repository_id, repo.repo_name as repo_name, repo.repo_owner as repo_owner, repo.provider as provider, rt.name as rule_type_name, rt.id as rule_type_id
 FROM rule_evaluation_status res
 INNER JOIN repositories repo ON repo.id = res.repository_id
 INNER JOIN rule_type rt ON rt.id = res.rule_type_id
 WHERE res.entity = 'repository' AND res.policy_id = $1;
 
 -- name: ListRuleEvaluationStatusForRepositoryByPolicyId :many
-SELECT res.eval_status, res.last_updated, res.repository_id, repo.repo_name, repo.repo_owner, repo.provider, rt.name, rt.id as rule_type_id
+SELECT res.eval_status as eval_status, res.last_updated as last_updated, res.details as details, res.repository_id as repository_id, repo.repo_name as repo_name, repo.repo_owner as repo_owner, repo.provider as provider, rt.name as rule_type_name, rt.id as rule_type_id
 FROM rule_evaluation_status res
 INNER JOIN repositories repo ON repo.id = res.repository_id
 INNER JOIN rule_type rt ON rt.id = res.rule_type_id
