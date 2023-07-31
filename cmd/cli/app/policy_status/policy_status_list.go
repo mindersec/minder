@@ -107,6 +107,8 @@ mediator control plane for an specific provider/group or policy id.`,
 					return fmt.Errorf("error marshalling json: %w", err)
 				}
 			}
+
+			return nil
 		}
 
 		enc := yaml.NewEncoder(os.Stdout)
