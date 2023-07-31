@@ -82,6 +82,7 @@ type Querier interface {
 	ListGroupsByOrganizationID(ctx context.Context, organizationID int32) ([]Group, error)
 	ListOrganizations(ctx context.Context, arg ListOrganizationsParams) ([]Organization, error)
 	ListPoliciesByGroupID(ctx context.Context, groupID int32) ([]ListPoliciesByGroupIDRow, error)
+	ListRegisteredRepositoriesByGroupIDAndProvider(ctx context.Context, arg ListRegisteredRepositoriesByGroupIDAndProviderParams) ([]Repository, error)
 	ListRepositoriesByGroupID(ctx context.Context, arg ListRepositoriesByGroupIDParams) ([]Repository, error)
 	ListRepositoriesByOwner(ctx context.Context, arg ListRepositoriesByOwnerParams) ([]Repository, error)
 	ListRoles(ctx context.Context, arg ListRolesParams) ([]Role, error)

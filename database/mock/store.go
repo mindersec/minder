@@ -1131,6 +1131,21 @@ func (mr *MockStoreMockRecorder) ListPoliciesByGroupID(arg0, arg1 interface{}) *
 	return mr.mock.ctrl.RecordCallWithMethodType(mr.mock, "ListPoliciesByGroupID", reflect.TypeOf((*MockStore)(nil).ListPoliciesByGroupID), arg0, arg1)
 }
 
+// ListRegisteredRepositoriesByGroupIDAndProvider mocks base method.
+func (m *MockStore) ListRegisteredRepositoriesByGroupIDAndProvider(arg0 context.Context, arg1 db.ListRegisteredRepositoriesByGroupIDAndProviderParams) ([]db.Repository, error) {
+	m.ctrl.T.Helper()
+	ret := m.ctrl.Call(m, "ListRegisteredRepositoriesByGroupIDAndProvider", arg0, arg1)
+	ret0, _ := ret[0].([]db.Repository)
+	ret1, _ := ret[1].(error)
+	return ret0, ret1
+}
+
+// ListRegisteredRepositoriesByGroupIDAndProvider indicates an expected call of ListRegisteredRepositoriesByGroupIDAndProvider.
+func (mr *MockStoreMockRecorder) ListRegisteredRepositoriesByGroupIDAndProvider(arg0, arg1 interface{}) *gomock.Call {
+	mr.mock.ctrl.T.Helper()
+	return mr.mock.ctrl.RecordCallWithMethodType(mr.mock, "ListRegisteredRepositoriesByGroupIDAndProvider", reflect.TypeOf((*MockStore)(nil).ListRegisteredRepositoriesByGroupIDAndProvider), arg0, arg1)
+}
+
 // ListRepositoriesByGroupID mocks base method.
 func (m *MockStore) ListRepositoriesByGroupID(arg0 context.Context, arg1 db.ListRepositoriesByGroupIDParams) ([]db.Repository, error) {
 	m.ctrl.T.Helper()

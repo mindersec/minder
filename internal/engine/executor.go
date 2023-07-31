@@ -24,6 +24,7 @@ import (
 	"strconv"
 
 	"github.com/ThreeDotsLabs/watermill/message"
+	"github.com/go-playground/validator/v10"
 	"google.golang.org/protobuf/types/known/timestamppb"
 
 	"github.com/stacklok/mediator/internal/events"
@@ -36,6 +37,8 @@ import (
 const (
 	// InternalWebhookEventTopic is the topic for internal webhook events
 	InternalWebhookEventTopic = "internal.webhook.event"
+	// InternalInitEventTopic is the topic for internal init events
+	InternalInitEventTopic = "internal.init.event"
 )
 
 // Executor is the engine that executes the rules for a given event
@@ -53,8 +56,140 @@ func NewExecutor(querier db.Store) *Executor {
 // Register implements the Consumer interface.
 func (e *Executor) Register(r events.Registrar) {
 	r.Register(InternalWebhookEventTopic, e.handleWebhookEvent)
+	r.Register(InternalInitEventTopic, e.handleInitEvent)
 }
 
+// InitEvent is an event that is sent to the init topic
+// Note that this event assumes the `provider` is set in the metadata
+type InitEvent struct {
+	// Group is the group that the event is relevant to
+	Group int32 `json:"group" validate:"gte=0"`
+	// Policy is the policy that the event is relevant to
+	Policy int32 `json:"policy" validate:"gte=0"`
+}
+
+// handleInitEvent handles events coming from the init topic
+// This allows us to run the engine on policy creation and updates
+// without having to wait for an event to come from the provider/signal.
+func (e *Executor) handleInitEvent(msg *message.Message) error {
+	prov := msg.Metadata.Get("provider")
+
+	if prov != ghclient.Github {
+		log.Printf("provider %s not supported", prov)
+		return nil
+	}
+
+	var evt InitEvent
+	if err := json.Unmarshal(msg.Payload, &evt); err != nil {
+		return fmt.Errorf("error unmarshalling payload: %w", err)
+	}
+
+	// validate event
+	validate := validator.New()
+	if err := validate.Struct(evt); err != nil {
+		// We don't return the event since there's no use
+		// retrying it if it's invalid.
+		log.Printf("error validating event: %v", err)
+		return nil
+	}
+
+	ctx := msg.Context()
+
+	log.Printf("handling init event for group %d", evt.Group)
+
+	// TODO(jaosorior): Handle events that are not repository events
+	// TODO(jaosorior): get provider from database
+	return e.handleReposInitEvent(ctx, prov, &evt)
+}
+
+func (e *Executor) handleReposInitEvent(ctx context.Context, prov string, evt *InitEvent) error {
+	// Get repositories for group
+	dbrepos, err := e.querier.ListRegisteredRepositoriesByGroupIDAndProvider(ctx,
+		db.ListRegisteredRepositoriesByGroupIDAndProviderParams{
+			Provider: prov,
+			GroupID:  evt.Group,
+		})
+
+	if err != nil {
+		if errors.Is(err, sql.ErrNoRows) {
+			log.Printf("no repositories found for group %d", evt.Group)
+			return nil
+		}
+		return fmt.Errorf("error getting repositories: %w", err)
+	}
+
+	// Get group info
+	group, err := e.querier.GetGroupByID(ctx, evt.Group)
+	if err != nil {
+		return fmt.Errorf("error getting group: %w", err)
+	}
+
+	// Get policy info
+	dbpols, err := e.querier.GetPolicyByGroupAndID(ctx, db.GetPolicyByGroupAndIDParams{
+		GroupID: evt.Group,
+		ID:      evt.Policy,
+	})
+	if err != nil {
+		if errors.Is(err, sql.ErrNoRows) {
+			log.Printf("policy %d not found", evt.Policy)
+			return nil
+		}
+		return fmt.Errorf("error getting policy: %w", err)
+	}
+
+	cli, err := e.buildClient(ctx, prov, evt.Group)
+	if err != nil {
+		return fmt.Errorf("error building client: %w", err)
+	}
+
+	ectx := &EntityContext{
+		Group: Group{
+			ID:   group.ID,
+			Name: group.Name,
+		},
+		Provider: prov,
+	}
+
+	for _, pol := range MergeDatabaseGetIntoPolicies(dbpols, ectx) {
+		// Given we're dealing with a repository event, we can assume that the
+		// entity is a repository.
+		relevant, err := GetRulesForEntity(pol, RepositoryEntity)
+		if err != nil {
+			return fmt.Errorf("error getting rules for entity: %w", err)
+		}
+
+		for _, dbrepo := range dbrepos {
+			// protobufs are our API, so we always execute on these instead of the DB directly.
+			repo := &pb.RepositoryResult{
+				Owner:      dbrepo.RepoOwner,
+				Repository: dbrepo.RepoName,
+				RepoId:     dbrepo.RepoID,
+				HookUrl:    dbrepo.WebhookUrl,
+				DeployUrl:  dbrepo.DeployUrl,
+				CreatedAt:  timestamppb.New(dbrepo.CreatedAt),
+				UpdatedAt:  timestamppb.New(dbrepo.UpdatedAt),
+			}
+
+			// Let's evaluate all the rules for this policy
+			err = TraverseRules(relevant, func(rule *pb.PipelinePolicy_Rule) error {
+				rt, rte, err := e.getEvaluator(ctx, *pol.Id, prov, cli, ectx, rule)
+				if err != nil {
+					return err
+				}
+
+				return e.createOrUpdateRepositoryEvalStatus(ctx, *pol.Id, dbrepo.ID, *rt.Id,
+					rte.Eval(ctx, repo, rule.Def.AsMap(), rule.Params.AsMap()))
+			})
+			if err != nil {
+				return fmt.Errorf("error traversing rules for policy %d: %w", pol.Id, err)
+			}
+		}
+	}
+
+	return nil
+}
+
+// handleWebhookEvent handles events coming from webhooks/signals
 func (e *Executor) handleWebhookEvent(msg *message.Message) error {
 	prov := msg.Metadata.Get("provider")
 
