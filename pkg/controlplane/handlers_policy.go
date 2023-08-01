@@ -22,6 +22,8 @@ import (
 	"fmt"
 	"log"
 
+	"github.com/ThreeDotsLabs/watermill/message"
+	"github.com/google/uuid"
 	"google.golang.org/grpc/codes"
 	"google.golang.org/grpc/status"
 
@@ -185,10 +187,38 @@ func (s *Server) CreatePolicy(ctx context.Context,
 	}
 
 	in.Id = &policy.ID
-
-	return &pb.CreatePolicyResponse{
+	resp := &pb.CreatePolicyResponse{
 		Policy: in,
-	}, nil
+	}
+
+	s.publishPolicyInitEvent(in, entityCtx)
+
+	return resp, nil
+}
+
+func (s *Server) publishPolicyInitEvent(pol *pb.PipelinePolicy, ectx *engine.EntityContext) {
+	log.Printf("publishing init event for policy: %s", pol.GetName())
+	evt := &engine.InitEvent{
+		Policy: *pol.Id,
+		Group:  ectx.Group.ID,
+	}
+
+	evtStr, err := json.Marshal(evt)
+	// This is a non-fatal error, so we'll just log it
+	// and return the policy.
+	if err != nil {
+		log.Printf("error marshalling init event: %v", err)
+		return
+	}
+
+	msg := message.NewMessage(uuid.New().String(), evtStr)
+	msg.Metadata.Set("provider", ectx.Provider)
+
+	// This is a non-fatal error, so we'll just log it
+	// and continue
+	if err := s.evt.Publish(engine.InternalInitEventTopic, msg); err != nil {
+		log.Printf("error publishing init event: %v", err)
+	}
 }
 
 func createPolicyRulesForEntity(

@@ -238,6 +238,54 @@ func (q *Queries) ListAllRepositories(ctx context.Context, provider string) ([]R
 	return items, nil
 }
 
+const listRegisteredRepositoriesByGroupIDAndProvider = `-- name: ListRegisteredRepositoriesByGroupIDAndProvider :many
+SELECT id, provider, group_id, repo_owner, repo_name, repo_id, is_private, is_fork, webhook_id, webhook_url, deploy_url, created_at, updated_at FROM repositories
+WHERE provider = $1 AND group_id = $2 AND webhook_id IS NOT NULL
+ORDER BY id
+`
+
+type ListRegisteredRepositoriesByGroupIDAndProviderParams struct {
+	Provider string `json:"provider"`
+	GroupID  int32  `json:"group_id"`
+}
+
+func (q *Queries) ListRegisteredRepositoriesByGroupIDAndProvider(ctx context.Context, arg ListRegisteredRepositoriesByGroupIDAndProviderParams) ([]Repository, error) {
+	rows, err := q.db.QueryContext(ctx, listRegisteredRepositoriesByGroupIDAndProvider, arg.Provider, arg.GroupID)
+	if err != nil {
+		return nil, err
+	}
+	defer rows.Close()
+	items := []Repository{}
+	for rows.Next() {
+		var i Repository
+		if err := rows.Scan(
+			&i.ID,
+			&i.Provider,
+			&i.GroupID,
+			&i.RepoOwner,
+			&i.RepoName,
+			&i.RepoID,
+			&i.IsPrivate,
+			&i.IsFork,
+			&i.WebhookID,
+			&i.WebhookUrl,
+			&i.DeployUrl,
+			&i.CreatedAt,
+			&i.UpdatedAt,
+		); err != nil {
+			return nil, err
+		}
+		items = append(items, i)
+	}
+	if err := rows.Close(); err != nil {
+		return nil, err
+	}
+	if err := rows.Err(); err != nil {
+		return nil, err
+	}
+	return items, nil
+}
+
 const listRepositoriesByGroupID = `-- name: ListRepositoriesByGroupID :many
 SELECT id, provider, group_id, repo_owner, repo_name, repo_id, is_private, is_fork, webhook_id, webhook_url, deploy_url, created_at, updated_at FROM repositories
 WHERE provider = $1 AND group_id = $2

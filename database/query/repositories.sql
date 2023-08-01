@@ -30,6 +30,11 @@ ORDER BY id
 LIMIT $3
 OFFSET $4;
 
+-- name: ListRegisteredRepositoriesByGroupIDAndProvider :many
+SELECT * FROM repositories
+WHERE provider = $1 AND group_id = $2 AND webhook_id IS NOT NULL
+ORDER BY id;
+
 -- name: ListRepositoriesByOwner :many
 SELECT * FROM repositories
 WHERE provider = $1 AND repo_owner = $2
