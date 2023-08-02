@@ -309,11 +309,7 @@ func (s *Server) GetRoleById(ctx context.Context,
 		if err == sql.ErrNoRows {
 			return nil, status.Errorf(codes.NotFound, "role not found")
 		}
-		return nil, err
-	}
-
-	if err != nil {
-		return nil, status.Errorf(codes.Unknown, "failed to get role: %s", err)
+		return nil, status.Errorf(codes.Internal, "failed to get role: %v", err)
 	}
 
 	// check if user is authorized
