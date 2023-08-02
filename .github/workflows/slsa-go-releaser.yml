@@ -1,13 +1,7 @@
-# This workflow uses actions that are not certified by GitHub.
-# They are provided by a third-party and are governed by
-# separate terms of service, privacy policy, and support
-# documentation.
-
-# This workflow lets you compile your Go project using a SLSA3 compliant builder. 
-# This workflow will generate a so-called "provenance" file describing the steps 
-# that were performed to generate the final binary.
-# The project is an initiative of the OpenSSF (openssf.org) and is developed at 
-# https://github.com/slsa-framework/slsa-github-generator.
+# This workflow compiles your mediator server and medic using a SLSA3 compliant
+# build and then verifies the provenance of the built artifacts.
+# It releases the following architectures: amd64, arm64, and armv7 on Linux, 
+# Windows, and macOS.
 # The provenance file can be verified using https://github.com/slsa-framework/slsa-verifier.
 # For more information about SLSA and how it improves the supply-chain, visit slsa.dev.
 
