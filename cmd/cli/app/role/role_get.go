@@ -93,9 +93,7 @@ mediator control plane.`,
 				Name:           name,
 			})
 			util.ExitNicelyOnError(err, "Error getting role")
-			if role != nil {
-				roleRecord = role.Role
-			}
+			roleRecord = role.GetRole()
 		}
 		json, err := json.Marshal(roleRecord)
 		util.ExitNicelyOnError(err, "Error marshalling role")
