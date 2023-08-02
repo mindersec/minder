@@ -79,26 +79,23 @@ mediator control plane.`,
 		var roleRecord *pb.RoleRecord
 		// get by id
 		if id > 0 {
-			role, _ := client.GetRoleById(ctx, &pb.GetRoleByIdRequest{
+			role, err := client.GetRoleById(ctx, &pb.GetRoleByIdRequest{
 				Id: id,
 			})
+			util.ExitNicelyOnError(err, "Error getting role")
 			if role != nil {
 				roleRecord = role.Role
 			}
 		} else if name != "" {
 			// get by name
-			role, _ := client.GetRoleByName(ctx, &pb.GetRoleByNameRequest{
+			role, err := client.GetRoleByName(ctx, &pb.GetRoleByNameRequest{
 				OrganizationId: org_id,
 				Name:           name,
 			})
+			util.ExitNicelyOnError(err, "Error getting role")
 			if role != nil {
 				roleRecord = role.Role
 			}
-		}
-
-		if roleRecord == nil {
-			fmt.Fprintf(os.Stderr, "Error getting role\n")
-			os.Exit(1)
 		}
 		json, err := json.Marshal(roleRecord)
 		util.ExitNicelyOnError(err, "Error marshalling role")

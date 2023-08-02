@@ -17,7 +17,6 @@ package controlplane
 import (
 	"context"
 	"database/sql"
-	"fmt"
 	"time"
 
 	"github.com/go-playground/validator/v10"
@@ -68,7 +67,7 @@ func (s *Server) CreateUser(ctx context.Context,
 
 	err := validator.Struct(format)
 	if err != nil {
-		return nil, err
+		return nil, status.Errorf(codes.InvalidArgument, "invalid argument: %s", err.Error())
 	}
 
 	if in.IsProtected == nil {
@@ -92,7 +91,7 @@ func (s *Server) CreateUser(ctx context.Context,
 	// hash the password for storing in the database
 	pHash, err := mcrypto.GeneratePasswordHash(*in.Password, &s.cfg.Salt)
 	if err != nil {
-		return nil, err
+		return nil, status.Errorf(codes.Internal, "failed to hash password: %s", err.Error())
 	}
 
 	// check if user is authorized
@@ -105,7 +104,10 @@ func (s *Server) CreateUser(ctx context.Context,
 		for _, id := range in.GroupIds {
 			group, err := s.store.GetGroupByID(ctx, id)
 			if err != nil {
-				return nil, status.Errorf(codes.NotFound, "group not found")
+				if err == sql.ErrNoRows {
+					return nil, status.Error(codes.NotFound, "group not found")
+				}
+				return nil, status.Errorf(codes.Internal, "failed to get group: %s", err)
 			}
 
 			// group must belong to org
@@ -120,7 +122,10 @@ func (s *Server) CreateUser(ctx context.Context,
 		for _, id := range in.RoleIds {
 			role, err := s.store.GetRoleByID(ctx, id)
 			if err != nil {
-				return nil, status.Errorf(codes.NotFound, "role not found")
+				if err == sql.ErrNoRows {
+					return nil, status.Error(codes.NotFound, "role not found")
+				}
+				return nil, status.Errorf(codes.Internal, "failed to get role: %s", err)
 			}
 
 			// role must belong to org
@@ -188,13 +193,16 @@ func (s *Server) DeleteUser(ctx context.Context,
 	validator := validator.New()
 	err := validator.Struct(deleteUserValidation{Id: in.Id})
 	if err != nil {
-		return nil, err
+		return nil, status.Errorf(codes.InvalidArgument, "invalid argument: %s", err.Error())
 	}
 
 	// first check if the user exists and is not protected
 	user, err := s.store.GetUserByID(ctx, in.Id)
 	if err != nil {
-		return nil, err
+		if err == sql.ErrNoRows {
+			return nil, status.Error(codes.NotFound, "user not found")
+		}
+		return nil, status.Errorf(codes.Internal, "failed to get user: %s", err)
 	}
 
 	// check if user is authorized
@@ -208,13 +216,12 @@ func (s *Server) DeleteUser(ctx context.Context,
 	}
 
 	if !*in.Force && user.IsProtected {
-		errcode := fmt.Errorf("cannot delete a protected user")
-		return nil, errcode
+		return nil, status.Errorf(codes.InvalidArgument, "cannot delete a protected user")
 	}
 
 	err = s.store.DeleteUser(ctx, in.Id)
 	if err != nil {
-		return nil, err
+		return nil, status.Errorf(codes.Internal, "failed to delete user: %s", err)
 	}
 
 	return &pb.DeleteUserResponse{}, nil
@@ -239,7 +246,7 @@ func (s *Server) GetUsers(ctx context.Context,
 		Offset: *in.Offset,
 	})
 	if err != nil {
-		return nil, status.Errorf(codes.Unknown, "failed to get users: %s", err)
+		return nil, status.Errorf(codes.Internal, "failed to get users: %s", err)
 	}
 
 	var resp pb.GetUsersResponse
@@ -286,7 +293,7 @@ func (s *Server) GetUsersByOrganization(ctx context.Context,
 		Offset:         *in.Offset,
 	})
 	if err != nil {
-		return nil, fmt.Errorf("failed to get users: %w", err)
+		return nil, status.Errorf(codes.Internal, "failed to get users: %s", err)
 	}
 
 	var resp pb.GetUsersByOrganizationResponse
@@ -333,7 +340,7 @@ func (s *Server) GetUsersByGroup(ctx context.Context,
 		Offset:  *in.Offset,
 	})
 	if err != nil {
-		return nil, fmt.Errorf("failed to get users: %w", err)
+		return nil, status.Errorf(codes.Internal, "failed to get users: %s", err)
 	}
 
 	var resp pb.GetUsersByGroupResponse
@@ -414,7 +421,10 @@ func (s *Server) GetUserById(ctx context.Context,
 
 	user, err := s.store.GetUserByID(ctx, in.Id)
 	if err != nil {
-		return nil, status.Errorf(codes.Unknown, "failed to get user: %s", err)
+		if err == sql.ErrNoRows {
+			return nil, status.Error(codes.NotFound, "user not found")
+		}
+		return nil, status.Errorf(codes.Internal, "failed to get user: %s", err)
 	}
 
 	groups, roles, err := getUserDependencies(ctx, s.store, user)
@@ -450,7 +460,10 @@ func (s *Server) GetUserByUserName(ctx context.Context,
 
 	user, err := s.store.GetUserByUserName(ctx, in.Username)
 	if err != nil {
-		return nil, status.Errorf(codes.Unknown, "failed to get user: %s", err)
+		if err == sql.ErrNoRows {
+			return nil, status.Error(codes.NotFound, "user not found")
+		}
+		return nil, status.Errorf(codes.Internal, "failed to get user: %s", err)
 	}
 
 	// check if user is authorized
@@ -491,7 +504,10 @@ func (s *Server) GetUserByEmail(ctx context.Context,
 
 	user, err := s.store.GetUserByEmail(ctx, sql.NullString{String: in.Email, Valid: true})
 	if err != nil {
-		return nil, status.Errorf(codes.Unknown, "failed to get user: %s", err)
+		if err == sql.ErrNoRows {
+			return nil, status.Error(codes.NotFound, "user not found")
+		}
+		return nil, status.Errorf(codes.Internal, "failed to get user: %s", err)
 	}
 
 	// check if user is authorized
@@ -533,6 +549,9 @@ func (s *Server) GetUser(ctx context.Context, _ *pb.GetUserRequest) (*pb.GetUser
 	// check if user exists
 	user, err := s.store.GetUserByID(ctx, claims.UserId)
 	if err != nil {
+		if err == sql.ErrNoRows {
+			return nil, status.Error(codes.NotFound, "user not found")
+		}
 		return nil, status.Errorf(codes.Internal, "failed to get user: %s", err)
 	}
 
@@ -593,6 +612,9 @@ func (s *Server) UpdatePassword(ctx context.Context, in *pb.UpdatePasswordReques
 	// check if the previous password was the same
 	user, err := s.store.GetUserByID(ctx, claims.UserId)
 	if err != nil {
+		if err == sql.ErrNoRows {
+			return nil, status.Error(codes.NotFound, "user not found")
+		}
 		return nil, status.Errorf(codes.Internal, "failed to get user: %s", err)
 	}
 
@@ -657,6 +679,9 @@ func (s *Server) UpdateProfile(ctx context.Context, in *pb.UpdateProfileRequest)
 	// get details of user
 	user, err := s.store.GetUserByID(ctx, claims.UserId)
 	if err != nil {
+		if err == sql.ErrNoRows {
+			return nil, status.Error(codes.NotFound, "user not found")
+		}
 		return nil, status.Errorf(codes.Internal, "failed to get user: %s", err)
 	}
 

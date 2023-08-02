@@ -55,6 +55,7 @@ type Querier interface {
 	GetParentProjectsUntil(ctx context.Context, arg GetParentProjectsUntilParams) ([]uuid.UUID, error)
 	GetPolicyByGroupAndID(ctx context.Context, arg GetPolicyByGroupAndIDParams) ([]GetPolicyByGroupAndIDRow, error)
 	GetPolicyByGroupAndName(ctx context.Context, arg GetPolicyByGroupAndNameParams) ([]GetPolicyByGroupAndNameRow, error)
+	GetPolicyByID(ctx context.Context, id int32) (Policy, error)
 	GetPolicyStatusByGroup(ctx context.Context, groupID int32) ([]GetPolicyStatusByGroupRow, error)
 	GetPolicyStatusByIdAndGroup(ctx context.Context, arg GetPolicyStatusByIdAndGroupParams) (GetPolicyStatusByIdAndGroupRow, error)
 	GetProjectByID(ctx context.Context, id uuid.UUID) (Project, error)
