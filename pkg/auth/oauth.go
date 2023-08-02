@@ -25,6 +25,8 @@ import (
 	"context"
 	"fmt"
 	"net/http"
+	"os"
+	"path/filepath"
 
 	go_github "github.com/google/go-github/v53/github"
 	"github.com/spf13/viper"
@@ -67,13 +69,37 @@ func NewOAuthConfig(provider string, cli bool) (*oauth2.Config, error) {
 		return nil, fmt.Errorf("invalid provider: %s", provider)
 	}
 
+	clientId, err := readFileOrConfig(fmt.Sprintf("%s.client_id", provider))
+	if err != nil {
+		return nil, fmt.Errorf("failed to read %s.client_id: %w", provider, err)
+	}
+	clientSecret, err := readFileOrConfig(fmt.Sprintf("%s.client_secret", provider))
+	if err != nil {
+		return nil, fmt.Errorf("failed to read %s.client_id: %w", provider, err)
+	}
+
 	return &oauth2.Config{
-		ClientID:     viper.GetString(fmt.Sprintf("%s.client_id", provider)),
-		ClientSecret: viper.GetString(fmt.Sprintf("%s.client_secret", provider)),
+		ClientID:     clientId,
+		ClientSecret: clientSecret,
 		RedirectURL:  redirectURL(provider, cli),
 		Scopes:       scopes(provider),
 		Endpoint:     endpoint(provider),
 	}, nil
+}
+
+// readFileOrConfig prefers reading from configKey_file (for Kubernetes distribution
+// of secrets), but falls back to a viper string value if the file is not present.
+func readFileOrConfig(configKey string) (string, error) {
+	if viper.IsSet(configKey + "_file") {
+		filename := viper.GetString(configKey + "_file")
+		// filepath.Clean avoids a gosec warning on reading a file by name
+		data, err := os.ReadFile(filepath.Clean(filename))
+		if err != nil {
+			return "", err
+		}
+		return string(data), nil
+	}
+	return viper.GetString(configKey), nil
 }
 
 // NewProviderHttpClient creates a new http client for the given provider

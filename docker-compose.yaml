@@ -24,7 +24,7 @@ services:
       "--grpc-host=0.0.0.0",
       "--http-host=0.0.0.0",
       "--db-host=postgres",
-      "--config=/app/config.yaml"
+      "--config=/app/config.yaml",
       ]
     restart: always # keep the server running
     ports:
@@ -32,6 +32,8 @@ services:
       - "8090:8090"
     volumes:
           - ./config.yaml:/app/config.yaml:z
+          - ./github_client_id:/secrets/github_client_id:z
+          - ./github_client_secret:/secrets/github_client_secret:z
           - ./.ssh:/app/.ssh:z
     environment:
       - KO_DATA_PATH=/app/
@@ -42,6 +44,10 @@ services:
       - AUTH.ACCESS_TOKEN_PUBLIC_KEY=/app/.ssh/access_token_rsa.pub
       - AUTH.REFRESH_TOKEN_PRIVATE_KEY=/app/.ssh/refresh_token_rsa
       - AUTH.REFRESH_TOKEN_PUBLIC_KEY=/app/.ssh/refresh_token_rsa.pub
+      # If you don't want to store your GitHub client ID and secret in the main
+      # config file, point to them here:
+      # - GITHUB.CLIENT_ID_FILE=/secrets/github_client_id
+      # - GITHUB.CLIENT_SECRET_FILE=/secrets/github_client_secret
     networks:
       - app_net
     depends_on:
@@ -58,6 +64,7 @@ services:
       "up",
       "--yes",
       "--db-host=postgres",
+      "--config=/app/config.yaml",
       ]
     volumes:
           - ./config.yaml:/app/config.yaml:z
