@@ -55,7 +55,7 @@
     "application/json"
   ],
   "paths": {
-    "/api/v1/artifacts": {
+    "/api/v1/artifacts/{provider}/type/{artifactType}": {
       "get": {
         "operationId": "ArtifactService_ListArtifacts",
         "responses": {
@@ -75,8 +75,14 @@
         "parameters": [
           {
             "name": "provider",
-            "in": "query",
-            "required": false,
+            "in": "path",
+            "required": true,
+            "type": "string"
+          },
+          {
+            "name": "artifactType",
+            "in": "path",
+            "required": true,
             "type": "string"
           },
           {
@@ -85,12 +91,6 @@
             "required": false,
             "type": "integer",
             "format": "int32"
-          },
-          {
-            "name": "artifactType",
-            "in": "query",
-            "required": false,
-            "type": "string"
           },
           {
             "name": "limit",
@@ -105,6 +105,68 @@
             "required": false,
             "type": "integer",
             "format": "int32"
+          }
+        ],
+        "tags": [
+          "ArtifactService"
+        ]
+      }
+    },
+    "/api/v1/artifacts/{provider}/type/{artifactType}/name/{name}": {
+      "get": {
+        "operationId": "ArtifactService_GetArtifactByName",
+        "responses": {
+          "200": {
+            "description": "A successful response.",
+            "schema": {
+              "$ref": "#/definitions/v1GetArtifactByNameResponse"
+            }
+          },
+          "default": {
+            "description": "An unexpected error response.",
+            "schema": {
+              "$ref": "#/definitions/rpcStatus"
+            }
+          }
+        },
+        "parameters": [
+          {
+            "name": "provider",
+            "in": "path",
+            "required": true,
+            "type": "string"
+          },
+          {
+            "name": "artifactType",
+            "in": "path",
+            "required": true,
+            "type": "string"
+          },
+          {
+            "name": "name",
+            "in": "path",
+            "required": true,
+            "type": "string"
+          },
+          {
+            "name": "groupId",
+            "in": "query",
+            "required": false,
+            "type": "integer",
+            "format": "int32"
+          },
+          {
+            "name": "latestVersions",
+            "in": "query",
+            "required": false,
+            "type": "integer",
+            "format": "int32"
+          },
+          {
+            "name": "tag",
+            "in": "query",
+            "required": false,
+            "type": "string"
           }
         ],
         "tags": [
@@ -1362,62 +1424,6 @@
         ],
         "tags": [
           "PolicyService"
-        ]
-      }
-    },
-    "/api/v1/provider/{provider}/type/{artifactType}/name/{name}": {
-      "get": {
-        "operationId": "ArtifactService_GetArtifactByName",
-        "responses": {
-          "200": {
-            "description": "A successful response.",
-            "schema": {
-              "$ref": "#/definitions/v1GetArtifactByNameResponse"
-            }
-          },
-          "default": {
-            "description": "An unexpected error response.",
-            "schema": {
-              "$ref": "#/definitions/rpcStatus"
-            }
-          }
-        },
-        "parameters": [
-          {
-            "name": "provider",
-            "in": "path",
-            "required": true,
-            "type": "string"
-          },
-          {
-            "name": "artifactType",
-            "in": "path",
-            "required": true,
-            "type": "string"
-          },
-          {
-            "name": "name",
-            "in": "path",
-            "required": true,
-            "type": "string"
-          },
-          {
-            "name": "groupId",
-            "in": "query",
-            "required": false,
-            "type": "integer",
-            "format": "int32"
-          },
-          {
-            "name": "latestVersions",
-            "in": "query",
-            "required": false,
-            "type": "integer",
-            "format": "int32"
-          }
-        ],
-        "tags": [
-          "ArtifactService"
         ]
       }
     },
@@ -2868,17 +2874,8 @@
           "type": "string",
           "format": "date-time"
         },
-        "githubWorkflowName": {
-          "type": "string"
-        },
-        "githubWorkflowRepository": {
-          "type": "string"
-        },
-        "githubWorkflowCommitSha": {
-          "type": "string"
-        },
-        "githubWorkflowTrigger": {
-          "type": "string"
+        "githubWorkflow": {
+          "$ref": "#/definitions/v1GithubWorkflow"
         },
         "createdAt": {
           "type": "string",
@@ -3796,6 +3793,23 @@
         "createdAt": {
           "type": "string",
           "format": "date-time"
+        }
+      }
+    },
+    "v1GithubWorkflow": {
+      "type": "object",
+      "properties": {
+        "name": {
+          "type": "string"
+        },
+        "repository": {
+          "type": "string"
+        },
+        "commitSha": {
+          "type": "string"
+        },
+        "trigger": {
+          "type": "string"
         }
       }
     },

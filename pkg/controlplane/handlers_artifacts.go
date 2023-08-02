@@ -19,6 +19,7 @@ import (
 	"fmt"
 	"time"
 
+	go_github "github.com/google/go-github/v53/github"
 	"google.golang.org/grpc/codes"
 	"google.golang.org/grpc/status"
 	"google.golang.org/protobuf/types/known/timestamppb"
@@ -125,8 +126,13 @@ func (s *Server) GetArtifactByName(ctx context.Context, in *pb.GetArtifactByName
 		return nil, status.Errorf(codes.InvalidArgument, "provider not supported: %v", in.Provider)
 	}
 
-	if in.LatestVersions < 0 || in.LatestVersions > 10 {
-		return nil, status.Errorf(codes.InvalidArgument, "latest versions must be between 0 and 10")
+	// tag and latest versions cannot be set at same time
+	if in.Tag != "" && in.LatestVersions > 1 {
+		return nil, status.Errorf(codes.InvalidArgument, "tag and latest versions cannot be set at same time")
+	}
+
+	if in.LatestVersions < 1 || in.LatestVersions > 10 {
+		return nil, status.Errorf(codes.InvalidArgument, "latest versions must be between 1 and 10")
 	}
 
 	// if we do not have a group, check if we can infer it
@@ -173,9 +179,21 @@ func (s *Server) GetArtifactByName(ctx context.Context, in *pb.GetArtifactByName
 	}
 
 	// get versions
-	versions, err := client.GetPackageVersions(ctx, isOrg, in.ArtifactType, in.Name)
-	if err != nil {
-		return nil, status.Errorf(codes.Internal, "cannot get package versions")
+	var versions []*go_github.PackageVersion
+	if in.Tag != "" {
+		version, err := client.GetPackageVersionByTag(ctx, isOrg, in.ArtifactType, in.Name, in.Tag)
+		if err != nil {
+			return nil, status.Errorf(codes.Internal, "cannot get package version")
+		}
+		if version == nil {
+			return nil, status.Errorf(codes.NotFound, "package version not found")
+		}
+		versions = append(versions, version)
+	} else {
+		versions, err = client.GetPackageVersions(ctx, isOrg, in.ArtifactType, in.Name)
+		if err != nil {
+			return nil, status.Errorf(codes.Internal, "cannot get package versions")
+		}
 	}
 
 	final_versions := []*pb.ArtifactVersion{}
@@ -202,13 +220,14 @@ func (s *Server) GetArtifactByName(ctx context.Context, in *pb.GetArtifactByName
 			continue
 		}
 
-		current_version := &pb.ArtifactVersion{}
-		current_version.IsVerified = false
-		current_version.IsBundleVerified = false
-		current_version.VersionId = version.GetID()
-		current_version.Tags = version.Metadata.Container.Tags
-		current_version.Sha = version.GetName()
-		current_version.CreatedAt = timestamppb.New(version.GetCreatedAt().Time)
+		current_version := &pb.ArtifactVersion{
+			IsVerified:       false,
+			IsBundleVerified: false,
+			VersionId:        version.GetID(),
+			Tags:             version.Metadata.Container.Tags,
+			Sha:              version.GetName(),
+			CreatedAt:        timestamppb.New(version.GetCreatedAt().Time),
+		}
 
 		// get information about signature
 		signature, err := container.GetSignatureTag(REGISTRY, *pkg.GetOwner().Login, pkg.GetName(), version.GetName())
@@ -241,17 +260,12 @@ func (s *Server) GetArtifactByName(ctx context.Context, in *pb.GetArtifactByName
 						signature_time := timestamppb.New(time.Unix(imageKeys["SignatureTime"].(int64), 0))
 						current_version.SignatureTime = signature_time
 
-						workflow_name := imageKeys["WorkflowName"].(string)
-						current_version.GithubWorkflowName = &workflow_name
-
-						workflow_repository := imageKeys["WorkflowRepository"].(string)
-						current_version.GithubWorkflowRepository = &workflow_repository
-
-						workflow_sha := imageKeys["WorkflowSha"].(string)
-						current_version.GithubWorkflowCommitSha = &workflow_sha
-
-						workflow_trigger := imageKeys["WorkflowTrigger"].(string)
-						current_version.GithubWorkflowTrigger = &workflow_trigger
+						current_version.GithubWorkflow = &pb.GithubWorkflow{
+							Name:       imageKeys["WorkflowName"].(string),
+							Repository: imageKeys["WorkflowRepository"].(string),
+							CommitSha:  imageKeys["WorkflowSha"].(string),
+							Trigger:    imageKeys["WorkflowTrigger"].(string),
+						}
 					}
 				}
 			}

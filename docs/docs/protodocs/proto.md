@@ -106,6 +106,7 @@
     - [GetVulnerabilitiesResponse](#mediator-v1-GetVulnerabilitiesResponse)
     - [GetVulnerabilityByIdRequest](#mediator-v1-GetVulnerabilityByIdRequest)
     - [GetVulnerabilityByIdResponse](#mediator-v1-GetVulnerabilityByIdResponse)
+    - [GithubWorkflow](#mediator-v1-GithubWorkflow)
     - [GroupRecord](#mediator-v1-GroupRecord)
     - [ListArtifactsRequest](#mediator-v1-ListArtifactsRequest)
     - [ListArtifactsResponse](#mediator-v1-ListArtifactsResponse)
@@ -243,10 +244,7 @@
 | rekor_log_id | [string](#string) | optional |  |
 | rekor_log_index | [int32](#int32) | optional |  |
 | signature_time | [google.protobuf.Timestamp](#google-protobuf-Timestamp) | optional |  |
-| github_workflow_name | [string](#string) | optional |  |
-| github_workflow_repository | [string](#string) | optional |  |
-| github_workflow_commit_sha | [string](#string) | optional |  |
-| github_workflow_trigger | [string](#string) | optional |  |
+| github_workflow | [GithubWorkflow](#mediator-v1-GithubWorkflow) | optional |  |
 | created_at | [google.protobuf.Timestamp](#google-protobuf-Timestamp) |  |  |
 
 
@@ -851,6 +849,7 @@ DeleteRuleTypeResponse is the response to delete a rule type.
 | artifact_type | [string](#string) |  |  |
 | name | [string](#string) |  |  |
 | latest_versions | [int32](#int32) |  |  |
+| tag | [string](#string) |  |  |
 
 
 
@@ -1832,6 +1831,24 @@ list users
 | advisroy_url | [string](#string) |  |  |
 | scanned_at | [google.protobuf.Timestamp](#google-protobuf-Timestamp) |  |  |
 | created_at | [google.protobuf.Timestamp](#google-protobuf-Timestamp) |  |  |
+
+
+
+
+
+
+<a name="mediator-v1-GithubWorkflow"></a>
+
+### GithubWorkflow
+
+
+
+| Field | Type | Label | Description |
+| ----- | ---- | ----- | ----------- |
+| name | [string](#string) |  |  |
+| repository | [string](#string) |  |  |
+| commit_sha | [string](#string) |  |  |
+| trigger | [string](#string) |  |  |
 
 
 

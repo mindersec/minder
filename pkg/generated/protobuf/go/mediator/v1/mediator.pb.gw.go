@@ -50,12 +50,39 @@ func local_request_HealthService_CheckHealth_0(ctx context.Context, marshaler ru
 }
 
 var (
-	filter_ArtifactService_ListArtifacts_0 = &utilities.DoubleArray{Encoding: map[string]int{}, Base: []int(nil), Check: []int(nil)}
+	filter_ArtifactService_ListArtifacts_0 = &utilities.DoubleArray{Encoding: map[string]int{"provider": 0, "artifact_type": 1, "artifactType": 2}, Base: []int{1, 2, 3, 4, 0, 0, 0, 0}, Check: []int{0, 1, 1, 1, 2, 2, 3, 4}}
 )
 
 func request_ArtifactService_ListArtifacts_0(ctx context.Context, marshaler runtime.Marshaler, client ArtifactServiceClient, req *http.Request, pathParams map[string]string) (proto.Message, runtime.ServerMetadata, error) {
 	var protoReq ListArtifactsRequest
 	var metadata runtime.ServerMetadata
+
+	var (
+		val string
+		ok  bool
+		err error
+		_   = err
+	)
+
+	val, ok = pathParams["provider"]
+	if !ok {
+		return nil, metadata, status.Errorf(codes.InvalidArgument, "missing parameter %s", "provider")
+	}
+
+	protoReq.Provider, err = runtime.String(val)
+	if err != nil {
+		return nil, metadata, status.Errorf(codes.InvalidArgument, "type mismatch, parameter: %s, error: %v", "provider", err)
+	}
+
+	val, ok = pathParams["artifact_type"]
+	if !ok {
+		return nil, metadata, status.Errorf(codes.InvalidArgument, "missing parameter %s", "artifact_type")
+	}
+
+	protoReq.ArtifactType, err = runtime.String(val)
+	if err != nil {
+		return nil, metadata, status.Errorf(codes.InvalidArgument, "type mismatch, parameter: %s, error: %v", "artifact_type", err)
+	}
 
 	if err := req.ParseForm(); err != nil {
 		return nil, metadata, status.Errorf(codes.InvalidArgument, "%v", err)
@@ -72,6 +99,33 @@ func request_ArtifactService_ListArtifacts_0(ctx context.Context, marshaler runt
 func local_request_ArtifactService_ListArtifacts_0(ctx context.Context, marshaler runtime.Marshaler, server ArtifactServiceServer, req *http.Request, pathParams map[string]string) (proto.Message, runtime.ServerMetadata, error) {
 	var protoReq ListArtifactsRequest
 	var metadata runtime.ServerMetadata
+
+	var (
+		val string
+		ok  bool
+		err error
+		_   = err
+	)
+
+	val, ok = pathParams["provider"]
+	if !ok {
+		return nil, metadata, status.Errorf(codes.InvalidArgument, "missing parameter %s", "provider")
+	}
+
+	protoReq.Provider, err = runtime.String(val)
+	if err != nil {
+		return nil, metadata, status.Errorf(codes.InvalidArgument, "type mismatch, parameter: %s, error: %v", "provider", err)
+	}
+
+	val, ok = pathParams["artifact_type"]
+	if !ok {
+		return nil, metadata, status.Errorf(codes.InvalidArgument, "missing parameter %s", "artifact_type")
+	}
+
+	protoReq.ArtifactType, err = runtime.String(val)
+	if err != nil {
+		return nil, metadata, status.Errorf(codes.InvalidArgument, "type mismatch, parameter: %s, error: %v", "artifact_type", err)
+	}
 
 	if err := req.ParseForm(); err != nil {
 		return nil, metadata, status.Errorf(codes.InvalidArgument, "%v", err)
@@ -3587,7 +3641,7 @@ func RegisterArtifactServiceHandlerServer(ctx context.Context, mux *runtime.Serv
 		inboundMarshaler, outboundMarshaler := runtime.MarshalerForRequest(mux, req)
 		var err error
 		var annotatedContext context.Context
-		annotatedContext, err = runtime.AnnotateIncomingContext(ctx, mux, req, "/mediator.v1.ArtifactService/ListArtifacts", runtime.WithHTTPPathPattern("/api/v1/artifacts"))
+		annotatedContext, err = runtime.AnnotateIncomingContext(ctx, mux, req, "/mediator.v1.ArtifactService/ListArtifacts", runtime.WithHTTPPathPattern("/api/v1/artifacts/{provider}/type/{artifact_type}"))
 		if err != nil {
 			runtime.HTTPError(ctx, mux, outboundMarshaler, w, req, err)
 			return
@@ -3612,7 +3666,7 @@ func RegisterArtifactServiceHandlerServer(ctx context.Context, mux *runtime.Serv
 		inboundMarshaler, outboundMarshaler := runtime.MarshalerForRequest(mux, req)
 		var err error
 		var annotatedContext context.Context
-		annotatedContext, err = runtime.AnnotateIncomingContext(ctx, mux, req, "/mediator.v1.ArtifactService/GetArtifactByName", runtime.WithHTTPPathPattern("/api/v1/provider/{provider}/type/{artifact_type}/name/{name}"))
+		annotatedContext, err = runtime.AnnotateIncomingContext(ctx, mux, req, "/mediator.v1.ArtifactService/GetArtifactByName", runtime.WithHTTPPathPattern("/api/v1/artifacts/{provider}/type/{artifact_type}/name/{name}"))
 		if err != nil {
 			runtime.HTTPError(ctx, mux, outboundMarshaler, w, req, err)
 			return
@@ -5480,7 +5534,7 @@ func RegisterArtifactServiceHandlerClient(ctx context.Context, mux *runtime.Serv
 		inboundMarshaler, outboundMarshaler := runtime.MarshalerForRequest(mux, req)
 		var err error
 		var annotatedContext context.Context
-		annotatedContext, err = runtime.AnnotateContext(ctx, mux, req, "/mediator.v1.ArtifactService/ListArtifacts", runtime.WithHTTPPathPattern("/api/v1/artifacts"))
+		annotatedContext, err = runtime.AnnotateContext(ctx, mux, req, "/mediator.v1.ArtifactService/ListArtifacts", runtime.WithHTTPPathPattern("/api/v1/artifacts/{provider}/type/{artifact_type}"))
 		if err != nil {
 			runtime.HTTPError(ctx, mux, outboundMarshaler, w, req, err)
 			return
@@ -5502,7 +5556,7 @@ func RegisterArtifactServiceHandlerClient(ctx context.Context, mux *runtime.Serv
 		inboundMarshaler, outboundMarshaler := runtime.MarshalerForRequest(mux, req)
 		var err error
 		var annotatedContext context.Context
-		annotatedContext, err = runtime.AnnotateContext(ctx, mux, req, "/mediator.v1.ArtifactService/GetArtifactByName", runtime.WithHTTPPathPattern("/api/v1/provider/{provider}/type/{artifact_type}/name/{name}"))
+		annotatedContext, err = runtime.AnnotateContext(ctx, mux, req, "/mediator.v1.ArtifactService/GetArtifactByName", runtime.WithHTTPPathPattern("/api/v1/artifacts/{provider}/type/{artifact_type}/name/{name}"))
 		if err != nil {
 			runtime.HTTPError(ctx, mux, outboundMarshaler, w, req, err)
 			return
@@ -5522,9 +5576,9 @@ func RegisterArtifactServiceHandlerClient(ctx context.Context, mux *runtime.Serv
 }
 
 var (
-	pattern_ArtifactService_ListArtifacts_0 = runtime.MustPattern(runtime.NewPattern(1, []int{2, 0, 2, 1, 2, 2}, []string{"api", "v1", "artifacts"}, ""))
+	pattern_ArtifactService_ListArtifacts_0 = runtime.MustPattern(runtime.NewPattern(1, []int{2, 0, 2, 1, 2, 2, 1, 0, 4, 1, 5, 3, 2, 4, 1, 0, 4, 1, 5, 5}, []string{"api", "v1", "artifacts", "provider", "type", "artifact_type"}, ""))
 
-	pattern_ArtifactService_GetArtifactByName_0 = runtime.MustPattern(runtime.NewPattern(1, []int{2, 0, 2, 1, 2, 2, 1, 0, 4, 1, 5, 2, 2, 3, 1, 0, 4, 1, 5, 4, 2, 5, 1, 0, 4, 1, 5, 5}, []string{"api", "v1", "provider", "type", "artifact_type", "name"}, ""))
+	pattern_ArtifactService_GetArtifactByName_0 = runtime.MustPattern(runtime.NewPattern(1, []int{2, 0, 2, 1, 2, 2, 1, 0, 4, 1, 5, 3, 2, 4, 1, 0, 4, 1, 5, 5, 2, 6, 1, 0, 4, 1, 5, 6}, []string{"api", "v1", "artifacts", "provider", "type", "artifact_type", "name"}, ""))
 )
 
 var (

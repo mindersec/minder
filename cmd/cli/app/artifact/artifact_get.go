@@ -51,8 +51,15 @@ var artifact_getCmd = &cobra.Command{
 		provider := util.GetConfigValue("provider", "provider", cmd, "").(string)
 		artifact_type := util.GetConfigValue("type", "type", cmd, "").(string)
 		name := util.GetConfigValue("name", "name", cmd, "").(string)
+		tag := util.GetConfigValue("tag", "tag", cmd, "").(string)
 		groupID := viper.GetInt32("group-id")
 		latest_versions := viper.GetInt32("latest-versions")
+
+		// tag and latest versions cannot be set at same time
+		if tag != "" && latest_versions != 1 {
+			fmt.Fprintf(os.Stderr, "tag and latest versions cannot be set at the same time")
+			os.Exit(1)
+		}
 
 		conn, err := util.GetGrpcConnection(grpc_host, grpc_port)
 		util.ExitNicelyOnError(err, "Error getting grpc connection")
@@ -69,6 +76,7 @@ var artifact_getCmd = &cobra.Command{
 			ArtifactType:   artifact_type,
 			Name:           name,
 			LatestVersions: latest_versions,
+			Tag:            tag,
 		})
 		util.ExitNicelyOnError(err, "Error getting repo by id")
 
@@ -91,6 +99,7 @@ func init() {
 		"Type of the artifact to get info from (npm, maven, rubygems, docker, nuget, container)")
 	artifact_getCmd.Flags().StringP("name", "n", "", "Name of the artifact to get info from")
 	artifact_getCmd.Flags().Int32P("latest-versions", "v", 1, "Latest artifact versions to retrieve")
+	artifact_getCmd.Flags().StringP("tag", "", "", "Specific artifact tag to retrieve")
 	if err := artifact_getCmd.MarkFlagRequired("provider"); err != nil {
 		fmt.Fprintf(os.Stderr, "Error marking flag as required: %s\n", err)
 	}

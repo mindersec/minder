@@ -56,6 +56,7 @@ type RestAPI interface {
 	ListAllPackages(context.Context, bool, string, int, int) (PackageListResult, error)
 	GetPackageByName(context.Context, bool, string, string) (*github.Package, error)
 	GetPackageVersions(context.Context, bool, string, string) ([]*github.PackageVersion, error)
+	GetPackageVersionByTag(context.Context, bool, string, string, string) (*github.PackageVersion, error)
 
 	// NewRequest allows for building raw and custom requests
 	NewRequest(method, urlStr string, body any, opts ...github.RequestOption) (*http.Request, error)

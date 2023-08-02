@@ -173,6 +173,45 @@ func (c *RestClient) GetPackageVersions(ctx context.Context, isOrg bool, package
 	return versions, nil
 }
 
+// GetPackageVersionByTag returns a single package version for the specific tag
+func (c *RestClient) GetPackageVersionByTag(ctx context.Context, isOrg bool, package_type string,
+	package_name string, tag string) (*github.PackageVersion, error) {
+	var versions []*github.PackageVersion
+	var err error
+	state := "active"
+
+	if isOrg {
+		versions, _, err = c.client.Organizations.PackageGetAllVersions(ctx, "", package_type,
+			package_name, &github.PackageListOptions{PackageType: &package_type, State: &state})
+		if err != nil {
+			return nil, err
+		}
+	} else {
+		user, err := c.GetAuthenticatedUser(ctx)
+		if err != nil {
+			return nil, err
+		}
+
+		versions, _, err = c.client.Users.PackageGetAllVersions(ctx, user.GetLogin(), package_type,
+			package_name, &github.PackageListOptions{PackageType: &package_type, State: &state})
+		if err != nil {
+			return nil, err
+		}
+	}
+
+	// iterate for all versions until we find the specific tag
+	for _, version := range versions {
+		tags := version.Metadata.Container.Tags
+		for _, t := range tags {
+			if t == tag {
+				return version, nil
+			}
+		}
+	}
+	return nil, nil
+
+}
+
 // GetRepository returns a single repository for the authenticated user
 func (c *RestClient) GetRepository(ctx context.Context, owner string, name string) (*github.Repository, error) {
 	// create a slice to hold the repositories

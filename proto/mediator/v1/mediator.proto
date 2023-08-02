@@ -37,13 +37,13 @@ service HealthService {
 service ArtifactService {
     rpc ListArtifacts (ListArtifactsRequest) returns (ListArtifactsResponse) {
         option (google.api.http) = {
-            get: "/api/v1/artifacts"
+            get: "/api/v1/artifacts/{provider}/type/{artifact_type}"
         };
     }
 
     rpc GetArtifactByName (GetArtifactByNameRequest) returns (GetArtifactByNameResponse) {
         option (google.api.http) = {
-            get: "/api/v1/provider/{provider}/type/{artifact_type}/name/{name}"
+            get: "/api/v1/artifacts/{provider}/type/{artifact_type}/name/{name}"
             };    
     }
 }
@@ -71,6 +71,13 @@ message Artifact {
     google.protobuf.Timestamp updated_at = 8;
 }
 
+message GithubWorkflow {
+    string name = 1;
+    string repository = 2;
+    string commit_sha = 3;
+    string trigger = 4;
+}
+
 message ArtifactVersion {
     int64 version_id = 1;
     repeated string tags = 2;
@@ -83,11 +90,8 @@ message ArtifactVersion {
     optional string rekor_log_id = 9;
     optional int32 rekor_log_index = 10;
     optional google.protobuf.Timestamp signature_time = 11;
-    optional string github_workflow_name = 12;
-    optional string github_workflow_repository = 13;
-    optional string github_workflow_commit_sha = 14;
-    optional string github_workflow_trigger = 15;
-    google.protobuf.Timestamp created_at = 16;
+    optional GithubWorkflow github_workflow = 12;
+    google.protobuf.Timestamp created_at = 13;
 }
 
 message GetArtifactByNameRequest {
@@ -96,6 +100,7 @@ message GetArtifactByNameRequest {
     string artifact_type = 3;
     string name = 4;
     int32 latest_versions = 5;
+    string tag = 6;
 }
 
 message GetArtifactByNameResponse {
