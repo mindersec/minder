@@ -19,7 +19,7 @@
 // It does make a good example of how to use the generated client code
 // for others to use as a reference.
 
-package enroll
+package provider
 
 import (
 	"context"
@@ -100,9 +100,9 @@ func callBackServer(ctx context.Context, provider string, group int32, port stri
 }
 
 var enrollProviderCmd = &cobra.Command{
-	Use:   "provider",
+	Use:   "enroll",
 	Short: "Enroll a provider within the mediator control plane",
-	Long: `The medic enroll provider command allows a user to enroll a provider
+	Long: `The medic provider enroll command allows a user to enroll a provider
 such as GitHub into the mediator control plane. Once enrolled, users can perform
 actions such as adding repositories.`,
 	PreRun: func(cmd *cobra.Command, args []string) {
@@ -172,7 +172,7 @@ actions such as adding repositories.`,
 }
 
 func init() {
-	EnrollCmd.AddCommand(enrollProviderCmd)
+	ProviderCmd.AddCommand(enrollProviderCmd)
 	enrollProviderCmd.Flags().StringP("provider", "n", "", "Name for the provider to enroll")
 	enrollProviderCmd.Flags().Int32P("group-id", "g", 0, "ID of the group for enrolling the provider")
 	enrollProviderCmd.Flags().StringP("token", "t", "", "Personal Access Token (PAT) to use for enrollment")

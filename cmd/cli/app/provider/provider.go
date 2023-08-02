@@ -19,8 +19,8 @@
 // It does make a good example of how to use the generated client code
 // for others to use as a reference.
 
-// Package enroll contains the enroll command for the medic CLI
-package enroll
+// Package provider is the root command for the provider subcommands
+package provider
 
 import (
 	"github.com/spf13/cobra"
@@ -28,17 +28,16 @@ import (
 	"github.com/stacklok/mediator/cmd/cli/app"
 )
 
-// EnrollCmd is the root command for the enroll subcommands
-var EnrollCmd = &cobra.Command{
-	Use:   "enroll",
-	Short: "Manage enrollments within a mediator control plane",
-	Long: `The medic enroll commands manage enrollment of providers, within a mediator
-control plane.`,
+// ProviderCmd is the root command for the provider subcommands
+var ProviderCmd = &cobra.Command{
+	Use:   "provider",
+	Short: "Manage providers within a mediator control plane",
+	Long:  `The medic provider commands manage providers within a mediator control plane.`,
 	RunE: func(cmd *cobra.Command, args []string) error {
 		return cmd.Usage()
 	},
 }
 
 func init() {
-	app.RootCmd.AddCommand(EnrollCmd)
+	app.RootCmd.AddCommand(ProviderCmd)
 }
