@@ -155,13 +155,14 @@ type Project struct {
 }
 
 type ProviderAccessToken struct {
-	ID             int32     `json:"id"`
-	Provider       string    `json:"provider"`
-	GroupID        int32     `json:"group_id"`
-	EncryptedToken string    `json:"encrypted_token"`
-	ExpirationTime time.Time `json:"expiration_time"`
-	CreatedAt      time.Time `json:"created_at"`
-	UpdatedAt      time.Time `json:"updated_at"`
+	ID             int32          `json:"id"`
+	Provider       string         `json:"provider"`
+	GroupID        int32          `json:"group_id"`
+	OwnerFilter    sql.NullString `json:"owner_filter"`
+	EncryptedToken string         `json:"encrypted_token"`
+	ExpirationTime time.Time      `json:"expiration_time"`
+	CreatedAt      time.Time      `json:"created_at"`
+	UpdatedAt      time.Time      `json:"updated_at"`
 }
 
 type Repository struct {
@@ -213,12 +214,13 @@ type RuleType struct {
 }
 
 type SessionStore struct {
-	ID           int32         `json:"id"`
-	Provider     string        `json:"provider"`
-	GrpID        sql.NullInt32 `json:"grp_id"`
-	Port         sql.NullInt32 `json:"port"`
-	SessionState string        `json:"session_state"`
-	CreatedAt    time.Time     `json:"created_at"`
+	ID           int32          `json:"id"`
+	Provider     string         `json:"provider"`
+	GrpID        sql.NullInt32  `json:"grp_id"`
+	Port         sql.NullInt32  `json:"port"`
+	OwnerFilter  sql.NullString `json:"owner_filter"`
+	SessionState string         `json:"session_state"`
+	CreatedAt    time.Time      `json:"created_at"`
 }
 
 type SigningKey struct {

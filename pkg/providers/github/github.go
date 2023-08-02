@@ -50,8 +50,7 @@ type RepositoryListResult struct {
 // e.g. GetRepositoryRestInfo(ctx context.Context, owner string, name string) (*RepositoryInfo, error)
 type RestAPI interface {
 	GetRepository(context.Context, string, string) (*github.Repository, error)
-	ListAllRepositories(context.Context, bool) (RepositoryListResult, error)
-	CheckIfTokenIsForOrganization(context.Context) (bool, error)
+	ListAllRepositories(context.Context, bool, string) (RepositoryListResult, error)
 	GetBranchProtection(context.Context, string, string, string) (*github.Protection, error)
 
 	// NewRequest allows for building raw and custom requests

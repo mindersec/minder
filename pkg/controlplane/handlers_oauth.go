@@ -30,7 +30,6 @@ import (
 	"google.golang.org/grpc/codes"
 	"google.golang.org/grpc/status"
 
-	"github.com/stacklok/mediator/internal/gh/queries"
 	"github.com/stacklok/mediator/pkg/auth"
 	mcrypto "github.com/stacklok/mediator/pkg/crypto"
 	"github.com/stacklok/mediator/pkg/db"
@@ -93,6 +92,13 @@ func (s *Server) GetAuthorizationURL(ctx context.Context,
 		return nil, status.Errorf(codes.Unknown, "error deleting session state: %s", err)
 	}
 
+	var owner sql.NullString
+	if req.Owner == nil {
+		owner = sql.NullString{Valid: false}
+	} else {
+		owner = sql.NullString{Valid: true, String: *req.Owner}
+	}
+
 	// Insert the new session state into the database along with the user's group ID
 	// retrieved from the JWT token
 	_, err = s.store.CreateSessionState(ctx, db.CreateSessionStateParams{
@@ -100,6 +106,7 @@ func (s *Server) GetAuthorizationURL(ctx context.Context,
 		GrpID:        groupID,
 		Port:         port,
 		SessionState: state,
+		OwnerFilter:  owner,
 	})
 	if err != nil {
 		return nil, status.Errorf(codes.Unknown, "error inserting session state: %s", err)
@@ -139,7 +146,7 @@ func (s *Server) ExchangeCodeForTokenCLI(ctx context.Context,
 	}
 
 	// get groupID from session along with state nonce from the database
-	groupId, err := s.store.GetGroupIDPortBySessionState(ctx, in.State)
+	stateData, err := s.store.GetGroupIDPortBySessionState(ctx, in.State)
 	if err != nil {
 		return nil, status.Errorf(codes.Unknown, "error getting group ID by session state: %s", err)
 	}
@@ -155,30 +162,6 @@ func (s *Server) ExchangeCodeForTokenCLI(ctx context.Context,
 	}
 
 	token, err := oauthConfig.Exchange(ctx, in.Code)
-	if err != nil {
-		return nil, err
-	}
-
-	// Populate the database with the repositories using the GraphQL API
-	client, err := ghclient.NewRestClient(ctx, ghclient.GitHubConfig{
-		Token: token.AccessToken,
-	})
-	if err != nil {
-		return nil, err
-	}
-
-	isOrg, err := client.CheckIfTokenIsForOrganization(ctx)
-	if err != nil {
-		return nil, err
-	}
-
-	repos, err := client.ListAllRepositories(ctx, isOrg)
-	if err != nil {
-		return nil, err
-	}
-
-	// // Insert the repositories into the database
-	err = queries.SyncRepositoriesWithDB(ctx, s.store, repos, in.Provider, groupId.GrpID.Int32)
 	if err != nil {
 		return nil, err
 	}
@@ -209,16 +192,23 @@ func (s *Server) ExchangeCodeForTokenCLI(ctx context.Context,
 	encodedToken := base64.StdEncoding.EncodeToString(encryptedToken)
 
 	// delete token if it exists
-	err = s.store.DeleteAccessToken(ctx, db.DeleteAccessTokenParams{Provider: ghclient.Github, GroupID: groupId.GrpID.Int32})
+	err = s.store.DeleteAccessToken(ctx, db.DeleteAccessTokenParams{Provider: ghclient.Github, GroupID: stateData.GrpID.Int32})
 	if err != nil {
 		return nil, status.Errorf(codes.Unknown, "error deleting access token: %s", err)
 	}
 
+	var owner sql.NullString
+	if stateData.OwnerFilter.Valid {
+		owner = sql.NullString{Valid: true, String: stateData.OwnerFilter.String}
+	} else {
+		owner = sql.NullString{Valid: false}
+	}
 	_, err = s.store.CreateAccessToken(ctx, db.CreateAccessTokenParams{
-		GroupID:        groupId.GrpID.Int32,
+		GroupID:        stateData.GrpID.Int32,
 		Provider:       ghclient.Github,
 		EncryptedToken: encodedToken,
 		ExpirationTime: expiryTime,
+		OwnerFilter:    owner,
 	})
 	if err != nil {
 		return nil, status.Errorf(codes.Unknown, "error inserting access token: %s", err)
@@ -261,26 +251,26 @@ func (s *Server) ExchangeCodeForTokenWEB(ctx context.Context,
 
 // GetProviderAccessToken returns the access token for providers
 func GetProviderAccessToken(ctx context.Context, store db.Store, provider string,
-	groupId int32, checkAuthz bool) (oauth2.Token, error) {
+	groupId int32, checkAuthz bool) (oauth2.Token, string, error) {
 	// check if user is authorized
 	if checkAuthz && !IsRequestAuthorized(ctx, groupId) {
-		return oauth2.Token{}, status.Errorf(codes.PermissionDenied, "user is not authorized to access this resource")
+		return oauth2.Token{}, "", status.Errorf(codes.PermissionDenied, "user is not authorized to access this resource")
 	}
 
 	encToken, err := store.GetAccessTokenByGroupID(ctx,
 		db.GetAccessTokenByGroupIDParams{Provider: provider, GroupID: groupId})
 	if err != nil {
-		return oauth2.Token{}, err
+		return oauth2.Token{}, "", err
 	}
 
 	decryptedToken, err := mcrypto.DecryptOAuthToken(encToken.EncryptedToken)
 	if err != nil {
-		return oauth2.Token{}, err
+		return oauth2.Token{}, "", err
 	}
 
 	// base64 decode the token
 	decryptedToken.Expiry = encToken.ExpirationTime
-	return decryptedToken, nil
+	return decryptedToken, encToken.OwnerFilter.String, nil
 }
 
 // RevokeOauthTokens revokes the all oauth tokens for a provider
@@ -411,8 +401,16 @@ func (s *Server) StoreProviderToken(ctx context.Context,
 	}
 	encodedToken := base64.StdEncoding.EncodeToString(encryptedToken)
 
+	// additionally add owner
+	var owner sql.NullString
+	if in.Owner == nil {
+		owner = sql.NullString{Valid: false}
+	} else {
+		owner = sql.NullString{String: *in.Owner, Valid: true}
+	}
+
 	_, err = s.store.CreateAccessToken(ctx, db.CreateAccessTokenParams{GroupID: in.GroupId, Provider: in.Provider,
-		EncryptedToken: encodedToken, ExpirationTime: expiryTime})
+		EncryptedToken: encodedToken, ExpirationTime: expiryTime, OwnerFilter: owner})
 
 	if err != nil {
 		return nil, status.Errorf(codes.Internal, "error storing access token: %v", err)

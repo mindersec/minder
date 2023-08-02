@@ -17,12 +17,14 @@ package controlplane
 import (
 	"context"
 	"database/sql"
+	"fmt"
 	"strings"
 
 	"google.golang.org/grpc/codes"
 	"google.golang.org/grpc/status"
 	"google.golang.org/protobuf/types/known/timestamppb"
 
+	"github.com/stacklok/mediator/internal/gh/queries"
 	"github.com/stacklok/mediator/pkg/auth"
 	"github.com/stacklok/mediator/pkg/db"
 	pb "github.com/stacklok/mediator/pkg/generated/protobuf/go/mediator/v1"
@@ -74,7 +76,7 @@ func (s *Server) RegisterRepository(ctx context.Context,
 		return nil, status.Errorf(codes.PermissionDenied, "user not authorized to interact with provider")
 	}
 
-	decryptedToken, err := GetProviderAccessToken(ctx, s.store, in.Provider, in.GroupId, true)
+	decryptedToken, _, err := GetProviderAccessToken(ctx, s.store, in.Provider, in.GroupId, true)
 
 	if err != nil {
 		return nil, err
@@ -307,4 +309,60 @@ func (s *Server) GetRepositoryByName(ctx context.Context,
 		CreatedAt: createdAt,
 		UpdatedAt: updatedat,
 	}}, nil
+}
+
+// SyncRepositories synchronizes the repositories for a given provider and group
+func (s *Server) SyncRepositories(ctx context.Context, in *pb.SyncRepositoriesRequest) (*pb.SyncRepositoriesResponse, error) {
+	fmt.Println("i want to sync repos")
+	if in.Provider != github.Github {
+		return nil, status.Errorf(codes.InvalidArgument, "provider not supported: %v", in.Provider)
+	}
+
+	// if we do not have a group, check if we can infer it
+	if in.GroupId == 0 {
+		group, err := auth.GetDefaultGroup(ctx)
+		if err != nil {
+			return nil, status.Errorf(codes.InvalidArgument, "cannot infer group id")
+		}
+		in.GroupId = group
+	}
+
+	// check if user is authorized
+	if !IsRequestAuthorized(ctx, in.GroupId) {
+		return nil, status.Errorf(codes.PermissionDenied, "user is not authorized to access this resource")
+	}
+
+	// Check if needs github authorization
+	isGithubAuthorized := IsProviderCallAuthorized(ctx, s.store, in.Provider, in.GroupId)
+	if !isGithubAuthorized {
+		return nil, status.Errorf(codes.PermissionDenied, "user not authorized to interact with provider")
+	}
+
+	token, owner_filter, err := GetProviderAccessToken(ctx, s.store, in.Provider, in.GroupId, true)
+
+	if err != nil {
+		return nil, status.Errorf(codes.PermissionDenied, "cannot get access token for provider")
+	}
+
+	// Populate the database with the repositories using the GraphQL API
+	client, err := github.NewRestClient(ctx, github.GitHubConfig{
+		Token: token.AccessToken,
+	})
+	if err != nil {
+		return nil, status.Errorf(codes.Internal, "cannot create github client: %v", err)
+	}
+
+	isOrg := (owner_filter != "")
+	repos, err := client.ListAllRepositories(ctx, isOrg, owner_filter)
+	if err != nil {
+		return nil, status.Errorf(codes.Internal, "cannot list repositories: %v", err)
+	}
+
+	// // Insert the repositories into the database
+	err = queries.SyncRepositoriesWithDB(ctx, s.store, repos, in.Provider, in.GroupId)
+	if err != nil {
+		return nil, status.Errorf(codes.Internal, "cannot sync repositories: %v", err)
+	}
+
+	return &pb.SyncRepositoriesResponse{}, nil
 }
