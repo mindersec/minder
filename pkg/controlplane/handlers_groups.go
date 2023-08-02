@@ -88,7 +88,7 @@ func (s *Server) CreateGroup(ctx context.Context, req *pb.CreateGroupRequest) (*
 	validator := validator.New()
 	err := validator.Struct(createGroupValidation{OrganizationId: req.OrganizationId, Name: req.Name})
 	if err != nil {
-		return nil, err
+		return nil, status.Errorf(codes.InvalidArgument, "invalid request: %s", err)
 	}
 
 	if req.IsProtected == nil {
@@ -132,7 +132,10 @@ func (s *Server) GetGroupById(ctx context.Context, req *pb.GetGroupByIdRequest) 
 
 	grp, err := s.store.GetGroupByID(ctx, req.GroupId)
 	if err != nil {
-		return nil, status.Errorf(codes.NotFound, "failed to get group by id: %s", err)
+		if err == sql.ErrNoRows {
+			return nil, status.Error(codes.NotFound, "group not found")
+		}
+		return nil, status.Errorf(codes.Internal, "failed to get group by id: %s", err)
 	}
 
 	// check if user is authorized
@@ -250,13 +253,16 @@ func (s *Server) DeleteGroup(ctx context.Context,
 	validator := validator.New()
 	err := validator.Struct(deleteGroupValidation{Id: in.Id})
 	if err != nil {
-		return nil, err
+		return nil, status.Errorf(codes.InvalidArgument, "validation failed: %s", err)
 	}
 
 	// first check if the group exists and is not protected
 	group, err := s.store.GetGroupByID(ctx, in.Id)
 	if err != nil {
-		return nil, err
+		if err == sql.ErrNoRows {
+			return nil, status.Errorf(codes.NotFound, "group not found")
+		}
+		return nil, status.Errorf(codes.Internal, "failed to get group by id: %s", err)
 	}
 
 	if in.Force == nil {
@@ -265,8 +271,7 @@ func (s *Server) DeleteGroup(ctx context.Context,
 	}
 
 	if !*in.Force && group.IsProtected {
-		errcode := status.Errorf(codes.PermissionDenied, "cannot delete a protected group")
-		return nil, errcode
+		return nil, status.Errorf(codes.PermissionDenied, "cannot delete a protected group")
 	}
 
 	// if we do not force the deletion, we need to check if there are roles
@@ -274,23 +279,16 @@ func (s *Server) DeleteGroup(ctx context.Context,
 		// list roles belonging to that role
 		roles, err := s.store.ListRolesByGroupID(ctx, db.ListRolesByGroupIDParams{GroupID: sql.NullInt32{Int32: group.ID, Valid: true}})
 		if err != nil {
-			return nil, err
+			return nil, status.Errorf(codes.Internal, "failed to list roles by group id: %s", err)
 		}
 
 		if len(roles) > 0 {
-			errcode := status.Errorf(codes.FailedPrecondition, "cannot delete the group, there are roles associated with it")
-			return nil, errcode
+			return nil, status.Errorf(codes.FailedPrecondition, "cannot delete the group, there are roles associated with it")
 		}
 	}
 
-	// check if group exists
-	grp, err := s.store.GetGroupByID(ctx, in.Id)
-	if err != nil {
-		return nil, status.Errorf(codes.NotFound, "group not found")
-	}
-
 	// check if user is authorized
-	if IsRequestAuthorized(ctx, grp.OrganizationID) {
+	if IsRequestAuthorized(ctx, group.OrganizationID) {
 		err = s.store.DeleteGroup(ctx, in.Id)
 		if err != nil {
 			return nil, err

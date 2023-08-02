@@ -205,15 +205,6 @@ func TestDeleteGroupDBMock(t *testing.T) {
 
 	request := &pb.DeleteGroupRequest{Id: 1}
 
-	expectedGroup := db.Group{
-		ID:             1,
-		OrganizationID: 1,
-		Name:           "test",
-		IsProtected:    false,
-		CreatedAt:      time.Now(),
-		UpdatedAt:      time.Now(),
-	}
-
 	// Create a new context and set the claims value
 	ctx := context.WithValue(context.Background(), auth.TokenInfoKey, auth.UserClaims{
 		UserId:         1,
@@ -224,8 +215,7 @@ func TestDeleteGroupDBMock(t *testing.T) {
 	})
 
 	mockStore.EXPECT().
-		GetGroupByID(gomock.Any(), gomock.Any()).
-		Return(expectedGroup, nil).Times(2)
+		GetGroupByID(gomock.Any(), gomock.Any())
 	mockStore.EXPECT().
 		ListRolesByGroupID(ctx, gomock.Any()).
 		Return([]db.Role{}, nil)
@@ -263,7 +253,7 @@ func TestDeleteGroup_gRPC(t *testing.T) {
 			},
 			buildStubs: func(store *mockdb.MockStore) {
 				store.EXPECT().
-					GetGroupByID(gomock.Any(), gomock.Any()).Return(db.Group{}, nil).Times(2)
+					GetGroupByID(gomock.Any(), gomock.Any()).Return(db.Group{}, nil)
 				store.EXPECT().
 					DeleteGroup(gomock.Any(), gomock.Any()).Return(nil).
 					Times(1)

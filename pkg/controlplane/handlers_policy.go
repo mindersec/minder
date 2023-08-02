@@ -258,9 +258,17 @@ func (s *Server) DeletePolicy(ctx context.Context,
 		return nil, status.Error(codes.InvalidArgument, "policy id is required")
 	}
 
+	_, err = s.store.GetPolicyByID(ctx, in.Id)
+	if err != nil {
+		if err == sql.ErrNoRows {
+			return nil, status.Error(codes.NotFound, "policy not found")
+		}
+		return nil, status.Errorf(codes.Internal, "failed to get policy: %s", err)
+	}
+
 	err = s.store.DeletePolicy(ctx, in.Id)
 	if err != nil {
-		return nil, err
+		return nil, status.Errorf(codes.Internal, "failed to delete policy: %s", err)
 	}
 
 	return &pb.DeletePolicyResponse{}, nil

@@ -197,6 +197,24 @@ func (q *Queries) GetPolicyByGroupAndName(ctx context.Context, arg GetPolicyByGr
 	return items, nil
 }
 
+const getPolicyByID = `-- name: GetPolicyByID :one
+SELECT id, name, provider, group_id, created_at, updated_at FROM policies WHERE id = $1
+`
+
+func (q *Queries) GetPolicyByID(ctx context.Context, id int32) (Policy, error) {
+	row := q.db.QueryRowContext(ctx, getPolicyByID, id)
+	var i Policy
+	err := row.Scan(
+		&i.ID,
+		&i.Name,
+		&i.Provider,
+		&i.GroupID,
+		&i.CreatedAt,
+		&i.UpdatedAt,
+	)
+	return i, err
+}
+
 const listPoliciesByGroupID = `-- name: ListPoliciesByGroupID :many
 SELECT policies.id, name, provider, group_id, policies.created_at, policies.updated_at, entity_policies.id, entity, policy_id, contextual_rules, entity_policies.created_at, entity_policies.updated_at FROM policies JOIN entity_policies ON policies.id = entity_policies.policy_id
 WHERE policies.group_id = $1

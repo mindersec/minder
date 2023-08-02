@@ -712,6 +712,21 @@ func (mr *MockStoreMockRecorder) GetPolicyByGroupAndName(arg0, arg1 interface{})
 	return mr.mock.ctrl.RecordCallWithMethodType(mr.mock, "GetPolicyByGroupAndName", reflect.TypeOf((*MockStore)(nil).GetPolicyByGroupAndName), arg0, arg1)
 }
 
+// GetPolicyByID mocks base method.
+func (m *MockStore) GetPolicyByID(arg0 context.Context, arg1 int32) (db.Policy, error) {
+	m.ctrl.T.Helper()
+	ret := m.ctrl.Call(m, "GetPolicyByID", arg0, arg1)
+	ret0, _ := ret[0].(db.Policy)
+	ret1, _ := ret[1].(error)
+	return ret0, ret1
+}
+
+// GetPolicyByID indicates an expected call of GetPolicyByID.
+func (mr *MockStoreMockRecorder) GetPolicyByID(arg0, arg1 interface{}) *gomock.Call {
+	mr.mock.ctrl.T.Helper()
+	return mr.mock.ctrl.RecordCallWithMethodType(mr.mock, "GetPolicyByID", reflect.TypeOf((*MockStore)(nil).GetPolicyByID), arg0, arg1)
+}
+
 // GetPolicyStatusByGroup mocks base method.
 func (m *MockStore) GetPolicyStatusByGroup(arg0 context.Context, arg1 int32) ([]db.GetPolicyStatusByGroupRow, error) {
 	m.ctrl.T.Helper()
