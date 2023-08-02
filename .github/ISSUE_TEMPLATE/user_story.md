@@ -1,8 +1,8 @@
 ---
 name: User story
 about: Suggest an idea / feature  for mediator or related projects
-title: 'As a __ I want a __ so I can __'
-labels: 'user story'
+title: As a __ I want a __ so I can __
+labels: ''
 assignees: ''
 
 ---
@@ -25,4 +25,4 @@ Add any other context about the feature request here. e.g. link to a Google doc 
 
 **Acceptance Criteria**
 
-What does done look like? 
+What does done look like?
