@@ -40,7 +40,7 @@ func (s *Server) CreateOrganization(ctx context.Context,
 	validator := validator.New()
 	err := validator.Struct(createOrganizationValidation{Name: in.Name, Company: in.Company})
 	if err != nil {
-		return nil, err
+		return nil, status.Errorf(codes.InvalidArgument, "invalid argument: %v", err)
 	}
 
 	tx, err := s.store.BeginTransaction()
@@ -268,7 +268,10 @@ func (s *Server) GetOrganization(ctx context.Context,
 
 	org, err := s.store.GetOrganization(ctx, in.OrganizationId)
 	if err != nil {
-		return nil, status.Errorf(codes.Unknown, "failed to get organization: %s", err)
+		if err == sql.ErrNoRows {
+			return nil, status.Error(codes.NotFound, "organization not found")
+		}
+		return nil, status.Errorf(codes.Internal, "failed to get organization: %s", err)
 	}
 
 	groups, roles, users, err := getOrganizationDependencies(ctx, s.store, org)
@@ -300,7 +303,10 @@ func (s *Server) GetOrganizationByName(ctx context.Context,
 
 	org, err := s.store.GetOrganizationByName(ctx, in.Name)
 	if err != nil {
-		return nil, status.Errorf(codes.Unknown, "failed to get organization: %s", err)
+		if err == sql.ErrNoRows {
+			return nil, status.Error(codes.NotFound, "organization not found")
+		}
+		return nil, status.Errorf(codes.Internal, "failed to get organization: %s", err)
 	}
 
 	// check if user is authorized
@@ -338,12 +344,15 @@ func (s *Server) DeleteOrganization(ctx context.Context,
 	validator := validator.New()
 	err := validator.Struct(deleteOrganizationValidation{Id: in.Id})
 	if err != nil {
-		return nil, err
+		return nil, status.Errorf(codes.InvalidArgument, "validation failed: %s", err)
 	}
 
 	_, err = s.store.GetOrganization(ctx, in.Id)
 	if err != nil {
-		return nil, err
+		if err == sql.ErrNoRows {
+			return nil, status.Error(codes.NotFound, "organization not found")
+		}
+		return nil, status.Errorf(codes.Internal, "failed to get organization: %s", err)
 	}
 
 	if in.Force == nil {
@@ -356,19 +365,18 @@ func (s *Server) DeleteOrganization(ctx context.Context,
 		// list groups belonging to that organization
 		groups, err := s.store.ListGroupsByOrganizationID(ctx, in.Id)
 		if err != nil {
-			return nil, err
+			return nil, status.Errorf(codes.Internal, "failed to list groups: %s", err)
 		}
 
 		if len(groups) > 0 {
-			errcode := fmt.Errorf("cannot delete the organization, there are groups associated with it")
-			return nil, errcode
+			return nil, status.Errorf(codes.InvalidArgument, "cannot delete the organization, there are groups associated with it")
 		}
 	}
 
 	// otherwise we delete, and delete groups in cascade
 	err = s.store.DeleteOrganization(ctx, in.Id)
 	if err != nil {
-		return nil, err
+		return nil, status.Errorf(codes.Internal, "failed to delete organization: %s", err)
 	}
 
 	return &pb.DeleteOrganizationResponse{}, nil

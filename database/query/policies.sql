@@ -14,6 +14,9 @@ INSERT INTO entity_policies (
 SELECT * FROM policies JOIN entity_policies ON policies.id = entity_policies.policy_id
 WHERE policies.group_id = $1 AND policies.id = $2;
 
+-- name: GetPolicyByID :one
+SELECT * FROM policies WHERE id = $1;
+
 -- name: GetPolicyByGroupAndName :many
 SELECT * FROM policies JOIN entity_policies ON policies.id = entity_policies.policy_id
 WHERE policies.group_id = $1 AND policies.name = $2;

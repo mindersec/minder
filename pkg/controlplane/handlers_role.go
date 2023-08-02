@@ -17,7 +17,6 @@ package controlplane
 import (
 	"context"
 	"database/sql"
-	"fmt"
 
 	"github.com/go-playground/validator/v10"
 	"google.golang.org/grpc/codes"
@@ -40,7 +39,7 @@ func (s *Server) CreateRoleByOrganization(ctx context.Context,
 	validator := validator.New()
 	err := validator.Struct(CreateRoleValidation{Name: in.Name})
 	if err != nil {
-		return nil, err
+		return nil, status.Errorf(codes.InvalidArgument, "invalid argument: %v", err)
 	}
 
 	// check if user is authorized
@@ -51,7 +50,10 @@ func (s *Server) CreateRoleByOrganization(ctx context.Context,
 	// check that organization exists
 	_, err = s.store.GetOrganization(ctx, in.OrganizationId)
 	if err != nil {
-		return nil, status.Errorf(codes.NotFound, "organization not found")
+		if err == sql.ErrNoRows {
+			return nil, status.Error(codes.NotFound, "organization not found")
+		}
+		return nil, status.Errorf(codes.Internal, "failed to get organization")
 	}
 
 	if in.IsAdmin == nil {
@@ -69,7 +71,7 @@ func (s *Server) CreateRoleByOrganization(ctx context.Context,
 
 	role, err := s.store.CreateRole(ctx, roleParams)
 	if err != nil {
-		return nil, err
+		return nil, status.Errorf(codes.Internal, "failed to create role: %v", err)
 	}
 
 	return &pb.CreateRoleByOrganizationResponse{Id: role.ID, Name: role.Name,
@@ -86,7 +88,7 @@ func (s *Server) CreateRoleByGroup(ctx context.Context,
 	validator := validator.New()
 	err := validator.Struct(CreateRoleValidation{Name: in.Name})
 	if err != nil {
-		return nil, err
+		return nil, status.Errorf(codes.InvalidArgument, "invalid argument: %v", err)
 	}
 
 	// check if user is authorized
@@ -97,13 +99,19 @@ func (s *Server) CreateRoleByGroup(ctx context.Context,
 	// check that organization exists
 	_, err = s.store.GetOrganization(ctx, in.OrganizationId)
 	if err != nil {
-		return nil, status.Errorf(codes.NotFound, "organization not found")
+		if err == sql.ErrNoRows {
+			return nil, status.Error(codes.NotFound, "organization not found")
+		}
+		return nil, status.Errorf(codes.Internal, "failed to get organization")
 	}
 
 	// check that group exists
 	_, err = s.store.GetGroupByID(ctx, in.GroupId)
 	if err != nil {
-		return nil, status.Errorf(codes.NotFound, "group not found")
+		if err == sql.ErrNoRows {
+			return nil, status.Error(codes.NotFound, "group not found")
+		}
+		return nil, status.Errorf(codes.Internal, "failed to get group by id: %s", err)
 	}
 
 	if in.IsAdmin == nil {
@@ -122,7 +130,7 @@ func (s *Server) CreateRoleByGroup(ctx context.Context,
 
 	role, err := s.store.CreateRole(ctx, roleParams)
 	if err != nil {
-		return nil, err
+		return nil, status.Errorf(codes.Internal, "failed to create role: %v", err)
 	}
 
 	return &pb.CreateRoleByGroupResponse{Id: role.ID, Name: role.Name,
@@ -143,13 +151,16 @@ func (s *Server) DeleteRole(ctx context.Context,
 	validator := validator.New()
 	err := validator.Struct(deleteRoleValidation{Id: in.Id})
 	if err != nil {
-		return nil, err
+		return nil, status.Errorf(codes.InvalidArgument, "invalid argument: %v", err)
 	}
 
 	// first check if the role exists and is not protected
 	role, err := s.store.GetRoleByID(ctx, in.Id)
 	if err != nil {
-		return nil, err
+		if err == sql.ErrNoRows {
+			return nil, status.Errorf(codes.NotFound, "role not found")
+		}
+		return nil, status.Errorf(codes.Internal, "failed to get role by id: %v", err)
 	}
 
 	// check if user is authorized
@@ -163,8 +174,7 @@ func (s *Server) DeleteRole(ctx context.Context,
 	}
 
 	if !*in.Force && role.IsProtected {
-		errcode := fmt.Errorf("cannot delete a protected role")
-		return nil, errcode
+		return nil, status.Errorf(codes.InvalidArgument, "cannot delete a protected role")
 	}
 
 	// if we do not force the deletion, we need to check if there are users
@@ -172,19 +182,18 @@ func (s *Server) DeleteRole(ctx context.Context,
 		// list users associated with that role
 		users, err := s.store.ListUsersByRoleId(ctx, in.Id)
 		if err != nil {
-			return nil, err
+			return nil, status.Errorf(codes.Internal, "failed to list users by role id: %v", err)
 		}
 
 		if len(users) > 0 {
-			errcode := fmt.Errorf("cannot delete the role, there are users associated with it")
-			return nil, errcode
+			return nil, status.Errorf(codes.InvalidArgument, "cannot delete the role, there are users associated with it")
 		}
 	}
 
 	// otherwise we delete, and delete association in cascade
 	err = s.store.DeleteRole(ctx, in.Id)
 	if err != nil {
-		return nil, err
+		return nil, status.Errorf(codes.Internal, "failed to delete role: %v", err)
 	}
 
 	return &pb.DeleteRoleResponse{}, nil
@@ -194,7 +203,7 @@ func (s *Server) DeleteRole(ctx context.Context,
 func (s *Server) GetRoles(ctx context.Context,
 	in *pb.GetRolesRequest) (*pb.GetRolesResponse, error) {
 	if in.OrganizationId == 0 {
-		return nil, fmt.Errorf("organization id is required")
+		return nil, status.Errorf(codes.InvalidArgument, "invalid argument: organization id is required")
 	}
 
 	// check if user is authorized
@@ -243,7 +252,7 @@ func (s *Server) GetRoles(ctx context.Context,
 func (s *Server) GetRolesByGroup(ctx context.Context,
 	in *pb.GetRolesByGroupRequest) (*pb.GetRolesByGroupResponse, error) {
 	if in.GroupId == 0 {
-		return nil, fmt.Errorf("group id is required")
+		return nil, status.Errorf(codes.InvalidArgument, "invalid argument: group id is required")
 	}
 
 	// check if user is authorized
@@ -267,7 +276,7 @@ func (s *Server) GetRolesByGroup(ctx context.Context,
 		Offset:  *in.Offset,
 	})
 	if err != nil {
-		return nil, fmt.Errorf("failed to get roles: %w", err)
+		return nil, status.Errorf(codes.Internal, "failed to get roles by group id: %v", err)
 	}
 
 	var resp pb.GetRolesByGroupResponse
@@ -297,7 +306,10 @@ func (s *Server) GetRoleById(ctx context.Context,
 
 	role, err := s.store.GetRoleByID(ctx, in.Id)
 	if err != nil {
-		return nil, status.Errorf(codes.Unknown, "failed to get role: %s", err)
+		if err == sql.ErrNoRows {
+			return nil, status.Errorf(codes.NotFound, "role not found")
+		}
+		return nil, status.Errorf(codes.Internal, "failed to get role: %v", err)
 	}
 
 	// check if user is authorized
@@ -329,15 +341,18 @@ func (s *Server) GetRoleByName(ctx context.Context,
 	}
 
 	if in.OrganizationId == 0 {
-		return nil, fmt.Errorf("organization id is required")
+		return nil, status.Errorf(codes.InvalidArgument, "organization id is required")
 	}
 	if in.Name == "" {
-		return nil, status.Error(codes.InvalidArgument, "role name is required")
+		return nil, status.Errorf(codes.InvalidArgument, "role name is required")
 	}
 
 	role, err := s.store.GetRoleByName(ctx, db.GetRoleByNameParams{OrganizationID: in.OrganizationId, Name: in.Name})
 	if err != nil {
-		return nil, status.Errorf(codes.Unknown, "failed to get role: %s", err)
+		if err == sql.ErrNoRows {
+			return nil, status.Error(codes.NotFound, "role not found")
+		}
+		return nil, status.Errorf(codes.Internal, "failed to get role by name: %v", err)
 	}
 
 	var resp pb.GetRoleByNameResponse
