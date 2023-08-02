@@ -2,7 +2,7 @@
 name: User story
 about: Suggest an idea / feature  for mediator or related projects
 title: As a __ I want a __ so I can __
-labels: ''
+labels: user-story
 assignees: ''
 
 ---
