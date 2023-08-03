@@ -325,12 +325,6 @@ var resourceAuthorizations = []map[string]map[string]interface{}{
 			"isAdmin":    true,
 		},
 	},
-	{
-		"/mediator.v1.PackageService/ListPackages": {
-			"claimField": "GroupId",
-			"isAdmin":    false,
-		},
-	},
 }
 
 var githubAuthorizations = []string{

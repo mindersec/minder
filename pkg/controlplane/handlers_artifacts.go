@@ -23,6 +23,7 @@ import (
 	go_github "github.com/google/go-github/v53/github"
 	"google.golang.org/grpc/codes"
 	"google.golang.org/grpc/status"
+	"google.golang.org/protobuf/proto"
 	"google.golang.org/protobuf/types/known/timestamppb"
 	"k8s.io/apimachinery/pkg/util/sets"
 
@@ -60,9 +61,10 @@ func (s *Server) ListArtifacts(ctx context.Context, in *pb.ListArtifactsRequest)
 	}
 
 	// define default values for limit and offset
-	if in.Limit == -1 {
+	if in.Limit <= 0 {
 		in.Limit = PaginationLimit
 	}
+	// GitHub API only works on offsets of whole page sizes
 	pageNumber := (in.Offset / in.Limit) + 1
 	itemsPerPage := in.Limit
 
@@ -193,7 +195,12 @@ func (s *Server) GetArtifactByName(ctx context.Context, in *pb.GetArtifactByName
 	for _, version := range versions {
 		// first try to read the manifest
 		imageRef := fmt.Sprintf("%s/%s/%s@%s", REGISTRY, *pkg.GetOwner().Login, pkg.GetName(), version.GetName())
-		manifest, err := container.GetImageManifest(imageRef, *pkg.GetOwner().Login, decryptedToken.AccessToken)
+		baseRef, err := name.ParseReference(imageRef)
+		if err != nil {
+			// Cannot parse the image reference, continue to the next version
+			continue
+		}
+		manifest, err := container.GetImageManifest(baseRef, *pkg.GetOwner().Login, decryptedToken.AccessToken)
 		if err != nil {
 			// we do not have a manifest, so we cannot add it to versions
 			continue
@@ -213,50 +220,48 @@ func (s *Server) GetArtifactByName(ctx context.Context, in *pb.GetArtifactByName
 			continue
 		}
 
-		current_version := &pb.ArtifactVersion{
+		signature_verification := &pb.SignatureVerification{
 			IsVerified:       false,
+			IsSigned:         false,
 			IsBundleVerified: false,
-			VersionId:        version.GetID(),
-			Tags:             version.Metadata.Container.Tags,
-			Sha:              version.GetName(),
-			CreatedAt:        timestamppb.New(version.GetCreatedAt().Time),
+		}
+
+		current_version := &pb.ArtifactVersion{
+			VersionId: version.GetID(),
+			Tags:      version.Metadata.Container.Tags,
+			Sha:       version.GetName(),
+			CreatedAt: timestamppb.New(version.GetCreatedAt().Time),
 		}
 
 		// get information about signature
-		options := []name.Option{}
-		ref, err := name.ParseReference(imageRef, options...)
-		if err != nil {
-			continue
-		}
-		signature, err := container.GetSignatureTag(ref)
+		signature, err := container.GetSignatureTag(baseRef)
 
 		// if there is a signature, we can move forward and retrieve details
-		if err == nil && signature != "" {
+		if err == nil && signature != nil {
 			// we need to extract manifest from the signature
 			manifest, err := container.GetImageManifest(signature, *pkg.GetOwner().Login, decryptedToken.AccessToken)
 			if err == nil && manifest.Layers != nil {
-				current_version.IsSigned = true
+				signature_verification.IsSigned = true
 				identity, issuer, err := container.ExtractIdentityFromCertificate(manifest)
 				if err == nil && identity != "" && issuer != "" {
-					current_version.CertIdentity = &identity
-					current_version.CertIssuer = &issuer
+					signature_verification.CertIdentity = &identity
+					signature_verification.CertIssuer = &issuer
 
 					// we have issuer and identity, we can verify the image
-					verified, bundleVerified, imageKeys, err := container.VerifyFromIdentity(ctx, REGISTRY,
-						*pkg.GetOwner().Login, decryptedToken.AccessToken, pkg.GetName(), version.GetName(), identity, issuer)
+					imageRef := fmt.Sprintf("%s/%s/%s@%s", REGISTRY, *pkg.GetOwner().Login, pkg.GetName(), version.GetName())
+					verified, bundleVerified, imageKeys, err := container.VerifyFromIdentity(ctx, imageRef,
+						*pkg.GetOwner().Login, decryptedToken.AccessToken, identity, issuer)
 					if err == nil {
 						// we can add information for the image
-						current_version.IsVerified = verified
-						current_version.IsBundleVerified = bundleVerified
-
-						log_id := imageKeys["RekorLogID"].(string)
-						current_version.RekorLogId = &log_id
+						signature_verification.IsVerified = verified
+						signature_verification.IsBundleVerified = bundleVerified
+						signature_verification.RekorLogId = proto.String(imageKeys["RekorLogID"].(string))
 
 						log_index := int32(imageKeys["RekorLogIndex"].(int64))
-						current_version.RekorLogIndex = &log_index
+						signature_verification.RekorLogIndex = &log_index
 
 						signature_time := timestamppb.New(time.Unix(imageKeys["SignatureTime"].(int64), 0))
-						current_version.SignatureTime = signature_time
+						signature_verification.SignatureTime = signature_time
 
 						current_version.GithubWorkflow = &pb.GithubWorkflow{
 							Name:       imageKeys["WorkflowName"].(string),
@@ -268,6 +273,7 @@ func (s *Server) GetArtifactByName(ctx context.Context, in *pb.GetArtifactByName
 				}
 			}
 		}
+		current_version.SignatureVerification = signature_verification
 		final_versions = append(final_versions, current_version)
 		if len(final_versions) == int(in.LatestVersions) {
 			break

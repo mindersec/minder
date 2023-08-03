@@ -46,24 +46,19 @@ func (g githubAuthenticator) Authorization() (*authn.AuthConfig, error) {
 }
 
 // GetSignatureTag returns the signature tag for a given image if exists
-func GetSignatureTag(imageRef name.Reference) (string, error) {
+func GetSignatureTag(imageRef name.Reference) (name.Reference, error) {
 	ociremoteOpts := []ociremote.Option{}
 	dstRef, err := ociremote.SignatureTag(imageRef, ociremoteOpts...)
 	if err != nil {
-		return "", fmt.Errorf("error getting signature tag: %w", err)
+		return nil, fmt.Errorf("error getting signature tag: %w", err)
 	}
-	return dstRef.Name(), nil
+	return dstRef, nil
 }
 
 // GetImageManifest returns the manifest for the given image
-func GetImageManifest(imageRef string, username string, token string) (containerregistry.Manifest, error) {
-	ref, err := name.ParseReference(imageRef)
-	if err != nil {
-		return containerregistry.Manifest{}, fmt.Errorf("error parsing reference url: %w", err)
-	}
+func GetImageManifest(imageRef name.Reference, username string, token string) (containerregistry.Manifest, error) {
 	auth := githubAuthenticator{username, token}
-
-	img, err := remote.Image(ref, remote.WithAuth(auth))
+	img, err := remote.Image(imageRef, remote.WithAuth(auth))
 	if err != nil {
 		return containerregistry.Manifest{}, fmt.Errorf("error getting image: %w", err)
 	}
@@ -107,17 +102,15 @@ func ExtractIdentityFromCertificate(manifest containerregistry.Manifest) (string
 			for _, ext := range certObj.Extensions {
 				if ext.Id.Equal(customOID) {
 					customExtensionValue = ext.Value
-					if len(customExtensionValue) > 0 {
-						issuer = string(customExtensionValue)
-					}
-					break
+					issuer = string(customExtensionValue)
+					return identity, issuer, nil
 				}
 			}
 			break
 		}
 	}
 
-	return identity, issuer, nil
+	return identity, "", nil
 }
 
 // GetKeysFromVerified returns the keys from the verified signatures
@@ -186,9 +179,8 @@ func GetKeysFromVerified(verified []oci.Signature) ([]payload.SimpleContainerIma
 }
 
 // VerifyFromIdentity verifies the image from the identity and extracts the keys
-func VerifyFromIdentity(ctx context.Context, registry string, owner string, token string, package_name string,
-	sha string, identity string, issuer string) (bool, bool, map[string]interface{}, error) {
-	imageRef := fmt.Sprintf("%s/%s/%s@%s", registry, owner, package_name, sha)
+func VerifyFromIdentity(ctx context.Context, imageRef string, owner string, token string,
+	identity string, issuer string) (bool, bool, map[string]interface{}, error) {
 	imageKeys := make(map[string]interface{})
 
 	options := []name.Option{}
@@ -225,25 +217,27 @@ func VerifyFromIdentity(ctx context.Context, registry string, owner string, toke
 	if err != nil {
 		return false, false, nil, fmt.Errorf("error verifying image: %w", err)
 	}
-	outputKeys, err := GetKeysFromVerified(verified)
-	if err != nil {
-		return false, false, nil, fmt.Errorf("error getting keys from verified: %w", err)
+	is_verified := (len(verified) > 0)
+	if is_verified {
+		outputKeys, err := GetKeysFromVerified(verified)
+		if err != nil {
+			return false, bundleVerified, nil, fmt.Errorf("error getting keys from verified: %w", err)
+		}
+
+		if len(outputKeys) > 0 {
+			imageKey := outputKeys[0]
+			imageKeys["Issuer"] = imageKey.Optional["Issuer"]
+			imageKeys["Identity"] = imageKey.Optional["Subject"]
+			imageKeys["WorkflowName"] = imageKey.Optional["githubWorkflowName"]
+			imageKeys["WorkflowRepository"] = imageKey.Optional["githubWorkflowRepository"]
+			imageKeys["WorkflowSha"] = imageKey.Optional["githubWorkflowSha"]
+			imageKeys["WorkflowTrigger"] = imageKey.Optional["githubWorkflowTrigger"]
+			container_payload := imageKey.Optional["Bundle"].(*bundle.RekorBundle).Payload
+			imageKeys["SignatureTime"] = container_payload.IntegratedTime
+			imageKeys["RekorLogIndex"] = container_payload.LogIndex
+			imageKeys["RekorLogID"] = container_payload.LogID
+		}
 	}
 
-	if len(outputKeys) > 0 {
-		imageKey := outputKeys[0]
-		imageKeys["Issuer"] = imageKey.Optional["Issuer"]
-		imageKeys["Identity"] = imageKey.Optional["Subject"]
-		imageKeys["WorkflowName"] = imageKey.Optional["githubWorkflowName"]
-		imageKeys["WorkflowRepository"] = imageKey.Optional["githubWorkflowRepository"]
-		imageKeys["WorkflowSha"] = imageKey.Optional["githubWorkflowSha"]
-		imageKeys["WorkflowTrigger"] = imageKey.Optional["githubWorkflowTrigger"]
-		container_bundle := imageKey.Optional["Bundle"].(*bundle.RekorBundle)
-		container_payload := container_bundle.Payload
-		imageKeys["SignatureTime"] = container_payload.IntegratedTime
-		imageKeys["RekorLogIndex"] = container_payload.LogIndex
-		imageKeys["RekorLogID"] = container_payload.LogID
-	}
-
-	return true, bundleVerified, imageKeys, err
+	return is_verified, bundleVerified, imageKeys, err
 }

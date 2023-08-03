@@ -2848,31 +2848,8 @@
         "sha": {
           "type": "string"
         },
-        "isSigned": {
-          "type": "boolean"
-        },
-        "isVerified": {
-          "type": "boolean"
-        },
-        "isBundleVerified": {
-          "type": "boolean"
-        },
-        "certIdentity": {
-          "type": "string"
-        },
-        "certIssuer": {
-          "type": "string"
-        },
-        "rekorLogId": {
-          "type": "string"
-        },
-        "rekorLogIndex": {
-          "type": "integer",
-          "format": "int32"
-        },
-        "signatureTime": {
-          "type": "string",
-          "format": "date-time"
+        "signatureVerification": {
+          "$ref": "#/definitions/v1SignatureVerification"
         },
         "githubWorkflow": {
           "$ref": "#/definitions/v1GithubWorkflow"
@@ -4310,6 +4287,37 @@
         }
       },
       "description": "Definition defines the rule type. It encompases the schema and the data evaluation."
+    },
+    "v1SignatureVerification": {
+      "type": "object",
+      "properties": {
+        "isSigned": {
+          "type": "boolean"
+        },
+        "isVerified": {
+          "type": "boolean"
+        },
+        "isBundleVerified": {
+          "type": "boolean"
+        },
+        "certIdentity": {
+          "type": "string"
+        },
+        "certIssuer": {
+          "type": "string"
+        },
+        "rekorLogId": {
+          "type": "string"
+        },
+        "rekorLogIndex": {
+          "type": "integer",
+          "format": "int32"
+        },
+        "signatureTime": {
+          "type": "string",
+          "format": "date-time"
+        }
+      }
     },
     "v1StoreProviderTokenResponse": {
       "type": "object"

@@ -156,6 +156,7 @@
     - [RuleType.Definition.DataEval.DataEvalDef](#mediator-v1-RuleType-Definition-DataEval-DataEvalDef)
     - [RuleType.Definition.DataEval.RestType](#mediator-v1-RuleType-Definition-DataEval-RestType)
     - [RuleType.Definition.RuleSchemaEntry](#mediator-v1-RuleType-Definition-RuleSchemaEntry)
+    - [SignatureVerification](#mediator-v1-SignatureVerification)
     - [StoreProviderTokenRequest](#mediator-v1-StoreProviderTokenRequest)
     - [StoreProviderTokenResponse](#mediator-v1-StoreProviderTokenResponse)
     - [SyncRepositoriesRequest](#mediator-v1-SyncRepositoriesRequest)
@@ -236,14 +237,7 @@
 | version_id | [int64](#int64) |  |  |
 | tags | [string](#string) | repeated |  |
 | sha | [string](#string) |  |  |
-| is_signed | [bool](#bool) |  |  |
-| is_verified | [bool](#bool) |  |  |
-| is_bundle_verified | [bool](#bool) |  |  |
-| cert_identity | [string](#string) | optional |  |
-| cert_issuer | [string](#string) | optional |  |
-| rekor_log_id | [string](#string) | optional |  |
-| rekor_log_index | [int32](#int32) | optional |  |
-| signature_time | [google.protobuf.Timestamp](#google-protobuf-Timestamp) | optional |  |
+| signature_verification | [SignatureVerification](#mediator-v1-SignatureVerification) |  |  |
 | github_workflow | [GithubWorkflow](#mediator-v1-GithubWorkflow) | optional |  |
 | created_at | [google.protobuf.Timestamp](#google-protobuf-Timestamp) |  |  |
 
@@ -2669,6 +2663,28 @@ This is used to fetch data from a REST endpoint.
 | ----- | ---- | ----- | ----------- |
 | key | [string](#string) |  |  |
 | value | [google.protobuf.Struct](#google-protobuf-Struct) |  |  |
+
+
+
+
+
+
+<a name="mediator-v1-SignatureVerification"></a>
+
+### SignatureVerification
+
+
+
+| Field | Type | Label | Description |
+| ----- | ---- | ----- | ----------- |
+| is_signed | [bool](#bool) |  |  |
+| is_verified | [bool](#bool) |  |  |
+| is_bundle_verified | [bool](#bool) |  |  |
+| cert_identity | [string](#string) | optional |  |
+| cert_issuer | [string](#string) | optional |  |
+| rekor_log_id | [string](#string) | optional |  |
+| rekor_log_index | [int32](#int32) | optional |  |
+| signature_time | [google.protobuf.Timestamp](#google-protobuf-Timestamp) | optional |  |
 
 
 
