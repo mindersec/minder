@@ -20,6 +20,7 @@ import (
 	"log"
 	"net"
 	"net/http"
+	"net/http/httptest"
 	"testing"
 	"time"
 
@@ -33,6 +34,8 @@ import (
 const bufSize = 1024 * 1024
 
 var lis *bufconn.Listener
+
+var httpServer *httptest.Server
 
 func init() {
 	// gRPC server
@@ -52,12 +55,10 @@ func init() {
 	// HTTP server
 	mux := http.NewServeMux()
 
-	srv := &http.Server{Addr: ":8080", Handler: mux, ReadHeaderTimeout: 10 * time.Second}
-	go func() {
-		if err := srv.ListenAndServe(); err != nil {
-			log.Fatalf("Server exited with error: %v", err)
-		}
-	}()
+	httpServer = httptest.NewUnstartedServer(mux)
+	httpServer.Config.ReadHeaderTimeout = 10 * time.Second
+	httpServer.Start()
+	// It would be nice if we could Close() the httpServer, but we leak it in the test instead
 }
 
 func bufDialer(context.Context, string) (net.Conn, error) {
@@ -93,7 +94,7 @@ func TestHealth(t *testing.T) {
 func TestWebhook(t *testing.T) {
 	t.Parallel()
 
-	resp, err := http.Get("http://localhost:8080/api/v1/github/hook")
+	resp, err := http.Get(httpServer.URL + "/api/v1/github/hook")
 	if err != nil {
 		t.Fatalf("Failed to get webhook: %v", err)
 	}
