@@ -3,7 +3,7 @@ module github.com/stacklok/mediator/tools
 go 1.20
 
 require (
-	github.com/bufbuild/buf v1.25.0
+	github.com/bufbuild/buf v1.25.1
 	github.com/daixiang0/gci v0.10.1
 	github.com/go-critic/go-critic v0.8.2
 	github.com/golangci/golangci-lint v1.53.3
@@ -46,7 +46,7 @@ require (
 	github.com/breml/errchkjson v0.3.1 // indirect
 	github.com/bufbuild/connect-go v1.9.0 // indirect
 	github.com/bufbuild/connect-opentelemetry-go v0.4.0 // indirect
-	github.com/bufbuild/protocompile v0.5.1 // indirect
+	github.com/bufbuild/protocompile v0.6.0 // indirect
 	github.com/butuzov/ireturn v0.2.0 // indirect
 	github.com/butuzov/mirror v1.1.0 // indirect
 	github.com/bytecodealliance/wasmtime-go/v8 v8.0.0 // indirect
@@ -214,7 +214,7 @@ require (
 	github.com/t-yuki/gocover-cobertura v0.0.0-20180217150009-aaee18c8195c // indirect
 	github.com/tdakkota/asciicheck v0.2.0 // indirect
 	github.com/tetafro/godot v1.4.11 // indirect
-	github.com/tetratelabs/wazero v1.3.0 // indirect
+	github.com/tetratelabs/wazero v1.3.1 // indirect
 	github.com/timakin/bodyclose v0.0.0-20230421092635-574207250966 // indirect
 	github.com/timonwong/loggercheck v0.9.4 // indirect
 	github.com/tomarrell/wrapcheck/v2 v2.8.1 // indirect
