@@ -19,6 +19,7 @@ import (
 	"fmt"
 	"time"
 
+	"github.com/google/go-containerregistry/pkg/name"
 	go_github "github.com/google/go-github/v53/github"
 	"google.golang.org/grpc/codes"
 	"google.golang.org/grpc/status"
@@ -76,10 +77,11 @@ func (s *Server) ListArtifacts(ctx context.Context, in *pb.ListArtifactsRequest)
 		return nil, status.Errorf(codes.PermissionDenied, "user not authorized to interact with provider")
 	}
 
-	decryptedToken, err := GetProviderAccessToken(ctx, s.store, in.Provider, in.GroupId, true)
+	decryptedToken, owner_filter, err := GetProviderAccessToken(ctx, s.store, in.Provider, in.GroupId, true)
 	if err != nil {
 		return nil, status.Errorf(codes.PermissionDenied, "user not authorized to interact with provider")
 	}
+	isOrg := (owner_filter != "")
 
 	// call github api to get list of packages
 	client, err := ghclient.NewRestClient(ctx, ghclient.GitHubConfig{
@@ -91,12 +93,7 @@ func (s *Server) ListArtifacts(ctx context.Context, in *pb.ListArtifactsRequest)
 
 	var results []*pb.Artifact
 
-	user, err := client.GetAuthenticatedUser(ctx)
-	if err != nil {
-		return nil, err
-	}
-	isOrg := (*user.Type == "Organization")
-	pkgList, err := client.ListAllPackages(ctx, isOrg, in.ArtifactType, int(pageNumber), int(itemsPerPage))
+	pkgList, err := client.ListAllPackages(ctx, isOrg, owner_filter, in.ArtifactType, int(pageNumber), int(itemsPerPage))
 	if err != nil {
 		return nil, status.Errorf(codes.Internal, "cannot list packages")
 	}
@@ -155,10 +152,11 @@ func (s *Server) GetArtifactByName(ctx context.Context, in *pb.GetArtifactByName
 		return nil, status.Errorf(codes.PermissionDenied, "user not authorized to interact with provider")
 	}
 
-	decryptedToken, err := GetProviderAccessToken(ctx, s.store, in.Provider, in.GroupId, true)
+	decryptedToken, owner_filter, err := GetProviderAccessToken(ctx, s.store, in.Provider, in.GroupId, true)
 	if err != nil {
 		return nil, status.Errorf(codes.Internal, "error getting provider access token")
 	}
+	isOrg := (owner_filter != "")
 
 	// call github api to get detail for an artifact
 	client, err := ghclient.NewRestClient(ctx, ghclient.GitHubConfig{
@@ -168,12 +166,7 @@ func (s *Server) GetArtifactByName(ctx context.Context, in *pb.GetArtifactByName
 		return nil, status.Errorf(codes.Internal, "cannot create github client")
 	}
 
-	user, err := client.GetAuthenticatedUser(ctx)
-	if err != nil {
-		return nil, status.Errorf(codes.Internal, "cannot get authenticated user")
-	}
-	isOrg := (*user.Type == "Organization")
-	pkg, err := client.GetPackageByName(ctx, isOrg, in.ArtifactType, in.Name)
+	pkg, err := client.GetPackageByName(ctx, isOrg, owner_filter, in.ArtifactType, in.Name)
 	if err != nil {
 		return nil, status.Errorf(codes.Internal, "cannot get package")
 	}
@@ -181,7 +174,7 @@ func (s *Server) GetArtifactByName(ctx context.Context, in *pb.GetArtifactByName
 	// get versions
 	var versions []*go_github.PackageVersion
 	if in.Tag != "" {
-		version, err := client.GetPackageVersionByTag(ctx, isOrg, in.ArtifactType, in.Name, in.Tag)
+		version, err := client.GetPackageVersionByTag(ctx, isOrg, owner_filter, in.ArtifactType, in.Name, in.Tag)
 		if err != nil {
 			return nil, status.Errorf(codes.Internal, "cannot get package version")
 		}
@@ -190,7 +183,7 @@ func (s *Server) GetArtifactByName(ctx context.Context, in *pb.GetArtifactByName
 		}
 		versions = append(versions, version)
 	} else {
-		versions, err = client.GetPackageVersions(ctx, isOrg, in.ArtifactType, in.Name)
+		versions, err = client.GetPackageVersions(ctx, isOrg, owner_filter, in.ArtifactType, in.Name)
 		if err != nil {
 			return nil, status.Errorf(codes.Internal, "cannot get package versions")
 		}
@@ -200,7 +193,7 @@ func (s *Server) GetArtifactByName(ctx context.Context, in *pb.GetArtifactByName
 	for _, version := range versions {
 		// first try to read the manifest
 		imageRef := fmt.Sprintf("%s/%s/%s@%s", REGISTRY, *pkg.GetOwner().Login, pkg.GetName(), version.GetName())
-		manifest, err := container.GetImageManifest(imageRef, user.GetLogin(), decryptedToken.AccessToken)
+		manifest, err := container.GetImageManifest(imageRef, *pkg.GetOwner().Login, decryptedToken.AccessToken)
 		if err != nil {
 			// we do not have a manifest, so we cannot add it to versions
 			continue
@@ -230,12 +223,17 @@ func (s *Server) GetArtifactByName(ctx context.Context, in *pb.GetArtifactByName
 		}
 
 		// get information about signature
-		signature, err := container.GetSignatureTag(REGISTRY, *pkg.GetOwner().Login, pkg.GetName(), version.GetName())
+		options := []name.Option{}
+		ref, err := name.ParseReference(imageRef, options...)
+		if err != nil {
+			continue
+		}
+		signature, err := container.GetSignatureTag(ref)
 
 		// if there is a signature, we can move forward and retrieve details
 		if err == nil && signature != "" {
 			// we need to extract manifest from the signature
-			manifest, err := container.GetImageManifest(signature, user.GetLogin(), decryptedToken.AccessToken)
+			manifest, err := container.GetImageManifest(signature, *pkg.GetOwner().Login, decryptedToken.AccessToken)
 			if err == nil && manifest.Layers != nil {
 				current_version.IsSigned = true
 				identity, issuer, err := container.ExtractIdentityFromCertificate(manifest)
@@ -245,7 +243,7 @@ func (s *Server) GetArtifactByName(ctx context.Context, in *pb.GetArtifactByName
 
 					// we have issuer and identity, we can verify the image
 					verified, bundleVerified, imageKeys, err := container.VerifyFromIdentity(ctx, REGISTRY,
-						*pkg.GetOwner().Login, pkg.GetName(), version.GetName(), identity, issuer)
+						*pkg.GetOwner().Login, decryptedToken.AccessToken, pkg.GetName(), version.GetName(), identity, issuer)
 					if err == nil {
 						// we can add information for the image
 						current_version.IsVerified = verified

@@ -46,16 +46,9 @@ func (g githubAuthenticator) Authorization() (*authn.AuthConfig, error) {
 }
 
 // GetSignatureTag returns the signature tag for a given image if exists
-func GetSignatureTag(registry string, owner string, package_name string, sha string) (string, error) {
-	imageRef := fmt.Sprintf("%s/%s/%s@%s", registry, owner, package_name, sha)
-	options := []name.Option{}
-	ref, err := name.ParseReference(imageRef, options...)
-	if err != nil {
-		return "", fmt.Errorf("error parsing reference url: %w", err)
-	}
-
+func GetSignatureTag(imageRef name.Reference) (string, error) {
 	ociremoteOpts := []ociremote.Option{}
-	dstRef, err := ociremote.SignatureTag(ref, ociremoteOpts...)
+	dstRef, err := ociremote.SignatureTag(imageRef, ociremoteOpts...)
 	if err != nil {
 		return "", fmt.Errorf("error getting signature tag: %w", err)
 	}
@@ -193,7 +186,7 @@ func GetKeysFromVerified(verified []oci.Signature) ([]payload.SimpleContainerIma
 }
 
 // VerifyFromIdentity verifies the image from the identity and extracts the keys
-func VerifyFromIdentity(ctx context.Context, registry string, owner string, package_name string,
+func VerifyFromIdentity(ctx context.Context, registry string, owner string, token string, package_name string,
 	sha string, identity string, issuer string) (bool, bool, map[string]interface{}, error) {
 	imageRef := fmt.Sprintf("%s/%s/%s@%s", registry, owner, package_name, sha)
 	imageKeys := make(map[string]interface{})
@@ -215,18 +208,23 @@ func VerifyFromIdentity(ctx context.Context, registry string, owner string, pack
 	if err != nil {
 		return false, false, nil, fmt.Errorf("error getting rekor public keys: %w", err)
 	}
+
+	// need to authenticate in case artifact is private
+	auth := githubAuthenticator{owner, token}
+	registryClientOpts := []ociremote.Option{ociremote.WithRemoteOptions(remote.WithAuth(auth))}
+
 	co := &cosign.CheckOpts{
-		Identities:    identityObj,
-		RootCerts:     rootCerts,
-		RekorPubKeys:  pubkeys,
-		IgnoreSCT:     true,
-		ClaimVerifier: cosign.SimpleClaimVerifier,
+		RegistryClientOpts: registryClientOpts,
+		Identities:         identityObj,
+		RootCerts:          rootCerts,
+		RekorPubKeys:       pubkeys,
+		IgnoreSCT:          true,
+		ClaimVerifier:      cosign.SimpleClaimVerifier,
 	}
 	verified, bundleVerified, err := cosign.VerifyImageSignatures(ctx, ref, co)
 	if err != nil {
 		return false, false, nil, fmt.Errorf("error verifying image: %w", err)
 	}
-
 	outputKeys, err := GetKeysFromVerified(verified)
 	if err != nil {
 		return false, false, nil, fmt.Errorf("error getting keys from verified: %w", err)
