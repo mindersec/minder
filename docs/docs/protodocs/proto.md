@@ -151,6 +151,8 @@
     - [RuleType.Definition.RuleSchemaEntry](#mediator-v1-RuleType-Definition-RuleSchemaEntry)
     - [StoreProviderTokenRequest](#mediator-v1-StoreProviderTokenRequest)
     - [StoreProviderTokenResponse](#mediator-v1-StoreProviderTokenResponse)
+    - [SyncRepositoriesRequest](#mediator-v1-SyncRepositoriesRequest)
+    - [SyncRepositoriesResponse](#mediator-v1-SyncRepositoriesResponse)
     - [UpdatePasswordRequest](#mediator-v1-UpdatePasswordRequest)
     - [UpdatePasswordResponse](#mediator-v1-UpdatePasswordResponse)
     - [UpdateProfileRequest](#mediator-v1-UpdateProfileRequest)
@@ -789,6 +791,7 @@ DeleteRuleTypeResponse is the response to delete a rule type.
 | group_id | [int32](#int32) |  |  |
 | cli | [bool](#bool) |  |  |
 | port | [int32](#int32) |  |  |
+| owner | [string](#string) | optional |  |
 
 
 
@@ -2538,6 +2541,7 @@ This is used to fetch data from a REST endpoint.
 | provider | [string](#string) |  |  |
 | group_id | [int32](#int32) |  |  |
 | access_token | [string](#string) |  |  |
+| owner | [string](#string) | optional |  |
 
 
 
@@ -2547,6 +2551,32 @@ This is used to fetch data from a REST endpoint.
 <a name="mediator-v1-StoreProviderTokenResponse"></a>
 
 ### StoreProviderTokenResponse
+
+
+
+
+
+
+
+<a name="mediator-v1-SyncRepositoriesRequest"></a>
+
+### SyncRepositoriesRequest
+
+
+
+| Field | Type | Label | Description |
+| ----- | ---- | ----- | ----------- |
+| provider | [string](#string) |  |  |
+| group_id | [int32](#int32) |  |  |
+
+
+
+
+
+
+<a name="mediator-v1-SyncRepositoriesResponse"></a>
+
+### SyncRepositoriesResponse
 
 
 
@@ -2899,6 +2929,7 @@ manage Organizations CRUD
 
 | Method Name | Request Type | Response Type | Description |
 | ----------- | ------------ | ------------- | ------------|
+| SyncRepositories | [SyncRepositoriesRequest](#mediator-v1-SyncRepositoriesRequest) | [SyncRepositoriesResponse](#mediator-v1-SyncRepositoriesResponse) |  |
 | RegisterRepository | [RegisterRepositoryRequest](#mediator-v1-RegisterRepositoryRequest) | [RegisterRepositoryResponse](#mediator-v1-RegisterRepositoryResponse) |  |
 | ListRepositories | [ListRepositoriesRequest](#mediator-v1-ListRepositoriesRequest) | [ListRepositoriesResponse](#mediator-v1-ListRepositoriesResponse) |  |
 | GetRepositoryById | [GetRepositoryByIdRequest](#mediator-v1-GetRepositoryByIdRequest) | [GetRepositoryByIdResponse](#mediator-v1-GetRepositoryByIdResponse) |  |

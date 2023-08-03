@@ -475,7 +475,7 @@ func IsProviderCallAuthorized(ctx context.Context, store db.Store, provider stri
 	for _, item := range githubAuthorizations {
 		if item == method {
 			// check the github token
-			encToken, err := GetProviderAccessToken(ctx, store, provider, groupId, true)
+			encToken, _, err := GetProviderAccessToken(ctx, store, provider, groupId, true)
 			if err != nil {
 				return false
 			}

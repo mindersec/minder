@@ -371,6 +371,12 @@
             "required": false,
             "type": "integer",
             "format": "int32"
+          },
+          {
+            "name": "owner",
+            "in": "query",
+            "required": false,
+            "type": "string"
           }
         ],
         "tags": [
@@ -567,6 +573,9 @@
                   "format": "int32"
                 },
                 "accessToken": {
+                  "type": "string"
+                },
+                "owner": {
                   "type": "string"
                 }
               }
@@ -1296,7 +1305,7 @@
         ]
       }
     },
-    "/api/v1/repositories": {
+    "/api/v1/repositories/provider/{provider}": {
       "get": {
         "operationId": "RepositoryService_ListRepositories",
         "responses": {
@@ -1316,8 +1325,8 @@
         "parameters": [
           {
             "name": "provider",
-            "in": "query",
-            "required": false,
+            "in": "path",
+            "required": true,
             "type": "string"
           },
           {
@@ -1360,14 +1369,14 @@
         ]
       }
     },
-    "/api/v1/repository": {
+    "/api/v1/repositories/provider/{provider}/sync": {
       "post": {
-        "operationId": "RepositoryService_RegisterRepository",
+        "operationId": "RepositoryService_SyncRepositories",
         "responses": {
           "200": {
             "description": "A successful response.",
             "schema": {
-              "$ref": "#/definitions/v1RegisterRepositoryResponse"
+              "$ref": "#/definitions/v1SyncRepositoriesResponse"
             }
           },
           "default": {
@@ -1379,12 +1388,55 @@
         },
         "parameters": [
           {
+            "name": "provider",
+            "in": "path",
+            "required": true,
+            "type": "string"
+          },
+          {
             "name": "body",
             "in": "body",
             "required": true,
             "schema": {
-              "$ref": "#/definitions/v1RegisterRepositoryRequest"
+              "type": "object",
+              "properties": {
+                "groupId": {
+                  "type": "integer",
+                  "format": "int32"
+                }
+              }
             }
+          }
+        ],
+        "tags": [
+          "RepositoryService"
+        ]
+      }
+    },
+    "/api/v1/repository/id/{repositoryId}": {
+      "get": {
+        "operationId": "RepositoryService_GetRepositoryById",
+        "responses": {
+          "200": {
+            "description": "A successful response.",
+            "schema": {
+              "$ref": "#/definitions/v1GetRepositoryByIdResponse"
+            }
+          },
+          "default": {
+            "description": "An unexpected error response.",
+            "schema": {
+              "$ref": "#/definitions/rpcStatus"
+            }
+          }
+        },
+        "parameters": [
+          {
+            "name": "repositoryId",
+            "in": "path",
+            "required": true,
+            "type": "integer",
+            "format": "int32"
           }
         ],
         "tags": [
@@ -1428,14 +1480,14 @@
         ]
       }
     },
-    "/api/v1/repository/{repositoryId}": {
-      "get": {
-        "operationId": "RepositoryService_GetRepositoryById",
+    "/api/v1/repository/provider/{provider}/register": {
+      "post": {
+        "operationId": "RepositoryService_RegisterRepository",
         "responses": {
           "200": {
             "description": "A successful response.",
             "schema": {
-              "$ref": "#/definitions/v1GetRepositoryByIdResponse"
+              "$ref": "#/definitions/v1RegisterRepositoryResponse"
             }
           },
           "default": {
@@ -1447,11 +1499,37 @@
         },
         "parameters": [
           {
-            "name": "repositoryId",
+            "name": "provider",
             "in": "path",
             "required": true,
-            "type": "integer",
-            "format": "int32"
+            "type": "string"
+          },
+          {
+            "name": "body",
+            "in": "body",
+            "required": true,
+            "schema": {
+              "type": "object",
+              "properties": {
+                "groupId": {
+                  "type": "integer",
+                  "format": "int32"
+                },
+                "repositories": {
+                  "type": "array",
+                  "items": {
+                    "type": "object",
+                    "$ref": "#/definitions/v1Repositories"
+                  }
+                },
+                "events": {
+                  "type": "array",
+                  "items": {
+                    "type": "string"
+                  }
+                }
+              }
+            }
           }
         ],
         "tags": [
@@ -3706,31 +3784,6 @@
         }
       }
     },
-    "v1RegisterRepositoryRequest": {
-      "type": "object",
-      "properties": {
-        "provider": {
-          "type": "string"
-        },
-        "groupId": {
-          "type": "integer",
-          "format": "int32"
-        },
-        "repositories": {
-          "type": "array",
-          "items": {
-            "type": "object",
-            "$ref": "#/definitions/v1Repositories"
-          }
-        },
-        "events": {
-          "type": "array",
-          "items": {
-            "type": "string"
-          }
-        }
-      }
-    },
     "v1RegisterRepositoryResponse": {
       "type": "object",
       "properties": {
@@ -4010,6 +4063,9 @@
       "description": "Definition defines the rule type. It encompases the schema and the data evaluation."
     },
     "v1StoreProviderTokenResponse": {
+      "type": "object"
+    },
+    "v1SyncRepositoriesResponse": {
       "type": "object"
     },
     "v1UpdatePasswordRequest": {

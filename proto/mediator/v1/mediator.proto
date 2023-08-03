@@ -165,20 +165,26 @@ service SecretsService {
 }
 
 service RepositoryService {
+    rpc SyncRepositories(SyncRepositoriesRequest) returns (SyncRepositoriesResponse) {
+        option (google.api.http) = {
+            post: "/api/v1/repositories/provider/{provider}/sync"
+            body: "*"
+        };
+    }
     rpc RegisterRepository (RegisterRepositoryRequest) returns (RegisterRepositoryResponse) {
         option (google.api.http) = {
-            post: "/api/v1/repository"
+            post: "/api/v1/repository/provider/{provider}/register"
             body: "*"
         };
     }
     rpc ListRepositories (ListRepositoriesRequest) returns (ListRepositoriesResponse) {
         option (google.api.http) = {
-            get: "/api/v1/repositories"
+            get: "/api/v1/repositories/provider/{provider}"
         };
     }
     rpc GetRepositoryById (GetRepositoryByIdRequest) returns (GetRepositoryByIdResponse) {
         option (google.api.http) = {
-            get: "/api/v1/repository/{repository_id}"
+            get: "/api/v1/repository/id/{repository_id}"
         };
     }
 
@@ -493,6 +499,7 @@ message GetAuthorizationURLRequest {
     int32 group_id = 2;
     bool  cli = 3;
     int32  port = 4;
+    optional string owner = 5;
 }
 
 message GetAuthorizationURLResponse {
@@ -511,6 +518,7 @@ message StoreProviderTokenRequest {
     string provider = 1;
     int32 group_id = 2;
     string access_token = 3;
+    optional string owner = 4;
 }
 
 message StoreProviderTokenResponse {    
@@ -587,6 +595,15 @@ message RefreshTokenRequest {
 message RefreshTokenResponse {
     string access_token = 2;
     int64  access_token_expires_in = 3;
+}
+
+message SyncRepositoriesRequest {
+    string provider = 1;
+    int32 group_id = 2;
+}
+
+message SyncRepositoriesResponse {
+
 }
 
 message RegisterRepositoryRequest {

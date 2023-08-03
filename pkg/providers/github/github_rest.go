@@ -25,11 +25,12 @@ import (
 
 // ListAllRepositories returns a list of all repositories for the authenticated user
 // Two APIs are available, contigent on whether the token is for a user or an organization
-func (c *RestClient) ListAllRepositories(ctx context.Context, isOrg bool) (RepositoryListResult, error) {
+func (c *RestClient) ListAllRepositories(ctx context.Context, isOrg bool, owner string) (RepositoryListResult, error) {
 	opt := &github.RepositoryListOptions{
 		ListOptions: github.ListOptions{
 			PerPage: 100,
 		},
+		Affiliation: "owner",
 	}
 
 	orgOpt := &github.RepositoryListByOrgOptions{
@@ -46,7 +47,7 @@ func (c *RestClient) ListAllRepositories(ctx context.Context, isOrg bool) (Repos
 		var err error
 
 		if isOrg {
-			repos, resp, err = c.client.Repositories.ListByOrg(ctx, "", orgOpt)
+			repos, resp, err = c.client.Repositories.ListByOrg(ctx, owner, orgOpt)
 		} else {
 			repos, resp, err = c.client.Repositories.List(ctx, "", opt)
 		}
@@ -80,22 +81,6 @@ func (c *RestClient) GetRepository(ctx context.Context, owner, name string) (*gi
 	}
 
 	return repo, nil
-}
-
-// CheckIfTokenIsForOrganization is to determine if the token is for a user or an organization
-// TODO: There may be more efficient ways to do this, then calling the API,
-// perhaps during the enrollment process
-func (c *RestClient) CheckIfTokenIsForOrganization(ctx context.Context) (bool, error) {
-	user, _, err := c.client.Users.Get(ctx, "")
-	if err != nil {
-		return false, err
-	}
-
-	if *user.Type == "Organization" {
-		return true, nil
-	}
-
-	return false, nil
 }
 
 // GetBranchProtection returns the branch protection for a given branch
