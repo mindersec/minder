@@ -51,3 +51,7 @@ cmd/server/__debug_bin
 docs/node_modules
 docs/build
 docs/.docusaurus
+
+# Generated helm configuration
+/config/helm/templates/combined.yml
+/config/helm/*.tgz

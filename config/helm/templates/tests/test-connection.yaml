@@ -1,0 +1,22 @@
+{{/*
+Test that the deployment completed successfully.
+
+Currently disabled.
+*/}}
+{{/*
+apiVersion: v1
+kind: Pod
+metadata:
+  name: "{{ include "mediator.fullname" . }}-test-connection"
+  labels:
+    {{- include "common.labels" . | nindent 4 }}
+  annotations:
+    "helm.sh/hook": test
+spec:
+  containers:
+    - name: wget
+      image: busybox
+      command: ['wget']
+      args: ['{{ include "mediator.fullname" . }}:{{ .Values.service.port }}']
+  restartPolicy: Never
+*/}}

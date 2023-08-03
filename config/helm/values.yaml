@@ -1,0 +1,17 @@
+# Default values for mediator.
+# This is a YAML-formatted file.
+# Declare variables to be passed into your templates.
+
+
+service:
+  httpPort: 8080
+  grpcPort: 8090
+
+hostname: "mediator.example.com"
+
+db:
+  host: "postgres.postgres"
+
+aws:
+  accountID: "123456789012"
+  iamRole: "mediator-role"

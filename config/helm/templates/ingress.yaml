@@ -1,0 +1,115 @@
+apiVersion: networking.k8s.io/v1
+kind: Ingress
+metadata:
+  name: mediator
+  labels:
+    helm.sh/chart: '{{ .Chart.Name }}-{{ .Chart.Version | replace "+" "_" }}'
+    app.kubernetes.io/name: mediator
+    app.kubernetes.io/instance: "{{ .Release.Name }}"
+    app.kubernetes.io/version: "{{ .Chart.AppVersion }}"
+    app.kubernetes.io/managed-by: "{{ .Release.Service }}"
+  annotations:
+    cert-manager.io/cluster-issuer: letsencrypt
+spec:
+  # Don't set ingressClassName for now, assume default
+  tls:
+  - hosts:
+    - "{{ .Values.hostname }}"
+    secretName: mediator-tls
+  rules:
+  - host: "{{ .Values.hostname }}"
+    http:
+      paths:
+      # We use Prefix matches on gRPC service names because Ingress API
+      # doesn't support matching on Content-Type: application/grpc
+      - path: /OauthService
+        pathType: Prefix
+        backend:
+          service:
+            name: mediator
+            port:
+              name: grpc
+      - path: /AuthService
+        pathType: Prefix
+        backend:
+          service:
+            name: mediator
+            port:
+              name: grpc
+      - path: /VulnerabilitiesService
+        pathType: Prefix
+        backend:
+          service:
+            name: mediator
+            port:
+              name: grpc
+      - path: /SecretsService
+        pathType: Prefix
+        backend:
+          service:
+            name: mediator
+            port:
+              name: grpc
+      - path: /RepositoryService
+        pathType: Prefix
+        backend:
+          service:
+            name: mediator
+            port:
+              name: grpc
+      - path: /BranchProtectionService
+        pathType: Prefix
+        backend:
+          service:
+            name: mediator
+            port:
+              name: grpc
+      - path: /OrganizationService
+        pathType: Prefix
+        backend:
+          service:
+            name: mediator
+            port:
+              name: grpc
+      - path: /GroupService
+        pathType: Prefix
+        backend:
+          service:
+            name: mediator
+            port:
+              name: grpc
+      - path: /RoleService
+        pathType: Prefix
+        backend:
+          service:
+            name: mediator
+            port:
+              name: grpc
+      - path: /UserService
+        pathType: Prefix
+        backend:
+          service:
+            name: mediator
+            port:
+              name: grpc
+      - path: /PolicyService
+        pathType: Prefix
+        backend:
+          service:
+            name: mediator
+            port:
+              name: grpc
+      - path: /KeyService
+        pathType: Prefix
+        backend:
+          service:
+            name: mediator
+            port:
+              name: grpc
+      - path: /
+        pathType: Prefix
+        backend:
+          service:
+            name: mediator
+            port:
+              name: http
