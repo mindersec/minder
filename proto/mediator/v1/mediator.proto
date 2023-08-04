@@ -89,6 +89,17 @@ message SignatureVerification {
     optional google.protobuf.Timestamp signature_time = 8;
 }
 
+message ArtifactEventPayload {
+    int64 artifact_id = 1;
+    string artifact_name = 2;
+    string artifact_type = 3;
+    string owner_login = 4;
+    string owner_type = 5;
+    int64 version_id = 6;
+    string version_sha = 7;
+    string tag = 8;
+}
+
 message ArtifactVersion {
     int64 version_id = 1;
     repeated string tags = 2;

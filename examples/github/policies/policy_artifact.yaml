@@ -1,0 +1,13 @@
+---
+version: v1
+type: pipeline-policy
+name: acme-github-policy-artifact
+context:
+  organization: ACME
+  provider: github
+artifact:
+  - context: github
+    rules:
+      - type: artifact_signature
+        def:
+          is_signed: true

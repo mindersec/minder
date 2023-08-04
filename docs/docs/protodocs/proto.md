@@ -5,6 +5,7 @@
 
 - [mediator/v1/mediator.proto](#mediator_v1_mediator-proto)
     - [Artifact](#mediator-v1-Artifact)
+    - [ArtifactEventPayload](#mediator-v1-ArtifactEventPayload)
     - [ArtifactVersion](#mediator-v1-ArtifactVersion)
     - [BranchProtection](#mediator-v1-BranchProtection)
     - [CheckHealthRequest](#mediator-v1-CheckHealthRequest)
@@ -220,6 +221,28 @@
 | repository | [string](#string) |  |  |
 | created_at | [google.protobuf.Timestamp](#google-protobuf-Timestamp) |  |  |
 | updated_at | [google.protobuf.Timestamp](#google-protobuf-Timestamp) |  |  |
+
+
+
+
+
+
+<a name="mediator-v1-ArtifactEventPayload"></a>
+
+### ArtifactEventPayload
+
+
+
+| Field | Type | Label | Description |
+| ----- | ---- | ----- | ----------- |
+| artifact_id | [int64](#int64) |  |  |
+| artifact_name | [string](#string) |  |  |
+| artifact_type | [string](#string) |  |  |
+| owner_login | [string](#string) |  |  |
+| owner_type | [string](#string) |  |  |
+| version_id | [int64](#int64) |  |  |
+| version_sha | [string](#string) |  |  |
+| tag | [string](#string) |  |  |
 
 
 
