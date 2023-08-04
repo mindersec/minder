@@ -45,40 +45,6 @@ jobs:
         env:
           KO_DOCKER_REPO: "ko.local"
 
-  helm-chart:
-    name: Build and Push Helm chart
-    # TODO: remove the 'image' build once helm build is stable, because ko resolve will build the image
-    runs-on: ubuntu-latest
-
-    if: github.ref == 'refs/heads/main'
-
-    permissions:
-      contents: read
-      packages: write
-
-    steps:
-      - name: Checkout
-        uses: actions/checkout@v3
-
-      - uses: ko-build/setup-ko@v0.6
-
-      - uses: azure/setup-helm@v3
-        with:
-          version: v3.12.2
-
-      - uses: docker/login-action@v1
-        with:
-          registry: ghcr.io
-          username: ${{ github.actor }}
-          password: ${{ secrets.GITHUB_TOKEN }}
-
-      - run: |
-          make helm
-          helm push deployment/helm/mediator-*.tgz oci://ghcr.io/stacklok/mediator-helm
-        env:
-          KO_DOCKER_REPO: "ghcr.io/stacklok/mediator"
-
-
   docker-image:
     name: Check docker image build
     runs-on: ubuntu-latest
