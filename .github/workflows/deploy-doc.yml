@@ -20,7 +20,7 @@ jobs:
       run:
         working-directory: docs
     steps:
-      - uses: actions/checkout@v3
+      - uses: actions/checkout@v3.5.3
       - uses: actions/setup-node@v3
         with:
           node-version: 18
