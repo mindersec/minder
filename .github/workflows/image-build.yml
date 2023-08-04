@@ -21,7 +21,6 @@ jobs:
             --image-label=org.opencontainers.image.source=https://github.com/stacklok/mediator,org.opencontainers.image.title="Stacklok Mediator",org.opencontainers.image.licenses=Apache-2.0,org.opencontainers.image.vendor=Stacklok
 
   check-helm:
-    # This is separate from 'helm-chart' because the latter actually pushes the images to the registry, while this only checks that the images can be built
     name: Build Helm chart
     # TODO: remove the 'image' build once helm build is stable, because ko resolve will build the image
     runs-on: ubuntu-latest
@@ -44,6 +43,7 @@ jobs:
           make helm
         env:
           KO_DOCKER_REPO: "ko.local"
+          KO_PUSH_IMAGE: "false"
 
   docker-image:
     name: Check docker image build

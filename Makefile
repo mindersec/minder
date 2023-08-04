@@ -31,6 +31,10 @@ services?=
 # Additional arguments to pass to docker-compose
 COMPOSE_ARGS?=-d
 
+# Additional flags and env vars for ko
+KO_DOCKER_REPO?=ko.local
+KO_PUSH_IMAGE?=false
+
 default: help
 
 .PHONY: help gen clean-gen build run-cli run-server bootstrap test clean cover lint pre-commit migrateup migratedown sqlc mock cli-docs
@@ -75,8 +79,8 @@ endif
 	rm .resolved-compose.yaml*
 
 helm:  ## build the helm chart to a local archive, using ko for the image build
-	cd deployments/helm; rm templates/combined.yml && \
-	    ko resolve --platform all --base-import-paths -f templates/ > templates/combined.yml && \
+	cd deployment/helm; rm -f templates/combined.yml && \
+	    ko resolve --platform all --base-import-paths --push=${KO_PUSH_IMAGE} -f templates/ > templates/combined.yml && \
 		helm package .
 
 bootstrap: ## install build deps
