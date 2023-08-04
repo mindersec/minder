@@ -19,6 +19,7 @@ package main
 import (
 	"github.com/stacklok/mediator/cmd/cli/app"
 	_ "github.com/stacklok/mediator/cmd/cli/app/apply"
+	_ "github.com/stacklok/mediator/cmd/cli/app/artifact"
 	_ "github.com/stacklok/mediator/cmd/cli/app/auth"
 	_ "github.com/stacklok/mediator/cmd/cli/app/docs"
 	_ "github.com/stacklok/mediator/cmd/cli/app/group"

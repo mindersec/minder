@@ -124,6 +124,133 @@ var HealthService_ServiceDesc = grpc.ServiceDesc{
 }
 
 const (
+	ArtifactService_ListArtifacts_FullMethodName     = "/mediator.v1.ArtifactService/ListArtifacts"
+	ArtifactService_GetArtifactByName_FullMethodName = "/mediator.v1.ArtifactService/GetArtifactByName"
+)
+
+// ArtifactServiceClient is the client API for ArtifactService service.
+//
+// For semantics around ctx use and closing/ending streaming RPCs, please refer to https://pkg.go.dev/google.golang.org/grpc/?tab=doc#ClientConn.NewStream.
+type ArtifactServiceClient interface {
+	ListArtifacts(ctx context.Context, in *ListArtifactsRequest, opts ...grpc.CallOption) (*ListArtifactsResponse, error)
+	GetArtifactByName(ctx context.Context, in *GetArtifactByNameRequest, opts ...grpc.CallOption) (*GetArtifactByNameResponse, error)
+}
+
+type artifactServiceClient struct {
+	cc grpc.ClientConnInterface
+}
+
+func NewArtifactServiceClient(cc grpc.ClientConnInterface) ArtifactServiceClient {
+	return &artifactServiceClient{cc}
+}
+
+func (c *artifactServiceClient) ListArtifacts(ctx context.Context, in *ListArtifactsRequest, opts ...grpc.CallOption) (*ListArtifactsResponse, error) {
+	out := new(ListArtifactsResponse)
+	err := c.cc.Invoke(ctx, ArtifactService_ListArtifacts_FullMethodName, in, out, opts...)
+	if err != nil {
+		return nil, err
+	}
+	return out, nil
+}
+
+func (c *artifactServiceClient) GetArtifactByName(ctx context.Context, in *GetArtifactByNameRequest, opts ...grpc.CallOption) (*GetArtifactByNameResponse, error) {
+	out := new(GetArtifactByNameResponse)
+	err := c.cc.Invoke(ctx, ArtifactService_GetArtifactByName_FullMethodName, in, out, opts...)
+	if err != nil {
+		return nil, err
+	}
+	return out, nil
+}
+
+// ArtifactServiceServer is the server API for ArtifactService service.
+// All implementations must embed UnimplementedArtifactServiceServer
+// for forward compatibility
+type ArtifactServiceServer interface {
+	ListArtifacts(context.Context, *ListArtifactsRequest) (*ListArtifactsResponse, error)
+	GetArtifactByName(context.Context, *GetArtifactByNameRequest) (*GetArtifactByNameResponse, error)
+	mustEmbedUnimplementedArtifactServiceServer()
+}
+
+// UnimplementedArtifactServiceServer must be embedded to have forward compatible implementations.
+type UnimplementedArtifactServiceServer struct {
+}
+
+func (UnimplementedArtifactServiceServer) ListArtifacts(context.Context, *ListArtifactsRequest) (*ListArtifactsResponse, error) {
+	return nil, status.Errorf(codes.Unimplemented, "method ListArtifacts not implemented")
+}
+func (UnimplementedArtifactServiceServer) GetArtifactByName(context.Context, *GetArtifactByNameRequest) (*GetArtifactByNameResponse, error) {
+	return nil, status.Errorf(codes.Unimplemented, "method GetArtifactByName not implemented")
+}
+func (UnimplementedArtifactServiceServer) mustEmbedUnimplementedArtifactServiceServer() {}
+
+// UnsafeArtifactServiceServer may be embedded to opt out of forward compatibility for this service.
+// Use of this interface is not recommended, as added methods to ArtifactServiceServer will
+// result in compilation errors.
+type UnsafeArtifactServiceServer interface {
+	mustEmbedUnimplementedArtifactServiceServer()
+}
+
+func RegisterArtifactServiceServer(s grpc.ServiceRegistrar, srv ArtifactServiceServer) {
+	s.RegisterService(&ArtifactService_ServiceDesc, srv)
+}
+
+func _ArtifactService_ListArtifacts_Handler(srv interface{}, ctx context.Context, dec func(interface{}) error, interceptor grpc.UnaryServerInterceptor) (interface{}, error) {
+	in := new(ListArtifactsRequest)
+	if err := dec(in); err != nil {
+		return nil, err
+	}
+	if interceptor == nil {
+		return srv.(ArtifactServiceServer).ListArtifacts(ctx, in)
+	}
+	info := &grpc.UnaryServerInfo{
+		Server:     srv,
+		FullMethod: ArtifactService_ListArtifacts_FullMethodName,
+	}
+	handler := func(ctx context.Context, req interface{}) (interface{}, error) {
+		return srv.(ArtifactServiceServer).ListArtifacts(ctx, req.(*ListArtifactsRequest))
+	}
+	return interceptor(ctx, in, info, handler)
+}
+
+func _ArtifactService_GetArtifactByName_Handler(srv interface{}, ctx context.Context, dec func(interface{}) error, interceptor grpc.UnaryServerInterceptor) (interface{}, error) {
+	in := new(GetArtifactByNameRequest)
+	if err := dec(in); err != nil {
+		return nil, err
+	}
+	if interceptor == nil {
+		return srv.(ArtifactServiceServer).GetArtifactByName(ctx, in)
+	}
+	info := &grpc.UnaryServerInfo{
+		Server:     srv,
+		FullMethod: ArtifactService_GetArtifactByName_FullMethodName,
+	}
+	handler := func(ctx context.Context, req interface{}) (interface{}, error) {
+		return srv.(ArtifactServiceServer).GetArtifactByName(ctx, req.(*GetArtifactByNameRequest))
+	}
+	return interceptor(ctx, in, info, handler)
+}
+
+// ArtifactService_ServiceDesc is the grpc.ServiceDesc for ArtifactService service.
+// It's only intended for direct use with grpc.RegisterService,
+// and not to be introspected or modified (even as a copy)
+var ArtifactService_ServiceDesc = grpc.ServiceDesc{
+	ServiceName: "mediator.v1.ArtifactService",
+	HandlerType: (*ArtifactServiceServer)(nil),
+	Methods: []grpc.MethodDesc{
+		{
+			MethodName: "ListArtifacts",
+			Handler:    _ArtifactService_ListArtifacts_Handler,
+		},
+		{
+			MethodName: "GetArtifactByName",
+			Handler:    _ArtifactService_GetArtifactByName_Handler,
+		},
+	},
+	Streams:  []grpc.StreamDesc{},
+	Metadata: "mediator/v1/mediator.proto",
+}
+
+const (
 	OAuthService_GetAuthorizationURL_FullMethodName     = "/mediator.v1.OAuthService/GetAuthorizationURL"
 	OAuthService_ExchangeCodeForTokenCLI_FullMethodName = "/mediator.v1.OAuthService/ExchangeCodeForTokenCLI"
 	OAuthService_ExchangeCodeForTokenWEB_FullMethodName = "/mediator.v1.OAuthService/ExchangeCodeForTokenWEB"

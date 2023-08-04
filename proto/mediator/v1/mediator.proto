@@ -34,6 +34,84 @@ service HealthService {
     }
 }
 
+service ArtifactService {
+    rpc ListArtifacts (ListArtifactsRequest) returns (ListArtifactsResponse) {
+        option (google.api.http) = {
+            get: "/api/v1/artifacts/{provider}/type/{artifact_type}"
+        };
+    }
+
+    rpc GetArtifactByName (GetArtifactByNameRequest) returns (GetArtifactByNameResponse) {
+        option (google.api.http) = {
+            get: "/api/v1/artifacts/{provider}/type/{artifact_type}/name/{name}"
+            };    
+    }
+}
+
+message ListArtifactsRequest {
+    string provider = 1;
+    int32 group_id = 2;
+    string artifact_type = 3;
+    int32 limit = 4;
+    int32 offset = 5;
+}
+
+message ListArtifactsResponse {
+    repeated Artifact results = 1;
+}
+
+message Artifact {
+    int64 artifact_id = 1;
+    string owner = 2;
+    string name = 3;
+    string type = 4;
+    string visibility = 5;
+    string repository = 6;
+    google.protobuf.Timestamp created_at = 7;
+    google.protobuf.Timestamp updated_at = 8;
+}
+
+message GithubWorkflow {
+    string name = 1;
+    string repository = 2;
+    string commit_sha = 3;
+    string trigger = 4;
+}
+
+message SignatureVerification {
+    bool is_signed = 1;
+    bool is_verified = 2;
+    bool is_bundle_verified = 3;
+    optional string cert_identity = 4;
+    optional string cert_issuer = 5;
+    optional string rekor_log_id = 6;
+    optional int32 rekor_log_index = 7;
+    optional google.protobuf.Timestamp signature_time = 8;
+}
+
+message ArtifactVersion {
+    int64 version_id = 1;
+    repeated string tags = 2;
+    string sha = 3;
+    SignatureVerification signature_verification = 4;
+    optional GithubWorkflow github_workflow = 5;
+    google.protobuf.Timestamp created_at = 6;
+}
+
+message GetArtifactByNameRequest {
+    string provider = 1;
+    int32 group_id = 2;
+    string artifact_type = 3;
+    string name = 4;
+    int32 latest_versions = 5;
+    string tag = 6;
+}
+
+message GetArtifactByNameResponse {
+    Artifact artifact = 1;
+    repeated ArtifactVersion versions = 2;
+}
+
 service OAuthService {
     rpc GetAuthorizationURL (GetAuthorizationURLRequest) returns (GetAuthorizationURLResponse) {
         option (google.api.http) = {

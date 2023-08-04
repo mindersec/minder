@@ -68,6 +68,8 @@ var superAdminMethods = []string{
 	"/mediator.v1.AuthService/RevokeUserToken",
 	"/mediator.v1.OAuthService/RevokeOauthTokens",
 	"/mediator.v1.UserService/GetUsers",
+	"/mediator.v1.ArtifactService/ListArtifacts",
+	"/mediator.v1.ArtifactService/GetArtifactByName",
 }
 
 var resourceAuthorizations = []map[string]map[string]interface{}{
