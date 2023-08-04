@@ -74,6 +74,11 @@ endif
 	$(COMPOSE) -f .resolved-compose.yaml down && $(COMPOSE) -f .resolved-compose.yaml up $(COMPOSE_ARGS) $(services)
 	rm .resolved-compose.yaml*
 
+helm:  ## build the helm chart to a local archive, using ko for the image build
+	cd deployments/helm; rm templates/combined.yml && \
+	    ko resolve --platform all --base-import-paths -f templates/ > templates/combined.yml && \
+		helm package .
+
 bootstrap: ## install build deps
 	go generate -tags tools tools/tools.go
 	# N.B. each line runs in a different subshell, so we don't need to undo the 'cd' here

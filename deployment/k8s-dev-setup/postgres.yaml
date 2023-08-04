@@ -1,0 +1,115 @@
+# Copyright 2023 Stacklok, Inc
+#
+# Licensed under the Apache License, Version 2.0 (the "License");
+# you may not use this file except in compliance with the License.
+# You may obtain a copy of the License at
+#
+#      http://www.apache.org/licenses/LICENSE-2.0
+#
+# Unless required by applicable law or agreed to in writing, software
+# distributed under the License is distributed on an "AS IS" BASIS,
+# WITHOUT WARRANTIES OR CONDITIONS OF ANY KIND, either express or implied.
+# See the License for the specific language governing permissions and
+# limitations under the License.
+
+# This is a set of manifests to create an INSECURE postgresql instance for use
+# during Mediator development. For production use, you should use a managed
+# postgresql instance, either from a Helm chart, operator, or cloud provider.
+
+# We deploy to the `postgres' namespace:
+---
+apiVersion: v1
+kind: Namespace
+metadata:
+  name: postgres
+  annotations:
+    development-only: |
+      This is a development-only namespace for postgresql. It is not suitable
+      for production use.  It is not secure, and has a well-known password.
+  labels:
+    app: postgres
+
+---
+apiVersion: v1
+kind: Secret
+metadata:
+  name: postgres-root-pw
+  namespace: postgres
+  labels:
+    app: postgres
+type: Opaque
+data:
+  # 'postgres' from config/config.yaml.example
+  password: cG9zdGdyZXM=
+---
+apiVersion: v1
+kind: Service
+metadata:
+  name: postgres
+  namespace: postgres
+  labels:
+    app: postgres
+spec:
+  type: ClusterIP
+  ports:
+  - port: 5432
+    targetPort: 5432
+  selector:
+    app: postgres
+---
+apiVersion: apps/v1
+kind: Deployment
+metadata:
+  name: postgres
+  namespace: postgres
+  labels:
+    app: postgres
+spec:
+  replicas: 1
+  selector:
+    matchLabels:
+      app: postgres
+  template:
+    metadata:
+      labels:
+        app: postgres
+    spec:
+      containers:
+      - name: postgres
+        image: postgres:15.3
+        imagePullPolicy: IfNotPresent
+        ports:
+        - containerPort: 5432
+        env:
+        - name: POSTGRES_PASSWORD
+          valueFrom:
+            secretKeyRef:
+              name: postgres-root-pw
+              key: password
+        - name: POSTGRES_DB
+          value: mediator
+        - name: POSTGRES_USER
+          value: postgres
+        # Yes, we're using temporary storage for our database.  YOLO, baby!
+        - name: PGDATA
+          value: /tmp/data/pgdata
+        volumeMounts:
+        - mountPath: /tmp/data
+          name: postgres-storage
+      volumes:
+      - name: postgres-storage
+        emptyDir:
+          sizeLimit: 200Mi
+---
+# Copy secret to default namespace, to make it easier to connect
+apiVersion: v1
+kind: Secret
+metadata:
+  name: postgres-root-pw
+  namespace: default
+  labels:
+    app: postgres
+type: Opaque
+data:
+  # 'p6ssw0rd' from config/config.yaml.example
+  password: cDZzc3cwcmQ=
