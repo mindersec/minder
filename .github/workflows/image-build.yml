@@ -27,7 +27,8 @@ jobs:
 
     permissions:
       contents: read
-      packages: write
+      # Only allow pushing packages from post-submit or scheduled runs
+      packages: ${{ (github.ref == 'refs/heads/main') && "write" || "none" }}
 
     steps:
       - name: Checkout
@@ -39,9 +40,17 @@ jobs:
         with:
           version: v3.12.2
 
+      - uses: docker/login-action@v1
+        with:
+          registry: ghcr.io
+          username: ${{ github.actor }}
+          password: ${{ secrets.GITHUB_TOKEN }}
+
       - run: |
           make helm
-          helm push deployment/helm/mediator-*.tgz oci://ghcr.io/stacklok/mediator-helm
+          if ${{ github.ref == 'refs/heads/main' }}; then
+            helm push deployment/helm/mediator-*.tgz oci://ghcr.io/stacklok/mediator-helm
+          fi
         env:
           KO_DOCKER_REPO: "ghcr.io/stacklok/mediator"
 
