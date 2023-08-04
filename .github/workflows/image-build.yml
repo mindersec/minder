@@ -41,7 +41,7 @@ jobs:
 
       - run: |
           make helm-build
-          helm push config/helm/mediator-*.tgz oci://ghcr.io/stacklok/mediator-helm
+          helm push deployment/helm/mediator-*.tgz oci://ghcr.io/stacklok/mediator-helm
         env:
           KO_DOCKER_REPO: "ghcr.io/stacklok/mediator"
 

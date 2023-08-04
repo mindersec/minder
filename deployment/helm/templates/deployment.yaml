@@ -45,8 +45,6 @@ spec:
             capabilities:
               drop:
                 - ALL
-              add:
-                - NET_BIND_SERVICE
           image: ko://github.com/stacklok/mediator/cmd/server
           args:
           - "serve"

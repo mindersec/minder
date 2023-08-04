@@ -53,5 +53,5 @@ docs/build
 docs/.docusaurus
 
 # Generated helm configuration
-/config/helm/templates/combined.yml
-/config/helm/*.tgz
+/deployment/helm/templates/combined.yml
+/deployment/helm/*.tgz

@@ -75,7 +75,7 @@ endif
 	rm .resolved-compose.yaml*
 
 helm:  ## build the helm chart to a local archive, using ko for the image build
-	cd config/helm; rm templates/combined.yml && \
+	cd deployments/helm; rm templates/combined.yml && \
 	    ko resolve --platform all --base-import-paths -f templates/ > templates/combined.yml && \
 		helm package .
 

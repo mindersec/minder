@@ -35,4 +35,8 @@ version: 0.1.0
 # incremented each time you make changes to the application. Versions are not expected to
 # follow Semantic Versioning. They should reflect the version the application is using.
 # It is recommended to use it with quotes.
+
+# TODO: remove this from the file, and set it during image build, probably to something like:
+# $(date -u +"%Y-%m-%d-%H%M")-$(git rev-parse --short HEAD)
+# e.g. 2023-07-31-1241-9f32213
 appVersion: "2023-07-31"
