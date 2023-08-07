@@ -52,6 +52,8 @@ spec:
           - "--config=/config/config.yaml"
           - "--grpc-host=0.0.0.0"
           - "--http-host=0.0.0.0"
+          - "--github-client-id-file=/secrets/app/client_id"
+          - "--github-client-secret-file=/secrets/app/client_secret"
           env:
           - name: "AUTH.ACCESS_TOKEN_PRIVATE_KEY"
             value: "/secrets/auth/access_token_rsa"
@@ -61,10 +63,6 @@ spec:
             value: "/secrets/auth/refresh_token_rsa"
           - name: "AUTH.REFRESH_TOKEN_PUBLIC_KEY"
             value: "/secrets/auth/refresh_token_rsa.pub"
-          - name: "GITHUB.CLIENT_ID_FILE"
-            value: "/secrets/app/client_id"
-          - name: "GITHUB.CLIENT_SECRET_FILE"
-            value: "/secrets/app/client_secret"
           
           # ko will always specify a digest, so we don't need to worry about
           # CRI image caching
