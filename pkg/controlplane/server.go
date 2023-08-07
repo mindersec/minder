@@ -69,6 +69,7 @@ type Server struct {
 	pb.UnimplementedUserServiceServer
 	pb.UnimplementedRepositoryServiceServer
 	pb.UnimplementedPolicyServiceServer
+	pb.UnimplementedArtifactServiceServer
 	pb.UnimplementedKeyServiceServer
 	OAuth2       *oauth2.Config
 	ClientID     string

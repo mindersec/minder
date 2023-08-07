@@ -92,6 +92,7 @@ CREATE TABLE provider_access_tokens (
     id SERIAL PRIMARY KEY,
     provider TEXT NOT NULL,
     group_id INTEGER NOT NULL REFERENCES groups(id) ON DELETE CASCADE,
+    owner_filter TEXT,
     encrypted_token TEXT NOT NULL,
     expiration_time TIMESTAMP NOT NULL,
     created_at TIMESTAMP NOT NULL DEFAULT NOW(),
@@ -132,6 +133,7 @@ CREATE TABLE session_store (
     provider TEXT NOT NULL,
     grp_id INTEGER,
     port INTEGER,
+    owner_filter TEXT,
     session_state TEXT NOT NULL,
     created_at TIMESTAMP NOT NULL DEFAULT NOW()
 );

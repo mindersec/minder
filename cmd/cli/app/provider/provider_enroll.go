@@ -47,10 +47,16 @@ type Response struct {
 // MAX_CALLS is the maximum number of calls to the gRPC server before stopping.
 const MAX_CALLS = 300
 
+// just syncs repos for the specific provider and group
+func syncRepos(ctx context.Context, client pb.RepositoryServiceClient, provider string, group int32) error {
+	_, err := client.SyncRepositories(ctx, &pb.SyncRepositoriesRequest{Provider: provider, GroupId: group})
+	return err
+}
+
 // callBackServer starts a server and handler to listen for the OAuth callback.
 // It will wait for either a success or failure response from the server.
 func callBackServer(ctx context.Context, provider string, group int32, port string,
-	wg *sync.WaitGroup, client pb.OAuthServiceClient, since int64) {
+	wg *sync.WaitGroup, client pb.OAuthServiceClient, since int64, repos_client pb.RepositoryServiceClient) {
 	server := &http.Server{
 		Addr:              fmt.Sprintf(":%s", port),
 		ReadHeaderTimeout: time.Second * 10, // Set an appropriate timeout value
@@ -91,6 +97,11 @@ func callBackServer(ctx context.Context, provider string, group int32, port stri
 			// todo: check if token has been created. We need an endpoint to pass an state and check if token is created
 			res, err := client.VerifyProviderTokenFrom(ctx,
 				&pb.VerifyProviderTokenFromRequest{Provider: provider, GroupId: group, Timestamp: timestamppb.New(t)})
+			if err == nil && res.Status == "OK" {
+				// we can sync repos
+				err := syncRepos(ctx, repos_client, provider, group)
+				util.ExitNicelyOnError(err, "Error syncing repos")
+			}
 			if err != nil || res.Status == "OK" || calls >= MAX_CALLS {
 				stopServer = true
 			}
@@ -118,6 +129,7 @@ actions such as adding repositories.`,
 		}
 		group := util.GetConfigValue("group-id", "group-id", cmd, 0).(int)
 		pat := util.GetConfigValue("token", "token", cmd, "").(string)
+		owner := util.GetConfigValue("owner", "owner", cmd, "").(string)
 
 		grpc_host := util.GetConfigValue("grpc_server.host", "grpc-host", cmd, "").(string)
 		grpc_port := util.GetConfigValue("grpc_server.port", "grpc-port", cmd, 0).(int)
@@ -127,14 +139,18 @@ actions such as adding repositories.`,
 		defer conn.Close()
 
 		client := pb.NewOAuthServiceClient(conn)
+		repos_client := pb.NewRepositoryServiceClient(conn)
 		ctx, cancel := util.GetAppContext()
 		defer cancel()
 
 		if pat != "" {
 			// use pat for enrollment
 			_, err := client.StoreProviderToken(context.Background(),
-				&pb.StoreProviderTokenRequest{Provider: provider, GroupId: int32(group), AccessToken: pat})
+				&pb.StoreProviderTokenRequest{Provider: provider, GroupId: int32(group), AccessToken: pat, Owner: &owner})
 			util.ExitNicelyOnError(err, "Error storing token")
+
+			err = syncRepos(ctx, repos_client, provider, int32(group))
+			util.ExitNicelyOnError(err, "Error syncing repos")
 			fmt.Println("Provider enrolled successfully")
 		} else {
 			// Get random port
@@ -146,6 +162,7 @@ actions such as adding repositories.`,
 				GroupId:  int32(group),
 				Cli:      true,
 				Port:     int32(port),
+				Owner:    &owner,
 			})
 			util.ExitNicelyOnError(err, "Error getting authorization URL")
 
@@ -165,7 +182,7 @@ actions such as adding repositories.`,
 			var wg sync.WaitGroup
 			wg.Add(1)
 
-			go callBackServer(ctx, provider, int32(group), fmt.Sprintf("%d", port), &wg, client, openTime)
+			go callBackServer(ctx, provider, int32(group), fmt.Sprintf("%d", port), &wg, client, openTime, repos_client)
 			wg.Wait()
 		}
 	},
@@ -176,6 +193,7 @@ func init() {
 	enrollProviderCmd.Flags().StringP("provider", "n", "", "Name for the provider to enroll")
 	enrollProviderCmd.Flags().Int32P("group-id", "g", 0, "ID of the group for enrolling the provider")
 	enrollProviderCmd.Flags().StringP("token", "t", "", "Personal Access Token (PAT) to use for enrollment")
+	enrollProviderCmd.Flags().StringP("owner", "o", "", "Owner to filter on for provider resources")
 	if err := enrollProviderCmd.MarkFlagRequired("provider"); err != nil {
 		fmt.Fprintf(os.Stderr, "Error marking flag as required: %s\n", err)
 	}

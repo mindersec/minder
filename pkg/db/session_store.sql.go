@@ -11,14 +11,15 @@ import (
 )
 
 const createSessionState = `-- name: CreateSessionState :one
-INSERT INTO session_store (provider, grp_id, port, session_state) VALUES ($1, $2, $3, $4) RETURNING id, provider, grp_id, port, session_state, created_at
+INSERT INTO session_store (provider, grp_id, port, session_state, owner_filter) VALUES ($1, $2, $3, $4, $5) RETURNING id, provider, grp_id, port, owner_filter, session_state, created_at
 `
 
 type CreateSessionStateParams struct {
-	Provider     string        `json:"provider"`
-	GrpID        sql.NullInt32 `json:"grp_id"`
-	Port         sql.NullInt32 `json:"port"`
-	SessionState string        `json:"session_state"`
+	Provider     string         `json:"provider"`
+	GrpID        sql.NullInt32  `json:"grp_id"`
+	Port         sql.NullInt32  `json:"port"`
+	SessionState string         `json:"session_state"`
+	OwnerFilter  sql.NullString `json:"owner_filter"`
 }
 
 func (q *Queries) CreateSessionState(ctx context.Context, arg CreateSessionStateParams) (SessionStore, error) {
@@ -27,6 +28,7 @@ func (q *Queries) CreateSessionState(ctx context.Context, arg CreateSessionState
 		arg.GrpID,
 		arg.Port,
 		arg.SessionState,
+		arg.OwnerFilter,
 	)
 	var i SessionStore
 	err := row.Scan(
@@ -34,6 +36,7 @@ func (q *Queries) CreateSessionState(ctx context.Context, arg CreateSessionState
 		&i.Provider,
 		&i.GrpID,
 		&i.Port,
+		&i.OwnerFilter,
 		&i.SessionState,
 		&i.CreatedAt,
 	)
@@ -73,24 +76,30 @@ func (q *Queries) DeleteSessionStateByGroupID(ctx context.Context, arg DeleteSes
 }
 
 const getGroupIDPortBySessionState = `-- name: GetGroupIDPortBySessionState :one
-SELECT provider, grp_id, port FROM session_store WHERE session_state = $1
+SELECT provider, grp_id, port, owner_filter FROM session_store WHERE session_state = $1
 `
 
 type GetGroupIDPortBySessionStateRow struct {
-	Provider string        `json:"provider"`
-	GrpID    sql.NullInt32 `json:"grp_id"`
-	Port     sql.NullInt32 `json:"port"`
+	Provider    string         `json:"provider"`
+	GrpID       sql.NullInt32  `json:"grp_id"`
+	Port        sql.NullInt32  `json:"port"`
+	OwnerFilter sql.NullString `json:"owner_filter"`
 }
 
 func (q *Queries) GetGroupIDPortBySessionState(ctx context.Context, sessionState string) (GetGroupIDPortBySessionStateRow, error) {
 	row := q.db.QueryRowContext(ctx, getGroupIDPortBySessionState, sessionState)
 	var i GetGroupIDPortBySessionStateRow
-	err := row.Scan(&i.Provider, &i.GrpID, &i.Port)
+	err := row.Scan(
+		&i.Provider,
+		&i.GrpID,
+		&i.Port,
+		&i.OwnerFilter,
+	)
 	return i, err
 }
 
 const getSessionState = `-- name: GetSessionState :one
-SELECT id, provider, grp_id, port, session_state, created_at FROM session_store WHERE id = $1
+SELECT id, provider, grp_id, port, owner_filter, session_state, created_at FROM session_store WHERE id = $1
 `
 
 func (q *Queries) GetSessionState(ctx context.Context, id int32) (SessionStore, error) {
@@ -101,6 +110,7 @@ func (q *Queries) GetSessionState(ctx context.Context, id int32) (SessionStore, 
 		&i.Provider,
 		&i.GrpID,
 		&i.Port,
+		&i.OwnerFilter,
 		&i.SessionState,
 		&i.CreatedAt,
 	)
@@ -108,7 +118,7 @@ func (q *Queries) GetSessionState(ctx context.Context, id int32) (SessionStore, 
 }
 
 const getSessionStateByGroupID = `-- name: GetSessionStateByGroupID :one
-SELECT id, provider, grp_id, port, session_state, created_at FROM session_store WHERE grp_id = $1
+SELECT id, provider, grp_id, port, owner_filter, session_state, created_at FROM session_store WHERE grp_id = $1
 `
 
 func (q *Queries) GetSessionStateByGroupID(ctx context.Context, grpID sql.NullInt32) (SessionStore, error) {
@@ -119,6 +129,7 @@ func (q *Queries) GetSessionStateByGroupID(ctx context.Context, grpID sql.NullIn
 		&i.Provider,
 		&i.GrpID,
 		&i.Port,
+		&i.OwnerFilter,
 		&i.SessionState,
 		&i.CreatedAt,
 	)

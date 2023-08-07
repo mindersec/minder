@@ -68,6 +68,8 @@ var superAdminMethods = []string{
 	"/mediator.v1.AuthService/RevokeUserToken",
 	"/mediator.v1.OAuthService/RevokeOauthTokens",
 	"/mediator.v1.UserService/GetUsers",
+	"/mediator.v1.ArtifactService/ListArtifacts",
+	"/mediator.v1.ArtifactService/GetArtifactByName",
 }
 
 var resourceAuthorizations = []map[string]map[string]interface{}{
@@ -475,7 +477,7 @@ func IsProviderCallAuthorized(ctx context.Context, store db.Store, provider stri
 	for _, item := range githubAuthorizations {
 		if item == method {
 			// check the github token
-			encToken, err := GetProviderAccessToken(ctx, store, provider, groupId, true)
+			encToken, _, err := GetProviderAccessToken(ctx, store, provider, groupId, true)
 			if err != nil {
 				return false
 			}

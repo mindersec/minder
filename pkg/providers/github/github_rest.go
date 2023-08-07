@@ -25,11 +25,12 @@ import (
 
 // ListAllRepositories returns a list of all repositories for the authenticated user
 // Two APIs are available, contigent on whether the token is for a user or an organization
-func (c *RestClient) ListAllRepositories(ctx context.Context, isOrg bool) (RepositoryListResult, error) {
+func (c *RestClient) ListAllRepositories(ctx context.Context, isOrg bool, owner string) (RepositoryListResult, error) {
 	opt := &github.RepositoryListOptions{
 		ListOptions: github.ListOptions{
 			PerPage: 100,
 		},
+		Affiliation: "owner",
 	}
 
 	orgOpt := &github.RepositoryListByOrgOptions{
@@ -46,7 +47,7 @@ func (c *RestClient) ListAllRepositories(ctx context.Context, isOrg bool) (Repos
 		var err error
 
 		if isOrg {
-			repos, resp, err = c.client.Repositories.ListByOrg(ctx, "", orgOpt)
+			repos, resp, err = c.client.Repositories.ListByOrg(ctx, owner, orgOpt)
 		} else {
 			repos, resp, err = c.client.Repositories.List(ctx, "", opt)
 		}
@@ -71,8 +72,128 @@ func (c *RestClient) ListAllRepositories(ctx context.Context, isOrg bool) (Repos
 	}, nil
 }
 
+// PackageListResult is a struct to hold the results of a package list
+type PackageListResult struct {
+	Packages []*github.Package
+}
+
+// ListAllPackages returns a list of all packages for the authenticated user
+func (c *RestClient) ListAllPackages(ctx context.Context, isOrg bool, owner string, artifactType string,
+	pageNumber int, itemsPerPage int) (PackageListResult, error) {
+	opt := &github.PackageListOptions{
+		PackageType: &artifactType,
+		ListOptions: github.ListOptions{
+			Page:    pageNumber,
+			PerPage: itemsPerPage,
+		},
+	}
+	// create a slice to hold the containers
+	var allContainers []*github.Package
+	for {
+		var artifacts []*github.Package
+		var resp *github.Response
+		var err error
+
+		if isOrg {
+			artifacts, resp, err = c.client.Organizations.ListPackages(ctx, owner, opt)
+		} else {
+			artifacts, resp, err = c.client.Users.ListPackages(ctx, "", opt)
+		}
+		if err != nil {
+			return PackageListResult{Packages: allContainers}, err
+		}
+
+		allContainers = append(allContainers, artifacts...)
+
+		if resp.NextPage == 0 {
+			break
+		}
+		opt.Page = resp.NextPage
+	}
+
+	return PackageListResult{Packages: allContainers}, nil
+}
+
+// GetPackageByName returns a single package for the authenticated user or for the org
+func (c *RestClient) GetPackageByName(ctx context.Context, isOrg bool, owner string, package_type string,
+	package_name string) (*github.Package, error) {
+	var pkg *github.Package
+	var err error
+
+	if isOrg {
+		pkg, _, err = c.client.Organizations.GetPackage(ctx, owner, package_type, package_name)
+		if err != nil {
+			return nil, err
+		}
+	} else {
+		pkg, _, err = c.client.Users.GetPackage(ctx, "", package_type, package_name)
+		if err != nil {
+			return nil, err
+		}
+	}
+	return pkg, nil
+}
+
+// GetPackageVersions returns a list of all package versions for the authenticated user or org
+func (c *RestClient) GetPackageVersions(ctx context.Context, isOrg bool, owner string, package_type string,
+	package_name string) ([]*github.PackageVersion, error) {
+	var versions []*github.PackageVersion
+	var err error
+	state := "active"
+
+	if isOrg {
+		versions, _, err = c.client.Organizations.PackageGetAllVersions(ctx, owner, package_type,
+			package_name, &github.PackageListOptions{PackageType: &package_type, State: &state})
+		if err != nil {
+			return nil, err
+		}
+	} else {
+		versions, _, err = c.client.Users.PackageGetAllVersions(ctx, "", package_type,
+			package_name, &github.PackageListOptions{PackageType: &package_type, State: &state})
+		if err != nil {
+			return nil, err
+		}
+	}
+
+	return versions, nil
+}
+
+// GetPackageVersionByTag returns a single package version for the specific tag
+func (c *RestClient) GetPackageVersionByTag(ctx context.Context, isOrg bool, owner string, package_type string,
+	package_name string, tag string) (*github.PackageVersion, error) {
+	var versions []*github.PackageVersion
+	var err error
+	state := "active"
+
+	if isOrg {
+		versions, _, err = c.client.Organizations.PackageGetAllVersions(ctx, owner, package_type,
+			package_name, &github.PackageListOptions{PackageType: &package_type, State: &state})
+		if err != nil {
+			return nil, err
+		}
+	} else {
+		versions, _, err = c.client.Users.PackageGetAllVersions(ctx, "", package_type,
+			package_name, &github.PackageListOptions{PackageType: &package_type, State: &state})
+		if err != nil {
+			return nil, err
+		}
+	}
+
+	// iterate for all versions until we find the specific tag
+	for _, version := range versions {
+		tags := version.Metadata.Container.Tags
+		for _, t := range tags {
+			if t == tag {
+				return version, nil
+			}
+		}
+	}
+	return nil, nil
+
+}
+
 // GetRepository returns a single repository for the authenticated user
-func (c *RestClient) GetRepository(ctx context.Context, owner, name string) (*github.Repository, error) {
+func (c *RestClient) GetRepository(ctx context.Context, owner string, name string) (*github.Repository, error) {
 	// create a slice to hold the repositories
 	repo, _, err := c.client.Repositories.Get(ctx, owner, name)
 	if err != nil {
@@ -80,22 +201,6 @@ func (c *RestClient) GetRepository(ctx context.Context, owner, name string) (*gi
 	}
 
 	return repo, nil
-}
-
-// CheckIfTokenIsForOrganization is to determine if the token is for a user or an organization
-// TODO: There may be more efficient ways to do this, then calling the API,
-// perhaps during the enrollment process
-func (c *RestClient) CheckIfTokenIsForOrganization(ctx context.Context) (bool, error) {
-	user, _, err := c.client.Users.Get(ctx, "")
-	if err != nil {
-		return false, err
-	}
-
-	if *user.Type == "Organization" {
-		return true, nil
-	}
-
-	return false, nil
 }
 
 // GetBranchProtection returns the branch protection for a given branch
@@ -106,6 +211,15 @@ func (c *RestClient) GetBranchProtection(ctx context.Context, owner string,
 		return nil, err
 	}
 	return protection, nil
+}
+
+// GetAuthenticatedUser returns the authenticated user
+func (c *RestClient) GetAuthenticatedUser(ctx context.Context) (*github.User, error) {
+	user, _, err := c.client.Users.Get(ctx, "")
+	if err != nil {
+		return nil, err
+	}
+	return user, nil
 }
 
 // NewRequest creates an API request. A relative URL can be provided in urlStr,

@@ -307,3 +307,12 @@ func IsAuthorizedForGroup(ctx context.Context, groupId int32) bool {
 
 	return slices.Contains(claims.GroupIds, groupId)
 }
+
+// GetUserGroups returns all the groups where an user belongs to
+func GetUserGroups(ctx context.Context) ([]int32, error) {
+	claims, ok := ctx.Value(TokenInfoKey).(UserClaims)
+	if !ok {
+		return nil, errors.New("cannot get user groups")
+	}
+	return claims.GroupIds, nil
+}

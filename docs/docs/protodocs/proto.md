@@ -4,6 +4,8 @@
 ## Table of Contents
 
 - [mediator/v1/mediator.proto](#mediator_v1_mediator-proto)
+    - [Artifact](#mediator-v1-Artifact)
+    - [ArtifactVersion](#mediator-v1-ArtifactVersion)
     - [BranchProtection](#mediator-v1-BranchProtection)
     - [CheckHealthRequest](#mediator-v1-CheckHealthRequest)
     - [CheckHealthResponse](#mediator-v1-CheckHealthResponse)
@@ -40,6 +42,8 @@
     - [ExchangeCodeForTokenCLIResponse](#mediator-v1-ExchangeCodeForTokenCLIResponse)
     - [ExchangeCodeForTokenWEBRequest](#mediator-v1-ExchangeCodeForTokenWEBRequest)
     - [ExchangeCodeForTokenWEBResponse](#mediator-v1-ExchangeCodeForTokenWEBResponse)
+    - [GetArtifactByNameRequest](#mediator-v1-GetArtifactByNameRequest)
+    - [GetArtifactByNameResponse](#mediator-v1-GetArtifactByNameResponse)
     - [GetAuthorizationURLRequest](#mediator-v1-GetAuthorizationURLRequest)
     - [GetAuthorizationURLResponse](#mediator-v1-GetAuthorizationURLResponse)
     - [GetBranchProtectionRequest](#mediator-v1-GetBranchProtectionRequest)
@@ -102,7 +106,10 @@
     - [GetVulnerabilitiesResponse](#mediator-v1-GetVulnerabilitiesResponse)
     - [GetVulnerabilityByIdRequest](#mediator-v1-GetVulnerabilityByIdRequest)
     - [GetVulnerabilityByIdResponse](#mediator-v1-GetVulnerabilityByIdResponse)
+    - [GithubWorkflow](#mediator-v1-GithubWorkflow)
     - [GroupRecord](#mediator-v1-GroupRecord)
+    - [ListArtifactsRequest](#mediator-v1-ListArtifactsRequest)
+    - [ListArtifactsResponse](#mediator-v1-ListArtifactsResponse)
     - [ListPoliciesRequest](#mediator-v1-ListPoliciesRequest)
     - [ListPoliciesResponse](#mediator-v1-ListPoliciesResponse)
     - [ListRepositoriesRequest](#mediator-v1-ListRepositoriesRequest)
@@ -149,8 +156,11 @@
     - [RuleType.Definition.DataEval.DataEvalDef](#mediator-v1-RuleType-Definition-DataEval-DataEvalDef)
     - [RuleType.Definition.DataEval.RestType](#mediator-v1-RuleType-Definition-DataEval-RestType)
     - [RuleType.Definition.RuleSchemaEntry](#mediator-v1-RuleType-Definition-RuleSchemaEntry)
+    - [SignatureVerification](#mediator-v1-SignatureVerification)
     - [StoreProviderTokenRequest](#mediator-v1-StoreProviderTokenRequest)
     - [StoreProviderTokenResponse](#mediator-v1-StoreProviderTokenResponse)
+    - [SyncRepositoriesRequest](#mediator-v1-SyncRepositoriesRequest)
+    - [SyncRepositoriesResponse](#mediator-v1-SyncRepositoriesResponse)
     - [UpdatePasswordRequest](#mediator-v1-UpdatePasswordRequest)
     - [UpdatePasswordResponse](#mediator-v1-UpdatePasswordResponse)
     - [UpdateProfileRequest](#mediator-v1-UpdateProfileRequest)
@@ -168,6 +178,7 @@
     - [Provider.Definition.ClientTypes.Type](#mediator-v1-Provider-Definition-ClientTypes-Type)
     - [RepoFilter](#mediator-v1-RepoFilter)
   
+    - [ArtifactService](#mediator-v1-ArtifactService)
     - [AuthService](#mediator-v1-AuthService)
     - [BranchProtectionService](#mediator-v1-BranchProtectionService)
     - [GroupService](#mediator-v1-GroupService)
@@ -190,6 +201,48 @@
 <p align="right"><a href="#top">Top</a></p>
 
 ## mediator/v1/mediator.proto
+
+
+
+<a name="mediator-v1-Artifact"></a>
+
+### Artifact
+
+
+
+| Field | Type | Label | Description |
+| ----- | ---- | ----- | ----------- |
+| artifact_id | [int64](#int64) |  |  |
+| owner | [string](#string) |  |  |
+| name | [string](#string) |  |  |
+| type | [string](#string) |  |  |
+| visibility | [string](#string) |  |  |
+| repository | [string](#string) |  |  |
+| created_at | [google.protobuf.Timestamp](#google-protobuf-Timestamp) |  |  |
+| updated_at | [google.protobuf.Timestamp](#google-protobuf-Timestamp) |  |  |
+
+
+
+
+
+
+<a name="mediator-v1-ArtifactVersion"></a>
+
+### ArtifactVersion
+
+
+
+| Field | Type | Label | Description |
+| ----- | ---- | ----- | ----------- |
+| version_id | [int64](#int64) |  |  |
+| tags | [string](#string) | repeated |  |
+| sha | [string](#string) |  |  |
+| signature_verification | [SignatureVerification](#mediator-v1-SignatureVerification) |  |  |
+| github_workflow | [GithubWorkflow](#mediator-v1-GithubWorkflow) | optional |  |
+| created_at | [google.protobuf.Timestamp](#google-protobuf-Timestamp) |  |  |
+
+
+
 
 
 
@@ -777,6 +830,42 @@ DeleteRuleTypeResponse is the response to delete a rule type.
 
 
 
+<a name="mediator-v1-GetArtifactByNameRequest"></a>
+
+### GetArtifactByNameRequest
+
+
+
+| Field | Type | Label | Description |
+| ----- | ---- | ----- | ----------- |
+| provider | [string](#string) |  |  |
+| group_id | [int32](#int32) |  |  |
+| artifact_type | [string](#string) |  |  |
+| name | [string](#string) |  |  |
+| latest_versions | [int32](#int32) |  |  |
+| tag | [string](#string) |  |  |
+
+
+
+
+
+
+<a name="mediator-v1-GetArtifactByNameResponse"></a>
+
+### GetArtifactByNameResponse
+
+
+
+| Field | Type | Label | Description |
+| ----- | ---- | ----- | ----------- |
+| artifact | [Artifact](#mediator-v1-Artifact) |  |  |
+| versions | [ArtifactVersion](#mediator-v1-ArtifactVersion) | repeated |  |
+
+
+
+
+
+
 <a name="mediator-v1-GetAuthorizationURLRequest"></a>
 
 ### GetAuthorizationURLRequest
@@ -789,6 +878,7 @@ DeleteRuleTypeResponse is the response to delete a rule type.
 | group_id | [int32](#int32) |  |  |
 | cli | [bool](#bool) |  |  |
 | port | [int32](#int32) |  |  |
+| owner | [string](#string) | optional |  |
 
 
 
@@ -1741,6 +1831,24 @@ list users
 
 
 
+<a name="mediator-v1-GithubWorkflow"></a>
+
+### GithubWorkflow
+
+
+
+| Field | Type | Label | Description |
+| ----- | ---- | ----- | ----------- |
+| name | [string](#string) |  |  |
+| repository | [string](#string) |  |  |
+| commit_sha | [string](#string) |  |  |
+| trigger | [string](#string) |  |  |
+
+
+
+
+
+
 <a name="mediator-v1-GroupRecord"></a>
 
 ### GroupRecord
@@ -1756,6 +1864,40 @@ BUF does not allow grouping (which is a shame)
 | is_protected | [bool](#bool) |  |  |
 | created_at | [google.protobuf.Timestamp](#google-protobuf-Timestamp) |  |  |
 | updated_at | [google.protobuf.Timestamp](#google-protobuf-Timestamp) |  |  |
+
+
+
+
+
+
+<a name="mediator-v1-ListArtifactsRequest"></a>
+
+### ListArtifactsRequest
+
+
+
+| Field | Type | Label | Description |
+| ----- | ---- | ----- | ----------- |
+| provider | [string](#string) |  |  |
+| group_id | [int32](#int32) |  |  |
+| artifact_type | [string](#string) |  |  |
+| limit | [int32](#int32) |  |  |
+| offset | [int32](#int32) |  |  |
+
+
+
+
+
+
+<a name="mediator-v1-ListArtifactsResponse"></a>
+
+### ListArtifactsResponse
+
+
+
+| Field | Type | Label | Description |
+| ----- | ---- | ----- | ----------- |
+| results | [Artifact](#mediator-v1-Artifact) | repeated |  |
 
 
 
@@ -2527,6 +2669,28 @@ This is used to fetch data from a REST endpoint.
 
 
 
+<a name="mediator-v1-SignatureVerification"></a>
+
+### SignatureVerification
+
+
+
+| Field | Type | Label | Description |
+| ----- | ---- | ----- | ----------- |
+| is_signed | [bool](#bool) |  |  |
+| is_verified | [bool](#bool) |  |  |
+| is_bundle_verified | [bool](#bool) |  |  |
+| cert_identity | [string](#string) | optional |  |
+| cert_issuer | [string](#string) | optional |  |
+| rekor_log_id | [string](#string) | optional |  |
+| rekor_log_index | [int32](#int32) | optional |  |
+| signature_time | [google.protobuf.Timestamp](#google-protobuf-Timestamp) | optional |  |
+
+
+
+
+
+
 <a name="mediator-v1-StoreProviderTokenRequest"></a>
 
 ### StoreProviderTokenRequest
@@ -2538,6 +2702,7 @@ This is used to fetch data from a REST endpoint.
 | provider | [string](#string) |  |  |
 | group_id | [int32](#int32) |  |  |
 | access_token | [string](#string) |  |  |
+| owner | [string](#string) | optional |  |
 
 
 
@@ -2547,6 +2712,32 @@ This is used to fetch data from a REST endpoint.
 <a name="mediator-v1-StoreProviderTokenResponse"></a>
 
 ### StoreProviderTokenResponse
+
+
+
+
+
+
+
+<a name="mediator-v1-SyncRepositoriesRequest"></a>
+
+### SyncRepositoriesRequest
+
+
+
+| Field | Type | Label | Description |
+| ----- | ---- | ----- | ----------- |
+| provider | [string](#string) |  |  |
+| group_id | [int32](#int32) |  |  |
+
+
+
+
+
+
+<a name="mediator-v1-SyncRepositoriesResponse"></a>
+
+### SyncRepositoriesResponse
 
 
 
@@ -2780,6 +2971,17 @@ Repo filter enum
  
 
 
+<a name="mediator-v1-ArtifactService"></a>
+
+### ArtifactService
+
+
+| Method Name | Request Type | Response Type | Description |
+| ----------- | ------------ | ------------- | ------------|
+| ListArtifacts | [ListArtifactsRequest](#mediator-v1-ListArtifactsRequest) | [ListArtifactsResponse](#mediator-v1-ListArtifactsResponse) |  |
+| GetArtifactByName | [GetArtifactByNameRequest](#mediator-v1-GetArtifactByNameRequest) | [GetArtifactByNameResponse](#mediator-v1-GetArtifactByNameResponse) |  |
+
+
 <a name="mediator-v1-AuthService"></a>
 
 ### AuthService
@@ -2899,6 +3101,7 @@ manage Organizations CRUD
 
 | Method Name | Request Type | Response Type | Description |
 | ----------- | ------------ | ------------- | ------------|
+| SyncRepositories | [SyncRepositoriesRequest](#mediator-v1-SyncRepositoriesRequest) | [SyncRepositoriesResponse](#mediator-v1-SyncRepositoriesResponse) |  |
 | RegisterRepository | [RegisterRepositoryRequest](#mediator-v1-RegisterRepositoryRequest) | [RegisterRepositoryResponse](#mediator-v1-RegisterRepositoryResponse) |  |
 | ListRepositories | [ListRepositoriesRequest](#mediator-v1-ListRepositoriesRequest) | [ListRepositoriesResponse](#mediator-v1-ListRepositoriesResponse) |  |
 | GetRepositoryById | [GetRepositoryByIdRequest](#mediator-v1-GetRepositoryByIdRequest) | [GetRepositoryByIdResponse](#mediator-v1-GetRepositoryByIdResponse) |  |

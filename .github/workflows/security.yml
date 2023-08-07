@@ -5,7 +5,7 @@ jobs:
     runs-on: ubuntu-latest
     steps:
       - name: Checkout
-        uses: actions/checkout@v3
+        uses: actions/checkout@v3.5.3
 
       - name: Security Scan
         uses: aquasecurity/trivy-action@master  # Trivy Action doesn't have a stable release yet

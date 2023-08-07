@@ -9,6 +9,9 @@
       "name": "HealthService"
     },
     {
+      "name": "ArtifactService"
+    },
+    {
       "name": "OAuthService"
     },
     {
@@ -52,6 +55,125 @@
     "application/json"
   ],
   "paths": {
+    "/api/v1/artifacts/{provider}/type/{artifactType}": {
+      "get": {
+        "operationId": "ArtifactService_ListArtifacts",
+        "responses": {
+          "200": {
+            "description": "A successful response.",
+            "schema": {
+              "$ref": "#/definitions/v1ListArtifactsResponse"
+            }
+          },
+          "default": {
+            "description": "An unexpected error response.",
+            "schema": {
+              "$ref": "#/definitions/rpcStatus"
+            }
+          }
+        },
+        "parameters": [
+          {
+            "name": "provider",
+            "in": "path",
+            "required": true,
+            "type": "string"
+          },
+          {
+            "name": "artifactType",
+            "in": "path",
+            "required": true,
+            "type": "string"
+          },
+          {
+            "name": "groupId",
+            "in": "query",
+            "required": false,
+            "type": "integer",
+            "format": "int32"
+          },
+          {
+            "name": "limit",
+            "in": "query",
+            "required": false,
+            "type": "integer",
+            "format": "int32"
+          },
+          {
+            "name": "offset",
+            "in": "query",
+            "required": false,
+            "type": "integer",
+            "format": "int32"
+          }
+        ],
+        "tags": [
+          "ArtifactService"
+        ]
+      }
+    },
+    "/api/v1/artifacts/{provider}/type/{artifactType}/name/{name}": {
+      "get": {
+        "operationId": "ArtifactService_GetArtifactByName",
+        "responses": {
+          "200": {
+            "description": "A successful response.",
+            "schema": {
+              "$ref": "#/definitions/v1GetArtifactByNameResponse"
+            }
+          },
+          "default": {
+            "description": "An unexpected error response.",
+            "schema": {
+              "$ref": "#/definitions/rpcStatus"
+            }
+          }
+        },
+        "parameters": [
+          {
+            "name": "provider",
+            "in": "path",
+            "required": true,
+            "type": "string"
+          },
+          {
+            "name": "artifactType",
+            "in": "path",
+            "required": true,
+            "type": "string"
+          },
+          {
+            "name": "name",
+            "in": "path",
+            "required": true,
+            "type": "string"
+          },
+          {
+            "name": "groupId",
+            "in": "query",
+            "required": false,
+            "type": "integer",
+            "format": "int32"
+          },
+          {
+            "name": "latestVersions",
+            "in": "query",
+            "required": false,
+            "type": "integer",
+            "format": "int32"
+          },
+          {
+            "name": "tag",
+            "in": "query",
+            "required": false,
+            "type": "string"
+          }
+        ],
+        "tags": [
+          "ArtifactService"
+        ]
+      }
+    },
     "/api/v1/auth/callback/{provider}/cli": {
       "get": {
         "operationId": "OAuthService_ExchangeCodeForTokenCLI",
@@ -371,6 +493,12 @@
             "required": false,
             "type": "integer",
             "format": "int32"
+          },
+          {
+            "name": "owner",
+            "in": "query",
+            "required": false,
+            "type": "string"
           }
         ],
         "tags": [
@@ -567,6 +695,9 @@
                   "format": "int32"
                 },
                 "accessToken": {
+                  "type": "string"
+                },
+                "owner": {
                   "type": "string"
                 }
               }
@@ -1296,7 +1427,7 @@
         ]
       }
     },
-    "/api/v1/repositories": {
+    "/api/v1/repositories/provider/{provider}": {
       "get": {
         "operationId": "RepositoryService_ListRepositories",
         "responses": {
@@ -1316,8 +1447,8 @@
         "parameters": [
           {
             "name": "provider",
-            "in": "query",
-            "required": false,
+            "in": "path",
+            "required": true,
             "type": "string"
           },
           {
@@ -1360,14 +1491,14 @@
         ]
       }
     },
-    "/api/v1/repository": {
+    "/api/v1/repositories/provider/{provider}/sync": {
       "post": {
-        "operationId": "RepositoryService_RegisterRepository",
+        "operationId": "RepositoryService_SyncRepositories",
         "responses": {
           "200": {
             "description": "A successful response.",
             "schema": {
-              "$ref": "#/definitions/v1RegisterRepositoryResponse"
+              "$ref": "#/definitions/v1SyncRepositoriesResponse"
             }
           },
           "default": {
@@ -1379,12 +1510,55 @@
         },
         "parameters": [
           {
+            "name": "provider",
+            "in": "path",
+            "required": true,
+            "type": "string"
+          },
+          {
             "name": "body",
             "in": "body",
             "required": true,
             "schema": {
-              "$ref": "#/definitions/v1RegisterRepositoryRequest"
+              "type": "object",
+              "properties": {
+                "groupId": {
+                  "type": "integer",
+                  "format": "int32"
+                }
+              }
             }
+          }
+        ],
+        "tags": [
+          "RepositoryService"
+        ]
+      }
+    },
+    "/api/v1/repository/id/{repositoryId}": {
+      "get": {
+        "operationId": "RepositoryService_GetRepositoryById",
+        "responses": {
+          "200": {
+            "description": "A successful response.",
+            "schema": {
+              "$ref": "#/definitions/v1GetRepositoryByIdResponse"
+            }
+          },
+          "default": {
+            "description": "An unexpected error response.",
+            "schema": {
+              "$ref": "#/definitions/rpcStatus"
+            }
+          }
+        },
+        "parameters": [
+          {
+            "name": "repositoryId",
+            "in": "path",
+            "required": true,
+            "type": "integer",
+            "format": "int32"
           }
         ],
         "tags": [
@@ -1428,14 +1602,14 @@
         ]
       }
     },
-    "/api/v1/repository/{repositoryId}": {
-      "get": {
-        "operationId": "RepositoryService_GetRepositoryById",
+    "/api/v1/repository/provider/{provider}/register": {
+      "post": {
+        "operationId": "RepositoryService_RegisterRepository",
         "responses": {
           "200": {
             "description": "A successful response.",
             "schema": {
-              "$ref": "#/definitions/v1GetRepositoryByIdResponse"
+              "$ref": "#/definitions/v1RegisterRepositoryResponse"
             }
           },
           "default": {
@@ -1447,11 +1621,37 @@
         },
         "parameters": [
           {
-            "name": "repositoryId",
+            "name": "provider",
             "in": "path",
             "required": true,
-            "type": "integer",
-            "format": "int32"
+            "type": "string"
+          },
+          {
+            "name": "body",
+            "in": "body",
+            "required": true,
+            "schema": {
+              "type": "object",
+              "properties": {
+                "groupId": {
+                  "type": "integer",
+                  "format": "int32"
+                },
+                "repositories": {
+                  "type": "array",
+                  "items": {
+                    "type": "object",
+                    "$ref": "#/definitions/v1Repositories"
+                  }
+                },
+                "events": {
+                  "type": "array",
+                  "items": {
+                    "type": "string"
+                  }
+                }
+              }
+            }
           }
         ],
         "tags": [
@@ -2600,6 +2800,66 @@
         }
       }
     },
+    "v1Artifact": {
+      "type": "object",
+      "properties": {
+        "artifactId": {
+          "type": "string",
+          "format": "int64"
+        },
+        "owner": {
+          "type": "string"
+        },
+        "name": {
+          "type": "string"
+        },
+        "type": {
+          "type": "string"
+        },
+        "visibility": {
+          "type": "string"
+        },
+        "repository": {
+          "type": "string"
+        },
+        "createdAt": {
+          "type": "string",
+          "format": "date-time"
+        },
+        "updatedAt": {
+          "type": "string",
+          "format": "date-time"
+        }
+      }
+    },
+    "v1ArtifactVersion": {
+      "type": "object",
+      "properties": {
+        "versionId": {
+          "type": "string",
+          "format": "int64"
+        },
+        "tags": {
+          "type": "array",
+          "items": {
+            "type": "string"
+          }
+        },
+        "sha": {
+          "type": "string"
+        },
+        "signatureVerification": {
+          "$ref": "#/definitions/v1SignatureVerification"
+        },
+        "githubWorkflow": {
+          "$ref": "#/definitions/v1GithubWorkflow"
+        },
+        "createdAt": {
+          "type": "string",
+          "format": "date-time"
+        }
+      }
+    },
     "v1BranchProtection": {
       "type": "object",
       "properties": {
@@ -3016,6 +3276,21 @@
         },
         "status": {
           "type": "string"
+        }
+      }
+    },
+    "v1GetArtifactByNameResponse": {
+      "type": "object",
+      "properties": {
+        "artifact": {
+          "$ref": "#/definitions/v1Artifact"
+        },
+        "versions": {
+          "type": "array",
+          "items": {
+            "type": "object",
+            "$ref": "#/definitions/v1ArtifactVersion"
+          }
         }
       }
     },
@@ -3498,6 +3773,23 @@
         }
       }
     },
+    "v1GithubWorkflow": {
+      "type": "object",
+      "properties": {
+        "name": {
+          "type": "string"
+        },
+        "repository": {
+          "type": "string"
+        },
+        "commitSha": {
+          "type": "string"
+        },
+        "trigger": {
+          "type": "string"
+        }
+      }
+    },
     "v1GroupRecord": {
       "type": "object",
       "properties": {
@@ -3528,6 +3820,18 @@
         }
       },
       "title": "BUF does not allow grouping (which is a shame)"
+    },
+    "v1ListArtifactsResponse": {
+      "type": "object",
+      "properties": {
+        "results": {
+          "type": "array",
+          "items": {
+            "type": "object",
+            "$ref": "#/definitions/v1Artifact"
+          }
+        }
+      }
     },
     "v1ListPoliciesResponse": {
       "type": "object",
@@ -3703,31 +4007,6 @@
         "accessTokenExpiresIn": {
           "type": "string",
           "format": "int64"
-        }
-      }
-    },
-    "v1RegisterRepositoryRequest": {
-      "type": "object",
-      "properties": {
-        "provider": {
-          "type": "string"
-        },
-        "groupId": {
-          "type": "integer",
-          "format": "int32"
-        },
-        "repositories": {
-          "type": "array",
-          "items": {
-            "type": "object",
-            "$ref": "#/definitions/v1Repositories"
-          }
-        },
-        "events": {
-          "type": "array",
-          "items": {
-            "type": "string"
-          }
         }
       }
     },
@@ -4009,7 +4288,41 @@
       },
       "description": "Definition defines the rule type. It encompases the schema and the data evaluation."
     },
+    "v1SignatureVerification": {
+      "type": "object",
+      "properties": {
+        "isSigned": {
+          "type": "boolean"
+        },
+        "isVerified": {
+          "type": "boolean"
+        },
+        "isBundleVerified": {
+          "type": "boolean"
+        },
+        "certIdentity": {
+          "type": "string"
+        },
+        "certIssuer": {
+          "type": "string"
+        },
+        "rekorLogId": {
+          "type": "string"
+        },
+        "rekorLogIndex": {
+          "type": "integer",
+          "format": "int32"
+        },
+        "signatureTime": {
+          "type": "string",
+          "format": "date-time"
+        }
+      }
+    },
     "v1StoreProviderTokenResponse": {
+      "type": "object"
+    },
+    "v1SyncRepositoriesResponse": {
       "type": "object"
     },
     "v1UpdatePasswordRequest": {

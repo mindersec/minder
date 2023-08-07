@@ -49,10 +49,14 @@ type RepositoryListResult struct {
 // Add methods here for interacting with the GitHub Rest API
 // e.g. GetRepositoryRestInfo(ctx context.Context, owner string, name string) (*RepositoryInfo, error)
 type RestAPI interface {
+	GetAuthenticatedUser(context.Context) (*github.User, error)
 	GetRepository(context.Context, string, string) (*github.Repository, error)
-	ListAllRepositories(context.Context, bool) (RepositoryListResult, error)
-	CheckIfTokenIsForOrganization(context.Context) (bool, error)
+	ListAllRepositories(context.Context, bool, string) (RepositoryListResult, error)
 	GetBranchProtection(context.Context, string, string, string) (*github.Protection, error)
+	ListAllPackages(context.Context, bool, string, string, int, int) (PackageListResult, error)
+	GetPackageByName(context.Context, bool, string, string, string) (*github.Package, error)
+	GetPackageVersions(context.Context, bool, string, string, string) ([]*github.PackageVersion, error)
+	GetPackageVersionByTag(context.Context, bool, string, string, string, string) (*github.PackageVersion, error)
 
 	// NewRequest allows for building raw and custom requests
 	NewRequest(method, urlStr string, body any, opts ...github.RequestOption) (*http.Request, error)
