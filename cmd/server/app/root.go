@@ -25,6 +25,7 @@ import (
 
 	"github.com/stacklok/mediator/internal/config"
 	"github.com/stacklok/mediator/internal/util"
+	"github.com/stacklok/mediator/pkg/auth"
 )
 
 var (
@@ -48,6 +49,9 @@ func init() {
 	cobra.OnInitialize(initConfig)
 	RootCmd.PersistentFlags().StringVar(&cfgFile, "config", "", "config file (default is $PWD/config.yaml)")
 	if err := config.RegisterDatabaseFlags(viper.GetViper(), RootCmd.PersistentFlags()); err != nil {
+		log.Fatal(err)
+	}
+	if err := auth.RegisterOAuthFlags(viper.GetViper(), RootCmd.PersistentFlags()); err != nil {
 		log.Fatal(err)
 	}
 }

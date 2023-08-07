@@ -25,19 +25,28 @@ import (
 	"context"
 	"fmt"
 	"net/http"
+	"os"
+	"path/filepath"
 
 	go_github "github.com/google/go-github/v53/github"
+	"github.com/spf13/pflag"
 	"github.com/spf13/viper"
+	"github.com/stacklok/mediator/internal/util"
 	"golang.org/x/oauth2"
 	"golang.org/x/oauth2/github"
 	"golang.org/x/oauth2/google"
 )
 
-// Google OAuth2 provider
-const Google = "google"
+const (
+	Google = "google"
+	// Google OAuth2 provider
 
-// Github OAuth2 provider
-const Github = "github"
+	// Github OAuth2 provider
+	Github = "github"
+)
+
+// TODO:
+var knownProviders = []string{Google, Github}
 
 // NewOAuthConfig creates a new OAuth2 config for the given provider
 // and whether the client is a CLI or web client
@@ -67,13 +76,38 @@ func NewOAuthConfig(provider string, cli bool) (*oauth2.Config, error) {
 		return nil, fmt.Errorf("invalid provider: %s", provider)
 	}
 
+	clientId, err := readFileOrConfig(fmt.Sprintf("%s.client_id", provider))
+	if err != nil {
+		return nil, fmt.Errorf("failed to read %s.client_id: %w", provider, err)
+	}
+	clientSecret, err := readFileOrConfig(fmt.Sprintf("%s.client_secret", provider))
+	if err != nil {
+		return nil, fmt.Errorf("failed to read %s.client_id: %w", provider, err)
+	}
+
 	return &oauth2.Config{
-		ClientID:     viper.GetString(fmt.Sprintf("%s.client_id", provider)),
-		ClientSecret: viper.GetString(fmt.Sprintf("%s.client_secret", provider)),
+		ClientID:     clientId,
+		ClientSecret: clientSecret,
 		RedirectURL:  redirectURL(provider, cli),
 		Scopes:       scopes(provider),
 		Endpoint:     endpoint(provider),
 	}, nil
+}
+
+// readFileOrConfig prefers reading from configKey_file (for Kubernetes distribution
+// of secrets), but falls back to a viper string value if the file is not present.
+func readFileOrConfig(configKey string) (string, error) {
+	fileKey := configKey + "_file"
+	if viper.IsSet(fileKey) && viper.GetString(fileKey) != "" {
+		filename := viper.GetString(fileKey)
+		// filepath.Clean avoids a gosec warning on reading a file by name
+		data, err := os.ReadFile(filepath.Clean(filename))
+		if err != nil {
+			return "", err
+		}
+		return string(data), nil
+	}
+	return viper.GetString(configKey), nil
 }
 
 // NewProviderHttpClient creates a new http client for the given provider
@@ -125,4 +159,28 @@ func ValidateProviderToken(_ context.Context, provider string, token string) err
 		return nil
 	}
 	return fmt.Errorf("invalid provider: %s", provider)
+}
+
+// RegisterOAuthFlags registers client ID and secret file flags for all known
+// providers.  This is pretty tied into the internal of the auth module, so it
+// lives here, but it would be nice if we have a consistent registration
+// pattern (database flags are registered in the config module).
+func RegisterOAuthFlags(v *viper.Viper, flags *pflag.FlagSet) error {
+	for _, provider := range knownProviders {
+		idFileKey := fmt.Sprintf("%s.client_id_file", provider)
+		idFileFlag := fmt.Sprintf("%s-client-id-file", provider)
+		idFileDesc := fmt.Sprintf("File containing %s client ID", provider)
+		secretFileKey := fmt.Sprintf("%s.client_secret_file", provider)
+		secretFileFlag := fmt.Sprintf("%s-client-secret-file", provider)
+		secretFileDesc := fmt.Sprintf("File containing %s client secret", provider)
+		if err := util.BindConfigFlag(
+			v, flags, idFileKey, idFileFlag, "", idFileDesc, flags.String); err != nil {
+			return err
+		}
+		if err := util.BindConfigFlag(
+			v, flags, secretFileKey, secretFileFlag, "", secretFileDesc, flags.String); err != nil {
+			return err
+		}
+	}
+	return nil
 }

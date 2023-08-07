@@ -24,7 +24,11 @@ services:
       "--grpc-host=0.0.0.0",
       "--http-host=0.0.0.0",
       "--db-host=postgres",
-      "--config=/app/config.yaml"
+      "--config=/app/config.yaml",
+      # If you don't want to store your GitHub client ID and secret in the main
+      # config file, point to them here:
+      # "--github-client-id-file=/secrets/github_client_id",
+      # "--github-client-secret-file=/secrets/github_client_secret",
       ]
     restart: always # keep the server running
     ports:
@@ -32,6 +36,8 @@ services:
       - "8090:8090"
     volumes:
           - ./config.yaml:/app/config.yaml:z
+          - ./github_client_id:/secrets/github_client_id:z
+          - ./github_client_secret:/secrets/github_client_secret:z
           - ./.ssh:/app/.ssh:z
     environment:
       - KO_DATA_PATH=/app/
@@ -58,6 +64,7 @@ services:
       "up",
       "--yes",
       "--db-host=postgres",
+      "--config=/app/config.yaml",
       ]
     volumes:
           - ./config.yaml:/app/config.yaml:z
