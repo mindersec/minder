@@ -24,15 +24,11 @@ def:
             description: "Set to true to enforce artifact signature being verified."
   # Defines the configuration for both ingesting and evaluating the rule.
   data_eval:
-    type: rest
-    rest:
-      # This is the path to the data source. Given that this will evaluate
-      # for each repository in the organization, we use a template that
-      # will be evaluated for each repository. The structure to use is the
-      # protobuf structure for the entity that is being evaluated.
-      endpoint: '{{.Entity.Prefix}}/packages/{{ index .Params "package_type" }}/{{ index .Params "package_name" }}/versions/{{ index .Params "package_version" }}'
-      # This is the method to use to retrieve the data. It should already default to JSON
-      parse: json
+    type: internal
+    internal:
+      # method will be called using reflection, and will accept a generic json payload
+      # it will also return a generic json payload
+      method: ValidateSignature
     key-type: jq
     data:
       # This key is meant to denote where the info will be
@@ -41,4 +37,14 @@ def:
         # This denotes where the information will be retrieved from
         # the data source.
         type: jq
-        def: ".is_signed"
+        def: ".Verification.is_signed"
+      ".is_verified":
+        # This denotes where the information will be retrieved from
+        # the data source.
+        type: jq
+        def: ".Verification.is_signed"
+      ".is_bundle_verified":
+        # This denotes where the information will be retrieved from
+        # the data source.
+        type: jq
+        def: ".Verification.is_bundle_verified"

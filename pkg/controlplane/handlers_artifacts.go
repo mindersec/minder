@@ -234,7 +234,7 @@ func (s *Server) GetArtifactByName(ctx context.Context, in *pb.GetArtifactByName
 		}
 
 		// get information about signature
-		signature, err := container.GetSignatureTag(baseRef)
+		signature, err := container.GetSignatureTag(baseRef, *pkg.GetOwner().Login, decryptedToken.AccessToken)
 
 		// if there is a signature, we can move forward and retrieve details
 		if err == nil && signature != nil {

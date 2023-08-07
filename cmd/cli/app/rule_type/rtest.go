@@ -98,7 +98,7 @@ func testCmdRun(cmd *cobra.Command, _ []string) error {
 		return fmt.Errorf("error getting provider client: %w", err)
 	}
 
-	eng, err := engine.NewRuleTypeEngine(rt, client)
+	eng, err := engine.NewRuleTypeEngine(rt, client, "")
 	if err != nil {
 		return fmt.Errorf("error creating rule type engine: %w", err)
 	}

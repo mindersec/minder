@@ -137,7 +137,7 @@ func (e *Executor) handleReposInitEvent(ctx context.Context, prov string, evt *I
 		return fmt.Errorf("error getting policy: %w", err)
 	}
 
-	cli, err := e.buildClient(ctx, prov, evt.Group)
+	cli, _, err := e.buildClient(ctx, prov, evt.Group)
 	if err != nil {
 		return fmt.Errorf("error building client: %w", err)
 	}
@@ -172,7 +172,7 @@ func (e *Executor) handleReposInitEvent(ctx context.Context, prov string, evt *I
 
 			// Let's evaluate all the rules for this policy
 			err = TraverseRules(relevant, func(rule *pb.PipelinePolicy_Rule) error {
-				rt, rte, err := e.getEvaluator(ctx, *pol.Id, prov, cli, ectx, rule)
+				rt, rte, err := e.getEvaluator(ctx, *pol.Id, prov, cli, "", ectx, rule)
 				if err != nil {
 					return err
 				}
@@ -245,7 +245,7 @@ func (e *Executor) handleArtifactPublishedEvent(ctx context.Context, prov string
 		return fmt.Errorf("error getting group: %w", err)
 	}
 
-	cli, err := e.buildClient(ctx, prov, g)
+	cli, token, err := e.buildClient(ctx, prov, g)
 	if err != nil {
 		return fmt.Errorf("error building client: %w", err)
 	}
@@ -274,12 +274,10 @@ func (e *Executor) handleArtifactPublishedEvent(ctx context.Context, prov string
 
 		// Let's evaluate all the rules for this policy
 		err = TraverseRules(relevant, func(rule *pb.PipelinePolicy_Rule) error {
-			rt, rte, err := e.getEvaluator(ctx, *pol.Id, prov, cli, ectx, rule)
+			_, rte, err := e.getEvaluator(ctx, *pol.Id, prov, cli, token, ectx, rule)
 			if err != nil {
 				return err
 			}
-			fmt.Println(rt)
-			fmt.Println(rte)
 			package_info, ok := payload["package"].(map[string]interface{})
 			if !ok {
 				return fmt.Errorf("error getting package info")
@@ -297,9 +295,6 @@ func (e *Executor) handleArtifactPublishedEvent(ctx context.Context, prov string
 				tag_info := container_metadata["tag"].(map[string]interface{})
 				tag = tag_info["name"].(string)
 			}
-			fmt.Println(package_info)
-			fmt.Println(package_version)
-			fmt.Println(container_metadata)
 
 			artifact := &pb.ArtifactEventPayload{
 				ArtifactId:   int64(package_info["id"].(float64)),
@@ -310,8 +305,11 @@ func (e *Executor) handleArtifactPublishedEvent(ctx context.Context, prov string
 				VersionId:    int64(package_version["id"].(float64)),
 				VersionSha:   package_version["version"].(string),
 				Tag:          tag,
+				PackageUrl:   package_version["package_url"].(string),
 			}
-			fmt.Println(artifact)
+
+			result := rte.Eval(ctx, artifact, rule.Def.AsMap(), rule.Params.AsMap())
+			fmt.Println(result)
 			return nil
 
 			//return e.createOrUpdateRepositoryEvalStatus(ctx, *pol.Id, dbrepo.ID, *rt.Id,
@@ -394,7 +392,7 @@ func (e *Executor) handleRepoEvent(ctx context.Context, prov string, payload map
 		return fmt.Errorf("error getting group: %w", err)
 	}
 
-	cli, err := e.buildClient(ctx, prov, g)
+	cli, _, err := e.buildClient(ctx, prov, g)
 	if err != nil {
 		return fmt.Errorf("error building client: %w", err)
 	}
@@ -423,7 +421,7 @@ func (e *Executor) handleRepoEvent(ctx context.Context, prov string, payload map
 
 		// Let's evaluate all the rules for this policy
 		err = TraverseRules(relevant, func(rule *pb.PipelinePolicy_Rule) error {
-			rt, rte, err := e.getEvaluator(ctx, *pol.Id, prov, cli, ectx, rule)
+			rt, rte, err := e.getEvaluator(ctx, *pol.Id, prov, cli, "", ectx, rule)
 			if err != nil {
 				return err
 			}
@@ -445,6 +443,7 @@ func (e *Executor) getEvaluator(
 	policyID int32,
 	prov string,
 	cli ghclient.RestAPI,
+	token string,
 	ectx *EntityContext,
 	rule *pb.PipelinePolicy_Rule,
 ) (*pb.RuleType, *RuleTypeEngine, error) {
@@ -467,7 +466,7 @@ func (e *Executor) getEvaluator(
 
 	// TODO(jaosorior): Rule types should be cached in memory so
 	// we don't have to query the database for each rule.
-	rte, err := NewRuleTypeEngine(rt, cli)
+	rte, err := NewRuleTypeEngine(rt, cli, token)
 	if err != nil {
 		return nil, nil, fmt.Errorf("error creating rule type engine: %w", err)
 	}
@@ -479,26 +478,26 @@ func (e *Executor) buildClient(
 	ctx context.Context,
 	prov string,
 	groupID int32,
-) (ghclient.RestAPI, error) {
+) (ghclient.RestAPI, string, error) {
 	encToken, err := e.querier.GetAccessTokenByGroupID(ctx,
 		db.GetAccessTokenByGroupIDParams{Provider: prov, GroupID: groupID})
 	if err != nil {
-		return nil, fmt.Errorf("error getting access token: %w", err)
+		return nil, "", fmt.Errorf("error getting access token: %w", err)
 	}
 
 	decryptedToken, err := crypto.DecryptOAuthToken(encToken.EncryptedToken)
 	if err != nil {
-		return nil, fmt.Errorf("error decrypting access token: %w", err)
+		return nil, "", fmt.Errorf("error decrypting access token: %w", err)
 	}
 
 	cli, err := ghclient.NewRestClient(ctx, ghclient.GitHubConfig{
 		Token: decryptedToken.AccessToken,
 	})
 	if err != nil {
-		return nil, fmt.Errorf("error creating github client: %w", err)
+		return nil, "", fmt.Errorf("error creating github client: %w", err)
 	}
 
-	return cli, nil
+	return cli, decryptedToken.AccessToken, nil
 }
 
 func (e *Executor) createOrUpdateRepositoryEvalStatus(

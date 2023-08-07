@@ -31,6 +31,7 @@ import (
 
 	pb "github.com/stacklok/mediator/pkg/generated/protobuf/go/mediator/v1"
 	ghclient "github.com/stacklok/mediator/pkg/providers/github"
+	"github.com/stacklok/mediator/pkg/rule_methods"
 )
 
 // RuleDataIngest is the interface for rule data ingest
@@ -51,7 +52,7 @@ func NewErrEvaluationFailed(sfmt string, args ...any) error {
 
 // NewRuleDataIngest creates a new rule data ingest based no the given rule
 // type definition.
-func NewRuleDataIngest(rt *pb.RuleType, cli ghclient.RestAPI) (RuleDataIngest, error) {
+func NewRuleDataIngest(rt *pb.RuleType, cli ghclient.RestAPI, access_token string) (RuleDataIngest, error) {
 	// TODO: make this more generic and/or use constants
 	switch rt.Def.DataEval.Type {
 	case "rest":
@@ -61,6 +62,13 @@ func NewRuleDataIngest(rt *pb.RuleType, cli ghclient.RestAPI) (RuleDataIngest, e
 
 		eval := rt.Def.GetDataEval()
 		return NewRestRuleDataIngest(eval, eval.GetRest(), cli)
+
+	case "internal":
+		if rt.Def.DataEval.GetInternal() == nil {
+			return nil, fmt.Errorf("rule type engine missing internal configuration")
+		}
+		eval := rt.Def.GetDataEval()
+		return NewInternalRuleDataIngest(eval, eval.GetInternal(), cli, access_token)
 	default:
 		return nil, fmt.Errorf("rule type engine only supports REST data ingest")
 	}
@@ -69,7 +77,7 @@ func NewRuleDataIngest(rt *pb.RuleType, cli ghclient.RestAPI) (RuleDataIngest, e
 // RestRuleDataIngest is the engine for a rule type that uses REST data ingest
 type RestRuleDataIngest struct {
 	cfg              *pb.RuleType_Definition_DataEval
-	restCfg          *pb.RuleType_Definition_DataEval_RestType
+	restCfg          *pb.RestType
 	cli              ghclient.RestAPI
 	endpointTemplate *template.Template
 	method           string
@@ -78,7 +86,7 @@ type RestRuleDataIngest struct {
 // NewRestRuleDataIngest creates a new REST rule data ingest engine
 func NewRestRuleDataIngest(
 	cfg *pb.RuleType_Definition_DataEval,
-	restCfg *pb.RuleType_Definition_DataEval_RestType,
+	restCfg *pb.RestType,
 	cli ghclient.RestAPI,
 ) (*RestRuleDataIngest, error) {
 	tmpl := template.New("path")
@@ -100,6 +108,31 @@ func NewRestRuleDataIngest(
 		cli:              cli,
 		endpointTemplate: tmpl,
 		method:           method,
+	}, nil
+}
+
+// InternalRuleDataIngest is the engine for a rule tye that uses internal data ingest
+type InternalRuleDataIngest struct {
+	cfg         *pb.RuleType_Definition_DataEval
+	internalCfg *pb.InternalType
+	cli         ghclient.RestAPI
+	method      string
+	accessToken string
+}
+
+// NewInternalRuleDataIngest creates a new internal rule data ingest engine
+func NewInternalRuleDataIngest(
+	cfg *pb.RuleType_Definition_DataEval,
+	internalCfg *pb.InternalType,
+	cli ghclient.RestAPI,
+	access_token string,
+) (*InternalRuleDataIngest, error) {
+	return &InternalRuleDataIngest{
+		cfg:         cfg,
+		internalCfg: internalCfg,
+		cli:         cli,
+		accessToken: access_token,
+		method:      internalCfg.GetMethod(),
 	}, nil
 }
 
@@ -167,6 +200,59 @@ func (rdi *RestRuleDataIngest) Eval(ctx context.Context, ent any, pol, params ma
 		}
 	}
 
+	return nil
+}
+
+// Eval evaluates the rule type against the given entity and policy
+func (idi *InternalRuleDataIngest) Eval(ctx context.Context, ent any, pol, params map[string]any) error {
+	// call internal method stored in pkg and method
+	rm := rule_methods.RuleMethods{}
+	value := reflect.ValueOf(rm)
+	method := value.MethodByName(idi.method)
+
+	// Check if the method exists
+	if method.IsValid() {
+		// call method
+		// Call the method (empty parameter list)
+		result := method.Call([]reflect.Value{reflect.ValueOf(ctx), reflect.ValueOf(idi.cli),
+			reflect.ValueOf(idi.accessToken), reflect.ValueOf(ent)})
+		if len(result) != 2 {
+			return fmt.Errorf("rule method should return 3 values")
+		}
+		if !result[1].IsNil() {
+			return fmt.Errorf("error calling rule method")
+		}
+		if result[0].IsNil() {
+			return fmt.Errorf("error calling rule method")
+		}
+		methodResult := result[0].Interface().(json.RawMessage)
+		var resultObj interface{}
+		err := json.Unmarshal(methodResult, &resultObj)
+		if err != nil {
+			return fmt.Errorf("cannot unmarshal json: %w", err)
+		}
+
+		for key, val := range idi.cfg.Data {
+			policyVal, err := JQGetValuesFromAccessor(ctx, key, pol)
+			if err != nil {
+				return fmt.Errorf("cannot get values from policy accessor: %w", err)
+			}
+
+			dataVal, err := JQGetValuesFromAccessor(ctx, val.Def, resultObj)
+			if err != nil {
+				return fmt.Errorf("cannot get values from data accessor: %w", err)
+			}
+
+			// Deep compare
+			if !reflect.DeepEqual(policyVal, dataVal) {
+				return NewErrEvaluationFailed("data does not match policy: for path %s got %v, want %v",
+					key, dataVal, policyVal)
+			}
+		}
+
+	} else {
+		return fmt.Errorf("rule method not found")
+	}
 	return nil
 }
 

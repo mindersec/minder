@@ -109,6 +109,7 @@
     - [GetVulnerabilityByIdResponse](#mediator-v1-GetVulnerabilityByIdResponse)
     - [GithubWorkflow](#mediator-v1-GithubWorkflow)
     - [GroupRecord](#mediator-v1-GroupRecord)
+    - [InternalType](#mediator-v1-InternalType)
     - [ListArtifactsRequest](#mediator-v1-ListArtifactsRequest)
     - [ListArtifactsResponse](#mediator-v1-ListArtifactsResponse)
     - [ListPoliciesRequest](#mediator-v1-ListPoliciesRequest)
@@ -139,6 +140,7 @@
     - [Repositories](#mediator-v1-Repositories)
     - [RepositoryRecord](#mediator-v1-RepositoryRecord)
     - [RepositoryResult](#mediator-v1-RepositoryResult)
+    - [RestType](#mediator-v1-RestType)
     - [RevokeOauthGroupTokenRequest](#mediator-v1-RevokeOauthGroupTokenRequest)
     - [RevokeOauthGroupTokenResponse](#mediator-v1-RevokeOauthGroupTokenResponse)
     - [RevokeOauthTokensRequest](#mediator-v1-RevokeOauthTokensRequest)
@@ -155,7 +157,6 @@
     - [RuleType.Definition.DataEval](#mediator-v1-RuleType-Definition-DataEval)
     - [RuleType.Definition.DataEval.DataEntry](#mediator-v1-RuleType-Definition-DataEval-DataEntry)
     - [RuleType.Definition.DataEval.DataEvalDef](#mediator-v1-RuleType-Definition-DataEval-DataEvalDef)
-    - [RuleType.Definition.DataEval.RestType](#mediator-v1-RuleType-Definition-DataEval-RestType)
     - [RuleType.Definition.RuleSchemaEntry](#mediator-v1-RuleType-Definition-RuleSchemaEntry)
     - [SignatureVerification](#mediator-v1-SignatureVerification)
     - [StoreProviderTokenRequest](#mediator-v1-StoreProviderTokenRequest)
@@ -243,6 +244,7 @@
 | version_id | [int64](#int64) |  |  |
 | version_sha | [string](#string) |  |  |
 | tag | [string](#string) |  |  |
+| package_url | [string](#string) |  |  |
 
 
 
@@ -1893,6 +1895,22 @@ BUF does not allow grouping (which is a shame)
 
 
 
+<a name="mediator-v1-InternalType"></a>
+
+### InternalType
+InternalType defines the internal data evaluation
+This is used to call internal methods
+
+
+| Field | Type | Label | Description |
+| ----- | ---- | ----- | ----------- |
+| method | [string](#string) |  |  |
+
+
+
+
+
+
 <a name="mediator-v1-ListArtifactsRequest"></a>
 
 ### ListArtifactsRequest
@@ -2404,6 +2422,26 @@ RepositoryRecord is used for registering repositories.
 
 
 
+<a name="mediator-v1-RestType"></a>
+
+### RestType
+RestType defines the rest data evaluation.
+This is used to fetch data from a REST endpoint.
+
+
+| Field | Type | Label | Description |
+| ----- | ---- | ----- | ----------- |
+| endpoint | [string](#string) |  | endpoint is the endpoint to fetch data from. This can be a URL or the path on the API.bool This is a required field and must be set. This is also evaluated via a template which allows us dynamically fill in the values. |
+| method | [string](#string) |  | method is the method to use to fetch data. |
+| headers | [string](#string) | repeated | headers are the headers to be sent to the endpoint. |
+| body | [string](#string) | optional | body is the body to be sent to the endpoint. |
+| parse | [string](#string) |  | parse is the parsing mechanism to be used to parse the data. |
+
+
+
+
+
+
 <a name="mediator-v1-RevokeOauthGroupTokenRequest"></a>
 
 ### RevokeOauthGroupTokenRequest
@@ -2610,7 +2648,8 @@ DataEval defines how the data is evaluated.
 | Field | Type | Label | Description |
 | ----- | ---- | ----- | ----------- |
 | type | [string](#string) |  | type is the type of the data evaluation. we currently support rest. |
-| rest | [RuleType.Definition.DataEval.RestType](#mediator-v1-RuleType-Definition-DataEval-RestType) | optional | rest is the rest data evaluation. this is only used if the type is rest. |
+| rest | [RestType](#mediator-v1-RestType) | optional | rest is the rest data evaluation. this is only used if the type is rest. |
+| internal | [InternalType](#mediator-v1-InternalType) | optional | internal is the internal data evaluation. this is only used if the type is internal. |
 | key_type | [string](#string) |  | key_type is the type of the key for each data item. This is used to index the data. Currently only `jq` is supported. |
 | data | [RuleType.Definition.DataEval.DataEntry](#mediator-v1-RuleType-Definition-DataEval-DataEntry) | repeated | data is the data evaluation definition. each key is a piece of data coming from the policy to be evaluated. The value is the definition of the data evaluation. |
 
@@ -2650,26 +2689,6 @@ e.g. the actual jq expression.
 | ----- | ---- | ----- | ----------- |
 | type | [string](#string) |  | type is the type of the data evaluation. |
 | def | [string](#string) |  | def is the definition of the data evaluation. |
-
-
-
-
-
-
-<a name="mediator-v1-RuleType-Definition-DataEval-RestType"></a>
-
-### RuleType.Definition.DataEval.RestType
-RestType defines the rest data evaluation.
-This is used to fetch data from a REST endpoint.
-
-
-| Field | Type | Label | Description |
-| ----- | ---- | ----- | ----------- |
-| endpoint | [string](#string) |  | endpoint is the endpoint to fetch data from. This can be a URL or the path on the API.bool This is a required field and must be set. This is also evaluated via a template which allows us dynamically fill in the values. |
-| method | [string](#string) |  | method is the method to use to fetch data. |
-| headers | [string](#string) | repeated | headers are the headers to be sent to the endpoint. |
-| body | [string](#string) | optional | body is the body to be sent to the endpoint. |
-| parse | [string](#string) |  | parse is the parsing mechanism to be used to parse the data. |
 
 
 

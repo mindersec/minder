@@ -533,6 +533,9 @@ func (s *Server) GetRuleTypeById(ctx context.Context, in *pb.GetRuleTypeByIdRequ
 // CreateRuleType is a method to create a rule type
 func (s *Server) CreateRuleType(ctx context.Context, crt *pb.CreateRuleTypeRequest) (*pb.CreateRuleTypeResponse, error) {
 	in := crt.GetRuleType()
+	fmt.Println("rule type is")
+	fmt.Println(in.GetName())
+	fmt.Println(in.GetDef())
 
 	ctx, err := s.authAndContextValidation(ctx, in.GetContext())
 	if err != nil {
