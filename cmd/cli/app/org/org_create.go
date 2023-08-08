@@ -22,7 +22,6 @@
 package org
 
 import (
-	"encoding/json"
 	"fmt"
 	"os"
 
@@ -31,6 +30,7 @@ import (
 
 	"github.com/stacklok/mediator/internal/util"
 	pb "github.com/stacklok/mediator/pkg/generated/protobuf/go/mediator/v1"
+	"google.golang.org/protobuf/encoding/protojson"
 )
 
 // Org_createCmd is the command for creating an organization
@@ -70,7 +70,11 @@ within a mediator control plane.`,
 		})
 		util.ExitNicelyOnError(err, "Error creating organization")
 
-		org, err := json.MarshalIndent(resp, "", "  ")
+		//org, err := json.MarshalIndent(resp, "", "  ")
+		m := protojson.MarshalOptions{
+			Indent: "  ",
+		}
+		org, err := m.Marshal(resp)
 		if err != nil {
 			cmd.Println("Created organization: ", resp.Name)
 		} else {

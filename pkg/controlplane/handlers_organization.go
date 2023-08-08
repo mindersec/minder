@@ -18,12 +18,15 @@ import (
 	"context"
 	"database/sql"
 	"fmt"
+	"time"
 
 	"github.com/go-playground/validator/v10"
 	"google.golang.org/grpc/codes"
 	"google.golang.org/grpc/status"
 	"google.golang.org/protobuf/types/known/timestamppb"
 
+	"github.com/stacklok/mediator/internal/util"
+	mcrypto "github.com/stacklok/mediator/pkg/crypto"
 	"github.com/stacklok/mediator/pkg/db"
 	pb "github.com/stacklok/mediator/pkg/generated/protobuf/go/mediator/v1"
 )
@@ -108,10 +111,20 @@ func (s *Server) CreateOrganization(ctx context.Context,
 			CreatedAt: timestamppb.New(roleGroup.CreatedAt), UpdatedAt: timestamppb.New(roleGroup.UpdatedAt)}
 		response.DefaultRoles = []*pb.RoleRecord{&rl, &rg}
 
+		// generate password for the user
+		seed := time.Now().UnixNano()
+		pass := util.RandomPassword(8, seed)
+		// hash the password for storing in the database
+		pHash, err := mcrypto.GeneratePasswordHash(pass, &s.cfg.Salt)
+		if err != nil {
+			return nil, status.Errorf(codes.Internal, "failed to hash password: %s", err.Error())
+		}
+
 		// we can create the default user
 		user, err := qtx.CreateUser(ctx, db.CreateUserParams{
 			OrganizationID:      org.ID,
 			Username:            fmt.Sprintf("%s-admin", org.Name),
+			Password:            pHash,
 			IsProtected:         true,
 			NeedsPasswordChange: true,
 		})
@@ -136,7 +149,7 @@ func (s *Server) CreateOrganization(ctx context.Context,
 		}
 
 		usr := pb.UserRecord{Id: user.ID, OrganizationId: org.ID, Username: user.Username,
-			Password: user.Password, IsProtected: &user.IsProtected, CreatedAt: timestamppb.New(user.CreatedAt),
+			Password: pass, IsProtected: &user.IsProtected, CreatedAt: timestamppb.New(user.CreatedAt),
 			UpdatedAt: timestamppb.New(user.UpdatedAt), NeedsPasswordChange: &user.NeedsPasswordChange}
 		response.DefaultUser = &usr
 	}
