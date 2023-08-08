@@ -540,10 +540,6 @@ func (s *Server) CreateRuleType(ctx context.Context, crt *pb.CreateRuleTypeReque
 	}
 
 	entityCtx := engine.EntityFromContext(ctx)
-	fmt.Println("entity is")
-	fmt.Println(entityCtx)
-	fmt.Println(entityCtx.GetGroup().GetID())
-
 	_, err = s.store.GetRuleTypeByName(ctx, db.GetRuleTypeByNameParams{
 		Provider: entityCtx.GetProvider(),
 		GroupID:  entityCtx.GetGroup().GetID(),
