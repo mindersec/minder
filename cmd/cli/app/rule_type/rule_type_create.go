@@ -25,6 +25,7 @@ import (
 
 	"github.com/spf13/cobra"
 	"github.com/spf13/viper"
+	"google.golang.org/protobuf/encoding/protojson"
 
 	"github.com/stacklok/mediator/internal/util"
 	pb "github.com/stacklok/mediator/pkg/generated/protobuf/go/mediator/v1"
@@ -96,12 +97,12 @@ within a mediator control plane.`,
 			return fmt.Errorf("error creating rule type: %w", err)
 		}
 
-		rul, err := json.MarshalIndent(resp, "", "  ")
-		if err != nil {
-			cmd.Println("Created rule type: ", resp.RuleType.Id)
-		} else {
-			cmd.Println("Created rule type:", string(rul))
+		m := protojson.MarshalOptions{
+			Indent: "  ",
 		}
+		out, err := m.Marshal(resp)
+		util.ExitNicelyOnError(err, "Error marshalling json")
+		fmt.Println(string(out))
 
 		return nil
 	},

@@ -28,37 +28,36 @@ import (
 
 	"github.com/spf13/cobra"
 	"github.com/spf13/viper"
-	"gopkg.in/yaml.v3"
+	"google.golang.org/protobuf/encoding/protojson"
 
 	"github.com/stacklok/mediator/cmd/cli/app"
 	"github.com/stacklok/mediator/internal/util"
 	pb "github.com/stacklok/mediator/pkg/generated/protobuf/go/mediator/v1"
 )
 
-type output struct {
-	Org    *pb.OrganizationRecord `json:"org"`
-	Groups []*pb.GroupRecord      `json:"groups"`
-	Roles  []*pb.RoleRecord       `json:"roles"`
-	Users  []*pb.UserRecord       `json:"users"`
-}
+func printOrganization(orgId *pb.GetOrganizationResponse, orgName *pb.GetOrganizationByNameResponse, format string) {
+	var outOrg []byte
+	var err error
 
-func printOrganization(org *pb.OrganizationRecord, groups []*pb.GroupRecord,
-	roles []*pb.RoleRecord, users []*pb.UserRecord, format string) {
-	output := output{
-		Org:    org,
-		Groups: groups,
-		Roles:  roles,
-		Users:  users,
+	m := protojson.MarshalOptions{
+		Indent: "  ",
 	}
-	if format == app.JSON {
-		output, err := json.MarshalIndent(output, "", "  ")
-		util.ExitNicelyOnError(err, "Error marshalling json")
-		fmt.Println(string(output))
-	} else if format == app.YAML {
-		yamlData, err := yaml.Marshal(output)
-		util.ExitNicelyOnError(err, "Error marshalling yaml")
-		fmt.Println(string(yamlData))
+	if orgId != nil {
+		outOrg, err = m.Marshal(orgId)
+	} else {
+		outOrg, err = m.Marshal(orgName)
+	}
+	util.ExitNicelyOnError(err, "Error marshalling json")
 
+	if format == app.JSON {
+		fmt.Println(string(outOrg))
+	} else if format == app.YAML {
+		var rawMsg json.RawMessage
+		err := json.Unmarshal(outOrg, &rawMsg)
+		util.ExitNicelyOnError(err, "Error unmarshalling json")
+		yamlResult, err := util.ConvertJsonToYaml(rawMsg)
+		util.ExitNicelyOnError(err, "Error converting json to yaml")
+		fmt.Println(string(yamlResult))
 	}
 }
 
@@ -107,13 +106,13 @@ mediator control plane.`,
 				OrganizationId: id,
 			})
 			util.ExitNicelyOnError(err, "Error getting organization by id")
-			printOrganization(org.Organization, org.Groups, org.Roles, org.Users, format)
+			printOrganization(org, nil, format)
 		} else if name != "" {
 			org, err := client.GetOrganizationByName(ctx, &pb.GetOrganizationByNameRequest{
 				Name: name,
 			})
 			util.ExitNicelyOnError(err, "Error getting organization by name")
-			printOrganization(org.Organization, org.Groups, org.Roles, org.Users, format)
+			printOrganization(nil, org, format)
 		} else {
 			fmt.Fprintf(os.Stderr, "Error: must specify either id or name\n")
 			os.Exit(1)

@@ -22,7 +22,7 @@ import (
 
 	"github.com/spf13/cobra"
 	"github.com/spf13/viper"
-	"gopkg.in/yaml.v3"
+	"google.golang.org/protobuf/encoding/protojson"
 
 	"github.com/stacklok/mediator/internal/util"
 	pb "github.com/stacklok/mediator/pkg/generated/protobuf/go/mediator/v1"
@@ -70,19 +70,22 @@ mediator control plane for an specific group.`,
 			return fmt.Errorf("error getting policies: %w", err)
 		}
 
+		m := protojson.MarshalOptions{
+			Indent: "  ",
+		}
+		output, err := m.Marshal(resp)
+		util.ExitNicelyOnError(err, "error marshalling json")
+
 		if format == "json" {
-			output, err := json.MarshalIndent(resp.Policies, "", "  ")
-			if err != nil {
-				return fmt.Errorf("error marshalling json: %w", err)
-			}
 			fmt.Println(string(output))
 		} else if format == "yaml" {
-			enc := yaml.NewEncoder(os.Stdout)
-			enc.SetIndent(2)
+			var rawMsg json.RawMessage
+			err = json.Unmarshal(output, &rawMsg)
+			util.ExitNicelyOnError(err, "Error unmarshalling json")
+			yamlResult, err := util.ConvertJsonToYaml(rawMsg)
+			util.ExitNicelyOnError(err, "Error converting json to yaml")
+			fmt.Println(string(yamlResult))
 
-			if err := enc.Encode(resp.Policies); err != nil {
-				return fmt.Errorf("error marshalling yaml: %w", err)
-			}
 		}
 
 		// this is unreachable

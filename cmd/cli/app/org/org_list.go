@@ -30,7 +30,7 @@ import (
 	"github.com/olekukonko/tablewriter"
 	"github.com/spf13/cobra"
 	"github.com/spf13/viper"
-	"gopkg.in/yaml.v3"
+	"google.golang.org/protobuf/encoding/protojson"
 
 	"github.com/stacklok/mediator/internal/util"
 	pb "github.com/stacklok/mediator/pkg/generated/protobuf/go/mediator/v1"
@@ -75,8 +75,11 @@ mediator control plane.`,
 		})
 		util.ExitNicelyOnError(err, "Error getting organizations")
 
-		// print output in a table
+		m := protojson.MarshalOptions{
+			Indent: "  ",
+		}
 		if format == "" {
+			// print output in a table
 			table := tablewriter.NewWriter(os.Stdout)
 			table.SetHeader([]string{"Id", "Name", "Company", "Created date", "Updated date"})
 
@@ -92,13 +95,19 @@ mediator control plane.`,
 			}
 			table.Render()
 		} else if format == "json" {
-			output, err := json.MarshalIndent(resp.Organizations, "", "  ")
+			out, err := m.Marshal(resp)
 			util.ExitNicelyOnError(err, "Error marshalling json")
-			fmt.Println(string(output))
+			fmt.Println(string(out))
 		} else if format == "yaml" {
-			yamlData, err := yaml.Marshal(resp.Organizations)
-			util.ExitNicelyOnError(err, "Error marshalling yaml")
-			fmt.Println(string(yamlData))
+			out, err := m.Marshal(resp)
+			util.ExitNicelyOnError(err, "Error marshalling json")
+
+			var rawMsg json.RawMessage
+			err = json.Unmarshal(out, &rawMsg)
+			util.ExitNicelyOnError(err, "Error unmarshalling json")
+			yamlResult, err := util.ConvertJsonToYaml(rawMsg)
+			util.ExitNicelyOnError(err, "Error converting json to yaml")
+			fmt.Println(string(yamlResult))
 
 		}
 	},

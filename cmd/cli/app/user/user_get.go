@@ -29,87 +29,61 @@ import (
 
 	"github.com/spf13/cobra"
 	"github.com/spf13/viper"
-	"gopkg.in/yaml.v3"
+	"google.golang.org/protobuf/encoding/protojson"
 
 	"github.com/stacklok/mediator/cmd/cli/app"
 	"github.com/stacklok/mediator/internal/util"
 	pb "github.com/stacklok/mediator/pkg/generated/protobuf/go/mediator/v1"
 )
 
-func getUser(ctx context.Context, client pb.UserServiceClient, queryType string,
-	id int32, username string, email string) (*pb.UserRecord, []*pb.GroupRecord, []*pb.RoleRecord, error) {
-	var userRecord *pb.UserRecord
-	var groups []*pb.GroupRecord
-	var roles []*pb.RoleRecord
-
-	if queryType == "id" {
-		// get by id
-		user, err := client.GetUserById(ctx, &pb.GetUserByIdRequest{
-			Id: id,
-		})
-		if err != nil {
-			return nil, nil, nil, err
-		}
-		userRecord = user.User
-		groups = user.Groups
-		roles = user.Roles
-
-	} else if queryType == "username" {
-		// get by username
-		user, err := client.GetUserByUserName(ctx, &pb.GetUserByUserNameRequest{
-			Username: username,
-		})
-		if err != nil {
-			return nil, nil, nil, err
-		}
-		userRecord = user.User
-		groups = user.Groups
-		roles = user.Roles
-
-	} else if queryType == "email" {
-		user, err := client.GetUserByEmail(ctx, &pb.GetUserByEmailRequest{
-			Email: email,
-		})
-		if err != nil {
-			return nil, nil, nil, err
-		}
-		userRecord = user.User
-		groups = user.Groups
-		roles = user.Roles
-	} else if queryType == "personal" {
-		user, err := client.GetUser(ctx, &pb.GetUserRequest{})
-		if err != nil {
-			return nil, nil, nil, err
-		}
-		userRecord = user.User
-		groups = user.Groups
-		roles = user.Roles
+func getUserById(ctx context.Context, client pb.UserServiceClient, id int32) (*pb.GetUserByIdResponse, error) {
+	user, err := client.GetUserById(ctx, &pb.GetUserByIdRequest{
+		Id: id,
+	})
+	if err != nil {
+		return nil, err
 	}
-
-	return userRecord, groups, roles, nil
+	return user, err
 }
 
-type output struct {
-	User   *pb.UserRecord    `json:"user"`
-	Groups []*pb.GroupRecord `json:"groups"`
-	Roles  []*pb.RoleRecord  `json:"roles"`
+func getUserByUsername(ctx context.Context, client pb.UserServiceClient, username string) (*pb.GetUserByUserNameResponse, error) {
+	user, err := client.GetUserByUserName(ctx, &pb.GetUserByUserNameRequest{
+		Username: username,
+	})
+	if err != nil {
+		return nil, err
+	}
+	return user, err
 }
 
-func printUser(user *pb.UserRecord, groups []*pb.GroupRecord, roles []*pb.RoleRecord, format string) {
-	output := output{
-		User:   user,
-		Groups: groups,
-		Roles:  roles,
+func getUserByEmail(ctx context.Context, client pb.UserServiceClient, email string) (*pb.GetUserByEmailResponse, error) {
+	user, err := client.GetUserByEmail(ctx, &pb.GetUserByEmailRequest{
+		Email: email,
+	})
+	if err != nil {
+		return nil, err
 	}
+	return user, err
+}
+
+func getOwnUser(ctx context.Context, client pb.UserServiceClient) (*pb.GetUserResponse, error) {
+	user, err := client.GetUser(ctx, &pb.GetUserRequest{})
+	if err != nil {
+		return nil, err
+	}
+	return user, err
+}
+
+func printUser(content []byte, format string) {
 	if format == app.JSON {
-		output, err := json.MarshalIndent(output, "", "  ")
-		util.ExitNicelyOnError(err, "Error marshalling json")
-		fmt.Println(string(output))
+		fmt.Println(string(content))
 	} else if format == app.YAML {
-		yamlData, err := yaml.Marshal(output)
-		util.ExitNicelyOnError(err, "Error marshalling yaml")
-		fmt.Println(string(yamlData))
-
+		var rawMsg json.RawMessage
+		err := json.Unmarshal(content, &rawMsg)
+		util.ExitNicelyOnError(err, "Error unmarshalling json")
+		yamlResult, err := util.ConvertJsonToYaml(rawMsg)
+		util.ExitNicelyOnError(err, "Error converting json to yaml")
+		fmt.Println(string(yamlResult))
 	}
 }
 
@@ -163,29 +137,37 @@ mediator control plane.`,
 			os.Exit(1)
 		}
 
-		var user *pb.UserRecord
-		var groups []*pb.GroupRecord
-		var roles []*pb.RoleRecord
+		m := protojson.MarshalOptions{
+			Indent: "  ",
+		}
 		// get by id
 		if id > 0 {
-			user, groups, roles, err = getUser(ctx, client, "id", id, "", "")
+			user, err := getUserById(ctx, client, id)
 			util.ExitNicelyOnError(err, "Error getting user by id")
-			printUser(user, groups, roles, format)
+			out, err := m.Marshal(user)
+			util.ExitNicelyOnError(err, "Error marshalling json")
+			printUser(out, format)
 		} else if username != "" {
 			// get by username
-			user, groups, roles, err = getUser(ctx, client, "username", 0, username, "")
+			user, err := getUserByUsername(ctx, client, username)
 			util.ExitNicelyOnError(err, "Error getting user by username")
-			printUser(user, groups, roles, format)
+			out, err := m.Marshal(user)
+			util.ExitNicelyOnError(err, "Error marshalling json")
+			printUser(out, format)
 		} else if email != "" {
 			// get by email
-			user, groups, roles, err = getUser(ctx, client, "email", 0, "", email)
+			user, err := getUserByEmail(ctx, client, email)
 			util.ExitNicelyOnError(err, "Error getting user by email")
-			printUser(user, groups, roles, format)
+			out, err := m.Marshal(user)
+			util.ExitNicelyOnError(err, "Error marshalling json")
+			printUser(out, format)
 		} else {
 			// just get personal profile
-			user, groups, roles, err = getUser(ctx, client, "personal", 0, "", "")
+			user, err := getOwnUser(ctx, client)
 			util.ExitNicelyOnError(err, "Error getting personal user")
-			printUser(user, groups, roles, format)
+			out, err := m.Marshal(user)
+			util.ExitNicelyOnError(err, "Error marshalling json")
+			printUser(out, format)
 		}
 	},
 }

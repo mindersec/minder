@@ -22,12 +22,12 @@
 package group
 
 import (
-	"encoding/json"
 	"fmt"
 	"os"
 
 	"github.com/spf13/cobra"
 	"github.com/spf13/viper"
+	"google.golang.org/protobuf/encoding/protojson"
 
 	"github.com/stacklok/mediator/internal/util"
 	pb "github.com/stacklok/mediator/pkg/generated/protobuf/go/mediator/v1"
@@ -72,7 +72,10 @@ a mediator control plane.`,
 		})
 		util.ExitNicelyOnError(err, "Error creating group")
 
-		group, err := json.MarshalIndent(resp, "", "  ")
+		m := protojson.MarshalOptions{
+			Indent: "  ",
+		}
+		group, err := m.Marshal(resp)
 		if err != nil {
 			cmd.Println("Created group: ", resp.Name)
 		} else {

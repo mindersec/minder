@@ -22,12 +22,12 @@
 package role
 
 import (
-	"encoding/json"
 	"fmt"
 	"os"
 
 	"github.com/spf13/cobra"
 	"github.com/spf13/viper"
+	"google.golang.org/protobuf/encoding/protojson"
 
 	"github.com/stacklok/mediator/internal/util"
 	pb "github.com/stacklok/mediator/pkg/generated/protobuf/go/mediator/v1"
@@ -67,6 +67,9 @@ within a mediator control plane.`,
 		adminPtr := &isAdmin
 		protectedPtr := &isProtected
 
+		m := protojson.MarshalOptions{
+			Indent: "  ",
+		}
 		if group == 0 {
 			// create a role by org
 			resp, err := client.CreateRoleByOrganization(ctx, &pb.CreateRoleByOrganizationRequest{
@@ -77,13 +80,9 @@ within a mediator control plane.`,
 			})
 			util.ExitNicelyOnError(err, "Error creating role")
 
-			role, err := json.MarshalIndent(resp, "", "  ")
-			if err != nil {
-				cmd.Println("Created role: ", resp.Name)
-			} else {
-				cmd.Println("Created role:", string(role))
-			}
-
+			output, err := m.Marshal(resp)
+			util.ExitNicelyOnError(err, "error marshalling json")
+			fmt.Println(string(output))
 		} else {
 			// create a role by group
 			resp, err := client.CreateRoleByGroup(ctx, &pb.CreateRoleByGroupRequest{
@@ -94,13 +93,9 @@ within a mediator control plane.`,
 				IsProtected:    protectedPtr,
 			})
 			util.ExitNicelyOnError(err, "Error creating role")
-
-			role, err := json.MarshalIndent(resp, "", "  ")
-			if err != nil {
-				cmd.Println("Created role: ", resp.Name)
-			} else {
-				cmd.Println("Created role:", string(role))
-			}
+			output, err := m.Marshal(resp)
+			util.ExitNicelyOnError(err, "error marshalling json")
+			fmt.Println(string(output))
 		}
 
 	},

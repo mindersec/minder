@@ -22,12 +22,12 @@
 package role
 
 import (
-	"encoding/json"
 	"fmt"
 	"os"
 
 	"github.com/spf13/cobra"
 	"github.com/spf13/viper"
+	"google.golang.org/protobuf/encoding/protojson"
 
 	"github.com/stacklok/mediator/internal/util"
 	pb "github.com/stacklok/mediator/pkg/generated/protobuf/go/mediator/v1"
@@ -76,16 +76,19 @@ mediator control plane.`,
 			os.Exit(1)
 		}
 
-		var roleRecord *pb.RoleRecord
+		m := protojson.MarshalOptions{
+			Indent: "  ",
+		}
+
 		// get by id
 		if id > 0 {
 			role, err := client.GetRoleById(ctx, &pb.GetRoleByIdRequest{
 				Id: id,
 			})
 			util.ExitNicelyOnError(err, "Error getting role")
-			if role != nil {
-				roleRecord = role.Role
-			}
+			out, err := m.Marshal(role)
+			util.ExitNicelyOnError(err, "Error marshalling json")
+			fmt.Println(string(out))
 		} else if name != "" {
 			// get by name
 			role, err := client.GetRoleByName(ctx, &pb.GetRoleByNameRequest{
@@ -93,11 +96,10 @@ mediator control plane.`,
 				Name:           name,
 			})
 			util.ExitNicelyOnError(err, "Error getting role")
-			roleRecord = role.GetRole()
+			out, err := m.Marshal(role)
+			util.ExitNicelyOnError(err, "Error marshalling json")
+			fmt.Println(string(out))
 		}
-		json, err := json.Marshal(roleRecord)
-		util.ExitNicelyOnError(err, "Error marshalling role")
-		fmt.Println(string(json))
 	},
 }
 

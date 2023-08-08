@@ -22,7 +22,7 @@ import (
 
 	"github.com/spf13/cobra"
 	"github.com/spf13/viper"
-	"gopkg.in/yaml.v3"
+	"google.golang.org/protobuf/encoding/protojson"
 
 	"github.com/stacklok/mediator/cmd/cli/app"
 	"github.com/stacklok/mediator/internal/util"
@@ -112,15 +112,22 @@ var repo_getCmd = &cobra.Command{
 		if status {
 			// TODO: implement this
 		} else {
+			m := protojson.MarshalOptions{
+				Indent: "  ",
+			}
+			out, err := m.Marshal(repository)
+			util.ExitNicelyOnError(err, "Error marshalling json")
+
 			// print result just in JSON or YAML
 			if format == "" || format == formatJSON {
-				output, err := json.MarshalIndent(repository, "", "  ")
-				util.ExitNicelyOnError(err, "Error marshalling json")
-				fmt.Println(string(output))
+				fmt.Println(string(out))
 			} else {
-				yamlData, err := yaml.Marshal(repository)
-				util.ExitNicelyOnError(err, "Error marshalling yaml")
-				fmt.Println(string(yamlData))
+				var rawMsg json.RawMessage
+				err = json.Unmarshal(out, &rawMsg)
+				util.ExitNicelyOnError(err, "Error unmarshalling json")
+				yamlResult, err := util.ConvertJsonToYaml(rawMsg)
+				util.ExitNicelyOnError(err, "Error converting json to yaml")
+				fmt.Println(string(yamlResult))
 			}
 		}
 		return nil

@@ -22,7 +22,7 @@ import (
 
 	"github.com/spf13/cobra"
 	"github.com/spf13/viper"
-	"gopkg.in/yaml.v3"
+	"google.golang.org/protobuf/encoding/protojson"
 
 	"github.com/stacklok/mediator/internal/util"
 	pb "github.com/stacklok/mediator/pkg/generated/protobuf/go/mediator/v1"
@@ -88,44 +88,20 @@ mediator control plane for an specific provider/group or policy id.`,
 			return fmt.Errorf("error getting policy status: %w", err)
 		}
 
-		status := resp.GetPolicyStatus()
-
+		m := protojson.MarshalOptions{
+			Indent: "  ",
+		}
+		out, err := m.Marshal(resp)
+		util.ExitNicelyOnError(err, "Error marshalling json")
 		if format == "json" {
-			enc := json.NewEncoder(os.Stdout)
-			enc.SetIndent("", "  ")
-
-			if err := enc.Encode(status); err != nil {
-				return fmt.Errorf("error marshalling json: %w", err)
-			}
-
-			if !all {
-				return nil
-			}
-
-			for _, v := range resp.RuleEvaluationStatus {
-				if err := enc.Encode(v); err != nil {
-					return fmt.Errorf("error marshalling json: %w", err)
-				}
-			}
-
-			return nil
-		}
-
-		enc := yaml.NewEncoder(os.Stdout)
-		enc.SetIndent(2)
-
-		if err := enc.Encode(status); err != nil {
-			return fmt.Errorf("error marshalling yaml: %w", err)
-		}
-
-		if !all {
-			return nil
-		}
-
-		for _, v := range resp.RuleEvaluationStatus {
-			if err := enc.Encode(v); err != nil {
-				return fmt.Errorf("error marshalling yaml: %w", err)
-			}
+			fmt.Println(string(out))
+		} else {
+			var rawMsg json.RawMessage
+			err = json.Unmarshal(out, &rawMsg)
+			util.ExitNicelyOnError(err, "Error unmarshalling json")
+			yamlResult, err := util.ConvertJsonToYaml(rawMsg)
+			util.ExitNicelyOnError(err, "Error converting json to yaml")
+			fmt.Println(string(yamlResult))
 		}
 
 		return nil

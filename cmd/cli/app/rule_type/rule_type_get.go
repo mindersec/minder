@@ -22,7 +22,7 @@ import (
 
 	"github.com/spf13/cobra"
 	"github.com/spf13/viper"
-	"gopkg.in/yaml.v3"
+	"google.golang.org/protobuf/encoding/protojson"
 
 	"github.com/stacklok/mediator/cmd/cli/app"
 	"github.com/stacklok/mediator/internal/util"
@@ -71,23 +71,22 @@ mediator control plane.`,
 			return fmt.Errorf("error getting rule type: %w", err)
 		}
 
+		m := protojson.MarshalOptions{
+			Indent: "  ",
+		}
+		out, err := m.Marshal(rtype)
+		util.ExitNicelyOnError(err, "Error marshalling json")
+
 		if format == app.YAML {
-			enc := yaml.NewEncoder(os.Stdout)
-			enc.SetIndent(2)
-
-			if err := enc.Encode(rtype.RuleType); err != nil {
-				return fmt.Errorf("error marshalling yaml: %w", err)
-			}
-
-			return nil
+			var rawMsg json.RawMessage
+			err = json.Unmarshal(out, &rawMsg)
+			util.ExitNicelyOnError(err, "Error unmarshalling json")
+			yamlResult, err := util.ConvertJsonToYaml(rawMsg)
+			util.ExitNicelyOnError(err, "Error converting json to yaml")
+			fmt.Println(string(yamlResult))
+		} else {
+			fmt.Println(string(out))
 		}
-
-		json, err := json.MarshalIndent(rtype.RuleType, "", "  ")
-		if err != nil {
-			return fmt.Errorf("error marshalling json: %w", err)
-		}
-		fmt.Println(string(json))
-
 		return nil
 	},
 }

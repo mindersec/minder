@@ -28,34 +28,36 @@ import (
 
 	"github.com/spf13/cobra"
 	"github.com/spf13/viper"
-	"gopkg.in/yaml.v3"
+	"google.golang.org/protobuf/encoding/protojson"
 
 	"github.com/stacklok/mediator/cmd/cli/app"
 	"github.com/stacklok/mediator/internal/util"
 	pb "github.com/stacklok/mediator/pkg/generated/protobuf/go/mediator/v1"
 )
 
-type output struct {
-	Group *pb.GroupRecord  `json:"group"`
-	Roles []*pb.RoleRecord `json:"roles"`
-	Users []*pb.UserRecord `json:"users"`
-}
+func printGroup(groupId *pb.GetGroupByIdResponse, groupName *pb.GetGroupByNameResponse, format string) {
+	var outGroup []byte
+	var err error
 
-func printGroup(group *pb.GroupRecord, roles []*pb.RoleRecord, users []*pb.UserRecord, format string) {
-	output := output{
-		Group: group,
-		Roles: roles,
-		Users: users,
+	m := protojson.MarshalOptions{
+		Indent: "  ",
 	}
-	if format == app.JSON {
-		output, err := json.MarshalIndent(output, "", "  ")
-		util.ExitNicelyOnError(err, "Error marshalling json")
-		fmt.Println(string(output))
-	} else if format == app.YAML {
-		yamlData, err := yaml.Marshal(output)
-		util.ExitNicelyOnError(err, "Error marshalling yaml")
-		fmt.Println(string(yamlData))
+	if groupId != nil {
+		outGroup, err = m.Marshal(groupId)
+	} else {
+		outGroup, err = m.Marshal(groupName)
+	}
+	util.ExitNicelyOnError(err, "Error marshalling json")
 
+	if format == app.JSON {
+		fmt.Println(string(outGroup))
+	} else if format == app.YAML {
+		var rawMsg json.RawMessage
+		err = json.Unmarshal(outGroup, &rawMsg)
+		util.ExitNicelyOnError(err, "Error unmarshalling json")
+		yamlResult, err := util.ConvertJsonToYaml(rawMsg)
+		util.ExitNicelyOnError(err, "Error converting json to yaml")
+		fmt.Println(string(yamlResult))
 	}
 }
 
@@ -108,14 +110,14 @@ mediator control plane.`,
 				GroupId: id,
 			})
 			util.ExitNicelyOnError(err, "Error getting group")
-			printGroup(group.Group, group.Roles, group.Users, format)
+			printGroup(group, nil, format)
 		} else if name != "" {
 			// get by name
 			group, err := client.GetGroupByName(ctx, &pb.GetGroupByNameRequest{
 				Name: name,
 			})
 			util.ExitNicelyOnError(err, "Error getting group")
-			printGroup(group.Group, group.Roles, group.Users, format)
+			printGroup(nil, group, format)
 		}
 	},
 }

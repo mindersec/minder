@@ -24,6 +24,7 @@ import (
 	"github.com/olekukonko/tablewriter"
 	"github.com/spf13/cobra"
 	"github.com/spf13/viper"
+	"google.golang.org/protobuf/encoding/protojson"
 	"gopkg.in/yaml.v3"
 
 	"github.com/stacklok/mediator/cmd/cli/app"
@@ -73,6 +74,10 @@ mediator control plane.`,
 			util.ExitNicelyOnError(err, "Error getting policy status")
 
 			// print results
+			m := protojson.MarshalOptions{
+				Indent: "  ",
+			}
+
 			if format == "" {
 				table := tablewriter.NewWriter(os.Stdout)
 				table.SetHeader([]string{"Policy ID", "Policy Name", "Status", "Last updated"})
@@ -87,13 +92,19 @@ mediator control plane.`,
 				table.Append(row)
 				table.Render()
 			} else if format == app.JSON {
-				output, err := json.MarshalIndent(resp, "", "  ")
+				output, err := m.Marshal(resp)
 				util.ExitNicelyOnError(err, "Error marshalling json")
 				fmt.Println(string(output))
 			} else if format == app.YAML {
-				yamlData, err := yaml.Marshal(resp)
-				util.ExitNicelyOnError(err, "Error marshalling yaml")
-				fmt.Println(string(yamlData))
+				output, err := m.Marshal(resp)
+				util.ExitNicelyOnError(err, "Error marshalling json")
+
+				var rawMsg json.RawMessage
+				err = json.Unmarshal(output, &rawMsg)
+				util.ExitNicelyOnError(err, "Error unmarshalling json")
+				yamlResult, err := util.ConvertJsonToYaml(rawMsg)
+				util.ExitNicelyOnError(err, "Error converting json to yaml")
+				fmt.Println(string(yamlResult))
 			}
 
 			return nil

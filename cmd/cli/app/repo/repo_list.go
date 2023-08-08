@@ -23,7 +23,7 @@ import (
 	"github.com/olekukonko/tablewriter"
 	"github.com/spf13/cobra"
 	"github.com/spf13/viper"
-	"gopkg.in/yaml.v3"
+	"google.golang.org/protobuf/encoding/protojson"
 
 	"github.com/stacklok/mediator/internal/util"
 	pb "github.com/stacklok/mediator/pkg/generated/protobuf/go/mediator/v1"
@@ -83,6 +83,9 @@ var repo_listCmd = &cobra.Command{
 			fmt.Fprintf(os.Stderr, "Error getting repo of repos: %s\n", err)
 			os.Exit(1)
 		}
+		m := protojson.MarshalOptions{
+			Indent: "  ",
+		}
 
 		switch format {
 		case "", "table":
@@ -102,13 +105,18 @@ var repo_listCmd = &cobra.Command{
 			}
 			table.Render()
 		case "json":
-			output, err := json.MarshalIndent(resp.Results, "", "  ")
-			util.ExitNicelyOnError(err, "Error marshalling json")
+			output, err := m.Marshal(resp)
+			util.ExitNicelyOnError(err, "error marshalling json")
 			fmt.Println(string(output))
 		case "yaml":
-			yamlData, err := yaml.Marshal(resp.Results)
-			util.ExitNicelyOnError(err, "Error marshalling yaml")
-			fmt.Println(string(yamlData))
+			output, err := m.Marshal(resp)
+			util.ExitNicelyOnError(err, "error marshalling json")
+			var rawMsg json.RawMessage
+			err = json.Unmarshal(output, &rawMsg)
+			util.ExitNicelyOnError(err, "Error unmarshalling json")
+			yamlResult, err := util.ConvertJsonToYaml(rawMsg)
+			util.ExitNicelyOnError(err, "Error converting json to yaml")
+			fmt.Println(string(yamlResult))
 		}
 		return nil
 	},
