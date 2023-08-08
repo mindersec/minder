@@ -1,3 +1,4 @@
+// Package rule_methods provides the methods that are used by the rules
 package rule_methods
 
 import (
@@ -6,21 +7,23 @@ import (
 
 	container "github.com/stacklok/mediator/pkg/container"
 	pb "github.com/stacklok/mediator/pkg/generated/protobuf/go/mediator/v1"
-	ghclient "github.com/stacklok/mediator/pkg/providers/github"
 )
 
+// RuleMethods is the struct that contains the methods that are used by the rules
 type RuleMethods struct{}
+
+// ValidateSignatureResult is the struct that contains the result of the ValidateSignature method
 type ValidateSignatureResult struct {
 	Verification   interface{}
 	GithubWorkflow interface{}
 }
 
 // ValidateSignature validates the signature of the image
-func (rm RuleMethods) ValidateSignature(ctx context.Context, client ghclient.RestAPI, accessToken string,
+func (_ RuleMethods) ValidateSignature(ctx context.Context, accessToken string,
 	containerData *pb.ArtifactEventPayload) (json.RawMessage, error) {
 	if containerData.ArtifactType == "CONTAINER" {
-		signature_verification, github_workflow, err := container.ValidateSignature(ctx, client, accessToken, containerData.OwnerLogin,
-			containerData.ArtifactName, containerData.PackageUrl)
+		signature_verification, github_workflow, err := container.ValidateSignature(ctx, accessToken, containerData.OwnerLogin,
+			containerData.PackageUrl)
 		if err != nil {
 			return nil, err
 		}

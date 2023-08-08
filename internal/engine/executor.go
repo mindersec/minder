@@ -324,7 +324,8 @@ func (e *Executor) handleArtifactPublishedEvent(ctx context.Context, prov string
 	return nil
 }
 
-func (e *Executor) getRepoInformationFromPayload(ctx context.Context, prov string, payload map[string]any) (db.Repository, error) {
+func (e *Executor) getRepoInformationFromPayload(ctx context.Context, prov string,
+	payload map[string]any) (db.Repository, error) {
 	repoInfo, ok := payload["repository"].(map[string]any)
 	if !ok {
 		// If the event doesn't have a relevant repository we can't do anything with it.

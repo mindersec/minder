@@ -35,10 +35,10 @@ import (
 	ociremote "github.com/sigstore/cosign/v2/pkg/oci/remote"
 	sigs "github.com/sigstore/cosign/v2/pkg/signature"
 	"github.com/sigstore/sigstore/pkg/signature/payload"
-	pb "github.com/stacklok/mediator/pkg/generated/protobuf/go/mediator/v1"
-	ghclient "github.com/stacklok/mediator/pkg/providers/github"
 	"google.golang.org/protobuf/proto"
 	"google.golang.org/protobuf/types/known/timestamppb"
+
+	pb "github.com/stacklok/mediator/pkg/generated/protobuf/go/mediator/v1"
 )
 
 type githubAuthenticator struct{ username, password string }
@@ -51,8 +51,8 @@ func (g githubAuthenticator) Authorization() (*authn.AuthConfig, error) {
 }
 
 // ValidateSignature returns information about signature validation of a package
-func ValidateSignature(ctx context.Context, cli ghclient.RestAPI, accessToken string, package_owner string,
-	package_name string, package_url string) (*pb.SignatureVerification, *pb.GithubWorkflow, error) {
+func ValidateSignature(ctx context.Context, accessToken string, package_owner string,
+	package_url string) (*pb.SignatureVerification, *pb.GithubWorkflow, error) {
 	baseRef, err := name.ParseReference(package_url)
 	if err != nil {
 		return nil, nil, fmt.Errorf("error parsing image path: %w", err)
