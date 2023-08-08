@@ -31,15 +31,16 @@ import (
 	go_github "github.com/google/go-github/v53/github"
 	"github.com/spf13/pflag"
 	"github.com/spf13/viper"
-	"github.com/stacklok/mediator/internal/util"
 	"golang.org/x/oauth2"
 	"golang.org/x/oauth2/github"
 	"golang.org/x/oauth2/google"
+
+	"github.com/stacklok/mediator/internal/util"
 )
 
 const (
-	Google = "google"
 	// Google OAuth2 provider
+	Google = "google"
 
 	// Github OAuth2 provider
 	Github = "github"
