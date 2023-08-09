@@ -22,12 +22,12 @@
 package org
 
 import (
-	"encoding/json"
 	"fmt"
 	"os"
 
 	"github.com/spf13/cobra"
 	"github.com/spf13/viper"
+	"google.golang.org/protobuf/encoding/protojson"
 
 	"github.com/stacklok/mediator/internal/util"
 	pb "github.com/stacklok/mediator/pkg/generated/protobuf/go/mediator/v1"
@@ -70,7 +70,10 @@ within a mediator control plane.`,
 		})
 		util.ExitNicelyOnError(err, "Error creating organization")
 
-		org, err := json.MarshalIndent(resp, "", "  ")
+		m := protojson.MarshalOptions{
+			Indent: "  ",
+		}
+		org, err := m.Marshal(resp)
 		if err != nil {
 			cmd.Println("Created organization: ", resp.Name)
 		} else {
