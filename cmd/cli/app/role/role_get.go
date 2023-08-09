@@ -22,7 +22,6 @@
 package role
 
 import (
-	"encoding/json"
 	"fmt"
 	"os"
 
@@ -76,16 +75,15 @@ mediator control plane.`,
 			os.Exit(1)
 		}
 
-		var roleRecord *pb.RoleRecord
 		// get by id
 		if id > 0 {
 			role, err := client.GetRoleById(ctx, &pb.GetRoleByIdRequest{
 				Id: id,
 			})
 			util.ExitNicelyOnError(err, "Error getting role")
-			if role != nil {
-				roleRecord = role.Role
-			}
+			out, err := util.GetJsonFromProto(role)
+			util.ExitNicelyOnError(err, "Error getting json from proto")
+			fmt.Println(out)
 		} else if name != "" {
 			// get by name
 			role, err := client.GetRoleByName(ctx, &pb.GetRoleByNameRequest{
@@ -93,11 +91,10 @@ mediator control plane.`,
 				Name:           name,
 			})
 			util.ExitNicelyOnError(err, "Error getting role")
-			roleRecord = role.GetRole()
+			out, err := util.GetJsonFromProto(role)
+			util.ExitNicelyOnError(err, "Error getting json from proto")
+			fmt.Println(out)
 		}
-		json, err := json.Marshal(roleRecord)
-		util.ExitNicelyOnError(err, "Error marshalling role")
-		fmt.Println(string(json))
 	},
 }
 

@@ -22,43 +22,27 @@
 package org
 
 import (
-	"encoding/json"
 	"fmt"
 	"os"
 
 	"github.com/spf13/cobra"
 	"github.com/spf13/viper"
-	"gopkg.in/yaml.v3"
+	"google.golang.org/protobuf/reflect/protoreflect"
 
 	"github.com/stacklok/mediator/cmd/cli/app"
 	"github.com/stacklok/mediator/internal/util"
 	pb "github.com/stacklok/mediator/pkg/generated/protobuf/go/mediator/v1"
 )
 
-type output struct {
-	Org    *pb.OrganizationRecord `json:"org"`
-	Groups []*pb.GroupRecord      `json:"groups"`
-	Roles  []*pb.RoleRecord       `json:"roles"`
-	Users  []*pb.UserRecord       `json:"users"`
-}
-
-func printOrganization(org *pb.OrganizationRecord, groups []*pb.GroupRecord,
-	roles []*pb.RoleRecord, users []*pb.UserRecord, format string) {
-	output := output{
-		Org:    org,
-		Groups: groups,
-		Roles:  roles,
-		Users:  users,
-	}
+func printOrganization(org protoreflect.ProtoMessage, format string) {
 	if format == app.JSON {
-		output, err := json.MarshalIndent(output, "", "  ")
-		util.ExitNicelyOnError(err, "Error marshalling json")
-		fmt.Println(string(output))
+		out, err := util.GetJsonFromProto(org)
+		util.ExitNicelyOnError(err, "Error getting json from proto")
+		fmt.Println(out)
 	} else if format == app.YAML {
-		yamlData, err := yaml.Marshal(output)
-		util.ExitNicelyOnError(err, "Error marshalling yaml")
-		fmt.Println(string(yamlData))
-
+		out, err := util.GetYamlFromProto(org)
+		util.ExitNicelyOnError(err, "Error getting org from proto")
+		fmt.Println(out)
 	}
 }
 
@@ -107,13 +91,13 @@ mediator control plane.`,
 				OrganizationId: id,
 			})
 			util.ExitNicelyOnError(err, "Error getting organization by id")
-			printOrganization(org.Organization, org.Groups, org.Roles, org.Users, format)
+			printOrganization(org, format)
 		} else if name != "" {
 			org, err := client.GetOrganizationByName(ctx, &pb.GetOrganizationByNameRequest{
 				Name: name,
 			})
 			util.ExitNicelyOnError(err, "Error getting organization by name")
-			printOrganization(org.Organization, org.Groups, org.Roles, org.Users, format)
+			printOrganization(org, format)
 		} else {
 			fmt.Fprintf(os.Stderr, "Error: must specify either id or name\n")
 			os.Exit(1)

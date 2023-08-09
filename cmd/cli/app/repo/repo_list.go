@@ -16,14 +16,12 @@
 package repo
 
 import (
-	"encoding/json"
 	"fmt"
 	"os"
 
 	"github.com/olekukonko/tablewriter"
 	"github.com/spf13/cobra"
 	"github.com/spf13/viper"
-	"gopkg.in/yaml.v3"
 
 	"github.com/stacklok/mediator/internal/util"
 	pb "github.com/stacklok/mediator/pkg/generated/protobuf/go/mediator/v1"
@@ -102,13 +100,13 @@ var repo_listCmd = &cobra.Command{
 			}
 			table.Render()
 		case "json":
-			output, err := json.MarshalIndent(resp.Results, "", "  ")
-			util.ExitNicelyOnError(err, "Error marshalling json")
-			fmt.Println(string(output))
+			out, err := util.GetJsonFromProto(resp)
+			util.ExitNicelyOnError(err, "Error getting json from proto")
+			fmt.Println(out)
 		case "yaml":
-			yamlData, err := yaml.Marshal(resp.Results)
-			util.ExitNicelyOnError(err, "Error marshalling yaml")
-			fmt.Println(string(yamlData))
+			out, err := util.GetYamlFromProto(resp)
+			util.ExitNicelyOnError(err, "Error getting yaml from proto")
+			fmt.Println(out)
 		}
 		return nil
 	},

@@ -16,13 +16,11 @@
 package policy
 
 import (
-	"encoding/json"
 	"fmt"
 	"os"
 
 	"github.com/spf13/cobra"
 	"github.com/spf13/viper"
-	"gopkg.in/yaml.v3"
 
 	"github.com/stacklok/mediator/internal/util"
 	pb "github.com/stacklok/mediator/pkg/generated/protobuf/go/mediator/v1"
@@ -71,18 +69,13 @@ mediator control plane for an specific group.`,
 		}
 
 		if format == "json" {
-			output, err := json.MarshalIndent(resp.Policies, "", "  ")
-			if err != nil {
-				return fmt.Errorf("error marshalling json: %w", err)
-			}
-			fmt.Println(string(output))
+			out, err := util.GetJsonFromProto(resp)
+			util.ExitNicelyOnError(err, "Error getting json from proto")
+			fmt.Println(out)
 		} else if format == "yaml" {
-			enc := yaml.NewEncoder(os.Stdout)
-			enc.SetIndent(2)
-
-			if err := enc.Encode(resp.Policies); err != nil {
-				return fmt.Errorf("error marshalling yaml: %w", err)
-			}
+			out, err := util.GetYamlFromProto(resp)
+			util.ExitNicelyOnError(err, "Error getting json from proto")
+			fmt.Println(out)
 		}
 
 		// this is unreachable

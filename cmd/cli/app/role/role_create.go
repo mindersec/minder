@@ -22,7 +22,6 @@
 package role
 
 import (
-	"encoding/json"
 	"fmt"
 	"os"
 
@@ -76,14 +75,9 @@ within a mediator control plane.`,
 				IsProtected:    protectedPtr,
 			})
 			util.ExitNicelyOnError(err, "Error creating role")
-
-			role, err := json.MarshalIndent(resp, "", "  ")
-			if err != nil {
-				cmd.Println("Created role: ", resp.Name)
-			} else {
-				cmd.Println("Created role:", string(role))
-			}
-
+			out, err := util.GetJsonFromProto(resp)
+			util.ExitNicelyOnError(err, "Error getting json from proto")
+			fmt.Println(out)
 		} else {
 			// create a role by group
 			resp, err := client.CreateRoleByGroup(ctx, &pb.CreateRoleByGroupRequest{
@@ -94,13 +88,9 @@ within a mediator control plane.`,
 				IsProtected:    protectedPtr,
 			})
 			util.ExitNicelyOnError(err, "Error creating role")
-
-			role, err := json.MarshalIndent(resp, "", "  ")
-			if err != nil {
-				cmd.Println("Created role: ", resp.Name)
-			} else {
-				cmd.Println("Created role:", string(role))
-			}
+			out, err := util.GetJsonFromProto(resp)
+			util.ExitNicelyOnError(err, "Error getting json from proto")
+			fmt.Println(out)
 		}
 
 	},

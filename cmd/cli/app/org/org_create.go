@@ -22,7 +22,6 @@
 package org
 
 import (
-	"encoding/json"
 	"fmt"
 	"os"
 
@@ -70,12 +69,9 @@ within a mediator control plane.`,
 		})
 		util.ExitNicelyOnError(err, "Error creating organization")
 
-		org, err := json.MarshalIndent(resp, "", "  ")
-		if err != nil {
-			cmd.Println("Created organization: ", resp.Name)
-		} else {
-			cmd.Println("Created organization:", string(org))
-		}
+		out, err := util.GetJsonFromProto(resp)
+		util.ExitNicelyOnError(err, "Error getting json from proto")
+		fmt.Println(out)
 	},
 }
 

@@ -23,7 +23,6 @@ package user
 
 import (
 	"bufio"
-	"encoding/json"
 	"fmt"
 	"log"
 	"os"
@@ -221,12 +220,9 @@ within a mediator control plane.`,
 		})
 		util.ExitNicelyOnError(err, "Error creating user")
 
-		user, err := json.MarshalIndent(resp, "", "  ")
-		if err != nil {
-			cmd.Println("Created user: ", resp.Username)
-		} else {
-			cmd.Println("Created user:", string(user))
-		}
+		out, err := util.GetJsonFromProto(resp)
+		util.ExitNicelyOnError(err, "Error getting json from proto")
+		fmt.Println(out)
 	},
 }
 

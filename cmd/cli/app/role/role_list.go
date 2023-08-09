@@ -22,7 +22,6 @@
 package role
 
 import (
-	"encoding/json"
 	"fmt"
 	"os"
 	"time"
@@ -30,11 +29,62 @@ import (
 	"github.com/olekukonko/tablewriter"
 	"github.com/spf13/cobra"
 	"github.com/spf13/viper"
-	"gopkg.in/yaml.v3"
+	"google.golang.org/protobuf/reflect/protoreflect"
 
 	"github.com/stacklok/mediator/internal/util"
 	pb "github.com/stacklok/mediator/pkg/generated/protobuf/go/mediator/v1"
 )
+
+func printRoles(rolesById *pb.GetRolesByGroupResponse, rolesByGroup *pb.GetRolesResponse, format string) {
+	// print output in a table
+	if format == "" {
+		table := tablewriter.NewWriter(os.Stdout)
+		table.SetHeader([]string{"Id", "Organization", "Group", "Name", "Is admin", "Is protected", "Created date", "Updated date"})
+
+		var roles []*pb.RoleRecord
+		if rolesById != nil {
+			roles = rolesById.Roles
+		} else {
+			roles = rolesByGroup.Roles
+		}
+
+		for _, v := range roles {
+			row := []string{
+				fmt.Sprintf("%d", v.Id),
+				fmt.Sprintf("%d", v.OrganizationId),
+				fmt.Sprintf("%d", v.GroupId),
+				v.Name,
+				fmt.Sprintf("%t", v.IsAdmin),
+				fmt.Sprintf("%t", v.IsProtected),
+				v.GetCreatedAt().AsTime().Format(time.RFC3339),
+				v.GetUpdatedAt().AsTime().Format(time.RFC3339),
+			}
+			table.Append(row)
+		}
+		table.Render()
+	} else if format == "json" {
+		var roles protoreflect.ProtoMessage
+		if rolesById != nil {
+			roles = rolesById
+		} else {
+			roles = rolesByGroup
+		}
+		out, err := util.GetJsonFromProto(roles)
+		util.ExitNicelyOnError(err, "Error getting json from proto")
+		fmt.Println(out)
+	} else if format == "yaml" {
+		var roles protoreflect.ProtoMessage
+		if rolesById != nil {
+			roles = rolesById
+		} else {
+			roles = rolesByGroup
+		}
+		out, err := util.GetYamlFromProto(roles)
+		util.ExitNicelyOnError(err, "Error getting yaml from proto")
+		fmt.Println(out)
+	}
+
+}
 
 var role_listCmd = &cobra.Command{
 	Use:   "list",
@@ -82,46 +132,15 @@ mediator control plane for an specific group.`,
 			os.Exit(1)
 		}
 
-		var roles []*pb.RoleRecord
 		if group != 0 {
 			resp, err := client.GetRolesByGroup(ctx, &pb.GetRolesByGroupRequest{GroupId: group, Limit: limitPtr, Offset: offsetPtr})
 			util.ExitNicelyOnError(err, "Error getting roles")
-			roles = resp.Roles
+			printRoles(resp, nil, format)
 		} else if org != 0 {
 			resp, err := client.GetRoles(ctx,
 				&pb.GetRolesRequest{OrganizationId: org, Limit: limitPtr, Offset: offsetPtr})
 			util.ExitNicelyOnError(err, "Error getting roles")
-			roles = resp.Roles
-		}
-
-		// print output in a table
-		if format == "" {
-			table := tablewriter.NewWriter(os.Stdout)
-			table.SetHeader([]string{"Id", "Organization", "Group", "Name", "Is admin", "Is protected", "Created date", "Updated date"})
-
-			for _, v := range roles {
-				row := []string{
-					fmt.Sprintf("%d", v.Id),
-					fmt.Sprintf("%d", v.OrganizationId),
-					fmt.Sprintf("%d", v.GroupId),
-					v.Name,
-					fmt.Sprintf("%t", v.IsAdmin),
-					fmt.Sprintf("%t", v.IsProtected),
-					v.GetCreatedAt().AsTime().Format(time.RFC3339),
-					v.GetUpdatedAt().AsTime().Format(time.RFC3339),
-				}
-				table.Append(row)
-			}
-			table.Render()
-		} else if format == "json" {
-			output, err := json.MarshalIndent(roles, "", "  ")
-			util.ExitNicelyOnError(err, "Error marshalling json")
-			fmt.Println(string(output))
-		} else if format == "yaml" {
-			yamlData, err := yaml.Marshal(roles)
-			util.ExitNicelyOnError(err, "Error marshalling yaml")
-			fmt.Println(string(yamlData))
-
+			printRoles(nil, resp, format)
 		}
 	},
 }

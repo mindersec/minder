@@ -22,7 +22,6 @@
 package user
 
 import (
-	"encoding/json"
 	"fmt"
 	"os"
 	"time"
@@ -30,7 +29,7 @@ import (
 	"github.com/olekukonko/tablewriter"
 	"github.com/spf13/cobra"
 	"github.com/spf13/viper"
-	"gopkg.in/yaml.v3"
+	"google.golang.org/protobuf/reflect/protoreflect"
 
 	"github.com/stacklok/mediator/internal/util"
 	pb "github.com/stacklok/mediator/pkg/generated/protobuf/go/mediator/v1"
@@ -86,16 +85,18 @@ mediator control plane for an specific role.`,
 
 		// call depending on parameters
 		var users []*pb.UserRecord
-
+		var result protoreflect.ProtoMessage
 		if org != 0 {
 			resp, err := client.GetUsersByOrganization(ctx,
 				&pb.GetUsersByOrganizationRequest{OrganizationId: org, Limit: limitPtr, Offset: offsetPtr})
 			util.ExitNicelyOnError(err, "Error getting users")
+			result = resp
 			users = resp.Users
 		} else if group != 0 {
 			resp, err := client.GetUsersByGroup(ctx, &pb.GetUsersByGroupRequest{GroupId: group, Limit: limitPtr, Offset: offsetPtr})
 			util.ExitNicelyOnError(err, "Error getting users")
 			users = resp.Users
+			result = resp
 		}
 
 		// print output in a table
@@ -124,14 +125,13 @@ mediator control plane for an specific role.`,
 			}
 			table.Render()
 		} else if format == "json" {
-			output, err := json.MarshalIndent(users, "", "  ")
-			util.ExitNicelyOnError(err, "Error marshalling json")
-			fmt.Println(string(output))
+			out, err := util.GetJsonFromProto(result)
+			util.ExitNicelyOnError(err, "Error getting json from proto")
+			fmt.Println(out)
 		} else if format == "yaml" {
-			yamlData, err := yaml.Marshal(users)
-			util.ExitNicelyOnError(err, "Error marshalling yaml")
-			fmt.Println(string(yamlData))
-
+			out, err := util.GetYamlFromProto(result)
+			util.ExitNicelyOnError(err, "Error getting yaml from proto")
+			fmt.Println(out)
 		}
 	},
 }

@@ -16,13 +16,11 @@
 package repo
 
 import (
-	"encoding/json"
 	"fmt"
 	"os"
 
 	"github.com/spf13/cobra"
 	"github.com/spf13/viper"
-	"gopkg.in/yaml.v3"
 
 	"github.com/stacklok/mediator/cmd/cli/app"
 	"github.com/stacklok/mediator/internal/util"
@@ -114,13 +112,13 @@ var repo_getCmd = &cobra.Command{
 		} else {
 			// print result just in JSON or YAML
 			if format == "" || format == formatJSON {
-				output, err := json.MarshalIndent(repository, "", "  ")
-				util.ExitNicelyOnError(err, "Error marshalling json")
-				fmt.Println(string(output))
+				out, err := util.GetJsonFromProto(repository)
+				util.ExitNicelyOnError(err, "Error getting json from proto")
+				fmt.Println(out)
 			} else {
-				yamlData, err := yaml.Marshal(repository)
-				util.ExitNicelyOnError(err, "Error marshalling yaml")
-				fmt.Println(string(yamlData))
+				out, err := util.GetYamlFromProto(repository)
+				util.ExitNicelyOnError(err, "Error getting json from proto")
+				fmt.Println(out)
 			}
 		}
 		return nil

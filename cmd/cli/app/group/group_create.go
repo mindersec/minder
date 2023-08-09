@@ -22,7 +22,6 @@
 package group
 
 import (
-	"encoding/json"
 	"fmt"
 	"os"
 
@@ -71,14 +70,9 @@ a mediator control plane.`,
 			IsProtected:    protectedPtr,
 		})
 		util.ExitNicelyOnError(err, "Error creating group")
-
-		group, err := json.MarshalIndent(resp, "", "  ")
-		if err != nil {
-			cmd.Println("Created group: ", resp.Name)
-		} else {
-			cmd.Println("Created group:", string(group))
-		}
-
+		out, err := util.GetJsonFromProto(resp)
+		util.ExitNicelyOnError(err, "Error getting json from proto")
+		fmt.Println(out)
 	},
 }
 

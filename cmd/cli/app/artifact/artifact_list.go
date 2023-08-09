@@ -16,7 +16,6 @@
 package artifact
 
 import (
-	"encoding/json"
 	"fmt"
 	"os"
 	"time"
@@ -24,7 +23,6 @@ import (
 	"github.com/olekukonko/tablewriter"
 	"github.com/spf13/cobra"
 	"github.com/spf13/viper"
-	"gopkg.in/yaml.v3"
 
 	"github.com/stacklok/mediator/internal/util"
 	"github.com/stacklok/mediator/pkg/auth"
@@ -105,15 +103,14 @@ var artifact_listCmd = &cobra.Command{
 			}
 
 			table.Render()
-		// }
 		case "json":
-			output, err := json.MarshalIndent(artifacts.GetResults(), "", "  ")
-			util.ExitNicelyOnError(err, "Error marshalling json")
-			fmt.Println(string(output))
+			out, err := util.GetJsonFromProto(artifacts)
+			util.ExitNicelyOnError(err, "Error getting json from proto")
+			fmt.Println(out)
 		case "yaml":
-			yamlData, err := yaml.Marshal(artifacts.GetResults())
-			util.ExitNicelyOnError(err, "Error marshalling yaml")
-			fmt.Println(string(yamlData))
+			out, err := util.GetYamlFromProto(artifacts)
+			util.ExitNicelyOnError(err, "Error getting yaml from proto")
+			fmt.Println(out)
 		}
 
 		return nil
