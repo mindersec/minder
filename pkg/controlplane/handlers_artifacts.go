@@ -17,13 +17,10 @@ package controlplane
 import (
 	"context"
 	"fmt"
-	"time"
 
-	"github.com/google/go-containerregistry/pkg/name"
 	go_github "github.com/google/go-github/v53/github"
 	"google.golang.org/grpc/codes"
 	"google.golang.org/grpc/status"
-	"google.golang.org/protobuf/proto"
 	"google.golang.org/protobuf/types/known/timestamppb"
 	"k8s.io/apimachinery/pkg/util/sets"
 
@@ -195,37 +192,6 @@ func (s *Server) GetArtifactByName(ctx context.Context, in *pb.GetArtifactByName
 	for _, version := range versions {
 		// first try to read the manifest
 		imageRef := fmt.Sprintf("%s/%s/%s@%s", REGISTRY, *pkg.GetOwner().Login, pkg.GetName(), version.GetName())
-		baseRef, err := name.ParseReference(imageRef)
-		if err != nil {
-			// Cannot parse the image reference, continue to the next version
-			continue
-		}
-		manifest, err := container.GetImageManifest(baseRef, *pkg.GetOwner().Login, decryptedToken.AccessToken)
-		if err != nil {
-			// we do not have a manifest, so we cannot add it to versions
-			continue
-		}
-
-		// need to check if we have a cosign layer, then we skip it
-		is_signature := false
-		if manifest.Layers != nil {
-			for _, layer := range manifest.Layers {
-				if layer.MediaType == "application/vnd.dev.cosign.simplesigning.v1+json" {
-					is_signature = true
-					break
-				}
-			}
-		}
-		if is_signature {
-			continue
-		}
-
-		signature_verification := &pb.SignatureVerification{
-			IsVerified:       false,
-			IsSigned:         false,
-			IsBundleVerified: false,
-		}
-
 		current_version := &pb.ArtifactVersion{
 			VersionId: version.GetID(),
 			Tags:      version.Metadata.Container.Tags,
@@ -233,47 +199,12 @@ func (s *Server) GetArtifactByName(ctx context.Context, in *pb.GetArtifactByName
 			CreatedAt: timestamppb.New(version.GetCreatedAt().Time),
 		}
 
-		// get information about signature
-		signature, err := container.GetSignatureTag(baseRef, *pkg.GetOwner().Login, decryptedToken.AccessToken)
-
-		// if there is a signature, we can move forward and retrieve details
-		if err == nil && signature != nil {
-			// we need to extract manifest from the signature
-			manifest, err := container.GetImageManifest(signature, *pkg.GetOwner().Login, decryptedToken.AccessToken)
-			if err == nil && manifest.Layers != nil {
-				signature_verification.IsSigned = true
-				identity, issuer, err := container.ExtractIdentityFromCertificate(manifest)
-				if err == nil && identity != "" && issuer != "" {
-					signature_verification.CertIdentity = &identity
-					signature_verification.CertIssuer = &issuer
-
-					// we have issuer and identity, we can verify the image
-					imageRef := fmt.Sprintf("%s/%s/%s@%s", REGISTRY, *pkg.GetOwner().Login, pkg.GetName(), version.GetName())
-					verified, bundleVerified, imageKeys, err := container.VerifyFromIdentity(ctx, imageRef,
-						*pkg.GetOwner().Login, decryptedToken.AccessToken, identity, issuer)
-					if err == nil {
-						// we can add information for the image
-						signature_verification.IsVerified = verified
-						signature_verification.IsBundleVerified = bundleVerified
-						signature_verification.RekorLogId = proto.String(imageKeys["RekorLogID"].(string))
-
-						log_index := int32(imageKeys["RekorLogIndex"].(int64))
-						signature_verification.RekorLogIndex = &log_index
-
-						signature_time := timestamppb.New(time.Unix(imageKeys["SignatureTime"].(int64), 0))
-						signature_verification.SignatureTime = signature_time
-
-						current_version.GithubWorkflow = &pb.GithubWorkflow{
-							Name:       imageKeys["WorkflowName"].(string),
-							Repository: imageKeys["WorkflowRepository"].(string),
-							CommitSha:  imageKeys["WorkflowSha"].(string),
-							Trigger:    imageKeys["WorkflowTrigger"].(string),
-						}
-					}
-				}
-			}
+		signature_verification, github_workflow, err := container.ValidateSignature(ctx,
+			decryptedToken.AccessToken, *pkg.GetOwner().Login, imageRef)
+		if err == nil {
+			current_version.SignatureVerification = signature_verification
+			current_version.GithubWorkflow = github_workflow
 		}
-		current_version.SignatureVerification = signature_verification
 		final_versions = append(final_versions, current_version)
 		if len(final_versions) == int(in.LatestVersions) {
 			break
