@@ -38,7 +38,7 @@ const config = {
   title: 'Mediator docs',
   tagline: 'Documentation site for Mediator',
   favicon: 'img/stacklok-favicon.png',
-  themes: ['docusaurus-theme-redoc'],
+  themes: ['@docusaurus/theme-mermaid', 'docusaurus-theme-redoc'],
 
   // Set the production url of your site here
   url: 'https://stacklok.github.io',
@@ -60,6 +60,10 @@ const config = {
   i18n: {
     defaultLocale: 'en',
     locales: ['en'],
+  },
+
+  markdown: {
+    mermaid: true,
   },
 
   presets: [
