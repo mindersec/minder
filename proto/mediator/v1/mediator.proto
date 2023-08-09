@@ -1556,9 +1556,8 @@ message RestType {
     string parse = 5;
 }
 
-// InternalType defines the internal data evaluation
-// This is used to call internal methods
-message InternalType {
+// BuiltinType defines the builtin data evaluation.
+message BuiltinType {
     string method = 1;
 }
 
@@ -1594,9 +1593,8 @@ message RuleType {
             // this is only used if the type is rest.
             optional RestType rest = 3;
 
-            // internal is the internal data evaluation.
-            // this is only used if the type is internal.
-            optional InternalType internal = 4;
+            // builtin is the builtin data evaluation.
+            optional BuiltinType builtin = 4;
 
             // key_type is the type of the key for each data item.
             // This is used to index the data.

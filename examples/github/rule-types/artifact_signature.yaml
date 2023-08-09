@@ -24,8 +24,8 @@ def:
             description: "Set to true to enforce artifact signature being verified."
   # Defines the configuration for both ingesting and evaluating the rule.
   data_eval:
-    type: internal
-    internal:
+    type: builtin
+    builtin:
       # method will be called using reflection, and will accept a generic json payload
       # it will also return a generic json payload
       method: ValidateSignature

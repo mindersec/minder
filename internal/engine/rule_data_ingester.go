@@ -63,12 +63,12 @@ func NewRuleDataIngest(rt *pb.RuleType, cli ghclient.RestAPI, access_token strin
 		eval := rt.Def.GetDataEval()
 		return NewRestRuleDataIngest(eval, eval.GetRest(), cli)
 
-	case "internal":
-		if rt.Def.DataEval.GetInternal() == nil {
+	case "builtin":
+		if rt.Def.DataEval.GetBuiltin() == nil {
 			return nil, fmt.Errorf("rule type engine missing internal configuration")
 		}
 		eval := rt.Def.GetDataEval()
-		return NewInternalRuleDataIngest(eval, eval.GetInternal(), cli, access_token)
+		return NewBuiltinRuleDataIngest(eval, eval.GetBuiltin(), access_token)
 	default:
 		return nil, fmt.Errorf("rule type engine only supports REST data ingest")
 	}
@@ -111,28 +111,25 @@ func NewRestRuleDataIngest(
 	}, nil
 }
 
-// InternalRuleDataIngest is the engine for a rule tye that uses internal data ingest
-type InternalRuleDataIngest struct {
+// BuiltinRuleDataIngest is the engine for a rule type that uses builtin methods
+type BuiltinRuleDataIngest struct {
 	cfg         *pb.RuleType_Definition_DataEval
-	internalCfg *pb.InternalType
-	cli         ghclient.RestAPI
+	builtinCfg  *pb.BuiltinType
 	method      string
 	accessToken string
 }
 
-// NewInternalRuleDataIngest creates a new internal rule data ingest engine
-func NewInternalRuleDataIngest(
+// NewBuiltinRuleDataIngest creates a new builtin rule data ingest engine
+func NewBuiltinRuleDataIngest(
 	cfg *pb.RuleType_Definition_DataEval,
-	internalCfg *pb.InternalType,
-	cli ghclient.RestAPI,
+	builtinCfg *pb.BuiltinType,
 	access_token string,
-) (*InternalRuleDataIngest, error) {
-	return &InternalRuleDataIngest{
+) (*BuiltinRuleDataIngest, error) {
+	return &BuiltinRuleDataIngest{
 		cfg:         cfg,
-		internalCfg: internalCfg,
-		cli:         cli,
+		builtinCfg:  builtinCfg,
 		accessToken: access_token,
-		method:      internalCfg.GetMethod(),
+		method:      builtinCfg.GetMethod(),
 	}, nil
 }
 
@@ -204,7 +201,7 @@ func (rdi *RestRuleDataIngest) Eval(ctx context.Context, ent any, pol, params ma
 }
 
 // Eval evaluates the rule type against the given entity and policy
-func (idi *InternalRuleDataIngest) Eval(ctx context.Context, ent any, pol, _ map[string]any) error {
+func (idi *BuiltinRuleDataIngest) Eval(ctx context.Context, ent any, pol, _ map[string]any) error {
 	// call internal method stored in pkg and method
 	rm := rule_methods.RuleMethods{}
 	value := reflect.ValueOf(rm)

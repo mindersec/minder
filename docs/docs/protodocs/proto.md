@@ -8,6 +8,7 @@
     - [ArtifactEventPayload](#mediator-v1-ArtifactEventPayload)
     - [ArtifactVersion](#mediator-v1-ArtifactVersion)
     - [BranchProtection](#mediator-v1-BranchProtection)
+    - [BuiltinType](#mediator-v1-BuiltinType)
     - [CheckHealthRequest](#mediator-v1-CheckHealthRequest)
     - [CheckHealthResponse](#mediator-v1-CheckHealthResponse)
     - [Context](#mediator-v1-Context)
@@ -109,7 +110,6 @@
     - [GetVulnerabilityByIdResponse](#mediator-v1-GetVulnerabilityByIdResponse)
     - [GithubWorkflow](#mediator-v1-GithubWorkflow)
     - [GroupRecord](#mediator-v1-GroupRecord)
-    - [InternalType](#mediator-v1-InternalType)
     - [ListArtifactsRequest](#mediator-v1-ListArtifactsRequest)
     - [ListArtifactsResponse](#mediator-v1-ListArtifactsResponse)
     - [ListPoliciesRequest](#mediator-v1-ListPoliciesRequest)
@@ -281,6 +281,21 @@
 | ----- | ---- | ----- | ----------- |
 | branch | [string](#string) |  |  |
 | is_protected | [bool](#bool) |  | Add other relevant fields |
+
+
+
+
+
+
+<a name="mediator-v1-BuiltinType"></a>
+
+### BuiltinType
+BuiltinType defines the builtin data evaluation.
+
+
+| Field | Type | Label | Description |
+| ----- | ---- | ----- | ----------- |
+| method | [string](#string) |  |  |
 
 
 
@@ -1895,22 +1910,6 @@ BUF does not allow grouping (which is a shame)
 
 
 
-<a name="mediator-v1-InternalType"></a>
-
-### InternalType
-InternalType defines the internal data evaluation
-This is used to call internal methods
-
-
-| Field | Type | Label | Description |
-| ----- | ---- | ----- | ----------- |
-| method | [string](#string) |  |  |
-
-
-
-
-
-
 <a name="mediator-v1-ListArtifactsRequest"></a>
 
 ### ListArtifactsRequest
@@ -2649,7 +2648,7 @@ DataEval defines how the data is evaluated.
 | ----- | ---- | ----- | ----------- |
 | type | [string](#string) |  | type is the type of the data evaluation. we currently support rest. |
 | rest | [RestType](#mediator-v1-RestType) | optional | rest is the rest data evaluation. this is only used if the type is rest. |
-| internal | [InternalType](#mediator-v1-InternalType) | optional | internal is the internal data evaluation. this is only used if the type is internal. |
+| builtin | [BuiltinType](#mediator-v1-BuiltinType) | optional | builtin is the builtin data evaluation. |
 | key_type | [string](#string) |  | key_type is the type of the key for each data item. This is used to index the data. Currently only `jq` is supported. |
 | data | [RuleType.Definition.DataEval.DataEntry](#mediator-v1-RuleType-Definition-DataEval-DataEntry) | repeated | data is the data evaluation definition. each key is a piece of data coming from the policy to be evaluated. The value is the definition of the data evaluation. |
 

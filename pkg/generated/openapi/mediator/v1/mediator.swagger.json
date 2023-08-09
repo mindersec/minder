@@ -2670,9 +2670,9 @@
           "$ref": "#/definitions/v1RestType",
           "description": "rest is the rest data evaluation.\nthis is only used if the type is rest."
         },
-        "internal": {
-          "$ref": "#/definitions/v1InternalType",
-          "description": "internal is the internal data evaluation.\nthis is only used if the type is internal."
+        "builtin": {
+          "$ref": "#/definitions/v1BuiltinType",
+          "description": "builtin is the builtin data evaluation."
         },
         "keyType": {
           "type": "string",
@@ -2846,6 +2846,15 @@
           "title": "Add other relevant fields"
         }
       }
+    },
+    "v1BuiltinType": {
+      "type": "object",
+      "properties": {
+        "method": {
+          "type": "string"
+        }
+      },
+      "description": "BuiltinType defines the builtin data evaluation."
     },
     "v1CheckHealthResponse": {
       "type": "object",
@@ -3795,15 +3804,6 @@
         }
       },
       "title": "BUF does not allow grouping (which is a shame)"
-    },
-    "v1InternalType": {
-      "type": "object",
-      "properties": {
-        "method": {
-          "type": "string"
-        }
-      },
-      "title": "InternalType defines the internal data evaluation\nThis is used to call internal methods"
     },
     "v1ListArtifactsResponse": {
       "type": "object",
