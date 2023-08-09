@@ -206,25 +206,80 @@ func (e *Executor) handleWebhookEvent(msg *message.Message) error {
 
 	// determine if the payload is an artifact published event
 	// TODO: this needs to be managed via signals
-	isArtifactPublished := (payload["package"] != nil && payload["action"] == "published")
-	if isArtifactPublished {
-		return e.handleArtifactPublishedEvent(ctx, ghclient.Github, payload)
+	hook_type := msg.Metadata.Get("type")
+	if hook_type == "package" {
+		if payload["action"] == "published" {
+			return e.handleArtifactPublishedEvent(ctx, ghclient.Github, payload)
+		}
+	} else {
+		// determine if the payload is a repository event
+		_, isRepo := payload["repository"]
+
+		// TODO(jaosorior): Handle events that are not repository events
+		if !isRepo {
+			log.Printf("could not determine relevant entity for event. Skipping execution.")
+			return nil
+		}
+
+		// TODO(jaosorior): Handle events that are not repository events
+		// TODO(jaosorior): get provider from database
+		return e.handleRepoEvent(ctx, ghclient.Github, payload)
 	}
-
-	// determine if the payload is a repository event
-	_, isRepo := payload["repository"]
-
-	// TODO(jaosorior): Handle events that are not repository events
-	if !isRepo {
-		log.Printf("could not determine relevant entity for event. Skipping execution.")
-		return nil
-	}
-
-	// TODO(jaosorior): Handle events that are not repository events
-	// TODO(jaosorior): get provider from database
-	return e.handleRepoEvent(ctx, ghclient.Github, payload)
+	return nil
 }
 
+func extractArtifactFromPayload(ctx context.Context, payload map[string]any) (*pb.ArtifactEventPayload, error) {
+	artifact_id, err := JQGetValuesFromAccessor(ctx, ".package.id", payload)
+	if err != nil {
+		return nil, err
+	}
+	artifact_name, err := JQGetValuesFromAccessor(ctx, ".package.name", payload)
+	if err != nil {
+		return nil, err
+	}
+	artifact_type, err := JQGetValuesFromAccessor(ctx, ".package.package_type", payload)
+	if err != nil {
+		return nil, err
+	}
+	owner_login, err := JQGetValuesFromAccessor(ctx, ".package.owner.login", payload)
+	if err != nil {
+		return nil, err
+	}
+	owner_type, err := JQGetValuesFromAccessor(ctx, ".package.owner.type", payload)
+	if err != nil {
+		return nil, err
+	}
+	package_version_id, err := JQGetValuesFromAccessor(ctx, ".package.package_version.id", payload)
+	if err != nil {
+		return nil, err
+	}
+	package_version_sha, err := JQGetValuesFromAccessor(ctx, ".package.package_version.version", payload)
+	if err != nil {
+		return nil, err
+	}
+	tag, err := JQGetValuesFromAccessor(ctx, ".package.package_version.container_metadata.tag.name", payload)
+	if err != nil {
+		return nil, err
+	}
+	package_url, err := JQGetValuesFromAccessor(ctx, ".package.package_version.package_url", payload)
+	if err != nil {
+		return nil, err
+	}
+
+	artifact := &pb.ArtifactEventPayload{
+		ArtifactId:   int64(artifact_id.(float64)),
+		ArtifactName: artifact_name.(string),
+		ArtifactType: artifact_type.(string),
+		OwnerLogin:   owner_login.(string),
+		OwnerType:    owner_type.(string),
+		VersionId:    int64(package_version_id.(float64)),
+		VersionSha:   package_version_sha.(string),
+		Tag:          tag.(string),
+		PackageUrl:   package_url.(string),
+	}
+	return artifact, nil
+
+}
 func (e *Executor) handleArtifactPublishedEvent(ctx context.Context, prov string, payload map[string]any) error {
 	// we need to have information about package and repository
 	if payload["package"] == nil || payload["repository"] == nil {
@@ -265,8 +320,6 @@ func (e *Executor) handleArtifactPublishedEvent(ctx context.Context, prov string
 	}
 
 	for _, pol := range MergeDatabaseListIntoPolicies(dbpols, ectx) {
-		// Given we're dealing with a repository event, we can assume that the
-		// entity is a repository.
 		relevant, err := GetRulesForEntity(pol, ArtifactEntity)
 		if err != nil {
 			return fmt.Errorf("error getting rules for entity: %w", err)
@@ -274,46 +327,17 @@ func (e *Executor) handleArtifactPublishedEvent(ctx context.Context, prov string
 
 		// Let's evaluate all the rules for this policy
 		err = TraverseRules(relevant, func(rule *pb.PipelinePolicy_Rule) error {
-			_, rte, err := e.getEvaluator(ctx, *pol.Id, prov, cli, token, ectx, rule)
+			rt, rte, err := e.getEvaluator(ctx, *pol.Id, prov, cli, token, ectx, rule)
 			if err != nil {
 				return err
 			}
-			package_info, ok := payload["package"].(map[string]interface{})
-			if !ok {
-				return fmt.Errorf("error getting package info")
-			}
-			package_version, ok := package_info["package_version"].(map[string]interface{})
-			if !ok {
-				return fmt.Errorf("error getting package version info")
-			}
-			container_metadata, ok := package_version["container_metadata"].(map[string]interface{})
-			if !ok {
-				return fmt.Errorf("error getting container metadata")
-			}
-			tag := ""
-			if container_metadata["tag"] != nil {
-				tag_info := container_metadata["tag"].(map[string]interface{})
-				tag = tag_info["name"].(string)
-			}
 
-			artifact := &pb.ArtifactEventPayload{
-				ArtifactId:   int64(package_info["id"].(float64)),
-				ArtifactName: package_info["name"].(string),
-				ArtifactType: package_info["package_type"].(string),
-				OwnerLogin:   package_info["owner"].(map[string]interface{})["login"].(string),
-				OwnerType:    package_info["owner"].(map[string]interface{})["type"].(string),
-				VersionId:    int64(package_version["id"].(float64)),
-				VersionSha:   package_version["version"].(string),
-				Tag:          tag,
-				PackageUrl:   package_version["package_url"].(string),
+			artifact, err := extractArtifactFromPayload(ctx, payload)
+			if err != nil {
+				return err
 			}
-
 			result := rte.Eval(ctx, artifact, rule.Def.AsMap(), rule.Params.AsMap())
-			fmt.Println(result)
-			return nil
-
-			//return e.createOrUpdateRepositoryEvalStatus(ctx, *pol.Id, dbrepo.ID, *rt.Id,
-			//	rte.Eval(ctx, repo, rule.Def.AsMap(), rule.Params.AsMap()))
+			return e.createOrUpdateRepositoryEvalStatus(ctx, *pol.Id, dbrepo.ID, *rt.Id, result)
 		})
 		if err != nil {
 			return fmt.Errorf("error traversing rules for policy %d: %w", pol.Id, err)

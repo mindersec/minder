@@ -111,10 +111,7 @@ func ValidateSignature(ctx context.Context, accessToken string, package_owner st
 // GetSignatureTag returns the signature tag for a given image if exists
 func GetSignatureTag(imageRef name.Reference, username string, token string) (name.Reference, error) {
 	auth := githubAuthenticator{username, token}
-	ociremoteOpts := []ociremote.Option{
-		ociremote.WithRemoteOptions(remote.WithAuth(auth)),
-	}
-	dstRef, err := ociremote.SignatureTag(imageRef, ociremoteOpts...)
+	dstRef, err := ociremote.SignatureTag(imageRef, ociremote.WithRemoteOptions(remote.WithAuth(auth)))
 	if err != nil {
 		return nil, fmt.Errorf("error getting signature tag: %w", err)
 	}

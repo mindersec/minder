@@ -3,7 +3,7 @@ version: v1
 type: pipeline-policy
 name: acme-github-policy-artifact
 context:
-  organization: ACME
+  group: Root Group
   provider: github
 artifact:
   - context: github

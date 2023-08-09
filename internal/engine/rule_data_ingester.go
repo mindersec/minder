@@ -231,7 +231,6 @@ func (idi *InternalRuleDataIngest) Eval(ctx context.Context, ent any, pol, _ map
 		if err != nil {
 			return fmt.Errorf("cannot unmarshal json: %w", err)
 		}
-		fmt.Println(resultObj)
 
 		for key, val := range idi.cfg.Data {
 			policyVal, err := JQGetValuesFromAccessor(ctx, key, pol)
@@ -244,16 +243,8 @@ func (idi *InternalRuleDataIngest) Eval(ctx context.Context, ent any, pol, _ map
 				return fmt.Errorf("cannot get values from data accessor: %w", err)
 			}
 
-			fmt.Println("key is")
-			fmt.Println(key)
-			fmt.Println("policy is")
-			fmt.Println(policyVal)
-			fmt.Println("data is")
-			fmt.Println(dataVal)
-
 			// Deep compare
 			if !reflect.DeepEqual(policyVal, dataVal) {
-				fmt.Println("values do not match")
 				return NewErrEvaluationFailed("data does not match policy: for path %s got %v, want %v",
 					key, dataVal, policyVal)
 			}
