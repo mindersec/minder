@@ -29,6 +29,10 @@ tooling and processes.
     [in-toto](https://in-toto.io/), [slsa](https://slsa.dev) and the
     [the-update-framework](https://theupdateframework.io/) to provide a way to verify the provenance of your software supply chain.
 
+## Architecture
+
+Mediator consists of a single golang binary which requires a backing Postgres database.  For more details on the architecture, see the [System Architecture](./architecture) section.
+
 ## Status
 
 Mediator is currently in early development.
