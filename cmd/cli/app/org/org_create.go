@@ -70,7 +70,6 @@ within a mediator control plane.`,
 		})
 		util.ExitNicelyOnError(err, "Error creating organization")
 
-		//org, err := json.MarshalIndent(resp, "", "  ")
 		m := protojson.MarshalOptions{
 			Indent: "  ",
 		}
