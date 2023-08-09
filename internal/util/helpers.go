@@ -41,6 +41,8 @@ import (
 	"golang.org/x/term"
 	"google.golang.org/grpc"
 	"google.golang.org/grpc/credentials/insecure"
+	"google.golang.org/protobuf/encoding/protojson"
+	"google.golang.org/protobuf/reflect/protoreflect"
 
 	pb "github.com/stacklok/mediator/pkg/generated/protobuf/go/mediator/v1"
 )
@@ -308,4 +310,44 @@ func GetPassFromTerm(confirm bool) ([]byte, error) {
 
 func bytesEqual(a, b []byte) bool {
 	return strings.EqualFold(strings.TrimSpace(string(a)), strings.TrimSpace(string(b)))
+}
+
+func getProtoMarshalOptions() protojson.MarshalOptions {
+	return protojson.MarshalOptions{
+		Multiline: true,
+		Indent:    "  ",
+	}
+
+}
+
+// GetJsonFromProto given a proto message, formats into json
+func GetJsonFromProto(msg protoreflect.ProtoMessage) (string, error) {
+	m := getProtoMarshalOptions()
+	out, err := m.Marshal(msg)
+	if err != nil {
+		return "", err
+	}
+	return string(out), nil
+}
+
+// GetYamlFromProto given a proto message, formats into yaml
+func GetYamlFromProto(msg protoreflect.ProtoMessage) (string, error) {
+	// first converts into json using the marshal options
+	m := getProtoMarshalOptions()
+	out, err := m.Marshal(msg)
+	if err != nil {
+		return "", err
+	}
+
+	// from byte, we get the raw message so we can convert into yaml
+	var rawMsg json.RawMessage
+	err = json.Unmarshal(out, &rawMsg)
+	if err != nil {
+		return "", err
+	}
+	yamlResult, err := ConvertJsonToYaml(rawMsg)
+	if err != nil {
+		return "", err
+	}
+	return yamlResult, nil
 }

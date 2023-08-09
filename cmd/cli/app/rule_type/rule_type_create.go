@@ -96,13 +96,9 @@ within a mediator control plane.`,
 			return fmt.Errorf("error creating rule type: %w", err)
 		}
 
-		rul, err := json.MarshalIndent(resp, "", "  ")
-		if err != nil {
-			cmd.Println("Created rule type: ", resp.RuleType.Id)
-		} else {
-			cmd.Println("Created rule type:", string(rul))
-		}
-
+		out, err := util.GetJsonFromProto(resp)
+		util.ExitNicelyOnError(err, "Error getting json from proto")
+		fmt.Println(out)
 		return nil
 	},
 }

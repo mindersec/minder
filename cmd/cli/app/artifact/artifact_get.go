@@ -16,7 +16,6 @@
 package artifact
 
 import (
-	"encoding/json"
 	"fmt"
 	"os"
 
@@ -26,11 +25,6 @@ import (
 	"github.com/stacklok/mediator/internal/util"
 	pb "github.com/stacklok/mediator/pkg/generated/protobuf/go/mediator/v1"
 )
-
-type artOutput struct {
-	Artifact *pb.Artifact          `json:"artifact"`
-	Versions []*pb.ArtifactVersion `json:"versions"`
-}
 
 // repo_listCmd represents the list command to list repos with the
 // mediator control plane
@@ -79,14 +73,9 @@ var artifact_getCmd = &cobra.Command{
 			Tag:            tag,
 		})
 		util.ExitNicelyOnError(err, "Error getting repo by id")
-
-		output := artOutput{
-			Artifact: art.Artifact,
-			Versions: art.Versions,
-		}
-		outStr, err := json.MarshalIndent(output, "", "  ")
-		util.ExitNicelyOnError(err, "Error marshalling json")
-		fmt.Println(string(outStr))
+		out, err := util.GetJsonFromProto(art)
+		util.ExitNicelyOnError(err, "Error getting json from proto")
+		fmt.Println(out)
 		return nil
 	},
 }

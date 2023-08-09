@@ -16,7 +16,6 @@
 package policy
 
 import (
-	"encoding/json"
 	"fmt"
 	"io"
 	"os"
@@ -90,13 +89,9 @@ within a mediator control plane.`,
 			return fmt.Errorf("error creating policy: %w", err)
 		}
 
-		pol, err := json.MarshalIndent(resp, "", "  ")
-		if err != nil {
-			cmd.Println("Created policy: ", resp.Policy.Id)
-		} else {
-			cmd.Println("Created policy:", string(pol))
-		}
-
+		out, err := util.GetJsonFromProto(resp)
+		util.ExitNicelyOnError(err, "Error getting json from proto")
+		fmt.Println(out)
 		return nil
 	},
 }

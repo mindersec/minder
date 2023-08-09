@@ -22,40 +22,27 @@
 package group
 
 import (
-	"encoding/json"
 	"fmt"
 	"os"
 
 	"github.com/spf13/cobra"
 	"github.com/spf13/viper"
-	"gopkg.in/yaml.v3"
+	"google.golang.org/protobuf/reflect/protoreflect"
 
 	"github.com/stacklok/mediator/cmd/cli/app"
 	"github.com/stacklok/mediator/internal/util"
 	pb "github.com/stacklok/mediator/pkg/generated/protobuf/go/mediator/v1"
 )
 
-type output struct {
-	Group *pb.GroupRecord  `json:"group"`
-	Roles []*pb.RoleRecord `json:"roles"`
-	Users []*pb.UserRecord `json:"users"`
-}
-
-func printGroup(group *pb.GroupRecord, roles []*pb.RoleRecord, users []*pb.UserRecord, format string) {
-	output := output{
-		Group: group,
-		Roles: roles,
-		Users: users,
-	}
+func printGroup(group protoreflect.ProtoMessage, format string) {
 	if format == app.JSON {
-		output, err := json.MarshalIndent(output, "", "  ")
-		util.ExitNicelyOnError(err, "Error marshalling json")
-		fmt.Println(string(output))
+		out, err := util.GetJsonFromProto(group)
+		util.ExitNicelyOnError(err, "Error getting json from proto")
+		fmt.Println(out)
 	} else if format == app.YAML {
-		yamlData, err := yaml.Marshal(output)
-		util.ExitNicelyOnError(err, "Error marshalling yaml")
-		fmt.Println(string(yamlData))
-
+		out, err := util.GetYamlFromProto(group)
+		util.ExitNicelyOnError(err, "Error getting yaml from proto")
+		fmt.Println(out)
 	}
 }
 
@@ -108,14 +95,14 @@ mediator control plane.`,
 				GroupId: id,
 			})
 			util.ExitNicelyOnError(err, "Error getting group")
-			printGroup(group.Group, group.Roles, group.Users, format)
+			printGroup(group, format)
 		} else if name != "" {
 			// get by name
 			group, err := client.GetGroupByName(ctx, &pb.GetGroupByNameRequest{
 				Name: name,
 			})
 			util.ExitNicelyOnError(err, "Error getting group")
-			printGroup(group.Group, group.Roles, group.Users, format)
+			printGroup(group, format)
 		}
 	},
 }

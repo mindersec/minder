@@ -16,13 +16,11 @@
 package rule_type
 
 import (
-	"encoding/json"
 	"fmt"
 	"os"
 
 	"github.com/spf13/cobra"
 	"github.com/spf13/viper"
-	"gopkg.in/yaml.v3"
 
 	"github.com/stacklok/mediator/cmd/cli/app"
 	"github.com/stacklok/mediator/internal/util"
@@ -72,22 +70,14 @@ mediator control plane.`,
 		}
 
 		if format == app.YAML {
-			enc := yaml.NewEncoder(os.Stdout)
-			enc.SetIndent(2)
-
-			if err := enc.Encode(rtype.RuleType); err != nil {
-				return fmt.Errorf("error marshalling yaml: %w", err)
-			}
-
-			return nil
+			out, err := util.GetYamlFromProto(rtype)
+			util.ExitNicelyOnError(err, "Error getting json from proto")
+			fmt.Println(out)
+		} else {
+			out, err := util.GetJsonFromProto(rtype)
+			util.ExitNicelyOnError(err, "Error getting json from proto")
+			fmt.Println(out)
 		}
-
-		json, err := json.MarshalIndent(rtype.RuleType, "", "  ")
-		if err != nil {
-			return fmt.Errorf("error marshalling json: %w", err)
-		}
-		fmt.Println(string(json))
-
 		return nil
 	},
 }

@@ -16,7 +16,6 @@
 package policy
 
 import (
-	"encoding/json"
 	"fmt"
 	"os"
 	"time"
@@ -24,7 +23,6 @@ import (
 	"github.com/olekukonko/tablewriter"
 	"github.com/spf13/cobra"
 	"github.com/spf13/viper"
-	"gopkg.in/yaml.v3"
 
 	"github.com/stacklok/mediator/cmd/cli/app"
 	"github.com/stacklok/mediator/internal/util"
@@ -87,41 +85,35 @@ mediator control plane.`,
 				table.Append(row)
 				table.Render()
 			} else if format == app.JSON {
-				output, err := json.MarshalIndent(resp, "", "  ")
-				util.ExitNicelyOnError(err, "Error marshalling json")
-				fmt.Println(string(output))
+				out, err := util.GetJsonFromProto(resp)
+				util.ExitNicelyOnError(err, "Error getting json from proto")
+				fmt.Println(out)
 			} else if format == app.YAML {
-				yamlData, err := yaml.Marshal(resp)
-				util.ExitNicelyOnError(err, "Error marshalling yaml")
-				fmt.Println(string(yamlData))
+				out, err := util.GetYamlFromProto(resp)
+				util.ExitNicelyOnError(err, "Error getting yaml from proto")
+				fmt.Println(out)
 			}
+		} else {
+			policy, err := client.GetPolicyById(ctx, &pb.GetPolicyByIdRequest{
+				Context: &pb.Context{
+					Provider: provider,
+					// TODO set up group if specified
+					// Currently it's inferred from the authorization token
+				},
+				Id: id,
+			})
+			util.ExitNicelyOnError(err, "Error getting policy")
 
-			return nil
-		}
-
-		policy, err := client.GetPolicyById(ctx, &pb.GetPolicyByIdRequest{
-			Context: &pb.Context{
-				Provider: provider,
-				// TODO set up group if specified
-				// Currently it's inferred from the authorization token
-			},
-			Id: id,
-		})
-		util.ExitNicelyOnError(err, "Error getting policy")
-
-		if format == app.YAML {
-			yamlData, err := yaml.Marshal(policy.Policy)
-			if err != nil {
-				return fmt.Errorf("error marshalling yaml: %w", err)
+			if format == app.YAML {
+				out, err := util.GetYamlFromProto(policy)
+				util.ExitNicelyOnError(err, "Error getting yaml from proto")
+				fmt.Println(out)
+			} else {
+				out, err := util.GetJsonFromProto(policy)
+				util.ExitNicelyOnError(err, "Error getting json from proto")
+				fmt.Println(out)
 			}
-			fmt.Println(string(yamlData))
 		}
-
-		json, err := json.MarshalIndent(policy.Policy, "", "  ")
-		if err != nil {
-			return fmt.Errorf("error marshalling json: %w", err)
-		}
-		fmt.Println(string(json))
 
 		return nil
 	},

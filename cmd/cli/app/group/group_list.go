@@ -22,7 +22,6 @@
 package group
 
 import (
-	"encoding/json"
 	"fmt"
 	"os"
 	"time"
@@ -30,7 +29,6 @@ import (
 	"github.com/olekukonko/tablewriter"
 	"github.com/spf13/cobra"
 	"github.com/spf13/viper"
-	"gopkg.in/yaml.v3"
 
 	"github.com/stacklok/mediator/internal/util"
 	pb "github.com/stacklok/mediator/pkg/generated/protobuf/go/mediator/v1"
@@ -74,8 +72,8 @@ a mediator control plane.`,
 		})
 		util.ExitNicelyOnError(err, "Error getting groups")
 
-		// print output in a table
 		if format == "" {
+			// print output in a table
 			table := tablewriter.NewWriter(os.Stdout)
 			table.SetHeader([]string{"Id", "Organization", "Name", "Is protected", "Created date", "Updated date"})
 
@@ -92,14 +90,13 @@ a mediator control plane.`,
 			}
 			table.Render()
 		} else if format == "json" {
-			output, err := json.MarshalIndent(resp.Groups, "", "  ")
-			util.ExitNicelyOnError(err, "Error marshalling json")
-			fmt.Println(string(output))
+			out, err := util.GetJsonFromProto(resp)
+			util.ExitNicelyOnError(err, "Error getting json from proto")
+			fmt.Println(out)
 		} else if format == "yaml" {
-			yamlData, err := yaml.Marshal(resp.Groups)
-			util.ExitNicelyOnError(err, "Error marshalling yaml")
-			fmt.Println(string(yamlData))
-
+			out, err := util.GetYamlFromProto(resp)
+			util.ExitNicelyOnError(err, "Error getting yaml from proto")
+			fmt.Println(out)
 		}
 	},
 }
