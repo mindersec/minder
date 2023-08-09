@@ -27,7 +27,6 @@ import (
 
 	"github.com/spf13/cobra"
 	"github.com/spf13/viper"
-	"google.golang.org/protobuf/encoding/protojson"
 
 	"github.com/stacklok/mediator/internal/util"
 	pb "github.com/stacklok/mediator/pkg/generated/protobuf/go/mediator/v1"
@@ -70,15 +69,9 @@ within a mediator control plane.`,
 		})
 		util.ExitNicelyOnError(err, "Error creating organization")
 
-		m := protojson.MarshalOptions{
-			Indent: "  ",
-		}
-		org, err := m.Marshal(resp)
-		if err != nil {
-			cmd.Println("Created organization: ", resp.Name)
-		} else {
-			cmd.Println("Created organization:", string(org))
-		}
+		out, err := util.GetJsonFromProto(resp)
+		util.ExitNicelyOnError(err, "Error getting json from proto")
+		fmt.Println(out)
 	},
 }
 

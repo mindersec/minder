@@ -16,13 +16,11 @@
 package rule_type
 
 import (
-	"encoding/json"
 	"fmt"
 	"os"
 
 	"github.com/spf13/cobra"
 	"github.com/spf13/viper"
-	"google.golang.org/protobuf/encoding/protojson"
 
 	"github.com/stacklok/mediator/internal/util"
 	pb "github.com/stacklok/mediator/pkg/generated/protobuf/go/mediator/v1"
@@ -70,21 +68,14 @@ mediator control plane for an specific group.`,
 			return fmt.Errorf("error getting policies: %w", err)
 		}
 
-		m := protojson.MarshalOptions{
-			Indent: "  ",
-		}
-		out, err := m.Marshal(resp)
-		util.ExitNicelyOnError(err, "Error marshalling json")
-
 		if format == "json" {
-			fmt.Println(string(out))
+			out, err := util.GetJsonFromProto(resp)
+			util.ExitNicelyOnError(err, "Error getting json from proto")
+			fmt.Println(out)
 		} else if format == "yaml" {
-			var rawMsg json.RawMessage
-			err = json.Unmarshal(out, &rawMsg)
-			util.ExitNicelyOnError(err, "Error unmarshalling json")
-			yamlResult, err := util.ConvertJsonToYaml(rawMsg)
-			util.ExitNicelyOnError(err, "Error converting json to yaml")
-			fmt.Println(string(yamlResult))
+			out, err := util.GetYamlFromProto(resp)
+			util.ExitNicelyOnError(err, "Error getting yaml from proto")
+			fmt.Println(out)
 		}
 
 		// this is unreachable

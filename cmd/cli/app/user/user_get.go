@@ -23,13 +23,12 @@ package user
 
 import (
 	"context"
-	"encoding/json"
 	"fmt"
 	"os"
 
 	"github.com/spf13/cobra"
 	"github.com/spf13/viper"
-	"google.golang.org/protobuf/encoding/protojson"
+	"google.golang.org/protobuf/reflect/protoreflect"
 
 	"github.com/stacklok/mediator/cmd/cli/app"
 	"github.com/stacklok/mediator/internal/util"
@@ -74,16 +73,15 @@ func getOwnUser(ctx context.Context, client pb.UserServiceClient) (*pb.GetUserRe
 	return user, err
 }
 
-func printUser(content []byte, format string) {
+func printUser(user protoreflect.ProtoMessage, format string) {
 	if format == app.JSON {
-		fmt.Println(string(content))
+		out, err := util.GetJsonFromProto(user)
+		util.ExitNicelyOnError(err, "Error getting json from proto")
+		fmt.Println(out)
 	} else if format == app.YAML {
-		var rawMsg json.RawMessage
-		err := json.Unmarshal(content, &rawMsg)
-		util.ExitNicelyOnError(err, "Error unmarshalling json")
-		yamlResult, err := util.ConvertJsonToYaml(rawMsg)
-		util.ExitNicelyOnError(err, "Error converting json to yaml")
-		fmt.Println(string(yamlResult))
+		out, err := util.GetYamlFromProto(user)
+		util.ExitNicelyOnError(err, "Error getting yaml from proto")
+		fmt.Println(out)
 	}
 }
 
@@ -137,38 +135,29 @@ mediator control plane.`,
 			os.Exit(1)
 		}
 
-		m := protojson.MarshalOptions{
-			Indent: "  ",
-		}
 		// get by id
+		var result protoreflect.ProtoMessage
 		if id > 0 {
 			user, err := getUserById(ctx, client, id)
 			util.ExitNicelyOnError(err, "Error getting user by id")
-			out, err := m.Marshal(user)
-			util.ExitNicelyOnError(err, "Error marshalling json")
-			printUser(out, format)
+			result = user
 		} else if username != "" {
 			// get by username
 			user, err := getUserByUsername(ctx, client, username)
 			util.ExitNicelyOnError(err, "Error getting user by username")
-			out, err := m.Marshal(user)
-			util.ExitNicelyOnError(err, "Error marshalling json")
-			printUser(out, format)
+			result = user
 		} else if email != "" {
 			// get by email
 			user, err := getUserByEmail(ctx, client, email)
 			util.ExitNicelyOnError(err, "Error getting user by email")
-			out, err := m.Marshal(user)
-			util.ExitNicelyOnError(err, "Error marshalling json")
-			printUser(out, format)
+			result = user
 		} else {
 			// just get personal profile
 			user, err := getOwnUser(ctx, client)
 			util.ExitNicelyOnError(err, "Error getting personal user")
-			out, err := m.Marshal(user)
-			util.ExitNicelyOnError(err, "Error marshalling json")
-			printUser(out, format)
+			result = user
 		}
+		printUser(result, format)
 	},
 }
 

@@ -27,7 +27,6 @@ import (
 
 	"github.com/spf13/cobra"
 	"github.com/spf13/viper"
-	"google.golang.org/protobuf/encoding/protojson"
 
 	"github.com/stacklok/mediator/internal/util"
 	pb "github.com/stacklok/mediator/pkg/generated/protobuf/go/mediator/v1"
@@ -76,19 +75,15 @@ mediator control plane.`,
 			os.Exit(1)
 		}
 
-		m := protojson.MarshalOptions{
-			Indent: "  ",
-		}
-
 		// get by id
 		if id > 0 {
 			role, err := client.GetRoleById(ctx, &pb.GetRoleByIdRequest{
 				Id: id,
 			})
 			util.ExitNicelyOnError(err, "Error getting role")
-			out, err := m.Marshal(role)
-			util.ExitNicelyOnError(err, "Error marshalling json")
-			fmt.Println(string(out))
+			out, err := util.GetJsonFromProto(role)
+			util.ExitNicelyOnError(err, "Error getting json from proto")
+			fmt.Println(out)
 		} else if name != "" {
 			// get by name
 			role, err := client.GetRoleByName(ctx, &pb.GetRoleByNameRequest{
@@ -96,9 +91,9 @@ mediator control plane.`,
 				Name:           name,
 			})
 			util.ExitNicelyOnError(err, "Error getting role")
-			out, err := m.Marshal(role)
-			util.ExitNicelyOnError(err, "Error marshalling json")
-			fmt.Println(string(out))
+			out, err := util.GetJsonFromProto(role)
+			util.ExitNicelyOnError(err, "Error getting json from proto")
+			fmt.Println(out)
 		}
 	},
 }

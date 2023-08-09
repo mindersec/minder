@@ -23,7 +23,6 @@ import (
 
 	"github.com/spf13/cobra"
 	"github.com/spf13/viper"
-	"google.golang.org/protobuf/encoding/protojson"
 
 	"github.com/stacklok/mediator/internal/engine"
 	"github.com/stacklok/mediator/internal/util"
@@ -90,16 +89,9 @@ within a mediator control plane.`,
 			return fmt.Errorf("error creating policy: %w", err)
 		}
 
-		m := protojson.MarshalOptions{
-			Indent: "  ",
-		}
-		pol, err := m.Marshal(resp)
-		if err != nil {
-			cmd.Println("Created policy: ", resp.Policy.Id)
-		} else {
-			cmd.Println("Created policy:", string(pol))
-		}
-
+		out, err := util.GetJsonFromProto(resp)
+		util.ExitNicelyOnError(err, "Error getting json from proto")
+		fmt.Println(out)
 		return nil
 	},
 }

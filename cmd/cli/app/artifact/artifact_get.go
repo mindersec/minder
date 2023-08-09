@@ -21,7 +21,6 @@ import (
 
 	"github.com/spf13/cobra"
 	"github.com/spf13/viper"
-	"google.golang.org/protobuf/encoding/protojson"
 
 	"github.com/stacklok/mediator/internal/util"
 	pb "github.com/stacklok/mediator/pkg/generated/protobuf/go/mediator/v1"
@@ -74,16 +73,9 @@ var artifact_getCmd = &cobra.Command{
 			Tag:            tag,
 		})
 		util.ExitNicelyOnError(err, "Error getting repo by id")
-		m := protojson.MarshalOptions{
-			Indent: "  ",
-		}
-		artStr, err := m.Marshal(art)
-		if err != nil {
-			fmt.Fprintf(os.Stderr, "Error marshalling artifact: %s\n", err)
-			os.Exit(1)
-		}
-		util.ExitNicelyOnError(err, "Error marshalling json")
-		fmt.Println(string(artStr))
+		out, err := util.GetJsonFromProto(art)
+		util.ExitNicelyOnError(err, "Error getting json from proto")
+		fmt.Println(out)
 		return nil
 	},
 }

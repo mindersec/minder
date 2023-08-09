@@ -16,7 +16,6 @@
 package artifact
 
 import (
-	"encoding/json"
 	"fmt"
 	"os"
 	"time"
@@ -24,7 +23,6 @@ import (
 	"github.com/olekukonko/tablewriter"
 	"github.com/spf13/cobra"
 	"github.com/spf13/viper"
-	"google.golang.org/protobuf/encoding/protojson"
 
 	"github.com/stacklok/mediator/internal/util"
 	"github.com/stacklok/mediator/pkg/auth"
@@ -106,25 +104,13 @@ var artifact_listCmd = &cobra.Command{
 
 			table.Render()
 		case "json":
-			m := protojson.MarshalOptions{
-				Indent: "  ",
-			}
-			out, err := m.Marshal(artifacts)
-			util.ExitNicelyOnError(err, "Error marshalling json")
-			fmt.Println(string(out))
+			out, err := util.GetJsonFromProto(artifacts)
+			util.ExitNicelyOnError(err, "Error getting json from proto")
+			fmt.Println(out)
 		case "yaml":
-			m := protojson.MarshalOptions{
-				Indent: "  ",
-			}
-			out, err := m.Marshal(artifacts)
-			util.ExitNicelyOnError(err, "Error marshalling json")
-
-			var rawMsg json.RawMessage
-			err = json.Unmarshal(out, &rawMsg)
-			util.ExitNicelyOnError(err, "Error unmarshalling json")
-			yamlResult, err := util.ConvertJsonToYaml(rawMsg)
-			util.ExitNicelyOnError(err, "Error converting json to yaml")
-			fmt.Println(string(yamlResult))
+			out, err := util.GetYamlFromProto(artifacts)
+			util.ExitNicelyOnError(err, "Error getting yaml from proto")
+			fmt.Println(out)
 		}
 
 		return nil

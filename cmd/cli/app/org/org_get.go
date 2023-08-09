@@ -22,42 +22,27 @@
 package org
 
 import (
-	"encoding/json"
 	"fmt"
 	"os"
 
 	"github.com/spf13/cobra"
 	"github.com/spf13/viper"
-	"google.golang.org/protobuf/encoding/protojson"
+	"google.golang.org/protobuf/reflect/protoreflect"
 
 	"github.com/stacklok/mediator/cmd/cli/app"
 	"github.com/stacklok/mediator/internal/util"
 	pb "github.com/stacklok/mediator/pkg/generated/protobuf/go/mediator/v1"
 )
 
-func printOrganization(orgId *pb.GetOrganizationResponse, orgName *pb.GetOrganizationByNameResponse, format string) {
-	var outOrg []byte
-	var err error
-
-	m := protojson.MarshalOptions{
-		Indent: "  ",
-	}
-	if orgId != nil {
-		outOrg, err = m.Marshal(orgId)
-	} else {
-		outOrg, err = m.Marshal(orgName)
-	}
-	util.ExitNicelyOnError(err, "Error marshalling json")
-
+func printOrganization(org protoreflect.ProtoMessage, format string) {
 	if format == app.JSON {
-		fmt.Println(string(outOrg))
+		out, err := util.GetJsonFromProto(org)
+		util.ExitNicelyOnError(err, "Error getting json from proto")
+		fmt.Println(out)
 	} else if format == app.YAML {
-		var rawMsg json.RawMessage
-		err := json.Unmarshal(outOrg, &rawMsg)
-		util.ExitNicelyOnError(err, "Error unmarshalling json")
-		yamlResult, err := util.ConvertJsonToYaml(rawMsg)
-		util.ExitNicelyOnError(err, "Error converting json to yaml")
-		fmt.Println(string(yamlResult))
+		out, err := util.GetYamlFromProto(org)
+		util.ExitNicelyOnError(err, "Error getting org from proto")
+		fmt.Println(out)
 	}
 }
 
@@ -106,13 +91,13 @@ mediator control plane.`,
 				OrganizationId: id,
 			})
 			util.ExitNicelyOnError(err, "Error getting organization by id")
-			printOrganization(org, nil, format)
+			printOrganization(org, format)
 		} else if name != "" {
 			org, err := client.GetOrganizationByName(ctx, &pb.GetOrganizationByNameRequest{
 				Name: name,
 			})
 			util.ExitNicelyOnError(err, "Error getting organization by name")
-			printOrganization(nil, org, format)
+			printOrganization(org, format)
 		} else {
 			fmt.Fprintf(os.Stderr, "Error: must specify either id or name\n")
 			os.Exit(1)

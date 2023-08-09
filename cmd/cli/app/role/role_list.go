@@ -22,7 +22,6 @@
 package role
 
 import (
-	"encoding/json"
 	"fmt"
 	"os"
 	"time"
@@ -30,17 +29,13 @@ import (
 	"github.com/olekukonko/tablewriter"
 	"github.com/spf13/cobra"
 	"github.com/spf13/viper"
-	"google.golang.org/protobuf/encoding/protojson"
+	"google.golang.org/protobuf/reflect/protoreflect"
 
 	"github.com/stacklok/mediator/internal/util"
 	pb "github.com/stacklok/mediator/pkg/generated/protobuf/go/mediator/v1"
 )
 
 func printRoles(rolesById *pb.GetRolesByGroupResponse, rolesByGroup *pb.GetRolesResponse, format string) {
-	m := protojson.MarshalOptions{
-		Indent: "  ",
-	}
-
 	// print output in a table
 	if format == "" {
 		table := tablewriter.NewWriter(os.Stdout)
@@ -68,31 +63,25 @@ func printRoles(rolesById *pb.GetRolesByGroupResponse, rolesByGroup *pb.GetRoles
 		}
 		table.Render()
 	} else if format == "json" {
-		var out []byte
-		var err error
+		var roles protoreflect.ProtoMessage
 		if rolesById != nil {
-			out, err = m.Marshal(rolesById)
+			roles = rolesById
 		} else {
-			out, err = m.Marshal(rolesByGroup)
+			roles = rolesByGroup
 		}
-		util.ExitNicelyOnError(err, "Error marshalling json")
-		fmt.Println(string(out))
+		out, err := util.GetJsonFromProto(roles)
+		util.ExitNicelyOnError(err, "Error getting json from proto")
+		fmt.Println(out)
 	} else if format == "yaml" {
-		var out []byte
-		var err error
+		var roles protoreflect.ProtoMessage
 		if rolesById != nil {
-			out, err = m.Marshal(rolesById)
+			roles = rolesById
 		} else {
-			out, err = m.Marshal(rolesByGroup)
+			roles = rolesByGroup
 		}
-		util.ExitNicelyOnError(err, "Error marshalling json")
-
-		var rawMsg json.RawMessage
-		err = json.Unmarshal(out, &rawMsg)
-		util.ExitNicelyOnError(err, "Error unmarshalling json")
-		yamlResult, err := util.ConvertJsonToYaml(rawMsg)
-		util.ExitNicelyOnError(err, "Error converting json to yaml")
-		fmt.Println(string(yamlResult))
+		out, err := util.GetYamlFromProto(roles)
+		util.ExitNicelyOnError(err, "Error getting yaml from proto")
+		fmt.Println(out)
 	}
 
 }
