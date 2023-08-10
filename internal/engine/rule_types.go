@@ -112,13 +112,13 @@ type RuleTypeEngine struct {
 }
 
 // NewRuleTypeEngine creates a new rule type engine
-func NewRuleTypeEngine(rt *pb.RuleType, cli ghclient.RestAPI) (*RuleTypeEngine, error) {
+func NewRuleTypeEngine(rt *pb.RuleType, cli ghclient.RestAPI, accessToken string) (*RuleTypeEngine, error) {
 	rval, err := NewRuleValidator(rt)
 	if err != nil {
 		return nil, fmt.Errorf("cannot create rule validator: %w", err)
 	}
 
-	rdi, err := NewRuleDataIngest(rt, cli)
+	rdi, err := NewRuleDataIngest(rt, cli, accessToken)
 	if err != nil {
 		return nil, fmt.Errorf("cannot create rule data ingest: %w", err)
 	}

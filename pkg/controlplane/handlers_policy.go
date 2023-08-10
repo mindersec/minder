@@ -173,8 +173,8 @@ func (s *Server) CreatePolicy(ctx context.Context,
 	// Create entity rules entries
 	for ent, entRules := range map[engine.EntityType][]*pb.PipelinePolicy_ContextualRuleSet{
 		engine.RepositoryEntity:       in.GetRepository(),
-		engine.ArtifactEntity:         in.GetBuildEnvironment(),
-		engine.BuildEnvironmentEntity: in.GetArtifact(),
+		engine.ArtifactEntity:         in.GetArtifact(),
+		engine.BuildEnvironmentEntity: in.GetBuildEnvironment(),
 	} {
 		if err := createPolicyRulesForEntity(ctx, ent, &policy, qtx, entRules); err != nil {
 			return nil, err

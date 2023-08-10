@@ -2659,35 +2659,6 @@
       },
       "description": "DataEvalDef defines the data evaluation definition.\nThis pertains to the way we traverse data from the upstream\nendpoint and how we compare it to the rule.\nthe type is the way we traverse and evaluate the data from the\nupstream endpoint. The def is the definition of the data evaluation.\ne.g. the actual jq expression."
     },
-    "DataEvalRestType": {
-      "type": "object",
-      "properties": {
-        "endpoint": {
-          "type": "string",
-          "description": "endpoint is the endpoint to fetch data from.\nThis can be a URL or the path on the API.bool\nThis is a required field and must be set.\nThis is also evaluated via a template which allows\nus dynamically fill in the values."
-        },
-        "method": {
-          "type": "string",
-          "description": "method is the method to use to fetch data."
-        },
-        "headers": {
-          "type": "array",
-          "items": {
-            "type": "string"
-          },
-          "description": "headers are the headers to be sent to the endpoint."
-        },
-        "body": {
-          "type": "string",
-          "description": "body is the body to be sent to the endpoint."
-        },
-        "parse": {
-          "type": "string",
-          "description": "parse is the parsing mechanism to be used to parse the data."
-        }
-      },
-      "description": "RestType defines the rest data evaluation.\nThis is used to fetch data from a REST endpoint."
-    },
     "DefinitionDataEval": {
       "type": "object",
       "properties": {
@@ -2696,8 +2667,12 @@
           "description": "type is the type of the data evaluation.\nwe currently support rest."
         },
         "rest": {
-          "$ref": "#/definitions/DataEvalRestType",
+          "$ref": "#/definitions/v1RestType",
           "description": "rest is the rest data evaluation.\nthis is only used if the type is rest."
+        },
+        "builtin": {
+          "$ref": "#/definitions/v1BuiltinType",
+          "description": "builtin is the builtin data evaluation."
         },
         "keyType": {
           "type": "string",
@@ -2871,6 +2846,15 @@
           "title": "Add other relevant fields"
         }
       }
+    },
+    "v1BuiltinType": {
+      "type": "object",
+      "properties": {
+        "method": {
+          "type": "string"
+        }
+      },
+      "description": "BuiltinType defines the builtin data evaluation."
     },
     "v1CheckHealthResponse": {
       "type": "object",
@@ -4145,6 +4129,35 @@
           "type": "boolean"
         }
       }
+    },
+    "v1RestType": {
+      "type": "object",
+      "properties": {
+        "endpoint": {
+          "type": "string",
+          "description": "endpoint is the endpoint to fetch data from.\nThis can be a URL or the path on the API.bool\nThis is a required field and must be set.\nThis is also evaluated via a template which allows\nus dynamically fill in the values."
+        },
+        "method": {
+          "type": "string",
+          "description": "method is the method to use to fetch data."
+        },
+        "headers": {
+          "type": "array",
+          "items": {
+            "type": "string"
+          },
+          "description": "headers are the headers to be sent to the endpoint."
+        },
+        "body": {
+          "type": "string",
+          "description": "body is the body to be sent to the endpoint."
+        },
+        "parse": {
+          "type": "string",
+          "description": "parse is the parsing mechanism to be used to parse the data."
+        }
+      },
+      "description": "RestType defines the rest data evaluation.\nThis is used to fetch data from a REST endpoint."
     },
     "v1RevokeOauthGroupTokenResponse": {
       "type": "object"

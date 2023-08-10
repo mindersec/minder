@@ -1,0 +1,15 @@
+---
+version: v1
+type: pipeline-policy
+name: acme-github-policy-artifact
+context:
+  group: Root Group
+  provider: github
+artifact:
+  - context: github
+    rules:
+      - type: artifact_signature
+        def:
+          is_signed: true
+          is_verified: true
+          is_bundle_verified: true

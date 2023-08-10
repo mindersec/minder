@@ -137,7 +137,7 @@ func (e *Executor) handleReposInitEvent(ctx context.Context, prov string, evt *I
 		return fmt.Errorf("error getting policy: %w", err)
 	}
 
-	cli, err := e.buildClient(ctx, prov, evt.Group)
+	cli, _, err := e.buildClient(ctx, prov, evt.Group)
 	if err != nil {
 		return fmt.Errorf("error building client: %w", err)
 	}
@@ -172,7 +172,7 @@ func (e *Executor) handleReposInitEvent(ctx context.Context, prov string, evt *I
 
 			// Let's evaluate all the rules for this policy
 			err = TraverseRules(relevant, func(rule *pb.PipelinePolicy_Rule) error {
-				rt, rte, err := e.getEvaluator(ctx, *pol.Id, prov, cli, ectx, rule)
+				rt, rte, err := e.getEvaluator(ctx, *pol.Id, prov, cli, "", ectx, rule)
 				if err != nil {
 					return err
 				}
@@ -202,24 +202,154 @@ func (e *Executor) handleWebhookEvent(msg *message.Message) error {
 	if err := json.Unmarshal(msg.Payload, &payload); err != nil {
 		return fmt.Errorf("error unmarshalling payload: %w", err)
 	}
+	ctx := msg.Context()
 
-	// determine if the payload is a repository event
-	_, isRepo := payload["repository"]
+	// determine if the payload is an artifact published event
+	// TODO: this needs to be managed via signals
+	hook_type := msg.Metadata.Get("type")
+	if hook_type == "package" {
+		if payload["action"] == "published" {
+			return e.handleArtifactPublishedEvent(ctx, ghclient.Github, payload)
+		}
+	} else {
+		// determine if the payload is a repository event
+		_, isRepo := payload["repository"]
 
-	// TODO(jaosorior): Handle events that are not repository events
-	if !isRepo {
+		// TODO(jaosorior): Handle events that are not repository events
+		if !isRepo {
+			log.Printf("could not determine relevant entity for event. Skipping execution.")
+			return nil
+		}
+
+		// TODO(jaosorior): Handle events that are not repository events
+		// TODO(jaosorior): get provider from database
+		return e.handleRepoEvent(ctx, ghclient.Github, payload)
+	}
+	return nil
+}
+
+func extractArtifactFromPayload(ctx context.Context, payload map[string]any) (*pb.ArtifactEventPayload, error) {
+	artifact_id, err := JQGetValuesFromAccessor(ctx, ".package.id", payload)
+	if err != nil {
+		return nil, err
+	}
+	artifact_name, err := JQGetValuesFromAccessor(ctx, ".package.name", payload)
+	if err != nil {
+		return nil, err
+	}
+	artifact_type, err := JQGetValuesFromAccessor(ctx, ".package.package_type", payload)
+	if err != nil {
+		return nil, err
+	}
+	owner_login, err := JQGetValuesFromAccessor(ctx, ".package.owner.login", payload)
+	if err != nil {
+		return nil, err
+	}
+	owner_type, err := JQGetValuesFromAccessor(ctx, ".package.owner.type", payload)
+	if err != nil {
+		return nil, err
+	}
+	package_version_id, err := JQGetValuesFromAccessor(ctx, ".package.package_version.id", payload)
+	if err != nil {
+		return nil, err
+	}
+	package_version_sha, err := JQGetValuesFromAccessor(ctx, ".package.package_version.version", payload)
+	if err != nil {
+		return nil, err
+	}
+	tag, err := JQGetValuesFromAccessor(ctx, ".package.package_version.container_metadata.tag.name", payload)
+	if err != nil {
+		return nil, err
+	}
+	package_url, err := JQGetValuesFromAccessor(ctx, ".package.package_version.package_url", payload)
+	if err != nil {
+		return nil, err
+	}
+
+	artifact := &pb.ArtifactEventPayload{
+		ArtifactId:   int64(artifact_id.(float64)),
+		ArtifactName: artifact_name.(string),
+		ArtifactType: artifact_type.(string),
+		OwnerLogin:   owner_login.(string),
+		OwnerType:    owner_type.(string),
+		VersionId:    int64(package_version_id.(float64)),
+		VersionSha:   package_version_sha.(string),
+		Tag:          tag.(string),
+		PackageUrl:   package_url.(string),
+	}
+	return artifact, nil
+
+}
+func (e *Executor) handleArtifactPublishedEvent(ctx context.Context, prov string, payload map[string]any) error {
+	// we need to have information about package and repository
+	if payload["package"] == nil || payload["repository"] == nil {
 		log.Printf("could not determine relevant entity for event. Skipping execution.")
 		return nil
 	}
 
-	ctx := msg.Context()
+	// extract information about repository so we can identity the group and associated rules
+	dbrepo, err := e.getRepoInformationFromPayload(ctx, prov, payload)
+	if err != nil {
+		return err
+	}
+	g := dbrepo.GroupID
 
-	// TODO(jaosorior): Handle events that are not repository events
-	// TODO(jaosorior): get provider from database
-	return e.handleRepoEvent(ctx, ghclient.Github, payload)
+	// get group info
+	group, err := e.querier.GetGroupByID(ctx, g)
+	if err != nil {
+		return fmt.Errorf("error getting group: %w", err)
+	}
+
+	cli, token, err := e.buildClient(ctx, prov, g)
+	if err != nil {
+		return fmt.Errorf("error building client: %w", err)
+	}
+
+	ectx := &EntityContext{
+		Group: Group{
+			ID:   group.ID,
+			Name: group.Name,
+		},
+		Provider: prov,
+	}
+
+	// Get policies relevant to group
+	dbpols, err := e.querier.ListPoliciesByGroupID(ctx, g)
+	if err != nil {
+		return fmt.Errorf("error getting policies: %w", err)
+	}
+
+	for _, pol := range MergeDatabaseListIntoPolicies(dbpols, ectx) {
+		relevant, err := GetRulesForEntity(pol, ArtifactEntity)
+		if err != nil {
+			return fmt.Errorf("error getting rules for entity: %w", err)
+		}
+
+		// Let's evaluate all the rules for this policy
+		err = TraverseRules(relevant, func(rule *pb.PipelinePolicy_Rule) error {
+			rt, rte, err := e.getEvaluator(ctx, *pol.Id, prov, cli, token, ectx, rule)
+			if err != nil {
+				return err
+			}
+
+			artifact, err := extractArtifactFromPayload(ctx, payload)
+			if err != nil {
+				return err
+			}
+			result := rte.Eval(ctx, artifact, rule.Def.AsMap(), rule.Params.AsMap())
+			return e.createOrUpdateRepositoryEvalStatus(ctx, *pol.Id, dbrepo.ID, *rt.Id, result)
+		})
+		if err != nil {
+			return fmt.Errorf("error traversing rules for policy %d: %w", pol.Id, err)
+		}
+
+	}
+
+	return nil
 }
 
-func (e *Executor) handleRepoEvent(ctx context.Context, prov string, payload map[string]any) error {
+func (e *Executor) getRepoInformationFromPayload(ctx context.Context, prov string,
+	payload map[string]any) (db.Repository, error) {
 	repoInfo, ok := payload["repository"].(map[string]any)
 	if !ok {
 		// If the event doesn't have a relevant repository we can't do anything with it.
@@ -230,7 +360,7 @@ func (e *Executor) handleRepoEvent(ctx context.Context, prov string, payload map
 		} else {
 			log.Printf("payload: %s", parsedPayload)
 		}
-		return nil
+		return db.Repository{}, nil
 	}
 
 	id, err := parseRepoID(repoInfo["id"])
@@ -242,7 +372,7 @@ func (e *Executor) handleRepoEvent(ctx context.Context, prov string, payload map
 		} else {
 			log.Printf("payload: %s", parsedPayload)
 		}
-		return fmt.Errorf("error parsing repository ID: %w", err)
+		return db.Repository{}, fmt.Errorf("error parsing repository ID: %w", err)
 	}
 
 	log.Printf("handling event for repository %d", id)
@@ -255,11 +385,18 @@ func (e *Executor) handleRepoEvent(ctx context.Context, prov string, payload map
 		if errors.Is(err, sql.ErrNoRows) {
 			log.Printf("repository %d not found", id)
 			// no use in continuing if the repository doesn't exist
-			return nil
+			return db.Repository{}, nil
 		}
-		return fmt.Errorf("error getting repository: %w", err)
+		return db.Repository{}, fmt.Errorf("error getting repository: %w", err)
 	}
+	return dbrepo, nil
+}
 
+func (e *Executor) handleRepoEvent(ctx context.Context, prov string, payload map[string]any) error {
+	dbrepo, err := e.getRepoInformationFromPayload(ctx, prov, payload)
+	if err != nil {
+		return err
+	}
 	// protobufs are our API, so we always execute on these instead of the DB directly.
 	repo := &pb.RepositoryResult{
 		Owner:      dbrepo.RepoOwner,
@@ -280,7 +417,7 @@ func (e *Executor) handleRepoEvent(ctx context.Context, prov string, payload map
 		return fmt.Errorf("error getting group: %w", err)
 	}
 
-	cli, err := e.buildClient(ctx, prov, g)
+	cli, _, err := e.buildClient(ctx, prov, g)
 	if err != nil {
 		return fmt.Errorf("error building client: %w", err)
 	}
@@ -309,7 +446,7 @@ func (e *Executor) handleRepoEvent(ctx context.Context, prov string, payload map
 
 		// Let's evaluate all the rules for this policy
 		err = TraverseRules(relevant, func(rule *pb.PipelinePolicy_Rule) error {
-			rt, rte, err := e.getEvaluator(ctx, *pol.Id, prov, cli, ectx, rule)
+			rt, rte, err := e.getEvaluator(ctx, *pol.Id, prov, cli, "", ectx, rule)
 			if err != nil {
 				return err
 			}
@@ -331,6 +468,7 @@ func (e *Executor) getEvaluator(
 	policyID int32,
 	prov string,
 	cli ghclient.RestAPI,
+	token string,
 	ectx *EntityContext,
 	rule *pb.PipelinePolicy_Rule,
 ) (*pb.RuleType, *RuleTypeEngine, error) {
@@ -353,7 +491,7 @@ func (e *Executor) getEvaluator(
 
 	// TODO(jaosorior): Rule types should be cached in memory so
 	// we don't have to query the database for each rule.
-	rte, err := NewRuleTypeEngine(rt, cli)
+	rte, err := NewRuleTypeEngine(rt, cli, token)
 	if err != nil {
 		return nil, nil, fmt.Errorf("error creating rule type engine: %w", err)
 	}
@@ -365,26 +503,26 @@ func (e *Executor) buildClient(
 	ctx context.Context,
 	prov string,
 	groupID int32,
-) (ghclient.RestAPI, error) {
+) (ghclient.RestAPI, string, error) {
 	encToken, err := e.querier.GetAccessTokenByGroupID(ctx,
 		db.GetAccessTokenByGroupIDParams{Provider: prov, GroupID: groupID})
 	if err != nil {
-		return nil, fmt.Errorf("error getting access token: %w", err)
+		return nil, "", fmt.Errorf("error getting access token: %w", err)
 	}
 
 	decryptedToken, err := crypto.DecryptOAuthToken(encToken.EncryptedToken)
 	if err != nil {
-		return nil, fmt.Errorf("error decrypting access token: %w", err)
+		return nil, "", fmt.Errorf("error decrypting access token: %w", err)
 	}
 
 	cli, err := ghclient.NewRestClient(ctx, ghclient.GitHubConfig{
 		Token: decryptedToken.AccessToken,
 	})
 	if err != nil {
-		return nil, fmt.Errorf("error creating github client: %w", err)
+		return nil, "", fmt.Errorf("error creating github client: %w", err)
 	}
 
-	return cli, nil
+	return cli, decryptedToken.AccessToken, nil
 }
 
 func (e *Executor) createOrUpdateRepositoryEvalStatus(

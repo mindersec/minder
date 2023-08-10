@@ -1,5 +1,5 @@
 ---
-# Note that we would create 
+# Note that we would create
 version: v1
 type: rule-type
 name: branch_protection
@@ -14,7 +14,7 @@ def:
   # Defines the schema for writing a rule with this rule being checked
   rule_schema:
     properties:
-      branch_protection":
+      branch_protection:
         type: "object"
         properties:
           enforce_admins:
@@ -76,29 +76,29 @@ def:
         # This denotes where the information will be retrieved from
         # the data source.
         type: jq
-        def: '.required_pull_request_reviews.dismiss_stale_reviews'
+        def: ".required_pull_request_reviews.dismiss_stale_reviews"
       ".required_pull_request_reviews.require_code_owner_reviews":
         # This denotes where the information will be retrieved from
         # the data source.
         type: jq
-        def: '.required_pull_request_reviews.require_code_owner_reviews'
+        def: ".required_pull_request_reviews.require_code_owner_reviews"
       ".required_pull_request_reviews.required_approving_review_count":
         # This denotes where the information will be retrieved from
         # the data source.
         type: jq
-        def: '.required_pull_request_reviews.required_approving_review_count'
+        def: ".required_pull_request_reviews.required_approving_review_count"
       ".required_linear_history":
         # This denotes where the information will be retrieved from
         # the data source.
         type: jq
-        def: '.required_linear_history.enabled'
+        def: ".required_linear_history.enabled"
       ".allow_force_pushes":
         # This denotes where the information will be retrieved from
         # the data source.
         type: jq
-        def: '.allow_force_pushes.enabled'
+        def: ".allow_force_pushes.enabled"
       ".allow_deletions":
         # This denotes where the information will be retrieved from
         # the data source.
         type: jq
-        def: '.allow_deletions.enabled'
+        def: ".allow_deletions.enabled"

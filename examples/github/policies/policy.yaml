@@ -30,6 +30,9 @@ repository:
         def:
           enabled: true
           allowed_actions: selected
+      - type: artifact_signature
+        def:
+          is_signed: true
 # build_environment:
 #   - rules:  # Not specifying a context takes the default context
 #       - type: no_org_wide_github_action_permissions

@@ -22,6 +22,7 @@ import (
 	"encoding/json"
 	"encoding/pem"
 	"fmt"
+	"time"
 
 	"github.com/google/go-containerregistry/pkg/authn"
 	"github.com/google/go-containerregistry/pkg/name"
@@ -34,6 +35,10 @@ import (
 	ociremote "github.com/sigstore/cosign/v2/pkg/oci/remote"
 	sigs "github.com/sigstore/cosign/v2/pkg/signature"
 	"github.com/sigstore/sigstore/pkg/signature/payload"
+	"google.golang.org/protobuf/proto"
+	"google.golang.org/protobuf/types/known/timestamppb"
+
+	pb "github.com/stacklok/mediator/pkg/generated/protobuf/go/mediator/v1"
 )
 
 type githubAuthenticator struct{ username, password string }
@@ -45,10 +50,68 @@ func (g githubAuthenticator) Authorization() (*authn.AuthConfig, error) {
 	}, nil
 }
 
+// ValidateSignature returns information about signature validation of a package
+func ValidateSignature(ctx context.Context, accessToken string, package_owner string,
+	package_url string) (*pb.SignatureVerification, *pb.GithubWorkflow, error) {
+	baseRef, err := name.ParseReference(package_url)
+	if err != nil {
+		return nil, nil, fmt.Errorf("error parsing image path: %w", err)
+	}
+
+	// need to retrieve package by name
+	signature_verification := &pb.SignatureVerification{
+		IsVerified:       false,
+		IsSigned:         false,
+		IsBundleVerified: false,
+	}
+	github_workflow := &pb.GithubWorkflow{}
+
+	// get information about signature
+	signature, err := GetSignatureTag(baseRef, package_owner, accessToken)
+
+	// if there is a signature, we can move forward and retrieve details
+	if err == nil && signature != nil {
+		// we need to extract manifest from the signature
+		manifest, err := GetImageManifest(signature, package_owner, accessToken)
+		if err == nil && manifest.Layers != nil {
+			signature_verification.IsSigned = true
+			identity, issuer, err := ExtractIdentityFromCertificate(manifest)
+			if err == nil && identity != "" && issuer != "" {
+				signature_verification.CertIdentity = &identity
+				signature_verification.CertIssuer = &issuer
+
+				// we have issuer and identity, we can verify the image
+				verified, bundleVerified, imageKeys, err := VerifyFromIdentity(ctx, package_url, package_owner, accessToken, identity, issuer)
+				if err == nil {
+					// we can add information for the image
+					signature_verification.IsVerified = verified
+					signature_verification.IsBundleVerified = bundleVerified
+					signature_verification.RekorLogId = proto.String(imageKeys["RekorLogID"].(string))
+
+					log_index := int32(imageKeys["RekorLogIndex"].(int64))
+					signature_verification.RekorLogIndex = &log_index
+
+					signature_time := timestamppb.New(time.Unix(imageKeys["SignatureTime"].(int64), 0))
+					signature_verification.SignatureTime = signature_time
+
+					github_workflow = &pb.GithubWorkflow{
+						Name:       imageKeys["WorkflowName"].(string),
+						Repository: imageKeys["WorkflowRepository"].(string),
+						CommitSha:  imageKeys["WorkflowSha"].(string),
+						Trigger:    imageKeys["WorkflowTrigger"].(string),
+					}
+				}
+			}
+		}
+	}
+	return signature_verification, github_workflow, nil
+
+}
+
 // GetSignatureTag returns the signature tag for a given image if exists
-func GetSignatureTag(imageRef name.Reference) (name.Reference, error) {
-	ociremoteOpts := []ociremote.Option{}
-	dstRef, err := ociremote.SignatureTag(imageRef, ociremoteOpts...)
+func GetSignatureTag(imageRef name.Reference, username string, token string) (name.Reference, error) {
+	auth := githubAuthenticator{username, token}
+	dstRef, err := ociremote.SignatureTag(imageRef, ociremote.WithRemoteOptions(remote.WithAuth(auth)))
 	if err != nil {
 		return nil, fmt.Errorf("error getting signature tag: %w", err)
 	}

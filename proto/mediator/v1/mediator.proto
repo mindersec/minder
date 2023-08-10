@@ -89,6 +89,18 @@ message SignatureVerification {
     optional google.protobuf.Timestamp signature_time = 8;
 }
 
+message ArtifactEventPayload {
+    int64 artifact_id = 1;
+    string artifact_name = 2;
+    string artifact_type = 3;
+    string owner_login = 4;
+    string owner_type = 5;
+    int64 version_id = 6;
+    string version_sha = 7;
+    string tag = 8;
+    string package_url = 9;
+}
+
 message ArtifactVersion {
     int64 version_id = 1;
     repeated string tags = 2;
@@ -1521,6 +1533,34 @@ message DeleteRuleTypeResponse {
 
 // --- END RuleType CRUD definitions
 
+// RestType defines the rest data evaluation.
+// This is used to fetch data from a REST endpoint.
+message RestType {
+    // endpoint is the endpoint to fetch data from.
+    // This can be a URL or the path on the API.bool
+    // This is a required field and must be set.
+    // This is also evaluated via a template which allows
+    // us dynamically fill in the values.
+    string endpoint = 1;
+
+    // method is the method to use to fetch data.
+    string method = 2;
+
+    // headers are the headers to be sent to the endpoint.
+    repeated string headers = 3;
+
+    // body is the body to be sent to the endpoint.
+    optional string body = 4;
+
+    // parse is the parsing mechanism to be used to parse the data.
+    string parse = 5;
+}
+
+// BuiltinType defines the builtin data evaluation.
+message BuiltinType {
+    string method = 1;
+}
+
 // RuleType defines rules that may or may not be user defined.
 // The version is assumed from the folder's version.
 message RuleType {
@@ -1533,7 +1573,7 @@ message RuleType {
 
     // context is the context in which the rule is evaluated.
     Context context = 3;
-
+    
     // Definition defines the rule type. It encompases the schema and the data evaluation.
     message Definition {
         // in_entity is the entity in which the rule is evaluated.
@@ -1549,37 +1589,17 @@ message RuleType {
             // we currently support rest.
             string type = 1;
 
-            // RestType defines the rest data evaluation.
-            // This is used to fetch data from a REST endpoint.
-            message RestType {
-                // endpoint is the endpoint to fetch data from.
-                // This can be a URL or the path on the API.bool
-                // This is a required field and must be set.
-                // This is also evaluated via a template which allows
-                // us dynamically fill in the values.
-                string endpoint = 1;
-
-                // method is the method to use to fetch data.
-                string method = 2;
-
-                // headers are the headers to be sent to the endpoint.
-                repeated string headers = 3;
-
-                // body is the body to be sent to the endpoint.
-                optional string body = 4;
-
-                // parse is the parsing mechanism to be used to parse the data.
-                string parse = 5;
-            }
-
             // rest is the rest data evaluation.
             // this is only used if the type is rest.
             optional RestType rest = 3;
 
+            // builtin is the builtin data evaluation.
+            optional BuiltinType builtin = 4;
+
             // key_type is the type of the key for each data item.
             // This is used to index the data.
             // Currently only `jq` is supported.
-            string key_type = 4;
+            string key_type = 5;
 
             // DataEvalDef defines the data evaluation definition.
             // This pertains to the way we traverse data from the upstream
@@ -1598,7 +1618,7 @@ message RuleType {
             // data is the data evaluation definition.
             // each key is a piece of data coming from the policy
             // to be evaluated. The value is the definition of the data evaluation.
-            map<string, DataEvalDef> data = 5;
+            map<string, DataEvalDef> data = 6;
         }
         DataEval data_eval = 3;
     }

@@ -17,7 +17,6 @@ package controlplane
 import (
 	"context"
 	"database/sql"
-	"fmt"
 	"strings"
 
 	"google.golang.org/grpc/codes"
@@ -313,7 +312,6 @@ func (s *Server) GetRepositoryByName(ctx context.Context,
 
 // SyncRepositories synchronizes the repositories for a given provider and group
 func (s *Server) SyncRepositories(ctx context.Context, in *pb.SyncRepositoriesRequest) (*pb.SyncRepositoriesResponse, error) {
-	fmt.Println("i want to sync repos")
 	if in.Provider != github.Github {
 		return nil, status.Errorf(codes.InvalidArgument, "provider not supported: %v", in.Provider)
 	}
