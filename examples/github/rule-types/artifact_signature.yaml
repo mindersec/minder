@@ -42,7 +42,7 @@ def:
         # This denotes where the information will be retrieved from
         # the data source.
         type: jq
-        def: ".Verification.is_signed"
+        def: ".Verification.is_verified"
       ".is_bundle_verified":
         # This denotes where the information will be retrieved from
         # the data source.
