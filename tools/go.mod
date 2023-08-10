@@ -3,7 +3,7 @@ module github.com/stacklok/mediator/tools
 go 1.20
 
 require (
-	github.com/bufbuild/buf v1.25.1
+	github.com/bufbuild/buf v1.26.1
 	github.com/daixiang0/gci v0.10.1
 	github.com/go-critic/go-critic v0.8.2
 	github.com/golangci/golangci-lint v1.53.3
