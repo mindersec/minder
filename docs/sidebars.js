@@ -46,8 +46,13 @@ const sidebars = {
   mediator: [
     {
       type: 'doc',
-      label: 'Mediator introduction',
+      label: 'Introduction',
       id: 'mediator_intro',
+    },
+    {
+      type: 'doc',
+      label: 'Architecture',
+      id: 'mediator_architecture',
     },
     {
       type: 'doc',
