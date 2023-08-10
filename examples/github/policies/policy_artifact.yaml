@@ -10,6 +10,8 @@ artifact:
   - context: github
     rules:
       - type: artifact_signature
+        params:
+          tag: main
         def:
           is_signed: true
           is_verified: true
