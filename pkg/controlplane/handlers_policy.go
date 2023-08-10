@@ -625,7 +625,17 @@ func (s *Server) UpdateRuleType(ctx context.Context, urt *pb.UpdateRuleTypeReque
 
 // DeleteRuleType is a method to delete a rule type
 func (s *Server) DeleteRuleType(ctx context.Context, in *pb.DeleteRuleTypeRequest) (*pb.DeleteRuleTypeResponse, error) {
-	ctx, err := s.authAndContextValidation(ctx, in.GetContext())
+	// first read rule type by id, so we can get provider
+	ruletype, err := s.store.GetRuleTypeByID(ctx, in.GetId())
+	if err != nil {
+		if errors.Is(err, sql.ErrNoRows) {
+			return nil, status.Errorf(codes.NotFound, "rule type %d not found", in.GetId())
+		}
+		return nil, status.Errorf(codes.Unknown, "failed to get rule type: %s", err)
+	}
+	in.Context.Provider = ruletype.Provider
+
+	ctx, err = s.authAndContextValidation(ctx, in.GetContext())
 	if err != nil {
 		return nil, status.Errorf(codes.InvalidArgument, "error ensuring default group: %v", err)
 	}
