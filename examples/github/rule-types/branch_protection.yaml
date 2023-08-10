@@ -1,5 +1,5 @@
 ---
-# Note that we would create
+# verifies that a branch has proper protections
 version: v1
 type: rule-type
 name: branch_protection

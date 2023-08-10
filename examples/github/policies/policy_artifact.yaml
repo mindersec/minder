@@ -1,4 +1,5 @@
 ---
+# sample policy for validating artifact signatures
 version: v1
 type: pipeline-policy
 name: acme-github-policy-artifact
