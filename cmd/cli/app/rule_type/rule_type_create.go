@@ -95,7 +95,6 @@ within a mediator control plane.`,
 		if err != nil {
 			return fmt.Errorf("error creating rule type: %w", err)
 		}
-
 		out, err := util.GetJsonFromProto(resp)
 		util.ExitNicelyOnError(err, "Error getting json from proto")
 		fmt.Println(out)

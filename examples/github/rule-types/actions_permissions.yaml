@@ -32,10 +32,10 @@ def:
       # for each repository in the organization, we use a template that
       # will be evaluated for each repository. The structure to use is the
       # protobuf structure for the entity that is being evaluated.
-      endpoint: '/repos/{{.Entity.Owner}}/{{.Entity.Repository}}/actions/permissions'
+      endpoint: "/repos/{{.Entity.Owner}}/{{.Entity.Repository}}/actions/permissions"
       # This is the method to use to retrieve the data. It should already default to JSON
       parse: json
-    key-type: jq
+    key_type: jq
     data:
       # This key is meant to denote where the info will be
       # persisted in the aspect itself.
@@ -43,7 +43,7 @@ def:
         # This denotes where the information will be retrieved from
         # the data source.
         type: jq
-        def: '.enabled'
+        def: ".enabled"
       ".allowed_actions":
         type: jq
-        def: '.allowed_actions'
+        def: ".allowed_actions"

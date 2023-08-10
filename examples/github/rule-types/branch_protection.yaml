@@ -68,7 +68,7 @@ def:
       endpoint: '/repos/{{.Entity.Owner}}/{{.Entity.Repository}}/branches/{{ index .Params "branch" }}/protection'
       # This is the method to use to retrieve the data. It should already default to JSON
       parse: json
-    key-type: jq
+    key_type: jq
     data:
       # This key is meant to denote where the info will be
       # persisted in the aspect itself.
