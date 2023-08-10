@@ -1,4 +1,5 @@
 ---
+# verifies that the artifact has a valid signature
 version: v1
 type: rule-type
 name: artifact_signature

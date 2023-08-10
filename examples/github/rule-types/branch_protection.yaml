@@ -1,11 +1,11 @@
 ---
-# Note that we would create
+# verifies that a branch has proper protections
 version: v1
 type: rule-type
 name: branch_protection
 context:
   provider: github
-  organization: ACME
+  group: Root Group
 def:
   # Defines the section of the pipeline the rule will appear in.
   # This will affect the template that is used to render multiple parts

@@ -1,9 +1,10 @@
 ---
+# sample policy for validating repositories
 version: v1
 type: pipeline-policy
 name: acme-github-policy
 context:
-  organization: ACME
+  group: Root Group
   provider: github
 repository:
   - context: github
