@@ -95,6 +95,7 @@ func verifyValidGroup(ctx context.Context, in *engine.EntityContext) error {
 }
 
 // CreatePolicy creates a policy for a group
+// nolint: gocyclo
 func (s *Server) CreatePolicy(ctx context.Context,
 	cpr *pb.CreatePolicyRequest) (*pb.CreatePolicyResponse, error) {
 	in := cpr.GetPolicy()
@@ -105,6 +106,15 @@ func (s *Server) CreatePolicy(ctx context.Context,
 	}
 
 	entityCtx := engine.EntityFromContext(ctx)
+	// if provider is not enrolled, we cannot create a policy
+	_, err = s.store.GetAccessTokenByGroupID(ctx,
+		db.GetAccessTokenByGroupIDParams{Provider: entityCtx.GetProvider(), GroupID: entityCtx.Group.GetID()})
+	if err != nil {
+		if err == sql.ErrNoRows {
+			return nil, status.Errorf(codes.FailedPrecondition, "provider %s is not enrolled", entityCtx.GetProvider())
+		}
+		return nil, status.Errorf(codes.Unknown, "failed to get access token: %s", err)
+	}
 
 	if err := engine.ValidatePolicy(in); err != nil {
 		return nil, status.Errorf(codes.InvalidArgument, "invalid policy: %v", err)
@@ -540,7 +550,6 @@ func (s *Server) CreateRuleType(ctx context.Context, crt *pb.CreateRuleTypeReque
 	}
 
 	entityCtx := engine.EntityFromContext(ctx)
-
 	_, err = s.store.GetRuleTypeByName(ctx, db.GetRuleTypeByNameParams{
 		Provider: entityCtx.GetProvider(),
 		GroupID:  entityCtx.GetGroup().GetID(),
