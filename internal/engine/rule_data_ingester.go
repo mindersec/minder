@@ -40,7 +40,7 @@ import (
 // It allows for different mechanisms for ingesting data
 // in order to evaluate a rule.
 type RuleDataIngest interface {
-	Eval(ctx context.Context, ent any, pol, params map[string]any) error
+	Eval(ctx context.Context, ent protoreflect.ProtoMessage, pol, params map[string]any) error
 }
 
 // ErrEvaluationFailed is an error that occurs during evaluation of a rule.
@@ -144,7 +144,7 @@ type RestEndpointTemplateParams struct {
 }
 
 // Eval evaluates the rule type against the given entity and policy
-func (rdi *RestRuleDataIngest) Eval(ctx context.Context, ent any, pol, params map[string]any) error {
+func (rdi *RestRuleDataIngest) Eval(ctx context.Context, ent protoreflect.ProtoMessage, pol, params map[string]any) error {
 	endpoint := new(bytes.Buffer)
 	retp := &RestEndpointTemplateParams{
 		Entity: ent,
@@ -231,7 +231,7 @@ func entityMatchesParams(ctx context.Context, ent protoreflect.ProtoMessage, par
 }
 
 // Eval evaluates the rule type against the given entity and policy
-func (idi *BuiltinRuleDataIngest) Eval(ctx context.Context, ent any, pol, params map[string]any) error {
+func (idi *BuiltinRuleDataIngest) Eval(ctx context.Context, ent protoreflect.ProtoMessage, pol, params map[string]any) error {
 	// call internal method stored in pkg and method
 	rm := rule_methods.RuleMethods{}
 	value := reflect.ValueOf(rm)
@@ -239,7 +239,7 @@ func (idi *BuiltinRuleDataIngest) Eval(ctx context.Context, ent any, pol, params
 
 	// Check if the method exists
 	if method.IsValid() {
-		matches, err := entityMatchesParams(ctx, ent.(protoreflect.ProtoMessage), params)
+		matches, err := entityMatchesParams(ctx, ent, params)
 		if err != nil {
 			return fmt.Errorf("cannot check if entity matches params: %w", err)
 		}

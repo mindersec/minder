@@ -26,6 +26,7 @@ import (
 
 	"github.com/spf13/cobra"
 	"github.com/spf13/viper"
+	"google.golang.org/protobuf/reflect/protoreflect"
 
 	"github.com/stacklok/mediator/internal/engine"
 	"github.com/stacklok/mediator/internal/util"
@@ -110,7 +111,7 @@ func testCmdRun(cmd *cobra.Command, _ []string) error {
 	return runEvaluationForRules(eng, ent, rules)
 }
 
-func runEvaluationForRules(eng *engine.RuleTypeEngine, ent any, frags []*pb.PipelinePolicy_Rule) error {
+func runEvaluationForRules(eng *engine.RuleTypeEngine, ent protoreflect.ProtoMessage, frags []*pb.PipelinePolicy_Rule) error {
 	for idx := range frags {
 		frag := frags[idx]
 
@@ -159,7 +160,7 @@ func readRuleTypeFromFile(fpath string) (*pb.RuleType, error) {
 // golang structure.
 // TODO: We probably want to move this code to a utility once we land the server
 // side code.
-func readEntityFromFile(fpath string, entType string) (any, error) {
+func readEntityFromFile(fpath string, entType string) (protoreflect.ProtoMessage, error) {
 	f, err := os.Open(filepath.Clean(fpath))
 	if err != nil {
 		return nil, fmt.Errorf("error opening file: %w", err)
@@ -171,7 +172,7 @@ func readEntityFromFile(fpath string, entType string) (any, error) {
 		return nil, fmt.Errorf("error converting yaml to json: %w", err)
 	}
 
-	var out any
+	var out protoreflect.ProtoMessage
 
 	switch entType {
 	case "repository":

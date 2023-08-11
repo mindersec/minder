@@ -24,6 +24,7 @@ import (
 
 	"github.com/xeipuuv/gojsonschema"
 	"google.golang.org/protobuf/encoding/protojson"
+	"google.golang.org/protobuf/reflect/protoreflect"
 
 	"github.com/stacklok/mediator/pkg/db"
 	pb "github.com/stacklok/mediator/pkg/generated/protobuf/go/mediator/v1"
@@ -163,7 +164,7 @@ func (r *RuleTypeEngine) ValidateAgainstSchema(contextualPolicy any) error {
 }
 
 // Eval runs the rule type engine against the given entity
-func (r *RuleTypeEngine) Eval(ctx context.Context, ent any, pol, params map[string]any) error {
+func (r *RuleTypeEngine) Eval(ctx context.Context, ent protoreflect.ProtoMessage, pol, params map[string]any) error {
 	return r.rdi.Eval(ctx, ent, pol, params)
 }
 
