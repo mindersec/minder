@@ -17,7 +17,6 @@ package engine
 
 import (
 	"context"
-	"encoding/json"
 	"errors"
 	"fmt"
 	"strings"
@@ -166,12 +165,6 @@ func (r *RuleTypeEngine) ValidateAgainstSchema(contextualPolicy any) error {
 // Eval runs the rule type engine against the given entity
 func (r *RuleTypeEngine) Eval(ctx context.Context, ent protoreflect.ProtoMessage, pol, params map[string]any) error {
 	return r.rdi.Eval(ctx, ent, pol, params)
-}
-
-// DBRuleDefFromPB converts a protobuf rule type definition to a database
-// rule type definition
-func DBRuleDefFromPB(def *pb.RuleType_Definition) ([]byte, error) {
-	return json.Marshal(def)
 }
 
 // RuleDefFromDB converts a rule type definition from the database to a protobuf

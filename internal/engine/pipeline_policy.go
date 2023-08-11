@@ -17,12 +17,17 @@ package engine
 
 import (
 	"bytes"
+	"context"
 	"encoding/json"
 	"fmt"
 	"io"
 	"log"
 	"os"
 	"path/filepath"
+	"strings"
+
+	"github.com/itchyny/gojq"
+	"google.golang.org/protobuf/encoding/protojson"
 
 	"github.com/stacklok/mediator/internal/util"
 	"github.com/stacklok/mediator/pkg/db"
@@ -58,21 +63,16 @@ func ParseYAML(r io.Reader) (*pb.PipelinePolicy, error) {
 	if err := util.TranscodeYAMLToJSON(r, w); err != nil {
 		return nil, fmt.Errorf("error converting yaml to json: %w", err)
 	}
-
 	return ParseJSON(w)
 }
 
-// ParseJSON parses a JSON pipeline policy and validates it
+// ParseJSON parses a JSON pipeline policy
 func ParseJSON(r io.Reader) (*pb.PipelinePolicy, error) {
 	var out pb.PipelinePolicy
 
 	dec := json.NewDecoder(r)
 	if err := dec.Decode(&out); err != nil {
 		return nil, fmt.Errorf("error decoding json: %w", err)
-	}
-
-	if err := ValidatePolicy(&out); err != nil {
-		return nil, fmt.Errorf("error validating policy: %w", err)
 	}
 
 	return &out, nil
@@ -86,38 +86,40 @@ func ReadPolicyFromFile(fpath string) (*pb.PipelinePolicy, error) {
 	}
 
 	defer f.Close()
+	var out *pb.PipelinePolicy
 
 	if filepath.Ext(fpath) == ".json" {
-		return ParseJSON(f)
+		out, err = ParseJSON(f)
+	} else {
+		// parse yaml by default
+		out, err = ParseYAML(f)
+	}
+	if err != nil {
+		return nil, fmt.Errorf("error parsing policy: %w", err)
 	}
 
-	// parse yaml by default
-	return ReadYAMLPolicyFromReader(f)
-}
-
-// ReadYAMLPolicyFromReader reads a pipeline policy from a reader and returns it as a protobuf
-func ReadYAMLPolicyFromReader(r io.Reader) (*pb.PipelinePolicy, error) {
-	return ParseYAML(r)
+	return out, nil
 }
 
 // ValidatePolicy validates a pipeline policy
-func ValidatePolicy(p *pb.PipelinePolicy) error {
+func ValidatePolicy(ctx context.Context, store db.Store, p *pb.PipelinePolicy) error {
 	if err := validateContext(p.Context); err != nil {
 		return err
 	}
 
 	// If the policy is nil or empty, we don't need to validate it
 	if p.Repository != nil && len(p.Repository) > 0 {
-		return validateEntity(p.Repository)
+		return validateEntity(ctx, store, p.Repository)
 	}
 
 	if p.BuildEnvironment != nil && len(p.BuildEnvironment) > 0 {
-		return validateEntity(p.BuildEnvironment)
+		return validateEntity(ctx, store, p.BuildEnvironment)
 	}
 
 	if p.Artifact != nil && len(p.Artifact) > 0 {
-		return validateEntity(p.Artifact)
+		return validateEntity(ctx, store, p.Artifact)
 	}
+
 	return nil
 }
 
@@ -145,7 +147,7 @@ func validateContext(c *pb.Context) error {
 	return nil
 }
 
-func validateEntity(e []*pb.PipelinePolicy_ContextualRuleSet) error {
+func validateEntity(ctx context.Context, store db.Store, e []*pb.PipelinePolicy_ContextualRuleSet) error {
 	if len(e) == 0 {
 		return fmt.Errorf("%w: entity rules cannot be empty", ErrValidationFailed)
 	}
@@ -155,7 +157,7 @@ func validateEntity(e []*pb.PipelinePolicy_ContextualRuleSet) error {
 			return fmt.Errorf("%w: entity contextual rules cannot be nil", ErrValidationFailed)
 		}
 
-		if err := validateContextualRuleSet(r); err != nil {
+		if err := validateContextualRuleSet(ctx, store, r); err != nil {
 			return err
 		}
 	}
@@ -163,13 +165,13 @@ func validateEntity(e []*pb.PipelinePolicy_ContextualRuleSet) error {
 	return nil
 }
 
-func validateContextualRuleSet(e *pb.PipelinePolicy_ContextualRuleSet) error {
+func validateContextualRuleSet(ctx context.Context, store db.Store, e *pb.PipelinePolicy_ContextualRuleSet) error {
 	if e.Rules == nil {
 		return fmt.Errorf("%w: entity rules cannot be nil", ErrValidationFailed)
 	}
 
 	for _, r := range e.Rules {
-		if err := validateRule(r); err != nil {
+		if err := validateRule(ctx, store, r); err != nil {
 			return err
 		}
 	}
@@ -177,7 +179,7 @@ func validateContextualRuleSet(e *pb.PipelinePolicy_ContextualRuleSet) error {
 	return nil
 }
 
-func validateRule(r *pb.PipelinePolicy_Rule) error {
+func validateRule(ctx context.Context, store db.Store, r *pb.PipelinePolicy_Rule) error {
 	if r.Type == "" {
 		return fmt.Errorf("%w: rule type cannot be empty", ErrValidationFailed)
 	}
@@ -186,6 +188,58 @@ func validateRule(r *pb.PipelinePolicy_Rule) error {
 		return fmt.Errorf("%w: rule def cannot be nil", ErrValidationFailed)
 	}
 
+	// if there are params, they need to match against rule type params
+	params := r.GetParams()
+	jsonBytes, err := protojson.Marshal(params)
+	if err != nil {
+		return fmt.Errorf("%w: error marshaling rule params: %v", ErrValidationFailed, err)
+	}
+
+	var jsonData map[string]interface{}
+	if err := json.Unmarshal(jsonBytes, &jsonData); err != nil {
+		return fmt.Errorf("%w: error unmarshaling rule params: %v", ErrValidationFailed, err)
+	}
+	if len(jsonData) > 0 {
+		// read rule type to get info about paramers
+		entityCtx := EntityFromContext(ctx)
+		rule_type, err := store.GetRuleTypeByName(ctx, db.GetRuleTypeByNameParams{Provider: entityCtx.GetProvider(),
+			GroupID: entityCtx.GetGroup().GetID(), Name: r.Type})
+		if err != nil {
+			return fmt.Errorf("%w: error getting rule type: %v", ErrValidationFailed, err)
+		}
+
+		// Create a gojq query to extract names
+		query, err := gojq.Parse(".entries[].name")
+		if err != nil {
+			return fmt.Errorf("%w: error parsing rule type params: %v", ErrValidationFailed, err)
+		}
+		var ruleTypeParamsNames []string
+		var paramsData map[string]interface{}
+		if err := json.Unmarshal(rule_type.Params, &paramsData); err != nil {
+			return fmt.Errorf("%w: error unmarshaling rule type params: %v", ErrValidationFailed, err)
+		}
+		iter := query.Run(paramsData)
+		for {
+			v, ok := iter.Next()
+			if !ok {
+				break
+			}
+			ruleTypeParamsNames = append(ruleTypeParamsNames, v.(string))
+		}
+		for k := range jsonData {
+			keyExists := false
+			for _, name := range ruleTypeParamsNames {
+				if name == k {
+					keyExists = true
+					break
+				}
+			}
+			if !keyExists {
+				arrayStr := strings.Join(ruleTypeParamsNames, ", ")
+				return fmt.Errorf("%w: key %s does not exist in rule type params. Valid params are: %s", ErrValidationFailed, k, arrayStr)
+			}
+		}
+	}
 	return nil
 }
 
