@@ -31,9 +31,17 @@ repository:
         def:
           enabled: true
           allowed_actions: selected
+artifact:
+  - context: github
+    rules:
       - type: artifact_signature
+        params:
+          tag: main
+          artifactName: test
         def:
           is_signed: true
+          is_verified: true
+          is_bundle_verified: true
 # build_environment:
 #   - rules:  # Not specifying a context takes the default context
 #       - type: no_org_wide_github_action_permissions

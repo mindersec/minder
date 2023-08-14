@@ -351,3 +351,9 @@ func GetYamlFromProto(msg protoreflect.ProtoMessage) (string, error) {
 	}
 	return yamlResult, nil
 }
+
+// GetBytesFromProto given a proto message, formats into bytes
+func GetBytesFromProto(message protoreflect.ProtoMessage) ([]byte, error) {
+	m := getProtoMarshalOptions()
+	return m.Marshal(message)
+}

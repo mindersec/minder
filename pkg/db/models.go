@@ -209,6 +209,7 @@ type RuleType struct {
 	Provider   string          `json:"provider"`
 	GroupID    int32           `json:"group_id"`
 	Definition json.RawMessage `json:"definition"`
+	Params     json.RawMessage `json:"params"`
 	CreatedAt  time.Time       `json:"created_at"`
 	UpdatedAt  time.Time       `json:"updated_at"`
 }

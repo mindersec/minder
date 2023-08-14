@@ -76,7 +76,7 @@ within a mediator control plane.`,
 		ctx, cancel := util.GetAppContext()
 		defer cancel()
 
-		p, err := engine.ReadYAMLPolicyFromReader(preader)
+		p, err := engine.ParseYAML(preader)
 		if err != nil {
 			return fmt.Errorf("error reading fragment from file: %w", err)
 		}

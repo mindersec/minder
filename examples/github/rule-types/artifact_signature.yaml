@@ -6,6 +6,14 @@ name: artifact_signature
 context:
   provider: github
   group: Root Group
+params:
+  entries:
+    - name: artifactName
+      type: string
+      description: "The name of the artifact to check."
+    - name: tag
+      type: string
+      description: "The tag of the artifact to check."
 def:
   # Defines the section of the pipeline the rule will appear in.
   # This will affect the template that is used to render multiple parts
@@ -30,7 +38,7 @@ def:
       # method will be called using reflection, and will accept a generic json payload
       # it will also return a generic json payload
       method: ValidateSignature
-    key-type: jq
+    key_type: jq
     data:
       # This key is meant to denote where the info will be
       # persisted in the aspect itself.

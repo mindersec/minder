@@ -170,7 +170,7 @@ func (e *Executor) handleReposInitEvent(ctx context.Context, prov string, evt *I
 				UpdatedAt:  timestamppb.New(dbrepo.UpdatedAt),
 			}
 
-			// Let's evaluate all the rules for this policy
+			// Let's evaluate all the repo rules for this policy
 			err = TraverseRules(relevant, func(rule *pb.PipelinePolicy_Rule) error {
 				rt, rte, err := e.getEvaluator(ctx, *pol.Id, prov, cli, "", ectx, rule)
 				if err != nil {
@@ -336,6 +336,7 @@ func (e *Executor) handleArtifactPublishedEvent(ctx context.Context, prov string
 			if err != nil {
 				return err
 			}
+
 			result := rte.Eval(ctx, artifact, rule.Def.AsMap(), rule.Params.AsMap())
 			return e.createOrUpdateRepositoryEvalStatus(ctx, *pol.Id, dbrepo.ID, *rt.Id, result)
 		})

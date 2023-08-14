@@ -17,12 +17,18 @@ package engine
 
 import (
 	"bytes"
+	"context"
 	"encoding/json"
 	"fmt"
 	"io"
 	"log"
 	"os"
 	"path/filepath"
+	"strings"
+
+	"github.com/itchyny/gojq"
+	"google.golang.org/protobuf/encoding/protojson"
+	"k8s.io/apimachinery/pkg/util/sets"
 
 	"github.com/stacklok/mediator/internal/util"
 	"github.com/stacklok/mediator/pkg/db"
@@ -58,7 +64,6 @@ func ParseYAML(r io.Reader) (*pb.PipelinePolicy, error) {
 	if err := util.TranscodeYAMLToJSON(r, w); err != nil {
 		return nil, fmt.Errorf("error converting yaml to json: %w", err)
 	}
-
 	return ParseJSON(w)
 }
 
@@ -86,18 +91,19 @@ func ReadPolicyFromFile(fpath string) (*pb.PipelinePolicy, error) {
 	}
 
 	defer f.Close()
+	var out *pb.PipelinePolicy
 
 	if filepath.Ext(fpath) == ".json" {
-		return ParseJSON(f)
+		out, err = ParseJSON(f)
+	} else {
+		// parse yaml by default
+		out, err = ParseYAML(f)
+	}
+	if err != nil {
+		return nil, fmt.Errorf("error parsing policy: %w", err)
 	}
 
-	// parse yaml by default
-	return ReadYAMLPolicyFromReader(f)
-}
-
-// ReadYAMLPolicyFromReader reads a pipeline policy from a reader and returns it as a protobuf
-func ReadYAMLPolicyFromReader(r io.Reader) (*pb.PipelinePolicy, error) {
-	return ParseYAML(r)
+	return out, nil
 }
 
 // ValidatePolicy validates a pipeline policy
@@ -118,7 +124,26 @@ func ValidatePolicy(p *pb.PipelinePolicy) error {
 	if p.Artifact != nil && len(p.Artifact) > 0 {
 		return validateEntity(p.Artifact)
 	}
+
 	return nil
+}
+
+// ValidatePolicyParams validates all params from a pipeline policy
+func ValidatePolicyParams(ctx context.Context, store db.Store, p *pb.PipelinePolicy) error {
+	if len(p.GetRepository()) > 0 {
+		return validateEntityParams(ctx, store, p.GetRepository())
+	}
+
+	if len(p.GetBuildEnvironment()) > 0 {
+		return validateEntityParams(ctx, store, p.GetBuildEnvironment())
+	}
+
+	if len(p.GetArtifact()) > 0 {
+		return validateEntityParams(ctx, store, p.GetArtifact())
+	}
+
+	return nil
+
 }
 
 func validateContext(c *pb.Context) error {
@@ -163,6 +188,17 @@ func validateEntity(e []*pb.PipelinePolicy_ContextualRuleSet) error {
 	return nil
 }
 
+func validateEntityParams(ctx context.Context, store db.Store, e []*pb.PipelinePolicy_ContextualRuleSet) error {
+	for _, r := range e {
+		if err := validateContextualRuleSetParams(ctx, store, r); err != nil {
+			return err
+		}
+	}
+
+	return nil
+
+}
+
 func validateContextualRuleSet(e *pb.PipelinePolicy_ContextualRuleSet) error {
 	if e.Rules == nil {
 		return fmt.Errorf("%w: entity rules cannot be nil", ErrValidationFailed)
@@ -170,6 +206,16 @@ func validateContextualRuleSet(e *pb.PipelinePolicy_ContextualRuleSet) error {
 
 	for _, r := range e.Rules {
 		if err := validateRule(r); err != nil {
+			return err
+		}
+	}
+
+	return nil
+}
+
+func validateContextualRuleSetParams(ctx context.Context, store db.Store, e *pb.PipelinePolicy_ContextualRuleSet) error {
+	for _, r := range e.Rules {
+		if err := validateRuleParams(ctx, store, r); err != nil {
 			return err
 		}
 	}
@@ -186,6 +232,64 @@ func validateRule(r *pb.PipelinePolicy_Rule) error {
 		return fmt.Errorf("%w: rule def cannot be nil", ErrValidationFailed)
 	}
 
+	return nil
+}
+
+func getParamNamesForRuleType(ctx context.Context, store db.Store, r *pb.PipelinePolicy_Rule) (sets.Set[string], error) {
+	entityCtx := EntityFromContext(ctx)
+	ruleTypeParamsNames := sets.Set[string]{}
+
+	rule_type, err := store.GetRuleTypeByName(ctx, db.GetRuleTypeByNameParams{Provider: entityCtx.GetProvider(),
+		GroupID: entityCtx.GetGroup().GetID(), Name: r.Type})
+	if err != nil {
+		return ruleTypeParamsNames, fmt.Errorf("%w: error getting rule type: %v", ErrValidationFailed, err)
+	}
+
+	// Create a gojq query to extract names
+	query, err := gojq.Parse(".entries[].name")
+	if err != nil {
+		return ruleTypeParamsNames, fmt.Errorf("%w: error parsing rule type params: %v", ErrValidationFailed, err)
+	}
+	var paramsData map[string]interface{}
+	if err := json.Unmarshal(rule_type.Params, &paramsData); err != nil {
+		return ruleTypeParamsNames, fmt.Errorf("%w: error unmarshaling rule type params: %v", ErrValidationFailed, err)
+	}
+	iter := query.Run(paramsData)
+	for {
+		v, ok := iter.Next()
+		if !ok {
+			break
+		}
+		ruleTypeParamsNames = ruleTypeParamsNames.Insert(v.(string))
+	}
+	return ruleTypeParamsNames, nil
+}
+
+func validateRuleParams(ctx context.Context, store db.Store, r *pb.PipelinePolicy_Rule) error {
+	// if there are params, they need to match against rule type params
+	params := r.GetParams()
+	jsonBytes, err := protojson.Marshal(params)
+	if err != nil {
+		return fmt.Errorf("%w: error marshaling rule params: %v", ErrValidationFailed, err)
+	}
+
+	var jsonData map[string]interface{}
+	if err := json.Unmarshal(jsonBytes, &jsonData); err != nil {
+		return fmt.Errorf("%w: error unmarshaling rule params: %v", ErrValidationFailed, err)
+	}
+	if len(jsonData) > 0 {
+		// read rule type to get info about paramers
+		ruleTypeParamsNames, err := getParamNamesForRuleType(ctx, store, r)
+		if err != nil {
+			return fmt.Errorf("%w: error getting rule type params: %v", ErrValidationFailed, err)
+		}
+		for k := range jsonData {
+			if !ruleTypeParamsNames.Has(k) {
+				arrayStr := strings.Join(ruleTypeParamsNames.UnsortedList(), ", ")
+				return fmt.Errorf("%w: key %s does not exist in rule type params. Valid params are: %s", ErrValidationFailed, k, arrayStr)
+			}
+		}
+	}
 	return nil
 }
 
@@ -247,7 +351,19 @@ func MergeDatabaseListIntoPolicies(ppl []db.ListPoliciesByGroupIDRow, ectx *Enti
 
 		// NOTE: names are unique within a given Provider & Group ID (Unique index),
 		// so we don't need to worry about collisions.
-		if pm := rowInfoToPolicyMap(p.Entity, p.ID, p.Name, p.Provider, p.ContextualRules, ectx); pm != nil {
+		// first we check if policy already exists, if not we create a new one
+		// first we check if policy already exists, if not we create a new one
+		if _, ok := policies[p.Name]; !ok {
+			policies[p.Name] = &pb.PipelinePolicy{
+				Id:   &p.ID,
+				Name: p.Name,
+				Context: &pb.Context{
+					Provider: p.Provider,
+					Group:    &ectx.Group.Name,
+				},
+			}
+		}
+		if pm := rowInfoToPolicyMap(policies[p.Name], p.Entity, p.ContextualRules); pm != nil {
 			policies[p.Name] = pm
 		}
 	}
@@ -267,7 +383,19 @@ func MergeDatabaseGetIntoPolicies(ppl []db.GetPolicyByGroupAndIDRow, ectx *Entit
 
 		// NOTE: names are unique within a given Provider & Group ID (Unique index),
 		// so we don't need to worry about collisions.
-		if pm := rowInfoToPolicyMap(p.Entity, p.ID, p.Name, p.Provider, p.ContextualRules, ectx); pm != nil {
+
+		// first we check if policy already exists, if not we create a new one
+		if _, ok := policies[p.Name]; !ok {
+			policies[p.Name] = &pb.PipelinePolicy{
+				Id:   &p.ID,
+				Name: p.Name,
+				Context: &pb.Context{
+					Provider: p.Provider,
+					Group:    &ectx.Group.Name,
+				},
+			}
+		}
+		if pm := rowInfoToPolicyMap(policies[p.Name], p.Entity, p.ContextualRules); pm != nil {
 			policies[p.Name] = pm
 		}
 	}
@@ -280,26 +408,13 @@ func MergeDatabaseGetIntoPolicies(ppl []db.GetPolicyByGroupAndIDRow, ectx *Entit
 // Note that this function is thought to be called from scpecific Merge functions
 // and thus the logic is targetted to that.
 func rowInfoToPolicyMap(
+	policy *pb.PipelinePolicy,
 	entity db.Entities,
-	policyID int32,
-	name string,
-	provider string,
 	contextualRules json.RawMessage,
-	ectx *EntityContext,
-	// in map[string]*pb.PipelinePolicy,
 ) *pb.PipelinePolicy {
 	if !IsValidEntity(EntityTypeFromDB(entity)) {
 		log.Printf("unknown entity found in database: %s", entity)
 		return nil
-	}
-
-	result := &pb.PipelinePolicy{
-		Id:   &policyID,
-		Name: name,
-		Context: &pb.Context{
-			Provider: provider,
-			Group:    &ectx.Group.Name,
-		},
 	}
 
 	var ruleset []*pb.PipelinePolicy_ContextualRuleSet
@@ -313,12 +428,12 @@ func rowInfoToPolicyMap(
 
 	switch EntityTypeFromDB(entity) {
 	case RepositoryEntity:
-		result.Repository = ruleset
+		policy.Repository = ruleset
 	case BuildEnvironmentEntity:
-		result.BuildEnvironment = ruleset
+		policy.BuildEnvironment = ruleset
 	case ArtifactEntity:
-		result.Artifact = ruleset
+		policy.Artifact = ruleset
 	}
 
-	return result
+	return policy
 }

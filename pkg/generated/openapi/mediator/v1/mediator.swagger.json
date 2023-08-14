@@ -2724,6 +2724,32 @@
       },
       "description": "Rule defines the individual call of a certain rule type."
     },
+    "RuleTypeRuleTypeParam": {
+      "type": "object",
+      "properties": {
+        "name": {
+          "type": "string"
+        },
+        "type": {
+          "type": "string"
+        },
+        "description": {
+          "type": "string"
+        }
+      }
+    },
+    "RuleTypeRuleTypeParams": {
+      "type": "object",
+      "properties": {
+        "entries": {
+          "type": "array",
+          "items": {
+            "type": "object",
+            "$ref": "#/definitions/RuleTypeRuleTypeParam"
+          }
+        }
+      }
+    },
     "mediatorv1Context": {
       "type": "object",
       "properties": {
@@ -4277,6 +4303,9 @@
         "def": {
           "$ref": "#/definitions/v1RuleTypeDefinition",
           "description": "def is the definition of the rule type."
+        },
+        "params": {
+          "$ref": "#/definitions/RuleTypeRuleTypeParams"
         }
       },
       "description": "RuleType defines rules that may or may not be user defined.\nThe version is assumed from the folder's version."

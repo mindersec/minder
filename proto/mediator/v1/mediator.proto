@@ -1625,6 +1625,18 @@ message RuleType {
 
     // def is the definition of the rule type.
     Definition def = 4;
+
+    message RuleTypeParam {
+        string name = 1;
+        string type = 2;
+        string description = 3;
+    }
+
+    message RuleTypeParams {
+        repeated RuleTypeParam entries = 1;
+    }
+
+    optional RuleTypeParams params = 5;
 }
 
  // PipelinePolicy defines a policy that is user defined.

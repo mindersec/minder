@@ -158,6 +158,8 @@
     - [RuleType.Definition.DataEval.DataEntry](#mediator-v1-RuleType-Definition-DataEval-DataEntry)
     - [RuleType.Definition.DataEval.DataEvalDef](#mediator-v1-RuleType-Definition-DataEval-DataEvalDef)
     - [RuleType.Definition.RuleSchemaEntry](#mediator-v1-RuleType-Definition-RuleSchemaEntry)
+    - [RuleType.RuleTypeParam](#mediator-v1-RuleType-RuleTypeParam)
+    - [RuleType.RuleTypeParams](#mediator-v1-RuleType-RuleTypeParams)
     - [SignatureVerification](#mediator-v1-SignatureVerification)
     - [StoreProviderTokenRequest](#mediator-v1-StoreProviderTokenRequest)
     - [StoreProviderTokenResponse](#mediator-v1-StoreProviderTokenResponse)
@@ -2615,6 +2617,7 @@ The version is assumed from the folder&#39;s version.
 | name | [string](#string) |  | name is the name of the rule type. |
 | context | [Context](#mediator-v1-Context) |  | context is the context in which the rule is evaluated. |
 | def | [RuleType.Definition](#mediator-v1-RuleType-Definition) |  | def is the definition of the rule type. |
+| params | [RuleType.RuleTypeParams](#mediator-v1-RuleType-RuleTypeParams) | optional |  |
 
 
 
@@ -2704,6 +2707,38 @@ e.g. the actual jq expression.
 | ----- | ---- | ----- | ----------- |
 | key | [string](#string) |  |  |
 | value | [google.protobuf.Struct](#google-protobuf-Struct) |  |  |
+
+
+
+
+
+
+<a name="mediator-v1-RuleType-RuleTypeParam"></a>
+
+### RuleType.RuleTypeParam
+
+
+
+| Field | Type | Label | Description |
+| ----- | ---- | ----- | ----------- |
+| name | [string](#string) |  |  |
+| type | [string](#string) |  |  |
+| description | [string](#string) |  |  |
+
+
+
+
+
+
+<a name="mediator-v1-RuleType-RuleTypeParams"></a>
+
+### RuleType.RuleTypeParams
+
+
+
+| Field | Type | Label | Description |
+| ----- | ---- | ----- | ----------- |
+| entries | [RuleType.RuleTypeParam](#mediator-v1-RuleType-RuleTypeParam) | repeated |  |
 
 
 

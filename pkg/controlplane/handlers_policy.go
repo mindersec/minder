@@ -28,6 +28,7 @@ import (
 	"google.golang.org/grpc/status"
 
 	"github.com/stacklok/mediator/internal/engine"
+	"github.com/stacklok/mediator/internal/util"
 	"github.com/stacklok/mediator/pkg/auth"
 	"github.com/stacklok/mediator/pkg/db"
 	pb "github.com/stacklok/mediator/pkg/generated/protobuf/go/mediator/v1"
@@ -118,6 +119,10 @@ func (s *Server) CreatePolicy(ctx context.Context,
 
 	if err := engine.ValidatePolicy(in); err != nil {
 		return nil, status.Errorf(codes.InvalidArgument, "invalid policy: %v", err)
+	}
+
+	if err := engine.ValidatePolicyParams(ctx, s.store, in); err != nil {
+		return nil, status.Errorf(codes.InvalidArgument, "invalid policy params: %v", err)
 	}
 
 	err = engine.TraverseAllRulesForPipeline(in, func(r *pb.PipelinePolicy_Rule) error {
@@ -567,9 +572,14 @@ func (s *Server) CreateRuleType(ctx context.Context, crt *pb.CreateRuleTypeReque
 		return nil, status.Errorf(codes.InvalidArgument, "invalid rule type definition: %v", err)
 	}
 
-	def, err := engine.DBRuleDefFromPB(in.GetDef())
+	def, err := util.GetBytesFromProto(in.GetDef())
 	if err != nil {
 		return nil, fmt.Errorf("cannot convert rule definition to db: %v", err)
+	}
+
+	params, err := util.GetBytesFromProto(in.GetParams())
+	if err != nil {
+		return nil, fmt.Errorf("cannot convert rule params to db: %v", err)
 	}
 
 	_, err = s.store.CreateRuleType(ctx, db.CreateRuleTypeParams{
@@ -577,6 +587,7 @@ func (s *Server) CreateRuleType(ctx context.Context, crt *pb.CreateRuleTypeReque
 		Provider:   entityCtx.GetProvider(),
 		GroupID:    entityCtx.GetGroup().GetID(),
 		Definition: def,
+		Params:     params,
 	})
 	if err != nil {
 		return nil, status.Errorf(codes.Unknown, "failed to create rule type: %s", err)
@@ -614,14 +625,20 @@ func (s *Server) UpdateRuleType(ctx context.Context, urt *pb.UpdateRuleTypeReque
 		return nil, status.Errorf(codes.Unavailable, "invalid rule type definition: %s", err)
 	}
 
-	def, err := engine.DBRuleDefFromPB(in.GetDef())
+	def, err := util.GetBytesFromProto(in.GetDef())
 	if err != nil {
 		return nil, status.Errorf(codes.Internal, "cannot convert rule definition to db: %s", err)
+	}
+
+	params, err := util.GetBytesFromProto(in.GetParams())
+	if err != nil {
+		return nil, status.Errorf(codes.Internal, "cannot convert rule params to db: %s", err)
 	}
 
 	err = s.store.UpdateRuleType(ctx, db.UpdateRuleTypeParams{
 		ID:         rtdb.ID,
 		Definition: def,
+		Params:     params,
 	})
 	if err != nil {
 		return nil, status.Errorf(codes.Unknown, "failed to create rule type: %s", err)
