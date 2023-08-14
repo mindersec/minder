@@ -28,7 +28,9 @@ import (
 	"text/template"
 
 	"github.com/itchyny/gojq"
+	"google.golang.org/protobuf/reflect/protoreflect"
 
+	"github.com/stacklok/mediator/internal/util"
 	pb "github.com/stacklok/mediator/pkg/generated/protobuf/go/mediator/v1"
 	ghclient "github.com/stacklok/mediator/pkg/providers/github"
 	"github.com/stacklok/mediator/pkg/rule_methods"
@@ -38,7 +40,7 @@ import (
 // It allows for different mechanisms for ingesting data
 // in order to evaluate a rule.
 type RuleDataIngest interface {
-	Eval(ctx context.Context, ent any, pol, params map[string]any) error
+	Eval(ctx context.Context, ent protoreflect.ProtoMessage, pol, params map[string]any) error
 }
 
 // ErrEvaluationFailed is an error that occurs during evaluation of a rule.
@@ -142,7 +144,7 @@ type RestEndpointTemplateParams struct {
 }
 
 // Eval evaluates the rule type against the given entity and policy
-func (rdi *RestRuleDataIngest) Eval(ctx context.Context, ent any, pol, params map[string]any) error {
+func (rdi *RestRuleDataIngest) Eval(ctx context.Context, ent protoreflect.ProtoMessage, pol, params map[string]any) error {
 	endpoint := new(bytes.Buffer)
 	retp := &RestEndpointTemplateParams{
 		Entity: ent,
@@ -200,8 +202,36 @@ func (rdi *RestRuleDataIngest) Eval(ctx context.Context, ent any, pol, params ma
 	return nil
 }
 
+func entityMatchesParams(ctx context.Context, ent protoreflect.ProtoMessage, params map[string]any) (bool, error) {
+	// first convert to json string
+	jsonStr, err := util.GetJsonFromProto(ent)
+	if err != nil {
+		return false, fmt.Errorf("cannot convert entity to json: %w", err)
+	}
+	var jsonData map[string]interface{}
+	err = json.Unmarshal([]byte(jsonStr), &jsonData)
+	if err != nil {
+		return false, fmt.Errorf("cannot unmarshal json: %w", err)
+	}
+	for key, val := range params {
+		// if key does not start with dot add it
+		if !strings.HasPrefix(key, ".") {
+			key = "." + key
+		}
+		expectedVal, err := JQGetValuesFromAccessor(ctx, key, jsonData)
+		if err != nil {
+			return false, fmt.Errorf("cannot get values from data accessor: %w", err)
+		}
+		if !reflect.DeepEqual(expectedVal, val) {
+			// just continue, this entity is not matching our parameters
+			return false, nil
+		}
+	}
+	return true, nil
+}
+
 // Eval evaluates the rule type against the given entity and policy
-func (idi *BuiltinRuleDataIngest) Eval(ctx context.Context, ent any, pol, _ map[string]any) error {
+func (idi *BuiltinRuleDataIngest) Eval(ctx context.Context, ent protoreflect.ProtoMessage, pol, params map[string]any) error {
 	// call internal method stored in pkg and method
 	rm := rule_methods.RuleMethods{}
 	value := reflect.ValueOf(rm)
@@ -209,6 +239,14 @@ func (idi *BuiltinRuleDataIngest) Eval(ctx context.Context, ent any, pol, _ map[
 
 	// Check if the method exists
 	if method.IsValid() {
+		matches, err := entityMatchesParams(ctx, ent, params)
+		if err != nil {
+			return fmt.Errorf("cannot check if entity matches params: %w", err)
+		}
+		if !matches {
+			log.Printf("entity not matching parameters, skipping")
+			return nil
+		}
 		// call method
 		// Call the method (empty parameter list)
 		result := method.Call([]reflect.Value{reflect.ValueOf(ctx),
@@ -224,7 +262,7 @@ func (idi *BuiltinRuleDataIngest) Eval(ctx context.Context, ent any, pol, _ map[
 		}
 		methodResult := result[0].Interface().(json.RawMessage)
 		var resultObj interface{}
-		err := json.Unmarshal(methodResult, &resultObj)
+		err = json.Unmarshal(methodResult, &resultObj)
 		if err != nil {
 			return fmt.Errorf("cannot unmarshal json: %w", err)
 		}
