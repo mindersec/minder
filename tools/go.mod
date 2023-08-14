@@ -6,7 +6,7 @@ require (
 	github.com/bufbuild/buf v1.26.1
 	github.com/daixiang0/gci v0.11.0
 	github.com/go-critic/go-critic v0.9.0
-	github.com/golangci/golangci-lint v1.54.0
+	github.com/golangci/golangci-lint v1.54.1
 	github.com/gotesttools/gotestfmt/v2 v2.5.0
 	github.com/grpc-ecosystem/grpc-gateway/v2 v2.16.2
 	github.com/kyleconroy/sqlc v1.19.1
