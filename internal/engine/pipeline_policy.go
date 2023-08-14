@@ -28,6 +28,7 @@ import (
 
 	"github.com/itchyny/gojq"
 	"google.golang.org/protobuf/encoding/protojson"
+	"k8s.io/apimachinery/pkg/util/sets"
 
 	"github.com/stacklok/mediator/internal/util"
 	"github.com/stacklok/mediator/pkg/db"
@@ -234,9 +235,9 @@ func validateRule(r *pb.PipelinePolicy_Rule) error {
 	return nil
 }
 
-func getParamNamesForRuleType(ctx context.Context, store db.Store, r *pb.PipelinePolicy_Rule) ([]string, error) {
+func getParamNamesForRuleType(ctx context.Context, store db.Store, r *pb.PipelinePolicy_Rule) (sets.Set[string], error) {
 	entityCtx := EntityFromContext(ctx)
-	var ruleTypeParamsNames []string
+	ruleTypeParamsNames := sets.Set[string]{}
 
 	rule_type, err := store.GetRuleTypeByName(ctx, db.GetRuleTypeByNameParams{Provider: entityCtx.GetProvider(),
 		GroupID: entityCtx.GetGroup().GetID(), Name: r.Type})
@@ -259,7 +260,7 @@ func getParamNamesForRuleType(ctx context.Context, store db.Store, r *pb.Pipelin
 		if !ok {
 			break
 		}
-		ruleTypeParamsNames = append(ruleTypeParamsNames, v.(string))
+		ruleTypeParamsNames = ruleTypeParamsNames.Insert(v.(string))
 	}
 	return ruleTypeParamsNames, nil
 }
@@ -283,15 +284,8 @@ func validateRuleParams(ctx context.Context, store db.Store, r *pb.PipelinePolic
 			return fmt.Errorf("%w: error getting rule type params: %v", ErrValidationFailed, err)
 		}
 		for k := range jsonData {
-			keyExists := false
-			for _, name := range ruleTypeParamsNames {
-				if name == k {
-					keyExists = true
-					break
-				}
-			}
-			if !keyExists {
-				arrayStr := strings.Join(ruleTypeParamsNames, ", ")
+			if !ruleTypeParamsNames.Has(k) {
+				arrayStr := strings.Join(ruleTypeParamsNames.UnsortedList(), ", ")
 				return fmt.Errorf("%w: key %s does not exist in rule type params. Valid params are: %s", ErrValidationFailed, k, arrayStr)
 			}
 		}
