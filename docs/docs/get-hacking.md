@@ -34,7 +34,7 @@ Note that the application requires a database to be running. This can be achieve
 using docker-compose:
 
 ```bash
-services=postgres make run-docker
+KO_DOCKER_REPO=ko.local services=postgres make run-docker
 ```
 
 Then run the application
@@ -52,6 +52,11 @@ go run cmd/server/main.go serve
 The application will be available on `http://localhost:8080` and gRPC on `localhost:8090`.
 
 ## Run the tests
+
+First, make sure the database schema is installed and the migration ran:
+```bash
+make migrateup
+```
 
 ```bash
 make test

@@ -12,7 +12,7 @@ displayed_sidebar: mediator
 
 Mediator is an open platform to manage the security of your software supply chain.
 
-Mediator unifiess the security of your software supply chain by providing a single
+Mediator unifies the security of your software supply chain by providing a single
 place to manage your security policies, and a central location to view and remediate
 the results.
 

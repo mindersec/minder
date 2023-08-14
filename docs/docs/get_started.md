@@ -49,20 +49,16 @@ This will create two binaries, `bin/mediator-server` and `bin/medic`.
 
 You may now copy these into a location on your path, or run them directly from the `bin` directory.
 
-You will also need a configuration file. You can copy the example configuration file from `configs/config.yaml.example` to `~/.config.yaml`.
+You will also need a configuration file. You can copy the example configuration file from `configs/config.yaml.example` to `$(PWD)/config.yaml`.
 
 If you prefer to use a different file name or location, you can specify this using the `--config` 
 flag, e.g. `mediator-server --config /file/path/mediator.yaml serve` when you later run the application.
-
-```bash
-
-```bash
 
 ## Database creation
 
 Mediator requires a PostgreSQL database to be running. You can install this locally, or use a container.
 
-Should you install locally, you will need to set certain configuration options in your `~/.config.yaml` file, to reflect your local database configuration.
+Should you install locally, you will need to set certain configuration options in your `config.yaml` file, to reflect your local database configuration.
 
 ```yaml
 database:
@@ -90,13 +86,15 @@ Once you have a running database, you can create the database using the `mediato
 make migrateup
 ```
 
+or:
+
 ```bash
 mediator-server migrate up
 ```
 
 ## Create encryption keys
 
-Encryption keys are used to encrypt JWT tokens. You can create these using the `opensssl` CLI tool.
+Encryption keys are used to encrypt JWT tokens. You can create these using the `openssl` CLI tool.
 
 ```bash
 ssh-keygen -t rsa -b 2048 -m PEM -f access_token_rsa
@@ -106,7 +104,7 @@ openssl rsa -in access_token_rsa -pubout -outform PEM -out access_token_rsa.pub
 openssl rsa -in access_token_rsa -pubout -outform PEM -out access_token_rsa.pub
 ```
 
-These keys should be placed in the `.ssh` directory, from where you will run the `mediator-server` binary. Alternatively, you can specify the location of the keys in the `./config.yaml` file.
+These keys should be placed in the `.ssh` directory, relatively from where you will run the `mediator-server` binary. Alternatively, you can specify the location of the keys in the `config.yaml` file.
 
 ```yaml
 auth:

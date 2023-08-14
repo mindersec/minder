@@ -214,7 +214,7 @@ Create a new client secret and fill in the `client_id` and `client_secret` in yo
 Once the Application is registered and the configuration is set, you can enroll the provider:
 
 ```bash
-go run ./cmd/cli/main.go enroll provider -n github
+go run ./cmd/cli/main.go provider enroll -n github
 ```
 
 This will take you through the OAuth2 flow and will result in the provider filling up the
