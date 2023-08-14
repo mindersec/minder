@@ -177,7 +177,7 @@ func (e *Executor) handleReposInitEvent(ctx context.Context, prov string, evt *I
 					return err
 				}
 
-				return e.createOrUpdateRepositoryEvalStatus(ctx, *pol.Id, dbrepo.ID, *rt.Id,
+				return e.createOrUpdateEvalStatus(ctx, *pol.Id, dbrepo.ID, db.Entities(rt.Def.InEntity), *rt.Id,
 					rte.Eval(ctx, repo, rule.Def.AsMap(), rule.Params.AsMap()))
 			})
 			if err != nil {
@@ -338,7 +338,7 @@ func (e *Executor) handleArtifactPublishedEvent(ctx context.Context, prov string
 			}
 
 			result := rte.Eval(ctx, artifact, rule.Def.AsMap(), rule.Params.AsMap())
-			return e.createOrUpdateRepositoryEvalStatus(ctx, *pol.Id, dbrepo.ID, *rt.Id, result)
+			return e.createOrUpdateEvalStatus(ctx, *pol.Id, dbrepo.ID, db.Entities(rt.Def.GetInEntity()), *rt.Id, result)
 		})
 		if err != nil {
 			return fmt.Errorf("error traversing rules for policy %d: %w", pol.Id, err)
@@ -452,7 +452,7 @@ func (e *Executor) handleRepoEvent(ctx context.Context, prov string, payload map
 				return err
 			}
 
-			return e.createOrUpdateRepositoryEvalStatus(ctx, *pol.Id, dbrepo.ID, *rt.Id,
+			return e.createOrUpdateEvalStatus(ctx, *pol.Id, dbrepo.ID, db.Entities(rt.Def.GetInEntity()), *rt.Id,
 				rte.Eval(ctx, repo, rule.Def.AsMap(), rule.Params.AsMap()))
 		})
 		if err != nil {
@@ -526,19 +526,21 @@ func (e *Executor) buildClient(
 	return cli, decryptedToken.AccessToken, nil
 }
 
-func (e *Executor) createOrUpdateRepositoryEvalStatus(
+func (e *Executor) createOrUpdateEvalStatus(
 	ctx context.Context,
 	policyID int32,
 	repoID int32,
+	ruleTypeEntity db.Entities,
 	ruleTypeID int32,
 	evalErr error,
 ) error {
-	return e.querier.UpsertRuleEvaluationStatusForRepository(ctx, db.UpsertRuleEvaluationStatusForRepositoryParams{
+	return e.querier.UpsertRuleEvaluationStatus(ctx, db.UpsertRuleEvaluationStatusParams{
 		PolicyID: policyID,
 		RepositoryID: sql.NullInt32{
 			Int32: repoID,
 			Valid: true,
 		},
+		Entity:     ruleTypeEntity,
 		RuleTypeID: ruleTypeID,
 		EvalStatus: errorAsEvalStatus(evalErr),
 		Details:    errorAsDetails(evalErr),
