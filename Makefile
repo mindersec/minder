@@ -34,6 +34,7 @@ COMPOSE_ARGS?=-d
 # Additional flags and env vars for ko
 KO_DOCKER_REPO?=ko.local
 KO_PUSH_IMAGE?=false
+KO_PLATFORMS=linux/amd64,linux/arm64
 
 default: help
 
@@ -80,7 +81,7 @@ endif
 
 helm:  ## build the helm chart to a local archive, using ko for the image build
 	cd deployment/helm; rm -f templates/combined.yml && \
-	    ko resolve --platform all --base-import-paths --push=${KO_PUSH_IMAGE} -f templates/ > templates/combined.yml && \
+	    ko resolve --platform=${KO_PLATFORMS} --base-import-paths --push=${KO_PUSH_IMAGE} -f templates/ > templates/combined.yml && \
 		helm package .
 
 bootstrap: ## install build deps
