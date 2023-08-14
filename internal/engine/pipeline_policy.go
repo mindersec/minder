@@ -129,16 +129,16 @@ func ValidatePolicy(p *pb.PipelinePolicy) error {
 
 // ValidatePolicyParams validates all params from a pipeline policy
 func ValidatePolicyParams(ctx context.Context, store db.Store, p *pb.PipelinePolicy) error {
-	if p.Repository != nil && len(p.Repository) > 0 {
-		return validateEntityParams(ctx, store, p.Repository)
+	if len(p.GetRepository()) > 0 {
+		return validateEntityParams(ctx, store, p.GetRepository())
 	}
 
-	if p.BuildEnvironment != nil && len(p.BuildEnvironment) > 0 {
-		return validateEntityParams(ctx, store, p.BuildEnvironment)
+	if len(p.GetBuildEnvironment()) > 0 {
+		return validateEntityParams(ctx, store, p.GetBuildEnvironment())
 	}
 
-	if p.Artifact != nil && len(p.Artifact) > 0 {
-		return validateEntityParams(ctx, store, p.Artifact)
+	if len(p.GetArtifact()) > 0 {
+		return validateEntityParams(ctx, store, p.GetArtifact())
 	}
 
 	return nil
@@ -189,10 +189,6 @@ func validateEntity(e []*pb.PipelinePolicy_ContextualRuleSet) error {
 
 func validateEntityParams(ctx context.Context, store db.Store, e []*pb.PipelinePolicy_ContextualRuleSet) error {
 	for _, r := range e {
-		if r == nil {
-			return fmt.Errorf("%w: entity contextual rules cannot be nil", ErrValidationFailed)
-		}
-
 		if err := validateContextualRuleSetParams(ctx, store, r); err != nil {
 			return err
 		}
@@ -217,10 +213,6 @@ func validateContextualRuleSet(e *pb.PipelinePolicy_ContextualRuleSet) error {
 }
 
 func validateContextualRuleSetParams(ctx context.Context, store db.Store, e *pb.PipelinePolicy_ContextualRuleSet) error {
-	if e.Rules == nil {
-		return fmt.Errorf("%w: entity rules cannot be nil", ErrValidationFailed)
-	}
-
 	for _, r := range e.Rules {
 		if err := validateRuleParams(ctx, store, r); err != nil {
 			return err
@@ -242,6 +234,36 @@ func validateRule(r *pb.PipelinePolicy_Rule) error {
 	return nil
 }
 
+func getParamNamesForRuleType(ctx context.Context, store db.Store, r *pb.PipelinePolicy_Rule) ([]string, error) {
+	entityCtx := EntityFromContext(ctx)
+	var ruleTypeParamsNames []string
+
+	rule_type, err := store.GetRuleTypeByName(ctx, db.GetRuleTypeByNameParams{Provider: entityCtx.GetProvider(),
+		GroupID: entityCtx.GetGroup().GetID(), Name: r.Type})
+	if err != nil {
+		return ruleTypeParamsNames, fmt.Errorf("%w: error getting rule type: %v", ErrValidationFailed, err)
+	}
+
+	// Create a gojq query to extract names
+	query, err := gojq.Parse(".entries[].name")
+	if err != nil {
+		return ruleTypeParamsNames, fmt.Errorf("%w: error parsing rule type params: %v", ErrValidationFailed, err)
+	}
+	var paramsData map[string]interface{}
+	if err := json.Unmarshal(rule_type.Params, &paramsData); err != nil {
+		return ruleTypeParamsNames, fmt.Errorf("%w: error unmarshaling rule type params: %v", ErrValidationFailed, err)
+	}
+	iter := query.Run(paramsData)
+	for {
+		v, ok := iter.Next()
+		if !ok {
+			break
+		}
+		ruleTypeParamsNames = append(ruleTypeParamsNames, v.(string))
+	}
+	return ruleTypeParamsNames, nil
+}
+
 func validateRuleParams(ctx context.Context, store db.Store, r *pb.PipelinePolicy_Rule) error {
 	// if there are params, they need to match against rule type params
 	params := r.GetParams()
@@ -256,30 +278,9 @@ func validateRuleParams(ctx context.Context, store db.Store, r *pb.PipelinePolic
 	}
 	if len(jsonData) > 0 {
 		// read rule type to get info about paramers
-		entityCtx := EntityFromContext(ctx)
-		rule_type, err := store.GetRuleTypeByName(ctx, db.GetRuleTypeByNameParams{Provider: entityCtx.GetProvider(),
-			GroupID: entityCtx.GetGroup().GetID(), Name: r.Type})
+		ruleTypeParamsNames, err := getParamNamesForRuleType(ctx, store, r)
 		if err != nil {
-			return fmt.Errorf("%w: error getting rule type: %v", ErrValidationFailed, err)
-		}
-
-		// Create a gojq query to extract names
-		query, err := gojq.Parse(".entries[].name")
-		if err != nil {
-			return fmt.Errorf("%w: error parsing rule type params: %v", ErrValidationFailed, err)
-		}
-		var ruleTypeParamsNames []string
-		var paramsData map[string]interface{}
-		if err := json.Unmarshal(rule_type.Params, &paramsData); err != nil {
-			return fmt.Errorf("%w: error unmarshaling rule type params: %v", ErrValidationFailed, err)
-		}
-		iter := query.Run(paramsData)
-		for {
-			v, ok := iter.Next()
-			if !ok {
-				break
-			}
-			ruleTypeParamsNames = append(ruleTypeParamsNames, v.(string))
+			return fmt.Errorf("%w: error getting rule type params: %v", ErrValidationFailed, err)
 		}
 		for k := range jsonData {
 			keyExists := false
