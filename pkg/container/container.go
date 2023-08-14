@@ -22,6 +22,7 @@ import (
 	"encoding/json"
 	"encoding/pem"
 	"fmt"
+	"log"
 	"time"
 
 	"github.com/google/go-containerregistry/pkg/authn"
@@ -100,9 +101,17 @@ func ValidateSignature(ctx context.Context, accessToken string, package_owner st
 						CommitSha:  imageKeys["WorkflowSha"].(string),
 						Trigger:    imageKeys["WorkflowTrigger"].(string),
 					}
+				} else {
+					log.Printf("error verifying image: %v", err)
 				}
+			} else {
+				log.Printf("error extracting identity from certificate: %v", err)
 			}
+		} else {
+			log.Printf("error getting manifest: %v", err)
 		}
+	} else {
+		log.Printf("error getting signature tag: %v", err)
 	}
 	return signature_verification, github_workflow, nil
 

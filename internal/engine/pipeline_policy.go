@@ -301,7 +301,19 @@ func MergeDatabaseListIntoPolicies(ppl []db.ListPoliciesByGroupIDRow, ectx *Enti
 
 		// NOTE: names are unique within a given Provider & Group ID (Unique index),
 		// so we don't need to worry about collisions.
-		if pm := rowInfoToPolicyMap(p.Entity, p.ID, p.Name, p.Provider, p.ContextualRules, ectx); pm != nil {
+		// first we check if policy already exists, if not we create a new one
+		// first we check if policy already exists, if not we create a new one
+		if _, ok := policies[p.Name]; !ok {
+			policies[p.Name] = &pb.PipelinePolicy{
+				Id:   &p.ID,
+				Name: p.Name,
+				Context: &pb.Context{
+					Provider: p.Provider,
+					Group:    &ectx.Group.Name,
+				},
+			}
+		}
+		if pm := rowInfoToPolicyMap(policies[p.Name], p.Entity, p.ContextualRules); pm != nil {
 			policies[p.Name] = pm
 		}
 	}
@@ -321,7 +333,19 @@ func MergeDatabaseGetIntoPolicies(ppl []db.GetPolicyByGroupAndIDRow, ectx *Entit
 
 		// NOTE: names are unique within a given Provider & Group ID (Unique index),
 		// so we don't need to worry about collisions.
-		if pm := rowInfoToPolicyMap(p.Entity, p.ID, p.Name, p.Provider, p.ContextualRules, ectx); pm != nil {
+
+		// first we check if policy already exists, if not we create a new one
+		if _, ok := policies[p.Name]; !ok {
+			policies[p.Name] = &pb.PipelinePolicy{
+				Id:   &p.ID,
+				Name: p.Name,
+				Context: &pb.Context{
+					Provider: p.Provider,
+					Group:    &ectx.Group.Name,
+				},
+			}
+		}
+		if pm := rowInfoToPolicyMap(policies[p.Name], p.Entity, p.ContextualRules); pm != nil {
 			policies[p.Name] = pm
 		}
 	}
@@ -334,26 +358,13 @@ func MergeDatabaseGetIntoPolicies(ppl []db.GetPolicyByGroupAndIDRow, ectx *Entit
 // Note that this function is thought to be called from scpecific Merge functions
 // and thus the logic is targetted to that.
 func rowInfoToPolicyMap(
+	policy *pb.PipelinePolicy,
 	entity db.Entities,
-	policyID int32,
-	name string,
-	provider string,
 	contextualRules json.RawMessage,
-	ectx *EntityContext,
-	// in map[string]*pb.PipelinePolicy,
 ) *pb.PipelinePolicy {
 	if !IsValidEntity(EntityTypeFromDB(entity)) {
 		log.Printf("unknown entity found in database: %s", entity)
 		return nil
-	}
-
-	result := &pb.PipelinePolicy{
-		Id:   &policyID,
-		Name: name,
-		Context: &pb.Context{
-			Provider: provider,
-			Group:    &ectx.Group.Name,
-		},
 	}
 
 	var ruleset []*pb.PipelinePolicy_ContextualRuleSet
@@ -367,12 +378,12 @@ func rowInfoToPolicyMap(
 
 	switch EntityTypeFromDB(entity) {
 	case RepositoryEntity:
-		result.Repository = ruleset
+		policy.Repository = ruleset
 	case BuildEnvironmentEntity:
-		result.BuildEnvironment = ruleset
+		policy.BuildEnvironment = ruleset
 	case ArtifactEntity:
-		result.Artifact = ruleset
+		policy.Artifact = ruleset
 	}
 
-	return result
+	return policy
 }
