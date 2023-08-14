@@ -117,8 +117,12 @@ func (s *Server) CreatePolicy(ctx context.Context,
 		return nil, status.Errorf(codes.Unknown, "failed to get access token: %s", err)
 	}
 
-	if err := engine.ValidatePolicy(ctx, s.store, in); err != nil {
+	if err := engine.ValidatePolicy(in); err != nil {
 		return nil, status.Errorf(codes.InvalidArgument, "invalid policy: %v", err)
+	}
+
+	if err := engine.ValidatePolicyParams(ctx, s.store, in); err != nil {
+		return nil, status.Errorf(codes.InvalidArgument, "invalid policy params: %v", err)
 	}
 
 	err = engine.TraverseAllRulesForPipeline(in, func(r *pb.PipelinePolicy_Rule) error {
