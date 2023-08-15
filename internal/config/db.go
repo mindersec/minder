@@ -34,13 +34,12 @@ const awsCredsProvider = "aws"
 
 // DatabaseConfig is the configuration for the database
 type DatabaseConfig struct {
-	Host          string `mapstructure:"dbhost"`
-	Port          int    `mapstructure:"dbport"`
-	User          string `mapstructure:"dbuser"`
-	Password      string `mapstructure:"dbpass"`
-	Name          string `mapstructure:"dbname"`
-	SSLMode       string `mapstructure:"sslmode"`
-	EncryptionKey string `mapstructure:"encryption_key"`
+	Host     string `mapstructure:"dbhost"`
+	Port     int    `mapstructure:"dbport"`
+	User     string `mapstructure:"dbuser"`
+	Password string `mapstructure:"dbpass"`
+	Name     string `mapstructure:"dbname"`
+	SSLMode  string `mapstructure:"sslmode"`
 
 	// If set, use credentials from the specified cloud provider.
 	// Currently supported values are `aws`
