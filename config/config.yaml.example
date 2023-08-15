@@ -40,7 +40,6 @@ database:
   dbpass: postgres
   dbname: mediator
   sslmode: disable
-  encryption_key: p6ssw0rd
 
 # Crypto (these should be ultimately stored in a secure vault)
 # sample keys can be generated with:

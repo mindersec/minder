@@ -29,7 +29,7 @@ medic auth login --username root --password password
 2. Enroll a user with the given provider
 
 ```bash
-medic  enroll provider --provider github
+medic provider enroll --provider github
 ```
 
 > __Note__: Provide the `--group-id` flag, if your user belongs to multiple groups. For this example, we will use the default group `1`, so we do not need to provide the flag.
