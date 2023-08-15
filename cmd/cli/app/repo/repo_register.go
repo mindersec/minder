@@ -79,7 +79,7 @@ var repo_registerCmd = &cobra.Command{
 
 		listResp, err := client.ListRepositories(ctx, req)
 		if err != nil {
-			fmt.Fprintf(os.Stderr, "Error getting repo of repos: %s\n", err)
+			fmt.Fprintf(os.Stderr, "Error getting list of repos: %s\n", err)
 			os.Exit(1)
 		}
 
@@ -87,6 +87,11 @@ var repo_registerCmd = &cobra.Command{
 
 		repoNames := make([]string, len(listResp.Results))
 		repoIDs := make(map[string]int32) // Map of repo names to IDs
+
+		if len(listResp.Results) == 0 {
+			fmt.Fprintf(os.Stderr, "No repositories found")
+			os.Exit(1)
+		}
 
 		for i, repo := range listResp.Results {
 			repoNames[i] = fmt.Sprintf("%s/%s", repo.Owner, repo.Name)
