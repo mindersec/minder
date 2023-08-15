@@ -32,6 +32,12 @@ jobs:
         with:
           version: v3.12.2
 
+      - name: Helm Login
+        # ko can pick up tokens ambiently from the GitHub Actions environment, but
+        # Helm needs explicit login
+        run: |
+          helm registry login ghcr.io --username ${{ github.repository_owner }} --password ${{ secrets.GITHUB_TOKEN }}
+
       - run: |
           make helm
           (cd deployment/helm && helm push mediator-*.tgz oci://$KO_DOCKER_REPO/helm)
