@@ -42,3 +42,4 @@ jobs:
           (cd deployment/helm && helm push mediator-*.tgz oci://$KO_DOCKER_REPO/helm)
         env:
           KO_DOCKER_REPO: "ghcr.io/stacklok/mediator"
+          KO_PUSH_IMAGE: "true"
