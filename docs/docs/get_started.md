@@ -104,7 +104,7 @@ openssl rsa -in access_token_rsa -pubout -outform PEM -out access_token_rsa.pub
 openssl rsa -in access_token_rsa -pubout -outform PEM -out access_token_rsa.pub
 ```
 
-These keys should be placed in the `.ssh` directory, relatively from where you will run the `mediator-server` binary. Alternatively, you can specify the location of the keys in the `config.yaml` file.
+These keys should be placed in the `.ssh` directory, relative to where you run the `mediator-server` binary. Alternatively, you can specify the location of the keys in the `config.yaml` file.
 
 ```yaml
 auth:
