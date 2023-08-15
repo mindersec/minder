@@ -1,11 +1,10 @@
 # Post-submit and daily build and publish of the Helm chart and Docker container
 # This is a separate workflow than image-build.yml because image-build.yml is
-# run PRE-submit on PRs, and those runs aren't allowed package:write permissions
-# (GitHub errors and invalidates the entire workflow if you try).
+# run in the PR context, and those runs aren't allowed package:write permissions if
+# the source is a fork(GitHub errors and invalidates the entire workflow if you try).
+name: Publish Helm Chart
 on:
-  pull_request:
-    types:
-    - closed
+  push:
     branches:
     -  main
 
@@ -43,3 +42,4 @@ jobs:
           (cd deployment/helm && helm push mediator-*.tgz oci://$KO_DOCKER_REPO/helm)
         env:
           KO_DOCKER_REPO: "ghcr.io/stacklok/mediator"
+          KO_PUSH_IMAGE: "true"
