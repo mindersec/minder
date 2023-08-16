@@ -217,7 +217,7 @@ func (s *Server) ExchangeCodeForTokenCLI(ctx context.Context,
 
 	return &httpbody.HttpBody{
 		ContentType: "text/html",
-		Data:        []byte(auth.SessionHTML),
+		Data:        auth.OAuthSuccessHtml,
 	}, nil
 }
 
@@ -225,7 +225,7 @@ func (s *Server) ExchangeCodeForTokenCLI(ctx context.Context,
 // a JWT token as a session cookie. This handler is specific for web clients.
 // The lint check for this function is disabled because it's a false positive.
 // It will complain about am unsused receiver (s *Server), however this receiver
-// will be used later when we implement the the database store.
+// will be used later when we implement the database store.
 //
 //revive:disable:unused-receiver
 func (s *Server) ExchangeCodeForTokenWEB(ctx context.Context,

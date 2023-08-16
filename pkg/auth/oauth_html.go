@@ -21,33 +21,10 @@
 
 package auth
 
-const (
-	// SessionHTML is the page displayed upon success when using a web browser during an interactive OAuth token flow.
-	SessionHTML = `<!DOCTYPE html>
-<html>
-<head>
-	<meta charset="UTF-8">
-	<title>Mediator</title>
-	<style>
-		body {
-			background-color: #ffffff;
-			font-family: Arial, sans-serif;
-			text-align: center;
-			margin-top: 20vh;
-		}
+import _ "embed"
 
-		h1 {
-			font-weight: bold;
-			font-size: 32px;
-			color: #000000;
-			margin-bottom: 20px;
-		}
-	</style>
-</head>
-<body>
-	<h1>Mediator enrollment complete</h1>
-	<p>You can now close this window and return to the CLI.</p>
-</body>
-</html>
-`
-)
+// OAuthSuccessHtml is the html page sent to the client upon successful enrollment
+// via CLI
+//
+//go:embed html/oauth_success.html
+var OAuthSuccessHtml []byte
