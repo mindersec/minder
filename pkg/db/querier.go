@@ -88,8 +88,7 @@ type Querier interface {
 	ListRepositoriesByOwner(ctx context.Context, arg ListRepositoriesByOwnerParams) ([]Repository, error)
 	ListRoles(ctx context.Context, arg ListRolesParams) ([]Role, error)
 	ListRolesByGroupID(ctx context.Context, arg ListRolesByGroupIDParams) ([]Role, error)
-	ListRuleEvaluationStatusForRepositoriesByPolicyId(ctx context.Context, policyID int32) ([]ListRuleEvaluationStatusForRepositoriesByPolicyIdRow, error)
-	ListRuleEvaluationStatusForRepositoryByPolicyId(ctx context.Context, arg ListRuleEvaluationStatusForRepositoryByPolicyIdParams) ([]ListRuleEvaluationStatusForRepositoryByPolicyIdRow, error)
+	ListRuleEvaluationStatusByPolicyId(ctx context.Context, policyID int32) ([]ListRuleEvaluationStatusByPolicyIdRow, error)
 	ListRuleTypesByProviderAndGroup(ctx context.Context, arg ListRuleTypesByProviderAndGroupParams) ([]RuleType, error)
 	ListUsers(ctx context.Context, arg ListUsersParams) ([]User, error)
 	ListUsersByGroup(ctx context.Context, arg ListUsersByGroupParams) ([]User, error)
@@ -107,7 +106,7 @@ type Querier interface {
 	UpdateRuleEvaluationStatusForRepository(ctx context.Context, arg UpdateRuleEvaluationStatusForRepositoryParams) error
 	UpdateRuleType(ctx context.Context, arg UpdateRuleTypeParams) error
 	UpdateUser(ctx context.Context, arg UpdateUserParams) (User, error)
-	UpsertRuleEvaluationStatusForRepository(ctx context.Context, arg UpsertRuleEvaluationStatusForRepositoryParams) error
+	UpsertRuleEvaluationStatus(ctx context.Context, arg UpsertRuleEvaluationStatusParams) error
 }
 
 var _ Querier = (*Queries)(nil)

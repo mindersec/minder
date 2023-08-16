@@ -381,7 +381,7 @@ func (s *Server) GetPolicyStatusById(ctx context.Context,
 
 	if in.All {
 
-		dbrulestat, err := s.store.ListRuleEvaluationStatusForRepositoriesByPolicyId(ctx, in.PolicyId)
+		dbrulestat, err := s.store.ListRuleEvaluationStatusByPolicyId(ctx, in.PolicyId)
 		if err != nil && !errors.Is(err, sql.ErrNoRows) {
 			return nil, status.Errorf(codes.Unknown, "failed to get policy: %s", err)
 		}
@@ -392,7 +392,7 @@ func (s *Server) GetPolicyStatusById(ctx context.Context,
 				PolicyId: in.PolicyId,
 				RuleId:   rs.RuleTypeID,
 				RuleName: rs.RuleTypeName,
-				Entity:   engine.RepositoryEntity.String(),
+				Entity:   string(rs.Entity),
 				Status:   string(rs.EvalStatus),
 				Details:  rs.Details,
 				EntityInfo: map[string]string{
