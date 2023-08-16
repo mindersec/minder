@@ -50,6 +50,7 @@ spec:
           - "serve"
           - "--db-host={{ .Values.db.host }}"
           - "--config=/config/config.yaml"
+          - "--config=/config/overrides.yaml"
           - "--grpc-host=0.0.0.0"
           - "--http-host=0.0.0.0"
           - "--github-client-id-file=/secrets/app/client_id"
@@ -103,6 +104,8 @@ spec:
           items:
           - key: config.yaml
             path: config.yaml
+          - key: overrides.yaml
+            path: overrides.yaml
       - name: auth-secrets
         secret:
           secretName: mediator-auth-secrets

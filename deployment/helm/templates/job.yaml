@@ -12,10 +12,55 @@
 # See the License for the specific language governing permissions and
 # limitations under the License.
 
+# We need a separate service account for the db-update job, because
+# it runs as a helm pre-install hook, and the mediator service account
+# won't have been installed at that point.
+apiVersion: v1
+kind: ServiceAccount
+metadata:
+  name: db-update
+  annotations:
+    eks.amazonaws.com/role-arn: "arn:aws:iam::{{ .Values.aws.accountID }}:role/{{ .Values.aws.iamRole }}"
+    helm.sh/hook-delete-policy: before-hook-creation
+    helm.sh/hook: pre-install,pre-upgrade
+  labels:
+    helm.sh/chart: '{{ .Chart.Name }}-{{ .Chart.Version | replace "+" "_" }}'
+    app.kubernetes.io/name: mediator
+    app.kubernetes.io/instance: "{{ .Release.Name }}"
+    app.kubernetes.io/version: "{{ .Chart.AppVersion }}"
+    app.kubernetes.io/managed-by: "{{ .Release.Service }}"
+imagePullSecrets:
+- name: mediator-pull-secret
+---
+apiVersion: v1
+kind: ConfigMap
+metadata:
+  name: db-update-config
+  annotations:
+    helm.sh/hook-delete-policy: hook-succeeded
+    helm.sh/hook: pre-install,pre-upgrade
+  labels:
+    helm.sh/chart: '{{ .Chart.Name }}-{{ .Chart.Version | replace "+" "_" }}'
+    app.kubernetes.io/name: mediator
+    app.kubernetes.io/instance: "{{ .Release.Name }}"
+    app.kubernetes.io/version: "{{ .Chart.AppVersion }}"
+    app.kubernetes.io/managed-by: "{{ .Release.Service }}"
+data:
+  config.yaml: |
+    {{ .Files.Get "config.yaml.example" | nindent 4 }}
+  overrides.yaml: |
+    {{ .Values.extra_config | nindent 4}}
+
+---
+
 apiVersion: batch/v1
 kind: Job
 metadata:
-  name: mediator
+  name: db-update
+  annotations:
+    helm.sh/hook-delete-policy: hook-succeeded
+    helm.sh/hook: pre-install,pre-upgrade
+    helm.sh/hook-weight: "5"
   labels:
     helm.sh/chart: '{{ .Chart.Name }}-{{ .Chart.Version | replace "+" "_" }}'
     app.kubernetes.io/name: mediator
@@ -28,7 +73,7 @@ spec:
       labels:
         app: db-init
     spec:
-      serviceAccountName: mediator
+      serviceAccountName: db-update
       restartPolicy: Never
       containers:
         - name: mediator-dbinit
@@ -49,12 +94,13 @@ spec:
           - "--yes"
           - "--db-host={{ .Values.db.host }}"
           - "--config=/config/config.yaml"
+          - "--config=/config/overrides.yaml"
           # ko will always specify a digest, so we don't need to worry about
           # CRI image caching
           imagePullPolicy: IfNotPresent
           resources:
             requests:
-              cpu: 1
+              cpu: 200m
               memory: 200Mi
             limits:
               cpu: 1
@@ -65,8 +111,10 @@ spec:
       volumes:
       - name: config
         configMap:
-          name: mediator-config
+          name: db-update-config
           items:
           - key: config.yaml
             path: config.yaml
+          - key: overrides.yaml
+            path: overrides.yaml
  
