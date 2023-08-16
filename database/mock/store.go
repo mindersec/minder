@@ -1221,34 +1221,19 @@ func (mr *MockStoreMockRecorder) ListRolesByGroupID(arg0, arg1 interface{}) *gom
 	return mr.mock.ctrl.RecordCallWithMethodType(mr.mock, "ListRolesByGroupID", reflect.TypeOf((*MockStore)(nil).ListRolesByGroupID), arg0, arg1)
 }
 
-// ListRuleEvaluationStatusForRepositoriesByPolicyId mocks base method.
-func (m *MockStore) ListRuleEvaluationStatusForRepositoriesByPolicyId(arg0 context.Context, arg1 int32) ([]db.ListRuleEvaluationStatusForRepositoriesByPolicyIdRow, error) {
+// ListRuleEvaluationStatusByPolicyId mocks base method.
+func (m *MockStore) ListRuleEvaluationStatusByPolicyId(arg0 context.Context, arg1 int32) ([]db.ListRuleEvaluationStatusByPolicyIdRow, error) {
 	m.ctrl.T.Helper()
-	ret := m.ctrl.Call(m, "ListRuleEvaluationStatusForRepositoriesByPolicyId", arg0, arg1)
-	ret0, _ := ret[0].([]db.ListRuleEvaluationStatusForRepositoriesByPolicyIdRow)
+	ret := m.ctrl.Call(m, "ListRuleEvaluationStatusByPolicyId", arg0, arg1)
+	ret0, _ := ret[0].([]db.ListRuleEvaluationStatusByPolicyIdRow)
 	ret1, _ := ret[1].(error)
 	return ret0, ret1
 }
 
-// ListRuleEvaluationStatusForRepositoriesByPolicyId indicates an expected call of ListRuleEvaluationStatusForRepositoriesByPolicyId.
-func (mr *MockStoreMockRecorder) ListRuleEvaluationStatusForRepositoriesByPolicyId(arg0, arg1 interface{}) *gomock.Call {
+// ListRuleEvaluationStatusByPolicyId indicates an expected call of ListRuleEvaluationStatusByPolicyId.
+func (mr *MockStoreMockRecorder) ListRuleEvaluationStatusByPolicyId(arg0, arg1 interface{}) *gomock.Call {
 	mr.mock.ctrl.T.Helper()
-	return mr.mock.ctrl.RecordCallWithMethodType(mr.mock, "ListRuleEvaluationStatusForRepositoriesByPolicyId", reflect.TypeOf((*MockStore)(nil).ListRuleEvaluationStatusForRepositoriesByPolicyId), arg0, arg1)
-}
-
-// ListRuleEvaluationStatusForRepositoryByPolicyId mocks base method.
-func (m *MockStore) ListRuleEvaluationStatusForRepositoryByPolicyId(arg0 context.Context, arg1 db.ListRuleEvaluationStatusForRepositoryByPolicyIdParams) ([]db.ListRuleEvaluationStatusForRepositoryByPolicyIdRow, error) {
-	m.ctrl.T.Helper()
-	ret := m.ctrl.Call(m, "ListRuleEvaluationStatusForRepositoryByPolicyId", arg0, arg1)
-	ret0, _ := ret[0].([]db.ListRuleEvaluationStatusForRepositoryByPolicyIdRow)
-	ret1, _ := ret[1].(error)
-	return ret0, ret1
-}
-
-// ListRuleEvaluationStatusForRepositoryByPolicyId indicates an expected call of ListRuleEvaluationStatusForRepositoryByPolicyId.
-func (mr *MockStoreMockRecorder) ListRuleEvaluationStatusForRepositoryByPolicyId(arg0, arg1 interface{}) *gomock.Call {
-	mr.mock.ctrl.T.Helper()
-	return mr.mock.ctrl.RecordCallWithMethodType(mr.mock, "ListRuleEvaluationStatusForRepositoryByPolicyId", reflect.TypeOf((*MockStore)(nil).ListRuleEvaluationStatusForRepositoryByPolicyId), arg0, arg1)
+	return mr.mock.ctrl.RecordCallWithMethodType(mr.mock, "ListRuleEvaluationStatusByPolicyId", reflect.TypeOf((*MockStore)(nil).ListRuleEvaluationStatusByPolicyId), arg0, arg1)
 }
 
 // ListRuleTypesByProviderAndGroup mocks base method.
@@ -1518,16 +1503,16 @@ func (mr *MockStoreMockRecorder) UpdateUser(arg0, arg1 interface{}) *gomock.Call
 	return mr.mock.ctrl.RecordCallWithMethodType(mr.mock, "UpdateUser", reflect.TypeOf((*MockStore)(nil).UpdateUser), arg0, arg1)
 }
 
-// UpsertRuleEvaluationStatusForRepository mocks base method.
-func (m *MockStore) UpsertRuleEvaluationStatusForRepository(arg0 context.Context, arg1 db.UpsertRuleEvaluationStatusForRepositoryParams) error {
+// UpsertRuleEvaluationStatus mocks base method.
+func (m *MockStore) UpsertRuleEvaluationStatus(arg0 context.Context, arg1 db.UpsertRuleEvaluationStatusParams) error {
 	m.ctrl.T.Helper()
-	ret := m.ctrl.Call(m, "UpsertRuleEvaluationStatusForRepository", arg0, arg1)
+	ret := m.ctrl.Call(m, "UpsertRuleEvaluationStatus", arg0, arg1)
 	ret0, _ := ret[0].(error)
 	return ret0
 }
 
-// UpsertRuleEvaluationStatusForRepository indicates an expected call of UpsertRuleEvaluationStatusForRepository.
-func (mr *MockStoreMockRecorder) UpsertRuleEvaluationStatusForRepository(arg0, arg1 interface{}) *gomock.Call {
+// UpsertRuleEvaluationStatus indicates an expected call of UpsertRuleEvaluationStatus.
+func (mr *MockStoreMockRecorder) UpsertRuleEvaluationStatus(arg0, arg1 interface{}) *gomock.Call {
 	mr.mock.ctrl.T.Helper()
-	return mr.mock.ctrl.RecordCallWithMethodType(mr.mock, "UpsertRuleEvaluationStatusForRepository", reflect.TypeOf((*MockStore)(nil).UpsertRuleEvaluationStatusForRepository), arg0, arg1)
+	return mr.mock.ctrl.RecordCallWithMethodType(mr.mock, "UpsertRuleEvaluationStatus", reflect.TypeOf((*MockStore)(nil).UpsertRuleEvaluationStatus), arg0, arg1)
 }

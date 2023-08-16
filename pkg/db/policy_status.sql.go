@@ -140,19 +140,20 @@ func (q *Queries) GetRuleEvaluationStatusForRepository(ctx context.Context, arg 
 	return i, err
 }
 
-const listRuleEvaluationStatusForRepositoriesByPolicyId = `-- name: ListRuleEvaluationStatusForRepositoriesByPolicyId :many
-SELECT res.eval_status as eval_status, res.last_updated as last_updated, res.details as details, res.repository_id as repository_id, repo.repo_name as repo_name, repo.repo_owner as repo_owner, repo.provider as provider, rt.name as rule_type_name, rt.id as rule_type_id
+const listRuleEvaluationStatusByPolicyId = `-- name: ListRuleEvaluationStatusByPolicyId :many
+SELECT res.eval_status as eval_status, res.last_updated as last_updated, res.details as details, res.repository_id as repository_id, res.entity as entity, repo.repo_name as repo_name, repo.repo_owner as repo_owner, repo.provider as provider, rt.name as rule_type_name, rt.id as rule_type_id
 FROM rule_evaluation_status res
 INNER JOIN repositories repo ON repo.id = res.repository_id
 INNER JOIN rule_type rt ON rt.id = res.rule_type_id
-WHERE res.entity = 'repository' AND res.policy_id = $1
+WHERE res.policy_id = $1
 `
 
-type ListRuleEvaluationStatusForRepositoriesByPolicyIdRow struct {
+type ListRuleEvaluationStatusByPolicyIdRow struct {
 	EvalStatus   EvalStatusTypes `json:"eval_status"`
 	LastUpdated  time.Time       `json:"last_updated"`
 	Details      string          `json:"details"`
 	RepositoryID sql.NullInt32   `json:"repository_id"`
+	Entity       Entities        `json:"entity"`
 	RepoName     string          `json:"repo_name"`
 	RepoOwner    string          `json:"repo_owner"`
 	Provider     string          `json:"provider"`
@@ -160,78 +161,21 @@ type ListRuleEvaluationStatusForRepositoriesByPolicyIdRow struct {
 	RuleTypeID   int32           `json:"rule_type_id"`
 }
 
-func (q *Queries) ListRuleEvaluationStatusForRepositoriesByPolicyId(ctx context.Context, policyID int32) ([]ListRuleEvaluationStatusForRepositoriesByPolicyIdRow, error) {
-	rows, err := q.db.QueryContext(ctx, listRuleEvaluationStatusForRepositoriesByPolicyId, policyID)
+func (q *Queries) ListRuleEvaluationStatusByPolicyId(ctx context.Context, policyID int32) ([]ListRuleEvaluationStatusByPolicyIdRow, error) {
+	rows, err := q.db.QueryContext(ctx, listRuleEvaluationStatusByPolicyId, policyID)
 	if err != nil {
 		return nil, err
 	}
 	defer rows.Close()
-	items := []ListRuleEvaluationStatusForRepositoriesByPolicyIdRow{}
+	items := []ListRuleEvaluationStatusByPolicyIdRow{}
 	for rows.Next() {
-		var i ListRuleEvaluationStatusForRepositoriesByPolicyIdRow
+		var i ListRuleEvaluationStatusByPolicyIdRow
 		if err := rows.Scan(
 			&i.EvalStatus,
 			&i.LastUpdated,
 			&i.Details,
 			&i.RepositoryID,
-			&i.RepoName,
-			&i.RepoOwner,
-			&i.Provider,
-			&i.RuleTypeName,
-			&i.RuleTypeID,
-		); err != nil {
-			return nil, err
-		}
-		items = append(items, i)
-	}
-	if err := rows.Close(); err != nil {
-		return nil, err
-	}
-	if err := rows.Err(); err != nil {
-		return nil, err
-	}
-	return items, nil
-}
-
-const listRuleEvaluationStatusForRepositoryByPolicyId = `-- name: ListRuleEvaluationStatusForRepositoryByPolicyId :many
-SELECT res.eval_status as eval_status, res.last_updated as last_updated, res.details as details, res.repository_id as repository_id, repo.repo_name as repo_name, repo.repo_owner as repo_owner, repo.provider as provider, rt.name as rule_type_name, rt.id as rule_type_id
-FROM rule_evaluation_status res
-INNER JOIN repositories repo ON repo.id = res.repository_id
-INNER JOIN rule_type rt ON rt.id = res.rule_type_id
-WHERE res.entity = 'repository' AND res.policy_id = $1 AND repo.id = $2
-`
-
-type ListRuleEvaluationStatusForRepositoryByPolicyIdParams struct {
-	PolicyID int32 `json:"policy_id"`
-	ID       int32 `json:"id"`
-}
-
-type ListRuleEvaluationStatusForRepositoryByPolicyIdRow struct {
-	EvalStatus   EvalStatusTypes `json:"eval_status"`
-	LastUpdated  time.Time       `json:"last_updated"`
-	Details      string          `json:"details"`
-	RepositoryID sql.NullInt32   `json:"repository_id"`
-	RepoName     string          `json:"repo_name"`
-	RepoOwner    string          `json:"repo_owner"`
-	Provider     string          `json:"provider"`
-	RuleTypeName string          `json:"rule_type_name"`
-	RuleTypeID   int32           `json:"rule_type_id"`
-}
-
-func (q *Queries) ListRuleEvaluationStatusForRepositoryByPolicyId(ctx context.Context, arg ListRuleEvaluationStatusForRepositoryByPolicyIdParams) ([]ListRuleEvaluationStatusForRepositoryByPolicyIdRow, error) {
-	rows, err := q.db.QueryContext(ctx, listRuleEvaluationStatusForRepositoryByPolicyId, arg.PolicyID, arg.ID)
-	if err != nil {
-		return nil, err
-	}
-	defer rows.Close()
-	items := []ListRuleEvaluationStatusForRepositoryByPolicyIdRow{}
-	for rows.Next() {
-		var i ListRuleEvaluationStatusForRepositoryByPolicyIdRow
-		if err := rows.Scan(
-			&i.EvalStatus,
-			&i.LastUpdated,
-			&i.Details,
-			&i.RepositoryID,
+			&i.Entity,
 			&i.RepoName,
 			&i.RepoOwner,
 			&i.Provider,
@@ -268,7 +212,7 @@ func (q *Queries) UpdateRuleEvaluationStatusForRepository(ctx context.Context, a
 	return err
 }
 
-const upsertRuleEvaluationStatusForRepository = `-- name: UpsertRuleEvaluationStatusForRepository :exec
+const upsertRuleEvaluationStatus = `-- name: UpsertRuleEvaluationStatus :exec
 INSERT INTO rule_evaluation_status (
     policy_id,
     repository_id,
@@ -277,30 +221,32 @@ INSERT INTO rule_evaluation_status (
     eval_status,
     details,
     last_updated
-) VALUES ($1, $2, $3, 'repository', $4, $5, NOW())
+) VALUES ($1, $2, $3, $4, $5, $6, NOW())
 ON CONFLICT(policy_id, repository_id, entity, rule_type_id) DO UPDATE SET
-    eval_status = $4,
-    details = $5,
+    eval_status = $5,
+    details = $6,
     last_updated = NOW()
 WHERE rule_evaluation_status.policy_id = $1
   AND rule_evaluation_status.repository_id = $2
-  AND rule_evaluation_status.entity = 'repository'
   AND rule_evaluation_status.rule_type_id = $3
+  AND rule_evaluation_status.entity = $4
 `
 
-type UpsertRuleEvaluationStatusForRepositoryParams struct {
+type UpsertRuleEvaluationStatusParams struct {
 	PolicyID     int32           `json:"policy_id"`
 	RepositoryID sql.NullInt32   `json:"repository_id"`
 	RuleTypeID   int32           `json:"rule_type_id"`
+	Entity       Entities        `json:"entity"`
 	EvalStatus   EvalStatusTypes `json:"eval_status"`
 	Details      string          `json:"details"`
 }
 
-func (q *Queries) UpsertRuleEvaluationStatusForRepository(ctx context.Context, arg UpsertRuleEvaluationStatusForRepositoryParams) error {
-	_, err := q.db.ExecContext(ctx, upsertRuleEvaluationStatusForRepository,
+func (q *Queries) UpsertRuleEvaluationStatus(ctx context.Context, arg UpsertRuleEvaluationStatusParams) error {
+	_, err := q.db.ExecContext(ctx, upsertRuleEvaluationStatus,
 		arg.PolicyID,
 		arg.RepositoryID,
 		arg.RuleTypeID,
+		arg.Entity,
 		arg.EvalStatus,
 		arg.Details,
 	)
