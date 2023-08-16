@@ -26,6 +26,7 @@ import (
 	"github.com/google/uuid"
 	"google.golang.org/grpc/codes"
 	"google.golang.org/grpc/status"
+	"google.golang.org/protobuf/types/known/timestamppb"
 
 	"github.com/stacklok/mediator/internal/engine"
 	"github.com/stacklok/mediator/internal/util"
@@ -400,6 +401,7 @@ func (s *Server) GetPolicyStatusById(ctx context.Context,
 					"repo_owner":    rs.RepoOwner,
 					"provider":      rs.Provider,
 				},
+				LastUpdated: timestamppb.New(rs.LastUpdated),
 			}
 
 			rulestats = append(rulestats, st)
@@ -413,6 +415,7 @@ func (s *Server) GetPolicyStatusById(ctx context.Context,
 			PolicyId:     dbstat.ID,
 			PolicyName:   dbstat.Name,
 			PolicyStatus: string(dbstat.PolicyStatus),
+			LastUpdated:  timestamppb.New(dbstat.LastUpdated),
 		},
 		RuleEvaluationStatus: rulestats,
 	}
