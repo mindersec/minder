@@ -228,8 +228,8 @@ ON CONFLICT(policy_id, repository_id, entity, rule_type_id) DO UPDATE SET
     last_updated = NOW()
 WHERE rule_evaluation_status.policy_id = $1
   AND rule_evaluation_status.repository_id = $2
-  AND rule_evaluation_status.entity = $4
   AND rule_evaluation_status.rule_type_id = $3
+  AND rule_evaluation_status.entity = $4
 `
 
 type UpsertRuleEvaluationStatusParams struct {

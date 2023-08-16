@@ -177,7 +177,7 @@ func (e *Executor) handleReposInitEvent(ctx context.Context, prov string, evt *I
 					return err
 				}
 
-				return e.createOrUpdateEvalStatus(ctx, *pol.Id, dbrepo.ID, db.Entities(rt.Def.InEntity), *rt.Id,
+				return e.createOrUpdateEvalStatus(ctx, *pol.Id, dbrepo.ID, db.Entities(rt.Def.GetInEntity()), *rt.Id,
 					rte.Eval(ctx, repo, rule.Def.AsMap(), rule.Params.AsMap()))
 			})
 			if err != nil {
