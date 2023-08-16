@@ -23,6 +23,7 @@ package _go
 
 import (
 	context "context"
+	httpbody "google.golang.org/genproto/googleapis/api/httpbody"
 	grpc "google.golang.org/grpc"
 	codes "google.golang.org/grpc/codes"
 	status "google.golang.org/grpc/status"
@@ -265,7 +266,8 @@ const (
 // For semantics around ctx use and closing/ending streaming RPCs, please refer to https://pkg.go.dev/google.golang.org/grpc/?tab=doc#ClientConn.NewStream.
 type OAuthServiceClient interface {
 	GetAuthorizationURL(ctx context.Context, in *GetAuthorizationURLRequest, opts ...grpc.CallOption) (*GetAuthorizationURLResponse, error)
-	ExchangeCodeForTokenCLI(ctx context.Context, in *ExchangeCodeForTokenCLIRequest, opts ...grpc.CallOption) (*ExchangeCodeForTokenCLIResponse, error)
+	// buf:lint:ignore RPC_RESPONSE_STANDARD_NAME
+	ExchangeCodeForTokenCLI(ctx context.Context, in *ExchangeCodeForTokenCLIRequest, opts ...grpc.CallOption) (*httpbody.HttpBody, error)
 	ExchangeCodeForTokenWEB(ctx context.Context, in *ExchangeCodeForTokenWEBRequest, opts ...grpc.CallOption) (*ExchangeCodeForTokenWEBResponse, error)
 	StoreProviderToken(ctx context.Context, in *StoreProviderTokenRequest, opts ...grpc.CallOption) (*StoreProviderTokenResponse, error)
 	// revoke all tokens for all users
@@ -293,8 +295,8 @@ func (c *oAuthServiceClient) GetAuthorizationURL(ctx context.Context, in *GetAut
 	return out, nil
 }
 
-func (c *oAuthServiceClient) ExchangeCodeForTokenCLI(ctx context.Context, in *ExchangeCodeForTokenCLIRequest, opts ...grpc.CallOption) (*ExchangeCodeForTokenCLIResponse, error) {
-	out := new(ExchangeCodeForTokenCLIResponse)
+func (c *oAuthServiceClient) ExchangeCodeForTokenCLI(ctx context.Context, in *ExchangeCodeForTokenCLIRequest, opts ...grpc.CallOption) (*httpbody.HttpBody, error) {
+	out := new(httpbody.HttpBody)
 	err := c.cc.Invoke(ctx, OAuthService_ExchangeCodeForTokenCLI_FullMethodName, in, out, opts...)
 	if err != nil {
 		return nil, err
@@ -352,7 +354,8 @@ func (c *oAuthServiceClient) VerifyProviderTokenFrom(ctx context.Context, in *Ve
 // for forward compatibility
 type OAuthServiceServer interface {
 	GetAuthorizationURL(context.Context, *GetAuthorizationURLRequest) (*GetAuthorizationURLResponse, error)
-	ExchangeCodeForTokenCLI(context.Context, *ExchangeCodeForTokenCLIRequest) (*ExchangeCodeForTokenCLIResponse, error)
+	// buf:lint:ignore RPC_RESPONSE_STANDARD_NAME
+	ExchangeCodeForTokenCLI(context.Context, *ExchangeCodeForTokenCLIRequest) (*httpbody.HttpBody, error)
 	ExchangeCodeForTokenWEB(context.Context, *ExchangeCodeForTokenWEBRequest) (*ExchangeCodeForTokenWEBResponse, error)
 	StoreProviderToken(context.Context, *StoreProviderTokenRequest) (*StoreProviderTokenResponse, error)
 	// revoke all tokens for all users
@@ -371,7 +374,7 @@ type UnimplementedOAuthServiceServer struct {
 func (UnimplementedOAuthServiceServer) GetAuthorizationURL(context.Context, *GetAuthorizationURLRequest) (*GetAuthorizationURLResponse, error) {
 	return nil, status.Errorf(codes.Unimplemented, "method GetAuthorizationURL not implemented")
 }
-func (UnimplementedOAuthServiceServer) ExchangeCodeForTokenCLI(context.Context, *ExchangeCodeForTokenCLIRequest) (*ExchangeCodeForTokenCLIResponse, error) {
+func (UnimplementedOAuthServiceServer) ExchangeCodeForTokenCLI(context.Context, *ExchangeCodeForTokenCLIRequest) (*httpbody.HttpBody, error) {
 	return nil, status.Errorf(codes.Unimplemented, "method ExchangeCodeForTokenCLI not implemented")
 }
 func (UnimplementedOAuthServiceServer) ExchangeCodeForTokenWEB(context.Context, *ExchangeCodeForTokenWEBRequest) (*ExchangeCodeForTokenWEBResponse, error) {

@@ -19,6 +19,7 @@ import "google/api/annotations.proto";
 import "google/protobuf/timestamp.proto";
 import "google/protobuf/wrappers.proto";
 import "google/protobuf/struct.proto";
+import "google/api/httpbody.proto";
 
 
 option go_package = "github.com/stacklok/mediator/pkg/generated/protobuf/go";
@@ -130,7 +131,8 @@ service OAuthService {
             get: "/api/v1/auth/url"
         };
     }
-    rpc ExchangeCodeForTokenCLI (ExchangeCodeForTokenCLIRequest) returns (ExchangeCodeForTokenCLIResponse) {
+    // buf:lint:ignore RPC_RESPONSE_STANDARD_NAME
+    rpc ExchangeCodeForTokenCLI (ExchangeCodeForTokenCLIRequest) returns (google.api.HttpBody) {  // protolint:disable:this
         option (google.api.http) = {
             get: "/api/v1/auth/callback/{provider}/cli"
         };
@@ -612,10 +614,6 @@ message StoreProviderTokenRequest {
 }
 
 message StoreProviderTokenResponse {    
-}
-
-message ExchangeCodeForTokenCLIResponse {
-    string html = 1;
 }
 
 message ExchangeCodeForTokenWEBRequest{
