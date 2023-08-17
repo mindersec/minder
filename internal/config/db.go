@@ -19,6 +19,7 @@ import (
 	"context"
 	"database/sql"
 	"fmt"
+	"net/url"
 	"sync"
 
 	"github.com/aws/aws-sdk-go-v2/config"
@@ -59,9 +60,11 @@ type DatabaseConfig struct {
 // a cloud environment.
 func (c *DatabaseConfig) getDBCreds(ctx context.Context) string {
 	if c.CloudProviderCredentials == "" {
+		zerolog.Ctx(ctx).Info().Msg("No cloud provider credentials specified, using password")
 		return c.Password
 	}
 	if c.CloudProviderCredentials == awsCredsProvider {
+		zerolog.Ctx(ctx).Info().Msg("Using AWS credentials")
 		cfg, err := config.LoadDefaultConfig(ctx)
 		if err != nil {
 			// May not be running on AWS, so skip
@@ -86,7 +89,7 @@ func (c *DatabaseConfig) GetDBURI(ctx context.Context) string {
 		authToken := c.getDBCreds(ctx)
 
 		c.connString = fmt.Sprintf("postgres://%s:%s@%s:%d/%s?sslmode=%s",
-			c.User, authToken, c.Host, c.Port, c.Name, c.SSLMode)
+			c.User, url.QueryEscape(authToken), c.Host, c.Port, c.Name, c.SSLMode)
 	})
 
 	return c.connString

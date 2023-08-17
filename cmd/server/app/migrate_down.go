@@ -27,6 +27,7 @@ import (
 	"github.com/spf13/viper"
 
 	"github.com/stacklok/mediator/internal/config"
+	"github.com/stacklok/mediator/internal/logger"
 )
 
 var downCmd = &cobra.Command{
@@ -39,8 +40,10 @@ var downCmd = &cobra.Command{
 			return fmt.Errorf("unable to read config: %w", err)
 		}
 
+		ctx := logger.FromFlags(cfg.LoggingConfig).WithContext(context.Background())
+
 		// Database configuration
-		dbConn, connString, err := cfg.Database.GetDBConnection(context.Background())
+		dbConn, connString, err := cfg.Database.GetDBConnection(ctx)
 		if err != nil {
 			return fmt.Errorf("unable to connect to database: %w", err)
 		}
