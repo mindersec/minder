@@ -41,7 +41,6 @@
     - [DeleteUserRequest](#mediator-v1-DeleteUserRequest)
     - [DeleteUserResponse](#mediator-v1-DeleteUserResponse)
     - [ExchangeCodeForTokenCLIRequest](#mediator-v1-ExchangeCodeForTokenCLIRequest)
-    - [ExchangeCodeForTokenCLIResponse](#mediator-v1-ExchangeCodeForTokenCLIResponse)
     - [ExchangeCodeForTokenWEBRequest](#mediator-v1-ExchangeCodeForTokenWEBRequest)
     - [ExchangeCodeForTokenWEBResponse](#mediator-v1-ExchangeCodeForTokenWEBResponse)
     - [GetArtifactByNameRequest](#mediator-v1-GetArtifactByNameRequest)
@@ -815,21 +814,6 @@ DeleteRuleTypeResponse is the response to delete a rule type.
 | code | [string](#string) |  |  |
 | state | [string](#string) |  |  |
 | redirect_uri | [string](#string) |  |  |
-
-
-
-
-
-
-<a name="mediator-v1-ExchangeCodeForTokenCLIResponse"></a>
-
-### ExchangeCodeForTokenCLIResponse
-
-
-
-| Field | Type | Label | Description |
-| ----- | ---- | ----- | ----------- |
-| html | [string](#string) |  |  |
 
 
 
@@ -3127,7 +3111,9 @@ replies with OK
 | Method Name | Request Type | Response Type | Description |
 | ----------- | ------------ | ------------- | ------------|
 | GetAuthorizationURL | [GetAuthorizationURLRequest](#mediator-v1-GetAuthorizationURLRequest) | [GetAuthorizationURLResponse](#mediator-v1-GetAuthorizationURLResponse) |  |
-| ExchangeCodeForTokenCLI | [ExchangeCodeForTokenCLIRequest](#mediator-v1-ExchangeCodeForTokenCLIRequest) | [ExchangeCodeForTokenCLIResponse](#mediator-v1-ExchangeCodeForTokenCLIResponse) |  |
+| ExchangeCodeForTokenCLI | [ExchangeCodeForTokenCLIRequest](#mediator-v1-ExchangeCodeForTokenCLIRequest) | [.google.api.HttpBody](#google-api-HttpBody) | buf:lint:ignore RPC_RESPONSE_STANDARD_NAME
+
+protolint:disable:this |
 | ExchangeCodeForTokenWEB | [ExchangeCodeForTokenWEBRequest](#mediator-v1-ExchangeCodeForTokenWEBRequest) | [ExchangeCodeForTokenWEBResponse](#mediator-v1-ExchangeCodeForTokenWEBResponse) |  |
 | StoreProviderToken | [StoreProviderTokenRequest](#mediator-v1-StoreProviderTokenRequest) | [StoreProviderTokenResponse](#mediator-v1-StoreProviderTokenResponse) |  |
 | RevokeOauthTokens | [RevokeOauthTokensRequest](#mediator-v1-RevokeOauthTokensRequest) | [RevokeOauthTokensResponse](#mediator-v1-RevokeOauthTokensResponse) | revoke all tokens for all users |
