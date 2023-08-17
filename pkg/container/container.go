@@ -42,6 +42,8 @@ import (
 	pb "github.com/stacklok/mediator/pkg/generated/protobuf/go/mediator/v1"
 )
 
+var REGISTRY = "ghcr.io"
+
 type githubAuthenticator struct{ username, password string }
 
 func (g githubAuthenticator) Authorization() (*authn.AuthConfig, error) {

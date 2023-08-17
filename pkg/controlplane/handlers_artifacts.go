@@ -33,9 +33,6 @@ import (
 // ARTIFACT_TYPES is a list of supported artifact types
 var ARTIFACT_TYPES = sets.New[string]("npm", "maven", "rubygems", "docker", "nuget", "container")
 
-// REGISTRY is the default registry to use
-var REGISTRY = "ghcr.io"
-
 // ListArtifacts lists all artifacts for a given group and provider
 // nolint:gocyclo
 func (s *Server) ListArtifacts(ctx context.Context, in *pb.ListArtifactsRequest) (*pb.ListArtifactsResponse, error) {
@@ -191,7 +188,7 @@ func (s *Server) GetArtifactByName(ctx context.Context, in *pb.GetArtifactByName
 	final_versions := []*pb.ArtifactVersion{}
 	for _, version := range versions {
 		// first try to read the manifest
-		imageRef := fmt.Sprintf("%s/%s/%s@%s", REGISTRY, *pkg.GetOwner().Login, pkg.GetName(), version.GetName())
+		imageRef := fmt.Sprintf("%s/%s/%s@%s", container.REGISTRY, *pkg.GetOwner().Login, pkg.GetName(), version.GetName())
 		current_version := &pb.ArtifactVersion{
 			VersionId: version.GetID(),
 			Tags:      version.Metadata.Container.Tags,

@@ -17,12 +17,17 @@ package controlplane
 import (
 	"context"
 	"database/sql"
+	"encoding/json"
+	"log"
 	"strings"
 
 	"google.golang.org/grpc/codes"
 	"google.golang.org/grpc/status"
 	"google.golang.org/protobuf/types/known/timestamppb"
 
+	"github.com/ThreeDotsLabs/watermill/message"
+	"github.com/google/uuid"
+	"github.com/stacklok/mediator/internal/engine"
 	"github.com/stacklok/mediator/internal/gh/queries"
 	"github.com/stacklok/mediator/pkg/auth"
 	"github.com/stacklok/mediator/pkg/db"
@@ -130,6 +135,30 @@ func (s *Server) RegisterRepository(ctx context.Context,
 		})
 		if err != nil {
 			return nil, err
+		}
+
+		// publish a reconcile event for the registered repositories
+		log.Printf("publishing register event for repository: %s", result.Repository)
+		evt := &engine.ReconcilerEvent{
+			Repository: result.RepoID,
+			Group:      in.GroupId,
+		}
+
+		evtStr, err := json.Marshal(evt)
+		// This is a non-fatal error, so we'll just log it
+		// and continue
+		if err != nil {
+			log.Printf("error marshalling init event: %v", err)
+			continue
+		}
+
+		msg := message.NewMessage(uuid.New().String(), evtStr)
+		msg.Metadata.Set("provider", in.Provider)
+
+		// This is a non-fatal error, so we'll just log it
+		// and continue
+		if err := s.evt.Publish(engine.InternalReconcilerEventTopic, msg); err != nil {
+			log.Printf("error publishing reconciler event: %v", err)
 		}
 	}
 
