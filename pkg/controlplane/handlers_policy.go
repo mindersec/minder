@@ -379,11 +379,23 @@ func (s *Server) GetPolicyStatusById(ctx context.Context,
 
 	var rulestats []*pb.RuleEvaluationStatus
 
-	if in.All {
+	if in.All || in.RepoId != 0 {
+		var repoID sql.NullInt32
 
-		dbrulestat, err := s.store.ListRuleEvaluationStatusByPolicyId(ctx, in.PolicyId)
+		if in.All {
+			repoID = sql.NullInt32{}
+		} else if in.RepoId != 0 {
+			repoID = sql.NullInt32{Int32: in.RepoId, Valid: true}
+		} else {
+			return nil, status.Error(codes.InvalidArgument, "either repo id or all is required")
+		}
+
+		dbrulestat, err := s.store.ListRuleEvaluationStatusByPolicyId(ctx, db.ListRuleEvaluationStatusByPolicyIdParams{
+			PolicyID:     in.PolicyId,
+			RepositoryID: repoID,
+		})
 		if err != nil && !errors.Is(err, sql.ErrNoRows) {
-			return nil, status.Errorf(codes.Unknown, "failed to get policy: %s", err)
+			return nil, status.Errorf(codes.Unknown, "failed to list rule evaluation status: %s", err)
 		}
 
 		rulestats = make([]*pb.RuleEvaluationStatus, 0, len(dbrulestat))

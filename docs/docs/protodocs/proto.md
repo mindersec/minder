@@ -1214,8 +1214,9 @@ get policy by id
 | Field | Type | Label | Description |
 | ----- | ---- | ----- | ----------- |
 | context | [Context](#mediator-v1-Context) |  | context is the context in which the rule type is evaluated. |
-| policy_id | [int32](#int32) |  | id is the id of the policy to get |
+| policy_id | [int32](#int32) |  | policy_id is the id of the policy to get |
 | all | [bool](#bool) |  | all is a flag to indicate if all rule statuses should be returned |
+| repo_id | [int32](#int32) |  | repo_id is the id of the repo to get |
 
 
 

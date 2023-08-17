@@ -1350,7 +1350,7 @@
         "parameters": [
           {
             "name": "policyId",
-            "description": "id is the id of the policy to get",
+            "description": "policy_id is the id of the policy to get",
             "in": "path",
             "required": true,
             "type": "integer",
@@ -1380,6 +1380,14 @@
             "in": "query",
             "required": false,
             "type": "boolean"
+          },
+          {
+            "name": "repoId",
+            "description": "repo_id is the id of the repo to get",
+            "in": "query",
+            "required": false,
+            "type": "integer",
+            "format": "int32"
           }
         ],
         "tags": [

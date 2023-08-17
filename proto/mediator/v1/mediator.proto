@@ -1318,11 +1318,14 @@ message RuleEvaluationStatus {
 message GetPolicyStatusByIdRequest {
     // context is the context in which the rule type is evaluated.
     Context context = 1;
-    // id is the id of the policy to get
+    // policy_id is the id of the policy to get
     int32 policy_id = 2;
 
     // all is a flag to indicate if all rule statuses should be returned
     bool all = 3;
+
+    // repo_id is the id of the repo to get
+    int32 repo_id = 4;
 }
 
 message GetPolicyStatusByIdResponse {
