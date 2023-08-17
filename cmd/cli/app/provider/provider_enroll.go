@@ -171,8 +171,6 @@ actions such as adding repositories.`,
 			fmt.Println("Once the flow is complete, the CLI will close")
 			fmt.Println("If this is a headless environment, please copy and paste the URL into a browser on a different machine.")
 
-			util.ExitNicelyOnError(err, "Error opening browser")
-
 			if err := browser.OpenURL(resp.GetUrl()); err != nil {
 				fmt.Fprintf(os.Stderr, "Error opening browser: %s\n", err)
 				os.Exit(1)
