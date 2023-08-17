@@ -125,8 +125,8 @@ var HealthService_ServiceDesc = grpc.ServiceDesc{
 }
 
 const (
-	ArtifactService_ListArtifacts_FullMethodName     = "/mediator.v1.ArtifactService/ListArtifacts"
-	ArtifactService_GetArtifactByName_FullMethodName = "/mediator.v1.ArtifactService/GetArtifactByName"
+	ArtifactService_ListArtifacts_FullMethodName   = "/mediator.v1.ArtifactService/ListArtifacts"
+	ArtifactService_GetArtifactById_FullMethodName = "/mediator.v1.ArtifactService/GetArtifactById"
 )
 
 // ArtifactServiceClient is the client API for ArtifactService service.
@@ -134,7 +134,7 @@ const (
 // For semantics around ctx use and closing/ending streaming RPCs, please refer to https://pkg.go.dev/google.golang.org/grpc/?tab=doc#ClientConn.NewStream.
 type ArtifactServiceClient interface {
 	ListArtifacts(ctx context.Context, in *ListArtifactsRequest, opts ...grpc.CallOption) (*ListArtifactsResponse, error)
-	GetArtifactByName(ctx context.Context, in *GetArtifactByNameRequest, opts ...grpc.CallOption) (*GetArtifactByNameResponse, error)
+	GetArtifactById(ctx context.Context, in *GetArtifactByIdRequest, opts ...grpc.CallOption) (*GetArtifactByIdResponse, error)
 }
 
 type artifactServiceClient struct {
@@ -154,9 +154,9 @@ func (c *artifactServiceClient) ListArtifacts(ctx context.Context, in *ListArtif
 	return out, nil
 }
 
-func (c *artifactServiceClient) GetArtifactByName(ctx context.Context, in *GetArtifactByNameRequest, opts ...grpc.CallOption) (*GetArtifactByNameResponse, error) {
-	out := new(GetArtifactByNameResponse)
-	err := c.cc.Invoke(ctx, ArtifactService_GetArtifactByName_FullMethodName, in, out, opts...)
+func (c *artifactServiceClient) GetArtifactById(ctx context.Context, in *GetArtifactByIdRequest, opts ...grpc.CallOption) (*GetArtifactByIdResponse, error) {
+	out := new(GetArtifactByIdResponse)
+	err := c.cc.Invoke(ctx, ArtifactService_GetArtifactById_FullMethodName, in, out, opts...)
 	if err != nil {
 		return nil, err
 	}
@@ -168,7 +168,7 @@ func (c *artifactServiceClient) GetArtifactByName(ctx context.Context, in *GetAr
 // for forward compatibility
 type ArtifactServiceServer interface {
 	ListArtifacts(context.Context, *ListArtifactsRequest) (*ListArtifactsResponse, error)
-	GetArtifactByName(context.Context, *GetArtifactByNameRequest) (*GetArtifactByNameResponse, error)
+	GetArtifactById(context.Context, *GetArtifactByIdRequest) (*GetArtifactByIdResponse, error)
 	mustEmbedUnimplementedArtifactServiceServer()
 }
 
@@ -179,8 +179,8 @@ type UnimplementedArtifactServiceServer struct {
 func (UnimplementedArtifactServiceServer) ListArtifacts(context.Context, *ListArtifactsRequest) (*ListArtifactsResponse, error) {
 	return nil, status.Errorf(codes.Unimplemented, "method ListArtifacts not implemented")
 }
-func (UnimplementedArtifactServiceServer) GetArtifactByName(context.Context, *GetArtifactByNameRequest) (*GetArtifactByNameResponse, error) {
-	return nil, status.Errorf(codes.Unimplemented, "method GetArtifactByName not implemented")
+func (UnimplementedArtifactServiceServer) GetArtifactById(context.Context, *GetArtifactByIdRequest) (*GetArtifactByIdResponse, error) {
+	return nil, status.Errorf(codes.Unimplemented, "method GetArtifactById not implemented")
 }
 func (UnimplementedArtifactServiceServer) mustEmbedUnimplementedArtifactServiceServer() {}
 
@@ -213,20 +213,20 @@ func _ArtifactService_ListArtifacts_Handler(srv interface{}, ctx context.Context
 	return interceptor(ctx, in, info, handler)
 }
 
-func _ArtifactService_GetArtifactByName_Handler(srv interface{}, ctx context.Context, dec func(interface{}) error, interceptor grpc.UnaryServerInterceptor) (interface{}, error) {
-	in := new(GetArtifactByNameRequest)
+func _ArtifactService_GetArtifactById_Handler(srv interface{}, ctx context.Context, dec func(interface{}) error, interceptor grpc.UnaryServerInterceptor) (interface{}, error) {
+	in := new(GetArtifactByIdRequest)
 	if err := dec(in); err != nil {
 		return nil, err
 	}
 	if interceptor == nil {
-		return srv.(ArtifactServiceServer).GetArtifactByName(ctx, in)
+		return srv.(ArtifactServiceServer).GetArtifactById(ctx, in)
 	}
 	info := &grpc.UnaryServerInfo{
 		Server:     srv,
-		FullMethod: ArtifactService_GetArtifactByName_FullMethodName,
+		FullMethod: ArtifactService_GetArtifactById_FullMethodName,
 	}
 	handler := func(ctx context.Context, req interface{}) (interface{}, error) {
-		return srv.(ArtifactServiceServer).GetArtifactByName(ctx, req.(*GetArtifactByNameRequest))
+		return srv.(ArtifactServiceServer).GetArtifactById(ctx, req.(*GetArtifactByIdRequest))
 	}
 	return interceptor(ctx, in, info, handler)
 }
@@ -243,8 +243,8 @@ var ArtifactService_ServiceDesc = grpc.ServiceDesc{
 			Handler:    _ArtifactService_ListArtifacts_Handler,
 		},
 		{
-			MethodName: "GetArtifactByName",
-			Handler:    _ArtifactService_GetArtifactByName_Handler,
+			MethodName: "GetArtifactById",
+			Handler:    _ArtifactService_GetArtifactById_Handler,
 		},
 	},
 	Streams:  []grpc.StreamDesc{},

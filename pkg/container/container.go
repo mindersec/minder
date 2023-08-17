@@ -42,6 +42,7 @@ import (
 	pb "github.com/stacklok/mediator/pkg/generated/protobuf/go/mediator/v1"
 )
 
+// REGISTRY is the default registry
 var REGISTRY = "ghcr.io"
 
 type githubAuthenticator struct{ username, password string }

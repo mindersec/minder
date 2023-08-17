@@ -28,8 +28,9 @@ import (
 	"github.com/stacklok/mediator/pkg/db"
 )
 
-// handleArtifactsReconcilerEvent recreates the artifacts belonging to
+// HandleArtifactsReconcilerEvent recreates the artifacts belonging to
 // an specific repository
+// nolint: gocyclo
 func (e *Executor) HandleArtifactsReconcilerEvent(ctx context.Context, prov string, evt *ReconcilerEvent) error {
 	cli, token, owner_filter, err := e.buildClient(ctx, prov, evt.Group)
 	if err != nil {
@@ -52,8 +53,9 @@ func (e *Executor) HandleArtifactsReconcilerEvent(ctx context.Context, prov stri
 	}
 	for _, artifact := range artifacts.Packages {
 		// store information if we do not have it
-		newArtifact, err := e.querier.UpsertArtifact(ctx, db.UpsertArtifactParams{RepositoryID: repository.ID, ArtifactName: artifact.GetName(),
-			ArtifactType: artifact.GetPackageType(), ArtifactVisibility: artifact.GetVisibility()})
+		newArtifact, err := e.querier.UpsertArtifact(ctx,
+			db.UpsertArtifactParams{RepositoryID: repository.ID, ArtifactName: artifact.GetName(),
+				ArtifactType: artifact.GetPackageType(), ArtifactVisibility: artifact.GetVisibility()})
 
 		if err != nil {
 			// just log error and continue
@@ -63,7 +65,8 @@ func (e *Executor) HandleArtifactsReconcilerEvent(ctx context.Context, prov stri
 
 		// remove older versions
 		thirtyDaysAgo := time.Now().AddDate(0, 0, -30)
-		err = e.querier.DeleteOldArtifactVersions(ctx, db.DeleteOldArtifactVersionsParams{ArtifactID: int32(artifact.GetID()), CreatedAt: thirtyDaysAgo})
+		err = e.querier.DeleteOldArtifactVersions(ctx,
+			db.DeleteOldArtifactVersionsParams{ArtifactID: int32(artifact.GetID()), CreatedAt: thirtyDaysAgo})
 		if err != nil {
 			// just log error, we will not remove older for now
 			log.Printf("error removing older artifact versions: %v", err)

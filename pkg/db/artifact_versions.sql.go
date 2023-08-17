@@ -143,22 +143,66 @@ func (q *Queries) GetArtifactVersionBySha(ctx context.Context, arg GetArtifactVe
 	return i, err
 }
 
-const listArtifactsByArtifactID = `-- name: ListArtifactsByArtifactID :many
+const listArtifactVersionsByArtifactID = `-- name: ListArtifactVersionsByArtifactID :many
 SELECT id, artifact_id, version, tags, sha, signature_verification, github_workflow, created_at FROM artifact_versions
 WHERE artifact_id = $1
-ORDER BY id
+ORDER BY created_at DESC
 LIMIT $2
-OFFSET $3
 `
 
-type ListArtifactsByArtifactIDParams struct {
+type ListArtifactVersionsByArtifactIDParams struct {
 	ArtifactID int32 `json:"artifact_id"`
 	Limit      int32 `json:"limit"`
-	Offset     int32 `json:"offset"`
 }
 
-func (q *Queries) ListArtifactsByArtifactID(ctx context.Context, arg ListArtifactsByArtifactIDParams) ([]ArtifactVersion, error) {
-	rows, err := q.db.QueryContext(ctx, listArtifactsByArtifactID, arg.ArtifactID, arg.Limit, arg.Offset)
+func (q *Queries) ListArtifactVersionsByArtifactID(ctx context.Context, arg ListArtifactVersionsByArtifactIDParams) ([]ArtifactVersion, error) {
+	rows, err := q.db.QueryContext(ctx, listArtifactVersionsByArtifactID, arg.ArtifactID, arg.Limit)
+	if err != nil {
+		return nil, err
+	}
+	defer rows.Close()
+	items := []ArtifactVersion{}
+	for rows.Next() {
+		var i ArtifactVersion
+		if err := rows.Scan(
+			&i.ID,
+			&i.ArtifactID,
+			&i.Version,
+			&i.Tags,
+			&i.Sha,
+			&i.SignatureVerification,
+			&i.GithubWorkflow,
+			&i.CreatedAt,
+		); err != nil {
+			return nil, err
+		}
+		items = append(items, i)
+	}
+	if err := rows.Close(); err != nil {
+		return nil, err
+	}
+	if err := rows.Err(); err != nil {
+		return nil, err
+	}
+	return items, nil
+}
+
+const listArtifactVersionsByArtifactIDAndTag = `-- name: ListArtifactVersionsByArtifactIDAndTag :many
+SELECT id, artifact_id, version, tags, sha, signature_verification, github_workflow, created_at FROM artifact_versions
+WHERE artifact_id = $1
+AND (tags=$2 OR tags LIKE '%' || $2 || ',%' OR tags LIKE $2 || ',%')
+ORDER BY created_at DESC
+LIMIT $3
+`
+
+type ListArtifactVersionsByArtifactIDAndTagParams struct {
+	ArtifactID int32          `json:"artifact_id"`
+	Tags       sql.NullString `json:"tags"`
+	Limit      int32          `json:"limit"`
+}
+
+func (q *Queries) ListArtifactVersionsByArtifactIDAndTag(ctx context.Context, arg ListArtifactVersionsByArtifactIDAndTagParams) ([]ArtifactVersion, error) {
+	rows, err := q.db.QueryContext(ctx, listArtifactVersionsByArtifactIDAndTag, arg.ArtifactID, arg.Tags, arg.Limit)
 	if err != nil {
 		return nil, err
 	}

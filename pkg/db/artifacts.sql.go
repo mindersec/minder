@@ -7,6 +7,7 @@ package db
 
 import (
 	"context"
+	"time"
 )
 
 const createArtifact = `-- name: CreateArtifact :one
@@ -55,12 +56,29 @@ func (q *Queries) DeleteArtifact(ctx context.Context, id int32) error {
 }
 
 const getArtifactByID = `-- name: GetArtifactByID :one
-SELECT id, repository_id, artifact_name, artifact_type, artifact_visibility, created_at, updated_at FROM artifacts WHERE id = $1
+SELECT artifacts.id, artifacts.repository_id, artifacts.artifact_name, artifacts.artifact_type,
+artifacts.artifact_visibility, artifacts.created_at,
+repositories.provider, repositories.group_id, repositories.repo_owner, repositories.repo_name
+FROM artifacts INNER JOIN repositories ON repositories.id = artifacts.repository_id
+WHERE artifacts.id = $1
 `
 
-func (q *Queries) GetArtifactByID(ctx context.Context, id int32) (Artifact, error) {
+type GetArtifactByIDRow struct {
+	ID                 int32     `json:"id"`
+	RepositoryID       int32     `json:"repository_id"`
+	ArtifactName       string    `json:"artifact_name"`
+	ArtifactType       string    `json:"artifact_type"`
+	ArtifactVisibility string    `json:"artifact_visibility"`
+	CreatedAt          time.Time `json:"created_at"`
+	Provider           string    `json:"provider"`
+	GroupID            int32     `json:"group_id"`
+	RepoOwner          string    `json:"repo_owner"`
+	RepoName           string    `json:"repo_name"`
+}
+
+func (q *Queries) GetArtifactByID(ctx context.Context, id int32) (GetArtifactByIDRow, error) {
 	row := q.db.QueryRowContext(ctx, getArtifactByID, id)
-	var i Artifact
+	var i GetArtifactByIDRow
 	err := row.Scan(
 		&i.ID,
 		&i.RepositoryID,
@@ -68,31 +86,10 @@ func (q *Queries) GetArtifactByID(ctx context.Context, id int32) (Artifact, erro
 		&i.ArtifactType,
 		&i.ArtifactVisibility,
 		&i.CreatedAt,
-		&i.UpdatedAt,
-	)
-	return i, err
-}
-
-const getArtifactByName = `-- name: GetArtifactByName :one
-SELECT id, repository_id, artifact_name, artifact_type, artifact_visibility, created_at, updated_at FROM artifacts WHERE repository_id = $1 AND artifact_name = $2
-`
-
-type GetArtifactByNameParams struct {
-	RepositoryID int32  `json:"repository_id"`
-	ArtifactName string `json:"artifact_name"`
-}
-
-func (q *Queries) GetArtifactByName(ctx context.Context, arg GetArtifactByNameParams) (Artifact, error) {
-	row := q.db.QueryRowContext(ctx, getArtifactByName, arg.RepositoryID, arg.ArtifactName)
-	var i Artifact
-	err := row.Scan(
-		&i.ID,
-		&i.RepositoryID,
-		&i.ArtifactName,
-		&i.ArtifactType,
-		&i.ArtifactVisibility,
-		&i.CreatedAt,
-		&i.UpdatedAt,
+		&i.Provider,
+		&i.GroupID,
+		&i.RepoOwner,
+		&i.RepoName,
 	)
 	return i, err
 }
@@ -101,18 +98,10 @@ const listArtifactsByRepoID = `-- name: ListArtifactsByRepoID :many
 SELECT id, repository_id, artifact_name, artifact_type, artifact_visibility, created_at, updated_at FROM artifacts
 WHERE repository_id = $1
 ORDER BY id
-LIMIT $2
-OFFSET $3
 `
 
-type ListArtifactsByRepoIDParams struct {
-	RepositoryID int32 `json:"repository_id"`
-	Limit        int32 `json:"limit"`
-	Offset       int32 `json:"offset"`
-}
-
-func (q *Queries) ListArtifactsByRepoID(ctx context.Context, arg ListArtifactsByRepoIDParams) ([]Artifact, error) {
-	rows, err := q.db.QueryContext(ctx, listArtifactsByRepoID, arg.RepositoryID, arg.Limit, arg.Offset)
+func (q *Queries) ListArtifactsByRepoID(ctx context.Context, repositoryID int32) ([]Artifact, error) {
+	rows, err := q.db.QueryContext(ctx, listArtifactsByRepoID, repositoryID)
 	if err != nil {
 		return nil, err
 	}

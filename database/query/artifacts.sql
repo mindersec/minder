@@ -20,17 +20,16 @@ WHERE artifacts.repository_id = $1 AND artifacts.artifact_name = $2
 RETURNING *;
 
 -- name: GetArtifactByID :one
-SELECT * FROM artifacts WHERE id = $1;
-
--- name: GetArtifactByName :one
-SELECT * FROM artifacts WHERE repository_id = $1 AND artifact_name = $2;
+SELECT artifacts.id, artifacts.repository_id, artifacts.artifact_name, artifacts.artifact_type,
+artifacts.artifact_visibility, artifacts.created_at,
+repositories.provider, repositories.group_id, repositories.repo_owner, repositories.repo_name
+FROM artifacts INNER JOIN repositories ON repositories.id = artifacts.repository_id
+WHERE artifacts.id = $1;
 
 -- name: ListArtifactsByRepoID :many
 SELECT * FROM artifacts
 WHERE repository_id = $1
-ORDER BY id
-LIMIT $2
-OFFSET $3;
+ORDER BY id;
 
 -- name: DeleteArtifact :exec
 DELETE FROM artifacts

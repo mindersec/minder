@@ -38,12 +38,18 @@ SELECT * FROM artifact_versions WHERE id = $1;
 -- name: GetArtifactVersionBySha :one
 SELECT * FROM artifact_versions WHERE artifact_id = $1 AND sha = $2;
 
--- name: ListArtifactsByArtifactID :many
+-- name: ListArtifactVersionsByArtifactID :many
 SELECT * FROM artifact_versions
 WHERE artifact_id = $1
-ORDER BY id
-LIMIT $2
-OFFSET $3;
+ORDER BY created_at DESC
+LIMIT $2;
+
+-- name: ListArtifactVersionsByArtifactIDAndTag :many
+SELECT * FROM artifact_versions
+WHERE artifact_id = $1
+AND (tags=$2 OR tags LIKE '%' || $2 || ',%' OR tags LIKE $2 || ',%')
+ORDER BY created_at DESC
+LIMIT $3;
 
 -- name: DeleteArtifactVersion :exec
 DELETE FROM artifact_versions

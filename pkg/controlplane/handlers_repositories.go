@@ -21,12 +21,12 @@ import (
 	"log"
 	"strings"
 
+	"github.com/ThreeDotsLabs/watermill/message"
+	"github.com/google/uuid"
 	"google.golang.org/grpc/codes"
 	"google.golang.org/grpc/status"
 	"google.golang.org/protobuf/types/known/timestamppb"
 
-	"github.com/ThreeDotsLabs/watermill/message"
-	"github.com/google/uuid"
 	"github.com/stacklok/mediator/internal/engine"
 	"github.com/stacklok/mediator/internal/gh/queries"
 	"github.com/stacklok/mediator/pkg/auth"
@@ -49,6 +49,8 @@ import (
 //		  ],
 //		  "events": [ "push", "issues" ]
 //	}' 127.0.0.1:8090 mediator.v1.RepositoryService/RegisterRepository
+//
+// nolint: gocyclo
 func (s *Server) RegisterRepository(ctx context.Context,
 	in *pb.RegisterRepositoryRequest) (*pb.RegisterRepositoryResponse, error) {
 	if in.Provider != github.Github {

@@ -31,7 +31,7 @@ import (
 var artifact_getCmd = &cobra.Command{
 	Use:   "get",
 	Short: "Get artifact details",
-	Long:  `Artifact get will get artifact details from an artifact, for a given type and name`,
+	Long:  `Artifact get will get artifact details from an artifact, for a given id`,
 	PreRun: func(cmd *cobra.Command, args []string) {
 		if err := viper.BindPFlags(cmd.Flags()); err != nil {
 			fmt.Fprintf(os.Stderr, "error binding flags: %s", err)
@@ -42,11 +42,8 @@ var artifact_getCmd = &cobra.Command{
 		grpc_host := util.GetConfigValue("grpc_server.host", "grpc-host", cmd, "").(string)
 		grpc_port := util.GetConfigValue("grpc_server.port", "grpc-port", cmd, 0).(int)
 
-		provider := util.GetConfigValue("provider", "provider", cmd, "").(string)
-		artifact_type := util.GetConfigValue("type", "type", cmd, "").(string)
-		name := util.GetConfigValue("name", "name", cmd, "").(string)
 		tag := util.GetConfigValue("tag", "tag", cmd, "").(string)
-		groupID := viper.GetInt32("group-id")
+		artifactID := viper.GetInt32("id")
 		latest_versions := viper.GetInt32("latest-versions")
 
 		// tag and latest versions cannot be set at same time
@@ -64,11 +61,8 @@ var artifact_getCmd = &cobra.Command{
 		defer cancel()
 
 		// check artifact by name
-		art, err := client.GetArtifactByName(ctx, &pb.GetArtifactByNameRequest{
-			Provider:       provider,
-			GroupId:        groupID,
-			ArtifactType:   artifact_type,
-			Name:           name,
+		art, err := client.GetArtifactById(ctx, &pb.GetArtifactByIdRequest{
+			Id:             artifactID,
 			LatestVersions: latest_versions,
 			Tag:            tag,
 		})
@@ -82,21 +76,10 @@ var artifact_getCmd = &cobra.Command{
 
 func init() {
 	ArtifactCmd.AddCommand(artifact_getCmd)
-	artifact_getCmd.Flags().StringP("provider", "p", "", "Name for the provider to enroll")
-	artifact_getCmd.Flags().Int32P("group-id", "g", 0, "ID of the group for repo registration")
-	artifact_getCmd.Flags().StringP("type", "t", "",
-		"Type of the artifact to get info from (npm, maven, rubygems, docker, nuget, container)")
-	artifact_getCmd.Flags().StringP("name", "n", "", "Name of the artifact to get info from")
+	artifact_getCmd.Flags().Int32P("id", "i", 0, "ID of the artifact to get info from")
 	artifact_getCmd.Flags().Int32P("latest-versions", "v", 1, "Latest artifact versions to retrieve")
 	artifact_getCmd.Flags().StringP("tag", "", "", "Specific artifact tag to retrieve")
-	if err := artifact_getCmd.MarkFlagRequired("provider"); err != nil {
+	if err := artifact_getCmd.MarkFlagRequired("id"); err != nil {
 		fmt.Fprintf(os.Stderr, "Error marking flag as required: %s\n", err)
 	}
-	if err := artifact_getCmd.MarkFlagRequired("type"); err != nil {
-		fmt.Fprintf(os.Stderr, "Error marking flag as required: %s\n", err)
-	}
-	if err := artifact_getCmd.MarkFlagRequired("name"); err != nil {
-		fmt.Fprintf(os.Stderr, "Error marking flag as required: %s\n", err)
-	}
-
 }

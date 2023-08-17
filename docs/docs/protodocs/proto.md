@@ -43,8 +43,8 @@
     - [ExchangeCodeForTokenCLIRequest](#mediator-v1-ExchangeCodeForTokenCLIRequest)
     - [ExchangeCodeForTokenWEBRequest](#mediator-v1-ExchangeCodeForTokenWEBRequest)
     - [ExchangeCodeForTokenWEBResponse](#mediator-v1-ExchangeCodeForTokenWEBResponse)
-    - [GetArtifactByNameRequest](#mediator-v1-GetArtifactByNameRequest)
-    - [GetArtifactByNameResponse](#mediator-v1-GetArtifactByNameResponse)
+    - [GetArtifactByIdRequest](#mediator-v1-GetArtifactByIdRequest)
+    - [GetArtifactByIdResponse](#mediator-v1-GetArtifactByIdResponse)
     - [GetAuthorizationURLRequest](#mediator-v1-GetAuthorizationURLRequest)
     - [GetAuthorizationURLResponse](#mediator-v1-GetAuthorizationURLResponse)
     - [GetBranchProtectionRequest](#mediator-v1-GetBranchProtectionRequest)
@@ -223,7 +223,6 @@
 | visibility | [string](#string) |  |  |
 | repository | [string](#string) |  |  |
 | created_at | [google.protobuf.Timestamp](#google-protobuf-Timestamp) |  |  |
-| updated_at | [google.protobuf.Timestamp](#google-protobuf-Timestamp) |  |  |
 
 
 
@@ -857,18 +856,15 @@ DeleteRuleTypeResponse is the response to delete a rule type.
 
 
 
-<a name="mediator-v1-GetArtifactByNameRequest"></a>
+<a name="mediator-v1-GetArtifactByIdRequest"></a>
 
-### GetArtifactByNameRequest
+### GetArtifactByIdRequest
 
 
 
 | Field | Type | Label | Description |
 | ----- | ---- | ----- | ----------- |
-| provider | [string](#string) |  |  |
-| group_id | [int32](#int32) |  |  |
-| artifact_type | [string](#string) |  |  |
-| name | [string](#string) |  |  |
+| id | [int32](#int32) |  |  |
 | latest_versions | [int32](#int32) |  |  |
 | tag | [string](#string) |  |  |
 
@@ -877,9 +873,9 @@ DeleteRuleTypeResponse is the response to delete a rule type.
 
 
 
-<a name="mediator-v1-GetArtifactByNameResponse"></a>
+<a name="mediator-v1-GetArtifactByIdResponse"></a>
 
-### GetArtifactByNameResponse
+### GetArtifactByIdResponse
 
 
 
@@ -1926,9 +1922,6 @@ BUF does not allow grouping (which is a shame)
 | ----- | ---- | ----- | ----------- |
 | provider | [string](#string) |  |  |
 | group_id | [int32](#int32) |  |  |
-| artifact_type | [string](#string) |  |  |
-| limit | [int32](#int32) |  |  |
-| offset | [int32](#int32) |  |  |
 
 
 
@@ -3059,7 +3052,7 @@ Repo filter enum
 | Method Name | Request Type | Response Type | Description |
 | ----------- | ------------ | ------------- | ------------|
 | ListArtifacts | [ListArtifactsRequest](#mediator-v1-ListArtifactsRequest) | [ListArtifactsResponse](#mediator-v1-ListArtifactsResponse) |  |
-| GetArtifactByName | [GetArtifactByNameRequest](#mediator-v1-GetArtifactByNameRequest) | [GetArtifactByNameResponse](#mediator-v1-GetArtifactByNameResponse) |  |
+| GetArtifactById | [GetArtifactByIdRequest](#mediator-v1-GetArtifactByIdRequest) | [GetArtifactByIdResponse](#mediator-v1-GetArtifactByIdResponse) |  |
 
 
 <a name="mediator-v1-AuthService"></a>
