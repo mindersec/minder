@@ -32,6 +32,7 @@ import (
 	"github.com/stacklok/mediator/internal/util"
 	"github.com/stacklok/mediator/pkg/auth"
 	"github.com/stacklok/mediator/pkg/db"
+	"github.com/stacklok/mediator/pkg/entities"
 	pb "github.com/stacklok/mediator/pkg/generated/protobuf/go/mediator/v1"
 	ghclient "github.com/stacklok/mediator/pkg/providers/github"
 )
@@ -187,10 +188,10 @@ func (s *Server) CreatePolicy(ctx context.Context,
 	}
 
 	// Create entity rules entries
-	for ent, entRules := range map[engine.EntityType][]*pb.PipelinePolicy_ContextualRuleSet{
-		engine.RepositoryEntity:       in.GetRepository(),
-		engine.ArtifactEntity:         in.GetArtifact(),
-		engine.BuildEnvironmentEntity: in.GetBuildEnvironment(),
+	for ent, entRules := range map[pb.Entity][]*pb.PipelinePolicy_ContextualRuleSet{
+		pb.Entity_ENTITY_REPOSITORIES:       in.GetRepository(),
+		pb.Entity_ENTITY_ARTIFACTS:          in.GetArtifact(),
+		pb.Entity_ENTITY_BUILD_ENVIRONMENTS: in.GetBuildEnvironment(),
 	} {
 		if err := createPolicyRulesForEntity(ctx, ent, &policy, qtx, entRules); err != nil {
 			return nil, err
@@ -239,7 +240,7 @@ func (s *Server) publishPolicyInitEvent(pol *pb.PipelinePolicy, ectx *engine.Ent
 
 func createPolicyRulesForEntity(
 	ctx context.Context,
-	entity engine.EntityType,
+	entity pb.Entity,
 	policy *db.Policy,
 	qtx db.Querier,
 	rules []*pb.PipelinePolicy_ContextualRuleSet,
@@ -378,21 +379,24 @@ func (s *Server) GetPolicyStatusById(ctx context.Context,
 	}
 
 	var rulestats []*pb.RuleEvaluationStatus
+	var selector *sql.NullInt32
 
-	if in.All || in.RepoId != 0 {
-		var repoID sql.NullInt32
-
-		if in.All {
-			repoID = sql.NullInt32{}
-		} else if in.RepoId != 0 {
-			repoID = sql.NullInt32{Int32: in.RepoId, Valid: true}
-		} else {
-			return nil, status.Error(codes.InvalidArgument, "either repo id or all is required")
+	if in.GetAll() {
+		selector = &sql.NullInt32{}
+	} else if e := in.GetEntity(); e != nil {
+		if !entities.IsValidEntity(e.GetType()) {
+			return nil, status.Errorf(codes.InvalidArgument,
+				"invalid entity type %s, please use one of %s",
+				e.GetType(), entities.KnownTypesCSV())
 		}
+		selector = &sql.NullInt32{Int32: e.GetId(), Valid: true}
+	}
 
+	// TODO: Handle retrieving status for other types of entities
+	if selector != nil {
 		dbrulestat, err := s.store.ListRuleEvaluationStatusByPolicyId(ctx, db.ListRuleEvaluationStatusByPolicyIdParams{
 			PolicyID:     in.PolicyId,
-			RepositoryID: repoID,
+			RepositoryID: *selector,
 		})
 		if err != nil && !errors.Is(err, sql.ErrNoRows) {
 			return nil, status.Errorf(codes.Unknown, "failed to list rule evaluation status: %s", err)
@@ -422,7 +426,7 @@ func (s *Server) GetPolicyStatusById(ctx context.Context,
 		// TODO: Add other entities once we have database entries for them
 	}
 
-	res := &pb.GetPolicyStatusByIdResponse{
+	return &pb.GetPolicyStatusByIdResponse{
 		PolicyStatus: &pb.PolicyStatus{
 			PolicyId:     dbstat.ID,
 			PolicyName:   dbstat.Name,
@@ -430,10 +434,7 @@ func (s *Server) GetPolicyStatusById(ctx context.Context,
 			LastUpdated:  timestamppb.New(dbstat.LastUpdated),
 		},
 		RuleEvaluationStatus: rulestats,
-	}
-
-	return res, nil
-
+	}, nil
 }
 
 // GetPolicyStatusByGroup is a method to get policy status for a group

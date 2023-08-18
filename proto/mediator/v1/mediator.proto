@@ -1321,11 +1321,20 @@ message GetPolicyStatusByIdRequest {
     // policy_id is the id of the policy to get
     int32 policy_id = 2;
 
-    // all is a flag to indicate if all rule statuses should be returned
-    bool all = 3;
+    // EntiryTypeId is a message that carries an ID together with a type to uniquely identify an entity
+    // such as (repo, 1), (artifact, 2), ...
+    // if the struct is reused in other messages, it should be moved to a top-level definition
+    message EntityTypedId {
+        // entity is the entity to get status for. Incompatible with `all`
+        Entity type = 1;
+        // repo_id is the id of the repo to get status for. Incompatible with `all`
+        int32 id = 2;
+    }
 
-    // repo_id is the id of the repo to get
-    int32 repo_id = 4;
+    oneof entity_selector {
+        EntityTypedId entity = 3;
+        bool all = 4;
+    }
 }
 
 message GetPolicyStatusByIdResponse {
@@ -1371,7 +1380,6 @@ enum Entity {
     ENTITY_BUILD_ENVIRONMENTS = 2;
     ENTITY_ARTIFACTS = 3;
 }
-
 
 // Provider defines a provider that is used to connect to a certain service.
 // This is used to define the context in which a rule is evaluated and serves
@@ -1579,7 +1587,7 @@ message RuleType {
     message Definition {
         // in_entity is the entity in which the rule is evaluated.
         // This can be repository, build_environment or artifact.
-        string in_entity = 1;
+        Entity in_entity = 1;
 
         // rule_schema is the schema of the rule. This is expressed in JSON Schema.
         map<string, google.protobuf.Struct> rule_schema = 2;

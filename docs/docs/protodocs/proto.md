@@ -66,6 +66,7 @@
     - [GetPolicyStatusByGroupRequest](#mediator-v1-GetPolicyStatusByGroupRequest)
     - [GetPolicyStatusByGroupResponse](#mediator-v1-GetPolicyStatusByGroupResponse)
     - [GetPolicyStatusByIdRequest](#mediator-v1-GetPolicyStatusByIdRequest)
+    - [GetPolicyStatusByIdRequest.EntityTypedId](#mediator-v1-GetPolicyStatusByIdRequest-EntityTypedId)
     - [GetPolicyStatusByIdResponse](#mediator-v1-GetPolicyStatusByIdResponse)
     - [GetPublicKeyRequest](#mediator-v1-GetPublicKeyRequest)
     - [GetPublicKeyResponse](#mediator-v1-GetPublicKeyResponse)
@@ -1215,8 +1216,26 @@ get policy by id
 | ----- | ---- | ----- | ----------- |
 | context | [Context](#mediator-v1-Context) |  | context is the context in which the rule type is evaluated. |
 | policy_id | [int32](#int32) |  | policy_id is the id of the policy to get |
-| all | [bool](#bool) |  | all is a flag to indicate if all rule statuses should be returned |
-| repo_id | [int32](#int32) |  | repo_id is the id of the repo to get |
+| entity | [GetPolicyStatusByIdRequest.EntityTypedId](#mediator-v1-GetPolicyStatusByIdRequest-EntityTypedId) |  |  |
+| all | [bool](#bool) |  |  |
+
+
+
+
+
+
+<a name="mediator-v1-GetPolicyStatusByIdRequest-EntityTypedId"></a>
+
+### GetPolicyStatusByIdRequest.EntityTypedId
+EntiryTypeId is a message that carries an ID together with a type to uniquely identify an entity
+such as (repo, 1), (artifact, 2), ...
+if the struct is reused in other messages, it should be moved to a top-level definition
+
+
+| Field | Type | Label | Description |
+| ----- | ---- | ----- | ----------- |
+| type | [Entity](#mediator-v1-Entity) |  | entity is the entity to get status for. Incompatible with `all` |
+| id | [int32](#int32) |  | repo_id is the id of the repo to get status for. Incompatible with `all` |
 
 
 
@@ -2617,7 +2636,7 @@ Definition defines the rule type. It encompases the schema and the data evaluati
 
 | Field | Type | Label | Description |
 | ----- | ---- | ----- | ----------- |
-| in_entity | [string](#string) |  | in_entity is the entity in which the rule is evaluated. This can be repository, build_environment or artifact. |
+| in_entity | [Entity](#mediator-v1-Entity) |  | in_entity is the entity in which the rule is evaluated. This can be repository, build_environment or artifact. |
 | rule_schema | [RuleType.Definition.RuleSchemaEntry](#mediator-v1-RuleType-Definition-RuleSchemaEntry) | repeated | rule_schema is the schema of the rule. This is expressed in JSON Schema. |
 | data_eval | [RuleType.Definition.DataEval](#mediator-v1-RuleType-Definition-DataEval) |  |  |
 

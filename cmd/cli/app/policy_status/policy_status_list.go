@@ -52,7 +52,7 @@ mediator control plane for an specific provider/group or policy id.`,
 
 		provider := viper.GetString("provider")
 		group := viper.GetString("group")
-		policy_id := viper.GetInt32("policy")
+		policyId := viper.GetInt32("policy")
 		format := viper.GetString("output")
 		all := viper.GetBool("all")
 
@@ -64,8 +64,7 @@ mediator control plane for an specific provider/group or policy id.`,
 			return fmt.Errorf("provider must be set")
 		}
 
-		// at least one of policy_id, repo-id or group needs to be set
-		if policy_id == 0 {
+		if policyId == 0 {
 			return fmt.Errorf("policy-id must be set")
 		}
 
@@ -73,8 +72,10 @@ mediator control plane for an specific provider/group or policy id.`,
 			Context: &pb.Context{
 				Provider: provider,
 			},
-			PolicyId: policy_id,
-			All:      all,
+			PolicyId: policyId,
+			EntitySelector: &pb.GetPolicyStatusByIdRequest_All{
+				All: all,
+			},
 		}
 
 		if group != "" {

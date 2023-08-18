@@ -23,6 +23,7 @@ import (
 	"github.com/spf13/viper"
 
 	"github.com/stacklok/mediator/internal/util"
+	"github.com/stacklok/mediator/pkg/entities"
 	pb "github.com/stacklok/mediator/pkg/generated/protobuf/go/mediator/v1"
 )
 
@@ -30,7 +31,7 @@ var policystatus_getCmd = &cobra.Command{
 	Use:   "get",
 	Short: "Get policy status within a mediator control plane",
 	Long: `The medic policy_status get subcommand lets you get policy status within a
-mediator control plane for an specific provider/group or policy id and repo-id.`,
+mediator control plane for an specific provider/group or policy id, entity type and entity id.`,
 	PreRun: func(cmd *cobra.Command, args []string) {
 		if err := viper.BindPFlags(cmd.Flags()); err != nil {
 			fmt.Fprintf(os.Stderr, "Error binding flags: %s\n", err)
@@ -52,11 +53,14 @@ mediator control plane for an specific provider/group or policy id and repo-id.`
 
 		provider := viper.GetString("provider")
 		group := viper.GetString("group")
-		policy_id := viper.GetInt32("policy")
-		repo_id := viper.GetInt32("repo")
+		policyId := viper.GetInt32("policy")
+		entityId := viper.GetInt32("entity")
+		entityType := viper.GetString("entity-type")
 		format := viper.GetString("output")
-		all := viper.GetBool("all")
 
+		// the linter complains that this should be a constant doing that should probably be part
+		// of a larger refactor of the CLI (see issue #690)
+		// nolint: goconst
 		if format != "json" && format != "yaml" {
 			return fmt.Errorf("error: invalid format: %s", format)
 		}
@@ -65,22 +69,25 @@ mediator control plane for an specific provider/group or policy id and repo-id.`
 			return fmt.Errorf("provider must be set")
 		}
 
-		// at least one of policy_id, repo-id or group needs to be set
-		if policy_id == 0 {
+		if policyId == 0 {
 			return fmt.Errorf("policy-id must be set")
 		}
 
-		if repo_id == 0 {
-			return fmt.Errorf("repo-id must be set")
+		if entityId == 0 {
+			return fmt.Errorf("entity-id must be set")
 		}
 
 		req := &pb.GetPolicyStatusByIdRequest{
 			Context: &pb.Context{
 				Provider: provider,
 			},
-			PolicyId: policy_id,
-			RepoId:   repo_id,
-			All:      all,
+			PolicyId: policyId,
+			EntitySelector: &pb.GetPolicyStatusByIdRequest_Entity{
+				Entity: &pb.GetPolicyStatusByIdRequest_EntityTypedId{
+					Id:   entityId,
+					Type: entities.FromString(entityType),
+				},
+			},
 		}
 
 		if group != "" {
@@ -111,6 +118,8 @@ func init() {
 	policystatus_getCmd.Flags().StringP("provider", "p", "github", "Provider to get policy status for")
 	policystatus_getCmd.Flags().StringP("group", "g", "", "group id to get policy status for")
 	policystatus_getCmd.Flags().Int32P("policy", "i", 0, "policy id to get policy status for")
-	policystatus_getCmd.Flags().Int32P("repo", "r", 0, "repo id to get policy status for")
+	policystatus_getCmd.Flags().StringP("entity-type", "t", "",
+		fmt.Sprintf("the entity type to get policy status for (one of %s)", entities.KnownTypesCSV()))
+	policystatus_getCmd.Flags().Int32P("entity", "e", 0, "entity id to get policy status for")
 	policystatus_getCmd.Flags().StringP("output", "o", "yaml", "Output format (json or yaml)")
 }

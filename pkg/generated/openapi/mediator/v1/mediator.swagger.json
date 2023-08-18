@@ -1375,19 +1375,32 @@
             "type": "string"
           },
           {
-            "name": "all",
-            "description": "all is a flag to indicate if all rule statuses should be returned",
+            "name": "entity.type",
+            "description": "entity is the entity to get status for. Incompatible with `all`",
             "in": "query",
             "required": false,
-            "type": "boolean"
+            "type": "string",
+            "enum": [
+              "ENTITY_UNSPECIFIED",
+              "ENTITY_REPOSITORIES",
+              "ENTITY_BUILD_ENVIRONMENTS",
+              "ENTITY_ARTIFACTS"
+            ],
+            "default": "ENTITY_UNSPECIFIED"
           },
           {
-            "name": "repoId",
-            "description": "repo_id is the id of the repo to get",
+            "name": "entity.id",
+            "description": "repo_id is the id of the repo to get status for. Incompatible with `all`",
             "in": "query",
             "required": false,
             "type": "integer",
             "format": "int32"
+          },
+          {
+            "name": "all",
+            "in": "query",
+            "required": false,
+            "type": "boolean"
           }
         ],
         "tags": [
@@ -2698,6 +2711,21 @@
       },
       "description": "DataEval defines how the data is evaluated."
     },
+    "GetPolicyStatusByIdRequestEntityTypedId": {
+      "type": "object",
+      "properties": {
+        "type": {
+          "$ref": "#/definitions/v1Entity",
+          "title": "entity is the entity to get status for. Incompatible with `all`"
+        },
+        "id": {
+          "type": "integer",
+          "format": "int32",
+          "title": "repo_id is the id of the repo to get status for. Incompatible with `all`"
+        }
+      },
+      "title": "EntiryTypeId is a message that carries an ID together with a type to uniquely identify an entity\nsuch as (repo, 1), (artifact, 2), ...\nif the struct is reused in other messages, it should be moved to a top-level definition"
+    },
     "PipelinePolicyContextualRuleSet": {
       "type": "object",
       "properties": {
@@ -3297,6 +3325,17 @@
     },
     "v1DeleteUserResponse": {
       "type": "object"
+    },
+    "v1Entity": {
+      "type": "string",
+      "enum": [
+        "ENTITY_UNSPECIFIED",
+        "ENTITY_REPOSITORIES",
+        "ENTITY_BUILD_ENVIRONMENTS",
+        "ENTITY_ARTIFACTS"
+      ],
+      "default": "ENTITY_UNSPECIFIED",
+      "description": "Entity defines the entity that is supported by the provider."
     },
     "v1ExchangeCodeForTokenWEBResponse": {
       "type": "object",
@@ -4341,7 +4380,7 @@
       "type": "object",
       "properties": {
         "inEntity": {
-          "type": "string",
+          "$ref": "#/definitions/v1Entity",
           "description": "in_entity is the entity in which the rule is evaluated.\nThis can be repository, build_environment or artifact."
         },
         "ruleSchema": {
