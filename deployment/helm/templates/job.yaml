@@ -94,6 +94,8 @@ spec:
           - "--yes"
           - "--db-host={{ .Values.db.host }}"
           - "--config=/config/config.yaml"
+          # We use two config files, one with all the defaults, and one with
+          # additional override values from helm.  (This is a viper feature.)
           - "--config=/config/overrides.yaml"
           # ko will always specify a digest, so we don't need to worry about
           # CRI image caching
