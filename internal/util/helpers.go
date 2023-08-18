@@ -142,7 +142,7 @@ func GetGrpcConnection(grpc_host string, grpc_port int) (*grpc.ClientConn, error
 
 	credentialOpts := insecure.NewCredentials()
 	if grpc_host != "localhost" && grpc_host != "127.0.0.1" && grpc_host != "::1" {
-		credentialOpts = credentials.NewTLS(&tls.Config{})
+		credentialOpts = credentials.NewTLS(&tls.Config{MinVersion: tls.VersionTLS13})
 	}
 
 	// generate credentials
