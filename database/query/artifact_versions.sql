@@ -7,7 +7,8 @@ INSERT INTO artifact_versions (
     signature_verification,
     github_workflow, created_at) VALUES ($1, $2, $3, $4,
     sqlc.arg(signature_verification)::jsonb,
-    sqlc.arg(github_workflow)::jsonb, $5) RETURNING *;
+    sqlc.arg(github_workflow)::jsonb,
+    $5) RETURNING *;
 
 -- name: UpsertArtifactVersion :one
 INSERT INTO artifact_versions (
@@ -20,7 +21,8 @@ INSERT INTO artifact_versions (
     created_at
 ) VALUES ($1, $2, $3, $4,
     sqlc.arg(signature_verification)::jsonb,
-    sqlc.arg(github_workflow)::jsonb, $5)
+    sqlc.arg(github_workflow)::jsonb,
+    $5)
 ON CONFLICT (artifact_id, sha)
 DO UPDATE SET
     version = $2,
@@ -47,17 +49,13 @@ LIMIT $2;
 -- name: ListArtifactVersionsByArtifactIDAndTag :many
 SELECT * FROM artifact_versions
 WHERE artifact_id = $1
-AND (tags=$2 OR tags LIKE '%' || $2 || ',%' OR tags LIKE $2 || ',%')
+AND $2=ANY(STRING_TO_ARRAY(tags, ','))
 ORDER BY created_at DESC
 LIMIT $3;
 
 -- name: DeleteArtifactVersion :exec
 DELETE FROM artifact_versions
 WHERE id = $1;
-
--- name: DeleteArtifactVersionsOlderThan :exec
-DELETE FROM artifact_versions
-WHERE artifact_id = $1 AND created_at < $2;
 
 -- name: DeleteOldArtifactVersions :exec
 DELETE FROM artifact_versions

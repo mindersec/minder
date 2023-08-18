@@ -23,15 +23,11 @@ import (
 	"google.golang.org/grpc/status"
 	"google.golang.org/protobuf/encoding/protojson"
 	"google.golang.org/protobuf/types/known/timestamppb"
-	"k8s.io/apimachinery/pkg/util/sets"
 
 	"github.com/stacklok/mediator/pkg/auth"
 	"github.com/stacklok/mediator/pkg/db"
 	pb "github.com/stacklok/mediator/pkg/generated/protobuf/go/mediator/v1"
 )
-
-// ARTIFACT_TYPES is a list of supported artifact types
-var ARTIFACT_TYPES = sets.New[string]("npm", "maven", "rubygems", "docker", "nuget", "container")
 
 // ListArtifacts lists all artifacts for a given group and provider
 // nolint:gocyclo
@@ -58,6 +54,9 @@ func (s *Server) ListArtifacts(ctx context.Context, in *pb.ListArtifactsRequest)
 	repositories, err := s.store.ListRegisteredRepositoriesByGroupIDAndProvider(ctx,
 		db.ListRegisteredRepositoriesByGroupIDAndProviderParams{Provider: in.Provider, GroupID: in.GroupId})
 	if err != nil {
+		if err == sql.ErrNoRows {
+			return nil, status.Errorf(codes.NotFound, "repositories not found")
+		}
 		return nil, status.Errorf(codes.Unknown, "failed to get repositories: %s", err)
 	}
 

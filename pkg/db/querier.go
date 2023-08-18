@@ -33,7 +33,6 @@ type Querier interface {
 	DeleteAccessToken(ctx context.Context, arg DeleteAccessTokenParams) error
 	DeleteArtifact(ctx context.Context, id int32) error
 	DeleteArtifactVersion(ctx context.Context, id int32) error
-	DeleteArtifactVersionsOlderThan(ctx context.Context, arg DeleteArtifactVersionsOlderThanParams) error
 	DeleteExpiredSessionStates(ctx context.Context) error
 	DeleteGroup(ctx context.Context, id int32) error
 	DeleteOldArtifactVersions(ctx context.Context, arg DeleteOldArtifactVersionsParams) error

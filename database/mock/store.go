@@ -391,20 +391,6 @@ func (mr *MockStoreMockRecorder) DeleteArtifactVersion(arg0, arg1 interface{}) *
 	return mr.mock.ctrl.RecordCallWithMethodType(mr.mock, "DeleteArtifactVersion", reflect.TypeOf((*MockStore)(nil).DeleteArtifactVersion), arg0, arg1)
 }
 
-// DeleteArtifactVersionsOlderThan mocks base method.
-func (m *MockStore) DeleteArtifactVersionsOlderThan(arg0 context.Context, arg1 db.DeleteArtifactVersionsOlderThanParams) error {
-	m.ctrl.T.Helper()
-	ret := m.ctrl.Call(m, "DeleteArtifactVersionsOlderThan", arg0, arg1)
-	ret0, _ := ret[0].(error)
-	return ret0
-}
-
-// DeleteArtifactVersionsOlderThan indicates an expected call of DeleteArtifactVersionsOlderThan.
-func (mr *MockStoreMockRecorder) DeleteArtifactVersionsOlderThan(arg0, arg1 interface{}) *gomock.Call {
-	mr.mock.ctrl.T.Helper()
-	return mr.mock.ctrl.RecordCallWithMethodType(mr.mock, "DeleteArtifactVersionsOlderThan", reflect.TypeOf((*MockStore)(nil).DeleteArtifactVersionsOlderThan), arg0, arg1)
-}
-
 // DeleteExpiredSessionStates mocks base method.
 func (m *MockStore) DeleteExpiredSessionStates(arg0 context.Context) error {
 	m.ctrl.T.Helper()

@@ -132,9 +132,9 @@ CREATE TABLE repositories (
 CREATE TABLE artifacts (
     id SERIAL PRIMARY KEY,
     repository_id INTEGER NOT NULL REFERENCES repositories(id) ON DELETE CASCADE,
-    artifact_name TEXT NOT NULL,
+    artifact_name TEXT NOT NULL,    -- this is case insensitive
     artifact_type TEXT NOT NULL,
-    artifact_visibility TEXT NOT NULL,
+    artifact_visibility TEXT NOT NULL,      -- comes from github. Can be public, private, internal
     created_at TIMESTAMP NOT NULL DEFAULT NOW(),
     updated_at TIMESTAMP NOT NULL DEFAULT NOW()
 );
@@ -146,8 +146,8 @@ CREATE TABLE artifact_versions (
     version BIGINT NOT NULL,
     tags TEXT,
     sha TEXT NOT NULL,
-    signature_verification JSONB,
-    github_workflow JSONB,
+    signature_verification JSONB,       -- see /proto/mediator/v1/mediator.proto#L82
+    github_workflow JSONB,              -- see /proto/mediator/v1/mediator.proto#L75
     created_at TIMESTAMP NOT NULL DEFAULT NOW()
 );
 

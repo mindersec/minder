@@ -21,7 +21,8 @@ INSERT INTO artifact_versions (
     signature_verification,
     github_workflow, created_at) VALUES ($1, $2, $3, $4,
     $6::jsonb,
-    $7::jsonb, $5) RETURNING id, artifact_id, version, tags, sha, signature_verification, github_workflow, created_at
+    $7::jsonb,
+    $5) RETURNING id, artifact_id, version, tags, sha, signature_verification, github_workflow, created_at
 `
 
 type CreateArtifactVersionParams struct {
@@ -65,21 +66,6 @@ WHERE id = $1
 
 func (q *Queries) DeleteArtifactVersion(ctx context.Context, id int32) error {
 	_, err := q.db.ExecContext(ctx, deleteArtifactVersion, id)
-	return err
-}
-
-const deleteArtifactVersionsOlderThan = `-- name: DeleteArtifactVersionsOlderThan :exec
-DELETE FROM artifact_versions
-WHERE artifact_id = $1 AND created_at < $2
-`
-
-type DeleteArtifactVersionsOlderThanParams struct {
-	ArtifactID int32     `json:"artifact_id"`
-	CreatedAt  time.Time `json:"created_at"`
-}
-
-func (q *Queries) DeleteArtifactVersionsOlderThan(ctx context.Context, arg DeleteArtifactVersionsOlderThanParams) error {
-	_, err := q.db.ExecContext(ctx, deleteArtifactVersionsOlderThan, arg.ArtifactID, arg.CreatedAt)
 	return err
 }
 
@@ -190,7 +176,7 @@ func (q *Queries) ListArtifactVersionsByArtifactID(ctx context.Context, arg List
 const listArtifactVersionsByArtifactIDAndTag = `-- name: ListArtifactVersionsByArtifactIDAndTag :many
 SELECT id, artifact_id, version, tags, sha, signature_verification, github_workflow, created_at FROM artifact_versions
 WHERE artifact_id = $1
-AND (tags=$2 OR tags LIKE '%' || $2 || ',%' OR tags LIKE $2 || ',%')
+AND $2=ANY(STRING_TO_ARRAY(tags, ','))
 ORDER BY created_at DESC
 LIMIT $3
 `
@@ -244,7 +230,8 @@ INSERT INTO artifact_versions (
     created_at
 ) VALUES ($1, $2, $3, $4,
     $6::jsonb,
-    $7::jsonb, $5)
+    $7::jsonb,
+    $5)
 ON CONFLICT (artifact_id, sha)
 DO UPDATE SET
     version = $2,

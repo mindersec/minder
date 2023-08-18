@@ -20,6 +20,7 @@ import (
 	"encoding/json"
 	"fmt"
 	"log"
+	"sort"
 	"strings"
 	"time"
 
@@ -27,6 +28,23 @@ import (
 	"github.com/stacklok/mediator/pkg/container"
 	"github.com/stacklok/mediator/pkg/db"
 )
+
+// CONTAINER_TYPE is the type for container artifacts
+var CONTAINER_TYPE = "container"
+
+// if tag contains the .sig suffix it's a signature, as cosign
+// stores signatures in that format
+func isSignature(tags []string) bool {
+	// if the artifact has a .sig tag it's a signature, skip it
+	found := false
+	for _, tag := range tags {
+		if strings.HasSuffix(tag, ".sig") {
+			found = true
+			break
+		}
+	}
+	return found
+}
 
 // HandleArtifactsReconcilerEvent recreates the artifacts belonging to
 // an specific repository
@@ -47,7 +65,8 @@ func (e *Executor) HandleArtifactsReconcilerEvent(ctx context.Context, prov stri
 	}
 	isOrg := (owner_filter != "")
 	// todo: add another type of artifacts
-	artifacts, err := cli.ListPackagesByRepository(ctx, isOrg, repository.RepoOwner, "container", int64(repository.RepoID), 1, 100)
+	artifacts, err := cli.ListPackagesByRepository(ctx, isOrg, repository.RepoOwner,
+		CONTAINER_TYPE, int64(repository.RepoID), 1, 100)
 	if err != nil {
 		return fmt.Errorf("error retrieving artifacts: %w", err)
 	}
@@ -80,60 +99,54 @@ func (e *Executor) HandleArtifactsReconcilerEvent(ctx context.Context, prov stri
 			continue
 		}
 		for _, version := range versions {
-			if version.CreatedAt.After(thirtyDaysAgo) {
-				tags := version.Metadata.Container.Tags
-				// if the artifact has a .sig tag it's a signature, skip it
-				found := false
-				for _, tag := range tags {
-					if strings.HasSuffix(tag, ".sig") {
-						found = true
-						break
-					}
-				}
-				if found {
-					continue
-				}
-				tagNames := strings.Join(tags, ",")
+			if version.CreatedAt.Before(thirtyDaysAgo) {
+				continue
+			}
 
-				// now get information for signature
-				var sigInfo json.RawMessage
-				var workflowInfo json.RawMessage
+			tags := version.Metadata.Container.Tags
+			if isSignature(tags) {
+				continue
+			}
+			sort.Strings(tags)
+			tagNames := strings.Join(tags, ",")
 
-				imageRef := fmt.Sprintf("%s/%s/%s@%s", container.REGISTRY, *artifact.GetOwner().Login, artifact.GetName(), version.GetName())
-				signature_verification, github_workflow, err := container.ValidateSignature(ctx,
-					token, *artifact.GetOwner().Login, imageRef)
-				if err != nil {
-					// just log error and continue
-					log.Printf("error validating signature: %v", err)
-					continue
-				}
+			// now get information for signature
+			var sigInfo json.RawMessage
+			var workflowInfo json.RawMessage
 
-				sig, err := util.GetBytesFromProto(signature_verification)
-				if err != nil {
-					// log error and just pass an empty json
-					log.Printf("error getting bytes from proto: %v", err)
-					sigInfo = json.RawMessage("{}")
-				} else {
-					sigInfo = json.RawMessage(sig)
-				}
-				work, err := util.GetBytesFromProto(github_workflow)
-				if err != nil {
-					// log error and just pass an empty json
-					log.Printf("error getting bytes from proto: %v", err)
-					workflowInfo = json.RawMessage("{}")
-				} else {
-					workflowInfo = json.RawMessage(work)
-				}
+			imageRef := fmt.Sprintf("%s/%s/%s@%s", container.REGISTRY, *artifact.GetOwner().Login, artifact.GetName(), version.GetName())
+			signature_verification, github_workflow, err := container.ValidateSignature(ctx,
+				token, *artifact.GetOwner().Login, imageRef)
+			if err != nil {
+				// just log error and continue
+				log.Printf("error validating signature: %v", err)
+				continue
+			}
 
-				_, err = e.querier.UpsertArtifactVersion(ctx, db.UpsertArtifactVersionParams{ArtifactID: newArtifact.ID, Version: *version.ID,
-					Tags: sql.NullString{Valid: true, String: tagNames}, Sha: *version.Name, SignatureVerification: sigInfo,
-					GithubWorkflow: workflowInfo, CreatedAt: version.CreatedAt.Time})
-				if err != nil {
-					// just log error and continue
-					log.Printf("error storing artifact version: %v", err)
-					continue
-				}
+			sig, err := util.GetBytesFromProto(signature_verification)
+			if err != nil {
+				// log error and just pass an empty json
+				log.Printf("error getting bytes from proto: %v", err)
+				sigInfo = json.RawMessage("{}")
+			} else {
+				sigInfo = json.RawMessage(sig)
+			}
+			work, err := util.GetBytesFromProto(github_workflow)
+			if err != nil {
+				// log error and just pass an empty json
+				log.Printf("error getting bytes from proto: %v", err)
+				workflowInfo = json.RawMessage("{}")
+			} else {
+				workflowInfo = json.RawMessage(work)
+			}
 
+			_, err = e.querier.UpsertArtifactVersion(ctx, db.UpsertArtifactVersionParams{ArtifactID: newArtifact.ID, Version: *version.ID,
+				Tags: sql.NullString{Valid: true, String: tagNames}, Sha: *version.Name, SignatureVerification: sigInfo,
+				GithubWorkflow: workflowInfo, CreatedAt: version.CreatedAt.Time})
+			if err != nil {
+				// just log error and continue
+				log.Printf("error storing artifact version: %v", err)
+				continue
 			}
 		}
 	}

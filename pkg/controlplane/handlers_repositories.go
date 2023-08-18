@@ -147,8 +147,7 @@ func (s *Server) RegisterRepository(ctx context.Context,
 		}
 
 		evtStr, err := json.Marshal(evt)
-		// This is a non-fatal error, so we'll just log it
-		// and continue
+		// This is a non-fatal error, so we'll just log it and continue
 		if err != nil {
 			log.Printf("error marshalling init event: %v", err)
 			continue
@@ -157,8 +156,7 @@ func (s *Server) RegisterRepository(ctx context.Context,
 		msg := message.NewMessage(uuid.New().String(), evtStr)
 		msg.Metadata.Set("provider", in.Provider)
 
-		// This is a non-fatal error, so we'll just log it
-		// and continue
+		// This is a non-fatal error, so we'll just log it and continue with the next ones
 		if err := s.evt.Publish(engine.InternalReconcilerEventTopic, msg); err != nil {
 			log.Printf("error publishing reconciler event: %v", err)
 		}
