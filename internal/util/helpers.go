@@ -24,6 +24,7 @@ package util
 
 import (
 	"context"
+	"crypto/tls"
 	"encoding/json"
 	"errors"
 	"fmt"
@@ -40,6 +41,7 @@ import (
 	"github.com/spf13/viper"
 	"golang.org/x/term"
 	"google.golang.org/grpc"
+	"google.golang.org/grpc/credentials"
 	"google.golang.org/grpc/credentials/insecure"
 	"google.golang.org/protobuf/encoding/protojson"
 	"google.golang.org/protobuf/reflect/protoreflect"
@@ -138,8 +140,13 @@ func GetGrpcConnection(grpc_host string, grpc_port int) (*grpc.ClientConn, error
 		expirationTime = creds.RefreshTokenExpiresIn
 	}
 
+	credentialOpts := insecure.NewCredentials()
+	if grpc_host != "localhost" && grpc_host != "127.0.0.1" && grpc_host != "::1" {
+		credentialOpts = credentials.NewTLS(&tls.Config{})
+	}
+
 	// generate credentials
-	conn, err := grpc.Dial(address, grpc.WithTransportCredentials(insecure.NewCredentials()),
+	conn, err := grpc.Dial(address, grpc.WithTransportCredentials(credentialOpts),
 		grpc.WithPerRPCCredentials(JWTTokenCredentials{accessToken: token, refreshToken: refreshToken}))
 	if err != nil {
 		return nil, fmt.Errorf("error connecting to gRPC server: %v", err)
