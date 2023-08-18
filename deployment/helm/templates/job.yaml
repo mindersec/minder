@@ -37,7 +37,7 @@ kind: ConfigMap
 metadata:
   name: db-update-config
   annotations:
-    helm.sh/hook-delete-policy: hook-succeeded
+    helm.sh/hook-delete-policy: before-hook-creation
     helm.sh/hook: pre-install,pre-upgrade
   labels:
     helm.sh/chart: '{{ .Chart.Name }}-{{ .Chart.Version | replace "+" "_" }}'
