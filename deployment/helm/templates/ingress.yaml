@@ -42,84 +42,90 @@ spec:
       paths:
       # We use Prefix matches on gRPC service names because Ingress API
       # doesn't support matching on Content-Type: application/grpc
-      - path: /OauthService
+      - path: /grpc.reflection.v1alpha.ServerReflection
+        backend:
+          service:
+            name: mediator-grpc
+            port:
+              name: grpc
+      - path: /mediator.v1.OauthService
         pathType: Prefix
         backend:
           service:
             name: mediator-grpc
             port:
               name: grpc
-      - path: /AuthService
+      - path: /mediator.v1.AuthService
         pathType: Prefix
         backend:
           service:
             name: mediator-grpc
             port:
               name: grpc
-      - path: /VulnerabilitiesService
+      - path: /mediator.v1.VulnerabilitiesService
         pathType: Prefix
         backend:
           service:
             name: mediator-grpc
             port:
               name: grpc
-      - path: /SecretsService
+      - path: /mediator.v1.SecretsService
         pathType: Prefix
         backend:
           service:
             name: mediator-grpc
             port:
               name: grpc
-      - path: /RepositoryService
+      - path: /mediator.v1.RepositoryService
         pathType: Prefix
         backend:
           service:
             name: mediator-grpc
             port:
               name: grpc
-      - path: /BranchProtectionService
+      - path: /mediator.v1.BranchProtectionService
         pathType: Prefix
         backend:
           service:
             name: mediator-grpc
             port:
               name: grpc
-      - path: /OrganizationService
+      - path: /mediator.v1.OrganizationService
         pathType: Prefix
         backend:
           service:
             name: mediator-grpc
             port:
               name: grpc
-      - path: /GroupService
+      - path: /mediator.v1.GroupService
         pathType: Prefix
         backend:
           service:
             name: mediator-grpc
             port:
               name: grpc
-      - path: /RoleService
+      - path: /mediator.v1.RoleService
         pathType: Prefix
         backend:
           service:
             name: mediator-grpc
             port:
               name: grpc
-      - path: /UserService
+      - path: /mediator.v1.UserService
         pathType: Prefix
         backend:
           service:
             name: mediator-grpc
             port:
               name: grpc
-      - path: /PolicyService
+      - path: /mediator.v1.PolicyService
         pathType: Prefix
         backend:
           service:
             name: mediator-grpc
             port:
               name: grpc
-      - path: /KeyService
+      - path: /mediator.v1.KeyService
         pathType: Prefix
         backend:
           service:
