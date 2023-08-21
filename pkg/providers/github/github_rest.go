@@ -277,18 +277,18 @@ func (c *RestClient) Do(ctx context.Context, req *http.Request, v interface{}) (
 	return c.client.Do(ctx, req, v)
 }
 
+// GetToken returns the token used to authenticate with the GitHub API
 func (c *RestClient) GetToken() string {
 	if c.token != "" {
 		return c.token
-	} else {
-		return ""
 	}
+	return ""
 }
 
+// GetOwner returns the owner of the repository
 func (c *RestClient) GetOwner() string {
 	if c.owner != "" {
 		return c.owner
-	} else {
-		return ""
 	}
+	return ""
 }
