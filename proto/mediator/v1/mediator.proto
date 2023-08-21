@@ -44,7 +44,7 @@ service ArtifactService {
 
     rpc GetArtifactById (GetArtifactByIdRequest) returns (GetArtifactByIdResponse) {
         option (google.api.http) = {
-            get: "/api/v1/artifacts/{id}"
+            get: "/api/v1/artifact/{id}"
             };    
     }
 }

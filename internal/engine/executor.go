@@ -177,7 +177,7 @@ func (e *Executor) handleReposInitEvent(ctx context.Context, prov string, evt *I
 		return fmt.Errorf("error getting policy: %w", err)
 	}
 
-	cli, _, _, err := e.buildClient(ctx, prov, evt.Group)
+	cli, err := e.buildClient(ctx, prov, evt.Group)
 	if err != nil {
 		return fmt.Errorf("error building client: %w", err)
 	}
@@ -340,7 +340,7 @@ func (e *Executor) handleArtifactPublishedEvent(ctx context.Context, prov string
 		return fmt.Errorf("error getting group: %w", err)
 	}
 
-	cli, token, _, err := e.buildClient(ctx, prov, g)
+	cli, err := e.buildClient(ctx, prov, g)
 	if err != nil {
 		return fmt.Errorf("error building client: %w", err)
 	}
@@ -367,7 +367,7 @@ func (e *Executor) handleArtifactPublishedEvent(ctx context.Context, prov string
 
 		// Let's evaluate all the rules for this policy
 		err = TraverseRules(relevant, func(rule *pb.PipelinePolicy_Rule) error {
-			rt, rte, err := e.getEvaluator(ctx, *pol.Id, prov, cli, token, ectx, rule)
+			rt, rte, err := e.getEvaluator(ctx, *pol.Id, prov, cli, cli.GetToken(), ectx, rule)
 			if err != nil {
 				return err
 			}
@@ -458,7 +458,7 @@ func (e *Executor) handleRepoEvent(ctx context.Context, prov string, payload map
 		return fmt.Errorf("error getting group: %w", err)
 	}
 
-	cli, _, _, err := e.buildClient(ctx, prov, g)
+	cli, err := e.buildClient(ctx, prov, g)
 	if err != nil {
 		return fmt.Errorf("error building client: %w", err)
 	}
@@ -544,26 +544,26 @@ func (e *Executor) buildClient(
 	ctx context.Context,
 	prov string,
 	groupID int32,
-) (ghclient.RestAPI, string, string, error) {
+) (ghclient.RestAPI, error) {
 	encToken, err := e.querier.GetAccessTokenByGroupID(ctx,
 		db.GetAccessTokenByGroupIDParams{Provider: prov, GroupID: groupID})
 	if err != nil {
-		return nil, "", "", fmt.Errorf("error getting access token: %w", err)
+		return nil, fmt.Errorf("error getting access token: %w", err)
 	}
 
 	decryptedToken, err := crypto.DecryptOAuthToken(encToken.EncryptedToken)
 	if err != nil {
-		return nil, "", "", fmt.Errorf("error decrypting access token: %w", err)
+		return nil, fmt.Errorf("error decrypting access token: %w", err)
 	}
 
 	cli, err := ghclient.NewRestClient(ctx, ghclient.GitHubConfig{
 		Token: decryptedToken.AccessToken,
-	})
+	}, encToken.OwnerFilter.String)
 	if err != nil {
-		return nil, "", "", fmt.Errorf("error creating github client: %w", err)
+		return nil, fmt.Errorf("error creating github client: %w", err)
 	}
 
-	return cli, decryptedToken.AccessToken, encToken.OwnerFilter.String, nil
+	return cli, nil
 }
 
 func (e *Executor) createOrUpdateEvalStatus(

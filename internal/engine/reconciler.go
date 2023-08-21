@@ -50,7 +50,7 @@ func isSignature(tags []string) bool {
 // an specific repository
 // nolint: gocyclo
 func (e *Executor) HandleArtifactsReconcilerEvent(ctx context.Context, prov string, evt *ReconcilerEvent) error {
-	cli, token, owner_filter, err := e.buildClient(ctx, prov, evt.Group)
+	cli, err := e.buildClient(ctx, prov, evt.Group)
 	if err != nil {
 		return fmt.Errorf("error building client: %w", err)
 	}
@@ -63,7 +63,7 @@ func (e *Executor) HandleArtifactsReconcilerEvent(ctx context.Context, prov stri
 	if err != nil {
 		return fmt.Errorf("error retrieving repository: %w", err)
 	}
-	isOrg := (owner_filter != "")
+	isOrg := (cli.GetOwner() != "")
 	// todo: add another type of artifacts
 	artifacts, err := cli.ListPackagesByRepository(ctx, isOrg, repository.RepoOwner,
 		CONTAINER_TYPE, int64(repository.RepoID), 1, 100)
@@ -116,7 +116,7 @@ func (e *Executor) HandleArtifactsReconcilerEvent(ctx context.Context, prov stri
 
 			imageRef := fmt.Sprintf("%s/%s/%s@%s", container.REGISTRY, *artifact.GetOwner().Login, artifact.GetName(), version.GetName())
 			signature_verification, github_workflow, err := container.ValidateSignature(ctx,
-				token, *artifact.GetOwner().Login, imageRef)
+				cli.GetToken(), *artifact.GetOwner().Login, imageRef)
 			if err != nil {
 				// just log error and continue
 				log.Printf("error validating signature: %v", err)

@@ -276,3 +276,19 @@ func (c *RestClient) NewRequest(method, url string, body interface{}, opts ...gi
 func (c *RestClient) Do(ctx context.Context, req *http.Request, v interface{}) (*github.Response, error) {
 	return c.client.Do(ctx, req, v)
 }
+
+func (c *RestClient) GetToken() string {
+	if c.token != "" {
+		return c.token
+	} else {
+		return ""
+	}
+}
+
+func (c *RestClient) GetOwner() string {
+	if c.owner != "" {
+		return c.owner
+	} else {
+		return ""
+	}
+}

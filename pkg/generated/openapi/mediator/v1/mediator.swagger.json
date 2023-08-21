@@ -55,7 +55,7 @@
     "application/json"
   ],
   "paths": {
-    "/api/v1/artifacts/{id}": {
+    "/api/v1/artifact/{id}": {
       "get": {
         "operationId": "ArtifactService_GetArtifactById",
         "responses": {

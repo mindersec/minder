@@ -221,7 +221,7 @@ func getProviderClient(ctx context.Context, rt *pb.RuleType) (ghclient.RestAPI, 
 	case ghclient.Github:
 		return ghclient.NewRestClient(ctx, ghclient.GitHubConfig{
 			Token: token,
-		})
+		}, "")
 	default:
 		return nil, fmt.Errorf("unknown provider: %s", rt.Context.Provider)
 	}

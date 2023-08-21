@@ -374,7 +374,7 @@ func (s *Server) SyncRepositories(ctx context.Context, in *pb.SyncRepositoriesRe
 	// Populate the database with the repositories using the GraphQL API
 	client, err := github.NewRestClient(ctx, github.GitHubConfig{
 		Token: token.AccessToken,
-	})
+	}, owner_filter)
 	if err != nil {
 		return nil, status.Errorf(codes.Internal, "cannot create github client: %v", err)
 	}

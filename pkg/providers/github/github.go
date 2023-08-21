@@ -58,6 +58,8 @@ type RestAPI interface {
 	GetPackageByName(context.Context, bool, string, string, string) (*github.Package, error)
 	GetPackageVersions(context.Context, bool, string, string, string) ([]*github.PackageVersion, error)
 	GetPackageVersionByTag(context.Context, bool, string, string, string, string) (*github.PackageVersion, error)
+	GetToken() string
+	GetOwner() string
 
 	// NewRequest allows for building raw and custom requests
 	NewRequest(method, urlStr string, body any, opts ...github.RequestOption) (*http.Request, error)
@@ -74,6 +76,8 @@ type GraphQLAPI interface {
 // RestClient is the struct that contains the GitHub REST API client
 type RestClient struct {
 	client *github.Client
+	token  string
+	owner  string
 }
 
 // GraphQLClient is the struct that contains the GitHub GraphQL API client
@@ -85,7 +89,7 @@ type GraphQLClient struct {
 // BaseURL defaults to the public GitHub API, if needing to use a customer domain
 // endpoint (as is the case with GitHub Enterprise), set the Endpoint field in
 // the GitHubConfig struct
-func NewRestClient(ctx context.Context, config GitHubConfig) (RestAPI, error) {
+func NewRestClient(ctx context.Context, config GitHubConfig, owner string) (RestAPI, error) {
 	ts := oauth2.StaticTokenSource(
 		&oauth2.Token{AccessToken: config.Token},
 	)
@@ -103,6 +107,8 @@ func NewRestClient(ctx context.Context, config GitHubConfig) (RestAPI, error) {
 
 	return &RestClient{
 		client: ghClient,
+		token:  config.Token,
+		owner:  owner,
 	}, nil
 }
 
