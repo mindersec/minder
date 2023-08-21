@@ -38,10 +38,7 @@ mediator control plane for an specific provider/group or policy id, entity type 
 		}
 	},
 	RunE: func(cmd *cobra.Command, args []string) error {
-		grpc_host := util.GetConfigValue("grpc_server.host", "grpc-host", cmd, "").(string)
-		grpc_port := util.GetConfigValue("grpc_server.port", "grpc-port", cmd, 0).(int)
-
-		conn, err := util.GetGrpcConnection(grpc_host, grpc_port)
+		conn, err := util.GetGrpcConnection(cmd)
 		if err != nil {
 			return fmt.Errorf("error getting grpc connection: %w", err)
 		}
