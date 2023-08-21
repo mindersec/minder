@@ -160,7 +160,7 @@ func readRuleTypeFromFile(fpath string) (*pb.RuleType, error) {
 // golang structure.
 // TODO: We probably want to move this code to a utility once we land the server
 // side code.
-func readEntityFromFile(fpath string, entType string) (protoreflect.ProtoMessage, error) {
+func readEntityFromFile(fpath string, entType pb.Entity) (protoreflect.ProtoMessage, error) {
 	f, err := os.Open(filepath.Clean(fpath))
 	if err != nil {
 		return nil, fmt.Errorf("error opening file: %w", err)
@@ -175,7 +175,7 @@ func readEntityFromFile(fpath string, entType string) (protoreflect.ProtoMessage
 	var out protoreflect.ProtoMessage
 
 	switch entType {
-	case "repository":
+	case pb.Entity_ENTITY_REPOSITORIES:
 		out = &pb.RepositoryResult{}
 	default:
 		return nil, fmt.Errorf("unknown entity type: %s", entType)
@@ -190,7 +190,7 @@ func readEntityFromFile(fpath string, entType string) (protoreflect.ProtoMessage
 
 // getRelevantRules returns the relevant rules for the rule type
 func getRelevantRules(rt *pb.RuleType, p *pb.PipelinePolicy) ([]*pb.PipelinePolicy_Rule, error) {
-	contextualRules, err := engine.GetRulesForEntity(p, engine.EntityType(rt.Def.InEntity))
+	contextualRules, err := engine.GetRulesForEntity(p, rt.Def.InEntity)
 	if err != nil {
 		return nil, fmt.Errorf("error getting rules for entity: %w", err)
 	}

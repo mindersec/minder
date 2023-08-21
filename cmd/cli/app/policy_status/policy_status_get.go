@@ -23,21 +23,25 @@ import (
 	"github.com/spf13/viper"
 
 	"github.com/stacklok/mediator/internal/util"
+	"github.com/stacklok/mediator/pkg/entities"
 	pb "github.com/stacklok/mediator/pkg/generated/protobuf/go/mediator/v1"
 )
 
-var policystatus_listCmd = &cobra.Command{
-	Use:   "list",
-	Short: "List policy status within a mediator control plane",
-	Long: `The medic policy_status list subcommand lets you list policy status within a
-mediator control plane for an specific provider/group or policy id.`,
+var policystatus_getCmd = &cobra.Command{
+	Use:   "get",
+	Short: "Get policy status within a mediator control plane",
+	Long: `The medic policy_status get subcommand lets you get policy status within a
+mediator control plane for an specific provider/group or policy id, entity type and entity id.`,
 	PreRun: func(cmd *cobra.Command, args []string) {
 		if err := viper.BindPFlags(cmd.Flags()); err != nil {
 			fmt.Fprintf(os.Stderr, "Error binding flags: %s\n", err)
 		}
 	},
 	RunE: func(cmd *cobra.Command, args []string) error {
-		conn, err := util.GetGrpcConnection(cmd)
+		grpc_host := util.GetConfigValue("grpc_server.host", "grpc-host", cmd, "").(string)
+		grpc_port := util.GetConfigValue("grpc_server.port", "grpc-port", cmd, 0).(int)
+
+		conn, err := util.GetGrpcConnection(grpc_host, grpc_port)
 		if err != nil {
 			return fmt.Errorf("error getting grpc connection: %w", err)
 		}
@@ -50,9 +54,13 @@ mediator control plane for an specific provider/group or policy id.`,
 		provider := viper.GetString("provider")
 		group := viper.GetString("group")
 		policyId := viper.GetInt32("policy")
+		entityId := viper.GetInt32("entity")
+		entityType := viper.GetString("entity-type")
 		format := viper.GetString("output")
-		all := viper.GetBool("all")
 
+		// the linter complains that this should be a constant doing that should probably be part
+		// of a larger refactor of the CLI (see issue #690)
+		// nolint: goconst
 		if format != "json" && format != "yaml" {
 			return fmt.Errorf("error: invalid format: %s", format)
 		}
@@ -65,13 +73,20 @@ mediator control plane for an specific provider/group or policy id.`,
 			return fmt.Errorf("policy-id must be set")
 		}
 
+		if entityId == 0 {
+			return fmt.Errorf("entity-id must be set")
+		}
+
 		req := &pb.GetPolicyStatusByIdRequest{
 			Context: &pb.Context{
 				Provider: provider,
 			},
 			PolicyId: policyId,
-			EntitySelector: &pb.GetPolicyStatusByIdRequest_All{
-				All: all,
+			EntitySelector: &pb.GetPolicyStatusByIdRequest_Entity{
+				Entity: &pb.GetPolicyStatusByIdRequest_EntityTypedId{
+					Id:   entityId,
+					Type: entities.FromString(entityType),
+				},
 			},
 		}
 
@@ -99,10 +114,12 @@ mediator control plane for an specific provider/group or policy id.`,
 }
 
 func init() {
-	PolicyStatusCmd.AddCommand(policystatus_listCmd)
-	policystatus_listCmd.Flags().StringP("provider", "p", "github", "Provider to list policy status for")
-	policystatus_listCmd.Flags().StringP("group", "g", "", "group id to list policy status for")
-	policystatus_listCmd.Flags().Int32P("policy", "i", 0, "policy id to list policy status for")
-	policystatus_listCmd.Flags().StringP("output", "o", "yaml", "Output format (json or yaml)")
-	policystatus_listCmd.Flags().BoolP("all", "a", false, "List all policy violations")
+	PolicyStatusCmd.AddCommand(policystatus_getCmd)
+	policystatus_getCmd.Flags().StringP("provider", "p", "github", "Provider to get policy status for")
+	policystatus_getCmd.Flags().StringP("group", "g", "", "group id to get policy status for")
+	policystatus_getCmd.Flags().Int32P("policy", "i", 0, "policy id to get policy status for")
+	policystatus_getCmd.Flags().StringP("entity-type", "t", "",
+		fmt.Sprintf("the entity type to get policy status for (one of %s)", entities.KnownTypesCSV()))
+	policystatus_getCmd.Flags().Int32P("entity", "e", 0, "entity id to get policy status for")
+	policystatus_getCmd.Flags().StringP("output", "o", "yaml", "Output format (json or yaml)")
 }

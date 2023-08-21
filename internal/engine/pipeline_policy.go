@@ -32,6 +32,7 @@ import (
 
 	"github.com/stacklok/mediator/internal/util"
 	"github.com/stacklok/mediator/pkg/db"
+	"github.com/stacklok/mediator/pkg/entities"
 	pb "github.com/stacklok/mediator/pkg/generated/protobuf/go/mediator/v1"
 )
 
@@ -294,13 +295,13 @@ func validateRuleParams(ctx context.Context, store db.Store, r *pb.PipelinePolic
 }
 
 // GetRulesForEntity returns the rules for the given entity
-func GetRulesForEntity(p *pb.PipelinePolicy, entity EntityType) ([]*pb.PipelinePolicy_ContextualRuleSet, error) {
+func GetRulesForEntity(p *pb.PipelinePolicy, entity pb.Entity) ([]*pb.PipelinePolicy_ContextualRuleSet, error) {
 	switch entity {
-	case RepositoryEntity:
+	case pb.Entity_ENTITY_REPOSITORIES:
 		return p.Repository, nil
-	case BuildEnvironmentEntity:
+	case pb.Entity_ENTITY_BUILD_ENVIRONMENTS:
 		return p.BuildEnvironment, nil
-	case ArtifactEntity:
+	case pb.Entity_ENTITY_ARTIFACTS:
 		return p.Artifact, nil
 	default:
 		return nil, fmt.Errorf("unknown entity: %s", entity)
@@ -412,7 +413,7 @@ func rowInfoToPolicyMap(
 	entity db.Entities,
 	contextualRules json.RawMessage,
 ) *pb.PipelinePolicy {
-	if !IsValidEntity(EntityTypeFromDB(entity)) {
+	if !entities.IsValidEntity(entities.EntityTypeFromDB(entity)) {
 		log.Printf("unknown entity found in database: %s", entity)
 		return nil
 	}
@@ -426,12 +427,12 @@ func rowInfoToPolicyMap(
 		return nil
 	}
 
-	switch EntityTypeFromDB(entity) {
-	case RepositoryEntity:
+	switch entities.EntityTypeFromDB(entity) {
+	case pb.Entity_ENTITY_REPOSITORIES:
 		policy.Repository = ruleset
-	case BuildEnvironmentEntity:
+	case pb.Entity_ENTITY_BUILD_ENVIRONMENTS:
 		policy.BuildEnvironment = ruleset
-	case ArtifactEntity:
+	case pb.Entity_ENTITY_ARTIFACTS:
 		policy.Artifact = ruleset
 	}
 

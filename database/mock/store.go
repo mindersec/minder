@@ -891,21 +891,6 @@ func (mr *MockStoreMockRecorder) GetRootProjects(arg0 interface{}) *gomock.Call 
 	return mr.mock.ctrl.RecordCallWithMethodType(mr.mock, "GetRootProjects", reflect.TypeOf((*MockStore)(nil).GetRootProjects), arg0)
 }
 
-// GetRuleEvaluationStatusForRepository mocks base method.
-func (m *MockStore) GetRuleEvaluationStatusForRepository(arg0 context.Context, arg1 db.GetRuleEvaluationStatusForRepositoryParams) (db.RuleEvaluationStatus, error) {
-	m.ctrl.T.Helper()
-	ret := m.ctrl.Call(m, "GetRuleEvaluationStatusForRepository", arg0, arg1)
-	ret0, _ := ret[0].(db.RuleEvaluationStatus)
-	ret1, _ := ret[1].(error)
-	return ret0, ret1
-}
-
-// GetRuleEvaluationStatusForRepository indicates an expected call of GetRuleEvaluationStatusForRepository.
-func (mr *MockStoreMockRecorder) GetRuleEvaluationStatusForRepository(arg0, arg1 interface{}) *gomock.Call {
-	mr.mock.ctrl.T.Helper()
-	return mr.mock.ctrl.RecordCallWithMethodType(mr.mock, "GetRuleEvaluationStatusForRepository", reflect.TypeOf((*MockStore)(nil).GetRuleEvaluationStatusForRepository), arg0, arg1)
-}
-
 // GetRuleTypeByID mocks base method.
 func (m *MockStore) GetRuleTypeByID(arg0 context.Context, arg1 int32) (db.RuleType, error) {
 	m.ctrl.T.Helper()
@@ -1222,7 +1207,7 @@ func (mr *MockStoreMockRecorder) ListRolesByGroupID(arg0, arg1 interface{}) *gom
 }
 
 // ListRuleEvaluationStatusByPolicyId mocks base method.
-func (m *MockStore) ListRuleEvaluationStatusByPolicyId(arg0 context.Context, arg1 int32) ([]db.ListRuleEvaluationStatusByPolicyIdRow, error) {
+func (m *MockStore) ListRuleEvaluationStatusByPolicyId(arg0 context.Context, arg1 db.ListRuleEvaluationStatusByPolicyIdParams) ([]db.ListRuleEvaluationStatusByPolicyIdRow, error) {
 	m.ctrl.T.Helper()
 	ret := m.ctrl.Call(m, "ListRuleEvaluationStatusByPolicyId", arg0, arg1)
 	ret0, _ := ret[0].([]db.ListRuleEvaluationStatusByPolicyIdRow)
