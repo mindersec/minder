@@ -23,7 +23,7 @@ jobs:
               Please make sure you are NOT addressing multiple issues with one PR.
               If you can, please split this PR into serveral smaller ones.
               This will make the review process easier and faster.
-            github_api_url: 'api.github.com'
+            # github_api_url: 'api.github.com'
             files_to_ignore: |
                 "pkg/generated/*"
                 "docs/*"
