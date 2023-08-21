@@ -28,5 +28,6 @@ medic policy_status [flags]
 ### SEE ALSO
 
 * [medic](medic.md)	 - medic controls mediator via the control plane
+* [medic policy_status get](medic_policy_status_get.md)	 - Get policy status within a mediator control plane
 * [medic policy_status list](medic_policy_status_list.md)	 - List policy status within a mediator control plane
 

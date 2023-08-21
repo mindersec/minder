@@ -33,10 +33,6 @@ WHERE rule_evaluation_status.policy_id = $1
   AND rule_evaluation_status.rule_type_id = $3
   AND rule_evaluation_status.entity = $4;
 
--- name: GetRuleEvaluationStatusForRepository :one
-SELECT * FROM rule_evaluation_status
-WHERE policy_id = $1 AND entity = 'repository' AND repository_id = $2 AND rule_type_id = $3;
-
 -- name: GetPolicyStatusByIdAndGroup :one
 SELECT p.id, p.name, ps.policy_status, ps.last_updated FROM policy_status ps
 INNER JOIN policies p ON p.id = ps.policy_id
@@ -52,4 +48,4 @@ SELECT res.eval_status as eval_status, res.last_updated as last_updated, res.det
 FROM rule_evaluation_status res
 INNER JOIN repositories repo ON repo.id = res.repository_id
 INNER JOIN rule_type rt ON rt.id = res.rule_type_id
-WHERE res.policy_id = $1;
+WHERE res.policy_id = $1 AND (res.repository_id = $2 OR $2 IS NULL);

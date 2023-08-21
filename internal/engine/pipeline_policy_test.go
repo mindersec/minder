@@ -522,7 +522,7 @@ func TestGetRulesForEntity(t *testing.T) {
 
 	type args struct {
 		p      *pb.PipelinePolicy
-		entity engine.EntityType
+		entity pb.Entity
 	}
 	tests := []struct {
 		name    string
@@ -534,7 +534,7 @@ func TestGetRulesForEntity(t *testing.T) {
 			name: "valid rules for repository",
 			args: args{
 				p:      pol,
-				entity: "repository",
+				entity: pb.Entity_ENTITY_REPOSITORIES,
 			},
 			want: []*pb.PipelinePolicy_ContextualRuleSet{
 				{
@@ -560,7 +560,7 @@ func TestGetRulesForEntity(t *testing.T) {
 			name: "valid rules for build environment",
 			args: args{
 				p:      pol,
-				entity: "build_environment",
+				entity: pb.Entity_ENTITY_BUILD_ENVIRONMENTS,
 			},
 			want: []*pb.PipelinePolicy_ContextualRuleSet{
 				{
@@ -585,7 +585,7 @@ func TestGetRulesForEntity(t *testing.T) {
 			name: "valid rules for artifacts",
 			args: args{
 				p:      pol,
-				entity: "artifact",
+				entity: pb.Entity_ENTITY_ARTIFACTS,
 			},
 			want: []*pb.PipelinePolicy_ContextualRuleSet{
 				{

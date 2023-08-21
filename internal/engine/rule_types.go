@@ -26,6 +26,7 @@ import (
 	"google.golang.org/protobuf/reflect/protoreflect"
 
 	"github.com/stacklok/mediator/pkg/db"
+	"github.com/stacklok/mediator/pkg/entities"
 	pb "github.com/stacklok/mediator/pkg/generated/protobuf/go/mediator/v1"
 	ghclient "github.com/stacklok/mediator/pkg/providers/github"
 )
@@ -207,7 +208,7 @@ func ValidateRuleTypeDefinition(def *pb.RuleType_Definition) error {
 		return fmt.Errorf("%w: rule type definition is nil", ErrInvalidRuleTypeDefinition)
 	}
 
-	if !IsValidEntity(EntityType(def.InEntity)) {
+	if !entities.IsValidEntity(def.InEntity) {
 		return fmt.Errorf("%w: invalid entity type: %s", ErrInvalidRuleTypeDefinition, def.InEntity)
 	}
 

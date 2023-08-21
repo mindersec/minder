@@ -153,7 +153,7 @@ func (e *Executor) handleReposInitEvent(ctx context.Context, prov string, evt *I
 	for _, pol := range MergeDatabaseGetIntoPolicies(dbpols, ectx) {
 		// Given we're dealing with a repository event, we can assume that the
 		// entity is a repository.
-		relevant, err := GetRulesForEntity(pol, RepositoryEntity)
+		relevant, err := GetRulesForEntity(pol, pb.Entity_ENTITY_REPOSITORIES)
 		if err != nil {
 			return fmt.Errorf("error getting rules for entity: %w", err)
 		}
@@ -320,7 +320,7 @@ func (e *Executor) handleArtifactPublishedEvent(ctx context.Context, prov string
 	}
 
 	for _, pol := range MergeDatabaseListIntoPolicies(dbpols, ectx) {
-		relevant, err := GetRulesForEntity(pol, ArtifactEntity)
+		relevant, err := GetRulesForEntity(pol, pb.Entity_ENTITY_ARTIFACTS)
 		if err != nil {
 			return fmt.Errorf("error getting rules for entity: %w", err)
 		}
@@ -440,7 +440,7 @@ func (e *Executor) handleRepoEvent(ctx context.Context, prov string, payload map
 	for _, pol := range MergeDatabaseListIntoPolicies(dbpols, ectx) {
 		// Given we're dealing with a repository event, we can assume that the
 		// entity is a repository.
-		relevant, err := GetRulesForEntity(pol, RepositoryEntity)
+		relevant, err := GetRulesForEntity(pol, pb.Entity_ENTITY_REPOSITORIES)
 		if err != nil {
 			return fmt.Errorf("error getting rules for entity: %w", err)
 		}
