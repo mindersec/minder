@@ -5,7 +5,7 @@ Get policy status within a mediator control plane
 ### Synopsis
 
 The medic policy_status get subcommand lets you get policy status within a
-mediator control plane for an specific provider/group or policy id and repo-id.
+mediator control plane for an specific provider/group or policy id, entity type and entity id.
 
 ```
 medic policy_status get [flags]
@@ -14,12 +14,13 @@ medic policy_status get [flags]
 ### Options
 
 ```
-  -g, --group string      group id to get policy status for
-  -h, --help              help for get
-  -o, --output string     Output format (json or yaml) (default "yaml")
-  -i, --policy int32      policy id to get policy status for
-  -p, --provider string   Provider to get policy status for (default "github")
-  -r, --repo int32        repo id to get policy status for
+  -e, --entity int32         entity id to get policy status for
+  -t, --entity-type string   the entity type to get policy status for (one of repository,build_environment,artifact)
+  -g, --group string         group id to get policy status for
+  -h, --help                 help for get
+  -o, --output string        Output format (json or yaml) (default "yaml")
+  -i, --policy int32         policy id to get policy status for
+  -p, --provider string      Provider to get policy status for (default "github")
 ```
 
 ### Options inherited from parent commands
