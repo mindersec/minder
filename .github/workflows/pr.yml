@@ -43,3 +43,5 @@ jobs:
     uses: ./.github/workflows/image-build.yml
   security:
     uses: ./.github/workflows/security.yml
+  pr-size:
+    uses: ./.github/workflows/pr-size.yml
