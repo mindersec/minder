@@ -38,10 +38,6 @@ var artifact_getCmd = &cobra.Command{
 		}
 	},
 	RunE: func(cmd *cobra.Command, args []string) error {
-
-		grpc_host := util.GetConfigValue("grpc_server.host", "grpc-host", cmd, "").(string)
-		grpc_port := util.GetConfigValue("grpc_server.port", "grpc-port", cmd, 0).(int)
-
 		provider := util.GetConfigValue("provider", "provider", cmd, "").(string)
 		artifact_type := util.GetConfigValue("type", "type", cmd, "").(string)
 		name := util.GetConfigValue("name", "name", cmd, "").(string)
@@ -55,7 +51,7 @@ var artifact_getCmd = &cobra.Command{
 			os.Exit(1)
 		}
 
-		conn, err := util.GetGrpcConnection(grpc_host, grpc_port)
+		conn, err := util.GetGrpcConnection(cmd)
 		util.ExitNicelyOnError(err, "Error getting grpc connection")
 		defer conn.Close()
 

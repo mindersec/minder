@@ -46,8 +46,6 @@ mediator control plane for an specific group.`,
 	},
 	RunE: func(cmd *cobra.Command, args []string) error {
 
-		grpc_host := util.GetConfigValue("grpc_server.host", "grpc-host", cmd, "").(string)
-		grpc_port := util.GetConfigValue("grpc_server.port", "grpc-port", cmd, 0).(int)
 		group_id := util.GetConfigValue("group-id", "group-id", cmd, int32(0))
 		out := util.GetConfigValue("output", "output", cmd, "").(string)
 		pass := util.GetConfigValue("passphrase", "passphrase", cmd, "").(string)
@@ -64,7 +62,7 @@ mediator control plane for an specific group.`,
 			passphrase = []byte(pass)
 		}
 
-		conn, err := util.GetGrpcConnection(grpc_host, grpc_port)
+		conn, err := util.GetGrpcConnection(cmd)
 		util.ExitNicelyOnError(err, "Error getting grpc connection")
 		defer conn.Close()
 

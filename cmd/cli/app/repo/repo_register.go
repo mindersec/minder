@@ -49,9 +49,6 @@ var repo_registerCmd = &cobra.Command{
 	},
 	Run: func(cmd *cobra.Command, args []string) {
 
-		grpc_host := util.GetConfigValue("grpc_server.host", "grpc-host", cmd, "").(string)
-		grpc_port := util.GetConfigValue("grpc_server.port", "grpc-port", cmd, 0).(int)
-
 		provider := util.GetConfigValue("provider", "provider", cmd, "").(string)
 		if provider != github.Github {
 			fmt.Fprintf(os.Stderr, "Only %s is supported at this time\n", github.Github)
@@ -61,7 +58,7 @@ var repo_registerCmd = &cobra.Command{
 		limit := viper.GetInt32("limit")
 		offset := viper.GetInt32("offset")
 
-		conn, err := util.GetGrpcConnection(grpc_host, grpc_port)
+		conn, err := util.GetGrpcConnection(cmd)
 		util.ExitNicelyOnError(err, "Error getting grpc connection")
 		defer conn.Close()
 

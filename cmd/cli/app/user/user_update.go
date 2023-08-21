@@ -58,10 +58,7 @@ var User_updateCmd = &cobra.Command{
 			fmt.Fprint(os.Stderr, "Error: Must provide at least one of the following: password, email, first_name, last_name")
 			os.Exit(1)
 		}
-		grpc_host := util.GetConfigValue("grpc_server.host", "grpc-host", cmd, "").(string)
-		grpc_port := util.GetConfigValue("grpc_server.port", "grpc-port", cmd, 0).(int)
-
-		conn, err := util.GetGrpcConnection(grpc_host, grpc_port)
+		conn, err := util.GetGrpcConnection(cmd)
 		util.ExitNicelyOnError(err, "Error getting grpc connection")
 		defer conn.Close()
 
