@@ -105,3 +105,19 @@ func EntityTypeFromDB(entity db.Entities) pb.Entity {
 		return pb.Entity_ENTITY_UNSPECIFIED
 	}
 }
+
+// EntityTypeToDB returns the database entity from the protobuf entity type
+func EntityTypeToDB(entity pb.Entity) db.Entities {
+	var dbEnt db.Entities
+
+	switch entity {
+	case pb.Entity_ENTITY_REPOSITORIES:
+		dbEnt = db.EntitiesRepository
+	case pb.Entity_ENTITY_BUILD_ENVIRONMENTS:
+		dbEnt = db.EntitiesBuildEnvironment
+	case pb.Entity_ENTITY_ARTIFACTS:
+		dbEnt = db.EntitiesArtifact
+	}
+
+	return dbEnt
+}
