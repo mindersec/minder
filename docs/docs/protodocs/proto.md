@@ -2629,7 +2629,7 @@ Definition defines the rule type. It encompases the schema and the data evaluati
 
 | Field | Type | Label | Description |
 | ----- | ---- | ----- | ----------- |
-| in_entity | [Entity](#mediator-v1-Entity) |  | in_entity is the entity in which the rule is evaluated. This can be repository, build_environment or artifact. |
+| in_entity | [string](#string) |  | in_entity is the entity in which the rule is evaluated. This can be repository, build_environment or artifact. |
 | rule_schema | [RuleType.Definition.RuleSchemaEntry](#mediator-v1-RuleType-Definition-RuleSchemaEntry) | repeated | rule_schema is the schema of the rule. This is expressed in JSON Schema. |
 | data_eval | [RuleType.Definition.DataEval](#mediator-v1-RuleType-Definition-DataEval) |  |  |
 

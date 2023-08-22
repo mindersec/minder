@@ -4338,7 +4338,7 @@
       "type": "object",
       "properties": {
         "inEntity": {
-          "$ref": "#/definitions/v1Entity",
+          "type": "string",
           "description": "in_entity is the entity in which the rule is evaluated.\nThis can be repository, build_environment or artifact."
         },
         "ruleSchema": {

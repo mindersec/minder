@@ -1580,7 +1580,7 @@ message RuleType {
     message Definition {
         // in_entity is the entity in which the rule is evaluated.
         // This can be repository, build_environment or artifact.
-        Entity in_entity = 1;
+        string in_entity = 1;
 
         // rule_schema is the schema of the rule. This is expressed in JSON Schema.
         map<string, google.protobuf.Struct> rule_schema = 2;
