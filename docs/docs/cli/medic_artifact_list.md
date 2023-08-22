@@ -15,11 +15,8 @@ medic artifact list [flags]
 ```
   -g, --group-id int32    ID of the group for repo registration
   -h, --help              help for list
-  -l, --limit int32       Number of repos to display per page (default 20)
-  -o, --offset int32      Offset of the repos to display
   -f, --output string     Output format (json or yaml)
   -n, --provider string   Name for the provider to enroll
-  -t, --type string       Type of artifact to list: npm, maven, rubygems, docker, nuget, container
 ```
 
 ### Options inherited from parent commands
