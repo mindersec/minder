@@ -39,7 +39,7 @@ mediator control plane for an specific group.`,
 	RunE: func(cmd *cobra.Command, args []string) error {
 		format := viper.GetString("output")
 
-		conn, err := util.GetGrpcConnection(cmd)
+		conn, err := util.GrpcForCommand(cmd)
 		if err != nil {
 			return fmt.Errorf("error getting grpc connection: %w", err)
 		}

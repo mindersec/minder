@@ -125,13 +125,17 @@ func (JWTTokenCredentials) RequireTransportSecurity() bool {
 	return false
 }
 
-// GetGrpcConnection is a helper for getting a testing connection for grpc
-func GetGrpcConnection(cmd *cobra.Command) (*grpc.ClientConn, error) {
+// GrpcForCommand is a helper for getting a testing connection for grpc
+func GrpcForCommand(cmd *cobra.Command) (*grpc.ClientConn, error) {
 	grpc_host := GetConfigValue("grpc_server.host", "grpc-host", cmd, "").(string)
 	grpc_port := GetConfigValue("grpc_server.port", "grpc-port", cmd, 0).(int)
 	insecureDefault := grpc_host == "localhost" || grpc_host == "127.0.0.1" || grpc_host == "::1"
 	allowInsecure := GetConfigValue("grpc_server.insecure", "grpc-insecure", cmd, insecureDefault).(bool)
 
+	return GetGrpcConnection(grpc_host, grpc_port, allowInsecure)
+}
+
+func GetGrpcConnection(grpc_host string, grpc_port int, allowInsecure bool) (*grpc.ClientConn, error) {
 	address := fmt.Sprintf("%s:%d", grpc_host, grpc_port)
 
 	// read credentials

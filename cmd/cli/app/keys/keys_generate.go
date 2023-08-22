@@ -62,7 +62,7 @@ mediator control plane for an specific group.`,
 			passphrase = []byte(pass)
 		}
 
-		conn, err := util.GetGrpcConnection(cmd)
+		conn, err := util.GrpcForCommand(cmd)
 		util.ExitNicelyOnError(err, "Error getting grpc connection")
 		defer conn.Close()
 

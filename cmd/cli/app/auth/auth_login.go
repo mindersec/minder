@@ -48,7 +48,7 @@ will be saved to $XDG_CONFIG_HOME/mediator/credentials.json`,
 		username := util.GetConfigValue("username", "username", cmd, "").(string)
 		password := util.GetConfigValue("password", "password", cmd, "").(string)
 
-		conn, err := util.GetGrpcConnection(cmd)
+		conn, err := util.GrpcForCommand(cmd)
 		util.ExitNicelyOnError(err, "Error getting grpc connection")
 		defer conn.Close()
 

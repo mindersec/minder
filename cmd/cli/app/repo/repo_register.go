@@ -58,7 +58,7 @@ var repo_registerCmd = &cobra.Command{
 		limit := viper.GetInt32("limit")
 		offset := viper.GetInt32("offset")
 
-		conn, err := util.GetGrpcConnection(cmd)
+		conn, err := util.GrpcForCommand(cmd)
 		util.ExitNicelyOnError(err, "Error getting grpc connection")
 		defer conn.Close()
 

@@ -49,7 +49,7 @@ var Auth_refreshCmd = &cobra.Command{
 		oldCreds, err := util.LoadCredentials()
 		util.ExitNicelyOnError(err, "Error loading credentials")
 
-		conn, err := util.GetGrpcConnection(cmd)
+		conn, err := util.GrpcForCommand(cmd)
 		util.ExitNicelyOnError(err, "Error getting grpc connection")
 		defer conn.Close()
 

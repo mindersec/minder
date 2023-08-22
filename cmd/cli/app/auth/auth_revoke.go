@@ -57,7 +57,7 @@ var Auth_revokeCmd = &cobra.Command{
 			os.Exit(1)
 		}
 
-		conn, err := util.GetGrpcConnection(cmd)
+		conn, err := util.GrpcForCommand(cmd)
 		util.ExitNicelyOnError(err, "Error getting grpc connection")
 		defer conn.Close()
 

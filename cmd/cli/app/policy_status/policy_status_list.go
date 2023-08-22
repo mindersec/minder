@@ -37,7 +37,7 @@ mediator control plane for an specific provider/group or policy id.`,
 		}
 	},
 	RunE: func(cmd *cobra.Command, args []string) error {
-		conn, err := util.GetGrpcConnection(cmd)
+		conn, err := util.GrpcForCommand(cmd)
 		if err != nil {
 			return fmt.Errorf("error getting grpc connection: %w", err)
 		}

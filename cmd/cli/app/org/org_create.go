@@ -49,7 +49,7 @@ within a mediator control plane.`,
 		company := util.GetConfigValue("company", "company", cmd, "")
 		create := util.GetConfigValue("create-default-records", "create-default-records", cmd, false)
 
-		conn, err := util.GetGrpcConnection(cmd)
+		conn, err := util.GrpcForCommand(cmd)
 		util.ExitNicelyOnError(err, "Error getting grpc connection")
 		defer conn.Close()
 

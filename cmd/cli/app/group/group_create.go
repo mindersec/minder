@@ -50,7 +50,7 @@ a mediator control plane.`,
 		organization := util.GetConfigValue("org-id", "org-id", cmd, int32(0)).(int32)
 		isProtected := viper.GetBool("is_protected")
 
-		conn, err := util.GetGrpcConnection(cmd)
+		conn, err := util.GrpcForCommand(cmd)
 		util.ExitNicelyOnError(err, "Error getting grpc connection")
 		defer conn.Close()
 

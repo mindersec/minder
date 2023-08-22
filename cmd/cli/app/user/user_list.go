@@ -47,7 +47,7 @@ mediator control plane for an specific role.`,
 	},
 
 	Run: func(cmd *cobra.Command, args []string) {
-		conn, err := util.GetGrpcConnection(cmd)
+		conn, err := util.GrpcForCommand(cmd)
 		util.ExitNicelyOnError(err, "Error getting grpc connection")
 		defer conn.Close()
 

@@ -65,7 +65,7 @@ within a mediator control plane.`,
 			preader = fopen
 		}
 
-		conn, err := util.GetGrpcConnection(cmd)
+		conn, err := util.GrpcForCommand(cmd)
 		util.ExitNicelyOnError(err, "Error getting grpc connection")
 		defer conn.Close()
 
