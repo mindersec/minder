@@ -24,6 +24,7 @@ import (
 	"github.com/xeipuuv/gojsonschema"
 	"google.golang.org/protobuf/encoding/protojson"
 	"google.golang.org/protobuf/reflect/protoreflect"
+	"google.golang.org/protobuf/types/known/structpb"
 
 	"github.com/stacklok/mediator/pkg/db"
 	"github.com/stacklok/mediator/pkg/entities"
@@ -61,27 +62,68 @@ func (r *RuleMeta) String() string {
 type RuleValidator struct {
 	// schema is the schema that this rule type must conform to
 	schema *gojsonschema.Schema
+	// paramSchema is the schema that the parameters for this rule type must conform to
+	paramSchema *gojsonschema.Schema
 }
 
 // NewRuleValidator creates a new rule validator
 func NewRuleValidator(rt *pb.RuleType) (*RuleValidator, error) {
-	// Load schema
+	// Load schemas
 	schemaLoader := gojsonschema.NewGoLoader(rt.Def.RuleSchema)
 	schema, err := gojsonschema.NewSchema(schemaLoader)
 	if err != nil {
 		return nil, fmt.Errorf("cannot create json schema: %w", err)
 	}
 
+	var paramSchema *gojsonschema.Schema
+	if rt.Def.ParamSchema != nil {
+		paramSchemaLoader := gojsonschema.NewGoLoader(rt.Def.ParamSchema)
+		paramSchema, err = gojsonschema.NewSchema(paramSchemaLoader)
+		if err != nil {
+			return nil, fmt.Errorf("cannot create json schema for params: %w", err)
+		}
+	}
+
 	return &RuleValidator{
-		schema: schema,
+		schema:      schema,
+		paramSchema: paramSchema,
 	}, nil
 }
 
 // ValidateAgainstSchema validates the given contextual policy against the
 // schema for this rule type
-func (r *RuleValidator) ValidateAgainstSchema(contextualPolicy any) error {
+func (r *RuleValidator) ValidateAgainstSchema(contextualPolicy map[string]any) error {
 	documentLoader := gojsonschema.NewGoLoader(contextualPolicy)
 	result, err := r.schema.Validate(documentLoader)
+	if err != nil {
+		return fmt.Errorf("cannot validate json schema: %v", err)
+	}
+
+	if !result.Valid() {
+		problems := make([]string, 0, len(result.Errors()))
+		for _, desc := range result.Errors() {
+			problems = append(problems, desc.String())
+		}
+
+		return fmt.Errorf("invalid json schema: %s", strings.TrimSpace(strings.Join(problems, "\n")))
+	}
+
+	return nil
+}
+
+// ValidateParamsAgainstSchema validates the given parameters against the
+// schema for this rule type
+func (r *RuleValidator) ValidateParamsAgainstSchema(params *structpb.Struct) error {
+	if r.paramSchema == nil {
+		return nil
+	}
+
+	if params == nil {
+		return fmt.Errorf("params cannot be nil")
+	}
+
+	documentLoader := gojsonschema.NewGoLoader(params.AsMap())
+	result, err := r.paramSchema.Validate(documentLoader)
 	if err != nil {
 		return fmt.Errorf("cannot validate json schema: %v", err)
 	}
@@ -159,7 +201,7 @@ func (r *RuleTypeEngine) GetID() string {
 
 // ValidateAgainstSchema validates the given contextual policy against the
 // schema for this rule type
-func (r *RuleTypeEngine) ValidateAgainstSchema(contextualPolicy any) error {
+func (r *RuleTypeEngine) ValidateAgainstSchema(contextualPolicy map[string]any) error {
 	return r.rval.ValidateAgainstSchema(contextualPolicy)
 }
 

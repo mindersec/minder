@@ -116,8 +116,6 @@ func runEvaluationForRules(eng *engine.RuleTypeEngine, ent protoreflect.ProtoMes
 	for idx := range frags {
 		frag := frags[idx]
 
-		// We already do validation of the rule definition when parsing.
-		// It's safe to simply
 		def := frag.Def.AsMap()
 		err := eng.ValidateAgainstSchema(def)
 		if err != nil {
@@ -125,7 +123,13 @@ func runEvaluationForRules(eng *engine.RuleTypeEngine, ent protoreflect.ProtoMes
 		}
 		fmt.Printf("Policy valid according to the JSON schema!\n")
 
-		params := frag.GetParams().AsMap()
+		var params map[string]any
+		if frag.GetParams() != nil {
+			params = frag.GetParams().AsMap()
+			if err := eng.ValidateAgainstSchema(params); err != nil {
+				return fmt.Errorf("error validating params against schema: %w", err)
+			}
+		}
 
 		if err := eng.Eval(context.Background(), ent, def, params); err != nil {
 			return fmt.Errorf("error evaluating rule type: %w", err)

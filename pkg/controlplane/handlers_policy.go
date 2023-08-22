@@ -123,10 +123,6 @@ func (s *Server) CreatePolicy(ctx context.Context,
 		return nil, status.Errorf(codes.InvalidArgument, "invalid policy: %v", err)
 	}
 
-	if err := engine.ValidatePolicyParams(ctx, s.store, in); err != nil {
-		return nil, status.Errorf(codes.InvalidArgument, "invalid policy params: %v", err)
-	}
-
 	err = engine.TraverseAllRulesForPipeline(in, func(r *pb.PipelinePolicy_Rule) error {
 		// TODO: This will need to be updated to support
 		// the hierarchy tree once that's settled in.
@@ -149,8 +145,12 @@ func (s *Server) CreatePolicy(ctx context.Context,
 			return fmt.Errorf("error creating rule validator: %w", err)
 		}
 
-		if err := rval.ValidateAgainstSchema(r.Def); err != nil {
+		if err := rval.ValidateAgainstSchema(r.Def.AsMap()); err != nil {
 			return fmt.Errorf("error validating rule: %w", err)
+		}
+
+		if err := rval.ValidateParamsAgainstSchema(r.GetParams()); err != nil {
+			return fmt.Errorf("error validating rule params: %w", err)
 		}
 
 		return nil
@@ -593,17 +593,11 @@ func (s *Server) CreateRuleType(ctx context.Context, crt *pb.CreateRuleTypeReque
 		return nil, fmt.Errorf("cannot convert rule definition to db: %v", err)
 	}
 
-	params, err := util.GetBytesFromProto(in.GetParams())
-	if err != nil {
-		return nil, fmt.Errorf("cannot convert rule params to db: %v", err)
-	}
-
 	_, err = s.store.CreateRuleType(ctx, db.CreateRuleTypeParams{
 		Name:       in.GetName(),
 		Provider:   entityCtx.GetProvider(),
 		GroupID:    entityCtx.GetGroup().GetID(),
 		Definition: def,
-		Params:     params,
 	})
 	if err != nil {
 		return nil, status.Errorf(codes.Unknown, "failed to create rule type: %s", err)
@@ -646,15 +640,9 @@ func (s *Server) UpdateRuleType(ctx context.Context, urt *pb.UpdateRuleTypeReque
 		return nil, status.Errorf(codes.Internal, "cannot convert rule definition to db: %s", err)
 	}
 
-	params, err := util.GetBytesFromProto(in.GetParams())
-	if err != nil {
-		return nil, status.Errorf(codes.Internal, "cannot convert rule params to db: %s", err)
-	}
-
 	err = s.store.UpdateRuleType(ctx, db.UpdateRuleTypeParams{
 		ID:         rtdb.ID,
 		Definition: def,
-		Params:     params,
 	})
 	if err != nil {
 		return nil, status.Errorf(codes.Unknown, "failed to create rule type: %s", err)
