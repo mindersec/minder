@@ -1,0 +1,137 @@
+//
+// Copyright 2023 Stacklok, Inc.
+//
+// Licensed under the Apache License, Version 2.0 (the "License");
+// you may not use this file except in compliance with the License.
+// You may obtain a copy of the License at
+//
+//     http://www.apache.org/licenses/LICENSE-2.0
+//
+// Unless required by applicable law or agreed to in writing, software
+// distributed under the License is distributed on an "AS IS" BASIS,
+// WITHOUT WARRANTIES OR CONDITIONS OF ANY KIND, either express or implied.
+// See the License for the specific language governing permissions and
+// limitations under the License.
+
+syntax = "proto3";
+package mediator.providers;
+import "google/api/annotations.proto";
+import "google/protobuf/timestamp.proto";
+import "google/protobuf/wrappers.proto";
+import "google/protobuf/struct.proto";
+
+
+option go_package = "github.com/stacklok/mediator/pkg/generated/protobuf/go/providers";
+
+
+message RepoId {
+    // The base repo name (like "basename" in linux, i.e. "stacklock/mediator" --> "mediator")
+    string name = 1;
+
+    // On GitHub, this is a user or an organization.  On GitLab, this may be
+    // a hierarchical path.
+    string parent = 2;
+
+    // The unique provider ID, generally opaque / not externally meaningful
+    // TODO: maybe this should be a string?  See "node_id" vs "databaseId" in GitHub
+    int32 id = 3;
+}
+
+message ArtifactId {
+    // The base name of the artifact; unlike RepoId.name, this may contain delimiters
+    string name = 1;
+
+    // TODO: make this an enum?
+    string type = 2;
+
+    // Base repository URL in which `name` is interpreted
+    string repository_url = 3;
+
+    // The unique provider ID, generally opaque / not externally meaningful
+    string id = 4;
+}
+
+message RepositoryMetadata {
+    string provider = 1;
+    RepoId id = 2;
+    // Keep <16 for repeated / common fields
+
+    // TODO: extract additional common cross-provider fields
+    bool is_private = 20;
+    bool is_fork = 21;
+
+    message CodeChecks {
+        bool secrets_in_repo = 1;
+        bool secrets_in_pull_requests = 2;
+    }
+    CodeChecks static_checks = 30;
+}
+
+message BuildMetadata {
+    string provider = 1;
+    // TODO: more fields... can upgrade from bytes to a proto message later!
+    bytes bogus_build_id = 2;
+
+    // TODO: do we want to separate this into a different call to avoid
+    // over-fetching on list?
+    BuildImportPermissions permissions = 20;
+}
+
+message ArtifactMetadata {
+    string provider = 1;
+    ArtifactId id = 2;
+}
+
+message BranchProtectionPolicy {
+    string provider = 1;
+    RepoId id = 2;
+
+    string branch_pattern = 3;  // TODO: should this be part of BrachProtectionPolicyId?
+    
+    message Policy {
+        bool allow_force_push = 1;
+        bool allow_deletions = 2;
+        
+        bool require_code_owner_review = 3;
+        uint32 required_reviewer_count = 4;
+        
+        bool require_linear_history = 5;
+        bool require_rereview_on_push = 6;
+    }
+    Policy policy = 20;
+    repeated string matched_branches = 21;
+}
+
+message ArtifactVersionId {
+    ArtifactId id = 1;
+
+    // Additional coordinates for the artifact
+    repeated string tags = 2;
+
+    // A released version name, should be unique and immutable
+    string version = 3;
+}
+
+message BuildImportPermissions {
+    message ExactDependencies {
+        repeated string allowed = 2;
+    }
+
+    bool enabled = 20;
+    oneof dependencies_allowed {
+        string global_setting = 21;
+        ExactDependencies exact = 22;
+    }
+}
+
+message ArtifactVersion {
+    string provider = 1;
+    ArtifactVersionId id = 2;
+
+    message Signature {
+        bool exists = 1;
+        bool verified = 2;
+        map<string, string> metadata = 3;
+    }
+    Signature signature = 3;
+}

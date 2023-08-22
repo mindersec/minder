@@ -3,6 +3,22 @@
 
 ## Table of Contents
 
+- [mediator/providers/providers.proto](#mediator_providers_providers-proto)
+    - [ArtifactId](#mediator-providers-ArtifactId)
+    - [ArtifactMetadata](#mediator-providers-ArtifactMetadata)
+    - [ArtifactVersion](#mediator-providers-ArtifactVersion)
+    - [ArtifactVersion.Signature](#mediator-providers-ArtifactVersion-Signature)
+    - [ArtifactVersion.Signature.MetadataEntry](#mediator-providers-ArtifactVersion-Signature-MetadataEntry)
+    - [ArtifactVersionId](#mediator-providers-ArtifactVersionId)
+    - [BranchProtectionPolicy](#mediator-providers-BranchProtectionPolicy)
+    - [BranchProtectionPolicy.Policy](#mediator-providers-BranchProtectionPolicy-Policy)
+    - [BuildImportPermissions](#mediator-providers-BuildImportPermissions)
+    - [BuildImportPermissions.ExactDependencies](#mediator-providers-BuildImportPermissions-ExactDependencies)
+    - [BuildMetadata](#mediator-providers-BuildMetadata)
+    - [RepoId](#mediator-providers-RepoId)
+    - [RepositoryMetadata](#mediator-providers-RepositoryMetadata)
+    - [RepositoryMetadata.CodeChecks](#mediator-providers-RepositoryMetadata-CodeChecks)
+  
 - [mediator/v1/mediator.proto](#mediator_v1_mediator-proto)
     - [Artifact](#mediator-v1-Artifact)
     - [ArtifactEventPayload](#mediator-v1-ArtifactEventPayload)
@@ -198,6 +214,263 @@
     - [VulnerabilitiesService](#mediator-v1-VulnerabilitiesService)
   
 - [Scalar Value Types](#scalar-value-types)
+
+
+
+<a name="mediator_providers_providers-proto"></a>
+<p align="right"><a href="#top">Top</a></p>
+
+## mediator/providers/providers.proto
+
+
+
+<a name="mediator-providers-ArtifactId"></a>
+
+### ArtifactId
+
+
+
+| Field | Type | Label | Description |
+| ----- | ---- | ----- | ----------- |
+| name | [string](#string) |  | The base name of the artifact; unlike RepoId.name, this may contain delimiters |
+| type | [string](#string) |  | TODO: make this an enum? |
+| repository_url | [string](#string) |  | Base repository URL in which `name` is interpreted |
+| id | [string](#string) |  | The unique provider ID, generally opaque / not externally meaningful |
+
+
+
+
+
+
+<a name="mediator-providers-ArtifactMetadata"></a>
+
+### ArtifactMetadata
+
+
+
+| Field | Type | Label | Description |
+| ----- | ---- | ----- | ----------- |
+| provider | [string](#string) |  |  |
+| id | [ArtifactId](#mediator-providers-ArtifactId) |  |  |
+
+
+
+
+
+
+<a name="mediator-providers-ArtifactVersion"></a>
+
+### ArtifactVersion
+
+
+
+| Field | Type | Label | Description |
+| ----- | ---- | ----- | ----------- |
+| provider | [string](#string) |  |  |
+| id | [ArtifactVersionId](#mediator-providers-ArtifactVersionId) |  |  |
+| signature | [ArtifactVersion.Signature](#mediator-providers-ArtifactVersion-Signature) |  |  |
+
+
+
+
+
+
+<a name="mediator-providers-ArtifactVersion-Signature"></a>
+
+### ArtifactVersion.Signature
+
+
+
+| Field | Type | Label | Description |
+| ----- | ---- | ----- | ----------- |
+| exists | [bool](#bool) |  |  |
+| verified | [bool](#bool) |  |  |
+| metadata | [ArtifactVersion.Signature.MetadataEntry](#mediator-providers-ArtifactVersion-Signature-MetadataEntry) | repeated |  |
+
+
+
+
+
+
+<a name="mediator-providers-ArtifactVersion-Signature-MetadataEntry"></a>
+
+### ArtifactVersion.Signature.MetadataEntry
+
+
+
+| Field | Type | Label | Description |
+| ----- | ---- | ----- | ----------- |
+| key | [string](#string) |  |  |
+| value | [string](#string) |  |  |
+
+
+
+
+
+
+<a name="mediator-providers-ArtifactVersionId"></a>
+
+### ArtifactVersionId
+
+
+
+| Field | Type | Label | Description |
+| ----- | ---- | ----- | ----------- |
+| id | [ArtifactId](#mediator-providers-ArtifactId) |  |  |
+| tags | [string](#string) | repeated | Additional coordinates for the artifact |
+| version | [string](#string) |  | A released version name, should be unique and immutable |
+
+
+
+
+
+
+<a name="mediator-providers-BranchProtectionPolicy"></a>
+
+### BranchProtectionPolicy
+
+
+
+| Field | Type | Label | Description |
+| ----- | ---- | ----- | ----------- |
+| provider | [string](#string) |  |  |
+| id | [RepoId](#mediator-providers-RepoId) |  |  |
+| branch_pattern | [string](#string) |  | TODO: should this be part of BrachProtectionPolicyId? |
+| policy | [BranchProtectionPolicy.Policy](#mediator-providers-BranchProtectionPolicy-Policy) |  |  |
+| matched_branches | [string](#string) | repeated |  |
+
+
+
+
+
+
+<a name="mediator-providers-BranchProtectionPolicy-Policy"></a>
+
+### BranchProtectionPolicy.Policy
+
+
+
+| Field | Type | Label | Description |
+| ----- | ---- | ----- | ----------- |
+| allow_force_push | [bool](#bool) |  |  |
+| allow_deletions | [bool](#bool) |  |  |
+| require_code_owner_review | [bool](#bool) |  |  |
+| required_reviewer_count | [uint32](#uint32) |  |  |
+| require_linear_history | [bool](#bool) |  |  |
+| require_rereview_on_push | [bool](#bool) |  |  |
+
+
+
+
+
+
+<a name="mediator-providers-BuildImportPermissions"></a>
+
+### BuildImportPermissions
+
+
+
+| Field | Type | Label | Description |
+| ----- | ---- | ----- | ----------- |
+| enabled | [bool](#bool) |  |  |
+| global_setting | [string](#string) |  |  |
+| exact | [BuildImportPermissions.ExactDependencies](#mediator-providers-BuildImportPermissions-ExactDependencies) |  |  |
+
+
+
+
+
+
+<a name="mediator-providers-BuildImportPermissions-ExactDependencies"></a>
+
+### BuildImportPermissions.ExactDependencies
+
+
+
+| Field | Type | Label | Description |
+| ----- | ---- | ----- | ----------- |
+| allowed | [string](#string) | repeated |  |
+
+
+
+
+
+
+<a name="mediator-providers-BuildMetadata"></a>
+
+### BuildMetadata
+
+
+
+| Field | Type | Label | Description |
+| ----- | ---- | ----- | ----------- |
+| provider | [string](#string) |  |  |
+| bogus_build_id | [bytes](#bytes) |  | TODO: more fields... can upgrade from bytes to a proto message later! |
+| permissions | [BuildImportPermissions](#mediator-providers-BuildImportPermissions) |  | TODO: do we want to separate this into a different call to avoid over-fetching on list? |
+
+
+
+
+
+
+<a name="mediator-providers-RepoId"></a>
+
+### RepoId
+
+
+
+| Field | Type | Label | Description |
+| ----- | ---- | ----- | ----------- |
+| name | [string](#string) |  | The base repo name (like &#34;basename&#34; in linux, i.e. &#34;stacklock/mediator&#34; --&gt; &#34;mediator&#34;) |
+| parent | [string](#string) |  | On GitHub, this is a user or an organization. On GitLab, this may be a hierarchical path. |
+| id | [int32](#int32) |  | The unique provider ID, generally opaque / not externally meaningful TODO: maybe this should be a string? See &#34;node_id&#34; vs &#34;databaseId&#34; in GitHub |
+
+
+
+
+
+
+<a name="mediator-providers-RepositoryMetadata"></a>
+
+### RepositoryMetadata
+
+
+
+| Field | Type | Label | Description |
+| ----- | ---- | ----- | ----------- |
+| provider | [string](#string) |  |  |
+| id | [RepoId](#mediator-providers-RepoId) |  | Keep &lt;16 for repeated / common fields |
+| is_private | [bool](#bool) |  | TODO: extract additional common cross-provider fields |
+| is_fork | [bool](#bool) |  |  |
+| static_checks | [RepositoryMetadata.CodeChecks](#mediator-providers-RepositoryMetadata-CodeChecks) |  |  |
+
+
+
+
+
+
+<a name="mediator-providers-RepositoryMetadata-CodeChecks"></a>
+
+### RepositoryMetadata.CodeChecks
+
+
+
+| Field | Type | Label | Description |
+| ----- | ---- | ----- | ----------- |
+| secrets_in_repo | [bool](#bool) |  |  |
+| secrets_in_pull_requests | [bool](#bool) |  |  |
+
+
+
+
+
+ 
+
+ 
+
+ 
+
+ 
 
 
 

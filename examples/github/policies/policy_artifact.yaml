@@ -7,13 +7,19 @@ context:
   group: Root Group
   provider: github
 artifact:
-  - context: github
+  - context: artifact_version
+    params:
+      name: myartifact
+      tag: latest  # TODO: OCI "tag" conflicts with git "tag"
+      # TODO: need better matching: semver expression?
     rules:
-      - type: artifact_signature
-        params:
-          tag: main
-          artifactName: test
-        def:
-          is_signed: true
-          is_verified: true
-          is_bundle_verified: true
+      - property: signature.exists
+        value: true
+      - property: signature.verified
+        value: true
+      - property: signature.metadata[WorkflowName]
+        value: "myorg/myrepo/myworkflow"
+      - property: signature.metadata[WorkflowTrigger]
+        glob: "something*" # prefix match
+      - property: signature.metadata[WorkflowSha]
+        exists: true

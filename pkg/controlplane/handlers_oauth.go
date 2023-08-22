@@ -31,10 +31,12 @@ import (
 	"google.golang.org/grpc/codes"
 	"google.golang.org/grpc/status"
 
+	"github.com/stacklok/mediator/internal/gh/queries"
 	"github.com/stacklok/mediator/pkg/auth"
 	mcrypto "github.com/stacklok/mediator/pkg/crypto"
 	"github.com/stacklok/mediator/pkg/db"
 	pb "github.com/stacklok/mediator/pkg/generated/protobuf/go/mediator/v1"
+	"github.com/stacklok/mediator/pkg/providers"
 	ghclient "github.com/stacklok/mediator/pkg/providers/github"
 )
 
@@ -153,16 +155,24 @@ func (s *Server) ExchangeCodeForTokenCLI(ctx context.Context,
 	}
 
 	// generate a new OAuth2 config for the given provider
-	oauthConfig, err := auth.NewOAuthConfig(in.Provider, true)
+	token, err := getTokenFromProvider(ctx, in.Provider, in.Code)
 	if err != nil {
 		return nil, err
 	}
 
-	if oauthConfig == nil {
-		return nil, status.Error(codes.Unknown, "oauth2.Config is nil")
+	// Populate the database with the repositories using the GraphQL API
+	ctx = providers.WithAuthToken(ctx, *token)
+	repoClient, err := providers.GetProvider(ctx, in.Provider)
+	if err != nil {
+		return nil, err
+	}
+	repos, err := repoClient.ListCallerRepositories(ctx, true)
+	if err != nil {
+		return nil, err
 	}
 
-	token, err := oauthConfig.Exchange(ctx, in.Code)
+	// // Insert the repositories into the database
+	err = queries.SyncRepositoriesWithDB(ctx, s.store, repos, in.Provider, groupId.GrpID.Int32)
 	if err != nil {
 		return nil, err
 	}
@@ -219,6 +229,14 @@ func (s *Server) ExchangeCodeForTokenCLI(ctx context.Context,
 		ContentType: "text/html",
 		Data:        auth.OAuthSuccessHtml,
 	}, nil
+}
+
+func getTokenFromProvider(ctx context.Context, provider string, code string) (*oauth2.Token, error) {
+	oauthConfig, err := auth.NewOAuthConfig(provider, true)
+	if err != nil {
+		return nil, err
+	}
+	return oauthConfig.Exchange(ctx, code)
 }
 
 // ExchangeCodeForTokenWEB exchanges an OAuth2 code for a token and returns

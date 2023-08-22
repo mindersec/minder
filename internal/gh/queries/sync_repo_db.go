@@ -21,7 +21,7 @@ import (
 	"fmt"
 
 	"github.com/stacklok/mediator/pkg/db"
-	ghclient "github.com/stacklok/mediator/pkg/providers/github"
+	"github.com/stacklok/mediator/pkg/providers"
 )
 
 // SyncRepositoriesWithDB syncs the repositories already in the database with the
@@ -38,7 +38,7 @@ import (
 //gocyclo:ignore
 func SyncRepositoriesWithDB(ctx context.Context,
 	store db.Store,
-	result ghclient.RepositoryListResult,
+	result []*providers.RepositoryMetadata,
 	provider string, groupId int32) error {
 	// Get all existing repositories from the database by group ID
 	dbRepos, err := store.ListRepositoriesByGroupID(ctx, db.ListRepositoriesByGroupIDParams{
@@ -57,45 +57,45 @@ func SyncRepositoriesWithDB(ctx context.Context,
 	}
 
 	// Iterate over the repositories returned from GitHub
-	for _, repo := range result.Repositories {
+	for _, repo := range result {
 		// Check if the repository already exists in the database by Repo ID
 		existingRepo, err := store.GetRepositoryByRepoID(ctx,
-			db.GetRepositoryByRepoIDParams{Provider: provider, RepoID: int32(*repo.ID)})
+			db.GetRepositoryByRepoIDParams{Provider: provider, RepoID: repo.Id.Id})
 		if err != nil {
 			if err == sql.ErrNoRows {
 				// The repository doesn't exist in our DB, let's create it
 				_, err = store.CreateRepository(ctx, db.CreateRepositoryParams{
-					Provider:  provider,
+					Provider:  repo.Provider,
 					GroupID:   groupId,
-					RepoOwner: string(*repo.Owner.Login),
-					RepoName:  string(*repo.Name),
-					RepoID:    int32(*repo.ID),
-					IsPrivate: bool(*repo.Private), // Needs a value from GraphQL data
-					IsFork:    bool(*repo.Fork),
+					RepoOwner: repo.Id.Parent,
+					RepoName:  repo.Id.Name,
+					RepoID:    repo.Id.Id,
+					IsPrivate: bool(repo.IsPrivate), // Needs a value from GraphQL data
+					IsFork:    bool(repo.IsFork),
 				})
 				if err != nil {
-					fmt.Println("failed to create repository for repo ID: with repo Name: ", *repo.ID, *repo.Name)
+					fmt.Println("failed to create repository for repo ID: with repo Name: ", repo.Id.Id, repo.Id.Name)
 					return fmt.Errorf("failed to create repository: %w", err)
 				}
 				// Delete this newly created repository's ID from the map
-				delete(dbRepoIDs, int32(*repo.ID))
+				delete(dbRepoIDs, repo.Id.Id)
 			} else {
 				// If it's any other error, we just fail the synchronization
 				return fmt.Errorf("failed during repository synchronization: %w", err)
 			}
 		} else {
 			// The repository exists, let's check if it needs to be updated.
-			if existingRepo.RepoName != string(*repo.Name) ||
-				existingRepo.IsFork != bool(*repo.Fork) {
-				fmt.Println("updating repository for repo ID: with repo Name: ", *repo.ID, *repo.Name)
+			if existingRepo.RepoName != repo.Id.Name ||
+				existingRepo.IsFork != repo.IsFork {
+				fmt.Println("updating repository for repo ID: with repo Name: ", repo.Id.Id, repo.Id.Name)
 				_, err = store.UpdateRepository(ctx, db.UpdateRepositoryParams{
-					Provider:  provider,
+					Provider:  repo.Provider,
 					GroupID:   existingRepo.GroupID,
-					RepoOwner: string(*repo.Owner.Login),
-					RepoName:  string(*repo.Name),
-					RepoID:    int32(*repo.ID),
-					IsPrivate: bool(*repo.Private), // Needs a value from GraphQL data
-					IsFork:    bool(*repo.Fork),
+					RepoOwner: repo.Id.Parent,
+					RepoName:  repo.Id.Name,
+					RepoID:    repo.Id.Id,
+					IsPrivate: repo.IsPrivate, // Needs a value from GraphQL data
+					IsFork:    repo.IsFork,
 					ID:        existingRepo.ID,
 				})
 				if err != nil {
@@ -103,7 +103,7 @@ func SyncRepositoriesWithDB(ctx context.Context,
 				}
 			}
 			// Delete the repository ID from the map
-			delete(dbRepoIDs, int32(*repo.ID))
+			delete(dbRepoIDs, repo.Id.Id)
 		}
 	}
 

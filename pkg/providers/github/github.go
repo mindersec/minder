@@ -21,8 +21,10 @@ import (
 	"net/url"
 
 	"github.com/google/go-github/v53/github"
-	"github.com/shurcooL/graphql"
+	graphql "github.com/shurcooL/githubv4"
 	"golang.org/x/oauth2"
+
+	"github.com/stacklok/mediator/pkg/providers"
 )
 
 // GitHubConfig is the struct that contains the configuration for the GitHub client
@@ -53,6 +55,8 @@ type RestAPI interface {
 	GetRepository(context.Context, string, string) (*github.Repository, error)
 	ListAllRepositories(context.Context, bool, string) (RepositoryListResult, error)
 	GetBranchProtection(context.Context, string, string, string) (*github.Protection, error)
+
+	SetBranchProtection(context.Context, string, string, *mediator.BranchProtectionPolicy)
 	ListAllPackages(context.Context, bool, string, string, int, int) (PackageListResult, error)
 	ListPackagesByRepository(context.Context, bool, string, string, int64, int, int) (PackageListResult, error)
 	GetPackageByName(context.Context, bool, string, string, string) (*github.Package, error)
@@ -85,6 +89,9 @@ type GraphQLClient struct {
 	client *graphql.Client
 }
 
+// Validate that RestClient implements the RepoProvider interface
+var _ providers.RepoProvider = &GraphQLClient{}
+
 // NewRestClient creates a new GitHub REST API client
 // BaseURL defaults to the public GitHub API, if needing to use a customer domain
 // endpoint (as is the case with GitHub Enterprise), set the Endpoint field in
@@ -113,21 +120,21 @@ func NewRestClient(ctx context.Context, config GitHubConfig, owner string) (Rest
 }
 
 // NewGraphQLClient creates a new GitHub GraphQL API client
-func NewGraphQLClient(ctx context.Context, config GitHubConfig) (GraphQLAPI, error) {
+func NewGraphQLClient(ctx context.Context, config GitHubConfig) (*GraphQLClient, error) {
 	ts := oauth2.StaticTokenSource(
 		&oauth2.Token{AccessToken: config.Token},
 	)
-	tc := oauth2.NewClient(ctx, ts)
+	httpClient := oauth2.NewClient(ctx, ts)
 
-	endpoint := config.Endpoint
-	if endpoint == "" {
-		endpoint = "https://api.github.com/graphql"
+	if config.Endpoint == "" {
+		return &GraphQLClient{
+			client: graphql.NewClient(httpClient),
+		}, nil
+
 	}
 
-	ghGraphQL := graphql.NewClient(endpoint, tc)
-
 	return &GraphQLClient{
-		client: ghGraphQL,
+		client: graphql.NewEnterpriseClient(config.Endpoint, httpClient),
 	}, nil
 }
 
