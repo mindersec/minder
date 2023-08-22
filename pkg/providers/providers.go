@@ -37,13 +37,6 @@ type ArtifactVersionId = providerspb.ArtifactVersionId
 // RepoProvider defines the methods which a provider needs to implement in
 // order to manage repository status.
 type RepoProvider interface {
-	// RepoProvider implements the `Query` method from
-	// github.com/shurcooL/graphql, but does not implement `Mutate`.
-	//
-	// queryObj is an object annotated with the relevant graphql annotations
-	// documented in https://pkg.go.dev/github.com/shurcooL/graphql
-	Query(ctx context.Context, queryObj any, variables map[string]any) error
-
 	GetRepository(ctx context.Context, repo RepoId) (*RepositoryMetadata, error)
 	GetBranchProtections(ctx context.Context, repo RepoId) ([]*providerspb.BranchProtectionPolicy, error)
 
@@ -52,7 +45,7 @@ type RepoProvider interface {
 }
 
 type BuildProvider interface {
-	GetBuild
+	GetBuildEnvironment(ctx context.Context, buildIdentifier string) (*BuildMetadata, error)
 
 	ListCallerBuildEnvironments(ctx context.Context) ([]*BuildMetadata, error)
 	ListBuildEnvironments(ctx context.Context, owner string) ([]*BuildMetadata, error)
