@@ -114,6 +114,48 @@ func (c *RestClient) ListAllPackages(ctx context.Context, isOrg bool, owner stri
 	return PackageListResult{Packages: allContainers}, nil
 }
 
+// ListPackagesByRepository returns a list of all packages for an specific repository
+func (c *RestClient) ListPackagesByRepository(ctx context.Context, isOrg bool, owner string, artifactType string,
+	repositoryId int64, pageNumber int, itemsPerPage int) (PackageListResult, error) {
+	opt := &github.PackageListOptions{
+		PackageType: &artifactType,
+		ListOptions: github.ListOptions{
+			Page:    pageNumber,
+			PerPage: itemsPerPage,
+		},
+	}
+	// create a slice to hold the containers
+	var allContainers []*github.Package
+	for {
+		var artifacts []*github.Package
+		var resp *github.Response
+		var err error
+
+		if isOrg {
+			artifacts, resp, err = c.client.Organizations.ListPackages(ctx, owner, opt)
+		} else {
+			artifacts, resp, err = c.client.Users.ListPackages(ctx, "", opt)
+		}
+		if err != nil {
+			return PackageListResult{Packages: allContainers}, err
+		}
+
+		// now just append the ones belonging to the repository
+		for _, artifact := range artifacts {
+			if artifact.Repository.GetID() == repositoryId {
+				allContainers = append(allContainers, artifact)
+			}
+		}
+
+		if resp.NextPage == 0 {
+			break
+		}
+		opt.Page = resp.NextPage
+	}
+
+	return PackageListResult{Packages: allContainers}, nil
+}
+
 // GetPackageByName returns a single package for the authenticated user or for the org
 func (c *RestClient) GetPackageByName(ctx context.Context, isOrg bool, owner string, package_type string,
 	package_name string) (*github.Package, error) {
@@ -233,4 +275,20 @@ func (c *RestClient) NewRequest(method, url string, body interface{}, opts ...gi
 // Do sends an API request and returns the API response.
 func (c *RestClient) Do(ctx context.Context, req *http.Request, v interface{}) (*github.Response, error) {
 	return c.client.Do(ctx, req, v)
+}
+
+// GetToken returns the token used to authenticate with the GitHub API
+func (c *RestClient) GetToken() string {
+	if c.token != "" {
+		return c.token
+	}
+	return ""
+}
+
+// GetOwner returns the owner of the repository
+func (c *RestClient) GetOwner() string {
+	if c.owner != "" {
+		return c.owner
+	}
+	return ""
 }

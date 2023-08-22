@@ -27,7 +27,7 @@ func TestNewRestClient(t *testing.T) {
 	client, err := NewRestClient(context.Background(), GitHubConfig{
 		Token:    "token",
 		Endpoint: "https://api.github.com",
-	})
+	}, "")
 	assert.NoError(t, err)
 	assert.NotNil(t, client)
 }

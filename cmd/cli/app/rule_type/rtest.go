@@ -30,6 +30,7 @@ import (
 
 	"github.com/stacklok/mediator/internal/engine"
 	"github.com/stacklok/mediator/internal/util"
+	"github.com/stacklok/mediator/pkg/entities"
 	pb "github.com/stacklok/mediator/pkg/generated/protobuf/go/mediator/v1"
 	ghclient "github.com/stacklok/mediator/pkg/providers/github"
 )
@@ -79,7 +80,7 @@ func testCmdRun(cmd *cobra.Command, _ []string) error {
 		return fmt.Errorf("error reading rule type from file: %w", err)
 	}
 
-	ent, err := readEntityFromFile(epath.Value.String(), rt.Def.InEntity)
+	ent, err := readEntityFromFile(epath.Value.String(), entities.FromString(rt.Def.InEntity))
 	if err != nil {
 		return fmt.Errorf("error reading entity from file: %w", err)
 	}
@@ -190,7 +191,7 @@ func readEntityFromFile(fpath string, entType pb.Entity) (protoreflect.ProtoMess
 
 // getRelevantRules returns the relevant rules for the rule type
 func getRelevantRules(rt *pb.RuleType, p *pb.PipelinePolicy) ([]*pb.PipelinePolicy_Rule, error) {
-	contextualRules, err := engine.GetRulesForEntity(p, rt.Def.InEntity)
+	contextualRules, err := engine.GetRulesForEntity(p, entities.FromString(rt.Def.InEntity))
 	if err != nil {
 		return nil, fmt.Errorf("error getting rules for entity: %w", err)
 	}
@@ -221,7 +222,7 @@ func getProviderClient(ctx context.Context, rt *pb.RuleType) (ghclient.RestAPI, 
 	case ghclient.Github:
 		return ghclient.NewRestClient(ctx, ghclient.GitHubConfig{
 			Token: token,
-		})
+		}, "")
 	default:
 		return nil, fmt.Errorf("unknown provider: %s", rt.Context.Provider)
 	}

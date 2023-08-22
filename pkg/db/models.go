@@ -12,6 +12,7 @@ import (
 	"time"
 
 	"github.com/google/uuid"
+	"github.com/sqlc-dev/pqtype"
 )
 
 type Entities string
@@ -100,6 +101,27 @@ func (ns NullEvalStatusTypes) Value() (driver.Value, error) {
 		return nil, nil
 	}
 	return string(ns.EvalStatusTypes), nil
+}
+
+type Artifact struct {
+	ID                 int32     `json:"id"`
+	RepositoryID       int32     `json:"repository_id"`
+	ArtifactName       string    `json:"artifact_name"`
+	ArtifactType       string    `json:"artifact_type"`
+	ArtifactVisibility string    `json:"artifact_visibility"`
+	CreatedAt          time.Time `json:"created_at"`
+	UpdatedAt          time.Time `json:"updated_at"`
+}
+
+type ArtifactVersion struct {
+	ID                    int32                 `json:"id"`
+	ArtifactID            int32                 `json:"artifact_id"`
+	Version               int64                 `json:"version"`
+	Tags                  sql.NullString        `json:"tags"`
+	Sha                   string                `json:"sha"`
+	SignatureVerification pqtype.NullRawMessage `json:"signature_verification"`
+	GithubWorkflow        pqtype.NullRawMessage `json:"github_workflow"`
+	CreatedAt             time.Time             `json:"created_at"`
 }
 
 type EntityPolicy struct {

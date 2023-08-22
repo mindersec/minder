@@ -208,7 +208,7 @@ func ValidateRuleTypeDefinition(def *pb.RuleType_Definition) error {
 		return fmt.Errorf("%w: rule type definition is nil", ErrInvalidRuleTypeDefinition)
 	}
 
-	if !entities.IsValidEntity(def.InEntity) {
+	if !entities.IsValidEntity(entities.FromString(def.InEntity)) {
 		return fmt.Errorf("%w: invalid entity type: %s", ErrInvalidRuleTypeDefinition, def.InEntity)
 	}
 

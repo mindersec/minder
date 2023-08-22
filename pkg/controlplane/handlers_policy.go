@@ -256,7 +256,7 @@ func createPolicyRulesForEntity(
 	}
 	_, err = qtx.CreatePolicyForEntity(ctx, db.CreatePolicyForEntityParams{
 		PolicyID:        policy.ID,
-		Entity:          db.Entities(entity.String()),
+		Entity:          entities.EntityTypeToDB(entity),
 		ContextualRules: marshalled,
 	})
 
