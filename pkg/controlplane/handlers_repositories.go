@@ -17,12 +17,17 @@ package controlplane
 import (
 	"context"
 	"database/sql"
+	"encoding/json"
+	"log"
 	"strings"
 
+	"github.com/ThreeDotsLabs/watermill/message"
+	"github.com/google/uuid"
 	"google.golang.org/grpc/codes"
 	"google.golang.org/grpc/status"
 	"google.golang.org/protobuf/types/known/timestamppb"
 
+	"github.com/stacklok/mediator/internal/engine"
 	"github.com/stacklok/mediator/internal/gh/queries"
 	"github.com/stacklok/mediator/pkg/auth"
 	"github.com/stacklok/mediator/pkg/db"
@@ -44,6 +49,8 @@ import (
 //		  ],
 //		  "events": [ "push", "issues" ]
 //	}' 127.0.0.1:8090 mediator.v1.RepositoryService/RegisterRepository
+//
+// nolint: gocyclo
 func (s *Server) RegisterRepository(ctx context.Context,
 	in *pb.RegisterRepositoryRequest) (*pb.RegisterRepositoryResponse, error) {
 	if in.Provider != github.Github {
@@ -130,6 +137,28 @@ func (s *Server) RegisterRepository(ctx context.Context,
 		})
 		if err != nil {
 			return nil, err
+		}
+
+		// publish a reconcile event for the registered repositories
+		log.Printf("publishing register event for repository: %s", result.Repository)
+		evt := &engine.ReconcilerEvent{
+			Repository: result.RepoID,
+			Group:      in.GroupId,
+		}
+
+		evtStr, err := json.Marshal(evt)
+		// This is a non-fatal error, so we'll just log it and continue
+		if err != nil {
+			log.Printf("error marshalling init event: %v", err)
+			continue
+		}
+
+		msg := message.NewMessage(uuid.New().String(), evtStr)
+		msg.Metadata.Set("provider", in.Provider)
+
+		// This is a non-fatal error, so we'll just log it and continue with the next ones
+		if err := s.evt.Publish(engine.InternalReconcilerEventTopic, msg); err != nil {
+			log.Printf("error publishing reconciler event: %v", err)
 		}
 	}
 
@@ -345,7 +374,7 @@ func (s *Server) SyncRepositories(ctx context.Context, in *pb.SyncRepositoriesRe
 	// Populate the database with the repositories using the GraphQL API
 	client, err := github.NewRestClient(ctx, github.GitHubConfig{
 		Token: token.AccessToken,
-	})
+	}, owner_filter)
 	if err != nil {
 		return nil, status.Errorf(codes.Internal, "cannot create github client: %v", err)
 	}

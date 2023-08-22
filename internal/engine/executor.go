@@ -39,6 +39,8 @@ const (
 	InternalWebhookEventTopic = "internal.webhook.event"
 	// InternalInitEventTopic is the topic for internal init events
 	InternalInitEventTopic = "internal.init.event"
+	// InternalReconcilerEventTopic is the topic for internal reconciler events
+	InternalReconcilerEventTopic = "internal.reconciler.event"
 )
 
 // Executor is the engine that executes the rules for a given event
@@ -57,6 +59,7 @@ func NewExecutor(querier db.Store) *Executor {
 func (e *Executor) Register(r events.Registrar) {
 	r.Register(InternalWebhookEventTopic, e.handleWebhookEvent)
 	r.Register(InternalInitEventTopic, e.handleInitEvent)
+	r.Register(InternalReconcilerEventTopic, e.handleReconcilerEvent)
 }
 
 // InitEvent is an event that is sent to the init topic
@@ -66,6 +69,42 @@ type InitEvent struct {
 	Group int32 `json:"group" validate:"gte=0"`
 	// Policy is the policy that the event is relevant to
 	Policy int32 `json:"policy" validate:"gte=0"`
+}
+
+// ReconcilerEvent is an event that is sent to the reconciler topic
+type ReconcilerEvent struct {
+	// Group is the group that the event is relevant to
+	Group int32 `json:"group" validate:"gte=0"`
+	// Repository is the repository to be reconciled
+	Repository int32 `json:"repository" validate:"gte=0"`
+}
+
+// handleReconcilerEvent handles events coming from the reconciler topic
+func (e *Executor) handleReconcilerEvent(msg *message.Message) error {
+	prov := msg.Metadata.Get("provider")
+
+	if prov != ghclient.Github {
+		log.Printf("provider %s not supported", prov)
+		return nil
+	}
+
+	var evt ReconcilerEvent
+	if err := json.Unmarshal(msg.Payload, &evt); err != nil {
+		return fmt.Errorf("error unmarshalling payload: %w", err)
+	}
+
+	// validate event
+	validate := validator.New()
+	if err := validate.Struct(evt); err != nil {
+		// We don't return the event since there's no use
+		// retrying it if it's invalid.
+		log.Printf("error validating event: %v", err)
+		return nil
+	}
+
+	ctx := msg.Context()
+	log.Printf("handling reconciler event for group %d and repository %d", evt.Group, evt.Repository)
+	return e.HandleArtifactsReconcilerEvent(ctx, prov, &evt)
 }
 
 // handleInitEvent handles events coming from the init topic
@@ -102,6 +141,7 @@ func (e *Executor) handleInitEvent(msg *message.Message) error {
 	return e.handleReposInitEvent(ctx, prov, &evt)
 }
 
+// handleReposInitEvent handles events coming from the init topic
 func (e *Executor) handleReposInitEvent(ctx context.Context, prov string, evt *InitEvent) error {
 	// Get repositories for group
 	dbrepos, err := e.querier.ListRegisteredRepositoriesByGroupIDAndProvider(ctx,
@@ -137,7 +177,7 @@ func (e *Executor) handleReposInitEvent(ctx context.Context, prov string, evt *I
 		return fmt.Errorf("error getting policy: %w", err)
 	}
 
-	cli, _, err := e.buildClient(ctx, prov, evt.Group)
+	cli, err := e.buildClient(ctx, prov, evt.Group)
 	if err != nil {
 		return fmt.Errorf("error building client: %w", err)
 	}
@@ -300,7 +340,7 @@ func (e *Executor) handleArtifactPublishedEvent(ctx context.Context, prov string
 		return fmt.Errorf("error getting group: %w", err)
 	}
 
-	cli, token, err := e.buildClient(ctx, prov, g)
+	cli, err := e.buildClient(ctx, prov, g)
 	if err != nil {
 		return fmt.Errorf("error building client: %w", err)
 	}
@@ -327,7 +367,7 @@ func (e *Executor) handleArtifactPublishedEvent(ctx context.Context, prov string
 
 		// Let's evaluate all the rules for this policy
 		err = TraverseRules(relevant, func(rule *pb.PipelinePolicy_Rule) error {
-			rt, rte, err := e.getEvaluator(ctx, *pol.Id, prov, cli, token, ectx, rule)
+			rt, rte, err := e.getEvaluator(ctx, *pol.Id, prov, cli, cli.GetToken(), ectx, rule)
 			if err != nil {
 				return err
 			}
@@ -418,7 +458,7 @@ func (e *Executor) handleRepoEvent(ctx context.Context, prov string, payload map
 		return fmt.Errorf("error getting group: %w", err)
 	}
 
-	cli, _, err := e.buildClient(ctx, prov, g)
+	cli, err := e.buildClient(ctx, prov, g)
 	if err != nil {
 		return fmt.Errorf("error building client: %w", err)
 	}
@@ -504,26 +544,26 @@ func (e *Executor) buildClient(
 	ctx context.Context,
 	prov string,
 	groupID int32,
-) (ghclient.RestAPI, string, error) {
+) (ghclient.RestAPI, error) {
 	encToken, err := e.querier.GetAccessTokenByGroupID(ctx,
 		db.GetAccessTokenByGroupIDParams{Provider: prov, GroupID: groupID})
 	if err != nil {
-		return nil, "", fmt.Errorf("error getting access token: %w", err)
+		return nil, fmt.Errorf("error getting access token: %w", err)
 	}
 
 	decryptedToken, err := crypto.DecryptOAuthToken(encToken.EncryptedToken)
 	if err != nil {
-		return nil, "", fmt.Errorf("error decrypting access token: %w", err)
+		return nil, fmt.Errorf("error decrypting access token: %w", err)
 	}
 
 	cli, err := ghclient.NewRestClient(ctx, ghclient.GitHubConfig{
 		Token: decryptedToken.AccessToken,
-	})
+	}, encToken.OwnerFilter.String)
 	if err != nil {
-		return nil, "", fmt.Errorf("error creating github client: %w", err)
+		return nil, fmt.Errorf("error creating github client: %w", err)
 	}
 
-	return cli, decryptedToken.AccessToken, nil
+	return cli, nil
 }
 
 func (e *Executor) createOrUpdateEvalStatus(

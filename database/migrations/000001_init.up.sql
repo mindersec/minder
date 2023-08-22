@@ -128,6 +128,29 @@ CREATE TABLE repositories (
     updated_at TIMESTAMP NOT NULL DEFAULT NOW()
 );
 
+-- artifacts table
+CREATE TABLE artifacts (
+    id SERIAL PRIMARY KEY,
+    repository_id INTEGER NOT NULL REFERENCES repositories(id) ON DELETE CASCADE,
+    artifact_name TEXT NOT NULL,    -- this is case insensitive
+    artifact_type TEXT NOT NULL,
+    artifact_visibility TEXT NOT NULL,      -- comes from github. Can be public, private, internal
+    created_at TIMESTAMP NOT NULL DEFAULT NOW(),
+    updated_at TIMESTAMP NOT NULL DEFAULT NOW()
+);
+
+-- artifact versions table
+CREATE TABLE artifact_versions (
+    id SERIAL PRIMARY KEY,
+    artifact_id INTEGER NOT NULL REFERENCES artifacts(id) ON DELETE CASCADE,
+    version BIGINT NOT NULL,
+    tags TEXT,
+    sha TEXT NOT NULL,
+    signature_verification JSONB,       -- see /proto/mediator/v1/mediator.proto#L82
+    github_workflow JSONB,              -- see /proto/mediator/v1/mediator.proto#L75
+    created_at TIMESTAMP NOT NULL DEFAULT NOW()
+);
+
 CREATE TABLE session_store (
     id SERIAL PRIMARY KEY,
     provider TEXT NOT NULL,
@@ -218,6 +241,8 @@ CREATE UNIQUE INDEX repositories_repo_id_idx ON repositories(repo_id);
 CREATE UNIQUE INDEX policies_group_id_policy_name_idx ON policies(provider, group_id, name);
 CREATE UNIQUE INDEX rule_type_idx ON rule_type(provider, group_id, name);
 CREATE UNIQUE INDEX rule_evaluation_status_results_idx ON rule_evaluation_status(policy_id, repository_id, entity, rule_type_id);
+CREATE UNIQUE INDEX artifact_name_lower_idx ON artifacts (repository_id, LOWER(artifact_name));
+CREATE UNIQUE INDEX artifact_versions_idx ON artifact_versions (artifact_id, sha);
 
 -- triggers
 

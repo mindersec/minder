@@ -16,36 +16,24 @@ package controlplane
 
 import (
 	"context"
-	"fmt"
+	"database/sql"
+	"strings"
 
-	go_github "github.com/google/go-github/v53/github"
 	"google.golang.org/grpc/codes"
 	"google.golang.org/grpc/status"
+	"google.golang.org/protobuf/encoding/protojson"
 	"google.golang.org/protobuf/types/known/timestamppb"
-	"k8s.io/apimachinery/pkg/util/sets"
 
 	"github.com/stacklok/mediator/pkg/auth"
-	"github.com/stacklok/mediator/pkg/container"
+	"github.com/stacklok/mediator/pkg/db"
 	pb "github.com/stacklok/mediator/pkg/generated/protobuf/go/mediator/v1"
-	ghclient "github.com/stacklok/mediator/pkg/providers/github"
 )
-
-// ARTIFACT_TYPES is a list of supported artifact types
-var ARTIFACT_TYPES = sets.New[string]("npm", "maven", "rubygems", "docker", "nuget", "container")
-
-// REGISTRY is the default registry to use
-var REGISTRY = "ghcr.io"
 
 // ListArtifacts lists all artifacts for a given group and provider
 // nolint:gocyclo
 func (s *Server) ListArtifacts(ctx context.Context, in *pb.ListArtifactsRequest) (*pb.ListArtifactsResponse, error) {
 	if in.Provider != auth.Github {
 		return nil, status.Errorf(codes.InvalidArgument, "provider not supported: %v", in.Provider)
-	}
-
-	// validate artifact
-	if !ARTIFACT_TYPES.Has(in.ArtifactType) {
-		return nil, status.Errorf(codes.InvalidArgument, "artifact type not supported: %v", in.ArtifactType)
 	}
 
 	// if we do not have a group, check if we can infer it
@@ -57,71 +45,46 @@ func (s *Server) ListArtifacts(ctx context.Context, in *pb.ListArtifactsRequest)
 		in.GroupId = group
 	}
 
-	// define default values for limit and offset
-	if in.Limit <= 0 {
-		in.Limit = PaginationLimit
-	}
-	// GitHub API only works on offsets of whole page sizes
-	pageNumber := (in.Offset / in.Limit) + 1
-	itemsPerPage := in.Limit
-
 	// check if user is authorized
 	if !IsRequestAuthorized(ctx, in.GroupId) {
 		return nil, status.Errorf(codes.PermissionDenied, "user is not authorized to access this resource")
 	}
 
-	// Check if needs github authorization
-	isGithubAuthorized := IsProviderCallAuthorized(ctx, s.store, in.Provider, in.GroupId)
-	if !isGithubAuthorized {
-		return nil, status.Errorf(codes.PermissionDenied, "user not authorized to interact with provider")
-	}
-
-	decryptedToken, owner_filter, err := GetProviderAccessToken(ctx, s.store, in.Provider, in.GroupId, true)
+	// first read all the repositories for provider and group
+	repositories, err := s.store.ListRegisteredRepositoriesByGroupIDAndProvider(ctx,
+		db.ListRegisteredRepositoriesByGroupIDAndProviderParams{Provider: in.Provider, GroupID: in.GroupId})
 	if err != nil {
-		return nil, status.Errorf(codes.PermissionDenied, "user not authorized to interact with provider")
-	}
-	isOrg := (owner_filter != "")
-
-	// call github api to get list of packages
-	client, err := ghclient.NewRestClient(ctx, ghclient.GitHubConfig{
-		Token: decryptedToken.AccessToken,
-	})
-	if err != nil {
-		return nil, status.Errorf(codes.Internal, "cannot create github client")
+		if err == sql.ErrNoRows {
+			return nil, status.Errorf(codes.NotFound, "repositories not found")
+		}
+		return nil, status.Errorf(codes.Unknown, "failed to get repositories: %s", err)
 	}
 
-	var results []*pb.Artifact
+	results := []*pb.Artifact{}
+	for _, repository := range repositories {
+		artifacts, err := s.store.ListArtifactsByRepoID(ctx, repository.ID)
+		if err != nil {
+			return nil, status.Errorf(codes.Unknown, "failed to get artifacts: %s", err)
+		}
 
-	pkgList, err := client.ListAllPackages(ctx, isOrg, owner_filter, in.ArtifactType, int(pageNumber), int(itemsPerPage))
-	if err != nil {
-		return nil, status.Errorf(codes.Internal, "cannot list packages")
+		for _, artifact := range artifacts {
+			results = append(results, &pb.Artifact{
+				ArtifactId: int64(artifact.ID),
+				Owner:      repository.RepoOwner,
+				Name:       artifact.ArtifactName,
+				Type:       artifact.ArtifactType,
+				Visibility: artifact.ArtifactVisibility,
+				Repository: repository.RepoName,
+				CreatedAt:  timestamppb.New(artifact.CreatedAt),
+			})
+		}
 	}
-
-	for _, pkg := range pkgList.Packages {
-		results = append(results, &pb.Artifact{
-			ArtifactId: pkg.GetID(),
-			Owner:      *pkg.GetOwner().Login,
-			Name:       pkg.GetName(),
-			Type:       pkg.GetPackageType(),
-			Repository: pkg.GetRepository().GetFullName(),
-			Visibility: pkg.GetVisibility(),
-			CreatedAt:  timestamppb.New(pkg.GetCreatedAt().Time),
-			UpdatedAt:  timestamppb.New(pkg.GetUpdatedAt().Time),
-		})
-	}
-
-	return &pb.ListArtifactsResponse{
-		Results: results,
-	}, nil
+	return &pb.ListArtifactsResponse{Results: results}, nil
 }
 
-// GetArtifactByName gets an artifact by type and name
+// GetArtifactById gets an artifact by id
 // nolint:gocyclo
-func (s *Server) GetArtifactByName(ctx context.Context, in *pb.GetArtifactByNameRequest) (*pb.GetArtifactByNameResponse, error) {
-	if in.Provider != auth.Github {
-		return nil, status.Errorf(codes.InvalidArgument, "provider not supported: %v", in.Provider)
-	}
-
+func (s *Server) GetArtifactById(ctx context.Context, in *pb.GetArtifactByIdRequest) (*pb.GetArtifactByIdResponse, error) {
 	// tag and latest versions cannot be set at same time
 	if in.Tag != "" && in.LatestVersions > 1 {
 		return nil, status.Errorf(codes.InvalidArgument, "tag and latest versions cannot be set at same time")
@@ -131,95 +94,80 @@ func (s *Server) GetArtifactByName(ctx context.Context, in *pb.GetArtifactByName
 		return nil, status.Errorf(codes.InvalidArgument, "latest versions must be between 1 and 10")
 	}
 
-	// if we do not have a group, check if we can infer it
-	if in.GroupId == 0 {
-		group, err := auth.GetDefaultGroup(ctx)
-		if err != nil {
-			return nil, status.Errorf(codes.InvalidArgument, "cannot infer group id")
+	// retrieve artifact details
+	artifact, err := s.store.GetArtifactByID(ctx, in.Id)
+	if err != nil {
+		if err == sql.ErrNoRows {
+			return nil, status.Errorf(codes.NotFound, "artifact not found")
 		}
-		in.GroupId = group
+		return nil, status.Errorf(codes.Unknown, "failed to get artifact: %s", err)
 	}
 
 	// check if user is authorized
-	if !IsRequestAuthorized(ctx, in.GroupId) {
+	if !IsRequestAuthorized(ctx, artifact.GroupID) {
 		return nil, status.Errorf(codes.PermissionDenied, "user is not authorized to access this resource")
 	}
 
-	// Check if needs github authorization
-	isGithubAuthorized := IsProviderCallAuthorized(ctx, s.store, in.Provider, in.GroupId)
-	if !isGithubAuthorized {
-		return nil, status.Errorf(codes.PermissionDenied, "user not authorized to interact with provider")
+	// get artifact versions
+	if in.LatestVersions <= 0 {
+		in.LatestVersions = 10
 	}
 
-	decryptedToken, owner_filter, err := GetProviderAccessToken(ctx, s.store, in.Provider, in.GroupId, true)
-	if err != nil {
-		return nil, status.Errorf(codes.Internal, "error getting provider access token")
-	}
-	isOrg := (owner_filter != "")
-
-	// call github api to get detail for an artifact
-	client, err := ghclient.NewRestClient(ctx, ghclient.GitHubConfig{
-		Token: decryptedToken.AccessToken,
-	})
-	if err != nil {
-		return nil, status.Errorf(codes.Internal, "cannot create github client")
-	}
-
-	pkg, err := client.GetPackageByName(ctx, isOrg, owner_filter, in.ArtifactType, in.Name)
-	if err != nil {
-		return nil, status.Errorf(codes.Internal, "cannot get package")
-	}
-
-	// get versions
-	var versions []*go_github.PackageVersion
+	var versions []db.ArtifactVersion
 	if in.Tag != "" {
-		version, err := client.GetPackageVersionByTag(ctx, isOrg, owner_filter, in.ArtifactType, in.Name, in.Tag)
-		if err != nil {
-			return nil, status.Errorf(codes.Internal, "cannot get package version")
-		}
-		if version == nil {
-			return nil, status.Errorf(codes.NotFound, "package version not found")
-		}
-		versions = append(versions, version)
+		versions, err = s.store.ListArtifactVersionsByArtifactIDAndTag(ctx,
+			db.ListArtifactVersionsByArtifactIDAndTagParams{ArtifactID: in.Id,
+				Tags: sql.NullString{Valid: true, String: in.Tag}, Limit: in.LatestVersions})
+
 	} else {
-		versions, err = client.GetPackageVersions(ctx, isOrg, owner_filter, in.ArtifactType, in.Name)
-		if err != nil {
-			return nil, status.Errorf(codes.Internal, "cannot get package versions")
-		}
+		versions, err = s.store.ListArtifactVersionsByArtifactID(ctx,
+			db.ListArtifactVersionsByArtifactIDParams{ArtifactID: in.Id, Limit: in.LatestVersions})
+	}
+
+	if err != nil {
+		return nil, status.Errorf(codes.Unknown, "failed to get artifact versions: %s", err)
 	}
 
 	final_versions := []*pb.ArtifactVersion{}
 	for _, version := range versions {
-		// first try to read the manifest
-		imageRef := fmt.Sprintf("%s/%s/%s@%s", REGISTRY, *pkg.GetOwner().Login, pkg.GetName(), version.GetName())
-		current_version := &pb.ArtifactVersion{
-			VersionId: version.GetID(),
-			Tags:      version.Metadata.Container.Tags,
-			Sha:       version.GetName(),
-			CreatedAt: timestamppb.New(version.GetCreatedAt().Time),
+		tags := []string{}
+		if version.Tags.Valid {
+			tags = strings.Split(version.Tags.String, ",")
 		}
 
-		signature_verification, github_workflow, err := container.ValidateSignature(ctx,
-			decryptedToken.AccessToken, *pkg.GetOwner().Login, imageRef)
-		if err == nil {
-			current_version.SignatureVerification = signature_verification
-			current_version.GithubWorkflow = github_workflow
+		sigVerification := &pb.SignatureVerification{}
+		if version.SignatureVerification.Valid {
+			if err := protojson.Unmarshal(version.SignatureVerification.RawMessage, sigVerification); err != nil {
+				return nil, err
+			}
 		}
-		final_versions = append(final_versions, current_version)
-		if len(final_versions) == int(in.LatestVersions) {
-			break
+
+		ghWorkflow := &pb.GithubWorkflow{}
+		if version.GithubWorkflow.Valid {
+			if err := protojson.Unmarshal(version.GithubWorkflow.RawMessage, ghWorkflow); err != nil {
+				return nil, err
+			}
 		}
+
+		final_versions = append(final_versions, &pb.ArtifactVersion{
+			VersionId:             int64(version.ID),
+			Tags:                  tags,
+			Sha:                   version.Sha,
+			SignatureVerification: sigVerification,
+			GithubWorkflow:        ghWorkflow,
+			CreatedAt:             timestamppb.New(version.CreatedAt),
+		})
+
 	}
 
-	return &pb.GetArtifactByNameResponse{Artifact: &pb.Artifact{
-		ArtifactId: pkg.GetID(),
-		Owner:      *pkg.GetOwner().Login,
-		Name:       pkg.GetName(),
-		Type:       pkg.GetPackageType(),
-		Visibility: pkg.GetVisibility(),
-		Repository: pkg.GetRepository().GetFullName(),
-		CreatedAt:  timestamppb.New(pkg.GetCreatedAt().Time),
-		UpdatedAt:  timestamppb.New(pkg.GetUpdatedAt().Time),
+	return &pb.GetArtifactByIdResponse{Artifact: &pb.Artifact{
+		ArtifactId: int64(artifact.ID),
+		Owner:      artifact.RepoOwner,
+		Name:       artifact.ArtifactName,
+		Type:       artifact.ArtifactType,
+		Visibility: artifact.ArtifactVisibility,
+		Repository: artifact.RepoName,
+		CreatedAt:  timestamppb.New(artifact.CreatedAt),
 	},
 		Versions: final_versions,
 	}, nil

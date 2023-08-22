@@ -55,7 +55,51 @@
     "application/json"
   ],
   "paths": {
-    "/api/v1/artifacts/{provider}/type/{artifactType}": {
+    "/api/v1/artifact/{id}": {
+      "get": {
+        "operationId": "ArtifactService_GetArtifactById",
+        "responses": {
+          "200": {
+            "description": "A successful response.",
+            "schema": {
+              "$ref": "#/definitions/v1GetArtifactByIdResponse"
+            }
+          },
+          "default": {
+            "description": "An unexpected error response.",
+            "schema": {
+              "$ref": "#/definitions/rpcStatus"
+            }
+          }
+        },
+        "parameters": [
+          {
+            "name": "id",
+            "in": "path",
+            "required": true,
+            "type": "integer",
+            "format": "int32"
+          },
+          {
+            "name": "latestVersions",
+            "in": "query",
+            "required": false,
+            "type": "integer",
+            "format": "int32"
+          },
+          {
+            "name": "tag",
+            "in": "query",
+            "required": false,
+            "type": "string"
+          }
+        ],
+        "tags": [
+          "ArtifactService"
+        ]
+      }
+    },
+    "/api/v1/artifacts/{provider}": {
       "get": {
         "operationId": "ArtifactService_ListArtifacts",
         "responses": {
@@ -80,93 +124,11 @@
             "type": "string"
           },
           {
-            "name": "artifactType",
-            "in": "path",
-            "required": true,
-            "type": "string"
-          },
-          {
             "name": "groupId",
             "in": "query",
             "required": false,
             "type": "integer",
             "format": "int32"
-          },
-          {
-            "name": "limit",
-            "in": "query",
-            "required": false,
-            "type": "integer",
-            "format": "int32"
-          },
-          {
-            "name": "offset",
-            "in": "query",
-            "required": false,
-            "type": "integer",
-            "format": "int32"
-          }
-        ],
-        "tags": [
-          "ArtifactService"
-        ]
-      }
-    },
-    "/api/v1/artifacts/{provider}/type/{artifactType}/name/{name}": {
-      "get": {
-        "operationId": "ArtifactService_GetArtifactByName",
-        "responses": {
-          "200": {
-            "description": "A successful response.",
-            "schema": {
-              "$ref": "#/definitions/v1GetArtifactByNameResponse"
-            }
-          },
-          "default": {
-            "description": "An unexpected error response.",
-            "schema": {
-              "$ref": "#/definitions/rpcStatus"
-            }
-          }
-        },
-        "parameters": [
-          {
-            "name": "provider",
-            "in": "path",
-            "required": true,
-            "type": "string"
-          },
-          {
-            "name": "artifactType",
-            "in": "path",
-            "required": true,
-            "type": "string"
-          },
-          {
-            "name": "name",
-            "in": "path",
-            "required": true,
-            "type": "string"
-          },
-          {
-            "name": "groupId",
-            "in": "query",
-            "required": false,
-            "type": "integer",
-            "format": "int32"
-          },
-          {
-            "name": "latestVersions",
-            "in": "query",
-            "required": false,
-            "type": "integer",
-            "format": "int32"
-          },
-          {
-            "name": "tag",
-            "in": "query",
-            "required": false,
-            "type": "string"
           }
         ],
         "tags": [
@@ -2889,10 +2851,6 @@
         "createdAt": {
           "type": "string",
           "format": "date-time"
-        },
-        "updatedAt": {
-          "type": "string",
-          "format": "date-time"
         }
       }
     },
@@ -3355,7 +3313,7 @@
         }
       }
     },
-    "v1GetArtifactByNameResponse": {
+    "v1GetArtifactByIdResponse": {
       "type": "object",
       "properties": {
         "artifact": {

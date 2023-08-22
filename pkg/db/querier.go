@@ -16,6 +16,8 @@ type Querier interface {
 	AddUserRole(ctx context.Context, arg AddUserRoleParams) (UserRole, error)
 	CleanTokenIat(ctx context.Context, id int32) (User, error)
 	CreateAccessToken(ctx context.Context, arg CreateAccessTokenParams) (ProviderAccessToken, error)
+	CreateArtifact(ctx context.Context, arg CreateArtifactParams) (Artifact, error)
+	CreateArtifactVersion(ctx context.Context, arg CreateArtifactVersionParams) (ArtifactVersion, error)
 	CreateGroup(ctx context.Context, arg CreateGroupParams) (Group, error)
 	CreateOrganization(ctx context.Context, arg CreateOrganizationParams) (Organization, error)
 	CreatePolicy(ctx context.Context, arg CreatePolicyParams) (Policy, error)
@@ -29,8 +31,11 @@ type Querier interface {
 	CreateSigningKey(ctx context.Context, arg CreateSigningKeyParams) (SigningKey, error)
 	CreateUser(ctx context.Context, arg CreateUserParams) (User, error)
 	DeleteAccessToken(ctx context.Context, arg DeleteAccessTokenParams) error
+	DeleteArtifact(ctx context.Context, id int32) error
+	DeleteArtifactVersion(ctx context.Context, id int32) error
 	DeleteExpiredSessionStates(ctx context.Context) error
 	DeleteGroup(ctx context.Context, id int32) error
+	DeleteOldArtifactVersions(ctx context.Context, arg DeleteOldArtifactVersionsParams) error
 	DeleteOrganization(ctx context.Context, id int32) error
 	DeletePolicy(ctx context.Context, id int32) error
 	DeleteProject(ctx context.Context, id uuid.UUID) ([]DeleteProjectRow, error)
@@ -44,6 +49,9 @@ type Querier interface {
 	GetAccessTokenByGroupID(ctx context.Context, arg GetAccessTokenByGroupIDParams) (ProviderAccessToken, error)
 	GetAccessTokenByProvider(ctx context.Context, provider string) ([]ProviderAccessToken, error)
 	GetAccessTokenSinceDate(ctx context.Context, arg GetAccessTokenSinceDateParams) (ProviderAccessToken, error)
+	GetArtifactByID(ctx context.Context, id int32) (GetArtifactByIDRow, error)
+	GetArtifactVersionByID(ctx context.Context, id int32) (ArtifactVersion, error)
+	GetArtifactVersionBySha(ctx context.Context, arg GetArtifactVersionByShaParams) (ArtifactVersion, error)
 	GetChildrenProjects(ctx context.Context, id uuid.UUID) ([]uuid.UUID, error)
 	GetGroupByID(ctx context.Context, id int32) (Group, error)
 	GetGroupByName(ctx context.Context, name string) (Group, error)
@@ -78,6 +86,9 @@ type Querier interface {
 	GetUserGroups(ctx context.Context, userID int32) ([]GetUserGroupsRow, error)
 	GetUserRoles(ctx context.Context, userID int32) ([]GetUserRolesRow, error)
 	ListAllRepositories(ctx context.Context, provider string) ([]Repository, error)
+	ListArtifactVersionsByArtifactID(ctx context.Context, arg ListArtifactVersionsByArtifactIDParams) ([]ArtifactVersion, error)
+	ListArtifactVersionsByArtifactIDAndTag(ctx context.Context, arg ListArtifactVersionsByArtifactIDAndTagParams) ([]ArtifactVersion, error)
+	ListArtifactsByRepoID(ctx context.Context, repositoryID int32) ([]Artifact, error)
 	ListGroups(ctx context.Context, arg ListGroupsParams) ([]Group, error)
 	ListGroupsByOrganizationID(ctx context.Context, organizationID int32) ([]Group, error)
 	ListOrganizations(ctx context.Context, arg ListOrganizationsParams) ([]Organization, error)
@@ -105,6 +116,8 @@ type Querier interface {
 	UpdateRuleEvaluationStatusForRepository(ctx context.Context, arg UpdateRuleEvaluationStatusForRepositoryParams) error
 	UpdateRuleType(ctx context.Context, arg UpdateRuleTypeParams) error
 	UpdateUser(ctx context.Context, arg UpdateUserParams) (User, error)
+	UpsertArtifact(ctx context.Context, arg UpsertArtifactParams) (Artifact, error)
+	UpsertArtifactVersion(ctx context.Context, arg UpsertArtifactVersionParams) (ArtifactVersion, error)
 	UpsertRuleEvaluationStatus(ctx context.Context, arg UpsertRuleEvaluationStatusParams) error
 }
 

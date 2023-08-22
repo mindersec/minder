@@ -48,11 +48,7 @@ var artifact_listCmd = &cobra.Command{
 		if provider != auth.Github {
 			return fmt.Errorf("only %s is supported at this time", auth.Github)
 		}
-		artifact_type := util.GetConfigValue("type", "type", cmd, "").(string)
-
 		groupID := viper.GetInt32("group-id")
-		limit := viper.GetInt32("limit")
-		offset := viper.GetInt32("offset")
 
 		switch format {
 		case "json":
@@ -74,11 +70,8 @@ var artifact_listCmd = &cobra.Command{
 		artifacts, err := client.ListArtifacts(
 			ctx,
 			&pb.ListArtifactsRequest{
-				Provider:     provider,
-				GroupId:      groupID,
-				ArtifactType: artifact_type,
-				Limit:        limit,
-				Offset:       offset,
+				Provider: provider,
+				GroupId:  groupID,
 			},
 		)
 
@@ -90,7 +83,7 @@ var artifact_listCmd = &cobra.Command{
 		case "", "table":
 			table := tablewriter.NewWriter(os.Stdout)
 
-			table.SetHeader([]string{"ID", "Type", "Owner", "Name", "Repository", "Visibility", "Last created", "Last updated"})
+			table.SetHeader([]string{"ID", "Type", "Owner", "Name", "Repository", "Visibility", "Creation date"})
 
 			for _, artifact_item := range artifacts.Results {
 				table.Append([]string{
@@ -99,7 +92,7 @@ var artifact_listCmd = &cobra.Command{
 					artifact_item.Repository,
 					artifact_item.Visibility,
 					artifact_item.CreatedAt.AsTime().Format(time.RFC3339),
-					artifact_item.UpdatedAt.AsTime().Format(time.RFC3339)})
+				})
 			}
 
 			table.Render()
@@ -122,15 +115,8 @@ func init() {
 	artifact_listCmd.Flags().StringP("output", "f", "", "Output format (json or yaml)")
 	artifact_listCmd.Flags().StringP("provider", "n", "", "Name for the provider to enroll")
 	artifact_listCmd.Flags().Int32P("group-id", "g", 0, "ID of the group for repo registration")
-	artifact_listCmd.Flags().StringP("type", "t", "", "Type of artifact to list: npm, maven, rubygems, docker, nuget, container")
-	artifact_listCmd.Flags().Int32P("limit", "l", 20, "Number of repos to display per page")
-	artifact_listCmd.Flags().Int32P("offset", "o", 0, "Offset of the repos to display")
 
 	if err := artifact_listCmd.MarkFlagRequired("provider"); err != nil {
 		fmt.Fprintf(os.Stderr, "Error marking flag as required: %s\n", err)
 	}
-	if err := artifact_listCmd.MarkFlagRequired("type"); err != nil {
-		fmt.Fprintf(os.Stderr, "Error marking flag as required: %s\n", err)
-	}
-
 }
