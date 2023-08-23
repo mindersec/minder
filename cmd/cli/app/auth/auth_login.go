@@ -47,10 +47,8 @@ will be saved to $XDG_CONFIG_HOME/mediator/credentials.json`,
 	Run: func(cmd *cobra.Command, args []string) {
 		username := util.GetConfigValue("username", "username", cmd, "").(string)
 		password := util.GetConfigValue("password", "password", cmd, "").(string)
-		grpc_host := util.GetConfigValue("grpc_server.host", "grpc-host", cmd, "").(string)
-		grpc_port := util.GetConfigValue("grpc_server.port", "grpc-port", cmd, 0).(int)
 
-		conn, err := util.GetGrpcConnection(grpc_host, grpc_port)
+		conn, err := util.GrpcForCommand(cmd)
 		util.ExitNicelyOnError(err, "Error getting grpc connection")
 		defer conn.Close()
 

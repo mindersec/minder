@@ -47,10 +47,7 @@ mediator control plane.`,
 		id := util.GetConfigValue("role-id", "role-id", cmd, int32(0)).(int32)
 		force := util.GetConfigValue("force", "force", cmd, false).(bool)
 
-		grpc_host := util.GetConfigValue("grpc_server.host", "grpc-host", cmd, "").(string)
-		grpc_port := util.GetConfigValue("grpc_server.port", "grpc-port", cmd, 0).(int)
-
-		conn, err := util.GetGrpcConnection(grpc_host, grpc_port)
+		conn, err := util.GrpcForCommand(cmd)
 
 		util.ExitNicelyOnError(err, "Error getting grpc connection")
 		defer conn.Close()

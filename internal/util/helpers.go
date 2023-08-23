@@ -24,6 +24,7 @@ package util
 
 import (
 	"context"
+	"crypto/tls"
 	"encoding/json"
 	"errors"
 	"fmt"
@@ -40,6 +41,7 @@ import (
 	"github.com/spf13/viper"
 	"golang.org/x/term"
 	"google.golang.org/grpc"
+	"google.golang.org/grpc/credentials"
 	"google.golang.org/grpc/credentials/insecure"
 	"google.golang.org/protobuf/encoding/protojson"
 	"google.golang.org/protobuf/reflect/protoreflect"
@@ -123,8 +125,18 @@ func (JWTTokenCredentials) RequireTransportSecurity() bool {
 	return false
 }
 
+// GrpcForCommand is a helper for getting a testing connection from cobra flags
+func GrpcForCommand(cmd *cobra.Command) (*grpc.ClientConn, error) {
+	grpc_host := GetConfigValue("grpc_server.host", "grpc-host", cmd, "").(string)
+	grpc_port := GetConfigValue("grpc_server.port", "grpc-port", cmd, 0).(int)
+	insecureDefault := grpc_host == "localhost" || grpc_host == "127.0.0.1" || grpc_host == "::1"
+	allowInsecure := GetConfigValue("grpc_server.insecure", "grpc-insecure", cmd, insecureDefault).(bool)
+
+	return GetGrpcConnection(grpc_host, grpc_port, allowInsecure)
+}
+
 // GetGrpcConnection is a helper for getting a testing connection for grpc
-func GetGrpcConnection(grpc_host string, grpc_port int) (*grpc.ClientConn, error) {
+func GetGrpcConnection(grpc_host string, grpc_port int, allowInsecure bool) (*grpc.ClientConn, error) {
 	address := fmt.Sprintf("%s:%d", grpc_host, grpc_port)
 
 	// read credentials
@@ -138,8 +150,13 @@ func GetGrpcConnection(grpc_host string, grpc_port int) (*grpc.ClientConn, error
 		expirationTime = creds.RefreshTokenExpiresIn
 	}
 
+	credentialOpts := credentials.NewTLS(&tls.Config{MinVersion: tls.VersionTLS13})
+	if allowInsecure {
+		credentialOpts = insecure.NewCredentials()
+	}
+
 	// generate credentials
-	conn, err := grpc.Dial(address, grpc.WithTransportCredentials(insecure.NewCredentials()),
+	conn, err := grpc.Dial(address, grpc.WithTransportCredentials(credentialOpts),
 		grpc.WithPerRPCCredentials(JWTTokenCredentials{accessToken: token, refreshToken: refreshToken}))
 	if err != nil {
 		return nil, fmt.Errorf("error connecting to gRPC server: %v", err)

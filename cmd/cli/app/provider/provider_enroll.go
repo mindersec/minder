@@ -131,10 +131,7 @@ actions such as adding repositories.`,
 		pat := util.GetConfigValue("token", "token", cmd, "").(string)
 		owner := util.GetConfigValue("owner", "owner", cmd, "").(string)
 
-		grpc_host := util.GetConfigValue("grpc_server.host", "grpc-host", cmd, "").(string)
-		grpc_port := util.GetConfigValue("grpc_server.port", "grpc-port", cmd, 0).(int)
-
-		conn, err := util.GetGrpcConnection(grpc_host, grpc_port)
+		conn, err := util.GrpcForCommand(cmd)
 		util.ExitNicelyOnError(err, "Error getting grpc connection")
 		defer conn.Close()
 

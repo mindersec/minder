@@ -38,8 +38,6 @@ mediator control plane.`,
 		}
 	},
 	RunE: func(cmd *cobra.Command, args []string) error {
-		grpc_host := util.GetConfigValue("grpc_server.host", "grpc-host", cmd, "").(string)
-		grpc_port := util.GetConfigValue("grpc_server.port", "grpc-port", cmd, 0).(int)
 		provider := viper.GetString("provider")
 		format := viper.GetString("output")
 
@@ -47,7 +45,7 @@ mediator control plane.`,
 			return fmt.Errorf("error: invalid format: %s", format)
 		}
 
-		conn, err := util.GetGrpcConnection(grpc_host, grpc_port)
+		conn, err := util.GrpcForCommand(cmd)
 		util.ExitNicelyOnError(err, "Error getting grpc connection")
 		defer conn.Close()
 
