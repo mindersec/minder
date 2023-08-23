@@ -145,7 +145,7 @@ func (s *Server) CreatePolicy(ctx context.Context,
 			return fmt.Errorf("error creating rule validator: %w", err)
 		}
 
-		if err := rval.ValidateAgainstSchema(r.Def.AsMap()); err != nil {
+		if err := rval.ValidateRuleDefAgainstSchema(r.Def.AsMap()); err != nil {
 			return fmt.Errorf("error validating rule: %w", err)
 		}
 

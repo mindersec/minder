@@ -117,7 +117,7 @@ func runEvaluationForRules(eng *engine.RuleTypeEngine, ent protoreflect.ProtoMes
 		frag := frags[idx]
 
 		def := frag.Def.AsMap()
-		err := eng.ValidateAgainstSchema(def)
+		err := eng.ValidateRuleDefAgainstSchema(def)
 		if err != nil {
 			return fmt.Errorf("error validating rule against schema: %w", err)
 		}
@@ -126,7 +126,7 @@ func runEvaluationForRules(eng *engine.RuleTypeEngine, ent protoreflect.ProtoMes
 		var params map[string]any
 		if frag.GetParams() != nil {
 			params = frag.GetParams().AsMap()
-			if err := eng.ValidateAgainstSchema(params); err != nil {
+			if err := eng.ValidateRuleDefAgainstSchema(params); err != nil {
 				return fmt.Errorf("error validating params against schema: %w", err)
 			}
 		}
