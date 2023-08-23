@@ -53,10 +53,11 @@ var knownProviders = []string{Google, Github}
 // and whether the client is a CLI or web client
 func NewOAuthConfig(provider string, cli bool) (*oauth2.Config, error) {
 	redirectURL := func(provider string, cli bool) string {
+		base := viper.GetString(fmt.Sprintf("%s.redirect_uri", provider))
 		if cli {
-			return fmt.Sprintf("http://localhost:8080/api/v1/auth/callback/%s/cli", provider)
+			return fmt.Sprintf("%s/cli", base)
 		}
-		return fmt.Sprintf("http://localhost:8080/api/v1/auth/callback/%s/web", provider)
+		return fmt.Sprintf("%s/web", base)
 	}
 
 	scopes := func(provider string) []string {
