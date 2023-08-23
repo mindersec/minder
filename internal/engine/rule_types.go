@@ -125,7 +125,7 @@ func (r *RuleValidator) ValidateParamsAgainstSchema(params *structpb.Struct) err
 	documentLoader := gojsonschema.NewGoLoader(params.AsMap())
 	result, err := r.paramSchema.Validate(documentLoader)
 	if err != nil {
-		return fmt.Errorf("cannot validate json schema: %v", err)
+		return fmt.Errorf("cannot validate json schema: %w", err)
 	}
 
 	if !result.Valid() {
