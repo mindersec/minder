@@ -2724,32 +2724,6 @@
       },
       "description": "Rule defines the individual call of a certain rule type."
     },
-    "RuleTypeRuleTypeParam": {
-      "type": "object",
-      "properties": {
-        "name": {
-          "type": "string"
-        },
-        "type": {
-          "type": "string"
-        },
-        "description": {
-          "type": "string"
-        }
-      }
-    },
-    "RuleTypeRuleTypeParams": {
-      "type": "object",
-      "properties": {
-        "entries": {
-          "type": "array",
-          "items": {
-            "type": "object",
-            "$ref": "#/definitions/RuleTypeRuleTypeParam"
-          }
-        }
-      }
-    },
     "apiHttpBody": {
       "type": "object",
       "properties": {
@@ -4327,9 +4301,6 @@
         "def": {
           "$ref": "#/definitions/v1RuleTypeDefinition",
           "description": "def is the definition of the rule type."
-        },
-        "params": {
-          "$ref": "#/definitions/RuleTypeRuleTypeParams"
         }
       },
       "description": "RuleType defines rules that may or may not be user defined.\nThe version is assumed from the folder's version."
@@ -4343,13 +4314,14 @@
         },
         "ruleSchema": {
           "type": "object",
-          "additionalProperties": {
-            "type": "object"
-          },
           "description": "rule_schema is the schema of the rule. This is expressed in JSON Schema."
         },
         "dataEval": {
           "$ref": "#/definitions/DefinitionDataEval"
+        },
+        "paramSchema": {
+          "type": "object",
+          "description": "param_schema is the schema of the parameters that are passed to the rule.\nThis is expressed in JSON Schema."
         }
       },
       "description": "Definition defines the rule type. It encompases the schema and the data evaluation."

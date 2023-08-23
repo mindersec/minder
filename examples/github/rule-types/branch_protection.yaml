@@ -6,16 +6,19 @@ name: branch_protection
 context:
   provider: github
   group: Root Group
-params:
-  entries:
-    - name: branch
-      type: string
-      description: "The name of the branch to check."
 def:
   # Defines the section of the pipeline the rule will appear in.
   # This will affect the template that is used to render multiple parts
   # of the rule.
   in_entity: repository
+  # Defines the schema for parameters that will be passed to the rule
+  param_schema:
+    properties:
+      branch:
+        type: string
+        description: "The name of the branch to check."
+    required:
+      - branch
   # Defines the schema for writing a rule with this rule being checked
   rule_schema:
     properties:

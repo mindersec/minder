@@ -16,15 +16,20 @@
 package engine
 
 import (
+	"bytes"
 	"context"
+	"encoding/json"
 	"errors"
 	"fmt"
+	"io"
 	"strings"
 
 	"github.com/xeipuuv/gojsonschema"
 	"google.golang.org/protobuf/encoding/protojson"
 	"google.golang.org/protobuf/reflect/protoreflect"
+	"google.golang.org/protobuf/types/known/structpb"
 
+	"github.com/stacklok/mediator/internal/util"
 	"github.com/stacklok/mediator/pkg/db"
 	"github.com/stacklok/mediator/pkg/entities"
 	pb "github.com/stacklok/mediator/pkg/generated/protobuf/go/mediator/v1"
@@ -35,6 +40,22 @@ var (
 	// ErrInvalidRuleTypeDefinition is returned when a rule type definition is invalid
 	ErrInvalidRuleTypeDefinition = errors.New("invalid rule type definition")
 )
+
+// ParseRuleType parses a rule type from a reader
+func ParseRuleType(r io.Reader) (*pb.RuleType, error) {
+	// We transcode to JSON so we can decode it straight to the protobuf structure
+	w := &bytes.Buffer{}
+	if err := util.TranscodeYAMLToJSON(r, w); err != nil {
+		return nil, fmt.Errorf("error converting yaml to json: %w", err)
+	}
+
+	rt := &pb.RuleType{}
+	if err := json.NewDecoder(w).Decode(rt); err != nil {
+		return nil, fmt.Errorf("error decoding json: %w", err)
+	}
+
+	return rt, nil
+}
 
 // RuleMeta is the metadata for a rule
 // TODO: We probably should care about a version
@@ -61,41 +82,75 @@ func (r *RuleMeta) String() string {
 type RuleValidator struct {
 	// schema is the schema that this rule type must conform to
 	schema *gojsonschema.Schema
+	// paramSchema is the schema that the parameters for this rule type must conform to
+	paramSchema *gojsonschema.Schema
 }
 
 // NewRuleValidator creates a new rule validator
 func NewRuleValidator(rt *pb.RuleType) (*RuleValidator, error) {
-	// Load schema
+	// Load schemas
 	schemaLoader := gojsonschema.NewGoLoader(rt.Def.RuleSchema)
 	schema, err := gojsonschema.NewSchema(schemaLoader)
 	if err != nil {
 		return nil, fmt.Errorf("cannot create json schema: %w", err)
 	}
 
+	var paramSchema *gojsonschema.Schema
+	if rt.Def.ParamSchema != nil {
+		paramSchemaLoader := gojsonschema.NewGoLoader(rt.Def.ParamSchema)
+		paramSchema, err = gojsonschema.NewSchema(paramSchemaLoader)
+		if err != nil {
+			return nil, fmt.Errorf("cannot create json schema for params: %w", err)
+		}
+	}
+
 	return &RuleValidator{
-		schema: schema,
+		schema:      schema,
+		paramSchema: paramSchema,
 	}, nil
 }
 
-// ValidateAgainstSchema validates the given contextual policy against the
+// ValidateRuleDefAgainstSchema validates the given contextual policy against the
 // schema for this rule type
-func (r *RuleValidator) ValidateAgainstSchema(contextualPolicy any) error {
-	documentLoader := gojsonschema.NewGoLoader(contextualPolicy)
-	result, err := r.schema.Validate(documentLoader)
+func (r *RuleValidator) ValidateRuleDefAgainstSchema(contextualPolicy map[string]any) error {
+	return validateAgainstSchema(r.schema, contextualPolicy)
+}
+
+// ValidateParamsAgainstSchema validates the given parameters against the
+// schema for this rule type
+func (r *RuleValidator) ValidateParamsAgainstSchema(params *structpb.Struct) error {
+	if r.paramSchema == nil {
+		return nil
+	}
+
+	if params == nil {
+		return fmt.Errorf("params cannot be nil")
+	}
+
+	return validateAgainstSchema(r.paramSchema, params.AsMap())
+}
+
+func validateAgainstSchema(schema *gojsonschema.Schema, obj map[string]any) error {
+	documentLoader := gojsonschema.NewGoLoader(obj)
+	result, err := schema.Validate(documentLoader)
 	if err != nil {
-		return fmt.Errorf("cannot validate json schema: %v", err)
+		return fmt.Errorf("cannot validate json schema: %w", err)
 	}
 
 	if !result.Valid() {
-		problems := make([]string, 0, len(result.Errors()))
-		for _, desc := range result.Errors() {
-			problems = append(problems, desc.String())
-		}
-
-		return fmt.Errorf("invalid json schema: %s", strings.TrimSpace(strings.Join(problems, "\n")))
+		return buildValidationError(result.Errors())
 	}
 
 	return nil
+}
+
+func buildValidationError(errs []gojsonschema.ResultError) error {
+	problems := make([]string, 0, len(errs))
+	for _, desc := range errs {
+		problems = append(problems, desc.String())
+	}
+
+	return fmt.Errorf("invalid json schema: %s", strings.TrimSpace(strings.Join(problems, "\n")))
 }
 
 // RuleTypeEngine is the engine for a rule type
@@ -157,10 +212,10 @@ func (r *RuleTypeEngine) GetID() string {
 	return r.Meta.String()
 }
 
-// ValidateAgainstSchema validates the given contextual policy against the
-// schema for this rule type
-func (r *RuleTypeEngine) ValidateAgainstSchema(contextualPolicy any) error {
-	return r.rval.ValidateAgainstSchema(contextualPolicy)
+// GetRuleInstanceValidator returns the rule instance validator for this rule type.
+// By instance we mean a rule that has been instantiated in a policy from a given rule type.
+func (r *RuleTypeEngine) GetRuleInstanceValidator() *RuleValidator {
+	return r.rval
 }
 
 // Eval runs the rule type engine against the given entity
@@ -225,4 +280,27 @@ func ValidateRuleTypeDefinition(def *pb.RuleType_Definition) error {
 	}
 
 	return nil
+}
+
+// GetRulesFromPolicyOfType returns the rules from the policy of the given type
+func GetRulesFromPolicyOfType(p *pb.PipelinePolicy, rt *pb.RuleType) ([]*pb.PipelinePolicy_Rule, error) {
+	contextualRules, err := GetRulesForEntity(p, entities.FromString(rt.Def.InEntity))
+	if err != nil {
+		return nil, fmt.Errorf("error getting rules for entity: %w", err)
+	}
+
+	rules := []*pb.PipelinePolicy_Rule{}
+	err = TraverseRules(contextualRules, func(r *pb.PipelinePolicy_Rule) error {
+		if r.Type == rt.Name {
+			rules = append(rules, r)
+		}
+		return nil
+	})
+
+	// This shouldn't happen
+	if err != nil {
+		return nil, fmt.Errorf("error traversing rules: %w", err)
+	}
+
+	return rules, nil
 }
