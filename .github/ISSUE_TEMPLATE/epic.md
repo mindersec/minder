@@ -14,11 +14,23 @@ assignees: ''
 **Summary** 
 [1-2 sentences that describe the jist of the epic without requiring someone to open the PRD]
 
-**Link to Product Requirements**
-[Link to product requirements document]
+**Product Requirement Document**
 
-**Design Documents**
-[Link to design document]
+- [Link to Product Requirements Document]
 
-**Additional context** 
-[Link to any additional docs as needed]
+**Technical Design Document**
+
+- [Link to technical design document]
+
+**User Scenarios/Acceptance Criteria**
+
+- [ ] As a user....
+- [ ] As a user....
+
+**Eng Implementation Tasks** 
+- [ ] Link to issue 1
+- [ ] Link to issue 1
+
+**Additional context**
+
+- [Link to any additional docs as needed]
