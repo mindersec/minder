@@ -1,0 +1,56 @@
+---
+# Verifies the settings for selected actions and reusable workflows that are allowed
+# in a repository. To use this rule, the repository policy for allowed_actions must
+# be configured to selected.
+version: v1
+type: rule-type
+name: allowed_selected_actions
+context:
+  provider: github
+  group: Root Group
+def:
+  # Defines the section of the pipeline the rule will appear in.
+  # This will affect the template that is used to render multiple parts
+  # of the rule.
+  in_entity: repository
+  # Defines the schema for writing a rule with this rule being checked
+  rule_schema:
+    type: object
+    properties:
+      github_owned_allowed:
+        type: boolean
+        "description": "Whether GitHub-owned actions are allowed. For example, this includes the actions in the `actions` organization."
+      verified_allowed:
+        type: boolean
+        "description": "Whether actions from GitHub Marketplace verified creators are allowed. Set to `true` to allow all actions by GitHub Marketplace verified creators."
+      patterns_allowed:
+        type: array
+        description: "Specifies a list of string-matching patterns to allow specific action(s) and reusable workflow(s). Wildcards, tags, and SHAs are allowed. For example, `monalisa/octocat@*`, `monalisa/octocat@v2`, `monalisa/*`.\n\n**Note**: The `patterns_allowed` setting only applies to public repositories."
+        items:
+          type: string
+  # Defines the configuration for both ingesting and evaluating the rule.
+  data_eval:
+    type: rest
+    rest:
+      # This is the path to the data source. Given that this will evaluate
+      # for each repository in the organization, we use a template that
+      # will be evaluated for each repository. The structure to use is the
+      # protobuf structure for the entity that is being evaluated.
+      endpoint: "/repos/{{.Entity.Owner}}/{{.Entity.Repository}}/actions/permissions/selected-actions"
+      # This is the method to use to retrieve the data. It should already default to JSON
+      parse: json
+    key_type: jq
+    data:
+      # This key is meant to denote where the info will be
+      # persisted in the aspect itself.
+      ".github_owned_allowed":
+        # This denotes where the information will be retrieved from
+        # the data source.
+        type: jq
+        def: '.github_owned_allowed'
+      ".verified_allowed":
+        type: jq
+        def: '.verified_allowed'
+      ".patterns_allowed":
+        type: jq
+        def: ".patterns_allowed"
