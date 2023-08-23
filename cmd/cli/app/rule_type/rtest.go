@@ -90,7 +90,7 @@ func testCmdRun(cmd *cobra.Command, _ []string) error {
 		return fmt.Errorf("error reading fragment from file: %w", err)
 	}
 
-	rules, err := getRelevantRules(rt, p)
+	rules, err := engine.GetRulesFromPolicyOfType(p, rt)
 	if err != nil {
 		return fmt.Errorf("error getting relevant fragment: %w", err)
 	}
@@ -147,18 +147,7 @@ func readRuleTypeFromFile(fpath string) (*pb.RuleType, error) {
 		return nil, fmt.Errorf("error opening file: %w", err)
 	}
 
-	// We transcode to JSON so we can decode it straight to the protobuf structure
-	w := &bytes.Buffer{}
-	if err := util.TranscodeYAMLToJSON(f, w); err != nil {
-		return nil, fmt.Errorf("error converting yaml to json: %w", err)
-	}
-
-	r := &pb.RuleType{}
-	if err := json.NewDecoder(w).Decode(r); err != nil {
-		return nil, fmt.Errorf("error decoding json: %w", err)
-	}
-
-	return r, nil
+	return engine.ParseRuleType(f)
 }
 
 // readEntityFromFile reads an entity from a file and returns it as a protobuf
@@ -191,29 +180,6 @@ func readEntityFromFile(fpath string, entType pb.Entity) (protoreflect.ProtoMess
 	}
 
 	return out, nil
-}
-
-// getRelevantRules returns the relevant rules for the rule type
-func getRelevantRules(rt *pb.RuleType, p *pb.PipelinePolicy) ([]*pb.PipelinePolicy_Rule, error) {
-	contextualRules, err := engine.GetRulesForEntity(p, entities.FromString(rt.Def.InEntity))
-	if err != nil {
-		return nil, fmt.Errorf("error getting rules for entity: %w", err)
-	}
-
-	rules := []*pb.PipelinePolicy_Rule{}
-	err = engine.TraverseRules(contextualRules, func(r *pb.PipelinePolicy_Rule) error {
-		if r.Type == rt.Name {
-			rules = append(rules, r)
-		}
-		return nil
-	})
-
-	// This shouldn't happen
-	if err != nil {
-		return nil, fmt.Errorf("error traversing rules: %w", err)
-	}
-
-	return rules, nil
 }
 
 // getProviderClient returns a client for the provider specified in the rule type

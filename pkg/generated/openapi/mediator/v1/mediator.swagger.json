@@ -4314,9 +4314,6 @@
         },
         "ruleSchema": {
           "type": "object",
-          "additionalProperties": {
-            "type": "object"
-          },
           "description": "rule_schema is the schema of the rule. This is expressed in JSON Schema."
         },
         "dataEval": {
@@ -4324,9 +4321,6 @@
         },
         "paramSchema": {
           "type": "object",
-          "additionalProperties": {
-            "type": "object"
-          },
           "description": "param_schema is the schema of the parameters that are passed to the rule.\nThis is expressed in JSON Schema."
         }
       },

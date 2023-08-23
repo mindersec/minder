@@ -16,9 +16,12 @@
 package engine
 
 import (
+	"bytes"
 	"context"
+	"encoding/json"
 	"errors"
 	"fmt"
+	"io"
 	"strings"
 
 	"github.com/xeipuuv/gojsonschema"
@@ -26,6 +29,7 @@ import (
 	"google.golang.org/protobuf/reflect/protoreflect"
 	"google.golang.org/protobuf/types/known/structpb"
 
+	"github.com/stacklok/mediator/internal/util"
 	"github.com/stacklok/mediator/pkg/db"
 	"github.com/stacklok/mediator/pkg/entities"
 	pb "github.com/stacklok/mediator/pkg/generated/protobuf/go/mediator/v1"
@@ -36,6 +40,22 @@ var (
 	// ErrInvalidRuleTypeDefinition is returned when a rule type definition is invalid
 	ErrInvalidRuleTypeDefinition = errors.New("invalid rule type definition")
 )
+
+// ParseRuleType parses a rule type from a reader
+func ParseRuleType(r io.Reader) (*pb.RuleType, error) {
+	// We transcode to JSON so we can decode it straight to the protobuf structure
+	w := &bytes.Buffer{}
+	if err := util.TranscodeYAMLToJSON(r, w); err != nil {
+		return nil, fmt.Errorf("error converting yaml to json: %w", err)
+	}
+
+	rt := &pb.RuleType{}
+	if err := json.NewDecoder(w).Decode(rt); err != nil {
+		return nil, fmt.Errorf("error decoding json: %w", err)
+	}
+
+	return rt, nil
+}
 
 // RuleMeta is the metadata for a rule
 // TODO: We probably should care about a version
@@ -260,4 +280,27 @@ func ValidateRuleTypeDefinition(def *pb.RuleType_Definition) error {
 	}
 
 	return nil
+}
+
+// GetRulesFromPolicyOfType returns the rules from the policy of the given type
+func GetRulesFromPolicyOfType(p *pb.PipelinePolicy, rt *pb.RuleType) ([]*pb.PipelinePolicy_Rule, error) {
+	contextualRules, err := GetRulesForEntity(p, entities.FromString(rt.Def.InEntity))
+	if err != nil {
+		return nil, fmt.Errorf("error getting rules for entity: %w", err)
+	}
+
+	rules := []*pb.PipelinePolicy_Rule{}
+	err = TraverseRules(contextualRules, func(r *pb.PipelinePolicy_Rule) error {
+		if r.Type == rt.Name {
+			rules = append(rules, r)
+		}
+		return nil
+	})
+
+	// This shouldn't happen
+	if err != nil {
+		return nil, fmt.Errorf("error traversing rules: %w", err)
+	}
+
+	return rules, nil
 }

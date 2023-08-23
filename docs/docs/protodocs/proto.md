@@ -157,8 +157,6 @@
     - [RuleType.Definition.DataEval](#mediator-v1-RuleType-Definition-DataEval)
     - [RuleType.Definition.DataEval.DataEntry](#mediator-v1-RuleType-Definition-DataEval-DataEntry)
     - [RuleType.Definition.DataEval.DataEvalDef](#mediator-v1-RuleType-Definition-DataEval-DataEvalDef)
-    - [RuleType.Definition.ParamSchemaEntry](#mediator-v1-RuleType-Definition-ParamSchemaEntry)
-    - [RuleType.Definition.RuleSchemaEntry](#mediator-v1-RuleType-Definition-RuleSchemaEntry)
     - [SignatureVerification](#mediator-v1-SignatureVerification)
     - [StoreProviderTokenRequest](#mediator-v1-StoreProviderTokenRequest)
     - [StoreProviderTokenResponse](#mediator-v1-StoreProviderTokenResponse)
@@ -2628,9 +2626,9 @@ Definition defines the rule type. It encompases the schema and the data evaluati
 | Field | Type | Label | Description |
 | ----- | ---- | ----- | ----------- |
 | in_entity | [string](#string) |  | in_entity is the entity in which the rule is evaluated. This can be repository, build_environment or artifact. |
-| rule_schema | [RuleType.Definition.RuleSchemaEntry](#mediator-v1-RuleType-Definition-RuleSchemaEntry) | repeated | rule_schema is the schema of the rule. This is expressed in JSON Schema. |
+| rule_schema | [google.protobuf.Struct](#google-protobuf-Struct) |  | rule_schema is the schema of the rule. This is expressed in JSON Schema. |
 | data_eval | [RuleType.Definition.DataEval](#mediator-v1-RuleType-Definition-DataEval) |  |  |
-| param_schema | [RuleType.Definition.ParamSchemaEntry](#mediator-v1-RuleType-Definition-ParamSchemaEntry) | repeated | param_schema is the schema of the parameters that are passed to the rule. This is expressed in JSON Schema. |
+| param_schema | [google.protobuf.Struct](#google-protobuf-Struct) | optional | param_schema is the schema of the parameters that are passed to the rule. This is expressed in JSON Schema. |
 
 
 
@@ -2687,38 +2685,6 @@ e.g. the actual jq expression.
 | ----- | ---- | ----- | ----------- |
 | type | [string](#string) |  | type is the type of the data evaluation. |
 | def | [string](#string) |  | def is the definition of the data evaluation. |
-
-
-
-
-
-
-<a name="mediator-v1-RuleType-Definition-ParamSchemaEntry"></a>
-
-### RuleType.Definition.ParamSchemaEntry
-
-
-
-| Field | Type | Label | Description |
-| ----- | ---- | ----- | ----------- |
-| key | [string](#string) |  |  |
-| value | [google.protobuf.Struct](#google-protobuf-Struct) |  |  |
-
-
-
-
-
-
-<a name="mediator-v1-RuleType-Definition-RuleSchemaEntry"></a>
-
-### RuleType.Definition.RuleSchemaEntry
-
-
-
-| Field | Type | Label | Description |
-| ----- | ---- | ----- | ----------- |
-| key | [string](#string) |  |  |
-| value | [google.protobuf.Struct](#google-protobuf-Struct) |  |  |
 
 
 
