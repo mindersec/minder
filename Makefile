@@ -82,6 +82,7 @@ endif
 helm:  ## build the helm chart to a local archive, using ko for the image build
 	cd deployment/helm; rm -f templates/combined.yml && \
 	    ko resolve --platform=${KO_PLATFORMS} --base-import-paths --push=${KO_PUSH_IMAGE} -f templates/ > templates/combined.yml && \
+		helm dependency update && \
 		helm package .
 
 bootstrap: ## install build deps

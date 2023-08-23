@@ -40,3 +40,8 @@ version: 0.1.0
 # $(date -u +"%Y-%m-%d-%H%M")-$(git rev-parse --short HEAD)
 # e.g. 2023-07-31-1241-9f32213
 appVersion: "2023-07-31"
+
+dependencies:
+  - name: common
+    version: 2.x.x
+    repository: oci://registry-1.docker.io/bitnamicharts
