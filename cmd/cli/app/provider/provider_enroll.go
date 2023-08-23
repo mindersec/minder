@@ -127,7 +127,7 @@ actions such as adding repositories.`,
 			fmt.Fprintf(os.Stderr, "Only %s is supported at this time\n", ghclient.Github)
 			os.Exit(1)
 		}
-		group := util.GetConfigValue("group-id", "group-id", cmd, 0).(int)
+		group := util.GetConfigValue("group-id", "group-id", cmd, int32(0)).(int32)
 		pat := util.GetConfigValue("token", "token", cmd, "").(string)
 		owner := util.GetConfigValue("owner", "owner", cmd, "").(string)
 
