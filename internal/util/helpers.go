@@ -135,7 +135,7 @@ func GrpcForCommand(cmd *cobra.Command) (*grpc.ClientConn, error) {
 	return GetGrpcConnection(grpc_host, grpc_port, allowInsecure)
 }
 
-// GrpcForCommand is a helper for getting a testing connection for grpc
+// GetGrpcConnection is a helper for getting a testing connection for grpc
 func GetGrpcConnection(grpc_host string, grpc_port int, allowInsecure bool) (*grpc.ClientConn, error) {
 	address := fmt.Sprintf("%s:%d", grpc_host, grpc_port)
 
