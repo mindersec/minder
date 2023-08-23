@@ -127,8 +127,8 @@ func (JWTTokenCredentials) RequireTransportSecurity() bool {
 
 // GrpcForCommand is a helper for getting a testing connection from cobra flags
 func GrpcForCommand(cmd *cobra.Command) (*grpc.ClientConn, error) {
-	grpc_host := GetConfigValue("grpc_server.host", "grpc-host", cmd, "").(string)
-	grpc_port := GetConfigValue("grpc_server.port", "grpc-port", cmd, 0).(int)
+	grpc_host := GetConfigValue("grpc_server.host", "grpc-host", cmd, "staging.stacklok.dev").(string)
+	grpc_port := GetConfigValue("grpc_server.port", "grpc-port", cmd, 443).(int)
 	insecureDefault := grpc_host == "localhost" || grpc_host == "127.0.0.1" || grpc_host == "::1"
 	allowInsecure := GetConfigValue("grpc_server.insecure", "grpc-insecure", cmd, insecureDefault).(bool)
 
