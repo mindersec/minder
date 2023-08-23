@@ -117,18 +117,20 @@ func runEvaluationForRules(eng *engine.RuleTypeEngine, ent protoreflect.ProtoMes
 		frag := frags[idx]
 
 		def := frag.Def.AsMap()
-		err := eng.ValidateRuleDefAgainstSchema(def)
+		val := eng.GetRuleInstanceValidator()
+		err := val.ValidateRuleDefAgainstSchema(def)
 		if err != nil {
 			return fmt.Errorf("error validating rule against schema: %w", err)
 		}
 		fmt.Printf("Policy valid according to the JSON schema!\n")
 
 		var params map[string]any
+		if err := val.ValidateParamsAgainstSchema(frag.GetParams()); err != nil {
+			return fmt.Errorf("error validating params against schema: %w", err)
+		}
+
 		if frag.GetParams() != nil {
 			params = frag.GetParams().AsMap()
-			if err := eng.ValidateRuleDefAgainstSchema(params); err != nil {
-				return fmt.Errorf("error validating params against schema: %w", err)
-			}
 		}
 
 		if err := eng.Eval(context.Background(), ent, def, params); err != nil {

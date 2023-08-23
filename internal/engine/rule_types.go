@@ -212,10 +212,10 @@ func (r *RuleTypeEngine) GetID() string {
 	return r.Meta.String()
 }
 
-// ValidateRuleDefAgainstSchema validates the given contextual policy against the
-// schema for this rule type
-func (r *RuleTypeEngine) ValidateRuleDefAgainstSchema(contextualPolicy map[string]any) error {
-	return r.rval.ValidateRuleDefAgainstSchema(contextualPolicy)
+// GetRuleInstanceValidator returns the rule instance validator for this rule type.
+// By instance we mean a rule that has been instantiated in a policy from a given rule type.
+func (r *RuleTypeEngine) GetRuleInstanceValidator() *RuleValidator {
+	return r.rval
 }
 
 // Eval runs the rule type engine against the given entity
