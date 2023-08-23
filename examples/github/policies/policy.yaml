@@ -31,6 +31,20 @@ repository:
         def:
           enabled: true
           allowed_actions: selected
+      - type: allowed_selected_actions
+        def:
+          github_owned_allowed: true
+          verified_allowed: true
+          patterns_allowed: []
+      - type: default_workflow_permissions
+        def:
+          default_workflow_permissions: read
+          can_approve_pull_request_reviews: false
+      # Note that this only applies to private repositories.
+      # So if you want to test this, you'll need to create a private repository.
+      # - type: repo_workflow_access_level
+      #   def:
+      #     access_level: none
 artifact:
   - context: github
     rules:
