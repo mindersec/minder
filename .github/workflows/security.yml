@@ -1,8 +1,9 @@
 on:
   workflow_call:
 jobs:
-  security-scan:
+  code-security-scan:
     runs-on: ubuntu-latest
+    name: Code Security Scan
     steps:
       - name: Checkout
         uses: actions/checkout@v3.5.3
@@ -15,3 +16,19 @@ jobs:
           trivy-config: .trivy.yml
           exit-code: 1
           ignore-unfixed: true
+
+  helm-security-scan:
+    runs-on: ubuntu-latest
+    name: Helm Security Scan
+    steps:
+      - name: Checkout
+        uses: actions/checkout@v3.5.3
+
+      - name: Security Scan
+        uses: aquasecurity/trivy-action@master  # Trivy Action doesn't have a stable release yet
+        with:
+          scan-type: 'config'
+          trivy-config: .trivy.yml
+          exit-code: 1
+          ignore-unfixed: true
+          scan-ref: ./deployment/helm

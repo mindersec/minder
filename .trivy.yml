@@ -10,6 +10,3 @@ scan:
   # Default is empty
   skip-dirs:
     - docs/
-  security-checks:
-    - vuln
-    - secret
