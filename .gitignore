@@ -34,7 +34,7 @@
 Thumbs.db
 
 # Secrets
-*config.yaml
+/*config.yaml
 *.pem
 *.key
 .ssh/
