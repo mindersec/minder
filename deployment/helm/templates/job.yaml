@@ -24,11 +24,8 @@ metadata:
     helm.sh/hook-delete-policy: before-hook-creation
     helm.sh/hook: pre-install,pre-upgrade
   labels:
-    helm.sh/chart: '{{ .Chart.Name }}-{{ .Chart.Version | replace "+" "_" }}'
-    app.kubernetes.io/name: mediator
-    app.kubernetes.io/instance: "{{ .Release.Name }}"
-    app.kubernetes.io/version: "{{ .Chart.AppVersion }}"
-    app.kubernetes.io/managed-by: "{{ .Release.Service }}"
+    # This includes a newline, so ko sees this as valid yaml
+    # {{ include "common.labels.standard" (dict "customLabels" .Values.commonLabels "context" $ ) | nindent 4 }}
 imagePullSecrets:
 - name: mediator-pull-secret
 ---

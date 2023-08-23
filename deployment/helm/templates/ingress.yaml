@@ -17,11 +17,8 @@ kind: Ingress
 metadata:
   name: mediator
   labels:
-    helm.sh/chart: '{{ .Chart.Name }}-{{ .Chart.Version | replace "+" "_" }}'
-    app.kubernetes.io/name: mediator
-    app.kubernetes.io/instance: "{{ .Release.Name }}"
-    app.kubernetes.io/version: "{{ .Chart.AppVersion }}"
-    app.kubernetes.io/managed-by: "{{ .Release.Service }}"
+    # This includes a newline, so ko sees this as valid yaml
+    # {{ include "common.labels.standard" (dict "customLabels" .Values.commonLabels "context" $ ) | nindent 4 }}
   annotations:
     alb.ingress.kubernetes.io/group.name: mediator-vip
     alb.ingress.kubernetes.io/listen-ports: '[{"HTTP": 80},{"HTTPS":443}]'
@@ -43,6 +40,7 @@ spec:
       # We use Prefix matches on gRPC service names because Ingress API
       # doesn't support matching on Content-Type: application/grpc
       - path: /grpc.reflection.v1alpha.ServerReflection
+        pathType: Prefix
         backend:
           service:
             name: mediator-grpc

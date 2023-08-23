@@ -12,25 +12,15 @@
 # See the License for the specific language governing permissions and
 # limitations under the License.
 
-apiVersion: autoscaling/v2
-kind: HorizontalPodAutoscaler
+apiVersion: v1
+kind: ConfigMap
 metadata:
-  name: mediator
+  name: mediator-config
   labels:
     # This includes a newline, so ko sees this as valid yaml
     # {{ include "common.labels.standard" (dict "customLabels" .Values.commonLabels "context" $ ) | nindent 4 }}
-spec:
-  scaleTargetRef:
-    apiVersion: apps/v1
-    kind: Deployment
-    name: mediator
-  minReplicas: 1
-  # Clamp to 1 at the moment
-  maxReplicas: 1
-  metrics:
-    - type: Resource
-      resource:
-        name: cpu
-        target:
-          type: Utilization
-          averageUtilization: 60
+data:
+  config.yaml: |
+    {{ .Files.Get "config.yaml.example" | nindent 4 }}
+  overrides.yaml: |
+    {{ .Values.extra_config | nindent 4}}

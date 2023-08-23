@@ -34,7 +34,7 @@
 Thumbs.db
 
 # Secrets
-*config.yaml
+/*config.yaml
 *.pem
 *.key
 .ssh/
@@ -54,4 +54,5 @@ docs/.docusaurus
 
 # Generated helm configuration
 /deployment/helm/templates/combined.yml
+/deployment/helm/charts
 /deployment/helm/*.tgz
