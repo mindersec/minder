@@ -31,5 +31,4 @@ jobs:
           trivy-config: .trivy.yml
           exit-code: 1
           ignore-unfixed: true
-          severity: CRITICAL,HIGH,MEDIUM,LOW,UNKNOWN
           scan-ref: ./deployment/helm
