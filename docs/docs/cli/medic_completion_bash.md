@@ -41,9 +41,9 @@ medic completion bash
 
 ```
       --config string      config file (default is $PWD/config.yaml)
-      --grpc-host string   Server host (default "localhost")
+      --grpc-host string   Server host (default "staging.stacklok.dev")
       --grpc-insecure      Allow establishing insecure connections
-      --grpc-port int      Server port (default 8090)
+      --grpc-port int      Server port (default 443)
 ```
 
 ### SEE ALSO

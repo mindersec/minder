@@ -15,7 +15,7 @@ medic policy_status get [flags]
 
 ```
   -e, --entity int32         entity id to get policy status for
-  -t, --entity-type string   the entity type to get policy status for (one of repository,build_environment,artifact)
+  -t, --entity-type string   the entity type to get policy status for (one of build_environment,artifact,repository)
   -g, --group string         group id to get policy status for
   -h, --help                 help for get
   -o, --output string        Output format (json or yaml) (default "yaml")
@@ -27,9 +27,9 @@ medic policy_status get [flags]
 
 ```
       --config string      config file (default is $PWD/config.yaml)
-      --grpc-host string   Server host (default "localhost")
+      --grpc-host string   Server host (default "staging.stacklok.dev")
       --grpc-insecure      Allow establishing insecure connections
-      --grpc-port int      Server port (default 8090)
+      --grpc-port int      Server port (default 443)
 ```
 
 ### SEE ALSO
