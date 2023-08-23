@@ -232,7 +232,8 @@ func (s *Server) GetRoles(ctx context.Context,
 
 	var resp pb.GetRolesResponse
 	resp.Roles = make([]*pb.RoleRecord, 0, len(roles))
-	for _, role := range roles {
+	for idx := range roles {
+		role := &roles[idx]
 		resp.Roles = append(resp.Roles, &pb.RoleRecord{
 			Id:             role.ID,
 			OrganizationId: role.OrganizationID,
@@ -281,7 +282,8 @@ func (s *Server) GetRolesByGroup(ctx context.Context,
 
 	var resp pb.GetRolesByGroupResponse
 	resp.Roles = make([]*pb.RoleRecord, 0, len(roles))
-	for _, role := range roles {
+	for idx := range roles {
+		role := &roles[idx]
 		resp.Roles = append(resp.Roles, &pb.RoleRecord{
 			Id:             role.ID,
 			OrganizationId: role.OrganizationID,

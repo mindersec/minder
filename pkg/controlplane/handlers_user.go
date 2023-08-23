@@ -251,7 +251,8 @@ func (s *Server) GetUsers(ctx context.Context,
 
 	var resp pb.GetUsersResponse
 	resp.Users = make([]*pb.UserRecord, 0, len(users))
-	for _, user := range users {
+	for idx := range users {
+		user := &users[idx]
 		resp.Users = append(resp.Users, &pb.UserRecord{
 			Id:                  user.ID,
 			OrganizationId:      user.OrganizationID,
@@ -298,7 +299,8 @@ func (s *Server) GetUsersByOrganization(ctx context.Context,
 
 	var resp pb.GetUsersByOrganizationResponse
 	resp.Users = make([]*pb.UserRecord, 0, len(users))
-	for _, user := range users {
+	for idx := range users {
+		user := &users[idx]
 		resp.Users = append(resp.Users, &pb.UserRecord{
 			Id:                  user.ID,
 			OrganizationId:      user.OrganizationID,
@@ -345,7 +347,8 @@ func (s *Server) GetUsersByGroup(ctx context.Context,
 
 	var resp pb.GetUsersByGroupResponse
 	resp.Users = make([]*pb.UserRecord, 0, len(users))
-	for _, user := range users {
+	for idx := range users {
+		user := &users[idx]
 		resp.Users = append(resp.Users, &pb.UserRecord{
 			Id:                  user.ID,
 			OrganizationId:      user.OrganizationID,
@@ -378,7 +381,8 @@ func getUserDependencies(ctx context.Context, store db.Store, user db.User) ([]*
 
 	// convert to right data type
 	var rolesPB []*pb.RoleRecord
-	for _, role := range roles {
+	for idx := range roles {
+		role := &roles[idx]
 		rolesPB = append(rolesPB, &pb.RoleRecord{
 			Id:             role.ID,
 			OrganizationId: role.OrganizationID,
