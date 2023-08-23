@@ -6,19 +6,23 @@ name: artifact_signature
 context:
   provider: github
   group: Root Group
-params:
-  entries:
-    - name: artifactName
-      type: string
-      description: "The name of the artifact to check."
-    - name: tag
-      type: string
-      description: "The tag of the artifact to check."
 def:
   # Defines the section of the pipeline the rule will appear in.
   # This will affect the template that is used to render multiple parts
   # of the rule.
   in_entity: artifact
+  # Defines the schema for parameters that will be passed to the rule
+  param_schema:
+    properties:
+      artifactName:
+        type: string
+        description: "The name of the artifact to check."
+      tag:
+        type: string
+        description: "The tag of the artifact to check."
+    required:
+      - artifactName
+      - tag
   # Defines the schema for writing a rule with this rule being checked
   rule_schema:
     properties:

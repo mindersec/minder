@@ -16,8 +16,6 @@
 package rule_type
 
 import (
-	"bytes"
-	"encoding/json"
 	"fmt"
 	"io"
 	"os"
@@ -26,6 +24,7 @@ import (
 	"github.com/spf13/cobra"
 	"github.com/spf13/viper"
 
+	"github.com/stacklok/mediator/internal/engine"
 	"github.com/stacklok/mediator/internal/util"
 	pb "github.com/stacklok/mediator/pkg/generated/protobuf/go/mediator/v1"
 )
@@ -74,15 +73,9 @@ within a mediator control plane.`,
 		ctx, cancel := util.GetAppContext()
 		defer cancel()
 
-		// We transcode to JSON so we can decode it straight to the protobuf structure
-		w := &bytes.Buffer{}
-		if err := util.TranscodeYAMLToJSON(preader, w); err != nil {
-			return fmt.Errorf("error converting yaml to json: %w", err)
-		}
-
-		r := &pb.RuleType{}
-		if err := json.NewDecoder(w).Decode(r); err != nil {
-			return fmt.Errorf("error decoding json: %w", err)
+		r, err := engine.ParseRuleType(preader)
+		if err != nil {
+			return fmt.Errorf("error parsing rule type: %w", err)
 		}
 
 		// create a policy

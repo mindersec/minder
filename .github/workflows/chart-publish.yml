@@ -21,6 +21,11 @@ jobs:
       contents: read
       packages: write
 
+    env:
+      KO_DOCKER_REPO: "ghcr.io/stacklok/mediator"
+      KO_PUSH_IMAGE: "true"
+
+
     steps:
       - name: Checkout
         uses: actions/checkout@v3
@@ -31,15 +36,18 @@ jobs:
         with:
           version: v3.12.2
 
+      - name: Build images and Helm Chart
+        run: |
+          make helm
+
       - name: Helm Login
         # ko can pick up tokens ambiently from the GitHub Actions environment, but
         # Helm needs explicit login
         run: |
           helm registry login ghcr.io --username ${{ github.repository_owner }} --password ${{ secrets.GITHUB_TOKEN }}
 
-      - run: |
-          make helm
-          (cd deployment/helm && helm push mediator-*.tgz oci://$KO_DOCKER_REPO/helm)
-        env:
-          KO_DOCKER_REPO: "ghcr.io/stacklok/mediator"
-          KO_PUSH_IMAGE: "true"
+      - name: Push Helm Chart
+        run: |
+          cd deployment/helm
+          helm push mediator-*.tgz oci://$KO_DOCKER_REPO/helm
+          

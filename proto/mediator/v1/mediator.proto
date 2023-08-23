@@ -1583,7 +1583,7 @@ message RuleType {
         string in_entity = 1;
 
         // rule_schema is the schema of the rule. This is expressed in JSON Schema.
-        map<string, google.protobuf.Struct> rule_schema = 2;
+        google.protobuf.Struct rule_schema = 2;
 
         // DataEval defines how the data is evaluated.
         message DataEval {
@@ -1623,22 +1623,14 @@ message RuleType {
             map<string, DataEvalDef> data = 6;
         }
         DataEval data_eval = 3;
+
+        // param_schema is the schema of the parameters that are passed to the rule.
+        // This is expressed in JSON Schema.
+        optional google.protobuf.Struct param_schema = 4;
     }
 
     // def is the definition of the rule type.
     Definition def = 4;
-
-    message RuleTypeParam {
-        string name = 1;
-        string type = 2;
-        string description = 3;
-    }
-
-    message RuleTypeParams {
-        repeated RuleTypeParam entries = 1;
-    }
-
-    optional RuleTypeParams params = 5;
 }
 
  // PipelinePolicy defines a policy that is user defined.

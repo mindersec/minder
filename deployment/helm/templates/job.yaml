@@ -37,7 +37,7 @@ kind: ConfigMap
 metadata:
   name: db-update-config
   annotations:
-    helm.sh/hook-delete-policy: hook-succeeded
+    helm.sh/hook-delete-policy: before-hook-creation
     helm.sh/hook: pre-install,pre-upgrade
   labels:
     helm.sh/chart: '{{ .Chart.Name }}-{{ .Chart.Version | replace "+" "_" }}'
@@ -94,6 +94,8 @@ spec:
           - "--yes"
           - "--db-host={{ .Values.db.host }}"
           - "--config=/config/config.yaml"
+          # We use two config files, one with all the defaults, and one with
+          # additional override values from helm.  (This is a viper feature.)
           - "--config=/config/overrides.yaml"
           # ko will always specify a digest, so we don't need to worry about
           # CRI image caching

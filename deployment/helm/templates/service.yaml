@@ -15,7 +15,9 @@
 apiVersion: v1
 kind: Service
 metadata:
-  name: mediator
+  name: mediator-http
+  annotations:
+    alb.ingress.kubernetes.io/healthcheck-path: "/api/v1/health"
   labels:
     helm.sh/chart: '{{ .Chart.Name }}-{{ .Chart.Version | replace "+" "_" }}'
     app.kubernetes.io/name: mediator
@@ -29,6 +31,30 @@ spec:
       targetPort: http
       protocol: TCP
       name: http
+  selector:
+    app: mediator
+
+---
+
+apiVersion: v1
+kind: Service
+metadata:
+  name: mediator-grpc
+  annotations:
+    alb.ingress.kubernetes.io/backend-protocol-version: "GRPC"
+    alb.ingress.kubernetes.io/healthcheck-protocol: "HTTP"
+    alb.ingress.kubernetes.io/healthcheck-path: "/mediator.v1.HealthService/CheckHealth"
+    # For some reason, ALB defaults to 12 (unimplemented) as a success code
+    alb.ingress.kubernetes.io/success-codes: "0"
+  labels:
+    helm.sh/chart: '{{ .Chart.Name }}-{{ .Chart.Version | replace "+" "_" }}'
+    app.kubernetes.io/name: mediator
+    app.kubernetes.io/instance: "{{ .Release.Name }}"
+    app.kubernetes.io/version: "{{ .Chart.AppVersion }}"
+    app.kubernetes.io/managed-by: "{{ .Release.Service }}"
+spec:
+  type: ClusterIP
+  ports:
     - port: !!int "{{ .Values.service.grpcPort }}"
       targetPort: grpc
       protocol: TCP
