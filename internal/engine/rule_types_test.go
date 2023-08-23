@@ -20,8 +20,9 @@ import (
 	"path/filepath"
 	"testing"
 
-	"github.com/stacklok/mediator/internal/engine"
 	"github.com/stretchr/testify/require"
+
+	"github.com/stacklok/mediator/internal/engine"
 )
 
 func TestExampleRulesAreValidatedCorrectly(t *testing.T) {
@@ -32,7 +33,7 @@ func TestExampleRulesAreValidatedCorrectly(t *testing.T) {
 	require.NoError(t, err, "failed to parse example policy")
 
 	// open rules in example directory
-	filepath.Walk("../../examples/github/rule-types", func(path string, info os.FileInfo, err error) error {
+	err = filepath.Walk("../../examples/github/rule-types", func(path string, info os.FileInfo, err error) error {
 		// skip directories
 		if info.IsDir() {
 			return nil
@@ -48,6 +49,7 @@ func TestExampleRulesAreValidatedCorrectly(t *testing.T) {
 			t.Parallel()
 
 			// open file
+			//nolint:gosec // this is a test
 			f, err := os.Open(path)
 			require.NoError(t, err, "failed to open file %s", path)
 			defer f.Close()
@@ -77,4 +79,5 @@ func TestExampleRulesAreValidatedCorrectly(t *testing.T) {
 
 		return nil
 	})
+	require.NoError(t, err, "failed to walk rule types directory")
 }
