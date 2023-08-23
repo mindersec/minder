@@ -25,6 +25,7 @@ medic rule_type test [flags]
 ```
       --config string      config file (default is $PWD/config.yaml)
       --grpc-host string   Server host (default "localhost")
+      --grpc-insecure      Allow establishing insecure connections
       --grpc-port int      Server port (default 8090)
 ```
 
