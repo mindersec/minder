@@ -125,7 +125,7 @@ func (JWTTokenCredentials) RequireTransportSecurity() bool {
 	return false
 }
 
-// GrpcForCommand is a helper for getting a testing connection for grpc
+// GrpcForCommand is a helper for getting a testing connection from cobra flags
 func GrpcForCommand(cmd *cobra.Command) (*grpc.ClientConn, error) {
 	grpc_host := GetConfigValue("grpc_server.host", "grpc-host", cmd, "").(string)
 	grpc_port := GetConfigValue("grpc_server.port", "grpc-port", cmd, 0).(int)
@@ -135,6 +135,7 @@ func GrpcForCommand(cmd *cobra.Command) (*grpc.ClientConn, error) {
 	return GetGrpcConnection(grpc_host, grpc_port, allowInsecure)
 }
 
+// GrpcForCommand is a helper for getting a testing connection for grpc
 func GetGrpcConnection(grpc_host string, grpc_port int, allowInsecure bool) (*grpc.ClientConn, error) {
 	address := fmt.Sprintf("%s:%d", grpc_host, grpc_port)
 
