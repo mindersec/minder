@@ -28,8 +28,22 @@ assignees: ''
 - [ ] As a user....
 
 **Eng Implementation Tasks** 
+
+Back end engineering tasks:
 - [ ] Link to issue 1
+- [ ] Link to issue 2
+
+Front end engineering tasks:
 - [ ] Link to issue 1
+- [ ] Link to issue 2
+
+Data science tasks:
+- [ ] Link to issue 1
+- [ ] Link to issue 2
+
+SaaS Eng Tasks:
+- [ ] Link to issue 1
+- [ ] Link to issue 2
 
 **Additional context**
 
