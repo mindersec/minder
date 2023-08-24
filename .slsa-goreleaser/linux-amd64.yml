@@ -20,11 +20,8 @@ goarch: amd64
 # Binary output name.
 # {{ .Os }} will be replaced by goos field in the config file.
 # {{ .Arch }} will be replaced by goarch field in the config file.
-builds:
-  - main: ./cmd/cli
-    binary: medic-{{ .Os }}-{{ .Arch }}
-  - main: ./cmd/server
-    binary: mediator-server-{{ .Os }}-{{ .Arch }}
+main: ./cmd/cli
+binary: medic-{{ .Os }}-{{ .Arch }}
 
 # (Optional) ldflags generated dynamically in the workflow, and set as the `evaluated-envs` input variables in the workflow.
 # ldflags:
