@@ -408,6 +408,10 @@ func OpenFileArg(f string, dashOpen io.Reader) (desc io.Reader, closer func(), e
 func ExpandFileArgs(files []string) ([]string, error) {
 	var expandedFiles []string
 	for _, f := range files {
+		if f == "-" {
+			expandedFiles = append(expandedFiles, f)
+			continue
+		}
 		f = filepath.Clean(f)
 		fi, err := os.Stat(f)
 		if err != nil {
