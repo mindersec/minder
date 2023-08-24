@@ -401,3 +401,40 @@ func OpenFileArg(f string, dashOpen io.Reader) (desc io.Reader, closer func(), e
 	desc = ftemp
 	return desc, closer, nil
 }
+
+// ExpandFileArgs expands a list of file arguments into a list of files.
+// If the file list contains "-" or regular files, it will leave them as-is.
+// If the file list contains directories, it will expand them into a list of files.
+func ExpandFileArgs(files []string) ([]string, error) {
+	var expandedFiles []string
+	for _, f := range files {
+		f = filepath.Clean(f)
+		fi, err := os.Stat(f)
+		if err != nil {
+			return nil, fmt.Errorf("error getting file info: %w", err)
+		}
+
+		if fi.IsDir() {
+			// expand directory
+			err := filepath.Walk(f, func(path string, info fs.FileInfo, err error) error {
+				if err != nil {
+					return fmt.Errorf("error walking directory: %w", err)
+				}
+
+				if !info.IsDir() {
+					expandedFiles = append(expandedFiles, path)
+				}
+
+				return nil
+			})
+			if err != nil {
+				return nil, fmt.Errorf("error walking directory: %w", err)
+			}
+		} else {
+			// add file
+			expandedFiles = append(expandedFiles, f)
+		}
+	}
+
+	return expandedFiles, nil
+}

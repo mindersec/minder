@@ -59,7 +59,12 @@ within a mediator control plane.`,
 		ctx, cancel := util.GetAppContext()
 		defer cancel()
 
-		for _, f := range files {
+		expfiles, err := util.ExpandFileArgs(files)
+		if err != nil {
+			return fmt.Errorf("error expanding file args: %w", err)
+		}
+
+		for _, f := range expfiles {
 			preader, closer, err := util.OpenFileArg(f, cmd.InOrStdin())
 			if err != nil {
 				return fmt.Errorf("error opening file arg: %w", err)
