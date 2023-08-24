@@ -715,7 +715,7 @@ func TestGetUsers_gRPC(t *testing.T) {
 				assert.Equal(t, expectedOrgs[0].Id, res.Users[0].Id)
 				assert.Equal(t, expectedOrgs[0].OrganizationId, res.Users[0].OrganizationId)
 				assert.Equal(t, expectedOrgs[0].Username, res.Users[0].Username)
-				assert.Equal(t, expectedOrgs[0].Email, res.Users[0].Email)
+				assert.Equal(t, *expectedOrgs[0].Email, *res.Users[0].Email)
 			},
 			expectedStatusCode: codes.OK,
 		},
