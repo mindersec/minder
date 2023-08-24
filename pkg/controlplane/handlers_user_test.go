@@ -694,7 +694,6 @@ func TestGetUsers_gRPC(t *testing.T) {
 						Id:             1,
 						OrganizationId: 1,
 						Username:       "test",
-						Email:          &emailPtr,
 						CreatedAt:      timestamppb.New(time.Now()),
 						UpdatedAt:      timestamppb.New(time.Now()),
 					},
@@ -703,6 +702,7 @@ func TestGetUsers_gRPC(t *testing.T) {
 						OrganizationId: 1,
 						Username:       "test1",
 						FirstName:      &firstNamePtr,
+						Email:          &emailPtr,
 						IsProtected:    &protectedPtr,
 						CreatedAt:      timestamppb.New(time.Now()),
 						UpdatedAt:      timestamppb.New(time.Now()),
@@ -712,10 +712,10 @@ func TestGetUsers_gRPC(t *testing.T) {
 				assert.NoError(t, err)
 				assert.NotNil(t, res)
 				assert.Equal(t, len(expectedOrgs), len(res.Users))
-				assert.Equal(t, expectedOrgs[0].Id, res.Users[0].Id)
-				assert.Equal(t, expectedOrgs[0].OrganizationId, res.Users[0].OrganizationId)
-				assert.Equal(t, expectedOrgs[0].Username, res.Users[0].Username)
-				assert.Equal(t, expectedOrgs[0].Email, res.Users[0].Email)
+				assert.Equal(t, expectedOrgs[1].Id, res.Users[1].Id)
+				assert.Equal(t, expectedOrgs[1].OrganizationId, res.Users[1].OrganizationId)
+				assert.Equal(t, expectedOrgs[1].FirstName, res.Users[1].FirstName)
+				assert.Equal(t, *expectedOrgs[1].Email, *res.Users[1].Email)
 			},
 			expectedStatusCode: codes.OK,
 		},

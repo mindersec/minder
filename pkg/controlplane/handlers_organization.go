@@ -235,7 +235,8 @@ func getOrganizationDependencies(ctx context.Context, store db.Store,
 	}
 
 	var rolesPB []*pb.RoleRecord
-	for _, role := range roles {
+	for idx := range roles {
+		role := &roles[idx]
 		rolesPB = append(rolesPB, &pb.RoleRecord{
 			Id:             role.ID,
 			OrganizationId: role.OrganizationID,
@@ -249,7 +250,8 @@ func getOrganizationDependencies(ctx context.Context, store db.Store,
 	}
 
 	var usersPB []*pb.UserRecord
-	for _, user := range users {
+	for idx := range users {
+		user := &users[idx]
 		usersPB = append(usersPB, &pb.UserRecord{
 			Id:                  user.ID,
 			OrganizationId:      user.OrganizationID,
