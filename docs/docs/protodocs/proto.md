@@ -2611,6 +2611,7 @@ The version is assumed from the folder&#39;s version.
 | name | [string](#string) |  | name is the name of the rule type. |
 | context | [Context](#mediator-v1-Context) |  | context is the context in which the rule is evaluated. |
 | def | [RuleType.Definition](#mediator-v1-RuleType-Definition) |  | def is the definition of the rule type. |
+| description | [string](#string) |  | description is the description of the rule type. |
 
 
 

@@ -1575,7 +1575,7 @@ message RuleType {
 
     // context is the context in which the rule is evaluated.
     Context context = 3;
-    
+
     // Definition defines the rule type. It encompases the schema and the data evaluation.
     message Definition {
         // in_entity is the entity in which the rule is evaluated.
@@ -1631,6 +1631,9 @@ message RuleType {
 
     // def is the definition of the rule type.
     Definition def = 4;
+
+    // description is the description of the rule type.
+    string description = 5;
 }
 
  // PipelinePolicy defines a policy that is user defined.

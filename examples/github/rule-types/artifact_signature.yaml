@@ -1,11 +1,11 @@
 ---
-# verifies that the artifact has a valid signature
 version: v1
 type: rule-type
 name: artifact_signature
 context:
   provider: github
   group: Root Group
+description: Verifies that a given artifact has a valid signature.
 def:
   # Defines the section of the pipeline the rule will appear in.
   # This will affect the template that is used to render multiple parts
