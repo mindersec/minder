@@ -28,6 +28,7 @@ import (
 	"encoding/json"
 	"errors"
 	"fmt"
+	"io"
 	"io/fs"
 	"net"
 	"os"
@@ -373,4 +374,30 @@ func GetYamlFromProto(msg protoreflect.ProtoMessage) (string, error) {
 func GetBytesFromProto(message protoreflect.ProtoMessage) ([]byte, error) {
 	m := getProtoMarshalOptions()
 	return m.Marshal(message)
+}
+
+// OpenFileArg opens a file argument and returns a descriptor, closer, and error
+// If the file is "-", it will return whatever is passed in as dashOpen and a no-op closer
+func OpenFileArg(f string, dashOpen io.Reader) (desc io.Reader, closer func(), err error) {
+	if f == "-" {
+		desc = dashOpen
+		closer = func() {}
+		return desc, closer, nil
+	}
+
+	f = filepath.Clean(f)
+	ftemp, err := os.Open(f)
+	if err != nil {
+		return nil, nil, fmt.Errorf("error opening file: %w", err)
+	}
+
+	closer = func() {
+		err := ftemp.Close()
+		if err != nil {
+			fmt.Fprintf(os.Stderr, "error closing file: %v\n", err)
+		}
+	}
+
+	desc = ftemp
+	return desc, closer, nil
 }
