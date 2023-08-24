@@ -113,5 +113,6 @@ func validateFilesArg(files []string) error {
 
 func init() {
 	ruleTypeCmd.AddCommand(RuleType_createCmd)
-	RuleType_createCmd.Flags().StringArrayP("file", "f", []string{}, "Path to the YAML defining the rule type (or - for stdin)")
+	RuleType_createCmd.Flags().StringArrayP("file", "f", []string{},
+		"Path to the YAML defining the rule type (or - for stdin). Can be specified multiple times. Can be a directory.")
 }
