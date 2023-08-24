@@ -594,10 +594,11 @@ func (s *Server) CreateRuleType(ctx context.Context, crt *pb.CreateRuleTypeReque
 	}
 
 	_, err = s.store.CreateRuleType(ctx, db.CreateRuleTypeParams{
-		Name:       in.GetName(),
-		Provider:   entityCtx.GetProvider(),
-		GroupID:    entityCtx.GetGroup().GetID(),
-		Definition: def,
+		Name:        in.GetName(),
+		Provider:    entityCtx.GetProvider(),
+		GroupID:     entityCtx.GetGroup().GetID(),
+		Description: in.GetDescription(),
+		Definition:  def,
 	})
 	if err != nil {
 		return nil, status.Errorf(codes.Unknown, "failed to create rule type: %s", err)
@@ -641,8 +642,9 @@ func (s *Server) UpdateRuleType(ctx context.Context, urt *pb.UpdateRuleTypeReque
 	}
 
 	err = s.store.UpdateRuleType(ctx, db.UpdateRuleTypeParams{
-		ID:         rtdb.ID,
-		Definition: def,
+		ID:          rtdb.ID,
+		Description: in.GetDescription(),
+		Definition:  def,
 	})
 	if err != nil {
 		return nil, status.Errorf(codes.Unknown, "failed to create rule type: %s", err)

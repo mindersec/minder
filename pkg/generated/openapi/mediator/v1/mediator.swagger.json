@@ -4301,6 +4301,10 @@
         "def": {
           "$ref": "#/definitions/v1RuleTypeDefinition",
           "description": "def is the definition of the rule type."
+        },
+        "description": {
+          "type": "string",
+          "description": "description is the description of the rule type."
         }
       },
       "description": "RuleType defines rules that may or may not be user defined.\nThe version is assumed from the folder's version."

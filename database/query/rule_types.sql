@@ -3,7 +3,8 @@ INSERT INTO rule_type (
     name,
     provider,
     group_id,
-    definition) VALUES ($1, $2, $3, sqlc.arg(definition)::jsonb) RETURNING *;
+    description,
+    definition) VALUES ($1, $2, $3, $4, sqlc.arg(definition)::jsonb) RETURNING *;
 
 -- name: ListRuleTypesByProviderAndGroup :many
 SELECT * FROM rule_type WHERE provider = $1 AND group_id = $2;
@@ -18,4 +19,4 @@ SELECT * FROM rule_type WHERE provider = $1 AND group_id = $2 AND name = $3;
 DELETE FROM rule_type WHERE id = $1;
 
 -- name: UpdateRuleType :exec
-UPDATE rule_type SET definition = sqlc.arg(definition)::jsonb WHERE id = $1;
+UPDATE rule_type SET description = $2, definition = sqlc.arg(definition)::jsonb WHERE id = $1;

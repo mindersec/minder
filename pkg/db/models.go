@@ -226,13 +226,14 @@ type RuleEvaluationStatus struct {
 }
 
 type RuleType struct {
-	ID         int32           `json:"id"`
-	Name       string          `json:"name"`
-	Provider   string          `json:"provider"`
-	GroupID    int32           `json:"group_id"`
-	Definition json.RawMessage `json:"definition"`
-	CreatedAt  time.Time       `json:"created_at"`
-	UpdatedAt  time.Time       `json:"updated_at"`
+	ID          int32           `json:"id"`
+	Name        string          `json:"name"`
+	Provider    string          `json:"provider"`
+	GroupID     int32           `json:"group_id"`
+	Description string          `json:"description"`
+	Definition  json.RawMessage `json:"definition"`
+	CreatedAt   time.Time       `json:"created_at"`
+	UpdatedAt   time.Time       `json:"updated_at"`
 }
 
 type SessionStore struct {

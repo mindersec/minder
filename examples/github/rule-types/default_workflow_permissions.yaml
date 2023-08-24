@@ -1,13 +1,14 @@
 ---
-# verifies the default workflow permissions granted to the GITHUB_TOKEN
-# when running workflows in a repository, as well as if GitHub Actions
-# can submit approving pull request reviews.
 version: v1
 type: rule-type
 name: default_workflow_permissions
 context:
   provider: github
   group: Root Group
+description: |
+  Verifies the default workflow permissions granted to the GITHUB_TOKEN
+  when running workflows in a repository, as well as if GitHub Actions
+  can submit approving pull request reviews.
 def:
   in_entity: repository
   rule_schema:

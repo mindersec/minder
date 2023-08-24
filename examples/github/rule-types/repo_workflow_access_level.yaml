@@ -1,12 +1,13 @@
 ---
-# Verifies the level of access that workflows outside of the repository have
-# to actions and reusable workflows in the repository. This only applies to private repositories.
 version: v1
 type: rule-type
 name: repo_workflow_access_level
 context:
   provider: github
   group: Root Group
+description: |
+  Verifies the level of access that workflows outside of the repository have
+  to actions and reusable workflows in the repository. This only applies to private repositories.
 def:
   # Defines the section of the pipeline the rule will appear in.
   # This will affect the template that is used to render multiple parts

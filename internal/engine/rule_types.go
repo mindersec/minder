@@ -253,7 +253,8 @@ func RuleTypePBFromDB(rt *db.RuleType, ectx *EntityContext) (*pb.RuleType, error
 			Provider: ectx.GetProvider(),
 			Group:    &gname,
 		},
-		Def: def,
+		Description: rt.Description,
+		Def:         def,
 	}, nil
 }
 
