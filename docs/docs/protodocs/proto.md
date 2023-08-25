@@ -244,6 +244,7 @@
 | version_sha | [string](#string) |  |  |
 | tag | [string](#string) |  |  |
 | package_url | [string](#string) |  |  |
+| visibility | [string](#string) |  |  |
 
 
 

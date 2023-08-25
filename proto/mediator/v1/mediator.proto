@@ -96,6 +96,7 @@ message ArtifactEventPayload {
     string version_sha = 7;
     string tag = 8;
     string package_url = 9;
+    string visibility = 10;
 }
 
 message ArtifactVersion {
