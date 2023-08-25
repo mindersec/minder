@@ -21,15 +21,20 @@ import (
 	"errors"
 	"fmt"
 	"log"
+	"sort"
 	"strconv"
+	"strings"
+	"time"
 
 	"github.com/ThreeDotsLabs/watermill/message"
 	"github.com/go-playground/validator/v10"
+	"google.golang.org/protobuf/encoding/protojson"
 	"google.golang.org/protobuf/types/known/timestamppb"
 
 	evalerrors "github.com/stacklok/mediator/internal/engine/errors"
 	"github.com/stacklok/mediator/internal/events"
 	"github.com/stacklok/mediator/internal/util"
+	"github.com/stacklok/mediator/pkg/container"
 	"github.com/stacklok/mediator/pkg/crypto"
 	"github.com/stacklok/mediator/pkg/db"
 	pb "github.com/stacklok/mediator/pkg/generated/protobuf/go/mediator/v1"
@@ -325,9 +330,134 @@ func extractArtifactFromPayload(ctx context.Context, payload map[string]any) (*p
 		Tag:          tag.(string),
 		PackageUrl:   package_url.(string),
 	}
-	return artifact, nil
 
+	return artifact, nil
 }
+
+func extractArtifactVersionFromPayload(ctx context.Context, payload map[string]any) (*pb.ArtifactVersion, error) {
+	packageVersionId, err := util.JQGetValuesFromAccessor(ctx, ".package.package_version.id", payload)
+	if err != nil {
+		return nil, err
+	}
+	packageVersionSha, err := util.JQGetValuesFromAccessor(ctx, ".package.package_version.version", payload)
+	if err != nil {
+		return nil, err
+	}
+	tag, err := util.JQGetValuesFromAccessor(ctx, ".package.package_version.container_metadata.tag.name", payload)
+	if err != nil {
+		return nil, err
+	}
+
+	version := &pb.ArtifactVersion{
+		VersionId:             int64(packageVersionId.(float64)),
+		Tags:                  []string{tag.(string)},
+		Sha:                   packageVersionSha.(string),
+		SignatureVerification: nil, // will be filled later by a call to the container registry
+		GithubWorkflow:        nil, // will be filled later by a call to the container registry
+	}
+
+	return version, nil
+}
+
+func artifactVersionUpstreamInfo(
+	ctx context.Context,
+	cli ghclient.RestAPI,
+	payload map[string]any,
+	artifactOwnerLogin, artifactName string,
+	version *pb.ArtifactVersion,
+) (*pb.ArtifactVersion, error) {
+	packageVersionName, err := util.JQGetValuesFromAccessor(ctx, ".package.package_version.name", payload)
+	if err != nil {
+		return nil, fmt.Errorf("error getting package version name: %w", err)
+	}
+
+	// for some reason the createdAt field is not populated in the payload, but instead set to the default zero value
+	isOrg := cli.GetOwner() != ""
+	ghVersion, err := cli.GetPackageVersionById(ctx, isOrg, artifactOwnerLogin, CONTAINER_TYPE, artifactName, version.VersionId)
+	if err != nil {
+		return nil, fmt.Errorf("error getting package version from repository: %w", err)
+	}
+
+	tags := ghVersion.Metadata.Container.Tags
+	if isSignature(tags) {
+		// we don't care about signatures
+		return nil, nil
+	}
+	sort.Strings(tags)
+
+	// now get information for signature and workflow
+	sigInfo, workflowInfo, err := container.GetArtifactSignatureAndWorkflowInfo(
+		ctx, cli, artifactOwnerLogin, artifactName, packageVersionName.(string))
+	if errors.Is(err, container.ErrSigValidation) {
+		return nil, err
+	} else if errors.Is(err, container.ErrProtoParse) {
+		// log error and just fill an empty json
+		return nil, err
+	} else if err != nil {
+		return nil, err
+	}
+
+	ghWorkflow := &pb.GithubWorkflow{}
+	if err := protojson.Unmarshal(workflowInfo, ghWorkflow); err != nil {
+		return nil, err
+	}
+
+	sigVerification := &pb.SignatureVerification{}
+	if err := protojson.Unmarshal(sigInfo, sigVerification); err != nil {
+		return nil, err
+	}
+
+	version.SignatureVerification = sigVerification
+	version.GithubWorkflow = ghWorkflow
+	version.Tags = tags
+	if ghVersion.CreatedAt != nil {
+		version.CreatedAt = timestamppb.New(*ghVersion.CreatedAt.GetTime())
+	}
+	return version, nil
+}
+
+func gatherArtifactInfo(
+	ctx context.Context,
+	cli ghclient.RestAPI,
+	payload map[string]any,
+) (*pb.ArtifactEventPayload, error) {
+	artifact, err := extractArtifactFromPayload(ctx, payload)
+	if err != nil {
+		return nil, fmt.Errorf("error extracting artifact from payload: %w", err)
+	}
+
+	// we also need to fill in the visibility which is not in the payload
+	isOrg := cli.GetOwner() != ""
+	ghArtifact, err := cli.GetPackageByName(ctx, isOrg, artifact.OwnerLogin, CONTAINER_TYPE, artifact.ArtifactName)
+	if err != nil {
+		return nil, fmt.Errorf("error extracting artifact from repo: %w", err)
+	}
+
+	artifact.Visibility = *ghArtifact.Visibility
+	return artifact, nil
+}
+
+func gatherArtifactVersionInfo(
+	ctx context.Context,
+	cli ghclient.RestAPI,
+	payload map[string]any,
+	artifactOwnerLogin, artifactName string,
+) (*pb.ArtifactVersion, error) {
+	version, err := extractArtifactVersionFromPayload(ctx, payload)
+	if err != nil {
+		return nil, fmt.Errorf("error extracting artifact version from payload: %w", err)
+	}
+
+	// not all information is in the payload, we need to get it from the container registry
+	// and/or GH API
+	version, err = artifactVersionUpstreamInfo(ctx, cli, payload, artifactOwnerLogin, artifactName, version)
+	if err != nil {
+		return nil, fmt.Errorf("error getting upstream information for artifact version: %w", err)
+	}
+
+	return version, nil
+}
+
 func (e *Executor) handleArtifactPublishedEvent(ctx context.Context, prov string, payload map[string]any) error {
 	// we need to have information about package and repository
 	if payload["package"] == nil || payload["repository"] == nil {
@@ -338,7 +468,7 @@ func (e *Executor) handleArtifactPublishedEvent(ctx context.Context, prov string
 	// extract information about repository so we can identity the group and associated rules
 	dbrepo, err := e.getRepoInformationFromPayload(ctx, prov, payload)
 	if err != nil {
-		return err
+		return fmt.Errorf("error getting repo information from payload: %w", err)
 	}
 	g := dbrepo.GroupID
 
@@ -361,7 +491,27 @@ func (e *Executor) handleArtifactPublishedEvent(ctx context.Context, prov string
 		Provider: prov,
 	}
 
-	// Get policies relevant to group
+	// make sure that the artifact and its version are stored in the database
+	artifact, err := gatherArtifactInfo(ctx, cli, payload)
+	if err != nil {
+		return fmt.Errorf("error gatherinfo artifact info: %w", err)
+	}
+
+	version, err := gatherArtifactVersionInfo(ctx, cli, payload, artifact.OwnerLogin, artifact.ArtifactName)
+	if err != nil {
+		return fmt.Errorf("error extracting artifact from payload: %w", err)
+	}
+
+	if version == nil {
+		// no point in storing and evaluating just the .sig
+		return nil
+	}
+
+	dbArtifact, _, err := e.upsertVersionedArtifact(ctx, dbrepo.ID, artifact, version)
+	if err != nil {
+		return fmt.Errorf("error upserting artifact from payload: %w", err)
+	}
+
 	dbpols, err := e.querier.ListPoliciesByGroupID(ctx, g)
 	if err != nil {
 		return fmt.Errorf("error getting policies: %w", err)
@@ -580,6 +730,72 @@ func (e *Executor) buildClient(
 	}
 
 	return cli, nil
+}
+
+func (e *Executor) upsertVersionedArtifact(
+	ctx context.Context,
+	repoID int32,
+	artifact *pb.ArtifactEventPayload,
+	version *pb.ArtifactVersion,
+) (*db.Artifact, *db.ArtifactVersion, error) {
+	sigInfo, err := protojson.Marshal(version.SignatureVerification)
+	if err != nil {
+		return nil, nil, fmt.Errorf("error marshalling signature verification: %w", err)
+	}
+
+	workflowInfo, err := protojson.Marshal(version.GithubWorkflow)
+	if err != nil {
+		return nil, nil, fmt.Errorf("error marshalling workflow info: %w", err)
+	}
+
+	tx, err := e.querier.BeginTransaction()
+	if err != nil {
+		return nil, nil, fmt.Errorf("error starting transaction: %w", err)
+	}
+	defer tx.Rollback()
+
+	thirtyDaysAgo := time.Now().AddDate(0, 0, -30)
+	err = e.querier.DeleteOldArtifactVersions(ctx,
+		db.DeleteOldArtifactVersionsParams{ArtifactID: int32(artifact.ArtifactId), CreatedAt: thirtyDaysAgo})
+	if err != nil {
+		// just log error, we will not remove older for now
+		log.Printf("error removing older artifact versions: %v", err)
+	}
+
+	qtx := e.querier.GetQuerierWithTransaction(tx)
+
+	dbArtifact, err := qtx.UpsertArtifact(ctx, db.UpsertArtifactParams{
+		RepositoryID:       repoID,
+		ArtifactName:       artifact.GetArtifactName(),
+		ArtifactType:       artifact.GetArtifactType(),
+		ArtifactVisibility: artifact.Visibility,
+	})
+	if err != nil {
+		return nil, nil, fmt.Errorf("error upserting artifact: %w", err)
+	}
+
+	dbVersion, err := qtx.UpsertArtifactVersion(ctx, db.UpsertArtifactVersionParams{
+		ArtifactID: dbArtifact.ID,
+		Version:    version.VersionId,
+		Tags: sql.NullString{
+			String: strings.Join(version.Tags, ","),
+			Valid:  true,
+		},
+		Sha:                   version.Sha,
+		CreatedAt:             version.CreatedAt.AsTime(),
+		SignatureVerification: sigInfo,
+		GithubWorkflow:        workflowInfo,
+	})
+	if err != nil {
+		return nil, nil, fmt.Errorf("error upserting artifact version: %w", err)
+	}
+
+	err = tx.Commit()
+	if err != nil {
+		return nil, nil, fmt.Errorf("error committing transaction: %w", err)
+	}
+
+	return &dbArtifact, &dbVersion, nil
 }
 
 type createOrUpdateEvalStatusParams struct {
