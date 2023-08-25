@@ -17,6 +17,7 @@ package eval
 
 import (
 	"context"
+	"encoding/json"
 	"fmt"
 	"reflect"
 
@@ -75,8 +76,15 @@ func (jqe *JQEvaluator) Eval(ctx context.Context, pol map[string]any, obj any) e
 
 		// Deep compare
 		if !reflect.DeepEqual(policyVal, dataVal) {
-			return NewErrEvaluationFailed("data does not match policy: for assertion %d, got %v, want %v",
-				idx, dataVal, policyVal)
+			msg := fmt.Sprintf("data does not match policy: for assertion, got %v, want %v",
+				dataVal, policyVal)
+
+			marshalledAssertion, err := json.MarshalIndent(a, "", "  ")
+			if err == nil {
+				msg = fmt.Sprintf("%s\nassertion: %s", msg, string(marshalledAssertion))
+			}
+
+			return NewErrEvaluationFailed(msg)
 		}
 	}
 
