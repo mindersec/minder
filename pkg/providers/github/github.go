@@ -58,6 +58,7 @@ type RestAPI interface {
 	GetPackageByName(context.Context, bool, string, string, string) (*github.Package, error)
 	GetPackageVersions(context.Context, bool, string, string, string) ([]*github.PackageVersion, error)
 	GetPackageVersionByTag(context.Context, bool, string, string, string, string) (*github.PackageVersion, error)
+	GetPackageVersionById(context.Context, bool, string, string, string, int64) (*github.PackageVersion, error)
 	GetToken() string
 	GetOwner() string
 
