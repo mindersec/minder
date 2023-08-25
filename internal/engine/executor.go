@@ -27,7 +27,9 @@ import (
 	"github.com/go-playground/validator/v10"
 	"google.golang.org/protobuf/types/known/timestamppb"
 
+	"github.com/stacklok/mediator/internal/engine/eval"
 	"github.com/stacklok/mediator/internal/events"
+	"github.com/stacklok/mediator/internal/util"
 	"github.com/stacklok/mediator/pkg/crypto"
 	"github.com/stacklok/mediator/pkg/db"
 	pb "github.com/stacklok/mediator/pkg/generated/protobuf/go/mediator/v1"
@@ -269,39 +271,39 @@ func (e *Executor) handleWebhookEvent(msg *message.Message) error {
 }
 
 func extractArtifactFromPayload(ctx context.Context, payload map[string]any) (*pb.ArtifactEventPayload, error) {
-	artifact_id, err := JQGetValuesFromAccessor(ctx, ".package.id", payload)
+	artifact_id, err := util.JQGetValuesFromAccessor(ctx, ".package.id", payload)
 	if err != nil {
 		return nil, err
 	}
-	artifact_name, err := JQGetValuesFromAccessor(ctx, ".package.name", payload)
+	artifact_name, err := util.JQGetValuesFromAccessor(ctx, ".package.name", payload)
 	if err != nil {
 		return nil, err
 	}
-	artifact_type, err := JQGetValuesFromAccessor(ctx, ".package.package_type", payload)
+	artifact_type, err := util.JQGetValuesFromAccessor(ctx, ".package.package_type", payload)
 	if err != nil {
 		return nil, err
 	}
-	owner_login, err := JQGetValuesFromAccessor(ctx, ".package.owner.login", payload)
+	owner_login, err := util.JQGetValuesFromAccessor(ctx, ".package.owner.login", payload)
 	if err != nil {
 		return nil, err
 	}
-	owner_type, err := JQGetValuesFromAccessor(ctx, ".package.owner.type", payload)
+	owner_type, err := util.JQGetValuesFromAccessor(ctx, ".package.owner.type", payload)
 	if err != nil {
 		return nil, err
 	}
-	package_version_id, err := JQGetValuesFromAccessor(ctx, ".package.package_version.id", payload)
+	package_version_id, err := util.JQGetValuesFromAccessor(ctx, ".package.package_version.id", payload)
 	if err != nil {
 		return nil, err
 	}
-	package_version_sha, err := JQGetValuesFromAccessor(ctx, ".package.package_version.version", payload)
+	package_version_sha, err := util.JQGetValuesFromAccessor(ctx, ".package.package_version.version", payload)
 	if err != nil {
 		return nil, err
 	}
-	tag, err := JQGetValuesFromAccessor(ctx, ".package.package_version.container_metadata.tag.name", payload)
+	tag, err := util.JQGetValuesFromAccessor(ctx, ".package.package_version.container_metadata.tag.name", payload)
 	if err != nil {
 		return nil, err
 	}
-	package_url, err := JQGetValuesFromAccessor(ctx, ".package.package_version.package_url", payload)
+	package_url, err := util.JQGetValuesFromAccessor(ctx, ".package.package_version.package_url", payload)
 	if err != nil {
 		return nil, err
 	}
@@ -606,7 +608,7 @@ func parseRepoID(repoID any) (int32, error) {
 }
 
 func errorAsEvalStatus(err error) db.EvalStatusTypes {
-	if errors.Is(err, ErrEvaluationFailed) {
+	if errors.Is(err, eval.ErrEvaluationFailed) {
 		return db.EvalStatusTypesFailure
 	} else if err != nil {
 		return db.EvalStatusTypesError

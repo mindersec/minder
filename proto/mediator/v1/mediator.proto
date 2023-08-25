@@ -1585,48 +1585,52 @@ message RuleType {
         // rule_schema is the schema of the rule. This is expressed in JSON Schema.
         google.protobuf.Struct rule_schema = 2;
 
-        // DataEval defines how the data is evaluated.
-        message DataEval {
-            // type is the type of the data evaluation.
-            // we currently support rest.
+        // param_schema is the schema of the parameters that are passed to the rule.
+        // This is expressed in JSON Schema.
+        optional google.protobuf.Struct param_schema = 3;
+
+        // Ingest defines how the data is ingested.
+        message Ingest {
+            // type is the type of the data ingestion.
+            // we currently support rest and builtin.
             string type = 1;
 
-            // rest is the rest data evaluation.
+            // rest is the rest data ingestion.
             // this is only used if the type is rest.
             optional RestType rest = 3;
 
-            // builtin is the builtin data evaluation.
+            // builtin is the builtin data ingestion.
             optional BuiltinType builtin = 4;
 
-            // key_type is the type of the key for each data item.
-            // This is used to index the data.
-            // Currently only `jq` is supported.
-            string key_type = 5;
+        }
+        Ingest ingest = 4;
 
-            // DataEvalDef defines the data evaluation definition.
-            // This pertains to the way we traverse data from the upstream
-            // endpoint and how we compare it to the rule.
-            // the type is the way we traverse and evaluate the data from the
-            // upstream endpoint. The def is the definition of the data evaluation.
-            // e.g. the actual jq expression.
-            message DataEvalDef {
-                // type is the type of the data evaluation.
-                string type = 1;
+        // Eval defines the data evaluation definition.
+        // This pertains to the way we traverse data from the upstream
+        // endpoint and how we compare it to the rule.
+        message Eval {
+            // type is the type of the data evaluation.
+            // Right now only `jq` is supported as a driver
+            string type = 1;
 
-                // def is the definition of the data evaluation.
-                string def = 2;
+            message JQComparison {
+                message operator {
+                    string def = 1;
+                }
+
+                // Ingested points to the data retrieved in the `ingest` section
+                operator ingested = 1;
+
+                // Policy points to the policy itself.
+                operator policy = 2;
             }
 
-            // data is the data evaluation definition.
-            // each key is a piece of data coming from the policy
-            // to be evaluated. The value is the definition of the data evaluation.
-            map<string, DataEvalDef> data = 6;
+            // jq is only used if the `jq` type is selected.
+            // It defines the comparisons that are made between
+            // the ingested data and the policy rule.
+            repeated JQComparison jq = 2;
         }
-        DataEval data_eval = 3;
-
-        // param_schema is the schema of the parameters that are passed to the rule.
-        // This is expressed in JSON Schema.
-        optional google.protobuf.Struct param_schema = 4;
+        Eval eval = 5;
     }
 
     // def is the definition of the rule type.
