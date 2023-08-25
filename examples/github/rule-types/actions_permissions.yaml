@@ -24,8 +24,8 @@ def:
           - "all"
           - "local_only"
           - "selected"
-  # Defines the configuration for both ingesting and evaluating the rule.
-  data_eval:
+  # Defines the configuration for ingesting data relevant for the rule
+  ingest:
     type: rest
     rest:
       # This is the path to the data source. Given that this will evaluate
@@ -35,15 +35,16 @@ def:
       endpoint: "/repos/{{.Entity.Owner}}/{{.Entity.Repository}}/actions/permissions"
       # This is the method to use to retrieve the data. It should already default to JSON
       parse: json
-    key_type: jq
-    data:
-      # This key is meant to denote where the info will be
-      # persisted in the aspect itself.
-      ".enabled":
-        # This denotes where the information will be retrieved from
-        # the data source.
-        type: jq
-        def: ".enabled"
-      ".allowed_actions":
-        type: jq
-        def: ".allowed_actions"
+  # Defines the configuration for evaluating data ingested against the given policy
+  eval:
+    type: jq
+    jq:
+      # Ingested points to the data retrieved in the `ingest` section
+      - ingested:
+          def: ".enabled"
+        policy:
+          def: ".enabled"
+      - ingested:
+          def: ".allowed_actions"
+        policy:
+          def: ".allowed_actions"

@@ -26,16 +26,23 @@ def:
     required:
       - default_workflow_permissions
       - can_approve_pull_request_reviews
-  data_eval:
+  # Defines the configuration for ingesting data relevant for the rule
+  ingest:
     type: rest
     rest:
       endpoint: "/repos/{{.Entity.Owner}}/{{.Entity.Repository}}/actions/permissions/workflow"
       parse: json
-    key_type: jq
-    data:
-      ".default_workflow_permissions":
-        type: jq
-        def: ".default_workflow_permissions"
-      ".can_approve_pull_request_reviews":
-        type: jq
-        def: ".can_approve_pull_request_reviews"
+  # Defines the configuration for evaluating data ingested against the given policy
+  eval:
+    type: jq
+    jq:
+      # Ingested points to the data retrieved in the `ingest` section
+      - ingested:
+          def: ".default_workflow_permissions"
+        # policy points to the policy itself.
+        policy:
+          def: ".default_workflow_permissions"
+      - ingested:
+          def: ".can_approve_pull_request_reviews"
+        policy:
+          def: ".can_approve_pull_request_reviews"
