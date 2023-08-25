@@ -41,10 +41,6 @@ Data science tasks:
 - [ ] Link to issue 1
 - [ ] Link to issue 2
 
-SaaS Eng Tasks:
-- [ ] Link to issue 1
-- [ ] Link to issue 2
-
 **Additional context**
 
 - [Link to any additional docs as needed]
