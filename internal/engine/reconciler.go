@@ -17,14 +17,13 @@ package engine
 import (
 	"context"
 	"database/sql"
-	"encoding/json"
+	"errors"
 	"fmt"
 	"log"
 	"sort"
 	"strings"
 	"time"
 
-	"github.com/stacklok/mediator/internal/util"
 	"github.com/stacklok/mediator/pkg/container"
 	"github.com/stacklok/mediator/pkg/db"
 )
@@ -110,34 +109,18 @@ func (e *Executor) HandleArtifactsReconcilerEvent(ctx context.Context, prov stri
 			sort.Strings(tags)
 			tagNames := strings.Join(tags, ",")
 
-			// now get information for signature
-			var sigInfo json.RawMessage
-			var workflowInfo json.RawMessage
-
-			imageRef := fmt.Sprintf("%s/%s/%s@%s", container.REGISTRY, *artifact.GetOwner().Login, artifact.GetName(), version.GetName())
-			signature_verification, github_workflow, err := container.ValidateSignature(ctx,
-				cli.GetToken(), *artifact.GetOwner().Login, imageRef)
-			if err != nil {
+			// now get information for signature and workflow
+			sigInfo, workflowInfo, err := container.GetArtifactSignatureAndWorkflowInfo(
+				ctx, cli, *artifact.GetOwner().Login, artifact.GetName(), version.GetName())
+			if errors.Is(err, container.ErrSigValidation) {
 				// just log error and continue
 				log.Printf("error validating signature: %v", err)
 				continue
-			}
-
-			sig, err := util.GetBytesFromProto(signature_verification)
-			if err != nil {
+			} else if errors.Is(err, container.ErrProtoParse) {
 				// log error and just pass an empty json
 				log.Printf("error getting bytes from proto: %v", err)
-				sigInfo = json.RawMessage("{}")
-			} else {
-				sigInfo = json.RawMessage(sig)
-			}
-			work, err := util.GetBytesFromProto(github_workflow)
-			if err != nil {
-				// log error and just pass an empty json
-				log.Printf("error getting bytes from proto: %v", err)
-				workflowInfo = json.RawMessage("{}")
-			} else {
-				workflowInfo = json.RawMessage(work)
+			} else if err != nil {
+				return fmt.Errorf("error getting signature and workflow info: %w", err)
 			}
 
 			_, err = e.querier.UpsertArtifactVersion(ctx, db.UpsertArtifactVersionParams{ArtifactID: newArtifact.ID, Version: *version.ID,

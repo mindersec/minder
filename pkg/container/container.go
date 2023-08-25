@@ -21,6 +21,7 @@ import (
 	"encoding/asn1"
 	"encoding/json"
 	"encoding/pem"
+	"errors"
 	"fmt"
 	"log"
 	"time"
@@ -39,7 +40,9 @@ import (
 	"google.golang.org/protobuf/proto"
 	"google.golang.org/protobuf/types/known/timestamppb"
 
+	"github.com/stacklok/mediator/internal/util"
 	pb "github.com/stacklok/mediator/pkg/generated/protobuf/go/mediator/v1"
+	ghclient "github.com/stacklok/mediator/pkg/providers/github"
 )
 
 // REGISTRY is the default registry
@@ -52,6 +55,54 @@ func (g githubAuthenticator) Authorization() (*authn.AuthConfig, error) {
 		Username: g.username,
 		Password: g.password,
 	}, nil
+}
+
+func artifactImageRef(registry, owner, artifactName, versionName string) string {
+	if registry == "" {
+		registry = REGISTRY
+	}
+	return fmt.Sprintf("%s/%s/%s@%s", registry, owner, artifactName, versionName)
+}
+
+var (
+	// ErrSigValidation is returned when signature validation fails
+	ErrSigValidation = errors.New("error validating signature")
+	// ErrProtoParse is returned when parsing the protobuf representation of signature or workflow fails
+	ErrProtoParse = errors.New("error getting bytes from proto")
+)
+
+// GetArtifactSignatureAndWorkflowInfo returns the signature and workflow information as raw JSON for a given artifact
+func GetArtifactSignatureAndWorkflowInfo(
+	ctx context.Context,
+	cli ghclient.RestAPI,
+	ownerLogin, artifactName, versionName string,
+) (sigInfo json.RawMessage, workflowInfo json.RawMessage, err error) {
+	imageRef := artifactImageRef("", ownerLogin, artifactName, versionName)
+	signatureVerification, githubWorkflow, validateErr := ValidateSignature(ctx,
+		cli.GetToken(), ownerLogin, imageRef)
+	if validateErr != nil {
+		err = ErrSigValidation
+		return
+	}
+
+	sig, parseErr := util.GetBytesFromProto(signatureVerification)
+	if parseErr != nil {
+		sigInfo = json.RawMessage("{}")
+		err = ErrProtoParse
+		// don't return early, let the caller handle the error after parsing the rest
+	} else {
+		sigInfo = json.RawMessage(sig)
+	}
+
+	work, parseErr := util.GetBytesFromProto(githubWorkflow)
+	if parseErr != nil {
+		err = ErrProtoParse
+		workflowInfo = json.RawMessage("{}")
+	} else {
+		workflowInfo = json.RawMessage(work)
+	}
+
+	return
 }
 
 // ValidateSignature returns information about signature validation of a package
