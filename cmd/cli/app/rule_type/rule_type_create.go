@@ -17,12 +17,11 @@ package rule_type
 
 import (
 	"fmt"
-	"io"
 	"os"
-	"path/filepath"
 
 	"github.com/spf13/cobra"
 	"github.com/spf13/viper"
+	"golang.org/x/exp/slices"
 
 	"github.com/stacklok/mediator/internal/engine"
 	"github.com/stacklok/mediator/internal/util"
@@ -41,58 +40,79 @@ within a mediator control plane.`,
 		}
 	},
 	RunE: func(cmd *cobra.Command, args []string) error {
-		f := util.GetConfigValue("file", "file", cmd, "").(string)
-
-		var err error
-
-		var preader io.Reader
-
-		if f == "" {
-			return fmt.Errorf("error: file must be set")
+		files, err := cmd.Flags().GetStringArray("file")
+		if err != nil {
+			return fmt.Errorf("error getting file flag: %w", err)
 		}
 
-		if f == "-" {
-			preader = os.Stdin
-		} else {
-			f = filepath.Clean(f)
-			fopen, err := os.Open(f)
-			if err != nil {
-				return fmt.Errorf("error opening file: %w", err)
-			}
-
-			defer fopen.Close()
-
-			preader = fopen
+		if err := validateFilesArg(files); err != nil {
+			return fmt.Errorf("error validating file arg: %w", err)
 		}
 
 		conn, err := util.GrpcForCommand(cmd)
-		util.ExitNicelyOnError(err, "Error getting grpc connection")
+		if err != nil {
+			return fmt.Errorf("error getting grpc connection: %w", err)
+		}
 		defer conn.Close()
 
 		client := pb.NewPolicyServiceClient(conn)
 		ctx, cancel := util.GetAppContext()
 		defer cancel()
 
-		r, err := engine.ParseRuleType(preader)
+		expfiles, err := util.ExpandFileArgs(files)
 		if err != nil {
-			return fmt.Errorf("error parsing rule type: %w", err)
+			return fmt.Errorf("error expanding file args: %w", err)
 		}
 
-		// create a policy
-		resp, err := client.CreateRuleType(ctx, &pb.CreateRuleTypeRequest{
-			RuleType: r,
-		})
-		if err != nil {
-			return fmt.Errorf("error creating rule type: %w", err)
+		for _, f := range expfiles {
+			preader, closer, err := util.OpenFileArg(f, cmd.InOrStdin())
+			if err != nil {
+				return fmt.Errorf("error opening file arg: %w", err)
+			}
+			defer closer()
+
+			r, err := engine.ParseRuleType(preader)
+			if err != nil {
+				return fmt.Errorf("error parsing rule type: %w", err)
+			}
+
+			// create a rule
+			resp, err := client.CreateRuleType(ctx, &pb.CreateRuleTypeRequest{
+				RuleType: r,
+			})
+			if err != nil {
+				return fmt.Errorf("error creating rule type: %w", err)
+			}
+			out, err := util.GetJsonFromProto(resp)
+			if err != nil {
+				return fmt.Errorf("error getting json from proto: %w", err)
+			}
+
+			fmt.Println(out)
 		}
-		out, err := util.GetJsonFromProto(resp)
-		util.ExitNicelyOnError(err, "Error getting json from proto")
-		fmt.Println(out)
+
 		return nil
 	},
 }
 
+func validateFilesArg(files []string) error {
+	if files == nil {
+		return fmt.Errorf("error: file must be set")
+	}
+
+	if slices.Contains(files, "") {
+		return fmt.Errorf("error: file must be set")
+	}
+
+	if slices.Contains(files, "-") && len(files) > 1 {
+		return fmt.Errorf("error: cannot use stdin with other files")
+	}
+
+	return nil
+}
+
 func init() {
 	ruleTypeCmd.AddCommand(RuleType_createCmd)
-	RuleType_createCmd.Flags().StringP("file", "f", "", "Path to the YAML defining the rule type (or - for stdin)")
+	RuleType_createCmd.Flags().StringArrayP("file", "f", []string{},
+		"Path to the YAML defining the rule type (or - for stdin). Can be specified multiple times. Can be a directory.")
 }
