@@ -212,8 +212,8 @@ CREATE TABLE rule_evaluation_status (
     eval_status eval_status_types NOT NULL,
     -- polimorphic references. A status may be associated with a repository, build environment or artifact
     repository_id INTEGER REFERENCES repositories(id) ON DELETE CASCADE,
+    artifact_id INTEGER REFERENCES artifacts(id) ON DELETE CASCADE,
     -- These will be added later
-    -- artifact_id INTEGER REFERENCES artifacts(id) ON DELETE CASCADE,
     -- build_environment_id INTEGER REFERENCES build_environments(id) ON DELETE CASCADE,
     details TEXT NOT NULL,
     last_updated TIMESTAMP NOT NULL DEFAULT NOW()
@@ -240,7 +240,7 @@ CREATE UNIQUE INDEX users_organization_id_username_lower_idx ON users (organizat
 CREATE UNIQUE INDEX repositories_repo_id_idx ON repositories(repo_id);
 CREATE UNIQUE INDEX policies_group_id_policy_name_idx ON policies(provider, group_id, name);
 CREATE UNIQUE INDEX rule_type_idx ON rule_type(provider, group_id, name);
-CREATE UNIQUE INDEX rule_evaluation_status_results_idx ON rule_evaluation_status(policy_id, repository_id, entity, rule_type_id);
+CREATE UNIQUE INDEX rule_evaluation_status_results_idx ON rule_evaluation_status(policy_id, repository_id, COALESCE(artifact_id, -1), entity, rule_type_id);
 CREATE UNIQUE INDEX artifact_name_lower_idx ON artifacts (repository_id, LOWER(artifact_name));
 CREATE UNIQUE INDEX artifact_versions_idx ON artifact_versions (artifact_id, sha);
 

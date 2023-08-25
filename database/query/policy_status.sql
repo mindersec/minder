@@ -18,20 +18,22 @@ INSERT INTO rule_evaluation_status (
 INSERT INTO rule_evaluation_status (
     policy_id,
     repository_id,
+    artifact_id,
     rule_type_id,
     entity,
     eval_status,
     details,
     last_updated
-) VALUES ($1, $2, $3, $4, $5, $6, NOW())
-ON CONFLICT(policy_id, repository_id, entity, rule_type_id) DO UPDATE SET
-    eval_status = $5,
-    details = $6,
+) VALUES ($1, $2, $3, $4, $5, $6, $7, NOW())
+ON CONFLICT(policy_id, repository_id, COALESCE(artifact_id, -1), entity, rule_type_id) DO UPDATE SET
+    eval_status = $6,
+    details = $7,
     last_updated = NOW()
 WHERE rule_evaluation_status.policy_id = $1
   AND rule_evaluation_status.repository_id = $2
-  AND rule_evaluation_status.rule_type_id = $3
-  AND rule_evaluation_status.entity = $4;
+  AND rule_evaluation_status.artifact_id = $3
+  AND rule_evaluation_status.rule_type_id = $4
+  AND rule_evaluation_status.entity = $5;
 
 -- name: GetPolicyStatusByIdAndGroup :one
 SELECT p.id, p.name, ps.policy_status, ps.last_updated FROM policy_status ps

@@ -221,6 +221,7 @@ type RuleEvaluationStatus struct {
 	RuleTypeID   int32           `json:"rule_type_id"`
 	EvalStatus   EvalStatusTypes `json:"eval_status"`
 	RepositoryID sql.NullInt32   `json:"repository_id"`
+	ArtifactID   sql.NullInt32   `json:"artifact_id"`
 	Details      string          `json:"details"`
 	LastUpdated  time.Time       `json:"last_updated"`
 }
