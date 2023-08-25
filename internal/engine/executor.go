@@ -219,8 +219,14 @@ func (e *Executor) handleReposInitEvent(ctx context.Context, prov string, evt *I
 					return err
 				}
 
-				return e.createOrUpdateEvalStatus(ctx, *pol.Id, dbrepo.ID, db.Entities(rt.Def.GetInEntity()), *rt.Id,
-					rte.Eval(ctx, repo, rule.Def.AsMap(), rule.Params.AsMap()))
+				return e.createOrUpdateEvalStatus(ctx, &createOrUpdateEvalStatusParams{
+					policyID:       *pol.Id,
+					repoID:         dbrepo.ID,
+					artifactID:     0,
+					ruleTypeEntity: db.Entities(rt.Def.GetInEntity()),
+					ruleTypeID:     *rt.Id,
+					evalErr:        rte.Eval(ctx, repo, rule.Def.AsMap(), rule.Params.AsMap()),
+				})
 			})
 			if err != nil {
 				return fmt.Errorf("error traversing rules for policy %d: %w", pol.Id, err)
@@ -374,13 +380,15 @@ func (e *Executor) handleArtifactPublishedEvent(ctx context.Context, prov string
 				return err
 			}
 
-			artifact, err := extractArtifactFromPayload(ctx, payload)
-			if err != nil {
-				return err
-			}
-
 			result := rte.Eval(ctx, artifact, rule.Def.AsMap(), rule.Params.AsMap())
-			return e.createOrUpdateEvalStatus(ctx, *pol.Id, dbrepo.ID, db.Entities(rt.Def.GetInEntity()), *rt.Id, result)
+			return e.createOrUpdateEvalStatus(ctx, &createOrUpdateEvalStatusParams{
+				policyID:       *pol.Id,
+				repoID:         dbrepo.ID,
+				artifactID:     dbArtifact.ID,
+				ruleTypeEntity: db.Entities(rt.Def.GetInEntity()),
+				ruleTypeID:     *rt.Id,
+				evalErr:        result,
+			})
 		})
 		if err != nil {
 			return fmt.Errorf("error traversing rules for policy %d: %w", pol.Id, err)
@@ -494,8 +502,14 @@ func (e *Executor) handleRepoEvent(ctx context.Context, prov string, payload map
 				return err
 			}
 
-			return e.createOrUpdateEvalStatus(ctx, *pol.Id, dbrepo.ID, db.Entities(rt.Def.GetInEntity()), *rt.Id,
-				rte.Eval(ctx, repo, rule.Def.AsMap(), rule.Params.AsMap()))
+			return e.createOrUpdateEvalStatus(ctx, &createOrUpdateEvalStatusParams{
+				policyID:       *pol.Id,
+				repoID:         dbrepo.ID,
+				artifactID:     0,
+				ruleTypeEntity: db.Entities(rt.Def.GetInEntity()),
+				ruleTypeID:     *rt.Id,
+				evalErr:        rte.Eval(ctx, repo, rule.Def.AsMap(), rule.Params.AsMap()),
+			})
 		})
 		if err != nil {
 			return fmt.Errorf("error traversing rules for policy %d: %w", pol.Id, err)
@@ -568,28 +582,42 @@ func (e *Executor) buildClient(
 	return cli, nil
 }
 
+type createOrUpdateEvalStatusParams struct {
+	policyID       int32
+	repoID         int32
+	artifactID     int32
+	ruleTypeEntity db.Entities
+	ruleTypeID     int32
+	evalErr        error
+}
+
 func (e *Executor) createOrUpdateEvalStatus(
 	ctx context.Context,
-	policyID int32,
-	repoID int32,
-	ruleTypeEntity db.Entities,
-	ruleTypeID int32,
-	evalErr error,
+	params *createOrUpdateEvalStatusParams,
 ) error {
-	if errors.Is(evalErr, evalerrors.ErrEvaluationSkipSilently) {
+	if errors.Is(params.evalErr, evalerrors.ErrEvaluationSkipSilently) {
 		return nil
 	}
 
+	var sqlArtifactID sql.NullInt32
+	if params.artifactID > 0 {
+		sqlArtifactID = sql.NullInt32{
+			Int32: params.artifactID,
+			Valid: true,
+		}
+	}
+
 	return e.querier.UpsertRuleEvaluationStatus(ctx, db.UpsertRuleEvaluationStatusParams{
-		PolicyID: policyID,
+		PolicyID: params.policyID,
 		RepositoryID: sql.NullInt32{
-			Int32: repoID,
+			Int32: params.repoID,
 			Valid: true,
 		},
-		Entity:     ruleTypeEntity,
-		RuleTypeID: ruleTypeID,
-		EvalStatus: errorAsEvalStatus(evalErr),
-		Details:    errorAsDetails(evalErr),
+		ArtifactID: sqlArtifactID,
+		Entity:     params.ruleTypeEntity,
+		RuleTypeID: params.ruleTypeID,
+		EvalStatus: errorAsEvalStatus(params.evalErr),
+		Details:    errorAsDetails(params.evalErr),
 	})
 }
 
