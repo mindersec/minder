@@ -40,10 +40,10 @@ func TestNewJQEvaluatorValid(t *testing.T) {
 			args: args{
 				assertions: []*pb.RuleType_Definition_Eval_JQComparison{
 					{
-						Policy: &pb.RuleType_Definition_Eval_JQComparisonOperator{
+						Policy: &pb.RuleType_Definition_Eval_JQComparison_Operator{
 							Def: ".",
 						},
-						Ingested: &pb.RuleType_Definition_Eval_JQComparisonOperator{
+						Ingested: &pb.RuleType_Definition_Eval_JQComparison_Operator{
 							Def: ".",
 						},
 					},
@@ -55,18 +55,18 @@ func TestNewJQEvaluatorValid(t *testing.T) {
 			args: args{
 				assertions: []*pb.RuleType_Definition_Eval_JQComparison{
 					{
-						Policy: &pb.RuleType_Definition_Eval_JQComparisonOperator{
+						Policy: &pb.RuleType_Definition_Eval_JQComparison_Operator{
 							Def: ".a",
 						},
-						Ingested: &pb.RuleType_Definition_Eval_JQComparisonOperator{
+						Ingested: &pb.RuleType_Definition_Eval_JQComparison_Operator{
 							Def: ".a",
 						},
 					},
 					{
-						Policy: &pb.RuleType_Definition_Eval_JQComparisonOperator{
+						Policy: &pb.RuleType_Definition_Eval_JQComparison_Operator{
 							Def: ".b",
 						},
-						Ingested: &pb.RuleType_Definition_Eval_JQComparisonOperator{
+						Ingested: &pb.RuleType_Definition_Eval_JQComparison_Operator{
 							Def: ".b",
 						},
 					},
@@ -114,7 +114,7 @@ func TestNewJQEvaluatorInvalid(t *testing.T) {
 				assertions: []*pb.RuleType_Definition_Eval_JQComparison{
 					{
 						Policy: nil,
-						Ingested: &pb.RuleType_Definition_Eval_JQComparisonOperator{
+						Ingested: &pb.RuleType_Definition_Eval_JQComparison_Operator{
 							Def: ".",
 						},
 					},
@@ -126,8 +126,8 @@ func TestNewJQEvaluatorInvalid(t *testing.T) {
 			args: args{
 				assertions: []*pb.RuleType_Definition_Eval_JQComparison{
 					{
-						Policy: &pb.RuleType_Definition_Eval_JQComparisonOperator{},
-						Ingested: &pb.RuleType_Definition_Eval_JQComparisonOperator{
+						Policy: &pb.RuleType_Definition_Eval_JQComparison_Operator{},
+						Ingested: &pb.RuleType_Definition_Eval_JQComparison_Operator{
 							Def: ".",
 						},
 					},
@@ -139,7 +139,7 @@ func TestNewJQEvaluatorInvalid(t *testing.T) {
 			args: args{
 				assertions: []*pb.RuleType_Definition_Eval_JQComparison{
 					{
-						Policy: &pb.RuleType_Definition_Eval_JQComparisonOperator{
+						Policy: &pb.RuleType_Definition_Eval_JQComparison_Operator{
 							Def: ".",
 						},
 						Ingested: nil,
@@ -152,10 +152,10 @@ func TestNewJQEvaluatorInvalid(t *testing.T) {
 			args: args{
 				assertions: []*pb.RuleType_Definition_Eval_JQComparison{
 					{
-						Policy: &pb.RuleType_Definition_Eval_JQComparisonOperator{
+						Policy: &pb.RuleType_Definition_Eval_JQComparison_Operator{
 							Def: ".",
 						},
-						Ingested: &pb.RuleType_Definition_Eval_JQComparisonOperator{},
+						Ingested: &pb.RuleType_Definition_Eval_JQComparison_Operator{},
 					},
 				},
 			},
@@ -165,16 +165,16 @@ func TestNewJQEvaluatorInvalid(t *testing.T) {
 			args: args{
 				assertions: []*pb.RuleType_Definition_Eval_JQComparison{
 					{
-						Policy: &pb.RuleType_Definition_Eval_JQComparisonOperator{
+						Policy: &pb.RuleType_Definition_Eval_JQComparison_Operator{
 							Def: ".",
 						},
 						Ingested: nil,
 					},
 					{
-						Policy: &pb.RuleType_Definition_Eval_JQComparisonOperator{
+						Policy: &pb.RuleType_Definition_Eval_JQComparison_Operator{
 							Def: ".",
 						},
-						Ingested: &pb.RuleType_Definition_Eval_JQComparisonOperator{
+						Ingested: &pb.RuleType_Definition_Eval_JQComparison_Operator{
 							Def: ".",
 						},
 					},
@@ -210,10 +210,10 @@ func TestValidJQEvals(t *testing.T) {
 			name: "valid single rule evaluates string",
 			assertions: []*pb.RuleType_Definition_Eval_JQComparison{
 				{
-					Policy: &pb.RuleType_Definition_Eval_JQComparisonOperator{
+					Policy: &pb.RuleType_Definition_Eval_JQComparison_Operator{
 						Def: ".simple",
 					},
-					Ingested: &pb.RuleType_Definition_Eval_JQComparisonOperator{
+					Ingested: &pb.RuleType_Definition_Eval_JQComparison_Operator{
 						Def: ".simple",
 					},
 				},
@@ -231,10 +231,10 @@ func TestValidJQEvals(t *testing.T) {
 			name: "valid single rule evaluates int",
 			assertions: []*pb.RuleType_Definition_Eval_JQComparison{
 				{
-					Policy: &pb.RuleType_Definition_Eval_JQComparisonOperator{
+					Policy: &pb.RuleType_Definition_Eval_JQComparison_Operator{
 						Def: ".simple",
 					},
-					Ingested: &pb.RuleType_Definition_Eval_JQComparisonOperator{
+					Ingested: &pb.RuleType_Definition_Eval_JQComparison_Operator{
 						Def: ".simple",
 					},
 				},
@@ -252,10 +252,10 @@ func TestValidJQEvals(t *testing.T) {
 			name: "valid single rule evaluates bool",
 			assertions: []*pb.RuleType_Definition_Eval_JQComparison{
 				{
-					Policy: &pb.RuleType_Definition_Eval_JQComparisonOperator{
+					Policy: &pb.RuleType_Definition_Eval_JQComparison_Operator{
 						Def: ".simple",
 					},
-					Ingested: &pb.RuleType_Definition_Eval_JQComparisonOperator{
+					Ingested: &pb.RuleType_Definition_Eval_JQComparison_Operator{
 						Def: ".simple",
 					},
 				},
@@ -273,10 +273,10 @@ func TestValidJQEvals(t *testing.T) {
 			name: "valid single rule evaluates array",
 			assertions: []*pb.RuleType_Definition_Eval_JQComparison{
 				{
-					Policy: &pb.RuleType_Definition_Eval_JQComparisonOperator{
+					Policy: &pb.RuleType_Definition_Eval_JQComparison_Operator{
 						Def: ".simple",
 					},
-					Ingested: &pb.RuleType_Definition_Eval_JQComparisonOperator{
+					Ingested: &pb.RuleType_Definition_Eval_JQComparison_Operator{
 						Def: ".simple",
 					},
 				},
@@ -322,10 +322,10 @@ func TestValidJQEvalsFailed(t *testing.T) {
 			name: "string doesn't match",
 			assertions: []*pb.RuleType_Definition_Eval_JQComparison{
 				{
-					Policy: &pb.RuleType_Definition_Eval_JQComparisonOperator{
+					Policy: &pb.RuleType_Definition_Eval_JQComparison_Operator{
 						Def: ".simple",
 					},
-					Ingested: &pb.RuleType_Definition_Eval_JQComparisonOperator{
+					Ingested: &pb.RuleType_Definition_Eval_JQComparison_Operator{
 						Def: ".simple",
 					},
 				},
@@ -343,10 +343,10 @@ func TestValidJQEvalsFailed(t *testing.T) {
 			name: "int doesn't match",
 			assertions: []*pb.RuleType_Definition_Eval_JQComparison{
 				{
-					Policy: &pb.RuleType_Definition_Eval_JQComparisonOperator{
+					Policy: &pb.RuleType_Definition_Eval_JQComparison_Operator{
 						Def: ".simple",
 					},
-					Ingested: &pb.RuleType_Definition_Eval_JQComparisonOperator{
+					Ingested: &pb.RuleType_Definition_Eval_JQComparison_Operator{
 						Def: ".simple",
 					},
 				},
@@ -364,10 +364,10 @@ func TestValidJQEvalsFailed(t *testing.T) {
 			name: "bool doesn't match",
 			assertions: []*pb.RuleType_Definition_Eval_JQComparison{
 				{
-					Policy: &pb.RuleType_Definition_Eval_JQComparisonOperator{
+					Policy: &pb.RuleType_Definition_Eval_JQComparison_Operator{
 						Def: ".simple",
 					},
-					Ingested: &pb.RuleType_Definition_Eval_JQComparisonOperator{
+					Ingested: &pb.RuleType_Definition_Eval_JQComparison_Operator{
 						Def: ".simple",
 					},
 				},
@@ -385,10 +385,10 @@ func TestValidJQEvalsFailed(t *testing.T) {
 			name: "type doesn't match",
 			assertions: []*pb.RuleType_Definition_Eval_JQComparison{
 				{
-					Policy: &pb.RuleType_Definition_Eval_JQComparisonOperator{
+					Policy: &pb.RuleType_Definition_Eval_JQComparison_Operator{
 						Def: ".simple",
 					},
-					Ingested: &pb.RuleType_Definition_Eval_JQComparisonOperator{
+					Ingested: &pb.RuleType_Definition_Eval_JQComparison_Operator{
 						Def: ".simple",
 					},
 				},
@@ -406,10 +406,10 @@ func TestValidJQEvalsFailed(t *testing.T) {
 			name: "array doesn't match",
 			assertions: []*pb.RuleType_Definition_Eval_JQComparison{
 				{
-					Policy: &pb.RuleType_Definition_Eval_JQComparisonOperator{
+					Policy: &pb.RuleType_Definition_Eval_JQComparison_Operator{
 						Def: ".simple",
 					},
-					Ingested: &pb.RuleType_Definition_Eval_JQComparisonOperator{
+					Ingested: &pb.RuleType_Definition_Eval_JQComparison_Operator{
 						Def: ".simple",
 					},
 				},
@@ -427,11 +427,11 @@ func TestValidJQEvalsFailed(t *testing.T) {
 			name: "accessor doesn't match",
 			assertions: []*pb.RuleType_Definition_Eval_JQComparison{
 				{
-					Policy: &pb.RuleType_Definition_Eval_JQComparisonOperator{
+					Policy: &pb.RuleType_Definition_Eval_JQComparison_Operator{
 						Def: ".should_match",
 					},
 					// This returns nil
-					Ingested: &pb.RuleType_Definition_Eval_JQComparisonOperator{
+					Ingested: &pb.RuleType_Definition_Eval_JQComparison_Operator{
 						Def: ".no_match",
 					},
 				},
@@ -477,10 +477,10 @@ func TestInvalidJQEvals(t *testing.T) {
 			name: "invalid policy accessor",
 			assertions: []*pb.RuleType_Definition_Eval_JQComparison{
 				{
-					Policy: &pb.RuleType_Definition_Eval_JQComparisonOperator{
+					Policy: &pb.RuleType_Definition_Eval_JQComparison_Operator{
 						Def: "invalid | foobar",
 					},
-					Ingested: &pb.RuleType_Definition_Eval_JQComparisonOperator{
+					Ingested: &pb.RuleType_Definition_Eval_JQComparison_Operator{
 						Def: ".simple",
 					},
 				},
@@ -498,10 +498,10 @@ func TestInvalidJQEvals(t *testing.T) {
 			name: "invalid ingested accessor",
 			assertions: []*pb.RuleType_Definition_Eval_JQComparison{
 				{
-					Policy: &pb.RuleType_Definition_Eval_JQComparisonOperator{
+					Policy: &pb.RuleType_Definition_Eval_JQComparison_Operator{
 						Def: ".simple",
 					},
-					Ingested: &pb.RuleType_Definition_Eval_JQComparisonOperator{
+					Ingested: &pb.RuleType_Definition_Eval_JQComparison_Operator{
 						Def: "invalid | foobar",
 					},
 				},

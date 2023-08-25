@@ -2670,11 +2670,11 @@
       "type": "object",
       "properties": {
         "ingested": {
-          "$ref": "#/definitions/JQComparisonoperator",
+          "$ref": "#/definitions/JQComparisonOperator",
           "title": "Ingested points to the data retrieved in the `ingest` section"
         },
         "policy": {
-          "$ref": "#/definitions/JQComparisonoperator",
+          "$ref": "#/definitions/JQComparisonOperator",
           "description": "Policy points to the policy itself."
         }
       }
@@ -2694,7 +2694,7 @@
       },
       "title": "EntiryTypeId is a message that carries an ID together with a type to uniquely identify an entity\nsuch as (repo, 1), (artifact, 2), ...\nif the struct is reused in other messages, it should be moved to a top-level definition"
     },
-    "JQComparisonoperator": {
+    "JQComparisonOperator": {
       "type": "object",
       "properties": {
         "def": {

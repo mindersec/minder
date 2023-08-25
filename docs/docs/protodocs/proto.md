@@ -156,7 +156,7 @@
     - [RuleType.Definition](#mediator-v1-RuleType-Definition)
     - [RuleType.Definition.Eval](#mediator-v1-RuleType-Definition-Eval)
     - [RuleType.Definition.Eval.JQComparison](#mediator-v1-RuleType-Definition-Eval-JQComparison)
-    - [RuleType.Definition.Eval.JQComparison.operator](#mediator-v1-RuleType-Definition-Eval-JQComparison-operator)
+    - [RuleType.Definition.Eval.JQComparison.Operator](#mediator-v1-RuleType-Definition-Eval-JQComparison-Operator)
     - [RuleType.Definition.Ingest](#mediator-v1-RuleType-Definition-Ingest)
     - [SignatureVerification](#mediator-v1-SignatureVerification)
     - [StoreProviderTokenRequest](#mediator-v1-StoreProviderTokenRequest)
@@ -2664,17 +2664,17 @@ endpoint and how we compare it to the rule.
 
 | Field | Type | Label | Description |
 | ----- | ---- | ----- | ----------- |
-| ingested | [RuleType.Definition.Eval.JQComparison.operator](#mediator-v1-RuleType-Definition-Eval-JQComparison-operator) |  | Ingested points to the data retrieved in the `ingest` section |
-| policy | [RuleType.Definition.Eval.JQComparison.operator](#mediator-v1-RuleType-Definition-Eval-JQComparison-operator) |  | Policy points to the policy itself. |
+| ingested | [RuleType.Definition.Eval.JQComparison.Operator](#mediator-v1-RuleType-Definition-Eval-JQComparison-Operator) |  | Ingested points to the data retrieved in the `ingest` section |
+| policy | [RuleType.Definition.Eval.JQComparison.Operator](#mediator-v1-RuleType-Definition-Eval-JQComparison-Operator) |  | Policy points to the policy itself. |
 
 
 
 
 
 
-<a name="mediator-v1-RuleType-Definition-Eval-JQComparison-operator"></a>
+<a name="mediator-v1-RuleType-Definition-Eval-JQComparison-Operator"></a>
 
-### RuleType.Definition.Eval.JQComparison.operator
+### RuleType.Definition.Eval.JQComparison.Operator
 
 
 

@@ -1614,15 +1614,15 @@ message RuleType {
             string type = 1;
 
             message JQComparison {
-                message operator {
+                message Operator {
                     string def = 1;
                 }
 
                 // Ingested points to the data retrieved in the `ingest` section
-                operator ingested = 1;
+                Operator ingested = 1;
 
                 // Policy points to the policy itself.
-                operator policy = 2;
+                Operator policy = 2;
             }
 
             // jq is only used if the `jq` type is selected.

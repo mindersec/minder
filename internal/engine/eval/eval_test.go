@@ -45,10 +45,10 @@ func TestNewRuleEvaluatorWorks(t *testing.T) {
 							Type: "jq",
 							Jq: []*pb.RuleType_Definition_Eval_JQComparison{
 								{
-									Policy: &pb.RuleType_Definition_Eval_JQComparisonOperator{
+									Policy: &pb.RuleType_Definition_Eval_JQComparison_Operator{
 										Def: ".",
 									},
-									Ingested: &pb.RuleType_Definition_Eval_JQComparisonOperator{
+									Ingested: &pb.RuleType_Definition_Eval_JQComparison_Operator{
 										Def: ".",
 									},
 								},
@@ -123,7 +123,7 @@ func TestNewRuleEvaluatorFails(t *testing.T) {
 							Type: "jq",
 							Jq: []*pb.RuleType_Definition_Eval_JQComparison{
 								{
-									Ingested: &pb.RuleType_Definition_Eval_JQComparisonOperator{
+									Ingested: &pb.RuleType_Definition_Eval_JQComparison_Operator{
 										Def: ".",
 									},
 								},
