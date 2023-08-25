@@ -50,4 +50,12 @@ SELECT res.eval_status as eval_status, res.last_updated as last_updated, res.det
 FROM rule_evaluation_status res
 INNER JOIN repositories repo ON repo.id = res.repository_id
 INNER JOIN rule_type rt ON rt.id = res.rule_type_id
-WHERE res.policy_id = $1 AND (res.repository_id = $2 OR $2 IS NULL);
+WHERE res.policy_id = $1 AND
+    (
+        CASE
+            WHEN sqlc.narg(entity_type)::entities = 'repository' AND res.repository_id = sqlc.narg(entity_id)::integer THEN true
+            WHEN sqlc.narg(entity_type)::entities  = 'artifact' AND res.artifact_id = sqlc.narg(entity_id)::integer THEN true
+            WHEN sqlc.narg(entity_id)::integer IS NULL THEN true
+            ELSE false
+        END
+    );

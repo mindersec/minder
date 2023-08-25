@@ -118,12 +118,21 @@ SELECT res.eval_status as eval_status, res.last_updated as last_updated, res.det
 FROM rule_evaluation_status res
 INNER JOIN repositories repo ON repo.id = res.repository_id
 INNER JOIN rule_type rt ON rt.id = res.rule_type_id
-WHERE res.policy_id = $1 AND (res.repository_id = $2 OR $2 IS NULL)
+WHERE res.policy_id = $1 AND
+    (
+        CASE
+            WHEN $2::entities = 'repository' AND res.repository_id = $3::integer THEN true
+            WHEN $2::entities  = 'artifact' AND res.artifact_id = $3::integer THEN true
+            WHEN $3::integer IS NULL THEN true
+            ELSE false
+        END
+    )
 `
 
 type ListRuleEvaluationStatusByPolicyIdParams struct {
-	PolicyID     int32         `json:"policy_id"`
-	RepositoryID sql.NullInt32 `json:"repository_id"`
+	PolicyID   int32         `json:"policy_id"`
+	EntityType NullEntities  `json:"entity_type"`
+	EntityID   sql.NullInt32 `json:"entity_id"`
 }
 
 type ListRuleEvaluationStatusByPolicyIdRow struct {
@@ -140,7 +149,7 @@ type ListRuleEvaluationStatusByPolicyIdRow struct {
 }
 
 func (q *Queries) ListRuleEvaluationStatusByPolicyId(ctx context.Context, arg ListRuleEvaluationStatusByPolicyIdParams) ([]ListRuleEvaluationStatusByPolicyIdRow, error) {
-	rows, err := q.db.QueryContext(ctx, listRuleEvaluationStatusByPolicyId, arg.PolicyID, arg.RepositoryID)
+	rows, err := q.db.QueryContext(ctx, listRuleEvaluationStatusByPolicyId, arg.PolicyID, arg.EntityType, arg.EntityID)
 	if err != nil {
 		return nil, err
 	}
