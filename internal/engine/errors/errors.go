@@ -29,3 +29,21 @@ func NewErrEvaluationFailed(sfmt string, args ...any) error {
 	msg := fmt.Sprintf(sfmt, args...)
 	return fmt.Errorf("%w: %s", ErrEvaluationFailed, msg)
 }
+
+// ErrEvaluationSkipped specifies that the rule was evaluated but skipped.
+var ErrEvaluationSkipped = errors.New("evaluation skipped")
+
+// NewErrEvaluationSkipped creates a new evaluation error
+func NewErrEvaluationSkipped(sfmt string, args ...any) error {
+	msg := fmt.Sprintf(sfmt, args...)
+	return fmt.Errorf("%w: %s", ErrEvaluationSkipped, msg)
+}
+
+// ErrEvaluationSkipSilently specifies that the rule was evaluated but skipped silently.
+var ErrEvaluationSkipSilently = errors.New("evaluation skipped silently")
+
+// NewErrEvaluationSkipSilently creates a new evaluation error
+func NewErrEvaluationSkipSilently(sfmt string, args ...any) error {
+	msg := fmt.Sprintf(sfmt, args...)
+	return fmt.Errorf("%w: %s", ErrEvaluationSkipSilently, msg)
+}

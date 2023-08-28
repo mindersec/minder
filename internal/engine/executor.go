@@ -27,7 +27,7 @@ import (
 	"github.com/go-playground/validator/v10"
 	"google.golang.org/protobuf/types/known/timestamppb"
 
-	evalerrors "github.com/stacklok/mediator/internal/engine/eval/errors"
+	evalerrors "github.com/stacklok/mediator/internal/engine/errors"
 	"github.com/stacklok/mediator/internal/events"
 	"github.com/stacklok/mediator/internal/util"
 	"github.com/stacklok/mediator/pkg/crypto"
@@ -576,6 +576,10 @@ func (e *Executor) createOrUpdateEvalStatus(
 	ruleTypeID int32,
 	evalErr error,
 ) error {
+	if errors.Is(evalErr, evalerrors.ErrEvaluationSkipSilently) {
+		return nil
+	}
+
 	return e.querier.UpsertRuleEvaluationStatus(ctx, db.UpsertRuleEvaluationStatusParams{
 		PolicyID: policyID,
 		RepositoryID: sql.NullInt32{
@@ -610,6 +614,8 @@ func parseRepoID(repoID any) (int32, error) {
 func errorAsEvalStatus(err error) db.EvalStatusTypes {
 	if errors.Is(err, evalerrors.ErrEvaluationFailed) {
 		return db.EvalStatusTypesFailure
+	} else if errors.Is(err, evalerrors.ErrEvaluationSkipped) {
+		return db.EvalStatusTypesSkipped
 	} else if err != nil {
 		return db.EvalStatusTypesError
 	}

@@ -22,7 +22,7 @@ import (
 	"fmt"
 	"reflect"
 
-	evalerrors "github.com/stacklok/mediator/internal/engine/eval/errors"
+	evalerrors "github.com/stacklok/mediator/internal/engine/errors"
 	"github.com/stacklok/mediator/internal/util"
 	pb "github.com/stacklok/mediator/pkg/generated/protobuf/go/mediator/v1"
 )
