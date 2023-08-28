@@ -27,7 +27,7 @@ import (
 	"github.com/go-playground/validator/v10"
 	"google.golang.org/protobuf/types/known/timestamppb"
 
-	"github.com/stacklok/mediator/internal/engine/eval"
+	evalerrors "github.com/stacklok/mediator/internal/engine/eval/errors"
 	"github.com/stacklok/mediator/internal/events"
 	"github.com/stacklok/mediator/internal/util"
 	"github.com/stacklok/mediator/pkg/crypto"
@@ -608,7 +608,7 @@ func parseRepoID(repoID any) (int32, error) {
 }
 
 func errorAsEvalStatus(err error) db.EvalStatusTypes {
-	if errors.Is(err, eval.ErrEvaluationFailed) {
+	if errors.Is(err, evalerrors.ErrEvaluationFailed) {
 		return db.EvalStatusTypesFailure
 	} else if err != nil {
 		return db.EvalStatusTypesError

@@ -23,6 +23,8 @@ import (
 
 	"google.golang.org/protobuf/reflect/protoreflect"
 
+	"github.com/stacklok/mediator/internal/engine/ingester/builtin"
+	"github.com/stacklok/mediator/internal/engine/ingester/rest"
 	pb "github.com/stacklok/mediator/pkg/generated/protobuf/go/mediator/v1"
 	ghclient "github.com/stacklok/mediator/pkg/providers/github"
 )
@@ -36,20 +38,19 @@ type Ingester interface {
 // type definition.
 func NewRuleDataIngest(rt *pb.RuleType, cli ghclient.RestAPI, access_token string) (Ingester, error) {
 	ing := rt.Def.GetIngest()
-	// TODO: make this more generic and/or use constants
 	switch rt.Def.Ingest.Type {
-	case "rest":
+	case rest.RestRuleDataIngestType:
 		if rt.Def.Ingest.GetRest() == nil {
 			return nil, fmt.Errorf("rule type engine missing rest configuration")
 		}
 
-		return NewRestRuleDataIngest(ing.GetRest(), cli)
+		return rest.NewRestRuleDataIngest(ing.GetRest(), cli)
 
-	case "builtin":
+	case builtin.BuiltinRuleDataIngestType:
 		if rt.Def.Ingest.GetBuiltin() == nil {
 			return nil, fmt.Errorf("rule type engine missing internal configuration")
 		}
-		return NewBuiltinRuleDataIngest(ing.GetBuiltin(), access_token)
+		return builtin.NewBuiltinRuleDataIngest(ing.GetBuiltin(), access_token)
 	default:
 		return nil, fmt.Errorf("unsupported rule type engine: %s", rt.Def.Ingest.Type)
 	}

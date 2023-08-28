@@ -13,7 +13,8 @@
 // limitations under the License.
 // Package rule provides the CLI subcommand for managing rules
 
-package ingester
+// Package builtin provides the builtin ingestion engine
+package builtin
 
 import (
 	"context"
@@ -28,6 +29,11 @@ import (
 	"github.com/stacklok/mediator/internal/util"
 	pb "github.com/stacklok/mediator/pkg/generated/protobuf/go/mediator/v1"
 	"github.com/stacklok/mediator/pkg/rule_methods"
+)
+
+const (
+	// BuiltinRuleDataIngestType is the type of the builtin rule data ingest engine
+	BuiltinRuleDataIngestType = "builtin"
 )
 
 // BuiltinRuleDataIngest is the engine for a rule type that uses builtin methods
