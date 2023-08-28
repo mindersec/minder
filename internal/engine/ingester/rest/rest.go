@@ -13,7 +13,8 @@
 // limitations under the License.
 // Package rule provides the CLI subcommand for managing rules
 
-package ingester
+// Package rest provides the REST rule data ingest engine
+package rest
 
 import (
 	"bytes"
@@ -30,8 +31,13 @@ import (
 	ghclient "github.com/stacklok/mediator/pkg/providers/github"
 )
 
-// RestRuleDataIngest is the engine for a rule type that uses REST data ingest
-type RestRuleDataIngest struct {
+const (
+	// RestRuleDataIngestType is the type of the REST rule data ingest engine
+	RestRuleDataIngestType = "rest"
+)
+
+// Ingestor is the engine for a rule type that uses REST data ingest
+type Ingestor struct {
 	restCfg          *pb.RestType
 	cli              ghclient.RestAPI
 	endpointTemplate *template.Template
@@ -42,7 +48,11 @@ type RestRuleDataIngest struct {
 func NewRestRuleDataIngest(
 	restCfg *pb.RestType,
 	cli ghclient.RestAPI,
-) (*RestRuleDataIngest, error) {
+) (*Ingestor, error) {
+	if len(restCfg.Endpoint) == 0 {
+		return nil, fmt.Errorf("missing endpoint")
+	}
+
 	tmpl := template.New("path")
 	tmpl, err := tmpl.Parse(restCfg.Endpoint)
 	if err != nil {
@@ -54,7 +64,7 @@ func NewRestRuleDataIngest(
 		method = http.MethodGet
 	}
 
-	return &RestRuleDataIngest{
+	return &Ingestor{
 		restCfg:          restCfg,
 		cli:              cli,
 		endpointTemplate: tmpl,
@@ -62,8 +72,8 @@ func NewRestRuleDataIngest(
 	}, nil
 }
 
-// RestEndpointTemplateParams is the parameters for the REST endpoint template
-type RestEndpointTemplateParams struct {
+// EndpointTemplateParams is the parameters for the REST endpoint template
+type EndpointTemplateParams struct {
 	// Entity is the entity to be evaluated
 	Entity any
 	// Params are the parameters to be used in the template
@@ -71,9 +81,9 @@ type RestEndpointTemplateParams struct {
 }
 
 // Ingest calls the REST endpoint and returns the data
-func (rdi *RestRuleDataIngest) Ingest(ctx context.Context, ent protoreflect.ProtoMessage, params map[string]any) (any, error) {
+func (rdi *Ingestor) Ingest(ctx context.Context, ent protoreflect.ProtoMessage, params map[string]any) (any, error) {
 	endpoint := new(bytes.Buffer)
-	retp := &RestEndpointTemplateParams{
+	retp := &EndpointTemplateParams{
 		Entity: ent,
 		Params: params,
 	}

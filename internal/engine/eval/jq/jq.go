@@ -13,7 +13,8 @@
 // limitations under the License.
 // Package rule provides the CLI subcommand for managing rules
 
-package eval
+// Package jq provides the jq policy evaluator
+package jq
 
 import (
 	"context"
@@ -21,17 +22,18 @@ import (
 	"fmt"
 	"reflect"
 
+	evalerrors "github.com/stacklok/mediator/internal/engine/eval/errors"
 	"github.com/stacklok/mediator/internal/util"
 	pb "github.com/stacklok/mediator/pkg/generated/protobuf/go/mediator/v1"
 )
 
-// JQEvaluator is an Evaluator that uses the jq library to evaluate rules
-type JQEvaluator struct {
+// Evaluator is an Evaluator that uses the jq library to evaluate rules
+type Evaluator struct {
 	assertions []*pb.RuleType_Definition_Eval_JQComparison
 }
 
 // NewJQEvaluator creates a new JQ rule data evaluator
-func NewJQEvaluator(assertions []*pb.RuleType_Definition_Eval_JQComparison) (*JQEvaluator, error) {
+func NewJQEvaluator(assertions []*pb.RuleType_Definition_Eval_JQComparison) (*Evaluator, error) {
 	if len(assertions) == 0 {
 		return nil, fmt.Errorf("missing jq assertions")
 	}
@@ -55,13 +57,13 @@ func NewJQEvaluator(assertions []*pb.RuleType_Definition_Eval_JQComparison) (*JQ
 		}
 	}
 
-	return &JQEvaluator{
+	return &Evaluator{
 		assertions: assertions,
 	}, nil
 }
 
 // Eval calls the jq library to evaluate the rule
-func (jqe *JQEvaluator) Eval(ctx context.Context, pol map[string]any, obj any) error {
+func (jqe *Evaluator) Eval(ctx context.Context, pol map[string]any, obj any) error {
 	for idx := range jqe.assertions {
 		a := jqe.assertions[idx]
 		policyVal, err := util.JQGetValuesFromAccessor(ctx, a.Policy.Def, pol)
@@ -84,7 +86,7 @@ func (jqe *JQEvaluator) Eval(ctx context.Context, pol map[string]any, obj any) e
 				msg = fmt.Sprintf("%s\nassertion: %s", msg, string(marshalledAssertion))
 			}
 
-			return NewErrEvaluationFailed(msg)
+			return evalerrors.NewErrEvaluationFailed(msg)
 		}
 	}
 

@@ -13,7 +13,7 @@
 // limitations under the License.
 // Package rule provides the CLI subcommand for managing rules
 
-package eval_test
+package jq_test
 
 import (
 	"context"
@@ -21,7 +21,8 @@ import (
 
 	"github.com/stretchr/testify/assert"
 
-	"github.com/stacklok/mediator/internal/engine/eval"
+	evalerrors "github.com/stacklok/mediator/internal/engine/eval/errors"
+	"github.com/stacklok/mediator/internal/engine/eval/jq"
 	pb "github.com/stacklok/mediator/pkg/generated/protobuf/go/mediator/v1"
 )
 
@@ -79,7 +80,7 @@ func TestNewJQEvaluatorValid(t *testing.T) {
 		t.Run(tt.name, func(t *testing.T) {
 			t.Parallel()
 
-			got, err := eval.NewJQEvaluator(tt.args.assertions)
+			got, err := jq.NewJQEvaluator(tt.args.assertions)
 			assert.NoError(t, err, "Got unexpected error")
 			assert.NotNil(t, got, "Got unexpected nil")
 		})
@@ -187,7 +188,7 @@ func TestNewJQEvaluatorInvalid(t *testing.T) {
 		t.Run(tt.name, func(t *testing.T) {
 			t.Parallel()
 
-			got, err := eval.NewJQEvaluator(tt.args.assertions)
+			got, err := jq.NewJQEvaluator(tt.args.assertions)
 			assert.Error(t, err, "expected error")
 			assert.Nil(t, got, "expected nil")
 		})
@@ -296,7 +297,7 @@ func TestValidJQEvals(t *testing.T) {
 		t.Run(tt.name, func(t *testing.T) {
 			t.Parallel()
 
-			jqe, err := eval.NewJQEvaluator(tt.assertions)
+			jqe, err := jq.NewJQEvaluator(tt.assertions)
 			assert.NoError(t, err, "Got unexpected error")
 			assert.NotNil(t, jqe, "Got unexpected nil")
 
@@ -451,12 +452,12 @@ func TestValidJQEvalsFailed(t *testing.T) {
 		t.Run(tt.name, func(t *testing.T) {
 			t.Parallel()
 
-			jqe, err := eval.NewJQEvaluator(tt.assertions)
+			jqe, err := jq.NewJQEvaluator(tt.assertions)
 			assert.NoError(t, err, "Got unexpected error")
 			assert.NotNil(t, jqe, "Got unexpected nil")
 
 			err = jqe.Eval(context.Background(), tt.args.pol, tt.args.obj)
-			assert.ErrorIs(t, err, eval.ErrEvaluationFailed, "Got unexpected error")
+			assert.ErrorIs(t, err, evalerrors.ErrEvaluationFailed, "Got unexpected error")
 		})
 	}
 }
@@ -523,13 +524,13 @@ func TestInvalidJQEvals(t *testing.T) {
 		t.Run(tt.name, func(t *testing.T) {
 			t.Parallel()
 
-			jqe, err := eval.NewJQEvaluator(tt.assertions)
+			jqe, err := jq.NewJQEvaluator(tt.assertions)
 			assert.NoError(t, err, "Got unexpected error")
 			assert.NotNil(t, jqe, "Got unexpected nil")
 
 			err = jqe.Eval(context.Background(), tt.args.pol, tt.args.obj)
 			assert.Error(t, err, "Got unexpected error")
-			assert.NotErrorIs(t, err, eval.ErrEvaluationFailed, "Got unexpected error")
+			assert.NotErrorIs(t, err, evalerrors.ErrEvaluationFailed, "Got unexpected error")
 		})
 	}
 }

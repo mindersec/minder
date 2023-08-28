@@ -19,24 +19,15 @@ package eval
 
 import (
 	"context"
-	"errors"
 	"fmt"
 
+	"github.com/stacklok/mediator/internal/engine/eval/jq"
 	pb "github.com/stacklok/mediator/pkg/generated/protobuf/go/mediator/v1"
 )
 
 // Evaluator is the interface for a rule type evaluator
 type Evaluator interface {
 	Eval(ctx context.Context, policy map[string]any, obj any) error
-}
-
-// ErrEvaluationFailed is an error that occurs during evaluation of a rule.
-var ErrEvaluationFailed = errors.New("evaluation error")
-
-// NewErrEvaluationFailed creates a new evaluation error
-func NewErrEvaluationFailed(sfmt string, args ...any) error {
-	msg := fmt.Sprintf(sfmt, args...)
-	return fmt.Errorf("%w: %s", ErrEvaluationFailed, msg)
 }
 
 // NewRuleEvaluator creates a new rule data evaluator
@@ -53,7 +44,7 @@ func NewRuleEvaluator(rt *pb.RuleType) (Evaluator, error) {
 			return nil, fmt.Errorf("rule type engine missing rest configuration")
 		}
 
-		return NewJQEvaluator(ing.GetJq())
+		return jq.NewJQEvaluator(ing.GetJq())
 	default:
 		return nil, fmt.Errorf("unsupported rule type engine: %s", rt.Def.Eval.Type)
 	}
