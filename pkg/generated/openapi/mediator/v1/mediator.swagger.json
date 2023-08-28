@@ -2630,48 +2630,54 @@
     }
   },
   "definitions": {
-    "DataEvalDataEvalDef": {
+    "DefinitionEval": {
       "type": "object",
       "properties": {
         "type": {
           "type": "string",
-          "description": "type is the type of the data evaluation."
+          "title": "type is the type of the data evaluation.\nRight now only `jq` is supported as a driver"
         },
-        "def": {
-          "type": "string",
-          "description": "def is the definition of the data evaluation."
+        "jq": {
+          "type": "array",
+          "items": {
+            "type": "object",
+            "$ref": "#/definitions/EvalJQComparison"
+          },
+          "description": "jq is only used if the `jq` type is selected.\nIt defines the comparisons that are made between\nthe ingested data and the policy rule."
         }
       },
-      "description": "DataEvalDef defines the data evaluation definition.\nThis pertains to the way we traverse data from the upstream\nendpoint and how we compare it to the rule.\nthe type is the way we traverse and evaluate the data from the\nupstream endpoint. The def is the definition of the data evaluation.\ne.g. the actual jq expression."
+      "description": "Eval defines the data evaluation definition.\nThis pertains to the way we traverse data from the upstream\nendpoint and how we compare it to the rule."
     },
-    "DefinitionDataEval": {
+    "DefinitionIngest": {
       "type": "object",
       "properties": {
         "type": {
           "type": "string",
-          "description": "type is the type of the data evaluation.\nwe currently support rest."
+          "description": "type is the type of the data ingestion.\nwe currently support rest and builtin."
         },
         "rest": {
           "$ref": "#/definitions/v1RestType",
-          "description": "rest is the rest data evaluation.\nthis is only used if the type is rest."
+          "description": "rest is the rest data ingestion.\nthis is only used if the type is rest."
         },
         "builtin": {
           "$ref": "#/definitions/v1BuiltinType",
-          "description": "builtin is the builtin data evaluation."
-        },
-        "keyType": {
-          "type": "string",
-          "description": "key_type is the type of the key for each data item.\nThis is used to index the data.\nCurrently only `jq` is supported."
-        },
-        "data": {
-          "type": "object",
-          "additionalProperties": {
-            "$ref": "#/definitions/DataEvalDataEvalDef"
-          },
-          "description": "data is the data evaluation definition.\neach key is a piece of data coming from the policy\nto be evaluated. The value is the definition of the data evaluation."
+          "description": "builtin is the builtin data ingestion."
         }
       },
-      "description": "DataEval defines how the data is evaluated."
+      "description": "Ingest defines how the data is ingested."
+    },
+    "EvalJQComparison": {
+      "type": "object",
+      "properties": {
+        "ingested": {
+          "$ref": "#/definitions/JQComparisonOperator",
+          "title": "Ingested points to the data retrieved in the `ingest` section"
+        },
+        "policy": {
+          "$ref": "#/definitions/JQComparisonOperator",
+          "description": "Policy points to the policy itself."
+        }
+      }
     },
     "GetPolicyStatusByIdRequestEntityTypedId": {
       "type": "object",
@@ -2687,6 +2693,14 @@
         }
       },
       "title": "EntiryTypeId is a message that carries an ID together with a type to uniquely identify an entity\nsuch as (repo, 1), (artifact, 2), ...\nif the struct is reused in other messages, it should be moved to a top-level definition"
+    },
+    "JQComparisonOperator": {
+      "type": "object",
+      "properties": {
+        "def": {
+          "type": "string"
+        }
+      }
     },
     "PipelinePolicyContextualRuleSet": {
       "type": "object",
@@ -4320,12 +4334,15 @@
           "type": "object",
           "description": "rule_schema is the schema of the rule. This is expressed in JSON Schema."
         },
-        "dataEval": {
-          "$ref": "#/definitions/DefinitionDataEval"
-        },
         "paramSchema": {
           "type": "object",
           "description": "param_schema is the schema of the parameters that are passed to the rule.\nThis is expressed in JSON Schema."
+        },
+        "ingest": {
+          "$ref": "#/definitions/DefinitionIngest"
+        },
+        "eval": {
+          "$ref": "#/definitions/DefinitionEval"
         }
       },
       "description": "Definition defines the rule type. It encompases the schema and the data evaluation."

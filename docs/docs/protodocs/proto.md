@@ -154,9 +154,10 @@
     - [RuleEvaluationStatus.EntityInfoEntry](#mediator-v1-RuleEvaluationStatus-EntityInfoEntry)
     - [RuleType](#mediator-v1-RuleType)
     - [RuleType.Definition](#mediator-v1-RuleType-Definition)
-    - [RuleType.Definition.DataEval](#mediator-v1-RuleType-Definition-DataEval)
-    - [RuleType.Definition.DataEval.DataEntry](#mediator-v1-RuleType-Definition-DataEval-DataEntry)
-    - [RuleType.Definition.DataEval.DataEvalDef](#mediator-v1-RuleType-Definition-DataEval-DataEvalDef)
+    - [RuleType.Definition.Eval](#mediator-v1-RuleType-Definition-Eval)
+    - [RuleType.Definition.Eval.JQComparison](#mediator-v1-RuleType-Definition-Eval-JQComparison)
+    - [RuleType.Definition.Eval.JQComparison.Operator](#mediator-v1-RuleType-Definition-Eval-JQComparison-Operator)
+    - [RuleType.Definition.Ingest](#mediator-v1-RuleType-Definition-Ingest)
     - [SignatureVerification](#mediator-v1-SignatureVerification)
     - [StoreProviderTokenRequest](#mediator-v1-StoreProviderTokenRequest)
     - [StoreProviderTokenResponse](#mediator-v1-StoreProviderTokenResponse)
@@ -2628,64 +2629,75 @@ Definition defines the rule type. It encompases the schema and the data evaluati
 | ----- | ---- | ----- | ----------- |
 | in_entity | [string](#string) |  | in_entity is the entity in which the rule is evaluated. This can be repository, build_environment or artifact. |
 | rule_schema | [google.protobuf.Struct](#google-protobuf-Struct) |  | rule_schema is the schema of the rule. This is expressed in JSON Schema. |
-| data_eval | [RuleType.Definition.DataEval](#mediator-v1-RuleType-Definition-DataEval) |  |  |
 | param_schema | [google.protobuf.Struct](#google-protobuf-Struct) | optional | param_schema is the schema of the parameters that are passed to the rule. This is expressed in JSON Schema. |
+| ingest | [RuleType.Definition.Ingest](#mediator-v1-RuleType-Definition-Ingest) |  |  |
+| eval | [RuleType.Definition.Eval](#mediator-v1-RuleType-Definition-Eval) |  |  |
 
 
 
 
 
 
-<a name="mediator-v1-RuleType-Definition-DataEval"></a>
+<a name="mediator-v1-RuleType-Definition-Eval"></a>
 
-### RuleType.Definition.DataEval
-DataEval defines how the data is evaluated.
-
-
-| Field | Type | Label | Description |
-| ----- | ---- | ----- | ----------- |
-| type | [string](#string) |  | type is the type of the data evaluation. we currently support rest. |
-| rest | [RestType](#mediator-v1-RestType) | optional | rest is the rest data evaluation. this is only used if the type is rest. |
-| builtin | [BuiltinType](#mediator-v1-BuiltinType) | optional | builtin is the builtin data evaluation. |
-| key_type | [string](#string) |  | key_type is the type of the key for each data item. This is used to index the data. Currently only `jq` is supported. |
-| data | [RuleType.Definition.DataEval.DataEntry](#mediator-v1-RuleType-Definition-DataEval-DataEntry) | repeated | data is the data evaluation definition. each key is a piece of data coming from the policy to be evaluated. The value is the definition of the data evaluation. |
-
-
-
-
-
-
-<a name="mediator-v1-RuleType-Definition-DataEval-DataEntry"></a>
-
-### RuleType.Definition.DataEval.DataEntry
-
-
-
-| Field | Type | Label | Description |
-| ----- | ---- | ----- | ----------- |
-| key | [string](#string) |  |  |
-| value | [RuleType.Definition.DataEval.DataEvalDef](#mediator-v1-RuleType-Definition-DataEval-DataEvalDef) |  |  |
-
-
-
-
-
-
-<a name="mediator-v1-RuleType-Definition-DataEval-DataEvalDef"></a>
-
-### RuleType.Definition.DataEval.DataEvalDef
-DataEvalDef defines the data evaluation definition.
+### RuleType.Definition.Eval
+Eval defines the data evaluation definition.
 This pertains to the way we traverse data from the upstream
 endpoint and how we compare it to the rule.
-the type is the way we traverse and evaluate the data from the
-upstream endpoint. The def is the definition of the data evaluation.
-e.g. the actual jq expression.
 
 
 | Field | Type | Label | Description |
 | ----- | ---- | ----- | ----------- |
-| type | [string](#string) |  | type is the type of the data evaluation. |
-| def | [string](#string) |  | def is the definition of the data evaluation. |
+| type | [string](#string) |  | type is the type of the data evaluation. Right now only `jq` is supported as a driver |
+| jq | [RuleType.Definition.Eval.JQComparison](#mediator-v1-RuleType-Definition-Eval-JQComparison) | repeated | jq is only used if the `jq` type is selected. It defines the comparisons that are made between the ingested data and the policy rule. |
+
+
+
+
+
+
+<a name="mediator-v1-RuleType-Definition-Eval-JQComparison"></a>
+
+### RuleType.Definition.Eval.JQComparison
+
+
+
+| Field | Type | Label | Description |
+| ----- | ---- | ----- | ----------- |
+| ingested | [RuleType.Definition.Eval.JQComparison.Operator](#mediator-v1-RuleType-Definition-Eval-JQComparison-Operator) |  | Ingested points to the data retrieved in the `ingest` section |
+| policy | [RuleType.Definition.Eval.JQComparison.Operator](#mediator-v1-RuleType-Definition-Eval-JQComparison-Operator) |  | Policy points to the policy itself. |
+
+
+
+
+
+
+<a name="mediator-v1-RuleType-Definition-Eval-JQComparison-Operator"></a>
+
+### RuleType.Definition.Eval.JQComparison.Operator
+
+
+
+| Field | Type | Label | Description |
+| ----- | ---- | ----- | ----------- |
+| def | [string](#string) |  |  |
+
+
+
+
+
+
+<a name="mediator-v1-RuleType-Definition-Ingest"></a>
+
+### RuleType.Definition.Ingest
+Ingest defines how the data is ingested.
+
+
+| Field | Type | Label | Description |
+| ----- | ---- | ----- | ----------- |
+| type | [string](#string) |  | type is the type of the data ingestion. we currently support rest and builtin. |
+| rest | [RestType](#mediator-v1-RestType) | optional | rest is the rest data ingestion. this is only used if the type is rest. |
+| builtin | [BuiltinType](#mediator-v1-BuiltinType) | optional | builtin is the builtin data ingestion. |
 
 
 

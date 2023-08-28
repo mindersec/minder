@@ -29,6 +29,8 @@ import (
 	"google.golang.org/protobuf/reflect/protoreflect"
 	"google.golang.org/protobuf/types/known/structpb"
 
+	"github.com/stacklok/mediator/internal/engine/eval"
+	"github.com/stacklok/mediator/internal/engine/ingester"
 	"github.com/stacklok/mediator/internal/util"
 	"github.com/stacklok/mediator/pkg/db"
 	"github.com/stacklok/mediator/pkg/entities"
@@ -158,7 +160,10 @@ type RuleTypeEngine struct {
 	Meta RuleMeta
 
 	// rdi is the rule data ingest engine
-	rdi RuleDataIngest
+	rdi ingester.Ingester
+
+	// reval is the rule evaluator
+	reval eval.Evaluator
 
 	rval *RuleValidator
 
@@ -174,9 +179,14 @@ func NewRuleTypeEngine(rt *pb.RuleType, cli ghclient.RestAPI, accessToken string
 		return nil, fmt.Errorf("cannot create rule validator: %w", err)
 	}
 
-	rdi, err := NewRuleDataIngest(rt, cli, accessToken)
+	rdi, err := ingester.NewRuleDataIngest(rt, cli, accessToken)
 	if err != nil {
 		return nil, fmt.Errorf("cannot create rule data ingest: %w", err)
+	}
+
+	reval, err := eval.NewRuleEvaluator(rt)
+	if err != nil {
+		return nil, fmt.Errorf("cannot create rule evaluator: %w", err)
 	}
 
 	rte := &RuleTypeEngine{
@@ -184,10 +194,11 @@ func NewRuleTypeEngine(rt *pb.RuleType, cli ghclient.RestAPI, accessToken string
 			Name:     rt.Name,
 			Provider: rt.Context.Provider,
 		},
-		rval: rval,
-		rdi:  rdi,
-		rt:   rt,
-		cli:  cli,
+		rval:  rval,
+		rdi:   rdi,
+		reval: reval,
+		rt:    rt,
+		cli:   cli,
 	}
 
 	// Set organization if it exists
@@ -220,7 +231,12 @@ func (r *RuleTypeEngine) GetRuleInstanceValidator() *RuleValidator {
 
 // Eval runs the rule type engine against the given entity
 func (r *RuleTypeEngine) Eval(ctx context.Context, ent protoreflect.ProtoMessage, pol, params map[string]any) error {
-	return r.rdi.Eval(ctx, ent, pol, params)
+	result, err := r.rdi.Ingest(ctx, ent, params)
+	if err != nil {
+		return fmt.Errorf("error ingesting data: %w", err)
+	}
+
+	return r.reval.Eval(ctx, pol, result)
 }
 
 // RuleDefFromDB converts a rule type definition from the database to a protobuf
@@ -272,12 +288,12 @@ func ValidateRuleTypeDefinition(def *pb.RuleType_Definition) error {
 		return fmt.Errorf("%w: rule schema is nil", ErrInvalidRuleTypeDefinition)
 	}
 
-	if def.DataEval == nil {
-		return fmt.Errorf("%w: data evaluation is nil", ErrInvalidRuleTypeDefinition)
+	if def.Ingest == nil {
+		return fmt.Errorf("%w: data ingest is nil", ErrInvalidRuleTypeDefinition)
 	}
 
-	if def.DataEval.Data == nil {
-		return fmt.Errorf("%w: data evaluation data is nil", ErrInvalidRuleTypeDefinition)
+	if def.Eval == nil {
+		return fmt.Errorf("%w: data eval is nil", ErrInvalidRuleTypeDefinition)
 	}
 
 	return nil
