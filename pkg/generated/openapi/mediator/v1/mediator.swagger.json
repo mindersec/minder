@@ -2839,6 +2839,9 @@
         "createdAt": {
           "type": "string",
           "format": "date-time"
+        },
+        "packageUrl": {
+          "type": "string"
         }
       }
     },
