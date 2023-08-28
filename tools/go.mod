@@ -8,7 +8,7 @@ require (
 	github.com/go-critic/go-critic v0.9.0
 	github.com/golangci/golangci-lint v1.54.2
 	github.com/gotesttools/gotestfmt/v2 v2.5.0
-	github.com/grpc-ecosystem/grpc-gateway/v2 v2.17.0
+	github.com/grpc-ecosystem/grpc-gateway/v2 v2.17.1
 	github.com/kyleconroy/sqlc v1.19.1
 	golang.org/x/lint v0.0.0-20210508222113-6edffad5e616
 	golang.org/x/tools v0.12.0
