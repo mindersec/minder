@@ -1557,6 +1557,10 @@ message BuiltinType {
     string method = 1;
 }
 
+// ArtifactType defines the artifact data evaluation.
+message ArtifactType {
+}
+
 // RuleType defines rules that may or may not be user defined.
 // The version is assumed from the folder's version.
 message RuleType {
@@ -1586,7 +1590,7 @@ message RuleType {
         // Ingest defines how the data is ingested.
         message Ingest {
             // type is the type of the data ingestion.
-            // we currently support rest and builtin.
+            // we currently support rest, artifact and builtin.
             string type = 1;
 
             // rest is the rest data ingestion.
@@ -1595,6 +1599,9 @@ message RuleType {
 
             // builtin is the builtin data ingestion.
             optional BuiltinType builtin = 4;
+
+            // artifact is the artifact data ingestion.
+            optional ArtifactType artifact = 5;
 
         }
         Ingest ingest = 4;

@@ -2653,7 +2653,7 @@
       "properties": {
         "type": {
           "type": "string",
-          "description": "type is the type of the data ingestion.\nwe currently support rest and builtin."
+          "description": "type is the type of the data ingestion.\nwe currently support rest, artifact and builtin."
         },
         "rest": {
           "$ref": "#/definitions/v1RestType",
@@ -2662,6 +2662,10 @@
         "builtin": {
           "$ref": "#/definitions/v1BuiltinType",
           "description": "builtin is the builtin data ingestion."
+        },
+        "artifact": {
+          "$ref": "#/definitions/v1ArtifactType",
+          "description": "artifact is the artifact data ingestion."
         }
       },
       "description": "Ingest defines how the data is ingested."
@@ -2844,6 +2848,15 @@
           "type": "string"
         }
       }
+    },
+    "v1ArtifactType": {
+      "type": "object",
+      "properties": {
+        "method": {
+          "type": "string"
+        }
+      },
+      "description": "ArtifactType defines the artifact data evaluation."
     },
     "v1ArtifactVersion": {
       "type": "object",

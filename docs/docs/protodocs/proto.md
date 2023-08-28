@@ -5,6 +5,7 @@
 
 - [mediator/v1/mediator.proto](#mediator_v1_mediator-proto)
     - [Artifact](#mediator-v1-Artifact)
+    - [ArtifactType](#mediator-v1-ArtifactType)
     - [ArtifactVersion](#mediator-v1-ArtifactVersion)
     - [BranchProtection](#mediator-v1-BranchProtection)
     - [BuiltinType](#mediator-v1-BuiltinType)
@@ -222,6 +223,21 @@
 | repository | [string](#string) |  |  |
 | created_at | [google.protobuf.Timestamp](#google-protobuf-Timestamp) |  |  |
 | package_url | [string](#string) |  |  |
+
+
+
+
+
+
+<a name="mediator-v1-ArtifactType"></a>
+
+### ArtifactType
+ArtifactType defines the artifact data evaluation.
+
+
+| Field | Type | Label | Description |
+| ----- | ---- | ----- | ----------- |
+| method | [string](#string) |  |  |
 
 
 
@@ -2673,9 +2689,10 @@ Ingest defines how the data is ingested.
 
 | Field | Type | Label | Description |
 | ----- | ---- | ----- | ----------- |
-| type | [string](#string) |  | type is the type of the data ingestion. we currently support rest and builtin. |
+| type | [string](#string) |  | type is the type of the data ingestion. we currently support rest, artifact and builtin. |
 | rest | [RestType](#mediator-v1-RestType) | optional | rest is the rest data ingestion. this is only used if the type is rest. |
 | builtin | [BuiltinType](#mediator-v1-BuiltinType) | optional | builtin is the builtin data ingestion. |
+| artifact | [ArtifactType](#mediator-v1-ArtifactType) | optional | artifact is the artifact data ingestion. |
 
 
 

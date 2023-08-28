@@ -23,6 +23,7 @@ import (
 
 	"google.golang.org/protobuf/reflect/protoreflect"
 
+	"github.com/stacklok/mediator/internal/engine/ingester/artifact"
 	"github.com/stacklok/mediator/internal/engine/ingester/builtin"
 	"github.com/stacklok/mediator/internal/engine/ingester/rest"
 	pb "github.com/stacklok/mediator/pkg/generated/protobuf/go/mediator/v1"
@@ -51,6 +52,13 @@ func NewRuleDataIngest(rt *pb.RuleType, cli ghclient.RestAPI, access_token strin
 			return nil, fmt.Errorf("rule type engine missing internal configuration")
 		}
 		return builtin.NewBuiltinRuleDataIngest(ing.GetBuiltin(), access_token)
+
+	case artifact.ArtifactRuleDataIngestType:
+		if rt.Def.Ingest.GetArtifact() == nil {
+			return nil, fmt.Errorf("rule type engine missing artifact configuration")
+		}
+		return artifact.NewArtifactDataIngest(ing.GetArtifact())
+
 	default:
 		return nil, fmt.Errorf("unsupported rule type engine: %s", rt.Def.Ingest.Type)
 	}
