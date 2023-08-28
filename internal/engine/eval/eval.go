@@ -18,21 +18,16 @@
 package eval
 
 import (
-	"context"
 	"fmt"
 
 	"github.com/stacklok/mediator/internal/engine/eval/jq"
 	"github.com/stacklok/mediator/internal/engine/eval/rego"
+	engif "github.com/stacklok/mediator/internal/engine/interfaces"
 	pb "github.com/stacklok/mediator/pkg/generated/protobuf/go/mediator/v1"
 )
 
-// Evaluator is the interface for a rule type evaluator
-type Evaluator interface {
-	Eval(ctx context.Context, policy map[string]any, obj any) error
-}
-
 // NewRuleEvaluator creates a new rule data evaluator
-func NewRuleEvaluator(rt *pb.RuleType) (Evaluator, error) {
+func NewRuleEvaluator(rt *pb.RuleType) (engif.Evaluator, error) {
 	e := rt.Def.GetEval()
 	if e == nil {
 		return nil, fmt.Errorf("rule type missing eval configuration")

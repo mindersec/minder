@@ -23,6 +23,7 @@ import (
 
 	evalerrors "github.com/stacklok/mediator/internal/engine/errors"
 	"github.com/stacklok/mediator/internal/engine/eval/jq"
+	engif "github.com/stacklok/mediator/internal/engine/interfaces"
 	pb "github.com/stacklok/mediator/pkg/generated/protobuf/go/mediator/v1"
 )
 
@@ -301,7 +302,7 @@ func TestValidJQEvals(t *testing.T) {
 			assert.NoError(t, err, "Got unexpected error")
 			assert.NotNil(t, jqe, "Got unexpected nil")
 
-			err = jqe.Eval(context.Background(), tt.args.pol, tt.args.obj)
+			err = jqe.Eval(context.Background(), tt.args.pol, &engif.Result{Object: tt.args.obj})
 			assert.NoError(t, err, "Got unexpected error")
 		})
 	}
@@ -456,7 +457,7 @@ func TestValidJQEvalsFailed(t *testing.T) {
 			assert.NoError(t, err, "Got unexpected error")
 			assert.NotNil(t, jqe, "Got unexpected nil")
 
-			err = jqe.Eval(context.Background(), tt.args.pol, tt.args.obj)
+			err = jqe.Eval(context.Background(), tt.args.pol, &engif.Result{Object: tt.args.obj})
 			assert.ErrorIs(t, err, evalerrors.ErrEvaluationFailed, "Got unexpected error")
 		})
 	}
@@ -528,7 +529,7 @@ func TestInvalidJQEvals(t *testing.T) {
 			assert.NoError(t, err, "Got unexpected error")
 			assert.NotNil(t, jqe, "Got unexpected nil")
 
-			err = jqe.Eval(context.Background(), tt.args.pol, tt.args.obj)
+			err = jqe.Eval(context.Background(), tt.args.pol, &engif.Result{Object: tt.args.obj})
 			assert.Error(t, err, "Got unexpected error")
 			assert.NotErrorIs(t, err, evalerrors.ErrEvaluationFailed, "Got unexpected error")
 		})

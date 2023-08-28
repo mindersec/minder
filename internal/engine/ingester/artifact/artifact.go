@@ -25,6 +25,7 @@ import (
 	"k8s.io/apimachinery/pkg/util/sets"
 
 	evalerrors "github.com/stacklok/mediator/internal/engine/errors"
+	engif "github.com/stacklok/mediator/internal/engine/interfaces"
 	pb "github.com/stacklok/mediator/pkg/generated/protobuf/go/mediator/v1"
 )
 
@@ -51,7 +52,7 @@ func (_ *Ingest) Ingest(
 	_ context.Context,
 	ent proto.Message,
 	params map[string]any,
-) (any, error) {
+) (*engif.Result, error) {
 	cfg, err := configFromParams(params)
 	if err != nil {
 		return nil, err
@@ -83,7 +84,9 @@ func (_ *Ingest) Ingest(
 		return nil, err
 	}
 
-	return out, nil
+	return &engif.Result{
+		Object: out,
+	}, nil
 }
 
 func isApplicableArtifact(

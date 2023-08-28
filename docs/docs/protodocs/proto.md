@@ -108,6 +108,7 @@
     - [GetVulnerabilitiesResponse](#mediator-v1-GetVulnerabilitiesResponse)
     - [GetVulnerabilityByIdRequest](#mediator-v1-GetVulnerabilityByIdRequest)
     - [GetVulnerabilityByIdResponse](#mediator-v1-GetVulnerabilityByIdResponse)
+    - [GitType](#mediator-v1-GitType)
     - [GithubWorkflow](#mediator-v1-GithubWorkflow)
     - [GroupRecord](#mediator-v1-GroupRecord)
     - [ListArtifactsRequest](#mediator-v1-ListArtifactsRequest)
@@ -1861,6 +1862,22 @@ list users
 
 
 
+<a name="mediator-v1-GitType"></a>
+
+### GitType
+GitType defines the git data ingester.
+
+
+| Field | Type | Label | Description |
+| ----- | ---- | ----- | ----------- |
+| clone_url | [string](#string) |  | clone_url is the url of the git repository. |
+| branch | [string](#string) |  | branch is the branch of the git repository. |
+
+
+
+
+
+
 <a name="mediator-v1-GithubWorkflow"></a>
 
 ### GithubWorkflow
@@ -2710,6 +2727,7 @@ Ingest defines how the data is ingested.
 | rest | [RestType](#mediator-v1-RestType) | optional | rest is the rest data ingestion. this is only used if the type is rest. |
 | builtin | [BuiltinType](#mediator-v1-BuiltinType) | optional | builtin is the builtin data ingestion. |
 | artifact | [ArtifactType](#mediator-v1-ArtifactType) | optional | artifact is the artifact data ingestion. |
+| git | [GitType](#mediator-v1-GitType) | optional | git is the git data ingestion. |
 
 
 

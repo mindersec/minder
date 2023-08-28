@@ -18,32 +18,26 @@
 package ingester
 
 import (
-	"context"
 	"fmt"
-
-	"google.golang.org/protobuf/reflect/protoreflect"
 
 	"github.com/stacklok/mediator/internal/engine/ingester/artifact"
 	"github.com/stacklok/mediator/internal/engine/ingester/builtin"
+	"github.com/stacklok/mediator/internal/engine/ingester/git"
 	"github.com/stacklok/mediator/internal/engine/ingester/rest"
+	engif "github.com/stacklok/mediator/internal/engine/interfaces"
 	pb "github.com/stacklok/mediator/pkg/generated/protobuf/go/mediator/v1"
 	ghclient "github.com/stacklok/mediator/pkg/providers/github"
 )
 
-// Ingester is the interface for a rule type ingester
-type Ingester interface {
-	Ingest(ctx context.Context, ent protoreflect.ProtoMessage, params map[string]any) (any, error)
-}
-
 // test that the ingester implementations implements the interface
 // this would be probably nicer in the implementation file, but that would cause an import loop
-var _ Ingester = (*artifact.Ingest)(nil)
-var _ Ingester = (*builtin.BuiltinRuleDataIngest)(nil)
-var _ Ingester = (*rest.Ingestor)(nil)
+var _ engif.Ingester = (*artifact.Ingest)(nil)
+var _ engif.Ingester = (*builtin.BuiltinRuleDataIngest)(nil)
+var _ engif.Ingester = (*rest.Ingestor)(nil)
 
 // NewRuleDataIngest creates a new rule data ingest based no the given rule
 // type definition.
-func NewRuleDataIngest(rt *pb.RuleType, cli ghclient.RestAPI, access_token string) (Ingester, error) {
+func NewRuleDataIngest(rt *pb.RuleType, cli ghclient.RestAPI, access_token string) (engif.Ingester, error) {
 	ing := rt.Def.GetIngest()
 	switch rt.Def.Ingest.Type {
 	case rest.RestRuleDataIngestType:
@@ -52,7 +46,6 @@ func NewRuleDataIngest(rt *pb.RuleType, cli ghclient.RestAPI, access_token strin
 		}
 
 		return rest.NewRestRuleDataIngest(ing.GetRest(), cli)
-
 	case builtin.BuiltinRuleDataIngestType:
 		if rt.Def.Ingest.GetBuiltin() == nil {
 			return nil, fmt.Errorf("rule type engine missing internal configuration")
@@ -64,7 +57,8 @@ func NewRuleDataIngest(rt *pb.RuleType, cli ghclient.RestAPI, access_token strin
 			return nil, fmt.Errorf("rule type engine missing artifact configuration")
 		}
 		return artifact.NewArtifactDataIngest(ing.GetArtifact())
-
+	case git.GitRuleDataIngestType:
+		return git.NewGitIngester(ing.GetGit(), access_token), nil
 	default:
 		return nil, fmt.Errorf("unsupported rule type engine: %s", rt.Def.Ingest.Type)
 	}

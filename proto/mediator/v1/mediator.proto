@@ -1565,6 +1565,15 @@ message BuiltinType {
 message ArtifactType {
 }
 
+// GitType defines the git data ingester.
+message GitType {
+    // clone_url is the url of the git repository.
+    string clone_url = 1;
+
+    // branch is the branch of the git repository.
+    string branch = 2;
+}
+
 // RuleType defines rules that may or may not be user defined.
 // The version is assumed from the folder's version.
 message RuleType {
@@ -1606,6 +1615,9 @@ message RuleType {
 
             // artifact is the artifact data ingestion.
             optional ArtifactType artifact = 5;
+
+            // git is the git data ingestion.
+            optional GitType git = 6;
 
         }
         Ingest ingest = 4;

@@ -31,6 +31,7 @@ import (
 
 	"github.com/stacklok/mediator/internal/engine/eval"
 	"github.com/stacklok/mediator/internal/engine/ingester"
+	engif "github.com/stacklok/mediator/internal/engine/interfaces"
 	"github.com/stacklok/mediator/internal/util"
 	"github.com/stacklok/mediator/pkg/db"
 	"github.com/stacklok/mediator/pkg/entities"
@@ -160,10 +161,10 @@ type RuleTypeEngine struct {
 	Meta RuleMeta
 
 	// rdi is the rule data ingest engine
-	rdi ingester.Ingester
+	rdi engif.Ingester
 
 	// reval is the rule evaluator
-	reval eval.Evaluator
+	reval engif.Evaluator
 
 	rval *RuleValidator
 
