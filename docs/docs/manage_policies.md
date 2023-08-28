@@ -21,7 +21,7 @@ type: pipeline-policy
 name: acme-github-policy
 context:
   organization: ACME
-  provider: github
+  group: Root Group
 repository:
   - context: github
     rules:
@@ -62,7 +62,8 @@ type: rule-type
 name: secret_scanning
 context:
   provider: github
-  organization: ACME
+  group: Root Group
+description: Verifies that secret scanning is enabled for a given repository.
 def:
   # Defines the section of the pipeline the rule will appear in.
   # This will affect the template that is used to render multiple parts
@@ -74,8 +75,8 @@ def:
       enabled:
         type: boolean
         default: true
-  # Defines the configuration for both ingesting and evaluating the rule.
-  data_eval:
+  # Defines the configuration for ingesting data relevant for the rule
+  ingest:
     type: rest
     rest:
       # This is the path to the data source. Given that this will evaluate
@@ -85,15 +86,17 @@ def:
       endpoint: "/repos/{{.Entity.Owner}}/{{.Entity.Repository}}"
       # This is the method to use to retrieve the data. It should already default to JSON
       parse: json
-    key_type: jq
-    data:
-      # This key is meant to denote where the info will be
-      # persisted in the aspect itself.
-      ".enabled":
-        # This denotes where the information will be retrieved from
-        # the data source.
-        type: jq
-        def: '.security_and_analysis.secret_scanning.status == "enabled"'
+  # Defines the configuration for evaluating data ingested against the given policy
+  eval:
+    type: jq
+    jq:
+      # Ingested points to the data retrieved in the `ingest` section
+      - ingested:
+          def: '.security_and_analysis.secret_scanning.status == "enabled"'
+        # policy points to the policy itself.
+        policy:
+          def: ".enabled"
+
 ```
 
 The full example is available in the [examples directory](https://github.com/stacklok/mediator/tree/main/examples/github/rule-types)
