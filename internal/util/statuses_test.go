@@ -13,7 +13,7 @@
 // See the License for the specific language governing permissions and
 // limitations under the License.
 
-package util
+package util_test
 
 import (
 	"fmt"
@@ -21,12 +21,14 @@ import (
 
 	"github.com/stretchr/testify/require"
 	"google.golang.org/grpc/codes"
+
+	"github.com/stacklok/mediator/internal/util"
 )
 
 func TestNiceStatusCreation(t *testing.T) {
 	t.Parallel()
 
-	s := GetNiceStatus(codes.OK)
+	s := util.GetNiceStatus(codes.OK)
 	require.Equal(t, codes.OK, s.Code)
 	require.Equal(t, "OK", s.Name)
 	require.Equal(t, "OK", s.Description)

@@ -19,12 +19,14 @@
 // It does make a good example of how to use the generated client code
 // for others to use as a reference.
 
-package util
+package util_test
 
 import (
 	"testing"
 
 	"github.com/stretchr/testify/require"
+
+	"github.com/stacklok/mediator/internal/util"
 )
 
 func TestRandomInt(t *testing.T) {
@@ -33,7 +35,7 @@ func TestRandomInt(t *testing.T) {
 	min := int64(1)
 	max := int64(10)
 	seed := int64(12345)
-	randomInt := RandomInt(min, max, seed)
+	randomInt := util.RandomInt(min, max, seed)
 	require.GreaterOrEqual(t, randomInt, min)
 	require.LessOrEqual(t, randomInt, max)
 }
@@ -41,7 +43,7 @@ func TestRandomInt(t *testing.T) {
 func TestRandomString(t *testing.T) {
 	t.Parallel()
 	seed := int64(12345)
-	randomString := RandomString(10, seed)
+	randomString := util.RandomString(10, seed)
 	require.NotEmpty(t, randomString)
 	require.Len(t, randomString, 10)
 }
@@ -50,7 +52,7 @@ func TestRandomEmail(t *testing.T) {
 	t.Parallel()
 
 	seed := int64(12345)
-	email := RandomEmail(seed)
+	email := util.RandomEmail(seed)
 	require.NotEmpty(t, email)
 	require.Contains(t, email, "@")
 	require.Contains(t, email, ".")
@@ -61,7 +63,7 @@ func TestRandomName(t *testing.T) {
 	t.Parallel()
 
 	seed := int64(12345)
-	name := RandomName(seed)
+	name := util.RandomName(seed)
 	require.NotEmpty(t, name)
 	require.Len(t, name, 10)
 }
