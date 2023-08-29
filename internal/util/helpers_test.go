@@ -13,7 +13,7 @@
 // See the License for the specific language governing permissions and
 // limitations under the License.
 
-package util
+package util_test
 
 import (
 	"strconv"
@@ -22,6 +22,8 @@ import (
 	"github.com/spf13/cobra"
 	"github.com/spf13/viper"
 	"github.com/stretchr/testify/assert"
+
+	"github.com/stacklok/mediator/internal/util"
 )
 
 func TestGetConfigValue(t *testing.T) {
@@ -96,7 +98,7 @@ func TestGetConfigValue(t *testing.T) {
 				}
 			}
 
-			result := GetConfigValue(tc.key, tc.flagName, cmd, tc.defaultValue)
+			result := util.GetConfigValue(tc.key, tc.flagName, cmd, tc.defaultValue)
 			assert.Equal(t, tc.expected, result)
 		})
 	}
