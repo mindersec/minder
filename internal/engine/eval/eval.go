@@ -22,6 +22,7 @@ import (
 	"fmt"
 
 	"github.com/stacklok/mediator/internal/engine/eval/jq"
+	"github.com/stacklok/mediator/internal/engine/eval/rego"
 	pb "github.com/stacklok/mediator/pkg/generated/protobuf/go/mediator/v1"
 )
 
@@ -32,8 +33,8 @@ type Evaluator interface {
 
 // NewRuleEvaluator creates a new rule data evaluator
 func NewRuleEvaluator(rt *pb.RuleType) (Evaluator, error) {
-	ing := rt.Def.GetEval()
-	if ing == nil {
+	e := rt.Def.GetEval()
+	if e == nil {
 		return nil, fmt.Errorf("rule type missing eval configuration")
 	}
 
@@ -44,7 +45,9 @@ func NewRuleEvaluator(rt *pb.RuleType) (Evaluator, error) {
 			return nil, fmt.Errorf("rule type engine missing rest configuration")
 		}
 
-		return jq.NewJQEvaluator(ing.GetJq())
+		return jq.NewJQEvaluator(e.GetJq())
+	case rego.RegoEvalType:
+		return rego.NewRegoEvaluator(e.GetRego())
 	default:
 		return nil, fmt.Errorf("unsupported rule type engine: %s", rt.Def.Eval.Type)
 	}

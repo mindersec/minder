@@ -58,6 +58,21 @@ func TestNewRuleEvaluatorWorks(t *testing.T) {
 				},
 			},
 		},
+		{
+			name: "Rego",
+			args: args{
+				rt: &pb.RuleType{
+					Def: &pb.RuleType_Definition{
+						Eval: &pb.RuleType_Definition_Eval{
+							Type: "rego",
+							Rego: &pb.RuleType_Definition_Eval_Rego{
+								Def: "package mediator\n\ndefault allow = false\n\nallow {\n\tinput.ingested.data == \"foo\"\n}",
+							},
+						},
+					},
+				},
+			},
+		},
 	}
 	for _, tt := range tests {
 		tt := tt

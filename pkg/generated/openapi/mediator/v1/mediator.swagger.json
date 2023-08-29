@@ -2644,6 +2644,10 @@
             "$ref": "#/definitions/EvalJQComparison"
           },
           "description": "jq is only used if the `jq` type is selected.\nIt defines the comparisons that are made between\nthe ingested data and the policy rule."
+        },
+        "rego": {
+          "$ref": "#/definitions/EvalRego",
+          "description": "rego is only used if the `rego` type is selected."
         }
       },
       "description": "Eval defines the data evaluation definition.\nThis pertains to the way we traverse data from the upstream\nendpoint and how we compare it to the rule."
@@ -2680,6 +2684,19 @@
         "policy": {
           "$ref": "#/definitions/JQComparisonOperator",
           "description": "Policy points to the policy itself."
+        }
+      }
+    },
+    "EvalRego": {
+      "type": "object",
+      "properties": {
+        "type": {
+          "type": "string",
+          "description": "type is the type of evaluation engine to use\nfor rego. We currently have two modes of operation:\n- deny-by-default: this is the default mode of operation\n  where we deny access by default and allow access only\n  if the policy explicitly allows it. It expects the\n  policy to set an `allow` variable to true or false.\n- constraints: this is the mode of operation where we\n  allow access by default and deny access only if a\n  violation is found. It expects the policy to set a\n  `violations` variable with a \"msg\" field."
+        },
+        "def": {
+          "type": "string",
+          "description": "def is the definition of the rego policy."
         }
       }
     },
@@ -2851,11 +2868,6 @@
     },
     "v1ArtifactType": {
       "type": "object",
-      "properties": {
-        "method": {
-          "type": "string"
-        }
-      },
       "description": "ArtifactType defines the artifact data evaluation."
     },
     "v1ArtifactVersion": {
