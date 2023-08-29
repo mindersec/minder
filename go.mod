@@ -37,8 +37,8 @@ require (
 	go.opentelemetry.io/contrib/instrumentation/google.golang.org/grpc/otelgrpc v0.43.0
 	go.opentelemetry.io/otel v1.17.0
 	go.opentelemetry.io/otel/exporters/prometheus v0.39.0
-	go.opentelemetry.io/otel/exporters/stdout/stdouttrace v1.16.0
-	go.opentelemetry.io/otel/sdk v1.16.0
+	go.opentelemetry.io/otel/exporters/stdout/stdouttrace v1.17.0
+	go.opentelemetry.io/otel/sdk v1.17.0
 	go.opentelemetry.io/otel/sdk/metric v0.39.0
 	go.opentelemetry.io/otel/trace v1.17.0
 	golang.org/x/crypto v0.12.0
