@@ -25,7 +25,7 @@ INSERT INTO rule_evaluation_status (
     details,
     last_updated
 ) VALUES ($1, $2, $3, $4, $5, $6, $7, NOW())
-ON CONFLICT(policy_id, repository_id, COALESCE(artifact_id, -1), entity, rule_type_id) DO UPDATE SET
+ON CONFLICT(policy_id, repository_id, COALESCE(artifact_id, 0), entity, rule_type_id) DO UPDATE SET
     eval_status = $6,
     details = $7,
     last_updated = NOW()

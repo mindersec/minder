@@ -347,7 +347,7 @@ func extractArtifactVersionFromPayload(ctx context.Context, payload map[string]a
 
 func artifactVersionUpstreamInfo(
 	ctx context.Context,
-	cli ghclient.RestAPI,
+	client ghclient.RestAPI,
 	payload map[string]any,
 	artifactOwnerLogin, artifactName string,
 	version *pb.ArtifactVersion,
@@ -357,9 +357,10 @@ func artifactVersionUpstreamInfo(
 		return nil, fmt.Errorf("error getting package version name: %w", err)
 	}
 
-	// for some reason the createdAt field is not populated in the payload, but instead set to the default zero value
-	isOrg := cli.GetOwner() != ""
-	ghVersion, err := cli.GetPackageVersionById(ctx, isOrg, artifactOwnerLogin, CONTAINER_TYPE, artifactName, version.VersionId)
+	// we'll grab the artifact version from the REST endpoint because we need the visibility
+	// and createdAt fields which are not in the payload
+	isOrg := client.GetOwner() != ""
+	ghVersion, err := client.GetPackageVersionById(ctx, isOrg, artifactOwnerLogin, CONTAINER_TYPE, artifactName, version.VersionId)
 	if err != nil {
 		return nil, fmt.Errorf("error getting package version from repository: %w", err)
 	}
@@ -372,8 +373,13 @@ func artifactVersionUpstreamInfo(
 	sort.Strings(tags)
 
 	// now get information for signature and workflow
+	packageVersionNameStr, ok := packageVersionName.(string)
+	if !ok {
+		return nil, fmt.Errorf("package version name is not a string")
+	}
+
 	sigInfo, workflowInfo, err := container.GetArtifactSignatureAndWorkflowInfo(
-		ctx, cli, artifactOwnerLogin, artifactName, packageVersionName.(string))
+		ctx, client, artifactOwnerLogin, artifactName, packageVersionNameStr)
 	if errors.Is(err, container.ErrSigValidation) {
 		return nil, err
 	} else if errors.Is(err, container.ErrProtoParse) {
@@ -404,7 +410,7 @@ func artifactVersionUpstreamInfo(
 
 func gatherArtifactInfo(
 	ctx context.Context,
-	cli ghclient.RestAPI,
+	client ghclient.RestAPI,
 	payload map[string]any,
 ) (*pb.Artifact, error) {
 	artifact, err := extractArtifactFromPayload(ctx, payload)
@@ -413,8 +419,8 @@ func gatherArtifactInfo(
 	}
 
 	// we also need to fill in the visibility which is not in the payload
-	isOrg := cli.GetOwner() != ""
-	ghArtifact, err := cli.GetPackageByName(ctx, isOrg, artifact.Owner, CONTAINER_TYPE, artifact.Name)
+	isOrg := client.GetOwner() != ""
+	ghArtifact, err := client.GetPackageByName(ctx, isOrg, artifact.Owner, CONTAINER_TYPE, artifact.Name)
 	if err != nil {
 		return nil, fmt.Errorf("error extracting artifact from repo: %w", err)
 	}
@@ -759,15 +765,15 @@ func (e *Executor) upsertVersionedArtifact(
 	}
 	defer tx.Rollback()
 
+	qtx := e.querier.GetQuerierWithTransaction(tx)
+
 	thirtyDaysAgo := time.Now().AddDate(0, 0, -30)
-	err = e.querier.DeleteOldArtifactVersions(ctx,
+	err = qtx.DeleteOldArtifactVersions(ctx,
 		db.DeleteOldArtifactVersionsParams{ArtifactID: int32(versionedArtifact.Artifact.ArtifactId), CreatedAt: thirtyDaysAgo})
 	if err != nil {
 		// just log error, we will not remove older for now
 		log.Printf("error removing older artifact versions: %v", err)
 	}
-
-	qtx := e.querier.GetQuerierWithTransaction(tx)
 
 	dbArtifact, err := qtx.UpsertArtifact(ctx, db.UpsertArtifactParams{
 		RepositoryID:       repoID,
@@ -803,6 +809,10 @@ func (e *Executor) upsertVersionedArtifact(
 	return &dbArtifact, &dbVersion, nil
 }
 
+// createOrUpdateEvalStatusParams is a helper struct to pass parameters to createOrUpdateEvalStatus
+// to avoid confusion with the parameters order. Since at the moment all our entities are bound to
+// a repo and most policies are expecting a repo, the repoID parameter is mandatory. For entities
+// other than artifacts, the artifactID should be 0 which is translated to NULL in the database.
 type createOrUpdateEvalStatusParams struct {
 	policyID       int32
 	repoID         int32
@@ -816,6 +826,10 @@ func (e *Executor) createOrUpdateEvalStatus(
 	ctx context.Context,
 	params *createOrUpdateEvalStatusParams,
 ) error {
+	if params == nil {
+		return fmt.Errorf("createOrUpdateEvalStatusParams cannot be nil")
+	}
+
 	if errors.Is(params.evalErr, evalerrors.ErrEvaluationSkipSilently) {
 		return nil
 	}
