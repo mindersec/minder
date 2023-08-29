@@ -227,7 +227,6 @@ func (e *Executor) handleReposInitEvent(ctx context.Context, prov string, evt *I
 				return e.createOrUpdateEvalStatus(ctx, &createOrUpdateEvalStatusParams{
 					policyID:       *pol.Id,
 					repoID:         dbrepo.ID,
-					artifactID:     0,
 					ruleTypeEntity: db.Entities(rt.Def.GetInEntity()),
 					ruleTypeID:     *rt.Id,
 					evalErr:        rte.Eval(ctx, repo, rule.Def.AsMap(), rule.Params.AsMap()),
@@ -345,16 +344,16 @@ func extractArtifactVersionFromPayload(ctx context.Context, payload map[string]a
 	return version, nil
 }
 
-func artifactVersionUpstreamInfo(
+func updateArtifactVersionFromRegistry(
 	ctx context.Context,
 	client ghclient.RestAPI,
 	payload map[string]any,
 	artifactOwnerLogin, artifactName string,
 	version *pb.ArtifactVersion,
-) (*pb.ArtifactVersion, error) {
+) error {
 	packageVersionName, err := util.JQGetValuesFromAccessor(ctx, ".package.package_version.name", payload)
 	if err != nil {
-		return nil, fmt.Errorf("error getting package version name: %w", err)
+		return fmt.Errorf("error getting package version name: %w", err)
 	}
 
 	// we'll grab the artifact version from the REST endpoint because we need the visibility
@@ -362,41 +361,38 @@ func artifactVersionUpstreamInfo(
 	isOrg := client.GetOwner() != ""
 	ghVersion, err := client.GetPackageVersionById(ctx, isOrg, artifactOwnerLogin, CONTAINER_TYPE, artifactName, version.VersionId)
 	if err != nil {
-		return nil, fmt.Errorf("error getting package version from repository: %w", err)
+		return fmt.Errorf("error getting package version from repository: %w", err)
 	}
 
 	tags := ghVersion.Metadata.Container.Tags
 	if isSignature(tags) {
 		// we don't care about signatures
-		return nil, nil
+		return nil
 	}
 	sort.Strings(tags)
 
 	// now get information for signature and workflow
 	packageVersionNameStr, ok := packageVersionName.(string)
 	if !ok {
-		return nil, fmt.Errorf("package version name is not a string")
+		return fmt.Errorf("package version name is not a string")
 	}
 
 	sigInfo, workflowInfo, err := container.GetArtifactSignatureAndWorkflowInfo(
 		ctx, client, artifactOwnerLogin, artifactName, packageVersionNameStr)
-	if errors.Is(err, container.ErrSigValidation) {
-		return nil, err
-	} else if errors.Is(err, container.ErrProtoParse) {
-		// log error and just fill an empty json
-		return nil, err
+	if errors.Is(err, container.ErrSigValidation) || errors.Is(err, container.ErrProtoParse) {
+		return err
 	} else if err != nil {
-		return nil, err
+		return err
 	}
 
 	ghWorkflow := &pb.GithubWorkflow{}
 	if err := protojson.Unmarshal(workflowInfo, ghWorkflow); err != nil {
-		return nil, err
+		return err
 	}
 
 	sigVerification := &pb.SignatureVerification{}
 	if err := protojson.Unmarshal(sigInfo, sigVerification); err != nil {
-		return nil, err
+		return err
 	}
 
 	version.SignatureVerification = sigVerification
@@ -405,7 +401,7 @@ func artifactVersionUpstreamInfo(
 	if ghVersion.CreatedAt != nil {
 		version.CreatedAt = timestamppb.New(*ghVersion.CreatedAt.GetTime())
 	}
-	return version, nil
+	return nil
 }
 
 func gatherArtifactInfo(
@@ -442,7 +438,7 @@ func gatherArtifactVersionInfo(
 
 	// not all information is in the payload, we need to get it from the container registry
 	// and/or GH API
-	version, err = artifactVersionUpstreamInfo(ctx, cli, payload, artifactOwnerLogin, artifactName, version)
+	err = updateArtifactVersionFromRegistry(ctx, cli, payload, artifactOwnerLogin, artifactName, version)
 	if err != nil {
 		return nil, fmt.Errorf("error getting upstream information for artifact version: %w", err)
 	}
@@ -667,7 +663,6 @@ func (e *Executor) handleRepoEvent(ctx context.Context, prov string, payload map
 			return e.createOrUpdateEvalStatus(ctx, &createOrUpdateEvalStatusParams{
 				policyID:       *pol.Id,
 				repoID:         dbrepo.ID,
-				artifactID:     0,
 				ruleTypeEntity: db.Entities(rt.Def.GetInEntity()),
 				ruleTypeID:     *rt.Id,
 				evalErr:        rte.Eval(ctx, repo, rule.Def.AsMap(), rule.Params.AsMap()),

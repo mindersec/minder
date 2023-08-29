@@ -21,8 +21,8 @@ import (
 	"encoding/json"
 	"fmt"
 
-	"golang.org/x/exp/slices"
-	"google.golang.org/protobuf/reflect/protoreflect"
+	"google.golang.org/protobuf/proto"
+	"k8s.io/apimachinery/pkg/util/sets"
 
 	evalerrors "github.com/stacklok/mediator/internal/engine/errors"
 	pb "github.com/stacklok/mediator/pkg/generated/protobuf/go/mediator/v1"
@@ -34,6 +34,7 @@ const (
 )
 
 // Ingest is the engine for a rule type that uses artifact data ingest
+// Implements enginer.ingester.Ingester
 type Ingest struct {
 }
 
@@ -45,10 +46,10 @@ func NewArtifactDataIngest(
 }
 
 // Ingest checks the passed in artifact, makes sure it is applicable to the current rule
-// and if it is, returns the appropriately marshalled data
+// and if it is, returns the appropriately marshalled data.
 func (_ *Ingest) Ingest(
 	_ context.Context,
-	ent protoreflect.ProtoMessage,
+	ent proto.Message,
 	params map[string]any,
 ) (any, error) {
 	cfg, err := configFromParams(params)
@@ -104,11 +105,6 @@ func isApplicableArtifact(
 		return true
 	}
 
-	for _, tag := range cfg.Tags {
-		if slices.Contains(versionedArtifact.Version.Tags, tag) {
-			return true
-		}
-	}
-
-	return false
+	haveTags := sets.New(versionedArtifact.Version.Tags...)
+	return haveTags.HasAny(cfg.Tags...)
 }

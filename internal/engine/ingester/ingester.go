@@ -35,6 +35,12 @@ type Ingester interface {
 	Ingest(ctx context.Context, ent protoreflect.ProtoMessage, params map[string]any) (any, error)
 }
 
+// test that the ingester implementations implements the interface
+// this would be probably nicer in the implementation file, but that would cause an import loop
+var _ Ingester = (*artifact.Ingest)(nil)
+var _ Ingester = (*builtin.BuiltinRuleDataIngest)(nil)
+var _ Ingester = (*rest.Ingestor)(nil)
+
 // NewRuleDataIngest creates a new rule data ingest based no the given rule
 // type definition.
 func NewRuleDataIngest(rt *pb.RuleType, cli ghclient.RestAPI, access_token string) (Ingester, error) {
