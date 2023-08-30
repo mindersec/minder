@@ -23,6 +23,7 @@ import (
 	"github.com/stretchr/testify/assert"
 
 	"github.com/stacklok/mediator/internal/engine/eval"
+	"github.com/stacklok/mediator/internal/engine/eval/rego"
 	pb "github.com/stacklok/mediator/pkg/generated/protobuf/go/mediator/v1"
 )
 
@@ -52,6 +53,22 @@ func TestNewRuleEvaluatorWorks(t *testing.T) {
 										Def: ".",
 									},
 								},
+							},
+						},
+					},
+				},
+			},
+		},
+		{
+			name: "Rego",
+			args: args{
+				rt: &pb.RuleType{
+					Def: &pb.RuleType_Definition{
+						Eval: &pb.RuleType_Definition_Eval{
+							Type: "rego",
+							Rego: &pb.RuleType_Definition_Eval_Rego{
+								Type: rego.DenyByDefaultEvaluationType.String(),
+								Def:  "package mediator\n\ndefault allow = false\n\nallow {\n\tinput.ingested.data == \"foo\"\n}",
 							},
 						},
 					},

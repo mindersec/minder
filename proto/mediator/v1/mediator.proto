@@ -1626,10 +1626,29 @@ message RuleType {
                 Operator policy = 2;
             }
 
+            message Rego {
+                // type is the type of evaluation engine to use
+                // for rego. We currently have two modes of operation:
+                // - deny-by-default: this is the default mode of operation
+                //   where we deny access by default and allow access only
+                //   if the policy explicitly allows it. It expects the
+                //   policy to set an `allow` variable to true or false.
+                // - constraints: this is the mode of operation where we
+                //   allow access by default and deny access only if a
+                //   violation is found. It expects the policy to set a
+                //   `violations` variable with a "msg" field.
+                string type = 1;
+                // def is the definition of the rego policy.
+                string def = 2;
+            }
+
             // jq is only used if the `jq` type is selected.
             // It defines the comparisons that are made between
             // the ingested data and the policy rule.
             repeated JQComparison jq = 2;
+
+            // rego is only used if the `rego` type is selected.
+            optional Rego rego = 3;
         }
         Eval eval = 5;
     }
