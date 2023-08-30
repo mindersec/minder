@@ -48,15 +48,15 @@ func (e EvaluationType) String() string {
 }
 
 type resultEvaluator interface {
-	getQuery() string
+	getQuery() func(r *rego.Rego)
 	parseResult(rs rego.ResultSet) error
 }
 
 type denyByDefaultEvaluator struct {
 }
 
-func (*denyByDefaultEvaluator) getQuery() string {
-	return "data.mediator.allow"
+func (*denyByDefaultEvaluator) getQuery() func(r *rego.Rego) {
+	return rego.Query("data.mediator.allow")
 }
 
 func (*denyByDefaultEvaluator) parseResult(rs rego.ResultSet) error {
@@ -74,8 +74,8 @@ func (*denyByDefaultEvaluator) parseResult(rs rego.ResultSet) error {
 type constraintsEvaluator struct {
 }
 
-func (*constraintsEvaluator) getQuery() string {
-	return "data.mediator.violations[details]"
+func (*constraintsEvaluator) getQuery() func(r *rego.Rego) {
+	return rego.Query("data.mediator.violations[details]")
 }
 
 func (*constraintsEvaluator) parseResult(rs rego.ResultSet) error {

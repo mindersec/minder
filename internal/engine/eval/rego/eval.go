@@ -62,7 +62,7 @@ func NewRegoEvaluator(cfg *pb.RuleType_Definition_Eval_Rego) (*Evaluator, error)
 		cfg:     c,
 		reseval: re,
 		regoOpts: []func(*rego.Rego){
-			rego.Query(re.getQuery()),
+			re.getQuery(),
 			rego.Module("mediator.rego", c.Def),
 			rego.Strict(true),
 		},
