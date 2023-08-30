@@ -826,6 +826,8 @@ func (e *Executor) createOrUpdateEvalStatus(
 	}
 
 	if errors.Is(params.evalErr, evalerrors.ErrEvaluationSkipSilently) {
+		log.Printf("silent skip of rule %d for policy %d for entity %s in repo %d",
+			params.ruleTypeID, params.policyID, params.ruleTypeEntity, params.repoID)
 		return nil
 	}
 
