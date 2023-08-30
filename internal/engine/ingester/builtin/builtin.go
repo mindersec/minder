@@ -19,6 +19,7 @@ package builtin
 import (
 	"context"
 	"encoding/json"
+	"errors"
 	"fmt"
 	"log"
 	"reflect"
@@ -117,8 +118,8 @@ func entityMatchesParams(ctx context.Context, ent protoreflect.ProtoMessage, par
 		if !strings.HasPrefix(key, ".") {
 			key = "." + key
 		}
-		expectedVal, err := util.JQGetValuesFromAccessor(ctx, key, jsonData)
-		if err != nil {
+		expectedVal, err := util.JQReadFrom[any](ctx, key, jsonData)
+		if err != nil && !errors.Is(err, util.ErrNoValueFound) {
 			return false, fmt.Errorf("cannot get values from data accessor: %w", err)
 		}
 		if !reflect.DeepEqual(expectedVal, val) {

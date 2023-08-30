@@ -281,38 +281,38 @@ func (e *Executor) handleWebhookEvent(msg *message.Message) error {
 }
 
 func extractArtifactFromPayload(ctx context.Context, payload map[string]any) (*pb.Artifact, error) {
-	artifactId, err := util.JQGetValuesFromAccessor(ctx, ".package.id", payload)
+	artifactId, err := util.JQReadFrom[float64](ctx, ".package.id", payload)
 	if err != nil {
 		return nil, err
 	}
-	artifactName, err := util.JQGetValuesFromAccessor(ctx, ".package.name", payload)
+	artifactName, err := util.JQReadFrom[string](ctx, ".package.name", payload)
 	if err != nil {
 		return nil, err
 	}
-	artifactType, err := util.JQGetValuesFromAccessor(ctx, ".package.package_type", payload)
+	artifactType, err := util.JQReadFrom[string](ctx, ".package.package_type", payload)
 	if err != nil {
 		return nil, err
 	}
-	ownerLogin, err := util.JQGetValuesFromAccessor(ctx, ".package.owner.login", payload)
+	ownerLogin, err := util.JQReadFrom[string](ctx, ".package.owner.login", payload)
 	if err != nil {
 		return nil, err
 	}
-	repoName, err := util.JQGetValuesFromAccessor(ctx, ".repository.full_name", payload)
+	repoName, err := util.JQReadFrom[string](ctx, ".repository.full_name", payload)
 	if err != nil {
 		return nil, err
 	}
-	packageUrl, err := util.JQGetValuesFromAccessor(ctx, ".package.package_version.package_url", payload)
+	packageUrl, err := util.JQReadFrom[string](ctx, ".package.package_version.package_url", payload)
 	if err != nil {
 		return nil, err
 	}
 
 	artifact := &pb.Artifact{
-		ArtifactId: int64(artifactId.(float64)),
-		Owner:      ownerLogin.(string),
-		Name:       artifactName.(string),
-		Type:       artifactType.(string),
-		Repository: repoName.(string),
-		PackageUrl: packageUrl.(string),
+		ArtifactId: int64(artifactId),
+		Owner:      ownerLogin,
+		Name:       artifactName,
+		Type:       artifactType,
+		Repository: repoName,
+		PackageUrl: packageUrl,
 		// visibility and createdAt are not in the payload, we need to get it with a REST call
 	}
 
@@ -320,23 +320,23 @@ func extractArtifactFromPayload(ctx context.Context, payload map[string]any) (*p
 }
 
 func extractArtifactVersionFromPayload(ctx context.Context, payload map[string]any) (*pb.ArtifactVersion, error) {
-	packageVersionId, err := util.JQGetValuesFromAccessor(ctx, ".package.package_version.id", payload)
+	packageVersionId, err := util.JQReadFrom[float64](ctx, ".package.package_version.id", payload)
 	if err != nil {
 		return nil, err
 	}
-	packageVersionSha, err := util.JQGetValuesFromAccessor(ctx, ".package.package_version.version", payload)
+	packageVersionSha, err := util.JQReadFrom[string](ctx, ".package.package_version.version", payload)
 	if err != nil {
 		return nil, err
 	}
-	tag, err := util.JQGetValuesFromAccessor(ctx, ".package.package_version.container_metadata.tag.name", payload)
+	tag, err := util.JQReadFrom[string](ctx, ".package.package_version.container_metadata.tag.name", payload)
 	if err != nil {
 		return nil, err
 	}
 
 	version := &pb.ArtifactVersion{
-		VersionId:             int64(packageVersionId.(float64)),
-		Tags:                  []string{tag.(string)},
-		Sha:                   packageVersionSha.(string),
+		VersionId:             int64(packageVersionId),
+		Tags:                  []string{tag},
+		Sha:                   packageVersionSha,
 		SignatureVerification: nil, // will be filled later by a call to the container registry
 		GithubWorkflow:        nil, // will be filled later by a call to the container registry
 	}
@@ -351,7 +351,7 @@ func updateArtifactVersionFromRegistry(
 	artifactOwnerLogin, artifactName string,
 	version *pb.ArtifactVersion,
 ) error {
-	packageVersionName, err := util.JQGetValuesFromAccessor(ctx, ".package.package_version.name", payload)
+	packageVersionName, err := util.JQReadFrom[string](ctx, ".package.package_version.name", payload)
 	if err != nil {
 		return fmt.Errorf("error getting package version name: %w", err)
 	}
@@ -372,13 +372,8 @@ func updateArtifactVersionFromRegistry(
 	sort.Strings(tags)
 
 	// now get information for signature and workflow
-	packageVersionNameStr, ok := packageVersionName.(string)
-	if !ok {
-		return fmt.Errorf("package version name is not a string")
-	}
-
 	sigInfo, workflowInfo, err := container.GetArtifactSignatureAndWorkflowInfo(
-		ctx, client, artifactOwnerLogin, artifactName, packageVersionNameStr)
+		ctx, client, artifactOwnerLogin, artifactName, packageVersionName)
 	if errors.Is(err, container.ErrSigValidation) || errors.Is(err, container.ErrProtoParse) {
 		return err
 	} else if err != nil {

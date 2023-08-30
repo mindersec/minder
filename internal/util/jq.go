@@ -18,15 +18,17 @@ package util
 
 import (
 	"context"
+	"errors"
 	"fmt"
+	"reflect"
 
 	"github.com/itchyny/gojq"
 )
 
-// JQGetValuesFromAccessor gets the values from the given accessor
+// jQReadAsAny gets the values from the given accessor
 // the path is the accessor path in jq format.
 // the obj is the object to be evaluated using the accessor.
-func JQGetValuesFromAccessor(ctx context.Context, path string, obj any) (any, error) {
+func jQReadAsAny(ctx context.Context, path string, obj any) (any, error) {
 	out := []any{}
 	accessor, err := gojq.Parse(path)
 	if err != nil {
@@ -52,6 +54,38 @@ func JQGetValuesFromAccessor(ctx context.Context, path string, obj any) (any, er
 
 	if len(out) == 1 {
 		return out[0], nil
+	}
+
+	return out, nil
+}
+
+// ErrNoValueFound is an error that is returned when the accessor doesn't find anything
+var ErrNoValueFound = errors.New("evaluation error")
+
+func newErrNoValueFound(sfmt string, args ...any) error {
+	msg := fmt.Sprintf(sfmt, args...)
+	return fmt.Errorf("%w: %s", ErrNoValueFound, msg)
+}
+
+// JQReadFrom gets the typed value from the given accessor. Returns an error when the accessor
+// doesn't find anything or when the type assertion fails. Useful for when you know the type you're expecting
+// AND the accessor must return a value (IOW, the value is required by the caller)
+func JQReadFrom[T any](ctx context.Context, path string, obj any) (T, error) {
+	var out T
+
+	outAny, err := jQReadAsAny(ctx, path, obj)
+	if err != nil {
+		return out, err
+	}
+
+	if outAny == nil {
+		return out, newErrNoValueFound("no value found for path %s", path)
+	}
+
+	// test for nil to cover the case where T is any and the accessor doesn't match - we'd attempt to type assert nil to any
+	out, ok := outAny.(T)
+	if !ok {
+		return out, fmt.Errorf("could not type assert %v to %v", outAny, reflect.TypeOf(out))
 	}
 
 	return out, nil
