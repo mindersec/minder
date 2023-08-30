@@ -379,14 +379,20 @@ func (s *Server) SyncRepositories(ctx context.Context, in *pb.SyncRepositoriesRe
 		return nil, status.Errorf(codes.Internal, "cannot create github client: %v", err)
 	}
 
+	tmoutCtx, cancel := context.WithTimeout(ctx, github.ExpensiveRestCallTimeout)
+	defer cancel()
+
 	isOrg := (owner_filter != "")
-	repos, err := client.ListAllRepositories(ctx, isOrg, owner_filter)
+	repos, err := client.ListAllRepositories(tmoutCtx, isOrg, owner_filter)
 	if err != nil {
 		return nil, status.Errorf(codes.Internal, "cannot list repositories: %v", err)
 	}
 
 	// // Insert the repositories into the database
-	err = queries.SyncRepositoriesWithDB(ctx, s.store, repos, in.Provider, in.GroupId)
+	// This uses the context with the extended timeout to allow for the
+	// database to be populated with the repositories. Otherwise the original context
+	// expires and the database insertions are cancelled.
+	err = queries.SyncRepositoriesWithDB(tmoutCtx, s.store, repos, in.Provider, in.GroupId)
 	if err != nil {
 		return nil, status.Errorf(codes.Internal, "cannot sync repositories: %v", err)
 	}
