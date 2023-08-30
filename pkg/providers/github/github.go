@@ -19,10 +19,16 @@ import (
 	"context"
 	"net/http"
 	"net/url"
+	"time"
 
 	"github.com/google/go-github/v53/github"
 	"github.com/shurcooL/graphql"
 	"golang.org/x/oauth2"
+)
+
+const (
+	// ExpensiveRestCallTimeout is the timeout for expensive REST calls
+	ExpensiveRestCallTimeout = 15 * time.Second
 )
 
 // GitHubConfig is the struct that contains the configuration for the GitHub client
