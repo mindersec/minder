@@ -216,7 +216,7 @@ ON CONFLICT(policy_id, repository_id, COALESCE(artifact_id, 0), entity, rule_typ
     last_updated = NOW()
 WHERE rule_evaluation_status.policy_id = $1
   AND rule_evaluation_status.repository_id = $2
-  AND rule_evaluation_status.artifact_id = $3
+  AND rule_evaluation_status.artifact_id IS NOT DISTINCT FROM $3
   AND rule_evaluation_status.rule_type_id = $4
   AND rule_evaluation_status.entity = $5
 `
