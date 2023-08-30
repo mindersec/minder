@@ -28,9 +28,6 @@ import (
 type EvaluationType string
 
 const (
-	// DefaultEvaluationType is the default evaluation type. It
-	// defaults to "deny-by-default"
-	DefaultEvaluationType EvaluationType = ""
 	// DenyByDefaultEvaluationType is the deny-by-default evaluation type
 	// It uses the rego query "data.mediator.allow" to determine if the
 	// object is allowed.

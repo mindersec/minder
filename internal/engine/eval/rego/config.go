@@ -28,20 +28,20 @@ import (
 // Config is the configuration for the rego evaluator
 type Config struct {
 	// Type is the type of evaluation to perform
-	Type EvaluationType `json:"type" mapstructure:"type"`
+	Type EvaluationType `json:"type" mapstructure:"type" validate:"required"`
 	// Def is the definition of the policy
 	Def string `json:"def" mapstructure:"def" validate:"required"`
 }
 
 func (c *Config) getEvalType() resultEvaluator {
 	switch c.Type {
-	case DefaultEvaluationType, DenyByDefaultEvaluationType:
+	case DenyByDefaultEvaluationType:
 		return &denyByDefaultEvaluator{}
 	case ConstraintsEvaluationType:
 		return &constraintsEvaluator{}
-	default:
-		return &denyByDefaultEvaluator{}
 	}
+
+	return nil
 }
 
 func parseConfig(cfg *pb.RuleType_Definition_Eval_Rego) (*Config, error) {
@@ -50,13 +50,19 @@ func parseConfig(cfg *pb.RuleType_Definition_Eval_Rego) (*Config, error) {
 	}
 
 	var conf Config
-	validate := validator.New()
+	validate := validator.New(validator.WithRequiredStructEnabled())
+
 	if err := mapstructure.Decode(cfg, &conf); err != nil {
 		return nil, fmt.Errorf("could not parse config: %w", err)
 	}
 
 	if err := validate.Struct(&conf); err != nil {
 		return nil, fmt.Errorf("config failed validation: %w", err)
+	}
+
+	typ := conf.getEvalType()
+	if typ == nil {
+		return nil, fmt.Errorf("unknown evaluation type: %s", conf.Type)
 	}
 
 	return &conf, nil

@@ -37,6 +37,7 @@ func TestEvaluatorDenyByDefaultEvalSimple(t *testing.T) {
 
 	e, err := rego.NewRegoEvaluator(
 		&pb.RuleType_Definition_Eval_Rego{
+			Type: rego.DenyByDefaultEvaluationType.String(),
 			Def: `
 package mediator
 
@@ -188,6 +189,17 @@ func TestCantCreateEvaluatorWithInvalidConfig(t *testing.T) {
 		_, err := rego.NewRegoEvaluator(&pb.RuleType_Definition_Eval_Rego{})
 		require.Error(t, err, "should have failed to create evaluator")
 	})
+
+	t.Run("invalid type", func(t *testing.T) {
+		t.Parallel()
+
+		_, err := rego.NewRegoEvaluator(
+			&pb.RuleType_Definition_Eval_Rego{
+				Type: "invalid",
+			},
+		)
+		require.Error(t, err, "should have failed to create evaluator")
+	})
 }
 
 // This test case reflects the scenario where the user provided
@@ -197,6 +209,7 @@ func TestCantEvaluateWithInvalidPolicy(t *testing.T) {
 
 	e, err := rego.NewRegoEvaluator(
 		&pb.RuleType_Definition_Eval_Rego{
+			Type: rego.ConstraintsEvaluationType.String(),
 			Def: `
 package mediator
 
