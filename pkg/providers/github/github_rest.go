@@ -234,6 +234,33 @@ func (c *RestClient) GetPackageVersionByTag(ctx context.Context, isOrg bool, own
 
 }
 
+// GetPackageVersionById returns a single package version for the specific id
+func (c *RestClient) GetPackageVersionById(
+	ctx context.Context,
+	isOrg bool,
+	owner string,
+	packageType string,
+	packageName string,
+	version int64,
+) (*github.PackageVersion, error) {
+	var pkgVersion *github.PackageVersion
+	var err error
+
+	if isOrg {
+		pkgVersion, _, err = c.client.Organizations.PackageGetVersion(ctx, owner, packageType, packageName, version)
+		if err != nil {
+			return nil, err
+		}
+	} else {
+		pkgVersion, _, err = c.client.Users.PackageGetVersion(ctx, owner, packageType, packageName, version)
+		if err != nil {
+			return nil, err
+		}
+	}
+
+	return pkgVersion, nil
+}
+
 // GetRepository returns a single repository for the authenticated user
 func (c *RestClient) GetRepository(ctx context.Context, owner string, name string) (*github.Repository, error) {
 	// create a slice to hold the repositories

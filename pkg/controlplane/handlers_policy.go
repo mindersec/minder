@@ -380,9 +380,11 @@ func (s *Server) GetPolicyStatusById(ctx context.Context,
 
 	var rulestats []*pb.RuleEvaluationStatus
 	var selector *sql.NullInt32
+	var dbEntity *db.NullEntities
 
 	if in.GetAll() {
 		selector = &sql.NullInt32{}
+		dbEntity = &db.NullEntities{}
 	} else if e := in.GetEntity(); e != nil {
 		if !entities.IsValidEntity(e.GetType()) {
 			return nil, status.Errorf(codes.InvalidArgument,
@@ -390,13 +392,15 @@ func (s *Server) GetPolicyStatusById(ctx context.Context,
 				e.GetType(), entities.KnownTypesCSV())
 		}
 		selector = &sql.NullInt32{Int32: e.GetId(), Valid: true}
+		dbEntity = &db.NullEntities{Entities: entities.EntityTypeToDB(e.GetType()), Valid: true}
 	}
 
 	// TODO: Handle retrieving status for other types of entities
 	if selector != nil {
 		dbrulestat, err := s.store.ListRuleEvaluationStatusByPolicyId(ctx, db.ListRuleEvaluationStatusByPolicyIdParams{
-			PolicyID:     in.PolicyId,
-			RepositoryID: *selector,
+			PolicyID:   in.PolicyId,
+			EntityID:   *selector,
+			EntityType: *dbEntity,
 		})
 		if err != nil && !errors.Is(err, sql.ErrNoRows) {
 			return nil, status.Errorf(codes.Unknown, "failed to list rule evaluation status: %s", err)

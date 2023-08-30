@@ -118,12 +118,21 @@ SELECT res.eval_status as eval_status, res.last_updated as last_updated, res.det
 FROM rule_evaluation_status res
 INNER JOIN repositories repo ON repo.id = res.repository_id
 INNER JOIN rule_type rt ON rt.id = res.rule_type_id
-WHERE res.policy_id = $1 AND (res.repository_id = $2 OR $2 IS NULL)
+WHERE res.policy_id = $1 AND
+    (
+        CASE
+            WHEN $2::entities = 'repository' AND res.repository_id = $3::integer THEN true
+            WHEN $2::entities  = 'artifact' AND res.artifact_id = $3::integer THEN true
+            WHEN $3::integer IS NULL THEN true
+            ELSE false
+        END
+    )
 `
 
 type ListRuleEvaluationStatusByPolicyIdParams struct {
-	PolicyID     int32         `json:"policy_id"`
-	RepositoryID sql.NullInt32 `json:"repository_id"`
+	PolicyID   int32         `json:"policy_id"`
+	EntityType NullEntities  `json:"entity_type"`
+	EntityID   sql.NullInt32 `json:"entity_id"`
 }
 
 type ListRuleEvaluationStatusByPolicyIdRow struct {
@@ -140,7 +149,7 @@ type ListRuleEvaluationStatusByPolicyIdRow struct {
 }
 
 func (q *Queries) ListRuleEvaluationStatusByPolicyId(ctx context.Context, arg ListRuleEvaluationStatusByPolicyIdParams) ([]ListRuleEvaluationStatusByPolicyIdRow, error) {
-	rows, err := q.db.QueryContext(ctx, listRuleEvaluationStatusByPolicyId, arg.PolicyID, arg.RepositoryID)
+	rows, err := q.db.QueryContext(ctx, listRuleEvaluationStatusByPolicyId, arg.PolicyID, arg.EntityType, arg.EntityID)
 	if err != nil {
 		return nil, err
 	}
@@ -194,25 +203,28 @@ const upsertRuleEvaluationStatus = `-- name: UpsertRuleEvaluationStatus :exec
 INSERT INTO rule_evaluation_status (
     policy_id,
     repository_id,
+    artifact_id,
     rule_type_id,
     entity,
     eval_status,
     details,
     last_updated
-) VALUES ($1, $2, $3, $4, $5, $6, NOW())
-ON CONFLICT(policy_id, repository_id, entity, rule_type_id) DO UPDATE SET
-    eval_status = $5,
-    details = $6,
+) VALUES ($1, $2, $3, $4, $5, $6, $7, NOW())
+ON CONFLICT(policy_id, repository_id, COALESCE(artifact_id, 0), entity, rule_type_id) DO UPDATE SET
+    eval_status = $6,
+    details = $7,
     last_updated = NOW()
 WHERE rule_evaluation_status.policy_id = $1
   AND rule_evaluation_status.repository_id = $2
-  AND rule_evaluation_status.rule_type_id = $3
-  AND rule_evaluation_status.entity = $4
+  AND rule_evaluation_status.artifact_id = $3
+  AND rule_evaluation_status.rule_type_id = $4
+  AND rule_evaluation_status.entity = $5
 `
 
 type UpsertRuleEvaluationStatusParams struct {
 	PolicyID     int32           `json:"policy_id"`
 	RepositoryID sql.NullInt32   `json:"repository_id"`
+	ArtifactID   sql.NullInt32   `json:"artifact_id"`
 	RuleTypeID   int32           `json:"rule_type_id"`
 	Entity       Entities        `json:"entity"`
 	EvalStatus   EvalStatusTypes `json:"eval_status"`
@@ -223,6 +235,7 @@ func (q *Queries) UpsertRuleEvaluationStatus(ctx context.Context, arg UpsertRule
 	_, err := q.db.ExecContext(ctx, upsertRuleEvaluationStatus,
 		arg.PolicyID,
 		arg.RepositoryID,
+		arg.ArtifactID,
 		arg.RuleTypeID,
 		arg.Entity,
 		arg.EvalStatus,

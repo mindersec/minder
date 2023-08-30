@@ -14,15 +14,23 @@ def:
   # Defines the schema for parameters that will be passed to the rule
   param_schema:
     properties:
-      artifactName:
+      name:
         type: string
         description: "The name of the artifact to check."
-      tag:
-        type: string
-        description: "The tag of the artifact to check."
+      tags:
+        "type": array
+        "items": {
+          "type": "string"
+        }
+        description: "The tags of the artifact to check. Must be a subset of the tags the artifact has"
+      type:
+        "type": string
+        "default": "container"
+        "enum": ["container"]
+        description: "The type of artifact to check. Currently only container is supported."
     required:
-      - artifactName
-      - tag
+      - name
+      - tags
   # Defines the schema for writing a rule with this rule being checked
   rule_schema:
     properties:
@@ -37,11 +45,9 @@ def:
             description: "Set to true to enforce artifact signature being verified."
   # Defines the configuration for ingesting data relevant for the rule
   ingest:
-    type: builtin
-    builtin:
-      # method will be called using reflection, and will accept a generic json payload
-      # it will also return a generic json payload
-      method: ValidateSignature
+    type: artifact
+    # Currently no configuration
+    artifact: {}
   # Defines the configuration for evaluating data ingested against the given policy
   eval:
     type: jq

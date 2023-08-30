@@ -66,6 +66,7 @@ message Artifact {
     string visibility = 5;
     string repository = 6;
     google.protobuf.Timestamp created_at = 7;
+    string package_url = 8;
 }
 
 message GithubWorkflow {
@@ -86,18 +87,6 @@ message SignatureVerification {
     optional google.protobuf.Timestamp signature_time = 8;
 }
 
-message ArtifactEventPayload {
-    int64 artifact_id = 1;
-    string artifact_name = 2;
-    string artifact_type = 3;
-    string owner_login = 4;
-    string owner_type = 5;
-    int64 version_id = 6;
-    string version_sha = 7;
-    string tag = 8;
-    string package_url = 9;
-}
-
 message ArtifactVersion {
     int64 version_id = 1;
     repeated string tags = 2;
@@ -105,6 +94,11 @@ message ArtifactVersion {
     SignatureVerification signature_verification = 4;
     optional GithubWorkflow github_workflow = 5;
     google.protobuf.Timestamp created_at = 6;
+}
+
+message VersionedArtifact {
+    Artifact artifact = 1;
+    ArtifactVersion version = 2;
 }
 
 message GetArtifactByIdRequest {
@@ -1563,6 +1557,10 @@ message BuiltinType {
     string method = 1;
 }
 
+// ArtifactType defines the artifact data evaluation.
+message ArtifactType {
+}
+
 // RuleType defines rules that may or may not be user defined.
 // The version is assumed from the folder's version.
 message RuleType {
@@ -1592,7 +1590,7 @@ message RuleType {
         // Ingest defines how the data is ingested.
         message Ingest {
             // type is the type of the data ingestion.
-            // we currently support rest and builtin.
+            // we currently support rest, artifact and builtin.
             string type = 1;
 
             // rest is the rest data ingestion.
@@ -1601,6 +1599,9 @@ message RuleType {
 
             // builtin is the builtin data ingestion.
             optional BuiltinType builtin = 4;
+
+            // artifact is the artifact data ingestion.
+            optional ArtifactType artifact = 5;
 
         }
         Ingest ingest = 4;

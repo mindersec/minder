@@ -1,0 +1,28 @@
+artifact:
+  artifactId: 5482209
+  name: test
+  owner: jakubtestorg
+  packageUrl: ghcr.io/jakubtestorg/testrepo:main
+  repository: jakubtestorg/testrepo
+  type: CONTAINER
+  visibility: public
+version:
+  createdAt: '2023-08-28T14:02:18Z'
+  github_workflow:
+    commit_sha: 542ff1ded187631de1077ef42c07a7b723ff0963
+    name: Docker
+    repository: jakubtestorg/testrepo
+    trigger: workflow_dispatch
+  sha: sha256:059105cbc9331f6cef5aeb4bff1c0c7be0126d3e5eee0fdfbd45718a6cdd9ea3
+  signature_verification:
+    cert_identity: >-
+      https://github.com/jakubtestorg/testrepo/.github/workflows/docker-image.yml@refs/heads/main
+    cert_issuer: https://token.actions.githubusercontent.com
+    is_bundle_verified: true
+    is_signed: true
+    is_verified: true
+    rekor_log_id: c0d23d6ad406973f9559f3ba2d1ca01f84147d8ffc5b8445c224f98b9591801d
+    rekor_log_index: 33115087
+  tags:
+    - main
+  versionId: 122634734

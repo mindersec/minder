@@ -18,20 +18,22 @@ INSERT INTO rule_evaluation_status (
 INSERT INTO rule_evaluation_status (
     policy_id,
     repository_id,
+    artifact_id,
     rule_type_id,
     entity,
     eval_status,
     details,
     last_updated
-) VALUES ($1, $2, $3, $4, $5, $6, NOW())
-ON CONFLICT(policy_id, repository_id, entity, rule_type_id) DO UPDATE SET
-    eval_status = $5,
-    details = $6,
+) VALUES ($1, $2, $3, $4, $5, $6, $7, NOW())
+ON CONFLICT(policy_id, repository_id, COALESCE(artifact_id, 0), entity, rule_type_id) DO UPDATE SET
+    eval_status = $6,
+    details = $7,
     last_updated = NOW()
 WHERE rule_evaluation_status.policy_id = $1
   AND rule_evaluation_status.repository_id = $2
-  AND rule_evaluation_status.rule_type_id = $3
-  AND rule_evaluation_status.entity = $4;
+  AND rule_evaluation_status.artifact_id = $3
+  AND rule_evaluation_status.rule_type_id = $4
+  AND rule_evaluation_status.entity = $5;
 
 -- name: GetPolicyStatusByIdAndGroup :one
 SELECT p.id, p.name, ps.policy_status, ps.last_updated FROM policy_status ps
@@ -48,4 +50,12 @@ SELECT res.eval_status as eval_status, res.last_updated as last_updated, res.det
 FROM rule_evaluation_status res
 INNER JOIN repositories repo ON repo.id = res.repository_id
 INNER JOIN rule_type rt ON rt.id = res.rule_type_id
-WHERE res.policy_id = $1 AND (res.repository_id = $2 OR $2 IS NULL);
+WHERE res.policy_id = $1 AND
+    (
+        CASE
+            WHEN sqlc.narg(entity_type)::entities = 'repository' AND res.repository_id = sqlc.narg(entity_id)::integer THEN true
+            WHEN sqlc.narg(entity_type)::entities  = 'artifact' AND res.artifact_id = sqlc.narg(entity_id)::integer THEN true
+            WHEN sqlc.narg(entity_id)::integer IS NULL THEN true
+            ELSE false
+        END
+    );
