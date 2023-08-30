@@ -124,6 +124,7 @@ CREATE TABLE repositories (
     webhook_id INTEGER,
     webhook_url TEXT NOT NULL,
     deploy_url TEXT NOT NULL,
+    clone_url TEXT NOT NULL,
     created_at TIMESTAMP NOT NULL DEFAULT NOW(),
     updated_at TIMESTAMP NOT NULL DEFAULT NOW()
 );

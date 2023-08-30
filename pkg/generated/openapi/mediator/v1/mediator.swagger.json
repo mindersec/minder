@@ -4134,6 +4134,9 @@
         "deployUrl": {
           "type": "string"
         },
+        "cloneUrl": {
+          "type": "string"
+        },
         "createdAt": {
           "type": "string",
           "format": "date-time"
@@ -4168,13 +4171,8 @@
         "deployUrl": {
           "type": "string"
         },
-        "createdAt": {
-          "type": "string",
-          "format": "date-time"
-        },
-        "updatedAt": {
-          "type": "string",
-          "format": "date-time"
+        "cloneUrl": {
+          "type": "string"
         },
         "hookName": {
           "type": "string"
@@ -4188,11 +4186,19 @@
         "uuid": {
           "type": "string"
         },
+        "registered": {
+          "type": "boolean"
+        },
         "error": {
           "type": "string"
         },
-        "registered": {
-          "type": "boolean"
+        "createdAt": {
+          "type": "string",
+          "format": "date-time"
+        },
+        "updatedAt": {
+          "type": "string",
+          "format": "date-time"
         }
       }
     },

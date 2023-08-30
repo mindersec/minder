@@ -2372,6 +2372,7 @@ RepositoryRecord is used for registering repositories.
 | is_fork | [bool](#bool) |  |  |
 | hook_url | [string](#string) |  |  |
 | deploy_url | [string](#string) |  |  |
+| clone_url | [string](#string) |  |  |
 | created_at | [google.protobuf.Timestamp](#google-protobuf-Timestamp) |  |  |
 | updated_at | [google.protobuf.Timestamp](#google-protobuf-Timestamp) |  |  |
 
@@ -2394,14 +2395,15 @@ RepositoryRecord is used for registering repositories.
 | hook_id | [int64](#int64) |  |  |
 | hook_url | [string](#string) |  |  |
 | deploy_url | [string](#string) |  |  |
-| created_at | [google.protobuf.Timestamp](#google-protobuf-Timestamp) |  |  |
-| updated_at | [google.protobuf.Timestamp](#google-protobuf-Timestamp) |  |  |
+| clone_url | [string](#string) |  |  |
 | hook_name | [string](#string) |  |  |
 | hook_type | [string](#string) |  |  |
 | success | [bool](#bool) |  |  |
 | uuid | [string](#string) |  |  |
-| error | [google.protobuf.StringValue](#google-protobuf-StringValue) |  |  |
 | registered | [bool](#bool) |  |  |
+| error | [google.protobuf.StringValue](#google-protobuf-StringValue) |  |  |
+| created_at | [google.protobuf.Timestamp](#google-protobuf-Timestamp) |  |  |
+| updated_at | [google.protobuf.Timestamp](#google-protobuf-Timestamp) |  |  |
 
 
 
