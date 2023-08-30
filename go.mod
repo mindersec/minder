@@ -8,7 +8,7 @@ require (
 	github.com/alexdrl/zerowater v0.0.3
 	github.com/aws/aws-sdk-go-v2/config v1.18.37
 	github.com/aws/aws-sdk-go-v2/feature/rds/auth v1.2.19
-	github.com/go-playground/validator/v10 v10.15.2
+	github.com/go-playground/validator/v10 v10.15.3
 	github.com/golang-jwt/jwt/v4 v4.5.0
 	github.com/golang-migrate/migrate/v4 v4.16.2
 	github.com/golang/mock v1.6.0
