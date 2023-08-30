@@ -4,7 +4,8 @@ INSERT INTO rule_type (
     provider,
     group_id,
     description,
-    definition) VALUES ($1, $2, $3, $4, sqlc.arg(definition)::jsonb) RETURNING *;
+    guidance,
+    definition) VALUES ($1, $2, $3, $4, $5, sqlc.arg(definition)::jsonb) RETURNING *;
 
 -- name: ListRuleTypesByProviderAndGroup :many
 SELECT * FROM rule_type WHERE provider = $1 AND group_id = $2;

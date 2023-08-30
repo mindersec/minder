@@ -4320,6 +4320,10 @@
         "details": {
           "type": "string",
           "title": "details is the description of the evaluation if any"
+        },
+        "guidance": {
+          "type": "string",
+          "title": "guidance is the guidance for the evaluation if any"
         }
       },
       "title": "get the status of the rules for a given policy"
@@ -4347,6 +4351,10 @@
         "description": {
           "type": "string",
           "description": "description is the description of the rule type."
+        },
+        "guidance": {
+          "type": "string",
+          "description": "guidance are instructions we give the user in case a rule fails."
         }
       },
       "description": "RuleType defines rules that may or may not be user defined.\nThe version is assumed from the folder's version."

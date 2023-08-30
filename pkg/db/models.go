@@ -232,6 +232,7 @@ type RuleType struct {
 	Provider    string          `json:"provider"`
 	GroupID     int32           `json:"group_id"`
 	Description string          `json:"description"`
+	Guidance    string          `json:"guidance"`
 	Definition  json.RawMessage `json:"definition"`
 	CreatedAt   time.Time       `json:"created_at"`
 	UpdatedAt   time.Time       `json:"updated_at"`

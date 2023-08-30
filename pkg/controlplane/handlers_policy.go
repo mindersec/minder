@@ -408,6 +408,16 @@ func (s *Server) GetPolicyStatusById(ctx context.Context,
 
 		rulestats = make([]*pb.RuleEvaluationStatus, 0, len(dbrulestat))
 		for _, rs := range dbrulestat {
+			var guidance string
+			if rs.EvalStatus == db.EvalStatusTypesFailure || rs.EvalStatus == db.EvalStatusTypesError {
+				ruleTypeInfo, err := s.store.GetRuleTypeByID(ctx, rs.RuleTypeID)
+				if err != nil {
+					log.Printf("error getting rule type info: %v", err)
+				} else {
+					guidance = ruleTypeInfo.Guidance
+				}
+			}
+
 			st := &pb.RuleEvaluationStatus{
 				PolicyId: in.PolicyId,
 				RuleId:   rs.RuleTypeID,
@@ -421,6 +431,7 @@ func (s *Server) GetPolicyStatusById(ctx context.Context,
 					"repo_owner":    rs.RepoOwner,
 					"provider":      rs.Provider,
 				},
+				Guidance:    guidance,
 				LastUpdated: timestamppb.New(rs.LastUpdated),
 			}
 
@@ -603,6 +614,7 @@ func (s *Server) CreateRuleType(ctx context.Context, crt *pb.CreateRuleTypeReque
 		GroupID:     entityCtx.GetGroup().GetID(),
 		Description: in.GetDescription(),
 		Definition:  def,
+		Guidance:    in.GetGuidance(),
 	})
 	if err != nil {
 		return nil, status.Errorf(codes.Unknown, "failed to create rule type: %s", err)

@@ -2567,6 +2567,7 @@ get the status of the rules for a given policy
 | last_updated | [google.protobuf.Timestamp](#google-protobuf-Timestamp) |  | last_updated is the last time the policy was updated |
 | entity_info | [RuleEvaluationStatus.EntityInfoEntry](#mediator-v1-RuleEvaluationStatus-EntityInfoEntry) | repeated | entity_info is the information about the entity |
 | details | [string](#string) |  | details is the description of the evaluation if any |
+| guidance | [string](#string) |  | guidance is the guidance for the evaluation if any |
 
 
 
@@ -2603,6 +2604,7 @@ The version is assumed from the folder&#39;s version.
 | context | [Context](#mediator-v1-Context) |  | context is the context in which the rule is evaluated. |
 | def | [RuleType.Definition](#mediator-v1-RuleType-Definition) |  | def is the definition of the rule type. |
 | description | [string](#string) |  | description is the description of the rule type. |
+| guidance | [string](#string) |  | guidance are instructions we give the user in case a rule fails. |
 
 
 
