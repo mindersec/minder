@@ -1300,6 +1300,8 @@ message RuleEvaluationStatus {
     map<string, string> entity_info = 7;
     // details is the description of the evaluation if any
     string details = 8;
+    // guidance is the guidance for the evaluation if any
+    string guidance = 9;
 }
 
 message GetPolicyStatusByIdRequest {
@@ -1658,6 +1660,9 @@ message RuleType {
 
     // description is the description of the rule type.
     string description = 5;
+
+    // guidance are instructions we give the user in case a rule fails.
+    string guidance = 6;
 }
 
  // PipelinePolicy defines a policy that is user defined.
