@@ -19,6 +19,7 @@ package jq
 import (
 	"context"
 	"encoding/json"
+	"errors"
 	"fmt"
 	"reflect"
 
@@ -65,14 +66,18 @@ func NewJQEvaluator(assertions []*pb.RuleType_Definition_Eval_JQComparison) (*Ev
 // Eval calls the jq library to evaluate the rule
 func (jqe *Evaluator) Eval(ctx context.Context, pol map[string]any, obj any) error {
 	for idx := range jqe.assertions {
+		var policyVal, dataVal any
+
 		a := jqe.assertions[idx]
-		policyVal, err := util.JQGetValuesFromAccessor(ctx, a.Policy.Def, pol)
-		if err != nil {
+		policyVal, err := util.JQReadFrom[any](ctx, a.Policy.Def, pol)
+		// we ignore util.ErrNoValueFound because we want to allow the JQ accessor to return the default value
+		// which is fine for DeepEqual
+		if err != nil && !errors.Is(err, util.ErrNoValueFound) {
 			return fmt.Errorf("cannot get values from policy accessor: %w", err)
 		}
 
-		dataVal, err := util.JQGetValuesFromAccessor(ctx, a.Ingested.Def, obj)
-		if err != nil {
+		dataVal, err = util.JQReadFrom[any](ctx, a.Ingested.Def, obj)
+		if err != nil && !errors.Is(err, util.ErrNoValueFound) {
 			return fmt.Errorf("cannot get values from data accessor: %w", err)
 		}
 

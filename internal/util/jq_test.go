@@ -18,6 +18,7 @@ package util_test
 
 import (
 	"context"
+	"errors"
 	"reflect"
 	"testing"
 
@@ -26,200 +27,232 @@ import (
 	"github.com/stacklok/mediator/internal/util"
 )
 
-func TestJQGetValuesFromAccessorValid(t *testing.T) {
+func TestJQReadFromAccessorString(t *testing.T) {
 	t.Parallel()
 
-	type args struct {
-		ctx  context.Context
-		path string
-		obj  any
-	}
-	tests := []struct {
-		name string
-		args args
-		want any
-	}{
-		{
-			name: "string",
-			args: args{
-				ctx:  context.Background(),
-				path: ".simple",
-				obj: map[string]any{
-					"simple": "value",
-				},
-			},
-			want: "value",
-		},
-		{
-			name: "number",
-			args: args{
-				ctx:  context.Background(),
-				path: ".number",
-				obj: map[string]any{
-					"number": 1,
-				},
-			},
-			want: 1,
-		},
-		{
-			name: "boolean",
-			args: args{
-				ctx:  context.Background(),
-				path: ".boolean",
-				obj: map[string]any{
-					"boolean": true,
-				},
-			},
-			want: true,
-		},
-		{
-			name: "array",
-			args: args{
-				ctx:  context.Background(),
-				path: ".array",
-				obj: map[string]any{
-					"array": []any{
-						"one",
-						"two",
-						"three",
-					},
-				},
-			},
-			want: []any{
-				"one",
-				"two",
-				"three",
-			},
-		},
-		{
-			name: "object",
-			args: args{
-				ctx:  context.Background(),
-				path: ".object",
-				obj: map[string]any{
-					"object": map[string]any{
-						"one":   1,
-						"two":   2,
-						"three": 3,
-					},
-				},
-			},
-			want: map[string]any{
-				"one":   1,
-				"two":   2,
-				"three": 3,
-			},
-		},
-		{
-			name: "nested",
-			args: args{
-				ctx:  context.Background(),
-				path: ".nested.object",
-				obj: map[string]any{
-					"nested": map[string]any{
-						"object": map[string]any{
-							"one":   1,
-							"two":   2,
-							"three": 3,
-						},
-					},
-				},
-			},
-			want: map[string]any{
-				"one":   1,
-				"two":   2,
-				"three": 3,
-			},
-		},
-		{
-			name: "nested array",
-			args: args{
-				ctx:  context.Background(),
-				path: ".nested.array",
-				obj: map[string]any{
-					"nested": map[string]any{
-						"array": []any{
-							"one",
-							"two",
-							"three",
-						},
-					},
-				},
-			},
-			want: []any{
-				"one",
-				"two",
-				"three",
-			},
-		},
-		{
-			// This shouldn't fail, but it should return nil
-			name: "invalid path",
-			args: args{
-				ctx:  context.Background(),
-				path: ".invalid",
-				obj: map[string]any{
-					"simple": "value",
-				},
-			},
-			want: nil,
-		},
-	}
-	for _, tt := range tests {
-		tt := tt
+	var want = "value"
 
-		t.Run(tt.name, func(t *testing.T) {
-			t.Parallel()
+	s, err := util.JQReadFrom[string](context.Background(), ".simple", map[string]any{
+		"simple": want,
+	})
 
-			got, err := util.JQGetValuesFromAccessor(tt.args.ctx, tt.args.path, tt.args.obj)
-			assert.NoError(t, err, "Unexpected error processing JQGetValuesFromAccessor()")
-			assert.True(t, reflect.DeepEqual(got, tt.want), "Expected JQGetValuesFromAccessor() to return %v, got %v", tt.want, got)
-		})
-	}
+	assert.NoError(t, err, "Unexpected error processing JQReadFrom()")
+	assert.Equal(t, want, s, "Expected JQReadFrom() to return %v, got %v", want, s)
 }
 
-func TestJQGetValuesFromAccessorInvalid(t *testing.T) {
+func TestJQReadFromAccessorNumber(t *testing.T) {
 	t.Parallel()
 
-	type args struct {
-		ctx  context.Context
-		path string
-		obj  any
+	var want = 1
+
+	n, err := util.JQReadFrom[int](context.Background(), ".number", map[string]any{
+		"number": want,
+	})
+
+	assert.NoError(t, err, "Unexpected error processing JQReadFrom()")
+	assert.Equal(t, want, n, "Expected JQReadFrom() to return %v, got %v", want, n)
+}
+
+func TestJQReadFromAccessorBoolean(t *testing.T) {
+	t.Parallel()
+
+	var want = true
+
+	b, err := util.JQReadFrom[bool](context.Background(), ".boolean", map[string]any{
+		"boolean": want,
+	})
+
+	assert.NoError(t, err, "Unexpected error processing JQReadFrom()")
+	assert.Equal(t, want, b, "Expected JQReadFrom() to return %v, got %v", want, b)
+}
+
+func TestJQReadFromAccessorArray(t *testing.T) {
+	t.Parallel()
+
+	var want = []string{
+		"one",
+		"two",
+		"three",
 	}
-	tests := []struct {
-		name string
-		args args
-	}{
-		{
-			name: "invalid object",
-			args: args{
-				ctx:  context.Background(),
-				path: ".simple",
-				obj:  "invalid",
+
+	a, err := util.JQReadFrom[[]string](context.Background(), ".array", map[string]any{
+		"array": []string{
+			"one",
+			"two",
+			"three",
+		},
+	})
+
+	assert.NoError(t, err, "Unexpected error processing JQReadFrom()")
+	assert.Equal(t, want, a, "Expected JQReadFrom() to return %v, got %v", want, a)
+}
+
+func TestJQReadFromAccessorNestedArray(t *testing.T) {
+	t.Parallel()
+
+	var want = []string{
+		"one",
+		"two",
+		"three",
+	}
+
+	a, err := util.JQReadFrom[[]string](context.Background(), ".nested.array", map[string]any{
+		"nested": map[string]any{
+			"array": []string{
+				"one",
+				"two",
+				"three",
 			},
 		},
-		{
-			name: "invalid path",
-			args: args{
-				ctx:  context.Background(),
-				path: ".simple.invalid[0]",
-				obj: map[string]any{
-					"simple": "value",
-				},
+	})
+
+	assert.NoError(t, err, "Unexpected error processing JQReadFrom()")
+	assert.Equal(t, want, a, "Expected JQReadFrom() to return %v, got %v", want, a)
+}
+
+func TestJQReadFromAccessorObj(t *testing.T) {
+	t.Parallel()
+
+	var want = map[string]any{
+		"one":   1,
+		"two":   2,
+		"three": 3,
+	}
+
+	o, err := util.JQReadFrom[map[string]any](context.Background(), ".object", map[string]any{
+		"object": map[string]any{
+			"one":   1,
+			"two":   2,
+			"three": 3,
+		},
+	})
+
+	assert.NoError(t, err, "Unexpected error processing JQReadFrom()")
+	assert.True(t, reflect.DeepEqual(o, want), "Expected jQReadAsAny() to return %v, got %v", want, o)
+}
+
+func TestJQReadFromAccessorNestedObj(t *testing.T) {
+	t.Parallel()
+
+	var want = map[string]any{
+		"one":   1,
+		"two":   2,
+		"three": 3,
+	}
+
+	o, err := util.JQReadFrom[map[string]any](context.Background(), ".nested.object", map[string]any{
+		"nested": map[string]any{
+			"object": map[string]any{
+				"one":   1,
+				"two":   2,
+				"three": 3,
 			},
 		},
+	})
+
+	assert.NoError(t, err, "Unexpected error processing JQReadFrom()")
+	assert.True(t, reflect.DeepEqual(o, want), "Expected jQReadAsAny() to return %v, got %v", want, o)
+}
+
+func TestJQReadFromAccessorAny(t *testing.T) {
+	t.Parallel()
+
+	var want = map[string]any{
+		"one":   1,
+		"two":   2,
+		"three": 3,
 	}
 
-	for _, tt := range tests {
-		tt := tt
+	o, err := util.JQReadFrom[any](context.Background(), ".nested.object", map[string]any{
+		"nested": map[string]any{
+			"object": map[string]any{
+				"one":   1,
+				"two":   2,
+				"three": 3,
+			},
+		},
+	})
 
-		t.Run(tt.name, func(t *testing.T) {
-			t.Parallel()
+	assert.NoError(t, err, "Unexpected error processing JQReadFrom()")
+	assert.True(t, reflect.DeepEqual(o, want), "Expected jQReadAsAny() to return %v, got %v", want, o)
+}
 
-			got, err := util.JQGetValuesFromAccessor(tt.args.ctx, tt.args.path, tt.args.obj)
-			assert.Nil(t, got, "Expected JQGetValuesFromAccessor() to return nil, got %v", got)
-			t.Log(err)
-			assert.Error(t, err, "JQGetValuesFromAccessor() should have returned an error")
-		})
-	}
+func TestJQReadFromAccessorNotAString(t *testing.T) {
+	t.Parallel()
+
+	s, err := util.JQReadFrom[string](context.Background(), ".simple", map[string]any{
+		"simple": 1,
+	})
+
+	assert.Error(t, err, "Expected JQReadFrom() to return an error")
+	assert.Equal(t, "", s, "Expected JQReadFrom() to return an empty string")
+}
+
+func TestJQReadFromAccessorBadAccessor(t *testing.T) {
+	t.Parallel()
+
+	var s string
+	var err error
+
+	s, err = util.JQReadFrom[string](context.Background(), ".simple", map[string]any{
+		"not_so_simple": 1,
+	})
+
+	assert.True(t, errors.Is(err, util.ErrNoValueFound), "Expected JQReadFrom() to return ErrNoValueFound")
+	assert.Equal(t, "", s, "Expected JQReadFrom() to return an empty string")
+}
+
+func TestJQReadFromAccessorBadAny(t *testing.T) {
+	t.Parallel()
+
+	var a any
+	var err error
+
+	a, err = util.JQReadFrom[any](context.Background(), ".simple", map[string]any{
+		"not_so_simple": 1,
+	})
+
+	assert.True(t, errors.Is(err, util.ErrNoValueFound), "Expected JQReadFrom() to return ErrNoValueFound")
+	assert.Nil(t, a, "Expected JQReadFrom() to return nil")
+}
+
+func TestJQReadFromAccessorInvalidObject(t *testing.T) {
+	t.Parallel()
+
+	a, err := util.JQReadFrom[any](context.Background(), ".simple", "invalid")
+
+	assert.Error(t, err, "Expected JQReadFrom() to return an error")
+	assert.Nil(t, a, "Expected JQReadFrom() to return nil")
+}
+
+func TestJQReadFromAccessorNoMatch(t *testing.T) {
+	t.Parallel()
+
+	o, err := util.JQReadFrom[any](context.Background(), ".you.shall.not.match", map[string]any{
+		"nested": map[string]any{
+			"object": map[string]any{
+				"one":   1,
+				"two":   2,
+				"three": 3,
+			},
+		},
+	})
+
+	assert.True(t, errors.Is(err, util.ErrNoValueFound), "Expected JQReadFrom() to return ErrNoValueFound")
+	assert.Nil(t, o, "Expected jQReadAsAny() to return nil, got %v", o)
+}
+
+func TestJQReadFromAccessorInvalid(t *testing.T) {
+	t.Parallel()
+
+	o, err := util.JQReadFrom[map[string]any](context.Background(), ".object.one[0]", map[string]any{
+		"object": map[string]any{
+			"one":   1,
+			"two":   2,
+			"three": 3,
+		},
+	})
+
+	assert.Error(t, err, "Expected JQReadFrom() to return an error")
+	assert.Nil(t, o, "Expected JQReadFrom() to return nil")
 }
