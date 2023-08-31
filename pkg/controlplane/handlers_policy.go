@@ -353,6 +353,45 @@ func (s *Server) GetPolicyById(ctx context.Context,
 	return &resp, nil
 }
 
+func getRuleEvalEntityInfo(
+	ctx context.Context,
+	store db.Store,
+	entityType *db.NullEntities,
+	selector *sql.NullInt32,
+	rs db.ListRuleEvaluationStatusByPolicyIdRow,
+) map[string]string {
+	entityInfo := map[string]string{
+		"provider": rs.Provider,
+	}
+
+	if rs.RepositoryID.Valid {
+		// this is always true now but might not be when we support entities not tied to a repo
+		entityInfo["repo_name"] = rs.RepoName
+		entityInfo["repo_owner"] = rs.RepoOwner
+		entityInfo["repository_id"] = fmt.Sprintf("%d", rs.RepositoryID.Int32)
+	}
+
+	if !selector.Valid || !entityType.Valid {
+		return entityInfo
+	}
+
+	// linter complaints that switches with one-case are bad, but I think that a switch is more extensible for future
+	// nolint:revive
+	switch entityType.Entities {
+	case db.EntitiesArtifact:
+		artifact, err := store.GetArtifactByID(ctx, selector.Int32)
+		if err != nil {
+			log.Printf("error getting artifact: %v", err)
+			return entityInfo
+		}
+		entityInfo["artifact_id"] = fmt.Sprintf("%d", artifact.ID)
+		entityInfo["artifact_name"] = artifact.ArtifactName
+		entityInfo["artifact_type"] = artifact.ArtifactType
+	}
+
+	return entityInfo
+}
+
 // GetPolicyStatusById is a method to get policy status
 func (s *Server) GetPolicyStatusById(ctx context.Context,
 	in *pb.GetPolicyStatusByIdRequest) (*pb.GetPolicyStatusByIdResponse, error) {
@@ -419,18 +458,13 @@ func (s *Server) GetPolicyStatusById(ctx context.Context,
 			}
 
 			st := &pb.RuleEvaluationStatus{
-				PolicyId: in.PolicyId,
-				RuleId:   rs.RuleTypeID,
-				RuleName: rs.RuleTypeName,
-				Entity:   string(rs.Entity),
-				Status:   string(rs.EvalStatus),
-				Details:  rs.Details,
-				EntityInfo: map[string]string{
-					"repository_id": fmt.Sprintf("%d", rs.RepositoryID.Int32),
-					"repo_name":     rs.RepoName,
-					"repo_owner":    rs.RepoOwner,
-					"provider":      rs.Provider,
-				},
+				PolicyId:    in.PolicyId,
+				RuleId:      rs.RuleTypeID,
+				RuleName:    rs.RuleTypeName,
+				Entity:      string(rs.Entity),
+				Status:      string(rs.EvalStatus),
+				Details:     rs.Details,
+				EntityInfo:  getRuleEvalEntityInfo(ctx, s.store, dbEntity, selector, rs),
 				Guidance:    guidance,
 				LastUpdated: timestamppb.New(rs.LastUpdated),
 			}
