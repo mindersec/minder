@@ -72,6 +72,7 @@ func SyncRepositoriesWithDB(ctx context.Context,
 					RepoID:    int32(*repo.ID),
 					IsPrivate: bool(*repo.Private), // Needs a value from GraphQL data
 					IsFork:    bool(*repo.Fork),
+					CloneUrl:  string(*repo.CloneURL),
 				})
 				if err != nil {
 					fmt.Println("failed to create repository for repo ID: with repo Name: ", *repo.ID, *repo.Name)
@@ -97,6 +98,7 @@ func SyncRepositoriesWithDB(ctx context.Context,
 					IsPrivate: bool(*repo.Private), // Needs a value from GraphQL data
 					IsFork:    bool(*repo.Fork),
 					ID:        existingRepo.ID,
+					CloneUrl:  string(*repo.CloneURL),
 				})
 				if err != nil {
 					return fmt.Errorf("failed to update repository: %w", err)

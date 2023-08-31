@@ -9,7 +9,8 @@ INSERT INTO repositories (
     is_fork,
     webhook_id,
     webhook_url,
-    deploy_url) VALUES ($1, $2, $3, $4, $5, $6, $7, $8, $9, $10) RETURNING *;
+    deploy_url,
+    clone_url) VALUES ($1, $2, $3, $4, $5, $6, $7, $8, $9, $10, $11) RETURNING *;
 
 -- name: GetRepositoryByID :one
 SELECT * FROM repositories WHERE id = $1;
@@ -59,6 +60,7 @@ webhook_id = $8,
 webhook_url = $9,
 deploy_url = $10, 
 provider = $11,
+clone_url = $12,
 updated_at = NOW() 
 WHERE id = $1 RETURNING *;
 
@@ -73,6 +75,7 @@ webhook_id = $7,
 webhook_url = $8,
 deploy_url = $9, 
 provider = $10,
+clone_url = $11,
 updated_at = NOW() 
 WHERE repo_id = $1 RETURNING *;
 

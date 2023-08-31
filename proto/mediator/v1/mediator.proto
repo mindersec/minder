@@ -701,14 +701,15 @@ message RepositoryResult {
     int64 hook_id = 4;
     string hook_url = 5;
     string deploy_url = 6;
-    google.protobuf.Timestamp created_at = 7;
-    google.protobuf.Timestamp updated_at = 8;
-    string hook_name = 9;
-    string hook_type = 10;
-    bool success = 11;
-    string uuid = 12;
+    string clone_url = 7;
+    string hook_name = 8;
+    string hook_type = 9;
+    bool success = 10;
+    string uuid = 11;
+    bool registered = 12;
     google.protobuf.StringValue error = 13;
-    bool registered = 14;
+    google.protobuf.Timestamp created_at = 14;
+    google.protobuf.Timestamp updated_at = 15;
 }
 
 message RegisterRepositoryResponse {
@@ -727,8 +728,9 @@ message RepositoryRecord {
     bool is_fork = 8;
     string hook_url = 9;
     string deploy_url = 10;
-    google.protobuf.Timestamp created_at = 11;
-    google.protobuf.Timestamp updated_at = 12;
+    string clone_url = 11;
+    google.protobuf.Timestamp created_at = 12;
+    google.protobuf.Timestamp updated_at = 13;
 }
 
 message GetRepositoryByIdRequest {

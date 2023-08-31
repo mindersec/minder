@@ -199,6 +199,7 @@ type Repository struct {
 	WebhookID  sql.NullInt32 `json:"webhook_id"`
 	WebhookUrl string        `json:"webhook_url"`
 	DeployUrl  string        `json:"deploy_url"`
+	CloneUrl   string        `json:"clone_url"`
 	CreatedAt  time.Time     `json:"created_at"`
 	UpdatedAt  time.Time     `json:"updated_at"`
 }
