@@ -21,6 +21,7 @@ metadata:
     # {{ include "common.labels.standard" (dict "customLabels" .Values.commonLabels "context" $ ) | nindent 4 }}
   annotations:
     alb.ingress.kubernetes.io/group.name: mediator-vip
+    alb.ingress.kubernetes.io/group.order: '200'
     alb.ingress.kubernetes.io/listen-ports: '[{"HTTP": 80},{"HTTPS":443}]'
     alb.ingress.kubernetes.io/scheme: internet-facing
     alb.ingress.kubernetes.io/ssl-redirect: "443"
