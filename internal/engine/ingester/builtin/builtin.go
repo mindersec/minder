@@ -25,8 +25,10 @@ import (
 	"reflect"
 	"strings"
 
+	"github.com/go-git/go-billy/v5"
 	"google.golang.org/protobuf/reflect/protoreflect"
 
+	engif "github.com/stacklok/mediator/internal/engine/interfaces"
 	"github.com/stacklok/mediator/internal/util"
 	pb "github.com/stacklok/mediator/pkg/generated/protobuf/go/mediator/v1"
 	"github.com/stacklok/mediator/pkg/rule_methods"
@@ -56,8 +58,14 @@ func NewBuiltinRuleDataIngest(
 	}, nil
 }
 
+// FileContext returns a file context that an evaluator can use to do rule evaluation.
+// the builtin engine does not support file context.
+func (*BuiltinRuleDataIngest) FileContext() billy.Filesystem {
+	return nil
+}
+
 // Ingest calls the builtin method and populates the data to be returned
-func (idi *BuiltinRuleDataIngest) Ingest(ctx context.Context, ent protoreflect.ProtoMessage, params map[string]any) (any, error) {
+func (idi *BuiltinRuleDataIngest) Ingest(ctx context.Context, ent protoreflect.ProtoMessage, params map[string]any) (*engif.Result, error) {
 	// call internal method stored in pkg and method
 	rm := rule_methods.RuleMethods{}
 	value := reflect.ValueOf(rm)
@@ -99,7 +107,9 @@ func (idi *BuiltinRuleDataIngest) Ingest(ctx context.Context, ent protoreflect.P
 		return nil, fmt.Errorf("cannot unmarshal json: %w", err)
 	}
 
-	return resultObj, nil
+	return &engif.Result{
+		Object: resultObj,
+	}, nil
 }
 
 func entityMatchesParams(ctx context.Context, ent protoreflect.ProtoMessage, params map[string]any) (bool, error) {

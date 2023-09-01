@@ -2670,6 +2670,10 @@
         "artifact": {
           "$ref": "#/definitions/v1ArtifactType",
           "description": "artifact is the artifact data ingestion."
+        },
+        "git": {
+          "$ref": "#/definitions/v1GitType",
+          "description": "git is the git data ingestion."
         }
       },
       "description": "Ingest defines how the data is ingested."
@@ -3822,6 +3826,20 @@
           "format": "date-time"
         }
       }
+    },
+    "v1GitType": {
+      "type": "object",
+      "properties": {
+        "cloneUrl": {
+          "type": "string",
+          "description": "clone_url is the url of the git repository."
+        },
+        "branch": {
+          "type": "string",
+          "description": "branch is the branch of the git repository."
+        }
+      },
+      "description": "GitType defines the git data ingester."
     },
     "v1GithubWorkflow": {
       "type": "object",

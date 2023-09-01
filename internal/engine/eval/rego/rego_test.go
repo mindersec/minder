@@ -24,6 +24,7 @@ import (
 
 	engerrors "github.com/stacklok/mediator/internal/engine/errors"
 	"github.com/stacklok/mediator/internal/engine/eval/rego"
+	engif "github.com/stacklok/mediator/internal/engine/interfaces"
 	pb "github.com/stacklok/mediator/pkg/generated/protobuf/go/mediator/v1"
 )
 
@@ -53,14 +54,18 @@ allow {
 	emptyPol := map[string]any{}
 
 	// Matches
-	err = e.Eval(context.Background(), emptyPol, map[string]any{
-		"data": "foo",
+	err = e.Eval(context.Background(), emptyPol, &engif.Result{
+		Object: map[string]any{
+			"data": "foo",
+		},
 	})
 	require.NoError(t, err, "could not evaluate")
 
 	// Doesn't match
-	err = e.Eval(context.Background(), emptyPol, map[string]any{
-		"data": "bar",
+	err = e.Eval(context.Background(), emptyPol, &engif.Result{
+		Object: map[string]any{
+			"data": "bar",
+		},
 	})
 	require.ErrorIs(t, err, engerrors.ErrEvaluationFailed, "should have failed the evaluation")
 }
@@ -85,14 +90,18 @@ violations[{"msg": msg}] {
 	emptyPol := map[string]any{}
 
 	// Matches
-	err = e.Eval(context.Background(), emptyPol, map[string]any{
-		"data": "foo",
+	err = e.Eval(context.Background(), emptyPol, &engif.Result{
+		Object: map[string]any{
+			"data": "foo",
+		},
 	})
 	require.NoError(t, err, "could not evaluate")
 
 	// Doesn't match
-	err = e.Eval(context.Background(), emptyPol, map[string]any{
-		"data": "bar",
+	err = e.Eval(context.Background(), emptyPol, &engif.Result{
+		Object: map[string]any{
+			"data": "bar",
+		},
 	})
 	require.ErrorIs(t, err, engerrors.ErrEvaluationFailed, "should have failed the evaluation")
 	require.ErrorContains(t, err, "data did not contain foo", "should have failed the evaluation")
@@ -126,14 +135,18 @@ allow {
 	}
 
 	// Matches
-	err = e.Eval(context.Background(), pol, map[string]any{
-		"data": "foo",
+	err = e.Eval(context.Background(), pol, &engif.Result{
+		Object: map[string]any{
+			"data": "foo",
+		},
 	})
 	require.NoError(t, err, "could not evaluate")
 
 	// Doesn't match
-	err = e.Eval(context.Background(), pol, map[string]any{
-		"data": "bar",
+	err = e.Eval(context.Background(), pol, &engif.Result{
+		Object: map[string]any{
+			"data": "bar",
+		},
 	})
 	require.ErrorIs(t, err, engerrors.ErrEvaluationFailed, "should have failed the evaluation")
 }
@@ -160,14 +173,18 @@ violations[{"msg": msg}] {
 	}
 
 	// Matches
-	err = e.Eval(context.Background(), pol, map[string]any{
-		"data": "foo",
+	err = e.Eval(context.Background(), pol, &engif.Result{
+		Object: map[string]any{
+			"data": "foo",
+		},
 	})
 	require.NoError(t, err, "could not evaluate")
 
 	// Doesn't match
-	err = e.Eval(context.Background(), pol, map[string]any{
-		"data": "bar",
+	err = e.Eval(context.Background(), pol, &engif.Result{
+		Object: map[string]any{
+			"data": "bar",
+		},
 	})
 	require.ErrorIs(t, err, engerrors.ErrEvaluationFailed, "should have failed the evaluation")
 	assert.ErrorContains(t, err, "data did not match policy: foo", "should have failed the evaluation")
@@ -218,7 +235,8 @@ violations[{"msg": msg}] {`,
 	)
 	require.NoError(t, err, "could not create evaluator")
 
-	err = e.Eval(context.Background(), map[string]any{}, map[string]any{})
+	err = e.Eval(context.Background(), map[string]any{},
+		&engif.Result{Object: map[string]any{}})
 	assert.Error(t, err, "should have failed to evaluate")
 }
 
@@ -241,6 +259,7 @@ violations[{"msg": msg}] {
 	)
 	require.NoError(t, err, "could not create evaluator")
 
-	err = e.Eval(context.Background(), map[string]any{}, 12345)
+	err = e.Eval(context.Background(), map[string]any{},
+		&engif.Result{Object: map[string]any{}})
 	assert.Error(t, err, "should have failed to evaluate")
 }

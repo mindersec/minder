@@ -24,6 +24,7 @@ import (
 	"reflect"
 
 	evalerrors "github.com/stacklok/mediator/internal/engine/errors"
+	engif "github.com/stacklok/mediator/internal/engine/interfaces"
 	"github.com/stacklok/mediator/internal/util"
 	pb "github.com/stacklok/mediator/pkg/generated/protobuf/go/mediator/v1"
 )
@@ -64,7 +65,12 @@ func NewJQEvaluator(assertions []*pb.RuleType_Definition_Eval_JQComparison) (*Ev
 }
 
 // Eval calls the jq library to evaluate the rule
-func (jqe *Evaluator) Eval(ctx context.Context, pol map[string]any, obj any) error {
+func (jqe *Evaluator) Eval(ctx context.Context, pol map[string]any, res *engif.Result) error {
+	if res.Object == nil {
+		return fmt.Errorf("missing object")
+	}
+	obj := res.Object
+
 	for idx := range jqe.assertions {
 		var policyVal, dataVal any
 

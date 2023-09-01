@@ -23,6 +23,7 @@ import (
 
 	"github.com/open-policy-agent/opa/rego"
 
+	engif "github.com/stacklok/mediator/internal/engine/interfaces"
 	pb "github.com/stacklok/mediator/pkg/generated/protobuf/go/mediator/v1"
 )
 
@@ -74,7 +75,12 @@ func (e *Evaluator) newRegoFromOptions(opts ...func(*rego.Rego)) *rego.Rego {
 }
 
 // Eval implements the Evaluator interface.
-func (e *Evaluator) Eval(ctx context.Context, pol map[string]any, obj any) error {
+func (e *Evaluator) Eval(ctx context.Context, pol map[string]any, res *engif.Result) error {
+	// The rego engine is actually able to handle nil
+	// objects quite gracefully, so we don't need to check
+	// this explicitly.
+	obj := res.Object
+
 	var buf bytes.Buffer
 	r := e.newRegoFromOptions(
 		rego.Dump(&buf),
