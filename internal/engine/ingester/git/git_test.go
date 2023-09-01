@@ -32,7 +32,7 @@ func TestGitIngestWithCloneURLFromRepo(t *testing.T) {
 	gi := gitengine.NewGitIngester(&pb.GitType{
 		Branch: "master",
 	}, "")
-	got, err := gi.Ingest(context.Background(), &pb.RepositoryRecord{
+	got, err := gi.Ingest(context.Background(), &pb.RepositoryResult{
 		CloneUrl: "https://github.com/octocat/Hello-World.git",
 	}, map[string]interface{}{})
 	require.NoError(t, err, "expected no error")

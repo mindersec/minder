@@ -424,7 +424,7 @@ webhook_id = $8,
 webhook_url = $9,
 deploy_url = $10, 
 provider = $11,
-clone_url = $12,
+clone_url = CASE WHEN $12::text = '' THEN clone_url ELSE $12::text END,
 updated_at = NOW() 
 WHERE id = $1 RETURNING id, provider, group_id, repo_owner, repo_name, repo_id, is_private, is_fork, webhook_id, webhook_url, deploy_url, clone_url, created_at, updated_at
 `
@@ -444,6 +444,7 @@ type UpdateRepositoryParams struct {
 	CloneUrl   string        `json:"clone_url"`
 }
 
+// set clone_url if the value is not an empty string
 func (q *Queries) UpdateRepository(ctx context.Context, arg UpdateRepositoryParams) (Repository, error) {
 	row := q.db.QueryRowContext(ctx, updateRepository,
 		arg.ID,
@@ -490,7 +491,7 @@ webhook_id = $7,
 webhook_url = $8,
 deploy_url = $9, 
 provider = $10,
-clone_url = $11,
+clone_url = CASE WHEN $11::text = '' THEN clone_url ELSE $11::text END,
 updated_at = NOW() 
 WHERE repo_id = $1 RETURNING id, provider, group_id, repo_owner, repo_name, repo_id, is_private, is_fork, webhook_id, webhook_url, deploy_url, clone_url, created_at, updated_at
 `

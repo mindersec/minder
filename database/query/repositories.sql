@@ -60,7 +60,8 @@ webhook_id = $8,
 webhook_url = $9,
 deploy_url = $10, 
 provider = $11,
-clone_url = $12,
+-- set clone_url if the value is not an empty string
+clone_url = CASE WHEN sqlc.arg(clone_url)::text = '' THEN clone_url ELSE sqlc.arg(clone_url)::text END,
 updated_at = NOW() 
 WHERE id = $1 RETURNING *;
 
@@ -75,7 +76,7 @@ webhook_id = $7,
 webhook_url = $8,
 deploy_url = $9, 
 provider = $10,
-clone_url = $11,
+clone_url = CASE WHEN sqlc.arg(clone_url)::text = '' THEN clone_url ELSE sqlc.arg(clone_url)::text END,
 updated_at = NOW() 
 WHERE repo_id = $1 RETURNING *;
 
