@@ -213,6 +213,7 @@ func (e *Executor) handleReposInitEvent(ctx context.Context, prov string, evt *I
 				RepoId:     dbrepo.RepoID,
 				HookUrl:    dbrepo.WebhookUrl,
 				DeployUrl:  dbrepo.DeployUrl,
+				CloneUrl:   dbrepo.CloneUrl,
 				CreatedAt:  timestamppb.New(dbrepo.CreatedAt),
 				UpdatedAt:  timestamppb.New(dbrepo.UpdatedAt),
 			}
@@ -608,6 +609,7 @@ func (e *Executor) handleRepoEvent(ctx context.Context, prov string, payload map
 		RepoId:     dbrepo.RepoID,
 		HookUrl:    dbrepo.WebhookUrl,
 		DeployUrl:  dbrepo.DeployUrl,
+		CloneUrl:   dbrepo.CloneUrl,
 		CreatedAt:  timestamppb.New(dbrepo.CreatedAt),
 		UpdatedAt:  timestamppb.New(dbrepo.UpdatedAt),
 	}

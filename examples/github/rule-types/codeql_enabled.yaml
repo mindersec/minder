@@ -1,0 +1,45 @@
+---
+version: v1
+type: rule-type
+name: codeql_enabled
+context:
+  provider: github
+  group: Root Group
+description: Verifies that CodeQL is enabled for the repository
+guidance: |
+  CodeQL is a tool that can be used to analyze code for security vulnerabilities.
+  It is recommended that repositories have some form of static analysis enabled
+  to ensure that vulnerabilities are not introduced into the codebase.
+
+  To enable CodeQL, add a GitHub workflow to the repository that runs the
+  CodeQL analysis. For more information, see the [CodeQL documentation](https://docs.github.com/en/code-security/secure-coding/automatically-scanning-your-code-for-vulnerabilities-and-errors/configuring-code-scanning#configuring-code-scanning-for-a-private-repository).
+def:
+  # Defines the section of the pipeline the rule will appear in.
+  # This will affect the template that is used to render multiple parts
+  # of the rule.
+  in_entity: repository
+  # Defines the schema for writing a rule with this rule being checked
+  # In this case there is no settings that need to be configured
+  rule_schema: {}
+  # Defines the configuration for ingesting data relevant for the rule
+  ingest:
+    type: git
+    git:
+      branch: main
+  # Defines the configuration for evaluating data ingested against the given policy
+  eval:
+    type: rego
+    rego:
+      type: deny-by-default
+      def: |
+        package mediator
+
+        default allow := false
+
+        allow {
+            some i
+            workflowstr := file.read("./.github/workflows/codeql.yml")
+            workflow := yaml.unmarshal(workflowstr)
+            steps := workflow.jobs.analyze.steps[i]
+            contains(steps.uses, "github/codeql-action/analyze@")
+        }

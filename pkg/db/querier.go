@@ -110,6 +110,7 @@ type Querier interface {
 	UpdateGroup(ctx context.Context, arg UpdateGroupParams) (Group, error)
 	UpdateOrganization(ctx context.Context, arg UpdateOrganizationParams) (Organization, error)
 	UpdatePassword(ctx context.Context, arg UpdatePasswordParams) (User, error)
+	// set clone_url if the value is not an empty string
 	UpdateRepository(ctx context.Context, arg UpdateRepositoryParams) (Repository, error)
 	UpdateRepositoryByID(ctx context.Context, arg UpdateRepositoryByIDParams) (Repository, error)
 	UpdateRole(ctx context.Context, arg UpdateRoleParams) (Role, error)

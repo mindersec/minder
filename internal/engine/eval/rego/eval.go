@@ -17,7 +17,6 @@
 package rego
 
 import (
-	"bytes"
 	"context"
 	"fmt"
 
@@ -81,9 +80,9 @@ func (e *Evaluator) Eval(ctx context.Context, pol map[string]any, res *engif.Res
 	// this explicitly.
 	obj := res.Object
 
-	var buf bytes.Buffer
+	libFuncs := instantiateRegoLib(res)
 	r := e.newRegoFromOptions(
-		rego.Dump(&buf),
+		libFuncs...,
 	)
 	pq, err := r.PrepareForEval(ctx)
 	if err != nil {
