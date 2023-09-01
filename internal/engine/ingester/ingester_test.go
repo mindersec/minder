@@ -22,6 +22,7 @@ import (
 
 	"github.com/stretchr/testify/require"
 
+	"github.com/stacklok/mediator/internal/engine/ingester/artifact"
 	"github.com/stacklok/mediator/internal/engine/ingester/builtin"
 	"github.com/stacklok/mediator/internal/engine/ingester/rest"
 	pb "github.com/stacklok/mediator/pkg/generated/protobuf/go/mediator/v1"
@@ -39,6 +40,32 @@ func TestNewRuleDataIngest(t *testing.T) {
 		args    args
 		wantErr bool
 	}{
+		{
+			name: "artifact",
+			args: args{
+				rt: &pb.RuleType{
+					Def: &pb.RuleType_Definition{
+						Ingest: &pb.RuleType_Definition_Ingest{
+							Type:     artifact.ArtifactRuleDataIngestType,
+							Artifact: &pb.ArtifactType{},
+						},
+					},
+				},
+			},
+		},
+		{
+			name: "artifact missing",
+			args: args{
+				rt: &pb.RuleType{
+					Def: &pb.RuleType_Definition{
+						Ingest: &pb.RuleType_Definition_Ingest{
+							Type: artifact.ArtifactRuleDataIngestType,
+						},
+					},
+				},
+			},
+			wantErr: true,
+		},
 		{
 			name: "rest",
 			args: args{
