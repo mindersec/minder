@@ -30,6 +30,8 @@ import (
 	"github.com/google/go-containerregistry/pkg/name"
 	containerregistry "github.com/google/go-containerregistry/pkg/v1"
 	"github.com/google/go-containerregistry/pkg/v1/remote"
+	"github.com/google/go-containerregistry/pkg/v1/remote/transport"
+	"github.com/rs/zerolog"
 	"github.com/sigstore/cosign/v2/cmd/cosign/cli/fulcio"
 	cosign "github.com/sigstore/cosign/v2/pkg/cosign"
 	"github.com/sigstore/cosign/v2/pkg/cosign/bundle"
@@ -47,6 +49,8 @@ import (
 
 // REGISTRY is the default registry
 var REGISTRY = "ghcr.io"
+
+var errManifestNotFound = errors.New("no such manifest found")
 
 type githubAuthenticator struct{ username, password string }
 
@@ -105,6 +109,45 @@ func GetArtifactSignatureAndWorkflowInfo(
 	return
 }
 
+func extractAndValidateSignature(
+	ctx context.Context,
+	package_url, package_owner, accessToken string,
+	manifest containerregistry.Manifest,
+	signatureVerification *pb.SignatureVerification,
+	githubWorkflow *pb.GithubWorkflow,
+) {
+	signatureVerification.IsSigned = true
+	identity, issuer, err := ExtractIdentityFromCertificate(manifest)
+	if err == nil && identity != "" && issuer != "" {
+		signatureVerification.CertIdentity = &identity
+		signatureVerification.CertIssuer = &issuer
+
+		// we have issuer and identity, we can verify the image
+		verified, bundleVerified, imageKeys, err := VerifyFromIdentity(ctx, package_url, package_owner, accessToken, identity, issuer)
+		if err == nil {
+			// we can add information for the image
+			signatureVerification.IsVerified = verified
+			signatureVerification.IsBundleVerified = bundleVerified
+			signatureVerification.RekorLogId = proto.String(imageKeys["RekorLogID"].(string))
+
+			log_index := int32(imageKeys["RekorLogIndex"].(int64))
+			signatureVerification.RekorLogIndex = &log_index
+
+			signature_time := timestamppb.New(time.Unix(imageKeys["SignatureTime"].(int64), 0))
+			signatureVerification.SignatureTime = signature_time
+
+			githubWorkflow.Name = imageKeys["WorkflowName"].(string)
+			githubWorkflow.Repository = imageKeys["WorkflowRepository"].(string)
+			githubWorkflow.CommitSha = imageKeys["WorkflowSha"].(string)
+			githubWorkflow.Trigger = imageKeys["WorkflowTrigger"].(string)
+		} else {
+			log.Printf("error verifying image: %v", err)
+		}
+	} else {
+		log.Printf("error extracting identity from certificate: %v", err)
+	}
+}
+
 // ValidateSignature returns information about signature validation of a package
 func ValidateSignature(ctx context.Context, accessToken string, package_owner string,
 	package_url string) (*pb.SignatureVerification, *pb.GithubWorkflow, error) {
@@ -128,41 +171,21 @@ func ValidateSignature(ctx context.Context, accessToken string, package_owner st
 	if err == nil && signature != nil {
 		// we need to extract manifest from the signature
 		manifest, err := GetImageManifest(signature, package_owner, accessToken)
-		if err == nil && manifest.Layers != nil {
-			signature_verification.IsSigned = true
-			identity, issuer, err := ExtractIdentityFromCertificate(manifest)
-			if err == nil && identity != "" && issuer != "" {
-				signature_verification.CertIdentity = &identity
-				signature_verification.CertIssuer = &issuer
-
-				// we have issuer and identity, we can verify the image
-				verified, bundleVerified, imageKeys, err := VerifyFromIdentity(ctx, package_url, package_owner, accessToken, identity, issuer)
-				if err == nil {
-					// we can add information for the image
-					signature_verification.IsVerified = verified
-					signature_verification.IsBundleVerified = bundleVerified
-					signature_verification.RekorLogId = proto.String(imageKeys["RekorLogID"].(string))
-
-					log_index := int32(imageKeys["RekorLogIndex"].(int64))
-					signature_verification.RekorLogIndex = &log_index
-
-					signature_time := timestamppb.New(time.Unix(imageKeys["SignatureTime"].(int64), 0))
-					signature_verification.SignatureTime = signature_time
-
-					github_workflow = &pb.GithubWorkflow{
-						Name:       imageKeys["WorkflowName"].(string),
-						Repository: imageKeys["WorkflowRepository"].(string),
-						CommitSha:  imageKeys["WorkflowSha"].(string),
-						Trigger:    imageKeys["WorkflowTrigger"].(string),
-					}
-				} else {
-					log.Printf("error verifying image: %v", err)
-				}
-			} else {
-				log.Printf("error extracting identity from certificate: %v", err)
-			}
-		} else {
+		if errors.Is(err, errManifestNotFound) {
+			zerolog.Ctx(ctx).Info().
+				Str("packageUrl", package_url).
+				Msg("no manifest found")
+		} else if err != nil {
 			log.Printf("error getting manifest: %v", err)
+		} else if manifest.Layers != nil {
+			extractAndValidateSignature(
+				ctx,
+				package_url,
+				package_owner,
+				accessToken,
+				manifest,
+				signature_verification,
+				github_workflow)
 		}
 	} else {
 		log.Printf("error getting signature tag: %v", err)
@@ -186,6 +209,14 @@ func GetImageManifest(imageRef name.Reference, username string, token string) (c
 	auth := githubAuthenticator{username, token}
 	img, err := remote.Image(imageRef, remote.WithAuth(auth))
 	if err != nil {
+		var transportErr *transport.Error
+		if errors.As(err, &transportErr) {
+			for _, err := range transportErr.Errors {
+				if err.Code == transport.ManifestUnknownErrorCode {
+					return containerregistry.Manifest{}, errManifestNotFound
+				}
+			}
+		}
 		return containerregistry.Manifest{}, fmt.Errorf("error getting image: %w", err)
 	}
 	manifest, err := img.Manifest()
