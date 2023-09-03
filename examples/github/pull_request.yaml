@@ -1,0 +1,8 @@
+url: https://api.github.com/repos/jakubtestorg/bad-npm/pulls/3
+commitSHA: "bd9958a63c9b95ccc2bc0cf1eef65a87529aed16"
+number: 3
+repoOwner: "jakubtestorg"
+repoName:  "bad-npm"
+patches:
+  - name: package-lock.json
+    patchUrl: "https://github.com/jakubtestorg/bad-npm/raw/123/package-lock.json"
