@@ -224,7 +224,6 @@
 | visibility | [string](#string) |  |  |
 | repository | [string](#string) |  |  |
 | created_at | [google.protobuf.Timestamp](#google-protobuf-Timestamp) |  |  |
-| package_url | [string](#string) |  |  |
 
 
 

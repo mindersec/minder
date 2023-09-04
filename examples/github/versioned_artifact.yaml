@@ -2,7 +2,6 @@ artifact:
   artifactId: 5482209
   name: test
   owner: jakubtestorg
-  packageUrl: ghcr.io/jakubtestorg/testrepo:main
   repository: jakubtestorg/testrepo
   type: CONTAINER
   visibility: public

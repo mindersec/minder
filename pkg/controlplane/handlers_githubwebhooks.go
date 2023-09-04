@@ -410,10 +410,6 @@ func extractArtifactFromPayload(ctx context.Context, payload map[string]any) (*p
 	if err != nil {
 		return nil, err
 	}
-	packageUrl, err := util.JQReadFrom[string](ctx, ".package.package_version.package_url", payload)
-	if err != nil {
-		return nil, err
-	}
 
 	artifact := &pb.Artifact{
 		ArtifactId: int64(artifactId),
@@ -421,7 +417,6 @@ func extractArtifactFromPayload(ctx context.Context, payload map[string]any) (*p
 		Name:       artifactName,
 		Type:       artifactType,
 		Repository: repoName,
-		PackageUrl: packageUrl,
 		// visibility and createdAt are not in the payload, we need to get it with a REST call
 	}
 
