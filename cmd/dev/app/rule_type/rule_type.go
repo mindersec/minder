@@ -185,6 +185,8 @@ func readEntityFromFile(fpath string, entType pb.Entity) (protoreflect.ProtoMess
 		out = &pb.RepositoryResult{}
 	case pb.Entity_ENTITY_ARTIFACTS:
 		out = &pb.VersionedArtifact{}
+	case pb.Entity_ENTITY_PULL_REQUESTS:
+		out = &pb.PullRequest{}
 	default:
 		return nil, fmt.Errorf("unknown entity type: %s", entType)
 	}

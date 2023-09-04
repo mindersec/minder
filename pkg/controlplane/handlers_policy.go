@@ -192,6 +192,7 @@ func (s *Server) CreatePolicy(ctx context.Context,
 		pb.Entity_ENTITY_REPOSITORIES:       in.GetRepository(),
 		pb.Entity_ENTITY_ARTIFACTS:          in.GetArtifact(),
 		pb.Entity_ENTITY_BUILD_ENVIRONMENTS: in.GetBuildEnvironment(),
+		pb.Entity_ENTITY_PULL_REQUESTS:      in.GetPullRequest(),
 	} {
 		if err := createPolicyRulesForEntity(ctx, ent, &policy, qtx, entRules); err != nil {
 			return nil, err
