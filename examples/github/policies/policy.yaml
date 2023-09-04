@@ -42,6 +42,8 @@ repository:
           can_approve_pull_request_reviews: false
       - type: codeql_enabled
         def: {}
+      - type: dependabot_enabled
+        def: {}
       # Note that this only applies to private repositories.
       # So if you want to test this, you'll need to create a private repository.
       # - type: repo_workflow_access_level
