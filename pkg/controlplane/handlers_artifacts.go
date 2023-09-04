@@ -17,6 +17,7 @@ package controlplane
 import (
 	"context"
 	"database/sql"
+	"errors"
 	"strings"
 
 	"google.golang.org/grpc/codes"
@@ -54,7 +55,7 @@ func (s *Server) ListArtifacts(ctx context.Context, in *pb.ListArtifactsRequest)
 	repositories, err := s.store.ListRegisteredRepositoriesByGroupIDAndProvider(ctx,
 		db.ListRegisteredRepositoriesByGroupIDAndProviderParams{Provider: in.Provider, GroupID: in.GroupId})
 	if err != nil {
-		if err == sql.ErrNoRows {
+		if errors.Is(err, sql.ErrNoRows) {
 			return nil, status.Errorf(codes.NotFound, "repositories not found")
 		}
 		return nil, status.Errorf(codes.Unknown, "failed to get repositories: %s", err)
@@ -97,7 +98,7 @@ func (s *Server) GetArtifactById(ctx context.Context, in *pb.GetArtifactByIdRequ
 	// retrieve artifact details
 	artifact, err := s.store.GetArtifactByID(ctx, in.Id)
 	if err != nil {
-		if err == sql.ErrNoRows {
+		if errors.Is(err, sql.ErrNoRows) {
 			return nil, status.Errorf(codes.NotFound, "artifact not found")
 		}
 		return nil, status.Errorf(codes.Unknown, "failed to get artifact: %s", err)

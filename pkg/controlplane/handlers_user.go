@@ -17,6 +17,7 @@ package controlplane
 import (
 	"context"
 	"database/sql"
+	"errors"
 	"time"
 
 	"github.com/go-playground/validator/v10"
@@ -104,7 +105,7 @@ func (s *Server) CreateUser(ctx context.Context,
 		for _, id := range in.GroupIds {
 			group, err := s.store.GetGroupByID(ctx, id)
 			if err != nil {
-				if err == sql.ErrNoRows {
+				if errors.Is(err, sql.ErrNoRows) {
 					return nil, status.Error(codes.NotFound, "group not found")
 				}
 				return nil, status.Errorf(codes.Internal, "failed to get group: %s", err)
@@ -122,7 +123,7 @@ func (s *Server) CreateUser(ctx context.Context,
 		for _, id := range in.RoleIds {
 			role, err := s.store.GetRoleByID(ctx, id)
 			if err != nil {
-				if err == sql.ErrNoRows {
+				if errors.Is(err, sql.ErrNoRows) {
 					return nil, status.Error(codes.NotFound, "role not found")
 				}
 				return nil, status.Errorf(codes.Internal, "failed to get role: %s", err)
@@ -199,7 +200,7 @@ func (s *Server) DeleteUser(ctx context.Context,
 	// first check if the user exists and is not protected
 	user, err := s.store.GetUserByID(ctx, in.Id)
 	if err != nil {
-		if err == sql.ErrNoRows {
+		if errors.Is(err, sql.ErrNoRows) {
 			return nil, status.Error(codes.NotFound, "user not found")
 		}
 		return nil, status.Errorf(codes.Internal, "failed to get user: %s", err)
@@ -425,7 +426,7 @@ func (s *Server) GetUserById(ctx context.Context,
 
 	user, err := s.store.GetUserByID(ctx, in.Id)
 	if err != nil {
-		if err == sql.ErrNoRows {
+		if errors.Is(err, sql.ErrNoRows) {
 			return nil, status.Error(codes.NotFound, "user not found")
 		}
 		return nil, status.Errorf(codes.Internal, "failed to get user: %s", err)
@@ -464,7 +465,7 @@ func (s *Server) GetUserByUserName(ctx context.Context,
 
 	user, err := s.store.GetUserByUserName(ctx, in.Username)
 	if err != nil {
-		if err == sql.ErrNoRows {
+		if errors.Is(err, sql.ErrNoRows) {
 			return nil, status.Error(codes.NotFound, "user not found")
 		}
 		return nil, status.Errorf(codes.Internal, "failed to get user: %s", err)
@@ -508,7 +509,7 @@ func (s *Server) GetUserByEmail(ctx context.Context,
 
 	user, err := s.store.GetUserByEmail(ctx, sql.NullString{String: in.Email, Valid: true})
 	if err != nil {
-		if err == sql.ErrNoRows {
+		if errors.Is(err, sql.ErrNoRows) {
 			return nil, status.Error(codes.NotFound, "user not found")
 		}
 		return nil, status.Errorf(codes.Internal, "failed to get user: %s", err)
@@ -553,7 +554,7 @@ func (s *Server) GetUser(ctx context.Context, _ *pb.GetUserRequest) (*pb.GetUser
 	// check if user exists
 	user, err := s.store.GetUserByID(ctx, claims.UserId)
 	if err != nil {
-		if err == sql.ErrNoRows {
+		if errors.Is(err, sql.ErrNoRows) {
 			return nil, status.Error(codes.NotFound, "user not found")
 		}
 		return nil, status.Errorf(codes.Internal, "failed to get user: %s", err)
@@ -616,7 +617,7 @@ func (s *Server) UpdatePassword(ctx context.Context, in *pb.UpdatePasswordReques
 	// check if the previous password was the same
 	user, err := s.store.GetUserByID(ctx, claims.UserId)
 	if err != nil {
-		if err == sql.ErrNoRows {
+		if errors.Is(err, sql.ErrNoRows) {
 			return nil, status.Error(codes.NotFound, "user not found")
 		}
 		return nil, status.Errorf(codes.Internal, "failed to get user: %s", err)
@@ -683,7 +684,7 @@ func (s *Server) UpdateProfile(ctx context.Context, in *pb.UpdateProfileRequest)
 	// get details of user
 	user, err := s.store.GetUserByID(ctx, claims.UserId)
 	if err != nil {
-		if err == sql.ErrNoRows {
+		if errors.Is(err, sql.ErrNoRows) {
 			return nil, status.Error(codes.NotFound, "user not found")
 		}
 		return nil, status.Errorf(codes.Internal, "failed to get user: %s", err)

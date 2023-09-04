@@ -17,6 +17,7 @@ package controlplane
 import (
 	"context"
 	"database/sql"
+	"errors"
 
 	"github.com/go-playground/validator/v10"
 	"google.golang.org/grpc/codes"
@@ -50,7 +51,7 @@ func (s *Server) CreateRoleByOrganization(ctx context.Context,
 	// check that organization exists
 	_, err = s.store.GetOrganization(ctx, in.OrganizationId)
 	if err != nil {
-		if err == sql.ErrNoRows {
+		if errors.Is(err, sql.ErrNoRows) {
 			return nil, status.Error(codes.NotFound, "organization not found")
 		}
 		return nil, status.Errorf(codes.Internal, "failed to get organization")
@@ -99,7 +100,7 @@ func (s *Server) CreateRoleByGroup(ctx context.Context,
 	// check that organization exists
 	_, err = s.store.GetOrganization(ctx, in.OrganizationId)
 	if err != nil {
-		if err == sql.ErrNoRows {
+		if errors.Is(err, sql.ErrNoRows) {
 			return nil, status.Error(codes.NotFound, "organization not found")
 		}
 		return nil, status.Errorf(codes.Internal, "failed to get organization")
@@ -108,7 +109,7 @@ func (s *Server) CreateRoleByGroup(ctx context.Context,
 	// check that group exists
 	_, err = s.store.GetGroupByID(ctx, in.GroupId)
 	if err != nil {
-		if err == sql.ErrNoRows {
+		if errors.Is(err, sql.ErrNoRows) {
 			return nil, status.Error(codes.NotFound, "group not found")
 		}
 		return nil, status.Errorf(codes.Internal, "failed to get group by id: %s", err)
@@ -157,7 +158,7 @@ func (s *Server) DeleteRole(ctx context.Context,
 	// first check if the role exists and is not protected
 	role, err := s.store.GetRoleByID(ctx, in.Id)
 	if err != nil {
-		if err == sql.ErrNoRows {
+		if errors.Is(err, sql.ErrNoRows) {
 			return nil, status.Errorf(codes.NotFound, "role not found")
 		}
 		return nil, status.Errorf(codes.Internal, "failed to get role by id: %v", err)
@@ -308,7 +309,7 @@ func (s *Server) GetRoleById(ctx context.Context,
 
 	role, err := s.store.GetRoleByID(ctx, in.Id)
 	if err != nil {
-		if err == sql.ErrNoRows {
+		if errors.Is(err, sql.ErrNoRows) {
 			return nil, status.Errorf(codes.NotFound, "role not found")
 		}
 		return nil, status.Errorf(codes.Internal, "failed to get role: %v", err)
@@ -351,7 +352,7 @@ func (s *Server) GetRoleByName(ctx context.Context,
 
 	role, err := s.store.GetRoleByName(ctx, db.GetRoleByNameParams{OrganizationID: in.OrganizationId, Name: in.Name})
 	if err != nil {
-		if err == sql.ErrNoRows {
+		if errors.Is(err, sql.ErrNoRows) {
 			return nil, status.Error(codes.NotFound, "role not found")
 		}
 		return nil, status.Errorf(codes.Internal, "failed to get role by name: %v", err)

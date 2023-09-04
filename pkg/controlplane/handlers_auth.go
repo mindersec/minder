@@ -17,6 +17,7 @@ package controlplane
 import (
 	"context"
 	"database/sql"
+	"errors"
 	"fmt"
 	"os"
 	"path/filepath"
@@ -97,7 +98,7 @@ func (s *Server) LogIn(ctx context.Context, in *pb.LogInRequest) (*pb.LogInRespo
 
 	user, err := s.store.GetUserByUserName(ctx, in.Username)
 	if err != nil {
-		if err == sql.ErrNoRows {
+		if errors.Is(err, sql.ErrNoRows) {
 			return &pb.LogInResponse{}, status.Error(codes.NotFound, "User and password not found")
 		}
 		return nil, err
