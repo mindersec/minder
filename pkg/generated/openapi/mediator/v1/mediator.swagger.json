@@ -1346,7 +1346,8 @@
               "ENTITY_UNSPECIFIED",
               "ENTITY_REPOSITORIES",
               "ENTITY_BUILD_ENVIRONMENTS",
-              "ENTITY_ARTIFACTS"
+              "ENTITY_ARTIFACTS",
+              "ENTITY_PULL_REQUESTS"
             ],
             "default": "ENTITY_UNSPECIFIED"
           },
@@ -3307,7 +3308,8 @@
         "ENTITY_UNSPECIFIED",
         "ENTITY_REPOSITORIES",
         "ENTITY_BUILD_ENVIRONMENTS",
-        "ENTITY_ARTIFACTS"
+        "ENTITY_ARTIFACTS",
+        "ENTITY_PULL_REQUESTS"
       ],
       "default": "ENTITY_UNSPECIFIED",
       "description": "Entity defines the entity that is supported by the provider."
@@ -4027,6 +4029,13 @@
           }
         },
         "artifact": {
+          "type": "array",
+          "items": {
+            "type": "object",
+            "$ref": "#/definitions/PipelinePolicyContextualRuleSet"
+          }
+        },
+        "pullRequest": {
           "type": "array",
           "items": {
             "type": "object",
