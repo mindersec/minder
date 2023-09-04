@@ -33,6 +33,7 @@ import (
 	"net"
 	"os"
 	"path/filepath"
+	"strconv"
 	"strings"
 	"syscall"
 	"time"
@@ -441,4 +442,18 @@ func ExpandFileArgs(files []string) ([]string, error) {
 	}
 
 	return expandedFiles, nil
+}
+
+// Int32FromString converts a string to an int32
+func Int32FromString(v string) (int32, error) {
+	if v == "" {
+		return 0, fmt.Errorf("cannot convert empty string to int")
+	}
+
+	// convert string to int
+	asInt32, err := strconv.ParseInt(v, 10, 32)
+	if err != nil {
+		return 0, fmt.Errorf("error converting string to int: %w", err)
+	}
+	return int32(asInt32), nil
 }

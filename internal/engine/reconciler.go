@@ -26,30 +26,17 @@ import (
 
 	"github.com/stacklok/mediator/pkg/container"
 	"github.com/stacklok/mediator/pkg/db"
+	"github.com/stacklok/mediator/pkg/providers"
 )
 
 // CONTAINER_TYPE is the type for container artifacts
 var CONTAINER_TYPE = "container"
 
-// if tag contains the .sig suffix it's a signature, as cosign
-// stores signatures in that format
-func isSignature(tags []string) bool {
-	// if the artifact has a .sig tag it's a signature, skip it
-	found := false
-	for _, tag := range tags {
-		if strings.HasSuffix(tag, ".sig") {
-			found = true
-			break
-		}
-	}
-	return found
-}
-
 // HandleArtifactsReconcilerEvent recreates the artifacts belonging to
 // an specific repository
 // nolint: gocyclo
 func (e *Executor) HandleArtifactsReconcilerEvent(ctx context.Context, prov string, evt *ReconcilerEvent) error {
-	cli, err := e.buildClient(ctx, prov, evt.Group)
+	cli, err := providers.BuildClient(ctx, prov, evt.Group, e.querier)
 	if err != nil {
 		return fmt.Errorf("error building client: %w", err)
 	}
@@ -103,7 +90,7 @@ func (e *Executor) HandleArtifactsReconcilerEvent(ctx context.Context, prov stri
 			}
 
 			tags := version.Metadata.Container.Tags
-			if isSignature(tags) {
+			if container.TagIsSignature(tags) {
 				continue
 			}
 			sort.Strings(tags)
@@ -134,5 +121,4 @@ func (e *Executor) HandleArtifactsReconcilerEvent(ctx context.Context, prov stri
 		}
 	}
 	return nil
-
 }

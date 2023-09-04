@@ -23,6 +23,7 @@ package controlplane
 import (
 	"bytes"
 	"context"
+	"database/sql"
 	"encoding/json"
 	"fmt"
 	"net/http"
@@ -30,7 +31,7 @@ import (
 	"time"
 
 	"github.com/ThreeDotsLabs/watermill/pubsub/gochannel"
-	"github.com/google/go-cmp/cmp"
+	"github.com/golang/mock/gomock"
 	"github.com/google/go-github/v53/github"
 	"github.com/stretchr/testify/assert"
 	"github.com/stretchr/testify/mock"
@@ -38,8 +39,10 @@ import (
 	"github.com/stretchr/testify/suite"
 	"golang.org/x/oauth2"
 
+	mockdb "github.com/stacklok/mediator/database/mock"
 	"github.com/stacklok/mediator/internal/engine"
 	"github.com/stacklok/mediator/internal/util"
+	"github.com/stacklok/mediator/pkg/db"
 )
 
 // MockClient is a mock implementation of the GitHub client.
@@ -129,7 +132,53 @@ func (s *UnitTestSuite) TestHandleGitHubWebHook() {
 	assert.NotEmpty(s.T(), results[0].DeployURL)
 }
 
-func TestHandleWebHook(t *testing.T) {
+// We should simply respond OK to ping events
+func (s *UnitTestSuite) TestHandleWebHookPing() {
+	t := s.T()
+	t.Parallel()
+
+	p := gochannel.NewGoChannel(gochannel.Config{}, nil)
+	queued, err := p.Subscribe(context.Background(), engine.InternalWebhookEventTopic)
+	require.NoError(t, err, "failed to subscribe to internal webhook event topic")
+	defer p.Close()
+
+	ctrl := gomock.NewController(t)
+	defer ctrl.Finish()
+
+	mockStore := mockdb.NewMockStore(ctrl)
+
+	hook := HandleGitHubWebHook(p, mockStore)
+	port, err := util.GetRandomPort()
+	require.NoError(t, err, "failed to get random port")
+
+	addr := fmt.Sprintf("localhost:%d", port)
+	server := &http.Server{
+		Addr:              fmt.Sprintf(":%d", port),
+		Handler:           hook,
+		ReadHeaderTimeout: 1 * time.Second,
+	}
+	go server.ListenAndServe()
+
+	event := github.PingEvent{}
+	packageJson, err := json.Marshal(event)
+	require.NoError(t, err, "failed to marshal ping event")
+
+	client := &http.Client{}
+	req, err := http.NewRequest("POST", fmt.Sprintf("http://%s", addr), bytes.NewBuffer(packageJson))
+	require.NoError(t, err, "failed to create request")
+
+	req.Header.Add("X-GitHub-Event", "ping")
+	req.Header.Add("X-GitHub-Delivery", "12345")
+	req.Header.Add("Content-Type", "application/json")
+	resp, err := client.Do(req)
+	require.NoError(t, err, "failed to make request")
+	assert.Equal(t, http.StatusOK, resp.StatusCode, "unexpected status code")
+	assert.Len(t, queued, 0, "unexpected number of queued events")
+}
+
+// We should ignore events from repositories that are not registered
+func (s *UnitTestSuite) TestHandleWebHookUnexistentRepository() {
+	t := s.T()
 	t.Parallel()
 
 	p := gochannel.NewGoChannel(gochannel.Config{}, nil)
@@ -139,7 +188,151 @@ func TestHandleWebHook(t *testing.T) {
 	}
 	defer p.Close()
 
-	hook := HandleGitHubWebHook(p)
+	ctrl := gomock.NewController(t)
+	defer ctrl.Finish()
+
+	mockStore := mockdb.NewMockStore(ctrl)
+
+	mockStore.EXPECT().
+		GetRepositoryByRepoID(gomock.Any(), gomock.Any()).
+		Return(db.Repository{}, sql.ErrNoRows)
+
+	hook := HandleGitHubWebHook(p, mockStore)
+	port, err := util.GetRandomPort()
+	if err != nil {
+		t.Fatal(err)
+	}
+	addr := fmt.Sprintf("localhost:%d", port)
+	server := &http.Server{
+		Addr:              fmt.Sprintf(":%d", port),
+		Handler:           hook,
+		ReadHeaderTimeout: 1 * time.Second,
+	}
+	go server.ListenAndServe()
+
+	event := github.MetaEvent{
+		Repo: &github.Repository{
+			ID:   github.Int64(12345),
+			Name: github.String("stacklok/mediator"),
+		},
+		Org: &github.Organization{
+			Login: github.String("stacklok"),
+		},
+	}
+	packageJson, err := json.Marshal(event)
+	require.NoError(t, err, "failed to marshal package event")
+
+	client := &http.Client{}
+	req, err := http.NewRequest("POST", fmt.Sprintf("http://%s", addr), bytes.NewBuffer(packageJson))
+	require.NoError(t, err, "failed to create request")
+
+	req.Header.Add("X-GitHub-Event", "meta")
+	req.Header.Add("X-GitHub-Delivery", "12345")
+	req.Header.Add("Content-Type", "application/json")
+	resp, err := client.Do(req)
+	require.NoError(t, err, "failed to make request")
+	// We expect OK since we don't want to leak information about registered repositories
+	require.Equal(t, http.StatusOK, resp.StatusCode, "unexpected status code")
+	assert.Len(t, queued, 0)
+}
+
+func (s *UnitTestSuite) TestHandleWebHookRepository() {
+	t := s.T()
+	t.Parallel()
+
+	p := gochannel.NewGoChannel(gochannel.Config{}, nil)
+	queued, err := p.Subscribe(context.Background(), engine.InternalWebhookEventTopic)
+	if err != nil {
+		t.Fatal(err)
+	}
+	defer p.Close()
+
+	ctrl := gomock.NewController(t)
+	defer ctrl.Finish()
+
+	mockStore := mockdb.NewMockStore(ctrl)
+
+	mockStore.EXPECT().
+		GetRepositoryByRepoID(gomock.Any(), gomock.Any()).
+		Return(db.Repository{
+			ID:      1,
+			GroupID: 1,
+			RepoID:  12345,
+		}, nil)
+
+	hook := HandleGitHubWebHook(p, mockStore)
+	port, err := util.GetRandomPort()
+	if err != nil {
+		t.Fatal(err)
+	}
+	addr := fmt.Sprintf("localhost:%d", port)
+	server := &http.Server{
+		Addr:              fmt.Sprintf(":%d", port),
+		Handler:           hook,
+		ReadHeaderTimeout: 1 * time.Second,
+	}
+	go server.ListenAndServe()
+
+	event := github.MetaEvent{
+		Repo: &github.Repository{
+			ID:   github.Int64(12345),
+			Name: github.String("stacklok/mediator"),
+		},
+		Org: &github.Organization{
+			Login: github.String("stacklok"),
+		},
+	}
+	packageJson, err := json.Marshal(event)
+	require.NoError(t, err, "failed to marshal package event")
+
+	client := &http.Client{}
+	req, err := http.NewRequest("POST", fmt.Sprintf("http://%s", addr), bytes.NewBuffer(packageJson))
+	require.NoError(t, err, "failed to create request")
+
+	req.Header.Add("X-GitHub-Event", "meta")
+	req.Header.Add("X-GitHub-Delivery", "12345")
+	req.Header.Add("Content-Type", "application/json")
+	resp, err := client.Do(req)
+	require.NoError(t, err, "failed to make request")
+	// We expect OK since we don't want to leak information about registered repositories
+	require.Equal(t, http.StatusOK, resp.StatusCode, "unexpected status code")
+
+	received := <-queued
+
+	assert.Equal(t, "12345", received.Metadata["id"])
+	assert.Equal(t, "meta", received.Metadata["type"])
+	assert.Equal(t, "https://api.github.com/", received.Metadata["source"])
+	assert.Equal(t, "github", received.Metadata["provider"])
+	assert.Equal(t, "1", received.Metadata["group_id"])
+	assert.Equal(t, "1", received.Metadata["repository_id"])
+
+	// TODO: assert payload is RepositoryRecord protobuf
+
+	assert.NoError(t, p.Close())
+}
+
+// We should ignore events from packages from repositories that are not registered
+func (s *UnitTestSuite) TestHandleWebHookUnexistentRepoPackage() {
+	t := s.T()
+	t.Parallel()
+
+	p := gochannel.NewGoChannel(gochannel.Config{}, nil)
+	queued, err := p.Subscribe(context.Background(), engine.InternalWebhookEventTopic)
+	if err != nil {
+		t.Fatal(err)
+	}
+	defer p.Close()
+
+	ctrl := gomock.NewController(t)
+	defer ctrl.Finish()
+
+	mockStore := mockdb.NewMockStore(ctrl)
+
+	mockStore.EXPECT().
+		GetRepositoryByRepoID(gomock.Any(), gomock.Any()).
+		Return(db.Repository{}, sql.ErrNoRows)
+
+	hook := HandleGitHubWebHook(p, mockStore)
 	port, err := util.GetRandomPort()
 	if err != nil {
 		t.Fatal(err)
@@ -154,11 +347,8 @@ func TestHandleWebHook(t *testing.T) {
 
 	event := github.PackageEvent{
 		Action: github.String("published"),
-		Package: &github.Package{
-			Name:        github.String("mediator"),
-			PackageType: github.String("container"),
-		},
 		Repo: &github.Repository{
+			ID:   github.Int64(12345),
 			Name: github.String("stacklok/mediator"),
 		},
 		Org: &github.Organization{
@@ -166,36 +356,20 @@ func TestHandleWebHook(t *testing.T) {
 		},
 	}
 	packageJson, err := json.Marshal(event)
-	if err != nil {
-		t.Fatal(err)
-	}
+	require.NoError(t, err, "failed to marshal package event")
 
 	client := &http.Client{}
 	req, err := http.NewRequest("POST", fmt.Sprintf("http://%s", addr), bytes.NewBuffer(packageJson))
-	if err != nil {
-		t.Fatal(err)
-	}
-	req.Header.Add("X-GitHub-Event", "package")
+	require.NoError(t, err, "failed to create request")
+
+	req.Header.Add("X-GitHub-Event", "meta")
 	req.Header.Add("X-GitHub-Delivery", "12345")
 	req.Header.Add("Content-Type", "application/json")
 	resp, err := client.Do(req)
-	if err != nil {
-		t.Fatal(err)
-	}
-	if resp.StatusCode != http.StatusOK {
-		t.Fatalf("expected status code %d, got %d", http.StatusOK, resp.StatusCode)
-	}
-
-	received := <-queued
-
-	if diff := cmp.Diff(string(packageJson), string(received.Payload)); diff != "" {
-		t.Fatalf("payload mismatch (-want +got):\n%s", diff)
-	}
-	assert.Equal(t, "12345", received.Metadata["id"])
-	assert.Equal(t, "package", received.Metadata["type"])
-	assert.Equal(t, "https://api.github.com/", received.Metadata["source"])
-
-	assert.NoError(t, p.Close())
+	require.NoError(t, err, "failed to make request")
+	// We expect OK since we don't want to leak information about registered repositories
+	require.Equal(t, http.StatusOK, resp.StatusCode, "unexpected status code")
+	assert.Len(t, queued, 0)
 }
 
 func TestAll(t *testing.T) {
