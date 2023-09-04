@@ -1,9 +1,9 @@
 ---
-owner: JAORMX
-repository: auditevent
+owner: stacklok
+repository: Demo-Repo-Go
 repoId: 605597568
 HookUrl:
-clone_url: "https://github.com/JAORMX/auditevent.git"
+clone_url: "https://github.com/stacklok/Demo-Repo-Go.git"
 CreatedAt: 2021-03-19T16:00:00Z
 UpdatedAt: 2021-03-19T16:00:00Z
 Registered: true

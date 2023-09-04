@@ -8,6 +8,14 @@ context:
 description: Verifies that any actions use pinned tags
 guidance: |
   Verifies that any actions use pinned tags
+  Pinning an action to a full length commit SHA is currently the only way to use
+  an action as an immutable release. Pinning to a particular SHA helps mitigate
+  the risk of a bad actor adding a backdoor to the action's repository, as they
+  would need to generate a SHA-1 collision for a valid Git object payload.
+  When selecting a SHA, you should verify it is from the action's repository
+  and not a repository fork.
+  For more information, see
+  https://docs.github.com/en/actions/security-guides/security-hardening-for-github-actions#using-third-party-actions
 def:
   # Defines the section of the pipeline the rule will appear in.
   # This will affect the template that is used to render multiple parts
