@@ -97,6 +97,47 @@ func Test_parseEntityEvent(t *testing.T) {
 				OwnershipData: map[string]int32{RepositoryIDEventKey: 456, ArtifactIDEventKey: 123},
 			},
 		},
+		{
+			name: "pull_request event",
+			args: args{
+				ent: &pb.PullRequest{
+					URL:       "https://api.github.com/repos/jakubtestorg/bad-npm/pulls/3",
+					CommitSHA: "bd9958a63c9b95ccc2bc0cf1eef65a87529aed16",
+					Number:    3,
+					RepoOwner: "jakubtestorg",
+					RepoName:  "bad-npm",
+					Patches: []*pb.FilePatch{
+						{
+							Name:     "package-lock.json",
+							PatchUrl: "https://github.com/jakubtestorg/bad-npm/raw/123/package-lock.json",
+						},
+					},
+				},
+				entType:   PullRequestEventEntityType,
+				groupID:   1,
+				provider:  "github",
+				ownership: map[string]int32{PullRequestIDEventKey: 3, RepositoryIDEventKey: 1},
+			},
+			want: &EntityInfoWrapper{
+				GroupID: 1,
+				Entity: &pb.PullRequest{
+					URL:       "https://api.github.com/repos/jakubtestorg/bad-npm/pulls/3",
+					CommitSHA: "bd9958a63c9b95ccc2bc0cf1eef65a87529aed16",
+					Number:    3,
+					RepoOwner: "jakubtestorg",
+					RepoName:  "bad-npm",
+					Patches: []*pb.FilePatch{
+						{
+							Name:     "package-lock.json",
+							PatchUrl: "https://github.com/jakubtestorg/bad-npm/raw/123/package-lock.json",
+						},
+					},
+				},
+				Provider:      "github",
+				Type:          pb.Entity_ENTITY_PULL_REQUESTS,
+				OwnershipData: map[string]int32{PullRequestIDEventKey: 3, RepositoryIDEventKey: 1},
+			},
+		},
 	}
 	for _, tt := range tests {
 		tt := tt
@@ -114,6 +155,8 @@ func Test_parseEntityEvent(t *testing.T) {
 			msg.Metadata.Set(ProviderEventKey, tt.args.provider)
 			if tt.args.entType == VersionedArtifactEventEntityType {
 				msg.Metadata.Set(ArtifactIDEventKey, fmt.Sprintf("%d", tt.args.ownership["artifact_id"]))
+			} else if tt.args.entType == PullRequestEventEntityType {
+				msg.Metadata.Set(PullRequestIDEventKey, fmt.Sprintf("%d", tt.args.ownership["pull_request_id"]))
 			}
 
 			got, err := parseEntityEvent(msg)

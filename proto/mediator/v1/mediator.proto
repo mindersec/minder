@@ -1385,6 +1385,7 @@ enum Entity {
     ENTITY_REPOSITORIES = 1;
     ENTITY_BUILD_ENVIRONMENTS = 2;
     ENTITY_ARTIFACTS = 3;
+    ENTITY_PULL_REQUESTS = 4;
 }
 
 // Provider defines a provider that is used to connect to a certain service.
@@ -1731,4 +1732,5 @@ message RuleType {
     repeated ContextualRuleSet repository = 4;
     repeated ContextualRuleSet build_environment = 5;
     repeated ContextualRuleSet artifact = 6;
+    repeated ContextualRuleSet pull_request = 7;
  }

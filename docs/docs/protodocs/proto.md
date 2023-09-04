@@ -2146,6 +2146,7 @@ PipelinePolicy defines a policy that is user defined.
 | repository | [PipelinePolicy.ContextualRuleSet](#mediator-v1-PipelinePolicy-ContextualRuleSet) | repeated | These are the entities that one could set in the pipeline policy. |
 | build_environment | [PipelinePolicy.ContextualRuleSet](#mediator-v1-PipelinePolicy-ContextualRuleSet) | repeated |  |
 | artifact | [PipelinePolicy.ContextualRuleSet](#mediator-v1-PipelinePolicy-ContextualRuleSet) | repeated |  |
+| pull_request | [PipelinePolicy.ContextualRuleSet](#mediator-v1-PipelinePolicy-ContextualRuleSet) | repeated |  |
 
 
 
@@ -3041,6 +3042,7 @@ Entity defines the entity that is supported by the provider.
 | ENTITY_REPOSITORIES | 1 |  |
 | ENTITY_BUILD_ENVIRONMENTS | 2 |  |
 | ENTITY_ARTIFACTS | 3 |  |
+| ENTITY_PULL_REQUESTS | 4 |  |
 
 
 
