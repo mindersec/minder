@@ -28,6 +28,7 @@ import (
 
 	"github.com/ThreeDotsLabs/watermill/message"
 	"github.com/go-playground/validator/v10"
+	"github.com/rs/zerolog"
 	"google.golang.org/protobuf/encoding/protojson"
 	"google.golang.org/protobuf/types/known/timestamppb"
 
@@ -535,6 +536,12 @@ func (e *Executor) handleArtifactPublishedEvent(ctx context.Context, prov string
 			}
 
 			result := rte.Eval(ctx, versionedArtifact, rule.Def.AsMap(), rule.Params.AsMap())
+			zerolog.Ctx(ctx).Debug().
+				Str("policy", pol.Name).
+				Str("ruleType", rule.Type).
+				Int("artifactId", int(dbArtifact.ID)).
+				Err(result)
+
 			return e.createOrUpdateEvalStatus(ctx, &createOrUpdateEvalStatusParams{
 				policyID:       *pol.Id,
 				repoID:         dbrepo.ID,

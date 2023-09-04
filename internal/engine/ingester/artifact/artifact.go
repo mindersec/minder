@@ -63,8 +63,9 @@ func (_ *Ingest) Ingest(
 		return nil, fmt.Errorf("expected VersionedArtifact, got %T", ent)
 	}
 
-	if !isApplicableArtifact(versionedArtifact, cfg) {
-		return nil, evalerrors.ErrEvaluationSkipSilently
+	applicable, msg := isApplicableArtifact(versionedArtifact, cfg)
+	if !applicable {
+		return nil, evalerrors.NewErrEvaluationSkipSilently(msg)
 	}
 
 	result := struct {
@@ -92,22 +93,26 @@ func (_ *Ingest) Ingest(
 func isApplicableArtifact(
 	versionedArtifact *pb.VersionedArtifact,
 	cfg *ingesterConfig,
-) bool {
+) (bool, string) {
 	if newArtifactIngestType(versionedArtifact.Artifact.Type) != cfg.Type {
 		// not interested in this type of artifact
-		return false
+		return false, "artifact type mismatch"
 	}
 
 	if cfg.Name != versionedArtifact.Artifact.Name {
 		// not interested in this artifact
-		return false
+		return false, "artifact name mismatch"
 	}
 
 	// no tags is treated as a wildcard and matches any container. This might be configurable in the future
 	if len(cfg.Tags) == 0 {
-		return true
+		return true, ""
 	}
 
 	haveTags := sets.New(versionedArtifact.Version.Tags...)
-	return haveTags.HasAny(cfg.Tags...)
+	tagsOk := haveTags.HasAny(cfg.Tags...)
+	if !tagsOk {
+		return false, "artifact tags mismatch"
+	}
+	return true, ""
 }
