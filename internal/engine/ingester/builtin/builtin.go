@@ -21,13 +21,13 @@ import (
 	"encoding/json"
 	"errors"
 	"fmt"
-	"log"
 	"reflect"
 	"strings"
 
 	"github.com/go-git/go-billy/v5"
 	"google.golang.org/protobuf/reflect/protoreflect"
 
+	evalerrors "github.com/stacklok/mediator/internal/engine/errors"
 	engif "github.com/stacklok/mediator/internal/engine/interfaces"
 	"github.com/stacklok/mediator/internal/util"
 	pb "github.com/stacklok/mediator/pkg/generated/protobuf/go/mediator/v1"
@@ -42,6 +42,7 @@ const (
 // BuiltinRuleDataIngest is the engine for a rule type that uses builtin methods
 type BuiltinRuleDataIngest struct {
 	builtinCfg  *pb.BuiltinType
+	ruleMethods rule_methods.Methods
 	method      string
 	accessToken string
 }
@@ -55,6 +56,7 @@ func NewBuiltinRuleDataIngest(
 		builtinCfg:  builtinCfg,
 		accessToken: access_token,
 		method:      builtinCfg.GetMethod(),
+		ruleMethods: &rule_methods.RuleMethods{},
 	}, nil
 }
 
@@ -66,10 +68,10 @@ func (*BuiltinRuleDataIngest) FileContext() billy.Filesystem {
 
 // Ingest calls the builtin method and populates the data to be returned
 func (idi *BuiltinRuleDataIngest) Ingest(ctx context.Context, ent protoreflect.ProtoMessage, params map[string]any) (*engif.Result, error) {
-	// call internal method stored in pkg and method
-	rm := rule_methods.RuleMethods{}
-	value := reflect.ValueOf(rm)
-	method := value.MethodByName(idi.method)
+	method, err := idi.ruleMethods.GetMethod(idi.method)
+	if err != nil {
+		return nil, fmt.Errorf("cannot get method: %w", err)
+	}
 
 	// Check if the method exists
 	if !method.IsValid() {
@@ -79,12 +81,8 @@ func (idi *BuiltinRuleDataIngest) Ingest(ctx context.Context, ent protoreflect.P
 	matches, err := entityMatchesParams(ctx, ent, params)
 	if err != nil {
 		return nil, fmt.Errorf("cannot check if entity matches params: %w", err)
-	}
-
-	// TODO: this should be a warning
-	if !matches {
-		log.Printf("entity not matching parameters, skipping")
-		return nil, nil
+	} else if !matches {
+		return nil, evalerrors.ErrEvaluationSkipSilently
 	}
 
 	// call method
