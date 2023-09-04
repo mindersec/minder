@@ -37,9 +37,17 @@ def:
         default allow := false
 
         allow {
-            some i
-            workflowstr := file.read("./.github/workflows/codeql.yml")
+            # List all workflows
+            workflows := file.ls("./.github/workflows")
+
+            # Read all workflows
+            some w
+            workflowstr := file.read(workflows[w])
+
             workflow := yaml.unmarshal(workflowstr)
+
+            # Ensure a workflow contains the codel-ql action
+            some i
             steps := workflow.jobs.analyze.steps[i]
-            contains(steps.uses, "github/codeql-action/analyze@")
+            startswith(steps.uses, "github/codeql-action/analyze@")
         }

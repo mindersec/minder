@@ -164,3 +164,260 @@ allow {
 	})
 	require.ErrorIs(t, err, engerrors.ErrEvaluationFailed, "could not evaluate")
 }
+
+func TestFileLsWithUnexistentFile(t *testing.T) {
+	t.Parallel()
+
+	fs := memfs.New()
+
+	e, err := rego.NewRegoEvaluator(
+		&pb.RuleType_Definition_Eval_Rego{
+			Type: rego.DenyByDefaultEvaluationType.String(),
+			Def: `
+package mediator
+
+default allow = false
+
+allow {
+	files := file.ls("unexistent")
+	is_null(files)
+}`,
+		},
+	)
+	require.NoError(t, err, "could not create evaluator")
+
+	emptyPol := map[string]any{}
+
+	err = e.Eval(context.Background(), emptyPol, &engif.Result{
+		Object: nil,
+		Fs:     fs,
+	})
+	require.NoError(t, err, "could not evaluate")
+}
+
+func TestFileLsWithEmptyDirectory(t *testing.T) {
+	t.Parallel()
+
+	fs := memfs.New()
+	err := fs.MkdirAll("foo", 0755)
+	require.NoError(t, err, "could not create directory")
+
+	e, err := rego.NewRegoEvaluator(
+		&pb.RuleType_Definition_Eval_Rego{
+			Type: rego.DenyByDefaultEvaluationType.String(),
+			Def: `
+package mediator
+
+default allow = false
+
+allow {
+	files := file.ls("foo")
+	count(files) == 0
+}`,
+		},
+	)
+	require.NoError(t, err, "could not create evaluator")
+
+	emptyPol := map[string]any{}
+
+	err = e.Eval(context.Background(), emptyPol, &engif.Result{
+		Object: nil,
+		Fs:     fs,
+	})
+	require.NoError(t, err, "could not evaluate")
+}
+
+func TestFileLsWithSingleFile(t *testing.T) {
+	t.Parallel()
+
+	fs := memfs.New()
+	err := fs.MkdirAll("foo", 0755)
+	require.NoError(t, err, "could not create directory")
+
+	// Create a file
+	_, err = fs.Create("foo/bar")
+	require.NoError(t, err, "could not create file")
+
+	e, err := rego.NewRegoEvaluator(
+		&pb.RuleType_Definition_Eval_Rego{
+			Type: rego.DenyByDefaultEvaluationType.String(),
+			Def: `
+package mediator
+
+default allow = false
+
+allow {
+	files := file.ls("foo")
+	count(files) == 1
+	files[0] == "foo/bar"
+}`,
+		},
+	)
+	require.NoError(t, err, "could not create evaluator")
+
+	emptyPol := map[string]any{}
+
+	err = e.Eval(context.Background(), emptyPol, &engif.Result{
+		Object: nil,
+		Fs:     fs,
+	})
+	require.NoError(t, err, "could not evaluate")
+}
+
+func TestFileLsWithSingleFileDirect(t *testing.T) {
+	t.Parallel()
+
+	fs := memfs.New()
+	err := fs.MkdirAll("foo", 0755)
+	require.NoError(t, err, "could not create directory")
+
+	// Create a file
+	_, err = fs.Create("foo/bar")
+	require.NoError(t, err, "could not create file")
+
+	e, err := rego.NewRegoEvaluator(
+		&pb.RuleType_Definition_Eval_Rego{
+			Type: rego.DenyByDefaultEvaluationType.String(),
+			Def: `
+package mediator
+
+default allow = false
+
+allow {
+	files := file.ls("foo/bar")
+	count(files) == 1
+	files[0] == "foo/bar"
+}`,
+		},
+	)
+	require.NoError(t, err, "could not create evaluator")
+
+	emptyPol := map[string]any{}
+
+	err = e.Eval(context.Background(), emptyPol, &engif.Result{
+		Object: nil,
+		Fs:     fs,
+	})
+	require.NoError(t, err, "could not evaluate")
+}
+
+func TestFileLsWithMultipleFiles(t *testing.T) {
+	t.Parallel()
+
+	fs := memfs.New()
+	err := fs.MkdirAll("foo", 0755)
+	require.NoError(t, err, "could not create directory")
+
+	// Create a files
+	_, err = fs.Create("foo/bar")
+	require.NoError(t, err, "could not create file")
+	_, err = fs.Create("foo/baz")
+	require.NoError(t, err, "could not create file")
+	_, err = fs.Create("foo/bat")
+	require.NoError(t, err, "could not create file")
+
+	e, err := rego.NewRegoEvaluator(
+		&pb.RuleType_Definition_Eval_Rego{
+			Type: rego.DenyByDefaultEvaluationType.String(),
+			Def: `
+package mediator
+
+default allow = false
+
+allow {
+	files := file.ls("foo")
+	count(files) == 3
+}`,
+		},
+	)
+	require.NoError(t, err, "could not create evaluator")
+
+	emptyPol := map[string]any{}
+
+	err = e.Eval(context.Background(), emptyPol, &engif.Result{
+		Object: nil,
+		Fs:     fs,
+	})
+	require.NoError(t, err, "could not evaluate")
+}
+
+func TestFileLsWithSimpleSymlink(t *testing.T) {
+	t.Parallel()
+
+	fs := memfs.New()
+	err := fs.MkdirAll("foo", 0755)
+	require.NoError(t, err, "could not create directory")
+
+	// Create a files
+	_, err = fs.Create("foo/bar")
+	require.NoError(t, err, "could not create file")
+	_, err = fs.Create("foo/baz")
+	require.NoError(t, err, "could not create file")
+	_, err = fs.Create("foo/bat")
+	require.NoError(t, err, "could not create file")
+
+	err = fs.Symlink("foo", "beer")
+	require.NoError(t, err, "could not create symlink")
+
+	e, err := rego.NewRegoEvaluator(
+		&pb.RuleType_Definition_Eval_Rego{
+			Type: rego.DenyByDefaultEvaluationType.String(),
+			Def: `
+package mediator
+
+default allow = false
+
+allow {
+	files := file.ls("beer")
+	count(files) == 3
+}`,
+		},
+	)
+	require.NoError(t, err, "could not create evaluator")
+
+	emptyPol := map[string]any{}
+
+	err = e.Eval(context.Background(), emptyPol, &engif.Result{
+		Object: nil,
+		Fs:     fs,
+	})
+	require.NoError(t, err, "could not evaluate")
+}
+
+func TestFileLsWithSymlinkToDir(t *testing.T) {
+	t.Parallel()
+
+	fs := memfs.New()
+	err := fs.MkdirAll("foo", 0755)
+	require.NoError(t, err, "could not create directory")
+
+	// Create a files
+	_, err = fs.Create("foo/bar")
+	require.NoError(t, err, "could not create file")
+	err = fs.Symlink("foo/bar", "foo/baz")
+	require.NoError(t, err, "could not create file")
+
+	e, err := rego.NewRegoEvaluator(
+		&pb.RuleType_Definition_Eval_Rego{
+			Type: rego.DenyByDefaultEvaluationType.String(),
+			Def: `
+package mediator
+
+default allow = false
+
+allow {
+	files := file.ls("foo/baz")
+	count(files) == 1
+}`,
+		},
+	)
+	require.NoError(t, err, "could not create evaluator")
+
+	emptyPol := map[string]any{}
+
+	err = e.Eval(context.Background(), emptyPol, &engif.Result{
+		Object: nil,
+		Fs:     fs,
+	})
+	require.NoError(t, err, "could not evaluate")
+}
