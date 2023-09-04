@@ -113,7 +113,7 @@ func (s *Server) CreatePolicy(ctx context.Context,
 	_, err = s.store.GetAccessTokenByGroupID(ctx,
 		db.GetAccessTokenByGroupIDParams{Provider: entityCtx.GetProvider(), GroupID: entityCtx.Group.GetID()})
 	if err != nil {
-		if err == sql.ErrNoRows {
+		if errors.Is(err, sql.ErrNoRows) {
 			return nil, status.Errorf(codes.FailedPrecondition, "provider %s is not enrolled", entityCtx.GetProvider())
 		}
 		return nil, status.Errorf(codes.Unknown, "failed to get access token: %s", err)
@@ -277,7 +277,7 @@ func (s *Server) DeletePolicy(ctx context.Context,
 
 	_, err = s.store.GetPolicyByID(ctx, in.Id)
 	if err != nil {
-		if err == sql.ErrNoRows {
+		if errors.Is(err, sql.ErrNoRows) {
 			return nil, status.Error(codes.NotFound, "policy not found")
 		}
 		return nil, status.Errorf(codes.Internal, "failed to get policy: %s", err)

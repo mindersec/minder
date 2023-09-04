@@ -17,6 +17,7 @@ package controlplane
 import (
 	"context"
 	"database/sql"
+	"errors"
 	"fmt"
 	"time"
 
@@ -283,7 +284,7 @@ func (s *Server) GetOrganization(ctx context.Context,
 
 	org, err := s.store.GetOrganization(ctx, in.OrganizationId)
 	if err != nil {
-		if err == sql.ErrNoRows {
+		if errors.Is(err, sql.ErrNoRows) {
 			return nil, status.Error(codes.NotFound, "organization not found")
 		}
 		return nil, status.Errorf(codes.Internal, "failed to get organization: %s", err)
@@ -318,7 +319,7 @@ func (s *Server) GetOrganizationByName(ctx context.Context,
 
 	org, err := s.store.GetOrganizationByName(ctx, in.Name)
 	if err != nil {
-		if err == sql.ErrNoRows {
+		if errors.Is(err, sql.ErrNoRows) {
 			return nil, status.Error(codes.NotFound, "organization not found")
 		}
 		return nil, status.Errorf(codes.Internal, "failed to get organization: %s", err)
@@ -364,7 +365,7 @@ func (s *Server) DeleteOrganization(ctx context.Context,
 
 	_, err = s.store.GetOrganization(ctx, in.Id)
 	if err != nil {
-		if err == sql.ErrNoRows {
+		if errors.Is(err, sql.ErrNoRows) {
 			return nil, status.Error(codes.NotFound, "organization not found")
 		}
 		return nil, status.Errorf(codes.Internal, "failed to get organization: %s", err)

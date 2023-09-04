@@ -17,6 +17,7 @@ package controlplane
 import (
 	"context"
 	"database/sql"
+	"errors"
 
 	"github.com/go-playground/validator/v10"
 	"google.golang.org/grpc/codes"
@@ -134,7 +135,7 @@ func (s *Server) GetGroupById(ctx context.Context, req *pb.GetGroupByIdRequest) 
 
 	grp, err := s.store.GetGroupByID(ctx, req.GroupId)
 	if err != nil {
-		if err == sql.ErrNoRows {
+		if errors.Is(err, sql.ErrNoRows) {
 			return nil, status.Error(codes.NotFound, "group not found")
 		}
 		return nil, status.Errorf(codes.Internal, "failed to get group by id: %s", err)
@@ -261,7 +262,7 @@ func (s *Server) DeleteGroup(ctx context.Context,
 	// first check if the group exists and is not protected
 	group, err := s.store.GetGroupByID(ctx, in.Id)
 	if err != nil {
-		if err == sql.ErrNoRows {
+		if errors.Is(err, sql.ErrNoRows) {
 			return nil, status.Errorf(codes.NotFound, "group not found")
 		}
 		return nil, status.Errorf(codes.Internal, "failed to get group by id: %s", err)
