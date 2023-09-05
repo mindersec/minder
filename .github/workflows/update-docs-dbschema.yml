@@ -15,7 +15,7 @@ jobs:
     steps:
       # Checkout your project with git
       - name: Checkout
-        uses: actions/checkout@v3.5.3
+        uses: actions/checkout@v4
 
       # generate db schema
       - name: Generate db schema
