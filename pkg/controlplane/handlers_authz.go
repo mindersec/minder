@@ -27,6 +27,7 @@ import (
 	"google.golang.org/grpc"
 	"google.golang.org/grpc/codes"
 	"google.golang.org/grpc/status"
+	"k8s.io/apimachinery/pkg/util/sets"
 
 	"github.com/stacklok/mediator/pkg/auth"
 	"github.com/stacklok/mediator/pkg/db"
@@ -52,15 +53,20 @@ func parseToken(token string, store db.Store) (auth.UserClaims, error) {
 	return userClaims, nil
 }
 
+// List of methods to skip entirely.
+var noLogMethods = sets.New[string](
+	"/mediator.v1.HealthService/CheckHealth",
+)
+
 // List of methods that bypass authentication
-var authBypassMethods = []string{
+var authBypassMethods = sets.New[string](
 	"/mediator.v1.AuthService/LogIn",
 	"/mediator.v1.HealthService/CheckHealth",
 	"/mediator.v1.OAuthService/ExchangeCodeForTokenCLI",
 	"/mediator.v1.OAuthService/ExchangeCodeForTokenWEB",
-}
+)
 
-var superAdminMethods = []string{
+var superAdminMethods = sets.New[string](
 	"/mediator.v1.OrganizationService/CreateOrganization",
 	"/mediator.v1.OrganizationService/GetOrganizations",
 	"/mediator.v1.OrganizationService/DeleteOrganization",
@@ -70,7 +76,7 @@ var superAdminMethods = []string{
 	"/mediator.v1.UserService/GetUsers",
 	"/mediator.v1.ArtifactService/ListArtifacts",
 	"/mediator.v1.ArtifactService/GetArtifactByName",
-}
+)
 
 var resourceAuthorizations = []map[string]map[string]interface{}{
 	{
@@ -331,23 +337,6 @@ var githubAuthorizations = []string{
 	"/mediator.v1.RepositoryService/AddRepository",
 }
 
-func canBypassAuth(ctx context.Context) bool {
-	// Extract the gRPC method name from the context
-	method, ok := grpc.Method(ctx)
-	if !ok {
-		// no method called, can bypass auth
-		return true
-	}
-
-	// Check if the current method is in the list of bypass methods
-	for _, bypassMethod := range authBypassMethods {
-		if bypassMethod == method {
-			return true
-		}
-	}
-	return false
-}
-
 // checks if an user is superadmin
 func isSuperadmin(claims auth.UserClaims) bool {
 	// need to check that has a role that belongs to org 1 generally and is admin
@@ -391,14 +380,7 @@ func isMethodAuthorized(ctx context.Context, claims auth.UserClaims) bool {
 	}
 
 	// check if method is on superadmin ones, and fail
-	for _, bypassMethod := range superAdminMethods {
-		if bypassMethod == method {
-			return false
-		}
-	}
-
-	return true
-
+	return !superAdminMethods.Has(method)
 }
 
 // IsRequestAuthorized checks if the request is authorized
@@ -503,11 +485,13 @@ func IsProviderCallAuthorized(ctx context.Context, store db.Store, provider stri
 // AuthUnaryInterceptor is a server interceptor for authentication
 func AuthUnaryInterceptor(ctx context.Context, req interface{}, info *grpc.UnaryServerInfo,
 	handler grpc.UnaryHandler) (any, error) {
-	// bypass auth
-	canBypass := canBypassAuth(ctx)
-	if canBypass {
+
+	// bypass auth for public endpoints
+	if authBypassMethods.Has(info.FullMethod) {
 		// If the method is in the bypass list, return the context as is without authentication
-		zerolog.Ctx(ctx).Info().Msgf("Bypassing authentication")
+		if !noLogMethods.Has(info.FullMethod) {
+			zerolog.Ctx(ctx).Info().Msgf("Bypassing authentication")
+		}
 		return handler(ctx, req)
 	}
 
