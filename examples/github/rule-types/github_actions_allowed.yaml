@@ -1,11 +1,22 @@
 ---
 version: v1
 type: rule-type
-name: actions_permissions
+name: github_actions_allowed
 context:
   provider: github
   group: Root Group
-description: Verifies permissions for github actions for a specific repository.
+description: |
+  Verifies permissions for github actions for a specific repository.
+
+  Setting up permissions for github actions can be a bit tricky. This rule will
+  help you verify that the permissions are set up correctly for a specific repository.
+  This rule allows you to limit the actions that are allowed to run for a repository.
+  It is recommended to use the `selected` option for allowed actions, and then
+  select the actions that are allowed to run.
+guidance: |
+  Configure your repository to match the organization's policy for allowed actions.
+
+  For more information see the [GitHub documentation](https://docs.github.com/en/repositories/managing-your-repositorys-settings-and-features/enabling-features-for-your-repository/managing-github-actions-settings-for-a-repository#managing-github-actions-permissions-for-your-repository).
 def:
   # Defines the section of the pipeline the rule will appear in.
   # This will affect the template that is used to render multiple parts
@@ -13,10 +24,8 @@ def:
   in_entity: repository
   # Defines the schema for writing a rule with this rule being checked
   rule_schema:
+    type: object
     properties:
-      enabled:
-        type: boolean
-        default: true
       allowed_actions:
         type: string
         description: The permissions policy that controls the actions and reusable workflows that are allowed to run.
@@ -40,10 +49,6 @@ def:
     type: jq
     jq:
       # Ingested points to the data retrieved in the `ingest` section
-      - ingested:
-          def: ".enabled"
-        policy:
-          def: ".enabled"
       - ingested:
           def: ".allowed_actions"
         policy:
