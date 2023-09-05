@@ -42,6 +42,8 @@ repository:
           can_approve_pull_request_reviews: false
       - type: codeql_enabled
         def: {}
+      - type: actions_check_pinned_tags
+        def: {}
       - type: dependabot_enabled
         def: {}
       # Note that this only applies to private repositories.
