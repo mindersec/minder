@@ -115,7 +115,7 @@ actions to comply with the policy.
 ## Prerequisites
 
 - The `medic` CLI application
-- [At least one repository is registered for Mediator](./enroll_user.md)
+- [At least one repository is registered for Mediator](./getting_started/register_repos.md)
 
 ## List rule types
 

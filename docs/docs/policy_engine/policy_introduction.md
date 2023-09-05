@@ -21,5 +21,4 @@ As of time of writing, mediator supports the following evaluation engines:
 Each engine is designed to be extensible, allowing you to integrate your own
 logic and processes.
 
-Please see the [examples](https://github.com/stacklok/mediator/tree/main/examples) directory for examples of policies, and [Manage Policies](/policy_engine/manage_policies) for more details on
-how to set up policies and rule types.
+Please see the [examples](https://github.com/stacklok/mediator/tree/main/examples) directory for examples of policies, and [Manage Policies](./manage_policies.md) for more details on how to set up policies and rule types.
