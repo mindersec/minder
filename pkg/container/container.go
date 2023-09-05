@@ -24,6 +24,7 @@ import (
 	"errors"
 	"fmt"
 	"log"
+	"strings"
 	"time"
 
 	"github.com/google/go-containerregistry/pkg/authn"
@@ -397,4 +398,18 @@ func VerifyFromIdentity(ctx context.Context, imageRef string, owner string, toke
 	}
 
 	return is_verified, bundleVerified, imageKeys, err
+}
+
+// TagIsSignature if tag contains the .sig suffix it's a signature, as cosign
+// stores signatures in that format
+func TagIsSignature(tags []string) bool {
+	// if the artifact has a .sig tag it's a signature, skip it
+	found := false
+	for _, tag := range tags {
+		if strings.HasSuffix(tag, ".sig") {
+			found = true
+			break
+		}
+	}
+	return found
 }

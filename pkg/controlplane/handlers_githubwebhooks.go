@@ -24,10 +24,15 @@ package controlplane
 
 import (
 	"context"
+	"database/sql"
+	"encoding/json"
+	"errors"
 	"fmt"
 	"log"
 	"net/http"
 	urlparser "net/url"
+	"sort"
+	"strconv"
 	"strings"
 	"time"
 
@@ -36,11 +41,21 @@ import (
 	"github.com/google/uuid"
 	"github.com/spf13/viper"
 	"golang.org/x/oauth2"
+	"google.golang.org/protobuf/encoding/protojson"
+	"google.golang.org/protobuf/types/known/timestamppb"
 
 	"github.com/stacklok/mediator/internal/engine"
+	"github.com/stacklok/mediator/internal/util"
 	// TODO(jaosorior): This should be moved to the provider package
+	"github.com/stacklok/mediator/pkg/container"
+	"github.com/stacklok/mediator/pkg/db"
+	pb "github.com/stacklok/mediator/pkg/generated/protobuf/go/mediator/v1"
+	"github.com/stacklok/mediator/pkg/providers"
 	ghclient "github.com/stacklok/mediator/pkg/providers/github"
 )
+
+// CONTAINER_TYPE is the type for container artifacts
+var CONTAINER_TYPE = "container"
 
 // Repository represents a GitHub repository
 type Repository struct {
@@ -71,12 +86,16 @@ type RepositoryResult struct {
 	RegistrationStatus
 }
 
+// ErrRepoNotFound is returned when a repository is not found
+var ErrRepoNotFound = errors.New("repository not found")
+
+// ErrArtifactNotFound is returned when an artifact is not found
+var ErrArtifactNotFound = errors.New("artifact not found")
+
 // HandleGitHubWebHook handles incoming GitHub webhooks
 // See https://docs.github.com/en/developers/webhooks-and-events/webhooks/about-webhooks
 // for more information.
-//
-//gocyclo:ignore
-func HandleGitHubWebHook(p message.Publisher) http.HandlerFunc {
+func HandleGitHubWebHook(p message.Publisher, store db.Store) http.HandlerFunc {
 	return func(w http.ResponseWriter, r *http.Request) {
 		// Validate the payload signature. This is required for security reasons.
 		// See https://docs.github.com/en/developers/webhooks-and-events/webhooks/securing-your-webhooks
@@ -86,7 +105,7 @@ func HandleGitHubWebHook(p message.Publisher) http.HandlerFunc {
 		segments := strings.Split(r.URL.Path, "/")
 		_ = segments[len(segments)-1]
 
-		payload, err := github.ValidatePayload(r, []byte(viper.GetString("webhook-config.webhook_secret")))
+		rawWBPayload, err := github.ValidatePayload(r, []byte(viper.GetString("webhook-config.webhook_secret")))
 		if err != nil {
 			fmt.Printf("Error validating webhook payload: %v", err)
 			w.WriteHeader(http.StatusBadRequest)
@@ -100,7 +119,7 @@ func HandleGitHubWebHook(p message.Publisher) http.HandlerFunc {
 		}
 
 		// TODO: extract sender and event time from payload portably
-		m := message.NewMessage(uuid.New().String(), payload)
+		m := message.NewMessage(uuid.New().String(), nil)
 		m.Metadata.Set("id", github.DeliveryID(r))
 
 		// TODO(jaosorior): When extracting the source we should also match
@@ -113,8 +132,20 @@ func HandleGitHubWebHook(p message.Publisher) http.HandlerFunc {
 		// m.Metadata.Set("time", ghEvent.GetCreatedAt().String())
 		log.Printf("publishing of type: %s", m.Metadata["type"])
 
+		if err := parseGithubEventForProcessing(store, rawWBPayload, m); err != nil {
+			// We won't leak whether a repository is not found.
+			if errors.Is(err, ErrRepoNotFound) {
+				log.Printf("repository not found: %v", err)
+				w.WriteHeader(http.StatusOK)
+				return
+			}
+			log.Printf("Error parsing github webhook message: %v", err)
+			w.WriteHeader(http.StatusInternalServerError)
+			return
+		}
+
 		if err := p.Publish(engine.InternalWebhookEventTopic, m); err != nil {
-			fmt.Printf("Error publishing message: %v", err)
+			log.Printf("Error publishing message: %v", err)
 			w.WriteHeader(http.StatusInternalServerError)
 			return
 		}
@@ -232,4 +263,432 @@ func RegisterWebHook(
 	}
 
 	return registerData, nil
+}
+
+func parseGithubEventForProcessing(
+	store db.Store,
+	rawWHPayload []byte,
+	msg *message.Message,
+) error {
+	prov := msg.Metadata.Get("provider")
+
+	if prov != ghclient.Github {
+		log.Printf("provider %s not supported", prov)
+		return nil
+	}
+
+	var payload map[string]any
+	if err := json.Unmarshal(rawWHPayload, &payload); err != nil {
+		return fmt.Errorf("error unmarshalling payload: %w", err)
+	}
+
+	// determine if the payload is an artifact published event
+	// TODO: this needs to be managed via signals
+	hook_type := msg.Metadata.Get("type")
+	if hook_type == "package" {
+		if payload["action"] == "published" {
+			return parseArtifactPublishedEvent(
+				context.Background(), ghclient.Github, store, payload, msg)
+		}
+	}
+
+	// determine if the payload is a repository event
+	_, isRepo := payload["repository"]
+	if !isRepo {
+		log.Printf("could not determine relevant entity for event. Skipping execution.")
+		return nil
+	}
+
+	return parseRepoEvent(context.Background(), ghclient.Github, store, payload, msg)
+}
+
+func parseRepoEvent(
+	ctx context.Context,
+	prov string,
+	store db.Store,
+	whPayload map[string]any,
+	msg *message.Message,
+) error {
+	dbrepo, err := getRepoInformationFromPayload(ctx, prov, store, whPayload)
+	if err != nil {
+		return err
+	}
+
+	// protobufs are our API, so we always execute on these instead of the DB directly.
+	repo := &pb.RepositoryResult{
+		Owner:      dbrepo.RepoOwner,
+		Repository: dbrepo.RepoName,
+		RepoId:     dbrepo.RepoID,
+		HookUrl:    dbrepo.WebhookUrl,
+		DeployUrl:  dbrepo.DeployUrl,
+		CloneUrl:   dbrepo.CloneUrl,
+		CreatedAt:  timestamppb.New(dbrepo.CreatedAt),
+		UpdatedAt:  timestamppb.New(dbrepo.UpdatedAt),
+	}
+
+	msg.Metadata.Set(engine.EntityTypeEventKey, engine.RepositoryEventEntityType)
+	msg.Metadata.Set(engine.GroupIDEventKey, strconv.Itoa(int(dbrepo.GroupID)))
+	msg.Metadata.Set(engine.RepositoryIDEventKey, strconv.Itoa(int(dbrepo.ID)))
+	msg.Payload, err = protojson.Marshal(repo)
+	if err != nil {
+		return fmt.Errorf("error marshalling repository: %w", err)
+	}
+
+	return nil
+}
+
+func parseArtifactPublishedEvent(
+	ctx context.Context,
+	prov string,
+	store db.Store,
+	whPayload map[string]any,
+	msg *message.Message,
+) error {
+	// we need to have information about package and repository
+	if whPayload["package"] == nil || whPayload["repository"] == nil {
+		log.Printf("could not determine relevant entity for event. Skipping execution.")
+		return nil
+	}
+
+	// extract information about repository so we can identity the group and associated rules
+	dbrepo, err := getRepoInformationFromPayload(ctx, prov, store, whPayload)
+	if err != nil {
+		return fmt.Errorf("error getting repo information from payload: %w", err)
+	}
+	g := dbrepo.GroupID
+
+	cli, err := providers.BuildClient(ctx, prov, g, store)
+	if err != nil {
+		return fmt.Errorf("error building client: %w", err)
+	}
+
+	versionedArtifact, err := gatherVersionedArtifact(ctx, cli, whPayload)
+	if err != nil {
+		return fmt.Errorf("error gathering versioned artifact: %w", err)
+	}
+
+	if versionedArtifact == nil {
+		// no error, but the version was just the signature
+		return nil
+	}
+
+	_, _, err = upsertVersionedArtifact(ctx, dbrepo.ID, versionedArtifact, store)
+	if err != nil {
+		return fmt.Errorf("error upserting artifact from payload: %w", err)
+	}
+
+	msg.Metadata.Set(engine.EntityTypeEventKey, engine.VersionedArtifactEventEntityType)
+	msg.Metadata.Set(engine.GroupIDEventKey, strconv.Itoa(int(dbrepo.GroupID)))
+	msg.Metadata.Set(engine.RepositoryIDEventKey, strconv.Itoa(int(dbrepo.ID)))
+	msg.Metadata.Set(engine.ArtifactIDEventKey, strconv.Itoa(int(versionedArtifact.Artifact.ArtifactId)))
+	msg.Payload, err = protojson.Marshal(versionedArtifact)
+	if err != nil {
+		return fmt.Errorf("error marshalling versioned artifact: %w", err)
+	}
+
+	return nil
+}
+
+func extractArtifactFromPayload(ctx context.Context, payload map[string]any) (*pb.Artifact, error) {
+	artifactId, err := util.JQReadFrom[float64](ctx, ".package.id", payload)
+	if err != nil {
+		return nil, err
+	}
+	artifactName, err := util.JQReadFrom[string](ctx, ".package.name", payload)
+	if err != nil {
+		return nil, err
+	}
+	artifactType, err := util.JQReadFrom[string](ctx, ".package.package_type", payload)
+	if err != nil {
+		return nil, err
+	}
+	ownerLogin, err := util.JQReadFrom[string](ctx, ".package.owner.login", payload)
+	if err != nil {
+		return nil, err
+	}
+	repoName, err := util.JQReadFrom[string](ctx, ".repository.full_name", payload)
+	if err != nil {
+		return nil, err
+	}
+	packageUrl, err := util.JQReadFrom[string](ctx, ".package.package_version.package_url", payload)
+	if err != nil {
+		return nil, err
+	}
+
+	artifact := &pb.Artifact{
+		ArtifactId: int64(artifactId),
+		Owner:      ownerLogin,
+		Name:       artifactName,
+		Type:       artifactType,
+		Repository: repoName,
+		PackageUrl: packageUrl,
+		// visibility and createdAt are not in the payload, we need to get it with a REST call
+	}
+
+	return artifact, nil
+}
+
+func extractArtifactVersionFromPayload(ctx context.Context, payload map[string]any) (*pb.ArtifactVersion, error) {
+	packageVersionId, err := util.JQReadFrom[float64](ctx, ".package.package_version.id", payload)
+	if err != nil {
+		return nil, err
+	}
+	packageVersionSha, err := util.JQReadFrom[string](ctx, ".package.package_version.version", payload)
+	if err != nil {
+		return nil, err
+	}
+	tag, err := util.JQReadFrom[string](ctx, ".package.package_version.container_metadata.tag.name", payload)
+	if err != nil {
+		return nil, err
+	}
+
+	version := &pb.ArtifactVersion{
+		VersionId:             int64(packageVersionId),
+		Tags:                  []string{tag},
+		Sha:                   packageVersionSha,
+		SignatureVerification: nil, // will be filled later by a call to the container registry
+		GithubWorkflow:        nil, // will be filled later by a call to the container registry
+	}
+
+	return version, nil
+}
+
+func gatherArtifactInfo(
+	ctx context.Context,
+	client ghclient.RestAPI,
+	payload map[string]any,
+) (*pb.Artifact, error) {
+	artifact, err := extractArtifactFromPayload(ctx, payload)
+	if err != nil {
+		return nil, fmt.Errorf("error extracting artifact from payload: %w", err)
+	}
+
+	// we also need to fill in the visibility which is not in the payload
+	isOrg := client.GetOwner() != ""
+	ghArtifact, err := client.GetPackageByName(ctx, isOrg, artifact.Owner, CONTAINER_TYPE, artifact.Name)
+	if err != nil {
+		return nil, fmt.Errorf("error extracting artifact from repo: %w", err)
+	}
+
+	artifact.Visibility = *ghArtifact.Visibility
+	return artifact, nil
+}
+
+func gatherArtifactVersionInfo(
+	ctx context.Context,
+	cli ghclient.RestAPI,
+	payload map[string]any,
+	artifactOwnerLogin, artifactName string,
+) (*pb.ArtifactVersion, error) {
+	version, err := extractArtifactVersionFromPayload(ctx, payload)
+	if err != nil {
+		return nil, fmt.Errorf("error extracting artifact version from payload: %w", err)
+	}
+
+	// not all information is in the payload, we need to get it from the container registry
+	// and/or GH API
+	err = updateArtifactVersionFromRegistry(ctx, cli, payload, artifactOwnerLogin, artifactName, version)
+	if err != nil {
+		return nil, fmt.Errorf("error getting upstream information for artifact version: %w", err)
+	}
+
+	return version, nil
+}
+
+func gatherVersionedArtifact(
+	ctx context.Context,
+	cli ghclient.RestAPI,
+	payload map[string]any,
+) (*pb.VersionedArtifact, error) {
+	artifact, err := gatherArtifactInfo(ctx, cli, payload)
+	if err != nil {
+		return nil, fmt.Errorf("error gatherinfo artifact info: %w", err)
+	}
+
+	version, err := gatherArtifactVersionInfo(ctx, cli, payload, artifact.Owner, artifact.Name)
+	if err != nil {
+		return nil, fmt.Errorf("error extracting artifact from payload: %w", err)
+	}
+
+	if version == nil {
+		// no point in storing and evaluating just the .sig
+		return nil, nil
+	}
+
+	return &pb.VersionedArtifact{
+		Artifact: artifact,
+		Version:  version,
+	}, nil
+}
+
+func updateArtifactVersionFromRegistry(
+	ctx context.Context,
+	client ghclient.RestAPI,
+	payload map[string]any,
+	artifactOwnerLogin, artifactName string,
+	version *pb.ArtifactVersion,
+) error {
+	packageVersionName, err := util.JQReadFrom[string](ctx, ".package.package_version.name", payload)
+	if err != nil {
+		return fmt.Errorf("error getting package version name: %w", err)
+	}
+
+	// we'll grab the artifact version from the REST endpoint because we need the visibility
+	// and createdAt fields which are not in the payload
+	isOrg := client.GetOwner() != ""
+	ghVersion, err := client.GetPackageVersionById(ctx, isOrg, artifactOwnerLogin, CONTAINER_TYPE, artifactName, version.VersionId)
+	if err != nil {
+		return fmt.Errorf("error getting package version from repository: %w", err)
+	}
+
+	tags := ghVersion.Metadata.Container.Tags
+	if container.TagIsSignature(tags) {
+		// we don't care about signatures
+		return nil
+	}
+	sort.Strings(tags)
+
+	// now get information for signature and workflow
+	sigInfo, workflowInfo, err := container.GetArtifactSignatureAndWorkflowInfo(
+		ctx, client, artifactOwnerLogin, artifactName, packageVersionName)
+	if errors.Is(err, container.ErrSigValidation) || errors.Is(err, container.ErrProtoParse) {
+		return err
+	} else if err != nil {
+		return err
+	}
+
+	ghWorkflow := &pb.GithubWorkflow{}
+	if err := protojson.Unmarshal(workflowInfo, ghWorkflow); err != nil {
+		return err
+	}
+
+	sigVerification := &pb.SignatureVerification{}
+	if err := protojson.Unmarshal(sigInfo, sigVerification); err != nil {
+		return err
+	}
+
+	version.SignatureVerification = sigVerification
+	version.GithubWorkflow = ghWorkflow
+	version.Tags = tags
+	if ghVersion.CreatedAt != nil {
+		version.CreatedAt = timestamppb.New(*ghVersion.CreatedAt.GetTime())
+	}
+	return nil
+}
+
+func upsertVersionedArtifact(
+	ctx context.Context,
+	repoID int32,
+	versionedArtifact *pb.VersionedArtifact,
+	store db.Store,
+) (*db.Artifact, *db.ArtifactVersion, error) {
+	sigInfo, err := protojson.Marshal(versionedArtifact.Version.SignatureVerification)
+	if err != nil {
+		return nil, nil, fmt.Errorf("error marshalling signature verification: %w", err)
+	}
+
+	workflowInfo, err := protojson.Marshal(versionedArtifact.Version.GithubWorkflow)
+	if err != nil {
+		return nil, nil, fmt.Errorf("error marshalling workflow info: %w", err)
+	}
+
+	tx, err := store.BeginTransaction()
+	if err != nil {
+		return nil, nil, fmt.Errorf("error starting transaction: %w", err)
+	}
+	defer tx.Rollback()
+
+	qtx := store.GetQuerierWithTransaction(tx)
+
+	thirtyDaysAgo := time.Now().AddDate(0, 0, -30)
+	err = qtx.DeleteOldArtifactVersions(ctx,
+		db.DeleteOldArtifactVersionsParams{ArtifactID: int32(versionedArtifact.Artifact.ArtifactId), CreatedAt: thirtyDaysAgo})
+	if err != nil {
+		// just log error, we will not remove older for now
+		log.Printf("error removing older artifact versions: %v", err)
+	}
+
+	dbArtifact, err := qtx.UpsertArtifact(ctx, db.UpsertArtifactParams{
+		RepositoryID:       repoID,
+		ArtifactName:       versionedArtifact.Artifact.GetName(),
+		ArtifactType:       versionedArtifact.Artifact.GetType(),
+		ArtifactVisibility: versionedArtifact.Artifact.Visibility,
+	})
+	if err != nil {
+		return nil, nil, fmt.Errorf("error upserting artifact: %w", err)
+	}
+
+	dbVersion, err := qtx.UpsertArtifactVersion(ctx, db.UpsertArtifactVersionParams{
+		ArtifactID: dbArtifact.ID,
+		Version:    versionedArtifact.Version.VersionId,
+		Tags: sql.NullString{
+			String: strings.Join(versionedArtifact.Version.Tags, ","),
+			Valid:  true,
+		},
+		Sha:                   versionedArtifact.Version.Sha,
+		CreatedAt:             versionedArtifact.Version.CreatedAt.AsTime(),
+		SignatureVerification: sigInfo,
+		GithubWorkflow:        workflowInfo,
+	})
+	if err != nil {
+		return nil, nil, fmt.Errorf("error upserting artifact version: %w", err)
+	}
+
+	err = tx.Commit()
+	if err != nil {
+		return nil, nil, fmt.Errorf("error committing transaction: %w", err)
+	}
+
+	return &dbArtifact, &dbVersion, nil
+}
+
+func getRepoInformationFromPayload(
+	ctx context.Context,
+	prov string,
+	store db.Store,
+	payload map[string]any,
+) (db.Repository, error) {
+	repoInfo, ok := payload["repository"].(map[string]any)
+	if !ok {
+		return db.Repository{}, fmt.Errorf("unable to determine repository for event: %w", ErrRepoNotFound)
+	}
+
+	id, err := parseRepoID(repoInfo["id"])
+	if err != nil {
+		return db.Repository{}, fmt.Errorf("error parsing repository ID: %w", err)
+	}
+
+	log.Printf("handling event for repository %d", id)
+
+	dbrepo, err := store.GetRepositoryByRepoID(ctx, db.GetRepositoryByRepoIDParams{
+		Provider: prov,
+		RepoID:   id,
+	})
+	if err != nil {
+		if errors.Is(err, sql.ErrNoRows) {
+			log.Printf("repository %d not found", id)
+			// no use in continuing if the repository doesn't exist
+			return db.Repository{}, fmt.Errorf("repository %d not found: %w", id, ErrRepoNotFound)
+		}
+		return db.Repository{}, fmt.Errorf("error getting repository: %w", err)
+	}
+	return dbrepo, nil
+}
+
+func parseRepoID(repoID any) (int32, error) {
+	switch v := repoID.(type) {
+	case int32:
+		return v, nil
+	case float64:
+		return int32(v), nil
+	case string:
+		// convert string to int
+		asInt32, err := strconv.ParseInt(v, 10, 16)
+		if err != nil {
+			return 0, fmt.Errorf("error converting string to int: %w", err)
+		}
+		return int32(asInt32), nil
+	default:
+		return 0, fmt.Errorf("unknown type for repoID: %T", v)
+	}
 }

@@ -19,9 +19,11 @@ import (
 	"strconv"
 	"testing"
 
+	_ "github.com/lib/pq"
 	"github.com/spf13/cobra"
 	"github.com/spf13/viper"
 	"github.com/stretchr/testify/assert"
+	"github.com/stretchr/testify/require"
 
 	"github.com/stacklok/mediator/internal/util"
 )
@@ -100,6 +102,84 @@ func TestGetConfigValue(t *testing.T) {
 
 			result := util.GetConfigValue(tc.key, tc.flagName, cmd, tc.defaultValue)
 			assert.Equal(t, tc.expected, result)
+		})
+	}
+}
+
+func TestInt32FromString(t *testing.T) {
+	t.Parallel()
+
+	type args struct {
+		v string
+	}
+	tests := []struct {
+		name    string
+		args    args
+		want    int32
+		wantErr bool
+	}{
+		{
+			name:    "valid int32",
+			args:    args{v: "42"},
+			want:    42,
+			wantErr: false,
+		},
+		{
+			name:    "valid int32 negative",
+			args:    args{v: "-42"},
+			want:    -42,
+			wantErr: false,
+		},
+		{
+			name:    "big int32",
+			args:    args{v: "2147483647"},
+			want:    2147483647,
+			wantErr: false,
+		},
+		{
+			name:    "big int32 negative",
+			args:    args{v: "-2147483648"},
+			want:    -2147483648,
+			wantErr: false,
+		},
+		{
+			name:    "too big int32",
+			args:    args{v: "12147483648"},
+			want:    0,
+			wantErr: true,
+		},
+		{
+			name:    "valid zero",
+			args:    args{v: "0"},
+			want:    0,
+			wantErr: false,
+		},
+		{
+			name:    "invalid int32",
+			args:    args{v: "invalid"},
+			want:    0,
+			wantErr: true,
+		},
+		{
+			name:    "empty string",
+			args:    args{v: ""},
+			want:    0,
+			wantErr: true,
+		},
+	}
+	for _, tt := range tests {
+		tt := tt
+
+		t.Run(tt.name, func(t *testing.T) {
+			t.Parallel()
+			got, err := util.Int32FromString(tt.args.v)
+			if tt.wantErr {
+				require.Error(t, err, "expected error")
+				require.Zero(t, got, "expected zero")
+				return
+			}
+
+			assert.Equal(t, tt.want, got, "result didn't match")
 		})
 	}
 }

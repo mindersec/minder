@@ -26,6 +26,7 @@ import (
 	"github.com/google/uuid"
 	"google.golang.org/grpc/codes"
 	"google.golang.org/grpc/status"
+	"google.golang.org/protobuf/encoding/protojson"
 	"google.golang.org/protobuf/types/known/timestamppb"
 
 	"github.com/stacklok/mediator/internal/engine"
@@ -208,33 +209,57 @@ func (s *Server) CreatePolicy(ctx context.Context,
 		Policy: in,
 	}
 
-	s.publishPolicyInitEvent(in, entityCtx)
+	s.publishPolicyInitEvents(ctx, in, entityCtx)
 
 	return resp, nil
 }
 
-func (s *Server) publishPolicyInitEvent(pol *pb.PipelinePolicy, ectx *engine.EntityContext) {
-	log.Printf("publishing init event for policy: %s", pol.GetName())
-	evt := &engine.InitEvent{
-		Policy: *pol.Id,
-		Group:  ectx.Group.ID,
-	}
+func (s *Server) publishPolicyInitEvents(
+	ctx context.Context,
+	pol *pb.PipelinePolicy,
+	ectx *engine.EntityContext,
+) {
+	log.Printf("publishing init events for policy: %s", pol.GetName())
 
-	evtStr, err := json.Marshal(evt)
-	// This is a non-fatal error, so we'll just log it
-	// and return the policy.
+	dbrepos, err := s.store.ListRegisteredRepositoriesByGroupIDAndProvider(ctx,
+		db.ListRegisteredRepositoriesByGroupIDAndProviderParams{
+			Provider: ectx.Provider,
+			GroupID:  ectx.Group.ID,
+		})
 	if err != nil {
-		log.Printf("error marshalling init event: %v", err)
+		log.Printf("publishPolicyInitEvents: error getting registered repos: %v", err)
 		return
 	}
 
-	msg := message.NewMessage(uuid.New().String(), evtStr)
-	msg.Metadata.Set("provider", ectx.Provider)
+	for _, dbrepo := range dbrepos {
+		// protobufs are our API, so we always execute on these instead of the DB directly.
+		repo := &pb.RepositoryResult{
+			Owner:      dbrepo.RepoOwner,
+			Repository: dbrepo.RepoName,
+			RepoId:     dbrepo.RepoID,
+			HookUrl:    dbrepo.WebhookUrl,
+			DeployUrl:  dbrepo.DeployUrl,
+			CloneUrl:   dbrepo.CloneUrl,
+			CreatedAt:  timestamppb.New(dbrepo.CreatedAt),
+			UpdatedAt:  timestamppb.New(dbrepo.UpdatedAt),
+		}
 
-	// This is a non-fatal error, so we'll just log it
-	// and continue
-	if err := s.evt.Publish(engine.InternalInitEventTopic, msg); err != nil {
-		log.Printf("error publishing init event: %v", err)
+		// protojson write repo as json string
+		repoBytes, err := protojson.Marshal(repo)
+		if err != nil {
+			log.Printf("publishPolicyInitEvents: error marshalling repo: %v", err)
+		}
+
+		msg := message.NewMessage(uuid.New().String(), repoBytes)
+		msg.Metadata.Set("provider", ectx.Provider)
+		msg.Metadata.Set(engine.GroupIDEventKey, fmt.Sprintf("%d", ectx.Group.ID))
+		msg.Metadata.Set(engine.RepositoryIDEventKey, fmt.Sprintf("%d", dbrepo.ID))
+
+		// This is a non-fatal error, so we'll just log it
+		// and continue
+		if err := s.evt.Publish(engine.InternalInitEventTopic, msg); err != nil {
+			log.Printf("error publishing init event for repo %d: %v", dbrepo.ID, err)
+		}
 	}
 }
 
