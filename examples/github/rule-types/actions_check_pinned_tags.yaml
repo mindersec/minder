@@ -39,13 +39,11 @@ def:
   eval:
     type: rego
     rego:
-      type: deny-by-default
+      type: constraints
       def: |
         package mediator
 
-        default allow := false
-
-        allow {
+        violations[{"msg": msg}] {
           # List all workflows
           workflows := file.ls("./.github/workflows")
 
@@ -57,17 +55,23 @@ def:
           workflow := yaml.unmarshal(workflowstr)
 
           # Iterate over all jobs and steps in the current workflow
-          job_steps := workflow.jobs[_].steps
+          some job_name
+          job_steps := workflow.jobs[job_name].steps
 
           # Ensure each step uses a SHA-1 hash
-          s := job_steps[_]
+          some step_num
+          s := job_steps[step_num]
+
+          # Check if the step has a uses directive
+          not is_null(s.uses)
           
           # Split the uses directive at '@'
           parts := split(s.uses, "@")
 
           # Check if the string after '@' is 40 characters long (SHA-1 hash length)
-          count(parts[1]) == 40
+          count(parts[1]) != 40
 
           # All characters should be hexadecimal
-          re_match(`^[a-fA-F0-9]+$`, parts[1])
+          not regex.match(`^[a-fA-F0-9]+$`, parts[1])
+          msg := sprintf("Workflow '%v' uses an unpinned action '%v' in job '%v' step '%v'", [workflows[w], s.uses, job_name, step_num])
         }
