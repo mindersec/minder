@@ -44,14 +44,14 @@ SELECT * FROM artifact_versions WHERE artifact_id = $1 AND sha = $2;
 SELECT * FROM artifact_versions
 WHERE artifact_id = $1
 ORDER BY created_at DESC
-LIMIT $2;
+LIMIT COALESCE(sqlc.narg('limit')::int, 2147483647);
 
 -- name: ListArtifactVersionsByArtifactIDAndTag :many
 SELECT * FROM artifact_versions
 WHERE artifact_id = $1
 AND $2=ANY(STRING_TO_ARRAY(tags, ','))
 ORDER BY created_at DESC
-LIMIT $3;
+LIMIT COALESCE(sqlc.narg('limit')::int, 2147483647);
 
 -- name: DeleteArtifactVersion :exec
 DELETE FROM artifact_versions

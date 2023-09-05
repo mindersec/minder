@@ -70,7 +70,7 @@ func (s *Server) ListArtifacts(ctx context.Context, in *pb.ListArtifactsRequest)
 
 		for _, artifact := range artifacts {
 			results = append(results, &pb.Artifact{
-				ArtifactId: int64(artifact.ID),
+				ArtifactPk: int64(artifact.ID),
 				Owner:      repository.RepoOwner,
 				Name:       artifact.ArtifactName,
 				Type:       artifact.ArtifactType,
@@ -118,11 +118,13 @@ func (s *Server) GetArtifactById(ctx context.Context, in *pb.GetArtifactByIdRequ
 	if in.Tag != "" {
 		versions, err = s.store.ListArtifactVersionsByArtifactIDAndTag(ctx,
 			db.ListArtifactVersionsByArtifactIDAndTagParams{ArtifactID: in.Id,
-				Tags: sql.NullString{Valid: true, String: in.Tag}, Limit: in.LatestVersions})
+				Tags:  sql.NullString{Valid: true, String: in.Tag},
+				Limit: sql.NullInt32{Valid: true, Int32: in.LatestVersions}})
 
 	} else {
 		versions, err = s.store.ListArtifactVersionsByArtifactID(ctx,
-			db.ListArtifactVersionsByArtifactIDParams{ArtifactID: in.Id, Limit: in.LatestVersions})
+			db.ListArtifactVersionsByArtifactIDParams{ArtifactID: in.Id,
+				Limit: sql.NullInt32{Valid: true, Int32: in.LatestVersions}})
 	}
 
 	if err != nil {
@@ -162,7 +164,7 @@ func (s *Server) GetArtifactById(ctx context.Context, in *pb.GetArtifactByIdRequ
 	}
 
 	return &pb.GetArtifactByIdResponse{Artifact: &pb.Artifact{
-		ArtifactId: int64(artifact.ID),
+		ArtifactPk: int64(artifact.ID),
 		Owner:      artifact.RepoOwner,
 		Name:       artifact.ArtifactName,
 		Type:       artifact.ArtifactType,

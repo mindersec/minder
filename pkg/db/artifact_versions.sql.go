@@ -133,12 +133,12 @@ const listArtifactVersionsByArtifactID = `-- name: ListArtifactVersionsByArtifac
 SELECT id, artifact_id, version, tags, sha, signature_verification, github_workflow, created_at FROM artifact_versions
 WHERE artifact_id = $1
 ORDER BY created_at DESC
-LIMIT $2
+LIMIT COALESCE($2::int, 2147483647)
 `
 
 type ListArtifactVersionsByArtifactIDParams struct {
-	ArtifactID int32 `json:"artifact_id"`
-	Limit      int32 `json:"limit"`
+	ArtifactID int32         `json:"artifact_id"`
+	Limit      sql.NullInt32 `json:"limit"`
 }
 
 func (q *Queries) ListArtifactVersionsByArtifactID(ctx context.Context, arg ListArtifactVersionsByArtifactIDParams) ([]ArtifactVersion, error) {
@@ -178,13 +178,13 @@ SELECT id, artifact_id, version, tags, sha, signature_verification, github_workf
 WHERE artifact_id = $1
 AND $2=ANY(STRING_TO_ARRAY(tags, ','))
 ORDER BY created_at DESC
-LIMIT $3
+LIMIT COALESCE($3::int, 2147483647)
 `
 
 type ListArtifactVersionsByArtifactIDAndTagParams struct {
 	ArtifactID int32          `json:"artifact_id"`
 	Tags       sql.NullString `json:"tags"`
-	Limit      int32          `json:"limit"`
+	Limit      sql.NullInt32  `json:"limit"`
 }
 
 func (q *Queries) ListArtifactVersionsByArtifactIDAndTag(ctx context.Context, arg ListArtifactVersionsByArtifactIDAndTagParams) ([]ArtifactVersion, error) {

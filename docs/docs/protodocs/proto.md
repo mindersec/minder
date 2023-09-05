@@ -217,14 +217,13 @@
 
 | Field | Type | Label | Description |
 | ----- | ---- | ----- | ----------- |
-| artifact_id | [int64](#int64) |  |  |
+| artifact_pk | [int64](#int64) |  |  |
 | owner | [string](#string) |  |  |
 | name | [string](#string) |  |  |
 | type | [string](#string) |  |  |
 | visibility | [string](#string) |  |  |
 | repository | [string](#string) |  |  |
 | created_at | [google.protobuf.Timestamp](#google-protobuf-Timestamp) |  |  |
-| package_url | [string](#string) |  |  |
 
 
 

@@ -59,14 +59,13 @@ message ListArtifactsResponse {
 }
 
 message Artifact {
-    int64 artifact_id = 1;
+    int64 artifact_pk = 1;
     string owner = 2;
     string name = 3;
     string type = 4;
     string visibility = 5;
     string repository = 6;
     google.protobuf.Timestamp created_at = 7;
-    string package_url = 8;
 }
 
 message GithubWorkflow {

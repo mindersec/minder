@@ -2842,7 +2842,7 @@
     "v1Artifact": {
       "type": "object",
       "properties": {
-        "artifactId": {
+        "artifactPk": {
           "type": "string",
           "format": "int64"
         },
@@ -2864,9 +2864,6 @@
         "createdAt": {
           "type": "string",
           "format": "date-time"
-        },
-        "packageUrl": {
-          "type": "string"
         }
       }
     },
