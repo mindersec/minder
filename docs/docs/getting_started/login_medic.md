@@ -12,7 +12,7 @@ displayed_sidebar: mediator
 
 ## Login as a user
 
-1. Log in with username and password.  By default, `medic` will run against localhost, but this can be changed in `config.yaml` in your local directory.
+1. Log in with username and password.  By default, `medic` will run against a public stacklok cloud instance, but this can be changed in `config.yaml` in your local directory or using the `--gprc-host` and `--grpc-port` flags.
 
 ```bash
 medic auth login --username  <username> --password <password>
