@@ -19,6 +19,7 @@ import (
 	"context"
 	"fmt"
 	"os"
+	"path/filepath"
 
 	"github.com/golang-migrate/migrate/v4"
 	_ "github.com/golang-migrate/migrate/v4/database/postgres" // nolint
@@ -67,7 +68,7 @@ var downCmd = &cobra.Command{
 			}
 		}
 
-		configPath := os.ExpandEnv("file://${KO_DATA_PATH}/database/migrations")
+		configPath := "file://" + filepath.Join(os.Getenv("KO_DATA_PATH"), "database/migrations")
 		m, err := migrate.New(configPath, connString)
 		if err != nil {
 			fmt.Printf("Error while creating migration instance (%s): %v\n", configPath, err)

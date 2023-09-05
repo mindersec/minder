@@ -13,6 +13,14 @@
 -- limitations under the License.
 
 
+DROP TABLE IF EXISTS artifact_versions;
+DROP TABLE IF EXISTS rule_evaluation_status;
+DROP TABLE IF EXISTS artifacts;
+DROP TABLE IF EXISTS entity_policies;
+DROP TABLE IF EXISTS policy_status;
+DROP TABLE IF EXISTS signing_keys;
+DROP TABLE IF EXISTS rule_type;
+DROP TABLE IF EXISTS policies;
 DROP TABLE IF EXISTS session_store;
 DROP TABLE IF EXISTS repositories;
 DROP TABLE IF EXISTS provider_access_tokens;
