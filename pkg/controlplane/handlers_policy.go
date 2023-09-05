@@ -328,7 +328,7 @@ func publishArtifactPolicyInitEvents(
 
 			versionedArtifact := &pb.VersionedArtifact{
 				Artifact: &pb.Artifact{
-					ArtifactId: int64(dbA.ID),
+					ArtifactPk: int64(dbA.ID),
 					Owner:      dbrepo.RepoOwner,
 					Name:       dbA.ArtifactName,
 					Type:       dbA.ArtifactType,

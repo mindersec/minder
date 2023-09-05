@@ -70,7 +70,7 @@ func (s *Server) ListArtifacts(ctx context.Context, in *pb.ListArtifactsRequest)
 
 		for _, artifact := range artifacts {
 			results = append(results, &pb.Artifact{
-				ArtifactId: int64(artifact.ID),
+				ArtifactPk: int64(artifact.ID),
 				Owner:      repository.RepoOwner,
 				Name:       artifact.ArtifactName,
 				Type:       artifact.ArtifactType,
@@ -164,7 +164,7 @@ func (s *Server) GetArtifactById(ctx context.Context, in *pb.GetArtifactByIdRequ
 	}
 
 	return &pb.GetArtifactByIdResponse{Artifact: &pb.Artifact{
-		ArtifactId: int64(artifact.ID),
+		ArtifactPk: int64(artifact.ID),
 		Owner:      artifact.RepoOwner,
 		Name:       artifact.ArtifactName,
 		Type:       artifact.ArtifactType,

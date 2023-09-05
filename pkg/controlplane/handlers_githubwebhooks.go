@@ -372,7 +372,7 @@ func parseArtifactPublishedEvent(
 		return nil
 	}
 
-	_, _, err = upsertVersionedArtifact(ctx, dbrepo.ID, versionedArtifact, store)
+	dbArtifact, _, err := upsertVersionedArtifact(ctx, dbrepo.ID, versionedArtifact, store)
 	if err != nil {
 		return fmt.Errorf("error upserting artifact from payload: %w", err)
 	}
@@ -380,7 +380,7 @@ func parseArtifactPublishedEvent(
 	msg.Metadata.Set(engine.EntityTypeEventKey, engine.VersionedArtifactEventEntityType)
 	msg.Metadata.Set(engine.GroupIDEventKey, strconv.Itoa(int(dbrepo.GroupID)))
 	msg.Metadata.Set(engine.RepositoryIDEventKey, strconv.Itoa(int(dbrepo.ID)))
-	msg.Metadata.Set(engine.ArtifactIDEventKey, strconv.Itoa(int(versionedArtifact.Artifact.ArtifactId)))
+	msg.Metadata.Set(engine.ArtifactIDEventKey, strconv.Itoa(int(dbArtifact.ID)))
 	msg.Payload, err = protojson.Marshal(versionedArtifact)
 	if err != nil {
 		return fmt.Errorf("error marshalling versioned artifact: %w", err)
@@ -390,10 +390,6 @@ func parseArtifactPublishedEvent(
 }
 
 func extractArtifactFromPayload(ctx context.Context, payload map[string]any) (*pb.Artifact, error) {
-	artifactId, err := util.JQReadFrom[float64](ctx, ".package.id", payload)
-	if err != nil {
-		return nil, err
-	}
 	artifactName, err := util.JQReadFrom[string](ctx, ".package.name", payload)
 	if err != nil {
 		return nil, err
@@ -412,7 +408,6 @@ func extractArtifactFromPayload(ctx context.Context, payload map[string]any) (*p
 	}
 
 	artifact := &pb.Artifact{
-		ArtifactId: int64(artifactId),
 		Owner:      ownerLogin,
 		Name:       artifactName,
 		Type:       artifactType,
@@ -595,14 +590,6 @@ func upsertVersionedArtifact(
 
 	qtx := store.GetQuerierWithTransaction(tx)
 
-	thirtyDaysAgo := time.Now().AddDate(0, 0, -30)
-	err = qtx.DeleteOldArtifactVersions(ctx,
-		db.DeleteOldArtifactVersionsParams{ArtifactID: int32(versionedArtifact.Artifact.ArtifactId), CreatedAt: thirtyDaysAgo})
-	if err != nil {
-		// just log error, we will not remove older for now
-		log.Printf("error removing older artifact versions: %v", err)
-	}
-
 	dbArtifact, err := qtx.UpsertArtifact(ctx, db.UpsertArtifactParams{
 		RepositoryID:       repoID,
 		ArtifactName:       versionedArtifact.Artifact.GetName(),
@@ -611,6 +598,14 @@ func upsertVersionedArtifact(
 	})
 	if err != nil {
 		return nil, nil, fmt.Errorf("error upserting artifact: %w", err)
+	}
+
+	thirtyDaysAgo := time.Now().AddDate(0, 0, -30)
+	err = qtx.DeleteOldArtifactVersions(ctx,
+		db.DeleteOldArtifactVersionsParams{ArtifactID: dbArtifact.ID, CreatedAt: thirtyDaysAgo})
+	if err != nil {
+		// just log error, we will not remove older for now
+		log.Printf("error removing older artifact versions: %v", err)
 	}
 
 	dbVersion, err := qtx.UpsertArtifactVersion(ctx, db.UpsertArtifactVersionParams{

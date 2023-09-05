@@ -2842,7 +2842,7 @@
     "v1Artifact": {
       "type": "object",
       "properties": {
-        "artifactId": {
+        "artifactPk": {
           "type": "string",
           "format": "int64"
         },

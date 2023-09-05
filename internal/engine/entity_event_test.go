@@ -68,7 +68,7 @@ func Test_parseEntityEvent(t *testing.T) {
 			args: args{
 				ent: &pb.VersionedArtifact{
 					Artifact: &pb.Artifact{
-						ArtifactId: 123,
+						ArtifactPk: 123,
 					},
 					Version: &pb.ArtifactVersion{
 						VersionId: 789,
@@ -82,7 +82,7 @@ func Test_parseEntityEvent(t *testing.T) {
 				GroupID: 1,
 				Entity: &pb.VersionedArtifact{
 					Artifact: &pb.Artifact{
-						ArtifactId: 123,
+						ArtifactPk: 123,
 					},
 					Version: &pb.ArtifactVersion{
 						VersionId: 789,

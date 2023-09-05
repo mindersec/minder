@@ -88,7 +88,7 @@ func (e *Executor) HandleArtifactsReconcilerEvent(ctx context.Context, prov stri
 		// remove older versions
 		thirtyDaysAgo := time.Now().AddDate(0, 0, -30)
 		err = e.querier.DeleteOldArtifactVersions(ctx,
-			db.DeleteOldArtifactVersionsParams{ArtifactID: int32(artifact.GetID()), CreatedAt: thirtyDaysAgo})
+			db.DeleteOldArtifactVersionsParams{ArtifactID: newArtifact.ID, CreatedAt: thirtyDaysAgo})
 		if err != nil {
 			// just log error, we will not remove older for now
 			log.Printf("error removing older artifact versions: %v", err)
@@ -157,7 +157,7 @@ func (e *Executor) HandleArtifactsReconcilerEvent(ctx context.Context, prov stri
 
 			versionedArtifact := &pb.VersionedArtifact{
 				Artifact: &pb.Artifact{
-					ArtifactId: artifact.GetID(),
+					ArtifactPk: int64(newArtifact.ID),
 					Owner:      *artifact.GetOwner().Login,
 					Name:       artifact.GetName(),
 					Type:       artifact.GetPackageType(),

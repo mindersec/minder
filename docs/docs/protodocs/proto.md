@@ -217,7 +217,7 @@
 
 | Field | Type | Label | Description |
 | ----- | ---- | ----- | ----------- |
-| artifact_id | [int64](#int64) |  |  |
+| artifact_pk | [int64](#int64) |  |  |
 | owner | [string](#string) |  |  |
 | name | [string](#string) |  |  |
 | type | [string](#string) |  |  |

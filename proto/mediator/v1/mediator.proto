@@ -59,7 +59,7 @@ message ListArtifactsResponse {
 }
 
 message Artifact {
-    int64 artifact_id = 1;
+    int64 artifact_pk = 1;
     string owner = 2;
     string name = 3;
     string type = 4;

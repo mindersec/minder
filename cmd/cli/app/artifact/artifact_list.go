@@ -84,7 +84,7 @@ var artifact_listCmd = &cobra.Command{
 
 			for _, artifact_item := range artifacts.Results {
 				table.Append([]string{
-					fmt.Sprintf("%d", artifact_item.ArtifactId), artifact_item.Type,
+					fmt.Sprintf("%d", artifact_item.ArtifactPk), artifact_item.Type,
 					artifact_item.GetOwner(), artifact_item.GetName(),
 					artifact_item.Repository,
 					artifact_item.Visibility,
