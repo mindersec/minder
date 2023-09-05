@@ -115,8 +115,6 @@ actions to comply with the policy.
 ## Prerequisites
 
 - The `medic` CLI application
-- A [running mediator instance](./getting_started)
-- [OAuth Configured](./config_oauth)
 - [At least one repository is registered for Mediator](./enroll_user.md)
 
 ## List rule types
