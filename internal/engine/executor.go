@@ -134,6 +134,15 @@ func (e *Executor) handleEntityEvent(msg *message.Message) error {
 		Provider: prov,
 	}
 
+	return e.evalEntityEvent(ctx, inf, ectx, cli)
+}
+
+func (e *Executor) evalEntityEvent(
+	ctx context.Context,
+	inf *entityInfoWrapper,
+	ectx *EntityContext,
+	cli ghclient.RestAPI,
+) error {
 	// Get policies relevant to group
 	dbpols, err := e.querier.ListPoliciesByGroupID(ctx, inf.GroupID)
 	if err != nil {
@@ -150,7 +159,7 @@ func (e *Executor) handleEntityEvent(msg *message.Message) error {
 
 		// Let's evaluate all the rules for this policy
 		err = TraverseRules(relevant, func(rule *pb.PipelinePolicy_Rule) error {
-			rt, rte, err := e.getEvaluator(ctx, *pol.Id, prov, cli, cli.GetToken(), ectx, rule)
+			rt, rte, err := e.getEvaluator(ctx, *pol.Id, ectx.Provider, cli, cli.GetToken(), ectx, rule)
 			if err != nil {
 				return err
 			}

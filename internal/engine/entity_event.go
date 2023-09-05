@@ -102,6 +102,21 @@ func parseEntityEvent(msg *message.Message) (*entityInfoWrapper, error) {
 	return out, nil
 }
 
+func newEntityInfoWrapper() *entityInfoWrapper {
+	return &entityInfoWrapper{
+		OwnershipData: make(map[string]int32),
+	}
+}
+
+func (eiw *entityInfoWrapper) withVersionedArtifact(va *pb.VersionedArtifact) {
+	eiw.Type = pb.Entity_ENTITY_ARTIFACTS
+	eiw.Entity = va
+}
+
+func (eiw *entityInfoWrapper) withGroupID(id int32) {
+	eiw.GroupID = id
+}
+
 func (eiw *entityInfoWrapper) asRepository() {
 	eiw.Type = pb.Entity_ENTITY_REPOSITORIES
 	eiw.Entity = &pb.RepositoryResult{}
@@ -138,6 +153,10 @@ func (eiw *entityInfoWrapper) withIDFromMessage(msg *message.Message, key string
 
 	eiw.OwnershipData[key] = id
 	return nil
+}
+
+func (eiw *entityInfoWrapper) withID(key string, id int32) {
+	eiw.OwnershipData[key] = id
 }
 
 func (eiw *entityInfoWrapper) unmarshalEntity(msg *message.Message) error {

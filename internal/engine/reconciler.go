@@ -24,8 +24,12 @@ import (
 	"strings"
 	"time"
 
+	"google.golang.org/protobuf/encoding/protojson"
+	"google.golang.org/protobuf/types/known/timestamppb"
+
 	"github.com/stacklok/mediator/pkg/container"
 	"github.com/stacklok/mediator/pkg/db"
+	pb "github.com/stacklok/mediator/pkg/generated/protobuf/go/mediator/v1"
 	"github.com/stacklok/mediator/pkg/providers"
 )
 
@@ -39,6 +43,19 @@ func (e *Executor) HandleArtifactsReconcilerEvent(ctx context.Context, prov stri
 	cli, err := providers.BuildClient(ctx, prov, evt.Group, e.querier)
 	if err != nil {
 		return fmt.Errorf("error building client: %w", err)
+	}
+
+	group, err := e.querier.GetGroupByID(ctx, evt.Group)
+	if err != nil {
+		return fmt.Errorf("error retrieving group: %w", err)
+	}
+
+	ectx := &EntityContext{
+		Group: Group{
+			ID:   group.ID,
+			Name: group.Name,
+		},
+		Provider: prov,
 	}
 
 	// first retrieve data for the repository
@@ -110,14 +127,67 @@ func (e *Executor) HandleArtifactsReconcilerEvent(ctx context.Context, prov stri
 				return fmt.Errorf("error getting signature and workflow info: %w", err)
 			}
 
-			_, err = e.querier.UpsertArtifactVersion(ctx, db.UpsertArtifactVersionParams{ArtifactID: newArtifact.ID, Version: *version.ID,
-				Tags: sql.NullString{Valid: true, String: tagNames}, Sha: *version.Name, SignatureVerification: sigInfo,
-				GithubWorkflow: workflowInfo, CreatedAt: version.CreatedAt.Time})
+			newVersion, err := e.querier.UpsertArtifactVersion(ctx,
+				db.UpsertArtifactVersionParams{
+					ArtifactID: newArtifact.ID,
+					Version:    *version.ID,
+					Tags:       sql.NullString{Valid: true, String: tagNames},
+					Sha:        *version.Name, SignatureVerification: sigInfo,
+					GithubWorkflow: workflowInfo,
+					CreatedAt:      version.CreatedAt.Time,
+				})
 			if err != nil {
 				// just log error and continue
 				log.Printf("error storing artifact version: %v", err)
 				continue
 			}
+
+			ghWorkflow := &pb.GithubWorkflow{}
+			if err := protojson.Unmarshal(workflowInfo, ghWorkflow); err != nil {
+				// just log error and continue
+				log.Printf("error unmarshalling github workflow: %v", err)
+				continue
+			}
+
+			sigVerification := &pb.SignatureVerification{}
+			if err := protojson.Unmarshal(sigInfo, sigVerification); err != nil {
+				log.Printf("error unmarshalling signature verification: %v", err)
+				continue
+			}
+
+			versionedArtifact := &pb.VersionedArtifact{
+				Artifact: &pb.Artifact{
+					ArtifactId: artifact.GetID(),
+					Owner:      *artifact.GetOwner().Login,
+					Name:       artifact.GetName(),
+					Type:       artifact.GetPackageType(),
+					Visibility: artifact.GetVisibility(),
+					Repository: repository.RepoName,
+					CreatedAt:  timestamppb.New(artifact.GetCreatedAt().Time),
+				},
+				Version: &pb.ArtifactVersion{
+					VersionId:             int64(newVersion.ID),
+					Tags:                  tags,
+					Sha:                   *version.Name,
+					SignatureVerification: sigVerification,
+					GithubWorkflow:        ghWorkflow,
+					CreatedAt:             timestamppb.New(version.CreatedAt.Time),
+				},
+			}
+
+			eiw := newEntityInfoWrapper()
+			eiw.withVersionedArtifact(versionedArtifact)
+			eiw.withGroupID(evt.Group)
+			eiw.withID(ArtifactIDEventKey, newArtifact.ID)
+			eiw.withID(RepositoryIDEventKey, repository.ID)
+
+			err = e.evalEntityEvent(ctx, eiw, ectx, cli)
+			if err != nil {
+				// just log error and continue
+				log.Printf("error evaluating policy: %v", err)
+				continue
+			}
+
 		}
 	}
 	return nil
