@@ -43,6 +43,7 @@
     - [ExchangeCodeForTokenCLIRequest](#mediator-v1-ExchangeCodeForTokenCLIRequest)
     - [ExchangeCodeForTokenWEBRequest](#mediator-v1-ExchangeCodeForTokenWEBRequest)
     - [ExchangeCodeForTokenWEBResponse](#mediator-v1-ExchangeCodeForTokenWEBResponse)
+    - [FilePatch](#mediator-v1-FilePatch)
     - [GetArtifactByIdRequest](#mediator-v1-GetArtifactByIdRequest)
     - [GetArtifactByIdResponse](#mediator-v1-GetArtifactByIdResponse)
     - [GetAuthorizationURLRequest](#mediator-v1-GetAuthorizationURLRequest)
@@ -134,6 +135,7 @@
     - [Provider.Definition.Auth](#mediator-v1-Provider-Definition-Auth)
     - [Provider.Definition.Auth.OAuth2](#mediator-v1-Provider-Definition-Auth-OAuth2)
     - [Provider.Definition.ClientTypes](#mediator-v1-Provider-Definition-ClientTypes)
+    - [PullRequest](#mediator-v1-PullRequest)
     - [RefreshTokenRequest](#mediator-v1-RefreshTokenRequest)
     - [RefreshTokenResponse](#mediator-v1-RefreshTokenResponse)
     - [RegisterRepositoryRequest](#mediator-v1-RegisterRepositoryRequest)
@@ -838,6 +840,22 @@ DeleteRuleTypeResponse is the response to delete a rule type.
 | token_type | [string](#string) |  |  |
 | expires_in | [int64](#int64) |  |  |
 | status | [string](#string) |  |  |
+
+
+
+
+
+
+<a name="mediator-v1-FilePatch"></a>
+
+### FilePatch
+
+
+
+| Field | Type | Label | Description |
+| ----- | ---- | ----- | ----------- |
+| name | [string](#string) |  | file changed, e.g. package-lock.json |
+| patchUrl | [string](#string) |  | points to the the raw patchfile |
 
 
 
@@ -2288,6 +2306,26 @@ This is used to define the types of clients that are supported by the provider.
 | Field | Type | Label | Description |
 | ----- | ---- | ----- | ----------- |
 | types | [Provider.Definition.ClientTypes.Type](#mediator-v1-Provider-Definition-ClientTypes-Type) | repeated |  |
+
+
+
+
+
+
+<a name="mediator-v1-PullRequest"></a>
+
+### PullRequest
+
+
+
+| Field | Type | Label | Description |
+| ----- | ---- | ----- | ----------- |
+| url | [string](#string) |  | The full URL to the PR |
+| commit_sha | [string](#string) |  | Commit SHA of the PR HEAD. Will be useful to submit a review |
+| number | [int32](#int32) |  | The sequential PR number (not the DB PK!) |
+| repo_owner | [string](#string) |  | The owner of the repo, will be used to submit a review |
+| repo_name | [string](#string) |  | The name of the repo, will be used to submit a review |
+| patches | [FilePatch](#mediator-v1-FilePatch) | repeated | The list of files changed in the PR. Does not include file contents |
 
 
 
