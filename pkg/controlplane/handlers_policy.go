@@ -255,6 +255,7 @@ func (s *Server) publishPolicyInitEvents(
 
 		msg := message.NewMessage(uuid.New().String(), repoBytes)
 		msg.Metadata.Set("provider", ectx.Provider)
+		msg.Metadata.Set(engine.EntityTypeEventKey, engine.RepositoryEventEntityType)
 		msg.Metadata.Set(engine.GroupIDEventKey, fmt.Sprintf("%d", ectx.Group.ID))
 		msg.Metadata.Set(engine.RepositoryIDEventKey, fmt.Sprintf("%d", dbrepo.ID))
 
