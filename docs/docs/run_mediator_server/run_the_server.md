@@ -1,12 +1,12 @@
 ---
-id: get_started
-title: Getting Started (Run the server)
-sidebar_position: 2
-slug: /get_started
+id: run_the_server
+title: Run the server
+sidebar_position: 4
+slug: /run-the-server
 displayed_sidebar: mediator
 ---
 
-# Getting Started (Run the Server)
+# Run a mediator server
 
 Mediator is platform, comprising of a controlplane, a CLI and a database.
 

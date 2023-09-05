@@ -1,12 +1,12 @@
 ---
 id: manage_policies
-title: Getting Started (Manage policies and violations)
-sidebar_position: 5
+title: Manage policies and violations
+sidebar_position: 2
 slug: /manage_policies
 displayed_sidebar: mediator
 ---
 
-# Getting Started (Manage policies)
+# Manage policies
 
 In order to detect security deviations from repositories or other entities, Mediator is relying on the concepts of **Policies**.
 A policy is a definition of a verification we want to do on an entity in a pipeline.
@@ -115,7 +115,7 @@ actions to comply with the policy.
 ## Prerequisites
 
 - The `medic` CLI application
-- A [running mediator instance](./get_started)
+- A [running mediator instance](./getting_started)
 - [OAuth Configured](./config_oauth)
 - [At least one repository is registered for Mediator](./enroll_user.md)
 

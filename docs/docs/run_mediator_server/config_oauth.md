@@ -1,6 +1,6 @@
 ---
 id: config_oauth
-title: Getting Started (Configure OAuth Provider)
+title: Configure OAuth Provider
 sidebar_position: 3
 slug: /config_oauth
 displayed_sidebar: mediator
