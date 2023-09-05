@@ -22,7 +22,7 @@ import (
 )
 
 // ErrEvaluationFailed is an error that occurs during evaluation of a rule.
-var ErrEvaluationFailed = errors.New("evaluation error")
+var ErrEvaluationFailed = errors.New("evaluation failure")
 
 // NewErrEvaluationFailed creates a new evaluation error
 func NewErrEvaluationFailed(sfmt string, args ...any) error {

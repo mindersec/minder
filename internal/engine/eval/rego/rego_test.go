@@ -107,6 +107,42 @@ violations[{"msg": msg}] {
 	require.ErrorContains(t, err, "data did not contain foo", "should have failed the evaluation")
 }
 
+func TestEvaluatorDenyByConstraintsEvalMultiple(t *testing.T) {
+	t.Parallel()
+
+	e, err := rego.NewRegoEvaluator(
+		&pb.RuleType_Definition_Eval_Rego{
+			Type: rego.ConstraintsEvaluationType.String(),
+			Def: `
+package mediator
+
+violations[{"msg": msg}] {
+	input.ingested.data == "foo"
+	msg := "data should not contain foo"
+}
+
+violations[{"msg": msg}] {
+	input.ingested.datum == "bar"
+	msg := "datum should not contain bar"
+}
+`,
+		},
+	)
+	require.NoError(t, err, "could not create evaluator")
+
+	emptyPol := map[string]any{}
+
+	err = e.Eval(context.Background(), emptyPol, &engif.Result{
+		Object: map[string]any{
+			"data":  "foo",
+			"datum": "bar",
+		},
+	})
+	require.ErrorIs(t, err, engerrors.ErrEvaluationFailed, "should have failed the evaluation")
+	require.ErrorContains(t, err, "- evaluation failure: data should not contain foo\n")
+	require.ErrorContains(t, err, "- evaluation failure: datum should not contain bar")
+}
+
 // Evaluates a simple query against a simple policy
 // In this case, the policy is a simple "allow" rule.
 // The given policy map has a value for the "data" key

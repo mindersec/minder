@@ -18,6 +18,7 @@ package rego
 import (
 	"errors"
 	"fmt"
+	"strings"
 
 	"github.com/open-policy-agent/opa/rego"
 
@@ -82,17 +83,17 @@ func (*constraintsEvaluator) parseResult(rs rego.ResultSet) error {
 	}
 
 	// Gather violations into one
-	violations := make([]error, len(rs))
+	violations := make([]string, 0, len(rs))
 	for _, r := range rs {
 		v := resultToViolation(r)
 		if errors.Is(v, engerrors.ErrEvaluationFailed) {
-			violations = append(violations, v)
+			violations = append(violations, v.Error())
 		} else {
 			return fmt.Errorf("unexpected error in rego violation: %w", v)
 		}
 	}
 
-	return engerrors.NewErrEvaluationFailed("Evaluation failed: %s", violations)
+	return engerrors.NewErrEvaluationFailed("Evaluation failures: \n - %s", strings.Join(violations, "\n - "))
 }
 
 func resultToViolation(r rego.Result) error {
@@ -116,5 +117,5 @@ func resultToViolation(r rego.Result) error {
 		return fmt.Errorf("msg is not a string")
 	}
 
-	return engerrors.NewErrEvaluationFailed("Evaluation failed: %s", msgstr)
+	return engerrors.NewErrEvaluationFailed(msgstr)
 }
