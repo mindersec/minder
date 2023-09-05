@@ -159,6 +159,7 @@ func (s *Server) CreatePolicy(ctx context.Context,
 	if err != nil {
 		var violation *engine.RuleValidationError
 		if errors.As(err, &violation) {
+			log.Printf("error validating rule: %v", violation)
 			return nil, status.Errorf(codes.InvalidArgument, "policy contained invalid rule: %s", violation.RuleType)
 		}
 
