@@ -445,7 +445,7 @@ func (s *Server) VerifyProviderTokenFrom(ctx context.Context,
 	_, err := s.store.GetAccessTokenSinceDate(ctx,
 		db.GetAccessTokenSinceDateParams{Provider: in.Provider, GroupID: in.GroupId, CreatedAt: in.Timestamp.AsTime()})
 	if err != nil {
-		if err == sql.ErrNoRows {
+		if errors.Is(err, sql.ErrNoRows) {
 			return &pb.VerifyProviderTokenFromResponse{Status: "KO"}, nil
 		}
 		return nil, status.Errorf(codes.Internal, "error getting access token: %v", err)

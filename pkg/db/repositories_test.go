@@ -24,6 +24,7 @@ package db
 import (
 	"context"
 	"database/sql"
+	"errors"
 	"testing"
 	"time"
 
@@ -37,7 +38,7 @@ type RepositoryOption func(*CreateRepositoryParams)
 func deleteRepositoryByRepoId(params CreateRepositoryParams) error {
 	repo, err := testQueries.GetRepositoryByRepoID(
 		context.Background(), GetRepositoryByRepoIDParams{Provider: params.Provider, RepoID: params.RepoID})
-	if err == sql.ErrNoRows {
+	if errors.Is(err, sql.ErrNoRows) {
 		return nil
 	}
 	if err != nil {

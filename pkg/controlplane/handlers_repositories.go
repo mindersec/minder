@@ -18,6 +18,7 @@ import (
 	"context"
 	"database/sql"
 	"encoding/json"
+	"errors"
 	"log"
 	"strings"
 
@@ -262,7 +263,7 @@ func (s *Server) GetRepositoryById(ctx context.Context,
 	}
 	// read the repository
 	repo, err := s.store.GetRepositoryByID(ctx, in.RepositoryId)
-	if err == sql.ErrNoRows {
+	if errors.Is(err, sql.ErrNoRows) {
 		return nil, status.Errorf(codes.NotFound, "repository not found")
 	} else if err != nil {
 		return nil, status.Errorf(codes.Internal, "cannot read repository: %v", err)
@@ -312,7 +313,7 @@ func (s *Server) GetRepositoryByName(ctx context.Context,
 	repo, err := s.store.GetRepositoryByRepoName(ctx,
 		db.GetRepositoryByRepoNameParams{Provider: in.Provider, RepoOwner: fragments[0], RepoName: fragments[1]})
 
-	if err == sql.ErrNoRows {
+	if errors.Is(err, sql.ErrNoRows) {
 		return nil, status.Errorf(codes.NotFound, "repository not found")
 	} else if err != nil {
 		return nil, err

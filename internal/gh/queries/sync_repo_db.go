@@ -18,6 +18,7 @@ package queries
 import (
 	"context"
 	"database/sql"
+	"errors"
 	"fmt"
 
 	"github.com/stacklok/mediator/pkg/db"
@@ -62,7 +63,7 @@ func SyncRepositoriesWithDB(ctx context.Context,
 		existingRepo, err := store.GetRepositoryByRepoID(ctx,
 			db.GetRepositoryByRepoIDParams{Provider: provider, RepoID: int32(*repo.ID)})
 		if err != nil {
-			if err == sql.ErrNoRows {
+			if errors.Is(err, sql.ErrNoRows) {
 				// The repository doesn't exist in our DB, let's create it
 				_, err = store.CreateRepository(ctx, db.CreateRepositoryParams{
 					Provider:  provider,
