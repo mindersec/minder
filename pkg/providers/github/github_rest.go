@@ -261,6 +261,51 @@ func (c *RestClient) GetPackageVersionById(
 	return pkgVersion, nil
 }
 
+// GetPullRequest is a wrapper for the GitHub API to get a pull request
+func (c *RestClient) GetPullRequest(
+	ctx context.Context,
+	owner string,
+	repo string,
+	number int,
+) (*github.PullRequest, error) {
+	pr, _, err := c.client.PullRequests.Get(ctx, owner, repo, number)
+	if err != nil {
+		return nil, err
+	}
+	return pr, nil
+}
+
+// ListFiles is a wrapper for the GitHub API to list files in a pull request
+func (c *RestClient) ListFiles(
+	ctx context.Context,
+	owner string,
+	repo string,
+	number int,
+	page int,
+	perPage int,
+) ([]*github.CommitFile, error) {
+	opt := &github.ListOptions{
+		Page:    page,
+		PerPage: perPage,
+	}
+	files, _, err := c.client.PullRequests.ListFiles(ctx, owner, repo, number, opt)
+	if err != nil {
+		return nil, err
+	}
+	return files, nil
+}
+
+// CreateReview is a wrapper for the GitHub API to create a review
+func (c *RestClient) CreateReview(
+	ctx context.Context, owner, repo string, number int, reviewRequest *github.PullRequestReviewRequest,
+) (*github.PullRequestReview, error) {
+	review, _, err := c.client.PullRequests.CreateReview(ctx, owner, repo, number, reviewRequest)
+	if err != nil {
+		return nil, fmt.Errorf("error creating review: %w", err)
+	}
+	return review, nil
+}
+
 // GetRepository returns a single repository for the authenticated user
 func (c *RestClient) GetRepository(ctx context.Context, owner string, name string) (*github.Repository, error) {
 	// create a slice to hold the repositories
