@@ -11,8 +11,9 @@
 // WITHOUT WARRANTIES OR CONDITIONS OF ANY KIND, either express or implied.
 // See the License for the specific language governing permissions and
 // limitations under the License.
-// Package rule provides the CLI subcommand for managing rules
 
+// Package rule_type provides the CLI subcommand for developing rules
+// e.g. the 'rule type test' subcommand.
 package rule_type
 
 import (
@@ -28,6 +29,7 @@ import (
 	"github.com/spf13/viper"
 	"google.golang.org/protobuf/reflect/protoreflect"
 
+	"github.com/stacklok/mediator/cmd/dev/app"
 	"github.com/stacklok/mediator/internal/engine"
 	"github.com/stacklok/mediator/internal/util"
 	"github.com/stacklok/mediator/pkg/entities"
@@ -37,15 +39,15 @@ import (
 
 // TestCmd is the root command for the rule subcommands
 var testCmd = &cobra.Command{
-	Use:          "test",
+	Use:          "rule type test",
 	Short:        "test a rule type definition",
-	Long:         `The 'rule_type test' subcommand allows you test a rule type definition`,
+	Long:         `The 'rule type test' subcommand allows you test a rule type definition`,
 	RunE:         testCmdRun,
 	SilenceUsage: true,
 }
 
 func init() {
-	ruleTypeCmd.AddCommand(testCmd)
+	app.RootCmd.AddCommand(testCmd)
 	testCmd.Flags().StringP("rule-type", "r", "", "file to read rule type definition from")
 	testCmd.Flags().StringP("entity", "e", "", "YAML file containing the entity to test the rule against")
 	testCmd.Flags().StringP("policy", "p", "", "YAML file containing a policy to test the rule against")
