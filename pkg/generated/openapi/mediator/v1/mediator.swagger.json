@@ -2675,9 +2675,26 @@
         "git": {
           "$ref": "#/definitions/v1GitType",
           "description": "git is the git data ingestion."
+        },
+        "diff": {
+          "$ref": "#/definitions/v1DiffType",
+          "description": "diff is the diff data ingestion."
         }
       },
       "description": "Ingest defines how the data is ingested."
+    },
+    "DiffTypeEcosystem": {
+      "type": "object",
+      "properties": {
+        "name": {
+          "type": "string",
+          "description": "name is the name of the ecosystem."
+        },
+        "depfile": {
+          "type": "string",
+          "title": "depfile is the file that contains the dependencies for this ecosystem"
+        }
+      }
     },
     "EvalJQComparison": {
       "type": "object",
@@ -3301,6 +3318,19 @@
     },
     "v1DeleteUserResponse": {
       "type": "object"
+    },
+    "v1DiffType": {
+      "type": "object",
+      "properties": {
+        "ecosystems": {
+          "type": "array",
+          "items": {
+            "type": "object",
+            "$ref": "#/definitions/DiffTypeEcosystem"
+          }
+        }
+      },
+      "description": "DiffType defines the diff data ingester."
     },
     "v1Entity": {
       "type": "string",

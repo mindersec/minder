@@ -22,6 +22,7 @@ import (
 
 	"github.com/stacklok/mediator/internal/engine/ingester/artifact"
 	"github.com/stacklok/mediator/internal/engine/ingester/builtin"
+	"github.com/stacklok/mediator/internal/engine/ingester/diff"
 	"github.com/stacklok/mediator/internal/engine/ingester/git"
 	"github.com/stacklok/mediator/internal/engine/ingester/rest"
 	engif "github.com/stacklok/mediator/internal/engine/interfaces"
@@ -57,8 +58,11 @@ func NewRuleDataIngest(rt *pb.RuleType, cli ghclient.RestAPI, access_token strin
 			return nil, fmt.Errorf("rule type engine missing artifact configuration")
 		}
 		return artifact.NewArtifactDataIngest(ing.GetArtifact())
+
 	case git.GitRuleDataIngestType:
 		return git.NewGitIngester(ing.GetGit(), access_token), nil
+	case diff.DiffRuleDataIngestType:
+		return diff.NewDiffIngester(ing.GetDiff(), cli), nil
 	default:
 		return nil, fmt.Errorf("unsupported rule type engine: %s", rt.Def.Ingest.Type)
 	}
