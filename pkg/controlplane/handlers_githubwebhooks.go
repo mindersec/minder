@@ -290,6 +290,11 @@ func parseGithubEventForProcessing(
 			return parseArtifactPublishedEvent(
 				context.Background(), ghclient.Github, store, payload, msg)
 		}
+	} else if hook_type == "pull_request" {
+		if payload["action"] == "opened" {
+			return parsePullRequestModEvent(
+				context.Background(), ghclient.Github, store, payload, msg)
+		}
 	}
 
 	// determine if the payload is a repository event
@@ -381,6 +386,47 @@ func parseArtifactPublishedEvent(
 		WithGroupID(dbrepo.GroupID).
 		WithRepositoryID(dbrepo.ID).
 		WithArtifactID(dbArtifact.ID)
+
+	return eiw.ToMessage(msg)
+}
+
+func parsePullRequestModEvent(
+	ctx context.Context,
+	prov string,
+	store db.Store,
+	whPayload map[string]any,
+	msg *message.Message,
+) error {
+	// extract information about repository so we can identify the group and associated rules
+	dbrepo, err := getRepoInformationFromPayload(ctx, prov, store, whPayload)
+	if err != nil {
+		return fmt.Errorf("error getting repo information from payload: %w", err)
+	}
+	g := dbrepo.GroupID
+
+	cli, err := providers.BuildClient(ctx, prov, g, store)
+	if err != nil {
+		return fmt.Errorf("error building client: %w", err)
+	}
+
+	prEvalInfo, err := getPullRequestInfoFromPayload(ctx, whPayload)
+	if err != nil {
+		return fmt.Errorf("error getting pull request information from payload: %w", err)
+	}
+
+	err = updatePullRequestInfoFromProvider(ctx, cli, dbrepo, prEvalInfo)
+	if err != nil {
+		return fmt.Errorf("error updating pull request information from provider: %w", err)
+	}
+
+	log.Printf("evaluating PR %+v", prEvalInfo)
+
+	eiw := engine.NewEntityInfoWrapper().
+		WithPullRequest(prEvalInfo).
+		WithPullRequestID(prEvalInfo.Number).
+		WithProvider(prov).
+		WithGroupID(dbrepo.GroupID).
+		WithRepositoryID(dbrepo.ID)
 
 	return eiw.ToMessage(msg)
 }
@@ -626,6 +672,57 @@ func upsertVersionedArtifact(
 	}
 
 	return &dbArtifact, &dbVersion, nil
+}
+
+func getPullRequestInfoFromPayload(
+	ctx context.Context,
+	payload map[string]any,
+) (*pb.PullRequest, error) {
+	prUrl, err := util.JQReadFrom[string](ctx, ".pull_request.url", payload)
+	if err != nil {
+		return nil, fmt.Errorf("error getting pull request url from payload: %w", err)
+	}
+
+	prNumber, err := util.JQReadFrom[float64](ctx, ".pull_request.number", payload)
+	if err != nil {
+		return nil, fmt.Errorf("error getting pull request number from payload: %w", err)
+	}
+
+	return &pb.PullRequest{
+		URL:     prUrl,
+		Number:  int32(prNumber),
+		Patches: nil, // to be filled later with a separate call
+	}, nil
+}
+
+func updatePullRequestInfoFromProvider(
+	ctx context.Context,
+	cli ghclient.RestAPI,
+	dbrepo db.Repository,
+	prEvalInfo *pb.PullRequest,
+) error {
+	prReply, err := cli.GetPullRequest(ctx, dbrepo.RepoOwner, dbrepo.RepoName, int(prEvalInfo.Number))
+	if err != nil {
+		return fmt.Errorf("error getting pull request: %w", err)
+	}
+	prEvalInfo.CommitSHA = *prReply.Head.SHA
+
+	prFiles, err := cli.ListFiles(ctx, dbrepo.RepoOwner, dbrepo.RepoName, int(prEvalInfo.Number), 1, 100)
+	if err != nil {
+		return fmt.Errorf("error getting pull request: %w", err)
+	}
+
+	prEvalInfo.Patches = make([]*pb.FilePatch, 0, len(prFiles))
+	for _, f := range prFiles {
+		prEvalInfo.Patches = append(prEvalInfo.Patches, &pb.FilePatch{
+			Name:     f.GetFilename(),
+			PatchUrl: f.GetRawURL(),
+		})
+	}
+
+	prEvalInfo.RepoOwner = dbrepo.RepoOwner
+	prEvalInfo.RepoName = dbrepo.RepoName
+	return nil
 }
 
 func getRepoInformationFromPayload(
