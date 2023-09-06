@@ -40,6 +40,9 @@
     - [DeleteRuleTypeResponse](#mediator-v1-DeleteRuleTypeResponse)
     - [DeleteUserRequest](#mediator-v1-DeleteUserRequest)
     - [DeleteUserResponse](#mediator-v1-DeleteUserResponse)
+    - [Dependency](#mediator-v1-Dependency)
+    - [DiffType](#mediator-v1-DiffType)
+    - [DiffType.Ecosystem](#mediator-v1-DiffType-Ecosystem)
     - [ExchangeCodeForTokenCLIRequest](#mediator-v1-ExchangeCodeForTokenCLIRequest)
     - [ExchangeCodeForTokenWEBRequest](#mediator-v1-ExchangeCodeForTokenWEBRequest)
     - [ExchangeCodeForTokenWEBResponse](#mediator-v1-ExchangeCodeForTokenWEBResponse)
@@ -129,6 +132,8 @@
     - [PipelinePolicy.ContextualRuleSet](#mediator-v1-PipelinePolicy-ContextualRuleSet)
     - [PipelinePolicy.Rule](#mediator-v1-PipelinePolicy-Rule)
     - [PolicyStatus](#mediator-v1-PolicyStatus)
+    - [PrDependencies](#mediator-v1-PrDependencies)
+    - [PrDependencies.ContextualDependency](#mediator-v1-PrDependencies-ContextualDependency)
     - [Provider](#mediator-v1-Provider)
     - [Provider.Context](#mediator-v1-Provider-Context)
     - [Provider.Definition](#mediator-v1-Provider-Definition)
@@ -180,6 +185,7 @@
     - [VerifyResponse](#mediator-v1-VerifyResponse)
     - [VersionedArtifact](#mediator-v1-VersionedArtifact)
   
+    - [DepEcosystem](#mediator-v1-DepEcosystem)
     - [Entity](#mediator-v1-Entity)
     - [Provider.Definition.Auth.Type](#mediator-v1-Provider-Definition-Auth-Type)
     - [Provider.Definition.ClientTypes.Type](#mediator-v1-Provider-Definition-ClientTypes-Type)
@@ -785,6 +791,54 @@ DeleteRuleTypeResponse is the response to delete a rule type.
 
 ### DeleteUserResponse
 
+
+
+
+
+
+
+<a name="mediator-v1-Dependency"></a>
+
+### Dependency
+
+
+
+| Field | Type | Label | Description |
+| ----- | ---- | ----- | ----------- |
+| ecosystem | [DepEcosystem](#mediator-v1-DepEcosystem) |  |  |
+| name | [string](#string) |  |  |
+| version | [string](#string) |  |  |
+
+
+
+
+
+
+<a name="mediator-v1-DiffType"></a>
+
+### DiffType
+DiffType defines the diff data ingester.
+
+
+| Field | Type | Label | Description |
+| ----- | ---- | ----- | ----------- |
+| ecosystems | [DiffType.Ecosystem](#mediator-v1-DiffType-Ecosystem) | repeated |  |
+
+
+
+
+
+
+<a name="mediator-v1-DiffType-Ecosystem"></a>
+
+### DiffType.Ecosystem
+
+
+
+| Field | Type | Label | Description |
+| ----- | ---- | ----- | ----------- |
+| name | [string](#string) |  | name is the name of the ecosystem. |
+| depfile | [string](#string) |  | depfile is the file that contains the dependencies for this ecosystem |
 
 
 
@@ -2204,6 +2258,38 @@ get the overall policy status
 
 
 
+<a name="mediator-v1-PrDependencies"></a>
+
+### PrDependencies
+
+
+
+| Field | Type | Label | Description |
+| ----- | ---- | ----- | ----------- |
+| pr | [PullRequest](#mediator-v1-PullRequest) |  |  |
+| deps | [PrDependencies.ContextualDependency](#mediator-v1-PrDependencies-ContextualDependency) | repeated |  |
+
+
+
+
+
+
+<a name="mediator-v1-PrDependencies-ContextualDependency"></a>
+
+### PrDependencies.ContextualDependency
+
+
+
+| Field | Type | Label | Description |
+| ----- | ---- | ----- | ----------- |
+| dep | [Dependency](#mediator-v1-Dependency) |  |  |
+| file | [FilePatch](#mediator-v1-FilePatch) |  |  |
+
+
+
+
+
+
 <a name="mediator-v1-Provider"></a>
 
 ### Provider
@@ -2766,6 +2852,7 @@ Ingest defines how the data is ingested.
 | builtin | [BuiltinType](#mediator-v1-BuiltinType) | optional | builtin is the builtin data ingestion. |
 | artifact | [ArtifactType](#mediator-v1-ArtifactType) | optional | artifact is the artifact data ingestion. |
 | git | [GitType](#mediator-v1-GitType) | optional | git is the git data ingestion. |
+| diff | [DiffType](#mediator-v1-DiffType) | optional | diff is the diff data ingestion. |
 
 
 
@@ -3029,6 +3116,18 @@ user record to be returned
 
 
  
+
+
+<a name="mediator-v1-DepEcosystem"></a>
+
+### DepEcosystem
+
+
+| Name | Number | Description |
+| ---- | ------ | ----------- |
+| DEP_ECOSYSTEM_UNKNOWN | 0 |  |
+| DEP_ECOSYSTEM_NPM | 1 |  |
+
 
 
 <a name="mediator-v1-Entity"></a>

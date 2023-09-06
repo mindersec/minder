@@ -127,6 +127,28 @@ message PullRequest {
     repeated FilePatch patches = 6; // The list of files changed in the PR. Does not include file contents
 }
 
+enum DepEcosystem {
+    DEP_ECOSYSTEM_UNKNOWN = 0;
+    DEP_ECOSYSTEM_NPM = 1;
+}
+
+message Dependency {
+    DepEcosystem ecosystem = 1;
+
+    string name = 2;
+    string version = 3;
+}
+
+message PrDependencies {
+    message ContextualDependency {
+        Dependency dep = 1;
+        FilePatch file = 2;
+    }
+
+    PullRequest pr = 1;
+    repeated ContextualDependency deps = 2;
+}
+
 service OAuthService {
     rpc GetAuthorizationURL (GetAuthorizationURLRequest) returns (GetAuthorizationURLResponse) {
         option (google.api.http) = {
@@ -1590,6 +1612,17 @@ message GitType {
     string branch = 2;
 }
 
+// DiffType defines the diff data ingester.
+message DiffType {
+    message Ecosystem {
+        // name is the name of the ecosystem.
+        string name = 1;
+        // depfile is the file that contains the dependencies for this ecosystem
+        string depfile = 2;
+    }
+    repeated Ecosystem ecosystems = 1;
+}
+
 // RuleType defines rules that may or may not be user defined.
 // The version is assumed from the folder's version.
 message RuleType {
@@ -1635,6 +1668,8 @@ message RuleType {
             // git is the git data ingestion.
             optional GitType git = 6;
 
+            // diff is the diff data ingestion.
+            optional DiffType diff = 7;
         }
         Ingest ingest = 4;
 
