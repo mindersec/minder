@@ -24,6 +24,7 @@ import (
 	"errors"
 	"fmt"
 	"log"
+	"reflect"
 	"strings"
 	"time"
 
@@ -129,24 +130,83 @@ func extractAndValidateSignature(
 			// we can add information for the image
 			signatureVerification.IsVerified = verified
 			signatureVerification.IsBundleVerified = bundleVerified
-			signatureVerification.RekorLogId = proto.String(imageKeys["RekorLogID"].(string))
+			rekorLogID, err := readValueAs[string](imageKeys, "RekorLogID")
+			if err != nil {
+				log.Printf("error parsing value from imageKeys: %v", err)
+			} else {
+				signatureVerification.RekorLogId = proto.String(rekorLogID)
+			}
 
-			log_index := int32(imageKeys["RekorLogIndex"].(int64))
-			signatureVerification.RekorLogIndex = &log_index
+			rekorLogIndex, err := readValueAs[int64](imageKeys, "RekorLogIndex")
+			if err != nil {
+				log.Printf("error parsing value from imageKeys: %v", err)
+			} else {
+				log_index := int32(rekorLogIndex)
+				signatureVerification.RekorLogIndex = &log_index
+			}
 
-			signature_time := timestamppb.New(time.Unix(imageKeys["SignatureTime"].(int64), 0))
-			signatureVerification.SignatureTime = signature_time
+			signatureTime, err := readValueAs[int64](imageKeys, "SignatureTime")
+			if err != nil {
+				log.Printf("error parsing value from imageKeys: %v", err)
+			} else {
+				signatureVerification.SignatureTime = timestamppb.New(time.Unix(signatureTime, 0))
+			}
 
-			githubWorkflow.Name = imageKeys["WorkflowName"].(string)
-			githubWorkflow.Repository = imageKeys["WorkflowRepository"].(string)
-			githubWorkflow.CommitSha = imageKeys["WorkflowSha"].(string)
-			githubWorkflow.Trigger = imageKeys["WorkflowTrigger"].(string)
+			workflowName, err := readValueAs[string](imageKeys, "WorkflowName")
+			if err != nil {
+				log.Printf("error parsing value from imageKeys: %v", err)
+			} else {
+				githubWorkflow.Name = workflowName
+			}
+
+			workflowRepository, err := readValueAs[string](imageKeys, "WorkflowRepository")
+			if err != nil {
+				log.Printf("error parsing value from imageKeys: %v", err)
+			} else {
+				githubWorkflow.Repository = workflowRepository
+			}
+
+			workflowSha, err := readValueAs[string](imageKeys, "WorkflowSha")
+			if err != nil {
+				log.Printf("error parsing value from imageKeys: %v", err)
+			} else {
+				githubWorkflow.CommitSha = workflowSha
+			}
+
+			workflowTrigger, err := readValueAs[string](imageKeys, "WorkflowTrigger")
+			if err != nil {
+				log.Printf("error parsing value from imageKeys: %v", err)
+			} else {
+				githubWorkflow.Trigger = workflowTrigger
+			}
 		} else {
 			log.Printf("error verifying image: %v", err)
 		}
 	} else {
 		log.Printf("error extracting identity from certificate: %v", err)
 	}
+}
+
+// readValueAs gets the typed value from the given accessor. Returns an error when the accessor
+// doesn't find anything or when the type assertion fails.
+func readValueAs[T any](data map[string]any, key string) (T, error) {
+	var out T
+
+	value, ok := data[key]
+	if !ok {
+		return out, fmt.Errorf("key %s not found in map", key)
+	}
+
+	if value == nil {
+		return out, fmt.Errorf("no value for key %s in map", key)
+	}
+
+	out, ok = value.(T)
+	if !ok {
+		return out, fmt.Errorf("could not type assert %v (value of key %v) to %v", value, key, reflect.TypeOf(out))
+	}
+
+	return out, nil
 }
 
 // ValidateSignature returns information about signature validation of a package
