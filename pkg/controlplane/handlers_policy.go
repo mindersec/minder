@@ -21,17 +21,13 @@ import (
 	"errors"
 	"fmt"
 	"log"
-	"strings"
 
-	"github.com/ThreeDotsLabs/watermill/message"
-	"github.com/google/uuid"
-	"github.com/rs/zerolog"
 	"google.golang.org/grpc/codes"
 	"google.golang.org/grpc/status"
-	"google.golang.org/protobuf/encoding/protojson"
 	"google.golang.org/protobuf/types/known/timestamppb"
 
 	"github.com/stacklok/mediator/internal/engine"
+	"github.com/stacklok/mediator/internal/reconcilers"
 	"github.com/stacklok/mediator/internal/util"
 	"github.com/stacklok/mediator/pkg/auth"
 	"github.com/stacklok/mediator/pkg/db"
@@ -212,164 +208,19 @@ func (s *Server) CreatePolicy(ctx context.Context,
 		Policy: in,
 	}
 
-	s.publishPolicyInitEvents(ctx, in, entityCtx)
+	msg, err := reconcilers.NewPolicyInitMessage(entityCtx.Provider, entityCtx.Group.ID)
+	if err != nil {
+		log.Printf("error creating reconciler event: %v", err)
+		// error is non-fatal
+		return resp, nil
+	}
+
+	// This is a non-fatal error, so we'll just log it and continue with the next ones
+	if err := s.evt.Publish(reconcilers.InternalReconcilerEventTopic, msg); err != nil {
+		log.Printf("error publishing reconciler event: %v", err)
+	}
 
 	return resp, nil
-}
-
-func (s *Server) publishPolicyInitEvents(
-	ctx context.Context,
-	pol *pb.PipelinePolicy,
-	ectx *engine.EntityContext,
-) {
-	log.Printf("publishing init events for policy: %s", pol.GetName())
-
-	dbrepos, err := s.store.ListRegisteredRepositoriesByGroupIDAndProvider(ctx,
-		db.ListRegisteredRepositoriesByGroupIDAndProviderParams{
-			Provider: ectx.Provider,
-			GroupID:  ectx.Group.ID,
-		})
-	if err != nil {
-		log.Printf("publishPolicyInitEvents: error getting registered repos: %v", err)
-		return
-	}
-
-	for _, dbrepo := range dbrepos {
-		// protobufs are our API, so we always execute on these instead of the DB directly.
-		repo := &pb.RepositoryResult{
-			Owner:      dbrepo.RepoOwner,
-			Repository: dbrepo.RepoName,
-			RepoId:     dbrepo.RepoID,
-			HookUrl:    dbrepo.WebhookUrl,
-			DeployUrl:  dbrepo.DeployUrl,
-			CloneUrl:   dbrepo.CloneUrl,
-			CreatedAt:  timestamppb.New(dbrepo.CreatedAt),
-			UpdatedAt:  timestamppb.New(dbrepo.UpdatedAt),
-		}
-
-		// protojson write repo as json string
-		repoBytes, err := protojson.Marshal(repo)
-		if err != nil {
-			log.Printf("publishPolicyInitEvents: error marshalling repo: %v", err)
-			continue
-		}
-
-		msg := message.NewMessage(uuid.New().String(), repoBytes)
-		msg.Metadata.Set("provider", ectx.Provider)
-		msg.Metadata.Set(engine.EntityTypeEventKey, engine.RepositoryEventEntityType)
-		msg.Metadata.Set(engine.GroupIDEventKey, fmt.Sprintf("%d", ectx.Group.ID))
-		msg.Metadata.Set(engine.RepositoryIDEventKey, fmt.Sprintf("%d", dbrepo.ID))
-
-		// This is a non-fatal error, so we'll just log it
-		// and continue
-		if err := s.evt.Publish(engine.InternalInitEventTopic, msg); err != nil {
-			log.Printf("error publishing init event for repo %d: %v", dbrepo.ID, err)
-			continue
-		}
-	}
-
-	// after we've initialized repository policies, let's initialize artifacts
-	// TODO(jakub): this should be done in an iterator of sorts
-	for i := range dbrepos {
-		pdb := &dbrepos[i]
-		err := publishArtifactPolicyInitEvents(ctx, s, ectx, pdb)
-		if err != nil {
-			log.Printf("publishPolicyInitEvents: error publishing artifact events: %v", err)
-			continue
-		}
-	}
-}
-
-func publishArtifactPolicyInitEvents(
-	ctx context.Context,
-	s *Server,
-	ectx *engine.EntityContext,
-	dbrepo *db.Repository,
-) error {
-	dbArtifacts, err := s.store.ListArtifactsByRepoID(ctx, dbrepo.ID)
-	if err != nil {
-		return fmt.Errorf("error getting artifacts: %w", err)
-	}
-	if len(dbArtifacts) == 0 {
-		zerolog.Ctx(ctx).Debug().Int32("repository", dbrepo.ID).Msgf("no artifacts found, skipping")
-		return nil
-	}
-
-	for _, dbA := range dbArtifacts {
-		// for each artifact, get the versions
-		dbArtifactVersions, err := s.store.ListArtifactVersionsByArtifactID(ctx, db.ListArtifactVersionsByArtifactIDParams{
-			ArtifactID: dbA.ID,
-			Limit:      sql.NullInt32{Valid: false},
-		})
-		if err != nil {
-			log.Printf("error getting artifact versions for artifact %d: %v", dbA.ID, err)
-			continue
-		}
-
-		for _, dbVersion := range dbArtifactVersions {
-			tags := []string{}
-			if dbVersion.Tags.Valid {
-				tags = strings.Split(dbVersion.Tags.String, ",")
-			}
-
-			sigVer := &pb.SignatureVerification{}
-			if dbVersion.SignatureVerification.Valid {
-				if err := protojson.Unmarshal(dbVersion.SignatureVerification.RawMessage, sigVer); err != nil {
-					log.Printf("error unmarshalling signature verification: %v", err)
-					continue
-				}
-			}
-			ghWorkflow := &pb.GithubWorkflow{}
-			if dbVersion.GithubWorkflow.Valid {
-				if err := protojson.Unmarshal(dbVersion.GithubWorkflow.RawMessage, ghWorkflow); err != nil {
-					log.Printf("error unmarshalling gh workflow: %v", err)
-					continue
-				}
-			}
-
-			versionedArtifact := &pb.VersionedArtifact{
-				Artifact: &pb.Artifact{
-					ArtifactPk: int64(dbA.ID),
-					Owner:      dbrepo.RepoOwner,
-					Name:       dbA.ArtifactName,
-					Type:       dbA.ArtifactType,
-					Visibility: dbA.ArtifactVisibility,
-					Repository: dbrepo.RepoName,
-					CreatedAt:  timestamppb.New(dbA.CreatedAt),
-				},
-				Version: &pb.ArtifactVersion{
-					VersionId:             dbVersion.Version,
-					Tags:                  tags,
-					Sha:                   dbVersion.Sha,
-					SignatureVerification: sigVer,
-					GithubWorkflow:        ghWorkflow,
-					CreatedAt:             timestamppb.New(dbVersion.CreatedAt),
-				},
-			}
-
-			// protojson write repo as json string
-			versionedArtifactBytes, err := protojson.Marshal(versionedArtifact)
-			if err != nil {
-				log.Printf("publishPolicyInitEvents: error marshalling repo: %v", err)
-				continue
-			}
-
-			msg := message.NewMessage(uuid.New().String(), versionedArtifactBytes)
-			msg.Metadata.Set("provider", ectx.Provider)
-			msg.Metadata.Set(engine.EntityTypeEventKey, engine.VersionedArtifactEventEntityType)
-			msg.Metadata.Set(engine.GroupIDEventKey, fmt.Sprintf("%d", ectx.Group.ID))
-			msg.Metadata.Set(engine.RepositoryIDEventKey, fmt.Sprintf("%d", dbrepo.ID))
-			msg.Metadata.Set(engine.ArtifactIDEventKey, fmt.Sprintf("%d", dbA.ID))
-
-			// This is a non-fatal error, so we'll just log it
-			// and continue
-			if err := s.evt.Publish(engine.InternalInitEventTopic, msg); err != nil {
-				log.Printf("error publishing init event for repo %d: %v", dbrepo.ID, err)
-				continue
-			}
-		}
-	}
-	return nil
 }
 
 func createPolicyRulesForEntity(

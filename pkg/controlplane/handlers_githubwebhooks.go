@@ -144,7 +144,7 @@ func HandleGitHubWebHook(p message.Publisher, store db.Store) http.HandlerFunc {
 			return
 		}
 
-		if err := p.Publish(engine.InternalWebhookEventTopic, m); err != nil {
+		if err := p.Publish(engine.InternalEntityEventTopic, m); err != nil {
 			log.Printf("Error publishing message: %v", err)
 			w.WriteHeader(http.StatusInternalServerError)
 			return
@@ -326,15 +326,13 @@ func parseRepoEvent(
 		UpdatedAt:  timestamppb.New(dbrepo.UpdatedAt),
 	}
 
-	msg.Metadata.Set(engine.EntityTypeEventKey, engine.RepositoryEventEntityType)
-	msg.Metadata.Set(engine.GroupIDEventKey, strconv.Itoa(int(dbrepo.GroupID)))
-	msg.Metadata.Set(engine.RepositoryIDEventKey, strconv.Itoa(int(dbrepo.ID)))
-	msg.Payload, err = protojson.Marshal(repo)
-	if err != nil {
-		return fmt.Errorf("error marshalling repository: %w", err)
-	}
+	eiw := engine.NewEntityInfoWrapper().
+		WithProvider(prov).
+		WithRepository(repo).
+		WithGroupID(dbrepo.GroupID).
+		WithRepositoryID(dbrepo.ID)
 
-	return nil
+	return eiw.ToMessage(msg)
 }
 
 func parseArtifactPublishedEvent(
@@ -377,16 +375,14 @@ func parseArtifactPublishedEvent(
 		return fmt.Errorf("error upserting artifact from payload: %w", err)
 	}
 
-	msg.Metadata.Set(engine.EntityTypeEventKey, engine.VersionedArtifactEventEntityType)
-	msg.Metadata.Set(engine.GroupIDEventKey, strconv.Itoa(int(dbrepo.GroupID)))
-	msg.Metadata.Set(engine.RepositoryIDEventKey, strconv.Itoa(int(dbrepo.ID)))
-	msg.Metadata.Set(engine.ArtifactIDEventKey, strconv.Itoa(int(dbArtifact.ID)))
-	msg.Payload, err = protojson.Marshal(versionedArtifact)
-	if err != nil {
-		return fmt.Errorf("error marshalling versioned artifact: %w", err)
-	}
+	eiw := engine.NewEntityInfoWrapper().
+		WithVersionedArtifact(versionedArtifact).
+		WithProvider(prov).
+		WithGroupID(dbrepo.GroupID).
+		WithRepositoryID(dbrepo.ID).
+		WithArtifactID(dbArtifact.ID)
 
-	return nil
+	return eiw.ToMessage(msg)
 }
 
 func extractArtifactFromPayload(ctx context.Context, payload map[string]any) (*pb.Artifact, error) {

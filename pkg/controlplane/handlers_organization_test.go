@@ -23,12 +23,10 @@ import (
 
 	"github.com/golang/mock/gomock"
 	"github.com/stretchr/testify/assert"
-	"github.com/stretchr/testify/require"
 	"google.golang.org/grpc/codes"
 	"google.golang.org/protobuf/types/known/timestamppb"
 
 	mockdb "github.com/stacklok/mediator/database/mock"
-	"github.com/stacklok/mediator/internal/config"
 	"github.com/stacklok/mediator/pkg/auth"
 	"github.com/stacklok/mediator/pkg/db"
 	pb "github.com/stacklok/mediator/pkg/generated/protobuf/go/mediator/v1"
@@ -198,8 +196,7 @@ func TestCreateOrganization_gRPC(t *testing.T) {
 			mockStore := mockdb.NewMockStore(ctrl)
 			tc.buildStubs(mockStore)
 
-			server, err := NewServer(mockStore, &config.Config{})
-			require.NoError(t, err, "failed to create test server")
+			server := newDefaultServer(t, mockStore)
 
 			resp, err := server.CreateOrganization(ctx, tc.req)
 			tc.checkResponse(t, resp, err)
@@ -347,8 +344,7 @@ func TestGetOrganizations_gRPC(t *testing.T) {
 			mockStore := mockdb.NewMockStore(ctrl)
 			tc.buildStubs(mockStore)
 
-			server, err := NewServer(mockStore, &config.Config{})
-			require.NoError(t, err, "failed to create test server")
+			server := newDefaultServer(t, mockStore)
 
 			resp, err := server.GetOrganizations(ctx, tc.req)
 			tc.checkResponse(t, resp, err)
@@ -527,8 +523,7 @@ func TestGetOrganization_gRPC(t *testing.T) {
 			mockStore := mockdb.NewMockStore(ctrl)
 			tc.buildStubs(mockStore)
 
-			server, err := NewServer(mockStore, &config.Config{})
-			require.NoError(t, err, "failed to create test server")
+			server := newDefaultServer(t, mockStore)
 
 			resp, err := server.GetOrganization(ctx, tc.req)
 			tc.checkResponse(t, resp, err)
@@ -706,8 +701,7 @@ func TestGetOrganizationByName_gRPC(t *testing.T) {
 			mockStore := mockdb.NewMockStore(ctrl)
 			tc.buildStubs(mockStore)
 
-			server, err := NewServer(mockStore, &config.Config{})
-			require.NoError(t, err, "failed to create test server")
+			server := newDefaultServer(t, mockStore)
 
 			resp, err := server.GetOrganizationByName(ctx, tc.req)
 			tc.checkResponse(t, resp, err)
@@ -832,8 +826,7 @@ func TestDeleteOrganization_gRPC(t *testing.T) {
 			mockStore := mockdb.NewMockStore(ctrl)
 			tc.buildStubs(mockStore)
 
-			server, err := NewServer(mockStore, &config.Config{})
-			require.NoError(t, err, "failed to create test server")
+			server := newDefaultServer(t, mockStore)
 
 			resp, err := server.DeleteOrganization(ctx, tc.req)
 			tc.checkResponse(t, resp, err)

@@ -28,7 +28,9 @@ import (
 
 	"github.com/stacklok/mediator/internal/config"
 	"github.com/stacklok/mediator/internal/engine"
+	"github.com/stacklok/mediator/internal/events"
 	"github.com/stacklok/mediator/internal/logger"
+	"github.com/stacklok/mediator/internal/reconcilers"
 	"github.com/stacklok/mediator/pkg/controlplane"
 	"github.com/stacklok/mediator/pkg/db"
 )
@@ -61,12 +63,19 @@ var serveCmd = &cobra.Command{
 
 		errg, ctx := errgroup.WithContext(ctx)
 
-		s, err := controlplane.NewServer(store, cfg)
+		evt, err := events.Setup()
+		if err != nil {
+			log.Printf("Failed to set up eventer: %v", err)
+			return err
+		}
+
+		s, err := controlplane.NewServer(store, evt, cfg)
 		if err != nil {
 			return fmt.Errorf("unable to create server: %w", err)
 		}
 
 		s.ConsumeEvents(engine.NewExecutor(store))
+		s.ConsumeEvents(reconcilers.NewRecociler(store, evt))
 
 		// Start the gRPC and HTTP server in separate goroutines
 		errg.Go(func() error {

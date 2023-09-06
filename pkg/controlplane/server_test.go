@@ -24,10 +24,14 @@ import (
 	"testing"
 	"time"
 
+	"github.com/stretchr/testify/require"
 	"google.golang.org/grpc"
 	"google.golang.org/grpc/credentials/insecure"
 	"google.golang.org/grpc/test/bufconn"
 
+	mockdb "github.com/stacklok/mediator/database/mock"
+	"github.com/stacklok/mediator/internal/config"
+	"github.com/stacklok/mediator/internal/events"
 	pb "github.com/stacklok/mediator/pkg/generated/protobuf/go/mediator/v1"
 )
 
@@ -73,6 +77,17 @@ func getgRPCConnection() (*grpc.ClientConn, error) {
 		return nil, err
 	}
 	return conn, nil
+}
+
+func newDefaultServer(t *testing.T, mockStore *mockdb.MockStore) *Server {
+	t.Helper()
+
+	evt, err := events.Setup()
+	require.NoError(t, err, "failed to setup eventer")
+
+	server, err := NewServer(mockStore, evt, &config.Config{})
+	require.NoError(t, err, "failed to create server")
+	return server
 }
 
 func TestHealth(t *testing.T) {

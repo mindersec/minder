@@ -138,7 +138,7 @@ func (s *UnitTestSuite) TestHandleWebHookPing() {
 	t.Parallel()
 
 	p := gochannel.NewGoChannel(gochannel.Config{}, nil)
-	queued, err := p.Subscribe(context.Background(), engine.InternalWebhookEventTopic)
+	queued, err := p.Subscribe(context.Background(), engine.InternalEntityEventTopic)
 	require.NoError(t, err, "failed to subscribe to internal webhook event topic")
 	defer p.Close()
 
@@ -182,7 +182,7 @@ func (s *UnitTestSuite) TestHandleWebHookUnexistentRepository() {
 	t.Parallel()
 
 	p := gochannel.NewGoChannel(gochannel.Config{}, nil)
-	queued, err := p.Subscribe(context.Background(), engine.InternalWebhookEventTopic)
+	queued, err := p.Subscribe(context.Background(), engine.InternalEntityEventTopic)
 	if err != nil {
 		t.Fatal(err)
 	}
@@ -241,7 +241,7 @@ func (s *UnitTestSuite) TestHandleWebHookRepository() {
 	t.Parallel()
 
 	p := gochannel.NewGoChannel(gochannel.Config{}, nil)
-	queued, err := p.Subscribe(context.Background(), engine.InternalWebhookEventTopic)
+	queued, err := p.Subscribe(context.Background(), engine.InternalEntityEventTopic)
 	if err != nil {
 		t.Fatal(err)
 	}
@@ -317,7 +317,7 @@ func (s *UnitTestSuite) TestHandleWebHookUnexistentRepoPackage() {
 	t.Parallel()
 
 	p := gochannel.NewGoChannel(gochannel.Config{}, nil)
-	queued, err := p.Subscribe(context.Background(), engine.InternalWebhookEventTopic)
+	queued, err := p.Subscribe(context.Background(), engine.InternalEntityEventTopic)
 	if err != nil {
 		t.Fatal(err)
 	}

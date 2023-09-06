@@ -77,14 +77,7 @@ type Server struct {
 }
 
 // NewServer creates a new server instance
-func NewServer(store db.Store, cfg *config.Config) (*Server, error) {
-	// TODO: enable registering handlers with the router (arg 0)
-	evt, err := events.Setup()
-	if err != nil {
-		log.Printf("Failed to set up eventer: %v", err)
-		return nil, err
-	}
-
+func NewServer(store db.Store, evt *events.Eventer, cfg *config.Config) (*Server, error) {
 	return &Server{
 		store: store,
 		cfg:   cfg,

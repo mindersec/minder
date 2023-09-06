@@ -21,13 +21,11 @@ import (
 
 	"github.com/golang/mock/gomock"
 	"github.com/stretchr/testify/assert"
-	"github.com/stretchr/testify/require"
 	"golang.org/x/oauth2/github"
 	"golang.org/x/oauth2/google"
 	"google.golang.org/grpc/codes"
 
 	mockdb "github.com/stacklok/mediator/database/mock"
-	"github.com/stacklok/mediator/internal/config"
 	"github.com/stacklok/mediator/pkg/auth"
 	"github.com/stacklok/mediator/pkg/db"
 	pb "github.com/stacklok/mediator/pkg/generated/protobuf/go/mediator/v1"
@@ -178,8 +176,7 @@ func TestRevokeOauthTokens_gRPC(t *testing.T) {
 	mockStore := mockdb.NewMockStore(ctrl)
 	mockStore.EXPECT().GetAccessTokenByProvider(gomock.Any(), gomock.Any())
 
-	server, err := NewServer(mockStore, &config.Config{})
-	require.NoError(t, err, "failed to create test server")
+	server := newDefaultServer(t, mockStore)
 
 	res, err := server.RevokeOauthTokens(ctx, &pb.RevokeOauthTokensRequest{Provider: ghclient.Github})
 
@@ -204,8 +201,7 @@ func RevokeOauthGroupToken_gRPC(t *testing.T) {
 	mockStore := mockdb.NewMockStore(ctrl)
 	mockStore.EXPECT().GetAccessTokenByGroupID(gomock.Any(), gomock.Any())
 
-	server, err := NewServer(mockStore, &config.Config{})
-	require.NoError(t, err, "failed to create test server")
+	server := newDefaultServer(t, mockStore)
 
 	res, err := server.RevokeOauthGroupToken(ctx, &pb.RevokeOauthGroupTokenRequest{Provider: ghclient.Github, GroupId: 1})
 
