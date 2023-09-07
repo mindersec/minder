@@ -185,7 +185,7 @@ func NewRuleTypeEngine(rt *pb.RuleType, cli ghclient.RestAPI, accessToken string
 		return nil, fmt.Errorf("cannot create rule data ingest: %w", err)
 	}
 
-	reval, err := eval.NewRuleEvaluator(rt)
+	reval, err := eval.NewRuleEvaluator(rt, cli)
 	if err != nil {
 		return nil, fmt.Errorf("cannot create rule evaluator: %w", err)
 	}
