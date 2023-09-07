@@ -15,7 +15,7 @@ medic rule_type list [flags]
 
 ```
   -h, --help              help for list
-  -o, --output string     Output format (json or yaml) (default "yaml")
+  -o, --output string     Output format (json, yaml or table) (default "table")
   -p, --provider string   Provider to list rule types for
 ```
 

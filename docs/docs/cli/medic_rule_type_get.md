@@ -16,7 +16,7 @@ medic rule_type get [flags]
 ```
   -h, --help              help for get
   -i, --id int32          ID for the policy to query
-  -o, --output string     Output format (json or yaml) (default "yaml")
+  -o, --output string     Output format (json, yaml or table) (default "table")
   -p, --provider string   Provider for the policy (default "github")
 ```
 
