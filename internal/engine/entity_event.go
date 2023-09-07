@@ -150,7 +150,11 @@ func (eiw *EntityInfoWrapper) BuildMessage() (*message.Message, error) {
 	}
 
 	msg := message.NewMessage(id.String(), nil)
-	return msg, eiw.ToMessage(msg)
+	if err := eiw.ToMessage(msg); err != nil {
+		return nil, err
+	}
+
+	return msg, nil
 }
 
 // ToMessage sets the information to a message.Message
