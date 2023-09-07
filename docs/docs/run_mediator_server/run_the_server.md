@@ -94,9 +94,17 @@ mediator-server migrate up
 
 ## Create encryption keys
 
+The default configuration expects these keys to be in a directory named `.ssh`, relative to where you run the `mediator-server` binary.
+Start by creating the `.ssh` directory.
+
+```bash
+mkdir .ssh && cd .ssh
+```
+
 Encryption keys are used to encrypt JWT tokens. You can create these using the `openssl` CLI tool.
 
 ```bash
+# First generate an RSA key pair
 ssh-keygen -t rsa -b 2048 -m PEM -f access_token_rsa
 ssh-keygen -t rsa -b 2048 -m PEM -f refresh_token_rsa
 # For passwordless keys, run the following:
@@ -104,7 +112,7 @@ openssl rsa -in access_token_rsa -pubout -outform PEM -out access_token_rsa.pub
 openssl rsa -in access_token_rsa -pubout -outform PEM -out access_token_rsa.pub
 ```
 
-These keys should be placed in the `.ssh` directory, relative to where you run the `mediator-server` binary. Alternatively, you can specify the location of the keys in the `config.yaml` file.
+If your keys live in a directory other than `.ssh`, you can specify the location of the keys in the `config.yaml` file.
 
 ```yaml
 auth:
