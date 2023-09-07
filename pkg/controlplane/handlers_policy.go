@@ -216,7 +216,7 @@ func (s *Server) CreatePolicy(ctx context.Context,
 	}
 
 	// This is a non-fatal error, so we'll just log it and continue with the next ones
-	if err := s.evt.Publish(reconcilers.InternalReconcilerEventTopic, msg); err != nil {
+	if err := s.evt.Publish(reconcilers.InternalPolicyInitEventTopic, msg); err != nil {
 		log.Printf("error publishing reconciler event: %v", err)
 	}
 

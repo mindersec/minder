@@ -83,7 +83,7 @@ func (e *Reconciler) handleRepoReconcilerEvent(msg *message.Message) error {
 
 	// validate event
 	validate := validator.New()
-	if err := validate.Struct(evt); err != nil {
+	if err := validate.Struct(&evt); err != nil {
 		// We don't return the event since there's no use
 		// retrying it if it's invalid.
 		log.Printf("error validating event: %v", err)
