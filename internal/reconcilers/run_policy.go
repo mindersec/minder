@@ -130,20 +130,16 @@ func (s *Reconciler) publishPolicyInitEvents(
 			UpdatedAt:  timestamppb.New(dbrepo.UpdatedAt),
 		}
 
-		eiw := engine.NewEntityInfoWrapper().
+		err := engine.NewEntityInfoWrapper().
 			WithProvider(ectx.Provider).
 			WithGroupID(ectx.Group.ID).
 			WithRepository(repo).
-			WithRepositoryID(dbrepo.ID)
-
-		msg, err := eiw.BuildMessage()
-		if err != nil {
-			return fmt.Errorf("publishPolicyInitEvents: error building message: %v", err)
-		}
+			WithRepositoryID(dbrepo.ID).
+			Publish(s.evt)
 
 		// This is a non-fatal error, so we'll just log it
 		// and continue
-		if err := s.evt.Publish(engine.InternalEntityEventTopic, msg); err != nil {
+		if err != nil {
 			return fmt.Errorf("error publishing init event for repo %d: %v", dbrepo.ID, err)
 		}
 	}
@@ -227,22 +223,17 @@ func (s *Reconciler) publishArtifactPolicyInitEvents(
 				},
 			}
 
-			eiw := engine.NewEntityInfoWrapper().
+			err := engine.NewEntityInfoWrapper().
 				WithProvider(ectx.Provider).
 				WithGroupID(ectx.Group.ID).
 				WithVersionedArtifact(versionedArtifact).
 				WithRepositoryID(dbrepo.ID).
-				WithArtifactID(dbA.ID)
-
-			msg, err := eiw.BuildMessage()
-			if err != nil {
-				log.Printf("publishPolicyInitEvents: error building message: %v", err)
-				continue
-			}
+				WithArtifactID(dbA.ID).
+				Publish(s.evt)
 
 			// This is a non-fatal error, so we'll just log it
 			// and continue
-			if err := s.evt.Publish(engine.InternalEntityEventTopic, msg); err != nil {
+			if err != nil {
 				log.Printf("error publishing init event for repo %d: %v", dbrepo.ID, err)
 				continue
 			}
