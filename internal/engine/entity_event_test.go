@@ -175,7 +175,7 @@ func TestEntityInfoWrapper_VersionedArtifact(t *testing.T) {
 	require.NoError(t, err, "unexpected error")
 
 	assert.Equal(t, "github", msg.Metadata.Get(ProviderEventKey), "provider mismatch")
-	assert.Equal(t, RepositoryEventEntityType, msg.Metadata.Get(EntityTypeEventKey), "entity type mismatch")
+	assert.Equal(t, VersionedArtifactEventEntityType, msg.Metadata.Get(EntityTypeEventKey), "entity type mismatch")
 	assert.Equal(t, "123", msg.Metadata.Get(GroupIDEventKey), "group id mismatch")
 	assert.Equal(t, "456", msg.Metadata.Get(RepositoryIDEventKey), "repository id mismatch")
 	assert.Equal(t, "789", msg.Metadata.Get(ArtifactIDEventKey), "artifact id mismatch")
