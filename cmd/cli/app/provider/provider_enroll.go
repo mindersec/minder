@@ -94,12 +94,16 @@ func callBackServer(ctx context.Context, provider string, group int32, port stri
 			t := time.Unix(since, 0)
 			calls++
 
+			// create a shorter lived context for any client calls
+			clientCtx, cancel := context.WithTimeout(ctx, 5*time.Second)
+			defer cancel()
+
 			// todo: check if token has been created. We need an endpoint to pass an state and check if token is created
-			res, err := client.VerifyProviderTokenFrom(ctx,
+			res, err := client.VerifyProviderTokenFrom(clientCtx,
 				&pb.VerifyProviderTokenFromRequest{Provider: provider, GroupId: group, Timestamp: timestamppb.New(t)})
 			if err == nil && res.Status == "OK" {
 				// we can sync repos
-				err := syncRepos(ctx, repos_client, provider, group)
+				err := syncRepos(clientCtx, repos_client, provider, group)
 				util.ExitNicelyOnError(err, "Error syncing repos")
 			}
 			if err != nil || res.Status == "OK" || calls >= MAX_CALLS {
@@ -139,6 +143,8 @@ actions such as adding repositories.`,
 		repos_client := pb.NewRepositoryServiceClient(conn)
 		ctx, cancel := util.GetAppContext()
 		defer cancel()
+		oAuthCallbackCtx, oAuthCancel := context.WithTimeout(context.Background(), MAX_CALLS*time.Second)
+		defer oAuthCancel()
 
 		if pat != "" {
 			// use pat for enrollment
@@ -177,7 +183,7 @@ actions such as adding repositories.`,
 			var wg sync.WaitGroup
 			wg.Add(1)
 
-			go callBackServer(ctx, provider, int32(group), fmt.Sprintf("%d", port), &wg, client, openTime, repos_client)
+			go callBackServer(oAuthCallbackCtx, provider, int32(group), fmt.Sprintf("%d", port), &wg, client, openTime, repos_client)
 			wg.Wait()
 		}
 	},
