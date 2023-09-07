@@ -22,12 +22,14 @@ import (
 
 	"github.com/stacklok/mediator/internal/engine/eval/jq"
 	"github.com/stacklok/mediator/internal/engine/eval/rego"
+	"github.com/stacklok/mediator/internal/engine/eval/vulncheck"
 	engif "github.com/stacklok/mediator/internal/engine/interfaces"
 	pb "github.com/stacklok/mediator/pkg/generated/protobuf/go/mediator/v1"
+	ghclient "github.com/stacklok/mediator/pkg/providers/github"
 )
 
 // NewRuleEvaluator creates a new rule data evaluator
-func NewRuleEvaluator(rt *pb.RuleType) (engif.Evaluator, error) {
+func NewRuleEvaluator(rt *pb.RuleType, cli ghclient.RestAPI) (engif.Evaluator, error) {
 	e := rt.Def.GetEval()
 	if e == nil {
 		return nil, fmt.Errorf("rule type missing eval configuration")
@@ -43,6 +45,8 @@ func NewRuleEvaluator(rt *pb.RuleType) (engif.Evaluator, error) {
 		return jq.NewJQEvaluator(e.GetJq())
 	case rego.RegoEvalType:
 		return rego.NewRegoEvaluator(e.GetRego())
+	case vulncheck.VulncheckEvalType:
+		return vulncheck.NewVulncheckEvaluator(e.GetVulncheck(), cli)
 	default:
 		return nil, fmt.Errorf("unsupported rule type engine: %s", rt.Def.Eval.Type)
 	}

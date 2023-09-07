@@ -2649,6 +2649,10 @@
         "rego": {
           "$ref": "#/definitions/EvalRego",
           "description": "rego is only used if the `rego` type is selected."
+        },
+        "vulncheck": {
+          "$ref": "#/definitions/EvalVulncheck",
+          "description": "vulncheck is only used if the `vulncheck` type is selected."
         }
       },
       "description": "Eval defines the data evaluation definition.\nThis pertains to the way we traverse data from the upstream\nendpoint and how we compare it to the rule."
@@ -2719,6 +2723,19 @@
         "def": {
           "type": "string",
           "description": "def is the definition of the rego policy."
+        }
+      }
+    },
+    "EvalVulncheck": {
+      "type": "object",
+      "properties": {
+        "db": {
+          "type": "string",
+          "title": "db is the database to use for the vulncheck, e.g. OSV"
+        },
+        "endpoint": {
+          "type": "string",
+          "title": "e.g. https://api.osv.dev/v1/query"
         }
       }
     },

@@ -1709,6 +1709,13 @@ message RuleType {
                 string def = 2;
             }
 
+            message Vulncheck {
+                // db is the database to use for the vulncheck, e.g. OSV
+                string db = 1;
+                // e.g. https://api.osv.dev/v1/query
+                string endpoint = 2;
+            }
+
             // jq is only used if the `jq` type is selected.
             // It defines the comparisons that are made between
             // the ingested data and the policy rule.
@@ -1716,6 +1723,9 @@ message RuleType {
 
             // rego is only used if the `rego` type is selected.
             optional Rego rego = 3;
+
+            // vulncheck is only used if the `vulncheck` type is selected.
+            optional Vulncheck vulncheck = 4;
         }
         Eval eval = 5;
     }
