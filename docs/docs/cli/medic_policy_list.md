@@ -15,7 +15,7 @@ medic policy list [flags]
 
 ```
   -h, --help              help for list
-  -o, --output string     Output format (json or yaml) (default "yaml")
+  -o, --output string     Output format (json, yaml or table) (default "table")
   -p, --provider string   Provider to list policies for
 ```
 
