@@ -22,6 +22,7 @@ import (
 	"github.com/spf13/cobra"
 	"github.com/spf13/viper"
 
+	"github.com/stacklok/mediator/cmd/cli/app"
 	"github.com/stacklok/mediator/internal/util"
 	pb "github.com/stacklok/mediator/pkg/generated/protobuf/go/mediator/v1"
 )
@@ -51,8 +52,12 @@ mediator control plane for an specific group.`,
 
 		provider := viper.GetString("provider")
 
-		if format != "json" && format != "yaml" {
-			fmt.Fprintf(os.Stderr, "Error: invalid format: %s\n", format)
+		switch format {
+		case app.JSON:
+		case app.YAML:
+		case app.Table:
+		default:
+			return fmt.Errorf("invalid format: %s", format)
 		}
 
 		resp, err := client.ListPolicies(ctx, &pb.ListPoliciesRequest{
@@ -66,14 +71,18 @@ mediator control plane for an specific group.`,
 			return fmt.Errorf("error getting policies: %w", err)
 		}
 
-		if format == "json" {
+		switch format {
+		case app.JSON:
 			out, err := util.GetJsonFromProto(resp)
 			util.ExitNicelyOnError(err, "Error getting json from proto")
 			fmt.Println(out)
-		} else if format == "yaml" {
+		case app.YAML:
 			out, err := util.GetYamlFromProto(resp)
 			util.ExitNicelyOnError(err, "Error getting json from proto")
 			fmt.Println(out)
+		case app.Table:
+			handleListTableOutput(cmd, resp)
+			return nil
 		}
 
 		// this is unreachable
@@ -84,7 +93,7 @@ mediator control plane for an specific group.`,
 func init() {
 	PolicyCmd.AddCommand(policy_listCmd)
 	policy_listCmd.Flags().StringP("provider", "p", "", "Provider to list policies for")
-	policy_listCmd.Flags().StringP("output", "o", "yaml", "Output format (json or yaml)")
+	policy_listCmd.Flags().StringP("output", "o", app.Table, "Output format (json, yaml or table)")
 	// TODO: Take group ID into account
 	// policy_listCmd.Flags().Int32P("group-id", "g", 0, "group id to list roles for")
 
@@ -92,4 +101,13 @@ func init() {
 		fmt.Fprintf(os.Stderr, "Error marking flag as required: %s\n", err)
 		os.Exit(1)
 	}
+}
+
+func handleListTableOutput(cmd *cobra.Command, resp *pb.ListPoliciesResponse) {
+	table := initializeTable(cmd)
+
+	for _, v := range resp.Policies {
+		renderPolicyTable(v, table)
+	}
+	table.Render()
 }

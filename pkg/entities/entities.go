@@ -25,34 +25,34 @@ import (
 )
 
 // EntityType is the type of entity
-type entityType string
+type EntityType string
 
 // Entity types as string-like enums. Used in CLI and other user-facing code
 const (
 	// RepositoryEntity is a repository entity
-	RepositoryEntity entityType = "repository"
+	RepositoryEntity EntityType = "repository"
 	// BuildEnvironmentEntity is a build environment entity
-	BuildEnvironmentEntity entityType = "build_environment"
+	BuildEnvironmentEntity EntityType = "build_environment"
 	// ArtifactEntity is an artifact entity
-	ArtifactEntity entityType = "artifact"
+	ArtifactEntity EntityType = "artifact"
 	// UnknownEntity is an explicitly unknown entity
-	UnknownEntity entityType = "unknown"
+	UnknownEntity EntityType = "unknown"
 )
 
 // String returns the string representation of the entity type
-func (e entityType) String() string {
+func (e EntityType) String() string {
 	return string(e)
 }
 
 // Enum value maps for Entity.
 var (
-	entityTypeToPb = map[entityType]pb.Entity{
+	entityTypeToPb = map[EntityType]pb.Entity{
 		RepositoryEntity:       pb.Entity_ENTITY_REPOSITORIES,
 		BuildEnvironmentEntity: pb.Entity_ENTITY_BUILD_ENVIRONMENTS,
 		ArtifactEntity:         pb.Entity_ENTITY_ARTIFACTS,
 		UnknownEntity:          pb.Entity_ENTITY_UNSPECIFIED,
 	}
-	pbToEntityType = map[pb.Entity]entityType{
+	pbToEntityType = map[pb.Entity]EntityType{
 		pb.Entity_ENTITY_REPOSITORIES:       RepositoryEntity,
 		pb.Entity_ENTITY_BUILD_ENVIRONMENTS: BuildEnvironmentEntity,
 		pb.Entity_ENTITY_ARTIFACTS:          ArtifactEntity,
@@ -72,7 +72,7 @@ func IsValidEntity(entity pb.Entity) bool {
 // FromString returns the Entity enum from a string. Typically used in CLI
 // when constructing a protobuf message
 func FromString(entity string) pb.Entity {
-	et := entityType(strings.ToLower(entity))
+	et := EntityType(strings.ToLower(entity))
 	// take advantage of the default value of the map being pb.Entity_ENTITY_UNSPECIFIED
 	return entityTypeToPb[et]
 }

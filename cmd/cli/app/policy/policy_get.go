@@ -18,9 +18,7 @@ package policy
 import (
 	"fmt"
 	"os"
-	"time"
 
-	"github.com/olekukonko/tablewriter"
 	"github.com/spf13/cobra"
 	"github.com/spf13/viper"
 
@@ -43,7 +41,7 @@ mediator control plane.`,
 		provider := viper.GetString("provider")
 		format := viper.GetString("output")
 
-		if format != app.JSON && format != app.YAML && format != "" {
+		if format != app.JSON && format != app.YAML && format != app.Table {
 			return fmt.Errorf("error: invalid format: %s", format)
 		}
 
@@ -56,61 +54,28 @@ mediator control plane.`,
 		defer cancel()
 
 		id := viper.GetInt32("id")
-		status := util.GetConfigValue("status", "status", cmd, false).(bool)
-		if status {
-			resp, err := client.GetPolicyStatusById(ctx, &pb.GetPolicyStatusByIdRequest{
-				Context: &pb.Context{
-					Provider: provider,
-					// TODO set up group if specified
-					// Currently it's inferred from the authorization token
-				},
-				PolicyId: id,
-			})
-			util.ExitNicelyOnError(err, "Error getting policy status")
+		policy, err := client.GetPolicyById(ctx, &pb.GetPolicyByIdRequest{
+			Context: &pb.Context{
+				Provider: provider,
+				// TODO set up group if specified
+				// Currently it's inferred from the authorization token
+			},
+			Id: id,
+		})
+		util.ExitNicelyOnError(err, "Error getting policy")
 
-			// print results
-			if format == "" {
-				table := tablewriter.NewWriter(os.Stdout)
-				table.SetHeader([]string{"Policy ID", "Policy Name", "Status", "Last updated"})
-
-				st := resp.GetPolicyStatus()
-				row := []string{
-					fmt.Sprintf("%d", st.PolicyId),
-					st.PolicyName,
-					st.PolicyStatus,
-					st.GetLastUpdated().AsTime().Format(time.RFC3339),
-				}
-				table.Append(row)
-				table.Render()
-			} else if format == app.JSON {
-				out, err := util.GetJsonFromProto(resp)
-				util.ExitNicelyOnError(err, "Error getting json from proto")
-				fmt.Println(out)
-			} else if format == app.YAML {
-				out, err := util.GetYamlFromProto(resp)
-				util.ExitNicelyOnError(err, "Error getting yaml from proto")
-				fmt.Println(out)
-			}
-		} else {
-			policy, err := client.GetPolicyById(ctx, &pb.GetPolicyByIdRequest{
-				Context: &pb.Context{
-					Provider: provider,
-					// TODO set up group if specified
-					// Currently it's inferred from the authorization token
-				},
-				Id: id,
-			})
-			util.ExitNicelyOnError(err, "Error getting policy")
-
-			if format == app.YAML {
-				out, err := util.GetYamlFromProto(policy)
-				util.ExitNicelyOnError(err, "Error getting yaml from proto")
-				fmt.Println(out)
-			} else {
-				out, err := util.GetJsonFromProto(policy)
-				util.ExitNicelyOnError(err, "Error getting json from proto")
-				fmt.Println(out)
-			}
+		switch format {
+		case app.YAML:
+			out, err := util.GetYamlFromProto(policy)
+			util.ExitNicelyOnError(err, "Error getting yaml from proto")
+			fmt.Println(out)
+		case app.JSON:
+			out, err := util.GetJsonFromProto(policy)
+			util.ExitNicelyOnError(err, "Error getting json from proto")
+			fmt.Println(out)
+		case app.Table:
+			p := policy.GetPolicy()
+			handleGetTableOutput(cmd, p)
 		}
 
 		return nil
@@ -120,8 +85,7 @@ mediator control plane.`,
 func init() {
 	PolicyCmd.AddCommand(policy_getCmd)
 	policy_getCmd.Flags().Int32P("id", "i", 0, "ID for the policy to query")
-	policy_getCmd.Flags().BoolP("status", "s", false, "Only return the status of the policy for all the associated repos")
-	policy_getCmd.Flags().StringP("output", "o", "", "Output format (json or yaml)")
+	policy_getCmd.Flags().StringP("output", "o", app.Table, "Output format (json, yaml or table)")
 	policy_getCmd.Flags().StringP("provider", "p", "github", "Provider for the policy")
 	// TODO set up group if specified
 
@@ -130,4 +94,12 @@ func init() {
 		os.Exit(1)
 	}
 
+}
+
+func handleGetTableOutput(cmd *cobra.Command, policy *pb.PipelinePolicy) {
+	table := initializeTable(cmd)
+
+	renderPolicyTable(policy, table)
+
+	table.Render()
 }

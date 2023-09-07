@@ -43,6 +43,9 @@ const JSON = "json"
 // YAML is the yaml format for output
 const YAML = "yaml"
 
+// Table is the table format for output
+const Table = "table"
+
 // Execute adds all child commands to the root command and sets flags appropriately.
 func Execute() {
 	err := RootCmd.Execute()
