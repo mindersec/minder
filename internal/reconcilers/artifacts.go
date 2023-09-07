@@ -221,19 +221,14 @@ func (e *Reconciler) handleArtifactsReconcilerEvent(ctx context.Context, prov st
 				},
 			}
 
-			eiw := engine.NewEntityInfoWrapper().
+			err = engine.NewEntityInfoWrapper().
 				WithProvider(prov).
 				WithVersionedArtifact(versionedArtifact).
 				WithGroupID(evt.Group).
 				WithArtifactID(newArtifact.ID).
-				WithRepositoryID(repository.ID)
-
-			msg, err := eiw.BuildMessage()
+				WithRepositoryID(repository.ID).
+				Publish(e.evt)
 			if err != nil {
-				return fmt.Errorf("error building message: %w", err)
-			}
-
-			if err := e.evt.Publish(engine.InternalEntityEventTopic, msg); err != nil {
 				return fmt.Errorf("error publishing message: %w", err)
 			}
 		}

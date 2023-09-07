@@ -22,6 +22,7 @@ import (
 	"google.golang.org/protobuf/encoding/protojson"
 	"google.golang.org/protobuf/reflect/protoreflect"
 
+	"github.com/stacklok/mediator/internal/events"
 	"github.com/stacklok/mediator/internal/util"
 	"github.com/stacklok/mediator/pkg/entities"
 	pb "github.com/stacklok/mediator/pkg/generated/protobuf/go/mediator/v1"
@@ -151,6 +152,20 @@ func (eiw *EntityInfoWrapper) BuildMessage() (*message.Message, error) {
 
 	msg := message.NewMessage(id.String(), nil)
 	return msg, eiw.ToMessage(msg)
+}
+
+// Publish builds a message.Message and publishes it to the event bus
+func (eiw *EntityInfoWrapper) Publish(evt *events.Eventer) error {
+	msg, err := eiw.BuildMessage()
+	if err != nil {
+		return err
+	}
+
+	if err := evt.Publish(InternalEntityEventTopic, msg); err != nil {
+		return fmt.Errorf("error publishing entity event: %w", err)
+	}
+
+	return nil
 }
 
 // ToMessage sets the information to a message.Message
