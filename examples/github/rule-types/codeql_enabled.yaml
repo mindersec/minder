@@ -12,7 +12,10 @@ guidance: |
   to ensure that vulnerabilities are not introduced into the codebase.
 
   To enable CodeQL, add a GitHub workflow to the repository that runs the
-  CodeQL analysis. For more information, see the [CodeQL documentation](https://docs.github.com/en/code-security/secure-coding/automatically-scanning-your-code-for-vulnerabilities-and-errors/configuring-code-scanning#configuring-code-scanning-for-a-private-repository).
+  CodeQL analysis.
+
+  For more information, see
+  https://docs.github.com/en/code-security/secure-coding/automatically-scanning-your-code-for-vulnerabilities-and-errors/configuring-code-scanning#configuring-code-scanning-for-a-private-repository
 def:
   # Defines the section of the pipeline the rule will appear in.
   # This will affect the template that is used to render multiple parts

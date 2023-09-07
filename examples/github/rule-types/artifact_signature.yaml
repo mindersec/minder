@@ -6,6 +6,13 @@ context:
   provider: github
   group: Root Group
 description: Verifies that a given artifact has a valid signature.
+guidance: |
+  Artifact signing allows a user to add a digital fingerprint to an artifact and verify its trust later.
+  It allows the artifact user to verify the source and trust the container image.
+  Mediator leverages sigstore(cosign) to verify an artifact has been signed.
+
+  For more information, see
+  https://docs.sigstore.dev/signing/signing_with_containers
 def:
   # Defines the section of the pipeline the rule will appear in.
   # This will affect the template that is used to render multiple parts
