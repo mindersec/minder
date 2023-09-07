@@ -776,7 +776,7 @@ func (s *Server) CreateRuleType(ctx context.Context, crt *pb.CreateRuleTypeReque
 		return nil, fmt.Errorf("cannot convert rule definition to db: %v", err)
 	}
 
-	_, err = s.store.CreateRuleType(ctx, db.CreateRuleTypeParams{
+	dbrtyp, err := s.store.CreateRuleType(ctx, db.CreateRuleTypeParams{
 		Name:        in.GetName(),
 		Provider:    entityCtx.GetProvider(),
 		GroupID:     entityCtx.GetGroup().GetID(),
@@ -787,6 +787,8 @@ func (s *Server) CreateRuleType(ctx context.Context, crt *pb.CreateRuleTypeReque
 	if err != nil {
 		return nil, status.Errorf(codes.Unknown, "failed to create rule type: %s", err)
 	}
+
+	in.Id = &dbrtyp.ID
 
 	return &pb.CreateRuleTypeResponse{
 		RuleType: in,

@@ -83,12 +83,10 @@ within a mediator control plane.`,
 			if err != nil {
 				return fmt.Errorf("error creating rule type: %w", err)
 			}
-			out, err := util.GetJsonFromProto(resp)
-			if err != nil {
-				return fmt.Errorf("error getting json from proto: %w", err)
-			}
 
-			fmt.Println(out)
+			table := initializeTable(cmd)
+			renderRuleTypeTable(resp.RuleType, table)
+			table.Render()
 		}
 
 		return nil

@@ -41,7 +41,11 @@ mediator control plane.`,
 		provider := viper.GetString("provider")
 		format := viper.GetString("output")
 
-		if format != app.JSON && format != app.YAML {
+		switch format {
+		case app.JSON:
+		case app.YAML:
+		case app.Table:
+		default:
 			return fmt.Errorf("error: invalid format: %s", format)
 		}
 
@@ -67,14 +71,17 @@ mediator control plane.`,
 			return fmt.Errorf("error getting rule type: %w", err)
 		}
 
-		if format == app.YAML {
+		switch format {
+		case app.YAML:
 			out, err := util.GetYamlFromProto(rtype)
 			util.ExitNicelyOnError(err, "Error getting json from proto")
 			fmt.Println(out)
-		} else {
+		case app.JSON:
 			out, err := util.GetJsonFromProto(rtype)
 			util.ExitNicelyOnError(err, "Error getting json from proto")
 			fmt.Println(out)
+		case app.Table:
+			handleGetTableOutput(cmd, rtype.GetRuleType())
 		}
 		return nil
 	},
@@ -83,7 +90,7 @@ mediator control plane.`,
 func init() {
 	ruleTypeCmd.AddCommand(ruleType_getCmd)
 	ruleType_getCmd.Flags().Int32P("id", "i", 0, "ID for the policy to query")
-	ruleType_getCmd.Flags().StringP("output", "o", app.YAML, "Output format (json or yaml)")
+	ruleType_getCmd.Flags().StringP("output", "o", app.Table, "Output format (json, yaml or table)")
 	ruleType_getCmd.Flags().StringP("provider", "p", "github", "Provider for the policy")
 	// TODO set up group if specified
 
@@ -92,4 +99,12 @@ func init() {
 		os.Exit(1)
 	}
 
+}
+
+func handleGetTableOutput(cmd *cobra.Command, rtype *pb.RuleType) {
+	table := initializeTable(cmd)
+
+	renderRuleTypeTable(rtype, table)
+
+	table.Render()
 }
