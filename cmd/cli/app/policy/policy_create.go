@@ -86,9 +86,9 @@ within a mediator control plane.`,
 			return fmt.Errorf("error creating policy: %w", err)
 		}
 
-		out, err := util.GetJsonFromProto(resp)
-		util.ExitNicelyOnError(err, "Error getting json from proto")
-		fmt.Println(out)
+		table := initializeTable(cmd)
+		renderPolicyTable(resp.GetPolicy(), table)
+		table.Render()
 		return nil
 	},
 }
