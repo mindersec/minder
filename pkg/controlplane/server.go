@@ -242,8 +242,11 @@ func (s *Server) StartHTTPServer(ctx context.Context) error {
 	// register the services (declared within register_handlers.go)
 	RegisterGatewayHTTPHandlers(ctx, gwmux, s.cfg.GRPCServer.GetAddress(), opts)
 
+	fs := http.FileServer(http.Dir("assets/"))
+
 	mux.Handle("/", gwmux)
 	mux.HandleFunc("/api/v1/webhook/", HandleGitHubWebHook(s.evt, s.store))
+	mux.Handle("/static/", http.StripPrefix("/static/", fs))
 
 	errch := make(chan error)
 
