@@ -1,12 +1,12 @@
 ---
 id: get_hacking
-title: Developer Guide
-sidebar_position: 5
+title: Get Hacking
+sidebar_position: 1
 slug: /get_hacking
 displayed_sidebar: mediator
 ---
 
-# Get Hacking (Development)
+# Get Hacking
 
 ## Prerequisites
 

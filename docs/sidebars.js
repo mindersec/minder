@@ -27,14 +27,14 @@
 // @ts-check
 const fs = require('fs');
 
-const folderPath = 'docs/cli/'; // Path to the folder containing the markdown files
-const sidebarItems = fs
-  .readdirSync(folderPath)
+const folderCLIPath = 'docs/cli/'; // Path to the folder containing the markdown files
+const sidebarCLIItems = fs
+  .readdirSync(folderCLIPath)
   .filter((file) => file.endsWith('.md'));
 
-const sidebar = [];
-sidebarItems.forEach((file) => {
-  sidebar.push({
+const sidebarCLI = [];
+sidebarCLIItems.forEach((file) => {
+  sidebarCLI.push({
     type: 'doc',
     label: file.replace('.md', '').replace(/_/g, ' '),
     id: 'cli/' + file.replace('.md', ''),
@@ -50,34 +50,40 @@ const sidebars = {
       id: 'mediator_intro',
     },
     {
+      type: 'category',
+      label: 'Getting Started',
+      items: [
+        'getting_started/login_medic',
+        'getting_started/register_repos',
+      ],
+    },
+    {
+      type: 'category',
+      label: 'Policy Engine',
+      items: [
+        'policy_engine/policy_introduction',
+        'policy_engine/manage_policies',
+      ],
+    },
+    {
+      type: 'category',
+      label: 'Run a Mediator Server',
+      items: [
+        'run_mediator_server/run_the_server',
+        'run_mediator_server/config_oauth',
+      ],
+    },
+    {
+      type: 'category',
+      label: 'Developer Guide',
+      items: [
+        'developer_guide/get_hacking',
+      ],
+    },
+    {
       type: 'doc',
       label: 'Architecture',
       id: 'mediator_architecture',
-    },
-    {
-      type: 'doc',
-      label: 'Getting Started (Run the Server)',
-      id: 'get_started',
-    },
-    {
-      type: 'doc',
-      label: 'Getting Started (Configure OAuth Provider)',
-      id: 'config_oauth',
-    },
-    {
-      type: 'doc',
-      label: 'Getting Started (Enroll User & Register Repositories)',
-      id: 'enroll_user',
-    },
-    {
-      type: 'doc',
-      label: 'Getting Started (Manage policies and violations)',
-      id: 'manage_policies',
-    },
-    {
-      type: 'doc',
-      label: 'Developer Guide',
-      id: 'get_hacking',
     },
     {
       type: 'link',
@@ -92,7 +98,7 @@ const sidebars = {
     {
       type: 'category',
       label: 'Mediator client documentation', 
-      items:   sidebar
+      items:   sidebarCLI
     },
     {
       type: 'doc',
