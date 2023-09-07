@@ -16,12 +16,10 @@ package engine
 
 import (
 	"context"
-	"encoding/json"
 	"fmt"
 	"log"
 
 	"github.com/ThreeDotsLabs/watermill/message"
-	"github.com/go-playground/validator/v10"
 	"github.com/rs/zerolog"
 
 	"github.com/stacklok/mediator/internal/events"
@@ -32,12 +30,8 @@ import (
 )
 
 const (
-	// InternalWebhookEventTopic is the topic for internal webhook events
-	InternalWebhookEventTopic = "internal.webhook.event"
-	// InternalInitEventTopic is the topic for internal init events
-	InternalInitEventTopic = "internal.init.event"
-	// InternalReconcilerEventTopic is the topic for internal reconciler events
-	InternalReconcilerEventTopic = "internal.reconciler.event"
+	// InternalEntityEventTopic is the topic for internal webhook events
+	InternalEntityEventTopic = "internal.entity.event"
 )
 
 // Executor is the engine that executes the rules for a given event
@@ -54,64 +48,22 @@ func NewExecutor(querier db.Store) *Executor {
 
 // Register implements the Consumer interface.
 func (e *Executor) Register(r events.Registrar) {
-	r.Register(InternalWebhookEventTopic, e.handleEntityEvent)
-	r.Register(InternalInitEventTopic, e.handleEntityEvent)
-	r.Register(InternalReconcilerEventTopic, e.handleReconcilerEvent)
+	r.Register(InternalEntityEventTopic, e.HandleEntityEvent)
 }
 
-// ReconcilerEvent is an event that is sent to the reconciler topic
-type ReconcilerEvent struct {
-	// Group is the group that the event is relevant to
-	Group int32 `json:"group" validate:"gte=0"`
-	// Repository is the repository to be reconciled
-	Repository int32 `json:"repository" validate:"gte=0"`
-}
-
-// handleReconcilerEvent handles events coming from the reconciler topic
-func (e *Executor) handleReconcilerEvent(msg *message.Message) error {
-	prov := msg.Metadata.Get("provider")
-
-	if prov != ghclient.Github {
-		log.Printf("provider %s not supported", prov)
-		return nil
-	}
-
-	var evt ReconcilerEvent
-	if err := json.Unmarshal(msg.Payload, &evt); err != nil {
-		return fmt.Errorf("error unmarshalling payload: %w", err)
-	}
-
-	// validate event
-	validate := validator.New()
-	if err := validate.Struct(evt); err != nil {
-		// We don't return the event since there's no use
-		// retrying it if it's invalid.
-		log.Printf("error validating event: %v", err)
-		return nil
-	}
-
-	ctx := msg.Context()
-	log.Printf("handling reconciler event for group %d and repository %d", evt.Group, evt.Repository)
-	return e.HandleArtifactsReconcilerEvent(ctx, prov, &evt)
-}
-
-// handleEntityEvent handles events coming from webhooks/signals
+// HandleEntityEvent handles events coming from webhooks/signals
 // as well as the init event.
-func (e *Executor) handleEntityEvent(msg *message.Message) error {
-	prov := msg.Metadata.Get("provider")
-
-	// TODO(jaosorior): get provider from database
-	if prov != ghclient.Github {
-		log.Printf("provider %s not supported", prov)
-		return nil
-	}
-
+func (e *Executor) HandleEntityEvent(msg *message.Message) error {
 	inf, err := parseEntityEvent(msg)
 	if err != nil {
 		return fmt.Errorf("error unmarshalling payload: %w", err)
 	}
 
-	log.Printf("got entity info %+v", inf)
+	// TODO(jaosorior): get provider from database
+	if inf.Provider != ghclient.Github {
+		log.Printf("provider %s not supported", inf.Provider)
+		return nil
+	}
 
 	ctx := msg.Context()
 
@@ -121,7 +73,7 @@ func (e *Executor) handleEntityEvent(msg *message.Message) error {
 		return fmt.Errorf("error getting group: %w", err)
 	}
 
-	cli, err := providers.BuildClient(ctx, prov, inf.GroupID, e.querier)
+	cli, err := providers.BuildClient(ctx, inf.Provider, inf.GroupID, e.querier)
 	if err != nil {
 		return fmt.Errorf("error building client: %w", err)
 	}
@@ -131,7 +83,7 @@ func (e *Executor) handleEntityEvent(msg *message.Message) error {
 			ID:   group.ID,
 			Name: group.Name,
 		},
-		Provider: prov,
+		Provider: inf.Provider,
 	}
 
 	return e.evalEntityEvent(ctx, inf, ectx, cli)
@@ -139,7 +91,7 @@ func (e *Executor) handleEntityEvent(msg *message.Message) error {
 
 func (e *Executor) evalEntityEvent(
 	ctx context.Context,
-	inf *entityInfoWrapper,
+	inf *EntityInfoWrapper,
 	ectx *EntityContext,
 	cli ghclient.RestAPI,
 ) error {
@@ -219,7 +171,7 @@ func logEval(
 	ctx context.Context,
 	pol *pb.PipelinePolicy,
 	rule *pb.PipelinePolicy_Rule,
-	inf *entityInfoWrapper,
+	inf *EntityInfoWrapper,
 	result error,
 ) {
 	logger := zerolog.Ctx(ctx).Debug().

@@ -28,6 +28,7 @@ import (
 
 	mockdb "github.com/stacklok/mediator/database/mock"
 	"github.com/stacklok/mediator/internal/config"
+	"github.com/stacklok/mediator/internal/events"
 	"github.com/stacklok/mediator/internal/util"
 	"github.com/stacklok/mediator/pkg/auth"
 	"github.com/stacklok/mediator/pkg/db"
@@ -206,7 +207,9 @@ func TestCreateUser_gRPC(t *testing.T) {
 
 			mockStore := mockdb.NewMockStore(ctrl)
 			tc.buildStubs(mockStore)
-			server, err := NewServer(mockStore, &config.Config{
+			evt, err := events.Setup()
+			require.NoError(t, err, "failed to setup eventer")
+			server, err := NewServer(mockStore, evt, &config.Config{
 				Salt: config.GetCryptoConfigWithDefaults(),
 			})
 			require.NoError(t, err, "failed to create test server")
@@ -324,7 +327,9 @@ func TestUpdatePassword_gRPC(t *testing.T) {
 			mockStore := mockdb.NewMockStore(ctrl)
 			tc.buildStubs(mockStore)
 
-			server, err := NewServer(mockStore, &config.Config{
+			evt, err := events.Setup()
+			require.NoError(t, err, "failed to setup eventer")
+			server, err := NewServer(mockStore, evt, &config.Config{
 				Salt: config.GetCryptoConfigWithDefaults(),
 			})
 			require.NoError(t, err, "failed to create test server")
@@ -442,7 +447,9 @@ func TestUpdateProfile_gRPC(t *testing.T) {
 			mockStore := mockdb.NewMockStore(ctrl)
 			tc.buildStubs(mockStore)
 
-			server, err := NewServer(mockStore, &config.Config{
+			evt, err := events.Setup()
+			require.NoError(t, err, "failed to setup eventer")
+			server, err := NewServer(mockStore, evt, &config.Config{
 				Salt: config.GetCryptoConfigWithDefaults(),
 			})
 			require.NoError(t, err, "failed to create test server")
@@ -576,7 +583,9 @@ func TestDeleteUser_gRPC(t *testing.T) {
 			mockStore := mockdb.NewMockStore(ctrl)
 			tc.buildStubs(mockStore)
 
-			server, err := NewServer(mockStore, &config.Config{
+			evt, err := events.Setup()
+			require.NoError(t, err, "failed to setup eventer")
+			server, err := NewServer(mockStore, evt, &config.Config{
 				Salt: config.GetCryptoConfigWithDefaults(),
 			})
 			require.NoError(t, err, "failed to create test server")
@@ -740,7 +749,9 @@ func TestGetUsers_gRPC(t *testing.T) {
 			mockStore := mockdb.NewMockStore(ctrl)
 			tc.buildStubs(mockStore)
 
-			server, err := NewServer(mockStore, &config.Config{
+			evt, err := events.Setup()
+			require.NoError(t, err, "failed to setup eventer")
+			server, err := NewServer(mockStore, evt, &config.Config{
 				Salt: config.GetCryptoConfigWithDefaults(),
 			})
 			require.NoError(t, err, "failed to create test server")
@@ -923,7 +934,9 @@ func TestGetUser_gRPC(t *testing.T) {
 			mockStore := mockdb.NewMockStore(ctrl)
 			tc.buildStubs(mockStore)
 
-			server, err := NewServer(mockStore, &config.Config{
+			evt, err := events.Setup()
+			require.NoError(t, err, "failed to setup eventer")
+			server, err := NewServer(mockStore, evt, &config.Config{
 				Salt: config.GetCryptoConfigWithDefaults(),
 			})
 			require.NoError(t, err, "failed to create test server")
