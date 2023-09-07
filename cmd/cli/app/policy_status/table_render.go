@@ -18,6 +18,7 @@ package policy_status
 import (
 	"fmt"
 	"strings"
+	"time"
 
 	"github.com/olekukonko/tablewriter"
 	"github.com/spf13/cobra"
@@ -53,7 +54,7 @@ func renderPolicyStatusTable(
 		fmt.Sprintf("%d", ps.PolicyId),
 		ps.PolicyName,
 		getStatusText(ps.PolicyStatus),
-		ps.LastUpdated.AsTime().Format("2006-01-02 15:04:05"),
+		ps.LastUpdated.AsTime().Format(time.RFC3339),
 	}
 
 	table.Rich(row, []tablewriter.Colors{
