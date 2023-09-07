@@ -45,6 +45,8 @@ repository:
         def: {}
       - type: dependabot_enabled
         def: {}
+      - type: dockerfile_no_latest_tag
+        def: {}
 artifact:
   - context: github
     rules:
