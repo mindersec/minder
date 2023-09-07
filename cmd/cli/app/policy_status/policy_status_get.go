@@ -22,6 +22,7 @@ import (
 	"github.com/spf13/cobra"
 	"github.com/spf13/viper"
 
+	"github.com/stacklok/mediator/cmd/cli/app"
 	"github.com/stacklok/mediator/internal/util"
 	"github.com/stacklok/mediator/pkg/entities"
 	pb "github.com/stacklok/mediator/pkg/generated/protobuf/go/mediator/v1"
@@ -55,10 +56,9 @@ mediator control plane for an specific provider/group or policy id, entity type 
 		entityType := viper.GetString("entity-type")
 		format := viper.GetString("output")
 
-		// the linter complains that this should be a constant doing that should probably be part
-		// of a larger refactor of the CLI (see issue #690)
-		// nolint: goconst
-		if format != "json" && format != "yaml" {
+		switch format {
+		case app.JSON, app.YAML, app.Table:
+		default:
 			return fmt.Errorf("error: invalid format: %s", format)
 		}
 
@@ -96,14 +96,17 @@ mediator control plane for an specific provider/group or policy id, entity type 
 			return fmt.Errorf("error getting policy status: %w", err)
 		}
 
-		if format == "json" {
+		switch format {
+		case app.JSON:
 			out, err := util.GetJsonFromProto(resp)
 			util.ExitNicelyOnError(err, "Error getting json from proto")
 			fmt.Println(out)
-		} else {
+		case app.YAML:
 			out, err := util.GetYamlFromProto(resp)
 			util.ExitNicelyOnError(err, "Error getting yaml from proto")
 			fmt.Println(out)
+		case app.Table:
+			handlePolicyStatusListTable(cmd, resp)
 		}
 
 		return nil
@@ -118,5 +121,5 @@ func init() {
 	policystatus_getCmd.Flags().StringP("entity-type", "t", "",
 		fmt.Sprintf("the entity type to get policy status for (one of %s)", entities.KnownTypesCSV()))
 	policystatus_getCmd.Flags().Int32P("entity", "e", 0, "entity id to get policy status for")
-	policystatus_getCmd.Flags().StringP("output", "o", "yaml", "Output format (json or yaml)")
+	policystatus_getCmd.Flags().StringP("output", "o", app.Table, "Output format (json, yaml or table)")
 }

@@ -22,6 +22,7 @@ import (
 	"github.com/spf13/cobra"
 	"github.com/spf13/viper"
 
+	"github.com/stacklok/mediator/cmd/cli/app"
 	"github.com/stacklok/mediator/internal/util"
 	pb "github.com/stacklok/mediator/pkg/generated/protobuf/go/mediator/v1"
 )
@@ -51,9 +52,11 @@ mediator control plane for an specific provider/group or policy id.`,
 		group := viper.GetString("group")
 		policyId := viper.GetInt32("policy")
 		format := viper.GetString("output")
-		all := viper.GetBool("all")
+		all := viper.GetBool("detailed")
 
-		if format != "json" && format != "yaml" {
+		switch format {
+		case app.JSON, app.YAML, app.Table:
+		default:
 			return fmt.Errorf("error: invalid format: %s", format)
 		}
 
@@ -84,14 +87,21 @@ mediator control plane for an specific provider/group or policy id.`,
 			return fmt.Errorf("error getting policy status: %w", err)
 		}
 
-		if format == "json" {
+		switch format {
+		case app.JSON:
 			out, err := util.GetJsonFromProto(resp)
 			util.ExitNicelyOnError(err, "Error getting json from proto")
 			fmt.Println(out)
-		} else {
+		case app.YAML:
 			out, err := util.GetYamlFromProto(resp)
 			util.ExitNicelyOnError(err, "Error getting yaml from proto")
 			fmt.Println(out)
+		case app.Table:
+			handlePolicyStatusListTable(cmd, resp)
+
+			if all {
+				handleRuleEvaluationStatusListTable(cmd, resp)
+			}
 		}
 
 		return nil
@@ -103,6 +113,25 @@ func init() {
 	policystatus_listCmd.Flags().StringP("provider", "p", "github", "Provider to list policy status for")
 	policystatus_listCmd.Flags().StringP("group", "g", "", "group id to list policy status for")
 	policystatus_listCmd.Flags().Int32P("policy", "i", 0, "policy id to list policy status for")
-	policystatus_listCmd.Flags().StringP("output", "o", "yaml", "Output format (json or yaml)")
-	policystatus_listCmd.Flags().BoolP("all", "a", false, "List all policy violations")
+	policystatus_listCmd.Flags().StringP("output", "o", app.Table, "Output format (json, yaml or table)")
+	policystatus_listCmd.Flags().BoolP("detailed", "d", false, "List all policy violations")
+}
+
+func handlePolicyStatusListTable(cmd *cobra.Command, resp *pb.GetPolicyStatusByIdResponse) {
+	table := initializePolicyStatusTable(cmd)
+
+	renderPolicyStatusTable(resp.PolicyStatus, table)
+
+	table.Render()
+}
+
+func handleRuleEvaluationStatusListTable(cmd *cobra.Command, resp *pb.GetPolicyStatusByIdResponse) {
+	table := initializeRuleEvaluationStatusTable(cmd)
+
+	for idx := range resp.RuleEvaluationStatus {
+		reval := resp.RuleEvaluationStatus[idx]
+		renderRuleEvaluationStatusTable(reval, table)
+	}
+
+	table.Render()
 }
