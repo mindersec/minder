@@ -153,7 +153,7 @@ func (e *Reconciler) handleArtifactsReconcilerEvent(ctx context.Context, prov st
 			}
 
 			tags := version.Metadata.Container.Tags
-			if container.TagIsSignature(tags) {
+			if container.TagsContainSignature(tags) {
 				continue
 			}
 			sort.Strings(tags)

@@ -57,6 +57,19 @@ import (
 // CONTAINER_TYPE is the type for container artifacts
 var CONTAINER_TYPE = "container"
 
+type tagIsASignatureError struct {
+	message      string
+	signatureTag string
+}
+
+func (e *tagIsASignatureError) Error() string {
+	return e.message
+}
+
+func newTagIsASignatureError(msg, signatureTag string) *tagIsASignatureError {
+	return &tagIsASignatureError{message: msg, signatureTag: signatureTag}
+}
+
 // Repository represents a GitHub repository
 type Repository struct {
 	Owner  string
@@ -365,7 +378,7 @@ func parseArtifactPublishedEvent(
 		return fmt.Errorf("error building client: %w", err)
 	}
 
-	versionedArtifact, err := gatherVersionedArtifact(ctx, cli, whPayload)
+	versionedArtifact, err := gatherVersionedArtifact(ctx, cli, store, whPayload)
 	if err != nil {
 		return fmt.Errorf("error gathering versioned artifact: %w", err)
 	}
@@ -506,6 +519,44 @@ func gatherArtifactInfo(
 	return artifact, nil
 }
 
+func transformTag(tag string) string {
+	// Define the prefix to match and its replacement
+	const prefixToMatch = "sha256-"
+	const prefixReplacement = "sha256:"
+
+	// If the tag starts with the prefix to match, replace it with the replacement prefix
+	if strings.HasPrefix(tag, prefixToMatch) {
+		tag = prefixReplacement + tag[len(prefixToMatch):]
+	}
+
+	// If the tag has a trailing ".sig", strip it off
+	return strings.TrimSuffix(tag, ".sig")
+}
+
+// handles the case when we get a notification about an image,
+// but a signature arrives a bit later. In that case, we need to:
+// -- search for a version whose sha matches the signature tag
+// -- if found, update the signature verification field
+func lookUpVersionBySignature(
+	ctx context.Context,
+	store db.Store,
+	sigTag string,
+) (*pb.ArtifactVersion, error) {
+	storedVersion, err := store.GetArtifactVersionBySha(ctx, transformTag(sigTag))
+	if errors.Is(err, sql.ErrNoRows) {
+		return nil, nil
+	} else if err != nil {
+		return nil, fmt.Errorf("error looking up version by signature: %w", err)
+	}
+
+	return &pb.ArtifactVersion{
+		VersionId: int64(storedVersion.Version),
+		Tags:      strings.Split(storedVersion.Tags.String, ","),
+		Sha:       storedVersion.Sha,
+		CreatedAt: timestamppb.New(storedVersion.CreatedAt),
+	}, nil
+}
+
 func gatherArtifactVersionInfo(
 	ctx context.Context,
 	cli ghclient.RestAPI,
@@ -530,6 +581,7 @@ func gatherArtifactVersionInfo(
 func gatherVersionedArtifact(
 	ctx context.Context,
 	cli ghclient.RestAPI,
+	store db.Store,
 	payload map[string]any,
 ) (*pb.VersionedArtifact, error) {
 	artifact, err := gatherArtifactInfo(ctx, cli, payload)
@@ -537,20 +589,64 @@ func gatherVersionedArtifact(
 		return nil, fmt.Errorf("error gatherinfo artifact info: %w", err)
 	}
 
+	var tagIsSigErr *tagIsASignatureError
 	version, err := gatherArtifactVersionInfo(ctx, cli, payload, artifact.Owner, artifact.Name)
-	if err != nil {
-		return nil, fmt.Errorf("error extracting artifact from payload: %w", err)
-	}
+	if errors.As(err, &tagIsSigErr) {
+		storedVersion, lookupErr := lookUpVersionBySignature(ctx, store, tagIsSigErr.signatureTag)
+		if lookupErr != nil {
+			return nil, fmt.Errorf("error looking up version by signature tag: %w", lookupErr)
+		}
+		if storedVersion == nil {
+			// not much we can do about the version not being there, let's hope the signed container arrives later
+			// but don't return nil, there's no point in retrying either
+			return nil, nil
+		}
+		// let's continue with the stored version
 
-	if version == nil {
-		// no point in storing and evaluating just the .sig
-		return nil, nil
+		// now get information for signature and workflow
+		err = storeSignatureAndWorkflowInVersion(
+			ctx, cli, artifact.Owner, artifact.Name, transformTag(tagIsSigErr.signatureTag), storedVersion)
+		if err != nil {
+			return nil, fmt.Errorf("error storing signature and workflow in version: %w", err)
+		}
+
+		version = storedVersion
+	} else if err != nil {
+		return nil, fmt.Errorf("error extracting artifact from payload: %w", err)
 	}
 
 	return &pb.VersionedArtifact{
 		Artifact: artifact,
 		Version:  version,
 	}, nil
+}
+
+func storeSignatureAndWorkflowInVersion(
+	ctx context.Context,
+	client ghclient.RestAPI,
+	artifactOwnerLogin, artifactName, packageVersionName string,
+	version *pb.ArtifactVersion,
+) error {
+	// now get information for signature and workflow
+	sigInfo, workflowInfo, err := container.GetArtifactSignatureAndWorkflowInfo(
+		ctx, client, artifactOwnerLogin, artifactName, packageVersionName)
+	if err != nil {
+		return fmt.Errorf("error getting signature and workflow info: %w", err)
+	}
+
+	ghWorkflow := &pb.GithubWorkflow{}
+	if err := protojson.Unmarshal(workflowInfo, ghWorkflow); err != nil {
+		return err
+	}
+
+	sigVerification := &pb.SignatureVerification{}
+	if err := protojson.Unmarshal(sigInfo, sigVerification); err != nil {
+		return err
+	}
+
+	version.SignatureVerification = sigVerification
+	version.GithubWorkflow = ghWorkflow
+	return nil
 }
 
 func updateArtifactVersionFromRegistry(
@@ -574,33 +670,19 @@ func updateArtifactVersionFromRegistry(
 	}
 
 	tags := ghVersion.Metadata.Container.Tags
-	if container.TagIsSignature(tags) {
-		// we don't care about signatures
-		return nil
+	if container.TagsContainSignature(tags) {
+		// handle the case where a signature arrives later than the image
+		return newTagIsASignatureError("version is a signature", container.FindSignatureTag(tags))
 	}
 	sort.Strings(tags)
 
 	// now get information for signature and workflow
-	sigInfo, workflowInfo, err := container.GetArtifactSignatureAndWorkflowInfo(
-		ctx, client, artifactOwnerLogin, artifactName, packageVersionName)
-	if errors.Is(err, container.ErrSigValidation) || errors.Is(err, container.ErrProtoParse) {
-		return err
-	} else if err != nil {
-		return err
+	err = storeSignatureAndWorkflowInVersion(
+		ctx, client, artifactOwnerLogin, artifactName, packageVersionName, version)
+	if err != nil {
+		return fmt.Errorf("error storing signature and workflow in version: %w", err)
 	}
 
-	ghWorkflow := &pb.GithubWorkflow{}
-	if err := protojson.Unmarshal(workflowInfo, ghWorkflow); err != nil {
-		return err
-	}
-
-	sigVerification := &pb.SignatureVerification{}
-	if err := protojson.Unmarshal(sigInfo, sigVerification); err != nil {
-		return err
-	}
-
-	version.SignatureVerification = sigVerification
-	version.GithubWorkflow = ghWorkflow
 	version.Tags = tags
 	if ghVersion.CreatedAt != nil {
 		version.CreatedAt = timestamppb.New(*ghVersion.CreatedAt.GetTime())
