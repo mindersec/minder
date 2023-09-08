@@ -64,6 +64,8 @@ within a mediator control plane.`,
 			return fmt.Errorf("error expanding file args: %w", err)
 		}
 
+		table := initializeTable(cmd)
+
 		for _, f := range expfiles {
 			preader, closer, err := util.OpenFileArg(f, cmd.InOrStdin())
 			if err != nil {
@@ -84,10 +86,10 @@ within a mediator control plane.`,
 				return fmt.Errorf("error creating rule type: %w", err)
 			}
 
-			table := initializeTable(cmd)
 			renderRuleTypeTable(resp.RuleType, table)
-			table.Render()
 		}
+
+		table.Render()
 
 		return nil
 	},
