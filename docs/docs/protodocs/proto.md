@@ -910,7 +910,7 @@ DiffType defines the diff data ingester.
 | Field | Type | Label | Description |
 | ----- | ---- | ----- | ----------- |
 | name | [string](#string) |  | file changed, e.g. package-lock.json |
-| patchUrl | [string](#string) |  | points to the the raw patchfile |
+| patch_url | [string](#string) |  | points to the the raw patchfile |
 
 
 
@@ -3143,7 +3143,7 @@ user record to be returned
 
 | Name | Number | Description |
 | ---- | ------ | ----------- |
-| DEP_ECOSYSTEM_UNKNOWN | 0 |  |
+| DEP_ECOSYSTEM_UNSPECIFIED | 0 |  |
 | DEP_ECOSYSTEM_NPM | 1 |  |
 
 
