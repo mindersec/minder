@@ -70,6 +70,40 @@ allow {
 	require.ErrorIs(t, err, engerrors.ErrEvaluationFailed, "should have failed the evaluation")
 }
 
+func TestEvaluatorDenyByDefaultSkip(t *testing.T) {
+	t.Parallel()
+
+	e, err := rego.NewRegoEvaluator(
+		&pb.RuleType_Definition_Eval_Rego{
+			Type: rego.DenyByDefaultEvaluationType.String(),
+			Def: `
+package mediator
+
+default allow = false
+
+allow {
+	input.ingested.data == "foo"
+}
+
+skip {
+	true
+}
+`,
+		},
+	)
+	require.NoError(t, err, "could not create evaluator")
+
+	emptyPol := map[string]any{}
+
+	// Doesn't match
+	err = e.Eval(context.Background(), emptyPol, &engif.Result{
+		Object: map[string]any{
+			"data": "bar",
+		},
+	})
+	require.ErrorIs(t, err, engerrors.ErrEvaluationSkipped, "should have been skipped")
+}
+
 func TestEvaluatorDenyByConstraintsEvalSimple(t *testing.T) {
 	t.Parallel()
 

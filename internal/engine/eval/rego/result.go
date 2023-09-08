@@ -54,15 +54,50 @@ type denyByDefaultEvaluator struct {
 }
 
 func (*denyByDefaultEvaluator) getQuery() func(r *rego.Rego) {
-	return rego.Query("data.mediator.allow")
+	return rego.Query("data.mediator")
 }
 
 func (*denyByDefaultEvaluator) parseResult(rs rego.ResultSet) error {
 	if len(rs) == 0 {
-		return engerrors.NewErrEvaluationFailed("Evaluation failed: no results")
+		return engerrors.NewErrEvaluationFailed("no results")
 	}
 
-	if rs.Allowed() {
+	res := rs[0]
+
+	if len(res.Expressions) == 0 {
+		return engerrors.NewErrEvaluationFailed("no expressions")
+	}
+
+	// get first expression
+	exprRaw := res.Expressions[0]
+	exprVal := exprRaw.Value
+	expr, ok := exprVal.(map[string]any)
+	if !ok {
+		return engerrors.NewErrEvaluationFailed("unable to get result expression")
+	}
+
+	// check if skipped
+	skipped, ok := expr["skip"]
+	if ok {
+		skippedBool, ok := skipped.(bool)
+		// if skipped is true, return skipped error
+		if ok && skippedBool {
+			return engerrors.NewErrEvaluationSkipped("rule not applicable")
+		}
+	}
+
+	// check if allowed
+	allowed, ok := expr["allow"]
+	if !ok {
+		return engerrors.NewErrEvaluationFailed("unable to get allow result")
+	}
+
+	allowedBool, ok := allowed.(bool)
+	if !ok {
+		return engerrors.NewErrEvaluationFailed("allow result is not a bool")
+	}
+
+	if allowedBool {
 		return nil
 	}
 

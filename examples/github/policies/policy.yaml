@@ -43,8 +43,16 @@ repository:
         def: {}
       - type: actions_check_pinned_tags
         def: {}
-      - type: dependabot_enabled
-        def: {}
+      - type: dependabot_configured
+        def:
+          package_ecosystem: gomod
+          schedule_interval: weekly
+          apply_if_file: go.mod
+      - type: dependabot_configured
+        def:
+          package_ecosystem: npm
+          schedule_interval: weekly
+          apply_if_file: package.json
       - type: dockerfile_no_latest_tag
         def: {}
       - type: trivy_action_enabled
