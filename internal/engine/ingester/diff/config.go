@@ -12,13 +12,28 @@
 // See the License for the specific language governing permissions and
 // limitations under the License.
 
-// Package git provides the git rule data ingest engine
-package git
+// Package diff provides the diff rule data ingest engine
+package diff
+
+// DependencyEcosystem is the type of dependency ecosystem
+type DependencyEcosystem string
+
+const (
+	// DepEcosystemNPM is the npm dependency ecosystem
+	DepEcosystemNPM DependencyEcosystem = "npm"
+	// DepEcosystemNone is the fallback value
+	DepEcosystemNone DependencyEcosystem = ""
+)
+
+// EcosystemMapping is the mapping of a dependency ecosystem to a set of files
+type EcosystemMapping struct {
+	Ecosystem DependencyEcosystem `json:"ecosystem" yaml:"ecosystem" mapstructure:"ecosystem"`
+	Files     []string            `json:"files" yaml:"files" mapstructure:"files"`
+}
 
 // IngesterConfig is the policy-provided configuration for the git ingester
 // This allows for users to pass in configuration to the ingester
 // in different calls as opposed to having to set it in the rule type.
 type IngesterConfig struct {
-	Branch   string `json:"branch" yaml:"branch" mapstructure:"branch"`
-	CloneURL string `json:"clone_url" yaml:"clone_url" mapstructure:"clone_url"`
+	Ecosystems []EcosystemMapping `json:"ecosystems" yaml:"ecosystems" mapstructure:"ecosystems"`
 }

@@ -200,6 +200,8 @@ func GetRulesForEntity(p *pb.PipelinePolicy, entity pb.Entity) ([]*pb.PipelinePo
 		return p.BuildEnvironment, nil
 	case pb.Entity_ENTITY_ARTIFACTS:
 		return p.Artifact, nil
+	case pb.Entity_ENTITY_PULL_REQUESTS:
+		return p.PullRequest, nil
 	default:
 		return nil, fmt.Errorf("unknown entity: %s", entity)
 	}
@@ -331,6 +333,8 @@ func rowInfoToPolicyMap(
 		policy.BuildEnvironment = ruleset
 	case pb.Entity_ENTITY_ARTIFACTS:
 		policy.Artifact = ruleset
+	case pb.Entity_ENTITY_PULL_REQUESTS:
+		policy.PullRequest = ruleset
 	}
 
 	return policy

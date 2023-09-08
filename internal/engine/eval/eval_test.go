@@ -82,7 +82,7 @@ func TestNewRuleEvaluatorWorks(t *testing.T) {
 		t.Run(tt.name, func(t *testing.T) {
 			t.Parallel()
 
-			got, err := eval.NewRuleEvaluator(tt.args.rt)
+			got, err := eval.NewRuleEvaluator(tt.args.rt, nil)
 			assert.NoError(t, err, "unexpected error")
 			assert.NotNil(t, got, "unexpected nil")
 		})
@@ -157,7 +157,7 @@ func TestNewRuleEvaluatorFails(t *testing.T) {
 		t.Run(tt.name, func(t *testing.T) {
 			t.Parallel()
 
-			got, err := eval.NewRuleEvaluator(tt.args.rt)
+			got, err := eval.NewRuleEvaluator(tt.args.rt, nil)
 			assert.Error(t, err, "should have errored")
 			assert.Nil(t, got, "should be nil")
 		})
