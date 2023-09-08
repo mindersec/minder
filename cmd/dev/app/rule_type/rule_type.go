@@ -31,6 +31,7 @@ import (
 
 	"github.com/stacklok/mediator/cmd/dev/app"
 	"github.com/stacklok/mediator/internal/engine"
+	"github.com/stacklok/mediator/internal/engine/eval/rego"
 	"github.com/stacklok/mediator/internal/util"
 	"github.com/stacklok/mediator/pkg/entities"
 	pb "github.com/stacklok/mediator/pkg/generated/protobuf/go/mediator/v1"
@@ -76,6 +77,12 @@ func testCmdRun(cmd *cobra.Command, _ []string) error {
 	rtpath := cmd.Flag("rule-type")
 	epath := cmd.Flag("entity")
 	ppath := cmd.Flag("policy")
+
+	// set rego env variable for debugging
+	if err := os.Setenv(rego.EnablePrintEnvVar, "true"); err != nil {
+		fmt.Printf("Unable to set %s environment variable: %s\n", rego.EnablePrintEnvVar, err)
+		fmt.Println("If the rule you're testing is rego-based, you will not be able to use `print` statements for debugging.")
+	}
 
 	rt, err := readRuleTypeFromFile(rtpath.Value.String())
 	if err != nil {

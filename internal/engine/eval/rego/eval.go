@@ -19,8 +19,10 @@ package rego
 import (
 	"context"
 	"fmt"
+	"os"
 
 	"github.com/open-policy-agent/opa/rego"
+	"github.com/open-policy-agent/opa/topdown/print"
 
 	engif "github.com/stacklok/mediator/internal/engine/interfaces"
 	pb "github.com/stacklok/mediator/pkg/generated/protobuf/go/mediator/v1"
@@ -29,6 +31,11 @@ import (
 const (
 	// RegoEvalType is the type of the rego evaluator
 	RegoEvalType = "rego"
+)
+
+const (
+	// EnablePrintEnvVar is the environment variable to enable print statements
+	EnablePrintEnvVar = "REGO_ENABLE_PRINT"
 )
 
 // Evaluator is the evaluator for rego rules
@@ -49,6 +56,16 @@ type Input struct {
 	Ingested any `json:"ingested"`
 }
 
+type hook struct {
+}
+
+func (*hook) Print(_ print.Context, msg string) error {
+	fmt.Println(msg)
+	return nil
+}
+
+var _ print.Hook = (*hook)(nil)
+
 // NewRegoEvaluator creates a new rego evaluator
 func NewRegoEvaluator(cfg *pb.RuleType_Definition_Eval_Rego) (*Evaluator, error) {
 	c, err := parseConfig(cfg)
@@ -58,7 +75,7 @@ func NewRegoEvaluator(cfg *pb.RuleType_Definition_Eval_Rego) (*Evaluator, error)
 
 	re := c.getEvalType()
 
-	return &Evaluator{
+	eval := &Evaluator{
 		cfg:     c,
 		reseval: re,
 		regoOpts: []func(*rego.Rego){
@@ -66,7 +83,17 @@ func NewRegoEvaluator(cfg *pb.RuleType_Definition_Eval_Rego) (*Evaluator, error)
 			rego.Module("mediator.rego", c.Def),
 			rego.Strict(true),
 		},
-	}, nil
+	}
+
+	if os.Getenv(EnablePrintEnvVar) == "true" {
+		h := &hook{}
+		eval.regoOpts = append(eval.regoOpts,
+			rego.EnablePrintStatements(true),
+			rego.PrintHook(h),
+		)
+	}
+
+	return eval, nil
 }
 
 func (e *Evaluator) newRegoFromOptions(opts ...func(*rego.Rego)) *rego.Rego {
