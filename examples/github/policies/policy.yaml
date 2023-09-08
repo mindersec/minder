@@ -47,6 +47,8 @@ repository:
         def: {}
       - type: dockerfile_no_latest_tag
         def: {}
+      - type: trivy_action_enabled
+        def: {}
 artifact:
   - context: github
     rules:
