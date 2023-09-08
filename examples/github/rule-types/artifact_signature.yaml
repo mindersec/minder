@@ -36,7 +36,6 @@ def:
         "enum": ["container"]
         description: "The type of artifact to check. Currently only container is supported."
     required:
-      - name
       - tags
   # Defines the schema for writing a rule with this rule being checked
   rule_schema:

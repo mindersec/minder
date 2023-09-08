@@ -99,7 +99,7 @@ func isApplicableArtifact(
 		return false, "artifact type mismatch"
 	}
 
-	if cfg.Name != versionedArtifact.Artifact.Name {
+	if cfg.Name != "" && cfg.Name != versionedArtifact.Artifact.Name {
 		// not interested in this artifact
 		return false, "artifact name mismatch"
 	}
