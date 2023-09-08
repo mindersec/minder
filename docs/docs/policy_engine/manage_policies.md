@@ -189,8 +189,8 @@ Policy status can be checked using the following commands
 medic policy_status list --policy 1
 ```
 
-or
+To view all of the rule evaluations, use the following
 
 ```bash
-medic policy get --id 1 --output yaml
+medic policy_status list --policy 1 --detailed
 ```
