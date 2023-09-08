@@ -51,6 +51,9 @@ func renderPolicyTable(
 
 	// artifacts
 	renderEntityRuleSets(p, entities.ArtifactEntity, p.Artifact, table)
+
+	// artifacts
+	renderEntityRuleSets(p, entities.PullRequestEntity, p.PullRequest, table)
 }
 
 func renderEntityRuleSets(

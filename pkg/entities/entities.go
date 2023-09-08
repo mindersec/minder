@@ -107,6 +107,8 @@ func EntityTypeFromDB(entity db.Entities) pb.Entity {
 		return pb.Entity_ENTITY_BUILD_ENVIRONMENTS
 	case db.EntitiesArtifact:
 		return pb.Entity_ENTITY_ARTIFACTS
+	case db.EntitiesPullRequest:
+		return pb.Entity_ENTITY_PULL_REQUESTS
 	default:
 		return pb.Entity_ENTITY_UNSPECIFIED
 	}
@@ -123,6 +125,8 @@ func EntityTypeToDB(entity pb.Entity) db.Entities {
 		dbEnt = db.EntitiesBuildEnvironment
 	case pb.Entity_ENTITY_ARTIFACTS:
 		dbEnt = db.EntitiesArtifact
+	case pb.Entity_ENTITY_PULL_REQUESTS:
+		dbEnt = db.EntitiesPullRequest
 	}
 
 	return dbEnt
