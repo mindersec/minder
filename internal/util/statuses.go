@@ -61,9 +61,8 @@ func UserVisibleError(code codes.Code, message string, args ...any) *NiceStatus 
 }
 
 // FromRpcError convert a grpc status.Status to a nice status for formatting
-func FromRpcError(s *status.Status) NiceStatus {
-	ns := NiceStatus{}
-	ns.SetCode(s.Code())
+func FromRpcError(s *status.Status) *NiceStatus {
+	ns := GetNiceStatus(s.Code())
 	if s.Message() != "" {
 		ns.Details = s.Message()
 	}
@@ -190,7 +189,7 @@ func ExitNicelyOnError(err error, message string) {
 	if err != nil {
 		if rpcStatus, ok := status.FromError(err); ok {
 			nice := FromRpcError(rpcStatus)
-			fmt.Fprintf(os.Stderr, "%s: %s\n", message, nice.String())
+			fmt.Fprintf(os.Stderr, "%s: %s\n", message, nice)
 			os.Exit(int(nice.Code))
 		} else {
 			fmt.Fprintf(os.Stderr, "%s: %s\n", message, err)
