@@ -26,7 +26,6 @@ import (
 	"context"
 	"fmt"
 	"os"
-	"strings"
 
 	"google.golang.org/grpc"
 	"google.golang.org/grpc/codes"
@@ -35,7 +34,7 @@ import (
 
 // NiceStatus A wrapper around a status to give a better description.
 type NiceStatus struct {
-	// Descritpion status code
+	// Description status code
 	Code codes.Code
 	// Name
 	Name string
@@ -49,6 +48,26 @@ type NiceStatus struct {
 func GetNiceStatus(code codes.Code) *NiceStatus {
 	s := &NiceStatus{}
 	return s.SetCode(code)
+}
+
+// UserVisibleError returns a status error where message is visible to the user,
+// rather than being filtered to generic advice.  You need to use this explicitly,
+// so that it's easy to track where we are providing (leaking) user-visible
+// information from mediator.
+func UserVisibleError(code codes.Code, message string, args ...any) *NiceStatus {
+	ret := GetNiceStatus(code)
+	ret.Details = fmt.Sprintf(message, args...)
+	return ret
+}
+
+// FromRpcError convert a grpc status.Status to a nice status for formatting
+func FromRpcError(s *status.Status) NiceStatus {
+	ns := NiceStatus{}
+	ns.SetCode(s.Code())
+	if s.Message() != "" {
+		ns.Details = s.Message()
+	}
+	return ns
 }
 
 // SetCode generates the nice status from the code.
@@ -169,15 +188,14 @@ func (s *NiceStatus) Error() string {
 // ExitNicelyOnError print a message and exit with the right code
 func ExitNicelyOnError(err error, message string) {
 	if err != nil {
-		ret := status.Convert(err)
-		ns := GetNiceStatus(ret.Code())
-		es := fmt.Sprintf("%s", err)
-		if len(es) > 0 && !strings.Contains(es, "rpc error:") {
-			fmt.Fprintf(os.Stderr, "%s: %s\n", message, es)
+		if rpcStatus, ok := status.FromError(err); ok {
+			nice := FromRpcError(rpcStatus)
+			fmt.Fprintf(os.Stderr, "%s: %s\n", message, nice.String())
+			os.Exit(int(nice.Code))
 		} else {
-			fmt.Fprintf(os.Stderr, "%s: %s\n", message, ns)
+			fmt.Fprintf(os.Stderr, "%s: %s\n", message, err)
+			os.Exit(1)
 		}
-		os.Exit(int(ret.Code()))
 	}
 }
 

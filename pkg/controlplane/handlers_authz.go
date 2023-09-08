@@ -29,6 +29,7 @@ import (
 	"google.golang.org/grpc/status"
 	"k8s.io/apimachinery/pkg/util/sets"
 
+	"github.com/stacklok/mediator/internal/util"
 	"github.com/stacklok/mediator/pkg/auth"
 	"github.com/stacklok/mediator/pkg/db"
 	github "github.com/stacklok/mediator/pkg/providers/github"
@@ -514,7 +515,7 @@ func AuthUnaryInterceptor(ctx context.Context, req interface{}, info *grpc.Unary
 	}
 
 	if claims.NeedsPasswordChange && method != "/mediator.v1.UserService/UpdatePassword" {
-		return nil, status.Errorf(codes.Unauthenticated, "password change required")
+		return nil, util.UserVisibleError(codes.Unauthenticated, "password change required")
 	}
 
 	if isSuperadmin(claims) {
