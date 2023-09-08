@@ -457,3 +457,14 @@ func Int32FromString(v string) (int32, error) {
 	}
 	return int32(asInt32), nil
 }
+
+// RemoveElementFromSlice removes element T from slice
+func RemoveElementFromSlice[T comparable](slice []T, element T) []T {
+	res := []T{}
+	for _, existingTag := range slice {
+		if existingTag != element {
+			res = append(res, existingTag)
+		}
+	}
+	return res
+}

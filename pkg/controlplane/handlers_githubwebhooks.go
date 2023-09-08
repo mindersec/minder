@@ -46,7 +46,6 @@ import (
 
 	"github.com/stacklok/mediator/internal/engine"
 	"github.com/stacklok/mediator/internal/util"
-
 	// TODO(jaosorior): This should be moved to the provider package
 	"github.com/stacklok/mediator/pkg/container"
 	"github.com/stacklok/mediator/pkg/db"
@@ -672,13 +671,8 @@ func upsertVersionedArtifact(
 			// Loop through all artifact versions that matched the incoming tag
 			for _, existing := range existingArtifactVersions {
 				if existing.Tags.Valid {
-					newTags := []string{}
 					// Rebuild the Tags list removing anything that would conflict
-					for _, existingTag := range strings.Split(existing.Tags.String, ",") {
-						if existingTag != incomingTag {
-							newTags = append(newTags, existingTag)
-						}
-					}
+					newTags := util.RemoveElementFromSlice[string](strings.Split(existing.Tags.String, ","), incomingTag)
 					// Update the versioned artifact row in the store (we should't change anything else except the tags value)
 					_, err := qtx.UpsertArtifactVersion(ctx, db.UpsertArtifactVersionParams{
 						ArtifactID: existing.ArtifactID,
