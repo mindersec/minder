@@ -120,6 +120,10 @@ func ValidatePolicy(p *pb.PipelinePolicy) error {
 		return validateEntity(p.Artifact)
 	}
 
+	if p.PullRequest != nil && len(p.PullRequest) > 0 {
+		return validateEntity(p.PullRequest)
+	}
+
 	return nil
 }
 
