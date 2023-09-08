@@ -20,6 +20,8 @@ package entities
 import (
 	"strings"
 
+	"golang.org/x/exp/slices"
+
 	"github.com/stacklok/mediator/pkg/db"
 	pb "github.com/stacklok/mediator/pkg/generated/protobuf/go/mediator/v1"
 )
@@ -89,6 +91,7 @@ func KnownTypesCSV() string {
 		keys = append(keys, pbToEntityType[pb.Entity(pbval)].String())
 	}
 
+	slices.Sort(keys)
 	return strings.Join(keys, ",")
 }
 
