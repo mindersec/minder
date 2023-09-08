@@ -183,7 +183,7 @@ CREATE TABLE policies (
     updated_at TIMESTAMP NOT NULL DEFAULT NOW()
 );
 
-CREATE TYPE entities as enum ('repository', 'build_environment', 'artifact');
+CREATE TYPE entities as enum ('repository', 'build_environment', 'artifact', 'pull_request');
 
 CREATE TABLE entity_policies (
     id SERIAL PRIMARY KEY,
