@@ -113,7 +113,7 @@ message GetArtifactByIdResponse {
 
 message FilePatch {
     string name = 1;      // file changed, e.g. package-lock.json
-    string patchUrl = 2;  // points to the the raw patchfile
+    string patch_url = 2;  // points to the the raw patchfile
 }
 
 message PullRequest {
@@ -128,7 +128,7 @@ message PullRequest {
 }
 
 enum DepEcosystem {
-    DEP_ECOSYSTEM_UNKNOWN = 0;
+    DEP_ECOSYSTEM_UNSPECIFIED = 0;
     DEP_ECOSYSTEM_NPM = 1;
 }
 
