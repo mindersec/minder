@@ -105,8 +105,8 @@ bootstrap: ## install build deps
 	# Make sure the keys are readable by the docker user
 	chmod 644 .ssh/*
 
-test: clean ## display test coverage
-	go test -json -v ./... | gotestfmt
+test: clean ## run unit tests
+	go test -race -json -v ./... | gotestfmt
 
 clean: ## clean up environment
 	rm -rf dist/* & rm -rf bin/*

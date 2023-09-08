@@ -28,7 +28,7 @@ import (
 	"github.com/stacklok/mediator/internal/util"
 )
 
-func TestGetConfigValue(t *testing.T) {
+func TestGetConfigValue(t *testing.T) { //nolint:tparallel // we test viper which triggers data races
 	t.Parallel()
 
 	testCases := []struct {
@@ -69,11 +69,10 @@ func TestGetConfigValue(t *testing.T) {
 		},
 	}
 
-	for _, tc := range testCases {
+	for _, tc := range testCases { //nolint:paralleltest // we test viper which triggers data races
 		tc := tc
 
 		t.Run(tc.name, func(t *testing.T) {
-			t.Parallel()
 
 			viper.Set(tc.key, tc.defaultValue)
 
