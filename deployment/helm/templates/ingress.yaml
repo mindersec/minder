@@ -47,7 +47,7 @@ spec:
             name: mediator-grpc
             port:
               name: grpc
-      - path: /mediator.v1.OauthService
+      - path: /mediator.v1.OAuthService
         pathType: Prefix
         backend:
           service:
