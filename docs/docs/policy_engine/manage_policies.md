@@ -137,13 +137,13 @@ by using those defaults without having to create a new policy from scratch.
 
 Before creating a policy, we need to ensure that all rule types exist in mediator.
 
-A rule type can be created by pointing to a file containing the rule type definition:
+A rule type can be created by pointing to a directory (or file) containing the rule type definition:
 
 ```bash
-medic rule_type create -f ./examples/github/rule-types/secret_scanning.yaml
+medic rule_type create -f ./examples/github/rule-types
 ```
 
-Where `secret_scanning.yaml` may look as the example above.
+Where the yaml files in the directory `rule-types` may look as the example above.
 
 Once all the relevant rule types are available for our group, we may take them into use
 by creating a policy.
@@ -160,7 +160,7 @@ The policy can be created by using the provided defaults, or by providing a new 
 For creating based on a file:
 
 ```bash
-medic policy create --provider github -f ./examples/github/policies/policy.yaml
+medic policy create -f ./examples/github/policies/policy.yaml
 ```
 
 Where `policy.yaml` may look as the example above.
@@ -183,22 +183,14 @@ Policy status will inform about:
 - status: [success, failure]
 - last updated: time when this status was updated
 
-Policy status can be checked at different levels:
-
-1. Globally per provider and group, listing all related policy status:
+Policy status can be checked using the following commands
 
 ```bash
-medic policy_status list --provider github --group-id 1
-```
-
-2. For an specific policy:
-
-```bash
-medic policy_status list --policy-id 1
+medic policy_status list --policy 1
 ```
 
 or
 
 ```bash
-medic policy get --id 1 --status --output yaml
+medic policy get --id 1 --output yaml
 ```
