@@ -650,7 +650,7 @@ func (mr *MockStoreMockRecorder) GetArtifactVersionByID(arg0, arg1 interface{}) 
 }
 
 // GetArtifactVersionBySha mocks base method.
-func (m *MockStore) GetArtifactVersionBySha(arg0 context.Context, arg1 db.GetArtifactVersionByShaParams) (db.ArtifactVersion, error) {
+func (m *MockStore) GetArtifactVersionBySha(arg0 context.Context, arg1 string) (db.ArtifactVersion, error) {
 	m.ctrl.T.Helper()
 	ret := m.ctrl.Call(m, "GetArtifactVersionBySha", arg0, arg1)
 	ret0, _ := ret[0].(db.ArtifactVersion)
