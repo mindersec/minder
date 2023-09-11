@@ -29,9 +29,9 @@ import (
 	"google.golang.org/grpc/status"
 	"k8s.io/apimachinery/pkg/util/sets"
 
+	"github.com/stacklok/mediator/internal/db"
 	"github.com/stacklok/mediator/internal/util"
 	"github.com/stacklok/mediator/pkg/auth"
-	"github.com/stacklok/mediator/pkg/db"
 	github "github.com/stacklok/mediator/pkg/providers/github"
 )
 

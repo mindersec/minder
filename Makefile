@@ -137,4 +137,4 @@ dbschema:	## generate database schema with schema spy, monitor file until doc is
 	cd database/schema && $(COMPOSE) down -v && rm -rf output
 
 mock:
-	mockgen -package mockdb -destination database/mock/store.go github.com/stacklok/mediator/pkg/db Store
+	mockgen -package mockdb -destination database/mock/store.go github.com/stacklok/mediator/internal/db Store

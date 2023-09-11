@@ -17,8 +17,8 @@
 package reconcilers
 
 import (
+	"github.com/stacklok/mediator/internal/db"
 	"github.com/stacklok/mediator/internal/events"
-	"github.com/stacklok/mediator/pkg/db"
 )
 
 const (

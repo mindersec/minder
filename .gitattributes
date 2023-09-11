@@ -9,7 +9,7 @@
 /docs/docs/db/schema.md linguist-generated=true
 /docs/docs/protodocs/proto.md linguist-generated=true
 /pkg/generated/** linguist-generated=true
-/pkg/db/db.go linguist-generated=true
-/pkg/db/models.go linguist-generated=true
-/pkg/db/querier.go linguist-generated=true
-/pkg/db/*.sql.go linguist-generated=true
+/internal/db/db.go linguist-generated=true
+/internal/db/models.go linguist-generated=true
+/internal/db/querier.go linguist-generated=true
+/internal/db/*.sql.go linguist-generated=true

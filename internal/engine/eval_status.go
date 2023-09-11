@@ -21,8 +21,8 @@ import (
 	"fmt"
 	"log"
 
+	"github.com/stacklok/mediator/internal/db"
 	evalerrors "github.com/stacklok/mediator/internal/engine/errors"
-	"github.com/stacklok/mediator/pkg/db"
 )
 
 // createOrUpdateEvalStatusParams is a helper struct to pass parameters to createOrUpdateEvalStatus

@@ -22,7 +22,7 @@ import (
 
 	"golang.org/x/exp/slices"
 
-	"github.com/stacklok/mediator/pkg/db"
+	"github.com/stacklok/mediator/internal/db"
 	pb "github.com/stacklok/mediator/pkg/generated/protobuf/go/mediator/v1"
 )
 

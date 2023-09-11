@@ -24,8 +24,8 @@ import (
 	"os"
 	"path/filepath"
 
+	"github.com/stacklok/mediator/internal/db"
 	"github.com/stacklok/mediator/internal/util"
-	"github.com/stacklok/mediator/pkg/db"
 	"github.com/stacklok/mediator/pkg/entities"
 	pb "github.com/stacklok/mediator/pkg/generated/protobuf/go/mediator/v1"
 )

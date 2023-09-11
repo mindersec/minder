@@ -29,11 +29,11 @@ import (
 	"google.golang.org/protobuf/reflect/protoreflect"
 	"google.golang.org/protobuf/types/known/structpb"
 
+	"github.com/stacklok/mediator/internal/db"
 	"github.com/stacklok/mediator/internal/engine/eval"
 	"github.com/stacklok/mediator/internal/engine/ingester"
 	engif "github.com/stacklok/mediator/internal/engine/interfaces"
 	"github.com/stacklok/mediator/internal/util"
-	"github.com/stacklok/mediator/pkg/db"
 	"github.com/stacklok/mediator/pkg/entities"
 	pb "github.com/stacklok/mediator/pkg/generated/protobuf/go/mediator/v1"
 	ghclient "github.com/stacklok/mediator/pkg/providers/github"
