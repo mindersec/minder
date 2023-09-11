@@ -47,7 +47,6 @@ import (
 
 	"github.com/stacklok/mediator/internal/engine"
 	"github.com/stacklok/mediator/internal/util"
-
 	// TODO(jaosorior): This should be moved to the provider package
 	"github.com/stacklok/mediator/pkg/container"
 	"github.com/stacklok/mediator/pkg/db"
