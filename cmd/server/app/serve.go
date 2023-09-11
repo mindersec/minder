@@ -74,8 +74,19 @@ var serveCmd = &cobra.Command{
 			return fmt.Errorf("unable to create server: %w", err)
 		}
 
-		s.ConsumeEvents(engine.NewExecutor(store))
-		s.ConsumeEvents(reconcilers.NewRecociler(store, evt))
+		exec, err := engine.NewExecutor(store, &cfg.Auth)
+		if err != nil {
+			return fmt.Errorf("unable to create executor: %w", err)
+		}
+
+		s.ConsumeEvents(exec)
+
+		rec, err := reconcilers.NewRecociler(store, evt, &cfg.Auth)
+		if err != nil {
+			return fmt.Errorf("unable to create reconciler: %w", err)
+		}
+
+		s.ConsumeEvents(rec)
 
 		// Start the gRPC and HTTP server in separate goroutines
 		errg.Go(func() error {

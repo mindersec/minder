@@ -20,8 +20,8 @@ import (
 	"context"
 	"fmt"
 
+	"github.com/stacklok/mediator/internal/crypto"
 	"github.com/stacklok/mediator/internal/db"
-	"github.com/stacklok/mediator/pkg/crypto"
 	ghclient "github.com/stacklok/mediator/pkg/providers/github"
 )
 
@@ -35,6 +35,7 @@ func BuildClient(
 	prov string,
 	groupID int32,
 	store db.Store,
+	crypteng *crypto.Engine,
 ) (ghclient.RestAPI, error) {
 	encToken, err := store.GetAccessTokenByGroupID(ctx,
 		db.GetAccessTokenByGroupIDParams{Provider: prov, GroupID: groupID})
@@ -42,7 +43,7 @@ func BuildClient(
 		return nil, fmt.Errorf("error getting access token: %w", err)
 	}
 
-	decryptedToken, err := crypto.DecryptOAuthToken(encToken.EncryptedToken)
+	decryptedToken, err := crypteng.DecryptOAuthToken(encToken.EncryptedToken)
 	if err != nil {
 		return nil, fmt.Errorf("error decrypting access token: %w", err)
 	}

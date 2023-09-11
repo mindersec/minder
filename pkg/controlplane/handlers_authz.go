@@ -450,7 +450,7 @@ func IsRequestAuthorized(ctx context.Context, value int32) bool {
 }
 
 // IsProviderCallAuthorized checks if the request is authorized
-func IsProviderCallAuthorized(ctx context.Context, store db.Store, provider string, groupId int32) bool {
+func (s *Server) IsProviderCallAuthorized(ctx context.Context, provider string, groupId int32) bool {
 	// currently everything is github
 	method, ok := grpc.Method(ctx)
 	if !ok {
@@ -460,7 +460,7 @@ func IsProviderCallAuthorized(ctx context.Context, store db.Store, provider stri
 	for _, item := range githubAuthorizations {
 		if item == method {
 			// check the github token
-			encToken, _, err := GetProviderAccessToken(ctx, store, provider, groupId, true)
+			encToken, _, err := s.GetProviderAccessToken(ctx, provider, groupId, true)
 			if err != nil {
 				return false
 			}
@@ -468,7 +468,7 @@ func IsProviderCallAuthorized(ctx context.Context, store db.Store, provider stri
 			// check if token is expired
 			if encToken.Expiry.Unix() < time.Now().Unix() {
 				// remove from the database and deny the request
-				_ = store.DeleteAccessToken(ctx, db.DeleteAccessTokenParams{Provider: github.Github, GroupID: groupId})
+				_ = s.store.DeleteAccessToken(ctx, db.DeleteAccessTokenParams{Provider: github.Github, GroupID: groupId})
 
 				// remove from github
 				err := auth.DeleteAccessToken(ctx, provider, encToken.AccessToken)

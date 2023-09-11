@@ -18,21 +18,26 @@ import (
 	"database/sql"
 	"encoding/base64"
 	"encoding/json"
+	"os"
 	"testing"
 	"time"
 
 	"github.com/golang/mock/gomock"
-	"github.com/spf13/viper"
 	"github.com/stretchr/testify/require"
 	"golang.org/x/oauth2"
 	"google.golang.org/protobuf/types/known/structpb"
 
 	mockdb "github.com/stacklok/mediator/database/mock"
+	"github.com/stacklok/mediator/internal/config"
+	"github.com/stacklok/mediator/internal/crypto"
 	"github.com/stacklok/mediator/internal/db"
 	"github.com/stacklok/mediator/internal/engine"
-	"github.com/stacklok/mediator/pkg/crypto"
 	"github.com/stacklok/mediator/pkg/entities"
 	pb "github.com/stacklok/mediator/pkg/generated/protobuf/go/mediator/v1"
+)
+
+const (
+	fakeTokenKey = "foo-bar"
 )
 
 func generateFakeAccessToken(t *testing.T) string {
@@ -51,7 +56,7 @@ func generateFakeAccessToken(t *testing.T) string {
 	require.NoError(t, err, "expected no error")
 
 	// encode token
-	encryptedToken, err := crypto.EncryptBytes(viper.GetString("auth.token_key"), jsonData)
+	encryptedToken, err := crypto.EncryptBytes(fakeTokenKey, jsonData)
 	require.NoError(t, err, "expected no error")
 
 	return base64.StdEncoding.EncodeToString(encryptedToken)
@@ -176,7 +181,18 @@ default allow = true`,
 
 	// -- end expectations
 
-	e := engine.NewExecutor(mockStore)
+	tmpdir := t.TempDir()
+	// write token key to file
+	tokenKeyPath := tmpdir + "/token_key"
+
+	// write key to file
+	err = os.WriteFile(tokenKeyPath, []byte(fakeTokenKey), 0600)
+	require.NoError(t, err, "expected no error")
+
+	e, err := engine.NewExecutor(mockStore, &config.AuthConfig{
+		TokenKey: tokenKeyPath,
+	})
+	require.NoError(t, err, "expected no error")
 
 	eiw := engine.NewEntityInfoWrapper().
 		WithProvider(provider).

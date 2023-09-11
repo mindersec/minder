@@ -17,6 +17,8 @@
 package reconcilers
 
 import (
+	"github.com/stacklok/mediator/internal/config"
+	"github.com/stacklok/mediator/internal/crypto"
 	"github.com/stacklok/mediator/internal/db"
 	"github.com/stacklok/mediator/internal/events"
 )
@@ -30,16 +32,23 @@ const (
 
 // Reconciler is a helper that reconciles entities
 type Reconciler struct {
-	store db.Store
-	evt   *events.Eventer
+	store    db.Store
+	evt      *events.Eventer
+	crypteng *crypto.Engine
 }
 
 // NewRecociler creates a new reconciler object
-func NewRecociler(store db.Store, evt *events.Eventer) *Reconciler {
-	return &Reconciler{
-		store: store,
-		evt:   evt,
+func NewRecociler(store db.Store, evt *events.Eventer, authCfg *config.AuthConfig) (*Reconciler, error) {
+	crypteng, err := crypto.EngineFromAuthConfig(authCfg)
+	if err != nil {
+		return nil, err
 	}
+
+	return &Reconciler{
+		store:    store,
+		evt:      evt,
+		crypteng: crypteng,
+	}, nil
 }
 
 // Register implements the Consumer interface.

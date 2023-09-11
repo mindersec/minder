@@ -31,9 +31,9 @@ import (
 	"google.golang.org/grpc/codes"
 	"google.golang.org/grpc/status"
 
+	mcrypto "github.com/stacklok/mediator/internal/crypto"
 	"github.com/stacklok/mediator/internal/db"
 	"github.com/stacklok/mediator/pkg/auth"
-	mcrypto "github.com/stacklok/mediator/pkg/crypto"
 	pb "github.com/stacklok/mediator/pkg/generated/protobuf/go/mediator/v1"
 	ghclient "github.com/stacklok/mediator/pkg/providers/github"
 )
@@ -185,7 +185,7 @@ func (s *Server) ExchangeCodeForTokenCLI(ctx context.Context,
 	}
 
 	// encode token
-	encryptedToken, err := mcrypto.EncryptBytes(viper.GetString("auth.token_key"), jsonData)
+	encryptedToken, err := s.cryptoEngine.EncryptOAuthToken(jsonData)
 	if err != nil {
 		return nil, err
 	}
@@ -252,20 +252,20 @@ func (s *Server) ExchangeCodeForTokenWEB(ctx context.Context,
 }
 
 // GetProviderAccessToken returns the access token for providers
-func GetProviderAccessToken(ctx context.Context, store db.Store, provider string,
+func (s *Server) GetProviderAccessToken(ctx context.Context, provider string,
 	groupId int32, checkAuthz bool) (oauth2.Token, string, error) {
 	// check if user is authorized
 	if checkAuthz && !IsRequestAuthorized(ctx, groupId) {
 		return oauth2.Token{}, "", status.Errorf(codes.PermissionDenied, "user is not authorized to access this resource")
 	}
 
-	encToken, err := store.GetAccessTokenByGroupID(ctx,
+	encToken, err := s.store.GetAccessTokenByGroupID(ctx,
 		db.GetAccessTokenByGroupIDParams{Provider: provider, GroupID: groupId})
 	if err != nil {
 		return oauth2.Token{}, "", err
 	}
 
-	decryptedToken, err := mcrypto.DecryptOAuthToken(encToken.EncryptedToken)
+	decryptedToken, err := s.cryptoEngine.DecryptOAuthToken(encToken.EncryptedToken)
 	if err != nil {
 		return oauth2.Token{}, "", err
 	}
@@ -289,7 +289,7 @@ func (s *Server) RevokeOauthTokens(ctx context.Context, in *pb.RevokeOauthTokens
 
 	revoked_tokens := 0
 	for _, token := range tokens {
-		objToken, err := mcrypto.DecryptOAuthToken(token.EncryptedToken)
+		objToken, err := s.cryptoEngine.DecryptOAuthToken(token.EncryptedToken)
 		if err != nil {
 			// just log and continue
 			log.Error().Msgf("error decrypting token: %v", err)
@@ -337,7 +337,7 @@ func (s *Server) RevokeOauthGroupToken(ctx context.Context,
 		return nil, status.Errorf(codes.Internal, "error getting access token: %v", err)
 	}
 
-	objToken, err := mcrypto.DecryptOAuthToken(token.EncryptedToken)
+	objToken, err := s.cryptoEngine.DecryptOAuthToken(token.EncryptedToken)
 	if err != nil {
 		return nil, status.Errorf(codes.Internal, "error decrypting token: %v", err)
 	}
@@ -397,7 +397,7 @@ func (s *Server) StoreProviderToken(ctx context.Context,
 	}
 
 	// encode token
-	encryptedToken, err := mcrypto.EncryptBytes(viper.GetString("auth.token_key"), jsonData)
+	encryptedToken, err := s.cryptoEngine.EncryptOAuthToken(jsonData)
 	if err != nil {
 		return nil, err
 	}

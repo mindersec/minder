@@ -16,16 +16,14 @@ package controlplane
 
 import (
 	"context"
-	// "database/sql"
 	"encoding/base64"
 
-	// "github.com/stacklok/mediator/internal/db"
 	"github.com/google/uuid"
 	"google.golang.org/grpc/codes"
 	"google.golang.org/grpc/status"
 
+	mcrypto "github.com/stacklok/mediator/internal/crypto"
 	"github.com/stacklok/mediator/internal/db"
-	mcrypto "github.com/stacklok/mediator/pkg/crypto"
 	pb "github.com/stacklok/mediator/pkg/generated/protobuf/go/mediator/v1"
 )
 

@@ -85,7 +85,11 @@ func newDefaultServer(t *testing.T, mockStore *mockdb.MockStore) *Server {
 	evt, err := events.Setup()
 	require.NoError(t, err, "failed to setup eventer")
 
-	server, err := NewServer(mockStore, evt, &config.Config{})
+	server, err := NewServer(mockStore, evt, &config.Config{
+		Auth: config.AuthConfig{
+			TokenKey: "test",
+		},
+	})
 	require.NoError(t, err, "failed to create server")
 	return server
 }

@@ -54,7 +54,7 @@ auth:
   token_expiry: 3600
   refresh_expiry: 86400
   nonce_period: 3600
-  session_key: "12345678901234567890123456789012"
+  token_key: "./.ssh/token_key_passphrase"
 
 # Password Salting, these values are using argon2id
 # https://en.wikipedia.org/wiki/Argon2
