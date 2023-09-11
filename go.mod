@@ -18,7 +18,7 @@ require (
 	github.com/google/go-github/v53 v53.2.0
 	github.com/google/uuid v1.3.1
 	github.com/grpc-ecosystem/go-grpc-middleware/v2 v2.0.0
-	github.com/grpc-ecosystem/grpc-gateway/v2 v2.17.1
+	github.com/grpc-ecosystem/grpc-gateway/v2 v2.18.0
 	github.com/itchyny/gojq v0.12.13
 	github.com/lib/pq v1.10.9
 	github.com/mitchellh/mapstructure v1.5.0
@@ -52,6 +52,7 @@ require (
 	google.golang.org/genproto/googleapis/api v0.0.0-20230822172742-b8732ec3820d
 	google.golang.org/grpc v1.58.0
 	google.golang.org/protobuf v1.31.0
+	gopkg.in/yaml.v2 v2.4.0
 	gopkg.in/yaml.v3 v3.0.1
 	k8s.io/apimachinery v0.27.4
 )
@@ -252,7 +253,6 @@ require (
 	gopkg.in/ini.v1 v1.67.0 // indirect
 	gopkg.in/square/go-jose.v2 v2.6.0 // indirect
 	gopkg.in/warnings.v0 v0.1.2 // indirect
-	gopkg.in/yaml.v2 v2.4.0 // indirect
 	k8s.io/api v0.27.3 // indirect
 	k8s.io/client-go v0.27.3 // indirect
 	k8s.io/klog/v2 v2.100.1 // indirect
