@@ -11,8 +11,8 @@
 // WITHOUT WARRANTIES OR CONDITIONS OF ANY KIND, either express or implied.
 // See the License for the specific language governing permissions and
 // limitations under the License.
-// Package rule provides the CLI subcommand for managing rules
 
+// Package git provides the git rule data ingest engine
 package git
 
 // IngesterConfig is the policy-provided configuration for the git ingester

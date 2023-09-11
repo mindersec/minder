@@ -41,10 +41,10 @@ import (
 	"google.golang.org/grpc/reflection"
 
 	"github.com/stacklok/mediator/internal/config"
+	"github.com/stacklok/mediator/internal/db"
 	"github.com/stacklok/mediator/internal/events"
 	"github.com/stacklok/mediator/internal/logger"
 	"github.com/stacklok/mediator/internal/util"
-	"github.com/stacklok/mediator/pkg/db"
 	pb "github.com/stacklok/mediator/pkg/generated/protobuf/go/mediator/v1"
 )
 
@@ -242,8 +242,11 @@ func (s *Server) StartHTTPServer(ctx context.Context) error {
 	// register the services (declared within register_handlers.go)
 	RegisterGatewayHTTPHandlers(ctx, gwmux, s.cfg.GRPCServer.GetAddress(), opts)
 
+	fs := http.FileServer(http.Dir("assets/"))
+
 	mux.Handle("/", gwmux)
 	mux.HandleFunc("/api/v1/webhook/", HandleGitHubWebHook(s.evt, s.store))
+	mux.Handle("/static/", http.StripPrefix("/static/", fs))
 
 	errch := make(chan error)
 

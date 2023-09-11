@@ -43,9 +43,19 @@ repository:
         def: {}
       - type: actions_check_pinned_tags
         def: {}
-      - type: dependabot_enabled
-        def: {}
+      - type: dependabot_configured
+        def:
+          package_ecosystem: gomod
+          schedule_interval: weekly
+          apply_if_file: go.mod
+      - type: dependabot_configured
+        def:
+          package_ecosystem: npm
+          schedule_interval: weekly
+          apply_if_file: package.json
       - type: dockerfile_no_latest_tag
+        def: {}
+      - type: trivy_action_enabled
         def: {}
 artifact:
   - context: github
@@ -58,3 +68,20 @@ artifact:
           is_signed: true
           is_verified: true
           is_bundle_verified: true
+pull_request:
+  - context: github
+    rules:
+      - type: pr_vulnerability_check
+        def:
+          action: reject_pr
+          ecosystem_config:
+            - name: npm
+              vulnerability_database_type: osv
+              vulnerability_database_endpoint: https://api.osv.dev/v1/query
+              package_repository:
+                url: https://registry.npmjs.org
+            - name: go
+              vulnerability_database_type: osv
+              vulnerability_database_endpoint: https://vuln.go.dev
+              package_repository:
+                url: https://proxy.golang.org

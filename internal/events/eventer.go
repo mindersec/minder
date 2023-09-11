@@ -19,11 +19,13 @@ package events
 
 import (
 	"context"
+	"errors"
 	"fmt"
 	"reflect"
 	"runtime"
 	"time"
 
+	"github.com/ThreeDotsLabs/watermill"
 	"github.com/ThreeDotsLabs/watermill/message"
 	"github.com/ThreeDotsLabs/watermill/message/router/middleware"
 	"github.com/ThreeDotsLabs/watermill/pubsub/gochannel"
@@ -129,6 +131,21 @@ func (e *Eventer) Running() chan struct{} {
 
 // Publish implements message.Publisher
 func (e *Eventer) Publish(topic string, messages ...*message.Message) error {
+	pc, _, _, ok := runtime.Caller(1)
+	details := runtime.FuncForPC(pc)
+
+	if ok && details != nil {
+		for idx := range messages {
+			msg := messages[idx]
+			// TODO: This should probably be debugging info
+			e.router.Logger().Info("Publishing messages", watermill.LogFields{
+				"message_uuid": msg.UUID,
+				"topic":        topic,
+				"handler":      details.Name(),
+			})
+		}
+	}
+
 	return e.webhookPublisher.Publish(topic, messages...)
 }
 
@@ -143,7 +160,24 @@ func (e *Eventer) Register(
 		funcName,
 		topic,
 		e.webhookSubscriber,
-		handler,
+		func(msg *message.Message) error {
+			if err := handler(msg); err != nil {
+				retriable := errors.Is(err, ErrRetriable)
+				e.router.Logger().Error("Found error handling message", err, watermill.LogFields{
+					"message_uuid": msg.UUID,
+					"topic":        topic,
+					"handler":      funcName,
+					"retriable":    retriable,
+				})
+
+				if retriable {
+					return nil
+				}
+				return err
+			}
+
+			return nil
+		},
 	)
 }
 

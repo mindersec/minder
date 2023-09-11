@@ -15,7 +15,7 @@ medic policy_status get [flags]
 
 ```
   -e, --entity int32         entity id to get policy status for
-  -t, --entity-type string   the entity type to get policy status for (one of repository,build_environment,artifact)
+  -t, --entity-type string   the entity type to get policy status for (one of artifact,build_environment,repository)
   -g, --group string         group id to get policy status for
   -h, --help                 help for get
   -o, --output string        Output format (json, yaml or table) (default "table")

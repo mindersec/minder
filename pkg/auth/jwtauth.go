@@ -35,7 +35,7 @@ import (
 	"google.golang.org/grpc/codes"
 	"google.golang.org/grpc/status"
 
-	"github.com/stacklok/mediator/pkg/db"
+	"github.com/stacklok/mediator/internal/db"
 )
 
 // RoleInfo contains the role information for a user

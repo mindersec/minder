@@ -20,8 +20,8 @@ import (
 	"context"
 	"fmt"
 
+	"github.com/stacklok/mediator/internal/db"
 	"github.com/stacklok/mediator/pkg/crypto"
-	"github.com/stacklok/mediator/pkg/db"
 	ghclient "github.com/stacklok/mediator/pkg/providers/github"
 )
 

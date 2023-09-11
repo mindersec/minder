@@ -20,7 +20,9 @@ package entities
 import (
 	"strings"
 
-	"github.com/stacklok/mediator/pkg/db"
+	"golang.org/x/exp/slices"
+
+	"github.com/stacklok/mediator/internal/db"
 	pb "github.com/stacklok/mediator/pkg/generated/protobuf/go/mediator/v1"
 )
 
@@ -35,6 +37,8 @@ const (
 	BuildEnvironmentEntity EntityType = "build_environment"
 	// ArtifactEntity is an artifact entity
 	ArtifactEntity EntityType = "artifact"
+	// PullRequestEntity is a pull request entity
+	PullRequestEntity EntityType = "pull_request"
 	// UnknownEntity is an explicitly unknown entity
 	UnknownEntity EntityType = "unknown"
 )
@@ -50,12 +54,14 @@ var (
 		RepositoryEntity:       pb.Entity_ENTITY_REPOSITORIES,
 		BuildEnvironmentEntity: pb.Entity_ENTITY_BUILD_ENVIRONMENTS,
 		ArtifactEntity:         pb.Entity_ENTITY_ARTIFACTS,
+		PullRequestEntity:      pb.Entity_ENTITY_PULL_REQUESTS,
 		UnknownEntity:          pb.Entity_ENTITY_UNSPECIFIED,
 	}
 	pbToEntityType = map[pb.Entity]EntityType{
 		pb.Entity_ENTITY_REPOSITORIES:       RepositoryEntity,
 		pb.Entity_ENTITY_BUILD_ENVIRONMENTS: BuildEnvironmentEntity,
 		pb.Entity_ENTITY_ARTIFACTS:          ArtifactEntity,
+		pb.Entity_ENTITY_PULL_REQUESTS:      PullRequestEntity,
 		pb.Entity_ENTITY_UNSPECIFIED:        UnknownEntity,
 	}
 )
@@ -63,7 +69,8 @@ var (
 // IsValidEntity returns true if the entity type is valid
 func IsValidEntity(entity pb.Entity) bool {
 	switch entity {
-	case pb.Entity_ENTITY_REPOSITORIES, pb.Entity_ENTITY_BUILD_ENVIRONMENTS, pb.Entity_ENTITY_ARTIFACTS:
+	case pb.Entity_ENTITY_REPOSITORIES, pb.Entity_ENTITY_BUILD_ENVIRONMENTS,
+		pb.Entity_ENTITY_ARTIFACTS, pb.Entity_ENTITY_PULL_REQUESTS:
 		return true
 	}
 	return false
@@ -83,12 +90,14 @@ func KnownTypesCSV() string {
 
 	// Iterate through the map and append keys to the slice
 	for _, pbval := range pb.Entity_value {
-		if !IsValidEntity(pb.Entity(pbval)) {
+		// PRs are not a first-class object
+		if !IsValidEntity(pb.Entity(pbval)) || pb.Entity(pbval) == pb.Entity_ENTITY_PULL_REQUESTS {
 			continue
 		}
 		keys = append(keys, pbToEntityType[pb.Entity(pbval)].String())
 	}
 
+	slices.Sort(keys)
 	return strings.Join(keys, ",")
 }
 
@@ -101,6 +110,8 @@ func EntityTypeFromDB(entity db.Entities) pb.Entity {
 		return pb.Entity_ENTITY_BUILD_ENVIRONMENTS
 	case db.EntitiesArtifact:
 		return pb.Entity_ENTITY_ARTIFACTS
+	case db.EntitiesPullRequest:
+		return pb.Entity_ENTITY_PULL_REQUESTS
 	default:
 		return pb.Entity_ENTITY_UNSPECIFIED
 	}
@@ -117,6 +128,8 @@ func EntityTypeToDB(entity pb.Entity) db.Entities {
 		dbEnt = db.EntitiesBuildEnvironment
 	case pb.Entity_ENTITY_ARTIFACTS:
 		dbEnt = db.EntitiesArtifact
+	case pb.Entity_ENTITY_PULL_REQUESTS:
+		dbEnt = db.EntitiesPullRequest
 	}
 
 	return dbEnt

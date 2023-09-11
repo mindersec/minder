@@ -162,7 +162,7 @@ Mediator uses [mockgen](https://github.com/golang/mock) to generate mocks.
 To generate the mocks, run:
 
 ```bash
-mockgen -package mockdb -destination database/mock/store.go github.com/stacklok/mediator/pkg/db Store
+mockgen -package mockdb -destination database/mock/store.go github.com/stacklok/mediator/internal/db Store
 ```
 
 # Configuration
@@ -210,7 +210,7 @@ First, you'll need to enroll your first provider. Before doing this, make sure t
 and fill in the appropriate settings in your `config.yaml` file.
 
 You may create an OAuth2 application [here](https://github.com/settings/developers). Select
-`New OAuth App` and fill in the details. The callback URL should be `http://localhost:8080/api/v1/auth/callback/github/cli`.
+`New OAuth App` and fill in the details. The callback URL should be `http://localhost:8080/api/v1/auth/callback/github`.
 Create a new client secret and fill in the `client_id` and `client_secret` in your `config.yaml` file.
 
 Once the Application is registered and the configuration is set, you can enroll the provider:

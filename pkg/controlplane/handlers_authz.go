@@ -33,8 +33,9 @@ import (
 	"google.golang.org/protobuf/reflect/protoreflect"
 	"google.golang.org/protobuf/reflect/protoregistry"
 
+	"github.com/stacklok/mediator/internal/db"
+	"github.com/stacklok/mediator/internal/util"
 	"github.com/stacklok/mediator/pkg/auth"
-	"github.com/stacklok/mediator/pkg/db"
 	mediator "github.com/stacklok/mediator/pkg/generated/protobuf/go/mediator/v1"
 	github "github.com/stacklok/mediator/pkg/providers/github"
 )
@@ -208,7 +209,7 @@ func AuthUnaryInterceptor(ctx context.Context, req interface{}, info *grpc.Unary
 
 	// check if we need a password change
 	if claims.NeedsPasswordChange && info.FullMethod != "/mediator.v1.UserService/UpdatePassword" {
-		return nil, status.Errorf(codes.Unauthenticated, "password change required")
+		return nil, util.UserVisibleError(codes.Unauthenticated, "password change required")
 	}
 
 	if opts.GetRootAdminOnly() && !isSuperadmin(claims) {

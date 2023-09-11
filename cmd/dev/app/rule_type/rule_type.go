@@ -31,6 +31,7 @@ import (
 
 	"github.com/stacklok/mediator/cmd/dev/app"
 	"github.com/stacklok/mediator/internal/engine"
+	"github.com/stacklok/mediator/internal/engine/eval/rego"
 	"github.com/stacklok/mediator/internal/util"
 	"github.com/stacklok/mediator/pkg/entities"
 	pb "github.com/stacklok/mediator/pkg/generated/protobuf/go/mediator/v1"
@@ -76,6 +77,13 @@ func testCmdRun(cmd *cobra.Command, _ []string) error {
 	rtpath := cmd.Flag("rule-type")
 	epath := cmd.Flag("entity")
 	ppath := cmd.Flag("policy")
+	token := viper.GetString("auth.token")
+
+	// set rego env variable for debugging
+	if err := os.Setenv(rego.EnablePrintEnvVar, "true"); err != nil {
+		fmt.Printf("Unable to set %s environment variable: %s\n", rego.EnablePrintEnvVar, err)
+		fmt.Println("If the rule you're testing is rego-based, you will not be able to use `print` statements for debugging.")
+	}
 
 	rt, err := readRuleTypeFromFile(rtpath.Value.String())
 	if err != nil {
@@ -97,12 +105,12 @@ func testCmdRun(cmd *cobra.Command, _ []string) error {
 		return fmt.Errorf("error getting relevant fragment: %w", err)
 	}
 
-	client, err := getProviderClient(context.Background(), rt)
+	client, err := getProviderClient(context.Background(), rt, token)
 	if err != nil {
 		return fmt.Errorf("error getting provider client: %w", err)
 	}
 
-	eng, err := engine.NewRuleTypeEngine(rt, client, "")
+	eng, err := engine.NewRuleTypeEngine(rt, client, token)
 	if err != nil {
 		return fmt.Errorf("error creating rule type engine: %w", err)
 	}
@@ -177,6 +185,8 @@ func readEntityFromFile(fpath string, entType pb.Entity) (protoreflect.ProtoMess
 		out = &pb.RepositoryResult{}
 	case pb.Entity_ENTITY_ARTIFACTS:
 		out = &pb.VersionedArtifact{}
+	case pb.Entity_ENTITY_PULL_REQUESTS:
+		out = &pb.PullRequest{}
 	default:
 		return nil, fmt.Errorf("unknown entity type: %s", entType)
 	}
@@ -192,8 +202,7 @@ func readEntityFromFile(fpath string, entType pb.Entity) (protoreflect.ProtoMess
 // definition.
 // TODO: This should be moved to a provider package and we should have some
 // generic interface for clients.
-func getProviderClient(ctx context.Context, rt *pb.RuleType) (ghclient.RestAPI, error) {
-	token := viper.GetString("auth.token")
+func getProviderClient(ctx context.Context, rt *pb.RuleType, token string) (ghclient.RestAPI, error) {
 	switch rt.Context.Provider {
 	case ghclient.Github:
 		return ghclient.NewRestClient(ctx, ghclient.GitHubConfig{

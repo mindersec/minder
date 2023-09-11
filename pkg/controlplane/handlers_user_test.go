@@ -28,10 +28,10 @@ import (
 
 	mockdb "github.com/stacklok/mediator/database/mock"
 	"github.com/stacklok/mediator/internal/config"
+	"github.com/stacklok/mediator/internal/db"
 	"github.com/stacklok/mediator/internal/events"
 	"github.com/stacklok/mediator/internal/util"
 	"github.com/stacklok/mediator/pkg/auth"
-	"github.com/stacklok/mediator/pkg/db"
 	pb "github.com/stacklok/mediator/pkg/generated/protobuf/go/mediator/v1"
 )
 

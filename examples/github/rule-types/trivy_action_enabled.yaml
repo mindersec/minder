@@ -1,0 +1,57 @@
+---
+version: v1
+type: rule-type
+name: trivy_action_enabled
+context:
+  provider: github
+  group: Root Group
+description: Verifies that the Trivy action is enabled for the repository and scanning
+guidance: |
+  Trivy is an open source vulnerability scanner for repositories, containers and other
+  artifacts provided by Aqua Security. It is used to scan for vulnerabilities in the
+  codebase and dependencies. This rule ensures that the Trivy action is enabled for
+  the repository and scanning is performed.
+
+  For more information on the Trivy action, see https://github.com/marketplace/actions/aqua-security-trivy
+def:
+  # Defines the section of the pipeline the rule will appear in.
+  # This will affect the template that is used to render multiple parts
+  # of the rule.
+  in_entity: repository
+  # Defines the schema for writing a rule with this rule being checked
+  # In this case there is no settings that need to be configured
+  rule_schema: {}
+  # Defines the configuration for ingesting data relevant for the rule
+  ingest:
+    type: git
+    git:
+      branch: main
+  # Defines the configuration for evaluating data ingested against the given policy
+  eval:
+    type: rego
+    rego:
+      type: deny-by-default
+      def: |
+        package mediator
+
+        default allow := false
+
+        allow {
+            # List all workflows
+            workflows := file.ls("./.github/workflows")
+
+            # Read all workflows
+            some w
+            workflowstr := file.read(workflows[w])
+
+            workflow := yaml.unmarshal(workflowstr)
+
+            # Iterate jobs
+            job := workflow.jobs[_]
+
+            # Iterate steps
+            step := job.steps[_]
+
+            # Check if the step is a trivy action
+            startswith(step.uses, "aquasecurity/trivy-action@")
+        }

@@ -105,16 +105,11 @@ func (q *Queries) GetArtifactVersionByID(ctx context.Context, id int32) (Artifac
 }
 
 const getArtifactVersionBySha = `-- name: GetArtifactVersionBySha :one
-SELECT id, artifact_id, version, tags, sha, signature_verification, github_workflow, created_at FROM artifact_versions WHERE artifact_id = $1 AND sha = $2
+SELECT id, artifact_id, version, tags, sha, signature_verification, github_workflow, created_at FROM artifact_versions WHERE sha = $1
 `
 
-type GetArtifactVersionByShaParams struct {
-	ArtifactID int32  `json:"artifact_id"`
-	Sha        string `json:"sha"`
-}
-
-func (q *Queries) GetArtifactVersionBySha(ctx context.Context, arg GetArtifactVersionByShaParams) (ArtifactVersion, error) {
-	row := q.db.QueryRowContext(ctx, getArtifactVersionBySha, arg.ArtifactID, arg.Sha)
+func (q *Queries) GetArtifactVersionBySha(ctx context.Context, sha string) (ArtifactVersion, error) {
+	row := q.db.QueryRowContext(ctx, getArtifactVersionBySha, sha)
 	var i ArtifactVersion
 	err := row.Scan(
 		&i.ID,

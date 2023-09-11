@@ -19,13 +19,13 @@ import (
 	// "database/sql"
 	"encoding/base64"
 
-	// "github.com/stacklok/mediator/pkg/db"
+	// "github.com/stacklok/mediator/internal/db"
 	"github.com/google/uuid"
 	"google.golang.org/grpc/codes"
 	"google.golang.org/grpc/status"
 
+	"github.com/stacklok/mediator/internal/db"
 	mcrypto "github.com/stacklok/mediator/pkg/crypto"
-	"github.com/stacklok/mediator/pkg/db"
 	pb "github.com/stacklok/mediator/pkg/generated/protobuf/go/mediator/v1"
 )
 

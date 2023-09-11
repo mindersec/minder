@@ -40,9 +40,13 @@
     - [DeleteRuleTypeResponse](#mediator-v1-DeleteRuleTypeResponse)
     - [DeleteUserRequest](#mediator-v1-DeleteUserRequest)
     - [DeleteUserResponse](#mediator-v1-DeleteUserResponse)
+    - [Dependency](#mediator-v1-Dependency)
+    - [DiffType](#mediator-v1-DiffType)
+    - [DiffType.Ecosystem](#mediator-v1-DiffType-Ecosystem)
     - [ExchangeCodeForTokenCLIRequest](#mediator-v1-ExchangeCodeForTokenCLIRequest)
     - [ExchangeCodeForTokenWEBRequest](#mediator-v1-ExchangeCodeForTokenWEBRequest)
     - [ExchangeCodeForTokenWEBResponse](#mediator-v1-ExchangeCodeForTokenWEBResponse)
+    - [FilePatch](#mediator-v1-FilePatch)
     - [GetArtifactByIdRequest](#mediator-v1-GetArtifactByIdRequest)
     - [GetArtifactByIdResponse](#mediator-v1-GetArtifactByIdResponse)
     - [GetAuthorizationURLRequest](#mediator-v1-GetAuthorizationURLRequest)
@@ -128,12 +132,15 @@
     - [PipelinePolicy.ContextualRuleSet](#mediator-v1-PipelinePolicy-ContextualRuleSet)
     - [PipelinePolicy.Rule](#mediator-v1-PipelinePolicy-Rule)
     - [PolicyStatus](#mediator-v1-PolicyStatus)
+    - [PrDependencies](#mediator-v1-PrDependencies)
+    - [PrDependencies.ContextualDependency](#mediator-v1-PrDependencies-ContextualDependency)
     - [Provider](#mediator-v1-Provider)
     - [Provider.Context](#mediator-v1-Provider-Context)
     - [Provider.Definition](#mediator-v1-Provider-Definition)
     - [Provider.Definition.Auth](#mediator-v1-Provider-Definition-Auth)
     - [Provider.Definition.Auth.OAuth2](#mediator-v1-Provider-Definition-Auth-OAuth2)
     - [Provider.Definition.ClientTypes](#mediator-v1-Provider-Definition-ClientTypes)
+    - [PullRequest](#mediator-v1-PullRequest)
     - [RefreshTokenRequest](#mediator-v1-RefreshTokenRequest)
     - [RefreshTokenResponse](#mediator-v1-RefreshTokenResponse)
     - [RegisterRepositoryRequest](#mediator-v1-RegisterRepositoryRequest)
@@ -160,6 +167,7 @@
     - [RuleType.Definition.Eval.JQComparison](#mediator-v1-RuleType-Definition-Eval-JQComparison)
     - [RuleType.Definition.Eval.JQComparison.Operator](#mediator-v1-RuleType-Definition-Eval-JQComparison-Operator)
     - [RuleType.Definition.Eval.Rego](#mediator-v1-RuleType-Definition-Eval-Rego)
+    - [RuleType.Definition.Eval.Vulncheck](#mediator-v1-RuleType-Definition-Eval-Vulncheck)
     - [RuleType.Definition.Ingest](#mediator-v1-RuleType-Definition-Ingest)
     - [SignatureVerification](#mediator-v1-SignatureVerification)
     - [StoreProviderTokenRequest](#mediator-v1-StoreProviderTokenRequest)
@@ -179,6 +187,7 @@
     - [VerifyResponse](#mediator-v1-VerifyResponse)
     - [VersionedArtifact](#mediator-v1-VersionedArtifact)
   
+    - [DepEcosystem](#mediator-v1-DepEcosystem)
     - [Entity](#mediator-v1-Entity)
     - [ObjectOwner](#mediator-v1-ObjectOwner)
     - [Provider.Definition.Auth.Type](#mediator-v1-Provider-Definition-Auth-Type)
@@ -793,6 +802,54 @@ DeleteRuleTypeResponse is the response to delete a rule type.
 
 
 
+<a name="mediator-v1-Dependency"></a>
+
+### Dependency
+
+
+
+| Field | Type | Label | Description |
+| ----- | ---- | ----- | ----------- |
+| ecosystem | [DepEcosystem](#mediator-v1-DepEcosystem) |  |  |
+| name | [string](#string) |  |  |
+| version | [string](#string) |  |  |
+
+
+
+
+
+
+<a name="mediator-v1-DiffType"></a>
+
+### DiffType
+DiffType defines the diff data ingester.
+
+
+| Field | Type | Label | Description |
+| ----- | ---- | ----- | ----------- |
+| ecosystems | [DiffType.Ecosystem](#mediator-v1-DiffType-Ecosystem) | repeated |  |
+
+
+
+
+
+
+<a name="mediator-v1-DiffType-Ecosystem"></a>
+
+### DiffType.Ecosystem
+
+
+
+| Field | Type | Label | Description |
+| ----- | ---- | ----- | ----------- |
+| name | [string](#string) |  | name is the name of the ecosystem. |
+| depfile | [string](#string) |  | depfile is the file that contains the dependencies for this ecosystem |
+
+
+
+
+
+
 <a name="mediator-v1-ExchangeCodeForTokenCLIRequest"></a>
 
 ### ExchangeCodeForTokenCLIRequest
@@ -842,6 +899,22 @@ DeleteRuleTypeResponse is the response to delete a rule type.
 | token_type | [string](#string) |  |  |
 | expires_in | [int64](#int64) |  |  |
 | status | [string](#string) |  |  |
+
+
+
+
+
+
+<a name="mediator-v1-FilePatch"></a>
+
+### FilePatch
+
+
+
+| Field | Type | Label | Description |
+| ----- | ---- | ----- | ----------- |
+| name | [string](#string) |  | file changed, e.g. package-lock.json |
+| patch_url | [string](#string) |  | points to the the raw patchfile |
 
 
 
@@ -2132,6 +2205,7 @@ PipelinePolicy defines a policy that is user defined.
 | repository | [PipelinePolicy.ContextualRuleSet](#mediator-v1-PipelinePolicy-ContextualRuleSet) | repeated | These are the entities that one could set in the pipeline policy. |
 | build_environment | [PipelinePolicy.ContextualRuleSet](#mediator-v1-PipelinePolicy-ContextualRuleSet) | repeated |  |
 | artifact | [PipelinePolicy.ContextualRuleSet](#mediator-v1-PipelinePolicy-ContextualRuleSet) | repeated |  |
+| pull_request | [PipelinePolicy.ContextualRuleSet](#mediator-v1-PipelinePolicy-ContextualRuleSet) | repeated |  |
 
 
 
@@ -2183,6 +2257,38 @@ get the overall policy status
 | policy_name | [string](#string) |  | policy_name is the name of the policy |
 | policy_status | [string](#string) |  | policy_status is the status of the policy |
 | last_updated | [google.protobuf.Timestamp](#google-protobuf-Timestamp) |  | last_updated is the last time the policy was updated |
+
+
+
+
+
+
+<a name="mediator-v1-PrDependencies"></a>
+
+### PrDependencies
+
+
+
+| Field | Type | Label | Description |
+| ----- | ---- | ----- | ----------- |
+| pr | [PullRequest](#mediator-v1-PullRequest) |  |  |
+| deps | [PrDependencies.ContextualDependency](#mediator-v1-PrDependencies-ContextualDependency) | repeated |  |
+
+
+
+
+
+
+<a name="mediator-v1-PrDependencies-ContextualDependency"></a>
+
+### PrDependencies.ContextualDependency
+
+
+
+| Field | Type | Label | Description |
+| ----- | ---- | ----- | ----------- |
+| dep | [Dependency](#mediator-v1-Dependency) |  |  |
+| file | [FilePatch](#mediator-v1-FilePatch) |  |  |
 
 
 
@@ -2292,6 +2398,26 @@ This is used to define the types of clients that are supported by the provider.
 | Field | Type | Label | Description |
 | ----- | ---- | ----- | ----------- |
 | types | [Provider.Definition.ClientTypes.Type](#mediator-v1-Provider-Definition-ClientTypes-Type) | repeated |  |
+
+
+
+
+
+
+<a name="mediator-v1-PullRequest"></a>
+
+### PullRequest
+
+
+
+| Field | Type | Label | Description |
+| ----- | ---- | ----- | ----------- |
+| url | [string](#string) |  | The full URL to the PR |
+| commit_sha | [string](#string) |  | Commit SHA of the PR HEAD. Will be useful to submit a review |
+| number | [int32](#int32) |  | The sequential PR number (not the DB PK!) |
+| repo_owner | [string](#string) |  | The owner of the repo, will be used to submit a review |
+| repo_name | [string](#string) |  | The name of the repo, will be used to submit a review |
+| patches | [FilePatch](#mediator-v1-FilePatch) | repeated | The list of files changed in the PR. Does not include file contents |
 
 
 
@@ -2684,6 +2810,7 @@ endpoint and how we compare it to the rule.
 | type | [string](#string) |  | type is the type of the data evaluation. Right now only `jq` is supported as a driver |
 | jq | [RuleType.Definition.Eval.JQComparison](#mediator-v1-RuleType-Definition-Eval-JQComparison) | repeated | jq is only used if the `jq` type is selected. It defines the comparisons that are made between the ingested data and the policy rule. |
 | rego | [RuleType.Definition.Eval.Rego](#mediator-v1-RuleType-Definition-Eval-Rego) | optional | rego is only used if the `rego` type is selected. |
+| vulncheck | [RuleType.Definition.Eval.Vulncheck](#mediator-v1-RuleType-Definition-Eval-Vulncheck) | optional | vulncheck is only used if the `vulncheck` type is selected. |
 
 
 
@@ -2737,6 +2864,22 @@ endpoint and how we compare it to the rule.
 
 
 
+<a name="mediator-v1-RuleType-Definition-Eval-Vulncheck"></a>
+
+### RuleType.Definition.Eval.Vulncheck
+
+
+
+| Field | Type | Label | Description |
+| ----- | ---- | ----- | ----------- |
+| db | [string](#string) |  | db is the database to use for the vulncheck, e.g. OSV |
+| endpoint | [string](#string) |  | e.g. https://api.osv.dev/v1/query |
+
+
+
+
+
+
 <a name="mediator-v1-RuleType-Definition-Ingest"></a>
 
 ### RuleType.Definition.Ingest
@@ -2750,6 +2893,7 @@ Ingest defines how the data is ingested.
 | builtin | [BuiltinType](#mediator-v1-BuiltinType) | optional | builtin is the builtin data ingestion. |
 | artifact | [ArtifactType](#mediator-v1-ArtifactType) | optional | artifact is the artifact data ingestion. |
 | git | [GitType](#mediator-v1-GitType) | optional | git is the git data ingestion. |
+| diff | [DiffType](#mediator-v1-DiffType) | optional | diff is the diff data ingestion. |
 
 
 
@@ -3015,6 +3159,18 @@ user record to be returned
  
 
 
+<a name="mediator-v1-DepEcosystem"></a>
+
+### DepEcosystem
+
+
+| Name | Number | Description |
+| ---- | ------ | ----------- |
+| DEP_ECOSYSTEM_UNSPECIFIED | 0 |  |
+| DEP_ECOSYSTEM_NPM | 1 |  |
+
+
+
 <a name="mediator-v1-Entity"></a>
 
 ### Entity
@@ -3026,6 +3182,7 @@ Entity defines the entity that is supported by the provider.
 | ENTITY_REPOSITORIES | 1 |  |
 | ENTITY_BUILD_ENVIRONMENTS | 2 |  |
 | ENTITY_ARTIFACTS | 3 |  |
+| ENTITY_PULL_REQUESTS | 4 |  |
 
 
 

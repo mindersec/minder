@@ -24,8 +24,8 @@ import (
 	"os"
 	"path/filepath"
 
+	"github.com/stacklok/mediator/internal/db"
 	"github.com/stacklok/mediator/internal/util"
-	"github.com/stacklok/mediator/pkg/db"
 	"github.com/stacklok/mediator/pkg/entities"
 	pb "github.com/stacklok/mediator/pkg/generated/protobuf/go/mediator/v1"
 )
@@ -120,6 +120,10 @@ func ValidatePolicy(p *pb.PipelinePolicy) error {
 		return validateEntity(p.Artifact)
 	}
 
+	if p.PullRequest != nil && len(p.PullRequest) > 0 {
+		return validateEntity(p.PullRequest)
+	}
+
 	return nil
 }
 
@@ -200,6 +204,8 @@ func GetRulesForEntity(p *pb.PipelinePolicy, entity pb.Entity) ([]*pb.PipelinePo
 		return p.BuildEnvironment, nil
 	case pb.Entity_ENTITY_ARTIFACTS:
 		return p.Artifact, nil
+	case pb.Entity_ENTITY_PULL_REQUESTS:
+		return p.PullRequest, nil
 	default:
 		return nil, fmt.Errorf("unknown entity: %s", entity)
 	}
@@ -331,6 +337,8 @@ func rowInfoToPolicyMap(
 		policy.BuildEnvironment = ruleset
 	case pb.Entity_ENTITY_ARTIFACTS:
 		policy.Artifact = ruleset
+	case pb.Entity_ENTITY_PULL_REQUESTS:
+		policy.PullRequest = ruleset
 	}
 
 	return policy

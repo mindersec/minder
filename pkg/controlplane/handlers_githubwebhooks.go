@@ -40,15 +40,15 @@ import (
 	"github.com/google/go-github/v53/github"
 	"github.com/google/uuid"
 	"github.com/spf13/viper"
+	"golang.org/x/exp/slices"
 	"golang.org/x/oauth2"
 	"google.golang.org/protobuf/encoding/protojson"
 	"google.golang.org/protobuf/types/known/timestamppb"
 
+	"github.com/stacklok/mediator/internal/db"
 	"github.com/stacklok/mediator/internal/engine"
 	"github.com/stacklok/mediator/internal/util"
-	// TODO(jaosorior): This should be moved to the provider package
 	"github.com/stacklok/mediator/pkg/container"
-	"github.com/stacklok/mediator/pkg/db"
 	pb "github.com/stacklok/mediator/pkg/generated/protobuf/go/mediator/v1"
 	"github.com/stacklok/mediator/pkg/providers"
 	ghclient "github.com/stacklok/mediator/pkg/providers/github"
@@ -56,6 +56,19 @@ import (
 
 // CONTAINER_TYPE is the type for container artifacts
 var CONTAINER_TYPE = "container"
+
+type tagIsASignatureError struct {
+	message      string
+	signatureTag string
+}
+
+func (e *tagIsASignatureError) Error() string {
+	return e.message
+}
+
+func newTagIsASignatureError(msg, signatureTag string) *tagIsASignatureError {
+	return &tagIsASignatureError{message: msg, signatureTag: signatureTag}
+}
 
 // Repository represents a GitHub repository
 type Repository struct {
@@ -290,6 +303,11 @@ func parseGithubEventForProcessing(
 			return parseArtifactPublishedEvent(
 				context.Background(), ghclient.Github, store, payload, msg)
 		}
+	} else if hook_type == "pull_request" {
+		if payload["action"] == "opened" {
+			return parsePullRequestModEvent(
+				context.Background(), ghclient.Github, store, payload, msg)
+		}
 	}
 
 	// determine if the payload is a repository event
@@ -360,7 +378,7 @@ func parseArtifactPublishedEvent(
 		return fmt.Errorf("error building client: %w", err)
 	}
 
-	versionedArtifact, err := gatherVersionedArtifact(ctx, cli, whPayload)
+	versionedArtifact, err := gatherVersionedArtifact(ctx, cli, store, whPayload)
 	if err != nil {
 		return fmt.Errorf("error gathering versioned artifact: %w", err)
 	}
@@ -381,6 +399,47 @@ func parseArtifactPublishedEvent(
 		WithGroupID(dbrepo.GroupID).
 		WithRepositoryID(dbrepo.ID).
 		WithArtifactID(dbArtifact.ID)
+
+	return eiw.ToMessage(msg)
+}
+
+func parsePullRequestModEvent(
+	ctx context.Context,
+	prov string,
+	store db.Store,
+	whPayload map[string]any,
+	msg *message.Message,
+) error {
+	// extract information about repository so we can identify the group and associated rules
+	dbrepo, err := getRepoInformationFromPayload(ctx, prov, store, whPayload)
+	if err != nil {
+		return fmt.Errorf("error getting repo information from payload: %w", err)
+	}
+	g := dbrepo.GroupID
+
+	cli, err := providers.BuildClient(ctx, prov, g, store)
+	if err != nil {
+		return fmt.Errorf("error building client: %w", err)
+	}
+
+	prEvalInfo, err := getPullRequestInfoFromPayload(ctx, whPayload)
+	if err != nil {
+		return fmt.Errorf("error getting pull request information from payload: %w", err)
+	}
+
+	err = updatePullRequestInfoFromProvider(ctx, cli, dbrepo, prEvalInfo)
+	if err != nil {
+		return fmt.Errorf("error updating pull request information from provider: %w", err)
+	}
+
+	log.Printf("evaluating PR %+v", prEvalInfo)
+
+	eiw := engine.NewEntityInfoWrapper().
+		WithPullRequest(prEvalInfo).
+		WithPullRequestID(prEvalInfo.Number).
+		WithProvider(prov).
+		WithGroupID(dbrepo.GroupID).
+		WithRepositoryID(dbrepo.ID)
 
 	return eiw.ToMessage(msg)
 }
@@ -460,6 +519,44 @@ func gatherArtifactInfo(
 	return artifact, nil
 }
 
+func transformTag(tag string) string {
+	// Define the prefix to match and its replacement
+	const prefixToMatch = "sha256-"
+	const prefixReplacement = "sha256:"
+
+	// If the tag starts with the prefix to match, replace it with the replacement prefix
+	if strings.HasPrefix(tag, prefixToMatch) {
+		tag = prefixReplacement + tag[len(prefixToMatch):]
+	}
+
+	// If the tag has a trailing ".sig", strip it off
+	return strings.TrimSuffix(tag, ".sig")
+}
+
+// handles the case when we get a notification about an image,
+// but a signature arrives a bit later. In that case, we need to:
+// -- search for a version whose sha matches the signature tag
+// -- if found, update the signature verification field
+func lookUpVersionBySignature(
+	ctx context.Context,
+	store db.Store,
+	sigTag string,
+) (*pb.ArtifactVersion, error) {
+	storedVersion, err := store.GetArtifactVersionBySha(ctx, transformTag(sigTag))
+	if errors.Is(err, sql.ErrNoRows) {
+		return nil, nil
+	} else if err != nil {
+		return nil, fmt.Errorf("error looking up version by signature: %w", err)
+	}
+
+	return &pb.ArtifactVersion{
+		VersionId: int64(storedVersion.Version),
+		Tags:      strings.Split(storedVersion.Tags.String, ","),
+		Sha:       storedVersion.Sha,
+		CreatedAt: timestamppb.New(storedVersion.CreatedAt),
+	}, nil
+}
+
 func gatherArtifactVersionInfo(
 	ctx context.Context,
 	cli ghclient.RestAPI,
@@ -484,6 +581,7 @@ func gatherArtifactVersionInfo(
 func gatherVersionedArtifact(
 	ctx context.Context,
 	cli ghclient.RestAPI,
+	store db.Store,
 	payload map[string]any,
 ) (*pb.VersionedArtifact, error) {
 	artifact, err := gatherArtifactInfo(ctx, cli, payload)
@@ -491,20 +589,64 @@ func gatherVersionedArtifact(
 		return nil, fmt.Errorf("error gatherinfo artifact info: %w", err)
 	}
 
+	var tagIsSigErr *tagIsASignatureError
 	version, err := gatherArtifactVersionInfo(ctx, cli, payload, artifact.Owner, artifact.Name)
-	if err != nil {
-		return nil, fmt.Errorf("error extracting artifact from payload: %w", err)
-	}
+	if errors.As(err, &tagIsSigErr) {
+		storedVersion, lookupErr := lookUpVersionBySignature(ctx, store, tagIsSigErr.signatureTag)
+		if lookupErr != nil {
+			return nil, fmt.Errorf("error looking up version by signature tag: %w", lookupErr)
+		}
+		if storedVersion == nil {
+			// not much we can do about the version not being there, let's hope the signed container arrives later
+			// but don't return nil, there's no point in retrying either
+			return nil, nil
+		}
+		// let's continue with the stored version
 
-	if version == nil {
-		// no point in storing and evaluating just the .sig
-		return nil, nil
+		// now get information for signature and workflow
+		err = storeSignatureAndWorkflowInVersion(
+			ctx, cli, artifact.Owner, artifact.Name, transformTag(tagIsSigErr.signatureTag), storedVersion)
+		if err != nil {
+			return nil, fmt.Errorf("error storing signature and workflow in version: %w", err)
+		}
+
+		version = storedVersion
+	} else if err != nil {
+		return nil, fmt.Errorf("error extracting artifact from payload: %w", err)
 	}
 
 	return &pb.VersionedArtifact{
 		Artifact: artifact,
 		Version:  version,
 	}, nil
+}
+
+func storeSignatureAndWorkflowInVersion(
+	ctx context.Context,
+	client ghclient.RestAPI,
+	artifactOwnerLogin, artifactName, packageVersionName string,
+	version *pb.ArtifactVersion,
+) error {
+	// now get information for signature and workflow
+	sigInfo, workflowInfo, err := container.GetArtifactSignatureAndWorkflowInfo(
+		ctx, client, artifactOwnerLogin, artifactName, packageVersionName)
+	if err != nil {
+		return fmt.Errorf("error getting signature and workflow info: %w", err)
+	}
+
+	ghWorkflow := &pb.GithubWorkflow{}
+	if err := protojson.Unmarshal(workflowInfo, ghWorkflow); err != nil {
+		return err
+	}
+
+	sigVerification := &pb.SignatureVerification{}
+	if err := protojson.Unmarshal(sigInfo, sigVerification); err != nil {
+		return err
+	}
+
+	version.SignatureVerification = sigVerification
+	version.GithubWorkflow = ghWorkflow
+	return nil
 }
 
 func updateArtifactVersionFromRegistry(
@@ -528,33 +670,19 @@ func updateArtifactVersionFromRegistry(
 	}
 
 	tags := ghVersion.Metadata.Container.Tags
-	if container.TagIsSignature(tags) {
-		// we don't care about signatures
-		return nil
+	if container.TagsContainSignature(tags) {
+		// handle the case where a signature arrives later than the image
+		return newTagIsASignatureError("version is a signature", container.FindSignatureTag(tags))
 	}
 	sort.Strings(tags)
 
 	// now get information for signature and workflow
-	sigInfo, workflowInfo, err := container.GetArtifactSignatureAndWorkflowInfo(
-		ctx, client, artifactOwnerLogin, artifactName, packageVersionName)
-	if errors.Is(err, container.ErrSigValidation) || errors.Is(err, container.ErrProtoParse) {
-		return err
-	} else if err != nil {
-		return err
+	err = storeSignatureAndWorkflowInVersion(
+		ctx, client, artifactOwnerLogin, artifactName, packageVersionName, version)
+	if err != nil {
+		return fmt.Errorf("error storing signature and workflow in version: %w", err)
 	}
 
-	ghWorkflow := &pb.GithubWorkflow{}
-	if err := protojson.Unmarshal(workflowInfo, ghWorkflow); err != nil {
-		return err
-	}
-
-	sigVerification := &pb.SignatureVerification{}
-	if err := protojson.Unmarshal(sigInfo, sigVerification); err != nil {
-		return err
-	}
-
-	version.SignatureVerification = sigVerification
-	version.GithubWorkflow = ghWorkflow
 	version.Tags = tags
 	if ghVersion.CreatedAt != nil {
 		version.CreatedAt = timestamppb.New(*ghVersion.CreatedAt.GetTime())
@@ -604,6 +732,49 @@ func upsertVersionedArtifact(
 		log.Printf("error removing older artifact versions: %v", err)
 	}
 
+	// To avoid conflicts, we search for all existing entries that have the incoming tag in their Tags field.
+	// If found, the existing artifact is updated by removing the incoming tag from its tags column.
+	// Loop through all incomming tags
+	for _, incomingTag := range versionedArtifact.Version.Tags {
+		// Search artifact versions having the incomming tag (there should be at most 1 or no matches at all)
+		existingArtifactVersions, err := qtx.ListArtifactVersionsByArtifactIDAndTag(ctx,
+			db.ListArtifactVersionsByArtifactIDAndTagParams{ArtifactID: dbArtifact.ID,
+				Tags:  sql.NullString{Valid: true, String: incomingTag},
+				Limit: sql.NullInt32{Valid: false, Int32: 0}})
+		if errors.Is(err, sql.ErrNoRows) {
+			// There're no tagged versions matching the incoming tag, all okay
+			continue
+		} else if err != nil {
+			// Unexpected failure
+			return nil, nil, fmt.Errorf("failed during repository synchronization: %w", err)
+		}
+		// Loop through all artifact versions that matched the incoming tag
+		for _, existing := range existingArtifactVersions {
+			if !existing.Tags.Valid {
+				continue
+			}
+			// Rebuild the Tags list removing anything that would conflict
+			newTags := slices.DeleteFunc(strings.Split(existing.Tags.String, ","), func(in string) bool { return in == incomingTag })
+			// Update the versioned artifact row in the store (we should't change anything else except the tags value)
+			_, err := qtx.UpsertArtifactVersion(ctx, db.UpsertArtifactVersionParams{
+				ArtifactID: existing.ArtifactID,
+				Version:    existing.Version,
+				Tags: sql.NullString{
+					String: strings.Join(newTags, ","),
+					Valid:  true,
+				},
+				Sha:                   existing.Sha,
+				CreatedAt:             existing.CreatedAt,
+				SignatureVerification: existing.SignatureVerification.RawMessage,
+				GithubWorkflow:        existing.GithubWorkflow.RawMessage,
+			})
+			if err != nil {
+				return nil, nil, fmt.Errorf("error upserting artifact %d with version %d: %w", existing.ArtifactID, existing.Version, err)
+			}
+		}
+	}
+
+	// Proceed storing the new versioned artifact
 	dbVersion, err := qtx.UpsertArtifactVersion(ctx, db.UpsertArtifactVersionParams{
 		ArtifactID: dbArtifact.ID,
 		Version:    versionedArtifact.Version.VersionId,
@@ -626,6 +797,57 @@ func upsertVersionedArtifact(
 	}
 
 	return &dbArtifact, &dbVersion, nil
+}
+
+func getPullRequestInfoFromPayload(
+	ctx context.Context,
+	payload map[string]any,
+) (*pb.PullRequest, error) {
+	prUrl, err := util.JQReadFrom[string](ctx, ".pull_request.url", payload)
+	if err != nil {
+		return nil, fmt.Errorf("error getting pull request url from payload: %w", err)
+	}
+
+	prNumber, err := util.JQReadFrom[float64](ctx, ".pull_request.number", payload)
+	if err != nil {
+		return nil, fmt.Errorf("error getting pull request number from payload: %w", err)
+	}
+
+	return &pb.PullRequest{
+		Url:     prUrl,
+		Number:  int32(prNumber),
+		Patches: nil, // to be filled later with a separate call
+	}, nil
+}
+
+func updatePullRequestInfoFromProvider(
+	ctx context.Context,
+	cli ghclient.RestAPI,
+	dbrepo db.Repository,
+	prEvalInfo *pb.PullRequest,
+) error {
+	prReply, err := cli.GetPullRequest(ctx, dbrepo.RepoOwner, dbrepo.RepoName, int(prEvalInfo.Number))
+	if err != nil {
+		return fmt.Errorf("error getting pull request: %w", err)
+	}
+	prEvalInfo.CommitSha = *prReply.Head.SHA
+
+	prFiles, err := cli.ListFiles(ctx, dbrepo.RepoOwner, dbrepo.RepoName, int(prEvalInfo.Number), 1, 100)
+	if err != nil {
+		return fmt.Errorf("error getting pull request: %w", err)
+	}
+
+	prEvalInfo.Patches = make([]*pb.FilePatch, 0, len(prFiles))
+	for _, f := range prFiles {
+		prEvalInfo.Patches = append(prEvalInfo.Patches, &pb.FilePatch{
+			Name:     f.GetFilename(),
+			PatchUrl: f.GetRawURL(),
+		})
+	}
+
+	prEvalInfo.RepoOwner = dbrepo.RepoOwner
+	prEvalInfo.RepoName = dbrepo.RepoName
+	return nil
 }
 
 func getRepoInformationFromPayload(
@@ -658,6 +880,12 @@ func getRepoInformationFromPayload(
 		}
 		return db.Repository{}, fmt.Errorf("error getting repository: %w", err)
 	}
+
+	if dbrepo.GroupID == 0 {
+		return db.Repository{}, fmt.Errorf("no group found for repository %s/%s: %w",
+			dbrepo.RepoOwner, dbrepo.RepoName, ErrRepoNotFound)
+	}
+
 	return dbrepo, nil
 }
 

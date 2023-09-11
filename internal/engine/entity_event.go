@@ -61,6 +61,8 @@ const (
 	RepositoryEventEntityType = "repository"
 	// VersionedArtifactEventEntityType is the entity type for versioned artifacts
 	VersionedArtifactEventEntityType = "versioned_artifact"
+	// PullRequestEventEntityType is the entity type for pull requests
+	PullRequestEventEntityType = "pull_request"
 )
 
 const (
@@ -74,6 +76,8 @@ const (
 	RepositoryIDEventKey = "repository_id"
 	// ArtifactIDEventKey is the key for the artifact ID
 	ArtifactIDEventKey = "artifact_id"
+	// PullRequestIDEventKey is the key for the pull request ID
+	PullRequestIDEventKey = "pull_request_id"
 )
 
 // NewEntityInfoWrapper creates a new EntityInfoWrapper
@@ -106,6 +110,14 @@ func (eiw *EntityInfoWrapper) WithRepository(r *pb.RepositoryResult) *EntityInfo
 	return eiw
 }
 
+// WithPullRequest sets the entity to a repository
+func (eiw *EntityInfoWrapper) WithPullRequest(p *pb.PullRequest) *EntityInfoWrapper {
+	eiw.Type = pb.Entity_ENTITY_PULL_REQUESTS
+	eiw.Entity = p
+
+	return eiw
+}
+
 // WithGroupID sets the group ID
 func (eiw *EntityInfoWrapper) WithGroupID(id int32) *EntityInfoWrapper {
 	eiw.GroupID = id
@@ -127,6 +139,13 @@ func (eiw *EntityInfoWrapper) WithArtifactID(id int32) *EntityInfoWrapper {
 	return eiw
 }
 
+// WithPullRequestID sets the pull request ID
+func (eiw *EntityInfoWrapper) WithPullRequestID(id int32) *EntityInfoWrapper {
+	eiw.withID(PullRequestIDEventKey, id)
+
+	return eiw
+}
+
 // AsRepository sets the entity type to a repository
 func (eiw *EntityInfoWrapper) AsRepository() *EntityInfoWrapper {
 	eiw.Type = pb.Entity_ENTITY_REPOSITORIES
@@ -141,6 +160,12 @@ func (eiw *EntityInfoWrapper) AsVersionedArtifact() *EntityInfoWrapper {
 	eiw.Entity = &pb.VersionedArtifact{}
 
 	return eiw
+}
+
+// AsPullRequest sets the entity type to a pull request
+func (eiw *EntityInfoWrapper) AsPullRequest() {
+	eiw.Type = pb.Entity_ENTITY_PULL_REQUESTS
+	eiw.Entity = &pb.PullRequest{}
 }
 
 // BuildMessage builds a message.Message from the information
@@ -232,6 +257,10 @@ func (eiw *EntityInfoWrapper) withArtifactIDFromMessage(msg *message.Message) er
 	return eiw.withIDFromMessage(msg, ArtifactIDEventKey)
 }
 
+func (eiw *EntityInfoWrapper) withPullRequestIDFromMessage(msg *message.Message) error {
+	return eiw.withIDFromMessage(msg, PullRequestIDEventKey)
+}
+
 func (eiw *EntityInfoWrapper) withIDFromMessage(msg *message.Message, key string) error {
 	id, err := getIDFromMessage(msg, key)
 	if err != nil {
@@ -268,6 +297,12 @@ func (eiw *EntityInfoWrapper) evalStatusParams(
 		params.artifactID = artifactID
 	}
 
+	pullRequestNumber, ok := eiw.OwnershipData[PullRequestIDEventKey]
+	if ok {
+		// todo: plug into DB
+		fmt.Println("pullRequestNumber", pullRequestNumber)
+	}
+
 	return params
 }
 
@@ -277,6 +312,8 @@ func pbEntityTypeToString(t pb.Entity) (string, error) {
 		return RepositoryEventEntityType, nil
 	case pb.Entity_ENTITY_ARTIFACTS:
 		return VersionedArtifactEventEntityType, nil
+	case pb.Entity_ENTITY_PULL_REQUESTS:
+		return PullRequestEventEntityType, nil
 	default:
 		return "", fmt.Errorf("unknown entity type: %s", t.String())
 	}
@@ -316,6 +353,11 @@ func parseEntityEvent(msg *message.Message) (*EntityInfoWrapper, error) {
 	case VersionedArtifactEventEntityType:
 		out.AsVersionedArtifact()
 		if err := out.withArtifactIDFromMessage(msg); err != nil {
+			return nil, err
+		}
+	case PullRequestEventEntityType:
+		out.AsPullRequest()
+		if err := out.withPullRequestIDFromMessage(msg); err != nil {
 			return nil, err
 		}
 	default:

@@ -16,7 +16,7 @@
 version: "1"
 packages:
   - name: "db"
-    path: "./pkg/db/"
+    path: "./internal/db/"
     queries: "./database/query/"
     schema: "./database/migrations/"
     engine: "postgresql"

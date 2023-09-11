@@ -139,6 +139,44 @@ message GetArtifactByIdResponse {
     repeated ArtifactVersion versions = 2;
 }
 
+message FilePatch {
+    string name = 1;      // file changed, e.g. package-lock.json
+    string patch_url = 2;  // points to the the raw patchfile
+}
+
+message PullRequest {
+    string url = 1;         // The full URL to the PR
+    string commit_sha = 2;   // Commit SHA of the PR HEAD. Will be useful to submit a review
+    int32 number = 3;       // The sequential PR number (not the DB PK!)
+
+    string repo_owner = 4;   // The owner of the repo, will be used to submit a review
+    string repo_name = 5;    // The name of the repo, will be used to submit a review
+
+    repeated FilePatch patches = 6; // The list of files changed in the PR. Does not include file contents
+}
+
+enum DepEcosystem {
+    DEP_ECOSYSTEM_UNSPECIFIED = 0;
+    DEP_ECOSYSTEM_NPM = 1;
+}
+
+message Dependency {
+    DepEcosystem ecosystem = 1;
+
+    string name = 2;
+    string version = 3;
+}
+
+message PrDependencies {
+    message ContextualDependency {
+        Dependency dep = 1;
+        FilePatch file = 2;
+    }
+
+    PullRequest pr = 1;
+    repeated ContextualDependency deps = 2;
+}
+
 service OAuthService {
     rpc GetAuthorizationURL (GetAuthorizationURLRequest) returns (GetAuthorizationURLResponse) {
         option (google.api.http) = {
@@ -1625,6 +1663,7 @@ enum Entity {
     ENTITY_REPOSITORIES = 1;
     ENTITY_BUILD_ENVIRONMENTS = 2;
     ENTITY_ARTIFACTS = 3;
+    ENTITY_PULL_REQUESTS = 4;
 }
 
 // Provider defines a provider that is used to connect to a certain service.
@@ -1829,6 +1868,17 @@ message GitType {
     string branch = 2;
 }
 
+// DiffType defines the diff data ingester.
+message DiffType {
+    message Ecosystem {
+        // name is the name of the ecosystem.
+        string name = 1;
+        // depfile is the file that contains the dependencies for this ecosystem
+        string depfile = 2;
+    }
+    repeated Ecosystem ecosystems = 1;
+}
+
 // RuleType defines rules that may or may not be user defined.
 // The version is assumed from the folder's version.
 message RuleType {
@@ -1874,6 +1924,8 @@ message RuleType {
             // git is the git data ingestion.
             optional GitType git = 6;
 
+            // diff is the diff data ingestion.
+            optional DiffType diff = 7;
         }
         Ingest ingest = 4;
 
@@ -1913,6 +1965,13 @@ message RuleType {
                 string def = 2;
             }
 
+            message Vulncheck {
+                // db is the database to use for the vulncheck, e.g. OSV
+                string db = 1;
+                // e.g. https://api.osv.dev/v1/query
+                string endpoint = 2;
+            }
+
             // jq is only used if the `jq` type is selected.
             // It defines the comparisons that are made between
             // the ingested data and the policy rule.
@@ -1920,6 +1979,9 @@ message RuleType {
 
             // rego is only used if the `rego` type is selected.
             optional Rego rego = 3;
+
+            // vulncheck is only used if the `vulncheck` type is selected.
+            optional Vulncheck vulncheck = 4;
         }
         Eval eval = 5;
     }
@@ -1971,4 +2033,5 @@ message RuleType {
     repeated ContextualRuleSet repository = 4;
     repeated ContextualRuleSet build_environment = 5;
     repeated ContextualRuleSet artifact = 6;
+    repeated ContextualRuleSet pull_request = 7;
  }

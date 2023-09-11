@@ -460,9 +460,9 @@ func VerifyFromIdentity(ctx context.Context, imageRef string, owner string, toke
 	return is_verified, bundleVerified, imageKeys, err
 }
 
-// TagIsSignature if tag contains the .sig suffix it's a signature, as cosign
+// TagsContainSignature if tag contains the .sig suffix it's a signature, as cosign
 // stores signatures in that format
-func TagIsSignature(tags []string) bool {
+func TagsContainSignature(tags []string) bool {
 	// if the artifact has a .sig tag it's a signature, skip it
 	found := false
 	for _, tag := range tags {
@@ -472,4 +472,15 @@ func TagIsSignature(tags []string) bool {
 		}
 	}
 	return found
+}
+
+// FindSignatureTag returns the signature tag for a given image if exists
+func FindSignatureTag(tags []string) string {
+	// if the artifact has a .sig tag it's a signature, skip it
+	for _, tag := range tags {
+		if strings.HasSuffix(tag, ".sig") {
+			return tag
+		}
+	}
+	return ""
 }

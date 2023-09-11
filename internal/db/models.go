@@ -21,6 +21,7 @@ const (
 	EntitiesRepository       Entities = "repository"
 	EntitiesBuildEnvironment Entities = "build_environment"
 	EntitiesArtifact         Entities = "artifact"
+	EntitiesPullRequest      Entities = "pull_request"
 )
 
 func (e *Entities) Scan(src interface{}) error {
