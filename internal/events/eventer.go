@@ -131,6 +131,21 @@ func (e *Eventer) Running() chan struct{} {
 
 // Publish implements message.Publisher
 func (e *Eventer) Publish(topic string, messages ...*message.Message) error {
+	pc, _, _, ok := runtime.Caller(1)
+	details := runtime.FuncForPC(pc)
+
+	if ok && details != nil {
+		for idx := range messages {
+			msg := messages[idx]
+			// TODO: This should probably be debugging info
+			e.router.Logger().Info("Publishing messages", watermill.LogFields{
+				"message_uuid": msg.UUID,
+				"topic":        topic,
+				"handler":      details.Name(),
+			})
+		}
+	}
+
 	return e.webhookPublisher.Publish(topic, messages...)
 }
 
