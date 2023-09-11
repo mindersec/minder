@@ -40,9 +40,9 @@ import (
 	"golang.org/x/oauth2"
 
 	mockdb "github.com/stacklok/mediator/database/mock"
+	"github.com/stacklok/mediator/internal/db"
 	"github.com/stacklok/mediator/internal/engine"
 	"github.com/stacklok/mediator/internal/util"
-	"github.com/stacklok/mediator/pkg/db"
 )
 
 // MockClient is a mock implementation of the GitHub client.

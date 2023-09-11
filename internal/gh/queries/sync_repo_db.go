@@ -21,7 +21,7 @@ import (
 	"errors"
 	"fmt"
 
-	"github.com/stacklok/mediator/pkg/db"
+	"github.com/stacklok/mediator/internal/db"
 	ghclient "github.com/stacklok/mediator/pkg/providers/github"
 )
 

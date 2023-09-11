@@ -162,7 +162,7 @@ Mediator uses [mockgen](https://github.com/golang/mock) to generate mocks.
 To generate the mocks, run:
 
 ```bash
-mockgen -package mockdb -destination database/mock/store.go github.com/stacklok/mediator/pkg/db Store
+mockgen -package mockdb -destination database/mock/store.go github.com/stacklok/mediator/internal/db Store
 ```
 
 # Configuration

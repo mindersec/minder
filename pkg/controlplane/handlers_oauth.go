@@ -31,9 +31,9 @@ import (
 	"google.golang.org/grpc/codes"
 	"google.golang.org/grpc/status"
 
+	"github.com/stacklok/mediator/internal/db"
 	"github.com/stacklok/mediator/pkg/auth"
 	mcrypto "github.com/stacklok/mediator/pkg/crypto"
-	"github.com/stacklok/mediator/pkg/db"
 	pb "github.com/stacklok/mediator/pkg/generated/protobuf/go/mediator/v1"
 	ghclient "github.com/stacklok/mediator/pkg/providers/github"
 )
