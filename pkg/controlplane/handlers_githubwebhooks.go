@@ -40,12 +40,14 @@ import (
 	"github.com/google/go-github/v53/github"
 	"github.com/google/uuid"
 	"github.com/spf13/viper"
+	"golang.org/x/exp/slices"
 	"golang.org/x/oauth2"
 	"google.golang.org/protobuf/encoding/protojson"
 	"google.golang.org/protobuf/types/known/timestamppb"
 
 	"github.com/stacklok/mediator/internal/engine"
 	"github.com/stacklok/mediator/internal/util"
+
 	// TODO(jaosorior): This should be moved to the provider package
 	"github.com/stacklok/mediator/pkg/container"
 	"github.com/stacklok/mediator/pkg/db"
@@ -672,7 +674,7 @@ func upsertVersionedArtifact(
 			for _, existing := range existingArtifactVersions {
 				if existing.Tags.Valid {
 					// Rebuild the Tags list removing anything that would conflict
-					newTags := util.RemoveElementFromSlice[string](strings.Split(existing.Tags.String, ","), incomingTag)
+					newTags := slices.DeleteFunc(strings.Split(existing.Tags.String, ","), func(in string) bool { return in == incomingTag })
 					// Update the versioned artifact row in the store (we should't change anything else except the tags value)
 					_, err := qtx.UpsertArtifactVersion(ctx, db.UpsertArtifactVersionParams{
 						ArtifactID: existing.ArtifactID,
