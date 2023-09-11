@@ -19,6 +19,7 @@ package events
 
 import (
 	"context"
+	"errors"
 	"fmt"
 	"reflect"
 	"runtime"
@@ -146,11 +147,17 @@ func (e *Eventer) Register(
 		e.webhookSubscriber,
 		func(msg *message.Message) error {
 			if err := handler(msg); err != nil {
-				e.router.Logger().Error("Error handling message", err, watermill.LogFields{
+				retriable := errors.Is(err, ErrRetriable)
+				e.router.Logger().Error("Found error handling message", err, watermill.LogFields{
 					"message_uuid": msg.UUID,
 					"topic":        topic,
 					"handler":      funcName,
+					"retriable":    retriable,
 				})
+
+				if retriable {
+					return nil
+				}
 				return err
 			}
 
