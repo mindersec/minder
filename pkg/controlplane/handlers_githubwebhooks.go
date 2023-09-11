@@ -660,11 +660,10 @@ func upsertVersionedArtifact(
 			db.ListArtifactVersionsByArtifactIDAndTagParams{ArtifactID: dbArtifact.ID,
 				Tags:  sql.NullString{Valid: true, String: incomingTag},
 				Limit: sql.NullInt32{Valid: false, Int32: 0}})
-		if err != nil {
-			if errors.Is(err, sql.ErrNoRows) {
-				// There're no tagged versions matching the incoming tag, all okay
-				continue
-			}
+		if errors.Is(err, sql.ErrNoRows) {
+			// There're no tagged versions matching the incoming tag, all okay
+			continue
+		} else if err != nil {
 			// Unexpected failure
 			return nil, nil, fmt.Errorf("failed during repository synchronization: %w", err)
 		}
@@ -689,7 +688,7 @@ func upsertVersionedArtifact(
 				GithubWorkflow:        existing.GithubWorkflow.RawMessage,
 			})
 			if err != nil {
-				return nil, nil, fmt.Errorf("error upserting artifact version: %w", err)
+				return nil, nil, fmt.Errorf("error upserting artifact_id %d with version_id %d: %w", existing.ArtifactID, existing.Version, err)
 			}
 		}
 	}
