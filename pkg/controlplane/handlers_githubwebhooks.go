@@ -837,6 +837,12 @@ func getRepoInformationFromPayload(
 		}
 		return db.Repository{}, fmt.Errorf("error getting repository: %w", err)
 	}
+
+	if dbrepo.GroupID == 0 {
+		return db.Repository{}, fmt.Errorf("no group found for repository %s/%s: %w",
+			dbrepo.RepoOwner, dbrepo.RepoName, ErrRepoNotFound)
+	}
+
 	return dbrepo, nil
 }
 
