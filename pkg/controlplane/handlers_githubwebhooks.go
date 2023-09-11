@@ -665,33 +665,32 @@ func upsertVersionedArtifact(
 			if errors.Is(err, sql.ErrNoRows) {
 				// There're no tagged versions matching the incoming tag, all okay
 				continue
-			} else {
-				// Unexpected failure
-				return nil, nil, fmt.Errorf("failed during repository synchronization: %w", err)
 			}
-		} else {
-			// Loop through all artifact versions that matched the incoming tag
-			for _, existing := range existingArtifactVersions {
-				if existing.Tags.Valid {
-					// Rebuild the Tags list removing anything that would conflict
-					newTags := slices.DeleteFunc(strings.Split(existing.Tags.String, ","), func(in string) bool { return in == incomingTag })
-					// Update the versioned artifact row in the store (we should't change anything else except the tags value)
-					_, err := qtx.UpsertArtifactVersion(ctx, db.UpsertArtifactVersionParams{
-						ArtifactID: existing.ArtifactID,
-						Version:    existing.Version,
-						Tags: sql.NullString{
-							String: strings.Join(newTags, ","),
-							Valid:  true,
-						},
-						Sha:                   existing.Sha,
-						CreatedAt:             existing.CreatedAt,
-						SignatureVerification: existing.SignatureVerification.RawMessage,
-						GithubWorkflow:        existing.GithubWorkflow.RawMessage,
-					})
-					if err != nil {
-						return nil, nil, fmt.Errorf("error upserting artifact version: %w", err)
-					}
-				}
+			// Unexpected failure
+			return nil, nil, fmt.Errorf("failed during repository synchronization: %w", err)
+		}
+		// Loop through all artifact versions that matched the incoming tag
+		for _, existing := range existingArtifactVersions {
+			if !existing.Tags.Valid {
+				continue
+			}
+			// Rebuild the Tags list removing anything that would conflict
+			newTags := slices.DeleteFunc(strings.Split(existing.Tags.String, ","), func(in string) bool { return in == incomingTag })
+			// Update the versioned artifact row in the store (we should't change anything else except the tags value)
+			_, err := qtx.UpsertArtifactVersion(ctx, db.UpsertArtifactVersionParams{
+				ArtifactID: existing.ArtifactID,
+				Version:    existing.Version,
+				Tags: sql.NullString{
+					String: strings.Join(newTags, ","),
+					Valid:  true,
+				},
+				Sha:                   existing.Sha,
+				CreatedAt:             existing.CreatedAt,
+				SignatureVerification: existing.SignatureVerification.RawMessage,
+				GithubWorkflow:        existing.GithubWorkflow.RawMessage,
+			})
+			if err != nil {
+				return nil, nil, fmt.Errorf("error upserting artifact version: %w", err)
 			}
 		}
 	}
