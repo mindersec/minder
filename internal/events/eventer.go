@@ -19,11 +19,13 @@ package events
 
 import (
 	"context"
+	"errors"
 	"fmt"
 	"reflect"
 	"runtime"
 	"time"
 
+	"github.com/ThreeDotsLabs/watermill"
 	"github.com/ThreeDotsLabs/watermill/message"
 	"github.com/ThreeDotsLabs/watermill/message/router/middleware"
 	"github.com/ThreeDotsLabs/watermill/pubsub/gochannel"
@@ -143,7 +145,24 @@ func (e *Eventer) Register(
 		funcName,
 		topic,
 		e.webhookSubscriber,
-		handler,
+		func(msg *message.Message) error {
+			if err := handler(msg); err != nil {
+				retriable := errors.Is(err, ErrRetriable)
+				e.router.Logger().Error("Found error handling message", err, watermill.LogFields{
+					"message_uuid": msg.UUID,
+					"topic":        topic,
+					"handler":      funcName,
+					"retriable":    retriable,
+				})
+
+				if retriable {
+					return nil
+				}
+				return err
+			}
+
+			return nil
+		},
 	)
 }
 
