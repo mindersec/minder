@@ -146,9 +146,9 @@ func (s *Server) HandleGitHubWebHook() http.HandlerFunc {
 		log.Printf("publishing of type: %s", m.Metadata["type"])
 
 		if err := s.parseGithubEventForProcessing(rawWBPayload, m); err != nil {
-			// We won't leak whether a repository is not found.
-			if errors.Is(err, ErrRepoNotFound) {
-				log.Printf("repository not found: %v", err)
+			// We won't leak when a repository or artifact is not found.
+			if errors.Is(err, ErrRepoNotFound) || errors.Is(err, ErrArtifactNotFound) {
+				log.Printf("repository or artifact not found: %v", err)
 				w.WriteHeader(http.StatusOK)
 				return
 			}
@@ -380,11 +380,6 @@ func (s *Server) parseArtifactPublishedEvent(
 		return fmt.Errorf("error gathering versioned artifact: %w", err)
 	}
 
-	if versionedArtifact == nil {
-		// no error, but the version was just the signature
-		return nil
-	}
-
 	dbArtifact, _, err := upsertVersionedArtifact(ctx, dbrepo.ID, versionedArtifact, s.store)
 	if err != nil {
 		return fmt.Errorf("error upserting artifact from payload: %w", err)
@@ -595,7 +590,7 @@ func gatherVersionedArtifact(
 		if storedVersion == nil {
 			// not much we can do about the version not being there, let's hope the signed container arrives later
 			// but don't return nil, there's no point in retrying either
-			return nil, nil
+			return nil, ErrArtifactNotFound
 		}
 		// let's continue with the stored version
 
