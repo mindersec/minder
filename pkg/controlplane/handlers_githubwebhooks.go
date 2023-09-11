@@ -40,6 +40,7 @@ import (
 	"github.com/google/go-github/v53/github"
 	"github.com/google/uuid"
 	"github.com/spf13/viper"
+	"golang.org/x/exp/slices"
 	"golang.org/x/oauth2"
 	"google.golang.org/protobuf/encoding/protojson"
 	"google.golang.org/protobuf/types/known/timestamppb"
@@ -732,6 +733,49 @@ func upsertVersionedArtifact(
 		log.Printf("error removing older artifact versions: %v", err)
 	}
 
+	// To avoid conflicts, we search for all existing entries that have the incoming tag in their Tags field.
+	// If found, the existing artifact is updated by removing the incoming tag from its tags column.
+	// Loop through all incomming tags
+	for _, incomingTag := range versionedArtifact.Version.Tags {
+		// Search artifact versions having the incomming tag (there should be at most 1 or no matches at all)
+		existingArtifactVersions, err := qtx.ListArtifactVersionsByArtifactIDAndTag(ctx,
+			db.ListArtifactVersionsByArtifactIDAndTagParams{ArtifactID: dbArtifact.ID,
+				Tags:  sql.NullString{Valid: true, String: incomingTag},
+				Limit: sql.NullInt32{Valid: false, Int32: 0}})
+		if errors.Is(err, sql.ErrNoRows) {
+			// There're no tagged versions matching the incoming tag, all okay
+			continue
+		} else if err != nil {
+			// Unexpected failure
+			return nil, nil, fmt.Errorf("failed during repository synchronization: %w", err)
+		}
+		// Loop through all artifact versions that matched the incoming tag
+		for _, existing := range existingArtifactVersions {
+			if !existing.Tags.Valid {
+				continue
+			}
+			// Rebuild the Tags list removing anything that would conflict
+			newTags := slices.DeleteFunc(strings.Split(existing.Tags.String, ","), func(in string) bool { return in == incomingTag })
+			// Update the versioned artifact row in the store (we should't change anything else except the tags value)
+			_, err := qtx.UpsertArtifactVersion(ctx, db.UpsertArtifactVersionParams{
+				ArtifactID: existing.ArtifactID,
+				Version:    existing.Version,
+				Tags: sql.NullString{
+					String: strings.Join(newTags, ","),
+					Valid:  true,
+				},
+				Sha:                   existing.Sha,
+				CreatedAt:             existing.CreatedAt,
+				SignatureVerification: existing.SignatureVerification.RawMessage,
+				GithubWorkflow:        existing.GithubWorkflow.RawMessage,
+			})
+			if err != nil {
+				return nil, nil, fmt.Errorf("error upserting artifact %d with version %d: %w", existing.ArtifactID, existing.Version, err)
+			}
+		}
+	}
+
+	// Proceed storing the new versioned artifact
 	dbVersion, err := qtx.UpsertArtifactVersion(ctx, db.UpsertArtifactVersionParams{
 		ArtifactID: dbArtifact.ID,
 		Version:    versionedArtifact.Version.VersionId,
