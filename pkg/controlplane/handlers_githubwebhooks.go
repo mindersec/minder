@@ -688,7 +688,7 @@ func upsertVersionedArtifact(
 				GithubWorkflow:        existing.GithubWorkflow.RawMessage,
 			})
 			if err != nil {
-				return nil, nil, fmt.Errorf("error upserting artifact_id %d with version_id %d: %w", existing.ArtifactID, existing.Version, err)
+				return nil, nil, fmt.Errorf("error upserting artifact %d with version %d: %w", existing.ArtifactID, existing.Version, err)
 			}
 		}
 	}
