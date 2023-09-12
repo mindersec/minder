@@ -151,7 +151,7 @@ func TestGetAuthorizationURL(t *testing.T) {
 			store := mockdb.NewMockStore(ctrl)
 			tc.buildStubs(store)
 
-			server := Server{store: store}
+			server := newDefaultServer(t, store)
 
 			res, err := server.GetAuthorizationURL(ctx, tc.req)
 			tc.checkResponse(t, res, err)

@@ -100,8 +100,12 @@ bootstrap: ## install build deps
 	# No passphrase (-N), don't overwrite existing keys ("n" to prompt)
 	echo n | ssh-keygen -t rsa -b 2048 -N "" -m PEM -f .ssh/access_token_rsa || true
 	echo n | ssh-keygen -t rsa -b 2048 -N "" -m PEM -f .ssh/refresh_token_rsa || true
+	@echo "Generating access token key pair"
 	openssl rsa -in .ssh/access_token_rsa -pubout -outform PEM -out .ssh/access_token_rsa.pub
+	@echo "Generating refresh token key pair"
 	openssl rsa -in .ssh/refresh_token_rsa -pubout -outform PEM -out .ssh/refresh_token_rsa.pub
+	@echo "Generating token key passphrase"
+	openssl rand -base64 32 > .ssh/token_key_passphrase
 	# Make sure the keys are readable by the docker user
 	chmod 644 .ssh/*
 

@@ -30,6 +30,7 @@ type Config struct {
 	Metrics       MetricsConfig    `mapstructure:"metrics"`
 	Database      DatabaseConfig   `mapstructure:"database"`
 	Salt          CryptoConfig     `mapstructure:"salt"`
+	Auth          AuthConfig       `mapstructure:"auth"`
 }
 
 // ReadConfigFromViper reads the configuration from the given Viper instance.

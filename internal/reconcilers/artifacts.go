@@ -99,7 +99,7 @@ func (e *Reconciler) handleRepoReconcilerEvent(msg *message.Message) error {
 // an specific repository
 // nolint: gocyclo
 func (e *Reconciler) handleArtifactsReconcilerEvent(ctx context.Context, prov string, evt *RepoReconcilerEvent) error {
-	cli, err := providers.BuildClient(ctx, prov, evt.Group, e.store)
+	cli, err := providers.BuildClient(ctx, prov, evt.Group, e.store, e.crypteng)
 	if err != nil {
 		return fmt.Errorf("error building client: %w", err)
 	}

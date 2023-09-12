@@ -30,7 +30,7 @@ import (
 	"testing"
 	"time"
 
-	"github.com/ThreeDotsLabs/watermill/pubsub/gochannel"
+	"github.com/ThreeDotsLabs/watermill/message"
 	"github.com/golang/mock/gomock"
 	"github.com/google/go-github/v53/github"
 	"github.com/stretchr/testify/assert"
@@ -137,17 +137,24 @@ func (s *UnitTestSuite) TestHandleWebHookPing() {
 	t := s.T()
 	t.Parallel()
 
-	p := gochannel.NewGoChannel(gochannel.Config{}, nil)
-	queued, err := p.Subscribe(context.Background(), engine.InternalEntityEventTopic)
-	require.NoError(t, err, "failed to subscribe to internal webhook event topic")
-	defer p.Close()
-
 	ctrl := gomock.NewController(t)
 	defer ctrl.Finish()
 
 	mockStore := mockdb.NewMockStore(ctrl)
+	srv := newDefaultServer(t, mockStore)
+	defer srv.evt.Close()
 
-	hook := HandleGitHubWebHook(p, mockStore)
+	go func() {
+		err := srv.evt.Run(context.Background())
+		require.NoError(t, err, "failed to run eventer")
+	}()
+
+	pq := newPassthroughQueue()
+	queued := pq.getQueue()
+
+	srv.evt.Register(engine.InternalEntityEventTopic, pq.pass)
+
+	hook := srv.HandleGitHubWebHook()
 	port, err := util.GetRandomPort()
 	require.NoError(t, err, "failed to get random port")
 
@@ -181,23 +188,28 @@ func (s *UnitTestSuite) TestHandleWebHookUnexistentRepository() {
 	t := s.T()
 	t.Parallel()
 
-	p := gochannel.NewGoChannel(gochannel.Config{}, nil)
-	queued, err := p.Subscribe(context.Background(), engine.InternalEntityEventTopic)
-	if err != nil {
-		t.Fatal(err)
-	}
-	defer p.Close()
-
 	ctrl := gomock.NewController(t)
 	defer ctrl.Finish()
 
 	mockStore := mockdb.NewMockStore(ctrl)
+	srv := newDefaultServer(t, mockStore)
+	defer srv.evt.Close()
+
+	go func() {
+		err := srv.evt.Run(context.Background())
+		require.NoError(t, err, "failed to run eventer")
+	}()
+
+	pq := newPassthroughQueue()
+	queued := pq.getQueue()
+
+	srv.evt.Register(engine.InternalEntityEventTopic, pq.pass)
 
 	mockStore.EXPECT().
 		GetRepositoryByRepoID(gomock.Any(), gomock.Any()).
 		Return(db.Repository{}, sql.ErrNoRows)
 
-	hook := HandleGitHubWebHook(p, mockStore)
+	hook := srv.HandleGitHubWebHook()
 	port, err := util.GetRandomPort()
 	if err != nil {
 		t.Fatal(err)
@@ -240,17 +252,22 @@ func (s *UnitTestSuite) TestHandleWebHookRepository() {
 	t := s.T()
 	t.Parallel()
 
-	p := gochannel.NewGoChannel(gochannel.Config{}, nil)
-	queued, err := p.Subscribe(context.Background(), engine.InternalEntityEventTopic)
-	if err != nil {
-		t.Fatal(err)
-	}
-	defer p.Close()
-
 	ctrl := gomock.NewController(t)
 	defer ctrl.Finish()
 
 	mockStore := mockdb.NewMockStore(ctrl)
+	srv := newDefaultServer(t, mockStore)
+	defer srv.evt.Close()
+
+	go func() {
+		err := srv.evt.Run(context.Background())
+		require.NoError(t, err, "failed to run eventer")
+	}()
+
+	pq := newPassthroughQueue()
+	queued := pq.getQueue()
+
+	srv.evt.Register(engine.InternalEntityEventTopic, pq.pass)
 
 	mockStore.EXPECT().
 		GetRepositoryByRepoID(gomock.Any(), gomock.Any()).
@@ -260,7 +277,7 @@ func (s *UnitTestSuite) TestHandleWebHookRepository() {
 			RepoID:  12345,
 		}, nil)
 
-	hook := HandleGitHubWebHook(p, mockStore)
+	hook := srv.HandleGitHubWebHook()
 	port, err := util.GetRandomPort()
 	if err != nil {
 		t.Fatal(err)
@@ -307,8 +324,6 @@ func (s *UnitTestSuite) TestHandleWebHookRepository() {
 	assert.Equal(t, "1", received.Metadata["repository_id"])
 
 	// TODO: assert payload is RepositoryRecord protobuf
-
-	assert.NoError(t, p.Close())
 }
 
 // We should ignore events from packages from repositories that are not registered
@@ -316,23 +331,28 @@ func (s *UnitTestSuite) TestHandleWebHookUnexistentRepoPackage() {
 	t := s.T()
 	t.Parallel()
 
-	p := gochannel.NewGoChannel(gochannel.Config{}, nil)
-	queued, err := p.Subscribe(context.Background(), engine.InternalEntityEventTopic)
-	if err != nil {
-		t.Fatal(err)
-	}
-	defer p.Close()
-
 	ctrl := gomock.NewController(t)
 	defer ctrl.Finish()
 
 	mockStore := mockdb.NewMockStore(ctrl)
+	srv := newDefaultServer(t, mockStore)
+	defer srv.evt.Close()
+
+	go func() {
+		err := srv.evt.Run(context.Background())
+		require.NoError(t, err, "failed to run eventer")
+	}()
+
+	pq := newPassthroughQueue()
+	queued := pq.getQueue()
+
+	srv.evt.Register(engine.InternalEntityEventTopic, pq.pass)
 
 	mockStore.EXPECT().
 		GetRepositoryByRepoID(gomock.Any(), gomock.Any()).
 		Return(db.Repository{}, sql.ErrNoRows)
 
-	hook := HandleGitHubWebHook(p, mockStore)
+	hook := srv.HandleGitHubWebHook()
 	port, err := util.GetRandomPort()
 	if err != nil {
 		t.Fatal(err)
@@ -377,4 +397,23 @@ func TestAll(t *testing.T) {
 
 	RunUnitTestSuite(t)
 	// Call other test runner functions for additional test suites
+}
+
+type passthroughQueue struct {
+	ch chan *message.Message
+}
+
+func newPassthroughQueue() *passthroughQueue {
+	return &passthroughQueue{
+		ch: make(chan *message.Message),
+	}
+}
+
+func (q *passthroughQueue) getQueue() <-chan *message.Message {
+	return q.ch
+}
+
+func (q *passthroughQueue) pass(msg *message.Message) error {
+	q.ch <- msg
+	return nil
 }

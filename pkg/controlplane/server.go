@@ -41,6 +41,7 @@ import (
 	"google.golang.org/grpc/reflection"
 
 	"github.com/stacklok/mediator/internal/config"
+	"github.com/stacklok/mediator/internal/crypto"
 	"github.com/stacklok/mediator/internal/db"
 	"github.com/stacklok/mediator/internal/events"
 	"github.com/stacklok/mediator/internal/logger"
@@ -74,14 +75,20 @@ type Server struct {
 	OAuth2       *oauth2.Config
 	ClientID     string
 	ClientSecret string
+	cryptoEngine *crypto.Engine
 }
 
 // NewServer creates a new server instance
 func NewServer(store db.Store, evt *events.Eventer, cfg *config.Config) (*Server, error) {
+	eng, err := crypto.EngineFromAuthConfig(&cfg.Auth)
+	if err != nil {
+		return nil, fmt.Errorf("failed to create crypto engine: %w", err)
+	}
 	return &Server{
-		store: store,
-		cfg:   cfg,
-		evt:   evt,
+		store:        store,
+		cfg:          cfg,
+		evt:          evt,
+		cryptoEngine: eng,
 	}, nil
 }
 
@@ -245,7 +252,7 @@ func (s *Server) StartHTTPServer(ctx context.Context) error {
 	fs := http.FileServer(http.Dir("assets/"))
 
 	mux.Handle("/", gwmux)
-	mux.HandleFunc("/api/v1/webhook/", HandleGitHubWebHook(s.evt, s.store))
+	mux.HandleFunc("/api/v1/webhook/", s.HandleGitHubWebHook())
 	mux.Handle("/static/", http.StripPrefix("/static/", fs))
 
 	errch := make(chan error)

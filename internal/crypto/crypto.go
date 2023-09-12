@@ -31,6 +31,7 @@ import (
 	"errors"
 	"fmt"
 	"io"
+	"os"
 	"strings"
 	"time"
 
@@ -51,6 +52,43 @@ var (
 	// ErrIncompatibleVersion is returned when the encoded hash was created with a different version of argon2
 	ErrIncompatibleVersion = errors.New("incompatible version of argon2")
 )
+
+// Engine is a structure that allows controller access to cryptographic functions.
+// The intention is that this structure will be passed to the controller on creation
+// and will validate that wrong parameters aren't passed to the functions.
+type Engine struct {
+	encryptionKey string
+}
+
+// EngineFromAuthConfig creates a new crypto engine from an auth config
+func EngineFromAuthConfig(authConfig *config.AuthConfig) (*Engine, error) {
+	if authConfig == nil {
+		return nil, errors.New("auth config is nil")
+	}
+
+	if authConfig.TokenKey == "" {
+		return nil, errors.New("token key is empty")
+	}
+
+	keyFile, err := os.Open(authConfig.TokenKey)
+	if err != nil {
+		return nil, fmt.Errorf("failed to open token key file: %s", err)
+	}
+
+	keyBytes, err := io.ReadAll(keyFile)
+	if err != nil {
+		return nil, fmt.Errorf("failed to read token key file: %s", err)
+	}
+
+	return NewEngine(string(keyBytes)), nil
+}
+
+// NewEngine creates a new crypto engine
+func NewEngine(tokenKey string) *Engine {
+	return &Engine{
+		encryptionKey: string(tokenKey),
+	}
+}
 
 // GetCert gets a certificate from an envelope
 func GetCert(envelope []byte) ([]byte, error) {
@@ -135,8 +173,13 @@ func EncryptBytes(key string, data []byte) ([]byte, error) {
 	return ciphertext, nil
 }
 
+// EncryptOAuthToken encrypts an oauth token
+func (e *Engine) EncryptOAuthToken(data []byte) ([]byte, error) {
+	return EncryptBytes(e.encryptionKey, data)
+}
+
 // DecryptOAuthToken decrypts an encrypted oauth token
-func DecryptOAuthToken(encToken string) (oauth2.Token, error) {
+func (e *Engine) DecryptOAuthToken(encToken string) (oauth2.Token, error) {
 	var decryptedToken oauth2.Token
 
 	// base64 decode the token
@@ -146,7 +189,7 @@ func DecryptOAuthToken(encToken string) (oauth2.Token, error) {
 	}
 
 	// decrypt the token
-	token, err := DecryptBytes(viper.GetString("auth.token_key"), decodeToken)
+	token, err := decryptBytes(e.encryptionKey, decodeToken)
 	if err != nil {
 		return decryptedToken, err
 	}
@@ -159,8 +202,8 @@ func DecryptOAuthToken(encToken string) (oauth2.Token, error) {
 	return decryptedToken, nil
 }
 
-// DecryptBytes decrypts a row of data
-func DecryptBytes(key string, ciphertext []byte) ([]byte, error) {
+// decryptBytes decrypts a row of data
+func decryptBytes(key string, ciphertext []byte) ([]byte, error) {
 	block, err := aes.NewCipher(deriveKey(key))
 	if err != nil {
 		return nil, status.Errorf(codes.Unknown, "failed to create cipher: %s", err)

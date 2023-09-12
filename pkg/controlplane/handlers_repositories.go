@@ -75,12 +75,12 @@ func (s *Server) RegisterRepository(ctx context.Context,
 	}
 
 	// Check if needs github authorization
-	isGithubAuthorized := IsProviderCallAuthorized(ctx, s.store, in.Provider, in.GroupId)
+	isGithubAuthorized := s.IsProviderCallAuthorized(ctx, in.Provider, in.GroupId)
 	if !isGithubAuthorized {
 		return nil, status.Errorf(codes.PermissionDenied, "user not authorized to interact with provider")
 	}
 
-	decryptedToken, _, err := GetProviderAccessToken(ctx, s.store, in.Provider, in.GroupId, true)
+	decryptedToken, _, err := s.GetProviderAccessToken(ctx, in.Provider, in.GroupId, true)
 
 	if err != nil {
 		return nil, err
@@ -353,12 +353,12 @@ func (s *Server) SyncRepositories(ctx context.Context, in *pb.SyncRepositoriesRe
 	}
 
 	// Check if needs github authorization
-	isGithubAuthorized := IsProviderCallAuthorized(ctx, s.store, in.Provider, in.GroupId)
+	isGithubAuthorized := s.IsProviderCallAuthorized(ctx, in.Provider, in.GroupId)
 	if !isGithubAuthorized {
 		return nil, status.Errorf(codes.PermissionDenied, "user not authorized to interact with provider")
 	}
 
-	token, owner_filter, err := GetProviderAccessToken(ctx, s.store, in.Provider, in.GroupId, true)
+	token, owner_filter, err := s.GetProviderAccessToken(ctx, in.Provider, in.GroupId, true)
 
 	if err != nil {
 		return nil, status.Errorf(codes.PermissionDenied, "cannot get access token for provider")

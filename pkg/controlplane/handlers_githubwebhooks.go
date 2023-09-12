@@ -108,7 +108,7 @@ var ErrArtifactNotFound = errors.New("artifact not found")
 // HandleGitHubWebHook handles incoming GitHub webhooks
 // See https://docs.github.com/en/developers/webhooks-and-events/webhooks/about-webhooks
 // for more information.
-func HandleGitHubWebHook(p message.Publisher, store db.Store) http.HandlerFunc {
+func (s *Server) HandleGitHubWebHook() http.HandlerFunc {
 	return func(w http.ResponseWriter, r *http.Request) {
 		// Validate the payload signature. This is required for security reasons.
 		// See https://docs.github.com/en/developers/webhooks-and-events/webhooks/securing-your-webhooks
@@ -145,7 +145,7 @@ func HandleGitHubWebHook(p message.Publisher, store db.Store) http.HandlerFunc {
 		// m.Metadata.Set("time", ghEvent.GetCreatedAt().String())
 		log.Printf("publishing of type: %s", m.Metadata["type"])
 
-		if err := parseGithubEventForProcessing(store, rawWBPayload, m); err != nil {
+		if err := s.parseGithubEventForProcessing(rawWBPayload, m); err != nil {
 			// We won't leak whether a repository is not found.
 			if errors.Is(err, ErrRepoNotFound) {
 				log.Printf("repository not found: %v", err)
@@ -157,7 +157,7 @@ func HandleGitHubWebHook(p message.Publisher, store db.Store) http.HandlerFunc {
 			return
 		}
 
-		if err := p.Publish(engine.InternalEntityEventTopic, m); err != nil {
+		if err := s.evt.Publish(engine.InternalEntityEventTopic, m); err != nil {
 			log.Printf("Error publishing message: %v", err)
 			w.WriteHeader(http.StatusInternalServerError)
 			return
@@ -278,8 +278,7 @@ func RegisterWebHook(
 	return registerData, nil
 }
 
-func parseGithubEventForProcessing(
-	store db.Store,
+func (s *Server) parseGithubEventForProcessing(
 	rawWHPayload []byte,
 	msg *message.Message,
 ) error {
@@ -300,13 +299,13 @@ func parseGithubEventForProcessing(
 	hook_type := msg.Metadata.Get("type")
 	if hook_type == "package" {
 		if payload["action"] == "published" {
-			return parseArtifactPublishedEvent(
-				context.Background(), ghclient.Github, store, payload, msg)
+			return s.parseArtifactPublishedEvent(
+				context.Background(), ghclient.Github, payload, msg)
 		}
 	} else if hook_type == "pull_request" {
 		if payload["action"] == "opened" {
-			return parsePullRequestModEvent(
-				context.Background(), ghclient.Github, store, payload, msg)
+			return s.parsePullRequestModEvent(
+				context.Background(), ghclient.Github, payload, msg)
 		}
 	}
 
@@ -317,17 +316,16 @@ func parseGithubEventForProcessing(
 		return nil
 	}
 
-	return parseRepoEvent(context.Background(), ghclient.Github, store, payload, msg)
+	return s.parseRepoEvent(context.Background(), ghclient.Github, payload, msg)
 }
 
-func parseRepoEvent(
+func (s *Server) parseRepoEvent(
 	ctx context.Context,
 	prov string,
-	store db.Store,
 	whPayload map[string]any,
 	msg *message.Message,
 ) error {
-	dbrepo, err := getRepoInformationFromPayload(ctx, prov, store, whPayload)
+	dbrepo, err := getRepoInformationFromPayload(ctx, prov, s.store, whPayload)
 	if err != nil {
 		return err
 	}
@@ -353,10 +351,9 @@ func parseRepoEvent(
 	return eiw.ToMessage(msg)
 }
 
-func parseArtifactPublishedEvent(
+func (s *Server) parseArtifactPublishedEvent(
 	ctx context.Context,
 	prov string,
-	store db.Store,
 	whPayload map[string]any,
 	msg *message.Message,
 ) error {
@@ -367,18 +364,18 @@ func parseArtifactPublishedEvent(
 	}
 
 	// extract information about repository so we can identity the group and associated rules
-	dbrepo, err := getRepoInformationFromPayload(ctx, prov, store, whPayload)
+	dbrepo, err := getRepoInformationFromPayload(ctx, prov, s.store, whPayload)
 	if err != nil {
 		return fmt.Errorf("error getting repo information from payload: %w", err)
 	}
 	g := dbrepo.GroupID
 
-	cli, err := providers.BuildClient(ctx, prov, g, store)
+	cli, err := providers.BuildClient(ctx, prov, g, s.store, s.cryptoEngine)
 	if err != nil {
 		return fmt.Errorf("error building client: %w", err)
 	}
 
-	versionedArtifact, err := gatherVersionedArtifact(ctx, cli, store, whPayload)
+	versionedArtifact, err := gatherVersionedArtifact(ctx, cli, s.store, whPayload)
 	if err != nil {
 		return fmt.Errorf("error gathering versioned artifact: %w", err)
 	}
@@ -388,7 +385,7 @@ func parseArtifactPublishedEvent(
 		return nil
 	}
 
-	dbArtifact, _, err := upsertVersionedArtifact(ctx, dbrepo.ID, versionedArtifact, store)
+	dbArtifact, _, err := upsertVersionedArtifact(ctx, dbrepo.ID, versionedArtifact, s.store)
 	if err != nil {
 		return fmt.Errorf("error upserting artifact from payload: %w", err)
 	}
@@ -403,21 +400,20 @@ func parseArtifactPublishedEvent(
 	return eiw.ToMessage(msg)
 }
 
-func parsePullRequestModEvent(
+func (s *Server) parsePullRequestModEvent(
 	ctx context.Context,
 	prov string,
-	store db.Store,
 	whPayload map[string]any,
 	msg *message.Message,
 ) error {
 	// extract information about repository so we can identify the group and associated rules
-	dbrepo, err := getRepoInformationFromPayload(ctx, prov, store, whPayload)
+	dbrepo, err := getRepoInformationFromPayload(ctx, prov, s.store, whPayload)
 	if err != nil {
 		return fmt.Errorf("error getting repo information from payload: %w", err)
 	}
 	g := dbrepo.GroupID
 
-	cli, err := providers.BuildClient(ctx, prov, g, store)
+	cli, err := providers.BuildClient(ctx, prov, g, s.store, s.cryptoEngine)
 	if err != nil {
 		return fmt.Errorf("error building client: %w", err)
 	}

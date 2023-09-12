@@ -66,7 +66,7 @@ func TestEncryptDecryptBytes(t *testing.T) {
 
 	encrypted, err := EncryptBytes("test", []byte("test"))
 	assert.Nil(t, err)
-	decrypted, err := DecryptBytes("test", encrypted)
+	decrypted, err := decryptBytes("test", encrypted)
 	assert.Nil(t, err)
 	assert.Equal(t, "test", string(decrypted))
 }

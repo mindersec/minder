@@ -22,6 +22,8 @@ import (
 	"github.com/ThreeDotsLabs/watermill/message"
 	"github.com/rs/zerolog"
 
+	"github.com/stacklok/mediator/internal/config"
+	"github.com/stacklok/mediator/internal/crypto"
 	"github.com/stacklok/mediator/internal/db"
 	"github.com/stacklok/mediator/internal/events"
 	pb "github.com/stacklok/mediator/pkg/generated/protobuf/go/mediator/v1"
@@ -36,14 +38,21 @@ const (
 
 // Executor is the engine that executes the rules for a given event
 type Executor struct {
-	querier db.Store
+	querier  db.Store
+	crypteng *crypto.Engine
 }
 
 // NewExecutor creates a new executor
-func NewExecutor(querier db.Store) *Executor {
-	return &Executor{
-		querier: querier,
+func NewExecutor(querier db.Store, authCfg *config.AuthConfig) (*Executor, error) {
+	crypteng, err := crypto.EngineFromAuthConfig(authCfg)
+	if err != nil {
+		return nil, err
 	}
+
+	return &Executor{
+		querier:  querier,
+		crypteng: crypteng,
+	}, nil
 }
 
 // Register implements the Consumer interface.
@@ -73,7 +82,7 @@ func (e *Executor) HandleEntityEvent(msg *message.Message) error {
 		return fmt.Errorf("error getting group: %w", err)
 	}
 
-	cli, err := providers.BuildClient(ctx, inf.Provider, inf.GroupID, e.querier)
+	cli, err := providers.BuildClient(ctx, inf.Provider, inf.GroupID, e.querier, e.crypteng)
 	if err != nil {
 		return fmt.Errorf("error building client: %w", err)
 	}
