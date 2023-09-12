@@ -189,7 +189,7 @@ func (e *Engine) DecryptOAuthToken(encToken string) (oauth2.Token, error) {
 	}
 
 	// decrypt the token
-	token, err := DecryptBytes(e.encryptionKey, decodeToken)
+	token, err := decryptBytes(e.encryptionKey, decodeToken)
 	if err != nil {
 		return decryptedToken, err
 	}
@@ -202,8 +202,8 @@ func (e *Engine) DecryptOAuthToken(encToken string) (oauth2.Token, error) {
 	return decryptedToken, nil
 }
 
-// DecryptBytes decrypts a row of data
-func DecryptBytes(key string, ciphertext []byte) ([]byte, error) {
+// decryptBytes decrypts a row of data
+func decryptBytes(key string, ciphertext []byte) ([]byte, error) {
 	block, err := aes.NewCipher(deriveKey(key))
 	if err != nil {
 		return nil, status.Errorf(codes.Unknown, "failed to create cipher: %s", err)
