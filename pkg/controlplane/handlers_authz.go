@@ -138,6 +138,8 @@ func IsRequestAuthorized(ctx context.Context, value int32) bool {
 			return false
 		}
 		return true
+	case mediator.ObjectOwner_OBJECT_OWNER_UNSPECIFIED:
+		fallthrough
 	default:
 		return false
 	}
