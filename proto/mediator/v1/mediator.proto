@@ -66,6 +66,7 @@ service ArtifactService {
         };
 
         option (rpc_options) = {
+            // TODO: this should probably be available to non-root users
             root_admin_only: true
         };
     }
@@ -184,6 +185,7 @@ service OAuthService {
         };
 
         option (rpc_options) = {
+            // TODO: should this be available to non-org admin users?
             auth_scope: OBJECT_OWNER_ORGANIZATION
             owner_only: true
         };
