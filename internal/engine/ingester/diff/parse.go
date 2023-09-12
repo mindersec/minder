@@ -29,6 +29,8 @@ func newEcosystemParser(eco DependencyEcosystem) ecosystemParser {
 	switch eco {
 	case DepEcosystemNPM:
 		return npmParse
+	case DepEcosystemNone:
+		return nil
 	default:
 		return nil
 	}

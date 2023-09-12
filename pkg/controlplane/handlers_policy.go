@@ -361,10 +361,7 @@ func getRuleEvalEntityInfo(
 		return entityInfo
 	}
 
-	// linter complaints that switches with one-case are bad, but I think that a switch is more extensible for future
-	// nolint:revive
-	switch entityType.Entities {
-	case db.EntitiesArtifact:
+	if entityType.Entities == db.EntitiesArtifact {
 		artifact, err := store.GetArtifactByID(ctx, selector.Int32)
 		if err != nil {
 			log.Printf("error getting artifact: %v", err)
