@@ -34,14 +34,31 @@ type RepoQuerier interface {
 	SendRecvRequest(*http.Request) (patchFormatter, error)
 }
 
-func newRepository(ecoConfig *ecosystemConfig) (RepoQuerier, error) {
+type repoCache struct {
+	cache map[string]RepoQuerier
+}
+
+func newRepoCache() *repoCache {
+	return &repoCache{
+		cache: make(map[string]RepoQuerier),
+	}
+}
+
+func (rc *repoCache) newRepository(ecoConfig *ecosystemConfig) (RepoQuerier, error) {
+	if repo, exists := rc.cache[ecoConfig.Name]; exists {
+		return repo, nil
+	}
+
+	var repo RepoQuerier
 	switch ecoConfig.Name {
 	case "npm":
-		// TODO(jakub): make this configurable
-		return newNpmRepository(ecoConfig.PackageRepository.Url), nil
+		repo = newNpmRepository(ecoConfig.PackageRepository.Url)
 	default:
 		return nil, fmt.Errorf("unknown ecosystem: %s", ecoConfig.Name)
 	}
+
+	rc.cache[ecoConfig.Name] = repo
+	return repo, nil
 }
 
 type packageJson struct {
@@ -67,16 +84,21 @@ func (pj *packageJson) IndentedString(leadingWhitespace int) string {
 }
 
 type npmRepository struct {
+	client   *http.Client
 	endpoint string
 }
 
 func newNpmRepository(endpoint string) *npmRepository {
 	return &npmRepository{
+		client:   &http.Client{},
 		endpoint: endpoint,
 	}
 }
 
-func (n npmRepository) NewRequest(ctx context.Context, dep *pb.Dependency) (*http.Request, error) {
+// check that npmRepository implements RepoQuerier
+var _ RepoQuerier = (*npmRepository)(nil)
+
+func (n *npmRepository) NewRequest(ctx context.Context, dep *pb.Dependency) (*http.Request, error) {
 	pkgUrl := fmt.Sprintf("%s/%s/latest", n.endpoint, dep.Name)
 	req, err := http.NewRequest("GET", pkgUrl, nil)
 	if err != nil {
@@ -86,9 +108,8 @@ func (n npmRepository) NewRequest(ctx context.Context, dep *pb.Dependency) (*htt
 	return req, nil
 }
 
-func (_ npmRepository) SendRecvRequest(request *http.Request) (patchFormatter, error) {
-	client := &http.Client{}
-	resp, err := client.Do(request)
+func (n *npmRepository) SendRecvRequest(request *http.Request) (patchFormatter, error) {
+	resp, err := n.client.Do(request)
 	if err != nil {
 		return nil, fmt.Errorf("could not send request: %w", err)
 	}

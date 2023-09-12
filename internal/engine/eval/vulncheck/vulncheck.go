@@ -62,6 +62,8 @@ func (e *Evaluator) Eval(ctx context.Context, pol map[string]any, res *engif.Res
 		return fmt.Errorf("failed to create pr action: %w", err)
 	}
 
+	pkgRepoCache := newRepoCache()
+
 	for _, dep := range prdeps.Deps {
 		ecoConfig := ruleConfig.getEcosystemConfig(dep.Dep.Ecosystem)
 		vdb, err := e.getVulnDb(ecoConfig.DbType, ecoConfig.DbEndpoint)
@@ -81,7 +83,7 @@ func (e *Evaluator) Eval(ctx context.Context, pol map[string]any, res *engif.Res
 		// TODO(jhrozek): this should be a list of vulnerabilities
 		evalErr = fmt.Errorf("vulnerabilities found for %s", dep.Dep.Name)
 
-		pkgRepo, err := newRepository(ecoConfig)
+		pkgRepo, err := pkgRepoCache.newRepository(ecoConfig)
 		if err != nil {
 			return fmt.Errorf("failed to create package repository: %w", err)
 		}
