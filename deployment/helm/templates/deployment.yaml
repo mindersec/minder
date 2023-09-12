@@ -63,6 +63,8 @@ spec:
             value: "/secrets/auth/refresh_token_rsa"
           - name: "AUTH.REFRESH_TOKEN_PUBLIC_KEY"
             value: "/secrets/auth/refresh_token_rsa.pub"
+          - name: "AUTH.TOKEN_KEY_PASSPHRASE"
+            value: "/secrets/auth/token_key_passphrase"
           
           # ko will always specify a digest, so we don't need to worry about
           # CRI image caching
