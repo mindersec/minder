@@ -314,6 +314,10 @@ func pbEntityTypeToString(t pb.Entity) (string, error) {
 		return VersionedArtifactEventEntityType, nil
 	case pb.Entity_ENTITY_PULL_REQUESTS:
 		return PullRequestEventEntityType, nil
+	case pb.Entity_ENTITY_BUILD_ENVIRONMENTS:
+		return "", fmt.Errorf("build environments not yet supported")
+	case pb.Entity_ENTITY_UNSPECIFIED:
+		return "", fmt.Errorf("entity type unspecified")
 	default:
 		return "", fmt.Errorf("unknown entity type: %s", t.String())
 	}

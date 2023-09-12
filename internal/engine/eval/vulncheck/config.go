@@ -81,6 +81,9 @@ func pbEcosystemAsString(ecosystem pb.DepEcosystem) string {
 	switch ecosystem {
 	case pb.DepEcosystem_DEP_ECOSYSTEM_NPM:
 		return "npm"
+	case pb.DepEcosystem_DEP_ECOSYSTEM_UNSPECIFIED:
+		// this shouldn't happen
+		return ""
 	default:
 		return ""
 	}

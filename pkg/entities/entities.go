@@ -72,6 +72,8 @@ func IsValidEntity(entity pb.Entity) bool {
 	case pb.Entity_ENTITY_REPOSITORIES, pb.Entity_ENTITY_BUILD_ENVIRONMENTS,
 		pb.Entity_ENTITY_ARTIFACTS, pb.Entity_ENTITY_PULL_REQUESTS:
 		return true
+	case pb.Entity_ENTITY_UNSPECIFIED:
+		return false
 	}
 	return false
 }
@@ -130,6 +132,8 @@ func EntityTypeToDB(entity pb.Entity) db.Entities {
 		dbEnt = db.EntitiesArtifact
 	case pb.Entity_ENTITY_PULL_REQUESTS:
 		dbEnt = db.EntitiesPullRequest
+	case pb.Entity_ENTITY_UNSPECIFIED:
+		// This shouldn't happen
 	}
 
 	return dbEnt
