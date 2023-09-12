@@ -48,7 +48,7 @@ services:
       - AUTH.ACCESS_TOKEN_PUBLIC_KEY=/app/.ssh/access_token_rsa.pub
       - AUTH.REFRESH_TOKEN_PRIVATE_KEY=/app/.ssh/refresh_token_rsa
       - AUTH.REFRESH_TOKEN_PUBLIC_KEY=/app/.ssh/refresh_token_rsa.pub
-      - AUTH.TOKEN_KEY=/app/.ssh/token_key
+      - AUTH.TOKEN_KEY=/app/.ssh/token_key_passphrase
     networks:
       - app_net
     depends_on:
