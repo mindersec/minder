@@ -22,6 +22,7 @@ import (
 	"net/http"
 	"net/http/httptest"
 	"os"
+	"path/filepath"
 	"testing"
 	"time"
 
@@ -86,13 +87,7 @@ func newDefaultServer(t *testing.T, mockStore *mockdb.MockStore) *Server {
 	evt, err := events.Setup()
 	require.NoError(t, err, "failed to setup eventer")
 
-	tmpdir := t.TempDir()
-
-	tokenKeyPath := tmpdir + "/token_key"
-
-	// Write token key to file
-	err = os.WriteFile(tokenKeyPath, []byte("test"), 0600)
-	require.NoError(t, err, "failed to write token key to file")
+	tokenKeyPath := generateTokenKey(t)
 
 	server, err := NewServer(mockStore, evt, &config.Config{
 		Auth: config.AuthConfig{
@@ -101,6 +96,20 @@ func newDefaultServer(t *testing.T, mockStore *mockdb.MockStore) *Server {
 	})
 	require.NoError(t, err, "failed to create server")
 	return server
+}
+
+func generateTokenKey(t *testing.T) string {
+	t.Helper()
+
+	tmpdir := t.TempDir()
+
+	tokenKeyPath := filepath.Join(tmpdir, "/token_key")
+
+	// Write token key to file
+	err := os.WriteFile(tokenKeyPath, []byte("test"), 0600)
+	require.NoError(t, err, "failed to write token key to file")
+
+	return tokenKeyPath
 }
 
 func TestHealth(t *testing.T) {
