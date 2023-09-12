@@ -158,6 +158,7 @@
     - [RevokeUserTokenRequest](#mediator-v1-RevokeUserTokenRequest)
     - [RevokeUserTokenResponse](#mediator-v1-RevokeUserTokenResponse)
     - [RoleRecord](#mediator-v1-RoleRecord)
+    - [RpcOptions](#mediator-v1-RpcOptions)
     - [RuleEvaluationStatus](#mediator-v1-RuleEvaluationStatus)
     - [RuleEvaluationStatus.EntityInfoEntry](#mediator-v1-RuleEvaluationStatus-EntityInfoEntry)
     - [RuleType](#mediator-v1-RuleType)
@@ -188,9 +189,12 @@
   
     - [DepEcosystem](#mediator-v1-DepEcosystem)
     - [Entity](#mediator-v1-Entity)
+    - [ObjectOwner](#mediator-v1-ObjectOwner)
     - [Provider.Definition.Auth.Type](#mediator-v1-Provider-Definition-Auth-Type)
     - [Provider.Definition.ClientTypes.Type](#mediator-v1-Provider-Definition-ClientTypes-Type)
     - [RepoFilter](#mediator-v1-RepoFilter)
+  
+    - [File-level Extensions](#mediator_v1_mediator-proto-extensions)
   
     - [ArtifactService](#mediator-v1-ArtifactService)
     - [AuthService](#mediator-v1-AuthService)
@@ -2695,6 +2699,25 @@ This is used to fetch data from a REST endpoint.
 
 
 
+<a name="mediator-v1-RpcOptions"></a>
+
+### RpcOptions
+
+
+
+| Field | Type | Label | Description |
+| ----- | ---- | ----- | ----------- |
+| anonymous | [bool](#bool) |  |  |
+| no_log | [bool](#bool) |  |  |
+| owner_only | [bool](#bool) |  |  |
+| root_admin_only | [bool](#bool) |  |  |
+| auth_scope | [ObjectOwner](#mediator-v1-ObjectOwner) |  |  |
+
+
+
+
+
+
 <a name="mediator-v1-RuleEvaluationStatus"></a>
 
 ### RuleEvaluationStatus
@@ -3163,6 +3186,20 @@ Entity defines the entity that is supported by the provider.
 
 
 
+<a name="mediator-v1-ObjectOwner"></a>
+
+### ObjectOwner
+
+
+| Name | Number | Description |
+| ---- | ------ | ----------- |
+| OBJECT_OWNER_UNSPECIFIED | 0 |  |
+| OBJECT_OWNER_ORGANIZATION | 1 |  |
+| OBJECT_OWNER_GROUP | 2 |  |
+| OBJECT_OWNER_USER | 3 |  |
+
+
+
 <a name="mediator-v1-Provider-Definition-Auth-Type"></a>
 
 ### Provider.Definition.Auth.Type
@@ -3204,6 +3241,14 @@ Repo filter enum
 
 
  
+
+
+<a name="mediator_v1_mediator-proto-extensions"></a>
+
+### File-level Extensions
+| Extension | Type | Base | Number | Description |
+| --------- | ---- | ---- | ------ | ----------- |
+| rpc_options | RpcOptions | .google.protobuf.MethodOptions | 51077 |  |
 
  
 

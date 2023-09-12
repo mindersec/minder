@@ -19,19 +19,24 @@ import (
 	"fmt"
 	"os"
 	"path/filepath"
+	"strings"
 	"time"
 
 	gauth "github.com/grpc-ecosystem/go-grpc-middleware/v2/interceptors/auth"
 	"github.com/rs/zerolog"
 	"github.com/spf13/viper"
+	"golang.org/x/exp/slices"
 	"google.golang.org/grpc"
 	"google.golang.org/grpc/codes"
 	"google.golang.org/grpc/status"
-	"k8s.io/apimachinery/pkg/util/sets"
+	"google.golang.org/protobuf/proto"
+	"google.golang.org/protobuf/reflect/protoreflect"
+	"google.golang.org/protobuf/reflect/protoregistry"
 
 	"github.com/stacklok/mediator/internal/db"
 	"github.com/stacklok/mediator/internal/util"
 	"github.com/stacklok/mediator/pkg/auth"
+	mediator "github.com/stacklok/mediator/pkg/generated/protobuf/go/mediator/v1"
 	github "github.com/stacklok/mediator/pkg/providers/github"
 )
 
@@ -54,284 +59,16 @@ func parseToken(token string, store db.Store) (auth.UserClaims, error) {
 	return userClaims, nil
 }
 
-// List of methods to skip entirely.
-var noLogMethods = sets.New[string](
-	"/mediator.v1.HealthService/CheckHealth",
-)
+type rpcOptionsKey struct{}
 
-// List of methods that bypass authentication
-var authBypassMethods = sets.New[string](
-	"/mediator.v1.AuthService/LogIn",
-	"/mediator.v1.HealthService/CheckHealth",
-	"/mediator.v1.OAuthService/ExchangeCodeForTokenCLI",
-	"/mediator.v1.OAuthService/ExchangeCodeForTokenWEB",
-)
+func withRpcOptions(ctx context.Context, opts *mediator.RpcOptions) context.Context {
+	return context.WithValue(ctx, rpcOptionsKey{}, opts)
+}
 
-var superAdminMethods = sets.New[string](
-	"/mediator.v1.OrganizationService/CreateOrganization",
-	"/mediator.v1.OrganizationService/GetOrganizations",
-	"/mediator.v1.OrganizationService/DeleteOrganization",
-	"/mediator.v1.AuthService/RevokeTokens",
-	"/mediator.v1.AuthService/RevokeUserToken",
-	"/mediator.v1.OAuthService/RevokeOauthTokens",
-	"/mediator.v1.UserService/GetUsers",
-	"/mediator.v1.ArtifactService/ListArtifacts",
-	"/mediator.v1.ArtifactService/GetArtifactByName",
-)
-
-var resourceAuthorizations = []map[string]map[string]interface{}{
-	{
-		"/mediator.v1.OrganizationService/GetOrganization": {
-			"claimField": "OrganizationId",
-			"isAdmin":    true,
-		},
-	},
-	{
-		"/mediator.v1.OrganizationService/GetOrganizationByName": {
-			"claimField": "OrganizationId",
-			"isAdmin":    false,
-		},
-	},
-	{
-		"/mediator.v1.GroupService/CreateGroup": {
-			"claimField": "OrganizationId",
-			"isAdmin":    true,
-		},
-	},
-	{
-		"/mediator.v1.GroupService/GetGroups": {
-			"claimField": "OrganizationId",
-			"isAdmin":    true,
-		},
-	},
-	{
-		"/mediator.v1.GroupService/GetGroupByName": {
-			"claimField": "OrganizationId",
-			"isAdmin":    true,
-		},
-	},
-	{
-		"/mediator.v1.GroupService/GetGroupById": {
-			"claimField": "OrganizationId",
-			"isAdmin":    true,
-		},
-	},
-	{
-		"/mediator.v1.GroupService/DeleteGroup": {
-			"claimField": "OrganizationId",
-			"isAdmin":    true,
-		},
-	},
-	{
-		"/mediator.v1.RoleService/CreateRoleByOrganization": {
-			"claimField": "OrganizationId",
-			"isAdmin":    true,
-		},
-	},
-	{
-		"/mediator.v1.RoleService/CreateRoleByGroup": {
-			"claimField": "GroupId",
-			"isAdmin":    true,
-		},
-	},
-	{
-		"/mediator.v1.RoleService/DeleteRole": {
-			"claimField": "OrganizationId",
-			"isAdmin":    true,
-		},
-	},
-	{
-		"/mediator.v1.RoleService/GetRoles": {
-			"claimField": "OrganizationId",
-			"isAdmin":    true,
-		},
-	},
-	{
-		"/mediator.v1.RoleService/GetRolesByGroup": {
-			"claimField": "GroupId",
-			"isAdmin":    true,
-		},
-	},
-	{
-		"/mediator.v1.RoleService/GetRoleById": {
-			"claimField": "OrganizationId",
-			"isAdmin":    true,
-		},
-	},
-	{
-		"/mediator.v1.RoleService/GetRoleByName": {
-			"claimField": "OrganizationId",
-			"isAdmin":    true,
-		},
-	},
-	{
-		"/mediator.v1.UserService/CreateUser": {
-			"claimField": "OrganizationId",
-			"isAdmin":    true,
-		},
-	},
-	{
-		"/mediator.v1.UserService/DeleteUser": {
-			"claimField": "OrganizationId",
-			"isAdmin":    true,
-		},
-	},
-	{
-		"/mediator.v1.UserService/GetUsersByOrganization": {
-			"claimField": "OrganizationId",
-			"isAdmin":    true,
-		},
-	},
-	{
-		"/mediator.v1.UserService/GetUsersByGroup": {
-			"claimField": "GroupId",
-			"isAdmin":    true,
-		},
-	},
-	{
-		"/mediator.v1.UserService/GetUserById": {
-			"claimField": "OrganizationId",
-			"isAdmin":    true,
-		},
-	},
-	{
-		"/mediator.v1.UserService/GetUserByUserName": {
-			"claimField": "OrganizationId",
-			"isAdmin":    true,
-		},
-	},
-	{
-		"/mediator.v1.UserService/GetUser": {
-			"claimField": "UserId",
-			"isAdmin":    false,
-		},
-	},
-	{
-		"/mediator.v1.UserService/UpdateUser": {
-			"claimField": "UserId",
-			"isAdmin":    false,
-		},
-	},
-	{
-		"/mediator.v1.UserService/GetUserByEmail": {
-			"claimField": "OrganizationId",
-			"isAdmin":    true,
-		},
-	},
-	{
-		"/mediator.v1.OAuthService/GetAuthorizationURL": {
-			"claimField": "OrganizationId",
-			"isAdmin":    true,
-		},
-	},
-	{
-		"/mediator.v1.OAuthService/RevokeOauthGroupToken": {
-			"claimField": "GroupId",
-			"isAdmin":    true,
-		},
-	},
-	{
-		"/mediator.v1.RepositoryService/ListRepositories": {
-			"claimField": "GroupId",
-			"isAdmin":    false,
-		},
-	},
-	{
-		"/mediator.v1.RepositoryService/GetRepositoryById": {
-			"claimField": "GroupId",
-			"isAdmin":    false,
-		},
-	},
-	{
-		"/mediator.v1.RepositoryService/GetRepositoryByName": {
-			"claimField": "GroupId",
-			"isAdmin":    false,
-		},
-	},
-	{
-		"/mediator.v1.RepositoryService/RegisterRepository": {
-			"claimField": "GroupId",
-			"isAdmin":    true,
-		},
-	},
-	{
-		"/mediator.v1.PolicyService/CreatePolicy": {
-			"claimField": "GroupId",
-			"isAdmin":    true,
-		},
-	},
-	{
-		"/mediator.v1.PolicyService/DeletePolicy": {
-			"claimField": "GroupId",
-			"isAdmin":    true,
-		},
-	},
-	{
-		"/mediator.v1.PolicyService/ListPolicies": {
-			"claimField": "GroupId",
-			"isAdmin":    false,
-		},
-	},
-	{
-		"/mediator.v1.PolicyService/GetPolicyById": {
-			"claimField": "GroupId",
-			"isAdmin":    false,
-		},
-	},
-	{
-		"/mediator.v1.PolicyService/GetPolicyStatusById": {
-			"claimField": "GroupId",
-			"isAdmin":    false,
-		},
-	},
-	{
-		"/mediator.v1.PolicyService/GetPolicyStatusByGroup": {
-			"claimField": "GroupId",
-			"isAdmin":    false,
-		},
-	},
-	{
-		"/mediator.v1.PolicyService/ListRuleTypes": {
-			"claimField": "GroupId",
-			"isAdmin":    false,
-		},
-	},
-	{
-		"/mediator.v1.PolicyService/GetRuleTypeByName": {
-			"claimField": "GroupId",
-			"isAdmin":    false,
-		},
-	},
-	{
-		"/mediator.v1.PolicyService/GetRuleTypeById": {
-			"claimField": "GroupId",
-			"isAdmin":    false,
-		},
-	},
-	{
-		"/mediator.v1.PolicyService/CreateRuleType": {
-			"claimField": "GroupId",
-			"isAdmin":    true,
-		},
-	},
-	{
-		"/mediator.v1.PolicyService/UpdateRuleType": {
-			"claimField": "GroupId",
-			"isAdmin":    true,
-		},
-	},
-	{
-		"/mediator.v1.PolicyService/DeleteRuleType": {
-			"claimField": "GroupId",
-			"isAdmin":    true,
-		},
-	},
-	{
-		"/mediator.v1.KeyService/CreateKeyPair": {
-			"claimField": "GroupId",
-			"isAdmin":    true,
-		},
-	},
+func getRpcOptions(ctx context.Context) *mediator.RpcOptions {
+	// nil value default is okay here
+	opts, _ := ctx.Value(rpcOptionsKey{}).(*mediator.RpcOptions)
+	return opts
 }
 
 var githubAuthorizations = []string{
@@ -368,22 +105,6 @@ func isUserAdmin(claims auth.UserClaims, claimsField string, claimsValue int32) 
 	return false
 }
 
-func isMethodAuthorized(ctx context.Context, claims auth.UserClaims) bool {
-	// superadmin is authorized to everything
-	if isSuperadmin(claims) {
-		return true
-	}
-	// Extract the gRPC method name from the context
-	method, ok := grpc.Method(ctx)
-	if !ok {
-		// no method called and did not bypass auth, return false
-		return false
-	}
-
-	// check if method is on superadmin ones, and fail
-	return !superAdminMethods.Has(method)
-}
-
 // IsRequestAuthorized checks if the request is authorized
 // nolint:gocyclo
 func IsRequestAuthorized(ctx context.Context, value int32) bool {
@@ -391,62 +112,37 @@ func IsRequestAuthorized(ctx context.Context, value int32) bool {
 	if isSuperadmin(claims) {
 		return true
 	}
-	method, ok := grpc.Method(ctx)
-	if !ok {
+	opts := getRpcOptions(ctx)
+
+	switch opts.GetAuthScope() {
+	case mediator.ObjectOwner_OBJECT_OWNER_ORGANIZATION:
+		if claims.OrganizationId != value {
+			return false
+		}
+		if opts.GetOwnerOnly() && !isUserAdmin(claims, "OrganizationId", value) {
+			return false
+		}
+		return true
+	case mediator.ObjectOwner_OBJECT_OWNER_GROUP:
+		if !slices.Contains(claims.GroupIds, value) {
+			return false
+		}
+
+		// check if is admin of group
+		if opts.GetOwnerOnly() && !isUserAdmin(claims, "GroupId", value) {
+			return false
+		}
+		return true
+	case mediator.ObjectOwner_OBJECT_OWNER_USER:
+		if claims.UserId == 0 {
+			return false
+		}
+		return true
+	case mediator.ObjectOwner_OBJECT_OWNER_UNSPECIFIED:
+		fallthrough
+	default:
 		return false
 	}
-
-	// grant permissions depending on request type and claims
-	for _, authorization := range resourceAuthorizations {
-		for path, data := range authorization {
-			// method matches, now we need to check if the request has the field
-			if path == method {
-				// now check if claims match
-				claimField := data["claimField"].(string)
-				isAdmin := data["isAdmin"].(bool)
-
-				if claimField == "OrganizationId" {
-					// check if user belongs to same org
-					if claims.OrganizationId != value {
-						return false
-					}
-					// check if is admin of org
-					if isAdmin && !isUserAdmin(claims, "OrganizationId", value) {
-						return false
-					}
-
-				} else if claimField == "GroupId" {
-					// check if user is in the list of groups
-					found := false
-					for _, group := range claims.GroupIds {
-						if group == value {
-							found = true
-							break
-						}
-					}
-					if !found {
-						return false
-					}
-
-					// check if is admin of group
-					if isAdmin && !isUserAdmin(claims, "GroupId", value) {
-						return false
-					}
-				} else if claimField == "UserId" {
-					// check that user id is not 0
-					if claims.UserId == 0 {
-						return false
-					}
-				} else {
-					// no claim field to match
-					return false
-				}
-
-				return true
-			}
-		}
-	}
-	return true
 }
 
 // IsProviderCallAuthorized checks if the request is authorized
@@ -487,10 +183,16 @@ func (s *Server) IsProviderCallAuthorized(ctx context.Context, provider string, 
 func AuthUnaryInterceptor(ctx context.Context, req interface{}, info *grpc.UnaryServerInfo,
 	handler grpc.UnaryHandler) (any, error) {
 
-	// bypass auth for public endpoints
-	if authBypassMethods.Has(info.FullMethod) {
-		// If the method is in the bypass list, return the context as is without authentication
-		if !noLogMethods.Has(info.FullMethod) {
+	opts, err := optionsForMethod(info)
+	if err != nil {
+		// Fail closed safely, rather than log and proceed.
+		return nil, status.Errorf(codes.Internal, "Error getting options for method: %v", err)
+	}
+
+	ctx = withRpcOptions(ctx, opts)
+
+	if opts.GetAnonymous() {
+		if !opts.GetNoLog() {
 			zerolog.Ctx(ctx).Info().Msgf("Bypassing authentication")
 		}
 		return handler(ctx, req)
@@ -508,27 +210,28 @@ func AuthUnaryInterceptor(ctx context.Context, req interface{}, info *grpc.Unary
 	}
 
 	// check if we need a password change
-	method, ok := grpc.Method(ctx)
-	if !ok {
-		// no method called and did not bypass auth, return false
-		return nil, status.Errorf(codes.Unauthenticated, "no method called")
-	}
-
-	if claims.NeedsPasswordChange && method != "/mediator.v1.UserService/UpdatePassword" {
+	if claims.NeedsPasswordChange && info.FullMethod != "/mediator.v1.UserService/UpdatePassword" {
 		return nil, util.UserVisibleError(codes.Unauthenticated, "password change required")
 	}
 
-	if isSuperadmin(claims) {
-		// is authorized to everything
-		ctx = context.WithValue(ctx, auth.TokenInfoKey, claims)
-	} else {
-		// Check if the current method needs to have a superadmin role
-		isAuthorized := isMethodAuthorized(ctx, claims)
-		if !isAuthorized {
-			return nil, status.Errorf(codes.PermissionDenied, "user not authorized")
-		}
+	if opts.GetRootAdminOnly() && !isSuperadmin(claims) {
+		return nil, status.Errorf(codes.PermissionDenied, "user not authorized")
 	}
 
 	ctx = context.WithValue(ctx, auth.TokenInfoKey, claims)
 	return handler(ctx, req)
+}
+
+func optionsForMethod(info *grpc.UnaryServerInfo) (*mediator.RpcOptions, error) {
+	formattedName := strings.ReplaceAll(info.FullMethod[1:], "/", ".")
+	descriptor, err := protoregistry.GlobalFiles.FindDescriptorByName(protoreflect.FullName(formattedName))
+	if err != nil {
+		return nil, fmt.Errorf("Unable to find descriptor for %q: %w", formattedName, err)
+	}
+	extension := proto.GetExtension(descriptor.Options(), mediator.E_RpcOptions)
+	opts, ok := extension.(*mediator.RpcOptions)
+	if !ok {
+		return nil, fmt.Errorf("Couldn't decode option for %q, wrong type: %T", formattedName, extension)
+	}
+	return opts, nil
 }

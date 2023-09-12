@@ -16,6 +16,7 @@
 syntax = "proto3";
 package mediator.v1;
 import "google/api/annotations.proto";
+import "google/protobuf/descriptor.proto";
 import "google/protobuf/timestamp.proto";
 import "google/protobuf/wrappers.proto";
 import "google/protobuf/struct.proto";
@@ -24,6 +25,24 @@ import "google/api/httpbody.proto";
 
 option go_package = "github.com/stacklok/mediator/pkg/generated/protobuf/go";
 
+enum ObjectOwner {
+    OBJECT_OWNER_UNSPECIFIED = 0;
+    OBJECT_OWNER_ORGANIZATION = 1;
+    OBJECT_OWNER_GROUP = 2;
+    OBJECT_OWNER_USER = 3;
+}
+
+message RpcOptions {
+    bool anonymous = 1;
+    bool no_log = 2;
+    bool owner_only = 3;
+    bool root_admin_only = 4;
+    ObjectOwner auth_scope = 5;
+}
+
+extend google.protobuf.MethodOptions {
+    RpcOptions rpc_options = 51077;
+}
 
 // Simple Health Check Service
 // replies with OK
@@ -32,6 +51,11 @@ service HealthService {
         option (google.api.http) = {
             get: "/api/v1/health"
         };
+
+        option (rpc_options) = {
+            anonymous: true
+            no_log: true
+        };
     }
 }
 
@@ -39,6 +63,11 @@ service ArtifactService {
     rpc ListArtifacts (ListArtifactsRequest) returns (ListArtifactsResponse) {
         option (google.api.http) = {
             get: "/api/v1/artifacts/{provider}"
+        };
+
+        option (rpc_options) = {
+            // TODO: this should probably be available to non-root users
+            root_admin_only: true
         };
     }
 
@@ -154,17 +183,31 @@ service OAuthService {
         option (google.api.http) = {
             get: "/api/v1/auth/url"
         };
+
+        option (rpc_options) = {
+            // TODO: should this be available to non-org admin users?
+            auth_scope: OBJECT_OWNER_ORGANIZATION
+            owner_only: true
+        };
     }
     // buf:lint:ignore RPC_RESPONSE_STANDARD_NAME
     rpc ExchangeCodeForTokenCLI (ExchangeCodeForTokenCLIRequest) returns (google.api.HttpBody) {  // protolint:disable:this
         option (google.api.http) = {
             get: "/api/v1/auth/callback/{provider}/cli"
         };
+
+        option (rpc_options) = {
+            anonymous: true  // Don't need token auth for code exchange
+        };
     }
     rpc ExchangeCodeForTokenWEB (ExchangeCodeForTokenWEBRequest) returns (ExchangeCodeForTokenWEBResponse) {
         option (google.api.http) = {
             get: "/api/v1/auth/callback/{provider}/web"
-        };        
+        };
+
+        option (rpc_options) = {
+            anonymous: true  // Don't need token auth for code exchange
+        };
     }
 
     rpc StoreProviderToken (StoreProviderTokenRequest) returns (StoreProviderTokenResponse) {
@@ -180,6 +223,10 @@ service OAuthService {
             post: "/api/v1/auth/{provider}/revoke"
             body: "*"
         };
+
+        option (rpc_options) = {
+            root_admin_only: true
+        };
     }
 
     // revoke token for a group
@@ -187,6 +234,11 @@ service OAuthService {
         option (google.api.http) = {
             post: "/api/v1/auth/{provider}/revoke/{group_id}"
             body: "*"
+        };
+
+        option (rpc_options) = {
+            auth_scope: OBJECT_OWNER_GROUP
+            owner_only: true
         };
     }
 
@@ -206,6 +258,10 @@ service AuthService {
             post: "/api/v1/auth/login"
             body: "*"
         };
+
+        option (rpc_options) = {
+            anonymous: true  // Don't need auth in order to log in
+        };
     }
 
     // Logout of Mediator
@@ -222,6 +278,10 @@ service AuthService {
             post: "/api/v1/auth/revoke"
             body: "*"
         };
+
+        option (rpc_options) = {
+            root_admin_only: true
+        };
     }
 
     // revoke token for an user
@@ -229,6 +289,10 @@ service AuthService {
         option (google.api.http) = {
             post: "/api/v1/auth/revoke/{user_id}"
             body: "*"
+        };
+
+        option (rpc_options) = {
+            root_admin_only: true
         };
     }
 
@@ -292,21 +356,41 @@ service RepositoryService {
             post: "/api/v1/repository/provider/{provider}/register"
             body: "*"
         };
+
+        option (rpc_options) = {
+            auth_scope: OBJECT_OWNER_GROUP
+            owner_only: true
+        };
     }
     rpc ListRepositories (ListRepositoriesRequest) returns (ListRepositoriesResponse) {
         option (google.api.http) = {
             get: "/api/v1/repositories/provider/{provider}"
+        };
+
+        option (rpc_options) = {
+            auth_scope: OBJECT_OWNER_GROUP
+            owner_only: false
         };
     }
     rpc GetRepositoryById (GetRepositoryByIdRequest) returns (GetRepositoryByIdResponse) {
         option (google.api.http) = {
             get: "/api/v1/repository/id/{repository_id}"
         };
+
+        option (rpc_options) = {
+            auth_scope: OBJECT_OWNER_GROUP
+            owner_only: false
+        };
     }
 
     rpc GetRepositoryByName (GetRepositoryByNameRequest) returns (GetRepositoryByNameResponse) {
         option (google.api.http) = {
             get: "/api/v1/repository/provider/{provider}/name/{name}"
+        };
+
+        option (rpc_options) = {
+            auth_scope: OBJECT_OWNER_GROUP
+            owner_only: false
         };
     }
 }
@@ -327,24 +411,43 @@ service OrganizationService {
             post: "/api/v1/organization"
             body: "*"
         };
+
+        option (rpc_options) = {
+            root_admin_only: true
+        };
     }
 
     rpc GetOrganizations (GetOrganizationsRequest) returns (GetOrganizationsResponse) {
         option (google.api.http) = {
-        get: "/api/v1/organizations"
+            get: "/api/v1/organizations"
+        };
+
+        option (rpc_options) = {
+            root_admin_only: true
         };
     }
 
     rpc GetOrganization (GetOrganizationRequest) returns (GetOrganizationResponse) {
         option (google.api.http) = {
             get: "/api/v1/organizations/{organization_id}"
-            };    
+        };
+
+        option (rpc_options) = {
+            auth_scope: OBJECT_OWNER_ORGANIZATION
+            owner_only: true
+        };
+
     }
 
     rpc GetOrganizationByName (GetOrganizationByNameRequest) returns (GetOrganizationByNameResponse) {
         option (google.api.http) = {
             get: "/api/v1/organizations/name/{name}"
-            };    
+        };
+
+        option (rpc_options) = {
+            auth_scope: OBJECT_OWNER_ORGANIZATION
+            owner_only: false
+        };
     }
 
     rpc DeleteOrganization (DeleteOrganizationRequest) returns (DeleteOrganizationResponse) {
@@ -352,6 +455,9 @@ service OrganizationService {
             delete: "/api/v1/organization/{id}"
         };
 
+        option (rpc_options) = {
+            root_admin_only: true
+        };
     }     
 
 }
@@ -363,11 +469,21 @@ service GroupService {
             post: "/api/v1/group"
             body: "*"
         };
+
+        option (rpc_options) = {
+            auth_scope: OBJECT_OWNER_ORGANIZATION
+            owner_only: true
+        };
     }
 
     rpc GetGroups (GetGroupsRequest) returns (GetGroupsResponse) {
         option (google.api.http) = {
             get: "/api/v1/groups/{organization_id}"
+        };
+
+        option (rpc_options) = {
+            auth_scope: OBJECT_OWNER_ORGANIZATION
+            owner_only: true
         };
     }
 
@@ -375,11 +491,21 @@ service GroupService {
         option (google.api.http) = {
             get: "/api/v1/group/name/{name}"
         };
+
+        option (rpc_options) = {
+            auth_scope: OBJECT_OWNER_ORGANIZATION
+            owner_only: true
+        };
     }
 
     rpc GetGroupById (GetGroupByIdRequest) returns (GetGroupByIdResponse) {
         option (google.api.http) = {
             get: "/api/v1/group/id/{group_id}"
+        };
+
+        option (rpc_options) = {
+            auth_scope: OBJECT_OWNER_ORGANIZATION
+            owner_only: true
         };
     }
 
@@ -388,6 +514,10 @@ service GroupService {
             delete: "/api/v1/group/{id}"
         };
 
+        option (rpc_options) = {
+            auth_scope: OBJECT_OWNER_ORGANIZATION
+            owner_only: true
+        };
     }     
 }
 
@@ -398,11 +528,21 @@ service RoleService {
             post: "/api/v1/role/organization"
             body: "*"
         };
+
+        option (rpc_options) = {
+            auth_scope: OBJECT_OWNER_ORGANIZATION
+            owner_only: true
+        };
     }
     rpc CreateRoleByGroup (CreateRoleByGroupRequest) returns (CreateRoleByGroupResponse) {
         option (google.api.http) = {
             post: "/api/v1/role/group"
             body: "*"
+        };
+
+        option (rpc_options) = {
+            auth_scope: OBJECT_OWNER_GROUP
+            owner_only: true
         };
     }
 
@@ -411,30 +551,54 @@ service RoleService {
             delete: "/api/v1/role/{id}"
         };
 
+        option (rpc_options) = {
+            auth_scope: OBJECT_OWNER_ORGANIZATION
+            owner_only: true
+        };
     } 
     
     rpc GetRoles (GetRolesRequest) returns (GetRolesResponse) {
         option (google.api.http) = {
-        get: "/api/v1/roles/{organization_id}"
+            get: "/api/v1/roles/{organization_id}"
+        };
+
+        option (rpc_options) = {
+            auth_scope: OBJECT_OWNER_ORGANIZATION
+            owner_only: true
         };
     }
 
     rpc GetRolesByGroup (GetRolesByGroupRequest) returns (GetRolesByGroupResponse) {
         option (google.api.http) = {
-        get: "/api/v1/roles/group/{group_id}"
+            get: "/api/v1/roles/group/{group_id}"
+        };
+
+        option (rpc_options) = {
+            auth_scope: OBJECT_OWNER_GROUP
+            owner_only: true
         };
     }
 
     rpc GetRoleById (GetRoleByIdRequest) returns (GetRoleByIdResponse) {
         option (google.api.http) = {
             get: "/api/v1/role/{id}"
-            };    
+        };
+
+        option (rpc_options) = {
+            auth_scope: OBJECT_OWNER_ORGANIZATION
+            owner_only: true
+        };    
     }
 
     rpc GetRoleByName (GetRoleByNameRequest) returns (GetRoleByNameResponse) {
         option (google.api.http) = {
             get: "/api/v1/role/name/{name}"
-            };    
+        };
+
+        option (rpc_options) = {
+            auth_scope: OBJECT_OWNER_ORGANIZATION
+            owner_only: true
+        };
     }
     
 }
@@ -458,42 +622,76 @@ service UserService {
         option (google.api.http) = {
         get: "/api/v1/users"
         };
+
+        option (rpc_options) = {
+            root_admin_only: true
+        };
     }
 
     rpc GetUsersByOrganization (GetUsersByOrganizationRequest) returns (GetUsersByOrganizationResponse) {
         option (google.api.http) = {
-        get: "/api/v1/users/{organization_id}"
+            get: "/api/v1/users/{organization_id}"
+        };
+
+        option (rpc_options) = {
+            auth_scope: OBJECT_OWNER_ORGANIZATION
+            owner_only: true
         };
     }
 
     rpc GetUsersByGroup (GetUsersByGroupRequest) returns (GetUsersByGroupResponse) {
         option (google.api.http) = {
-        get: "/api/v1/users/{group_id}"
+            get: "/api/v1/users/{group_id}"
+        };
+
+        option (rpc_options) = {
+            auth_scope: OBJECT_OWNER_GROUP
+            owner_only: true
         };
     }
 
     rpc GetUserById (GetUserByIdRequest) returns (GetUserByIdResponse) {
         option (google.api.http) = {
             get: "/api/v1/user/{id}"
-            };    
+        };
+
+        option (rpc_options) = {
+            auth_scope: OBJECT_OWNER_ORGANIZATION
+            owner_only: true
+        };
     }
 
     rpc GetUserByUserName (GetUserByUserNameRequest) returns (GetUserByUserNameResponse) {
         option (google.api.http) = {
             get: "/api/v1/user/username/{username}"
-            };    
+        };
+
+        option (rpc_options) = {
+            auth_scope: OBJECT_OWNER_ORGANIZATION
+            owner_only: true
+        };
     }
 
     rpc GetUser (GetUserRequest) returns (GetUserResponse) {
         option (google.api.http) = {
             get: "/api/v1/user"
-            };
+        };
+
+        option (rpc_options) = {
+            auth_scope: OBJECT_OWNER_USER
+            owner_only: false
+        };
     }
 
     rpc GetUserByEmail (GetUserByEmailRequest) returns (GetUserByEmailResponse) {
         option (google.api.http) = {
             get: "/api/v1/user/email/{email}"
-            };    
+        };
+
+        option (rpc_options) = {
+            auth_scope: OBJECT_OWNER_ORGANIZATION
+            owner_only: true
+        };
     }
 
     rpc UpdatePassword (UpdatePasswordRequest) returns (UpdatePasswordResponse) {
@@ -518,17 +716,32 @@ service PolicyService {
             post: "/api/v1/policy"
             body: "*"
         };
+
+        option (rpc_options) = {
+            auth_scope: OBJECT_OWNER_GROUP
+            owner_only: true
+        };
     }
 
     rpc DeletePolicy (DeletePolicyRequest) returns (DeletePolicyResponse) {
         option (google.api.http) = {
             delete: "/api/v1/policy/{id}"
         };
+
+        option (rpc_options) = {
+            auth_scope: OBJECT_OWNER_GROUP
+            owner_only: true
+        };
     }
 
     rpc ListPolicies (ListPoliciesRequest) returns (ListPoliciesResponse) {
         option (google.api.http) = {
-        get: "/api/v1/policies"
+            get: "/api/v1/policies"
+        };
+
+        option (rpc_options) = {
+            auth_scope: OBJECT_OWNER_GROUP
+            owner_only: false
         };
     }
 
@@ -541,37 +754,67 @@ service PolicyService {
     rpc GetPolicyStatusById (GetPolicyStatusByIdRequest) returns (GetPolicyStatusByIdResponse) {
         option (google.api.http) = {
             get: "/api/v1/policy/{policy_id}/status"
-            };    
+        };
+
+        option (rpc_options) = {
+            auth_scope: OBJECT_OWNER_GROUP
+            owner_only: false
+        };
     }
 
     rpc GetPolicyStatusByGroup (GetPolicyStatusByGroupRequest) returns (GetPolicyStatusByGroupResponse) {
         option (google.api.http) = {
             get: "/api/v1/policy_status"
-            };    
+        };
+
+        option (rpc_options) = {
+            auth_scope: OBJECT_OWNER_GROUP
+            owner_only: false
+        };
     }    
 
     rpc ListRuleTypes (ListRuleTypesRequest) returns (ListRuleTypesResponse) {
         option (google.api.http) = {
             get: "/api/v1/rule_types"
-            };    
+        };
+
+        option (rpc_options) = {
+            auth_scope: OBJECT_OWNER_GROUP
+            owner_only: false
+        };
     }
 
     rpc GetRuleTypeByName (GetRuleTypeByNameRequest) returns (GetRuleTypeByNameResponse) {
         option (google.api.http) = {
             get: "/api/v1/rule_type/name/{name}"
-            };    
+        };
+
+        option (rpc_options) = {
+            auth_scope: OBJECT_OWNER_GROUP
+            owner_only: false
+        };
     }
 
     rpc GetRuleTypeById (GetRuleTypeByIdRequest) returns (GetRuleTypeByIdResponse) {
         option (google.api.http) = {
             get: "/api/v1/rule_type/{id}"
-            };    
+        };
+
+        option (rpc_options) = {
+            auth_scope: OBJECT_OWNER_GROUP
+            owner_only: false
+        };
     }
 
     rpc CreateRuleType (CreateRuleTypeRequest) returns (CreateRuleTypeResponse) {
         option (google.api.http) = {
             post: "/api/v1/rule_type"
             body: "*"
+        };
+
+        option (rpc_options) = {
+            auth_scope: OBJECT_OWNER_GROUP
+            owner_only: true
         };
     }
 
@@ -580,11 +823,21 @@ service PolicyService {
             put: "/api/v1/rule_type"
             body: "*"
         };
+
+        option (rpc_options) = {
+            auth_scope: OBJECT_OWNER_GROUP
+            owner_only: true
+        };
     }
 
     rpc DeleteRuleType (DeleteRuleTypeRequest) returns (DeleteRuleTypeResponse) {
         option (google.api.http) = {
             delete: "/api/v1/rule_type/{id}"
+        };
+
+        option (rpc_options) = {
+            auth_scope: OBJECT_OWNER_GROUP
+            owner_only: true
         };
     }
 }
@@ -599,6 +852,11 @@ service KeyService {
         option (google.api.http) = {
             post: "/api/v1/key"
             body: "*"
+        };
+
+        option (rpc_options) = {
+            auth_scope: OBJECT_OWNER_GROUP
+            owner_only: true
         };
     }
 }
