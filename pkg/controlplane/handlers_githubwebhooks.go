@@ -588,12 +588,10 @@ func gatherVersionedArtifact(
 			return nil, fmt.Errorf("error looking up version by signature tag: %w", lookupErr)
 		}
 		if storedVersion == nil {
-			// not much we can do about the version not being there, let's hope the signed container arrives later
-			// but don't return nil, there's no point in retrying either
+			// return an error that would be caught by the webhook HTTP handler and not retried
 			return nil, ErrArtifactNotFound
 		}
 		// let's continue with the stored version
-
 		// now get information for signature and workflow
 		err = storeSignatureAndWorkflowInVersion(
 			ctx, cli, artifact.Owner, artifact.Name, transformTag(tagIsSigErr.signatureTag), storedVersion)
