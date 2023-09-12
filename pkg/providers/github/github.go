@@ -67,6 +67,9 @@ type RestAPI interface {
 	GetPackageVersionById(context.Context, bool, string, string, string, int64) (*github.PackageVersion, error)
 	GetPullRequest(context.Context, string, string, int) (*github.PullRequest, error)
 	CreateReview(context.Context, string, string, int, *github.PullRequestReviewRequest) (*github.PullRequestReview, error)
+	ListReviews(context.Context, string, string, int, *github.ListOptions) ([]*github.PullRequestReview, error)
+	DismissReview(context.Context, string, string, int, int64,
+		*github.PullRequestReviewDismissalRequest) (*github.PullRequestReview, error)
 	ListFiles(context.Context, string, string, int, int, int) ([]*github.CommitFile, error)
 	GetToken() string
 	GetOwner() string

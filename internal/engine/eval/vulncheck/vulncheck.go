@@ -18,7 +18,6 @@ package vulncheck
 import (
 	"context"
 	"fmt"
-	"log"
 
 	engif "github.com/stacklok/mediator/internal/engine/interfaces"
 	pb "github.com/stacklok/mediator/pkg/generated/protobuf/go/mediator/v1"
@@ -58,6 +57,11 @@ func (e *Evaluator) Eval(ctx context.Context, pol map[string]any, res *engif.Res
 		return fmt.Errorf("failed to parse config: %w", err)
 	}
 
+	prReplyHandler, err := newPrStatusHandler(ctx, ruleConfig.Action, prdeps.Pr, e.cli)
+	if err != nil {
+		return fmt.Errorf("failed to create pr action: %w", err)
+	}
+
 	for _, dep := range prdeps.Deps {
 		ecoConfig := ruleConfig.getEcosystemConfig(dep.Dep.Ecosystem)
 		vdb, err := e.getVulnDb(ecoConfig.DbType, ecoConfig.DbEndpoint)
@@ -92,22 +96,13 @@ func (e *Evaluator) Eval(ctx context.Context, pol map[string]any, res *engif.Res
 			return fmt.Errorf("failed to send package request: %w", err)
 		}
 
-		// TODO(jakub): implement comment. Policy only does nothing as the evaluator
-		// takes care of setting the policy to failed later.
-		if ruleConfig.Action == actionRejectPr {
-			reviewLoc, err := locateDepInPr(ctx, e.cli, dep)
-			if err != nil {
-				log.Printf("failed to locate dep in PR: %s", err)
-				continue
-			}
-
-			err = requestChanges(ctx, e.cli, dep.File.Name, prdeps.Pr,
-				reviewLoc, patch.IndentedString(reviewLoc.leadingWhitespace))
-			if err != nil {
-				log.Printf("failed to request changes on PR: %s", err)
-				continue
-			}
+		if err := prReplyHandler.trackVulnerableDep(ctx, dep, patch); err != nil {
+			return fmt.Errorf("failed to add package patch for further processing: %w", err)
 		}
+	}
+
+	if err := prReplyHandler.submit(ctx); err != nil {
+		return fmt.Errorf("failed to submit pr action: %w", err)
 	}
 
 	return evalErr

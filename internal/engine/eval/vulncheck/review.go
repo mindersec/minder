@@ -16,17 +16,67 @@
 package vulncheck
 
 import (
+	"bytes"
 	"context"
 	"fmt"
 	"io"
 	"net/http"
 	"strings"
+	"text/template"
 
 	"github.com/google/go-github/v53/github"
+	"github.com/rs/zerolog"
 
 	pb "github.com/stacklok/mediator/pkg/generated/protobuf/go/mediator/v1"
 	ghclient "github.com/stacklok/mediator/pkg/providers/github"
 )
+
+const (
+	reviewBodyMagicComment              = "<!-- mediator: pr-review-body -->"
+	reviewBodyRequestChangesCommentText = `
+Mediator found vulnerable dependencies in this PR. Either push an updated
+version or accept the proposed changes. Note that accepting the changes will
+include mediator as a co-author of this PR.
+`
+	reviewBodyCommentText = `
+Mediator analyzed this PR and found no vulnerable dependencies.
+`
+	reviewBodyDismissCommentText = `
+Previous mediator review was dismissed because the PR was updated.
+`
+)
+
+const (
+	reviewTemplateName = "reviewBody"
+	reviewTmplStr      = "{{.MagicComment}}\n\n{{.ReviewText}}"
+)
+
+type reviewTemplateData struct {
+	MagicComment string
+	ReviewText   string
+}
+
+func createReviewBody(magicComment, reviewText string) (string, error) {
+	// Create and parse the template
+	tmpl, err := template.New(reviewTemplateName).Parse(reviewTmplStr)
+	if err != nil {
+		return "", err
+	}
+
+	// Define the data for the template
+	data := reviewTemplateData{
+		MagicComment: magicComment,
+		ReviewText:   reviewText,
+	}
+
+	// Execute the template
+	var buf bytes.Buffer
+	if err := tmpl.Execute(&buf, data); err != nil {
+		return "", err
+	}
+
+	return buf.String(), nil
+}
 
 type reviewLocation struct {
 	lineToChange      int
@@ -79,43 +129,167 @@ func locateDepInPr(
 	return &loc, nil
 }
 
-func requestChanges(
-	ctx context.Context,
-	client ghclient.RestAPI,
-	fileName string,
-	pr *pb.PullRequest,
-	location *reviewLocation,
-	comment string,
-) error {
-	var comments []*github.DraftReviewComment
+type reviewPrHandler struct {
+	cli ghclient.RestAPI
+	pr  *pb.PullRequest
 
+	mediatorReview *github.PullRequestReview
+
+	comments []*github.DraftReviewComment
+	status   *string
+	text     *string
+
+	logger zerolog.Logger
+}
+
+func newReviewPrHandler(
+	ctx context.Context,
+	pr *pb.PullRequest,
+	cli ghclient.RestAPI,
+) (prStatusHandler, error) {
+	if pr == nil {
+		return nil, fmt.Errorf("pr was nil, can't review")
+	}
+
+	logger := zerolog.Ctx(ctx).With().
+		Int32("pull-number", pr.Number).
+		Str("repo-owner", pr.RepoOwner).
+		Str("repo-name", pr.RepoName).
+		Logger()
+
+	return &reviewPrHandler{
+		cli:      cli,
+		pr:       pr,
+		comments: []*github.DraftReviewComment{},
+		logger:   logger,
+	}, nil
+}
+
+func (ra *reviewPrHandler) trackVulnerableDep(
+	ctx context.Context,
+	dep *pb.PrDependencies_ContextualDependency,
+	patch patchFormatter,
+) error {
+	location, err := locateDepInPr(ctx, ra.cli, dep)
+	if err != nil {
+		return fmt.Errorf("could not locate dependency in PR: %w", err)
+	}
+
+	comment := patch.IndentedString(location.leadingWhitespace)
 	body := fmt.Sprintf("```suggestion\n"+"%s\n"+"```\n", comment)
 
 	reviewComment := &github.DraftReviewComment{
-		Path:      github.String(fileName),
+		Path:      github.String(dep.File.Name),
 		Position:  nil,
 		StartLine: github.Int(location.lineToChange),
 		Line:      github.Int(location.lineToChange + 3), // TODO(jakub): Need to count the lines from the patch
 		Body:      github.String(body),
 	}
-	comments = append(comments, reviewComment)
+	ra.comments = append(ra.comments, reviewComment)
 
-	review := &github.PullRequestReviewRequest{
-		CommitID: github.String(pr.CommitSha),
-		Event:    github.String("REQUEST_CHANGES"),
-		Comments: comments,
+	return nil
+}
+
+func (ra *reviewPrHandler) submit(ctx context.Context) error {
+	if err := ra.findPreviousReview(ctx); err != nil {
+		return fmt.Errorf("could not find previous review: %w", err)
 	}
 
-	_, err := client.CreateReview(
+	if ra.mediatorReview != nil {
+		err := ra.dismissReview(ctx)
+		if err != nil {
+			ra.logger.Error().Err(err).
+				Int64("review-id", ra.mediatorReview.GetID()).
+				Msg("could not dismiss previous review")
+		}
+		ra.logger.Debug().
+			Int64("review-id", ra.mediatorReview.GetID()).
+			Msg("dismissed previous review")
+	}
+
+	// either there are changes to request or just send the first review mentioning that everything is ok
+	ra.setStatus()
+	if err := ra.submitReview(ctx); err != nil {
+		return fmt.Errorf("could not submit review: %w", err)
+	}
+	ra.logger.Debug().Msg("submitted review")
+	return nil
+}
+
+func (ra *reviewPrHandler) setStatus() {
+	if len(ra.comments) > 0 {
+		// if this pass produced comments, request changes
+		ra.status = github.String("REQUEST_CHANGES")
+		ra.text = github.String(reviewBodyRequestChangesCommentText)
+	} else {
+		// if this pass produced no comments, resolve the mediator review
+		ra.status = github.String("COMMENT")
+		ra.text = github.String(reviewBodyCommentText)
+	}
+}
+
+func (ra *reviewPrHandler) findPreviousReview(ctx context.Context) error {
+	reviews, err := ra.cli.ListReviews(ctx, ra.pr.RepoOwner, ra.pr.RepoName, int(ra.pr.Number), nil)
+	if err != nil {
+		return fmt.Errorf("could not list reviews: %w", err)
+	}
+
+	ra.mediatorReview = nil
+	for _, r := range reviews {
+		if strings.HasPrefix(r.GetBody(), reviewBodyMagicComment) && r.GetState() != "DISMISSED" {
+			ra.mediatorReview = r
+			break
+		}
+	}
+
+	return nil
+}
+
+func (ra *reviewPrHandler) submitReview(ctx context.Context) error {
+	body, err := createReviewBody(reviewBodyMagicComment, *ra.text)
+	if err != nil {
+		return fmt.Errorf("could not create review body: %w", err)
+	}
+
+	review := &github.PullRequestReviewRequest{
+		CommitID: github.String(ra.pr.CommitSha),
+		Event:    ra.status,
+		Comments: ra.comments,
+		Body:     github.String(body),
+	}
+
+	_, err = ra.cli.CreateReview(
 		ctx,
-		pr.RepoOwner,
-		pr.RepoName,
-		int(pr.Number),
+		ra.pr.RepoOwner,
+		ra.pr.RepoName,
+		int(ra.pr.Number),
 		review,
 	)
 	if err != nil {
 		return fmt.Errorf("could not create review: %w", err)
 	}
 
+	return nil
+}
+
+func (ra *reviewPrHandler) dismissReview(ctx context.Context) error {
+	if ra.mediatorReview == nil {
+		return nil
+	}
+
+	dismissReview := &github.PullRequestReviewDismissalRequest{
+		Message: github.String(reviewBodyDismissCommentText),
+	}
+
+	_, err := ra.cli.DismissReview(
+		ctx,
+		ra.pr.RepoOwner,
+		ra.pr.RepoName,
+		int(ra.pr.Number),
+		ra.mediatorReview.GetID(),
+		dismissReview)
+	if err != nil {
+		return fmt.Errorf("could not dismiss review: %w", err)
+	}
 	return nil
 }
