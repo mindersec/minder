@@ -183,7 +183,7 @@ func AuthUnaryInterceptor(ctx context.Context, req interface{}, info *grpc.Unary
 
 	opts, err := optionsForMethod(info)
 	if err != nil {
-		// Another option: log and continue with default RPC options
+		// Fail closed safely, rather than log and proceed.
 		return nil, status.Errorf(codes.Internal, "Error getting options for method: %v", err)
 	}
 
