@@ -37,8 +37,8 @@ type Reconciler struct {
 	crypteng *crypto.Engine
 }
 
-// NewRecociler creates a new reconciler object
-func NewRecociler(store db.Store, evt *events.Eventer, authCfg *config.AuthConfig) (*Reconciler, error) {
+// NewReconciler creates a new reconciler object
+func NewReconciler(store db.Store, evt *events.Eventer, authCfg *config.AuthConfig) (*Reconciler, error) {
 	crypteng, err := crypto.EngineFromAuthConfig(authCfg)
 	if err != nil {
 		return nil, err

@@ -81,7 +81,7 @@ var serveCmd = &cobra.Command{
 
 		s.ConsumeEvents(exec)
 
-		rec, err := reconcilers.NewRecociler(store, evt, &cfg.Auth)
+		rec, err := reconcilers.NewReconciler(store, evt, &cfg.Auth)
 		if err != nil {
 			return fmt.Errorf("unable to create reconciler: %w", err)
 		}
