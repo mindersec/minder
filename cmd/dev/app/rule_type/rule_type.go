@@ -32,10 +32,10 @@ import (
 	"github.com/stacklok/mediator/cmd/dev/app"
 	"github.com/stacklok/mediator/internal/engine"
 	"github.com/stacklok/mediator/internal/engine/eval/rego"
+	"github.com/stacklok/mediator/internal/entities"
+	ghclient "github.com/stacklok/mediator/internal/providers/github"
 	"github.com/stacklok/mediator/internal/util"
-	"github.com/stacklok/mediator/pkg/entities"
 	pb "github.com/stacklok/mediator/pkg/generated/protobuf/go/mediator/v1"
-	ghclient "github.com/stacklok/mediator/pkg/providers/github"
 )
 
 // TestCmd is the root command for the rule subcommands

@@ -26,14 +26,14 @@ import (
 	"google.golang.org/grpc/status"
 	"google.golang.org/protobuf/types/known/timestamppb"
 
+	"github.com/stacklok/mediator/internal/auth"
 	"github.com/stacklok/mediator/internal/db"
 	"github.com/stacklok/mediator/internal/engine"
+	"github.com/stacklok/mediator/internal/entities"
+	ghclient "github.com/stacklok/mediator/internal/providers/github"
 	"github.com/stacklok/mediator/internal/reconcilers"
 	"github.com/stacklok/mediator/internal/util"
-	"github.com/stacklok/mediator/pkg/auth"
-	"github.com/stacklok/mediator/pkg/entities"
 	pb "github.com/stacklok/mediator/pkg/generated/protobuf/go/mediator/v1"
-	ghclient "github.com/stacklok/mediator/pkg/providers/github"
 )
 
 // authAndContextValidation is a helper function to initialize entity context info and validate input

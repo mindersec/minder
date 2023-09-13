@@ -23,8 +23,8 @@ import (
 	"github.com/spf13/viper"
 
 	"github.com/stacklok/mediator/cmd/cli/app"
+	"github.com/stacklok/mediator/internal/entities"
 	"github.com/stacklok/mediator/internal/util"
-	"github.com/stacklok/mediator/pkg/entities"
 	pb "github.com/stacklok/mediator/pkg/generated/protobuf/go/mediator/v1"
 )
 

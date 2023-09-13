@@ -26,9 +26,9 @@ import (
 	"github.com/stacklok/mediator/internal/crypto"
 	"github.com/stacklok/mediator/internal/db"
 	"github.com/stacklok/mediator/internal/events"
+	"github.com/stacklok/mediator/internal/providers"
+	ghclient "github.com/stacklok/mediator/internal/providers/github"
 	pb "github.com/stacklok/mediator/pkg/generated/protobuf/go/mediator/v1"
-	"github.com/stacklok/mediator/pkg/providers"
-	ghclient "github.com/stacklok/mediator/pkg/providers/github"
 )
 
 const (

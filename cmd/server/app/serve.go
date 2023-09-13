@@ -27,12 +27,12 @@ import (
 	"golang.org/x/sync/errgroup"
 
 	"github.com/stacklok/mediator/internal/config"
+	"github.com/stacklok/mediator/internal/controlplane"
 	"github.com/stacklok/mediator/internal/db"
 	"github.com/stacklok/mediator/internal/engine"
 	"github.com/stacklok/mediator/internal/events"
 	"github.com/stacklok/mediator/internal/logger"
 	"github.com/stacklok/mediator/internal/reconcilers"
-	"github.com/stacklok/mediator/pkg/controlplane"
 )
 
 var serveCmd = &cobra.Command{

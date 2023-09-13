@@ -32,7 +32,7 @@ import (
 	"github.com/stacklok/mediator/internal/crypto"
 	"github.com/stacklok/mediator/internal/db"
 	"github.com/stacklok/mediator/internal/engine"
-	"github.com/stacklok/mediator/pkg/entities"
+	"github.com/stacklok/mediator/internal/entities"
 	pb "github.com/stacklok/mediator/pkg/generated/protobuf/go/mediator/v1"
 )
 

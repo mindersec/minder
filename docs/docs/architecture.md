@@ -24,7 +24,7 @@ flowchart LR
         grpc>GRPC endpoint]
         click grpc "/api" "GRPC auto-generated documentation"
         web>HTTP endpoint]
-        click web "https://github.com/stacklok/mediator/blob/main/pkg/controlplane/server.go#L210" "Webserver URL registration code"
+        click web "https://github.com/stacklok/mediator/blob/main/internal/controlplane/server.go#L210" "Webserver URL registration code"
         events("watermill")
         click events "https://watermill.io/docs" "Watermill event processing library"
 

@@ -22,7 +22,7 @@ import (
 
 	"github.com/stacklok/mediator/internal/crypto"
 	"github.com/stacklok/mediator/internal/db"
-	ghclient "github.com/stacklok/mediator/pkg/providers/github"
+	ghclient "github.com/stacklok/mediator/internal/providers/github"
 )
 
 // BuildClient is a utility function which allows for building
