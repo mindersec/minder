@@ -154,6 +154,8 @@ message PullRequest {
     string repo_name = 5;    // The name of the repo, will be used to submit a review
 
     repeated FilePatch patches = 6; // The list of files changed in the PR. Does not include file contents
+
+    int64 author_id = 7;    // The author of the PR, will be used to check if we can request changes
 }
 
 enum DepEcosystem {
