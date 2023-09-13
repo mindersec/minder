@@ -34,9 +34,10 @@ const (
 type action string
 
 const (
-	actionRejectPr   action = "reject_pr"
-	actionComment    action = "comment"
-	actionPolicyOnly action = "policy_only"
+	actionReviewPr     action = "reject_pr"
+	actionComment      action = "comment"
+	actionCommitStatus action = "commit_status"
+	actionPolicyOnly   action = "policy_only"
 )
 
 type packageRepository struct {
