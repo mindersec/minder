@@ -47,6 +47,8 @@ Thumbs.db
 .ssh/
 cmd/server/__debug_bin
 .resolved-compose.yaml
+github_client_id/
+github_client_secret/
 
 # docusaurus
 docs/node_modules
