@@ -39,10 +39,10 @@ require (
 	github.com/xeipuuv/gojsonschema v1.2.0
 	go.opentelemetry.io/contrib/instrumentation/google.golang.org/grpc/otelgrpc v0.43.0
 	go.opentelemetry.io/otel v1.18.0
-	go.opentelemetry.io/otel/exporters/prometheus v0.40.0
+	go.opentelemetry.io/otel/exporters/prometheus v0.41.0
 	go.opentelemetry.io/otel/exporters/stdout/stdouttrace v1.17.0
 	go.opentelemetry.io/otel/sdk v1.18.0
-	go.opentelemetry.io/otel/sdk/metric v0.40.0
+	go.opentelemetry.io/otel/sdk/metric v0.41.0
 	go.opentelemetry.io/otel/trace v1.18.0
 	golang.org/x/crypto v0.13.0
 	golang.org/x/exp v0.0.0-20230713183714-613f0c0eb8a1
