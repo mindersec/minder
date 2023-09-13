@@ -1528,11 +1528,11 @@ message GetUserResponse {
 
 // Policy service
 message CreatePolicyRequest {
-    PipelinePolicy policy = 1;
+    Policy policy = 1;
 }
   
 message CreatePolicyResponse {
-    PipelinePolicy policy = 1;
+    Policy policy = 1;
 }
 
 message DeletePolicyRequest {
@@ -1552,7 +1552,7 @@ message ListPoliciesRequest {
 }
 
 message ListPoliciesResponse {
-    repeated PipelinePolicy policies = 1;
+    repeated Policy policies = 1;
 }
 
 // get policy by id
@@ -1564,7 +1564,7 @@ message GetPolicyByIdRequest {
 }
 
 message GetPolicyByIdResponse {
-    PipelinePolicy policy = 1;
+    Policy policy = 1;
 }
 
 // get the overall policy status
@@ -1998,8 +1998,8 @@ message RuleType {
     string guidance = 6;
 }
 
- // PipelinePolicy defines a policy that is user defined.
- message PipelinePolicy {
+ // Policy defines a policy that is user defined.
+ message Policy {
     // context is the context in which the policy is evaluated.
     Context context = 1;
 
@@ -2022,18 +2022,9 @@ message RuleType {
         google.protobuf.Struct def = 3;
     }
 
-    // ContextualRuleSet defines a set of rules that are evaluated in a certain context.
-    message ContextualRuleSet {
-        // context is the context in which the rules are evaluated.
-        // This refers to the provider.
-        optional string context = 1;
-        // rule is the set of rules that are evaluated.
-        repeated Rule rules = 2;
-    }
-
-    // These are the entities that one could set in the pipeline policy.
-    repeated ContextualRuleSet repository = 4;
-    repeated ContextualRuleSet build_environment = 5;
-    repeated ContextualRuleSet artifact = 6;
-    repeated ContextualRuleSet pull_request = 7;
+    // These are the entities that one could set in the policy.
+    repeated Rule repository = 4;
+    repeated Rule build_environment = 5;
+    repeated Rule artifact = 6;
+    repeated Rule pull_request = 7;
  }

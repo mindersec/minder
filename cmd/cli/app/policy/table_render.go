@@ -29,10 +29,10 @@ import (
 
 func initializeTable(cmd *cobra.Command) *tablewriter.Table {
 	table := tablewriter.NewWriter(cmd.OutOrStdout())
-	table.SetHeader([]string{"Id", "Name", "Provider", "Entity", "Context", "Rule", "Rule Params", "Rule Definition"})
+	table.SetHeader([]string{"Id", "Name", "Provider", "Entity", "Rule", "Rule Params", "Rule Definition"})
 	table.SetRowLine(true)
 	table.SetRowSeparator("-")
-	table.SetAutoMergeCellsByColumnIndex([]int{0, 1, 2, 3, 4, 5})
+	table.SetAutoMergeCellsByColumnIndex([]int{0, 1, 2, 3, 4})
 	// This is needed for the rule definition and rule parameters
 	table.SetAutoWrapText(false)
 
@@ -40,7 +40,7 @@ func initializeTable(cmd *cobra.Command) *tablewriter.Table {
 }
 
 func renderPolicyTable(
-	p *pb.PipelinePolicy,
+	p *pb.Policy,
 	table *tablewriter.Table,
 ) {
 	// repositories
@@ -57,41 +57,22 @@ func renderPolicyTable(
 }
 
 func renderEntityRuleSets(
-	p *pb.PipelinePolicy,
+	p *pb.Policy,
 	entType entities.EntityType,
-	rs []*pb.PipelinePolicy_ContextualRuleSet,
+	rs []*pb.Policy_Rule,
 	table *tablewriter.Table,
 ) {
 	for idx := range rs {
-		rs := rs[idx]
+		rule := rs[idx]
 
-		renderContextualRuleSetTable(p, entType, rs, table)
-	}
-}
-
-func renderContextualRuleSetTable(
-	p *pb.PipelinePolicy,
-	entType entities.EntityType,
-	ctxrs *pb.PipelinePolicy_ContextualRuleSet,
-	table *tablewriter.Table,
-) {
-	for idx := range ctxrs.Rules {
-		rule := ctxrs.Rules[idx]
-
-		ruleCtx := ""
-		if ctxrs.Context != nil {
-			ruleCtx = *ctxrs.Context
-		}
-
-		renderRuleTable(p, entType, ruleCtx, rule, table)
+		renderRuleTable(p, entType, rule, table)
 	}
 }
 
 func renderRuleTable(
-	p *pb.PipelinePolicy,
+	p *pb.Policy,
 	entType entities.EntityType,
-	ruleContext string,
-	rule *pb.PipelinePolicy_Rule,
+	rule *pb.Policy_Rule,
 	table *tablewriter.Table,
 ) {
 
@@ -103,7 +84,6 @@ func renderRuleTable(
 		p.Name,
 		p.Context.Provider,
 		entType.String(),
-		ruleContext,
 		rule.Type,
 		params,
 		def,

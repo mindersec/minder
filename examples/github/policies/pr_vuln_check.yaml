@@ -1,24 +1,22 @@
 # sample policy for validating artifact signatures
 version: v1
-type: pipeline-policy
+type: policy
 name: acme-github-policy-pr-vuln-check
 context:
   group: Root Group
   provider: github
 pull_request:
-  - context: github
-    rules:
-      - type: pr_vulnerability_check
-        def:
-            action: reject_pr
-            ecosystem_config:
-                - name: npm
-                  vulnerability_database_type: osv
-                  vulnerability_database_endpoint: https://api.osv.dev/v1/query
-                  package_repository:
-                    url: https://registry.npmjs.org
-                - name: go
-                  vulnerability_database_type: osv
-                  vulnerability_database_endpoint: https://vuln.go.dev
-                  package_repository:
-                    url: https://proxy.golang.org
+  - type: pr_vulnerability_check
+    def:
+        action: reject_pr
+        ecosystem_config:
+            - name: npm
+              vulnerability_database_type: osv
+              vulnerability_database_endpoint: https://api.osv.dev/v1/query
+              package_repository:
+                url: https://registry.npmjs.org
+            - name: go
+              vulnerability_database_type: osv
+              vulnerability_database_endpoint: https://vuln.go.dev
+              package_repository:
+                url: https://proxy.golang.org

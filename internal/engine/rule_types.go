@@ -302,14 +302,14 @@ func ValidateRuleTypeDefinition(def *pb.RuleType_Definition) error {
 }
 
 // GetRulesFromPolicyOfType returns the rules from the policy of the given type
-func GetRulesFromPolicyOfType(p *pb.PipelinePolicy, rt *pb.RuleType) ([]*pb.PipelinePolicy_Rule, error) {
+func GetRulesFromPolicyOfType(p *pb.Policy, rt *pb.RuleType) ([]*pb.Policy_Rule, error) {
 	contextualRules, err := GetRulesForEntity(p, entities.FromString(rt.Def.InEntity))
 	if err != nil {
 		return nil, fmt.Errorf("error getting rules for entity: %w", err)
 	}
 
-	rules := []*pb.PipelinePolicy_Rule{}
-	err = TraverseRules(contextualRules, func(r *pb.PipelinePolicy_Rule) error {
+	rules := []*pb.Policy_Rule{}
+	err = TraverseRules(contextualRules, func(r *pb.Policy_Rule) error {
 		if r.Type == rt.Name {
 			rules = append(rules, r)
 		}

@@ -17,7 +17,7 @@ An example policy is the following:
 ```yaml
 ---
 version: v1
-type: pipeline-policy
+type: policy
 name: acme-github-policy
 context:
   organization: ACME
