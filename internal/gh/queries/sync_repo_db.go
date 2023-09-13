@@ -22,7 +22,7 @@ import (
 	"fmt"
 
 	"github.com/stacklok/mediator/internal/db"
-	ghclient "github.com/stacklok/mediator/pkg/providers/github"
+	ghclient "github.com/stacklok/mediator/internal/providers/github"
 )
 
 // SyncRepositoriesWithDB syncs the repositories already in the database with the

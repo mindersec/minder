@@ -34,9 +34,9 @@ import (
 	"github.com/spf13/viper"
 	"google.golang.org/protobuf/types/known/timestamppb"
 
+	ghclient "github.com/stacklok/mediator/internal/providers/github"
 	"github.com/stacklok/mediator/internal/util"
 	pb "github.com/stacklok/mediator/pkg/generated/protobuf/go/mediator/v1"
-	ghclient "github.com/stacklok/mediator/pkg/providers/github"
 )
 
 // Response is the response from the OAuth callback server.

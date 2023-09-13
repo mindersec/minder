@@ -33,11 +33,11 @@ import (
 	"google.golang.org/protobuf/reflect/protoreflect"
 	"google.golang.org/protobuf/reflect/protoregistry"
 
+	"github.com/stacklok/mediator/internal/auth"
 	"github.com/stacklok/mediator/internal/db"
+	github "github.com/stacklok/mediator/internal/providers/github"
 	"github.com/stacklok/mediator/internal/util"
-	"github.com/stacklok/mediator/pkg/auth"
 	mediator "github.com/stacklok/mediator/pkg/generated/protobuf/go/mediator/v1"
-	github "github.com/stacklok/mediator/pkg/providers/github"
 )
 
 func parseToken(token string, store db.Store) (auth.UserClaims, error) {

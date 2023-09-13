@@ -24,9 +24,9 @@ import (
 	"google.golang.org/grpc/codes"
 
 	mockdb "github.com/stacklok/mediator/database/mock"
+	"github.com/stacklok/mediator/internal/auth"
 	"github.com/stacklok/mediator/internal/config"
 	"github.com/stacklok/mediator/internal/db"
-	"github.com/stacklok/mediator/pkg/auth"
 	pb "github.com/stacklok/mediator/pkg/generated/protobuf/go/mediator/v1"
 )
 

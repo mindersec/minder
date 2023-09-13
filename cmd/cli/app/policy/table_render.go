@@ -23,7 +23,7 @@ import (
 	"google.golang.org/protobuf/types/known/structpb"
 	"gopkg.in/yaml.v2"
 
-	"github.com/stacklok/mediator/pkg/entities"
+	"github.com/stacklok/mediator/internal/entities"
 	pb "github.com/stacklok/mediator/pkg/generated/protobuf/go/mediator/v1"
 )
 

@@ -26,10 +26,10 @@ import (
 	"google.golang.org/grpc/codes"
 
 	mockdb "github.com/stacklok/mediator/database/mock"
+	"github.com/stacklok/mediator/internal/auth"
 	"github.com/stacklok/mediator/internal/db"
-	"github.com/stacklok/mediator/pkg/auth"
+	ghclient "github.com/stacklok/mediator/internal/providers/github"
 	pb "github.com/stacklok/mediator/pkg/generated/protobuf/go/mediator/v1"
-	ghclient "github.com/stacklok/mediator/pkg/providers/github"
 )
 
 func TestNewOAuthConfig(t *testing.T) {

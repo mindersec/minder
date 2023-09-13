@@ -31,11 +31,11 @@ import (
 	"google.golang.org/grpc/codes"
 	"google.golang.org/grpc/status"
 
+	"github.com/stacklok/mediator/internal/auth"
 	mcrypto "github.com/stacklok/mediator/internal/crypto"
 	"github.com/stacklok/mediator/internal/db"
-	"github.com/stacklok/mediator/pkg/auth"
+	ghclient "github.com/stacklok/mediator/internal/providers/github"
 	pb "github.com/stacklok/mediator/pkg/generated/protobuf/go/mediator/v1"
-	ghclient "github.com/stacklok/mediator/pkg/providers/github"
 )
 
 // GetAuthorizationURL returns the URL to redirect the user to for authorization

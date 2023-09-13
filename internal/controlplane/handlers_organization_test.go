@@ -27,8 +27,8 @@ import (
 	"google.golang.org/protobuf/types/known/timestamppb"
 
 	mockdb "github.com/stacklok/mediator/database/mock"
+	"github.com/stacklok/mediator/internal/auth"
 	"github.com/stacklok/mediator/internal/db"
-	"github.com/stacklok/mediator/pkg/auth"
 	pb "github.com/stacklok/mediator/pkg/generated/protobuf/go/mediator/v1"
 )
 

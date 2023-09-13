@@ -23,9 +23,9 @@ import (
 	"github.com/spf13/viper"
 
 	"github.com/stacklok/mediator/cmd/cli/app"
+	github "github.com/stacklok/mediator/internal/providers/github"
 	"github.com/stacklok/mediator/internal/util"
 	pb "github.com/stacklok/mediator/pkg/generated/protobuf/go/mediator/v1"
-	github "github.com/stacklok/mediator/pkg/providers/github"
 )
 
 const (
