@@ -33,10 +33,6 @@ import (
 // ListArtifacts lists all artifacts for a given group and provider
 // nolint:gocyclo
 func (s *Server) ListArtifacts(ctx context.Context, in *pb.ListArtifactsRequest) (*pb.ListArtifactsResponse, error) {
-	if in.Provider != auth.Github {
-		return nil, status.Errorf(codes.InvalidArgument, "provider not supported: %v", in.Provider)
-	}
-
 	// if we do not have a group, check if we can infer it
 	if in.GroupId == 0 {
 		group, err := auth.GetDefaultGroup(ctx)
@@ -51,9 +47,17 @@ func (s *Server) ListArtifacts(ctx context.Context, in *pb.ListArtifactsRequest)
 		return nil, status.Errorf(codes.PermissionDenied, "user is not authorized to access this resource")
 	}
 
+	provider, err := s.store.GetProviderByName(ctx, db.GetProviderByNameParams{
+		Name:    in.Provider,
+		GroupID: in.GroupId,
+	})
+	if err != nil {
+		return nil, returnProviderError(err)
+	}
+
 	// first read all the repositories for provider and group
 	repositories, err := s.store.ListRegisteredRepositoriesByGroupIDAndProvider(ctx,
-		db.ListRegisteredRepositoriesByGroupIDAndProviderParams{Provider: in.Provider, GroupID: in.GroupId})
+		db.ListRegisteredRepositoriesByGroupIDAndProviderParams{Provider: provider.ID, GroupID: in.GroupId})
 	if err != nil {
 		if errors.Is(err, sql.ErrNoRows) {
 			return nil, status.Errorf(codes.NotFound, "repositories not found")

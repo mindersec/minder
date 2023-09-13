@@ -108,14 +108,13 @@ func (s *Server) CreatePolicy(ctx context.Context,
 	}
 
 	entityCtx := engine.EntityFromContext(ctx)
-	// if provider is not enrolled, we cannot create a policy
-	_, err = s.store.GetAccessTokenByGroupID(ctx,
-		db.GetAccessTokenByGroupIDParams{Provider: entityCtx.GetProvider(), GroupID: entityCtx.Group.GetID()})
+
+	// If provider doesn't exist, return error
+	provider, err := s.store.GetProviderByName(ctx, db.GetProviderByNameParams{
+		Name:    entityCtx.GetProvider().Name,
+		GroupID: entityCtx.GetGroup().ID})
 	if err != nil {
-		if errors.Is(err, sql.ErrNoRows) {
-			return nil, status.Errorf(codes.FailedPrecondition, "provider %s is not enrolled", entityCtx.GetProvider())
-		}
-		return nil, status.Errorf(codes.Unknown, "failed to get access token: %s", err)
+		return nil, returnProviderError(fmt.Errorf("provider error: %w", err))
 	}
 
 	if err := engine.ValidatePolicy(in); err != nil {
@@ -126,7 +125,7 @@ func (s *Server) CreatePolicy(ctx context.Context,
 		// TODO: This will need to be updated to support
 		// the hierarchy tree once that's settled in.
 		rtdb, err := s.store.GetRuleTypeByName(ctx, db.GetRuleTypeByNameParams{
-			Provider: in.GetContext().GetProvider(),
+			Provider: provider.ID,
 			GroupID:  entityCtx.GetGroup().GetID(),
 			Name:     r.GetType(),
 		})
@@ -178,7 +177,7 @@ func (s *Server) CreatePolicy(ctx context.Context,
 
 	// Create policy
 	policy, err := qtx.CreatePolicy(ctx, db.CreatePolicyParams{
-		Provider: in.GetContext().GetProvider(),
+		Provider: provider.ID,
 		GroupID:  entityCtx.GetGroup().GetID(),
 		Name:     in.GetName(),
 	})
@@ -209,7 +208,7 @@ func (s *Server) CreatePolicy(ctx context.Context,
 		Policy: in,
 	}
 
-	msg, err := reconcilers.NewPolicyInitMessage(entityCtx.Provider, entityCtx.Group.ID)
+	msg, err := reconcilers.NewPolicyInitMessage(entityCtx.Provider.Name, entityCtx.Group.ID)
 	if err != nil {
 		log.Printf("error creating reconciler event: %v", err)
 		// error is non-fatal
@@ -345,9 +344,10 @@ func getRuleEvalEntityInfo(
 	entityType *db.NullEntities,
 	selector *sql.NullInt32,
 	rs db.ListRuleEvaluationStatusByPolicyIdRow,
+	providerName string,
 ) map[string]string {
 	entityInfo := map[string]string{
-		"provider": rs.Provider,
+		"provider": providerName,
 	}
 
 	if rs.RepositoryID.Valid {
@@ -447,7 +447,7 @@ func (s *Server) GetPolicyStatusById(ctx context.Context,
 				Entity:      string(rs.Entity),
 				Status:      string(rs.EvalStatus),
 				Details:     rs.Details,
-				EntityInfo:  getRuleEvalEntityInfo(ctx, s.store, dbEntity, selector, rs),
+				EntityInfo:  getRuleEvalEntityInfo(ctx, s.store, dbEntity, selector, rs, entityCtx.GetProvider().Name),
 				Guidance:    guidance,
 				LastUpdated: timestamppb.New(rs.LastUpdated),
 			}
@@ -515,7 +515,7 @@ func (s *Server) ListRuleTypes(ctx context.Context, in *pb.ListRuleTypesRequest)
 	entityCtx := engine.EntityFromContext(ctx)
 
 	lrt, err := s.store.ListRuleTypesByProviderAndGroup(ctx, db.ListRuleTypesByProviderAndGroupParams{
-		Provider: entityCtx.GetProvider(),
+		Provider: entityCtx.GetProvider().ID,
 		GroupID:  entityCtx.GetGroup().GetID(),
 	})
 	if err != nil {
@@ -549,7 +549,7 @@ func (s *Server) GetRuleTypeByName(ctx context.Context, in *pb.GetRuleTypeByName
 	resp := &pb.GetRuleTypeByNameResponse{}
 
 	rtdb, err := s.store.GetRuleTypeByName(ctx, db.GetRuleTypeByNameParams{
-		Provider: entityCtx.GetProvider(),
+		Provider: entityCtx.GetProvider().ID,
 		GroupID:  entityCtx.GetGroup().GetID(),
 		Name:     in.GetName(),
 	})
@@ -604,7 +604,7 @@ func (s *Server) CreateRuleType(ctx context.Context, crt *pb.CreateRuleTypeReque
 
 	entityCtx := engine.EntityFromContext(ctx)
 	_, err = s.store.GetRuleTypeByName(ctx, db.GetRuleTypeByNameParams{
-		Provider: entityCtx.GetProvider(),
+		Provider: entityCtx.GetProvider().ID,
 		GroupID:  entityCtx.GetGroup().GetID(),
 		Name:     in.GetName(),
 	})
@@ -627,7 +627,7 @@ func (s *Server) CreateRuleType(ctx context.Context, crt *pb.CreateRuleTypeReque
 
 	dbrtyp, err := s.store.CreateRuleType(ctx, db.CreateRuleTypeParams{
 		Name:        in.GetName(),
-		Provider:    entityCtx.GetProvider(),
+		Provider:    entityCtx.GetProvider().ID,
 		GroupID:     entityCtx.GetGroup().GetID(),
 		Description: in.GetDescription(),
 		Definition:  def,
@@ -656,7 +656,7 @@ func (s *Server) UpdateRuleType(ctx context.Context, urt *pb.UpdateRuleTypeReque
 	entityCtx := engine.EntityFromContext(ctx)
 
 	rtdb, err := s.store.GetRuleTypeByName(ctx, db.GetRuleTypeByNameParams{
-		Provider: entityCtx.GetProvider(),
+		Provider: entityCtx.GetProvider().ID,
 		GroupID:  entityCtx.GetGroup().GetID(),
 		Name:     in.GetName(),
 	})
@@ -700,7 +700,16 @@ func (s *Server) DeleteRuleType(ctx context.Context, in *pb.DeleteRuleTypeReques
 		}
 		return nil, status.Errorf(codes.Unknown, "failed to get rule type: %s", err)
 	}
-	in.Context.Provider = ruletype.Provider
+
+	prov, err := s.store.GetProviderByID(ctx, db.GetProviderByIDParams{
+		ID:      ruletype.Provider,
+		GroupID: ruletype.GroupID,
+	})
+	if err != nil {
+		return nil, status.Errorf(codes.Unknown, "failed to get provider: %s", err)
+	}
+
+	in.Context.Provider = prov.Name
 
 	ctx, err = s.authAndContextValidation(ctx, in.GetContext())
 	if err != nil {

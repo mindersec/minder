@@ -24,6 +24,8 @@ import (
 	"github.com/google/go-github/v53/github"
 	"github.com/shurcooL/graphql"
 	"golang.org/x/oauth2"
+
+	"github.com/stacklok/mediator/internal/db"
 )
 
 const (
@@ -45,6 +47,13 @@ type GitHubConfig struct { //revive:disable-line:exported
 
 // Github is the string that represents the GitHub provider
 const Github = "github"
+
+// Implements is the list of provider types that the GitHub provider implements
+var Implements = []db.ProviderType{
+	db.ProviderTypeGithub,
+	db.ProviderTypeGit,
+	db.ProviderTypeRest,
+}
 
 // RepositoryListResult is a struct that contains the information about a GitHub repository
 type RepositoryListResult struct {

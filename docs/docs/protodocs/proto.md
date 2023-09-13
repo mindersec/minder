@@ -1357,6 +1357,7 @@ if the struct is reused in other messages, it should be moved to a top-level def
 | Field | Type | Label | Description |
 | ----- | ---- | ----- | ----------- |
 | repository_id | [int32](#int32) |  |  |
+| group_id | [int32](#int32) |  |  |
 
 
 
@@ -1387,6 +1388,7 @@ if the struct is reused in other messages, it should be moved to a top-level def
 | Field | Type | Label | Description |
 | ----- | ---- | ----- | ----------- |
 | provider | [string](#string) |  |  |
+| group_id | [int32](#int32) |  |  |
 | name | [string](#string) |  |  |
 
 
@@ -2595,6 +2597,7 @@ This is used to fetch data from a REST endpoint.
 | Field | Type | Label | Description |
 | ----- | ---- | ----- | ----------- |
 | provider | [string](#string) |  |  |
+| group_id | [int32](#int32) |  |  |
 
 
 

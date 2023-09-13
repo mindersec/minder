@@ -957,6 +957,7 @@ message RevokeUserTokenResponse {
 
 message RevokeOauthTokensRequest {
     string provider = 1;
+    int32 group_id = 2;
 }
 
 message RevokeOauthTokensResponse {
@@ -1042,6 +1043,7 @@ message RepositoryRecord {
 
 message GetRepositoryByIdRequest {
     int32 repository_id = 1;
+    int32 group_id = 2;
 }
 
 message GetRepositoryByIdResponse {
@@ -1050,6 +1052,7 @@ message GetRepositoryByIdResponse {
 
 message GetRepositoryByNameRequest {
     string provider = 1;
+    int32 group_id = 2;
     string name = 3;
 }
 

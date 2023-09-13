@@ -568,7 +568,13 @@
             "in": "body",
             "required": true,
             "schema": {
-              "type": "object"
+              "type": "object",
+              "properties": {
+                "groupId": {
+                  "type": "integer",
+                  "format": "int32"
+                }
+              }
             }
           }
         ],
@@ -1545,6 +1551,13 @@
             "required": true,
             "type": "integer",
             "format": "int32"
+          },
+          {
+            "name": "groupId",
+            "in": "query",
+            "required": false,
+            "type": "integer",
+            "format": "int32"
           }
         ],
         "tags": [
@@ -1581,6 +1594,13 @@
             "in": "path",
             "required": true,
             "type": "string"
+          },
+          {
+            "name": "groupId",
+            "in": "query",
+            "required": false,
+            "type": "integer",
+            "format": "int32"
           }
         ],
         "tags": [

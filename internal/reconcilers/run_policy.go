@@ -31,7 +31,6 @@ import (
 
 	"github.com/stacklok/mediator/internal/db"
 	"github.com/stacklok/mediator/internal/engine"
-	ghclient "github.com/stacklok/mediator/internal/providers/github"
 	pb "github.com/stacklok/mediator/pkg/generated/protobuf/go/mediator/v1"
 )
 
@@ -66,11 +65,6 @@ func NewPolicyInitMessage(provider string, groupID int32) (*message.Message, err
 func (e *Reconciler) handlePolicyInitEvent(msg *message.Message) error {
 	prov := msg.Metadata.Get("provider")
 
-	if prov != ghclient.Github {
-		log.Printf("provider %s not supported", prov)
-		return nil
-	}
-
 	var evt PolicyInitEvent
 	if err := json.Unmarshal(msg.Payload, &evt); err != nil {
 		return fmt.Errorf("error unmarshalling payload: %w", err)
@@ -85,11 +79,23 @@ func (e *Reconciler) handlePolicyInitEvent(msg *message.Message) error {
 		return nil
 	}
 
+	provInfo, err := e.store.GetProviderByName(context.Background(), db.GetProviderByNameParams{
+		Name:    prov,
+		GroupID: evt.Group,
+	})
+	if err != nil {
+		log.Printf("error getting provider: %v", err)
+		return nil
+	}
+
 	ectx := &engine.EntityContext{
 		Group: engine.Group{
 			ID: evt.Group,
 		},
-		Provider: prov,
+		Provider: engine.Provider{
+			Name: provInfo.Name,
+			ID:   provInfo.ID,
+		},
 	}
 
 	ctx := msg.Context()
@@ -110,7 +116,7 @@ func (s *Reconciler) publishPolicyInitEvents(
 ) error {
 	dbrepos, err := s.store.ListRegisteredRepositoriesByGroupIDAndProvider(ctx,
 		db.ListRegisteredRepositoriesByGroupIDAndProviderParams{
-			Provider: ectx.Provider,
+			Provider: ectx.Provider.ID,
 			GroupID:  ectx.Group.ID,
 		})
 	if err != nil {
@@ -131,7 +137,7 @@ func (s *Reconciler) publishPolicyInitEvents(
 		}
 
 		err := engine.NewEntityInfoWrapper().
-			WithProvider(ectx.Provider).
+			WithProvider(ectx.Provider.Name).
 			WithGroupID(ectx.Group.ID).
 			WithRepository(repo).
 			WithRepositoryID(dbrepo.ID).
@@ -224,7 +230,7 @@ func (s *Reconciler) publishArtifactPolicyInitEvents(
 			}
 
 			err := engine.NewEntityInfoWrapper().
-				WithProvider(ectx.Provider).
+				WithProvider(ectx.Provider.Name).
 				WithGroupID(ectx.Group.ID).
 				WithVersionedArtifact(versionedArtifact).
 				WithRepositoryID(dbrepo.ID).

@@ -8,6 +8,8 @@ package db
 import (
 	"context"
 	"time"
+
+	"github.com/google/uuid"
 )
 
 const createArtifact = `-- name: CreateArtifact :one
@@ -70,7 +72,7 @@ type GetArtifactByIDRow struct {
 	ArtifactType       string    `json:"artifact_type"`
 	ArtifactVisibility string    `json:"artifact_visibility"`
 	CreatedAt          time.Time `json:"created_at"`
-	Provider           string    `json:"provider"`
+	Provider           uuid.UUID `json:"provider"`
 	GroupID            int32     `json:"group_id"`
 	RepoOwner          string    `json:"repo_owner"`
 	RepoName           string    `json:"repo_name"`

@@ -104,6 +104,49 @@ func (ns NullEvalStatusTypes) Value() (driver.Value, error) {
 	return string(ns.EvalStatusTypes), nil
 }
 
+type ProviderType string
+
+const (
+	ProviderTypeGithub ProviderType = "github"
+	ProviderTypeRest   ProviderType = "rest"
+	ProviderTypeGit    ProviderType = "git"
+)
+
+func (e *ProviderType) Scan(src interface{}) error {
+	switch s := src.(type) {
+	case []byte:
+		*e = ProviderType(s)
+	case string:
+		*e = ProviderType(s)
+	default:
+		return fmt.Errorf("unsupported scan type for ProviderType: %T", src)
+	}
+	return nil
+}
+
+type NullProviderType struct {
+	ProviderType ProviderType `json:"provider_type"`
+	Valid        bool         `json:"valid"` // Valid is true if ProviderType is not NULL
+}
+
+// Scan implements the Scanner interface.
+func (ns *NullProviderType) Scan(value interface{}) error {
+	if value == nil {
+		ns.ProviderType, ns.Valid = "", false
+		return nil
+	}
+	ns.Valid = true
+	return ns.ProviderType.Scan(value)
+}
+
+// Value implements the driver Valuer interface.
+func (ns NullProviderType) Value() (driver.Value, error) {
+	if !ns.Valid {
+		return nil, nil
+	}
+	return string(ns.ProviderType), nil
+}
+
 type Artifact struct {
 	ID                 int32     `json:"id"`
 	RepositoryID       int32     `json:"repository_id"`
@@ -155,7 +198,7 @@ type Organization struct {
 type Policy struct {
 	ID        int32     `json:"id"`
 	Name      string    `json:"name"`
-	Provider  string    `json:"provider"`
+	Provider  uuid.UUID `json:"provider"`
 	GroupID   int32     `json:"group_id"`
 	CreatedAt time.Time `json:"created_at"`
 	UpdatedAt time.Time `json:"updated_at"`
@@ -177,9 +220,20 @@ type Project struct {
 	UpdatedAt time.Time       `json:"updated_at"`
 }
 
+type Provider struct {
+	ID         uuid.UUID       `json:"id"`
+	Name       string          `json:"name"`
+	Version    string          `json:"version"`
+	GroupID    int32           `json:"group_id"`
+	Implements []ProviderType  `json:"implements"`
+	Definition json.RawMessage `json:"definition"`
+	CreatedAt  time.Time       `json:"created_at"`
+	UpdatedAt  time.Time       `json:"updated_at"`
+}
+
 type ProviderAccessToken struct {
 	ID             int32          `json:"id"`
-	Provider       string         `json:"provider"`
+	ProviderID     uuid.UUID      `json:"provider_id"`
 	GroupID        int32          `json:"group_id"`
 	OwnerFilter    sql.NullString `json:"owner_filter"`
 	EncryptedToken string         `json:"encrypted_token"`
@@ -190,7 +244,7 @@ type ProviderAccessToken struct {
 
 type Repository struct {
 	ID         int32         `json:"id"`
-	Provider   string        `json:"provider"`
+	Provider   uuid.UUID     `json:"provider"`
 	GroupID    int32         `json:"group_id"`
 	RepoOwner  string        `json:"repo_owner"`
 	RepoName   string        `json:"repo_name"`
@@ -231,7 +285,7 @@ type RuleEvaluationStatus struct {
 type RuleType struct {
 	ID          int32           `json:"id"`
 	Name        string          `json:"name"`
-	Provider    string          `json:"provider"`
+	Provider    uuid.UUID       `json:"provider"`
 	GroupID     int32           `json:"group_id"`
 	Description string          `json:"description"`
 	Guidance    string          `json:"guidance"`
@@ -242,7 +296,7 @@ type RuleType struct {
 
 type SessionStore struct {
 	ID           int32          `json:"id"`
-	Provider     string         `json:"provider"`
+	Provider     uuid.UUID      `json:"provider"`
 	GrpID        sql.NullInt32  `json:"grp_id"`
 	Port         sql.NullInt32  `json:"port"`
 	OwnerFilter  sql.NullString `json:"owner_filter"`

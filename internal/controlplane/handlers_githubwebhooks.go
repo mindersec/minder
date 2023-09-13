@@ -134,9 +134,6 @@ func (s *Server) HandleGitHubWebHook() http.HandlerFunc {
 		// TODO: extract sender and event time from payload portably
 		m := message.NewMessage(uuid.New().String(), nil)
 		m.Metadata.Set("id", github.DeliveryID(r))
-
-		// TODO(jaosorior): When extracting the source we should also match
-		// the relevant provider and signal
 		m.Metadata.Set("provider", ghclient.Github)
 		m.Metadata.Set("source", "https://api.github.com/") // TODO: handle other sources
 
@@ -282,13 +279,6 @@ func (s *Server) parseGithubEventForProcessing(
 	rawWHPayload []byte,
 	msg *message.Message,
 ) error {
-	prov := msg.Metadata.Get("provider")
-
-	if prov != ghclient.Github {
-		log.Printf("provider %s not supported", prov)
-		return nil
-	}
-
 	var payload map[string]any
 	if err := json.Unmarshal(rawWHPayload, &payload); err != nil {
 		return fmt.Errorf("error unmarshalling payload: %w", err)
@@ -300,12 +290,12 @@ func (s *Server) parseGithubEventForProcessing(
 	if hook_type == "package" {
 		if payload["action"] == "published" {
 			return s.parseArtifactPublishedEvent(
-				context.Background(), ghclient.Github, payload, msg)
+				context.Background(), payload, msg)
 		}
 	} else if hook_type == "pull_request" {
 		if payload["action"] == "opened" || payload["action"] == "synchronize" {
 			return s.parsePullRequestModEvent(
-				context.Background(), ghclient.Github, payload, msg)
+				context.Background(), payload, msg)
 		}
 	}
 
@@ -316,18 +306,25 @@ func (s *Server) parseGithubEventForProcessing(
 		return nil
 	}
 
-	return s.parseRepoEvent(context.Background(), ghclient.Github, payload, msg)
+	return s.parseRepoEvent(context.Background(), payload, msg)
 }
 
 func (s *Server) parseRepoEvent(
 	ctx context.Context,
-	prov string,
 	whPayload map[string]any,
 	msg *message.Message,
 ) error {
-	dbrepo, err := getRepoInformationFromPayload(ctx, prov, s.store, whPayload)
+	dbrepo, err := getRepoInformationFromPayload(ctx, s.store, whPayload)
 	if err != nil {
 		return err
+	}
+
+	provider, err := s.store.GetProviderByID(ctx, db.GetProviderByIDParams{
+		ID:      dbrepo.Provider,
+		GroupID: dbrepo.GroupID,
+	})
+	if err != nil {
+		return fmt.Errorf("error getting provider: %w", err)
 	}
 
 	// protobufs are our API, so we always execute on these instead of the DB directly.
@@ -343,7 +340,7 @@ func (s *Server) parseRepoEvent(
 	}
 
 	eiw := engine.NewEntityInfoWrapper().
-		WithProvider(prov).
+		WithProvider(provider.Name).
 		WithRepository(repo).
 		WithGroupID(dbrepo.GroupID).
 		WithRepositoryID(dbrepo.ID)
@@ -353,7 +350,6 @@ func (s *Server) parseRepoEvent(
 
 func (s *Server) parseArtifactPublishedEvent(
 	ctx context.Context,
-	prov string,
 	whPayload map[string]any,
 	msg *message.Message,
 ) error {
@@ -364,13 +360,21 @@ func (s *Server) parseArtifactPublishedEvent(
 	}
 
 	// extract information about repository so we can identity the group and associated rules
-	dbrepo, err := getRepoInformationFromPayload(ctx, prov, s.store, whPayload)
+	dbrepo, err := getRepoInformationFromPayload(ctx, s.store, whPayload)
 	if err != nil {
 		return fmt.Errorf("error getting repo information from payload: %w", err)
 	}
 	g := dbrepo.GroupID
 
-	cli, err := providers.BuildClient(ctx, prov, g, s.store, s.cryptoEngine)
+	prov, err := s.store.GetProviderByID(ctx, db.GetProviderByIDParams{
+		ID:      dbrepo.Provider,
+		GroupID: dbrepo.GroupID,
+	})
+	if err != nil {
+		return fmt.Errorf("error getting provider: %w", err)
+	}
+
+	cli, err := providers.BuildClient(ctx, dbrepo.Provider, g, s.store, s.cryptoEngine)
 	if err != nil {
 		return fmt.Errorf("error building client: %w", err)
 	}
@@ -387,7 +391,7 @@ func (s *Server) parseArtifactPublishedEvent(
 
 	eiw := engine.NewEntityInfoWrapper().
 		WithVersionedArtifact(versionedArtifact).
-		WithProvider(prov).
+		WithProvider(prov.Name).
 		WithGroupID(dbrepo.GroupID).
 		WithRepositoryID(dbrepo.ID).
 		WithArtifactID(dbArtifact.ID)
@@ -397,18 +401,25 @@ func (s *Server) parseArtifactPublishedEvent(
 
 func (s *Server) parsePullRequestModEvent(
 	ctx context.Context,
-	prov string,
 	whPayload map[string]any,
 	msg *message.Message,
 ) error {
 	// extract information about repository so we can identify the group and associated rules
-	dbrepo, err := getRepoInformationFromPayload(ctx, prov, s.store, whPayload)
+	dbrepo, err := getRepoInformationFromPayload(ctx, s.store, whPayload)
 	if err != nil {
 		return fmt.Errorf("error getting repo information from payload: %w", err)
 	}
 	g := dbrepo.GroupID
 
-	cli, err := providers.BuildClient(ctx, prov, g, s.store, s.cryptoEngine)
+	prov, err := s.store.GetProviderByID(ctx, db.GetProviderByIDParams{
+		ID:      dbrepo.Provider,
+		GroupID: dbrepo.GroupID,
+	})
+	if err != nil {
+		return fmt.Errorf("error getting provider: %w", err)
+	}
+
+	cli, err := providers.BuildClient(ctx, prov.ID, g, s.store, s.cryptoEngine)
 	if err != nil {
 		return fmt.Errorf("error building client: %w", err)
 	}
@@ -428,7 +439,7 @@ func (s *Server) parsePullRequestModEvent(
 	eiw := engine.NewEntityInfoWrapper().
 		WithPullRequest(prEvalInfo).
 		WithPullRequestID(prEvalInfo.Number).
-		WithProvider(prov).
+		WithProvider(prov.Name).
 		WithGroupID(dbrepo.GroupID).
 		WithRepositoryID(dbrepo.ID)
 
@@ -847,7 +858,6 @@ func updatePullRequestInfoFromProvider(
 
 func getRepoInformationFromPayload(
 	ctx context.Context,
-	prov string,
 	store db.Store,
 	payload map[string]any,
 ) (db.Repository, error) {
@@ -863,10 +873,10 @@ func getRepoInformationFromPayload(
 
 	log.Printf("handling event for repository %d", id)
 
-	dbrepo, err := store.GetRepositoryByRepoID(ctx, db.GetRepositoryByRepoIDParams{
-		Provider: prov,
-		RepoID:   id,
-	})
+	// At this point, we're unsure what the group ID is, so we need to look it up.
+	// It's the same case for the provider. We can gather this information from the
+	// repository ID.
+	dbrepo, err := store.GetRepositoryByRepoID(ctx, id)
 	if err != nil {
 		if errors.Is(err, sql.ErrNoRows) {
 			log.Printf("repository %d not found", id)

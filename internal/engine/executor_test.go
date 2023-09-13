@@ -23,6 +23,7 @@ import (
 	"time"
 
 	"github.com/golang/mock/gomock"
+	"github.com/google/uuid"
 	"github.com/stretchr/testify/require"
 	"golang.org/x/oauth2"
 	"google.golang.org/protobuf/types/known/structpb"
@@ -72,7 +73,8 @@ func TestExecutor_handleEntityEvent(t *testing.T) {
 
 	// declarations
 	groupID := int32(1)
-	provider := "github"
+	providerName := "github"
+	providerID := uuid.New()
 	passthroughRuleType := "passthrough"
 
 	authtoken := generateFakeAccessToken(t)
@@ -87,12 +89,22 @@ func TestExecutor_handleEntityEvent(t *testing.T) {
 			Name: "test",
 		}, nil)
 
+	mockStore.EXPECT().
+		GetProviderByName(gomock.Any(), db.GetProviderByNameParams{
+			Name:    providerName,
+			GroupID: groupID,
+		}).
+		Return(db.Provider{
+			ID:      providerID,
+			GroupID: groupID,
+		}, nil)
+
 	// get access token
 	mockStore.EXPECT().
 		GetAccessTokenByGroupID(gomock.Any(),
 			db.GetAccessTokenByGroupIDParams{
-				Provider: provider,
-				GroupID:  groupID,
+				ProviderID: providerID,
+				GroupID:    groupID,
 			}).
 		Return(db.ProviderAccessToken{
 			EncryptedToken: authtoken,
@@ -116,7 +128,7 @@ func TestExecutor_handleEntityEvent(t *testing.T) {
 				ID:              1,
 				Name:            "test-policy",
 				Entity:          db.EntitiesRepository,
-				Provider:        provider,
+				Provider:        providerID,
 				GroupID:         groupID,
 				CreatedAt:       time.Now(),
 				UpdatedAt:       time.Now(),
@@ -149,13 +161,13 @@ default allow = true`,
 
 	mockStore.EXPECT().
 		GetRuleTypeByName(gomock.Any(), db.GetRuleTypeByNameParams{
-			Provider: provider,
+			Provider: providerID,
 			GroupID:  groupID,
 			Name:     passthroughRuleType,
 		}).Return(db.RuleType{
 		ID:         1,
 		Name:       passthroughRuleType,
-		Provider:   provider,
+		Provider:   providerID,
 		GroupID:    groupID,
 		Definition: json.RawMessage(marshalledRTD),
 	}, nil)
@@ -190,7 +202,7 @@ default allow = true`,
 	require.NoError(t, err, "expected no error")
 
 	eiw := engine.NewEntityInfoWrapper().
-		WithProvider(provider).
+		WithProvider(providerName).
 		WithGroupID(groupID).
 		WithRepository(&pb.RepositoryResult{
 			Repository: "test",

@@ -87,10 +87,24 @@ CREATE TABLE user_roles (
     role_id INTEGER NOT NULL REFERENCES roles(id) ON DELETE CASCADE
 );
 
+CREATE TYPE provider_type as enum ('github', 'rest', 'git');
+
+-- providers table
+CREATE TABLE providers (
+    id UUID NOT NULL DEFAULT gen_random_uuid() PRIMARY KEY,
+    name TEXT NOT NULL,
+    version TEXT NOT NULL DEFAULT 'v1',
+    group_id INTEGER NOT NULL REFERENCES groups(id) ON DELETE CASCADE,
+    implements provider_type ARRAY NOT NULL,
+    definition JSONB NOT NULL,
+    created_at TIMESTAMP NOT NULL DEFAULT NOW(),
+    updated_at TIMESTAMP NOT NULL DEFAULT NOW()
+);
+
 -- provider_access_tokens table
 CREATE TABLE provider_access_tokens (
     id SERIAL PRIMARY KEY,
-    provider TEXT NOT NULL,
+    provider_id UUID NOT NULL REFERENCES providers(id) ON DELETE CASCADE,
     group_id INTEGER NOT NULL REFERENCES groups(id) ON DELETE CASCADE,
     owner_filter TEXT,
     encrypted_token TEXT NOT NULL,
@@ -114,7 +128,7 @@ CREATE TABLE signing_keys (
 -- repositories table
 CREATE TABLE repositories (
     id SERIAL PRIMARY KEY,
-    provider TEXT NOT NULL,
+    provider UUID NOT NULL REFERENCES providers(id) ON DELETE CASCADE,
     group_id INTEGER NOT NULL REFERENCES groups(id) ON DELETE CASCADE,
     repo_owner TEXT NOT NULL,
     repo_name TEXT NOT NULL,
@@ -154,7 +168,7 @@ CREATE TABLE artifact_versions (
 
 CREATE TABLE session_store (
     id SERIAL PRIMARY KEY,
-    provider TEXT NOT NULL,
+    provider UUID NOT NULL REFERENCES providers(id) ON DELETE CASCADE,
     grp_id INTEGER,
     port INTEGER,
     owner_filter TEXT,
@@ -165,7 +179,7 @@ CREATE TABLE session_store (
 CREATE TABLE rule_type (
     id SERIAL PRIMARY KEY,
     name TEXT NOT NULL,
-    provider TEXT NOT NULL,
+    provider UUID NOT NULL REFERENCES providers(id) ON DELETE CASCADE,
     group_id INTEGER NOT NULL REFERENCES groups(id) ON DELETE CASCADE,
     description TEXT NOT NULL,
     guidance TEXT NOT NULL,
@@ -177,7 +191,7 @@ CREATE TABLE rule_type (
 CREATE TABLE policies (
     id SERIAL PRIMARY KEY,
     name TEXT NOT NULL,
-    provider TEXT NOT NULL,
+    provider UUID NOT NULL REFERENCES providers(id) ON DELETE CASCADE,
     group_id INTEGER NOT NULL REFERENCES groups(id) ON DELETE CASCADE,
     created_at TIMESTAMP NOT NULL DEFAULT NOW(),
     updated_at TIMESTAMP NOT NULL DEFAULT NOW()
@@ -245,6 +259,7 @@ CREATE UNIQUE INDEX rule_type_idx ON rule_type(provider, group_id, name);
 CREATE UNIQUE INDEX rule_evaluation_status_results_idx ON rule_evaluation_status(policy_id, repository_id, COALESCE(artifact_id, 0), entity, rule_type_id);
 CREATE UNIQUE INDEX artifact_name_lower_idx ON artifacts (repository_id, LOWER(artifact_name));
 CREATE UNIQUE INDEX artifact_versions_idx ON artifact_versions (artifact_id, sha);
+CREATE UNIQUE INDEX provider_name_group_id_idx ON providers (name, group_id);
 
 -- triggers
 
@@ -326,3 +341,7 @@ VALUES (1, 'root@localhost', 'root', '$argon2id$v=19$m=16,t=2,p=1$c2VjcmV0aGFzaA
 
 INSERT INTO user_groups (user_id, group_id) VALUES (1, 1);
 INSERT INTO user_roles (user_id, role_id) VALUES (1, 1);
+
+-- Create default GitHub provider
+INSERT INTO providers (name, group_id, implements, definition)
+VALUES ('github', 1, ARRAY ['github', 'git', 'rest']::provider_type[], '{}');

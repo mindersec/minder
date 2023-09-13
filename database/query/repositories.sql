@@ -16,7 +16,7 @@ INSERT INTO repositories (
 SELECT * FROM repositories WHERE id = $1;
 
 -- name: GetRepositoryByRepoID :one
-SELECT * FROM repositories WHERE provider = $1 AND repo_id = $2;
+SELECT * FROM repositories WHERE repo_id = $1;
 
 -- name: GetRepositoryByRepoName :one
 SELECT * FROM repositories WHERE provider = $1 AND repo_owner = $2 AND repo_name = $3;

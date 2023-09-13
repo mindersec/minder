@@ -33,6 +33,7 @@ import (
 	"github.com/ThreeDotsLabs/watermill/message"
 	"github.com/golang/mock/gomock"
 	"github.com/google/go-github/v53/github"
+	"github.com/google/uuid"
 	"github.com/stretchr/testify/assert"
 	"github.com/stretchr/testify/mock"
 	"github.com/stretchr/testify/require"
@@ -269,12 +270,26 @@ func (s *UnitTestSuite) TestHandleWebHookRepository() {
 
 	srv.evt.Register(engine.InternalEntityEventTopic, pq.pass)
 
+	providerUUID := uuid.New()
+
 	mockStore.EXPECT().
 		GetRepositoryByRepoID(gomock.Any(), gomock.Any()).
 		Return(db.Repository{
-			ID:      1,
+			ID:       1,
+			GroupID:  1,
+			RepoID:   12345,
+			Provider: providerUUID,
+		}, nil)
+
+	mockStore.EXPECT().
+		GetProviderByID(gomock.Any(), db.GetProviderByIDParams{
+			ID:      providerUUID,
 			GroupID: 1,
-			RepoID:  12345,
+		}).
+		Return(db.Provider{
+			ID:      providerUUID,
+			GroupID: 1,
+			Name:    "github",
 		}, nil)
 
 	hook := srv.HandleGitHubWebHook()

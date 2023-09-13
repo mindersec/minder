@@ -20,6 +20,7 @@ import (
 	"log"
 
 	"github.com/ThreeDotsLabs/watermill/message"
+	"github.com/google/uuid"
 	"github.com/rs/zerolog"
 
 	"github.com/stacklok/mediator/internal/config"
@@ -82,7 +83,16 @@ func (e *Executor) HandleEntityEvent(msg *message.Message) error {
 		return fmt.Errorf("error getting group: %w", err)
 	}
 
-	cli, err := providers.BuildClient(ctx, inf.Provider, inf.GroupID, e.querier, e.crypteng)
+	provider, err := e.querier.GetProviderByName(ctx, db.GetProviderByNameParams{
+		Name:    inf.Provider,
+		GroupID: inf.GroupID,
+	})
+
+	if err != nil {
+		return fmt.Errorf("error getting provider: %w", err)
+	}
+
+	cli, err := providers.BuildClient(ctx, provider.ID, inf.GroupID, e.querier, e.crypteng)
 	if err != nil {
 		return fmt.Errorf("error building client: %w", err)
 	}
@@ -92,7 +102,10 @@ func (e *Executor) HandleEntityEvent(msg *message.Message) error {
 			ID:   group.ID,
 			Name: group.Name,
 		},
-		Provider: inf.Provider,
+		Provider: Provider{
+			Name: inf.Provider,
+			ID:   provider.ID,
+		},
 	}
 
 	return e.evalEntityEvent(ctx, inf, ectx, cli)
@@ -120,7 +133,7 @@ func (e *Executor) evalEntityEvent(
 
 		// Let's evaluate all the rules for this policy
 		err = TraverseRules(relevant, func(rule *pb.Policy_Rule) error {
-			rt, rte, err := e.getEvaluator(ctx, *pol.Id, ectx.Provider, cli, cli.GetToken(), ectx, rule)
+			rt, rte, err := e.getEvaluator(ctx, *pol.Id, ectx.Provider.ID, cli, cli.GetToken(), ectx, rule)
 			if err != nil {
 				return err
 			}
@@ -143,7 +156,7 @@ func (e *Executor) evalEntityEvent(
 func (e *Executor) getEvaluator(
 	ctx context.Context,
 	policyID int32,
-	prov string,
+	prov uuid.UUID,
 	cli ghclient.RestAPI,
 	token string,
 	ectx *EntityContext,
