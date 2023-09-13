@@ -303,7 +303,7 @@ func (s *Server) parseGithubEventForProcessing(
 				context.Background(), ghclient.Github, payload, msg)
 		}
 	} else if hook_type == "pull_request" {
-		if payload["action"] == "opened" {
+		if payload["action"] == "opened" || payload["action"] == "synchronize" {
 			return s.parsePullRequestModEvent(
 				context.Background(), ghclient.Github, payload, msg)
 		}

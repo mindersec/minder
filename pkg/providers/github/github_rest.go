@@ -306,6 +306,35 @@ func (c *RestClient) CreateReview(
 	return review, nil
 }
 
+// ListReviews is a wrapper for the GitHub API to list reviews
+func (c *RestClient) ListReviews(
+	ctx context.Context,
+	owner, repo string,
+	number int,
+	opt *github.ListOptions,
+) ([]*github.PullRequestReview, error) {
+	reviews, _, err := c.client.PullRequests.ListReviews(ctx, owner, repo, number, opt)
+	if err != nil {
+		return nil, fmt.Errorf("error listing reviews for PR %s/%s/%d: %w", owner, repo, number, err)
+	}
+	return reviews, nil
+}
+
+// DismissReview is a wrapper for the GitHub API to dismiss a review
+func (c *RestClient) DismissReview(
+	ctx context.Context,
+	owner, repo string,
+	prId int,
+	reviewId int64,
+	dismissalRequest *github.PullRequestReviewDismissalRequest,
+) (*github.PullRequestReview, error) {
+	review, _, err := c.client.PullRequests.DismissReview(ctx, owner, repo, prId, reviewId, dismissalRequest)
+	if err != nil {
+		return nil, fmt.Errorf("error dismissing review %d for PR %s/%s/%d: %w", reviewId, owner, repo, prId, err)
+	}
+	return review, nil
+}
+
 // GetRepository returns a single repository for the authenticated user
 func (c *RestClient) GetRepository(ctx context.Context, owner string, name string) (*github.Repository, error) {
 	// create a slice to hold the repositories
