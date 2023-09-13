@@ -2762,25 +2762,7 @@
         }
       }
     },
-    "PipelinePolicyContextualRuleSet": {
-      "type": "object",
-      "properties": {
-        "context": {
-          "type": "string",
-          "description": "context is the context in which the rules are evaluated.\nThis refers to the provider."
-        },
-        "rules": {
-          "type": "array",
-          "items": {
-            "type": "object",
-            "$ref": "#/definitions/PipelinePolicyRule"
-          },
-          "description": "rule is the set of rules that are evaluated."
-        }
-      },
-      "description": "ContextualRuleSet defines a set of rules that are evaluated in a certain context."
-    },
-    "PipelinePolicyRule": {
+    "PolicyRule": {
       "type": "object",
       "properties": {
         "type": {
@@ -3090,7 +3072,7 @@
       "type": "object",
       "properties": {
         "policy": {
-          "$ref": "#/definitions/v1PipelinePolicy"
+          "$ref": "#/definitions/v1Policy"
         }
       },
       "title": "Policy service"
@@ -3099,7 +3081,7 @@
       "type": "object",
       "properties": {
         "policy": {
-          "$ref": "#/definitions/v1PipelinePolicy"
+          "$ref": "#/definitions/v1Policy"
         }
       }
     },
@@ -3545,7 +3527,7 @@
       "type": "object",
       "properties": {
         "policy": {
-          "$ref": "#/definitions/v1PipelinePolicy"
+          "$ref": "#/definitions/v1Policy"
         }
       }
     },
@@ -3954,7 +3936,7 @@
           "type": "array",
           "items": {
             "type": "object",
-            "$ref": "#/definitions/v1PipelinePolicy"
+            "$ref": "#/definitions/v1Policy"
           }
         }
       }
@@ -4044,7 +4026,7 @@
         }
       }
     },
-    "v1PipelinePolicy": {
+    "v1Policy": {
       "type": "object",
       "properties": {
         "context": {
@@ -4064,33 +4046,33 @@
           "type": "array",
           "items": {
             "type": "object",
-            "$ref": "#/definitions/PipelinePolicyContextualRuleSet"
+            "$ref": "#/definitions/PolicyRule"
           },
-          "description": "These are the entities that one could set in the pipeline policy."
+          "description": "These are the entities that one could set in the policy."
         },
         "buildEnvironment": {
           "type": "array",
           "items": {
             "type": "object",
-            "$ref": "#/definitions/PipelinePolicyContextualRuleSet"
+            "$ref": "#/definitions/PolicyRule"
           }
         },
         "artifact": {
           "type": "array",
           "items": {
             "type": "object",
-            "$ref": "#/definitions/PipelinePolicyContextualRuleSet"
+            "$ref": "#/definitions/PolicyRule"
           }
         },
         "pullRequest": {
           "type": "array",
           "items": {
             "type": "object",
-            "$ref": "#/definitions/PipelinePolicyContextualRuleSet"
+            "$ref": "#/definitions/PolicyRule"
           }
         }
       },
-      "description": "PipelinePolicy defines a policy that is user defined."
+      "description": "Policy defines a policy that is user defined."
     },
     "v1PolicyStatus": {
       "type": "object",

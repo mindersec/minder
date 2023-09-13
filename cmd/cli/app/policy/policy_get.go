@@ -96,7 +96,7 @@ func init() {
 
 }
 
-func handleGetTableOutput(cmd *cobra.Command, policy *pb.PipelinePolicy) {
+func handleGetTableOutput(cmd *cobra.Command, policy *pb.Policy) {
 	table := initializeTable(cmd)
 
 	renderPolicyTable(policy, table)

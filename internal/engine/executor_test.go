@@ -99,15 +99,10 @@ func TestExecutor_handleEntityEvent(t *testing.T) {
 		}, nil)
 
 	// list one policy
-	crs := []*pb.PipelinePolicy_ContextualRuleSet{
+	crs := []*pb.Policy_Rule{
 		{
-			Context: &provider,
-			Rules: []*pb.PipelinePolicy_Rule{
-				{
-					Type: passthroughRuleType,
-					Def:  &structpb.Struct{},
-				},
-			},
+			Type: passthroughRuleType,
+			Def:  &structpb.Struct{},
 		},
 	}
 

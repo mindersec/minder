@@ -122,7 +122,7 @@ func testCmdRun(cmd *cobra.Command, _ []string) error {
 	return runEvaluationForRules(eng, ent, rules)
 }
 
-func runEvaluationForRules(eng *engine.RuleTypeEngine, ent protoreflect.ProtoMessage, frags []*pb.PipelinePolicy_Rule) error {
+func runEvaluationForRules(eng *engine.RuleTypeEngine, ent protoreflect.ProtoMessage, frags []*pb.Policy_Rule) error {
 	for idx := range frags {
 		frag := frags[idx]
 

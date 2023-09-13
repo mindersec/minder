@@ -128,9 +128,8 @@
     - [LogOutRequest](#mediator-v1-LogOutRequest)
     - [LogOutResponse](#mediator-v1-LogOutResponse)
     - [OrganizationRecord](#mediator-v1-OrganizationRecord)
-    - [PipelinePolicy](#mediator-v1-PipelinePolicy)
-    - [PipelinePolicy.ContextualRuleSet](#mediator-v1-PipelinePolicy-ContextualRuleSet)
-    - [PipelinePolicy.Rule](#mediator-v1-PipelinePolicy-Rule)
+    - [Policy](#mediator-v1-Policy)
+    - [Policy.Rule](#mediator-v1-Policy-Rule)
     - [PolicyStatus](#mediator-v1-PolicyStatus)
     - [PrDependencies](#mediator-v1-PrDependencies)
     - [PrDependencies.ContextualDependency](#mediator-v1-PrDependencies-ContextualDependency)
@@ -465,7 +464,7 @@ Policy service
 
 | Field | Type | Label | Description |
 | ----- | ---- | ----- | ----------- |
-| policy | [PipelinePolicy](#mediator-v1-PipelinePolicy) |  |  |
+| policy | [Policy](#mediator-v1-Policy) |  |  |
 
 
 
@@ -480,7 +479,7 @@ Policy service
 
 | Field | Type | Label | Description |
 | ----- | ---- | ----- | ----------- |
-| policy | [PipelinePolicy](#mediator-v1-PipelinePolicy) |  |  |
+| policy | [Policy](#mediator-v1-Policy) |  |  |
 
 
 
@@ -1230,7 +1229,7 @@ get policy by id
 
 | Field | Type | Label | Description |
 | ----- | ---- | ----- | ----------- |
-| policy | [PipelinePolicy](#mediator-v1-PipelinePolicy) |  |  |
+| policy | [Policy](#mediator-v1-Policy) |  |  |
 
 
 
@@ -2047,7 +2046,7 @@ list policies
 
 | Field | Type | Label | Description |
 | ----- | ---- | ----- | ----------- |
-| policies | [PipelinePolicy](#mediator-v1-PipelinePolicy) | repeated |  |
+| policies | [Policy](#mediator-v1-Policy) | repeated |  |
 
 
 
@@ -2191,10 +2190,10 @@ ListRuleTypesResponse is the response to list rule types.
 
 
 
-<a name="mediator-v1-PipelinePolicy"></a>
+<a name="mediator-v1-Policy"></a>
 
-### PipelinePolicy
-PipelinePolicy defines a policy that is user defined.
+### Policy
+Policy defines a policy that is user defined.
 
 
 | Field | Type | Label | Description |
@@ -2202,35 +2201,19 @@ PipelinePolicy defines a policy that is user defined.
 | context | [Context](#mediator-v1-Context) |  | context is the context in which the policy is evaluated. |
 | id | [int32](#int32) | optional | id is the id of the policy. This is optional and is set by the system. |
 | name | [string](#string) |  | name is the name of the policy instance. |
-| repository | [PipelinePolicy.ContextualRuleSet](#mediator-v1-PipelinePolicy-ContextualRuleSet) | repeated | These are the entities that one could set in the pipeline policy. |
-| build_environment | [PipelinePolicy.ContextualRuleSet](#mediator-v1-PipelinePolicy-ContextualRuleSet) | repeated |  |
-| artifact | [PipelinePolicy.ContextualRuleSet](#mediator-v1-PipelinePolicy-ContextualRuleSet) | repeated |  |
-| pull_request | [PipelinePolicy.ContextualRuleSet](#mediator-v1-PipelinePolicy-ContextualRuleSet) | repeated |  |
+| repository | [Policy.Rule](#mediator-v1-Policy-Rule) | repeated | These are the entities that one could set in the policy. |
+| build_environment | [Policy.Rule](#mediator-v1-Policy-Rule) | repeated |  |
+| artifact | [Policy.Rule](#mediator-v1-Policy-Rule) | repeated |  |
+| pull_request | [Policy.Rule](#mediator-v1-Policy-Rule) | repeated |  |
 
 
 
 
 
 
-<a name="mediator-v1-PipelinePolicy-ContextualRuleSet"></a>
+<a name="mediator-v1-Policy-Rule"></a>
 
-### PipelinePolicy.ContextualRuleSet
-ContextualRuleSet defines a set of rules that are evaluated in a certain context.
-
-
-| Field | Type | Label | Description |
-| ----- | ---- | ----- | ----------- |
-| context | [string](#string) | optional | context is the context in which the rules are evaluated. This refers to the provider. |
-| rules | [PipelinePolicy.Rule](#mediator-v1-PipelinePolicy-Rule) | repeated | rule is the set of rules that are evaluated. |
-
-
-
-
-
-
-<a name="mediator-v1-PipelinePolicy-Rule"></a>
-
-### PipelinePolicy.Rule
+### Policy.Rule
 Rule defines the individual call of a certain rule type.
 
 

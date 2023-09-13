@@ -122,7 +122,7 @@ func (s *Server) CreatePolicy(ctx context.Context,
 		return nil, status.Errorf(codes.InvalidArgument, "invalid policy: %v", err)
 	}
 
-	err = engine.TraverseAllRulesForPipeline(in, func(r *pb.PipelinePolicy_Rule) error {
+	err = engine.TraverseAllRulesForPipeline(in, func(r *pb.Policy_Rule) error {
 		// TODO: This will need to be updated to support
 		// the hierarchy tree once that's settled in.
 		rtdb, err := s.store.GetRuleTypeByName(ctx, db.GetRuleTypeByNameParams{
@@ -188,7 +188,7 @@ func (s *Server) CreatePolicy(ctx context.Context,
 	}
 
 	// Create entity rules entries
-	for ent, entRules := range map[pb.Entity][]*pb.PipelinePolicy_ContextualRuleSet{
+	for ent, entRules := range map[pb.Entity][]*pb.Policy_Rule{
 		pb.Entity_ENTITY_REPOSITORIES:       in.GetRepository(),
 		pb.Entity_ENTITY_ARTIFACTS:          in.GetArtifact(),
 		pb.Entity_ENTITY_BUILD_ENVIRONMENTS: in.GetBuildEnvironment(),
@@ -229,7 +229,7 @@ func createPolicyRulesForEntity(
 	entity pb.Entity,
 	policy *db.Policy,
 	qtx db.Querier,
-	rules []*pb.PipelinePolicy_ContextualRuleSet,
+	rules []*pb.Policy_Rule,
 ) error {
 	if rules == nil {
 		return nil
@@ -293,7 +293,7 @@ func (s *Server) ListPolicies(ctx context.Context,
 	}
 
 	var resp pb.ListPoliciesResponse
-	resp.Policies = make([]*pb.PipelinePolicy, 0, len(policies))
+	resp.Policies = make([]*pb.Policy, 0, len(policies))
 	for _, policy := range engine.MergeDatabaseListIntoPolicies(policies, entityCtx) {
 		resp.Policies = append(resp.Policies, policy)
 	}

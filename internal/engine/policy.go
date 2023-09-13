@@ -54,7 +54,7 @@ func (e *RuleValidationError) Error() string {
 }
 
 // ParseYAML parses a YAML pipeline policy and validates it
-func ParseYAML(r io.Reader) (*pb.PipelinePolicy, error) {
+func ParseYAML(r io.Reader) (*pb.Policy, error) {
 	w := &bytes.Buffer{}
 	if err := util.TranscodeYAMLToJSON(r, w); err != nil {
 		return nil, fmt.Errorf("error converting yaml to json: %w", err)
@@ -63,8 +63,8 @@ func ParseYAML(r io.Reader) (*pb.PipelinePolicy, error) {
 }
 
 // ParseJSON parses a JSON pipeline policy and validates it
-func ParseJSON(r io.Reader) (*pb.PipelinePolicy, error) {
-	var out pb.PipelinePolicy
+func ParseJSON(r io.Reader) (*pb.Policy, error) {
+	var out pb.Policy
 
 	dec := json.NewDecoder(r)
 	if err := dec.Decode(&out); err != nil {
@@ -79,14 +79,14 @@ func ParseJSON(r io.Reader) (*pb.PipelinePolicy, error) {
 }
 
 // ReadPolicyFromFile reads a pipeline policy from a file and returns it as a protobuf
-func ReadPolicyFromFile(fpath string) (*pb.PipelinePolicy, error) {
+func ReadPolicyFromFile(fpath string) (*pb.Policy, error) {
 	f, err := os.Open(filepath.Clean(fpath))
 	if err != nil {
 		return nil, fmt.Errorf("error opening file: %w", err)
 	}
 
 	defer f.Close()
-	var out *pb.PipelinePolicy
+	var out *pb.Policy
 
 	if filepath.Ext(fpath) == ".json" {
 		out, err = ParseJSON(f)
@@ -102,7 +102,7 @@ func ReadPolicyFromFile(fpath string) (*pb.PipelinePolicy, error) {
 }
 
 // ValidatePolicy validates a pipeline policy
-func ValidatePolicy(p *pb.PipelinePolicy) error {
+func ValidatePolicy(p *pb.Policy) error {
 	if err := validateContext(p.Context); err != nil {
 		return err
 	}
@@ -151,7 +151,7 @@ func validateContext(c *pb.Context) error {
 	return nil
 }
 
-func validateEntity(e []*pb.PipelinePolicy_ContextualRuleSet) error {
+func validateEntity(e []*pb.Policy_Rule) error {
 	if len(e) == 0 {
 		return fmt.Errorf("%w: entity rules cannot be empty", ErrValidationFailed)
 	}
@@ -161,20 +161,6 @@ func validateEntity(e []*pb.PipelinePolicy_ContextualRuleSet) error {
 			return fmt.Errorf("%w: entity contextual rules cannot be nil", ErrValidationFailed)
 		}
 
-		if err := validateContextualRuleSet(r); err != nil {
-			return err
-		}
-	}
-
-	return nil
-}
-
-func validateContextualRuleSet(e *pb.PipelinePolicy_ContextualRuleSet) error {
-	if e.Rules == nil {
-		return fmt.Errorf("%w: entity rules cannot be nil", ErrValidationFailed)
-	}
-
-	for _, r := range e.Rules {
 		if err := validateRule(r); err != nil {
 			return err
 		}
@@ -183,7 +169,7 @@ func validateContextualRuleSet(e *pb.PipelinePolicy_ContextualRuleSet) error {
 	return nil
 }
 
-func validateRule(r *pb.PipelinePolicy_Rule) error {
+func validateRule(r *pb.Policy_Rule) error {
 	if r.Type == "" {
 		return fmt.Errorf("%w: rule type cannot be empty", ErrValidationFailed)
 	}
@@ -196,7 +182,7 @@ func validateRule(r *pb.PipelinePolicy_Rule) error {
 }
 
 // GetRulesForEntity returns the rules for the given entity
-func GetRulesForEntity(p *pb.PipelinePolicy, entity pb.Entity) ([]*pb.PipelinePolicy_ContextualRuleSet, error) {
+func GetRulesForEntity(p *pb.Policy, entity pb.Entity) ([]*pb.Policy_Rule, error) {
 	switch entity {
 	case pb.Entity_ENTITY_REPOSITORIES:
 		return p.Repository, nil
@@ -214,7 +200,7 @@ func GetRulesForEntity(p *pb.PipelinePolicy, entity pb.Entity) ([]*pb.PipelinePo
 }
 
 // TraverseAllRulesForPipeline traverses all rules for the given pipeline policy
-func TraverseAllRulesForPipeline(p *pb.PipelinePolicy, fn func(*pb.PipelinePolicy_Rule) error) error {
+func TraverseAllRulesForPipeline(p *pb.Policy, fn func(*pb.Policy_Rule) error) error {
 	if err := TraverseRules(p.Repository, fn); err != nil {
 		return fmt.Errorf("error traversing repository rules: %w", err)
 	}
@@ -233,12 +219,10 @@ func TraverseAllRulesForPipeline(p *pb.PipelinePolicy, fn func(*pb.PipelinePolic
 // TraverseRules traverses the rules and calls the given function for each rule
 // TODO: do we want to collect and return _all_ errors, rather than just the first,
 // to prevent whack-a-mole fixing?
-func TraverseRules(cr []*pb.PipelinePolicy_ContextualRuleSet, fn func(*pb.PipelinePolicy_Rule) error) error {
-	for _, r := range cr {
-		for _, rule := range r.Rules {
-			if err := fn(rule); err != nil {
-				return &RuleValidationError{err.Error(), rule.GetType()}
-			}
+func TraverseRules(rules []*pb.Policy_Rule, fn func(*pb.Policy_Rule) error) error {
+	for _, rule := range rules {
+		if err := fn(rule); err != nil {
+			return &RuleValidationError{err.Error(), rule.GetType()}
 		}
 	}
 
@@ -249,8 +233,8 @@ func TraverseRules(cr []*pb.PipelinePolicy_ContextualRuleSet, fn func(*pb.Pipeli
 // policies map. This assumes that the policies belong to the same group.
 //
 // TODO(jaosorior): This will have to consider the project tree once we	migrate to that
-func MergeDatabaseListIntoPolicies(ppl []db.ListPoliciesByGroupIDRow, ectx *EntityContext) map[string]*pb.PipelinePolicy {
-	policies := map[string]*pb.PipelinePolicy{}
+func MergeDatabaseListIntoPolicies(ppl []db.ListPoliciesByGroupIDRow, ectx *EntityContext) map[string]*pb.Policy {
+	policies := map[string]*pb.Policy{}
 
 	for idx := range ppl {
 		p := ppl[idx]
@@ -260,7 +244,7 @@ func MergeDatabaseListIntoPolicies(ppl []db.ListPoliciesByGroupIDRow, ectx *Enti
 		// first we check if policy already exists, if not we create a new one
 		// first we check if policy already exists, if not we create a new one
 		if _, ok := policies[p.Name]; !ok {
-			policies[p.Name] = &pb.PipelinePolicy{
+			policies[p.Name] = &pb.Policy{
 				Id:   &p.ID,
 				Name: p.Name,
 				Context: &pb.Context{
@@ -281,8 +265,8 @@ func MergeDatabaseListIntoPolicies(ppl []db.ListPoliciesByGroupIDRow, ectx *Enti
 // policies map. This assumes that the policies belong to the same group.
 //
 // TODO(jaosorior): This will have to consider the project tree once we migrate to that
-func MergeDatabaseGetIntoPolicies(ppl []db.GetPolicyByGroupAndIDRow, ectx *EntityContext) map[string]*pb.PipelinePolicy {
-	policies := map[string]*pb.PipelinePolicy{}
+func MergeDatabaseGetIntoPolicies(ppl []db.GetPolicyByGroupAndIDRow, ectx *EntityContext) map[string]*pb.Policy {
+	policies := map[string]*pb.Policy{}
 
 	for idx := range ppl {
 		p := ppl[idx]
@@ -292,7 +276,7 @@ func MergeDatabaseGetIntoPolicies(ppl []db.GetPolicyByGroupAndIDRow, ectx *Entit
 
 		// first we check if policy already exists, if not we create a new one
 		if _, ok := policies[p.Name]; !ok {
-			policies[p.Name] = &pb.PipelinePolicy{
+			policies[p.Name] = &pb.Policy{
 				Id:   &p.ID,
 				Name: p.Name,
 				Context: &pb.Context{
@@ -314,16 +298,16 @@ func MergeDatabaseGetIntoPolicies(ppl []db.GetPolicyByGroupAndIDRow, ectx *Entit
 // Note that this function is thought to be called from scpecific Merge functions
 // and thus the logic is targetted to that.
 func rowInfoToPolicyMap(
-	policy *pb.PipelinePolicy,
+	policy *pb.Policy,
 	entity db.Entities,
 	contextualRules json.RawMessage,
-) *pb.PipelinePolicy {
+) *pb.Policy {
 	if !entities.IsValidEntity(entities.EntityTypeFromDB(entity)) {
 		log.Printf("unknown entity found in database: %s", entity)
 		return nil
 	}
 
-	var ruleset []*pb.PipelinePolicy_ContextualRuleSet
+	var ruleset []*pb.Policy_Rule
 
 	if err := json.Unmarshal(contextualRules, &ruleset); err != nil {
 		// We merely print the error and continue. This is because the user

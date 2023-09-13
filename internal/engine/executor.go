@@ -119,7 +119,7 @@ func (e *Executor) evalEntityEvent(
 		}
 
 		// Let's evaluate all the rules for this policy
-		err = TraverseRules(relevant, func(rule *pb.PipelinePolicy_Rule) error {
+		err = TraverseRules(relevant, func(rule *pb.Policy_Rule) error {
 			rt, rte, err := e.getEvaluator(ctx, *pol.Id, ectx.Provider, cli, cli.GetToken(), ectx, rule)
 			if err != nil {
 				return err
@@ -147,7 +147,7 @@ func (e *Executor) getEvaluator(
 	cli ghclient.RestAPI,
 	token string,
 	ectx *EntityContext,
-	rule *pb.PipelinePolicy_Rule,
+	rule *pb.Policy_Rule,
 ) (*pb.RuleType, *RuleTypeEngine, error) {
 	log.Printf("Evaluating rule: %s for policy %d", rule.Type, policyID)
 
@@ -178,8 +178,8 @@ func (e *Executor) getEvaluator(
 
 func logEval(
 	ctx context.Context,
-	pol *pb.PipelinePolicy,
-	rule *pb.PipelinePolicy_Rule,
+	pol *pb.Policy,
+	rule *pb.Policy_Rule,
 	inf *EntityInfoWrapper,
 	result error,
 ) {
