@@ -15,19 +15,10 @@
 
 package config
 
-import "github.com/spf13/viper"
-
 // TracingConfig is the configuration for our tracing capabilities
 type TracingConfig struct {
-	Enabled bool `mapstructure:"enabled"`
+	Enabled bool `mapstructure:"enabled" default:"false"`
 	// for the demonstration, we use AlwaysSmaple sampler to take all spans.
 	// do not use this option in production.
-	SampleRatio float64 `mapstructure:"sample_ratio"`
-}
-
-// SetTracingViperDefaults sets the default values for the tracing configuration
-// to be picked up by viper
-func SetTracingViperDefaults(v *viper.Viper) {
-	v.SetDefault("tracing.enabled", false)
-	v.SetDefault("tracing.sample_ratio", 0.1)
+	SampleRatio float64 `mapstructure:"sample_ratio" default:"0.1"`
 }

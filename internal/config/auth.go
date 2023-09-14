@@ -26,13 +26,13 @@ type AuthConfig struct {
 	// RefreshTokenPublicKey is the public key used to verify the refresh token for authn/z
 	RefreshTokenPublicKey string `mapstructure:"refresh_token_public_key"`
 	// TokenExpiry is the expiry time for the access token in seconds
-	TokenExpiry int64 `mapstructure:"token_expiry"`
+	TokenExpiry int64 `mapstructure:"token_expiry" default:"3600"`
 	// RefreshExpiry is the expiry time for the refresh token in seconds
-	RefreshExpiry int64 `mapstructure:"refresh_expiry"`
+	RefreshExpiry int64 `mapstructure:"refresh_expiry" default:"86400"`
 	// NoncePeriod is the period in seconds for which a nonce is valid
-	NoncePeriod int64 `mapstructure:"nonce_period"`
+	NoncePeriod int64 `mapstructure:"nonce_period" default:"60"`
 	// TokenKey is the key used to store the provider's token in the database
-	TokenKey string `mapstructure:"token_key"`
+	TokenKey string `mapstructure:"token_key" default:"./.ssh/token_key_passphrase"`
 }
 
 // GetAuthConfigWithDefaults returns a AuthConfig with default values

@@ -48,6 +48,10 @@ var serveCmd = &cobra.Command{
 		if err != nil {
 			return fmt.Errorf("unable to read config: %w", err)
 		}
+		if cmd.Flag("dump_config").Value.String() == "true" {
+			log.Printf("%+v\n", cfg)
+			os.Exit(0)
+		}
 
 		ctx = logger.FromFlags(cfg.LoggingConfig).WithContext(ctx)
 		zerolog.Ctx(ctx).Info().Msgf("Initializing logger in level: %s", cfg.LoggingConfig.Level)
@@ -117,4 +121,6 @@ func init() {
 	}
 
 	serveCmd.Flags().String("logging", "", "Log Level")
+
+	serveCmd.Flags().Bool("dump_config", false, "Dump Config and exit")
 }
