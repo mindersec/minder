@@ -42,7 +42,9 @@ type Config struct {
 // DefaultConfig returns a configuration with all the struct defaults set,
 // but no other changes.
 func DefaultConfig() *Config {
-	c, err := ReadConfigFromViper(viper.New())
+	v := viper.New()
+	SetViperDefaults(v)
+	c, err := ReadConfigFromViper(v)
 	if err != nil {
 		panic(fmt.Sprintf("Failed to read default config: %v", err))
 	}
@@ -84,7 +86,7 @@ func setViperStructDefaults(v *viper.Viper, prefix string, s any) {
 		if field.Tag.Get("mapstructure") == "" {
 			// Error, need a tag
 			panic(fmt.Sprintf("Untagged config struct field %q", field.Name))
-		}		
+		}
 		valueName := strings.ToLower(prefix + field.Tag.Get("mapstructure"))
 
 		if field.Type.Kind() == reflect.Struct {
@@ -96,7 +98,7 @@ func setViperStructDefaults(v *viper.Viper, prefix string, s any) {
 		// we don't support all value types yet, but we can add them as needed
 		value := field.Tag.Get("default")
 		defaultValue := reflect.Zero(field.Type).Interface()
-		var err error  // We handle errors at the end of the switch
+		var err error // We handle errors at the end of the switch
 		fieldType := field.Type.Kind()
 		//nolint:golint,exhaustive
 		switch fieldType {
