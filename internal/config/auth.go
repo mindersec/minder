@@ -15,16 +15,24 @@
 
 package config
 
+import (
+	"fmt"
+	"os"
+	"path/filepath"
+
+	"github.com/spf13/viper"
+)
+
 // AuthConfig is the configuration for the auth package
 type AuthConfig struct {
 	// AccessTokenPrivateKey is the private key used to sign the access token for authn/z
-	AccessTokenPrivateKey string `mapstructure:"access_token_private_key"`
+	AccessTokenPrivateKey string `mapstructure:"access_token_private_key" validate:"required"`
 	// AccessTokenPublicKey is the public key used to verify the access token for authn/z
-	AccessTokenPublicKey string `mapstructure:"access_token_public_key"`
+	AccessTokenPublicKey string `mapstructure:"access_token_public_key" validate:"required"`
 	// RefreshTokenPrivateKey is the private key used to sign the refresh token for authn/z
-	RefreshTokenPrivateKey string `mapstructure:"refresh_token_private_key"`
+	RefreshTokenPrivateKey string `mapstructure:"refresh_token_private_key" validate:"required"`
 	// RefreshTokenPublicKey is the public key used to verify the refresh token for authn/z
-	RefreshTokenPublicKey string `mapstructure:"refresh_token_public_key"`
+	RefreshTokenPublicKey string `mapstructure:"refresh_token_public_key" validate:"required"`
 	// TokenExpiry is the expiry time for the access token in seconds
 	TokenExpiry int64 `mapstructure:"token_expiry"`
 	// RefreshExpiry is the expiry time for the refresh token in seconds
@@ -32,10 +40,47 @@ type AuthConfig struct {
 	// NoncePeriod is the period in seconds for which a nonce is valid
 	NoncePeriod int64 `mapstructure:"nonce_period"`
 	// TokenKey is the key used to store the provider's token in the database
-	TokenKey string `mapstructure:"token_key"`
+	TokenKey string `mapstructure:"token_key" validate:"required"`
+}
+
+// SetAuthViperDefaults sets the default values for the auth configuration
+func SetAuthViperDefaults(v *viper.Viper) {
+	v.SetDefault("auth.token_expiry", 3600)
+	v.SetDefault("auth.refresh_expiry", 86400)
+	v.SetDefault("auth.nonce_period", 3600)
 }
 
 // GetAuthConfigWithDefaults returns a AuthConfig with default values
 func GetAuthConfigWithDefaults() AuthConfig {
 	return AuthConfig{}
+}
+
+// GetAccessTokenPrivateKey returns the private key used to sign the access token
+func (acfg *AuthConfig) GetAccessTokenPrivateKey() ([]byte, error) {
+	return readKey(acfg.AccessTokenPrivateKey)
+}
+
+// GetAccessTokenPublicKey returns the public key used to verify the access token
+func (acfg *AuthConfig) GetAccessTokenPublicKey() ([]byte, error) {
+	return readKey(acfg.AccessTokenPublicKey)
+}
+
+// GetRefreshTokenPrivateKey returns the private key used to sign the refresh token
+func (acfg *AuthConfig) GetRefreshTokenPrivateKey() ([]byte, error) {
+	return readKey(acfg.RefreshTokenPrivateKey)
+}
+
+// GetRefreshTokenPublicKey returns the public key used to verify the refresh token
+func (acfg *AuthConfig) GetRefreshTokenPublicKey() ([]byte, error) {
+	return readKey(acfg.RefreshTokenPublicKey)
+}
+
+func readKey(keypath string) ([]byte, error) {
+	cleankeypath := filepath.Clean(keypath)
+	data, err := os.ReadFile(cleankeypath)
+	if err != nil {
+		return nil, fmt.Errorf("failed to read key: %s", err)
+	}
+
+	return data, nil
 }

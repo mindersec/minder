@@ -81,19 +81,26 @@ func getgRPCConnection() (*grpc.ClientConn, error) {
 	return conn, nil
 }
 
-func newDefaultServer(t *testing.T, mockStore *mockdb.MockStore) *Server {
+func newDefaultServer(t *testing.T, mockStore *mockdb.MockStore, cfg ...*config.Config) *Server {
 	t.Helper()
 
 	evt, err := events.Setup()
 	require.NoError(t, err, "failed to setup eventer")
 
-	tokenKeyPath := generateTokenKey(t)
+	var c *config.Config
+	if len(cfg) > 0 {
+		c = cfg[0]
+	} else {
+		tokenKeyPath := generateTokenKey(t)
 
-	server, err := NewServer(mockStore, evt, &config.Config{
-		Auth: config.AuthConfig{
-			TokenKey: tokenKeyPath,
-		},
-	})
+		c = &config.Config{
+			Auth: config.AuthConfig{
+				TokenKey: tokenKeyPath,
+			},
+		}
+	}
+
+	server, err := NewServer(mockStore, evt, c)
 	require.NoError(t, err, "failed to create server")
 	return server
 }

@@ -18,6 +18,7 @@
 package config
 
 import (
+	"github.com/go-playground/validator/v10"
 	"github.com/spf13/viper"
 )
 
@@ -30,7 +31,7 @@ type Config struct {
 	Metrics       MetricsConfig    `mapstructure:"metrics"`
 	Database      DatabaseConfig   `mapstructure:"database"`
 	Salt          CryptoConfig     `mapstructure:"salt"`
-	Auth          AuthConfig       `mapstructure:"auth"`
+	Auth          AuthConfig       `mapstructure:"auth" validate:"required"`
 }
 
 // ReadConfigFromViper reads the configuration from the given Viper instance.
@@ -43,6 +44,13 @@ func ReadConfigFromViper(v *viper.Viper) (*Config, error) {
 	return &cfg, nil
 }
 
+// Validate validates the configuration
+func (cfg *Config) Validate() error {
+	validator := validator.New(validator.WithRequiredStructEnabled())
+
+	return validator.Struct(cfg)
+}
+
 // SetViperDefaults sets the default values for the configuration to be picked
 // up by viper
 func SetViperDefaults(v *viper.Viper) {
@@ -50,4 +58,5 @@ func SetViperDefaults(v *viper.Viper) {
 	SetTracingViperDefaults(v)
 	SetMetricsViperDefaults(v)
 	SetCryptoViperDefaults(v)
+	SetAuthViperDefaults(v)
 }

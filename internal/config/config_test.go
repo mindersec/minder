@@ -115,3 +115,84 @@ grpc_server:
 	require.Equal(t, "bar", cfg.GRPCServer.Host)
 	require.Equal(t, 5678, cfg.GRPCServer.Port)
 }
+
+func TestValidateConfig(t *testing.T) {
+	t.Parallel()
+
+	testCases := []struct {
+		name    string
+		cfgstr  string
+		wantErr bool
+	}{
+		{
+			name: "valid config",
+			cfgstr: `---
+http_server:
+  host:	"myhost"
+  port:	8666
+grpc_server:
+  host:	"myhost"
+  port:	8667
+auth:
+  access_token_private_key:	"testdata/keys/access_token_private_key.pem"
+  access_token_public_key:	"testdata/keys/access_token_public_key.pem"
+  refresh_token_private_key:	"testdata/keys/refresh_token_private_key.pem"
+  refresh_token_public_key:	"testdata/keys/refresh_token_public_key.pem"
+  token_key: "testdata/keys/token_key.pem"
+`,
+			wantErr: false,
+		},
+		{
+			name: "missing auth config",
+			cfgstr: `---
+http_server:
+  host:	"myhost"
+  port:	8666
+grpc_server:
+  host:	"myhost"
+  port:	8667
+`,
+			wantErr: true,
+		},
+		{
+			name: "missing access token private key",
+			cfgstr: `---
+http_server:
+  host:	"myhost"
+  port:	8666
+grpc_server:
+  host:	"myhost"
+  port:	8667
+auth:
+  access_token_public_key:	"testdata/keys/access_token_public_key.pem"
+  refresh_token_private_key:	"testdata/keys/refresh_token_private_key.pem"
+  refresh_token_public_key:	"testdata/keys/refresh_token_public_key.pem"
+  token_key: "testdata/keys/token_key.pem"
+`,
+			wantErr: true,
+		},
+	}
+
+	for _, tc := range testCases {
+		tc := tc
+
+		t.Run(tc.name, func(t *testing.T) {
+			t.Parallel()
+
+			cfgbuf := bytes.NewBufferString(tc.cfgstr)
+
+			v := viper.New()
+			v.SetConfigType("yaml")
+			require.NoError(t, v.ReadConfig(cfgbuf), "Unexpected error")
+
+			cfg, err := config.ReadConfigFromViper(v)
+			require.NoError(t, err, "Unexpected error")
+
+			if tc.wantErr {
+				require.Error(t, cfg.Validate(), "Expected error")
+			} else {
+				require.NoError(t, cfg.Validate(), "unexpected error")
+			}
+		})
+	}
+}
