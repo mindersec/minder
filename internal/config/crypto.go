@@ -27,5 +27,5 @@ type CryptoConfig struct {
 // GetCryptoConfigWithDefaults returns a CryptoConfig with default values
 // TODO: extract from struct default tags
 func GetCryptoConfigWithDefaults() CryptoConfig {
-	return DefaultConfig().Salt
+	return DefaultConfigForTest().Salt
 }

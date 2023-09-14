@@ -119,7 +119,7 @@ grpc_server:
 func TestReadDefaultConfig(t *testing.T) {
 	t.Parallel()
 
-	cfg := config.DefaultConfig()
+	cfg := config.DefaultConfigForTest()
 	require.Equal(t, "debug", cfg.LoggingConfig.Level)
 	require.Equal(t, "mediator", cfg.Database.Name)
 	require.Equal(t, "./.ssh/token_key_passphrase", cfg.Auth.TokenKey)

@@ -39,9 +39,9 @@ type Config struct {
 	Auth          AuthConfig       `mapstructure:"auth"`
 }
 
-// DefaultConfig returns a configuration with all the struct defaults set,
+// DefaultConfigForTest returns a configuration with all the struct defaults set,
 // but no other changes.
-func DefaultConfig() *Config {
+func DefaultConfigForTest() *Config {
 	v := viper.New()
 	SetViperDefaults(v)
 	c, err := ReadConfigFromViper(v)
