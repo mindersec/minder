@@ -29,7 +29,6 @@ import (
 
 	mockdb "github.com/stacklok/mediator/database/mock"
 	"github.com/stacklok/mediator/internal/auth"
-	"github.com/stacklok/mediator/internal/config"
 	mcrypto "github.com/stacklok/mediator/internal/crypto"
 	"github.com/stacklok/mediator/internal/db"
 	"github.com/stacklok/mediator/internal/util"
@@ -41,7 +40,7 @@ func TestLogin_gRPC(t *testing.T) {
 
 	seed := time.Now().UnixNano()
 	password := util.RandomPassword(8, seed)
-	cryptcfg := config.GetCryptoConfigWithDefaults()
+	cryptcfg := DefaultConfigForTest().Salt
 	hash, err := mcrypto.GeneratePasswordHash(password, &cryptcfg)
 	if err != nil {
 		t.Fatalf("Error generating password hash: %v", err)
