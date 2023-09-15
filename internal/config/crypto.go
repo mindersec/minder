@@ -23,9 +23,3 @@ type CryptoConfig struct {
 	SaltLength  uint32 `mapstructure:"salt_length" default:"16"`
 	KeyLength   uint32 `mapstructure:"key_length" default:"32"`
 }
-
-// GetCryptoConfigWithDefaults returns a CryptoConfig with default values
-// TODO: extract from struct default tags
-func GetCryptoConfigWithDefaults() CryptoConfig {
-	return DefaultConfigForTest().Salt
-}

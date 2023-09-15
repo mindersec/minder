@@ -75,7 +75,7 @@ func TestKeysHandler(t *testing.T) {
 	s := &Server{
 		store: mockStore,
 		cfg: &config.Config{
-			Salt: config.GetCryptoConfigWithDefaults(),
+			Salt: config.DefaultConfigForTest().Salt,
 		},
 	}
 
@@ -168,7 +168,7 @@ func TestKeysHandler_gRPC(t *testing.T) {
 			server := &Server{
 				store: mockStore,
 				cfg: &config.Config{
-					Salt: config.GetCryptoConfigWithDefaults(),
+					Salt: config.DefaultConfigForTest().Salt,
 				},
 			}
 

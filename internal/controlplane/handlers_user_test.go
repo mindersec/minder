@@ -96,7 +96,7 @@ func TestCreateUserDBMock(t *testing.T) {
 	server := &Server{
 		store: mockStore,
 		cfg: &config.Config{
-			Salt: config.GetCryptoConfigWithDefaults(),
+			Salt: config.DefaultConfigForTest().Salt,
 		},
 		cryptoEngine: crypeng,
 	}
@@ -214,7 +214,7 @@ func TestCreateUser_gRPC(t *testing.T) {
 			evt, err := events.Setup()
 			require.NoError(t, err, "failed to setup eventer")
 			server, err := NewServer(mockStore, evt, &config.Config{
-				Salt: config.GetCryptoConfigWithDefaults(),
+				Salt: config.DefaultConfigForTest().Salt,
 				Auth: config.AuthConfig{
 					TokenKey: generateTokenKey(t),
 				},
@@ -257,7 +257,7 @@ func TestUpdatePasswordDBMock(t *testing.T) {
 	server := &Server{
 		store: mockStore,
 		cfg: &config.Config{
-			Salt: config.GetCryptoConfigWithDefaults(),
+			Salt: config.DefaultConfigForTest().Salt,
 		},
 		cryptoEngine: crypeng,
 	}
@@ -340,7 +340,7 @@ func TestUpdatePassword_gRPC(t *testing.T) {
 			evt, err := events.Setup()
 			require.NoError(t, err, "failed to setup eventer")
 			server, err := NewServer(mockStore, evt, &config.Config{
-				Salt: config.GetCryptoConfigWithDefaults(),
+				Salt: config.DefaultConfigForTest().Salt,
 				Auth: config.AuthConfig{
 					TokenKey: generateTokenKey(t),
 				},
@@ -381,7 +381,7 @@ func TestUpdateProfileDBMock(t *testing.T) {
 	server := &Server{
 		store: mockStore,
 		cfg: &config.Config{
-			Salt: config.GetCryptoConfigWithDefaults(),
+			Salt: config.DefaultConfigForTest().Salt,
 		},
 		cryptoEngine: crypeng,
 	}
@@ -466,7 +466,7 @@ func TestUpdateProfile_gRPC(t *testing.T) {
 			evt, err := events.Setup()
 			require.NoError(t, err, "failed to setup eventer")
 			server, err := NewServer(mockStore, evt, &config.Config{
-				Salt: config.GetCryptoConfigWithDefaults(),
+				Salt: config.DefaultConfigForTest().Salt,
 				Auth: config.AuthConfig{
 					TokenKey: generateTokenKey(t),
 				},
@@ -522,7 +522,7 @@ func TestDeleteUserDBMock(t *testing.T) {
 	server := &Server{
 		store: mockStore,
 		cfg: &config.Config{
-			Salt: config.GetCryptoConfigWithDefaults(),
+			Salt: config.DefaultConfigForTest().Salt,
 		},
 		cryptoEngine: crypeng,
 	}
@@ -608,7 +608,7 @@ func TestDeleteUser_gRPC(t *testing.T) {
 			evt, err := events.Setup()
 			require.NoError(t, err, "failed to setup eventer")
 			server, err := NewServer(mockStore, evt, &config.Config{
-				Salt: config.GetCryptoConfigWithDefaults(),
+				Salt: config.DefaultConfigForTest().Salt,
 				Auth: config.AuthConfig{
 					TokenKey: generateTokenKey(t),
 				},
@@ -665,7 +665,7 @@ func TestGetUsersDBMock(t *testing.T) {
 	server := &Server{
 		store: mockStore,
 		cfg: &config.Config{
-			Salt: config.GetCryptoConfigWithDefaults(),
+			Salt: config.DefaultConfigForTest().Salt,
 		},
 		cryptoEngine: crypeng,
 	}
@@ -780,7 +780,7 @@ func TestGetUsers_gRPC(t *testing.T) {
 			evt, err := events.Setup()
 			require.NoError(t, err, "failed to setup eventer")
 			server, err := NewServer(mockStore, evt, &config.Config{
-				Salt: config.GetCryptoConfigWithDefaults(),
+				Salt: config.DefaultConfigForTest().Salt,
 				Auth: config.AuthConfig{
 					TokenKey: generateTokenKey(t),
 				},
@@ -829,7 +829,7 @@ func TestGetUserDBMock(t *testing.T) {
 	server := &Server{
 		store: mockStore,
 		cfg: &config.Config{
-			Salt: config.GetCryptoConfigWithDefaults(),
+			Salt: config.DefaultConfigForTest().Salt,
 		},
 		cryptoEngine: crypeng,
 	}
@@ -875,7 +875,7 @@ func TestGetNonExistingUserDBMock(t *testing.T) {
 	server := &Server{
 		store: mockStore,
 		cfg: &config.Config{
-			Salt: config.GetCryptoConfigWithDefaults(),
+			Salt: config.DefaultConfigForTest().Salt,
 		},
 		cryptoEngine: crypeng,
 	}
@@ -974,7 +974,7 @@ func TestGetUser_gRPC(t *testing.T) {
 			evt, err := events.Setup()
 			require.NoError(t, err, "failed to setup eventer")
 			server, err := NewServer(mockStore, evt, &config.Config{
-				Salt: config.GetCryptoConfigWithDefaults(),
+				Salt: config.DefaultConfigForTest().Salt,
 				Auth: config.AuthConfig{
 					TokenKey: generateTokenKey(t),
 				},

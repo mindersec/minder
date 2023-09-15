@@ -41,7 +41,7 @@ func TestLogin_gRPC(t *testing.T) {
 
 	seed := time.Now().UnixNano()
 	password := util.RandomPassword(8, seed)
-	cryptcfg := config.GetCryptoConfigWithDefaults()
+	cryptcfg := config.DefaultConfigForTest().Salt
 	hash, err := mcrypto.GeneratePasswordHash(password, &cryptcfg)
 	if err != nil {
 		t.Fatalf("Error generating password hash: %v", err)
