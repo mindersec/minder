@@ -115,3 +115,12 @@ grpc_server:
 	require.Equal(t, "bar", cfg.GRPCServer.Host)
 	require.Equal(t, 5678, cfg.GRPCServer.Port)
 }
+
+func TestReadDefaultConfig(t *testing.T) {
+	t.Parallel()
+
+	cfg := config.DefaultConfigForTest()
+	require.Equal(t, "debug", cfg.LoggingConfig.Level)
+	require.Equal(t, "mediator", cfg.Database.Name)
+	require.Equal(t, "./.ssh/token_key_passphrase", cfg.Auth.TokenKey)
+}

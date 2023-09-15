@@ -18,21 +18,21 @@ package config
 // AuthConfig is the configuration for the auth package
 type AuthConfig struct {
 	// AccessTokenPrivateKey is the private key used to sign the access token for authn/z
-	AccessTokenPrivateKey string `mapstructure:"access_token_private_key"`
+	AccessTokenPrivateKey string `mapstructure:"access_token_private_key" default:"./.ssh/access_token_rsa"`
 	// AccessTokenPublicKey is the public key used to verify the access token for authn/z
-	AccessTokenPublicKey string `mapstructure:"access_token_public_key"`
+	AccessTokenPublicKey string `mapstructure:"access_token_public_key" default:"./.ssh/access_token_rsa.pub"`
 	// RefreshTokenPrivateKey is the private key used to sign the refresh token for authn/z
-	RefreshTokenPrivateKey string `mapstructure:"refresh_token_private_key"`
+	RefreshTokenPrivateKey string `mapstructure:"refresh_token_private_key" default:"./.ssh/refresh_token_rsa"`
 	// RefreshTokenPublicKey is the public key used to verify the refresh token for authn/z
-	RefreshTokenPublicKey string `mapstructure:"refresh_token_public_key"`
+	RefreshTokenPublicKey string `mapstructure:"refresh_token_public_key" default:"./.ssh/refresh_token_rsa.pub"`
 	// TokenExpiry is the expiry time for the access token in seconds
-	TokenExpiry int64 `mapstructure:"token_expiry"`
+	TokenExpiry int64 `mapstructure:"token_expiry" default:"3600"`
 	// RefreshExpiry is the expiry time for the refresh token in seconds
-	RefreshExpiry int64 `mapstructure:"refresh_expiry"`
+	RefreshExpiry int64 `mapstructure:"refresh_expiry" default:"86400"`
 	// NoncePeriod is the period in seconds for which a nonce is valid
-	NoncePeriod int64 `mapstructure:"nonce_period"`
+	NoncePeriod int64 `mapstructure:"nonce_period" default:"3600"`
 	// TokenKey is the key used to store the provider's token in the database
-	TokenKey string `mapstructure:"token_key"`
+	TokenKey string `mapstructure:"token_key" default:"./.ssh/token_key_passphrase"`
 }
 
 // GetAuthConfigWithDefaults returns a AuthConfig with default values

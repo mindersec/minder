@@ -46,11 +46,11 @@ services:
       # Use viper environment variables to set specific paths to keys;
       # these values are relative paths in config.yaml, but it's not clear
       # what they are relative _to_...
-      - AUTH.ACCESS_TOKEN_PRIVATE_KEY=/app/.ssh/access_token_rsa
-      - AUTH.ACCESS_TOKEN_PUBLIC_KEY=/app/.ssh/access_token_rsa.pub
-      - AUTH.REFRESH_TOKEN_PRIVATE_KEY=/app/.ssh/refresh_token_rsa
-      - AUTH.REFRESH_TOKEN_PUBLIC_KEY=/app/.ssh/refresh_token_rsa.pub
-      - AUTH.TOKEN_KEY=/app/.ssh/token_key_passphrase
+      - AUTH_ACCESS_TOKEN_PRIVATE_KEY=/app/.ssh/access_token_rsa
+      - AUTH_ACCESS_TOKEN_PUBLIC_KEY=/app/.ssh/access_token_rsa.pub
+      - AUTH_REFRESH_TOKEN_PRIVATE_KEY=/app/.ssh/refresh_token_rsa
+      - AUTH_REFRESH_TOKEN_PUBLIC_KEY=/app/.ssh/refresh_token_rsa.pub
+      - AUTH_TOKEN_KEY=/app/.ssh/token_key_passphrase
     networks:
       - app_net
     depends_on:

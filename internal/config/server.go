@@ -27,9 +27,9 @@ import (
 // HTTPServerConfig is the configuration for the HTTP server
 type HTTPServerConfig struct {
 	// Host is the host to bind to
-	Host string `mapstructure:"host"`
+	Host string `mapstructure:"host" default:"127.0.0.1"`
 	// Port is the port to bind to
-	Port int `mapstructure:"port"`
+	Port int `mapstructure:"port" default:"8080"`
 }
 
 // GetAddress returns the address to bind to
@@ -40,9 +40,9 @@ func (s *HTTPServerConfig) GetAddress() string {
 // GRPCServerConfig is the configuration for the gRPC server
 type GRPCServerConfig struct {
 	// Host is the host to bind to
-	Host string `mapstructure:"host"`
+	Host string `mapstructure:"host" default:"127.0.0.1"`
 	// Port is the port to bind to
-	Port int `mapstructure:"port"`
+	Port int `mapstructure:"port" default:"8090"`
 }
 
 // GetAddress returns the address to bind to
