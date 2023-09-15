@@ -30,6 +30,7 @@ import (
 const (
 	// DiffRuleDataIngestType is the type of the diff rule data ingest engine
 	DiffRuleDataIngestType = "diff"
+	prFilesPerPage         = 30
 )
 
 // Diff is the diff rule data ingest engine
@@ -63,41 +64,48 @@ func (di *Diff) Ingest(
 		return nil, fmt.Errorf("entity is not a pull request")
 	}
 
-	// TODO(jakub): support pagination
-	prFiles, err := di.cli.ListFiles(ctx, pr.RepoOwner, pr.RepoName, int(pr.Number), 1, 100)
-	if err != nil {
-		return nil, fmt.Errorf("error getting pull request files: %w", err)
-	}
-
 	allDiffs := make([]*pb.PrDependencies_ContextualDependency, 0)
 
-	for _, file := range prFiles {
-		eco := di.getEcosystemForFile(*file.Filename)
-		if eco == DepEcosystemNone {
-			log.Printf("no ecosystem found for file %s", *file.Filename)
-			continue
-		}
-
-		parser := newEcosystemParser(eco)
-		if parser == nil {
-			return nil, fmt.Errorf("no parser found for ecosystem %s", eco)
-		}
-
-		depBatch, err := parser(*file.Patch)
+	page := 0
+	for {
+		prFiles, resp, err := di.cli.ListFiles(ctx, pr.RepoOwner, pr.RepoName, int(pr.Number), prFilesPerPage, page)
 		if err != nil {
-			return nil, fmt.Errorf("error parsing file %s: %w", *file.Filename, err)
+			return nil, fmt.Errorf("error getting pull request files: %w", err)
+		}
+		for _, file := range prFiles {
+			eco := di.getEcosystemForFile(*file.Filename)
+			if eco == DepEcosystemNone {
+				log.Printf("no ecosystem found for file %s", *file.Filename)
+				continue
+			}
+
+			parser := newEcosystemParser(eco)
+			if parser == nil {
+				return nil, fmt.Errorf("no parser found for ecosystem %s", eco)
+			}
+
+			depBatch, err := parser(*file.Patch)
+			if err != nil {
+				return nil, fmt.Errorf("error parsing file %s: %w", *file.Filename, err)
+			}
+
+			for i := range depBatch {
+				dep := depBatch[i]
+				allDiffs = append(allDiffs, &pb.PrDependencies_ContextualDependency{
+					Dep: dep,
+					File: &pb.FilePatch{
+						Name:     file.GetFilename(),
+						PatchUrl: file.GetRawURL(),
+					},
+				})
+			}
 		}
 
-		for i := range depBatch {
-			dep := depBatch[i]
-			allDiffs = append(allDiffs, &pb.PrDependencies_ContextualDependency{
-				Dep: dep,
-				File: &pb.FilePatch{
-					Name:     file.GetFilename(),
-					PatchUrl: file.GetRawURL(),
-				},
-			})
+		if resp.NextPage == 0 {
+			break
 		}
+
+		page = resp.NextPage
 	}
 
 	return &engif.Result{

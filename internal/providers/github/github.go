@@ -80,7 +80,7 @@ type RestAPI interface {
 	DismissReview(context.Context, string, string, int, int64,
 		*github.PullRequestReviewDismissalRequest) (*github.PullRequestReview, error)
 	SetCommitStatus(context.Context, string, string, string, *github.RepoStatus) (*github.RepoStatus, error)
-	ListFiles(context.Context, string, string, int, int, int) ([]*github.CommitFile, error)
+	ListFiles(context.Context, string, string, int, int, int) ([]*github.CommitFile, *github.Response, error)
 	GetToken() string
 	GetOwner() string
 

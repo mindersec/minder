@@ -838,7 +838,7 @@ func updatePullRequestInfoFromProvider(
 	}
 	prEvalInfo.CommitSha = *prReply.Head.SHA
 
-	prFiles, err := cli.ListFiles(ctx, dbrepo.RepoOwner, dbrepo.RepoName, int(prEvalInfo.Number), 1, 100)
+	prFiles, _, err := cli.ListFiles(ctx, dbrepo.RepoOwner, dbrepo.RepoName, int(prEvalInfo.Number), 1, 100)
 	if err != nil {
 		return fmt.Errorf("error getting pull request: %w", err)
 	}
