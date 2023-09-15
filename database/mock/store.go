@@ -1232,6 +1232,21 @@ func (mr *MockStoreMockRecorder) GetUserRoles(arg0, arg1 interface{}) *gomock.Ca
 	return mr.mock.ctrl.RecordCallWithMethodType(mr.mock, "GetUserRoles", reflect.TypeOf((*MockStore)(nil).GetUserRoles), arg0, arg1)
 }
 
+// GlobalListProviders mocks base method.
+func (m *MockStore) GlobalListProviders(arg0 context.Context) ([]db.Provider, error) {
+	m.ctrl.T.Helper()
+	ret := m.ctrl.Call(m, "GlobalListProviders", arg0)
+	ret0, _ := ret[0].([]db.Provider)
+	ret1, _ := ret[1].(error)
+	return ret0, ret1
+}
+
+// GlobalListProviders indicates an expected call of GlobalListProviders.
+func (mr *MockStoreMockRecorder) GlobalListProviders(arg0 interface{}) *gomock.Call {
+	mr.mock.ctrl.T.Helper()
+	return mr.mock.ctrl.RecordCallWithMethodType(mr.mock, "GlobalListProviders", reflect.TypeOf((*MockStore)(nil).GlobalListProviders), arg0)
+}
+
 // ListAllRepositories mocks base method.
 func (m *MockStore) ListAllRepositories(arg0 context.Context, arg1 uuid.UUID) ([]db.Repository, error) {
 	m.ctrl.T.Helper()

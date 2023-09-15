@@ -297,38 +297,40 @@ func (s *Server) GetProviderAccessToken(ctx context.Context, providerID uuid.UUI
 }
 
 // RevokeOauthTokens revokes the all oauth tokens for a provider
-func (s *Server) RevokeOauthTokens(ctx context.Context, in *pb.RevokeOauthTokensRequest) (*pb.RevokeOauthTokensResponse, error) {
-	provider, err := s.store.GetProviderByName(ctx, db.GetProviderByNameParams{
-		Name:    in.Provider,
-		GroupID: in.GroupId,
-	})
+// This is in case of a security breach, where we need to revoke all tokens
+func (s *Server) RevokeOauthTokens(ctx context.Context, _ *pb.RevokeOauthTokensRequest) (*pb.RevokeOauthTokensResponse, error) {
+	providers, err := s.store.GlobalListProviders(ctx)
 	if err != nil {
-		return nil, status.Errorf(codes.InvalidArgument, "provider not supported: %v", in.Provider)
-	}
-
-	// need to read all tokens from the provider and revoke them
-	tokens, err := s.store.GetAccessTokenByProvider(ctx, provider.ID)
-	if err != nil {
-		return nil, status.Errorf(codes.Internal, "error getting access tokens: %v", err)
+		return nil, status.Errorf(codes.InvalidArgument, "unable to list providers: %v", err)
 	}
 
 	revoked_tokens := 0
-	for _, token := range tokens {
-		objToken, err := s.cryptoEngine.DecryptOAuthToken(token.EncryptedToken)
+
+	for idx := range providers {
+		provider := providers[idx]
+		// need to read all tokens from the provider and revoke them
+		tokens, err := s.store.GetAccessTokenByProvider(ctx, provider.ID)
 		if err != nil {
-			// just log and continue
-			log.Error().Msgf("error decrypting token: %v", err)
-		} else {
-			// remove token from db
-			_ = s.store.DeleteAccessToken(ctx, db.DeleteAccessTokenParams{ProviderID: provider.ID, GroupID: token.GroupID})
+			return nil, status.Errorf(codes.Internal, "error getting access tokens: %v", err)
+		}
 
-			// remove from provider
-			err := auth.DeleteAccessToken(ctx, provider.Name, objToken.AccessToken)
-
+		for _, token := range tokens {
+			objToken, err := s.cryptoEngine.DecryptOAuthToken(token.EncryptedToken)
 			if err != nil {
-				log.Error().Msgf("Error deleting access token: %v", err)
+				// just log and continue
+				log.Error().Msgf("error decrypting token: %v", err)
+			} else {
+				// remove token from db
+				_ = s.store.DeleteAccessToken(ctx, db.DeleteAccessTokenParams{ProviderID: provider.ID, GroupID: token.GroupID})
+
+				// remove from provider
+				err := auth.DeleteAccessToken(ctx, provider.Name, objToken.AccessToken)
+
+				if err != nil {
+					log.Error().Msgf("Error deleting access token: %v", err)
+				}
+				revoked_tokens++
 			}
-			revoked_tokens++
 		}
 	}
 	return &pb.RevokeOauthTokensResponse{RevokedTokens: int32(revoked_tokens)}, nil

@@ -219,10 +219,11 @@ service OAuthService {
         };
     }
 
-    // revoke all tokens for all users
+    // RevokeOauthTokens is used to revoke all tokens
+    // this a nuclear option and should only be used in emergencies
     rpc RevokeOauthTokens (RevokeOauthTokensRequest) returns (RevokeOauthTokensResponse) {
         option (google.api.http) = {
-            post: "/api/v1/auth/{provider}/revoke"
+            post: "/api/v1/auth/revoke-all"
             body: "*"
         };
 
@@ -956,8 +957,6 @@ message RevokeUserTokenResponse {
 }
 
 message RevokeOauthTokensRequest {
-    string provider = 1;
-    int32 group_id = 2;
 }
 
 message RevokeOauthTokensResponse {

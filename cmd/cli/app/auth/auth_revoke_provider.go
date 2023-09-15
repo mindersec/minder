@@ -61,7 +61,7 @@ var Auth_revokeproviderCmd = &cobra.Command{
 		defer cancel()
 		client := pb.NewOAuthServiceClient(conn)
 		if all {
-			result, err := client.RevokeOauthTokens(ctx, &pb.RevokeOauthTokensRequest{Provider: provider})
+			result, err := client.RevokeOauthTokens(ctx, &pb.RevokeOauthTokensRequest{})
 			util.ExitNicelyOnError(err, "Error revoking tokens")
 			cmd.Println("Revoked a total of ", result.RevokedTokens, " tokens")
 		} else {
@@ -79,5 +79,6 @@ var Auth_revokeproviderCmd = &cobra.Command{
 func init() {
 	AuthCmd.AddCommand(Auth_revokeproviderCmd)
 	Auth_revokeproviderCmd.Flags().StringP("provider", "n", "", "Name for the provider to revoke tokens for")
+	Auth_revokeproviderCmd.Flags().Int32P("group-id", "g", 0, "ID of the group for repo registration")
 	Auth_revokeproviderCmd.Flags().BoolP("all", "a", false, "Revoke all tokens")
 }

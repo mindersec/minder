@@ -189,22 +189,18 @@ func TestRevokeOauthTokens_gRPC(t *testing.T) {
 	providerUUID := uuid.New()
 
 	mockStore.EXPECT().
-		GetProviderByName(gomock.Any(), db.GetProviderByNameParams{
-			Name:    ghclient.Github,
-			GroupID: 1,
-		}).
-		Return(db.Provider{
-			ID:   providerUUID,
-			Name: ghclient.Github,
+		GlobalListProviders(gomock.Any()).
+		Return([]db.Provider{
+			{
+				ID:   providerUUID,
+				Name: ghclient.Github,
+			},
 		}, nil)
 	mockStore.EXPECT().GetAccessTokenByProvider(gomock.Any(), gomock.Any())
 
 	server := newDefaultServer(t, mockStore)
 
-	res, err := server.RevokeOauthTokens(ctx, &pb.RevokeOauthTokensRequest{
-		Provider: ghclient.Github,
-		GroupId:  1,
-	})
+	res, err := server.RevokeOauthTokens(ctx, &pb.RevokeOauthTokensRequest{})
 
 	assert.NoError(t, err)
 	assert.NotNil(t, res)

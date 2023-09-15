@@ -113,6 +113,42 @@ func (q *Queries) GetProviderByName(ctx context.Context, arg GetProviderByNamePa
 	return i, err
 }
 
+const globalListProviders = `-- name: GlobalListProviders :many
+SELECT id, name, version, group_id, implements, definition, created_at, updated_at FROM providers
+`
+
+func (q *Queries) GlobalListProviders(ctx context.Context) ([]Provider, error) {
+	rows, err := q.db.QueryContext(ctx, globalListProviders)
+	if err != nil {
+		return nil, err
+	}
+	defer rows.Close()
+	items := []Provider{}
+	for rows.Next() {
+		var i Provider
+		if err := rows.Scan(
+			&i.ID,
+			&i.Name,
+			&i.Version,
+			&i.GroupID,
+			pq.Array(&i.Implements),
+			&i.Definition,
+			&i.CreatedAt,
+			&i.UpdatedAt,
+		); err != nil {
+			return nil, err
+		}
+		items = append(items, i)
+	}
+	if err := rows.Close(); err != nil {
+		return nil, err
+	}
+	if err := rows.Err(); err != nil {
+		return nil, err
+	}
+	return items, nil
+}
+
 const listProvidersByGroupID = `-- name: ListProvidersByGroupID :many
 SELECT id, name, version, group_id, implements, definition, created_at, updated_at FROM providers WHERE group_id = $1
 `

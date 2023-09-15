@@ -14,5 +14,8 @@ SELECT * FROM providers WHERE id = $1 AND group_id = $2;
 -- name: ListProvidersByGroupID :many
 SELECT * FROM providers WHERE group_id = $1;
 
+-- name: GlobalListProviders :many
+SELECT * FROM providers;
+
 -- name: DeleteProvider :exec
 DELETE FROM providers WHERE id = $1 AND group_id = $2;
