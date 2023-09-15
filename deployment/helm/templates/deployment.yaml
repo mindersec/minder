@@ -63,7 +63,7 @@ spec:
             value: "/secrets/auth/refresh_token_rsa"
           - name: "AUTH_REFRESH_TOKEN_PUBLIC_KEY"
             value: "/secrets/auth/refresh_token_rsa.pub"
-          - name: "AUTH_TOKEN_KEY_PASSPHRASE"
+          - name: "AUTH_TOKEN_KEY"
             value: "/secrets/auth/token_key_passphrase"
           
           # ko will always specify a digest, so we don't need to worry about
