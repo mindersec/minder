@@ -140,11 +140,6 @@ message GetArtifactByIdResponse {
     repeated ArtifactVersion versions = 2;
 }
 
-message FilePatch {
-    string name = 1;      // file changed, e.g. package-lock.json
-    string patch_url = 2;  // points to the the raw patchfile
-}
-
 message PullRequest {
     string url = 1;         // The full URL to the PR
     string commit_sha = 2;   // Commit SHA of the PR HEAD. Will be useful to submit a review
@@ -153,9 +148,7 @@ message PullRequest {
     string repo_owner = 4;   // The owner of the repo, will be used to submit a review
     string repo_name = 5;    // The name of the repo, will be used to submit a review
 
-    repeated FilePatch patches = 6; // The list of files changed in the PR. Does not include file contents
-
-    int64 author_id = 7;    // The author of the PR, will be used to check if we can request changes
+    int64 author_id = 6;    // The author of the PR, will be used to check if we can request changes
 }
 
 enum DepEcosystem {
@@ -172,6 +165,11 @@ message Dependency {
 
 message PrDependencies {
     message ContextualDependency {
+        message FilePatch {
+            string name = 1;      // file changed, e.g. package-lock.json
+            string patch_url = 2;  // points to the the raw patchfile
+        }
+
         Dependency dep = 1;
         FilePatch file = 2;
     }

@@ -93,7 +93,7 @@ func (di *Diff) Ingest(
 				dep := depBatch[i]
 				allDiffs = append(allDiffs, &pb.PrDependencies_ContextualDependency{
 					Dep: dep,
-					File: &pb.FilePatch{
+					File: &pb.PrDependencies_ContextualDependency_FilePatch{
 						Name:     file.GetFilename(),
 						PatchUrl: file.GetRawURL(),
 					},

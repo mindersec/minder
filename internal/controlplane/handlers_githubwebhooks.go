@@ -822,7 +822,6 @@ func getPullRequestInfoFromPayload(
 		Url:      prUrl,
 		Number:   int32(prNumber),
 		AuthorId: int64(prAuthorId),
-		Patches:  nil, // to be filled later with a separate call
 	}, nil
 }
 
@@ -836,21 +835,8 @@ func updatePullRequestInfoFromProvider(
 	if err != nil {
 		return fmt.Errorf("error getting pull request: %w", err)
 	}
+
 	prEvalInfo.CommitSha = *prReply.Head.SHA
-
-	prFiles, _, err := cli.ListFiles(ctx, dbrepo.RepoOwner, dbrepo.RepoName, int(prEvalInfo.Number), 1, 100)
-	if err != nil {
-		return fmt.Errorf("error getting pull request: %w", err)
-	}
-
-	prEvalInfo.Patches = make([]*pb.FilePatch, 0, len(prFiles))
-	for _, f := range prFiles {
-		prEvalInfo.Patches = append(prEvalInfo.Patches, &pb.FilePatch{
-			Name:     f.GetFilename(),
-			PatchUrl: f.GetRawURL(),
-		})
-	}
-
 	prEvalInfo.RepoOwner = dbrepo.RepoOwner
 	prEvalInfo.RepoName = dbrepo.RepoName
 	return nil
