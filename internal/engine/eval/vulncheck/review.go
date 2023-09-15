@@ -134,6 +134,7 @@ type reviewPrHandler struct {
 	pr  *pb.PullRequest
 
 	mediatorReview *github.PullRequestReview
+	failStatus     *string
 
 	comments []*github.DraftReviewComment
 	status   *string
@@ -157,11 +158,28 @@ func newReviewPrHandler(
 		Str("repo-name", pr.RepoName).
 		Logger()
 
+	cliUser, err := cli.GetAuthenticatedUser(ctx)
+	if err != nil {
+		return nil, fmt.Errorf("could not get authenticated user: %w", err)
+	}
+
+	// if the user wants mediator to request changes on a pull request, they need to
+	// be different identities
+	var failStatus *string
+	if pr.AuthorId == cliUser.GetID() {
+		failStatus = github.String("COMMENT")
+		logger.Debug().Msg("author is the same as the authenticated user, can only comment")
+	} else {
+		failStatus = github.String("REQUEST_CHANGES")
+		logger.Debug().Msg("author is different than the authenticated user, can request changes")
+	}
+
 	return &reviewPrHandler{
-		cli:      cli,
-		pr:       pr,
-		comments: []*github.DraftReviewComment{},
-		logger:   logger,
+		cli:        cli,
+		pr:         pr,
+		comments:   []*github.DraftReviewComment{},
+		logger:     logger,
+		failStatus: failStatus,
 	}, nil
 }
 
@@ -219,7 +237,7 @@ func (ra *reviewPrHandler) submit(ctx context.Context) error {
 func (ra *reviewPrHandler) setStatus() {
 	if len(ra.comments) > 0 {
 		// if this pass produced comments, request changes
-		ra.status = github.String("REQUEST_CHANGES")
+		ra.status = ra.failStatus
 		ra.text = github.String(reviewBodyRequestChangesCommentText)
 	} else {
 		// if this pass produced no comments, resolve the mediator review

@@ -802,10 +802,16 @@ func getPullRequestInfoFromPayload(
 		return nil, fmt.Errorf("error getting pull request number from payload: %w", err)
 	}
 
+	prAuthorId, err := util.JQReadFrom[float64](ctx, ".pull_request.user.id", payload)
+	if err != nil {
+		return nil, fmt.Errorf("error getting pull request author ID from payload: %w", err)
+	}
+
 	return &pb.PullRequest{
-		Url:     prUrl,
-		Number:  int32(prNumber),
-		Patches: nil, // to be filled later with a separate call
+		Url:      prUrl,
+		Number:   int32(prNumber),
+		AuthorId: int64(prAuthorId),
+		Patches:  nil, // to be filled later with a separate call
 	}, nil
 }
 

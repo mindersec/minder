@@ -2401,6 +2401,7 @@ This is used to define the types of clients that are supported by the provider.
 | repo_owner | [string](#string) |  | The owner of the repo, will be used to submit a review |
 | repo_name | [string](#string) |  | The name of the repo, will be used to submit a review |
 | patches | [FilePatch](#mediator-v1-FilePatch) | repeated | The list of files changed in the PR. Does not include file contents |
+| author_id | [int64](#int64) |  | The author of the PR, will be used to check if we can request changes |
 
 
 
