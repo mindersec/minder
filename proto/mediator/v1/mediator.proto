@@ -1988,6 +1988,15 @@ message RuleType {
             optional Vulncheck vulncheck = 4;
         }
         Eval eval = 5;
+
+        // reconcile_signal is the signal that triggers a reconciliation of this rule type.
+        // on empty, it reconciles on every event. Note that the this signal is
+        // provider-dependent and will vary from provider to provider. The signaling
+        // implementation **must** set the `type` field to the name of the signal.
+        // e.g. for GitHub, it's the webhook event type.
+        // Note that this is a repeated field and can be used to reconcile on multiple
+        // signals.
+        repeated string reconcile_signals = 6;
     }
 
     // def is the definition of the rule type.

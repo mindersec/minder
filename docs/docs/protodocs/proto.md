@@ -2775,6 +2775,7 @@ Definition defines the rule type. It encompases the schema and the data evaluati
 | param_schema | [google.protobuf.Struct](#google-protobuf-Struct) | optional | param_schema is the schema of the parameters that are passed to the rule. This is expressed in JSON Schema. |
 | ingest | [RuleType.Definition.Ingest](#mediator-v1-RuleType-Definition-Ingest) |  |  |
 | eval | [RuleType.Definition.Eval](#mediator-v1-RuleType-Definition-Eval) |  |  |
+| reconcile_signals | [string](#string) | repeated | reconcile_signal is the signal that triggers a reconciliation of this rule type. on empty, it reconciles on every event. Note that the this signal is provider-dependent and will vary from provider to provider. The signaling implementation **must** set the `type` field to the name of the signal. e.g. for GitHub, it&#39;s the webhook event type. Note that this is a repeated field and can be used to reconcile on multiple signals. |
 
 
 

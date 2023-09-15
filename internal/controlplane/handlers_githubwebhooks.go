@@ -141,6 +141,7 @@ func (s *Server) HandleGitHubWebHook() http.HandlerFunc {
 		m.Metadata.Set("source", "https://api.github.com/") // TODO: handle other sources
 
 		m.Metadata.Set("type", github.WebHookType(r))
+		m.Metadata.Set(engine.SignalMetadataKey, github.WebHookType(r))
 		// m.Metadata.Set("subject", ghEvent.GetRepo().GetFullName())
 		// m.Metadata.Set("time", ghEvent.GetCreatedAt().String())
 		log.Printf("publishing of type: %s", m.Metadata["type"])

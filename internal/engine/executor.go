@@ -124,6 +124,11 @@ func (e *Executor) evalEntityEvent(
 			if err != nil {
 				return err
 			}
+
+			if !rte.ShouldTriggerRule(inf.Signal) {
+				return nil
+			}
+
 			result := rte.Eval(ctx, inf.Entity, rule.Def.AsMap(), rule.Params.AsMap())
 
 			logEval(ctx, pol, rule, inf, result)

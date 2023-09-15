@@ -53,6 +53,7 @@ type EntityInfoWrapper struct {
 	GroupID       int32
 	Entity        protoreflect.ProtoMessage
 	Type          pb.Entity
+	Signal        string
 	OwnershipData map[string]int32
 }
 
@@ -146,6 +147,13 @@ func (eiw *EntityInfoWrapper) WithPullRequestID(id int32) *EntityInfoWrapper {
 	return eiw
 }
 
+// WithSignal sets the signal
+func (eiw *EntityInfoWrapper) WithSignal(signal string) *EntityInfoWrapper {
+	eiw.Signal = signal
+
+	return eiw
+}
+
 // AsRepository sets the entity type to a repository
 func (eiw *EntityInfoWrapper) AsRepository() *EntityInfoWrapper {
 	eiw.Type = pb.Entity_ENTITY_REPOSITORIES
@@ -210,6 +218,11 @@ func (eiw *EntityInfoWrapper) ToMessage(msg *message.Message) error {
 
 	if eiw.Provider == "" {
 		return fmt.Errorf("provider is required")
+	}
+
+	// Signal may be set elsewhere, so we don't check it here.
+	if eiw.Signal != "" {
+		msg.Metadata.Set(SignalMetadataKey, eiw.Signal)
 	}
 
 	msg.Metadata.Set(ProviderEventKey, eiw.Provider)

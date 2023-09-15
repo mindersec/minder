@@ -4438,6 +4438,13 @@
         },
         "eval": {
           "$ref": "#/definitions/DefinitionEval"
+        },
+        "reconcileSignals": {
+          "type": "array",
+          "items": {
+            "type": "string"
+          },
+          "description": "reconcile_signal is the signal that triggers a reconciliation of this rule type.\non empty, it reconciles on every event. Note that the this signal is\nprovider-dependent and will vary from provider to provider. The signaling\nimplementation **must** set the `type` field to the name of the signal.\ne.g. for GitHub, it's the webhook event type.\nNote that this is a repeated field and can be used to reconcile on multiple\nsignals."
         }
       },
       "description": "Definition defines the rule type. It encompases the schema and the data evaluation."

@@ -171,6 +171,8 @@ type RuleTypeEngine struct {
 	rt *pb.RuleType
 	// TODO(JAORMX): We need to have an abstract client interface
 	cli ghclient.RestAPI
+
+	reconcileSignals []string
 }
 
 // NewRuleTypeEngine creates a new rule type engine
@@ -190,16 +192,23 @@ func NewRuleTypeEngine(rt *pb.RuleType, cli ghclient.RestAPI, accessToken string
 		return nil, fmt.Errorf("cannot create rule evaluator: %w", err)
 	}
 
+	signals := defaultSignals
+
+	if rt.Def.ReconcileSignals != nil {
+		signals = append(signals, rt.Def.ReconcileSignals...)
+	}
+
 	rte := &RuleTypeEngine{
 		Meta: RuleMeta{
 			Name:     rt.Name,
 			Provider: rt.Context.Provider,
 		},
-		rval:  rval,
-		rdi:   rdi,
-		reval: reval,
-		rt:    rt,
-		cli:   cli,
+		rval:             rval,
+		rdi:              rdi,
+		reval:            reval,
+		rt:               rt,
+		cli:              cli,
+		reconcileSignals: signals,
 	}
 
 	// Set organization if it exists
