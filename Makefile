@@ -93,6 +93,9 @@ bootstrap: ## install build deps
 		github.com/grpc-ecosystem/grpc-gateway/v2/protoc-gen-openapiv2 \
 			google.golang.org/protobuf/cmd/protoc-gen-go google.golang.org/grpc/cmd/protoc-gen-go-grpc \
 			github.com/kyleconroy/sqlc
+	# Create a config.yaml if it doesn't exist
+	# TODO: remove this when all config is handled in internal/config
+	cp -n config/config.yaml.example ./config.yaml || echo "config.yaml already exists, not overwriting"
 	# Create keys:
 	mkdir -p .ssh
 	# No passphrase (-N), don't overwrite existing keys ("n" to prompt)
