@@ -18,8 +18,9 @@ package diff
 import (
 	"context"
 	"fmt"
-	"log"
+	"path/filepath"
 
+	"github.com/rs/zerolog"
 	"google.golang.org/protobuf/reflect/protoreflect"
 
 	engif "github.com/stacklok/mediator/internal/engine/interfaces"
@@ -31,6 +32,7 @@ const (
 	// DiffRuleDataIngestType is the type of the diff rule data ingest engine
 	DiffRuleDataIngestType = "diff"
 	prFilesPerPage         = 30
+	wildcard               = "*"
 )
 
 // Diff is the diff rule data ingest engine
@@ -47,6 +49,7 @@ func NewDiffIngester(
 	if cfg == nil {
 		cfg = &pb.DiffType{}
 	}
+
 	return &Diff{
 		cfg: cfg,
 		cli: cli,
@@ -64,6 +67,12 @@ func (di *Diff) Ingest(
 		return nil, fmt.Errorf("entity is not a pull request")
 	}
 
+	logger := zerolog.Ctx(ctx).With().
+		Int32("pull-number", pr.Number).
+		Str("repo-owner", pr.RepoOwner).
+		Str("repo-name", pr.RepoName).
+		Logger()
+
 	allDiffs := make([]*pb.PrDependencies_ContextualDependency, 0)
 
 	page := 0
@@ -72,12 +81,20 @@ func (di *Diff) Ingest(
 		if err != nil {
 			return nil, fmt.Errorf("error getting pull request files: %w", err)
 		}
+
 		for _, file := range prFiles {
 			eco := di.getEcosystemForFile(*file.Filename)
 			if eco == DepEcosystemNone {
-				log.Printf("no ecosystem found for file %s", *file.Filename)
+				logger.Debug().
+					Str("filename", *file.Filename).
+					Msg("No ecosystem found, skipping")
 				continue
 			}
+
+			logger.Debug().
+				Str("filename", *file.Filename).
+				Str("package-ecosystem", string(eco)).
+				Msg("No ecosystem found, skipping")
 
 			parser := newEcosystemParser(eco)
 			if parser == nil {
@@ -117,8 +134,10 @@ func (di *Diff) Ingest(
 }
 
 func (di *Diff) getEcosystemForFile(filename string) DependencyEcosystem {
+	lastComponent := filepath.Base(filename)
+
 	for _, ecoMapping := range di.cfg.Ecosystems {
-		if filename == ecoMapping.Depfile {
+		if match, _ := filepath.Match(ecoMapping.Depfile, lastComponent); match {
 			return DependencyEcosystem(ecoMapping.Name)
 		}
 	}
