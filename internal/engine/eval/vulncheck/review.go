@@ -60,7 +60,7 @@ type reviewTemplateData struct {
 	ReviewText   string
 }
 
-func createReviewBody(magicComment, reviewText string) (string, error) {
+func createReviewBody(reviewText string) (string, error) {
 	// Create and parse the template
 	tmpl, err := template.New(reviewTemplateName).Parse(reviewTmplStr)
 	if err != nil {
@@ -69,7 +69,7 @@ func createReviewBody(magicComment, reviewText string) (string, error) {
 
 	// Define the data for the template
 	data := reviewTemplateData{
-		MagicComment: magicComment,
+		MagicComment: reviewBodyMagicComment,
 		ReviewText:   reviewText,
 	}
 
@@ -109,7 +109,7 @@ func locateDepInPr(
 	}
 	// TODO:(jakub) I couldn't make this work with the GH client
 	netClient := &http.Client{}
-	resp, _ := netClient.Do(req)
+	resp, err := netClient.Do(req)
 	if err != nil {
 		return nil, fmt.Errorf("could not send request: %w", err)
 	}
@@ -131,6 +131,10 @@ func locateDepInPr(
 	}
 
 	return &loc, nil
+}
+
+func reviewBodyWithSuggestion(comment string) string {
+	return fmt.Sprintf("```suggestion\n%s\n```\n", comment)
 }
 
 type reviewPrHandler struct {
@@ -214,7 +218,7 @@ func (ra *reviewPrHandler) trackVulnerableDep(
 	}
 
 	comment := patch.IndentedString(location.leadingWhitespace)
-	body := fmt.Sprintf("```suggestion\n"+"%s\n"+"```\n", comment)
+	body := reviewBodyWithSuggestion(comment)
 
 	reviewComment := &github.DraftReviewComment{
 		Path:      github.String(dep.File.Name),
@@ -292,7 +296,7 @@ func (ra *reviewPrHandler) findPreviousReview(ctx context.Context) error {
 }
 
 func (ra *reviewPrHandler) submitReview(ctx context.Context) error {
-	body, err := createReviewBody(reviewBodyMagicComment, *ra.text)
+	body, err := createReviewBody(*ra.text)
 	if err != nil {
 		return fmt.Errorf("could not create review body: %w", err)
 	}
