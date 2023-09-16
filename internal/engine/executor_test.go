@@ -101,11 +101,7 @@ func TestExecutor_handleEntityEvent(t *testing.T) {
 
 	// get access token
 	mockStore.EXPECT().
-		GetAccessTokenByGroupID(gomock.Any(),
-			db.GetAccessTokenByGroupIDParams{
-				ProviderID: providerID,
-				GroupID:    groupID,
-			}).
+		GetAccessTokenByProviderID(gomock.Any(), providerID).
 		Return(db.ProviderAccessToken{
 			EncryptedToken: authtoken,
 		}, nil)
@@ -122,14 +118,23 @@ func TestExecutor_handleEntityEvent(t *testing.T) {
 	require.NoError(t, err, "expected no error")
 
 	mockStore.EXPECT().
-		ListPoliciesByGroupID(gomock.Any(), groupID).
-		Return([]db.ListPoliciesByGroupIDRow{
+		GetProviderByName(gomock.Any(), db.GetProviderByNameParams{
+			Name:    providerName,
+			GroupID: groupID,
+		}).
+		Return(db.Provider{
+			ID:      providerID,
+			GroupID: groupID,
+		}, nil)
+
+	mockStore.EXPECT().
+		ListPoliciesByProvider(gomock.Any(), groupID).
+		Return([]db.ListPoliciesByProviderRow{
 			{
 				ID:              1,
 				Name:            "test-policy",
 				Entity:          db.EntitiesRepository,
 				Provider:        providerID,
-				GroupID:         groupID,
 				CreatedAt:       time.Now(),
 				UpdatedAt:       time.Now(),
 				ContextualRules: json.RawMessage(marshalledCRS),

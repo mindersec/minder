@@ -22,7 +22,7 @@ RETURNING *;
 -- name: GetArtifactByID :one
 SELECT artifacts.id, artifacts.repository_id, artifacts.artifact_name, artifacts.artifact_type,
 artifacts.artifact_visibility, artifacts.created_at,
-repositories.provider, repositories.group_id, repositories.repo_owner, repositories.repo_name
+repositories.provider, repositories.repo_owner, repositories.repo_name
 FROM artifacts INNER JOIN repositories ON repositories.id = artifacts.repository_id
 WHERE artifacts.id = $1;
 

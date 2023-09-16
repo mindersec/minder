@@ -56,8 +56,7 @@ func (s *Server) ListArtifacts(ctx context.Context, in *pb.ListArtifactsRequest)
 	}
 
 	// first read all the repositories for provider and group
-	repositories, err := s.store.ListRegisteredRepositoriesByGroupIDAndProvider(ctx,
-		db.ListRegisteredRepositoriesByGroupIDAndProviderParams{Provider: provider.ID, GroupID: in.GroupId})
+	repositories, err := s.store.ListRegisteredRepositoriesByProvider(ctx, provider.ID)
 	if err != nil {
 		if errors.Is(err, sql.ErrNoRows) {
 			return nil, status.Errorf(codes.NotFound, "repositories not found")
@@ -108,8 +107,13 @@ func (s *Server) GetArtifactById(ctx context.Context, in *pb.GetArtifactByIdRequ
 		return nil, status.Errorf(codes.Unknown, "failed to get artifact: %s", err)
 	}
 
+	prov, err := s.store.GlobalGetProviderByID(ctx, artifact.Provider)
+	if err != nil {
+		return nil, returnProviderError(err)
+	}
+
 	// check if user is authorized
-	if !IsRequestAuthorized(ctx, artifact.GroupID) {
+	if !IsRequestAuthorized(ctx, prov.GroupID) {
 		return nil, status.Errorf(codes.PermissionDenied, "user is not authorized to access this resource")
 	}
 

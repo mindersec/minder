@@ -105,7 +105,6 @@ CREATE TABLE providers (
 CREATE TABLE provider_access_tokens (
     id SERIAL PRIMARY KEY,
     provider_id UUID NOT NULL REFERENCES providers(id) ON DELETE CASCADE,
-    group_id INTEGER NOT NULL REFERENCES groups(id) ON DELETE CASCADE,
     owner_filter TEXT,
     encrypted_token TEXT NOT NULL,
     expiration_time TIMESTAMP NOT NULL,
@@ -129,7 +128,6 @@ CREATE TABLE signing_keys (
 CREATE TABLE repositories (
     id SERIAL PRIMARY KEY,
     provider UUID NOT NULL REFERENCES providers(id) ON DELETE CASCADE,
-    group_id INTEGER NOT NULL REFERENCES groups(id) ON DELETE CASCADE,
     repo_owner TEXT NOT NULL,
     repo_name TEXT NOT NULL,
     repo_id INTEGER NOT NULL,
@@ -176,6 +174,9 @@ CREATE TABLE session_store (
     created_at TIMESTAMP NOT NULL DEFAULT NOW()
 );
 
+-- table for storing rule types
+-- Note we'll leave the group_id in here since we'll de-couple the provider
+-- reference from this table in favor of referencing provider types.
 CREATE TABLE rule_type (
     id SERIAL PRIMARY KEY,
     name TEXT NOT NULL,
@@ -192,7 +193,6 @@ CREATE TABLE policies (
     id SERIAL PRIMARY KEY,
     name TEXT NOT NULL,
     provider UUID NOT NULL REFERENCES providers(id) ON DELETE CASCADE,
-    group_id INTEGER NOT NULL REFERENCES groups(id) ON DELETE CASCADE,
     created_at TIMESTAMP NOT NULL DEFAULT NOW(),
     updated_at TIMESTAMP NOT NULL DEFAULT NOW()
 );
@@ -239,7 +239,7 @@ CREATE TABLE rule_evaluation_status (
 ALTER TABLE projects ADD CONSTRAINT parent_child_not_equal CHECK (id != parent_id);
 
 -- Unique constraint
-ALTER TABLE provider_access_tokens ADD CONSTRAINT unique_group_id UNIQUE (group_id);
+ALTER TABLE provider_access_tokens ADD CONSTRAINT unique_provider_id UNIQUE (provider_id);
 ALTER TABLE repositories ADD CONSTRAINT unique_repo_id UNIQUE (repo_id);
 ALTER TABLE signing_keys ADD CONSTRAINT unique_key_identifier UNIQUE (key_identifier);
 
@@ -250,11 +250,11 @@ CREATE INDEX idx_users_organization_id ON users(organization_id);
 CREATE INDEX idx_groups_organization_id ON groups(organization_id);
 CREATE INDEX idx_roles_group_id ON roles(group_id);
 CREATE UNIQUE INDEX roles_organization_id_name_lower_idx ON roles (organization_id, LOWER(name));
-CREATE INDEX idx_provider_access_tokens_group_id ON provider_access_tokens(group_id);
+CREATE INDEX idx_provider_access_tokens_provider_id ON provider_access_tokens(provider_id);
 CREATE UNIQUE INDEX users_organization_id_email_lower_idx ON users (organization_id, LOWER(email));
 CREATE UNIQUE INDEX users_organization_id_username_lower_idx ON users (organization_id, LOWER(username));
 CREATE UNIQUE INDEX repositories_repo_id_idx ON repositories(repo_id);
-CREATE UNIQUE INDEX policies_group_id_policy_name_idx ON policies(provider, group_id, name);
+CREATE UNIQUE INDEX policies_policy_name_idx ON policies(provider, name);
 CREATE UNIQUE INDEX rule_type_idx ON rule_type(provider, group_id, name);
 CREATE UNIQUE INDEX rule_evaluation_status_results_idx ON rule_evaluation_status(policy_id, repository_id, COALESCE(artifact_id, 0), entity, rule_type_id);
 CREATE UNIQUE INDEX artifact_name_lower_idx ON artifacts (repository_id, LOWER(artifact_name));

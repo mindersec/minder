@@ -233,7 +233,7 @@ func RevokeOauthGroupToken_gRPC(t *testing.T) {
 			ID:   providerUUID,
 			Name: ghclient.Github,
 		}, nil)
-	mockStore.EXPECT().GetAccessTokenByGroupID(gomock.Any(), gomock.Any())
+	mockStore.EXPECT().GetAccessTokenByProviderID(gomock.Any(), gomock.Any())
 
 	server := newDefaultServer(t, mockStore)
 

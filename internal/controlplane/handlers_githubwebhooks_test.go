@@ -276,7 +276,6 @@ func (s *UnitTestSuite) TestHandleWebHookRepository() {
 		GetRepositoryByRepoID(gomock.Any(), gomock.Any()).
 		Return(db.Repository{
 			ID:       1,
-			GroupID:  1,
 			RepoID:   12345,
 			Provider: providerUUID,
 		}, nil)

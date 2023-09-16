@@ -199,7 +199,6 @@ type Policy struct {
 	ID        int32     `json:"id"`
 	Name      string    `json:"name"`
 	Provider  uuid.UUID `json:"provider"`
-	GroupID   int32     `json:"group_id"`
 	CreatedAt time.Time `json:"created_at"`
 	UpdatedAt time.Time `json:"updated_at"`
 }
@@ -234,7 +233,6 @@ type Provider struct {
 type ProviderAccessToken struct {
 	ID             int32          `json:"id"`
 	ProviderID     uuid.UUID      `json:"provider_id"`
-	GroupID        int32          `json:"group_id"`
 	OwnerFilter    sql.NullString `json:"owner_filter"`
 	EncryptedToken string         `json:"encrypted_token"`
 	ExpirationTime time.Time      `json:"expiration_time"`
@@ -245,7 +243,6 @@ type ProviderAccessToken struct {
 type Repository struct {
 	ID         int32         `json:"id"`
 	Provider   uuid.UUID     `json:"provider"`
-	GroupID    int32         `json:"group_id"`
 	RepoOwner  string        `json:"repo_owner"`
 	RepoName   string        `json:"repo_name"`
 	RepoID     int32         `json:"repo_id"`

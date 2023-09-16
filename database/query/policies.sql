@@ -1,8 +1,7 @@
 -- name: CreatePolicy :one
 INSERT INTO policies (  
     provider,
-    group_id,
-    name) VALUES ($1, $2, $3) RETURNING *;
+    name) VALUES ($1, $2) RETURNING *;
 
 -- name: CreatePolicyForEntity :one
 INSERT INTO entity_policies (
@@ -10,20 +9,20 @@ INSERT INTO entity_policies (
     policy_id,
     contextual_rules) VALUES ($1, $2, sqlc.arg(contextual_rules)::jsonb) RETURNING *;
 
--- name: GetPolicyByGroupAndID :many
+-- name: GetPolicyByProviderAndID :many
 SELECT * FROM policies JOIN entity_policies ON policies.id = entity_policies.policy_id
-WHERE policies.group_id = $1 AND policies.id = $2;
+WHERE policies.provider = $1 AND policies.id = $2;
 
 -- name: GetPolicyByID :one
 SELECT * FROM policies WHERE id = $1;
 
--- name: GetPolicyByGroupAndName :many
+-- name: GetPolicyByProviderAndName :many
 SELECT * FROM policies JOIN entity_policies ON policies.id = entity_policies.policy_id
-WHERE policies.group_id = $1 AND policies.name = $2;
+WHERE policies.provider = $1 AND policies.name = $2;
 
--- name: ListPoliciesByGroupID :many
+-- name: ListPoliciesByProvider :many
 SELECT * FROM policies JOIN entity_policies ON policies.id = entity_policies.policy_id
-WHERE policies.group_id = $1;
+WHERE policies.provider = $1;
 
 -- name: DeletePolicy :exec
 DELETE FROM policies

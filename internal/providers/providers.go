@@ -35,12 +35,10 @@ import (
 func BuildClient(
 	ctx context.Context,
 	prov uuid.UUID,
-	groupID int32,
 	store db.Store,
 	crypteng *crypto.Engine,
 ) (ghclient.RestAPI, error) {
-	encToken, err := store.GetAccessTokenByGroupID(ctx,
-		db.GetAccessTokenByGroupIDParams{ProviderID: prov, GroupID: groupID})
+	encToken, err := store.GetAccessTokenByProviderID(ctx, prov)
 	if err != nil {
 		return nil, fmt.Errorf("error getting access token: %w", err)
 	}

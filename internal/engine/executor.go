@@ -92,7 +92,7 @@ func (e *Executor) HandleEntityEvent(msg *message.Message) error {
 		return fmt.Errorf("error getting provider: %w", err)
 	}
 
-	cli, err := providers.BuildClient(ctx, provider.ID, inf.GroupID, e.querier, e.crypteng)
+	cli, err := providers.BuildClient(ctx, provider.ID, e.querier, e.crypteng)
 	if err != nil {
 		return fmt.Errorf("error building client: %w", err)
 	}
@@ -117,8 +117,16 @@ func (e *Executor) evalEntityEvent(
 	ectx *EntityContext,
 	cli ghclient.RestAPI,
 ) error {
+	prov, err := e.querier.GetProviderByName(ctx, db.GetProviderByNameParams{
+		Name:    inf.Provider,
+		GroupID: inf.GroupID,
+	})
+	if err != nil {
+		return fmt.Errorf("error getting provider: %w", err)
+	}
+
 	// Get policies relevant to group
-	dbpols, err := e.querier.ListPoliciesByGroupID(ctx, inf.GroupID)
+	dbpols, err := e.querier.ListPoliciesByProvider(ctx, prov.ID)
 	if err != nil {
 		return fmt.Errorf("error getting policies: %w", err)
 	}
