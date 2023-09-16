@@ -35,6 +35,7 @@ COMPOSE_ARGS?=-d
 KO_DOCKER_REPO?=ko.local
 KO_PUSH_IMAGE?=false
 KO_PLATFORMS=linux/amd64,linux/arm64
+HELM_PACKAGE_VERSION?=0.1.0
 
 default: help
 
@@ -83,7 +84,7 @@ helm:  ## build the helm chart to a local archive, using ko for the image build
 	cd deployment/helm; rm -f templates/combined.yml && \
 	    ko resolve --platform=${KO_PLATFORMS} --base-import-paths --push=${KO_PUSH_IMAGE} -f templates/ > templates/combined.yml && \
 		helm dependency update && \
-		helm package .
+		helm package --version="${HELM_PACKAGE_VERSION}" .
 
 bootstrap: ## install build deps
 	go generate -tags tools tools/tools.go
