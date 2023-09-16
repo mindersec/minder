@@ -30,7 +30,6 @@ import (
 	"github.com/stacklok/mediator/internal/db"
 	"github.com/stacklok/mediator/internal/engine"
 	"github.com/stacklok/mediator/internal/entities"
-	ghclient "github.com/stacklok/mediator/internal/providers/github"
 	"github.com/stacklok/mediator/internal/reconcilers"
 	"github.com/stacklok/mediator/internal/util"
 	pb "github.com/stacklok/mediator/pkg/generated/protobuf/go/mediator/v1"
@@ -42,10 +41,6 @@ import (
 func (s *Server) authAndContextValidation(ctx context.Context, inout *pb.Context) (context.Context, error) {
 	if inout == nil {
 		return ctx, fmt.Errorf("context cannot be nil")
-	}
-
-	if inout.Provider != ghclient.Github {
-		return ctx, fmt.Errorf("provider not supported: %s", inout.Provider)
 	}
 
 	if err := s.ensureDefaultGroupForContext(ctx, inout); err != nil {
