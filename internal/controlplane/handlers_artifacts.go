@@ -57,7 +57,7 @@ func (s *Server) ListArtifacts(ctx context.Context, in *pb.ListArtifactsRequest)
 
 	// first read all the repositories for provider and group
 	repositories, err := s.store.ListRegisteredRepositoriesByGroupIDAndProvider(ctx,
-		db.ListRegisteredRepositoriesByGroupIDAndProviderParams{Provider: provider.ID, GroupID: in.GroupId})
+		db.ListRegisteredRepositoriesByGroupIDAndProviderParams{Provider: provider.Name, GroupID: in.GroupId})
 	if err != nil {
 		if errors.Is(err, sql.ErrNoRows) {
 			return nil, status.Errorf(codes.NotFound, "repositories not found")

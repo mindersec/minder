@@ -159,7 +159,7 @@ func (s *Server) IsProviderCallAuthorized(ctx context.Context, provider db.Provi
 	for _, item := range githubAuthorizations {
 		if item == method {
 			// check the github token
-			encToken, _, err := s.GetProviderAccessToken(ctx, provider.ID, groupId, true)
+			encToken, _, err := s.GetProviderAccessToken(ctx, provider.Name, groupId, true)
 			if err != nil {
 				return false
 			}
@@ -167,7 +167,7 @@ func (s *Server) IsProviderCallAuthorized(ctx context.Context, provider db.Provi
 			// check if token is expired
 			if encToken.Expiry.Unix() < time.Now().Unix() {
 				// remove from the database and deny the request
-				_ = s.store.DeleteAccessToken(ctx, db.DeleteAccessTokenParams{ProviderID: provider.ID, GroupID: groupId})
+				_ = s.store.DeleteAccessToken(ctx, db.DeleteAccessTokenParams{Provider: provider.Name, GroupID: groupId})
 
 				// remove from github
 				err := auth.DeleteAccessToken(ctx, provider.Name, encToken.AccessToken)

@@ -8,8 +8,6 @@ package db
 import (
 	"context"
 	"encoding/json"
-
-	"github.com/google/uuid"
 )
 
 const createRuleType = `-- name: CreateRuleType :one
@@ -24,7 +22,7 @@ INSERT INTO rule_type (
 
 type CreateRuleTypeParams struct {
 	Name        string          `json:"name"`
-	Provider    uuid.UUID       `json:"provider"`
+	Provider    string          `json:"provider"`
 	GroupID     int32           `json:"group_id"`
 	Description string          `json:"description"`
 	Guidance    string          `json:"guidance"`
@@ -90,9 +88,9 @@ SELECT id, name, provider, group_id, description, guidance, definition, created_
 `
 
 type GetRuleTypeByNameParams struct {
-	Provider uuid.UUID `json:"provider"`
-	GroupID  int32     `json:"group_id"`
-	Name     string    `json:"name"`
+	Provider string `json:"provider"`
+	GroupID  int32  `json:"group_id"`
+	Name     string `json:"name"`
 }
 
 func (q *Queries) GetRuleTypeByName(ctx context.Context, arg GetRuleTypeByNameParams) (RuleType, error) {
@@ -117,8 +115,8 @@ SELECT id, name, provider, group_id, description, guidance, definition, created_
 `
 
 type ListRuleTypesByProviderAndGroupParams struct {
-	Provider uuid.UUID `json:"provider"`
-	GroupID  int32     `json:"group_id"`
+	Provider string `json:"provider"`
+	GroupID  int32  `json:"group_id"`
 }
 
 func (q *Queries) ListRuleTypesByProviderAndGroup(ctx context.Context, arg ListRuleTypesByProviderAndGroupParams) ([]RuleType, error) {

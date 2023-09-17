@@ -20,7 +20,6 @@ import (
 	"log"
 
 	"github.com/ThreeDotsLabs/watermill/message"
-	"github.com/google/uuid"
 	"github.com/rs/zerolog"
 
 	"github.com/stacklok/mediator/internal/config"
@@ -92,7 +91,7 @@ func (e *Executor) HandleEntityEvent(msg *message.Message) error {
 		return fmt.Errorf("error getting provider: %w", err)
 	}
 
-	cli, err := providers.BuildClient(ctx, provider.ID, inf.GroupID, e.querier, e.crypteng)
+	cli, err := providers.BuildClient(ctx, provider.Name, inf.GroupID, e.querier, e.crypteng)
 	if err != nil {
 		return fmt.Errorf("error building client: %w", err)
 	}
@@ -133,7 +132,7 @@ func (e *Executor) evalEntityEvent(
 
 		// Let's evaluate all the rules for this policy
 		err = TraverseRules(relevant, func(rule *pb.Policy_Rule) error {
-			rt, rte, err := e.getEvaluator(ctx, *pol.Id, ectx.Provider.ID, cli, cli.GetToken(), ectx, rule)
+			rt, rte, err := e.getEvaluator(ctx, *pol.Id, ectx.Provider.Name, cli, cli.GetToken(), ectx, rule)
 			if err != nil {
 				return err
 			}
@@ -156,7 +155,7 @@ func (e *Executor) evalEntityEvent(
 func (e *Executor) getEvaluator(
 	ctx context.Context,
 	policyID int32,
-	prov uuid.UUID,
+	prov string,
 	cli ghclient.RestAPI,
 	token string,
 	ectx *EntityContext,

@@ -103,8 +103,8 @@ func TestExecutor_handleEntityEvent(t *testing.T) {
 	mockStore.EXPECT().
 		GetAccessTokenByGroupID(gomock.Any(),
 			db.GetAccessTokenByGroupIDParams{
-				ProviderID: providerID,
-				GroupID:    groupID,
+				Provider: providerName,
+				GroupID:  groupID,
 			}).
 		Return(db.ProviderAccessToken{
 			EncryptedToken: authtoken,
@@ -128,7 +128,7 @@ func TestExecutor_handleEntityEvent(t *testing.T) {
 				ID:              1,
 				Name:            "test-policy",
 				Entity:          db.EntitiesRepository,
-				Provider:        providerID,
+				Provider:        providerName,
 				GroupID:         groupID,
 				CreatedAt:       time.Now(),
 				UpdatedAt:       time.Now(),
@@ -161,13 +161,13 @@ default allow = true`,
 
 	mockStore.EXPECT().
 		GetRuleTypeByName(gomock.Any(), db.GetRuleTypeByNameParams{
-			Provider: providerID,
+			Provider: providerName,
 			GroupID:  groupID,
 			Name:     passthroughRuleType,
 		}).Return(db.RuleType{
 		ID:         1,
 		Name:       passthroughRuleType,
-		Provider:   providerID,
+		Provider:   providerName,
 		GroupID:    groupID,
 		Definition: json.RawMessage(marshalledRTD),
 	}, nil)

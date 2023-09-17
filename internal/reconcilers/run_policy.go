@@ -116,7 +116,7 @@ func (s *Reconciler) publishPolicyInitEvents(
 ) error {
 	dbrepos, err := s.store.ListRegisteredRepositoriesByGroupIDAndProvider(ctx,
 		db.ListRegisteredRepositoriesByGroupIDAndProviderParams{
-			Provider: ectx.Provider.ID,
+			Provider: ectx.Provider.Name,
 			GroupID:  ectx.Group.ID,
 		})
 	if err != nil {

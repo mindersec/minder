@@ -23,7 +23,6 @@ import (
 	"fmt"
 	"time"
 
-	"github.com/google/uuid"
 	"github.com/rs/zerolog/log"
 	"github.com/spf13/viper"
 	"go.opentelemetry.io/otel/attribute"
@@ -99,7 +98,7 @@ func (s *Server) GetAuthorizationURL(ctx context.Context,
 
 	// Delete any existing session state for the group
 	err = s.store.DeleteSessionStateByGroupID(ctx, db.DeleteSessionStateByGroupIDParams{
-		Provider: provider.ID,
+		Provider: provider.Name,
 		GrpID:    groupID})
 	if err != nil && !errors.Is(err, sql.ErrNoRows) {
 		return nil, status.Errorf(codes.Unknown, "error deleting session state: %s", err)
@@ -115,7 +114,7 @@ func (s *Server) GetAuthorizationURL(ctx context.Context,
 	// Insert the new session state into the database along with the user's group ID
 	// retrieved from the JWT token
 	_, err = s.store.CreateSessionState(ctx, db.CreateSessionStateParams{
-		Provider:     provider.ID,
+		Provider:     provider.Name,
 		GrpID:        groupID,
 		Port:         port,
 		SessionState: state,
@@ -214,7 +213,7 @@ func (s *Server) ExchangeCodeForTokenCLI(ctx context.Context,
 	encodedToken := base64.StdEncoding.EncodeToString(encryptedToken)
 
 	// delete token if it exists
-	err = s.store.DeleteAccessToken(ctx, db.DeleteAccessTokenParams{ProviderID: provider.ID, GroupID: stateData.GrpID.Int32})
+	err = s.store.DeleteAccessToken(ctx, db.DeleteAccessTokenParams{Provider: provider.Name, GroupID: stateData.GrpID.Int32})
 	if err != nil {
 		return nil, status.Errorf(codes.Unknown, "error deleting access token: %s", err)
 	}
@@ -227,7 +226,7 @@ func (s *Server) ExchangeCodeForTokenCLI(ctx context.Context,
 	}
 	_, err = s.store.CreateAccessToken(ctx, db.CreateAccessTokenParams{
 		GroupID:        stateData.GrpID.Int32,
-		ProviderID:     provider.ID,
+		Provider:       provider.Name,
 		EncryptedToken: encodedToken,
 		ExpirationTime: expiryTime,
 		OwnerFilter:    owner,
@@ -273,7 +272,7 @@ func (s *Server) ExchangeCodeForTokenWEB(ctx context.Context,
 }
 
 // GetProviderAccessToken returns the access token for providers
-func (s *Server) GetProviderAccessToken(ctx context.Context, providerID uuid.UUID,
+func (s *Server) GetProviderAccessToken(ctx context.Context, provider string,
 	groupId int32, checkAuthz bool) (oauth2.Token, string, error) {
 	// check if user is authorized
 	if checkAuthz && !IsRequestAuthorized(ctx, groupId) {
@@ -281,7 +280,7 @@ func (s *Server) GetProviderAccessToken(ctx context.Context, providerID uuid.UUI
 	}
 
 	encToken, err := s.store.GetAccessTokenByGroupID(ctx,
-		db.GetAccessTokenByGroupIDParams{ProviderID: providerID, GroupID: groupId})
+		db.GetAccessTokenByGroupIDParams{Provider: provider, GroupID: groupId})
 	if err != nil {
 		return oauth2.Token{}, "", err
 	}
@@ -309,7 +308,7 @@ func (s *Server) RevokeOauthTokens(ctx context.Context, _ *pb.RevokeOauthTokensR
 	for idx := range providers {
 		provider := providers[idx]
 		// need to read all tokens from the provider and revoke them
-		tokens, err := s.store.GetAccessTokenByProvider(ctx, provider.ID)
+		tokens, err := s.store.GetAccessTokenByProvider(ctx, provider.Name)
 		if err != nil {
 			return nil, status.Errorf(codes.Internal, "error getting access tokens: %v", err)
 		}
@@ -321,7 +320,7 @@ func (s *Server) RevokeOauthTokens(ctx context.Context, _ *pb.RevokeOauthTokensR
 				log.Error().Msgf("error decrypting token: %v", err)
 			} else {
 				// remove token from db
-				_ = s.store.DeleteAccessToken(ctx, db.DeleteAccessTokenParams{ProviderID: provider.ID, GroupID: token.GroupID})
+				_ = s.store.DeleteAccessToken(ctx, db.DeleteAccessTokenParams{Provider: provider.Name, GroupID: token.GroupID})
 
 				// remove from provider
 				err := auth.DeleteAccessToken(ctx, provider.Name, objToken.AccessToken)
@@ -360,7 +359,7 @@ func (s *Server) RevokeOauthGroupToken(ctx context.Context,
 
 	// need to read the token for the provider and group
 	token, err := s.store.GetAccessTokenByGroupID(ctx,
-		db.GetAccessTokenByGroupIDParams{ProviderID: provider.ID, GroupID: in.GroupId})
+		db.GetAccessTokenByGroupIDParams{Provider: provider.Name, GroupID: in.GroupId})
 	if err != nil {
 		return nil, status.Errorf(codes.Internal, "error getting access token: %v", err)
 	}
@@ -370,7 +369,7 @@ func (s *Server) RevokeOauthGroupToken(ctx context.Context,
 		return nil, status.Errorf(codes.Internal, "error decrypting token: %v", err)
 	}
 	// remove token from db
-	_ = s.store.DeleteAccessToken(ctx, db.DeleteAccessTokenParams{ProviderID: provider.ID, GroupID: token.GroupID})
+	_ = s.store.DeleteAccessToken(ctx, db.DeleteAccessTokenParams{Provider: provider.Name, GroupID: token.GroupID})
 
 	// remove from provider
 	err = auth.DeleteAccessToken(ctx, provider.Name, objToken.AccessToken)
@@ -440,7 +439,7 @@ func (s *Server) StoreProviderToken(ctx context.Context,
 		owner = sql.NullString{String: *in.Owner, Valid: true}
 	}
 
-	_, err = s.store.CreateAccessToken(ctx, db.CreateAccessTokenParams{GroupID: in.GroupId, ProviderID: provider.ID,
+	_, err = s.store.CreateAccessToken(ctx, db.CreateAccessTokenParams{GroupID: in.GroupId, Provider: provider.Name,
 		EncryptedToken: encodedToken, ExpirationTime: expiryTime, OwnerFilter: owner})
 
 	if err != nil {
@@ -473,7 +472,7 @@ func (s *Server) VerifyProviderTokenFrom(ctx context.Context,
 
 	// check if a token has been created since timestamp
 	_, err = s.store.GetAccessTokenSinceDate(ctx,
-		db.GetAccessTokenSinceDateParams{ProviderID: provider.ID, GroupID: in.GroupId, CreatedAt: in.Timestamp.AsTime()})
+		db.GetAccessTokenSinceDateParams{Provider: provider.Name, GroupID: in.GroupId, CreatedAt: in.Timestamp.AsTime()})
 	if err != nil {
 		if errors.Is(err, sql.ErrNoRows) {
 			return &pb.VerifyProviderTokenFromResponse{Status: "KO"}, nil

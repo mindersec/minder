@@ -49,7 +49,7 @@ type Querier interface {
 	DeleteSigningKey(ctx context.Context, arg DeleteSigningKeyParams) error
 	DeleteUser(ctx context.Context, id int32) error
 	GetAccessTokenByGroupID(ctx context.Context, arg GetAccessTokenByGroupIDParams) (ProviderAccessToken, error)
-	GetAccessTokenByProvider(ctx context.Context, providerID uuid.UUID) ([]ProviderAccessToken, error)
+	GetAccessTokenByProvider(ctx context.Context, provider string) ([]ProviderAccessToken, error)
 	GetAccessTokenSinceDate(ctx context.Context, arg GetAccessTokenSinceDateParams) (ProviderAccessToken, error)
 	GetArtifactByID(ctx context.Context, id int32) (GetArtifactByIDRow, error)
 	GetArtifactVersionByID(ctx context.Context, id int32) (ArtifactVersion, error)
@@ -90,7 +90,7 @@ type Querier interface {
 	GetUserGroups(ctx context.Context, userID int32) ([]GetUserGroupsRow, error)
 	GetUserRoles(ctx context.Context, userID int32) ([]GetUserRolesRow, error)
 	GlobalListProviders(ctx context.Context) ([]Provider, error)
-	ListAllRepositories(ctx context.Context, provider uuid.UUID) ([]Repository, error)
+	ListAllRepositories(ctx context.Context, provider string) ([]Repository, error)
 	ListArtifactVersionsByArtifactID(ctx context.Context, arg ListArtifactVersionsByArtifactIDParams) ([]ArtifactVersion, error)
 	ListArtifactVersionsByArtifactIDAndTag(ctx context.Context, arg ListArtifactVersionsByArtifactIDAndTagParams) ([]ArtifactVersion, error)
 	ListArtifactsByRepoID(ctx context.Context, repositoryID int32) ([]Artifact, error)

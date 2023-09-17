@@ -20,8 +20,6 @@ import (
 	"context"
 	"fmt"
 
-	"github.com/google/uuid"
-
 	"github.com/stacklok/mediator/internal/crypto"
 	"github.com/stacklok/mediator/internal/db"
 	ghclient "github.com/stacklok/mediator/internal/providers/github"
@@ -34,13 +32,13 @@ import (
 // instead of a concrete github client.
 func BuildClient(
 	ctx context.Context,
-	prov uuid.UUID,
+	prov string,
 	groupID int32,
 	store db.Store,
 	crypteng *crypto.Engine,
 ) (ghclient.RestAPI, error) {
 	encToken, err := store.GetAccessTokenByGroupID(ctx,
-		db.GetAccessTokenByGroupIDParams{ProviderID: prov, GroupID: groupID})
+		db.GetAccessTokenByGroupIDParams{Provider: prov, GroupID: groupID})
 	if err != nil {
 		return nil, fmt.Errorf("error getting access token: %w", err)
 	}

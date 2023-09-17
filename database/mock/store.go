@@ -619,7 +619,7 @@ func (mr *MockStoreMockRecorder) GetAccessTokenByGroupID(arg0, arg1 interface{})
 }
 
 // GetAccessTokenByProvider mocks base method.
-func (m *MockStore) GetAccessTokenByProvider(arg0 context.Context, arg1 uuid.UUID) ([]db.ProviderAccessToken, error) {
+func (m *MockStore) GetAccessTokenByProvider(arg0 context.Context, arg1 string) ([]db.ProviderAccessToken, error) {
 	m.ctrl.T.Helper()
 	ret := m.ctrl.Call(m, "GetAccessTokenByProvider", arg0, arg1)
 	ret0, _ := ret[0].([]db.ProviderAccessToken)
@@ -1248,7 +1248,7 @@ func (mr *MockStoreMockRecorder) GlobalListProviders(arg0 interface{}) *gomock.C
 }
 
 // ListAllRepositories mocks base method.
-func (m *MockStore) ListAllRepositories(arg0 context.Context, arg1 uuid.UUID) ([]db.Repository, error) {
+func (m *MockStore) ListAllRepositories(arg0 context.Context, arg1 string) ([]db.Repository, error) {
 	m.ctrl.T.Helper()
 	ret := m.ctrl.Call(m, "ListAllRepositories", arg0, arg1)
 	ret0, _ := ret[0].([]db.Repository)

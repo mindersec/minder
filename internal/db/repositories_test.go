@@ -28,7 +28,6 @@ import (
 	"testing"
 	"time"
 
-	"github.com/google/uuid"
 	"github.com/stretchr/testify/require"
 
 	"github.com/stacklok/mediator/internal/util"
@@ -48,7 +47,7 @@ func deleteRepositoryByRepoId(params CreateRepositoryParams) error {
 	return testQueries.DeleteRepository(context.Background(), repo.ID)
 }
 
-func createRandomRepository(t *testing.T, group int32, prov uuid.UUID, opts ...RepositoryOption) Repository {
+func createRandomRepository(t *testing.T, group int32, prov string, opts ...RepositoryOption) Repository {
 	t.Helper()
 
 	seed := time.Now().UnixNano()
@@ -100,7 +99,7 @@ func TestRepository(t *testing.T) {
 	org := createRandomOrganization(t)
 	group := createRandomGroup(t, org.ID)
 	prov := createRandomProvider(t, group.ID)
-	createRandomRepository(t, group.ID, prov.ID)
+	createRandomRepository(t, group.ID, prov.Name)
 }
 
 func TestGetRepositoryByID(t *testing.T) {
@@ -109,7 +108,7 @@ func TestGetRepositoryByID(t *testing.T) {
 	org := createRandomOrganization(t)
 	group := createRandomGroup(t, org.ID)
 	prov := createRandomProvider(t, group.ID)
-	repo1 := createRandomRepository(t, group.ID, prov.ID)
+	repo1 := createRandomRepository(t, group.ID, prov.Name)
 
 	repo2, err := testQueries.GetRepositoryByID(context.Background(), repo1.ID)
 	require.NoError(t, err)
@@ -136,7 +135,7 @@ func TestGetRepositoryByRepoName(t *testing.T) {
 	org := createRandomOrganization(t)
 	group := createRandomGroup(t, org.ID)
 	prov := createRandomProvider(t, group.ID)
-	repo1 := createRandomRepository(t, group.ID, prov.ID)
+	repo1 := createRandomRepository(t, group.ID, prov.Name)
 
 	repo2, err := testQueries.GetRepositoryByRepoName(context.Background(), GetRepositoryByRepoNameParams{
 		Provider: repo1.Provider, RepoOwner: repo1.RepoOwner, RepoName: repo1.RepoName})
@@ -164,16 +163,16 @@ func TestListRepositoriesByGroupID(t *testing.T) {
 	org := createRandomOrganization(t)
 	group := createRandomGroup(t, org.ID)
 	prov := createRandomProvider(t, group.ID)
-	createRandomRepository(t, group.ID, prov.ID)
+	createRandomRepository(t, group.ID, prov.Name)
 
 	for i := int32(1001); i < 1020; i++ {
-		createRandomRepository(t, group.ID, prov.ID, func(r *CreateRepositoryParams) {
+		createRandomRepository(t, group.ID, prov.Name, func(r *CreateRepositoryParams) {
 			r.RepoID = int32(i)
 		})
 	}
 
 	arg := ListRepositoriesByGroupIDParams{
-		Provider: prov.ID,
+		Provider: prov.Name,
 		GroupID:  group.ID,
 		Limit:    5,
 		Offset:   5,
@@ -195,7 +194,7 @@ func TestUpdateRepository(t *testing.T) {
 	org := createRandomOrganization(t)
 	group := createRandomGroup(t, org.ID)
 	prov := createRandomProvider(t, group.ID)
-	repo1 := createRandomRepository(t, group.ID, prov.ID)
+	repo1 := createRandomRepository(t, group.ID, prov.Name)
 
 	arg := UpdateRepositoryParams{
 		ID:         repo1.ID,
@@ -236,7 +235,7 @@ func TestUpdateRepositoryByRepoId(t *testing.T) {
 	org := createRandomOrganization(t)
 	group := createRandomGroup(t, org.ID)
 	prov := createRandomProvider(t, group.ID)
-	repo1 := createRandomRepository(t, group.ID, prov.ID)
+	repo1 := createRandomRepository(t, group.ID, prov.Name)
 
 	arg := UpdateRepositoryByIDParams{
 		RepoID:     repo1.RepoID,
@@ -276,7 +275,7 @@ func TestDeleteRepository(t *testing.T) {
 	org := createRandomOrganization(t)
 	group := createRandomGroup(t, org.ID)
 	prov := createRandomProvider(t, group.ID)
-	repo1 := createRandomRepository(t, group.ID, prov.ID)
+	repo1 := createRandomRepository(t, group.ID, prov.Name)
 
 	err := testQueries.DeleteRepository(context.Background(), repo1.ID)
 	require.NoError(t, err)

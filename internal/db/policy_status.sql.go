@@ -9,8 +9,6 @@ import (
 	"context"
 	"database/sql"
 	"time"
-
-	"github.com/google/uuid"
 )
 
 const createRuleEvaluationStatusForRepository = `-- name: CreateRuleEvaluationStatusForRepository :exec
@@ -145,7 +143,7 @@ type ListRuleEvaluationStatusByPolicyIdRow struct {
 	Entity       Entities        `json:"entity"`
 	RepoName     string          `json:"repo_name"`
 	RepoOwner    string          `json:"repo_owner"`
-	Provider     uuid.UUID       `json:"provider"`
+	Provider     string          `json:"provider"`
 	RuleTypeName string          `json:"rule_type_name"`
 	RuleTypeID   int32           `json:"rule_type_id"`
 }

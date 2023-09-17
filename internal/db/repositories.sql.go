@@ -8,8 +8,6 @@ package db
 import (
 	"context"
 	"database/sql"
-
-	"github.com/google/uuid"
 )
 
 const createRepository = `-- name: CreateRepository :one
@@ -28,7 +26,7 @@ INSERT INTO repositories (
 `
 
 type CreateRepositoryParams struct {
-	Provider   uuid.UUID     `json:"provider"`
+	Provider   string        `json:"provider"`
 	GroupID    int32         `json:"group_id"`
 	RepoOwner  string        `json:"repo_owner"`
 	RepoName   string        `json:"repo_name"`
@@ -116,9 +114,9 @@ SELECT id, provider, group_id, repo_owner, repo_name, repo_id, is_private, is_fo
 `
 
 type GetRepositoryByIDAndGroupParams struct {
-	Provider uuid.UUID `json:"provider"`
-	RepoID   int32     `json:"repo_id"`
-	GroupID  int32     `json:"group_id"`
+	Provider string `json:"provider"`
+	RepoID   int32  `json:"repo_id"`
+	GroupID  int32  `json:"group_id"`
 }
 
 func (q *Queries) GetRepositoryByIDAndGroup(ctx context.Context, arg GetRepositoryByIDAndGroupParams) (Repository, error) {
@@ -174,9 +172,9 @@ SELECT id, provider, group_id, repo_owner, repo_name, repo_id, is_private, is_fo
 `
 
 type GetRepositoryByRepoNameParams struct {
-	Provider  uuid.UUID `json:"provider"`
-	RepoOwner string    `json:"repo_owner"`
-	RepoName  string    `json:"repo_name"`
+	Provider  string `json:"provider"`
+	RepoOwner string `json:"repo_owner"`
+	RepoName  string `json:"repo_name"`
 }
 
 func (q *Queries) GetRepositoryByRepoName(ctx context.Context, arg GetRepositoryByRepoNameParams) (Repository, error) {
@@ -206,7 +204,7 @@ SELECT id, provider, group_id, repo_owner, repo_name, repo_id, is_private, is_fo
 ORDER BY id
 `
 
-func (q *Queries) ListAllRepositories(ctx context.Context, provider uuid.UUID) ([]Repository, error) {
+func (q *Queries) ListAllRepositories(ctx context.Context, provider string) ([]Repository, error) {
 	rows, err := q.db.QueryContext(ctx, listAllRepositories, provider)
 	if err != nil {
 		return nil, err
@@ -251,8 +249,8 @@ ORDER BY id
 `
 
 type ListRegisteredRepositoriesByGroupIDAndProviderParams struct {
-	Provider uuid.UUID `json:"provider"`
-	GroupID  int32     `json:"group_id"`
+	Provider string `json:"provider"`
+	GroupID  int32  `json:"group_id"`
 }
 
 func (q *Queries) ListRegisteredRepositoriesByGroupIDAndProvider(ctx context.Context, arg ListRegisteredRepositoriesByGroupIDAndProviderParams) ([]Repository, error) {
@@ -302,10 +300,10 @@ OFFSET $4
 `
 
 type ListRepositoriesByGroupIDParams struct {
-	Provider uuid.UUID `json:"provider"`
-	GroupID  int32     `json:"group_id"`
-	Limit    int32     `json:"limit"`
-	Offset   int32     `json:"offset"`
+	Provider string `json:"provider"`
+	GroupID  int32  `json:"group_id"`
+	Limit    int32  `json:"limit"`
+	Offset   int32  `json:"offset"`
 }
 
 func (q *Queries) ListRepositoriesByGroupID(ctx context.Context, arg ListRepositoriesByGroupIDParams) ([]Repository, error) {
@@ -360,10 +358,10 @@ OFFSET $4
 `
 
 type ListRepositoriesByOwnerParams struct {
-	Provider  uuid.UUID `json:"provider"`
-	RepoOwner string    `json:"repo_owner"`
-	Limit     int32     `json:"limit"`
-	Offset    int32     `json:"offset"`
+	Provider  string `json:"provider"`
+	RepoOwner string `json:"repo_owner"`
+	Limit     int32  `json:"limit"`
+	Offset    int32  `json:"offset"`
 }
 
 func (q *Queries) ListRepositoriesByOwner(ctx context.Context, arg ListRepositoriesByOwnerParams) ([]Repository, error) {
@@ -437,7 +435,7 @@ type UpdateRepositoryParams struct {
 	WebhookID  sql.NullInt32 `json:"webhook_id"`
 	WebhookUrl string        `json:"webhook_url"`
 	DeployUrl  string        `json:"deploy_url"`
-	Provider   uuid.UUID     `json:"provider"`
+	Provider   string        `json:"provider"`
 	CloneUrl   string        `json:"clone_url"`
 }
 
@@ -503,7 +501,7 @@ type UpdateRepositoryByIDParams struct {
 	WebhookID  sql.NullInt32 `json:"webhook_id"`
 	WebhookUrl string        `json:"webhook_url"`
 	DeployUrl  string        `json:"deploy_url"`
-	Provider   uuid.UUID     `json:"provider"`
+	Provider   string        `json:"provider"`
 	CloneUrl   string        `json:"clone_url"`
 }
 

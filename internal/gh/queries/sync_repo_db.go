@@ -21,8 +21,6 @@ import (
 	"errors"
 	"fmt"
 
-	"github.com/google/uuid"
-
 	"github.com/stacklok/mediator/internal/db"
 	ghclient "github.com/stacklok/mediator/internal/providers/github"
 )
@@ -42,7 +40,7 @@ import (
 func SyncRepositoriesWithDB(ctx context.Context,
 	store db.Store,
 	result ghclient.RepositoryListResult,
-	provider uuid.UUID, groupId int32) error {
+	provider string, groupId int32) error {
 	// Get all existing repositories from the database by group ID
 	dbRepos, err := store.ListRepositoriesByGroupID(ctx, db.ListRepositoriesByGroupIDParams{
 		Provider: provider,

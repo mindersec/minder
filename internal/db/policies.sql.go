@@ -9,8 +9,6 @@ import (
 	"context"
 	"encoding/json"
 	"time"
-
-	"github.com/google/uuid"
 )
 
 const createPolicy = `-- name: CreatePolicy :one
@@ -21,9 +19,9 @@ INSERT INTO policies (
 `
 
 type CreatePolicyParams struct {
-	Provider uuid.UUID `json:"provider"`
-	GroupID  int32     `json:"group_id"`
-	Name     string    `json:"name"`
+	Provider string `json:"provider"`
+	GroupID  int32  `json:"group_id"`
+	Name     string `json:"name"`
 }
 
 func (q *Queries) CreatePolicy(ctx context.Context, arg CreatePolicyParams) (Policy, error) {
@@ -90,7 +88,7 @@ type GetPolicyByGroupAndIDParams struct {
 type GetPolicyByGroupAndIDRow struct {
 	ID              int32           `json:"id"`
 	Name            string          `json:"name"`
-	Provider        uuid.UUID       `json:"provider"`
+	Provider        string          `json:"provider"`
 	GroupID         int32           `json:"group_id"`
 	CreatedAt       time.Time       `json:"created_at"`
 	UpdatedAt       time.Time       `json:"updated_at"`
@@ -151,7 +149,7 @@ type GetPolicyByGroupAndNameParams struct {
 type GetPolicyByGroupAndNameRow struct {
 	ID              int32           `json:"id"`
 	Name            string          `json:"name"`
-	Provider        uuid.UUID       `json:"provider"`
+	Provider        string          `json:"provider"`
 	GroupID         int32           `json:"group_id"`
 	CreatedAt       time.Time       `json:"created_at"`
 	UpdatedAt       time.Time       `json:"updated_at"`
@@ -225,7 +223,7 @@ WHERE policies.group_id = $1
 type ListPoliciesByGroupIDRow struct {
 	ID              int32           `json:"id"`
 	Name            string          `json:"name"`
-	Provider        uuid.UUID       `json:"provider"`
+	Provider        string          `json:"provider"`
 	GroupID         int32           `json:"group_id"`
 	CreatedAt       time.Time       `json:"created_at"`
 	UpdatedAt       time.Time       `json:"updated_at"`

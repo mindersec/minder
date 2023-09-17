@@ -8,8 +8,6 @@ package db
 import (
 	"context"
 	"database/sql"
-
-	"github.com/google/uuid"
 )
 
 const createSessionState = `-- name: CreateSessionState :one
@@ -17,7 +15,7 @@ INSERT INTO session_store (provider, grp_id, port, session_state, owner_filter) 
 `
 
 type CreateSessionStateParams struct {
-	Provider     uuid.UUID      `json:"provider"`
+	Provider     string         `json:"provider"`
 	GrpID        sql.NullInt32  `json:"grp_id"`
 	Port         sql.NullInt32  `json:"port"`
 	SessionState string         `json:"session_state"`
@@ -68,7 +66,7 @@ DELETE FROM session_store WHERE provider=$1 AND grp_id = $2
 `
 
 type DeleteSessionStateByGroupIDParams struct {
-	Provider uuid.UUID     `json:"provider"`
+	Provider string        `json:"provider"`
 	GrpID    sql.NullInt32 `json:"grp_id"`
 }
 
@@ -82,7 +80,7 @@ SELECT provider, grp_id, port, owner_filter FROM session_store WHERE session_sta
 `
 
 type GetGroupIDPortBySessionStateRow struct {
-	Provider    uuid.UUID      `json:"provider"`
+	Provider    string         `json:"provider"`
 	GrpID       sql.NullInt32  `json:"grp_id"`
 	Port        sql.NullInt32  `json:"port"`
 	OwnerFilter sql.NullString `json:"owner_filter"`

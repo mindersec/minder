@@ -110,6 +110,7 @@ const (
 	ProviderTypeGithub ProviderType = "github"
 	ProviderTypeRest   ProviderType = "rest"
 	ProviderTypeGit    ProviderType = "git"
+	ProviderTypeOci    ProviderType = "oci"
 )
 
 func (e *ProviderType) Scan(src interface{}) error {
@@ -198,7 +199,7 @@ type Organization struct {
 type Policy struct {
 	ID        int32     `json:"id"`
 	Name      string    `json:"name"`
-	Provider  uuid.UUID `json:"provider"`
+	Provider  string    `json:"provider"`
 	GroupID   int32     `json:"group_id"`
 	CreatedAt time.Time `json:"created_at"`
 	UpdatedAt time.Time `json:"updated_at"`
@@ -233,7 +234,7 @@ type Provider struct {
 
 type ProviderAccessToken struct {
 	ID             int32          `json:"id"`
-	ProviderID     uuid.UUID      `json:"provider_id"`
+	Provider       string         `json:"provider"`
 	GroupID        int32          `json:"group_id"`
 	OwnerFilter    sql.NullString `json:"owner_filter"`
 	EncryptedToken string         `json:"encrypted_token"`
@@ -244,7 +245,7 @@ type ProviderAccessToken struct {
 
 type Repository struct {
 	ID         int32         `json:"id"`
-	Provider   uuid.UUID     `json:"provider"`
+	Provider   string        `json:"provider"`
 	GroupID    int32         `json:"group_id"`
 	RepoOwner  string        `json:"repo_owner"`
 	RepoName   string        `json:"repo_name"`
@@ -285,7 +286,7 @@ type RuleEvaluationStatus struct {
 type RuleType struct {
 	ID          int32           `json:"id"`
 	Name        string          `json:"name"`
-	Provider    uuid.UUID       `json:"provider"`
+	Provider    string          `json:"provider"`
 	GroupID     int32           `json:"group_id"`
 	Description string          `json:"description"`
 	Guidance    string          `json:"guidance"`
@@ -296,7 +297,7 @@ type RuleType struct {
 
 type SessionStore struct {
 	ID           int32          `json:"id"`
-	Provider     uuid.UUID      `json:"provider"`
+	Provider     string         `json:"provider"`
 	GrpID        sql.NullInt32  `json:"grp_id"`
 	Port         sql.NullInt32  `json:"port"`
 	OwnerFilter  sql.NullString `json:"owner_filter"`
