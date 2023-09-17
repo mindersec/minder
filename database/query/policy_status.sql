@@ -38,14 +38,12 @@ WHERE rule_evaluation_status.policy_id = $1
 -- name: GetPolicyStatusByIdAndGroup :one
 SELECT p.id, p.name, ps.policy_status, ps.last_updated FROM policy_status ps
 INNER JOIN policies p ON p.id = ps.policy_id
-INNER JOIN providers pr ON pr.id = p.provider_id
-WHERE p.id = $1 AND pr.group_id = $2;
+WHERE p.id = $1 AND p.group_id = $2;
 
 -- name: GetPolicyStatusByGroup :many
 SELECT p.id, p.name, ps.policy_status, ps.last_updated FROM policy_status ps
 INNER JOIN policies p ON p.id = ps.policy_id
-INNER JOIN providers pr ON pr.id = p.provider_id
-WHERE pr.group_id = $1;
+WHERE p.group_id = $1;
 
 -- name: ListRuleEvaluationStatusByPolicyId :many
 SELECT res.eval_status as eval_status, res.last_updated as last_updated, res.details as details, res.repository_id as repository_id, res.entity as entity, repo.repo_name as repo_name, repo.repo_owner as repo_owner, repo.provider as provider, rt.name as rule_type_name, rt.id as rule_type_id

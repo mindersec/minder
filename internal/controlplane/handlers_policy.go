@@ -173,6 +173,7 @@ func (s *Server) CreatePolicy(ctx context.Context,
 	// Create policy
 	policy, err := qtx.CreatePolicy(ctx, db.CreatePolicyParams{
 		Provider: provider.ID,
+		GroupID:  entityCtx.GetGroup().GetID(),
 		Name:     in.GetName(),
 	})
 	if err != nil {
@@ -280,14 +281,7 @@ func (s *Server) ListPolicies(ctx context.Context,
 
 	entityCtx := engine.EntityFromContext(ctx)
 
-	prov, err := s.store.GetProviderByName(ctx, db.GetProviderByNameParams{
-		Name:    entityCtx.GetProvider().Name,
-		GroupID: entityCtx.GetGroup().ID})
-	if err != nil {
-		return nil, returnProviderError(fmt.Errorf("provider error: %w", err))
-	}
-
-	policies, err := s.store.ListPoliciesByProvider(ctx, prov.ID)
+	policies, err := s.store.ListPoliciesByGroupID(ctx, entityCtx.Group.ID)
 	if err != nil {
 		return nil, status.Errorf(codes.Unknown, "failed to get policies: %s", err)
 	}
@@ -315,16 +309,9 @@ func (s *Server) GetPolicyById(ctx context.Context,
 		return nil, status.Error(codes.InvalidArgument, "policy id is required")
 	}
 
-	prov, err := s.store.GetProviderByName(ctx, db.GetProviderByNameParams{
-		Name:    entityCtx.GetProvider().Name,
-		GroupID: entityCtx.GetGroup().ID})
-	if err != nil {
-		return nil, returnProviderError(fmt.Errorf("provider error: %w", err))
-	}
-
-	policies, err := s.store.GetPolicyByProviderAndID(ctx, db.GetPolicyByProviderAndIDParams{
-		Provider: prov.ID,
-		ID:       in.Id,
+	policies, err := s.store.GetPolicyByGroupAndID(ctx, db.GetPolicyByGroupAndIDParams{
+		GroupID: entityCtx.Group.ID,
+		ID:      in.Id,
 	})
 	if err != nil {
 		return nil, status.Errorf(codes.Unknown, "failed to get policy: %s", err)

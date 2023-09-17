@@ -114,7 +114,11 @@ func (s *Reconciler) publishPolicyInitEvents(
 	ctx context.Context,
 	ectx *engine.EntityContext,
 ) error {
-	dbrepos, err := s.store.ListRegisteredRepositoriesByProvider(ctx, ectx.Provider.ID)
+	dbrepos, err := s.store.ListRegisteredRepositoriesByGroupIDAndProvider(ctx,
+		db.ListRegisteredRepositoriesByGroupIDAndProviderParams{
+			Provider: ectx.Provider.ID,
+			GroupID:  ectx.Group.ID,
+		})
 	if err != nil {
 		return fmt.Errorf("publishPolicyInitEvents: error getting registered repos: %v", err)
 	}

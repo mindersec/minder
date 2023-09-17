@@ -233,7 +233,7 @@ func TraverseRules(rules []*pb.Policy_Rule, fn func(*pb.Policy_Rule) error) erro
 // policies map. This assumes that the policies belong to the same group.
 //
 // TODO(jaosorior): This will have to consider the project tree once we	migrate to that
-func MergeDatabaseListIntoPolicies(ppl []db.ListPoliciesByProviderRow, ectx *EntityContext) map[string]*pb.Policy {
+func MergeDatabaseListIntoPolicies(ppl []db.ListPoliciesByGroupIDRow, ectx *EntityContext) map[string]*pb.Policy {
 	policies := map[string]*pb.Policy{}
 
 	for idx := range ppl {
@@ -265,7 +265,7 @@ func MergeDatabaseListIntoPolicies(ppl []db.ListPoliciesByProviderRow, ectx *Ent
 // policies map. This assumes that the policies belong to the same group.
 //
 // TODO(jaosorior): This will have to consider the project tree once we migrate to that
-func MergeDatabaseGetIntoPolicies(ppl []db.GetPolicyByProviderAndIDRow, ectx *EntityContext) map[string]*pb.Policy {
+func MergeDatabaseGetIntoPolicies(ppl []db.GetPolicyByGroupAndIDRow, ectx *EntityContext) map[string]*pb.Policy {
 	policies := map[string]*pb.Policy{}
 
 	for idx := range ppl {

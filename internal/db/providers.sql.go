@@ -113,26 +113,6 @@ func (q *Queries) GetProviderByName(ctx context.Context, arg GetProviderByNamePa
 	return i, err
 }
 
-const globalGetProviderByID = `-- name: GlobalGetProviderByID :one
-SELECT id, name, version, group_id, implements, definition, created_at, updated_at FROM providers WHERE id = $1
-`
-
-func (q *Queries) GlobalGetProviderByID(ctx context.Context, id uuid.UUID) (Provider, error) {
-	row := q.db.QueryRowContext(ctx, globalGetProviderByID, id)
-	var i Provider
-	err := row.Scan(
-		&i.ID,
-		&i.Name,
-		&i.Version,
-		&i.GroupID,
-		pq.Array(&i.Implements),
-		&i.Definition,
-		&i.CreatedAt,
-		&i.UpdatedAt,
-	)
-	return i, err
-}
-
 const globalListProviders = `-- name: GlobalListProviders :many
 SELECT id, name, version, group_id, implements, definition, created_at, updated_at FROM providers
 `

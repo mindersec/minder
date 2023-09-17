@@ -42,10 +42,11 @@ import (
 func SyncRepositoriesWithDB(ctx context.Context,
 	store db.Store,
 	result ghclient.RepositoryListResult,
-	provider uuid.UUID) error {
+	provider uuid.UUID, groupId int32) error {
 	// Get all existing repositories from the database by group ID
-	dbRepos, err := store.ListRepositoriesByProvider(ctx, db.ListRepositoriesByProviderParams{
+	dbRepos, err := store.ListRepositoriesByGroupID(ctx, db.ListRepositoriesByGroupIDParams{
 		Provider: provider,
+		GroupID:  groupId,
 	})
 	if err != nil {
 		return fmt.Errorf("error retrieving list of repositories: %w", err)
@@ -67,6 +68,7 @@ func SyncRepositoriesWithDB(ctx context.Context,
 				// The repository doesn't exist in our DB, let's create it
 				_, err = store.CreateRepository(ctx, db.CreateRepositoryParams{
 					Provider:  provider,
+					GroupID:   groupId,
 					RepoOwner: string(*repo.Owner.Login),
 					RepoName:  string(*repo.Name),
 					RepoID:    int32(*repo.ID),
@@ -85,8 +87,8 @@ func SyncRepositoriesWithDB(ctx context.Context,
 				return fmt.Errorf("failed during repository synchronization: %w", err)
 			}
 		} else {
-			if existingRepo.Provider != provider {
-				fmt.Println("got request to sync repository of different provider. Skipping")
+			if existingRepo.GroupID != groupId {
+				fmt.Println("got request to sync repository of different group. Skipping")
 				continue
 			}
 
@@ -96,6 +98,7 @@ func SyncRepositoriesWithDB(ctx context.Context,
 				fmt.Println("updating repository for repo ID: with repo Name: ", *repo.ID, *repo.Name)
 				_, err = store.UpdateRepository(ctx, db.UpdateRepositoryParams{
 					Provider:  provider,
+					GroupID:   existingRepo.GroupID,
 					RepoOwner: string(*repo.Owner.Login),
 					RepoName:  string(*repo.Name),
 					RepoID:    int32(*repo.ID),

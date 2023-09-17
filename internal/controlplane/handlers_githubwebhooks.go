@@ -319,7 +319,10 @@ func (s *Server) parseRepoEvent(
 		return err
 	}
 
-	provider, err := s.store.GlobalGetProviderByID(ctx, dbrepo.Provider)
+	provider, err := s.store.GetProviderByID(ctx, db.GetProviderByIDParams{
+		ID:      dbrepo.Provider,
+		GroupID: dbrepo.GroupID,
+	})
 	if err != nil {
 		return fmt.Errorf("error getting provider: %w", err)
 	}
@@ -339,7 +342,7 @@ func (s *Server) parseRepoEvent(
 	eiw := engine.NewEntityInfoWrapper().
 		WithProvider(provider.Name).
 		WithRepository(repo).
-		WithGroupID(provider.GroupID).
+		WithGroupID(dbrepo.GroupID).
 		WithRepositoryID(dbrepo.ID)
 
 	return eiw.ToMessage(msg)
@@ -361,13 +364,17 @@ func (s *Server) parseArtifactPublishedEvent(
 	if err != nil {
 		return fmt.Errorf("error getting repo information from payload: %w", err)
 	}
+	g := dbrepo.GroupID
 
-	prov, err := s.store.GlobalGetProviderByID(ctx, dbrepo.Provider)
+	prov, err := s.store.GetProviderByID(ctx, db.GetProviderByIDParams{
+		ID:      dbrepo.Provider,
+		GroupID: dbrepo.GroupID,
+	})
 	if err != nil {
 		return fmt.Errorf("error getting provider: %w", err)
 	}
 
-	cli, err := providers.BuildClient(ctx, dbrepo.Provider, s.store, s.cryptoEngine)
+	cli, err := providers.BuildClient(ctx, dbrepo.Provider, g, s.store, s.cryptoEngine)
 	if err != nil {
 		return fmt.Errorf("error building client: %w", err)
 	}
@@ -385,7 +392,7 @@ func (s *Server) parseArtifactPublishedEvent(
 	eiw := engine.NewEntityInfoWrapper().
 		WithVersionedArtifact(versionedArtifact).
 		WithProvider(prov.Name).
-		WithGroupID(prov.GroupID).
+		WithGroupID(dbrepo.GroupID).
 		WithRepositoryID(dbrepo.ID).
 		WithArtifactID(dbArtifact.ID)
 
@@ -402,13 +409,17 @@ func (s *Server) parsePullRequestModEvent(
 	if err != nil {
 		return fmt.Errorf("error getting repo information from payload: %w", err)
 	}
+	g := dbrepo.GroupID
 
-	prov, err := s.store.GlobalGetProviderByID(ctx, dbrepo.Provider)
+	prov, err := s.store.GetProviderByID(ctx, db.GetProviderByIDParams{
+		ID:      dbrepo.Provider,
+		GroupID: dbrepo.GroupID,
+	})
 	if err != nil {
 		return fmt.Errorf("error getting provider: %w", err)
 	}
 
-	cli, err := providers.BuildClient(ctx, prov.ID, s.store, s.cryptoEngine)
+	cli, err := providers.BuildClient(ctx, prov.ID, g, s.store, s.cryptoEngine)
 	if err != nil {
 		return fmt.Errorf("error building client: %w", err)
 	}
@@ -429,7 +440,7 @@ func (s *Server) parsePullRequestModEvent(
 		WithPullRequest(prEvalInfo).
 		WithPullRequestID(prEvalInfo.Number).
 		WithProvider(prov.Name).
-		WithGroupID(prov.GroupID).
+		WithGroupID(dbrepo.GroupID).
 		WithRepositoryID(dbrepo.ID)
 
 	return eiw.ToMessage(msg)
@@ -873,6 +884,11 @@ func getRepoInformationFromPayload(
 			return db.Repository{}, fmt.Errorf("repository %d not found: %w", id, ErrRepoNotFound)
 		}
 		return db.Repository{}, fmt.Errorf("error getting repository: %w", err)
+	}
+
+	if dbrepo.GroupID == 0 {
+		return db.Repository{}, fmt.Errorf("no group found for repository %s/%s: %w",
+			dbrepo.RepoOwner, dbrepo.RepoName, ErrRepoNotFound)
 	}
 
 	return dbrepo, nil

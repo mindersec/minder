@@ -47,8 +47,7 @@ func (q *Queries) CreateRuleEvaluationStatusForRepository(ctx context.Context, a
 const getPolicyStatusByGroup = `-- name: GetPolicyStatusByGroup :many
 SELECT p.id, p.name, ps.policy_status, ps.last_updated FROM policy_status ps
 INNER JOIN policies p ON p.id = ps.policy_id
-INNER JOIN providers pr ON pr.id = p.provider_id
-WHERE pr.group_id = $1
+WHERE p.group_id = $1
 `
 
 type GetPolicyStatusByGroupRow struct {
@@ -89,8 +88,7 @@ func (q *Queries) GetPolicyStatusByGroup(ctx context.Context, groupID int32) ([]
 const getPolicyStatusByIdAndGroup = `-- name: GetPolicyStatusByIdAndGroup :one
 SELECT p.id, p.name, ps.policy_status, ps.last_updated FROM policy_status ps
 INNER JOIN policies p ON p.id = ps.policy_id
-INNER JOIN providers pr ON pr.id = p.provider_id
-WHERE p.id = $1 AND pr.group_id = $2
+WHERE p.id = $1 AND p.group_id = $2
 `
 
 type GetPolicyStatusByIdAndGroupParams struct {

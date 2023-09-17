@@ -167,7 +167,7 @@ func (s *Server) IsProviderCallAuthorized(ctx context.Context, provider db.Provi
 			// check if token is expired
 			if encToken.Expiry.Unix() < time.Now().Unix() {
 				// remove from the database and deny the request
-				_ = s.store.DeleteAccessToken(ctx, provider.ID)
+				_ = s.store.DeleteAccessToken(ctx, db.DeleteAccessTokenParams{ProviderID: provider.ID, GroupID: groupId})
 
 				// remove from github
 				err := auth.DeleteAccessToken(ctx, provider.Name, encToken.AccessToken)

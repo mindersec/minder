@@ -131,6 +131,7 @@ func (s *Server) RegisterRepository(ctx context.Context,
 			WebhookID:  sql.NullInt32{Int32: int32(result.HookID), Valid: true},
 			WebhookUrl: result.HookURL,
 			Provider:   provider.ID,
+			GroupID:    in.GroupId,
 			RepoOwner:  result.Owner,
 			RepoName:   result.Repository,
 			RepoID:     result.RepoID,
@@ -189,8 +190,9 @@ func (s *Server) ListRepositories(ctx context.Context,
 		return nil, returnProviderError(fmt.Errorf("provider error: %w", err))
 	}
 
-	repos, err := s.store.ListRepositoriesByProvider(ctx, db.ListRepositoriesByProviderParams{
+	repos, err := s.store.ListRepositoriesByGroupID(ctx, db.ListRepositoriesByGroupIDParams{
 		Provider: provider.ID,
+		GroupID:  in.GroupId,
 		Limit:    in.Limit,
 		Offset:   in.Offset,
 	})
@@ -228,7 +230,7 @@ func (s *Server) ListRepositories(ctx context.Context,
 			results = append(results, &pb.RepositoryRecord{
 				Id:        repo.ID,
 				Provider:  provider.Name,
-				GroupId:   provider.GroupID,
+				GroupId:   repo.GroupID,
 				Owner:     repo.RepoOwner,
 				Name:      repo.RepoName,
 				RepoId:    repo.RepoID,
@@ -278,9 +280,13 @@ func (s *Server) GetRepositoryById(ctx context.Context,
 		return nil, status.Errorf(codes.Internal, "cannot read repository: %v", err)
 	}
 
+	if repo.GroupID != in.GroupId {
+		return nil, status.Errorf(codes.PermissionDenied, "user is not authorized to access this resource")
+	}
+
 	provider, err := s.store.GetProviderByID(ctx, db.GetProviderByIDParams{
 		ID:      repo.Provider,
-		GroupID: in.GroupId,
+		GroupID: repo.GroupID,
 	})
 	if err != nil {
 		return nil, returnProviderError(fmt.Errorf("provider error: %w", err))
@@ -292,7 +298,7 @@ func (s *Server) GetRepositoryById(ctx context.Context,
 	return &pb.GetRepositoryByIdResponse{Repository: &pb.RepositoryRecord{
 		Id:        repo.ID,
 		Provider:  provider.Name,
-		GroupId:   provider.GroupID,
+		GroupId:   repo.GroupID,
 		Owner:     repo.RepoOwner,
 		Name:      repo.RepoName,
 		RepoId:    repo.RepoID,
@@ -349,7 +355,7 @@ func (s *Server) GetRepositoryByName(ctx context.Context,
 		return nil, err
 	}
 	// check if user is authorized
-	if !IsRequestAuthorized(ctx, in.GroupId) {
+	if !IsRequestAuthorized(ctx, repo.GroupID) {
 		return nil, status.Errorf(codes.PermissionDenied, "user is not authorized to access this resource")
 	}
 
@@ -359,7 +365,7 @@ func (s *Server) GetRepositoryByName(ctx context.Context,
 	return &pb.GetRepositoryByNameResponse{Repository: &pb.RepositoryRecord{
 		Id:        repo.ID,
 		Provider:  provider.Name,
-		GroupId:   provider.GroupID,
+		GroupId:   repo.GroupID,
 		Owner:     repo.RepoOwner,
 		Name:      repo.RepoName,
 		RepoId:    repo.RepoID,
@@ -430,7 +436,7 @@ func (s *Server) SyncRepositories(ctx context.Context, in *pb.SyncRepositoriesRe
 	// This uses the context with the extended timeout to allow for the
 	// database to be populated with the repositories. Otherwise the original context
 	// expires and the database insertions are cancelled.
-	err = queries.SyncRepositoriesWithDB(tmoutCtx, s.store, repos, provider.ID)
+	err = queries.SyncRepositoriesWithDB(tmoutCtx, s.store, repos, provider.ID, in.GroupId)
 	if err != nil {
 		return nil, status.Errorf(codes.Internal, "cannot sync repositories: %v", err)
 	}

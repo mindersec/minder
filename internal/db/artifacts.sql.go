@@ -60,7 +60,7 @@ func (q *Queries) DeleteArtifact(ctx context.Context, id int32) error {
 const getArtifactByID = `-- name: GetArtifactByID :one
 SELECT artifacts.id, artifacts.repository_id, artifacts.artifact_name, artifacts.artifact_type,
 artifacts.artifact_visibility, artifacts.created_at,
-repositories.provider, repositories.repo_owner, repositories.repo_name
+repositories.provider, repositories.group_id, repositories.repo_owner, repositories.repo_name
 FROM artifacts INNER JOIN repositories ON repositories.id = artifacts.repository_id
 WHERE artifacts.id = $1
 `
@@ -73,6 +73,7 @@ type GetArtifactByIDRow struct {
 	ArtifactVisibility string    `json:"artifact_visibility"`
 	CreatedAt          time.Time `json:"created_at"`
 	Provider           uuid.UUID `json:"provider"`
+	GroupID            int32     `json:"group_id"`
 	RepoOwner          string    `json:"repo_owner"`
 	RepoName           string    `json:"repo_name"`
 }
@@ -88,6 +89,7 @@ func (q *Queries) GetArtifactByID(ctx context.Context, id int32) (GetArtifactByI
 		&i.ArtifactVisibility,
 		&i.CreatedAt,
 		&i.Provider,
+		&i.GroupID,
 		&i.RepoOwner,
 		&i.RepoName,
 	)
