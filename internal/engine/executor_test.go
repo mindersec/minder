@@ -96,6 +96,7 @@ func TestExecutor_handleEntityEvent(t *testing.T) {
 		}).
 		Return(db.Provider{
 			ID:      providerID,
+			Name:    providerName,
 			GroupID: groupID,
 		}, nil)
 
