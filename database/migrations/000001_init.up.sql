@@ -144,8 +144,7 @@ CREATE TABLE repositories (
     clone_url TEXT NOT NULL,
     created_at TIMESTAMP NOT NULL DEFAULT NOW(),
     updated_at TIMESTAMP NOT NULL DEFAULT NOW(),
-    FOREIGN KEY (group_id, provider) REFERENCES providers(group_id, name) ON DELETE CASCADE,
-    UNIQUE (group_id, provider)
+    FOREIGN KEY (group_id, provider) REFERENCES providers(group_id, name) ON DELETE CASCADE
 
 );
 
@@ -195,9 +194,7 @@ CREATE TABLE rule_type (
     definition JSONB NOT NULL,
     created_at TIMESTAMP NOT NULL DEFAULT NOW(),
     updated_at TIMESTAMP NOT NULL DEFAULT NOW(),
-    FOREIGN KEY (group_id, provider) REFERENCES providers(group_id, name) ON DELETE CASCADE,
-    UNIQUE (group_id, provider)
-
+    FOREIGN KEY (group_id, provider) REFERENCES providers(group_id, name) ON DELETE CASCADE
 );
 
 CREATE TABLE policies (
@@ -207,9 +204,7 @@ CREATE TABLE policies (
     group_id INTEGER NOT NULL,
     created_at TIMESTAMP NOT NULL DEFAULT NOW(),
     updated_at TIMESTAMP NOT NULL DEFAULT NOW(),
-    FOREIGN KEY (group_id, provider) REFERENCES providers(group_id, name) ON DELETE CASCADE,
-    UNIQUE (group_id, provider)
-
+    FOREIGN KEY (group_id, provider) REFERENCES providers(group_id, name) ON DELETE CASCADE
 );
 
 CREATE TYPE entities as enum ('repository', 'build_environment', 'artifact', 'pull_request');
