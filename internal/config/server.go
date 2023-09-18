@@ -37,6 +37,19 @@ func (s *HTTPServerConfig) GetAddress() string {
 	return fmt.Sprintf("%s:%d", s.Host, s.Port)
 }
 
+// MetricServerConfig is the configuration for the metric server
+type MetricServerConfig struct {
+	// Host is the host to bind to
+	Host string `mapstructure:"host" default:"127.0.0.1"`
+	// Port is the port to bind to
+	Port int `mapstructure:"port" default:"9090"`
+}
+
+// GetAddress returns the address to bind to
+func (s *MetricServerConfig) GetAddress() string {
+	return fmt.Sprintf("%s:%d", s.Host, s.Port)
+}
+
 // GRPCServerConfig is the configuration for the gRPC server
 type GRPCServerConfig struct {
 	// Host is the host to bind to
@@ -72,4 +85,16 @@ func RegisterGRPCServerFlags(v *viper.Viper, flags *pflag.FlagSet) error {
 
 	return util.BindConfigFlag(v, flags, "grpc_server.port", "grpc-port", 8090,
 		"The port to bind to for the gRPC server", flags.Int)
+}
+
+// RegisterMetricServerFlags registers the flags for the metric server
+func RegisterMetricServerFlags(v *viper.Viper, flags *pflag.FlagSet) error {
+	err := util.BindConfigFlag(v, flags, "metric_server.host", "metric-host", "",
+		"The host to bind to for the metric server", flags.String)
+	if err != nil {
+		return err
+	}
+
+	return util.BindConfigFlag(v, flags, "metric_server.port", "metric-port", 9090,
+		"The port to bind to for the metric server", flags.Int)
 }

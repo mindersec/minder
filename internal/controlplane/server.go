@@ -223,26 +223,6 @@ func (s *Server) StartHTTPServer(ctx context.Context) error {
 		})
 	}
 
-	addMeter := s.cfg.Metrics.Enabled
-
-	if addMeter {
-		// Pull-based Prometheus exporter
-		prometheusExporter, err := prometheus.New(
-			prometheus.WithNamespace("mediator"),
-		)
-		if err != nil {
-			return fmt.Errorf("could not initialize metrics: %w", err)
-		}
-
-		mp := initMetrics(prometheusExporter)
-		defer shutdownHandler("MeterProvider", func(ctx context.Context) error {
-			return mp.Shutdown(ctx)
-		})
-
-		handler := promhttp.Handler()
-		mux.Handle(metricsPath, handler)
-	}
-
 	gwmux := runtime.NewServeMux()
 	opts := []grpc.DialOption{grpc.WithTransportCredentials(insecure.NewCredentials())}
 
@@ -265,6 +245,16 @@ func (s *Server) StartHTTPServer(ctx context.Context) error {
 		ReadHeaderTimeout: readHeaderTimeout,
 	}
 
+	// start the metrics server if enabled
+	if s.cfg.Metrics.Enabled {
+		go func() {
+			if err := s.startMetricServer(ctx); err != nil {
+				log.Printf("failed to start metrics server: %v", err)
+			}
+		}()
+	}
+
+	// start the HTTP server
 	go func() {
 		if err := server.ListenAndServe(); err != nil {
 			errch <- fmt.Errorf("failed to serve: %w", err)
@@ -280,6 +270,55 @@ func (s *Server) StartHTTPServer(ctx context.Context) error {
 		defer shutdownRelease()
 
 		log.Printf("shutting down 'HTTP server'")
+
+		return server.Shutdown(shutdownCtx)
+	}
+}
+
+// startMetricServer starts a Prometheus metrics server and blocks while serving
+func (s *Server) startMetricServer(ctx context.Context) error {
+	// pull-based Prometheus exporter
+	prometheusExporter, err := prometheus.New(
+		prometheus.WithNamespace("mediator"),
+	)
+	if err != nil {
+		return fmt.Errorf("could not initialize metrics: %w", err)
+	}
+
+	mp := initMetrics(prometheusExporter)
+	defer shutdownHandler("MeterProvider", func(ctx context.Context) error {
+		return mp.Shutdown(ctx)
+	})
+
+	handler := promhttp.Handler()
+	mux := http.NewServeMux()
+	mux.Handle(metricsPath, handler)
+
+	ch := make(chan error)
+
+	log.Printf("Starting metrics server on %s", s.cfg.MetricServer.GetAddress())
+
+	server := http.Server{
+		Addr:              s.cfg.MetricServer.GetAddress(),
+		Handler:           mux,
+		ReadHeaderTimeout: readHeaderTimeout,
+	}
+
+	go func() {
+		if err := server.ListenAndServe(); err != nil {
+			ch <- fmt.Errorf("failed to serve: %w", err)
+		}
+	}()
+
+	select {
+	case err := <-ch:
+		log.Printf("Metric server fatal error: %v", err)
+		return err
+	case <-ctx.Done():
+		shutdownCtx, shutdownRelease := context.WithTimeout(context.Background(), 5*time.Second)
+		defer shutdownRelease()
+
+		log.Printf("shutting down 'Metric server'")
 
 		return server.Shutdown(shutdownCtx)
 	}
