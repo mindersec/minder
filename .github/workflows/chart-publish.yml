@@ -40,9 +40,7 @@ jobs:
         run: |
           DATE="$(date +%Y%m%d)"
           COMMIT="$(git rev-parse --short HEAD)"
-          echo "tag=0.$DATE.$INPUT_RUN_ID+ref.$COMMIT" >> "$GITHUB_OUTPUT"
-        with:
-          run_id: "${{ github.run_number }}"
+          echo "tag=0.$DATE.$GITHUB_RUN_NUMBER+ref.$COMMIT" >> "$GITHUB_OUTPUT"
 
       - name: Build images and Helm Chart
         run: |
