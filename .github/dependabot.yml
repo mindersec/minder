@@ -39,3 +39,7 @@ updates:
       # facebook/docusaurus#8940 docusaurus uses v1
       - dependency-name: "prism-react-renderer"
         update-types: ["version-update:semver-major"]
+  - package-ecosystem: "docker"
+    directory: "/"
+    schedule:
+      interval: "daily"
