@@ -35,11 +35,21 @@ jobs:
         with:
           version: v3.12.2
 
+      - name: Compute version number
+        id: version-string
+        run: |
+          DATE="$(date +%Y%m%d)"
+          COMMIT="$(git rev-parse --short HEAD)"
+          echo "tag=0.$DATE.$INPUT_RUN_ID+ref.$COMMIT" >> "$GITHUB_OUTPUT"
+        with:
+          run_id: "${{ github.run_number }}"
+
       - name: Build images and Helm Chart
         run: |
           KO_DOCKER_REPO=$BASE_REPO make helm
         env:
           KO_PUSH_IMAGE: "true"
+          HELM_PACKAGE_VERSION: "${{ steps.version-string.outputs.tag }}"
 
       - name: Helm Login
         # ko can pick up tokens ambiently from the GitHub Actions environment, but
