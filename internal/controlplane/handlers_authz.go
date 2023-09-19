@@ -98,7 +98,7 @@ func IsOrgAuthorized(ctx context.Context, orgId int32) error {
 		zerolog.Ctx(ctx).Error().Msgf("Called IsOrgAuthorized on non-org method, should be %v", opts.GetAuthScope())
 	}
 	if claims.OrganizationId != orgId {
-		util.UserVisibleError(codes.PermissionDenied, "user is not authorized to access this organization")
+		return util.UserVisibleError(codes.PermissionDenied, "user is not authorized to access this organization")
 	}
 	isOwner := func(role auth.RoleInfo) bool {
 		return role.GroupID == 0 && int32(role.OrganizationID) == orgId && role.IsAdmin
@@ -137,10 +137,15 @@ func IsGroupAuthorized(ctx context.Context, groupId int32) error {
 // IsUserAuthorized checks if the request is authorized for the given
 // user, and returns an error if the request is not authorized.
 func IsUserAuthorized(ctx context.Context, userId int32) error {
+	claims, _ := ctx.Value(auth.TokenInfoKey).(auth.UserClaims)
+	if isSuperadmin(claims) {
+		return nil
+	}
 	opts := getRpcOptions(ctx)
 	if opts.GetAuthScope() != mediator.ObjectOwner_OBJECT_OWNER_USER {
 		zerolog.Ctx(ctx).Error().Msgf("Called IsUserAuthorized on non-user method, should be %v", opts.GetAuthScope())
 	}
+
 	if claims.UserId == userId {
 		return nil
 	}

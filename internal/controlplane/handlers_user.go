@@ -415,7 +415,7 @@ func getUserDependencies(ctx context.Context, store db.Store, user db.User) ([]*
 // GetUserById is a service for getting a user by id
 func (s *Server) GetUserById(ctx context.Context,
 	in *pb.GetUserByIdRequest) (*pb.GetUserByIdResponse, error) {
-	if in.Id == 0 {
+	if in.UserId == 0 {
 		return nil, status.Error(codes.InvalidArgument, "user id is required")
 	}
 
