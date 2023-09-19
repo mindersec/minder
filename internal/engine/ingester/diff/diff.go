@@ -83,39 +83,11 @@ func (di *Diff) Ingest(
 		}
 
 		for _, file := range prFiles {
-			eco := di.getEcosystemForFile(*file.Filename)
-			if eco == DepEcosystemNone {
-				logger.Debug().
-					Str("filename", *file.Filename).
-					Msg("No ecosystem found, skipping")
-				continue
-			}
-
-			logger.Debug().
-				Str("filename", *file.Filename).
-				Str("package-ecosystem", string(eco)).
-				Msg("No ecosystem found, skipping")
-
-			parser := newEcosystemParser(eco)
-			if parser == nil {
-				return nil, fmt.Errorf("no parser found for ecosystem %s", eco)
-			}
-
-			depBatch, err := parser(*file.Patch)
+			fileDiffs, err := di.ingestFile(file.GetFilename(), file.GetPatch(), file.GetRawURL(), logger)
 			if err != nil {
-				return nil, fmt.Errorf("error parsing file %s: %w", *file.Filename, err)
+				return nil, fmt.Errorf("error ingesting file %s: %w", file.GetFilename(), err)
 			}
-
-			for i := range depBatch {
-				dep := depBatch[i]
-				allDiffs = append(allDiffs, &pb.PrDependencies_ContextualDependency{
-					Dep: dep,
-					File: &pb.PrDependencies_ContextualDependency_FilePatch{
-						Name:     file.GetFilename(),
-						PatchUrl: file.GetRawURL(),
-					},
-				})
-			}
+			allDiffs = append(allDiffs, fileDiffs...)
 		}
 
 		if resp.NextPage == 0 {
@@ -133,6 +105,35 @@ func (di *Diff) Ingest(
 	}, nil
 }
 
+func (di *Diff) ingestFile(
+	filename, patchContents, patchUrl string,
+	logger zerolog.Logger,
+) ([]*pb.PrDependencies_ContextualDependency, error) {
+	parser := di.getParserForFile(filename, logger)
+	if parser == nil {
+		return nil, nil
+	}
+
+	depBatch, err := parser(patchContents)
+	if err != nil {
+		return nil, fmt.Errorf("error parsing file %s: %w", filename, err)
+	}
+
+	batchCtxDeps := make([]*pb.PrDependencies_ContextualDependency, 0, len(depBatch))
+	for i := range depBatch {
+		dep := depBatch[i]
+		batchCtxDeps = append(batchCtxDeps, &pb.PrDependencies_ContextualDependency{
+			Dep: dep,
+			File: &pb.PrDependencies_ContextualDependency_FilePatch{
+				Name:     filename,
+				PatchUrl: patchUrl,
+			},
+		})
+	}
+
+	return batchCtxDeps, nil
+}
+
 func (di *Diff) getEcosystemForFile(filename string) DependencyEcosystem {
 	lastComponent := filepath.Base(filename)
 
@@ -142,4 +143,21 @@ func (di *Diff) getEcosystemForFile(filename string) DependencyEcosystem {
 		}
 	}
 	return DepEcosystemNone
+}
+
+func (di *Diff) getParserForFile(filename string, logger zerolog.Logger) ecosystemParser {
+	eco := di.getEcosystemForFile(filename)
+	if eco == DepEcosystemNone {
+		logger.Debug().
+			Str("filename", filename).
+			Msg("No ecosystem found, skipping")
+		return nil
+	}
+
+	logger.Debug().
+		Str("filename", filename).
+		Str("package-ecosystem", string(eco)).
+		Msg("matched ecosystem")
+
+	return newEcosystemParser(eco)
 }
