@@ -22,6 +22,8 @@ import (
 const SignalMetadataKey = "signal"
 
 const (
+	// EntitySignalUnset is a useful type for when the signal is not set
+	EntitySignalUnset = ""
 	// EntityInitSignal is the signal sent when an entity is initialized
 	EntityInitSignal = "entity_init"
 	// EntityReconcileSignal is the signal sent when an entity is reconciled
@@ -29,6 +31,7 @@ const (
 )
 
 var defaultSignals = []string{
+	EntitySignalUnset,
 	EntityInitSignal,
 	EntityReconcileSignal,
 }
