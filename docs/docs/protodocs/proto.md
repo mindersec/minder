@@ -1693,7 +1693,7 @@ get user by id
 
 | Field | Type | Label | Description |
 | ----- | ---- | ----- | ----------- |
-| id | [int32](#int32) |  |  |
+| user_id | [int32](#int32) |  |  |
 
 
 

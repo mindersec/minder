@@ -47,8 +47,8 @@ func (s *Server) ListArtifacts(ctx context.Context, in *pb.ListArtifactsRequest)
 	}
 
 	// check if user is authorized
-	if !IsRequestAuthorized(ctx, in.GroupId) {
-		return nil, status.Errorf(codes.PermissionDenied, "user is not authorized to access this resource")
+	if err := IsGroupAuthorized(ctx, in.GroupId); err != nil {
+		return nil, err
 	}
 
 	// first read all the repositories for provider and group
@@ -105,8 +105,8 @@ func (s *Server) GetArtifactById(ctx context.Context, in *pb.GetArtifactByIdRequ
 	}
 
 	// check if user is authorized
-	if !IsRequestAuthorized(ctx, artifact.GroupID) {
-		return nil, status.Errorf(codes.PermissionDenied, "user is not authorized to access this resource")
+	if err := IsGroupAuthorized(ctx, artifact.GroupID); err != nil {
+		return nil, err
 	}
 
 	// get artifact versions

@@ -86,63 +86,65 @@ func isSuperadmin(claims auth.UserClaims) bool {
 	return false
 }
 
-func isUserAdmin(claims auth.UserClaims, claimsField string, claimsValue int32) bool {
-	if claimsField == "OrganizationId" {
-		// need to check for a role that is only for org and has admin
-		for _, role := range claims.Roles {
-			if role.GroupID == 0 && int32(role.OrganizationID) == claimsValue && role.IsAdmin {
-				return true
-			}
-		}
-	} else if claimsField == "GroupId" {
-		// need to check for a role that is only for group and has admin
-		for _, role := range claims.Roles {
-			if int32(role.GroupID) == claimsValue && role.IsAdmin {
-				return true
-			}
-		}
-	}
-	return false
-}
-
-// IsRequestAuthorized checks if the request is authorized
-// nolint:gocyclo
-func IsRequestAuthorized(ctx context.Context, value int32) bool {
+// IsOrgAuthorized checks if the request is authorized for the given
+// organization, and returns an error if the request is not authorized.
+func IsOrgAuthorized(ctx context.Context, orgId int32) error {
 	claims, _ := ctx.Value(auth.TokenInfoKey).(auth.UserClaims)
 	if isSuperadmin(claims) {
-		return true
+		return nil
 	}
 	opts := getRpcOptions(ctx)
-
-	switch opts.GetAuthScope() {
-	case mediator.ObjectOwner_OBJECT_OWNER_ORGANIZATION:
-		if claims.OrganizationId != value {
-			return false
-		}
-		if opts.GetOwnerOnly() && !isUserAdmin(claims, "OrganizationId", value) {
-			return false
-		}
-		return true
-	case mediator.ObjectOwner_OBJECT_OWNER_GROUP:
-		if !slices.Contains(claims.GroupIds, value) {
-			return false
-		}
-
-		// check if is admin of group
-		if opts.GetOwnerOnly() && !isUserAdmin(claims, "GroupId", value) {
-			return false
-		}
-		return true
-	case mediator.ObjectOwner_OBJECT_OWNER_USER:
-		if claims.UserId == 0 {
-			return false
-		}
-		return true
-	case mediator.ObjectOwner_OBJECT_OWNER_UNSPECIFIED:
-		fallthrough
-	default:
-		return false
+	if opts.GetAuthScope() != mediator.ObjectOwner_OBJECT_OWNER_ORGANIZATION {
+		zerolog.Ctx(ctx).Error().Msgf("Called IsOrgAuthorized on non-org method, should be %v", opts.GetAuthScope())
 	}
+	if claims.OrganizationId != orgId {
+		util.UserVisibleError(codes.PermissionDenied, "user is not authorized to access this organization")
+	}
+	isOwner := func(role auth.RoleInfo) bool {
+		return role.GroupID == 0 && int32(role.OrganizationID) == orgId && role.IsAdmin
+	}
+	if opts.GetOwnerOnly() && !slices.ContainsFunc(claims.Roles, isOwner) {
+		return util.UserVisibleError(codes.PermissionDenied, "user is not an administrator on this organization")
+	}
+	return nil
+}
+
+// IsGroupAuthorized checks if the request is authorized for the given
+// group, and returns an error if the request is not authorized.
+func IsGroupAuthorized(ctx context.Context, groupId int32) error {
+	claims, _ := ctx.Value(auth.TokenInfoKey).(auth.UserClaims)
+	if isSuperadmin(claims) {
+		return nil
+	}
+	opts := getRpcOptions(ctx)
+	if opts.GetAuthScope() != mediator.ObjectOwner_OBJECT_OWNER_GROUP {
+		zerolog.Ctx(ctx).Error().Msgf("Called IsGroupAuthorized on non-group method, should be %v", opts.GetAuthScope())
+	}
+
+	if !slices.Contains(claims.GroupIds, groupId) {
+		return util.UserVisibleError(codes.PermissionDenied, "user is not authorized to access this group")
+	}
+	isOwner := func(role auth.RoleInfo) bool {
+		return int32(role.GroupID) == groupId && role.IsAdmin
+	}
+	// check if is admin of group
+	if opts.GetOwnerOnly() && !slices.ContainsFunc(claims.Roles, isOwner) {
+		return util.UserVisibleError(codes.PermissionDenied, "user is not an administrator on this group")
+	}
+	return nil
+}
+
+// IsUserAuthorized checks if the request is authorized for the given
+// user, and returns an error if the request is not authorized.
+func IsUserAuthorized(ctx context.Context, userId int32) error {
+	opts := getRpcOptions(ctx)
+	if opts.GetAuthScope() != mediator.ObjectOwner_OBJECT_OWNER_USER {
+		zerolog.Ctx(ctx).Error().Msgf("Called IsUserAuthorized on non-user method, should be %v", opts.GetAuthScope())
+	}
+	if claims.UserId == userId {
+		return nil
+	}
+	return util.UserVisibleError(codes.PermissionDenied, "user is not authorized to access this user")
 }
 
 // IsProviderCallAuthorized checks if the request is authorized

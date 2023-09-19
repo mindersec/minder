@@ -100,8 +100,8 @@ func (s *Server) CreateGroup(ctx context.Context, req *pb.CreateGroupRequest) (*
 	}
 
 	// check if user is authorized
-	if !IsRequestAuthorized(ctx, req.OrganizationId) {
-		return nil, status.Errorf(codes.PermissionDenied, "user is not authorized to access this resource")
+	if err := IsOrgAuthorized(ctx, req.OrganizationId); err != nil {
+		return nil, err
 	}
 
 	grp, err := s.store.CreateGroup(ctx, db.CreateGroupParams{
@@ -142,8 +142,8 @@ func (s *Server) GetGroupById(ctx context.Context, req *pb.GetGroupByIdRequest) 
 	}
 
 	// check if user is authorized
-	if !IsRequestAuthorized(ctx, grp.OrganizationID) {
-		return nil, status.Errorf(codes.PermissionDenied, "user is not authorized to access this resource")
+	if err := IsOrgAuthorized(ctx, grp.OrganizationID); err != nil {
+		return nil, err
 	}
 
 	roles, users, err := getGroupDependencies(ctx, s.store, grp)
@@ -179,8 +179,8 @@ func (s *Server) GetGroupByName(ctx context.Context, req *pb.GetGroupByNameReque
 	}
 
 	// check if user is authorized
-	if !IsRequestAuthorized(ctx, grp.OrganizationID) {
-		return nil, status.Errorf(codes.PermissionDenied, "user is not authorized to access this resource")
+	if err := IsOrgAuthorized(ctx, grp.OrganizationID); err != nil {
+		return nil, err
 	}
 
 	roles, users, err := getGroupDependencies(ctx, s.store, grp)
@@ -217,6 +217,11 @@ func (s *Server) GetGroups(ctx context.Context, req *pb.GetGroupsRequest) (*pb.G
 		req.Limit = PaginationLimit
 	}
 
+	// check if user is authorized
+	if err := IsOrgAuthorized(ctx, req.OrganizationId); err != nil {
+		return nil, err
+	}
+
 	grps, err := s.store.ListGroups(ctx, db.ListGroupsParams{
 		OrganizationID: req.OrganizationId,
 		Limit:          req.Limit,
@@ -239,11 +244,7 @@ func (s *Server) GetGroups(ctx context.Context, req *pb.GetGroupsRequest) (*pb.G
 		})
 	}
 
-	// check if user is authorized
-	if IsRequestAuthorized(ctx, req.OrganizationId) {
-		return &resp, nil
-	}
-	return nil, status.Errorf(codes.PermissionDenied, "user is not authorized to access this resource")
+	return &resp, nil
 }
 
 type deleteGroupValidation struct {
@@ -290,14 +291,14 @@ func (s *Server) DeleteGroup(ctx context.Context,
 		}
 	}
 
-	// check if user is authorized
-	if IsRequestAuthorized(ctx, group.OrganizationID) {
-		err = s.store.DeleteGroup(ctx, in.Id)
-		if err != nil {
-			return nil, err
-		}
-
-		return &pb.DeleteGroupResponse{}, nil
+	// check if user is authorized on the org
+	if err := IsOrgAuthorized(ctx, group.OrganizationID); err != nil {
+		return nil, err
 	}
-	return nil, status.Errorf(codes.PermissionDenied, "user is not authorized to access this resource")
+	err = s.store.DeleteGroup(ctx, in.Id)
+	if err != nil {
+		return nil, err
+	}
+
+	return &pb.DeleteGroupResponse{}, nil
 }

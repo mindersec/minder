@@ -801,7 +801,7 @@ func TestGetUserDBMock(t *testing.T) {
 
 	mockStore := mockdb.NewMockStore(ctrl)
 
-	request := &pb.GetUserByIdRequest{Id: 1}
+	request := &pb.GetUserByIdRequest{UserId: 1}
 
 	expectedUser := db.User{
 		ID:             1,
@@ -855,7 +855,7 @@ func TestGetNonExistingUserDBMock(t *testing.T) {
 
 	mockStore := mockdb.NewMockStore(ctrl)
 
-	request := &pb.GetUserByIdRequest{Id: 5}
+	request := &pb.GetUserByIdRequest{UserId: 5}
 	// Create a new context and set the claims value
 	ctx := context.WithValue(context.Background(), auth.TokenInfoKey, auth.UserClaims{
 		UserId:         1,
@@ -898,7 +898,7 @@ func TestGetUser_gRPC(t *testing.T) {
 	}{
 		{
 			name: "Success",
-			req:  &pb.GetUserByIdRequest{Id: 1},
+			req:  &pb.GetUserByIdRequest{UserId: 1},
 			buildStubs: func(store *mockdb.MockStore) {
 				store.EXPECT().GetUserByID(gomock.Any(), gomock.Any()).
 					Return(db.User{
@@ -933,7 +933,7 @@ func TestGetUser_gRPC(t *testing.T) {
 		},
 		{
 			name: "NonExisting",
-			req:  &pb.GetUserByIdRequest{Id: 5},
+			req:  &pb.GetUserByIdRequest{UserId: 5},
 			buildStubs: func(store *mockdb.MockStore) {
 				store.EXPECT().GetUserByID(gomock.Any(), gomock.Any()).
 					Return(db.User{}, nil).

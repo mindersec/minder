@@ -37,7 +37,7 @@ import (
 
 func getUserById(ctx context.Context, client pb.UserServiceClient, id int32) (*pb.GetUserByIdResponse, error) {
 	user, err := client.GetUserById(ctx, &pb.GetUserByIdRequest{
-		Id: id,
+		UserId: id,
 	})
 	if err != nil {
 		return nil, err

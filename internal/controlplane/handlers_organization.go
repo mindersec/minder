@@ -274,8 +274,8 @@ func getOrganizationDependencies(ctx context.Context, store db.Store,
 func (s *Server) GetOrganization(ctx context.Context,
 	in *pb.GetOrganizationRequest) (*pb.GetOrganizationResponse, error) {
 	// check if user is authorized
-	if !IsRequestAuthorized(ctx, in.OrganizationId) {
-		return nil, status.Errorf(codes.PermissionDenied, "user is not authorized to access this resource")
+	if err := IsOrgAuthorized(ctx, in.OrganizationId); err != nil {
+		return nil, err
 	}
 
 	if in.GetOrganizationId() <= 0 {
@@ -326,8 +326,8 @@ func (s *Server) GetOrganizationByName(ctx context.Context,
 	}
 
 	// check if user is authorized
-	if !IsRequestAuthorized(ctx, org.ID) {
-		return nil, status.Errorf(codes.PermissionDenied, "user is not authorized to access this resource")
+	if err := IsOrgAuthorized(ctx, org.ID); err != nil {
+		return nil, err
 	}
 
 	groups, roles, users, err := getOrganizationDependencies(ctx, s.store, org)

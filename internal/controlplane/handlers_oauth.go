@@ -44,8 +44,8 @@ import (
 func (s *Server) GetAuthorizationURL(ctx context.Context,
 	req *pb.GetAuthorizationURLRequest) (*pb.GetAuthorizationURLResponse, error) {
 	// check if user is authorized
-	if !IsRequestAuthorized(ctx, req.GroupId) {
-		return nil, status.Errorf(codes.PermissionDenied, "user is not authorized to access this resource")
+	if err := IsGroupAuthorized(ctx, req.GroupId); err != nil {
+		return nil, err
 	}
 
 	// if we do not have a group, check if we can infer it
@@ -255,8 +255,10 @@ func (s *Server) ExchangeCodeForTokenWEB(ctx context.Context,
 func (s *Server) GetProviderAccessToken(ctx context.Context, provider string,
 	groupId int32, checkAuthz bool) (oauth2.Token, string, error) {
 	// check if user is authorized
-	if checkAuthz && !IsRequestAuthorized(ctx, groupId) {
-		return oauth2.Token{}, "", status.Errorf(codes.PermissionDenied, "user is not authorized to access this resource")
+	if checkAuthz {
+		if err := IsGroupAuthorized(ctx, groupId); err != nil {
+			return oauth2.Token{}, "", err
+		}
 	}
 
 	encToken, err := s.store.GetAccessTokenByGroupID(ctx,
@@ -326,8 +328,8 @@ func (s *Server) RevokeOauthGroupToken(ctx context.Context,
 	}
 
 	// check if user is authorized
-	if !IsRequestAuthorized(ctx, in.GroupId) {
-		return nil, status.Errorf(codes.PermissionDenied, "user is not authorized to access this resource")
+	if err := IsGroupAuthorized(ctx, in.GroupId); err != nil {
+		return nil, err
 	}
 
 	// need to read the token for the provider and group
@@ -370,8 +372,8 @@ func (s *Server) StoreProviderToken(ctx context.Context,
 	}
 
 	// check if user is authorized
-	if !IsRequestAuthorized(ctx, in.GroupId) {
-		return nil, status.Errorf(codes.PermissionDenied, "user is not authorized to access this resource")
+	if err := IsGroupAuthorized(ctx, in.GroupId); err != nil {
+		return nil, err
 	}
 
 	// validate token
@@ -437,8 +439,8 @@ func (s *Server) VerifyProviderTokenFrom(ctx context.Context,
 	}
 
 	// check if user is authorized
-	if !IsRequestAuthorized(ctx, in.GroupId) {
-		return nil, status.Errorf(codes.PermissionDenied, "user is not authorized to access this resource")
+	if err := IsGroupAuthorized(ctx, in.GroupId); err != nil {
+		return nil, err
 	}
 
 	// check if a token has been created since timestamp
