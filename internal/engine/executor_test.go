@@ -196,7 +196,8 @@ default allow = true`,
 			Repository: "test",
 			RepoId:     123,
 			CloneUrl:   "github.com/foo/bar.git",
-		}).WithRepositoryID(123)
+		}).WithRepositoryID(123).
+		WithSignal(engine.EntityInitSignal)
 
 	msg, err := eiw.BuildMessage()
 	require.NoError(t, err, "expected no error")
