@@ -144,3 +144,4 @@ dbschema:	## generate database schema with schema spy, monitor file until doc is
 
 mock:
 	mockgen -package mockdb -destination database/mock/store.go github.com/stacklok/mediator/internal/db Store
+	mockgen -package mockgh -destination internal/providers/github/mock/github.go -source internal/providers/github/github.go RestAPI

@@ -19,6 +19,8 @@ import (
 	"context"
 	"fmt"
 
+	"github.com/google/go-github/v53/github"
+
 	ghclient "github.com/stacklok/mediator/internal/providers/github"
 	pb "github.com/stacklok/mediator/pkg/generated/protobuf/go/mediator/v1"
 )
@@ -39,10 +41,14 @@ func newPrStatusHandler(
 	client ghclient.RestAPI,
 ) (prStatusHandler, error) {
 	switch action {
-	case actionRejectPr:
+	case actionReviewPr:
 		return newReviewPrHandler(ctx, pr, client)
-	case actionComment, actionPolicyOnly:
-		return nil, fmt.Errorf("action %s not implemented", action)
+	case actionCommitStatus:
+		return newCommitStatusPrHandler(ctx, pr, client)
+	case actionComment:
+		return newReviewPrHandler(ctx, pr, client, withVulnsFoundReviewStatus(github.String("COMMENT")))
+	case actionPolicyOnly:
+		return newPolicyOnlyPrHandler(), nil
 	default:
 		return nil, fmt.Errorf("unknown action: %s", action)
 	}

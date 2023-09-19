@@ -335,6 +335,17 @@ func (c *RestClient) DismissReview(
 	return review, nil
 }
 
+// SetCommitStatus is a wrapper for the GitHub API to set a commit status
+func (c *RestClient) SetCommitStatus(
+	ctx context.Context, owner, repo, ref string, status *github.RepoStatus,
+) (*github.RepoStatus, error) {
+	status, _, err := c.client.Repositories.CreateStatus(ctx, owner, repo, ref, status)
+	if err != nil {
+		return nil, fmt.Errorf("error creating commit status: %w", err)
+	}
+	return status, nil
+}
+
 // GetRepository returns a single repository for the authenticated user
 func (c *RestClient) GetRepository(ctx context.Context, owner string, name string) (*github.Repository, error) {
 	// create a slice to hold the repositories
