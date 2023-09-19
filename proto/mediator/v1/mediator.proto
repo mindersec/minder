@@ -701,12 +701,22 @@ service UserService {
             post: "/api/v1/user/password"
             body: "*"
         };
+
+        option (rpc_options) = {
+            auth_scope: OBJECT_OWNER_USER
+            owner_only: true
+        };
     }
 
     rpc UpdateProfile (UpdateProfileRequest) returns (UpdateProfileResponse) {
         option (google.api.http) = {
             post: "/api/v1/user/profile"
             body: "*"
+        };
+
+        option (rpc_options) = {
+            auth_scope: OBJECT_OWNER_USER
+            owner_only: true
         };
     }
 
