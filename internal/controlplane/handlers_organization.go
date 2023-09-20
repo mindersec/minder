@@ -274,7 +274,7 @@ func getOrganizationDependencies(ctx context.Context, store db.Store,
 func (s *Server) GetOrganization(ctx context.Context,
 	in *pb.GetOrganizationRequest) (*pb.GetOrganizationResponse, error) {
 	// check if user is authorized
-	if err := IsOrgAuthorized(ctx, in.OrganizationId); err != nil {
+	if err := AuthorizedOnOrg(ctx, in.OrganizationId); err != nil {
 		return nil, err
 	}
 
@@ -326,7 +326,7 @@ func (s *Server) GetOrganizationByName(ctx context.Context,
 	}
 
 	// check if user is authorized
-	if err := IsOrgAuthorized(ctx, org.ID); err != nil {
+	if err := AuthorizedOnOrg(ctx, org.ID); err != nil {
 		return nil, err
 	}
 

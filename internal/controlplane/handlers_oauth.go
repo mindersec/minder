@@ -44,7 +44,7 @@ import (
 func (s *Server) GetAuthorizationURL(ctx context.Context,
 	req *pb.GetAuthorizationURLRequest) (*pb.GetAuthorizationURLResponse, error) {
 	// check if user is authorized
-	if err := IsGroupAuthorized(ctx, req.GroupId); err != nil {
+	if err := AuthorizedOnGroup(ctx, req.GroupId); err != nil {
 		return nil, err
 	}
 
@@ -256,7 +256,7 @@ func (s *Server) GetProviderAccessToken(ctx context.Context, provider string,
 	groupId int32, checkAuthz bool) (oauth2.Token, string, error) {
 	// check if user is authorized
 	if checkAuthz {
-		if err := IsGroupAuthorized(ctx, groupId); err != nil {
+		if err := AuthorizedOnGroup(ctx, groupId); err != nil {
 			return oauth2.Token{}, "", err
 		}
 	}
@@ -328,7 +328,7 @@ func (s *Server) RevokeOauthGroupToken(ctx context.Context,
 	}
 
 	// check if user is authorized
-	if err := IsGroupAuthorized(ctx, in.GroupId); err != nil {
+	if err := AuthorizedOnGroup(ctx, in.GroupId); err != nil {
 		return nil, err
 	}
 
@@ -372,7 +372,7 @@ func (s *Server) StoreProviderToken(ctx context.Context,
 	}
 
 	// check if user is authorized
-	if err := IsGroupAuthorized(ctx, in.GroupId); err != nil {
+	if err := AuthorizedOnGroup(ctx, in.GroupId); err != nil {
 		return nil, err
 	}
 
@@ -439,7 +439,7 @@ func (s *Server) VerifyProviderTokenFrom(ctx context.Context,
 	}
 
 	// check if user is authorized
-	if err := IsGroupAuthorized(ctx, in.GroupId); err != nil {
+	if err := AuthorizedOnGroup(ctx, in.GroupId); err != nil {
 		return nil, err
 	}
 

@@ -70,7 +70,7 @@ func (s *Server) RegisterRepository(ctx context.Context,
 	}
 
 	// check if user is authorized
-	if err := IsGroupAuthorized(ctx, in.GroupId); err != nil {
+	if err := AuthorizedOnGroup(ctx, in.GroupId); err != nil {
 		return nil, err
 	}
 
@@ -179,7 +179,7 @@ func (s *Server) ListRepositories(ctx context.Context,
 	}
 
 	// check if user is authorized
-	if err := IsGroupAuthorized(ctx, in.GroupId); err != nil {
+	if err := AuthorizedOnGroup(ctx, in.GroupId); err != nil {
 		return nil, err
 	}
 
@@ -259,7 +259,7 @@ func (s *Server) GetRepositoryById(ctx context.Context,
 	}
 
 	// check if user is authorized
-	if err := IsGroupAuthorized(ctx, repo.GroupID); err != nil {
+	if err := AuthorizedOnGroup(ctx, repo.GroupID); err != nil {
 		return nil, err
 	}
 
@@ -308,7 +308,7 @@ func (s *Server) GetRepositoryByName(ctx context.Context,
 		return nil, err
 	}
 	// check if user is authorized
-	if err := IsGroupAuthorized(ctx, repo.GroupID); err != nil {
+	if err := AuthorizedOnGroup(ctx, repo.GroupID); err != nil {
 		return nil, err
 	}
 
@@ -348,7 +348,7 @@ func (s *Server) SyncRepositories(ctx context.Context, in *pb.SyncRepositoriesRe
 	}
 
 	// check if user is authorized
-	if err := IsGroupAuthorized(ctx, in.GroupId); err != nil {
+	if err := AuthorizedOnGroup(ctx, in.GroupId); err != nil {
 		return nil, err
 	}
 

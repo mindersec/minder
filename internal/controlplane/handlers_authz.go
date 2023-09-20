@@ -86,9 +86,9 @@ func isSuperadmin(claims auth.UserClaims) bool {
 	return false
 }
 
-// IsOrgAuthorized checks if the request is authorized for the given
+// AuthorizedOnOrg checks if the request is authorized for the given
 // organization, and returns an error if the request is not authorized.
-func IsOrgAuthorized(ctx context.Context, orgId int32) error {
+func AuthorizedOnOrg(ctx context.Context, orgId int32) error {
 	claims, _ := ctx.Value(auth.TokenInfoKey).(auth.UserClaims)
 	if isSuperadmin(claims) {
 		return nil
@@ -109,9 +109,9 @@ func IsOrgAuthorized(ctx context.Context, orgId int32) error {
 	return nil
 }
 
-// IsGroupAuthorized checks if the request is authorized for the given
+// AuthorizedOnGroup checks if the request is authorized for the given
 // group, and returns an error if the request is not authorized.
-func IsGroupAuthorized(ctx context.Context, groupId int32) error {
+func AuthorizedOnGroup(ctx context.Context, groupId int32) error {
 	claims, _ := ctx.Value(auth.TokenInfoKey).(auth.UserClaims)
 	if isSuperadmin(claims) {
 		return nil
@@ -134,9 +134,9 @@ func IsGroupAuthorized(ctx context.Context, groupId int32) error {
 	return nil
 }
 
-// IsUserAuthorized checks if the request is authorized for the given
+// AuthorizedOnUser checks if the request is authorized for the given
 // user, and returns an error if the request is not authorized.
-func IsUserAuthorized(ctx context.Context, userId int32) error {
+func AuthorizedOnUser(ctx context.Context, userId int32) error {
 	claims, _ := ctx.Value(auth.TokenInfoKey).(auth.UserClaims)
 	if isSuperadmin(claims) {
 		return nil

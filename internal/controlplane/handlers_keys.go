@@ -30,7 +30,7 @@ import (
 // CreateKeyPair creates a new key pair for a given group
 func (s *Server) CreateKeyPair(ctx context.Context, req *pb.CreateKeyPairRequest) (*pb.CreateKeyPairResponse, error) {
 	// check if user is authorized
-	if err := IsGroupAuthorized(ctx, req.GroupId); err != nil {
+	if err := AuthorizedOnGroup(ctx, req.GroupId); err != nil {
 		return nil, err
 	}
 	bpass, err := base64.RawStdEncoding.DecodeString(req.Passphrase)

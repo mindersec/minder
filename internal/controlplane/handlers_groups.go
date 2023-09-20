@@ -100,7 +100,7 @@ func (s *Server) CreateGroup(ctx context.Context, req *pb.CreateGroupRequest) (*
 	}
 
 	// check if user is authorized
-	if err := IsOrgAuthorized(ctx, req.OrganizationId); err != nil {
+	if err := AuthorizedOnOrg(ctx, req.OrganizationId); err != nil {
 		return nil, err
 	}
 
@@ -142,7 +142,7 @@ func (s *Server) GetGroupById(ctx context.Context, req *pb.GetGroupByIdRequest) 
 	}
 
 	// check if user is authorized
-	if err := IsOrgAuthorized(ctx, grp.OrganizationID); err != nil {
+	if err := AuthorizedOnOrg(ctx, grp.OrganizationID); err != nil {
 		return nil, err
 	}
 
@@ -179,7 +179,7 @@ func (s *Server) GetGroupByName(ctx context.Context, req *pb.GetGroupByNameReque
 	}
 
 	// check if user is authorized
-	if err := IsOrgAuthorized(ctx, grp.OrganizationID); err != nil {
+	if err := AuthorizedOnOrg(ctx, grp.OrganizationID); err != nil {
 		return nil, err
 	}
 
@@ -218,7 +218,7 @@ func (s *Server) GetGroups(ctx context.Context, req *pb.GetGroupsRequest) (*pb.G
 	}
 
 	// check if user is authorized
-	if err := IsOrgAuthorized(ctx, req.OrganizationId); err != nil {
+	if err := AuthorizedOnOrg(ctx, req.OrganizationId); err != nil {
 		return nil, err
 	}
 
@@ -292,7 +292,7 @@ func (s *Server) DeleteGroup(ctx context.Context,
 	}
 
 	// check if user is authorized on the org
-	if err := IsOrgAuthorized(ctx, group.OrganizationID); err != nil {
+	if err := AuthorizedOnOrg(ctx, group.OrganizationID); err != nil {
 		return nil, err
 	}
 	err = s.store.DeleteGroup(ctx, in.Id)

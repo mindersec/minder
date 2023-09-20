@@ -47,7 +47,7 @@ func (s *Server) ListArtifacts(ctx context.Context, in *pb.ListArtifactsRequest)
 	}
 
 	// check if user is authorized
-	if err := IsGroupAuthorized(ctx, in.GroupId); err != nil {
+	if err := AuthorizedOnGroup(ctx, in.GroupId); err != nil {
 		return nil, err
 	}
 
@@ -105,7 +105,7 @@ func (s *Server) GetArtifactById(ctx context.Context, in *pb.GetArtifactByIdRequ
 	}
 
 	// check if user is authorized
-	if err := IsGroupAuthorized(ctx, artifact.GroupID); err != nil {
+	if err := AuthorizedOnGroup(ctx, artifact.GroupID); err != nil {
 		return nil, err
 	}
 

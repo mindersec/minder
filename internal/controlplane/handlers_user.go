@@ -96,7 +96,7 @@ func (s *Server) CreateUser(ctx context.Context,
 	}
 
 	// check if user is authorized
-	if err := IsOrgAuthorized(ctx, in.OrganizationId); err != nil {
+	if err := AuthorizedOnOrg(ctx, in.OrganizationId); err != nil {
 		return nil, err
 	}
 
@@ -207,7 +207,7 @@ func (s *Server) DeleteUser(ctx context.Context,
 	}
 
 	// check if user is authorized
-	if err := IsOrgAuthorized(ctx, user.OrganizationID); err != nil {
+	if err := AuthorizedOnOrg(ctx, user.OrganizationID); err != nil {
 		return nil, err
 	}
 
@@ -275,7 +275,7 @@ func (s *Server) GetUsers(ctx context.Context,
 func (s *Server) GetUsersByOrganization(ctx context.Context,
 	in *pb.GetUsersByOrganizationRequest) (*pb.GetUsersByOrganizationResponse, error) {
 	// check if user is authorized
-	if err := IsOrgAuthorized(ctx, in.OrganizationId); err != nil {
+	if err := AuthorizedOnOrg(ctx, in.OrganizationId); err != nil {
 		return nil, err
 	}
 
@@ -323,7 +323,7 @@ func (s *Server) GetUsersByOrganization(ctx context.Context,
 func (s *Server) GetUsersByGroup(ctx context.Context,
 	in *pb.GetUsersByGroupRequest) (*pb.GetUsersByGroupResponse, error) {
 	// check if user is authorized
-	if err := IsGroupAuthorized(ctx, in.GroupId); err != nil {
+	if err := AuthorizedOnGroup(ctx, in.GroupId); err != nil {
 		return nil, err
 	}
 
@@ -420,7 +420,7 @@ func (s *Server) GetUserById(ctx context.Context,
 	}
 
 	// check if user is authorized
-	if err := IsUserAuthorized(ctx, in.UserId); err != nil {
+	if err := AuthorizedOnUser(ctx, in.UserId); err != nil {
 		return nil, err
 	}
 
@@ -472,7 +472,7 @@ func (s *Server) GetUserByUserName(ctx context.Context,
 	}
 
 	// check if user is authorized
-	if err := IsOrgAuthorized(ctx, user.OrganizationID); err != nil {
+	if err := AuthorizedOnOrg(ctx, user.OrganizationID); err != nil {
 		return nil, err
 	}
 
@@ -516,7 +516,7 @@ func (s *Server) GetUserByEmail(ctx context.Context,
 	}
 
 	// check if user is authorized
-	if err := IsOrgAuthorized(ctx, user.OrganizationID); err != nil {
+	if err := AuthorizedOnOrg(ctx, user.OrganizationID); err != nil {
 		return nil, err
 	}
 
@@ -547,7 +547,7 @@ func (s *Server) GetUserByEmail(ctx context.Context,
 func (s *Server) GetUser(ctx context.Context, _ *pb.GetUserRequest) (*pb.GetUserResponse, error) {
 	claims, _ := ctx.Value(auth.TokenInfoKey).(auth.UserClaims)
 	// check if user is authorized
-	if err := IsUserAuthorized(ctx, claims.UserId); err != nil {
+	if err := AuthorizedOnUser(ctx, claims.UserId); err != nil {
 		return nil, err
 	}
 
@@ -592,7 +592,7 @@ type updatePasswordValidation struct {
 func (s *Server) UpdatePassword(ctx context.Context, in *pb.UpdatePasswordRequest) (*pb.UpdatePasswordResponse, error) {
 	claims, _ := ctx.Value(auth.TokenInfoKey).(auth.UserClaims)
 	// check if user is authorized
-	if err := IsUserAuthorized(ctx, claims.UserId); err != nil {
+	if err := AuthorizedOnUser(ctx, claims.UserId); err != nil {
 		return nil, err
 	}
 
@@ -654,7 +654,7 @@ type updateProfileValidation struct {
 //gocyclo:ignore
 func (s *Server) UpdateProfile(ctx context.Context, in *pb.UpdateProfileRequest) (*pb.UpdateProfileResponse, error) {
 	claims, _ := ctx.Value(auth.TokenInfoKey).(auth.UserClaims)
-	if err := IsUserAuthorized(ctx, claims.UserId); err != nil {
+	if err := AuthorizedOnUser(ctx, claims.UserId); err != nil {
 		return nil, err
 	}
 

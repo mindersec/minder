@@ -44,7 +44,7 @@ func (s *Server) CreateRoleByOrganization(ctx context.Context,
 	}
 
 	// check if user is authorized
-	if err := IsOrgAuthorized(ctx, in.OrganizationId); err != nil {
+	if err := AuthorizedOnOrg(ctx, in.OrganizationId); err != nil {
 		return nil, err
 	}
 
@@ -93,7 +93,7 @@ func (s *Server) CreateRoleByGroup(ctx context.Context,
 	}
 
 	// check if user is authorized
-	if err := IsGroupAuthorized(ctx, in.GroupId); err != nil {
+	if err := AuthorizedOnGroup(ctx, in.GroupId); err != nil {
 		return nil, err
 	}
 
@@ -165,7 +165,7 @@ func (s *Server) DeleteRole(ctx context.Context,
 	}
 
 	// check if user is authorized
-	if err := IsOrgAuthorized(ctx, role.OrganizationID); err != nil {
+	if err := AuthorizedOnOrg(ctx, role.OrganizationID); err != nil {
 		return nil, err
 	}
 
@@ -208,7 +208,7 @@ func (s *Server) GetRoles(ctx context.Context,
 	}
 
 	// check if user is authorized
-	if err := IsOrgAuthorized(ctx, in.OrganizationId); err != nil {
+	if err := AuthorizedOnOrg(ctx, in.OrganizationId); err != nil {
 		return nil, err
 	}
 
@@ -258,7 +258,7 @@ func (s *Server) GetRolesByGroup(ctx context.Context,
 	}
 
 	// check if user is authorized
-	if err := IsGroupAuthorized(ctx, in.GroupId); err != nil {
+	if err := AuthorizedOnGroup(ctx, in.GroupId); err != nil {
 		return nil, err
 	}
 
@@ -316,7 +316,7 @@ func (s *Server) GetRoleById(ctx context.Context,
 	}
 
 	// check if user is authorized
-	if err := IsOrgAuthorized(ctx, role.OrganizationID); err != nil {
+	if err := AuthorizedOnOrg(ctx, role.OrganizationID); err != nil {
 		return nil, err
 	}
 
@@ -339,7 +339,7 @@ func (s *Server) GetRoleById(ctx context.Context,
 func (s *Server) GetRoleByName(ctx context.Context,
 	in *pb.GetRoleByNameRequest) (*pb.GetRoleByNameResponse, error) {
 	// check if user is authorized
-	if err := IsOrgAuthorized(ctx, in.OrganizationId); err != nil {
+	if err := AuthorizedOnOrg(ctx, in.OrganizationId); err != nil {
 		return nil, err
 	}
 
