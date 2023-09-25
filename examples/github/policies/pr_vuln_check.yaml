@@ -8,7 +8,7 @@ context:
 pull_request:
   - type: pr_vulnerability_check
     def:
-        action: reject_pr
+        action: policy_only
         ecosystem_config:
             - name: npm
               vulnerability_database_type: osv
