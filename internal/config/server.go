@@ -63,8 +63,24 @@ func (s *GRPCServerConfig) GetAddress() string {
 	return fmt.Sprintf("%s:%d", s.Host, s.Port)
 }
 
-// RegisterHTTPServerFlags registers the flags for the HTTP server
-func RegisterHTTPServerFlags(v *viper.Viper, flags *pflag.FlagSet) error {
+// RegisterServerFlags registers the flags for the Mediator server
+func RegisterServerFlags(v *viper.Viper, flags *pflag.FlagSet) error {
+	// Register the flags for the HTTP server
+	if err := registerHTTPServerFlags(v, flags); err != nil {
+		return err
+	}
+
+	// Register the flags for the gRPC server
+	if err := registerGRPCServerFlags(v, flags); err != nil {
+		return err
+	}
+
+	// Register the flags for the metric server
+	return registerMetricServerFlags(v, flags)
+}
+
+// registerHTTPServerFlags registers the flags for the HTTP server
+func registerHTTPServerFlags(v *viper.Viper, flags *pflag.FlagSet) error {
 	err := util.BindConfigFlag(v, flags, "http_server.host", "http-host", "",
 		"The host to bind to for the HTTP server", flags.String)
 	if err != nil {
@@ -75,8 +91,8 @@ func RegisterHTTPServerFlags(v *viper.Viper, flags *pflag.FlagSet) error {
 		"The port to bind to for the HTTP server", flags.Int)
 }
 
-// RegisterGRPCServerFlags registers the flags for the gRPC server
-func RegisterGRPCServerFlags(v *viper.Viper, flags *pflag.FlagSet) error {
+// registerGRPCServerFlags registers the flags for the gRPC server
+func registerGRPCServerFlags(v *viper.Viper, flags *pflag.FlagSet) error {
 	err := util.BindConfigFlag(v, flags, "grpc_server.host", "grpc-host", "",
 		"The host to bind to for the gRPC server", flags.String)
 	if err != nil {
@@ -87,8 +103,8 @@ func RegisterGRPCServerFlags(v *viper.Viper, flags *pflag.FlagSet) error {
 		"The port to bind to for the gRPC server", flags.Int)
 }
 
-// RegisterMetricServerFlags registers the flags for the metric server
-func RegisterMetricServerFlags(v *viper.Viper, flags *pflag.FlagSet) error {
+// registerMetricServerFlags registers the flags for the metric server
+func registerMetricServerFlags(v *viper.Viper, flags *pflag.FlagSet) error {
 	err := util.BindConfigFlag(v, flags, "metric_server.host", "metric-host", "",
 		"The host to bind to for the metric server", flags.String)
 	if err != nil {

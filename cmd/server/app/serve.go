@@ -112,20 +112,11 @@ func init() {
 
 	v := viper.GetViper()
 
-	// http server flags
-	if err := config.RegisterHTTPServerFlags(v, serveCmd.Flags()); err != nil {
+	// Register flags for the server - http, grpc, metrics
+	if err := config.RegisterServerFlags(v, serveCmd.Flags()); err != nil {
 		log.Fatal(err)
 	}
 
-	// grpc server flags
-	if err := config.RegisterGRPCServerFlags(v, serveCmd.Flags()); err != nil {
-		log.Fatal(err)
-	}
-
-	// metric server flags
-	if err := config.RegisterMetricServerFlags(v, serveCmd.Flags()); err != nil {
-		log.Fatal(err)
-	}
 	serveCmd.Flags().String("logging", "", "Log Level")
 
 	serveCmd.Flags().Bool("dump_config", false, "Dump Config and exit")

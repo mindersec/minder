@@ -305,9 +305,7 @@ func (s *Server) startMetricServer(ctx context.Context) error {
 	}
 
 	go func() {
-		if err := server.ListenAndServe(); err != nil {
-			ch <- fmt.Errorf("failed to serve: %w", err)
-		}
+		ch <- server.ListenAndServe()
 	}()
 
 	select {
