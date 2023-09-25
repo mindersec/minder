@@ -27,7 +27,7 @@ require (
 	github.com/open-policy-agent/opa v0.56.0
 	github.com/pkg/browser v0.0.0-20210911075715-681adbf594b8
 	github.com/prometheus/client_golang v1.16.0
-	github.com/rs/zerolog v1.30.0
+	github.com/rs/zerolog v1.31.0
 	github.com/secure-systems-lab/go-securesystemslib v0.7.0
 	github.com/shurcooL/graphql v0.0.0-20220606043923-3cf50f8a0a29
 	github.com/sigstore/cosign/v2 v2.2.0
