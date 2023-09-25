@@ -18,8 +18,9 @@ package diff
 import (
 	"context"
 	"fmt"
-	"log"
+	"path/filepath"
 
+	"github.com/rs/zerolog"
 	"google.golang.org/protobuf/reflect/protoreflect"
 
 	engif "github.com/stacklok/mediator/internal/engine/interfaces"
@@ -30,6 +31,8 @@ import (
 const (
 	// DiffRuleDataIngestType is the type of the diff rule data ingest engine
 	DiffRuleDataIngestType = "diff"
+	prFilesPerPage         = 30
+	wildcard               = "*"
 )
 
 // Diff is the diff rule data ingest engine
@@ -46,6 +49,7 @@ func NewDiffIngester(
 	if cfg == nil {
 		cfg = &pb.DiffType{}
 	}
+
 	return &Diff{
 		cfg: cfg,
 		cli: cli,
@@ -63,41 +67,34 @@ func (di *Diff) Ingest(
 		return nil, fmt.Errorf("entity is not a pull request")
 	}
 
-	// TODO(jakub): support pagination
-	prFiles, err := di.cli.ListFiles(ctx, pr.RepoOwner, pr.RepoName, int(pr.Number), 1, 100)
-	if err != nil {
-		return nil, fmt.Errorf("error getting pull request files: %w", err)
-	}
+	logger := zerolog.Ctx(ctx).With().
+		Int32("pull-number", pr.Number).
+		Str("repo-owner", pr.RepoOwner).
+		Str("repo-name", pr.RepoName).
+		Logger()
 
 	allDiffs := make([]*pb.PrDependencies_ContextualDependency, 0)
 
-	for _, file := range prFiles {
-		eco := di.getEcosystemForFile(*file.Filename)
-		if eco == DepEcosystemNone {
-			log.Printf("no ecosystem found for file %s", *file.Filename)
-			continue
-		}
-
-		parser := newEcosystemParser(eco)
-		if parser == nil {
-			return nil, fmt.Errorf("no parser found for ecosystem %s", eco)
-		}
-
-		depBatch, err := parser(*file.Patch)
+	page := 0
+	for {
+		prFiles, resp, err := di.cli.ListFiles(ctx, pr.RepoOwner, pr.RepoName, int(pr.Number), prFilesPerPage, page)
 		if err != nil {
-			return nil, fmt.Errorf("error parsing file %s: %w", *file.Filename, err)
+			return nil, fmt.Errorf("error getting pull request files: %w", err)
 		}
 
-		for i := range depBatch {
-			dep := depBatch[i]
-			allDiffs = append(allDiffs, &pb.PrDependencies_ContextualDependency{
-				Dep: dep,
-				File: &pb.FilePatch{
-					Name:     file.GetFilename(),
-					PatchUrl: file.GetRawURL(),
-				},
-			})
+		for _, file := range prFiles {
+			fileDiffs, err := di.ingestFile(file.GetFilename(), file.GetPatch(), file.GetRawURL(), logger)
+			if err != nil {
+				return nil, fmt.Errorf("error ingesting file %s: %w", file.GetFilename(), err)
+			}
+			allDiffs = append(allDiffs, fileDiffs...)
 		}
+
+		if resp.NextPage == 0 {
+			break
+		}
+
+		page = resp.NextPage
 	}
 
 	return &engif.Result{
@@ -108,11 +105,59 @@ func (di *Diff) Ingest(
 	}, nil
 }
 
+func (di *Diff) ingestFile(
+	filename, patchContents, patchUrl string,
+	logger zerolog.Logger,
+) ([]*pb.PrDependencies_ContextualDependency, error) {
+	parser := di.getParserForFile(filename, logger)
+	if parser == nil {
+		return nil, nil
+	}
+
+	depBatch, err := parser(patchContents)
+	if err != nil {
+		return nil, fmt.Errorf("error parsing file %s: %w", filename, err)
+	}
+
+	batchCtxDeps := make([]*pb.PrDependencies_ContextualDependency, 0, len(depBatch))
+	for i := range depBatch {
+		dep := depBatch[i]
+		batchCtxDeps = append(batchCtxDeps, &pb.PrDependencies_ContextualDependency{
+			Dep: dep,
+			File: &pb.PrDependencies_ContextualDependency_FilePatch{
+				Name:     filename,
+				PatchUrl: patchUrl,
+			},
+		})
+	}
+
+	return batchCtxDeps, nil
+}
+
 func (di *Diff) getEcosystemForFile(filename string) DependencyEcosystem {
+	lastComponent := filepath.Base(filename)
+
 	for _, ecoMapping := range di.cfg.Ecosystems {
-		if filename == ecoMapping.Depfile {
+		if match, _ := filepath.Match(ecoMapping.Depfile, lastComponent); match {
 			return DependencyEcosystem(ecoMapping.Name)
 		}
 	}
 	return DepEcosystemNone
+}
+
+func (di *Diff) getParserForFile(filename string, logger zerolog.Logger) ecosystemParser {
+	eco := di.getEcosystemForFile(filename)
+	if eco == DepEcosystemNone {
+		logger.Debug().
+			Str("filename", filename).
+			Msg("No ecosystem found, skipping")
+		return nil
+	}
+
+	logger.Debug().
+		Str("filename", filename).
+		Str("package-ecosystem", string(eco)).
+		Msg("matched ecosystem")
+
+	return newEcosystemParser(eco)
 }
