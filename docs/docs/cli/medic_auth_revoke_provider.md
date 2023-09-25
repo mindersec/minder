@@ -14,6 +14,7 @@ medic auth revoke_provider [flags]
 
 ```
   -a, --all               Revoke all tokens
+  -g, --group-id int32    ID of the group for repo registration
   -h, --help              help for revoke_provider
   -n, --provider string   Name for the provider to revoke tokens for
 ```
