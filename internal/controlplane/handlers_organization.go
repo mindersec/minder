@@ -17,6 +17,7 @@ package controlplane
 import (
 	"context"
 	"database/sql"
+	"encoding/json"
 	"errors"
 	"fmt"
 	"time"
@@ -28,6 +29,7 @@ import (
 
 	mcrypto "github.com/stacklok/mediator/internal/crypto"
 	"github.com/stacklok/mediator/internal/db"
+	"github.com/stacklok/mediator/internal/providers/github"
 	"github.com/stacklok/mediator/internal/util"
 	pb "github.com/stacklok/mediator/pkg/generated/protobuf/go/mediator/v1"
 )
@@ -38,6 +40,7 @@ type createOrganizationValidation struct {
 }
 
 // CreateOrganization is a service for creating an organization
+// nolint:gocyclo // we should reactor this later.
 func (s *Server) CreateOrganization(ctx context.Context,
 	in *pb.CreateOrganizationRequest) (*pb.CreateOrganizationResponse, error) {
 	// validate that the company and name are not empty
@@ -153,6 +156,18 @@ func (s *Server) CreateOrganization(ctx context.Context,
 			Password: pass, IsProtected: &user.IsProtected, CreatedAt: timestamppb.New(user.CreatedAt),
 			UpdatedAt: timestamppb.New(user.UpdatedAt), NeedsPasswordChange: &user.NeedsPasswordChange}
 		response.DefaultUser = &usr
+
+		// Create GitHub provider
+		_, err = qtx.CreateProvider(ctx, db.CreateProviderParams{
+			Name:       github.Github,
+			GroupID:    grp.GroupId,
+			Implements: github.Implements,
+			// TODO add actual definition
+			Definition: json.RawMessage("{}"),
+		})
+		if err != nil {
+			return nil, status.Errorf(codes.Internal, "failed to create provider: %v", err)
+		}
 	}
 	// commit and return
 	err = s.store.Commit(tx)

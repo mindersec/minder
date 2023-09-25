@@ -269,12 +269,25 @@ func (s *UnitTestSuite) TestHandleWebHookRepository() {
 
 	srv.evt.Register(engine.InternalEntityEventTopic, pq.pass)
 
+	providerName := "github"
+
 	mockStore.EXPECT().
 		GetRepositoryByRepoID(gomock.Any(), gomock.Any()).
 		Return(db.Repository{
-			ID:      1,
+			ID:       1,
+			GroupID:  1,
+			RepoID:   12345,
+			Provider: providerName,
+		}, nil)
+
+	mockStore.EXPECT().
+		GetProviderByName(gomock.Any(), db.GetProviderByNameParams{
+			Name:    providerName,
 			GroupID: 1,
-			RepoID:  12345,
+		}).
+		Return(db.Provider{
+			GroupID: 1,
+			Name:    providerName,
 		}, nil)
 
 	hook := srv.HandleGitHubWebHook()

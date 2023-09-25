@@ -20,6 +20,7 @@ import (
 	"testing"
 
 	"github.com/golang/mock/gomock"
+	"github.com/google/uuid"
 	"github.com/stretchr/testify/assert"
 	"golang.org/x/oauth2/github"
 	"golang.org/x/oauth2/google"
@@ -87,6 +88,7 @@ func TestGetAuthorizationURL(t *testing.T) {
 	state := "test"
 	grpID := sql.NullInt32{Int32: 1, Valid: true}
 	port := sql.NullInt32{Int32: 8080, Valid: true}
+	providerID := uuid.New()
 
 	testCases := []struct {
 		name               string
@@ -103,6 +105,15 @@ func TestGetAuthorizationURL(t *testing.T) {
 				Cli:      true,
 			},
 			buildStubs: func(store *mockdb.MockStore) {
+				store.EXPECT().
+					GetProviderByName(gomock.Any(), db.GetProviderByNameParams{
+						Name:    "github",
+						GroupID: grpID.Int32,
+					}).
+					Return(db.Provider{
+						ID:   providerID,
+						Name: "github",
+					}, nil)
 				store.EXPECT().
 					CreateSessionState(gomock.Any(), gomock.Any()).
 					Return(db.SessionStore{
@@ -174,11 +185,22 @@ func TestRevokeOauthTokens_gRPC(t *testing.T) {
 	defer ctrl.Finish()
 
 	mockStore := mockdb.NewMockStore(ctrl)
+
+	providerUUID := uuid.New()
+
+	mockStore.EXPECT().
+		GlobalListProviders(gomock.Any()).
+		Return([]db.Provider{
+			{
+				ID:   providerUUID,
+				Name: ghclient.Github,
+			},
+		}, nil)
 	mockStore.EXPECT().GetAccessTokenByProvider(gomock.Any(), gomock.Any())
 
 	server := newDefaultServer(t, mockStore)
 
-	res, err := server.RevokeOauthTokens(ctx, &pb.RevokeOauthTokensRequest{Provider: ghclient.Github})
+	res, err := server.RevokeOauthTokens(ctx, &pb.RevokeOauthTokensRequest{})
 
 	assert.NoError(t, err)
 	assert.NotNil(t, res)
@@ -198,7 +220,19 @@ func RevokeOauthGroupToken_gRPC(t *testing.T) {
 	ctrl := gomock.NewController(t)
 	defer ctrl.Finish()
 
+	providerUUID := uuid.New()
+
 	mockStore := mockdb.NewMockStore(ctrl)
+
+	mockStore.EXPECT().
+		GetProviderByName(gomock.Any(), db.GetProviderByNameParams{
+			Name:    ghclient.Github,
+			GroupID: 1,
+		}).
+		Return(db.Provider{
+			ID:   providerUUID,
+			Name: ghclient.Github,
+		}, nil)
 	mockStore.EXPECT().GetAccessTokenByGroupID(gomock.Any(), gomock.Any())
 
 	server := newDefaultServer(t, mockStore)

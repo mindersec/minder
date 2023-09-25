@@ -35,7 +35,6 @@ import (
 	"github.com/stacklok/mediator/internal/db"
 	"github.com/stacklok/mediator/internal/engine"
 	"github.com/stacklok/mediator/internal/providers"
-	ghclient "github.com/stacklok/mediator/internal/providers/github"
 	pb "github.com/stacklok/mediator/pkg/generated/protobuf/go/mediator/v1"
 )
 
@@ -69,13 +68,6 @@ func NewRepoReconcilerMessage(provider string, repoID, groupID int32) (*message.
 
 // handleRepoReconcilerEvent handles events coming from the reconciler topic
 func (e *Reconciler) handleRepoReconcilerEvent(msg *message.Message) error {
-	prov := msg.Metadata.Get("provider")
-
-	if prov != ghclient.Github {
-		log.Printf("provider %s not supported", prov)
-		return nil
-	}
-
 	var evt RepoReconcilerEvent
 	if err := json.Unmarshal(msg.Payload, &evt); err != nil {
 		return fmt.Errorf("error unmarshalling payload: %w", err)
@@ -92,26 +84,32 @@ func (e *Reconciler) handleRepoReconcilerEvent(msg *message.Message) error {
 
 	ctx := msg.Context()
 	log.Printf("handling reconciler event for group %d and repository %d", evt.Group, evt.Repository)
-	return e.handleArtifactsReconcilerEvent(ctx, prov, &evt)
+	return e.handleArtifactsReconcilerEvent(ctx, &evt)
 }
 
 // HandleArtifactsReconcilerEvent recreates the artifacts belonging to
 // an specific repository
 // nolint: gocyclo
-func (e *Reconciler) handleArtifactsReconcilerEvent(ctx context.Context, prov string, evt *RepoReconcilerEvent) error {
-	cli, err := providers.BuildClient(ctx, prov, evt.Group, e.store, e.crypteng)
+func (e *Reconciler) handleArtifactsReconcilerEvent(ctx context.Context, evt *RepoReconcilerEvent) error {
+	// first retrieve data for the repository
+	repository, err := e.store.GetRepositoryByRepoID(ctx, evt.Repository)
+	if err != nil {
+		return fmt.Errorf("error retrieving repository: %w", err)
+	}
+
+	prov, err := e.store.GetProviderByName(ctx, db.GetProviderByNameParams{
+		Name:    repository.Provider,
+		GroupID: evt.Group,
+	})
+	if err != nil {
+		return fmt.Errorf("error retrieving provider: %w", err)
+	}
+
+	cli, err := providers.BuildClient(ctx, prov.Name, evt.Group, e.store, e.crypteng)
 	if err != nil {
 		return fmt.Errorf("error building client: %w", err)
 	}
 
-	// first retrieve data for the repository
-	repository, err := e.store.GetRepositoryByRepoID(ctx, db.GetRepositoryByRepoIDParams{
-		Provider: prov,
-		RepoID:   evt.Repository,
-	})
-	if err != nil {
-		return fmt.Errorf("error retrieving repository: %w", err)
-	}
 	isOrg := (cli.GetOwner() != "")
 	// todo: add another type of artifacts
 	artifacts, err := cli.ListPackagesByRepository(ctx, isOrg, repository.RepoOwner,
@@ -222,7 +220,7 @@ func (e *Reconciler) handleArtifactsReconcilerEvent(ctx context.Context, prov st
 			}
 
 			err = engine.NewEntityInfoWrapper().
-				WithProvider(prov).
+				WithProvider(prov.Name).
 				WithVersionedArtifact(versionedArtifact).
 				WithGroupID(evt.Group).
 				WithArtifactID(newArtifact.ID).

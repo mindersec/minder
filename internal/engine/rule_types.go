@@ -267,7 +267,7 @@ func RuleTypePBFromDB(rt *db.RuleType, ectx *EntityContext) (*pb.RuleType, error
 		Id:   &id,
 		Name: rt.Name,
 		Context: &pb.Context{
-			Provider: ectx.GetProvider(),
+			Provider: ectx.GetProvider().Name,
 			Group:    &gname,
 		},
 		Description: rt.Description,
