@@ -1042,7 +1042,6 @@ message RepositoryRecord {
 
 message GetRepositoryByIdRequest {
     int32 repository_id = 1;
-    int32 group_id = 2;
 }
 
 message GetRepositoryByIdResponse {

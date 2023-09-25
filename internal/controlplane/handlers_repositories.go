@@ -258,20 +258,6 @@ func (s *Server) GetRepositoryById(ctx context.Context,
 		return nil, status.Errorf(codes.InvalidArgument, "repository id not specified")
 	}
 
-	// if we do not have a group, check if we can infer it
-	if in.GroupId == 0 {
-		group, err := auth.GetDefaultGroup(ctx)
-		if err != nil {
-			return nil, status.Errorf(codes.InvalidArgument, "cannot infer group id")
-		}
-		in.GroupId = group
-	}
-
-	// check if user is authorized
-	if !IsRequestAuthorized(ctx, in.GroupId) {
-		return nil, status.Errorf(codes.PermissionDenied, "user is not authorized to access this resource")
-	}
-
 	// read the repository
 	repo, err := s.store.GetRepositoryByID(ctx, in.RepositoryId)
 	if errors.Is(err, sql.ErrNoRows) {
@@ -280,7 +266,10 @@ func (s *Server) GetRepositoryById(ctx context.Context,
 		return nil, status.Errorf(codes.Internal, "cannot read repository: %v", err)
 	}
 
-	if repo.GroupID != in.GroupId {
+	groupID := repo.GroupID
+
+	// check if user is authorized
+	if !IsRequestAuthorized(ctx, groupID) {
 		return nil, status.Errorf(codes.PermissionDenied, "user is not authorized to access this resource")
 	}
 

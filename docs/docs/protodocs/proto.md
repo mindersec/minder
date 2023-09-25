@@ -1357,7 +1357,6 @@ if the struct is reused in other messages, it should be moved to a top-level def
 | Field | Type | Label | Description |
 | ----- | ---- | ----- | ----------- |
 | repository_id | [int32](#int32) |  |  |
-| group_id | [int32](#int32) |  |  |
 
 
 
