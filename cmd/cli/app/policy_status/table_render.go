@@ -20,6 +20,7 @@ import (
 	"strings"
 	"time"
 
+	"github.com/charmbracelet/glamour"
 	"github.com/olekukonko/tablewriter"
 	"github.com/spf13/cobra"
 	"gopkg.in/yaml.v2"
@@ -160,5 +161,12 @@ func guidanceOrEncouragement(status, guidance string) string {
 		return "No guidance available for this rule 😞"
 	}
 
-	return guidance
+	// TODO: use a color scheme for mediator instead of a pre-defined one.
+	// Related-to: https://github.com/stacklok/mediator/issues/1006
+	renderedGuidance, err := glamour.Render(guidance, "dark")
+	if err != nil {
+		return guidance
+	}
+
+	return renderedGuidance
 }
