@@ -75,7 +75,7 @@ func (s *Server) RegisterRepository(ctx context.Context,
 		Name:    in.GetProvider(),
 		GroupID: in.GetGroupId()})
 	if err != nil {
-		return nil, returnProviderError(fmt.Errorf("provider error: %w", err))
+		return nil, providerError(fmt.Errorf("provider error: %w", err))
 	}
 
 	// Check if needs github authorization
@@ -187,7 +187,7 @@ func (s *Server) ListRepositories(ctx context.Context,
 		Name:    in.GetProvider(),
 		GroupID: in.GetGroupId()})
 	if err != nil {
-		return nil, returnProviderError(fmt.Errorf("provider error: %w", err))
+		return nil, providerError(fmt.Errorf("provider error: %w", err))
 	}
 
 	repos, err := s.store.ListRepositoriesByGroupID(ctx, db.ListRepositoriesByGroupIDParams{
@@ -289,7 +289,7 @@ func (s *Server) GetRepositoryById(ctx context.Context,
 		GroupID: repo.GroupID,
 	})
 	if err != nil {
-		return nil, returnProviderError(fmt.Errorf("provider error: %w", err))
+		return nil, providerError(fmt.Errorf("provider error: %w", err))
 	}
 
 	createdAt := timestamppb.New(repo.CreatedAt)
@@ -343,7 +343,7 @@ func (s *Server) GetRepositoryByName(ctx context.Context,
 		GroupID: in.GroupId,
 	})
 	if err != nil {
-		return nil, returnProviderError(fmt.Errorf("provider error: %w", err))
+		return nil, providerError(fmt.Errorf("provider error: %w", err))
 	}
 
 	repo, err := s.store.GetRepositoryByRepoName(ctx,
@@ -400,7 +400,7 @@ func (s *Server) SyncRepositories(ctx context.Context, in *pb.SyncRepositoriesRe
 		GroupID: in.GroupId,
 	})
 	if err != nil {
-		return nil, returnProviderError(fmt.Errorf("provider error: %w", err))
+		return nil, providerError(fmt.Errorf("provider error: %w", err))
 	}
 
 	// Check if needs github authorization

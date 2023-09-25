@@ -70,7 +70,7 @@ func (s *Server) GetAuthorizationURL(ctx context.Context,
 		GroupID: req.GroupId,
 	})
 	if err != nil {
-		return nil, returnProviderError(fmt.Errorf("provider error: %w", err))
+		return nil, providerError(fmt.Errorf("provider error: %w", err))
 	}
 
 	// Create a new OAuth2 config for the given provider
@@ -169,7 +169,7 @@ func (s *Server) ExchangeCodeForTokenCLI(ctx context.Context,
 		GroupID: stateData.GrpID.Int32,
 	})
 	if err != nil {
-		return nil, returnProviderError(fmt.Errorf("provider error: %w", err))
+		return nil, providerError(fmt.Errorf("provider error: %w", err))
 	}
 
 	// generate a new OAuth2 config for the given provider
@@ -354,7 +354,7 @@ func (s *Server) RevokeOauthGroupToken(ctx context.Context,
 
 	provider, err := s.store.GetProviderByName(ctx, db.GetProviderByNameParams{Name: in.Provider, GroupID: in.GroupId})
 	if err != nil {
-		return nil, returnProviderError(fmt.Errorf("provider error: %w", err))
+		return nil, providerError(fmt.Errorf("provider error: %w", err))
 	}
 
 	// need to read the token for the provider and group
@@ -399,7 +399,7 @@ func (s *Server) StoreProviderToken(ctx context.Context,
 
 	provider, err := s.store.GetProviderByName(ctx, db.GetProviderByNameParams{Name: in.Provider, GroupID: in.GroupId})
 	if err != nil {
-		return nil, returnProviderError(fmt.Errorf("provider error: %w", err))
+		return nil, providerError(fmt.Errorf("provider error: %w", err))
 	}
 
 	// validate token
@@ -467,7 +467,7 @@ func (s *Server) VerifyProviderTokenFrom(ctx context.Context,
 
 	provider, err := s.store.GetProviderByName(ctx, db.GetProviderByNameParams{Name: in.Provider, GroupID: in.GroupId})
 	if err != nil {
-		return nil, returnProviderError(fmt.Errorf("provider error: %w", err))
+		return nil, providerError(fmt.Errorf("provider error: %w", err))
 	}
 
 	// check if a token has been created since timestamp

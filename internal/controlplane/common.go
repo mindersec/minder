@@ -25,7 +25,7 @@ import (
 	"github.com/stacklok/mediator/internal/util"
 )
 
-func returnProviderError(err error) error {
+func providerError(err error) error {
 	if errors.Is(err, sql.ErrNoRows) {
 		return util.UserVisibleError(codes.NotFound, "provider not found")
 	}

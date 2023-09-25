@@ -109,7 +109,7 @@ func (s *Server) CreatePolicy(ctx context.Context,
 		Name:    entityCtx.GetProvider().Name,
 		GroupID: entityCtx.GetGroup().ID})
 	if err != nil {
-		return nil, returnProviderError(fmt.Errorf("provider error: %w", err))
+		return nil, providerError(fmt.Errorf("provider error: %w", err))
 	}
 
 	if err := engine.ValidatePolicy(in); err != nil {

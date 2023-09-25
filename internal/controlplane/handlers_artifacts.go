@@ -52,7 +52,7 @@ func (s *Server) ListArtifacts(ctx context.Context, in *pb.ListArtifactsRequest)
 		GroupID: in.GroupId,
 	})
 	if err != nil {
-		return nil, returnProviderError(err)
+		return nil, providerError(err)
 	}
 
 	// first read all the repositories for provider and group
