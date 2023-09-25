@@ -105,9 +105,19 @@ func (e *Reconciler) handleArtifactsReconcilerEvent(ctx context.Context, evt *Re
 		return fmt.Errorf("error retrieving provider: %w", err)
 	}
 
-	cli, err := providers.BuildClient(ctx, prov.Name, evt.Group, e.store, e.crypteng)
+	p, err := providers.GetProviderBuilder(ctx, prov, evt.Group, e.store, e.crypteng)
 	if err != nil {
 		return fmt.Errorf("error building client: %w", err)
+	}
+
+	if !p.Implements(db.ProviderTypeGithub) {
+		log.Printf("provider %s is not supported for artifacts reconciler", prov.Name)
+		return nil
+	}
+
+	cli, err := p.GetGitHub(ctx)
+	if err != nil {
+		return fmt.Errorf("error getting github client: %w", err)
 	}
 
 	isOrg := (cli.GetOwner() != "")
@@ -117,7 +127,7 @@ func (e *Reconciler) handleArtifactsReconcilerEvent(ctx context.Context, evt *Re
 	if err != nil {
 		return fmt.Errorf("error retrieving artifacts: %w", err)
 	}
-	for _, artifact := range artifacts.Packages {
+	for _, artifact := range artifacts {
 		// store information if we do not have it
 		newArtifact, err := e.store.UpsertArtifact(ctx,
 			db.UpsertArtifactParams{RepositoryID: repository.ID, ArtifactName: artifact.GetName(),

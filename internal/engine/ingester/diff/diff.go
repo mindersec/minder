@@ -24,8 +24,9 @@ import (
 	"google.golang.org/protobuf/reflect/protoreflect"
 
 	engif "github.com/stacklok/mediator/internal/engine/interfaces"
-	ghclient "github.com/stacklok/mediator/internal/providers/github"
+	"github.com/stacklok/mediator/internal/providers"
 	pb "github.com/stacklok/mediator/pkg/api/protobuf/go/mediator/v1"
+	provifv1 "github.com/stacklok/mediator/pkg/providers/v1"
 )
 
 const (
@@ -37,23 +38,32 @@ const (
 
 // Diff is the diff rule data ingest engine
 type Diff struct {
-	cli ghclient.RestAPI
+	cli provifv1.GitHub
 	cfg *pb.DiffType
 }
 
 // NewDiffIngester creates a new diff ingester
 func NewDiffIngester(
 	cfg *pb.DiffType,
-	cli ghclient.RestAPI,
-) *Diff {
+	pbuild *providers.ProviderBuilder,
+) (*Diff, error) {
 	if cfg == nil {
 		cfg = &pb.DiffType{}
+	}
+
+	if pbuild == nil {
+		return nil, fmt.Errorf("provider builder is nil")
+	}
+
+	cli, err := pbuild.GetGitHub(context.Background())
+	if err != nil {
+		return nil, fmt.Errorf("failed to get github client: %w", err)
 	}
 
 	return &Diff{
 		cfg: cfg,
 		cli: cli,
-	}
+	}, nil
 }
 
 // Ingest ingests a pull request and returns a list of dependencies

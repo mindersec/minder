@@ -19,27 +19,16 @@ import (
 	"testing"
 
 	"github.com/stretchr/testify/assert"
+
+	provifv1 "github.com/stacklok/mediator/pkg/providers/v1"
 )
 
 func TestNewRestClient(t *testing.T) {
 	t.Parallel()
 
-	client, err := NewRestClient(context.Background(), GitHubConfig{
-		Token:    "token",
+	client, err := NewRestClient(context.Background(), &provifv1.GitHubConfig{
 		Endpoint: "https://api.github.com",
-	}, "")
-	assert.NoError(t, err)
-	assert.NotNil(t, client)
-}
-
-func TestNewGraphQLClient(t *testing.T) {
-	t.Parallel()
-
-	client, err := NewGraphQLClient(context.Background(), GitHubConfig{
-		Token:    "token",
-		Endpoint: "https://api.github.com/graphql",
-	})
-
+	}, "token", "")
 	assert.NoError(t, err)
 	assert.NotNil(t, client)
 }

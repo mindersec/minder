@@ -34,7 +34,7 @@ import (
 	"github.com/stacklok/mediator/internal/engine/ingester"
 	engif "github.com/stacklok/mediator/internal/engine/interfaces"
 	"github.com/stacklok/mediator/internal/entities"
-	ghclient "github.com/stacklok/mediator/internal/providers/github"
+	"github.com/stacklok/mediator/internal/providers"
 	"github.com/stacklok/mediator/internal/util"
 	pb "github.com/stacklok/mediator/pkg/api/protobuf/go/mediator/v1"
 )
@@ -169,18 +169,18 @@ type RuleTypeEngine struct {
 	rval *RuleValidator
 
 	rt *pb.RuleType
-	// TODO(JAORMX): We need to have an abstract client interface
-	cli ghclient.RestAPI
+
+	cli *providers.ProviderBuilder
 }
 
 // NewRuleTypeEngine creates a new rule type engine
-func NewRuleTypeEngine(rt *pb.RuleType, cli ghclient.RestAPI, accessToken string) (*RuleTypeEngine, error) {
+func NewRuleTypeEngine(rt *pb.RuleType, cli *providers.ProviderBuilder) (*RuleTypeEngine, error) {
 	rval, err := NewRuleValidator(rt)
 	if err != nil {
 		return nil, fmt.Errorf("cannot create rule validator: %w", err)
 	}
 
-	rdi, err := ingester.NewRuleDataIngest(rt, cli, accessToken)
+	rdi, err := ingester.NewRuleDataIngest(rt, cli)
 	if err != nil {
 		return nil, fmt.Errorf("cannot create rule data ingest: %w", err)
 	}

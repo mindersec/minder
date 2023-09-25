@@ -49,9 +49,9 @@ import (
 	"github.com/stacklok/mediator/internal/db"
 	"github.com/stacklok/mediator/internal/engine"
 	"github.com/stacklok/mediator/internal/providers"
-	ghclient "github.com/stacklok/mediator/internal/providers/github"
 	"github.com/stacklok/mediator/internal/util"
 	pb "github.com/stacklok/mediator/pkg/api/protobuf/go/mediator/v1"
+	provifv1 "github.com/stacklok/mediator/pkg/providers/v1"
 )
 
 // CONTAINER_TYPE is the type for container artifacts
@@ -134,7 +134,7 @@ func (s *Server) HandleGitHubWebHook() http.HandlerFunc {
 		// TODO: extract sender and event time from payload portably
 		m := message.NewMessage(uuid.New().String(), nil)
 		m.Metadata.Set("id", github.DeliveryID(r))
-		m.Metadata.Set("provider", ghclient.Github)
+		m.Metadata.Set("provider", string(db.ProviderTypeGithub))
 		m.Metadata.Set("source", "https://api.github.com/") // TODO: handle other sources
 
 		m.Metadata.Set("type", github.WebHookType(r))
@@ -374,9 +374,21 @@ func (s *Server) parseArtifactPublishedEvent(
 		return fmt.Errorf("error getting provider: %w", err)
 	}
 
-	cli, err := providers.BuildClient(ctx, dbrepo.Provider, g, s.store, s.cryptoEngine)
+	p, err := providers.GetProviderBuilder(ctx, prov, g, s.store, s.cryptoEngine)
 	if err != nil {
 		return fmt.Errorf("error building client: %w", err)
+	}
+
+	// NOTE(jaosorior): this webhook is very specific to github
+	if !p.Implements(db.ProviderTypeGithub) {
+		log.Printf("provider %s is not supported for github webhook", p.GetName())
+		return nil
+	}
+
+	cli, err := p.GetGitHub(ctx)
+	if err != nil {
+		log.Printf("error creating github provider: %v", err)
+		return nil
 	}
 
 	versionedArtifact, err := gatherVersionedArtifact(ctx, cli, s.store, whPayload)
@@ -419,9 +431,21 @@ func (s *Server) parsePullRequestModEvent(
 		return fmt.Errorf("error getting provider: %w", err)
 	}
 
-	cli, err := providers.BuildClient(ctx, prov.Name, g, s.store, s.cryptoEngine)
+	p, err := providers.GetProviderBuilder(ctx, prov, g, s.store, s.cryptoEngine)
 	if err != nil {
 		return fmt.Errorf("error building client: %w", err)
+	}
+
+	// NOTE(jaosorior): this webhook is very specific to github
+	if !p.Implements(db.ProviderTypeGithub) {
+		log.Printf("provider %s is not supported for github webhook", p.GetName())
+		return nil
+	}
+
+	cli, err := p.GetGitHub(ctx)
+	if err != nil {
+		log.Printf("error creating github provider: %v", err)
+		return nil
 	}
 
 	prEvalInfo, err := getPullRequestInfoFromPayload(ctx, whPayload)
@@ -502,7 +526,7 @@ func extractArtifactVersionFromPayload(ctx context.Context, payload map[string]a
 
 func gatherArtifactInfo(
 	ctx context.Context,
-	client ghclient.RestAPI,
+	client provifv1.GitHub,
 	payload map[string]any,
 ) (*pb.Artifact, error) {
 	artifact, err := extractArtifactFromPayload(ctx, payload)
@@ -561,7 +585,7 @@ func lookUpVersionBySignature(
 
 func gatherArtifactVersionInfo(
 	ctx context.Context,
-	cli ghclient.RestAPI,
+	cli provifv1.GitHub,
 	payload map[string]any,
 	artifactOwnerLogin, artifactName string,
 ) (*pb.ArtifactVersion, error) {
@@ -582,7 +606,7 @@ func gatherArtifactVersionInfo(
 
 func gatherVersionedArtifact(
 	ctx context.Context,
-	cli ghclient.RestAPI,
+	cli provifv1.GitHub,
 	store db.Store,
 	payload map[string]any,
 ) (*pb.VersionedArtifact, error) {
@@ -623,7 +647,7 @@ func gatherVersionedArtifact(
 
 func storeSignatureAndWorkflowInVersion(
 	ctx context.Context,
-	client ghclient.RestAPI,
+	client provifv1.GitHub,
 	artifactOwnerLogin, artifactName, packageVersionName string,
 	version *pb.ArtifactVersion,
 ) error {
@@ -651,7 +675,7 @@ func storeSignatureAndWorkflowInVersion(
 
 func updateArtifactVersionFromRegistry(
 	ctx context.Context,
-	client ghclient.RestAPI,
+	client provifv1.GitHub,
 	payload map[string]any,
 	artifactOwnerLogin, artifactName string,
 	version *pb.ArtifactVersion,
@@ -827,7 +851,7 @@ func getPullRequestInfoFromPayload(
 
 func updatePullRequestInfoFromProvider(
 	ctx context.Context,
-	cli ghclient.RestAPI,
+	cli provifv1.GitHub,
 	dbrepo db.Repository,
 	prEvalInfo *pb.PullRequest,
 ) error {

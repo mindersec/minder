@@ -26,6 +26,7 @@ import (
 	"google.golang.org/protobuf/reflect/protoreflect"
 
 	evalerrors "github.com/stacklok/mediator/internal/engine/errors"
+	"github.com/stacklok/mediator/internal/providers"
 	pb "github.com/stacklok/mediator/pkg/api/protobuf/go/mediator/v1"
 )
 
@@ -60,7 +61,7 @@ func TestBuiltInWorks(t *testing.T) {
 		t.Run(tt.name, func(t *testing.T) {
 			t.Parallel()
 
-			bi, err := NewBuiltinRuleDataIngest(nil, "")
+			bi, err := NewBuiltinRuleDataIngest(nil, &providers.ProviderBuilder{})
 			assert.NoError(t, err)
 			bi.method = tt.methodName
 
@@ -107,7 +108,7 @@ func TestBuiltinErrorCases(t *testing.T) {
 		t.Run(tt.name, func(t *testing.T) {
 			t.Parallel()
 
-			bi, err := NewBuiltinRuleDataIngest(nil, "")
+			bi, err := NewBuiltinRuleDataIngest(nil, &providers.ProviderBuilder{})
 			assert.NoError(t, err)
 			bi.method = tt.methodName
 
