@@ -182,8 +182,6 @@ CREATE TABLE session_store (
 );
 
 -- table for storing rule types
--- Note we'll leave the group_id in here since we'll de-couple the provider
--- reference from this table in favor of referencing provider types.
 CREATE TABLE rule_type (
     id SERIAL PRIMARY KEY,
     name TEXT NOT NULL,
