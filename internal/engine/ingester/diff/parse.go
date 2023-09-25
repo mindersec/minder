@@ -16,6 +16,7 @@
 package diff
 
 import (
+	"bufio"
 	"encoding/json"
 	"fmt"
 	"strings"
@@ -29,11 +30,42 @@ func newEcosystemParser(eco DependencyEcosystem) ecosystemParser {
 	switch eco {
 	case DepEcosystemNPM:
 		return npmParse
+	case DepEcosystemGo:
+		return goParse
 	case DepEcosystemNone:
 		return nil
 	default:
 		return nil
 	}
+}
+
+func goParse(patch string) ([]*pb.Dependency, error) {
+	scanner := bufio.NewScanner(strings.NewReader(patch))
+	var deps []*pb.Dependency
+
+	for scanner.Scan() {
+		line := scanner.Text()
+
+		if strings.HasPrefix(line, "+") {
+			fields := strings.Split(line, " ")
+			if len(fields) > 2 && !strings.HasSuffix(fields[1], "/go.mod") {
+				name, version := fields[0], fields[1]
+				dep := &pb.Dependency{
+					Ecosystem: pb.DepEcosystem_DEP_ECOSYSTEM_GO,
+					Name:      name[1:],
+					Version:   version,
+				}
+
+				deps = append(deps, dep)
+			}
+		}
+	}
+
+	if err := scanner.Err(); err != nil {
+		return nil, err
+	}
+
+	return deps, nil
 }
 
 type npmDependency struct {
