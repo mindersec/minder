@@ -29,14 +29,15 @@ import (
 
 // Config is the top-level configuration structure.
 type Config struct {
-	HTTPServer    HTTPServerConfig `mapstructure:"http_server"`
-	GRPCServer    GRPCServerConfig `mapstructure:"grpc_server"`
-	LoggingConfig LoggingConfig    `mapstructure:"logging"`
-	Tracing       TracingConfig    `mapstructure:"tracing"`
-	Metrics       MetricsConfig    `mapstructure:"metrics"`
-	Database      DatabaseConfig   `mapstructure:"database"`
-	Salt          CryptoConfig     `mapstructure:"salt"`
-	Auth          AuthConfig       `mapstructure:"auth"`
+	HTTPServer    HTTPServerConfig   `mapstructure:"http_server"`
+	GRPCServer    GRPCServerConfig   `mapstructure:"grpc_server"`
+	MetricServer  MetricServerConfig `mapstructure:"metric_server"`
+	LoggingConfig LoggingConfig      `mapstructure:"logging"`
+	Tracing       TracingConfig      `mapstructure:"tracing"`
+	Metrics       MetricsConfig      `mapstructure:"metrics"`
+	Database      DatabaseConfig     `mapstructure:"database"`
+	Salt          CryptoConfig       `mapstructure:"salt"`
+	Auth          AuthConfig         `mapstructure:"auth"`
 }
 
 // DefaultConfigForTest returns a configuration with all the struct defaults set,

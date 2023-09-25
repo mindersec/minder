@@ -55,3 +55,22 @@ spec:
       name: grpc
   selector:
     app: mediator
+
+---
+
+apiVersion: v1
+kind: Service
+metadata:
+  name: mediator-metrics
+  labels:
+  # This includes a newline, so ko sees this as valid yaml
+  # {{ include "common.labels.standard" (dict "customLabels" .Values.commonLabels "context" $ ) | nindent 4 }}
+spec:
+  type: ClusterIP
+  ports:
+    - port: !!int "{{ .Values.service.metricPort }}"
+      targetPort: http
+      protocol: TCP
+      name: metrics
+  selector:
+    app: mediator

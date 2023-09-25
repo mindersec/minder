@@ -23,6 +23,7 @@ services:
       "serve",
       "--grpc-host=0.0.0.0",
       "--http-host=0.0.0.0",
+      "--metric-host=0.0.0.0",
       "--db-host=postgres",
       "--config=/app/config.yaml",
       # If you don't want to store your GitHub client ID and secret in the main
@@ -34,6 +35,7 @@ services:
     ports:
       - "8080:8080"
       - "8090:8090"
+      - "9090:9090"
     volumes:
           - ./config.yaml:/app/config.yaml:z
           - ./assets:/assets:z
