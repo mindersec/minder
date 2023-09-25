@@ -36,6 +36,9 @@ http_server:
 grpc_server:
   host:	"myhost"
   port:	8667
+metric_server:
+  host:	"myhost"
+  port:	8668
 `
 
 	cfgbuf := bytes.NewBufferString(cfgstr)
@@ -52,6 +55,8 @@ grpc_server:
 	require.Equal(t, 8666, cfg.HTTPServer.Port)
 	require.Equal(t, "myhost", cfg.GRPCServer.Host)
 	require.Equal(t, 8667, cfg.GRPCServer.Port)
+	require.Equal(t, "myhost", cfg.MetricServer.Host)
+	require.Equal(t, 8668, cfg.MetricServer.Port)
 }
 
 func TestReadConfigWithDefaults(t *testing.T) {
@@ -68,9 +73,7 @@ metric_server:
 	v := viper.New()
 	flags := pflag.NewFlagSet("test", pflag.ContinueOnError)
 
-	require.NoError(t, config.RegisterHTTPServerFlags(v, flags), "Unexpected error")
-	require.NoError(t, config.RegisterGRPCServerFlags(v, flags), "Unexpected error")
-	require.NoError(t, config.RegisterMetricServerFlags(v, flags), "Unexpected error")
+	require.NoError(t, config.RegisterServerFlags(v, flags), "Unexpected error")
 
 	v.SetConfigType("yaml")
 	require.NoError(t, v.ReadConfig(cfgbuf), "Unexpected error")
@@ -106,9 +109,7 @@ metric_server:
 	v := viper.New()
 	flags := pflag.NewFlagSet("test", pflag.ContinueOnError)
 
-	require.NoError(t, config.RegisterHTTPServerFlags(v, flags), "Unexpected error")
-	require.NoError(t, config.RegisterGRPCServerFlags(v, flags), "Unexpected error")
-	require.NoError(t, config.RegisterMetricServerFlags(v, flags), "Unexpected error")
+	require.NoError(t, config.RegisterServerFlags(v, flags), "Unexpected error")
 
 	require.NoError(t, flags.Parse([]string{"--http-host=foo", "--http-port=1234", "--grpc-host=bar", "--grpc-port=5678", "--metric-host=var", "--metric-port=6679"}))
 
