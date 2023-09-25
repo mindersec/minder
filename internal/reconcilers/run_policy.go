@@ -18,6 +18,7 @@ import (
 	"context"
 	"database/sql"
 	"encoding/json"
+	"errors"
 	"fmt"
 	"log"
 	"strings"
@@ -84,8 +85,14 @@ func (e *Reconciler) handlePolicyInitEvent(msg *message.Message) error {
 		GroupID: evt.Group,
 	})
 	if err != nil {
-		log.Printf("error getting provider: %v", err)
-		return nil
+		if errors.Is(err, sql.ErrNoRows) {
+			// We don't return the event since there's no use
+			// retrying it if the provider doesn't exist.
+			log.Printf("provider %s not found", prov)
+			return nil
+		}
+
+		return fmt.Errorf("error getting provider: %w", err)
 	}
 
 	ectx := &engine.EntityContext{
