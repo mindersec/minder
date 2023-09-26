@@ -18,6 +18,7 @@ package vulncheck
 import (
 	"errors"
 	"fmt"
+	"strings"
 
 	"github.com/go-playground/validator/v10"
 	"github.com/mitchellh/mapstructure"
@@ -94,13 +95,14 @@ func pbEcosystemAsString(ecosystem pb.DepEcosystem) string {
 }
 
 func (c *config) getEcosystemConfig(ecosystem pb.DepEcosystem) *ecosystemConfig {
-	for _, eco := range c.EcosystemConfig {
-		sEco := pbEcosystemAsString(ecosystem)
-		if sEco == "" {
-			continue
-		}
+	sEco := pbEcosystemAsString(ecosystem)
+	if sEco == "" {
+		return nil
+	}
+	sEco = strings.ToLower(sEco)
 
-		if eco.Name == sEco {
+	for _, eco := range c.EcosystemConfig {
+		if strings.ToLower(eco.Name) == sEco {
 			return &eco
 		}
 	}
