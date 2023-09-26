@@ -24,8 +24,6 @@ package auth
 import (
 	"context"
 	"crypto/rsa"
-	"crypto/x509"
-	"encoding/pem"
 	"errors"
 	"fmt"
 	"time"
@@ -56,7 +54,7 @@ type UserClaims struct {
 }
 
 // GenerateToken generates a JWT token
-func GenerateToken(userClaims UserClaims, accessPrivateKey []byte, refreshPrivateKey []byte,
+func GenerateToken(userClaims UserClaims, accessPrivateKey *rsa.PrivateKey, refreshPrivateKey *rsa.PrivateKey,
 	expiry int64, refreshExpiry int64) (string, string, int64, int64, error) {
 	if accessPrivateKey == nil || refreshPrivateKey == nil {
 		return "", "", 0, 0, fmt.Errorf("invalid key")
@@ -73,11 +71,7 @@ func GenerateToken(userClaims UserClaims, accessPrivateKey []byte, refreshPrivat
 		"needsPasswordChange": userClaims.NeedsPasswordChange,
 	})
 
-	accessKey, err := jwt.ParseRSAPrivateKeyFromPEM(accessPrivateKey)
-	if err != nil {
-		return "", "", 0, 0, err
-	}
-	tokenString, err := token.SignedString(accessKey)
+	tokenString, err := token.SignedString(accessPrivateKey)
 	if err != nil {
 		return "", "", 0, 0, err
 	}
@@ -90,12 +84,7 @@ func GenerateToken(userClaims UserClaims, accessPrivateKey []byte, refreshPrivat
 		"exp":    refreshExpirationTime,
 	})
 
-	refreshKey, err := jwt.ParseRSAPrivateKeyFromPEM(refreshPrivateKey)
-	if err != nil {
-		return "", "", 0, 0, err
-	}
-
-	refreshTokenString, err := refreshToken.SignedString(refreshKey)
+	refreshTokenString, err := refreshToken.SignedString(refreshPrivateKey)
 	if err != nil {
 		return "", "", 0, 0, err
 	}
@@ -105,28 +94,17 @@ func GenerateToken(userClaims UserClaims, accessPrivateKey []byte, refreshPrivat
 
 // VerifyToken verifies the token string and returns the user ID
 // nolint:gocyclo
-func VerifyToken(tokenString string, publicKey []byte, store db.Store) (UserClaims, error) {
+func VerifyToken(tokenString string, publicKey *rsa.PublicKey, store db.Store) (UserClaims, error) {
 	var userClaims UserClaims
-	// extract the pubkey from the pem
-	pubPem, _ := pem.Decode(publicKey)
-	if pubPem == nil {
-		return userClaims, fmt.Errorf("invalid PEM data")
-	}
-	key, err := x509.ParsePKCS1PublicKey(pubPem.Bytes)
-	if err != nil {
-		// try another method
-		key1, err := x509.ParsePKIXPublicKey(pubPem.Bytes)
-		if err != nil {
-			return userClaims, fmt.Errorf("could not find PKCS1 or PKIX public key")
-		}
-		key = key1.(*rsa.PublicKey)
+	if publicKey == nil {
+		return userClaims, fmt.Errorf("invalid key")
 	}
 
 	token, err := jwt.Parse(tokenString, func(token *jwt.Token) (interface{}, error) {
 		if _, ok := token.Method.(*jwt.SigningMethodRSA); !ok {
 			return nil, status.Error(codes.InvalidArgument, "unexpected signing method")
 		}
-		return key, nil
+		return publicKey, nil
 	})
 
 	if err != nil {
@@ -192,27 +170,15 @@ func VerifyToken(tokenString string, publicKey []byte, store db.Store) (UserClai
 }
 
 // VerifyRefreshToken verifies the refresh token string and returns the user ID
-func VerifyRefreshToken(tokenString string, publicKey []byte, store db.Store) (int32, error) {
-	// extract the pubkey from the pem
-	pubPem, _ := pem.Decode(publicKey)
-	if pubPem == nil {
+func VerifyRefreshToken(tokenString string, publicKey *rsa.PublicKey, store db.Store) (int32, error) {
+	if publicKey == nil {
 		return 0, fmt.Errorf("invalid key")
 	}
-	key, err := x509.ParsePKCS1PublicKey(pubPem.Bytes)
-	if err != nil {
-		// try another method
-		key1, err := x509.ParsePKIXPublicKey(pubPem.Bytes)
-		if err != nil {
-			return 0, fmt.Errorf("invalid key")
-		}
-		key = key1.(*rsa.PublicKey)
-	}
-
 	token, err := jwt.Parse(tokenString, func(token *jwt.Token) (interface{}, error) {
 		if _, ok := token.Method.(*jwt.SigningMethodRSA); !ok {
 			return nil, status.Error(codes.InvalidArgument, "unexpected signing method")
 		}
-		return key, nil
+		return publicKey, nil
 	})
 
 	if err != nil {

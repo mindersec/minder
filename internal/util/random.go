@@ -121,26 +121,14 @@ func getRandomChar(r *rand.Rand, charset string) byte {
 }
 
 // RandomKeypair returns a random RSA keypair
-func RandomKeypair(length int) ([]byte, []byte) {
+func RandomKeypair(length int) (*rsa.PrivateKey, *rsa.PublicKey) {
 	privateKey, err := rsa.GenerateKey(crand.Reader, length)
 	if err != nil {
 		return nil, nil
 	}
 	publicKey := &privateKey.PublicKey
 
-	privateKeyPEM := &pem.Block{
-		Type:  "RSA PRIVATE KEY",
-		Bytes: x509.MarshalPKCS1PrivateKey(privateKey),
-	}
-	publicKeyPEM := &pem.Block{
-		Type:  "RSA PUBLIC KEY",
-		Bytes: x509.MarshalPKCS1PublicKey(publicKey),
-	}
-	// Encode the PEM block to a string
-	privateKeyString := pem.EncodeToMemory(privateKeyPEM)
-	publicKeyString := pem.EncodeToMemory(publicKeyPEM)
-
-	return privateKeyString, publicKeyString
+	return privateKey, publicKey
 }
 
 // RandomKeypairFile generates a random RSA keypair and writes it to files

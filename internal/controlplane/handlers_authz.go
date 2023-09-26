@@ -17,14 +17,11 @@ package controlplane
 import (
 	"context"
 	"fmt"
-	"os"
-	"path/filepath"
 	"strings"
 	"time"
 
 	gauth "github.com/grpc-ecosystem/go-grpc-middleware/v2/interceptors/auth"
 	"github.com/rs/zerolog"
-	"github.com/spf13/viper"
 	"golang.org/x/exp/slices"
 	"google.golang.org/grpc"
 	"google.golang.org/grpc/codes"
@@ -39,19 +36,15 @@ import (
 	mediator "github.com/stacklok/mediator/pkg/api/protobuf/go/mediator/v1"
 )
 
-func parseToken(token string, store db.Store) (auth.UserClaims, error) {
+func (s *Server) parseTokenForAuthz(token string) (auth.UserClaims, error) {
 	var claims auth.UserClaims
 	// need to read pub key from file
-	publicKeyPath := viper.GetString("auth.access_token_public_key")
-	if publicKeyPath == "" {
-		return claims, fmt.Errorf("could not read public key")
-	}
-	pubKeyData, err := os.ReadFile(filepath.Clean(publicKeyPath))
+	pubKeyData, err := s.cfg.Auth.GetAccessTokenPublicKey()
 	if err != nil {
 		return claims, fmt.Errorf("failed to read public key file")
 	}
 
-	userClaims, err := auth.VerifyToken(token, pubKeyData, store)
+	userClaims, err := auth.VerifyToken(token, pubKeyData, s.store)
 	if err != nil {
 		return claims, fmt.Errorf("failed to verify token: %v", err)
 	}
@@ -207,7 +200,7 @@ func AuthUnaryInterceptor(ctx context.Context, req interface{}, info *grpc.Unary
 	}
 
 	server := info.Server.(*Server)
-	claims, err := parseToken(token, server.store)
+	claims, err := server.parseTokenForAuthz(token)
 	if err != nil {
 		return nil, status.Errorf(codes.Unauthenticated, "invalid auth token: %v", err)
 	}

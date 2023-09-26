@@ -108,13 +108,13 @@ func TestVerifyToken(t *testing.T) {
 	}
 
 	// Test error case with invalid token string
-	_, err = VerifyToken("invalid_token_string", access_key, mockStore)
+	_, err = VerifyToken("invalid_token_string", access_pub_key, mockStore)
 	if err == nil {
 		t.Error("Expected error with invalid token string, but got nil")
 	}
 
 	// Test error case with invalid key
-	_, err = VerifyToken(tokenString, []byte("invalid_key"), mockStore)
+	_, err = VerifyToken(tokenString, nil, mockStore)
 	if err == nil {
 		t.Error("Expected error with invalid key, but got nil")
 	} else {
