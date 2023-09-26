@@ -48,7 +48,7 @@ gen: ## generate protobuf files
 	buf generate
 
 clean-gen:
-	rm -rf $(shell find pkg/generated -iname "*.go") & rm -rf $(shell find pkg/generated -iname "*.swagger.json") & rm -rf pkg/generated/protodocs
+	rm -rf $(shell find pkg/api -iname "*.go") & rm -rf $(shell find pkg/api -iname "*.swagger.json") & rm -rf pkg/api/protodocs
 
 cli-docs:
 	@mkdir -p docs/docs/cli
@@ -58,6 +58,7 @@ build: ## build golang binary
 	# @go build -ldflags "-X main.version=$(shell git describe --abbrev=0 --tags)" -o bin/$(projectname)
 	CGO_ENABLED=0 go build -trimpath -o ./bin/medic ./cmd/cli
 	CGO_ENABLED=0 go build -trimpath -o ./bin/$(projectname)-server ./cmd/server
+	CGO_ENABLED=0 go build -trimpath -o ./bin/medev ./cmd/dev
 
 run-cli: ## run the CLI, needs additional arguments
 	@go run -ldflags "-X main.version=$(shell git describe --abbrev=0 --tags)"  ./cmd/cli
@@ -144,4 +145,4 @@ dbschema:	## generate database schema with schema spy, monitor file until doc is
 
 mock:
 	mockgen -package mockdb -destination database/mock/store.go github.com/stacklok/mediator/internal/db Store
-	mockgen -package mockgh -destination internal/providers/github/mock/github.go -source internal/providers/github/github.go RestAPI
+	mockgen -package mockgh -destination internal/providers/github/mock/github.go -source pkg/providers/v1/providers.go GitHub 

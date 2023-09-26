@@ -29,8 +29,9 @@ import (
 
 	evalerrors "github.com/stacklok/mediator/internal/engine/errors"
 	engif "github.com/stacklok/mediator/internal/engine/interfaces"
+	"github.com/stacklok/mediator/internal/providers"
 	"github.com/stacklok/mediator/internal/util"
-	pb "github.com/stacklok/mediator/pkg/generated/protobuf/go/mediator/v1"
+	pb "github.com/stacklok/mediator/pkg/api/protobuf/go/mediator/v1"
 	"github.com/stacklok/mediator/pkg/rule_methods"
 )
 
@@ -50,11 +51,11 @@ type BuiltinRuleDataIngest struct {
 // NewBuiltinRuleDataIngest creates a new builtin rule data ingest engine
 func NewBuiltinRuleDataIngest(
 	builtinCfg *pb.BuiltinType,
-	access_token string,
+	pbuild *providers.ProviderBuilder,
 ) (*BuiltinRuleDataIngest, error) {
 	return &BuiltinRuleDataIngest{
 		builtinCfg:  builtinCfg,
-		accessToken: access_token,
+		accessToken: pbuild.GetToken(),
 		method:      builtinCfg.GetMethod(),
 		ruleMethods: &rule_methods.RuleMethods{},
 	}, nil

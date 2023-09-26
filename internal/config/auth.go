@@ -15,6 +15,17 @@
 
 package config
 
+import (
+	"crypto/rsa"
+	"crypto/x509"
+	"encoding/pem"
+	"fmt"
+	"os"
+	"path/filepath"
+
+	"github.com/golang-jwt/jwt/v4"
+)
+
 // AuthConfig is the configuration for the auth package
 type AuthConfig struct {
 	// AccessTokenPrivateKey is the private key used to sign the access token for authn/z
@@ -35,7 +46,73 @@ type AuthConfig struct {
 	TokenKey string `mapstructure:"token_key" default:"./.ssh/token_key_passphrase"`
 }
 
-// GetAuthConfigWithDefaults returns a AuthConfig with default values
-func GetAuthConfigWithDefaults() AuthConfig {
-	return AuthConfig{}
+// GetAccessTokenPrivateKey returns the private key used to sign the access token
+func (acfg *AuthConfig) GetAccessTokenPrivateKey() (*rsa.PrivateKey, error) {
+	return readRSAPrivateKey(acfg.AccessTokenPrivateKey)
+}
+
+// GetAccessTokenPublicKey returns the public key used to verify the access token
+func (acfg *AuthConfig) GetAccessTokenPublicKey() (*rsa.PublicKey, error) {
+	return readRSAPublicKey(acfg.AccessTokenPublicKey)
+}
+
+// GetRefreshTokenPrivateKey returns the private key used to sign the refresh token
+func (acfg *AuthConfig) GetRefreshTokenPrivateKey() (*rsa.PrivateKey, error) {
+	return readRSAPrivateKey(acfg.RefreshTokenPrivateKey)
+}
+
+// GetRefreshTokenPublicKey returns the public key used to verify the refresh token
+func (acfg *AuthConfig) GetRefreshTokenPublicKey() (*rsa.PublicKey, error) {
+	return readRSAPublicKey(acfg.RefreshTokenPublicKey)
+}
+
+// GetTokenKey returns a key used to encrypt the provider's token in the database
+func (acfg *AuthConfig) GetTokenKey() ([]byte, error) {
+	return readKey(acfg.TokenKey)
+}
+
+func readKey(keypath string) ([]byte, error) {
+	cleankeypath := filepath.Clean(keypath)
+	data, err := os.ReadFile(cleankeypath)
+	if err != nil {
+		return nil, fmt.Errorf("failed to read key: %w", err)
+	}
+
+	return data, nil
+}
+
+func readRSAPrivateKey(keypath string) (*rsa.PrivateKey, error) {
+	keyBytes, err := readKey(keypath)
+	if err != nil {
+		return nil, err
+	}
+	return jwt.ParseRSAPrivateKeyFromPEM(keyBytes)
+}
+
+func readRSAPublicKey(keypath string) (*rsa.PublicKey, error) {
+	keyBytes, err := readKey(keypath)
+	if err != nil {
+		return nil, err
+	}
+	// We'd like to use jwt.ParseRSAPublicKeyFromPEM here, but existing code
+	// uses ParsePKCS1PublicKey and ParsePKIXPublicKey, and the jwt method appears
+	// to only call the latter, despite documenting doing both.
+	// Ref: https://github.com/golang-jwt/jwt/blob/v4.5.0/rsa_utils.go#L79
+	pemBlock, _ := pem.Decode(keyBytes)
+	if pemBlock == nil {
+		return nil, fmt.Errorf("failed to decode PEM block in %q", keypath)
+	}
+	key, err := x509.ParsePKCS1PublicKey(pemBlock.Bytes)
+	if err != nil {
+		// try another method
+		aKey, err := x509.ParsePKIXPublicKey(pemBlock.Bytes)
+		if err != nil {
+			return nil, fmt.Errorf("could not find PKCS1 or PKIX public key in %q: %w", keypath, err)
+		}
+		var ok bool
+		if key, ok = aKey.(*rsa.PublicKey); !ok {
+			return nil, fmt.Errorf("wrong key type in %q, expected RSA public key", keypath)
+		}
+	}
+	return key, nil
 }

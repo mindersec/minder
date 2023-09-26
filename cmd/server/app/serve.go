@@ -112,11 +112,8 @@ func init() {
 
 	v := viper.GetViper()
 
-	if err := config.RegisterHTTPServerFlags(v, serveCmd.Flags()); err != nil {
-		log.Fatal(err)
-	}
-
-	if err := config.RegisterGRPCServerFlags(v, serveCmd.Flags()); err != nil {
+	// Register flags for the server - http, grpc, metrics
+	if err := config.RegisterServerFlags(v, serveCmd.Flags()); err != nil {
 		log.Fatal(err)
 	}
 

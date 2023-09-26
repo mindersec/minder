@@ -22,7 +22,7 @@ import (
 	"github.com/go-playground/validator/v10"
 	"github.com/mitchellh/mapstructure"
 
-	pb "github.com/stacklok/mediator/pkg/generated/protobuf/go/mediator/v1"
+	pb "github.com/stacklok/mediator/pkg/api/protobuf/go/mediator/v1"
 )
 
 type vulnDbType string
@@ -82,6 +82,8 @@ func pbEcosystemAsString(ecosystem pb.DepEcosystem) string {
 	switch ecosystem {
 	case pb.DepEcosystem_DEP_ECOSYSTEM_NPM:
 		return "npm"
+	case pb.DepEcosystem_DEP_ECOSYSTEM_GO:
+		return "Go"
 	case pb.DepEcosystem_DEP_ECOSYSTEM_UNSPECIFIED:
 		// this shouldn't happen
 		return ""

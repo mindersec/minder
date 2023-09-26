@@ -20,16 +20,14 @@ import (
 	"context"
 	"fmt"
 
-	memfs "github.com/go-git/go-billy/v5/memfs"
-	git "github.com/go-git/go-git/v5"
-	"github.com/go-git/go-git/v5/plumbing"
-	http "github.com/go-git/go-git/v5/plumbing/transport/http"
-	memory "github.com/go-git/go-git/v5/storage/memory"
 	"github.com/mitchellh/mapstructure"
 	"google.golang.org/protobuf/reflect/protoreflect"
 
+	"github.com/stacklok/mediator/internal/db"
 	engif "github.com/stacklok/mediator/internal/engine/interfaces"
-	pb "github.com/stacklok/mediator/pkg/generated/protobuf/go/mediator/v1"
+	"github.com/stacklok/mediator/internal/providers"
+	pb "github.com/stacklok/mediator/pkg/api/protobuf/go/mediator/v1"
+	provifv1 "github.com/stacklok/mediator/pkg/providers/v1"
 )
 
 const (
@@ -40,19 +38,33 @@ const (
 
 // Git is the engine for a rule type that uses git data ingest
 type Git struct {
-	accessToken string
-	cfg         *pb.GitType
+	cfg     *pb.GitType
+	gitprov provifv1.Git
 }
 
 // NewGitIngester creates a new git rule data ingest engine
-func NewGitIngester(cfg *pb.GitType, token string) *Git {
+func NewGitIngester(cfg *pb.GitType, pbuild *providers.ProviderBuilder) (*Git, error) {
+	if pbuild == nil {
+		return nil, fmt.Errorf("provider builder is nil")
+	}
+
+	if !pbuild.Implements(db.ProviderTypeGit) {
+		return nil, fmt.Errorf("provider builder does not implement git")
+	}
+
 	if cfg == nil {
 		cfg = &pb.GitType{}
 	}
-	return &Git{
-		accessToken: token,
-		cfg:         cfg,
+
+	gitprov, err := pbuild.GetGit()
+	if err != nil {
+		return nil, fmt.Errorf("could not get git provider: %w", err)
 	}
+
+	return &Git{
+		cfg:     cfg,
+		gitprov: gitprov,
+	}, nil
 }
 
 // Ingest does the actual data ingestion for a rule type by cloning a git repo
@@ -69,34 +81,11 @@ func (gi *Git) Ingest(ctx context.Context, ent protoreflect.ProtoMessage, params
 
 	branch := gi.getBranch(userCfg)
 
-	opts := &git.CloneOptions{
-		URL:           url,
-		SingleBranch:  true,
-		Depth:         1,
-		Tags:          git.NoTags,
-		ReferenceName: plumbing.NewBranchReferenceName(branch),
-	}
-
-	if gi.accessToken != "" {
-		opts.Auth = &http.BasicAuth{
-			// the Username can be anything but it can't be empty
-			Username: "mediator-user",
-			Password: gi.accessToken,
-		}
-	}
-
-	if err := opts.Validate(); err != nil {
-		return nil, fmt.Errorf("invalid clone options: %w", err)
-	}
-
-	storer := memory.NewStorage()
-	fs := memfs.New()
-
 	// We clone to the memfs go-billy filesystem driver, which doesn't
 	// allow for direct access to the underlying filesystem. This is
 	// because we want to be able to run this in a sandboxed environment
 	// where we don't have access to the underlying filesystem.
-	r, err := git.CloneContext(ctx, storer, fs, opts)
+	r, err := gi.gitprov.Clone(ctx, url, branch)
 	if err != nil {
 		return nil, fmt.Errorf("could not clone repo: %w", err)
 	}

@@ -29,7 +29,7 @@ import (
 	mcrypto "github.com/stacklok/mediator/internal/crypto"
 	"github.com/stacklok/mediator/internal/db"
 	"github.com/stacklok/mediator/internal/util"
-	pb "github.com/stacklok/mediator/pkg/generated/protobuf/go/mediator/v1"
+	pb "github.com/stacklok/mediator/pkg/api/protobuf/go/mediator/v1"
 )
 
 type createUserValidation struct {
@@ -156,25 +156,25 @@ func (s *Server) CreateUser(ctx context.Context,
 		FirstName: *stringToNullString(in.FirstName), LastName: *stringToNullString(in.LastName),
 		IsProtected: *in.IsProtected, NeedsPasswordChange: needsPassPtr})
 	if err != nil {
-		return nil, status.Errorf(codes.Internal, "failed to create user")
+		return nil, status.Errorf(codes.Internal, "failed to create user: %s", err)
 	}
 
 	// now attach the groups and roles
 	for _, id := range in.GroupIds {
 		_, err := qtx.AddUserGroup(ctx, db.AddUserGroupParams{UserID: user.ID, GroupID: id})
 		if err != nil {
-			return nil, status.Errorf(codes.Internal, "failed to add user to group")
+			return nil, status.Errorf(codes.Internal, "failed to add user to group: %s", err)
 		}
 	}
 	for _, id := range in.RoleIds {
 		_, err := qtx.AddUserRole(ctx, db.AddUserRoleParams{UserID: user.ID, RoleID: id})
 		if err != nil {
-			return nil, status.Errorf(codes.Internal, "failed to add user to role")
+			return nil, status.Errorf(codes.Internal, "failed to add user to role: %s", err)
 		}
 	}
 	err = s.store.Commit(tx)
 	if err != nil {
-		return nil, status.Errorf(codes.Internal, "failed to commit transaction")
+		return nil, status.Errorf(codes.Internal, "failed to commit transaction: %s", err)
 	}
 
 	return &pb.CreateUserResponse{Id: user.ID, OrganizationId: user.OrganizationID, Email: &user.Email.String,

@@ -21,6 +21,8 @@ import (
 	"context"
 	"encoding/json"
 	"fmt"
+	"io"
+	"log"
 	"net/http"
 	"strings"
 	"text/template"
@@ -28,8 +30,9 @@ import (
 	"google.golang.org/protobuf/reflect/protoreflect"
 
 	engif "github.com/stacklok/mediator/internal/engine/interfaces"
-	ghclient "github.com/stacklok/mediator/internal/providers/github"
-	pb "github.com/stacklok/mediator/pkg/generated/protobuf/go/mediator/v1"
+	"github.com/stacklok/mediator/internal/providers"
+	pb "github.com/stacklok/mediator/pkg/api/protobuf/go/mediator/v1"
+	provifv1 "github.com/stacklok/mediator/pkg/providers/v1"
 )
 
 const (
@@ -40,7 +43,7 @@ const (
 // Ingestor is the engine for a rule type that uses REST data ingest
 type Ingestor struct {
 	restCfg          *pb.RestType
-	cli              ghclient.RestAPI
+	cli              provifv1.REST
 	endpointTemplate *template.Template
 	method           string
 }
@@ -48,7 +51,7 @@ type Ingestor struct {
 // NewRestRuleDataIngest creates a new REST rule data ingest engine
 func NewRestRuleDataIngest(
 	restCfg *pb.RestType,
-	cli ghclient.RestAPI,
+	pbuild *providers.ProviderBuilder,
 ) (*Ingestor, error) {
 	if len(restCfg.Endpoint) == 0 {
 		return nil, fmt.Errorf("missing endpoint")
@@ -63,6 +66,11 @@ func NewRestRuleDataIngest(
 	method := strings.ToUpper(restCfg.Method)
 	if len(method) == 0 {
 		method = http.MethodGet
+	}
+
+	cli, err := pbuild.GetHTTP(context.Background())
+	if err != nil {
+		return nil, fmt.Errorf("cannot get http client: %w", err)
 	}
 
 	return &Ingestor{
@@ -93,28 +101,43 @@ func (rdi *Ingestor) Ingest(ctx context.Context, ent protoreflect.ProtoMessage, 
 		return nil, fmt.Errorf("cannot execute endpoint template: %w", err)
 	}
 
-	req, err := rdi.cli.NewRequest(rdi.method, endpoint.String(), rdi.restCfg.Body)
+	// create string buffer
+	var bodyr io.Reader
+	if rdi.restCfg.Body != nil {
+		bodyr = strings.NewReader(*rdi.restCfg.Body)
+	}
+
+	req, err := rdi.cli.NewRequest(rdi.method, endpoint.String(), bodyr)
 	if err != nil {
 		return nil, fmt.Errorf("cannot create request: %w", err)
 	}
 
-	bodyBuf := new(bytes.Buffer)
-	_, err = rdi.cli.Do(ctx, req, bodyBuf)
+	resp, err := rdi.cli.Do(ctx, req)
 	if err != nil {
 		return nil, fmt.Errorf("cannot make request: %w", err)
 	}
 
+	defer func() {
+		if err := resp.Body.Close(); err != nil {
+			log.Printf("cannot close response body: %v", err)
+		}
+	}()
+
 	var data any
-	data = bodyBuf
 
 	if rdi.restCfg.Parse == "json" {
 		var jsonData any
-		dec := json.NewDecoder(bodyBuf)
+		dec := json.NewDecoder(resp.Body)
 		if err := dec.Decode(&jsonData); err != nil {
 			return nil, fmt.Errorf("cannot decode json: %w", err)
 		}
 
 		data = jsonData
+	} else {
+		data, err = io.ReadAll(resp.Body)
+		if err != nil {
+			return nil, fmt.Errorf("cannot read response body: %w", err)
+		}
 	}
 
 	return &engif.Result{

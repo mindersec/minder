@@ -21,7 +21,6 @@ import (
 	"time"
 
 	"github.com/golang/mock/gomock"
-	"github.com/spf13/viper"
 	"github.com/stretchr/testify/assert"
 	"github.com/stretchr/testify/require"
 	"google.golang.org/grpc/codes"
@@ -33,7 +32,7 @@ import (
 	mcrypto "github.com/stacklok/mediator/internal/crypto"
 	"github.com/stacklok/mediator/internal/db"
 	"github.com/stacklok/mediator/internal/util"
-	pb "github.com/stacklok/mediator/pkg/generated/protobuf/go/mediator/v1"
+	pb "github.com/stacklok/mediator/pkg/api/protobuf/go/mediator/v1"
 )
 
 // nolint // This function is serial for some reason and doesn't work with t.Parallel()
@@ -58,8 +57,6 @@ func TestLogin_gRPC(t *testing.T) {
 	rtpPath := filepath.Join(tmpdir, "refresh_token_private.pem")
 
 	// prepare keys for signing tokens
-	viper.SetDefault("auth.access_token_private_key", atpPath)
-	viper.SetDefault("auth.refresh_token_private_key", rtpPath)
 	err = util.RandomPrivateKeyFile(2048, atpPath)
 	require.NoError(t, err, "Error generating access token private key")
 	err = util.RandomPrivateKeyFile(2048, rtpPath)
@@ -125,6 +122,8 @@ func TestLogin_gRPC(t *testing.T) {
 			tc.buildStubs(mockStore)
 
 			server := newDefaultServer(t, mockStore)
+			server.cfg.Auth.AccessTokenPrivateKey = atpPath
+			server.cfg.Auth.RefreshTokenPrivateKey = rtpPath
 
 			resp, err := server.LogIn(context.Background(), tc.req)
 			tc.checkResponse(t, resp, err)
@@ -190,14 +189,9 @@ func TestRefreshToken_gRPC(t *testing.T) {
 	atPubPath := filepath.Join(tmpdir, "access_token_public.pem")
 	rtPrivPath := filepath.Join(tmpdir, "refresh_token_private.pem")
 	rtPubPath := filepath.Join(tmpdir, "refresh_token_public.pem")
+	tokenKeyPath := generateTokenKey(t)
 
 	// prepare keys for signing tokens
-	viper.SetDefault("auth.access_token_private_key", atPrivPath)
-	viper.SetDefault("auth.access_token_public_key", atPubPath)
-	viper.SetDefault("auth.refresh_token_private_key", rtPrivPath)
-	viper.SetDefault("auth.refresh_token_public_key", rtPubPath)
-	viper.SetDefault("auth.token_expiry", 3600)
-	viper.SetDefault("auth.refresh_expiry", 86400)
 	err := util.RandomKeypairFile(2048, atPrivPath, atPubPath)
 	require.NoError(t, err, "Error generating access token key pair")
 
@@ -215,8 +209,23 @@ func TestRefreshToken_gRPC(t *testing.T) {
 	mockStoreToken.EXPECT().GetUserByID(ctxToken, gomock.Any())
 	mockStoreToken.EXPECT().GetUserGroups(ctxToken, gomock.Any())
 	mockStoreToken.EXPECT().GetUserRoles(ctxToken, gomock.Any())
+
+	cfg := &config.Config{
+		Auth: config.AuthConfig{
+			AccessTokenPrivateKey:  atPrivPath,
+			AccessTokenPublicKey:   atPubPath,
+			RefreshTokenPrivateKey: rtPrivPath,
+			RefreshTokenPublicKey:  rtPubPath,
+			TokenExpiry:            3600,
+			RefreshExpiry:          86400,
+			TokenKey:               tokenKeyPath,
+		},
+	}
+	srv := newDefaultServer(t, mockStoreToken, cfg)
+	require.NoError(t, err, "Error creating server")
+
 	// generate a token
-	_, refreshToken, _, _, _, err := generateToken(ctxToken, mockStoreToken, 1)
+	_, refreshToken, _, _, _, err := srv.generateToken(ctxToken, mockStoreToken, 1)
 	if err != nil {
 		t.Fatalf("Error generating token: %v", err)
 	}
@@ -229,7 +238,7 @@ func TestRefreshToken_gRPC(t *testing.T) {
 	// Create a new context with added header metadata
 	ctx := context.Background()
 	ctx = metadata.NewIncomingContext(ctx, md)
-	server := newDefaultServer(t, mockStore)
+	server := newDefaultServer(t, mockStore, cfg)
 	mockStore.EXPECT().GetUserByID(gomock.Any(), gomock.Any()).Times(2)
 	mockStore.EXPECT().GetUserGroups(gomock.Any(), gomock.Any())
 	mockStore.EXPECT().GetUserRoles(gomock.Any(), gomock.Any())

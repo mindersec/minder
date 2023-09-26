@@ -21,8 +21,9 @@ import (
 	"errors"
 	"fmt"
 
+	"github.com/google/go-github/v53/github"
+
 	"github.com/stacklok/mediator/internal/db"
-	ghclient "github.com/stacklok/mediator/internal/providers/github"
 )
 
 // SyncRepositoriesWithDB syncs the repositories already in the database with the
@@ -39,7 +40,7 @@ import (
 //gocyclo:ignore
 func SyncRepositoriesWithDB(ctx context.Context,
 	store db.Store,
-	result ghclient.RepositoryListResult,
+	repos []*github.Repository,
 	provider string, groupId int32) error {
 	// Get all existing repositories from the database by group ID
 	dbRepos, err := store.ListRepositoriesByGroupID(ctx, db.ListRepositoriesByGroupIDParams{
@@ -58,10 +59,9 @@ func SyncRepositoriesWithDB(ctx context.Context,
 	}
 
 	// Iterate over the repositories returned from GitHub
-	for _, repo := range result.Repositories {
+	for _, repo := range repos {
 		// Check if the repository already exists in the database by Repo ID
-		existingRepo, err := store.GetRepositoryByRepoID(ctx,
-			db.GetRepositoryByRepoIDParams{Provider: provider, RepoID: int32(*repo.ID)})
+		existingRepo, err := store.GetRepositoryByRepoID(ctx, int32(*repo.ID))
 		if err != nil {
 			if errors.Is(err, sql.ErrNoRows) {
 				// The repository doesn't exist in our DB, let's create it
@@ -86,6 +86,11 @@ func SyncRepositoriesWithDB(ctx context.Context,
 				return fmt.Errorf("failed during repository synchronization: %w", err)
 			}
 		} else {
+			if existingRepo.GroupID != groupId {
+				fmt.Println("got request to sync repository of different group. Skipping")
+				continue
+			}
+
 			// The repository exists, let's check if it needs to be updated.
 			if existingRepo.RepoName != string(*repo.Name) ||
 				existingRepo.IsFork != bool(*repo.Fork) {
@@ -115,7 +120,7 @@ func SyncRepositoriesWithDB(ctx context.Context,
 	for repoID := range dbRepoIDs {
 
 		// Get repository by ID and delete it
-		repoToDelete, err := store.GetRepositoryByRepoID(ctx, db.GetRepositoryByRepoIDParams{Provider: provider, RepoID: repoID})
+		repoToDelete, err := store.GetRepositoryByRepoID(ctx, repoID)
 		if err != nil {
 			return fmt.Errorf("failed to get repository ID to delete: %w", err)
 		}

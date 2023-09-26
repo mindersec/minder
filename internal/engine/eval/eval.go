@@ -24,12 +24,12 @@ import (
 	"github.com/stacklok/mediator/internal/engine/eval/rego"
 	"github.com/stacklok/mediator/internal/engine/eval/vulncheck"
 	engif "github.com/stacklok/mediator/internal/engine/interfaces"
-	ghclient "github.com/stacklok/mediator/internal/providers/github"
-	pb "github.com/stacklok/mediator/pkg/generated/protobuf/go/mediator/v1"
+	"github.com/stacklok/mediator/internal/providers"
+	pb "github.com/stacklok/mediator/pkg/api/protobuf/go/mediator/v1"
 )
 
 // NewRuleEvaluator creates a new rule data evaluator
-func NewRuleEvaluator(rt *pb.RuleType, cli ghclient.RestAPI) (engif.Evaluator, error) {
+func NewRuleEvaluator(rt *pb.RuleType, cli *providers.ProviderBuilder) (engif.Evaluator, error) {
 	e := rt.Def.GetEval()
 	if e == nil {
 		return nil, fmt.Errorf("rule type missing eval configuration")

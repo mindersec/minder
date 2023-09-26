@@ -21,8 +21,8 @@ import (
 
 	"github.com/google/go-github/v53/github"
 
-	ghclient "github.com/stacklok/mediator/internal/providers/github"
-	pb "github.com/stacklok/mediator/pkg/generated/protobuf/go/mediator/v1"
+	pb "github.com/stacklok/mediator/pkg/api/protobuf/go/mediator/v1"
+	provifv1 "github.com/stacklok/mediator/pkg/providers/v1"
 )
 
 type prStatusHandler interface {
@@ -38,7 +38,7 @@ func newPrStatusHandler(
 	ctx context.Context,
 	action action,
 	pr *pb.PullRequest,
-	client ghclient.RestAPI,
+	client provifv1.GitHub,
 ) (prStatusHandler, error) {
 	switch action {
 	case actionReviewPr:

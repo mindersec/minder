@@ -16,8 +16,10 @@
 package github
 
 import (
+	"bytes"
 	"context"
 	"fmt"
+	"io"
 	"net/http"
 
 	"github.com/google/go-github/v53/github"
@@ -25,7 +27,7 @@ import (
 
 // ListAllRepositories returns a list of all repositories for the authenticated user
 // Two APIs are available, contigent on whether the token is for a user or an organization
-func (c *RestClient) ListAllRepositories(ctx context.Context, isOrg bool, owner string) (RepositoryListResult, error) {
+func (c *RestClient) ListAllRepositories(ctx context.Context, isOrg bool, owner string) ([]*github.Repository, error) {
 	opt := &github.RepositoryListOptions{
 		ListOptions: github.ListOptions{
 			PerPage: 100,
@@ -53,7 +55,7 @@ func (c *RestClient) ListAllRepositories(ctx context.Context, isOrg bool, owner 
 		}
 
 		if err != nil {
-			return RepositoryListResult{}, err
+			return allRepos, err
 		}
 		allRepos = append(allRepos, repos...)
 		if resp.NextPage == 0 {
@@ -67,19 +69,12 @@ func (c *RestClient) ListAllRepositories(ctx context.Context, isOrg bool, owner 
 		}
 	}
 
-	return RepositoryListResult{
-		Repositories: allRepos,
-	}, nil
-}
-
-// PackageListResult is a struct to hold the results of a package list
-type PackageListResult struct {
-	Packages []*github.Package
+	return allRepos, nil
 }
 
 // ListAllPackages returns a list of all packages for the authenticated user
 func (c *RestClient) ListAllPackages(ctx context.Context, isOrg bool, owner string, artifactType string,
-	pageNumber int, itemsPerPage int) (PackageListResult, error) {
+	pageNumber int, itemsPerPage int) ([]*github.Package, error) {
 	opt := &github.PackageListOptions{
 		PackageType: &artifactType,
 		ListOptions: github.ListOptions{
@@ -100,7 +95,7 @@ func (c *RestClient) ListAllPackages(ctx context.Context, isOrg bool, owner stri
 			artifacts, resp, err = c.client.Users.ListPackages(ctx, "", opt)
 		}
 		if err != nil {
-			return PackageListResult{Packages: allContainers}, err
+			return allContainers, err
 		}
 
 		allContainers = append(allContainers, artifacts...)
@@ -111,12 +106,12 @@ func (c *RestClient) ListAllPackages(ctx context.Context, isOrg bool, owner stri
 		opt.Page = resp.NextPage
 	}
 
-	return PackageListResult{Packages: allContainers}, nil
+	return allContainers, nil
 }
 
 // ListPackagesByRepository returns a list of all packages for an specific repository
 func (c *RestClient) ListPackagesByRepository(ctx context.Context, isOrg bool, owner string, artifactType string,
-	repositoryId int64, pageNumber int, itemsPerPage int) (PackageListResult, error) {
+	repositoryId int64, pageNumber int, itemsPerPage int) ([]*github.Package, error) {
 	opt := &github.PackageListOptions{
 		PackageType: &artifactType,
 		ListOptions: github.ListOptions{
@@ -137,7 +132,7 @@ func (c *RestClient) ListPackagesByRepository(ctx context.Context, isOrg bool, o
 			artifacts, resp, err = c.client.Users.ListPackages(ctx, "", opt)
 		}
 		if err != nil {
-			return PackageListResult{Packages: allContainers}, err
+			return allContainers, err
 		}
 
 		// now just append the ones belonging to the repository
@@ -153,7 +148,7 @@ func (c *RestClient) ListPackagesByRepository(ctx context.Context, isOrg bool, o
 		opt.Page = resp.NextPage
 	}
 
-	return PackageListResult{Packages: allContainers}, nil
+	return allContainers, nil
 }
 
 // GetPackageByName returns a single package for the authenticated user or for the org
@@ -280,19 +275,15 @@ func (c *RestClient) ListFiles(
 	ctx context.Context,
 	owner string,
 	repo string,
-	number int,
-	page int,
+	prNumber int,
 	perPage int,
-) ([]*github.CommitFile, error) {
+	pageNumber int,
+) ([]*github.CommitFile, *github.Response, error) {
 	opt := &github.ListOptions{
-		Page:    page,
+		Page:    pageNumber,
 		PerPage: perPage,
 	}
-	files, _, err := c.client.PullRequests.ListFiles(ctx, owner, repo, number, opt)
-	if err != nil {
-		return nil, err
-	}
-	return files, nil
+	return c.client.PullRequests.ListFiles(ctx, owner, repo, prNumber, opt)
 }
 
 // CreateReview is a wrapper for the GitHub API to create a review
@@ -380,13 +371,24 @@ func (c *RestClient) GetAuthenticatedUser(ctx context.Context) (*github.User, er
 // which will be resolved to the BaseURL of the Client. Relative URLS should
 // always be specified without a preceding slash. If specified, the value
 // pointed to by body is JSON encoded and included as the request body.
-func (c *RestClient) NewRequest(method, url string, body interface{}, opts ...github.RequestOption) (*http.Request, error) {
-	return c.client.NewRequest(method, url, body, opts...)
+func (c *RestClient) NewRequest(method, url string, body io.Reader) (*http.Request, error) {
+	return c.client.NewRequest(method, url, body)
 }
 
 // Do sends an API request and returns the API response.
-func (c *RestClient) Do(ctx context.Context, req *http.Request, v interface{}) (*github.Response, error) {
-	return c.client.Do(ctx, req, v)
+func (c *RestClient) Do(ctx context.Context, req *http.Request) (*http.Response, error) {
+	var buf bytes.Buffer
+
+	// The GitHub client closes the response body, so we need to capture it
+	// in a buffer so that we can return it to the caller
+	resp, err := c.client.Do(ctx, req, &buf)
+	if err != nil {
+		return nil, err
+	}
+
+	resp.Response.Body = io.NopCloser(&buf)
+
+	return resp.Response, nil
 }
 
 // GetToken returns the token used to authenticate with the GitHub API

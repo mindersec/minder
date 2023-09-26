@@ -8,15 +8,15 @@ context:
 pull_request:
   - type: pr_vulnerability_check
     def:
-        action: reject_pr
+        action: policy_only
         ecosystem_config:
             - name: npm
               vulnerability_database_type: osv
               vulnerability_database_endpoint: https://api.osv.dev/v1/query
               package_repository:
                 url: https://registry.npmjs.org
-            - name: go
+            - name: Go
               vulnerability_database_type: osv
-              vulnerability_database_endpoint: https://vuln.go.dev
+              vulnerability_database_endpoint: https://api.osv.dev/v1/query
               package_repository:
                 url: https://proxy.golang.org

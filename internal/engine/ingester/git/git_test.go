@@ -22,16 +22,33 @@ import (
 
 	"github.com/stretchr/testify/require"
 
+	"github.com/stacklok/mediator/internal/db"
 	gitengine "github.com/stacklok/mediator/internal/engine/ingester/git"
-	pb "github.com/stacklok/mediator/pkg/generated/protobuf/go/mediator/v1"
+	"github.com/stacklok/mediator/internal/providers"
+	pb "github.com/stacklok/mediator/pkg/api/protobuf/go/mediator/v1"
+	provifv1 "github.com/stacklok/mediator/pkg/providers/v1"
 )
 
 func TestGitIngestWithCloneURLFromRepo(t *testing.T) {
 	t.Parallel()
 
-	gi := gitengine.NewGitIngester(&pb.GitType{
+	gi, err := gitengine.NewGitIngester(&pb.GitType{
 		Branch: "master",
-	}, "")
+	}, providers.NewProviderBuilder(
+		&db.Provider{
+			Name:    "github",
+			Version: provifv1.V1,
+			Implements: []db.ProviderType{
+				"git",
+				"rest",
+				"github",
+			},
+		},
+		db.ProviderAccessToken{},
+		"",
+	))
+	require.NoError(t, err, "expected no error")
+
 	got, err := gi.Ingest(context.Background(), &pb.RepositoryResult{
 		CloneUrl: "https://github.com/octocat/Hello-World.git",
 	}, map[string]interface{}{})
@@ -54,9 +71,23 @@ func TestGitIngestWithCloneURLFromRepo(t *testing.T) {
 func TestGitIngestWithCloneURLFromParams(t *testing.T) {
 	t.Parallel()
 
-	gi := gitengine.NewGitIngester(&pb.GitType{
+	gi, err := gitengine.NewGitIngester(&pb.GitType{
 		Branch: "master",
-	}, "")
+	}, providers.NewProviderBuilder(
+		&db.Provider{
+			Name:    "github",
+			Version: provifv1.V1,
+			Implements: []db.ProviderType{
+				"git",
+				"rest",
+				"github",
+			},
+		},
+		db.ProviderAccessToken{},
+		"",
+	))
+	require.NoError(t, err, "expected no error")
+
 	got, err := gi.Ingest(context.Background(), &pb.Artifact{}, map[string]any{
 		"clone_url": "https://github.com/octocat/Hello-World.git",
 	})
@@ -79,7 +110,23 @@ func TestGitIngestWithCloneURLFromParams(t *testing.T) {
 func TestGitIngestWithCustomBranchFromParams(t *testing.T) {
 	t.Parallel()
 
-	gi := gitengine.NewGitIngester(&pb.GitType{}, "")
+	gi, err := gitengine.NewGitIngester(&pb.GitType{
+		Branch: "master",
+	}, providers.NewProviderBuilder(
+		&db.Provider{
+			Name:    "github",
+			Version: provifv1.V1,
+			Implements: []db.ProviderType{
+				"git",
+				"rest",
+				"github",
+			},
+		},
+		db.ProviderAccessToken{},
+		"",
+	))
+	require.NoError(t, err, "expected no error")
+
 	got, err := gi.Ingest(context.Background(), &pb.Artifact{}, map[string]any{
 		"clone_url": "https://github.com/octocat/Hello-World.git",
 		"branch":    "test",
@@ -104,7 +151,24 @@ func TestGitIngestFailsBecauseOfAuthorization(t *testing.T) {
 	t.Parallel()
 
 	// foobar is not a valid token
-	gi := gitengine.NewGitIngester(&pb.GitType{}, "foobar")
+	gi, err := gitengine.NewGitIngester(&pb.GitType{
+		Branch: "master",
+	}, providers.NewProviderBuilder(
+		&db.Provider{
+			Name:    "github",
+			Version: provifv1.V1,
+			Implements: []db.ProviderType{
+				"git",
+				"rest",
+				"github",
+			},
+		},
+		db.ProviderAccessToken{},
+		"foobar",
+	),
+	)
+	require.NoError(t, err, "expected no error")
+
 	got, err := gi.Ingest(context.Background(), &pb.Artifact{}, map[string]any{
 		"clone_url": "https://github.com/stacklok/mediator.git",
 	})
@@ -116,7 +180,22 @@ func TestGitIngestFailsBecauseOfUnexistentCloneUrl(t *testing.T) {
 	t.Parallel()
 
 	// foobar is not a valid token
-	gi := gitengine.NewGitIngester(&pb.GitType{}, "")
+	gi, err := gitengine.NewGitIngester(&pb.GitType{}, providers.NewProviderBuilder(
+		&db.Provider{
+			Name:    "github",
+			Version: provifv1.V1,
+			Implements: []db.ProviderType{
+				"git",
+				"rest",
+				"github",
+			},
+		},
+		db.ProviderAccessToken{},
+		// No authentication is the right thing in this case.
+		"",
+	))
+	require.NoError(t, err, "expected no error")
+
 	got, err := gi.Ingest(context.Background(), &pb.Artifact{}, map[string]any{
 		"clone_url": "https://github.com/octocat/unexistent-git-repo.git",
 	})

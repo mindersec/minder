@@ -30,12 +30,13 @@ import (
 	"google.golang.org/protobuf/reflect/protoreflect"
 
 	"github.com/stacklok/mediator/cmd/dev/app"
+	"github.com/stacklok/mediator/internal/db"
 	"github.com/stacklok/mediator/internal/engine"
 	"github.com/stacklok/mediator/internal/engine/eval/rego"
 	"github.com/stacklok/mediator/internal/entities"
-	ghclient "github.com/stacklok/mediator/internal/providers/github"
+	"github.com/stacklok/mediator/internal/providers"
 	"github.com/stacklok/mediator/internal/util"
-	pb "github.com/stacklok/mediator/pkg/generated/protobuf/go/mediator/v1"
+	pb "github.com/stacklok/mediator/pkg/api/protobuf/go/mediator/v1"
 )
 
 // TestCmd is the root command for the rule subcommands
@@ -105,12 +106,19 @@ func testCmdRun(cmd *cobra.Command, _ []string) error {
 		return fmt.Errorf("error getting relevant fragment: %w", err)
 	}
 
-	client, err := getProviderClient(context.Background(), rt, token)
-	if err != nil {
-		return fmt.Errorf("error getting provider client: %w", err)
-	}
-
-	eng, err := engine.NewRuleTypeEngine(rt, client, token)
+	// TODO: Read this from a providers file instead so we can make it pluggable
+	eng, err := engine.NewRuleTypeEngine(rt, providers.NewProviderBuilder(
+		&db.Provider{
+			Name: "test",
+			Implements: []db.ProviderType{
+				"rest",
+				"git",
+				"github",
+			},
+		},
+		db.ProviderAccessToken{},
+		token,
+	))
 	if err != nil {
 		return fmt.Errorf("error creating rule type engine: %w", err)
 	}
@@ -200,19 +208,4 @@ func readEntityFromFile(fpath string, entType pb.Entity) (protoreflect.ProtoMess
 	}
 
 	return out, nil
-}
-
-// getProviderClient returns a client for the provider specified in the rule type
-// definition.
-// TODO: This should be moved to a provider package and we should have some
-// generic interface for clients.
-func getProviderClient(ctx context.Context, rt *pb.RuleType, token string) (ghclient.RestAPI, error) {
-	switch rt.Context.Provider {
-	case ghclient.Github:
-		return ghclient.NewRestClient(ctx, ghclient.GitHubConfig{
-			Token: token,
-		}, "")
-	default:
-		return nil, fmt.Errorf("unknown provider: %s", rt.Context.Provider)
-	}
 }

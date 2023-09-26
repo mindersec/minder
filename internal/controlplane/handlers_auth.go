@@ -19,12 +19,9 @@ import (
 	"database/sql"
 	"errors"
 	"fmt"
-	"os"
-	"path/filepath"
 	"time"
 
 	"github.com/go-playground/validator/v10"
-	"github.com/spf13/viper"
 	"google.golang.org/grpc/codes"
 	"google.golang.org/grpc/metadata"
 	"google.golang.org/grpc/status"
@@ -32,7 +29,7 @@ import (
 	"github.com/stacklok/mediator/internal/auth"
 	mcrypto "github.com/stacklok/mediator/internal/crypto"
 	"github.com/stacklok/mediator/internal/db"
-	pb "github.com/stacklok/mediator/pkg/generated/protobuf/go/mediator/v1"
+	pb "github.com/stacklok/mediator/pkg/api/protobuf/go/mediator/v1"
 )
 
 type loginValidation struct {
@@ -40,28 +37,19 @@ type loginValidation struct {
 	Password string `validate:"min=8,containsany=_.;?&@"`
 }
 
-func generateToken(ctx context.Context, store db.Store, userId int32) (string, string, int64, int64, auth.UserClaims, error) {
+func (s *Server) generateToken(
+	ctx context.Context,
+	store db.Store,
+	userId int32,
+) (string, string, int64, int64, auth.UserClaims, error) {
 	emptyClaims := auth.UserClaims{}
 
-	// read private key for generating token and refresh token
-	privateKeyPath := viper.GetString("auth.access_token_private_key")
-	if privateKeyPath == "" {
-		return "", "", 0, 0, emptyClaims, fmt.Errorf("could not read private access token key")
-	}
-
-	privateKeyPath = filepath.Clean(privateKeyPath)
-	keyBytes, err := os.ReadFile(privateKeyPath)
+	keyBytes, err := s.cfg.Auth.GetAccessTokenPrivateKey()
 	if err != nil {
-		return "", "", 0, 0, emptyClaims, fmt.Errorf("failed to read access token key: %s", err)
+		return "", "", 0, 0, emptyClaims, fmt.Errorf("failed to read access token key: %w", err)
 	}
 
-	refreshPrivateKeyPath := viper.GetString("auth.refresh_token_private_key")
-	if refreshPrivateKeyPath == "" {
-		return "", "", 0, 0, emptyClaims, fmt.Errorf("unable to read private refresh token key")
-	}
-
-	refreshPrivateKeyPath = filepath.Clean(refreshPrivateKeyPath)
-	refreshKeyBytes, err := os.ReadFile(refreshPrivateKeyPath)
+	refreshKeyBytes, err := s.cfg.Auth.GetRefreshTokenPrivateKey()
 	if err != nil {
 		return "", "", 0, 0, emptyClaims, fmt.Errorf("failed to read refresh token key: %s", err)
 	}
@@ -76,8 +64,8 @@ func generateToken(ctx context.Context, store db.Store, userId int32) (string, s
 		claims,
 		keyBytes,
 		refreshKeyBytes,
-		viper.GetInt64("auth.token_expiry"),
-		viper.GetInt64("auth.refresh_expiry"),
+		s.cfg.Auth.TokenExpiry,
+		s.cfg.Auth.RefreshExpiry,
 	)
 
 	if err != nil {
@@ -113,7 +101,7 @@ func (s *Server) LogIn(ctx context.Context, in *pb.LogInRequest) (*pb.LogInRespo
 	}
 
 	accessToken, refreshToken, accessTokenExpirationTime, refreshTokenExpirationTime,
-		claims, err := generateToken(ctx, s.store, user.ID)
+		claims, err := s.generateToken(ctx, s.store, user.ID)
 
 	if err != nil {
 		return nil, status.Error(codes.Internal, fmt.Sprintf("Failed to generate token: %s", err))
@@ -167,15 +155,10 @@ func (s *Server) RevokeUserToken(ctx context.Context, req *pb.RevokeUserTokenReq
 
 }
 
-func parseRefreshToken(token string, store db.Store) (int32, error) {
-	// need to read pub key from file
-	publicKeyPath := viper.GetString("auth.refresh_token_public_key")
-	if publicKeyPath == "" {
-		return 0, fmt.Errorf("could not read refresh token public key")
-	}
-	pubKeyData, err := os.ReadFile(filepath.Clean(publicKeyPath))
+func (s *Server) parseRefreshToken(token string, store db.Store) (int32, error) {
+	pubKeyData, err := s.cfg.Auth.GetRefreshTokenPublicKey()
 	if err != nil {
-		return 0, fmt.Errorf("failed to read refresh token public key file")
+		return 0, fmt.Errorf("failed to read refresh token public key file: %w", err)
 	}
 
 	userId, err := auth.VerifyRefreshToken(token, pubKeyData, store)
@@ -200,13 +183,13 @@ func (s *Server) RefreshToken(ctx context.Context, _ *pb.RefreshTokenRequest) (*
 		return nil, status.Errorf(codes.Unauthenticated, "no refresh token found")
 	}
 
-	userId, err := parseRefreshToken(refresh, s.store)
+	userId, err := s.parseRefreshToken(refresh, s.store)
 	if err != nil {
 		return nil, status.Errorf(codes.Unauthenticated, "invalid token: %v", err)
 	}
 
 	// regenerate and return tokens
-	accessToken, _, accessTokenExpirationTime, _, _, err := generateToken(ctx, s.store, userId)
+	accessToken, _, accessTokenExpirationTime, _, _, err := s.generateToken(ctx, s.store, userId)
 
 	if err != nil {
 		return nil, status.Errorf(codes.Internal, "Failed to generate token")

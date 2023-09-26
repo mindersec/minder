@@ -27,8 +27,7 @@ import (
 	"github.com/stacklok/mediator/internal/db"
 	"github.com/stacklok/mediator/internal/events"
 	"github.com/stacklok/mediator/internal/providers"
-	ghclient "github.com/stacklok/mediator/internal/providers/github"
-	pb "github.com/stacklok/mediator/pkg/generated/protobuf/go/mediator/v1"
+	pb "github.com/stacklok/mediator/pkg/api/protobuf/go/mediator/v1"
 )
 
 const (
@@ -68,12 +67,6 @@ func (e *Executor) HandleEntityEvent(msg *message.Message) error {
 		return fmt.Errorf("error unmarshalling payload: %w", err)
 	}
 
-	// TODO(jaosorior): get provider from database
-	if inf.Provider != ghclient.Github {
-		log.Printf("provider %s not supported", inf.Provider)
-		return nil
-	}
-
 	ctx := msg.Context()
 
 	// get group info
@@ -82,7 +75,16 @@ func (e *Executor) HandleEntityEvent(msg *message.Message) error {
 		return fmt.Errorf("error getting group: %w", err)
 	}
 
-	cli, err := providers.BuildClient(ctx, inf.Provider, inf.GroupID, e.querier, e.crypteng)
+	provider, err := e.querier.GetProviderByName(ctx, db.GetProviderByNameParams{
+		Name:    inf.Provider,
+		GroupID: inf.GroupID,
+	})
+
+	if err != nil {
+		return fmt.Errorf("error getting provider: %w", err)
+	}
+
+	cli, err := providers.GetProviderBuilder(ctx, provider, inf.GroupID, e.querier, e.crypteng)
 	if err != nil {
 		return fmt.Errorf("error building client: %w", err)
 	}
@@ -92,7 +94,10 @@ func (e *Executor) HandleEntityEvent(msg *message.Message) error {
 			ID:   group.ID,
 			Name: group.Name,
 		},
-		Provider: inf.Provider,
+		Provider: Provider{
+			Name: inf.Provider,
+			ID:   provider.ID,
+		},
 	}
 
 	return e.evalEntityEvent(ctx, inf, ectx, cli)
@@ -102,7 +107,7 @@ func (e *Executor) evalEntityEvent(
 	ctx context.Context,
 	inf *EntityInfoWrapper,
 	ectx *EntityContext,
-	cli ghclient.RestAPI,
+	cli *providers.ProviderBuilder,
 ) error {
 	// Get policies relevant to group
 	dbpols, err := e.querier.ListPoliciesByGroupID(ctx, inf.GroupID)
@@ -120,7 +125,7 @@ func (e *Executor) evalEntityEvent(
 
 		// Let's evaluate all the rules for this policy
 		err = TraverseRules(relevant, func(rule *pb.Policy_Rule) error {
-			rt, rte, err := e.getEvaluator(ctx, *pol.Id, ectx.Provider, cli, cli.GetToken(), ectx, rule)
+			rt, rte, err := e.getEvaluator(ctx, *pol.Id, ectx.Provider.Name, cli, ectx, rule)
 			if err != nil {
 				return err
 			}
@@ -144,8 +149,7 @@ func (e *Executor) getEvaluator(
 	ctx context.Context,
 	policyID int32,
 	prov string,
-	cli ghclient.RestAPI,
-	token string,
+	cli *providers.ProviderBuilder,
 	ectx *EntityContext,
 	rule *pb.Policy_Rule,
 ) (*pb.RuleType, *RuleTypeEngine, error) {
@@ -168,7 +172,7 @@ func (e *Executor) getEvaluator(
 
 	// TODO(jaosorior): Rule types should be cached in memory so
 	// we don't have to query the database for each rule.
-	rte, err := NewRuleTypeEngine(rt, cli, token)
+	rte, err := NewRuleTypeEngine(rt, cli)
 	if err != nil {
 		return nil, nil, fmt.Errorf("error creating rule type engine: %w", err)
 	}

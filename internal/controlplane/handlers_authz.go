@@ -17,14 +17,11 @@ package controlplane
 import (
 	"context"
 	"fmt"
-	"os"
-	"path/filepath"
 	"strings"
 	"time"
 
 	gauth "github.com/grpc-ecosystem/go-grpc-middleware/v2/interceptors/auth"
 	"github.com/rs/zerolog"
-	"github.com/spf13/viper"
 	"golang.org/x/exp/slices"
 	"google.golang.org/grpc"
 	"google.golang.org/grpc/codes"
@@ -35,24 +32,19 @@ import (
 
 	"github.com/stacklok/mediator/internal/auth"
 	"github.com/stacklok/mediator/internal/db"
-	github "github.com/stacklok/mediator/internal/providers/github"
 	"github.com/stacklok/mediator/internal/util"
-	mediator "github.com/stacklok/mediator/pkg/generated/protobuf/go/mediator/v1"
+	mediator "github.com/stacklok/mediator/pkg/api/protobuf/go/mediator/v1"
 )
 
-func parseToken(token string, store db.Store) (auth.UserClaims, error) {
+func (s *Server) parseTokenForAuthz(token string) (auth.UserClaims, error) {
 	var claims auth.UserClaims
 	// need to read pub key from file
-	publicKeyPath := viper.GetString("auth.access_token_public_key")
-	if publicKeyPath == "" {
-		return claims, fmt.Errorf("could not read public key")
-	}
-	pubKeyData, err := os.ReadFile(filepath.Clean(publicKeyPath))
+	pubKeyData, err := s.cfg.Auth.GetAccessTokenPublicKey()
 	if err != nil {
 		return claims, fmt.Errorf("failed to read public key file")
 	}
 
-	userClaims, err := auth.VerifyToken(token, pubKeyData, store)
+	userClaims, err := auth.VerifyToken(token, pubKeyData, s.store)
 	if err != nil {
 		return claims, fmt.Errorf("failed to verify token: %v", err)
 	}
@@ -153,7 +145,11 @@ func AuthorizedOnUser(ctx context.Context, userId int32) error {
 }
 
 // IsProviderCallAuthorized checks if the request is authorized
-func (s *Server) IsProviderCallAuthorized(ctx context.Context, provider string, groupId int32) bool {
+func (s *Server) IsProviderCallAuthorized(ctx context.Context, provider db.Provider, groupId int32) bool {
+	if provider.GroupID != groupId {
+		return false
+	}
+
 	// currently everything is github
 	method, ok := grpc.Method(ctx)
 	if !ok {
@@ -163,7 +159,7 @@ func (s *Server) IsProviderCallAuthorized(ctx context.Context, provider string, 
 	for _, item := range githubAuthorizations {
 		if item == method {
 			// check the github token
-			encToken, _, err := s.GetProviderAccessToken(ctx, provider, groupId, true)
+			encToken, _, err := s.GetProviderAccessToken(ctx, provider.Name, groupId, true)
 			if err != nil {
 				return false
 			}
@@ -171,10 +167,10 @@ func (s *Server) IsProviderCallAuthorized(ctx context.Context, provider string, 
 			// check if token is expired
 			if encToken.Expiry.Unix() < time.Now().Unix() {
 				// remove from the database and deny the request
-				_ = s.store.DeleteAccessToken(ctx, db.DeleteAccessTokenParams{Provider: github.Github, GroupID: groupId})
+				_ = s.store.DeleteAccessToken(ctx, db.DeleteAccessTokenParams{Provider: provider.Name, GroupID: groupId})
 
 				// remove from github
-				err := auth.DeleteAccessToken(ctx, provider, encToken.AccessToken)
+				err := auth.DeleteAccessToken(ctx, provider.Name, encToken.AccessToken)
 
 				if err != nil {
 					zerolog.Ctx(ctx).Error().Msgf("Error deleting access token: %v", err)
@@ -211,7 +207,7 @@ func AuthUnaryInterceptor(ctx context.Context, req interface{}, info *grpc.Unary
 	}
 
 	server := info.Server.(*Server)
-	claims, err := parseToken(token, server.store)
+	claims, err := server.parseTokenForAuthz(token)
 	if err != nil {
 		return nil, status.Errorf(codes.Unauthenticated, "invalid auth token: %v", err)
 	}

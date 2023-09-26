@@ -20,8 +20,9 @@ import (
 	"fmt"
 
 	engif "github.com/stacklok/mediator/internal/engine/interfaces"
-	ghclient "github.com/stacklok/mediator/internal/providers/github"
-	pb "github.com/stacklok/mediator/pkg/generated/protobuf/go/mediator/v1"
+	"github.com/stacklok/mediator/internal/providers"
+	pb "github.com/stacklok/mediator/pkg/api/protobuf/go/mediator/v1"
+	provifv1 "github.com/stacklok/mediator/pkg/providers/v1"
 )
 
 const (
@@ -31,13 +32,22 @@ const (
 
 // Evaluator is the vulncheck evaluator
 type Evaluator struct {
-	cli ghclient.RestAPI
+	cli provifv1.GitHub
 }
 
 // NewVulncheckEvaluator creates a new vulncheck evaluator
-func NewVulncheckEvaluator(_ *pb.RuleType_Definition_Eval_Vulncheck, cli ghclient.RestAPI) (*Evaluator, error) {
+func NewVulncheckEvaluator(_ *pb.RuleType_Definition_Eval_Vulncheck, pbuild *providers.ProviderBuilder) (*Evaluator, error) {
+	if pbuild == nil {
+		return nil, fmt.Errorf("provider builder is nil")
+	}
+
+	ghcli, err := pbuild.GetGitHub(context.Background())
+	if err != nil {
+		return nil, fmt.Errorf("failed to get github client: %w", err)
+	}
+
 	return &Evaluator{
-		cli: cli,
+		cli: ghcli,
 	}, nil
 }
 

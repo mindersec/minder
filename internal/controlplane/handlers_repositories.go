@@ -18,6 +18,7 @@ import (
 	"context"
 	"database/sql"
 	"errors"
+	"fmt"
 	"log"
 	"strings"
 
@@ -30,7 +31,8 @@ import (
 	"github.com/stacklok/mediator/internal/gh/queries"
 	github "github.com/stacklok/mediator/internal/providers/github"
 	"github.com/stacklok/mediator/internal/reconcilers"
-	pb "github.com/stacklok/mediator/pkg/generated/protobuf/go/mediator/v1"
+	pb "github.com/stacklok/mediator/pkg/api/protobuf/go/mediator/v1"
+	provifv1 "github.com/stacklok/mediator/pkg/providers/v1"
 )
 
 // RegisterRepository adds repositories to the database and registers a webhook
@@ -51,10 +53,6 @@ import (
 // nolint: gocyclo
 func (s *Server) RegisterRepository(ctx context.Context,
 	in *pb.RegisterRepositoryRequest) (*pb.RegisterRepositoryResponse, error) {
-	if in.Provider != github.Github {
-		return nil, status.Errorf(codes.InvalidArgument, "provider not supported: %v", in.Provider)
-	}
-
 	// if we have set no events, give an error
 	if len(in.Events) == 0 {
 		return nil, status.Errorf(codes.InvalidArgument, "no events provided")
@@ -74,13 +72,20 @@ func (s *Server) RegisterRepository(ctx context.Context,
 		return nil, err
 	}
 
+	provider, err := s.store.GetProviderByName(ctx, db.GetProviderByNameParams{
+		Name:    in.GetProvider(),
+		GroupID: in.GetGroupId()})
+	if err != nil {
+		return nil, providerError(fmt.Errorf("provider error: %w", err))
+	}
+
 	// Check if needs github authorization
-	isGithubAuthorized := s.IsProviderCallAuthorized(ctx, in.Provider, in.GroupId)
+	isGithubAuthorized := s.IsProviderCallAuthorized(ctx, provider, in.GroupId)
 	if !isGithubAuthorized {
 		return nil, status.Errorf(codes.PermissionDenied, "user not authorized to interact with provider")
 	}
 
-	decryptedToken, _, err := s.GetProviderAccessToken(ctx, in.Provider, in.GroupId, true)
+	decryptedToken, _, err := s.GetProviderAccessToken(ctx, provider.Name, in.GroupId, true)
 
 	if err != nil {
 		return nil, err
@@ -126,7 +131,7 @@ func (s *Server) RegisterRepository(ctx context.Context,
 		_, err = s.store.UpdateRepositoryByID(ctx, db.UpdateRepositoryByIDParams{
 			WebhookID:  sql.NullInt32{Int32: int32(result.HookID), Valid: true},
 			WebhookUrl: result.HookURL,
-			Provider:   in.Provider,
+			Provider:   provider.Name,
 			GroupID:    in.GroupId,
 			RepoOwner:  result.Owner,
 			RepoName:   result.Repository,
@@ -165,10 +170,6 @@ func (s *Server) RegisterRepository(ctx context.Context,
 // The API is called with a group id, limit and offset
 func (s *Server) ListRepositories(ctx context.Context,
 	in *pb.ListRepositoriesRequest) (*pb.ListRepositoriesResponse, error) {
-	if in.Provider != github.Github {
-		return nil, status.Errorf(codes.InvalidArgument, "provider not supported: %v", in.Provider)
-	}
-
 	// if we do not have a group, check if we can infer it
 	if in.GroupId == 0 {
 		group, err := auth.GetDefaultGroup(ctx)
@@ -183,8 +184,15 @@ func (s *Server) ListRepositories(ctx context.Context,
 		return nil, err
 	}
 
+	provider, err := s.store.GetProviderByName(ctx, db.GetProviderByNameParams{
+		Name:    in.GetProvider(),
+		GroupID: in.GetGroupId()})
+	if err != nil {
+		return nil, providerError(fmt.Errorf("provider error: %w", err))
+	}
+
 	repos, err := s.store.ListRepositoriesByGroupID(ctx, db.ListRepositoriesByGroupIDParams{
-		Provider: in.Provider,
+		Provider: provider.Name,
 		GroupID:  in.GroupId,
 		Limit:    in.Limit,
 		Offset:   in.Offset,
@@ -222,7 +230,7 @@ func (s *Server) ListRepositories(ctx context.Context,
 		if filterCondition(&repo) {
 			results = append(results, &pb.RepositoryRecord{
 				Id:        repo.ID,
-				Provider:  repo.Provider,
+				Provider:  provider.Name,
 				GroupId:   repo.GroupID,
 				Owner:     repo.RepoOwner,
 				Name:      repo.RepoName,
@@ -250,6 +258,7 @@ func (s *Server) GetRepositoryById(ctx context.Context,
 	if in.RepositoryId == 0 {
 		return nil, status.Errorf(codes.InvalidArgument, "repository id not specified")
 	}
+
 	// read the repository
 	repo, err := s.store.GetRepositoryByID(ctx, in.RepositoryId)
 	if errors.Is(err, sql.ErrNoRows) {
@@ -263,12 +272,20 @@ func (s *Server) GetRepositoryById(ctx context.Context,
 		return nil, err
 	}
 
+	provider, err := s.store.GetProviderByName(ctx, db.GetProviderByNameParams{
+		Name:    repo.Provider,
+		GroupID: repo.GroupID,
+	})
+	if err != nil {
+		return nil, providerError(fmt.Errorf("provider error: %w", err))
+	}
+
 	createdAt := timestamppb.New(repo.CreatedAt)
 	updatedat := timestamppb.New(repo.UpdatedAt)
 
 	return &pb.GetRepositoryByIdResponse{Repository: &pb.RepositoryRecord{
 		Id:        repo.ID,
-		Provider:  repo.Provider,
+		Provider:  provider.Name,
 		GroupId:   repo.GroupID,
 		Owner:     repo.RepoOwner,
 		Name:      repo.RepoName,
@@ -289,53 +306,10 @@ func (s *Server) GetRepositoryById(ctx context.Context,
 // The API is called with a group id
 func (s *Server) GetRepositoryByName(ctx context.Context,
 	in *pb.GetRepositoryByNameRequest) (*pb.GetRepositoryByNameResponse, error) {
-	if in.Provider != github.Github {
-		return nil, status.Errorf(codes.InvalidArgument, "provider not supported: %v", in.Provider)
-	}
-
 	// split repo name in owner and name
 	fragments := strings.Split(in.Name, "/")
 	if len(fragments) != 2 {
 		return nil, status.Errorf(codes.InvalidArgument, "invalid repository name, needs to have the format: owner/name")
-	}
-
-	repo, err := s.store.GetRepositoryByRepoName(ctx,
-		db.GetRepositoryByRepoNameParams{Provider: in.Provider, RepoOwner: fragments[0], RepoName: fragments[1]})
-
-	if errors.Is(err, sql.ErrNoRows) {
-		return nil, status.Errorf(codes.NotFound, "repository not found")
-	} else if err != nil {
-		return nil, err
-	}
-	// check if user is authorized
-	if err := AuthorizedOnGroup(ctx, repo.GroupID); err != nil {
-		return nil, err
-	}
-
-	createdAt := timestamppb.New(repo.CreatedAt)
-	updatedat := timestamppb.New(repo.UpdatedAt)
-
-	return &pb.GetRepositoryByNameResponse{Repository: &pb.RepositoryRecord{
-		Id:        repo.ID,
-		Provider:  repo.Provider,
-		GroupId:   repo.GroupID,
-		Owner:     repo.RepoOwner,
-		Name:      repo.RepoName,
-		RepoId:    repo.RepoID,
-		IsPrivate: repo.IsPrivate,
-		IsFork:    repo.IsFork,
-		HookUrl:   repo.WebhookUrl,
-		DeployUrl: repo.DeployUrl,
-		CloneUrl:  repo.CloneUrl,
-		CreatedAt: createdAt,
-		UpdatedAt: updatedat,
-	}}, nil
-}
-
-// SyncRepositories synchronizes the repositories for a given provider and group
-func (s *Server) SyncRepositories(ctx context.Context, in *pb.SyncRepositoriesRequest) (*pb.SyncRepositoriesResponse, error) {
-	if in.Provider != github.Github {
-		return nil, status.Errorf(codes.InvalidArgument, "provider not supported: %v", in.Provider)
 	}
 
 	// if we do not have a group, check if we can infer it
@@ -352,22 +326,85 @@ func (s *Server) SyncRepositories(ctx context.Context, in *pb.SyncRepositoriesRe
 		return nil, err
 	}
 
+	provider, err := s.store.GetProviderByName(ctx, db.GetProviderByNameParams{
+		Name:    in.Provider,
+		GroupID: in.GroupId,
+	})
+	if err != nil {
+		return nil, providerError(fmt.Errorf("provider error: %w", err))
+	}
+
+	repo, err := s.store.GetRepositoryByRepoName(ctx,
+		db.GetRepositoryByRepoNameParams{Provider: provider.Name, RepoOwner: fragments[0], RepoName: fragments[1]})
+
+	if errors.Is(err, sql.ErrNoRows) {
+		return nil, status.Errorf(codes.NotFound, "repository not found")
+	} else if err != nil {
+		return nil, err
+	}
+	// check if user is authorized
+	if err := AuthorizedOnGroup(ctx, repo.GroupID); err != nil {
+		return nil, err
+	}
+
+	createdAt := timestamppb.New(repo.CreatedAt)
+	updatedat := timestamppb.New(repo.UpdatedAt)
+
+	return &pb.GetRepositoryByNameResponse{Repository: &pb.RepositoryRecord{
+		Id:        repo.ID,
+		Provider:  provider.Name,
+		GroupId:   repo.GroupID,
+		Owner:     repo.RepoOwner,
+		Name:      repo.RepoName,
+		RepoId:    repo.RepoID,
+		IsPrivate: repo.IsPrivate,
+		IsFork:    repo.IsFork,
+		HookUrl:   repo.WebhookUrl,
+		DeployUrl: repo.DeployUrl,
+		CloneUrl:  repo.CloneUrl,
+		CreatedAt: createdAt,
+		UpdatedAt: updatedat,
+	}}, nil
+}
+
+// SyncRepositories synchronizes the repositories for a given provider and group
+func (s *Server) SyncRepositories(ctx context.Context, in *pb.SyncRepositoriesRequest) (*pb.SyncRepositoriesResponse, error) {
+	// if we do not have a group, check if we can infer it
+	if in.GroupId == 0 {
+		group, err := auth.GetDefaultGroup(ctx)
+		if err != nil {
+			return nil, status.Errorf(codes.InvalidArgument, "cannot infer group id")
+		}
+		in.GroupId = group
+	}
+
+	// check if user is authorized
+	if err := AuthorizedOnGroup(ctx, in.GroupId); err != nil {
+		return nil, err
+	}
+
+	provider, err := s.store.GetProviderByName(ctx, db.GetProviderByNameParams{
+		Name:    in.Provider,
+		GroupID: in.GroupId,
+	})
+	if err != nil {
+		return nil, providerError(fmt.Errorf("provider error: %w", err))
+	}
+
 	// Check if needs github authorization
-	isGithubAuthorized := s.IsProviderCallAuthorized(ctx, in.Provider, in.GroupId)
+	isGithubAuthorized := s.IsProviderCallAuthorized(ctx, provider, in.GroupId)
 	if !isGithubAuthorized {
 		return nil, status.Errorf(codes.PermissionDenied, "user not authorized to interact with provider")
 	}
 
-	token, owner_filter, err := s.GetProviderAccessToken(ctx, in.Provider, in.GroupId, true)
+	token, owner_filter, err := s.GetProviderAccessToken(ctx, provider.Name, in.GroupId, true)
 
 	if err != nil {
 		return nil, status.Errorf(codes.PermissionDenied, "cannot get access token for provider")
 	}
 
 	// Populate the database with the repositories using the GraphQL API
-	client, err := github.NewRestClient(ctx, github.GitHubConfig{
-		Token: token.AccessToken,
-	}, owner_filter)
+	client, err := github.NewRestClient(ctx, &provifv1.GitHubConfig{}, token.AccessToken, owner_filter)
 	if err != nil {
 		return nil, status.Errorf(codes.Internal, "cannot create github client: %v", err)
 	}
@@ -385,7 +422,7 @@ func (s *Server) SyncRepositories(ctx context.Context, in *pb.SyncRepositoriesRe
 	// This uses the context with the extended timeout to allow for the
 	// database to be populated with the repositories. Otherwise the original context
 	// expires and the database insertions are cancelled.
-	err = queries.SyncRepositoriesWithDB(tmoutCtx, s.store, repos, in.Provider, in.GroupId)
+	err = queries.SyncRepositoriesWithDB(tmoutCtx, s.store, repos, provider.Name, in.GroupId)
 	if err != nil {
 		return nil, status.Errorf(codes.Internal, "cannot sync repositories: %v", err)
 	}

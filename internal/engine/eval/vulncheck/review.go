@@ -27,8 +27,8 @@ import (
 	"github.com/google/go-github/v53/github"
 	"github.com/rs/zerolog"
 
-	ghclient "github.com/stacklok/mediator/internal/providers/github"
-	pb "github.com/stacklok/mediator/pkg/generated/protobuf/go/mediator/v1"
+	pb "github.com/stacklok/mediator/pkg/api/protobuf/go/mediator/v1"
+	provifv1 "github.com/stacklok/mediator/pkg/providers/v1"
 )
 
 const (
@@ -100,7 +100,7 @@ func countLeadingWhitespace(line string) int {
 
 func locateDepInPr(
 	_ context.Context,
-	client ghclient.RestAPI,
+	client provifv1.GitHub,
 	dep *pb.PrDependencies_ContextualDependency,
 ) (*reviewLocation, error) {
 	req, err := client.NewRequest("GET", dep.File.PatchUrl, nil)
@@ -138,7 +138,7 @@ func reviewBodyWithSuggestion(comment string) string {
 }
 
 type reviewPrHandler struct {
-	cli ghclient.RestAPI
+	cli provifv1.GitHub
 	pr  *pb.PullRequest
 
 	mediatorReview *github.PullRequestReview
@@ -163,7 +163,7 @@ func withVulnsFoundReviewStatus(status *string) reviewPrHandlerOption {
 func newReviewPrHandler(
 	ctx context.Context,
 	pr *pb.PullRequest,
-	cli ghclient.RestAPI,
+	cli provifv1.GitHub,
 	opts ...reviewPrHandlerOption,
 ) (*reviewPrHandler, error) {
 	if pr == nil {
@@ -352,7 +352,7 @@ type commitStatusPrHandler struct {
 func newCommitStatusPrHandler(
 	ctx context.Context,
 	pr *pb.PullRequest,
-	client ghclient.RestAPI,
+	client provifv1.GitHub,
 ) (prStatusHandler, error) {
 	// create a reviewPrHandler and embed it in the commitStatusPrHandler
 	rph, err := newReviewPrHandler(

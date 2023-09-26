@@ -18,8 +18,10 @@ import (
 	"context"
 	"fmt"
 
+	"github.com/google/uuid"
+
 	"github.com/stacklok/mediator/internal/db"
-	pb "github.com/stacklok/mediator/pkg/generated/protobuf/go/mediator/v1"
+	pb "github.com/stacklok/mediator/pkg/api/protobuf/go/mediator/v1"
 )
 
 type key int
@@ -61,11 +63,18 @@ func (g Group) GetName() string {
 	return g.Name
 }
 
+// Provider is a construct relevant to an entity's context.
+// This is relevant for getting the full information about an entity.
+type Provider struct {
+	ID   uuid.UUID
+	Name string
+}
+
 // EntityContext is the context of an entity.
 // This is relevant for getting the full information about an entity.
 type EntityContext struct {
 	Group    Group
-	Provider string
+	Provider Provider
 }
 
 // GetGroup returns the group of the entity
@@ -74,7 +83,7 @@ func (c *EntityContext) GetGroup() Group {
 }
 
 // GetProvider returns the provider of the entity
-func (c *EntityContext) GetProvider() string {
+func (c *EntityContext) GetProvider() Provider {
 	return c.Provider
 }
 
@@ -91,11 +100,22 @@ func GetContextFromInput(ctx context.Context, in *pb.Context, q db.Querier) (*En
 		return nil, fmt.Errorf("unable to get context: %w", err)
 	}
 
+	prov, err := q.GetProviderByName(ctx, db.GetProviderByNameParams{
+		Name:    in.Provider,
+		GroupID: group.ID,
+	})
+	if err != nil {
+		return nil, fmt.Errorf("unable to get context: failed getting provider: %w", err)
+	}
+
 	return &EntityContext{
 		Group: Group{
 			ID:   group.ID,
 			Name: group.Name,
 		},
-		Provider: in.Provider,
+		Provider: Provider{
+			ID:   prov.ID,
+			Name: prov.Name,
+		},
 	}, nil
 }
