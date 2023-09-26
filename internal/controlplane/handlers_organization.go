@@ -162,8 +162,7 @@ func (s *Server) CreateOrganization(ctx context.Context,
 			Name:       github.Github,
 			GroupID:    grp.GroupId,
 			Implements: github.Implements,
-			// TODO add actual definition
-			Definition: json.RawMessage("{}"),
+			Definition: json.RawMessage(`{"github": {}}`),
 		})
 		if err != nil {
 			return nil, status.Errorf(codes.Internal, "failed to create provider: %v", err)

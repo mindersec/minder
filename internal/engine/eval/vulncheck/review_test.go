@@ -45,7 +45,7 @@ func TestReviewPrHandlerNoVulnerabilities(t *testing.T) {
 	ctrl := gomock.NewController(t)
 	defer ctrl.Finish()
 
-	mockClient := mock_ghclient.NewMockRestAPI(ctrl)
+	mockClient := mock_ghclient.NewMockGitHub(ctrl)
 	pr := &pb.PullRequest{
 		Url:       "https://api.github.com/repos/jakubtestorg/bad-npm/pulls/43",
 		CommitSha: commitSHA,
@@ -85,7 +85,7 @@ func TestReviewPrHandlerVulnerabilitiesDifferentIdentities(t *testing.T) {
 	ctrl := gomock.NewController(t)
 	defer ctrl.Finish()
 
-	mockClient := mock_ghclient.NewMockRestAPI(ctrl)
+	mockClient := mock_ghclient.NewMockGitHub(ctrl)
 	pr := &pb.PullRequest{
 		Url:       "https://api.github.com/repos/jakubtestorg/bad-npm/pulls/43",
 		CommitSha: commitSHA,
@@ -171,7 +171,7 @@ func TestReviewPrHandlerVulnerabilitiesDismissReview(t *testing.T) {
 	ctrl := gomock.NewController(t)
 	defer ctrl.Finish()
 
-	mockClient := mock_ghclient.NewMockRestAPI(ctrl)
+	mockClient := mock_ghclient.NewMockGitHub(ctrl)
 	pr := &pb.PullRequest{
 		Url:       "https://api.github.com/repos/jakubtestorg/bad-npm/pulls/43",
 		CommitSha: commitSHA,
@@ -222,7 +222,7 @@ func TestCommitStatusHandlerNoVulnerabilities(t *testing.T) {
 	ctrl := gomock.NewController(t)
 	defer ctrl.Finish()
 
-	mockClient := mock_ghclient.NewMockRestAPI(ctrl)
+	mockClient := mock_ghclient.NewMockGitHub(ctrl)
 	pr := &pb.PullRequest{
 		Url:       "https://api.github.com/repos/jakubtestorg/bad-npm/pulls/43",
 		CommitSha: commitSHA,
@@ -269,7 +269,7 @@ func TestCommitStatusPrHandlerWithVulnerabilities(t *testing.T) {
 	ctrl := gomock.NewController(t)
 	defer ctrl.Finish()
 
-	mockClient := mock_ghclient.NewMockRestAPI(ctrl)
+	mockClient := mock_ghclient.NewMockGitHub(ctrl)
 	pr := &pb.PullRequest{
 		Url:       "https://api.github.com/repos/jakubtestorg/bad-npm/pulls/43",
 		CommitSha: commitSHA,

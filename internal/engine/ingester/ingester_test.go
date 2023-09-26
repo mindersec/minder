@@ -18,23 +18,26 @@
 package ingester
 
 import (
+	"encoding/json"
 	"testing"
 
 	"github.com/stretchr/testify/require"
 
+	"github.com/stacklok/mediator/internal/db"
 	"github.com/stacklok/mediator/internal/engine/ingester/artifact"
 	"github.com/stacklok/mediator/internal/engine/ingester/builtin"
 	"github.com/stacklok/mediator/internal/engine/ingester/git"
 	"github.com/stacklok/mediator/internal/engine/ingester/rest"
+	"github.com/stacklok/mediator/internal/providers"
 	pb "github.com/stacklok/mediator/pkg/api/protobuf/go/mediator/v1"
+	provifv1 "github.com/stacklok/mediator/pkg/providers/v1"
 )
 
 func TestNewRuleDataIngest(t *testing.T) {
 	t.Parallel()
 
 	type args struct {
-		rt           *pb.RuleType
-		access_token string
+		rt *pb.RuleType
 	}
 	tests := []struct {
 		name    string
@@ -155,7 +158,26 @@ func TestNewRuleDataIngest(t *testing.T) {
 		t.Run(tt.name, func(t *testing.T) {
 			t.Parallel()
 
-			got, err := NewRuleDataIngest(tt.args.rt, nil, tt.args.access_token)
+			got, err := NewRuleDataIngest(tt.args.rt, providers.NewProviderBuilder(
+				&db.Provider{
+					Name:    "github",
+					Version: provifv1.V1,
+					Implements: []db.ProviderType{
+						"rest",
+						"git",
+						"github",
+					},
+					Definition: json.RawMessage(`{
+	"rest": {
+		"endpoint": "https://api.github.com/repos/Foo/Bar"
+	},
+	"git": {},
+	"github": {}
+}`),
+				},
+				db.ProviderAccessToken{},
+				"token",
+			))
 			if tt.wantErr {
 				require.Error(t, err, "Expected error")
 				require.Nil(t, got, "Expected nil")

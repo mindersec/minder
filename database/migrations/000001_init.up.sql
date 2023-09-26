@@ -350,4 +350,4 @@ INSERT INTO user_roles (user_id, role_id) VALUES (1, 1);
 
 -- Create default GitHub provider
 INSERT INTO providers (name, group_id, implements, definition)
-VALUES ('github', 1, ARRAY ['github', 'git', 'rest']::provider_type[], '{}');
+VALUES ('github', 1, ARRAY ['github', 'git', 'rest']::provider_type[], '{"github": {}}');

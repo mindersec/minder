@@ -21,8 +21,9 @@ import (
 	"errors"
 	"fmt"
 
+	"github.com/google/go-github/v53/github"
+
 	"github.com/stacklok/mediator/internal/db"
-	ghclient "github.com/stacklok/mediator/internal/providers/github"
 )
 
 // SyncRepositoriesWithDB syncs the repositories already in the database with the
@@ -39,7 +40,7 @@ import (
 //gocyclo:ignore
 func SyncRepositoriesWithDB(ctx context.Context,
 	store db.Store,
-	result ghclient.RepositoryListResult,
+	repos []*github.Repository,
 	provider string, groupId int32) error {
 	// Get all existing repositories from the database by group ID
 	dbRepos, err := store.ListRepositoriesByGroupID(ctx, db.ListRepositoriesByGroupIDParams{
@@ -58,7 +59,7 @@ func SyncRepositoriesWithDB(ctx context.Context,
 	}
 
 	// Iterate over the repositories returned from GitHub
-	for _, repo := range result.Repositories {
+	for _, repo := range repos {
 		// Check if the repository already exists in the database by Repo ID
 		existingRepo, err := store.GetRepositoryByRepoID(ctx, int32(*repo.ID))
 		if err != nil {

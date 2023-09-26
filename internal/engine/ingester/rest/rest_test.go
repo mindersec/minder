@@ -16,12 +16,15 @@
 package rest
 
 import (
+	"encoding/json"
 	"testing"
 
 	"github.com/stretchr/testify/require"
 
-	ghclient "github.com/stacklok/mediator/internal/providers/github"
+	"github.com/stacklok/mediator/internal/db"
+	"github.com/stacklok/mediator/internal/providers"
 	pb "github.com/stacklok/mediator/pkg/api/protobuf/go/mediator/v1"
+	provifv1 "github.com/stacklok/mediator/pkg/providers/v1"
 )
 
 func TestNewRestRuleDataIngest(t *testing.T) {
@@ -29,7 +32,7 @@ func TestNewRestRuleDataIngest(t *testing.T) {
 
 	type args struct {
 		restCfg *pb.RestType
-		cli     ghclient.RestAPI
+		pbuild  *providers.ProviderBuilder
 	}
 	tests := []struct {
 		name    string
@@ -40,9 +43,24 @@ func TestNewRestRuleDataIngest(t *testing.T) {
 			name: "valid rest",
 			args: args{
 				restCfg: &pb.RestType{
-					Endpoint: "https://api.github.com/repos/Foo/Bar",
+					Endpoint: "/repos/Foo/Bar",
 				},
-				cli: nil,
+				pbuild: providers.NewProviderBuilder(
+					&db.Provider{
+						Name:    "osv",
+						Version: provifv1.V1,
+						Implements: []db.ProviderType{
+							"rest",
+						},
+						Definition: json.RawMessage(`{
+	"rest": {
+		"base_url": "https://api.github.com/"
+	}
+}`),
+					},
+					db.ProviderAccessToken{},
+					"token",
+				),
 			},
 			wantErr: false,
 		},
@@ -52,6 +70,22 @@ func TestNewRestRuleDataIngest(t *testing.T) {
 				restCfg: &pb.RestType{
 					Endpoint: "{{",
 				},
+				pbuild: providers.NewProviderBuilder(
+					&db.Provider{
+						Name:    "osv",
+						Version: provifv1.V1,
+						Implements: []db.ProviderType{
+							"rest",
+						},
+						Definition: json.RawMessage(`{
+	"rest": {
+		"base_url": "https://api.github.com/"
+	}
+}`),
+					},
+					db.ProviderAccessToken{},
+					"token",
+				),
 			},
 			wantErr: true,
 		},
@@ -61,6 +95,91 @@ func TestNewRestRuleDataIngest(t *testing.T) {
 				restCfg: &pb.RestType{
 					Endpoint: "",
 				},
+				pbuild: providers.NewProviderBuilder(
+					&db.Provider{
+						Name:    "osv",
+						Version: provifv1.V1,
+						Implements: []db.ProviderType{
+							"rest",
+						},
+						Definition: json.RawMessage(`{
+	"rest": {
+		"endpoint": "https://api.github.com/"
+	}
+}`),
+					},
+					db.ProviderAccessToken{},
+					"token",
+				),
+			},
+			wantErr: true,
+		},
+		{
+			name: "missing provider definition",
+			args: args{
+				restCfg: &pb.RestType{
+					Endpoint: "",
+				},
+				pbuild: providers.NewProviderBuilder(
+					&db.Provider{
+						Name:    "osv",
+						Version: provifv1.V1,
+						Implements: []db.ProviderType{
+							"rest",
+						},
+					},
+					db.ProviderAccessToken{},
+					"token",
+				),
+			},
+			wantErr: true,
+		},
+		{
+			name: "wrong provider definition",
+			args: args{
+				restCfg: &pb.RestType{
+					Endpoint: "",
+				},
+				pbuild: providers.NewProviderBuilder(
+					&db.Provider{
+						Name:    "osv",
+						Version: provifv1.V1,
+						Implements: []db.ProviderType{
+							"rest",
+						},
+						Definition: json.RawMessage(`{
+	"rest": {
+		"wrong": "https://api.github.com/"
+	}
+}`),
+					},
+					db.ProviderAccessToken{},
+					"token",
+				),
+			},
+			wantErr: true,
+		},
+		{
+			name: "invalid provider definition",
+			args: args{
+				restCfg: &pb.RestType{
+					Endpoint: "",
+				},
+				pbuild: providers.NewProviderBuilder(
+					&db.Provider{
+						Name:    "osv",
+						Version: provifv1.V1,
+						Implements: []db.ProviderType{
+							"rest",
+						},
+						Definition: json.RawMessage(`{
+	"rest": {
+		"base_url": "https://api.github.com/"
+}`),
+					},
+					db.ProviderAccessToken{},
+					"token",
+				),
 			},
 			wantErr: true,
 		},
@@ -71,7 +190,7 @@ func TestNewRestRuleDataIngest(t *testing.T) {
 		t.Run(tt.name, func(t *testing.T) {
 			t.Parallel()
 
-			got, err := NewRestRuleDataIngest(tt.args.restCfg, tt.args.cli)
+			got, err := NewRestRuleDataIngest(tt.args.restCfg, tt.args.pbuild)
 			if tt.wantErr {
 				require.Error(t, err, "expected error")
 				require.Nil(t, got, "expected nil")

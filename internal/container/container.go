@@ -44,9 +44,9 @@ import (
 	"google.golang.org/protobuf/proto"
 	"google.golang.org/protobuf/types/known/timestamppb"
 
-	ghclient "github.com/stacklok/mediator/internal/providers/github"
 	"github.com/stacklok/mediator/internal/util"
 	pb "github.com/stacklok/mediator/pkg/api/protobuf/go/mediator/v1"
+	provifv1 "github.com/stacklok/mediator/pkg/providers/v1"
 )
 
 // REGISTRY is the default registry
@@ -80,7 +80,7 @@ var (
 // GetArtifactSignatureAndWorkflowInfo returns the signature and workflow information as raw JSON for a given artifact
 func GetArtifactSignatureAndWorkflowInfo(
 	ctx context.Context,
-	cli ghclient.RestAPI,
+	cli provifv1.Provider,
 	ownerLogin, artifactName, versionName string,
 ) (sigInfo json.RawMessage, workflowInfo json.RawMessage, err error) {
 	imageRef := artifactImageRef("", ownerLogin, artifactName, versionName)
