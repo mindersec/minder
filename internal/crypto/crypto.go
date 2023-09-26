@@ -31,7 +31,6 @@ import (
 	"errors"
 	"fmt"
 	"io"
-	"os"
 	"strings"
 	"time"
 
@@ -66,16 +65,7 @@ func EngineFromAuthConfig(authConfig *config.AuthConfig) (*Engine, error) {
 		return nil, errors.New("auth config is nil")
 	}
 
-	if authConfig.TokenKey == "" {
-		return nil, errors.New("token key is empty")
-	}
-
-	keyFile, err := os.Open(authConfig.TokenKey)
-	if err != nil {
-		return nil, fmt.Errorf("failed to open token key file: %s", err)
-	}
-
-	keyBytes, err := io.ReadAll(keyFile)
+	keyBytes, err := authConfig.GetTokenKey()
 	if err != nil {
 		return nil, fmt.Errorf("failed to read token key file: %s", err)
 	}
@@ -86,7 +76,7 @@ func EngineFromAuthConfig(authConfig *config.AuthConfig) (*Engine, error) {
 // NewEngine creates a new crypto engine
 func NewEngine(tokenKey string) *Engine {
 	return &Engine{
-		encryptionKey: string(tokenKey),
+		encryptionKey: tokenKey,
 	}
 }
 

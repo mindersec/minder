@@ -66,6 +66,7 @@ func (acfg *AuthConfig) GetRefreshTokenPublicKey() (*rsa.PublicKey, error) {
 	return readRSAPublicKey(acfg.RefreshTokenPublicKey)
 }
 
+// GetTokenKey returns a key used to encrypt the provider's token in the database
 func (acfg *AuthConfig) GetTokenKey() ([]byte, error) {
 	return readKey(acfg.TokenKey)
 }
@@ -97,14 +98,14 @@ func readRSAPublicKey(keypath string) (*rsa.PublicKey, error) {
 	// uses ParsePKCS1PublicKey and ParsePKIXPublicKey, and the jwt method appears
 	// to only call the latter, despite documenting doing both.
 	// Ref: https://github.com/golang-jwt/jwt/blob/v4.5.0/rsa_utils.go#L79
-	pem, _ := pem.Decode(keyBytes)
-	if pem == nil {
+	pemBlock, _ := pem.Decode(keyBytes)
+	if pemBlock == nil {
 		return nil, fmt.Errorf("failed to decode PEM block in %q", keypath)
 	}
-	key, err := x509.ParsePKCS1PublicKey(pem.Bytes)
+	key, err := x509.ParsePKCS1PublicKey(pemBlock.Bytes)
 	if err != nil {
 		// try another method
-		aKey, err := x509.ParsePKIXPublicKey(pem.Bytes)
+		aKey, err := x509.ParsePKIXPublicKey(pemBlock.Bytes)
 		if err != nil {
 			return nil, fmt.Errorf("could not find PKCS1 or PKIX public key in %q: %w", keypath, err)
 		}

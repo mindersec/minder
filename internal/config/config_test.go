@@ -142,15 +142,11 @@ func TestReadDefaultConfig(t *testing.T) {
 
 func TestReadAuthConfig(t *testing.T) {
 	t.Parallel()
-	tmpdir := t.TempDir()
-	config := config.AuthConfig{
-		AccessTokenPrivateKey:  filepath.Join(tmpdir, "access_token_private.pem"),
-		AccessTokenPublicKey:   filepath.Join(tmpdir, "access_token_public.pem"),
-	}
+
 	testCases := []struct {
-		name string
-		mutate func()
-		publicKeyError string
+		name            string
+		mutate          func(*testing.T, *config.AuthConfig)
+		publicKeyError  string
 		privateKeyError string
 	}{
 		{
@@ -158,47 +154,51 @@ func TestReadAuthConfig(t *testing.T) {
 		},
 		{
 			name: "missing keys",
-			mutate: func() {
-				os.Remove(config.AccessTokenPrivateKey)
-				os.Remove(config.AccessTokenPublicKey)
+			mutate: func(t *testing.T, cfg *config.AuthConfig) {
+				t.Helper()
+				require.NoError(t, os.Remove(cfg.AccessTokenPrivateKey))
+				require.NoError(t, os.Remove(cfg.AccessTokenPublicKey))
 			},
-			publicKeyError: "no such file or directory",
+			publicKeyError:  "no such file or directory",
 			privateKeyError: "no such file or directory",
 		},
 		{
 			name: "bad formats",
-			mutate: func() {
-				privateBytes, err := os.ReadFile(config.AccessTokenPrivateKey)
-				if err != nil {
-					t.Fatalf("Unable to open %q: %v", config.AccessTokenPrivateKey, err)
-				}
-				if err := os.WriteFile(config.AccessTokenPublicKey, privateBytes, 0600); err != nil {
-					t.Fatalf("Unable to overwrite %q: %v", config.AccessTokenPublicKey, err)
-				}
-				if err := os.WriteFile(config.AccessTokenPrivateKey, []byte("bad format"), 0600); err != nil {
-					t.Fatalf("Unable to overwrite %q: %v", config.AccessTokenPrivateKey, err)
-				}
+			mutate: func(t *testing.T, cfg *config.AuthConfig) {
+				t.Helper()
+				privateBytes, err := os.ReadFile(cfg.AccessTokenPrivateKey)
+				require.NoError(t, err)
+
+				require.NoError(t, os.WriteFile(cfg.AccessTokenPublicKey, privateBytes, 0600))
+				require.NoError(t, os.WriteFile(cfg.AccessTokenPrivateKey, []byte("bad format"), 0600))
 			},
-			publicKeyError: "could not find PKCS1 or PKIX public key in",
+			publicKeyError:  "could not find PKCS1 or PKIX public key in",
 			privateKeyError: "Key must be a PEM encoded PKCS1 or PKCS8 key",
 		},
 	}
 
 	for _, tc := range testCases {
+		tc := tc
 		t.Run(tc.name, func(t *testing.T) {
-			err := util.RandomKeypairFile(2048, config.AccessTokenPrivateKey, config.AccessTokenPublicKey)
+			t.Parallel()
+			tmpdir := t.TempDir()
+			cfg := config.AuthConfig{
+				AccessTokenPrivateKey: filepath.Join(tmpdir, "access_token_private.pem"),
+				AccessTokenPublicKey:  filepath.Join(tmpdir, "access_token_public.pem"),
+			}
+			err := util.RandomKeypairFile(2048, cfg.AccessTokenPrivateKey, cfg.AccessTokenPublicKey)
 			if err != nil {
 				t.Fatalf("Error generating access token key pair: %v", err)
 			}
 
 			if tc.mutate != nil {
-				tc.mutate()
+				tc.mutate(t, &cfg)
 			}
-			
-			if _, err := config.GetAccessTokenPrivateKey(); !errMatches(err, tc.privateKeyError) {
+
+			if _, err := cfg.GetAccessTokenPrivateKey(); !errMatches(err, tc.privateKeyError) {
 				t.Errorf("Expected error containing %q, but got %v", tc.privateKeyError, err)
 			}
-			if _, err := config.GetAccessTokenPublicKey(); !errMatches(err, tc.publicKeyError) {
+			if _, err := cfg.GetAccessTokenPublicKey(); !errMatches(err, tc.publicKeyError) {
 				t.Errorf("Expected error containing %q, but got %v", tc.publicKeyError, err)
 			}
 		})
