@@ -30,7 +30,7 @@ import (
 	"google.golang.org/grpc/status"
 
 	"github.com/stacklok/mediator/internal/util"
-	pb "github.com/stacklok/mediator/pkg/generated/protobuf/go/mediator/v1"
+	pb "github.com/stacklok/mediator/pkg/api/protobuf/go/mediator/v1"
 )
 
 // auth_loginCmd represents the login command

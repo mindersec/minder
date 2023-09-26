@@ -21,7 +21,7 @@ import (
 	"fmt"
 	"net/http"
 
-	pb "github.com/stacklok/mediator/pkg/generated/protobuf/go/mediator/v1"
+	pb "github.com/stacklok/mediator/pkg/api/protobuf/go/mediator/v1"
 )
 
 type patchFormatter interface {

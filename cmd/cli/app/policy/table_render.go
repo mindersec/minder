@@ -24,7 +24,7 @@ import (
 	"gopkg.in/yaml.v2"
 
 	"github.com/stacklok/mediator/internal/entities"
-	pb "github.com/stacklok/mediator/pkg/generated/protobuf/go/mediator/v1"
+	pb "github.com/stacklok/mediator/pkg/api/protobuf/go/mediator/v1"
 )
 
 func initializeTable(cmd *cobra.Command) *tablewriter.Table {

@@ -26,7 +26,7 @@ import (
 	evalerrors "github.com/stacklok/mediator/internal/engine/errors"
 	engif "github.com/stacklok/mediator/internal/engine/interfaces"
 	"github.com/stacklok/mediator/internal/util"
-	pb "github.com/stacklok/mediator/pkg/generated/protobuf/go/mediator/v1"
+	pb "github.com/stacklok/mediator/pkg/api/protobuf/go/mediator/v1"
 )
 
 // Evaluator is an Evaluator that uses the jq library to evaluate rules

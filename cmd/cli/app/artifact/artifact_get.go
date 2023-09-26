@@ -23,7 +23,7 @@ import (
 	"github.com/spf13/viper"
 
 	"github.com/stacklok/mediator/internal/util"
-	pb "github.com/stacklok/mediator/pkg/generated/protobuf/go/mediator/v1"
+	pb "github.com/stacklok/mediator/pkg/api/protobuf/go/mediator/v1"
 )
 
 // repo_listCmd represents the list command to list repos with the

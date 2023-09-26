@@ -23,7 +23,7 @@ import "google/protobuf/struct.proto";
 import "google/api/httpbody.proto";
 
 
-option go_package = "github.com/stacklok/mediator/pkg/generated/protobuf/go";
+option go_package = "github.com/stacklok/mediator/pkg/api/protobuf/go";
 
 enum ObjectOwner {
     OBJECT_OWNER_UNSPECIFIED = 0;

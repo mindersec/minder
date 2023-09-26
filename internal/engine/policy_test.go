@@ -23,7 +23,7 @@ import (
 	"google.golang.org/protobuf/types/known/structpb"
 
 	"github.com/stacklok/mediator/internal/engine"
-	pb "github.com/stacklok/mediator/pkg/generated/protobuf/go/mediator/v1"
+	pb "github.com/stacklok/mediator/pkg/api/protobuf/go/mediator/v1"
 )
 
 var (

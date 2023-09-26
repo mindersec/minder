@@ -114,7 +114,7 @@ API Doc [here](https://mediator-docs.stacklok.dev/api)
 
 The APIs are defined in protobuf [here](https://github.com/stacklok/mediator/blob/main/proto/mediator/v1/mediator.proto).
 
-An OpenAPI / swagger spec is generated to [JSON](https://github.com/stacklok/mediator/blob/main/pkg/generated/openapi/mediator/v1/mediator.swagger.json) 
+An OpenAPI / swagger spec is generated to [JSON](https://github.com/stacklok/mediator/blob/main/pkg/api/openapi/mediator/v1/mediator.swagger.json) 
 
 It can be accessed over gRPC or HTTP using [gprc-gateway](https://grpc-ecosystem.github.io/grpc-gateway/).
 

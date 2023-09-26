@@ -32,7 +32,7 @@ import (
 	"google.golang.org/protobuf/reflect/protoreflect"
 
 	"github.com/stacklok/mediator/internal/util"
-	pb "github.com/stacklok/mediator/pkg/generated/protobuf/go/mediator/v1"
+	pb "github.com/stacklok/mediator/pkg/api/protobuf/go/mediator/v1"
 )
 
 func printRoles(rolesById *pb.GetRolesByGroupResponse, rolesByGroup *pb.GetRolesResponse, format string) {
