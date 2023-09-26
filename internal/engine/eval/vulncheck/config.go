@@ -51,6 +51,7 @@ type ecosystemConfig struct {
 	//nolint:lll
 	DbEndpoint        string            `json:"vulnerability_database_endpoint" mapstructure:"vulnerability_database_endpoint" validate:"required"`
 	PackageRepository packageRepository `json:"package_repository" mapstructure:"package_repository" validate:"required"`
+	SumRepository     packageRepository `json:"sum_repository" mapstructure:"sum_repository" validate:"required"`
 }
 
 // config is the configuration for the vulncheck evaluator

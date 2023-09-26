@@ -20,3 +20,5 @@ pull_request:
               vulnerability_database_endpoint: https://api.osv.dev/v1/query
               package_repository:
                 url: https://proxy.golang.org
+              sum_repository:
+                url: https://sum.golang.org

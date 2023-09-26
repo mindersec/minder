@@ -98,12 +98,7 @@ func (e *Evaluator) Eval(ctx context.Context, pol map[string]any, res *engif.Res
 			return fmt.Errorf("failed to create package repository: %w", err)
 		}
 
-		pkgReq, err := pkgRepo.NewRequest(ctx, dep.Dep)
-		if err != nil {
-			return fmt.Errorf("failed to create package request: %w", err)
-		}
-
-		patch, err := pkgRepo.SendRecvRequest(pkgReq)
+		patch, err := pkgRepo.SendRecvRequest(ctx, dep.Dep)
 		if err != nil {
 			return fmt.Errorf("failed to send package request: %w", err)
 		}

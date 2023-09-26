@@ -107,7 +107,7 @@ func locateDepInPr(
 	if err != nil {
 		return nil, fmt.Errorf("could not create request: %w", err)
 	}
-	// TODO:(jakub) I couldn't make this work with the GH client
+	// TODO:(jakub) I couldn't make this work with the GH proxyClient
 	netClient := &http.Client{}
 	resp, err := netClient.Do(req)
 	if err != nil {
@@ -219,12 +219,13 @@ func (ra *reviewPrHandler) trackVulnerableDep(
 
 	comment := patch.IndentedString(location.leadingWhitespace)
 	body := reviewBodyWithSuggestion(comment)
+	lineTo := len(strings.Split(comment, "\n")) - 1
 
 	reviewComment := &github.DraftReviewComment{
 		Path:      github.String(dep.File.Name),
 		Position:  nil,
 		StartLine: github.Int(location.lineToChange),
-		Line:      github.Int(location.lineToChange + 3), // TODO(jakub): Need to count the lines from the patch
+		Line:      github.Int(location.lineToChange + lineTo),
 		Body:      github.String(body),
 	}
 	ra.comments = append(ra.comments, reviewComment)

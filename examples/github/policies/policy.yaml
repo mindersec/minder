@@ -79,3 +79,5 @@ pull_request:
           vulnerability_database_endpoint: https://vuln.go.dev
           package_repository:
             url: https://proxy.golang.org
+          sum_repository:
+            url: https://sum.golang.org
