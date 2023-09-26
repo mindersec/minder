@@ -27,13 +27,14 @@ import (
 	pb "github.com/stacklok/mediator/pkg/api/protobuf/go/mediator/v1"
 )
 
-type patchFormatter interface {
+type patchLocatorFormatter interface {
+	LineHasDependency(line string) bool
 	IndentedString(int) string
 }
 
 // RepoQuerier is the interface for querying a repository
 type RepoQuerier interface {
-	SendRecvRequest(ctx context.Context, dep *pb.Dependency) (patchFormatter, error)
+	SendRecvRequest(ctx context.Context, dep *pb.Dependency) (patchLocatorFormatter, error)
 }
 
 type repoCache struct {
@@ -87,6 +88,11 @@ func (pj *packageJson) IndentedString(leadingWhitespace int) string {
 	return data
 }
 
+func (pj *packageJson) LineHasDependency(line string) bool {
+	pkgLine := fmt.Sprintf(`"%s": {`, pj.Name)
+	return strings.Contains(line, pkgLine)
+}
+
 type npmRepository struct {
 	client   *http.Client
 	endpoint string
@@ -112,7 +118,7 @@ func (n *npmRepository) newRequest(ctx context.Context, dep *pb.Dependency) (*ht
 	return req, nil
 }
 
-func (n *npmRepository) SendRecvRequest(ctx context.Context, dep *pb.Dependency) (patchFormatter, error) {
+func (n *npmRepository) SendRecvRequest(ctx context.Context, dep *pb.Dependency) (patchLocatorFormatter, error) {
 	req, err := n.newRequest(ctx, dep)
 	if err != nil {
 		return nil, fmt.Errorf("could not create request: %w", err)

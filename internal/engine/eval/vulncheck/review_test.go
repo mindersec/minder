@@ -103,8 +103,9 @@ func TestReviewPrHandlerVulnerabilitiesDifferentIdentities(t *testing.T) {
 	require.NotNil(t, handler)
 
 	server := httptest.NewServer(http.HandlerFunc(func(w http.ResponseWriter, r *http.Request) {
-		// Here you can define what your mock server should return
-		_, err := w.Write([]byte("mocked response"))
+		_, err := w.Write([]byte(`+    "mongodb": {
++      "version": "5.1.0",
++      }`))
 		assert.NoError(t, err)
 	}))
 	defer server.Close()
@@ -155,8 +156,8 @@ func TestReviewPrHandlerVulnerabilitiesDifferentIdentities(t *testing.T) {
 			Comments: []*github.DraftReviewComment{
 				{
 					Path:      github.String(dep.File.Name),
-					StartLine: github.Int(0),
-					Line:      github.Int(3),
+					StartLine: github.Int(1),
+					Line:      github.Int(4),
 					Body:      github.String(expCommentBody),
 				},
 			},
@@ -287,8 +288,9 @@ func TestCommitStatusPrHandlerWithVulnerabilities(t *testing.T) {
 	require.NotNil(t, handler)
 
 	server := httptest.NewServer(http.HandlerFunc(func(w http.ResponseWriter, r *http.Request) {
-		// Here you can define what your mock server should return
-		_, err := w.Write([]byte("mocked response"))
+		_, err := w.Write([]byte(`+    "mongodb": {
++      "version": "5.1.0",
++      }`))
 		assert.NoError(t, err)
 	}))
 	defer server.Close()
@@ -339,8 +341,8 @@ func TestCommitStatusPrHandlerWithVulnerabilities(t *testing.T) {
 			Comments: []*github.DraftReviewComment{
 				{
 					Path:      github.String(dep.File.Name),
-					StartLine: github.Int(0),
-					Line:      github.Int(3),
+					StartLine: github.Int(1),
+					Line:      github.Int(4),
 					Body:      github.String(expCommentBody),
 				},
 			},
