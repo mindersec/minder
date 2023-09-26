@@ -35,6 +35,7 @@ COMPOSE_ARGS?=-d
 KO_DOCKER_REPO?=ko.local
 KO_PUSH_IMAGE?=false
 KO_PLATFORMS=linux/amd64,linux/arm64
+HELM_PACKAGE_VERSION?=0.1.0
 
 default: help
 
@@ -47,7 +48,7 @@ gen: ## generate protobuf files
 	buf generate
 
 clean-gen:
-	rm -rf $(shell find pkg/generated -iname "*.go") & rm -rf $(shell find pkg/generated -iname "*.swagger.json") & rm -rf pkg/generated/protodocs
+	rm -rf $(shell find pkg/api -iname "*.go") & rm -rf $(shell find pkg/api -iname "*.swagger.json") & rm -rf pkg/api/protodocs
 
 cli-docs:
 	@mkdir -p docs/docs/cli
@@ -83,7 +84,7 @@ helm:  ## build the helm chart to a local archive, using ko for the image build
 	cd deployment/helm; rm -f templates/combined.yml && \
 	    ko resolve --platform=${KO_PLATFORMS} --base-import-paths --push=${KO_PUSH_IMAGE} -f templates/ > templates/combined.yml && \
 		helm dependency update && \
-		helm package .
+		helm package --version="${HELM_PACKAGE_VERSION}" .
 
 bootstrap: ## install build deps
 	go generate -tags tools tools/tools.go
@@ -94,6 +95,7 @@ bootstrap: ## install build deps
 			google.golang.org/protobuf/cmd/protoc-gen-go google.golang.org/grpc/cmd/protoc-gen-go-grpc \
 			github.com/kyleconroy/sqlc
 	# Create a config.yaml if it doesn't exist
+	# TODO: remove this when all config is handled in internal/config
 	cp -n config/config.yaml.example ./config.yaml || echo "config.yaml already exists, not overwriting"
 	# Create keys:
 	mkdir -p .ssh
@@ -142,3 +144,4 @@ dbschema:	## generate database schema with schema spy, monitor file until doc is
 
 mock:
 	mockgen -package mockdb -destination database/mock/store.go github.com/stacklok/mediator/internal/db Store
+	mockgen -package mockgh -destination internal/providers/github/mock/github.go -source internal/providers/github/github.go RestAPI

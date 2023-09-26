@@ -27,7 +27,7 @@ import (
 	"github.com/stacklok/mediator/internal/db"
 	"github.com/stacklok/mediator/internal/entities"
 	"github.com/stacklok/mediator/internal/util"
-	pb "github.com/stacklok/mediator/pkg/generated/protobuf/go/mediator/v1"
+	pb "github.com/stacklok/mediator/pkg/api/protobuf/go/mediator/v1"
 )
 
 var (
@@ -248,7 +248,7 @@ func MergeDatabaseListIntoPolicies(ppl []db.ListPoliciesByGroupIDRow, ectx *Enti
 				Id:   &p.ID,
 				Name: p.Name,
 				Context: &pb.Context{
-					Provider: p.Provider,
+					Provider: ectx.Provider.Name,
 					Group:    &ectx.Group.Name,
 				},
 			}
@@ -280,7 +280,7 @@ func MergeDatabaseGetIntoPolicies(ppl []db.GetPolicyByGroupAndIDRow, ectx *Entit
 				Id:   &p.ID,
 				Name: p.Name,
 				Context: &pb.Context{
-					Provider: p.Provider,
+					Provider: ectx.Provider.Name,
 					Group:    &ectx.Group.Name,
 				},
 			}

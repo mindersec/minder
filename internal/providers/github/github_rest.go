@@ -280,19 +280,15 @@ func (c *RestClient) ListFiles(
 	ctx context.Context,
 	owner string,
 	repo string,
-	number int,
-	page int,
+	prNumber int,
 	perPage int,
-) ([]*github.CommitFile, error) {
+	pageNumber int,
+) ([]*github.CommitFile, *github.Response, error) {
 	opt := &github.ListOptions{
-		Page:    page,
+		Page:    pageNumber,
 		PerPage: perPage,
 	}
-	files, _, err := c.client.PullRequests.ListFiles(ctx, owner, repo, number, opt)
-	if err != nil {
-		return nil, err
-	}
-	return files, nil
+	return c.client.PullRequests.ListFiles(ctx, owner, repo, prNumber, opt)
 }
 
 // CreateReview is a wrapper for the GitHub API to create a review
@@ -333,6 +329,17 @@ func (c *RestClient) DismissReview(
 		return nil, fmt.Errorf("error dismissing review %d for PR %s/%s/%d: %w", reviewId, owner, repo, prId, err)
 	}
 	return review, nil
+}
+
+// SetCommitStatus is a wrapper for the GitHub API to set a commit status
+func (c *RestClient) SetCommitStatus(
+	ctx context.Context, owner, repo, ref string, status *github.RepoStatus,
+) (*github.RepoStatus, error) {
+	status, _, err := c.client.Repositories.CreateStatus(ctx, owner, repo, ref, status)
+	if err != nil {
+		return nil, fmt.Errorf("error creating commit status: %w", err)
+	}
+	return status, nil
 }
 
 // GetRepository returns a single repository for the authenticated user

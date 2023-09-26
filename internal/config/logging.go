@@ -15,19 +15,9 @@
 
 package config
 
-import "github.com/spf13/viper"
-
 // LoggingConfig is the configuration for the logging package
 type LoggingConfig struct {
-	Level   string `mapstructure:"level"`
-	Format  string `mapstructure:"format"`
-	LogFile string `mapstructure:"logFile"`
-}
-
-// SetLoggingViperDefaults sets the default values for the logging configuration
-// to be picked up by viper
-func SetLoggingViperDefaults(v *viper.Viper) {
-	v.SetDefault("logging.level", "debug")
-	v.SetDefault("logging.format", "json")
-	v.SetDefault("logging.logFile", "")
+	Level   string `mapstructure:"level" default:"debug"`
+	Format  string `mapstructure:"format" default:"json"`
+	LogFile string `mapstructure:"logFile" default:""`
 }

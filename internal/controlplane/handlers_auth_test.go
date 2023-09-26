@@ -32,7 +32,7 @@ import (
 	mcrypto "github.com/stacklok/mediator/internal/crypto"
 	"github.com/stacklok/mediator/internal/db"
 	"github.com/stacklok/mediator/internal/util"
-	pb "github.com/stacklok/mediator/pkg/generated/protobuf/go/mediator/v1"
+	pb "github.com/stacklok/mediator/pkg/api/protobuf/go/mediator/v1"
 )
 
 // nolint // This function is serial for some reason and doesn't work with t.Parallel()
@@ -40,7 +40,7 @@ func TestLogin_gRPC(t *testing.T) {
 
 	seed := time.Now().UnixNano()
 	password := util.RandomPassword(8, seed)
-	cryptcfg := config.GetCryptoConfigWithDefaults()
+	cryptcfg := config.DefaultConfigForTest().Salt
 	hash, err := mcrypto.GeneratePasswordHash(password, &cryptcfg)
 	if err != nil {
 		t.Fatalf("Error generating password hash: %v", err)

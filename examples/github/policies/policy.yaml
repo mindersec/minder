@@ -67,7 +67,7 @@ artifact:
 pull_request:
   - type: pr_vulnerability_check
     def:
-      action: reject_pr
+      action: review
       ecosystem_config:
         - name: npm
           vulnerability_database_type: osv

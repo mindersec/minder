@@ -27,7 +27,7 @@ import (
 	"github.com/stacklok/mediator/internal/auth"
 	"github.com/stacklok/mediator/internal/config"
 	"github.com/stacklok/mediator/internal/db"
-	pb "github.com/stacklok/mediator/pkg/generated/protobuf/go/mediator/v1"
+	pb "github.com/stacklok/mediator/pkg/api/protobuf/go/mediator/v1"
 )
 
 func TestKeysHandler(t *testing.T) {
@@ -75,7 +75,7 @@ func TestKeysHandler(t *testing.T) {
 	s := &Server{
 		store: mockStore,
 		cfg: &config.Config{
-			Salt: config.GetCryptoConfigWithDefaults(),
+			Salt: config.DefaultConfigForTest().Salt,
 		},
 	}
 
@@ -168,7 +168,7 @@ func TestKeysHandler_gRPC(t *testing.T) {
 			server := &Server{
 				store: mockStore,
 				cfg: &config.Config{
-					Salt: config.GetCryptoConfigWithDefaults(),
+					Salt: config.DefaultConfigForTest().Salt,
 				},
 			}
 

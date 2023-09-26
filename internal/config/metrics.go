@@ -15,15 +15,7 @@
 
 package config
 
-import "github.com/spf13/viper"
-
 // MetricsConfig is the configuration for the metrics
 type MetricsConfig struct {
-	Enabled bool `mapstructure:"enabled"`
-}
-
-// SetMetricsViperDefaults sets the default values for the metrics configuration
-// to be picked up by viper
-func SetMetricsViperDefaults(v *viper.Viper) {
-	v.SetDefault("metrics.enabled", true)
+	Enabled bool `mapstructure:"enabled" default:"true"`
 }

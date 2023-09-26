@@ -13,13 +13,16 @@
 # See the License for the specific language governing permissions and
 # limitations under the License.
 
-# HTTP & gRPC server configuration
+# HTTP, gRPC & metrics server configuration
 http_server:
   host: "127.0.0.1"
   port: 8080
 grpc_server:
   host: "127.0.0.1"
   port: 8090
+metric_server:
+  host: "127.0.0.1"
+  port: 9090
 
 logging:
   level: "debug"

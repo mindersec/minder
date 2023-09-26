@@ -28,17 +28,21 @@ import (
 	"github.com/rs/zerolog"
 
 	ghclient "github.com/stacklok/mediator/internal/providers/github"
-	pb "github.com/stacklok/mediator/pkg/generated/protobuf/go/mediator/v1"
+	pb "github.com/stacklok/mediator/pkg/api/protobuf/go/mediator/v1"
 )
 
 const (
-	reviewBodyMagicComment              = "<!-- mediator: pr-review-body -->"
-	reviewBodyRequestChangesCommentText = `
+	reviewBodyMagicComment = "<!-- mediator: pr-review-body -->"
+	commitStatusContext    = "mediator.stacklok.dev/pr-vulncheck"
+	vulnsFoundText         = `
 Mediator found vulnerable dependencies in this PR. Either push an updated
 version or accept the proposed changes. Note that accepting the changes will
 include mediator as a co-author of this PR.
 `
-	reviewBodyCommentText = `
+	vulnsFoundTextShort = `
+Vulnerable dependencies found.
+`
+	noVulsFoundText = `
 Mediator analyzed this PR and found no vulnerable dependencies.
 `
 	reviewBodyDismissCommentText = `
@@ -56,7 +60,7 @@ type reviewTemplateData struct {
 	ReviewText   string
 }
 
-func createReviewBody(magicComment, reviewText string) (string, error) {
+func createReviewBody(reviewText string) (string, error) {
 	// Create and parse the template
 	tmpl, err := template.New(reviewTemplateName).Parse(reviewTmplStr)
 	if err != nil {
@@ -65,7 +69,7 @@ func createReviewBody(magicComment, reviewText string) (string, error) {
 
 	// Define the data for the template
 	data := reviewTemplateData{
-		MagicComment: magicComment,
+		MagicComment: reviewBodyMagicComment,
 		ReviewText:   reviewText,
 	}
 
@@ -105,7 +109,7 @@ func locateDepInPr(
 	}
 	// TODO:(jakub) I couldn't make this work with the GH client
 	netClient := &http.Client{}
-	resp, _ := netClient.Do(req)
+	resp, err := netClient.Do(req)
 	if err != nil {
 		return nil, fmt.Errorf("could not send request: %w", err)
 	}
@@ -129,11 +133,16 @@ func locateDepInPr(
 	return &loc, nil
 }
 
+func reviewBodyWithSuggestion(comment string) string {
+	return fmt.Sprintf("```suggestion\n%s\n```\n", comment)
+}
+
 type reviewPrHandler struct {
 	cli ghclient.RestAPI
 	pr  *pb.PullRequest
 
 	mediatorReview *github.PullRequestReview
+	failStatus     *string
 
 	comments []*github.DraftReviewComment
 	status   *string
@@ -142,11 +151,21 @@ type reviewPrHandler struct {
 	logger zerolog.Logger
 }
 
+type reviewPrHandlerOption func(*reviewPrHandler)
+
+// WithSetReviewStatus is an option to set the vulnsFoundReviewStatus field of reviewPrHandler.
+func withVulnsFoundReviewStatus(status *string) reviewPrHandlerOption {
+	return func(r *reviewPrHandler) {
+		r.failStatus = status
+	}
+}
+
 func newReviewPrHandler(
 	ctx context.Context,
 	pr *pb.PullRequest,
 	cli ghclient.RestAPI,
-) (prStatusHandler, error) {
+	opts ...reviewPrHandlerOption,
+) (*reviewPrHandler, error) {
 	if pr == nil {
 		return nil, fmt.Errorf("pr was nil, can't review")
 	}
@@ -157,12 +176,35 @@ func newReviewPrHandler(
 		Str("repo-name", pr.RepoName).
 		Logger()
 
-	return &reviewPrHandler{
-		cli:      cli,
-		pr:       pr,
-		comments: []*github.DraftReviewComment{},
-		logger:   logger,
-	}, nil
+	cliUser, err := cli.GetAuthenticatedUser(ctx)
+	if err != nil {
+		return nil, fmt.Errorf("could not get authenticated user: %w", err)
+	}
+
+	// if the user wants mediator to request changes on a pull request, they need to
+	// be different identities
+	var failStatus *string
+	if pr.AuthorId == cliUser.GetID() {
+		failStatus = github.String("COMMENT")
+		logger.Debug().Msg("author is the same as the authenticated user, can only comment")
+	} else {
+		failStatus = github.String("REQUEST_CHANGES")
+		logger.Debug().Msg("author is different than the authenticated user, can request changes")
+	}
+
+	handler := &reviewPrHandler{
+		cli:        cli,
+		pr:         pr,
+		comments:   []*github.DraftReviewComment{},
+		logger:     logger,
+		failStatus: failStatus,
+	}
+
+	for _, opt := range opts {
+		opt(handler)
+	}
+
+	return handler, nil
 }
 
 func (ra *reviewPrHandler) trackVulnerableDep(
@@ -176,7 +218,7 @@ func (ra *reviewPrHandler) trackVulnerableDep(
 	}
 
 	comment := patch.IndentedString(location.leadingWhitespace)
-	body := fmt.Sprintf("```suggestion\n"+"%s\n"+"```\n", comment)
+	body := reviewBodyWithSuggestion(comment)
 
 	reviewComment := &github.DraftReviewComment{
 		Path:      github.String(dep.File.Name),
@@ -186,6 +228,10 @@ func (ra *reviewPrHandler) trackVulnerableDep(
 		Body:      github.String(body),
 	}
 	ra.comments = append(ra.comments, reviewComment)
+
+	ra.logger.Debug().
+		Str("dep-name", dep.Dep.Name).
+		Msg("vulnerable dependency found")
 
 	return nil
 }
@@ -219,13 +265,17 @@ func (ra *reviewPrHandler) submit(ctx context.Context) error {
 func (ra *reviewPrHandler) setStatus() {
 	if len(ra.comments) > 0 {
 		// if this pass produced comments, request changes
-		ra.status = github.String("REQUEST_CHANGES")
-		ra.text = github.String(reviewBodyRequestChangesCommentText)
+		ra.text = github.String(vulnsFoundText)
+		ra.status = ra.failStatus
+		ra.logger.Debug().Msg("vulnerabilities found")
 	} else {
 		// if this pass produced no comments, resolve the mediator review
 		ra.status = github.String("COMMENT")
-		ra.text = github.String(reviewBodyCommentText)
+		ra.text = github.String(noVulsFoundText)
+		ra.logger.Debug().Msg("no vulnerabilities found")
 	}
+
+	ra.logger.Debug().Str("status", *ra.status).Msg("will set review status")
 }
 
 func (ra *reviewPrHandler) findPreviousReview(ctx context.Context) error {
@@ -246,7 +296,7 @@ func (ra *reviewPrHandler) findPreviousReview(ctx context.Context) error {
 }
 
 func (ra *reviewPrHandler) submitReview(ctx context.Context) error {
-	body, err := createReviewBody(reviewBodyMagicComment, *ra.text)
+	body, err := createReviewBody(*ra.text)
 	if err != nil {
 		return fmt.Errorf("could not create review body: %w", err)
 	}
@@ -292,4 +342,86 @@ func (ra *reviewPrHandler) dismissReview(ctx context.Context) error {
 		return fmt.Errorf("could not dismiss review: %w", err)
 	}
 	return nil
+}
+
+type commitStatusPrHandler struct {
+	// embed the reviewPrHandler to automatically satisfy the prStatusHandler interface
+	reviewPrHandler
+}
+
+func newCommitStatusPrHandler(
+	ctx context.Context,
+	pr *pb.PullRequest,
+	client ghclient.RestAPI,
+) (prStatusHandler, error) {
+	// create a reviewPrHandler and embed it in the commitStatusPrHandler
+	rph, err := newReviewPrHandler(
+		ctx,
+		pr,
+		client,
+		withVulnsFoundReviewStatus(github.String("COMMENT")),
+	)
+	if err != nil {
+		return nil, fmt.Errorf("could not create review handler: %w", err)
+	}
+
+	return &commitStatusPrHandler{
+		reviewPrHandler: *rph,
+	}, nil
+}
+
+func (csh *commitStatusPrHandler) submit(ctx context.Context) error {
+	// first submit the review, we force the status to be COMMENT to not block
+	if err := csh.reviewPrHandler.submit(ctx); err != nil {
+		return fmt.Errorf("could not submit review: %w", err)
+	}
+
+	// next either pass or fail the commit status to eventually block the PR
+	if err := csh.setCommitStatus(ctx); err != nil {
+		return fmt.Errorf("could not set commit status: %w", err)
+	}
+
+	return nil
+}
+
+func (csh *commitStatusPrHandler) setCommitStatus(
+	ctx context.Context,
+) error {
+	commitStatus := &github.RepoStatus{
+		Context: github.String(commitStatusContext),
+	}
+
+	if len(csh.comments) > 0 {
+		commitStatus.State = github.String("failure")
+		commitStatus.Description = github.String(vulnsFoundTextShort)
+	} else {
+		commitStatus.State = github.String("success")
+		commitStatus.Description = github.String(noVulsFoundText)
+	}
+
+	csh.logger.Debug().
+		Str("commit-status", commitStatus.String()).
+		Str("commit-sha", csh.pr.CommitSha).
+		Msg("setting commit status")
+
+	_, err := csh.cli.SetCommitStatus(ctx, csh.pr.RepoOwner, csh.pr.RepoName, csh.pr.CommitSha, commitStatus)
+	return err
+}
+
+// just satisfies the interface but really does nothing. Useful for testing.
+type policyOnlyPrHandler struct{}
+
+func (policyOnlyPrHandler) trackVulnerableDep(
+	_ context.Context,
+	_ *pb.PrDependencies_ContextualDependency,
+	_ patchFormatter) error {
+	return nil
+}
+
+func (policyOnlyPrHandler) submit(_ context.Context) error {
+	return nil
+}
+
+func newPolicyOnlyPrHandler() prStatusHandler {
+	return &policyOnlyPrHandler{}
 }

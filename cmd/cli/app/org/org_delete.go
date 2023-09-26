@@ -29,7 +29,7 @@ import (
 	"github.com/spf13/viper"
 
 	"github.com/stacklok/mediator/internal/util"
-	pb "github.com/stacklok/mediator/pkg/generated/protobuf/go/mediator/v1"
+	pb "github.com/stacklok/mediator/pkg/api/protobuf/go/mediator/v1"
 )
 
 var org_deleteCmd = &cobra.Command{

@@ -374,6 +374,39 @@
         ]
       }
     },
+    "/api/v1/auth/revoke-all": {
+      "post": {
+        "summary": "RevokeOauthTokens is used to revoke all tokens\nthis a nuclear option and should only be used in emergencies",
+        "operationId": "OAuthService_RevokeOauthTokens",
+        "responses": {
+          "200": {
+            "description": "A successful response.",
+            "schema": {
+              "$ref": "#/definitions/v1RevokeOauthTokensResponse"
+            }
+          },
+          "default": {
+            "description": "An unexpected error response.",
+            "schema": {
+              "$ref": "#/definitions/rpcStatus"
+            }
+          }
+        },
+        "parameters": [
+          {
+            "name": "body",
+            "in": "body",
+            "required": true,
+            "schema": {
+              "$ref": "#/definitions/v1RevokeOauthTokensRequest"
+            }
+          }
+        ],
+        "tags": [
+          "OAuthService"
+        ]
+      }
+    },
     "/api/v1/auth/revoke/{userId}": {
       "post": {
         "summary": "revoke token for an user",
@@ -531,45 +564,6 @@
             "required": false,
             "type": "integer",
             "format": "int32"
-          }
-        ],
-        "tags": [
-          "OAuthService"
-        ]
-      }
-    },
-    "/api/v1/auth/{provider}/revoke": {
-      "post": {
-        "summary": "revoke all tokens for all users",
-        "operationId": "OAuthService_RevokeOauthTokens",
-        "responses": {
-          "200": {
-            "description": "A successful response.",
-            "schema": {
-              "$ref": "#/definitions/v1RevokeOauthTokensResponse"
-            }
-          },
-          "default": {
-            "description": "An unexpected error response.",
-            "schema": {
-              "$ref": "#/definitions/rpcStatus"
-            }
-          }
-        },
-        "parameters": [
-          {
-            "name": "provider",
-            "in": "path",
-            "required": true,
-            "type": "string"
-          },
-          {
-            "name": "body",
-            "in": "body",
-            "required": true,
-            "schema": {
-              "type": "object"
-            }
           }
         ],
         "tags": [
@@ -1581,6 +1575,13 @@
             "in": "path",
             "required": true,
             "type": "string"
+          },
+          {
+            "name": "groupId",
+            "in": "query",
+            "required": false,
+            "type": "integer",
+            "format": "int32"
           }
         ],
         "tags": [
@@ -4285,6 +4286,9 @@
       "description": "RestType defines the rest data evaluation.\nThis is used to fetch data from a REST endpoint."
     },
     "v1RevokeOauthGroupTokenResponse": {
+      "type": "object"
+    },
+    "v1RevokeOauthTokensRequest": {
       "type": "object"
     },
     "v1RevokeOauthTokensResponse": {

@@ -20,7 +20,7 @@ import (
 	"fmt"
 	"strings"
 
-	pb "github.com/stacklok/mediator/pkg/generated/protobuf/go/mediator/v1"
+	pb "github.com/stacklok/mediator/pkg/api/protobuf/go/mediator/v1"
 )
 
 type ecosystemParser func(string) ([]*pb.Dependency, error)

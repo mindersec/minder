@@ -48,6 +48,10 @@ var serveCmd = &cobra.Command{
 		if err != nil {
 			return fmt.Errorf("unable to read config: %w", err)
 		}
+		if cmd.Flag("dump_config").Value.String() == "true" {
+			log.Printf("%+v\n", cfg)
+			os.Exit(0)
+		}
 
 		if err := cfg.Validate(); err != nil {
 			return fmt.Errorf("invalid config: %w", err)
@@ -112,13 +116,12 @@ func init() {
 
 	v := viper.GetViper()
 
-	if err := config.RegisterHTTPServerFlags(v, serveCmd.Flags()); err != nil {
-		log.Fatal(err)
-	}
-
-	if err := config.RegisterGRPCServerFlags(v, serveCmd.Flags()); err != nil {
+	// Register flags for the server - http, grpc, metrics
+	if err := config.RegisterServerFlags(v, serveCmd.Flags()); err != nil {
 		log.Fatal(err)
 	}
 
 	serveCmd.Flags().String("logging", "", "Log Level")
+
+	serveCmd.Flags().Bool("dump_config", false, "Dump Config and exit")
 }

@@ -46,7 +46,6 @@
     - [ExchangeCodeForTokenCLIRequest](#mediator-v1-ExchangeCodeForTokenCLIRequest)
     - [ExchangeCodeForTokenWEBRequest](#mediator-v1-ExchangeCodeForTokenWEBRequest)
     - [ExchangeCodeForTokenWEBResponse](#mediator-v1-ExchangeCodeForTokenWEBResponse)
-    - [FilePatch](#mediator-v1-FilePatch)
     - [GetArtifactByIdRequest](#mediator-v1-GetArtifactByIdRequest)
     - [GetArtifactByIdResponse](#mediator-v1-GetArtifactByIdResponse)
     - [GetAuthorizationURLRequest](#mediator-v1-GetAuthorizationURLRequest)
@@ -133,6 +132,7 @@
     - [PolicyStatus](#mediator-v1-PolicyStatus)
     - [PrDependencies](#mediator-v1-PrDependencies)
     - [PrDependencies.ContextualDependency](#mediator-v1-PrDependencies-ContextualDependency)
+    - [PrDependencies.ContextualDependency.FilePatch](#mediator-v1-PrDependencies-ContextualDependency-FilePatch)
     - [Provider](#mediator-v1-Provider)
     - [Provider.Context](#mediator-v1-Provider-Context)
     - [Provider.Definition](#mediator-v1-Provider-Definition)
@@ -904,22 +904,6 @@ DiffType defines the diff data ingester.
 
 
 
-<a name="mediator-v1-FilePatch"></a>
-
-### FilePatch
-
-
-
-| Field | Type | Label | Description |
-| ----- | ---- | ----- | ----------- |
-| name | [string](#string) |  | file changed, e.g. package-lock.json |
-| patch_url | [string](#string) |  | points to the the raw patchfile |
-
-
-
-
-
-
 <a name="mediator-v1-GetArtifactByIdRequest"></a>
 
 ### GetArtifactByIdRequest
@@ -1387,6 +1371,7 @@ if the struct is reused in other messages, it should be moved to a top-level def
 | Field | Type | Label | Description |
 | ----- | ---- | ----- | ----------- |
 | provider | [string](#string) |  |  |
+| group_id | [int32](#int32) |  |  |
 | name | [string](#string) |  |  |
 
 
@@ -2271,7 +2256,23 @@ get the overall policy status
 | Field | Type | Label | Description |
 | ----- | ---- | ----- | ----------- |
 | dep | [Dependency](#mediator-v1-Dependency) |  |  |
-| file | [FilePatch](#mediator-v1-FilePatch) |  |  |
+| file | [PrDependencies.ContextualDependency.FilePatch](#mediator-v1-PrDependencies-ContextualDependency-FilePatch) |  |  |
+
+
+
+
+
+
+<a name="mediator-v1-PrDependencies-ContextualDependency-FilePatch"></a>
+
+### PrDependencies.ContextualDependency.FilePatch
+
+
+
+| Field | Type | Label | Description |
+| ----- | ---- | ----- | ----------- |
+| name | [string](#string) |  | file changed, e.g. package-lock.json |
+| patch_url | [string](#string) |  | points to the the raw patchfile |
 
 
 
@@ -2400,7 +2401,7 @@ This is used to define the types of clients that are supported by the provider.
 | number | [int32](#int32) |  | The sequential PR number (not the DB PK!) |
 | repo_owner | [string](#string) |  | The owner of the repo, will be used to submit a review |
 | repo_name | [string](#string) |  | The name of the repo, will be used to submit a review |
-| patches | [FilePatch](#mediator-v1-FilePatch) | repeated | The list of files changed in the PR. Does not include file contents |
+| author_id | [int64](#int64) |  | The author of the PR, will be used to check if we can request changes |
 
 
 
@@ -2589,11 +2590,6 @@ This is used to fetch data from a REST endpoint.
 
 ### RevokeOauthTokensRequest
 
-
-
-| Field | Type | Label | Description |
-| ----- | ---- | ----- | ----------- |
-| provider | [string](#string) |  |  |
 
 
 
@@ -3321,7 +3317,7 @@ replies with OK
 protolint:disable:this |
 | ExchangeCodeForTokenWEB | [ExchangeCodeForTokenWEBRequest](#mediator-v1-ExchangeCodeForTokenWEBRequest) | [ExchangeCodeForTokenWEBResponse](#mediator-v1-ExchangeCodeForTokenWEBResponse) |  |
 | StoreProviderToken | [StoreProviderTokenRequest](#mediator-v1-StoreProviderTokenRequest) | [StoreProviderTokenResponse](#mediator-v1-StoreProviderTokenResponse) |  |
-| RevokeOauthTokens | [RevokeOauthTokensRequest](#mediator-v1-RevokeOauthTokensRequest) | [RevokeOauthTokensResponse](#mediator-v1-RevokeOauthTokensResponse) | revoke all tokens for all users |
+| RevokeOauthTokens | [RevokeOauthTokensRequest](#mediator-v1-RevokeOauthTokensRequest) | [RevokeOauthTokensResponse](#mediator-v1-RevokeOauthTokensResponse) | RevokeOauthTokens is used to revoke all tokens this a nuclear option and should only be used in emergencies |
 | RevokeOauthGroupToken | [RevokeOauthGroupTokenRequest](#mediator-v1-RevokeOauthGroupTokenRequest) | [RevokeOauthGroupTokenResponse](#mediator-v1-RevokeOauthGroupTokenResponse) | revoke token for a group |
 | VerifyProviderTokenFrom | [VerifyProviderTokenFromRequest](#mediator-v1-VerifyProviderTokenFromRequest) | [VerifyProviderTokenFromResponse](#mediator-v1-VerifyProviderTokenFromResponse) | VerifyProviderTokenFrom verifies that a token has been created for a provider since given timestamp |
 

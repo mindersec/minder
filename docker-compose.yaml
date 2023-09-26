@@ -23,6 +23,7 @@ services:
       "serve",
       "--grpc-host=0.0.0.0",
       "--http-host=0.0.0.0",
+      "--metric-host=0.0.0.0",
       "--db-host=postgres",
       "--config=/app/config.yaml",
       # If you don't want to store your GitHub client ID and secret in the main
@@ -34,8 +35,10 @@ services:
     ports:
       - "8080:8080"
       - "8090:8090"
+      - "9090:9090"
     volumes:
           - ./config.yaml:/app/config.yaml:z
+          - ./assets:/assets:z
           # If you don't want to store your GitHub client ID and secret in the main
           # config file, point to them here:
           # - ./.github_client_id:/secrets/github_client_id:z
@@ -46,11 +49,11 @@ services:
       # Use viper environment variables to set specific paths to keys;
       # these values are relative paths in config.yaml, but it's not clear
       # what they are relative _to_...
-      - AUTH.ACCESS_TOKEN_PRIVATE_KEY=/app/.ssh/access_token_rsa
-      - AUTH.ACCESS_TOKEN_PUBLIC_KEY=/app/.ssh/access_token_rsa.pub
-      - AUTH.REFRESH_TOKEN_PRIVATE_KEY=/app/.ssh/refresh_token_rsa
-      - AUTH.REFRESH_TOKEN_PUBLIC_KEY=/app/.ssh/refresh_token_rsa.pub
-      - AUTH.TOKEN_KEY=/app/.ssh/token_key_passphrase
+      - AUTH_ACCESS_TOKEN_PRIVATE_KEY=/app/.ssh/access_token_rsa
+      - AUTH_ACCESS_TOKEN_PUBLIC_KEY=/app/.ssh/access_token_rsa.pub
+      - AUTH_REFRESH_TOKEN_PRIVATE_KEY=/app/.ssh/refresh_token_rsa
+      - AUTH_REFRESH_TOKEN_PUBLIC_KEY=/app/.ssh/refresh_token_rsa.pub
+      - AUTH_TOKEN_KEY=/app/.ssh/token_key_passphrase
     networks:
       - app_net
     depends_on:

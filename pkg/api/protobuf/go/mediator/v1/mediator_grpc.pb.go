@@ -270,7 +270,8 @@ type OAuthServiceClient interface {
 	ExchangeCodeForTokenCLI(ctx context.Context, in *ExchangeCodeForTokenCLIRequest, opts ...grpc.CallOption) (*httpbody.HttpBody, error)
 	ExchangeCodeForTokenWEB(ctx context.Context, in *ExchangeCodeForTokenWEBRequest, opts ...grpc.CallOption) (*ExchangeCodeForTokenWEBResponse, error)
 	StoreProviderToken(ctx context.Context, in *StoreProviderTokenRequest, opts ...grpc.CallOption) (*StoreProviderTokenResponse, error)
-	// revoke all tokens for all users
+	// RevokeOauthTokens is used to revoke all tokens
+	// this a nuclear option and should only be used in emergencies
 	RevokeOauthTokens(ctx context.Context, in *RevokeOauthTokensRequest, opts ...grpc.CallOption) (*RevokeOauthTokensResponse, error)
 	// revoke token for a group
 	RevokeOauthGroupToken(ctx context.Context, in *RevokeOauthGroupTokenRequest, opts ...grpc.CallOption) (*RevokeOauthGroupTokenResponse, error)
@@ -358,7 +359,8 @@ type OAuthServiceServer interface {
 	ExchangeCodeForTokenCLI(context.Context, *ExchangeCodeForTokenCLIRequest) (*httpbody.HttpBody, error)
 	ExchangeCodeForTokenWEB(context.Context, *ExchangeCodeForTokenWEBRequest) (*ExchangeCodeForTokenWEBResponse, error)
 	StoreProviderToken(context.Context, *StoreProviderTokenRequest) (*StoreProviderTokenResponse, error)
-	// revoke all tokens for all users
+	// RevokeOauthTokens is used to revoke all tokens
+	// this a nuclear option and should only be used in emergencies
 	RevokeOauthTokens(context.Context, *RevokeOauthTokensRequest) (*RevokeOauthTokensResponse, error)
 	// revoke token for a group
 	RevokeOauthGroupToken(context.Context, *RevokeOauthGroupTokenRequest) (*RevokeOauthGroupTokenResponse, error)

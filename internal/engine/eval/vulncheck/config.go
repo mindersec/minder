@@ -22,7 +22,7 @@ import (
 	"github.com/go-playground/validator/v10"
 	"github.com/mitchellh/mapstructure"
 
-	pb "github.com/stacklok/mediator/pkg/generated/protobuf/go/mediator/v1"
+	pb "github.com/stacklok/mediator/pkg/api/protobuf/go/mediator/v1"
 )
 
 type vulnDbType string
@@ -34,9 +34,10 @@ const (
 type action string
 
 const (
-	actionRejectPr   action = "reject_pr"
-	actionComment    action = "comment"
-	actionPolicyOnly action = "policy_only"
+	actionReviewPr     action = "reject_pr"
+	actionComment      action = "comment"
+	actionCommitStatus action = "commit_status"
+	actionPolicyOnly   action = "policy_only"
 )
 
 type packageRepository struct {

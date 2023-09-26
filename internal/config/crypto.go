@@ -15,45 +15,11 @@
 
 package config
 
-import (
-	"github.com/spf13/viper"
-)
-
-const (
-	saltMemory     = 64 * 1024
-	saltIterations = 3
-	saltParameters = 2
-	saltLength     = 16
-	saltKeyLength  = 32
-)
-
 // CryptoConfig is the configuration for the crypto package
 type CryptoConfig struct {
-	Memory      uint32 `mapstructure:"memory"`
-	Iterations  uint32 `mapstructure:"iterations"`
-	Parallelism uint   `mapstructure:"parallelism"`
-	SaltLength  uint32 `mapstructure:"salt_length"`
-	KeyLength   uint32 `mapstructure:"key_length"`
-}
-
-// SetCryptoViperDefaults sets the default values for the crypto configuration
-// to be picked up by viper
-func SetCryptoViperDefaults(v *viper.Viper) {
-	// set default values when not set
-	v.SetDefault("salt.memory", saltMemory)
-	v.SetDefault("salt.iterations", saltIterations)
-	v.SetDefault("salt.parallelism", saltParameters)
-	v.SetDefault("salt.salt_length", saltLength)
-	v.SetDefault("salt.key_length", saltKeyLength)
-}
-
-// GetCryptoConfigWithDefaults returns a CryptoConfig with default values
-func GetCryptoConfigWithDefaults() CryptoConfig {
-	return CryptoConfig{
-		Memory:      saltMemory,
-		Iterations:  saltIterations,
-		Parallelism: saltParameters,
-		SaltLength:  saltLength,
-		KeyLength:   saltKeyLength,
-	}
+	Memory      uint32 `mapstructure:"memory" default:"65536"`
+	Iterations  uint32 `mapstructure:"iterations" default:"50"`
+	Parallelism uint   `mapstructure:"parallelism" default:"4"`
+	SaltLength  uint32 `mapstructure:"salt_length" default:"16"`
+	KeyLength   uint32 `mapstructure:"key_length" default:"32"`
 }
