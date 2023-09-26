@@ -22,7 +22,7 @@ const (
 	// DepEcosystemNPM is the npm dependency ecosystem
 	DepEcosystemNPM DependencyEcosystem = "npm"
 	// DepEcosystemGo is the go dependency ecosystem
-	DepEcosystemGo DependencyEcosystem = "Go"
+	DepEcosystemGo DependencyEcosystem = "go"
 	// DepEcosystemNone is the fallback value
 	DepEcosystemNone DependencyEcosystem = ""
 )

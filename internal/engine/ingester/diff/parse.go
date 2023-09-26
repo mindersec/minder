@@ -27,12 +27,12 @@ import (
 type ecosystemParser func(string) ([]*pb.Dependency, error)
 
 func newEcosystemParser(eco DependencyEcosystem) ecosystemParser {
-	switch eco {
-	case DepEcosystemNPM:
+	switch strings.ToLower(string(eco)) {
+	case string(DepEcosystemNPM):
 		return npmParse
-	case DepEcosystemGo:
+	case string(DepEcosystemGo):
 		return goParse
-	case DepEcosystemNone:
+	case string(DepEcosystemNone):
 		return nil
 	default:
 		return nil
