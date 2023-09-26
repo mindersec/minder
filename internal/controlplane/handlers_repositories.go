@@ -32,7 +32,6 @@ import (
 	github "github.com/stacklok/mediator/internal/providers/github"
 	"github.com/stacklok/mediator/internal/reconcilers"
 	pb "github.com/stacklok/mediator/pkg/api/protobuf/go/mediator/v1"
-	provifv1 "github.com/stacklok/mediator/pkg/providers/v1"
 )
 
 // RegisterRepository adds repositories to the database and registers a webhook
@@ -404,7 +403,7 @@ func (s *Server) SyncRepositories(ctx context.Context, in *pb.SyncRepositoriesRe
 	}
 
 	// Populate the database with the repositories using the GraphQL API
-	client, err := github.NewRestClient(ctx, &provifv1.GitHubConfig{}, token.AccessToken, owner_filter)
+	client, err := github.NewRestClient(ctx, &pb.GitHubProviderConfig{}, token.AccessToken, owner_filter)
 	if err != nil {
 		return nil, status.Errorf(codes.Internal, "cannot create github client: %v", err)
 	}

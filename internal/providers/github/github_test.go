@@ -20,13 +20,13 @@ import (
 
 	"github.com/stretchr/testify/assert"
 
-	provifv1 "github.com/stacklok/mediator/pkg/providers/v1"
+	mediatorv1 "github.com/stacklok/mediator/pkg/api/protobuf/go/mediator/v1"
 )
 
 func TestNewRestClient(t *testing.T) {
 	t.Parallel()
 
-	client, err := NewRestClient(context.Background(), &provifv1.GitHubConfig{
+	client, err := NewRestClient(context.Background(), &mediatorv1.GitHubProviderConfig{
 		Endpoint: "https://api.github.com",
 	}, "token", "")
 	assert.NoError(t, err)

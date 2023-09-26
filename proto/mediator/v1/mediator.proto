@@ -1706,6 +1706,24 @@ enum Entity {
     ENTITY_PULL_REQUESTS = 4;
 }
 
+// RESTProviderConfig contains the configuration for the REST provider.
+message RESTProviderConfig {
+    // base_url is the base URL for the REST provider.
+	string base_url = 1;
+}
+
+// GitHubProviderConfig contains the configuration for the GitHub client
+//
+// Endpoint: is the GitHub API endpoint
+//
+// If using the public GitHub API, Endpoint can be left blank
+// disable revive linting for this struct as there is nothing wrong with the
+// naming convention
+message GitHubProviderConfig {
+    // Endpoint is the GitHub API endpoint. If using the public GitHub API, Endpoint can be left blank.
+	string endpoint = 1;
+}
+
 // Provider defines a provider that is used to connect to a certain service.
 // This is used to define the context in which a rule is evaluated and serves
 // as a data ingestion point. They are top level entities and are scoped to
@@ -1723,60 +1741,29 @@ message Provider {
 
     Context context = 2;
 
+    // Version defines the version of the provider. Currently only v1 is supported.
+    string version = 3;
+
+    // Implements defines the provider types that this provider implements.
+    // This is used to determine the interface to use to interact with the provider.
+    // This is a required field and must be set.
+    // currently, the following interfaces are supported:
+    // - rest
+    // - github
+    // - git
+    repeated string implements = 4;
+
     // Definition defines the definition of the provider.
     // This is used to define the connection to the provider.
     message Definition {
-        string endpoint = 1;
+        // rest is the REST provider configuration.
+        optional RESTProviderConfig rest = 1;
 
-        // Auth defines the authentication mechanism to be used.
-        message Auth {
-            enum Type {
-                TYPE_UNSPECIFIED = 0;
-                // TYPE_OAUTH2 defines the OAuth2 authentication mechanism.
-                TYPE_OAUTH2 = 1;
-                // These are left as references of what we could implement
-                // BASIC = 2;
-                // TOKEN = 3;
-            }
-
-            Type type = 1;
-
-            // OAuth2 defines the OAuth2 authentication mechanism.
-            message OAuth2 {
-                string client_id = 1;
-                string client_secret = 2;
-                string redirect_uri = 3;
-                string auth_url = 4;
-                string token_url = 5;
-                string scope = 6;
-            }
-
-            optional OAuth2 oauth2 = 2;
-        }
-
-        Auth auth = 2;
-
-        // ClientTypes defines the client types that are supported by the provider.
-        // This is used to define the types of clients that are supported by the provider.
-        message ClientTypes {
-            // Type defines the type of client that is supported by the provider.
-            enum Type {
-                TYPE_UNSPECIFIED = 0;
-                TYPE_REST = 1;
-                TYPE_GRAPHQL = 2;
-            }
-
-            repeated Type types = 1;
-        }
-
-        // ClientTypes defines the client types that are supported by the provider.
-        ClientTypes client_types = 3;
-
-        // entities defines the entities that are supported by the provider.
-        repeated Entity entities = 4;
+        // github is the GitHub provider configuration.
+        optional GitHubProviderConfig github = 2;
     }
 
-    Definition def = 3;
+    Definition def = 5;
 }
 
 // Context defines the context in which a rule is evaluated.
