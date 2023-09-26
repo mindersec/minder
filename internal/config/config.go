@@ -24,7 +24,6 @@ import (
 	"strings"
 	"unicode"
 
-	"github.com/go-playground/validator/v10"
 	"github.com/spf13/viper"
 )
 
@@ -61,13 +60,6 @@ func ReadConfigFromViper(v *viper.Viper) (*Config, error) {
 		return nil, err
 	}
 	return &cfg, nil
-}
-
-// Validate validates the configuration
-func (cfg *Config) Validate() error {
-	validator := validator.New(validator.WithRequiredStructEnabled())
-
-	return validator.Struct(cfg)
 }
 
 // SetViperDefaults sets the default values for the configuration to be picked

@@ -53,10 +53,6 @@ var serveCmd = &cobra.Command{
 			os.Exit(0)
 		}
 
-		if err := cfg.Validate(); err != nil {
-			return fmt.Errorf("invalid config: %w", err)
-		}
-
 		ctx = logger.FromFlags(cfg.LoggingConfig).WithContext(ctx)
 		zerolog.Ctx(ctx).Info().Msgf("Initializing logger in level: %s", cfg.LoggingConfig.Level)
 
