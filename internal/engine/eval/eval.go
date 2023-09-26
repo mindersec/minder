@@ -25,7 +25,7 @@ import (
 	"github.com/stacklok/mediator/internal/engine/eval/vulncheck"
 	engif "github.com/stacklok/mediator/internal/engine/interfaces"
 	ghclient "github.com/stacklok/mediator/internal/providers/github"
-	pb "github.com/stacklok/mediator/pkg/generated/protobuf/go/mediator/v1"
+	pb "github.com/stacklok/mediator/pkg/api/protobuf/go/mediator/v1"
 )
 
 // NewRuleEvaluator creates a new rule data evaluator

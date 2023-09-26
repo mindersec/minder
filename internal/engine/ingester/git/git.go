@@ -29,7 +29,7 @@ import (
 	"google.golang.org/protobuf/reflect/protoreflect"
 
 	engif "github.com/stacklok/mediator/internal/engine/interfaces"
-	pb "github.com/stacklok/mediator/pkg/generated/protobuf/go/mediator/v1"
+	pb "github.com/stacklok/mediator/pkg/api/protobuf/go/mediator/v1"
 )
 
 const (

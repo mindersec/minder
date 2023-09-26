@@ -32,7 +32,7 @@ import (
 
 	"github.com/stacklok/mediator/cmd/cli/app"
 	"github.com/stacklok/mediator/internal/util"
-	pb "github.com/stacklok/mediator/pkg/generated/protobuf/go/mediator/v1"
+	pb "github.com/stacklok/mediator/pkg/api/protobuf/go/mediator/v1"
 )
 
 func getUserById(ctx context.Context, client pb.UserServiceClient, id int32) (*pb.GetUserByIdResponse, error) {

@@ -36,7 +36,7 @@ import (
 	"github.com/stacklok/mediator/internal/auth"
 	"github.com/stacklok/mediator/internal/db"
 	"github.com/stacklok/mediator/internal/util"
-	mediator "github.com/stacklok/mediator/pkg/generated/protobuf/go/mediator/v1"
+	mediator "github.com/stacklok/mediator/pkg/api/protobuf/go/mediator/v1"
 )
 
 func parseToken(token string, store db.Store) (auth.UserClaims, error) {

@@ -26,7 +26,7 @@ import (
 	"github.com/stacklok/mediator/internal/engine/ingester/builtin"
 	"github.com/stacklok/mediator/internal/engine/ingester/git"
 	"github.com/stacklok/mediator/internal/engine/ingester/rest"
-	pb "github.com/stacklok/mediator/pkg/generated/protobuf/go/mediator/v1"
+	pb "github.com/stacklok/mediator/pkg/api/protobuf/go/mediator/v1"
 )
 
 func TestNewRuleDataIngest(t *testing.T) {

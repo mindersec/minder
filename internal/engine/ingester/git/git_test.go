@@ -23,7 +23,7 @@ import (
 	"github.com/stretchr/testify/require"
 
 	gitengine "github.com/stacklok/mediator/internal/engine/ingester/git"
-	pb "github.com/stacklok/mediator/pkg/generated/protobuf/go/mediator/v1"
+	pb "github.com/stacklok/mediator/pkg/api/protobuf/go/mediator/v1"
 )
 
 func TestGitIngestWithCloneURLFromRepo(t *testing.T) {

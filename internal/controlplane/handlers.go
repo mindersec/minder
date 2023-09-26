@@ -25,7 +25,7 @@ package controlplane
 import (
 	"context"
 
-	pb "github.com/stacklok/mediator/pkg/generated/protobuf/go/mediator/v1"
+	pb "github.com/stacklok/mediator/pkg/api/protobuf/go/mediator/v1"
 )
 
 // PaginationLimit is the maximum number of items that can be returned in a single page

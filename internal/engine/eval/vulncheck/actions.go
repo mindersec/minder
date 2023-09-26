@@ -22,7 +22,7 @@ import (
 	"github.com/google/go-github/v53/github"
 
 	ghclient "github.com/stacklok/mediator/internal/providers/github"
-	pb "github.com/stacklok/mediator/pkg/generated/protobuf/go/mediator/v1"
+	pb "github.com/stacklok/mediator/pkg/api/protobuf/go/mediator/v1"
 )
 
 type prStatusHandler interface {
