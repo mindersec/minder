@@ -22,10 +22,24 @@ import (
 	"fmt"
 	"io"
 	"net/http"
+	"net/url"
 	"strings"
 
 	pb "github.com/stacklok/mediator/pkg/api/protobuf/go/mediator/v1"
 )
+
+func urlFromEndpointAndPaths(
+	endpoint string,
+	pathComponents ...string,
+) (*url.URL, error) {
+	u, err := url.Parse(endpoint)
+	if err != nil {
+		return nil, fmt.Errorf("failed to parse endpoint: %w", err)
+	}
+	u = u.JoinPath(pathComponents...)
+
+	return u, nil
+}
 
 type patchLocatorFormatter interface {
 	LineHasDependency(line string) bool
@@ -109,8 +123,12 @@ func newNpmRepository(endpoint string) *npmRepository {
 var _ RepoQuerier = (*npmRepository)(nil)
 
 func (n *npmRepository) newRequest(ctx context.Context, dep *pb.Dependency) (*http.Request, error) {
-	pkgUrl := fmt.Sprintf("%s/%s/latest", n.endpoint, dep.Name)
-	req, err := http.NewRequest("GET", pkgUrl, nil)
+	u, err := urlFromEndpointAndPaths(n.endpoint, dep.Name, "latest")
+	if err != nil {
+		return nil, fmt.Errorf("could not parse endpoint: %w", err)
+	}
+
+	req, err := http.NewRequest("GET", u.String(), nil)
 	if err != nil {
 		return nil, fmt.Errorf("could not create request: %w", err)
 	}
@@ -187,8 +205,12 @@ func newGoProxySumRepository(proxyEndpoint, sumEndpoint string) *goProxyReposito
 var _ RepoQuerier = (*goProxyRepository)(nil)
 
 func (r *goProxyRepository) goProxyRequest(ctx context.Context, dep *pb.Dependency) (*http.Request, error) {
-	pkgUrl := fmt.Sprintf("%s/%s/@latest", r.proxyEndpoint, dep.Name)
-	req, err := http.NewRequest("GET", pkgUrl, nil)
+	u, err := urlFromEndpointAndPaths(r.proxyEndpoint, dep.Name, "@latest")
+	if err != nil {
+		return nil, fmt.Errorf("could not parse endpoint: %w", err)
+	}
+
+	req, err := http.NewRequest("GET", u.String(), nil)
 	if err != nil {
 		return nil, fmt.Errorf("could not create request: %w", err)
 	}
@@ -197,8 +219,14 @@ func (r *goProxyRepository) goProxyRequest(ctx context.Context, dep *pb.Dependen
 }
 
 func (r *goProxyRepository) goSumRequest(ctx context.Context, depName, depVersion string) (*http.Request, error) {
-	sumUrl := fmt.Sprintf("%s/lookup/%s@%s", r.sumEndpoint, depName, depVersion)
-	req, err := http.NewRequest("GET", sumUrl, nil)
+	u, err := urlFromEndpointAndPaths(r.sumEndpoint,
+		"lookup",
+		fmt.Sprintf("%s@%s", depName, depVersion))
+	if err != nil {
+		return nil, fmt.Errorf("could not parse endpoint: %w", err)
+	}
+
+	req, err := http.NewRequest("GET", u.String(), nil)
 	if err != nil {
 		return nil, fmt.Errorf("could not create request: %w", err)
 	}
