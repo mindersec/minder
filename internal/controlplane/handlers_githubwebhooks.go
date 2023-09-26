@@ -779,10 +779,8 @@ func upsertVersionedArtifact(
 			}
 			// Rebuild the Tags list removing anything that would conflict
 			newTags := slices.DeleteFunc(strings.Split(existing.Tags.String, ","), func(in string) bool { return in == incomingTag })
-			newTagsSQL := sql.NullString{Valid: false, String: ""}
-			if len(newTags) != 0 {
-				newTagsSQL = sql.NullString{Valid: true, String: strings.Join(newTags, ",")}
-			}
+			newTagsSQL := sql.NullString{String: strings.Join(newTags, ",")}
+			newTagsSQL.Valid = len(newTagsSQL) > 0
 			// Update the versioned artifact row in the store (we shouldn't change anything else except the tags value)
 			_, err := qtx.UpsertArtifactVersion(ctx, db.UpsertArtifactVersionParams{
 				ArtifactID:            existing.ArtifactID,
