@@ -15,8 +15,8 @@ pull_request:
               vulnerability_database_endpoint: https://api.osv.dev/v1/query
               package_repository:
                 url: https://registry.npmjs.org
-            - name: go
+            - name: Go
               vulnerability_database_type: osv
-              vulnerability_database_endpoint: https://vuln.go.dev
+              vulnerability_database_endpoint: https://api.osv.dev/v1/query
               package_repository:
                 url: https://proxy.golang.org
