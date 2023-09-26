@@ -143,7 +143,7 @@ func TestGetAuthorizationURL(t *testing.T) {
 	}
 
 	// Create a new context and set the claims value
-	ctx := context.WithValue(context.Background(), auth.TokenInfoKey, auth.UserClaims{
+	ctx := auth.WithClaimContext(context.Background(), auth.UserClaims{
 		UserId:         1,
 		OrganizationId: 1,
 		GroupIds:       []int32{1},
@@ -173,7 +173,7 @@ func TestGetAuthorizationURL(t *testing.T) {
 func TestRevokeOauthTokens_gRPC(t *testing.T) {
 	t.Parallel()
 
-	ctx := context.WithValue(context.Background(), auth.TokenInfoKey, auth.UserClaims{
+	ctx := auth.WithClaimContext(context.Background(), auth.UserClaims{
 		UserId:         1,
 		OrganizationId: 1,
 		GroupIds:       []int32{1},
@@ -209,7 +209,7 @@ func TestRevokeOauthTokens_gRPC(t *testing.T) {
 func RevokeOauthGroupToken_gRPC(t *testing.T) {
 	t.Helper()
 
-	ctx := context.WithValue(context.Background(), auth.TokenInfoKey, auth.UserClaims{
+	ctx := auth.WithClaimContext(context.Background(), auth.UserClaims{
 		UserId:         1,
 		OrganizationId: 1,
 		GroupIds:       []int32{1},

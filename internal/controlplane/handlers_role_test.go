@@ -57,7 +57,7 @@ func TestCreateRoleDBMock(t *testing.T) {
 		UpdatedAt:      time.Now(),
 	}
 	// Create a new context and set the claims value
-	ctx := context.WithValue(context.Background(), auth.TokenInfoKey, auth.UserClaims{
+	ctx := auth.WithClaimContext(context.Background(), auth.UserClaims{
 		UserId:         1,
 		OrganizationId: 1,
 		GroupIds:       []int32{1},
@@ -179,7 +179,7 @@ func TestCreateRole_gRPC(t *testing.T) {
 		},
 	}
 	// Create a new context and set the claims value
-	ctx := context.WithValue(context.Background(), auth.TokenInfoKey, auth.UserClaims{
+	ctx := auth.WithClaimContext(context.Background(), auth.UserClaims{
 		UserId:         1,
 		OrganizationId: 1,
 		GroupIds:       []int32{1},
@@ -217,7 +217,7 @@ func TestDeleteRoleDBMock(t *testing.T) {
 	request := &pb.DeleteRoleRequest{Id: 1}
 
 	// Create a new context and set the claims value
-	ctx := context.WithValue(context.Background(), auth.TokenInfoKey, auth.UserClaims{
+	ctx := auth.WithClaimContext(context.Background(), auth.UserClaims{
 		UserId:         1,
 		OrganizationId: 1,
 		GroupIds:       []int32{1},
@@ -295,7 +295,7 @@ func TestDeleteRole_gRPC(t *testing.T) {
 		},
 	}
 	// Create a new context and set the claims value
-	ctx := context.WithValue(context.Background(), auth.TokenInfoKey, auth.UserClaims{
+	ctx := auth.WithClaimContext(context.Background(), auth.UserClaims{
 		UserId:         1,
 		OrganizationId: 1,
 		GroupIds:       []int32{1},
@@ -350,7 +350,7 @@ func TestGetRolesDBMock(t *testing.T) {
 		},
 	}
 	// Create a new context and set the claims value
-	ctx := context.WithValue(context.Background(), auth.TokenInfoKey, auth.UserClaims{
+	ctx := auth.WithClaimContext(context.Background(), auth.UserClaims{
 		UserId:         1,
 		OrganizationId: 1,
 		GroupIds:       []int32{1},
@@ -447,7 +447,7 @@ func TestGetRoles_gRPC(t *testing.T) {
 	}
 
 	// Create a new context and set the claims value
-	ctx := context.WithValue(context.Background(), auth.TokenInfoKey, auth.UserClaims{
+	ctx := auth.WithClaimContext(context.Background(), auth.UserClaims{
 		UserId:         1,
 		OrganizationId: 1,
 		GroupIds:       []int32{1},
@@ -492,7 +492,7 @@ func TestGetRoleDBMock(t *testing.T) {
 		UpdatedAt:      time.Now(),
 	}
 	// Create a new context and set the claims value
-	ctx := context.WithValue(context.Background(), auth.TokenInfoKey, auth.UserClaims{
+	ctx := auth.WithClaimContext(context.Background(), auth.UserClaims{
 		UserId:         1,
 		OrganizationId: 1,
 		GroupIds:       []int32{1},
@@ -530,7 +530,7 @@ func TestGetNonExistingRoleDBMock(t *testing.T) {
 
 	request := &pb.GetRoleByIdRequest{Id: 5}
 	// Create a new context and set the claims value
-	ctx := context.WithValue(context.Background(), auth.TokenInfoKey, auth.UserClaims{
+	ctx := auth.WithClaimContext(context.Background(), auth.UserClaims{
 		UserId:         1,
 		OrganizationId: 1,
 		GroupIds:       []int32{1},
@@ -612,7 +612,7 @@ func TestGetRole_gRPC(t *testing.T) {
 		},
 	}
 	// Create a new context and set the claims value
-	ctx := context.WithValue(context.Background(), auth.TokenInfoKey, auth.UserClaims{
+	ctx := auth.WithClaimContext(context.Background(), auth.UserClaims{
 		UserId:         1,
 		OrganizationId: 1,
 		GroupIds:       []int32{1},

@@ -191,7 +191,6 @@ service OAuthService {
         };
 
         option (rpc_options) = {
-            // TODO: should this be available to non-org admin users?
             auth_scope: OBJECT_OWNER_GROUP
             owner_only: true
         };

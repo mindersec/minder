@@ -81,13 +81,13 @@ func isSuperadmin(claims auth.UserClaims) bool {
 // AuthorizedOnOrg checks if the request is authorized for the given
 // organization, and returns an error if the request is not authorized.
 func AuthorizedOnOrg(ctx context.Context, orgId int32) error {
-	claims, _ := ctx.Value(auth.TokenInfoKey).(auth.UserClaims)
+	claims := auth.GetClaimsFromContext(ctx)
 	if isSuperadmin(claims) {
 		return nil
 	}
 	opts := getRpcOptions(ctx)
 	if opts.GetAuthScope() != mediator.ObjectOwner_OBJECT_OWNER_ORGANIZATION {
-		zerolog.Ctx(ctx).Error().Msgf("Called IsOrgAuthorized on non-org method, should be %v", opts.GetAuthScope())
+		return status.Errorf(codes.Internal, "Called IsOrgAuthorized on non-org method, should be %v", opts.GetAuthScope())
 	}
 	if claims.OrganizationId != orgId {
 		return util.UserVisibleError(codes.PermissionDenied, "user is not authorized to access this organization")
@@ -104,13 +104,13 @@ func AuthorizedOnOrg(ctx context.Context, orgId int32) error {
 // AuthorizedOnGroup checks if the request is authorized for the given
 // group, and returns an error if the request is not authorized.
 func AuthorizedOnGroup(ctx context.Context, groupId int32) error {
-	claims, _ := ctx.Value(auth.TokenInfoKey).(auth.UserClaims)
+	claims := auth.GetClaimsFromContext(ctx)
 	if isSuperadmin(claims) {
 		return nil
 	}
 	opts := getRpcOptions(ctx)
 	if opts.GetAuthScope() != mediator.ObjectOwner_OBJECT_OWNER_GROUP {
-		zerolog.Ctx(ctx).Error().Msgf("Called IsGroupAuthorized on non-group method, should be %v", opts.GetAuthScope())
+		return status.Errorf(codes.Internal, "Called IsGroupAuthorized on non-group method, should be %v", opts.GetAuthScope())
 	}
 
 	if !slices.Contains(claims.GroupIds, groupId) {
@@ -129,7 +129,7 @@ func AuthorizedOnGroup(ctx context.Context, groupId int32) error {
 // AuthorizedOnUser checks if the request is authorized for the given
 // user, and returns an error if the request is not authorized.
 func AuthorizedOnUser(ctx context.Context, userId int32) error {
-	claims, _ := ctx.Value(auth.TokenInfoKey).(auth.UserClaims)
+	claims := auth.GetClaimsFromContext(ctx)
 	if isSuperadmin(claims) {
 		return nil
 	}
@@ -221,7 +221,7 @@ func AuthUnaryInterceptor(ctx context.Context, req interface{}, info *grpc.Unary
 		return nil, status.Errorf(codes.PermissionDenied, "user not authorized")
 	}
 
-	ctx = context.WithValue(ctx, auth.TokenInfoKey, claims)
+	ctx = auth.WithClaimContext(ctx, claims)
 	return handler(ctx, req)
 }
 

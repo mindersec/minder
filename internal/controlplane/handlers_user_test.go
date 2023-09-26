@@ -74,7 +74,7 @@ func TestCreateUserDBMock(t *testing.T) {
 	}
 
 	// Create a new context and set the claims value
-	ctx := context.WithValue(context.Background(), auth.TokenInfoKey, auth.UserClaims{
+	ctx := auth.WithClaimContext(context.Background(), auth.UserClaims{
 		UserId:         1,
 		OrganizationId: 1,
 		GroupIds:       []int32{1},
@@ -193,7 +193,7 @@ func TestCreateUser_gRPC(t *testing.T) {
 	}
 
 	// Create a new context and set the claims value
-	ctx := context.WithValue(context.Background(), auth.TokenInfoKey, auth.UserClaims{
+	ctx := auth.WithClaimContext(context.Background(), auth.UserClaims{
 		UserId:         1,
 		OrganizationId: 1,
 		GroupIds:       []int32{1},
@@ -240,7 +240,7 @@ func TestUpdatePasswordDBMock(t *testing.T) {
 	request := &pb.UpdatePasswordRequest{Password: password, PasswordConfirmation: password}
 
 	// Create a new context and set the claims value
-	ctx := context.WithValue(context.Background(), auth.TokenInfoKey, auth.UserClaims{
+	ctx := auth.WithClaimContext(context.Background(), auth.UserClaims{
 		UserId:         1,
 		OrganizationId: 1,
 		GroupIds:       []int32{1},
@@ -318,7 +318,7 @@ func TestUpdatePassword_gRPC(t *testing.T) {
 	}
 
 	// Create a new context and set the claims value
-	ctx := context.WithValue(context.Background(), auth.TokenInfoKey, auth.UserClaims{
+	ctx := auth.WithClaimContext(context.Background(), auth.UserClaims{
 		UserId:         1,
 		OrganizationId: 1,
 		GroupIds:       []int32{1},
@@ -366,7 +366,7 @@ func TestUpdateProfileDBMock(t *testing.T) {
 	name := util.RandomName(seed)
 
 	// Create a new context and set the claims value
-	ctx := context.WithValue(context.Background(), auth.TokenInfoKey, auth.UserClaims{
+	ctx := auth.WithClaimContext(context.Background(), auth.UserClaims{
 		UserId:         1,
 		OrganizationId: 1,
 		GroupIds:       []int32{1},
@@ -443,7 +443,7 @@ func TestUpdateProfile_gRPC(t *testing.T) {
 	}
 
 	// Create a new context and set the claims value
-	ctx := context.WithValue(context.Background(), auth.TokenInfoKey, auth.UserClaims{
+	ctx := auth.WithClaimContext(context.Background(), auth.UserClaims{
 		UserId:              1,
 		OrganizationId:      1,
 		GroupIds:            []int32{1},
@@ -502,7 +502,7 @@ func TestDeleteUserDBMock(t *testing.T) {
 		UpdatedAt:      time.Now(),
 	}
 	// Create a new context and set the claims value
-	ctx := context.WithValue(context.Background(), auth.TokenInfoKey, auth.UserClaims{
+	ctx := auth.WithClaimContext(context.Background(), auth.UserClaims{
 		UserId:         1,
 		OrganizationId: 1,
 		GroupIds:       []int32{1},
@@ -586,7 +586,7 @@ func TestDeleteUser_gRPC(t *testing.T) {
 		},
 	}
 	// Create a new context and set the claims value
-	ctx := context.WithValue(context.Background(), auth.TokenInfoKey, auth.UserClaims{
+	ctx := auth.WithClaimContext(context.Background(), auth.UserClaims{
 		UserId:         1,
 		OrganizationId: 1,
 		GroupIds:       []int32{1},
@@ -649,7 +649,7 @@ func TestGetUsersDBMock(t *testing.T) {
 		},
 	}
 	// Create a new context and set the claims value
-	ctx := context.WithValue(context.Background(), auth.TokenInfoKey, auth.UserClaims{
+	ctx := auth.WithClaimContext(context.Background(), auth.UserClaims{
 		UserId:         1,
 		OrganizationId: 1,
 		GroupIds:       []int32{1},
@@ -758,7 +758,7 @@ func TestGetUsers_gRPC(t *testing.T) {
 		},
 	}
 	// Create a new context and set the claims value
-	ctx := context.WithValue(context.Background(), auth.TokenInfoKey, auth.UserClaims{
+	ctx := auth.WithClaimContext(context.Background(), auth.UserClaims{
 		UserId:         1,
 		OrganizationId: 1,
 		GroupIds:       []int32{1},
@@ -811,7 +811,7 @@ func TestGetUserDBMock(t *testing.T) {
 		UpdatedAt:      time.Now(),
 	}
 	// Create a new context and set the claims value
-	ctx := context.WithValue(context.Background(), auth.TokenInfoKey, auth.UserClaims{
+	ctx := auth.WithClaimContext(context.Background(), auth.UserClaims{
 		UserId:         1,
 		OrganizationId: 1,
 		GroupIds:       []int32{1},
@@ -857,7 +857,7 @@ func TestGetNonExistingUserDBMock(t *testing.T) {
 
 	request := &pb.GetUserByIdRequest{UserId: 5}
 	// Create a new context and set the claims value
-	ctx := context.WithValue(context.Background(), auth.TokenInfoKey, auth.UserClaims{
+	ctx := auth.WithClaimContext(context.Background(), auth.UserClaims{
 		UserId:         1,
 		OrganizationId: 1,
 		GroupIds:       []int32{1},
@@ -952,7 +952,7 @@ func TestGetUser_gRPC(t *testing.T) {
 		},
 	}
 	// Create a new context and set the claims value
-	ctx := context.WithValue(context.Background(), auth.TokenInfoKey, auth.UserClaims{
+	ctx := auth.WithClaimContext(context.Background(), auth.UserClaims{
 		UserId:         1,
 		OrganizationId: 1,
 		GroupIds:       []int32{1},

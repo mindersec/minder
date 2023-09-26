@@ -545,7 +545,7 @@ func (s *Server) GetUserByEmail(ctx context.Context,
 
 // GetUser is a service for getting personal user details
 func (s *Server) GetUser(ctx context.Context, _ *pb.GetUserRequest) (*pb.GetUserResponse, error) {
-	claims, _ := ctx.Value(auth.TokenInfoKey).(auth.UserClaims)
+	claims := auth.GetClaimsFromContext(ctx)
 	// check if user is authorized
 	if err := AuthorizedOnUser(ctx, claims.UserId); err != nil {
 		return nil, err
@@ -590,7 +590,7 @@ type updatePasswordValidation struct {
 
 // UpdatePassword is a service for updating a user's password
 func (s *Server) UpdatePassword(ctx context.Context, in *pb.UpdatePasswordRequest) (*pb.UpdatePasswordResponse, error) {
-	claims, _ := ctx.Value(auth.TokenInfoKey).(auth.UserClaims)
+	claims := auth.GetClaimsFromContext(ctx)
 	// check if user is authorized
 	if err := AuthorizedOnUser(ctx, claims.UserId); err != nil {
 		return nil, err
@@ -653,7 +653,7 @@ type updateProfileValidation struct {
 //
 //gocyclo:ignore
 func (s *Server) UpdateProfile(ctx context.Context, in *pb.UpdateProfileRequest) (*pb.UpdateProfileResponse, error) {
-	claims, _ := ctx.Value(auth.TokenInfoKey).(auth.UserClaims)
+	claims := auth.GetClaimsFromContext(ctx)
 	if err := AuthorizedOnUser(ctx, claims.UserId); err != nil {
 		return nil, err
 	}

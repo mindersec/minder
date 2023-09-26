@@ -43,7 +43,7 @@ func TestKeysHandler(t *testing.T) {
 		GroupId:    1,
 	}
 
-	ctx := context.WithValue(context.Background(), auth.TokenInfoKey, auth.UserClaims{
+	ctx := auth.WithClaimContext(context.Background(), auth.UserClaims{
 		UserId:         1,
 		OrganizationId: 1,
 		GroupIds:       []int32{1},
@@ -145,7 +145,7 @@ func TestKeysHandler_gRPC(t *testing.T) {
 			expectedStatusCode: codes.Internal,
 		},
 	}
-	ctx := context.WithValue(context.Background(), auth.TokenInfoKey, auth.UserClaims{
+	ctx := auth.WithClaimContext(context.Background(), auth.UserClaims{
 		UserId:              1,
 		OrganizationId:      1,
 		GroupIds:            []int32{1},
