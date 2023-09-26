@@ -111,6 +111,7 @@
     - [GetVulnerabilitiesResponse](#mediator-v1-GetVulnerabilitiesResponse)
     - [GetVulnerabilityByIdRequest](#mediator-v1-GetVulnerabilityByIdRequest)
     - [GetVulnerabilityByIdResponse](#mediator-v1-GetVulnerabilityByIdResponse)
+    - [GitHubProviderConfig](#mediator-v1-GitHubProviderConfig)
     - [GitType](#mediator-v1-GitType)
     - [GithubWorkflow](#mediator-v1-GithubWorkflow)
     - [GroupRecord](#mediator-v1-GroupRecord)
@@ -136,10 +137,8 @@
     - [Provider](#mediator-v1-Provider)
     - [Provider.Context](#mediator-v1-Provider-Context)
     - [Provider.Definition](#mediator-v1-Provider-Definition)
-    - [Provider.Definition.Auth](#mediator-v1-Provider-Definition-Auth)
-    - [Provider.Definition.Auth.OAuth2](#mediator-v1-Provider-Definition-Auth-OAuth2)
-    - [Provider.Definition.ClientTypes](#mediator-v1-Provider-Definition-ClientTypes)
     - [PullRequest](#mediator-v1-PullRequest)
+    - [RESTProviderConfig](#mediator-v1-RESTProviderConfig)
     - [RefreshTokenRequest](#mediator-v1-RefreshTokenRequest)
     - [RefreshTokenResponse](#mediator-v1-RefreshTokenResponse)
     - [RegisterRepositoryRequest](#mediator-v1-RegisterRepositoryRequest)
@@ -189,8 +188,6 @@
     - [DepEcosystem](#mediator-v1-DepEcosystem)
     - [Entity](#mediator-v1-Entity)
     - [ObjectOwner](#mediator-v1-ObjectOwner)
-    - [Provider.Definition.Auth.Type](#mediator-v1-Provider-Definition-Auth-Type)
-    - [Provider.Definition.ClientTypes.Type](#mediator-v1-Provider-Definition-ClientTypes-Type)
     - [RepoFilter](#mediator-v1-RepoFilter)
   
     - [File-level Extensions](#mediator_v1_mediator-proto-extensions)
@@ -1922,6 +1919,27 @@ list users
 
 
 
+<a name="mediator-v1-GitHubProviderConfig"></a>
+
+### GitHubProviderConfig
+GitHubProviderConfig contains the configuration for the GitHub client
+
+Endpoint: is the GitHub API endpoint
+
+If using the public GitHub API, Endpoint can be left blank
+disable revive linting for this struct as there is nothing wrong with the
+naming convention
+
+
+| Field | Type | Label | Description |
+| ----- | ---- | ----- | ----------- |
+| endpoint | [string](#string) |  | Endpoint is the GitHub API endpoint. If using the public GitHub API, Endpoint can be left blank. |
+
+
+
+
+
+
 <a name="mediator-v1-GitType"></a>
 
 ### GitType
@@ -2292,6 +2310,8 @@ an organization.
 | ----- | ---- | ----- | ----------- |
 | name | [string](#string) |  |  |
 | context | [Provider.Context](#mediator-v1-Provider-Context) |  |  |
+| version | [string](#string) |  | Version defines the version of the provider. Currently only v1 is supported. |
+| implements | [string](#string) | repeated | Implements defines the provider types that this provider implements. This is used to determine the interface to use to interact with the provider. This is a required field and must be set. currently, the following interfaces are supported: - rest - github - git |
 | def | [Provider.Definition](#mediator-v1-Provider-Definition) |  |  |
 
 
@@ -2326,62 +2346,8 @@ This is used to define the connection to the provider.
 
 | Field | Type | Label | Description |
 | ----- | ---- | ----- | ----------- |
-| endpoint | [string](#string) |  |  |
-| auth | [Provider.Definition.Auth](#mediator-v1-Provider-Definition-Auth) |  |  |
-| client_types | [Provider.Definition.ClientTypes](#mediator-v1-Provider-Definition-ClientTypes) |  | ClientTypes defines the client types that are supported by the provider. |
-| entities | [Entity](#mediator-v1-Entity) | repeated | entities defines the entities that are supported by the provider. |
-
-
-
-
-
-
-<a name="mediator-v1-Provider-Definition-Auth"></a>
-
-### Provider.Definition.Auth
-Auth defines the authentication mechanism to be used.
-
-
-| Field | Type | Label | Description |
-| ----- | ---- | ----- | ----------- |
-| type | [Provider.Definition.Auth.Type](#mediator-v1-Provider-Definition-Auth-Type) |  |  |
-| oauth2 | [Provider.Definition.Auth.OAuth2](#mediator-v1-Provider-Definition-Auth-OAuth2) | optional |  |
-
-
-
-
-
-
-<a name="mediator-v1-Provider-Definition-Auth-OAuth2"></a>
-
-### Provider.Definition.Auth.OAuth2
-OAuth2 defines the OAuth2 authentication mechanism.
-
-
-| Field | Type | Label | Description |
-| ----- | ---- | ----- | ----------- |
-| client_id | [string](#string) |  |  |
-| client_secret | [string](#string) |  |  |
-| redirect_uri | [string](#string) |  |  |
-| auth_url | [string](#string) |  |  |
-| token_url | [string](#string) |  |  |
-| scope | [string](#string) |  |  |
-
-
-
-
-
-
-<a name="mediator-v1-Provider-Definition-ClientTypes"></a>
-
-### Provider.Definition.ClientTypes
-ClientTypes defines the client types that are supported by the provider.
-This is used to define the types of clients that are supported by the provider.
-
-
-| Field | Type | Label | Description |
-| ----- | ---- | ----- | ----------- |
-| types | [Provider.Definition.ClientTypes.Type](#mediator-v1-Provider-Definition-ClientTypes-Type) | repeated |  |
+| rest | [RESTProviderConfig](#mediator-v1-RESTProviderConfig) | optional | rest is the REST provider configuration. |
+| github | [GitHubProviderConfig](#mediator-v1-GitHubProviderConfig) | optional | github is the GitHub provider configuration. |
 
 
 
@@ -2402,6 +2368,21 @@ This is used to define the types of clients that are supported by the provider.
 | repo_owner | [string](#string) |  | The owner of the repo, will be used to submit a review |
 | repo_name | [string](#string) |  | The name of the repo, will be used to submit a review |
 | author_id | [int64](#int64) |  | The author of the PR, will be used to check if we can request changes |
+
+
+
+
+
+
+<a name="mediator-v1-RESTProviderConfig"></a>
+
+### RESTProviderConfig
+RESTProviderConfig contains the configuration for the REST provider.
+
+
+| Field | Type | Label | Description |
+| ----- | ---- | ----- | ----------- |
+| base_url | [string](#string) |  | base_url is the base URL for the REST provider. |
 
 
 
@@ -3177,33 +3158,6 @@ Entity defines the entity that is supported by the provider.
 | OBJECT_OWNER_ORGANIZATION | 1 |  |
 | OBJECT_OWNER_GROUP | 2 |  |
 | OBJECT_OWNER_USER | 3 |  |
-
-
-
-<a name="mediator-v1-Provider-Definition-Auth-Type"></a>
-
-### Provider.Definition.Auth.Type
-
-
-| Name | Number | Description |
-| ---- | ------ | ----------- |
-| TYPE_UNSPECIFIED | 0 |  |
-| TYPE_OAUTH2 | 1 | TYPE_OAUTH2 defines the OAuth2 authentication mechanism.
-
-These are left as references of what we could implement BASIC = 2; TOKEN = 3; |
-
-
-
-<a name="mediator-v1-Provider-Definition-ClientTypes-Type"></a>
-
-### Provider.Definition.ClientTypes.Type
-Type defines the type of client that is supported by the provider.
-
-| Name | Number | Description |
-| ---- | ------ | ----------- |
-| TYPE_UNSPECIFIED | 0 |  |
-| TYPE_REST | 1 |  |
-| TYPE_GRAPHQL | 2 |  |
 
 
 

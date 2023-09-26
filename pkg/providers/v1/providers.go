@@ -59,11 +59,6 @@ type REST interface {
 	Do(ctx context.Context, req *http.Request) (*http.Response, error)
 }
 
-// RESTConfig is the struct that contains the configuration for the HTTP client
-type RESTConfig struct {
-	BaseURL string `json:"base_url" yaml:"base_url" mapstructure:"base_url" validate:"required"`
-}
-
 // GitHub is the interface for interacting with the GitHub REST API
 // Add methods here for interacting with the GitHub Rest API
 type GitHub interface {
@@ -91,24 +86,15 @@ type GitHub interface {
 	GetOwner() string
 }
 
-// GitHubConfig is the struct that contains the configuration for the GitHub client
-// Endpoint: is the GitHub API endpoint
-// If using the public GitHub API, Endpoint can be left blank
-// disable revive linting for this struct as there is nothing wrong with the
-// naming convention
-type GitHubConfig struct {
-	Endpoint string `json:"endpoint" yaml:"endpoint" mapstructure:"endpoint"`
-}
-
 // ParseAndValidate parses the given provider configuration and validates it.
 func ParseAndValidate(rawConfig json.RawMessage, to any) error {
 	if err := json.Unmarshal(rawConfig, to); err != nil {
-		return fmt.Errorf("error parsing http v1 provider config: %w", err)
+		return fmt.Errorf("error parsing v1 provider config: %w", err)
 	}
 
 	validate := validator.New(validator.WithRequiredStructEnabled())
 	if err := validate.Struct(to); err != nil {
-		return fmt.Errorf("error validating http v1 provider config: %w", err)
+		return fmt.Errorf("error validating v1 provider config: %w", err)
 	}
 
 	return nil
