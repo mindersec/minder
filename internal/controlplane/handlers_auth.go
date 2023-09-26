@@ -158,7 +158,7 @@ func (s *Server) RevokeUserToken(ctx context.Context, req *pb.RevokeUserTokenReq
 func (s *Server) parseRefreshToken(token string, store db.Store) (int32, error) {
 	pubKeyData, err := s.cfg.Auth.GetRefreshTokenPublicKey()
 	if err != nil {
-		return 0, fmt.Errorf("failed to read refresh token public key file")
+		return 0, fmt.Errorf("failed to read refresh token public key file: %w", err)
 	}
 
 	userId, err := auth.VerifyRefreshToken(token, pubKeyData, store)

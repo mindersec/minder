@@ -210,7 +210,7 @@ func TestRefreshToken_gRPC(t *testing.T) {
 	mockStoreToken.EXPECT().GetUserGroups(ctxToken, gomock.Any())
 	mockStoreToken.EXPECT().GetUserRoles(ctxToken, gomock.Any())
 
-	srv := newDefaultServer(t, mockStoreToken, &config.Config{
+	config := &config.Config{
 		Auth: config.AuthConfig{
 			AccessTokenPrivateKey:  atPrivPath,
 			AccessTokenPublicKey:   atPubPath,
@@ -220,7 +220,8 @@ func TestRefreshToken_gRPC(t *testing.T) {
 			RefreshExpiry:          86400,
 			TokenKey:               tokenKeyPath,
 		},
-	})
+	}
+	srv := newDefaultServer(t, mockStoreToken, config)
 	require.NoError(t, err, "Error creating server")
 
 	// generate a token
@@ -237,7 +238,7 @@ func TestRefreshToken_gRPC(t *testing.T) {
 	// Create a new context with added header metadata
 	ctx := context.Background()
 	ctx = metadata.NewIncomingContext(ctx, md)
-	server := newDefaultServer(t, mockStore)
+	server := newDefaultServer(t, mockStore, config)
 	mockStore.EXPECT().GetUserByID(gomock.Any(), gomock.Any()).Times(2)
 	mockStore.EXPECT().GetUserGroups(gomock.Any(), gomock.Any())
 	mockStore.EXPECT().GetUserRoles(gomock.Any(), gomock.Any())

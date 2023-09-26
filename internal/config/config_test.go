@@ -17,6 +17,9 @@ package config_test
 
 import (
 	"bytes"
+	"os"
+	"path/filepath"
+	"strings"
 	"testing"
 
 	"github.com/spf13/pflag"
@@ -24,6 +27,7 @@ import (
 	"github.com/stretchr/testify/require"
 
 	"github.com/stacklok/mediator/internal/config"
+	"github.com/stacklok/mediator/internal/util"
 )
 
 func TestReadValidConfig(t *testing.T) {
@@ -136,83 +140,74 @@ func TestReadDefaultConfig(t *testing.T) {
 	require.Equal(t, "./.ssh/token_key_passphrase", cfg.Auth.TokenKey)
 }
 
-func TestValidateConfig(t *testing.T) {
+func TestReadAuthConfig(t *testing.T) {
 	t.Parallel()
-
+	tmpdir := t.TempDir()
+	config := config.AuthConfig{
+		AccessTokenPrivateKey:  filepath.Join(tmpdir, "access_token_private.pem"),
+		AccessTokenPublicKey:   filepath.Join(tmpdir, "access_token_public.pem"),
+	}
 	testCases := []struct {
-		name    string
-		cfgstr  string
-		wantErr bool
+		name string
+		mutate func()
+		publicKeyError string
+		privateKeyError string
 	}{
 		{
 			name: "valid config",
-			cfgstr: `---
-http_server:
-  host:	"myhost"
-  port:	8666
-grpc_server:
-  host:	"myhost"
-  port:	8667
-auth:
-  access_token_private_key:	"testdata/keys/access_token_private_key.pem"
-  access_token_public_key:	"testdata/keys/access_token_public_key.pem"
-  refresh_token_private_key:	"testdata/keys/refresh_token_private_key.pem"
-  refresh_token_public_key:	"testdata/keys/refresh_token_public_key.pem"
-  token_key: "testdata/keys/token_key.pem"
-`,
-			wantErr: false,
 		},
 		{
-			name: "missing auth config",
-			cfgstr: `---
-http_server:
-  host:	"myhost"
-  port:	8666
-grpc_server:
-  host:	"myhost"
-  port:	8667
-`,
-			wantErr: true,
+			name: "missing keys",
+			mutate: func() {
+				os.Remove(config.AccessTokenPrivateKey)
+				os.Remove(config.AccessTokenPublicKey)
+			},
+			publicKeyError: "no such file or directory",
+			privateKeyError: "no such file or directory",
 		},
 		{
-			name: "missing access token private key",
-			cfgstr: `---
-http_server:
-  host:	"myhost"
-  port:	8666
-grpc_server:
-  host:	"myhost"
-  port:	8667
-auth:
-  access_token_public_key:	"testdata/keys/access_token_public_key.pem"
-  refresh_token_private_key:	"testdata/keys/refresh_token_private_key.pem"
-  refresh_token_public_key:	"testdata/keys/refresh_token_public_key.pem"
-  token_key: "testdata/keys/token_key.pem"
-`,
-			wantErr: true,
+			name: "bad formats",
+			mutate: func() {
+				privateBytes, err := os.ReadFile(config.AccessTokenPrivateKey)
+				if err != nil {
+					t.Fatalf("Unable to open %q: %v", config.AccessTokenPrivateKey, err)
+				}
+				if err := os.WriteFile(config.AccessTokenPublicKey, privateBytes, 0600); err != nil {
+					t.Fatalf("Unable to overwrite %q: %v", config.AccessTokenPublicKey, err)
+				}
+				if err := os.WriteFile(config.AccessTokenPrivateKey, []byte("bad format"), 0600); err != nil {
+					t.Fatalf("Unable to overwrite %q: %v", config.AccessTokenPrivateKey, err)
+				}
+			},
+			publicKeyError: "could not find PKCS1 or PKIX public key in",
+			privateKeyError: "Key must be a PEM encoded PKCS1 or PKCS8 key",
 		},
 	}
 
 	for _, tc := range testCases {
-		tc := tc
-
 		t.Run(tc.name, func(t *testing.T) {
-			t.Parallel()
+			err := util.RandomKeypairFile(2048, config.AccessTokenPrivateKey, config.AccessTokenPublicKey)
+			if err != nil {
+				t.Fatalf("Error generating access token key pair: %v", err)
+			}
 
-			cfgbuf := bytes.NewBufferString(tc.cfgstr)
-
-			v := viper.New()
-			v.SetConfigType("yaml")
-			require.NoError(t, v.ReadConfig(cfgbuf), "Unexpected error")
-
-			cfg, err := config.ReadConfigFromViper(v)
-			require.NoError(t, err, "Unexpected error")
-
-			if tc.wantErr {
-				require.Error(t, cfg.Validate(), "Expected error")
-			} else {
-				require.NoError(t, cfg.Validate(), "unexpected error")
+			if tc.mutate != nil {
+				tc.mutate()
+			}
+			
+			if _, err := config.GetAccessTokenPrivateKey(); !errMatches(err, tc.privateKeyError) {
+				t.Errorf("Expected error containing %q, but got %v", tc.privateKeyError, err)
+			}
+			if _, err := config.GetAccessTokenPublicKey(); !errMatches(err, tc.publicKeyError) {
+				t.Errorf("Expected error containing %q, but got %v", tc.publicKeyError, err)
 			}
 		})
 	}
+}
+
+func errMatches(got error, want string) bool {
+	if want == "" {
+		return got == nil
+	}
+	return strings.Contains(got.Error(), want)
 }
