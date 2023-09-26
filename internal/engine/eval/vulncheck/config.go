@@ -34,7 +34,7 @@ const (
 type action string
 
 const (
-	actionReviewPr     action = "reject_pr"
+	actionReviewPr     action = "review"
 	actionComment      action = "comment"
 	actionCommitStatus action = "commit_status"
 	actionPolicyOnly   action = "policy_only"
