@@ -18,6 +18,7 @@ package github
 import (
 	"context"
 	"encoding/json"
+	"fmt"
 	"net/url"
 	"time"
 
@@ -25,6 +26,7 @@ import (
 	"golang.org/x/oauth2"
 
 	"github.com/stacklok/mediator/internal/db"
+	mediatorv1 "github.com/stacklok/mediator/pkg/api/protobuf/go/mediator/v1"
 	provifv1 "github.com/stacklok/mediator/pkg/providers/v1"
 )
 
@@ -57,7 +59,12 @@ var _ provifv1.GitHub = (*RestClient)(nil)
 // BaseURL defaults to the public GitHub API, if needing to use a customer domain
 // endpoint (as is the case with GitHub Enterprise), set the Endpoint field in
 // the GitHubConfig struct
-func NewRestClient(ctx context.Context, config *provifv1.GitHubConfig, token string, owner string) (*RestClient, error) {
+func NewRestClient(
+	ctx context.Context,
+	config *mediatorv1.GitHubProviderConfig,
+	token string,
+	owner string,
+) (*RestClient, error) {
 	ts := oauth2.StaticTokenSource(
 		&oauth2.Token{AccessToken: token},
 	)
@@ -81,14 +88,19 @@ func NewRestClient(ctx context.Context, config *provifv1.GitHubConfig, token str
 }
 
 // ParseV1Config parses the raw config into a GitHubConfig struct
-func ParseV1Config(rawCfg json.RawMessage) (*provifv1.GitHubConfig, error) {
+func ParseV1Config(rawCfg json.RawMessage) (*mediatorv1.GitHubProviderConfig, error) {
 	type wrapper struct {
-		GitHub *provifv1.GitHubConfig `json:"github" yaml:"github" mapstructure:"github" validate:"required"`
+		GitHub *mediatorv1.GitHubProviderConfig `json:"github" yaml:"github" mapstructure:"github" validate:"required"`
 	}
 
 	var w wrapper
 	if err := provifv1.ParseAndValidate(rawCfg, &w); err != nil {
 		return nil, err
+	}
+
+	// Validate the config according to the protobuf validation rules.
+	if err := w.GitHub.Validate(); err != nil {
+		return nil, fmt.Errorf("error validating GitHub v1 provider config: %w", err)
 	}
 
 	return w.GitHub, nil

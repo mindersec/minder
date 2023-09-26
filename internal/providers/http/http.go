@@ -18,12 +18,14 @@ package http
 import (
 	"context"
 	"encoding/json"
+	"fmt"
 	"io"
 	"net/http"
 	"net/url"
 
 	"golang.org/x/oauth2"
 
+	mediatorv1 "github.com/stacklok/mediator/pkg/api/protobuf/go/mediator/v1"
 	provifv1 "github.com/stacklok/mediator/pkg/providers/v1"
 )
 
@@ -38,7 +40,7 @@ type REST struct {
 var _ provifv1.REST = (*REST)(nil)
 
 // NewREST creates a new RESTful client.
-func NewREST(config *provifv1.RESTConfig, tok string) (*REST, error) {
+func NewREST(config *mediatorv1.RESTProviderConfig, tok string) (*REST, error) {
 	var cli *http.Client
 
 	if tok != "" {
@@ -51,7 +53,7 @@ func NewREST(config *provifv1.RESTConfig, tok string) (*REST, error) {
 	}
 
 	var baseURL *url.URL
-	baseURL, err := baseURL.Parse(config.BaseURL)
+	baseURL, err := baseURL.Parse(config.GetBaseUrl())
 	if err != nil {
 		return nil, err
 	}
@@ -87,14 +89,19 @@ func (h *REST) Do(ctx context.Context, req *http.Request) (*http.Response, error
 }
 
 // ParseV1Config parses the raw config into a HTTPConfig struct
-func ParseV1Config(rawCfg json.RawMessage) (*provifv1.RESTConfig, error) {
+func ParseV1Config(rawCfg json.RawMessage) (*mediatorv1.RESTProviderConfig, error) {
 	type wrapper struct {
-		REST *provifv1.RESTConfig `json:"rest" validate:"required"`
+		REST *mediatorv1.RESTProviderConfig `json:"rest" validate:"required"`
 	}
 
 	var w wrapper
 	if err := provifv1.ParseAndValidate(rawCfg, &w); err != nil {
 		return nil, err
+	}
+
+	// Validate the config according to the protobuf validation rules.
+	if err := w.REST.Validate(); err != nil {
+		return nil, fmt.Errorf("error validating REST v1 provider config: %w", err)
 	}
 
 	return w.REST, nil
