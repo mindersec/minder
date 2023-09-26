@@ -758,15 +758,15 @@ func upsertVersionedArtifact(
 
 	// To avoid conflicts, we search for all existing entries that have the incoming tag in their Tags field.
 	// If found, the existing artifact is updated by removing the incoming tag from its tags column.
-	// Loop through all incomming tags
+	// Loop through all incoming tags
 	for _, incomingTag := range versionedArtifact.Version.Tags {
-		// Search artifact versions having the incomming tag (there should be at most 1 or no matches at all)
+		// Search artifact versions having the incoming tag (there should be at most 1 or no matches at all)
 		existingArtifactVersions, err := qtx.ListArtifactVersionsByArtifactIDAndTag(ctx,
 			db.ListArtifactVersionsByArtifactIDAndTagParams{ArtifactID: dbArtifact.ID,
 				Tags:  sql.NullString{Valid: true, String: incomingTag},
 				Limit: sql.NullInt32{Valid: false, Int32: 0}})
 		if errors.Is(err, sql.ErrNoRows) {
-			// There're no tagged versions matching the incoming tag, all okay
+			// There are no tagged versions matching the incoming tag, all okay
 			continue
 		} else if err != nil {
 			// Unexpected failure
@@ -779,14 +779,15 @@ func upsertVersionedArtifact(
 			}
 			// Rebuild the Tags list removing anything that would conflict
 			newTags := slices.DeleteFunc(strings.Split(existing.Tags.String, ","), func(in string) bool { return in == incomingTag })
-			// Update the versioned artifact row in the store (we should't change anything else except the tags value)
+			newTagsSQL := sql.NullString{Valid: false, String: ""}
+			if len(newTags) != 0 {
+				newTagsSQL = sql.NullString{Valid: true, String: strings.Join(newTags, ",")}
+			}
+			// Update the versioned artifact row in the store (we shouldn't change anything else except the tags value)
 			_, err := qtx.UpsertArtifactVersion(ctx, db.UpsertArtifactVersionParams{
-				ArtifactID: existing.ArtifactID,
-				Version:    existing.Version,
-				Tags: sql.NullString{
-					String: strings.Join(newTags, ","),
-					Valid:  true,
-				},
+				ArtifactID:            existing.ArtifactID,
+				Version:               existing.Version,
+				Tags:                  newTagsSQL,
 				Sha:                   existing.Sha,
 				CreatedAt:             existing.CreatedAt,
 				SignatureVerification: existing.SignatureVerification.RawMessage,
