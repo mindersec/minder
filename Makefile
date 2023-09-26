@@ -48,7 +48,7 @@ gen: ## generate protobuf files
 	buf generate
 
 clean-gen:
-	rm -rf $(shell find pkg/generated -iname "*.go") & rm -rf $(shell find pkg/generated -iname "*.swagger.json") & rm -rf pkg/generated/protodocs
+	rm -rf $(shell find pkg/api -iname "*.go") & rm -rf $(shell find pkg/api -iname "*.swagger.json") & rm -rf pkg/api/protodocs
 
 cli-docs:
 	@mkdir -p docs/docs/cli

@@ -261,12 +261,13 @@ func (mr *MockRestAPIMockRecorder) ListAllRepositories(arg0, arg1, arg2 interfac
 }
 
 // ListFiles mocks base method.
-func (m *MockRestAPI) ListFiles(arg0 context.Context, arg1, arg2 string, arg3, arg4, arg5 int) ([]*github.CommitFile, error) {
+func (m *MockRestAPI) ListFiles(arg0 context.Context, arg1, arg2 string, arg3, arg4, arg5 int) ([]*github.CommitFile, *github.Response, error) {
 	m.ctrl.T.Helper()
 	ret := m.ctrl.Call(m, "ListFiles", arg0, arg1, arg2, arg3, arg4, arg5)
 	ret0, _ := ret[0].([]*github.CommitFile)
-	ret1, _ := ret[1].(error)
-	return ret0, ret1
+	ret1, _ := ret[1].(*github.Response)
+	ret2, _ := ret[2].(error)
+	return ret0, ret1, ret2
 }
 
 // ListFiles indicates an expected call of ListFiles.

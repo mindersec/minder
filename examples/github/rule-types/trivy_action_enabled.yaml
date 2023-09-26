@@ -7,12 +7,25 @@ context:
   group: Root Group
 description: Verifies that the Trivy action is enabled for the repository and scanning
 guidance: |
+  ## Please set up trivy!
+
   Trivy is an open source vulnerability scanner for repositories, containers and other
   artifacts provided by Aqua Security. It is used to scan for vulnerabilities in the
   codebase and dependencies. This rule ensures that the Trivy action is enabled for
   the repository and scanning is performed.
 
   For more information on the Trivy action, see https://github.com/marketplace/actions/aqua-security-trivy
+
+  Set it up by adding the following to your workflow:
+
+  ```yaml
+  - name: Trivy Scan
+    uses: aquasecurity/trivy-action@fbd16365eb88e12433951383f5e99bd901fc618f  # v0.12.0
+    with:
+      image-ref: ${{ github.repository }}
+      format: json
+      exit-code: 1
+  ```
 def:
   # Defines the section of the pipeline the rule will appear in.
   # This will affect the template that is used to render multiple parts

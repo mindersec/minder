@@ -24,7 +24,7 @@ import (
 	"google.golang.org/protobuf/encoding/protojson"
 	"google.golang.org/protobuf/reflect/protoreflect"
 
-	pb "github.com/stacklok/mediator/pkg/generated/protobuf/go/mediator/v1"
+	pb "github.com/stacklok/mediator/pkg/api/protobuf/go/mediator/v1"
 )
 
 func Test_parseEntityEvent(t *testing.T) {
@@ -106,12 +106,6 @@ func Test_parseEntityEvent(t *testing.T) {
 					Number:    3,
 					RepoOwner: "jakubtestorg",
 					RepoName:  "bad-npm",
-					Patches: []*pb.FilePatch{
-						{
-							Name:     "package-lock.json",
-							PatchUrl: "https://github.com/jakubtestorg/bad-npm/raw/123/package-lock.json",
-						},
-					},
 				},
 				entType:   PullRequestEventEntityType,
 				groupID:   1,
@@ -126,12 +120,6 @@ func Test_parseEntityEvent(t *testing.T) {
 					Number:    3,
 					RepoOwner: "jakubtestorg",
 					RepoName:  "bad-npm",
-					Patches: []*pb.FilePatch{
-						{
-							Name:     "package-lock.json",
-							PatchUrl: "https://github.com/jakubtestorg/bad-npm/raw/123/package-lock.json",
-						},
-					},
 				},
 				Provider:      "github",
 				Type:          pb.Entity_ENTITY_PULL_REQUESTS,

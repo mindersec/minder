@@ -24,6 +24,8 @@ import (
 	"github.com/google/go-github/v53/github"
 	"github.com/shurcooL/graphql"
 	"golang.org/x/oauth2"
+
+	"github.com/stacklok/mediator/internal/db"
 )
 
 const (
@@ -45,6 +47,13 @@ type GitHubConfig struct { //revive:disable-line:exported
 
 // Github is the string that represents the GitHub provider
 const Github = "github"
+
+// Implements is the list of provider types that the GitHub provider implements
+var Implements = []db.ProviderType{
+	db.ProviderTypeGithub,
+	db.ProviderTypeGit,
+	db.ProviderTypeRest,
+}
 
 // RepositoryListResult is a struct that contains the information about a GitHub repository
 type RepositoryListResult struct {
@@ -71,7 +80,7 @@ type RestAPI interface {
 	DismissReview(context.Context, string, string, int, int64,
 		*github.PullRequestReviewDismissalRequest) (*github.PullRequestReview, error)
 	SetCommitStatus(context.Context, string, string, string, *github.RepoStatus) (*github.RepoStatus, error)
-	ListFiles(context.Context, string, string, int, int, int) ([]*github.CommitFile, error)
+	ListFiles(context.Context, string, string, int, int, int) ([]*github.CommitFile, *github.Response, error)
 	GetToken() string
 	GetOwner() string
 

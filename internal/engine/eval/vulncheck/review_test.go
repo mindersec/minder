@@ -27,7 +27,7 @@ import (
 	"github.com/stretchr/testify/require"
 
 	mock_ghclient "github.com/stacklok/mediator/internal/providers/github/mock"
-	pb "github.com/stacklok/mediator/pkg/generated/protobuf/go/mediator/v1"
+	pb "github.com/stacklok/mediator/pkg/api/protobuf/go/mediator/v1"
 )
 
 const (
@@ -52,7 +52,6 @@ func TestReviewPrHandlerNoVulnerabilities(t *testing.T) {
 		Number:    43,
 		RepoOwner: "jakubtestorg",
 		RepoName:  "bad-npm",
-		Patches:   nil,
 		AuthorId:  githubSubmitterID,
 	}
 
@@ -93,7 +92,6 @@ func TestReviewPrHandlerVulnerabilitiesDifferentIdentities(t *testing.T) {
 		Number:    43,
 		RepoOwner: "jakubtestorg",
 		RepoName:  "bad-npm",
-		Patches:   nil,
 		AuthorId:  githubSubmitterID,
 	}
 
@@ -117,7 +115,7 @@ func TestReviewPrHandlerVulnerabilitiesDifferentIdentities(t *testing.T) {
 			Name:      "mongodb",
 			Version:   "0.5.0",
 		},
-		File: &pb.FilePatch{
+		File: &pb.PrDependencies_ContextualDependency_FilePatch{
 			Name:     "package-lock.json",
 			PatchUrl: server.URL,
 		},
@@ -180,7 +178,6 @@ func TestReviewPrHandlerVulnerabilitiesDismissReview(t *testing.T) {
 		Number:    43,
 		RepoOwner: "jakubtestorg",
 		RepoName:  "bad-npm",
-		Patches:   nil,
 		AuthorId:  githubSubmitterID,
 	}
 
@@ -232,7 +229,6 @@ func TestCommitStatusHandlerNoVulnerabilities(t *testing.T) {
 		Number:    43,
 		RepoOwner: "jakubtestorg",
 		RepoName:  "bad-npm",
-		Patches:   nil,
 		AuthorId:  githubSubmitterID,
 	}
 
@@ -280,7 +276,6 @@ func TestCommitStatusPrHandlerWithVulnerabilities(t *testing.T) {
 		Number:    43,
 		RepoOwner: "jakubtestorg",
 		RepoName:  "bad-npm",
-		Patches:   nil,
 		AuthorId:  githubSubmitterID,
 	}
 
@@ -304,7 +299,7 @@ func TestCommitStatusPrHandlerWithVulnerabilities(t *testing.T) {
 			Name:      "mongodb",
 			Version:   "0.5.0",
 		},
-		File: &pb.FilePatch{
+		File: &pb.PrDependencies_ContextualDependency_FilePatch{
 			Name:     "package-lock.json",
 			PatchUrl: server.URL,
 		},

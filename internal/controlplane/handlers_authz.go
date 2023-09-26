@@ -35,9 +35,8 @@ import (
 
 	"github.com/stacklok/mediator/internal/auth"
 	"github.com/stacklok/mediator/internal/db"
-	github "github.com/stacklok/mediator/internal/providers/github"
 	"github.com/stacklok/mediator/internal/util"
-	mediator "github.com/stacklok/mediator/pkg/generated/protobuf/go/mediator/v1"
+	mediator "github.com/stacklok/mediator/pkg/api/protobuf/go/mediator/v1"
 )
 
 func parseToken(token string, store db.Store) (auth.UserClaims, error) {
@@ -146,7 +145,11 @@ func IsRequestAuthorized(ctx context.Context, value int32) bool {
 }
 
 // IsProviderCallAuthorized checks if the request is authorized
-func (s *Server) IsProviderCallAuthorized(ctx context.Context, provider string, groupId int32) bool {
+func (s *Server) IsProviderCallAuthorized(ctx context.Context, provider db.Provider, groupId int32) bool {
+	if provider.GroupID != groupId {
+		return false
+	}
+
 	// currently everything is github
 	method, ok := grpc.Method(ctx)
 	if !ok {
@@ -156,7 +159,7 @@ func (s *Server) IsProviderCallAuthorized(ctx context.Context, provider string, 
 	for _, item := range githubAuthorizations {
 		if item == method {
 			// check the github token
-			encToken, _, err := s.GetProviderAccessToken(ctx, provider, groupId, true)
+			encToken, _, err := s.GetProviderAccessToken(ctx, provider.Name, groupId, true)
 			if err != nil {
 				return false
 			}
@@ -164,10 +167,10 @@ func (s *Server) IsProviderCallAuthorized(ctx context.Context, provider string, 
 			// check if token is expired
 			if encToken.Expiry.Unix() < time.Now().Unix() {
 				// remove from the database and deny the request
-				_ = s.store.DeleteAccessToken(ctx, db.DeleteAccessTokenParams{Provider: github.Github, GroupID: groupId})
+				_ = s.store.DeleteAccessToken(ctx, db.DeleteAccessTokenParams{Provider: provider.Name, GroupID: groupId})
 
 				// remove from github
-				err := auth.DeleteAccessToken(ctx, provider, encToken.AccessToken)
+				err := auth.DeleteAccessToken(ctx, provider.Name, encToken.AccessToken)
 
 				if err != nil {
 					zerolog.Ctx(ctx).Error().Msgf("Error deleting access token: %v", err)

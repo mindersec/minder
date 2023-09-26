@@ -36,7 +36,7 @@ import (
 	"github.com/stacklok/mediator/internal/entities"
 	ghclient "github.com/stacklok/mediator/internal/providers/github"
 	"github.com/stacklok/mediator/internal/util"
-	pb "github.com/stacklok/mediator/pkg/generated/protobuf/go/mediator/v1"
+	pb "github.com/stacklok/mediator/pkg/api/protobuf/go/mediator/v1"
 )
 
 var (
@@ -267,7 +267,7 @@ func RuleTypePBFromDB(rt *db.RuleType, ectx *EntityContext) (*pb.RuleType, error
 		Id:   &id,
 		Name: rt.Name,
 		Context: &pb.Context{
-			Provider: ectx.GetProvider(),
+			Provider: ectx.GetProvider().Name,
 			Group:    &gname,
 		},
 		Description: rt.Description,

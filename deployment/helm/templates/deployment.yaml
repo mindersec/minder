@@ -52,6 +52,7 @@ spec:
           - "--config=/config/overrides.yaml"
           - "--grpc-host=0.0.0.0"
           - "--http-host=0.0.0.0"
+          - "--metric-host=0.0.0.0"
           - "--github-client-id-file=/secrets/app/client_id"
           - "--github-client-secret-file=/secrets/app/client_secret"
           env:
@@ -75,6 +76,9 @@ spec:
               protocol: TCP
             - name: grpc
               containerPort: !!int "{{ .Values.service.grpcPort }}"
+              protocol: TCP
+            - name: metric
+              containerPort: !!int "{{ .Values.service.metricPort }}"
               protocol: TCP
           livenessProbe:
             httpGet:

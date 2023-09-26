@@ -21,7 +21,7 @@ import (
 	"github.com/stretchr/testify/require"
 
 	ghclient "github.com/stacklok/mediator/internal/providers/github"
-	pb "github.com/stacklok/mediator/pkg/generated/protobuf/go/mediator/v1"
+	pb "github.com/stacklok/mediator/pkg/api/protobuf/go/mediator/v1"
 )
 
 func TestNewRestRuleDataIngest(t *testing.T) {

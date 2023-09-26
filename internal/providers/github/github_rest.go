@@ -280,19 +280,15 @@ func (c *RestClient) ListFiles(
 	ctx context.Context,
 	owner string,
 	repo string,
-	number int,
-	page int,
+	prNumber int,
 	perPage int,
-) ([]*github.CommitFile, error) {
+	pageNumber int,
+) ([]*github.CommitFile, *github.Response, error) {
 	opt := &github.ListOptions{
-		Page:    page,
+		Page:    pageNumber,
 		PerPage: perPage,
 	}
-	files, _, err := c.client.PullRequests.ListFiles(ctx, owner, repo, number, opt)
-	if err != nil {
-		return nil, err
-	}
-	return files, nil
+	return c.client.PullRequests.ListFiles(ctx, owner, repo, prNumber, opt)
 }
 
 // CreateReview is a wrapper for the GitHub API to create a review

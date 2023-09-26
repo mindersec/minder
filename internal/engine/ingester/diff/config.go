@@ -32,10 +32,3 @@ type EcosystemMapping struct {
 	Ecosystem DependencyEcosystem `json:"ecosystem" yaml:"ecosystem" mapstructure:"ecosystem"`
 	Files     []string            `json:"files" yaml:"files" mapstructure:"files"`
 }
-
-// IngesterConfig is the policy-provided configuration for the git ingester
-// This allows for users to pass in configuration to the ingester
-// in different calls as opposed to having to set it in the rule type.
-type IngesterConfig struct {
-	Ecosystems []EcosystemMapping `json:"ecosystems" yaml:"ecosystems" mapstructure:"ecosystems"`
-}

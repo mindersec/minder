@@ -20,6 +20,7 @@
 service:
   httpPort: 8080
   grpcPort: 8090
+  metricPort: 9090
 
 hostname: "mediator.example.com"
 
