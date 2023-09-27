@@ -43,11 +43,6 @@ import (
 // and a boolean indicating whether the client is a CLI or web client
 func (s *Server) GetAuthorizationURL(ctx context.Context,
 	req *pb.GetAuthorizationURLRequest) (*pb.GetAuthorizationURLResponse, error) {
-	// check if user is authorized
-	if !IsRequestAuthorized(ctx, req.GroupId) {
-		return nil, status.Errorf(codes.PermissionDenied, "user is not authorized to access this resource")
-	}
-
 	// if we do not have a group, check if we can infer it
 	if req.GroupId == 0 {
 		group, err := auth.GetDefaultGroup(ctx)
@@ -55,6 +50,10 @@ func (s *Server) GetAuthorizationURL(ctx context.Context,
 			return nil, status.Errorf(codes.InvalidArgument, "cannot infer group id")
 		}
 		req.GroupId = group
+	}
+
+	if err := AuthorizedOnGroup(ctx, req.GroupId); err != nil {
+		return nil, err
 	}
 
 	// Configure tracing
@@ -275,8 +274,10 @@ func (s *Server) ExchangeCodeForTokenWEB(ctx context.Context,
 func (s *Server) GetProviderAccessToken(ctx context.Context, provider string,
 	groupId int32, checkAuthz bool) (oauth2.Token, string, error) {
 	// check if user is authorized
-	if checkAuthz && !IsRequestAuthorized(ctx, groupId) {
-		return oauth2.Token{}, "", status.Errorf(codes.PermissionDenied, "user is not authorized to access this resource")
+	if checkAuthz {
+		if err := AuthorizedOnGroup(ctx, groupId); err != nil {
+			return oauth2.Token{}, "", err
+		}
 	}
 
 	encToken, err := s.store.GetAccessTokenByGroupID(ctx,
@@ -348,8 +349,8 @@ func (s *Server) RevokeOauthGroupToken(ctx context.Context,
 	}
 
 	// check if user is authorized
-	if !IsRequestAuthorized(ctx, in.GroupId) {
-		return nil, status.Errorf(codes.PermissionDenied, "user is not authorized to access this resource")
+	if err := AuthorizedOnGroup(ctx, in.GroupId); err != nil {
+		return nil, err
 	}
 
 	provider, err := s.store.GetProviderByName(ctx, db.GetProviderByNameParams{Name: in.Provider, GroupID: in.GroupId})
@@ -393,8 +394,8 @@ func (s *Server) StoreProviderToken(ctx context.Context,
 	}
 
 	// check if user is authorized
-	if !IsRequestAuthorized(ctx, in.GroupId) {
-		return nil, status.Errorf(codes.PermissionDenied, "user is not authorized to access this resource")
+	if err := AuthorizedOnGroup(ctx, in.GroupId); err != nil {
+		return nil, err
 	}
 
 	provider, err := s.store.GetProviderByName(ctx, db.GetProviderByNameParams{Name: in.Provider, GroupID: in.GroupId})
@@ -461,8 +462,8 @@ func (s *Server) VerifyProviderTokenFrom(ctx context.Context,
 	}
 
 	// check if user is authorized
-	if !IsRequestAuthorized(ctx, in.GroupId) {
-		return nil, status.Errorf(codes.PermissionDenied, "user is not authorized to access this resource")
+	if err := AuthorizedOnGroup(ctx, in.GroupId); err != nil {
+		return nil, err
 	}
 
 	provider, err := s.store.GetProviderByName(ctx, db.GetProviderByNameParams{Name: in.Provider, GroupID: in.GroupId})

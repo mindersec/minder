@@ -67,8 +67,8 @@ func (s *Server) RegisterRepository(ctx context.Context,
 	}
 
 	// check if user is authorized
-	if !IsRequestAuthorized(ctx, in.GroupId) {
-		return nil, status.Errorf(codes.PermissionDenied, "user is not authorized to access this resource")
+	if err := AuthorizedOnGroup(ctx, in.GroupId); err != nil {
+		return nil, err
 	}
 
 	provider, err := s.store.GetProviderByName(ctx, db.GetProviderByNameParams{
@@ -179,8 +179,8 @@ func (s *Server) ListRepositories(ctx context.Context,
 	}
 
 	// check if user is authorized
-	if !IsRequestAuthorized(ctx, in.GroupId) {
-		return nil, status.Errorf(codes.PermissionDenied, "user is not authorized to access this resource")
+	if err := AuthorizedOnGroup(ctx, in.GroupId); err != nil {
+		return nil, err
 	}
 
 	provider, err := s.store.GetProviderByName(ctx, db.GetProviderByNameParams{
@@ -266,11 +266,9 @@ func (s *Server) GetRepositoryById(ctx context.Context,
 		return nil, status.Errorf(codes.Internal, "cannot read repository: %v", err)
 	}
 
-	groupID := repo.GroupID
-
 	// check if user is authorized
-	if !IsRequestAuthorized(ctx, groupID) {
-		return nil, status.Errorf(codes.PermissionDenied, "user is not authorized to access this resource")
+	if err := AuthorizedOnGroup(ctx, repo.GroupID); err != nil {
+		return nil, err
 	}
 
 	provider, err := s.store.GetProviderByName(ctx, db.GetProviderByNameParams{
@@ -323,8 +321,8 @@ func (s *Server) GetRepositoryByName(ctx context.Context,
 	}
 
 	// check if user is authorized
-	if !IsRequestAuthorized(ctx, in.GroupId) {
-		return nil, status.Errorf(codes.PermissionDenied, "user is not authorized to access this resource")
+	if err := AuthorizedOnGroup(ctx, in.GroupId); err != nil {
+		return nil, err
 	}
 
 	provider, err := s.store.GetProviderByName(ctx, db.GetProviderByNameParams{
@@ -344,8 +342,8 @@ func (s *Server) GetRepositoryByName(ctx context.Context,
 		return nil, err
 	}
 	// check if user is authorized
-	if !IsRequestAuthorized(ctx, repo.GroupID) {
-		return nil, status.Errorf(codes.PermissionDenied, "user is not authorized to access this resource")
+	if err := AuthorizedOnGroup(ctx, repo.GroupID); err != nil {
+		return nil, err
 	}
 
 	createdAt := timestamppb.New(repo.CreatedAt)
@@ -380,8 +378,8 @@ func (s *Server) SyncRepositories(ctx context.Context, in *pb.SyncRepositoriesRe
 	}
 
 	// check if user is authorized
-	if !IsRequestAuthorized(ctx, in.GroupId) {
-		return nil, status.Errorf(codes.PermissionDenied, "user is not authorized to access this resource")
+	if err := AuthorizedOnGroup(ctx, in.GroupId); err != nil {
+		return nil, err
 	}
 
 	provider, err := s.store.GetProviderByName(ctx, db.GetProviderByNameParams{

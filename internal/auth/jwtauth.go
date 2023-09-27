@@ -249,15 +249,25 @@ func GetUserClaims(ctx context.Context, store db.Store, userId int32) (UserClaim
 	return claims, nil
 }
 
-// TokenInfoKey is the key used to store the token info in the context
-var TokenInfoKey struct{}
+var tokenContextKey struct{}
+
+// GetClaimsFromContext returns the claims from the context, or an empty default
+func GetClaimsFromContext(ctx context.Context) UserClaims {
+	claims, ok := ctx.Value(tokenContextKey).(UserClaims)
+	if !ok {
+		return UserClaims{UserId: -1, OrganizationId: -1}
+	}
+	return claims
+}
+
+// WithClaimContext stores the specified UserClaim in the context.
+func WithClaimContext(ctx context.Context, claims UserClaims) context.Context {
+	return context.WithValue(ctx, tokenContextKey, claims)
+}
 
 // GetDefaultGroup returns the default group id for the user
 func GetDefaultGroup(ctx context.Context) (int32, error) {
-	claims, ok := ctx.Value(TokenInfoKey).(UserClaims)
-	if !ok {
-		return 0, errors.New("cannot get default group")
-	}
+	claims := GetClaimsFromContext(ctx)
 	if len(claims.GroupIds) != 1 {
 		return 0, errors.New("cannot get default group")
 	}
@@ -266,19 +276,13 @@ func GetDefaultGroup(ctx context.Context) (int32, error) {
 
 // IsAuthorizedForGroup returns true if the user is authorized for the given group
 func IsAuthorizedForGroup(ctx context.Context, groupId int32) bool {
-	claims, ok := ctx.Value(TokenInfoKey).(UserClaims)
-	if !ok {
-		return false
-	}
+	claims := GetClaimsFromContext(ctx)
 
 	return slices.Contains(claims.GroupIds, groupId)
 }
 
 // GetUserGroups returns all the groups where an user belongs to
 func GetUserGroups(ctx context.Context) ([]int32, error) {
-	claims, ok := ctx.Value(TokenInfoKey).(UserClaims)
-	if !ok {
-		return nil, errors.New("cannot get user groups")
-	}
+	claims := GetClaimsFromContext(ctx)
 	return claims.GroupIds, nil
 }

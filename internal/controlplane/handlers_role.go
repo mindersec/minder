@@ -44,8 +44,8 @@ func (s *Server) CreateRoleByOrganization(ctx context.Context,
 	}
 
 	// check if user is authorized
-	if !IsRequestAuthorized(ctx, in.OrganizationId) {
-		return nil, status.Errorf(codes.PermissionDenied, "user is not authorized to access this resource")
+	if err := AuthorizedOnOrg(ctx, in.OrganizationId); err != nil {
+		return nil, err
 	}
 
 	// check that organization exists
@@ -93,8 +93,8 @@ func (s *Server) CreateRoleByGroup(ctx context.Context,
 	}
 
 	// check if user is authorized
-	if !IsRequestAuthorized(ctx, in.GroupId) {
-		return nil, status.Errorf(codes.PermissionDenied, "user is not authorized to access this resource")
+	if err := AuthorizedOnGroup(ctx, in.GroupId); err != nil {
+		return nil, err
 	}
 
 	// check that organization exists
@@ -165,8 +165,8 @@ func (s *Server) DeleteRole(ctx context.Context,
 	}
 
 	// check if user is authorized
-	if !IsRequestAuthorized(ctx, role.OrganizationID) {
-		return nil, status.Errorf(codes.PermissionDenied, "user is not authorized to access this resource")
+	if err := AuthorizedOnOrg(ctx, role.OrganizationID); err != nil {
+		return nil, err
 	}
 
 	if in.Force == nil {
@@ -208,8 +208,8 @@ func (s *Server) GetRoles(ctx context.Context,
 	}
 
 	// check if user is authorized
-	if !IsRequestAuthorized(ctx, in.OrganizationId) {
-		return nil, status.Errorf(codes.PermissionDenied, "user is not authorized to access this resource")
+	if err := AuthorizedOnOrg(ctx, in.OrganizationId); err != nil {
+		return nil, err
 	}
 
 	// define default values for limit and offset
@@ -258,8 +258,8 @@ func (s *Server) GetRolesByGroup(ctx context.Context,
 	}
 
 	// check if user is authorized
-	if !IsRequestAuthorized(ctx, in.GroupId) {
-		return nil, status.Errorf(codes.PermissionDenied, "user is not authorized to access this resource")
+	if err := AuthorizedOnGroup(ctx, in.GroupId); err != nil {
+		return nil, err
 	}
 
 	// define default values for limit and offset
@@ -316,8 +316,8 @@ func (s *Server) GetRoleById(ctx context.Context,
 	}
 
 	// check if user is authorized
-	if !IsRequestAuthorized(ctx, role.OrganizationID) {
-		return nil, status.Errorf(codes.PermissionDenied, "user is not authorized to access this resource")
+	if err := AuthorizedOnOrg(ctx, role.OrganizationID); err != nil {
+		return nil, err
 	}
 
 	var resp pb.GetRoleByIdResponse
@@ -339,8 +339,8 @@ func (s *Server) GetRoleById(ctx context.Context,
 func (s *Server) GetRoleByName(ctx context.Context,
 	in *pb.GetRoleByNameRequest) (*pb.GetRoleByNameResponse, error) {
 	// check if user is authorized
-	if !IsRequestAuthorized(ctx, in.OrganizationId) {
-		return nil, status.Errorf(codes.PermissionDenied, "user is not authorized to access this resource")
+	if err := AuthorizedOnOrg(ctx, in.OrganizationId); err != nil {
+		return nil, err
 	}
 
 	if in.OrganizationId == 0 {

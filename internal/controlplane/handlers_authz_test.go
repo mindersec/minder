@@ -20,6 +20,7 @@ import (
 
 	"github.com/golang/mock/gomock"
 	"github.com/stretchr/testify/assert"
+	"google.golang.org/grpc"
 
 	mockdb "github.com/stacklok/mediator/database/mock"
 	"github.com/stacklok/mediator/internal/auth"
@@ -34,7 +35,7 @@ func TestIsSuperadminAuthorized(t *testing.T) {
 
 	request := &pb.GetGroupByIdRequest{GroupId: 1}
 	// Create a new context and set the claims value
-	ctx := context.WithValue(context.Background(), auth.TokenInfoKey, auth.UserClaims{
+	ctx := auth.WithClaimContext(context.Background(), auth.UserClaims{
 		UserId:         1,
 		OrganizationId: 1,
 		GroupIds:       []int32{1},
@@ -65,7 +66,7 @@ func TestIsNonadminAuthorized(t *testing.T) {
 
 	request := &pb.CreateRoleByOrganizationRequest{OrganizationId: 1, Name: "test"}
 	// Create a new context and set the claims value
-	ctx := context.WithValue(context.Background(), auth.TokenInfoKey, auth.UserClaims{
+	ctx := auth.WithClaimContext(context.Background(), auth.UserClaims{
 		UserId:         1,
 		OrganizationId: 1,
 		GroupIds:       []int32{1},
@@ -73,13 +74,21 @@ func TestIsNonadminAuthorized(t *testing.T) {
 			{RoleID: 1, IsAdmin: false, GroupID: 0, OrganizationID: 1}},
 	})
 
+	rpcOpts, err := optionsForMethod(&grpc.UnaryServerInfo{FullMethod: "/mediator.v1.RoleService/CreateRoleByOrganization"})
+	if err != nil {
+		t.Fatalf("Unable to get rpc options: %v", err)
+	}
+	ctx = withRpcOptions(ctx, rpcOpts)
+
 	mockStore := mockdb.NewMockStore(ctrl)
 	server := &Server{
 		store: mockStore,
 	}
 	mockStore.EXPECT().CreateRole(ctx, gomock.Any()).Times(0)
 
-	_, err := server.CreateRoleByOrganization(ctx, request)
+	_, err = server.CreateRoleByOrganization(ctx, request)
+
+	t.Logf("Got error: %v", err)
 
 	if err == nil {
 		t.Error("Expected error when user is not authorized, but got nil")
@@ -96,7 +105,7 @@ func TestByResourceUnauthorized(t *testing.T) {
 
 	request := &pb.GetRoleByIdRequest{Id: 1}
 	// Create a new context and set the claims value
-	ctx := context.WithValue(context.Background(), auth.TokenInfoKey, auth.UserClaims{
+	ctx := auth.WithClaimContext(context.Background(), auth.UserClaims{
 		UserId:         2,
 		OrganizationId: 2,
 		GroupIds:       []int32{1},
@@ -104,13 +113,19 @@ func TestByResourceUnauthorized(t *testing.T) {
 			{RoleID: 2, IsAdmin: true, GroupID: 2, OrganizationID: 2}},
 	})
 
+	rpcOpts, err := optionsForMethod(&grpc.UnaryServerInfo{FullMethod: "/mediator.v1.RoleService/GetRoleById"})
+	if err != nil {
+		t.Fatalf("Unable to get rpc options: %v", err)
+	}
+	ctx = withRpcOptions(ctx, rpcOpts)
+
 	mockStore := mockdb.NewMockStore(ctrl)
 	server := &Server{
 		store: mockStore,
 	}
 	mockStore.EXPECT().GetRoleByID(ctx, gomock.Any()).Times(1)
 
-	_, err := server.GetRoleById(ctx, request)
+	_, err = server.GetRoleById(ctx, request)
 
 	if err == nil {
 		t.Error("Expected error when user is not authorized, but got nil")

@@ -96,8 +96,8 @@ func (s *Server) CreateUser(ctx context.Context,
 	}
 
 	// check if user is authorized
-	if !IsRequestAuthorized(ctx, in.OrganizationId) {
-		return nil, status.Errorf(codes.PermissionDenied, "user is not authorized to access this resource")
+	if err := AuthorizedOnOrg(ctx, in.OrganizationId); err != nil {
+		return nil, err
 	}
 
 	// if we have group ids we check if they exist
@@ -207,8 +207,8 @@ func (s *Server) DeleteUser(ctx context.Context,
 	}
 
 	// check if user is authorized
-	if !IsRequestAuthorized(ctx, user.OrganizationID) {
-		return nil, status.Errorf(codes.PermissionDenied, "user is not authorized to access this resource")
+	if err := AuthorizedOnOrg(ctx, user.OrganizationID); err != nil {
+		return nil, err
 	}
 
 	if in.Force == nil {
@@ -275,8 +275,8 @@ func (s *Server) GetUsers(ctx context.Context,
 func (s *Server) GetUsersByOrganization(ctx context.Context,
 	in *pb.GetUsersByOrganizationRequest) (*pb.GetUsersByOrganizationResponse, error) {
 	// check if user is authorized
-	if !IsRequestAuthorized(ctx, in.OrganizationId) {
-		return nil, status.Errorf(codes.PermissionDenied, "user is not authorized to access this resource")
+	if err := AuthorizedOnOrg(ctx, in.OrganizationId); err != nil {
+		return nil, err
 	}
 
 	// define default values for limit and offset
@@ -323,8 +323,8 @@ func (s *Server) GetUsersByOrganization(ctx context.Context,
 func (s *Server) GetUsersByGroup(ctx context.Context,
 	in *pb.GetUsersByGroupRequest) (*pb.GetUsersByGroupResponse, error) {
 	// check if user is authorized
-	if !IsRequestAuthorized(ctx, in.GroupId) {
-		return nil, status.Errorf(codes.PermissionDenied, "user is not authorized to access this resource")
+	if err := AuthorizedOnGroup(ctx, in.GroupId); err != nil {
+		return nil, err
 	}
 
 	// define default values for limit and offset
@@ -415,16 +415,16 @@ func getUserDependencies(ctx context.Context, store db.Store, user db.User) ([]*
 // GetUserById is a service for getting a user by id
 func (s *Server) GetUserById(ctx context.Context,
 	in *pb.GetUserByIdRequest) (*pb.GetUserByIdResponse, error) {
-	if in.Id == 0 {
+	if in.UserId == 0 {
 		return nil, status.Error(codes.InvalidArgument, "user id is required")
 	}
 
 	// check if user is authorized
-	if !IsRequestAuthorized(ctx, in.Id) {
-		return nil, status.Errorf(codes.PermissionDenied, "user is not authorized to access this resource")
+	if err := AuthorizedOnUser(ctx, in.UserId); err != nil {
+		return nil, err
 	}
 
-	user, err := s.store.GetUserByID(ctx, in.Id)
+	user, err := s.store.GetUserByID(ctx, in.UserId)
 	if err != nil {
 		if errors.Is(err, sql.ErrNoRows) {
 			return nil, status.Error(codes.NotFound, "user not found")
@@ -472,8 +472,8 @@ func (s *Server) GetUserByUserName(ctx context.Context,
 	}
 
 	// check if user is authorized
-	if !IsRequestAuthorized(ctx, user.OrganizationID) {
-		return nil, status.Errorf(codes.PermissionDenied, "user is not authorized to access this resource")
+	if err := AuthorizedOnOrg(ctx, user.OrganizationID); err != nil {
+		return nil, err
 	}
 
 	groups, roles, err := getUserDependencies(ctx, s.store, user)
@@ -516,8 +516,8 @@ func (s *Server) GetUserByEmail(ctx context.Context,
 	}
 
 	// check if user is authorized
-	if !IsRequestAuthorized(ctx, user.OrganizationID) {
-		return nil, status.Errorf(codes.PermissionDenied, "user is not authorized to access this resource")
+	if err := AuthorizedOnOrg(ctx, user.OrganizationID); err != nil {
+		return nil, err
 	}
 
 	var resp pb.GetUserByEmailResponse
@@ -545,10 +545,10 @@ func (s *Server) GetUserByEmail(ctx context.Context,
 
 // GetUser is a service for getting personal user details
 func (s *Server) GetUser(ctx context.Context, _ *pb.GetUserRequest) (*pb.GetUserResponse, error) {
-	claims, _ := ctx.Value(auth.TokenInfoKey).(auth.UserClaims)
+	claims := auth.GetClaimsFromContext(ctx)
 	// check if user is authorized
-	if !IsRequestAuthorized(ctx, claims.UserId) {
-		return nil, status.Errorf(codes.PermissionDenied, "user is not authorized to access this resource")
+	if err := AuthorizedOnUser(ctx, claims.UserId); err != nil {
+		return nil, err
 	}
 
 	// check if user exists
@@ -590,10 +590,10 @@ type updatePasswordValidation struct {
 
 // UpdatePassword is a service for updating a user's password
 func (s *Server) UpdatePassword(ctx context.Context, in *pb.UpdatePasswordRequest) (*pb.UpdatePasswordResponse, error) {
-	claims, _ := ctx.Value(auth.TokenInfoKey).(auth.UserClaims)
+	claims := auth.GetClaimsFromContext(ctx)
 	// check if user is authorized
-	if !IsRequestAuthorized(ctx, claims.UserId) {
-		return nil, status.Errorf(codes.PermissionDenied, "user is not authorized to access this resource")
+	if err := AuthorizedOnUser(ctx, claims.UserId); err != nil {
+		return nil, err
 	}
 
 	// validate password
@@ -653,10 +653,9 @@ type updateProfileValidation struct {
 //
 //gocyclo:ignore
 func (s *Server) UpdateProfile(ctx context.Context, in *pb.UpdateProfileRequest) (*pb.UpdateProfileResponse, error) {
-	claims, _ := ctx.Value(auth.TokenInfoKey).(auth.UserClaims)
-	// check if user is authorized
-	if !IsRequestAuthorized(ctx, claims.UserId) {
-		return nil, status.Errorf(codes.PermissionDenied, "user is not authorized to access this resource")
+	claims := auth.GetClaimsFromContext(ctx)
+	if err := AuthorizedOnUser(ctx, claims.UserId); err != nil {
+		return nil, err
 	}
 
 	// validate that at least one field is being updated
