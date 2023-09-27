@@ -434,12 +434,13 @@ func (mr *MockGitHubMockRecorder) ListFiles(ctx, owner, repo, prNumber, perPage,
 }
 
 // ListPackagesByRepository mocks base method.
-func (m *MockGitHub) ListPackagesByRepository(arg0 context.Context, arg1 bool, arg2, arg3 string, arg4 int64, arg5, arg6 int) ([]*github.Package, error) {
+func (m *MockGitHub) ListPackagesByRepository(arg0 context.Context, arg1 bool, arg2, arg3 string, arg4 int64, arg5, arg6 int) ([]*github.Package, *github.Response, error) {
 	m.ctrl.T.Helper()
 	ret := m.ctrl.Call(m, "ListPackagesByRepository", arg0, arg1, arg2, arg3, arg4, arg5, arg6)
 	ret0, _ := ret[0].([]*github.Package)
-	ret1, _ := ret[1].(error)
-	return ret0, ret1
+	ret1, _ := ret[1].(*github.Response)
+	ret2, _ := ret[2].(error)
+	return ret0, ret1, ret2
 }
 
 // ListPackagesByRepository indicates an expected call of ListPackagesByRepository.

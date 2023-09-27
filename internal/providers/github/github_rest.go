@@ -111,7 +111,7 @@ func (c *RestClient) ListAllPackages(ctx context.Context, isOrg bool, owner stri
 
 // ListPackagesByRepository returns a list of all packages for an specific repository
 func (c *RestClient) ListPackagesByRepository(ctx context.Context, isOrg bool, owner string, artifactType string,
-	repositoryId int64, pageNumber int, itemsPerPage int) ([]*github.Package, error) {
+	repositoryId int64, pageNumber int, itemsPerPage int) ([]*github.Package, *github.Response, error) {
 	opt := &github.PackageListOptions{
 		PackageType: &artifactType,
 		ListOptions: github.ListOptions{
@@ -132,7 +132,7 @@ func (c *RestClient) ListPackagesByRepository(ctx context.Context, isOrg bool, o
 			artifacts, resp, err = c.client.Users.ListPackages(ctx, "", opt)
 		}
 		if err != nil {
-			return allContainers, err
+			return allContainers, resp, err
 		}
 
 		// now just append the ones belonging to the repository
@@ -148,7 +148,7 @@ func (c *RestClient) ListPackagesByRepository(ctx context.Context, isOrg bool, o
 		opt.Page = resp.NextPage
 	}
 
-	return allContainers, nil
+	return allContainers, nil, nil
 }
 
 // GetPackageByName returns a single package for the authenticated user or for the org

@@ -144,12 +144,15 @@ func (e *Reconciler) handleArtifactsReconcilerEvent(ctx context.Context, evt *Re
 
 	isOrg := (cli.GetOwner() != "")
 	// todo: add another type of artifacts
-	artifacts, err := cli.ListPackagesByRepository(ctx, isOrg, repository.RepoOwner,
+	artifacts, resp, err := cli.ListPackagesByRepository(ctx, isOrg, repository.RepoOwner,
 		CONTAINER_TYPE, int64(repository.RepoID), 1, 100)
 	if err != nil {
-		// we do not return error since it's a valid use case for a repository to not have artifacts
-		log.Printf("error retrieving artifacts for RepoID %d: %w", repository.RepoID, err)
-		return nil
+		if resp.StatusCode == 404 {
+			// we do not return error since it's a valid use case for a repository to not have artifacts
+			log.Printf("error retrieving artifacts for RepoID %d: %v", repository.RepoID, err)
+			return nil
+		}
+		return err
 	}
 	for _, artifact := range artifacts {
 		// store information if we do not have it
