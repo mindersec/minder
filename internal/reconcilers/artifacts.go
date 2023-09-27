@@ -110,6 +110,28 @@ func (e *Reconciler) handleArtifactsReconcilerEvent(ctx context.Context, evt *Re
 		return fmt.Errorf("error building client: %w", err)
 	}
 
+	// evaluate policy for repo
+	repo := &pb.RepositoryResult{
+		Owner:      repository.RepoOwner,
+		Repository: repository.RepoName,
+		RepoId:     repository.RepoID,
+		HookUrl:    repository.WebhookUrl,
+		DeployUrl:  repository.DeployUrl,
+		CloneUrl:   repository.CloneUrl,
+		CreatedAt:  timestamppb.New(repository.CreatedAt),
+		UpdatedAt:  timestamppb.New(repository.UpdatedAt),
+	}
+
+	err = engine.NewEntityInfoWrapper().
+		WithProvider(prov.Name).
+		WithRepository(repo).
+		WithGroupID(evt.Group).
+		WithRepositoryID(repository.ID).
+		Publish(e.evt)
+	if err != nil {
+		return fmt.Errorf("error publishing message: %w", err)
+	}
+
 	if !p.Implements(db.ProviderTypeGithub) {
 		log.Printf("provider %s is not supported for artifacts reconciler", prov.Name)
 		return nil
