@@ -32,18 +32,18 @@ type Querier interface {
 	CreateSigningKey(ctx context.Context, arg CreateSigningKeyParams) (SigningKey, error)
 	CreateUser(ctx context.Context, arg CreateUserParams) (User, error)
 	DeleteAccessToken(ctx context.Context, arg DeleteAccessTokenParams) error
-	DeleteArtifact(ctx context.Context, id int32) error
-	DeleteArtifactVersion(ctx context.Context, id int32) error
+	DeleteArtifact(ctx context.Context, id uuid.UUID) error
+	DeleteArtifactVersion(ctx context.Context, id uuid.UUID) error
 	DeleteExpiredSessionStates(ctx context.Context) error
 	DeleteGroup(ctx context.Context, id int32) error
 	DeleteOldArtifactVersions(ctx context.Context, arg DeleteOldArtifactVersionsParams) error
 	DeleteOrganization(ctx context.Context, id int32) error
-	DeletePolicy(ctx context.Context, id int32) error
+	DeletePolicy(ctx context.Context, id uuid.UUID) error
 	DeleteProject(ctx context.Context, id uuid.UUID) ([]DeleteProjectRow, error)
 	DeleteProvider(ctx context.Context, arg DeleteProviderParams) error
-	DeleteRepository(ctx context.Context, id int32) error
+	DeleteRepository(ctx context.Context, id uuid.UUID) error
 	DeleteRole(ctx context.Context, id int32) error
-	DeleteRuleType(ctx context.Context, id int32) error
+	DeleteRuleType(ctx context.Context, id uuid.UUID) error
 	DeleteSessionState(ctx context.Context, id int32) error
 	DeleteSessionStateByGroupID(ctx context.Context, arg DeleteSessionStateByGroupIDParams) error
 	DeleteSigningKey(ctx context.Context, arg DeleteSigningKeyParams) error
@@ -51,8 +51,8 @@ type Querier interface {
 	GetAccessTokenByGroupID(ctx context.Context, arg GetAccessTokenByGroupIDParams) (ProviderAccessToken, error)
 	GetAccessTokenByProvider(ctx context.Context, provider string) ([]ProviderAccessToken, error)
 	GetAccessTokenSinceDate(ctx context.Context, arg GetAccessTokenSinceDateParams) (ProviderAccessToken, error)
-	GetArtifactByID(ctx context.Context, id int32) (GetArtifactByIDRow, error)
-	GetArtifactVersionByID(ctx context.Context, id int32) (ArtifactVersion, error)
+	GetArtifactByID(ctx context.Context, id uuid.UUID) (GetArtifactByIDRow, error)
+	GetArtifactVersionByID(ctx context.Context, id uuid.UUID) (ArtifactVersion, error)
 	GetArtifactVersionBySha(ctx context.Context, sha string) (ArtifactVersion, error)
 	GetChildrenProjects(ctx context.Context, id uuid.UUID) ([]uuid.UUID, error)
 	GetGroupByID(ctx context.Context, id int32) (Group, error)
@@ -65,20 +65,20 @@ type Querier interface {
 	GetParentProjectsUntil(ctx context.Context, arg GetParentProjectsUntilParams) ([]uuid.UUID, error)
 	GetPolicyByGroupAndID(ctx context.Context, arg GetPolicyByGroupAndIDParams) ([]GetPolicyByGroupAndIDRow, error)
 	GetPolicyByGroupAndName(ctx context.Context, arg GetPolicyByGroupAndNameParams) ([]GetPolicyByGroupAndNameRow, error)
-	GetPolicyByID(ctx context.Context, id int32) (Policy, error)
+	GetPolicyByID(ctx context.Context, id uuid.UUID) (Policy, error)
 	GetPolicyStatusByGroup(ctx context.Context, groupID int32) ([]GetPolicyStatusByGroupRow, error)
 	GetPolicyStatusByIdAndGroup(ctx context.Context, arg GetPolicyStatusByIdAndGroupParams) (GetPolicyStatusByIdAndGroupRow, error)
 	GetProjectByID(ctx context.Context, id uuid.UUID) (Project, error)
 	GetProviderByID(ctx context.Context, arg GetProviderByIDParams) (Provider, error)
 	GetProviderByName(ctx context.Context, arg GetProviderByNameParams) (Provider, error)
-	GetRepositoryByID(ctx context.Context, id int32) (Repository, error)
+	GetRepositoryByID(ctx context.Context, id uuid.UUID) (Repository, error)
 	GetRepositoryByIDAndGroup(ctx context.Context, arg GetRepositoryByIDAndGroupParams) (Repository, error)
 	GetRepositoryByRepoID(ctx context.Context, repoID int32) (Repository, error)
 	GetRepositoryByRepoName(ctx context.Context, arg GetRepositoryByRepoNameParams) (Repository, error)
 	GetRoleByID(ctx context.Context, id int32) (Role, error)
 	GetRoleByName(ctx context.Context, arg GetRoleByNameParams) (Role, error)
 	GetRootProjects(ctx context.Context) ([]Project, error)
-	GetRuleTypeByID(ctx context.Context, id int32) (RuleType, error)
+	GetRuleTypeByID(ctx context.Context, id uuid.UUID) (RuleType, error)
 	GetRuleTypeByName(ctx context.Context, arg GetRuleTypeByNameParams) (RuleType, error)
 	GetSessionState(ctx context.Context, id int32) (SessionStore, error)
 	GetSessionStateByGroupID(ctx context.Context, grpID sql.NullInt32) (SessionStore, error)
@@ -93,7 +93,7 @@ type Querier interface {
 	ListAllRepositories(ctx context.Context, provider string) ([]Repository, error)
 	ListArtifactVersionsByArtifactID(ctx context.Context, arg ListArtifactVersionsByArtifactIDParams) ([]ArtifactVersion, error)
 	ListArtifactVersionsByArtifactIDAndTag(ctx context.Context, arg ListArtifactVersionsByArtifactIDAndTagParams) ([]ArtifactVersion, error)
-	ListArtifactsByRepoID(ctx context.Context, repositoryID int32) ([]Artifact, error)
+	ListArtifactsByRepoID(ctx context.Context, repositoryID uuid.UUID) ([]Artifact, error)
 	ListGroups(ctx context.Context, arg ListGroupsParams) ([]Group, error)
 	ListGroupsByOrganizationID(ctx context.Context, organizationID int32) ([]Group, error)
 	ListOrganizations(ctx context.Context, arg ListOrganizationsParams) ([]Organization, error)

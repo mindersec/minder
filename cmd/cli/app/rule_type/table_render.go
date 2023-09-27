@@ -16,8 +16,6 @@
 package rule_type
 
 import (
-	"fmt"
-
 	"github.com/olekukonko/tablewriter"
 	"github.com/spf13/cobra"
 
@@ -43,7 +41,7 @@ func renderRuleTypeTable(
 	row := []string{
 		rt.Context.Provider,
 		*rt.Context.Group,
-		fmt.Sprintf("%d", *rt.Id),
+		*rt.Id,
 		rt.Name,
 		rt.Description,
 	}

@@ -8,6 +8,8 @@ package db
 import (
 	"context"
 	"encoding/json"
+
+	"github.com/google/uuid"
 )
 
 const createRuleType = `-- name: CreateRuleType :one
@@ -57,7 +59,7 @@ const deleteRuleType = `-- name: DeleteRuleType :exec
 DELETE FROM rule_type WHERE id = $1
 `
 
-func (q *Queries) DeleteRuleType(ctx context.Context, id int32) error {
+func (q *Queries) DeleteRuleType(ctx context.Context, id uuid.UUID) error {
 	_, err := q.db.ExecContext(ctx, deleteRuleType, id)
 	return err
 }
@@ -66,7 +68,7 @@ const getRuleTypeByID = `-- name: GetRuleTypeByID :one
 SELECT id, name, provider, group_id, description, guidance, definition, created_at, updated_at FROM rule_type WHERE id = $1
 `
 
-func (q *Queries) GetRuleTypeByID(ctx context.Context, id int32) (RuleType, error) {
+func (q *Queries) GetRuleTypeByID(ctx context.Context, id uuid.UUID) (RuleType, error) {
 	row := q.db.QueryRowContext(ctx, getRuleTypeByID, id)
 	var i RuleType
 	err := row.Scan(
@@ -157,7 +159,7 @@ UPDATE rule_type SET description = $2, definition = $3::jsonb WHERE id = $1
 `
 
 type UpdateRuleTypeParams struct {
-	ID          int32           `json:"id"`
+	ID          uuid.UUID       `json:"id"`
 	Description string          `json:"description"`
 	Definition  json.RawMessage `json:"definition"`
 }

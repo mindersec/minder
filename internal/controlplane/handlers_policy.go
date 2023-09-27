@@ -22,6 +22,7 @@ import (
 	"fmt"
 	"log"
 
+	"github.com/google/uuid"
 	"google.golang.org/grpc/codes"
 	"google.golang.org/grpc/status"
 	"google.golang.org/protobuf/types/known/timestamppb"
@@ -198,7 +199,8 @@ func (s *Server) CreatePolicy(ctx context.Context,
 		return nil, status.Errorf(codes.Internal, "error creating policy")
 	}
 
-	in.Id = &policy.ID
+	idStr := policy.ID.String()
+	in.Id = &idStr
 	resp := &pb.CreatePolicyResponse{
 		Policy: in,
 	}
@@ -251,11 +253,12 @@ func (s *Server) DeletePolicy(ctx context.Context,
 		return nil, status.Errorf(codes.InvalidArgument, "error ensuring default group: %v", err)
 	}
 
-	if in.Id == 0 {
-		return nil, status.Error(codes.InvalidArgument, "policy id is required")
+	parsedPolicyID, err := uuid.Parse(in.Id)
+	if err != nil {
+		return nil, util.UserVisibleError(codes.InvalidArgument, "invalid policy ID")
 	}
 
-	_, err = s.store.GetPolicyByID(ctx, in.Id)
+	_, err = s.store.GetPolicyByID(ctx, parsedPolicyID)
 	if err != nil {
 		if errors.Is(err, sql.ErrNoRows) {
 			return nil, status.Error(codes.NotFound, "policy not found")
@@ -263,7 +266,7 @@ func (s *Server) DeletePolicy(ctx context.Context,
 		return nil, status.Errorf(codes.Internal, "failed to get policy: %s", err)
 	}
 
-	err = s.store.DeletePolicy(ctx, in.Id)
+	err = s.store.DeletePolicy(ctx, parsedPolicyID)
 	if err != nil {
 		return nil, status.Errorf(codes.Internal, "failed to delete policy: %s", err)
 	}
@@ -305,13 +308,14 @@ func (s *Server) GetPolicyById(ctx context.Context,
 
 	entityCtx := engine.EntityFromContext(ctx)
 
-	if in.Id == 0 {
-		return nil, status.Error(codes.InvalidArgument, "policy id is required")
+	parsedPolicyID, err := uuid.Parse(in.Id)
+	if err != nil {
+		return nil, util.UserVisibleError(codes.InvalidArgument, "invalid policy ID")
 	}
 
 	policies, err := s.store.GetPolicyByGroupAndID(ctx, db.GetPolicyByGroupAndIDParams{
 		GroupID: entityCtx.Group.ID,
-		ID:      in.Id,
+		ID:      parsedPolicyID,
 	})
 	if err != nil {
 		return nil, status.Errorf(codes.Unknown, "failed to get policy: %s", err)
@@ -337,7 +341,7 @@ func getRuleEvalEntityInfo(
 	ctx context.Context,
 	store db.Store,
 	entityType *db.NullEntities,
-	selector *sql.NullInt32,
+	selector *uuid.NullUUID,
 	rs db.ListRuleEvaluationStatusByPolicyIdRow,
 	providerName string,
 ) map[string]string {
@@ -349,7 +353,7 @@ func getRuleEvalEntityInfo(
 		// this is always true now but might not be when we support entities not tied to a repo
 		entityInfo["repo_name"] = rs.RepoName
 		entityInfo["repo_owner"] = rs.RepoOwner
-		entityInfo["repository_id"] = fmt.Sprintf("%d", rs.RepositoryID.Int32)
+		entityInfo["repository_id"] = rs.RepositoryID.UUID.String()
 	}
 
 	if !selector.Valid || !entityType.Valid {
@@ -357,12 +361,12 @@ func getRuleEvalEntityInfo(
 	}
 
 	if entityType.Entities == db.EntitiesArtifact {
-		artifact, err := store.GetArtifactByID(ctx, selector.Int32)
+		artifact, err := store.GetArtifactByID(ctx, selector.UUID)
 		if err != nil {
 			log.Printf("error getting artifact: %v", err)
 			return entityInfo
 		}
-		entityInfo["artifact_id"] = fmt.Sprintf("%d", artifact.ID)
+		entityInfo["artifact_id"] = artifact.ID.String()
 		entityInfo["artifact_name"] = artifact.ArtifactName
 		entityInfo["artifact_type"] = artifact.ArtifactType
 	}
@@ -371,6 +375,7 @@ func getRuleEvalEntityInfo(
 }
 
 // GetPolicyStatusById is a method to get policy status
+// nolint:gocyclo // TODO: Refactor this to be more readable
 func (s *Server) GetPolicyStatusById(ctx context.Context,
 	in *pb.GetPolicyStatusByIdRequest) (*pb.GetPolicyStatusByIdResponse, error) {
 	ctx, err := s.authAndContextValidation(ctx, in.GetContext())
@@ -380,13 +385,14 @@ func (s *Server) GetPolicyStatusById(ctx context.Context,
 
 	entityCtx := engine.EntityFromContext(ctx)
 
-	if in.PolicyId == 0 {
-		return nil, status.Error(codes.InvalidArgument, "policy id is required")
+	parsedPolicyID, err := uuid.Parse(in.PolicyId)
+	if err != nil {
+		return nil, util.UserVisibleError(codes.InvalidArgument, "invalid policy ID")
 	}
 
 	dbstat, err := s.store.GetPolicyStatusByIdAndGroup(ctx, db.GetPolicyStatusByIdAndGroupParams{
 		GroupID: entityCtx.Group.ID,
-		ID:      in.PolicyId,
+		ID:      parsedPolicyID,
 	})
 	if err != nil {
 		if errors.Is(err, sql.ErrNoRows) {
@@ -396,11 +402,11 @@ func (s *Server) GetPolicyStatusById(ctx context.Context,
 	}
 
 	var rulestats []*pb.RuleEvaluationStatus
-	var selector *sql.NullInt32
+	var selector *uuid.NullUUID
 	var dbEntity *db.NullEntities
 
 	if in.GetAll() {
-		selector = &sql.NullInt32{}
+		selector = &uuid.NullUUID{}
 		dbEntity = &db.NullEntities{}
 	} else if e := in.GetEntity(); e != nil {
 		if !entities.IsValidEntity(e.GetType()) {
@@ -408,14 +414,17 @@ func (s *Server) GetPolicyStatusById(ctx context.Context,
 				"invalid entity type %s, please use one of %s",
 				e.GetType(), entities.KnownTypesCSV())
 		}
-		selector = &sql.NullInt32{Int32: e.GetId(), Valid: true}
+		selector = &uuid.NullUUID{}
+		if err := selector.Scan(e.GetId()); err != nil {
+			return nil, util.UserVisibleError(codes.InvalidArgument, "invalid entity ID in selector")
+		}
 		dbEntity = &db.NullEntities{Entities: entities.EntityTypeToDB(e.GetType()), Valid: true}
 	}
 
 	// TODO: Handle retrieving status for other types of entities
 	if selector != nil {
 		dbrulestat, err := s.store.ListRuleEvaluationStatusByPolicyId(ctx, db.ListRuleEvaluationStatusByPolicyIdParams{
-			PolicyID:   in.PolicyId,
+			PolicyID:   parsedPolicyID,
 			EntityID:   *selector,
 			EntityType: *dbEntity,
 		})
@@ -437,7 +446,7 @@ func (s *Server) GetPolicyStatusById(ctx context.Context,
 
 			st := &pb.RuleEvaluationStatus{
 				PolicyId:    in.PolicyId,
-				RuleId:      rs.RuleTypeID,
+				RuleId:      rs.RuleTypeID.String(),
 				RuleName:    rs.RuleTypeName,
 				Entity:      string(rs.Entity),
 				Status:      string(rs.EvalStatus),
@@ -455,7 +464,7 @@ func (s *Server) GetPolicyStatusById(ctx context.Context,
 
 	return &pb.GetPolicyStatusByIdResponse{
 		PolicyStatus: &pb.PolicyStatus{
-			PolicyId:     dbstat.ID,
+			PolicyId:     dbstat.ID.String(),
 			PolicyName:   dbstat.Name,
 			PolicyStatus: string(dbstat.PolicyStatus),
 			LastUpdated:  timestamppb.New(dbstat.LastUpdated),
@@ -489,7 +498,7 @@ func (s *Server) GetPolicyStatusByGroup(ctx context.Context,
 
 	for _, dbstat := range dbstats {
 		res.PolicyStatus = append(res.PolicyStatus, &pb.PolicyStatus{
-			PolicyId:     dbstat.ID,
+			PolicyId:     dbstat.ID.String(),
 			PolicyName:   dbstat.Name,
 			PolicyStatus: string(dbstat.PolicyStatus),
 		})
@@ -573,7 +582,12 @@ func (s *Server) GetRuleTypeById(ctx context.Context, in *pb.GetRuleTypeByIdRequ
 
 	resp := &pb.GetRuleTypeByIdResponse{}
 
-	rtdb, err := s.store.GetRuleTypeByID(ctx, in.GetId())
+	parsedRuleTypeID, err := uuid.Parse(in.GetId())
+	if err != nil {
+		return nil, util.UserVisibleError(codes.InvalidArgument, "invalid rule type ID")
+	}
+
+	rtdb, err := s.store.GetRuleTypeByID(ctx, parsedRuleTypeID)
 	if err != nil {
 		return nil, status.Errorf(codes.Unknown, "failed to get rule type: %s", err)
 	}
@@ -632,7 +646,8 @@ func (s *Server) CreateRuleType(ctx context.Context, crt *pb.CreateRuleTypeReque
 		return nil, status.Errorf(codes.Unknown, "failed to create rule type: %s", err)
 	}
 
-	in.Id = &dbrtyp.ID
+	rtypeIDStr := dbrtyp.ID.String()
+	in.Id = &rtypeIDStr
 
 	return &pb.CreateRuleTypeResponse{
 		RuleType: in,
@@ -687,11 +702,16 @@ func (s *Server) UpdateRuleType(ctx context.Context, urt *pb.UpdateRuleTypeReque
 
 // DeleteRuleType is a method to delete a rule type
 func (s *Server) DeleteRuleType(ctx context.Context, in *pb.DeleteRuleTypeRequest) (*pb.DeleteRuleTypeResponse, error) {
+	parsedRuleTypeID, err := uuid.Parse(in.GetId())
+	if err != nil {
+		return nil, util.UserVisibleError(codes.InvalidArgument, "invalid rule type ID")
+	}
+
 	// first read rule type by id, so we can get provider
-	ruletype, err := s.store.GetRuleTypeByID(ctx, in.GetId())
+	ruletype, err := s.store.GetRuleTypeByID(ctx, parsedRuleTypeID)
 	if err != nil {
 		if errors.Is(err, sql.ErrNoRows) {
-			return nil, status.Errorf(codes.NotFound, "rule type %d not found", in.GetId())
+			return nil, status.Errorf(codes.NotFound, "rule type %s not found", in.GetId())
 		}
 		return nil, status.Errorf(codes.Unknown, "failed to get rule type: %s", err)
 	}
@@ -711,10 +731,10 @@ func (s *Server) DeleteRuleType(ctx context.Context, in *pb.DeleteRuleTypeReques
 		return nil, status.Errorf(codes.InvalidArgument, "error ensuring default group: %v", err)
 	}
 
-	err = s.store.DeleteRuleType(ctx, in.GetId())
+	err = s.store.DeleteRuleType(ctx, parsedRuleTypeID)
 	if err != nil {
 		if errors.Is(err, sql.ErrNoRows) {
-			return nil, status.Errorf(codes.NotFound, "rule type %d not found", in.GetId())
+			return nil, status.Errorf(codes.NotFound, "rule type %s not found", in.GetId())
 		}
 		return nil, status.Errorf(codes.Unknown, "failed to delete rule type: %s", err)
 	}

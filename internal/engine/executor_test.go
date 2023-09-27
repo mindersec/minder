@@ -15,7 +15,6 @@
 package engine_test
 
 import (
-	"database/sql"
 	"encoding/base64"
 	"encoding/json"
 	"os"
@@ -76,6 +75,9 @@ func TestExecutor_handleEntityEvent(t *testing.T) {
 	providerName := "github"
 	providerID := uuid.New()
 	passthroughRuleType := "passthrough"
+	policyID := uuid.New()
+	ruleTypeID := uuid.New()
+	repositoryID := uuid.New()
 
 	authtoken := generateFakeAccessToken(t)
 
@@ -126,7 +128,7 @@ func TestExecutor_handleEntityEvent(t *testing.T) {
 		ListPoliciesByGroupID(gomock.Any(), groupID).
 		Return([]db.ListPoliciesByGroupIDRow{
 			{
-				ID:              1,
+				ID:              policyID,
 				Name:            "test-policy",
 				Entity:          db.EntitiesRepository,
 				Provider:        providerName,
@@ -166,7 +168,7 @@ default allow = true`,
 			GroupID:  groupID,
 			Name:     passthroughRuleType,
 		}).Return(db.RuleType{
-		ID:         1,
+		ID:         ruleTypeID,
 		Name:       passthroughRuleType,
 		Provider:   providerName,
 		GroupID:    groupID,
@@ -176,13 +178,13 @@ default allow = true`,
 	// Upload passing status
 	mockStore.EXPECT().
 		UpsertRuleEvaluationStatus(gomock.Any(), db.UpsertRuleEvaluationStatusParams{
-			PolicyID: 1,
-			RepositoryID: sql.NullInt32{
-				Int32: 123,
+			PolicyID: policyID,
+			RepositoryID: uuid.NullUUID{
+				UUID:  repositoryID,
 				Valid: true,
 			},
-			ArtifactID: sql.NullInt32{},
-			RuleTypeID: 1,
+			ArtifactID: uuid.NullUUID{},
+			RuleTypeID: ruleTypeID,
 			Entity:     db.EntitiesRepository,
 			EvalStatus: db.EvalStatusTypesSuccess,
 		}).Return(nil)
@@ -209,7 +211,7 @@ default allow = true`,
 			Repository: "test",
 			RepoId:     123,
 			CloneUrl:   "github.com/foo/bar.git",
-		}).WithRepositoryID(123)
+		}).WithRepositoryID(repositoryID)
 
 	msg, err := eiw.BuildMessage()
 	require.NoError(t, err, "expected no error")

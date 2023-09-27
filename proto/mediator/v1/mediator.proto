@@ -93,7 +93,7 @@ message ListArtifactsResponse {
 }
 
 message Artifact {
-    int64 artifact_pk = 1;
+    string artifact_pk = 1;
     string owner = 2;
     string name = 3;
     string type = 4;
@@ -135,7 +135,7 @@ message VersionedArtifact {
 }
 
 message GetArtifactByIdRequest {
-    int32 id = 1;
+    string id = 1;
     int32 latest_versions = 5;
     string tag = 6;
 }
@@ -1050,7 +1050,7 @@ message RegisterRepositoryResponse {
 
 // RepositoryRecord is used for registering repositories.
 message RepositoryRecord {
-    int32 id = 1;
+    string id = 1;
     string provider = 2;
     int32 group_id = 3;
     string owner = 4;
@@ -1066,7 +1066,7 @@ message RepositoryRecord {
 }
 
 message GetRepositoryByIdRequest {
-    int32 repository_id = 1;
+    string repository_id = 1;
 }
 
 message GetRepositoryByIdResponse {
@@ -1129,7 +1129,7 @@ message GetVulnerabilityByIdRequest {
 
 message GetVulnerabilityByIdResponse {
   // May require adjustment, currently set up for GitHub Security Advisories only
-  uint64 id = 1;
+  string id = 1;
   int64 github_id = 2;
   int64 repo_id = 3;
   string repo_name = 4;
@@ -1577,7 +1577,7 @@ message DeletePolicyRequest {
     // context is the context in which the rule type is evaluated.
     Context context = 1;
     // id is the id of the policy to delete
-    int32 id = 2;
+    string id = 2;
 }
 
 message DeletePolicyResponse {
@@ -1598,7 +1598,7 @@ message GetPolicyByIdRequest {
     // context is the context which contains the policies
     Context context = 1;
     // id is the id of the policy to get
-    int32 id = 2;
+    string id = 2;
 }
 
 message GetPolicyByIdResponse {
@@ -1608,7 +1608,7 @@ message GetPolicyByIdResponse {
 // get the overall policy status
 message PolicyStatus {
     // policy_id is the id of the policy
-    int32 policy_id = 1;
+    string policy_id = 1;
     // policy_name is the name of the policy
     string policy_name = 2;
     // policy_status is the status of the policy
@@ -1620,9 +1620,9 @@ message PolicyStatus {
 // get the status of the rules for a given policy
 message RuleEvaluationStatus {
     // policy_id is the id of the policy
-    int32 policy_id = 1;
+    string policy_id = 1;
     // rule_id is the id of the rule
-    int32 rule_id = 2;
+    string rule_id = 2;
     // rule_name is the name of the rule
     string rule_name = 3;
     // entity is the entity that was evaluated
@@ -1643,7 +1643,7 @@ message GetPolicyStatusByIdRequest {
     // context is the context in which the rule type is evaluated.
     Context context = 1;
     // policy_id is the id of the policy to get
-    int32 policy_id = 2;
+    string policy_id = 2;
 
     // EntiryTypeId is a message that carries an ID together with a type to uniquely identify an entity
     // such as (repo, 1), (artifact, 2), ...
@@ -1651,8 +1651,8 @@ message GetPolicyStatusByIdRequest {
     message EntityTypedId {
         // entity is the entity to get status for. Incompatible with `all`
         Entity type = 1;
-        // repo_id is the id of the repo to get status for. Incompatible with `all`
-        int32 id = 2;
+        // id is the ID of the entity to get status for. Incompatible with `all`
+        string id = 2;
     }
 
     oneof entity_selector {
@@ -1807,7 +1807,7 @@ message GetRuleTypeByIdRequest {
     // context is the context in which the rule type is evaluated.
     Context context = 1;
     // id is the id of the rule type.
-    int32 id = 2;
+    string id = 2;
 }
 
 // GetRuleTypeByIdResponse is the response to get a rule type by id.
@@ -1845,7 +1845,7 @@ message DeleteRuleTypeRequest {
     // context is the context in which the rule type is evaluated.
     Context context = 1;
     // id is the id of the rule type to be deleted.
-    int32 id = 2;
+    string id = 2;
 }
 
 // DeleteRuleTypeResponse is the response to delete a rule type.
@@ -1911,7 +1911,7 @@ message DiffType {
 message RuleType {
     // id is the id of the rule type.
     // This is mostly optional and is set by the server.
-    optional int32 id = 1;
+    optional string id = 1;
 
     // name is the name of the rule type.
     string name = 2;
@@ -2030,7 +2030,7 @@ message RuleType {
 
     // id is the id of the policy.
     // This is optional and is set by the system.
-    optional int32 id = 2;
+    optional string id = 2;
 
     // name is the name of the policy instance.
     string name = 3;

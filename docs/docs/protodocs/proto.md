@@ -226,7 +226,7 @@
 
 | Field | Type | Label | Description |
 | ----- | ---- | ----- | ----------- |
-| artifact_pk | [int64](#int64) |  |  |
+| artifact_pk | [string](#string) |  |  |
 | owner | [string](#string) |  |  |
 | name | [string](#string) |  |  |
 | type | [string](#string) |  |  |
@@ -703,7 +703,7 @@ DeleteOrganizationResponse represents a response to a delete organization reques
 | Field | Type | Label | Description |
 | ----- | ---- | ----- | ----------- |
 | context | [Context](#mediator-v1-Context) |  | context is the context in which the rule type is evaluated. |
-| id | [int32](#int32) |  | id is the id of the policy to delete |
+| id | [string](#string) |  | id is the id of the policy to delete |
 
 
 
@@ -755,7 +755,7 @@ DeleteRuleTypeRequest is the request to delete a rule type.
 | Field | Type | Label | Description |
 | ----- | ---- | ----- | ----------- |
 | context | [Context](#mediator-v1-Context) |  | context is the context in which the rule type is evaluated. |
-| id | [int32](#int32) |  | id is the id of the rule type to be deleted. |
+| id | [string](#string) |  | id is the id of the rule type to be deleted. |
 
 
 
@@ -909,7 +909,7 @@ DiffType defines the diff data ingester.
 
 | Field | Type | Label | Description |
 | ----- | ---- | ----- | ----------- |
-| id | [int32](#int32) |  |  |
+| id | [string](#string) |  |  |
 | latest_versions | [int32](#int32) |  |  |
 | tag | [string](#string) |  |  |
 
@@ -1195,7 +1195,7 @@ get policy by id
 | Field | Type | Label | Description |
 | ----- | ---- | ----- | ----------- |
 | context | [Context](#mediator-v1-Context) |  | context is the context which contains the policies |
-| id | [int32](#int32) |  | id is the id of the policy to get |
+| id | [string](#string) |  | id is the id of the policy to get |
 
 
 
@@ -1256,7 +1256,7 @@ get policy by id
 | Field | Type | Label | Description |
 | ----- | ---- | ----- | ----------- |
 | context | [Context](#mediator-v1-Context) |  | context is the context in which the rule type is evaluated. |
-| policy_id | [int32](#int32) |  | policy_id is the id of the policy to get |
+| policy_id | [string](#string) |  | policy_id is the id of the policy to get |
 | entity | [GetPolicyStatusByIdRequest.EntityTypedId](#mediator-v1-GetPolicyStatusByIdRequest-EntityTypedId) |  |  |
 | all | [bool](#bool) |  |  |
 
@@ -1276,7 +1276,7 @@ if the struct is reused in other messages, it should be moved to a top-level def
 | Field | Type | Label | Description |
 | ----- | ---- | ----- | ----------- |
 | type | [Entity](#mediator-v1-Entity) |  | entity is the entity to get status for. Incompatible with `all` |
-| id | [int32](#int32) |  | repo_id is the id of the repo to get status for. Incompatible with `all` |
+| id | [string](#string) |  | id is the ID of the entity to get status for. Incompatible with `all` |
 
 
 
@@ -1337,7 +1337,7 @@ if the struct is reused in other messages, it should be moved to a top-level def
 
 | Field | Type | Label | Description |
 | ----- | ---- | ----- | ----------- |
-| repository_id | [int32](#int32) |  |  |
+| repository_id | [string](#string) |  |  |
 
 
 
@@ -1525,7 +1525,7 @@ GetRuleTypeByIdRequest is the request to get a rule type by id.
 | Field | Type | Label | Description |
 | ----- | ---- | ----- | ----------- |
 | context | [Context](#mediator-v1-Context) |  | context is the context in which the rule type is evaluated. |
-| id | [int32](#int32) |  | id is the id of the rule type. |
+| id | [string](#string) |  | id is the id of the rule type. |
 
 
 
@@ -1901,7 +1901,7 @@ list users
 
 | Field | Type | Label | Description |
 | ----- | ---- | ----- | ----------- |
-| id | [uint64](#uint64) |  | May require adjustment, currently set up for GitHub Security Advisories only |
+| id | [string](#string) |  | May require adjustment, currently set up for GitHub Security Advisories only |
 | github_id | [int64](#int64) |  |  |
 | repo_id | [int64](#int64) |  |  |
 | repo_name | [string](#string) |  |  |
@@ -2202,7 +2202,7 @@ Policy defines a policy that is user defined.
 | Field | Type | Label | Description |
 | ----- | ---- | ----- | ----------- |
 | context | [Context](#mediator-v1-Context) |  | context is the context in which the policy is evaluated. |
-| id | [int32](#int32) | optional | id is the id of the policy. This is optional and is set by the system. |
+| id | [string](#string) | optional | id is the id of the policy. This is optional and is set by the system. |
 | name | [string](#string) |  | name is the name of the policy instance. |
 | repository | [Policy.Rule](#mediator-v1-Policy-Rule) | repeated | These are the entities that one could set in the policy. |
 | build_environment | [Policy.Rule](#mediator-v1-Policy-Rule) | repeated |  |
@@ -2239,7 +2239,7 @@ get the overall policy status
 
 | Field | Type | Label | Description |
 | ----- | ---- | ----- | ----------- |
-| policy_id | [int32](#int32) |  | policy_id is the id of the policy |
+| policy_id | [string](#string) |  | policy_id is the id of the policy |
 | policy_name | [string](#string) |  | policy_name is the name of the policy |
 | policy_status | [string](#string) |  | policy_status is the status of the policy |
 | last_updated | [google.protobuf.Timestamp](#google-protobuf-Timestamp) |  | last_updated is the last time the policy was updated |
@@ -2473,7 +2473,7 @@ RepositoryRecord is used for registering repositories.
 
 | Field | Type | Label | Description |
 | ----- | ---- | ----- | ----------- |
-| id | [int32](#int32) |  |  |
+| id | [string](#string) |  |  |
 | provider | [string](#string) |  |  |
 | group_id | [int32](#int32) |  |  |
 | owner | [string](#string) |  |  |
@@ -2686,8 +2686,8 @@ get the status of the rules for a given policy
 
 | Field | Type | Label | Description |
 | ----- | ---- | ----- | ----------- |
-| policy_id | [int32](#int32) |  | policy_id is the id of the policy |
-| rule_id | [int32](#int32) |  | rule_id is the id of the rule |
+| policy_id | [string](#string) |  | policy_id is the id of the policy |
+| rule_id | [string](#string) |  | rule_id is the id of the rule |
 | rule_name | [string](#string) |  | rule_name is the name of the rule |
 | entity | [string](#string) |  | entity is the entity that was evaluated |
 | status | [string](#string) |  | status is the status of the evaluation |
@@ -2726,7 +2726,7 @@ The version is assumed from the folder&#39;s version.
 
 | Field | Type | Label | Description |
 | ----- | ---- | ----- | ----------- |
-| id | [int32](#int32) | optional | id is the id of the rule type. This is mostly optional and is set by the server. |
+| id | [string](#string) | optional | id is the id of the rule type. This is mostly optional and is set by the server. |
 | name | [string](#string) |  | name is the name of the rule type. |
 | context | [Context](#mediator-v1-Context) |  | context is the context in which the rule is evaluated. |
 | def | [RuleType.Definition](#mediator-v1-RuleType-Definition) |  | def is the definition of the rule type. |

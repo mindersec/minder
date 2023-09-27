@@ -53,7 +53,7 @@ type EntityInfoWrapper struct {
 	GroupID       int32
 	Entity        protoreflect.ProtoMessage
 	Type          pb.Entity
-	OwnershipData map[string]int32
+	OwnershipData map[string]string
 }
 
 const (
@@ -83,7 +83,7 @@ const (
 // NewEntityInfoWrapper creates a new EntityInfoWrapper
 func NewEntityInfoWrapper() *EntityInfoWrapper {
 	return &EntityInfoWrapper{
-		OwnershipData: make(map[string]int32),
+		OwnershipData: make(map[string]string),
 	}
 }
 
@@ -126,22 +126,23 @@ func (eiw *EntityInfoWrapper) WithGroupID(id int32) *EntityInfoWrapper {
 }
 
 // WithRepositoryID sets the repository ID
-func (eiw *EntityInfoWrapper) WithRepositoryID(id int32) *EntityInfoWrapper {
-	eiw.withID(RepositoryIDEventKey, id)
+func (eiw *EntityInfoWrapper) WithRepositoryID(id uuid.UUID) *EntityInfoWrapper {
+	eiw.withID(RepositoryIDEventKey, id.String())
 
 	return eiw
 }
 
 // WithArtifactID sets the artifact ID
-func (eiw *EntityInfoWrapper) WithArtifactID(id int32) *EntityInfoWrapper {
-	eiw.withID(ArtifactIDEventKey, id)
+func (eiw *EntityInfoWrapper) WithArtifactID(id uuid.UUID) *EntityInfoWrapper {
+	eiw.withID(ArtifactIDEventKey, id.String())
 
 	return eiw
 }
 
-// WithPullRequestID sets the pull request ID
-func (eiw *EntityInfoWrapper) WithPullRequestID(id int32) *EntityInfoWrapper {
-	eiw.withID(PullRequestIDEventKey, id)
+// WithPullRequestNumber sets the pull request ID
+func (eiw *EntityInfoWrapper) WithPullRequestNumber(id int32) *EntityInfoWrapper {
+	strid := fmt.Sprintf("%d", id)
+	eiw.withID(PullRequestIDEventKey, strid)
 
 	return eiw
 }
@@ -216,10 +217,7 @@ func (eiw *EntityInfoWrapper) ToMessage(msg *message.Message) error {
 	msg.Metadata.Set(EntityTypeEventKey, typ)
 	msg.Metadata.Set(GroupIDEventKey, fmt.Sprintf("%d", eiw.GroupID))
 	for k, v := range eiw.OwnershipData {
-		if v == 0 {
-			return fmt.Errorf("%s is required", k)
-		}
-		msg.Metadata.Set(k, fmt.Sprintf("%d", v))
+		msg.Metadata.Set(k, v)
 	}
 	msg.Payload, err = protojson.Marshal(eiw.Entity)
 	if err != nil {
@@ -230,7 +228,12 @@ func (eiw *EntityInfoWrapper) ToMessage(msg *message.Message) error {
 }
 
 func (eiw *EntityInfoWrapper) withGroupIDFromMessage(msg *message.Message) error {
-	id, err := getIDFromMessage(msg, GroupIDEventKey)
+	rawID := msg.Metadata.Get(GroupIDEventKey)
+	if rawID == "" {
+		return fmt.Errorf("%s not found in metadata", GroupIDEventKey)
+	}
+
+	id, err := util.Int32FromString(rawID)
 	if err != nil {
 		return fmt.Errorf("error parsing %s: %w", GroupIDEventKey, err)
 	}
@@ -271,7 +274,7 @@ func (eiw *EntityInfoWrapper) withIDFromMessage(msg *message.Message, key string
 	return nil
 }
 
-func (eiw *EntityInfoWrapper) withID(key string, id int32) {
+func (eiw *EntityInfoWrapper) withID(key string, id string) {
 	eiw.OwnershipData[key] = id
 }
 
@@ -280,13 +283,14 @@ func (eiw *EntityInfoWrapper) unmarshalEntity(msg *message.Message) error {
 }
 
 func (eiw *EntityInfoWrapper) evalStatusParams(
-	policyID int32,
-	ruleTypeID int32,
+	policyID uuid.UUID,
+	ruleTypeID uuid.UUID,
 	evalErr error,
 ) *createOrUpdateEvalStatusParams {
+	repoID := uuid.MustParse(eiw.OwnershipData[RepositoryIDEventKey])
 	params := &createOrUpdateEvalStatusParams{
 		policyID:       policyID,
-		repoID:         eiw.OwnershipData[RepositoryIDEventKey],
+		repoID:         repoID,
 		ruleTypeEntity: entities.EntityTypeToDB(eiw.Type),
 		ruleTypeID:     ruleTypeID,
 		evalErr:        evalErr,
@@ -294,7 +298,8 @@ func (eiw *EntityInfoWrapper) evalStatusParams(
 
 	artifactID, ok := eiw.OwnershipData[ArtifactIDEventKey]
 	if ok {
-		params.artifactID = artifactID
+		aID := uuid.MustParse(artifactID)
+		params.artifactID = &aID
 	}
 
 	pullRequestNumber, ok := eiw.OwnershipData[PullRequestIDEventKey]
@@ -323,18 +328,18 @@ func pbEntityTypeToString(t pb.Entity) (string, error) {
 	}
 }
 
-func getIDFromMessage(msg *message.Message, key string) (int32, error) {
+func getIDFromMessage(msg *message.Message, key string) (string, error) {
 	rawID := msg.Metadata.Get(key)
 	if rawID == "" {
-		return 0, fmt.Errorf("%s not found in metadata", key)
+		return "", fmt.Errorf("%s not found in metadata", key)
 	}
 
-	return util.Int32FromString(rawID)
+	return rawID, nil
 }
 
 func parseEntityEvent(msg *message.Message) (*EntityInfoWrapper, error) {
 	out := &EntityInfoWrapper{
-		OwnershipData: make(map[string]int32),
+		OwnershipData: make(map[string]string),
 	}
 
 	if err := out.withGroupIDFromMessage(msg); err != nil {

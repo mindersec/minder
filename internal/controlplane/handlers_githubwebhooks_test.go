@@ -33,6 +33,7 @@ import (
 	"github.com/ThreeDotsLabs/watermill/message"
 	"github.com/golang/mock/gomock"
 	"github.com/google/go-github/v53/github"
+	"github.com/google/uuid"
 	"github.com/stretchr/testify/assert"
 	"github.com/stretchr/testify/mock"
 	"github.com/stretchr/testify/require"
@@ -270,11 +271,12 @@ func (s *UnitTestSuite) TestHandleWebHookRepository() {
 	srv.evt.Register(engine.InternalEntityEventTopic, pq.pass)
 
 	providerName := "github"
+	repositoryID := uuid.New()
 
 	mockStore.EXPECT().
 		GetRepositoryByRepoID(gomock.Any(), gomock.Any()).
 		Return(db.Repository{
-			ID:       1,
+			ID:       repositoryID,
 			GroupID:  1,
 			RepoID:   12345,
 			Provider: providerName,
@@ -334,7 +336,7 @@ func (s *UnitTestSuite) TestHandleWebHookRepository() {
 	assert.Equal(t, "https://api.github.com/", received.Metadata["source"])
 	assert.Equal(t, "github", received.Metadata["provider"])
 	assert.Equal(t, "1", received.Metadata["group_id"])
-	assert.Equal(t, "1", received.Metadata["repository_id"])
+	assert.Equal(t, repositoryID.String(), received.Metadata["repository_id"])
 
 	// TODO: assert payload is RepositoryRecord protobuf
 }

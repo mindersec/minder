@@ -49,17 +49,17 @@ var repo_getCmd = &cobra.Command{
 	RunE: func(cmd *cobra.Command, args []string) error {
 
 		provider := util.GetConfigValue("provider", "provider", cmd, "").(string)
-		repoid := viper.GetInt32("repo-id")
+		repoid := viper.GetString("repo-id")
 		format := viper.GetString("output")
 		name := util.GetConfigValue("name", "name", cmd, "").(string)
 
 		// if name is set, repo-id cannot be set
-		if name != "" && repoid != 0 {
+		if name != "" && repoid != "" {
 			return fmt.Errorf("cannot set both name and repo-id")
 		}
 
 		// either name or repoid needs to be set
-		if name == "" && repoid == 0 {
+		if name == "" && repoid == "" {
 			return fmt.Errorf("either name or repo-id needs to be set")
 		}
 
@@ -86,7 +86,7 @@ var repo_getCmd = &cobra.Command{
 
 		// check repo by id
 		var repository *pb.RepositoryRecord
-		if repoid != 0 {
+		if repoid != "" {
 			resp, err := client.GetRepositoryById(ctx, &pb.GetRepositoryByIdRequest{
 				RepositoryId: repoid,
 			})
@@ -127,6 +127,6 @@ func init() {
 	repo_getCmd.Flags().StringP("output", "f", "", "Output format (json or yaml)")
 	repo_getCmd.Flags().StringP("provider", "p", "", "Name for the provider to enroll")
 	repo_getCmd.Flags().StringP("name", "n", "", "Name of the repository (owner/name format)")
-	repo_getCmd.Flags().Int32P("repo-id", "r", 0, "ID of the repo to query")
+	repo_getCmd.Flags().StringP("repo-id", "r", "", "ID of the repo to query")
 	repo_getCmd.Flags().BoolP("status", "s", false, "Only return the status of the policies associated to this repo")
 }

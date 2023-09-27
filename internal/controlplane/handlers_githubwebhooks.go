@@ -462,7 +462,7 @@ func (s *Server) parsePullRequestModEvent(
 
 	eiw := engine.NewEntityInfoWrapper().
 		WithPullRequest(prEvalInfo).
-		WithPullRequestID(prEvalInfo.Number).
+		WithPullRequestNumber(prEvalInfo.Number).
 		WithProvider(prov.Name).
 		WithGroupID(dbrepo.GroupID).
 		WithRepositoryID(dbrepo.ID)
@@ -716,7 +716,7 @@ func updateArtifactVersionFromRegistry(
 
 func upsertVersionedArtifact(
 	ctx context.Context,
-	repoID int32,
+	repoID uuid.UUID,
 	versionedArtifact *pb.VersionedArtifact,
 	store db.Store,
 ) (*db.Artifact, *db.ArtifactVersion, error) {
@@ -792,7 +792,7 @@ func upsertVersionedArtifact(
 				GithubWorkflow:        existing.GithubWorkflow.RawMessage,
 			})
 			if err != nil {
-				return nil, nil, fmt.Errorf("error upserting artifact %d with version %d: %w", existing.ArtifactID, existing.Version, err)
+				return nil, nil, fmt.Errorf("error upserting artifact %s with version %d: %w", existing.ArtifactID, existing.Version, err)
 			}
 		}
 	}

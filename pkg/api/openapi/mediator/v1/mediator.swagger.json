@@ -77,8 +77,7 @@
             "name": "id",
             "in": "path",
             "required": true,
-            "type": "integer",
-            "format": "int32"
+            "type": "string"
           },
           {
             "name": "latestVersions",
@@ -1211,8 +1210,7 @@
             "description": "id is the id of the policy to get",
             "in": "path",
             "required": true,
-            "type": "integer",
-            "format": "int32"
+            "type": "string"
           },
           {
             "name": "context.provider",
@@ -1259,8 +1257,7 @@
             "description": "id is the id of the policy to delete",
             "in": "path",
             "required": true,
-            "type": "integer",
-            "format": "int32"
+            "type": "string"
           },
           {
             "name": "context.provider",
@@ -1309,8 +1306,7 @@
             "description": "policy_id is the id of the policy to get",
             "in": "path",
             "required": true,
-            "type": "integer",
-            "format": "int32"
+            "type": "string"
           },
           {
             "name": "context.provider",
@@ -1347,11 +1343,10 @@
           },
           {
             "name": "entity.id",
-            "description": "repo_id is the id of the repo to get status for. Incompatible with `all`",
+            "description": "id is the ID of the entity to get status for. Incompatible with `all`",
             "in": "query",
             "required": false,
-            "type": "integer",
-            "format": "int32"
+            "type": "string"
           },
           {
             "name": "all",
@@ -1537,8 +1532,7 @@
             "name": "repositoryId",
             "in": "path",
             "required": true,
-            "type": "integer",
-            "format": "int32"
+            "type": "string"
           }
         ],
         "tags": [
@@ -2039,8 +2033,7 @@
             "description": "id is the id of the rule type.",
             "in": "path",
             "required": true,
-            "type": "integer",
-            "format": "int32"
+            "type": "string"
           },
           {
             "name": "context.provider",
@@ -2087,8 +2080,7 @@
             "description": "id is the id of the rule type to be deleted.",
             "in": "path",
             "required": true,
-            "type": "integer",
-            "format": "int32"
+            "type": "string"
           },
           {
             "name": "context.provider",
@@ -2750,9 +2742,8 @@
           "title": "entity is the entity to get status for. Incompatible with `all`"
         },
         "id": {
-          "type": "integer",
-          "format": "int32",
-          "title": "repo_id is the id of the repo to get status for. Incompatible with `all`"
+          "type": "string",
+          "title": "id is the ID of the entity to get status for. Incompatible with `all`"
         }
       },
       "title": "EntiryTypeId is a message that carries an ID together with a type to uniquely identify an entity\nsuch as (repo, 1), (artifact, 2), ...\nif the struct is reused in other messages, it should be moved to a top-level definition"
@@ -2863,8 +2854,7 @@
       "type": "object",
       "properties": {
         "artifactPk": {
-          "type": "string",
-          "format": "int64"
+          "type": "string"
         },
         "owner": {
           "type": "string"
@@ -3816,7 +3806,6 @@
       "properties": {
         "id": {
           "type": "string",
-          "format": "uint64",
           "title": "May require adjustment, currently set up for GitHub Security Advisories only"
         },
         "githubId": {
@@ -4037,8 +4026,7 @@
           "description": "context is the context in which the policy is evaluated."
         },
         "id": {
-          "type": "integer",
-          "format": "int32",
+          "type": "string",
           "description": "id is the id of the policy.\nThis is optional and is set by the system."
         },
         "name": {
@@ -4081,8 +4069,7 @@
       "type": "object",
       "properties": {
         "policyId": {
-          "type": "integer",
-          "format": "int32",
+          "type": "string",
           "title": "policy_id is the id of the policy"
         },
         "policyName": {
@@ -4158,8 +4145,7 @@
       "type": "object",
       "properties": {
         "id": {
-          "type": "integer",
-          "format": "int32"
+          "type": "string"
         },
         "provider": {
           "type": "string"
@@ -4349,13 +4335,11 @@
       "type": "object",
       "properties": {
         "policyId": {
-          "type": "integer",
-          "format": "int32",
+          "type": "string",
           "title": "policy_id is the id of the policy"
         },
         "ruleId": {
-          "type": "integer",
-          "format": "int32",
+          "type": "string",
           "title": "rule_id is the id of the rule"
         },
         "ruleName": {
@@ -4397,8 +4381,7 @@
       "type": "object",
       "properties": {
         "id": {
-          "type": "integer",
-          "format": "int32",
+          "type": "string",
           "description": "id is the id of the rule type.\nThis is mostly optional and is set by the server."
         },
         "name": {

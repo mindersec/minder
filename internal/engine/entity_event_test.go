@@ -19,6 +19,7 @@ import (
 	"testing"
 
 	"github.com/ThreeDotsLabs/watermill/message"
+	"github.com/google/uuid"
 	"github.com/stretchr/testify/assert"
 	"github.com/stretchr/testify/require"
 	"google.golang.org/protobuf/encoding/protojson"
@@ -30,12 +31,15 @@ import (
 func Test_parseEntityEvent(t *testing.T) {
 	t.Parallel()
 
+	repoID := uuid.NewString()
+	artifactID := uuid.NewString()
+
 	type args struct {
 		ent       protoreflect.ProtoMessage
 		entType   string
 		groupID   int32
 		provider  string
-		ownership map[string]int32
+		ownership map[string]string
 	}
 	tests := []struct {
 		name    string
@@ -53,7 +57,7 @@ func Test_parseEntityEvent(t *testing.T) {
 				entType:   RepositoryEventEntityType,
 				groupID:   1,
 				provider:  "github",
-				ownership: map[string]int32{RepositoryIDEventKey: 123},
+				ownership: map[string]string{RepositoryIDEventKey: repoID},
 			},
 			want: &EntityInfoWrapper{
 				GroupID: 1,
@@ -63,7 +67,7 @@ func Test_parseEntityEvent(t *testing.T) {
 				},
 				Provider:      "github",
 				Type:          pb.Entity_ENTITY_REPOSITORIES,
-				OwnershipData: map[string]int32{RepositoryIDEventKey: 123},
+				OwnershipData: map[string]string{RepositoryIDEventKey: repoID},
 			},
 		},
 		{
@@ -71,30 +75,36 @@ func Test_parseEntityEvent(t *testing.T) {
 			args: args{
 				ent: &pb.VersionedArtifact{
 					Artifact: &pb.Artifact{
-						ArtifactPk: 123,
+						ArtifactPk: artifactID,
 					},
 					Version: &pb.ArtifactVersion{
 						VersionId: 789,
 					},
 				},
-				entType:   VersionedArtifactEventEntityType,
-				groupID:   1,
-				provider:  "github",
-				ownership: map[string]int32{RepositoryIDEventKey: 456, ArtifactIDEventKey: 123},
+				entType:  VersionedArtifactEventEntityType,
+				groupID:  1,
+				provider: "github",
+				ownership: map[string]string{
+					RepositoryIDEventKey: repoID,
+					ArtifactIDEventKey:   artifactID,
+				},
 			},
 			want: &EntityInfoWrapper{
 				GroupID: 1,
 				Entity: &pb.VersionedArtifact{
 					Artifact: &pb.Artifact{
-						ArtifactPk: 123,
+						ArtifactPk: artifactID,
 					},
 					Version: &pb.ArtifactVersion{
 						VersionId: 789,
 					},
 				},
-				Provider:      "github",
-				Type:          pb.Entity_ENTITY_ARTIFACTS,
-				OwnershipData: map[string]int32{RepositoryIDEventKey: 456, ArtifactIDEventKey: 123},
+				Provider: "github",
+				Type:     pb.Entity_ENTITY_ARTIFACTS,
+				OwnershipData: map[string]string{
+					RepositoryIDEventKey: repoID,
+					ArtifactIDEventKey:   artifactID,
+				},
 			},
 		},
 		{
@@ -107,10 +117,13 @@ func Test_parseEntityEvent(t *testing.T) {
 					RepoOwner: "jakubtestorg",
 					RepoName:  "bad-npm",
 				},
-				entType:   PullRequestEventEntityType,
-				groupID:   1,
-				provider:  "github",
-				ownership: map[string]int32{PullRequestIDEventKey: 3, RepositoryIDEventKey: 1},
+				entType:  PullRequestEventEntityType,
+				groupID:  1,
+				provider: "github",
+				ownership: map[string]string{
+					PullRequestIDEventKey: "3",
+					RepositoryIDEventKey:  repoID,
+				},
 			},
 			want: &EntityInfoWrapper{
 				GroupID: 1,
@@ -121,9 +134,12 @@ func Test_parseEntityEvent(t *testing.T) {
 					RepoOwner: "jakubtestorg",
 					RepoName:  "bad-npm",
 				},
-				Provider:      "github",
-				Type:          pb.Entity_ENTITY_PULL_REQUESTS,
-				OwnershipData: map[string]int32{PullRequestIDEventKey: 3, RepositoryIDEventKey: 1},
+				Provider: "github",
+				Type:     pb.Entity_ENTITY_PULL_REQUESTS,
+				OwnershipData: map[string]string{
+					PullRequestIDEventKey: "3",
+					RepositoryIDEventKey:  repoID,
+				},
 			},
 		},
 	}
@@ -139,12 +155,12 @@ func Test_parseEntityEvent(t *testing.T) {
 			msg := message.NewMessage("", marshalledEntity)
 			msg.Metadata.Set(GroupIDEventKey, fmt.Sprintf("%d", tt.args.groupID))
 			msg.Metadata.Set(EntityTypeEventKey, tt.args.entType)
-			msg.Metadata.Set(RepositoryIDEventKey, fmt.Sprintf("%d", tt.args.ownership["repository_id"]))
+			msg.Metadata.Set(RepositoryIDEventKey, tt.args.ownership["repository_id"])
 			msg.Metadata.Set(ProviderEventKey, tt.args.provider)
 			if tt.args.entType == VersionedArtifactEventEntityType {
-				msg.Metadata.Set(ArtifactIDEventKey, fmt.Sprintf("%d", tt.args.ownership["artifact_id"]))
+				msg.Metadata.Set(ArtifactIDEventKey, tt.args.ownership["artifact_id"])
 			} else if tt.args.entType == PullRequestEventEntityType {
-				msg.Metadata.Set(PullRequestIDEventKey, fmt.Sprintf("%d", tt.args.ownership["pull_request_id"]))
+				msg.Metadata.Set(PullRequestIDEventKey, tt.args.ownership["pull_request_id"])
 			}
 
 			got, err := parseEntityEvent(msg)
@@ -169,13 +185,14 @@ func Test_parseEntityEvent(t *testing.T) {
 func TestEntityInfoWrapper_RepositoryToMessage(t *testing.T) {
 	t.Parallel()
 
+	repoID := uuid.New()
 	eiw := NewEntityInfoWrapper().
 		WithProvider("github").
 		WithGroupID(123).
 		WithRepository(&pb.RepositoryResult{
 			Owner:  "test",
 			RepoId: 123,
-		}).WithRepositoryID(456)
+		}).WithRepositoryID(repoID)
 
 	msg, err := eiw.BuildMessage()
 	require.NoError(t, err, "unexpected error")
@@ -183,24 +200,27 @@ func TestEntityInfoWrapper_RepositoryToMessage(t *testing.T) {
 	assert.Equal(t, "github", msg.Metadata.Get(ProviderEventKey), "provider mismatch")
 	assert.Equal(t, RepositoryEventEntityType, msg.Metadata.Get(EntityTypeEventKey), "entity type mismatch")
 	assert.Equal(t, "123", msg.Metadata.Get(GroupIDEventKey), "group id mismatch")
-	assert.Equal(t, "456", msg.Metadata.Get(RepositoryIDEventKey), "repository id mismatch")
+	assert.Equal(t, repoID.String(), msg.Metadata.Get(RepositoryIDEventKey), "repository id mismatch")
 }
 
 func TestEntityInfoWrapper_VersionedArtifact(t *testing.T) {
 	t.Parallel()
+
+	artifactID := uuid.New()
+	repoID := uuid.New()
 
 	eiw := NewEntityInfoWrapper().
 		WithProvider("github").
 		WithGroupID(123).
 		WithVersionedArtifact(&pb.VersionedArtifact{
 			Artifact: &pb.Artifact{
-				ArtifactPk: 789,
+				ArtifactPk: artifactID.String(),
 			},
 			Version: &pb.ArtifactVersion{
 				VersionId: 101112,
 			},
-		}).WithRepositoryID(456).
-		WithArtifactID(789)
+		}).WithRepositoryID(repoID).
+		WithArtifactID(artifactID)
 
 	msg, err := eiw.BuildMessage()
 	require.NoError(t, err, "unexpected error")
@@ -208,8 +228,8 @@ func TestEntityInfoWrapper_VersionedArtifact(t *testing.T) {
 	assert.Equal(t, "github", msg.Metadata.Get(ProviderEventKey), "provider mismatch")
 	assert.Equal(t, VersionedArtifactEventEntityType, msg.Metadata.Get(EntityTypeEventKey), "entity type mismatch")
 	assert.Equal(t, "123", msg.Metadata.Get(GroupIDEventKey), "group id mismatch")
-	assert.Equal(t, "456", msg.Metadata.Get(RepositoryIDEventKey), "repository id mismatch")
-	assert.Equal(t, "789", msg.Metadata.Get(ArtifactIDEventKey), "artifact id mismatch")
+	assert.Equal(t, repoID.String(), msg.Metadata.Get(RepositoryIDEventKey), "repository id mismatch")
+	assert.Equal(t, artifactID.String(), msg.Metadata.Get(ArtifactIDEventKey), "artifact id mismatch")
 }
 
 func TestEntityInfoWrapper_FailsWithoutGroupID(t *testing.T) {
@@ -220,7 +240,7 @@ func TestEntityInfoWrapper_FailsWithoutGroupID(t *testing.T) {
 		WithRepository(&pb.RepositoryResult{
 			Owner:  "test",
 			RepoId: 123,
-		}).WithRepositoryID(456)
+		}).WithRepositoryID(uuid.New())
 
 	_, err := eiw.BuildMessage()
 	require.Error(t, err, "expected error")
@@ -234,7 +254,7 @@ func TestEntityInfoWrapper_FailsWithoutProvider(t *testing.T) {
 		WithRepository(&pb.RepositoryResult{
 			Owner:  "test",
 			RepoId: 123,
-		}).WithRepositoryID(456)
+		}).WithRepositoryID(uuid.New())
 
 	_, err := eiw.BuildMessage()
 	require.Error(t, err, "expected error")
@@ -246,7 +266,7 @@ func TestEntityInfoWrapper_FailsWithoutRepository(t *testing.T) {
 	eiw := NewEntityInfoWrapper().
 		WithProvider("github").
 		WithGroupID(123).
-		WithRepositoryID(456)
+		WithRepositoryID(uuid.New())
 
 	_, err := eiw.BuildMessage()
 	require.Error(t, err, "expected error")

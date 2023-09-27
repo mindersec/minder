@@ -22,6 +22,7 @@ import (
 	"log"
 	"strings"
 
+	"github.com/google/uuid"
 	"google.golang.org/grpc/codes"
 	"google.golang.org/grpc/status"
 	"google.golang.org/protobuf/types/known/timestamppb"
@@ -31,6 +32,7 @@ import (
 	"github.com/stacklok/mediator/internal/gh/queries"
 	github "github.com/stacklok/mediator/internal/providers/github"
 	"github.com/stacklok/mediator/internal/reconcilers"
+	"github.com/stacklok/mediator/internal/util"
 	pb "github.com/stacklok/mediator/pkg/api/protobuf/go/mediator/v1"
 )
 
@@ -228,7 +230,7 @@ func (s *Server) ListRepositories(ctx context.Context,
 
 		if filterCondition(&repo) {
 			results = append(results, &pb.RepositoryRecord{
-				Id:        repo.ID,
+				Id:        repo.ID.String(),
 				Provider:  provider.Name,
 				GroupId:   repo.GroupID,
 				Owner:     repo.RepoOwner,
@@ -253,13 +255,13 @@ func (s *Server) ListRepositories(ctx context.Context,
 // GetRepositoryById returns a repository for a given repository id
 func (s *Server) GetRepositoryById(ctx context.Context,
 	in *pb.GetRepositoryByIdRequest) (*pb.GetRepositoryByIdResponse, error) {
-	// check if we get an id
-	if in.RepositoryId == 0 {
-		return nil, status.Errorf(codes.InvalidArgument, "repository id not specified")
+	parsedRepositoryID, err := uuid.Parse(in.RepositoryId)
+	if err != nil {
+		return nil, util.UserVisibleError(codes.InvalidArgument, "invalid repository ID")
 	}
 
 	// read the repository
-	repo, err := s.store.GetRepositoryByID(ctx, in.RepositoryId)
+	repo, err := s.store.GetRepositoryByID(ctx, parsedRepositoryID)
 	if errors.Is(err, sql.ErrNoRows) {
 		return nil, status.Errorf(codes.NotFound, "repository not found")
 	} else if err != nil {
@@ -283,7 +285,7 @@ func (s *Server) GetRepositoryById(ctx context.Context,
 	updatedat := timestamppb.New(repo.UpdatedAt)
 
 	return &pb.GetRepositoryByIdResponse{Repository: &pb.RepositoryRecord{
-		Id:        repo.ID,
+		Id:        repo.ID.String(),
 		Provider:  provider.Name,
 		GroupId:   repo.GroupID,
 		Owner:     repo.RepoOwner,
@@ -350,7 +352,7 @@ func (s *Server) GetRepositoryByName(ctx context.Context,
 	updatedat := timestamppb.New(repo.UpdatedAt)
 
 	return &pb.GetRepositoryByNameResponse{Repository: &pb.RepositoryRecord{
-		Id:        repo.ID,
+		Id:        repo.ID.String(),
 		Provider:  provider.Name,
 		GroupId:   repo.GroupID,
 		Owner:     repo.RepoOwner,

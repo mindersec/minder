@@ -16,7 +16,6 @@
 package policy_status
 
 import (
-	"fmt"
 	"strings"
 	"time"
 
@@ -52,7 +51,7 @@ func renderPolicyStatusTable(
 	table *tablewriter.Table,
 ) {
 	row := []string{
-		fmt.Sprintf("%d", ps.PolicyId),
+		ps.PolicyId,
 		ps.PolicyName,
 		getStatusText(ps.PolicyStatus),
 		ps.LastUpdated.AsTime().Format(time.RFC3339),
@@ -84,8 +83,8 @@ func renderRuleEvaluationStatusTable(
 	table *tablewriter.Table,
 ) {
 	row := []string{
-		fmt.Sprintf("%d", reval.PolicyId),
-		fmt.Sprintf("%d", reval.RuleId),
+		reval.PolicyId,
+		reval.RuleId,
 		reval.RuleName,
 		reval.Entity,
 		getStatusText(reval.Status),

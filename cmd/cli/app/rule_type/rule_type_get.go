@@ -57,7 +57,7 @@ mediator control plane.`,
 		ctx, cancel := util.GetAppContext()
 		defer cancel()
 
-		id := viper.GetInt32("id")
+		id := viper.GetString("id")
 
 		rtype, err := client.GetRuleTypeById(ctx, &pb.GetRuleTypeByIdRequest{
 			Context: &pb.Context{
@@ -89,7 +89,7 @@ mediator control plane.`,
 
 func init() {
 	ruleTypeCmd.AddCommand(ruleType_getCmd)
-	ruleType_getCmd.Flags().Int32P("id", "i", 0, "ID for the policy to query")
+	ruleType_getCmd.Flags().StringP("id", "i", "", "ID for the policy to query")
 	ruleType_getCmd.Flags().StringP("output", "o", app.Table, "Output format (json, yaml or table)")
 	ruleType_getCmd.Flags().StringP("provider", "p", "github", "Provider for the policy")
 	// TODO set up group if specified

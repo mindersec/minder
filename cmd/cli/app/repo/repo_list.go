@@ -86,7 +86,7 @@ var repo_listCmd = &cobra.Command{
 
 			for _, v := range resp.Results {
 				row := []string{
-					fmt.Sprintf("%d", v.Id),
+					v.Id,
 					fmt.Sprintf("%d", v.GroupId),
 					fmt.Sprintf("%d", v.GetRepoId()),
 					fmt.Sprintf("%s/%s", v.GetOwner(), v.GetName()),

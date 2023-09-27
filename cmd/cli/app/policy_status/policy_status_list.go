@@ -50,7 +50,7 @@ mediator control plane for an specific provider/group or policy id.`,
 
 		provider := viper.GetString("provider")
 		group := viper.GetString("group")
-		policyId := viper.GetInt32("policy")
+		policyId := viper.GetString("policy")
 		format := viper.GetString("output")
 		all := viper.GetBool("detailed")
 
@@ -62,10 +62,6 @@ mediator control plane for an specific provider/group or policy id.`,
 
 		if provider == "" {
 			return fmt.Errorf("provider must be set")
-		}
-
-		if policyId == 0 {
-			return fmt.Errorf("policy-id must be set")
 		}
 
 		req := &pb.GetPolicyStatusByIdRequest{
@@ -112,9 +108,14 @@ func init() {
 	PolicyStatusCmd.AddCommand(policystatus_listCmd)
 	policystatus_listCmd.Flags().StringP("provider", "p", "github", "Provider to list policy status for")
 	policystatus_listCmd.Flags().StringP("group", "g", "", "group id to list policy status for")
-	policystatus_listCmd.Flags().Int32P("policy", "i", 0, "policy id to list policy status for")
+	policystatus_listCmd.Flags().StringP("policy", "i", "", "policy id to list policy status for")
 	policystatus_listCmd.Flags().StringP("output", "o", app.Table, "Output format (json, yaml or table)")
 	policystatus_listCmd.Flags().BoolP("detailed", "d", false, "List all policy violations")
+
+	if err := policystatus_listCmd.MarkFlagRequired("policy"); err != nil {
+		fmt.Fprintf(os.Stderr, "Error marking flag as required: %s\n", err)
+		os.Exit(1)
+	}
 }
 
 func handlePolicyStatusListTable(cmd *cobra.Command, resp *pb.GetPolicyStatusByIdResponse) {

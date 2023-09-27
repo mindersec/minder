@@ -8,6 +8,8 @@ package db
 import (
 	"context"
 	"database/sql"
+
+	"github.com/google/uuid"
 )
 
 const createRepository = `-- name: CreateRepository :one
@@ -78,7 +80,7 @@ DELETE FROM repositories
 WHERE id = $1
 `
 
-func (q *Queries) DeleteRepository(ctx context.Context, id int32) error {
+func (q *Queries) DeleteRepository(ctx context.Context, id uuid.UUID) error {
 	_, err := q.db.ExecContext(ctx, deleteRepository, id)
 	return err
 }
@@ -87,7 +89,7 @@ const getRepositoryByID = `-- name: GetRepositoryByID :one
 SELECT id, provider, group_id, repo_owner, repo_name, repo_id, is_private, is_fork, webhook_id, webhook_url, deploy_url, clone_url, created_at, updated_at FROM repositories WHERE id = $1
 `
 
-func (q *Queries) GetRepositoryByID(ctx context.Context, id int32) (Repository, error) {
+func (q *Queries) GetRepositoryByID(ctx context.Context, id uuid.UUID) (Repository, error) {
 	row := q.db.QueryRowContext(ctx, getRepositoryByID, id)
 	var i Repository
 	err := row.Scan(
@@ -425,7 +427,7 @@ WHERE id = $1 RETURNING id, provider, group_id, repo_owner, repo_name, repo_id, 
 `
 
 type UpdateRepositoryParams struct {
-	ID         int32         `json:"id"`
+	ID         uuid.UUID     `json:"id"`
 	GroupID    int32         `json:"group_id"`
 	RepoOwner  string        `json:"repo_owner"`
 	RepoName   string        `json:"repo_name"`

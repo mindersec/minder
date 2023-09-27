@@ -149,8 +149,8 @@ func (ns NullProviderType) Value() (driver.Value, error) {
 }
 
 type Artifact struct {
-	ID                 int32     `json:"id"`
-	RepositoryID       int32     `json:"repository_id"`
+	ID                 uuid.UUID `json:"id"`
+	RepositoryID       uuid.UUID `json:"repository_id"`
 	ArtifactName       string    `json:"artifact_name"`
 	ArtifactType       string    `json:"artifact_type"`
 	ArtifactVisibility string    `json:"artifact_visibility"`
@@ -159,8 +159,8 @@ type Artifact struct {
 }
 
 type ArtifactVersion struct {
-	ID                    int32                 `json:"id"`
-	ArtifactID            int32                 `json:"artifact_id"`
+	ID                    uuid.UUID             `json:"id"`
+	ArtifactID            uuid.UUID             `json:"artifact_id"`
 	Version               int64                 `json:"version"`
 	Tags                  sql.NullString        `json:"tags"`
 	Sha                   string                `json:"sha"`
@@ -170,9 +170,9 @@ type ArtifactVersion struct {
 }
 
 type EntityPolicy struct {
-	ID              int32           `json:"id"`
+	ID              uuid.UUID       `json:"id"`
 	Entity          Entities        `json:"entity"`
-	PolicyID        int32           `json:"policy_id"`
+	PolicyID        uuid.UUID       `json:"policy_id"`
 	ContextualRules json.RawMessage `json:"contextual_rules"`
 	CreatedAt       time.Time       `json:"created_at"`
 	UpdatedAt       time.Time       `json:"updated_at"`
@@ -197,7 +197,7 @@ type Organization struct {
 }
 
 type Policy struct {
-	ID        int32     `json:"id"`
+	ID        uuid.UUID `json:"id"`
 	Name      string    `json:"name"`
 	Provider  string    `json:"provider"`
 	GroupID   int32     `json:"group_id"`
@@ -206,8 +206,8 @@ type Policy struct {
 }
 
 type PolicyStatus struct {
-	ID           int32           `json:"id"`
-	PolicyID     int32           `json:"policy_id"`
+	ID           uuid.UUID       `json:"id"`
+	PolicyID     uuid.UUID       `json:"policy_id"`
 	PolicyStatus EvalStatusTypes `json:"policy_status"`
 	LastUpdated  time.Time       `json:"last_updated"`
 }
@@ -244,7 +244,7 @@ type ProviderAccessToken struct {
 }
 
 type Repository struct {
-	ID         int32         `json:"id"`
+	ID         uuid.UUID     `json:"id"`
 	Provider   string        `json:"provider"`
 	GroupID    int32         `json:"group_id"`
 	RepoOwner  string        `json:"repo_owner"`
@@ -272,19 +272,19 @@ type Role struct {
 }
 
 type RuleEvaluationStatus struct {
-	ID           int32           `json:"id"`
+	ID           uuid.UUID       `json:"id"`
 	Entity       Entities        `json:"entity"`
-	PolicyID     int32           `json:"policy_id"`
-	RuleTypeID   int32           `json:"rule_type_id"`
+	PolicyID     uuid.UUID       `json:"policy_id"`
+	RuleTypeID   uuid.UUID       `json:"rule_type_id"`
 	EvalStatus   EvalStatusTypes `json:"eval_status"`
-	RepositoryID sql.NullInt32   `json:"repository_id"`
-	ArtifactID   sql.NullInt32   `json:"artifact_id"`
+	RepositoryID uuid.NullUUID   `json:"repository_id"`
+	ArtifactID   uuid.NullUUID   `json:"artifact_id"`
 	Details      string          `json:"details"`
 	LastUpdated  time.Time       `json:"last_updated"`
 }
 
 type RuleType struct {
-	ID          int32           `json:"id"`
+	ID          uuid.UUID       `json:"id"`
 	Name        string          `json:"name"`
 	Provider    string          `json:"provider"`
 	GroupID     int32           `json:"group_id"`

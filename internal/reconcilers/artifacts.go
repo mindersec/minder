@@ -211,7 +211,7 @@ func (e *Reconciler) handleArtifactsReconcilerEvent(ctx context.Context, evt *Re
 
 			versionedArtifact := &pb.VersionedArtifact{
 				Artifact: &pb.Artifact{
-					ArtifactPk: int64(newArtifact.ID),
+					ArtifactPk: newArtifact.ID.String(),
 					Owner:      *artifact.GetOwner().Login,
 					Name:       artifact.GetName(),
 					Type:       artifact.GetPackageType(),
@@ -220,7 +220,7 @@ func (e *Reconciler) handleArtifactsReconcilerEvent(ctx context.Context, evt *Re
 					CreatedAt:  timestamppb.New(artifact.GetCreatedAt().Time),
 				},
 				Version: &pb.ArtifactVersion{
-					VersionId:             int64(newVersion.ID),
+					VersionId:             newVersion.Version,
 					Tags:                  tags,
 					Sha:                   *version.Name,
 					SignatureVerification: sigVerification,
