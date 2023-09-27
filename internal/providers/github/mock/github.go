@@ -104,31 +104,31 @@ func (mr *MockGitMockRecorder) GetToken() *gomock.Call {
 	return mr.mock.ctrl.RecordCallWithMethodType(mr.mock, "GetToken", reflect.TypeOf((*MockGit)(nil).GetToken))
 }
 
-// MockHTTP is a mock of HTTP interface.
-type MockHTTP struct {
+// MockREST is a mock of REST interface.
+type MockREST struct {
 	ctrl     *gomock.Controller
-	recorder *MockHTTPMockRecorder
+	recorder *MockRESTMockRecorder
 }
 
-// MockHTTPMockRecorder is the mock recorder for MockHTTP.
-type MockHTTPMockRecorder struct {
-	mock *MockHTTP
+// MockRESTMockRecorder is the mock recorder for MockREST.
+type MockRESTMockRecorder struct {
+	mock *MockREST
 }
 
-// NewMockHTTP creates a new mock instance.
-func NewMockHTTP(ctrl *gomock.Controller) *MockHTTP {
-	mock := &MockHTTP{ctrl: ctrl}
-	mock.recorder = &MockHTTPMockRecorder{mock}
+// NewMockREST creates a new mock instance.
+func NewMockREST(ctrl *gomock.Controller) *MockREST {
+	mock := &MockREST{ctrl: ctrl}
+	mock.recorder = &MockRESTMockRecorder{mock}
 	return mock
 }
 
 // EXPECT returns an object that allows the caller to indicate expected use.
-func (m *MockHTTP) EXPECT() *MockHTTPMockRecorder {
+func (m *MockREST) EXPECT() *MockRESTMockRecorder {
 	return m.recorder
 }
 
 // Do mocks base method.
-func (m *MockHTTP) Do(ctx context.Context, req *http.Request) (*http.Response, error) {
+func (m *MockREST) Do(ctx context.Context, req *http.Request) (*http.Response, error) {
 	m.ctrl.T.Helper()
 	ret := m.ctrl.Call(m, "Do", ctx, req)
 	ret0, _ := ret[0].(*http.Response)
@@ -137,13 +137,13 @@ func (m *MockHTTP) Do(ctx context.Context, req *http.Request) (*http.Response, e
 }
 
 // Do indicates an expected call of Do.
-func (mr *MockHTTPMockRecorder) Do(ctx, req interface{}) *gomock.Call {
+func (mr *MockRESTMockRecorder) Do(ctx, req interface{}) *gomock.Call {
 	mr.mock.ctrl.T.Helper()
-	return mr.mock.ctrl.RecordCallWithMethodType(mr.mock, "Do", reflect.TypeOf((*MockHTTP)(nil).Do), ctx, req)
+	return mr.mock.ctrl.RecordCallWithMethodType(mr.mock, "Do", reflect.TypeOf((*MockREST)(nil).Do), ctx, req)
 }
 
 // GetToken mocks base method.
-func (m *MockHTTP) GetToken() string {
+func (m *MockREST) GetToken() string {
 	m.ctrl.T.Helper()
 	ret := m.ctrl.Call(m, "GetToken")
 	ret0, _ := ret[0].(string)
@@ -151,13 +151,13 @@ func (m *MockHTTP) GetToken() string {
 }
 
 // GetToken indicates an expected call of GetToken.
-func (mr *MockHTTPMockRecorder) GetToken() *gomock.Call {
+func (mr *MockRESTMockRecorder) GetToken() *gomock.Call {
 	mr.mock.ctrl.T.Helper()
-	return mr.mock.ctrl.RecordCallWithMethodType(mr.mock, "GetToken", reflect.TypeOf((*MockHTTP)(nil).GetToken))
+	return mr.mock.ctrl.RecordCallWithMethodType(mr.mock, "GetToken", reflect.TypeOf((*MockREST)(nil).GetToken))
 }
 
 // NewRequest mocks base method.
-func (m *MockHTTP) NewRequest(method, url string, body io.Reader) (*http.Request, error) {
+func (m *MockREST) NewRequest(method, url string, body io.Reader) (*http.Request, error) {
 	m.ctrl.T.Helper()
 	ret := m.ctrl.Call(m, "NewRequest", method, url, body)
 	ret0, _ := ret[0].(*http.Request)
@@ -166,9 +166,9 @@ func (m *MockHTTP) NewRequest(method, url string, body io.Reader) (*http.Request
 }
 
 // NewRequest indicates an expected call of NewRequest.
-func (mr *MockHTTPMockRecorder) NewRequest(method, url, body interface{}) *gomock.Call {
+func (mr *MockRESTMockRecorder) NewRequest(method, url, body interface{}) *gomock.Call {
 	mr.mock.ctrl.T.Helper()
-	return mr.mock.ctrl.RecordCallWithMethodType(mr.mock, "NewRequest", reflect.TypeOf((*MockHTTP)(nil).NewRequest), method, url, body)
+	return mr.mock.ctrl.RecordCallWithMethodType(mr.mock, "NewRequest", reflect.TypeOf((*MockREST)(nil).NewRequest), method, url, body)
 }
 
 // MockGitHub is a mock of GitHub interface.
