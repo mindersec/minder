@@ -147,7 +147,9 @@ func (e *Reconciler) handleArtifactsReconcilerEvent(ctx context.Context, evt *Re
 	artifacts, err := cli.ListPackagesByRepository(ctx, isOrg, repository.RepoOwner,
 		CONTAINER_TYPE, int64(repository.RepoID), 1, 100)
 	if err != nil {
-		return fmt.Errorf("error retrieving artifacts: %w", err)
+		// we do not return error since it's a valid use case for a repository to not have artifacts
+		log.Printf("error retrieving artifacts for RepoID %d: %w", repository.RepoID, err)
+		return nil
 	}
 	for _, artifact := range artifacts {
 		// store information if we do not have it
