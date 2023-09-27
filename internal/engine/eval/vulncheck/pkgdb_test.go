@@ -28,7 +28,7 @@ import (
 	pb "github.com/stacklok/mediator/pkg/api/protobuf/go/mediator/v1"
 )
 
-func TestSendRecvRequest(t *testing.T) {
+func TestNpmPkgDb(t *testing.T) {
 	t.Parallel()
 
 	tests := []struct {
@@ -110,10 +110,163 @@ func TestSendRecvRequest(t *testing.T) {
 			dep := &pb.Dependency{
 				Name: tt.depName,
 			}
-			req, err := repo.NewRequest(context.Background(), dep)
-			require.NoError(t, err, "Failed to create request")
 
-			reply, err := repo.SendRecvRequest(req)
+			reply, err := repo.SendRecvRequest(context.Background(), dep)
+			if tt.expectError {
+				assert.Error(t, err, "Expected error")
+			} else {
+				assert.NoError(t, err, "Expected no error")
+				require.Equal(t, tt.expectReply.IndentedString(0), reply.IndentedString(0), "expected reply to match mock data")
+			}
+		})
+	}
+}
+
+func TestGoPkgDb(t *testing.T) {
+	t.Parallel()
+
+	tests := []struct {
+		name             string
+		mockProxyHandler http.HandlerFunc
+		mockSumHandler   http.HandlerFunc
+		depName          string
+		expectError      bool
+		expectReply      *goModPackage
+	}{
+		{
+			name: "ValidResponse",
+			mockProxyHandler: func(w http.ResponseWriter, r *http.Request) {
+				data := goModPackage{
+					Name:    "golang.org/x/text",
+					Version: "v0.13.0",
+				}
+				w.WriteHeader(http.StatusOK)
+				err := json.NewEncoder(w).Encode(data)
+				if err != nil {
+					t.Fatal(err)
+				}
+			},
+			mockSumHandler: func(w http.ResponseWriter, r *http.Request) {
+				w.WriteHeader(http.StatusOK)
+				_, err := w.Write([]byte(`19383665
+golang.org/x/text v0.13.0 h1:ablQoSUd0tRdKxZewP80B+BaqeKJuVhuRxj/dkrun3k=
+golang.org/x/text v0.13.0/go.mod h1:TvPlkZtksWOMsz7fbANvkp4WM8x/WCo/om8BMLbz+aE=
+
+go.sum database tree
+19777102
++g50vJoV4VVGa6aiQF3LYGUZHEP4pvGkW38vlR7WKtU=
+
+— sum.golang.org Az3griMTLHyRzj7jMuyEt85a2JnegVME6Lx3xLEBdzTd3FMDiD5y3bHV24rcl0yijOtWxV0zyygwTdo/rnaennuoqgU=`))
+				assert.NoError(t, err, "Failed to write mock response")
+			},
+			depName: "golang.org/x/text",
+			expectReply: &goModPackage{
+				Name:           "golang.org/x/text",
+				Version:        "v0.13.0",
+				ModuleHash:     "h1:ablQoSUd0tRdKxZewP80B+BaqeKJuVhuRxj/dkrun3k=",
+				DependencyHash: "h1:TvPlkZtksWOMsz7fbANvkp4WM8x/WCo/om8BMLbz+aE=",
+			},
+		},
+		{
+			name: "Non200ResponseProxy",
+			mockProxyHandler: func(w http.ResponseWriter, r *http.Request) {
+				w.WriteHeader(http.StatusNotFound)
+				_, err := w.Write([]byte("Not Found"))
+				if err != nil {
+					t.Fatal(err)
+				}
+			},
+			depName:     "non-existing-package",
+			expectError: true,
+		},
+		{
+			name: "InvalidJSONProxy",
+			mockProxyHandler: func(w http.ResponseWriter, r *http.Request) {
+				w.WriteHeader(http.StatusOK)
+				_, err := w.Write([]byte("{ invalid json }"))
+				if err != nil {
+					t.Fatal(err)
+				}
+			},
+			depName:     "package-with-invalid-json",
+			expectError: true,
+		},
+		{
+			name: "MissingVersionProxy",
+			mockProxyHandler: func(w http.ResponseWriter, r *http.Request) {
+				data := goModPackage{
+					Name: "golang.org/x/text",
+				}
+				w.WriteHeader(http.StatusOK)
+				err := json.NewEncoder(w).Encode(data)
+				if err != nil {
+					t.Fatal(err)
+				}
+				w.WriteHeader(http.StatusOK)
+			},
+			depName:     "package-with-invalid-json",
+			expectError: true,
+		},
+		{
+			name: "Non200ResponseSum",
+			mockProxyHandler: func(w http.ResponseWriter, r *http.Request) {
+				data := goModPackage{
+					Version: "v0.13.0",
+				}
+				w.WriteHeader(http.StatusOK)
+				err := json.NewEncoder(w).Encode(data)
+				if err != nil {
+					t.Fatal(err)
+				}
+			},
+			mockSumHandler: func(w http.ResponseWriter, r *http.Request) {
+				w.WriteHeader(http.StatusNotFound)
+			},
+			depName:     "golang.org/x/text",
+			expectError: true,
+		},
+		{
+			name: "TooFewLinesSum",
+			mockProxyHandler: func(w http.ResponseWriter, r *http.Request) {
+				data := goModPackage{
+					Version: "v0.13.0",
+				}
+				w.WriteHeader(http.StatusOK)
+				err := json.NewEncoder(w).Encode(data)
+				if err != nil {
+					t.Fatal(err)
+				}
+			},
+			mockSumHandler: func(w http.ResponseWriter, r *http.Request) {
+				w.WriteHeader(http.StatusOK)
+				_, err := w.Write([]byte(`19383665
+golang.org/x/text v0.13.0 h1:ablQoSUd0tRdKxZewP80B+BaqeKJuVhuRxj/dkrun3k=`))
+				assert.NoError(t, err, "Failed to write mock response")
+			},
+			depName:     "golang.org/x/text",
+			expectError: true,
+		},
+	}
+
+	for _, tt := range tests {
+		tt := tt
+		t.Run(tt.name, func(t *testing.T) {
+			t.Parallel()
+
+			proxyServer := httptest.NewServer(tt.mockProxyHandler)
+			defer proxyServer.Close()
+
+			sumServer := httptest.NewServer(tt.mockSumHandler)
+			defer proxyServer.Close()
+
+			repo := newGoProxySumRepository(proxyServer.URL, sumServer.URL)
+			assert.NotNil(t, repo, "Failed to create repository")
+
+			dep := &pb.Dependency{
+				Name: tt.depName,
+			}
+
+			reply, err := repo.SendRecvRequest(context.Background(), dep)
 			if tt.expectError {
 				assert.Error(t, err, "Expected error")
 			} else {

@@ -76,6 +76,11 @@ func (e *Evaluator) Eval(ctx context.Context, pol map[string]any, res *engif.Res
 
 	for _, dep := range prdeps.Deps {
 		ecoConfig := ruleConfig.getEcosystemConfig(dep.Dep.Ecosystem)
+		if ecoConfig == nil {
+			fmt.Printf("Skipping dependency %s because ecosystem %s is not configured\n", dep.Dep.Name, dep.Dep.Ecosystem)
+			continue
+		}
+
 		vdb, err := e.getVulnDb(ecoConfig.DbType, ecoConfig.DbEndpoint)
 		if err != nil {
 			return fmt.Errorf("failed to get vulncheck db: %w", err)
@@ -98,12 +103,7 @@ func (e *Evaluator) Eval(ctx context.Context, pol map[string]any, res *engif.Res
 			return fmt.Errorf("failed to create package repository: %w", err)
 		}
 
-		pkgReq, err := pkgRepo.NewRequest(ctx, dep.Dep)
-		if err != nil {
-			return fmt.Errorf("failed to create package request: %w", err)
-		}
-
-		patch, err := pkgRepo.SendRecvRequest(pkgReq)
+		patch, err := pkgRepo.SendRecvRequest(ctx, dep.Dep)
 		if err != nil {
 			return fmt.Errorf("failed to send package request: %w", err)
 		}

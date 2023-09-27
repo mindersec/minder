@@ -18,6 +18,7 @@ package vulncheck
 import (
 	"errors"
 	"fmt"
+	"strings"
 
 	"github.com/go-playground/validator/v10"
 	"github.com/mitchellh/mapstructure"
@@ -34,7 +35,7 @@ const (
 type action string
 
 const (
-	actionReviewPr     action = "reject_pr"
+	actionReviewPr     action = "review"
 	actionComment      action = "comment"
 	actionCommitStatus action = "commit_status"
 	actionPolicyOnly   action = "policy_only"
@@ -51,6 +52,7 @@ type ecosystemConfig struct {
 	//nolint:lll
 	DbEndpoint        string            `json:"vulnerability_database_endpoint" mapstructure:"vulnerability_database_endpoint" validate:"required"`
 	PackageRepository packageRepository `json:"package_repository" mapstructure:"package_repository" validate:"required"`
+	SumRepository     packageRepository `json:"sum_repository" mapstructure:"sum_repository" validate:"required"`
 }
 
 // config is the configuration for the vulncheck evaluator
@@ -93,13 +95,14 @@ func pbEcosystemAsString(ecosystem pb.DepEcosystem) string {
 }
 
 func (c *config) getEcosystemConfig(ecosystem pb.DepEcosystem) *ecosystemConfig {
-	for _, eco := range c.EcosystemConfig {
-		sEco := pbEcosystemAsString(ecosystem)
-		if sEco == "" {
-			continue
-		}
+	sEco := pbEcosystemAsString(ecosystem)
+	if sEco == "" {
+		return nil
+	}
+	sEco = strings.ToLower(sEco)
 
-		if eco.Name == sEco {
+	for _, eco := range c.EcosystemConfig {
+		if strings.ToLower(eco.Name) == sEco {
 			return &eco
 		}
 	}

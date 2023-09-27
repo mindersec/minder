@@ -102,12 +102,13 @@ func locateDepInPr(
 	_ context.Context,
 	client provifv1.GitHub,
 	dep *pb.PrDependencies_ContextualDependency,
+	patch patchLocatorFormatter,
 ) (*reviewLocation, error) {
 	req, err := client.NewRequest("GET", dep.File.PatchUrl, nil)
 	if err != nil {
 		return nil, fmt.Errorf("could not create request: %w", err)
 	}
-	// TODO:(jakub) I couldn't make this work with the GH client
+	// TODO:(jakub) I couldn't make this work with the GH proxyClient
 	netClient := &http.Client{}
 	resp, err := netClient.Do(req)
 	if err != nil {
@@ -123,11 +124,15 @@ func locateDepInPr(
 	loc := reviewLocation{}
 	lines := strings.Split(string(content), "\n")
 	for i, line := range lines {
-		pkgName := fmt.Sprintf(`"%s": {`, dep.Dep.Name)
-		if strings.Contains(line, pkgName) {
+		if patch.LineHasDependency(line) {
 			loc.leadingWhitespace = countLeadingWhitespace(line)
 			loc.lineToChange = i + 1
+			break
 		}
+	}
+
+	if loc.lineToChange == 0 {
+		return nil, fmt.Errorf("could not locate dependency in PR")
 	}
 
 	return &loc, nil
@@ -210,21 +215,22 @@ func newReviewPrHandler(
 func (ra *reviewPrHandler) trackVulnerableDep(
 	ctx context.Context,
 	dep *pb.PrDependencies_ContextualDependency,
-	patch patchFormatter,
+	patch patchLocatorFormatter,
 ) error {
-	location, err := locateDepInPr(ctx, ra.cli, dep)
+	location, err := locateDepInPr(ctx, ra.cli, dep, patch)
 	if err != nil {
 		return fmt.Errorf("could not locate dependency in PR: %w", err)
 	}
 
 	comment := patch.IndentedString(location.leadingWhitespace)
 	body := reviewBodyWithSuggestion(comment)
+	lineTo := len(strings.Split(comment, "\n")) - 1
 
 	reviewComment := &github.DraftReviewComment{
 		Path:      github.String(dep.File.Name),
 		Position:  nil,
 		StartLine: github.Int(location.lineToChange),
-		Line:      github.Int(location.lineToChange + 3), // TODO(jakub): Need to count the lines from the patch
+		Line:      github.Int(location.lineToChange + lineTo),
 		Body:      github.String(body),
 	}
 	ra.comments = append(ra.comments, reviewComment)
@@ -414,7 +420,7 @@ type policyOnlyPrHandler struct{}
 func (policyOnlyPrHandler) trackVulnerableDep(
 	_ context.Context,
 	_ *pb.PrDependencies_ContextualDependency,
-	_ patchFormatter) error {
+	_ patchLocatorFormatter) error {
 	return nil
 }
 
