@@ -12,6 +12,19 @@ repository:
   - type: secret_push_protection
     def:
       enabled: true
+  - type: branch_has_protection_enabled
+    params:
+      branch: main
+    def: {}
+  - type: branch_protection_require_pull_request
+    params:
+      branch: main
+    def: {}
+  - type: branch_protection_pull_request_dismiss_stale_reviews
+    params:
+      branch: main
+    def:
+      enabled: true
   - type: branch_protection
     params:
       branch: main

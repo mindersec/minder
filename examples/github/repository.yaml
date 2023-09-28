@@ -1,9 +1,9 @@
 ---
-owner: stacklok
-repository: Demo-Repo-Go
-repoId: 605597568
+owner: JAORMX
+repository: audito-maldito
+repoId: 610712657
 HookUrl:
-clone_url: "https://github.com/stacklok/Demo-Repo-Go.git"
+clone_url: "https://github.com/JAORMX/audito-maldito.git"
 CreatedAt: 2021-03-19T16:00:00Z
 UpdatedAt: 2021-03-19T16:00:00Z
 Registered: true
