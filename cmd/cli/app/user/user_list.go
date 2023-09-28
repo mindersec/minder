@@ -99,7 +99,7 @@ mediator control plane for an specific role.`,
 		// print output in a table
 		if format == "" {
 			table := tablewriter.NewWriter(os.Stdout)
-			table.SetHeader([]string{"Id", "Role", "Username", "Email", "First name",
+			table.SetHeader([]string{"Id", "Organization", "Username", "Email", "First name",
 				"Last name", "Is protected", "Created date", "Updated date"})
 
 			for _, v := range users {
