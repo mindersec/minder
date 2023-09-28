@@ -44,7 +44,9 @@ default: help
 help: ## list makefile targets
 	@grep -E '^[a-zA-Z_-]+:.*?## .*$$' $(MAKEFILE_LIST) | sort | awk 'BEGIN {FS = ":.*?## "}; {printf "\033[36m%-30s\033[0m %s\n", $$1, $$2}'
 
-gen: ## generate protobuf files
+gen: buf sqlc mock ## Run code generation targets (buf, sqlc, mock)
+
+buf:  ## Run protobuf code generation
 	buf generate
 
 clean-gen:
@@ -143,6 +145,6 @@ dbschema:	## generate database schema with schema spy, monitor file until doc is
 	cp database/schema/output/diagrams/summary/relationships.real.large.png docs/static/img/mediator/schema.png
 	cd database/schema && $(COMPOSE) down -v && rm -rf output
 
-mock:
+mock:  ## generate mocks
 	mockgen -package mockdb -destination database/mock/store.go github.com/stacklok/mediator/internal/db Store
 	mockgen -package mockgh -destination internal/providers/github/mock/github.go -source pkg/providers/v1/providers.go GitHub 
