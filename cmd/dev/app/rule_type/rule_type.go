@@ -109,12 +109,17 @@ func testCmdRun(cmd *cobra.Command, _ []string) error {
 	// TODO: Read this from a providers file instead so we can make it pluggable
 	eng, err := engine.NewRuleTypeEngine(rt, providers.NewProviderBuilder(
 		&db.Provider{
-			Name: "test",
+			Name:    "test",
+			Version: "v1",
 			Implements: []db.ProviderType{
 				"rest",
 				"git",
 				"github",
 			},
+			Definition: json.RawMessage(`{
+				"rest": {},
+				"github": {}
+			}`),
 		},
 		db.ProviderAccessToken{},
 		token,
