@@ -18,11 +18,17 @@ package github
 import (
 	"bytes"
 	"context"
+	"errors"
 	"fmt"
 	"io"
 	"net/http"
 
 	"github.com/google/go-github/v53/github"
+)
+
+var (
+	// ErrNotFound Denotes if the call returned a 404
+	ErrNotFound = errors.New("not found")
 )
 
 // ListAllRepositories returns a list of all repositories for the authenticated user
@@ -132,6 +138,10 @@ func (c *RestClient) ListPackagesByRepository(ctx context.Context, isOrg bool, o
 			artifacts, resp, err = c.client.Users.ListPackages(ctx, "", opt)
 		}
 		if err != nil {
+			if resp.StatusCode == http.StatusNotFound {
+				return allContainers, fmt.Errorf("packages not found for repository %d: %w", repositoryId, ErrNotFound)
+			}
+
 			return allContainers, err
 		}
 

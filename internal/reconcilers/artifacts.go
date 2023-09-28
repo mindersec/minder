@@ -35,6 +35,7 @@ import (
 	"github.com/stacklok/mediator/internal/db"
 	"github.com/stacklok/mediator/internal/engine"
 	"github.com/stacklok/mediator/internal/providers"
+	"github.com/stacklok/mediator/internal/providers/github"
 	pb "github.com/stacklok/mediator/pkg/api/protobuf/go/mediator/v1"
 )
 
@@ -110,6 +111,28 @@ func (e *Reconciler) handleArtifactsReconcilerEvent(ctx context.Context, evt *Re
 		return fmt.Errorf("error building client: %w", err)
 	}
 
+	// evaluate policy for repo
+	repo := &pb.RepositoryResult{
+		Owner:      repository.RepoOwner,
+		Repository: repository.RepoName,
+		RepoId:     repository.RepoID,
+		HookUrl:    repository.WebhookUrl,
+		DeployUrl:  repository.DeployUrl,
+		CloneUrl:   repository.CloneUrl,
+		CreatedAt:  timestamppb.New(repository.CreatedAt),
+		UpdatedAt:  timestamppb.New(repository.UpdatedAt),
+	}
+
+	err = engine.NewEntityInfoWrapper().
+		WithProvider(prov.Name).
+		WithRepository(repo).
+		WithGroupID(evt.Group).
+		WithRepositoryID(repository.ID).
+		Publish(e.evt)
+	if err != nil {
+		return fmt.Errorf("error publishing message: %w", err)
+	}
+
 	if !p.Implements(db.ProviderTypeGithub) {
 		log.Printf("provider %s is not supported for artifacts reconciler", prov.Name)
 		return nil
@@ -125,7 +148,12 @@ func (e *Reconciler) handleArtifactsReconcilerEvent(ctx context.Context, evt *Re
 	artifacts, err := cli.ListPackagesByRepository(ctx, isOrg, repository.RepoOwner,
 		CONTAINER_TYPE, int64(repository.RepoID), 1, 100)
 	if err != nil {
-		return fmt.Errorf("error retrieving artifacts: %w", err)
+		if errors.Is(err, github.ErrNotFound) {
+			// we do not return error since it's a valid use case for a repository to not have artifacts
+			log.Printf("error retrieving artifacts for RepoID %d: %v", repository.RepoID, err)
+			return nil
+		}
+		return err
 	}
 	for _, artifact := range artifacts {
 		// store information if we do not have it
