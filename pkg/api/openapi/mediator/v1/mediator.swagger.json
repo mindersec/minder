@@ -1320,6 +1320,12 @@
             "in": "query",
             "required": false,
             "type": "boolean"
+          },
+          {
+            "name": "rule",
+            "in": "query",
+            "required": false,
+            "type": "string"
           }
         ],
         "tags": [

@@ -53,6 +53,9 @@ mediator control plane for an specific provider/group or policy id.`,
 		policyId := viper.GetString("policy")
 		format := viper.GetString("output")
 		all := viper.GetBool("detailed")
+		rule := viper.GetString("rule")
+		entity := viper.GetInt32("entity")
+		entityType := pb.Entity(viper.GetInt32("entity_type"))
 
 		switch format {
 		case app.JSON, app.YAML, app.Table:
@@ -69,9 +72,12 @@ mediator control plane for an specific provider/group or policy id.`,
 				Provider: provider,
 			},
 			PolicyId: policyId,
-			EntitySelector: &pb.GetPolicyStatusByIdRequest_All{
-				All: all,
+			All:      all,
+			Entity: &pb.GetPolicyStatusByIdRequest_EntityTypedId{
+				Type: entityType,
+				Id:   entity,
 			},
+			Rule: rule,
 		}
 
 		if group != "" {
@@ -111,6 +117,9 @@ func init() {
 	policystatus_listCmd.Flags().StringP("policy", "i", "", "policy id to list policy status for")
 	policystatus_listCmd.Flags().StringP("output", "o", app.Table, "Output format (json, yaml or table)")
 	policystatus_listCmd.Flags().BoolP("detailed", "d", false, "List all policy violations")
+	policystatus_listCmd.Flags().StringP("rule", "r", "", "Filter policy status list by rule")
+	policystatus_listCmd.Flags().StringP("entity", "e", "", "Filter policy status list by entity")
+	policystatus_listCmd.Flags().StringP("entity-type", "t", "", "Filter policy status list by entity type")
 
 	if err := policystatus_listCmd.MarkFlagRequired("policy"); err != nil {
 		fmt.Fprintf(os.Stderr, "Error marking flag as required: %s\n", err)

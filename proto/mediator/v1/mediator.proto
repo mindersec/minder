@@ -1547,10 +1547,9 @@ message GetPolicyStatusByIdRequest {
         string id = 2;
     }
 
-    oneof entity_selector {
-        EntityTypedId entity = 3;
-        bool all = 4;
-    }
+    EntityTypedId entity = 3;
+    bool all = 4;
+    string rule = 5;
 }
 
 message GetPolicyStatusByIdResponse {
