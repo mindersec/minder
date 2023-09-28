@@ -55,6 +55,9 @@ repository:
     def: {}
   - type: trivy_action_enabled
     def: {}
+  - type: repo_conforms_to_pi
+    def:
+      repo_activity: 3
 artifact:
   - type: artifact_signature
     params:

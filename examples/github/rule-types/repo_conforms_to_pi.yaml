@@ -1,0 +1,67 @@
+---
+version: v1
+type: rule-type
+name: repo_conforms_to_pi
+context:
+  provider: github
+  group: Root Group
+description: Verifies that a repository conforms to Package Intelligence
+guidance: |
+  ## Verify that a repository conforms to Package Intelligence
+
+def:
+  # Defines the section of the pipeline the rule will appear in.
+  # This will affect the template that is used to render multiple parts
+  # of the rule.
+  in_entity: repository
+  # Defines the schema for writing a rule with this rule being checked
+  # In this case there is no settings that need to be configured
+  rule_schema:
+    type: object
+    properties:
+      repo_activity:
+        type: number
+        minimum: 0
+        maximum: 5
+        default: 4
+        description: |
+          The activity score of the repository. This is a number between 0 and 5.
+          The higher the number the more active the repository is.
+  # Defines the configuration for ingesting data relevant for the rule
+  ingest:
+    type: git
+    git:
+      branch: main
+  # Defines the configuration for evaluating data ingested against the given policy
+  eval:
+    type: rego
+    rego:
+      type: constraints
+      def: |
+        package mediator
+
+        result := http.send({
+          "method": "POST",
+          "url": "https://staging.stacklok.dev/pi/v1/packint",
+          "body": [
+            {
+              "package_name": "cryptography"
+            }
+          ]
+        })
+
+        # Issue violation if the response is not 200
+        violations[{"msg": msg}] {
+          result.status_code != 200
+          msg := "Unable to verify that the repository conforms to Package Intelligence"
+        }
+
+        # Issue violation if score is less than 0.5
+        violations[{"msg": msg}] {
+          pkg := result.body.packages[_]
+
+          pg_name := pkg.package_name
+          repo_activity := pkg.activity.repo
+          repo_activity < input.policy.repo_activity
+          msg := sprintf("Package %v has low activity score %v and it should be %v", [pg_name, repo_activity, input.policy.repo_activity])
+        }
