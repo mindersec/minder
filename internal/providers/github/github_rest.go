@@ -18,11 +18,17 @@ package github
 import (
 	"bytes"
 	"context"
+	"errors"
 	"fmt"
 	"io"
 	"net/http"
 
 	"github.com/google/go-github/v53/github"
+)
+
+var (
+	// ErrNotFound Denotes if the call returned a 404
+	ErrNotFound = errors.New("not found")
 )
 
 // ListAllRepositories returns a list of all repositories for the authenticated user
@@ -111,7 +117,7 @@ func (c *RestClient) ListAllPackages(ctx context.Context, isOrg bool, owner stri
 
 // ListPackagesByRepository returns a list of all packages for an specific repository
 func (c *RestClient) ListPackagesByRepository(ctx context.Context, isOrg bool, owner string, artifactType string,
-	repositoryId int64, pageNumber int, itemsPerPage int) ([]*github.Package, *github.Response, error) {
+	repositoryId int64, pageNumber int, itemsPerPage int) ([]*github.Package, error) {
 	opt := &github.PackageListOptions{
 		PackageType: &artifactType,
 		ListOptions: github.ListOptions{
@@ -132,7 +138,11 @@ func (c *RestClient) ListPackagesByRepository(ctx context.Context, isOrg bool, o
 			artifacts, resp, err = c.client.Users.ListPackages(ctx, "", opt)
 		}
 		if err != nil {
-			return allContainers, resp, err
+			if resp.StatusCode == http.StatusNotFound {
+				return allContainers, fmt.Errorf("packages not found for repository %d: %w", repositoryId, ErrNotFound)
+			}
+
+			return allContainers, err
 		}
 
 		// now just append the ones belonging to the repository
@@ -148,7 +158,7 @@ func (c *RestClient) ListPackagesByRepository(ctx context.Context, isOrg bool, o
 		opt.Page = resp.NextPage
 	}
 
-	return allContainers, nil, nil
+	return allContainers, nil
 }
 
 // GetPackageByName returns a single package for the authenticated user or for the org

@@ -35,6 +35,7 @@ import (
 	"github.com/stacklok/mediator/internal/db"
 	"github.com/stacklok/mediator/internal/engine"
 	"github.com/stacklok/mediator/internal/providers"
+	"github.com/stacklok/mediator/internal/providers/github"
 	pb "github.com/stacklok/mediator/pkg/api/protobuf/go/mediator/v1"
 )
 
@@ -144,10 +145,10 @@ func (e *Reconciler) handleArtifactsReconcilerEvent(ctx context.Context, evt *Re
 
 	isOrg := (cli.GetOwner() != "")
 	// todo: add another type of artifacts
-	artifacts, resp, err := cli.ListPackagesByRepository(ctx, isOrg, repository.RepoOwner,
+	artifacts, err := cli.ListPackagesByRepository(ctx, isOrg, repository.RepoOwner,
 		CONTAINER_TYPE, int64(repository.RepoID), 1, 100)
 	if err != nil {
-		if resp.StatusCode == 404 {
+		if errors.Is(err, github.ErrNotFound) {
 			// we do not return error since it's a valid use case for a repository to not have artifacts
 			log.Printf("error retrieving artifacts for RepoID %d: %v", repository.RepoID, err)
 			return nil

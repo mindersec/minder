@@ -70,7 +70,7 @@ type GitHub interface {
 	ListAllRepositories(context.Context, bool, string) ([]*github.Repository, error)
 	GetBranchProtection(context.Context, string, string, string) (*github.Protection, error)
 	ListAllPackages(context.Context, bool, string, string, int, int) ([]*github.Package, error)
-	ListPackagesByRepository(context.Context, bool, string, string, int64, int, int) ([]*github.Package, *github.Response, error)
+	ListPackagesByRepository(context.Context, bool, string, string, int64, int, int) ([]*github.Package, error)
 	GetPackageByName(context.Context, bool, string, string, string) (*github.Package, error)
 	GetPackageVersions(context.Context, bool, string, string, string) ([]*github.PackageVersion, error)
 	GetPackageVersionByTag(context.Context, bool, string, string, string, string) (*github.PackageVersion, error)
