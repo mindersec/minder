@@ -15,7 +15,7 @@ medic policy delete [flags]
 
 ```
   -h, --help              help for delete
-  -i, --id int32          id of policy to delete
+  -i, --id string         id of policy to delete
   -p, --provider string   Provider for the policy (default "github")
 ```
 

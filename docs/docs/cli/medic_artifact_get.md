@@ -14,7 +14,7 @@ medic artifact get [flags]
 
 ```
   -h, --help                    help for get
-  -i, --id int32                ID of the artifact to get info from
+  -i, --id string               ID of the artifact to get info from
   -v, --latest-versions int32   Latest artifact versions to retrieve (default 1)
       --tag string              Specific artifact tag to retrieve
 ```

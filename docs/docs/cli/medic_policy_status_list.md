@@ -18,7 +18,7 @@ medic policy_status list [flags]
   -g, --group string      group id to list policy status for
   -h, --help              help for list
   -o, --output string     Output format (json, yaml or table) (default "table")
-  -i, --policy int32      policy id to list policy status for
+  -i, --policy string     policy id to list policy status for
   -p, --provider string   Provider to list policy status for (default "github")
 ```
 
