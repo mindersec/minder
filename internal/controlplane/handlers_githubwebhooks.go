@@ -48,6 +48,7 @@ import (
 	"github.com/stacklok/mediator/internal/container"
 	"github.com/stacklok/mediator/internal/db"
 	"github.com/stacklok/mediator/internal/engine"
+	evnts "github.com/stacklok/mediator/internal/events"
 	"github.com/stacklok/mediator/internal/providers"
 	"github.com/stacklok/mediator/internal/util"
 	pb "github.com/stacklok/mediator/pkg/api/protobuf/go/mediator/v1"
@@ -396,7 +397,7 @@ func (s *Server) parseArtifactPublishedEvent(
 		return fmt.Errorf("error gathering versioned artifact: %w", err)
 	}
 
-	dbArtifact, _, err := upsertVersionedArtifact(ctx, dbrepo.ID, versionedArtifact, s.store)
+	dbArtifact, _, err := upsertVersionedArtifact(ctx, dbrepo, versionedArtifact, s.store, s.evt)
 	if err != nil {
 		return fmt.Errorf("error upserting artifact from payload: %w", err)
 	}
@@ -716,9 +717,10 @@ func updateArtifactVersionFromRegistry(
 
 func upsertVersionedArtifact(
 	ctx context.Context,
-	repoID uuid.UUID,
+	dbrepo db.Repository,
 	versionedArtifact *pb.VersionedArtifact,
 	store db.Store,
+	evt *evnts.Eventer,
 ) (*db.Artifact, *db.ArtifactVersion, error) {
 	sigInfo, err := protojson.Marshal(versionedArtifact.Version.SignatureVerification)
 	if err != nil {
@@ -739,7 +741,7 @@ func upsertVersionedArtifact(
 	qtx := store.GetQuerierWithTransaction(tx)
 
 	dbArtifact, err := qtx.UpsertArtifact(ctx, db.UpsertArtifactParams{
-		RepositoryID:       repoID,
+		RepositoryID:       dbrepo.ID,
 		ArtifactName:       versionedArtifact.Artifact.GetName(),
 		ArtifactType:       versionedArtifact.Artifact.GetType(),
 		ArtifactVisibility: versionedArtifact.Artifact.Visibility,
@@ -777,12 +779,12 @@ func upsertVersionedArtifact(
 			if !existing.Tags.Valid {
 				continue
 			}
-			// Rebuild the Tags list removing anything that would conflict
+			// Rebuild the list of tags removing anything that would conflict with the incoming tag
 			newTags := slices.DeleteFunc(strings.Split(existing.Tags.String, ","), func(in string) bool { return in == incomingTag })
 			newTagsSQL := sql.NullString{String: strings.Join(newTags, ",")}
 			newTagsSQL.Valid = len(newTagsSQL.String) > 0
 			// Update the versioned artifact row in the store (we shouldn't change anything else except the tags value)
-			_, err := qtx.UpsertArtifactVersion(ctx, db.UpsertArtifactVersionParams{
+			upsertArtifactVersion, err := qtx.UpsertArtifactVersion(ctx, db.UpsertArtifactVersionParams{
 				ArtifactID:            existing.ArtifactID,
 				Version:               existing.Version,
 				Tags:                  newTagsSQL,
@@ -793,6 +795,62 @@ func upsertVersionedArtifact(
 			})
 			if err != nil {
 				return nil, nil, fmt.Errorf("error upserting artifact %s with version %d: %w", existing.ArtifactID, existing.Version, err)
+			}
+
+			// Publish an event to notify that an artifact has been updated
+			var tags []string
+			if upsertArtifactVersion.Tags.Valid {
+				tags = strings.Split(upsertArtifactVersion.Tags.String, ",")
+			}
+			sigVer := &pb.SignatureVerification{}
+			if upsertArtifactVersion.SignatureVerification.Valid {
+				if err := protojson.Unmarshal(upsertArtifactVersion.SignatureVerification.RawMessage, sigVer); err != nil {
+					log.Printf("error unmarshalling signature verification: %v", err)
+					continue
+				}
+			}
+
+			ghWorkflow := &pb.GithubWorkflow{}
+			if upsertArtifactVersion.GithubWorkflow.Valid {
+				if err := protojson.Unmarshal(upsertArtifactVersion.GithubWorkflow.RawMessage, ghWorkflow); err != nil {
+					log.Printf("error unmarshalling gh workflow: %v", err)
+					continue
+				}
+			}
+
+			updatedArtifact := &pb.VersionedArtifact{
+				Artifact: &pb.Artifact{
+					ArtifactPk: dbArtifact.ID.String(),
+					Owner:      dbrepo.RepoOwner,
+					Name:       dbArtifact.ArtifactName,
+					Type:       dbArtifact.ArtifactType,
+					Visibility: dbArtifact.ArtifactVisibility,
+					Repository: dbrepo.RepoName,
+					CreatedAt:  timestamppb.New(dbArtifact.CreatedAt),
+				},
+				Version: &pb.ArtifactVersion{
+					VersionId:             upsertArtifactVersion.Version,
+					Tags:                  tags,
+					Sha:                   upsertArtifactVersion.Sha,
+					SignatureVerification: sigVer,
+					GithubWorkflow:        ghWorkflow,
+					CreatedAt:             timestamppb.New(upsertArtifactVersion.CreatedAt),
+				},
+			}
+
+			err = engine.NewEntityInfoWrapper().
+				WithProvider(dbrepo.Provider).
+				WithGroupID(dbrepo.GroupID).
+				WithVersionedArtifact(updatedArtifact).
+				WithRepositoryID(dbrepo.ID).
+				WithArtifactID(dbArtifact.ID).
+				Publish(evt)
+
+			// This is a non-fatal error, so we'll just log it
+			// and continue
+			if err != nil {
+				log.Printf("error publishing entity event for updated versioned artifact in repo %d: %v", dbrepo.ID, err)
+				continue
 			}
 		}
 	}

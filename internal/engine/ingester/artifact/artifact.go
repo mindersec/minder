@@ -104,13 +104,17 @@ func isApplicableArtifact(
 		return false, "artifact name mismatch"
 	}
 
+	if len(versionedArtifact.Version.Tags) == 0 || versionedArtifact.Version.Tags[0] == "" {
+		return false, "artifact has no tags, skipping"
+	}
+
 	// no tags is treated as a wildcard and matches any container. This might be configurable in the future
 	if len(cfg.Tags) == 0 {
 		return true, ""
 	}
 
 	haveTags := sets.New(versionedArtifact.Version.Tags...)
-	tagsOk := haveTags.HasAny(cfg.Tags...)
+	tagsOk := haveTags.HasAll(cfg.Tags...)
 	if !tagsOk {
 		return false, "artifact tags mismatch"
 	}
