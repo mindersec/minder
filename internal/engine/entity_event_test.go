@@ -73,12 +73,12 @@ func Test_parseEntityEvent(t *testing.T) {
 		{
 			name: "versioned artifact event",
 			args: args{
-				ent: &pb.VersionedArtifact{
-					Artifact: &pb.Artifact{
-						ArtifactPk: artifactID,
-					},
-					Version: &pb.ArtifactVersion{
-						VersionId: 789,
+				ent: &pb.Artifact{
+					ArtifactPk: artifactID,
+					Versions: []*pb.ArtifactVersion{
+						{
+							VersionId: 789,
+						},
 					},
 				},
 				entType:  VersionedArtifactEventEntityType,
@@ -91,12 +91,12 @@ func Test_parseEntityEvent(t *testing.T) {
 			},
 			want: &EntityInfoWrapper{
 				GroupID: 1,
-				Entity: &pb.VersionedArtifact{
-					Artifact: &pb.Artifact{
-						ArtifactPk: artifactID,
-					},
-					Version: &pb.ArtifactVersion{
-						VersionId: 789,
+				Entity: &pb.Artifact{
+					ArtifactPk: artifactID,
+					Versions: []*pb.ArtifactVersion{
+						{
+							VersionId: 789,
+						},
 					},
 				},
 				Provider: "github",
@@ -212,12 +212,12 @@ func TestEntityInfoWrapper_VersionedArtifact(t *testing.T) {
 	eiw := NewEntityInfoWrapper().
 		WithProvider("github").
 		WithGroupID(123).
-		WithVersionedArtifact(&pb.VersionedArtifact{
-			Artifact: &pb.Artifact{
-				ArtifactPk: artifactID.String(),
-			},
-			Version: &pb.ArtifactVersion{
-				VersionId: 101112,
+		WithArtifact(&pb.Artifact{
+			ArtifactPk: artifactID.String(),
+			Versions: []*pb.ArtifactVersion{
+				{
+					VersionId: 101112,
+				},
 			},
 		}).WithRepositoryID(repoID).
 		WithArtifactID(artifactID)

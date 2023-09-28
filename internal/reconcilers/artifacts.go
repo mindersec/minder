@@ -183,6 +183,7 @@ func (e *Reconciler) handleArtifactsReconcilerEvent(ctx context.Context, evt *Re
 			log.Printf("error retrieving artifact versions: %v", err)
 			continue
 		}
+		var listVersionedArtifacts []*pb.ArtifactVersion
 		for _, version := range versions {
 			if version.CreatedAt.Before(thirtyDaysAgo) {
 				continue
@@ -236,38 +237,36 @@ func (e *Reconciler) handleArtifactsReconcilerEvent(ctx context.Context, evt *Re
 				log.Printf("error unmarshalling signature verification: %v", err)
 				continue
 			}
-
-			versionedArtifact := &pb.VersionedArtifact{
-				Artifact: &pb.Artifact{
-					ArtifactPk: newArtifact.ID.String(),
-					Owner:      *artifact.GetOwner().Login,
-					Name:       artifact.GetName(),
-					Type:       artifact.GetPackageType(),
-					Visibility: artifact.GetVisibility(),
-					Repository: repository.RepoName,
-					CreatedAt:  timestamppb.New(artifact.GetCreatedAt().Time),
-				},
-				Version: &pb.ArtifactVersion{
-					VersionId:             newVersion.Version,
-					Tags:                  tags,
-					Sha:                   *version.Name,
-					SignatureVerification: sigVerification,
-					GithubWorkflow:        ghWorkflow,
-					CreatedAt:             timestamppb.New(version.CreatedAt.Time),
-				},
-			}
-
-			err = engine.NewEntityInfoWrapper().
-				WithProvider(prov.Name).
-				WithVersionedArtifact(versionedArtifact).
-				WithGroupID(evt.Group).
-				WithArtifactID(newArtifact.ID).
-				WithRepositoryID(repository.ID).
-				Publish(e.evt)
-			if err != nil {
-				return fmt.Errorf("error publishing message: %w", err)
-			}
+			listVersionedArtifacts = append(listVersionedArtifacts, &pb.ArtifactVersion{
+				VersionId:             newVersion.Version,
+				Tags:                  tags,
+				Sha:                   *version.Name,
+				SignatureVerification: sigVerification,
+				GithubWorkflow:        ghWorkflow,
+				CreatedAt:             timestamppb.New(version.CreatedAt.Time),
+			})
 		}
+		pbArtifact := &pb.Artifact{
+			ArtifactPk: newArtifact.ID.String(),
+			Owner:      *artifact.GetOwner().Login,
+			Name:       artifact.GetName(),
+			Type:       artifact.GetPackageType(),
+			Visibility: artifact.GetVisibility(),
+			Repository: repository.RepoName,
+			Versions:   listVersionedArtifacts,
+			CreatedAt:  timestamppb.New(artifact.GetCreatedAt().Time),
+		}
+		err = engine.NewEntityInfoWrapper().
+			WithProvider(prov.Name).
+			WithArtifact(pbArtifact).
+			WithGroupID(evt.Group).
+			WithArtifactID(newArtifact.ID).
+			WithRepositoryID(repository.ID).
+			Publish(e.evt)
+		if err != nil {
+			return fmt.Errorf("error publishing message: %w", err)
+		}
+
 	}
 	return nil
 }

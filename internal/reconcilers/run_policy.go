@@ -20,15 +20,13 @@ import (
 	"encoding/json"
 	"errors"
 	"fmt"
-	"log"
-	"strings"
-
 	"github.com/ThreeDotsLabs/watermill/message"
 	"github.com/go-playground/validator/v10"
 	"github.com/google/uuid"
 	"github.com/rs/zerolog"
-	"google.golang.org/protobuf/encoding/protojson"
+	"github.com/stacklok/mediator/internal/util"
 	"google.golang.org/protobuf/types/known/timestamppb"
+	"log"
 
 	"github.com/stacklok/mediator/internal/db"
 	"github.com/stacklok/mediator/internal/engine"
@@ -183,73 +181,26 @@ func (s *Reconciler) publishArtifactPolicyInitEvents(
 		zerolog.Ctx(ctx).Debug().Str("repository", dbrepo.ID.String()).Msgf("no artifacts found, skipping")
 		return nil
 	}
-
 	for _, dbA := range dbArtifacts {
-		// for each artifact, get the versions
-		dbArtifactVersions, err := s.store.ListArtifactVersionsByArtifactID(ctx, db.ListArtifactVersionsByArtifactIDParams{
-			ArtifactID: dbA.ID,
-			Limit:      sql.NullInt32{Valid: false},
-		})
+		// Get the artifact with all its versions as a protobuf
+		pbArtifact, err := util.GetArtifactWithVersions(ctx, s.store, dbrepo.ID, dbA.ID)
 		if err != nil {
-			log.Printf("error getting artifact versions for artifact %s: %v", dbA.ID, err)
-			continue
+			return fmt.Errorf("error getting artifact versions: %w", err)
 		}
 
-		for _, dbVersion := range dbArtifactVersions {
-			tags := []string{}
-			if dbVersion.Tags.Valid {
-				tags = strings.Split(dbVersion.Tags.String, ",")
-			}
+		err = engine.NewEntityInfoWrapper().
+			WithProvider(ectx.Provider.Name).
+			WithGroupID(ectx.Group.ID).
+			WithArtifact(pbArtifact).
+			WithRepositoryID(dbrepo.ID).
+			WithArtifactID(dbA.ID).
+			Publish(s.evt)
 
-			sigVer := &pb.SignatureVerification{}
-			if dbVersion.SignatureVerification.Valid {
-				if err := protojson.Unmarshal(dbVersion.SignatureVerification.RawMessage, sigVer); err != nil {
-					log.Printf("error unmarshalling signature verification: %v", err)
-					continue
-				}
-			}
-			ghWorkflow := &pb.GithubWorkflow{}
-			if dbVersion.GithubWorkflow.Valid {
-				if err := protojson.Unmarshal(dbVersion.GithubWorkflow.RawMessage, ghWorkflow); err != nil {
-					log.Printf("error unmarshalling gh workflow: %v", err)
-					continue
-				}
-			}
-
-			versionedArtifact := &pb.VersionedArtifact{
-				Artifact: &pb.Artifact{
-					ArtifactPk: dbA.ID.String(),
-					Owner:      dbrepo.RepoOwner,
-					Name:       dbA.ArtifactName,
-					Type:       dbA.ArtifactType,
-					Visibility: dbA.ArtifactVisibility,
-					Repository: dbrepo.RepoName,
-					CreatedAt:  timestamppb.New(dbA.CreatedAt),
-				},
-				Version: &pb.ArtifactVersion{
-					VersionId:             dbVersion.Version,
-					Tags:                  tags,
-					Sha:                   dbVersion.Sha,
-					SignatureVerification: sigVer,
-					GithubWorkflow:        ghWorkflow,
-					CreatedAt:             timestamppb.New(dbVersion.CreatedAt),
-				},
-			}
-
-			err := engine.NewEntityInfoWrapper().
-				WithProvider(ectx.Provider.Name).
-				WithGroupID(ectx.Group.ID).
-				WithVersionedArtifact(versionedArtifact).
-				WithRepositoryID(dbrepo.ID).
-				WithArtifactID(dbA.ID).
-				Publish(s.evt)
-
-			// This is a non-fatal error, so we'll just log it
-			// and continue
-			if err != nil {
-				log.Printf("error publishing init event for repo %s: %v", dbrepo.ID, err)
-				continue
-			}
+		// This is a non-fatal error, so we'll just log it
+		// and continue
+		if err != nil {
+			log.Printf("error publishing init event for repo %s: %v", dbrepo.ID, err)
+			continue
 		}
 	}
 	return nil

@@ -32,17 +32,69 @@ func TestArtifactIngestMatchingName(t *testing.T) {
 	ing, err := artifact.NewArtifactDataIngest(nil)
 	require.NoError(t, err, "expected no error")
 
-	got, err := ing.Ingest(context.Background(), &pb.VersionedArtifact{
-		Artifact: &pb.Artifact{
-			Type: "container",
-			Name: "this-will-match",
+	got, err := ing.Ingest(context.Background(), &pb.Artifact{
+		Type: "container",
+		Name: "this-will-match",
+		Versions: []*pb.ArtifactVersion{
+			{
+				Tags: []string{"latest"},
+			},
 		},
-		Version: &pb.ArtifactVersion{},
 	}, map[string]interface{}{
 		"name": "this-will-match",
 	})
 	require.NoError(t, err, "expected no error")
 	require.NotNil(t, got, "expected non-nil result")
+}
+
+func TestArtifactIngestMatchingTags(t *testing.T) {
+	t.Parallel()
+
+	ing, err := artifact.NewArtifactDataIngest(nil)
+	require.NoError(t, err, "expected no error")
+
+	got, err := ing.Ingest(context.Background(), &pb.Artifact{
+		Type: "container",
+		Name: "this-will-match",
+		Versions: []*pb.ArtifactVersion{
+			{
+				Tags: []string{"main", "production"},
+			},
+			{
+				Tags: []string{"latest"},
+			},
+		},
+	}, map[string]interface{}{
+		"name": "this-will-match",
+		"tags": []string{"latest"},
+	})
+	require.NoError(t, err, "expected no error")
+	require.NotNil(t, got, "expected non-nil result")
+}
+
+func TestArtifactIngestNoMatchingTags(t *testing.T) {
+	t.Parallel()
+
+	ing, err := artifact.NewArtifactDataIngest(nil)
+	require.NoError(t, err, "expected no error")
+
+	got, err := ing.Ingest(context.Background(), &pb.Artifact{
+		Type: "container",
+		Name: "this-will-match",
+		Versions: []*pb.ArtifactVersion{
+			{
+				Tags: []string{"main", "production"},
+			},
+			{
+				Tags: []string{"dev"},
+			},
+		},
+	}, map[string]interface{}{
+		"name": "this-will-match",
+		"tags": []string{"latest"},
+	})
+	require.Error(t, err, "expected error")
+	require.Nil(t, got, "expected nil result")
 }
 
 func TestArtifactIngestNotMatchingName(t *testing.T) {
@@ -51,12 +103,10 @@ func TestArtifactIngestNotMatchingName(t *testing.T) {
 	ing, err := artifact.NewArtifactDataIngest(nil)
 	require.NoError(t, err, "expected no error")
 
-	got, err := ing.Ingest(context.Background(), &pb.VersionedArtifact{
-		Artifact: &pb.Artifact{
-			Type: "container",
-			Name: "this-will-match",
-		},
-		Version: &pb.ArtifactVersion{},
+	got, err := ing.Ingest(context.Background(), &pb.Artifact{
+		Type:     "container",
+		Name:     "this-will-match",
+		Versions: []*pb.ArtifactVersion{},
 	}, map[string]interface{}{
 		"name": "this-will-NOT-match",
 	})
@@ -71,12 +121,14 @@ func TestArtifactIngestMatchAnyName(t *testing.T) {
 	ing, err := artifact.NewArtifactDataIngest(nil)
 	require.NoError(t, err, "expected no error")
 
-	got, err := ing.Ingest(context.Background(), &pb.VersionedArtifact{
-		Artifact: &pb.Artifact{
-			Type: "container",
-			Name: "surely-noone-will-set-this-name",
+	got, err := ing.Ingest(context.Background(), &pb.Artifact{
+		Type: "container",
+		Name: "surely-noone-will-set-this-name",
+		Versions: []*pb.ArtifactVersion{
+			{
+				Tags: []string{"latest"},
+			},
 		},
-		Version: &pb.ArtifactVersion{},
 	}, map[string]interface{}{
 		"name": "", // empty string means match any name
 	})

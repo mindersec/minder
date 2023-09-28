@@ -2744,6 +2744,13 @@
         "repository": {
           "type": "string"
         },
+        "versions": {
+          "type": "array",
+          "items": {
+            "type": "object",
+            "$ref": "#/definitions/v1ArtifactVersion"
+          }
+        },
         "createdAt": {
           "type": "string",
           "format": "date-time"

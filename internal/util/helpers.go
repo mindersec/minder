@@ -25,11 +25,16 @@ package util
 import (
 	"context"
 	"crypto/tls"
+	"database/sql"
 	"encoding/json"
 	"errors"
 	"fmt"
+	"github.com/google/uuid"
+	"github.com/stacklok/mediator/internal/db"
+	"google.golang.org/protobuf/types/known/timestamppb"
 	"io"
 	"io/fs"
+	"log"
 	"net"
 	"os"
 	"path/filepath"
@@ -435,4 +440,74 @@ func Int32FromString(v string) (int32, error) {
 		return 0, fmt.Errorf("error converting string to int: %w", err)
 	}
 	return int32(asInt32), nil
+}
+
+func GetArtifactWithVersions(ctx context.Context, store db.Store, repoID, artifactID uuid.UUID) (*pb.Artifact, error) {
+	// Get repository data - we need the owner and name
+	dbrepo, err := store.GetRepositoryByID(ctx, repoID)
+	if errors.Is(err, sql.ErrNoRows) {
+		return nil, fmt.Errorf("repository not found")
+	} else if err != nil {
+		return nil, fmt.Errorf("cannot read repository: %v", err)
+	}
+
+	// Retrieve artifact details
+	artifact, err := store.GetArtifactByID(ctx, artifactID)
+	if errors.Is(err, sql.ErrNoRows) {
+		return nil, fmt.Errorf("artifact not found")
+	} else if err != nil {
+		return nil, fmt.Errorf("failed to get artifact: %v", err)
+	}
+
+	// Get its versions
+	dbArtifactVersions, err := store.ListArtifactVersionsByArtifactID(ctx, db.ListArtifactVersionsByArtifactIDParams{
+		ArtifactID: artifact.ID,
+		Limit:      sql.NullInt32{Valid: false},
+	})
+	if err != nil {
+		log.Printf("error getting artifact versions for artifact %s: %v", artifact.ID, err)
+	}
+
+	// Translate each to protobuf so we can publish the event
+	var listArtifactVersions []*pb.ArtifactVersion
+	for _, dbVersion := range dbArtifactVersions {
+		var tags []string
+		if dbVersion.Tags.Valid {
+			tags = strings.Split(dbVersion.Tags.String, ",")
+		}
+		sigVer := &pb.SignatureVerification{}
+		if dbVersion.SignatureVerification.Valid {
+			if err := protojson.Unmarshal(dbVersion.SignatureVerification.RawMessage, sigVer); err != nil {
+				log.Printf("error unmarshalling signature verification: %v", err)
+				continue
+			}
+		}
+		ghWorkflow := &pb.GithubWorkflow{}
+		if dbVersion.GithubWorkflow.Valid {
+			if err := protojson.Unmarshal(dbVersion.GithubWorkflow.RawMessage, ghWorkflow); err != nil {
+				log.Printf("error unmarshalling gh workflow: %v", err)
+				continue
+			}
+		}
+		listArtifactVersions = append(listArtifactVersions, &pb.ArtifactVersion{
+			VersionId:             dbVersion.Version,
+			Tags:                  tags,
+			Sha:                   dbVersion.Sha,
+			SignatureVerification: sigVer,
+			GithubWorkflow:        ghWorkflow,
+			CreatedAt:             timestamppb.New(dbVersion.CreatedAt),
+		})
+	}
+
+	// Build the artifact protobuf
+	return &pb.Artifact{
+		ArtifactPk: artifact.ID.String(),
+		Owner:      dbrepo.RepoOwner,
+		Name:       artifact.ArtifactName,
+		Type:       artifact.ArtifactType,
+		Visibility: artifact.ArtifactVisibility,
+		Repository: dbrepo.RepoName,
+		Versions:   listArtifactVersions,
+		CreatedAt:  timestamppb.New(artifact.CreatedAt),
+	}, nil
 }

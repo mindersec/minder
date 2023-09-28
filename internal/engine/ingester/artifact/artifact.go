@@ -20,11 +20,11 @@ import (
 	"context"
 	"encoding/json"
 	"fmt"
+	evalerrors "github.com/stacklok/mediator/internal/engine/errors"
 
 	"google.golang.org/protobuf/proto"
 	"k8s.io/apimachinery/pkg/util/sets"
 
-	evalerrors "github.com/stacklok/mediator/internal/engine/errors"
 	engif "github.com/stacklok/mediator/internal/engine/interfaces"
 	pb "github.com/stacklok/mediator/pkg/api/protobuf/go/mediator/v1"
 )
@@ -58,65 +58,83 @@ func (_ *Ingest) Ingest(
 		return nil, err
 	}
 
-	versionedArtifact, ok := ent.(*pb.VersionedArtifact)
+	artifact, ok := ent.(*pb.Artifact)
 	if !ok {
-		return nil, fmt.Errorf("expected VersionedArtifact, got %T", ent)
+		return nil, fmt.Errorf("expected Artifact, got %T", ent)
 	}
 
-	applicable, msg := isApplicableArtifact(versionedArtifact, cfg)
-	if !applicable {
-		return nil, evalerrors.NewErrEvaluationSkipSilently(msg)
-	}
-
-	result := struct {
-		Verification   any
-		GithubWorkflow any
-	}{
-		versionedArtifact.Version.SignatureVerification,
-		versionedArtifact.Version.GithubWorkflow}
-	jsonBytes, err := json.Marshal(result)
-	if err != nil {
-		return nil, err
-	}
-
-	out := make(map[string]any)
-	err = json.Unmarshal(jsonBytes, &out)
+	// Filter the versions of the artifact that are applicable to this rule
+	applicable, err := getApplicableArtifactVersions(artifact, cfg)
 	if err != nil {
 		return nil, err
 	}
 
 	return &engif.Result{
-		Object: out,
+		Object: applicable,
 	}, nil
 }
 
-func isApplicableArtifact(
-	versionedArtifact *pb.VersionedArtifact,
+func getApplicableArtifactVersions(
+	artifact *pb.Artifact,
 	cfg *ingesterConfig,
-) (bool, string) {
-	if newArtifactIngestType(versionedArtifact.Artifact.Type) != cfg.Type {
-		// not interested in this type of artifact
-		return false, "artifact type mismatch"
+) ([]map[string]any, error) {
+	var applicableArtifactVersions []struct {
+		Verification   any
+		GithubWorkflow any
+	}
+	// make sure the artifact type matches
+	if newArtifactIngestType(artifact.Type) != cfg.Type {
+		return nil, evalerrors.NewErrEvaluationSkipSilently("artifact type mismatch")
 	}
 
-	if cfg.Name != "" && cfg.Name != versionedArtifact.Artifact.Name {
-		// not interested in this artifact
-		return false, "artifact name mismatch"
+	// if a name is specified, make sure it matches
+	if cfg.Name != "" && cfg.Name != artifact.Name {
+		return nil, evalerrors.NewErrEvaluationSkipSilently("artifact name mismatch")
 	}
 
-	if len(versionedArtifact.Version.Tags) == 0 || versionedArtifact.Version.Tags[0] == "" {
-		return false, "artifact has no tags, skipping"
+	// get all versions of the artifact that are applicable to this rule
+	for _, artifactVersion := range artifact.Versions {
+		// skip artifact versions without tags
+		if len(artifactVersion.Tags) == 0 || artifactVersion.Tags[0] == "" {
+			continue
+		}
+
+		// rule without tags is treated as a wildcard and matches all tagged artifacts
+		// this might be configurable in the future
+		if len(cfg.Tags) == 0 {
+			applicableArtifactVersions = append(applicableArtifactVersions, struct {
+				Verification   any
+				GithubWorkflow any
+			}{artifactVersion.SignatureVerification, artifactVersion.GithubWorkflow})
+			continue
+		}
+
+		// make sure all rule tags are present in the artifact version tags
+		haveTags := sets.New(artifactVersion.Tags...)
+		tagsOk := haveTags.HasAll(cfg.Tags...)
+		if tagsOk {
+			applicableArtifactVersions = append(applicableArtifactVersions, struct {
+				Verification   any
+				GithubWorkflow any
+			}{artifactVersion.SignatureVerification, artifactVersion.GithubWorkflow})
+		}
 	}
 
-	// no tags is treated as a wildcard and matches any container. This might be configurable in the future
-	if len(cfg.Tags) == 0 {
-		return true, ""
+	// if no applicable artifact versions were found for this rule, we can go ahead and fail the rule evaluation here
+	if len(applicableArtifactVersions) == 0 {
+		return nil, evalerrors.NewErrEvaluationFailed("no applicable artifact versions found")
 	}
 
-	haveTags := sets.New(versionedArtifact.Version.Tags...)
-	tagsOk := haveTags.HasAll(cfg.Tags...)
-	if !tagsOk {
-		return false, "artifact tags mismatch"
+	jsonBytes, err := json.Marshal(applicableArtifactVersions)
+	if err != nil {
+		return nil, err
 	}
-	return true, ""
+
+	result := make([]map[string]any, 0, len(applicableArtifactVersions))
+	err = json.Unmarshal(jsonBytes, &result)
+	if err != nil {
+		return nil, err
+	}
+	// return the list of applicable artifact versions
+	return result, nil
 }
