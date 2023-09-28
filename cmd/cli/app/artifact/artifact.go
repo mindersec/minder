@@ -31,8 +31,8 @@ import (
 // ArtifactCmd is the artifact subcommand
 var ArtifactCmd = &cobra.Command{
 	Use:   "artifact",
-	Short: "Manage artifact within a mediator control plane",
-	Long:  `The medic artifact commands allow the management of artifact within a mediator control plane`,
+	Short: "Manage artifacts within a mediator control plane",
+	Long:  `The medic artifact commands allow the management of artifacts within a mediator control plane`,
 	RunE: func(cmd *cobra.Command, args []string) error {
 		return cmd.Usage()
 	},
