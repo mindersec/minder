@@ -16,10 +16,11 @@ package engine
 
 import (
 	"context"
-	"database/sql"
 	"errors"
 	"fmt"
 	"log"
+
+	"github.com/google/uuid"
 
 	"github.com/stacklok/mediator/internal/db"
 	evalerrors "github.com/stacklok/mediator/internal/engine/errors"
@@ -30,11 +31,11 @@ import (
 // a repo and most policies are expecting a repo, the repoID parameter is mandatory. For entities
 // other than artifacts, the artifactID should be 0 which is translated to NULL in the database.
 type createOrUpdateEvalStatusParams struct {
-	policyID       int32
-	repoID         int32
-	artifactID     int32
+	policyID       uuid.UUID
+	repoID         uuid.UUID
+	artifactID     *uuid.UUID
 	ruleTypeEntity db.Entities
-	ruleTypeID     int32
+	ruleTypeID     uuid.UUID
 	evalErr        error
 }
 
@@ -47,23 +48,23 @@ func (e *Executor) createOrUpdateEvalStatus(
 	}
 
 	if errors.Is(params.evalErr, evalerrors.ErrEvaluationSkipSilently) {
-		log.Printf("silent skip of rule %d for policy %d for entity %s in repo %d",
+		log.Printf("silent skip of rule %s for policy %s for entity %s in repo %s",
 			params.ruleTypeID, params.policyID, params.ruleTypeEntity, params.repoID)
 		return nil
 	}
 
-	var sqlArtifactID sql.NullInt32
-	if params.artifactID > 0 {
-		sqlArtifactID = sql.NullInt32{
-			Int32: params.artifactID,
+	var sqlArtifactID uuid.NullUUID
+	if params.artifactID != nil {
+		sqlArtifactID = uuid.NullUUID{
+			UUID:  *params.artifactID,
 			Valid: true,
 		}
 	}
 
 	return e.querier.UpsertRuleEvaluationStatus(ctx, db.UpsertRuleEvaluationStatusParams{
 		PolicyID: params.policyID,
-		RepositoryID: sql.NullInt32{
-			Int32: params.repoID,
+		RepositoryID: uuid.NullUUID{
+			UUID:  params.repoID,
 			Valid: true,
 		},
 		ArtifactID: sqlArtifactID,

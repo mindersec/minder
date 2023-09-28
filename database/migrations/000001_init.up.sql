@@ -130,7 +130,7 @@ CREATE TABLE signing_keys (
 
 -- repositories table
 CREATE TABLE repositories (
-    id SERIAL PRIMARY KEY,
+    id UUID NOT NULL DEFAULT gen_random_uuid() PRIMARY KEY,
     provider TEXT NOT NULL,
     group_id INTEGER NOT NULL,
     repo_owner TEXT NOT NULL,
@@ -150,8 +150,8 @@ CREATE TABLE repositories (
 
 -- artifacts table
 CREATE TABLE artifacts (
-    id SERIAL PRIMARY KEY,
-    repository_id INTEGER NOT NULL REFERENCES repositories(id) ON DELETE CASCADE,
+    id UUID NOT NULL DEFAULT gen_random_uuid() PRIMARY KEY,
+    repository_id UUID NOT NULL REFERENCES repositories(id) ON DELETE CASCADE,
     artifact_name TEXT NOT NULL,    -- this is case insensitive
     artifact_type TEXT NOT NULL,
     artifact_visibility TEXT NOT NULL,      -- comes from github. Can be public, private, internal
@@ -161,8 +161,8 @@ CREATE TABLE artifacts (
 
 -- artifact versions table
 CREATE TABLE artifact_versions (
-    id SERIAL PRIMARY KEY,
-    artifact_id INTEGER NOT NULL REFERENCES artifacts(id) ON DELETE CASCADE,
+    id UUID NOT NULL DEFAULT gen_random_uuid() PRIMARY KEY,
+    artifact_id UUID NOT NULL REFERENCES artifacts(id) ON DELETE CASCADE,
     version BIGINT NOT NULL,
     tags TEXT,
     sha TEXT NOT NULL,
@@ -183,7 +183,7 @@ CREATE TABLE session_store (
 
 -- table for storing rule types
 CREATE TABLE rule_type (
-    id SERIAL PRIMARY KEY,
+    id UUID NOT NULL DEFAULT gen_random_uuid() PRIMARY KEY,
     name TEXT NOT NULL,
     provider TEXT NOT NULL,
     group_id INTEGER NOT NULL,
@@ -196,7 +196,7 @@ CREATE TABLE rule_type (
 );
 
 CREATE TABLE policies (
-    id SERIAL PRIMARY KEY,
+    id UUID NOT NULL DEFAULT gen_random_uuid() PRIMARY KEY,
     name TEXT NOT NULL,
     provider TEXT NOT NULL,
     group_id INTEGER NOT NULL,
@@ -208,9 +208,9 @@ CREATE TABLE policies (
 CREATE TYPE entities as enum ('repository', 'build_environment', 'artifact', 'pull_request');
 
 CREATE TABLE entity_policies (
-    id SERIAL PRIMARY KEY,
+    id UUID NOT NULL DEFAULT gen_random_uuid() PRIMARY KEY,
     entity entities NOT NULL,
-    policy_id INTEGER NOT NULL REFERENCES policies(id) ON DELETE CASCADE,
+    policy_id UUID NOT NULL REFERENCES policies(id) ON DELETE CASCADE,
     contextual_rules JSONB NOT NULL,
     created_at TIMESTAMP NOT NULL DEFAULT NOW(),
     updated_at TIMESTAMP NOT NULL DEFAULT NOW()
@@ -220,8 +220,8 @@ create type eval_status_types as enum ('success', 'failure', 'error', 'skipped',
 
 -- This table will be used to track the overall status of a policy evaluation
 CREATE TABLE policy_status (
-    id SERIAL PRIMARY KEY,
-    policy_id INTEGER NOT NULL REFERENCES policies(id) ON DELETE CASCADE,
+    id UUID NOT NULL DEFAULT gen_random_uuid() PRIMARY KEY,
+    policy_id UUID NOT NULL REFERENCES policies(id) ON DELETE CASCADE,
     policy_status eval_status_types NOT NULL,
     last_updated TIMESTAMP NOT NULL DEFAULT NOW()
 );
@@ -229,16 +229,16 @@ CREATE TABLE policy_status (
 -- This table will be used to track the status of each rule evaluation
 -- for a given policy
 CREATE TABLE rule_evaluation_status (
-    id SERIAL PRIMARY KEY,
+    id UUID NOT NULL DEFAULT gen_random_uuid() PRIMARY KEY,
     entity entities NOT NULL,
-    policy_id INTEGER NOT NULL REFERENCES policies(id) ON DELETE CASCADE,
-    rule_type_id INTEGER NOT NULL REFERENCES rule_type(id) ON DELETE CASCADE,
+    policy_id UUID NOT NULL REFERENCES policies(id) ON DELETE CASCADE,
+    rule_type_id UUID NOT NULL REFERENCES rule_type(id) ON DELETE CASCADE,
     eval_status eval_status_types NOT NULL,
     -- polimorphic references. A status may be associated with a repository, build environment or artifact
-    repository_id INTEGER REFERENCES repositories(id) ON DELETE CASCADE,
-    artifact_id INTEGER REFERENCES artifacts(id) ON DELETE CASCADE,
+    repository_id UUID REFERENCES repositories(id) ON DELETE CASCADE,
+    artifact_id UUID REFERENCES artifacts(id) ON DELETE CASCADE,
     -- These will be added later
-    -- build_environment_id INTEGER REFERENCES build_environments(id) ON DELETE CASCADE,
+    -- build_environment_id UUID REFERENCES build_environments(id) ON DELETE CASCADE,
     details TEXT NOT NULL,
     last_updated TIMESTAMP NOT NULL DEFAULT NOW()
 );
@@ -262,7 +262,7 @@ CREATE UNIQUE INDEX users_organization_id_username_lower_idx ON users (organizat
 CREATE UNIQUE INDEX repositories_repo_id_idx ON repositories(repo_id);
 CREATE UNIQUE INDEX policies_policy_name_idx ON policies(provider, name);
 CREATE UNIQUE INDEX rule_type_idx ON rule_type(provider, group_id, name);
-CREATE UNIQUE INDEX rule_evaluation_status_results_idx ON rule_evaluation_status(policy_id, repository_id, COALESCE(artifact_id, 0), entity, rule_type_id);
+CREATE UNIQUE INDEX rule_evaluation_status_results_idx ON rule_evaluation_status(policy_id, repository_id, COALESCE(artifact_id, '00000000-0000-0000-0000-000000000000'::UUID), entity, rule_type_id);
 CREATE UNIQUE INDEX artifact_name_lower_idx ON artifacts (repository_id, LOWER(artifact_name));
 CREATE UNIQUE INDEX artifact_versions_idx ON artifact_versions (artifact_id, sha);
 CREATE UNIQUE INDEX provider_name_group_id_idx ON providers (name, group_id);

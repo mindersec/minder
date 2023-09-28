@@ -229,12 +229,12 @@ func optionsForMethod(info *grpc.UnaryServerInfo) (*mediator.RpcOptions, error) 
 	formattedName := strings.ReplaceAll(info.FullMethod[1:], "/", ".")
 	descriptor, err := protoregistry.GlobalFiles.FindDescriptorByName(protoreflect.FullName(formattedName))
 	if err != nil {
-		return nil, fmt.Errorf("Unable to find descriptor for %q: %w", formattedName, err)
+		return nil, fmt.Errorf("unable to find descriptor for %q: %w", formattedName, err)
 	}
 	extension := proto.GetExtension(descriptor.Options(), mediator.E_RpcOptions)
 	opts, ok := extension.(*mediator.RpcOptions)
 	if !ok {
-		return nil, fmt.Errorf("Couldn't decode option for %q, wrong type: %T", formattedName, extension)
+		return nil, fmt.Errorf("couldn't decode option for %q, wrong type: %T", formattedName, extension)
 	}
 	return opts, nil
 }

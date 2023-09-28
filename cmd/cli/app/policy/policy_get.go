@@ -53,7 +53,7 @@ mediator control plane.`,
 		ctx, cancel := util.GetAppContext()
 		defer cancel()
 
-		id := viper.GetInt32("id")
+		id := viper.GetString("id")
 		policy, err := client.GetPolicyById(ctx, &pb.GetPolicyByIdRequest{
 			Context: &pb.Context{
 				Provider: provider,
@@ -84,7 +84,7 @@ mediator control plane.`,
 
 func init() {
 	PolicyCmd.AddCommand(policy_getCmd)
-	policy_getCmd.Flags().Int32P("id", "i", 0, "ID for the policy to query")
+	policy_getCmd.Flags().StringP("id", "i", "", "ID for the policy to query")
 	policy_getCmd.Flags().StringP("output", "o", app.Table, "Output format (json, yaml or table)")
 	policy_getCmd.Flags().StringP("provider", "p", "github", "Provider for the policy")
 	// TODO set up group if specified

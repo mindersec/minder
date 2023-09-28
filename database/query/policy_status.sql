@@ -25,7 +25,7 @@ INSERT INTO rule_evaluation_status (
     details,
     last_updated
 ) VALUES ($1, $2, $3, $4, $5, $6, $7, NOW())
-ON CONFLICT(policy_id, repository_id, COALESCE(artifact_id, 0), entity, rule_type_id) DO UPDATE SET
+ON CONFLICT(policy_id, repository_id, COALESCE(artifact_id, '00000000-0000-0000-0000-000000000000'::UUID), entity, rule_type_id) DO UPDATE SET
     eval_status = $6,
     details = $7,
     last_updated = NOW()
@@ -53,9 +53,9 @@ INNER JOIN rule_type rt ON rt.id = res.rule_type_id
 WHERE res.policy_id = $1 AND
     (
         CASE
-            WHEN sqlc.narg(entity_type)::entities = 'repository' AND res.repository_id = sqlc.narg(entity_id)::integer THEN true
-            WHEN sqlc.narg(entity_type)::entities  = 'artifact' AND res.artifact_id = sqlc.narg(entity_id)::integer THEN true
-            WHEN sqlc.narg(entity_id)::integer IS NULL THEN true
+            WHEN sqlc.narg(entity_type)::entities = 'repository' AND res.repository_id = sqlc.narg(entity_id)::UUID THEN true
+            WHEN sqlc.narg(entity_type)::entities  = 'artifact' AND res.artifact_id = sqlc.narg(entity_id)::UUID THEN true
+            WHEN sqlc.narg(entity_id)::UUID IS NULL THEN true
             ELSE false
         END
     );

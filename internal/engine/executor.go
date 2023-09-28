@@ -20,6 +20,7 @@ import (
 	"log"
 
 	"github.com/ThreeDotsLabs/watermill/message"
+	"github.com/google/uuid"
 	"github.com/rs/zerolog"
 
 	"github.com/stacklok/mediator/internal/config"
@@ -116,6 +117,11 @@ func (e *Executor) evalEntityEvent(
 	}
 
 	for _, pol := range MergeDatabaseListIntoPolicies(dbpols, ectx) {
+		policyID, err := uuid.Parse(*pol.Id)
+		if err != nil {
+			return fmt.Errorf("error parsing policy ID: %w", err)
+		}
+
 		// Given we're dealing with a repository event, we can assume that the
 		// entity is a repository.
 		relevant, err := GetRulesForEntity(pol, inf.Type)
@@ -125,19 +131,30 @@ func (e *Executor) evalEntityEvent(
 
 		// Let's evaluate all the rules for this policy
 		err = TraverseRules(relevant, func(rule *pb.Policy_Rule) error {
-			rt, rte, err := e.getEvaluator(ctx, *pol.Id, ectx.Provider.Name, cli, ectx, rule)
+			rt, rte, err := e.getEvaluator(ctx, policyID, ectx.Provider.Name, cli, ectx, rule)
 			if err != nil {
 				return err
 			}
+
+			ruleTypeID, err := uuid.Parse(*rt.Id)
+			if err != nil {
+				return fmt.Errorf("error parsing rule type ID: %w", err)
+			}
+
 			result := rte.Eval(ctx, inf.Entity, rule.Def.AsMap(), rule.Params.AsMap())
 
 			logEval(ctx, pol, rule, inf, result)
 
 			return e.createOrUpdateEvalStatus(ctx, inf.evalStatusParams(
-				*pol.Id, *rt.Id, result))
+				policyID, ruleTypeID, result))
 		})
 		if err != nil {
-			return fmt.Errorf("error traversing rules for policy %d: %w", pol.Id, err)
+			p := pol.Name
+			if pol.Id != nil {
+				p = *pol.Id
+			}
+
+			return fmt.Errorf("error traversing rules for policy %s: %w", p, err)
 		}
 
 	}
@@ -147,13 +164,13 @@ func (e *Executor) evalEntityEvent(
 
 func (e *Executor) getEvaluator(
 	ctx context.Context,
-	policyID int32,
+	policyID uuid.UUID,
 	prov string,
 	cli *providers.ProviderBuilder,
 	ectx *EntityContext,
 	rule *pb.Policy_Rule,
 ) (*pb.RuleType, *RuleTypeEngine, error) {
-	log.Printf("Evaluating rule: %s for policy %d", rule.Type, policyID)
+	log.Printf("Evaluating rule: %s for policy %s", rule.Type, policyID)
 
 	dbrt, err := e.querier.GetRuleTypeByName(ctx, db.GetRuleTypeByNameParams{
 		Provider: prov,
@@ -162,12 +179,12 @@ func (e *Executor) getEvaluator(
 	})
 
 	if err != nil {
-		return nil, nil, fmt.Errorf("error getting rule type when traversing policy %d: %w", policyID, err)
+		return nil, nil, fmt.Errorf("error getting rule type when traversing policy %s: %w", policyID, err)
 	}
 
 	rt, err := RuleTypePBFromDB(&dbrt, ectx)
 	if err != nil {
-		return nil, nil, fmt.Errorf("error parsing rule type when traversing policy %d: %w", policyID, err)
+		return nil, nil, fmt.Errorf("error parsing rule type when traversing policy %s: %w", policyID, err)
 	}
 
 	// TODO(jaosorior): Rule types should be cached in memory so
@@ -191,10 +208,10 @@ func logEval(
 		Str("policy", pol.Name).
 		Str("ruleType", rule.Type).
 		Int32("groupId", inf.GroupID).
-		Int32("repositoryId", inf.OwnershipData[RepositoryIDEventKey])
+		Str("repositoryId", inf.OwnershipData[RepositoryIDEventKey])
 
 	if aID, ok := inf.OwnershipData[ArtifactIDEventKey]; ok {
-		logger = logger.Int32("artifactId", aID)
+		logger = logger.Str("artifactId", aID)
 	}
 
 	logger.Err(result).Msg("evaluated rule")

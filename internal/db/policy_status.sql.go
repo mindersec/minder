@@ -7,8 +7,9 @@ package db
 
 import (
 	"context"
-	"database/sql"
 	"time"
+
+	"github.com/google/uuid"
 )
 
 const createRuleEvaluationStatusForRepository = `-- name: CreateRuleEvaluationStatusForRepository :exec
@@ -24,9 +25,9 @@ INSERT INTO rule_evaluation_status (
 `
 
 type CreateRuleEvaluationStatusForRepositoryParams struct {
-	PolicyID     int32           `json:"policy_id"`
-	RepositoryID sql.NullInt32   `json:"repository_id"`
-	RuleTypeID   int32           `json:"rule_type_id"`
+	PolicyID     uuid.UUID       `json:"policy_id"`
+	RepositoryID uuid.NullUUID   `json:"repository_id"`
+	RuleTypeID   uuid.UUID       `json:"rule_type_id"`
 	EvalStatus   EvalStatusTypes `json:"eval_status"`
 	Details      string          `json:"details"`
 }
@@ -49,7 +50,7 @@ WHERE p.group_id = $1
 `
 
 type GetPolicyStatusByGroupRow struct {
-	ID           int32           `json:"id"`
+	ID           uuid.UUID       `json:"id"`
 	Name         string          `json:"name"`
 	PolicyStatus EvalStatusTypes `json:"policy_status"`
 	LastUpdated  time.Time       `json:"last_updated"`
@@ -90,12 +91,12 @@ WHERE p.id = $1 AND p.group_id = $2
 `
 
 type GetPolicyStatusByIdAndGroupParams struct {
-	ID      int32 `json:"id"`
-	GroupID int32 `json:"group_id"`
+	ID      uuid.UUID `json:"id"`
+	GroupID int32     `json:"group_id"`
 }
 
 type GetPolicyStatusByIdAndGroupRow struct {
-	ID           int32           `json:"id"`
+	ID           uuid.UUID       `json:"id"`
 	Name         string          `json:"name"`
 	PolicyStatus EvalStatusTypes `json:"policy_status"`
 	LastUpdated  time.Time       `json:"last_updated"`
@@ -121,31 +122,31 @@ INNER JOIN rule_type rt ON rt.id = res.rule_type_id
 WHERE res.policy_id = $1 AND
     (
         CASE
-            WHEN $2::entities = 'repository' AND res.repository_id = $3::integer THEN true
-            WHEN $2::entities  = 'artifact' AND res.artifact_id = $3::integer THEN true
-            WHEN $3::integer IS NULL THEN true
+            WHEN $2::entities = 'repository' AND res.repository_id = $3::UUID THEN true
+            WHEN $2::entities  = 'artifact' AND res.artifact_id = $3::UUID THEN true
+            WHEN $3::UUID IS NULL THEN true
             ELSE false
         END
     )
 `
 
 type ListRuleEvaluationStatusByPolicyIdParams struct {
-	PolicyID   int32         `json:"policy_id"`
+	PolicyID   uuid.UUID     `json:"policy_id"`
 	EntityType NullEntities  `json:"entity_type"`
-	EntityID   sql.NullInt32 `json:"entity_id"`
+	EntityID   uuid.NullUUID `json:"entity_id"`
 }
 
 type ListRuleEvaluationStatusByPolicyIdRow struct {
 	EvalStatus   EvalStatusTypes `json:"eval_status"`
 	LastUpdated  time.Time       `json:"last_updated"`
 	Details      string          `json:"details"`
-	RepositoryID sql.NullInt32   `json:"repository_id"`
+	RepositoryID uuid.NullUUID   `json:"repository_id"`
 	Entity       Entities        `json:"entity"`
 	RepoName     string          `json:"repo_name"`
 	RepoOwner    string          `json:"repo_owner"`
 	Provider     string          `json:"provider"`
 	RuleTypeName string          `json:"rule_type_name"`
-	RuleTypeID   int32           `json:"rule_type_id"`
+	RuleTypeID   uuid.UUID       `json:"rule_type_id"`
 }
 
 func (q *Queries) ListRuleEvaluationStatusByPolicyId(ctx context.Context, arg ListRuleEvaluationStatusByPolicyIdParams) ([]ListRuleEvaluationStatusByPolicyIdRow, error) {
@@ -191,7 +192,7 @@ UPDATE rule_evaluation_status
 type UpdateRuleEvaluationStatusForRepositoryParams struct {
 	EvalStatus EvalStatusTypes `json:"eval_status"`
 	Details    string          `json:"details"`
-	ID         int32           `json:"id"`
+	ID         uuid.UUID       `json:"id"`
 }
 
 func (q *Queries) UpdateRuleEvaluationStatusForRepository(ctx context.Context, arg UpdateRuleEvaluationStatusForRepositoryParams) error {
@@ -210,7 +211,7 @@ INSERT INTO rule_evaluation_status (
     details,
     last_updated
 ) VALUES ($1, $2, $3, $4, $5, $6, $7, NOW())
-ON CONFLICT(policy_id, repository_id, COALESCE(artifact_id, 0), entity, rule_type_id) DO UPDATE SET
+ON CONFLICT(policy_id, repository_id, COALESCE(artifact_id, '00000000-0000-0000-0000-000000000000'::UUID), entity, rule_type_id) DO UPDATE SET
     eval_status = $6,
     details = $7,
     last_updated = NOW()
@@ -222,10 +223,10 @@ WHERE rule_evaluation_status.policy_id = $1
 `
 
 type UpsertRuleEvaluationStatusParams struct {
-	PolicyID     int32           `json:"policy_id"`
-	RepositoryID sql.NullInt32   `json:"repository_id"`
-	ArtifactID   sql.NullInt32   `json:"artifact_id"`
-	RuleTypeID   int32           `json:"rule_type_id"`
+	PolicyID     uuid.UUID       `json:"policy_id"`
+	RepositoryID uuid.NullUUID   `json:"repository_id"`
+	ArtifactID   uuid.NullUUID   `json:"artifact_id"`
+	RuleTypeID   uuid.UUID       `json:"rule_type_id"`
 	Entity       Entities        `json:"entity"`
 	EvalStatus   EvalStatusTypes `json:"eval_status"`
 	Details      string          `json:"details"`

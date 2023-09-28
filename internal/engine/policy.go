@@ -244,8 +244,9 @@ func MergeDatabaseListIntoPolicies(ppl []db.ListPoliciesByGroupIDRow, ectx *Enti
 		// first we check if policy already exists, if not we create a new one
 		// first we check if policy already exists, if not we create a new one
 		if _, ok := policies[p.Name]; !ok {
+			policyID := p.ID.String()
 			policies[p.Name] = &pb.Policy{
-				Id:   &p.ID,
+				Id:   &policyID,
 				Name: p.Name,
 				Context: &pb.Context{
 					Provider: ectx.Provider.Name,
@@ -276,8 +277,9 @@ func MergeDatabaseGetIntoPolicies(ppl []db.GetPolicyByGroupAndIDRow, ectx *Entit
 
 		// first we check if policy already exists, if not we create a new one
 		if _, ok := policies[p.Name]; !ok {
+			policyID := p.ID.String()
 			policies[p.Name] = &pb.Policy{
-				Id:   &p.ID,
+				Id:   &policyID,
 				Name: p.Name,
 				Context: &pb.Context{
 					Provider: ectx.Provider.Name,

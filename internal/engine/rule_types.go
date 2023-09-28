@@ -261,7 +261,7 @@ func RuleTypePBFromDB(rt *db.RuleType, ectx *EntityContext) (*pb.RuleType, error
 		return nil, fmt.Errorf("cannot get rule type definition: %w", err)
 	}
 
-	id := rt.ID
+	id := rt.ID.String()
 
 	return &pb.RuleType{
 		Id:   &id,

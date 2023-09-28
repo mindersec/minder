@@ -38,7 +38,7 @@ mediator control plane.`,
 	},
 	Run: func(cmd *cobra.Command, args []string) {
 		// delete the policy via GRPC
-		id := util.GetConfigValue("id", "id", cmd, int32(0)).(int32)
+		id := viper.GetString("id")
 
 		conn, err := util.GrpcForCommand(cmd)
 
@@ -61,7 +61,7 @@ mediator control plane.`,
 
 func init() {
 	ruleTypeCmd.AddCommand(ruleType_deleteCmd)
-	ruleType_deleteCmd.Flags().Int32P("id", "i", 0, "id of rule type to delete")
+	ruleType_deleteCmd.Flags().StringP("id", "i", "", "id of rule type to delete")
 	err := ruleType_deleteCmd.MarkFlagRequired("id")
 	util.ExitNicelyOnError(err, "Error marking flag as required")
 }

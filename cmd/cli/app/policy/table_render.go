@@ -16,8 +16,6 @@
 package policy
 
 import (
-	"fmt"
-
 	"github.com/olekukonko/tablewriter"
 	"github.com/spf13/cobra"
 	"google.golang.org/protobuf/types/known/structpb"
@@ -80,7 +78,7 @@ func renderRuleTable(
 	def := marshalStructOrEmpty(rule.Def)
 
 	row := []string{
-		fmt.Sprintf("%d", *p.Id),
+		*p.Id,
 		p.Name,
 		p.Context.Provider,
 		entType.String(),

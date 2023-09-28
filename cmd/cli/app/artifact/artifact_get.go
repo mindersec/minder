@@ -39,7 +39,7 @@ var artifact_getCmd = &cobra.Command{
 	},
 	RunE: func(cmd *cobra.Command, args []string) error {
 		tag := util.GetConfigValue("tag", "tag", cmd, "").(string)
-		artifactID := viper.GetInt32("id")
+		artifactID := viper.GetString("id")
 		latest_versions := viper.GetInt32("latest-versions")
 
 		// tag and latest versions cannot be set at same time
@@ -72,7 +72,7 @@ var artifact_getCmd = &cobra.Command{
 
 func init() {
 	ArtifactCmd.AddCommand(artifact_getCmd)
-	artifact_getCmd.Flags().Int32P("id", "i", 0, "ID of the artifact to get info from")
+	artifact_getCmd.Flags().StringP("id", "i", "", "ID of the artifact to get info from")
 	artifact_getCmd.Flags().Int32P("latest-versions", "v", 1, "Latest artifact versions to retrieve")
 	artifact_getCmd.Flags().StringP("tag", "", "", "Specific artifact tag to retrieve")
 	if err := artifact_getCmd.MarkFlagRequired("id"); err != nil {

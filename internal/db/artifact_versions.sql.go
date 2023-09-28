@@ -10,6 +10,8 @@ import (
 	"database/sql"
 	"encoding/json"
 	"time"
+
+	"github.com/google/uuid"
 )
 
 const createArtifactVersion = `-- name: CreateArtifactVersion :one
@@ -26,7 +28,7 @@ INSERT INTO artifact_versions (
 `
 
 type CreateArtifactVersionParams struct {
-	ArtifactID            int32           `json:"artifact_id"`
+	ArtifactID            uuid.UUID       `json:"artifact_id"`
 	Version               int64           `json:"version"`
 	Tags                  sql.NullString  `json:"tags"`
 	Sha                   string          `json:"sha"`
@@ -64,7 +66,7 @@ DELETE FROM artifact_versions
 WHERE id = $1
 `
 
-func (q *Queries) DeleteArtifactVersion(ctx context.Context, id int32) error {
+func (q *Queries) DeleteArtifactVersion(ctx context.Context, id uuid.UUID) error {
 	_, err := q.db.ExecContext(ctx, deleteArtifactVersion, id)
 	return err
 }
@@ -75,7 +77,7 @@ WHERE artifact_id = $1 AND created_at <= $2
 `
 
 type DeleteOldArtifactVersionsParams struct {
-	ArtifactID int32     `json:"artifact_id"`
+	ArtifactID uuid.UUID `json:"artifact_id"`
 	CreatedAt  time.Time `json:"created_at"`
 }
 
@@ -88,7 +90,7 @@ const getArtifactVersionByID = `-- name: GetArtifactVersionByID :one
 SELECT id, artifact_id, version, tags, sha, signature_verification, github_workflow, created_at FROM artifact_versions WHERE id = $1
 `
 
-func (q *Queries) GetArtifactVersionByID(ctx context.Context, id int32) (ArtifactVersion, error) {
+func (q *Queries) GetArtifactVersionByID(ctx context.Context, id uuid.UUID) (ArtifactVersion, error) {
 	row := q.db.QueryRowContext(ctx, getArtifactVersionByID, id)
 	var i ArtifactVersion
 	err := row.Scan(
@@ -132,7 +134,7 @@ LIMIT COALESCE($2::int, 2147483647)
 `
 
 type ListArtifactVersionsByArtifactIDParams struct {
-	ArtifactID int32         `json:"artifact_id"`
+	ArtifactID uuid.UUID     `json:"artifact_id"`
 	Limit      sql.NullInt32 `json:"limit"`
 }
 
@@ -177,7 +179,7 @@ LIMIT COALESCE($3::int, 2147483647)
 `
 
 type ListArtifactVersionsByArtifactIDAndTagParams struct {
-	ArtifactID int32          `json:"artifact_id"`
+	ArtifactID uuid.UUID      `json:"artifact_id"`
 	Tags       sql.NullString `json:"tags"`
 	Limit      sql.NullInt32  `json:"limit"`
 }
@@ -239,7 +241,7 @@ RETURNING id, artifact_id, version, tags, sha, signature_verification, github_wo
 `
 
 type UpsertArtifactVersionParams struct {
-	ArtifactID            int32           `json:"artifact_id"`
+	ArtifactID            uuid.UUID       `json:"artifact_id"`
 	Version               int64           `json:"version"`
 	Tags                  sql.NullString  `json:"tags"`
 	Sha                   string          `json:"sha"`

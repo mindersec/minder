@@ -153,7 +153,7 @@ func (s *Reconciler) publishPolicyInitEvents(
 		// This is a non-fatal error, so we'll just log it
 		// and continue
 		if err != nil {
-			return fmt.Errorf("error publishing init event for repo %d: %v", dbrepo.ID, err)
+			return fmt.Errorf("error publishing init event for repo %s: %v", dbrepo.ID, err)
 		}
 	}
 
@@ -180,7 +180,7 @@ func (s *Reconciler) publishArtifactPolicyInitEvents(
 		return fmt.Errorf("error getting artifacts: %w", err)
 	}
 	if len(dbArtifacts) == 0 {
-		zerolog.Ctx(ctx).Debug().Int32("repository", dbrepo.ID).Msgf("no artifacts found, skipping")
+		zerolog.Ctx(ctx).Debug().Str("repository", dbrepo.ID.String()).Msgf("no artifacts found, skipping")
 		return nil
 	}
 
@@ -191,7 +191,7 @@ func (s *Reconciler) publishArtifactPolicyInitEvents(
 			Limit:      sql.NullInt32{Valid: false},
 		})
 		if err != nil {
-			log.Printf("error getting artifact versions for artifact %d: %v", dbA.ID, err)
+			log.Printf("error getting artifact versions for artifact %s: %v", dbA.ID, err)
 			continue
 		}
 
@@ -218,7 +218,7 @@ func (s *Reconciler) publishArtifactPolicyInitEvents(
 
 			versionedArtifact := &pb.VersionedArtifact{
 				Artifact: &pb.Artifact{
-					ArtifactPk: int64(dbA.ID),
+					ArtifactPk: dbA.ID.String(),
 					Owner:      dbrepo.RepoOwner,
 					Name:       dbA.ArtifactName,
 					Type:       dbA.ArtifactType,
@@ -247,7 +247,7 @@ func (s *Reconciler) publishArtifactPolicyInitEvents(
 			// This is a non-fatal error, so we'll just log it
 			// and continue
 			if err != nil {
-				log.Printf("error publishing init event for repo %d: %v", dbrepo.ID, err)
+				log.Printf("error publishing init event for repo %s: %v", dbrepo.ID, err)
 				continue
 			}
 		}

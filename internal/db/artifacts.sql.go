@@ -8,6 +8,8 @@ package db
 import (
 	"context"
 	"time"
+
+	"github.com/google/uuid"
 )
 
 const createArtifact = `-- name: CreateArtifact :one
@@ -19,10 +21,10 @@ INSERT INTO artifacts (
 `
 
 type CreateArtifactParams struct {
-	RepositoryID       int32  `json:"repository_id"`
-	ArtifactName       string `json:"artifact_name"`
-	ArtifactType       string `json:"artifact_type"`
-	ArtifactVisibility string `json:"artifact_visibility"`
+	RepositoryID       uuid.UUID `json:"repository_id"`
+	ArtifactName       string    `json:"artifact_name"`
+	ArtifactType       string    `json:"artifact_type"`
+	ArtifactVisibility string    `json:"artifact_visibility"`
 }
 
 func (q *Queries) CreateArtifact(ctx context.Context, arg CreateArtifactParams) (Artifact, error) {
@@ -50,7 +52,7 @@ DELETE FROM artifacts
 WHERE id = $1
 `
 
-func (q *Queries) DeleteArtifact(ctx context.Context, id int32) error {
+func (q *Queries) DeleteArtifact(ctx context.Context, id uuid.UUID) error {
 	_, err := q.db.ExecContext(ctx, deleteArtifact, id)
 	return err
 }
@@ -64,8 +66,8 @@ WHERE artifacts.id = $1
 `
 
 type GetArtifactByIDRow struct {
-	ID                 int32     `json:"id"`
-	RepositoryID       int32     `json:"repository_id"`
+	ID                 uuid.UUID `json:"id"`
+	RepositoryID       uuid.UUID `json:"repository_id"`
 	ArtifactName       string    `json:"artifact_name"`
 	ArtifactType       string    `json:"artifact_type"`
 	ArtifactVisibility string    `json:"artifact_visibility"`
@@ -76,7 +78,7 @@ type GetArtifactByIDRow struct {
 	RepoName           string    `json:"repo_name"`
 }
 
-func (q *Queries) GetArtifactByID(ctx context.Context, id int32) (GetArtifactByIDRow, error) {
+func (q *Queries) GetArtifactByID(ctx context.Context, id uuid.UUID) (GetArtifactByIDRow, error) {
 	row := q.db.QueryRowContext(ctx, getArtifactByID, id)
 	var i GetArtifactByIDRow
 	err := row.Scan(
@@ -100,7 +102,7 @@ WHERE repository_id = $1
 ORDER BY id
 `
 
-func (q *Queries) ListArtifactsByRepoID(ctx context.Context, repositoryID int32) ([]Artifact, error) {
+func (q *Queries) ListArtifactsByRepoID(ctx context.Context, repositoryID uuid.UUID) ([]Artifact, error) {
 	rows, err := q.db.QueryContext(ctx, listArtifactsByRepoID, repositoryID)
 	if err != nil {
 		return nil, err
@@ -147,10 +149,10 @@ RETURNING id, repository_id, artifact_name, artifact_type, artifact_visibility, 
 `
 
 type UpsertArtifactParams struct {
-	RepositoryID       int32  `json:"repository_id"`
-	ArtifactName       string `json:"artifact_name"`
-	ArtifactType       string `json:"artifact_type"`
-	ArtifactVisibility string `json:"artifact_visibility"`
+	RepositoryID       uuid.UUID `json:"repository_id"`
+	ArtifactName       string    `json:"artifact_name"`
+	ArtifactType       string    `json:"artifact_type"`
+	ArtifactVisibility string    `json:"artifact_visibility"`
 }
 
 func (q *Queries) UpsertArtifact(ctx context.Context, arg UpsertArtifactParams) (Artifact, error) {

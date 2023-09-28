@@ -9,6 +9,8 @@ import (
 	"context"
 	"encoding/json"
 	"time"
+
+	"github.com/google/uuid"
 )
 
 const createPolicy = `-- name: CreatePolicy :one
@@ -47,7 +49,7 @@ INSERT INTO entity_policies (
 
 type CreatePolicyForEntityParams struct {
 	Entity          Entities        `json:"entity"`
-	PolicyID        int32           `json:"policy_id"`
+	PolicyID        uuid.UUID       `json:"policy_id"`
 	ContextualRules json.RawMessage `json:"contextual_rules"`
 }
 
@@ -70,7 +72,7 @@ DELETE FROM policies
 WHERE id = $1
 `
 
-func (q *Queries) DeletePolicy(ctx context.Context, id int32) error {
+func (q *Queries) DeletePolicy(ctx context.Context, id uuid.UUID) error {
 	_, err := q.db.ExecContext(ctx, deletePolicy, id)
 	return err
 }
@@ -81,20 +83,20 @@ WHERE policies.group_id = $1 AND policies.id = $2
 `
 
 type GetPolicyByGroupAndIDParams struct {
-	GroupID int32 `json:"group_id"`
-	ID      int32 `json:"id"`
+	GroupID int32     `json:"group_id"`
+	ID      uuid.UUID `json:"id"`
 }
 
 type GetPolicyByGroupAndIDRow struct {
-	ID              int32           `json:"id"`
+	ID              uuid.UUID       `json:"id"`
 	Name            string          `json:"name"`
 	Provider        string          `json:"provider"`
 	GroupID         int32           `json:"group_id"`
 	CreatedAt       time.Time       `json:"created_at"`
 	UpdatedAt       time.Time       `json:"updated_at"`
-	ID_2            int32           `json:"id_2"`
+	ID_2            uuid.UUID       `json:"id_2"`
 	Entity          Entities        `json:"entity"`
-	PolicyID        int32           `json:"policy_id"`
+	PolicyID        uuid.UUID       `json:"policy_id"`
 	ContextualRules json.RawMessage `json:"contextual_rules"`
 	CreatedAt_2     time.Time       `json:"created_at_2"`
 	UpdatedAt_2     time.Time       `json:"updated_at_2"`
@@ -147,15 +149,15 @@ type GetPolicyByGroupAndNameParams struct {
 }
 
 type GetPolicyByGroupAndNameRow struct {
-	ID              int32           `json:"id"`
+	ID              uuid.UUID       `json:"id"`
 	Name            string          `json:"name"`
 	Provider        string          `json:"provider"`
 	GroupID         int32           `json:"group_id"`
 	CreatedAt       time.Time       `json:"created_at"`
 	UpdatedAt       time.Time       `json:"updated_at"`
-	ID_2            int32           `json:"id_2"`
+	ID_2            uuid.UUID       `json:"id_2"`
 	Entity          Entities        `json:"entity"`
-	PolicyID        int32           `json:"policy_id"`
+	PolicyID        uuid.UUID       `json:"policy_id"`
 	ContextualRules json.RawMessage `json:"contextual_rules"`
 	CreatedAt_2     time.Time       `json:"created_at_2"`
 	UpdatedAt_2     time.Time       `json:"updated_at_2"`
@@ -201,7 +203,7 @@ const getPolicyByID = `-- name: GetPolicyByID :one
 SELECT id, name, provider, group_id, created_at, updated_at FROM policies WHERE id = $1
 `
 
-func (q *Queries) GetPolicyByID(ctx context.Context, id int32) (Policy, error) {
+func (q *Queries) GetPolicyByID(ctx context.Context, id uuid.UUID) (Policy, error) {
 	row := q.db.QueryRowContext(ctx, getPolicyByID, id)
 	var i Policy
 	err := row.Scan(
@@ -221,15 +223,15 @@ WHERE policies.group_id = $1
 `
 
 type ListPoliciesByGroupIDRow struct {
-	ID              int32           `json:"id"`
+	ID              uuid.UUID       `json:"id"`
 	Name            string          `json:"name"`
 	Provider        string          `json:"provider"`
 	GroupID         int32           `json:"group_id"`
 	CreatedAt       time.Time       `json:"created_at"`
 	UpdatedAt       time.Time       `json:"updated_at"`
-	ID_2            int32           `json:"id_2"`
+	ID_2            uuid.UUID       `json:"id_2"`
 	Entity          Entities        `json:"entity"`
-	PolicyID        int32           `json:"policy_id"`
+	PolicyID        uuid.UUID       `json:"policy_id"`
 	ContextualRules json.RawMessage `json:"contextual_rules"`
 	CreatedAt_2     time.Time       `json:"created_at_2"`
 	UpdatedAt_2     time.Time       `json:"updated_at_2"`

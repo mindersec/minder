@@ -20,6 +20,7 @@ import (
 	"errors"
 	"strings"
 
+	"github.com/google/uuid"
 	"google.golang.org/grpc/codes"
 	"google.golang.org/grpc/status"
 	"google.golang.org/protobuf/encoding/protojson"
@@ -27,6 +28,7 @@ import (
 
 	"github.com/stacklok/mediator/internal/auth"
 	"github.com/stacklok/mediator/internal/db"
+	"github.com/stacklok/mediator/internal/util"
 	pb "github.com/stacklok/mediator/pkg/api/protobuf/go/mediator/v1"
 )
 
@@ -74,7 +76,7 @@ func (s *Server) ListArtifacts(ctx context.Context, in *pb.ListArtifactsRequest)
 
 		for _, artifact := range artifacts {
 			results = append(results, &pb.Artifact{
-				ArtifactPk: int64(artifact.ID),
+				ArtifactPk: artifact.ID.String(),
 				Owner:      repository.RepoOwner,
 				Name:       artifact.ArtifactName,
 				Type:       artifact.ArtifactType,
@@ -99,8 +101,13 @@ func (s *Server) GetArtifactById(ctx context.Context, in *pb.GetArtifactByIdRequ
 		return nil, status.Errorf(codes.InvalidArgument, "latest versions must be between 1 and 10")
 	}
 
+	parsedArtifactID, err := uuid.Parse(in.Id)
+	if err != nil {
+		return nil, util.UserVisibleError(codes.InvalidArgument, "invalid artifact ID")
+	}
+
 	// retrieve artifact details
-	artifact, err := s.store.GetArtifactByID(ctx, in.Id)
+	artifact, err := s.store.GetArtifactByID(ctx, parsedArtifactID)
 	if err != nil {
 		if errors.Is(err, sql.ErrNoRows) {
 			return nil, status.Errorf(codes.NotFound, "artifact not found")
@@ -121,13 +128,13 @@ func (s *Server) GetArtifactById(ctx context.Context, in *pb.GetArtifactByIdRequ
 	var versions []db.ArtifactVersion
 	if in.Tag != "" {
 		versions, err = s.store.ListArtifactVersionsByArtifactIDAndTag(ctx,
-			db.ListArtifactVersionsByArtifactIDAndTagParams{ArtifactID: in.Id,
+			db.ListArtifactVersionsByArtifactIDAndTagParams{ArtifactID: parsedArtifactID,
 				Tags:  sql.NullString{Valid: true, String: in.Tag},
 				Limit: sql.NullInt32{Valid: true, Int32: in.LatestVersions}})
 
 	} else {
 		versions, err = s.store.ListArtifactVersionsByArtifactID(ctx,
-			db.ListArtifactVersionsByArtifactIDParams{ArtifactID: in.Id,
+			db.ListArtifactVersionsByArtifactIDParams{ArtifactID: parsedArtifactID,
 				Limit: sql.NullInt32{Valid: true, Int32: in.LatestVersions}})
 	}
 
@@ -157,7 +164,7 @@ func (s *Server) GetArtifactById(ctx context.Context, in *pb.GetArtifactByIdRequ
 		}
 
 		final_versions = append(final_versions, &pb.ArtifactVersion{
-			VersionId:             int64(version.ID),
+			VersionId:             version.Version,
 			Tags:                  tags,
 			Sha:                   version.Sha,
 			SignatureVerification: sigVerification,
@@ -168,7 +175,7 @@ func (s *Server) GetArtifactById(ctx context.Context, in *pb.GetArtifactByIdRequ
 	}
 
 	return &pb.GetArtifactByIdResponse{Artifact: &pb.Artifact{
-		ArtifactPk: int64(artifact.ID),
+		ArtifactPk: artifact.ID.String(),
 		Owner:      artifact.RepoOwner,
 		Name:       artifact.ArtifactName,
 		Type:       artifact.ArtifactType,

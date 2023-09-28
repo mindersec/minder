@@ -51,8 +51,8 @@ mediator control plane for an specific provider/group or policy id, entity type 
 
 		provider := viper.GetString("provider")
 		group := viper.GetString("group")
-		policyId := viper.GetInt32("policy")
-		entityId := viper.GetInt32("entity")
+		policyId := viper.GetString("policy")
+		entityId := viper.GetString("entity")
 		entityType := viper.GetString("entity-type")
 		format := viper.GetString("output")
 
@@ -64,14 +64,6 @@ mediator control plane for an specific provider/group or policy id, entity type 
 
 		if provider == "" {
 			return fmt.Errorf("provider must be set")
-		}
-
-		if policyId == 0 {
-			return fmt.Errorf("policy-id must be set")
-		}
-
-		if entityId == 0 {
-			return fmt.Errorf("entity-id must be set")
 		}
 
 		req := &pb.GetPolicyStatusByIdRequest{
@@ -117,9 +109,17 @@ func init() {
 	PolicyStatusCmd.AddCommand(policystatus_getCmd)
 	policystatus_getCmd.Flags().StringP("provider", "p", "github", "Provider to get policy status for")
 	policystatus_getCmd.Flags().StringP("group", "g", "", "group id to get policy status for")
-	policystatus_getCmd.Flags().Int32P("policy", "i", 0, "policy id to get policy status for")
+	policystatus_getCmd.Flags().StringP("policy", "i", "", "policy id to get policy status for")
 	policystatus_getCmd.Flags().StringP("entity-type", "t", "",
 		fmt.Sprintf("the entity type to get policy status for (one of %s)", entities.KnownTypesCSV()))
-	policystatus_getCmd.Flags().Int32P("entity", "e", 0, "entity id to get policy status for")
+	policystatus_getCmd.Flags().StringP("entity", "e", "", "entity id to get policy status for")
 	policystatus_getCmd.Flags().StringP("output", "o", app.Table, "Output format (json, yaml or table)")
+
+	// mark as required
+	if err := policystatus_getCmd.MarkFlagRequired("policy"); err != nil {
+		util.ExitNicelyOnError(err, "error marking flag as required")
+	}
+	if err := policystatus_getCmd.MarkFlagRequired("entity"); err != nil {
+		util.ExitNicelyOnError(err, "error marking flag as required")
+	}
 }

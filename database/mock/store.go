@@ -379,7 +379,7 @@ func (mr *MockStoreMockRecorder) DeleteAccessToken(arg0, arg1 interface{}) *gomo
 }
 
 // DeleteArtifact mocks base method.
-func (m *MockStore) DeleteArtifact(arg0 context.Context, arg1 int32) error {
+func (m *MockStore) DeleteArtifact(arg0 context.Context, arg1 uuid.UUID) error {
 	m.ctrl.T.Helper()
 	ret := m.ctrl.Call(m, "DeleteArtifact", arg0, arg1)
 	ret0, _ := ret[0].(error)
@@ -393,7 +393,7 @@ func (mr *MockStoreMockRecorder) DeleteArtifact(arg0, arg1 interface{}) *gomock.
 }
 
 // DeleteArtifactVersion mocks base method.
-func (m *MockStore) DeleteArtifactVersion(arg0 context.Context, arg1 int32) error {
+func (m *MockStore) DeleteArtifactVersion(arg0 context.Context, arg1 uuid.UUID) error {
 	m.ctrl.T.Helper()
 	ret := m.ctrl.Call(m, "DeleteArtifactVersion", arg0, arg1)
 	ret0, _ := ret[0].(error)
@@ -463,7 +463,7 @@ func (mr *MockStoreMockRecorder) DeleteOrganization(arg0, arg1 interface{}) *gom
 }
 
 // DeletePolicy mocks base method.
-func (m *MockStore) DeletePolicy(arg0 context.Context, arg1 int32) error {
+func (m *MockStore) DeletePolicy(arg0 context.Context, arg1 uuid.UUID) error {
 	m.ctrl.T.Helper()
 	ret := m.ctrl.Call(m, "DeletePolicy", arg0, arg1)
 	ret0, _ := ret[0].(error)
@@ -506,7 +506,7 @@ func (mr *MockStoreMockRecorder) DeleteProvider(arg0, arg1 interface{}) *gomock.
 }
 
 // DeleteRepository mocks base method.
-func (m *MockStore) DeleteRepository(arg0 context.Context, arg1 int32) error {
+func (m *MockStore) DeleteRepository(arg0 context.Context, arg1 uuid.UUID) error {
 	m.ctrl.T.Helper()
 	ret := m.ctrl.Call(m, "DeleteRepository", arg0, arg1)
 	ret0, _ := ret[0].(error)
@@ -534,7 +534,7 @@ func (mr *MockStoreMockRecorder) DeleteRole(arg0, arg1 interface{}) *gomock.Call
 }
 
 // DeleteRuleType mocks base method.
-func (m *MockStore) DeleteRuleType(arg0 context.Context, arg1 int32) error {
+func (m *MockStore) DeleteRuleType(arg0 context.Context, arg1 uuid.UUID) error {
 	m.ctrl.T.Helper()
 	ret := m.ctrl.Call(m, "DeleteRuleType", arg0, arg1)
 	ret0, _ := ret[0].(error)
@@ -649,7 +649,7 @@ func (mr *MockStoreMockRecorder) GetAccessTokenSinceDate(arg0, arg1 interface{})
 }
 
 // GetArtifactByID mocks base method.
-func (m *MockStore) GetArtifactByID(arg0 context.Context, arg1 int32) (db.GetArtifactByIDRow, error) {
+func (m *MockStore) GetArtifactByID(arg0 context.Context, arg1 uuid.UUID) (db.GetArtifactByIDRow, error) {
 	m.ctrl.T.Helper()
 	ret := m.ctrl.Call(m, "GetArtifactByID", arg0, arg1)
 	ret0, _ := ret[0].(db.GetArtifactByIDRow)
@@ -664,7 +664,7 @@ func (mr *MockStoreMockRecorder) GetArtifactByID(arg0, arg1 interface{}) *gomock
 }
 
 // GetArtifactVersionByID mocks base method.
-func (m *MockStore) GetArtifactVersionByID(arg0 context.Context, arg1 int32) (db.ArtifactVersion, error) {
+func (m *MockStore) GetArtifactVersionByID(arg0 context.Context, arg1 uuid.UUID) (db.ArtifactVersion, error) {
 	m.ctrl.T.Helper()
 	ret := m.ctrl.Call(m, "GetArtifactVersionByID", arg0, arg1)
 	ret0, _ := ret[0].(db.ArtifactVersion)
@@ -859,7 +859,7 @@ func (mr *MockStoreMockRecorder) GetPolicyByGroupAndName(arg0, arg1 interface{})
 }
 
 // GetPolicyByID mocks base method.
-func (m *MockStore) GetPolicyByID(arg0 context.Context, arg1 int32) (db.Policy, error) {
+func (m *MockStore) GetPolicyByID(arg0 context.Context, arg1 uuid.UUID) (db.Policy, error) {
 	m.ctrl.T.Helper()
 	ret := m.ctrl.Call(m, "GetPolicyByID", arg0, arg1)
 	ret0, _ := ret[0].(db.Policy)
@@ -963,7 +963,7 @@ func (mr *MockStoreMockRecorder) GetQuerierWithTransaction(arg0 interface{}) *go
 }
 
 // GetRepositoryByID mocks base method.
-func (m *MockStore) GetRepositoryByID(arg0 context.Context, arg1 int32) (db.Repository, error) {
+func (m *MockStore) GetRepositoryByID(arg0 context.Context, arg1 uuid.UUID) (db.Repository, error) {
 	m.ctrl.T.Helper()
 	ret := m.ctrl.Call(m, "GetRepositoryByID", arg0, arg1)
 	ret0, _ := ret[0].(db.Repository)
@@ -1068,7 +1068,7 @@ func (mr *MockStoreMockRecorder) GetRootProjects(arg0 interface{}) *gomock.Call 
 }
 
 // GetRuleTypeByID mocks base method.
-func (m *MockStore) GetRuleTypeByID(arg0 context.Context, arg1 int32) (db.RuleType, error) {
+func (m *MockStore) GetRuleTypeByID(arg0 context.Context, arg1 uuid.UUID) (db.RuleType, error) {
 	m.ctrl.T.Helper()
 	ret := m.ctrl.Call(m, "GetRuleTypeByID", arg0, arg1)
 	ret0, _ := ret[0].(db.RuleType)
@@ -1293,7 +1293,7 @@ func (mr *MockStoreMockRecorder) ListArtifactVersionsByArtifactIDAndTag(arg0, ar
 }
 
 // ListArtifactsByRepoID mocks base method.
-func (m *MockStore) ListArtifactsByRepoID(arg0 context.Context, arg1 int32) ([]db.Artifact, error) {
+func (m *MockStore) ListArtifactsByRepoID(arg0 context.Context, arg1 uuid.UUID) ([]db.Artifact, error) {
 	m.ctrl.T.Helper()
 	ret := m.ctrl.Call(m, "ListArtifactsByRepoID", arg0, arg1)
 	ret0, _ := ret[0].([]db.Artifact)
