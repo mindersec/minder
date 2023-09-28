@@ -14,8 +14,8 @@ medic rule_type delete [flags]
 ### Options
 
 ```
-  -h, --help       help for delete
-  -i, --id int32   id of rule type to delete
+  -h, --help        help for delete
+  -i, --id string   id of rule type to delete
 ```
 
 ### Options inherited from parent commands
