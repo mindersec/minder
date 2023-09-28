@@ -29,9 +29,6 @@ import (
 	"encoding/json"
 	"errors"
 	"fmt"
-	"github.com/google/uuid"
-	"github.com/stacklok/mediator/internal/db"
-	"google.golang.org/protobuf/types/known/timestamppb"
 	"io"
 	"io/fs"
 	"log"
@@ -43,6 +40,7 @@ import (
 	"syscall"
 	"time"
 
+	"github.com/google/uuid"
 	_ "github.com/lib/pq" // nolint
 	"github.com/spf13/cobra"
 	"github.com/spf13/viper"
@@ -53,6 +51,10 @@ import (
 	"google.golang.org/grpc/credentials/insecure"
 	"google.golang.org/protobuf/encoding/protojson"
 	"google.golang.org/protobuf/reflect/protoreflect"
+	"google.golang.org/protobuf/types/known/timestamppb"
+
+	"github.com/stacklok/mediator/internal/db"
+	pb "github.com/stacklok/mediator/pkg/api/protobuf/go/mediator/v1"
 )
 
 // GetConfigValue is a helper function that retrieves a configuration value
@@ -442,6 +444,7 @@ func Int32FromString(v string) (int32, error) {
 	return int32(asInt32), nil
 }
 
+// GetArtifactWithVersions retrieves an artifact and its versions from the database
 func GetArtifactWithVersions(ctx context.Context, store db.Store, repoID, artifactID uuid.UUID) (*pb.Artifact, error) {
 	// Get repository data - we need the owner and name
 	dbrepo, err := store.GetRepositoryByID(ctx, repoID)
