@@ -40,6 +40,7 @@ import (
 	"google.golang.org/grpc/credentials/insecure"
 	"google.golang.org/grpc/reflection"
 
+	"github.com/stacklok/mediator/internal/auth"
 	"github.com/stacklok/mediator/internal/config"
 	"github.com/stacklok/mediator/internal/crypto"
 	"github.com/stacklok/mediator/internal/db"
@@ -61,6 +62,7 @@ type Server struct {
 	cfg        *config.Config
 	evt        *events.Eventer
 	grpcServer *grpc.Server
+	vldtr      auth.JwtValidator
 	pb.UnimplementedHealthServiceServer
 	pb.UnimplementedOAuthServiceServer
 	pb.UnimplementedAuthServiceServer
@@ -79,7 +81,7 @@ type Server struct {
 }
 
 // NewServer creates a new server instance
-func NewServer(store db.Store, evt *events.Eventer, cfg *config.Config) (*Server, error) {
+func NewServer(store db.Store, evt *events.Eventer, cfg *config.Config, vldtr auth.JwtValidator) (*Server, error) {
 	eng, err := crypto.EngineFromAuthConfig(&cfg.Auth)
 	if err != nil {
 		return nil, fmt.Errorf("failed to create crypto engine: %w", err)
@@ -89,6 +91,7 @@ func NewServer(store db.Store, evt *events.Eventer, cfg *config.Config) (*Server
 		cfg:          cfg,
 		evt:          evt,
 		cryptoEngine: eng,
+		vldtr:        vldtr,
 	}, nil
 }
 

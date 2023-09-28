@@ -241,39 +241,6 @@
         ]
       }
     },
-    "/api/v1/auth/login": {
-      "post": {
-        "summary": "LogIn to Mediator",
-        "operationId": "AuthService_LogIn",
-        "responses": {
-          "200": {
-            "description": "A successful response.",
-            "schema": {
-              "$ref": "#/definitions/v1LogInResponse"
-            }
-          },
-          "default": {
-            "description": "An unexpected error response.",
-            "schema": {
-              "$ref": "#/definitions/rpcStatus"
-            }
-          }
-        },
-        "parameters": [
-          {
-            "name": "body",
-            "in": "body",
-            "required": true,
-            "schema": {
-              "$ref": "#/definitions/v1LogInRequest"
-            }
-          }
-        ],
-        "tags": [
-          "AuthService"
-        ]
-      }
-    },
     "/api/v1/auth/logout": {
       "post": {
         "summary": "Logout of Mediator",
@@ -2252,14 +2219,14 @@
         ]
       }
     },
-    "/api/v1/user/email/{email}": {
+    "/api/v1/user/subject/{subject}": {
       "get": {
-        "operationId": "UserService_GetUserByEmail",
+        "operationId": "UserService_GetUserBySubject",
         "responses": {
           "200": {
             "description": "A successful response.",
             "schema": {
-              "$ref": "#/definitions/v1GetUserByEmailResponse"
+              "$ref": "#/definitions/v1GetUserBySubjectResponse"
             }
           },
           "default": {
@@ -2271,101 +2238,7 @@
         },
         "parameters": [
           {
-            "name": "email",
-            "in": "path",
-            "required": true,
-            "type": "string"
-          }
-        ],
-        "tags": [
-          "UserService"
-        ]
-      }
-    },
-    "/api/v1/user/password": {
-      "post": {
-        "operationId": "UserService_UpdatePassword",
-        "responses": {
-          "200": {
-            "description": "A successful response.",
-            "schema": {
-              "$ref": "#/definitions/v1UpdatePasswordResponse"
-            }
-          },
-          "default": {
-            "description": "An unexpected error response.",
-            "schema": {
-              "$ref": "#/definitions/rpcStatus"
-            }
-          }
-        },
-        "parameters": [
-          {
-            "name": "body",
-            "in": "body",
-            "required": true,
-            "schema": {
-              "$ref": "#/definitions/v1UpdatePasswordRequest"
-            }
-          }
-        ],
-        "tags": [
-          "UserService"
-        ]
-      }
-    },
-    "/api/v1/user/profile": {
-      "post": {
-        "operationId": "UserService_UpdateProfile",
-        "responses": {
-          "200": {
-            "description": "A successful response.",
-            "schema": {
-              "$ref": "#/definitions/v1UpdateProfileResponse"
-            }
-          },
-          "default": {
-            "description": "An unexpected error response.",
-            "schema": {
-              "$ref": "#/definitions/rpcStatus"
-            }
-          }
-        },
-        "parameters": [
-          {
-            "name": "body",
-            "in": "body",
-            "required": true,
-            "schema": {
-              "$ref": "#/definitions/v1UpdateProfileRequest"
-            }
-          }
-        ],
-        "tags": [
-          "UserService"
-        ]
-      }
-    },
-    "/api/v1/user/username/{username}": {
-      "get": {
-        "operationId": "UserService_GetUserByUserName",
-        "responses": {
-          "200": {
-            "description": "A successful response.",
-            "schema": {
-              "$ref": "#/definitions/v1GetUserByUserNameResponse"
-            }
-          },
-          "default": {
-            "description": "An unexpected error response.",
-            "schema": {
-              "$ref": "#/definitions/rpcStatus"
-            }
-          }
-        },
-        "parameters": [
-          {
-            "name": "username",
+            "name": "subject",
             "in": "path",
             "required": true,
             "type": "string"
@@ -3210,27 +3083,6 @@
           "type": "integer",
           "format": "int32"
         },
-        "email": {
-          "type": "string"
-        },
-        "username": {
-          "type": "string"
-        },
-        "password": {
-          "type": "string"
-        },
-        "firstName": {
-          "type": "string"
-        },
-        "lastName": {
-          "type": "string"
-        },
-        "isProtected": {
-          "type": "boolean"
-        },
-        "needsPasswordChange": {
-          "type": "boolean"
-        },
         "groupIds": {
           "type": "array",
           "items": {
@@ -3262,10 +3114,7 @@
         "email": {
           "type": "string"
         },
-        "username": {
-          "type": "string"
-        },
-        "password": {
+        "identitySubject": {
           "type": "string"
         },
         "firstName": {
@@ -3273,12 +3122,6 @@
         },
         "lastName": {
           "type": "string"
-        },
-        "isProtected": {
-          "type": "boolean"
-        },
-        "needsPasswordChange": {
-          "type": "boolean"
         },
         "createdAt": {
           "type": "string",
@@ -3665,28 +3508,6 @@
         }
       }
     },
-    "v1GetUserByEmailResponse": {
-      "type": "object",
-      "properties": {
-        "user": {
-          "$ref": "#/definitions/v1UserRecord"
-        },
-        "groups": {
-          "type": "array",
-          "items": {
-            "type": "object",
-            "$ref": "#/definitions/v1GroupRecord"
-          }
-        },
-        "roles": {
-          "type": "array",
-          "items": {
-            "type": "object",
-            "$ref": "#/definitions/v1RoleRecord"
-          }
-        }
-      }
-    },
     "v1GetUserByIdResponse": {
       "type": "object",
       "properties": {
@@ -3709,7 +3530,7 @@
         }
       }
     },
-    "v1GetUserByUserNameResponse": {
+    "v1GetUserBySubjectResponse": {
       "type": "object",
       "properties": {
         "user": {
@@ -3958,36 +3779,6 @@
         }
       },
       "description": "ListRuleTypesResponse is the response to list rule types."
-    },
-    "v1LogInRequest": {
-      "type": "object",
-      "properties": {
-        "username": {
-          "type": "string"
-        },
-        "password": {
-          "type": "string"
-        }
-      }
-    },
-    "v1LogInResponse": {
-      "type": "object",
-      "properties": {
-        "refreshToken": {
-          "type": "string"
-        },
-        "accessToken": {
-          "type": "string"
-        },
-        "refreshTokenExpiresIn": {
-          "type": "string",
-          "format": "int64"
-        },
-        "accessTokenExpiresIn": {
-          "type": "string",
-          "format": "int64"
-        }
-      }
     },
     "v1LogOutRequest": {
       "type": "object"
@@ -4468,37 +4259,6 @@
     "v1SyncRepositoriesResponse": {
       "type": "object"
     },
-    "v1UpdatePasswordRequest": {
-      "type": "object",
-      "properties": {
-        "password": {
-          "type": "string"
-        },
-        "passwordConfirmation": {
-          "type": "string"
-        }
-      }
-    },
-    "v1UpdatePasswordResponse": {
-      "type": "object"
-    },
-    "v1UpdateProfileRequest": {
-      "type": "object",
-      "properties": {
-        "email": {
-          "type": "string"
-        },
-        "firstName": {
-          "type": "string"
-        },
-        "lastName": {
-          "type": "string"
-        }
-      }
-    },
-    "v1UpdateProfileResponse": {
-      "type": "object"
-    },
     "v1UpdateRuleTypeRequest": {
       "type": "object",
       "properties": {
@@ -4533,10 +4293,7 @@
         "email": {
           "type": "string"
         },
-        "username": {
-          "type": "string"
-        },
-        "password": {
+        "identitySubject": {
           "type": "string"
         },
         "firstName": {
@@ -4544,12 +4301,6 @@
         },
         "lastName": {
           "type": "string"
-        },
-        "isProtected": {
-          "type": "boolean"
-        },
-        "needsPasswordChange": {
-          "type": "boolean"
         },
         "createdAt": {
           "type": "string",

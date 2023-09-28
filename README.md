@@ -55,6 +55,14 @@ docker-compose up -d postgres
 make migrateup
 ```
 
+## Start the identity provider (Keycloak)
+
+In order to login, we rely on an identity provider that stores the usernames and passwords.
+
+```bash
+docker-compose up -d keycloak
+```
+
 ## Run the application
 
 You will need to [initialize the database](#initialize-the-database) before you can start the application.  Then run the application:
@@ -179,29 +187,20 @@ Before running the app, please copy the content of `config/config.yaml.example` 
 
 ## Login
 
-First, login with the default password for the database:
+First, login with the default credentials:
 
 ```bash
-go run ./cmd/cli/main.go auth login -u root -p P4ssw@rd
+go run ./cmd/cli/main.go auth login
 ```
 
-This will result in the following prompt:
+This will open a browser window with the identity provider login page.  
+Enter the credentials root / P4ssw@rd. You will immediately be prompted to change your password.  
+Upon successful authentication you can close your browser.
+
+You will see the following prompt in your terminal:
 
 ```
 You have been successfully logged in. Your access credentials saved to /var/home/jaosorior/.config/mediator/credentials.json
-Remember that if that's your first login, you will need to update your password using the user update --password command
-```
-
-At this point, you should update the password:
-
-```bash
-go run ./cmd/cli/main.go user update -p f00b@r123 -c f00b@r123
-```
-
-And subsequently log in again with your new password
-
-```bash
-go run ./cmd/cli/main.go auth login -u root -p 'f00b@r123'
 ```
 
 ## Enroll provider

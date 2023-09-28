@@ -266,18 +266,6 @@ service OAuthService {
 }
 
 service AuthService {
-    // LogIn to Mediator
-    rpc LogIn (LogInRequest) returns (LogInResponse) {
-        option (google.api.http) = {
-            post: "/api/v1/auth/login"
-            body: "*"
-        };
-
-        option (rpc_options) = {
-            anonymous: true  // Don't need auth in order to log in
-        };
-    }
-
     // Logout of Mediator
     rpc LogOut (LogOutRequest) returns (LogOutResponse) {
         option (google.api.http) = {
@@ -689,9 +677,9 @@ service UserService {
         };
     }
 
-    rpc GetUserByUserName (GetUserByUserNameRequest) returns (GetUserByUserNameResponse) {
+    rpc GetUserBySubject (GetUserBySubjectRequest) returns (GetUserBySubjectResponse) {
         option (google.api.http) = {
-            get: "/api/v1/user/username/{username}"
+            get: "/api/v1/user/subject/{subject}"
         };
 
         option (rpc_options) = {
@@ -708,41 +696,6 @@ service UserService {
         option (rpc_options) = {
             auth_scope: OBJECT_OWNER_USER
             owner_only: false
-        };
-    }
-
-    rpc GetUserByEmail (GetUserByEmailRequest) returns (GetUserByEmailResponse) {
-        option (google.api.http) = {
-            get: "/api/v1/user/email/{email}"
-        };
-
-        option (rpc_options) = {
-            auth_scope: OBJECT_OWNER_ORGANIZATION
-            owner_only: true
-        };
-    }
-
-    rpc UpdatePassword (UpdatePasswordRequest) returns (UpdatePasswordResponse) {
-        option (google.api.http) = {
-            post: "/api/v1/user/password"
-            body: "*"
-        };
-
-        option (rpc_options) = {
-            auth_scope: OBJECT_OWNER_USER
-            owner_only: true
-        };
-    }
-
-    rpc UpdateProfile (UpdateProfileRequest) returns (UpdateProfileResponse) {
-        option (google.api.http) = {
-            post: "/api/v1/user/profile"
-            body: "*"
-        };
-
-        option (rpc_options) = {
-            auth_scope: OBJECT_OWNER_USER
-            owner_only: true
         };
     }
 
@@ -948,18 +901,6 @@ message ExchangeCodeForTokenWEBResponse {
     string token_type = 2;
     int64  expires_in = 3;
     string status = 4;
-}
-
-message LogInRequest {
-    string username = 1;
-    string password = 2;
-}
-
-message LogInResponse {
-    string refresh_token = 2;
-    string access_token = 3;
-    int64  refresh_token_expires_in = 4;
-    int64  access_token_expires_in = 5;
 }
 
 message LogOutRequest {
@@ -1426,29 +1367,19 @@ message GetRoleByNameResponse {
 // User service
 message CreateUserRequest {
     int32 organization_id = 1;
-    optional string email = 2;
-    string username = 3;
-    optional string password = 4;
-    optional string first_name = 5;
-    optional string last_name = 6;
-    optional bool is_protected = 7;
-    optional bool needs_password_change = 8;
-    repeated int32 group_ids = 9;
-    repeated int32 role_ids = 10;
+    repeated int32 group_ids = 2;
+    repeated int32 role_ids = 3;
   }
   
 message CreateUserResponse {
     int32 id = 1;
     int32 organization_id = 2;
     optional string email = 3;
-    string username = 4;
-    string password = 5;
-    optional string first_name = 6;
-    optional string last_name = 7;
-    optional bool is_protected = 8;
-    optional bool needs_password_change = 9;
-    google.protobuf.Timestamp created_at = 10;
-    google.protobuf.Timestamp updated_at = 11;
+    string identity_subject = 4;
+    optional string first_name = 5;
+    optional string last_name = 6;
+    google.protobuf.Timestamp created_at = 7;
+    google.protobuf.Timestamp updated_at = 8;
 }
 
 message DeleteUserRequest {
@@ -1459,36 +1390,16 @@ message DeleteUserRequest {
 message DeleteUserResponse {
 }
 
-message UpdatePasswordRequest {
-    string password = 1;
-    string password_confirmation = 2;
-}
-
-message UpdatePasswordResponse {
-}
-
-message UpdateProfileRequest {
-    optional string email = 1;
-    optional string first_name = 2;
-    optional string last_name = 3;
-}
-
-message UpdateProfileResponse {
-}
-
 // user record to be returned
 message UserRecord {
     int32 id = 1;
     int32 organization_id = 2;
     optional string email = 3;
-    string username = 4;
-    string password = 5;
-    optional string first_name = 6;
-    optional string last_name = 7;
-    optional bool is_protected = 8;
-    optional bool needs_password_change = 9;
-    google.protobuf.Timestamp created_at = 10;
-    google.protobuf.Timestamp updated_at = 11;    
+    string identity_subject = 4;
+    optional string first_name = 5;
+    optional string last_name = 6;
+    google.protobuf.Timestamp created_at = 7;
+    google.protobuf.Timestamp updated_at = 8;
 }
 
 // list users
@@ -1532,23 +1443,12 @@ message GetUserByIdResponse {
     repeated RoleRecord roles = 3;
 }
 
-// get user by username
-message GetUserByUserNameRequest {
-    string username = 1;
+// get user by subject
+message GetUserBySubjectRequest {
+    string subject = 1;
 }
 
-message GetUserByUserNameResponse {
-    optional UserRecord user = 1;
-    repeated GroupRecord groups = 2;
-    repeated RoleRecord roles = 3;
-}
-
-// get user by email
-message GetUserByEmailRequest {
-    string email = 1;
-}
-
-message GetUserByEmailResponse {
+message GetUserBySubjectResponse {
     optional UserRecord user = 1;
     repeated GroupRecord groups = 2;
     repeated RoleRecord roles = 3;

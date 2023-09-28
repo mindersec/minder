@@ -62,16 +62,14 @@ CREATE TABLE users (
     id SERIAL PRIMARY KEY,
     organization_id INTEGER NOT NULL REFERENCES organizations(id) ON DELETE CASCADE,
     email TEXT,
-    username TEXT NOT NULL,
-    password TEXT NOT NULL,
-    needs_password_change BOOLEAN NOT NULL DEFAULT TRUE,
+    identity_subject TEXT NOT NULL,
     first_name TEXT,
     last_name TEXT,
-    is_protected BOOLEAN NOT NULL DEFAULT FALSE,
     created_at TIMESTAMP NOT NULL DEFAULT NOW(),
-    updated_at TIMESTAMP NOT NULL DEFAULT NOW(),
-    min_token_issued_time TIMESTAMP
+    updated_at TIMESTAMP NOT NULL DEFAULT NOW()
 );
+
+ALTER TABLE users ADD CONSTRAINT unique_identity_subject UNIQUE (identity_subject);
 
 -- user/groups
 CREATE TABLE user_groups (
@@ -257,8 +255,7 @@ CREATE INDEX idx_users_organization_id ON users(organization_id);
 CREATE INDEX idx_groups_organization_id ON groups(organization_id);
 CREATE INDEX idx_roles_group_id ON roles(group_id);
 CREATE UNIQUE INDEX roles_organization_id_name_lower_idx ON roles (organization_id, LOWER(name));
-CREATE UNIQUE INDEX users_organization_id_email_lower_idx ON users (organization_id, LOWER(email));
-CREATE UNIQUE INDEX users_organization_id_username_lower_idx ON users (organization_id, LOWER(username));
+CREATE INDEX idx_provider_access_tokens_group_id ON provider_access_tokens(group_id);
 CREATE UNIQUE INDEX repositories_repo_id_idx ON repositories(repo_id);
 CREATE UNIQUE INDEX policies_policy_name_idx ON policies(provider, name);
 CREATE UNIQUE INDEX rule_type_idx ON rule_type(provider, group_id, name);
@@ -341,12 +338,6 @@ VALUES (1, 'Root Group', TRUE);
 -- superadmin role
 INSERT INTO roles (organization_id, name, is_admin, is_protected)
 VALUES (1, 'Superadmin Role', TRUE, TRUE);
-
-INSERT INTO users (organization_id, email, username, password, first_name, last_name, is_protected, needs_password_change)
-VALUES (1, 'root@localhost', 'root', '$argon2id$v=19$m=16,t=2,p=1$c2VjcmV0aGFzaA$WP4Vqo6QtHBY+n0x99R81Q', 'Root', 'Admin', TRUE, FALSE);   -- password is P4ssw@rd
-
-INSERT INTO user_groups (user_id, group_id) VALUES (1, 1);
-INSERT INTO user_roles (user_id, role_id) VALUES (1, 1);
 
 -- Create default GitHub provider
 INSERT INTO providers (name, group_id, implements, definition)

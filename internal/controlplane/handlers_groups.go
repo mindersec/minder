@@ -69,16 +69,14 @@ func getGroupDependencies(ctx context.Context, store db.Store, group db.Group) (
 	for idx := range users {
 		user := &users[idx]
 		usersPB = append(usersPB, &pb.UserRecord{
-			Id:                  user.ID,
-			OrganizationId:      user.OrganizationID,
-			Email:               &user.Email.String,
-			FirstName:           &user.FirstName.String,
-			LastName:            &user.LastName.String,
-			Username:            user.Username,
-			IsProtected:         &user.IsProtected,
-			NeedsPasswordChange: &user.NeedsPasswordChange,
-			CreatedAt:           timestamppb.New(user.CreatedAt),
-			UpdatedAt:           timestamppb.New(user.UpdatedAt),
+			Id:              user.ID,
+			OrganizationId:  user.OrganizationID,
+			Email:           &user.Email.String,
+			FirstName:       &user.FirstName.String,
+			LastName:        &user.LastName.String,
+			IdentitySubject: user.IdentitySubject,
+			CreatedAt:       timestamppb.New(user.CreatedAt),
+			UpdatedAt:       timestamppb.New(user.UpdatedAt),
 		})
 	}
 

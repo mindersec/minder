@@ -18,6 +18,7 @@ package app
 import (
 	"fmt"
 	"log"
+	"net/url"
 	"os"
 	"os/signal"
 
@@ -26,6 +27,7 @@ import (
 	"github.com/spf13/viper"
 	"golang.org/x/sync/errgroup"
 
+	"github.com/stacklok/mediator/internal/auth"
 	"github.com/stacklok/mediator/internal/config"
 	"github.com/stacklok/mediator/internal/controlplane"
 	"github.com/stacklok/mediator/internal/db"
@@ -73,7 +75,18 @@ var serveCmd = &cobra.Command{
 			return err
 		}
 
-		s, err := controlplane.NewServer(store, evt, cfg)
+		parsedURL, err := url.Parse(cfg.Identity.IssuerUrl)
+		if err != nil {
+			return fmt.Errorf("failed to parse issuer URL: %w\n", err)
+		}
+
+		jwksUrl := parsedURL.JoinPath("realms", cfg.Identity.Realm, "protocol/openid-connect/certs")
+		vldtr, err := auth.NewJwtValidator(ctx, jwksUrl.String())
+		if err != nil {
+			return fmt.Errorf("failed to fetch and cache identity provider JWKS: %w\n", err)
+		}
+
+		s, err := controlplane.NewServer(store, evt, cfg, vldtr)
 		if err != nil {
 			return fmt.Errorf("unable to create server: %w", err)
 		}

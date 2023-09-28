@@ -34,7 +34,6 @@ import (
 	"github.com/stacklok/mediator/cmd/cli/app/group"
 	"github.com/stacklok/mediator/cmd/cli/app/org"
 	"github.com/stacklok/mediator/cmd/cli/app/role"
-	"github.com/stacklok/mediator/cmd/cli/app/user"
 	"github.com/stacklok/mediator/internal/util"
 )
 
@@ -111,8 +110,6 @@ var ApplyCmd = &cobra.Command{
 				org.Org_createCmd.Run(cmd, args)
 			} else if object.Object == "role" {
 				role.Role_createCmd.Run(cmd, args)
-			} else if object.Object == "user" {
-				user.User_createCmd.Run(cmd, args)
 			} else if object.Object == "group" {
 				group.Group_createCmd.Run(cmd, args)
 			} else {

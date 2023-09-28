@@ -155,8 +155,7 @@ by retrying with a backoff.`
 		s.Name = "UNAUTHENTICATED"
 		s.Description = "Unauthenticated"
 		s.Details = `Unauthenticated indicates the request does not have valid
-authentication credentials for the operation. If it is the first time you log in,
-it may indicate that you need to change your password.`
+authentication credentials for the operation.`
 	}
 	return s
 }

@@ -36,21 +36,6 @@ import (
 	mediator "github.com/stacklok/mediator/pkg/api/protobuf/go/mediator/v1"
 )
 
-func (s *Server) parseTokenForAuthz(token string) (auth.UserClaims, error) {
-	var claims auth.UserClaims
-	// need to read pub key from file
-	pubKeyData, err := s.cfg.Auth.GetAccessTokenPublicKey()
-	if err != nil {
-		return claims, fmt.Errorf("failed to read public key file")
-	}
-
-	userClaims, err := auth.VerifyToken(token, pubKeyData, s.store)
-	if err != nil {
-		return claims, fmt.Errorf("failed to verify token: %v", err)
-	}
-	return userClaims, nil
-}
-
 type rpcOptionsKey struct{}
 
 func withRpcOptions(ctx context.Context, opts *mediator.RpcOptions) context.Context {
@@ -68,7 +53,7 @@ var githubAuthorizations = []string{
 }
 
 // checks if an user is superadmin
-func isSuperadmin(claims auth.UserClaims) bool {
+func isSuperadmin(claims auth.UserPermissions) bool {
 	// need to check that has a role that belongs to org 1 generally and is admin
 	for _, role := range claims.Roles {
 		if role.OrganizationID == 1 && role.GroupID == 0 && role.IsAdmin {
@@ -78,10 +63,52 @@ func isSuperadmin(claims auth.UserClaims) bool {
 	return false
 }
 
+// lookupUserPermissions returns the user permissions from the database for the given user
+func lookupUserPermissions(ctx context.Context, store db.Store, subject string) (auth.UserPermissions, error) {
+	emptyPermissions := auth.UserPermissions{}
+
+	// read all information for user claims
+	userInfo, err := store.GetUserBySubject(ctx, subject)
+	if err != nil {
+		return emptyPermissions, fmt.Errorf("failed to read user")
+	}
+
+	// read groups and add id to claims
+	gs, err := store.GetUserGroups(ctx, userInfo.ID)
+	if err != nil {
+		return emptyPermissions, fmt.Errorf("failed to get groups")
+	}
+	var groups []int32
+	for _, g := range gs {
+		groups = append(groups, g.ID)
+	}
+
+	// read roles and add details to claims
+	rs, err := store.GetUserRoles(ctx, userInfo.ID)
+	if err != nil {
+		return emptyPermissions, fmt.Errorf("failed to get roles")
+	}
+
+	var roles []auth.RoleInfo
+	for _, r := range rs {
+		roles = append(roles, auth.RoleInfo{RoleID: r.ID, IsAdmin: r.IsAdmin, GroupID: r.GroupID.Int32,
+			OrganizationID: r.OrganizationID})
+	}
+
+	claims := auth.UserPermissions{
+		UserId:         userInfo.ID,
+		Roles:          roles,
+		GroupIds:       groups,
+		OrganizationId: userInfo.OrganizationID,
+	}
+
+	return claims, nil
+}
+
 // AuthorizedOnOrg checks if the request is authorized for the given
 // organization, and returns an error if the request is not authorized.
 func AuthorizedOnOrg(ctx context.Context, orgId int32) error {
-	claims := auth.GetClaimsFromContext(ctx)
+	claims := auth.GetPermissionsFromContext(ctx)
 	if isSuperadmin(claims) {
 		return nil
 	}
@@ -104,7 +131,7 @@ func AuthorizedOnOrg(ctx context.Context, orgId int32) error {
 // AuthorizedOnGroup checks if the request is authorized for the given
 // group, and returns an error if the request is not authorized.
 func AuthorizedOnGroup(ctx context.Context, groupId int32) error {
-	claims := auth.GetClaimsFromContext(ctx)
+	claims := auth.GetPermissionsFromContext(ctx)
 	if isSuperadmin(claims) {
 		return nil
 	}
@@ -129,7 +156,7 @@ func AuthorizedOnGroup(ctx context.Context, groupId int32) error {
 // AuthorizedOnUser checks if the request is authorized for the given
 // user, and returns an error if the request is not authorized.
 func AuthorizedOnUser(ctx context.Context, userId int32) error {
-	claims := auth.GetClaimsFromContext(ctx)
+	claims := auth.GetPermissionsFromContext(ctx)
 	if isSuperadmin(claims) {
 		return nil
 	}
@@ -207,21 +234,23 @@ func AuthUnaryInterceptor(ctx context.Context, req interface{}, info *grpc.Unary
 	}
 
 	server := info.Server.(*Server)
-	claims, err := server.parseTokenForAuthz(token)
+
+	parsedToken, err := server.vldtr.ParseAndValidate(token)
 	if err != nil {
 		return nil, status.Errorf(codes.Unauthenticated, "invalid auth token: %v", err)
 	}
 
-	// check if we need a password change
-	if claims.NeedsPasswordChange && info.FullMethod != "/mediator.v1.UserService/UpdatePassword" {
-		return nil, util.UserVisibleError(codes.Unauthenticated, "password change required")
-	}
+	subject := parsedToken.Subject()
 
-	if opts.GetRootAdminOnly() && !isSuperadmin(claims) {
+	// get user authorities from the database
+	// ignore any error because the user may not exist yet
+	authorities, _ := lookupUserPermissions(ctx, server.store, subject)
+
+	if opts.GetRootAdminOnly() && !isSuperadmin(authorities) {
 		return nil, status.Errorf(codes.PermissionDenied, "user not authorized")
 	}
 
-	ctx = auth.WithClaimContext(ctx, claims)
+	ctx = auth.WithPermissionsContext(ctx, authorities)
 	return handler(ctx, req)
 }
 

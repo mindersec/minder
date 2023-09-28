@@ -14,7 +14,6 @@ import (
 type Querier interface {
 	AddUserGroup(ctx context.Context, arg AddUserGroupParams) (UserGroup, error)
 	AddUserRole(ctx context.Context, arg AddUserRoleParams) (UserRole, error)
-	CleanTokenIat(ctx context.Context, id int32) (User, error)
 	CreateAccessToken(ctx context.Context, arg CreateAccessTokenParams) (ProviderAccessToken, error)
 	CreateArtifact(ctx context.Context, arg CreateArtifactParams) (Artifact, error)
 	CreateArtifactVersion(ctx context.Context, arg CreateArtifactVersionParams) (ArtifactVersion, error)
@@ -84,9 +83,8 @@ type Querier interface {
 	GetSessionStateByGroupID(ctx context.Context, grpID sql.NullInt32) (SessionStore, error)
 	GetSigningKeyByGroupID(ctx context.Context, groupID int32) (SigningKey, error)
 	GetSigningKeyByIdentifier(ctx context.Context, keyIdentifier string) (SigningKey, error)
-	GetUserByEmail(ctx context.Context, email sql.NullString) (User, error)
 	GetUserByID(ctx context.Context, id int32) (User, error)
-	GetUserByUserName(ctx context.Context, username string) (User, error)
+	GetUserBySubject(ctx context.Context, identitySubject string) (User, error)
 	GetUserGroups(ctx context.Context, userID int32) ([]GetUserGroupsRow, error)
 	GetUserRoles(ctx context.Context, userID int32) ([]GetUserRolesRow, error)
 	GlobalListProviders(ctx context.Context) ([]Provider, error)
@@ -110,19 +108,15 @@ type Querier interface {
 	ListUsersByGroup(ctx context.Context, arg ListUsersByGroupParams) ([]User, error)
 	ListUsersByOrganization(ctx context.Context, arg ListUsersByOrganizationParams) ([]User, error)
 	ListUsersByRoleId(ctx context.Context, roleID int32) ([]int32, error)
-	RevokeUserToken(ctx context.Context, arg RevokeUserTokenParams) (User, error)
-	RevokeUsersTokens(ctx context.Context, minTokenIssuedTime sql.NullTime) (User, error)
 	UpdateAccessToken(ctx context.Context, arg UpdateAccessTokenParams) (ProviderAccessToken, error)
 	UpdateGroup(ctx context.Context, arg UpdateGroupParams) (Group, error)
 	UpdateOrganization(ctx context.Context, arg UpdateOrganizationParams) (Organization, error)
-	UpdatePassword(ctx context.Context, arg UpdatePasswordParams) (User, error)
 	// set clone_url if the value is not an empty string
 	UpdateRepository(ctx context.Context, arg UpdateRepositoryParams) (Repository, error)
 	UpdateRepositoryByID(ctx context.Context, arg UpdateRepositoryByIDParams) (Repository, error)
 	UpdateRole(ctx context.Context, arg UpdateRoleParams) (Role, error)
 	UpdateRuleEvaluationStatusForRepository(ctx context.Context, arg UpdateRuleEvaluationStatusForRepositoryParams) error
 	UpdateRuleType(ctx context.Context, arg UpdateRuleTypeParams) error
-	UpdateUser(ctx context.Context, arg UpdateUserParams) (User, error)
 	UpsertArtifact(ctx context.Context, arg UpsertArtifactParams) (Artifact, error)
 	UpsertArtifactVersion(ctx context.Context, arg UpsertArtifactVersionParams) (ArtifactVersion, error)
 	UpsertRuleEvaluationStatus(ctx context.Context, arg UpsertRuleEvaluationStatusParams) error

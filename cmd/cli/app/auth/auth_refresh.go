@@ -22,16 +22,11 @@
 package auth
 
 import (
-	"context"
 	"fmt"
 	"os"
-	"time"
 
 	"github.com/spf13/cobra"
 	"github.com/spf13/viper"
-
-	"github.com/stacklok/mediator/internal/util"
-	pb "github.com/stacklok/mediator/pkg/api/protobuf/go/mediator/v1"
 )
 
 // Auth_refreshCmd represents the auth refresh command
@@ -45,36 +40,7 @@ var Auth_refreshCmd = &cobra.Command{
 		}
 	},
 	Run: func(cmd *cobra.Command, args []string) {
-		// load old credentials
-		oldCreds, err := util.LoadCredentials()
-		util.ExitNicelyOnError(err, "Error loading credentials")
-
-		conn, err := util.GrpcForCommand(cmd)
-		util.ExitNicelyOnError(err, "Error getting grpc connection")
-		defer conn.Close()
-
-		ctx, cancel := context.WithTimeout(context.Background(), time.Second)
-		defer cancel()
-
-		client := pb.NewAuthServiceClient(conn)
-		util.ExitNicelyOnError(err, "Error getting grpc connection")
-
-		resp, err := client.RefreshToken(ctx, &pb.RefreshTokenRequest{})
-		util.ExitNicelyOnError(err, "Error refreshing token")
-
-		// marshal the credentials to json. Only refresh access token
-		creds := util.Credentials{
-			AccessToken:           resp.AccessToken,
-			RefreshToken:          oldCreds.RefreshToken,
-			AccessTokenExpiresIn:  int(resp.AccessTokenExpiresIn),
-			RefreshTokenExpiresIn: oldCreds.RefreshTokenExpiresIn,
-		}
-
-		// save credentials
-		filePath, err := util.SaveCredentials(creds)
-		util.ExitNicelyOnError(err, "Error saving credentials")
-
-		fmt.Printf("Credentials saved to %s\n", filePath)
+		// TODO: implement refresh token
 	},
 }
 
