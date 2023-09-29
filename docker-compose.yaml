@@ -106,6 +106,20 @@ services:
         retries: 5
       networks:
         - app_net
+  keycloak:
+    container_name: keycloak_container
+    image: quay.io/keycloak/keycloak:22.0
+    command: ["start-dev", "--import-realm"]
+    environment:
+      KEYCLOAK_ADMIN: admin
+      KEYCLOAK_ADMIN_PASSWORD: admin
+    ports:
+      - "8081:8080"
+    volumes:
+      - ./identity/import:/opt/keycloak/data/import:z
+      - ./identity/themes:/opt/keycloak/themes:z
+    networks:
+      - app_net
 networks:
   app_net:
     driver: bridge

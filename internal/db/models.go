@@ -317,18 +317,14 @@ type SigningKey struct {
 }
 
 type User struct {
-	ID                  int32          `json:"id"`
-	OrganizationID      int32          `json:"organization_id"`
-	Email               sql.NullString `json:"email"`
-	Username            string         `json:"username"`
-	Password            string         `json:"password"`
-	NeedsPasswordChange bool           `json:"needs_password_change"`
-	FirstName           sql.NullString `json:"first_name"`
-	LastName            sql.NullString `json:"last_name"`
-	IsProtected         bool           `json:"is_protected"`
-	CreatedAt           time.Time      `json:"created_at"`
-	UpdatedAt           time.Time      `json:"updated_at"`
-	MinTokenIssuedTime  sql.NullTime   `json:"min_token_issued_time"`
+	ID              int32          `json:"id"`
+	OrganizationID  int32          `json:"organization_id"`
+	Email           sql.NullString `json:"email"`
+	IdentitySubject string         `json:"identity_subject"`
+	FirstName       sql.NullString `json:"first_name"`
+	LastName        sql.NullString `json:"last_name"`
+	CreatedAt       time.Time      `json:"created_at"`
+	UpdatedAt       time.Time      `json:"updated_at"`
 }
 
 type UserGroup struct {

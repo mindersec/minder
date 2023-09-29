@@ -43,7 +43,7 @@ func TestKeysHandler(t *testing.T) {
 		GroupId:    1,
 	}
 
-	ctx := auth.WithClaimContext(context.Background(), auth.UserClaims{
+	ctx := auth.WithPermissionsContext(context.Background(), auth.UserPermissions{
 		UserId:         1,
 		OrganizationId: 1,
 		GroupIds:       []int32{1},
@@ -145,11 +145,10 @@ func TestKeysHandler_gRPC(t *testing.T) {
 			expectedStatusCode: codes.Internal,
 		},
 	}
-	ctx := auth.WithClaimContext(context.Background(), auth.UserClaims{
-		UserId:              1,
-		OrganizationId:      1,
-		GroupIds:            []int32{1},
-		NeedsPasswordChange: false,
+	ctx := auth.WithPermissionsContext(context.Background(), auth.UserPermissions{
+		UserId:         1,
+		OrganizationId: 1,
+		GroupIds:       []int32{1},
 		Roles: []auth.RoleInfo{
 			{RoleID: 1, IsAdmin: true, GroupID: 0, OrganizationID: 1}},
 	})

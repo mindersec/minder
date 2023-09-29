@@ -93,12 +93,10 @@
     - [GetSecretByIdResponse](#mediator-v1-GetSecretByIdResponse)
     - [GetSecretsRequest](#mediator-v1-GetSecretsRequest)
     - [GetSecretsResponse](#mediator-v1-GetSecretsResponse)
-    - [GetUserByEmailRequest](#mediator-v1-GetUserByEmailRequest)
-    - [GetUserByEmailResponse](#mediator-v1-GetUserByEmailResponse)
     - [GetUserByIdRequest](#mediator-v1-GetUserByIdRequest)
     - [GetUserByIdResponse](#mediator-v1-GetUserByIdResponse)
-    - [GetUserByUserNameRequest](#mediator-v1-GetUserByUserNameRequest)
-    - [GetUserByUserNameResponse](#mediator-v1-GetUserByUserNameResponse)
+    - [GetUserBySubjectRequest](#mediator-v1-GetUserBySubjectRequest)
+    - [GetUserBySubjectResponse](#mediator-v1-GetUserBySubjectResponse)
     - [GetUserRequest](#mediator-v1-GetUserRequest)
     - [GetUserResponse](#mediator-v1-GetUserResponse)
     - [GetUsersByGroupRequest](#mediator-v1-GetUsersByGroupRequest)
@@ -123,8 +121,6 @@
     - [ListRepositoriesResponse](#mediator-v1-ListRepositoriesResponse)
     - [ListRuleTypesRequest](#mediator-v1-ListRuleTypesRequest)
     - [ListRuleTypesResponse](#mediator-v1-ListRuleTypesResponse)
-    - [LogInRequest](#mediator-v1-LogInRequest)
-    - [LogInResponse](#mediator-v1-LogInResponse)
     - [LogOutRequest](#mediator-v1-LogOutRequest)
     - [LogOutResponse](#mediator-v1-LogOutResponse)
     - [OrganizationRecord](#mediator-v1-OrganizationRecord)
@@ -172,10 +168,6 @@
     - [StoreProviderTokenResponse](#mediator-v1-StoreProviderTokenResponse)
     - [SyncRepositoriesRequest](#mediator-v1-SyncRepositoriesRequest)
     - [SyncRepositoriesResponse](#mediator-v1-SyncRepositoriesResponse)
-    - [UpdatePasswordRequest](#mediator-v1-UpdatePasswordRequest)
-    - [UpdatePasswordResponse](#mediator-v1-UpdatePasswordResponse)
-    - [UpdateProfileRequest](#mediator-v1-UpdateProfileRequest)
-    - [UpdateProfileResponse](#mediator-v1-UpdateProfileResponse)
     - [UpdateRuleTypeRequest](#mediator-v1-UpdateRuleTypeRequest)
     - [UpdateRuleTypeResponse](#mediator-v1-UpdateRuleTypeResponse)
     - [UserRecord](#mediator-v1-UserRecord)
@@ -602,13 +594,6 @@ User service
 | Field | Type | Label | Description |
 | ----- | ---- | ----- | ----------- |
 | organization_id | [int32](#int32) |  |  |
-| email | [string](#string) | optional |  |
-| username | [string](#string) |  |  |
-| password | [string](#string) | optional |  |
-| first_name | [string](#string) | optional |  |
-| last_name | [string](#string) | optional |  |
-| is_protected | [bool](#bool) | optional |  |
-| needs_password_change | [bool](#bool) | optional |  |
 | group_ids | [int32](#int32) | repeated |  |
 | role_ids | [int32](#int32) | repeated |  |
 
@@ -628,12 +613,9 @@ User service
 | id | [int32](#int32) |  |  |
 | organization_id | [int32](#int32) |  |  |
 | email | [string](#string) | optional |  |
-| username | [string](#string) |  |  |
-| password | [string](#string) |  |  |
+| identity_subject | [string](#string) |  |  |
 | first_name | [string](#string) | optional |  |
 | last_name | [string](#string) | optional |  |
-| is_protected | [bool](#bool) | optional |  |
-| needs_password_change | [bool](#bool) | optional |  |
 | created_at | [google.protobuf.Timestamp](#google-protobuf-Timestamp) |  |  |
 | updated_at | [google.protobuf.Timestamp](#google-protobuf-Timestamp) |  |  |
 
@@ -1635,38 +1617,6 @@ GetRuleTypeByNameResponse is the response to get a rule type by name.
 
 
 
-<a name="mediator-v1-GetUserByEmailRequest"></a>
-
-### GetUserByEmailRequest
-get user by email
-
-
-| Field | Type | Label | Description |
-| ----- | ---- | ----- | ----------- |
-| email | [string](#string) |  |  |
-
-
-
-
-
-
-<a name="mediator-v1-GetUserByEmailResponse"></a>
-
-### GetUserByEmailResponse
-
-
-
-| Field | Type | Label | Description |
-| ----- | ---- | ----- | ----------- |
-| user | [UserRecord](#mediator-v1-UserRecord) | optional |  |
-| groups | [GroupRecord](#mediator-v1-GroupRecord) | repeated |  |
-| roles | [RoleRecord](#mediator-v1-RoleRecord) | repeated |  |
-
-
-
-
-
-
 <a name="mediator-v1-GetUserByIdRequest"></a>
 
 ### GetUserByIdRequest
@@ -1699,24 +1649,24 @@ get user by id
 
 
 
-<a name="mediator-v1-GetUserByUserNameRequest"></a>
+<a name="mediator-v1-GetUserBySubjectRequest"></a>
 
-### GetUserByUserNameRequest
-get user by username
+### GetUserBySubjectRequest
+get user by subject
 
 
 | Field | Type | Label | Description |
 | ----- | ---- | ----- | ----------- |
-| username | [string](#string) |  |  |
+| subject | [string](#string) |  |  |
 
 
 
 
 
 
-<a name="mediator-v1-GetUserByUserNameResponse"></a>
+<a name="mediator-v1-GetUserBySubjectResponse"></a>
 
-### GetUserByUserNameResponse
+### GetUserBySubjectResponse
 
 
 
@@ -2114,40 +2064,6 @@ ListRuleTypesResponse is the response to list rule types.
 | Field | Type | Label | Description |
 | ----- | ---- | ----- | ----------- |
 | rule_types | [RuleType](#mediator-v1-RuleType) | repeated | rule_types is the list of rule types. |
-
-
-
-
-
-
-<a name="mediator-v1-LogInRequest"></a>
-
-### LogInRequest
-
-
-
-| Field | Type | Label | Description |
-| ----- | ---- | ----- | ----------- |
-| username | [string](#string) |  |  |
-| password | [string](#string) |  |  |
-
-
-
-
-
-
-<a name="mediator-v1-LogInResponse"></a>
-
-### LogInResponse
-
-
-
-| Field | Type | Label | Description |
-| ----- | ---- | ----- | ----------- |
-| refresh_token | [string](#string) |  |  |
-| access_token | [string](#string) |  |  |
-| refresh_token_expires_in | [int64](#int64) |  |  |
-| access_token_expires_in | [int64](#int64) |  |  |
 
 
 
@@ -2936,59 +2852,6 @@ Ingest defines how the data is ingested.
 
 
 
-<a name="mediator-v1-UpdatePasswordRequest"></a>
-
-### UpdatePasswordRequest
-
-
-
-| Field | Type | Label | Description |
-| ----- | ---- | ----- | ----------- |
-| password | [string](#string) |  |  |
-| password_confirmation | [string](#string) |  |  |
-
-
-
-
-
-
-<a name="mediator-v1-UpdatePasswordResponse"></a>
-
-### UpdatePasswordResponse
-
-
-
-
-
-
-
-<a name="mediator-v1-UpdateProfileRequest"></a>
-
-### UpdateProfileRequest
-
-
-
-| Field | Type | Label | Description |
-| ----- | ---- | ----- | ----------- |
-| email | [string](#string) | optional |  |
-| first_name | [string](#string) | optional |  |
-| last_name | [string](#string) | optional |  |
-
-
-
-
-
-
-<a name="mediator-v1-UpdateProfileResponse"></a>
-
-### UpdateProfileResponse
-
-
-
-
-
-
-
 <a name="mediator-v1-UpdateRuleTypeRequest"></a>
 
 ### UpdateRuleTypeRequest
@@ -3030,12 +2893,9 @@ user record to be returned
 | id | [int32](#int32) |  |  |
 | organization_id | [int32](#int32) |  |  |
 | email | [string](#string) | optional |  |
-| username | [string](#string) |  |  |
-| password | [string](#string) |  |  |
+| identity_subject | [string](#string) |  |  |
 | first_name | [string](#string) | optional |  |
 | last_name | [string](#string) | optional |  |
-| is_protected | [bool](#bool) | optional |  |
-| needs_password_change | [bool](#bool) | optional |  |
 | created_at | [google.protobuf.Timestamp](#google-protobuf-Timestamp) |  |  |
 | updated_at | [google.protobuf.Timestamp](#google-protobuf-Timestamp) |  |  |
 
@@ -3205,7 +3065,6 @@ Repo filter enum
 
 | Method Name | Request Type | Response Type | Description |
 | ----------- | ------------ | ------------- | ------------|
-| LogIn | [LogInRequest](#mediator-v1-LogInRequest) | [LogInResponse](#mediator-v1-LogInResponse) | LogIn to Mediator |
 | LogOut | [LogOutRequest](#mediator-v1-LogOutRequest) | [LogOutResponse](#mediator-v1-LogOutResponse) | Logout of Mediator |
 | RevokeTokens | [RevokeTokensRequest](#mediator-v1-RevokeTokensRequest) | [RevokeTokensResponse](#mediator-v1-RevokeTokensResponse) | revoke all tokens for all users |
 | RevokeUserToken | [RevokeUserTokenRequest](#mediator-v1-RevokeUserTokenRequest) | [RevokeUserTokenResponse](#mediator-v1-RevokeUserTokenResponse) | revoke token for an user |
@@ -3368,11 +3227,8 @@ manage Users CRUD
 | GetUsersByOrganization | [GetUsersByOrganizationRequest](#mediator-v1-GetUsersByOrganizationRequest) | [GetUsersByOrganizationResponse](#mediator-v1-GetUsersByOrganizationResponse) |  |
 | GetUsersByGroup | [GetUsersByGroupRequest](#mediator-v1-GetUsersByGroupRequest) | [GetUsersByGroupResponse](#mediator-v1-GetUsersByGroupResponse) |  |
 | GetUserById | [GetUserByIdRequest](#mediator-v1-GetUserByIdRequest) | [GetUserByIdResponse](#mediator-v1-GetUserByIdResponse) |  |
-| GetUserByUserName | [GetUserByUserNameRequest](#mediator-v1-GetUserByUserNameRequest) | [GetUserByUserNameResponse](#mediator-v1-GetUserByUserNameResponse) |  |
+| GetUserBySubject | [GetUserBySubjectRequest](#mediator-v1-GetUserBySubjectRequest) | [GetUserBySubjectResponse](#mediator-v1-GetUserBySubjectResponse) |  |
 | GetUser | [GetUserRequest](#mediator-v1-GetUserRequest) | [GetUserResponse](#mediator-v1-GetUserResponse) |  |
-| GetUserByEmail | [GetUserByEmailRequest](#mediator-v1-GetUserByEmailRequest) | [GetUserByEmailResponse](#mediator-v1-GetUserByEmailResponse) |  |
-| UpdatePassword | [UpdatePasswordRequest](#mediator-v1-UpdatePasswordRequest) | [UpdatePasswordResponse](#mediator-v1-UpdatePasswordResponse) |  |
-| UpdateProfile | [UpdateProfileRequest](#mediator-v1-UpdateProfileRequest) | [UpdateProfileResponse](#mediator-v1-UpdateProfileResponse) |  |
 
 
 <a name="mediator-v1-VulnerabilitiesService"></a>

@@ -21,18 +21,20 @@ import (
 	"time"
 
 	"github.com/golang/mock/gomock"
+	"github.com/lestrrat-go/jwx/v2/jwt/openid"
 	"github.com/stretchr/testify/assert"
 	"github.com/stretchr/testify/require"
 	"google.golang.org/grpc/codes"
+	"google.golang.org/grpc/metadata"
 	"google.golang.org/protobuf/types/known/timestamppb"
 
 	mockdb "github.com/stacklok/mediator/database/mock"
 	"github.com/stacklok/mediator/internal/auth"
+	mockjwt "github.com/stacklok/mediator/internal/auth/mock"
 	"github.com/stacklok/mediator/internal/config"
 	"github.com/stacklok/mediator/internal/crypto"
 	"github.com/stacklok/mediator/internal/db"
 	"github.com/stacklok/mediator/internal/events"
-	"github.com/stacklok/mediator/internal/util"
 	pb "github.com/stacklok/mediator/pkg/api/protobuf/go/mediator/v1"
 )
 
@@ -43,44 +45,45 @@ func TestCreateUserDBMock(t *testing.T) {
 	defer ctrl.Finish()
 
 	mockStore := mockdb.NewMockStore(ctrl)
-	seed := time.Now().UnixNano()
+	mockJwtValidator := mockjwt.NewMockJwtValidator(ctrl)
 
-	name := "Foo"
-	lastname := "Bar"
 	email := "test@stacklok.com"
-	password := util.RandomPassword(8, seed)
 
 	request := &pb.CreateUserRequest{
 		OrganizationId: 1,
-		Email:          &email,
-		Username:       "test",
-		Password:       &password,
-		FirstName:      &name,
-		LastName:       &lastname,
 	}
 
 	expectedUser := db.User{
-		ID:                  1,
-		OrganizationID:      1,
-		Email:               sql.NullString{String: email, Valid: true},
-		Username:            "test",
-		Password:            util.RandomPassword(8, seed),
-		FirstName:           sql.NullString{String: "Foo", Valid: true},
-		LastName:            sql.NullString{String: "Bar", Valid: true},
-		IsProtected:         false,
-		CreatedAt:           time.Now(),
-		UpdatedAt:           time.Now(),
-		NeedsPasswordChange: false,
+		ID:             1,
+		OrganizationID: 1,
+		Email:          sql.NullString{String: email, Valid: true},
+		FirstName:      sql.NullString{String: "Foo", Valid: true},
+		LastName:       sql.NullString{String: "Bar", Valid: true},
+		CreatedAt:      time.Now(),
+		UpdatedAt:      time.Now(),
 	}
 
 	// Create a new context and set the claims value
-	ctx := auth.WithClaimContext(context.Background(), auth.UserClaims{
+	ctx := auth.WithPermissionsContext(context.Background(), auth.UserPermissions{
 		UserId:         1,
 		OrganizationId: 1,
 		GroupIds:       []int32{1},
 		Roles: []auth.RoleInfo{
 			{RoleID: 1, IsAdmin: true, GroupID: 0, OrganizationID: 1}},
 	})
+
+	// Create the access token
+	tokenString := "some-access-token"
+	tokenResult, _ := openid.NewBuilder().GivenName("Foo").FamilyName("Bar").Email(email).Build()
+	mockJwtValidator.EXPECT().ParseAndValidate(tokenString).Return(tokenResult, nil)
+
+	// Create header metadata
+	md := metadata.New(map[string]string{
+		"authorization": "bearer " + tokenString,
+	})
+
+	// Create a new context with added header metadata
+	ctx = metadata.NewIncomingContext(ctx, md)
 
 	tx := sql.Tx{}
 	mockStore.EXPECT().BeginTransaction().Return(&tx, nil)
@@ -99,6 +102,7 @@ func TestCreateUserDBMock(t *testing.T) {
 			Salt: config.DefaultConfigForTest().Salt,
 		},
 		cryptoEngine: crypeng,
+		vldtr:        mockJwtValidator,
 	}
 
 	response, err := server.CreateUser(ctx, request)
@@ -106,10 +110,8 @@ func TestCreateUserDBMock(t *testing.T) {
 	assert.NoError(t, err)
 	assert.NotNil(t, response)
 	assert.Equal(t, expectedUser.ID, response.Id)
-	assert.Equal(t, expectedUser.Username, response.Username)
 	assert.Equal(t, expectedUser.Email, sql.NullString{String: *response.Email, Valid: true})
 	assert.Equal(t, expectedUser.OrganizationID, response.OrganizationId)
-	assert.Equal(t, expectedUser.IsProtected, *response.IsProtected)
 	assert.Equal(t, expectedUser.FirstName, sql.NullString{String: *response.FirstName, Valid: true})
 	assert.Equal(t, expectedUser.LastName, sql.NullString{String: *response.LastName, Valid: true})
 	expectedCreatedAt := expectedUser.CreatedAt.In(time.UTC)
@@ -121,13 +123,10 @@ func TestCreateUserDBMock(t *testing.T) {
 func TestCreateUser_gRPC(t *testing.T) {
 	t.Parallel()
 
-	seed := time.Now().UnixNano()
-	password := util.RandomPassword(8, seed)
-
 	testCases := []struct {
 		name               string
 		req                *pb.CreateUserRequest
-		buildStubs         func(store *mockdb.MockStore)
+		buildStubs         func(store *mockdb.MockStore, jwt *mockjwt.MockJwtValidator)
 		checkResponse      func(t *testing.T, res *pb.CreateUserResponse, err error)
 		expectedStatusCode codes.Code
 	}{
@@ -135,10 +134,8 @@ func TestCreateUser_gRPC(t *testing.T) {
 			name: "Success",
 			req: &pb.CreateUserRequest{
 				OrganizationId: 1,
-				Username:       "test",
-				Password:       &password,
 			},
-			buildStubs: func(store *mockdb.MockStore) {
+			buildStubs: func(store *mockdb.MockStore, jwt *mockjwt.MockJwtValidator) {
 				tx := sql.Tx{}
 				store.EXPECT().BeginTransaction().Return(&tx, nil)
 				store.EXPECT().GetQuerierWithTransaction(gomock.Any()).Return(store)
@@ -148,16 +145,13 @@ func TestCreateUser_gRPC(t *testing.T) {
 					Return(db.User{
 						ID:             1,
 						OrganizationID: 1,
-						Username:       "test",
-						Password:       password,
-						IsProtected:    false,
 						CreatedAt:      time.Now(),
 						UpdatedAt:      time.Now(),
 					}, nil).
 					Times(1)
 				store.EXPECT().Commit(gomock.Any())
 				store.EXPECT().Rollback(gomock.Any())
-
+				jwt.EXPECT().ParseAndValidate(gomock.Any()).Return(openid.New(), nil)
 			},
 			checkResponse: func(t *testing.T, res *pb.CreateUserResponse, err error) {
 				t.Helper()
@@ -165,41 +159,30 @@ func TestCreateUser_gRPC(t *testing.T) {
 				assert.NoError(t, err)
 				assert.NotNil(t, res)
 				assert.Equal(t, int32(1), res.Id)
-				assert.Equal(t, "test", res.Username)
 				assert.Equal(t, int32(1), res.OrganizationId)
-				assert.Equal(t, false, *res.IsProtected)
 				assert.NotNil(t, res.CreatedAt)
 				assert.NotNil(t, res.UpdatedAt)
 			},
 			expectedStatusCode: codes.OK,
 		},
-		{
-			name: "EmptyRequest",
-			req: &pb.CreateUserRequest{
-				Username: "",
-			},
-			buildStubs: func(store *mockdb.MockStore) {
-				// No expectations, as CreateRole should not be called
-			},
-			checkResponse: func(t *testing.T, res *pb.CreateUserResponse, err error) {
-				t.Helper()
-
-				// Assert the expected behavior when the request is empty
-				assert.Error(t, err)
-				assert.Nil(t, res)
-			},
-			expectedStatusCode: codes.InvalidArgument,
-		},
 	}
 
 	// Create a new context and set the claims value
-	ctx := auth.WithClaimContext(context.Background(), auth.UserClaims{
+	ctx := auth.WithPermissionsContext(context.Background(), auth.UserPermissions{
 		UserId:         1,
 		OrganizationId: 1,
 		GroupIds:       []int32{1},
 		Roles: []auth.RoleInfo{
 			{RoleID: 1, IsAdmin: true, GroupID: 0, OrganizationID: 1}},
 	})
+
+	// Create header metadata
+	md := metadata.New(map[string]string{
+		"authorization": "bearer some-access-token",
+	})
+
+	// Create a new context with added header metadata
+	ctx = metadata.NewIncomingContext(ctx, md)
 
 	for i := range testCases {
 		tc := testCases[i]
@@ -210,7 +193,8 @@ func TestCreateUser_gRPC(t *testing.T) {
 			defer ctrl.Finish()
 
 			mockStore := mockdb.NewMockStore(ctrl)
-			tc.buildStubs(mockStore)
+			mockJwtValidator := mockjwt.NewMockJwtValidator(ctrl)
+			tc.buildStubs(mockStore, mockJwtValidator)
 			evt, err := events.Setup()
 			require.NoError(t, err, "failed to setup eventer")
 			server, err := NewServer(mockStore, evt, &config.Config{
@@ -218,262 +202,10 @@ func TestCreateUser_gRPC(t *testing.T) {
 				Auth: config.AuthConfig{
 					TokenKey: generateTokenKey(t),
 				},
-			})
+			}, mockJwtValidator)
 			require.NoError(t, err, "failed to create test server")
 
 			resp, err := server.CreateUser(ctx, tc.req)
-			tc.checkResponse(t, resp, err)
-		})
-	}
-}
-
-func TestUpdatePasswordDBMock(t *testing.T) {
-	t.Parallel()
-
-	ctrl := gomock.NewController(t)
-	defer ctrl.Finish()
-
-	mockStore := mockdb.NewMockStore(ctrl)
-	seed := time.Now().UnixNano()
-
-	password := util.RandomPassword(8, seed)
-	request := &pb.UpdatePasswordRequest{Password: password, PasswordConfirmation: password}
-
-	// Create a new context and set the claims value
-	ctx := auth.WithClaimContext(context.Background(), auth.UserClaims{
-		UserId:         1,
-		OrganizationId: 1,
-		GroupIds:       []int32{1},
-		Roles: []auth.RoleInfo{
-			{RoleID: 1, IsAdmin: true, GroupID: 0, OrganizationID: 1}},
-	})
-
-	mockStore.EXPECT().GetUserByID(ctx, gomock.Any())
-	mockStore.EXPECT().UpdatePassword(ctx, gomock.Any())
-	mockStore.EXPECT().RevokeUserToken(ctx, gomock.Any())
-
-	crypeng := crypto.NewEngine("test")
-
-	server := &Server{
-		store: mockStore,
-		cfg: &config.Config{
-			Salt: config.DefaultConfigForTest().Salt,
-		},
-		cryptoEngine: crypeng,
-	}
-
-	response, err := server.UpdatePassword(ctx, request)
-
-	assert.NoError(t, err)
-	assert.NotNil(t, response)
-}
-
-func TestUpdatePassword_gRPC(t *testing.T) {
-	t.Parallel()
-
-	seed := time.Now().UnixNano()
-	password := util.RandomPassword(8, seed)
-
-	testCases := []struct {
-		name               string
-		req                *pb.UpdatePasswordRequest
-		buildStubs         func(store *mockdb.MockStore)
-		checkResponse      func(t *testing.T, res *pb.UpdatePasswordResponse, err error)
-		expectedStatusCode codes.Code
-	}{
-		{
-			name: "Success",
-			req: &pb.UpdatePasswordRequest{
-				Password:             password,
-				PasswordConfirmation: password,
-			},
-			buildStubs: func(store *mockdb.MockStore) {
-				store.EXPECT().GetUserByID(gomock.Any(), gomock.Any())
-				store.EXPECT().UpdatePassword(gomock.Any(), gomock.Any())
-				store.EXPECT().RevokeUserToken(gomock.Any(), gomock.Any())
-			},
-			checkResponse: func(t *testing.T, res *pb.UpdatePasswordResponse, err error) {
-				t.Helper()
-
-				assert.NoError(t, err)
-				assert.NotNil(t, res)
-			},
-			expectedStatusCode: codes.OK,
-		},
-		{
-			name: "EmptyRequest",
-			req:  &pb.UpdatePasswordRequest{},
-			buildStubs: func(store *mockdb.MockStore) {
-				// No expectations, as CreateRole should not be called
-			},
-			checkResponse: func(t *testing.T, res *pb.UpdatePasswordResponse, err error) {
-				t.Helper()
-
-				// Assert the expected behavior when the request is empty
-				assert.Error(t, err)
-				assert.Nil(t, res)
-			},
-			expectedStatusCode: codes.InvalidArgument,
-		},
-	}
-
-	// Create a new context and set the claims value
-	ctx := auth.WithClaimContext(context.Background(), auth.UserClaims{
-		UserId:         1,
-		OrganizationId: 1,
-		GroupIds:       []int32{1},
-		Roles: []auth.RoleInfo{
-			{RoleID: 1, IsAdmin: true, GroupID: 0, OrganizationID: 1}},
-	})
-
-	for i := range testCases {
-		tc := testCases[i]
-		t.Run(tc.name, func(t *testing.T) {
-			t.Parallel()
-
-			ctrl := gomock.NewController(t)
-			defer ctrl.Finish()
-
-			mockStore := mockdb.NewMockStore(ctrl)
-			tc.buildStubs(mockStore)
-
-			evt, err := events.Setup()
-			require.NoError(t, err, "failed to setup eventer")
-			server, err := NewServer(mockStore, evt, &config.Config{
-				Salt: config.DefaultConfigForTest().Salt,
-				Auth: config.AuthConfig{
-					TokenKey: generateTokenKey(t),
-				},
-			})
-			require.NoError(t, err, "failed to create test server")
-
-			resp, err := server.UpdatePassword(ctx, tc.req)
-			tc.checkResponse(t, resp, err)
-		})
-	}
-}
-
-func TestUpdateProfileDBMock(t *testing.T) {
-	t.Parallel()
-
-	ctrl := gomock.NewController(t)
-	defer ctrl.Finish()
-
-	mockStore := mockdb.NewMockStore(ctrl)
-	seed := time.Now().UnixNano()
-
-	email := util.RandomEmail(seed)
-	name := util.RandomName(seed)
-
-	// Create a new context and set the claims value
-	ctx := auth.WithClaimContext(context.Background(), auth.UserClaims{
-		UserId:         1,
-		OrganizationId: 1,
-		GroupIds:       []int32{1},
-		Roles: []auth.RoleInfo{
-			{RoleID: 1, IsAdmin: true, GroupID: 0, OrganizationID: 1}},
-	})
-
-	mockStore.EXPECT().UpdateUser(ctx, gomock.Any())
-
-	crypeng := crypto.NewEngine("test")
-
-	server := &Server{
-		store: mockStore,
-		cfg: &config.Config{
-			Salt: config.DefaultConfigForTest().Salt,
-		},
-		cryptoEngine: crypeng,
-	}
-
-	response, err := server.store.UpdateUser(ctx, db.UpdateUserParams{ID: 1, Email: sql.NullString{String: email, Valid: true},
-		FirstName: sql.NullString{String: name, Valid: true}})
-
-	assert.NoError(t, err)
-	assert.NotNil(t, response)
-}
-
-func TestUpdateProfile_gRPC(t *testing.T) {
-	t.Parallel()
-
-	seed := time.Now().UnixNano()
-	email := util.RandomEmail(seed)
-	name := util.RandomName(seed)
-
-	testCases := []struct {
-		name               string
-		req                *pb.UpdateProfileRequest
-		buildStubs         func(store *mockdb.MockStore)
-		checkResponse      func(t *testing.T, res *pb.UpdateProfileResponse, err error)
-		expectedStatusCode codes.Code
-	}{
-		{
-			name: "Success",
-			req: &pb.UpdateProfileRequest{
-				Email:     &email,
-				FirstName: &name,
-			},
-			buildStubs: func(store *mockdb.MockStore) {
-				store.EXPECT().GetUserByID(gomock.Any(), gomock.Any())
-				store.EXPECT().UpdateUser(gomock.Any(), gomock.Any())
-			},
-			checkResponse: func(t *testing.T, res *pb.UpdateProfileResponse, err error) {
-				t.Helper()
-
-				assert.NoError(t, err)
-				assert.NotNil(t, res)
-			},
-			expectedStatusCode: codes.OK,
-		},
-		{
-			name: "EmptyRequest",
-			req:  &pb.UpdateProfileRequest{},
-			buildStubs: func(store *mockdb.MockStore) {
-				// No expectations, as CreateRole should not be called
-			},
-			checkResponse: func(t *testing.T, res *pb.UpdateProfileResponse, err error) {
-				t.Helper()
-
-				// Assert the expected behavior when the request is empty
-				assert.Error(t, err)
-				assert.Nil(t, res)
-			},
-			expectedStatusCode: codes.InvalidArgument,
-		},
-	}
-
-	// Create a new context and set the claims value
-	ctx := auth.WithClaimContext(context.Background(), auth.UserClaims{
-		UserId:              1,
-		OrganizationId:      1,
-		GroupIds:            []int32{1},
-		NeedsPasswordChange: false,
-		Roles: []auth.RoleInfo{
-			{RoleID: 1, IsAdmin: true, GroupID: 0, OrganizationID: 1}},
-	})
-
-	for i := range testCases {
-		tc := testCases[i]
-		t.Run(tc.name, func(t *testing.T) {
-			t.Parallel()
-
-			ctrl := gomock.NewController(t)
-			defer ctrl.Finish()
-
-			mockStore := mockdb.NewMockStore(ctrl)
-			tc.buildStubs(mockStore)
-
-			evt, err := events.Setup()
-			require.NoError(t, err, "failed to setup eventer")
-			server, err := NewServer(mockStore, evt, &config.Config{
-				Salt: config.DefaultConfigForTest().Salt,
-				Auth: config.AuthConfig{
-					TokenKey: generateTokenKey(t),
-				},
-			})
-			require.NoError(t, err, "failed to create test server")
-
-			resp, err := server.UpdateProfile(ctx, tc.req)
 			tc.checkResponse(t, resp, err)
 		})
 	}
@@ -493,16 +225,13 @@ func TestDeleteUserDBMock(t *testing.T) {
 		ID:             1,
 		OrganizationID: 1,
 		Email:          sql.NullString{String: "test@stacklok.com", Valid: true},
-		Username:       "test",
-		Password:       util.RandomPassword(8, time.Now().UnixNano()),
 		FirstName:      sql.NullString{String: "Foo", Valid: true},
 		LastName:       sql.NullString{String: "Bar", Valid: true},
-		IsProtected:    false,
 		CreatedAt:      time.Now(),
 		UpdatedAt:      time.Now(),
 	}
 	// Create a new context and set the claims value
-	ctx := auth.WithClaimContext(context.Background(), auth.UserClaims{
+	ctx := auth.WithPermissionsContext(context.Background(), auth.UserPermissions{
 		UserId:         1,
 		OrganizationId: 1,
 		GroupIds:       []int32{1},
@@ -586,7 +315,7 @@ func TestDeleteUser_gRPC(t *testing.T) {
 		},
 	}
 	// Create a new context and set the claims value
-	ctx := auth.WithClaimContext(context.Background(), auth.UserClaims{
+	ctx := auth.WithPermissionsContext(context.Background(), auth.UserPermissions{
 		UserId:         1,
 		OrganizationId: 1,
 		GroupIds:       []int32{1},
@@ -604,6 +333,7 @@ func TestDeleteUser_gRPC(t *testing.T) {
 
 			mockStore := mockdb.NewMockStore(ctrl)
 			tc.buildStubs(mockStore)
+			mockJwtValidator := mockjwt.NewMockJwtValidator(ctrl)
 
 			evt, err := events.Setup()
 			require.NoError(t, err, "failed to setup eventer")
@@ -612,7 +342,7 @@ func TestDeleteUser_gRPC(t *testing.T) {
 				Auth: config.AuthConfig{
 					TokenKey: generateTokenKey(t),
 				},
-			})
+			}, mockJwtValidator)
 			require.NoError(t, err, "failed to create test server")
 
 			resp, err := server.DeleteUser(ctx, tc.req)
@@ -634,22 +364,19 @@ func TestGetUsersDBMock(t *testing.T) {
 	expectedUsers := []db.User{
 		{
 			ID:        1,
-			Username:  "test",
 			CreatedAt: time.Now(),
 			UpdatedAt: time.Now(),
 		},
 		{
-			ID:          2,
-			Username:    "test1",
-			FirstName:   sql.NullString{String: "Foo", Valid: true},
-			Email:       sql.NullString{String: "test@stacklok.com", Valid: true},
-			IsProtected: true,
-			CreatedAt:   time.Now(),
-			UpdatedAt:   time.Now(),
+			ID:        2,
+			FirstName: sql.NullString{String: "Foo", Valid: true},
+			Email:     sql.NullString{String: "test@stacklok.com", Valid: true},
+			CreatedAt: time.Now(),
+			UpdatedAt: time.Now(),
 		},
 	}
 	// Create a new context and set the claims value
-	ctx := auth.WithClaimContext(context.Background(), auth.UserClaims{
+	ctx := auth.WithPermissionsContext(context.Background(), auth.UserPermissions{
 		UserId:         1,
 		OrganizationId: 1,
 		GroupIds:       []int32{1},
@@ -677,7 +404,6 @@ func TestGetUsersDBMock(t *testing.T) {
 	assert.Equal(t, len(expectedUsers), len(response.Users))
 	assert.Equal(t, expectedUsers[0].ID, response.Users[0].Id)
 	assert.Equal(t, expectedUsers[0].OrganizationID, response.Users[0].OrganizationId)
-	assert.Equal(t, expectedUsers[0].Username, response.Users[0].Username)
 	expectedCreatedAt := expectedUsers[0].CreatedAt.In(time.UTC)
 	assert.Equal(t, expectedCreatedAt, response.Users[0].CreatedAt.AsTime().In(time.UTC))
 	expectedUpdatedAt := expectedUsers[0].UpdatedAt.In(time.UTC)
@@ -701,21 +427,20 @@ func TestGetUsers_gRPC(t *testing.T) {
 				store.EXPECT().ListUsers(gomock.Any(), gomock.Any()).
 					Return([]db.User{
 						{
-							ID:             1,
-							OrganizationID: 1,
-							Username:       "test",
-							CreatedAt:      time.Now(),
-							UpdatedAt:      time.Now(),
+							ID:              1,
+							IdentitySubject: "subject1",
+							OrganizationID:  1,
+							CreatedAt:       time.Now(),
+							UpdatedAt:       time.Now(),
 						},
 						{
-							ID:             2,
-							OrganizationID: 1,
-							Email:          sql.NullString{String: "test1@stacklok.com", Valid: true},
-							Username:       "test1",
-							FirstName:      sql.NullString{String: "Foo", Valid: true},
-							IsProtected:    true,
-							CreatedAt:      time.Now(),
-							UpdatedAt:      time.Now(),
+							ID:              2,
+							IdentitySubject: "subject2",
+							OrganizationID:  1,
+							Email:           sql.NullString{String: "test1@stacklok.com", Valid: true},
+							FirstName:       sql.NullString{String: "Foo", Valid: true},
+							CreatedAt:       time.Now(),
+							UpdatedAt:       time.Now(),
 						},
 					}, nil).
 					Times(1)
@@ -724,25 +449,23 @@ func TestGetUsers_gRPC(t *testing.T) {
 				t.Helper()
 
 				firstNamePtr := "Foo"
-				protectedPtr := true
 				emailPtr := "test1@stacklok.com"
 				expectedOrgs := []*pb.UserRecord{
 					{
-						Id:             1,
-						OrganizationId: 1,
-						Username:       "test",
-						CreatedAt:      timestamppb.New(time.Now()),
-						UpdatedAt:      timestamppb.New(time.Now()),
+						Id:              1,
+						IdentitySubject: "subject1",
+						OrganizationId:  1,
+						CreatedAt:       timestamppb.New(time.Now()),
+						UpdatedAt:       timestamppb.New(time.Now()),
 					},
 					{
-						Id:             2,
-						OrganizationId: 1,
-						Username:       "test1",
-						FirstName:      &firstNamePtr,
-						Email:          &emailPtr,
-						IsProtected:    &protectedPtr,
-						CreatedAt:      timestamppb.New(time.Now()),
-						UpdatedAt:      timestamppb.New(time.Now()),
+						Id:              2,
+						IdentitySubject: "subject2",
+						OrganizationId:  1,
+						FirstName:       &firstNamePtr,
+						Email:           &emailPtr,
+						CreatedAt:       timestamppb.New(time.Now()),
+						UpdatedAt:       timestamppb.New(time.Now()),
 					},
 				}
 
@@ -758,7 +481,7 @@ func TestGetUsers_gRPC(t *testing.T) {
 		},
 	}
 	// Create a new context and set the claims value
-	ctx := auth.WithClaimContext(context.Background(), auth.UserClaims{
+	ctx := auth.WithPermissionsContext(context.Background(), auth.UserPermissions{
 		UserId:         1,
 		OrganizationId: 1,
 		GroupIds:       []int32{1},
@@ -776,6 +499,7 @@ func TestGetUsers_gRPC(t *testing.T) {
 
 			mockStore := mockdb.NewMockStore(ctrl)
 			tc.buildStubs(mockStore)
+			mockJwtValidator := mockjwt.NewMockJwtValidator(ctrl)
 
 			evt, err := events.Setup()
 			require.NoError(t, err, "failed to setup eventer")
@@ -784,7 +508,7 @@ func TestGetUsers_gRPC(t *testing.T) {
 				Auth: config.AuthConfig{
 					TokenKey: generateTokenKey(t),
 				},
-			})
+			}, mockJwtValidator)
 			require.NoError(t, err, "failed to create test server")
 
 			resp, err := server.GetUsers(ctx, tc.req)
@@ -806,12 +530,11 @@ func TestGetUserDBMock(t *testing.T) {
 	expectedUser := db.User{
 		ID:             1,
 		OrganizationID: 1,
-		Username:       "test",
 		CreatedAt:      time.Now(),
 		UpdatedAt:      time.Now(),
 	}
 	// Create a new context and set the claims value
-	ctx := auth.WithClaimContext(context.Background(), auth.UserClaims{
+	ctx := auth.WithPermissionsContext(context.Background(), auth.UserPermissions{
 		UserId:         1,
 		OrganizationId: 1,
 		GroupIds:       []int32{1},
@@ -840,7 +563,6 @@ func TestGetUserDBMock(t *testing.T) {
 	assert.NotNil(t, response)
 	assert.Equal(t, expectedUser.ID, response.User.Id)
 	assert.Equal(t, expectedUser.OrganizationID, response.User.OrganizationId)
-	assert.Equal(t, expectedUser.Username, response.User.Username)
 	expectedCreatedAt := expectedUser.CreatedAt.In(time.UTC)
 	assert.Equal(t, expectedCreatedAt, response.User.CreatedAt.AsTime().In(time.UTC))
 	expectedUpdatedAt := expectedUser.UpdatedAt.In(time.UTC)
@@ -857,7 +579,7 @@ func TestGetNonExistingUserDBMock(t *testing.T) {
 
 	request := &pb.GetUserByIdRequest{UserId: 5}
 	// Create a new context and set the claims value
-	ctx := auth.WithClaimContext(context.Background(), auth.UserClaims{
+	ctx := auth.WithPermissionsContext(context.Background(), auth.UserPermissions{
 		UserId:         1,
 		OrganizationId: 1,
 		GroupIds:       []int32{1},
@@ -904,7 +626,6 @@ func TestGetUser_gRPC(t *testing.T) {
 					Return(db.User{
 						ID:             1,
 						OrganizationID: 1,
-						Username:       "test",
 						CreatedAt:      time.Now(),
 						UpdatedAt:      time.Now(),
 					}, nil).
@@ -918,7 +639,6 @@ func TestGetUser_gRPC(t *testing.T) {
 				expectedUser := pb.UserRecord{
 					Id:             1,
 					OrganizationId: 1,
-					Username:       "test",
 					CreatedAt:      timestamppb.New(time.Now()),
 					UpdatedAt:      timestamppb.New(time.Now()),
 				}
@@ -927,7 +647,6 @@ func TestGetUser_gRPC(t *testing.T) {
 				assert.NotNil(t, res)
 				assert.Equal(t, expectedUser.Id, res.User.Id)
 				assert.Equal(t, expectedUser.OrganizationId, res.User.OrganizationId)
-				assert.Equal(t, expectedUser.Username, res.User.Username)
 			},
 			expectedStatusCode: codes.OK,
 		},
@@ -952,7 +671,7 @@ func TestGetUser_gRPC(t *testing.T) {
 		},
 	}
 	// Create a new context and set the claims value
-	ctx := auth.WithClaimContext(context.Background(), auth.UserClaims{
+	ctx := auth.WithPermissionsContext(context.Background(), auth.UserPermissions{
 		UserId:         1,
 		OrganizationId: 1,
 		GroupIds:       []int32{1},
@@ -970,6 +689,7 @@ func TestGetUser_gRPC(t *testing.T) {
 
 			mockStore := mockdb.NewMockStore(ctrl)
 			tc.buildStubs(mockStore)
+			mockJwtValidator := mockjwt.NewMockJwtValidator(ctrl)
 
 			evt, err := events.Setup()
 			require.NoError(t, err, "failed to setup eventer")
@@ -978,7 +698,7 @@ func TestGetUser_gRPC(t *testing.T) {
 				Auth: config.AuthConfig{
 					TokenKey: generateTokenKey(t),
 				},
-			})
+			}, mockJwtValidator)
 			require.NoError(t, err, "failed to create test server")
 
 			resp, err := server.GetUserById(ctx, tc.req)

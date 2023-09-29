@@ -13,27 +13,17 @@
 // See the License for the specific language governing permissions and
 // limitations under the License.
 
-// NOTE: This file is for stubbing out client code for proof of concept
-// purposes. It will / should be removed in the future.
-// Until then, it is not covered by unit tests and should not be used
-// It does make a good example of how to use the generated client code
-// for others to use as a reference.
-
 package auth
 
 import (
 	"context"
-	"crypto/rsa"
 	"errors"
 	"fmt"
-	"time"
 
-	"github.com/golang-jwt/jwt/v4"
+	"github.com/lestrrat-go/jwx/v2/jwk"
+	"github.com/lestrrat-go/jwx/v2/jwt"
+	"github.com/lestrrat-go/jwx/v2/jwt/openid"
 	"golang.org/x/exp/slices"
-	"google.golang.org/grpc/codes"
-	"google.golang.org/grpc/status"
-
-	"github.com/stacklok/mediator/internal/db"
 )
 
 // RoleInfo contains the role information for a user
@@ -44,245 +34,125 @@ type RoleInfo struct {
 	OrganizationID int32 `json:"organization_id"`
 }
 
-// UserClaims contains the claims for a user
-type UserClaims struct {
-	UserId              int32
-	GroupIds            []int32
-	Roles               []RoleInfo
-	OrganizationId      int32
-	NeedsPasswordChange bool
+// UserPermissions contains the permissions for a user
+type UserPermissions struct {
+	UserId         int32
+	GroupIds       []int32
+	Roles          []RoleInfo
+	OrganizationId int32
 }
 
-// GenerateToken generates a JWT token
-func GenerateToken(userClaims UserClaims, accessPrivateKey *rsa.PrivateKey, refreshPrivateKey *rsa.PrivateKey,
-	expiry int64, refreshExpiry int64) (string, string, int64, int64, error) {
-	if accessPrivateKey == nil || refreshPrivateKey == nil {
-		return "", "", 0, 0, fmt.Errorf("invalid key")
-	}
-	tokenExpirationTime := time.Now().Add(time.Duration(expiry) * time.Second).Unix()
-
-	token := jwt.NewWithClaims(jwt.SigningMethodRS256, jwt.MapClaims{
-		"userId":              int32(userClaims.UserId),
-		"roleInfo":            userClaims.Roles,
-		"groupIds":            userClaims.GroupIds,
-		"orgId":               int32(userClaims.OrganizationId),
-		"iat":                 time.Now().Unix(),
-		"exp":                 tokenExpirationTime,
-		"needsPasswordChange": userClaims.NeedsPasswordChange,
-	})
-
-	tokenString, err := token.SignedString(accessPrivateKey)
-	if err != nil {
-		return "", "", 0, 0, err
-	}
-
-	// Create a refresh token that lasts longer than the access token
-	refreshExpirationTime := time.Now().Add(time.Duration(refreshExpiry) * time.Second).Unix()
-	refreshToken := jwt.NewWithClaims(jwt.SigningMethodRS256, jwt.MapClaims{
-		"userId": userClaims.UserId,
-		"iat":    time.Now().Unix(),
-		"exp":    refreshExpirationTime,
-	})
-
-	refreshTokenString, err := refreshToken.SignedString(refreshPrivateKey)
-	if err != nil {
-		return "", "", 0, 0, err
-	}
-
-	return tokenString, refreshTokenString, tokenExpirationTime, refreshExpirationTime, nil
+// JwtValidator provides the functions to validate a JWT
+type JwtValidator interface {
+	ParseAndValidate(tokenString string) (openid.Token, error)
 }
 
-// VerifyToken verifies the token string and returns the user ID
-// nolint:gocyclo
-func VerifyToken(tokenString string, publicKey *rsa.PublicKey, store db.Store) (UserClaims, error) {
-	var userClaims UserClaims
-	if publicKey == nil {
-		return userClaims, fmt.Errorf("invalid key")
-	}
-
-	token, err := jwt.Parse(tokenString, func(token *jwt.Token) (interface{}, error) {
-		if _, ok := token.Method.(*jwt.SigningMethodRSA); !ok {
-			return nil, status.Error(codes.InvalidArgument, "unexpected signing method")
-		}
-		return publicKey, nil
-	})
-
-	if err != nil {
-		return userClaims, err
-	}
-
-	claims, ok := token.Claims.(jwt.MapClaims)
-	if !ok || !token.Valid {
-		return userClaims, fmt.Errorf("invalid token")
-	}
-
-	// validate that iat is on the past
-	if claims, ok := token.Claims.(jwt.MapClaims); ok {
-		if !claims.VerifyIssuedAt(time.Now().Unix(), true) {
-			return userClaims, fmt.Errorf("token used before issued")
-		}
-	}
-
-	// we have the user id, read the auth
-	userId := int32(claims["userId"].(float64))
-	user, err := store.GetUserByID(context.Background(), userId)
-	if err != nil {
-		return userClaims, fmt.Errorf("unknown userId")
-	}
-
-	// if we have a value in issued at, we compare against iat
-	iat := int64(claims["iat"].(float64))
-	if user.MinTokenIssuedTime.Valid {
-		unitTs := user.MinTokenIssuedTime.Time.Unix()
-		if unitTs > iat {
-			// token was issued after the iat
-			return userClaims, fmt.Errorf("token issued after iat=%d", iat)
-		}
-	}
-
-	// generate claims
-	var groups []int32
-	if claims["groupIds"] != nil {
-		for _, g := range claims["groupIds"].([]interface{}) {
-			groups = append(groups, int32(g.(float64)))
-		}
-	}
-	userClaims.GroupIds = groups
-
-	var roles []RoleInfo
-	if claims["roleInfo"] != nil {
-		for _, role := range claims["roleInfo"].([]interface{}) {
-			roleInfo := RoleInfo{RoleID: int32(role.(map[string]interface{})["role_id"].(float64)),
-				IsAdmin:        role.(map[string]interface{})["is_admin"].(bool),
-				GroupID:        int32(role.(map[string]interface{})["group_id"].(float64)),
-				OrganizationID: int32(role.(map[string]interface{})["organization_id"].(float64))}
-
-			roles = append(roles, roleInfo)
-		}
-	}
-	userClaims.Roles = roles
-	userClaims.UserId = int32(claims["userId"].(float64))
-
-	userClaims.OrganizationId = int32(claims["orgId"].(float64))
-	userClaims.NeedsPasswordChange = claims["needsPasswordChange"].(bool)
-
-	return userClaims, nil
+// JwkSetJwtValidator is a JWT validator that uses a JWK set URL to validate the tokens
+type JwkSetJwtValidator struct {
+	jwksFetcher KeySetFetcher
 }
 
-// VerifyRefreshToken verifies the refresh token string and returns the user ID
-func VerifyRefreshToken(tokenString string, publicKey *rsa.PublicKey, store db.Store) (int32, error) {
-	if publicKey == nil {
-		return 0, fmt.Errorf("invalid key")
-	}
-	token, err := jwt.Parse(tokenString, func(token *jwt.Token) (interface{}, error) {
-		if _, ok := token.Method.(*jwt.SigningMethodRSA); !ok {
-			return nil, status.Error(codes.InvalidArgument, "unexpected signing method")
-		}
-		return publicKey, nil
-	})
-
-	if err != nil {
-		return 0, err
-	}
-
-	claims, ok := token.Claims.(jwt.MapClaims)
-	if !ok || !token.Valid {
-		return 0, fmt.Errorf("invalid token")
-	}
-
-	// validate that iat is on the past
-	if claims, ok := token.Claims.(jwt.MapClaims); ok {
-		if !claims.VerifyIssuedAt(time.Now().Unix(), true) {
-			return 0, fmt.Errorf("invalid token")
-		}
-	}
-
-	// we have the user id, check if exists
-	userId := int32(claims["userId"].(float64))
-	_, err = store.GetUserByID(context.Background(), userId)
-	if err != nil {
-		return 0, fmt.Errorf("invalid token")
-	}
-
-	return userId, nil
+// KeySetFetcher provides the functions to fetch a JWK set
+type KeySetFetcher interface {
+	GetKeySet() (jwk.Set, error)
 }
 
-// GetUserClaims returns the user claims for the given user
-func GetUserClaims(ctx context.Context, store db.Store, userId int32) (UserClaims, error) {
-	emptyClaims := UserClaims{}
+// KeySetCache is a KeySetFetcher that fetches the JWK set from a cache
+type KeySetCache struct {
+	ctx       context.Context
+	jwksUrl   string
+	jwksCache *jwk.Cache
+}
 
-	// read all information for user claims
-	userInfo, err := store.GetUserByID(ctx, userId)
+// GetKeySet returns the caches JWK set
+func (k *KeySetCache) GetKeySet() (jwk.Set, error) {
+	return k.jwksCache.Get(k.ctx, k.jwksUrl)
+}
+
+// ParseAndValidate validates a token string and returns an openID token, or an error if the token is invalid
+func (j *JwkSetJwtValidator) ParseAndValidate(tokenString string) (openid.Token, error) {
+	set, err := j.jwksFetcher.GetKeySet()
 	if err != nil {
-		return emptyClaims, fmt.Errorf("failed to read user")
+		return nil, err
 	}
 
-	// read groups and add id to claims
-	gs, err := store.GetUserGroups(ctx, userId)
+	token, err := jwt.ParseString(tokenString, jwt.WithKeySet(set), jwt.WithValidate(true), jwt.WithToken(openid.New()))
 	if err != nil {
-		return emptyClaims, fmt.Errorf("failed to get groups")
-	}
-	var groups []int32
-	for _, g := range gs {
-		groups = append(groups, g.ID)
+		return nil, err
 	}
 
-	// read roles and add details to claims
-	rs, err := store.GetUserRoles(ctx, userId)
+	openIdToken, ok := token.(openid.Token)
+	if !ok {
+		return nil, fmt.Errorf("provided token was not an OpenID token")
+	}
+
+	if openIdToken.Subject() == "" {
+		return nil, fmt.Errorf("provided token is missing required subject claim")
+	}
+
+	return openIdToken, nil
+}
+
+// NewJwtValidator creates a new JWT validator that uses a JWK set URL to validate the tokens
+func NewJwtValidator(ctx context.Context, jwksUrl string) (JwtValidator, error) {
+	// Cache the JWK set
+	// The cache will refresh every 15 minutes by default
+	jwks := jwk.NewCache(ctx)
+	err := jwks.Register(jwksUrl)
 	if err != nil {
-		return emptyClaims, fmt.Errorf("failed to get roles")
+		return nil, err
 	}
 
-	var roles []RoleInfo
-	for _, r := range rs {
-		roles = append(roles, RoleInfo{RoleID: r.ID, IsAdmin: r.IsAdmin, GroupID: r.GroupID.Int32, OrganizationID: r.OrganizationID})
+	// Refresh the JWKS once before starting
+	_, err = jwks.Refresh(ctx, jwksUrl)
+	if err != nil {
+		return nil, fmt.Errorf("failed to refresh identity provider JWKS: %s\n", err)
 	}
 
-	claims := UserClaims{
-		UserId:              userId,
-		Roles:               roles,
-		GroupIds:            groups,
-		OrganizationId:      userInfo.OrganizationID,
-		NeedsPasswordChange: userInfo.NeedsPasswordChange,
+	keySetCache := KeySetCache{
+		ctx:       ctx,
+		jwksUrl:   jwksUrl,
+		jwksCache: jwks,
 	}
-
-	return claims, nil
+	return &JwkSetJwtValidator{
+		jwksFetcher: &keySetCache,
+	}, nil
 }
 
 var tokenContextKey struct{}
 
-// GetClaimsFromContext returns the claims from the context, or an empty default
-func GetClaimsFromContext(ctx context.Context) UserClaims {
-	claims, ok := ctx.Value(tokenContextKey).(UserClaims)
+// GetPermissionsFromContext returns the claims from the context, or an empty default
+func GetPermissionsFromContext(ctx context.Context) UserPermissions {
+	permissions, ok := ctx.Value(tokenContextKey).(UserPermissions)
 	if !ok {
-		return UserClaims{UserId: -1, OrganizationId: -1}
+		return UserPermissions{UserId: -1, OrganizationId: -1}
 	}
-	return claims
+	return permissions
 }
 
-// WithClaimContext stores the specified UserClaim in the context.
-func WithClaimContext(ctx context.Context, claims UserClaims) context.Context {
+// WithPermissionsContext stores the specified UserClaim in the context.
+func WithPermissionsContext(ctx context.Context, claims UserPermissions) context.Context {
 	return context.WithValue(ctx, tokenContextKey, claims)
 }
 
 // GetDefaultGroup returns the default group id for the user
 func GetDefaultGroup(ctx context.Context) (int32, error) {
-	claims := GetClaimsFromContext(ctx)
-	if len(claims.GroupIds) != 1 {
+	permissions := GetPermissionsFromContext(ctx)
+	if len(permissions.GroupIds) != 1 {
 		return 0, errors.New("cannot get default group")
 	}
-	return claims.GroupIds[0], nil
+	return permissions.GroupIds[0], nil
 }
 
 // IsAuthorizedForGroup returns true if the user is authorized for the given group
 func IsAuthorizedForGroup(ctx context.Context, groupId int32) bool {
-	claims := GetClaimsFromContext(ctx)
+	permissions := GetPermissionsFromContext(ctx)
 
-	return slices.Contains(claims.GroupIds, groupId)
+	return slices.Contains(permissions.GroupIds, groupId)
 }
 
 // GetUserGroups returns all the groups where an user belongs to
 func GetUserGroups(ctx context.Context) ([]int32, error) {
-	claims := GetClaimsFromContext(ctx)
-	return claims.GroupIds, nil
+	permissions := GetPermissionsFromContext(ctx)
+	return permissions.GroupIds, nil
 }

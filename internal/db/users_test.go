@@ -44,12 +44,11 @@ func createRandomUser(t *testing.T, org Organization) User {
 	seed := time.Now().UnixNano()
 
 	arg := CreateUserParams{
-		OrganizationID: org.ID,
-		Email:          stringToNullString(util.RandomEmail(seed)),
-		Username:       util.RandomString(10, seed),
-		Password:       util.RandomPassword(10, seed),
-		FirstName:      stringToNullString(util.RandomName(seed)),
-		LastName:       stringToNullString(util.RandomName(seed)),
+		OrganizationID:  org.ID,
+		IdentitySubject: util.RandomString(10, seed),
+		Email:           stringToNullString(util.RandomEmail(seed)),
+		FirstName:       stringToNullString(util.RandomName(seed)),
+		LastName:        stringToNullString(util.RandomName(seed)),
 	}
 
 	user, err := testQueries.CreateUser(context.Background(), arg)
@@ -58,11 +57,8 @@ func createRandomUser(t *testing.T, org Organization) User {
 
 	require.Equal(t, arg.Email, user.Email)
 	require.Equal(t, arg.OrganizationID, user.OrganizationID)
-	require.Equal(t, arg.Username, user.Username)
-	require.Equal(t, arg.Password, user.Password)
 	require.Equal(t, arg.FirstName, user.FirstName)
 	require.Equal(t, arg.LastName, user.LastName)
-	require.Equal(t, false, user.IsProtected)
 
 	require.NotZero(t, user.ID)
 	require.NotZero(t, user.CreatedAt)
@@ -92,41 +88,8 @@ func TestGetUser(t *testing.T) {
 	require.Equal(t, user1.ID, user2.ID)
 	require.Equal(t, user1.OrganizationID, user2.OrganizationID)
 	require.Equal(t, user1.Email, user2.Email)
-	require.Equal(t, user1.Username, user2.Username)
-	require.Equal(t, user1.Password, user2.Password)
 	require.Equal(t, user1.FirstName, user2.FirstName)
 	require.Equal(t, user1.LastName, user2.LastName)
-	require.Equal(t, user1.IsProtected, user2.IsProtected)
-
-	require.NotZero(t, user2.CreatedAt)
-	require.NotZero(t, user2.UpdatedAt)
-
-	require.WithinDuration(t, user1.CreatedAt, user2.CreatedAt, time.Second)
-	require.WithinDuration(t, user1.UpdatedAt, user2.UpdatedAt, time.Second)
-}
-
-func TestUpdateUser(t *testing.T) {
-	t.Parallel()
-
-	seed := time.Now().UnixNano()
-	org := createRandomOrganization(t)
-	user1 := createRandomUser(t, org)
-
-	arg := UpdateUserParams{
-		ID:        user1.ID,
-		Email:     stringToNullString(util.RandomEmail(seed)),
-		FirstName: stringToNullString(util.RandomName(seed)),
-		LastName:  stringToNullString(util.RandomName(seed)),
-	}
-
-	user2, err := testQueries.UpdateUser(context.Background(), arg)
-	require.NoError(t, err)
-	require.NotEmpty(t, user2)
-
-	require.Equal(t, arg.ID, user2.ID)
-	require.Equal(t, arg.Email, user2.Email)
-	require.Equal(t, arg.FirstName, user2.FirstName)
-	require.Equal(t, arg.LastName, user2.LastName)
 
 	require.NotZero(t, user2.CreatedAt)
 	require.NotZero(t, user2.UpdatedAt)

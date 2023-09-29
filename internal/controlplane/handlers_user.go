@@ -18,86 +18,58 @@ import (
 	"context"
 	"database/sql"
 	"errors"
-	"time"
 
 	"github.com/go-playground/validator/v10"
+	gauth "github.com/grpc-ecosystem/go-grpc-middleware/v2/interceptors/auth"
+	"github.com/lestrrat-go/jwx/v2/jwt/openid"
+	"golang.org/x/exp/slices"
 	"google.golang.org/grpc/codes"
 	"google.golang.org/grpc/status"
 	"google.golang.org/protobuf/types/known/timestamppb"
 
-	"github.com/stacklok/mediator/internal/auth"
-	mcrypto "github.com/stacklok/mediator/internal/crypto"
 	"github.com/stacklok/mediator/internal/db"
-	"github.com/stacklok/mediator/internal/util"
 	pb "github.com/stacklok/mediator/pkg/api/protobuf/go/mediator/v1"
 )
 
 type createUserValidation struct {
-	OrganizationId int32  `db:"organization_id" validate:"required"`
-	Email          string `db:"email" validate:"omitempty,email"`
-	FirstName      string `db:"first_name" validate:"omitempty,alphaunicode"`
-	LastName       string `db:"last_name" validate:"omitempty,alphaunicode"`
-	Username       string `db:"username" validate:"required"`
-	Password       string `validate:"omitempty,min=8,containsany=_.;?&@"`
+	OrganizationId int32 `db:"organization_id" validate:"required"`
 }
 
-func stringToNullString(s *string) *sql.NullString {
-	if s == nil {
+func stringToNullString(s string) *sql.NullString {
+	if s == "" {
 		return &sql.NullString{Valid: false}
 	}
-	return &sql.NullString{String: *s, Valid: true}
+	return &sql.NullString{String: s, Valid: true}
 }
 
-// CreateUser is a service for creating an organization
+// CreateUser is a service for user self registration
 //
 //gocyclo:ignore
 func (s *Server) CreateUser(ctx context.Context,
 	in *pb.CreateUserRequest) (*pb.CreateUserResponse, error) {
 
-	// validate that the company and name are not empty, and email is valid if exists
+	tokenString, err := gauth.AuthFromMD(ctx, "bearer")
+	if err != nil {
+		return nil, status.Errorf(codes.InvalidArgument, "no auth token: %v", err)
+	}
+
+	token, err := s.vldtr.ParseAndValidate(tokenString)
+	if err != nil {
+		return nil, status.Errorf(codes.Unauthenticated, "failed to parse bearer token: %v", err)
+	}
+
 	validator := validator.New()
-	format := createUserValidation{OrganizationId: in.OrganizationId, Username: in.Username}
+	format := createUserValidation{OrganizationId: in.OrganizationId}
 
-	if in.Email != nil {
-		format.Email = *in.Email
-	}
-
-	if in.Password != nil {
-		format.Password = *in.Password
-	}
-
-	err := validator.Struct(format)
+	err = validator.Struct(format)
 	if err != nil {
 		return nil, status.Errorf(codes.InvalidArgument, "invalid argument: %s", err.Error())
 	}
 
-	if in.IsProtected == nil {
-		isProtected := false
-		in.IsProtected = &isProtected
-	}
-
-	// if email is blank, set to null
-	if in.Email != nil && *in.Email == "" {
-		in.Email = nil
-	}
-
-	// if password is not set, we generate a random one
-	seed := time.Now().UnixNano()
-
-	if in.Password == nil || *in.Password == "" {
-		pass := util.RandomPassword(8, seed)
-		in.Password = &pass
-	}
-
-	// hash the password for storing in the database
-	pHash, err := mcrypto.GeneratePasswordHash(*in.Password, &s.cfg.Salt)
-	if err != nil {
-		return nil, status.Errorf(codes.Internal, "failed to hash password: %s", err.Error())
-	}
-
-	// check if user is authorized
-	if err := AuthorizedOnOrg(ctx, in.OrganizationId); err != nil {
-		return nil, err
+	// if the token has superadmin access to the realm, then make give them a superadmin role in the DB
+	if containsAdminRole(token) {
+		in.RoleIds = append(in.RoleIds, 1)
+		in.GroupIds = append(in.GroupIds, 1)
 	}
 
 	// if we have group ids we check if they exist
@@ -136,11 +108,6 @@ func (s *Server) CreateUser(ctx context.Context,
 		}
 	}
 
-	needsPassPtr := false
-	if in.NeedsPasswordChange != nil {
-		needsPassPtr = *in.NeedsPasswordChange
-	}
-
 	tx, err := s.store.BeginTransaction()
 	if err != nil {
 		return nil, status.Errorf(codes.Internal, "failed to begin transaction")
@@ -152,9 +119,10 @@ func (s *Server) CreateUser(ctx context.Context,
 	}
 
 	user, err := qtx.CreateUser(ctx, db.CreateUserParams{OrganizationID: in.OrganizationId,
-		Email: *stringToNullString(in.Email), Username: in.Username, Password: pHash,
-		FirstName: *stringToNullString(in.FirstName), LastName: *stringToNullString(in.LastName),
-		IsProtected: *in.IsProtected, NeedsPasswordChange: needsPassPtr})
+		Email:           *stringToNullString(token.Email()),
+		FirstName:       *stringToNullString(token.GivenName()),
+		LastName:        *stringToNullString(token.FamilyName()),
+		IdentitySubject: token.Subject()})
 	if err != nil {
 		return nil, status.Errorf(codes.Internal, "failed to create user: %s", err)
 	}
@@ -178,10 +146,23 @@ func (s *Server) CreateUser(ctx context.Context,
 	}
 
 	return &pb.CreateUserResponse{Id: user.ID, OrganizationId: user.OrganizationID, Email: &user.Email.String,
-		Username: user.Username, Password: *in.Password, FirstName: &user.FirstName.String,
-		LastName: &user.LastName.String, IsProtected: &user.IsProtected,
-		NeedsPasswordChange: &user.NeedsPasswordChange, CreatedAt: timestamppb.New(user.CreatedAt),
-		UpdatedAt: timestamppb.New(user.UpdatedAt)}, nil
+		IdentitySubject: user.IdentitySubject, FirstName: &user.FirstName.String, LastName: &user.LastName.String,
+		CreatedAt: timestamppb.New(user.CreatedAt), UpdatedAt: timestamppb.New(user.UpdatedAt)}, nil
+}
+
+func containsAdminRole(openIdToken openid.Token) bool {
+	if realmAccess, ok := openIdToken.Get("realm_access"); ok {
+		if realms, ok := realmAccess.(map[string]interface{}); ok {
+			if roles, ok := realms["roles"]; ok {
+				if userRoles, ok := roles.([]interface{}); ok {
+					if slices.Contains(userRoles, "superadmin") {
+						return true
+					}
+				}
+			}
+		}
+	}
+	return false
 }
 
 type deleteUserValidation struct {
@@ -214,10 +195,6 @@ func (s *Server) DeleteUser(ctx context.Context,
 	if in.Force == nil {
 		isProtected := false
 		in.Force = &isProtected
-	}
-
-	if !*in.Force && user.IsProtected {
-		return nil, status.Errorf(codes.InvalidArgument, "cannot delete a protected user")
 	}
 
 	err = s.store.DeleteUser(ctx, in.Id)
@@ -255,16 +232,14 @@ func (s *Server) GetUsers(ctx context.Context,
 	for idx := range users {
 		user := &users[idx]
 		resp.Users = append(resp.Users, &pb.UserRecord{
-			Id:                  user.ID,
-			OrganizationId:      user.OrganizationID,
-			Email:               &user.Email.String,
-			Username:            user.Username,
-			FirstName:           &user.FirstName.String,
-			LastName:            &user.LastName.String,
-			IsProtected:         &user.IsProtected,
-			NeedsPasswordChange: &user.NeedsPasswordChange,
-			CreatedAt:           timestamppb.New(user.CreatedAt),
-			UpdatedAt:           timestamppb.New(user.UpdatedAt),
+			Id:              user.ID,
+			OrganizationId:  user.OrganizationID,
+			Email:           &user.Email.String,
+			IdentitySubject: user.IdentitySubject,
+			FirstName:       &user.FirstName.String,
+			LastName:        &user.LastName.String,
+			CreatedAt:       timestamppb.New(user.CreatedAt),
+			UpdatedAt:       timestamppb.New(user.UpdatedAt),
 		})
 	}
 
@@ -303,16 +278,14 @@ func (s *Server) GetUsersByOrganization(ctx context.Context,
 	for idx := range users {
 		user := &users[idx]
 		resp.Users = append(resp.Users, &pb.UserRecord{
-			Id:                  user.ID,
-			OrganizationId:      user.OrganizationID,
-			Email:               &user.Email.String,
-			Username:            user.Username,
-			FirstName:           &user.FirstName.String,
-			LastName:            &user.LastName.String,
-			IsProtected:         &user.IsProtected,
-			NeedsPasswordChange: &user.NeedsPasswordChange,
-			CreatedAt:           timestamppb.New(user.CreatedAt),
-			UpdatedAt:           timestamppb.New(user.UpdatedAt),
+			Id:              user.ID,
+			OrganizationId:  user.OrganizationID,
+			Email:           &user.Email.String,
+			IdentitySubject: user.IdentitySubject,
+			FirstName:       &user.FirstName.String,
+			LastName:        &user.LastName.String,
+			CreatedAt:       timestamppb.New(user.CreatedAt),
+			UpdatedAt:       timestamppb.New(user.UpdatedAt),
 		})
 	}
 
@@ -351,16 +324,14 @@ func (s *Server) GetUsersByGroup(ctx context.Context,
 	for idx := range users {
 		user := &users[idx]
 		resp.Users = append(resp.Users, &pb.UserRecord{
-			Id:                  user.ID,
-			OrganizationId:      user.OrganizationID,
-			Email:               &user.Email.String,
-			Username:            user.Username,
-			FirstName:           &user.FirstName.String,
-			LastName:            &user.LastName.String,
-			IsProtected:         &user.IsProtected,
-			NeedsPasswordChange: &user.NeedsPasswordChange,
-			CreatedAt:           timestamppb.New(user.CreatedAt),
-			UpdatedAt:           timestamppb.New(user.UpdatedAt),
+			Id:              user.ID,
+			OrganizationId:  user.OrganizationID,
+			Email:           &user.Email.String,
+			IdentitySubject: user.IdentitySubject,
+			FirstName:       &user.FirstName.String,
+			LastName:        &user.LastName.String,
+			CreatedAt:       timestamppb.New(user.CreatedAt),
+			UpdatedAt:       timestamppb.New(user.UpdatedAt),
 		})
 	}
 
@@ -439,120 +410,36 @@ func (s *Server) GetUserById(ctx context.Context,
 
 	var resp pb.GetUserByIdResponse
 	resp.User = &pb.UserRecord{
-		Id:                  user.ID,
-		OrganizationId:      user.OrganizationID,
-		Email:               &user.Email.String,
-		Username:            user.Username,
-		FirstName:           &user.FirstName.String,
-		LastName:            &user.LastName.String,
-		IsProtected:         &user.IsProtected,
-		NeedsPasswordChange: &user.NeedsPasswordChange,
-		CreatedAt:           timestamppb.New(user.CreatedAt),
-		UpdatedAt:           timestamppb.New(user.UpdatedAt),
+		Id:              user.ID,
+		OrganizationId:  user.OrganizationID,
+		Email:           &user.Email.String,
+		IdentitySubject: user.IdentitySubject,
+		FirstName:       &user.FirstName.String,
+		LastName:        &user.LastName.String,
+		CreatedAt:       timestamppb.New(user.CreatedAt),
+		UpdatedAt:       timestamppb.New(user.UpdatedAt),
 	}
 
 	resp.Groups = groups
 	resp.Roles = roles
-	return &resp, nil
-}
-
-// GetUserByUserName is a service for getting an user by username
-func (s *Server) GetUserByUserName(ctx context.Context,
-	in *pb.GetUserByUserNameRequest) (*pb.GetUserByUserNameResponse, error) {
-	if in.GetUsername() == "" {
-		return nil, status.Error(codes.InvalidArgument, "username is required")
-	}
-
-	user, err := s.store.GetUserByUserName(ctx, in.Username)
-	if err != nil {
-		if errors.Is(err, sql.ErrNoRows) {
-			return nil, status.Error(codes.NotFound, "user not found")
-		}
-		return nil, status.Errorf(codes.Internal, "failed to get user: %s", err)
-	}
-
-	// check if user is authorized
-	if err := AuthorizedOnOrg(ctx, user.OrganizationID); err != nil {
-		return nil, err
-	}
-
-	groups, roles, err := getUserDependencies(ctx, s.store, user)
-	if err != nil {
-		return nil, status.Errorf(codes.Unknown, "failed to get user dependencies: %s", err)
-	}
-
-	var resp pb.GetUserByUserNameResponse
-	resp.User = &pb.UserRecord{
-		Id:                  user.ID,
-		OrganizationId:      user.OrganizationID,
-		Email:               &user.Email.String,
-		Username:            user.Username,
-		Password:            user.Password,
-		FirstName:           &user.FirstName.String,
-		LastName:            &user.LastName.String,
-		NeedsPasswordChange: &user.NeedsPasswordChange,
-		CreatedAt:           timestamppb.New(user.CreatedAt),
-		UpdatedAt:           timestamppb.New(user.UpdatedAt),
-	}
-
-	resp.Groups = groups
-	resp.Roles = roles
-	return &resp, nil
-}
-
-// GetUserByEmail is a service for getting an user by email
-func (s *Server) GetUserByEmail(ctx context.Context,
-	in *pb.GetUserByEmailRequest) (*pb.GetUserByEmailResponse, error) {
-	if in.GetEmail() == "" {
-		return nil, status.Error(codes.InvalidArgument, "email is required")
-	}
-
-	user, err := s.store.GetUserByEmail(ctx, sql.NullString{String: in.Email, Valid: true})
-	if err != nil {
-		if errors.Is(err, sql.ErrNoRows) {
-			return nil, status.Error(codes.NotFound, "user not found")
-		}
-		return nil, status.Errorf(codes.Internal, "failed to get user: %s", err)
-	}
-
-	// check if user is authorized
-	if err := AuthorizedOnOrg(ctx, user.OrganizationID); err != nil {
-		return nil, err
-	}
-
-	var resp pb.GetUserByEmailResponse
-	resp.User = &pb.UserRecord{
-		Id:                  user.ID,
-		OrganizationId:      user.OrganizationID,
-		Email:               &user.Email.String,
-		Username:            user.Username,
-		FirstName:           &user.FirstName.String,
-		LastName:            &user.LastName.String,
-		NeedsPasswordChange: &user.NeedsPasswordChange,
-		CreatedAt:           timestamppb.New(user.CreatedAt),
-		UpdatedAt:           timestamppb.New(user.UpdatedAt),
-	}
-
-	groups, roles, err := getUserDependencies(ctx, s.store, user)
-	if err != nil {
-		return nil, status.Errorf(codes.Unknown, "failed to get user dependencies: %s", err)
-	}
-	resp.Groups = groups
-	resp.Roles = roles
-
 	return &resp, nil
 }
 
 // GetUser is a service for getting personal user details
 func (s *Server) GetUser(ctx context.Context, _ *pb.GetUserRequest) (*pb.GetUserResponse, error) {
-	claims := auth.GetClaimsFromContext(ctx)
-	// check if user is authorized
-	if err := AuthorizedOnUser(ctx, claims.UserId); err != nil {
-		return nil, err
+	// user is always authorized to get themselves
+	tokenString, err := gauth.AuthFromMD(ctx, "bearer")
+	if err != nil {
+		return nil, status.Errorf(codes.InvalidArgument, "no auth token: %v", err)
+	}
+
+	openIdToken, err := s.vldtr.ParseAndValidate(tokenString)
+	if err != nil {
+		return nil, status.Errorf(codes.Unauthenticated, "failed to parse bearer token: %v", err)
 	}
 
 	// check if user exists
-	user, err := s.store.GetUserByID(ctx, claims.UserId)
+	user, err := s.store.GetUserBySubject(ctx, openIdToken.Subject())
 	if err != nil {
 		if errors.Is(err, sql.ErrNoRows) {
 			return nil, status.Error(codes.NotFound, "user not found")
@@ -562,15 +449,14 @@ func (s *Server) GetUser(ctx context.Context, _ *pb.GetUserRequest) (*pb.GetUser
 
 	var resp pb.GetUserResponse
 	resp.User = &pb.UserRecord{
-		Id:                  user.ID,
-		OrganizationId:      user.OrganizationID,
-		Email:               &user.Email.String,
-		Username:            user.Username,
-		FirstName:           &user.FirstName.String,
-		LastName:            &user.LastName.String,
-		NeedsPasswordChange: &user.NeedsPasswordChange,
-		CreatedAt:           timestamppb.New(user.CreatedAt),
-		UpdatedAt:           timestamppb.New(user.UpdatedAt),
+		Id:              user.ID,
+		OrganizationId:  user.OrganizationID,
+		Email:           &user.Email.String,
+		IdentitySubject: user.IdentitySubject,
+		FirstName:       &user.FirstName.String,
+		LastName:        &user.LastName.String,
+		CreatedAt:       timestamppb.New(user.CreatedAt),
+		UpdatedAt:       timestamppb.New(user.UpdatedAt),
 	}
 
 	groups, roles, err := getUserDependencies(ctx, s.store, user)
@@ -581,132 +467,4 @@ func (s *Server) GetUser(ctx context.Context, _ *pb.GetUserRequest) (*pb.GetUser
 	resp.Roles = roles
 
 	return &resp, nil
-}
-
-type updatePasswordValidation struct {
-	Password             string `validate:"min=8,containsany=_.;?&@"`
-	PasswordConfirmation string `validate:"min=8,containsany=_.;?&@"`
-}
-
-// UpdatePassword is a service for updating a user's password
-func (s *Server) UpdatePassword(ctx context.Context, in *pb.UpdatePasswordRequest) (*pb.UpdatePasswordResponse, error) {
-	claims := auth.GetClaimsFromContext(ctx)
-	// check if user is authorized
-	if err := AuthorizedOnUser(ctx, claims.UserId); err != nil {
-		return nil, err
-	}
-
-	// validate password
-	validator := validator.New()
-	err := validator.Struct(updatePasswordValidation{Password: in.Password, PasswordConfirmation: in.PasswordConfirmation})
-	if err != nil {
-		return nil, status.Error(codes.InvalidArgument,
-			"password must be at least 8 characters long and contain one of the following characters: !@#?*")
-	}
-
-	if in.Password != in.PasswordConfirmation {
-		return nil, status.Error(codes.InvalidArgument, "passwords do not match")
-	}
-
-	// hash the password for storing in the database
-	pHash, err := mcrypto.GeneratePasswordHash(in.Password, &s.cfg.Salt)
-	if err != nil {
-		return nil, status.Errorf(codes.Internal, "failed to generate password hash: %s", err)
-	}
-
-	// check if the previous password was the same
-	user, err := s.store.GetUserByID(ctx, claims.UserId)
-	if err != nil {
-		if errors.Is(err, sql.ErrNoRows) {
-			return nil, status.Error(codes.NotFound, "user not found")
-		}
-		return nil, status.Errorf(codes.Internal, "failed to get user: %s", err)
-	}
-
-	match, _ := mcrypto.VerifyPasswordHash(pHash, user.Password)
-	if match {
-		return nil, status.Errorf(codes.NotFound, "User and password not found: %s", err)
-	}
-
-	_, err = s.store.UpdatePassword(ctx, db.UpdatePasswordParams{ID: claims.UserId, Password: pHash})
-	if err != nil {
-		return nil, status.Errorf(codes.Internal, "failed to update password: %s", err)
-	}
-
-	// revoke token for the user
-	_, err = s.store.RevokeUserToken(ctx, db.RevokeUserTokenParams{ID: claims.UserId,
-		MinTokenIssuedTime: sql.NullTime{Time: time.Unix(time.Now().Unix(), 0), Valid: true}})
-	if err != nil {
-		return nil, status.Errorf(codes.Internal, "failed to revoke user token: %s", err)
-	}
-
-	return &pb.UpdatePasswordResponse{}, nil
-}
-
-type updateProfileValidation struct {
-	Email     string `db:"email" validate:"omitempty,email"`
-	FirstName string `db:"first_name" validate:"omitempty,alphaunicode"`
-	LastName  string `db:"last_name" validate:"omitempty,alphaunicode"`
-}
-
-// UpdateProfile is a service for updating a user's profile
-//
-//gocyclo:ignore
-func (s *Server) UpdateProfile(ctx context.Context, in *pb.UpdateProfileRequest) (*pb.UpdateProfileResponse, error) {
-	claims := auth.GetClaimsFromContext(ctx)
-	if err := AuthorizedOnUser(ctx, claims.UserId); err != nil {
-		return nil, err
-	}
-
-	// validate that at least one field is being updated
-	if (in.Email == nil || *in.Email == "") && (in.FirstName == nil || *in.FirstName == "") &&
-		(in.LastName == nil || *in.LastName == "") {
-		return nil, status.Errorf(codes.InvalidArgument, "at least one field must be updated")
-	}
-
-	updateProfileValidation := updateProfileValidation{}
-	if in.Email != nil {
-		updateProfileValidation.Email = *in.Email
-	}
-	if in.FirstName != nil {
-		updateProfileValidation.FirstName = *in.FirstName
-	}
-	if in.LastName != nil {
-		updateProfileValidation.LastName = *in.LastName
-	}
-	validator := validator.New()
-	err := validator.Struct(updateProfileValidation)
-	if err != nil {
-		return nil, status.Error(codes.InvalidArgument, "invalid fields for updating profile")
-	}
-
-	// get details of user
-	user, err := s.store.GetUserByID(ctx, claims.UserId)
-	if err != nil {
-		if errors.Is(err, sql.ErrNoRows) {
-			return nil, status.Error(codes.NotFound, "user not found")
-		}
-		return nil, status.Errorf(codes.Internal, "failed to get user: %s", err)
-	}
-
-	// now update the modified fields
-	if in.Email != nil && *in.Email != "" {
-		user.Email = sql.NullString{String: *in.Email, Valid: true}
-	}
-	if in.FirstName != nil && *in.FirstName != "" {
-		user.FirstName = sql.NullString{String: *in.FirstName, Valid: true}
-	}
-	if in.LastName != nil && *in.LastName != "" {
-		user.LastName = sql.NullString{String: *in.LastName, Valid: true}
-	}
-
-	_, err = s.store.UpdateUser(ctx, db.UpdateUserParams{ID: claims.UserId, Email: user.Email,
-		FirstName: user.FirstName, LastName: user.LastName})
-
-	if err != nil {
-		return nil, status.Errorf(codes.Internal, "failed to update user: %s", err)
-	}
-
-	// return updated details
-	return &pb.UpdateProfileResponse{}, nil
 }

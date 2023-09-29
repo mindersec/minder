@@ -26,12 +26,14 @@ import (
 	"testing"
 	"time"
 
+	"github.com/golang/mock/gomock"
 	"github.com/stretchr/testify/require"
 	"google.golang.org/grpc"
 	"google.golang.org/grpc/credentials/insecure"
 	"google.golang.org/grpc/test/bufconn"
 
 	mockdb "github.com/stacklok/mediator/database/mock"
+	mockjwt "github.com/stacklok/mediator/internal/auth/mock"
 	"github.com/stacklok/mediator/internal/config"
 	"github.com/stacklok/mediator/internal/events"
 	pb "github.com/stacklok/mediator/pkg/api/protobuf/go/mediator/v1"
@@ -81,26 +83,24 @@ func getgRPCConnection() (*grpc.ClientConn, error) {
 	return conn, nil
 }
 
-func newDefaultServer(t *testing.T, mockStore *mockdb.MockStore, cfg ...*config.Config) *Server {
+func newDefaultServer(t *testing.T, mockStore *mockdb.MockStore) *Server {
 	t.Helper()
 
 	evt, err := events.Setup()
 	require.NoError(t, err, "failed to setup eventer")
 
 	var c *config.Config
-	if len(cfg) > 0 {
-		c = cfg[0]
-	} else {
-		tokenKeyPath := generateTokenKey(t)
-
-		c = &config.Config{
-			Auth: config.AuthConfig{
-				TokenKey: tokenKeyPath,
-			},
-		}
+	tokenKeyPath := generateTokenKey(t)
+	c = &config.Config{
+		Auth: config.AuthConfig{
+			TokenKey: tokenKeyPath,
+		},
 	}
+	ctrl := gomock.NewController(t)
+	defer ctrl.Finish()
+	mockJwt := mockjwt.NewMockJwtValidator(ctrl)
 
-	server, err := NewServer(mockStore, evt, c)
+	server, err := NewServer(mockStore, evt, c, mockJwt)
 	require.NoError(t, err, "failed to create server")
 	return server
 }

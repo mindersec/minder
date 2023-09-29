@@ -36,6 +36,7 @@ type Config struct {
 	Tracing       TracingConfig      `mapstructure:"tracing"`
 	Metrics       MetricsConfig      `mapstructure:"metrics"`
 	Database      DatabaseConfig     `mapstructure:"database"`
+	Identity      IdentityConfig     `mapstructure:"identity"`
 	Salt          CryptoConfig       `mapstructure:"salt"`
 	Auth          AuthConfig         `mapstructure:"auth"`
 }

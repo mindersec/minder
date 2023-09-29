@@ -20,17 +20,14 @@ import (
 	"encoding/json"
 	"errors"
 	"fmt"
-	"time"
 
 	"github.com/go-playground/validator/v10"
 	"google.golang.org/grpc/codes"
 	"google.golang.org/grpc/status"
 	"google.golang.org/protobuf/types/known/timestamppb"
 
-	mcrypto "github.com/stacklok/mediator/internal/crypto"
 	"github.com/stacklok/mediator/internal/db"
 	"github.com/stacklok/mediator/internal/providers/github"
-	"github.com/stacklok/mediator/internal/util"
 	pb "github.com/stacklok/mediator/pkg/api/protobuf/go/mediator/v1"
 )
 
@@ -114,48 +111,6 @@ func (s *Server) CreateOrganization(ctx context.Context,
 			IsAdmin: roleGroup.IsAdmin, IsProtected: roleGroup.IsProtected,
 			CreatedAt: timestamppb.New(roleGroup.CreatedAt), UpdatedAt: timestamppb.New(roleGroup.UpdatedAt)}
 		response.DefaultRoles = []*pb.RoleRecord{&rl, &rg}
-
-		// generate password for the user
-		seed := time.Now().UnixNano()
-		pass := util.RandomPassword(8, seed)
-		// hash the password for storing in the database
-		pHash, err := mcrypto.GeneratePasswordHash(pass, &s.cfg.Salt)
-		if err != nil {
-			return nil, status.Errorf(codes.Internal, "failed to hash password: %s", err.Error())
-		}
-
-		// we can create the default user
-		user, err := qtx.CreateUser(ctx, db.CreateUserParams{
-			OrganizationID:      org.ID,
-			Username:            fmt.Sprintf("%s-admin", org.Name),
-			Password:            pHash,
-			IsProtected:         true,
-			NeedsPasswordChange: true,
-		})
-
-		if err != nil {
-			return nil, status.Errorf(codes.Internal, "failed to create default user: %v", err)
-		}
-
-		// add the user to the group
-		_, err = qtx.AddUserGroup(ctx, db.AddUserGroupParams{UserID: user.ID, GroupID: group.ID})
-		if err != nil {
-			return nil, status.Errorf(codes.Internal, "failed to add user to group: %v", err)
-		}
-
-		// add the user to roles
-		roles := []db.Role{role, roleGroup}
-		for _, r := range roles {
-			_, err = qtx.AddUserRole(ctx, db.AddUserRoleParams{UserID: user.ID, RoleID: r.ID})
-			if err != nil {
-				return nil, status.Errorf(codes.Internal, "failed to add user to role: %v", err)
-			}
-		}
-
-		usr := pb.UserRecord{Id: user.ID, OrganizationId: org.ID, Username: user.Username,
-			Password: pass, IsProtected: &user.IsProtected, CreatedAt: timestamppb.New(user.CreatedAt),
-			UpdatedAt: timestamppb.New(user.UpdatedAt), NeedsPasswordChange: &user.NeedsPasswordChange}
-		response.DefaultUser = &usr
 
 		// Create GitHub provider
 		_, err = qtx.CreateProvider(ctx, db.CreateProviderParams{
@@ -268,16 +223,13 @@ func getOrganizationDependencies(ctx context.Context, store db.Store,
 	for idx := range users {
 		user := &users[idx]
 		usersPB = append(usersPB, &pb.UserRecord{
-			Id:                  user.ID,
-			OrganizationId:      user.OrganizationID,
-			Email:               &user.Email.String,
-			FirstName:           &user.FirstName.String,
-			LastName:            &user.LastName.String,
-			Username:            user.Username,
-			IsProtected:         &user.IsProtected,
-			NeedsPasswordChange: &user.NeedsPasswordChange,
-			CreatedAt:           timestamppb.New(user.CreatedAt),
-			UpdatedAt:           timestamppb.New(user.UpdatedAt),
+			Id:             user.ID,
+			OrganizationId: user.OrganizationID,
+			Email:          &user.Email.String,
+			FirstName:      &user.FirstName.String,
+			LastName:       &user.LastName.String,
+			CreatedAt:      timestamppb.New(user.CreatedAt),
+			UpdatedAt:      timestamppb.New(user.UpdatedAt),
 		})
 	}
 

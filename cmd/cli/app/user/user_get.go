@@ -45,19 +45,9 @@ func getUserById(ctx context.Context, client pb.UserServiceClient, id int32) (*p
 	return user, err
 }
 
-func getUserByUsername(ctx context.Context, client pb.UserServiceClient, username string) (*pb.GetUserByUserNameResponse, error) {
-	user, err := client.GetUserByUserName(ctx, &pb.GetUserByUserNameRequest{
-		Username: username,
-	})
-	if err != nil {
-		return nil, err
-	}
-	return user, err
-}
-
-func getUserByEmail(ctx context.Context, client pb.UserServiceClient, email string) (*pb.GetUserByEmailResponse, error) {
-	user, err := client.GetUserByEmail(ctx, &pb.GetUserByEmailRequest{
-		Email: email,
+func getUserBySubject(ctx context.Context, client pb.UserServiceClient, subject string) (*pb.GetUserBySubjectResponse, error) {
+	user, err := client.GetUserBySubject(ctx, &pb.GetUserBySubjectRequest{
+		Subject: subject,
 	})
 	if err != nil {
 		return nil, err
@@ -106,8 +96,7 @@ mediator control plane.`,
 		defer cancel()
 
 		id := viper.GetInt32("id")
-		username := viper.GetString("username")
-		email := viper.GetString("email")
+		subject := viper.GetString("subject")
 		format := util.GetConfigValue("output", "output", cmd, "").(string)
 		if format == "" {
 			format = app.JSON
@@ -121,14 +110,11 @@ mediator control plane.`,
 		if id > 0 {
 			count++
 		}
-		if username != "" {
-			count++
-		}
-		if email != "" {
+		if subject != "" {
 			count++
 		}
 		if count > 1 {
-			fmt.Fprintf(os.Stderr, "Error: must specify only one of id, username, or email\n")
+			fmt.Fprintf(os.Stderr, "Error: must specify only one of id or subject\n")
 			os.Exit(1)
 		}
 
@@ -138,15 +124,10 @@ mediator control plane.`,
 			user, err := getUserById(ctx, client, id)
 			util.ExitNicelyOnError(err, "Error getting user by id")
 			result = user
-		} else if username != "" {
-			// get by username
-			user, err := getUserByUsername(ctx, client, username)
-			util.ExitNicelyOnError(err, "Error getting user by username")
-			result = user
-		} else if email != "" {
-			// get by email
-			user, err := getUserByEmail(ctx, client, email)
-			util.ExitNicelyOnError(err, "Error getting user by email")
+		} else if subject != "" {
+			// get by subject
+			user, err := getUserBySubject(ctx, client, subject)
+			util.ExitNicelyOnError(err, "Error getting user by subject")
 			result = user
 		} else {
 			// just get personal profile

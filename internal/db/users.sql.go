@@ -10,70 +10,36 @@ import (
 	"database/sql"
 )
 
-const cleanTokenIat = `-- name: CleanTokenIat :one
-UPDATE users SET min_token_issued_time = NULL WHERE id = $1 RETURNING id, organization_id, email, username, password, needs_password_change, first_name, last_name, is_protected, created_at, updated_at, min_token_issued_time
-`
-
-func (q *Queries) CleanTokenIat(ctx context.Context, id int32) (User, error) {
-	row := q.db.QueryRowContext(ctx, cleanTokenIat, id)
-	var i User
-	err := row.Scan(
-		&i.ID,
-		&i.OrganizationID,
-		&i.Email,
-		&i.Username,
-		&i.Password,
-		&i.NeedsPasswordChange,
-		&i.FirstName,
-		&i.LastName,
-		&i.IsProtected,
-		&i.CreatedAt,
-		&i.UpdatedAt,
-		&i.MinTokenIssuedTime,
-	)
-	return i, err
-}
-
 const createUser = `-- name: CreateUser :one
-INSERT INTO users (organization_id, email, username, password, first_name, last_name, is_protected, needs_password_change) VALUES ($1, $2, $3, $4, $5, $6, $7, $8) RETURNING id, organization_id, email, username, password, needs_password_change, first_name, last_name, is_protected, created_at, updated_at, min_token_issued_time
+INSERT INTO users (organization_id, email, identity_subject, first_name, last_name) VALUES ($1, $2, $3, $4, $5) RETURNING id, organization_id, email, identity_subject, first_name, last_name, created_at, updated_at
 `
 
 type CreateUserParams struct {
-	OrganizationID      int32          `json:"organization_id"`
-	Email               sql.NullString `json:"email"`
-	Username            string         `json:"username"`
-	Password            string         `json:"password"`
-	FirstName           sql.NullString `json:"first_name"`
-	LastName            sql.NullString `json:"last_name"`
-	IsProtected         bool           `json:"is_protected"`
-	NeedsPasswordChange bool           `json:"needs_password_change"`
+	OrganizationID  int32          `json:"organization_id"`
+	Email           sql.NullString `json:"email"`
+	IdentitySubject string         `json:"identity_subject"`
+	FirstName       sql.NullString `json:"first_name"`
+	LastName        sql.NullString `json:"last_name"`
 }
 
 func (q *Queries) CreateUser(ctx context.Context, arg CreateUserParams) (User, error) {
 	row := q.db.QueryRowContext(ctx, createUser,
 		arg.OrganizationID,
 		arg.Email,
-		arg.Username,
-		arg.Password,
+		arg.IdentitySubject,
 		arg.FirstName,
 		arg.LastName,
-		arg.IsProtected,
-		arg.NeedsPasswordChange,
 	)
 	var i User
 	err := row.Scan(
 		&i.ID,
 		&i.OrganizationID,
 		&i.Email,
-		&i.Username,
-		&i.Password,
-		&i.NeedsPasswordChange,
+		&i.IdentitySubject,
 		&i.FirstName,
 		&i.LastName,
-		&i.IsProtected,
 		&i.CreatedAt,
 		&i.UpdatedAt,
-		&i.MinTokenIssuedTime,
 	)
 	return i, err
 }
@@ -87,32 +53,8 @@ func (q *Queries) DeleteUser(ctx context.Context, id int32) error {
 	return err
 }
 
-const getUserByEmail = `-- name: GetUserByEmail :one
-SELECT id, organization_id, email, username, password, needs_password_change, first_name, last_name, is_protected, created_at, updated_at, min_token_issued_time FROM users WHERE email = $1
-`
-
-func (q *Queries) GetUserByEmail(ctx context.Context, email sql.NullString) (User, error) {
-	row := q.db.QueryRowContext(ctx, getUserByEmail, email)
-	var i User
-	err := row.Scan(
-		&i.ID,
-		&i.OrganizationID,
-		&i.Email,
-		&i.Username,
-		&i.Password,
-		&i.NeedsPasswordChange,
-		&i.FirstName,
-		&i.LastName,
-		&i.IsProtected,
-		&i.CreatedAt,
-		&i.UpdatedAt,
-		&i.MinTokenIssuedTime,
-	)
-	return i, err
-}
-
 const getUserByID = `-- name: GetUserByID :one
-SELECT id, organization_id, email, username, password, needs_password_change, first_name, last_name, is_protected, created_at, updated_at, min_token_issued_time FROM users WHERE id = $1
+SELECT id, organization_id, email, identity_subject, first_name, last_name, created_at, updated_at FROM users WHERE id = $1
 `
 
 func (q *Queries) GetUserByID(ctx context.Context, id int32) (User, error) {
@@ -122,45 +64,37 @@ func (q *Queries) GetUserByID(ctx context.Context, id int32) (User, error) {
 		&i.ID,
 		&i.OrganizationID,
 		&i.Email,
-		&i.Username,
-		&i.Password,
-		&i.NeedsPasswordChange,
+		&i.IdentitySubject,
 		&i.FirstName,
 		&i.LastName,
-		&i.IsProtected,
 		&i.CreatedAt,
 		&i.UpdatedAt,
-		&i.MinTokenIssuedTime,
 	)
 	return i, err
 }
 
-const getUserByUserName = `-- name: GetUserByUserName :one
-SELECT id, organization_id, email, username, password, needs_password_change, first_name, last_name, is_protected, created_at, updated_at, min_token_issued_time FROM users WHERE username = $1
+const getUserBySubject = `-- name: GetUserBySubject :one
+SELECT id, organization_id, email, identity_subject, first_name, last_name, created_at, updated_at FROM users WHERE identity_subject = $1
 `
 
-func (q *Queries) GetUserByUserName(ctx context.Context, username string) (User, error) {
-	row := q.db.QueryRowContext(ctx, getUserByUserName, username)
+func (q *Queries) GetUserBySubject(ctx context.Context, identitySubject string) (User, error) {
+	row := q.db.QueryRowContext(ctx, getUserBySubject, identitySubject)
 	var i User
 	err := row.Scan(
 		&i.ID,
 		&i.OrganizationID,
 		&i.Email,
-		&i.Username,
-		&i.Password,
-		&i.NeedsPasswordChange,
+		&i.IdentitySubject,
 		&i.FirstName,
 		&i.LastName,
-		&i.IsProtected,
 		&i.CreatedAt,
 		&i.UpdatedAt,
-		&i.MinTokenIssuedTime,
 	)
 	return i, err
 }
 
 const listUsers = `-- name: ListUsers :many
-SELECT id, organization_id, email, username, password, needs_password_change, first_name, last_name, is_protected, created_at, updated_at, min_token_issued_time FROM users
+SELECT id, organization_id, email, identity_subject, first_name, last_name, created_at, updated_at FROM users
 ORDER BY id
 LIMIT $1
 OFFSET $2
@@ -184,15 +118,11 @@ func (q *Queries) ListUsers(ctx context.Context, arg ListUsersParams) ([]User, e
 			&i.ID,
 			&i.OrganizationID,
 			&i.Email,
-			&i.Username,
-			&i.Password,
-			&i.NeedsPasswordChange,
+			&i.IdentitySubject,
 			&i.FirstName,
 			&i.LastName,
-			&i.IsProtected,
 			&i.CreatedAt,
 			&i.UpdatedAt,
-			&i.MinTokenIssuedTime,
 		); err != nil {
 			return nil, err
 		}
@@ -208,7 +138,7 @@ func (q *Queries) ListUsers(ctx context.Context, arg ListUsersParams) ([]User, e
 }
 
 const listUsersByGroup = `-- name: ListUsersByGroup :many
-SELECT users.id, users.organization_id, users.email, users.username, users.password, users.needs_password_change, users.first_name, users.last_name, users.is_protected, users.created_at, users.updated_at, users.min_token_issued_time FROM users
+SELECT users.id, users.organization_id, users.email, users.identity_subject, users.first_name, users.last_name, users.created_at, users.updated_at FROM users
 JOIN user_groups ON users.id = user_groups.user_id
 WHERE user_groups.group_id = $1
 ORDER BY users.id
@@ -235,15 +165,11 @@ func (q *Queries) ListUsersByGroup(ctx context.Context, arg ListUsersByGroupPara
 			&i.ID,
 			&i.OrganizationID,
 			&i.Email,
-			&i.Username,
-			&i.Password,
-			&i.NeedsPasswordChange,
+			&i.IdentitySubject,
 			&i.FirstName,
 			&i.LastName,
-			&i.IsProtected,
 			&i.CreatedAt,
 			&i.UpdatedAt,
-			&i.MinTokenIssuedTime,
 		); err != nil {
 			return nil, err
 		}
@@ -259,7 +185,7 @@ func (q *Queries) ListUsersByGroup(ctx context.Context, arg ListUsersByGroupPara
 }
 
 const listUsersByOrganization = `-- name: ListUsersByOrganization :many
-SELECT id, organization_id, email, username, password, needs_password_change, first_name, last_name, is_protected, created_at, updated_at, min_token_issued_time FROM users
+SELECT id, organization_id, email, identity_subject, first_name, last_name, created_at, updated_at FROM users
 WHERE organization_id = $1
 ORDER BY id
 LIMIT $2
@@ -285,15 +211,11 @@ func (q *Queries) ListUsersByOrganization(ctx context.Context, arg ListUsersByOr
 			&i.ID,
 			&i.OrganizationID,
 			&i.Email,
-			&i.Username,
-			&i.Password,
-			&i.NeedsPasswordChange,
+			&i.IdentitySubject,
 			&i.FirstName,
 			&i.LastName,
-			&i.IsProtected,
 			&i.CreatedAt,
 			&i.UpdatedAt,
-			&i.MinTokenIssuedTime,
 		); err != nil {
 			return nil, err
 		}
@@ -306,122 +228,4 @@ func (q *Queries) ListUsersByOrganization(ctx context.Context, arg ListUsersByOr
 		return nil, err
 	}
 	return items, nil
-}
-
-const revokeUserToken = `-- name: RevokeUserToken :one
-UPDATE users SET min_token_issued_time = $2 WHERE id = $1 RETURNING id, organization_id, email, username, password, needs_password_change, first_name, last_name, is_protected, created_at, updated_at, min_token_issued_time
-`
-
-type RevokeUserTokenParams struct {
-	ID                 int32        `json:"id"`
-	MinTokenIssuedTime sql.NullTime `json:"min_token_issued_time"`
-}
-
-func (q *Queries) RevokeUserToken(ctx context.Context, arg RevokeUserTokenParams) (User, error) {
-	row := q.db.QueryRowContext(ctx, revokeUserToken, arg.ID, arg.MinTokenIssuedTime)
-	var i User
-	err := row.Scan(
-		&i.ID,
-		&i.OrganizationID,
-		&i.Email,
-		&i.Username,
-		&i.Password,
-		&i.NeedsPasswordChange,
-		&i.FirstName,
-		&i.LastName,
-		&i.IsProtected,
-		&i.CreatedAt,
-		&i.UpdatedAt,
-		&i.MinTokenIssuedTime,
-	)
-	return i, err
-}
-
-const revokeUsersTokens = `-- name: RevokeUsersTokens :one
-UPDATE users SET min_token_issued_time = $1 RETURNING id, organization_id, email, username, password, needs_password_change, first_name, last_name, is_protected, created_at, updated_at, min_token_issued_time
-`
-
-func (q *Queries) RevokeUsersTokens(ctx context.Context, minTokenIssuedTime sql.NullTime) (User, error) {
-	row := q.db.QueryRowContext(ctx, revokeUsersTokens, minTokenIssuedTime)
-	var i User
-	err := row.Scan(
-		&i.ID,
-		&i.OrganizationID,
-		&i.Email,
-		&i.Username,
-		&i.Password,
-		&i.NeedsPasswordChange,
-		&i.FirstName,
-		&i.LastName,
-		&i.IsProtected,
-		&i.CreatedAt,
-		&i.UpdatedAt,
-		&i.MinTokenIssuedTime,
-	)
-	return i, err
-}
-
-const updatePassword = `-- name: UpdatePassword :one
-UPDATE users SET password = $2, needs_password_change = FALSE, updated_at = NOW() WHERE id = $1 RETURNING id, organization_id, email, username, password, needs_password_change, first_name, last_name, is_protected, created_at, updated_at, min_token_issued_time
-`
-
-type UpdatePasswordParams struct {
-	ID       int32  `json:"id"`
-	Password string `json:"password"`
-}
-
-func (q *Queries) UpdatePassword(ctx context.Context, arg UpdatePasswordParams) (User, error) {
-	row := q.db.QueryRowContext(ctx, updatePassword, arg.ID, arg.Password)
-	var i User
-	err := row.Scan(
-		&i.ID,
-		&i.OrganizationID,
-		&i.Email,
-		&i.Username,
-		&i.Password,
-		&i.NeedsPasswordChange,
-		&i.FirstName,
-		&i.LastName,
-		&i.IsProtected,
-		&i.CreatedAt,
-		&i.UpdatedAt,
-		&i.MinTokenIssuedTime,
-	)
-	return i, err
-}
-
-const updateUser = `-- name: UpdateUser :one
-UPDATE users SET email = $2, first_name = $3, last_name = $4, updated_at = NOW() WHERE id = $1 RETURNING id, organization_id, email, username, password, needs_password_change, first_name, last_name, is_protected, created_at, updated_at, min_token_issued_time
-`
-
-type UpdateUserParams struct {
-	ID        int32          `json:"id"`
-	Email     sql.NullString `json:"email"`
-	FirstName sql.NullString `json:"first_name"`
-	LastName  sql.NullString `json:"last_name"`
-}
-
-func (q *Queries) UpdateUser(ctx context.Context, arg UpdateUserParams) (User, error) {
-	row := q.db.QueryRowContext(ctx, updateUser,
-		arg.ID,
-		arg.Email,
-		arg.FirstName,
-		arg.LastName,
-	)
-	var i User
-	err := row.Scan(
-		&i.ID,
-		&i.OrganizationID,
-		&i.Email,
-		&i.Username,
-		&i.Password,
-		&i.NeedsPasswordChange,
-		&i.FirstName,
-		&i.LastName,
-		&i.IsProtected,
-		&i.CreatedAt,
-		&i.UpdatedAt,
-		&i.MinTokenIssuedTime,
-	)
-	return i, err
 }
