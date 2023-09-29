@@ -92,6 +92,22 @@ func verifyValidGroup(ctx context.Context, in *engine.EntityContext) error {
 	return nil
 }
 
+// validateRemediateType returns the appropriate remediate type or the
+// NULL DB type if the input is invalid, thus letting the server run
+// the policy with the default remediate type.
+func validateRemediateType(r string) db.NullRemediateType {
+	switch r {
+	case "on":
+		return db.NullRemediateType{RemediateType: db.RemediateTypeOn, Valid: true}
+	case "off":
+		return db.NullRemediateType{RemediateType: db.RemediateTypeOff, Valid: true}
+	case "dry_run":
+		return db.NullRemediateType{RemediateType: db.RemediateTypeDryRun, Valid: true}
+	}
+
+	return db.NullRemediateType{Valid: false}
+}
+
 // CreatePolicy creates a policy for a group
 // nolint: gocyclo
 func (s *Server) CreatePolicy(ctx context.Context,
@@ -171,12 +187,15 @@ func (s *Server) CreatePolicy(ctx context.Context,
 
 	qtx := s.store.GetQuerierWithTransaction(tx)
 
+	params := db.CreatePolicyParams{
+		Provider:  provider.Name,
+		GroupID:   entityCtx.GetGroup().GetID(),
+		Name:      in.GetName(),
+		Remediate: validateRemediateType(in.GetRemediate()),
+	}
+
 	// Create policy
-	policy, err := qtx.CreatePolicy(ctx, db.CreatePolicyParams{
-		Provider: provider.Name,
-		GroupID:  entityCtx.GetGroup().GetID(),
-		Name:     in.GetName(),
-	})
+	policy, err := qtx.CreatePolicy(ctx, params)
 	if err != nil {
 		log.Printf("error creating policy: %v", err)
 		return nil, status.Errorf(codes.Internal, "error creating policy")

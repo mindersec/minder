@@ -17,23 +17,31 @@ const createPolicy = `-- name: CreatePolicy :one
 INSERT INTO policies (  
     provider,
     group_id,
-    name) VALUES ($1, $2, $3) RETURNING id, name, provider, group_id, created_at, updated_at
+    remediate,
+    name) VALUES ($1, $2, $3, $4) RETURNING id, name, provider, group_id, remediate, created_at, updated_at
 `
 
 type CreatePolicyParams struct {
-	Provider string `json:"provider"`
-	GroupID  int32  `json:"group_id"`
-	Name     string `json:"name"`
+	Provider  string            `json:"provider"`
+	GroupID   int32             `json:"group_id"`
+	Remediate NullRemediateType `json:"remediate"`
+	Name      string            `json:"name"`
 }
 
 func (q *Queries) CreatePolicy(ctx context.Context, arg CreatePolicyParams) (Policy, error) {
-	row := q.db.QueryRowContext(ctx, createPolicy, arg.Provider, arg.GroupID, arg.Name)
+	row := q.db.QueryRowContext(ctx, createPolicy,
+		arg.Provider,
+		arg.GroupID,
+		arg.Remediate,
+		arg.Name,
+	)
 	var i Policy
 	err := row.Scan(
 		&i.ID,
 		&i.Name,
 		&i.Provider,
 		&i.GroupID,
+		&i.Remediate,
 		&i.CreatedAt,
 		&i.UpdatedAt,
 	)
@@ -78,7 +86,7 @@ func (q *Queries) DeletePolicy(ctx context.Context, id uuid.UUID) error {
 }
 
 const getPolicyByGroupAndID = `-- name: GetPolicyByGroupAndID :many
-SELECT policies.id, name, provider, group_id, policies.created_at, policies.updated_at, entity_policies.id, entity, policy_id, contextual_rules, entity_policies.created_at, entity_policies.updated_at FROM policies JOIN entity_policies ON policies.id = entity_policies.policy_id
+SELECT policies.id, name, provider, group_id, remediate, policies.created_at, policies.updated_at, entity_policies.id, entity, policy_id, contextual_rules, entity_policies.created_at, entity_policies.updated_at FROM policies JOIN entity_policies ON policies.id = entity_policies.policy_id
 WHERE policies.group_id = $1 AND policies.id = $2
 `
 
@@ -88,18 +96,19 @@ type GetPolicyByGroupAndIDParams struct {
 }
 
 type GetPolicyByGroupAndIDRow struct {
-	ID              uuid.UUID       `json:"id"`
-	Name            string          `json:"name"`
-	Provider        string          `json:"provider"`
-	GroupID         int32           `json:"group_id"`
-	CreatedAt       time.Time       `json:"created_at"`
-	UpdatedAt       time.Time       `json:"updated_at"`
-	ID_2            uuid.UUID       `json:"id_2"`
-	Entity          Entities        `json:"entity"`
-	PolicyID        uuid.UUID       `json:"policy_id"`
-	ContextualRules json.RawMessage `json:"contextual_rules"`
-	CreatedAt_2     time.Time       `json:"created_at_2"`
-	UpdatedAt_2     time.Time       `json:"updated_at_2"`
+	ID              uuid.UUID         `json:"id"`
+	Name            string            `json:"name"`
+	Provider        string            `json:"provider"`
+	GroupID         int32             `json:"group_id"`
+	Remediate       NullRemediateType `json:"remediate"`
+	CreatedAt       time.Time         `json:"created_at"`
+	UpdatedAt       time.Time         `json:"updated_at"`
+	ID_2            uuid.UUID         `json:"id_2"`
+	Entity          Entities          `json:"entity"`
+	PolicyID        uuid.UUID         `json:"policy_id"`
+	ContextualRules json.RawMessage   `json:"contextual_rules"`
+	CreatedAt_2     time.Time         `json:"created_at_2"`
+	UpdatedAt_2     time.Time         `json:"updated_at_2"`
 }
 
 func (q *Queries) GetPolicyByGroupAndID(ctx context.Context, arg GetPolicyByGroupAndIDParams) ([]GetPolicyByGroupAndIDRow, error) {
@@ -116,6 +125,7 @@ func (q *Queries) GetPolicyByGroupAndID(ctx context.Context, arg GetPolicyByGrou
 			&i.Name,
 			&i.Provider,
 			&i.GroupID,
+			&i.Remediate,
 			&i.CreatedAt,
 			&i.UpdatedAt,
 			&i.ID_2,
@@ -139,7 +149,7 @@ func (q *Queries) GetPolicyByGroupAndID(ctx context.Context, arg GetPolicyByGrou
 }
 
 const getPolicyByGroupAndName = `-- name: GetPolicyByGroupAndName :many
-SELECT policies.id, name, provider, group_id, policies.created_at, policies.updated_at, entity_policies.id, entity, policy_id, contextual_rules, entity_policies.created_at, entity_policies.updated_at FROM policies JOIN entity_policies ON policies.id = entity_policies.policy_id
+SELECT policies.id, name, provider, group_id, remediate, policies.created_at, policies.updated_at, entity_policies.id, entity, policy_id, contextual_rules, entity_policies.created_at, entity_policies.updated_at FROM policies JOIN entity_policies ON policies.id = entity_policies.policy_id
 WHERE policies.group_id = $1 AND policies.name = $2
 `
 
@@ -149,18 +159,19 @@ type GetPolicyByGroupAndNameParams struct {
 }
 
 type GetPolicyByGroupAndNameRow struct {
-	ID              uuid.UUID       `json:"id"`
-	Name            string          `json:"name"`
-	Provider        string          `json:"provider"`
-	GroupID         int32           `json:"group_id"`
-	CreatedAt       time.Time       `json:"created_at"`
-	UpdatedAt       time.Time       `json:"updated_at"`
-	ID_2            uuid.UUID       `json:"id_2"`
-	Entity          Entities        `json:"entity"`
-	PolicyID        uuid.UUID       `json:"policy_id"`
-	ContextualRules json.RawMessage `json:"contextual_rules"`
-	CreatedAt_2     time.Time       `json:"created_at_2"`
-	UpdatedAt_2     time.Time       `json:"updated_at_2"`
+	ID              uuid.UUID         `json:"id"`
+	Name            string            `json:"name"`
+	Provider        string            `json:"provider"`
+	GroupID         int32             `json:"group_id"`
+	Remediate       NullRemediateType `json:"remediate"`
+	CreatedAt       time.Time         `json:"created_at"`
+	UpdatedAt       time.Time         `json:"updated_at"`
+	ID_2            uuid.UUID         `json:"id_2"`
+	Entity          Entities          `json:"entity"`
+	PolicyID        uuid.UUID         `json:"policy_id"`
+	ContextualRules json.RawMessage   `json:"contextual_rules"`
+	CreatedAt_2     time.Time         `json:"created_at_2"`
+	UpdatedAt_2     time.Time         `json:"updated_at_2"`
 }
 
 func (q *Queries) GetPolicyByGroupAndName(ctx context.Context, arg GetPolicyByGroupAndNameParams) ([]GetPolicyByGroupAndNameRow, error) {
@@ -177,6 +188,7 @@ func (q *Queries) GetPolicyByGroupAndName(ctx context.Context, arg GetPolicyByGr
 			&i.Name,
 			&i.Provider,
 			&i.GroupID,
+			&i.Remediate,
 			&i.CreatedAt,
 			&i.UpdatedAt,
 			&i.ID_2,
@@ -200,7 +212,7 @@ func (q *Queries) GetPolicyByGroupAndName(ctx context.Context, arg GetPolicyByGr
 }
 
 const getPolicyByID = `-- name: GetPolicyByID :one
-SELECT id, name, provider, group_id, created_at, updated_at FROM policies WHERE id = $1
+SELECT id, name, provider, group_id, remediate, created_at, updated_at FROM policies WHERE id = $1
 `
 
 func (q *Queries) GetPolicyByID(ctx context.Context, id uuid.UUID) (Policy, error) {
@@ -211,6 +223,7 @@ func (q *Queries) GetPolicyByID(ctx context.Context, id uuid.UUID) (Policy, erro
 		&i.Name,
 		&i.Provider,
 		&i.GroupID,
+		&i.Remediate,
 		&i.CreatedAt,
 		&i.UpdatedAt,
 	)
@@ -218,23 +231,24 @@ func (q *Queries) GetPolicyByID(ctx context.Context, id uuid.UUID) (Policy, erro
 }
 
 const listPoliciesByGroupID = `-- name: ListPoliciesByGroupID :many
-SELECT policies.id, name, provider, group_id, policies.created_at, policies.updated_at, entity_policies.id, entity, policy_id, contextual_rules, entity_policies.created_at, entity_policies.updated_at FROM policies JOIN entity_policies ON policies.id = entity_policies.policy_id
+SELECT policies.id, name, provider, group_id, remediate, policies.created_at, policies.updated_at, entity_policies.id, entity, policy_id, contextual_rules, entity_policies.created_at, entity_policies.updated_at FROM policies JOIN entity_policies ON policies.id = entity_policies.policy_id
 WHERE policies.group_id = $1
 `
 
 type ListPoliciesByGroupIDRow struct {
-	ID              uuid.UUID       `json:"id"`
-	Name            string          `json:"name"`
-	Provider        string          `json:"provider"`
-	GroupID         int32           `json:"group_id"`
-	CreatedAt       time.Time       `json:"created_at"`
-	UpdatedAt       time.Time       `json:"updated_at"`
-	ID_2            uuid.UUID       `json:"id_2"`
-	Entity          Entities        `json:"entity"`
-	PolicyID        uuid.UUID       `json:"policy_id"`
-	ContextualRules json.RawMessage `json:"contextual_rules"`
-	CreatedAt_2     time.Time       `json:"created_at_2"`
-	UpdatedAt_2     time.Time       `json:"updated_at_2"`
+	ID              uuid.UUID         `json:"id"`
+	Name            string            `json:"name"`
+	Provider        string            `json:"provider"`
+	GroupID         int32             `json:"group_id"`
+	Remediate       NullRemediateType `json:"remediate"`
+	CreatedAt       time.Time         `json:"created_at"`
+	UpdatedAt       time.Time         `json:"updated_at"`
+	ID_2            uuid.UUID         `json:"id_2"`
+	Entity          Entities          `json:"entity"`
+	PolicyID        uuid.UUID         `json:"policy_id"`
+	ContextualRules json.RawMessage   `json:"contextual_rules"`
+	CreatedAt_2     time.Time         `json:"created_at_2"`
+	UpdatedAt_2     time.Time         `json:"updated_at_2"`
 }
 
 func (q *Queries) ListPoliciesByGroupID(ctx context.Context, groupID int32) ([]ListPoliciesByGroupIDRow, error) {
@@ -251,6 +265,7 @@ func (q *Queries) ListPoliciesByGroupID(ctx context.Context, groupID int32) ([]L
 			&i.Name,
 			&i.Provider,
 			&i.GroupID,
+			&i.Remediate,
 			&i.CreatedAt,
 			&i.UpdatedAt,
 			&i.ID_2,

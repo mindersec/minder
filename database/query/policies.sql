@@ -2,7 +2,8 @@
 INSERT INTO policies (  
     provider,
     group_id,
-    name) VALUES ($1, $2, $3) RETURNING *;
+    remediate,
+    name) VALUES ($1, $2, $3, $4) RETURNING *;
 
 -- name: CreatePolicyForEntity :one
 INSERT INTO entity_policies (

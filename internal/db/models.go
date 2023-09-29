@@ -148,6 +148,49 @@ func (ns NullProviderType) Value() (driver.Value, error) {
 	return string(ns.ProviderType), nil
 }
 
+type RemediateType string
+
+const (
+	RemediateTypeOn     RemediateType = "on"
+	RemediateTypeOff    RemediateType = "off"
+	RemediateTypeDryRun RemediateType = "dry_run"
+)
+
+func (e *RemediateType) Scan(src interface{}) error {
+	switch s := src.(type) {
+	case []byte:
+		*e = RemediateType(s)
+	case string:
+		*e = RemediateType(s)
+	default:
+		return fmt.Errorf("unsupported scan type for RemediateType: %T", src)
+	}
+	return nil
+}
+
+type NullRemediateType struct {
+	RemediateType RemediateType `json:"remediate_type"`
+	Valid         bool          `json:"valid"` // Valid is true if RemediateType is not NULL
+}
+
+// Scan implements the Scanner interface.
+func (ns *NullRemediateType) Scan(value interface{}) error {
+	if value == nil {
+		ns.RemediateType, ns.Valid = "", false
+		return nil
+	}
+	ns.Valid = true
+	return ns.RemediateType.Scan(value)
+}
+
+// Value implements the driver Valuer interface.
+func (ns NullRemediateType) Value() (driver.Value, error) {
+	if !ns.Valid {
+		return nil, nil
+	}
+	return string(ns.RemediateType), nil
+}
+
 type Artifact struct {
 	ID                 uuid.UUID `json:"id"`
 	RepositoryID       uuid.UUID `json:"repository_id"`
@@ -197,12 +240,13 @@ type Organization struct {
 }
 
 type Policy struct {
-	ID        uuid.UUID `json:"id"`
-	Name      string    `json:"name"`
-	Provider  string    `json:"provider"`
-	GroupID   int32     `json:"group_id"`
-	CreatedAt time.Time `json:"created_at"`
-	UpdatedAt time.Time `json:"updated_at"`
+	ID        uuid.UUID         `json:"id"`
+	Name      string            `json:"name"`
+	Provider  string            `json:"provider"`
+	GroupID   int32             `json:"group_id"`
+	Remediate NullRemediateType `json:"remediate"`
+	CreatedAt time.Time         `json:"created_at"`
+	UpdatedAt time.Time         `json:"updated_at"`
 }
 
 type PolicyStatus struct {

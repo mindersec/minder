@@ -193,11 +193,14 @@ CREATE TABLE rule_type (
     FOREIGN KEY (group_id, provider) REFERENCES providers(group_id, name) ON DELETE CASCADE
 );
 
+CREATE TYPE remediate_type as enum ('on', 'off', 'dry_run');
+
 CREATE TABLE policies (
     id UUID NOT NULL DEFAULT gen_random_uuid() PRIMARY KEY,
     name TEXT NOT NULL,
     provider TEXT NOT NULL,
     group_id INTEGER NOT NULL,
+    remediate remediate_type,
     created_at TIMESTAMP NOT NULL DEFAULT NOW(),
     updated_at TIMESTAMP NOT NULL DEFAULT NOW(),
     FOREIGN KEY (group_id, provider) REFERENCES providers(group_id, name) ON DELETE CASCADE
