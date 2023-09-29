@@ -21,7 +21,6 @@ import (
 	"context"
 	"encoding/json"
 	"fmt"
-	"io"
 	"net/http"
 
 	"github.com/go-git/go-git/v5"
@@ -53,7 +52,7 @@ type REST interface {
 	Provider
 
 	// NewRequest creates an HTTP request.
-	NewRequest(method, url string, body io.Reader) (*http.Request, error)
+	NewRequest(method, url string, body any) (*http.Request, error)
 
 	// Do executes an HTTP request.
 	Do(ctx context.Context, req *http.Request) (*http.Response, error)

@@ -6,7 +6,6 @@ package mockgh
 
 import (
 	context "context"
-	io "io"
 	http "net/http"
 	reflect "reflect"
 
@@ -157,7 +156,7 @@ func (mr *MockRESTMockRecorder) GetToken() *gomock.Call {
 }
 
 // NewRequest mocks base method.
-func (m *MockREST) NewRequest(method, url string, body io.Reader) (*http.Request, error) {
+func (m *MockREST) NewRequest(method, url string, body any) (*http.Request, error) {
 	m.ctrl.T.Helper()
 	ret := m.ctrl.Call(m, "NewRequest", method, url, body)
 	ret0, _ := ret[0].(*http.Request)
@@ -464,7 +463,7 @@ func (mr *MockGitHubMockRecorder) ListReviews(arg0, arg1, arg2, arg3, arg4 inter
 }
 
 // NewRequest mocks base method.
-func (m *MockGitHub) NewRequest(method, url string, body io.Reader) (*http.Request, error) {
+func (m *MockGitHub) NewRequest(method, url string, body any) (*http.Request, error) {
 	m.ctrl.T.Helper()
 	ret := m.ctrl.Call(m, "NewRequest", method, url, body)
 	ret0, _ := ret[0].(*http.Request)

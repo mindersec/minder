@@ -71,14 +71,18 @@ func (h *REST) GetToken() string {
 }
 
 // NewRequest creates an HTTP request.
-func (h *REST) NewRequest(method, endpoint string, body io.Reader) (*http.Request, error) {
+func (h *REST) NewRequest(method, endpoint string, body any) (*http.Request, error) {
 	targetURL := endpoint
 	if h.baseURL != nil {
 		u := h.baseURL.JoinPath(endpoint)
 		targetURL = u.String()
 	}
 
-	return http.NewRequest(method, targetURL, body)
+	reader, ok := body.(io.Reader)
+	if !ok {
+		return nil, fmt.Errorf("body is not an io.Reader")
+	}
+	return http.NewRequest(method, targetURL, reader)
 }
 
 // Do executes an HTTP request.
