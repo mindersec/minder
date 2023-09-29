@@ -163,6 +163,7 @@
     - [RuleType.Definition.Eval.Rego](#mediator-v1-RuleType-Definition-Eval-Rego)
     - [RuleType.Definition.Eval.Vulncheck](#mediator-v1-RuleType-Definition-Eval-Vulncheck)
     - [RuleType.Definition.Ingest](#mediator-v1-RuleType-Definition-Ingest)
+    - [RuleType.Definition.Remediate](#mediator-v1-RuleType-Definition-Remediate)
     - [SignatureVerification](#mediator-v1-SignatureVerification)
     - [StoreProviderTokenRequest](#mediator-v1-StoreProviderTokenRequest)
     - [StoreProviderTokenResponse](#mediator-v1-StoreProviderTokenResponse)
@@ -2117,6 +2118,7 @@ Policy defines a policy that is user defined.
 | build_environment | [Policy.Rule](#mediator-v1-Policy-Rule) | repeated |  |
 | artifact | [Policy.Rule](#mediator-v1-Policy-Rule) | repeated |  |
 | pull_request | [Policy.Rule](#mediator-v1-Policy-Rule) | repeated |  |
+| remediate | [string](#string) | optional | whether and how to remediate (on,off,dry_run) this is optional as the default is set by the system |
 
 
 
@@ -2660,6 +2662,7 @@ Definition defines the rule type. It encompases the schema and the data evaluati
 | param_schema | [google.protobuf.Struct](#google-protobuf-Struct) | optional | param_schema is the schema of the parameters that are passed to the rule. This is expressed in JSON Schema. |
 | ingest | [RuleType.Definition.Ingest](#mediator-v1-RuleType-Definition-Ingest) |  |  |
 | eval | [RuleType.Definition.Eval](#mediator-v1-RuleType-Definition-Eval) |  |  |
+| remediate | [RuleType.Definition.Remediate](#mediator-v1-RuleType-Definition-Remediate) |  |  |
 
 
 
@@ -2763,6 +2766,22 @@ Ingest defines how the data is ingested.
 | artifact | [ArtifactType](#mediator-v1-ArtifactType) | optional | artifact is the artifact data ingestion. |
 | git | [GitType](#mediator-v1-GitType) | optional | git is the git data ingestion. |
 | diff | [DiffType](#mediator-v1-DiffType) | optional | diff is the diff data ingestion. |
+
+
+
+
+
+
+<a name="mediator-v1-RuleType-Definition-Remediate"></a>
+
+### RuleType.Definition.Remediate
+
+
+
+| Field | Type | Label | Description |
+| ----- | ---- | ----- | ----------- |
+| type | [string](#string) |  |  |
+| rest | [RestType](#mediator-v1-RestType) | optional |  |
 
 
 

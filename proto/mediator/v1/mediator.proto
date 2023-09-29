@@ -1903,6 +1903,13 @@ message RuleType {
             optional Vulncheck vulncheck = 4;
         }
         Eval eval = 5;
+
+        message Remediate {
+            string type = 1;
+
+            optional RestType rest = 2;
+        }
+        Remediate remediate = 6;
     }
 
     // def is the definition of the rule type.
@@ -1944,4 +1951,8 @@ message RuleType {
     repeated Rule build_environment = 5;
     repeated Rule artifact = 6;
     repeated Rule pull_request = 7;
+
+     // whether and how to remediate (on,off,dry_run)
+     // this is optional as the default is set by the system
+     optional string remediate = 8;
  }

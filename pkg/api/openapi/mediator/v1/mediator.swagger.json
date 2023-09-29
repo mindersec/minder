@@ -2555,6 +2555,17 @@
       },
       "description": "Ingest defines how the data is ingested."
     },
+    "DefinitionRemediate": {
+      "type": "object",
+      "properties": {
+        "type": {
+          "type": "string"
+        },
+        "rest": {
+          "$ref": "#/definitions/v1RestType"
+        }
+      }
+    },
     "DiffTypeEcosystem": {
       "type": "object",
       "properties": {
@@ -3839,6 +3850,10 @@
             "type": "object",
             "$ref": "#/definitions/PolicyRule"
           }
+        },
+        "remediate": {
+          "type": "string",
+          "title": "whether and how to remediate (on,off,dry_run)\nthis is optional as the default is set by the system"
         }
       },
       "description": "Policy defines a policy that is user defined."
@@ -4205,6 +4220,9 @@
         },
         "eval": {
           "$ref": "#/definitions/DefinitionEval"
+        },
+        "remediate": {
+          "$ref": "#/definitions/DefinitionRemediate"
         }
       },
       "description": "Definition defines the rule type. It encompases the schema and the data evaluation."
