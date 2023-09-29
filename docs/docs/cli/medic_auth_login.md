@@ -14,9 +14,7 @@ medic auth login [flags]
 ### Options
 
 ```
-  -h, --help              help for login
-  -p, --password string   Password to use for authentication
-  -u, --username string   Username to use for authentication
+  -h, --help   help for login
 ```
 
 ### Options inherited from parent commands
