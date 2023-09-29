@@ -26,6 +26,7 @@ import (
 	"github.com/stacklok/mediator/internal/config"
 	"github.com/stacklok/mediator/internal/crypto"
 	"github.com/stacklok/mediator/internal/db"
+	"github.com/stacklok/mediator/internal/engine/interfaces"
 	"github.com/stacklok/mediator/internal/events"
 	"github.com/stacklok/mediator/internal/providers"
 	pb "github.com/stacklok/mediator/pkg/api/protobuf/go/mediator/v1"
@@ -122,6 +123,8 @@ func (e *Executor) evalEntityEvent(
 			return fmt.Errorf("error parsing policy ID: %w", err)
 		}
 
+		remAction := interfaces.RemediationActionOptFromString(pol.Remediate)
+
 		// Get only these rules that are relevant for this entity type
 		relevant, err := GetRulesForEntity(pol, inf.Type)
 		if err != nil {
@@ -140,7 +143,7 @@ func (e *Executor) evalEntityEvent(
 				return fmt.Errorf("error parsing rule type ID: %w", err)
 			}
 
-			result := rte.Eval(ctx, inf.Entity, rule.Def.AsMap(), rule.Params.AsMap())
+			result := rte.Eval(ctx, inf.Entity, rule.Def.AsMap(), rule.Params.AsMap(), remAction)
 
 			logEval(ctx, pol, rule, inf, result)
 

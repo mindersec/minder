@@ -45,3 +45,43 @@ type Result struct {
 	// may be a git repo, or a memory filesystem.
 	Fs billy.Filesystem
 }
+
+// RemediateActionOpt is the type that defines what action to take when remediating
+type RemediateActionOpt int
+
+const (
+	// ActionOptOn means perform the remediation
+	ActionOptOn RemediateActionOpt = iota
+	// ActionOptOff means do not perform the remediation
+	ActionOptOff
+	// ActionOptDryRun means perform a dry run of the remediation
+	ActionOptDryRun
+	// ActionOptUnknown means the action is unknown. This is a sentinel value.
+	ActionOptUnknown
+)
+
+const defaultAction = ActionOptOff
+
+// RemediationActionOptFromString returns the RemediateActionOpt from a string representation
+func RemediationActionOptFromString(s *string) RemediateActionOpt {
+	var actionOptMap = map[string]RemediateActionOpt{
+		"on":      ActionOptOn,
+		"off":     ActionOptOff,
+		"dry_run": ActionOptDryRun,
+	}
+
+	if s == nil {
+		return defaultAction
+	}
+
+	if v, ok := actionOptMap[*s]; ok {
+		return v
+	}
+
+	return ActionOptUnknown
+}
+
+// Remediator is the interface for a rule type remediator
+type Remediator interface {
+	Remediate(ctx context.Context, remAction RemediateActionOpt, ent protoreflect.ProtoMessage, pol map[string]any) error
+}
