@@ -69,7 +69,6 @@ require (
 	github.com/lestrrat-go/option v1.0.1 // indirect
 	github.com/muhlemmer/gu v0.3.1 // indirect
 	github.com/segmentio/asm v1.2.0 // indirect
-	github.com/zitadel/oidc v1.13.4 // indirect
 )
 
 require (
