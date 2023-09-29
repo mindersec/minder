@@ -61,12 +61,16 @@ def:
       type: deny-by-default
       def: |
         package mediator
-    
+
+        import future.keywords.every
+        import future.keywords.if
+
         default allow := false
 
-        allow {
-            version := input.ingested[_]
-            not (version.Verification.is_signed == input.policy.is_signed)
-            not (version.Verification.is_verified == input.policy.is_verified)
-            not (version.Verification.is_bundle_verified == input.policy.is_bundle_verified)
+        allow if {
+          every artifactVersion in input.ingested {
+            every key, value in input.policy {
+              artifactVersion.Verification[key] == value
+            }
+          }
         }
