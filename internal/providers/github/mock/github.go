@@ -141,6 +141,20 @@ func (mr *MockRESTMockRecorder) Do(ctx, req interface{}) *gomock.Call {
 	return mr.mock.ctrl.RecordCallWithMethodType(mr.mock, "Do", reflect.TypeOf((*MockREST)(nil).Do), ctx, req)
 }
 
+// GetBaseURL mocks base method.
+func (m *MockREST) GetBaseURL() string {
+	m.ctrl.T.Helper()
+	ret := m.ctrl.Call(m, "GetBaseURL")
+	ret0, _ := ret[0].(string)
+	return ret0
+}
+
+// GetBaseURL indicates an expected call of GetBaseURL.
+func (mr *MockRESTMockRecorder) GetBaseURL() *gomock.Call {
+	mr.mock.ctrl.T.Helper()
+	return mr.mock.ctrl.RecordCallWithMethodType(mr.mock, "GetBaseURL", reflect.TypeOf((*MockREST)(nil).GetBaseURL))
+}
+
 // GetToken mocks base method.
 func (m *MockREST) GetToken() string {
 	m.ctrl.T.Helper()
@@ -251,6 +265,20 @@ func (m *MockGitHub) GetAuthenticatedUser(arg0 context.Context) (*github.User, e
 func (mr *MockGitHubMockRecorder) GetAuthenticatedUser(arg0 interface{}) *gomock.Call {
 	mr.mock.ctrl.T.Helper()
 	return mr.mock.ctrl.RecordCallWithMethodType(mr.mock, "GetAuthenticatedUser", reflect.TypeOf((*MockGitHub)(nil).GetAuthenticatedUser), arg0)
+}
+
+// GetBaseURL mocks base method.
+func (m *MockGitHub) GetBaseURL() string {
+	m.ctrl.T.Helper()
+	ret := m.ctrl.Call(m, "GetBaseURL")
+	ret0, _ := ret[0].(string)
+	return ret0
+}
+
+// GetBaseURL indicates an expected call of GetBaseURL.
+func (mr *MockGitHubMockRecorder) GetBaseURL() *gomock.Call {
+	mr.mock.ctrl.T.Helper()
+	return mr.mock.ctrl.RecordCallWithMethodType(mr.mock, "GetBaseURL", reflect.TypeOf((*MockGitHub)(nil).GetBaseURL))
 }
 
 // GetBranchProtection mocks base method.

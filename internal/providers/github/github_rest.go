@@ -377,6 +377,11 @@ func (c *RestClient) GetAuthenticatedUser(ctx context.Context) (*github.User, er
 	return user, nil
 }
 
+// GetBaseURL returns the base URL for the REST API.
+func (c *RestClient) GetBaseURL() string {
+	return c.client.BaseURL.String()
+}
+
 // NewRequest creates an API request. A relative URL can be provided in urlStr,
 // which will be resolved to the BaseURL of the Client. Relative URLS should
 // always be specified without a preceding slash. If specified, the value
