@@ -8,13 +8,15 @@ displayed_sidebar: mediator
 
 # Run a mediator server
 
-Mediator is platform, comprising of a controlplane, a CLI and a database.
+Mediator is platform, comprising of a controlplane, a CLI, a database and an identity provider.
 
 The control plane runs two endpoints, a gRPC endpoint and a HTTP endpoint.
 
 Mediator is controlled and managed via the CLI application `medic`.
 
 PostgreSQL is used as the database.
+
+Keycloak is used as the identity provider.
 
 There are two methods to get started with Mediator, either by downloading the
 latest release, building from source or (quickest) using the provided `docker-compose`
@@ -24,6 +26,7 @@ file.
 
 - [Go 1.20](https://golang.org/doc/install)
 - [PostgreSQL](https://www.postgresql.org/download/)
+- [Keycloak](https://www.keycloak.org/guides)
 
 ## Download the latest release
 
@@ -92,6 +95,30 @@ or:
 mediator-server migrate up
 ```
 
+# Identity Provider
+Mediator requires a Keycloak instance to be running. You can install this locally, or use a container.
+
+Should you install locally, you will need to configure the client on Keycloak.
+You will need the following:
+- A Keycloak realm where the mediator client can be registered
+- A registered client with the redirect URI `http://localhost/*`
+
+You will also need to set certain configuration options in your `config.yaml` file, to reflect your local Keycloak configuration.
+```yaml
+identity:
+  issuer_url: http://localhost:8081
+  realm: stacklok
+  client_id: mediator-cli
+```
+
+### Using a container
+
+A simple way to get started is to use the provided `docker-compose` file.
+
+```bash
+docker-compose up -d keycloak
+```
+
 ## Create encryption keys
 
 The default configuration expects these keys to be in a directory named `.ssh`, relative to where you run the `mediator-server` binary.
@@ -101,7 +128,7 @@ Start by creating the `.ssh` directory.
 mkdir .ssh && cd .ssh
 ```
 
-Encryption keys are used to encrypt JWT tokens. You can create these using the `openssl` CLI tool.
+You can create the encryption keys using the `openssl` CLI tool.
 
 ```bash
 # First generate an RSA key pair
