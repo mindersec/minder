@@ -21,6 +21,7 @@ import (
 	"fmt"
 
 	engif "github.com/stacklok/mediator/internal/engine/interfaces"
+	"github.com/stacklok/mediator/internal/engine/remediate/rest"
 	"github.com/stacklok/mediator/internal/providers"
 	pb "github.com/stacklok/mediator/pkg/api/protobuf/go/mediator/v1"
 )
@@ -35,9 +36,14 @@ func NewRuleRemediator(rt *pb.RuleType, pbuild *providers.ProviderBuilder) (engi
 		return nil, ErrNoRemediation
 	}
 
+	// nolint:revive // let's keep the switch here, it would be nicer to extend a switch in the future
 	switch rem.GetType() {
-	default:
-		return nil, fmt.Errorf("unknown remediation type: %s", rem.GetType())
+	case rest.RemediateType:
+		if rem.GetRest() == nil {
+			return nil, fmt.Errorf("remediations engine missing rest configuration")
+		}
+
+		return rest.NewRestRemediate(rem.GetRest(), pbuild)
 	}
 
 	return nil, nil
