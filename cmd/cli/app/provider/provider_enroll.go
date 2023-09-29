@@ -36,6 +36,7 @@ import (
 
 	ghclient "github.com/stacklok/mediator/internal/providers/github"
 	"github.com/stacklok/mediator/internal/util"
+	"github.com/stacklok/mediator/internal/util/rand"
 	pb "github.com/stacklok/mediator/pkg/api/protobuf/go/mediator/v1"
 )
 
@@ -157,7 +158,7 @@ actions such as adding repositories.`,
 			fmt.Println("Provider enrolled successfully")
 		} else {
 			// Get random port
-			port, err := util.GetRandomPort()
+			port, err := rand.GetRandomPort()
 			util.ExitNicelyOnError(err, "Error getting random port")
 
 			resp, err := client.GetAuthorizationURL(ctx, &pb.GetAuthorizationURLRequest{

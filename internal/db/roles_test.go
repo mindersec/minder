@@ -28,7 +28,7 @@ import (
 
 	"github.com/stretchr/testify/require"
 
-	"github.com/stacklok/mediator/internal/util"
+	"github.com/stacklok/mediator/internal/util/rand"
 )
 
 // A helper function to create a random role
@@ -38,7 +38,7 @@ func createRandomRole(t *testing.T, org int32) Role {
 	seed := time.Now().UnixNano()
 	arg := CreateRoleParams{
 		OrganizationID: org,
-		Name:           util.RandomName(seed),
+		Name:           rand.RandomName(seed),
 	}
 
 	role, err := testQueries.CreateRole(context.Background(), arg)
@@ -93,7 +93,7 @@ func TestUpdateRole(t *testing.T) {
 	arg := UpdateRoleParams{
 		ID:             role1.ID,
 		OrganizationID: org.ID,
-		Name:           util.RandomName(seed),
+		Name:           rand.RandomName(seed),
 		IsAdmin:        true,
 	}
 

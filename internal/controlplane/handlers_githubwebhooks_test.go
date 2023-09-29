@@ -43,7 +43,7 @@ import (
 	mockdb "github.com/stacklok/mediator/database/mock"
 	"github.com/stacklok/mediator/internal/db"
 	"github.com/stacklok/mediator/internal/engine"
-	"github.com/stacklok/mediator/internal/util"
+	"github.com/stacklok/mediator/internal/util/rand"
 )
 
 // MockClient is a mock implementation of the GitHub client.
@@ -156,7 +156,7 @@ func (s *UnitTestSuite) TestHandleWebHookPing() {
 	srv.evt.Register(engine.InternalEntityEventTopic, pq.pass)
 
 	hook := srv.HandleGitHubWebHook()
-	port, err := util.GetRandomPort()
+	port, err := rand.GetRandomPort()
 	require.NoError(t, err, "failed to get random port")
 
 	addr := fmt.Sprintf("localhost:%d", port)
@@ -211,7 +211,7 @@ func (s *UnitTestSuite) TestHandleWebHookUnexistentRepository() {
 		Return(db.Repository{}, sql.ErrNoRows)
 
 	hook := srv.HandleGitHubWebHook()
-	port, err := util.GetRandomPort()
+	port, err := rand.GetRandomPort()
 	if err != nil {
 		t.Fatal(err)
 	}
@@ -293,7 +293,7 @@ func (s *UnitTestSuite) TestHandleWebHookRepository() {
 		}, nil)
 
 	hook := srv.HandleGitHubWebHook()
-	port, err := util.GetRandomPort()
+	port, err := rand.GetRandomPort()
 	if err != nil {
 		t.Fatal(err)
 	}
@@ -368,7 +368,7 @@ func (s *UnitTestSuite) TestHandleWebHookUnexistentRepoPackage() {
 		Return(db.Repository{}, sql.ErrNoRows)
 
 	hook := srv.HandleGitHubWebHook()
-	port, err := util.GetRandomPort()
+	port, err := rand.GetRandomPort()
 	if err != nil {
 		t.Fatal(err)
 	}
