@@ -42,7 +42,7 @@ require (
 	go.opentelemetry.io/otel/exporters/prometheus v0.41.0
 	go.opentelemetry.io/otel/exporters/stdout/stdouttrace v1.18.0
 	go.opentelemetry.io/otel/sdk v1.19.0
-	go.opentelemetry.io/otel/sdk/metric v0.41.0
+	go.opentelemetry.io/otel/sdk/metric v1.19.0
 	go.opentelemetry.io/otel/trace v1.19.0
 	golang.org/x/crypto v0.13.0
 	golang.org/x/exp v0.0.0-20230713183714-613f0c0eb8a1
