@@ -320,8 +320,8 @@ func (s *Server) parseRepoEvent(
 	}
 
 	provider, err := s.store.GetProviderByName(ctx, db.GetProviderByNameParams{
-		Name:    dbrepo.Provider,
-		GroupID: dbrepo.GroupID,
+		Name:      dbrepo.Provider,
+		ProjectID: dbrepo.ProjectID,
 	})
 	if err != nil {
 		return fmt.Errorf("error getting provider: %w", err)
@@ -342,7 +342,7 @@ func (s *Server) parseRepoEvent(
 	eiw := engine.NewEntityInfoWrapper().
 		WithProvider(provider.Name).
 		WithRepository(repo).
-		WithGroupID(dbrepo.GroupID).
+		WithProjectID(dbrepo.ProjectID).
 		WithRepositoryID(dbrepo.ID)
 
 	return eiw.ToMessage(msg)
@@ -364,11 +364,11 @@ func (s *Server) parseArtifactPublishedEvent(
 	if err != nil {
 		return fmt.Errorf("error getting repo information from payload: %w", err)
 	}
-	g := dbrepo.GroupID
+	g := dbrepo.ProjectID
 
 	prov, err := s.store.GetProviderByName(ctx, db.GetProviderByNameParams{
-		Name:    dbrepo.Provider,
-		GroupID: dbrepo.GroupID,
+		Name:      dbrepo.Provider,
+		ProjectID: dbrepo.ProjectID,
 	})
 	if err != nil {
 		return fmt.Errorf("error getting provider: %w", err)
@@ -409,7 +409,7 @@ func (s *Server) parseArtifactPublishedEvent(
 	eiw := engine.NewEntityInfoWrapper().
 		WithArtifact(pbArtifact).
 		WithProvider(prov.Name).
-		WithGroupID(dbrepo.GroupID).
+		WithProjectID(dbrepo.ProjectID).
 		WithRepositoryID(dbrepo.ID).
 		WithArtifactID(dbArtifact.ID)
 
@@ -426,11 +426,11 @@ func (s *Server) parsePullRequestModEvent(
 	if err != nil {
 		return fmt.Errorf("error getting repo information from payload: %w", err)
 	}
-	g := dbrepo.GroupID
+	g := dbrepo.ProjectID
 
 	prov, err := s.store.GetProviderByName(ctx, db.GetProviderByNameParams{
-		Name:    dbrepo.Provider,
-		GroupID: dbrepo.GroupID,
+		Name:      dbrepo.Provider,
+		ProjectID: dbrepo.ProjectID,
 	})
 	if err != nil {
 		return fmt.Errorf("error getting provider: %w", err)
@@ -469,7 +469,7 @@ func (s *Server) parsePullRequestModEvent(
 		WithPullRequest(prEvalInfo).
 		WithPullRequestNumber(prEvalInfo.Number).
 		WithProvider(prov.Name).
-		WithGroupID(dbrepo.GroupID).
+		WithProjectID(dbrepo.ProjectID).
 		WithRepositoryID(dbrepo.ID)
 
 	return eiw.ToMessage(msg)
@@ -899,7 +899,7 @@ func getRepoInformationFromPayload(
 		return db.Repository{}, fmt.Errorf("error getting repository: %w", err)
 	}
 
-	if dbrepo.GroupID == 0 {
+	if dbrepo.ProjectID.String() == "" {
 		return db.Repository{}, fmt.Errorf("no group found for repository %s/%s: %w",
 			dbrepo.RepoOwner, dbrepo.RepoName, ErrRepoNotFound)
 	}

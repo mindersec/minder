@@ -7,8 +7,9 @@ package db
 
 import (
 	"context"
-	"database/sql"
 	"time"
+
+	"github.com/google/uuid"
 )
 
 const addUserRole = `-- name: AddUserRole :one
@@ -33,13 +34,13 @@ func (q *Queries) AddUserRole(ctx context.Context, arg AddUserRoleParams) (UserR
 }
 
 const getUserRoles = `-- name: GetUserRoles :many
-SELECT roles.id, organization_id, group_id, name, is_admin, is_protected, created_at, updated_at, user_roles.id, user_id, role_id FROM roles INNER JOIN user_roles ON roles.id = user_roles.role_id WHERE user_roles.user_id = $1
+SELECT roles.id, organization_id, project_id, name, is_admin, is_protected, created_at, updated_at, user_roles.id, user_id, role_id FROM roles INNER JOIN user_roles ON roles.id = user_roles.role_id WHERE user_roles.user_id = $1
 `
 
 type GetUserRolesRow struct {
 	ID             int32         `json:"id"`
-	OrganizationID int32         `json:"organization_id"`
-	GroupID        sql.NullInt32 `json:"group_id"`
+	OrganizationID uuid.UUID     `json:"organization_id"`
+	ProjectID      uuid.NullUUID `json:"project_id"`
 	Name           string        `json:"name"`
 	IsAdmin        bool          `json:"is_admin"`
 	IsProtected    bool          `json:"is_protected"`
@@ -62,7 +63,7 @@ func (q *Queries) GetUserRoles(ctx context.Context, userID int32) ([]GetUserRole
 		if err := rows.Scan(
 			&i.ID,
 			&i.OrganizationID,
-			&i.GroupID,
+			&i.ProjectID,
 			&i.Name,
 			&i.IsAdmin,
 			&i.IsProtected,

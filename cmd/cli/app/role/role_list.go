@@ -35,24 +35,24 @@ import (
 	pb "github.com/stacklok/mediator/pkg/api/protobuf/go/mediator/v1"
 )
 
-func printRoles(rolesById *pb.GetRolesByGroupResponse, rolesByGroup *pb.GetRolesResponse, format string) {
+func printRoles(rolesById *pb.GetRolesByProjectResponse, rolesByProject *pb.GetRolesResponse, format string) {
 	// print output in a table
 	if format == "" {
 		table := tablewriter.NewWriter(os.Stdout)
-		table.SetHeader([]string{"Id", "Organization", "Group", "Name", "Is admin", "Is protected", "Created date", "Updated date"})
+		table.SetHeader([]string{"Id", "Organization", "Project", "Name", "Is admin", "Is protected", "Created date", "Updated date"})
 
 		var roles []*pb.RoleRecord
 		if rolesById != nil {
 			roles = rolesById.Roles
 		} else {
-			roles = rolesByGroup.Roles
+			roles = rolesByProject.Roles
 		}
 
 		for _, v := range roles {
 			row := []string{
 				fmt.Sprintf("%d", v.Id),
-				fmt.Sprintf("%d", v.OrganizationId),
-				fmt.Sprintf("%d", v.GroupId),
+				v.OrganizationId,
+				fmt.Sprintf("%v", v.ProjectId),
 				v.Name,
 				fmt.Sprintf("%t", v.IsAdmin),
 				fmt.Sprintf("%t", v.IsProtected),
@@ -67,7 +67,7 @@ func printRoles(rolesById *pb.GetRolesByGroupResponse, rolesByGroup *pb.GetRoles
 		if rolesById != nil {
 			roles = rolesById
 		} else {
-			roles = rolesByGroup
+			roles = rolesByProject
 		}
 		out, err := util.GetJsonFromProto(roles)
 		util.ExitNicelyOnError(err, "Error getting json from proto")
@@ -77,7 +77,7 @@ func printRoles(rolesById *pb.GetRolesByGroupResponse, rolesByGroup *pb.GetRoles
 		if rolesById != nil {
 			roles = rolesById
 		} else {
-			roles = rolesByGroup
+			roles = rolesByProject
 		}
 		out, err := util.GetYamlFromProto(roles)
 		util.ExitNicelyOnError(err, "Error getting yaml from proto")
@@ -90,7 +90,7 @@ var role_listCmd = &cobra.Command{
 	Use:   "list",
 	Short: "List roles within a mediator control plane",
 	Long: `The medic role list subcommand lets you list roles within a
-mediator control plane for an specific group.`,
+mediator control plane for an specific project.`,
 	PreRun: func(cmd *cobra.Command, args []string) {
 		if err := viper.BindPFlags(cmd.Flags()); err != nil {
 			fmt.Fprintf(os.Stderr, "Error binding flags: %s\n", err)
@@ -105,8 +105,8 @@ mediator control plane for an specific group.`,
 		ctx, cancel := util.GetAppContext()
 		defer cancel()
 
-		org := viper.GetInt32("org-id")
-		group := viper.GetInt32("group-id")
+		org := viper.GetString("org-id")
+		project := viper.GetString("project-id")
 		limit := viper.GetInt32("limit")
 		offset := viper.GetInt32("offset")
 		format := viper.GetString("output")
@@ -118,22 +118,23 @@ mediator control plane for an specific group.`,
 		var limitPtr = &limit
 		var offsetPtr = &offset
 
-		// we need to set either org or group
-		if org == 0 && group == 0 {
-			fmt.Fprintf(os.Stderr, "Error: must set either org or group\n")
+		// we need to set either org or project
+		if org == "" && project == "" {
+			fmt.Fprintf(os.Stderr, "Error: must set either org or project\n")
 			os.Exit(1)
 		}
-		// if group is set , org cannot be set
-		if group != 0 && org != 0 {
-			fmt.Fprintf(os.Stderr, "Error: cannot set both org and group\n")
+		// if project is set , org cannot be set
+		if project != "" && org != "" {
+			fmt.Fprintf(os.Stderr, "Error: cannot set both org and project\n")
 			os.Exit(1)
 		}
 
-		if group != 0 {
-			resp, err := client.GetRolesByGroup(ctx, &pb.GetRolesByGroupRequest{GroupId: group, Limit: limitPtr, Offset: offsetPtr})
+		if project != "" {
+			resp, err := client.GetRolesByProject(ctx, &pb.GetRolesByProjectRequest{
+				ProjectId: project, Limit: limitPtr, Offset: offsetPtr})
 			util.ExitNicelyOnError(err, "Error getting roles")
 			printRoles(resp, nil, format)
-		} else if org != 0 {
+		} else if org != "" {
 			resp, err := client.GetRoles(ctx,
 				&pb.GetRolesRequest{OrganizationId: org, Limit: limitPtr, Offset: offsetPtr})
 			util.ExitNicelyOnError(err, "Error getting roles")
@@ -144,8 +145,8 @@ mediator control plane for an specific group.`,
 
 func init() {
 	RoleCmd.AddCommand(role_listCmd)
-	role_listCmd.Flags().Int32P("org-id", "i", 0, "org id to list roles for")
-	role_listCmd.Flags().Int32P("group-id", "g", 0, "group id to list roles for")
+	role_listCmd.Flags().StringP("org-id", "i", "", "org id to list roles for")
+	role_listCmd.Flags().StringP("project-id", "g", "", "project id to list roles for")
 	role_listCmd.Flags().StringP("output", "o", "", "Output format (json or yaml)")
 	role_listCmd.Flags().Int32P("limit", "l", -1, "Limit the number of results returned")
 	role_listCmd.Flags().Int32P("offset", "f", 0, "Offset the results returned")

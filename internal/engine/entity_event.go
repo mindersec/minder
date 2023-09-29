@@ -24,7 +24,6 @@ import (
 
 	"github.com/stacklok/mediator/internal/entities"
 	"github.com/stacklok/mediator/internal/events"
-	"github.com/stacklok/mediator/internal/util"
 	mediatorv1 "github.com/stacklok/mediator/pkg/api/protobuf/go/mediator/v1"
 )
 
@@ -39,7 +38,7 @@ import (
 // It also assumes the following metadata keys are present:
 //
 // - EntityTypeEventKey - entity_type
-// - GroupIDEventKey - group_id
+// - ProjectIDEventKey - project_id
 // - RepositoryIDEventKey - repository_id
 // - ArtifactIDEventKey - artifact_id (only for versioned artifacts)
 //
@@ -50,7 +49,7 @@ import (
 // - VersionedArtifactEventEntityType - versioned_artifact
 type EntityInfoWrapper struct {
 	Provider      string
-	GroupID       int32
+	ProjectID     *uuid.UUID
 	Entity        protoreflect.ProtoMessage
 	Type          mediatorv1.Entity
 	OwnershipData map[string]string
@@ -70,8 +69,8 @@ const (
 	EntityTypeEventKey = "entity_type"
 	// ProviderEventKey is the key for the provider
 	ProviderEventKey = "provider"
-	// GroupIDEventKey is the key for the group ID
-	GroupIDEventKey = "group_id"
+	// ProjectIDEventKey is the key for the project ID
+	ProjectIDEventKey = "project_id"
 	// RepositoryIDEventKey is the key for the repository ID
 	RepositoryIDEventKey = "repository_id"
 	// ArtifactIDEventKey is the key for the artifact ID
@@ -118,9 +117,9 @@ func (eiw *EntityInfoWrapper) WithPullRequest(p *mediatorv1.PullRequest) *Entity
 	return eiw
 }
 
-// WithGroupID sets the group ID
-func (eiw *EntityInfoWrapper) WithGroupID(id int32) *EntityInfoWrapper {
-	eiw.GroupID = id
+// WithProjectID sets the project ID
+func (eiw *EntityInfoWrapper) WithProjectID(id uuid.UUID) *EntityInfoWrapper {
+	eiw.ProjectID = &id
 
 	return eiw
 }
@@ -205,8 +204,8 @@ func (eiw *EntityInfoWrapper) ToMessage(msg *message.Message) error {
 		return err
 	}
 
-	if eiw.GroupID == 0 {
-		return fmt.Errorf("group ID is required")
+	if eiw.ProjectID == nil {
+		return fmt.Errorf("project ID is required")
 	}
 
 	if eiw.Provider == "" {
@@ -215,7 +214,7 @@ func (eiw *EntityInfoWrapper) ToMessage(msg *message.Message) error {
 
 	msg.Metadata.Set(ProviderEventKey, eiw.Provider)
 	msg.Metadata.Set(EntityTypeEventKey, typ)
-	msg.Metadata.Set(GroupIDEventKey, fmt.Sprintf("%d", eiw.GroupID))
+	msg.Metadata.Set(ProjectIDEventKey, eiw.ProjectID.String())
 	for k, v := range eiw.OwnershipData {
 		msg.Metadata.Set(k, v)
 	}
@@ -227,18 +226,18 @@ func (eiw *EntityInfoWrapper) ToMessage(msg *message.Message) error {
 	return nil
 }
 
-func (eiw *EntityInfoWrapper) withGroupIDFromMessage(msg *message.Message) error {
-	rawID := msg.Metadata.Get(GroupIDEventKey)
+func (eiw *EntityInfoWrapper) withProjectIDFromMessage(msg *message.Message) error {
+	rawID := msg.Metadata.Get(ProjectIDEventKey)
 	if rawID == "" {
-		return fmt.Errorf("%s not found in metadata", GroupIDEventKey)
+		return fmt.Errorf("%s not found in metadata", ProjectIDEventKey)
 	}
 
-	id, err := util.Int32FromString(rawID)
+	id, err := uuid.Parse(rawID)
 	if err != nil {
-		return fmt.Errorf("error parsing %s: %w", GroupIDEventKey, err)
+		return fmt.Errorf("error parsing project ID: %w", err)
 	}
 
-	eiw.GroupID = id
+	eiw.ProjectID = &id
 	return nil
 }
 
@@ -342,7 +341,7 @@ func parseEntityEvent(msg *message.Message) (*EntityInfoWrapper, error) {
 		OwnershipData: make(map[string]string),
 	}
 
-	if err := out.withGroupIDFromMessage(msg); err != nil {
+	if err := out.withProjectIDFromMessage(msg); err != nil {
 		return nil, err
 	}
 

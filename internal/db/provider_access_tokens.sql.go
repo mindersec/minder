@@ -9,14 +9,16 @@ import (
 	"context"
 	"database/sql"
 	"time"
+
+	"github.com/google/uuid"
 )
 
 const createAccessToken = `-- name: CreateAccessToken :one
-INSERT INTO provider_access_tokens (group_id, provider, encrypted_token, expiration_time, owner_filter) VALUES ($1, $2, $3, $4, $5) RETURNING id, provider, group_id, owner_filter, encrypted_token, expiration_time, created_at, updated_at
+INSERT INTO provider_access_tokens (project_id, provider, encrypted_token, expiration_time, owner_filter) VALUES ($1, $2, $3, $4, $5) RETURNING id, provider, project_id, owner_filter, encrypted_token, expiration_time, created_at, updated_at
 `
 
 type CreateAccessTokenParams struct {
-	GroupID        int32          `json:"group_id"`
+	ProjectID      uuid.UUID      `json:"project_id"`
 	Provider       string         `json:"provider"`
 	EncryptedToken string         `json:"encrypted_token"`
 	ExpirationTime time.Time      `json:"expiration_time"`
@@ -25,7 +27,7 @@ type CreateAccessTokenParams struct {
 
 func (q *Queries) CreateAccessToken(ctx context.Context, arg CreateAccessTokenParams) (ProviderAccessToken, error) {
 	row := q.db.QueryRowContext(ctx, createAccessToken,
-		arg.GroupID,
+		arg.ProjectID,
 		arg.Provider,
 		arg.EncryptedToken,
 		arg.ExpirationTime,
@@ -35,7 +37,7 @@ func (q *Queries) CreateAccessToken(ctx context.Context, arg CreateAccessTokenPa
 	err := row.Scan(
 		&i.ID,
 		&i.Provider,
-		&i.GroupID,
+		&i.ProjectID,
 		&i.OwnerFilter,
 		&i.EncryptedToken,
 		&i.ExpirationTime,
@@ -46,35 +48,35 @@ func (q *Queries) CreateAccessToken(ctx context.Context, arg CreateAccessTokenPa
 }
 
 const deleteAccessToken = `-- name: DeleteAccessToken :exec
-DELETE FROM provider_access_tokens WHERE provider = $1 AND group_id = $2
+DELETE FROM provider_access_tokens WHERE provider = $1 AND project_id = $2
 `
 
 type DeleteAccessTokenParams struct {
-	Provider string `json:"provider"`
-	GroupID  int32  `json:"group_id"`
+	Provider  string    `json:"provider"`
+	ProjectID uuid.UUID `json:"project_id"`
 }
 
 func (q *Queries) DeleteAccessToken(ctx context.Context, arg DeleteAccessTokenParams) error {
-	_, err := q.db.ExecContext(ctx, deleteAccessToken, arg.Provider, arg.GroupID)
+	_, err := q.db.ExecContext(ctx, deleteAccessToken, arg.Provider, arg.ProjectID)
 	return err
 }
 
-const getAccessTokenByGroupID = `-- name: GetAccessTokenByGroupID :one
-SELECT id, provider, group_id, owner_filter, encrypted_token, expiration_time, created_at, updated_at FROM provider_access_tokens WHERE provider = $1 AND group_id = $2
+const getAccessTokenByProjectID = `-- name: GetAccessTokenByProjectID :one
+SELECT id, provider, project_id, owner_filter, encrypted_token, expiration_time, created_at, updated_at FROM provider_access_tokens WHERE provider = $1 AND project_id = $2
 `
 
-type GetAccessTokenByGroupIDParams struct {
-	Provider string `json:"provider"`
-	GroupID  int32  `json:"group_id"`
+type GetAccessTokenByProjectIDParams struct {
+	Provider  string    `json:"provider"`
+	ProjectID uuid.UUID `json:"project_id"`
 }
 
-func (q *Queries) GetAccessTokenByGroupID(ctx context.Context, arg GetAccessTokenByGroupIDParams) (ProviderAccessToken, error) {
-	row := q.db.QueryRowContext(ctx, getAccessTokenByGroupID, arg.Provider, arg.GroupID)
+func (q *Queries) GetAccessTokenByProjectID(ctx context.Context, arg GetAccessTokenByProjectIDParams) (ProviderAccessToken, error) {
+	row := q.db.QueryRowContext(ctx, getAccessTokenByProjectID, arg.Provider, arg.ProjectID)
 	var i ProviderAccessToken
 	err := row.Scan(
 		&i.ID,
 		&i.Provider,
-		&i.GroupID,
+		&i.ProjectID,
 		&i.OwnerFilter,
 		&i.EncryptedToken,
 		&i.ExpirationTime,
@@ -85,7 +87,7 @@ func (q *Queries) GetAccessTokenByGroupID(ctx context.Context, arg GetAccessToke
 }
 
 const getAccessTokenByProvider = `-- name: GetAccessTokenByProvider :many
-SELECT id, provider, group_id, owner_filter, encrypted_token, expiration_time, created_at, updated_at FROM provider_access_tokens WHERE provider = $1
+SELECT id, provider, project_id, owner_filter, encrypted_token, expiration_time, created_at, updated_at FROM provider_access_tokens WHERE provider = $1
 `
 
 func (q *Queries) GetAccessTokenByProvider(ctx context.Context, provider string) ([]ProviderAccessToken, error) {
@@ -100,7 +102,7 @@ func (q *Queries) GetAccessTokenByProvider(ctx context.Context, provider string)
 		if err := rows.Scan(
 			&i.ID,
 			&i.Provider,
-			&i.GroupID,
+			&i.ProjectID,
 			&i.OwnerFilter,
 			&i.EncryptedToken,
 			&i.ExpirationTime,
@@ -121,22 +123,22 @@ func (q *Queries) GetAccessTokenByProvider(ctx context.Context, provider string)
 }
 
 const getAccessTokenSinceDate = `-- name: GetAccessTokenSinceDate :one
-SELECT id, provider, group_id, owner_filter, encrypted_token, expiration_time, created_at, updated_at FROM provider_access_tokens WHERE provider = $1 AND group_id = $2 AND created_at >= $3
+SELECT id, provider, project_id, owner_filter, encrypted_token, expiration_time, created_at, updated_at FROM provider_access_tokens WHERE provider = $1 AND project_id = $2 AND created_at >= $3
 `
 
 type GetAccessTokenSinceDateParams struct {
 	Provider  string    `json:"provider"`
-	GroupID   int32     `json:"group_id"`
+	ProjectID uuid.UUID `json:"project_id"`
 	CreatedAt time.Time `json:"created_at"`
 }
 
 func (q *Queries) GetAccessTokenSinceDate(ctx context.Context, arg GetAccessTokenSinceDateParams) (ProviderAccessToken, error) {
-	row := q.db.QueryRowContext(ctx, getAccessTokenSinceDate, arg.Provider, arg.GroupID, arg.CreatedAt)
+	row := q.db.QueryRowContext(ctx, getAccessTokenSinceDate, arg.Provider, arg.ProjectID, arg.CreatedAt)
 	var i ProviderAccessToken
 	err := row.Scan(
 		&i.ID,
 		&i.Provider,
-		&i.GroupID,
+		&i.ProjectID,
 		&i.OwnerFilter,
 		&i.EncryptedToken,
 		&i.ExpirationTime,
@@ -147,12 +149,12 @@ func (q *Queries) GetAccessTokenSinceDate(ctx context.Context, arg GetAccessToke
 }
 
 const updateAccessToken = `-- name: UpdateAccessToken :one
-UPDATE provider_access_tokens SET encrypted_token = $3, expiration_time = $4, owner_filter = $5, updated_at = NOW() WHERE provider = $1 AND group_id = $2 RETURNING id, provider, group_id, owner_filter, encrypted_token, expiration_time, created_at, updated_at
+UPDATE provider_access_tokens SET encrypted_token = $3, expiration_time = $4, owner_filter = $5, updated_at = NOW() WHERE provider = $1 AND project_id = $2 RETURNING id, provider, project_id, owner_filter, encrypted_token, expiration_time, created_at, updated_at
 `
 
 type UpdateAccessTokenParams struct {
 	Provider       string         `json:"provider"`
-	GroupID        int32          `json:"group_id"`
+	ProjectID      uuid.UUID      `json:"project_id"`
 	EncryptedToken string         `json:"encrypted_token"`
 	ExpirationTime time.Time      `json:"expiration_time"`
 	OwnerFilter    sql.NullString `json:"owner_filter"`
@@ -161,7 +163,7 @@ type UpdateAccessTokenParams struct {
 func (q *Queries) UpdateAccessToken(ctx context.Context, arg UpdateAccessTokenParams) (ProviderAccessToken, error) {
 	row := q.db.QueryRowContext(ctx, updateAccessToken,
 		arg.Provider,
-		arg.GroupID,
+		arg.ProjectID,
 		arg.EncryptedToken,
 		arg.ExpirationTime,
 		arg.OwnerFilter,
@@ -170,7 +172,7 @@ func (q *Queries) UpdateAccessToken(ctx context.Context, arg UpdateAccessTokenPa
 	err := row.Scan(
 		&i.ID,
 		&i.Provider,
-		&i.GroupID,
+		&i.ProjectID,
 		&i.OwnerFilter,
 		&i.EncryptedToken,
 		&i.ExpirationTime,

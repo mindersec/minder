@@ -20,11 +20,13 @@ import (
 	"errors"
 
 	"github.com/go-playground/validator/v10"
+	"github.com/google/uuid"
 	"google.golang.org/grpc/codes"
 	"google.golang.org/grpc/status"
 	"google.golang.org/protobuf/types/known/timestamppb"
 
 	"github.com/stacklok/mediator/internal/db"
+	"github.com/stacklok/mediator/internal/util"
 	pb "github.com/stacklok/mediator/pkg/api/protobuf/go/mediator/v1"
 )
 
@@ -43,13 +45,18 @@ func (s *Server) CreateRoleByOrganization(ctx context.Context,
 		return nil, status.Errorf(codes.InvalidArgument, "invalid argument: %v", err)
 	}
 
+	orgID, err := uuid.Parse(in.OrganizationId)
+	if err != nil {
+		return nil, util.UserVisibleError(codes.InvalidArgument, "invalid organization id")
+	}
+
 	// check if user is authorized
-	if err := AuthorizedOnOrg(ctx, in.OrganizationId); err != nil {
+	if err := AuthorizedOnOrg(ctx, orgID); err != nil {
 		return nil, err
 	}
 
 	// check that organization exists
-	_, err = s.store.GetOrganization(ctx, in.OrganizationId)
+	_, err = s.store.GetOrganization(ctx, orgID)
 	if err != nil {
 		if errors.Is(err, sql.ErrNoRows) {
 			return nil, status.Error(codes.NotFound, "organization not found")
@@ -67,7 +74,7 @@ func (s *Server) CreateRoleByOrganization(ctx context.Context,
 		in.IsProtected = &isProtected
 	}
 
-	roleParams := db.CreateRoleParams{OrganizationID: in.OrganizationId,
+	roleParams := db.CreateRoleParams{OrganizationID: orgID,
 		Name: in.Name, IsAdmin: *in.IsAdmin, IsProtected: *in.IsProtected}
 
 	role, err := s.store.CreateRole(ctx, roleParams)
@@ -77,14 +84,14 @@ func (s *Server) CreateRoleByOrganization(ctx context.Context,
 
 	return &pb.CreateRoleByOrganizationResponse{Id: role.ID, Name: role.Name,
 		IsAdmin: role.IsAdmin, IsProtected: role.IsProtected,
-		OrganizationId: role.OrganizationID,
+		OrganizationId: role.OrganizationID.String(),
 		CreatedAt:      timestamppb.New(role.CreatedAt),
 		UpdatedAt:      timestamppb.New(role.UpdatedAt)}, nil
 }
 
-// CreateRoleByGroup is a service for creating a role for a group
-func (s *Server) CreateRoleByGroup(ctx context.Context,
-	in *pb.CreateRoleByGroupRequest) (*pb.CreateRoleByGroupResponse, error) {
+// CreateRoleByProject is a service for creating a role for a project
+func (s *Server) CreateRoleByProject(ctx context.Context,
+	in *pb.CreateRoleByProjectRequest) (*pb.CreateRoleByProjectResponse, error) {
 	// validate that the company and name are not empty
 	validator := validator.New()
 	err := validator.Struct(CreateRoleValidation{Name: in.Name})
@@ -92,13 +99,23 @@ func (s *Server) CreateRoleByGroup(ctx context.Context,
 		return nil, status.Errorf(codes.InvalidArgument, "invalid argument: %v", err)
 	}
 
+	projID, err := uuid.Parse(in.ProjectId)
+	if err != nil {
+		return nil, util.UserVisibleError(codes.InvalidArgument, "invalid project id")
+	}
+
 	// check if user is authorized
-	if err := AuthorizedOnGroup(ctx, in.GroupId); err != nil {
+	if err := AuthorizedOnProject(ctx, projID); err != nil {
 		return nil, err
 	}
 
+	orgID, err := uuid.Parse(in.OrganizationId)
+	if err != nil {
+		return nil, util.UserVisibleError(codes.InvalidArgument, "invalid organization id")
+	}
+
 	// check that organization exists
-	_, err = s.store.GetOrganization(ctx, in.OrganizationId)
+	_, err = s.store.GetOrganization(ctx, orgID)
 	if err != nil {
 		if errors.Is(err, sql.ErrNoRows) {
 			return nil, status.Error(codes.NotFound, "organization not found")
@@ -106,13 +123,13 @@ func (s *Server) CreateRoleByGroup(ctx context.Context,
 		return nil, status.Errorf(codes.Internal, "failed to get organization")
 	}
 
-	// check that group exists
-	_, err = s.store.GetGroupByID(ctx, in.GroupId)
+	// check that project exists
+	_, err = s.store.GetProjectByID(ctx, projID)
 	if err != nil {
 		if errors.Is(err, sql.ErrNoRows) {
-			return nil, status.Error(codes.NotFound, "group not found")
+			return nil, status.Error(codes.NotFound, "project not found")
 		}
-		return nil, status.Errorf(codes.Internal, "failed to get group by id: %s", err)
+		return nil, status.Errorf(codes.Internal, "failed to get project by id: %s", err)
 	}
 
 	if in.IsAdmin == nil {
@@ -125,19 +142,19 @@ func (s *Server) CreateRoleByGroup(ctx context.Context,
 		in.IsProtected = &isProtected
 	}
 
-	roleParams := db.CreateRoleParams{OrganizationID: in.OrganizationId,
+	roleParams := db.CreateRoleParams{OrganizationID: orgID,
 		Name: in.Name, IsAdmin: *in.IsAdmin, IsProtected: *in.IsProtected,
-		GroupID: sql.NullInt32{Int32: in.GroupId, Valid: true}}
+		ProjectID: uuid.NullUUID{UUID: projID, Valid: true}}
 
 	role, err := s.store.CreateRole(ctx, roleParams)
 	if err != nil {
 		return nil, status.Errorf(codes.Internal, "failed to create role: %v", err)
 	}
 
-	return &pb.CreateRoleByGroupResponse{Id: role.ID, Name: role.Name,
+	return &pb.CreateRoleByProjectResponse{Id: role.ID, Name: role.Name,
 		IsAdmin: role.IsAdmin, IsProtected: role.IsProtected,
-		OrganizationId: role.OrganizationID,
-		GroupId:        role.GroupID.Int32,
+		OrganizationId: role.OrganizationID.String(),
+		ProjectId:      role.ProjectID.UUID.String(),
 		CreatedAt:      timestamppb.New(role.CreatedAt),
 		UpdatedAt:      timestamppb.New(role.UpdatedAt)}, nil
 }
@@ -203,12 +220,13 @@ func (s *Server) DeleteRole(ctx context.Context,
 // GetRoles is a service for getting roles
 func (s *Server) GetRoles(ctx context.Context,
 	in *pb.GetRolesRequest) (*pb.GetRolesResponse, error) {
-	if in.OrganizationId == 0 {
-		return nil, status.Errorf(codes.InvalidArgument, "invalid argument: organization id is required")
+	orgID, err := uuid.Parse(in.OrganizationId)
+	if err != nil {
+		return nil, util.UserVisibleError(codes.InvalidArgument, "invalid organization id")
 	}
 
 	// check if user is authorized
-	if err := AuthorizedOnOrg(ctx, in.OrganizationId); err != nil {
+	if err := AuthorizedOnOrg(ctx, orgID); err != nil {
 		return nil, err
 	}
 
@@ -223,7 +241,7 @@ func (s *Server) GetRoles(ctx context.Context,
 	}
 
 	roles, err := s.store.ListRoles(ctx, db.ListRolesParams{
-		OrganizationID: in.OrganizationId,
+		OrganizationID: orgID,
 		Limit:          *in.Limit,
 		Offset:         *in.Offset,
 	})
@@ -235,10 +253,11 @@ func (s *Server) GetRoles(ctx context.Context,
 	resp.Roles = make([]*pb.RoleRecord, 0, len(roles))
 	for idx := range roles {
 		role := &roles[idx]
+		projID := role.ProjectID.UUID.String()
 		resp.Roles = append(resp.Roles, &pb.RoleRecord{
 			Id:             role.ID,
-			OrganizationId: role.OrganizationID,
-			GroupId:        &role.GroupID.Int32,
+			OrganizationId: role.OrganizationID.String(),
+			ProjectId:      &projID,
 			Name:           role.Name,
 			IsAdmin:        role.IsAdmin,
 			IsProtected:    role.IsProtected,
@@ -250,15 +269,16 @@ func (s *Server) GetRoles(ctx context.Context,
 	return &resp, nil
 }
 
-// GetRolesByGroup is a service for getting roles for a group
-func (s *Server) GetRolesByGroup(ctx context.Context,
-	in *pb.GetRolesByGroupRequest) (*pb.GetRolesByGroupResponse, error) {
-	if in.GroupId == 0 {
-		return nil, status.Errorf(codes.InvalidArgument, "invalid argument: group id is required")
+// GetRolesByProject is a service for getting roles for a projects
+func (s *Server) GetRolesByProject(ctx context.Context,
+	in *pb.GetRolesByProjectRequest) (*pb.GetRolesByProjectResponse, error) {
+	projID, err := uuid.Parse(in.ProjectId)
+	if err != nil {
+		return nil, util.UserVisibleError(codes.InvalidArgument, "invalid project id")
 	}
 
 	// check if user is authorized
-	if err := AuthorizedOnGroup(ctx, in.GroupId); err != nil {
+	if err := AuthorizedOnProject(ctx, projID); err != nil {
 		return nil, err
 	}
 
@@ -272,23 +292,24 @@ func (s *Server) GetRolesByGroup(ctx context.Context,
 		*in.Offset = 0
 	}
 
-	roles, err := s.store.ListRolesByGroupID(ctx, db.ListRolesByGroupIDParams{
-		GroupID: sql.NullInt32{Int32: in.GroupId, Valid: true},
-		Limit:   *in.Limit,
-		Offset:  *in.Offset,
+	roles, err := s.store.ListRolesByProjectID(ctx, db.ListRolesByProjectIDParams{
+		ProjectID: uuid.NullUUID{UUID: projID, Valid: true},
+		Limit:     *in.Limit,
+		Offset:    *in.Offset,
 	})
 	if err != nil {
-		return nil, status.Errorf(codes.Internal, "failed to get roles by group id: %v", err)
+		return nil, status.Errorf(codes.Internal, "failed to get roles by project id: %v", err)
 	}
 
-	var resp pb.GetRolesByGroupResponse
+	var resp pb.GetRolesByProjectResponse
 	resp.Roles = make([]*pb.RoleRecord, 0, len(roles))
 	for idx := range roles {
 		role := &roles[idx]
+		pID := role.ProjectID.UUID.String()
 		resp.Roles = append(resp.Roles, &pb.RoleRecord{
 			Id:             role.ID,
-			OrganizationId: role.OrganizationID,
-			GroupId:        &role.GroupID.Int32,
+			OrganizationId: role.OrganizationID.String(),
+			ProjectId:      &pID,
 			Name:           role.Name,
 			IsAdmin:        role.IsAdmin,
 			IsProtected:    role.IsProtected,
@@ -321,10 +342,11 @@ func (s *Server) GetRoleById(ctx context.Context,
 	}
 
 	var resp pb.GetRoleByIdResponse
+	projID := role.ProjectID.UUID.String()
 	resp.Role = &pb.RoleRecord{
 		Id:             role.ID,
-		OrganizationId: role.OrganizationID,
-		GroupId:        &role.GroupID.Int32,
+		OrganizationId: role.OrganizationID.String(),
+		ProjectId:      &projID,
 		Name:           role.Name,
 		IsAdmin:        role.IsAdmin,
 		IsProtected:    role.IsProtected,
@@ -338,19 +360,21 @@ func (s *Server) GetRoleById(ctx context.Context,
 // GetRoleByName is a service for getting a role by name
 func (s *Server) GetRoleByName(ctx context.Context,
 	in *pb.GetRoleByNameRequest) (*pb.GetRoleByNameResponse, error) {
+	orgID, err := uuid.Parse(in.OrganizationId)
+	if err != nil {
+		return nil, util.UserVisibleError(codes.InvalidArgument, "invalid organization id")
+	}
+
 	// check if user is authorized
-	if err := AuthorizedOnOrg(ctx, in.OrganizationId); err != nil {
+	if err := AuthorizedOnOrg(ctx, orgID); err != nil {
 		return nil, err
 	}
 
-	if in.OrganizationId == 0 {
-		return nil, status.Errorf(codes.InvalidArgument, "organization id is required")
-	}
 	if in.Name == "" {
 		return nil, status.Errorf(codes.InvalidArgument, "role name is required")
 	}
 
-	role, err := s.store.GetRoleByName(ctx, db.GetRoleByNameParams{OrganizationID: in.OrganizationId, Name: in.Name})
+	role, err := s.store.GetRoleByName(ctx, db.GetRoleByNameParams{OrganizationID: orgID, Name: in.Name})
 	if err != nil {
 		if errors.Is(err, sql.ErrNoRows) {
 			return nil, status.Error(codes.NotFound, "role not found")
@@ -359,10 +383,11 @@ func (s *Server) GetRoleByName(ctx context.Context,
 	}
 
 	var resp pb.GetRoleByNameResponse
+	projID := role.ProjectID.UUID.String()
 	resp.Role = &pb.RoleRecord{
 		Id:             role.ID,
-		OrganizationId: role.OrganizationID,
-		GroupId:        &role.GroupID.Int32,
+		OrganizationId: role.OrganizationID.String(),
+		ProjectId:      &projID,
 		Name:           role.Name,
 		IsAdmin:        role.IsAdmin,
 		IsProtected:    role.IsProtected,

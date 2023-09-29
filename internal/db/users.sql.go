@@ -8,6 +8,8 @@ package db
 import (
 	"context"
 	"database/sql"
+
+	"github.com/google/uuid"
 )
 
 const createUser = `-- name: CreateUser :one
@@ -15,7 +17,7 @@ INSERT INTO users (organization_id, email, identity_subject, first_name, last_na
 `
 
 type CreateUserParams struct {
-	OrganizationID  int32          `json:"organization_id"`
+	OrganizationID  uuid.UUID      `json:"organization_id"`
 	Email           sql.NullString `json:"email"`
 	IdentitySubject string         `json:"identity_subject"`
 	FirstName       sql.NullString `json:"first_name"`
@@ -137,23 +139,22 @@ func (q *Queries) ListUsers(ctx context.Context, arg ListUsersParams) ([]User, e
 	return items, nil
 }
 
-const listUsersByGroup = `-- name: ListUsersByGroup :many
-SELECT users.id, users.organization_id, users.email, users.identity_subject, users.first_name, users.last_name, users.created_at, users.updated_at FROM users
-JOIN user_groups ON users.id = user_groups.user_id
-WHERE user_groups.group_id = $1
-ORDER BY users.id
+const listUsersByOrganization = `-- name: ListUsersByOrganization :many
+SELECT id, organization_id, email, identity_subject, first_name, last_name, created_at, updated_at FROM users
+WHERE organization_id = $1
+ORDER BY id
 LIMIT $2
 OFFSET $3
 `
 
-type ListUsersByGroupParams struct {
-	GroupID int32 `json:"group_id"`
-	Limit   int32 `json:"limit"`
-	Offset  int32 `json:"offset"`
+type ListUsersByOrganizationParams struct {
+	OrganizationID uuid.UUID `json:"organization_id"`
+	Limit          int32     `json:"limit"`
+	Offset         int32     `json:"offset"`
 }
 
-func (q *Queries) ListUsersByGroup(ctx context.Context, arg ListUsersByGroupParams) ([]User, error) {
-	rows, err := q.db.QueryContext(ctx, listUsersByGroup, arg.GroupID, arg.Limit, arg.Offset)
+func (q *Queries) ListUsersByOrganization(ctx context.Context, arg ListUsersByOrganizationParams) ([]User, error) {
+	rows, err := q.db.QueryContext(ctx, listUsersByOrganization, arg.OrganizationID, arg.Limit, arg.Offset)
 	if err != nil {
 		return nil, err
 	}
@@ -184,22 +185,23 @@ func (q *Queries) ListUsersByGroup(ctx context.Context, arg ListUsersByGroupPara
 	return items, nil
 }
 
-const listUsersByOrganization = `-- name: ListUsersByOrganization :many
-SELECT id, organization_id, email, identity_subject, first_name, last_name, created_at, updated_at FROM users
-WHERE organization_id = $1
-ORDER BY id
+const listUsersByProject = `-- name: ListUsersByProject :many
+SELECT users.id, users.organization_id, users.email, users.identity_subject, users.first_name, users.last_name, users.created_at, users.updated_at FROM users
+JOIN user_projects ON users.id = user_projects.user_id
+WHERE user_projects.project_id = $1
+ORDER BY users.id
 LIMIT $2
 OFFSET $3
 `
 
-type ListUsersByOrganizationParams struct {
-	OrganizationID int32 `json:"organization_id"`
-	Limit          int32 `json:"limit"`
-	Offset         int32 `json:"offset"`
+type ListUsersByProjectParams struct {
+	ProjectID uuid.UUID `json:"project_id"`
+	Limit     int32     `json:"limit"`
+	Offset    int32     `json:"offset"`
 }
 
-func (q *Queries) ListUsersByOrganization(ctx context.Context, arg ListUsersByOrganizationParams) ([]User, error) {
-	rows, err := q.db.QueryContext(ctx, listUsersByOrganization, arg.OrganizationID, arg.Limit, arg.Offset)
+func (q *Queries) ListUsersByProject(ctx context.Context, arg ListUsersByProjectParams) ([]User, error) {
+	rows, err := q.db.QueryContext(ctx, listUsersByProject, arg.ProjectID, arg.Limit, arg.Offset)
 	if err != nil {
 		return nil, err
 	}

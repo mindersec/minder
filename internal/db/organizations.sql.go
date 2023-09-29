@@ -7,29 +7,35 @@ package db
 
 import (
 	"context"
+	"encoding/json"
+
+	"github.com/google/uuid"
 )
 
 const createOrganization = `-- name: CreateOrganization :one
-INSERT INTO organizations (
+INSERT INTO projects (
     name,
-    company
+    is_organization,
+    metadata 
 ) VALUES (
-    $1, $2
-) RETURNING id, name, company, created_at, updated_at
+    $1, TRUE, $2::jsonb
+) RETURNING id, name, is_organization, metadata, parent_id, created_at, updated_at
 `
 
 type CreateOrganizationParams struct {
-	Name    string `json:"name"`
-	Company string `json:"company"`
+	Name     string          `json:"name"`
+	Metadata json.RawMessage `json:"metadata"`
 }
 
-func (q *Queries) CreateOrganization(ctx context.Context, arg CreateOrganizationParams) (Organization, error) {
-	row := q.db.QueryRowContext(ctx, createOrganization, arg.Name, arg.Company)
-	var i Organization
+func (q *Queries) CreateOrganization(ctx context.Context, arg CreateOrganizationParams) (Project, error) {
+	row := q.db.QueryRowContext(ctx, createOrganization, arg.Name, arg.Metadata)
+	var i Project
 	err := row.Scan(
 		&i.ID,
 		&i.Name,
-		&i.Company,
+		&i.IsOrganization,
+		&i.Metadata,
+		&i.ParentID,
 		&i.CreatedAt,
 		&i.UpdatedAt,
 	)
@@ -37,27 +43,29 @@ func (q *Queries) CreateOrganization(ctx context.Context, arg CreateOrganization
 }
 
 const deleteOrganization = `-- name: DeleteOrganization :exec
-DELETE FROM organizations
-WHERE id = $1
+DELETE FROM projects
+WHERE id = $1 AND is_organization = TRUE
 `
 
-func (q *Queries) DeleteOrganization(ctx context.Context, id int32) error {
+func (q *Queries) DeleteOrganization(ctx context.Context, id uuid.UUID) error {
 	_, err := q.db.ExecContext(ctx, deleteOrganization, id)
 	return err
 }
 
 const getOrganization = `-- name: GetOrganization :one
-SELECT id, name, company, created_at, updated_at FROM organizations 
-WHERE id = $1 LIMIT 1
+SELECT id, name, is_organization, metadata, parent_id, created_at, updated_at FROM projects 
+WHERE id = $1 AND is_organization = TRUE LIMIT 1
 `
 
-func (q *Queries) GetOrganization(ctx context.Context, id int32) (Organization, error) {
+func (q *Queries) GetOrganization(ctx context.Context, id uuid.UUID) (Project, error) {
 	row := q.db.QueryRowContext(ctx, getOrganization, id)
-	var i Organization
+	var i Project
 	err := row.Scan(
 		&i.ID,
 		&i.Name,
-		&i.Company,
+		&i.IsOrganization,
+		&i.Metadata,
+		&i.ParentID,
 		&i.CreatedAt,
 		&i.UpdatedAt,
 	)
@@ -65,17 +73,19 @@ func (q *Queries) GetOrganization(ctx context.Context, id int32) (Organization, 
 }
 
 const getOrganizationByName = `-- name: GetOrganizationByName :one
-SELECT id, name, company, created_at, updated_at FROM organizations 
-WHERE name = $1 LIMIT 1
+SELECT id, name, is_organization, metadata, parent_id, created_at, updated_at FROM projects
+WHERE name = $1 AND is_organization = TRUE LIMIT 1
 `
 
-func (q *Queries) GetOrganizationByName(ctx context.Context, name string) (Organization, error) {
+func (q *Queries) GetOrganizationByName(ctx context.Context, name string) (Project, error) {
 	row := q.db.QueryRowContext(ctx, getOrganizationByName, name)
-	var i Organization
+	var i Project
 	err := row.Scan(
 		&i.ID,
 		&i.Name,
-		&i.Company,
+		&i.IsOrganization,
+		&i.Metadata,
+		&i.ParentID,
 		&i.CreatedAt,
 		&i.UpdatedAt,
 	)
@@ -83,18 +93,20 @@ func (q *Queries) GetOrganizationByName(ctx context.Context, name string) (Organ
 }
 
 const getOrganizationForUpdate = `-- name: GetOrganizationForUpdate :one
-SELECT id, name, company, created_at, updated_at FROM organizations
-WHERE name = $1 LIMIT 1
+SELECT id, name, is_organization, metadata, parent_id, created_at, updated_at FROM projects
+WHERE name = $1 AND is_organization = TRUE LIMIT 1
 FOR NO KEY UPDATE
 `
 
-func (q *Queries) GetOrganizationForUpdate(ctx context.Context, name string) (Organization, error) {
+func (q *Queries) GetOrganizationForUpdate(ctx context.Context, name string) (Project, error) {
 	row := q.db.QueryRowContext(ctx, getOrganizationForUpdate, name)
-	var i Organization
+	var i Project
 	err := row.Scan(
 		&i.ID,
 		&i.Name,
-		&i.Company,
+		&i.IsOrganization,
+		&i.Metadata,
+		&i.ParentID,
 		&i.CreatedAt,
 		&i.UpdatedAt,
 	)
@@ -102,8 +114,9 @@ func (q *Queries) GetOrganizationForUpdate(ctx context.Context, name string) (Or
 }
 
 const listOrganizations = `-- name: ListOrganizations :many
-SELECT id, name, company, created_at, updated_at FROM organizations
-ORDER BY id
+SELECT id, name, is_organization, metadata, parent_id, created_at, updated_at FROM projects
+WHERE is_organization = TRUE
+ORDER BY name
 LIMIT $1
 OFFSET $2
 `
@@ -113,19 +126,21 @@ type ListOrganizationsParams struct {
 	Offset int32 `json:"offset"`
 }
 
-func (q *Queries) ListOrganizations(ctx context.Context, arg ListOrganizationsParams) ([]Organization, error) {
+func (q *Queries) ListOrganizations(ctx context.Context, arg ListOrganizationsParams) ([]Project, error) {
 	rows, err := q.db.QueryContext(ctx, listOrganizations, arg.Limit, arg.Offset)
 	if err != nil {
 		return nil, err
 	}
 	defer rows.Close()
-	items := []Organization{}
+	items := []Project{}
 	for rows.Next() {
-		var i Organization
+		var i Project
 		if err := rows.Scan(
 			&i.ID,
 			&i.Name,
-			&i.Company,
+			&i.IsOrganization,
+			&i.Metadata,
+			&i.ParentID,
 			&i.CreatedAt,
 			&i.UpdatedAt,
 		); err != nil {
@@ -143,24 +158,26 @@ func (q *Queries) ListOrganizations(ctx context.Context, arg ListOrganizationsPa
 }
 
 const updateOrganization = `-- name: UpdateOrganization :one
-UPDATE organizations
-SET name = $2, company = $3, updated_at = NOW()
-WHERE id = $1 RETURNING id, name, company, created_at, updated_at
+UPDATE projects
+SET name = $2, metadata = $3, updated_at = NOW()
+WHERE id = $1 AND is_organization = TRUE RETURNING id, name, is_organization, metadata, parent_id, created_at, updated_at
 `
 
 type UpdateOrganizationParams struct {
-	ID      int32  `json:"id"`
-	Name    string `json:"name"`
-	Company string `json:"company"`
+	ID       uuid.UUID       `json:"id"`
+	Name     string          `json:"name"`
+	Metadata json.RawMessage `json:"metadata"`
 }
 
-func (q *Queries) UpdateOrganization(ctx context.Context, arg UpdateOrganizationParams) (Organization, error) {
-	row := q.db.QueryRowContext(ctx, updateOrganization, arg.ID, arg.Name, arg.Company)
-	var i Organization
+func (q *Queries) UpdateOrganization(ctx context.Context, arg UpdateOrganizationParams) (Project, error) {
+	row := q.db.QueryRowContext(ctx, updateOrganization, arg.ID, arg.Name, arg.Metadata)
+	var i Project
 	err := row.Scan(
 		&i.ID,
 		&i.Name,
-		&i.Company,
+		&i.IsOrganization,
+		&i.Metadata,
+		&i.ParentID,
 		&i.CreatedAt,
 		&i.UpdatedAt,
 	)

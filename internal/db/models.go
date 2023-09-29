@@ -221,29 +221,11 @@ type EntityPolicy struct {
 	UpdatedAt       time.Time       `json:"updated_at"`
 }
 
-type Group struct {
-	ID             int32          `json:"id"`
-	OrganizationID int32          `json:"organization_id"`
-	Name           string         `json:"name"`
-	Description    sql.NullString `json:"description"`
-	IsProtected    bool           `json:"is_protected"`
-	CreatedAt      time.Time      `json:"created_at"`
-	UpdatedAt      time.Time      `json:"updated_at"`
-}
-
-type Organization struct {
-	ID        int32     `json:"id"`
-	Name      string    `json:"name"`
-	Company   string    `json:"company"`
-	CreatedAt time.Time `json:"created_at"`
-	UpdatedAt time.Time `json:"updated_at"`
-}
-
 type Policy struct {
 	ID        uuid.UUID         `json:"id"`
 	Name      string            `json:"name"`
 	Provider  string            `json:"provider"`
-	GroupID   int32             `json:"group_id"`
+	ProjectID uuid.UUID         `json:"project_id"`
 	Remediate NullRemediateType `json:"remediate"`
 	CreatedAt time.Time         `json:"created_at"`
 	UpdatedAt time.Time         `json:"updated_at"`
@@ -257,19 +239,20 @@ type PolicyStatus struct {
 }
 
 type Project struct {
-	ID        uuid.UUID       `json:"id"`
-	Name      string          `json:"name"`
-	Metadata  json.RawMessage `json:"metadata"`
-	ParentID  uuid.NullUUID   `json:"parent_id"`
-	CreatedAt time.Time       `json:"created_at"`
-	UpdatedAt time.Time       `json:"updated_at"`
+	ID             uuid.UUID       `json:"id"`
+	Name           string          `json:"name"`
+	IsOrganization bool            `json:"is_organization"`
+	Metadata       json.RawMessage `json:"metadata"`
+	ParentID       uuid.NullUUID   `json:"parent_id"`
+	CreatedAt      time.Time       `json:"created_at"`
+	UpdatedAt      time.Time       `json:"updated_at"`
 }
 
 type Provider struct {
 	ID         uuid.UUID       `json:"id"`
 	Name       string          `json:"name"`
 	Version    string          `json:"version"`
-	GroupID    int32           `json:"group_id"`
+	ProjectID  uuid.UUID       `json:"project_id"`
 	Implements []ProviderType  `json:"implements"`
 	Definition json.RawMessage `json:"definition"`
 	CreatedAt  time.Time       `json:"created_at"`
@@ -279,7 +262,7 @@ type Provider struct {
 type ProviderAccessToken struct {
 	ID             int32          `json:"id"`
 	Provider       string         `json:"provider"`
-	GroupID        int32          `json:"group_id"`
+	ProjectID      uuid.UUID      `json:"project_id"`
 	OwnerFilter    sql.NullString `json:"owner_filter"`
 	EncryptedToken string         `json:"encrypted_token"`
 	ExpirationTime time.Time      `json:"expiration_time"`
@@ -290,7 +273,7 @@ type ProviderAccessToken struct {
 type Repository struct {
 	ID         uuid.UUID     `json:"id"`
 	Provider   string        `json:"provider"`
-	GroupID    int32         `json:"group_id"`
+	ProjectID  uuid.UUID     `json:"project_id"`
 	RepoOwner  string        `json:"repo_owner"`
 	RepoName   string        `json:"repo_name"`
 	RepoID     int32         `json:"repo_id"`
@@ -306,8 +289,8 @@ type Repository struct {
 
 type Role struct {
 	ID             int32         `json:"id"`
-	OrganizationID int32         `json:"organization_id"`
-	GroupID        sql.NullInt32 `json:"group_id"`
+	OrganizationID uuid.UUID     `json:"organization_id"`
+	ProjectID      uuid.NullUUID `json:"project_id"`
 	Name           string        `json:"name"`
 	IsAdmin        bool          `json:"is_admin"`
 	IsProtected    bool          `json:"is_protected"`
@@ -331,7 +314,7 @@ type RuleType struct {
 	ID          uuid.UUID       `json:"id"`
 	Name        string          `json:"name"`
 	Provider    string          `json:"provider"`
-	GroupID     int32           `json:"group_id"`
+	ProjectID   uuid.UUID       `json:"project_id"`
 	Description string          `json:"description"`
 	Guidance    string          `json:"guidance"`
 	Definition  json.RawMessage `json:"definition"`
@@ -342,7 +325,7 @@ type RuleType struct {
 type SessionStore struct {
 	ID           int32          `json:"id"`
 	Provider     string         `json:"provider"`
-	GrpID        sql.NullInt32  `json:"grp_id"`
+	ProjectID    uuid.UUID      `json:"project_id"`
 	Port         sql.NullInt32  `json:"port"`
 	OwnerFilter  sql.NullString `json:"owner_filter"`
 	SessionState string         `json:"session_state"`
@@ -351,7 +334,7 @@ type SessionStore struct {
 
 type SigningKey struct {
 	ID            int32     `json:"id"`
-	GroupID       int32     `json:"group_id"`
+	ProjectID     uuid.UUID `json:"project_id"`
 	PrivateKey    string    `json:"private_key"`
 	PublicKey     string    `json:"public_key"`
 	Passphrase    string    `json:"passphrase"`
@@ -362,7 +345,7 @@ type SigningKey struct {
 
 type User struct {
 	ID              int32          `json:"id"`
-	OrganizationID  int32          `json:"organization_id"`
+	OrganizationID  uuid.UUID      `json:"organization_id"`
 	Email           sql.NullString `json:"email"`
 	IdentitySubject string         `json:"identity_subject"`
 	FirstName       sql.NullString `json:"first_name"`
@@ -371,10 +354,10 @@ type User struct {
 	UpdatedAt       time.Time      `json:"updated_at"`
 }
 
-type UserGroup struct {
-	ID      int32 `json:"id"`
-	UserID  int32 `json:"user_id"`
-	GroupID int32 `json:"group_id"`
+type UserProject struct {
+	ID        int32     `json:"id"`
+	UserID    int32     `json:"user_id"`
+	ProjectID uuid.UUID `json:"project_id"`
 }
 
 type UserRole struct {

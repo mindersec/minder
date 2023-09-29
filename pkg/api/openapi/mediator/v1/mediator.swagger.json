@@ -33,7 +33,7 @@
       "name": "OrganizationService"
     },
     {
-      "name": "GroupService"
+      "name": "ProjectService"
     },
     {
       "name": "RoleService"
@@ -123,11 +123,10 @@
             "type": "string"
           },
           {
-            "name": "groupId",
+            "name": "projectId",
             "in": "query",
             "required": false,
-            "type": "integer",
-            "format": "int32"
+            "type": "string"
           }
         ],
         "tags": [
@@ -162,11 +161,10 @@
             "type": "string"
           },
           {
-            "name": "groupId",
+            "name": "projectId",
             "in": "query",
             "required": false,
-            "type": "integer",
-            "format": "int32"
+            "type": "string"
           },
           {
             "name": "code",
@@ -217,11 +215,10 @@
             "type": "string"
           },
           {
-            "name": "groupId",
+            "name": "projectId",
             "in": "query",
             "required": false,
-            "type": "integer",
-            "format": "int32"
+            "type": "string"
           },
           {
             "name": "code",
@@ -438,11 +435,10 @@
             "type": "string"
           },
           {
-            "name": "groupId",
+            "name": "projectId",
             "in": "query",
             "required": false,
-            "type": "integer",
-            "format": "int32"
+            "type": "string"
           },
           {
             "name": "cli",
@@ -525,11 +521,10 @@
             "format": "date-time"
           },
           {
-            "name": "groupId",
+            "name": "projectId",
             "in": "query",
             "required": false,
-            "type": "integer",
-            "format": "int32"
+            "type": "string"
           }
         ],
         "tags": [
@@ -537,15 +532,15 @@
         ]
       }
     },
-    "/api/v1/auth/{provider}/revoke/{groupId}": {
+    "/api/v1/auth/{provider}/revoke/{projectId}": {
       "post": {
-        "summary": "revoke token for a group",
-        "operationId": "OAuthService_RevokeOauthGroupToken",
+        "summary": "revoke token for a project",
+        "operationId": "OAuthService_RevokeOauthProjectToken",
         "responses": {
           "200": {
             "description": "A successful response.",
             "schema": {
-              "$ref": "#/definitions/v1RevokeOauthGroupTokenResponse"
+              "$ref": "#/definitions/v1RevokeOauthProjectTokenResponse"
             }
           },
           "default": {
@@ -563,11 +558,10 @@
             "type": "string"
           },
           {
-            "name": "groupId",
+            "name": "projectId",
             "in": "path",
             "required": true,
-            "type": "integer",
-            "format": "int32"
+            "type": "string"
           },
           {
             "name": "body",
@@ -614,9 +608,8 @@
             "schema": {
               "type": "object",
               "properties": {
-                "groupId": {
-                  "type": "integer",
-                  "format": "int32"
+                "projectId": {
+                  "type": "string"
                 },
                 "accessToken": {
                   "type": "string"
@@ -652,181 +645,6 @@
         },
         "tags": [
           "BranchProtectionService"
-        ]
-      }
-    },
-    "/api/v1/group": {
-      "post": {
-        "operationId": "GroupService_CreateGroup",
-        "responses": {
-          "200": {
-            "description": "A successful response.",
-            "schema": {
-              "$ref": "#/definitions/v1CreateGroupResponse"
-            }
-          },
-          "default": {
-            "description": "An unexpected error response.",
-            "schema": {
-              "$ref": "#/definitions/rpcStatus"
-            }
-          }
-        },
-        "parameters": [
-          {
-            "name": "body",
-            "in": "body",
-            "required": true,
-            "schema": {
-              "$ref": "#/definitions/v1CreateGroupRequest"
-            }
-          }
-        ],
-        "tags": [
-          "GroupService"
-        ]
-      }
-    },
-    "/api/v1/group/id/{groupId}": {
-      "get": {
-        "operationId": "GroupService_GetGroupById",
-        "responses": {
-          "200": {
-            "description": "A successful response.",
-            "schema": {
-              "$ref": "#/definitions/v1GetGroupByIdResponse"
-            }
-          },
-          "default": {
-            "description": "An unexpected error response.",
-            "schema": {
-              "$ref": "#/definitions/rpcStatus"
-            }
-          }
-        },
-        "parameters": [
-          {
-            "name": "groupId",
-            "in": "path",
-            "required": true,
-            "type": "integer",
-            "format": "int32"
-          }
-        ],
-        "tags": [
-          "GroupService"
-        ]
-      }
-    },
-    "/api/v1/group/name/{name}": {
-      "get": {
-        "operationId": "GroupService_GetGroupByName",
-        "responses": {
-          "200": {
-            "description": "A successful response.",
-            "schema": {
-              "$ref": "#/definitions/v1GetGroupByNameResponse"
-            }
-          },
-          "default": {
-            "description": "An unexpected error response.",
-            "schema": {
-              "$ref": "#/definitions/rpcStatus"
-            }
-          }
-        },
-        "parameters": [
-          {
-            "name": "name",
-            "in": "path",
-            "required": true,
-            "type": "string"
-          }
-        ],
-        "tags": [
-          "GroupService"
-        ]
-      }
-    },
-    "/api/v1/group/{id}": {
-      "delete": {
-        "operationId": "GroupService_DeleteGroup",
-        "responses": {
-          "200": {
-            "description": "A successful response.",
-            "schema": {
-              "$ref": "#/definitions/v1DeleteGroupResponse"
-            }
-          },
-          "default": {
-            "description": "An unexpected error response.",
-            "schema": {
-              "$ref": "#/definitions/rpcStatus"
-            }
-          }
-        },
-        "parameters": [
-          {
-            "name": "id",
-            "in": "path",
-            "required": true,
-            "type": "integer",
-            "format": "int32"
-          },
-          {
-            "name": "force",
-            "in": "query",
-            "required": false,
-            "type": "boolean"
-          }
-        ],
-        "tags": [
-          "GroupService"
-        ]
-      }
-    },
-    "/api/v1/groups/{organizationId}": {
-      "get": {
-        "operationId": "GroupService_GetGroups",
-        "responses": {
-          "200": {
-            "description": "A successful response.",
-            "schema": {
-              "$ref": "#/definitions/v1GetGroupsResponse"
-            }
-          },
-          "default": {
-            "description": "An unexpected error response.",
-            "schema": {
-              "$ref": "#/definitions/rpcStatus"
-            }
-          }
-        },
-        "parameters": [
-          {
-            "name": "organizationId",
-            "in": "path",
-            "required": true,
-            "type": "integer",
-            "format": "int32"
-          },
-          {
-            "name": "limit",
-            "in": "query",
-            "required": false,
-            "type": "integer",
-            "format": "int32"
-          },
-          {
-            "name": "offset",
-            "in": "query",
-            "required": false,
-            "type": "integer",
-            "format": "int32"
-          }
-        ],
-        "tags": [
-          "GroupService"
         ]
       }
     },
@@ -966,8 +784,7 @@
             "name": "id",
             "in": "path",
             "required": true,
-            "type": "integer",
-            "format": "int32"
+            "type": "string"
           },
           {
             "name": "force",
@@ -1071,8 +888,7 @@
             "name": "organizationId",
             "in": "path",
             "required": true,
-            "type": "integer",
-            "format": "int32"
+            "type": "string"
           }
         ],
         "tags": [
@@ -1111,7 +927,7 @@
             "type": "string"
           },
           {
-            "name": "context.group",
+            "name": "context.project",
             "in": "query",
             "required": false,
             "type": "string"
@@ -1192,7 +1008,7 @@
             "type": "string"
           },
           {
-            "name": "context.group",
+            "name": "context.project",
             "in": "query",
             "required": false,
             "type": "string"
@@ -1239,7 +1055,7 @@
             "type": "string"
           },
           {
-            "name": "context.group",
+            "name": "context.project",
             "in": "query",
             "required": false,
             "type": "string"
@@ -1288,7 +1104,7 @@
             "type": "string"
           },
           {
-            "name": "context.group",
+            "name": "context.project",
             "in": "query",
             "required": false,
             "type": "string"
@@ -1335,12 +1151,12 @@
     },
     "/api/v1/policy_status": {
       "get": {
-        "operationId": "PolicyService_GetPolicyStatusByGroup",
+        "operationId": "PolicyService_GetPolicyStatusByProject",
         "responses": {
           "200": {
             "description": "A successful response.",
             "schema": {
-              "$ref": "#/definitions/v1GetPolicyStatusByGroupResponse"
+              "$ref": "#/definitions/v1GetPolicyStatusByProjectResponse"
             }
           },
           "default": {
@@ -1364,7 +1180,7 @@
             "type": "string"
           },
           {
-            "name": "context.group",
+            "name": "context.project",
             "in": "query",
             "required": false,
             "type": "string"
@@ -1372,6 +1188,178 @@
         ],
         "tags": [
           "PolicyService"
+        ]
+      }
+    },
+    "/api/v1/project": {
+      "post": {
+        "operationId": "ProjectService_CreateProject",
+        "responses": {
+          "200": {
+            "description": "A successful response.",
+            "schema": {
+              "$ref": "#/definitions/v1CreateProjectResponse"
+            }
+          },
+          "default": {
+            "description": "An unexpected error response.",
+            "schema": {
+              "$ref": "#/definitions/rpcStatus"
+            }
+          }
+        },
+        "parameters": [
+          {
+            "name": "body",
+            "in": "body",
+            "required": true,
+            "schema": {
+              "$ref": "#/definitions/v1CreateProjectRequest"
+            }
+          }
+        ],
+        "tags": [
+          "ProjectService"
+        ]
+      }
+    },
+    "/api/v1/project/id/{projectId}": {
+      "get": {
+        "operationId": "ProjectService_GetProjectById",
+        "responses": {
+          "200": {
+            "description": "A successful response.",
+            "schema": {
+              "$ref": "#/definitions/v1GetProjectByIdResponse"
+            }
+          },
+          "default": {
+            "description": "An unexpected error response.",
+            "schema": {
+              "$ref": "#/definitions/rpcStatus"
+            }
+          }
+        },
+        "parameters": [
+          {
+            "name": "projectId",
+            "in": "path",
+            "required": true,
+            "type": "string"
+          }
+        ],
+        "tags": [
+          "ProjectService"
+        ]
+      }
+    },
+    "/api/v1/project/name/{name}": {
+      "get": {
+        "operationId": "ProjectService_GetProjectByName",
+        "responses": {
+          "200": {
+            "description": "A successful response.",
+            "schema": {
+              "$ref": "#/definitions/v1GetProjectByNameResponse"
+            }
+          },
+          "default": {
+            "description": "An unexpected error response.",
+            "schema": {
+              "$ref": "#/definitions/rpcStatus"
+            }
+          }
+        },
+        "parameters": [
+          {
+            "name": "name",
+            "in": "path",
+            "required": true,
+            "type": "string"
+          }
+        ],
+        "tags": [
+          "ProjectService"
+        ]
+      }
+    },
+    "/api/v1/project/{id}": {
+      "delete": {
+        "operationId": "ProjectService_DeleteProject",
+        "responses": {
+          "200": {
+            "description": "A successful response.",
+            "schema": {
+              "$ref": "#/definitions/v1DeleteProjectResponse"
+            }
+          },
+          "default": {
+            "description": "An unexpected error response.",
+            "schema": {
+              "$ref": "#/definitions/rpcStatus"
+            }
+          }
+        },
+        "parameters": [
+          {
+            "name": "id",
+            "in": "path",
+            "required": true,
+            "type": "string"
+          },
+          {
+            "name": "force",
+            "in": "query",
+            "required": false,
+            "type": "boolean"
+          }
+        ],
+        "tags": [
+          "ProjectService"
+        ]
+      }
+    },
+    "/api/v1/projects/{organizationId}": {
+      "get": {
+        "operationId": "ProjectService_GetProjects",
+        "responses": {
+          "200": {
+            "description": "A successful response.",
+            "schema": {
+              "$ref": "#/definitions/v1GetProjectsResponse"
+            }
+          },
+          "default": {
+            "description": "An unexpected error response.",
+            "schema": {
+              "$ref": "#/definitions/rpcStatus"
+            }
+          }
+        },
+        "parameters": [
+          {
+            "name": "organizationId",
+            "in": "path",
+            "required": true,
+            "type": "string"
+          },
+          {
+            "name": "limit",
+            "in": "query",
+            "required": false,
+            "type": "integer",
+            "format": "int32"
+          },
+          {
+            "name": "offset",
+            "in": "query",
+            "required": false,
+            "type": "integer",
+            "format": "int32"
+          }
+        ],
+        "tags": [
+          "ProjectService"
         ]
       }
     },
@@ -1400,11 +1388,10 @@
             "type": "string"
           },
           {
-            "name": "groupId",
+            "name": "projectId",
             "in": "query",
             "required": false,
-            "type": "integer",
-            "format": "int32"
+            "type": "string"
           },
           {
             "name": "limit",
@@ -1470,9 +1457,8 @@
             "schema": {
               "type": "object",
               "properties": {
-                "groupId": {
-                  "type": "integer",
-                  "format": "int32"
+                "projectId": {
+                  "type": "string"
                 }
               }
             }
@@ -1544,11 +1530,10 @@
             "type": "string"
           },
           {
-            "name": "groupId",
+            "name": "projectId",
             "in": "query",
             "required": false,
-            "type": "integer",
-            "format": "int32"
+            "type": "string"
           }
         ],
         "tags": [
@@ -1587,9 +1572,8 @@
             "schema": {
               "type": "object",
               "properties": {
-                "groupId": {
-                  "type": "integer",
-                  "format": "int32"
+                "projectId": {
+                  "type": "string"
                 },
                 "repositories": {
                   "type": "array",
@@ -1610,38 +1594,6 @@
         ],
         "tags": [
           "RepositoryService"
-        ]
-      }
-    },
-    "/api/v1/role/group": {
-      "post": {
-        "operationId": "RoleService_CreateRoleByGroup",
-        "responses": {
-          "200": {
-            "description": "A successful response.",
-            "schema": {
-              "$ref": "#/definitions/v1CreateRoleByGroupResponse"
-            }
-          },
-          "default": {
-            "description": "An unexpected error response.",
-            "schema": {
-              "$ref": "#/definitions/rpcStatus"
-            }
-          }
-        },
-        "parameters": [
-          {
-            "name": "body",
-            "in": "body",
-            "required": true,
-            "schema": {
-              "$ref": "#/definitions/v1CreateRoleByGroupRequest"
-            }
-          }
-        ],
-        "tags": [
-          "RoleService"
         ]
       }
     },
@@ -1673,8 +1625,7 @@
             "name": "organizationId",
             "in": "query",
             "required": false,
-            "type": "integer",
-            "format": "int32"
+            "type": "string"
           }
         ],
         "tags": [
@@ -1706,6 +1657,38 @@
             "required": true,
             "schema": {
               "$ref": "#/definitions/v1CreateRoleByOrganizationRequest"
+            }
+          }
+        ],
+        "tags": [
+          "RoleService"
+        ]
+      }
+    },
+    "/api/v1/role/project": {
+      "post": {
+        "operationId": "RoleService_CreateRoleByProject",
+        "responses": {
+          "200": {
+            "description": "A successful response.",
+            "schema": {
+              "$ref": "#/definitions/v1CreateRoleByProjectResponse"
+            }
+          },
+          "default": {
+            "description": "An unexpected error response.",
+            "schema": {
+              "$ref": "#/definitions/rpcStatus"
+            }
+          }
+        },
+        "parameters": [
+          {
+            "name": "body",
+            "in": "body",
+            "required": true,
+            "schema": {
+              "$ref": "#/definitions/v1CreateRoleByProjectRequest"
             }
           }
         ],
@@ -1780,14 +1763,14 @@
         ]
       }
     },
-    "/api/v1/roles/group/{groupId}": {
+    "/api/v1/roles/project/{projectId}": {
       "get": {
-        "operationId": "RoleService_GetRolesByGroup",
+        "operationId": "RoleService_GetRolesByProject",
         "responses": {
           "200": {
             "description": "A successful response.",
             "schema": {
-              "$ref": "#/definitions/v1GetRolesByGroupResponse"
+              "$ref": "#/definitions/v1GetRolesByProjectResponse"
             }
           },
           "default": {
@@ -1799,11 +1782,10 @@
         },
         "parameters": [
           {
-            "name": "groupId",
+            "name": "projectId",
             "in": "path",
             "required": true,
-            "type": "integer",
-            "format": "int32"
+            "type": "string"
           },
           {
             "name": "limit",
@@ -1847,8 +1829,7 @@
             "name": "organizationId",
             "in": "path",
             "required": true,
-            "type": "integer",
-            "format": "int32"
+            "type": "string"
           },
           {
             "name": "limit",
@@ -1972,7 +1953,7 @@
             "type": "string"
           },
           {
-            "name": "context.group",
+            "name": "context.project",
             "in": "query",
             "required": false,
             "type": "string"
@@ -2021,7 +2002,7 @@
             "type": "string"
           },
           {
-            "name": "context.group",
+            "name": "context.project",
             "in": "query",
             "required": false,
             "type": "string"
@@ -2068,7 +2049,7 @@
             "type": "string"
           },
           {
-            "name": "context.group",
+            "name": "context.project",
             "in": "query",
             "required": false,
             "type": "string"
@@ -2110,7 +2091,7 @@
             "type": "string"
           },
           {
-            "name": "context.group",
+            "name": "context.project",
             "in": "query",
             "required": false,
             "type": "string"
@@ -2361,51 +2342,6 @@
         ]
       }
     },
-    "/api/v1/users/{groupId}": {
-      "get": {
-        "operationId": "UserService_GetUsersByGroup",
-        "responses": {
-          "200": {
-            "description": "A successful response.",
-            "schema": {
-              "$ref": "#/definitions/v1GetUsersByGroupResponse"
-            }
-          },
-          "default": {
-            "description": "An unexpected error response.",
-            "schema": {
-              "$ref": "#/definitions/rpcStatus"
-            }
-          }
-        },
-        "parameters": [
-          {
-            "name": "groupId",
-            "in": "path",
-            "required": true,
-            "type": "integer",
-            "format": "int32"
-          },
-          {
-            "name": "limit",
-            "in": "query",
-            "required": false,
-            "type": "integer",
-            "format": "int32"
-          },
-          {
-            "name": "offset",
-            "in": "query",
-            "required": false,
-            "type": "integer",
-            "format": "int32"
-          }
-        ],
-        "tags": [
-          "UserService"
-        ]
-      }
-    },
     "/api/v1/users/{organizationId}": {
       "get": {
         "operationId": "UserService_GetUsersByOrganization",
@@ -2428,8 +2364,51 @@
             "name": "organizationId",
             "in": "path",
             "required": true,
+            "type": "string"
+          },
+          {
+            "name": "limit",
+            "in": "query",
+            "required": false,
             "type": "integer",
             "format": "int32"
+          },
+          {
+            "name": "offset",
+            "in": "query",
+            "required": false,
+            "type": "integer",
+            "format": "int32"
+          }
+        ],
+        "tags": [
+          "UserService"
+        ]
+      }
+    },
+    "/api/v1/users/{projectId}": {
+      "get": {
+        "operationId": "UserService_GetUsersByProject",
+        "responses": {
+          "200": {
+            "description": "A successful response.",
+            "schema": {
+              "$ref": "#/definitions/v1GetUsersByProjectResponse"
+            }
+          },
+          "default": {
+            "description": "An unexpected error response.",
+            "schema": {
+              "$ref": "#/definitions/rpcStatus"
+            }
+          }
+        },
+        "parameters": [
+          {
+            "name": "projectId",
+            "in": "path",
+            "required": true,
+            "type": "string"
           },
           {
             "name": "limit",
@@ -2696,11 +2675,11 @@
         "organization": {
           "type": "string"
         },
-        "group": {
+        "project": {
           "type": "string"
         }
       },
-      "description": "Context defines the context in which a rule is evaluated.\nthis normally refers to a combination of the provider, organization and group."
+      "description": "Context defines the context in which a rule is evaluated.\nthis normally refers to a combination of the provider, organization and project."
     },
     "protobufAny": {
       "type": "object",
@@ -2835,64 +2814,14 @@
         }
       }
     },
-    "v1CreateGroupRequest": {
-      "type": "object",
-      "properties": {
-        "organizationId": {
-          "type": "integer",
-          "format": "int32"
-        },
-        "name": {
-          "type": "string"
-        },
-        "description": {
-          "type": "string"
-        },
-        "isProtected": {
-          "type": "boolean"
-        }
-      },
-      "title": "The CreateGroupRequest message represents a request to create a group"
-    },
-    "v1CreateGroupResponse": {
-      "type": "object",
-      "properties": {
-        "groupId": {
-          "type": "integer",
-          "format": "int32"
-        },
-        "organizationId": {
-          "type": "integer",
-          "format": "int32"
-        },
-        "name": {
-          "type": "string"
-        },
-        "description": {
-          "type": "string"
-        },
-        "isProtected": {
-          "type": "boolean"
-        },
-        "createdAt": {
-          "type": "string",
-          "format": "date-time"
-        },
-        "updatedAt": {
-          "type": "string",
-          "format": "date-time"
-        }
-      }
-    },
     "v1CreateKeyPairRequest": {
       "type": "object",
       "properties": {
         "passphrase": {
           "type": "string"
         },
-        "groupId": {
-          "type": "integer",
-          "format": "int32"
+        "projectId": {
+          "type": "string"
         }
       }
     },
@@ -2926,8 +2855,7 @@
       "type": "object",
       "properties": {
         "id": {
-          "type": "integer",
-          "format": "int32"
+          "type": "string"
         },
         "name": {
           "type": "string"
@@ -2943,8 +2871,8 @@
           "type": "string",
           "format": "date-time"
         },
-        "defaultGroup": {
-          "$ref": "#/definitions/v1GroupRecord"
+        "defaultProject": {
+          "$ref": "#/definitions/v1ProjectRecord"
         },
         "defaultRoles": {
           "type": "array",
@@ -2975,48 +2903,38 @@
         }
       }
     },
-    "v1CreateRoleByGroupRequest": {
+    "v1CreateProjectRequest": {
       "type": "object",
       "properties": {
         "organizationId": {
-          "type": "integer",
-          "format": "int32"
-        },
-        "groupId": {
-          "type": "integer",
-          "format": "int32"
+          "type": "string"
         },
         "name": {
           "type": "string"
         },
-        "isAdmin": {
-          "type": "boolean"
+        "description": {
+          "type": "string"
         },
         "isProtected": {
           "type": "boolean"
         }
-      }
+      },
+      "title": "The CreateProjectRequest message represents a request to create a project"
     },
-    "v1CreateRoleByGroupResponse": {
+    "v1CreateProjectResponse": {
       "type": "object",
       "properties": {
-        "id": {
-          "type": "integer",
-          "format": "int32"
+        "projectId": {
+          "type": "string"
         },
         "organizationId": {
-          "type": "integer",
-          "format": "int32"
-        },
-        "groupId": {
-          "type": "integer",
-          "format": "int32"
+          "type": "string"
         },
         "name": {
           "type": "string"
         },
-        "isAdmin": {
-          "type": "boolean"
+        "description": {
+          "type": "string"
         },
         "isProtected": {
           "type": "boolean"
@@ -3035,8 +2953,7 @@
       "type": "object",
       "properties": {
         "organizationId": {
-          "type": "integer",
-          "format": "int32"
+          "type": "string"
         },
         "name": {
           "type": "string"
@@ -3058,8 +2975,59 @@
           "format": "int32"
         },
         "organizationId": {
+          "type": "string"
+        },
+        "name": {
+          "type": "string"
+        },
+        "isAdmin": {
+          "type": "boolean"
+        },
+        "isProtected": {
+          "type": "boolean"
+        },
+        "createdAt": {
+          "type": "string",
+          "format": "date-time"
+        },
+        "updatedAt": {
+          "type": "string",
+          "format": "date-time"
+        }
+      }
+    },
+    "v1CreateRoleByProjectRequest": {
+      "type": "object",
+      "properties": {
+        "organizationId": {
+          "type": "string"
+        },
+        "projectId": {
+          "type": "string"
+        },
+        "name": {
+          "type": "string"
+        },
+        "isAdmin": {
+          "type": "boolean"
+        },
+        "isProtected": {
+          "type": "boolean"
+        }
+      }
+    },
+    "v1CreateRoleByProjectResponse": {
+      "type": "object",
+      "properties": {
+        "id": {
           "type": "integer",
           "format": "int32"
+        },
+        "organizationId": {
+          "type": "string"
+        },
+        "projectId": {
+          "type": "string"
         },
         "name": {
           "type": "string"
@@ -3112,8 +3080,7 @@
           "format": "int32"
         },
         "organizationId": {
-          "type": "integer",
-          "format": "int32"
+          "type": "string"
         },
         "email": {
           "type": "string"
@@ -3137,16 +3104,16 @@
         }
       }
     },
-    "v1DeleteGroupResponse": {
-      "type": "object",
-      "title": "DeleteGroupResponse represents a response to a delete group request"
-    },
     "v1DeleteOrganizationResponse": {
       "type": "object",
       "title": "DeleteOrganizationResponse represents a response to a delete organization request"
     },
     "v1DeletePolicyResponse": {
       "type": "object"
+    },
+    "v1DeleteProjectResponse": {
+      "type": "object",
+      "title": "DeleteProjectResponse represents a response to a delete project request"
     },
     "v1DeleteRoleResponse": {
       "type": "object"
@@ -3236,74 +3203,17 @@
         }
       }
     },
-    "v1GetGroupByIdResponse": {
-      "type": "object",
-      "properties": {
-        "group": {
-          "$ref": "#/definitions/v1GroupRecord"
-        },
-        "roles": {
-          "type": "array",
-          "items": {
-            "type": "object",
-            "$ref": "#/definitions/v1RoleRecord"
-          }
-        },
-        "users": {
-          "type": "array",
-          "items": {
-            "type": "object",
-            "$ref": "#/definitions/v1UserRecord"
-          }
-        }
-      }
-    },
-    "v1GetGroupByNameResponse": {
-      "type": "object",
-      "properties": {
-        "group": {
-          "$ref": "#/definitions/v1GroupRecord"
-        },
-        "roles": {
-          "type": "array",
-          "items": {
-            "type": "object",
-            "$ref": "#/definitions/v1RoleRecord"
-          }
-        },
-        "users": {
-          "type": "array",
-          "items": {
-            "type": "object",
-            "$ref": "#/definitions/v1UserRecord"
-          }
-        }
-      }
-    },
-    "v1GetGroupsResponse": {
-      "type": "object",
-      "properties": {
-        "groups": {
-          "type": "array",
-          "items": {
-            "type": "object",
-            "$ref": "#/definitions/v1GroupRecord"
-          }
-        }
-      },
-      "title": "The GetGroupsResponse message represents a response with an array of groups"
-    },
     "v1GetOrganizationByNameResponse": {
       "type": "object",
       "properties": {
         "organization": {
           "$ref": "#/definitions/v1OrganizationRecord"
         },
-        "groups": {
+        "projects": {
           "type": "array",
           "items": {
             "type": "object",
-            "$ref": "#/definitions/v1GroupRecord"
+            "$ref": "#/definitions/v1ProjectRecord"
           }
         },
         "roles": {
@@ -3328,11 +3238,11 @@
         "organization": {
           "$ref": "#/definitions/v1OrganizationRecord"
         },
-        "groups": {
+        "projects": {
           "type": "array",
           "items": {
             "type": "object",
-            "$ref": "#/definitions/v1GroupRecord"
+            "$ref": "#/definitions/v1ProjectRecord"
           }
         },
         "roles": {
@@ -3371,19 +3281,6 @@
         }
       }
     },
-    "v1GetPolicyStatusByGroupResponse": {
-      "type": "object",
-      "properties": {
-        "policyStatus": {
-          "type": "array",
-          "items": {
-            "type": "object",
-            "$ref": "#/definitions/v1PolicyStatus"
-          },
-          "title": "policy_status is the status of the policy"
-        }
-      }
-    },
     "v1GetPolicyStatusByIdResponse": {
       "type": "object",
       "properties": {
@@ -3400,6 +3297,76 @@
           "title": "rule_evaluation_status is the status of the rules"
         }
       }
+    },
+    "v1GetPolicyStatusByProjectResponse": {
+      "type": "object",
+      "properties": {
+        "policyStatus": {
+          "type": "array",
+          "items": {
+            "type": "object",
+            "$ref": "#/definitions/v1PolicyStatus"
+          },
+          "title": "policy_status is the status of the policy"
+        }
+      }
+    },
+    "v1GetProjectByIdResponse": {
+      "type": "object",
+      "properties": {
+        "project": {
+          "$ref": "#/definitions/v1ProjectRecord"
+        },
+        "roles": {
+          "type": "array",
+          "items": {
+            "type": "object",
+            "$ref": "#/definitions/v1RoleRecord"
+          }
+        },
+        "users": {
+          "type": "array",
+          "items": {
+            "type": "object",
+            "$ref": "#/definitions/v1UserRecord"
+          }
+        }
+      }
+    },
+    "v1GetProjectByNameResponse": {
+      "type": "object",
+      "properties": {
+        "project": {
+          "$ref": "#/definitions/v1ProjectRecord"
+        },
+        "roles": {
+          "type": "array",
+          "items": {
+            "type": "object",
+            "$ref": "#/definitions/v1RoleRecord"
+          }
+        },
+        "users": {
+          "type": "array",
+          "items": {
+            "type": "object",
+            "$ref": "#/definitions/v1UserRecord"
+          }
+        }
+      }
+    },
+    "v1GetProjectsResponse": {
+      "type": "object",
+      "properties": {
+        "projects": {
+          "type": "array",
+          "items": {
+            "type": "object",
+            "$ref": "#/definitions/v1ProjectRecord"
+          }
+        }
+      },
+      "title": "The GetProjectsResponse message represents a response with an array of projects"
     },
     "v1GetPublicKeyResponse": {
       "type": "object",
@@ -3441,7 +3408,7 @@
         }
       }
     },
-    "v1GetRolesByGroupResponse": {
+    "v1GetRolesByProjectResponse": {
       "type": "object",
       "properties": {
         "roles": {
@@ -3518,11 +3485,11 @@
         "user": {
           "$ref": "#/definitions/v1UserRecord"
         },
-        "groups": {
+        "projects": {
           "type": "array",
           "items": {
             "type": "object",
-            "$ref": "#/definitions/v1GroupRecord"
+            "$ref": "#/definitions/v1ProjectRecord"
           }
         },
         "roles": {
@@ -3540,11 +3507,11 @@
         "user": {
           "$ref": "#/definitions/v1UserRecord"
         },
-        "groups": {
+        "projects": {
           "type": "array",
           "items": {
             "type": "object",
-            "$ref": "#/definitions/v1GroupRecord"
+            "$ref": "#/definitions/v1ProjectRecord"
           }
         },
         "roles": {
@@ -3562,11 +3529,11 @@
         "user": {
           "$ref": "#/definitions/v1UserRecord"
         },
-        "groups": {
+        "projects": {
           "type": "array",
           "items": {
             "type": "object",
-            "$ref": "#/definitions/v1GroupRecord"
+            "$ref": "#/definitions/v1ProjectRecord"
           }
         },
         "roles": {
@@ -3578,7 +3545,7 @@
         }
       }
     },
-    "v1GetUsersByGroupResponse": {
+    "v1GetUsersByOrganizationResponse": {
       "type": "object",
       "properties": {
         "users": {
@@ -3590,7 +3557,7 @@
         }
       }
     },
-    "v1GetUsersByOrganizationResponse": {
+    "v1GetUsersByProjectResponse": {
       "type": "object",
       "properties": {
         "users": {
@@ -3703,37 +3670,6 @@
         }
       }
     },
-    "v1GroupRecord": {
-      "type": "object",
-      "properties": {
-        "groupId": {
-          "type": "integer",
-          "format": "int32"
-        },
-        "organizationId": {
-          "type": "integer",
-          "format": "int32"
-        },
-        "name": {
-          "type": "string"
-        },
-        "description": {
-          "type": "string"
-        },
-        "isProtected": {
-          "type": "boolean"
-        },
-        "createdAt": {
-          "type": "string",
-          "format": "date-time"
-        },
-        "updatedAt": {
-          "type": "string",
-          "format": "date-time"
-        }
-      },
-      "title": "BUF does not allow grouping (which is a shame)"
-    },
     "v1ListArtifactsResponse": {
       "type": "object",
       "properties": {
@@ -3794,8 +3730,7 @@
       "type": "object",
       "properties": {
         "id": {
-          "type": "integer",
-          "format": "int32"
+          "type": "string"
         },
         "name": {
           "type": "string"
@@ -3887,6 +3822,35 @@
       },
       "title": "get the overall policy status"
     },
+    "v1ProjectRecord": {
+      "type": "object",
+      "properties": {
+        "projectId": {
+          "type": "string"
+        },
+        "organizationId": {
+          "type": "string"
+        },
+        "name": {
+          "type": "string"
+        },
+        "description": {
+          "type": "string"
+        },
+        "isProtected": {
+          "type": "boolean"
+        },
+        "createdAt": {
+          "type": "string",
+          "format": "date-time"
+        },
+        "updatedAt": {
+          "type": "string",
+          "format": "date-time"
+        }
+      },
+      "title": "BUF does not allow grouping (which is a shame)"
+    },
     "v1RefreshTokenRequest": {
       "type": "object"
     },
@@ -3949,9 +3913,8 @@
         "provider": {
           "type": "string"
         },
-        "groupId": {
-          "type": "integer",
-          "format": "int32"
+        "projectId": {
+          "type": "string"
         },
         "owner": {
           "type": "string"
@@ -4072,7 +4035,7 @@
       },
       "description": "RestType defines the rest data evaluation.\nThis is used to fetch data from a REST endpoint."
     },
-    "v1RevokeOauthGroupTokenResponse": {
+    "v1RevokeOauthProjectTokenResponse": {
       "type": "object"
     },
     "v1RevokeOauthTokensRequest": {
@@ -4104,12 +4067,10 @@
           "format": "int32"
         },
         "organizationId": {
-          "type": "integer",
-          "format": "int32"
+          "type": "string"
         },
-        "groupId": {
-          "type": "integer",
-          "format": "int32"
+        "projectId": {
+          "type": "string"
         },
         "name": {
           "type": "string"
@@ -4298,8 +4259,7 @@
           "format": "int32"
         },
         "organizationId": {
-          "type": "integer",
-          "format": "int32"
+          "type": "string"
         },
         "email": {
           "type": "string"

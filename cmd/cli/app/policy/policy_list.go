@@ -31,7 +31,7 @@ var policy_listCmd = &cobra.Command{
 	Use:   "list",
 	Short: "List policies within a mediator control plane",
 	Long: `The medic policy list subcommand lets you list policies within a
-mediator control plane for an specific group.`,
+mediator control plane for an specific project.`,
 	PreRun: func(cmd *cobra.Command, args []string) {
 		if err := viper.BindPFlags(cmd.Flags()); err != nil {
 			fmt.Fprintf(os.Stderr, "Error binding flags: %s\n", err)
@@ -63,7 +63,7 @@ mediator control plane for an specific group.`,
 		resp, err := client.ListPolicies(ctx, &pb.ListPoliciesRequest{
 			Context: &pb.Context{
 				Provider: provider,
-				// TODO set up group if specified
+				// TODO set up project if specified
 				// Currently it's inferred from the authorization token
 			},
 		})
@@ -94,8 +94,8 @@ func init() {
 	PolicyCmd.AddCommand(policy_listCmd)
 	policy_listCmd.Flags().StringP("provider", "p", "", "Provider to list policies for")
 	policy_listCmd.Flags().StringP("output", "o", app.Table, "Output format (json, yaml or table)")
-	// TODO: Take group ID into account
-	// policy_listCmd.Flags().Int32P("group-id", "g", 0, "group id to list roles for")
+	// TODO: Take project ID into account
+	// policy_listCmd.Flags().Int32P("project-id", "g", 0, "project id to list roles for")
 
 	if err := policy_listCmd.MarkFlagRequired("provider"); err != nil {
 		fmt.Fprintf(os.Stderr, "Error marking flag as required: %s\n", err)

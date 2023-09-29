@@ -19,7 +19,7 @@
 // It does make a good example of how to use the generated client code
 // for others to use as a reference.
 
-package group
+package project
 
 import (
 	"fmt"
@@ -34,22 +34,22 @@ import (
 	pb "github.com/stacklok/mediator/pkg/api/protobuf/go/mediator/v1"
 )
 
-func printGroup(group protoreflect.ProtoMessage, format string) {
+func printProject(project protoreflect.ProtoMessage, format string) {
 	if format == app.JSON {
-		out, err := util.GetJsonFromProto(group)
+		out, err := util.GetJsonFromProto(project)
 		util.ExitNicelyOnError(err, "Error getting json from proto")
 		fmt.Println(out)
 	} else if format == app.YAML {
-		out, err := util.GetYamlFromProto(group)
+		out, err := util.GetYamlFromProto(project)
 		util.ExitNicelyOnError(err, "Error getting yaml from proto")
 		fmt.Println(out)
 	}
 }
 
-var group_getCmd = &cobra.Command{
+var project_getCmd = &cobra.Command{
 	Use:   "get",
-	Short: "Get details for an group within a mediator control plane",
-	Long: `The medic group get subcommand lets you retrieve details for a group within a
+	Short: "Get details for an project within a mediator control plane",
+	Long: `The medic project get subcommand lets you retrieve details for a project within a
 mediator control plane.`,
 	PreRun: func(cmd *cobra.Command, args []string) {
 		if err := viper.BindPFlags(cmd.Flags()); err != nil {
@@ -61,11 +61,11 @@ mediator control plane.`,
 		util.ExitNicelyOnError(err, "Error getting grpc connection")
 		defer conn.Close()
 
-		client := pb.NewGroupServiceClient(conn)
+		client := pb.NewProjectServiceClient(conn)
 		ctx, cancel := util.GetAppContext()
 		defer cancel()
 
-		id := viper.GetInt32("id")
+		id := viper.GetString("id")
 		name := viper.GetString("name")
 		format := util.GetConfigValue("output", "output", cmd, "").(string)
 		if format == "" {
@@ -76,38 +76,37 @@ mediator control plane.`,
 		}
 
 		// check for required options
-		if id == 0 && name == "" {
+		if id == "" && name == "" {
 			fmt.Fprintf(os.Stderr, "Error: must specify one of id or name\n")
 			os.Exit(1)
 		}
 
-		if id > 0 && name != "" {
+		if id != "" && name != "" {
 			fmt.Fprintf(os.Stderr, "Error: must specify either one of id or name\n")
 			os.Exit(1)
 		}
 
 		// get by id
-		if id > 0 {
-			group, err := client.GetGroupById(ctx, &pb.GetGroupByIdRequest{
-				GroupId: id,
+		if id != "" {
+			project, err := client.GetProjectById(ctx, &pb.GetProjectByIdRequest{
+				ProjectId: id,
 			})
-			util.ExitNicelyOnError(err, "Error getting group")
-			printGroup(group, format)
+			util.ExitNicelyOnError(err, "Error getting project")
+			printProject(project, format)
 		} else if name != "" {
 			// get by name
-			group, err := client.GetGroupByName(ctx, &pb.GetGroupByNameRequest{
+			project, err := client.GetProjectByName(ctx, &pb.GetProjectByNameRequest{
 				Name: name,
 			})
-			util.ExitNicelyOnError(err, "Error getting group")
-			printGroup(group, format)
+			util.ExitNicelyOnError(err, "Error getting project")
+			printProject(project, format)
 		}
 	},
 }
 
 func init() {
-	GroupCmd.AddCommand(group_getCmd)
-	group_getCmd.Flags().Int32P("id", "i", 0, "ID for the role to query")
-	group_getCmd.Flags().Int32P("group-id", "g", 0, "Group ID")
-	group_getCmd.Flags().StringP("name", "n", "", "Name for the role to query")
-	group_getCmd.Flags().StringP("output", "o", "", "Output format (json or yaml)")
+	ProjectCmd.AddCommand(project_getCmd)
+	project_getCmd.Flags().StringP("id", "i", "", "ID for the project to query")
+	project_getCmd.Flags().StringP("name", "n", "", "Name for the project to query")
+	project_getCmd.Flags().StringP("output", "o", "", "Output format (json or yaml)")
 }

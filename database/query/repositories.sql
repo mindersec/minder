@@ -1,7 +1,7 @@
 -- name: CreateRepository :one
 INSERT INTO repositories (
     provider,
-    group_id,
+    project_id,
     repo_owner, 
     repo_name,
     repo_id,
@@ -21,19 +21,19 @@ SELECT * FROM repositories WHERE repo_id = $1;
 -- name: GetRepositoryByRepoName :one
 SELECT * FROM repositories WHERE provider = $1 AND repo_owner = $2 AND repo_name = $3;
 
--- name: GetRepositoryByIDAndGroup :one
-SELECT * FROM repositories WHERE provider = $1 AND repo_id = $2 AND group_id = $3;
+-- name: GetRepositoryByIDAndProject :one
+SELECT * FROM repositories WHERE provider = $1 AND repo_id = $2 AND project_id = $3;
 
--- name: ListRepositoriesByGroupID :many
+-- name: ListRepositoriesByProjectID :many
 SELECT * FROM repositories
-WHERE provider = $1 AND group_id = $2
+WHERE provider = $1 AND project_id = $2
 ORDER BY id
 LIMIT $3
 OFFSET $4;
 
--- name: ListRegisteredRepositoriesByGroupIDAndProvider :many
+-- name: ListRegisteredRepositoriesByProjectIDAndProvider :many
 SELECT * FROM repositories
-WHERE provider = $1 AND group_id = $2 AND webhook_id IS NOT NULL
+WHERE provider = $1 AND project_id = $2 AND webhook_id IS NOT NULL
 ORDER BY id;
 
 -- name: ListRepositoriesByOwner :many
@@ -50,7 +50,7 @@ ORDER BY id;
 
 -- name: UpdateRepository :one
 UPDATE repositories 
-SET group_id = $2,
+SET project_id = $2,
 repo_owner = $3,
 repo_name = $4,
 repo_id = $5,
@@ -67,7 +67,7 @@ WHERE id = $1 RETURNING *;
 
 -- name: UpdateRepositoryByID :one
 UPDATE repositories 
-SET group_id = $2,
+SET project_id = $2,
 repo_owner = $3,
 repo_name = $4,
 is_private = $5,

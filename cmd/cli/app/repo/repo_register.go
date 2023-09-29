@@ -54,7 +54,7 @@ var repo_registerCmd = &cobra.Command{
 			fmt.Fprintf(os.Stderr, "Only %s is supported at this time\n", github.Github)
 			os.Exit(1)
 		}
-		groupID := viper.GetInt32("group-id")
+		projectID := viper.GetString("project-id")
 		limit := viper.GetInt32("limit")
 		offset := viper.GetInt32("offset")
 
@@ -67,11 +67,11 @@ var repo_registerCmd = &cobra.Command{
 		defer cancel()
 
 		req := &pb.ListRepositoriesRequest{
-			Provider: provider,
-			GroupId:  int32(groupID),
-			Limit:    int32(limit),
-			Offset:   int32(offset),
-			Filter:   pb.RepoFilter_REPO_FILTER_SHOW_NOT_REGISTERED_ONLY,
+			Provider:  provider,
+			ProjectId: projectID,
+			Limit:     int32(limit),
+			Offset:    int32(offset),
+			Filter:    pb.RepoFilter_REPO_FILTER_SHOW_NOT_REGISTERED_ONLY,
 		}
 
 		listResp, err := client.ListRepositories(ctx, req)
@@ -131,7 +131,7 @@ var repo_registerCmd = &cobra.Command{
 			Provider:     provider,
 			Repositories: repoProtos,
 			Events:       events,
-			GroupId:      int32(groupID),
+			ProjectId:    projectID,
 		}
 
 		registerResp, err := client.RegisterRepository(context.Background(), request)
@@ -151,7 +151,7 @@ func init() {
 	RepoCmd.AddCommand(repo_registerCmd)
 	var reposFlag string
 	repo_registerCmd.Flags().StringP("provider", "n", "", "Name for the provider to enroll")
-	repo_registerCmd.Flags().Int32P("group-id", "g", 0, "ID of the group for repo registration")
+	repo_registerCmd.Flags().StringP("project-id", "g", "", "ID of the project for repo registration")
 	repo_registerCmd.Flags().Int32P("limit", "l", 20, "Number of repos to display per page")
 	repo_registerCmd.Flags().Int32P("offset", "o", 0, "Offset of the repos to display")
 	repo_registerCmd.Flags().StringVar(&reposFlag, "repo", "", "List of key-value pairs")

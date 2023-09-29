@@ -44,17 +44,17 @@ var CONTAINER_TYPE = "container"
 
 // RepoReconcilerEvent is an event that is sent to the reconciler topic
 type RepoReconcilerEvent struct {
-	// Group is the group that the event is relevant to
-	Group int32 `json:"group" validate:"gte=0"`
+	// Project is the group that the event is relevant to
+	Project uuid.UUID `json:"group" validate:"gte=0"`
 	// Repository is the repository to be reconciled
 	Repository int32 `json:"repository" validate:"gte=0"`
 }
 
 // NewRepoReconcilerMessage creates a new repos init event
-func NewRepoReconcilerMessage(provider string, repoID, groupID int32) (*message.Message, error) {
+func NewRepoReconcilerMessage(provider string, repoID int32, projectID uuid.UUID) (*message.Message, error) {
 	evt := &RepoReconcilerEvent{
 		Repository: repoID,
-		Group:      groupID,
+		Project:    projectID,
 	}
 
 	evtStr, err := json.Marshal(evt)
@@ -84,7 +84,7 @@ func (e *Reconciler) handleRepoReconcilerEvent(msg *message.Message) error {
 	}
 
 	ctx := msg.Context()
-	log.Printf("handling reconciler event for group %d and repository %d", evt.Group, evt.Repository)
+	log.Printf("handling reconciler event for project %s and repository %d", evt.Project.String(), evt.Repository)
 	return e.handleArtifactsReconcilerEvent(ctx, &evt)
 }
 
@@ -99,14 +99,14 @@ func (e *Reconciler) handleArtifactsReconcilerEvent(ctx context.Context, evt *Re
 	}
 
 	prov, err := e.store.GetProviderByName(ctx, db.GetProviderByNameParams{
-		Name:    repository.Provider,
-		GroupID: evt.Group,
+		Name:      repository.Provider,
+		ProjectID: evt.Project,
 	})
 	if err != nil {
 		return fmt.Errorf("error retrieving provider: %w", err)
 	}
 
-	p, err := providers.GetProviderBuilder(ctx, prov, evt.Group, e.store, e.crypteng)
+	p, err := providers.GetProviderBuilder(ctx, prov, evt.Project, e.store, e.crypteng)
 	if err != nil {
 		return fmt.Errorf("error building client: %w", err)
 	}
@@ -126,7 +126,7 @@ func (e *Reconciler) handleArtifactsReconcilerEvent(ctx context.Context, evt *Re
 	err = engine.NewEntityInfoWrapper().
 		WithProvider(prov.Name).
 		WithRepository(repo).
-		WithGroupID(evt.Group).
+		WithProjectID(evt.Project).
 		WithRepositoryID(repository.ID).
 		Publish(e.evt)
 	if err != nil {
@@ -259,7 +259,7 @@ func (e *Reconciler) handleArtifactsReconcilerEvent(ctx context.Context, evt *Re
 		err = engine.NewEntityInfoWrapper().
 			WithProvider(prov.Name).
 			WithArtifact(pbArtifact).
-			WithGroupID(evt.Group).
+			WithProjectID(evt.Project).
 			WithArtifactID(newArtifact.ID).
 			WithRepositoryID(repository.ID).
 			Publish(e.evt)

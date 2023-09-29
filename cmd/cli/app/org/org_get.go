@@ -65,7 +65,7 @@ mediator control plane.`,
 		ctx, cancel := util.GetAppContext()
 		defer cancel()
 
-		id := viper.GetInt32("id")
+		id := viper.GetString("id")
 		name := viper.GetString("name")
 		format := util.GetConfigValue("output", "output", cmd, "").(string)
 		if format == "" {
@@ -73,7 +73,7 @@ mediator control plane.`,
 		}
 
 		// check mutually exclusive flags
-		if id > 0 && name != "" {
+		if id != "" && name != "" {
 			fmt.Fprintf(os.Stderr, "Error: mutually exclusive flags: id and name\n")
 			os.Exit(1)
 		}
@@ -83,7 +83,7 @@ mediator control plane.`,
 		}
 
 		// get by id or name
-		if id > 0 {
+		if id != "" {
 			org, err := client.GetOrganization(ctx, &pb.GetOrganizationRequest{
 				OrganizationId: id,
 			})
@@ -105,7 +105,7 @@ mediator control plane.`,
 
 func init() {
 	OrgCmd.AddCommand(org_getCmd)
-	org_getCmd.Flags().Int32P("id", "i", -1, "ID for the organization to query")
+	org_getCmd.Flags().StringP("id", "i", "", "ID for the organization to query")
 	org_getCmd.Flags().StringP("name", "n", "", "Name for the organization to query")
 	org_getCmd.Flags().StringP("output", "o", "", "Output format (json or yaml)")
 }

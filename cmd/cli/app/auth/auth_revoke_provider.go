@@ -45,11 +45,11 @@ var Auth_revokeproviderCmd = &cobra.Command{
 	Run: func(cmd *cobra.Command, args []string) {
 		// check if we need to revoke all tokens or the user one
 		all := util.GetConfigValue("all", "all", cmd, false).(bool)
-		group := viper.GetInt32("group-id")
+		project := viper.GetString("project-id")
 		provider := util.GetConfigValue("provider", "provider", cmd, "").(string)
 
-		if all && group != 0 {
-			fmt.Fprintf(os.Stderr, "Error: you can't use --all and --group-id together\n")
+		if all && project != "" {
+			fmt.Fprintf(os.Stderr, "Error: you can't use --all and --project-id together\n")
 			os.Exit(1)
 		}
 
@@ -65,12 +65,12 @@ var Auth_revokeproviderCmd = &cobra.Command{
 			util.ExitNicelyOnError(err, "Error revoking tokens")
 			cmd.Println("Revoked a total of ", result.RevokedTokens, " tokens")
 		} else {
-			_, err := client.RevokeOauthGroupToken(ctx, &pb.RevokeOauthGroupTokenRequest{Provider: provider, GroupId: group})
+			_, err := client.RevokeOauthProjectToken(ctx, &pb.RevokeOauthProjectTokenRequest{Provider: provider, ProjectId: project})
 			util.ExitNicelyOnError(err, "Error revoking tokens")
-			if group == 0 {
-				cmd.Println("Revoked token for default group")
+			if project == "" {
+				cmd.Println("Revoked token for default project")
 			} else {
-				cmd.Println("Revoked token for group ", group)
+				cmd.Println("Revoked token for project ", project)
 			}
 		}
 	},
@@ -79,6 +79,6 @@ var Auth_revokeproviderCmd = &cobra.Command{
 func init() {
 	AuthCmd.AddCommand(Auth_revokeproviderCmd)
 	Auth_revokeproviderCmd.Flags().StringP("provider", "n", "", "Name for the provider to revoke tokens for")
-	Auth_revokeproviderCmd.Flags().Int32P("group-id", "g", 0, "ID of the group for repo registration")
+	Auth_revokeproviderCmd.Flags().StringP("project-id", "g", "", "ID of the project for repo registration")
 	Auth_revokeproviderCmd.Flags().BoolP("all", "a", false, "Revoke all tokens")
 }

@@ -22,14 +22,21 @@ import (
 	"fmt"
 
 	"github.com/go-playground/validator/v10"
+	"github.com/google/uuid"
 	"google.golang.org/grpc/codes"
 	"google.golang.org/grpc/status"
 	"google.golang.org/protobuf/types/known/timestamppb"
 
 	"github.com/stacklok/mediator/internal/db"
 	"github.com/stacklok/mediator/internal/providers/github"
+	"github.com/stacklok/mediator/internal/util"
 	pb "github.com/stacklok/mediator/pkg/api/protobuf/go/mediator/v1"
 )
+
+// OrgMeta is the metadata associated with an organization
+type OrgMeta struct {
+	Company string `json:"company"`
+}
 
 type createOrganizationValidation struct {
 	Name    string `db:"name" validate:"required"`
@@ -57,22 +64,28 @@ func (s *Server) CreateOrganization(ctx context.Context,
 		return nil, status.Errorf(codes.Internal, "failed to get transaction")
 	}
 
-	org, err := qtx.CreateOrganization(ctx, db.CreateOrganizationParams{Name: in.Name, Company: in.Company})
+	meta := OrgMeta{Company: in.Company}
+	jsonmeta, err := json.Marshal(meta)
+	if err != nil {
+		return nil, status.Errorf(codes.Internal, "failed to marshal meta: %v", err)
+	}
+
+	org, err := qtx.CreateOrganization(ctx, db.CreateOrganizationParams{Name: in.Name, Metadata: jsonmeta})
 	if err != nil {
 		return nil, status.Errorf(codes.Internal, "failed to create organization: %v", err)
 	}
 
-	response := &pb.CreateOrganizationResponse{Id: org.ID, Name: org.Name,
-		Company: org.Company, CreatedAt: timestamppb.New(org.CreatedAt),
+	response := &pb.CreateOrganizationResponse{Id: org.ID.String(), Name: org.Name,
+		Company: meta.Company, CreatedAt: timestamppb.New(org.CreatedAt),
 		UpdatedAt: timestamppb.New(org.UpdatedAt)}
 
 	if in.CreateDefaultRecords {
 		// we need to create the default records for the organization
-		defaultGroup, defaultRoles, err := CreateDefaultRecordsForOrg(ctx, qtx, org)
+		defaultProject, defaultRoles, err := CreateDefaultRecordsForOrg(ctx, qtx, org)
 		if err != nil {
 			return nil, err
 		}
-		response.DefaultGroup = defaultGroup
+		response.DefaultProject = defaultProject
 		response.DefaultRoles = defaultRoles
 	}
 	// commit and return
@@ -84,24 +97,43 @@ func (s *Server) CreateOrganization(ctx context.Context,
 	return response, nil
 }
 
-// CreateDefaultRecordsForOrg creates the default records, such as groups, roles and provider for the organization
+// CreateDefaultRecordsForOrg creates the default records, such as projects, roles and provider for the organization
 func CreateDefaultRecordsForOrg(ctx context.Context, qtx db.Querier,
-	org db.Organization) (*pb.GroupRecord, []*pb.RoleRecord, error) {
-	// we need to create the default records for the organization
-	group, err := qtx.CreateGroup(ctx, db.CreateGroupParams{OrganizationID: org.ID,
-		Name:        fmt.Sprintf("%s-admin", org.Name),
-		Description: sql.NullString{String: fmt.Sprintf("Default admin group for %s", org.Name), Valid: true},
+	org db.Project) (*pb.ProjectRecord, []*pb.RoleRecord, error) {
+	projectmeta := &ProjectMeta{
 		IsProtected: true,
-	})
-	if err != nil {
-		return nil, nil, status.Errorf(codes.Internal, "failed to create default group: %v", err)
+		Description: fmt.Sprintf("Default admin project for %s", org.Name),
 	}
 
-	grp := pb.GroupRecord{GroupId: group.ID, OrganizationId: group.OrganizationID,
-		Name: group.Name, Description: group.Description.String,
-		IsProtected: group.IsProtected, CreatedAt: timestamppb.New(group.CreatedAt), UpdatedAt: timestamppb.New(group.UpdatedAt)}
+	jsonmeta, err := json.Marshal(projectmeta)
+	if err != nil {
+		return nil, nil, status.Errorf(codes.Internal, "failed to marshal meta: %v", err)
+	}
 
-	// we can create the default role for org and for group
+	// we need to create the default records for the organization
+	project, err := qtx.CreateProject(ctx, db.CreateProjectParams{
+		ParentID: uuid.NullUUID{
+			UUID:  org.ID,
+			Valid: true,
+		},
+		Name:     fmt.Sprintf("%s-admin", org.Name),
+		Metadata: jsonmeta,
+	})
+	if err != nil {
+		return nil, nil, status.Errorf(codes.Internal, "failed to create default project: %v", err)
+	}
+
+	prj := pb.ProjectRecord{
+		ProjectId:      project.ID.String(),
+		OrganizationId: project.ParentID.UUID.String(),
+		Name:           project.Name,
+		Description:    projectmeta.Description,
+		IsProtected:    projectmeta.IsProtected,
+		CreatedAt:      timestamppb.New(project.CreatedAt),
+		UpdatedAt:      timestamppb.New(project.UpdatedAt),
+	}
+
+	// we can create the default role for org and for project
 	role, err := qtx.CreateRole(ctx, db.CreateRoleParams{
 		OrganizationID: org.ID,
 		Name:           fmt.Sprintf("%s-org-admin", org.Name),
@@ -112,35 +144,36 @@ func CreateDefaultRecordsForOrg(ctx context.Context, qtx db.Querier,
 		return nil, nil, status.Errorf(codes.Internal, "failed to create default org role: %v", err)
 	}
 
-	roleGroup, err := qtx.CreateRole(ctx, db.CreateRoleParams{
+	roleProject, err := qtx.CreateRole(ctx, db.CreateRoleParams{
 		OrganizationID: org.ID,
-		GroupID:        sql.NullInt32{Int32: group.ID, Valid: true},
-		Name:           fmt.Sprintf("%s-group-admin", org.Name),
+		ProjectID:      uuid.NullUUID{UUID: project.ID, Valid: true},
+		Name:           fmt.Sprintf("%s-project-admin", org.Name),
 		IsAdmin:        true,
 		IsProtected:    true,
 	})
 
 	if err != nil {
-		return nil, nil, status.Errorf(codes.Internal, "failed to create default group role: %v", err)
+		return nil, nil, status.Errorf(codes.Internal, "failed to create default project role: %v", err)
 	}
 
-	rl := pb.RoleRecord{Id: role.ID, OrganizationId: role.OrganizationID, Name: role.Name, IsAdmin: role.IsAdmin,
+	pID := roleProject.ProjectID.UUID.String()
+	rl := pb.RoleRecord{Id: role.ID, OrganizationId: role.OrganizationID.String(), Name: role.Name, IsAdmin: role.IsAdmin,
 		IsProtected: role.IsProtected, CreatedAt: timestamppb.New(role.CreatedAt), UpdatedAt: timestamppb.New(role.UpdatedAt)}
-	rg := pb.RoleRecord{Id: roleGroup.ID, Name: roleGroup.Name, GroupId: &roleGroup.GroupID.Int32,
-		IsAdmin: roleGroup.IsAdmin, IsProtected: roleGroup.IsProtected,
-		CreatedAt: timestamppb.New(roleGroup.CreatedAt), UpdatedAt: timestamppb.New(roleGroup.UpdatedAt)}
+	rg := pb.RoleRecord{Id: roleProject.ID, Name: roleProject.Name, ProjectId: &pID,
+		IsAdmin: roleProject.IsAdmin, IsProtected: roleProject.IsProtected,
+		CreatedAt: timestamppb.New(roleProject.CreatedAt), UpdatedAt: timestamppb.New(roleProject.UpdatedAt)}
 
 	// Create GitHub provider
 	_, err = qtx.CreateProvider(ctx, db.CreateProviderParams{
 		Name:       github.Github,
-		GroupID:    grp.GroupId,
+		ProjectID:  project.ID,
 		Implements: github.Implements,
 		Definition: json.RawMessage(`{"github": {}}`),
 	})
 	if err != nil {
 		return nil, nil, status.Errorf(codes.Internal, "failed to create provider: %v", err)
 	}
-	return &grp, []*pb.RoleRecord{&rl, &rg}, nil
+	return &prj, []*pb.RoleRecord{&rl, &rg}, nil
 }
 
 // GetOrganizations is a service for getting a list of organizations
@@ -162,16 +195,22 @@ func (s *Server) GetOrganizations(ctx context.Context,
 		Offset: *in.Offset,
 	})
 	if err != nil {
-		return nil, status.Errorf(codes.Unknown, "failed to get groups: %s", err)
+		return nil, status.Errorf(codes.Unknown, "failed to get projects: %s", err)
 	}
 
 	var resp pb.GetOrganizationsResponse
 	resp.Organizations = make([]*pb.OrganizationRecord, 0, len(orgs))
 	for _, org := range orgs {
+		var orgmeta OrgMeta
+		err := json.Unmarshal(org.Metadata, &orgmeta)
+		if err != nil {
+			return nil, status.Errorf(codes.Internal, "failed to unmarshal metadata: %s", err)
+		}
+
 		resp.Organizations = append(resp.Organizations, &pb.OrganizationRecord{
-			Id:        org.ID,
+			Id:        org.ID.String(),
 			Name:      org.Name,
-			Company:   org.Company,
+			Company:   orgmeta.Company,
 			CreatedAt: timestamppb.New(org.CreatedAt),
 			UpdatedAt: timestamppb.New(org.UpdatedAt),
 		})
@@ -181,12 +220,20 @@ func (s *Server) GetOrganizations(ctx context.Context,
 }
 
 func getOrganizationDependencies(ctx context.Context, store db.Store,
-	org db.Organization) ([]*pb.GroupRecord, []*pb.RoleRecord, []*pb.UserRecord, error) {
+	org db.Project) ([]*pb.ProjectRecord, []*pb.RoleRecord, []*pb.UserRecord, error) {
 	const MAX_ITEMS = 999
-	// get the groups for the organization
-	groups, err := store.ListGroupsByOrganizationID(ctx, org.ID)
+	// get the projects for the organization
+	projects, err := store.GetChildrenProjects(ctx, org.ID)
 	if err != nil {
 		return nil, nil, nil, err
+	}
+
+	// if there are more than one project, we need to remove the calling project
+	// from the list
+	if len(projects) > 1 {
+		// NOTE(jaosorior): We need to remove the calling project from the list
+		// since it's included in the list of projects.
+		projects = projects[db.CalculateProjectHierarchyOffset(0):]
 	}
 
 	// get the roles for the organization
@@ -202,26 +249,25 @@ func getOrganizationDependencies(ctx context.Context, store db.Store,
 	}
 
 	// convert to right data type
-	var groupsPB []*pb.GroupRecord
-	for _, group := range groups {
-		groupsPB = append(groupsPB, &pb.GroupRecord{
-			GroupId:        group.ID,
-			OrganizationId: group.OrganizationID,
-			Name:           group.Name,
-			Description:    group.Description.String,
-			IsProtected:    group.IsProtected,
-			CreatedAt:      timestamppb.New(group.CreatedAt),
-			UpdatedAt:      timestamppb.New(group.UpdatedAt),
+	var projectsPB []*pb.ProjectRecord
+	for _, project := range projects {
+		projectsPB = append(projectsPB, &pb.ProjectRecord{
+			ProjectId:      project.ID.String(),
+			OrganizationId: project.ParentID.UUID.String(),
+			Name:           project.Name,
+			CreatedAt:      timestamppb.New(project.CreatedAt),
+			UpdatedAt:      timestamppb.New(project.UpdatedAt),
 		})
 	}
 
 	var rolesPB []*pb.RoleRecord
 	for idx := range roles {
 		role := &roles[idx]
+		pID := role.ProjectID.UUID.String()
 		rolesPB = append(rolesPB, &pb.RoleRecord{
 			Id:             role.ID,
-			OrganizationId: role.OrganizationID,
-			GroupId:        &role.GroupID.Int32,
+			OrganizationId: role.OrganizationID.String(),
+			ProjectId:      &pID,
 			Name:           role.Name,
 			IsAdmin:        role.IsAdmin,
 			IsProtected:    role.IsProtected,
@@ -235,7 +281,7 @@ func getOrganizationDependencies(ctx context.Context, store db.Store,
 		user := &users[idx]
 		usersPB = append(usersPB, &pb.UserRecord{
 			Id:             user.ID,
-			OrganizationId: user.OrganizationID,
+			OrganizationId: user.OrganizationID.String(),
 			Email:          &user.Email.String,
 			FirstName:      &user.FirstName.String,
 			LastName:       &user.LastName.String,
@@ -244,43 +290,50 @@ func getOrganizationDependencies(ctx context.Context, store db.Store,
 		})
 	}
 
-	return groupsPB, rolesPB, usersPB, nil
+	return projectsPB, rolesPB, usersPB, nil
 }
 
 // GetOrganization is a service for getting an organization
 func (s *Server) GetOrganization(ctx context.Context,
 	in *pb.GetOrganizationRequest) (*pb.GetOrganizationResponse, error) {
+	orgID, err := uuid.Parse(in.OrganizationId)
+	if err != nil {
+		return nil, util.UserVisibleError(codes.InvalidArgument, "invalid organization ID")
+	}
+
 	// check if user is authorized
-	if err := AuthorizedOnOrg(ctx, in.OrganizationId); err != nil {
+	if err := AuthorizedOnOrg(ctx, orgID); err != nil {
 		return nil, err
 	}
 
-	if in.GetOrganizationId() <= 0 {
-		return nil, status.Error(codes.InvalidArgument, "organization id is required")
-	}
-
-	org, err := s.store.GetOrganization(ctx, in.OrganizationId)
+	org, err := s.store.GetOrganization(ctx, orgID)
 	if err != nil {
 		if errors.Is(err, sql.ErrNoRows) {
-			return nil, status.Error(codes.NotFound, "organization not found")
+			return nil, util.UserVisibleError(codes.NotFound, "organization not found")
 		}
 		return nil, status.Errorf(codes.Internal, "failed to get organization: %s", err)
 	}
 
-	groups, roles, users, err := getOrganizationDependencies(ctx, s.store, org)
+	projects, roles, users, err := getOrganizationDependencies(ctx, s.store, org)
 	if err != nil {
 		return nil, status.Errorf(codes.Unknown, "failed to get organization dependencies: %s", err)
 	}
 
 	var resp pb.GetOrganizationResponse
+	var orgmeta OrgMeta
+	err = json.Unmarshal(org.Metadata, &orgmeta)
+	if err != nil {
+		return nil, status.Errorf(codes.Internal, "failed to unmarshal metadata: %s", err)
+	}
+
 	resp.Organization = &pb.OrganizationRecord{
-		Id:        org.ID,
+		Id:        org.ID.String(),
 		Name:      org.Name,
-		Company:   org.Company,
+		Company:   orgmeta.Company,
 		CreatedAt: timestamppb.New(org.CreatedAt),
 		UpdatedAt: timestamppb.New(org.UpdatedAt),
 	}
-	resp.Groups = groups
+	resp.Projects = projects
 	resp.Roles = roles
 	resp.Users = users
 
@@ -307,20 +360,26 @@ func (s *Server) GetOrganizationByName(ctx context.Context,
 		return nil, err
 	}
 
-	groups, roles, users, err := getOrganizationDependencies(ctx, s.store, org)
+	projects, roles, users, err := getOrganizationDependencies(ctx, s.store, org)
 	if err != nil {
 		return nil, status.Errorf(codes.Unknown, "failed to get organization dependencies: %s", err)
 	}
 
 	var resp pb.GetOrganizationByNameResponse
+	var orgmeta OrgMeta
+	err = json.Unmarshal(org.Metadata, &orgmeta)
+	if err != nil {
+		return nil, status.Errorf(codes.Internal, "failed to unmarshal metadata: %s", err)
+	}
+
 	resp.Organization = &pb.OrganizationRecord{
-		Id:        org.ID,
+		Id:        org.ID.String(),
 		Name:      org.Name,
-		Company:   org.Company,
+		Company:   orgmeta.Company,
 		CreatedAt: timestamppb.New(org.CreatedAt),
 		UpdatedAt: timestamppb.New(org.UpdatedAt),
 	}
-	resp.Groups = groups
+	resp.Projects = projects
 	resp.Roles = roles
 	resp.Users = users
 
@@ -328,7 +387,7 @@ func (s *Server) GetOrganizationByName(ctx context.Context,
 }
 
 type deleteOrganizationValidation struct {
-	Id int32 `db:"id" validate:"required"`
+	Id string `db:"id" validate:"required"`
 }
 
 // DeleteOrganization is a handler that deletes a organization
@@ -340,7 +399,12 @@ func (s *Server) DeleteOrganization(ctx context.Context,
 		return nil, status.Errorf(codes.InvalidArgument, "validation failed: %s", err)
 	}
 
-	_, err = s.store.GetOrganization(ctx, in.Id)
+	orgID, err := uuid.Parse(in.Id)
+	if err != nil {
+		return nil, util.UserVisibleError(codes.InvalidArgument, "invalid organization ID")
+	}
+
+	_, err = s.store.GetOrganization(ctx, orgID)
 	if err != nil {
 		if errors.Is(err, sql.ErrNoRows) {
 			return nil, status.Error(codes.NotFound, "organization not found")
@@ -353,21 +417,21 @@ func (s *Server) DeleteOrganization(ctx context.Context,
 		in.Force = &isProtected
 	}
 
-	// if we do not force the deletion, we need to check if there are groups
+	// if we do not force the deletion, we need to check if there are projects
 	if !*in.Force {
-		// list groups belonging to that organization
-		groups, err := s.store.ListGroupsByOrganizationID(ctx, in.Id)
+		// list projects belonging to that organization
+		projects, err := s.store.GetChildrenProjects(ctx, orgID)
 		if err != nil {
-			return nil, status.Errorf(codes.Internal, "failed to list groups: %s", err)
+			return nil, status.Errorf(codes.Internal, "failed to list projects: %s", err)
 		}
 
-		if len(groups) > 0 {
-			return nil, status.Errorf(codes.InvalidArgument, "cannot delete the organization, there are groups associated with it")
+		if len(projects) > db.CalculateProjectHierarchyOffset(0) {
+			return nil, status.Errorf(codes.InvalidArgument, "cannot delete the organization, there are projects associated with it")
 		}
 	}
 
-	// otherwise we delete, and delete groups in cascade
-	err = s.store.DeleteOrganization(ctx, in.Id)
+	// otherwise we delete, and delete projects in cascade
+	err = s.store.DeleteOrganization(ctx, orgID)
 	if err != nil {
 		return nil, status.Errorf(codes.Internal, "failed to delete organization: %s", err)
 	}

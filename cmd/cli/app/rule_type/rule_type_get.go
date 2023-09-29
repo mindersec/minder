@@ -62,7 +62,7 @@ mediator control plane.`,
 		rtype, err := client.GetRuleTypeById(ctx, &pb.GetRuleTypeByIdRequest{
 			Context: &pb.Context{
 				Provider: provider,
-				// TODO set up group if specified
+				// TODO set up project if specified
 				// Currently it's inferred from the authorization token
 			},
 			Id: id,
@@ -92,7 +92,7 @@ func init() {
 	ruleType_getCmd.Flags().StringP("id", "i", "", "ID for the policy to query")
 	ruleType_getCmd.Flags().StringP("output", "o", app.Table, "Output format (json, yaml or table)")
 	ruleType_getCmd.Flags().StringP("provider", "p", "github", "Provider for the policy")
-	// TODO set up group if specified
+	// TODO set up project if specified
 
 	if err := ruleType_getCmd.MarkFlagRequired("id"); err != nil {
 		fmt.Fprintf(os.Stderr, "Error marking flag as required: %s\n", err)

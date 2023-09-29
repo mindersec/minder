@@ -77,7 +77,7 @@ mediator control plane.`,
 
 			for _, v := range resp.Organizations {
 				row := []string{
-					fmt.Sprintf("%d", v.Id),
+					v.Id,
 					v.Name,
 					v.Company,
 					v.GetCreatedAt().AsTime().Format(time.RFC3339),

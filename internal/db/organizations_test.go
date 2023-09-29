@@ -24,6 +24,8 @@ package db
 import (
 	"context"
 	"database/sql"
+	"encoding/json"
+	"fmt"
 	"testing"
 	"time"
 
@@ -33,13 +35,13 @@ import (
 )
 
 // A helper function to create a random organization
-func createRandomOrganization(t *testing.T) Organization {
+func createRandomOrganization(t *testing.T) Project {
 	t.Helper()
 
 	seed := time.Now().UnixNano()
 	arg := CreateOrganizationParams{
-		Name:    rand.RandomName(seed),
-		Company: rand.RandomName(seed),
+		Name:     rand.RandomName(seed),
+		Metadata: json.RawMessage(`{"company": "stacklok"}`),
 	}
 
 	organization, err := testQueries.CreateOrganization(context.Background(), arg)
@@ -47,7 +49,7 @@ func createRandomOrganization(t *testing.T) Organization {
 	require.NotEmpty(t, organization)
 
 	require.Equal(t, arg.Name, organization.Name)
-	require.Equal(t, arg.Company, organization.Company)
+	require.Equal(t, arg.Metadata, organization.Metadata)
 
 	require.NotZero(t, organization.ID)
 	require.NotZero(t, organization.CreatedAt)
@@ -75,7 +77,7 @@ func TestGetOrganization(t *testing.T) {
 
 	require.Equal(t, organization1.ID, organization2.ID)
 	require.Equal(t, organization1.Name, organization2.Name)
-	require.Equal(t, organization1.Company, organization2.Company)
+	require.Equal(t, organization1.Metadata, organization2.Metadata)
 
 	require.NotZero(t, organization2.CreatedAt)
 	require.NotZero(t, organization2.UpdatedAt)
@@ -91,10 +93,11 @@ func TestUpdateOrganization(t *testing.T) {
 	seed := time.Now().UnixNano()
 	organization1 := createRandomOrganization(t)
 
+	cmpName := rand.RandomName(seed)
 	arg := UpdateOrganizationParams{
-		ID:      organization1.ID,
-		Name:    rand.RandomName(seed),
-		Company: rand.RandomName(seed),
+		ID:       organization1.ID,
+		Name:     rand.RandomName(seed),
+		Metadata: json.RawMessage(fmt.Sprintf(`{"company": "%s"}`, cmpName)),
 	}
 
 	organization2, err := testQueries.UpdateOrganization(context.Background(), arg)
@@ -103,7 +106,7 @@ func TestUpdateOrganization(t *testing.T) {
 
 	require.Equal(t, organization1.ID, organization2.ID)
 	require.Equal(t, arg.Name, organization2.Name)
-	require.Equal(t, arg.Company, organization2.Company)
+	require.Equal(t, arg.Metadata, organization2.Metadata)
 
 	require.NotZero(t, organization2.CreatedAt)
 	require.NotZero(t, organization2.UpdatedAt)

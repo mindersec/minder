@@ -272,24 +272,25 @@ func (s *UnitTestSuite) TestHandleWebHookRepository() {
 
 	providerName := "github"
 	repositoryID := uuid.New()
+	projectID := uuid.New()
 
 	mockStore.EXPECT().
 		GetRepositoryByRepoID(gomock.Any(), gomock.Any()).
 		Return(db.Repository{
-			ID:       repositoryID,
-			GroupID:  1,
-			RepoID:   12345,
-			Provider: providerName,
+			ID:        repositoryID,
+			ProjectID: projectID,
+			RepoID:    12345,
+			Provider:  providerName,
 		}, nil)
 
 	mockStore.EXPECT().
 		GetProviderByName(gomock.Any(), db.GetProviderByNameParams{
-			Name:    providerName,
-			GroupID: 1,
+			Name:      providerName,
+			ProjectID: projectID,
 		}).
 		Return(db.Provider{
-			GroupID: 1,
-			Name:    providerName,
+			ProjectID: projectID,
+			Name:      providerName,
 		}, nil)
 
 	hook := srv.HandleGitHubWebHook()
@@ -335,7 +336,7 @@ func (s *UnitTestSuite) TestHandleWebHookRepository() {
 	assert.Equal(t, "meta", received.Metadata["type"])
 	assert.Equal(t, "https://api.github.com/", received.Metadata["source"])
 	assert.Equal(t, "github", received.Metadata["provider"])
-	assert.Equal(t, "1", received.Metadata["group_id"])
+	assert.Equal(t, projectID.String(), received.Metadata[engine.ProjectIDEventKey])
 	assert.Equal(t, repositoryID.String(), received.Metadata["repository_id"])
 
 	// TODO: assert payload is RepositoryRecord protobuf

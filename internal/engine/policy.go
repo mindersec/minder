@@ -136,7 +136,7 @@ func validateContext(c *pb.Context) error {
 		return fmt.Errorf("%w: context provider cannot be empty", ErrValidationFailed)
 	}
 
-	if c.Organization == nil && c.Group == nil {
+	if c.Organization == nil && c.Project == nil {
 		return fmt.Errorf("%w: context organization or group must be set", ErrValidationFailed)
 	}
 
@@ -144,7 +144,7 @@ func validateContext(c *pb.Context) error {
 		return fmt.Errorf("%w: context organization cannot be empty", ErrValidationFailed)
 	}
 
-	if c.Group != nil && *c.Group == "" {
+	if c.Project != nil && *c.Project == "" {
 		return fmt.Errorf("%w: context group cannot be empty", ErrValidationFailed)
 	}
 
@@ -233,13 +233,13 @@ func TraverseRules(rules []*pb.Policy_Rule, fn func(*pb.Policy_Rule) error) erro
 // policies map. This assumes that the policies belong to the same group.
 //
 // TODO(jaosorior): This will have to consider the project tree once we	migrate to that
-func MergeDatabaseListIntoPolicies(ppl []db.ListPoliciesByGroupIDRow, ectx *EntityContext) map[string]*pb.Policy {
+func MergeDatabaseListIntoPolicies(ppl []db.ListPoliciesByProjectIDRow, ectx *EntityContext) map[string]*pb.Policy {
 	policies := map[string]*pb.Policy{}
 
 	for idx := range ppl {
 		p := ppl[idx]
 
-		// NOTE: names are unique within a given Provider & Group ID (Unique index),
+		// NOTE: names are unique within a given Provider & Project ID (Unique index),
 		// so we don't need to worry about collisions.
 		// first we check if policy already exists, if not we create a new one
 		// first we check if policy already exists, if not we create a new one
@@ -250,7 +250,7 @@ func MergeDatabaseListIntoPolicies(ppl []db.ListPoliciesByGroupIDRow, ectx *Enti
 				Name: p.Name,
 				Context: &pb.Context{
 					Provider: ectx.Provider.Name,
-					Group:    &ectx.Group.Name,
+					Project:  &ectx.Project.Name,
 				},
 			}
 
@@ -271,13 +271,13 @@ func MergeDatabaseListIntoPolicies(ppl []db.ListPoliciesByGroupIDRow, ectx *Enti
 // policies map. This assumes that the policies belong to the same group.
 //
 // TODO(jaosorior): This will have to consider the project tree once we migrate to that
-func MergeDatabaseGetIntoPolicies(ppl []db.GetPolicyByGroupAndIDRow, ectx *EntityContext) map[string]*pb.Policy {
+func MergeDatabaseGetIntoPolicies(ppl []db.GetPolicyByProjectAndIDRow, ectx *EntityContext) map[string]*pb.Policy {
 	policies := map[string]*pb.Policy{}
 
 	for idx := range ppl {
 		p := ppl[idx]
 
-		// NOTE: names are unique within a given Provider & Group ID (Unique index),
+		// NOTE: names are unique within a given Provider & Project ID (Unique index),
 		// so we don't need to worry about collisions.
 
 		// first we check if policy already exists, if not we create a new one
@@ -288,7 +288,7 @@ func MergeDatabaseGetIntoPolicies(ppl []db.GetPolicyByGroupAndIDRow, ectx *Entit
 				Name: p.Name,
 				Context: &pb.Context{
 					Provider: ectx.Provider.Name,
-					Group:    &ectx.Group.Name,
+					Project:  &ectx.Project.Name,
 				},
 			}
 

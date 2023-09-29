@@ -28,6 +28,7 @@ import (
 	"testing"
 	"time"
 
+	"github.com/google/uuid"
 	"github.com/stretchr/testify/require"
 
 	"github.com/stacklok/mediator/internal/util/rand"
@@ -47,13 +48,13 @@ func deleteRepositoryByRepoId(params CreateRepositoryParams) error {
 	return testQueries.DeleteRepository(context.Background(), repo.ID)
 }
 
-func createRandomRepository(t *testing.T, group int32, prov string, opts ...RepositoryOption) Repository {
+func createRandomRepository(t *testing.T, project uuid.UUID, prov string, opts ...RepositoryOption) Repository {
 	t.Helper()
 
 	seed := time.Now().UnixNano()
 	arg := CreateRepositoryParams{
 		Provider:   prov,
-		GroupID:    group,
+		ProjectID:  project,
 		RepoOwner:  rand.RandomName(seed),
 		RepoName:   rand.RandomName(seed),
 		RepoID:     int32(rand.RandomInt(0, 1000, seed)),
@@ -76,7 +77,7 @@ func createRandomRepository(t *testing.T, group int32, prov string, opts ...Repo
 	require.NotEmpty(t, repo)
 
 	require.Equal(t, arg.Provider, repo.Provider)
-	require.Equal(t, arg.GroupID, repo.GroupID)
+	require.Equal(t, arg.ProjectID, repo.ProjectID)
 	require.Equal(t, arg.RepoOwner, repo.RepoOwner)
 	require.Equal(t, arg.RepoName, repo.RepoName)
 	require.Equal(t, arg.RepoID, repo.RepoID)
@@ -86,7 +87,7 @@ func createRandomRepository(t *testing.T, group int32, prov string, opts ...Repo
 	require.Equal(t, arg.WebhookUrl, repo.WebhookUrl)
 
 	require.NotZero(t, repo.ID)
-	require.NotZero(t, repo.GroupID)
+	require.NotZero(t, repo.ProjectID)
 	require.NotZero(t, repo.CreatedAt)
 	require.NotZero(t, repo.UpdatedAt)
 
@@ -97,7 +98,7 @@ func TestRepository(t *testing.T) {
 	t.Parallel()
 
 	org := createRandomOrganization(t)
-	group := createRandomGroup(t, org.ID)
+	group := createRandomProject(t, org.ID)
 	prov := createRandomProvider(t, group.ID)
 	createRandomRepository(t, group.ID, prov.Name)
 }
@@ -106,7 +107,7 @@ func TestGetRepositoryByID(t *testing.T) {
 	t.Parallel()
 
 	org := createRandomOrganization(t)
-	group := createRandomGroup(t, org.ID)
+	group := createRandomProject(t, org.ID)
 	prov := createRandomProvider(t, group.ID)
 	repo1 := createRandomRepository(t, group.ID, prov.Name)
 
@@ -116,7 +117,7 @@ func TestGetRepositoryByID(t *testing.T) {
 
 	require.Equal(t, repo1.ID, repo2.ID)
 	require.Equal(t, repo1.Provider, repo2.Provider)
-	require.Equal(t, repo1.GroupID, repo2.GroupID)
+	require.Equal(t, repo1.ProjectID, repo2.ProjectID)
 	require.Equal(t, repo1.RepoOwner, repo2.RepoOwner)
 	require.Equal(t, repo1.RepoName, repo2.RepoName)
 	require.Equal(t, repo1.RepoID, repo2.RepoID)
@@ -133,7 +134,7 @@ func TestGetRepositoryByRepoName(t *testing.T) {
 	t.Parallel()
 
 	org := createRandomOrganization(t)
-	group := createRandomGroup(t, org.ID)
+	group := createRandomProject(t, org.ID)
 	prov := createRandomProvider(t, group.ID)
 	repo1 := createRandomRepository(t, group.ID, prov.Name)
 
@@ -144,7 +145,7 @@ func TestGetRepositoryByRepoName(t *testing.T) {
 
 	require.Equal(t, repo1.ID, repo2.ID)
 	require.Equal(t, repo1.Provider, repo2.Provider)
-	require.Equal(t, repo1.GroupID, repo2.GroupID)
+	require.Equal(t, repo1.ProjectID, repo2.ProjectID)
 	require.Equal(t, repo1.RepoOwner, repo2.RepoOwner)
 	require.Equal(t, repo1.RepoName, repo2.RepoName)
 	require.Equal(t, repo1.RepoID, repo2.RepoID)
@@ -157,11 +158,11 @@ func TestGetRepositoryByRepoName(t *testing.T) {
 	require.Equal(t, repo1.UpdatedAt, repo2.UpdatedAt)
 }
 
-func TestListRepositoriesByGroupID(t *testing.T) {
+func TestListRepositoriesByProjectID(t *testing.T) {
 	t.Parallel()
 
 	org := createRandomOrganization(t)
-	group := createRandomGroup(t, org.ID)
+	group := createRandomProject(t, org.ID)
 	prov := createRandomProvider(t, group.ID)
 	createRandomRepository(t, group.ID, prov.Name)
 
@@ -171,20 +172,20 @@ func TestListRepositoriesByGroupID(t *testing.T) {
 		})
 	}
 
-	arg := ListRepositoriesByGroupIDParams{
-		Provider: prov.Name,
-		GroupID:  group.ID,
-		Limit:    5,
-		Offset:   5,
+	arg := ListRepositoriesByProjectIDParams{
+		Provider:  prov.Name,
+		ProjectID: group.ID,
+		Limit:     5,
+		Offset:    5,
 	}
 
-	repos, err := testQueries.ListRepositoriesByGroupID(context.Background(), arg)
+	repos, err := testQueries.ListRepositoriesByProjectID(context.Background(), arg)
 	require.NoError(t, err)
 	require.Len(t, repos, 5)
 
 	for _, repo := range repos {
 		require.NotEmpty(t, repo)
-		require.Equal(t, arg.GroupID, repo.GroupID)
+		require.Equal(t, arg.ProjectID, repo.ProjectID)
 	}
 }
 
@@ -192,14 +193,14 @@ func TestUpdateRepository(t *testing.T) {
 	t.Parallel()
 
 	org := createRandomOrganization(t)
-	group := createRandomGroup(t, org.ID)
+	group := createRandomProject(t, org.ID)
 	prov := createRandomProvider(t, group.ID)
 	repo1 := createRandomRepository(t, group.ID, prov.Name)
 
 	arg := UpdateRepositoryParams{
 		ID:         repo1.ID,
 		Provider:   repo1.Provider,
-		GroupID:    repo1.GroupID,
+		ProjectID:  repo1.ProjectID,
 		RepoOwner:  repo1.RepoOwner,
 		RepoName:   repo1.RepoName,
 		RepoID:     repo1.RepoID,
@@ -216,7 +217,7 @@ func TestUpdateRepository(t *testing.T) {
 
 	require.Equal(t, repo1.ID, repo2.ID)
 	require.Equal(t, repo1.Provider, repo2.Provider)
-	require.Equal(t, repo1.GroupID, repo2.GroupID)
+	require.Equal(t, repo1.ProjectID, repo2.ProjectID)
 	require.Equal(t, repo1.RepoOwner, repo2.RepoOwner)
 	require.Equal(t, repo1.RepoName, repo2.RepoName)
 	require.Equal(t, repo1.RepoID, repo2.RepoID)
@@ -233,14 +234,14 @@ func TestUpdateRepositoryByRepoId(t *testing.T) {
 	t.Parallel()
 
 	org := createRandomOrganization(t)
-	group := createRandomGroup(t, org.ID)
+	group := createRandomProject(t, org.ID)
 	prov := createRandomProvider(t, group.ID)
 	repo1 := createRandomRepository(t, group.ID, prov.Name)
 
 	arg := UpdateRepositoryByIDParams{
 		RepoID:     repo1.RepoID,
 		Provider:   repo1.Provider,
-		GroupID:    repo1.GroupID,
+		ProjectID:  repo1.ProjectID,
 		RepoOwner:  repo1.RepoOwner,
 		RepoName:   repo1.RepoName,
 		IsPrivate:  repo1.IsPrivate,
@@ -256,7 +257,7 @@ func TestUpdateRepositoryByRepoId(t *testing.T) {
 
 	require.Equal(t, repo1.ID, repo2.ID)
 	require.Equal(t, repo1.Provider, repo2.Provider)
-	require.Equal(t, repo1.GroupID, repo2.GroupID)
+	require.Equal(t, repo1.ProjectID, repo2.ProjectID)
 	require.Equal(t, repo1.RepoOwner, repo2.RepoOwner)
 	require.Equal(t, repo1.RepoName, repo2.RepoName)
 	require.Equal(t, repo1.RepoID, repo2.RepoID)
@@ -273,7 +274,7 @@ func TestDeleteRepository(t *testing.T) {
 	t.Parallel()
 
 	org := createRandomOrganization(t)
-	group := createRandomGroup(t, org.ID)
+	group := createRandomProject(t, org.ID)
 	prov := createRandomProvider(t, group.ID)
 	repo1 := createRandomRepository(t, group.ID, prov.Name)
 

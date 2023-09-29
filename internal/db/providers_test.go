@@ -27,19 +27,20 @@ import (
 	"testing"
 	"time"
 
+	"github.com/google/uuid"
 	"github.com/stretchr/testify/require"
 
 	"github.com/stacklok/mediator/internal/util/rand"
 )
 
-func createRandomProvider(t *testing.T, groupID int32) Provider {
+func createRandomProvider(t *testing.T, projectID uuid.UUID) Provider {
 	t.Helper()
 
 	seed := time.Now().UnixNano()
 
 	prov, err := testQueries.CreateProvider(context.Background(), CreateProviderParams{
 		Name:       rand.RandomName(seed),
-		GroupID:    groupID,
+		ProjectID:  projectID,
 		Implements: []ProviderType{ProviderTypeGithub, ProviderTypeGit},
 		Definition: json.RawMessage("{}"),
 	})

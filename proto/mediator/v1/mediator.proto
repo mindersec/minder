@@ -28,7 +28,7 @@ option go_package = "github.com/stacklok/mediator/pkg/api/protobuf/go";
 enum ObjectOwner {
     OBJECT_OWNER_UNSPECIFIED = 0;
     OBJECT_OWNER_ORGANIZATION = 1;
-    OBJECT_OWNER_GROUP = 2;
+    OBJECT_OWNER_PROJECT = 2;
     OBJECT_OWNER_USER = 3;
 }
 
@@ -68,7 +68,7 @@ service ArtifactService {
         option (rpc_options) = {
             // TODO: this should probably be available to non-root users
             root_admin_only: true
-            auth_scope: OBJECT_OWNER_GROUP
+            auth_scope: OBJECT_OWNER_PROJECT
         };
     }
 
@@ -78,14 +78,14 @@ service ArtifactService {
         };
 
         option (rpc_options) = {
-            auth_scope: OBJECT_OWNER_GROUP
+            auth_scope: OBJECT_OWNER_PROJECT
         };
     }
 }
 
 message ListArtifactsRequest {
     string provider = 1;
-    int32 group_id = 2;
+    string project_id = 2;
 }
 
 message ListArtifactsResponse {
@@ -187,7 +187,7 @@ service OAuthService {
         };
 
         option (rpc_options) = {
-            auth_scope: OBJECT_OWNER_GROUP
+            auth_scope: OBJECT_OWNER_PROJECT
             owner_only: true
         };
     }
@@ -218,7 +218,7 @@ service OAuthService {
         };
 
         option (rpc_options) = {
-            auth_scope: OBJECT_OWNER_GROUP
+            auth_scope: OBJECT_OWNER_PROJECT
         };
     }
 
@@ -235,15 +235,15 @@ service OAuthService {
         };
     }
 
-    // revoke token for a group
-    rpc RevokeOauthGroupToken (RevokeOauthGroupTokenRequest) returns (RevokeOauthGroupTokenResponse) {
+    // revoke token for a project
+    rpc RevokeOauthProjectToken (RevokeOauthProjectTokenRequest) returns (RevokeOauthProjectTokenResponse) {
         option (google.api.http) = {
-            post: "/api/v1/auth/{provider}/revoke/{group_id}"
+            post: "/api/v1/auth/{provider}/revoke/{project_id}"
             body: "*"
         };
 
         option (rpc_options) = {
-            auth_scope: OBJECT_OWNER_GROUP
+            auth_scope: OBJECT_OWNER_PROJECT
             owner_only: true
         };
     }
@@ -255,7 +255,7 @@ service OAuthService {
         };
 
         option (rpc_options) = {
-            auth_scope: OBJECT_OWNER_GROUP
+            auth_scope: OBJECT_OWNER_PROJECT
         };
     }
 
@@ -350,7 +350,7 @@ service RepositoryService {
         };
 
         option (rpc_options) = {
-            auth_scope: OBJECT_OWNER_GROUP
+            auth_scope: OBJECT_OWNER_PROJECT
         };
     }
     rpc RegisterRepository (RegisterRepositoryRequest) returns (RegisterRepositoryResponse) {
@@ -360,7 +360,7 @@ service RepositoryService {
         };
 
         option (rpc_options) = {
-            auth_scope: OBJECT_OWNER_GROUP
+            auth_scope: OBJECT_OWNER_PROJECT
             owner_only: true
         };
     }
@@ -370,7 +370,7 @@ service RepositoryService {
         };
 
         option (rpc_options) = {
-            auth_scope: OBJECT_OWNER_GROUP
+            auth_scope: OBJECT_OWNER_PROJECT
             owner_only: false
         };
     }
@@ -380,7 +380,7 @@ service RepositoryService {
         };
 
         option (rpc_options) = {
-            auth_scope: OBJECT_OWNER_GROUP
+            auth_scope: OBJECT_OWNER_PROJECT
             owner_only: false
         };
     }
@@ -391,7 +391,7 @@ service RepositoryService {
         };
 
         option (rpc_options) = {
-            auth_scope: OBJECT_OWNER_GROUP
+            auth_scope: OBJECT_OWNER_PROJECT
             owner_only: false
         };
     }
@@ -464,11 +464,11 @@ service OrganizationService {
 
 }
 
-// manage Groups CRUD
-service GroupService {
-    rpc CreateGroup (CreateGroupRequest) returns (CreateGroupResponse) {
+// manage Projects CRUD
+service ProjectService {
+    rpc CreateProject (CreateProjectRequest) returns (CreateProjectResponse) {
         option (google.api.http) = {
-            post: "/api/v1/group"
+            post: "/api/v1/project"
             body: "*"
         };
 
@@ -478,9 +478,9 @@ service GroupService {
         };
     }
 
-    rpc GetGroups (GetGroupsRequest) returns (GetGroupsResponse) {
+    rpc GetProjects (GetProjectsRequest) returns (GetProjectsResponse) {
         option (google.api.http) = {
-            get: "/api/v1/groups/{organization_id}"
+            get: "/api/v1/projects/{organization_id}"
         };
 
         option (rpc_options) = {
@@ -489,9 +489,9 @@ service GroupService {
         };
     }
 
-    rpc GetGroupByName (GetGroupByNameRequest) returns (GetGroupByNameResponse) {
+    rpc GetProjectByName (GetProjectByNameRequest) returns (GetProjectByNameResponse) {
         option (google.api.http) = {
-            get: "/api/v1/group/name/{name}"
+            get: "/api/v1/project/name/{name}"
         };
 
         option (rpc_options) = {
@@ -500,9 +500,9 @@ service GroupService {
         };
     }
 
-    rpc GetGroupById (GetGroupByIdRequest) returns (GetGroupByIdResponse) {
+    rpc GetProjectById (GetProjectByIdRequest) returns (GetProjectByIdResponse) {
         option (google.api.http) = {
-            get: "/api/v1/group/id/{group_id}"
+            get: "/api/v1/project/id/{project_id}"
         };
 
         option (rpc_options) = {
@@ -511,9 +511,9 @@ service GroupService {
         };
     }
 
-    rpc DeleteGroup (DeleteGroupRequest) returns (DeleteGroupResponse) {
+    rpc DeleteProject (DeleteProjectRequest) returns (DeleteProjectResponse) {
         option (google.api.http) = {
-            delete: "/api/v1/group/{id}"
+            delete: "/api/v1/project/{id}"
         };
 
         option (rpc_options) = {
@@ -536,14 +536,14 @@ service RoleService {
             owner_only: true
         };
     }
-    rpc CreateRoleByGroup (CreateRoleByGroupRequest) returns (CreateRoleByGroupResponse) {
+    rpc CreateRoleByProject (CreateRoleByProjectRequest) returns (CreateRoleByProjectResponse) {
         option (google.api.http) = {
-            post: "/api/v1/role/group"
+            post: "/api/v1/role/project"
             body: "*"
         };
 
         option (rpc_options) = {
-            auth_scope: OBJECT_OWNER_GROUP
+            auth_scope: OBJECT_OWNER_PROJECT
             owner_only: true
         };
     }
@@ -570,13 +570,13 @@ service RoleService {
         };
     }
 
-    rpc GetRolesByGroup (GetRolesByGroupRequest) returns (GetRolesByGroupResponse) {
+    rpc GetRolesByProject (GetRolesByProjectRequest) returns (GetRolesByProjectResponse) {
         option (google.api.http) = {
-            get: "/api/v1/roles/group/{group_id}"
+            get: "/api/v1/roles/project/{project_id}"
         };
 
         option (rpc_options) = {
-            auth_scope: OBJECT_OWNER_GROUP
+            auth_scope: OBJECT_OWNER_PROJECT
             owner_only: true
         };
     }
@@ -651,13 +651,13 @@ service UserService {
         };
     }
 
-    rpc GetUsersByGroup (GetUsersByGroupRequest) returns (GetUsersByGroupResponse) {
+    rpc GetUsersByProject (GetUsersByProjectRequest) returns (GetUsersByProjectResponse) {
         option (google.api.http) = {
-            get: "/api/v1/users/{group_id}"
+            get: "/api/v1/users/{project_id}"
         };
 
         option (rpc_options) = {
-            auth_scope: OBJECT_OWNER_GROUP
+            auth_scope: OBJECT_OWNER_PROJECT
             owner_only: true
         };
     }
@@ -705,7 +705,7 @@ service PolicyService {
         };
 
         option (rpc_options) = {
-            auth_scope: OBJECT_OWNER_GROUP
+            auth_scope: OBJECT_OWNER_PROJECT
             owner_only: true
         };
     }
@@ -716,7 +716,7 @@ service PolicyService {
         };
 
         option (rpc_options) = {
-            auth_scope: OBJECT_OWNER_GROUP
+            auth_scope: OBJECT_OWNER_PROJECT
             owner_only: true
         };
     }
@@ -727,7 +727,7 @@ service PolicyService {
         };
 
         option (rpc_options) = {
-            auth_scope: OBJECT_OWNER_GROUP
+            auth_scope: OBJECT_OWNER_PROJECT
             owner_only: false
         };
     }
@@ -744,18 +744,18 @@ service PolicyService {
         };
 
         option (rpc_options) = {
-            auth_scope: OBJECT_OWNER_GROUP
+            auth_scope: OBJECT_OWNER_PROJECT
             owner_only: false
         };
     }
 
-    rpc GetPolicyStatusByGroup (GetPolicyStatusByGroupRequest) returns (GetPolicyStatusByGroupResponse) {
+    rpc GetPolicyStatusByProject (GetPolicyStatusByProjectRequest) returns (GetPolicyStatusByProjectResponse) {
         option (google.api.http) = {
             get: "/api/v1/policy_status"
         };
 
         option (rpc_options) = {
-            auth_scope: OBJECT_OWNER_GROUP
+            auth_scope: OBJECT_OWNER_PROJECT
             owner_only: false
         };
     }    
@@ -766,7 +766,7 @@ service PolicyService {
         };
 
         option (rpc_options) = {
-            auth_scope: OBJECT_OWNER_GROUP
+            auth_scope: OBJECT_OWNER_PROJECT
             owner_only: false
         };
     }
@@ -777,7 +777,7 @@ service PolicyService {
         };
 
         option (rpc_options) = {
-            auth_scope: OBJECT_OWNER_GROUP
+            auth_scope: OBJECT_OWNER_PROJECT
             owner_only: false
         };
     }
@@ -788,7 +788,7 @@ service PolicyService {
         };
 
         option (rpc_options) = {
-            auth_scope: OBJECT_OWNER_GROUP
+            auth_scope: OBJECT_OWNER_PROJECT
             owner_only: false
         };
     }
@@ -800,7 +800,7 @@ service PolicyService {
         };
 
         option (rpc_options) = {
-            auth_scope: OBJECT_OWNER_GROUP
+            auth_scope: OBJECT_OWNER_PROJECT
             owner_only: true
         };
     }
@@ -812,7 +812,7 @@ service PolicyService {
         };
 
         option (rpc_options) = {
-            auth_scope: OBJECT_OWNER_GROUP
+            auth_scope: OBJECT_OWNER_PROJECT
             owner_only: true
         };
     }
@@ -823,7 +823,7 @@ service PolicyService {
         };
 
         option (rpc_options) = {
-            auth_scope: OBJECT_OWNER_GROUP
+            auth_scope: OBJECT_OWNER_PROJECT
             owner_only: true
         };
     }
@@ -842,7 +842,7 @@ service KeyService {
         };
 
         option (rpc_options) = {
-            auth_scope: OBJECT_OWNER_GROUP
+            auth_scope: OBJECT_OWNER_PROJECT
             owner_only: true
         };
     }
@@ -857,7 +857,7 @@ message CheckHealthResponse {
 
 message GetAuthorizationURLRequest {
     string provider = 1;
-    int32 group_id = 2;
+    string project_id = 2;
     bool  cli = 3;
     int32  port = 4;
     optional string owner = 5;
@@ -869,7 +869,7 @@ message GetAuthorizationURLResponse {
 
 message ExchangeCodeForTokenCLIRequest {
     string provider = 1;
-    int32 group_id = 2;
+    string project_id = 2;
     string code = 3;
     string state = 4;
     string redirect_uri = 5;
@@ -877,7 +877,7 @@ message ExchangeCodeForTokenCLIRequest {
 
 message StoreProviderTokenRequest {
     string provider = 1;
-    int32 group_id = 2;
+    string project_id = 2;
     string access_token = 3;
     optional string owner = 4;
 }
@@ -887,7 +887,7 @@ message StoreProviderTokenResponse {
 
 message ExchangeCodeForTokenWEBRequest{
     string provider = 1;
-    int32 group_id = 2;
+    string project_id = 2;
     string code = 3;
     string redirect_uri = 4;
 }
@@ -925,12 +925,12 @@ message RevokeOauthTokensResponse {
     int32 revoked_tokens = 1;
 }
 
-message RevokeOauthGroupTokenRequest {
+message RevokeOauthProjectTokenRequest {
     string provider = 1;
-    int32 group_id = 2;
+    string project_id = 2;
 }
 
-message RevokeOauthGroupTokenResponse {
+message RevokeOauthProjectTokenResponse {
 }
 
 message RefreshTokenRequest {    
@@ -943,7 +943,7 @@ message RefreshTokenResponse {
 
 message SyncRepositoriesRequest {
     string provider = 1;
-    int32 group_id = 2;
+    string project_id = 2;
 }
 
 message SyncRepositoriesResponse {
@@ -952,7 +952,7 @@ message SyncRepositoriesResponse {
 
 message RegisterRepositoryRequest {
     string provider = 1;
-    int32 group_id = 2;
+    string project_id = 2;
     repeated Repositories repositories = 3;
     repeated string events = 4;
 }
@@ -989,7 +989,7 @@ message RegisterRepositoryResponse {
 message RepositoryRecord {
     string id = 1;
     string provider = 2;
-    int32 group_id = 3;
+    string project_id = 3;
     string owner = 4;
     string name = 5;
     int32 repo_id = 6;
@@ -1012,7 +1012,7 @@ message GetRepositoryByIdResponse {
 
 message GetRepositoryByNameRequest {
     string provider = 1;
-    int32 group_id = 2;
+    string project_id = 2;
     string name = 3;
 }
 
@@ -1030,7 +1030,7 @@ enum RepoFilter {
 
 message ListRepositoriesRequest {
     string provider = 1;
-    int32 group_id = 2;
+    string project_id = 2;
     int32 limit = 3;
     int32 offset = 4;
     RepoFilter filter = 5;
@@ -1049,7 +1049,7 @@ message VerifyResponse {
 
 message VerifyProviderTokenFromRequest {
     string provider = 1;
-    int32 group_id = 2;
+    string project_id = 2;
     google.protobuf.Timestamp timestamp = 3;
 }
 
@@ -1122,18 +1122,18 @@ message CreateOrganizationRequest {
   }
   
 message CreateOrganizationResponse {
-    int32 id = 1;
+    string id = 1;
     string name = 2;
     string company = 3;
     google.protobuf.Timestamp created_at = 5;
     google.protobuf.Timestamp updated_at = 6;
-    optional GroupRecord default_group = 7;
+    optional ProjectRecord default_project = 7;
     repeated RoleRecord default_roles = 8;
     optional UserRecord default_user = 9;
 }
 
 message OrganizationRecord {
-    int32 id = 1;
+    string id = 1;
     string name = 2;
     string company = 3;
     google.protobuf.Timestamp created_at = 5;
@@ -1142,7 +1142,7 @@ message OrganizationRecord {
 
 // DeleteOrganizationRequest represents a request to delete a organization
 message DeleteOrganizationRequest {
-    int32 id = 1;
+    string id = 1;
     optional bool force = 2;
 }
 
@@ -1163,12 +1163,12 @@ message GetOrganizationsResponse {
 
 // get organization by id
 message GetOrganizationRequest {
-    int32 organization_id = 1;
+    string organization_id = 1;
 }
 
 message GetOrganizationResponse {
     optional OrganizationRecord organization = 1;
-    repeated GroupRecord groups = 2;
+    repeated ProjectRecord projects = 2;
     repeated RoleRecord roles = 3;
     repeated UserRecord users = 4;
 }
@@ -1180,42 +1180,42 @@ message GetOrganizationByNameRequest {
 
 message GetOrganizationByNameResponse {
     optional OrganizationRecord organization = 1;
-    repeated GroupRecord groups = 2;
+    repeated ProjectRecord projects = 2;
     repeated RoleRecord roles = 3;
     repeated UserRecord users = 4;
 }
 
-// Group service
+// Project service
 
-// The CreateGroupRequest message represents a request to create a group
-message CreateGroupRequest {
-    int32  organization_id = 1;
+// The CreateProjectRequest message represents a request to create a project
+message CreateProjectRequest {
+    string  organization_id = 1;
     string name = 2;
     string description = 3;
     optional bool is_protected = 4;
 }
 
-// The GetGroupByNameRequest message represents a request to get a group by name
-message GetGroupByNameRequest {
+// The GetProjectByNameRequest message represents a request to get a project by name
+message GetProjectByNameRequest {
     string name = 1;
 }
 
-// The GetGroupByIdRequest message represents a request to get a group by ID
-message GetGroupByIdRequest {
-    int32 group_id = 1;
+// The GetProjectByIdRequest message represents a request to get a project by ID
+message GetProjectByIdRequest {
+    string project_id = 1;
 }
 
-// The GetGroupsRequest message represents a request to get an array of groups
-message GetGroupsRequest {
-    int32 organization_id = 1;
+// The GetProjectsRequest message represents a request to get an array of projects
+message GetProjectsRequest {
+    string organization_id = 1;
     int32 limit = 2;
     int32 offset = 3;
 }
 
 // BUF does not allow grouping (which is a shame)
-message GroupRecord {
-    int32 group_id = 1;
-    int32 organization_id = 2;
+message ProjectRecord {
+    string project_id = 1;
+    string organization_id = 2;
     string name = 3;
     string description = 4;
     bool is_protected = 5;
@@ -1223,9 +1223,9 @@ message GroupRecord {
     google.protobuf.Timestamp updated_at = 7;    
 }
 
-message  CreateGroupResponse {
-    int32 group_id = 1;
-    int32 organization_id = 2;
+message  CreateProjectResponse {
+    string project_id = 1;
+    string organization_id = 2;
     string name = 3;
     string description = 4;
     bool is_protected = 5;
@@ -1233,37 +1233,37 @@ message  CreateGroupResponse {
     google.protobuf.Timestamp updated_at = 7;    
 }
 
-message GetGroupByNameResponse {
-    optional GroupRecord group = 1;
+message GetProjectByNameResponse {
+    optional ProjectRecord project = 1;
     repeated RoleRecord roles = 2;
     repeated UserRecord users = 3;
 }
 
-message GetGroupByIdResponse {
-    optional GroupRecord group = 1;
+message GetProjectByIdResponse {
+    optional ProjectRecord project = 1;
     repeated RoleRecord roles = 2;
     repeated UserRecord users = 3;
 }
 
-// The GetGroupsResponse message represents a response with an array of groups
-message GetGroupsResponse {
-    repeated GroupRecord groups = 1;
+// The GetProjectsResponse message represents a response with an array of projects
+message GetProjectsResponse {
+    repeated ProjectRecord projects = 1;
 }
 
-// DeleteGroupRequest represents a request to delete a group
-message DeleteGroupRequest {
-    int32 id = 1;
+// DeleteProjectRequest represents a request to delete a project
+message DeleteProjectRequest {
+    string id = 1;
     optional bool force = 2;
 }
 
-// DeleteGroupResponse represents a response to a delete group request
-message DeleteGroupResponse {
+// DeleteProjectResponse represents a response to a delete project request
+message DeleteProjectResponse {
 
 }
 
 // Role service
 message CreateRoleByOrganizationRequest {
-    int32 organization_id = 1;
+    string organization_id = 1;
     string name = 3;
     optional bool is_admin = 4;
     optional bool is_protected = 5;
@@ -1271,7 +1271,7 @@ message CreateRoleByOrganizationRequest {
   
 message CreateRoleByOrganizationResponse {
     int32 id = 1;
-    int32 organization_id = 2;
+    string organization_id = 2;
     string name = 4;
     bool is_admin = 5;
     bool is_protected = 6;
@@ -1279,18 +1279,18 @@ message CreateRoleByOrganizationResponse {
     google.protobuf.Timestamp updated_at = 8;    
 }
 
-message CreateRoleByGroupRequest {
-    int32 organization_id = 1;
-    int32 group_id = 2;
+message CreateRoleByProjectRequest {
+    string organization_id = 1;
+    string project_id = 2;
     string name = 3;
     optional bool is_admin = 4;
     optional bool is_protected = 5;
   }
   
-message CreateRoleByGroupResponse {
+message CreateRoleByProjectResponse {
     int32 id = 1;
-    int32 organization_id = 2;
-    int32 group_id = 3;
+    string organization_id = 2;
+    string project_id = 3;
     string name = 4;
     bool is_admin = 5;
     bool is_protected = 6;
@@ -1310,8 +1310,8 @@ message DeleteRoleResponse {
 
 message RoleRecord {
     int32 id = 1;
-    int32 organization_id = 2;
-    optional int32 group_id = 3;
+    string organization_id = 2;
+    optional string project_id = 3;
     string name = 4;
     bool is_admin = 5;
     bool is_protected = 6;
@@ -1321,7 +1321,7 @@ message RoleRecord {
 
 // list roles
 message GetRolesRequest {
-    int32 organization_id = 1;
+    string organization_id = 1;
     optional int32 limit = 2;
     optional int32 offset = 3;
 }
@@ -1330,13 +1330,13 @@ message GetRolesResponse {
     repeated RoleRecord roles = 1;
 }
 
-message GetRolesByGroupRequest {
-    int32 group_id = 1;
+message GetRolesByProjectRequest {
+    string project_id = 1;
     optional int32 limit = 2;
     optional int32 offset = 3;
 }
 
-message GetRolesByGroupResponse {
+message GetRolesByProjectResponse {
     repeated RoleRecord roles = 1;
 }
 
@@ -1349,9 +1349,9 @@ message GetRoleByIdResponse {
     optional RoleRecord role = 1;
 }
 
-// get role by group and name
+// get role by project and name
 message GetRoleByNameRequest {
-    int32 organization_id = 1;
+    string organization_id = 1;
     string name = 2;
 }
 
@@ -1365,7 +1365,7 @@ message CreateUserRequest { }
   
 message CreateUserResponse {
     int32 id = 1;
-    int32 organization_id = 2;
+    string organization_id = 2;
     optional string email = 3;
     string identity_subject = 4;
     optional string first_name = 5;
@@ -1385,7 +1385,7 @@ message DeleteUserResponse {
 // user record to be returned
 message UserRecord {
     int32 id = 1;
-    int32 organization_id = 2;
+    string organization_id = 2;
     optional string email = 3;
     string identity_subject = 4;
     optional string first_name = 5;
@@ -1405,7 +1405,7 @@ message GetUsersResponse {
 }
 
 message GetUsersByOrganizationRequest {
-    int32 organization_id = 1;
+    string organization_id = 1;
     optional int32 limit = 2;
     optional int32 offset = 3;
 }
@@ -1414,13 +1414,13 @@ message GetUsersByOrganizationResponse {
     repeated UserRecord users = 1;
 }
 
-message GetUsersByGroupRequest {
-    int32 group_id = 1;
+message GetUsersByProjectRequest {
+    string project_id = 1;
     optional int32 limit = 2;
     optional int32 offset = 3;
 }
 
-message GetUsersByGroupResponse {
+message GetUsersByProjectResponse {
     repeated UserRecord users = 1;
 }
 
@@ -1431,7 +1431,7 @@ message GetUserByIdRequest {
 
 message GetUserByIdResponse {
     optional UserRecord user = 1;
-    repeated GroupRecord groups = 2;
+    repeated ProjectRecord projects = 2;
     repeated RoleRecord roles = 3;
 }
 
@@ -1442,7 +1442,7 @@ message GetUserBySubjectRequest {
 
 message GetUserBySubjectResponse {
     optional UserRecord user = 1;
-    repeated GroupRecord groups = 2;
+    repeated ProjectRecord projects = 2;
     repeated RoleRecord roles = 3;
 }
 
@@ -1452,7 +1452,7 @@ message GetUserRequest {
 
 message GetUserResponse {
     optional UserRecord user = 1;
-    repeated GroupRecord groups = 2;
+    repeated ProjectRecord projects = 2;
     repeated RoleRecord roles = 3;
 }
 
@@ -1560,12 +1560,12 @@ message GetPolicyStatusByIdResponse {
     repeated RuleEvaluationStatus rule_evaluation_status = 2;
 }
 
-message GetPolicyStatusByGroupRequest {
+message GetPolicyStatusByProjectRequest {
     // context is the context in which the rule type is evaluated.
     Context context = 1;
 }
 
-message GetPolicyStatusByGroupResponse {
+message GetPolicyStatusByProjectResponse {
     // policy_status is the status of the policy
     repeated PolicyStatus policy_status = 1;
 }
@@ -1580,7 +1580,7 @@ message GetPublicKeyResponse {
 
 message CreateKeyPairRequest {
     string passphrase = 1;
-    int32 group_id = 2;
+    string project_id = 2;
 }
 
 message CreateKeyPairResponse {
@@ -1627,7 +1627,7 @@ message Provider {
     // an organization.
     message Context {
         string organization = 1;
-        string group = 2;
+        string project = 2;
     }
 
     Context context = 2;
@@ -1658,11 +1658,11 @@ message Provider {
 }
 
 // Context defines the context in which a rule is evaluated.
-// this normally refers to a combination of the provider, organization and group.
+// this normally refers to a combination of the provider, organization and project.
 message Context {
     string provider = 1;
     optional string organization = 2;
-    optional string group = 3;
+    optional string project = 3;
 }
 
 // --- START RuleType CRUD definitions

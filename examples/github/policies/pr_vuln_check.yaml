@@ -3,7 +3,7 @@ version: v1
 type: policy
 name: acme-github-policy-pr-vuln-check
 context:
-  group: Root Group
+  project: Root Project
   provider: github
 pull_request:
   - type: pr_vulnerability_check

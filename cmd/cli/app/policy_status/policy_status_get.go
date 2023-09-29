@@ -32,7 +32,7 @@ var policystatus_getCmd = &cobra.Command{
 	Use:   "get",
 	Short: "Get policy status within a mediator control plane",
 	Long: `The medic policy_status get subcommand lets you get policy status within a
-mediator control plane for an specific provider/group or policy id, entity type and entity id.`,
+mediator control plane for an specific provider/project or policy id, entity type and entity id.`,
 	PreRun: func(cmd *cobra.Command, args []string) {
 		if err := viper.BindPFlags(cmd.Flags()); err != nil {
 			fmt.Fprintf(os.Stderr, "Error binding flags: %s\n", err)
@@ -50,7 +50,7 @@ mediator control plane for an specific provider/group or policy id, entity type 
 		defer cancel()
 
 		provider := viper.GetString("provider")
-		group := viper.GetString("group")
+		project := viper.GetString("project")
 		policyId := viper.GetString("policy")
 		entityId := viper.GetString("entity")
 		entityType := viper.GetString("entity-type")
@@ -77,8 +77,8 @@ mediator control plane for an specific provider/group or policy id, entity type 
 			},
 		}
 
-		if group != "" {
-			req.Context.Group = &group
+		if project != "" {
+			req.Context.Project = &project
 		}
 
 		resp, err := client.GetPolicyStatusById(ctx, req)
@@ -106,7 +106,7 @@ mediator control plane for an specific provider/group or policy id, entity type 
 func init() {
 	PolicyStatusCmd.AddCommand(policystatus_getCmd)
 	policystatus_getCmd.Flags().StringP("provider", "p", "github", "Provider to get policy status for")
-	policystatus_getCmd.Flags().StringP("group", "g", "", "group id to get policy status for")
+	policystatus_getCmd.Flags().StringP("project", "g", "", "project id to get policy status for")
 	policystatus_getCmd.Flags().StringP("policy", "i", "", "policy id to get policy status for")
 	policystatus_getCmd.Flags().StringP("entity-type", "t", "",
 		fmt.Sprintf("the entity type to get policy status for (one of %s)", entities.KnownTypesCSV()))

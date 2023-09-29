@@ -19,6 +19,7 @@ import (
 	"testing"
 
 	"github.com/golang/mock/gomock"
+	"github.com/google/uuid"
 	"github.com/stretchr/testify/assert"
 	"google.golang.org/grpc"
 
@@ -33,26 +34,29 @@ func TestIsSuperadminAuthorized(t *testing.T) {
 	ctrl := gomock.NewController(t)
 	defer ctrl.Finish()
 
-	request := &pb.GetGroupByIdRequest{GroupId: 1}
+	orgID := rootOrganization
+	projectID := rootProject
+
+	request := &pb.GetProjectByIdRequest{ProjectId: projectID.String()}
 	// Create a new context and set the claims value
 	ctx := auth.WithPermissionsContext(context.Background(), auth.UserPermissions{
 		UserId:         1,
-		OrganizationId: 1,
-		GroupIds:       []int32{1},
+		OrganizationId: orgID,
+		ProjectIds:     []uuid.UUID{projectID},
 		Roles: []auth.RoleInfo{
-			{RoleID: 1, IsAdmin: true, GroupID: 0, OrganizationID: 1}},
+			{RoleID: 1, IsAdmin: true, ProjectID: &projectID, OrganizationID: orgID}},
 	})
 
 	mockStore := mockdb.NewMockStore(ctrl)
-	mockStore.EXPECT().GetGroupByID(ctx, gomock.Any())
-	mockStore.EXPECT().ListRolesByGroupID(ctx, gomock.Any())
-	mockStore.EXPECT().ListUsersByGroup(ctx, gomock.Any())
+	mockStore.EXPECT().GetProjectByID(ctx, gomock.Any())
+	mockStore.EXPECT().ListRolesByProjectID(ctx, gomock.Any())
+	mockStore.EXPECT().ListUsersByProject(ctx, gomock.Any())
 
 	server := &Server{
 		store: mockStore,
 	}
 
-	response, err := server.GetGroupById(ctx, request)
+	response, err := server.GetProjectById(ctx, request)
 
 	assert.NoError(t, err)
 	assert.NotNil(t, response)
@@ -64,14 +68,17 @@ func TestIsNonadminAuthorized(t *testing.T) {
 	ctrl := gomock.NewController(t)
 	defer ctrl.Finish()
 
-	request := &pb.CreateRoleByOrganizationRequest{OrganizationId: 1, Name: "test"}
+	orgID := uuid.New()
+	projectID := uuid.New()
+
+	request := &pb.CreateRoleByOrganizationRequest{OrganizationId: orgID.String(), Name: "test"}
 	// Create a new context and set the claims value
 	ctx := auth.WithPermissionsContext(context.Background(), auth.UserPermissions{
 		UserId:         1,
-		OrganizationId: 1,
-		GroupIds:       []int32{1},
+		OrganizationId: orgID,
+		ProjectIds:     []uuid.UUID{projectID},
 		Roles: []auth.RoleInfo{
-			{RoleID: 1, IsAdmin: false, GroupID: 0, OrganizationID: 1}},
+			{RoleID: 1, IsAdmin: false, ProjectID: &projectID, OrganizationID: orgID}},
 	})
 
 	rpcOpts, err := optionsForMethod(&grpc.UnaryServerInfo{FullMethod: "/mediator.v1.RoleService/CreateRoleByOrganization"})
@@ -103,14 +110,18 @@ func TestByResourceUnauthorized(t *testing.T) {
 	ctrl := gomock.NewController(t)
 	defer ctrl.Finish()
 
+	orgID := uuid.New()
+	projectID1 := uuid.New()
+	projectID2 := uuid.New()
+
 	request := &pb.GetRoleByIdRequest{Id: 1}
 	// Create a new context and set the claims value
 	ctx := auth.WithPermissionsContext(context.Background(), auth.UserPermissions{
 		UserId:         2,
-		OrganizationId: 2,
-		GroupIds:       []int32{1},
+		OrganizationId: orgID,
+		ProjectIds:     []uuid.UUID{projectID1},
 		Roles: []auth.RoleInfo{
-			{RoleID: 2, IsAdmin: true, GroupID: 2, OrganizationID: 2}},
+			{RoleID: 2, IsAdmin: true, ProjectID: &projectID2, OrganizationID: orgID}},
 	})
 
 	rpcOpts, err := optionsForMethod(&grpc.UnaryServerInfo{FullMethod: "/mediator.v1.RoleService/GetRoleById"})

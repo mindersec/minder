@@ -20,6 +20,7 @@ import (
 	"context"
 	"fmt"
 
+	"github.com/google/uuid"
 	"golang.org/x/exp/slices"
 
 	"github.com/stacklok/mediator/internal/crypto"
@@ -35,12 +36,12 @@ import (
 func GetProviderBuilder(
 	ctx context.Context,
 	prov db.Provider,
-	groupID int32,
+	projectID uuid.UUID,
 	store db.Store,
 	crypteng *crypto.Engine,
 ) (*ProviderBuilder, error) {
-	encToken, err := store.GetAccessTokenByGroupID(ctx,
-		db.GetAccessTokenByGroupIDParams{Provider: prov.Name, GroupID: groupID})
+	encToken, err := store.GetAccessTokenByProjectID(ctx,
+		db.GetAccessTokenByProjectIDParams{Provider: prov.Name, ProjectID: projectID})
 	if err != nil {
 		return nil, fmt.Errorf("error getting access token: %w", err)
 	}

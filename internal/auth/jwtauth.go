@@ -20,6 +20,7 @@ import (
 	"errors"
 	"fmt"
 
+	"github.com/google/uuid"
 	"github.com/lestrrat-go/jwx/v2/jwk"
 	"github.com/lestrrat-go/jwx/v2/jwt"
 	"github.com/lestrrat-go/jwx/v2/jwt/openid"
@@ -28,18 +29,18 @@ import (
 
 // RoleInfo contains the role information for a user
 type RoleInfo struct {
-	RoleID         int32 `json:"role_id"`
-	IsAdmin        bool  `json:"is_admin"`
-	GroupID        int32 `json:"group_id"`
-	OrganizationID int32 `json:"organization_id"`
+	RoleID         int32      `json:"role_id"`
+	IsAdmin        bool       `json:"is_admin"`
+	ProjectID      *uuid.UUID `json:"project_id"`
+	OrganizationID uuid.UUID  `json:"organization_id"`
 }
 
 // UserPermissions contains the permissions for a user
 type UserPermissions struct {
 	UserId         int32
-	GroupIds       []int32
+	ProjectIds     []uuid.UUID
 	Roles          []RoleInfo
-	OrganizationId int32
+	OrganizationId uuid.UUID
 }
 
 // JwtValidator provides the functions to validate a JWT
@@ -125,7 +126,7 @@ var tokenContextKey struct{}
 func GetPermissionsFromContext(ctx context.Context) UserPermissions {
 	permissions, ok := ctx.Value(tokenContextKey).(UserPermissions)
 	if !ok {
-		return UserPermissions{UserId: -1, OrganizationId: -1}
+		return UserPermissions{UserId: -1, OrganizationId: uuid.UUID{}}
 	}
 	return permissions
 }
@@ -135,24 +136,24 @@ func WithPermissionsContext(ctx context.Context, claims UserPermissions) context
 	return context.WithValue(ctx, tokenContextKey, claims)
 }
 
-// GetDefaultGroup returns the default group id for the user
-func GetDefaultGroup(ctx context.Context) (int32, error) {
+// GetDefaultProject returns the default group id for the user
+func GetDefaultProject(ctx context.Context) (uuid.UUID, error) {
 	permissions := GetPermissionsFromContext(ctx)
-	if len(permissions.GroupIds) != 1 {
-		return 0, errors.New("cannot get default group")
+	if len(permissions.ProjectIds) != 1 {
+		return uuid.UUID{}, errors.New("cannot get default group")
 	}
-	return permissions.GroupIds[0], nil
+	return permissions.ProjectIds[0], nil
 }
 
-// IsAuthorizedForGroup returns true if the user is authorized for the given group
-func IsAuthorizedForGroup(ctx context.Context, groupId int32) bool {
+// IsAuthorizedForProject returns true if the user is authorized for the given group
+func IsAuthorizedForProject(ctx context.Context, projectID uuid.UUID) bool {
 	permissions := GetPermissionsFromContext(ctx)
 
-	return slices.Contains(permissions.GroupIds, groupId)
+	return slices.Contains(permissions.ProjectIds, projectID)
 }
 
-// GetUserGroups returns all the groups where an user belongs to
-func GetUserGroups(ctx context.Context) ([]int32, error) {
+// GetUserProjects returns all the groups where an user belongs to
+func GetUserProjects(ctx context.Context) ([]uuid.UUID, error) {
 	permissions := GetPermissionsFromContext(ctx)
-	return permissions.GroupIds, nil
+	return permissions.ProjectIds, nil
 }

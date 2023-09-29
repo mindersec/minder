@@ -33,7 +33,7 @@ import (
 var Policy_createCmd = &cobra.Command{
 	Use:   "create",
 	Short: "Create a policy within a mediator control plane",
-	Long: `The medic policy create subcommand lets you create new policies for a group
+	Long: `The medic policy create subcommand lets you create new policies for a project
 within a mediator control plane.`,
 	PreRun: func(cmd *cobra.Command, args []string) {
 		if err := viper.BindPFlags(cmd.Flags()); err != nil {

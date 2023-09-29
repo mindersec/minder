@@ -16,14 +16,24 @@
 package controlplane
 
 import (
+	"context"
 	"database/sql"
 	"errors"
 	"fmt"
 
+	"github.com/google/uuid"
 	"google.golang.org/grpc/codes"
+	"google.golang.org/grpc/status"
 
+	"github.com/stacklok/mediator/internal/auth"
 	"github.com/stacklok/mediator/internal/util"
 )
+
+// ProjectIDGetter is an interface that can be implemented by a request
+type ProjectIDGetter interface {
+	// GetProjectId returns the project ID
+	GetProjectId() string
+}
 
 func providerError(err error) error {
 	if errors.Is(err, sql.ErrNoRows) {
@@ -31,3 +41,34 @@ func providerError(err error) error {
 	}
 	return fmt.Errorf("provider error: %w", err)
 }
+
+func getProjectFromRequestOrDefault(ctx context.Context, in ProjectIDGetter) (uuid.UUID, error) {
+	// if we do not have a group, check if we can infer it
+	if in.GetProjectId() == "" {
+		proj, err := auth.GetDefaultProject(ctx)
+		if err != nil {
+			return uuid.UUID{}, status.Errorf(codes.InvalidArgument, "cannot infer project id: %s", err)
+		}
+
+		return proj, err
+	}
+
+	parsedProjectID, err := uuid.Parse(in.GetProjectId())
+	if err != nil {
+		return uuid.UUID{}, util.UserVisibleError(codes.InvalidArgument, "malformed project ID")
+	}
+	return parsedProjectID, nil
+}
+
+// Note that to keep existing functionality, we hardcode a root organization
+// and project that are predictable. This is so we can create a superadmin
+// user that can then create other users and organizations. This is a
+// temporary measure until we have a better way to bootstrap the system.
+var (
+	rootOrganization = uuid.MustParse("00000000-0000-0000-0000-000000000001")
+	rootProject      = uuid.MustParse("00000000-0000-0000-0000-000000000002")
+)
+
+const (
+	superadminRole = 1
+)

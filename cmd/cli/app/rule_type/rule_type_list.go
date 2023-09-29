@@ -31,7 +31,7 @@ var ruleType_listCmd = &cobra.Command{
 	Use:   "list",
 	Short: "List rule types within a mediator control plane",
 	Long: `The medic rule_type list subcommand lets you list rule type within a
-mediator control plane for an specific group.`,
+mediator control plane for an specific project.`,
 	PreRun: func(cmd *cobra.Command, args []string) {
 		if err := viper.BindPFlags(cmd.Flags()); err != nil {
 			fmt.Fprintf(os.Stderr, "Error binding flags: %s\n", err)
@@ -63,7 +63,7 @@ mediator control plane for an specific group.`,
 		resp, err := client.ListRuleTypes(ctx, &pb.ListRuleTypesRequest{
 			Context: &pb.Context{
 				Provider: provider,
-				// TODO set up group if specified
+				// TODO set up project if specified
 				// Currently it's inferred from the authorization token
 			},
 		})
@@ -93,8 +93,8 @@ func init() {
 	ruleTypeCmd.AddCommand(ruleType_listCmd)
 	ruleType_listCmd.Flags().StringP("provider", "p", "", "Provider to list rule types for")
 	ruleType_listCmd.Flags().StringP("output", "o", app.Table, "Output format (json, yaml or table)")
-	// TODO: Take group ID into account
-	// ruleType_listCmd.Flags().Int32P("group-id", "g", 0, "group id to list roles for")
+	// TODO: Take project ID into account
+	// ruleType_listCmd.Flags().Int32P("project-id", "g", 0, "project id to list roles for")
 
 	if err := ruleType_listCmd.MarkFlagRequired("provider"); err != nil {
 		fmt.Fprintf(os.Stderr, "Error marking flag as required: %s\n", err)
