@@ -53,6 +53,7 @@ clean-gen:
 	rm -rf $(shell find pkg/api -iname "*.go") & rm -rf $(shell find pkg/api -iname "*.swagger.json") & rm -rf pkg/api/protodocs
 
 cli-docs:
+	@rm -rf docs/docs/cli
 	@mkdir -p docs/docs/cli
 	@go run cmd/cli/main.go docs
 
