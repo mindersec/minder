@@ -15,6 +15,7 @@
 package _go
 
 import (
+	"errors"
 	"fmt"
 )
 
@@ -42,6 +43,71 @@ func (rpcfg *RESTProviderConfig) Validate() error {
 	// protobuf-generated structs, so we have to do this manually.
 	if rpcfg.GetBaseUrl() == "" {
 		return fmt.Errorf("base_url is required")
+	}
+
+	return nil
+}
+
+// Ensure Entity implements the Validator interface
+var _ Validator = (*Entity)(nil)
+
+var (
+	// ErrInvalidEntity is returned when an entity is invalid
+	ErrInvalidEntity = errors.New("invalid entity")
+)
+
+// Validate ensures that an entity is valid
+func (entity *Entity) Validate() error {
+	if !entity.IsValid() {
+		return fmt.Errorf("%w: invalid entity type: %s", ErrInvalidEntity, entity.String())
+	}
+
+	return nil
+}
+
+var (
+	// ErrInvalidRuleType is returned when a rule type is invalid
+	ErrInvalidRuleType = errors.New("invalid rule type")
+	// ErrInvalidRuleTypeDefinition is returned when a rule type definition is invalid
+	ErrInvalidRuleTypeDefinition = errors.New("invalid rule type definition")
+)
+
+// Ensure RuleType implements the Validator interface
+var _ Validator = (*RuleType)(nil)
+
+// Validate ensures that a rule type is valid
+func (rt *RuleType) Validate() error {
+	if rt == nil {
+		return fmt.Errorf("%w: rule type is nil", ErrInvalidRuleType)
+	}
+
+	if rt.Def == nil {
+		return fmt.Errorf("%w: rule type definition is nil", ErrInvalidRuleType)
+	}
+
+	if err := rt.Def.Validate(); err != nil {
+		return errors.Join(ErrInvalidRuleType, err)
+	}
+
+	return nil
+}
+
+// Validate validates a rule type definition
+func (def *RuleType_Definition) Validate() error {
+	// if !entities.IsValidEntity(entities.FromString(def.InEntity)) {
+	// 	return fmt.Errorf("%w: invalid entity type: %s", ErrInvalidRuleTypeDefinition, def.InEntity)
+	// }
+
+	if def.RuleSchema == nil {
+		return fmt.Errorf("%w: rule schema is nil", ErrInvalidRuleTypeDefinition)
+	}
+
+	if def.Ingest == nil {
+		return fmt.Errorf("%w: data ingest is nil", ErrInvalidRuleTypeDefinition)
+	}
+
+	if def.Eval == nil {
+		return fmt.Errorf("%w: data eval is nil", ErrInvalidRuleTypeDefinition)
 	}
 
 	return nil
