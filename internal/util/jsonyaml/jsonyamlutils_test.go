@@ -19,14 +19,14 @@
 // It does make a good example of how to use the generated client code
 // for others to use as a reference.
 
-package util_test
+package jsonyaml_test
 
 import (
 	"testing"
 
 	"github.com/stretchr/testify/assert"
 
-	"github.com/stacklok/mediator/internal/util"
+	"github.com/stacklok/mediator/internal/util/jsonyaml"
 )
 
 func TestConvertYAMLToJSON(t *testing.T) {
@@ -69,7 +69,7 @@ bar:
 		t.Run(tt.name, func(t *testing.T) {
 			t.Parallel()
 
-			got, err := util.ConvertYamlToJson(tt.yamlCase)
+			got, err := jsonyaml.ConvertYamlToJson(tt.yamlCase)
 
 			if tt.wantErr {
 				assert.Error(t, err, "expected error")
@@ -121,7 +121,7 @@ foo: bar
 		t.Run(tt.name, func(t *testing.T) {
 			t.Parallel()
 
-			got, err := util.ConvertJsonToYaml([]byte(tt.jsonCase))
+			got, err := jsonyaml.ConvertJsonToYaml([]byte(tt.jsonCase))
 
 			if tt.wantErr {
 				assert.Error(t, err, "expected error")

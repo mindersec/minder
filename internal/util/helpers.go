@@ -53,6 +53,7 @@ import (
 	"google.golang.org/protobuf/types/known/timestamppb"
 
 	"github.com/stacklok/mediator/internal/db"
+	"github.com/stacklok/mediator/internal/util/jsonyaml"
 	pb "github.com/stacklok/mediator/pkg/api/protobuf/go/mediator/v1"
 )
 
@@ -328,7 +329,7 @@ func GetYamlFromProto(msg protoreflect.ProtoMessage) (string, error) {
 	if err != nil {
 		return "", err
 	}
-	yamlResult, err := ConvertJsonToYaml(rawMsg)
+	yamlResult, err := jsonyaml.ConvertJsonToYaml(rawMsg)
 	if err != nil {
 		return "", err
 	}
