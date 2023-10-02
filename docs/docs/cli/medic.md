@@ -20,7 +20,7 @@ https://docs.stacklok.com/mediator/medic/overview.html
 ### SEE ALSO
 
 * [medic apply](medic_apply.md)	 - Appy a configuration to a mediator control plane
-* [medic artifact](medic_artifact.md)	 - Manage repositories within a mediator control plane
+* [medic artifact](medic_artifact.md)	 - Manage artifacts within a mediator control plane
 * [medic auth](medic_auth.md)	 - Authorize and manage accounts within a mediator control plane
 * [medic completion](medic_completion.md)	 - Generate the autocompletion script for the specified shell
 * [medic docs](medic_docs.md)	 - Generates documentation for the client

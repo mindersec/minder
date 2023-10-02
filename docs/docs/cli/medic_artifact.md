@@ -1,6 +1,6 @@
 ## medic artifact
 
-Manage repositories within a mediator control plane
+Manage artifacts within a mediator control plane
 
 ### Synopsis
 
