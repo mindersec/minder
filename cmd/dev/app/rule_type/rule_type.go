@@ -33,6 +33,7 @@ import (
 	"github.com/stacklok/mediator/internal/db"
 	"github.com/stacklok/mediator/internal/engine"
 	"github.com/stacklok/mediator/internal/engine/eval/rego"
+	"github.com/stacklok/mediator/internal/engine/interfaces"
 	"github.com/stacklok/mediator/internal/providers"
 	"github.com/stacklok/mediator/internal/util/jsonyaml"
 	mediatorv1 "github.com/stacklok/mediator/pkg/api/protobuf/go/mediator/v1"
@@ -131,10 +132,15 @@ func testCmdRun(cmd *cobra.Command, _ []string) error {
 		return fmt.Errorf("no rules found with type %s", rt.Name)
 	}
 
-	return runEvaluationForRules(eng, ent, rules)
+	return runEvaluationForRules(eng, ent, interfaces.RemediationActionOptFromString(p.Remediate), rules)
 }
 
-func runEvaluationForRules(eng *engine.RuleTypeEngine, ent protoreflect.ProtoMessage, frags []*mediatorv1.Policy_Rule) error {
+func runEvaluationForRules(
+	eng *engine.RuleTypeEngine,
+	ent protoreflect.ProtoMessage,
+	rem interfaces.RemediateActionOpt,
+	frags []*mediatorv1.Policy_Rule,
+) error {
 	for idx := range frags {
 		frag := frags[idx]
 
@@ -155,7 +161,7 @@ func runEvaluationForRules(eng *engine.RuleTypeEngine, ent protoreflect.ProtoMes
 			params = frag.GetParams().AsMap()
 		}
 
-		if err := eng.Eval(context.Background(), ent, def, params); err != nil {
+		if err := eng.Eval(context.Background(), ent, def, params, rem); err != nil {
 			return fmt.Errorf("error evaluating rule type: %w", err)
 		}
 

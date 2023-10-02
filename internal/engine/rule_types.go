@@ -17,7 +17,9 @@ package engine
 
 import (
 	"context"
+	"errors"
 	"fmt"
+	"log"
 	"strings"
 
 	"github.com/xeipuuv/gojsonschema"
@@ -26,9 +28,11 @@ import (
 	"google.golang.org/protobuf/types/known/structpb"
 
 	"github.com/stacklok/mediator/internal/db"
+	evalerrors "github.com/stacklok/mediator/internal/engine/errors"
 	"github.com/stacklok/mediator/internal/engine/eval"
 	"github.com/stacklok/mediator/internal/engine/ingester"
 	engif "github.com/stacklok/mediator/internal/engine/interfaces"
+	"github.com/stacklok/mediator/internal/engine/remediate"
 	"github.com/stacklok/mediator/internal/providers"
 	mediatorv1 "github.com/stacklok/mediator/pkg/api/protobuf/go/mediator/v1"
 )
@@ -139,6 +143,9 @@ type RuleTypeEngine struct {
 	// reval is the rule evaluator
 	reval engif.Evaluator
 
+	// rrem is the rule remediator
+	rrem engif.Remediator
+
 	rval *RuleValidator
 
 	rt *mediatorv1.RuleType
@@ -163,6 +170,11 @@ func NewRuleTypeEngine(rt *mediatorv1.RuleType, cli *providers.ProviderBuilder) 
 		return nil, fmt.Errorf("cannot create rule evaluator: %w", err)
 	}
 
+	rrem, err := remediate.NewRuleRemediator(rt, cli)
+	if err != nil {
+		return nil, fmt.Errorf("cannot create rule remediator: %w", err)
+	}
+
 	rte := &RuleTypeEngine{
 		Meta: RuleMeta{
 			Name:     rt.Name,
@@ -171,6 +183,7 @@ func NewRuleTypeEngine(rt *mediatorv1.RuleType, cli *providers.ProviderBuilder) 
 		rval:  rval,
 		rdi:   rdi,
 		reval: reval,
+		rrem:  rrem,
 		rt:    rt,
 		cli:   cli,
 	}
@@ -204,13 +217,68 @@ func (r *RuleTypeEngine) GetRuleInstanceValidator() *RuleValidator {
 }
 
 // Eval runs the rule type engine against the given entity
-func (r *RuleTypeEngine) Eval(ctx context.Context, ent protoreflect.ProtoMessage, pol, params map[string]any) error {
+func (r *RuleTypeEngine) Eval(
+	ctx context.Context,
+	ent protoreflect.ProtoMessage,
+	pol, params map[string]any,
+	remAction engif.RemediateActionOpt,
+) error {
 	result, err := r.rdi.Ingest(ctx, ent, params)
 	if err != nil {
 		return fmt.Errorf("error ingesting data: %w", err)
 	}
 
-	return r.reval.Eval(ctx, pol, result)
+	evalErr := r.reval.Eval(ctx, pol, result)
+
+	remediateErr := r.tryRemediate(ctx, ent, pol, remAction, evalErr)
+	if remediateErr != nil {
+		// TODO(jakub): We should surface this error up and store in the rule evaluation status
+		// for now we just log and do nothing else
+		log.Printf("remediation error: %v", remediateErr)
+	}
+
+	return evalErr
+}
+
+func (r *RuleTypeEngine) tryRemediate(
+	ctx context.Context,
+	ent protoreflect.ProtoMessage,
+	pol map[string]any,
+	remAction engif.RemediateActionOpt,
+	evalErr error,
+) error {
+	shouldRemediate, err := r.shouldRemediate(remAction, evalErr)
+	if err != nil {
+		return err
+	} else if !shouldRemediate {
+		return nil
+	}
+
+	return r.rrem.Remediate(ctx, remAction, ent, pol)
+}
+
+func (r *RuleTypeEngine) shouldRemediate(remAction engif.RemediateActionOpt, evalErr error) (bool, error) {
+	if r.rrem == nil {
+		return false, nil
+	}
+
+	var runRemediation bool
+
+	switch remAction {
+	case engif.ActionOptOff:
+		return false, nil
+	case engif.ActionOptUnknown:
+		return false, errors.New("unknown remediation action, check your policy definition")
+	case engif.ActionOptDryRun, engif.ActionOptOn:
+		runRemediation = !errors.Is(evalErr, evalerrors.ErrEvaluationSkipped) ||
+			errors.Is(evalErr, evalerrors.ErrEvaluationSkipSilently)
+	}
+
+	if evalErr == nil {
+		runRemediation = false
+	}
+
+	return runRemediation, nil
 }
 
 // RuleDefFromDB converts a rule type definition from the database to a protobuf

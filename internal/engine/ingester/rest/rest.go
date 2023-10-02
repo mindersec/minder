@@ -11,7 +11,6 @@
 // WITHOUT WARRANTIES OR CONDITIONS OF ANY KIND, either express or implied.
 // See the License for the specific language governing permissions and
 // limitations under the License.
-// Package rule provides the CLI subcommand for managing rules
 
 // Package rest provides the REST rule data ingest engine
 package rest
@@ -31,6 +30,7 @@ import (
 
 	engif "github.com/stacklok/mediator/internal/engine/interfaces"
 	"github.com/stacklok/mediator/internal/providers"
+	"github.com/stacklok/mediator/internal/util"
 	pb "github.com/stacklok/mediator/pkg/api/protobuf/go/mediator/v1"
 	provifv1 "github.com/stacklok/mediator/pkg/providers/v1"
 )
@@ -57,16 +57,12 @@ func NewRestRuleDataIngest(
 		return nil, fmt.Errorf("missing endpoint")
 	}
 
-	tmpl := template.New("path")
-	tmpl, err := tmpl.Parse(restCfg.Endpoint)
+	tmpl, err := util.ParseNewTemplate(&restCfg.Endpoint, "endpoint")
 	if err != nil {
 		return nil, fmt.Errorf("cannot parse endpoint template: %w", err)
 	}
 
-	method := strings.ToUpper(restCfg.Method)
-	if len(method) == 0 {
-		method = http.MethodGet
-	}
+	method := util.HttpMethodFromString(restCfg.Method, http.MethodGet)
 
 	cli, err := pbuild.GetHTTP(context.Background())
 	if err != nil {

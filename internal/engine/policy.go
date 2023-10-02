@@ -253,6 +253,11 @@ func MergeDatabaseListIntoPolicies(ppl []db.ListPoliciesByGroupIDRow, ectx *Enti
 					Group:    &ectx.Group.Name,
 				},
 			}
+
+			if p.Remediate.Valid {
+				sRem := string(p.Remediate.RemediateType)
+				policies[p.Name].Remediate = &sRem
+			}
 		}
 		if pm := rowInfoToPolicyMap(policies[p.Name], p.Entity, p.ContextualRules); pm != nil {
 			policies[p.Name] = pm
@@ -285,6 +290,11 @@ func MergeDatabaseGetIntoPolicies(ppl []db.GetPolicyByGroupAndIDRow, ectx *Entit
 					Provider: ectx.Provider.Name,
 					Group:    &ectx.Group.Name,
 				},
+			}
+
+			if p.Remediate.Valid {
+				sRem := string(p.Remediate.RemediateType)
+				policies[p.Name].Remediate = &sRem
 			}
 		}
 		if pm := rowInfoToPolicyMap(policies[p.Name], p.Entity, p.ContextualRules); pm != nil {

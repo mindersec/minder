@@ -54,3 +54,10 @@ def:
           def: ".allowed_actions"
         policy:
           def: ".allowed_actions"
+  remediate:
+    type: rest
+    rest:
+      method: PUT # (jakub): PATCH doesn't seem to work
+      endpoint: "/repos/{{.Entity.Owner}}/{{.Entity.Repository}}/actions/permissions"
+      body: |
+        { "enabled": true, "allowed_actions": "{{.Policy.allowed_actions}}" }

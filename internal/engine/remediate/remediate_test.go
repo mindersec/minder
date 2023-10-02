@@ -1,0 +1,133 @@
+// Copyright 2023 Stacklok, Inc.
+//
+// Licensed under the Apache License, Version 2.0 (the "License");
+// you may not use this file except in compliance with the License.
+// You may obtain a copy of the License at
+//
+//	http://www.apache.org/licenses/LICENSE-2.0
+//
+// Unless required by applicable law or agreed to in writing, software
+// distributed under the License is distributed on an "AS IS" BASIS,
+// WITHOUT WARRANTIES OR CONDITIONS OF ANY KIND, either express or implied.
+// See the License for the specific language governing permissions and
+// limitations under the License.
+// Package rule provides the CLI subcommand for managing rules
+
+// Package remediate_test provides tests for the remediate package.
+package remediate_test
+
+import (
+	"encoding/json"
+	"testing"
+
+	"github.com/stretchr/testify/assert"
+	"github.com/stretchr/testify/require"
+
+	"github.com/stacklok/mediator/internal/db"
+	engif "github.com/stacklok/mediator/internal/engine/interfaces"
+	"github.com/stacklok/mediator/internal/engine/remediate"
+	"github.com/stacklok/mediator/internal/engine/remediate/noop"
+	"github.com/stacklok/mediator/internal/engine/remediate/rest"
+	"github.com/stacklok/mediator/internal/providers"
+	pb "github.com/stacklok/mediator/pkg/api/protobuf/go/mediator/v1"
+	provifv1 "github.com/stacklok/mediator/pkg/providers/v1"
+)
+
+var (
+	simpleBodyTemplate   = "{\"foo\": \"bar\"}"
+	validProviderBuilder = providers.NewProviderBuilder(
+		&db.Provider{
+			Name:    "github",
+			Version: provifv1.V1,
+			Implements: []db.ProviderType{
+				db.ProviderTypeRest,
+			},
+			Definition: json.RawMessage(`{
+	"rest": {
+		"base_url": "https://api.github.com/"
+	}
+}`),
+		},
+		db.ProviderAccessToken{},
+		"token",
+	)
+)
+
+func TestNewRuleRemediator(t *testing.T) {
+	t.Parallel()
+
+	tests := []struct {
+		name        string
+		ruleType    *pb.RuleType
+		wantError   bool
+		wantType    engif.Remediator
+		provBuilder *providers.ProviderBuilder
+	}{
+		{
+			name: "Test Noop Remediate",
+			ruleType: &pb.RuleType{
+				Def: &pb.RuleType_Definition{}, // No remediate field set
+			},
+			wantError: false, // Expecting a NoopRemediate instance (or whichever condition you check for)
+			wantType:  &noop.Remediator{},
+		},
+		{
+			name: "Test REST Remediate",
+			ruleType: &pb.RuleType{
+				Def: &pb.RuleType_Definition{
+					Remediate: &pb.RuleType_Definition_Remediate{
+						Type: rest.RemediateType,
+						Rest: &pb.RestType{
+							Method:   "POST",
+							Endpoint: "{{.Policy.endpoint}}",
+							Body:     &simpleBodyTemplate,
+						},
+					},
+				},
+			},
+			provBuilder: validProviderBuilder,
+			wantError:   false, // Expecting a NoopRemediate instance (or whichever condition you check for)
+			wantType:    &rest.Remediator{},
+		},
+		{
+			name: "Test Rest Remediate Without Config",
+			ruleType: &pb.RuleType{
+				Def: &pb.RuleType_Definition{
+					Remediate: &pb.RuleType_Definition_Remediate{
+						Type: rest.RemediateType,
+					},
+				},
+			},
+			wantError: true,
+		},
+		{
+			name: "Test made up remediator",
+			ruleType: &pb.RuleType{
+				Def: &pb.RuleType_Definition{
+					Remediate: &pb.RuleType_Definition_Remediate{
+						Type: "madeup",
+					},
+				},
+			},
+			wantError: true,
+		},
+		// ... Add more test cases as needed
+	}
+
+	for _, tt := range tests {
+		tt := tt
+
+		t.Run(tt.name, func(t *testing.T) {
+			t.Parallel()
+
+			result, err := remediate.NewRuleRemediator(tt.ruleType, tt.provBuilder)
+			if tt.wantError {
+				require.Error(t, err)
+				return
+			}
+
+			require.NoError(t, err)
+			assert.IsType(t, tt.wantType, result) // Or whichever condition you check for
+		})
+	}
+}

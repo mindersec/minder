@@ -70,6 +70,11 @@ func (h *REST) GetToken() string {
 	return h.tok
 }
 
+// GetBaseURL returns the base URL for the REST API.
+func (h *REST) GetBaseURL() string {
+	return h.baseURL.String()
+}
+
 // NewRequest creates an HTTP request.
 func (h *REST) NewRequest(method, endpoint string, body any) (*http.Request, error) {
 	targetURL := endpoint

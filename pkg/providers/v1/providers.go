@@ -51,6 +51,9 @@ type Git interface {
 type REST interface {
 	Provider
 
+	// GetBaseURL returns the base URL for the REST API.
+	GetBaseURL() string
+
 	// NewRequest creates an HTTP request.
 	NewRequest(method, url string, body any) (*http.Request, error)
 
