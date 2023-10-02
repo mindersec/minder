@@ -60,6 +60,8 @@ func (r *RuleMeta) String() string {
 
 // RuleValidator validates a rule against a schema
 type RuleValidator struct {
+	ruleTypeName string
+
 	// schema is the schema that this rule type must conform to
 	schema *gojsonschema.Schema
 	// paramSchema is the schema that the parameters for this rule type must conform to
@@ -85,15 +87,23 @@ func NewRuleValidator(rt *mediatorv1.RuleType) (*RuleValidator, error) {
 	}
 
 	return &RuleValidator{
-		schema:      schema,
-		paramSchema: paramSchema,
+		ruleTypeName: rt.Name,
+		schema:       schema,
+		paramSchema:  paramSchema,
 	}, nil
 }
 
 // ValidateRuleDefAgainstSchema validates the given contextual policy against the
 // schema for this rule type
 func (r *RuleValidator) ValidateRuleDefAgainstSchema(contextualPolicy map[string]any) error {
-	return validateAgainstSchema(r.schema, contextualPolicy)
+	if err := validateAgainstSchema(r.schema, contextualPolicy); err != nil {
+		return &RuleValidationError{
+			RuleType: r.ruleTypeName,
+			Err:      err.Error(),
+		}
+	}
+
+	return nil
 }
 
 // ValidateParamsAgainstSchema validates the given parameters against the
@@ -104,17 +114,27 @@ func (r *RuleValidator) ValidateParamsAgainstSchema(params *structpb.Struct) err
 	}
 
 	if params == nil {
-		return fmt.Errorf("params cannot be nil")
+		return &RuleValidationError{
+			RuleType: r.ruleTypeName,
+			Err:      "params cannot be nil",
+		}
 	}
 
-	return validateAgainstSchema(r.paramSchema, params.AsMap())
+	if err := validateAgainstSchema(r.paramSchema, params.AsMap()); err != nil {
+		return &RuleValidationError{
+			RuleType: r.ruleTypeName,
+			Err:      err.Error(),
+		}
+	}
+
+	return nil
 }
 
 func validateAgainstSchema(schema *gojsonschema.Schema, obj map[string]any) error {
 	documentLoader := gojsonschema.NewGoLoader(obj)
 	result, err := schema.Validate(documentLoader)
 	if err != nil {
-		return fmt.Errorf("cannot validate json schema: %w", err)
+		return fmt.Errorf("cannot validate json schema: %s", err)
 	}
 
 	if !result.Valid() {
