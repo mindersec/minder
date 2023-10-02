@@ -34,14 +34,15 @@ func TestArtifactIngestMatchingName(t *testing.T) {
 
 	got, err := ing.Ingest(context.Background(), &pb.Artifact{
 		Type: "container",
-		Name: "this-will-match",
+		Name: "matching-name",
 		Versions: []*pb.ArtifactVersion{
 			{
 				Tags: []string{"latest"},
 			},
 		},
 	}, map[string]interface{}{
-		"name": "this-will-match",
+		"name": "matching-name",
+		// missing tags means wildcard match any tag
 	})
 	require.NoError(t, err, "expected no error")
 	require.NotNil(t, got, "expected non-nil result")
@@ -55,7 +56,7 @@ func TestArtifactIngestMatchingTags(t *testing.T) {
 
 	got, err := ing.Ingest(context.Background(), &pb.Artifact{
 		Type: "container",
-		Name: "this-will-match",
+		Name: "matching-name-and-tag",
 		Versions: []*pb.ArtifactVersion{
 			{
 				Tags: []string{"main", "production"},
@@ -65,7 +66,7 @@ func TestArtifactIngestMatchingTags(t *testing.T) {
 			},
 		},
 	}, map[string]interface{}{
-		"name": "this-will-match",
+		"name": "matching-name-and-tag",
 		"tags": []string{"latest"},
 	})
 	require.NoError(t, err, "expected no error")
@@ -80,7 +81,7 @@ func TestArtifactIngestNoMatchingTags(t *testing.T) {
 
 	got, err := ing.Ingest(context.Background(), &pb.Artifact{
 		Type: "container",
-		Name: "this-will-match",
+		Name: "matching-name-but-not-tags",
 		Versions: []*pb.ArtifactVersion{
 			{
 				Tags: []string{"main", "production"},
@@ -90,11 +91,86 @@ func TestArtifactIngestNoMatchingTags(t *testing.T) {
 			},
 		},
 	}, map[string]interface{}{
-		"name": "this-will-match",
+		"name": "matching-name-but-not-tags",
 		"tags": []string{"latest"},
 	})
 	require.Error(t, err, "expected error")
 	require.Nil(t, got, "expected nil result")
+}
+
+func TestArtifactIngestNoMatchingMultipleTagsFromDifferentVersions(t *testing.T) {
+	t.Parallel()
+
+	ing, err := artifact.NewArtifactDataIngest(nil)
+	require.NoError(t, err, "expected no error")
+
+	got, err := ing.Ingest(context.Background(), &pb.Artifact{
+		Type: "container",
+		Name: "matching-name-but-not-tags",
+		Versions: []*pb.ArtifactVersion{
+			{
+				Tags: []string{"main", "production"},
+			},
+			{
+				Tags: []string{"dev"},
+			},
+		},
+	}, map[string]interface{}{
+		"name": "matching-name-but-not-tags",
+		"tags": []string{"latest", "dev"},
+	})
+	require.Error(t, err, "expected error")
+	require.Nil(t, got, "expected nil result")
+}
+
+func TestArtifactIngestNoMatchingMultipleTagsFromSameVersion(t *testing.T) {
+	t.Parallel()
+
+	ing, err := artifact.NewArtifactDataIngest(nil)
+	require.NoError(t, err, "expected no error")
+
+	got, err := ing.Ingest(context.Background(), &pb.Artifact{
+		Type: "container",
+		Name: "matching-name-but-not-tags",
+		Versions: []*pb.ArtifactVersion{
+			{
+				Tags: []string{"main", "production"},
+			},
+			{
+				Tags: []string{"dev"},
+			},
+		},
+	}, map[string]interface{}{
+		"name": "matching-name-but-not-tags",
+		"tags": []string{"main", "production", "dev"},
+	})
+	require.Error(t, err, "expected error")
+	require.Nil(t, got, "expected nil result")
+}
+
+func TestArtifactIngestMatchingMultipleTagsFromSameVersion(t *testing.T) {
+	t.Parallel()
+
+	ing, err := artifact.NewArtifactDataIngest(nil)
+	require.NoError(t, err, "expected no error")
+
+	got, err := ing.Ingest(context.Background(), &pb.Artifact{
+		Type: "container",
+		Name: "matching-name-but-not-tags",
+		Versions: []*pb.ArtifactVersion{
+			{
+				Tags: []string{"main", "production", "dev"},
+			},
+			{
+				Tags: []string{"v1.0.0"},
+			},
+		},
+	}, map[string]interface{}{
+		"name": "matching-name-but-not-tags",
+		"tags": []string{"main", "production"},
+	})
+	require.NoError(t, err, "expected no error")
+	require.NotNil(t, got, "expected non-nil result")
 }
 
 func TestArtifactIngestNotMatchingName(t *testing.T) {
@@ -105,10 +181,10 @@ func TestArtifactIngestNotMatchingName(t *testing.T) {
 
 	got, err := ing.Ingest(context.Background(), &pb.Artifact{
 		Type:     "container",
-		Name:     "this-will-match",
+		Name:     "name-does-not-match",
 		Versions: []*pb.ArtifactVersion{},
 	}, map[string]interface{}{
-		"name": "this-will-NOT-match",
+		"name": "name-does-NOT-match",
 	})
 	require.Error(t, err, "expected error")
 	require.ErrorIs(t, err, evalerrors.ErrEvaluationSkipSilently, "expected ErrEvaluationSkipSilently")
