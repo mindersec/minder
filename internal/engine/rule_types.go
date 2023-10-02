@@ -171,11 +171,7 @@ func NewRuleTypeEngine(rt *mediatorv1.RuleType, cli *providers.ProviderBuilder) 
 	}
 
 	rrem, err := remediate.NewRuleRemediator(rt, cli)
-	if errors.Is(err, remediate.ErrNoRemediation) {
-		// we should be graceful about not having a remediator
-		// TODO: return a noop remediator instead that would log that there's nothing configured?
-		rrem = nil
-	} else if err != nil {
+	if err != nil {
 		return nil, fmt.Errorf("cannot create rule remediator: %w", err)
 	}
 

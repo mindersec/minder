@@ -21,19 +21,17 @@ import (
 	"fmt"
 
 	engif "github.com/stacklok/mediator/internal/engine/interfaces"
+	"github.com/stacklok/mediator/internal/engine/remediate/noop"
 	"github.com/stacklok/mediator/internal/engine/remediate/rest"
 	"github.com/stacklok/mediator/internal/providers"
 	pb "github.com/stacklok/mediator/pkg/api/protobuf/go/mediator/v1"
 )
 
-// ErrNoRemediation is returned when no remediation is configured
-var ErrNoRemediation = fmt.Errorf("no remediation configured")
-
 // NewRuleRemediator creates a new rule remediator
 func NewRuleRemediator(rt *pb.RuleType, pbuild *providers.ProviderBuilder) (engif.Remediator, error) {
 	rem := rt.Def.GetRemediate()
 	if rem == nil {
-		return nil, ErrNoRemediation
+		return noop.NewNoopRemediate()
 	}
 
 	// nolint:revive // let's keep the switch here, it would be nicer to extend a switch in the future
@@ -46,5 +44,5 @@ func NewRuleRemediator(rt *pb.RuleType, pbuild *providers.ProviderBuilder) (engi
 		return rest.NewRestRemediate(rem.GetRest(), pbuild)
 	}
 
-	return nil, nil
+	return nil, fmt.Errorf("unknown remediation type: %s", rem.GetType())
 }
