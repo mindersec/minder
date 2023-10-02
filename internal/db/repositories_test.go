@@ -30,7 +30,7 @@ import (
 
 	"github.com/stretchr/testify/require"
 
-	"github.com/stacklok/mediator/internal/util"
+	"github.com/stacklok/mediator/internal/util/rand"
 )
 
 type RepositoryOption func(*CreateRepositoryParams)
@@ -54,14 +54,14 @@ func createRandomRepository(t *testing.T, group int32, prov string, opts ...Repo
 	arg := CreateRepositoryParams{
 		Provider:   prov,
 		GroupID:    group,
-		RepoOwner:  util.RandomName(seed),
-		RepoName:   util.RandomName(seed),
-		RepoID:     int32(util.RandomInt(0, 1000, seed)),
+		RepoOwner:  rand.RandomName(seed),
+		RepoName:   rand.RandomName(seed),
+		RepoID:     int32(rand.RandomInt(0, 1000, seed)),
 		IsPrivate:  false,
 		IsFork:     false,
-		WebhookID:  sql.NullInt32{Int32: int32(util.RandomInt(0, 1000, seed)), Valid: true},
-		WebhookUrl: util.RandomURL(seed),
-		DeployUrl:  util.RandomURL(seed),
+		WebhookID:  sql.NullInt32{Int32: int32(rand.RandomInt(0, 1000, seed)), Valid: true},
+		WebhookUrl: rand.RandomURL(seed),
+		DeployUrl:  rand.RandomURL(seed),
 	}
 	// Allow arbitrary fixups to the Repository
 	for _, o := range opts {

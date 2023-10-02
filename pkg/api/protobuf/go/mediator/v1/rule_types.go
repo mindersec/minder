@@ -20,14 +20,14 @@ import (
 	"fmt"
 	"io"
 
-	"github.com/stacklok/mediator/internal/util"
+	"github.com/stacklok/mediator/internal/util/jsonyaml"
 )
 
 // ParseRuleType parses a rule type from a reader
 func ParseRuleType(r io.Reader) (*RuleType, error) {
 	// We transcode to JSON so we can decode it straight to the protobuf structure
 	w := &bytes.Buffer{}
-	if err := util.TranscodeYAMLToJSON(r, w); err != nil {
+	if err := jsonyaml.TranscodeYAMLToJSON(r, w); err != nil {
 		return nil, fmt.Errorf("error converting yaml to json: %w", err)
 	}
 

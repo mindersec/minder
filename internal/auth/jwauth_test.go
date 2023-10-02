@@ -28,14 +28,14 @@ import (
 	"github.com/stretchr/testify/require"
 
 	mockjwt "github.com/stacklok/mediator/internal/auth/mock"
-	"github.com/stacklok/mediator/internal/util"
+	"github.com/stacklok/mediator/internal/util/rand"
 )
 
 func TestParseAndValidate(t *testing.T) {
 	t.Parallel()
 
 	jwks := jwk.NewSet()
-	privateKey, publicKey := util.RandomKeypair(2048)
+	privateKey, publicKey := rand.RandomKeypair(2048)
 	privateJwk, _ := jwk.FromRaw(privateKey)
 	err := privateJwk.Set(jwk.KeyIDKey, `mykey`)
 	require.NoError(t, err, "failed to setup private key ID")
@@ -83,7 +83,7 @@ func TestParseAndValidate(t *testing.T) {
 		{
 			name: "Invalid signature",
 			buildToken: func() string {
-				otherKey, _ := util.RandomKeypair(2048)
+				otherKey, _ := rand.RandomKeypair(2048)
 				otherJwk, _ := jwk.FromRaw(otherKey)
 				err = otherJwk.Set(jwk.KeyIDKey, `otherKey`)
 				require.NoError(t, err, "failed to setup signing key ID")

@@ -29,7 +29,7 @@ import (
 
 	"github.com/stretchr/testify/require"
 
-	"github.com/stacklok/mediator/internal/util"
+	"github.com/stacklok/mediator/internal/util/rand"
 )
 
 // A helper function to create a random organization
@@ -38,8 +38,8 @@ func createRandomOrganization(t *testing.T) Organization {
 
 	seed := time.Now().UnixNano()
 	arg := CreateOrganizationParams{
-		Name:    util.RandomName(seed),
-		Company: util.RandomName(seed),
+		Name:    rand.RandomName(seed),
+		Company: rand.RandomName(seed),
 	}
 
 	organization, err := testQueries.CreateOrganization(context.Background(), arg)
@@ -93,8 +93,8 @@ func TestUpdateOrganization(t *testing.T) {
 
 	arg := UpdateOrganizationParams{
 		ID:      organization1.ID,
-		Name:    util.RandomName(seed),
-		Company: util.RandomName(seed),
+		Name:    rand.RandomName(seed),
+		Company: rand.RandomName(seed),
 	}
 
 	organization2, err := testQueries.UpdateOrganization(context.Background(), arg)

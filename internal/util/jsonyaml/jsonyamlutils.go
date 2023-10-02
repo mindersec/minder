@@ -19,7 +19,8 @@
 // It does make a good example of how to use the generated client code
 // for others to use as a reference.
 
-package util
+// Package jsonyaml contains utility functions for converting to/from json and yaml
+package jsonyaml
 
 import (
 	"bytes"

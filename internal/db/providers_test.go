@@ -29,7 +29,7 @@ import (
 
 	"github.com/stretchr/testify/require"
 
-	"github.com/stacklok/mediator/internal/util"
+	"github.com/stacklok/mediator/internal/util/rand"
 )
 
 func createRandomProvider(t *testing.T, groupID int32) Provider {
@@ -38,7 +38,7 @@ func createRandomProvider(t *testing.T, groupID int32) Provider {
 	seed := time.Now().UnixNano()
 
 	prov, err := testQueries.CreateProvider(context.Background(), CreateProviderParams{
-		Name:       util.RandomName(seed),
+		Name:       rand.RandomName(seed),
 		GroupID:    groupID,
 		Implements: []ProviderType{ProviderTypeGithub, ProviderTypeGit},
 		Definition: json.RawMessage("{}"),

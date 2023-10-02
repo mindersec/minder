@@ -27,7 +27,7 @@ import (
 	"github.com/stretchr/testify/require"
 
 	"github.com/stacklok/mediator/internal/config"
-	"github.com/stacklok/mediator/internal/util"
+	"github.com/stacklok/mediator/internal/util/rand"
 )
 
 func TestReadValidConfig(t *testing.T) {
@@ -186,7 +186,7 @@ func TestReadAuthConfig(t *testing.T) {
 				AccessTokenPrivateKey: filepath.Join(tmpdir, "access_token_private.pem"),
 				AccessTokenPublicKey:  filepath.Join(tmpdir, "access_token_public.pem"),
 			}
-			err := util.RandomKeypairFile(2048, cfg.AccessTokenPrivateKey, cfg.AccessTokenPublicKey)
+			err := rand.RandomKeypairFile(2048, cfg.AccessTokenPrivateKey, cfg.AccessTokenPublicKey)
 			if err != nil {
 				t.Fatalf("Error generating access token key pair: %v", err)
 			}

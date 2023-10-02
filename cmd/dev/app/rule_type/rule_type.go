@@ -34,7 +34,7 @@ import (
 	"github.com/stacklok/mediator/internal/engine"
 	"github.com/stacklok/mediator/internal/engine/eval/rego"
 	"github.com/stacklok/mediator/internal/providers"
-	"github.com/stacklok/mediator/internal/util"
+	"github.com/stacklok/mediator/internal/util/jsonyaml"
 	mediatorv1 "github.com/stacklok/mediator/pkg/api/protobuf/go/mediator/v1"
 )
 
@@ -186,7 +186,7 @@ func readEntityFromFile(fpath string, entType mediatorv1.Entity) (protoreflect.P
 
 	// We transcode to JSON so we can decode it straight to the protobuf structure
 	w := &bytes.Buffer{}
-	if err := util.TranscodeYAMLToJSON(f, w); err != nil {
+	if err := jsonyaml.TranscodeYAMLToJSON(f, w); err != nil {
 		return nil, fmt.Errorf("error converting yaml to json: %w", err)
 	}
 
@@ -196,7 +196,7 @@ func readEntityFromFile(fpath string, entType mediatorv1.Entity) (protoreflect.P
 	case mediatorv1.Entity_ENTITY_REPOSITORIES:
 		out = &mediatorv1.RepositoryResult{}
 	case mediatorv1.Entity_ENTITY_ARTIFACTS:
-		out = &mediatorv1.VersionedArtifact{}
+		out = &mediatorv1.Artifact{}
 	case mediatorv1.Entity_ENTITY_PULL_REQUESTS:
 		out = &mediatorv1.PullRequest{}
 	case mediatorv1.Entity_ENTITY_BUILD_ENVIRONMENTS:

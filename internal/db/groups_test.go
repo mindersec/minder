@@ -28,7 +28,7 @@ import (
 
 	"github.com/stretchr/testify/require"
 
-	"github.com/stacklok/mediator/internal/util"
+	"github.com/stacklok/mediator/internal/util/rand"
 )
 
 func createRandomGroup(t *testing.T, org int32) Group {
@@ -37,7 +37,7 @@ func createRandomGroup(t *testing.T, org int32) Group {
 	seed := time.Now().UnixNano()
 	arg := CreateGroupParams{
 		OrganizationID: org,
-		Name:           util.RandomName(seed),
+		Name:           rand.RandomName(seed),
 	}
 
 	group, err := testQueries.CreateGroup(context.Background(), arg)
@@ -115,7 +115,7 @@ func TestUpdateGroup(t *testing.T) {
 	arg := UpdateGroupParams{
 		ID:             group1.ID,
 		OrganizationID: org.ID,
-		Name:           util.RandomName(seed),
+		Name:           rand.RandomName(seed),
 	}
 
 	group2, err := testQueries.UpdateGroup(context.Background(), arg)

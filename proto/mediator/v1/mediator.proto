@@ -99,7 +99,8 @@ message Artifact {
     string type = 4;
     string visibility = 5;
     string repository = 6;
-    google.protobuf.Timestamp created_at = 7;
+    repeated ArtifactVersion versions = 7;
+    google.protobuf.Timestamp created_at = 8;
 }
 
 message GithubWorkflow {
@@ -127,11 +128,6 @@ message ArtifactVersion {
     SignatureVerification signature_verification = 4;
     optional GithubWorkflow github_workflow = 5;
     google.protobuf.Timestamp created_at = 6;
-}
-
-message VersionedArtifact {
-    Artifact artifact = 1;
-    ArtifactVersion version = 2;
 }
 
 message GetArtifactByIdRequest {

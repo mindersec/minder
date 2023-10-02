@@ -42,6 +42,7 @@ import (
 	"github.com/stacklok/mediator/internal/config"
 	mcrypto "github.com/stacklok/mediator/internal/crypto"
 	"github.com/stacklok/mediator/internal/util"
+	"github.com/stacklok/mediator/internal/util/rand"
 	pb "github.com/stacklok/mediator/pkg/api/protobuf/go/mediator/v1"
 )
 
@@ -94,7 +95,7 @@ will be saved to $XDG_CONFIG_HOME/mediator/credentials.json`,
 		}
 
 		// Get random port
-		port, err := util.GetRandomPort()
+		port, err := rand.GetRandomPort()
 		util.ExitNicelyOnError(err, "Error getting random port")
 
 		parsedURL, err = url.Parse(fmt.Sprintf("http://localhost:%v", port))

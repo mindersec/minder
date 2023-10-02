@@ -25,12 +25,13 @@ package util
 import (
 	"context"
 	"crypto/tls"
+	"database/sql"
 	"encoding/json"
 	"errors"
 	"fmt"
 	"io"
 	"io/fs"
-	"net"
+	"log"
 	"os"
 	"path/filepath"
 	"strconv"
@@ -38,6 +39,7 @@ import (
 	"syscall"
 	"time"
 
+	"github.com/google/uuid"
 	_ "github.com/lib/pq" // nolint
 	"github.com/spf13/cobra"
 	"github.com/spf13/viper"
@@ -48,6 +50,11 @@ import (
 	"google.golang.org/grpc/credentials/insecure"
 	"google.golang.org/protobuf/encoding/protojson"
 	"google.golang.org/protobuf/reflect/protoreflect"
+	"google.golang.org/protobuf/types/known/timestamppb"
+
+	"github.com/stacklok/mediator/internal/db"
+	"github.com/stacklok/mediator/internal/util/jsonyaml"
+	mediatorv1 "github.com/stacklok/mediator/pkg/api/protobuf/go/mediator/v1"
 )
 
 // GetConfigValue is a helper function that retrieves a configuration value
@@ -244,27 +251,6 @@ func GetAppContext() (context.Context, context.CancelFunc) {
 	return ctx, cancel
 }
 
-// GetRandomPort returns a random port number.
-// The binding address should not need to be configurable
-// as this is a short lived operation just to disover a random available port.
-// Note that there is a possible race condition here if another process binds
-// to the same port between the time we discover it and the time we use it.
-// This is unlikely to happen in practice, but if it does, the user will
-// need to retry the command.
-// Marking a nosec here because we want this to listen on all addresses to
-// ensure a reliable connection chance for the client. This is based on lessons
-// learned from the sigstore CLI.
-func GetRandomPort() (int, error) {
-	listener, err := net.Listen("tcp", ":0") // #nosec
-	if err != nil {
-		return 0, err
-	}
-	defer listener.Close()
-
-	port := listener.Addr().(*net.TCPAddr).Port
-	return port, nil
-}
-
 // WriteToFile writes the content to a file if the out parameter is not empty.
 func WriteToFile(out string, content []byte, perms fs.FileMode) error {
 	if out != "" {
@@ -343,7 +329,7 @@ func GetYamlFromProto(msg protoreflect.ProtoMessage) (string, error) {
 	if err != nil {
 		return "", err
 	}
-	yamlResult, err := ConvertJsonToYaml(rawMsg)
+	yamlResult, err := jsonyaml.ConvertJsonToYaml(rawMsg)
 	if err != nil {
 		return "", err
 	}
@@ -435,4 +421,75 @@ func Int32FromString(v string) (int32, error) {
 		return 0, fmt.Errorf("error converting string to int: %w", err)
 	}
 	return int32(asInt32), nil
+}
+
+// GetArtifactWithVersions retrieves an artifact and its versions from the database
+func GetArtifactWithVersions(ctx context.Context, store db.Store, repoID, artifactID uuid.UUID) (*mediatorv1.Artifact, error) {
+	// Get repository data - we need the owner and name
+	dbrepo, err := store.GetRepositoryByID(ctx, repoID)
+	if errors.Is(err, sql.ErrNoRows) {
+		return nil, fmt.Errorf("repository not found")
+	} else if err != nil {
+		return nil, fmt.Errorf("cannot read repository: %v", err)
+	}
+
+	// Retrieve artifact details
+	artifact, err := store.GetArtifactByID(ctx, artifactID)
+	if errors.Is(err, sql.ErrNoRows) {
+		return nil, fmt.Errorf("artifact not found")
+	} else if err != nil {
+		return nil, fmt.Errorf("failed to get artifact: %v", err)
+	}
+
+	// Get its versions
+	dbArtifactVersions, err := store.ListArtifactVersionsByArtifactID(ctx, db.ListArtifactVersionsByArtifactIDParams{
+		ArtifactID: artifact.ID,
+		Limit:      sql.NullInt32{Valid: false},
+	})
+	if err != nil {
+		log.Printf("error getting artifact versions for artifact %s: %v", artifact.ID, err)
+	}
+
+	// Translate each to protobuf so we can publish the event
+	var listArtifactVersions []*mediatorv1.ArtifactVersion
+	for _, dbVersion := range dbArtifactVersions {
+		var tags []string
+		if dbVersion.Tags.Valid {
+			tags = strings.Split(dbVersion.Tags.String, ",")
+		}
+		sigVer := &mediatorv1.SignatureVerification{}
+		if dbVersion.SignatureVerification.Valid {
+			if err := protojson.Unmarshal(dbVersion.SignatureVerification.RawMessage, sigVer); err != nil {
+				log.Printf("error unmarshalling signature verification: %v", err)
+				continue
+			}
+		}
+		ghWorkflow := &mediatorv1.GithubWorkflow{}
+		if dbVersion.GithubWorkflow.Valid {
+			if err := protojson.Unmarshal(dbVersion.GithubWorkflow.RawMessage, ghWorkflow); err != nil {
+				log.Printf("error unmarshalling gh workflow: %v", err)
+				continue
+			}
+		}
+		listArtifactVersions = append(listArtifactVersions, &mediatorv1.ArtifactVersion{
+			VersionId:             dbVersion.Version,
+			Tags:                  tags,
+			Sha:                   dbVersion.Sha,
+			SignatureVerification: sigVer,
+			GithubWorkflow:        ghWorkflow,
+			CreatedAt:             timestamppb.New(dbVersion.CreatedAt),
+		})
+	}
+
+	// Build the artifact protobuf
+	return &mediatorv1.Artifact{
+		ArtifactPk: artifact.ID.String(),
+		Owner:      dbrepo.RepoOwner,
+		Name:       artifact.ArtifactName,
+		Type:       artifact.ArtifactType,
+		Visibility: artifact.ArtifactVisibility,
+		Repository: dbrepo.RepoName,
+		Versions:   listArtifactVersions,
+		CreatedAt:  timestamppb.New(artifact.CreatedAt),
+	}, nil
 }

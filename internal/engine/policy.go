@@ -26,7 +26,7 @@ import (
 
 	"github.com/stacklok/mediator/internal/db"
 	"github.com/stacklok/mediator/internal/entities"
-	"github.com/stacklok/mediator/internal/util"
+	"github.com/stacklok/mediator/internal/util/jsonyaml"
 	pb "github.com/stacklok/mediator/pkg/api/protobuf/go/mediator/v1"
 )
 
@@ -56,7 +56,7 @@ func (e *RuleValidationError) Error() string {
 // ParseYAML parses a YAML pipeline policy and validates it
 func ParseYAML(r io.Reader) (*pb.Policy, error) {
 	w := &bytes.Buffer{}
-	if err := util.TranscodeYAMLToJSON(r, w); err != nil {
+	if err := jsonyaml.TranscodeYAMLToJSON(r, w); err != nil {
 		return nil, fmt.Errorf("error converting yaml to json: %w", err)
 	}
 	return ParseJSON(w)

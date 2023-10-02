@@ -122,8 +122,7 @@ func (e *Executor) evalEntityEvent(
 			return fmt.Errorf("error parsing policy ID: %w", err)
 		}
 
-		// Given we're dealing with a repository event, we can assume that the
-		// entity is a repository.
+		// Get only these rules that are relevant for this entity type
 		relevant, err := GetRulesForEntity(pol, inf.Type)
 		if err != nil {
 			return fmt.Errorf("error getting rules for entity: %w", err)
@@ -148,17 +147,15 @@ func (e *Executor) evalEntityEvent(
 			return e.createOrUpdateEvalStatus(ctx, inf.evalStatusParams(
 				policyID, ruleTypeID, result))
 		})
+
 		if err != nil {
 			p := pol.Name
 			if pol.Id != nil {
 				p = *pol.Id
 			}
-
 			return fmt.Errorf("error traversing rules for policy %s: %w", p, err)
 		}
-
 	}
-
 	return nil
 }
 

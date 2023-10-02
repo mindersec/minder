@@ -28,7 +28,7 @@ import (
 
 	"github.com/stretchr/testify/require"
 
-	"github.com/stacklok/mediator/internal/util"
+	"github.com/stacklok/mediator/internal/util/rand"
 )
 
 func stringToNullString(s string) sql.NullString {
@@ -45,10 +45,10 @@ func createRandomUser(t *testing.T, org Organization) User {
 
 	arg := CreateUserParams{
 		OrganizationID:  org.ID,
-		IdentitySubject: util.RandomString(10, seed),
-		Email:           stringToNullString(util.RandomEmail(seed)),
-		FirstName:       stringToNullString(util.RandomName(seed)),
-		LastName:        stringToNullString(util.RandomName(seed)),
+		IdentitySubject: rand.RandomString(10, seed),
+		Email:           stringToNullString(rand.RandomEmail(seed)),
+		FirstName:       stringToNullString(rand.RandomName(seed)),
+		LastName:        stringToNullString(rand.RandomName(seed)),
 	}
 
 	user, err := testQueries.CreateUser(context.Background(), arg)

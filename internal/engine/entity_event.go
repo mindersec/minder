@@ -94,8 +94,8 @@ func (eiw *EntityInfoWrapper) WithProvider(provider string) *EntityInfoWrapper {
 	return eiw
 }
 
-// WithVersionedArtifact sets the entity to a versioned artifact
-func (eiw *EntityInfoWrapper) WithVersionedArtifact(va *mediatorv1.VersionedArtifact) *EntityInfoWrapper {
+// WithArtifact sets the entity to a versioned artifact sets the entity to a versioned artifact
+func (eiw *EntityInfoWrapper) WithArtifact(va *mediatorv1.Artifact) *EntityInfoWrapper {
 	eiw.Type = mediatorv1.Entity_ENTITY_ARTIFACTS
 	eiw.Entity = va
 
@@ -155,10 +155,10 @@ func (eiw *EntityInfoWrapper) AsRepository() *EntityInfoWrapper {
 	return eiw
 }
 
-// AsVersionedArtifact sets the entity type to a versioned artifact
-func (eiw *EntityInfoWrapper) AsVersionedArtifact() *EntityInfoWrapper {
+// AsArtifact sets the entity type to a versioned artifact
+func (eiw *EntityInfoWrapper) AsArtifact() *EntityInfoWrapper {
 	eiw.Type = mediatorv1.Entity_ENTITY_ARTIFACTS
-	eiw.Entity = &mediatorv1.VersionedArtifact{}
+	eiw.Entity = &mediatorv1.Artifact{}
 
 	return eiw
 }
@@ -360,7 +360,7 @@ func parseEntityEvent(msg *message.Message) (*EntityInfoWrapper, error) {
 	case RepositoryEventEntityType:
 		out.AsRepository()
 	case VersionedArtifactEventEntityType:
-		out.AsVersionedArtifact()
+		out.AsArtifact()
 		if err := out.withArtifactIDFromMessage(msg); err != nil {
 			return nil, err
 		}

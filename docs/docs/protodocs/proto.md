@@ -175,7 +175,6 @@
     - [VerifyProviderTokenFromResponse](#mediator-v1-VerifyProviderTokenFromResponse)
     - [VerifyRequest](#mediator-v1-VerifyRequest)
     - [VerifyResponse](#mediator-v1-VerifyResponse)
-    - [VersionedArtifact](#mediator-v1-VersionedArtifact)
   
     - [DepEcosystem](#mediator-v1-DepEcosystem)
     - [Entity](#mediator-v1-Entity)
@@ -224,6 +223,7 @@
 | type | [string](#string) |  |  |
 | visibility | [string](#string) |  |  |
 | repository | [string](#string) |  |  |
+| versions | [ArtifactVersion](#mediator-v1-ArtifactVersion) | repeated |  |
 | created_at | [google.protobuf.Timestamp](#google-protobuf-Timestamp) |  |  |
 
 
@@ -2948,22 +2948,6 @@ user record to be returned
 | Field | Type | Label | Description |
 | ----- | ---- | ----- | ----------- |
 | status | [string](#string) |  |  |
-
-
-
-
-
-
-<a name="mediator-v1-VersionedArtifact"></a>
-
-### VersionedArtifact
-
-
-
-| Field | Type | Label | Description |
-| ----- | ---- | ----- | ----------- |
-| artifact | [Artifact](#mediator-v1-Artifact) |  |  |
-| version | [ArtifactVersion](#mediator-v1-ArtifactVersion) |  |  |
 
 
 
