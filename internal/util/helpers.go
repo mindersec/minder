@@ -54,7 +54,7 @@ import (
 
 	"github.com/stacklok/mediator/internal/db"
 	"github.com/stacklok/mediator/internal/util/jsonyaml"
-	pb "github.com/stacklok/mediator/pkg/api/protobuf/go/mediator/v1"
+	mediatorv1 "github.com/stacklok/mediator/pkg/api/protobuf/go/mediator/v1"
 )
 
 // GetConfigValue is a helper function that retrieves a configuration value
@@ -424,7 +424,7 @@ func Int32FromString(v string) (int32, error) {
 }
 
 // GetArtifactWithVersions retrieves an artifact and its versions from the database
-func GetArtifactWithVersions(ctx context.Context, store db.Store, repoID, artifactID uuid.UUID) (*pb.Artifact, error) {
+func GetArtifactWithVersions(ctx context.Context, store db.Store, repoID, artifactID uuid.UUID) (*mediatorv1.Artifact, error) {
 	// Get repository data - we need the owner and name
 	dbrepo, err := store.GetRepositoryByID(ctx, repoID)
 	if errors.Is(err, sql.ErrNoRows) {
@@ -451,27 +451,27 @@ func GetArtifactWithVersions(ctx context.Context, store db.Store, repoID, artifa
 	}
 
 	// Translate each to protobuf so we can publish the event
-	var listArtifactVersions []*pb.ArtifactVersion
+	var listArtifactVersions []*mediatorv1.ArtifactVersion
 	for _, dbVersion := range dbArtifactVersions {
 		var tags []string
 		if dbVersion.Tags.Valid {
 			tags = strings.Split(dbVersion.Tags.String, ",")
 		}
-		sigVer := &pb.SignatureVerification{}
+		sigVer := &mediatorv1.SignatureVerification{}
 		if dbVersion.SignatureVerification.Valid {
 			if err := protojson.Unmarshal(dbVersion.SignatureVerification.RawMessage, sigVer); err != nil {
 				log.Printf("error unmarshalling signature verification: %v", err)
 				continue
 			}
 		}
-		ghWorkflow := &pb.GithubWorkflow{}
+		ghWorkflow := &mediatorv1.GithubWorkflow{}
 		if dbVersion.GithubWorkflow.Valid {
 			if err := protojson.Unmarshal(dbVersion.GithubWorkflow.RawMessage, ghWorkflow); err != nil {
 				log.Printf("error unmarshalling gh workflow: %v", err)
 				continue
 			}
 		}
-		listArtifactVersions = append(listArtifactVersions, &pb.ArtifactVersion{
+		listArtifactVersions = append(listArtifactVersions, &mediatorv1.ArtifactVersion{
 			VersionId:             dbVersion.Version,
 			Tags:                  tags,
 			Sha:                   dbVersion.Sha,
@@ -482,7 +482,7 @@ func GetArtifactWithVersions(ctx context.Context, store db.Store, repoID, artifa
 	}
 
 	// Build the artifact protobuf
-	return &pb.Artifact{
+	return &mediatorv1.Artifact{
 		ArtifactPk: artifact.ID.String(),
 		Owner:      dbrepo.RepoOwner,
 		Name:       artifact.ArtifactName,
