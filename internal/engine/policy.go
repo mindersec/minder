@@ -304,7 +304,7 @@ func rowInfoToPolicyMap(
 	entity db.Entities,
 	contextualRules json.RawMessage,
 ) *pb.Policy {
-	if !entities.IsValidEntity(entities.EntityTypeFromDB(entity)) {
+	if !entities.EntityTypeFromDB(entity).IsValid() {
 		log.Printf("unknown entity found in database: %s", entity)
 		return nil
 	}

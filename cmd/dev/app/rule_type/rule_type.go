@@ -33,10 +33,9 @@ import (
 	"github.com/stacklok/mediator/internal/db"
 	"github.com/stacklok/mediator/internal/engine"
 	"github.com/stacklok/mediator/internal/engine/eval/rego"
-	"github.com/stacklok/mediator/internal/entities"
 	"github.com/stacklok/mediator/internal/providers"
 	"github.com/stacklok/mediator/internal/util"
-	pb "github.com/stacklok/mediator/pkg/api/protobuf/go/mediator/v1"
+	mediatorv1 "github.com/stacklok/mediator/pkg/api/protobuf/go/mediator/v1"
 )
 
 // TestCmd is the root command for the rule subcommands
@@ -91,7 +90,7 @@ func testCmdRun(cmd *cobra.Command, _ []string) error {
 		return fmt.Errorf("error reading rule type from file: %w", err)
 	}
 
-	ent, err := readEntityFromFile(epath.Value.String(), entities.FromString(rt.Def.InEntity))
+	ent, err := readEntityFromFile(epath.Value.String(), mediatorv1.EntityFromString(rt.Def.InEntity))
 	if err != nil {
 		return fmt.Errorf("error reading entity from file: %w", err)
 	}
@@ -135,7 +134,7 @@ func testCmdRun(cmd *cobra.Command, _ []string) error {
 	return runEvaluationForRules(eng, ent, rules)
 }
 
-func runEvaluationForRules(eng *engine.RuleTypeEngine, ent protoreflect.ProtoMessage, frags []*pb.Policy_Rule) error {
+func runEvaluationForRules(eng *engine.RuleTypeEngine, ent protoreflect.ProtoMessage, frags []*mediatorv1.Policy_Rule) error {
 	for idx := range frags {
 		frag := frags[idx]
 
@@ -166,20 +165,20 @@ func runEvaluationForRules(eng *engine.RuleTypeEngine, ent protoreflect.ProtoMes
 	return nil
 }
 
-func readRuleTypeFromFile(fpath string) (*pb.RuleType, error) {
+func readRuleTypeFromFile(fpath string) (*mediatorv1.RuleType, error) {
 	f, err := os.Open(filepath.Clean(fpath))
 	if err != nil {
 		return nil, fmt.Errorf("error opening file: %w", err)
 	}
 
-	return engine.ParseRuleType(f)
+	return mediatorv1.ParseRuleType(f)
 }
 
 // readEntityFromFile reads an entity from a file and returns it as a protobuf
 // golang structure.
 // TODO: We probably want to move this code to a utility once we land the server
 // side code.
-func readEntityFromFile(fpath string, entType pb.Entity) (protoreflect.ProtoMessage, error) {
+func readEntityFromFile(fpath string, entType mediatorv1.Entity) (protoreflect.ProtoMessage, error) {
 	f, err := os.Open(filepath.Clean(fpath))
 	if err != nil {
 		return nil, fmt.Errorf("error opening file: %w", err)
@@ -194,15 +193,15 @@ func readEntityFromFile(fpath string, entType pb.Entity) (protoreflect.ProtoMess
 	var out protoreflect.ProtoMessage
 
 	switch entType {
-	case pb.Entity_ENTITY_REPOSITORIES:
-		out = &pb.RepositoryResult{}
-	case pb.Entity_ENTITY_ARTIFACTS:
-		out = &pb.VersionedArtifact{}
-	case pb.Entity_ENTITY_PULL_REQUESTS:
-		out = &pb.PullRequest{}
-	case pb.Entity_ENTITY_BUILD_ENVIRONMENTS:
+	case mediatorv1.Entity_ENTITY_REPOSITORIES:
+		out = &mediatorv1.RepositoryResult{}
+	case mediatorv1.Entity_ENTITY_ARTIFACTS:
+		out = &mediatorv1.VersionedArtifact{}
+	case mediatorv1.Entity_ENTITY_PULL_REQUESTS:
+		out = &mediatorv1.PullRequest{}
+	case mediatorv1.Entity_ENTITY_BUILD_ENVIRONMENTS:
 		return nil, fmt.Errorf("build environments not yet supported")
-	case pb.Entity_ENTITY_UNSPECIFIED:
+	case mediatorv1.Entity_ENTITY_UNSPECIFIED:
 		return nil, fmt.Errorf("entity type unspecified")
 	default:
 		return nil, fmt.Errorf("unknown entity type: %s", entType)

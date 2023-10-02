@@ -25,7 +25,7 @@ import (
 	"github.com/stacklok/mediator/internal/entities"
 	"github.com/stacklok/mediator/internal/events"
 	"github.com/stacklok/mediator/internal/util"
-	pb "github.com/stacklok/mediator/pkg/api/protobuf/go/mediator/v1"
+	mediatorv1 "github.com/stacklok/mediator/pkg/api/protobuf/go/mediator/v1"
 )
 
 // EntityInfoWrapper is a helper struct to gather information
@@ -52,7 +52,7 @@ type EntityInfoWrapper struct {
 	Provider      string
 	GroupID       int32
 	Entity        protoreflect.ProtoMessage
-	Type          pb.Entity
+	Type          mediatorv1.Entity
 	OwnershipData map[string]string
 }
 
@@ -95,24 +95,24 @@ func (eiw *EntityInfoWrapper) WithProvider(provider string) *EntityInfoWrapper {
 }
 
 // WithVersionedArtifact sets the entity to a versioned artifact
-func (eiw *EntityInfoWrapper) WithVersionedArtifact(va *pb.VersionedArtifact) *EntityInfoWrapper {
-	eiw.Type = pb.Entity_ENTITY_ARTIFACTS
+func (eiw *EntityInfoWrapper) WithVersionedArtifact(va *mediatorv1.VersionedArtifact) *EntityInfoWrapper {
+	eiw.Type = mediatorv1.Entity_ENTITY_ARTIFACTS
 	eiw.Entity = va
 
 	return eiw
 }
 
 // WithRepository sets the entity to a repository
-func (eiw *EntityInfoWrapper) WithRepository(r *pb.RepositoryResult) *EntityInfoWrapper {
-	eiw.Type = pb.Entity_ENTITY_REPOSITORIES
+func (eiw *EntityInfoWrapper) WithRepository(r *mediatorv1.RepositoryResult) *EntityInfoWrapper {
+	eiw.Type = mediatorv1.Entity_ENTITY_REPOSITORIES
 	eiw.Entity = r
 
 	return eiw
 }
 
 // WithPullRequest sets the entity to a repository
-func (eiw *EntityInfoWrapper) WithPullRequest(p *pb.PullRequest) *EntityInfoWrapper {
-	eiw.Type = pb.Entity_ENTITY_PULL_REQUESTS
+func (eiw *EntityInfoWrapper) WithPullRequest(p *mediatorv1.PullRequest) *EntityInfoWrapper {
+	eiw.Type = mediatorv1.Entity_ENTITY_PULL_REQUESTS
 	eiw.Entity = p
 
 	return eiw
@@ -149,24 +149,24 @@ func (eiw *EntityInfoWrapper) WithPullRequestNumber(id int32) *EntityInfoWrapper
 
 // AsRepository sets the entity type to a repository
 func (eiw *EntityInfoWrapper) AsRepository() *EntityInfoWrapper {
-	eiw.Type = pb.Entity_ENTITY_REPOSITORIES
-	eiw.Entity = &pb.RepositoryResult{}
+	eiw.Type = mediatorv1.Entity_ENTITY_REPOSITORIES
+	eiw.Entity = &mediatorv1.RepositoryResult{}
 
 	return eiw
 }
 
 // AsVersionedArtifact sets the entity type to a versioned artifact
 func (eiw *EntityInfoWrapper) AsVersionedArtifact() *EntityInfoWrapper {
-	eiw.Type = pb.Entity_ENTITY_ARTIFACTS
-	eiw.Entity = &pb.VersionedArtifact{}
+	eiw.Type = mediatorv1.Entity_ENTITY_ARTIFACTS
+	eiw.Entity = &mediatorv1.VersionedArtifact{}
 
 	return eiw
 }
 
 // AsPullRequest sets the entity type to a pull request
 func (eiw *EntityInfoWrapper) AsPullRequest() {
-	eiw.Type = pb.Entity_ENTITY_PULL_REQUESTS
-	eiw.Entity = &pb.PullRequest{}
+	eiw.Type = mediatorv1.Entity_ENTITY_PULL_REQUESTS
+	eiw.Entity = &mediatorv1.PullRequest{}
 }
 
 // BuildMessage builds a message.Message from the information
@@ -311,17 +311,17 @@ func (eiw *EntityInfoWrapper) evalStatusParams(
 	return params
 }
 
-func pbEntityTypeToString(t pb.Entity) (string, error) {
+func pbEntityTypeToString(t mediatorv1.Entity) (string, error) {
 	switch t {
-	case pb.Entity_ENTITY_REPOSITORIES:
+	case mediatorv1.Entity_ENTITY_REPOSITORIES:
 		return RepositoryEventEntityType, nil
-	case pb.Entity_ENTITY_ARTIFACTS:
+	case mediatorv1.Entity_ENTITY_ARTIFACTS:
 		return VersionedArtifactEventEntityType, nil
-	case pb.Entity_ENTITY_PULL_REQUESTS:
+	case mediatorv1.Entity_ENTITY_PULL_REQUESTS:
 		return PullRequestEventEntityType, nil
-	case pb.Entity_ENTITY_BUILD_ENVIRONMENTS:
+	case mediatorv1.Entity_ENTITY_BUILD_ENVIRONMENTS:
 		return "", fmt.Errorf("build environments not yet supported")
-	case pb.Entity_ENTITY_UNSPECIFIED:
+	case mediatorv1.Entity_ENTITY_UNSPECIFIED:
 		return "", fmt.Errorf("entity type unspecified")
 	default:
 		return "", fmt.Errorf("unknown entity type: %s", t.String())

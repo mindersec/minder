@@ -21,8 +21,7 @@ import (
 	"google.golang.org/protobuf/types/known/structpb"
 	"gopkg.in/yaml.v2"
 
-	"github.com/stacklok/mediator/internal/entities"
-	pb "github.com/stacklok/mediator/pkg/api/protobuf/go/mediator/v1"
+	mediatorv1 "github.com/stacklok/mediator/pkg/api/protobuf/go/mediator/v1"
 )
 
 func initializeTable(cmd *cobra.Command) *tablewriter.Table {
@@ -38,26 +37,26 @@ func initializeTable(cmd *cobra.Command) *tablewriter.Table {
 }
 
 func renderPolicyTable(
-	p *pb.Policy,
+	p *mediatorv1.Policy,
 	table *tablewriter.Table,
 ) {
 	// repositories
-	renderEntityRuleSets(p, entities.RepositoryEntity, p.Repository, table)
+	renderEntityRuleSets(p, mediatorv1.RepositoryEntity, p.Repository, table)
 
 	// build_environments
-	renderEntityRuleSets(p, entities.BuildEnvironmentEntity, p.BuildEnvironment, table)
+	renderEntityRuleSets(p, mediatorv1.BuildEnvironmentEntity, p.BuildEnvironment, table)
 
 	// artifacts
-	renderEntityRuleSets(p, entities.ArtifactEntity, p.Artifact, table)
+	renderEntityRuleSets(p, mediatorv1.ArtifactEntity, p.Artifact, table)
 
 	// artifacts
-	renderEntityRuleSets(p, entities.PullRequestEntity, p.PullRequest, table)
+	renderEntityRuleSets(p, mediatorv1.PullRequestEntity, p.PullRequest, table)
 }
 
 func renderEntityRuleSets(
-	p *pb.Policy,
-	entType entities.EntityType,
-	rs []*pb.Policy_Rule,
+	p *mediatorv1.Policy,
+	entType mediatorv1.EntityType,
+	rs []*mediatorv1.Policy_Rule,
 	table *tablewriter.Table,
 ) {
 	for idx := range rs {
@@ -68,9 +67,9 @@ func renderEntityRuleSets(
 }
 
 func renderRuleTable(
-	p *pb.Policy,
-	entType entities.EntityType,
-	rule *pb.Policy_Rule,
+	p *mediatorv1.Policy,
+	entType mediatorv1.EntityType,
+	rule *mediatorv1.Policy_Rule,
 	table *tablewriter.Table,
 ) {
 

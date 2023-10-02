@@ -25,7 +25,7 @@ import (
 	"github.com/stacklok/mediator/cmd/cli/app"
 	"github.com/stacklok/mediator/internal/entities"
 	"github.com/stacklok/mediator/internal/util"
-	pb "github.com/stacklok/mediator/pkg/api/protobuf/go/mediator/v1"
+	mediatorv1 "github.com/stacklok/mediator/pkg/api/protobuf/go/mediator/v1"
 )
 
 var policystatus_getCmd = &cobra.Command{
@@ -45,7 +45,7 @@ mediator control plane for an specific provider/group or policy id, entity type 
 		}
 		defer conn.Close()
 
-		client := pb.NewPolicyServiceClient(conn)
+		client := mediatorv1.NewPolicyServiceClient(conn)
 		ctx, cancel := util.GetAppContext()
 		defer cancel()
 
@@ -66,15 +66,15 @@ mediator control plane for an specific provider/group or policy id, entity type 
 			return fmt.Errorf("provider must be set")
 		}
 
-		req := &pb.GetPolicyStatusByIdRequest{
-			Context: &pb.Context{
+		req := &mediatorv1.GetPolicyStatusByIdRequest{
+			Context: &mediatorv1.Context{
 				Provider: provider,
 			},
 			PolicyId: policyId,
-			EntitySelector: &pb.GetPolicyStatusByIdRequest_Entity{
-				Entity: &pb.GetPolicyStatusByIdRequest_EntityTypedId{
+			EntitySelector: &mediatorv1.GetPolicyStatusByIdRequest_Entity{
+				Entity: &mediatorv1.GetPolicyStatusByIdRequest_EntityTypedId{
 					Id:   entityId,
-					Type: entities.FromString(entityType),
+					Type: mediatorv1.EntityFromString(entityType),
 				},
 			},
 		}

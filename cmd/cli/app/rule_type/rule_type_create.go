@@ -23,9 +23,8 @@ import (
 	"github.com/spf13/viper"
 	"golang.org/x/exp/slices"
 
-	"github.com/stacklok/mediator/internal/engine"
 	"github.com/stacklok/mediator/internal/util"
-	pb "github.com/stacklok/mediator/pkg/api/protobuf/go/mediator/v1"
+	mediatorv1 "github.com/stacklok/mediator/pkg/api/protobuf/go/mediator/v1"
 )
 
 // RuleType_createCmd represents the policy create command
@@ -55,7 +54,7 @@ within a mediator control plane.`,
 		}
 		defer conn.Close()
 
-		client := pb.NewPolicyServiceClient(conn)
+		client := mediatorv1.NewPolicyServiceClient(conn)
 		ctx, cancel := util.GetAppContext()
 		defer cancel()
 
@@ -73,13 +72,13 @@ within a mediator control plane.`,
 			}
 			defer closer()
 
-			r, err := engine.ParseRuleType(preader)
+			r, err := mediatorv1.ParseRuleType(preader)
 			if err != nil {
 				return fmt.Errorf("error parsing rule type: %w", err)
 			}
 
 			// create a rule
-			resp, err := client.CreateRuleType(ctx, &pb.CreateRuleTypeRequest{
+			resp, err := client.CreateRuleType(ctx, &mediatorv1.CreateRuleTypeRequest{
 				RuleType: r,
 			})
 			if err != nil {

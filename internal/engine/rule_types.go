@@ -16,12 +16,8 @@
 package engine
 
 import (
-	"bytes"
 	"context"
-	"encoding/json"
-	"errors"
 	"fmt"
-	"io"
 	"strings"
 
 	"github.com/xeipuuv/gojsonschema"
@@ -33,32 +29,9 @@ import (
 	"github.com/stacklok/mediator/internal/engine/eval"
 	"github.com/stacklok/mediator/internal/engine/ingester"
 	engif "github.com/stacklok/mediator/internal/engine/interfaces"
-	"github.com/stacklok/mediator/internal/entities"
 	"github.com/stacklok/mediator/internal/providers"
-	"github.com/stacklok/mediator/internal/util"
-	pb "github.com/stacklok/mediator/pkg/api/protobuf/go/mediator/v1"
+	mediatorv1 "github.com/stacklok/mediator/pkg/api/protobuf/go/mediator/v1"
 )
-
-var (
-	// ErrInvalidRuleTypeDefinition is returned when a rule type definition is invalid
-	ErrInvalidRuleTypeDefinition = errors.New("invalid rule type definition")
-)
-
-// ParseRuleType parses a rule type from a reader
-func ParseRuleType(r io.Reader) (*pb.RuleType, error) {
-	// We transcode to JSON so we can decode it straight to the protobuf structure
-	w := &bytes.Buffer{}
-	if err := util.TranscodeYAMLToJSON(r, w); err != nil {
-		return nil, fmt.Errorf("error converting yaml to json: %w", err)
-	}
-
-	rt := &pb.RuleType{}
-	if err := json.NewDecoder(w).Decode(rt); err != nil {
-		return nil, fmt.Errorf("error decoding json: %w", err)
-	}
-
-	return rt, nil
-}
 
 // RuleMeta is the metadata for a rule
 // TODO: We probably should care about a version
@@ -90,7 +63,7 @@ type RuleValidator struct {
 }
 
 // NewRuleValidator creates a new rule validator
-func NewRuleValidator(rt *pb.RuleType) (*RuleValidator, error) {
+func NewRuleValidator(rt *mediatorv1.RuleType) (*RuleValidator, error) {
 	// Load schemas
 	schemaLoader := gojsonschema.NewGoLoader(rt.Def.RuleSchema)
 	schema, err := gojsonschema.NewSchema(schemaLoader)
@@ -168,13 +141,13 @@ type RuleTypeEngine struct {
 
 	rval *RuleValidator
 
-	rt *pb.RuleType
+	rt *mediatorv1.RuleType
 
 	cli *providers.ProviderBuilder
 }
 
 // NewRuleTypeEngine creates a new rule type engine
-func NewRuleTypeEngine(rt *pb.RuleType, cli *providers.ProviderBuilder) (*RuleTypeEngine, error) {
+func NewRuleTypeEngine(rt *mediatorv1.RuleType, cli *providers.ProviderBuilder) (*RuleTypeEngine, error) {
 	rval, err := NewRuleValidator(rt)
 	if err != nil {
 		return nil, fmt.Errorf("cannot create rule validator: %w", err)
@@ -242,8 +215,8 @@ func (r *RuleTypeEngine) Eval(ctx context.Context, ent protoreflect.ProtoMessage
 
 // RuleDefFromDB converts a rule type definition from the database to a protobuf
 // rule type definition
-func RuleDefFromDB(r *db.RuleType) (*pb.RuleType_Definition, error) {
-	def := &pb.RuleType_Definition{}
+func RuleDefFromDB(r *db.RuleType) (*mediatorv1.RuleType_Definition, error) {
+	def := &mediatorv1.RuleType_Definition{}
 
 	if err := protojson.Unmarshal(r.Definition, def); err != nil {
 		return nil, fmt.Errorf("cannot unmarshal rule type definition: %w", err)
@@ -253,7 +226,7 @@ func RuleDefFromDB(r *db.RuleType) (*pb.RuleType_Definition, error) {
 
 // RuleTypePBFromDB converts a rule type from the database to a protobuf
 // rule type
-func RuleTypePBFromDB(rt *db.RuleType, ectx *EntityContext) (*pb.RuleType, error) {
+func RuleTypePBFromDB(rt *db.RuleType, ectx *EntityContext) (*mediatorv1.RuleType, error) {
 	gname := ectx.GetGroup().GetName()
 
 	def, err := RuleDefFromDB(rt)
@@ -263,10 +236,10 @@ func RuleTypePBFromDB(rt *db.RuleType, ectx *EntityContext) (*pb.RuleType, error
 
 	id := rt.ID.String()
 
-	return &pb.RuleType{
+	return &mediatorv1.RuleType{
 		Id:   &id,
 		Name: rt.Name,
-		Context: &pb.Context{
+		Context: &mediatorv1.Context{
 			Provider: ectx.GetProvider().Name,
 			Group:    &gname,
 		},
@@ -276,40 +249,15 @@ func RuleTypePBFromDB(rt *db.RuleType, ectx *EntityContext) (*pb.RuleType, error
 	}, nil
 }
 
-// ValidateRuleTypeDefinition validates a rule type definition
-func ValidateRuleTypeDefinition(def *pb.RuleType_Definition) error {
-	if def == nil {
-		return fmt.Errorf("%w: rule type definition is nil", ErrInvalidRuleTypeDefinition)
-	}
-
-	if !entities.IsValidEntity(entities.FromString(def.InEntity)) {
-		return fmt.Errorf("%w: invalid entity type: %s", ErrInvalidRuleTypeDefinition, def.InEntity)
-	}
-
-	if def.RuleSchema == nil {
-		return fmt.Errorf("%w: rule schema is nil", ErrInvalidRuleTypeDefinition)
-	}
-
-	if def.Ingest == nil {
-		return fmt.Errorf("%w: data ingest is nil", ErrInvalidRuleTypeDefinition)
-	}
-
-	if def.Eval == nil {
-		return fmt.Errorf("%w: data eval is nil", ErrInvalidRuleTypeDefinition)
-	}
-
-	return nil
-}
-
 // GetRulesFromPolicyOfType returns the rules from the policy of the given type
-func GetRulesFromPolicyOfType(p *pb.Policy, rt *pb.RuleType) ([]*pb.Policy_Rule, error) {
-	contextualRules, err := GetRulesForEntity(p, entities.FromString(rt.Def.InEntity))
+func GetRulesFromPolicyOfType(p *mediatorv1.Policy, rt *mediatorv1.RuleType) ([]*mediatorv1.Policy_Rule, error) {
+	contextualRules, err := GetRulesForEntity(p, mediatorv1.EntityFromString(rt.Def.InEntity))
 	if err != nil {
 		return nil, fmt.Errorf("error getting rules for entity: %w", err)
 	}
 
-	rules := []*pb.Policy_Rule{}
-	err = TraverseRules(contextualRules, func(r *pb.Policy_Rule) error {
+	rules := []*mediatorv1.Policy_Rule{}
+	err = TraverseRules(contextualRules, func(r *mediatorv1.Policy_Rule) error {
 		if r.Type == rt.Name {
 			rules = append(rules, r)
 		}

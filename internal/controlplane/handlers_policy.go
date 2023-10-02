@@ -33,13 +33,13 @@ import (
 	"github.com/stacklok/mediator/internal/entities"
 	"github.com/stacklok/mediator/internal/reconcilers"
 	"github.com/stacklok/mediator/internal/util"
-	pb "github.com/stacklok/mediator/pkg/api/protobuf/go/mediator/v1"
+	mediatorv1 "github.com/stacklok/mediator/pkg/api/protobuf/go/mediator/v1"
 )
 
 // authAndContextValidation is a helper function to initialize entity context info and validate input
 // It also sets up the needed information in the `in` entity context that's needed for the rest of the flow
 // Note that this also does an authorization check.
-func (s *Server) authAndContextValidation(ctx context.Context, inout *pb.Context) (context.Context, error) {
+func (s *Server) authAndContextValidation(ctx context.Context, inout *mediatorv1.Context) (context.Context, error) {
 	if inout == nil {
 		return ctx, fmt.Errorf("context cannot be nil")
 	}
@@ -62,7 +62,7 @@ func (s *Server) authAndContextValidation(ctx context.Context, inout *pb.Context
 
 // ensureDefaultGroupForContext ensures a valid group is set in the context or sets the default group
 // if the group is not set in the incoming entity context, it'll set it.
-func (s *Server) ensureDefaultGroupForContext(ctx context.Context, inout *pb.Context) error {
+func (s *Server) ensureDefaultGroupForContext(ctx context.Context, inout *mediatorv1.Context) error {
 	// Group is already set
 	if inout.GetGroup() != "" {
 		return nil
@@ -95,7 +95,7 @@ func verifyValidGroup(ctx context.Context, in *engine.EntityContext) error {
 // CreatePolicy creates a policy for a group
 // nolint: gocyclo
 func (s *Server) CreatePolicy(ctx context.Context,
-	cpr *pb.CreatePolicyRequest) (*pb.CreatePolicyResponse, error) {
+	cpr *mediatorv1.CreatePolicyRequest) (*mediatorv1.CreatePolicyResponse, error) {
 	in := cpr.GetPolicy()
 
 	ctx, err := s.authAndContextValidation(ctx, in.GetContext())
@@ -117,7 +117,7 @@ func (s *Server) CreatePolicy(ctx context.Context,
 		return nil, status.Errorf(codes.InvalidArgument, "invalid policy: %v", err)
 	}
 
-	err = engine.TraverseAllRulesForPipeline(in, func(r *pb.Policy_Rule) error {
+	err = engine.TraverseAllRulesForPipeline(in, func(r *mediatorv1.Policy_Rule) error {
 		// TODO: This will need to be updated to support
 		// the hierarchy tree once that's settled in.
 		rtdb, err := s.store.GetRuleTypeByName(ctx, db.GetRuleTypeByNameParams{
@@ -183,11 +183,11 @@ func (s *Server) CreatePolicy(ctx context.Context,
 	}
 
 	// Create entity rules entries
-	for ent, entRules := range map[pb.Entity][]*pb.Policy_Rule{
-		pb.Entity_ENTITY_REPOSITORIES:       in.GetRepository(),
-		pb.Entity_ENTITY_ARTIFACTS:          in.GetArtifact(),
-		pb.Entity_ENTITY_BUILD_ENVIRONMENTS: in.GetBuildEnvironment(),
-		pb.Entity_ENTITY_PULL_REQUESTS:      in.GetPullRequest(),
+	for ent, entRules := range map[mediatorv1.Entity][]*mediatorv1.Policy_Rule{
+		mediatorv1.Entity_ENTITY_REPOSITORIES:       in.GetRepository(),
+		mediatorv1.Entity_ENTITY_ARTIFACTS:          in.GetArtifact(),
+		mediatorv1.Entity_ENTITY_BUILD_ENVIRONMENTS: in.GetBuildEnvironment(),
+		mediatorv1.Entity_ENTITY_PULL_REQUESTS:      in.GetPullRequest(),
 	} {
 		if err := createPolicyRulesForEntity(ctx, ent, &policy, qtx, entRules); err != nil {
 			return nil, err
@@ -201,7 +201,7 @@ func (s *Server) CreatePolicy(ctx context.Context,
 
 	idStr := policy.ID.String()
 	in.Id = &idStr
-	resp := &pb.CreatePolicyResponse{
+	resp := &mediatorv1.CreatePolicyResponse{
 		Policy: in,
 	}
 
@@ -222,10 +222,10 @@ func (s *Server) CreatePolicy(ctx context.Context,
 
 func createPolicyRulesForEntity(
 	ctx context.Context,
-	entity pb.Entity,
+	entity mediatorv1.Entity,
 	policy *db.Policy,
 	qtx db.Querier,
-	rules []*pb.Policy_Rule,
+	rules []*mediatorv1.Policy_Rule,
 ) error {
 	if rules == nil {
 		return nil
@@ -247,7 +247,7 @@ func createPolicyRulesForEntity(
 
 // DeletePolicy is a method to delete a policy
 func (s *Server) DeletePolicy(ctx context.Context,
-	in *pb.DeletePolicyRequest) (*pb.DeletePolicyResponse, error) {
+	in *mediatorv1.DeletePolicyRequest) (*mediatorv1.DeletePolicyResponse, error) {
 	_, err := s.authAndContextValidation(ctx, in.GetContext())
 	if err != nil {
 		return nil, status.Errorf(codes.InvalidArgument, "error ensuring default group: %v", err)
@@ -271,12 +271,12 @@ func (s *Server) DeletePolicy(ctx context.Context,
 		return nil, status.Errorf(codes.Internal, "failed to delete policy: %s", err)
 	}
 
-	return &pb.DeletePolicyResponse{}, nil
+	return &mediatorv1.DeletePolicyResponse{}, nil
 }
 
 // ListPolicies is a method to get all policies for a group
 func (s *Server) ListPolicies(ctx context.Context,
-	in *pb.ListPoliciesRequest) (*pb.ListPoliciesResponse, error) {
+	in *mediatorv1.ListPoliciesRequest) (*mediatorv1.ListPoliciesResponse, error) {
 	ctx, err := s.authAndContextValidation(ctx, in.GetContext())
 	if err != nil {
 		return nil, status.Errorf(codes.InvalidArgument, "error ensuring default group: %v", err)
@@ -289,8 +289,8 @@ func (s *Server) ListPolicies(ctx context.Context,
 		return nil, status.Errorf(codes.Unknown, "failed to get policies: %s", err)
 	}
 
-	var resp pb.ListPoliciesResponse
-	resp.Policies = make([]*pb.Policy, 0, len(policies))
+	var resp mediatorv1.ListPoliciesResponse
+	resp.Policies = make([]*mediatorv1.Policy, 0, len(policies))
 	for _, policy := range engine.MergeDatabaseListIntoPolicies(policies, entityCtx) {
 		resp.Policies = append(resp.Policies, policy)
 	}
@@ -300,7 +300,7 @@ func (s *Server) ListPolicies(ctx context.Context,
 
 // GetPolicyById is a method to get a policy by id
 func (s *Server) GetPolicyById(ctx context.Context,
-	in *pb.GetPolicyByIdRequest) (*pb.GetPolicyByIdResponse, error) {
+	in *mediatorv1.GetPolicyByIdRequest) (*mediatorv1.GetPolicyByIdResponse, error) {
 	ctx, err := s.authAndContextValidation(ctx, in.GetContext())
 	if err != nil {
 		return nil, status.Errorf(codes.InvalidArgument, "error ensuring default group: %v", err)
@@ -321,7 +321,7 @@ func (s *Server) GetPolicyById(ctx context.Context,
 		return nil, status.Errorf(codes.Unknown, "failed to get policy: %s", err)
 	}
 
-	var resp pb.GetPolicyByIdResponse
+	var resp mediatorv1.GetPolicyByIdResponse
 	pols := engine.MergeDatabaseGetIntoPolicies(policies, entityCtx)
 	if len(pols) == 0 {
 		return nil, status.Errorf(codes.NotFound, "policy not found")
@@ -377,7 +377,7 @@ func getRuleEvalEntityInfo(
 // GetPolicyStatusById is a method to get policy status
 // nolint:gocyclo // TODO: Refactor this to be more readable
 func (s *Server) GetPolicyStatusById(ctx context.Context,
-	in *pb.GetPolicyStatusByIdRequest) (*pb.GetPolicyStatusByIdResponse, error) {
+	in *mediatorv1.GetPolicyStatusByIdRequest) (*mediatorv1.GetPolicyStatusByIdResponse, error) {
 	ctx, err := s.authAndContextValidation(ctx, in.GetContext())
 	if err != nil {
 		return nil, status.Errorf(codes.InvalidArgument, "error ensuring default group: %v", err)
@@ -401,7 +401,7 @@ func (s *Server) GetPolicyStatusById(ctx context.Context,
 		return nil, status.Errorf(codes.Unknown, "failed to get policy: %s", err)
 	}
 
-	var rulestats []*pb.RuleEvaluationStatus
+	var rulestats []*mediatorv1.RuleEvaluationStatus
 	var selector *uuid.NullUUID
 	var dbEntity *db.NullEntities
 
@@ -409,7 +409,7 @@ func (s *Server) GetPolicyStatusById(ctx context.Context,
 		selector = &uuid.NullUUID{}
 		dbEntity = &db.NullEntities{}
 	} else if e := in.GetEntity(); e != nil {
-		if !entities.IsValidEntity(e.GetType()) {
+		if !e.GetType().IsValid() {
 			return nil, status.Errorf(codes.InvalidArgument,
 				"invalid entity type %s, please use one of %s",
 				e.GetType(), entities.KnownTypesCSV())
@@ -432,7 +432,7 @@ func (s *Server) GetPolicyStatusById(ctx context.Context,
 			return nil, status.Errorf(codes.Unknown, "failed to list rule evaluation status: %s", err)
 		}
 
-		rulestats = make([]*pb.RuleEvaluationStatus, 0, len(dbrulestat))
+		rulestats = make([]*mediatorv1.RuleEvaluationStatus, 0, len(dbrulestat))
 		for _, rs := range dbrulestat {
 			var guidance string
 			if rs.EvalStatus == db.EvalStatusTypesFailure || rs.EvalStatus == db.EvalStatusTypesError {
@@ -444,7 +444,7 @@ func (s *Server) GetPolicyStatusById(ctx context.Context,
 				}
 			}
 
-			st := &pb.RuleEvaluationStatus{
+			st := &mediatorv1.RuleEvaluationStatus{
 				PolicyId:    in.PolicyId,
 				RuleId:      rs.RuleTypeID.String(),
 				RuleName:    rs.RuleTypeName,
@@ -462,8 +462,8 @@ func (s *Server) GetPolicyStatusById(ctx context.Context,
 		// TODO: Add other entities once we have database entries for them
 	}
 
-	return &pb.GetPolicyStatusByIdResponse{
-		PolicyStatus: &pb.PolicyStatus{
+	return &mediatorv1.GetPolicyStatusByIdResponse{
+		PolicyStatus: &mediatorv1.PolicyStatus{
 			PolicyId:     dbstat.ID.String(),
 			PolicyName:   dbstat.Name,
 			PolicyStatus: string(dbstat.PolicyStatus),
@@ -475,7 +475,7 @@ func (s *Server) GetPolicyStatusById(ctx context.Context,
 
 // GetPolicyStatusByGroup is a method to get policy status for a group
 func (s *Server) GetPolicyStatusByGroup(ctx context.Context,
-	in *pb.GetPolicyStatusByGroupRequest) (*pb.GetPolicyStatusByGroupResponse, error) {
+	in *mediatorv1.GetPolicyStatusByGroupRequest) (*mediatorv1.GetPolicyStatusByGroupResponse, error) {
 	ctx, err := s.authAndContextValidation(ctx, in.GetContext())
 	if err != nil {
 		return nil, status.Errorf(codes.InvalidArgument, "error ensuring default group: %v", err)
@@ -492,12 +492,12 @@ func (s *Server) GetPolicyStatusByGroup(ctx context.Context,
 		return nil, status.Errorf(codes.Unknown, "failed to get policy status: %s", err)
 	}
 
-	res := &pb.GetPolicyStatusByGroupResponse{
-		PolicyStatus: make([]*pb.PolicyStatus, 0, len(dbstats)),
+	res := &mediatorv1.GetPolicyStatusByGroupResponse{
+		PolicyStatus: make([]*mediatorv1.PolicyStatus, 0, len(dbstats)),
 	}
 
 	for _, dbstat := range dbstats {
-		res.PolicyStatus = append(res.PolicyStatus, &pb.PolicyStatus{
+		res.PolicyStatus = append(res.PolicyStatus, &mediatorv1.PolicyStatus{
 			PolicyId:     dbstat.ID.String(),
 			PolicyName:   dbstat.Name,
 			PolicyStatus: string(dbstat.PolicyStatus),
@@ -510,7 +510,10 @@ func (s *Server) GetPolicyStatusByGroup(ctx context.Context,
 // Rule type CRUD
 
 // ListRuleTypes is a method to list all rule types for a given context
-func (s *Server) ListRuleTypes(ctx context.Context, in *pb.ListRuleTypesRequest) (*pb.ListRuleTypesResponse, error) {
+func (s *Server) ListRuleTypes(
+	ctx context.Context,
+	in *mediatorv1.ListRuleTypesRequest,
+) (*mediatorv1.ListRuleTypesResponse, error) {
 	ctx, err := s.authAndContextValidation(ctx, in.GetContext())
 	if err != nil {
 		return nil, status.Errorf(codes.InvalidArgument, "error ensuring default group: %v", err)
@@ -526,7 +529,7 @@ func (s *Server) ListRuleTypes(ctx context.Context, in *pb.ListRuleTypesRequest)
 		return nil, status.Errorf(codes.Unknown, "failed to get rule types: %s", err)
 	}
 
-	resp := &pb.ListRuleTypesResponse{}
+	resp := &mediatorv1.ListRuleTypesResponse{}
 
 	for idx := range lrt {
 		rt := lrt[idx]
@@ -542,7 +545,10 @@ func (s *Server) ListRuleTypes(ctx context.Context, in *pb.ListRuleTypesRequest)
 }
 
 // GetRuleTypeByName is a method to get a rule type by name
-func (s *Server) GetRuleTypeByName(ctx context.Context, in *pb.GetRuleTypeByNameRequest) (*pb.GetRuleTypeByNameResponse, error) {
+func (s *Server) GetRuleTypeByName(
+	ctx context.Context,
+	in *mediatorv1.GetRuleTypeByNameRequest,
+) (*mediatorv1.GetRuleTypeByNameResponse, error) {
 	ctx, err := s.authAndContextValidation(ctx, in.GetContext())
 	if err != nil {
 		return nil, status.Errorf(codes.InvalidArgument, "error ensuring default group: %v", err)
@@ -550,7 +556,7 @@ func (s *Server) GetRuleTypeByName(ctx context.Context, in *pb.GetRuleTypeByName
 
 	entityCtx := engine.EntityFromContext(ctx)
 
-	resp := &pb.GetRuleTypeByNameResponse{}
+	resp := &mediatorv1.GetRuleTypeByNameResponse{}
 
 	rtdb, err := s.store.GetRuleTypeByName(ctx, db.GetRuleTypeByNameParams{
 		Provider: entityCtx.GetProvider().Name,
@@ -572,7 +578,10 @@ func (s *Server) GetRuleTypeByName(ctx context.Context, in *pb.GetRuleTypeByName
 }
 
 // GetRuleTypeById is a method to get a rule type by id
-func (s *Server) GetRuleTypeById(ctx context.Context, in *pb.GetRuleTypeByIdRequest) (*pb.GetRuleTypeByIdResponse, error) {
+func (s *Server) GetRuleTypeById(
+	ctx context.Context,
+	in *mediatorv1.GetRuleTypeByIdRequest,
+) (*mediatorv1.GetRuleTypeByIdResponse, error) {
 	ctx, err := s.authAndContextValidation(ctx, in.GetContext())
 	if err != nil {
 		return nil, status.Errorf(codes.InvalidArgument, "error ensuring default group: %v", err)
@@ -580,7 +589,7 @@ func (s *Server) GetRuleTypeById(ctx context.Context, in *pb.GetRuleTypeByIdRequ
 
 	entityCtx := engine.EntityFromContext(ctx)
 
-	resp := &pb.GetRuleTypeByIdResponse{}
+	resp := &mediatorv1.GetRuleTypeByIdResponse{}
 
 	parsedRuleTypeID, err := uuid.Parse(in.GetId())
 	if err != nil {
@@ -603,7 +612,10 @@ func (s *Server) GetRuleTypeById(ctx context.Context, in *pb.GetRuleTypeByIdRequ
 }
 
 // CreateRuleType is a method to create a rule type
-func (s *Server) CreateRuleType(ctx context.Context, crt *pb.CreateRuleTypeRequest) (*pb.CreateRuleTypeResponse, error) {
+func (s *Server) CreateRuleType(
+	ctx context.Context,
+	crt *mediatorv1.CreateRuleTypeRequest,
+) (*mediatorv1.CreateRuleTypeResponse, error) {
 	in := crt.GetRuleType()
 
 	ctx, err := s.authAndContextValidation(ctx, in.GetContext())
@@ -625,7 +637,10 @@ func (s *Server) CreateRuleType(ctx context.Context, crt *pb.CreateRuleTypeReque
 		return nil, status.Errorf(codes.Unknown, "failed to get rule type: %s", err)
 	}
 
-	if err := engine.ValidateRuleTypeDefinition(in.GetDef()); err != nil {
+	if err := in.Validate(); err != nil {
+		if errors.Is(err, mediatorv1.ErrInvalidRuleType) {
+			return nil, util.UserVisibleError(codes.InvalidArgument, "Couldn't create rule: %s", err)
+		}
 		return nil, status.Errorf(codes.InvalidArgument, "invalid rule type definition: %v", err)
 	}
 
@@ -649,13 +664,16 @@ func (s *Server) CreateRuleType(ctx context.Context, crt *pb.CreateRuleTypeReque
 	rtypeIDStr := dbrtyp.ID.String()
 	in.Id = &rtypeIDStr
 
-	return &pb.CreateRuleTypeResponse{
+	return &mediatorv1.CreateRuleTypeResponse{
 		RuleType: in,
 	}, nil
 }
 
 // UpdateRuleType is a method to update a rule type
-func (s *Server) UpdateRuleType(ctx context.Context, urt *pb.UpdateRuleTypeRequest) (*pb.UpdateRuleTypeResponse, error) {
+func (s *Server) UpdateRuleType(
+	ctx context.Context,
+	urt *mediatorv1.UpdateRuleTypeRequest,
+) (*mediatorv1.UpdateRuleTypeResponse, error) {
 	in := urt.GetRuleType()
 
 	ctx, err := s.authAndContextValidation(ctx, in.GetContext())
@@ -677,7 +695,10 @@ func (s *Server) UpdateRuleType(ctx context.Context, urt *pb.UpdateRuleTypeReque
 		return nil, status.Errorf(codes.Internal, "failed to get rule type: %s", err)
 	}
 
-	if err := engine.ValidateRuleTypeDefinition(in.GetDef()); err != nil {
+	if err := in.Validate(); err != nil {
+		if errors.Is(err, mediatorv1.ErrInvalidRuleType) {
+			return nil, util.UserVisibleError(codes.InvalidArgument, "Couldn't update rule: %s", err)
+		}
 		return nil, status.Errorf(codes.Unavailable, "invalid rule type definition: %s", err)
 	}
 
@@ -695,13 +716,16 @@ func (s *Server) UpdateRuleType(ctx context.Context, urt *pb.UpdateRuleTypeReque
 		return nil, status.Errorf(codes.Unknown, "failed to create rule type: %s", err)
 	}
 
-	return &pb.UpdateRuleTypeResponse{
+	return &mediatorv1.UpdateRuleTypeResponse{
 		RuleType: in,
 	}, nil
 }
 
 // DeleteRuleType is a method to delete a rule type
-func (s *Server) DeleteRuleType(ctx context.Context, in *pb.DeleteRuleTypeRequest) (*pb.DeleteRuleTypeResponse, error) {
+func (s *Server) DeleteRuleType(
+	ctx context.Context,
+	in *mediatorv1.DeleteRuleTypeRequest,
+) (*mediatorv1.DeleteRuleTypeResponse, error) {
 	parsedRuleTypeID, err := uuid.Parse(in.GetId())
 	if err != nil {
 		return nil, util.UserVisibleError(codes.InvalidArgument, "invalid rule type ID")
@@ -739,5 +763,5 @@ func (s *Server) DeleteRuleType(ctx context.Context, in *pb.DeleteRuleTypeReques
 		return nil, status.Errorf(codes.Unknown, "failed to delete rule type: %s", err)
 	}
 
-	return &pb.DeleteRuleTypeResponse{}, nil
+	return &mediatorv1.DeleteRuleTypeResponse{}, nil
 }
