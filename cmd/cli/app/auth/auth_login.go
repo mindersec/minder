@@ -166,11 +166,7 @@ will be saved to $XDG_CONFIG_HOME/mediator/credentials.json`,
 
 		if !registered {
 			fmt.Println("First login, registering user.")
-			// register the user and add them to organization 1
-			// TODO: register the user in their own organization
-			_, err = client.CreateUser(ctx, &pb.CreateUserRequest{
-				OrganizationId: 1,
-			})
+			_, err = client.CreateUser(ctx, &pb.CreateUserRequest{})
 			util.ExitNicelyOnError(err, "Error registering user")
 		}
 

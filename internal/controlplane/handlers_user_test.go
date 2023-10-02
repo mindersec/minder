@@ -41,26 +41,109 @@ import (
 func TestCreateUserDBMock(t *testing.T) {
 	t.Parallel()
 
-	ctrl := gomock.NewController(t)
-	defer ctrl.Finish()
+	testCases := []struct {
+		name               string
+		req                *pb.CreateUserRequest
+		buildStubs         func(store *mockdb.MockStore, jwt *mockjwt.MockJwtValidator)
+		checkResponse      func(t *testing.T, res *pb.CreateUserResponse, err error)
+		expectedStatusCode codes.Code
+	}{
+		{
+			name: "Success",
+			req:  &pb.CreateUserRequest{},
+			buildStubs: func(store *mockdb.MockStore, jwt *mockjwt.MockJwtValidator) {
+				tx := sql.Tx{}
+				store.EXPECT().BeginTransaction().Return(&tx, nil)
+				store.EXPECT().GetQuerierWithTransaction(gomock.Any()).Return(store)
+				returnedUser := db.User{
+					ID:              1,
+					OrganizationID:  2,
+					IdentitySubject: "subject1",
+					Email:           sql.NullString{String: "test@stacklok.com", Valid: true},
+					FirstName:       sql.NullString{String: "Foo", Valid: true},
+					LastName:        sql.NullString{String: "Bar", Valid: true},
+					CreatedAt:       time.Now(),
+					UpdatedAt:       time.Now(),
+				}
+				store.EXPECT().
+					CreateOrganization(gomock.Any(), gomock.Any()).
+					Return(db.Organization{ID: 2}, nil)
+				store.EXPECT().
+					CreateGroup(gomock.Any(), gomock.Any()).
+					Return(db.Group{ID: 2}, nil)
+				store.EXPECT().
+					CreateRole(gomock.Any(), gomock.Any()).
+					Return(db.Role{ID: 2}, nil)
+				store.EXPECT().
+					CreateRole(gomock.Any(), gomock.Any()).
+					Return(db.Role{ID: 3}, nil)
+				store.EXPECT().CreateProvider(gomock.Any(), gomock.Any())
+				store.EXPECT().
+					CreateUser(gomock.Any(), db.CreateUserParams{OrganizationID: 2,
+						IdentitySubject: "subject1",
+						Email:           sql.NullString{String: "test@stacklok.com", Valid: true},
+						FirstName:       sql.NullString{String: "Foo", Valid: true},
+						LastName:        sql.NullString{String: "Bar", Valid: true}}).
+					Return(returnedUser, nil)
+				store.EXPECT().AddUserGroup(gomock.Any(), db.AddUserGroupParams{UserID: 1, GroupID: 2})
+				store.EXPECT().AddUserRole(gomock.Any(), db.AddUserRoleParams{UserID: 1, RoleID: 2})
+				store.EXPECT().AddUserRole(gomock.Any(), db.AddUserRoleParams{UserID: 1, RoleID: 3})
+				store.EXPECT().Commit(gomock.Any())
+				store.EXPECT().Rollback(gomock.Any())
+				tokenResult, _ := openid.NewBuilder().GivenName("Foo").FamilyName("Bar").Email("test@stacklok.com").Subject("subject1").Build()
+				jwt.EXPECT().ParseAndValidate(gomock.Any()).Return(tokenResult, nil)
+			},
+			checkResponse: func(t *testing.T, res *pb.CreateUserResponse, err error) {
+				t.Helper()
 
-	mockStore := mockdb.NewMockStore(ctrl)
-	mockJwtValidator := mockjwt.NewMockJwtValidator(ctrl)
+				assert.NoError(t, err)
+				assert.NotNil(t, res)
+				assert.Equal(t, int32(1), res.Id)
+				assert.Equal(t, "test@stacklok.com", *res.Email)
+				assert.Equal(t, int32(2), res.OrganizationId)
+				assert.Equal(t, "Foo", *res.FirstName)
+				assert.Equal(t, "Bar", *res.LastName)
+			},
+		},
+		{
+			name: "Success",
+			req:  &pb.CreateUserRequest{},
+			buildStubs: func(store *mockdb.MockStore, jwt *mockjwt.MockJwtValidator) {
+				tx := sql.Tx{}
+				store.EXPECT().BeginTransaction().Return(&tx, nil)
+				store.EXPECT().GetQuerierWithTransaction(gomock.Any()).Return(store)
+				returnedUser := db.User{
+					ID:              1,
+					OrganizationID:  1,
+					IdentitySubject: "subject1",
+					Email:           sql.NullString{Valid: false},
+					FirstName:       sql.NullString{Valid: false},
+					LastName:        sql.NullString{Valid: false},
+					CreatedAt:       time.Now(),
+					UpdatedAt:       time.Now(),
+				}
+				store.EXPECT().
+					CreateUser(gomock.Any(), db.CreateUserParams{
+						OrganizationID:  1,
+						IdentitySubject: "subject1",
+					}).
+					Return(returnedUser, nil)
+				store.EXPECT().AddUserGroup(gomock.Any(), db.AddUserGroupParams{UserID: 1, GroupID: 1})
+				store.EXPECT().AddUserRole(gomock.Any(), db.AddUserRoleParams{UserID: 1, RoleID: 1})
+				store.EXPECT().Commit(gomock.Any())
+				store.EXPECT().Rollback(gomock.Any())
+				roles := []interface{}{"superadmin"}
+				realmAccess := map[string]interface{}{"roles": roles}
+				tokenResult, _ := openid.NewBuilder().Subject("subject1").Claim("realm_access", realmAccess).Build()
+				jwt.EXPECT().ParseAndValidate(gomock.Any()).Return(tokenResult, nil)
+			},
+			checkResponse: func(t *testing.T, res *pb.CreateUserResponse, err error) {
+				t.Helper()
 
-	email := "test@stacklok.com"
-
-	request := &pb.CreateUserRequest{
-		OrganizationId: 1,
-	}
-
-	expectedUser := db.User{
-		ID:             1,
-		OrganizationID: 1,
-		Email:          sql.NullString{String: email, Valid: true},
-		FirstName:      sql.NullString{String: "Foo", Valid: true},
-		LastName:       sql.NullString{String: "Bar", Valid: true},
-		CreatedAt:      time.Now(),
-		UpdatedAt:      time.Now(),
+				assert.Equal(t, int32(1), res.Id)
+				assert.Equal(t, int32(1), res.OrganizationId)
+			},
+		},
 	}
 
 	// Create a new context and set the claims value
@@ -72,52 +155,40 @@ func TestCreateUserDBMock(t *testing.T) {
 			{RoleID: 1, IsAdmin: true, GroupID: 0, OrganizationID: 1}},
 	})
 
-	// Create the access token
-	tokenString := "some-access-token"
-	tokenResult, _ := openid.NewBuilder().GivenName("Foo").FamilyName("Bar").Email(email).Build()
-	mockJwtValidator.EXPECT().ParseAndValidate(tokenString).Return(tokenResult, nil)
-
 	// Create header metadata
 	md := metadata.New(map[string]string{
-		"authorization": "bearer " + tokenString,
+		"authorization": "bearer some-access-token",
 	})
 
 	// Create a new context with added header metadata
 	ctx = metadata.NewIncomingContext(ctx, md)
 
-	tx := sql.Tx{}
-	mockStore.EXPECT().BeginTransaction().Return(&tx, nil)
-	mockStore.EXPECT().GetQuerierWithTransaction(gomock.Any()).Return(mockStore)
-	mockStore.EXPECT().
-		CreateUser(ctx, gomock.Any()).
-		Return(expectedUser, nil)
-	mockStore.EXPECT().Commit(gomock.Any())
-	mockStore.EXPECT().Rollback(gomock.Any())
+	for i := range testCases {
+		tc := testCases[i]
+		t.Run(tc.name, func(t *testing.T) {
+			t.Parallel()
 
-	crypeng := crypto.NewEngine("test")
+			ctrl := gomock.NewController(t)
+			defer ctrl.Finish()
 
-	server := &Server{
-		store: mockStore,
-		cfg: &config.Config{
-			Salt: config.DefaultConfigForTest().Salt,
-		},
-		cryptoEngine: crypeng,
-		vldtr:        mockJwtValidator,
+			mockStore := mockdb.NewMockStore(ctrl)
+			mockJwtValidator := mockjwt.NewMockJwtValidator(ctrl)
+			tc.buildStubs(mockStore, mockJwtValidator)
+			crypeng := crypto.NewEngine("test")
+
+			server := &Server{
+				store: mockStore,
+				cfg: &config.Config{
+					Salt: config.DefaultConfigForTest().Salt,
+				},
+				cryptoEngine: crypeng,
+				vldtr:        mockJwtValidator,
+			}
+
+			resp, err := server.CreateUser(ctx, tc.req)
+			tc.checkResponse(t, resp, err)
+		})
 	}
-
-	response, err := server.CreateUser(ctx, request)
-
-	assert.NoError(t, err)
-	assert.NotNil(t, response)
-	assert.Equal(t, expectedUser.ID, response.Id)
-	assert.Equal(t, expectedUser.Email, sql.NullString{String: *response.Email, Valid: true})
-	assert.Equal(t, expectedUser.OrganizationID, response.OrganizationId)
-	assert.Equal(t, expectedUser.FirstName, sql.NullString{String: *response.FirstName, Valid: true})
-	assert.Equal(t, expectedUser.LastName, sql.NullString{String: *response.LastName, Valid: true})
-	expectedCreatedAt := expectedUser.CreatedAt.In(time.UTC)
-	assert.Equal(t, expectedCreatedAt, response.CreatedAt.AsTime().In(time.UTC))
-	expectedUpdatedAt := expectedUser.UpdatedAt.In(time.UTC)
-	assert.Equal(t, expectedUpdatedAt, response.UpdatedAt.AsTime().In(time.UTC))
 }
 
 func TestCreateUser_gRPC(t *testing.T) {
@@ -132,14 +203,59 @@ func TestCreateUser_gRPC(t *testing.T) {
 	}{
 		{
 			name: "Success",
-			req: &pb.CreateUserRequest{
-				OrganizationId: 1,
-			},
+			req:  &pb.CreateUserRequest{},
 			buildStubs: func(store *mockdb.MockStore, jwt *mockjwt.MockJwtValidator) {
 				tx := sql.Tx{}
 				store.EXPECT().BeginTransaction().Return(&tx, nil)
 				store.EXPECT().GetQuerierWithTransaction(gomock.Any()).Return(store)
+				store.EXPECT().
+					CreateOrganization(gomock.Any(), gomock.Any()).
+					Return(db.Organization{ID: 2}, nil)
+				store.EXPECT().
+					CreateGroup(gomock.Any(), gomock.Any()).
+					Return(db.Group{ID: 2}, nil)
+				store.EXPECT().
+					CreateRole(gomock.Any(), gomock.Any()).
+					Return(db.Role{ID: 2}, nil)
+				store.EXPECT().
+					CreateRole(gomock.Any(), gomock.Any()).
+					Return(db.Role{ID: 3}, nil)
+				store.EXPECT().CreateProvider(gomock.Any(), gomock.Any())
+				store.EXPECT().
+					CreateUser(gomock.Any(), gomock.Any()).
+					Return(db.User{
+						ID:             1,
+						OrganizationID: 2,
+						CreatedAt:      time.Now(),
+						UpdatedAt:      time.Now(),
+					}, nil).
+					Times(1)
+				store.EXPECT().AddUserGroup(gomock.Any(), db.AddUserGroupParams{UserID: 1, GroupID: 2})
+				store.EXPECT().AddUserRole(gomock.Any(), db.AddUserRoleParams{UserID: 1, RoleID: 2})
+				store.EXPECT().AddUserRole(gomock.Any(), db.AddUserRoleParams{UserID: 1, RoleID: 3})
+				store.EXPECT().Commit(gomock.Any())
+				store.EXPECT().Rollback(gomock.Any())
+				jwt.EXPECT().ParseAndValidate(gomock.Any()).Return(openid.New(), nil)
+			},
+			checkResponse: func(t *testing.T, res *pb.CreateUserResponse, err error) {
+				t.Helper()
 
+				assert.NoError(t, err)
+				assert.NotNil(t, res)
+				assert.Equal(t, int32(1), res.Id)
+				assert.Equal(t, int32(2), res.OrganizationId)
+				assert.NotNil(t, res.CreatedAt)
+				assert.NotNil(t, res.UpdatedAt)
+			},
+			expectedStatusCode: codes.OK,
+		},
+		{
+			name: "Superadmin",
+			req:  &pb.CreateUserRequest{},
+			buildStubs: func(store *mockdb.MockStore, jwt *mockjwt.MockJwtValidator) {
+				tx := sql.Tx{}
+				store.EXPECT().BeginTransaction().Return(&tx, nil)
+				store.EXPECT().GetQuerierWithTransaction(gomock.Any()).Return(store)
 				store.EXPECT().
 					CreateUser(gomock.Any(), gomock.Any()).
 					Return(db.User{
@@ -147,11 +263,15 @@ func TestCreateUser_gRPC(t *testing.T) {
 						OrganizationID: 1,
 						CreatedAt:      time.Now(),
 						UpdatedAt:      time.Now(),
-					}, nil).
-					Times(1)
+					}, nil)
+				store.EXPECT().AddUserGroup(gomock.Any(), db.AddUserGroupParams{UserID: 1, GroupID: 1})
+				store.EXPECT().AddUserRole(gomock.Any(), db.AddUserRoleParams{UserID: 1, RoleID: 1})
 				store.EXPECT().Commit(gomock.Any())
 				store.EXPECT().Rollback(gomock.Any())
-				jwt.EXPECT().ParseAndValidate(gomock.Any()).Return(openid.New(), nil)
+				roles := []interface{}{"superadmin"}
+				realmAccess := map[string]interface{}{"roles": roles}
+				tokenResult, _ := openid.NewBuilder().Claim("realm_access", realmAccess).Build()
+				jwt.EXPECT().ParseAndValidate(gomock.Any()).Return(tokenResult, nil)
 			},
 			checkResponse: func(t *testing.T, res *pb.CreateUserResponse, err error) {
 				t.Helper()

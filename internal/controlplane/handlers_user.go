@@ -31,9 +31,11 @@ import (
 	pb "github.com/stacklok/mediator/pkg/api/protobuf/go/mediator/v1"
 )
 
-type createUserValidation struct {
-	OrganizationId int32 `db:"organization_id" validate:"required"`
-}
+const (
+	rootOrganization = 1
+	rootGroup        = 1
+	superadminRole   = 1
+)
 
 func stringToNullString(s string) *sql.NullString {
 	if s == "" {
@@ -46,7 +48,7 @@ func stringToNullString(s string) *sql.NullString {
 //
 //gocyclo:ignore
 func (s *Server) CreateUser(ctx context.Context,
-	in *pb.CreateUserRequest) (*pb.CreateUserResponse, error) {
+	_ *pb.CreateUserRequest) (*pb.CreateUserResponse, error) {
 
 	tokenString, err := gauth.AuthFromMD(ctx, "bearer")
 	if err != nil {
@@ -56,56 +58,6 @@ func (s *Server) CreateUser(ctx context.Context,
 	token, err := s.vldtr.ParseAndValidate(tokenString)
 	if err != nil {
 		return nil, status.Errorf(codes.Unauthenticated, "failed to parse bearer token: %v", err)
-	}
-
-	validator := validator.New()
-	format := createUserValidation{OrganizationId: in.OrganizationId}
-
-	err = validator.Struct(format)
-	if err != nil {
-		return nil, status.Errorf(codes.InvalidArgument, "invalid argument: %s", err.Error())
-	}
-
-	// if the token has superadmin access to the realm, then make give them a superadmin role in the DB
-	if containsAdminRole(token) {
-		in.RoleIds = append(in.RoleIds, 1)
-		in.GroupIds = append(in.GroupIds, 1)
-	}
-
-	// if we have group ids we check if they exist
-	if in.GroupIds != nil {
-		for _, id := range in.GroupIds {
-			group, err := s.store.GetGroupByID(ctx, id)
-			if err != nil {
-				if errors.Is(err, sql.ErrNoRows) {
-					return nil, status.Error(codes.NotFound, "group not found")
-				}
-				return nil, status.Errorf(codes.Internal, "failed to get group: %s", err)
-			}
-
-			// group must belong to org
-			if group.OrganizationID != in.OrganizationId {
-				return nil, status.Errorf(codes.InvalidArgument, "group does not belong to organization")
-			}
-		}
-	}
-
-	// if we have role ids we check if they exist
-	if in.RoleIds != nil {
-		for _, id := range in.RoleIds {
-			role, err := s.store.GetRoleByID(ctx, id)
-			if err != nil {
-				if errors.Is(err, sql.ErrNoRows) {
-					return nil, status.Error(codes.NotFound, "role not found")
-				}
-				return nil, status.Errorf(codes.Internal, "failed to get role: %s", err)
-			}
-
-			// role must belong to org
-			if role.OrganizationID != in.OrganizationId {
-				return nil, status.Errorf(codes.InvalidArgument, "role does not belong to organization")
-			}
-		}
 	}
 
 	tx, err := s.store.BeginTransaction()
@@ -118,23 +70,53 @@ func (s *Server) CreateUser(ctx context.Context,
 		return nil, status.Errorf(codes.Internal, "failed to get transaction")
 	}
 
-	user, err := qtx.CreateUser(ctx, db.CreateUserParams{OrganizationID: in.OrganizationId,
+	subject := token.Subject()
+
+	var userOrg int32
+	var userGroup int32
+	var userRoles []int32
+
+	if containsSuperadminRole(token) {
+		// if the token has superadmin access to the realm, then make give them a superadmin role in the DB
+		userOrg = rootOrganization
+		userGroup = rootGroup
+		userRoles = append(userRoles, superadminRole)
+	} else {
+		// otherwise self-enroll user, by creating a new org and group and making the user an admin of those
+		organization, err := qtx.CreateOrganization(ctx, db.CreateOrganizationParams{
+			Name:    subject + "-org",
+			Company: subject + " - Self enrolled",
+		})
+		if err != nil {
+			return nil, status.Errorf(codes.Internal, "failed to create organization: %s", err)
+		}
+		orgGroup, orgRoles, err := CreateDefaultRecordsForOrg(ctx, qtx, organization)
+		if err != nil {
+			return nil, status.Errorf(codes.Internal, "failed to create default organization records: %s", err)
+		}
+
+		userOrg = organization.ID
+		userGroup = orgGroup.GroupId
+		for _, role := range orgRoles {
+			userRoles = append(userRoles, role.Id)
+		}
+	}
+
+	user, err := qtx.CreateUser(ctx, db.CreateUserParams{OrganizationID: userOrg,
 		Email:           *stringToNullString(token.Email()),
 		FirstName:       *stringToNullString(token.GivenName()),
 		LastName:        *stringToNullString(token.FamilyName()),
-		IdentitySubject: token.Subject()})
+		IdentitySubject: subject})
 	if err != nil {
 		return nil, status.Errorf(codes.Internal, "failed to create user: %s", err)
 	}
 
-	// now attach the groups and roles
-	for _, id := range in.GroupIds {
-		_, err := qtx.AddUserGroup(ctx, db.AddUserGroupParams{UserID: user.ID, GroupID: id})
-		if err != nil {
-			return nil, status.Errorf(codes.Internal, "failed to add user to group: %s", err)
-		}
+	_, err = qtx.AddUserGroup(ctx, db.AddUserGroupParams{UserID: user.ID, GroupID: userGroup})
+	if err != nil {
+		return nil, status.Errorf(codes.Internal, "failed to add user to group: %s", err)
 	}
-	for _, id := range in.RoleIds {
+
+	for _, id := range userRoles {
 		_, err := qtx.AddUserRole(ctx, db.AddUserRoleParams{UserID: user.ID, RoleID: id})
 		if err != nil {
 			return nil, status.Errorf(codes.Internal, "failed to add user to role: %s", err)
@@ -150,7 +132,7 @@ func (s *Server) CreateUser(ctx context.Context,
 		CreatedAt: timestamppb.New(user.CreatedAt), UpdatedAt: timestamppb.New(user.UpdatedAt)}, nil
 }
 
-func containsAdminRole(openIdToken openid.Token) bool {
+func containsSuperadminRole(openIdToken openid.Token) bool {
 	if realmAccess, ok := openIdToken.Get("realm_access"); ok {
 		if realms, ok := realmAccess.(map[string]interface{}); ok {
 			if roles, ok := realms["roles"]; ok {

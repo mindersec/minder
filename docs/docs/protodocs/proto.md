@@ -591,13 +591,6 @@ CreateRuleTypeResponse is the response to create a rule type.
 User service
 
 
-| Field | Type | Label | Description |
-| ----- | ---- | ----- | ----------- |
-| organization_id | [int32](#int32) |  |  |
-| group_ids | [int32](#int32) | repeated |  |
-| role_ids | [int32](#int32) | repeated |  |
-
-
 
 
 

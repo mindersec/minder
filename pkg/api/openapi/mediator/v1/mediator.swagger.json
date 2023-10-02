@@ -3078,26 +3078,6 @@
     },
     "v1CreateUserRequest": {
       "type": "object",
-      "properties": {
-        "organizationId": {
-          "type": "integer",
-          "format": "int32"
-        },
-        "groupIds": {
-          "type": "array",
-          "items": {
-            "type": "integer",
-            "format": "int32"
-          }
-        },
-        "roleIds": {
-          "type": "array",
-          "items": {
-            "type": "integer",
-            "format": "int32"
-          }
-        }
-      },
       "title": "User service"
     },
     "v1CreateUserResponse": {

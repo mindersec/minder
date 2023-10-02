@@ -68,60 +68,12 @@ func (s *Server) CreateOrganization(ctx context.Context,
 
 	if in.CreateDefaultRecords {
 		// we need to create the default records for the organization
-		group, err := qtx.CreateGroup(ctx, db.CreateGroupParams{OrganizationID: org.ID,
-			Name:        fmt.Sprintf("%s-admin", org.Name),
-			Description: sql.NullString{String: fmt.Sprintf("Default admin group for %s", org.Name), Valid: true},
-			IsProtected: true,
-		})
+		defaultGroup, defaultRoles, err := CreateDefaultRecordsForOrg(ctx, qtx, org)
 		if err != nil {
-			return nil, status.Errorf(codes.Internal, "failed to create default group: %v", err)
+			return nil, err
 		}
-
-		grp := pb.GroupRecord{GroupId: group.ID, OrganizationId: group.OrganizationID,
-			Name: group.Name, Description: group.Description.String,
-			IsProtected: group.IsProtected, CreatedAt: timestamppb.New(group.CreatedAt), UpdatedAt: timestamppb.New(group.UpdatedAt)}
-		response.DefaultGroup = &grp
-
-		// we can create the default role for org and for group
-		role, err := qtx.CreateRole(ctx, db.CreateRoleParams{
-			OrganizationID: org.ID,
-			Name:           fmt.Sprintf("%s-org-admin", org.Name),
-			IsAdmin:        true,
-			IsProtected:    true,
-		})
-		if err != nil {
-			return nil, status.Errorf(codes.Internal, "failed to create default org role: %v", err)
-		}
-
-		roleGroup, err := qtx.CreateRole(ctx, db.CreateRoleParams{
-			OrganizationID: org.ID,
-			GroupID:        sql.NullInt32{Int32: group.ID, Valid: true},
-			Name:           fmt.Sprintf("%s-group-admin", org.Name),
-			IsAdmin:        true,
-			IsProtected:    true,
-		})
-
-		if err != nil {
-			return nil, status.Errorf(codes.Internal, "failed to create default group role: %v", err)
-		}
-
-		rl := pb.RoleRecord{Id: role.ID, OrganizationId: role.OrganizationID, Name: role.Name, IsAdmin: role.IsAdmin,
-			IsProtected: role.IsProtected, CreatedAt: timestamppb.New(role.CreatedAt), UpdatedAt: timestamppb.New(role.UpdatedAt)}
-		rg := pb.RoleRecord{Id: roleGroup.ID, Name: roleGroup.Name, GroupId: &roleGroup.GroupID.Int32,
-			IsAdmin: roleGroup.IsAdmin, IsProtected: roleGroup.IsProtected,
-			CreatedAt: timestamppb.New(roleGroup.CreatedAt), UpdatedAt: timestamppb.New(roleGroup.UpdatedAt)}
-		response.DefaultRoles = []*pb.RoleRecord{&rl, &rg}
-
-		// Create GitHub provider
-		_, err = qtx.CreateProvider(ctx, db.CreateProviderParams{
-			Name:       github.Github,
-			GroupID:    grp.GroupId,
-			Implements: github.Implements,
-			Definition: json.RawMessage(`{"github": {}}`),
-		})
-		if err != nil {
-			return nil, status.Errorf(codes.Internal, "failed to create provider: %v", err)
-		}
+		response.DefaultGroup = defaultGroup
+		response.DefaultRoles = defaultRoles
 	}
 	// commit and return
 	err = s.store.Commit(tx)
@@ -130,6 +82,65 @@ func (s *Server) CreateOrganization(ctx context.Context,
 	}
 
 	return response, nil
+}
+
+// CreateDefaultRecordsForOrg creates the default records, such as groups, roles and provider for the organization
+func CreateDefaultRecordsForOrg(ctx context.Context, qtx db.Querier,
+	org db.Organization) (*pb.GroupRecord, []*pb.RoleRecord, error) {
+	// we need to create the default records for the organization
+	group, err := qtx.CreateGroup(ctx, db.CreateGroupParams{OrganizationID: org.ID,
+		Name:        fmt.Sprintf("%s-admin", org.Name),
+		Description: sql.NullString{String: fmt.Sprintf("Default admin group for %s", org.Name), Valid: true},
+		IsProtected: true,
+	})
+	if err != nil {
+		return nil, nil, status.Errorf(codes.Internal, "failed to create default group: %v", err)
+	}
+
+	grp := pb.GroupRecord{GroupId: group.ID, OrganizationId: group.OrganizationID,
+		Name: group.Name, Description: group.Description.String,
+		IsProtected: group.IsProtected, CreatedAt: timestamppb.New(group.CreatedAt), UpdatedAt: timestamppb.New(group.UpdatedAt)}
+
+	// we can create the default role for org and for group
+	role, err := qtx.CreateRole(ctx, db.CreateRoleParams{
+		OrganizationID: org.ID,
+		Name:           fmt.Sprintf("%s-org-admin", org.Name),
+		IsAdmin:        true,
+		IsProtected:    true,
+	})
+	if err != nil {
+		return nil, nil, status.Errorf(codes.Internal, "failed to create default org role: %v", err)
+	}
+
+	roleGroup, err := qtx.CreateRole(ctx, db.CreateRoleParams{
+		OrganizationID: org.ID,
+		GroupID:        sql.NullInt32{Int32: group.ID, Valid: true},
+		Name:           fmt.Sprintf("%s-group-admin", org.Name),
+		IsAdmin:        true,
+		IsProtected:    true,
+	})
+
+	if err != nil {
+		return nil, nil, status.Errorf(codes.Internal, "failed to create default group role: %v", err)
+	}
+
+	rl := pb.RoleRecord{Id: role.ID, OrganizationId: role.OrganizationID, Name: role.Name, IsAdmin: role.IsAdmin,
+		IsProtected: role.IsProtected, CreatedAt: timestamppb.New(role.CreatedAt), UpdatedAt: timestamppb.New(role.UpdatedAt)}
+	rg := pb.RoleRecord{Id: roleGroup.ID, Name: roleGroup.Name, GroupId: &roleGroup.GroupID.Int32,
+		IsAdmin: roleGroup.IsAdmin, IsProtected: roleGroup.IsProtected,
+		CreatedAt: timestamppb.New(roleGroup.CreatedAt), UpdatedAt: timestamppb.New(roleGroup.UpdatedAt)}
+
+	// Create GitHub provider
+	_, err = qtx.CreateProvider(ctx, db.CreateProviderParams{
+		Name:       github.Github,
+		GroupID:    grp.GroupId,
+		Implements: github.Implements,
+		Definition: json.RawMessage(`{"github": {}}`),
+	})
+	if err != nil {
+		return nil, nil, status.Errorf(codes.Internal, "failed to create provider: %v", err)
+	}
+	return &grp, []*pb.RoleRecord{&rl, &rg}, nil
 }
 
 // GetOrganizations is a service for getting a list of organizations
