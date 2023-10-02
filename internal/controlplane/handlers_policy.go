@@ -142,7 +142,14 @@ func (s *Server) CreatePolicy(ctx context.Context,
 			Name:     r.GetType(),
 		})
 		if err != nil {
-			return fmt.Errorf("error creating policy")
+			if errors.Is(err, sql.ErrNoRows) {
+				return &engine.RuleValidationError{
+					Err:      fmt.Sprintf("cannot find rule type %s", r.GetType()),
+					RuleType: r.GetType(),
+				}
+			}
+
+			return fmt.Errorf("error getting rule type %s: %w", r.GetType(), err)
 		}
 
 		rtyppb, err := engine.RuleTypePBFromDB(&rtdb, entityCtx)
@@ -170,7 +177,8 @@ func (s *Server) CreatePolicy(ctx context.Context,
 		var violation *engine.RuleValidationError
 		if errors.As(err, &violation) {
 			log.Printf("error validating rule: %v", violation)
-			return nil, status.Errorf(codes.InvalidArgument, "policy contained invalid rule: %s", violation.RuleType)
+			return nil, util.UserVisibleError(codes.InvalidArgument,
+				"policy contained invalid rule '%s': %s", violation.RuleType, violation.Err)
 		}
 
 		log.Printf("error getting rule type: %v", err)
