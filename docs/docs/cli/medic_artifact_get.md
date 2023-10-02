@@ -30,5 +30,5 @@ medic artifact get [flags]
 
 ### SEE ALSO
 
-* [medic artifact](medic_artifact.md)	 - Manage repositories within a mediator control plane
+* [medic artifact](medic_artifact.md)	 - Manage artifacts within a mediator control plane
 
