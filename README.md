@@ -172,6 +172,10 @@ To generate the mocks, run:
 ```bash
 mockgen -package mockdb -destination database/mock/store.go github.com/stacklok/mediator/internal/db Store
 ```
+and
+```bash
+mockgen -package auth -destination internal/auth/mock/jwtauth.go github.com/stacklok/mediator/internal/auth JwtValidator,KeySetFetcher
+```
 
 # Configuration
 
@@ -182,6 +186,39 @@ An example configuration file is `config/config.yaml.example`.
 Most values should be quite self explanatory.
 
 Before running the app, please copy the content of `config/config.yaml.example` into `$PWD/config.yaml` file, and modify to use your own settings.
+
+## Social login configuration
+_note: this will be improved in the future, to avoid modifying the Keyclaok JSON file_  
+
+You can optionally configure login with GitHub by modifying the Keycloak configuration file.
+
+You may create an OAuth2 application for GitHub [here](https://github.com/settings/developers). Select
+`New OAuth App` and fill in the details. The callback URL should be `http://localhost:8081/realms/stacklok/broker/github/endpoint`.
+Create a new client secret for your OAuth2 client.
+
+Then, in the file `identity/import/stacklok-realm-with-user-and-client.json`, replace `identityProviders" : [ ],` with the following, using your generated client ID and client secret:
+```
+”identityProviders" : [
+  {
+  "alias" : "github",
+  "internalId" : "afb4fd44-b6d7-4cff-a4ff-12735ca09b02",
+  "providerId" : "github",
+  "enabled" : true,
+  "updateProfileFirstLoginMode" : "on",
+  "trustEmail" : false,
+  "storeToken" : false,
+  "addReadTokenRoleOnCreate" : false,
+  "authenticateByDefault" : false,
+  "linkOnly" : false,
+  "firstBrokerLoginFlowAlias" : "first broker login",
+  "config" : {
+    "clientSecret" : "the-client-secret-you-generated",
+    "clientId" : "the-client-id-you-generated"
+  }
+ }
+],
+```
+Restart the Keycloak instance if it is already running.
 
 # Initial setup / Getting started
 
@@ -226,13 +263,8 @@ repositories table with the repositories you have access to.
 Now that you've granted the GitHub app permissions to access your repositories, you can register them:
 
 ```bash
-go run ./cmd/cli/main.go repo register -n github -g 1
+go run ./cmd/cli/main.go repo register -n github
 ```
-
-You're probably wondering why you need to pass the `-g` flag. This is because the repositories are registered
-under a group. This is to allow for multiple repositories to be registered under the same group. In the future,
-you might create different groups for different purposes. For example, you might have a group for your personal
-repositories, and another group for your work repositories.
 
 Once you've registered the repositories, the mediator server will listen for events from GitHub and will
 automatically create the necessary webhooks for you.

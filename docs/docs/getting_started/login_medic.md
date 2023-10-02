@@ -15,10 +15,12 @@ displayed_sidebar: mediator
 1. Log in with username and password.  By default, `medic` will run against a public stacklok cloud instance, but this can be changed in `config.yaml` in your local directory or using the `--gprc-host` and `--grpc-port` flags.
 
 ```bash
-medic auth login --username  <username> --password <password>
+medic auth login
 ```
 
-Once logged
+A new browser window will open, where you can register a new user and log in.
+
+Once logged in
 
 2. Enroll a user with the given provider
 
