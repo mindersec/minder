@@ -28,11 +28,12 @@ import (
 )
 
 const (
-	successStatus = "success"
-	failureStatus = "failure"
-	errorStatus   = "error"
-	skippedStatus = "skipped"
-	pendingStatus = "pending"
+	successStatus      = "success"
+	failureStatus      = "failure"
+	errorStatus        = "error"
+	skippedStatus      = "skipped"
+	pendingStatus      = "pending"
+	notAvailableStatus = "not_available"
 )
 
 func initializePolicyStatusTable(cmd *cobra.Command) *tablewriter.Table {
@@ -53,14 +54,14 @@ func renderPolicyStatusTable(
 	row := []string{
 		ps.PolicyId,
 		ps.PolicyName,
-		getStatusText(ps.PolicyStatus),
+		getEvalStatusText(ps.PolicyStatus),
 		ps.LastUpdated.AsTime().Format(time.RFC3339),
 	}
 
 	table.Rich(row, []tablewriter.Colors{
 		{},
 		{},
-		getStatusColor(ps.PolicyStatus),
+		getEvalStatusColor(ps.PolicyStatus),
 		{},
 	})
 }
@@ -68,7 +69,7 @@ func renderPolicyStatusTable(
 func initializeRuleEvaluationStatusTable(cmd *cobra.Command) *tablewriter.Table {
 	table := tablewriter.NewWriter(cmd.OutOrStdout())
 	table.SetHeader([]string{
-		"Policy ID", "Rule ID", "Rule Name", "Entity", "Status", "Entity Info", "Guidance"})
+		"Policy ID", "Rule ID", "Rule Name", "Entity", "Status", "Remediation Status", "Entity Info", "Guidance"})
 	table.SetRowLine(true)
 	table.SetRowSeparator("-")
 	table.SetAutoMergeCellsByColumnIndex([]int{0})
@@ -87,7 +88,8 @@ func renderRuleEvaluationStatusTable(
 		reval.RuleId,
 		reval.RuleName,
 		reval.Entity,
-		getStatusText(reval.Status),
+		getEvalStatusText(reval.Status),
+		getRemediationStatusText(reval.RemediationStatus),
 		mapToYAMLOrEmpty(reval.EntityInfo),
 		guidanceOrEncouragement(reval.Status, reval.Guidance),
 	}
@@ -97,15 +99,16 @@ func renderRuleEvaluationStatusTable(
 		{},
 		{},
 		{},
-		getStatusColor(reval.Status),
+		getEvalStatusColor(reval.Status),
+		getRemediateStatusColor(reval.RemediationStatus),
 		{},
 		{},
 	})
 }
 
 // Gets a friendly status text with an emoji
-func getStatusText(status string) string {
-	// statuses can be 'success', 'failure', 'error', 'skipped', 'pending'
+func getEvalStatusText(status string) string {
+	// eval statuses can be 'success', 'failure', 'error', 'skipped', 'pending'
 	switch strings.ToLower(status) {
 	case successStatus:
 		return "✅ Success"
@@ -114,7 +117,7 @@ func getStatusText(status string) string {
 	case errorStatus:
 		return "❌ Error"
 	case skippedStatus:
-		return "⚠️ Skipped"
+		return "⏹ Skipped"
 	case pendingStatus:
 		return "⏳ Pending"
 	default:
@@ -122,8 +125,27 @@ func getStatusText(status string) string {
 	}
 }
 
-func getStatusColor(status string) tablewriter.Colors {
-	// statuses can be 'success', 'failure', 'error', 'skipped', 'pending'
+// Gets a friendly status text with an emoji
+func getRemediationStatusText(status string) string {
+	// remediation statuses can be 'success', 'failure', 'error', 'skipped', 'not supported'
+	switch strings.ToLower(status) {
+	case successStatus:
+		return "✅ Success"
+	case failureStatus:
+		return "❌ Failure"
+	case errorStatus:
+		return "❌ Error"
+	case skippedStatus:
+		return "" // visually empty as we didn't have to remediate
+	case notAvailableStatus:
+		return "🚫 Not Available"
+	default:
+		return "⚠️ Unknown"
+	}
+}
+
+func getEvalStatusColor(status string) tablewriter.Colors {
+	// eval statuses can be 'success', 'failure', 'error', 'skipped', 'pending'
 	switch strings.ToLower(status) {
 	case successStatus:
 		return tablewriter.Colors{tablewriter.FgGreenColor}
@@ -132,6 +154,22 @@ func getStatusColor(status string) tablewriter.Colors {
 	case errorStatus:
 		return tablewriter.Colors{tablewriter.FgRedColor}
 	case skippedStatus:
+		return tablewriter.Colors{tablewriter.FgYellowColor}
+	default:
+		return tablewriter.Colors{}
+	}
+}
+
+func getRemediateStatusColor(status string) tablewriter.Colors {
+	// remediation statuses can be 'success', 'failure', 'error', 'skipped', 'not supported'
+	switch strings.ToLower(status) {
+	case successStatus:
+		return tablewriter.Colors{tablewriter.FgGreenColor}
+	case failureStatus:
+		return tablewriter.Colors{tablewriter.FgRedColor}
+	case errorStatus:
+		return tablewriter.Colors{tablewriter.FgRedColor}
+	case notAvailableStatus:
 		return tablewriter.Colors{tablewriter.FgYellowColor}
 	default:
 		return tablewriter.Colors{}
