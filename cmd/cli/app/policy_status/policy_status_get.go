@@ -71,11 +71,9 @@ mediator control plane for an specific provider/group or policy id, entity type 
 				Provider: provider,
 			},
 			PolicyId: policyId,
-			EntitySelector: &mediatorv1.GetPolicyStatusByIdRequest_Entity{
-				Entity: &mediatorv1.GetPolicyStatusByIdRequest_EntityTypedId{
-					Id:   entityId,
-					Type: mediatorv1.EntityFromString(entityType),
-				},
+			Entity: &mediatorv1.GetPolicyStatusByIdRequest_EntityTypedId{
+				Id:   entityId,
+				Type: mediatorv1.EntityFromString(entityType),
 			},
 		}
 

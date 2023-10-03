@@ -431,6 +431,7 @@ func (s *Server) GetPolicyStatusById(ctx context.Context,
 	var rulestats []*mediatorv1.RuleEvaluationStatus
 	var selector *uuid.NullUUID
 	var dbEntity *db.NullEntities
+	var rule *sql.NullString
 
 	if in.GetAll() {
 		selector = &uuid.NullUUID{}
@@ -448,12 +449,19 @@ func (s *Server) GetPolicyStatusById(ctx context.Context,
 		dbEntity = &db.NullEntities{Entities: entities.EntityTypeToDB(e.GetType()), Valid: true}
 	}
 
+	if len(in.GetRule()) > 0 {
+		rule = &sql.NullString{String: in.GetRule(), Valid: true}
+	} else {
+		rule = &sql.NullString{Valid: false}
+	}
+
 	// TODO: Handle retrieving status for other types of entities
 	if selector != nil {
 		dbrulestat, err := s.store.ListRuleEvaluationStatusByPolicyId(ctx, db.ListRuleEvaluationStatusByPolicyIdParams{
 			PolicyID:   parsedPolicyID,
 			EntityID:   *selector,
 			EntityType: *dbEntity,
+			RuleName:   *rule,
 		})
 		if err != nil && !errors.Is(err, sql.ErrNoRows) {
 			return nil, status.Errorf(codes.Unknown, "failed to list rule evaluation status: %s", err)

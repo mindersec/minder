@@ -7,6 +7,7 @@ package db
 
 import (
 	"context"
+	"database/sql"
 	"time"
 
 	"github.com/google/uuid"
@@ -127,13 +128,14 @@ WHERE res.policy_id = $1 AND
             WHEN $3::UUID IS NULL THEN true
             ELSE false
         END
-    )
+    ) AND (rt.name = $4 OR $4 IS NULL)
 `
 
 type ListRuleEvaluationStatusByPolicyIdParams struct {
-	PolicyID   uuid.UUID     `json:"policy_id"`
-	EntityType NullEntities  `json:"entity_type"`
-	EntityID   uuid.NullUUID `json:"entity_id"`
+	PolicyID   uuid.UUID      `json:"policy_id"`
+	EntityType NullEntities   `json:"entity_type"`
+	EntityID   uuid.NullUUID  `json:"entity_id"`
+	RuleName   sql.NullString `json:"rule_name"`
 }
 
 type ListRuleEvaluationStatusByPolicyIdRow struct {
@@ -150,7 +152,12 @@ type ListRuleEvaluationStatusByPolicyIdRow struct {
 }
 
 func (q *Queries) ListRuleEvaluationStatusByPolicyId(ctx context.Context, arg ListRuleEvaluationStatusByPolicyIdParams) ([]ListRuleEvaluationStatusByPolicyIdRow, error) {
-	rows, err := q.db.QueryContext(ctx, listRuleEvaluationStatusByPolicyId, arg.PolicyID, arg.EntityType, arg.EntityID)
+	rows, err := q.db.QueryContext(ctx, listRuleEvaluationStatusByPolicyId,
+		arg.PolicyID,
+		arg.EntityType,
+		arg.EntityID,
+		arg.RuleName,
+	)
 	if err != nil {
 		return nil, err
 	}

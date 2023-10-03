@@ -58,4 +58,5 @@ WHERE res.policy_id = $1 AND
             WHEN sqlc.narg(entity_id)::UUID IS NULL THEN true
             ELSE false
         END
-    );
+    ) AND (rt.name = sqlc.narg(rule_name) OR sqlc.narg(rule_name) IS NULL)
+;

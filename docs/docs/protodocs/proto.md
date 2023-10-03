@@ -1235,6 +1235,7 @@ get policy by id
 | policy_id | [string](#string) |  | policy_id is the id of the policy to get |
 | entity | [GetPolicyStatusByIdRequest.EntityTypedId](#mediator-v1-GetPolicyStatusByIdRequest-EntityTypedId) |  |  |
 | all | [bool](#bool) |  |  |
+| rule | [string](#string) |  |  |
 
 
 
