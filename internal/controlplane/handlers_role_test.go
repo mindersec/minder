@@ -16,12 +16,12 @@ package controlplane
 
 import (
 	"context"
-	"database/sql"
 	"errors"
 	"testing"
 	"time"
 
 	"github.com/golang/mock/gomock"
+	"github.com/google/uuid"
 	"github.com/stretchr/testify/assert"
 	"google.golang.org/grpc/codes"
 	"google.golang.org/protobuf/types/known/timestamppb"
@@ -40,8 +40,12 @@ func TestCreateRoleDBMock(t *testing.T) {
 
 	mockStore := mockdb.NewMockStore(ctrl)
 
-	request := &pb.CreateRoleByGroupRequest{
-		OrganizationId: 1,
+	orgID := uuid.New()
+	projectID := uuid.New()
+
+	request := &pb.CreateRoleByProjectRequest{
+		OrganizationId: orgID.String(),
+		ProjectId:      projectID.String(),
 		Name:           "TestRole",
 		IsAdmin:        nil,
 		IsProtected:    nil,
@@ -49,7 +53,8 @@ func TestCreateRoleDBMock(t *testing.T) {
 
 	expectedRole := db.Role{
 		ID:             1,
-		OrganizationID: 1,
+		OrganizationID: orgID,
+		ProjectID:      uuid.NullUUID{UUID: projectID, Valid: true},
 		Name:           "TestRole",
 		IsAdmin:        false,
 		IsProtected:    false,
@@ -59,14 +64,14 @@ func TestCreateRoleDBMock(t *testing.T) {
 	// Create a new context and set the claims value
 	ctx := auth.WithPermissionsContext(context.Background(), auth.UserPermissions{
 		UserId:         1,
-		OrganizationId: 1,
-		GroupIds:       []int32{1},
+		OrganizationId: rootOrganization,
+		ProjectIds:     []uuid.UUID{rootProject},
 		Roles: []auth.RoleInfo{
-			{RoleID: 1, IsAdmin: true, GroupID: 0, OrganizationID: 1}},
+			{RoleID: 1, IsAdmin: true, ProjectID: &rootProject, OrganizationID: rootOrganization}},
 	})
 
 	mockStore.EXPECT().GetOrganization(ctx, gomock.Any())
-	mockStore.EXPECT().GetGroupByID(ctx, gomock.Any())
+	mockStore.EXPECT().GetProjectByID(ctx, gomock.Any())
 	mockStore.EXPECT().
 		CreateRole(ctx, gomock.Any()).
 		Return(expectedRole, nil)
@@ -75,13 +80,15 @@ func TestCreateRoleDBMock(t *testing.T) {
 		store: mockStore,
 	}
 
-	response, err := server.CreateRoleByGroup(ctx, request)
+	response, err := server.CreateRoleByProject(ctx, request)
 
 	assert.NoError(t, err)
 	assert.NotNil(t, response)
 	assert.Equal(t, expectedRole.ID, response.Id)
 	assert.Equal(t, expectedRole.Name, response.Name)
-	assert.Equal(t, expectedRole.GroupID, sql.NullInt32{Int32: response.GroupId, Valid: false})
+	parsedProjectID, err := uuid.Parse(response.ProjectId)
+	assert.NoError(t, err, "failed to parse project id")
+	assert.Equal(t, expectedRole.ProjectID, uuid.NullUUID{UUID: parsedProjectID, Valid: true})
 	assert.Equal(t, expectedRole.IsAdmin, response.IsAdmin)
 	assert.Equal(t, expectedRole.IsProtected, response.IsProtected)
 	expectedCreatedAt := expectedRole.CreatedAt.In(time.UTC)
@@ -93,27 +100,31 @@ func TestCreateRoleDBMock(t *testing.T) {
 func TestCreateRole_gRPC(t *testing.T) {
 	t.Parallel()
 
+	orgID := uuid.New()
+	projectID := uuid.New()
+
 	testCases := []struct {
 		name               string
-		req                *pb.CreateRoleByGroupRequest
+		req                *pb.CreateRoleByProjectRequest
 		buildStubs         func(store *mockdb.MockStore)
-		checkResponse      func(t *testing.T, res *pb.CreateRoleByGroupResponse, err error)
+		checkResponse      func(t *testing.T, res *pb.CreateRoleByProjectResponse, err error)
 		expectedStatusCode codes.Code
 	}{
 		{
 			name: "Success",
-			req: &pb.CreateRoleByGroupRequest{
-				OrganizationId: 1,
+			req: &pb.CreateRoleByProjectRequest{
+				OrganizationId: orgID.String(),
+				ProjectId:      projectID.String(),
 				Name:           "TestRole",
 			},
 			buildStubs: func(store *mockdb.MockStore) {
 				store.EXPECT().GetOrganization(gomock.Any(), gomock.Any())
-				store.EXPECT().GetGroupByID(gomock.Any(), gomock.Any())
+				store.EXPECT().GetProjectByID(gomock.Any(), gomock.Any())
 				store.EXPECT().
 					CreateRole(gomock.Any(), gomock.Any()).
 					Return(db.Role{
 						ID:             1,
-						OrganizationID: 1,
+						OrganizationID: orgID,
 						Name:           "TestRole",
 						IsAdmin:        false,
 						IsProtected:    false,
@@ -122,14 +133,14 @@ func TestCreateRole_gRPC(t *testing.T) {
 					}, nil).
 					Times(1)
 			},
-			checkResponse: func(t *testing.T, res *pb.CreateRoleByGroupResponse, err error) {
+			checkResponse: func(t *testing.T, res *pb.CreateRoleByProjectResponse, err error) {
 				t.Helper()
 
 				assert.NoError(t, err)
 				assert.NotNil(t, res)
 				assert.Equal(t, int32(1), res.Id)
 				assert.Equal(t, "TestRole", res.Name)
-				assert.Equal(t, int32(1), res.OrganizationId)
+				assert.Equal(t, orgID.String(), res.OrganizationId)
 				assert.Equal(t, false, res.IsAdmin)
 				assert.Equal(t, false, res.IsProtected)
 				assert.NotNil(t, res.CreatedAt)
@@ -139,13 +150,13 @@ func TestCreateRole_gRPC(t *testing.T) {
 		},
 		{
 			name: "EmptyRequest",
-			req: &pb.CreateRoleByGroupRequest{
+			req: &pb.CreateRoleByProjectRequest{
 				Name: "",
 			},
 			buildStubs: func(store *mockdb.MockStore) {
 				// No expectations, as CreateRole should not be called
 			},
-			checkResponse: func(t *testing.T, res *pb.CreateRoleByGroupResponse, err error) {
+			checkResponse: func(t *testing.T, res *pb.CreateRoleByProjectResponse, err error) {
 				t.Helper()
 
 				// Assert the expected behavior when the request is empty
@@ -156,19 +167,20 @@ func TestCreateRole_gRPC(t *testing.T) {
 		},
 		{
 			name: "StoreError",
-			req: &pb.CreateRoleByGroupRequest{
-				OrganizationId: 1,
+			req: &pb.CreateRoleByProjectRequest{
+				OrganizationId: orgID.String(),
+				ProjectId:      projectID.String(),
 				Name:           "TestRole",
 			},
 			buildStubs: func(store *mockdb.MockStore) {
 				store.EXPECT().GetOrganization(gomock.Any(), gomock.Any())
-				store.EXPECT().GetGroupByID(gomock.Any(), gomock.Any())
+				store.EXPECT().GetProjectByID(gomock.Any(), gomock.Any())
 				store.EXPECT().
 					CreateRole(gomock.Any(), gomock.Any()).
 					Return(db.Role{}, errors.New("store error")).
 					Times(1)
 			},
-			checkResponse: func(t *testing.T, res *pb.CreateRoleByGroupResponse, err error) {
+			checkResponse: func(t *testing.T, res *pb.CreateRoleByProjectResponse, err error) {
 				t.Helper()
 
 				// Assert the expected behavior when there's a store error
@@ -181,10 +193,10 @@ func TestCreateRole_gRPC(t *testing.T) {
 	// Create a new context and set the claims value
 	ctx := auth.WithPermissionsContext(context.Background(), auth.UserPermissions{
 		UserId:         1,
-		OrganizationId: 1,
-		GroupIds:       []int32{1},
+		OrganizationId: rootOrganization,
+		ProjectIds:     []uuid.UUID{rootProject},
 		Roles: []auth.RoleInfo{
-			{RoleID: 1, IsAdmin: true, GroupID: 0, OrganizationID: 1}},
+			{RoleID: 1, IsAdmin: true, ProjectID: &rootProject, OrganizationID: rootOrganization}},
 	})
 
 	for i := range testCases {
@@ -200,7 +212,7 @@ func TestCreateRole_gRPC(t *testing.T) {
 
 			server := newDefaultServer(t, mockStore)
 
-			resp, err := server.CreateRoleByGroup(ctx, tc.req)
+			resp, err := server.CreateRoleByProject(ctx, tc.req)
 			tc.checkResponse(t, resp, err)
 		})
 	}
@@ -219,10 +231,10 @@ func TestDeleteRoleDBMock(t *testing.T) {
 	// Create a new context and set the claims value
 	ctx := auth.WithPermissionsContext(context.Background(), auth.UserPermissions{
 		UserId:         1,
-		OrganizationId: 1,
-		GroupIds:       []int32{1},
+		OrganizationId: rootOrganization,
+		ProjectIds:     []uuid.UUID{rootProject},
 		Roles: []auth.RoleInfo{
-			{RoleID: 1, IsAdmin: true, GroupID: 0, OrganizationID: 1}},
+			{RoleID: 1, IsAdmin: true, ProjectID: &rootProject, OrganizationID: rootOrganization}},
 	})
 
 	mockStore.EXPECT().GetRoleByID(ctx, gomock.Any())
@@ -294,13 +306,14 @@ func TestDeleteRole_gRPC(t *testing.T) {
 			expectedStatusCode: codes.InvalidArgument,
 		},
 	}
+
 	// Create a new context and set the claims value
 	ctx := auth.WithPermissionsContext(context.Background(), auth.UserPermissions{
 		UserId:         1,
-		OrganizationId: 1,
-		GroupIds:       []int32{1},
+		OrganizationId: rootOrganization,
+		ProjectIds:     []uuid.UUID{rootProject},
 		Roles: []auth.RoleInfo{
-			{RoleID: 1, IsAdmin: true, GroupID: 0, OrganizationID: 1}},
+			{RoleID: 1, IsAdmin: true, ProjectID: &rootProject, OrganizationID: rootOrganization}},
 	})
 
 	for i := range testCases {
@@ -330,19 +343,23 @@ func TestGetRolesDBMock(t *testing.T) {
 
 	mockStore := mockdb.NewMockStore(ctrl)
 
-	request := &pb.GetRolesRequest{OrganizationId: 1}
+	// use root so we can do the operation
+	orgID := rootOrganization
+	projectID := rootProject
+
+	request := &pb.GetRolesRequest{OrganizationId: orgID.String()}
 
 	expectedRoles := []db.Role{
 		{
 			ID:             1,
-			OrganizationID: 1,
+			OrganizationID: orgID,
 			Name:           "test",
 			CreatedAt:      time.Now(),
 			UpdatedAt:      time.Now(),
 		},
 		{
 			ID:             2,
-			OrganizationID: 1,
+			OrganizationID: orgID,
 			Name:           "test1",
 			IsProtected:    true,
 			CreatedAt:      time.Now(),
@@ -352,10 +369,10 @@ func TestGetRolesDBMock(t *testing.T) {
 	// Create a new context and set the claims value
 	ctx := auth.WithPermissionsContext(context.Background(), auth.UserPermissions{
 		UserId:         1,
-		OrganizationId: 1,
-		GroupIds:       []int32{1},
+		OrganizationId: orgID,
+		ProjectIds:     []uuid.UUID{projectID},
 		Roles: []auth.RoleInfo{
-			{RoleID: 1, IsAdmin: true, GroupID: 0, OrganizationID: 1}},
+			{RoleID: 1, IsAdmin: true, ProjectID: &projectID, OrganizationID: orgID}},
 	})
 
 	mockStore.EXPECT().ListRoles(ctx, gomock.Any()).
@@ -371,7 +388,7 @@ func TestGetRolesDBMock(t *testing.T) {
 	assert.NotNil(t, response)
 	assert.Equal(t, len(expectedRoles), len(response.Roles))
 	assert.Equal(t, expectedRoles[0].ID, response.Roles[0].Id)
-	assert.Equal(t, expectedRoles[0].OrganizationID, response.Roles[0].OrganizationId)
+	assert.Equal(t, expectedRoles[0].OrganizationID.String(), response.Roles[0].OrganizationId)
 	assert.Equal(t, expectedRoles[0].Name, response.Roles[0].Name)
 
 	expectedCreatedAt := expectedRoles[0].CreatedAt.In(time.UTC)
@@ -383,6 +400,8 @@ func TestGetRolesDBMock(t *testing.T) {
 func TestGetRoles_gRPC(t *testing.T) {
 	t.Parallel()
 
+	orgID := uuid.New()
+
 	testCases := []struct {
 		name               string
 		req                *pb.GetRolesRequest
@@ -392,20 +411,20 @@ func TestGetRoles_gRPC(t *testing.T) {
 	}{
 		{
 			name: "Success",
-			req:  &pb.GetRolesRequest{OrganizationId: 1},
+			req:  &pb.GetRolesRequest{OrganizationId: orgID.String()},
 			buildStubs: func(store *mockdb.MockStore) {
 				store.EXPECT().ListRoles(gomock.Any(), gomock.Any()).
 					Return([]db.Role{
 						{
 							ID:             1,
-							OrganizationID: 1,
+							OrganizationID: orgID,
 							Name:           "test",
 							CreatedAt:      time.Now(),
 							UpdatedAt:      time.Now(),
 						},
 						{
 							ID:             2,
-							OrganizationID: 1,
+							OrganizationID: orgID,
 							Name:           "test1",
 							IsProtected:    true,
 							CreatedAt:      time.Now(),
@@ -420,14 +439,14 @@ func TestGetRoles_gRPC(t *testing.T) {
 				expectedRoles := []*pb.RoleRecord{
 					{
 						Id:             1,
-						OrganizationId: 1,
+						OrganizationId: orgID.String(),
 						Name:           "test",
 						CreatedAt:      timestamppb.New(time.Now()),
 						UpdatedAt:      timestamppb.New(time.Now()),
 					},
 					{
 						Id:             2,
-						OrganizationId: 1,
+						OrganizationId: orgID.String(),
 						Name:           "test1",
 						IsProtected:    true,
 						CreatedAt:      timestamppb.New(time.Now()),
@@ -449,10 +468,10 @@ func TestGetRoles_gRPC(t *testing.T) {
 	// Create a new context and set the claims value
 	ctx := auth.WithPermissionsContext(context.Background(), auth.UserPermissions{
 		UserId:         1,
-		OrganizationId: 1,
-		GroupIds:       []int32{1},
+		OrganizationId: rootOrganization,
+		ProjectIds:     []uuid.UUID{rootProject},
 		Roles: []auth.RoleInfo{
-			{RoleID: 1, IsAdmin: true, GroupID: 0, OrganizationID: 1}},
+			{RoleID: 1, IsAdmin: true, ProjectID: &rootProject, OrganizationID: rootOrganization}},
 	})
 
 	for i := range testCases {
@@ -484,9 +503,12 @@ func TestGetRoleDBMock(t *testing.T) {
 
 	request := &pb.GetRoleByIdRequest{Id: 1}
 
+	orgID := rootOrganization
+	projectID := rootProject
+
 	expectedRole := db.Role{
 		ID:             1,
-		OrganizationID: 1,
+		OrganizationID: orgID,
 		Name:           "test",
 		CreatedAt:      time.Now(),
 		UpdatedAt:      time.Now(),
@@ -494,10 +516,10 @@ func TestGetRoleDBMock(t *testing.T) {
 	// Create a new context and set the claims value
 	ctx := auth.WithPermissionsContext(context.Background(), auth.UserPermissions{
 		UserId:         1,
-		OrganizationId: 1,
-		GroupIds:       []int32{1},
+		OrganizationId: orgID,
+		ProjectIds:     []uuid.UUID{projectID},
 		Roles: []auth.RoleInfo{
-			{RoleID: 1, IsAdmin: true, GroupID: 0, OrganizationID: 1}},
+			{RoleID: 1, IsAdmin: true, ProjectID: &projectID, OrganizationID: orgID}},
 	})
 
 	mockStore.EXPECT().GetRoleByID(ctx, gomock.Any()).
@@ -512,7 +534,7 @@ func TestGetRoleDBMock(t *testing.T) {
 	assert.NoError(t, err)
 	assert.NotNil(t, response)
 	assert.Equal(t, expectedRole.ID, response.Role.Id)
-	assert.Equal(t, expectedRole.OrganizationID, response.Role.OrganizationId)
+	assert.Equal(t, expectedRole.OrganizationID.String(), response.Role.OrganizationId)
 	assert.Equal(t, expectedRole.Name, response.Role.Name)
 	expectedCreatedAt := expectedRole.CreatedAt.In(time.UTC)
 	assert.Equal(t, expectedCreatedAt, response.Role.CreatedAt.AsTime().In(time.UTC))
@@ -528,14 +550,17 @@ func TestGetNonExistingRoleDBMock(t *testing.T) {
 
 	mockStore := mockdb.NewMockStore(ctrl)
 
+	orgID := rootOrganization
+	projectID := rootProject
+
 	request := &pb.GetRoleByIdRequest{Id: 5}
 	// Create a new context and set the claims value
 	ctx := auth.WithPermissionsContext(context.Background(), auth.UserPermissions{
 		UserId:         1,
-		OrganizationId: 1,
-		GroupIds:       []int32{1},
+		OrganizationId: orgID,
+		ProjectIds:     []uuid.UUID{projectID},
 		Roles: []auth.RoleInfo{
-			{RoleID: 1, IsAdmin: true, GroupID: 0, OrganizationID: 1}},
+			{RoleID: 1, IsAdmin: true, ProjectID: &projectID, OrganizationID: orgID}},
 	})
 
 	mockStore.EXPECT().GetRoleByID(ctx, gomock.Any()).
@@ -554,6 +579,8 @@ func TestGetNonExistingRoleDBMock(t *testing.T) {
 func TestGetRole_gRPC(t *testing.T) {
 	t.Parallel()
 
+	orgID := uuid.New()
+
 	testCases := []struct {
 		name               string
 		req                *pb.GetRoleByIdRequest
@@ -568,7 +595,7 @@ func TestGetRole_gRPC(t *testing.T) {
 				store.EXPECT().GetRoleByID(gomock.Any(), gomock.Any()).
 					Return(db.Role{
 						ID:             1,
-						OrganizationID: 1,
+						OrganizationID: orgID,
 						Name:           "test",
 						CreatedAt:      time.Now(),
 						UpdatedAt:      time.Now(),
@@ -580,7 +607,7 @@ func TestGetRole_gRPC(t *testing.T) {
 
 				expectedRole := pb.RoleRecord{
 					Id:             1,
-					OrganizationId: 1,
+					OrganizationId: orgID.String(),
 					Name:           "test",
 					CreatedAt:      timestamppb.New(time.Now()),
 					UpdatedAt:      timestamppb.New(time.Now()),
@@ -614,10 +641,10 @@ func TestGetRole_gRPC(t *testing.T) {
 	// Create a new context and set the claims value
 	ctx := auth.WithPermissionsContext(context.Background(), auth.UserPermissions{
 		UserId:         1,
-		OrganizationId: 1,
-		GroupIds:       []int32{1},
+		OrganizationId: rootOrganization,
+		ProjectIds:     []uuid.UUID{rootProject},
 		Roles: []auth.RoleInfo{
-			{RoleID: 1, IsAdmin: true, GroupID: 0, OrganizationID: 1}},
+			{RoleID: 1, IsAdmin: true, ProjectID: &rootProject, OrganizationID: rootOrganization}},
 	})
 
 	for i := range testCases {

@@ -86,7 +86,10 @@ func TestGetAuthorizationURL(t *testing.T) {
 	t.Parallel()
 
 	state := "test"
-	grpID := sql.NullInt32{Int32: 1, Valid: true}
+	// NOTE(jaosorior): We use the root user to avoid having to mock the
+	// authorization check.
+	orgID := rootOrganization
+	projectID := rootProject
 	port := sql.NullInt32{Int32: 8080, Valid: true}
 	providerID := uuid.New()
 
@@ -107,8 +110,8 @@ func TestGetAuthorizationURL(t *testing.T) {
 			buildStubs: func(store *mockdb.MockStore) {
 				store.EXPECT().
 					GetProviderByName(gomock.Any(), db.GetProviderByNameParams{
-						Name:    "github",
-						GroupID: grpID.Int32,
+						Name:      "github",
+						ProjectID: projectID,
 					}).
 					Return(db.Provider{
 						ID:   providerID,
@@ -117,12 +120,12 @@ func TestGetAuthorizationURL(t *testing.T) {
 				store.EXPECT().
 					CreateSessionState(gomock.Any(), gomock.Any()).
 					Return(db.SessionStore{
-						GrpID:        grpID,
+						ProjectID:    projectID,
 						Port:         port,
 						SessionState: state,
 					}, nil)
 				store.EXPECT().
-					DeleteSessionStateByGroupID(gomock.Any(), gomock.Any()).
+					DeleteSessionStateByProjectID(gomock.Any(), gomock.Any()).
 					Return(nil)
 			},
 
@@ -145,10 +148,10 @@ func TestGetAuthorizationURL(t *testing.T) {
 	// Create a new context and set the claims value
 	ctx := auth.WithPermissionsContext(context.Background(), auth.UserPermissions{
 		UserId:         1,
-		OrganizationId: 1,
-		GroupIds:       []int32{1},
+		OrganizationId: orgID,
+		ProjectIds:     []uuid.UUID{projectID},
 		Roles: []auth.RoleInfo{
-			{RoleID: 1, IsAdmin: true, GroupID: 0, OrganizationID: 1}},
+			{RoleID: 1, IsAdmin: true, ProjectID: &projectID, OrganizationID: orgID}},
 	})
 
 	for i := range testCases {
@@ -173,12 +176,15 @@ func TestGetAuthorizationURL(t *testing.T) {
 func TestRevokeOauthTokens_gRPC(t *testing.T) {
 	t.Parallel()
 
+	orgID := uuid.New()
+	projectID := uuid.New()
+
 	ctx := auth.WithPermissionsContext(context.Background(), auth.UserPermissions{
 		UserId:         1,
-		OrganizationId: 1,
-		GroupIds:       []int32{1},
+		OrganizationId: orgID,
+		ProjectIds:     []uuid.UUID{projectID},
 		Roles: []auth.RoleInfo{
-			{RoleID: 1, IsAdmin: true, GroupID: 0, OrganizationID: 1}},
+			{RoleID: 1, IsAdmin: true, ProjectID: &projectID, OrganizationID: orgID}},
 	})
 
 	ctrl := gomock.NewController(t)
@@ -206,15 +212,18 @@ func TestRevokeOauthTokens_gRPC(t *testing.T) {
 	assert.NotNil(t, res)
 }
 
-func RevokeOauthGroupToken_gRPC(t *testing.T) {
+func RevokeOauthProjectToken_gRPC(t *testing.T) {
 	t.Helper()
+
+	orgID := uuid.New()
+	projectID := uuid.New()
 
 	ctx := auth.WithPermissionsContext(context.Background(), auth.UserPermissions{
 		UserId:         1,
-		OrganizationId: 1,
-		GroupIds:       []int32{1},
+		OrganizationId: orgID,
+		ProjectIds:     []uuid.UUID{projectID},
 		Roles: []auth.RoleInfo{
-			{RoleID: 1, IsAdmin: true, GroupID: 0, OrganizationID: 1}},
+			{RoleID: 1, IsAdmin: true, ProjectID: &projectID, OrganizationID: orgID}},
 	})
 
 	ctrl := gomock.NewController(t)
@@ -226,18 +235,19 @@ func RevokeOauthGroupToken_gRPC(t *testing.T) {
 
 	mockStore.EXPECT().
 		GetProviderByName(gomock.Any(), db.GetProviderByNameParams{
-			Name:    ghclient.Github,
-			GroupID: 1,
+			Name:      ghclient.Github,
+			ProjectID: projectID,
 		}).
 		Return(db.Provider{
 			ID:   providerUUID,
 			Name: ghclient.Github,
 		}, nil)
-	mockStore.EXPECT().GetAccessTokenByGroupID(gomock.Any(), gomock.Any())
+	mockStore.EXPECT().GetAccessTokenByProjectID(gomock.Any(), gomock.Any())
 
 	server := newDefaultServer(t, mockStore)
 
-	res, err := server.RevokeOauthGroupToken(ctx, &pb.RevokeOauthGroupTokenRequest{Provider: ghclient.Github, GroupId: 1})
+	res, err := server.RevokeOauthProjectToken(ctx, &pb.RevokeOauthProjectTokenRequest{
+		Provider: ghclient.Github, ProjectId: projectID.String()})
 
 	assert.NoError(t, err)
 	assert.NotNil(t, res)

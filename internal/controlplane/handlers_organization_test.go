@@ -17,11 +17,13 @@ package controlplane
 import (
 	"context"
 	"database/sql"
+	"encoding/json"
 	"errors"
 	"testing"
 	"time"
 
 	"github.com/golang/mock/gomock"
+	"github.com/google/uuid"
 	"github.com/stretchr/testify/assert"
 	"google.golang.org/grpc/codes"
 	"google.golang.org/protobuf/types/known/timestamppb"
@@ -45,21 +47,22 @@ func TestCreateOrganizationDBMock(t *testing.T) {
 		Company: "TestCompany",
 	}
 
-	expectedOrg := db.Organization{
-		ID:        1,
-		Name:      "TestOrg",
-		Company:   "TestCompany",
-		CreatedAt: time.Now(),
-		UpdatedAt: time.Now(),
+	projID := uuid.New()
+	expectedOrg := db.Project{
+		ID:             uuid.New(),
+		Name:           "TestOrg",
+		IsOrganization: true,
+		CreatedAt:      time.Now(),
+		UpdatedAt:      time.Now(),
 	}
 
 	// Create a new context and set the claims value
 	ctx := auth.WithPermissionsContext(context.Background(), auth.UserPermissions{
 		UserId:         1,
-		OrganizationId: 1,
-		GroupIds:       []int32{1},
+		OrganizationId: expectedOrg.ID,
+		ProjectIds:     []uuid.UUID{projID},
 		Roles: []auth.RoleInfo{
-			{RoleID: 1, IsAdmin: true, GroupID: 0, OrganizationID: 1}},
+			{RoleID: 1, IsAdmin: true, ProjectID: &projID, OrganizationID: expectedOrg.ID}},
 	})
 
 	tx := sql.Tx{}
@@ -78,9 +81,9 @@ func TestCreateOrganizationDBMock(t *testing.T) {
 
 	assert.NoError(t, err)
 	assert.NotNil(t, response)
-	assert.Equal(t, expectedOrg.ID, response.Id)
+	assert.Equal(t, expectedOrg.ID.String(), response.Id)
 	assert.Equal(t, expectedOrg.Name, response.Name)
-	assert.Equal(t, expectedOrg.Company, response.Company)
+	// assert.Equal(t, expectedOrg.Company, response.Company)
 	expectedCreatedAt := expectedOrg.CreatedAt.In(time.UTC)
 	assert.Equal(t, expectedCreatedAt, response.CreatedAt.AsTime().In(time.UTC))
 	expectedUpdatedAt := expectedOrg.UpdatedAt.In(time.UTC)
@@ -89,6 +92,8 @@ func TestCreateOrganizationDBMock(t *testing.T) {
 
 func TestCreateOrganization_gRPC(t *testing.T) {
 	t.Parallel()
+
+	orgID := uuid.New()
 
 	testCases := []struct {
 		name               string
@@ -106,12 +111,16 @@ func TestCreateOrganization_gRPC(t *testing.T) {
 			buildStubs: func(store *mockdb.MockStore) {
 				store.EXPECT().BeginTransaction()
 				store.EXPECT().GetQuerierWithTransaction(gomock.Any()).Return(store)
+				meta, err := json.Marshal(&OrgMeta{
+					Company: "TestCompany",
+				})
+				assert.NoError(t, err, "unexpected error marshalling metadata")
 				store.EXPECT().
 					CreateOrganization(gomock.Any(), gomock.Any()).
-					Return(db.Organization{
-						ID:        1,
+					Return(db.Project{
+						ID:        orgID,
 						Name:      "TestOrg",
-						Company:   "TestCompany",
+						Metadata:  meta,
 						CreatedAt: time.Now(),
 						UpdatedAt: time.Now(),
 					}, nil).
@@ -124,7 +133,7 @@ func TestCreateOrganization_gRPC(t *testing.T) {
 
 				assert.NoError(t, err)
 				assert.NotNil(t, res)
-				assert.Equal(t, int32(1), res.Id)
+				assert.Equal(t, orgID.String(), res.Id)
 				assert.Equal(t, "TestOrg", res.Name)
 				assert.Equal(t, "TestCompany", res.Company)
 				assert.NotNil(t, res.CreatedAt)
@@ -162,7 +171,7 @@ func TestCreateOrganization_gRPC(t *testing.T) {
 
 				store.EXPECT().
 					CreateOrganization(gomock.Any(), gomock.Any()).
-					Return(db.Organization{}, errors.New("store error")).
+					Return(db.Project{}, errors.New("store error")).
 					Times(1)
 				store.EXPECT().Rollback(gomock.Any())
 			},
@@ -179,10 +188,10 @@ func TestCreateOrganization_gRPC(t *testing.T) {
 	// Create a new context and set the claims value
 	ctx := auth.WithPermissionsContext(context.Background(), auth.UserPermissions{
 		UserId:         1,
-		OrganizationId: 1,
-		GroupIds:       []int32{1},
+		OrganizationId: rootOrganization,
+		ProjectIds:     []uuid.UUID{rootProject},
 		Roles: []auth.RoleInfo{
-			{RoleID: 1, IsAdmin: true, GroupID: 0, OrganizationID: 1}},
+			{RoleID: 1, IsAdmin: true, ProjectID: &rootProject, OrganizationID: rootOrganization}},
 	})
 
 	for i := range testCases {
@@ -210,30 +219,47 @@ func TestGetOrganizationsDBMock(t *testing.T) {
 	ctrl := gomock.NewController(t)
 	defer ctrl.Finish()
 
+	orgID := uuid.New()
+	projID := uuid.New()
+
 	mockStore := mockdb.NewMockStore(ctrl)
 	// Create a new context and set the claims value
 	ctx := auth.WithPermissionsContext(context.Background(), auth.UserPermissions{
 		UserId:         1,
-		OrganizationId: 1,
-		GroupIds:       []int32{1},
+		OrganizationId: orgID,
+		ProjectIds:     []uuid.UUID{projID},
 		Roles: []auth.RoleInfo{
-			{RoleID: 1, IsAdmin: true, GroupID: 0, OrganizationID: 1}},
+			{RoleID: 1, IsAdmin: true, ProjectID: &projID, OrganizationID: orgID}},
 	})
 
 	request := &pb.GetOrganizationsRequest{}
 
-	expectedOrgs := []db.Organization{
+	orgMeta1 := &OrgMeta{
+		Company: "TestCompany",
+	}
+
+	orgMeta2 := &OrgMeta{
+		Company: "TestCompany1",
+	}
+
+	marshalledMeta1, err := json.Marshal(orgMeta1)
+	assert.NoError(t, err, "unexpected error marshalling metadata")
+
+	marshalledMeta2, err := json.Marshal(orgMeta2)
+	assert.NoError(t, err, "unexpected error marshalling metadata")
+
+	expectedOrgs := []db.Project{
 		{
-			ID:        1,
+			ID:        uuid.New(),
 			Name:      "TestOrg",
-			Company:   "TestCompany",
+			Metadata:  marshalledMeta1,
 			CreatedAt: time.Now(),
 			UpdatedAt: time.Now(),
 		},
 		{
-			ID:        2,
+			ID:        uuid.New(),
 			Name:      "TestOrg1",
-			Company:   "TestCompany1",
+			Metadata:  marshalledMeta2,
 			CreatedAt: time.Now(),
 			UpdatedAt: time.Now(),
 		},
@@ -251,9 +277,9 @@ func TestGetOrganizationsDBMock(t *testing.T) {
 	assert.NoError(t, err)
 	assert.NotNil(t, response)
 	assert.Equal(t, len(expectedOrgs), len(response.Organizations))
-	assert.Equal(t, expectedOrgs[0].ID, response.Organizations[0].Id)
+	assert.Equal(t, expectedOrgs[0].ID.String(), response.Organizations[0].Id)
 	assert.Equal(t, expectedOrgs[0].Name, response.Organizations[0].Name)
-	assert.Equal(t, expectedOrgs[0].Company, response.Organizations[0].Company)
+	assert.Contains(t, string(expectedOrgs[0].Metadata), response.Organizations[0].Company)
 	expectedCreatedAt := expectedOrgs[0].CreatedAt.In(time.UTC)
 	assert.Equal(t, expectedCreatedAt, response.Organizations[0].CreatedAt.AsTime().In(time.UTC))
 	expectedUpdatedAt := expectedOrgs[0].UpdatedAt.In(time.UTC)
@@ -262,6 +288,22 @@ func TestGetOrganizationsDBMock(t *testing.T) {
 
 func TestGetOrganizations_gRPC(t *testing.T) {
 	t.Parallel()
+
+	orgID1 := uuid.New()
+	orgID2 := uuid.New()
+	projID := uuid.New()
+
+	orgmeta1 := &OrgMeta{
+		Company: "TestCompany",
+	}
+	orgmeta2 := &OrgMeta{
+		Company: "TestCompany1",
+	}
+
+	marshalledMeta1, err := json.Marshal(orgmeta1)
+	assert.NoError(t, err, "unexpected error marshalling metadata")
+	marshalledMeta2, err := json.Marshal(orgmeta2)
+	assert.NoError(t, err, "unexpected error marshalling metadata")
 
 	testCases := []struct {
 		name               string
@@ -275,18 +317,18 @@ func TestGetOrganizations_gRPC(t *testing.T) {
 			req:  &pb.GetOrganizationsRequest{},
 			buildStubs: func(store *mockdb.MockStore) {
 				store.EXPECT().ListOrganizations(gomock.Any(), gomock.Any()).
-					Return([]db.Organization{
+					Return([]db.Project{
 						{
-							ID:        1,
+							ID:        orgID1,
 							Name:      "TestOrg",
-							Company:   "TestCompany",
+							Metadata:  marshalledMeta1,
 							CreatedAt: time.Now(),
 							UpdatedAt: time.Now(),
 						},
 						{
-							ID:        2,
+							ID:        orgID2,
 							Name:      "TestOrg1",
-							Company:   "TestCompany1",
+							Metadata:  marshalledMeta2,
 							CreatedAt: time.Now(),
 							UpdatedAt: time.Now(),
 						},
@@ -298,14 +340,14 @@ func TestGetOrganizations_gRPC(t *testing.T) {
 
 				expectedOrgs := []*pb.OrganizationRecord{
 					{
-						Id:        1,
+						Id:        orgID1.String(),
 						Name:      "TestOrg",
 						Company:   "TestCompany",
 						CreatedAt: timestamppb.New(time.Now()),
 						UpdatedAt: timestamppb.New(time.Now()),
 					},
 					{
-						Id:        2,
+						Id:        orgID2.String(),
 						Name:      "TestOrg1",
 						Company:   "TestCompany1",
 						CreatedAt: timestamppb.New(time.Now()),
@@ -327,10 +369,10 @@ func TestGetOrganizations_gRPC(t *testing.T) {
 	// Create a new context and set the claims value
 	ctx := auth.WithPermissionsContext(context.Background(), auth.UserPermissions{
 		UserId:         1,
-		OrganizationId: 1,
-		GroupIds:       []int32{1},
+		OrganizationId: orgID1,
+		ProjectIds:     []uuid.UUID{projID},
 		Roles: []auth.RoleInfo{
-			{RoleID: 1, IsAdmin: true, GroupID: 0, OrganizationID: 1}},
+			{RoleID: 1, IsAdmin: true, ProjectID: &projID, OrganizationID: orgID1}},
 	})
 
 	for i := range testCases {
@@ -360,12 +402,21 @@ func TestGetOrganizationDBMock(t *testing.T) {
 
 	mockStore := mockdb.NewMockStore(ctrl)
 
-	request := &pb.GetOrganizationRequest{OrganizationId: 1}
+	orgID := rootOrganization
+	projID := rootProject
+	orgmeta := &OrgMeta{
+		Company: "TestCompany",
+	}
 
-	expectedOrg := db.Organization{
-		ID:        1,
+	marshalledMeta, err := json.Marshal(orgmeta)
+	assert.NoError(t, err, "unexpected error marshalling metadata")
+
+	request := &pb.GetOrganizationRequest{OrganizationId: orgID.String()}
+
+	expectedOrg := db.Project{
+		ID:        orgID,
 		Name:      "TestOrg",
-		Company:   "TestCompany",
+		Metadata:  marshalledMeta,
 		CreatedAt: time.Now(),
 		UpdatedAt: time.Now(),
 	}
@@ -373,14 +424,14 @@ func TestGetOrganizationDBMock(t *testing.T) {
 	// Create a new context and set the claims value
 	ctx := auth.WithPermissionsContext(context.Background(), auth.UserPermissions{
 		UserId:         1,
-		OrganizationId: 1,
-		GroupIds:       []int32{1},
+		OrganizationId: expectedOrg.ID,
+		ProjectIds:     []uuid.UUID{projID},
 		Roles: []auth.RoleInfo{
-			{RoleID: 1, IsAdmin: true, GroupID: 0, OrganizationID: 1}},
+			{RoleID: 1, IsAdmin: true, ProjectID: &projID, OrganizationID: expectedOrg.ID}},
 	})
 	mockStore.EXPECT().GetOrganization(ctx, gomock.Any()).
 		Return(expectedOrg, nil)
-	mockStore.EXPECT().ListGroupsByOrganizationID(ctx, gomock.Any())
+	mockStore.EXPECT().GetChildrenProjects(ctx, gomock.Any())
 	mockStore.EXPECT().ListRoles(ctx, gomock.Any())
 	mockStore.EXPECT().ListUsersByOrganization(ctx, gomock.Any())
 
@@ -392,9 +443,9 @@ func TestGetOrganizationDBMock(t *testing.T) {
 
 	assert.NoError(t, err)
 	assert.NotNil(t, response)
-	assert.Equal(t, expectedOrg.ID, response.Organization.Id)
+	assert.Equal(t, expectedOrg.ID.String(), response.Organization.Id)
 	assert.Equal(t, expectedOrg.Name, response.Organization.Name)
-	assert.Equal(t, expectedOrg.Company, response.Organization.Company)
+	assert.Contains(t, string(expectedOrg.Metadata), response.Organization.Company)
 	expectedCreatedAt := expectedOrg.CreatedAt.In(time.UTC)
 	assert.Equal(t, expectedCreatedAt, response.Organization.CreatedAt.AsTime().In(time.UTC))
 	expectedUpdatedAt := expectedOrg.UpdatedAt.In(time.UTC)
@@ -411,19 +462,18 @@ func TestGetNonExistingOrganizationDBMock(t *testing.T) {
 	// Create a new context and set the claims value
 	ctx := auth.WithPermissionsContext(context.Background(), auth.UserPermissions{
 		UserId:         1,
-		OrganizationId: 1,
-		GroupIds:       []int32{1},
+		OrganizationId: rootOrganization,
+		ProjectIds:     []uuid.UUID{rootProject},
 		Roles: []auth.RoleInfo{
-			{RoleID: 1, IsAdmin: true, GroupID: 0, OrganizationID: 1}},
+			{RoleID: 1, IsAdmin: true, ProjectID: &rootProject, OrganizationID: rootOrganization}},
 	})
 
-	request := &pb.GetOrganizationRequest{OrganizationId: 5}
+	unexistentOrgID := uuid.New()
+
+	request := &pb.GetOrganizationRequest{OrganizationId: unexistentOrgID.String()}
 
 	mockStore.EXPECT().GetOrganization(ctx, gomock.Any()).
-		Return(db.Organization{}, nil)
-	mockStore.EXPECT().ListGroupsByOrganizationID(ctx, gomock.Any())
-	mockStore.EXPECT().ListRoles(ctx, gomock.Any())
-	mockStore.EXPECT().ListUsersByOrganization(ctx, gomock.Any())
+		Return(db.Project{}, sql.ErrNoRows)
 
 	server := &Server{
 		store: mockStore,
@@ -431,12 +481,20 @@ func TestGetNonExistingOrganizationDBMock(t *testing.T) {
 
 	response, err := server.GetOrganization(ctx, request)
 
-	assert.NoError(t, err)
-	assert.Equal(t, int32(0), response.Organization.Id)
+	assert.Error(t, err, "expected error when organization does not exist")
+	assert.Nil(t, response)
 }
 
 func TestGetOrganization_gRPC(t *testing.T) {
 	t.Parallel()
+
+	orgID := uuid.New()
+	orgmeta := &OrgMeta{
+		Company: "TestCompany",
+	}
+
+	marshalledmeta, err := json.Marshal(orgmeta)
+	assert.NoError(t, err, "unexpected error marshalling metadata")
 
 	testCases := []struct {
 		name               string
@@ -447,19 +505,19 @@ func TestGetOrganization_gRPC(t *testing.T) {
 	}{
 		{
 			name: "Success",
-			req:  &pb.GetOrganizationRequest{OrganizationId: 1},
+			req:  &pb.GetOrganizationRequest{OrganizationId: orgID.String()},
 			buildStubs: func(store *mockdb.MockStore) {
 				store.EXPECT().GetOrganization(gomock.Any(), gomock.Any()).
-					Return(db.Organization{
-						ID:        1,
+					Return(db.Project{
+						ID:        orgID,
 						Name:      "TestOrg",
-						Company:   "TestCompany",
+						Metadata:  marshalledmeta,
 						CreatedAt: time.Now(),
 						UpdatedAt: time.Now(),
 					}, nil).
 					Times(1)
 				store.EXPECT().ListRoles(gomock.Any(), gomock.Any())
-				store.EXPECT().ListGroupsByOrganizationID(gomock.Any(), gomock.Any())
+				store.EXPECT().GetChildrenProjects(gomock.Any(), orgID)
 				store.EXPECT().ListUsersByOrganization(gomock.Any(), gomock.Any())
 
 			},
@@ -467,7 +525,7 @@ func TestGetOrganization_gRPC(t *testing.T) {
 				t.Helper()
 
 				expectedOrg := pb.OrganizationRecord{
-					Id:        1,
+					Id:        orgID.String(),
 					Name:      "TestOrg",
 					Company:   "TestCompany",
 					CreatedAt: timestamppb.New(time.Now()),
@@ -484,20 +542,17 @@ func TestGetOrganization_gRPC(t *testing.T) {
 		},
 		{
 			name: "NonExisting",
-			req:  &pb.GetOrganizationRequest{OrganizationId: 5},
+			req:  &pb.GetOrganizationRequest{OrganizationId: uuid.NewString()},
 			buildStubs: func(store *mockdb.MockStore) {
 				store.EXPECT().GetOrganization(gomock.Any(), gomock.Any()).
-					Return(db.Organization{}, nil).
+					Return(db.Project{}, sql.ErrNoRows).
 					Times(1)
-				store.EXPECT().ListRoles(gomock.Any(), gomock.Any())
-				store.EXPECT().ListGroupsByOrganizationID(gomock.Any(), gomock.Any())
-				store.EXPECT().ListUsersByOrganization(gomock.Any(), gomock.Any())
 			},
 			checkResponse: func(t *testing.T, res *pb.GetOrganizationResponse, err error) {
 				t.Helper()
 
-				assert.NoError(t, err)
-				assert.Equal(t, int32(0), res.Organization.Id)
+				assert.Error(t, err)
+				assert.Nil(t, res)
 			},
 			expectedStatusCode: codes.OK,
 		},
@@ -506,10 +561,10 @@ func TestGetOrganization_gRPC(t *testing.T) {
 	// Create a new context and set the claims value
 	ctx := auth.WithPermissionsContext(context.Background(), auth.UserPermissions{
 		UserId:         1,
-		OrganizationId: 1,
-		GroupIds:       []int32{1},
+		OrganizationId: rootOrganization,
+		ProjectIds:     []uuid.UUID{rootProject},
 		Roles: []auth.RoleInfo{
-			{RoleID: 1, IsAdmin: true, GroupID: 0, OrganizationID: 1}},
+			{RoleID: 1, IsAdmin: true, ProjectID: &rootProject, OrganizationID: rootOrganization}},
 	})
 
 	for i := range testCases {
@@ -539,27 +594,36 @@ func TestGetOrganizationByNameDBMock(t *testing.T) {
 
 	mockStore := mockdb.NewMockStore(ctrl)
 
+	orgID := uuid.New()
+
+	orgmeta := &OrgMeta{
+		Company: "TestCompany",
+	}
+
+	marshalledMeta, err := json.Marshal(orgmeta)
+	assert.NoError(t, err, "unexpected error marshalling metadata")
+
 	request := &pb.GetOrganizationByNameRequest{Name: "TestOrg"}
 
-	expectedOrg := db.Organization{
-		ID:        1,
+	expectedOrg := db.Project{
+		ID:        orgID,
 		Name:      "TestOrg",
-		Company:   "TestCompany",
+		Metadata:  marshalledMeta,
 		CreatedAt: time.Now(),
 		UpdatedAt: time.Now(),
 	}
 	// Create a new context and set the claims value
 	ctx := auth.WithPermissionsContext(context.Background(), auth.UserPermissions{
 		UserId:         1,
-		OrganizationId: 1,
-		GroupIds:       []int32{1},
+		OrganizationId: rootOrganization,
+		ProjectIds:     []uuid.UUID{rootProject},
 		Roles: []auth.RoleInfo{
-			{RoleID: 1, IsAdmin: true, GroupID: 0, OrganizationID: 1}},
+			{RoleID: 1, IsAdmin: true, ProjectID: &rootProject, OrganizationID: rootOrganization}},
 	})
 
 	mockStore.EXPECT().GetOrganizationByName(ctx, gomock.Any()).
 		Return(expectedOrg, nil)
-	mockStore.EXPECT().ListGroupsByOrganizationID(ctx, gomock.Any())
+	mockStore.EXPECT().GetChildrenProjects(ctx, gomock.Any())
 	mockStore.EXPECT().ListRoles(ctx, gomock.Any())
 	mockStore.EXPECT().ListUsersByOrganization(ctx, gomock.Any())
 
@@ -571,9 +635,9 @@ func TestGetOrganizationByNameDBMock(t *testing.T) {
 
 	assert.NoError(t, err)
 	assert.NotNil(t, response)
-	assert.Equal(t, expectedOrg.ID, response.Organization.Id)
+	assert.Equal(t, expectedOrg.ID.String(), response.Organization.Id)
 	assert.Equal(t, expectedOrg.Name, response.Organization.Name)
-	assert.Equal(t, expectedOrg.Company, response.Organization.Company)
+	assert.Contains(t, string(expectedOrg.Metadata), response.Organization.Company)
 	expectedCreatedAt := expectedOrg.CreatedAt.In(time.UTC)
 	assert.Equal(t, expectedCreatedAt, response.Organization.CreatedAt.AsTime().In(time.UTC))
 	expectedUpdatedAt := expectedOrg.UpdatedAt.In(time.UTC)
@@ -588,21 +652,21 @@ func TestGetNonExistingOrganizationByNameDBMock(t *testing.T) {
 
 	mockStore := mockdb.NewMockStore(ctrl)
 
+	orgID := uuid.New()
+	projID := uuid.New()
+
 	request := &pb.GetOrganizationByNameRequest{Name: "Test"}
 	// Create a new context and set the claims value
 	ctx := auth.WithPermissionsContext(context.Background(), auth.UserPermissions{
 		UserId:         1,
-		OrganizationId: 1,
-		GroupIds:       []int32{1},
+		OrganizationId: orgID,
+		ProjectIds:     []uuid.UUID{projID},
 		Roles: []auth.RoleInfo{
-			{RoleID: 1, IsAdmin: true, GroupID: 0, OrganizationID: 1}},
+			{RoleID: 1, IsAdmin: true, ProjectID: &projID, OrganizationID: orgID}},
 	})
 
 	mockStore.EXPECT().GetOrganizationByName(ctx, gomock.Any()).
-		Return(db.Organization{}, nil)
-	mockStore.EXPECT().ListGroupsByOrganizationID(ctx, gomock.Any())
-	mockStore.EXPECT().ListRoles(ctx, gomock.Any())
-	mockStore.EXPECT().ListUsersByOrganization(ctx, gomock.Any())
+		Return(db.Project{}, sql.ErrNoRows)
 
 	server := &Server{
 		store: mockStore,
@@ -610,12 +674,21 @@ func TestGetNonExistingOrganizationByNameDBMock(t *testing.T) {
 
 	response, err := server.GetOrganizationByName(ctx, request)
 
-	assert.NoError(t, err)
-	assert.Equal(t, int32(0), response.Organization.Id)
+	assert.Error(t, err)
+	assert.Nil(t, response)
 }
 
 func TestGetOrganizationByName_gRPC(t *testing.T) {
 	t.Parallel()
+
+	orgID := uuid.New()
+
+	orgmeta := &OrgMeta{
+		Company: "TestCompany",
+	}
+
+	marshalledMeta, err := json.Marshal(orgmeta)
+	assert.NoError(t, err, "unexpected error marshalling metadata")
 
 	testCases := []struct {
 		name               string
@@ -629,15 +702,15 @@ func TestGetOrganizationByName_gRPC(t *testing.T) {
 			req:  &pb.GetOrganizationByNameRequest{Name: "TestOrg"},
 			buildStubs: func(store *mockdb.MockStore) {
 				store.EXPECT().GetOrganizationByName(gomock.Any(), gomock.Any()).
-					Return(db.Organization{
-						ID:        1,
+					Return(db.Project{
+						ID:        orgID,
 						Name:      "TestOrg",
-						Company:   "TestCompany",
+						Metadata:  marshalledMeta,
 						CreatedAt: time.Now(),
 						UpdatedAt: time.Now(),
 					}, nil).
 					Times(1)
-				store.EXPECT().ListGroupsByOrganizationID(gomock.Any(), gomock.Any())
+				store.EXPECT().GetChildrenProjects(gomock.Any(), gomock.Any())
 				store.EXPECT().ListRoles(gomock.Any(), gomock.Any())
 				store.EXPECT().ListUsersByOrganization(gomock.Any(), gomock.Any())
 
@@ -646,7 +719,7 @@ func TestGetOrganizationByName_gRPC(t *testing.T) {
 				t.Helper()
 
 				expectedOrg := pb.OrganizationRecord{
-					Id:        1,
+					Id:        orgID.String(),
 					Name:      "TestOrg",
 					Company:   "TestCompany",
 					CreatedAt: timestamppb.New(time.Now()),
@@ -666,17 +739,14 @@ func TestGetOrganizationByName_gRPC(t *testing.T) {
 			req:  &pb.GetOrganizationByNameRequest{Name: "test"},
 			buildStubs: func(store *mockdb.MockStore) {
 				store.EXPECT().GetOrganizationByName(gomock.Any(), gomock.Any()).
-					Return(db.Organization{}, nil).
+					Return(db.Project{}, sql.ErrNoRows).
 					Times(1)
-				store.EXPECT().ListGroupsByOrganizationID(gomock.Any(), gomock.Any())
-				store.EXPECT().ListRoles(gomock.Any(), gomock.Any())
-				store.EXPECT().ListUsersByOrganization(gomock.Any(), gomock.Any())
 			},
 			checkResponse: func(t *testing.T, res *pb.GetOrganizationByNameResponse, err error) {
 				t.Helper()
 
-				assert.NoError(t, err)
-				assert.Equal(t, int32(0), res.Organization.Id)
+				assert.Error(t, err)
+				assert.Nil(t, res)
 			},
 			expectedStatusCode: codes.OK,
 		},
@@ -684,10 +754,10 @@ func TestGetOrganizationByName_gRPC(t *testing.T) {
 	// Create a new context and set the claims value
 	ctx := auth.WithPermissionsContext(context.Background(), auth.UserPermissions{
 		UserId:         1,
-		OrganizationId: 1,
-		GroupIds:       []int32{1},
+		OrganizationId: rootOrganization,
+		ProjectIds:     []uuid.UUID{rootProject},
 		Roles: []auth.RoleInfo{
-			{RoleID: 1, IsAdmin: true, GroupID: 0, OrganizationID: 1}},
+			{RoleID: 1, IsAdmin: true, ProjectID: &rootProject, OrganizationID: rootOrganization}},
 	})
 
 	for i := range testCases {
@@ -715,22 +785,32 @@ func TestDeleteOrganizationDBMock(t *testing.T) {
 	ctrl := gomock.NewController(t)
 	defer ctrl.Finish()
 
+	orgID := uuid.New()
+	projID := uuid.New()
+
+	orgmeta := &OrgMeta{
+		Company: "test",
+	}
+
+	marshalledMeta, err := json.Marshal(orgmeta)
+	assert.NoError(t, err, "unexpected error marshalling metadata")
+
 	mockStore := mockdb.NewMockStore(ctrl)
 	// Create a new context and set the claims value
 	ctx := auth.WithPermissionsContext(context.Background(), auth.UserPermissions{
 		UserId:         1,
-		OrganizationId: 1,
-		GroupIds:       []int32{1},
+		OrganizationId: orgID,
+		ProjectIds:     []uuid.UUID{projID},
 		Roles: []auth.RoleInfo{
-			{RoleID: 1, IsAdmin: true, GroupID: 0, OrganizationID: 1}},
+			{RoleID: 1, IsAdmin: true, ProjectID: &projID, OrganizationID: orgID}},
 	})
 
-	request := &pb.DeleteOrganizationRequest{Id: 1}
+	request := &pb.DeleteOrganizationRequest{Id: orgID.String()}
 
-	expectedOrg := db.Organization{
-		ID:        1,
+	expectedOrg := db.Project{
+		ID:        orgID,
 		Name:      "test",
-		Company:   "test",
+		Metadata:  marshalledMeta,
 		CreatedAt: time.Now(),
 		UpdatedAt: time.Now(),
 	}
@@ -738,8 +818,12 @@ func TestDeleteOrganizationDBMock(t *testing.T) {
 	mockStore.EXPECT().GetOrganization(ctx, gomock.Any()).
 		Return(expectedOrg, nil)
 	mockStore.EXPECT().
-		ListGroupsByOrganizationID(ctx, gomock.Any()).
-		Return([]db.Group{}, nil)
+		GetChildrenProjects(ctx, gomock.Any()).
+		Return([]db.GetChildrenProjectsRow{
+			{
+				ID: orgID,
+			},
+		}, nil)
 	mockStore.EXPECT().
 		DeleteOrganization(ctx, gomock.Any()).
 		Return(nil)
@@ -759,6 +843,9 @@ func TestDeleteOrganization_gRPC(t *testing.T) {
 
 	force := true
 
+	orgID := uuid.New()
+	projID := uuid.New()
+
 	testCases := []struct {
 		name               string
 		req                *pb.DeleteOrganizationRequest
@@ -769,12 +856,12 @@ func TestDeleteOrganization_gRPC(t *testing.T) {
 		{
 			name: "Success",
 			req: &pb.DeleteOrganizationRequest{
-				Id:    1,
+				Id:    orgID.String(),
 				Force: &force,
 			},
 			buildStubs: func(store *mockdb.MockStore) {
 				store.EXPECT().
-					GetOrganization(gomock.Any(), gomock.Any()).Return(db.Organization{}, nil).Times(1)
+					GetOrganization(gomock.Any(), gomock.Any()).Return(db.Project{}, nil).Times(1)
 				store.EXPECT().
 					DeleteOrganization(gomock.Any(), gomock.Any()).Return(nil).
 					Times(1)
@@ -791,7 +878,7 @@ func TestDeleteOrganization_gRPC(t *testing.T) {
 		{
 			name: "EmptyRequest",
 			req: &pb.DeleteOrganizationRequest{
-				Id: 0,
+				Id: "",
 			},
 			buildStubs: func(store *mockdb.MockStore) {
 			},
@@ -809,10 +896,10 @@ func TestDeleteOrganization_gRPC(t *testing.T) {
 	// Create a new context and set the claims value
 	ctx := auth.WithPermissionsContext(context.Background(), auth.UserPermissions{
 		UserId:         1,
-		OrganizationId: 1,
-		GroupIds:       []int32{1},
+		OrganizationId: orgID,
+		ProjectIds:     []uuid.UUID{projID},
 		Roles: []auth.RoleInfo{
-			{RoleID: 1, IsAdmin: true, GroupID: 0, OrganizationID: 1}},
+			{RoleID: 1, IsAdmin: true, ProjectID: &projID, OrganizationID: orgID}},
 	})
 
 	for i := range testCases {

@@ -45,7 +45,7 @@ var repo_listCmd = &cobra.Command{
 		if provider != github.Github {
 			return fmt.Errorf("only %s is supported at this time", github.Github)
 		}
-		groupID := viper.GetInt32("group-id")
+		projectID := viper.GetString("project-id")
 		limit := viper.GetInt32("limit")
 		offset := viper.GetInt32("offset")
 		format := viper.GetString("output")
@@ -68,11 +68,11 @@ var repo_listCmd = &cobra.Command{
 		defer cancel()
 
 		resp, err := client.ListRepositories(ctx, &pb.ListRepositoriesRequest{
-			Provider: provider,
-			GroupId:  int32(groupID),
-			Limit:    int32(limit),
-			Offset:   int32(offset),
-			Filter:   pb.RepoFilter_REPO_FILTER_SHOW_REGISTERED_ONLY,
+			Provider:  provider,
+			ProjectId: projectID,
+			Limit:     int32(limit),
+			Offset:    int32(offset),
+			Filter:    pb.RepoFilter_REPO_FILTER_SHOW_REGISTERED_ONLY,
 		})
 		if err != nil {
 			fmt.Fprintf(os.Stderr, "Error getting repo of repos: %s\n", err)
@@ -82,12 +82,12 @@ var repo_listCmd = &cobra.Command{
 		switch format {
 		case "", "table":
 			table := tablewriter.NewWriter(os.Stdout)
-			table.SetHeader([]string{"Id", "Group ID", "Provider Id", "Name", "Is fork", "Is private"})
+			table.SetHeader([]string{"Id", "Project ID", "Provider Id", "Name", "Is fork", "Is private"})
 
 			for _, v := range resp.Results {
 				row := []string{
 					v.Id,
-					fmt.Sprintf("%d", v.GroupId),
+					v.ProjectId,
 					fmt.Sprintf("%d", v.GetRepoId()),
 					fmt.Sprintf("%s/%s", v.GetOwner(), v.GetName()),
 					fmt.Sprintf("%t", v.GetIsFork()),
@@ -113,7 +113,7 @@ func init() {
 	RepoCmd.AddCommand(repo_listCmd)
 	repo_listCmd.Flags().StringP("output", "f", "", "Output format (json or yaml)")
 	repo_listCmd.Flags().StringP("provider", "n", "", "Name for the provider to enroll")
-	repo_listCmd.Flags().Int32P("group-id", "g", 0, "ID of the group for repo registration")
+	repo_listCmd.Flags().StringP("project-id", "g", "", "ID of the project for repo registration")
 	repo_listCmd.Flags().Int32P("limit", "l", 20, "Number of repos to display per page")
 	repo_listCmd.Flags().Int32P("offset", "o", 0, "Offset of the repos to display")
 	if err := repo_listCmd.MarkFlagRequired("provider"); err != nil {

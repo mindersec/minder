@@ -19,7 +19,7 @@
 // It does make a good example of how to use the generated client code
 // for others to use as a reference.
 
-package group
+package project
 
 import (
 	"fmt"
@@ -34,10 +34,10 @@ import (
 	pb "github.com/stacklok/mediator/pkg/api/protobuf/go/mediator/v1"
 )
 
-var group_listCmd = &cobra.Command{
+var project_listCmd = &cobra.Command{
 	Use:   "list",
-	Short: "Get list of groups within a mediator control plane",
-	Long: `The medic group list subcommand lets you list groups within
+	Short: "Get list of projects within a mediator control plane",
+	Long: `The medic project list subcommand lets you list projects within
 a mediator control plane.`,
 	PreRun: func(cmd *cobra.Command, args []string) {
 		if err := viper.BindPFlags(cmd.Flags()); err != nil {
@@ -49,11 +49,11 @@ a mediator control plane.`,
 		util.ExitNicelyOnError(err, "Error getting grpc connection")
 		defer conn.Close()
 
-		client := pb.NewGroupServiceClient(conn)
+		client := pb.NewProjectServiceClient(conn)
 		ctx, cancel := util.GetAppContext()
 		defer cancel()
 
-		org := viper.GetInt32("org-id")
+		org := viper.GetString("org-id")
 		limit := viper.GetInt32("limit")
 		offset := viper.GetInt32("offset")
 		format := viper.GetString("output")
@@ -62,22 +62,22 @@ a mediator control plane.`,
 			fmt.Fprintf(os.Stderr, "Error: invalid format: %s\n", format)
 		}
 
-		resp, err := client.GetGroups(ctx, &pb.GetGroupsRequest{
+		resp, err := client.GetProjects(ctx, &pb.GetProjectsRequest{
 			OrganizationId: org,
 			Limit:          limit,
 			Offset:         offset,
 		})
-		util.ExitNicelyOnError(err, "Error getting groups")
+		util.ExitNicelyOnError(err, "Error getting projects")
 
 		if format == "" {
 			// print output in a table
 			table := tablewriter.NewWriter(os.Stdout)
 			table.SetHeader([]string{"Id", "Organization", "Name", "Is protected", "Created date", "Updated date"})
 
-			for _, v := range resp.Groups {
+			for _, v := range resp.Projects {
 				row := []string{
-					fmt.Sprintf("%d", v.GroupId),
-					fmt.Sprintf("%d", v.OrganizationId),
+					v.ProjectId,
+					v.OrganizationId,
 					v.Name,
 					fmt.Sprintf("%t", v.IsProtected),
 					v.GetCreatedAt().AsTime().Format(time.RFC3339),
@@ -99,11 +99,11 @@ a mediator control plane.`,
 }
 
 func init() {
-	GroupCmd.AddCommand(group_listCmd)
-	group_listCmd.Flags().Int32P("org-id", "i", 0, "org id to list groups for")
-	group_listCmd.Flags().StringP("output", "o", "", "Output format")
-	group_listCmd.Flags().Int32P("limit", "l", -1, "Limit the number of results returned")
-	group_listCmd.Flags().Int32P("offset", "f", 0, "Offset the results returned")
-	err := group_listCmd.MarkFlagRequired("org-id")
+	ProjectCmd.AddCommand(project_listCmd)
+	project_listCmd.Flags().StringP("org-id", "i", "", "org id to list projects for")
+	project_listCmd.Flags().StringP("output", "o", "", "Output format")
+	project_listCmd.Flags().Int32P("limit", "l", -1, "Limit the number of results returned")
+	project_listCmd.Flags().Int32P("offset", "f", 0, "Offset the results returned")
+	err := project_listCmd.MarkFlagRequired("org-id")
 	util.ExitNicelyOnError(err, "Error marking flag as required")
 }

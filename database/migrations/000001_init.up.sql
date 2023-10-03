@@ -13,43 +13,24 @@
 -- limitations under the License.
 
 -- projects table
--- TODO(jaosorior): We should look back at our primary key strategy. I
--- chose to use UUIDs but we want to look at alternatives.
 CREATE TABLE projects (
     id UUID NOT NULL DEFAULT gen_random_uuid() PRIMARY KEY,
     name TEXT NOT NULL,
-    metadata JSONB NOT NULL,
+    is_organization BOOLEAN NOT NULL DEFAULT FALSE,
+    metadata JSONB NOT NULL DEFAULT '{}',
     parent_id UUID REFERENCES projects(id) ON DELETE CASCADE,
     created_at TIMESTAMP NOT NULL DEFAULT NOW(),
     updated_at TIMESTAMP NOT NULL DEFAULT NOW()
 );
 
--- organizations table
-CREATE TABLE organizations (
-    id SERIAL PRIMARY KEY,
-    name TEXT NOT NULL,
-    company TEXT NOT NULL,
-    created_at TIMESTAMP NOT NULL DEFAULT NOW(),
-    updated_at TIMESTAMP NOT NULL DEFAULT NOW()
-);
-
--- groups table
-CREATE TABLE groups (
-    id SERIAL PRIMARY KEY,
-    organization_id INTEGER NOT NULL REFERENCES organizations(id) ON DELETE CASCADE,
-    name TEXT NOT NULL,
-    description TEXT,
-    is_protected BOOLEAN NOT NULL DEFAULT FALSE,
-    created_at TIMESTAMP NOT NULL DEFAULT NOW(),
-    updated_at TIMESTAMP NOT NULL DEFAULT NOW()
-);
-
+CREATE UNIQUE INDEX ON projects(name) WHERE parent_id IS NULL; -- if parent_id is null, then name must be unique
+CREATE UNIQUE INDEX ON projects(parent_id, name) WHERE parent_id IS NOT NULL; -- if parent_id is not null, then name must be unique for that parent
 
 -- roles table
 CREATE TABLE roles (
     id SERIAL PRIMARY KEY,
-    organization_id INTEGER NOT NULL REFERENCES organizations(id) ON DELETE CASCADE,
-    group_id INTEGER REFERENCES groups(id) ON DELETE CASCADE,
+    organization_id UUID NOT NULL REFERENCES projects(id) ON DELETE CASCADE,
+    project_id UUID REFERENCES projects(id) ON DELETE CASCADE,
     name TEXT NOT NULL,    
     is_admin BOOLEAN NOT NULL DEFAULT FALSE,
     is_protected BOOLEAN NOT NULL DEFAULT FALSE,
@@ -60,7 +41,7 @@ CREATE TABLE roles (
 -- users table
 CREATE TABLE users (
     id SERIAL PRIMARY KEY,
-    organization_id INTEGER NOT NULL REFERENCES organizations(id) ON DELETE CASCADE,
+    organization_id UUID NOT NULL REFERENCES projects(id) ON DELETE CASCADE,
     email TEXT,
     identity_subject TEXT NOT NULL,
     first_name TEXT,
@@ -71,11 +52,11 @@ CREATE TABLE users (
 
 ALTER TABLE users ADD CONSTRAINT unique_identity_subject UNIQUE (identity_subject);
 
--- user/groups
-CREATE TABLE user_groups (
+-- user/projects
+CREATE TABLE user_projects (
     id SERIAL PRIMARY KEY,
     user_id INTEGER NOT NULL REFERENCES users(id) ON DELETE CASCADE,
-    group_id INTEGER NOT NULL REFERENCES groups(id) ON DELETE CASCADE
+    project_id UUID NOT NULL REFERENCES projects(id) ON DELETE CASCADE
 );
 
 -- user/roles
@@ -89,35 +70,35 @@ CREATE TYPE provider_type as enum ('github', 'rest', 'git', 'oci');
 
 -- providers table
 CREATE TABLE providers (
-    id UUID NOT NULL DEFAULT gen_random_uuid() PRIMARY KEY,  -- NOTE: we could omit this and use group_id + name as primary key, for one less primary key. Downside is that we would always need group_id + name to log or look up, instead of a UUID.
+    id UUID NOT NULL DEFAULT gen_random_uuid() PRIMARY KEY,  -- NOTE: we could omit this and use project_id + name as primary key, for one less primary key. Downside is that we would always need project_id + name to log or look up, instead of a UUID.
     name TEXT NOT NULL,
     version TEXT NOT NULL DEFAULT 'v1',
-    group_id INTEGER NOT NULL REFERENCES groups(id) ON DELETE CASCADE,
+    project_id UUID NOT NULL REFERENCES projects(id) ON DELETE CASCADE,
     implements provider_type ARRAY NOT NULL,
     definition JSONB NOT NULL,
     created_at TIMESTAMP NOT NULL DEFAULT NOW(),
     updated_at TIMESTAMP NOT NULL DEFAULT NOW(),
-    UNIQUE (group_id, name) -- alternative primary key
+    UNIQUE (project_id, name) -- alternative primary key
 );
 
 -- provider_access_tokens table
 CREATE TABLE provider_access_tokens (
     id SERIAL PRIMARY KEY,
     provider TEXT NOT NULL,
-    group_id INTEGER NOT NULL,
+    project_id UUID NOT NULL,
     owner_filter TEXT,
     encrypted_token TEXT NOT NULL,
     expiration_time TIMESTAMP NOT NULL,
     created_at TIMESTAMP NOT NULL DEFAULT NOW(),
     updated_at TIMESTAMP NOT NULL DEFAULT NOW(),
-    FOREIGN KEY (group_id, provider) REFERENCES providers(group_id, name) ON DELETE CASCADE,
-    UNIQUE (group_id, provider)
+    FOREIGN KEY (project_id, provider) REFERENCES providers(project_id, name) ON DELETE CASCADE,
+    UNIQUE (project_id, provider)
 );
 
 -- signing_keys table
 CREATE TABLE signing_keys (
     id SERIAL PRIMARY KEY,
-    group_id INTEGER NOT NULL REFERENCES groups(id) ON DELETE CASCADE,
+    project_id UUID NOT NULL REFERENCES projects(id) ON DELETE CASCADE,
     private_key TEXT NOT NULL,
     public_key TEXT NOT NULL,
     passphrase TEXT NOT NULL,
@@ -130,7 +111,7 @@ CREATE TABLE signing_keys (
 CREATE TABLE repositories (
     id UUID NOT NULL DEFAULT gen_random_uuid() PRIMARY KEY,
     provider TEXT NOT NULL,
-    group_id INTEGER NOT NULL,
+    project_id UUID NOT NULL,
     repo_owner TEXT NOT NULL,
     repo_name TEXT NOT NULL,
     repo_id INTEGER NOT NULL,
@@ -142,7 +123,7 @@ CREATE TABLE repositories (
     clone_url TEXT NOT NULL,
     created_at TIMESTAMP NOT NULL DEFAULT NOW(),
     updated_at TIMESTAMP NOT NULL DEFAULT NOW(),
-    FOREIGN KEY (group_id, provider) REFERENCES providers(group_id, name) ON DELETE CASCADE
+    FOREIGN KEY (project_id, provider) REFERENCES providers(project_id, name) ON DELETE CASCADE
 
 );
 
@@ -172,11 +153,12 @@ CREATE TABLE artifact_versions (
 CREATE TABLE session_store (
     id SERIAL PRIMARY KEY,
     provider TEXT NOT NULL,
-    grp_id INTEGER,
+    project_id UUID NOT NULL,
     port INTEGER,
     owner_filter TEXT,
     session_state TEXT NOT NULL,
-    created_at TIMESTAMP NOT NULL DEFAULT NOW()
+    created_at TIMESTAMP NOT NULL DEFAULT NOW(),
+    FOREIGN KEY (project_id, provider) REFERENCES providers(project_id, name) ON DELETE CASCADE
 );
 
 -- table for storing rule types
@@ -184,13 +166,13 @@ CREATE TABLE rule_type (
     id UUID NOT NULL DEFAULT gen_random_uuid() PRIMARY KEY,
     name TEXT NOT NULL,
     provider TEXT NOT NULL,
-    group_id INTEGER NOT NULL,
+    project_id UUID NOT NULL,
     description TEXT NOT NULL,
     guidance TEXT NOT NULL,
     definition JSONB NOT NULL,
     created_at TIMESTAMP NOT NULL DEFAULT NOW(),
     updated_at TIMESTAMP NOT NULL DEFAULT NOW(),
-    FOREIGN KEY (group_id, provider) REFERENCES providers(group_id, name) ON DELETE CASCADE
+    FOREIGN KEY (project_id, provider) REFERENCES providers(project_id, name) ON DELETE CASCADE
 );
 
 CREATE TYPE remediate_type as enum ('on', 'off', 'dry_run');
@@ -199,11 +181,11 @@ CREATE TABLE policies (
     id UUID NOT NULL DEFAULT gen_random_uuid() PRIMARY KEY,
     name TEXT NOT NULL,
     provider TEXT NOT NULL,
-    group_id INTEGER NOT NULL,
+    project_id UUID NOT NULL,
     remediate remediate_type,
     created_at TIMESTAMP NOT NULL DEFAULT NOW(),
     updated_at TIMESTAMP NOT NULL DEFAULT NOW(),
-    FOREIGN KEY (group_id, provider) REFERENCES providers(group_id, name) ON DELETE CASCADE
+    FOREIGN KEY (project_id, provider) REFERENCES providers(project_id, name) ON DELETE CASCADE
 );
 
 CREATE TYPE entities as enum ('repository', 'build_environment', 'artifact', 'pull_request');
@@ -252,20 +234,17 @@ ALTER TABLE repositories ADD CONSTRAINT unique_repo_id UNIQUE (repo_id);
 ALTER TABLE signing_keys ADD CONSTRAINT unique_key_identifier UNIQUE (key_identifier);
 
 -- Indexes
-CREATE UNIQUE INDEX organizations_name_lower_idx ON organizations (LOWER(name));
-CREATE UNIQUE INDEX organizations_company_lower_idx ON organizations (LOWER(company));
 CREATE INDEX idx_users_organization_id ON users(organization_id);
-CREATE INDEX idx_groups_organization_id ON groups(organization_id);
-CREATE INDEX idx_roles_group_id ON roles(group_id);
+CREATE INDEX idx_roles_project_id ON roles(project_id);
 CREATE UNIQUE INDEX roles_organization_id_name_lower_idx ON roles (organization_id, LOWER(name));
-CREATE INDEX idx_provider_access_tokens_group_id ON provider_access_tokens(group_id);
+CREATE INDEX idx_provider_access_tokens_project_id ON provider_access_tokens(project_id);
 CREATE UNIQUE INDEX repositories_repo_id_idx ON repositories(repo_id);
 CREATE UNIQUE INDEX policies_policy_name_idx ON policies(provider, name);
-CREATE UNIQUE INDEX rule_type_idx ON rule_type(provider, group_id, name);
+CREATE UNIQUE INDEX rule_type_idx ON rule_type(provider, project_id, name);
 CREATE UNIQUE INDEX rule_evaluation_status_results_idx ON rule_evaluation_status(policy_id, repository_id, COALESCE(artifact_id, '00000000-0000-0000-0000-000000000000'::UUID), entity, rule_type_id);
 CREATE UNIQUE INDEX artifact_name_lower_idx ON artifacts (repository_id, LOWER(artifact_name));
 CREATE UNIQUE INDEX artifact_versions_idx ON artifact_versions (artifact_id, sha);
-CREATE UNIQUE INDEX provider_name_group_id_idx ON providers (name, group_id);
+CREATE UNIQUE INDEX provider_name_project_id_idx ON providers (name, project_id);
 
 -- triggers
 
@@ -327,21 +306,21 @@ CREATE TRIGGER update_policy_status
     FOR EACH ROW
     EXECUTE PROCEDURE update_policy_status();
 
+-- Create default root organization and get id so we can create the root project
+-- To keep existing functionality, '00000000-0000-0000-0000-000000000001' is the
+-- magic number for the root organization ID
+INSERT INTO projects (id, name, is_organization) VALUES ('00000000-0000-0000-0000-000000000001'::UUID, 'Root Organization', TRUE);
+
 -- Create default root project
-INSERT INTO projects (name, metadata) VALUES ('Root Project', '{}');
-
--- Create default root organization
-
-INSERT INTO organizations (name, company) 
-VALUES ('Root Organization', 'Root Company');
-
-INSERT INTO groups (organization_id, name, is_protected)
-VALUES (1, 'Root Group', TRUE);
+-- To keep existing functionality, '00000000-0000-0000-0000-000000000002' is the
+-- magic number for the root project ID
+INSERT INTO projects (id, name, is_organization, parent_id)
+    SELECT '00000000-0000-0000-0000-000000000002'::UUID, 'Root Project', FALSE, '00000000-0000-0000-0000-000000000001'::UUID;
 
 -- superadmin role
-INSERT INTO roles (organization_id, name, is_admin, is_protected)
-VALUES (1, 'Superadmin Role', TRUE, TRUE);
+INSERT INTO roles (organization_id, project_id, name, is_admin, is_protected)
+    SELECT '00000000-0000-0000-0000-000000000001'::UUID, '00000000-0000-0000-0000-000000000002'::UUID, 'Superadmin Role', TRUE, TRUE;
 
 -- Create default GitHub provider
-INSERT INTO providers (name, group_id, implements, definition)
-VALUES ('github', 1, ARRAY ['github', 'git', 'rest']::provider_type[], '{"github": {}}');
+INSERT INTO providers (name, project_id, implements, definition)
+    SELECT 'github', '00000000-0000-0000-0000-000000000002'::UUID, ARRAY ['github', 'git', 'rest']::provider_type[], '{"github": {}}';

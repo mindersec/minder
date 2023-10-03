@@ -22,6 +22,7 @@ import (
 	"fmt"
 
 	"github.com/google/go-github/v53/github"
+	"github.com/google/uuid"
 
 	"github.com/stacklok/mediator/internal/db"
 )
@@ -41,11 +42,11 @@ import (
 func SyncRepositoriesWithDB(ctx context.Context,
 	store db.Store,
 	repos []*github.Repository,
-	provider string, groupId int32) error {
+	provider string, projectID uuid.UUID) error {
 	// Get all existing repositories from the database by group ID
-	dbRepos, err := store.ListRepositoriesByGroupID(ctx, db.ListRepositoriesByGroupIDParams{
-		Provider: provider,
-		GroupID:  groupId,
+	dbRepos, err := store.ListRepositoriesByProjectID(ctx, db.ListRepositoriesByProjectIDParams{
+		Provider:  provider,
+		ProjectID: projectID,
 	})
 	if err != nil {
 		return fmt.Errorf("error retrieving list of repositories: %w", err)
@@ -67,7 +68,7 @@ func SyncRepositoriesWithDB(ctx context.Context,
 				// The repository doesn't exist in our DB, let's create it
 				_, err = store.CreateRepository(ctx, db.CreateRepositoryParams{
 					Provider:  provider,
-					GroupID:   groupId,
+					ProjectID: projectID,
 					RepoOwner: string(*repo.Owner.Login),
 					RepoName:  string(*repo.Name),
 					RepoID:    int32(*repo.ID),
@@ -86,7 +87,7 @@ func SyncRepositoriesWithDB(ctx context.Context,
 				return fmt.Errorf("failed during repository synchronization: %w", err)
 			}
 		} else {
-			if existingRepo.GroupID != groupId {
+			if existingRepo.ProjectID != projectID {
 				fmt.Println("got request to sync repository of different group. Skipping")
 				continue
 			}
@@ -97,7 +98,7 @@ func SyncRepositoriesWithDB(ctx context.Context,
 				fmt.Println("updating repository for repo ID: with repo Name: ", *repo.ID, *repo.Name)
 				_, err = store.UpdateRepository(ctx, db.UpdateRepositoryParams{
 					Provider:  provider,
-					GroupID:   existingRepo.GroupID,
+					ProjectID: existingRepo.ProjectID,
 					RepoOwner: string(*repo.Owner.Login),
 					RepoName:  string(*repo.Name),
 					RepoID:    int32(*repo.ID),

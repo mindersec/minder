@@ -46,14 +46,14 @@ type RuleMeta struct {
 	Provider string
 	// Organization is the ID of the organization that this rule is for
 	Organization *string
-	// Group is the ID of the group that this rule is for
-	Group *string
+	// Project is the ID of the group that this rule is for
+	Project *string
 }
 
 // String returns a string representation of the rule meta
 func (r *RuleMeta) String() string {
-	if r.Group != nil {
-		return fmt.Sprintf("%s/group/%s/%s", r.Provider, *r.Group, r.Name)
+	if r.Project != nil {
+		return fmt.Sprintf("%s/group/%s/%s", r.Provider, *r.Project, r.Name)
 	}
 	return fmt.Sprintf("%s/org/%s/%s", r.Provider, *r.Organization, r.Name)
 }
@@ -214,9 +214,9 @@ func NewRuleTypeEngine(rt *mediatorv1.RuleType, cli *providers.ProviderBuilder) 
 		// and we don't want to modify that
 		org := strings.Clone(*rt.Context.Organization)
 		rte.Meta.Organization = &org
-	} else if rt.Context.Group != nil && *rt.Context.Group != "" {
-		grp := strings.Clone(*rt.Context.Group)
-		rte.Meta.Group = &grp
+	} else if rt.Context.Project != nil && *rt.Context.Project != "" {
+		grp := strings.Clone(*rt.Context.Project)
+		rte.Meta.Project = &grp
 	} else {
 		return nil, fmt.Errorf("rule type context must have an organization or group")
 	}
@@ -315,7 +315,7 @@ func RuleDefFromDB(r *db.RuleType) (*mediatorv1.RuleType_Definition, error) {
 // RuleTypePBFromDB converts a rule type from the database to a protobuf
 // rule type
 func RuleTypePBFromDB(rt *db.RuleType, ectx *EntityContext) (*mediatorv1.RuleType, error) {
-	gname := ectx.GetGroup().GetName()
+	gname := ectx.GetProject().GetName()
 
 	def, err := RuleDefFromDB(rt)
 	if err != nil {
@@ -329,7 +329,7 @@ func RuleTypePBFromDB(rt *db.RuleType, ectx *EntityContext) (*mediatorv1.RuleTyp
 		Name: rt.Name,
 		Context: &mediatorv1.Context{
 			Provider: ectx.GetProvider().Name,
-			Group:    &gname,
+			Project:  &gname,
 		},
 		Description: rt.Description,
 		Guidance:    rt.Guidance,

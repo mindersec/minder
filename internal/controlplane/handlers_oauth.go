@@ -23,6 +23,7 @@ import (
 	"fmt"
 	"time"
 
+	"github.com/google/uuid"
 	"github.com/rs/zerolog/log"
 	"github.com/spf13/viper"
 	"go.opentelemetry.io/otel/attribute"
@@ -35,6 +36,7 @@ import (
 	"github.com/stacklok/mediator/internal/auth"
 	mcrypto "github.com/stacklok/mediator/internal/crypto"
 	"github.com/stacklok/mediator/internal/db"
+	"github.com/stacklok/mediator/internal/util"
 	pb "github.com/stacklok/mediator/pkg/api/protobuf/go/mediator/v1"
 )
 
@@ -43,16 +45,12 @@ import (
 // and a boolean indicating whether the client is a CLI or web client
 func (s *Server) GetAuthorizationURL(ctx context.Context,
 	req *pb.GetAuthorizationURLRequest) (*pb.GetAuthorizationURLResponse, error) {
-	// if we do not have a group, check if we can infer it
-	if req.GroupId == 0 {
-		group, err := auth.GetDefaultGroup(ctx)
-		if err != nil {
-			return nil, status.Errorf(codes.InvalidArgument, "cannot infer group id")
-		}
-		req.GroupId = group
+	projectID, err := getProjectFromRequestOrDefault(ctx, req)
+	if err != nil {
+		return nil, util.UserVisibleError(codes.InvalidArgument, err.Error())
 	}
 
-	if err := AuthorizedOnGroup(ctx, req.GroupId); err != nil {
+	if err := AuthorizedOnProject(ctx, projectID); err != nil {
 		return nil, err
 	}
 
@@ -65,8 +63,8 @@ func (s *Server) GetAuthorizationURL(ctx context.Context,
 
 	// get provider info
 	provider, err := s.store.GetProviderByName(ctx, db.GetProviderByNameParams{
-		Name:    req.Provider,
-		GroupID: req.GroupId,
+		Name:      req.Provider,
+		ProjectID: projectID,
 	})
 	if err != nil {
 		return nil, providerError(fmt.Errorf("provider error: %w", err))
@@ -84,11 +82,6 @@ func (s *Server) GetAuthorizationURL(ctx context.Context,
 		return nil, err
 	}
 
-	groupID := sql.NullInt32{
-		Int32: req.GroupId,
-		Valid: true,
-	}
-
 	// Format the port number
 	port := sql.NullInt32{
 		Int32: req.Port,
@@ -96,9 +89,9 @@ func (s *Server) GetAuthorizationURL(ctx context.Context,
 	}
 
 	// Delete any existing session state for the group
-	err = s.store.DeleteSessionStateByGroupID(ctx, db.DeleteSessionStateByGroupIDParams{
-		Provider: provider.Name,
-		GrpID:    groupID})
+	err = s.store.DeleteSessionStateByProjectID(ctx, db.DeleteSessionStateByProjectIDParams{
+		Provider:  provider.Name,
+		ProjectID: projectID})
 	if err != nil && !errors.Is(err, sql.ErrNoRows) {
 		return nil, status.Errorf(codes.Unknown, "error deleting session state: %s", err)
 	}
@@ -114,7 +107,7 @@ func (s *Server) GetAuthorizationURL(ctx context.Context,
 	// retrieved from the JWT token
 	_, err = s.store.CreateSessionState(ctx, db.CreateSessionStateParams{
 		Provider:     provider.Name,
-		GrpID:        groupID,
+		ProjectID:    projectID,
 		Port:         port,
 		SessionState: state,
 		OwnerFilter:  owner,
@@ -156,16 +149,16 @@ func (s *Server) ExchangeCodeForTokenCLI(ctx context.Context,
 		return nil, status.Error(codes.InvalidArgument, "invalid nonce")
 	}
 
-	// get groupID from session along with state nonce from the database
-	stateData, err := s.store.GetGroupIDPortBySessionState(ctx, in.State)
+	// get projectID from session along with state nonce from the database
+	stateData, err := s.store.GetProjectIDPortBySessionState(ctx, in.State)
 	if err != nil {
 		return nil, status.Errorf(codes.Unknown, "error getting group ID by session state: %s", err)
 	}
 
 	// get provider
 	provider, err := s.store.GetProviderByName(ctx, db.GetProviderByNameParams{
-		Name:    in.Provider,
-		GroupID: stateData.GrpID.Int32,
+		Name:      in.Provider,
+		ProjectID: stateData.ProjectID,
 	})
 	if err != nil {
 		return nil, providerError(fmt.Errorf("provider error: %w", err))
@@ -212,7 +205,8 @@ func (s *Server) ExchangeCodeForTokenCLI(ctx context.Context,
 	encodedToken := base64.StdEncoding.EncodeToString(encryptedToken)
 
 	// delete token if it exists
-	err = s.store.DeleteAccessToken(ctx, db.DeleteAccessTokenParams{Provider: provider.Name, GroupID: stateData.GrpID.Int32})
+	err = s.store.DeleteAccessToken(ctx, db.DeleteAccessTokenParams{
+		Provider: provider.Name, ProjectID: stateData.ProjectID})
 	if err != nil {
 		return nil, status.Errorf(codes.Unknown, "error deleting access token: %s", err)
 	}
@@ -224,7 +218,7 @@ func (s *Server) ExchangeCodeForTokenCLI(ctx context.Context,
 		owner = sql.NullString{Valid: false}
 	}
 	_, err = s.store.CreateAccessToken(ctx, db.CreateAccessTokenParams{
-		GroupID:        stateData.GrpID.Int32,
+		ProjectID:      stateData.ProjectID,
 		Provider:       provider.Name,
 		EncryptedToken: encodedToken,
 		ExpirationTime: expiryTime,
@@ -272,16 +266,16 @@ func (s *Server) ExchangeCodeForTokenWEB(ctx context.Context,
 
 // GetProviderAccessToken returns the access token for providers
 func (s *Server) GetProviderAccessToken(ctx context.Context, provider string,
-	groupId int32, checkAuthz bool) (oauth2.Token, string, error) {
+	projectID uuid.UUID, checkAuthz bool) (oauth2.Token, string, error) {
 	// check if user is authorized
 	if checkAuthz {
-		if err := AuthorizedOnGroup(ctx, groupId); err != nil {
+		if err := AuthorizedOnProject(ctx, projectID); err != nil {
 			return oauth2.Token{}, "", err
 		}
 	}
 
-	encToken, err := s.store.GetAccessTokenByGroupID(ctx,
-		db.GetAccessTokenByGroupIDParams{Provider: provider, GroupID: groupId})
+	encToken, err := s.store.GetAccessTokenByProjectID(ctx,
+		db.GetAccessTokenByProjectIDParams{Provider: provider, ProjectID: projectID})
 	if err != nil {
 		return oauth2.Token{}, "", err
 	}
@@ -321,7 +315,7 @@ func (s *Server) RevokeOauthTokens(ctx context.Context, _ *pb.RevokeOauthTokensR
 				log.Error().Msgf("error decrypting token: %v", err)
 			} else {
 				// remove token from db
-				_ = s.store.DeleteAccessToken(ctx, db.DeleteAccessTokenParams{Provider: provider.Name, GroupID: token.GroupID})
+				_ = s.store.DeleteAccessToken(ctx, db.DeleteAccessTokenParams{Provider: provider.Name, ProjectID: token.ProjectID})
 
 				// remove from provider
 				err := auth.DeleteAccessToken(ctx, provider.Name, objToken.AccessToken)
@@ -336,31 +330,28 @@ func (s *Server) RevokeOauthTokens(ctx context.Context, _ *pb.RevokeOauthTokensR
 	return &pb.RevokeOauthTokensResponse{RevokedTokens: int32(revoked_tokens)}, nil
 }
 
-// RevokeOauthGroupToken revokes the oauth token for a group
-func (s *Server) RevokeOauthGroupToken(ctx context.Context,
-	in *pb.RevokeOauthGroupTokenRequest) (*pb.RevokeOauthGroupTokenResponse, error) {
-	// if we do not have a group, check if we can infer it
-	if in.GroupId == 0 {
-		group, err := auth.GetDefaultGroup(ctx)
-		if err != nil {
-			return nil, status.Errorf(codes.InvalidArgument, "cannot infer group id")
-		}
-		in.GroupId = group
+// RevokeOauthProjectToken revokes the oauth token for a group
+func (s *Server) RevokeOauthProjectToken(ctx context.Context,
+	in *pb.RevokeOauthProjectTokenRequest) (*pb.RevokeOauthProjectTokenResponse, error) {
+	projectID, err := getProjectFromRequestOrDefault(ctx, in)
+	if err != nil {
+		return nil, util.UserVisibleError(codes.InvalidArgument, err.Error())
 	}
 
 	// check if user is authorized
-	if err := AuthorizedOnGroup(ctx, in.GroupId); err != nil {
+	if err := AuthorizedOnProject(ctx, projectID); err != nil {
 		return nil, err
 	}
 
-	provider, err := s.store.GetProviderByName(ctx, db.GetProviderByNameParams{Name: in.Provider, GroupID: in.GroupId})
+	provider, err := s.store.GetProviderByName(ctx, db.GetProviderByNameParams{
+		Name: in.Provider, ProjectID: projectID})
 	if err != nil {
 		return nil, providerError(fmt.Errorf("provider error: %w", err))
 	}
 
 	// need to read the token for the provider and group
-	token, err := s.store.GetAccessTokenByGroupID(ctx,
-		db.GetAccessTokenByGroupIDParams{Provider: provider.Name, GroupID: in.GroupId})
+	token, err := s.store.GetAccessTokenByProjectID(ctx,
+		db.GetAccessTokenByProjectIDParams{Provider: provider.Name, ProjectID: projectID})
 	if err != nil {
 		return nil, status.Errorf(codes.Internal, "error getting access token: %v", err)
 	}
@@ -370,7 +361,7 @@ func (s *Server) RevokeOauthGroupToken(ctx context.Context,
 		return nil, status.Errorf(codes.Internal, "error decrypting token: %v", err)
 	}
 	// remove token from db
-	_ = s.store.DeleteAccessToken(ctx, db.DeleteAccessTokenParams{Provider: provider.Name, GroupID: token.GroupID})
+	_ = s.store.DeleteAccessToken(ctx, db.DeleteAccessTokenParams{Provider: provider.Name, ProjectID: token.ProjectID})
 
 	// remove from provider
 	err = auth.DeleteAccessToken(ctx, provider.Name, objToken.AccessToken)
@@ -378,27 +369,24 @@ func (s *Server) RevokeOauthGroupToken(ctx context.Context,
 	if err != nil {
 		log.Error().Msgf("Error deleting access token: %v", err)
 	}
-	return &pb.RevokeOauthGroupTokenResponse{}, nil
+	return &pb.RevokeOauthProjectTokenResponse{}, nil
 }
 
 // StoreProviderToken stores the provider token for a group
 func (s *Server) StoreProviderToken(ctx context.Context,
 	in *pb.StoreProviderTokenRequest) (*pb.StoreProviderTokenResponse, error) {
-	// if we do not have a group, check if we can infer it
-	if in.GroupId == 0 {
-		group, err := auth.GetDefaultGroup(ctx)
-		if err != nil {
-			return nil, status.Errorf(codes.InvalidArgument, "cannot infer group id")
-		}
-		in.GroupId = group
+	projectID, err := getProjectFromRequestOrDefault(ctx, in)
+	if err != nil {
+		return nil, util.UserVisibleError(codes.InvalidArgument, err.Error())
 	}
 
 	// check if user is authorized
-	if err := AuthorizedOnGroup(ctx, in.GroupId); err != nil {
+	if err := AuthorizedOnProject(ctx, projectID); err != nil {
 		return nil, err
 	}
 
-	provider, err := s.store.GetProviderByName(ctx, db.GetProviderByNameParams{Name: in.Provider, GroupID: in.GroupId})
+	provider, err := s.store.GetProviderByName(ctx, db.GetProviderByNameParams{
+		Name: in.Provider, ProjectID: projectID})
 	if err != nil {
 		return nil, providerError(fmt.Errorf("provider error: %w", err))
 	}
@@ -440,7 +428,7 @@ func (s *Server) StoreProviderToken(ctx context.Context,
 		owner = sql.NullString{String: *in.Owner, Valid: true}
 	}
 
-	_, err = s.store.CreateAccessToken(ctx, db.CreateAccessTokenParams{GroupID: in.GroupId, Provider: provider.Name,
+	_, err = s.store.CreateAccessToken(ctx, db.CreateAccessTokenParams{ProjectID: projectID, Provider: provider.Name,
 		EncryptedToken: encodedToken, ExpirationTime: expiryTime, OwnerFilter: owner})
 
 	if err != nil {
@@ -452,28 +440,25 @@ func (s *Server) StoreProviderToken(ctx context.Context,
 // VerifyProviderTokenFrom verifies the provider token since a timestamp
 func (s *Server) VerifyProviderTokenFrom(ctx context.Context,
 	in *pb.VerifyProviderTokenFromRequest) (*pb.VerifyProviderTokenFromResponse, error) {
-	// if we do not have a group, check if we can infer it
-	if in.GroupId == 0 {
-		group, err := auth.GetDefaultGroup(ctx)
-		if err != nil {
-			return nil, status.Errorf(codes.InvalidArgument, "cannot infer group id")
-		}
-		in.GroupId = group
+	projectID, err := getProjectFromRequestOrDefault(ctx, in)
+	if err != nil {
+		return nil, util.UserVisibleError(codes.InvalidArgument, err.Error())
 	}
 
 	// check if user is authorized
-	if err := AuthorizedOnGroup(ctx, in.GroupId); err != nil {
+	if err := AuthorizedOnProject(ctx, projectID); err != nil {
 		return nil, err
 	}
 
-	provider, err := s.store.GetProviderByName(ctx, db.GetProviderByNameParams{Name: in.Provider, GroupID: in.GroupId})
+	provider, err := s.store.GetProviderByName(ctx, db.GetProviderByNameParams{
+		Name: in.Provider, ProjectID: projectID})
 	if err != nil {
 		return nil, providerError(fmt.Errorf("provider error: %w", err))
 	}
 
 	// check if a token has been created since timestamp
 	_, err = s.store.GetAccessTokenSinceDate(ctx,
-		db.GetAccessTokenSinceDateParams{Provider: provider.Name, GroupID: in.GroupId, CreatedAt: in.Timestamp.AsTime()})
+		db.GetAccessTokenSinceDateParams{Provider: provider.Name, ProjectID: projectID, CreatedAt: in.Timestamp.AsTime()})
 	if err != nil {
 		if errors.Is(err, sql.ErrNoRows) {
 			return &pb.VerifyProviderTokenFromResponse{Status: "KO"}, nil

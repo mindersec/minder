@@ -20,6 +20,7 @@ import (
 	"time"
 
 	"github.com/golang/mock/gomock"
+	"github.com/google/uuid"
 	"github.com/stretchr/testify/assert"
 	"google.golang.org/grpc/codes"
 
@@ -38,17 +39,19 @@ func TestKeysHandler(t *testing.T) {
 
 	mockStore := mockdb.NewMockStore(ctrl)
 
+	projectID := uuid.New()
+
 	request := &pb.CreateKeyPairRequest{
 		Passphrase: "test",
-		GroupId:    1,
+		ProjectId:  projectID.String(),
 	}
 
 	ctx := auth.WithPermissionsContext(context.Background(), auth.UserPermissions{
 		UserId:         1,
-		OrganizationId: 1,
-		GroupIds:       []int32{1},
+		OrganizationId: rootOrganization,
+		ProjectIds:     []uuid.UUID{rootProject},
 		Roles: []auth.RoleInfo{
-			{RoleID: 1, IsAdmin: true, GroupID: 0, OrganizationID: 1}},
+			{RoleID: 1, IsAdmin: true, ProjectID: &rootProject, OrganizationID: rootOrganization}},
 	})
 
 	// Set the expectations for the CreateSigningKey method
@@ -61,7 +64,7 @@ func TestKeysHandler(t *testing.T) {
 			// Return a mock SigningKey with the expected properties
 			return db.SigningKey{
 				ID:            1,
-				GroupID:       params.GroupID,
+				ProjectID:     params.ProjectID,
 				PrivateKey:    params.PrivateKey,
 				PublicKey:     params.PublicKey,
 				Passphrase:    params.Passphrase,
@@ -90,6 +93,8 @@ func TestKeysHandler(t *testing.T) {
 func TestKeysHandler_gRPC(t *testing.T) {
 	t.Parallel()
 
+	projectID := uuid.New()
+
 	testCases := []struct {
 		name               string
 		request            *pb.CreateKeyPairRequest
@@ -101,14 +106,14 @@ func TestKeysHandler_gRPC(t *testing.T) {
 			name: "success",
 			request: &pb.CreateKeyPairRequest{
 				Passphrase: "test",
-				GroupId:    1,
+				ProjectId:  projectID.String(),
 			},
 			buildStubs: func(store *mockdb.MockStore) {
 				store.EXPECT().CreateSigningKey(gomock.Any(), gomock.Any()).DoAndReturn(
 					func(ctx context.Context, params db.CreateSigningKeyParams) (db.SigningKey, error) {
 						return db.SigningKey{
 							ID:            1,
-							GroupID:       params.GroupID,
+							ProjectID:     params.ProjectID,
 							PrivateKey:    params.PrivateKey,
 							PublicKey:     params.PublicKey,
 							Passphrase:    params.Passphrase,
@@ -132,7 +137,7 @@ func TestKeysHandler_gRPC(t *testing.T) {
 			name: "failure",
 			request: &pb.CreateKeyPairRequest{
 				Passphrase: "test",
-				GroupId:    1,
+				ProjectId:  projectID.String(),
 			},
 			buildStubs: func(store *mockdb.MockStore) {
 				store.EXPECT().CreateSigningKey(gomock.Any(), gomock.Any()).Return(db.SigningKey{}, assert.AnError)
@@ -147,10 +152,10 @@ func TestKeysHandler_gRPC(t *testing.T) {
 	}
 	ctx := auth.WithPermissionsContext(context.Background(), auth.UserPermissions{
 		UserId:         1,
-		OrganizationId: 1,
-		GroupIds:       []int32{1},
+		OrganizationId: rootOrganization,
+		ProjectIds:     []uuid.UUID{rootProject},
 		Roles: []auth.RoleInfo{
-			{RoleID: 1, IsAdmin: true, GroupID: 0, OrganizationID: 1}},
+			{RoleID: 1, IsAdmin: true, ProjectID: &rootProject, OrganizationID: rootOrganization}},
 	})
 
 	for i := range testCases {

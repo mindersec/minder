@@ -4,7 +4,7 @@ version: v1
 type: policy
 name: acme-github-policy-artifact
 context:
-  group: Root Group
+  project: Root Project
   provider: github
 artifact:
   - type: artifact_signature

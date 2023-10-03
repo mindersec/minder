@@ -20,7 +20,7 @@ INSERT INTO projects (
     metadata
 ) VALUES (
     $1, $2, $3::jsonb
-) RETURNING id, name, metadata, parent_id, created_at, updated_at
+) RETURNING id, name, is_organization, metadata, parent_id, created_at, updated_at
 `
 
 type CreateProjectParams struct {
@@ -35,6 +35,7 @@ func (q *Queries) CreateProject(ctx context.Context, arg CreateProjectParams) (P
 	err := row.Scan(
 		&i.ID,
 		&i.Name,
+		&i.IsOrganization,
 		&i.Metadata,
 		&i.ParentID,
 		&i.CreatedAt,
@@ -99,33 +100,49 @@ func (q *Queries) DeleteProject(ctx context.Context, id uuid.UUID) ([]DeleteProj
 
 const getChildrenProjects = `-- name: GetChildrenProjects :many
 WITH RECURSIVE get_children AS (
-    SELECT id, parent_id, created_at FROM projects 
+    SELECT projects.id, projects.name, projects.metadata, projects.parent_id, projects.created_at, projects.updated_at FROM projects 
     WHERE projects.id = $1
 
     UNION
 
     (
-        SELECT p.id, p.parent_id, p.created_at FROM projects p
+        SELECT p.id, p.name, p.metadata, p.parent_id, p.created_at, p.updated_at FROM projects p
         INNER JOIN get_children gc ON p.parent_id = gc.id
-        ORDER BY created_at ASC
+        ORDER BY p.created_at ASC
     )
 )
-SELECT id FROM get_children
+SELECT id, name, metadata, parent_id, created_at, updated_at FROM get_children
 `
 
-func (q *Queries) GetChildrenProjects(ctx context.Context, id uuid.UUID) ([]uuid.UUID, error) {
+type GetChildrenProjectsRow struct {
+	ID        uuid.UUID       `json:"id"`
+	Name      string          `json:"name"`
+	Metadata  json.RawMessage `json:"metadata"`
+	ParentID  uuid.NullUUID   `json:"parent_id"`
+	CreatedAt time.Time       `json:"created_at"`
+	UpdatedAt time.Time       `json:"updated_at"`
+}
+
+func (q *Queries) GetChildrenProjects(ctx context.Context, id uuid.UUID) ([]GetChildrenProjectsRow, error) {
 	rows, err := q.db.QueryContext(ctx, getChildrenProjects, id)
 	if err != nil {
 		return nil, err
 	}
 	defer rows.Close()
-	items := []uuid.UUID{}
+	items := []GetChildrenProjectsRow{}
 	for rows.Next() {
-		var id uuid.UUID
-		if err := rows.Scan(&id); err != nil {
+		var i GetChildrenProjectsRow
+		if err := rows.Scan(
+			&i.ID,
+			&i.Name,
+			&i.Metadata,
+			&i.ParentID,
+			&i.CreatedAt,
+			&i.UpdatedAt,
+		); err != nil {
 			return nil, err
 		}
-		items = append(items, id)
+		items = append(items, i)
 	}
 	if err := rows.Close(); err != nil {
 		return nil, err
@@ -146,7 +163,7 @@ WITH RECURSIVE get_parents AS (
     (
         SELECT p.id, p.parent_id, p.created_at FROM projects p
         INNER JOIN get_parents gp ON p.id = gp.parent_id
-        ORDER BY created_at ASC
+        ORDER BY p.created_at ASC
     )
 )
 SELECT id FROM get_parents
@@ -186,7 +203,7 @@ WITH RECURSIVE get_parents_until AS (
         SELECT p.id, p.parent_id, p.created_at FROM projects p
         INNER JOIN get_parents_until gpu ON p.id = gpu.parent_id
         WHERE p.id != $2
-        ORDER BY created_at ASC
+        ORDER BY p.created_at ASC
     )
 )
 SELECT id FROM get_parents_until
@@ -221,8 +238,8 @@ func (q *Queries) GetParentProjectsUntil(ctx context.Context, arg GetParentProje
 }
 
 const getProjectByID = `-- name: GetProjectByID :one
-SELECT id, name, metadata, parent_id, created_at, updated_at FROM projects
-WHERE id = $1
+SELECT id, name, is_organization, metadata, parent_id, created_at, updated_at FROM projects
+WHERE id = $1 AND is_organization = FALSE LIMIT 1
 `
 
 func (q *Queries) GetProjectByID(ctx context.Context, id uuid.UUID) (Project, error) {
@@ -231,6 +248,27 @@ func (q *Queries) GetProjectByID(ctx context.Context, id uuid.UUID) (Project, er
 	err := row.Scan(
 		&i.ID,
 		&i.Name,
+		&i.IsOrganization,
+		&i.Metadata,
+		&i.ParentID,
+		&i.CreatedAt,
+		&i.UpdatedAt,
+	)
+	return i, err
+}
+
+const getProjectByName = `-- name: GetProjectByName :one
+SELECT id, name, is_organization, metadata, parent_id, created_at, updated_at FROM projects
+WHERE name = $1 AND is_organization = FALSE LIMIT 1
+`
+
+func (q *Queries) GetProjectByName(ctx context.Context, name string) (Project, error) {
+	row := q.db.QueryRowContext(ctx, getProjectByName, name)
+	var i Project
+	err := row.Scan(
+		&i.ID,
+		&i.Name,
+		&i.IsOrganization,
 		&i.Metadata,
 		&i.ParentID,
 		&i.CreatedAt,
@@ -240,7 +278,7 @@ func (q *Queries) GetProjectByID(ctx context.Context, id uuid.UUID) (Project, er
 }
 
 const getRootProjects = `-- name: GetRootProjects :many
-SELECT id, name, metadata, parent_id, created_at, updated_at FROM projects
+SELECT id, name, is_organization, metadata, parent_id, created_at, updated_at FROM projects
 WHERE parent_id IS NULL
 `
 
@@ -256,6 +294,7 @@ func (q *Queries) GetRootProjects(ctx context.Context) ([]Project, error) {
 		if err := rows.Scan(
 			&i.ID,
 			&i.Name,
+			&i.IsOrganization,
 			&i.Metadata,
 			&i.ParentID,
 			&i.CreatedAt,

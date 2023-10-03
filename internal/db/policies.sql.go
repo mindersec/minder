@@ -16,14 +16,14 @@ import (
 const createPolicy = `-- name: CreatePolicy :one
 INSERT INTO policies (  
     provider,
-    group_id,
+    project_id,
     remediate,
-    name) VALUES ($1, $2, $3, $4) RETURNING id, name, provider, group_id, remediate, created_at, updated_at
+    name) VALUES ($1, $2, $3, $4) RETURNING id, name, provider, project_id, remediate, created_at, updated_at
 `
 
 type CreatePolicyParams struct {
 	Provider  string            `json:"provider"`
-	GroupID   int32             `json:"group_id"`
+	ProjectID uuid.UUID         `json:"project_id"`
 	Remediate NullRemediateType `json:"remediate"`
 	Name      string            `json:"name"`
 }
@@ -31,7 +31,7 @@ type CreatePolicyParams struct {
 func (q *Queries) CreatePolicy(ctx context.Context, arg CreatePolicyParams) (Policy, error) {
 	row := q.db.QueryRowContext(ctx, createPolicy,
 		arg.Provider,
-		arg.GroupID,
+		arg.ProjectID,
 		arg.Remediate,
 		arg.Name,
 	)
@@ -40,7 +40,7 @@ func (q *Queries) CreatePolicy(ctx context.Context, arg CreatePolicyParams) (Pol
 		&i.ID,
 		&i.Name,
 		&i.Provider,
-		&i.GroupID,
+		&i.ProjectID,
 		&i.Remediate,
 		&i.CreatedAt,
 		&i.UpdatedAt,
@@ -85,134 +85,8 @@ func (q *Queries) DeletePolicy(ctx context.Context, id uuid.UUID) error {
 	return err
 }
 
-const getPolicyByGroupAndID = `-- name: GetPolicyByGroupAndID :many
-SELECT policies.id, name, provider, group_id, remediate, policies.created_at, policies.updated_at, entity_policies.id, entity, policy_id, contextual_rules, entity_policies.created_at, entity_policies.updated_at FROM policies JOIN entity_policies ON policies.id = entity_policies.policy_id
-WHERE policies.group_id = $1 AND policies.id = $2
-`
-
-type GetPolicyByGroupAndIDParams struct {
-	GroupID int32     `json:"group_id"`
-	ID      uuid.UUID `json:"id"`
-}
-
-type GetPolicyByGroupAndIDRow struct {
-	ID              uuid.UUID         `json:"id"`
-	Name            string            `json:"name"`
-	Provider        string            `json:"provider"`
-	GroupID         int32             `json:"group_id"`
-	Remediate       NullRemediateType `json:"remediate"`
-	CreatedAt       time.Time         `json:"created_at"`
-	UpdatedAt       time.Time         `json:"updated_at"`
-	ID_2            uuid.UUID         `json:"id_2"`
-	Entity          Entities          `json:"entity"`
-	PolicyID        uuid.UUID         `json:"policy_id"`
-	ContextualRules json.RawMessage   `json:"contextual_rules"`
-	CreatedAt_2     time.Time         `json:"created_at_2"`
-	UpdatedAt_2     time.Time         `json:"updated_at_2"`
-}
-
-func (q *Queries) GetPolicyByGroupAndID(ctx context.Context, arg GetPolicyByGroupAndIDParams) ([]GetPolicyByGroupAndIDRow, error) {
-	rows, err := q.db.QueryContext(ctx, getPolicyByGroupAndID, arg.GroupID, arg.ID)
-	if err != nil {
-		return nil, err
-	}
-	defer rows.Close()
-	items := []GetPolicyByGroupAndIDRow{}
-	for rows.Next() {
-		var i GetPolicyByGroupAndIDRow
-		if err := rows.Scan(
-			&i.ID,
-			&i.Name,
-			&i.Provider,
-			&i.GroupID,
-			&i.Remediate,
-			&i.CreatedAt,
-			&i.UpdatedAt,
-			&i.ID_2,
-			&i.Entity,
-			&i.PolicyID,
-			&i.ContextualRules,
-			&i.CreatedAt_2,
-			&i.UpdatedAt_2,
-		); err != nil {
-			return nil, err
-		}
-		items = append(items, i)
-	}
-	if err := rows.Close(); err != nil {
-		return nil, err
-	}
-	if err := rows.Err(); err != nil {
-		return nil, err
-	}
-	return items, nil
-}
-
-const getPolicyByGroupAndName = `-- name: GetPolicyByGroupAndName :many
-SELECT policies.id, name, provider, group_id, remediate, policies.created_at, policies.updated_at, entity_policies.id, entity, policy_id, contextual_rules, entity_policies.created_at, entity_policies.updated_at FROM policies JOIN entity_policies ON policies.id = entity_policies.policy_id
-WHERE policies.group_id = $1 AND policies.name = $2
-`
-
-type GetPolicyByGroupAndNameParams struct {
-	GroupID int32  `json:"group_id"`
-	Name    string `json:"name"`
-}
-
-type GetPolicyByGroupAndNameRow struct {
-	ID              uuid.UUID         `json:"id"`
-	Name            string            `json:"name"`
-	Provider        string            `json:"provider"`
-	GroupID         int32             `json:"group_id"`
-	Remediate       NullRemediateType `json:"remediate"`
-	CreatedAt       time.Time         `json:"created_at"`
-	UpdatedAt       time.Time         `json:"updated_at"`
-	ID_2            uuid.UUID         `json:"id_2"`
-	Entity          Entities          `json:"entity"`
-	PolicyID        uuid.UUID         `json:"policy_id"`
-	ContextualRules json.RawMessage   `json:"contextual_rules"`
-	CreatedAt_2     time.Time         `json:"created_at_2"`
-	UpdatedAt_2     time.Time         `json:"updated_at_2"`
-}
-
-func (q *Queries) GetPolicyByGroupAndName(ctx context.Context, arg GetPolicyByGroupAndNameParams) ([]GetPolicyByGroupAndNameRow, error) {
-	rows, err := q.db.QueryContext(ctx, getPolicyByGroupAndName, arg.GroupID, arg.Name)
-	if err != nil {
-		return nil, err
-	}
-	defer rows.Close()
-	items := []GetPolicyByGroupAndNameRow{}
-	for rows.Next() {
-		var i GetPolicyByGroupAndNameRow
-		if err := rows.Scan(
-			&i.ID,
-			&i.Name,
-			&i.Provider,
-			&i.GroupID,
-			&i.Remediate,
-			&i.CreatedAt,
-			&i.UpdatedAt,
-			&i.ID_2,
-			&i.Entity,
-			&i.PolicyID,
-			&i.ContextualRules,
-			&i.CreatedAt_2,
-			&i.UpdatedAt_2,
-		); err != nil {
-			return nil, err
-		}
-		items = append(items, i)
-	}
-	if err := rows.Close(); err != nil {
-		return nil, err
-	}
-	if err := rows.Err(); err != nil {
-		return nil, err
-	}
-	return items, nil
-}
-
 const getPolicyByID = `-- name: GetPolicyByID :one
-SELECT id, name, provider, group_id, remediate, created_at, updated_at FROM policies WHERE id = $1
+SELECT id, name, provider, project_id, remediate, created_at, updated_at FROM policies WHERE id = $1
 `
 
 func (q *Queries) GetPolicyByID(ctx context.Context, id uuid.UUID) (Policy, error) {
@@ -222,7 +96,7 @@ func (q *Queries) GetPolicyByID(ctx context.Context, id uuid.UUID) (Policy, erro
 		&i.ID,
 		&i.Name,
 		&i.Provider,
-		&i.GroupID,
+		&i.ProjectID,
 		&i.Remediate,
 		&i.CreatedAt,
 		&i.UpdatedAt,
@@ -230,16 +104,21 @@ func (q *Queries) GetPolicyByID(ctx context.Context, id uuid.UUID) (Policy, erro
 	return i, err
 }
 
-const listPoliciesByGroupID = `-- name: ListPoliciesByGroupID :many
-SELECT policies.id, name, provider, group_id, remediate, policies.created_at, policies.updated_at, entity_policies.id, entity, policy_id, contextual_rules, entity_policies.created_at, entity_policies.updated_at FROM policies JOIN entity_policies ON policies.id = entity_policies.policy_id
-WHERE policies.group_id = $1
+const getPolicyByProjectAndID = `-- name: GetPolicyByProjectAndID :many
+SELECT policies.id, name, provider, project_id, remediate, policies.created_at, policies.updated_at, entity_policies.id, entity, policy_id, contextual_rules, entity_policies.created_at, entity_policies.updated_at FROM policies JOIN entity_policies ON policies.id = entity_policies.policy_id
+WHERE policies.project_id = $1 AND policies.id = $2
 `
 
-type ListPoliciesByGroupIDRow struct {
+type GetPolicyByProjectAndIDParams struct {
+	ProjectID uuid.UUID `json:"project_id"`
+	ID        uuid.UUID `json:"id"`
+}
+
+type GetPolicyByProjectAndIDRow struct {
 	ID              uuid.UUID         `json:"id"`
 	Name            string            `json:"name"`
 	Provider        string            `json:"provider"`
-	GroupID         int32             `json:"group_id"`
+	ProjectID       uuid.UUID         `json:"project_id"`
 	Remediate       NullRemediateType `json:"remediate"`
 	CreatedAt       time.Time         `json:"created_at"`
 	UpdatedAt       time.Time         `json:"updated_at"`
@@ -251,20 +130,141 @@ type ListPoliciesByGroupIDRow struct {
 	UpdatedAt_2     time.Time         `json:"updated_at_2"`
 }
 
-func (q *Queries) ListPoliciesByGroupID(ctx context.Context, groupID int32) ([]ListPoliciesByGroupIDRow, error) {
-	rows, err := q.db.QueryContext(ctx, listPoliciesByGroupID, groupID)
+func (q *Queries) GetPolicyByProjectAndID(ctx context.Context, arg GetPolicyByProjectAndIDParams) ([]GetPolicyByProjectAndIDRow, error) {
+	rows, err := q.db.QueryContext(ctx, getPolicyByProjectAndID, arg.ProjectID, arg.ID)
 	if err != nil {
 		return nil, err
 	}
 	defer rows.Close()
-	items := []ListPoliciesByGroupIDRow{}
+	items := []GetPolicyByProjectAndIDRow{}
 	for rows.Next() {
-		var i ListPoliciesByGroupIDRow
+		var i GetPolicyByProjectAndIDRow
 		if err := rows.Scan(
 			&i.ID,
 			&i.Name,
 			&i.Provider,
-			&i.GroupID,
+			&i.ProjectID,
+			&i.Remediate,
+			&i.CreatedAt,
+			&i.UpdatedAt,
+			&i.ID_2,
+			&i.Entity,
+			&i.PolicyID,
+			&i.ContextualRules,
+			&i.CreatedAt_2,
+			&i.UpdatedAt_2,
+		); err != nil {
+			return nil, err
+		}
+		items = append(items, i)
+	}
+	if err := rows.Close(); err != nil {
+		return nil, err
+	}
+	if err := rows.Err(); err != nil {
+		return nil, err
+	}
+	return items, nil
+}
+
+const getPolicyByProjectAndName = `-- name: GetPolicyByProjectAndName :many
+SELECT policies.id, name, provider, project_id, remediate, policies.created_at, policies.updated_at, entity_policies.id, entity, policy_id, contextual_rules, entity_policies.created_at, entity_policies.updated_at FROM policies JOIN entity_policies ON policies.id = entity_policies.policy_id
+WHERE policies.project_id = $1 AND policies.name = $2
+`
+
+type GetPolicyByProjectAndNameParams struct {
+	ProjectID uuid.UUID `json:"project_id"`
+	Name      string    `json:"name"`
+}
+
+type GetPolicyByProjectAndNameRow struct {
+	ID              uuid.UUID         `json:"id"`
+	Name            string            `json:"name"`
+	Provider        string            `json:"provider"`
+	ProjectID       uuid.UUID         `json:"project_id"`
+	Remediate       NullRemediateType `json:"remediate"`
+	CreatedAt       time.Time         `json:"created_at"`
+	UpdatedAt       time.Time         `json:"updated_at"`
+	ID_2            uuid.UUID         `json:"id_2"`
+	Entity          Entities          `json:"entity"`
+	PolicyID        uuid.UUID         `json:"policy_id"`
+	ContextualRules json.RawMessage   `json:"contextual_rules"`
+	CreatedAt_2     time.Time         `json:"created_at_2"`
+	UpdatedAt_2     time.Time         `json:"updated_at_2"`
+}
+
+func (q *Queries) GetPolicyByProjectAndName(ctx context.Context, arg GetPolicyByProjectAndNameParams) ([]GetPolicyByProjectAndNameRow, error) {
+	rows, err := q.db.QueryContext(ctx, getPolicyByProjectAndName, arg.ProjectID, arg.Name)
+	if err != nil {
+		return nil, err
+	}
+	defer rows.Close()
+	items := []GetPolicyByProjectAndNameRow{}
+	for rows.Next() {
+		var i GetPolicyByProjectAndNameRow
+		if err := rows.Scan(
+			&i.ID,
+			&i.Name,
+			&i.Provider,
+			&i.ProjectID,
+			&i.Remediate,
+			&i.CreatedAt,
+			&i.UpdatedAt,
+			&i.ID_2,
+			&i.Entity,
+			&i.PolicyID,
+			&i.ContextualRules,
+			&i.CreatedAt_2,
+			&i.UpdatedAt_2,
+		); err != nil {
+			return nil, err
+		}
+		items = append(items, i)
+	}
+	if err := rows.Close(); err != nil {
+		return nil, err
+	}
+	if err := rows.Err(); err != nil {
+		return nil, err
+	}
+	return items, nil
+}
+
+const listPoliciesByProjectID = `-- name: ListPoliciesByProjectID :many
+SELECT policies.id, name, provider, project_id, remediate, policies.created_at, policies.updated_at, entity_policies.id, entity, policy_id, contextual_rules, entity_policies.created_at, entity_policies.updated_at FROM policies JOIN entity_policies ON policies.id = entity_policies.policy_id
+WHERE policies.project_id = $1
+`
+
+type ListPoliciesByProjectIDRow struct {
+	ID              uuid.UUID         `json:"id"`
+	Name            string            `json:"name"`
+	Provider        string            `json:"provider"`
+	ProjectID       uuid.UUID         `json:"project_id"`
+	Remediate       NullRemediateType `json:"remediate"`
+	CreatedAt       time.Time         `json:"created_at"`
+	UpdatedAt       time.Time         `json:"updated_at"`
+	ID_2            uuid.UUID         `json:"id_2"`
+	Entity          Entities          `json:"entity"`
+	PolicyID        uuid.UUID         `json:"policy_id"`
+	ContextualRules json.RawMessage   `json:"contextual_rules"`
+	CreatedAt_2     time.Time         `json:"created_at_2"`
+	UpdatedAt_2     time.Time         `json:"updated_at_2"`
+}
+
+func (q *Queries) ListPoliciesByProjectID(ctx context.Context, projectID uuid.UUID) ([]ListPoliciesByProjectIDRow, error) {
+	rows, err := q.db.QueryContext(ctx, listPoliciesByProjectID, projectID)
+	if err != nil {
+		return nil, err
+	}
+	defer rows.Close()
+	items := []ListPoliciesByProjectIDRow{}
+	for rows.Next() {
+		var i ListPoliciesByProjectIDRow
+		if err := rows.Scan(
+			&i.ID,
+			&i.Name,
+			&i.Provider,
+			&i.ProjectID,
 			&i.Remediate,
 			&i.CreatedAt,
 			&i.UpdatedAt,

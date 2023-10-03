@@ -70,7 +70,7 @@ func TestExecutor_handleEntityEvent(t *testing.T) {
 	mockStore := mockdb.NewMockStore(ctrl)
 
 	// declarations
-	groupID := int32(1)
+	projectID := uuid.New()
 	providerName := "github"
 	providerID := uuid.New()
 	passthroughRuleType := "passthrough"
@@ -84,29 +84,29 @@ func TestExecutor_handleEntityEvent(t *testing.T) {
 
 	// get group information
 	mockStore.EXPECT().
-		GetGroupByID(gomock.Any(), groupID).
-		Return(db.Group{
-			ID:   groupID,
+		GetProjectByID(gomock.Any(), projectID).
+		Return(db.Project{
+			ID:   projectID,
 			Name: "test",
 		}, nil)
 
 	mockStore.EXPECT().
 		GetProviderByName(gomock.Any(), db.GetProviderByNameParams{
-			Name:    providerName,
-			GroupID: groupID,
+			Name:      providerName,
+			ProjectID: projectID,
 		}).
 		Return(db.Provider{
-			ID:      providerID,
-			Name:    providerName,
-			GroupID: groupID,
+			ID:        providerID,
+			Name:      providerName,
+			ProjectID: projectID,
 		}, nil)
 
 	// get access token
 	mockStore.EXPECT().
-		GetAccessTokenByGroupID(gomock.Any(),
-			db.GetAccessTokenByGroupIDParams{
-				Provider: providerName,
-				GroupID:  groupID,
+		GetAccessTokenByProjectID(gomock.Any(),
+			db.GetAccessTokenByProjectIDParams{
+				Provider:  providerName,
+				ProjectID: projectID,
 			}).
 		Return(db.ProviderAccessToken{
 			EncryptedToken: authtoken,
@@ -124,14 +124,14 @@ func TestExecutor_handleEntityEvent(t *testing.T) {
 	require.NoError(t, err, "expected no error")
 
 	mockStore.EXPECT().
-		ListPoliciesByGroupID(gomock.Any(), groupID).
-		Return([]db.ListPoliciesByGroupIDRow{
+		ListPoliciesByProjectID(gomock.Any(), projectID).
+		Return([]db.ListPoliciesByProjectIDRow{
 			{
 				ID:              policyID,
 				Name:            "test-policy",
 				Entity:          db.EntitiesRepository,
 				Provider:        providerName,
-				GroupID:         groupID,
+				ProjectID:       projectID,
 				CreatedAt:       time.Now(),
 				UpdatedAt:       time.Now(),
 				ContextualRules: json.RawMessage(marshalledCRS),
@@ -163,14 +163,14 @@ default allow = true`,
 
 	mockStore.EXPECT().
 		GetRuleTypeByName(gomock.Any(), db.GetRuleTypeByNameParams{
-			Provider: providerName,
-			GroupID:  groupID,
-			Name:     passthroughRuleType,
+			Provider:  providerName,
+			ProjectID: projectID,
+			Name:      passthroughRuleType,
 		}).Return(db.RuleType{
 		ID:         ruleTypeID,
 		Name:       passthroughRuleType,
 		Provider:   providerName,
-		GroupID:    groupID,
+		ProjectID:  projectID,
 		Definition: json.RawMessage(marshalledRTD),
 	}, nil)
 
@@ -205,7 +205,7 @@ default allow = true`,
 
 	eiw := engine.NewEntityInfoWrapper().
 		WithProvider(providerName).
-		WithGroupID(groupID).
+		WithProjectID(projectID).
 		WithRepository(&mediatorv1.RepositoryResult{
 			Repository: "test",
 			RepoId:     123,

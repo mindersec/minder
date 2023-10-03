@@ -46,20 +46,20 @@ func EntityFromContext(ctx context.Context) *EntityContext {
 	return ec
 }
 
-// Group is a construct relevant to an entity's context.
+// Project is a construct relevant to an entity's context.
 // This is relevant for getting the full information about an entity.
-type Group struct {
-	ID   int32
+type Project struct {
+	ID   uuid.UUID
 	Name string
 }
 
 // GetID returns the ID of the group
-func (g Group) GetID() int32 {
+func (g Project) GetID() uuid.UUID {
 	return g.ID
 }
 
 // GetName returns the name of the group
-func (g Group) GetName() string {
+func (g Project) GetName() string {
 	return g.Name
 }
 
@@ -73,13 +73,13 @@ type Provider struct {
 // EntityContext is the context of an entity.
 // This is relevant for getting the full information about an entity.
 type EntityContext struct {
-	Group    Group
+	Project  Project
 	Provider Provider
 }
 
-// GetGroup returns the group of the entity
-func (c *EntityContext) GetGroup() Group {
-	return c.Group
+// GetProject returns the group of the entity
+func (c *EntityContext) GetProject() Project {
+	return c.Project
 }
 
 // GetProvider returns the provider of the entity
@@ -91,25 +91,25 @@ func (c *EntityContext) GetProvider() Provider {
 // input is the context from the gRPC request which merely holds
 // user-friendly information about an object.
 func GetContextFromInput(ctx context.Context, in *pb.Context, q db.Querier) (*EntityContext, error) {
-	if in.Group == nil || *in.Group == "" {
+	if in.Project == nil || *in.Project == "" {
 		return nil, fmt.Errorf("invalid context: missing group")
 	}
 
-	group, err := q.GetGroupByName(ctx, *in.Group)
+	group, err := q.GetProjectByName(ctx, *in.Project)
 	if err != nil {
 		return nil, fmt.Errorf("unable to get context: %w", err)
 	}
 
 	prov, err := q.GetProviderByName(ctx, db.GetProviderByNameParams{
-		Name:    in.Provider,
-		GroupID: group.ID,
+		Name:      in.Provider,
+		ProjectID: group.ID,
 	})
 	if err != nil {
 		return nil, fmt.Errorf("unable to get context: failed getting provider: %w", err)
 	}
 
 	return &EntityContext{
-		Group: Group{
+		Project: Project{
 			ID:   group.ID,
 			Name: group.Name,
 		},

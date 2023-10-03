@@ -15,7 +15,6 @@
 package engine
 
 import (
-	"fmt"
 	"testing"
 
 	"github.com/ThreeDotsLabs/watermill/message"
@@ -31,13 +30,14 @@ import (
 func Test_parseEntityEvent(t *testing.T) {
 	t.Parallel()
 
+	projectID := uuid.New()
 	repoID := uuid.NewString()
 	artifactID := uuid.NewString()
 
 	type args struct {
 		ent       protoreflect.ProtoMessage
 		entType   string
-		groupID   int32
+		projectID uuid.UUID
 		provider  string
 		ownership map[string]string
 	}
@@ -55,12 +55,12 @@ func Test_parseEntityEvent(t *testing.T) {
 					RepoId:     123,
 				},
 				entType:   RepositoryEventEntityType,
-				groupID:   1,
+				projectID: projectID,
 				provider:  "github",
 				ownership: map[string]string{RepositoryIDEventKey: repoID},
 			},
 			want: &EntityInfoWrapper{
-				GroupID: 1,
+				ProjectID: &projectID,
 				Entity: &pb.RepositoryResult{
 					Repository: "test",
 					RepoId:     123,
@@ -81,16 +81,16 @@ func Test_parseEntityEvent(t *testing.T) {
 						},
 					},
 				},
-				entType:  VersionedArtifactEventEntityType,
-				groupID:  1,
-				provider: "github",
+				entType:   VersionedArtifactEventEntityType,
+				projectID: projectID,
+				provider:  "github",
 				ownership: map[string]string{
 					RepositoryIDEventKey: repoID,
 					ArtifactIDEventKey:   artifactID,
 				},
 			},
 			want: &EntityInfoWrapper{
-				GroupID: 1,
+				ProjectID: &projectID,
 				Entity: &pb.Artifact{
 					ArtifactPk: artifactID,
 					Versions: []*pb.ArtifactVersion{
@@ -117,16 +117,16 @@ func Test_parseEntityEvent(t *testing.T) {
 					RepoOwner: "jakubtestorg",
 					RepoName:  "bad-npm",
 				},
-				entType:  PullRequestEventEntityType,
-				groupID:  1,
-				provider: "github",
+				entType:   PullRequestEventEntityType,
+				projectID: projectID,
+				provider:  "github",
 				ownership: map[string]string{
 					PullRequestIDEventKey: "3",
 					RepositoryIDEventKey:  repoID,
 				},
 			},
 			want: &EntityInfoWrapper{
-				GroupID: 1,
+				ProjectID: &projectID,
 				Entity: &pb.PullRequest{
 					Url:       "https://api.github.com/repos/jakubtestorg/bad-npm/pulls/3",
 					CommitSha: "bd9958a63c9b95ccc2bc0cf1eef65a87529aed16",
@@ -153,7 +153,7 @@ func Test_parseEntityEvent(t *testing.T) {
 			require.NoError(t, err, "unexpected error")
 
 			msg := message.NewMessage("", marshalledEntity)
-			msg.Metadata.Set(GroupIDEventKey, fmt.Sprintf("%d", tt.args.groupID))
+			msg.Metadata.Set(ProjectIDEventKey, tt.args.projectID.String())
 			msg.Metadata.Set(EntityTypeEventKey, tt.args.entType)
 			msg.Metadata.Set(RepositoryIDEventKey, tt.args.ownership["repository_id"])
 			msg.Metadata.Set(ProviderEventKey, tt.args.provider)
@@ -174,7 +174,7 @@ func Test_parseEntityEvent(t *testing.T) {
 			require.NotNil(t, got, "expected non-nil entity info")
 
 			//NOTE: Not checking the entity right now because it's a pain to compare
-			assert.Equal(t, tt.want.GroupID, got.GroupID, "group id mismatch")
+			assert.Equal(t, tt.want.ProjectID, got.ProjectID, "project id mismatch")
 			assert.Equal(t, tt.want.Type, got.Type, "entity type mismatch")
 			assert.Equal(t, tt.want.OwnershipData, got.OwnershipData, "ownership data mismatch")
 			assert.Equal(t, tt.want.Provider, got.Provider, "provider mismatch")
@@ -185,10 +185,11 @@ func Test_parseEntityEvent(t *testing.T) {
 func TestEntityInfoWrapper_RepositoryToMessage(t *testing.T) {
 	t.Parallel()
 
+	projectID := uuid.New()
 	repoID := uuid.New()
 	eiw := NewEntityInfoWrapper().
 		WithProvider("github").
-		WithGroupID(123).
+		WithProjectID(projectID).
 		WithRepository(&pb.RepositoryResult{
 			Owner:  "test",
 			RepoId: 123,
@@ -199,19 +200,20 @@ func TestEntityInfoWrapper_RepositoryToMessage(t *testing.T) {
 
 	assert.Equal(t, "github", msg.Metadata.Get(ProviderEventKey), "provider mismatch")
 	assert.Equal(t, RepositoryEventEntityType, msg.Metadata.Get(EntityTypeEventKey), "entity type mismatch")
-	assert.Equal(t, "123", msg.Metadata.Get(GroupIDEventKey), "group id mismatch")
+	assert.Equal(t, projectID.String(), msg.Metadata.Get(ProjectIDEventKey), "project id mismatch")
 	assert.Equal(t, repoID.String(), msg.Metadata.Get(RepositoryIDEventKey), "repository id mismatch")
 }
 
 func TestEntityInfoWrapper_VersionedArtifact(t *testing.T) {
 	t.Parallel()
 
+	projectID := uuid.New()
 	artifactID := uuid.New()
 	repoID := uuid.New()
 
 	eiw := NewEntityInfoWrapper().
 		WithProvider("github").
-		WithGroupID(123).
+		WithProjectID(projectID).
 		WithArtifact(&pb.Artifact{
 			ArtifactPk: artifactID.String(),
 			Versions: []*pb.ArtifactVersion{
@@ -227,12 +229,12 @@ func TestEntityInfoWrapper_VersionedArtifact(t *testing.T) {
 
 	assert.Equal(t, "github", msg.Metadata.Get(ProviderEventKey), "provider mismatch")
 	assert.Equal(t, VersionedArtifactEventEntityType, msg.Metadata.Get(EntityTypeEventKey), "entity type mismatch")
-	assert.Equal(t, "123", msg.Metadata.Get(GroupIDEventKey), "group id mismatch")
+	assert.Equal(t, projectID.String(), msg.Metadata.Get(ProjectIDEventKey), "project id mismatch")
 	assert.Equal(t, repoID.String(), msg.Metadata.Get(RepositoryIDEventKey), "repository id mismatch")
 	assert.Equal(t, artifactID.String(), msg.Metadata.Get(ArtifactIDEventKey), "artifact id mismatch")
 }
 
-func TestEntityInfoWrapper_FailsWithoutGroupID(t *testing.T) {
+func TestEntityInfoWrapper_FailsWithoutProjectID(t *testing.T) {
 	t.Parallel()
 
 	eiw := NewEntityInfoWrapper().
@@ -242,7 +244,8 @@ func TestEntityInfoWrapper_FailsWithoutGroupID(t *testing.T) {
 			RepoId: 123,
 		}).WithRepositoryID(uuid.New())
 
-	_, err := eiw.BuildMessage()
+	msg, err := eiw.BuildMessage()
+	t.Logf("OZZ: %+v", msg)
 	require.Error(t, err, "expected error")
 }
 
@@ -250,7 +253,7 @@ func TestEntityInfoWrapper_FailsWithoutProvider(t *testing.T) {
 	t.Parallel()
 
 	eiw := NewEntityInfoWrapper().
-		WithGroupID(123).
+		WithProjectID(uuid.New()).
 		WithRepository(&pb.RepositoryResult{
 			Owner:  "test",
 			RepoId: 123,
@@ -265,7 +268,7 @@ func TestEntityInfoWrapper_FailsWithoutRepository(t *testing.T) {
 
 	eiw := NewEntityInfoWrapper().
 		WithProvider("github").
-		WithGroupID(123).
+		WithProjectID(uuid.New()).
 		WithRepositoryID(uuid.New())
 
 	_, err := eiw.BuildMessage()
@@ -277,7 +280,7 @@ func TestEntityInfoWrapper_FailsWithInvalidEntity(t *testing.T) {
 
 	eiw := NewEntityInfoWrapper().
 		WithProvider("github").
-		WithGroupID(123)
+		WithProjectID(uuid.New())
 
 	eiw.Entity = &pb.UserRecord{}
 

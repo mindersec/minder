@@ -257,7 +257,7 @@ const (
 	OAuthService_ExchangeCodeForTokenWEB_FullMethodName = "/mediator.v1.OAuthService/ExchangeCodeForTokenWEB"
 	OAuthService_StoreProviderToken_FullMethodName      = "/mediator.v1.OAuthService/StoreProviderToken"
 	OAuthService_RevokeOauthTokens_FullMethodName       = "/mediator.v1.OAuthService/RevokeOauthTokens"
-	OAuthService_RevokeOauthGroupToken_FullMethodName   = "/mediator.v1.OAuthService/RevokeOauthGroupToken"
+	OAuthService_RevokeOauthProjectToken_FullMethodName = "/mediator.v1.OAuthService/RevokeOauthProjectToken"
 	OAuthService_VerifyProviderTokenFrom_FullMethodName = "/mediator.v1.OAuthService/VerifyProviderTokenFrom"
 )
 
@@ -273,8 +273,8 @@ type OAuthServiceClient interface {
 	// RevokeOauthTokens is used to revoke all tokens
 	// this a nuclear option and should only be used in emergencies
 	RevokeOauthTokens(ctx context.Context, in *RevokeOauthTokensRequest, opts ...grpc.CallOption) (*RevokeOauthTokensResponse, error)
-	// revoke token for a group
-	RevokeOauthGroupToken(ctx context.Context, in *RevokeOauthGroupTokenRequest, opts ...grpc.CallOption) (*RevokeOauthGroupTokenResponse, error)
+	// revoke token for a project
+	RevokeOauthProjectToken(ctx context.Context, in *RevokeOauthProjectTokenRequest, opts ...grpc.CallOption) (*RevokeOauthProjectTokenResponse, error)
 	// VerifyProviderTokenFrom verifies that a token has been created for a provider since given timestamp
 	VerifyProviderTokenFrom(ctx context.Context, in *VerifyProviderTokenFromRequest, opts ...grpc.CallOption) (*VerifyProviderTokenFromResponse, error)
 }
@@ -332,9 +332,9 @@ func (c *oAuthServiceClient) RevokeOauthTokens(ctx context.Context, in *RevokeOa
 	return out, nil
 }
 
-func (c *oAuthServiceClient) RevokeOauthGroupToken(ctx context.Context, in *RevokeOauthGroupTokenRequest, opts ...grpc.CallOption) (*RevokeOauthGroupTokenResponse, error) {
-	out := new(RevokeOauthGroupTokenResponse)
-	err := c.cc.Invoke(ctx, OAuthService_RevokeOauthGroupToken_FullMethodName, in, out, opts...)
+func (c *oAuthServiceClient) RevokeOauthProjectToken(ctx context.Context, in *RevokeOauthProjectTokenRequest, opts ...grpc.CallOption) (*RevokeOauthProjectTokenResponse, error) {
+	out := new(RevokeOauthProjectTokenResponse)
+	err := c.cc.Invoke(ctx, OAuthService_RevokeOauthProjectToken_FullMethodName, in, out, opts...)
 	if err != nil {
 		return nil, err
 	}
@@ -362,8 +362,8 @@ type OAuthServiceServer interface {
 	// RevokeOauthTokens is used to revoke all tokens
 	// this a nuclear option and should only be used in emergencies
 	RevokeOauthTokens(context.Context, *RevokeOauthTokensRequest) (*RevokeOauthTokensResponse, error)
-	// revoke token for a group
-	RevokeOauthGroupToken(context.Context, *RevokeOauthGroupTokenRequest) (*RevokeOauthGroupTokenResponse, error)
+	// revoke token for a project
+	RevokeOauthProjectToken(context.Context, *RevokeOauthProjectTokenRequest) (*RevokeOauthProjectTokenResponse, error)
 	// VerifyProviderTokenFrom verifies that a token has been created for a provider since given timestamp
 	VerifyProviderTokenFrom(context.Context, *VerifyProviderTokenFromRequest) (*VerifyProviderTokenFromResponse, error)
 	mustEmbedUnimplementedOAuthServiceServer()
@@ -388,8 +388,8 @@ func (UnimplementedOAuthServiceServer) StoreProviderToken(context.Context, *Stor
 func (UnimplementedOAuthServiceServer) RevokeOauthTokens(context.Context, *RevokeOauthTokensRequest) (*RevokeOauthTokensResponse, error) {
 	return nil, status.Errorf(codes.Unimplemented, "method RevokeOauthTokens not implemented")
 }
-func (UnimplementedOAuthServiceServer) RevokeOauthGroupToken(context.Context, *RevokeOauthGroupTokenRequest) (*RevokeOauthGroupTokenResponse, error) {
-	return nil, status.Errorf(codes.Unimplemented, "method RevokeOauthGroupToken not implemented")
+func (UnimplementedOAuthServiceServer) RevokeOauthProjectToken(context.Context, *RevokeOauthProjectTokenRequest) (*RevokeOauthProjectTokenResponse, error) {
+	return nil, status.Errorf(codes.Unimplemented, "method RevokeOauthProjectToken not implemented")
 }
 func (UnimplementedOAuthServiceServer) VerifyProviderTokenFrom(context.Context, *VerifyProviderTokenFromRequest) (*VerifyProviderTokenFromResponse, error) {
 	return nil, status.Errorf(codes.Unimplemented, "method VerifyProviderTokenFrom not implemented")
@@ -497,20 +497,20 @@ func _OAuthService_RevokeOauthTokens_Handler(srv interface{}, ctx context.Contex
 	return interceptor(ctx, in, info, handler)
 }
 
-func _OAuthService_RevokeOauthGroupToken_Handler(srv interface{}, ctx context.Context, dec func(interface{}) error, interceptor grpc.UnaryServerInterceptor) (interface{}, error) {
-	in := new(RevokeOauthGroupTokenRequest)
+func _OAuthService_RevokeOauthProjectToken_Handler(srv interface{}, ctx context.Context, dec func(interface{}) error, interceptor grpc.UnaryServerInterceptor) (interface{}, error) {
+	in := new(RevokeOauthProjectTokenRequest)
 	if err := dec(in); err != nil {
 		return nil, err
 	}
 	if interceptor == nil {
-		return srv.(OAuthServiceServer).RevokeOauthGroupToken(ctx, in)
+		return srv.(OAuthServiceServer).RevokeOauthProjectToken(ctx, in)
 	}
 	info := &grpc.UnaryServerInfo{
 		Server:     srv,
-		FullMethod: OAuthService_RevokeOauthGroupToken_FullMethodName,
+		FullMethod: OAuthService_RevokeOauthProjectToken_FullMethodName,
 	}
 	handler := func(ctx context.Context, req interface{}) (interface{}, error) {
-		return srv.(OAuthServiceServer).RevokeOauthGroupToken(ctx, req.(*RevokeOauthGroupTokenRequest))
+		return srv.(OAuthServiceServer).RevokeOauthProjectToken(ctx, req.(*RevokeOauthProjectTokenRequest))
 	}
 	return interceptor(ctx, in, info, handler)
 }
@@ -561,8 +561,8 @@ var OAuthService_ServiceDesc = grpc.ServiceDesc{
 			Handler:    _OAuthService_RevokeOauthTokens_Handler,
 		},
 		{
-			MethodName: "RevokeOauthGroupToken",
-			Handler:    _OAuthService_RevokeOauthGroupToken_Handler,
+			MethodName: "RevokeOauthProjectToken",
+			Handler:    _OAuthService_RevokeOauthProjectToken_Handler,
 		},
 		{
 			MethodName: "VerifyProviderTokenFrom",
@@ -1644,237 +1644,237 @@ var OrganizationService_ServiceDesc = grpc.ServiceDesc{
 }
 
 const (
-	GroupService_CreateGroup_FullMethodName    = "/mediator.v1.GroupService/CreateGroup"
-	GroupService_GetGroups_FullMethodName      = "/mediator.v1.GroupService/GetGroups"
-	GroupService_GetGroupByName_FullMethodName = "/mediator.v1.GroupService/GetGroupByName"
-	GroupService_GetGroupById_FullMethodName   = "/mediator.v1.GroupService/GetGroupById"
-	GroupService_DeleteGroup_FullMethodName    = "/mediator.v1.GroupService/DeleteGroup"
+	ProjectService_CreateProject_FullMethodName    = "/mediator.v1.ProjectService/CreateProject"
+	ProjectService_GetProjects_FullMethodName      = "/mediator.v1.ProjectService/GetProjects"
+	ProjectService_GetProjectByName_FullMethodName = "/mediator.v1.ProjectService/GetProjectByName"
+	ProjectService_GetProjectById_FullMethodName   = "/mediator.v1.ProjectService/GetProjectById"
+	ProjectService_DeleteProject_FullMethodName    = "/mediator.v1.ProjectService/DeleteProject"
 )
 
-// GroupServiceClient is the client API for GroupService service.
+// ProjectServiceClient is the client API for ProjectService service.
 //
 // For semantics around ctx use and closing/ending streaming RPCs, please refer to https://pkg.go.dev/google.golang.org/grpc/?tab=doc#ClientConn.NewStream.
-type GroupServiceClient interface {
-	CreateGroup(ctx context.Context, in *CreateGroupRequest, opts ...grpc.CallOption) (*CreateGroupResponse, error)
-	GetGroups(ctx context.Context, in *GetGroupsRequest, opts ...grpc.CallOption) (*GetGroupsResponse, error)
-	GetGroupByName(ctx context.Context, in *GetGroupByNameRequest, opts ...grpc.CallOption) (*GetGroupByNameResponse, error)
-	GetGroupById(ctx context.Context, in *GetGroupByIdRequest, opts ...grpc.CallOption) (*GetGroupByIdResponse, error)
-	DeleteGroup(ctx context.Context, in *DeleteGroupRequest, opts ...grpc.CallOption) (*DeleteGroupResponse, error)
+type ProjectServiceClient interface {
+	CreateProject(ctx context.Context, in *CreateProjectRequest, opts ...grpc.CallOption) (*CreateProjectResponse, error)
+	GetProjects(ctx context.Context, in *GetProjectsRequest, opts ...grpc.CallOption) (*GetProjectsResponse, error)
+	GetProjectByName(ctx context.Context, in *GetProjectByNameRequest, opts ...grpc.CallOption) (*GetProjectByNameResponse, error)
+	GetProjectById(ctx context.Context, in *GetProjectByIdRequest, opts ...grpc.CallOption) (*GetProjectByIdResponse, error)
+	DeleteProject(ctx context.Context, in *DeleteProjectRequest, opts ...grpc.CallOption) (*DeleteProjectResponse, error)
 }
 
-type groupServiceClient struct {
+type projectServiceClient struct {
 	cc grpc.ClientConnInterface
 }
 
-func NewGroupServiceClient(cc grpc.ClientConnInterface) GroupServiceClient {
-	return &groupServiceClient{cc}
+func NewProjectServiceClient(cc grpc.ClientConnInterface) ProjectServiceClient {
+	return &projectServiceClient{cc}
 }
 
-func (c *groupServiceClient) CreateGroup(ctx context.Context, in *CreateGroupRequest, opts ...grpc.CallOption) (*CreateGroupResponse, error) {
-	out := new(CreateGroupResponse)
-	err := c.cc.Invoke(ctx, GroupService_CreateGroup_FullMethodName, in, out, opts...)
+func (c *projectServiceClient) CreateProject(ctx context.Context, in *CreateProjectRequest, opts ...grpc.CallOption) (*CreateProjectResponse, error) {
+	out := new(CreateProjectResponse)
+	err := c.cc.Invoke(ctx, ProjectService_CreateProject_FullMethodName, in, out, opts...)
 	if err != nil {
 		return nil, err
 	}
 	return out, nil
 }
 
-func (c *groupServiceClient) GetGroups(ctx context.Context, in *GetGroupsRequest, opts ...grpc.CallOption) (*GetGroupsResponse, error) {
-	out := new(GetGroupsResponse)
-	err := c.cc.Invoke(ctx, GroupService_GetGroups_FullMethodName, in, out, opts...)
+func (c *projectServiceClient) GetProjects(ctx context.Context, in *GetProjectsRequest, opts ...grpc.CallOption) (*GetProjectsResponse, error) {
+	out := new(GetProjectsResponse)
+	err := c.cc.Invoke(ctx, ProjectService_GetProjects_FullMethodName, in, out, opts...)
 	if err != nil {
 		return nil, err
 	}
 	return out, nil
 }
 
-func (c *groupServiceClient) GetGroupByName(ctx context.Context, in *GetGroupByNameRequest, opts ...grpc.CallOption) (*GetGroupByNameResponse, error) {
-	out := new(GetGroupByNameResponse)
-	err := c.cc.Invoke(ctx, GroupService_GetGroupByName_FullMethodName, in, out, opts...)
+func (c *projectServiceClient) GetProjectByName(ctx context.Context, in *GetProjectByNameRequest, opts ...grpc.CallOption) (*GetProjectByNameResponse, error) {
+	out := new(GetProjectByNameResponse)
+	err := c.cc.Invoke(ctx, ProjectService_GetProjectByName_FullMethodName, in, out, opts...)
 	if err != nil {
 		return nil, err
 	}
 	return out, nil
 }
 
-func (c *groupServiceClient) GetGroupById(ctx context.Context, in *GetGroupByIdRequest, opts ...grpc.CallOption) (*GetGroupByIdResponse, error) {
-	out := new(GetGroupByIdResponse)
-	err := c.cc.Invoke(ctx, GroupService_GetGroupById_FullMethodName, in, out, opts...)
+func (c *projectServiceClient) GetProjectById(ctx context.Context, in *GetProjectByIdRequest, opts ...grpc.CallOption) (*GetProjectByIdResponse, error) {
+	out := new(GetProjectByIdResponse)
+	err := c.cc.Invoke(ctx, ProjectService_GetProjectById_FullMethodName, in, out, opts...)
 	if err != nil {
 		return nil, err
 	}
 	return out, nil
 }
 
-func (c *groupServiceClient) DeleteGroup(ctx context.Context, in *DeleteGroupRequest, opts ...grpc.CallOption) (*DeleteGroupResponse, error) {
-	out := new(DeleteGroupResponse)
-	err := c.cc.Invoke(ctx, GroupService_DeleteGroup_FullMethodName, in, out, opts...)
+func (c *projectServiceClient) DeleteProject(ctx context.Context, in *DeleteProjectRequest, opts ...grpc.CallOption) (*DeleteProjectResponse, error) {
+	out := new(DeleteProjectResponse)
+	err := c.cc.Invoke(ctx, ProjectService_DeleteProject_FullMethodName, in, out, opts...)
 	if err != nil {
 		return nil, err
 	}
 	return out, nil
 }
 
-// GroupServiceServer is the server API for GroupService service.
-// All implementations must embed UnimplementedGroupServiceServer
+// ProjectServiceServer is the server API for ProjectService service.
+// All implementations must embed UnimplementedProjectServiceServer
 // for forward compatibility
-type GroupServiceServer interface {
-	CreateGroup(context.Context, *CreateGroupRequest) (*CreateGroupResponse, error)
-	GetGroups(context.Context, *GetGroupsRequest) (*GetGroupsResponse, error)
-	GetGroupByName(context.Context, *GetGroupByNameRequest) (*GetGroupByNameResponse, error)
-	GetGroupById(context.Context, *GetGroupByIdRequest) (*GetGroupByIdResponse, error)
-	DeleteGroup(context.Context, *DeleteGroupRequest) (*DeleteGroupResponse, error)
-	mustEmbedUnimplementedGroupServiceServer()
+type ProjectServiceServer interface {
+	CreateProject(context.Context, *CreateProjectRequest) (*CreateProjectResponse, error)
+	GetProjects(context.Context, *GetProjectsRequest) (*GetProjectsResponse, error)
+	GetProjectByName(context.Context, *GetProjectByNameRequest) (*GetProjectByNameResponse, error)
+	GetProjectById(context.Context, *GetProjectByIdRequest) (*GetProjectByIdResponse, error)
+	DeleteProject(context.Context, *DeleteProjectRequest) (*DeleteProjectResponse, error)
+	mustEmbedUnimplementedProjectServiceServer()
 }
 
-// UnimplementedGroupServiceServer must be embedded to have forward compatible implementations.
-type UnimplementedGroupServiceServer struct {
+// UnimplementedProjectServiceServer must be embedded to have forward compatible implementations.
+type UnimplementedProjectServiceServer struct {
 }
 
-func (UnimplementedGroupServiceServer) CreateGroup(context.Context, *CreateGroupRequest) (*CreateGroupResponse, error) {
-	return nil, status.Errorf(codes.Unimplemented, "method CreateGroup not implemented")
+func (UnimplementedProjectServiceServer) CreateProject(context.Context, *CreateProjectRequest) (*CreateProjectResponse, error) {
+	return nil, status.Errorf(codes.Unimplemented, "method CreateProject not implemented")
 }
-func (UnimplementedGroupServiceServer) GetGroups(context.Context, *GetGroupsRequest) (*GetGroupsResponse, error) {
-	return nil, status.Errorf(codes.Unimplemented, "method GetGroups not implemented")
+func (UnimplementedProjectServiceServer) GetProjects(context.Context, *GetProjectsRequest) (*GetProjectsResponse, error) {
+	return nil, status.Errorf(codes.Unimplemented, "method GetProjects not implemented")
 }
-func (UnimplementedGroupServiceServer) GetGroupByName(context.Context, *GetGroupByNameRequest) (*GetGroupByNameResponse, error) {
-	return nil, status.Errorf(codes.Unimplemented, "method GetGroupByName not implemented")
+func (UnimplementedProjectServiceServer) GetProjectByName(context.Context, *GetProjectByNameRequest) (*GetProjectByNameResponse, error) {
+	return nil, status.Errorf(codes.Unimplemented, "method GetProjectByName not implemented")
 }
-func (UnimplementedGroupServiceServer) GetGroupById(context.Context, *GetGroupByIdRequest) (*GetGroupByIdResponse, error) {
-	return nil, status.Errorf(codes.Unimplemented, "method GetGroupById not implemented")
+func (UnimplementedProjectServiceServer) GetProjectById(context.Context, *GetProjectByIdRequest) (*GetProjectByIdResponse, error) {
+	return nil, status.Errorf(codes.Unimplemented, "method GetProjectById not implemented")
 }
-func (UnimplementedGroupServiceServer) DeleteGroup(context.Context, *DeleteGroupRequest) (*DeleteGroupResponse, error) {
-	return nil, status.Errorf(codes.Unimplemented, "method DeleteGroup not implemented")
+func (UnimplementedProjectServiceServer) DeleteProject(context.Context, *DeleteProjectRequest) (*DeleteProjectResponse, error) {
+	return nil, status.Errorf(codes.Unimplemented, "method DeleteProject not implemented")
 }
-func (UnimplementedGroupServiceServer) mustEmbedUnimplementedGroupServiceServer() {}
+func (UnimplementedProjectServiceServer) mustEmbedUnimplementedProjectServiceServer() {}
 
-// UnsafeGroupServiceServer may be embedded to opt out of forward compatibility for this service.
-// Use of this interface is not recommended, as added methods to GroupServiceServer will
+// UnsafeProjectServiceServer may be embedded to opt out of forward compatibility for this service.
+// Use of this interface is not recommended, as added methods to ProjectServiceServer will
 // result in compilation errors.
-type UnsafeGroupServiceServer interface {
-	mustEmbedUnimplementedGroupServiceServer()
+type UnsafeProjectServiceServer interface {
+	mustEmbedUnimplementedProjectServiceServer()
 }
 
-func RegisterGroupServiceServer(s grpc.ServiceRegistrar, srv GroupServiceServer) {
-	s.RegisterService(&GroupService_ServiceDesc, srv)
+func RegisterProjectServiceServer(s grpc.ServiceRegistrar, srv ProjectServiceServer) {
+	s.RegisterService(&ProjectService_ServiceDesc, srv)
 }
 
-func _GroupService_CreateGroup_Handler(srv interface{}, ctx context.Context, dec func(interface{}) error, interceptor grpc.UnaryServerInterceptor) (interface{}, error) {
-	in := new(CreateGroupRequest)
+func _ProjectService_CreateProject_Handler(srv interface{}, ctx context.Context, dec func(interface{}) error, interceptor grpc.UnaryServerInterceptor) (interface{}, error) {
+	in := new(CreateProjectRequest)
 	if err := dec(in); err != nil {
 		return nil, err
 	}
 	if interceptor == nil {
-		return srv.(GroupServiceServer).CreateGroup(ctx, in)
+		return srv.(ProjectServiceServer).CreateProject(ctx, in)
 	}
 	info := &grpc.UnaryServerInfo{
 		Server:     srv,
-		FullMethod: GroupService_CreateGroup_FullMethodName,
+		FullMethod: ProjectService_CreateProject_FullMethodName,
 	}
 	handler := func(ctx context.Context, req interface{}) (interface{}, error) {
-		return srv.(GroupServiceServer).CreateGroup(ctx, req.(*CreateGroupRequest))
+		return srv.(ProjectServiceServer).CreateProject(ctx, req.(*CreateProjectRequest))
 	}
 	return interceptor(ctx, in, info, handler)
 }
 
-func _GroupService_GetGroups_Handler(srv interface{}, ctx context.Context, dec func(interface{}) error, interceptor grpc.UnaryServerInterceptor) (interface{}, error) {
-	in := new(GetGroupsRequest)
+func _ProjectService_GetProjects_Handler(srv interface{}, ctx context.Context, dec func(interface{}) error, interceptor grpc.UnaryServerInterceptor) (interface{}, error) {
+	in := new(GetProjectsRequest)
 	if err := dec(in); err != nil {
 		return nil, err
 	}
 	if interceptor == nil {
-		return srv.(GroupServiceServer).GetGroups(ctx, in)
+		return srv.(ProjectServiceServer).GetProjects(ctx, in)
 	}
 	info := &grpc.UnaryServerInfo{
 		Server:     srv,
-		FullMethod: GroupService_GetGroups_FullMethodName,
+		FullMethod: ProjectService_GetProjects_FullMethodName,
 	}
 	handler := func(ctx context.Context, req interface{}) (interface{}, error) {
-		return srv.(GroupServiceServer).GetGroups(ctx, req.(*GetGroupsRequest))
+		return srv.(ProjectServiceServer).GetProjects(ctx, req.(*GetProjectsRequest))
 	}
 	return interceptor(ctx, in, info, handler)
 }
 
-func _GroupService_GetGroupByName_Handler(srv interface{}, ctx context.Context, dec func(interface{}) error, interceptor grpc.UnaryServerInterceptor) (interface{}, error) {
-	in := new(GetGroupByNameRequest)
+func _ProjectService_GetProjectByName_Handler(srv interface{}, ctx context.Context, dec func(interface{}) error, interceptor grpc.UnaryServerInterceptor) (interface{}, error) {
+	in := new(GetProjectByNameRequest)
 	if err := dec(in); err != nil {
 		return nil, err
 	}
 	if interceptor == nil {
-		return srv.(GroupServiceServer).GetGroupByName(ctx, in)
+		return srv.(ProjectServiceServer).GetProjectByName(ctx, in)
 	}
 	info := &grpc.UnaryServerInfo{
 		Server:     srv,
-		FullMethod: GroupService_GetGroupByName_FullMethodName,
+		FullMethod: ProjectService_GetProjectByName_FullMethodName,
 	}
 	handler := func(ctx context.Context, req interface{}) (interface{}, error) {
-		return srv.(GroupServiceServer).GetGroupByName(ctx, req.(*GetGroupByNameRequest))
+		return srv.(ProjectServiceServer).GetProjectByName(ctx, req.(*GetProjectByNameRequest))
 	}
 	return interceptor(ctx, in, info, handler)
 }
 
-func _GroupService_GetGroupById_Handler(srv interface{}, ctx context.Context, dec func(interface{}) error, interceptor grpc.UnaryServerInterceptor) (interface{}, error) {
-	in := new(GetGroupByIdRequest)
+func _ProjectService_GetProjectById_Handler(srv interface{}, ctx context.Context, dec func(interface{}) error, interceptor grpc.UnaryServerInterceptor) (interface{}, error) {
+	in := new(GetProjectByIdRequest)
 	if err := dec(in); err != nil {
 		return nil, err
 	}
 	if interceptor == nil {
-		return srv.(GroupServiceServer).GetGroupById(ctx, in)
+		return srv.(ProjectServiceServer).GetProjectById(ctx, in)
 	}
 	info := &grpc.UnaryServerInfo{
 		Server:     srv,
-		FullMethod: GroupService_GetGroupById_FullMethodName,
+		FullMethod: ProjectService_GetProjectById_FullMethodName,
 	}
 	handler := func(ctx context.Context, req interface{}) (interface{}, error) {
-		return srv.(GroupServiceServer).GetGroupById(ctx, req.(*GetGroupByIdRequest))
+		return srv.(ProjectServiceServer).GetProjectById(ctx, req.(*GetProjectByIdRequest))
 	}
 	return interceptor(ctx, in, info, handler)
 }
 
-func _GroupService_DeleteGroup_Handler(srv interface{}, ctx context.Context, dec func(interface{}) error, interceptor grpc.UnaryServerInterceptor) (interface{}, error) {
-	in := new(DeleteGroupRequest)
+func _ProjectService_DeleteProject_Handler(srv interface{}, ctx context.Context, dec func(interface{}) error, interceptor grpc.UnaryServerInterceptor) (interface{}, error) {
+	in := new(DeleteProjectRequest)
 	if err := dec(in); err != nil {
 		return nil, err
 	}
 	if interceptor == nil {
-		return srv.(GroupServiceServer).DeleteGroup(ctx, in)
+		return srv.(ProjectServiceServer).DeleteProject(ctx, in)
 	}
 	info := &grpc.UnaryServerInfo{
 		Server:     srv,
-		FullMethod: GroupService_DeleteGroup_FullMethodName,
+		FullMethod: ProjectService_DeleteProject_FullMethodName,
 	}
 	handler := func(ctx context.Context, req interface{}) (interface{}, error) {
-		return srv.(GroupServiceServer).DeleteGroup(ctx, req.(*DeleteGroupRequest))
+		return srv.(ProjectServiceServer).DeleteProject(ctx, req.(*DeleteProjectRequest))
 	}
 	return interceptor(ctx, in, info, handler)
 }
 
-// GroupService_ServiceDesc is the grpc.ServiceDesc for GroupService service.
+// ProjectService_ServiceDesc is the grpc.ServiceDesc for ProjectService service.
 // It's only intended for direct use with grpc.RegisterService,
 // and not to be introspected or modified (even as a copy)
-var GroupService_ServiceDesc = grpc.ServiceDesc{
-	ServiceName: "mediator.v1.GroupService",
-	HandlerType: (*GroupServiceServer)(nil),
+var ProjectService_ServiceDesc = grpc.ServiceDesc{
+	ServiceName: "mediator.v1.ProjectService",
+	HandlerType: (*ProjectServiceServer)(nil),
 	Methods: []grpc.MethodDesc{
 		{
-			MethodName: "CreateGroup",
-			Handler:    _GroupService_CreateGroup_Handler,
+			MethodName: "CreateProject",
+			Handler:    _ProjectService_CreateProject_Handler,
 		},
 		{
-			MethodName: "GetGroups",
-			Handler:    _GroupService_GetGroups_Handler,
+			MethodName: "GetProjects",
+			Handler:    _ProjectService_GetProjects_Handler,
 		},
 		{
-			MethodName: "GetGroupByName",
-			Handler:    _GroupService_GetGroupByName_Handler,
+			MethodName: "GetProjectByName",
+			Handler:    _ProjectService_GetProjectByName_Handler,
 		},
 		{
-			MethodName: "GetGroupById",
-			Handler:    _GroupService_GetGroupById_Handler,
+			MethodName: "GetProjectById",
+			Handler:    _ProjectService_GetProjectById_Handler,
 		},
 		{
-			MethodName: "DeleteGroup",
-			Handler:    _GroupService_DeleteGroup_Handler,
+			MethodName: "DeleteProject",
+			Handler:    _ProjectService_DeleteProject_Handler,
 		},
 	},
 	Streams:  []grpc.StreamDesc{},
@@ -1883,10 +1883,10 @@ var GroupService_ServiceDesc = grpc.ServiceDesc{
 
 const (
 	RoleService_CreateRoleByOrganization_FullMethodName = "/mediator.v1.RoleService/CreateRoleByOrganization"
-	RoleService_CreateRoleByGroup_FullMethodName        = "/mediator.v1.RoleService/CreateRoleByGroup"
+	RoleService_CreateRoleByProject_FullMethodName      = "/mediator.v1.RoleService/CreateRoleByProject"
 	RoleService_DeleteRole_FullMethodName               = "/mediator.v1.RoleService/DeleteRole"
 	RoleService_GetRoles_FullMethodName                 = "/mediator.v1.RoleService/GetRoles"
-	RoleService_GetRolesByGroup_FullMethodName          = "/mediator.v1.RoleService/GetRolesByGroup"
+	RoleService_GetRolesByProject_FullMethodName        = "/mediator.v1.RoleService/GetRolesByProject"
 	RoleService_GetRoleById_FullMethodName              = "/mediator.v1.RoleService/GetRoleById"
 	RoleService_GetRoleByName_FullMethodName            = "/mediator.v1.RoleService/GetRoleByName"
 )
@@ -1896,10 +1896,10 @@ const (
 // For semantics around ctx use and closing/ending streaming RPCs, please refer to https://pkg.go.dev/google.golang.org/grpc/?tab=doc#ClientConn.NewStream.
 type RoleServiceClient interface {
 	CreateRoleByOrganization(ctx context.Context, in *CreateRoleByOrganizationRequest, opts ...grpc.CallOption) (*CreateRoleByOrganizationResponse, error)
-	CreateRoleByGroup(ctx context.Context, in *CreateRoleByGroupRequest, opts ...grpc.CallOption) (*CreateRoleByGroupResponse, error)
+	CreateRoleByProject(ctx context.Context, in *CreateRoleByProjectRequest, opts ...grpc.CallOption) (*CreateRoleByProjectResponse, error)
 	DeleteRole(ctx context.Context, in *DeleteRoleRequest, opts ...grpc.CallOption) (*DeleteRoleResponse, error)
 	GetRoles(ctx context.Context, in *GetRolesRequest, opts ...grpc.CallOption) (*GetRolesResponse, error)
-	GetRolesByGroup(ctx context.Context, in *GetRolesByGroupRequest, opts ...grpc.CallOption) (*GetRolesByGroupResponse, error)
+	GetRolesByProject(ctx context.Context, in *GetRolesByProjectRequest, opts ...grpc.CallOption) (*GetRolesByProjectResponse, error)
 	GetRoleById(ctx context.Context, in *GetRoleByIdRequest, opts ...grpc.CallOption) (*GetRoleByIdResponse, error)
 	GetRoleByName(ctx context.Context, in *GetRoleByNameRequest, opts ...grpc.CallOption) (*GetRoleByNameResponse, error)
 }
@@ -1921,9 +1921,9 @@ func (c *roleServiceClient) CreateRoleByOrganization(ctx context.Context, in *Cr
 	return out, nil
 }
 
-func (c *roleServiceClient) CreateRoleByGroup(ctx context.Context, in *CreateRoleByGroupRequest, opts ...grpc.CallOption) (*CreateRoleByGroupResponse, error) {
-	out := new(CreateRoleByGroupResponse)
-	err := c.cc.Invoke(ctx, RoleService_CreateRoleByGroup_FullMethodName, in, out, opts...)
+func (c *roleServiceClient) CreateRoleByProject(ctx context.Context, in *CreateRoleByProjectRequest, opts ...grpc.CallOption) (*CreateRoleByProjectResponse, error) {
+	out := new(CreateRoleByProjectResponse)
+	err := c.cc.Invoke(ctx, RoleService_CreateRoleByProject_FullMethodName, in, out, opts...)
 	if err != nil {
 		return nil, err
 	}
@@ -1948,9 +1948,9 @@ func (c *roleServiceClient) GetRoles(ctx context.Context, in *GetRolesRequest, o
 	return out, nil
 }
 
-func (c *roleServiceClient) GetRolesByGroup(ctx context.Context, in *GetRolesByGroupRequest, opts ...grpc.CallOption) (*GetRolesByGroupResponse, error) {
-	out := new(GetRolesByGroupResponse)
-	err := c.cc.Invoke(ctx, RoleService_GetRolesByGroup_FullMethodName, in, out, opts...)
+func (c *roleServiceClient) GetRolesByProject(ctx context.Context, in *GetRolesByProjectRequest, opts ...grpc.CallOption) (*GetRolesByProjectResponse, error) {
+	out := new(GetRolesByProjectResponse)
+	err := c.cc.Invoke(ctx, RoleService_GetRolesByProject_FullMethodName, in, out, opts...)
 	if err != nil {
 		return nil, err
 	}
@@ -1980,10 +1980,10 @@ func (c *roleServiceClient) GetRoleByName(ctx context.Context, in *GetRoleByName
 // for forward compatibility
 type RoleServiceServer interface {
 	CreateRoleByOrganization(context.Context, *CreateRoleByOrganizationRequest) (*CreateRoleByOrganizationResponse, error)
-	CreateRoleByGroup(context.Context, *CreateRoleByGroupRequest) (*CreateRoleByGroupResponse, error)
+	CreateRoleByProject(context.Context, *CreateRoleByProjectRequest) (*CreateRoleByProjectResponse, error)
 	DeleteRole(context.Context, *DeleteRoleRequest) (*DeleteRoleResponse, error)
 	GetRoles(context.Context, *GetRolesRequest) (*GetRolesResponse, error)
-	GetRolesByGroup(context.Context, *GetRolesByGroupRequest) (*GetRolesByGroupResponse, error)
+	GetRolesByProject(context.Context, *GetRolesByProjectRequest) (*GetRolesByProjectResponse, error)
 	GetRoleById(context.Context, *GetRoleByIdRequest) (*GetRoleByIdResponse, error)
 	GetRoleByName(context.Context, *GetRoleByNameRequest) (*GetRoleByNameResponse, error)
 	mustEmbedUnimplementedRoleServiceServer()
@@ -1996,8 +1996,8 @@ type UnimplementedRoleServiceServer struct {
 func (UnimplementedRoleServiceServer) CreateRoleByOrganization(context.Context, *CreateRoleByOrganizationRequest) (*CreateRoleByOrganizationResponse, error) {
 	return nil, status.Errorf(codes.Unimplemented, "method CreateRoleByOrganization not implemented")
 }
-func (UnimplementedRoleServiceServer) CreateRoleByGroup(context.Context, *CreateRoleByGroupRequest) (*CreateRoleByGroupResponse, error) {
-	return nil, status.Errorf(codes.Unimplemented, "method CreateRoleByGroup not implemented")
+func (UnimplementedRoleServiceServer) CreateRoleByProject(context.Context, *CreateRoleByProjectRequest) (*CreateRoleByProjectResponse, error) {
+	return nil, status.Errorf(codes.Unimplemented, "method CreateRoleByProject not implemented")
 }
 func (UnimplementedRoleServiceServer) DeleteRole(context.Context, *DeleteRoleRequest) (*DeleteRoleResponse, error) {
 	return nil, status.Errorf(codes.Unimplemented, "method DeleteRole not implemented")
@@ -2005,8 +2005,8 @@ func (UnimplementedRoleServiceServer) DeleteRole(context.Context, *DeleteRoleReq
 func (UnimplementedRoleServiceServer) GetRoles(context.Context, *GetRolesRequest) (*GetRolesResponse, error) {
 	return nil, status.Errorf(codes.Unimplemented, "method GetRoles not implemented")
 }
-func (UnimplementedRoleServiceServer) GetRolesByGroup(context.Context, *GetRolesByGroupRequest) (*GetRolesByGroupResponse, error) {
-	return nil, status.Errorf(codes.Unimplemented, "method GetRolesByGroup not implemented")
+func (UnimplementedRoleServiceServer) GetRolesByProject(context.Context, *GetRolesByProjectRequest) (*GetRolesByProjectResponse, error) {
+	return nil, status.Errorf(codes.Unimplemented, "method GetRolesByProject not implemented")
 }
 func (UnimplementedRoleServiceServer) GetRoleById(context.Context, *GetRoleByIdRequest) (*GetRoleByIdResponse, error) {
 	return nil, status.Errorf(codes.Unimplemented, "method GetRoleById not implemented")
@@ -2045,20 +2045,20 @@ func _RoleService_CreateRoleByOrganization_Handler(srv interface{}, ctx context.
 	return interceptor(ctx, in, info, handler)
 }
 
-func _RoleService_CreateRoleByGroup_Handler(srv interface{}, ctx context.Context, dec func(interface{}) error, interceptor grpc.UnaryServerInterceptor) (interface{}, error) {
-	in := new(CreateRoleByGroupRequest)
+func _RoleService_CreateRoleByProject_Handler(srv interface{}, ctx context.Context, dec func(interface{}) error, interceptor grpc.UnaryServerInterceptor) (interface{}, error) {
+	in := new(CreateRoleByProjectRequest)
 	if err := dec(in); err != nil {
 		return nil, err
 	}
 	if interceptor == nil {
-		return srv.(RoleServiceServer).CreateRoleByGroup(ctx, in)
+		return srv.(RoleServiceServer).CreateRoleByProject(ctx, in)
 	}
 	info := &grpc.UnaryServerInfo{
 		Server:     srv,
-		FullMethod: RoleService_CreateRoleByGroup_FullMethodName,
+		FullMethod: RoleService_CreateRoleByProject_FullMethodName,
 	}
 	handler := func(ctx context.Context, req interface{}) (interface{}, error) {
-		return srv.(RoleServiceServer).CreateRoleByGroup(ctx, req.(*CreateRoleByGroupRequest))
+		return srv.(RoleServiceServer).CreateRoleByProject(ctx, req.(*CreateRoleByProjectRequest))
 	}
 	return interceptor(ctx, in, info, handler)
 }
@@ -2099,20 +2099,20 @@ func _RoleService_GetRoles_Handler(srv interface{}, ctx context.Context, dec fun
 	return interceptor(ctx, in, info, handler)
 }
 
-func _RoleService_GetRolesByGroup_Handler(srv interface{}, ctx context.Context, dec func(interface{}) error, interceptor grpc.UnaryServerInterceptor) (interface{}, error) {
-	in := new(GetRolesByGroupRequest)
+func _RoleService_GetRolesByProject_Handler(srv interface{}, ctx context.Context, dec func(interface{}) error, interceptor grpc.UnaryServerInterceptor) (interface{}, error) {
+	in := new(GetRolesByProjectRequest)
 	if err := dec(in); err != nil {
 		return nil, err
 	}
 	if interceptor == nil {
-		return srv.(RoleServiceServer).GetRolesByGroup(ctx, in)
+		return srv.(RoleServiceServer).GetRolesByProject(ctx, in)
 	}
 	info := &grpc.UnaryServerInfo{
 		Server:     srv,
-		FullMethod: RoleService_GetRolesByGroup_FullMethodName,
+		FullMethod: RoleService_GetRolesByProject_FullMethodName,
 	}
 	handler := func(ctx context.Context, req interface{}) (interface{}, error) {
-		return srv.(RoleServiceServer).GetRolesByGroup(ctx, req.(*GetRolesByGroupRequest))
+		return srv.(RoleServiceServer).GetRolesByProject(ctx, req.(*GetRolesByProjectRequest))
 	}
 	return interceptor(ctx, in, info, handler)
 }
@@ -2165,8 +2165,8 @@ var RoleService_ServiceDesc = grpc.ServiceDesc{
 			Handler:    _RoleService_CreateRoleByOrganization_Handler,
 		},
 		{
-			MethodName: "CreateRoleByGroup",
-			Handler:    _RoleService_CreateRoleByGroup_Handler,
+			MethodName: "CreateRoleByProject",
+			Handler:    _RoleService_CreateRoleByProject_Handler,
 		},
 		{
 			MethodName: "DeleteRole",
@@ -2177,8 +2177,8 @@ var RoleService_ServiceDesc = grpc.ServiceDesc{
 			Handler:    _RoleService_GetRoles_Handler,
 		},
 		{
-			MethodName: "GetRolesByGroup",
-			Handler:    _RoleService_GetRolesByGroup_Handler,
+			MethodName: "GetRolesByProject",
+			Handler:    _RoleService_GetRolesByProject_Handler,
 		},
 		{
 			MethodName: "GetRoleById",
@@ -2198,7 +2198,7 @@ const (
 	UserService_DeleteUser_FullMethodName             = "/mediator.v1.UserService/DeleteUser"
 	UserService_GetUsers_FullMethodName               = "/mediator.v1.UserService/GetUsers"
 	UserService_GetUsersByOrganization_FullMethodName = "/mediator.v1.UserService/GetUsersByOrganization"
-	UserService_GetUsersByGroup_FullMethodName        = "/mediator.v1.UserService/GetUsersByGroup"
+	UserService_GetUsersByProject_FullMethodName      = "/mediator.v1.UserService/GetUsersByProject"
 	UserService_GetUserById_FullMethodName            = "/mediator.v1.UserService/GetUserById"
 	UserService_GetUserBySubject_FullMethodName       = "/mediator.v1.UserService/GetUserBySubject"
 	UserService_GetUser_FullMethodName                = "/mediator.v1.UserService/GetUser"
@@ -2212,7 +2212,7 @@ type UserServiceClient interface {
 	DeleteUser(ctx context.Context, in *DeleteUserRequest, opts ...grpc.CallOption) (*DeleteUserResponse, error)
 	GetUsers(ctx context.Context, in *GetUsersRequest, opts ...grpc.CallOption) (*GetUsersResponse, error)
 	GetUsersByOrganization(ctx context.Context, in *GetUsersByOrganizationRequest, opts ...grpc.CallOption) (*GetUsersByOrganizationResponse, error)
-	GetUsersByGroup(ctx context.Context, in *GetUsersByGroupRequest, opts ...grpc.CallOption) (*GetUsersByGroupResponse, error)
+	GetUsersByProject(ctx context.Context, in *GetUsersByProjectRequest, opts ...grpc.CallOption) (*GetUsersByProjectResponse, error)
 	GetUserById(ctx context.Context, in *GetUserByIdRequest, opts ...grpc.CallOption) (*GetUserByIdResponse, error)
 	GetUserBySubject(ctx context.Context, in *GetUserBySubjectRequest, opts ...grpc.CallOption) (*GetUserBySubjectResponse, error)
 	GetUser(ctx context.Context, in *GetUserRequest, opts ...grpc.CallOption) (*GetUserResponse, error)
@@ -2262,9 +2262,9 @@ func (c *userServiceClient) GetUsersByOrganization(ctx context.Context, in *GetU
 	return out, nil
 }
 
-func (c *userServiceClient) GetUsersByGroup(ctx context.Context, in *GetUsersByGroupRequest, opts ...grpc.CallOption) (*GetUsersByGroupResponse, error) {
-	out := new(GetUsersByGroupResponse)
-	err := c.cc.Invoke(ctx, UserService_GetUsersByGroup_FullMethodName, in, out, opts...)
+func (c *userServiceClient) GetUsersByProject(ctx context.Context, in *GetUsersByProjectRequest, opts ...grpc.CallOption) (*GetUsersByProjectResponse, error) {
+	out := new(GetUsersByProjectResponse)
+	err := c.cc.Invoke(ctx, UserService_GetUsersByProject_FullMethodName, in, out, opts...)
 	if err != nil {
 		return nil, err
 	}
@@ -2306,7 +2306,7 @@ type UserServiceServer interface {
 	DeleteUser(context.Context, *DeleteUserRequest) (*DeleteUserResponse, error)
 	GetUsers(context.Context, *GetUsersRequest) (*GetUsersResponse, error)
 	GetUsersByOrganization(context.Context, *GetUsersByOrganizationRequest) (*GetUsersByOrganizationResponse, error)
-	GetUsersByGroup(context.Context, *GetUsersByGroupRequest) (*GetUsersByGroupResponse, error)
+	GetUsersByProject(context.Context, *GetUsersByProjectRequest) (*GetUsersByProjectResponse, error)
 	GetUserById(context.Context, *GetUserByIdRequest) (*GetUserByIdResponse, error)
 	GetUserBySubject(context.Context, *GetUserBySubjectRequest) (*GetUserBySubjectResponse, error)
 	GetUser(context.Context, *GetUserRequest) (*GetUserResponse, error)
@@ -2329,8 +2329,8 @@ func (UnimplementedUserServiceServer) GetUsers(context.Context, *GetUsersRequest
 func (UnimplementedUserServiceServer) GetUsersByOrganization(context.Context, *GetUsersByOrganizationRequest) (*GetUsersByOrganizationResponse, error) {
 	return nil, status.Errorf(codes.Unimplemented, "method GetUsersByOrganization not implemented")
 }
-func (UnimplementedUserServiceServer) GetUsersByGroup(context.Context, *GetUsersByGroupRequest) (*GetUsersByGroupResponse, error) {
-	return nil, status.Errorf(codes.Unimplemented, "method GetUsersByGroup not implemented")
+func (UnimplementedUserServiceServer) GetUsersByProject(context.Context, *GetUsersByProjectRequest) (*GetUsersByProjectResponse, error) {
+	return nil, status.Errorf(codes.Unimplemented, "method GetUsersByProject not implemented")
 }
 func (UnimplementedUserServiceServer) GetUserById(context.Context, *GetUserByIdRequest) (*GetUserByIdResponse, error) {
 	return nil, status.Errorf(codes.Unimplemented, "method GetUserById not implemented")
@@ -2426,20 +2426,20 @@ func _UserService_GetUsersByOrganization_Handler(srv interface{}, ctx context.Co
 	return interceptor(ctx, in, info, handler)
 }
 
-func _UserService_GetUsersByGroup_Handler(srv interface{}, ctx context.Context, dec func(interface{}) error, interceptor grpc.UnaryServerInterceptor) (interface{}, error) {
-	in := new(GetUsersByGroupRequest)
+func _UserService_GetUsersByProject_Handler(srv interface{}, ctx context.Context, dec func(interface{}) error, interceptor grpc.UnaryServerInterceptor) (interface{}, error) {
+	in := new(GetUsersByProjectRequest)
 	if err := dec(in); err != nil {
 		return nil, err
 	}
 	if interceptor == nil {
-		return srv.(UserServiceServer).GetUsersByGroup(ctx, in)
+		return srv.(UserServiceServer).GetUsersByProject(ctx, in)
 	}
 	info := &grpc.UnaryServerInfo{
 		Server:     srv,
-		FullMethod: UserService_GetUsersByGroup_FullMethodName,
+		FullMethod: UserService_GetUsersByProject_FullMethodName,
 	}
 	handler := func(ctx context.Context, req interface{}) (interface{}, error) {
-		return srv.(UserServiceServer).GetUsersByGroup(ctx, req.(*GetUsersByGroupRequest))
+		return srv.(UserServiceServer).GetUsersByProject(ctx, req.(*GetUsersByProjectRequest))
 	}
 	return interceptor(ctx, in, info, handler)
 }
@@ -2522,8 +2522,8 @@ var UserService_ServiceDesc = grpc.ServiceDesc{
 			Handler:    _UserService_GetUsersByOrganization_Handler,
 		},
 		{
-			MethodName: "GetUsersByGroup",
-			Handler:    _UserService_GetUsersByGroup_Handler,
+			MethodName: "GetUsersByProject",
+			Handler:    _UserService_GetUsersByProject_Handler,
 		},
 		{
 			MethodName: "GetUserById",
@@ -2543,18 +2543,18 @@ var UserService_ServiceDesc = grpc.ServiceDesc{
 }
 
 const (
-	PolicyService_CreatePolicy_FullMethodName           = "/mediator.v1.PolicyService/CreatePolicy"
-	PolicyService_DeletePolicy_FullMethodName           = "/mediator.v1.PolicyService/DeletePolicy"
-	PolicyService_ListPolicies_FullMethodName           = "/mediator.v1.PolicyService/ListPolicies"
-	PolicyService_GetPolicyById_FullMethodName          = "/mediator.v1.PolicyService/GetPolicyById"
-	PolicyService_GetPolicyStatusById_FullMethodName    = "/mediator.v1.PolicyService/GetPolicyStatusById"
-	PolicyService_GetPolicyStatusByGroup_FullMethodName = "/mediator.v1.PolicyService/GetPolicyStatusByGroup"
-	PolicyService_ListRuleTypes_FullMethodName          = "/mediator.v1.PolicyService/ListRuleTypes"
-	PolicyService_GetRuleTypeByName_FullMethodName      = "/mediator.v1.PolicyService/GetRuleTypeByName"
-	PolicyService_GetRuleTypeById_FullMethodName        = "/mediator.v1.PolicyService/GetRuleTypeById"
-	PolicyService_CreateRuleType_FullMethodName         = "/mediator.v1.PolicyService/CreateRuleType"
-	PolicyService_UpdateRuleType_FullMethodName         = "/mediator.v1.PolicyService/UpdateRuleType"
-	PolicyService_DeleteRuleType_FullMethodName         = "/mediator.v1.PolicyService/DeleteRuleType"
+	PolicyService_CreatePolicy_FullMethodName             = "/mediator.v1.PolicyService/CreatePolicy"
+	PolicyService_DeletePolicy_FullMethodName             = "/mediator.v1.PolicyService/DeletePolicy"
+	PolicyService_ListPolicies_FullMethodName             = "/mediator.v1.PolicyService/ListPolicies"
+	PolicyService_GetPolicyById_FullMethodName            = "/mediator.v1.PolicyService/GetPolicyById"
+	PolicyService_GetPolicyStatusById_FullMethodName      = "/mediator.v1.PolicyService/GetPolicyStatusById"
+	PolicyService_GetPolicyStatusByProject_FullMethodName = "/mediator.v1.PolicyService/GetPolicyStatusByProject"
+	PolicyService_ListRuleTypes_FullMethodName            = "/mediator.v1.PolicyService/ListRuleTypes"
+	PolicyService_GetRuleTypeByName_FullMethodName        = "/mediator.v1.PolicyService/GetRuleTypeByName"
+	PolicyService_GetRuleTypeById_FullMethodName          = "/mediator.v1.PolicyService/GetRuleTypeById"
+	PolicyService_CreateRuleType_FullMethodName           = "/mediator.v1.PolicyService/CreateRuleType"
+	PolicyService_UpdateRuleType_FullMethodName           = "/mediator.v1.PolicyService/UpdateRuleType"
+	PolicyService_DeleteRuleType_FullMethodName           = "/mediator.v1.PolicyService/DeleteRuleType"
 )
 
 // PolicyServiceClient is the client API for PolicyService service.
@@ -2566,7 +2566,7 @@ type PolicyServiceClient interface {
 	ListPolicies(ctx context.Context, in *ListPoliciesRequest, opts ...grpc.CallOption) (*ListPoliciesResponse, error)
 	GetPolicyById(ctx context.Context, in *GetPolicyByIdRequest, opts ...grpc.CallOption) (*GetPolicyByIdResponse, error)
 	GetPolicyStatusById(ctx context.Context, in *GetPolicyStatusByIdRequest, opts ...grpc.CallOption) (*GetPolicyStatusByIdResponse, error)
-	GetPolicyStatusByGroup(ctx context.Context, in *GetPolicyStatusByGroupRequest, opts ...grpc.CallOption) (*GetPolicyStatusByGroupResponse, error)
+	GetPolicyStatusByProject(ctx context.Context, in *GetPolicyStatusByProjectRequest, opts ...grpc.CallOption) (*GetPolicyStatusByProjectResponse, error)
 	ListRuleTypes(ctx context.Context, in *ListRuleTypesRequest, opts ...grpc.CallOption) (*ListRuleTypesResponse, error)
 	GetRuleTypeByName(ctx context.Context, in *GetRuleTypeByNameRequest, opts ...grpc.CallOption) (*GetRuleTypeByNameResponse, error)
 	GetRuleTypeById(ctx context.Context, in *GetRuleTypeByIdRequest, opts ...grpc.CallOption) (*GetRuleTypeByIdResponse, error)
@@ -2628,9 +2628,9 @@ func (c *policyServiceClient) GetPolicyStatusById(ctx context.Context, in *GetPo
 	return out, nil
 }
 
-func (c *policyServiceClient) GetPolicyStatusByGroup(ctx context.Context, in *GetPolicyStatusByGroupRequest, opts ...grpc.CallOption) (*GetPolicyStatusByGroupResponse, error) {
-	out := new(GetPolicyStatusByGroupResponse)
-	err := c.cc.Invoke(ctx, PolicyService_GetPolicyStatusByGroup_FullMethodName, in, out, opts...)
+func (c *policyServiceClient) GetPolicyStatusByProject(ctx context.Context, in *GetPolicyStatusByProjectRequest, opts ...grpc.CallOption) (*GetPolicyStatusByProjectResponse, error) {
+	out := new(GetPolicyStatusByProjectResponse)
+	err := c.cc.Invoke(ctx, PolicyService_GetPolicyStatusByProject_FullMethodName, in, out, opts...)
 	if err != nil {
 		return nil, err
 	}
@@ -2700,7 +2700,7 @@ type PolicyServiceServer interface {
 	ListPolicies(context.Context, *ListPoliciesRequest) (*ListPoliciesResponse, error)
 	GetPolicyById(context.Context, *GetPolicyByIdRequest) (*GetPolicyByIdResponse, error)
 	GetPolicyStatusById(context.Context, *GetPolicyStatusByIdRequest) (*GetPolicyStatusByIdResponse, error)
-	GetPolicyStatusByGroup(context.Context, *GetPolicyStatusByGroupRequest) (*GetPolicyStatusByGroupResponse, error)
+	GetPolicyStatusByProject(context.Context, *GetPolicyStatusByProjectRequest) (*GetPolicyStatusByProjectResponse, error)
 	ListRuleTypes(context.Context, *ListRuleTypesRequest) (*ListRuleTypesResponse, error)
 	GetRuleTypeByName(context.Context, *GetRuleTypeByNameRequest) (*GetRuleTypeByNameResponse, error)
 	GetRuleTypeById(context.Context, *GetRuleTypeByIdRequest) (*GetRuleTypeByIdResponse, error)
@@ -2729,8 +2729,8 @@ func (UnimplementedPolicyServiceServer) GetPolicyById(context.Context, *GetPolic
 func (UnimplementedPolicyServiceServer) GetPolicyStatusById(context.Context, *GetPolicyStatusByIdRequest) (*GetPolicyStatusByIdResponse, error) {
 	return nil, status.Errorf(codes.Unimplemented, "method GetPolicyStatusById not implemented")
 }
-func (UnimplementedPolicyServiceServer) GetPolicyStatusByGroup(context.Context, *GetPolicyStatusByGroupRequest) (*GetPolicyStatusByGroupResponse, error) {
-	return nil, status.Errorf(codes.Unimplemented, "method GetPolicyStatusByGroup not implemented")
+func (UnimplementedPolicyServiceServer) GetPolicyStatusByProject(context.Context, *GetPolicyStatusByProjectRequest) (*GetPolicyStatusByProjectResponse, error) {
+	return nil, status.Errorf(codes.Unimplemented, "method GetPolicyStatusByProject not implemented")
 }
 func (UnimplementedPolicyServiceServer) ListRuleTypes(context.Context, *ListRuleTypesRequest) (*ListRuleTypesResponse, error) {
 	return nil, status.Errorf(codes.Unimplemented, "method ListRuleTypes not implemented")
@@ -2853,20 +2853,20 @@ func _PolicyService_GetPolicyStatusById_Handler(srv interface{}, ctx context.Con
 	return interceptor(ctx, in, info, handler)
 }
 
-func _PolicyService_GetPolicyStatusByGroup_Handler(srv interface{}, ctx context.Context, dec func(interface{}) error, interceptor grpc.UnaryServerInterceptor) (interface{}, error) {
-	in := new(GetPolicyStatusByGroupRequest)
+func _PolicyService_GetPolicyStatusByProject_Handler(srv interface{}, ctx context.Context, dec func(interface{}) error, interceptor grpc.UnaryServerInterceptor) (interface{}, error) {
+	in := new(GetPolicyStatusByProjectRequest)
 	if err := dec(in); err != nil {
 		return nil, err
 	}
 	if interceptor == nil {
-		return srv.(PolicyServiceServer).GetPolicyStatusByGroup(ctx, in)
+		return srv.(PolicyServiceServer).GetPolicyStatusByProject(ctx, in)
 	}
 	info := &grpc.UnaryServerInfo{
 		Server:     srv,
-		FullMethod: PolicyService_GetPolicyStatusByGroup_FullMethodName,
+		FullMethod: PolicyService_GetPolicyStatusByProject_FullMethodName,
 	}
 	handler := func(ctx context.Context, req interface{}) (interface{}, error) {
-		return srv.(PolicyServiceServer).GetPolicyStatusByGroup(ctx, req.(*GetPolicyStatusByGroupRequest))
+		return srv.(PolicyServiceServer).GetPolicyStatusByProject(ctx, req.(*GetPolicyStatusByProjectRequest))
 	}
 	return interceptor(ctx, in, info, handler)
 }
@@ -3007,8 +3007,8 @@ var PolicyService_ServiceDesc = grpc.ServiceDesc{
 			Handler:    _PolicyService_GetPolicyStatusById_Handler,
 		},
 		{
-			MethodName: "GetPolicyStatusByGroup",
-			Handler:    _PolicyService_GetPolicyStatusByGroup_Handler,
+			MethodName: "GetPolicyStatusByProject",
+			Handler:    _PolicyService_GetPolicyStatusByProject_Handler,
 		},
 		{
 			MethodName: "ListRuleTypes",

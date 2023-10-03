@@ -27,7 +27,6 @@ import (
 	"google.golang.org/grpc/status"
 	"google.golang.org/protobuf/types/known/timestamppb"
 
-	"github.com/stacklok/mediator/internal/auth"
 	"github.com/stacklok/mediator/internal/db"
 	"github.com/stacklok/mediator/internal/gh/queries"
 	github "github.com/stacklok/mediator/internal/providers/github"
@@ -59,34 +58,30 @@ func (s *Server) RegisterRepository(ctx context.Context,
 		return nil, status.Errorf(codes.InvalidArgument, "no events provided")
 	}
 
-	// if we do not have a group, check if we can infer it
-	if in.GroupId == 0 {
-		group, err := auth.GetDefaultGroup(ctx)
-		if err != nil {
-			return nil, status.Errorf(codes.InvalidArgument, "cannot infer group id")
-		}
-		in.GroupId = group
+	projectID, err := getProjectFromRequestOrDefault(ctx, in)
+	if err != nil {
+		return nil, util.UserVisibleError(codes.InvalidArgument, err.Error())
 	}
 
 	// check if user is authorized
-	if err := AuthorizedOnGroup(ctx, in.GroupId); err != nil {
+	if err := AuthorizedOnProject(ctx, projectID); err != nil {
 		return nil, err
 	}
 
 	provider, err := s.store.GetProviderByName(ctx, db.GetProviderByNameParams{
-		Name:    in.GetProvider(),
-		GroupID: in.GetGroupId()})
+		Name:      in.GetProvider(),
+		ProjectID: projectID})
 	if err != nil {
 		return nil, providerError(fmt.Errorf("provider error: %w", err))
 	}
 
 	// Check if needs github authorization
-	isGithubAuthorized := s.IsProviderCallAuthorized(ctx, provider, in.GroupId)
+	isGithubAuthorized := s.IsProviderCallAuthorized(ctx, provider, projectID)
 	if !isGithubAuthorized {
 		return nil, status.Errorf(codes.PermissionDenied, "user not authorized to interact with provider")
 	}
 
-	decryptedToken, _, err := s.GetProviderAccessToken(ctx, provider.Name, in.GroupId, true)
+	decryptedToken, _, err := s.GetProviderAccessToken(ctx, provider.Name, projectID, true)
 
 	if err != nil {
 		return nil, err
@@ -133,7 +128,7 @@ func (s *Server) RegisterRepository(ctx context.Context,
 			WebhookID:  sql.NullInt32{Int32: int32(result.HookID), Valid: true},
 			WebhookUrl: result.HookURL,
 			Provider:   provider.Name,
-			GroupID:    in.GroupId,
+			ProjectID:  projectID,
 			RepoOwner:  result.Owner,
 			RepoName:   result.Repository,
 			RepoID:     result.RepoID,
@@ -146,7 +141,7 @@ func (s *Server) RegisterRepository(ctx context.Context,
 		// publish a reconcile event for the registered repositories
 		log.Printf("publishing register event for repository: %s", result.Repository)
 
-		msg, err := reconcilers.NewRepoReconcilerMessage(in.Provider, result.RepoID, in.GroupId)
+		msg, err := reconcilers.NewRepoReconcilerMessage(in.Provider, result.RepoID, projectID)
 		if err != nil {
 			log.Printf("error creating reconciler event: %v", err)
 			continue
@@ -171,32 +166,28 @@ func (s *Server) RegisterRepository(ctx context.Context,
 // The API is called with a group id, limit and offset
 func (s *Server) ListRepositories(ctx context.Context,
 	in *pb.ListRepositoriesRequest) (*pb.ListRepositoriesResponse, error) {
-	// if we do not have a group, check if we can infer it
-	if in.GroupId == 0 {
-		group, err := auth.GetDefaultGroup(ctx)
-		if err != nil {
-			return nil, status.Errorf(codes.InvalidArgument, "cannot infer group id")
-		}
-		in.GroupId = group
+	projectID, err := getProjectFromRequestOrDefault(ctx, in)
+	if err != nil {
+		return nil, util.UserVisibleError(codes.InvalidArgument, err.Error())
 	}
 
 	// check if user is authorized
-	if err := AuthorizedOnGroup(ctx, in.GroupId); err != nil {
+	if err := AuthorizedOnProject(ctx, projectID); err != nil {
 		return nil, err
 	}
 
 	provider, err := s.store.GetProviderByName(ctx, db.GetProviderByNameParams{
-		Name:    in.GetProvider(),
-		GroupID: in.GetGroupId()})
+		Name:      in.GetProvider(),
+		ProjectID: projectID})
 	if err != nil {
 		return nil, providerError(fmt.Errorf("provider error: %w", err))
 	}
 
-	repos, err := s.store.ListRepositoriesByGroupID(ctx, db.ListRepositoriesByGroupIDParams{
-		Provider: provider.Name,
-		GroupID:  in.GroupId,
-		Limit:    in.Limit,
-		Offset:   in.Offset,
+	repos, err := s.store.ListRepositoriesByProjectID(ctx, db.ListRepositoriesByProjectIDParams{
+		Provider:  provider.Name,
+		ProjectID: projectID,
+		Limit:     in.Limit,
+		Offset:    in.Offset,
 	})
 
 	if err != nil {
@@ -232,7 +223,7 @@ func (s *Server) ListRepositories(ctx context.Context,
 			results = append(results, &pb.RepositoryRecord{
 				Id:        repo.ID.String(),
 				Provider:  provider.Name,
-				GroupId:   repo.GroupID,
+				ProjectId: repo.ProjectID.String(),
 				Owner:     repo.RepoOwner,
 				Name:      repo.RepoName,
 				RepoId:    repo.RepoID,
@@ -269,13 +260,13 @@ func (s *Server) GetRepositoryById(ctx context.Context,
 	}
 
 	// check if user is authorized
-	if err := AuthorizedOnGroup(ctx, repo.GroupID); err != nil {
+	if err := AuthorizedOnProject(ctx, repo.ProjectID); err != nil {
 		return nil, err
 	}
 
 	provider, err := s.store.GetProviderByName(ctx, db.GetProviderByNameParams{
-		Name:    repo.Provider,
-		GroupID: repo.GroupID,
+		Name:      repo.Provider,
+		ProjectID: repo.ProjectID,
 	})
 	if err != nil {
 		return nil, providerError(fmt.Errorf("provider error: %w", err))
@@ -287,7 +278,7 @@ func (s *Server) GetRepositoryById(ctx context.Context,
 	return &pb.GetRepositoryByIdResponse{Repository: &pb.RepositoryRecord{
 		Id:        repo.ID.String(),
 		Provider:  provider.Name,
-		GroupId:   repo.GroupID,
+		ProjectId: repo.ProjectID.String(),
 		Owner:     repo.RepoOwner,
 		Name:      repo.RepoName,
 		RepoId:    repo.RepoID,
@@ -313,23 +304,19 @@ func (s *Server) GetRepositoryByName(ctx context.Context,
 		return nil, status.Errorf(codes.InvalidArgument, "invalid repository name, needs to have the format: owner/name")
 	}
 
-	// if we do not have a group, check if we can infer it
-	if in.GroupId == 0 {
-		group, err := auth.GetDefaultGroup(ctx)
-		if err != nil {
-			return nil, status.Errorf(codes.InvalidArgument, "cannot infer group id")
-		}
-		in.GroupId = group
+	projectID, err := getProjectFromRequestOrDefault(ctx, in)
+	if err != nil {
+		return nil, util.UserVisibleError(codes.InvalidArgument, err.Error())
 	}
 
 	// check if user is authorized
-	if err := AuthorizedOnGroup(ctx, in.GroupId); err != nil {
+	if err := AuthorizedOnProject(ctx, projectID); err != nil {
 		return nil, err
 	}
 
 	provider, err := s.store.GetProviderByName(ctx, db.GetProviderByNameParams{
-		Name:    in.Provider,
-		GroupID: in.GroupId,
+		Name:      in.Provider,
+		ProjectID: projectID,
 	})
 	if err != nil {
 		return nil, providerError(fmt.Errorf("provider error: %w", err))
@@ -344,7 +331,7 @@ func (s *Server) GetRepositoryByName(ctx context.Context,
 		return nil, err
 	}
 	// check if user is authorized
-	if err := AuthorizedOnGroup(ctx, repo.GroupID); err != nil {
+	if err := AuthorizedOnProject(ctx, repo.ProjectID); err != nil {
 		return nil, err
 	}
 
@@ -354,7 +341,7 @@ func (s *Server) GetRepositoryByName(ctx context.Context,
 	return &pb.GetRepositoryByNameResponse{Repository: &pb.RepositoryRecord{
 		Id:        repo.ID.String(),
 		Provider:  provider.Name,
-		GroupId:   repo.GroupID,
+		ProjectId: repo.ProjectID.String(),
 		Owner:     repo.RepoOwner,
 		Name:      repo.RepoName,
 		RepoId:    repo.RepoID,
@@ -370,35 +357,31 @@ func (s *Server) GetRepositoryByName(ctx context.Context,
 
 // SyncRepositories synchronizes the repositories for a given provider and group
 func (s *Server) SyncRepositories(ctx context.Context, in *pb.SyncRepositoriesRequest) (*pb.SyncRepositoriesResponse, error) {
-	// if we do not have a group, check if we can infer it
-	if in.GroupId == 0 {
-		group, err := auth.GetDefaultGroup(ctx)
-		if err != nil {
-			return nil, status.Errorf(codes.InvalidArgument, "cannot infer group id")
-		}
-		in.GroupId = group
+	projectID, err := getProjectFromRequestOrDefault(ctx, in)
+	if err != nil {
+		return nil, util.UserVisibleError(codes.InvalidArgument, err.Error())
 	}
 
 	// check if user is authorized
-	if err := AuthorizedOnGroup(ctx, in.GroupId); err != nil {
+	if err := AuthorizedOnProject(ctx, projectID); err != nil {
 		return nil, err
 	}
 
 	provider, err := s.store.GetProviderByName(ctx, db.GetProviderByNameParams{
-		Name:    in.Provider,
-		GroupID: in.GroupId,
+		Name:      in.Provider,
+		ProjectID: projectID,
 	})
 	if err != nil {
 		return nil, providerError(fmt.Errorf("provider error: %w", err))
 	}
 
 	// Check if needs github authorization
-	isGithubAuthorized := s.IsProviderCallAuthorized(ctx, provider, in.GroupId)
+	isGithubAuthorized := s.IsProviderCallAuthorized(ctx, provider, projectID)
 	if !isGithubAuthorized {
 		return nil, status.Errorf(codes.PermissionDenied, "user not authorized to interact with provider")
 	}
 
-	token, owner_filter, err := s.GetProviderAccessToken(ctx, provider.Name, in.GroupId, true)
+	token, owner_filter, err := s.GetProviderAccessToken(ctx, provider.Name, projectID, true)
 
 	if err != nil {
 		return nil, status.Errorf(codes.PermissionDenied, "cannot get access token for provider")
@@ -423,7 +406,7 @@ func (s *Server) SyncRepositories(ctx context.Context, in *pb.SyncRepositoriesRe
 	// This uses the context with the extended timeout to allow for the
 	// database to be populated with the repositories. Otherwise the original context
 	// expires and the database insertions are cancelled.
-	err = queries.SyncRepositoriesWithDB(tmoutCtx, s.store, repos, provider.Name, in.GroupId)
+	err = queries.SyncRepositoriesWithDB(tmoutCtx, s.store, repos, provider.Name, projectID)
 	if err != nil {
 		return nil, status.Errorf(codes.Internal, "cannot sync repositories: %v", err)
 	}

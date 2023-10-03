@@ -55,8 +55,8 @@ mediator control plane for an specific role.`,
 		ctx, cancel := util.GetAppContext()
 		defer cancel()
 
-		org := viper.GetInt32("org-id")
-		group := viper.GetInt32("group-id")
+		org := viper.GetString("org-id")
+		project := viper.GetString("project-id")
 		limit := viper.GetInt32("limit")
 		offset := viper.GetInt32("offset")
 		format := viper.GetString("output")
@@ -65,15 +65,15 @@ mediator control plane for an specific role.`,
 			fmt.Fprintf(os.Stderr, "Error: invalid format: %s\n", format)
 		}
 
-		// need to set either group or org
-		if org == 0 && group == 0 {
-			fmt.Fprintf(os.Stderr, "Error: must set either org-id or group-id\n")
+		// need to set either project or org
+		if org == "" && project == "" {
+			fmt.Fprintf(os.Stderr, "Error: must set either org-id or project-id\n")
 			os.Exit(1)
 		}
 
-		// if group id is set, org id cannot be set
-		if (org != 0) && (group != 0) {
-			fmt.Fprintf(os.Stderr, "Error: cannot set both org-id and group-id\n")
+		// if project id is set, org id cannot be set
+		if (org != "") && (project != "") {
+			fmt.Fprintf(os.Stderr, "Error: cannot set both org-id and project-id\n")
 			os.Exit(1)
 		}
 
@@ -83,14 +83,15 @@ mediator control plane for an specific role.`,
 		// call depending on parameters
 		var users []*pb.UserRecord
 		var result protoreflect.ProtoMessage
-		if org != 0 {
+		if org != "" {
 			resp, err := client.GetUsersByOrganization(ctx,
 				&pb.GetUsersByOrganizationRequest{OrganizationId: org, Limit: limitPtr, Offset: offsetPtr})
 			util.ExitNicelyOnError(err, "Error getting users")
 			result = resp
 			users = resp.Users
-		} else if group != 0 {
-			resp, err := client.GetUsersByGroup(ctx, &pb.GetUsersByGroupRequest{GroupId: group, Limit: limitPtr, Offset: offsetPtr})
+		} else if project != "" {
+			resp, err := client.GetUsersByProject(ctx, &pb.GetUsersByProjectRequest{
+				ProjectId: project, Limit: limitPtr, Offset: offsetPtr})
 			util.ExitNicelyOnError(err, "Error getting users")
 			users = resp.Users
 			result = resp
@@ -105,7 +106,7 @@ mediator control plane for an specific role.`,
 			for _, v := range users {
 				row := []string{
 					fmt.Sprintf("%d", v.Id),
-					fmt.Sprintf("%d", v.OrganizationId),
+					v.OrganizationId,
 					*v.Email,
 					*v.FirstName,
 					*v.LastName,
@@ -130,8 +131,8 @@ mediator control plane for an specific role.`,
 
 func init() {
 	UserCmd.AddCommand(user_listCmd)
-	user_listCmd.Flags().Int32P("org-id", "i", 0, "org id to list users for")
-	user_listCmd.Flags().Int32P("group-id", "g", 0, "group id to list users for")
+	user_listCmd.Flags().StringP("org-id", "i", "", "org id to list users for")
+	user_listCmd.Flags().StringP("project-id", "g", "", "project id to list users for")
 	user_listCmd.Flags().StringP("output", "o", "", "Output format (json or yaml)")
 	user_listCmd.Flags().Int32P("limit", "l", -1, "Limit the number of results returned")
 	user_listCmd.Flags().Int32P("offset", "f", 0, "Offset the results returned")

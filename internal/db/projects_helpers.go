@@ -19,26 +19,19 @@
 // It does make a good example of how to use the generated client code
 // for others to use as a reference.
 
-// Package group contains the group logic for the control plane
-package group
+package db
 
-import (
-	"github.com/spf13/cobra"
+// TODO(jaosorior): Currently we have the caveat that GetChildrenProjects and GetParentProjects
+// will also return the calling project. I didn't quite figure out how to
+// filter this out with the CTE query. I think it's possible, but I'm not
+// sure how to do it. For now, we'll just filter it out in the code.
+// Once we figure out how to do it in the query, we can remove the filtering
+// in the code and remove the +1 in the hierarchy offset and set it to 0.
+const hierarchyOffset = 1
 
-	"github.com/stacklok/mediator/cmd/cli/app"
-)
-
-// GroupCmd is the root command for the group subcommands
-var GroupCmd = &cobra.Command{
-	Use:   "group",
-	Short: "Manage groups within a mediator control plane",
-	Long: `The medic group commands allow the management of groups within a 
-mediator control plane.`,
-	RunE: func(cmd *cobra.Command, args []string) error {
-		return cmd.Usage()
-	},
-}
-
-func init() {
-	app.RootCmd.AddCommand(GroupCmd)
+// CalculateProjectHierarchyOffset will calculate the offset for the hierarchy
+// in the returned array from GetChildrenProjects and GetParentProjects.
+// This is because the calling project is also returned.
+func CalculateProjectHierarchyOffset(hierarchy int) int {
+	return hierarchy + hierarchyOffset
 }

@@ -8,14 +8,16 @@ package db
 import (
 	"context"
 	"time"
+
+	"github.com/google/uuid"
 )
 
 const createSigningKey = `-- name: CreateSigningKey :one
-INSERT INTO signing_keys (group_id, private_key, public_key, passphrase, key_identifier, created_at) VALUES ($1, $2, $3, $4, $5, $6) RETURNING id, group_id, private_key, public_key, passphrase, key_identifier, created_at, updated_at
+INSERT INTO signing_keys (project_id, private_key, public_key, passphrase, key_identifier, created_at) VALUES ($1, $2, $3, $4, $5, $6) RETURNING id, project_id, private_key, public_key, passphrase, key_identifier, created_at, updated_at
 `
 
 type CreateSigningKeyParams struct {
-	GroupID       int32     `json:"group_id"`
+	ProjectID     uuid.UUID `json:"project_id"`
 	PrivateKey    string    `json:"private_key"`
 	PublicKey     string    `json:"public_key"`
 	Passphrase    string    `json:"passphrase"`
@@ -25,7 +27,7 @@ type CreateSigningKeyParams struct {
 
 func (q *Queries) CreateSigningKey(ctx context.Context, arg CreateSigningKeyParams) (SigningKey, error) {
 	row := q.db.QueryRowContext(ctx, createSigningKey,
-		arg.GroupID,
+		arg.ProjectID,
 		arg.PrivateKey,
 		arg.PublicKey,
 		arg.Passphrase,
@@ -35,7 +37,7 @@ func (q *Queries) CreateSigningKey(ctx context.Context, arg CreateSigningKeyPara
 	var i SigningKey
 	err := row.Scan(
 		&i.ID,
-		&i.GroupID,
+		&i.ProjectID,
 		&i.PrivateKey,
 		&i.PublicKey,
 		&i.Passphrase,
@@ -47,29 +49,29 @@ func (q *Queries) CreateSigningKey(ctx context.Context, arg CreateSigningKeyPara
 }
 
 const deleteSigningKey = `-- name: DeleteSigningKey :exec
-DELETE FROM signing_keys WHERE group_id = $1 AND key_identifier = $2
+DELETE FROM signing_keys WHERE project_id = $1 AND key_identifier = $2
 `
 
 type DeleteSigningKeyParams struct {
-	GroupID       int32  `json:"group_id"`
-	KeyIdentifier string `json:"key_identifier"`
+	ProjectID     uuid.UUID `json:"project_id"`
+	KeyIdentifier string    `json:"key_identifier"`
 }
 
 func (q *Queries) DeleteSigningKey(ctx context.Context, arg DeleteSigningKeyParams) error {
-	_, err := q.db.ExecContext(ctx, deleteSigningKey, arg.GroupID, arg.KeyIdentifier)
+	_, err := q.db.ExecContext(ctx, deleteSigningKey, arg.ProjectID, arg.KeyIdentifier)
 	return err
 }
 
-const getSigningKeyByGroupID = `-- name: GetSigningKeyByGroupID :one
-SELECT id, group_id, private_key, public_key, passphrase, key_identifier, created_at, updated_at FROM signing_keys WHERE group_id = $1
+const getSigningKeyByIdentifier = `-- name: GetSigningKeyByIdentifier :one
+SELECT id, project_id, private_key, public_key, passphrase, key_identifier, created_at, updated_at FROM signing_keys WHERE key_identifier = $1
 `
 
-func (q *Queries) GetSigningKeyByGroupID(ctx context.Context, groupID int32) (SigningKey, error) {
-	row := q.db.QueryRowContext(ctx, getSigningKeyByGroupID, groupID)
+func (q *Queries) GetSigningKeyByIdentifier(ctx context.Context, keyIdentifier string) (SigningKey, error) {
+	row := q.db.QueryRowContext(ctx, getSigningKeyByIdentifier, keyIdentifier)
 	var i SigningKey
 	err := row.Scan(
 		&i.ID,
-		&i.GroupID,
+		&i.ProjectID,
 		&i.PrivateKey,
 		&i.PublicKey,
 		&i.Passphrase,
@@ -80,16 +82,16 @@ func (q *Queries) GetSigningKeyByGroupID(ctx context.Context, groupID int32) (Si
 	return i, err
 }
 
-const getSigningKeyByIdentifier = `-- name: GetSigningKeyByIdentifier :one
-SELECT id, group_id, private_key, public_key, passphrase, key_identifier, created_at, updated_at FROM signing_keys WHERE key_identifier = $1
+const getSigningKeyByProjectID = `-- name: GetSigningKeyByProjectID :one
+SELECT id, project_id, private_key, public_key, passphrase, key_identifier, created_at, updated_at FROM signing_keys WHERE project_id = $1
 `
 
-func (q *Queries) GetSigningKeyByIdentifier(ctx context.Context, keyIdentifier string) (SigningKey, error) {
-	row := q.db.QueryRowContext(ctx, getSigningKeyByIdentifier, keyIdentifier)
+func (q *Queries) GetSigningKeyByProjectID(ctx context.Context, projectID uuid.UUID) (SigningKey, error) {
+	row := q.db.QueryRowContext(ctx, getSigningKeyByProjectID, projectID)
 	var i SigningKey
 	err := row.Scan(
 		&i.ID,
-		&i.GroupID,
+		&i.ProjectID,
 		&i.PrivateKey,
 		&i.PublicKey,
 		&i.Passphrase,

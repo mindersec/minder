@@ -8,15 +8,17 @@ package db
 import (
 	"context"
 	"database/sql"
+
+	"github.com/google/uuid"
 )
 
 const createSessionState = `-- name: CreateSessionState :one
-INSERT INTO session_store (provider, grp_id, port, session_state, owner_filter) VALUES ($1, $2, $3, $4, $5) RETURNING id, provider, grp_id, port, owner_filter, session_state, created_at
+INSERT INTO session_store (provider, project_id, port, session_state, owner_filter) VALUES ($1, $2, $3, $4, $5) RETURNING id, provider, project_id, port, owner_filter, session_state, created_at
 `
 
 type CreateSessionStateParams struct {
 	Provider     string         `json:"provider"`
-	GrpID        sql.NullInt32  `json:"grp_id"`
+	ProjectID    uuid.UUID      `json:"project_id"`
 	Port         sql.NullInt32  `json:"port"`
 	SessionState string         `json:"session_state"`
 	OwnerFilter  sql.NullString `json:"owner_filter"`
@@ -25,7 +27,7 @@ type CreateSessionStateParams struct {
 func (q *Queries) CreateSessionState(ctx context.Context, arg CreateSessionStateParams) (SessionStore, error) {
 	row := q.db.QueryRowContext(ctx, createSessionState,
 		arg.Provider,
-		arg.GrpID,
+		arg.ProjectID,
 		arg.Port,
 		arg.SessionState,
 		arg.OwnerFilter,
@@ -34,7 +36,7 @@ func (q *Queries) CreateSessionState(ctx context.Context, arg CreateSessionState
 	err := row.Scan(
 		&i.ID,
 		&i.Provider,
-		&i.GrpID,
+		&i.ProjectID,
 		&i.Port,
 		&i.OwnerFilter,
 		&i.SessionState,
@@ -61,37 +63,37 @@ func (q *Queries) DeleteSessionState(ctx context.Context, id int32) error {
 	return err
 }
 
-const deleteSessionStateByGroupID = `-- name: DeleteSessionStateByGroupID :exec
-DELETE FROM session_store WHERE provider=$1 AND grp_id = $2
+const deleteSessionStateByProjectID = `-- name: DeleteSessionStateByProjectID :exec
+DELETE FROM session_store WHERE provider=$1 AND project_id = $2
 `
 
-type DeleteSessionStateByGroupIDParams struct {
-	Provider string        `json:"provider"`
-	GrpID    sql.NullInt32 `json:"grp_id"`
+type DeleteSessionStateByProjectIDParams struct {
+	Provider  string    `json:"provider"`
+	ProjectID uuid.UUID `json:"project_id"`
 }
 
-func (q *Queries) DeleteSessionStateByGroupID(ctx context.Context, arg DeleteSessionStateByGroupIDParams) error {
-	_, err := q.db.ExecContext(ctx, deleteSessionStateByGroupID, arg.Provider, arg.GrpID)
+func (q *Queries) DeleteSessionStateByProjectID(ctx context.Context, arg DeleteSessionStateByProjectIDParams) error {
+	_, err := q.db.ExecContext(ctx, deleteSessionStateByProjectID, arg.Provider, arg.ProjectID)
 	return err
 }
 
-const getGroupIDPortBySessionState = `-- name: GetGroupIDPortBySessionState :one
-SELECT provider, grp_id, port, owner_filter FROM session_store WHERE session_state = $1
+const getProjectIDPortBySessionState = `-- name: GetProjectIDPortBySessionState :one
+SELECT provider, project_id, port, owner_filter FROM session_store WHERE session_state = $1
 `
 
-type GetGroupIDPortBySessionStateRow struct {
+type GetProjectIDPortBySessionStateRow struct {
 	Provider    string         `json:"provider"`
-	GrpID       sql.NullInt32  `json:"grp_id"`
+	ProjectID   uuid.UUID      `json:"project_id"`
 	Port        sql.NullInt32  `json:"port"`
 	OwnerFilter sql.NullString `json:"owner_filter"`
 }
 
-func (q *Queries) GetGroupIDPortBySessionState(ctx context.Context, sessionState string) (GetGroupIDPortBySessionStateRow, error) {
-	row := q.db.QueryRowContext(ctx, getGroupIDPortBySessionState, sessionState)
-	var i GetGroupIDPortBySessionStateRow
+func (q *Queries) GetProjectIDPortBySessionState(ctx context.Context, sessionState string) (GetProjectIDPortBySessionStateRow, error) {
+	row := q.db.QueryRowContext(ctx, getProjectIDPortBySessionState, sessionState)
+	var i GetProjectIDPortBySessionStateRow
 	err := row.Scan(
 		&i.Provider,
-		&i.GrpID,
+		&i.ProjectID,
 		&i.Port,
 		&i.OwnerFilter,
 	)
@@ -99,7 +101,7 @@ func (q *Queries) GetGroupIDPortBySessionState(ctx context.Context, sessionState
 }
 
 const getSessionState = `-- name: GetSessionState :one
-SELECT id, provider, grp_id, port, owner_filter, session_state, created_at FROM session_store WHERE id = $1
+SELECT id, provider, project_id, port, owner_filter, session_state, created_at FROM session_store WHERE id = $1
 `
 
 func (q *Queries) GetSessionState(ctx context.Context, id int32) (SessionStore, error) {
@@ -108,7 +110,7 @@ func (q *Queries) GetSessionState(ctx context.Context, id int32) (SessionStore, 
 	err := row.Scan(
 		&i.ID,
 		&i.Provider,
-		&i.GrpID,
+		&i.ProjectID,
 		&i.Port,
 		&i.OwnerFilter,
 		&i.SessionState,
@@ -117,17 +119,17 @@ func (q *Queries) GetSessionState(ctx context.Context, id int32) (SessionStore, 
 	return i, err
 }
 
-const getSessionStateByGroupID = `-- name: GetSessionStateByGroupID :one
-SELECT id, provider, grp_id, port, owner_filter, session_state, created_at FROM session_store WHERE grp_id = $1
+const getSessionStateByProjectID = `-- name: GetSessionStateByProjectID :one
+SELECT id, provider, project_id, port, owner_filter, session_state, created_at FROM session_store WHERE project_id = $1
 `
 
-func (q *Queries) GetSessionStateByGroupID(ctx context.Context, grpID sql.NullInt32) (SessionStore, error) {
-	row := q.db.QueryRowContext(ctx, getSessionStateByGroupID, grpID)
+func (q *Queries) GetSessionStateByProjectID(ctx context.Context, projectID uuid.UUID) (SessionStore, error) {
+	row := q.db.QueryRowContext(ctx, getSessionStateByProjectID, projectID)
 	var i SessionStore
 	err := row.Scan(
 		&i.ID,
 		&i.Provider,
-		&i.GrpID,
+		&i.ProjectID,
 		&i.Port,
 		&i.OwnerFilter,
 		&i.SessionState,

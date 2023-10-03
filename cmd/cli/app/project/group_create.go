@@ -19,7 +19,7 @@
 // It does make a good example of how to use the generated client code
 // for others to use as a reference.
 
-package group
+package project
 
 import (
 	"fmt"
@@ -32,11 +32,11 @@ import (
 	pb "github.com/stacklok/mediator/pkg/api/protobuf/go/mediator/v1"
 )
 
-// Group_createCmd is the command for creating a group
-var Group_createCmd = &cobra.Command{
+// Project_createCmd is the command for creating a project
+var Project_createCmd = &cobra.Command{
 	Use:   "create",
-	Short: "Create a group within a mediator control plane",
-	Long: `The medic group create subcommand lets you create new groups within
+	Short: "Create a project within a mediator control plane",
+	Long: `The medic project create subcommand lets you create new projects within
 a mediator control plane.`,
 	PreRun: func(cmd *cobra.Command, args []string) {
 		if err := viper.BindPFlags(cmd.Flags()); err != nil {
@@ -47,26 +47,26 @@ a mediator control plane.`,
 
 		name := util.GetConfigValue("name", "name", cmd, "")
 		description := util.GetConfigValue("description", "description", cmd, "")
-		organization := util.GetConfigValue("org-id", "org-id", cmd, int32(0)).(int32)
+		organization := viper.GetString("org-id")
 		isProtected := viper.GetBool("is_protected")
 
 		conn, err := util.GrpcForCommand(cmd)
 		util.ExitNicelyOnError(err, "Error getting grpc connection")
 		defer conn.Close()
 
-		client := pb.NewGroupServiceClient(conn)
+		client := pb.NewProjectServiceClient(conn)
 		ctx, cancel := util.GetAppContext()
 		defer cancel()
 
 		protectedPtr := &isProtected
 
-		resp, err := client.CreateGroup(ctx, &pb.CreateGroupRequest{
+		resp, err := client.CreateProject(ctx, &pb.CreateProjectRequest{
 			Name:           name.(string),
 			Description:    description.(string),
 			OrganizationId: organization,
 			IsProtected:    protectedPtr,
 		})
-		util.ExitNicelyOnError(err, "Error creating group")
+		util.ExitNicelyOnError(err, "Error creating project")
 		out, err := util.GetJsonFromProto(resp)
 		util.ExitNicelyOnError(err, "Error getting json from proto")
 		fmt.Println(out)
@@ -74,19 +74,19 @@ a mediator control plane.`,
 }
 
 func init() {
-	GroupCmd.AddCommand(Group_createCmd)
-	Group_createCmd.Flags().StringP("name", "n", "", "Name of the group")
-	Group_createCmd.Flags().StringP("description", "d", "", "Description of the group")
-	Group_createCmd.Flags().Int32("org-id", 0, "Organization ID")
-	Group_createCmd.Flags().BoolP("is_protected", "i", false, "Is the group protected")
+	ProjectCmd.AddCommand(Project_createCmd)
+	Project_createCmd.Flags().StringP("name", "n", "", "Name of the project")
+	Project_createCmd.Flags().StringP("description", "d", "", "Description of the project")
+	Project_createCmd.Flags().String("org-id", "", "Organization ID")
+	Project_createCmd.Flags().BoolP("is_protected", "i", false, "Is the project protected")
 
-	if err := Group_createCmd.MarkFlagRequired("name"); err != nil {
+	if err := Project_createCmd.MarkFlagRequired("name"); err != nil {
 		fmt.Fprintf(os.Stderr, "Error marking flag as required: %s\n", err)
 	}
-	if err := Group_createCmd.MarkFlagRequired("description"); err != nil {
+	if err := Project_createCmd.MarkFlagRequired("description"); err != nil {
 		fmt.Fprintf(os.Stderr, "Error marking flag as required: %s\n", err)
 	}
-	if err := Group_createCmd.MarkFlagRequired("org-id"); err != nil {
+	if err := Project_createCmd.MarkFlagRequired("org-id"); err != nil {
 		fmt.Fprintf(os.Stderr, "Error marking flag as required: %s\n", err)
 	}
 }

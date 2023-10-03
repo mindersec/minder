@@ -26,13 +26,14 @@ import (
 	"testing"
 	"time"
 
+	"github.com/google/uuid"
 	"github.com/stretchr/testify/require"
 
 	"github.com/stacklok/mediator/internal/util/rand"
 )
 
 // A helper function to create a random role
-func createRandomRole(t *testing.T, org int32) Role {
+func createRandomRole(t *testing.T, org uuid.UUID) Role {
 	t.Helper()
 
 	seed := time.Now().UnixNano()
@@ -74,7 +75,7 @@ func TestGetRole(t *testing.T) {
 	require.NotEmpty(t, role2)
 
 	require.Equal(t, role1.Name, role2.Name)
-	require.Equal(t, role1.GroupID, role2.GroupID)
+	require.Equal(t, role1.ProjectID, role2.ProjectID)
 
 	require.NotZero(t, role2.ID)
 	require.NotZero(t, role2.CreatedAt)
@@ -103,7 +104,7 @@ func TestUpdateRole(t *testing.T) {
 	require.NotEmpty(t, role2)
 
 	require.Equal(t, role1.ID, role2.ID)
-	require.Equal(t, role1.GroupID, role2.GroupID)
+	require.Equal(t, role1.ProjectID, role2.ProjectID)
 	require.Equal(t, arg.Name, role2.Name)
 
 	require.NotZero(t, role2.CreatedAt)

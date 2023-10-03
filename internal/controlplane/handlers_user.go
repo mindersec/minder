@@ -17,9 +17,11 @@ package controlplane
 import (
 	"context"
 	"database/sql"
+	"encoding/json"
 	"errors"
 
 	"github.com/go-playground/validator/v10"
+	"github.com/google/uuid"
 	gauth "github.com/grpc-ecosystem/go-grpc-middleware/v2/interceptors/auth"
 	"github.com/lestrrat-go/jwx/v2/jwt/openid"
 	"golang.org/x/exp/slices"
@@ -28,13 +30,8 @@ import (
 	"google.golang.org/protobuf/types/known/timestamppb"
 
 	"github.com/stacklok/mediator/internal/db"
+	"github.com/stacklok/mediator/internal/util"
 	pb "github.com/stacklok/mediator/pkg/api/protobuf/go/mediator/v1"
-)
-
-const (
-	rootOrganization = 1
-	rootGroup        = 1
-	superadminRole   = 1
 )
 
 func stringToNullString(s string) *sql.NullString {
@@ -72,31 +69,40 @@ func (s *Server) CreateUser(ctx context.Context,
 
 	subject := token.Subject()
 
-	var userOrg int32
-	var userGroup int32
+	var userOrg uuid.UUID
+	var userProject uuid.UUID
 	var userRoles []int32
 
 	if containsSuperadminRole(token) {
 		// if the token has superadmin access to the realm, then make give them a superadmin role in the DB
 		userOrg = rootOrganization
-		userGroup = rootGroup
+		userProject = rootProject
 		userRoles = append(userRoles, superadminRole)
 	} else {
-		// otherwise self-enroll user, by creating a new org and group and making the user an admin of those
-		organization, err := qtx.CreateOrganization(ctx, db.CreateOrganizationParams{
-			Name:    subject + "-org",
+		orgmeta := &OrgMeta{
 			Company: subject + " - Self enrolled",
+		}
+
+		marshaled, err := json.Marshal(orgmeta)
+		if err != nil {
+			return nil, status.Errorf(codes.Internal, "failed to marshal org metadata: %s", err)
+		}
+
+		// otherwise self-enroll user, by creating a new org and project and making the user an admin of those
+		organization, err := qtx.CreateOrganization(ctx, db.CreateOrganizationParams{
+			Name:     subject + "-org",
+			Metadata: marshaled,
 		})
 		if err != nil {
 			return nil, status.Errorf(codes.Internal, "failed to create organization: %s", err)
 		}
-		orgGroup, orgRoles, err := CreateDefaultRecordsForOrg(ctx, qtx, organization)
+		orgProject, orgRoles, err := CreateDefaultRecordsForOrg(ctx, qtx, organization)
 		if err != nil {
 			return nil, status.Errorf(codes.Internal, "failed to create default organization records: %s", err)
 		}
 
 		userOrg = organization.ID
-		userGroup = orgGroup.GroupId
+		userProject = uuid.MustParse(orgProject.ProjectId)
 		for _, role := range orgRoles {
 			userRoles = append(userRoles, role.Id)
 		}
@@ -111,9 +117,9 @@ func (s *Server) CreateUser(ctx context.Context,
 		return nil, status.Errorf(codes.Internal, "failed to create user: %s", err)
 	}
 
-	_, err = qtx.AddUserGroup(ctx, db.AddUserGroupParams{UserID: user.ID, GroupID: userGroup})
+	_, err = qtx.AddUserProject(ctx, db.AddUserProjectParams{UserID: user.ID, ProjectID: userProject})
 	if err != nil {
-		return nil, status.Errorf(codes.Internal, "failed to add user to group: %s", err)
+		return nil, status.Errorf(codes.Internal, "failed to add user to project: %s", err)
 	}
 
 	for _, id := range userRoles {
@@ -127,7 +133,7 @@ func (s *Server) CreateUser(ctx context.Context,
 		return nil, status.Errorf(codes.Internal, "failed to commit transaction: %s", err)
 	}
 
-	return &pb.CreateUserResponse{Id: user.ID, OrganizationId: user.OrganizationID, Email: &user.Email.String,
+	return &pb.CreateUserResponse{Id: user.ID, OrganizationId: user.OrganizationID.String(), Email: &user.Email.String,
 		IdentitySubject: user.IdentitySubject, FirstName: &user.FirstName.String, LastName: &user.LastName.String,
 		CreatedAt: timestamppb.New(user.CreatedAt), UpdatedAt: timestamppb.New(user.UpdatedAt)}, nil
 }
@@ -215,7 +221,7 @@ func (s *Server) GetUsers(ctx context.Context,
 		user := &users[idx]
 		resp.Users = append(resp.Users, &pb.UserRecord{
 			Id:              user.ID,
-			OrganizationId:  user.OrganizationID,
+			OrganizationId:  user.OrganizationID.String(),
 			Email:           &user.Email.String,
 			IdentitySubject: user.IdentitySubject,
 			FirstName:       &user.FirstName.String,
@@ -231,8 +237,13 @@ func (s *Server) GetUsers(ctx context.Context,
 // GetUsersByOrganization is a service for getting a list of users of an organization
 func (s *Server) GetUsersByOrganization(ctx context.Context,
 	in *pb.GetUsersByOrganizationRequest) (*pb.GetUsersByOrganizationResponse, error) {
+	orgID, err := uuid.Parse(in.OrganizationId)
+	if err != nil {
+		return nil, util.UserVisibleError(codes.InvalidArgument, "invalid organization id")
+	}
+
 	// check if user is authorized
-	if err := AuthorizedOnOrg(ctx, in.OrganizationId); err != nil {
+	if err := AuthorizedOnOrg(ctx, orgID); err != nil {
 		return nil, err
 	}
 
@@ -247,7 +258,7 @@ func (s *Server) GetUsersByOrganization(ctx context.Context,
 	}
 
 	users, err := s.store.ListUsersByOrganization(ctx, db.ListUsersByOrganizationParams{
-		OrganizationID: in.OrganizationId,
+		OrganizationID: orgID,
 		Limit:          *in.Limit,
 		Offset:         *in.Offset,
 	})
@@ -261,7 +272,7 @@ func (s *Server) GetUsersByOrganization(ctx context.Context,
 		user := &users[idx]
 		resp.Users = append(resp.Users, &pb.UserRecord{
 			Id:              user.ID,
-			OrganizationId:  user.OrganizationID,
+			OrganizationId:  user.OrganizationID.String(),
 			Email:           &user.Email.String,
 			IdentitySubject: user.IdentitySubject,
 			FirstName:       &user.FirstName.String,
@@ -274,11 +285,16 @@ func (s *Server) GetUsersByOrganization(ctx context.Context,
 	return &resp, nil
 }
 
-// GetUsersByGroup is a service for getting a list of users of a group
-func (s *Server) GetUsersByGroup(ctx context.Context,
-	in *pb.GetUsersByGroupRequest) (*pb.GetUsersByGroupResponse, error) {
+// GetUsersByProject is a service for getting a list of users of a project
+func (s *Server) GetUsersByProject(ctx context.Context,
+	in *pb.GetUsersByProjectRequest) (*pb.GetUsersByProjectResponse, error) {
+	projID, err := uuid.Parse(in.ProjectId)
+	if err != nil {
+		return nil, util.UserVisibleError(codes.InvalidArgument, "invalid project id")
+	}
+
 	// check if user is authorized
-	if err := AuthorizedOnGroup(ctx, in.GroupId); err != nil {
+	if err := AuthorizedOnProject(ctx, projID); err != nil {
 		return nil, err
 	}
 
@@ -292,22 +308,22 @@ func (s *Server) GetUsersByGroup(ctx context.Context,
 		*in.Offset = 0
 	}
 
-	users, err := s.store.ListUsersByGroup(ctx, db.ListUsersByGroupParams{
-		GroupID: in.GroupId,
-		Limit:   *in.Limit,
-		Offset:  *in.Offset,
+	users, err := s.store.ListUsersByProject(ctx, db.ListUsersByProjectParams{
+		ProjectID: projID,
+		Limit:     *in.Limit,
+		Offset:    *in.Offset,
 	})
 	if err != nil {
 		return nil, status.Errorf(codes.Internal, "failed to get users: %s", err)
 	}
 
-	var resp pb.GetUsersByGroupResponse
+	var resp pb.GetUsersByProjectResponse
 	resp.Users = make([]*pb.UserRecord, 0, len(users))
 	for idx := range users {
 		user := &users[idx]
 		resp.Users = append(resp.Users, &pb.UserRecord{
 			Id:              user.ID,
-			OrganizationId:  user.OrganizationID,
+			OrganizationId:  user.OrganizationID.String(),
 			Email:           &user.Email.String,
 			IdentitySubject: user.IdentitySubject,
 			FirstName:       &user.FirstName.String,
@@ -320,15 +336,15 @@ func (s *Server) GetUsersByGroup(ctx context.Context,
 	return &resp, nil
 }
 
-func getUserDependencies(ctx context.Context, store db.Store, user db.User) ([]*pb.GroupRecord, []*pb.RoleRecord, error) {
+func getUserDependencies(ctx context.Context, store db.Store, user db.User) ([]*pb.ProjectRecord, []*pb.RoleRecord, error) {
 	// get all the roles associated with that user
 	roles, err := store.GetUserRoles(ctx, user.ID)
 	if err != nil {
 		return nil, nil, err
 	}
 
-	// get all the groups associated with that user
-	groups, err := store.GetUserGroups(ctx, user.ID)
+	// get all the projects associated with that user
+	projects, err := store.GetUserProjects(ctx, user.ID)
 	if err != nil {
 		return nil, nil, err
 	}
@@ -337,10 +353,11 @@ func getUserDependencies(ctx context.Context, store db.Store, user db.User) ([]*
 	var rolesPB []*pb.RoleRecord
 	for idx := range roles {
 		role := &roles[idx]
+		pid := role.ProjectID.UUID.String()
 		rolesPB = append(rolesPB, &pb.RoleRecord{
 			Id:             role.ID,
-			OrganizationId: role.OrganizationID,
-			GroupId:        &role.GroupID.Int32,
+			OrganizationId: role.OrganizationID.String(),
+			ProjectId:      &pid,
 			Name:           role.Name,
 			IsAdmin:        role.IsAdmin,
 			IsProtected:    role.IsProtected,
@@ -349,20 +366,18 @@ func getUserDependencies(ctx context.Context, store db.Store, user db.User) ([]*
 		})
 	}
 
-	var groupsPB []*pb.GroupRecord
-	for _, group := range groups {
-		groupsPB = append(groupsPB, &pb.GroupRecord{
-			GroupId:        group.ID,
-			OrganizationId: group.OrganizationID,
-			Name:           group.Name,
-			Description:    group.Description.String,
-			IsProtected:    group.IsProtected,
-			CreatedAt:      timestamppb.New(group.CreatedAt),
-			UpdatedAt:      timestamppb.New(group.UpdatedAt),
+	var projectsPB []*pb.ProjectRecord
+	for _, proj := range projects {
+		projectsPB = append(projectsPB, &pb.ProjectRecord{
+			ProjectId:      proj.ID.String(),
+			OrganizationId: proj.ParentID.UUID.String(),
+			Name:           proj.Name,
+			CreatedAt:      timestamppb.New(proj.CreatedAt),
+			UpdatedAt:      timestamppb.New(proj.UpdatedAt),
 		})
 	}
 
-	return groupsPB, rolesPB, nil
+	return projectsPB, rolesPB, nil
 }
 
 // GetUserById is a service for getting a user by id
@@ -385,7 +400,7 @@ func (s *Server) GetUserById(ctx context.Context,
 		return nil, status.Errorf(codes.Internal, "failed to get user: %s", err)
 	}
 
-	groups, roles, err := getUserDependencies(ctx, s.store, user)
+	projects, roles, err := getUserDependencies(ctx, s.store, user)
 	if err != nil {
 		return nil, status.Errorf(codes.Unknown, "failed to get user dependencies: %s", err)
 	}
@@ -393,7 +408,7 @@ func (s *Server) GetUserById(ctx context.Context,
 	var resp pb.GetUserByIdResponse
 	resp.User = &pb.UserRecord{
 		Id:              user.ID,
-		OrganizationId:  user.OrganizationID,
+		OrganizationId:  user.OrganizationID.String(),
 		Email:           &user.Email.String,
 		IdentitySubject: user.IdentitySubject,
 		FirstName:       &user.FirstName.String,
@@ -402,7 +417,7 @@ func (s *Server) GetUserById(ctx context.Context,
 		UpdatedAt:       timestamppb.New(user.UpdatedAt),
 	}
 
-	resp.Groups = groups
+	resp.Projects = projects
 	resp.Roles = roles
 	return &resp, nil
 }
@@ -432,7 +447,7 @@ func (s *Server) GetUser(ctx context.Context, _ *pb.GetUserRequest) (*pb.GetUser
 	var resp pb.GetUserResponse
 	resp.User = &pb.UserRecord{
 		Id:              user.ID,
-		OrganizationId:  user.OrganizationID,
+		OrganizationId:  user.OrganizationID.String(),
 		Email:           &user.Email.String,
 		IdentitySubject: user.IdentitySubject,
 		FirstName:       &user.FirstName.String,
@@ -441,11 +456,11 @@ func (s *Server) GetUser(ctx context.Context, _ *pb.GetUserRequest) (*pb.GetUser
 		UpdatedAt:       timestamppb.New(user.UpdatedAt),
 	}
 
-	groups, roles, err := getUserDependencies(ctx, s.store, user)
+	projects, roles, err := getUserDependencies(ctx, s.store, user)
 	if err != nil {
 		return nil, status.Errorf(codes.Unknown, "failed to get user dependencies: %s", err)
 	}
-	resp.Groups = groups
+	resp.Projects = projects
 	resp.Roles = roles
 
 	return &resp, nil

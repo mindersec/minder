@@ -44,7 +44,7 @@ func (s *Server) authAndContextValidation(ctx context.Context, inout *mediatorv1
 		return ctx, fmt.Errorf("context cannot be nil")
 	}
 
-	if err := s.ensureDefaultGroupForContext(ctx, inout); err != nil {
+	if err := s.ensureDefaultProjectForContext(ctx, inout); err != nil {
 		return ctx, err
 	}
 
@@ -53,39 +53,39 @@ func (s *Server) authAndContextValidation(ctx context.Context, inout *mediatorv1
 		return ctx, fmt.Errorf("cannot get context from input: %v", err)
 	}
 
-	if err := verifyValidGroup(ctx, entityCtx); err != nil {
+	if err := verifyValidProject(ctx, entityCtx); err != nil {
 		return ctx, err
 	}
 
 	return engine.WithEntityContext(ctx, entityCtx), nil
 }
 
-// ensureDefaultGroupForContext ensures a valid group is set in the context or sets the default group
+// ensureDefaultProjectForContext ensures a valid group is set in the context or sets the default group
 // if the group is not set in the incoming entity context, it'll set it.
-func (s *Server) ensureDefaultGroupForContext(ctx context.Context, inout *mediatorv1.Context) error {
-	// Group is already set
-	if inout.GetGroup() != "" {
+func (s *Server) ensureDefaultProjectForContext(ctx context.Context, inout *mediatorv1.Context) error {
+	// Project is already set
+	if inout.GetProject() != "" {
 		return nil
 	}
 
-	gid, err := auth.GetDefaultGroup(ctx)
+	gid, err := auth.GetDefaultProject(ctx)
 	if err != nil {
 		return status.Errorf(codes.InvalidArgument, "cannot infer group id")
 	}
 
-	g, err := s.store.GetGroupByID(ctx, gid)
+	g, err := s.store.GetProjectByID(ctx, gid)
 	if err != nil {
 		return status.Errorf(codes.InvalidArgument, "cannot infer group id")
 	}
 
-	inout.Group = &g.Name
+	inout.Project = &g.Name
 	return nil
 }
 
-// verifyValidGroup verifies that the group is valid and the user is authorized to access it
+// verifyValidProject verifies that the group is valid and the user is authorized to access it
 // TODO: This will have to change once we have the hierarchy tree in place.
-func verifyValidGroup(ctx context.Context, in *engine.EntityContext) error {
-	if !auth.IsAuthorizedForGroup(ctx, in.GetGroup().GetID()) {
+func verifyValidProject(ctx context.Context, in *engine.EntityContext) error {
+	if !auth.IsAuthorizedForProject(ctx, in.GetProject().GetID()) {
 		return status.Errorf(codes.PermissionDenied, "user is not authorized to access this resource")
 	}
 
@@ -123,8 +123,8 @@ func (s *Server) CreatePolicy(ctx context.Context,
 
 	// If provider doesn't exist, return error
 	provider, err := s.store.GetProviderByName(ctx, db.GetProviderByNameParams{
-		Name:    entityCtx.GetProvider().Name,
-		GroupID: entityCtx.GetGroup().ID})
+		Name:      entityCtx.GetProvider().Name,
+		ProjectID: entityCtx.GetProject().ID})
 	if err != nil {
 		return nil, providerError(fmt.Errorf("provider error: %w", err))
 	}
@@ -137,9 +137,9 @@ func (s *Server) CreatePolicy(ctx context.Context,
 		// TODO: This will need to be updated to support
 		// the hierarchy tree once that's settled in.
 		rtdb, err := s.store.GetRuleTypeByName(ctx, db.GetRuleTypeByNameParams{
-			Provider: provider.Name,
-			GroupID:  entityCtx.GetGroup().GetID(),
-			Name:     r.GetType(),
+			Provider:  provider.Name,
+			ProjectID: entityCtx.GetProject().GetID(),
+			Name:      r.GetType(),
 		})
 		if err != nil {
 			if errors.Is(err, sql.ErrNoRows) {
@@ -197,7 +197,7 @@ func (s *Server) CreatePolicy(ctx context.Context,
 
 	params := db.CreatePolicyParams{
 		Provider:  provider.Name,
-		GroupID:   entityCtx.GetGroup().GetID(),
+		ProjectID: entityCtx.GetProject().GetID(),
 		Name:      in.GetName(),
 		Remediate: validateRemediateType(in.GetRemediate()),
 	}
@@ -232,7 +232,7 @@ func (s *Server) CreatePolicy(ctx context.Context,
 		Policy: in,
 	}
 
-	msg, err := reconcilers.NewPolicyInitMessage(entityCtx.Provider.Name, entityCtx.Group.ID)
+	msg, err := reconcilers.NewPolicyInitMessage(entityCtx.Provider.Name, entityCtx.Project.ID)
 	if err != nil {
 		log.Printf("error creating reconciler event: %v", err)
 		// error is non-fatal
@@ -311,7 +311,7 @@ func (s *Server) ListPolicies(ctx context.Context,
 
 	entityCtx := engine.EntityFromContext(ctx)
 
-	policies, err := s.store.ListPoliciesByGroupID(ctx, entityCtx.Group.ID)
+	policies, err := s.store.ListPoliciesByProjectID(ctx, entityCtx.Project.ID)
 	if err != nil {
 		return nil, status.Errorf(codes.Unknown, "failed to get policies: %s", err)
 	}
@@ -340,9 +340,9 @@ func (s *Server) GetPolicyById(ctx context.Context,
 		return nil, util.UserVisibleError(codes.InvalidArgument, "invalid policy ID")
 	}
 
-	policies, err := s.store.GetPolicyByGroupAndID(ctx, db.GetPolicyByGroupAndIDParams{
-		GroupID: entityCtx.Group.ID,
-		ID:      parsedPolicyID,
+	policies, err := s.store.GetPolicyByProjectAndID(ctx, db.GetPolicyByProjectAndIDParams{
+		ProjectID: entityCtx.Project.ID,
+		ID:        parsedPolicyID,
 	})
 	if err != nil {
 		return nil, status.Errorf(codes.Unknown, "failed to get policy: %s", err)
@@ -417,9 +417,9 @@ func (s *Server) GetPolicyStatusById(ctx context.Context,
 		return nil, util.UserVisibleError(codes.InvalidArgument, "invalid policy ID")
 	}
 
-	dbstat, err := s.store.GetPolicyStatusByIdAndGroup(ctx, db.GetPolicyStatusByIdAndGroupParams{
-		GroupID: entityCtx.Group.ID,
-		ID:      parsedPolicyID,
+	dbstat, err := s.store.GetPolicyStatusByIdAndProject(ctx, db.GetPolicyStatusByIdAndProjectParams{
+		ProjectID: entityCtx.Project.ID,
+		ID:        parsedPolicyID,
 	})
 	if err != nil {
 		if errors.Is(err, sql.ErrNoRows) {
@@ -508,9 +508,9 @@ func (s *Server) GetPolicyStatusById(ctx context.Context,
 	}, nil
 }
 
-// GetPolicyStatusByGroup is a method to get policy status for a group
-func (s *Server) GetPolicyStatusByGroup(ctx context.Context,
-	in *mediatorv1.GetPolicyStatusByGroupRequest) (*mediatorv1.GetPolicyStatusByGroupResponse, error) {
+// GetPolicyStatusByProject is a method to get policy status for a group
+func (s *Server) GetPolicyStatusByProject(ctx context.Context,
+	in *mediatorv1.GetPolicyStatusByProjectRequest) (*mediatorv1.GetPolicyStatusByProjectResponse, error) {
 	ctx, err := s.authAndContextValidation(ctx, in.GetContext())
 	if err != nil {
 		return nil, status.Errorf(codes.InvalidArgument, "error ensuring default group: %v", err)
@@ -519,7 +519,7 @@ func (s *Server) GetPolicyStatusByGroup(ctx context.Context,
 	entityCtx := engine.EntityFromContext(ctx)
 
 	// read policy status
-	dbstats, err := s.store.GetPolicyStatusByGroup(ctx, entityCtx.Group.ID)
+	dbstats, err := s.store.GetPolicyStatusByProject(ctx, entityCtx.Project.ID)
 	if err != nil {
 		if errors.Is(err, sql.ErrNoRows) {
 			return nil, status.Errorf(codes.NotFound, "policy statuses not found for group")
@@ -527,7 +527,7 @@ func (s *Server) GetPolicyStatusByGroup(ctx context.Context,
 		return nil, status.Errorf(codes.Unknown, "failed to get policy status: %s", err)
 	}
 
-	res := &mediatorv1.GetPolicyStatusByGroupResponse{
+	res := &mediatorv1.GetPolicyStatusByProjectResponse{
 		PolicyStatus: make([]*mediatorv1.PolicyStatus, 0, len(dbstats)),
 	}
 
@@ -556,9 +556,9 @@ func (s *Server) ListRuleTypes(
 
 	entityCtx := engine.EntityFromContext(ctx)
 
-	lrt, err := s.store.ListRuleTypesByProviderAndGroup(ctx, db.ListRuleTypesByProviderAndGroupParams{
-		Provider: entityCtx.GetProvider().Name,
-		GroupID:  entityCtx.GetGroup().GetID(),
+	lrt, err := s.store.ListRuleTypesByProviderAndProject(ctx, db.ListRuleTypesByProviderAndProjectParams{
+		Provider:  entityCtx.GetProvider().Name,
+		ProjectID: entityCtx.GetProject().GetID(),
 	})
 	if err != nil {
 		return nil, status.Errorf(codes.Unknown, "failed to get rule types: %s", err)
@@ -594,9 +594,9 @@ func (s *Server) GetRuleTypeByName(
 	resp := &mediatorv1.GetRuleTypeByNameResponse{}
 
 	rtdb, err := s.store.GetRuleTypeByName(ctx, db.GetRuleTypeByNameParams{
-		Provider: entityCtx.GetProvider().Name,
-		GroupID:  entityCtx.GetGroup().GetID(),
-		Name:     in.GetName(),
+		Provider:  entityCtx.GetProvider().Name,
+		ProjectID: entityCtx.GetProject().GetID(),
+		Name:      in.GetName(),
 	})
 	if err != nil {
 		return nil, status.Errorf(codes.Unknown, "failed to get rule type: %s", err)
@@ -660,9 +660,9 @@ func (s *Server) CreateRuleType(
 
 	entityCtx := engine.EntityFromContext(ctx)
 	_, err = s.store.GetRuleTypeByName(ctx, db.GetRuleTypeByNameParams{
-		Provider: entityCtx.GetProvider().Name,
-		GroupID:  entityCtx.GetGroup().GetID(),
-		Name:     in.GetName(),
+		Provider:  entityCtx.GetProvider().Name,
+		ProjectID: entityCtx.GetProject().GetID(),
+		Name:      in.GetName(),
 	})
 	if err == nil {
 		return nil, status.Errorf(codes.AlreadyExists, "rule type %s already exists", in.GetName())
@@ -687,7 +687,7 @@ func (s *Server) CreateRuleType(
 	dbrtyp, err := s.store.CreateRuleType(ctx, db.CreateRuleTypeParams{
 		Name:        in.GetName(),
 		Provider:    entityCtx.GetProvider().Name,
-		GroupID:     entityCtx.GetGroup().GetID(),
+		ProjectID:   entityCtx.GetProject().GetID(),
 		Description: in.GetDescription(),
 		Definition:  def,
 		Guidance:    in.GetGuidance(),
@@ -719,9 +719,9 @@ func (s *Server) UpdateRuleType(
 	entityCtx := engine.EntityFromContext(ctx)
 
 	rtdb, err := s.store.GetRuleTypeByName(ctx, db.GetRuleTypeByNameParams{
-		Provider: entityCtx.GetProvider().Name,
-		GroupID:  entityCtx.GetGroup().GetID(),
-		Name:     in.GetName(),
+		Provider:  entityCtx.GetProvider().Name,
+		ProjectID: entityCtx.GetProject().GetID(),
+		Name:      in.GetName(),
 	})
 	if err != nil {
 		if errors.Is(err, sql.ErrNoRows) {
@@ -776,8 +776,8 @@ func (s *Server) DeleteRuleType(
 	}
 
 	prov, err := s.store.GetProviderByName(ctx, db.GetProviderByNameParams{
-		Name:    ruletype.Provider,
-		GroupID: ruletype.GroupID,
+		Name:      ruletype.Provider,
+		ProjectID: ruletype.ProjectID,
 	})
 	if err != nil {
 		return nil, status.Errorf(codes.Unknown, "failed to get provider: %s", err)

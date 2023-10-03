@@ -44,7 +44,7 @@ mediator control plane.`,
 	},
 	Run: func(cmd *cobra.Command, args []string) {
 		// delete the org via GRPC
-		id := util.GetConfigValue("org-id", "org-id", cmd, int32(0)).(int32)
+		id := viper.GetString("org-id")
 		force := util.GetConfigValue("force", "force", cmd, false).(bool)
 
 		conn, err := util.GrpcForCommand(cmd)
@@ -69,9 +69,9 @@ mediator control plane.`,
 
 func init() {
 	OrgCmd.AddCommand(org_deleteCmd)
-	org_deleteCmd.Flags().Int32P("org-id", "o", 0, "id of organization to delete")
+	org_deleteCmd.Flags().StringP("org-id", "o", "", "id of organization to delete")
 	org_deleteCmd.Flags().BoolP("force", "f", false,
-		"Force deletion of organization, even if it has associated groups")
+		"Force deletion of organization, even if it has associated projects")
 	err := org_deleteCmd.MarkFlagRequired("org-id")
 	util.ExitNicelyOnError(err, "Error marking flag as required")
 }

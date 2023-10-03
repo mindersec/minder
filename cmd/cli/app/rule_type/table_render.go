@@ -24,7 +24,7 @@ import (
 
 func initializeTable(cmd *cobra.Command) *tablewriter.Table {
 	table := tablewriter.NewWriter(cmd.OutOrStdout())
-	table.SetHeader([]string{"Provider", "Group Name", "Id", "Name", "Description"})
+	table.SetHeader([]string{"Provider", "Project Name", "Id", "Name", "Description"})
 	table.SetRowLine(true)
 	table.SetRowSeparator("-")
 	table.SetAutoMergeCellsByColumnIndex([]int{0, 1, 2, 3})
@@ -40,7 +40,7 @@ func renderRuleTypeTable(
 ) {
 	row := []string{
 		rt.Context.Provider,
-		*rt.Context.Group,
+		*rt.Context.Project,
 		*rt.Id,
 		rt.Name,
 		rt.Description,

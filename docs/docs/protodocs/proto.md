@@ -12,28 +12,28 @@
     - [CheckHealthRequest](#mediator-v1-CheckHealthRequest)
     - [CheckHealthResponse](#mediator-v1-CheckHealthResponse)
     - [Context](#mediator-v1-Context)
-    - [CreateGroupRequest](#mediator-v1-CreateGroupRequest)
-    - [CreateGroupResponse](#mediator-v1-CreateGroupResponse)
     - [CreateKeyPairRequest](#mediator-v1-CreateKeyPairRequest)
     - [CreateKeyPairResponse](#mediator-v1-CreateKeyPairResponse)
     - [CreateOrganizationRequest](#mediator-v1-CreateOrganizationRequest)
     - [CreateOrganizationResponse](#mediator-v1-CreateOrganizationResponse)
     - [CreatePolicyRequest](#mediator-v1-CreatePolicyRequest)
     - [CreatePolicyResponse](#mediator-v1-CreatePolicyResponse)
-    - [CreateRoleByGroupRequest](#mediator-v1-CreateRoleByGroupRequest)
-    - [CreateRoleByGroupResponse](#mediator-v1-CreateRoleByGroupResponse)
+    - [CreateProjectRequest](#mediator-v1-CreateProjectRequest)
+    - [CreateProjectResponse](#mediator-v1-CreateProjectResponse)
     - [CreateRoleByOrganizationRequest](#mediator-v1-CreateRoleByOrganizationRequest)
     - [CreateRoleByOrganizationResponse](#mediator-v1-CreateRoleByOrganizationResponse)
+    - [CreateRoleByProjectRequest](#mediator-v1-CreateRoleByProjectRequest)
+    - [CreateRoleByProjectResponse](#mediator-v1-CreateRoleByProjectResponse)
     - [CreateRuleTypeRequest](#mediator-v1-CreateRuleTypeRequest)
     - [CreateRuleTypeResponse](#mediator-v1-CreateRuleTypeResponse)
     - [CreateUserRequest](#mediator-v1-CreateUserRequest)
     - [CreateUserResponse](#mediator-v1-CreateUserResponse)
-    - [DeleteGroupRequest](#mediator-v1-DeleteGroupRequest)
-    - [DeleteGroupResponse](#mediator-v1-DeleteGroupResponse)
     - [DeleteOrganizationRequest](#mediator-v1-DeleteOrganizationRequest)
     - [DeleteOrganizationResponse](#mediator-v1-DeleteOrganizationResponse)
     - [DeletePolicyRequest](#mediator-v1-DeletePolicyRequest)
     - [DeletePolicyResponse](#mediator-v1-DeletePolicyResponse)
+    - [DeleteProjectRequest](#mediator-v1-DeleteProjectRequest)
+    - [DeleteProjectResponse](#mediator-v1-DeleteProjectResponse)
     - [DeleteRoleRequest](#mediator-v1-DeleteRoleRequest)
     - [DeleteRoleResponse](#mediator-v1-DeleteRoleResponse)
     - [DeleteRuleTypeRequest](#mediator-v1-DeleteRuleTypeRequest)
@@ -52,12 +52,6 @@
     - [GetAuthorizationURLResponse](#mediator-v1-GetAuthorizationURLResponse)
     - [GetBranchProtectionRequest](#mediator-v1-GetBranchProtectionRequest)
     - [GetBranchProtectionResponse](#mediator-v1-GetBranchProtectionResponse)
-    - [GetGroupByIdRequest](#mediator-v1-GetGroupByIdRequest)
-    - [GetGroupByIdResponse](#mediator-v1-GetGroupByIdResponse)
-    - [GetGroupByNameRequest](#mediator-v1-GetGroupByNameRequest)
-    - [GetGroupByNameResponse](#mediator-v1-GetGroupByNameResponse)
-    - [GetGroupsRequest](#mediator-v1-GetGroupsRequest)
-    - [GetGroupsResponse](#mediator-v1-GetGroupsResponse)
     - [GetOrganizationByNameRequest](#mediator-v1-GetOrganizationByNameRequest)
     - [GetOrganizationByNameResponse](#mediator-v1-GetOrganizationByNameResponse)
     - [GetOrganizationRequest](#mediator-v1-GetOrganizationRequest)
@@ -66,11 +60,17 @@
     - [GetOrganizationsResponse](#mediator-v1-GetOrganizationsResponse)
     - [GetPolicyByIdRequest](#mediator-v1-GetPolicyByIdRequest)
     - [GetPolicyByIdResponse](#mediator-v1-GetPolicyByIdResponse)
-    - [GetPolicyStatusByGroupRequest](#mediator-v1-GetPolicyStatusByGroupRequest)
-    - [GetPolicyStatusByGroupResponse](#mediator-v1-GetPolicyStatusByGroupResponse)
     - [GetPolicyStatusByIdRequest](#mediator-v1-GetPolicyStatusByIdRequest)
     - [GetPolicyStatusByIdRequest.EntityTypedId](#mediator-v1-GetPolicyStatusByIdRequest-EntityTypedId)
     - [GetPolicyStatusByIdResponse](#mediator-v1-GetPolicyStatusByIdResponse)
+    - [GetPolicyStatusByProjectRequest](#mediator-v1-GetPolicyStatusByProjectRequest)
+    - [GetPolicyStatusByProjectResponse](#mediator-v1-GetPolicyStatusByProjectResponse)
+    - [GetProjectByIdRequest](#mediator-v1-GetProjectByIdRequest)
+    - [GetProjectByIdResponse](#mediator-v1-GetProjectByIdResponse)
+    - [GetProjectByNameRequest](#mediator-v1-GetProjectByNameRequest)
+    - [GetProjectByNameResponse](#mediator-v1-GetProjectByNameResponse)
+    - [GetProjectsRequest](#mediator-v1-GetProjectsRequest)
+    - [GetProjectsResponse](#mediator-v1-GetProjectsResponse)
     - [GetPublicKeyRequest](#mediator-v1-GetPublicKeyRequest)
     - [GetPublicKeyResponse](#mediator-v1-GetPublicKeyResponse)
     - [GetRepositoryByIdRequest](#mediator-v1-GetRepositoryByIdRequest)
@@ -81,8 +81,8 @@
     - [GetRoleByIdResponse](#mediator-v1-GetRoleByIdResponse)
     - [GetRoleByNameRequest](#mediator-v1-GetRoleByNameRequest)
     - [GetRoleByNameResponse](#mediator-v1-GetRoleByNameResponse)
-    - [GetRolesByGroupRequest](#mediator-v1-GetRolesByGroupRequest)
-    - [GetRolesByGroupResponse](#mediator-v1-GetRolesByGroupResponse)
+    - [GetRolesByProjectRequest](#mediator-v1-GetRolesByProjectRequest)
+    - [GetRolesByProjectResponse](#mediator-v1-GetRolesByProjectResponse)
     - [GetRolesRequest](#mediator-v1-GetRolesRequest)
     - [GetRolesResponse](#mediator-v1-GetRolesResponse)
     - [GetRuleTypeByIdRequest](#mediator-v1-GetRuleTypeByIdRequest)
@@ -99,10 +99,10 @@
     - [GetUserBySubjectResponse](#mediator-v1-GetUserBySubjectResponse)
     - [GetUserRequest](#mediator-v1-GetUserRequest)
     - [GetUserResponse](#mediator-v1-GetUserResponse)
-    - [GetUsersByGroupRequest](#mediator-v1-GetUsersByGroupRequest)
-    - [GetUsersByGroupResponse](#mediator-v1-GetUsersByGroupResponse)
     - [GetUsersByOrganizationRequest](#mediator-v1-GetUsersByOrganizationRequest)
     - [GetUsersByOrganizationResponse](#mediator-v1-GetUsersByOrganizationResponse)
+    - [GetUsersByProjectRequest](#mediator-v1-GetUsersByProjectRequest)
+    - [GetUsersByProjectResponse](#mediator-v1-GetUsersByProjectResponse)
     - [GetUsersRequest](#mediator-v1-GetUsersRequest)
     - [GetUsersResponse](#mediator-v1-GetUsersResponse)
     - [GetVulnerabilitiesRequest](#mediator-v1-GetVulnerabilitiesRequest)
@@ -112,7 +112,6 @@
     - [GitHubProviderConfig](#mediator-v1-GitHubProviderConfig)
     - [GitType](#mediator-v1-GitType)
     - [GithubWorkflow](#mediator-v1-GithubWorkflow)
-    - [GroupRecord](#mediator-v1-GroupRecord)
     - [ListArtifactsRequest](#mediator-v1-ListArtifactsRequest)
     - [ListArtifactsResponse](#mediator-v1-ListArtifactsResponse)
     - [ListPoliciesRequest](#mediator-v1-ListPoliciesRequest)
@@ -130,6 +129,7 @@
     - [PrDependencies](#mediator-v1-PrDependencies)
     - [PrDependencies.ContextualDependency](#mediator-v1-PrDependencies-ContextualDependency)
     - [PrDependencies.ContextualDependency.FilePatch](#mediator-v1-PrDependencies-ContextualDependency-FilePatch)
+    - [ProjectRecord](#mediator-v1-ProjectRecord)
     - [Provider](#mediator-v1-Provider)
     - [Provider.Context](#mediator-v1-Provider-Context)
     - [Provider.Definition](#mediator-v1-Provider-Definition)
@@ -143,8 +143,8 @@
     - [RepositoryRecord](#mediator-v1-RepositoryRecord)
     - [RepositoryResult](#mediator-v1-RepositoryResult)
     - [RestType](#mediator-v1-RestType)
-    - [RevokeOauthGroupTokenRequest](#mediator-v1-RevokeOauthGroupTokenRequest)
-    - [RevokeOauthGroupTokenResponse](#mediator-v1-RevokeOauthGroupTokenResponse)
+    - [RevokeOauthProjectTokenRequest](#mediator-v1-RevokeOauthProjectTokenRequest)
+    - [RevokeOauthProjectTokenResponse](#mediator-v1-RevokeOauthProjectTokenResponse)
     - [RevokeOauthTokensRequest](#mediator-v1-RevokeOauthTokensRequest)
     - [RevokeOauthTokensResponse](#mediator-v1-RevokeOauthTokensResponse)
     - [RevokeTokensRequest](#mediator-v1-RevokeTokensRequest)
@@ -187,12 +187,12 @@
     - [ArtifactService](#mediator-v1-ArtifactService)
     - [AuthService](#mediator-v1-AuthService)
     - [BranchProtectionService](#mediator-v1-BranchProtectionService)
-    - [GroupService](#mediator-v1-GroupService)
     - [HealthService](#mediator-v1-HealthService)
     - [KeyService](#mediator-v1-KeyService)
     - [OAuthService](#mediator-v1-OAuthService)
     - [OrganizationService](#mediator-v1-OrganizationService)
     - [PolicyService](#mediator-v1-PolicyService)
+    - [ProjectService](#mediator-v1-ProjectService)
     - [RepositoryService](#mediator-v1-RepositoryService)
     - [RoleService](#mediator-v1-RoleService)
     - [SecretsService](#mediator-v1-SecretsService)
@@ -322,53 +322,14 @@ BuiltinType defines the builtin data evaluation.
 
 ### Context
 Context defines the context in which a rule is evaluated.
-this normally refers to a combination of the provider, organization and group.
+this normally refers to a combination of the provider, organization and project.
 
 
 | Field | Type | Label | Description |
 | ----- | ---- | ----- | ----------- |
 | provider | [string](#string) |  |  |
 | organization | [string](#string) | optional |  |
-| group | [string](#string) | optional |  |
-
-
-
-
-
-
-<a name="mediator-v1-CreateGroupRequest"></a>
-
-### CreateGroupRequest
-The CreateGroupRequest message represents a request to create a group
-
-
-| Field | Type | Label | Description |
-| ----- | ---- | ----- | ----------- |
-| organization_id | [int32](#int32) |  |  |
-| name | [string](#string) |  |  |
-| description | [string](#string) |  |  |
-| is_protected | [bool](#bool) | optional |  |
-
-
-
-
-
-
-<a name="mediator-v1-CreateGroupResponse"></a>
-
-### CreateGroupResponse
-
-
-
-| Field | Type | Label | Description |
-| ----- | ---- | ----- | ----------- |
-| group_id | [int32](#int32) |  |  |
-| organization_id | [int32](#int32) |  |  |
-| name | [string](#string) |  |  |
-| description | [string](#string) |  |  |
-| is_protected | [bool](#bool) |  |  |
-| created_at | [google.protobuf.Timestamp](#google-protobuf-Timestamp) |  |  |
-| updated_at | [google.protobuf.Timestamp](#google-protobuf-Timestamp) |  |  |
+| project | [string](#string) | optional |  |
 
 
 
@@ -384,7 +345,7 @@ The CreateGroupRequest message represents a request to create a group
 | Field | Type | Label | Description |
 | ----- | ---- | ----- | ----------- |
 | passphrase | [string](#string) |  |  |
-| group_id | [int32](#int32) |  |  |
+| project_id | [string](#string) |  |  |
 
 
 
@@ -432,12 +393,12 @@ Organization service
 
 | Field | Type | Label | Description |
 | ----- | ---- | ----- | ----------- |
-| id | [int32](#int32) |  |  |
+| id | [string](#string) |  |  |
 | name | [string](#string) |  |  |
 | company | [string](#string) |  |  |
 | created_at | [google.protobuf.Timestamp](#google-protobuf-Timestamp) |  |  |
 | updated_at | [google.protobuf.Timestamp](#google-protobuf-Timestamp) |  |  |
-| default_group | [GroupRecord](#mediator-v1-GroupRecord) | optional |  |
+| default_project | [ProjectRecord](#mediator-v1-ProjectRecord) | optional |  |
 | default_roles | [RoleRecord](#mediator-v1-RoleRecord) | repeated |  |
 | default_user | [UserRecord](#mediator-v1-UserRecord) | optional |  |
 
@@ -476,18 +437,17 @@ Policy service
 
 
 
-<a name="mediator-v1-CreateRoleByGroupRequest"></a>
+<a name="mediator-v1-CreateProjectRequest"></a>
 
-### CreateRoleByGroupRequest
-
+### CreateProjectRequest
+The CreateProjectRequest message represents a request to create a project
 
 
 | Field | Type | Label | Description |
 | ----- | ---- | ----- | ----------- |
-| organization_id | [int32](#int32) |  |  |
-| group_id | [int32](#int32) |  |  |
+| organization_id | [string](#string) |  |  |
 | name | [string](#string) |  |  |
-| is_admin | [bool](#bool) | optional |  |
+| description | [string](#string) |  |  |
 | is_protected | [bool](#bool) | optional |  |
 
 
@@ -495,19 +455,18 @@ Policy service
 
 
 
-<a name="mediator-v1-CreateRoleByGroupResponse"></a>
+<a name="mediator-v1-CreateProjectResponse"></a>
 
-### CreateRoleByGroupResponse
+### CreateProjectResponse
 
 
 
 | Field | Type | Label | Description |
 | ----- | ---- | ----- | ----------- |
-| id | [int32](#int32) |  |  |
-| organization_id | [int32](#int32) |  |  |
-| group_id | [int32](#int32) |  |  |
+| project_id | [string](#string) |  |  |
+| organization_id | [string](#string) |  |  |
 | name | [string](#string) |  |  |
-| is_admin | [bool](#bool) |  |  |
+| description | [string](#string) |  |  |
 | is_protected | [bool](#bool) |  |  |
 | created_at | [google.protobuf.Timestamp](#google-protobuf-Timestamp) |  |  |
 | updated_at | [google.protobuf.Timestamp](#google-protobuf-Timestamp) |  |  |
@@ -525,7 +484,7 @@ Role service
 
 | Field | Type | Label | Description |
 | ----- | ---- | ----- | ----------- |
-| organization_id | [int32](#int32) |  |  |
+| organization_id | [string](#string) |  |  |
 | name | [string](#string) |  |  |
 | is_admin | [bool](#bool) | optional |  |
 | is_protected | [bool](#bool) | optional |  |
@@ -544,7 +503,48 @@ Role service
 | Field | Type | Label | Description |
 | ----- | ---- | ----- | ----------- |
 | id | [int32](#int32) |  |  |
-| organization_id | [int32](#int32) |  |  |
+| organization_id | [string](#string) |  |  |
+| name | [string](#string) |  |  |
+| is_admin | [bool](#bool) |  |  |
+| is_protected | [bool](#bool) |  |  |
+| created_at | [google.protobuf.Timestamp](#google-protobuf-Timestamp) |  |  |
+| updated_at | [google.protobuf.Timestamp](#google-protobuf-Timestamp) |  |  |
+
+
+
+
+
+
+<a name="mediator-v1-CreateRoleByProjectRequest"></a>
+
+### CreateRoleByProjectRequest
+
+
+
+| Field | Type | Label | Description |
+| ----- | ---- | ----- | ----------- |
+| organization_id | [string](#string) |  |  |
+| project_id | [string](#string) |  |  |
+| name | [string](#string) |  |  |
+| is_admin | [bool](#bool) | optional |  |
+| is_protected | [bool](#bool) | optional |  |
+
+
+
+
+
+
+<a name="mediator-v1-CreateRoleByProjectResponse"></a>
+
+### CreateRoleByProjectResponse
+
+
+
+| Field | Type | Label | Description |
+| ----- | ---- | ----- | ----------- |
+| id | [int32](#int32) |  |  |
+| organization_id | [string](#string) |  |  |
+| project_id | [string](#string) |  |  |
 | name | [string](#string) |  |  |
 | is_admin | [bool](#bool) |  |  |
 | is_protected | [bool](#bool) |  |  |
@@ -605,39 +605,13 @@ User service
 | Field | Type | Label | Description |
 | ----- | ---- | ----- | ----------- |
 | id | [int32](#int32) |  |  |
-| organization_id | [int32](#int32) |  |  |
+| organization_id | [string](#string) |  |  |
 | email | [string](#string) | optional |  |
 | identity_subject | [string](#string) |  |  |
 | first_name | [string](#string) | optional |  |
 | last_name | [string](#string) | optional |  |
 | created_at | [google.protobuf.Timestamp](#google-protobuf-Timestamp) |  |  |
 | updated_at | [google.protobuf.Timestamp](#google-protobuf-Timestamp) |  |  |
-
-
-
-
-
-
-<a name="mediator-v1-DeleteGroupRequest"></a>
-
-### DeleteGroupRequest
-DeleteGroupRequest represents a request to delete a group
-
-
-| Field | Type | Label | Description |
-| ----- | ---- | ----- | ----------- |
-| id | [int32](#int32) |  |  |
-| force | [bool](#bool) | optional |  |
-
-
-
-
-
-
-<a name="mediator-v1-DeleteGroupResponse"></a>
-
-### DeleteGroupResponse
-DeleteGroupResponse represents a response to a delete group request
 
 
 
@@ -652,7 +626,7 @@ DeleteOrganizationRequest represents a request to delete a organization
 
 | Field | Type | Label | Description |
 | ----- | ---- | ----- | ----------- |
-| id | [int32](#int32) |  |  |
+| id | [string](#string) |  |  |
 | force | [bool](#bool) | optional |  |
 
 
@@ -690,6 +664,32 @@ DeleteOrganizationResponse represents a response to a delete organization reques
 
 ### DeletePolicyResponse
 
+
+
+
+
+
+
+<a name="mediator-v1-DeleteProjectRequest"></a>
+
+### DeleteProjectRequest
+DeleteProjectRequest represents a request to delete a project
+
+
+| Field | Type | Label | Description |
+| ----- | ---- | ----- | ----------- |
+| id | [string](#string) |  |  |
+| force | [bool](#bool) | optional |  |
+
+
+
+
+
+
+<a name="mediator-v1-DeleteProjectResponse"></a>
+
+### DeleteProjectResponse
+DeleteProjectResponse represents a response to a delete project request
 
 
 
@@ -831,7 +831,7 @@ DiffType defines the diff data ingester.
 | Field | Type | Label | Description |
 | ----- | ---- | ----- | ----------- |
 | provider | [string](#string) |  |  |
-| group_id | [int32](#int32) |  |  |
+| project_id | [string](#string) |  |  |
 | code | [string](#string) |  |  |
 | state | [string](#string) |  |  |
 | redirect_uri | [string](#string) |  |  |
@@ -850,7 +850,7 @@ DiffType defines the diff data ingester.
 | Field | Type | Label | Description |
 | ----- | ---- | ----- | ----------- |
 | provider | [string](#string) |  |  |
-| group_id | [int32](#int32) |  |  |
+| project_id | [string](#string) |  |  |
 | code | [string](#string) |  |  |
 | redirect_uri | [string](#string) |  |  |
 
@@ -919,7 +919,7 @@ DiffType defines the diff data ingester.
 | Field | Type | Label | Description |
 | ----- | ---- | ----- | ----------- |
 | provider | [string](#string) |  |  |
-| group_id | [int32](#int32) |  |  |
+| project_id | [string](#string) |  |  |
 | cli | [bool](#bool) |  |  |
 | port | [int32](#int32) |  |  |
 | owner | [string](#string) | optional |  |
@@ -969,102 +969,6 @@ DiffType defines the diff data ingester.
 
 
 
-<a name="mediator-v1-GetGroupByIdRequest"></a>
-
-### GetGroupByIdRequest
-The GetGroupByIdRequest message represents a request to get a group by ID
-
-
-| Field | Type | Label | Description |
-| ----- | ---- | ----- | ----------- |
-| group_id | [int32](#int32) |  |  |
-
-
-
-
-
-
-<a name="mediator-v1-GetGroupByIdResponse"></a>
-
-### GetGroupByIdResponse
-
-
-
-| Field | Type | Label | Description |
-| ----- | ---- | ----- | ----------- |
-| group | [GroupRecord](#mediator-v1-GroupRecord) | optional |  |
-| roles | [RoleRecord](#mediator-v1-RoleRecord) | repeated |  |
-| users | [UserRecord](#mediator-v1-UserRecord) | repeated |  |
-
-
-
-
-
-
-<a name="mediator-v1-GetGroupByNameRequest"></a>
-
-### GetGroupByNameRequest
-The GetGroupByNameRequest message represents a request to get a group by name
-
-
-| Field | Type | Label | Description |
-| ----- | ---- | ----- | ----------- |
-| name | [string](#string) |  |  |
-
-
-
-
-
-
-<a name="mediator-v1-GetGroupByNameResponse"></a>
-
-### GetGroupByNameResponse
-
-
-
-| Field | Type | Label | Description |
-| ----- | ---- | ----- | ----------- |
-| group | [GroupRecord](#mediator-v1-GroupRecord) | optional |  |
-| roles | [RoleRecord](#mediator-v1-RoleRecord) | repeated |  |
-| users | [UserRecord](#mediator-v1-UserRecord) | repeated |  |
-
-
-
-
-
-
-<a name="mediator-v1-GetGroupsRequest"></a>
-
-### GetGroupsRequest
-The GetGroupsRequest message represents a request to get an array of groups
-
-
-| Field | Type | Label | Description |
-| ----- | ---- | ----- | ----------- |
-| organization_id | [int32](#int32) |  |  |
-| limit | [int32](#int32) |  |  |
-| offset | [int32](#int32) |  |  |
-
-
-
-
-
-
-<a name="mediator-v1-GetGroupsResponse"></a>
-
-### GetGroupsResponse
-The GetGroupsResponse message represents a response with an array of groups
-
-
-| Field | Type | Label | Description |
-| ----- | ---- | ----- | ----------- |
-| groups | [GroupRecord](#mediator-v1-GroupRecord) | repeated |  |
-
-
-
-
-
-
 <a name="mediator-v1-GetOrganizationByNameRequest"></a>
 
 ### GetOrganizationByNameRequest
@@ -1089,7 +993,7 @@ get organization by name
 | Field | Type | Label | Description |
 | ----- | ---- | ----- | ----------- |
 | organization | [OrganizationRecord](#mediator-v1-OrganizationRecord) | optional |  |
-| groups | [GroupRecord](#mediator-v1-GroupRecord) | repeated |  |
+| projects | [ProjectRecord](#mediator-v1-ProjectRecord) | repeated |  |
 | roles | [RoleRecord](#mediator-v1-RoleRecord) | repeated |  |
 | users | [UserRecord](#mediator-v1-UserRecord) | repeated |  |
 
@@ -1106,7 +1010,7 @@ get organization by id
 
 | Field | Type | Label | Description |
 | ----- | ---- | ----- | ----------- |
-| organization_id | [int32](#int32) |  |  |
+| organization_id | [string](#string) |  |  |
 
 
 
@@ -1122,7 +1026,7 @@ get organization by id
 | Field | Type | Label | Description |
 | ----- | ---- | ----- | ----------- |
 | organization | [OrganizationRecord](#mediator-v1-OrganizationRecord) | optional |  |
-| groups | [GroupRecord](#mediator-v1-GroupRecord) | repeated |  |
+| projects | [ProjectRecord](#mediator-v1-ProjectRecord) | repeated |  |
 | roles | [RoleRecord](#mediator-v1-RoleRecord) | repeated |  |
 | users | [UserRecord](#mediator-v1-UserRecord) | repeated |  |
 
@@ -1193,36 +1097,6 @@ get policy by id
 
 
 
-<a name="mediator-v1-GetPolicyStatusByGroupRequest"></a>
-
-### GetPolicyStatusByGroupRequest
-
-
-
-| Field | Type | Label | Description |
-| ----- | ---- | ----- | ----------- |
-| context | [Context](#mediator-v1-Context) |  | context is the context in which the rule type is evaluated. |
-
-
-
-
-
-
-<a name="mediator-v1-GetPolicyStatusByGroupResponse"></a>
-
-### GetPolicyStatusByGroupResponse
-
-
-
-| Field | Type | Label | Description |
-| ----- | ---- | ----- | ----------- |
-| policy_status | [PolicyStatus](#mediator-v1-PolicyStatus) | repeated | policy_status is the status of the policy |
-
-
-
-
-
-
 <a name="mediator-v1-GetPolicyStatusByIdRequest"></a>
 
 ### GetPolicyStatusByIdRequest
@@ -1270,6 +1144,132 @@ if the struct is reused in other messages, it should be moved to a top-level def
 | ----- | ---- | ----- | ----------- |
 | policy_status | [PolicyStatus](#mediator-v1-PolicyStatus) |  | policy_status is the status of the policy |
 | rule_evaluation_status | [RuleEvaluationStatus](#mediator-v1-RuleEvaluationStatus) | repeated | rule_evaluation_status is the status of the rules |
+
+
+
+
+
+
+<a name="mediator-v1-GetPolicyStatusByProjectRequest"></a>
+
+### GetPolicyStatusByProjectRequest
+
+
+
+| Field | Type | Label | Description |
+| ----- | ---- | ----- | ----------- |
+| context | [Context](#mediator-v1-Context) |  | context is the context in which the rule type is evaluated. |
+
+
+
+
+
+
+<a name="mediator-v1-GetPolicyStatusByProjectResponse"></a>
+
+### GetPolicyStatusByProjectResponse
+
+
+
+| Field | Type | Label | Description |
+| ----- | ---- | ----- | ----------- |
+| policy_status | [PolicyStatus](#mediator-v1-PolicyStatus) | repeated | policy_status is the status of the policy |
+
+
+
+
+
+
+<a name="mediator-v1-GetProjectByIdRequest"></a>
+
+### GetProjectByIdRequest
+The GetProjectByIdRequest message represents a request to get a project by ID
+
+
+| Field | Type | Label | Description |
+| ----- | ---- | ----- | ----------- |
+| project_id | [string](#string) |  |  |
+
+
+
+
+
+
+<a name="mediator-v1-GetProjectByIdResponse"></a>
+
+### GetProjectByIdResponse
+
+
+
+| Field | Type | Label | Description |
+| ----- | ---- | ----- | ----------- |
+| project | [ProjectRecord](#mediator-v1-ProjectRecord) | optional |  |
+| roles | [RoleRecord](#mediator-v1-RoleRecord) | repeated |  |
+| users | [UserRecord](#mediator-v1-UserRecord) | repeated |  |
+
+
+
+
+
+
+<a name="mediator-v1-GetProjectByNameRequest"></a>
+
+### GetProjectByNameRequest
+The GetProjectByNameRequest message represents a request to get a project by name
+
+
+| Field | Type | Label | Description |
+| ----- | ---- | ----- | ----------- |
+| name | [string](#string) |  |  |
+
+
+
+
+
+
+<a name="mediator-v1-GetProjectByNameResponse"></a>
+
+### GetProjectByNameResponse
+
+
+
+| Field | Type | Label | Description |
+| ----- | ---- | ----- | ----------- |
+| project | [ProjectRecord](#mediator-v1-ProjectRecord) | optional |  |
+| roles | [RoleRecord](#mediator-v1-RoleRecord) | repeated |  |
+| users | [UserRecord](#mediator-v1-UserRecord) | repeated |  |
+
+
+
+
+
+
+<a name="mediator-v1-GetProjectsRequest"></a>
+
+### GetProjectsRequest
+The GetProjectsRequest message represents a request to get an array of projects
+
+
+| Field | Type | Label | Description |
+| ----- | ---- | ----- | ----------- |
+| organization_id | [string](#string) |  |  |
+| limit | [int32](#int32) |  |  |
+| offset | [int32](#int32) |  |  |
+
+
+
+
+
+
+<a name="mediator-v1-GetProjectsResponse"></a>
+
+### GetProjectsResponse
+The GetProjectsResponse message represents a response with an array of projects
+
+
+| Field | Type | Label | Description |
+| ----- | ---- | ----- | ----------- |
+| projects | [ProjectRecord](#mediator-v1-ProjectRecord) | repeated |  |
 
 
 
@@ -1345,7 +1345,7 @@ if the struct is reused in other messages, it should be moved to a top-level def
 | Field | Type | Label | Description |
 | ----- | ---- | ----- | ----------- |
 | provider | [string](#string) |  |  |
-| group_id | [int32](#int32) |  |  |
+| project_id | [string](#string) |  |  |
 | name | [string](#string) |  |  |
 
 
@@ -1401,12 +1401,12 @@ get role by id
 <a name="mediator-v1-GetRoleByNameRequest"></a>
 
 ### GetRoleByNameRequest
-get role by group and name
+get role by project and name
 
 
 | Field | Type | Label | Description |
 | ----- | ---- | ----- | ----------- |
-| organization_id | [int32](#int32) |  |  |
+| organization_id | [string](#string) |  |  |
 | name | [string](#string) |  |  |
 
 
@@ -1429,15 +1429,15 @@ get role by group and name
 
 
 
-<a name="mediator-v1-GetRolesByGroupRequest"></a>
+<a name="mediator-v1-GetRolesByProjectRequest"></a>
 
-### GetRolesByGroupRequest
+### GetRolesByProjectRequest
 
 
 
 | Field | Type | Label | Description |
 | ----- | ---- | ----- | ----------- |
-| group_id | [int32](#int32) |  |  |
+| project_id | [string](#string) |  |  |
 | limit | [int32](#int32) | optional |  |
 | offset | [int32](#int32) | optional |  |
 
@@ -1446,9 +1446,9 @@ get role by group and name
 
 
 
-<a name="mediator-v1-GetRolesByGroupResponse"></a>
+<a name="mediator-v1-GetRolesByProjectResponse"></a>
 
-### GetRolesByGroupResponse
+### GetRolesByProjectResponse
 
 
 
@@ -1469,7 +1469,7 @@ list roles
 
 | Field | Type | Label | Description |
 | ----- | ---- | ----- | ----------- |
-| organization_id | [int32](#int32) |  |  |
+| organization_id | [string](#string) |  |  |
 | limit | [int32](#int32) | optional |  |
 | offset | [int32](#int32) | optional |  |
 
@@ -1636,7 +1636,7 @@ get user by id
 | Field | Type | Label | Description |
 | ----- | ---- | ----- | ----------- |
 | user | [UserRecord](#mediator-v1-UserRecord) | optional |  |
-| groups | [GroupRecord](#mediator-v1-GroupRecord) | repeated |  |
+| projects | [ProjectRecord](#mediator-v1-ProjectRecord) | repeated |  |
 | roles | [RoleRecord](#mediator-v1-RoleRecord) | repeated |  |
 
 
@@ -1668,7 +1668,7 @@ get user by subject
 | Field | Type | Label | Description |
 | ----- | ---- | ----- | ----------- |
 | user | [UserRecord](#mediator-v1-UserRecord) | optional |  |
-| groups | [GroupRecord](#mediator-v1-GroupRecord) | repeated |  |
+| projects | [ProjectRecord](#mediator-v1-ProjectRecord) | repeated |  |
 | roles | [RoleRecord](#mediator-v1-RoleRecord) | repeated |  |
 
 
@@ -1695,40 +1695,8 @@ get user
 | Field | Type | Label | Description |
 | ----- | ---- | ----- | ----------- |
 | user | [UserRecord](#mediator-v1-UserRecord) | optional |  |
-| groups | [GroupRecord](#mediator-v1-GroupRecord) | repeated |  |
+| projects | [ProjectRecord](#mediator-v1-ProjectRecord) | repeated |  |
 | roles | [RoleRecord](#mediator-v1-RoleRecord) | repeated |  |
-
-
-
-
-
-
-<a name="mediator-v1-GetUsersByGroupRequest"></a>
-
-### GetUsersByGroupRequest
-
-
-
-| Field | Type | Label | Description |
-| ----- | ---- | ----- | ----------- |
-| group_id | [int32](#int32) |  |  |
-| limit | [int32](#int32) | optional |  |
-| offset | [int32](#int32) | optional |  |
-
-
-
-
-
-
-<a name="mediator-v1-GetUsersByGroupResponse"></a>
-
-### GetUsersByGroupResponse
-
-
-
-| Field | Type | Label | Description |
-| ----- | ---- | ----- | ----------- |
-| users | [UserRecord](#mediator-v1-UserRecord) | repeated |  |
 
 
 
@@ -1743,7 +1711,7 @@ get user
 
 | Field | Type | Label | Description |
 | ----- | ---- | ----- | ----------- |
-| organization_id | [int32](#int32) |  |  |
+| organization_id | [string](#string) |  |  |
 | limit | [int32](#int32) | optional |  |
 | offset | [int32](#int32) | optional |  |
 
@@ -1755,6 +1723,38 @@ get user
 <a name="mediator-v1-GetUsersByOrganizationResponse"></a>
 
 ### GetUsersByOrganizationResponse
+
+
+
+| Field | Type | Label | Description |
+| ----- | ---- | ----- | ----------- |
+| users | [UserRecord](#mediator-v1-UserRecord) | repeated |  |
+
+
+
+
+
+
+<a name="mediator-v1-GetUsersByProjectRequest"></a>
+
+### GetUsersByProjectRequest
+
+
+
+| Field | Type | Label | Description |
+| ----- | ---- | ----- | ----------- |
+| project_id | [string](#string) |  |  |
+| limit | [int32](#int32) | optional |  |
+| offset | [int32](#int32) | optional |  |
+
+
+
+
+
+
+<a name="mediator-v1-GetUsersByProjectResponse"></a>
+
+### GetUsersByProjectResponse
 
 
 
@@ -1919,27 +1919,6 @@ GitType defines the git data ingester.
 
 
 
-<a name="mediator-v1-GroupRecord"></a>
-
-### GroupRecord
-BUF does not allow grouping (which is a shame)
-
-
-| Field | Type | Label | Description |
-| ----- | ---- | ----- | ----------- |
-| group_id | [int32](#int32) |  |  |
-| organization_id | [int32](#int32) |  |  |
-| name | [string](#string) |  |  |
-| description | [string](#string) |  |  |
-| is_protected | [bool](#bool) |  |  |
-| created_at | [google.protobuf.Timestamp](#google-protobuf-Timestamp) |  |  |
-| updated_at | [google.protobuf.Timestamp](#google-protobuf-Timestamp) |  |  |
-
-
-
-
-
-
 <a name="mediator-v1-ListArtifactsRequest"></a>
 
 ### ListArtifactsRequest
@@ -1949,7 +1928,7 @@ BUF does not allow grouping (which is a shame)
 | Field | Type | Label | Description |
 | ----- | ---- | ----- | ----------- |
 | provider | [string](#string) |  |  |
-| group_id | [int32](#int32) |  |  |
+| project_id | [string](#string) |  |  |
 
 
 
@@ -2010,7 +1989,7 @@ list policies
 | Field | Type | Label | Description |
 | ----- | ---- | ----- | ----------- |
 | provider | [string](#string) |  |  |
-| group_id | [int32](#int32) |  |  |
+| project_id | [string](#string) |  |  |
 | limit | [int32](#int32) |  |  |
 | offset | [int32](#int32) |  |  |
 | filter | [RepoFilter](#mediator-v1-RepoFilter) |  |  |
@@ -2093,7 +2072,7 @@ ListRuleTypesResponse is the response to list rule types.
 
 | Field | Type | Label | Description |
 | ----- | ---- | ----- | ----------- |
-| id | [int32](#int32) |  |  |
+| id | [string](#string) |  |  |
 | name | [string](#string) |  |  |
 | company | [string](#string) |  |  |
 | created_at | [google.protobuf.Timestamp](#google-protobuf-Timestamp) |  |  |
@@ -2209,6 +2188,27 @@ get the overall policy status
 
 
 
+<a name="mediator-v1-ProjectRecord"></a>
+
+### ProjectRecord
+BUF does not allow grouping (which is a shame)
+
+
+| Field | Type | Label | Description |
+| ----- | ---- | ----- | ----------- |
+| project_id | [string](#string) |  |  |
+| organization_id | [string](#string) |  |  |
+| name | [string](#string) |  |  |
+| description | [string](#string) |  |  |
+| is_protected | [bool](#bool) |  |  |
+| created_at | [google.protobuf.Timestamp](#google-protobuf-Timestamp) |  |  |
+| updated_at | [google.protobuf.Timestamp](#google-protobuf-Timestamp) |  |  |
+
+
+
+
+
+
 <a name="mediator-v1-Provider"></a>
 
 ### Provider
@@ -2242,7 +2242,7 @@ an organization.
 | Field | Type | Label | Description |
 | ----- | ---- | ----- | ----------- |
 | organization | [string](#string) |  |  |
-| group | [string](#string) |  |  |
+| project | [string](#string) |  |  |
 
 
 
@@ -2336,7 +2336,7 @@ RESTProviderConfig contains the configuration for the REST provider.
 | Field | Type | Label | Description |
 | ----- | ---- | ----- | ----------- |
 | provider | [string](#string) |  |  |
-| group_id | [int32](#int32) |  |  |
+| project_id | [string](#string) |  |  |
 | repositories | [Repositories](#mediator-v1-Repositories) | repeated |  |
 | events | [string](#string) | repeated |  |
 
@@ -2387,7 +2387,7 @@ RepositoryRecord is used for registering repositories.
 | ----- | ---- | ----- | ----------- |
 | id | [string](#string) |  |  |
 | provider | [string](#string) |  |  |
-| group_id | [int32](#int32) |  |  |
+| project_id | [string](#string) |  |  |
 | owner | [string](#string) |  |  |
 | name | [string](#string) |  |  |
 | repo_id | [int32](#int32) |  |  |
@@ -2453,25 +2453,25 @@ This is used to fetch data from a REST endpoint.
 
 
 
-<a name="mediator-v1-RevokeOauthGroupTokenRequest"></a>
+<a name="mediator-v1-RevokeOauthProjectTokenRequest"></a>
 
-### RevokeOauthGroupTokenRequest
+### RevokeOauthProjectTokenRequest
 
 
 
 | Field | Type | Label | Description |
 | ----- | ---- | ----- | ----------- |
 | provider | [string](#string) |  |  |
-| group_id | [int32](#int32) |  |  |
+| project_id | [string](#string) |  |  |
 
 
 
 
 
 
-<a name="mediator-v1-RevokeOauthGroupTokenResponse"></a>
+<a name="mediator-v1-RevokeOauthProjectTokenResponse"></a>
 
-### RevokeOauthGroupTokenResponse
+### RevokeOauthProjectTokenResponse
 
 
 
@@ -2558,8 +2558,8 @@ This is used to fetch data from a REST endpoint.
 | Field | Type | Label | Description |
 | ----- | ---- | ----- | ----------- |
 | id | [int32](#int32) |  |  |
-| organization_id | [int32](#int32) |  |  |
-| group_id | [int32](#int32) | optional |  |
+| organization_id | [string](#string) |  |  |
+| project_id | [string](#string) | optional |  |
 | name | [string](#string) |  |  |
 | is_admin | [bool](#bool) |  |  |
 | is_protected | [bool](#bool) |  |  |
@@ -2820,7 +2820,7 @@ Ingest defines how the data is ingested.
 | Field | Type | Label | Description |
 | ----- | ---- | ----- | ----------- |
 | provider | [string](#string) |  |  |
-| group_id | [int32](#int32) |  |  |
+| project_id | [string](#string) |  |  |
 | access_token | [string](#string) |  |  |
 | owner | [string](#string) | optional |  |
 
@@ -2848,7 +2848,7 @@ Ingest defines how the data is ingested.
 | Field | Type | Label | Description |
 | ----- | ---- | ----- | ----------- |
 | provider | [string](#string) |  |  |
-| group_id | [int32](#int32) |  |  |
+| project_id | [string](#string) |  |  |
 
 
 
@@ -2904,7 +2904,7 @@ user record to be returned
 | Field | Type | Label | Description |
 | ----- | ---- | ----- | ----------- |
 | id | [int32](#int32) |  |  |
-| organization_id | [int32](#int32) |  |  |
+| organization_id | [string](#string) |  |  |
 | email | [string](#string) | optional |  |
 | identity_subject | [string](#string) |  |  |
 | first_name | [string](#string) | optional |  |
@@ -2926,7 +2926,7 @@ user record to be returned
 | Field | Type | Label | Description |
 | ----- | ---- | ----- | ----------- |
 | provider | [string](#string) |  |  |
-| group_id | [int32](#int32) |  |  |
+| project_id | [string](#string) |  |  |
 | timestamp | [google.protobuf.Timestamp](#google-protobuf-Timestamp) |  |  |
 
 
@@ -3013,7 +3013,7 @@ Entity defines the entity that is supported by the provider.
 | ---- | ------ | ----------- |
 | OBJECT_OWNER_UNSPECIFIED | 0 |  |
 | OBJECT_OWNER_ORGANIZATION | 1 |  |
-| OBJECT_OWNER_GROUP | 2 |  |
+| OBJECT_OWNER_PROJECT | 2 |  |
 | OBJECT_OWNER_USER | 3 |  |
 
 
@@ -3079,20 +3079,6 @@ Get Branch Protection Settings
 | GetBranchProtection | [GetBranchProtectionRequest](#mediator-v1-GetBranchProtectionRequest) | [GetBranchProtectionResponse](#mediator-v1-GetBranchProtectionResponse) |  |
 
 
-<a name="mediator-v1-GroupService"></a>
-
-### GroupService
-manage Groups CRUD
-
-| Method Name | Request Type | Response Type | Description |
-| ----------- | ------------ | ------------- | ------------|
-| CreateGroup | [CreateGroupRequest](#mediator-v1-CreateGroupRequest) | [CreateGroupResponse](#mediator-v1-CreateGroupResponse) |  |
-| GetGroups | [GetGroupsRequest](#mediator-v1-GetGroupsRequest) | [GetGroupsResponse](#mediator-v1-GetGroupsResponse) |  |
-| GetGroupByName | [GetGroupByNameRequest](#mediator-v1-GetGroupByNameRequest) | [GetGroupByNameResponse](#mediator-v1-GetGroupByNameResponse) |  |
-| GetGroupById | [GetGroupByIdRequest](#mediator-v1-GetGroupByIdRequest) | [GetGroupByIdResponse](#mediator-v1-GetGroupByIdResponse) |  |
-| DeleteGroup | [DeleteGroupRequest](#mediator-v1-DeleteGroupRequest) | [DeleteGroupResponse](#mediator-v1-DeleteGroupResponse) |  |
-
-
 <a name="mediator-v1-HealthService"></a>
 
 ### HealthService
@@ -3129,7 +3115,7 @@ protolint:disable:this |
 | ExchangeCodeForTokenWEB | [ExchangeCodeForTokenWEBRequest](#mediator-v1-ExchangeCodeForTokenWEBRequest) | [ExchangeCodeForTokenWEBResponse](#mediator-v1-ExchangeCodeForTokenWEBResponse) |  |
 | StoreProviderToken | [StoreProviderTokenRequest](#mediator-v1-StoreProviderTokenRequest) | [StoreProviderTokenResponse](#mediator-v1-StoreProviderTokenResponse) |  |
 | RevokeOauthTokens | [RevokeOauthTokensRequest](#mediator-v1-RevokeOauthTokensRequest) | [RevokeOauthTokensResponse](#mediator-v1-RevokeOauthTokensResponse) | RevokeOauthTokens is used to revoke all tokens this a nuclear option and should only be used in emergencies |
-| RevokeOauthGroupToken | [RevokeOauthGroupTokenRequest](#mediator-v1-RevokeOauthGroupTokenRequest) | [RevokeOauthGroupTokenResponse](#mediator-v1-RevokeOauthGroupTokenResponse) | revoke token for a group |
+| RevokeOauthProjectToken | [RevokeOauthProjectTokenRequest](#mediator-v1-RevokeOauthProjectTokenRequest) | [RevokeOauthProjectTokenResponse](#mediator-v1-RevokeOauthProjectTokenResponse) | revoke token for a project |
 | VerifyProviderTokenFrom | [VerifyProviderTokenFromRequest](#mediator-v1-VerifyProviderTokenFromRequest) | [VerifyProviderTokenFromResponse](#mediator-v1-VerifyProviderTokenFromResponse) | VerifyProviderTokenFrom verifies that a token has been created for a provider since given timestamp |
 
 
@@ -3159,13 +3145,27 @@ manage Organizations CRUD
 | ListPolicies | [ListPoliciesRequest](#mediator-v1-ListPoliciesRequest) | [ListPoliciesResponse](#mediator-v1-ListPoliciesResponse) |  |
 | GetPolicyById | [GetPolicyByIdRequest](#mediator-v1-GetPolicyByIdRequest) | [GetPolicyByIdResponse](#mediator-v1-GetPolicyByIdResponse) |  |
 | GetPolicyStatusById | [GetPolicyStatusByIdRequest](#mediator-v1-GetPolicyStatusByIdRequest) | [GetPolicyStatusByIdResponse](#mediator-v1-GetPolicyStatusByIdResponse) |  |
-| GetPolicyStatusByGroup | [GetPolicyStatusByGroupRequest](#mediator-v1-GetPolicyStatusByGroupRequest) | [GetPolicyStatusByGroupResponse](#mediator-v1-GetPolicyStatusByGroupResponse) |  |
+| GetPolicyStatusByProject | [GetPolicyStatusByProjectRequest](#mediator-v1-GetPolicyStatusByProjectRequest) | [GetPolicyStatusByProjectResponse](#mediator-v1-GetPolicyStatusByProjectResponse) |  |
 | ListRuleTypes | [ListRuleTypesRequest](#mediator-v1-ListRuleTypesRequest) | [ListRuleTypesResponse](#mediator-v1-ListRuleTypesResponse) |  |
 | GetRuleTypeByName | [GetRuleTypeByNameRequest](#mediator-v1-GetRuleTypeByNameRequest) | [GetRuleTypeByNameResponse](#mediator-v1-GetRuleTypeByNameResponse) |  |
 | GetRuleTypeById | [GetRuleTypeByIdRequest](#mediator-v1-GetRuleTypeByIdRequest) | [GetRuleTypeByIdResponse](#mediator-v1-GetRuleTypeByIdResponse) |  |
 | CreateRuleType | [CreateRuleTypeRequest](#mediator-v1-CreateRuleTypeRequest) | [CreateRuleTypeResponse](#mediator-v1-CreateRuleTypeResponse) |  |
 | UpdateRuleType | [UpdateRuleTypeRequest](#mediator-v1-UpdateRuleTypeRequest) | [UpdateRuleTypeResponse](#mediator-v1-UpdateRuleTypeResponse) |  |
 | DeleteRuleType | [DeleteRuleTypeRequest](#mediator-v1-DeleteRuleTypeRequest) | [DeleteRuleTypeResponse](#mediator-v1-DeleteRuleTypeResponse) |  |
+
+
+<a name="mediator-v1-ProjectService"></a>
+
+### ProjectService
+manage Projects CRUD
+
+| Method Name | Request Type | Response Type | Description |
+| ----------- | ------------ | ------------- | ------------|
+| CreateProject | [CreateProjectRequest](#mediator-v1-CreateProjectRequest) | [CreateProjectResponse](#mediator-v1-CreateProjectResponse) |  |
+| GetProjects | [GetProjectsRequest](#mediator-v1-GetProjectsRequest) | [GetProjectsResponse](#mediator-v1-GetProjectsResponse) |  |
+| GetProjectByName | [GetProjectByNameRequest](#mediator-v1-GetProjectByNameRequest) | [GetProjectByNameResponse](#mediator-v1-GetProjectByNameResponse) |  |
+| GetProjectById | [GetProjectByIdRequest](#mediator-v1-GetProjectByIdRequest) | [GetProjectByIdResponse](#mediator-v1-GetProjectByIdResponse) |  |
+| DeleteProject | [DeleteProjectRequest](#mediator-v1-DeleteProjectRequest) | [DeleteProjectResponse](#mediator-v1-DeleteProjectResponse) |  |
 
 
 <a name="mediator-v1-RepositoryService"></a>
@@ -3190,10 +3190,10 @@ manage Roles CRUD
 | Method Name | Request Type | Response Type | Description |
 | ----------- | ------------ | ------------- | ------------|
 | CreateRoleByOrganization | [CreateRoleByOrganizationRequest](#mediator-v1-CreateRoleByOrganizationRequest) | [CreateRoleByOrganizationResponse](#mediator-v1-CreateRoleByOrganizationResponse) |  |
-| CreateRoleByGroup | [CreateRoleByGroupRequest](#mediator-v1-CreateRoleByGroupRequest) | [CreateRoleByGroupResponse](#mediator-v1-CreateRoleByGroupResponse) |  |
+| CreateRoleByProject | [CreateRoleByProjectRequest](#mediator-v1-CreateRoleByProjectRequest) | [CreateRoleByProjectResponse](#mediator-v1-CreateRoleByProjectResponse) |  |
 | DeleteRole | [DeleteRoleRequest](#mediator-v1-DeleteRoleRequest) | [DeleteRoleResponse](#mediator-v1-DeleteRoleResponse) |  |
 | GetRoles | [GetRolesRequest](#mediator-v1-GetRolesRequest) | [GetRolesResponse](#mediator-v1-GetRolesResponse) |  |
-| GetRolesByGroup | [GetRolesByGroupRequest](#mediator-v1-GetRolesByGroupRequest) | [GetRolesByGroupResponse](#mediator-v1-GetRolesByGroupResponse) |  |
+| GetRolesByProject | [GetRolesByProjectRequest](#mediator-v1-GetRolesByProjectRequest) | [GetRolesByProjectResponse](#mediator-v1-GetRolesByProjectResponse) |  |
 | GetRoleById | [GetRoleByIdRequest](#mediator-v1-GetRoleByIdRequest) | [GetRoleByIdResponse](#mediator-v1-GetRoleByIdResponse) |  |
 | GetRoleByName | [GetRoleByNameRequest](#mediator-v1-GetRoleByNameRequest) | [GetRoleByNameResponse](#mediator-v1-GetRoleByNameResponse) |  |
 
@@ -3222,7 +3222,7 @@ manage Users CRUD
 | DeleteUser | [DeleteUserRequest](#mediator-v1-DeleteUserRequest) | [DeleteUserResponse](#mediator-v1-DeleteUserResponse) |  |
 | GetUsers | [GetUsersRequest](#mediator-v1-GetUsersRequest) | [GetUsersResponse](#mediator-v1-GetUsersResponse) |  |
 | GetUsersByOrganization | [GetUsersByOrganizationRequest](#mediator-v1-GetUsersByOrganizationRequest) | [GetUsersByOrganizationResponse](#mediator-v1-GetUsersByOrganizationResponse) |  |
-| GetUsersByGroup | [GetUsersByGroupRequest](#mediator-v1-GetUsersByGroupRequest) | [GetUsersByGroupResponse](#mediator-v1-GetUsersByGroupResponse) |  |
+| GetUsersByProject | [GetUsersByProjectRequest](#mediator-v1-GetUsersByProjectRequest) | [GetUsersByProjectResponse](#mediator-v1-GetUsersByProjectResponse) |  |
 | GetUserById | [GetUserByIdRequest](#mediator-v1-GetUserByIdRequest) | [GetUserByIdResponse](#mediator-v1-GetUserByIdResponse) |  |
 | GetUserBySubject | [GetUserBySubjectRequest](#mediator-v1-GetUserBySubjectRequest) | [GetUserBySubjectResponse](#mediator-v1-GetUserBySubjectResponse) |  |
 | GetUser | [GetUserRequest](#mediator-v1-GetUserRequest) | [GetUserResponse](#mediator-v1-GetUserResponse) |  |

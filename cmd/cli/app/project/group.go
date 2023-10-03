@@ -19,51 +19,26 @@
 // It does make a good example of how to use the generated client code
 // for others to use as a reference.
 
-package group
+// Package project contains the project logic for the control plane
+package project
 
 import (
-	"testing"
-
-	"github.com/spf13/viper"
-	"github.com/stretchr/testify/assert"
+	"github.com/spf13/cobra"
 
 	"github.com/stacklok/mediator/cmd/cli/app"
-	"github.com/stacklok/mediator/internal/util"
 )
 
-func TestCobraMain(t *testing.T) {
-	t.Parallel()
+// ProjectCmd is the root command for the project subcommands
+var ProjectCmd = &cobra.Command{
+	Use:   "project",
+	Short: "Manage projects within a mediator control plane",
+	Long: `The medic project commands allow the management of projects within a 
+mediator control plane.`,
+	RunE: func(cmd *cobra.Command, args []string) error {
+		return cmd.Usage()
+	},
+}
 
-	tests := []struct {
-		name           string
-		args           []string
-		expectedOutput string
-	}{
-		{
-			name:           "group command",
-			args:           []string{"group"},
-			expectedOutput: "group called\n",
-		},
-	}
-
-	for _, test := range tests {
-		test := test
-
-		t.Run(test.name, func(t *testing.T) {
-			t.Parallel()
-
-			viper.SetConfigName("config")
-			viper.AddConfigPath("../../../..")
-			viper.SetConfigType("yaml")
-			viper.AutomaticEnv()
-			GroupCmd.Use = test.expectedOutput
-
-			tw := &util.TestWriter{}
-			app.RootCmd.SetOut(tw) // stub to capture eventual output
-			app.RootCmd.SetArgs(test.args)
-
-			assert.NoError(t, app.RootCmd.Execute(), "Error on execute")
-			assert.Contains(t, tw.Output, test.expectedOutput)
-		})
-	}
+func init() {
+	app.RootCmd.AddCommand(ProjectCmd)
 }

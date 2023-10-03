@@ -45,7 +45,7 @@ var artifact_listCmd = &cobra.Command{
 		if provider != auth.Github {
 			return fmt.Errorf("only %s is supported at this time", auth.Github)
 		}
-		groupID := viper.GetInt32("group-id")
+		projectID := viper.GetString("project-id")
 
 		switch format {
 		case "json":
@@ -67,8 +67,8 @@ var artifact_listCmd = &cobra.Command{
 		artifacts, err := client.ListArtifacts(
 			ctx,
 			&pb.ListArtifactsRequest{
-				Provider: provider,
-				GroupId:  groupID,
+				Provider:  provider,
+				ProjectId: projectID,
 			},
 		)
 
@@ -113,7 +113,7 @@ func init() {
 	ArtifactCmd.AddCommand(artifact_listCmd)
 	artifact_listCmd.Flags().StringP("output", "f", "", "Output format (json or yaml)")
 	artifact_listCmd.Flags().StringP("provider", "n", "", "Name for the provider to enroll")
-	artifact_listCmd.Flags().Int32P("group-id", "g", 0, "ID of the group for repo registration")
+	artifact_listCmd.Flags().StringP("project-id", "g", "", "ID of the project for repo registration")
 
 	if err := artifact_listCmd.MarkFlagRequired("provider"); err != nil {
 		fmt.Fprintf(os.Stderr, "Error marking flag as required: %s\n", err)

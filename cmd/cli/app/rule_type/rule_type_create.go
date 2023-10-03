@@ -31,7 +31,7 @@ import (
 var RuleType_createCmd = &cobra.Command{
 	Use:   "create",
 	Short: "Create a rule type within a mediator control plane",
-	Long: `The medic rule type create subcommand lets you create new policies for a group
+	Long: `The medic rule type create subcommand lets you create new policies for a project
 within a mediator control plane.`,
 	PreRun: func(cmd *cobra.Command, args []string) {
 		if err := viper.BindPFlags(cmd.Flags()); err != nil {

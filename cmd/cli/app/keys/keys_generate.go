@@ -38,7 +38,7 @@ var genKeys_listCmd = &cobra.Command{
 	Use:   "generate",
 	Short: "Generate keys within a mediator control plane",
 	Long: `The medic keys generate  subcommand lets you create keys within a
-mediator control plane for an specific group.`,
+mediator control plane for an specific project.`,
 	PreRun: func(cmd *cobra.Command, args []string) {
 		if err := viper.BindPFlags(cmd.Flags()); err != nil {
 			fmt.Fprintf(os.Stderr, "Error binding flags: %s\n", err)
@@ -46,7 +46,7 @@ mediator control plane for an specific group.`,
 	},
 	RunE: func(cmd *cobra.Command, args []string) error {
 
-		group_id := util.GetConfigValue("group-id", "group-id", cmd, int32(0))
+		project_id := viper.GetString("project-id")
 		out := util.GetConfigValue("output", "output", cmd, "").(string)
 		pass := util.GetConfigValue("passphrase", "passphrase", cmd, "").(string)
 		var passphrase []byte
@@ -72,7 +72,7 @@ mediator control plane for an specific group.`,
 
 		keyResp, err := client.CreateKeyPair(ctx, &pb.CreateKeyPairRequest{
 			Passphrase: base64.RawStdEncoding.EncodeToString(passphrase),
-			GroupId:    group_id.(int32),
+			ProjectId:  project_id,
 		})
 		if err != nil {
 			util.ExitNicelyOnError(err, "Error calling create keys")
@@ -103,7 +103,7 @@ mediator control plane for an specific group.`,
 
 func init() {
 	KeysCmd.AddCommand(genKeys_listCmd)
-	genKeys_listCmd.Flags().Int32P("group-id", "g", 0, "group id to list roles for")
+	genKeys_listCmd.Flags().StringP("project-id", "g", "", "project id to list roles for")
 	genKeys_listCmd.Flags().StringP("output", "o", "", "Output public key to file")
 	genKeys_listCmd.Flags().StringP("passphrase", "p", "", "Passphrase to use for key generation")
 }

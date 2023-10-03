@@ -71,30 +71,32 @@ func (e *Executor) HandleEntityEvent(msg *message.Message) error {
 
 	ctx := msg.Context()
 
-	// get group info
-	group, err := e.querier.GetGroupByID(ctx, inf.GroupID)
+	projectID := inf.ProjectID
+
+	// get project info
+	project, err := e.querier.GetProjectByID(ctx, *projectID)
 	if err != nil {
 		return fmt.Errorf("error getting group: %w", err)
 	}
 
 	provider, err := e.querier.GetProviderByName(ctx, db.GetProviderByNameParams{
-		Name:    inf.Provider,
-		GroupID: inf.GroupID,
+		Name:      inf.Provider,
+		ProjectID: *projectID,
 	})
 
 	if err != nil {
 		return fmt.Errorf("error getting provider: %w", err)
 	}
 
-	cli, err := providers.GetProviderBuilder(ctx, provider, inf.GroupID, e.querier, e.crypteng)
+	cli, err := providers.GetProviderBuilder(ctx, provider, *projectID, e.querier, e.crypteng)
 	if err != nil {
 		return fmt.Errorf("error building client: %w", err)
 	}
 
 	ectx := &EntityContext{
-		Group: Group{
-			ID:   group.ID,
-			Name: group.Name,
+		Project: Project{
+			ID:   project.ID,
+			Name: project.Name,
 		},
 		Provider: Provider{
 			Name: inf.Provider,
@@ -112,7 +114,7 @@ func (e *Executor) evalEntityEvent(
 	cli *providers.ProviderBuilder,
 ) error {
 	// Get policies relevant to group
-	dbpols, err := e.querier.ListPoliciesByGroupID(ctx, inf.GroupID)
+	dbpols, err := e.querier.ListPoliciesByProjectID(ctx, *inf.ProjectID)
 	if err != nil {
 		return fmt.Errorf("error getting policies: %w", err)
 	}
@@ -173,9 +175,9 @@ func (e *Executor) getEvaluator(
 	log.Printf("Evaluating rule: %s for policy %s", rule.Type, policyID)
 
 	dbrt, err := e.querier.GetRuleTypeByName(ctx, db.GetRuleTypeByNameParams{
-		Provider: prov,
-		GroupID:  ectx.Group.ID,
-		Name:     rule.Type,
+		Provider:  prov,
+		ProjectID: ectx.Project.ID,
+		Name:      rule.Type,
 	})
 
 	if err != nil {
@@ -207,7 +209,7 @@ func logEval(
 	logger := zerolog.Ctx(ctx).Debug().
 		Str("policy", pol.Name).
 		Str("ruleType", rule.Type).
-		Int32("groupId", inf.GroupID).
+		Str("projectId", inf.ProjectID.String()).
 		Str("repositoryId", inf.OwnershipData[RepositoryIDEventKey])
 
 	if aID, ok := inf.OwnershipData[ArtifactIDEventKey]; ok {

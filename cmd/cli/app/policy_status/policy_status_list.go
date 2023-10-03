@@ -31,7 +31,7 @@ var policystatus_listCmd = &cobra.Command{
 	Use:   "list",
 	Short: "List policy status within a mediator control plane",
 	Long: `The medic policy_status list subcommand lets you list policy status within a
-mediator control plane for an specific provider/group or policy id.`,
+mediator control plane for an specific provider/project or policy id.`,
 	PreRun: func(cmd *cobra.Command, args []string) {
 		if err := viper.BindPFlags(cmd.Flags()); err != nil {
 			fmt.Fprintf(os.Stderr, "Error binding flags: %s\n", err)
@@ -49,7 +49,7 @@ mediator control plane for an specific provider/group or policy id.`,
 		defer cancel()
 
 		provider := viper.GetString("provider")
-		group := viper.GetString("group")
+		project := viper.GetString("project")
 		policyId := viper.GetString("policy")
 		format := viper.GetString("output")
 		all := viper.GetBool("detailed")
@@ -74,8 +74,8 @@ mediator control plane for an specific provider/group or policy id.`,
 			Rule:     rule,
 		}
 
-		if group != "" {
-			req.Context.Group = &group
+		if project != "" {
+			req.Context.Project = &project
 		}
 
 		resp, err := client.GetPolicyStatusById(ctx, req)
@@ -107,7 +107,7 @@ mediator control plane for an specific provider/group or policy id.`,
 func init() {
 	PolicyStatusCmd.AddCommand(policystatus_listCmd)
 	policystatus_listCmd.Flags().StringP("provider", "p", "github", "Provider to list policy status for")
-	policystatus_listCmd.Flags().StringP("group", "g", "", "group id to list policy status for")
+	policystatus_listCmd.Flags().StringP("project", "g", "", "project id to list policy status for")
 	policystatus_listCmd.Flags().StringP("policy", "i", "", "policy id to list policy status for")
 	policystatus_listCmd.Flags().StringP("output", "o", app.Table, "Output format (json, yaml or table)")
 	policystatus_listCmd.Flags().BoolP("detailed", "d", false, "List all policy violations")

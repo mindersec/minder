@@ -16,14 +16,14 @@ import (
 const createProvider = `-- name: CreateProvider :one
 INSERT INTO providers (
     name,
-    group_id,
+    project_id,
     implements,
-    definition) VALUES ($1, $2, $3, $4::jsonb) RETURNING id, name, version, group_id, implements, definition, created_at, updated_at
+    definition) VALUES ($1, $2, $3, $4::jsonb) RETURNING id, name, version, project_id, implements, definition, created_at, updated_at
 `
 
 type CreateProviderParams struct {
 	Name       string          `json:"name"`
-	GroupID    int32           `json:"group_id"`
+	ProjectID  uuid.UUID       `json:"project_id"`
 	Implements []ProviderType  `json:"implements"`
 	Definition json.RawMessage `json:"definition"`
 }
@@ -31,7 +31,7 @@ type CreateProviderParams struct {
 func (q *Queries) CreateProvider(ctx context.Context, arg CreateProviderParams) (Provider, error) {
 	row := q.db.QueryRowContext(ctx, createProvider,
 		arg.Name,
-		arg.GroupID,
+		arg.ProjectID,
 		pq.Array(arg.Implements),
 		arg.Definition,
 	)
@@ -40,7 +40,7 @@ func (q *Queries) CreateProvider(ctx context.Context, arg CreateProviderParams) 
 		&i.ID,
 		&i.Name,
 		&i.Version,
-		&i.GroupID,
+		&i.ProjectID,
 		pq.Array(&i.Implements),
 		&i.Definition,
 		&i.CreatedAt,
@@ -50,36 +50,36 @@ func (q *Queries) CreateProvider(ctx context.Context, arg CreateProviderParams) 
 }
 
 const deleteProvider = `-- name: DeleteProvider :exec
-DELETE FROM providers WHERE id = $1 AND group_id = $2
+DELETE FROM providers WHERE id = $1 AND project_id = $2
 `
 
 type DeleteProviderParams struct {
-	ID      uuid.UUID `json:"id"`
-	GroupID int32     `json:"group_id"`
+	ID        uuid.UUID `json:"id"`
+	ProjectID uuid.UUID `json:"project_id"`
 }
 
 func (q *Queries) DeleteProvider(ctx context.Context, arg DeleteProviderParams) error {
-	_, err := q.db.ExecContext(ctx, deleteProvider, arg.ID, arg.GroupID)
+	_, err := q.db.ExecContext(ctx, deleteProvider, arg.ID, arg.ProjectID)
 	return err
 }
 
 const getProviderByID = `-- name: GetProviderByID :one
-SELECT id, name, version, group_id, implements, definition, created_at, updated_at FROM providers WHERE id = $1 AND group_id = $2
+SELECT id, name, version, project_id, implements, definition, created_at, updated_at FROM providers WHERE id = $1 AND project_id = $2
 `
 
 type GetProviderByIDParams struct {
-	ID      uuid.UUID `json:"id"`
-	GroupID int32     `json:"group_id"`
+	ID        uuid.UUID `json:"id"`
+	ProjectID uuid.UUID `json:"project_id"`
 }
 
 func (q *Queries) GetProviderByID(ctx context.Context, arg GetProviderByIDParams) (Provider, error) {
-	row := q.db.QueryRowContext(ctx, getProviderByID, arg.ID, arg.GroupID)
+	row := q.db.QueryRowContext(ctx, getProviderByID, arg.ID, arg.ProjectID)
 	var i Provider
 	err := row.Scan(
 		&i.ID,
 		&i.Name,
 		&i.Version,
-		&i.GroupID,
+		&i.ProjectID,
 		pq.Array(&i.Implements),
 		&i.Definition,
 		&i.CreatedAt,
@@ -89,22 +89,22 @@ func (q *Queries) GetProviderByID(ctx context.Context, arg GetProviderByIDParams
 }
 
 const getProviderByName = `-- name: GetProviderByName :one
-SELECT id, name, version, group_id, implements, definition, created_at, updated_at FROM providers WHERE name = $1 AND group_id = $2
+SELECT id, name, version, project_id, implements, definition, created_at, updated_at FROM providers WHERE name = $1 AND project_id = $2
 `
 
 type GetProviderByNameParams struct {
-	Name    string `json:"name"`
-	GroupID int32  `json:"group_id"`
+	Name      string    `json:"name"`
+	ProjectID uuid.UUID `json:"project_id"`
 }
 
 func (q *Queries) GetProviderByName(ctx context.Context, arg GetProviderByNameParams) (Provider, error) {
-	row := q.db.QueryRowContext(ctx, getProviderByName, arg.Name, arg.GroupID)
+	row := q.db.QueryRowContext(ctx, getProviderByName, arg.Name, arg.ProjectID)
 	var i Provider
 	err := row.Scan(
 		&i.ID,
 		&i.Name,
 		&i.Version,
-		&i.GroupID,
+		&i.ProjectID,
 		pq.Array(&i.Implements),
 		&i.Definition,
 		&i.CreatedAt,
@@ -114,7 +114,7 @@ func (q *Queries) GetProviderByName(ctx context.Context, arg GetProviderByNamePa
 }
 
 const globalListProviders = `-- name: GlobalListProviders :many
-SELECT id, name, version, group_id, implements, definition, created_at, updated_at FROM providers
+SELECT id, name, version, project_id, implements, definition, created_at, updated_at FROM providers
 `
 
 func (q *Queries) GlobalListProviders(ctx context.Context) ([]Provider, error) {
@@ -130,7 +130,7 @@ func (q *Queries) GlobalListProviders(ctx context.Context) ([]Provider, error) {
 			&i.ID,
 			&i.Name,
 			&i.Version,
-			&i.GroupID,
+			&i.ProjectID,
 			pq.Array(&i.Implements),
 			&i.Definition,
 			&i.CreatedAt,
@@ -149,12 +149,12 @@ func (q *Queries) GlobalListProviders(ctx context.Context) ([]Provider, error) {
 	return items, nil
 }
 
-const listProvidersByGroupID = `-- name: ListProvidersByGroupID :many
-SELECT id, name, version, group_id, implements, definition, created_at, updated_at FROM providers WHERE group_id = $1
+const listProvidersByProjectID = `-- name: ListProvidersByProjectID :many
+SELECT id, name, version, project_id, implements, definition, created_at, updated_at FROM providers WHERE project_id = $1
 `
 
-func (q *Queries) ListProvidersByGroupID(ctx context.Context, groupID int32) ([]Provider, error) {
-	rows, err := q.db.QueryContext(ctx, listProvidersByGroupID, groupID)
+func (q *Queries) ListProvidersByProjectID(ctx context.Context, projectID uuid.UUID) ([]Provider, error) {
+	rows, err := q.db.QueryContext(ctx, listProvidersByProjectID, projectID)
 	if err != nil {
 		return nil, err
 	}
@@ -166,7 +166,7 @@ func (q *Queries) ListProvidersByGroupID(ctx context.Context, groupID int32) ([]
 			&i.ID,
 			&i.Name,
 			&i.Version,
-			&i.GroupID,
+			&i.ProjectID,
 			pq.Array(&i.Implements),
 			&i.Definition,
 			&i.CreatedAt,

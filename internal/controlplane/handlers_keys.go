@@ -24,13 +24,19 @@ import (
 
 	mcrypto "github.com/stacklok/mediator/internal/crypto"
 	"github.com/stacklok/mediator/internal/db"
+	"github.com/stacklok/mediator/internal/util"
 	pb "github.com/stacklok/mediator/pkg/api/protobuf/go/mediator/v1"
 )
 
 // CreateKeyPair creates a new key pair for a given group
 func (s *Server) CreateKeyPair(ctx context.Context, req *pb.CreateKeyPairRequest) (*pb.CreateKeyPairResponse, error) {
+	projID, err := getProjectFromRequestOrDefault(ctx, req)
+	if err != nil {
+		return nil, util.UserVisibleError(codes.InvalidArgument, err.Error())
+	}
+
 	// check if user is authorized
-	if err := AuthorizedOnGroup(ctx, req.GroupId); err != nil {
+	if err := AuthorizedOnProject(ctx, projID); err != nil {
 		return nil, err
 	}
 	bpass, err := base64.RawStdEncoding.DecodeString(req.Passphrase)
@@ -51,7 +57,7 @@ func (s *Server) CreateKeyPair(ctx context.Context, req *pb.CreateKeyPairRequest
 	uuid_key_id := uuid.New()
 
 	keys, err := s.store.CreateSigningKey(ctx, db.CreateSigningKeyParams{
-		GroupID:       req.GroupId,
+		ProjectID:     projID,
 		PrivateKey:    base64.RawStdEncoding.EncodeToString(priv),
 		PublicKey:     base64.RawStdEncoding.EncodeToString(pub),
 		Passphrase:    pHash,

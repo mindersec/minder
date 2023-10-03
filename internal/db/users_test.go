@@ -38,7 +38,7 @@ func stringToNullString(s string) sql.NullString {
 	return sql.NullString{String: s, Valid: true}
 }
 
-func createRandomUser(t *testing.T, org Organization) User {
+func createRandomUser(t *testing.T, org Project) User {
 	t.Helper()
 
 	seed := time.Now().UnixNano()

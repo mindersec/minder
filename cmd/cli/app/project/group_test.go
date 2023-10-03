@@ -19,26 +19,51 @@
 // It does make a good example of how to use the generated client code
 // for others to use as a reference.
 
-// Package auth provides the auth command project for the medic CLI.
-package auth
+package project
 
 import (
-	"github.com/spf13/cobra"
+	"testing"
+
+	"github.com/spf13/viper"
+	"github.com/stretchr/testify/assert"
 
 	"github.com/stacklok/mediator/cmd/cli/app"
+	"github.com/stacklok/mediator/internal/util"
 )
 
-// AuthCmd represents the account command
-var AuthCmd = &cobra.Command{
-	Use:   "auth",
-	Short: "Authorize and manage accounts within a mediator control plane",
-	Long: `The medic auth command project lets you create accounts and grant or revoke
-authorization to existing accounts within a mediator control plane.`,
-	RunE: func(cmd *cobra.Command, args []string) error {
-		return cmd.Usage()
-	},
-}
+func TestCobraMain(t *testing.T) {
+	t.Parallel()
 
-func init() {
-	app.RootCmd.AddCommand(AuthCmd)
+	tests := []struct {
+		name           string
+		args           []string
+		expectedOutput string
+	}{
+		{
+			name:           "project command",
+			args:           []string{"project"},
+			expectedOutput: "project called\n",
+		},
+	}
+
+	for _, test := range tests {
+		test := test
+
+		t.Run(test.name, func(t *testing.T) {
+			t.Parallel()
+
+			viper.SetConfigName("config")
+			viper.AddConfigPath("../../../..")
+			viper.SetConfigType("yaml")
+			viper.AutomaticEnv()
+			ProjectCmd.Use = test.expectedOutput
+
+			tw := &util.TestWriter{}
+			app.RootCmd.SetOut(tw) // stub to capture eventual output
+			app.RootCmd.SetArgs(test.args)
+
+			assert.NoError(t, app.RootCmd.Execute(), "Error on execute")
+			assert.Contains(t, tw.Output, test.expectedOutput)
+		})
+	}
 }

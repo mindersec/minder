@@ -20,6 +20,7 @@ import (
 	"strings"
 	"time"
 
+	"github.com/google/uuid"
 	gauth "github.com/grpc-ecosystem/go-grpc-middleware/v2/interceptors/auth"
 	"github.com/rs/zerolog"
 	"golang.org/x/exp/slices"
@@ -54,9 +55,10 @@ var githubAuthorizations = []string{
 
 // checks if an user is superadmin
 func isSuperadmin(claims auth.UserPermissions) bool {
-	// need to check that has a role that belongs to org 1 generally and is admin
+	// need to check that has a role that belongs to the root org generally and is admin
 	for _, role := range claims.Roles {
-		if role.OrganizationID == 1 && role.GroupID == 0 && role.IsAdmin {
+		// NOTE(jaosorior): Should we check for the root project too?
+		if role.OrganizationID == rootOrganization && role.IsAdmin {
 			return true
 		}
 	}
@@ -74,11 +76,11 @@ func lookupUserPermissions(ctx context.Context, store db.Store, subject string) 
 	}
 
 	// read groups and add id to claims
-	gs, err := store.GetUserGroups(ctx, userInfo.ID)
+	gs, err := store.GetUserProjects(ctx, userInfo.ID)
 	if err != nil {
 		return emptyPermissions, fmt.Errorf("failed to get groups")
 	}
-	var groups []int32
+	var groups []uuid.UUID
 	for _, g := range gs {
 		groups = append(groups, g.ID)
 	}
@@ -91,14 +93,22 @@ func lookupUserPermissions(ctx context.Context, store db.Store, subject string) 
 
 	var roles []auth.RoleInfo
 	for _, r := range rs {
-		roles = append(roles, auth.RoleInfo{RoleID: r.ID, IsAdmin: r.IsAdmin, GroupID: r.GroupID.Int32,
-			OrganizationID: r.OrganizationID})
+		rif := auth.RoleInfo{
+			RoleID:         r.ID,
+			IsAdmin:        r.IsAdmin,
+			OrganizationID: r.OrganizationID,
+		}
+		if r.ProjectID.Valid {
+			pID := r.ProjectID.UUID
+			rif.ProjectID = &pID
+		}
+		roles = append(roles, rif)
 	}
 
 	claims := auth.UserPermissions{
 		UserId:         userInfo.ID,
 		Roles:          roles,
-		GroupIds:       groups,
+		ProjectIds:     groups,
 		OrganizationId: userInfo.OrganizationID,
 	}
 
@@ -107,7 +117,7 @@ func lookupUserPermissions(ctx context.Context, store db.Store, subject string) 
 
 // AuthorizedOnOrg checks if the request is authorized for the given
 // organization, and returns an error if the request is not authorized.
-func AuthorizedOnOrg(ctx context.Context, orgId int32) error {
+func AuthorizedOnOrg(ctx context.Context, orgId uuid.UUID) error {
 	claims := auth.GetPermissionsFromContext(ctx)
 	if isSuperadmin(claims) {
 		return nil
@@ -120,7 +130,7 @@ func AuthorizedOnOrg(ctx context.Context, orgId int32) error {
 		return util.UserVisibleError(codes.PermissionDenied, "user is not authorized to access this organization")
 	}
 	isOwner := func(role auth.RoleInfo) bool {
-		return role.GroupID == 0 && int32(role.OrganizationID) == orgId && role.IsAdmin
+		return role.ProjectID.String() == "" && role.OrganizationID == orgId && role.IsAdmin
 	}
 	if opts.GetOwnerOnly() && !slices.ContainsFunc(claims.Roles, isOwner) {
 		return util.UserVisibleError(codes.PermissionDenied, "user is not an administrator on this organization")
@@ -128,27 +138,30 @@ func AuthorizedOnOrg(ctx context.Context, orgId int32) error {
 	return nil
 }
 
-// AuthorizedOnGroup checks if the request is authorized for the given
+// AuthorizedOnProject checks if the request is authorized for the given
 // group, and returns an error if the request is not authorized.
-func AuthorizedOnGroup(ctx context.Context, groupId int32) error {
+func AuthorizedOnProject(ctx context.Context, projectID uuid.UUID) error {
 	claims := auth.GetPermissionsFromContext(ctx)
 	if isSuperadmin(claims) {
 		return nil
 	}
 	opts := getRpcOptions(ctx)
-	if opts.GetAuthScope() != mediator.ObjectOwner_OBJECT_OWNER_GROUP {
-		return status.Errorf(codes.Internal, "Called IsGroupAuthorized on non-group method, should be %v", opts.GetAuthScope())
+	if opts.GetAuthScope() != mediator.ObjectOwner_OBJECT_OWNER_PROJECT {
+		return status.Errorf(codes.Internal, "Called IsProjectAuthorized on non-group method, should be %v", opts.GetAuthScope())
 	}
 
-	if !slices.Contains(claims.GroupIds, groupId) {
-		return util.UserVisibleError(codes.PermissionDenied, "user is not authorized to access this group")
+	if !slices.Contains(claims.ProjectIds, projectID) {
+		return util.UserVisibleError(codes.PermissionDenied, "user is not authorized to access this project")
 	}
 	isOwner := func(role auth.RoleInfo) bool {
-		return int32(role.GroupID) == groupId && role.IsAdmin
+		if role.ProjectID == nil {
+			return false
+		}
+		return *role.ProjectID == projectID && role.IsAdmin
 	}
 	// check if is admin of group
 	if opts.GetOwnerOnly() && !slices.ContainsFunc(claims.Roles, isOwner) {
-		return util.UserVisibleError(codes.PermissionDenied, "user is not an administrator on this group")
+		return util.UserVisibleError(codes.PermissionDenied, "user is not an administrator on this project")
 	}
 	return nil
 }
@@ -172,8 +185,8 @@ func AuthorizedOnUser(ctx context.Context, userId int32) error {
 }
 
 // IsProviderCallAuthorized checks if the request is authorized
-func (s *Server) IsProviderCallAuthorized(ctx context.Context, provider db.Provider, groupId int32) bool {
-	if provider.GroupID != groupId {
+func (s *Server) IsProviderCallAuthorized(ctx context.Context, provider db.Provider, projectID uuid.UUID) bool {
+	if provider.ProjectID != projectID {
 		return false
 	}
 
@@ -186,7 +199,7 @@ func (s *Server) IsProviderCallAuthorized(ctx context.Context, provider db.Provi
 	for _, item := range githubAuthorizations {
 		if item == method {
 			// check the github token
-			encToken, _, err := s.GetProviderAccessToken(ctx, provider.Name, groupId, true)
+			encToken, _, err := s.GetProviderAccessToken(ctx, provider.Name, projectID, true)
 			if err != nil {
 				return false
 			}
@@ -194,7 +207,7 @@ func (s *Server) IsProviderCallAuthorized(ctx context.Context, provider db.Provi
 			// check if token is expired
 			if encToken.Expiry.Unix() < time.Now().Unix() {
 				// remove from the database and deny the request
-				_ = s.store.DeleteAccessToken(ctx, db.DeleteAccessTokenParams{Provider: provider.Name, GroupID: groupId})
+				_ = s.store.DeleteAccessToken(ctx, db.DeleteAccessTokenParams{Provider: provider.Name, ProjectID: projectID})
 
 				// remove from github
 				err := auth.DeleteAccessToken(ctx, provider.Name, encToken.AccessToken)

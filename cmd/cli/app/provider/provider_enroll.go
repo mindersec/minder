@@ -48,15 +48,15 @@ type Response struct {
 // MAX_CALLS is the maximum number of calls to the gRPC server before stopping.
 const MAX_CALLS = 300
 
-// just syncs repos for the specific provider and group
-func syncRepos(ctx context.Context, client pb.RepositoryServiceClient, provider string, group int32) error {
-	_, err := client.SyncRepositories(ctx, &pb.SyncRepositoriesRequest{Provider: provider, GroupId: group})
+// just syncs repos for the specific provider and project
+func syncRepos(ctx context.Context, client pb.RepositoryServiceClient, provider string, project string) error {
+	_, err := client.SyncRepositories(ctx, &pb.SyncRepositoriesRequest{Provider: provider, ProjectId: project})
 	return err
 }
 
 // callBackServer starts a server and handler to listen for the OAuth callback.
 // It will wait for either a success or failure response from the server.
-func callBackServer(ctx context.Context, provider string, group int32, port string,
+func callBackServer(ctx context.Context, provider string, project string, port string,
 	wg *sync.WaitGroup, client pb.OAuthServiceClient, since int64, repos_client pb.RepositoryServiceClient) {
 	server := &http.Server{
 		Addr:              fmt.Sprintf(":%s", port),
@@ -101,10 +101,10 @@ func callBackServer(ctx context.Context, provider string, group int32, port stri
 
 			// todo: check if token has been created. We need an endpoint to pass an state and check if token is created
 			res, err := client.VerifyProviderTokenFrom(clientCtx,
-				&pb.VerifyProviderTokenFromRequest{Provider: provider, GroupId: group, Timestamp: timestamppb.New(t)})
+				&pb.VerifyProviderTokenFromRequest{Provider: provider, ProjectId: project, Timestamp: timestamppb.New(t)})
 			if err == nil && res.Status == "OK" {
 				// we can sync repos
-				err := syncRepos(clientCtx, repos_client, provider, group)
+				err := syncRepos(clientCtx, repos_client, provider, project)
 				util.ExitNicelyOnError(err, "Error syncing repos")
 			}
 			if err != nil || res.Status == "OK" || calls >= MAX_CALLS {
@@ -132,7 +132,7 @@ actions such as adding repositories.`,
 			fmt.Fprintf(os.Stderr, "Only %s is supported at this time\n", ghclient.Github)
 			os.Exit(1)
 		}
-		group := viper.GetInt32("group-id")
+		project := viper.GetString("project-id")
 		pat := util.GetConfigValue("token", "token", cmd, "").(string)
 		owner := util.GetConfigValue("owner", "owner", cmd, "").(string)
 
@@ -150,10 +150,10 @@ actions such as adding repositories.`,
 		if pat != "" {
 			// use pat for enrollment
 			_, err := client.StoreProviderToken(context.Background(),
-				&pb.StoreProviderTokenRequest{Provider: provider, GroupId: int32(group), AccessToken: pat, Owner: &owner})
+				&pb.StoreProviderTokenRequest{Provider: provider, ProjectId: project, AccessToken: pat, Owner: &owner})
 			util.ExitNicelyOnError(err, "Error storing token")
 
-			err = syncRepos(ctx, repos_client, provider, int32(group))
+			err = syncRepos(ctx, repos_client, provider, project)
 			util.ExitNicelyOnError(err, "Error syncing repos")
 			fmt.Println("Provider enrolled successfully")
 		} else {
@@ -162,11 +162,11 @@ actions such as adding repositories.`,
 			util.ExitNicelyOnError(err, "Error getting random port")
 
 			resp, err := client.GetAuthorizationURL(ctx, &pb.GetAuthorizationURLRequest{
-				Provider: provider,
-				GroupId:  int32(group),
-				Cli:      true,
-				Port:     int32(port),
-				Owner:    &owner,
+				Provider:  provider,
+				ProjectId: project,
+				Cli:       true,
+				Port:      int32(port),
+				Owner:     &owner,
 			})
 			util.ExitNicelyOnError(err, "Error getting authorization URL")
 
@@ -184,7 +184,7 @@ actions such as adding repositories.`,
 			var wg sync.WaitGroup
 			wg.Add(1)
 
-			go callBackServer(oAuthCallbackCtx, provider, int32(group), fmt.Sprintf("%d", port), &wg, client, openTime, repos_client)
+			go callBackServer(oAuthCallbackCtx, provider, project, fmt.Sprintf("%d", port), &wg, client, openTime, repos_client)
 			wg.Wait()
 		}
 	},
@@ -193,7 +193,7 @@ actions such as adding repositories.`,
 func init() {
 	ProviderCmd.AddCommand(enrollProviderCmd)
 	enrollProviderCmd.Flags().StringP("provider", "n", "", "Name for the provider to enroll")
-	enrollProviderCmd.Flags().Int32P("group-id", "g", 0, "ID of the group for enrolling the provider")
+	enrollProviderCmd.Flags().StringP("project-id", "g", "", "ID of the project for enrolling the provider")
 	enrollProviderCmd.Flags().StringP("token", "t", "", "Personal Access Token (PAT) to use for enrollment")
 	enrollProviderCmd.Flags().StringP("owner", "o", "", "Owner to filter on for provider resources")
 	if err := enrollProviderCmd.MarkFlagRequired("provider"); err != nil {

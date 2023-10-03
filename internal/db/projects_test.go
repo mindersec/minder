@@ -27,22 +27,40 @@ import (
 	"encoding/json"
 	"strconv"
 	"testing"
+	"time"
 
 	"github.com/google/uuid"
 	"github.com/stretchr/testify/assert"
 	"github.com/stretchr/testify/require"
+
+	"github.com/stacklok/mediator/internal/util/rand"
 )
 
-// TODO(jaosorior): Currently we have the caveat that GetChildrenProjects and GetParentProjects
-// will also return the calling project. I didn't quite figure out how to
-// filter this out with the CTE query. I think it's possible, but I'm not
-// sure how to do it. For now, we'll just filter it out in the code.
-// Once we figure out how to do it in the query, we can remove the filtering
-// in the code and remove the +1 in the hierarchy offset and set it to 0.
-const hierarchyOffset = 1
+func createRandomProject(t *testing.T, orgID uuid.UUID) Project {
+	t.Helper()
 
-func calculateHierarchyOffset(hierarchy int) int {
-	return hierarchy + hierarchyOffset
+	seed := time.Now().UnixNano()
+	arg := CreateProjectParams{
+		Name: rand.RandomName(seed),
+		ParentID: uuid.NullUUID{
+			UUID:  orgID,
+			Valid: true,
+		},
+		Metadata: json.RawMessage(`{"company": "stacklok"}`),
+	}
+
+	proj, err := testQueries.CreateProject(context.Background(), arg)
+	require.NoError(t, err)
+	require.NotEmpty(t, proj)
+
+	require.Equal(t, arg.Name, proj.Name)
+	require.Equal(t, arg.Metadata, proj.Metadata)
+
+	require.NotZero(t, proj.ID)
+	require.NotZero(t, proj.CreatedAt)
+	require.NotZero(t, proj.UpdatedAt)
+
+	return proj
 }
 
 // createRoot will create a root project and return it. It will also return a cleanup function to delete the root
@@ -158,9 +176,9 @@ func TestDeleteDirectoryWithoutChildren(t *testing.T) {
 	// list projects to ensure it was created
 	projects, err := testQueries.GetChildrenProjects(context.Background(), rp.ID)
 	require.NoError(t, err, "error getting children")
-	l := calculateHierarchyOffset(1)
+	l := CalculateProjectHierarchyOffset(1)
 	assert.Len(t, projects, l)
-	assert.Equal(t, p.ID, projects[calculateHierarchyOffset(0)], "project id should match")
+	assert.Equal(t, p.ID, projects[CalculateProjectHierarchyOffset(0)].ID, "project id should match")
 
 	// delete project
 	_, err = testQueries.DeleteProject(context.Background(), p.ID)
@@ -169,7 +187,7 @@ func TestDeleteDirectoryWithoutChildren(t *testing.T) {
 	// list projects to ensure it was deleted
 	projects, err = testQueries.GetChildrenProjects(context.Background(), rp.ID)
 	require.NoError(t, err, "error getting children")
-	l = calculateHierarchyOffset(0)
+	l = CalculateProjectHierarchyOffset(0)
 	assert.Len(t, projects, l)
 }
 
@@ -186,7 +204,7 @@ func TestDeleteDirectoryWithChildren(t *testing.T) {
 	projects, err := testQueries.GetChildrenProjects(context.Background(), rp.ID)
 	require.NoError(t, err, "error getting children")
 
-	l := calculateHierarchyOffset(depth)
+	l := CalculateProjectHierarchyOffset(depth)
 	assert.Len(t, projects, l)
 
 	// delete project
@@ -197,7 +215,7 @@ func TestDeleteDirectoryWithChildren(t *testing.T) {
 	projects, err = testQueries.GetChildrenProjects(context.Background(), rp.ID)
 	require.NoError(t, err, "error getting children")
 
-	l = calculateHierarchyOffset(0)
+	l = CalculateProjectHierarchyOffset(0)
 	assert.Len(t, projects, l)
 }
 
@@ -234,11 +252,11 @@ func TestGetSingleParent(t *testing.T) {
 	require.NoError(t, err, "error getting parents")
 
 	// Should only have one parent
-	l := calculateHierarchyOffset(1)
+	l := CalculateProjectHierarchyOffset(1)
 	assert.Len(t, parents, l)
 
 	// Parent should be root
-	assert.Equal(t, rp.ID, parents[calculateHierarchyOffset(0)], "parent should be root")
+	assert.Equal(t, rp.ID, parents[CalculateProjectHierarchyOffset(0)], "parent should be root")
 }
 
 func TestGetParentFromRootDirShouldReturnEmpty(t *testing.T) {
@@ -250,7 +268,7 @@ func TestGetParentFromRootDirShouldReturnEmpty(t *testing.T) {
 	parents, err := testQueries.GetParentProjects(context.Background(), rp.ID)
 	require.NoError(t, err, "error getting parents")
 
-	l := calculateHierarchyOffset(0)
+	l := CalculateProjectHierarchyOffset(0)
 	assert.Len(t, parents, l)
 }
 
@@ -272,6 +290,6 @@ func TestGetChildrenMayReturnEmptyAppropriately(t *testing.T) {
 	parents, err := testQueries.GetChildrenProjects(context.Background(), rp.ID)
 	require.NoError(t, err, "error getting children")
 
-	l := calculateHierarchyOffset(0)
+	l := CalculateProjectHierarchyOffset(0)
 	assert.Len(t, parents, l)
 }

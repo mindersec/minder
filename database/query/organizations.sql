@@ -1,36 +1,38 @@
 -- name: CreateOrganization :one
-INSERT INTO organizations (
+INSERT INTO projects (
     name,
-    company
+    is_organization,
+    metadata 
 ) VALUES (
-    $1, $2
+    $1, TRUE, sqlc.arg(metadata)::jsonb
 ) RETURNING *;
 
 -- name: GetOrganization :one 
-SELECT * FROM organizations 
-WHERE id = $1 LIMIT 1;
+SELECT * FROM projects 
+WHERE id = $1 AND is_organization = TRUE LIMIT 1;
 
 -- name: GetOrganizationByName :one 
-SELECT * FROM organizations 
-WHERE name = $1 LIMIT 1;
+SELECT * FROM projects
+WHERE name = $1 AND is_organization = TRUE LIMIT 1;
 
 
 -- name: GetOrganizationForUpdate :one
-SELECT * FROM organizations
-WHERE name = $1 LIMIT 1
+SELECT * FROM projects
+WHERE name = $1 AND is_organization = TRUE LIMIT 1
 FOR NO KEY UPDATE;
 
 -- name: ListOrganizations :many
-SELECT * FROM organizations
-ORDER BY id
+SELECT * FROM projects
+WHERE is_organization = TRUE
+ORDER BY name
 LIMIT $1
 OFFSET $2;
 
 -- name: UpdateOrganization :one
-UPDATE organizations
-SET name = $2, company = $3, updated_at = NOW()
-WHERE id = $1 RETURNING *;
+UPDATE projects
+SET name = $2, metadata = sqlc.arg(metadata), updated_at = NOW()
+WHERE id = $1 AND is_organization = TRUE RETURNING *;
 
 -- name: DeleteOrganization :exec
-DELETE FROM organizations
-WHERE id = $1;
+DELETE FROM projects
+WHERE id = $1 AND is_organization = TRUE;

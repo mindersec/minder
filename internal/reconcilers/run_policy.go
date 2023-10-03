@@ -39,14 +39,14 @@ import (
 // by iterating over all registered entities for the relevant group
 // and sending a policy evaluation event for each one.
 type PolicyInitEvent struct {
-	// Group is the group that the event is relevant to
-	Group int32 `json:"group" validate:"gte=0"`
+	// Project is the project that the event is relevant to
+	Project uuid.UUID `json:"project" validate:"gte=0"`
 }
 
 // NewPolicyInitMessage creates a new repos init event
-func NewPolicyInitMessage(provider string, groupID int32) (*message.Message, error) {
+func NewPolicyInitMessage(provider string, projectID uuid.UUID) (*message.Message, error) {
 	evt := &PolicyInitEvent{
-		Group: groupID,
+		Project: projectID,
 	}
 
 	evtStr, err := json.Marshal(evt)
@@ -80,8 +80,8 @@ func (e *Reconciler) handlePolicyInitEvent(msg *message.Message) error {
 	}
 
 	provInfo, err := e.store.GetProviderByName(context.Background(), db.GetProviderByNameParams{
-		Name:    prov,
-		GroupID: evt.Group,
+		Name:      prov,
+		ProjectID: evt.Project,
 	})
 	if err != nil {
 		if errors.Is(err, sql.ErrNoRows) {
@@ -95,8 +95,8 @@ func (e *Reconciler) handlePolicyInitEvent(msg *message.Message) error {
 	}
 
 	ectx := &engine.EntityContext{
-		Group: engine.Group{
-			ID: evt.Group,
+		Project: engine.Project{
+			ID: evt.Project,
 		},
 		Provider: engine.Provider{
 			Name: provInfo.Name,
@@ -105,7 +105,7 @@ func (e *Reconciler) handlePolicyInitEvent(msg *message.Message) error {
 	}
 
 	ctx := msg.Context()
-	log.Printf("handling policy init event for group %d", evt.Group)
+	log.Printf("handling policy init event for group %d", evt.Project)
 	if err := e.publishPolicyInitEvents(ctx, ectx); err != nil {
 		// We don't return an error since watermill will retry
 		// the message.
@@ -120,10 +120,10 @@ func (s *Reconciler) publishPolicyInitEvents(
 	ctx context.Context,
 	ectx *engine.EntityContext,
 ) error {
-	dbrepos, err := s.store.ListRegisteredRepositoriesByGroupIDAndProvider(ctx,
-		db.ListRegisteredRepositoriesByGroupIDAndProviderParams{
-			Provider: ectx.Provider.Name,
-			GroupID:  ectx.Group.ID,
+	dbrepos, err := s.store.ListRegisteredRepositoriesByProjectIDAndProvider(ctx,
+		db.ListRegisteredRepositoriesByProjectIDAndProviderParams{
+			Provider:  ectx.Provider.Name,
+			ProjectID: ectx.Project.ID,
 		})
 	if err != nil {
 		return fmt.Errorf("publishPolicyInitEvents: error getting registered repos: %v", err)
@@ -144,7 +144,7 @@ func (s *Reconciler) publishPolicyInitEvents(
 
 		err := engine.NewEntityInfoWrapper().
 			WithProvider(ectx.Provider.Name).
-			WithGroupID(ectx.Group.ID).
+			WithProjectID(ectx.Project.ID).
 			WithRepository(repo).
 			WithRepositoryID(dbrepo.ID).
 			Publish(s.evt)
@@ -191,7 +191,7 @@ func (s *Reconciler) publishArtifactPolicyInitEvents(
 
 		err = engine.NewEntityInfoWrapper().
 			WithProvider(ectx.Provider.Name).
-			WithGroupID(ectx.Group.ID).
+			WithProjectID(ectx.Project.ID).
 			WithArtifact(pbArtifact).
 			WithRepositoryID(dbrepo.ID).
 			WithArtifactID(dbA.ID).

@@ -44,28 +44,58 @@ func (q *Queries) CreateRuleEvaluationStatusForRepository(ctx context.Context, a
 	return err
 }
 
-const getPolicyStatusByGroup = `-- name: GetPolicyStatusByGroup :many
+const getPolicyStatusByIdAndProject = `-- name: GetPolicyStatusByIdAndProject :one
 SELECT p.id, p.name, ps.policy_status, ps.last_updated FROM policy_status ps
 INNER JOIN policies p ON p.id = ps.policy_id
-WHERE p.group_id = $1
+WHERE p.id = $1 AND p.project_id = $2
 `
 
-type GetPolicyStatusByGroupRow struct {
+type GetPolicyStatusByIdAndProjectParams struct {
+	ID        uuid.UUID `json:"id"`
+	ProjectID uuid.UUID `json:"project_id"`
+}
+
+type GetPolicyStatusByIdAndProjectRow struct {
 	ID           uuid.UUID       `json:"id"`
 	Name         string          `json:"name"`
 	PolicyStatus EvalStatusTypes `json:"policy_status"`
 	LastUpdated  time.Time       `json:"last_updated"`
 }
 
-func (q *Queries) GetPolicyStatusByGroup(ctx context.Context, groupID int32) ([]GetPolicyStatusByGroupRow, error) {
-	rows, err := q.db.QueryContext(ctx, getPolicyStatusByGroup, groupID)
+func (q *Queries) GetPolicyStatusByIdAndProject(ctx context.Context, arg GetPolicyStatusByIdAndProjectParams) (GetPolicyStatusByIdAndProjectRow, error) {
+	row := q.db.QueryRowContext(ctx, getPolicyStatusByIdAndProject, arg.ID, arg.ProjectID)
+	var i GetPolicyStatusByIdAndProjectRow
+	err := row.Scan(
+		&i.ID,
+		&i.Name,
+		&i.PolicyStatus,
+		&i.LastUpdated,
+	)
+	return i, err
+}
+
+const getPolicyStatusByProject = `-- name: GetPolicyStatusByProject :many
+SELECT p.id, p.name, ps.policy_status, ps.last_updated FROM policy_status ps
+INNER JOIN policies p ON p.id = ps.policy_id
+WHERE p.project_id = $1
+`
+
+type GetPolicyStatusByProjectRow struct {
+	ID           uuid.UUID       `json:"id"`
+	Name         string          `json:"name"`
+	PolicyStatus EvalStatusTypes `json:"policy_status"`
+	LastUpdated  time.Time       `json:"last_updated"`
+}
+
+func (q *Queries) GetPolicyStatusByProject(ctx context.Context, projectID uuid.UUID) ([]GetPolicyStatusByProjectRow, error) {
+	rows, err := q.db.QueryContext(ctx, getPolicyStatusByProject, projectID)
 	if err != nil {
 		return nil, err
 	}
 	defer rows.Close()
-	items := []GetPolicyStatusByGroupRow{}
+	items := []GetPolicyStatusByProjectRow{}
 	for rows.Next() {
-		var i GetPolicyStatusByGroupRow
+		var i GetPolicyStatusByProjectRow
 		if err := rows.Scan(
 			&i.ID,
 			&i.Name,
@@ -83,36 +113,6 @@ func (q *Queries) GetPolicyStatusByGroup(ctx context.Context, groupID int32) ([]
 		return nil, err
 	}
 	return items, nil
-}
-
-const getPolicyStatusByIdAndGroup = `-- name: GetPolicyStatusByIdAndGroup :one
-SELECT p.id, p.name, ps.policy_status, ps.last_updated FROM policy_status ps
-INNER JOIN policies p ON p.id = ps.policy_id
-WHERE p.id = $1 AND p.group_id = $2
-`
-
-type GetPolicyStatusByIdAndGroupParams struct {
-	ID      uuid.UUID `json:"id"`
-	GroupID int32     `json:"group_id"`
-}
-
-type GetPolicyStatusByIdAndGroupRow struct {
-	ID           uuid.UUID       `json:"id"`
-	Name         string          `json:"name"`
-	PolicyStatus EvalStatusTypes `json:"policy_status"`
-	LastUpdated  time.Time       `json:"last_updated"`
-}
-
-func (q *Queries) GetPolicyStatusByIdAndGroup(ctx context.Context, arg GetPolicyStatusByIdAndGroupParams) (GetPolicyStatusByIdAndGroupRow, error) {
-	row := q.db.QueryRowContext(ctx, getPolicyStatusByIdAndGroup, arg.ID, arg.GroupID)
-	var i GetPolicyStatusByIdAndGroupRow
-	err := row.Scan(
-		&i.ID,
-		&i.Name,
-		&i.PolicyStatus,
-		&i.LastUpdated,
-	)
-	return i, err
 }
 
 const listRuleEvaluationStatusByPolicyId = `-- name: ListRuleEvaluationStatusByPolicyId :many
