@@ -20,8 +20,8 @@ set -eux
 medic() {
   go run ./cmd/cli/main.go "$@";
 }
-
-medic auth login -u root -p 'P4ssw@rd'
+# use root:root for credentials
+medic auth login
 
 medic provider enroll -n github
 
