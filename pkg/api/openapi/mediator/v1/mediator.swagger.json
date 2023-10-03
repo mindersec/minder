@@ -18,12 +18,6 @@
       "name": "AuthService"
     },
     {
-      "name": "VulnerabilitiesService"
-    },
-    {
-      "name": "SecretsService"
-    },
-    {
       "name": "RepositoryService"
     },
     {
@@ -2102,58 +2096,6 @@
         ]
       }
     },
-    "/api/v1/secrets": {
-      "get": {
-        "operationId": "SecretsService_GetSecrets",
-        "responses": {
-          "200": {
-            "description": "A successful response.",
-            "schema": {
-              "$ref": "#/definitions/v1GetSecretsResponse"
-            }
-          },
-          "default": {
-            "description": "An unexpected error response.",
-            "schema": {
-              "$ref": "#/definitions/rpcStatus"
-            }
-          }
-        },
-        "tags": [
-          "SecretsService"
-        ]
-      }
-    },
-    "/api/v1/secrets/{id}": {
-      "get": {
-        "operationId": "SecretsService_GetSecretById",
-        "responses": {
-          "200": {
-            "description": "A successful response.",
-            "schema": {
-              "$ref": "#/definitions/v1GetSecretByIdResponse"
-            }
-          },
-          "default": {
-            "description": "An unexpected error response.",
-            "schema": {
-              "$ref": "#/definitions/rpcStatus"
-            }
-          }
-        },
-        "parameters": [
-          {
-            "name": "id",
-            "in": "path",
-            "required": true,
-            "type": "string"
-          }
-        ],
-        "tags": [
-          "SecretsService"
-        ]
-      }
-    },
     "/api/v1/user": {
       "get": {
         "operationId": "UserService_GetUser",
@@ -2427,58 +2369,6 @@
         ],
         "tags": [
           "UserService"
-        ]
-      }
-    },
-    "/api/v1/vulns": {
-      "get": {
-        "operationId": "VulnerabilitiesService_GetVulnerabilities",
-        "responses": {
-          "200": {
-            "description": "A successful response.",
-            "schema": {
-              "$ref": "#/definitions/v1GetVulnerabilitiesResponse"
-            }
-          },
-          "default": {
-            "description": "An unexpected error response.",
-            "schema": {
-              "$ref": "#/definitions/rpcStatus"
-            }
-          }
-        },
-        "tags": [
-          "VulnerabilitiesService"
-        ]
-      }
-    },
-    "/api/v1/vulns/{id}": {
-      "get": {
-        "operationId": "VulnerabilitiesService_GetVulnerabilityById",
-        "responses": {
-          "200": {
-            "description": "A successful response.",
-            "schema": {
-              "$ref": "#/definitions/v1GetVulnerabilityByIdResponse"
-            }
-          },
-          "default": {
-            "description": "An unexpected error response.",
-            "schema": {
-              "$ref": "#/definitions/rpcStatus"
-            }
-          }
-        },
-        "parameters": [
-          {
-            "name": "id",
-            "in": "path",
-            "required": true,
-            "type": "string"
-          }
-        ],
-        "tags": [
-          "VulnerabilitiesService"
         ]
       }
     }
@@ -3452,33 +3342,6 @@
       },
       "description": "GetRuleTypeByNameResponse is the response to get a rule type by name."
     },
-    "v1GetSecretByIdResponse": {
-      "type": "object",
-      "properties": {
-        "id": {
-          "type": "string"
-        },
-        "name": {
-          "type": "string"
-        },
-        "description": {
-          "type": "string",
-          "title": "Add other relevant fields"
-        }
-      }
-    },
-    "v1GetSecretsResponse": {
-      "type": "object",
-      "properties": {
-        "secrets": {
-          "type": "array",
-          "items": {
-            "type": "object",
-            "$ref": "#/definitions/v1GetSecretByIdResponse"
-          }
-        }
-      }
-    },
     "v1GetUserByIdResponse": {
       "type": "object",
       "properties": {
@@ -3578,64 +3441,6 @@
             "type": "object",
             "$ref": "#/definitions/v1UserRecord"
           }
-        }
-      }
-    },
-    "v1GetVulnerabilitiesResponse": {
-      "type": "object",
-      "properties": {
-        "vulns": {
-          "type": "array",
-          "items": {
-            "type": "object",
-            "$ref": "#/definitions/v1GetVulnerabilityByIdResponse"
-          }
-        }
-      }
-    },
-    "v1GetVulnerabilityByIdResponse": {
-      "type": "object",
-      "properties": {
-        "id": {
-          "type": "string",
-          "title": "May require adjustment, currently set up for GitHub Security Advisories only"
-        },
-        "githubId": {
-          "type": "string",
-          "format": "int64"
-        },
-        "repoId": {
-          "type": "string",
-          "format": "int64"
-        },
-        "repoName": {
-          "type": "string"
-        },
-        "packageName": {
-          "type": "string"
-        },
-        "severity": {
-          "type": "string"
-        },
-        "versionAffected": {
-          "type": "string"
-        },
-        "upgradeVersion": {
-          "type": "string"
-        },
-        "ghsaid": {
-          "type": "string"
-        },
-        "advisroyUrl": {
-          "type": "string"
-        },
-        "scannedAt": {
-          "type": "string",
-          "format": "date-time"
-        },
-        "createdAt": {
-          "type": "string",
-          "format": "date-time"
         }
       }
     },
