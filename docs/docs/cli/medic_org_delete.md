@@ -14,9 +14,9 @@ medic org delete [flags]
 ### Options
 
 ```
-  -f, --force          Force deletion of organization, even if it has associated groups
-  -h, --help           help for delete
-  -o, --org-id int32   id of organization to delete
+  -f, --force           Force deletion of organization, even if it has associated projects
+  -h, --help            help for delete
+  -o, --org-id string   id of organization to delete
 ```
 
 ### Options inherited from parent commands

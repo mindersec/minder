@@ -5,7 +5,7 @@ List rule types within a mediator control plane
 ### Synopsis
 
 The medic rule_type list subcommand lets you list rule type within a
-mediator control plane for an specific group.
+mediator control plane for an specific project.
 
 ```
 medic rule_type list [flags]
