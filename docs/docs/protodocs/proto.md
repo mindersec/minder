@@ -2607,6 +2607,9 @@ get the status of the rules for a given policy
 | entity_info | [RuleEvaluationStatus.EntityInfoEntry](#mediator-v1-RuleEvaluationStatus-EntityInfoEntry) | repeated | entity_info is the information about the entity |
 | details | [string](#string) |  | details is the description of the evaluation if any |
 | guidance | [string](#string) |  | guidance is the guidance for the evaluation if any |
+| remediation_status | [string](#string) |  | remediation_status is the status of the remediation |
+| remediation_last_updated | [google.protobuf.Timestamp](#google-protobuf-Timestamp) | optional | remediation_last_updated is the last time the remediation was performed or attempted |
+| remediation_details | [string](#string) |  | remediation_details is the description of the remediation attempt if any |
 
 
 

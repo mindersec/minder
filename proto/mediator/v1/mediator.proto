@@ -1499,6 +1499,12 @@ message RuleEvaluationStatus {
     string details = 8;
     // guidance is the guidance for the evaluation if any
     string guidance = 9;
+    // remediation_status is the status of the remediation
+    string remediation_status = 10;
+    // remediation_last_updated is the last time the remediation was performed or attempted
+    optional google.protobuf.Timestamp remediation_last_updated = 11;
+    // remediation_details is the description of the remediation attempt if any
+    string remediation_details = 12;
 }
 
 message GetPolicyStatusByIdRequest {
