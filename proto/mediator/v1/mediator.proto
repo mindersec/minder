@@ -314,38 +314,6 @@ service AuthService {
     }
 }
 
-// Get Vulnerabilities
-service VulnerabilitiesService {
-    rpc GetVulnerabilities (GetVulnerabilitiesRequest) returns (GetVulnerabilitiesResponse) {
-        option (google.api.http) = {
-        get: "/api/v1/vulns"
-        };
-    }
-
-    rpc GetVulnerabilityById (GetVulnerabilityByIdRequest) returns (GetVulnerabilityByIdResponse) {
-        option (google.api.http) = {
-        get: "/api/v1/vulns/{id}"
-        };
-    }
-}
-
-// Get Secrets
-// Note there are different APIs for enterprise or org secrets
-// https://docs.github.com/en/rest/secret-scanning?apiVersion=2022-11-28
-service SecretsService {
-    rpc GetSecrets (GetSecretsRequest) returns (GetSecretsResponse) {
-        option (google.api.http) = {
-        get: "/api/v1/secrets"
-        };
-    }
-
-    rpc GetSecretById (GetSecretByIdRequest) returns (GetSecretByIdResponse) {
-        option (google.api.http) = {
-        get: "/api/v1/secrets/{id}"
-        };
-    }
-}
-
 service RepositoryService {
     rpc SyncRepositories(SyncRepositoriesRequest) returns (SyncRepositoriesResponse) {
         option (google.api.http) = {

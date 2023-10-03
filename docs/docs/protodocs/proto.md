@@ -195,9 +195,7 @@
     - [PolicyService](#mediator-v1-PolicyService)
     - [RepositoryService](#mediator-v1-RepositoryService)
     - [RoleService](#mediator-v1-RoleService)
-    - [SecretsService](#mediator-v1-SecretsService)
     - [UserService](#mediator-v1-UserService)
-    - [VulnerabilitiesService](#mediator-v1-VulnerabilitiesService)
   
 - [Scalar Value Types](#scalar-value-types)
 
@@ -3194,19 +3192,6 @@ manage Roles CRUD
 | GetRoleByName | [GetRoleByNameRequest](#mediator-v1-GetRoleByNameRequest) | [GetRoleByNameResponse](#mediator-v1-GetRoleByNameResponse) |  |
 
 
-<a name="mediator-v1-SecretsService"></a>
-
-### SecretsService
-Get Secrets
-Note there are different APIs for enterprise or org secrets
-https://docs.github.com/en/rest/secret-scanning?apiVersion=2022-11-28
-
-| Method Name | Request Type | Response Type | Description |
-| ----------- | ------------ | ------------- | ------------|
-| GetSecrets | [GetSecretsRequest](#mediator-v1-GetSecretsRequest) | [GetSecretsResponse](#mediator-v1-GetSecretsResponse) |  |
-| GetSecretById | [GetSecretByIdRequest](#mediator-v1-GetSecretByIdRequest) | [GetSecretByIdResponse](#mediator-v1-GetSecretByIdResponse) |  |
-
-
 <a name="mediator-v1-UserService"></a>
 
 ### UserService
@@ -3222,17 +3207,6 @@ manage Users CRUD
 | GetUserById | [GetUserByIdRequest](#mediator-v1-GetUserByIdRequest) | [GetUserByIdResponse](#mediator-v1-GetUserByIdResponse) |  |
 | GetUserBySubject | [GetUserBySubjectRequest](#mediator-v1-GetUserBySubjectRequest) | [GetUserBySubjectResponse](#mediator-v1-GetUserBySubjectResponse) |  |
 | GetUser | [GetUserRequest](#mediator-v1-GetUserRequest) | [GetUserResponse](#mediator-v1-GetUserResponse) |  |
-
-
-<a name="mediator-v1-VulnerabilitiesService"></a>
-
-### VulnerabilitiesService
-Get Vulnerabilities
-
-| Method Name | Request Type | Response Type | Description |
-| ----------- | ------------ | ------------- | ------------|
-| GetVulnerabilities | [GetVulnerabilitiesRequest](#mediator-v1-GetVulnerabilitiesRequest) | [GetVulnerabilitiesResponse](#mediator-v1-GetVulnerabilitiesResponse) |  |
-| GetVulnerabilityById | [GetVulnerabilityByIdRequest](#mediator-v1-GetVulnerabilityByIdRequest) | [GetVulnerabilityByIdResponse](#mediator-v1-GetVulnerabilityByIdResponse) |  |
 
  
 
