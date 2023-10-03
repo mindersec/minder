@@ -16,6 +16,7 @@ package engine
 
 import (
 	"context"
+	"errors"
 	"fmt"
 	"log"
 
@@ -26,6 +27,7 @@ import (
 	"github.com/stacklok/mediator/internal/config"
 	"github.com/stacklok/mediator/internal/crypto"
 	"github.com/stacklok/mediator/internal/db"
+	evalerrors "github.com/stacklok/mediator/internal/engine/errors"
 	"github.com/stacklok/mediator/internal/engine/interfaces"
 	"github.com/stacklok/mediator/internal/events"
 	"github.com/stacklok/mediator/internal/providers"
@@ -145,12 +147,12 @@ func (e *Executor) evalEntityEvent(
 				return fmt.Errorf("error parsing rule type ID: %w", err)
 			}
 
-			result := rte.Eval(ctx, inf.Entity, rule.Def.AsMap(), rule.Params.AsMap(), remAction)
+			evalResult, remediateResult := rte.Eval(ctx, inf.Entity, rule.Def.AsMap(), rule.Params.AsMap(), remAction)
 
-			logEval(ctx, pol, rule, inf, result)
+			logEval(ctx, pol, rule, inf, evalResult, remediateResult)
 
 			return e.createOrUpdateEvalStatus(ctx, inf.evalStatusParams(
-				policyID, ruleTypeID, result))
+				policyID, ruleTypeID, evalResult, remediateResult))
 		})
 
 		if err != nil {
@@ -204,7 +206,8 @@ func logEval(
 	pol *pb.Policy,
 	rule *pb.Policy_Rule,
 	inf *EntityInfoWrapper,
-	result error,
+	evalResult error,
+	remediateResult error,
 ) {
 	logger := zerolog.Ctx(ctx).Debug().
 		Str("policy", pol.Name).
@@ -216,5 +219,13 @@ func logEval(
 		logger = logger.Str("artifactId", aID)
 	}
 
-	logger.Err(result).Msg("evaluated rule")
+	logger.Err(evalResult).Msg("evaluated rule")
+
+	if errors.Is(remediateResult, evalerrors.ErrRemediationSkipped) {
+		logger.Msg("remediation skipped")
+	} else if errors.Is(remediateResult, evalerrors.ErrRemediationNotAvailable) {
+		logger.Msg("remediation not supported")
+	} else {
+		logger.Err(remediateResult).Msg("remediated rule")
+	}
 }

@@ -469,6 +469,8 @@ func (s *Server) GetPolicyStatusById(ctx context.Context,
 
 		rulestats = make([]*mediatorv1.RuleEvaluationStatus, 0, len(dbrulestat))
 		for _, rs := range dbrulestat {
+			rs := rs
+
 			var guidance string
 			if rs.EvalStatus == db.EvalStatusTypesFailure || rs.EvalStatus == db.EvalStatusTypesError {
 				ruleTypeInfo, err := s.store.GetRuleTypeByID(ctx, rs.RuleTypeID)
@@ -480,15 +482,21 @@ func (s *Server) GetPolicyStatusById(ctx context.Context,
 			}
 
 			st := &mediatorv1.RuleEvaluationStatus{
-				PolicyId:    in.PolicyId,
-				RuleId:      rs.RuleTypeID.String(),
-				RuleName:    rs.RuleTypeName,
-				Entity:      string(rs.Entity),
-				Status:      string(rs.EvalStatus),
-				Details:     rs.Details,
-				EntityInfo:  getRuleEvalEntityInfo(ctx, s.store, dbEntity, selector, rs, entityCtx.GetProvider().Name),
-				Guidance:    guidance,
-				LastUpdated: timestamppb.New(rs.LastUpdated),
+				PolicyId:           in.PolicyId,
+				RuleId:             rs.RuleTypeID.String(),
+				RuleName:           rs.RuleTypeName,
+				Entity:             string(rs.Entity),
+				Status:             string(rs.EvalStatus),
+				Details:            rs.EvalDetails,
+				EntityInfo:         getRuleEvalEntityInfo(ctx, s.store, dbEntity, selector, rs, entityCtx.GetProvider().Name),
+				Guidance:           guidance,
+				LastUpdated:        timestamppb.New(rs.EvalLastUpdated),
+				RemediationStatus:  string(rs.RemStatus),
+				RemediationDetails: rs.RemDetails,
+			}
+
+			if rs.RemLastUpdated.Valid {
+				st.RemediationLastUpdated = timestamppb.New(rs.RemLastUpdated.Time)
 			}
 
 			rulestats = append(rulestats, st)
