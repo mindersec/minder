@@ -307,20 +307,5 @@ CREATE TRIGGER update_policy_status
     EXECUTE PROCEDURE update_policy_status();
 
 -- Create default root organization and get id so we can create the root project
--- To keep existing functionality, '00000000-0000-0000-0000-000000000001' is the
--- magic number for the root organization ID
-INSERT INTO projects (id, name, is_organization) VALUES ('00000000-0000-0000-0000-000000000001'::UUID, 'Root Organization', TRUE);
+INSERT INTO projects (name, is_organization) VALUES ('Mediator Root', TRUE);
 
--- Create default root project
--- To keep existing functionality, '00000000-0000-0000-0000-000000000002' is the
--- magic number for the root project ID
-INSERT INTO projects (id, name, is_organization, parent_id)
-    SELECT '00000000-0000-0000-0000-000000000002'::UUID, 'Root Project', FALSE, '00000000-0000-0000-0000-000000000001'::UUID;
-
--- superadmin role
-INSERT INTO roles (organization_id, project_id, name, is_admin, is_protected)
-    SELECT '00000000-0000-0000-0000-000000000001'::UUID, '00000000-0000-0000-0000-000000000002'::UUID, 'Superadmin Role', TRUE, TRUE;
-
--- Create default GitHub provider
-INSERT INTO providers (name, project_id, implements, definition)
-    SELECT 'github', '00000000-0000-0000-0000-000000000002'::UUID, ARRAY ['github', 'git', 'rest']::provider_type[], '{"github": {}}';

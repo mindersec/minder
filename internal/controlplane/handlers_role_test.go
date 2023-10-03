@@ -64,10 +64,11 @@ func TestCreateRoleDBMock(t *testing.T) {
 	// Create a new context and set the claims value
 	ctx := auth.WithPermissionsContext(context.Background(), auth.UserPermissions{
 		UserId:         1,
-		OrganizationId: rootOrganization,
-		ProjectIds:     []uuid.UUID{rootProject},
+		OrganizationId: orgID,
+		ProjectIds:     []uuid.UUID{projectID},
+		IsStaff:        true, // TODO: remove this
 		Roles: []auth.RoleInfo{
-			{RoleID: 1, IsAdmin: true, ProjectID: &rootProject, OrganizationID: rootOrganization}},
+			{RoleID: 1, IsAdmin: true, ProjectID: &projectID, OrganizationID: orgID}},
 	})
 
 	mockStore.EXPECT().GetOrganization(ctx, gomock.Any())
@@ -193,10 +194,11 @@ func TestCreateRole_gRPC(t *testing.T) {
 	// Create a new context and set the claims value
 	ctx := auth.WithPermissionsContext(context.Background(), auth.UserPermissions{
 		UserId:         1,
-		OrganizationId: rootOrganization,
-		ProjectIds:     []uuid.UUID{rootProject},
+		OrganizationId: orgID,
+		ProjectIds:     []uuid.UUID{projectID},
+		IsStaff:        true, // TODO: remove this
 		Roles: []auth.RoleInfo{
-			{RoleID: 1, IsAdmin: true, ProjectID: &rootProject, OrganizationID: rootOrganization}},
+			{RoleID: 1, IsAdmin: true, ProjectID: &projectID, OrganizationID: orgID}},
 	})
 
 	for i := range testCases {
@@ -226,15 +228,19 @@ func TestDeleteRoleDBMock(t *testing.T) {
 
 	mockStore := mockdb.NewMockStore(ctrl)
 
+	orgID := uuid.New()
+	projectID := uuid.New()
+
 	request := &pb.DeleteRoleRequest{Id: 1}
 
 	// Create a new context and set the claims value
 	ctx := auth.WithPermissionsContext(context.Background(), auth.UserPermissions{
 		UserId:         1,
-		OrganizationId: rootOrganization,
-		ProjectIds:     []uuid.UUID{rootProject},
+		OrganizationId: orgID,
+		ProjectIds:     []uuid.UUID{projectID},
+		IsStaff:        true, // TODO: remove this
 		Roles: []auth.RoleInfo{
-			{RoleID: 1, IsAdmin: true, ProjectID: &rootProject, OrganizationID: rootOrganization}},
+			{RoleID: 1, IsAdmin: true, ProjectID: &projectID, OrganizationID: orgID}},
 	})
 
 	mockStore.EXPECT().GetRoleByID(ctx, gomock.Any())
@@ -258,6 +264,9 @@ func TestDeleteRole_gRPC(t *testing.T) {
 	t.Parallel()
 
 	force := true
+
+	orgID := uuid.New()
+	projectID := uuid.New()
 
 	testCases := []struct {
 		name               string
@@ -310,10 +319,11 @@ func TestDeleteRole_gRPC(t *testing.T) {
 	// Create a new context and set the claims value
 	ctx := auth.WithPermissionsContext(context.Background(), auth.UserPermissions{
 		UserId:         1,
-		OrganizationId: rootOrganization,
-		ProjectIds:     []uuid.UUID{rootProject},
+		OrganizationId: orgID,
+		ProjectIds:     []uuid.UUID{projectID},
+		IsStaff:        true, // TODO: remove this
 		Roles: []auth.RoleInfo{
-			{RoleID: 1, IsAdmin: true, ProjectID: &rootProject, OrganizationID: rootOrganization}},
+			{RoleID: 1, IsAdmin: true, ProjectID: &projectID, OrganizationID: orgID}},
 	})
 
 	for i := range testCases {
@@ -344,8 +354,8 @@ func TestGetRolesDBMock(t *testing.T) {
 	mockStore := mockdb.NewMockStore(ctrl)
 
 	// use root so we can do the operation
-	orgID := rootOrganization
-	projectID := rootProject
+	orgID := uuid.New()
+	projectID := uuid.New()
 
 	request := &pb.GetRolesRequest{OrganizationId: orgID.String()}
 
@@ -371,6 +381,7 @@ func TestGetRolesDBMock(t *testing.T) {
 		UserId:         1,
 		OrganizationId: orgID,
 		ProjectIds:     []uuid.UUID{projectID},
+		IsStaff:        true, // TODO: remove this
 		Roles: []auth.RoleInfo{
 			{RoleID: 1, IsAdmin: true, ProjectID: &projectID, OrganizationID: orgID}},
 	})
@@ -401,6 +412,7 @@ func TestGetRoles_gRPC(t *testing.T) {
 	t.Parallel()
 
 	orgID := uuid.New()
+	projectID := uuid.New()
 
 	testCases := []struct {
 		name               string
@@ -468,10 +480,11 @@ func TestGetRoles_gRPC(t *testing.T) {
 	// Create a new context and set the claims value
 	ctx := auth.WithPermissionsContext(context.Background(), auth.UserPermissions{
 		UserId:         1,
-		OrganizationId: rootOrganization,
-		ProjectIds:     []uuid.UUID{rootProject},
+		OrganizationId: orgID,
+		ProjectIds:     []uuid.UUID{projectID},
+		IsStaff:        true, // TODO: remove this
 		Roles: []auth.RoleInfo{
-			{RoleID: 1, IsAdmin: true, ProjectID: &rootProject, OrganizationID: rootOrganization}},
+			{RoleID: 1, IsAdmin: true, ProjectID: &projectID, OrganizationID: orgID}},
 	})
 
 	for i := range testCases {
@@ -503,8 +516,8 @@ func TestGetRoleDBMock(t *testing.T) {
 
 	request := &pb.GetRoleByIdRequest{Id: 1}
 
-	orgID := rootOrganization
-	projectID := rootProject
+	orgID := uuid.New()
+	projectID := uuid.New()
 
 	expectedRole := db.Role{
 		ID:             1,
@@ -518,6 +531,7 @@ func TestGetRoleDBMock(t *testing.T) {
 		UserId:         1,
 		OrganizationId: orgID,
 		ProjectIds:     []uuid.UUID{projectID},
+		IsStaff:        true, // TODO: remove this
 		Roles: []auth.RoleInfo{
 			{RoleID: 1, IsAdmin: true, ProjectID: &projectID, OrganizationID: orgID}},
 	})
@@ -550,8 +564,8 @@ func TestGetNonExistingRoleDBMock(t *testing.T) {
 
 	mockStore := mockdb.NewMockStore(ctrl)
 
-	orgID := rootOrganization
-	projectID := rootProject
+	orgID := uuid.New()
+	projectID := uuid.New()
 
 	request := &pb.GetRoleByIdRequest{Id: 5}
 	// Create a new context and set the claims value
@@ -559,6 +573,7 @@ func TestGetNonExistingRoleDBMock(t *testing.T) {
 		UserId:         1,
 		OrganizationId: orgID,
 		ProjectIds:     []uuid.UUID{projectID},
+		IsStaff:        true, // TODO: remove this
 		Roles: []auth.RoleInfo{
 			{RoleID: 1, IsAdmin: true, ProjectID: &projectID, OrganizationID: orgID}},
 	})
@@ -580,6 +595,7 @@ func TestGetRole_gRPC(t *testing.T) {
 	t.Parallel()
 
 	orgID := uuid.New()
+	projectID := uuid.New()
 
 	testCases := []struct {
 		name               string
@@ -641,10 +657,11 @@ func TestGetRole_gRPC(t *testing.T) {
 	// Create a new context and set the claims value
 	ctx := auth.WithPermissionsContext(context.Background(), auth.UserPermissions{
 		UserId:         1,
-		OrganizationId: rootOrganization,
-		ProjectIds:     []uuid.UUID{rootProject},
+		OrganizationId: orgID,
+		ProjectIds:     []uuid.UUID{projectID},
+		IsStaff:        true,
 		Roles: []auth.RoleInfo{
-			{RoleID: 1, IsAdmin: true, ProjectID: &rootProject, OrganizationID: rootOrganization}},
+			{RoleID: 1, IsAdmin: true, ProjectID: &projectID, OrganizationID: orgID}},
 	})
 
 	for i := range testCases {

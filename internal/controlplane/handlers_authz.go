@@ -22,6 +22,7 @@ import (
 
 	"github.com/google/uuid"
 	gauth "github.com/grpc-ecosystem/go-grpc-middleware/v2/interceptors/auth"
+	"github.com/lestrrat-go/jwx/v2/jwt/openid"
 	"github.com/rs/zerolog"
 	"golang.org/x/exp/slices"
 	"google.golang.org/grpc"
@@ -55,22 +56,30 @@ var githubAuthorizations = []string{
 
 // checks if an user is superadmin
 func isSuperadmin(claims auth.UserPermissions) bool {
-	// need to check that has a role that belongs to the root org generally and is admin
-	for _, role := range claims.Roles {
-		// NOTE(jaosorior): Should we check for the root project too?
-		if role.OrganizationID == rootOrganization && role.IsAdmin {
-			return true
+	return claims.IsStaff
+}
+
+func containsSuperadminRole(openIdToken openid.Token) bool {
+	if realmAccess, ok := openIdToken.Get("realm_access"); ok {
+		if realms, ok := realmAccess.(map[string]interface{}); ok {
+			if roles, ok := realms["roles"]; ok {
+				if userRoles, ok := roles.([]interface{}); ok {
+					if slices.Contains(userRoles, "superadmin") {
+						return true
+					}
+				}
+			}
 		}
 	}
 	return false
 }
 
 // lookupUserPermissions returns the user permissions from the database for the given user
-func lookupUserPermissions(ctx context.Context, store db.Store, subject string) (auth.UserPermissions, error) {
+func lookupUserPermissions(ctx context.Context, store db.Store, tok openid.Token) (auth.UserPermissions, error) {
 	emptyPermissions := auth.UserPermissions{}
 
 	// read all information for user claims
-	userInfo, err := store.GetUserBySubject(ctx, subject)
+	userInfo, err := store.GetUserBySubject(ctx, tok.Subject())
 	if err != nil {
 		return emptyPermissions, fmt.Errorf("failed to read user")
 	}
@@ -110,6 +119,7 @@ func lookupUserPermissions(ctx context.Context, store db.Store, subject string) 
 		Roles:          roles,
 		ProjectIds:     groups,
 		OrganizationId: userInfo.OrganizationID,
+		IsStaff:        containsSuperadminRole(tok),
 	}
 
 	return claims, nil
@@ -253,11 +263,9 @@ func AuthUnaryInterceptor(ctx context.Context, req interface{}, info *grpc.Unary
 		return nil, status.Errorf(codes.Unauthenticated, "invalid auth token: %v", err)
 	}
 
-	subject := parsedToken.Subject()
-
 	// get user authorities from the database
 	// ignore any error because the user may not exist yet
-	authorities, _ := lookupUserPermissions(ctx, server.store, subject)
+	authorities, _ := lookupUserPermissions(ctx, server.store, parsedToken)
 
 	if opts.GetRootAdminOnly() && !isSuperadmin(authorities) {
 		return nil, status.Errorf(codes.PermissionDenied, "user not authorized")

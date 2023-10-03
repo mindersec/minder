@@ -39,6 +39,7 @@ func TestKeysHandler(t *testing.T) {
 
 	mockStore := mockdb.NewMockStore(ctrl)
 
+	orgID := uuid.New()
 	projectID := uuid.New()
 
 	request := &pb.CreateKeyPairRequest{
@@ -48,10 +49,11 @@ func TestKeysHandler(t *testing.T) {
 
 	ctx := auth.WithPermissionsContext(context.Background(), auth.UserPermissions{
 		UserId:         1,
-		OrganizationId: rootOrganization,
-		ProjectIds:     []uuid.UUID{rootProject},
+		OrganizationId: orgID,
+		ProjectIds:     []uuid.UUID{projectID},
+		IsStaff:        true, // TODO: remove this
 		Roles: []auth.RoleInfo{
-			{RoleID: 1, IsAdmin: true, ProjectID: &rootProject, OrganizationID: rootOrganization}},
+			{RoleID: 1, IsAdmin: true, ProjectID: &projectID, OrganizationID: orgID}},
 	})
 
 	// Set the expectations for the CreateSigningKey method
@@ -93,6 +95,7 @@ func TestKeysHandler(t *testing.T) {
 func TestKeysHandler_gRPC(t *testing.T) {
 	t.Parallel()
 
+	orgID := uuid.New()
 	projectID := uuid.New()
 
 	testCases := []struct {
@@ -152,10 +155,11 @@ func TestKeysHandler_gRPC(t *testing.T) {
 	}
 	ctx := auth.WithPermissionsContext(context.Background(), auth.UserPermissions{
 		UserId:         1,
-		OrganizationId: rootOrganization,
-		ProjectIds:     []uuid.UUID{rootProject},
+		OrganizationId: orgID,
+		ProjectIds:     []uuid.UUID{projectID},
+		IsStaff:        true, // TODO: remove this
 		Roles: []auth.RoleInfo{
-			{RoleID: 1, IsAdmin: true, ProjectID: &rootProject, OrganizationID: rootOrganization}},
+			{RoleID: 1, IsAdmin: true, ProjectID: &projectID, OrganizationID: orgID}},
 	})
 
 	for i := range testCases {

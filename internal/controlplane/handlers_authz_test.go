@@ -34,8 +34,8 @@ func TestIsSuperadminAuthorized(t *testing.T) {
 	ctrl := gomock.NewController(t)
 	defer ctrl.Finish()
 
-	orgID := rootOrganization
-	projectID := rootProject
+	orgID := uuid.New()
+	projectID := uuid.New()
 
 	request := &pb.GetProjectByIdRequest{ProjectId: projectID.String()}
 	// Create a new context and set the claims value
@@ -43,6 +43,7 @@ func TestIsSuperadminAuthorized(t *testing.T) {
 		UserId:         1,
 		OrganizationId: orgID,
 		ProjectIds:     []uuid.UUID{projectID},
+		IsStaff:        true, // TODO: remove this
 		Roles: []auth.RoleInfo{
 			{RoleID: 1, IsAdmin: true, ProjectID: &projectID, OrganizationID: orgID}},
 	})

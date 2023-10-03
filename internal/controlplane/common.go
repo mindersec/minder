@@ -59,16 +59,3 @@ func getProjectFromRequestOrDefault(ctx context.Context, in ProjectIDGetter) (uu
 	}
 	return parsedProjectID, nil
 }
-
-// Note that to keep existing functionality, we hardcode a root organization
-// and project that are predictable. This is so we can create a superadmin
-// user that can then create other users and organizations. This is a
-// temporary measure until we have a better way to bootstrap the system.
-var (
-	rootOrganization = uuid.MustParse("00000000-0000-0000-0000-000000000001")
-	rootProject      = uuid.MustParse("00000000-0000-0000-0000-000000000002")
-)
-
-const (
-	superadminRole = 1
-)

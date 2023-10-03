@@ -94,6 +94,7 @@ func TestCreateOrganization_gRPC(t *testing.T) {
 	t.Parallel()
 
 	orgID := uuid.New()
+	projectID := uuid.New()
 
 	testCases := []struct {
 		name               string
@@ -188,10 +189,11 @@ func TestCreateOrganization_gRPC(t *testing.T) {
 	// Create a new context and set the claims value
 	ctx := auth.WithPermissionsContext(context.Background(), auth.UserPermissions{
 		UserId:         1,
-		OrganizationId: rootOrganization,
-		ProjectIds:     []uuid.UUID{rootProject},
+		OrganizationId: orgID,
+		ProjectIds:     []uuid.UUID{projectID},
+		IsStaff:        true, // TODO: remove this
 		Roles: []auth.RoleInfo{
-			{RoleID: 1, IsAdmin: true, ProjectID: &rootProject, OrganizationID: rootOrganization}},
+			{RoleID: 1, IsAdmin: true, ProjectID: &projectID, OrganizationID: orgID}},
 	})
 
 	for i := range testCases {
@@ -402,8 +404,8 @@ func TestGetOrganizationDBMock(t *testing.T) {
 
 	mockStore := mockdb.NewMockStore(ctrl)
 
-	orgID := rootOrganization
-	projID := rootProject
+	orgID := uuid.New()
+	projID := uuid.New()
 	orgmeta := &OrgMeta{
 		Company: "TestCompany",
 	}
@@ -426,6 +428,7 @@ func TestGetOrganizationDBMock(t *testing.T) {
 		UserId:         1,
 		OrganizationId: expectedOrg.ID,
 		ProjectIds:     []uuid.UUID{projID},
+		IsStaff:        true, // TODO: remove this
 		Roles: []auth.RoleInfo{
 			{RoleID: 1, IsAdmin: true, ProjectID: &projID, OrganizationID: expectedOrg.ID}},
 	})
@@ -458,14 +461,18 @@ func TestGetNonExistingOrganizationDBMock(t *testing.T) {
 	ctrl := gomock.NewController(t)
 	defer ctrl.Finish()
 
+	orgID := uuid.New()
+	projectID := uuid.New()
+
 	mockStore := mockdb.NewMockStore(ctrl)
 	// Create a new context and set the claims value
 	ctx := auth.WithPermissionsContext(context.Background(), auth.UserPermissions{
 		UserId:         1,
-		OrganizationId: rootOrganization,
-		ProjectIds:     []uuid.UUID{rootProject},
+		OrganizationId: orgID,
+		ProjectIds:     []uuid.UUID{projectID},
+		IsStaff:        true, // TODO: remove this
 		Roles: []auth.RoleInfo{
-			{RoleID: 1, IsAdmin: true, ProjectID: &rootProject, OrganizationID: rootOrganization}},
+			{RoleID: 1, IsAdmin: true, ProjectID: &projectID, OrganizationID: orgID}},
 	})
 
 	unexistentOrgID := uuid.New()
@@ -488,6 +495,7 @@ func TestGetNonExistingOrganizationDBMock(t *testing.T) {
 func TestGetOrganization_gRPC(t *testing.T) {
 	t.Parallel()
 
+	projectID := uuid.New()
 	orgID := uuid.New()
 	orgmeta := &OrgMeta{
 		Company: "TestCompany",
@@ -561,10 +569,11 @@ func TestGetOrganization_gRPC(t *testing.T) {
 	// Create a new context and set the claims value
 	ctx := auth.WithPermissionsContext(context.Background(), auth.UserPermissions{
 		UserId:         1,
-		OrganizationId: rootOrganization,
-		ProjectIds:     []uuid.UUID{rootProject},
+		OrganizationId: orgID,
+		ProjectIds:     []uuid.UUID{projectID},
+		IsStaff:        true, // TODO: remove this
 		Roles: []auth.RoleInfo{
-			{RoleID: 1, IsAdmin: true, ProjectID: &rootProject, OrganizationID: rootOrganization}},
+			{RoleID: 1, IsAdmin: true, ProjectID: &projectID, OrganizationID: orgID}},
 	})
 
 	for i := range testCases {
@@ -594,6 +603,7 @@ func TestGetOrganizationByNameDBMock(t *testing.T) {
 
 	mockStore := mockdb.NewMockStore(ctrl)
 
+	projectID := uuid.New()
 	orgID := uuid.New()
 
 	orgmeta := &OrgMeta{
@@ -615,10 +625,11 @@ func TestGetOrganizationByNameDBMock(t *testing.T) {
 	// Create a new context and set the claims value
 	ctx := auth.WithPermissionsContext(context.Background(), auth.UserPermissions{
 		UserId:         1,
-		OrganizationId: rootOrganization,
-		ProjectIds:     []uuid.UUID{rootProject},
+		OrganizationId: orgID,
+		ProjectIds:     []uuid.UUID{projectID},
+		IsStaff:        true, // TODO: remove this
 		Roles: []auth.RoleInfo{
-			{RoleID: 1, IsAdmin: true, ProjectID: &rootProject, OrganizationID: rootOrganization}},
+			{RoleID: 1, IsAdmin: true, ProjectID: &projectID, OrganizationID: orgID}},
 	})
 
 	mockStore.EXPECT().GetOrganizationByName(ctx, gomock.Any()).
@@ -682,6 +693,7 @@ func TestGetOrganizationByName_gRPC(t *testing.T) {
 	t.Parallel()
 
 	orgID := uuid.New()
+	projectID := uuid.New()
 
 	orgmeta := &OrgMeta{
 		Company: "TestCompany",
@@ -754,10 +766,11 @@ func TestGetOrganizationByName_gRPC(t *testing.T) {
 	// Create a new context and set the claims value
 	ctx := auth.WithPermissionsContext(context.Background(), auth.UserPermissions{
 		UserId:         1,
-		OrganizationId: rootOrganization,
-		ProjectIds:     []uuid.UUID{rootProject},
+		OrganizationId: orgID,
+		ProjectIds:     []uuid.UUID{projectID},
+		IsStaff:        true,
 		Roles: []auth.RoleInfo{
-			{RoleID: 1, IsAdmin: true, ProjectID: &rootProject, OrganizationID: rootOrganization}},
+			{RoleID: 1, IsAdmin: true, ProjectID: &projectID, OrganizationID: orgID}},
 	})
 
 	for i := range testCases {
