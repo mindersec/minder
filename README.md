@@ -114,7 +114,8 @@ The CLI is available in the `cmd/cli` directory.
 go run cmd/cli/main.go --help 
 ```
 
-To start with, you will need to run `cli auth login -u root -p P4ssw@rd` matching the password bootstrapped from the [database initialization](./database/migrations/000001_init.up.sql)
+To start with, you will need to run `cli auth login` using `root:root` as the credentials.
+This will open a browser window with the identity provider login page.
 
 ## APIs
 
@@ -230,8 +231,9 @@ First, login with the default credentials:
 go run ./cmd/cli/main.go auth login
 ```
 
-This will open a browser window with the identity provider login page.  
-Enter the credentials root / P4ssw@rd. You will immediately be prompted to change your password.  
+This will open a browser window with the identity provider login page.
+Enter the credentials `root:root`.
+You will immediately be prompted to change your password.
 Upon successful authentication you can close your browser.
 
 You will see the following prompt in your terminal:

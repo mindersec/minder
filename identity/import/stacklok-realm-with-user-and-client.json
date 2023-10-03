@@ -396,7 +396,7 @@
       "type" : "password",
       "userLabel" : "My password",
       "createdDate" : 1695635437604,
-      "secretData" : "{\"value\":\"VbiUfudYyMOv1rdW8ofVTl005RLXUy9UE7iTCpOU000=\",\"salt\":\"oR6ZY2DgLeOwvp/TgEZEYA==\",\"additionalParameters\":{}}",
+      "secretData" : "{\"value\":\"JsFSYaycxtfeIWHwDJydCEorBN/ilNRDjAGCAxWozKI=\",\"salt\":\"oR6ZY2DgLeOwvp/TgEZEYA==\",\"additionalParameters\":{}}",
       "credentialData" : "{\"hashIterations\":27500,\"algorithm\":\"pbkdf2-sha256\",\"additionalParameters\":{}}"
     } ],
     "disableableCredentialTypes" : [ ],
