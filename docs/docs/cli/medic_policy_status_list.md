@@ -20,6 +20,7 @@ medic policy_status list [flags]
   -o, --output string     Output format (json, yaml or table) (default "table")
   -i, --policy string     policy id to list policy status for
   -p, --provider string   Provider to list policy status for (default "github")
+  -r, --rule string       Filter policy status list by rule
 ```
 
 ### Options inherited from parent commands
