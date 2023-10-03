@@ -4,7 +4,7 @@ Authorize and manage accounts within a mediator control plane
 
 ### Synopsis
 
-The medic auth command group lets you create accounts and grant or revoke
+The medic auth command project lets you create accounts and grant or revoke
 authorization to existing accounts within a mediator control plane.
 
 ```

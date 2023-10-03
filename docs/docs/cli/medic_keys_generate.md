@@ -5,7 +5,7 @@ Generate keys within a mediator control plane
 ### Synopsis
 
 The medic keys generate  subcommand lets you create keys within a
-mediator control plane for an specific group.
+mediator control plane for an specific project.
 
 ```
 medic keys generate [flags]
@@ -14,10 +14,10 @@ medic keys generate [flags]
 ### Options
 
 ```
-  -g, --group-id int32      group id to list roles for
   -h, --help                help for generate
   -o, --output string       Output public key to file
   -p, --passphrase string   Passphrase to use for key generation
+  -g, --project-id string   project id to list roles for
 ```
 
 ### Options inherited from parent commands

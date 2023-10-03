@@ -14,12 +14,12 @@ medic user list [flags]
 ### Options
 
 ```
-  -g, --group-id int32   group id to list users for
-  -h, --help             help for list
-  -l, --limit int32      Limit the number of results returned (default -1)
-  -f, --offset int32     Offset the results returned
-  -i, --org-id int32     org id to list users for
-  -o, --output string    Output format (json or yaml)
+  -h, --help                help for list
+  -l, --limit int32         Limit the number of results returned (default -1)
+  -f, --offset int32        Offset the results returned
+  -i, --org-id string       org id to list users for
+  -o, --output string       Output format (json or yaml)
+  -g, --project-id string   project id to list users for
 ```
 
 ### Options inherited from parent commands

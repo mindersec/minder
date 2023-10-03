@@ -14,10 +14,10 @@ medic role get [flags]
 ### Options
 
 ```
-  -h, --help           help for get
-  -i, --id int32       ID for the role to query
-  -n, --name string    Name for the role to query
-  -o, --org-id int32   Organization ID
+  -h, --help            help for get
+  -i, --id int32        ID for the role to query
+  -n, --name string     Name for the role to query
+  -o, --org-id string   Organization ID
 ```
 
 ### Options inherited from parent commands

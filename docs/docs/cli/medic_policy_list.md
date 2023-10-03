@@ -5,7 +5,7 @@ List policies within a mediator control plane
 ### Synopsis
 
 The medic policy list subcommand lets you list policies within a
-mediator control plane for an specific group.
+mediator control plane for an specific project.
 
 ```
 medic policy list [flags]

@@ -13,10 +13,10 @@ medic artifact list [flags]
 ### Options
 
 ```
-  -g, --group-id int32    ID of the group for repo registration
-  -h, --help              help for list
-  -f, --output string     Output format (json or yaml)
-  -n, --provider string   Name for the provider to enroll
+  -h, --help                help for list
+  -f, --output string       Output format (json or yaml)
+  -g, --project-id string   ID of the project for repo registration
+  -n, --provider string     Name for the provider to enroll
 ```
 
 ### Options inherited from parent commands

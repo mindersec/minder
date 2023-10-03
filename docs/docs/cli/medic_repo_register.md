@@ -13,12 +13,12 @@ medic repo register [flags]
 ### Options
 
 ```
-  -g, --group-id int32    ID of the group for repo registration
-  -h, --help              help for register
-  -l, --limit int32       Number of repos to display per page (default 20)
-  -o, --offset int32      Offset of the repos to display
-  -n, --provider string   Name for the provider to enroll
-      --repo string       List of key-value pairs
+  -h, --help                help for register
+  -l, --limit int32         Number of repos to display per page (default 20)
+  -o, --offset int32        Offset of the repos to display
+  -g, --project-id string   ID of the project for repo registration
+  -n, --provider string     Name for the provider to enroll
+      --repo string         List of key-value pairs
 ```
 
 ### Options inherited from parent commands

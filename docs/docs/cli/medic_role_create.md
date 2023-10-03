@@ -4,7 +4,7 @@ Create a role within a mediator control plane
 
 ### Synopsis
 
-The medic role create subcommand lets you create new roles for a group
+The medic role create subcommand lets you create new roles for a project
 within a mediator control plane.
 
 ```
@@ -14,12 +14,12 @@ medic role create [flags]
 ### Options
 
 ```
-  -g, --group-id int32   ID of the group which owns the role
-  -h, --help             help for create
-  -a, --is_admin         Is it an admin role
-  -i, --is_protected     Is the role protected
-  -n, --name string      Name of the role
-  -o, --org-id int32     ID of the organization which owns the role
+  -h, --help                help for create
+  -a, --is_admin            Is it an admin role
+  -i, --is_protected        Is the role protected
+  -n, --name string         Name of the role
+  -o, --org-id string       ID of the organization which owns the role
+  -g, --project-id string   ID of the project which owns the role
 ```
 
 ### Options inherited from parent commands

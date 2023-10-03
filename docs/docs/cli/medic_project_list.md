@@ -1,14 +1,14 @@
-## medic group list
+## medic project list
 
-Get list of groups within a mediator control plane
+Get list of projects within a mediator control plane
 
 ### Synopsis
 
-The medic group list subcommand lets you list groups within
+The medic project list subcommand lets you list projects within
 a mediator control plane.
 
 ```
-medic group list [flags]
+medic project list [flags]
 ```
 
 ### Options
@@ -17,7 +17,7 @@ medic group list [flags]
   -h, --help            help for list
   -l, --limit int32     Limit the number of results returned (default -1)
   -f, --offset int32    Offset the results returned
-  -i, --org-id int32    org id to list groups for
+  -i, --org-id string   org id to list projects for
   -o, --output string   Output format
 ```
 
@@ -32,5 +32,5 @@ medic group list [flags]
 
 ### SEE ALSO
 
-* [medic group](medic_group.md)	 - Manage groups within a mediator control plane
+* [medic project](medic_project.md)	 - Manage projects within a mediator control plane
 
