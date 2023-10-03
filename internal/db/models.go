@@ -191,6 +191,51 @@ func (ns NullRemediateType) Value() (driver.Value, error) {
 	return string(ns.RemediateType), nil
 }
 
+type RemediationStatusTypes string
+
+const (
+	RemediationStatusTypesSuccess      RemediationStatusTypes = "success"
+	RemediationStatusTypesFailure      RemediationStatusTypes = "failure"
+	RemediationStatusTypesError        RemediationStatusTypes = "error"
+	RemediationStatusTypesSkipped      RemediationStatusTypes = "skipped"
+	RemediationStatusTypesNotAvailable RemediationStatusTypes = "not_available"
+)
+
+func (e *RemediationStatusTypes) Scan(src interface{}) error {
+	switch s := src.(type) {
+	case []byte:
+		*e = RemediationStatusTypes(s)
+	case string:
+		*e = RemediationStatusTypes(s)
+	default:
+		return fmt.Errorf("unsupported scan type for RemediationStatusTypes: %T", src)
+	}
+	return nil
+}
+
+type NullRemediationStatusTypes struct {
+	RemediationStatusTypes RemediationStatusTypes `json:"remediation_status_types"`
+	Valid                  bool                   `json:"valid"` // Valid is true if RemediationStatusTypes is not NULL
+}
+
+// Scan implements the Scanner interface.
+func (ns *NullRemediationStatusTypes) Scan(value interface{}) error {
+	if value == nil {
+		ns.RemediationStatusTypes, ns.Valid = "", false
+		return nil
+	}
+	ns.Valid = true
+	return ns.RemediationStatusTypes.Scan(value)
+}
+
+// Value implements the driver Valuer interface.
+func (ns NullRemediationStatusTypes) Value() (driver.Value, error) {
+	if !ns.Valid {
+		return nil, nil
+	}
+	return string(ns.RemediationStatusTypes), nil
+}
+
 type Artifact struct {
 	ID                 uuid.UUID `json:"id"`
 	RepositoryID       uuid.UUID `json:"repository_id"`
@@ -299,15 +344,18 @@ type Role struct {
 }
 
 type RuleEvaluationStatus struct {
-	ID           uuid.UUID       `json:"id"`
-	Entity       Entities        `json:"entity"`
-	PolicyID     uuid.UUID       `json:"policy_id"`
-	RuleTypeID   uuid.UUID       `json:"rule_type_id"`
-	EvalStatus   EvalStatusTypes `json:"eval_status"`
-	RepositoryID uuid.NullUUID   `json:"repository_id"`
-	ArtifactID   uuid.NullUUID   `json:"artifact_id"`
-	Details      string          `json:"details"`
-	LastUpdated  time.Time       `json:"last_updated"`
+	ID                     uuid.UUID              `json:"id"`
+	Entity                 Entities               `json:"entity"`
+	PolicyID               uuid.UUID              `json:"policy_id"`
+	RuleTypeID             uuid.UUID              `json:"rule_type_id"`
+	EvalStatus             EvalStatusTypes        `json:"eval_status"`
+	RemediationStatus      RemediationStatusTypes `json:"remediation_status"`
+	RepositoryID           uuid.NullUUID          `json:"repository_id"`
+	ArtifactID             uuid.NullUUID          `json:"artifact_id"`
+	EvalDetails            string                 `json:"eval_details"`
+	EvalLastUpdated        time.Time              `json:"eval_last_updated"`
+	RemediationDetails     string                 `json:"remediation_details"`
+	RemediationLastUpdated sql.NullTime           `json:"remediation_last_updated"`
 }
 
 type RuleType struct {

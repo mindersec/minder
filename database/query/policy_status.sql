@@ -1,7 +1,7 @@
 -- name: UpdateRuleEvaluationStatusForRepository :exec
 UPDATE rule_evaluation_status 
-    SET eval_status = $1, details = $2, last_updated = NOW()
-    WHERE id = $3;
+    SET eval_status = $1, eval_details = $2, remediation_status = $3, remediation_details=$4, remediation_last_updated=$5, last_updated = NOW()
+    WHERE id = $5;
 
 -- name: CreateRuleEvaluationStatusForRepository :exec
 INSERT INTO rule_evaluation_status (
@@ -10,7 +10,7 @@ INSERT INTO rule_evaluation_status (
     rule_type_id,
     entity,
     eval_status,
-    details,
+    eval_details,
     last_updated
 ) VALUES ($1, $2, $3, 'repository', $4, $5, NOW());
 
@@ -22,13 +22,19 @@ INSERT INTO rule_evaluation_status (
     rule_type_id,
     entity,
     eval_status,
-    details,
-    last_updated
-) VALUES ($1, $2, $3, $4, $5, $6, $7, NOW())
+    eval_details,
+    remediation_status,
+    remediation_details,
+    remediation_last_updated,
+    eval_last_updated
+) VALUES ($1, $2, $3, $4, $5, $6, $7, $8, $9, $10, NOW())
 ON CONFLICT(policy_id, repository_id, COALESCE(artifact_id, '00000000-0000-0000-0000-000000000000'::UUID), entity, rule_type_id) DO UPDATE SET
     eval_status = $6,
-    details = $7,
-    last_updated = NOW()
+    eval_details = $7,
+    remediation_status = $8,
+    remediation_details = $9,
+    remediation_last_updated = COALESCE($10, rule_evaluation_status.remediation_last_updated), -- don't overwrite timestamp already set with NULL
+    eval_last_updated = NOW()
 WHERE rule_evaluation_status.policy_id = $1
   AND rule_evaluation_status.repository_id = $2
   AND rule_evaluation_status.artifact_id IS NOT DISTINCT FROM $3
@@ -46,7 +52,7 @@ INNER JOIN policies p ON p.id = ps.policy_id
 WHERE p.project_id = $1;
 
 -- name: ListRuleEvaluationStatusByPolicyId :many
-SELECT res.eval_status as eval_status, res.last_updated as last_updated, res.details as details, res.repository_id as repository_id, res.entity as entity, repo.repo_name as repo_name, repo.repo_owner as repo_owner, repo.provider as provider, rt.name as rule_type_name, rt.id as rule_type_id
+SELECT res.eval_status as eval_status, res.eval_last_updated as eval_last_updated, res.eval_details as eval_details, res.remediation_status as rem_status, res.remediation_details as rem_details, res.remediation_last_updated as rem_last_updated, res.repository_id as repository_id, res.entity as entity, repo.repo_name as repo_name, repo.repo_owner as repo_owner, repo.provider as provider, rt.name as rule_type_name, rt.id as rule_type_id
 FROM rule_evaluation_status res
 INNER JOIN repositories repo ON repo.id = res.repository_id
 INNER JOIN rule_type rt ON rt.id = res.rule_type_id

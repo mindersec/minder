@@ -201,6 +201,8 @@ CREATE TABLE entity_policies (
 
 create type eval_status_types as enum ('success', 'failure', 'error', 'skipped', 'pending');
 
+create type remediation_status_types as enum ('success', 'failure', 'error', 'skipped', 'not_available');
+
 -- This table will be used to track the overall status of a policy evaluation
 CREATE TABLE policy_status (
     id UUID NOT NULL DEFAULT gen_random_uuid() PRIMARY KEY,
@@ -217,13 +219,16 @@ CREATE TABLE rule_evaluation_status (
     policy_id UUID NOT NULL REFERENCES policies(id) ON DELETE CASCADE,
     rule_type_id UUID NOT NULL REFERENCES rule_type(id) ON DELETE CASCADE,
     eval_status eval_status_types NOT NULL,
+    remediation_status remediation_status_types NOT NULL,
     -- polimorphic references. A status may be associated with a repository, build environment or artifact
     repository_id UUID REFERENCES repositories(id) ON DELETE CASCADE,
     artifact_id UUID REFERENCES artifacts(id) ON DELETE CASCADE,
     -- These will be added later
     -- build_environment_id UUID REFERENCES build_environments(id) ON DELETE CASCADE,
-    details TEXT NOT NULL,
-    last_updated TIMESTAMP NOT NULL DEFAULT NOW()
+    eval_details TEXT NOT NULL,
+    eval_last_updated TIMESTAMP NOT NULL DEFAULT NOW(),
+    remediation_details TEXT NOT NULL,
+    remediation_last_updated TIMESTAMP DEFAULT NOW()
 );
 
 -- Constraint to ensure we don't have a cycle in the project tree
