@@ -26,9 +26,9 @@ import (
 	"fmt"
 	"net/http"
 	"net/url"
-	"os"
 	"time"
 
+	"github.com/charmbracelet/bubbles/table"
 	"github.com/gorilla/securecookie"
 	"github.com/pkg/browser"
 	"github.com/spf13/cobra"
@@ -42,6 +42,7 @@ import (
 	"github.com/stacklok/mediator/internal/config"
 	mcrypto "github.com/stacklok/mediator/internal/crypto"
 	"github.com/stacklok/mediator/internal/util"
+	"github.com/stacklok/mediator/internal/util/cli"
 	"github.com/stacklok/mediator/internal/util/rand"
 	pb "github.com/stacklok/mediator/pkg/api/protobuf/go/mediator/v1"
 )
@@ -54,7 +55,7 @@ func userRegistered(ctx context.Context, client pb.UserServiceClient) (bool, err
 				return false, nil
 			}
 		}
-		return false, fmt.Errorf("Error retrieving user %v", err)
+		return false, fmt.Errorf("error retrieving user %v", err)
 	}
 	return true, nil
 }
@@ -67,7 +68,7 @@ var auth_loginCmd = &cobra.Command{
 will be saved to $XDG_CONFIG_HOME/mediator/credentials.json`,
 	PreRun: func(cmd *cobra.Command, args []string) {
 		if err := viper.BindPFlags(cmd.Flags()); err != nil {
-			fmt.Fprintf(os.Stderr, "Error binding flags: %s\n", err)
+			cli.Print(cmd.ErrOrStderr(), "Error binding flags: %s\n", err)
 		}
 	},
 	Run: func(cmd *cobra.Command, args []string) {
@@ -137,15 +138,15 @@ will be saved to $XDG_CONFIG_HOME/mediator/credentials.json`,
 		loginUrl := fmt.Sprintf("http://localhost:%v/login", port)
 
 		// Redirect user to provider to log in
-		fmt.Printf("Your browser will now be opened to: %s\n", loginUrl)
-		fmt.Println("Please follow the instructions on the page to log in.")
+		cli.PrintCmd(cmd, "Your browser will now be opened to: %s", loginUrl)
+		cli.PrintCmd(cmd, "Please follow the instructions on the page to log in.")
 
 		// open user's browser to login page
 		if err := browser.OpenURL(loginUrl); err != nil {
-			fmt.Printf("You may login by pasting this URL into your browser: %s\n", loginUrl)
+			fmt.Printf("You may login by pasting this URL into your browser: %s", loginUrl)
 		}
 
-		fmt.Printf("Waiting for token\n")
+		cli.PrintCmd(cmd, "Waiting for token...")
 
 		// wait for the token to be received
 		token := <-tokenChan
@@ -166,9 +167,16 @@ will be saved to $XDG_CONFIG_HOME/mediator/credentials.json`,
 		util.ExitNicelyOnError(err, "Error fetching user")
 
 		if !registered {
-			fmt.Println("First login, registering user.")
-			_, err = client.CreateUser(ctx, &pb.CreateUserRequest{})
+			cli.PrintCmd(cmd, "First login, registering user.")
+			newUser, err := client.CreateUser(ctx, &pb.CreateUserRequest{})
 			util.ExitNicelyOnError(err, "Error registering user")
+
+			cli.PrintCmd(cmd, cli.CLIMarmot)
+			cli.PrintCmd(cmd, cli.WelcomeBannerText(
+				"You have been successfully registered. Welcome!"))
+			cli.PrintCmd(cmd, "\nHere are your details:")
+
+			renderNewUser(cmd, newUser)
 		}
 
 		fmt.Printf("You have been successfully logged in. Your access credentials saved to %s\n",
@@ -180,6 +188,41 @@ will be saved to $XDG_CONFIG_HOME/mediator/credentials.json`,
 
 		fmt.Println("Authentication successful")
 	},
+}
+
+func renderNewUser(cmd *cobra.Command, newUser *pb.CreateUserResponse) {
+	columns := []table.Column{
+		{Title: "Key", Width: 30},
+		{Title: "Value", Width: 70},
+	}
+	rows := []table.Row{
+		{"Organization ID", newUser.OrganizationId},
+		{"Organization Name", newUser.OrganizatioName},
+		{"Project ID", newUser.ProjectId},
+		{"Project Name", newUser.ProjectName},
+	}
+
+	if newUser.Email != nil {
+		rows = append(rows, table.Row{"Email", *newUser.Email})
+	}
+
+	if newUser.FirstName != nil {
+		rows = append(rows, table.Row{"First Name", *newUser.FirstName})
+	}
+
+	if newUser.LastName != nil {
+		rows = append(rows, table.Row{"Last Name", *newUser.LastName})
+	}
+
+	t := table.New(
+		table.WithColumns(columns),
+		table.WithRows(rows),
+		table.WithFocused(false),
+		table.WithHeight(len(rows)),
+		table.WithStyles(cli.TableHiddenSelectStyles),
+	)
+
+	cli.PrintCmd(cmd, cli.TableRender(t))
 }
 
 func init() {

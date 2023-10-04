@@ -224,8 +224,8 @@ func TestCreateUser_gRPC(t *testing.T) {
 				assert.NotNil(t, res)
 				assert.Equal(t, int32(1), res.Id)
 				assert.Equal(t, orgID.String(), res.OrganizationId)
+				assert.Equal(t, projectID.String(), res.ProjectId)
 				assert.NotNil(t, res.CreatedAt)
-				assert.NotNil(t, res.UpdatedAt)
 			},
 			expectedStatusCode: codes.OK,
 		},
