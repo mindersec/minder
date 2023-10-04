@@ -4,7 +4,6 @@ type: rule-type
 name: repo_workflow_access_level
 context:
   provider: github
-  group: Root Group
 description: |
   Verifies the level of access that workflows outside of the repository have
   to actions and reusable workflows in the repository. This only applies to private repositories.

@@ -4,7 +4,6 @@ type: rule-type
 name: allowed_selected_actions
 context:
   provider: github
-  group: Root Group
 description: |
   Verifies the settings for selected actions and reusable workflows that are allowed
   in a repository. To use this rule, the repository policy for allowed_actions must

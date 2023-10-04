@@ -4,7 +4,6 @@ type: rule-type
 name: dockerfile_no_latest_tag
 context:
   provider: github
-  group: Root Group
 description: Verifies that the Dockerfile image references don't use the latest tag
 guidance: |
   Using the latest tag for Docker images is not recommended as it can lead to unexpected behavior.

@@ -4,7 +4,6 @@ type: rule-type
 name: branch_protection
 context:
   provider: github
-  group: Root Group
 description: Verifies that a branch has proper protections.
 guidance: |
   You can protect important branches by setting branch protection rules, which define whether

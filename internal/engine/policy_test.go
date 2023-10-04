@@ -23,14 +23,14 @@ import (
 	"google.golang.org/protobuf/types/known/structpb"
 
 	"github.com/stacklok/mediator/internal/engine"
-	pb "github.com/stacklok/mediator/pkg/api/protobuf/go/mediator/v1"
+	mediatorv1 "github.com/stacklok/mediator/pkg/api/protobuf/go/mediator/v1"
 )
 
 var (
 	defaultOrg = "ACME"
 )
 
-func comparePolicies(t *testing.T, a *pb.Policy, b *pb.Policy) {
+func comparePolicies(t *testing.T, a *mediatorv1.Policy, b *mediatorv1.Policy) {
 	t.Helper()
 
 	require.Equal(t, a.Name, b.Name, "policy names should match")
@@ -40,7 +40,7 @@ func comparePolicies(t *testing.T, a *pb.Policy, b *pb.Policy) {
 	compareEntityRules(t, a.Artifact, b.Artifact)
 }
 
-func compareEntityRules(t *testing.T, a []*pb.Policy_Rule, b []*pb.Policy_Rule) {
+func compareEntityRules(t *testing.T, a []*mediatorv1.Policy_Rule, b []*mediatorv1.Policy_Rule) {
 	t.Helper()
 
 	require.Equal(t, len(a), len(b), "rule sets should have the same length")
@@ -50,7 +50,7 @@ func compareEntityRules(t *testing.T, a []*pb.Policy_Rule, b []*pb.Policy_Rule) 
 	}
 }
 
-func compareRule(t *testing.T, a *pb.Policy_Rule, b *pb.Policy_Rule) {
+func compareRule(t *testing.T, a *mediatorv1.Policy_Rule, b *mediatorv1.Policy_Rule) {
 	t.Helper()
 
 	require.Equal(t, a.Type, b.Type, "rule types should match")
@@ -110,7 +110,7 @@ func TestParseYAML(t *testing.T) {
 	tests := []struct {
 		name    string
 		policy  string
-		want    *pb.Policy
+		want    *mediatorv1.Policy
 		wantErr bool
 		errIs   error
 	}{
@@ -141,13 +141,13 @@ artifact:
     def:
       state: exists
 `,
-			want: &pb.Policy{
+			want: &mediatorv1.Policy{
 				Name: "acme-github-policy",
-				Context: &pb.Context{
+				Context: &mediatorv1.Context{
 					Organization: &defaultOrg,
 					Provider:     "github",
 				},
-				Repository: []*pb.Policy_Rule{
+				Repository: []*mediatorv1.Policy_Rule{
 					{
 						Type: "secret_scanning",
 						Def: &structpb.Struct{
@@ -161,7 +161,7 @@ artifact:
 						},
 					},
 				},
-				BuildEnvironment: []*pb.Policy_Rule{
+				BuildEnvironment: []*mediatorv1.Policy_Rule{
 					{
 						Type: "no_org_wide_github_action_permissions",
 						Def: &structpb.Struct{
@@ -175,7 +175,7 @@ artifact:
 						},
 					},
 				},
-				Artifact: []*pb.Policy_Rule{
+				Artifact: []*mediatorv1.Policy_Rule{
 					{
 						Type: "ctlog_entry",
 						Params: &structpb.Struct{
@@ -225,13 +225,13 @@ repository:
     def:
       enabled: true
 `,
-			want: &pb.Policy{
+			want: &mediatorv1.Policy{
 				Name: "acme-github-policy",
-				Context: &pb.Context{
+				Context: &mediatorv1.Context{
 					Organization: &defaultOrg,
 					Provider:     "github",
 				},
-				Repository: []*pb.Policy_Rule{
+				Repository: []*mediatorv1.Policy_Rule{
 					{
 						Type: "secret_scanning",
 						Def: &structpb.Struct{
@@ -277,7 +277,7 @@ repository:
   - type: secret_scanning
 `,
 			wantErr: true,
-			errIs:   engine.ErrValidationFailed,
+			errIs:   mediatorv1.ErrValidationFailed,
 		},
 		{
 			name: "invalid with nil rule",
@@ -296,22 +296,7 @@ repository:
       enabled: true
 `,
 			wantErr: true,
-			errIs:   engine.ErrValidationFailed,
-		},
-		{
-			name: "invalid with no context",
-			policy: `
----
-version: v1
-type: policy
-name: acme-github-policy
-repository:
-  - type: secret_scanning
-    def:
-      enabled: true
-`,
-			wantErr: true,
-			errIs:   engine.ErrValidationFailed,
+			errIs:   mediatorv1.ErrValidationFailed,
 		},
 		{
 			name: "invalid with no name",
@@ -325,7 +310,7 @@ repository:
       enabled: true
 `,
 			wantErr: true,
-			errIs:   engine.ErrValidationFailed,
+			errIs:   mediatorv1.ErrValidationFailed,
 		},
 	}
 	for _, tt := range tests {
@@ -354,13 +339,13 @@ repository:
 func TestGetRulesForEntity(t *testing.T) {
 	t.Parallel()
 
-	pol := &pb.Policy{
+	pol := &mediatorv1.Policy{
 		Name: "acme-github-policy",
-		Context: &pb.Context{
+		Context: &mediatorv1.Context{
 			Organization: &defaultOrg,
 			Provider:     "github",
 		},
-		Repository: []*pb.Policy_Rule{
+		Repository: []*mediatorv1.Policy_Rule{
 			{
 				Type: "secret_scanning",
 				Def: &structpb.Struct{
@@ -374,7 +359,7 @@ func TestGetRulesForEntity(t *testing.T) {
 				},
 			},
 		},
-		BuildEnvironment: []*pb.Policy_Rule{
+		BuildEnvironment: []*mediatorv1.Policy_Rule{
 			{
 				Type: "no_org_wide_github_action_permissions",
 				Def: &structpb.Struct{
@@ -388,7 +373,7 @@ func TestGetRulesForEntity(t *testing.T) {
 				},
 			},
 		},
-		Artifact: []*pb.Policy_Rule{
+		Artifact: []*mediatorv1.Policy_Rule{
 			{
 				Type: "ctlog_entry",
 				Params: &structpb.Struct{
@@ -424,22 +409,22 @@ func TestGetRulesForEntity(t *testing.T) {
 	}
 
 	type args struct {
-		p      *pb.Policy
-		entity pb.Entity
+		p      *mediatorv1.Policy
+		entity mediatorv1.Entity
 	}
 	tests := []struct {
 		name    string
 		args    args
-		want    []*pb.Policy_Rule
+		want    []*mediatorv1.Policy_Rule
 		wantErr bool
 	}{
 		{
 			name: "valid rules for repository",
 			args: args{
 				p:      pol,
-				entity: pb.Entity_ENTITY_REPOSITORIES,
+				entity: mediatorv1.Entity_ENTITY_REPOSITORIES,
 			},
-			want: []*pb.Policy_Rule{
+			want: []*mediatorv1.Policy_Rule{
 				{
 					Type: "secret_scanning",
 					Def: &structpb.Struct{
@@ -458,9 +443,9 @@ func TestGetRulesForEntity(t *testing.T) {
 			name: "valid rules for build environment",
 			args: args{
 				p:      pol,
-				entity: pb.Entity_ENTITY_BUILD_ENVIRONMENTS,
+				entity: mediatorv1.Entity_ENTITY_BUILD_ENVIRONMENTS,
 			},
-			want: []*pb.Policy_Rule{
+			want: []*mediatorv1.Policy_Rule{
 				{
 					Type: "no_org_wide_github_action_permissions",
 					Def: &structpb.Struct{
@@ -479,9 +464,9 @@ func TestGetRulesForEntity(t *testing.T) {
 			name: "valid rules for artifacts",
 			args: args{
 				p:      pol,
-				entity: pb.Entity_ENTITY_ARTIFACTS,
+				entity: mediatorv1.Entity_ENTITY_ARTIFACTS,
 			},
-			want: []*pb.Policy_Rule{
+			want: []*mediatorv1.Policy_Rule{
 				{
 					Type: "ctlog_entry",
 					Params: &structpb.Struct{
@@ -536,7 +521,7 @@ func TestGetRulesForEntity(t *testing.T) {
 func TestFilterRulesForType(t *testing.T) {
 	t.Parallel()
 
-	crs := []*pb.Policy_Rule{
+	crs := []*mediatorv1.Policy_Rule{
 		{
 			Type: "secret_scanning",
 			Def: &structpb.Struct{
@@ -595,8 +580,8 @@ func TestFilterRulesForType(t *testing.T) {
 	}
 
 	type args struct {
-		cr []*pb.Policy_Rule
-		rt *pb.RuleType
+		cr []*mediatorv1.Policy_Rule
+		rt *mediatorv1.RuleType
 	}
 	tests := []struct {
 		name    string
@@ -608,7 +593,7 @@ func TestFilterRulesForType(t *testing.T) {
 			name: "valid filter for secret scanning",
 			args: args{
 				cr: crs,
-				rt: &pb.RuleType{
+				rt: &mediatorv1.RuleType{
 					Name: "secret_scanning",
 				},
 			},
@@ -618,7 +603,7 @@ func TestFilterRulesForType(t *testing.T) {
 			name: "valid filter for no_org_wide_github_action_permissions",
 			args: args{
 				cr: crs,
-				rt: &pb.RuleType{
+				rt: &mediatorv1.RuleType{
 					Name: "no_org_wide_github_action_permissions",
 				},
 			},
@@ -628,7 +613,7 @@ func TestFilterRulesForType(t *testing.T) {
 			name: "valid filter for ctlog_entry",
 			args: args{
 				cr: crs,
-				rt: &pb.RuleType{
+				rt: &mediatorv1.RuleType{
 					Name: "ctlog_entry",
 				},
 			},
@@ -641,8 +626,8 @@ func TestFilterRulesForType(t *testing.T) {
 		t.Run(tt.name, func(t *testing.T) {
 			t.Parallel()
 
-			got := []*pb.Policy_Rule{}
-			err := engine.TraverseRules(tt.args.cr, func(pp *pb.Policy_Rule) error {
+			got := []*mediatorv1.Policy_Rule{}
+			err := engine.TraverseRules(tt.args.cr, func(pp *mediatorv1.Policy_Rule) error {
 				if pp.Type == tt.args.rt.Name {
 					got = append(got, pp)
 				}

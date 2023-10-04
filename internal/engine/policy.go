@@ -30,11 +30,6 @@ import (
 	pb "github.com/stacklok/mediator/pkg/api/protobuf/go/mediator/v1"
 )
 
-var (
-	// ErrValidationFailed is returned when a policy fails validation
-	ErrValidationFailed = fmt.Errorf("validation failed")
-)
-
 // RuleValidationError is used to report errors from evaluating a rule, including
 // attribution of the particular error encountered.
 type RuleValidationError struct {
@@ -71,7 +66,7 @@ func ParseJSON(r io.Reader) (*pb.Policy, error) {
 		return nil, fmt.Errorf("error decoding json: %w", err)
 	}
 
-	if err := ValidatePolicy(&out); err != nil {
+	if err := out.Validate(); err != nil {
 		return nil, fmt.Errorf("error validating policy: %w", err)
 	}
 
@@ -99,86 +94,6 @@ func ReadPolicyFromFile(fpath string) (*pb.Policy, error) {
 	}
 
 	return out, nil
-}
-
-// ValidatePolicy validates a pipeline policy
-func ValidatePolicy(p *pb.Policy) error {
-	if err := validateContext(p.Context); err != nil {
-		return err
-	}
-
-	// If the policy is nil or empty, we don't need to validate it
-	if p.Repository != nil && len(p.Repository) > 0 {
-		return validateEntity(p.Repository)
-	}
-
-	if p.BuildEnvironment != nil && len(p.BuildEnvironment) > 0 {
-		return validateEntity(p.BuildEnvironment)
-	}
-
-	if p.Artifact != nil && len(p.Artifact) > 0 {
-		return validateEntity(p.Artifact)
-	}
-
-	if p.PullRequest != nil && len(p.PullRequest) > 0 {
-		return validateEntity(p.PullRequest)
-	}
-
-	return nil
-}
-
-func validateContext(c *pb.Context) error {
-	if c == nil {
-		return fmt.Errorf("%w: context cannot be empty", ErrValidationFailed)
-	}
-
-	if c.Provider == "" {
-		return fmt.Errorf("%w: context provider cannot be empty", ErrValidationFailed)
-	}
-
-	if c.Organization == nil && c.Project == nil {
-		return fmt.Errorf("%w: context organization or group must be set", ErrValidationFailed)
-	}
-
-	if c.Organization != nil && *c.Organization == "" {
-		return fmt.Errorf("%w: context organization cannot be empty", ErrValidationFailed)
-	}
-
-	if c.Project != nil && *c.Project == "" {
-		return fmt.Errorf("%w: context group cannot be empty", ErrValidationFailed)
-	}
-
-	return nil
-}
-
-func validateEntity(e []*pb.Policy_Rule) error {
-	if len(e) == 0 {
-		return fmt.Errorf("%w: entity rules cannot be empty", ErrValidationFailed)
-	}
-
-	for _, r := range e {
-		if r == nil {
-			return fmt.Errorf("%w: entity contextual rules cannot be nil", ErrValidationFailed)
-		}
-
-		if err := validateRule(r); err != nil {
-			return err
-		}
-	}
-
-	return nil
-}
-
-func validateRule(r *pb.Policy_Rule) error {
-	if r.Type == "" {
-		return fmt.Errorf("%w: rule type cannot be empty", ErrValidationFailed)
-	}
-
-	if r.Def == nil {
-		return fmt.Errorf("%w: rule def cannot be nil", ErrValidationFailed)
-	}
-
-	return nil
 }
 
 // GetRulesForEntity returns the rules for the given entity

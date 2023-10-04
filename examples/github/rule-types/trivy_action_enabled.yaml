@@ -4,7 +4,6 @@ type: rule-type
 name: trivy_action_enabled
 context:
   provider: github
-  group: Root Group
 description: Verifies that the Trivy action is enabled for the repository and scanning
 guidance: |
   ## Please set up trivy!

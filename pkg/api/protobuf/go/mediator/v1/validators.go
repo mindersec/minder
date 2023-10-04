@@ -19,6 +19,11 @@ import (
 	"fmt"
 )
 
+var (
+	// ErrValidationFailed is returned when a policy fails validation
+	ErrValidationFailed = fmt.Errorf("validation failed")
+)
+
 // Validator is an interface which allows for the validation of a struct.
 type Validator interface {
 	Validate() error
@@ -108,6 +113,62 @@ func (def *RuleType_Definition) Validate() error {
 
 	if def.Eval == nil {
 		return fmt.Errorf("%w: data eval is nil", ErrInvalidRuleTypeDefinition)
+	}
+
+	return nil
+}
+
+// Validate validates a pipeline policy
+func (p *Policy) Validate() error {
+	if p.Name == "" {
+		return fmt.Errorf("%w: policy name cannot be empty", ErrValidationFailed)
+	}
+
+	// If the policy is nil or empty, we don't need to validate it
+	if p.Repository != nil && len(p.Repository) > 0 {
+		return validateEntity(p.Repository)
+	}
+
+	if p.BuildEnvironment != nil && len(p.BuildEnvironment) > 0 {
+		return validateEntity(p.BuildEnvironment)
+	}
+
+	if p.Artifact != nil && len(p.Artifact) > 0 {
+		return validateEntity(p.Artifact)
+	}
+
+	if p.PullRequest != nil && len(p.PullRequest) > 0 {
+		return validateEntity(p.PullRequest)
+	}
+
+	return nil
+}
+
+func validateEntity(e []*Policy_Rule) error {
+	if len(e) == 0 {
+		return fmt.Errorf("%w: entity rules cannot be empty", ErrValidationFailed)
+	}
+
+	for _, r := range e {
+		if r == nil {
+			return fmt.Errorf("%w: entity contextual rules cannot be nil", ErrValidationFailed)
+		}
+
+		if err := validateRule(r); err != nil {
+			return err
+		}
+	}
+
+	return nil
+}
+
+func validateRule(r *Policy_Rule) error {
+	if r.Type == "" {
+		return fmt.Errorf("%w: rule type cannot be empty", ErrValidationFailed)
+	}
+
+	if r.Def == nil {
+		return fmt.Errorf("%w: rule def cannot be nil", ErrValidationFailed)
 	}
 
 	return nil
