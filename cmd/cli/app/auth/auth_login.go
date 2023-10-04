@@ -133,7 +133,6 @@ will be saved to $XDG_CONFIG_HOME/mediator/credentials.json`,
 		go func() {
 			_ = server.ListenAndServe()
 		}()
-
 		// get the OAuth authorization URL
 		loginUrl := fmt.Sprintf("http://localhost:%v/login", port)
 
@@ -146,7 +145,7 @@ will be saved to $XDG_CONFIG_HOME/mediator/credentials.json`,
 			fmt.Printf("You may login by pasting this URL into your browser: %s", loginUrl)
 		}
 
-		cli.PrintCmd(cmd, "Waiting for token...")
+		cli.PrintCmd(cmd, "Waiting for token...\n")
 
 		// wait for the token to be received
 		token := <-tokenChan
@@ -167,33 +166,37 @@ will be saved to $XDG_CONFIG_HOME/mediator/credentials.json`,
 		util.ExitNicelyOnError(err, "Error fetching user")
 
 		if !registered {
-			cli.PrintCmd(cmd, "First login, registering user.")
+			cli.PrintCmd(cmd, "First login, registering user...\n")
 			newUser, err := client.CreateUser(ctx, &pb.CreateUserRequest{})
 			util.ExitNicelyOnError(err, "Error registering user")
 
-			cli.PrintCmd(cmd, cli.CLIMarmot)
-			cli.PrintCmd(cmd, cli.WelcomeBannerText(
+			cli.PrintCmd(cmd, cli.SuccessBanner.Render(
 				"You have been successfully registered. Welcome!"))
-			cli.PrintCmd(cmd, "\nHere are your details:")
+			cli.PrintCmd(cmd, cli.WarningBanner.Render(
+				"Mediator is currently under active development and considered experimental, "+
+					" we therefore provide no data retention or service stability guarantees.",
+			))
+			cli.PrintCmd(cmd, cli.Header.Render("Here are your details:"))
 
 			renderNewUser(cmd, newUser)
+		} else {
+			cli.PrintCmd(cmd, cli.SuccessBanner.Render(
+				"You have successfully logged in."))
 		}
 
-		fmt.Printf("You have been successfully logged in. Your access credentials saved to %s\n",
+		fmt.Printf("Your access credentials saved to %s\n",
 			filePath)
 
 		// shut down the HTTP server
 		err = server.Shutdown(context.Background())
 		util.ExitNicelyOnError(err, "Failed to shut down server")
-
-		fmt.Println("Authentication successful")
 	},
 }
 
 func renderNewUser(cmd *cobra.Command, newUser *pb.CreateUserResponse) {
 	columns := []table.Column{
-		{Title: "Key", Width: 30},
-		{Title: "Value", Width: 70},
+		{Title: "Key", Width: cli.KeyValTableWidths.Key},
+		{Title: "Value", Width: cli.KeyValTableWidths.Value},
 	}
 	rows := []table.Row{
 		{"Organization ID", newUser.OrganizationId},
