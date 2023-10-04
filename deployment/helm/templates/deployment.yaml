@@ -29,9 +29,9 @@ spec:
       labels:
         app: '{{ include "common.names.name" . }}'
       annotations:
-        prometheus.io/scrape: "true"
-        prometheus.io/port: "9090"
-        prometheus.io/path: '/metrics'
+        {{- with .Values.podAnnotations }}
+        {{- toYaml . | nindent 8 }}
+        {{- end }}
     spec:
       serviceAccountName: mediator
       containers:
