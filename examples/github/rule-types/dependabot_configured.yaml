@@ -4,7 +4,6 @@ type: rule-type
 name: dependabot_configured
 context:
   provider: github
-  group: Root Group
 description: Verifies that Dependabot is configured for the repository
 guidance: |
   Dependabot enables Automated dependency updates for repositories.

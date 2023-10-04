@@ -4,7 +4,6 @@ type: rule-type
 name: codeql_enabled
 context:
   provider: github
-  group: Root Group
 description: Verifies that CodeQL is enabled for the repository
 guidance: |
   CodeQL is a tool that can be used to analyze code for security vulnerabilities.

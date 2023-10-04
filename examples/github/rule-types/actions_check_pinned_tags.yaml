@@ -4,7 +4,6 @@ type: rule-type
 name: actions_check_pinned_tags
 context:
   provider: github
-  group: Root Group
 description: Verifies that any actions use pinned tags
 guidance: |
   Verifies that any actions use pinned tags

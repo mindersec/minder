@@ -129,7 +129,7 @@ func (s *Server) CreatePolicy(ctx context.Context,
 		return nil, providerError(fmt.Errorf("provider error: %w", err))
 	}
 
-	if err := engine.ValidatePolicy(in); err != nil {
+	if err := in.Validate(); err != nil {
 		return nil, status.Errorf(codes.InvalidArgument, "invalid policy: %v", err)
 	}
 

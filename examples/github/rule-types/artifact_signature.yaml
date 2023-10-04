@@ -4,7 +4,6 @@ type: rule-type
 name: artifact_signature
 context:
   provider: github
-  group: Root Group
 description: Verifies that a given artifact has a valid signature.
 guidance: |
   Artifact signing allows a user to add a digital fingerprint to an artifact and verify its trust later.

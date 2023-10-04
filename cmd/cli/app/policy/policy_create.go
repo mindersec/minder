@@ -75,7 +75,7 @@ within a mediator control plane.`,
 
 		p, err := engine.ParseYAML(preader)
 		if err != nil {
-			return fmt.Errorf("error reading fragment from file: %w", err)
+			return fmt.Errorf("error reading policy from file: %w", err)
 		}
 
 		// create a policy

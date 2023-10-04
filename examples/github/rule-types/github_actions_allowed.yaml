@@ -4,7 +4,6 @@ type: rule-type
 name: github_actions_allowed
 context:
   provider: github
-  group: Root Group
 description: |
   Verifies permissions for github actions for a specific repository.
 
