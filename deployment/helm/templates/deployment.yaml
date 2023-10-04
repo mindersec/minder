@@ -30,7 +30,7 @@ spec:
         app: '{{ include "common.names.name" . }}'
       annotations:
         # This includes a newline, so ko sees this as valid yaml
-        # {{ include "common.annotations" (dict "customAnnotations" .Values.commonAnnotations "context" $ ) | nindent 8 }}
+        # {{ include "common.annotations.pods" (dict "customAnnotationsPods" .Values.commonAnnotationsPods "context" $ ) | nindent 8 }}
     spec:
       serviceAccountName: mediator
       containers:

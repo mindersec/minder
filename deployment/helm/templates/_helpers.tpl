@@ -15,7 +15,7 @@ app.kubernetes.io/managed-by: {{ .Release.Service }}
 {{/*
 Common annotations
 */}}
-{{- define "common.annotations" -}}
+{{- define "common.annotations.pods" -}}
 prometheus.io/scrape: "true"
 prometheus.io/port: "9090"
 prometheus.io/path: "/metrics"
