@@ -215,10 +215,10 @@ func NewRuleTypeEngine(rt *mediatorv1.RuleType, cli *providers.ProviderBuilder) 
 		org := strings.Clone(*rt.Context.Organization)
 		rte.Meta.Organization = &org
 	} else if rt.Context.Project != nil && *rt.Context.Project != "" {
-		grp := strings.Clone(*rt.Context.Project)
-		rte.Meta.Project = &grp
+		prj := strings.Clone(*rt.Context.Project)
+		rte.Meta.Project = &prj
 	} else {
-		return nil, fmt.Errorf("rule type context must have an organization or group")
+		return nil, fmt.Errorf("rule type context must have an organization or project")
 	}
 
 	return rte, nil

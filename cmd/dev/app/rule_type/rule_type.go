@@ -91,6 +91,12 @@ func testCmdRun(cmd *cobra.Command, _ []string) error {
 		return fmt.Errorf("error reading rule type from file: %w", err)
 	}
 
+	rootProject := "00000000-0000-0000-0000-000000000002"
+	rt.Context = &mediatorv1.Context{
+		Provider: "test",
+		Project:  &rootProject,
+	}
+
 	ent, err := readEntityFromFile(epath.Value.String(), mediatorv1.EntityFromString(rt.Def.InEntity))
 	if err != nil {
 		return fmt.Errorf("error reading entity from file: %w", err)
