@@ -401,10 +401,10 @@ func getRuleEvalEntityInfo(
 	return entityInfo
 }
 
-// GetPolicyStatusById is a method to get policy status
+// GetPolicyStatusByName is a method to get policy status
 // nolint:gocyclo // TODO: Refactor this to be more readable
-func (s *Server) GetPolicyStatusById(ctx context.Context,
-	in *mediatorv1.GetPolicyStatusByIdRequest) (*mediatorv1.GetPolicyStatusByIdResponse, error) {
+func (s *Server) GetPolicyStatusByName(ctx context.Context,
+	in *mediatorv1.GetPolicyStatusByNameRequest) (*mediatorv1.GetPolicyStatusByNameResponse, error) {
 	ctx, err := s.authAndContextValidation(ctx, in.GetContext())
 	if err != nil {
 		return nil, status.Errorf(codes.InvalidArgument, "error ensuring default group: %v", err)
@@ -412,14 +412,9 @@ func (s *Server) GetPolicyStatusById(ctx context.Context,
 
 	entityCtx := engine.EntityFromContext(ctx)
 
-	parsedPolicyID, err := uuid.Parse(in.PolicyId)
-	if err != nil {
-		return nil, util.UserVisibleError(codes.InvalidArgument, "invalid policy ID")
-	}
-
-	dbstat, err := s.store.GetPolicyStatusByIdAndProject(ctx, db.GetPolicyStatusByIdAndProjectParams{
+	dbstat, err := s.store.GetPolicyStatusByNameAndProject(ctx, db.GetPolicyStatusByNameAndProjectParams{
 		ProjectID: entityCtx.Project.ID,
-		ID:        parsedPolicyID,
+		Name:      in.Name,
 	})
 	if err != nil {
 		if errors.Is(err, sql.ErrNoRows) {
@@ -458,7 +453,7 @@ func (s *Server) GetPolicyStatusById(ctx context.Context,
 	// TODO: Handle retrieving status for other types of entities
 	if selector != nil {
 		dbrulestat, err := s.store.ListRuleEvaluationStatusByPolicyId(ctx, db.ListRuleEvaluationStatusByPolicyIdParams{
-			PolicyID:   parsedPolicyID,
+			PolicyID:   dbstat.ID,
 			EntityID:   *selector,
 			EntityType: *dbEntity,
 			RuleName:   *rule,
@@ -482,7 +477,7 @@ func (s *Server) GetPolicyStatusById(ctx context.Context,
 			}
 
 			st := &mediatorv1.RuleEvaluationStatus{
-				PolicyId:           in.PolicyId,
+				PolicyId:           dbstat.ID.String(),
 				RuleId:             rs.RuleTypeID.String(),
 				RuleName:           rs.RuleTypeName,
 				Entity:             string(rs.Entity),
@@ -505,7 +500,7 @@ func (s *Server) GetPolicyStatusById(ctx context.Context,
 		// TODO: Add other entities once we have database entries for them
 	}
 
-	return &mediatorv1.GetPolicyStatusByIdResponse{
+	return &mediatorv1.GetPolicyStatusByNameResponse{
 		PolicyStatus: &mediatorv1.PolicyStatus{
 			PolicyId:     dbstat.ID.String(),
 			PolicyName:   dbstat.Name,

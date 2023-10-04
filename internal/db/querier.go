@@ -60,6 +60,7 @@ type Querier interface {
 	GetPolicyByProjectAndID(ctx context.Context, arg GetPolicyByProjectAndIDParams) ([]GetPolicyByProjectAndIDRow, error)
 	GetPolicyByProjectAndName(ctx context.Context, arg GetPolicyByProjectAndNameParams) ([]GetPolicyByProjectAndNameRow, error)
 	GetPolicyStatusByIdAndProject(ctx context.Context, arg GetPolicyStatusByIdAndProjectParams) (GetPolicyStatusByIdAndProjectRow, error)
+	GetPolicyStatusByNameAndProject(ctx context.Context, arg GetPolicyStatusByNameAndProjectParams) (GetPolicyStatusByNameAndProjectRow, error)
 	GetPolicyStatusByProject(ctx context.Context, projectID uuid.UUID) ([]GetPolicyStatusByProjectRow, error)
 	GetProjectByID(ctx context.Context, id uuid.UUID) (Project, error)
 	GetProjectByName(ctx context.Context, name string) (Project, error)

@@ -74,6 +74,36 @@ func (q *Queries) GetPolicyStatusByIdAndProject(ctx context.Context, arg GetPoli
 	return i, err
 }
 
+const getPolicyStatusByNameAndProject = `-- name: GetPolicyStatusByNameAndProject :one
+SELECT p.id, p.name, ps.policy_status, ps.last_updated FROM policy_status ps
+INNER JOIN policies p ON p.id = ps.policy_id
+WHERE p.name = $1 AND p.project_id = $2
+`
+
+type GetPolicyStatusByNameAndProjectParams struct {
+	Name      string    `json:"name"`
+	ProjectID uuid.UUID `json:"project_id"`
+}
+
+type GetPolicyStatusByNameAndProjectRow struct {
+	ID           uuid.UUID       `json:"id"`
+	Name         string          `json:"name"`
+	PolicyStatus EvalStatusTypes `json:"policy_status"`
+	LastUpdated  time.Time       `json:"last_updated"`
+}
+
+func (q *Queries) GetPolicyStatusByNameAndProject(ctx context.Context, arg GetPolicyStatusByNameAndProjectParams) (GetPolicyStatusByNameAndProjectRow, error) {
+	row := q.db.QueryRowContext(ctx, getPolicyStatusByNameAndProject, arg.Name, arg.ProjectID)
+	var i GetPolicyStatusByNameAndProjectRow
+	err := row.Scan(
+		&i.ID,
+		&i.Name,
+		&i.PolicyStatus,
+		&i.LastUpdated,
+	)
+	return i, err
+}
+
 const getPolicyStatusByProject = `-- name: GetPolicyStatusByProject :many
 SELECT p.id, p.name, ps.policy_status, ps.last_updated FROM policy_status ps
 INNER JOIN policies p ON p.id = ps.policy_id

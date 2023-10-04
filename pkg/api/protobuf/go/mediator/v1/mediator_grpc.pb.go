@@ -2292,7 +2292,7 @@ const (
 	PolicyService_DeletePolicy_FullMethodName             = "/mediator.v1.PolicyService/DeletePolicy"
 	PolicyService_ListPolicies_FullMethodName             = "/mediator.v1.PolicyService/ListPolicies"
 	PolicyService_GetPolicyById_FullMethodName            = "/mediator.v1.PolicyService/GetPolicyById"
-	PolicyService_GetPolicyStatusById_FullMethodName      = "/mediator.v1.PolicyService/GetPolicyStatusById"
+	PolicyService_GetPolicyStatusByName_FullMethodName    = "/mediator.v1.PolicyService/GetPolicyStatusByName"
 	PolicyService_GetPolicyStatusByProject_FullMethodName = "/mediator.v1.PolicyService/GetPolicyStatusByProject"
 	PolicyService_ListRuleTypes_FullMethodName            = "/mediator.v1.PolicyService/ListRuleTypes"
 	PolicyService_GetRuleTypeByName_FullMethodName        = "/mediator.v1.PolicyService/GetRuleTypeByName"
@@ -2310,7 +2310,7 @@ type PolicyServiceClient interface {
 	DeletePolicy(ctx context.Context, in *DeletePolicyRequest, opts ...grpc.CallOption) (*DeletePolicyResponse, error)
 	ListPolicies(ctx context.Context, in *ListPoliciesRequest, opts ...grpc.CallOption) (*ListPoliciesResponse, error)
 	GetPolicyById(ctx context.Context, in *GetPolicyByIdRequest, opts ...grpc.CallOption) (*GetPolicyByIdResponse, error)
-	GetPolicyStatusById(ctx context.Context, in *GetPolicyStatusByIdRequest, opts ...grpc.CallOption) (*GetPolicyStatusByIdResponse, error)
+	GetPolicyStatusByName(ctx context.Context, in *GetPolicyStatusByNameRequest, opts ...grpc.CallOption) (*GetPolicyStatusByNameResponse, error)
 	GetPolicyStatusByProject(ctx context.Context, in *GetPolicyStatusByProjectRequest, opts ...grpc.CallOption) (*GetPolicyStatusByProjectResponse, error)
 	ListRuleTypes(ctx context.Context, in *ListRuleTypesRequest, opts ...grpc.CallOption) (*ListRuleTypesResponse, error)
 	GetRuleTypeByName(ctx context.Context, in *GetRuleTypeByNameRequest, opts ...grpc.CallOption) (*GetRuleTypeByNameResponse, error)
@@ -2364,9 +2364,9 @@ func (c *policyServiceClient) GetPolicyById(ctx context.Context, in *GetPolicyBy
 	return out, nil
 }
 
-func (c *policyServiceClient) GetPolicyStatusById(ctx context.Context, in *GetPolicyStatusByIdRequest, opts ...grpc.CallOption) (*GetPolicyStatusByIdResponse, error) {
-	out := new(GetPolicyStatusByIdResponse)
-	err := c.cc.Invoke(ctx, PolicyService_GetPolicyStatusById_FullMethodName, in, out, opts...)
+func (c *policyServiceClient) GetPolicyStatusByName(ctx context.Context, in *GetPolicyStatusByNameRequest, opts ...grpc.CallOption) (*GetPolicyStatusByNameResponse, error) {
+	out := new(GetPolicyStatusByNameResponse)
+	err := c.cc.Invoke(ctx, PolicyService_GetPolicyStatusByName_FullMethodName, in, out, opts...)
 	if err != nil {
 		return nil, err
 	}
@@ -2444,7 +2444,7 @@ type PolicyServiceServer interface {
 	DeletePolicy(context.Context, *DeletePolicyRequest) (*DeletePolicyResponse, error)
 	ListPolicies(context.Context, *ListPoliciesRequest) (*ListPoliciesResponse, error)
 	GetPolicyById(context.Context, *GetPolicyByIdRequest) (*GetPolicyByIdResponse, error)
-	GetPolicyStatusById(context.Context, *GetPolicyStatusByIdRequest) (*GetPolicyStatusByIdResponse, error)
+	GetPolicyStatusByName(context.Context, *GetPolicyStatusByNameRequest) (*GetPolicyStatusByNameResponse, error)
 	GetPolicyStatusByProject(context.Context, *GetPolicyStatusByProjectRequest) (*GetPolicyStatusByProjectResponse, error)
 	ListRuleTypes(context.Context, *ListRuleTypesRequest) (*ListRuleTypesResponse, error)
 	GetRuleTypeByName(context.Context, *GetRuleTypeByNameRequest) (*GetRuleTypeByNameResponse, error)
@@ -2471,8 +2471,8 @@ func (UnimplementedPolicyServiceServer) ListPolicies(context.Context, *ListPolic
 func (UnimplementedPolicyServiceServer) GetPolicyById(context.Context, *GetPolicyByIdRequest) (*GetPolicyByIdResponse, error) {
 	return nil, status.Errorf(codes.Unimplemented, "method GetPolicyById not implemented")
 }
-func (UnimplementedPolicyServiceServer) GetPolicyStatusById(context.Context, *GetPolicyStatusByIdRequest) (*GetPolicyStatusByIdResponse, error) {
-	return nil, status.Errorf(codes.Unimplemented, "method GetPolicyStatusById not implemented")
+func (UnimplementedPolicyServiceServer) GetPolicyStatusByName(context.Context, *GetPolicyStatusByNameRequest) (*GetPolicyStatusByNameResponse, error) {
+	return nil, status.Errorf(codes.Unimplemented, "method GetPolicyStatusByName not implemented")
 }
 func (UnimplementedPolicyServiceServer) GetPolicyStatusByProject(context.Context, *GetPolicyStatusByProjectRequest) (*GetPolicyStatusByProjectResponse, error) {
 	return nil, status.Errorf(codes.Unimplemented, "method GetPolicyStatusByProject not implemented")
@@ -2580,20 +2580,20 @@ func _PolicyService_GetPolicyById_Handler(srv interface{}, ctx context.Context, 
 	return interceptor(ctx, in, info, handler)
 }
 
-func _PolicyService_GetPolicyStatusById_Handler(srv interface{}, ctx context.Context, dec func(interface{}) error, interceptor grpc.UnaryServerInterceptor) (interface{}, error) {
-	in := new(GetPolicyStatusByIdRequest)
+func _PolicyService_GetPolicyStatusByName_Handler(srv interface{}, ctx context.Context, dec func(interface{}) error, interceptor grpc.UnaryServerInterceptor) (interface{}, error) {
+	in := new(GetPolicyStatusByNameRequest)
 	if err := dec(in); err != nil {
 		return nil, err
 	}
 	if interceptor == nil {
-		return srv.(PolicyServiceServer).GetPolicyStatusById(ctx, in)
+		return srv.(PolicyServiceServer).GetPolicyStatusByName(ctx, in)
 	}
 	info := &grpc.UnaryServerInfo{
 		Server:     srv,
-		FullMethod: PolicyService_GetPolicyStatusById_FullMethodName,
+		FullMethod: PolicyService_GetPolicyStatusByName_FullMethodName,
 	}
 	handler := func(ctx context.Context, req interface{}) (interface{}, error) {
-		return srv.(PolicyServiceServer).GetPolicyStatusById(ctx, req.(*GetPolicyStatusByIdRequest))
+		return srv.(PolicyServiceServer).GetPolicyStatusByName(ctx, req.(*GetPolicyStatusByNameRequest))
 	}
 	return interceptor(ctx, in, info, handler)
 }
@@ -2748,8 +2748,8 @@ var PolicyService_ServiceDesc = grpc.ServiceDesc{
 			Handler:    _PolicyService_GetPolicyById_Handler,
 		},
 		{
-			MethodName: "GetPolicyStatusById",
-			Handler:    _PolicyService_GetPolicyStatusById_Handler,
+			MethodName: "GetPolicyStatusByName",
+			Handler:    _PolicyService_GetPolicyStatusByName_Handler,
 		},
 		{
 			MethodName: "GetPolicyStatusByProject",

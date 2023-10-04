@@ -46,6 +46,11 @@ SELECT p.id, p.name, ps.policy_status, ps.last_updated FROM policy_status ps
 INNER JOIN policies p ON p.id = ps.policy_id
 WHERE p.id = $1 AND p.project_id = $2;
 
+-- name: GetPolicyStatusByNameAndProject :one
+SELECT p.id, p.name, ps.policy_status, ps.last_updated FROM policy_status ps
+INNER JOIN policies p ON p.id = ps.policy_id
+WHERE p.name = $1 AND p.project_id = $2;
+
 -- name: GetPolicyStatusByProject :many
 SELECT p.id, p.name, ps.policy_status, ps.last_updated FROM policy_status ps
 INNER JOIN policies p ON p.id = ps.policy_id

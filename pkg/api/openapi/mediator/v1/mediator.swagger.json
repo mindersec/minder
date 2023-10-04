@@ -964,6 +964,89 @@
         ]
       }
     },
+    "/api/v1/policy/name/{name}/status": {
+      "get": {
+        "operationId": "PolicyService_GetPolicyStatusByName",
+        "responses": {
+          "200": {
+            "description": "A successful response.",
+            "schema": {
+              "$ref": "#/definitions/v1GetPolicyStatusByNameResponse"
+            }
+          },
+          "default": {
+            "description": "An unexpected error response.",
+            "schema": {
+              "$ref": "#/definitions/rpcStatus"
+            }
+          }
+        },
+        "parameters": [
+          {
+            "name": "name",
+            "description": "name is the name of the policy to get",
+            "in": "path",
+            "required": true,
+            "type": "string"
+          },
+          {
+            "name": "context.provider",
+            "in": "query",
+            "required": false,
+            "type": "string"
+          },
+          {
+            "name": "context.organization",
+            "in": "query",
+            "required": false,
+            "type": "string"
+          },
+          {
+            "name": "context.project",
+            "in": "query",
+            "required": false,
+            "type": "string"
+          },
+          {
+            "name": "entity.type",
+            "description": "entity is the entity to get status for. Incompatible with `all`",
+            "in": "query",
+            "required": false,
+            "type": "string",
+            "enum": [
+              "ENTITY_UNSPECIFIED",
+              "ENTITY_REPOSITORIES",
+              "ENTITY_BUILD_ENVIRONMENTS",
+              "ENTITY_ARTIFACTS",
+              "ENTITY_PULL_REQUESTS"
+            ],
+            "default": "ENTITY_UNSPECIFIED"
+          },
+          {
+            "name": "entity.id",
+            "description": "id is the ID of the entity to get status for. Incompatible with `all`",
+            "in": "query",
+            "required": false,
+            "type": "string"
+          },
+          {
+            "name": "all",
+            "in": "query",
+            "required": false,
+            "type": "boolean"
+          },
+          {
+            "name": "rule",
+            "in": "query",
+            "required": false,
+            "type": "string"
+          }
+        ],
+        "tags": [
+          "PolicyService"
+        ]
+      }
+    },
     "/api/v1/policy/{id}": {
       "get": {
         "operationId": "PolicyService_GetPolicyById",
@@ -1050,89 +1133,6 @@
           },
           {
             "name": "context.project",
-            "in": "query",
-            "required": false,
-            "type": "string"
-          }
-        ],
-        "tags": [
-          "PolicyService"
-        ]
-      }
-    },
-    "/api/v1/policy/{policyId}/status": {
-      "get": {
-        "operationId": "PolicyService_GetPolicyStatusById",
-        "responses": {
-          "200": {
-            "description": "A successful response.",
-            "schema": {
-              "$ref": "#/definitions/v1GetPolicyStatusByIdResponse"
-            }
-          },
-          "default": {
-            "description": "An unexpected error response.",
-            "schema": {
-              "$ref": "#/definitions/rpcStatus"
-            }
-          }
-        },
-        "parameters": [
-          {
-            "name": "policyId",
-            "description": "policy_id is the id of the policy to get",
-            "in": "path",
-            "required": true,
-            "type": "string"
-          },
-          {
-            "name": "context.provider",
-            "in": "query",
-            "required": false,
-            "type": "string"
-          },
-          {
-            "name": "context.organization",
-            "in": "query",
-            "required": false,
-            "type": "string"
-          },
-          {
-            "name": "context.project",
-            "in": "query",
-            "required": false,
-            "type": "string"
-          },
-          {
-            "name": "entity.type",
-            "description": "entity is the entity to get status for. Incompatible with `all`",
-            "in": "query",
-            "required": false,
-            "type": "string",
-            "enum": [
-              "ENTITY_UNSPECIFIED",
-              "ENTITY_REPOSITORIES",
-              "ENTITY_BUILD_ENVIRONMENTS",
-              "ENTITY_ARTIFACTS",
-              "ENTITY_PULL_REQUESTS"
-            ],
-            "default": "ENTITY_UNSPECIFIED"
-          },
-          {
-            "name": "entity.id",
-            "description": "id is the ID of the entity to get status for. Incompatible with `all`",
-            "in": "query",
-            "required": false,
-            "type": "string"
-          },
-          {
-            "name": "all",
-            "in": "query",
-            "required": false,
-            "type": "boolean"
-          },
-          {
-            "name": "rule",
             "in": "query",
             "required": false,
             "type": "string"
@@ -2493,7 +2493,7 @@
         }
       }
     },
-    "GetPolicyStatusByIdRequestEntityTypedId": {
+    "GetPolicyStatusByNameRequestEntityTypedId": {
       "type": "object",
       "properties": {
         "type": {
@@ -3176,7 +3176,7 @@
         }
       }
     },
-    "v1GetPolicyStatusByIdResponse": {
+    "v1GetPolicyStatusByNameResponse": {
       "type": "object",
       "properties": {
         "policyStatus": {

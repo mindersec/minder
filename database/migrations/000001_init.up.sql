@@ -188,6 +188,8 @@ CREATE TABLE policies (
     FOREIGN KEY (project_id, provider) REFERENCES providers(project_id, name) ON DELETE CASCADE
 );
 
+CREATE UNIQUE INDEX ON policies(project_id, name);
+
 CREATE TYPE entities as enum ('repository', 'build_environment', 'artifact', 'pull_request');
 
 CREATE TABLE entity_policies (
@@ -244,7 +246,6 @@ CREATE INDEX idx_roles_project_id ON roles(project_id);
 CREATE UNIQUE INDEX roles_organization_id_name_lower_idx ON roles (organization_id, LOWER(name));
 CREATE INDEX idx_provider_access_tokens_project_id ON provider_access_tokens(project_id);
 CREATE UNIQUE INDEX repositories_repo_id_idx ON repositories(repo_id);
-CREATE UNIQUE INDEX policies_policy_name_idx ON policies(provider, name);
 CREATE UNIQUE INDEX rule_type_idx ON rule_type(provider, project_id, name);
 CREATE UNIQUE INDEX rule_evaluation_status_results_idx ON rule_evaluation_status(policy_id, repository_id, COALESCE(artifact_id, '00000000-0000-0000-0000-000000000000'::UUID), entity, rule_type_id);
 CREATE UNIQUE INDEX artifact_name_lower_idx ON artifacts (repository_id, LOWER(artifact_name));

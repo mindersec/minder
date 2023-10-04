@@ -706,9 +706,9 @@ service PolicyService {
             };    
     }
 
-    rpc GetPolicyStatusById (GetPolicyStatusByIdRequest) returns (GetPolicyStatusByIdResponse) {
+    rpc GetPolicyStatusByName (GetPolicyStatusByNameRequest) returns (GetPolicyStatusByNameResponse) {
         option (google.api.http) = {
-            get: "/api/v1/policy/{policy_id}/status"
+            get: "/api/v1/policy/name/{name}/status"
         };
 
         option (rpc_options) = {
@@ -1507,11 +1507,11 @@ message RuleEvaluationStatus {
     string remediation_details = 12;
 }
 
-message GetPolicyStatusByIdRequest {
+message GetPolicyStatusByNameRequest {
     // context is the context in which the rule type is evaluated.
     Context context = 1;
-    // policy_id is the id of the policy to get
-    string policy_id = 2;
+    // name is the name of the policy to get
+    string name = 2;
 
     // EntiryTypeId is a message that carries an ID together with a type to uniquely identify an entity
     // such as (repo, 1), (artifact, 2), ...
@@ -1528,7 +1528,7 @@ message GetPolicyStatusByIdRequest {
     string rule = 5;
 }
 
-message GetPolicyStatusByIdResponse {
+message GetPolicyStatusByNameResponse {
     // policy_status is the status of the policy
     PolicyStatus policy_status = 1;
 
