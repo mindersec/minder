@@ -118,7 +118,7 @@ func (def *RuleType_Definition) Validate() error {
 	return nil
 }
 
-// ValidatePolicy validates a pipeline policy
+// Validate validates a pipeline policy
 func (p *Policy) Validate() error {
 	// If the policy is nil or empty, we don't need to validate it
 	if p.Repository != nil && len(p.Repository) > 0 {
