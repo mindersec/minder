@@ -14,8 +14,9 @@ medic policy create [flags]
 ### Options
 
 ```
-  -f, --file string   Path to the YAML defining the policy (or - for stdin)
-  -h, --help          help for create
+  -f, --file string      Path to the YAML defining the policy (or - for stdin)
+  -h, --help             help for create
+  -p, --project string   Project to create the policy in
 ```
 
 ### Options inherited from parent commands
