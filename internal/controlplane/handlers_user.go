@@ -23,8 +23,6 @@ import (
 	"github.com/go-playground/validator/v10"
 	"github.com/google/uuid"
 	gauth "github.com/grpc-ecosystem/go-grpc-middleware/v2/interceptors/auth"
-	"github.com/lestrrat-go/jwx/v2/jwt/openid"
-	"golang.org/x/exp/slices"
 	"google.golang.org/grpc/codes"
 	"google.golang.org/grpc/status"
 	"google.golang.org/protobuf/types/known/timestamppb"
@@ -73,39 +71,32 @@ func (s *Server) CreateUser(ctx context.Context,
 	var userProject uuid.UUID
 	var userRoles []int32
 
-	if containsSuperadminRole(token) {
-		// if the token has superadmin access to the realm, then make give them a superadmin role in the DB
-		userOrg = rootOrganization
-		userProject = rootProject
-		userRoles = append(userRoles, superadminRole)
-	} else {
-		orgmeta := &OrgMeta{
-			Company: subject + " - Self enrolled",
-		}
+	orgmeta := &OrgMeta{
+		Company: subject + " - Self enrolled",
+	}
 
-		marshaled, err := json.Marshal(orgmeta)
-		if err != nil {
-			return nil, status.Errorf(codes.Internal, "failed to marshal org metadata: %s", err)
-		}
+	marshaled, err := json.Marshal(orgmeta)
+	if err != nil {
+		return nil, status.Errorf(codes.Internal, "failed to marshal org metadata: %s", err)
+	}
 
-		// otherwise self-enroll user, by creating a new org and project and making the user an admin of those
-		organization, err := qtx.CreateOrganization(ctx, db.CreateOrganizationParams{
-			Name:     subject + "-org",
-			Metadata: marshaled,
-		})
-		if err != nil {
-			return nil, status.Errorf(codes.Internal, "failed to create organization: %s", err)
-		}
-		orgProject, orgRoles, err := CreateDefaultRecordsForOrg(ctx, qtx, organization)
-		if err != nil {
-			return nil, status.Errorf(codes.Internal, "failed to create default organization records: %s", err)
-		}
+	// otherwise self-enroll user, by creating a new org and project and making the user an admin of those
+	organization, err := qtx.CreateOrganization(ctx, db.CreateOrganizationParams{
+		Name:     subject + "-org",
+		Metadata: marshaled,
+	})
+	if err != nil {
+		return nil, status.Errorf(codes.Internal, "failed to create organization: %s", err)
+	}
+	orgProject, orgRoles, err := CreateDefaultRecordsForOrg(ctx, qtx, organization)
+	if err != nil {
+		return nil, status.Errorf(codes.Internal, "failed to create default organization records: %s", err)
+	}
 
-		userOrg = organization.ID
-		userProject = uuid.MustParse(orgProject.ProjectId)
-		for _, role := range orgRoles {
-			userRoles = append(userRoles, role.Id)
-		}
+	userOrg = organization.ID
+	userProject = uuid.MustParse(orgProject.ProjectId)
+	for _, role := range orgRoles {
+		userRoles = append(userRoles, role.Id)
 	}
 
 	user, err := qtx.CreateUser(ctx, db.CreateUserParams{OrganizationID: userOrg,
@@ -136,21 +127,6 @@ func (s *Server) CreateUser(ctx context.Context,
 	return &pb.CreateUserResponse{Id: user.ID, OrganizationId: user.OrganizationID.String(), Email: &user.Email.String,
 		IdentitySubject: user.IdentitySubject, FirstName: &user.FirstName.String, LastName: &user.LastName.String,
 		CreatedAt: timestamppb.New(user.CreatedAt), UpdatedAt: timestamppb.New(user.UpdatedAt)}, nil
-}
-
-func containsSuperadminRole(openIdToken openid.Token) bool {
-	if realmAccess, ok := openIdToken.Get("realm_access"); ok {
-		if realms, ok := realmAccess.(map[string]interface{}); ok {
-			if roles, ok := realms["roles"]; ok {
-				if userRoles, ok := roles.([]interface{}); ok {
-					if slices.Contains(userRoles, "superadmin") {
-						return true
-					}
-				}
-			}
-		}
-	}
-	return false
 }
 
 type deleteUserValidation struct {
@@ -212,6 +188,9 @@ func (s *Server) GetUsers(ctx context.Context,
 		Offset: *in.Offset,
 	})
 	if err != nil {
+		if errors.Is(err, sql.ErrNoRows) {
+			return nil, util.UserVisibleError(codes.NotFound, "user not found")
+		}
 		return nil, status.Errorf(codes.Internal, "failed to get users: %s", err)
 	}
 

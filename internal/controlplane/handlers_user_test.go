@@ -115,45 +115,6 @@ func TestCreateUserDBMock(t *testing.T) {
 				assert.Equal(t, "Bar", *res.LastName)
 			},
 		},
-		{
-			name: "Success 2",
-			req:  &pb.CreateUserRequest{},
-			buildStubs: func(store *mockdb.MockStore, jwt *mockjwt.MockJwtValidator) {
-				tx := sql.Tx{}
-				store.EXPECT().BeginTransaction().Return(&tx, nil)
-				store.EXPECT().GetQuerierWithTransaction(gomock.Any()).Return(store)
-				returnedUser := db.User{
-					ID:              1,
-					OrganizationID:  rootOrganization,
-					IdentitySubject: "subject1",
-					Email:           sql.NullString{Valid: false},
-					FirstName:       sql.NullString{Valid: false},
-					LastName:        sql.NullString{Valid: false},
-					CreatedAt:       time.Now(),
-					UpdatedAt:       time.Now(),
-				}
-				store.EXPECT().
-					CreateUser(gomock.Any(), db.CreateUserParams{
-						OrganizationID:  rootOrganization,
-						IdentitySubject: "subject1",
-					}).
-					Return(returnedUser, nil)
-				store.EXPECT().AddUserProject(gomock.Any(), db.AddUserProjectParams{UserID: 1, ProjectID: rootProject})
-				store.EXPECT().AddUserRole(gomock.Any(), db.AddUserRoleParams{UserID: 1, RoleID: 1})
-				store.EXPECT().Commit(gomock.Any())
-				store.EXPECT().Rollback(gomock.Any())
-				roles := []interface{}{"superadmin"}
-				realmAccess := map[string]interface{}{"roles": roles}
-				tokenResult, _ := openid.NewBuilder().Subject("subject1").Claim("realm_access", realmAccess).Build()
-				jwt.EXPECT().ParseAndValidate(gomock.Any()).Return(tokenResult, nil)
-			},
-			checkResponse: func(t *testing.T, res *pb.CreateUserResponse, err error) {
-				t.Helper()
-
-				assert.Equal(t, int32(1), res.Id)
-				assert.Equal(t, rootOrganization.String(), res.OrganizationId)
-			},
-		},
 	}
 
 	// Create a new context and set the claims value
@@ -268,45 +229,6 @@ func TestCreateUser_gRPC(t *testing.T) {
 			},
 			expectedStatusCode: codes.OK,
 		},
-		{
-			name: "Superadmin",
-			req:  &pb.CreateUserRequest{},
-			buildStubs: func(store *mockdb.MockStore, jwt *mockjwt.MockJwtValidator) {
-				tx := sql.Tx{}
-				store.EXPECT().BeginTransaction().Return(&tx, nil)
-				store.EXPECT().GetQuerierWithTransaction(gomock.Any()).Return(store)
-				store.EXPECT().
-					CreateUser(gomock.Any(), gomock.Any()).
-					Return(db.User{
-						ID:             1,
-						OrganizationID: rootOrganization,
-						CreatedAt:      time.Now(),
-						UpdatedAt:      time.Now(),
-					}, nil)
-				store.EXPECT().AddUserProject(gomock.Any(), db.AddUserProjectParams{
-					UserID:    1,
-					ProjectID: rootProject,
-				})
-				store.EXPECT().AddUserRole(gomock.Any(), db.AddUserRoleParams{UserID: 1, RoleID: 1})
-				store.EXPECT().Commit(gomock.Any())
-				store.EXPECT().Rollback(gomock.Any())
-				roles := []interface{}{"superadmin"}
-				realmAccess := map[string]interface{}{"roles": roles}
-				tokenResult, _ := openid.NewBuilder().Claim("realm_access", realmAccess).Build()
-				jwt.EXPECT().ParseAndValidate(gomock.Any()).Return(tokenResult, nil)
-			},
-			checkResponse: func(t *testing.T, res *pb.CreateUserResponse, err error) {
-				t.Helper()
-
-				assert.NoError(t, err)
-				assert.NotNil(t, res)
-				assert.Equal(t, int32(1), res.Id)
-				assert.Equal(t, rootOrganization.String(), res.OrganizationId)
-				assert.NotNil(t, res.CreatedAt)
-				assert.NotNil(t, res.UpdatedAt)
-			},
-			expectedStatusCode: codes.OK,
-		},
 	}
 
 	// Create a new context and set the claims value
@@ -364,6 +286,7 @@ func TestDeleteUserDBMock(t *testing.T) {
 	request := &pb.DeleteUserRequest{Id: 1}
 
 	orgID := uuid.New()
+	projectID := uuid.New()
 
 	expectedUser := db.User{
 		ID:             1,
@@ -377,10 +300,11 @@ func TestDeleteUserDBMock(t *testing.T) {
 	// Create a new context and set the claims value
 	ctx := auth.WithPermissionsContext(context.Background(), auth.UserPermissions{
 		UserId:         1,
-		OrganizationId: rootOrganization,
-		ProjectIds:     []uuid.UUID{rootProject},
+		OrganizationId: orgID,
+		ProjectIds:     []uuid.UUID{projectID},
+		IsStaff:        true, // TODO: remove this
 		Roles: []auth.RoleInfo{
-			{RoleID: 1, IsAdmin: true, ProjectID: &rootProject, OrganizationID: rootOrganization}},
+			{RoleID: 1, IsAdmin: true, ProjectID: &projectID, OrganizationID: orgID}},
 	})
 
 	mockStore.EXPECT().
@@ -410,6 +334,9 @@ func TestDeleteUser_gRPC(t *testing.T) {
 	t.Parallel()
 
 	force := true
+
+	orgID := uuid.New()
+	projectID := uuid.New()
 
 	testCases := []struct {
 		name               string
@@ -461,10 +388,11 @@ func TestDeleteUser_gRPC(t *testing.T) {
 	// Create a new context and set the claims value
 	ctx := auth.WithPermissionsContext(context.Background(), auth.UserPermissions{
 		UserId:         1,
-		OrganizationId: rootOrganization,
-		ProjectIds:     []uuid.UUID{rootProject},
+		OrganizationId: orgID,
+		ProjectIds:     []uuid.UUID{projectID},
+		IsStaff:        true, // TODO: remove this
 		Roles: []auth.RoleInfo{
-			{RoleID: 1, IsAdmin: true, ProjectID: &rootProject, OrganizationID: rootOrganization}},
+			{RoleID: 1, IsAdmin: true, ProjectID: &projectID, OrganizationID: orgID}},
 	})
 
 	for i := range testCases {
@@ -503,6 +431,9 @@ func TestGetUsersDBMock(t *testing.T) {
 
 	mockStore := mockdb.NewMockStore(ctrl)
 
+	orgID := uuid.New()
+	projectID := uuid.New()
+
 	request := &pb.GetUsersRequest{}
 
 	expectedUsers := []db.User{
@@ -522,10 +453,11 @@ func TestGetUsersDBMock(t *testing.T) {
 	// Create a new context and set the claims value
 	ctx := auth.WithPermissionsContext(context.Background(), auth.UserPermissions{
 		UserId:         1,
-		OrganizationId: rootOrganization,
-		ProjectIds:     []uuid.UUID{rootProject},
+		OrganizationId: orgID,
+		ProjectIds:     []uuid.UUID{projectID},
+		IsStaff:        true, // TODO: remove this
 		Roles: []auth.RoleInfo{
-			{RoleID: 1, IsAdmin: true, ProjectID: &rootProject, OrganizationID: rootOrganization}},
+			{RoleID: 1, IsAdmin: true, ProjectID: &projectID, OrganizationID: orgID}},
 	})
 
 	mockStore.EXPECT().ListUsers(ctx, gomock.Any()).
@@ -725,16 +657,20 @@ func TestGetNonExistingUserDBMock(t *testing.T) {
 	ctrl := gomock.NewController(t)
 	defer ctrl.Finish()
 
+	orgID := uuid.New()
+	projectID := uuid.New()
+
 	mockStore := mockdb.NewMockStore(ctrl)
 
 	request := &pb.GetUserByIdRequest{UserId: 5}
 	// Create a new context and set the claims value
 	ctx := auth.WithPermissionsContext(context.Background(), auth.UserPermissions{
 		UserId:         1,
-		OrganizationId: rootOrganization,
-		ProjectIds:     []uuid.UUID{rootProject},
+		OrganizationId: orgID,
+		ProjectIds:     []uuid.UUID{projectID},
+		IsStaff:        true, // TODO: remove this
 		Roles: []auth.RoleInfo{
-			{RoleID: 1, IsAdmin: true, ProjectID: &rootProject, OrganizationID: rootOrganization}},
+			{RoleID: 1, IsAdmin: true, ProjectID: &projectID, OrganizationID: orgID}},
 	})
 
 	mockStore.EXPECT().GetUserByID(ctx, gomock.Any()).
@@ -760,6 +696,7 @@ func TestGetUser_gRPC(t *testing.T) {
 	t.Parallel()
 
 	orgID := uuid.New()
+	projectID := uuid.New()
 
 	testCases := []struct {
 		name               string
@@ -823,10 +760,11 @@ func TestGetUser_gRPC(t *testing.T) {
 	// Create a new context and set the claims value
 	ctx := auth.WithPermissionsContext(context.Background(), auth.UserPermissions{
 		UserId:         1,
-		OrganizationId: rootOrganization,
-		ProjectIds:     []uuid.UUID{rootProject},
+		OrganizationId: orgID,
+		ProjectIds:     []uuid.UUID{projectID},
+		IsStaff:        true, // TODO: remove this
 		Roles: []auth.RoleInfo{
-			{RoleID: 1, IsAdmin: true, ProjectID: &rootProject, OrganizationID: rootOrganization}},
+			{RoleID: 1, IsAdmin: true, ProjectID: &projectID, OrganizationID: orgID}},
 	})
 
 	for i := range testCases {
