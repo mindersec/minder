@@ -34,8 +34,3 @@ aws:
 # Additional configuration yaml beyond what's in config.yaml.example
 extra_config: |
   # Add content here
-
-podAnnotations:
-  prometheus.io/scrape: "true"
-  prometheus.io/port: "9090"
-  prometheus.io/path: "/metrics"
