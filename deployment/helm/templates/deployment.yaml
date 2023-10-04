@@ -29,9 +29,9 @@ spec:
       labels:
         app: '{{ include "common.names.name" . }}'
       annotations:
-        {{- with .Values.podAnnotations }}
+        '{{- with .Values.podAnnotations }}
         {{- toYaml . | nindent 8 }}
-        {{- end }}
+        {{- end }}'
     spec:
       serviceAccountName: mediator
       containers:
