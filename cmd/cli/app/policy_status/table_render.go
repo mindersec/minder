@@ -69,7 +69,7 @@ func renderPolicyStatusTable(
 func initializeRuleEvaluationStatusTable(cmd *cobra.Command) *tablewriter.Table {
 	table := tablewriter.NewWriter(cmd.OutOrStdout())
 	table.SetHeader([]string{
-		"Policy ID", "Rule ID", "Rule Name", "Entity", "Status", "Remediation Status", "Entity Info", "Guidance"})
+		"Rule ID", "Rule Name", "Entity", "Status", "Remediation Status", "Entity Info", "Guidance"})
 	table.SetRowLine(true)
 	table.SetRowSeparator("-")
 	table.SetAutoMergeCellsByColumnIndex([]int{0})
@@ -84,7 +84,6 @@ func renderRuleEvaluationStatusTable(
 	table *tablewriter.Table,
 ) {
 	row := []string{
-		reval.PolicyId,
 		reval.RuleId,
 		reval.RuleName,
 		reval.Entity,
