@@ -62,3 +62,10 @@ def:
           def: ".patterns_allowed"
         profile:
           def: ".patterns_allowed"
+  remediate:
+    type: rest
+    rest:
+      method: PUT
+      endpoint: "/repos/{{.Entity.Owner}}/{{.Entity.Repository}}/actions/permissions/selected-actions"
+      body: |
+        {"github_owned_allowed":{{ .Profile.github_owned_allowed }},"verified_allowed":{{ .Profile.verified_allowed }},"patterns_allowed":[{{range $index, $pattern := .Profile.patterns_allowed}}{{if $index}},{{end}}"{{ $pattern }}"{{end}}]}
