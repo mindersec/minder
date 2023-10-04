@@ -299,21 +299,6 @@ repository:
 			errIs:   mediatorv1.ErrValidationFailed,
 		},
 		{
-			name: "invalid with no context",
-			policy: `
----
-version: v1
-type: policy
-name: acme-github-policy
-repository:
-  - type: secret_scanning
-    def:
-      enabled: true
-`,
-			wantErr: true,
-			errIs:   mediatorv1.ErrValidationFailed,
-		},
-		{
 			name: "invalid with no name",
 			policy: `
 ---

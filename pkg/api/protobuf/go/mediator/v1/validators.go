@@ -120,6 +120,10 @@ func (def *RuleType_Definition) Validate() error {
 
 // Validate validates a pipeline policy
 func (p *Policy) Validate() error {
+	if p.Name == "" {
+		return fmt.Errorf("%w: policy name cannot be empty", ErrValidationFailed)
+	}
+
 	// If the policy is nil or empty, we don't need to validate it
 	if p.Repository != nil && len(p.Repository) > 0 {
 		return validateEntity(p.Repository)
