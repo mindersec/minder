@@ -40,20 +40,34 @@ var (
 	BlackColor = lipgloss.Color("#000000")
 )
 
+const (
+	// DefaultBannerWidth is the default width for a banner
+	DefaultBannerWidth = 100
+)
+
 // Styles
 var (
 	// Header is the style to use for headers
 	Header = lipgloss.NewStyle().
 		Bold(true).
-		Background(AccentColor).
-		Foreground(WhiteColor).
+		Foreground(PrimaryColor).
 		PaddingTop(1).
 		PaddingBottom(1).
-		PaddingLeft(4).
-		PaddingRight(4).
+		PaddingLeft(1).
+		PaddingRight(1).
 		MaxWidth(80)
-	// WelcomeBanner is the style to use for the welcome banner
-	WelcomeBanner = lipgloss.NewStyle().
+	WarningBanner = lipgloss.NewStyle().
+			Bold(true).
+			Background(BlackColor).
+			Foreground(WhiteColor).
+			BorderForeground(AccentColor).
+			PaddingTop(2).
+			PaddingBottom(2).
+			PaddingLeft(4).
+			PaddingRight(4).
+			Width(DefaultBannerWidth)
+	// SuccessBanner is the style to use for a success banner
+	SuccessBanner = lipgloss.NewStyle().
 			Bold(true).
 			Background(AccentColor).
 			Foreground(WhiteColor).
@@ -61,7 +75,7 @@ var (
 			PaddingBottom(1).
 			PaddingLeft(4).
 			PaddingRight(4).
-			Width(70)
+			Width(DefaultBannerWidth)
 	// Table is the style to use for tables
 	Table = lipgloss.NewStyle().
 		BorderStyle(lipgloss.NormalBorder()).
@@ -79,14 +93,14 @@ var (
 		Cell:     lipgloss.NewStyle().Padding(0, 1),
 		Selected: lipgloss.NewStyle(),
 	}
-)
 
-// Utility functions
-var (
-	// HeaderText returns a header with the given text
-	HeaderText = Header.Render
-	// WelcomeBannerText returns a welcome banner with the given text
-	WelcomeBannerText = WelcomeBanner.Render
+	KeyValTableWidths = struct {
+		Key   int
+		Value int
+	}{
+		Key:   27, // 30 - 3 for padding
+		Value: 67, // 70 - 3 for padding
+	}
 )
 
 // TableRender renders a table given a table model
