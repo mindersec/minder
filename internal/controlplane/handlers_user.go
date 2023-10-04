@@ -124,9 +124,18 @@ func (s *Server) CreateUser(ctx context.Context,
 		return nil, status.Errorf(codes.Internal, "failed to commit transaction: %s", err)
 	}
 
-	return &pb.CreateUserResponse{Id: user.ID, OrganizationId: user.OrganizationID.String(), Email: &user.Email.String,
-		IdentitySubject: user.IdentitySubject, FirstName: &user.FirstName.String, LastName: &user.LastName.String,
-		CreatedAt: timestamppb.New(user.CreatedAt), UpdatedAt: timestamppb.New(user.UpdatedAt)}, nil
+	return &pb.CreateUserResponse{
+		Id:              user.ID,
+		OrganizationId:  user.OrganizationID.String(),
+		OrganizatioName: organization.Name,
+		ProjectId:       userProject.String(),
+		ProjectName:     orgProject.Name,
+		Email:           &user.Email.String,
+		IdentitySubject: user.IdentitySubject,
+		FirstName:       &user.FirstName.String,
+		LastName:        &user.LastName.String,
+		CreatedAt:       timestamppb.New(user.CreatedAt),
+	}, nil
 }
 
 type deleteUserValidation struct {

@@ -1330,16 +1330,18 @@ message GetRoleByNameResponse {
 
 // User service
 message CreateUserRequest { }
-  
+
 message CreateUserResponse {
     int32 id = 1;
     string organization_id = 2;
-    optional string email = 3;
-    string identity_subject = 4;
-    optional string first_name = 5;
-    optional string last_name = 6;
-    google.protobuf.Timestamp created_at = 7;
-    google.protobuf.Timestamp updated_at = 8;
+    string organizatio_name = 3;
+    string project_id = 4;
+    string project_name = 5;
+    optional string email = 6;
+    string identity_subject = 7;
+    optional string first_name = 8;
+    optional string last_name = 9;
+    google.protobuf.Timestamp created_at = 10;
 }
 
 message DeleteUserRequest {

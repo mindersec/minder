@@ -2972,6 +2972,15 @@
         "organizationId": {
           "type": "string"
         },
+        "organizatioName": {
+          "type": "string"
+        },
+        "projectId": {
+          "type": "string"
+        },
+        "projectName": {
+          "type": "string"
+        },
         "email": {
           "type": "string"
         },
@@ -2985,10 +2994,6 @@
           "type": "string"
         },
         "createdAt": {
-          "type": "string",
-          "format": "date-time"
-        },
-        "updatedAt": {
           "type": "string",
           "format": "date-time"
         }
