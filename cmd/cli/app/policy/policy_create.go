@@ -42,6 +42,7 @@ within a mediator control plane.`,
 	},
 	RunE: func(cmd *cobra.Command, args []string) error {
 		f := util.GetConfigValue("file", "file", cmd, "").(string)
+		proj := viper.GetString("project")
 
 		var err error
 
@@ -78,6 +79,14 @@ within a mediator control plane.`,
 			return fmt.Errorf("error reading policy from file: %w", err)
 		}
 
+		if proj != "" {
+			if p.Context == nil {
+				p.Context = &pb.Context{}
+			}
+
+			p.Context.Project = &proj
+		}
+
 		// create a policy
 		resp, err := client.CreatePolicy(ctx, &pb.CreatePolicyRequest{
 			Policy: p,
@@ -96,4 +105,5 @@ within a mediator control plane.`,
 func init() {
 	PolicyCmd.AddCommand(Policy_createCmd)
 	Policy_createCmd.Flags().StringP("file", "f", "", "Path to the YAML defining the policy (or - for stdin)")
+	Policy_createCmd.Flags().StringP("project", "p", "", "Project to create the policy in")
 }
