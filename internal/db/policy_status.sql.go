@@ -20,7 +20,7 @@ INSERT INTO rule_evaluation_status (
     rule_type_id,
     entity,
     eval_status,
-    details,
+    eval_details,
     last_updated
 ) VALUES ($1, $2, $3, 'repository', $4, $5, NOW())
 `
@@ -30,7 +30,7 @@ type CreateRuleEvaluationStatusForRepositoryParams struct {
 	RepositoryID uuid.NullUUID   `json:"repository_id"`
 	RuleTypeID   uuid.UUID       `json:"rule_type_id"`
 	EvalStatus   EvalStatusTypes `json:"eval_status"`
-	Details      string          `json:"details"`
+	EvalDetails  string          `json:"eval_details"`
 }
 
 func (q *Queries) CreateRuleEvaluationStatusForRepository(ctx context.Context, arg CreateRuleEvaluationStatusForRepositoryParams) error {
@@ -39,7 +39,7 @@ func (q *Queries) CreateRuleEvaluationStatusForRepository(ctx context.Context, a
 		arg.RepositoryID,
 		arg.RuleTypeID,
 		arg.EvalStatus,
-		arg.Details,
+		arg.EvalDetails,
 	)
 	return err
 }
@@ -116,7 +116,7 @@ func (q *Queries) GetPolicyStatusByProject(ctx context.Context, projectID uuid.U
 }
 
 const listRuleEvaluationStatusByPolicyId = `-- name: ListRuleEvaluationStatusByPolicyId :many
-SELECT res.eval_status as eval_status, res.last_updated as last_updated, res.details as details, res.repository_id as repository_id, res.entity as entity, repo.repo_name as repo_name, repo.repo_owner as repo_owner, repo.provider as provider, rt.name as rule_type_name, rt.id as rule_type_id
+SELECT res.eval_status as eval_status, res.eval_last_updated as eval_last_updated, res.eval_details as eval_details, res.remediation_status as rem_status, res.remediation_details as rem_details, res.remediation_last_updated as rem_last_updated, res.repository_id as repository_id, res.entity as entity, repo.repo_name as repo_name, repo.repo_owner as repo_owner, repo.provider as provider, rt.name as rule_type_name, rt.id as rule_type_id
 FROM rule_evaluation_status res
 INNER JOIN repositories repo ON repo.id = res.repository_id
 INNER JOIN rule_type rt ON rt.id = res.rule_type_id
@@ -139,16 +139,19 @@ type ListRuleEvaluationStatusByPolicyIdParams struct {
 }
 
 type ListRuleEvaluationStatusByPolicyIdRow struct {
-	EvalStatus   EvalStatusTypes `json:"eval_status"`
-	LastUpdated  time.Time       `json:"last_updated"`
-	Details      string          `json:"details"`
-	RepositoryID uuid.NullUUID   `json:"repository_id"`
-	Entity       Entities        `json:"entity"`
-	RepoName     string          `json:"repo_name"`
-	RepoOwner    string          `json:"repo_owner"`
-	Provider     string          `json:"provider"`
-	RuleTypeName string          `json:"rule_type_name"`
-	RuleTypeID   uuid.UUID       `json:"rule_type_id"`
+	EvalStatus      EvalStatusTypes        `json:"eval_status"`
+	EvalLastUpdated time.Time              `json:"eval_last_updated"`
+	EvalDetails     string                 `json:"eval_details"`
+	RemStatus       RemediationStatusTypes `json:"rem_status"`
+	RemDetails      string                 `json:"rem_details"`
+	RemLastUpdated  sql.NullTime           `json:"rem_last_updated"`
+	RepositoryID    uuid.NullUUID          `json:"repository_id"`
+	Entity          Entities               `json:"entity"`
+	RepoName        string                 `json:"repo_name"`
+	RepoOwner       string                 `json:"repo_owner"`
+	Provider        string                 `json:"provider"`
+	RuleTypeName    string                 `json:"rule_type_name"`
+	RuleTypeID      uuid.UUID              `json:"rule_type_id"`
 }
 
 func (q *Queries) ListRuleEvaluationStatusByPolicyId(ctx context.Context, arg ListRuleEvaluationStatusByPolicyIdParams) ([]ListRuleEvaluationStatusByPolicyIdRow, error) {
@@ -167,8 +170,11 @@ func (q *Queries) ListRuleEvaluationStatusByPolicyId(ctx context.Context, arg Li
 		var i ListRuleEvaluationStatusByPolicyIdRow
 		if err := rows.Scan(
 			&i.EvalStatus,
-			&i.LastUpdated,
-			&i.Details,
+			&i.EvalLastUpdated,
+			&i.EvalDetails,
+			&i.RemStatus,
+			&i.RemDetails,
+			&i.RemLastUpdated,
 			&i.RepositoryID,
 			&i.Entity,
 			&i.RepoName,
@@ -192,18 +198,26 @@ func (q *Queries) ListRuleEvaluationStatusByPolicyId(ctx context.Context, arg Li
 
 const updateRuleEvaluationStatusForRepository = `-- name: UpdateRuleEvaluationStatusForRepository :exec
 UPDATE rule_evaluation_status 
-    SET eval_status = $1, details = $2, last_updated = NOW()
-    WHERE id = $3
+    SET eval_status = $1, eval_details = $2, remediation_status = $3, remediation_details=$4, remediation_last_updated=$5, last_updated = NOW()
+    WHERE id = $5
 `
 
 type UpdateRuleEvaluationStatusForRepositoryParams struct {
-	EvalStatus EvalStatusTypes `json:"eval_status"`
-	Details    string          `json:"details"`
-	ID         uuid.UUID       `json:"id"`
+	EvalStatus             EvalStatusTypes        `json:"eval_status"`
+	EvalDetails            string                 `json:"eval_details"`
+	RemediationStatus      RemediationStatusTypes `json:"remediation_status"`
+	RemediationDetails     string                 `json:"remediation_details"`
+	RemediationLastUpdated sql.NullTime           `json:"remediation_last_updated"`
 }
 
 func (q *Queries) UpdateRuleEvaluationStatusForRepository(ctx context.Context, arg UpdateRuleEvaluationStatusForRepositoryParams) error {
-	_, err := q.db.ExecContext(ctx, updateRuleEvaluationStatusForRepository, arg.EvalStatus, arg.Details, arg.ID)
+	_, err := q.db.ExecContext(ctx, updateRuleEvaluationStatusForRepository,
+		arg.EvalStatus,
+		arg.EvalDetails,
+		arg.RemediationStatus,
+		arg.RemediationDetails,
+		arg.RemediationLastUpdated,
+	)
 	return err
 }
 
@@ -215,13 +229,19 @@ INSERT INTO rule_evaluation_status (
     rule_type_id,
     entity,
     eval_status,
-    details,
-    last_updated
-) VALUES ($1, $2, $3, $4, $5, $6, $7, NOW())
+    eval_details,
+    remediation_status,
+    remediation_details,
+    remediation_last_updated,
+    eval_last_updated
+) VALUES ($1, $2, $3, $4, $5, $6, $7, $8, $9, $10, NOW())
 ON CONFLICT(policy_id, repository_id, COALESCE(artifact_id, '00000000-0000-0000-0000-000000000000'::UUID), entity, rule_type_id) DO UPDATE SET
     eval_status = $6,
-    details = $7,
-    last_updated = NOW()
+    eval_details = $7,
+    remediation_status = $8,
+    remediation_details = $9,
+    remediation_last_updated = COALESCE($10, rule_evaluation_status.remediation_last_updated), -- don't overwrite timestamp already set with NULL
+    eval_last_updated = NOW()
 WHERE rule_evaluation_status.policy_id = $1
   AND rule_evaluation_status.repository_id = $2
   AND rule_evaluation_status.artifact_id IS NOT DISTINCT FROM $3
@@ -230,13 +250,16 @@ WHERE rule_evaluation_status.policy_id = $1
 `
 
 type UpsertRuleEvaluationStatusParams struct {
-	PolicyID     uuid.UUID       `json:"policy_id"`
-	RepositoryID uuid.NullUUID   `json:"repository_id"`
-	ArtifactID   uuid.NullUUID   `json:"artifact_id"`
-	RuleTypeID   uuid.UUID       `json:"rule_type_id"`
-	Entity       Entities        `json:"entity"`
-	EvalStatus   EvalStatusTypes `json:"eval_status"`
-	Details      string          `json:"details"`
+	PolicyID               uuid.UUID              `json:"policy_id"`
+	RepositoryID           uuid.NullUUID          `json:"repository_id"`
+	ArtifactID             uuid.NullUUID          `json:"artifact_id"`
+	RuleTypeID             uuid.UUID              `json:"rule_type_id"`
+	Entity                 Entities               `json:"entity"`
+	EvalStatus             EvalStatusTypes        `json:"eval_status"`
+	EvalDetails            string                 `json:"eval_details"`
+	RemediationStatus      RemediationStatusTypes `json:"remediation_status"`
+	RemediationDetails     string                 `json:"remediation_details"`
+	RemediationLastUpdated sql.NullTime           `json:"remediation_last_updated"`
 }
 
 func (q *Queries) UpsertRuleEvaluationStatus(ctx context.Context, arg UpsertRuleEvaluationStatusParams) error {
@@ -247,7 +270,10 @@ func (q *Queries) UpsertRuleEvaluationStatus(ctx context.Context, arg UpsertRule
 		arg.RuleTypeID,
 		arg.Entity,
 		arg.EvalStatus,
-		arg.Details,
+		arg.EvalDetails,
+		arg.RemediationStatus,
+		arg.RemediationDetails,
+		arg.RemediationLastUpdated,
 	)
 	return err
 }

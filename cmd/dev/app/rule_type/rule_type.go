@@ -32,6 +32,7 @@ import (
 	"github.com/stacklok/mediator/cmd/dev/app"
 	"github.com/stacklok/mediator/internal/db"
 	"github.com/stacklok/mediator/internal/engine"
+	"github.com/stacklok/mediator/internal/engine/errors"
 	"github.com/stacklok/mediator/internal/engine/eval/rego"
 	"github.com/stacklok/mediator/internal/engine/interfaces"
 	"github.com/stacklok/mediator/internal/providers"
@@ -167,8 +168,13 @@ func runEvaluationForRules(
 			params = frag.GetParams().AsMap()
 		}
 
-		if err := eng.Eval(context.Background(), ent, def, params, rem); err != nil {
+		evalErr, remediateErr := eng.Eval(context.Background(), ent, def, params, rem)
+		if evalErr != nil {
 			return fmt.Errorf("error evaluating rule type: %w", err)
+		}
+
+		if errors.IsRemediateFatalError(remediateErr) {
+			fmt.Printf("Remediation failed with fatal error: %s", remediateErr)
 		}
 
 		fmt.Printf("The rule type is valid and the entity conforms to it\n")

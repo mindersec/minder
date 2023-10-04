@@ -285,6 +285,7 @@ func (eiw *EntityInfoWrapper) evalStatusParams(
 	policyID uuid.UUID,
 	ruleTypeID uuid.UUID,
 	evalErr error,
+	remediateErr error,
 ) *createOrUpdateEvalStatusParams {
 	repoID := uuid.MustParse(eiw.OwnershipData[RepositoryIDEventKey])
 	params := &createOrUpdateEvalStatusParams{
@@ -293,6 +294,7 @@ func (eiw *EntityInfoWrapper) evalStatusParams(
 		ruleTypeEntity: entities.EntityTypeToDB(eiw.Type),
 		ruleTypeID:     ruleTypeID,
 		evalErr:        evalErr,
+		remediateErr:   remediateErr,
 	}
 
 	artifactID, ok := eiw.OwnershipData[ArtifactIDEventKey]

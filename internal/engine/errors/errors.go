@@ -47,3 +47,29 @@ func NewErrEvaluationSkipSilently(sfmt string, args ...any) error {
 	msg := fmt.Sprintf(sfmt, args...)
 	return fmt.Errorf("%w: %s", ErrEvaluationSkipSilently, msg)
 }
+
+// ErrRemediationSkipped is an error code that indicates that the remediation was not performed at all because
+// the evaluation passed and the remediation was not needed.
+var ErrRemediationSkipped = errors.New("remediation not performed")
+
+// IsRemediateInformativeError returns true if the error is an informative error that should not be reported to the user
+func IsRemediateInformativeError(err error) bool {
+	return errors.Is(err, ErrRemediationSkipped) || errors.Is(err, ErrRemediationNotAvailable)
+}
+
+// IsRemediateFatalError returns true if the error is a fatal error that should stop be reported to the user
+func IsRemediateFatalError(err error) bool {
+	return err != nil && !IsRemediateInformativeError(err)
+}
+
+// ErrRemediateFailed is an error code that indicates that the remediation was attempted but failed.
+var ErrRemediateFailed = errors.New("remediation failed")
+
+// NewErrRemediationFailed creates a new remediation error
+func NewErrRemediationFailed(sfmt string, args ...any) error {
+	msg := fmt.Sprintf(sfmt, args...)
+	return fmt.Errorf("%w: %s", ErrRemediateFailed, msg)
+}
+
+// ErrRemediationNotAvailable is an error code that indicates that the remediation was not available for this rule_type
+var ErrRemediationNotAvailable = errors.New("remediation not available")

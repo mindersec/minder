@@ -3943,6 +3943,19 @@
         "guidance": {
           "type": "string",
           "title": "guidance is the guidance for the evaluation if any"
+        },
+        "remediationStatus": {
+          "type": "string",
+          "title": "remediation_status is the status of the remediation"
+        },
+        "remediationLastUpdated": {
+          "type": "string",
+          "format": "date-time",
+          "title": "remediation_last_updated is the last time the remediation was performed or attempted"
+        },
+        "remediationDetails": {
+          "type": "string",
+          "title": "remediation_details is the description of the remediation attempt if any"
         }
       },
       "title": "get the status of the rules for a given policy"

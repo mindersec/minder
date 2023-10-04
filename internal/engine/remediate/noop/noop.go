@@ -21,6 +21,7 @@ import (
 
 	"google.golang.org/protobuf/reflect/protoreflect"
 
+	enginerr "github.com/stacklok/mediator/internal/engine/errors"
 	"github.com/stacklok/mediator/internal/engine/interfaces"
 )
 
@@ -39,5 +40,5 @@ func (_ *Remediator) Remediate(
 	_ protoreflect.ProtoMessage,
 	_ map[string]any,
 ) error {
-	return nil
+	return enginerr.ErrRemediationNotAvailable
 }

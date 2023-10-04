@@ -16,9 +16,11 @@ package engine
 
 import (
 	"context"
+	"database/sql"
 	"errors"
 	"fmt"
 	"log"
+	"time"
 
 	"github.com/google/uuid"
 
@@ -37,6 +39,7 @@ type createOrUpdateEvalStatusParams struct {
 	ruleTypeEntity db.Entities
 	ruleTypeID     uuid.UUID
 	evalErr        error
+	remediateErr   error
 }
 
 func (e *Executor) createOrUpdateEvalStatus(
@@ -61,18 +64,22 @@ func (e *Executor) createOrUpdateEvalStatus(
 		}
 	}
 
-	return e.querier.UpsertRuleEvaluationStatus(ctx, db.UpsertRuleEvaluationStatusParams{
+	err := e.querier.UpsertRuleEvaluationStatus(ctx, db.UpsertRuleEvaluationStatusParams{
 		PolicyID: params.policyID,
 		RepositoryID: uuid.NullUUID{
 			UUID:  params.repoID,
 			Valid: true,
 		},
-		ArtifactID: sqlArtifactID,
-		Entity:     params.ruleTypeEntity,
-		RuleTypeID: params.ruleTypeID,
-		EvalStatus: errorAsEvalStatus(params.evalErr),
-		Details:    errorAsDetails(params.evalErr),
+		ArtifactID:             sqlArtifactID,
+		Entity:                 params.ruleTypeEntity,
+		RuleTypeID:             params.ruleTypeID,
+		EvalStatus:             errorAsEvalStatus(params.evalErr),
+		EvalDetails:            errorAsEvalDetails(params.evalErr),
+		RemediationStatus:      errorAsRemediationStatus(params.remediateErr),
+		RemediationDetails:     errorAsRemediationDetails(params.remediateErr),
+		RemediationLastUpdated: setRemediationLastUpdated(params.remediateErr),
 	})
+	return err
 }
 
 func errorAsEvalStatus(err error) db.EvalStatusTypes {
@@ -86,10 +93,48 @@ func errorAsEvalStatus(err error) db.EvalStatusTypes {
 	return db.EvalStatusTypesSuccess
 }
 
-func errorAsDetails(err error) string {
+func errorAsEvalDetails(err error) string {
 	if err != nil {
 		return err.Error()
 	}
 
 	return ""
+}
+
+func errorAsRemediationStatus(err error) db.RemediationStatusTypes {
+	if err == nil {
+		return db.RemediationStatusTypesSuccess
+	}
+
+	switch err != nil {
+	case errors.Is(err, evalerrors.ErrRemediateFailed):
+		return db.RemediationStatusTypesFailure
+	case errors.Is(err, evalerrors.ErrRemediationSkipped):
+		return db.RemediationStatusTypesSkipped
+	case errors.Is(err, evalerrors.ErrRemediationNotAvailable):
+		return db.RemediationStatusTypesNotAvailable
+	}
+
+	return db.RemediationStatusTypesError
+}
+
+func errorAsRemediationDetails(err error) string {
+	if evalerrors.IsRemediateFatalError(err) {
+		return err.Error()
+	}
+
+	return ""
+}
+
+func setRemediationLastUpdated(err error) sql.NullTime {
+	ret := sql.NullTime{}
+	if evalerrors.IsRemediateInformativeError(err) {
+		// just return a NullString
+		return ret
+	}
+
+	ret.Valid = true
+	ret.Time = time.Now()
+
+	return ret
 }

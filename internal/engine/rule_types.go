@@ -19,7 +19,6 @@ import (
 	"context"
 	"errors"
 	"fmt"
-	"log"
 	"strings"
 
 	"github.com/xeipuuv/gojsonschema"
@@ -242,22 +241,20 @@ func (r *RuleTypeEngine) Eval(
 	ent protoreflect.ProtoMessage,
 	pol, params map[string]any,
 	remAction engif.RemediateActionOpt,
-) error {
+) (evalErr error, remediateErr error) {
+	remediateErr = evalerrors.ErrRemediationSkipped
+
 	result, err := r.rdi.Ingest(ctx, ent, params)
 	if err != nil {
-		return fmt.Errorf("error ingesting data: %w", err)
+		evalErr = fmt.Errorf("error ingesting data: %w", err)
+		return
 	}
 
-	evalErr := r.reval.Eval(ctx, pol, result)
+	evalErr = r.reval.Eval(ctx, pol, result)
 
-	remediateErr := r.tryRemediate(ctx, ent, pol, remAction, evalErr)
-	if remediateErr != nil {
-		// TODO(jakub): We should surface this error up and store in the rule evaluation status
-		// for now we just log and do nothing else
-		log.Printf("remediation error: %v", remediateErr)
-	}
+	remediateErr = r.tryRemediate(ctx, ent, pol, remAction, evalErr)
 
-	return evalErr
+	return evalErr, remediateErr
 }
 
 func (r *RuleTypeEngine) tryRemediate(
@@ -271,7 +268,7 @@ func (r *RuleTypeEngine) tryRemediate(
 	if err != nil {
 		return err
 	} else if !shouldRemediate {
-		return nil
+		return evalerrors.ErrRemediationSkipped
 	}
 
 	return r.rrem.Remediate(ctx, remAction, ent, pol)

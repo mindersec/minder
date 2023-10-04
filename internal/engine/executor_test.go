@@ -182,10 +182,11 @@ default allow = true`,
 				UUID:  repositoryID,
 				Valid: true,
 			},
-			ArtifactID: uuid.NullUUID{},
-			RuleTypeID: ruleTypeID,
-			Entity:     db.EntitiesRepository,
-			EvalStatus: db.EvalStatusTypesSuccess,
+			ArtifactID:        uuid.NullUUID{},
+			RuleTypeID:        ruleTypeID,
+			Entity:            db.EntitiesRepository,
+			EvalStatus:        db.EvalStatusTypesSuccess,
+			RemediationStatus: db.RemediationStatusTypesSkipped,
 		}).Return(nil)
 
 	// -- end expectations
