@@ -11,3 +11,12 @@ app.kubernetes.io/version: {{ .Chart.AppVersion | quote }}
 {{- end }}
 app.kubernetes.io/managed-by: {{ .Release.Service }}
 {{- end }}
+
+{{/*
+Common annotations
+*/}}
+{{- define "common.annotations.pods" -}}
+prometheus.io/scrape: "true"
+prometheus.io/port: "9090"
+prometheus.io/path: "/metrics"
+{{- end }}
