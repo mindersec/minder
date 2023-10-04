@@ -80,15 +80,20 @@ func (s *Server) CreateUser(ctx context.Context,
 		return nil, status.Errorf(codes.Internal, "failed to marshal org metadata: %s", err)
 	}
 
+	baseName := subject
+	if token.PreferredUsername() != "" {
+		baseName = token.PreferredUsername()
+	}
+
 	// otherwise self-enroll user, by creating a new org and project and making the user an admin of those
 	organization, err := qtx.CreateOrganization(ctx, db.CreateOrganizationParams{
-		Name:     subject + "-org",
+		Name:     baseName + "-org",
 		Metadata: marshaled,
 	})
 	if err != nil {
 		return nil, status.Errorf(codes.Internal, "failed to create organization: %s", err)
 	}
-	orgProject, orgRoles, err := CreateDefaultRecordsForOrg(ctx, qtx, organization)
+	orgProject, orgRoles, err := CreateDefaultRecordsForOrg(ctx, qtx, organization, baseName)
 	if err != nil {
 		return nil, status.Errorf(codes.Internal, "failed to create default organization records: %s", err)
 	}

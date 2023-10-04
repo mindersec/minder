@@ -81,7 +81,7 @@ func (s *Server) CreateOrganization(ctx context.Context,
 
 	if in.CreateDefaultRecords {
 		// we need to create the default records for the organization
-		defaultProject, defaultRoles, err := CreateDefaultRecordsForOrg(ctx, qtx, org)
+		defaultProject, defaultRoles, err := CreateDefaultRecordsForOrg(ctx, qtx, org, org.Name+"-project")
 		if err != nil {
 			return nil, err
 		}
@@ -99,7 +99,7 @@ func (s *Server) CreateOrganization(ctx context.Context,
 
 // CreateDefaultRecordsForOrg creates the default records, such as projects, roles and provider for the organization
 func CreateDefaultRecordsForOrg(ctx context.Context, qtx db.Querier,
-	org db.Project) (*pb.ProjectRecord, []*pb.RoleRecord, error) {
+	org db.Project, projectName string) (*pb.ProjectRecord, []*pb.RoleRecord, error) {
 	projectmeta := &ProjectMeta{
 		IsProtected: true,
 		Description: fmt.Sprintf("Default admin project for %s", org.Name),
@@ -116,7 +116,7 @@ func CreateDefaultRecordsForOrg(ctx context.Context, qtx db.Querier,
 			UUID:  org.ID,
 			Valid: true,
 		},
-		Name:     fmt.Sprintf("%s-admin", org.Name),
+		Name:     projectName,
 		Metadata: jsonmeta,
 	})
 	if err != nil {
