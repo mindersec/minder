@@ -26,6 +26,7 @@ import (
 	"fmt"
 	"net/http"
 	"net/url"
+	"strings"
 	"time"
 
 	"github.com/charmbracelet/bubbles/table"
@@ -47,17 +48,17 @@ import (
 	pb "github.com/stacklok/mediator/pkg/api/protobuf/go/mediator/v1"
 )
 
-func userRegistered(ctx context.Context, client pb.UserServiceClient) (bool, error) {
-	_, err := client.GetUser(ctx, &pb.GetUserRequest{})
+func userRegistered(ctx context.Context, client pb.UserServiceClient) (bool, *pb.GetUserResponse, error) {
+	res, err := client.GetUser(ctx, &pb.GetUserRequest{})
 	if err != nil {
 		if st, ok := status.FromError(err); ok {
 			if st.Code() == codes.NotFound {
-				return false, nil
+				return false, nil, nil
 			}
 		}
-		return false, fmt.Errorf("error retrieving user %v", err)
+		return false, nil, fmt.Errorf("error retrieving user %v", err)
 	}
-	return true, nil
+	return true, res, nil
 }
 
 // auth_loginCmd represents the login command
@@ -162,7 +163,7 @@ will be saved to $XDG_CONFIG_HOME/mediator/credentials.json`,
 		client := pb.NewUserServiceClient(conn)
 
 		// check if the user already exists in the local database
-		registered, err := userRegistered(ctx, client)
+		registered, userInfo, err := userRegistered(ctx, client)
 		util.ExitNicelyOnError(err, "Error fetching user")
 
 		if !registered {
@@ -182,6 +183,9 @@ will be saved to $XDG_CONFIG_HOME/mediator/credentials.json`,
 		} else {
 			cli.PrintCmd(cmd, cli.SuccessBanner.Render(
 				"You have successfully logged in."))
+
+			cli.PrintCmd(cmd, cli.Header.Render("Here are your details:"))
+			renderUserInfo(cmd, userInfo)
 		}
 
 		fmt.Printf("Your access credentials saved to %s\n",
@@ -194,10 +198,6 @@ will be saved to $XDG_CONFIG_HOME/mediator/credentials.json`,
 }
 
 func renderNewUser(cmd *cobra.Command, newUser *pb.CreateUserResponse) {
-	columns := []table.Column{
-		{Title: "Key", Width: cli.KeyValTableWidths.Key},
-		{Title: "Value", Width: cli.KeyValTableWidths.Value},
-	}
 	rows := []table.Row{
 		{"Organization ID", newUser.OrganizationId},
 		{"Organization Name", newUser.OrganizatioName},
@@ -215,6 +215,46 @@ func renderNewUser(cmd *cobra.Command, newUser *pb.CreateUserResponse) {
 
 	if newUser.LastName != nil {
 		rows = append(rows, table.Row{"Last Name", *newUser.LastName})
+	}
+
+	renderUserToTable(cmd, rows)
+}
+
+func renderUserInfo(cmd *cobra.Command, user *pb.GetUserResponse) {
+	projects := []string{}
+	for _, project := range user.Projects {
+		projects = append(projects, project.GetName())
+	}
+
+	projectKey := "Project Name"
+	if len(projects) > 1 {
+		projectKey += "s"
+	}
+
+	rows := []table.Row{
+		{projectKey, strings.Join(projects, ", ")},
+	}
+
+	userInfo := user.GetUser()
+	if userInfo.Email != nil {
+		rows = append(rows, table.Row{"Email", *userInfo.Email})
+	}
+
+	if userInfo.FirstName != nil {
+		rows = append(rows, table.Row{"First Name", *userInfo.FirstName})
+	}
+
+	if userInfo.LastName != nil {
+		rows = append(rows, table.Row{"Last Name", *userInfo.LastName})
+	}
+
+	renderUserToTable(cmd, rows)
+}
+
+func renderUserToTable(cmd *cobra.Command, rows []table.Row) {
+	columns := []table.Column{
+		{Title: "Key", Width: cli.KeyValTableWidths.Key},
+		{Title: "Value", Width: cli.KeyValTableWidths.Value},
 	}
 
 	t := table.New(
