@@ -17,7 +17,7 @@ medic policy_status list [flags]
   -d, --detailed          List all policy violations
   -h, --help              help for list
   -o, --output string     Output format (json, yaml or table) (default "table")
-  -i, --policy string     policy id to list policy status for
+  -i, --policy string     policy name to list policy status for
   -g, --project string    project id to list policy status for
   -p, --provider string   Provider to list policy status for (default "github")
   -r, --rule string       Filter policy status list by rule
