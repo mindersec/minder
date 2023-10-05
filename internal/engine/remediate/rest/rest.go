@@ -98,8 +98,8 @@ func NewRestRemediate(
 type EndpointTemplateParams struct {
 	// Entity is the entity to be evaluated
 	Entity any
-	// Policy are the parameters to be used in the template
-	Policy map[string]any
+	// Profile are the parameters to be used in the template
+	Profile map[string]any
 }
 
 // Remediate actually performs the remediation
@@ -110,8 +110,8 @@ func (r *Remediator) Remediate(
 	pol map[string]any,
 ) error {
 	retp := &EndpointTemplateParams{
-		Entity: ent,
-		Policy: pol,
+		Entity:  ent,
+		Profile: pol,
 	}
 
 	endpoint := new(bytes.Buffer)

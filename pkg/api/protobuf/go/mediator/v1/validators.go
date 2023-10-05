@@ -20,7 +20,7 @@ import (
 )
 
 var (
-	// ErrValidationFailed is returned when a policy fails validation
+	// ErrValidationFailed is returned when a profile fails validation
 	ErrValidationFailed = fmt.Errorf("validation failed")
 )
 
@@ -118,13 +118,13 @@ func (def *RuleType_Definition) Validate() error {
 	return nil
 }
 
-// Validate validates a pipeline policy
-func (p *Policy) Validate() error {
+// Validate validates a pipeline profile
+func (p *Profile) Validate() error {
 	if p.Name == "" {
-		return fmt.Errorf("%w: policy name cannot be empty", ErrValidationFailed)
+		return fmt.Errorf("%w: profile name cannot be empty", ErrValidationFailed)
 	}
 
-	// If the policy is nil or empty, we don't need to validate it
+	// If the profile is nil or empty, we don't need to validate it
 	if p.Repository != nil && len(p.Repository) > 0 {
 		return validateEntity(p.Repository)
 	}
@@ -144,7 +144,7 @@ func (p *Policy) Validate() error {
 	return nil
 }
 
-func validateEntity(e []*Policy_Rule) error {
+func validateEntity(e []*Profile_Rule) error {
 	if len(e) == 0 {
 		return fmt.Errorf("%w: entity rules cannot be empty", ErrValidationFailed)
 	}
@@ -162,7 +162,7 @@ func validateEntity(e []*Policy_Rule) error {
 	return nil
 }
 
-func validateRule(r *Policy_Rule) error {
+func validateRule(r *Profile_Rule) error {
 	if r.Type == "" {
 		return fmt.Errorf("%w: rule type cannot be empty", ErrValidationFailed)
 	}

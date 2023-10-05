@@ -2288,30 +2288,30 @@ var UserService_ServiceDesc = grpc.ServiceDesc{
 }
 
 const (
-	PolicyService_CreatePolicy_FullMethodName             = "/mediator.v1.PolicyService/CreatePolicy"
-	PolicyService_DeletePolicy_FullMethodName             = "/mediator.v1.PolicyService/DeletePolicy"
-	PolicyService_ListPolicies_FullMethodName             = "/mediator.v1.PolicyService/ListPolicies"
-	PolicyService_GetPolicyById_FullMethodName            = "/mediator.v1.PolicyService/GetPolicyById"
-	PolicyService_GetPolicyStatusByName_FullMethodName    = "/mediator.v1.PolicyService/GetPolicyStatusByName"
-	PolicyService_GetPolicyStatusByProject_FullMethodName = "/mediator.v1.PolicyService/GetPolicyStatusByProject"
-	PolicyService_ListRuleTypes_FullMethodName            = "/mediator.v1.PolicyService/ListRuleTypes"
-	PolicyService_GetRuleTypeByName_FullMethodName        = "/mediator.v1.PolicyService/GetRuleTypeByName"
-	PolicyService_GetRuleTypeById_FullMethodName          = "/mediator.v1.PolicyService/GetRuleTypeById"
-	PolicyService_CreateRuleType_FullMethodName           = "/mediator.v1.PolicyService/CreateRuleType"
-	PolicyService_UpdateRuleType_FullMethodName           = "/mediator.v1.PolicyService/UpdateRuleType"
-	PolicyService_DeleteRuleType_FullMethodName           = "/mediator.v1.PolicyService/DeleteRuleType"
+	ProfileService_CreateProfile_FullMethodName             = "/mediator.v1.ProfileService/CreateProfile"
+	ProfileService_DeleteProfile_FullMethodName             = "/mediator.v1.ProfileService/DeleteProfile"
+	ProfileService_ListProfiles_FullMethodName              = "/mediator.v1.ProfileService/ListProfiles"
+	ProfileService_GetProfileById_FullMethodName            = "/mediator.v1.ProfileService/GetProfileById"
+	ProfileService_GetProfileStatusByName_FullMethodName    = "/mediator.v1.ProfileService/GetProfileStatusByName"
+	ProfileService_GetProfileStatusByProject_FullMethodName = "/mediator.v1.ProfileService/GetProfileStatusByProject"
+	ProfileService_ListRuleTypes_FullMethodName             = "/mediator.v1.ProfileService/ListRuleTypes"
+	ProfileService_GetRuleTypeByName_FullMethodName         = "/mediator.v1.ProfileService/GetRuleTypeByName"
+	ProfileService_GetRuleTypeById_FullMethodName           = "/mediator.v1.ProfileService/GetRuleTypeById"
+	ProfileService_CreateRuleType_FullMethodName            = "/mediator.v1.ProfileService/CreateRuleType"
+	ProfileService_UpdateRuleType_FullMethodName            = "/mediator.v1.ProfileService/UpdateRuleType"
+	ProfileService_DeleteRuleType_FullMethodName            = "/mediator.v1.ProfileService/DeleteRuleType"
 )
 
-// PolicyServiceClient is the client API for PolicyService service.
+// ProfileServiceClient is the client API for ProfileService service.
 //
 // For semantics around ctx use and closing/ending streaming RPCs, please refer to https://pkg.go.dev/google.golang.org/grpc/?tab=doc#ClientConn.NewStream.
-type PolicyServiceClient interface {
-	CreatePolicy(ctx context.Context, in *CreatePolicyRequest, opts ...grpc.CallOption) (*CreatePolicyResponse, error)
-	DeletePolicy(ctx context.Context, in *DeletePolicyRequest, opts ...grpc.CallOption) (*DeletePolicyResponse, error)
-	ListPolicies(ctx context.Context, in *ListPoliciesRequest, opts ...grpc.CallOption) (*ListPoliciesResponse, error)
-	GetPolicyById(ctx context.Context, in *GetPolicyByIdRequest, opts ...grpc.CallOption) (*GetPolicyByIdResponse, error)
-	GetPolicyStatusByName(ctx context.Context, in *GetPolicyStatusByNameRequest, opts ...grpc.CallOption) (*GetPolicyStatusByNameResponse, error)
-	GetPolicyStatusByProject(ctx context.Context, in *GetPolicyStatusByProjectRequest, opts ...grpc.CallOption) (*GetPolicyStatusByProjectResponse, error)
+type ProfileServiceClient interface {
+	CreateProfile(ctx context.Context, in *CreateProfileRequest, opts ...grpc.CallOption) (*CreateProfileResponse, error)
+	DeleteProfile(ctx context.Context, in *DeleteProfileRequest, opts ...grpc.CallOption) (*DeleteProfileResponse, error)
+	ListProfiles(ctx context.Context, in *ListProfilesRequest, opts ...grpc.CallOption) (*ListProfilesResponse, error)
+	GetProfileById(ctx context.Context, in *GetProfileByIdRequest, opts ...grpc.CallOption) (*GetProfileByIdResponse, error)
+	GetProfileStatusByName(ctx context.Context, in *GetProfileStatusByNameRequest, opts ...grpc.CallOption) (*GetProfileStatusByNameResponse, error)
+	GetProfileStatusByProject(ctx context.Context, in *GetProfileStatusByProjectRequest, opts ...grpc.CallOption) (*GetProfileStatusByProjectResponse, error)
 	ListRuleTypes(ctx context.Context, in *ListRuleTypesRequest, opts ...grpc.CallOption) (*ListRuleTypesResponse, error)
 	GetRuleTypeByName(ctx context.Context, in *GetRuleTypeByNameRequest, opts ...grpc.CallOption) (*GetRuleTypeByNameResponse, error)
 	GetRuleTypeById(ctx context.Context, in *GetRuleTypeByIdRequest, opts ...grpc.CallOption) (*GetRuleTypeByIdResponse, error)
@@ -2320,464 +2320,464 @@ type PolicyServiceClient interface {
 	DeleteRuleType(ctx context.Context, in *DeleteRuleTypeRequest, opts ...grpc.CallOption) (*DeleteRuleTypeResponse, error)
 }
 
-type policyServiceClient struct {
+type profileServiceClient struct {
 	cc grpc.ClientConnInterface
 }
 
-func NewPolicyServiceClient(cc grpc.ClientConnInterface) PolicyServiceClient {
-	return &policyServiceClient{cc}
+func NewProfileServiceClient(cc grpc.ClientConnInterface) ProfileServiceClient {
+	return &profileServiceClient{cc}
 }
 
-func (c *policyServiceClient) CreatePolicy(ctx context.Context, in *CreatePolicyRequest, opts ...grpc.CallOption) (*CreatePolicyResponse, error) {
-	out := new(CreatePolicyResponse)
-	err := c.cc.Invoke(ctx, PolicyService_CreatePolicy_FullMethodName, in, out, opts...)
+func (c *profileServiceClient) CreateProfile(ctx context.Context, in *CreateProfileRequest, opts ...grpc.CallOption) (*CreateProfileResponse, error) {
+	out := new(CreateProfileResponse)
+	err := c.cc.Invoke(ctx, ProfileService_CreateProfile_FullMethodName, in, out, opts...)
 	if err != nil {
 		return nil, err
 	}
 	return out, nil
 }
 
-func (c *policyServiceClient) DeletePolicy(ctx context.Context, in *DeletePolicyRequest, opts ...grpc.CallOption) (*DeletePolicyResponse, error) {
-	out := new(DeletePolicyResponse)
-	err := c.cc.Invoke(ctx, PolicyService_DeletePolicy_FullMethodName, in, out, opts...)
+func (c *profileServiceClient) DeleteProfile(ctx context.Context, in *DeleteProfileRequest, opts ...grpc.CallOption) (*DeleteProfileResponse, error) {
+	out := new(DeleteProfileResponse)
+	err := c.cc.Invoke(ctx, ProfileService_DeleteProfile_FullMethodName, in, out, opts...)
 	if err != nil {
 		return nil, err
 	}
 	return out, nil
 }
 
-func (c *policyServiceClient) ListPolicies(ctx context.Context, in *ListPoliciesRequest, opts ...grpc.CallOption) (*ListPoliciesResponse, error) {
-	out := new(ListPoliciesResponse)
-	err := c.cc.Invoke(ctx, PolicyService_ListPolicies_FullMethodName, in, out, opts...)
+func (c *profileServiceClient) ListProfiles(ctx context.Context, in *ListProfilesRequest, opts ...grpc.CallOption) (*ListProfilesResponse, error) {
+	out := new(ListProfilesResponse)
+	err := c.cc.Invoke(ctx, ProfileService_ListProfiles_FullMethodName, in, out, opts...)
 	if err != nil {
 		return nil, err
 	}
 	return out, nil
 }
 
-func (c *policyServiceClient) GetPolicyById(ctx context.Context, in *GetPolicyByIdRequest, opts ...grpc.CallOption) (*GetPolicyByIdResponse, error) {
-	out := new(GetPolicyByIdResponse)
-	err := c.cc.Invoke(ctx, PolicyService_GetPolicyById_FullMethodName, in, out, opts...)
+func (c *profileServiceClient) GetProfileById(ctx context.Context, in *GetProfileByIdRequest, opts ...grpc.CallOption) (*GetProfileByIdResponse, error) {
+	out := new(GetProfileByIdResponse)
+	err := c.cc.Invoke(ctx, ProfileService_GetProfileById_FullMethodName, in, out, opts...)
 	if err != nil {
 		return nil, err
 	}
 	return out, nil
 }
 
-func (c *policyServiceClient) GetPolicyStatusByName(ctx context.Context, in *GetPolicyStatusByNameRequest, opts ...grpc.CallOption) (*GetPolicyStatusByNameResponse, error) {
-	out := new(GetPolicyStatusByNameResponse)
-	err := c.cc.Invoke(ctx, PolicyService_GetPolicyStatusByName_FullMethodName, in, out, opts...)
+func (c *profileServiceClient) GetProfileStatusByName(ctx context.Context, in *GetProfileStatusByNameRequest, opts ...grpc.CallOption) (*GetProfileStatusByNameResponse, error) {
+	out := new(GetProfileStatusByNameResponse)
+	err := c.cc.Invoke(ctx, ProfileService_GetProfileStatusByName_FullMethodName, in, out, opts...)
 	if err != nil {
 		return nil, err
 	}
 	return out, nil
 }
 
-func (c *policyServiceClient) GetPolicyStatusByProject(ctx context.Context, in *GetPolicyStatusByProjectRequest, opts ...grpc.CallOption) (*GetPolicyStatusByProjectResponse, error) {
-	out := new(GetPolicyStatusByProjectResponse)
-	err := c.cc.Invoke(ctx, PolicyService_GetPolicyStatusByProject_FullMethodName, in, out, opts...)
+func (c *profileServiceClient) GetProfileStatusByProject(ctx context.Context, in *GetProfileStatusByProjectRequest, opts ...grpc.CallOption) (*GetProfileStatusByProjectResponse, error) {
+	out := new(GetProfileStatusByProjectResponse)
+	err := c.cc.Invoke(ctx, ProfileService_GetProfileStatusByProject_FullMethodName, in, out, opts...)
 	if err != nil {
 		return nil, err
 	}
 	return out, nil
 }
 
-func (c *policyServiceClient) ListRuleTypes(ctx context.Context, in *ListRuleTypesRequest, opts ...grpc.CallOption) (*ListRuleTypesResponse, error) {
+func (c *profileServiceClient) ListRuleTypes(ctx context.Context, in *ListRuleTypesRequest, opts ...grpc.CallOption) (*ListRuleTypesResponse, error) {
 	out := new(ListRuleTypesResponse)
-	err := c.cc.Invoke(ctx, PolicyService_ListRuleTypes_FullMethodName, in, out, opts...)
+	err := c.cc.Invoke(ctx, ProfileService_ListRuleTypes_FullMethodName, in, out, opts...)
 	if err != nil {
 		return nil, err
 	}
 	return out, nil
 }
 
-func (c *policyServiceClient) GetRuleTypeByName(ctx context.Context, in *GetRuleTypeByNameRequest, opts ...grpc.CallOption) (*GetRuleTypeByNameResponse, error) {
+func (c *profileServiceClient) GetRuleTypeByName(ctx context.Context, in *GetRuleTypeByNameRequest, opts ...grpc.CallOption) (*GetRuleTypeByNameResponse, error) {
 	out := new(GetRuleTypeByNameResponse)
-	err := c.cc.Invoke(ctx, PolicyService_GetRuleTypeByName_FullMethodName, in, out, opts...)
+	err := c.cc.Invoke(ctx, ProfileService_GetRuleTypeByName_FullMethodName, in, out, opts...)
 	if err != nil {
 		return nil, err
 	}
 	return out, nil
 }
 
-func (c *policyServiceClient) GetRuleTypeById(ctx context.Context, in *GetRuleTypeByIdRequest, opts ...grpc.CallOption) (*GetRuleTypeByIdResponse, error) {
+func (c *profileServiceClient) GetRuleTypeById(ctx context.Context, in *GetRuleTypeByIdRequest, opts ...grpc.CallOption) (*GetRuleTypeByIdResponse, error) {
 	out := new(GetRuleTypeByIdResponse)
-	err := c.cc.Invoke(ctx, PolicyService_GetRuleTypeById_FullMethodName, in, out, opts...)
+	err := c.cc.Invoke(ctx, ProfileService_GetRuleTypeById_FullMethodName, in, out, opts...)
 	if err != nil {
 		return nil, err
 	}
 	return out, nil
 }
 
-func (c *policyServiceClient) CreateRuleType(ctx context.Context, in *CreateRuleTypeRequest, opts ...grpc.CallOption) (*CreateRuleTypeResponse, error) {
+func (c *profileServiceClient) CreateRuleType(ctx context.Context, in *CreateRuleTypeRequest, opts ...grpc.CallOption) (*CreateRuleTypeResponse, error) {
 	out := new(CreateRuleTypeResponse)
-	err := c.cc.Invoke(ctx, PolicyService_CreateRuleType_FullMethodName, in, out, opts...)
+	err := c.cc.Invoke(ctx, ProfileService_CreateRuleType_FullMethodName, in, out, opts...)
 	if err != nil {
 		return nil, err
 	}
 	return out, nil
 }
 
-func (c *policyServiceClient) UpdateRuleType(ctx context.Context, in *UpdateRuleTypeRequest, opts ...grpc.CallOption) (*UpdateRuleTypeResponse, error) {
+func (c *profileServiceClient) UpdateRuleType(ctx context.Context, in *UpdateRuleTypeRequest, opts ...grpc.CallOption) (*UpdateRuleTypeResponse, error) {
 	out := new(UpdateRuleTypeResponse)
-	err := c.cc.Invoke(ctx, PolicyService_UpdateRuleType_FullMethodName, in, out, opts...)
+	err := c.cc.Invoke(ctx, ProfileService_UpdateRuleType_FullMethodName, in, out, opts...)
 	if err != nil {
 		return nil, err
 	}
 	return out, nil
 }
 
-func (c *policyServiceClient) DeleteRuleType(ctx context.Context, in *DeleteRuleTypeRequest, opts ...grpc.CallOption) (*DeleteRuleTypeResponse, error) {
+func (c *profileServiceClient) DeleteRuleType(ctx context.Context, in *DeleteRuleTypeRequest, opts ...grpc.CallOption) (*DeleteRuleTypeResponse, error) {
 	out := new(DeleteRuleTypeResponse)
-	err := c.cc.Invoke(ctx, PolicyService_DeleteRuleType_FullMethodName, in, out, opts...)
+	err := c.cc.Invoke(ctx, ProfileService_DeleteRuleType_FullMethodName, in, out, opts...)
 	if err != nil {
 		return nil, err
 	}
 	return out, nil
 }
 
-// PolicyServiceServer is the server API for PolicyService service.
-// All implementations must embed UnimplementedPolicyServiceServer
+// ProfileServiceServer is the server API for ProfileService service.
+// All implementations must embed UnimplementedProfileServiceServer
 // for forward compatibility
-type PolicyServiceServer interface {
-	CreatePolicy(context.Context, *CreatePolicyRequest) (*CreatePolicyResponse, error)
-	DeletePolicy(context.Context, *DeletePolicyRequest) (*DeletePolicyResponse, error)
-	ListPolicies(context.Context, *ListPoliciesRequest) (*ListPoliciesResponse, error)
-	GetPolicyById(context.Context, *GetPolicyByIdRequest) (*GetPolicyByIdResponse, error)
-	GetPolicyStatusByName(context.Context, *GetPolicyStatusByNameRequest) (*GetPolicyStatusByNameResponse, error)
-	GetPolicyStatusByProject(context.Context, *GetPolicyStatusByProjectRequest) (*GetPolicyStatusByProjectResponse, error)
+type ProfileServiceServer interface {
+	CreateProfile(context.Context, *CreateProfileRequest) (*CreateProfileResponse, error)
+	DeleteProfile(context.Context, *DeleteProfileRequest) (*DeleteProfileResponse, error)
+	ListProfiles(context.Context, *ListProfilesRequest) (*ListProfilesResponse, error)
+	GetProfileById(context.Context, *GetProfileByIdRequest) (*GetProfileByIdResponse, error)
+	GetProfileStatusByName(context.Context, *GetProfileStatusByNameRequest) (*GetProfileStatusByNameResponse, error)
+	GetProfileStatusByProject(context.Context, *GetProfileStatusByProjectRequest) (*GetProfileStatusByProjectResponse, error)
 	ListRuleTypes(context.Context, *ListRuleTypesRequest) (*ListRuleTypesResponse, error)
 	GetRuleTypeByName(context.Context, *GetRuleTypeByNameRequest) (*GetRuleTypeByNameResponse, error)
 	GetRuleTypeById(context.Context, *GetRuleTypeByIdRequest) (*GetRuleTypeByIdResponse, error)
 	CreateRuleType(context.Context, *CreateRuleTypeRequest) (*CreateRuleTypeResponse, error)
 	UpdateRuleType(context.Context, *UpdateRuleTypeRequest) (*UpdateRuleTypeResponse, error)
 	DeleteRuleType(context.Context, *DeleteRuleTypeRequest) (*DeleteRuleTypeResponse, error)
-	mustEmbedUnimplementedPolicyServiceServer()
+	mustEmbedUnimplementedProfileServiceServer()
 }
 
-// UnimplementedPolicyServiceServer must be embedded to have forward compatible implementations.
-type UnimplementedPolicyServiceServer struct {
+// UnimplementedProfileServiceServer must be embedded to have forward compatible implementations.
+type UnimplementedProfileServiceServer struct {
 }
 
-func (UnimplementedPolicyServiceServer) CreatePolicy(context.Context, *CreatePolicyRequest) (*CreatePolicyResponse, error) {
-	return nil, status.Errorf(codes.Unimplemented, "method CreatePolicy not implemented")
+func (UnimplementedProfileServiceServer) CreateProfile(context.Context, *CreateProfileRequest) (*CreateProfileResponse, error) {
+	return nil, status.Errorf(codes.Unimplemented, "method CreateProfile not implemented")
 }
-func (UnimplementedPolicyServiceServer) DeletePolicy(context.Context, *DeletePolicyRequest) (*DeletePolicyResponse, error) {
-	return nil, status.Errorf(codes.Unimplemented, "method DeletePolicy not implemented")
+func (UnimplementedProfileServiceServer) DeleteProfile(context.Context, *DeleteProfileRequest) (*DeleteProfileResponse, error) {
+	return nil, status.Errorf(codes.Unimplemented, "method DeleteProfile not implemented")
 }
-func (UnimplementedPolicyServiceServer) ListPolicies(context.Context, *ListPoliciesRequest) (*ListPoliciesResponse, error) {
-	return nil, status.Errorf(codes.Unimplemented, "method ListPolicies not implemented")
+func (UnimplementedProfileServiceServer) ListProfiles(context.Context, *ListProfilesRequest) (*ListProfilesResponse, error) {
+	return nil, status.Errorf(codes.Unimplemented, "method ListProfiles not implemented")
 }
-func (UnimplementedPolicyServiceServer) GetPolicyById(context.Context, *GetPolicyByIdRequest) (*GetPolicyByIdResponse, error) {
-	return nil, status.Errorf(codes.Unimplemented, "method GetPolicyById not implemented")
+func (UnimplementedProfileServiceServer) GetProfileById(context.Context, *GetProfileByIdRequest) (*GetProfileByIdResponse, error) {
+	return nil, status.Errorf(codes.Unimplemented, "method GetProfileById not implemented")
 }
-func (UnimplementedPolicyServiceServer) GetPolicyStatusByName(context.Context, *GetPolicyStatusByNameRequest) (*GetPolicyStatusByNameResponse, error) {
-	return nil, status.Errorf(codes.Unimplemented, "method GetPolicyStatusByName not implemented")
+func (UnimplementedProfileServiceServer) GetProfileStatusByName(context.Context, *GetProfileStatusByNameRequest) (*GetProfileStatusByNameResponse, error) {
+	return nil, status.Errorf(codes.Unimplemented, "method GetProfileStatusByName not implemented")
 }
-func (UnimplementedPolicyServiceServer) GetPolicyStatusByProject(context.Context, *GetPolicyStatusByProjectRequest) (*GetPolicyStatusByProjectResponse, error) {
-	return nil, status.Errorf(codes.Unimplemented, "method GetPolicyStatusByProject not implemented")
+func (UnimplementedProfileServiceServer) GetProfileStatusByProject(context.Context, *GetProfileStatusByProjectRequest) (*GetProfileStatusByProjectResponse, error) {
+	return nil, status.Errorf(codes.Unimplemented, "method GetProfileStatusByProject not implemented")
 }
-func (UnimplementedPolicyServiceServer) ListRuleTypes(context.Context, *ListRuleTypesRequest) (*ListRuleTypesResponse, error) {
+func (UnimplementedProfileServiceServer) ListRuleTypes(context.Context, *ListRuleTypesRequest) (*ListRuleTypesResponse, error) {
 	return nil, status.Errorf(codes.Unimplemented, "method ListRuleTypes not implemented")
 }
-func (UnimplementedPolicyServiceServer) GetRuleTypeByName(context.Context, *GetRuleTypeByNameRequest) (*GetRuleTypeByNameResponse, error) {
+func (UnimplementedProfileServiceServer) GetRuleTypeByName(context.Context, *GetRuleTypeByNameRequest) (*GetRuleTypeByNameResponse, error) {
 	return nil, status.Errorf(codes.Unimplemented, "method GetRuleTypeByName not implemented")
 }
-func (UnimplementedPolicyServiceServer) GetRuleTypeById(context.Context, *GetRuleTypeByIdRequest) (*GetRuleTypeByIdResponse, error) {
+func (UnimplementedProfileServiceServer) GetRuleTypeById(context.Context, *GetRuleTypeByIdRequest) (*GetRuleTypeByIdResponse, error) {
 	return nil, status.Errorf(codes.Unimplemented, "method GetRuleTypeById not implemented")
 }
-func (UnimplementedPolicyServiceServer) CreateRuleType(context.Context, *CreateRuleTypeRequest) (*CreateRuleTypeResponse, error) {
+func (UnimplementedProfileServiceServer) CreateRuleType(context.Context, *CreateRuleTypeRequest) (*CreateRuleTypeResponse, error) {
 	return nil, status.Errorf(codes.Unimplemented, "method CreateRuleType not implemented")
 }
-func (UnimplementedPolicyServiceServer) UpdateRuleType(context.Context, *UpdateRuleTypeRequest) (*UpdateRuleTypeResponse, error) {
+func (UnimplementedProfileServiceServer) UpdateRuleType(context.Context, *UpdateRuleTypeRequest) (*UpdateRuleTypeResponse, error) {
 	return nil, status.Errorf(codes.Unimplemented, "method UpdateRuleType not implemented")
 }
-func (UnimplementedPolicyServiceServer) DeleteRuleType(context.Context, *DeleteRuleTypeRequest) (*DeleteRuleTypeResponse, error) {
+func (UnimplementedProfileServiceServer) DeleteRuleType(context.Context, *DeleteRuleTypeRequest) (*DeleteRuleTypeResponse, error) {
 	return nil, status.Errorf(codes.Unimplemented, "method DeleteRuleType not implemented")
 }
-func (UnimplementedPolicyServiceServer) mustEmbedUnimplementedPolicyServiceServer() {}
+func (UnimplementedProfileServiceServer) mustEmbedUnimplementedProfileServiceServer() {}
 
-// UnsafePolicyServiceServer may be embedded to opt out of forward compatibility for this service.
-// Use of this interface is not recommended, as added methods to PolicyServiceServer will
+// UnsafeProfileServiceServer may be embedded to opt out of forward compatibility for this service.
+// Use of this interface is not recommended, as added methods to ProfileServiceServer will
 // result in compilation errors.
-type UnsafePolicyServiceServer interface {
-	mustEmbedUnimplementedPolicyServiceServer()
+type UnsafeProfileServiceServer interface {
+	mustEmbedUnimplementedProfileServiceServer()
 }
 
-func RegisterPolicyServiceServer(s grpc.ServiceRegistrar, srv PolicyServiceServer) {
-	s.RegisterService(&PolicyService_ServiceDesc, srv)
+func RegisterProfileServiceServer(s grpc.ServiceRegistrar, srv ProfileServiceServer) {
+	s.RegisterService(&ProfileService_ServiceDesc, srv)
 }
 
-func _PolicyService_CreatePolicy_Handler(srv interface{}, ctx context.Context, dec func(interface{}) error, interceptor grpc.UnaryServerInterceptor) (interface{}, error) {
-	in := new(CreatePolicyRequest)
+func _ProfileService_CreateProfile_Handler(srv interface{}, ctx context.Context, dec func(interface{}) error, interceptor grpc.UnaryServerInterceptor) (interface{}, error) {
+	in := new(CreateProfileRequest)
 	if err := dec(in); err != nil {
 		return nil, err
 	}
 	if interceptor == nil {
-		return srv.(PolicyServiceServer).CreatePolicy(ctx, in)
+		return srv.(ProfileServiceServer).CreateProfile(ctx, in)
 	}
 	info := &grpc.UnaryServerInfo{
 		Server:     srv,
-		FullMethod: PolicyService_CreatePolicy_FullMethodName,
+		FullMethod: ProfileService_CreateProfile_FullMethodName,
 	}
 	handler := func(ctx context.Context, req interface{}) (interface{}, error) {
-		return srv.(PolicyServiceServer).CreatePolicy(ctx, req.(*CreatePolicyRequest))
+		return srv.(ProfileServiceServer).CreateProfile(ctx, req.(*CreateProfileRequest))
 	}
 	return interceptor(ctx, in, info, handler)
 }
 
-func _PolicyService_DeletePolicy_Handler(srv interface{}, ctx context.Context, dec func(interface{}) error, interceptor grpc.UnaryServerInterceptor) (interface{}, error) {
-	in := new(DeletePolicyRequest)
+func _ProfileService_DeleteProfile_Handler(srv interface{}, ctx context.Context, dec func(interface{}) error, interceptor grpc.UnaryServerInterceptor) (interface{}, error) {
+	in := new(DeleteProfileRequest)
 	if err := dec(in); err != nil {
 		return nil, err
 	}
 	if interceptor == nil {
-		return srv.(PolicyServiceServer).DeletePolicy(ctx, in)
+		return srv.(ProfileServiceServer).DeleteProfile(ctx, in)
 	}
 	info := &grpc.UnaryServerInfo{
 		Server:     srv,
-		FullMethod: PolicyService_DeletePolicy_FullMethodName,
+		FullMethod: ProfileService_DeleteProfile_FullMethodName,
 	}
 	handler := func(ctx context.Context, req interface{}) (interface{}, error) {
-		return srv.(PolicyServiceServer).DeletePolicy(ctx, req.(*DeletePolicyRequest))
+		return srv.(ProfileServiceServer).DeleteProfile(ctx, req.(*DeleteProfileRequest))
 	}
 	return interceptor(ctx, in, info, handler)
 }
 
-func _PolicyService_ListPolicies_Handler(srv interface{}, ctx context.Context, dec func(interface{}) error, interceptor grpc.UnaryServerInterceptor) (interface{}, error) {
-	in := new(ListPoliciesRequest)
+func _ProfileService_ListProfiles_Handler(srv interface{}, ctx context.Context, dec func(interface{}) error, interceptor grpc.UnaryServerInterceptor) (interface{}, error) {
+	in := new(ListProfilesRequest)
 	if err := dec(in); err != nil {
 		return nil, err
 	}
 	if interceptor == nil {
-		return srv.(PolicyServiceServer).ListPolicies(ctx, in)
+		return srv.(ProfileServiceServer).ListProfiles(ctx, in)
 	}
 	info := &grpc.UnaryServerInfo{
 		Server:     srv,
-		FullMethod: PolicyService_ListPolicies_FullMethodName,
+		FullMethod: ProfileService_ListProfiles_FullMethodName,
 	}
 	handler := func(ctx context.Context, req interface{}) (interface{}, error) {
-		return srv.(PolicyServiceServer).ListPolicies(ctx, req.(*ListPoliciesRequest))
+		return srv.(ProfileServiceServer).ListProfiles(ctx, req.(*ListProfilesRequest))
 	}
 	return interceptor(ctx, in, info, handler)
 }
 
-func _PolicyService_GetPolicyById_Handler(srv interface{}, ctx context.Context, dec func(interface{}) error, interceptor grpc.UnaryServerInterceptor) (interface{}, error) {
-	in := new(GetPolicyByIdRequest)
+func _ProfileService_GetProfileById_Handler(srv interface{}, ctx context.Context, dec func(interface{}) error, interceptor grpc.UnaryServerInterceptor) (interface{}, error) {
+	in := new(GetProfileByIdRequest)
 	if err := dec(in); err != nil {
 		return nil, err
 	}
 	if interceptor == nil {
-		return srv.(PolicyServiceServer).GetPolicyById(ctx, in)
+		return srv.(ProfileServiceServer).GetProfileById(ctx, in)
 	}
 	info := &grpc.UnaryServerInfo{
 		Server:     srv,
-		FullMethod: PolicyService_GetPolicyById_FullMethodName,
+		FullMethod: ProfileService_GetProfileById_FullMethodName,
 	}
 	handler := func(ctx context.Context, req interface{}) (interface{}, error) {
-		return srv.(PolicyServiceServer).GetPolicyById(ctx, req.(*GetPolicyByIdRequest))
+		return srv.(ProfileServiceServer).GetProfileById(ctx, req.(*GetProfileByIdRequest))
 	}
 	return interceptor(ctx, in, info, handler)
 }
 
-func _PolicyService_GetPolicyStatusByName_Handler(srv interface{}, ctx context.Context, dec func(interface{}) error, interceptor grpc.UnaryServerInterceptor) (interface{}, error) {
-	in := new(GetPolicyStatusByNameRequest)
+func _ProfileService_GetProfileStatusByName_Handler(srv interface{}, ctx context.Context, dec func(interface{}) error, interceptor grpc.UnaryServerInterceptor) (interface{}, error) {
+	in := new(GetProfileStatusByNameRequest)
 	if err := dec(in); err != nil {
 		return nil, err
 	}
 	if interceptor == nil {
-		return srv.(PolicyServiceServer).GetPolicyStatusByName(ctx, in)
+		return srv.(ProfileServiceServer).GetProfileStatusByName(ctx, in)
 	}
 	info := &grpc.UnaryServerInfo{
 		Server:     srv,
-		FullMethod: PolicyService_GetPolicyStatusByName_FullMethodName,
+		FullMethod: ProfileService_GetProfileStatusByName_FullMethodName,
 	}
 	handler := func(ctx context.Context, req interface{}) (interface{}, error) {
-		return srv.(PolicyServiceServer).GetPolicyStatusByName(ctx, req.(*GetPolicyStatusByNameRequest))
+		return srv.(ProfileServiceServer).GetProfileStatusByName(ctx, req.(*GetProfileStatusByNameRequest))
 	}
 	return interceptor(ctx, in, info, handler)
 }
 
-func _PolicyService_GetPolicyStatusByProject_Handler(srv interface{}, ctx context.Context, dec func(interface{}) error, interceptor grpc.UnaryServerInterceptor) (interface{}, error) {
-	in := new(GetPolicyStatusByProjectRequest)
+func _ProfileService_GetProfileStatusByProject_Handler(srv interface{}, ctx context.Context, dec func(interface{}) error, interceptor grpc.UnaryServerInterceptor) (interface{}, error) {
+	in := new(GetProfileStatusByProjectRequest)
 	if err := dec(in); err != nil {
 		return nil, err
 	}
 	if interceptor == nil {
-		return srv.(PolicyServiceServer).GetPolicyStatusByProject(ctx, in)
+		return srv.(ProfileServiceServer).GetProfileStatusByProject(ctx, in)
 	}
 	info := &grpc.UnaryServerInfo{
 		Server:     srv,
-		FullMethod: PolicyService_GetPolicyStatusByProject_FullMethodName,
+		FullMethod: ProfileService_GetProfileStatusByProject_FullMethodName,
 	}
 	handler := func(ctx context.Context, req interface{}) (interface{}, error) {
-		return srv.(PolicyServiceServer).GetPolicyStatusByProject(ctx, req.(*GetPolicyStatusByProjectRequest))
+		return srv.(ProfileServiceServer).GetProfileStatusByProject(ctx, req.(*GetProfileStatusByProjectRequest))
 	}
 	return interceptor(ctx, in, info, handler)
 }
 
-func _PolicyService_ListRuleTypes_Handler(srv interface{}, ctx context.Context, dec func(interface{}) error, interceptor grpc.UnaryServerInterceptor) (interface{}, error) {
+func _ProfileService_ListRuleTypes_Handler(srv interface{}, ctx context.Context, dec func(interface{}) error, interceptor grpc.UnaryServerInterceptor) (interface{}, error) {
 	in := new(ListRuleTypesRequest)
 	if err := dec(in); err != nil {
 		return nil, err
 	}
 	if interceptor == nil {
-		return srv.(PolicyServiceServer).ListRuleTypes(ctx, in)
+		return srv.(ProfileServiceServer).ListRuleTypes(ctx, in)
 	}
 	info := &grpc.UnaryServerInfo{
 		Server:     srv,
-		FullMethod: PolicyService_ListRuleTypes_FullMethodName,
+		FullMethod: ProfileService_ListRuleTypes_FullMethodName,
 	}
 	handler := func(ctx context.Context, req interface{}) (interface{}, error) {
-		return srv.(PolicyServiceServer).ListRuleTypes(ctx, req.(*ListRuleTypesRequest))
+		return srv.(ProfileServiceServer).ListRuleTypes(ctx, req.(*ListRuleTypesRequest))
 	}
 	return interceptor(ctx, in, info, handler)
 }
 
-func _PolicyService_GetRuleTypeByName_Handler(srv interface{}, ctx context.Context, dec func(interface{}) error, interceptor grpc.UnaryServerInterceptor) (interface{}, error) {
+func _ProfileService_GetRuleTypeByName_Handler(srv interface{}, ctx context.Context, dec func(interface{}) error, interceptor grpc.UnaryServerInterceptor) (interface{}, error) {
 	in := new(GetRuleTypeByNameRequest)
 	if err := dec(in); err != nil {
 		return nil, err
 	}
 	if interceptor == nil {
-		return srv.(PolicyServiceServer).GetRuleTypeByName(ctx, in)
+		return srv.(ProfileServiceServer).GetRuleTypeByName(ctx, in)
 	}
 	info := &grpc.UnaryServerInfo{
 		Server:     srv,
-		FullMethod: PolicyService_GetRuleTypeByName_FullMethodName,
+		FullMethod: ProfileService_GetRuleTypeByName_FullMethodName,
 	}
 	handler := func(ctx context.Context, req interface{}) (interface{}, error) {
-		return srv.(PolicyServiceServer).GetRuleTypeByName(ctx, req.(*GetRuleTypeByNameRequest))
+		return srv.(ProfileServiceServer).GetRuleTypeByName(ctx, req.(*GetRuleTypeByNameRequest))
 	}
 	return interceptor(ctx, in, info, handler)
 }
 
-func _PolicyService_GetRuleTypeById_Handler(srv interface{}, ctx context.Context, dec func(interface{}) error, interceptor grpc.UnaryServerInterceptor) (interface{}, error) {
+func _ProfileService_GetRuleTypeById_Handler(srv interface{}, ctx context.Context, dec func(interface{}) error, interceptor grpc.UnaryServerInterceptor) (interface{}, error) {
 	in := new(GetRuleTypeByIdRequest)
 	if err := dec(in); err != nil {
 		return nil, err
 	}
 	if interceptor == nil {
-		return srv.(PolicyServiceServer).GetRuleTypeById(ctx, in)
+		return srv.(ProfileServiceServer).GetRuleTypeById(ctx, in)
 	}
 	info := &grpc.UnaryServerInfo{
 		Server:     srv,
-		FullMethod: PolicyService_GetRuleTypeById_FullMethodName,
+		FullMethod: ProfileService_GetRuleTypeById_FullMethodName,
 	}
 	handler := func(ctx context.Context, req interface{}) (interface{}, error) {
-		return srv.(PolicyServiceServer).GetRuleTypeById(ctx, req.(*GetRuleTypeByIdRequest))
+		return srv.(ProfileServiceServer).GetRuleTypeById(ctx, req.(*GetRuleTypeByIdRequest))
 	}
 	return interceptor(ctx, in, info, handler)
 }
 
-func _PolicyService_CreateRuleType_Handler(srv interface{}, ctx context.Context, dec func(interface{}) error, interceptor grpc.UnaryServerInterceptor) (interface{}, error) {
+func _ProfileService_CreateRuleType_Handler(srv interface{}, ctx context.Context, dec func(interface{}) error, interceptor grpc.UnaryServerInterceptor) (interface{}, error) {
 	in := new(CreateRuleTypeRequest)
 	if err := dec(in); err != nil {
 		return nil, err
 	}
 	if interceptor == nil {
-		return srv.(PolicyServiceServer).CreateRuleType(ctx, in)
+		return srv.(ProfileServiceServer).CreateRuleType(ctx, in)
 	}
 	info := &grpc.UnaryServerInfo{
 		Server:     srv,
-		FullMethod: PolicyService_CreateRuleType_FullMethodName,
+		FullMethod: ProfileService_CreateRuleType_FullMethodName,
 	}
 	handler := func(ctx context.Context, req interface{}) (interface{}, error) {
-		return srv.(PolicyServiceServer).CreateRuleType(ctx, req.(*CreateRuleTypeRequest))
+		return srv.(ProfileServiceServer).CreateRuleType(ctx, req.(*CreateRuleTypeRequest))
 	}
 	return interceptor(ctx, in, info, handler)
 }
 
-func _PolicyService_UpdateRuleType_Handler(srv interface{}, ctx context.Context, dec func(interface{}) error, interceptor grpc.UnaryServerInterceptor) (interface{}, error) {
+func _ProfileService_UpdateRuleType_Handler(srv interface{}, ctx context.Context, dec func(interface{}) error, interceptor grpc.UnaryServerInterceptor) (interface{}, error) {
 	in := new(UpdateRuleTypeRequest)
 	if err := dec(in); err != nil {
 		return nil, err
 	}
 	if interceptor == nil {
-		return srv.(PolicyServiceServer).UpdateRuleType(ctx, in)
+		return srv.(ProfileServiceServer).UpdateRuleType(ctx, in)
 	}
 	info := &grpc.UnaryServerInfo{
 		Server:     srv,
-		FullMethod: PolicyService_UpdateRuleType_FullMethodName,
+		FullMethod: ProfileService_UpdateRuleType_FullMethodName,
 	}
 	handler := func(ctx context.Context, req interface{}) (interface{}, error) {
-		return srv.(PolicyServiceServer).UpdateRuleType(ctx, req.(*UpdateRuleTypeRequest))
+		return srv.(ProfileServiceServer).UpdateRuleType(ctx, req.(*UpdateRuleTypeRequest))
 	}
 	return interceptor(ctx, in, info, handler)
 }
 
-func _PolicyService_DeleteRuleType_Handler(srv interface{}, ctx context.Context, dec func(interface{}) error, interceptor grpc.UnaryServerInterceptor) (interface{}, error) {
+func _ProfileService_DeleteRuleType_Handler(srv interface{}, ctx context.Context, dec func(interface{}) error, interceptor grpc.UnaryServerInterceptor) (interface{}, error) {
 	in := new(DeleteRuleTypeRequest)
 	if err := dec(in); err != nil {
 		return nil, err
 	}
 	if interceptor == nil {
-		return srv.(PolicyServiceServer).DeleteRuleType(ctx, in)
+		return srv.(ProfileServiceServer).DeleteRuleType(ctx, in)
 	}
 	info := &grpc.UnaryServerInfo{
 		Server:     srv,
-		FullMethod: PolicyService_DeleteRuleType_FullMethodName,
+		FullMethod: ProfileService_DeleteRuleType_FullMethodName,
 	}
 	handler := func(ctx context.Context, req interface{}) (interface{}, error) {
-		return srv.(PolicyServiceServer).DeleteRuleType(ctx, req.(*DeleteRuleTypeRequest))
+		return srv.(ProfileServiceServer).DeleteRuleType(ctx, req.(*DeleteRuleTypeRequest))
 	}
 	return interceptor(ctx, in, info, handler)
 }
 
-// PolicyService_ServiceDesc is the grpc.ServiceDesc for PolicyService service.
+// ProfileService_ServiceDesc is the grpc.ServiceDesc for ProfileService service.
 // It's only intended for direct use with grpc.RegisterService,
 // and not to be introspected or modified (even as a copy)
-var PolicyService_ServiceDesc = grpc.ServiceDesc{
-	ServiceName: "mediator.v1.PolicyService",
-	HandlerType: (*PolicyServiceServer)(nil),
+var ProfileService_ServiceDesc = grpc.ServiceDesc{
+	ServiceName: "mediator.v1.ProfileService",
+	HandlerType: (*ProfileServiceServer)(nil),
 	Methods: []grpc.MethodDesc{
 		{
-			MethodName: "CreatePolicy",
-			Handler:    _PolicyService_CreatePolicy_Handler,
+			MethodName: "CreateProfile",
+			Handler:    _ProfileService_CreateProfile_Handler,
 		},
 		{
-			MethodName: "DeletePolicy",
-			Handler:    _PolicyService_DeletePolicy_Handler,
+			MethodName: "DeleteProfile",
+			Handler:    _ProfileService_DeleteProfile_Handler,
 		},
 		{
-			MethodName: "ListPolicies",
-			Handler:    _PolicyService_ListPolicies_Handler,
+			MethodName: "ListProfiles",
+			Handler:    _ProfileService_ListProfiles_Handler,
 		},
 		{
-			MethodName: "GetPolicyById",
-			Handler:    _PolicyService_GetPolicyById_Handler,
+			MethodName: "GetProfileById",
+			Handler:    _ProfileService_GetProfileById_Handler,
 		},
 		{
-			MethodName: "GetPolicyStatusByName",
-			Handler:    _PolicyService_GetPolicyStatusByName_Handler,
+			MethodName: "GetProfileStatusByName",
+			Handler:    _ProfileService_GetProfileStatusByName_Handler,
 		},
 		{
-			MethodName: "GetPolicyStatusByProject",
-			Handler:    _PolicyService_GetPolicyStatusByProject_Handler,
+			MethodName: "GetProfileStatusByProject",
+			Handler:    _ProfileService_GetProfileStatusByProject_Handler,
 		},
 		{
 			MethodName: "ListRuleTypes",
-			Handler:    _PolicyService_ListRuleTypes_Handler,
+			Handler:    _ProfileService_ListRuleTypes_Handler,
 		},
 		{
 			MethodName: "GetRuleTypeByName",
-			Handler:    _PolicyService_GetRuleTypeByName_Handler,
+			Handler:    _ProfileService_GetRuleTypeByName_Handler,
 		},
 		{
 			MethodName: "GetRuleTypeById",
-			Handler:    _PolicyService_GetRuleTypeById_Handler,
+			Handler:    _ProfileService_GetRuleTypeById_Handler,
 		},
 		{
 			MethodName: "CreateRuleType",
-			Handler:    _PolicyService_CreateRuleType_Handler,
+			Handler:    _ProfileService_CreateRuleType_Handler,
 		},
 		{
 			MethodName: "UpdateRuleType",
-			Handler:    _PolicyService_UpdateRuleType_Handler,
+			Handler:    _ProfileService_UpdateRuleType_Handler,
 		},
 		{
 			MethodName: "DeleteRuleType",
-			Handler:    _PolicyService_DeleteRuleType_Handler,
+			Handler:    _ProfileService_DeleteRuleType_Handler,
 		},
 	},
 	Streams:  []grpc.StreamDesc{},

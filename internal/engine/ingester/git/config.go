@@ -15,7 +15,7 @@
 // Package git provides the git rule data ingest engine
 package git
 
-// IngesterConfig is the policy-provided configuration for the git ingester
+// IngesterConfig is the profile-provided configuration for the git ingester
 // This allows for users to pass in configuration to the ingester
 // in different calls as opposed to having to set it in the rule type.
 type IngesterConfig struct {

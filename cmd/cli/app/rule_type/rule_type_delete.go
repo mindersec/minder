@@ -29,7 +29,7 @@ import (
 var ruleType_deleteCmd = &cobra.Command{
 	Use:   "delete",
 	Short: "delete a rule type within a mediator controlplane",
-	Long: `The medic rule type delete subcommand lets you delete policies within a
+	Long: `The medic rule type delete subcommand lets you delete profiles within a
 mediator control plane.`,
 	PreRun: func(cmd *cobra.Command, args []string) {
 		if err := viper.BindPFlags(cmd.Flags()); err != nil {
@@ -37,7 +37,7 @@ mediator control plane.`,
 		}
 	},
 	Run: func(cmd *cobra.Command, args []string) {
-		// delete the policy via GRPC
+		// delete the profile via GRPC
 		id := viper.GetString("id")
 
 		conn, err := util.GrpcForCommand(cmd)
@@ -45,7 +45,7 @@ mediator control plane.`,
 		util.ExitNicelyOnError(err, "Error getting grpc connection")
 		defer conn.Close()
 
-		client := pb.NewPolicyServiceClient(conn)
+		client := pb.NewProfileServiceClient(conn)
 		ctx, cancel := util.GetAppContext()
 		defer cancel()
 
@@ -54,8 +54,8 @@ mediator control plane.`,
 			Id:      id,
 		})
 
-		util.ExitNicelyOnError(err, "Error deleting policy")
-		cmd.Println("Successfully deleted policy with id:", id)
+		util.ExitNicelyOnError(err, "Error deleting profile")
+		cmd.Println("Successfully deleted profile with id:", id)
 	},
 }
 

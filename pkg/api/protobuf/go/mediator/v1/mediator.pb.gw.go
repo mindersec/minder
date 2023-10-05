@@ -2523,8 +2523,8 @@ func local_request_UserService_GetUser_0(ctx context.Context, marshaler runtime.
 
 }
 
-func request_PolicyService_CreatePolicy_0(ctx context.Context, marshaler runtime.Marshaler, client PolicyServiceClient, req *http.Request, pathParams map[string]string) (proto.Message, runtime.ServerMetadata, error) {
-	var protoReq CreatePolicyRequest
+func request_ProfileService_CreateProfile_0(ctx context.Context, marshaler runtime.Marshaler, client ProfileServiceClient, req *http.Request, pathParams map[string]string) (proto.Message, runtime.ServerMetadata, error) {
+	var protoReq CreateProfileRequest
 	var metadata runtime.ServerMetadata
 
 	newReader, berr := utilities.IOReaderFactory(req.Body)
@@ -2535,13 +2535,13 @@ func request_PolicyService_CreatePolicy_0(ctx context.Context, marshaler runtime
 		return nil, metadata, status.Errorf(codes.InvalidArgument, "%v", err)
 	}
 
-	msg, err := client.CreatePolicy(ctx, &protoReq, grpc.Header(&metadata.HeaderMD), grpc.Trailer(&metadata.TrailerMD))
+	msg, err := client.CreateProfile(ctx, &protoReq, grpc.Header(&metadata.HeaderMD), grpc.Trailer(&metadata.TrailerMD))
 	return msg, metadata, err
 
 }
 
-func local_request_PolicyService_CreatePolicy_0(ctx context.Context, marshaler runtime.Marshaler, server PolicyServiceServer, req *http.Request, pathParams map[string]string) (proto.Message, runtime.ServerMetadata, error) {
-	var protoReq CreatePolicyRequest
+func local_request_ProfileService_CreateProfile_0(ctx context.Context, marshaler runtime.Marshaler, server ProfileServiceServer, req *http.Request, pathParams map[string]string) (proto.Message, runtime.ServerMetadata, error) {
+	var protoReq CreateProfileRequest
 	var metadata runtime.ServerMetadata
 
 	newReader, berr := utilities.IOReaderFactory(req.Body)
@@ -2552,17 +2552,17 @@ func local_request_PolicyService_CreatePolicy_0(ctx context.Context, marshaler r
 		return nil, metadata, status.Errorf(codes.InvalidArgument, "%v", err)
 	}
 
-	msg, err := server.CreatePolicy(ctx, &protoReq)
+	msg, err := server.CreateProfile(ctx, &protoReq)
 	return msg, metadata, err
 
 }
 
 var (
-	filter_PolicyService_DeletePolicy_0 = &utilities.DoubleArray{Encoding: map[string]int{"id": 0}, Base: []int{1, 2, 0, 0}, Check: []int{0, 1, 2, 2}}
+	filter_ProfileService_DeleteProfile_0 = &utilities.DoubleArray{Encoding: map[string]int{"id": 0}, Base: []int{1, 2, 0, 0}, Check: []int{0, 1, 2, 2}}
 )
 
-func request_PolicyService_DeletePolicy_0(ctx context.Context, marshaler runtime.Marshaler, client PolicyServiceClient, req *http.Request, pathParams map[string]string) (proto.Message, runtime.ServerMetadata, error) {
-	var protoReq DeletePolicyRequest
+func request_ProfileService_DeleteProfile_0(ctx context.Context, marshaler runtime.Marshaler, client ProfileServiceClient, req *http.Request, pathParams map[string]string) (proto.Message, runtime.ServerMetadata, error) {
+	var protoReq DeleteProfileRequest
 	var metadata runtime.ServerMetadata
 
 	var (
@@ -2585,17 +2585,17 @@ func request_PolicyService_DeletePolicy_0(ctx context.Context, marshaler runtime
 	if err := req.ParseForm(); err != nil {
 		return nil, metadata, status.Errorf(codes.InvalidArgument, "%v", err)
 	}
-	if err := runtime.PopulateQueryParameters(&protoReq, req.Form, filter_PolicyService_DeletePolicy_0); err != nil {
+	if err := runtime.PopulateQueryParameters(&protoReq, req.Form, filter_ProfileService_DeleteProfile_0); err != nil {
 		return nil, metadata, status.Errorf(codes.InvalidArgument, "%v", err)
 	}
 
-	msg, err := client.DeletePolicy(ctx, &protoReq, grpc.Header(&metadata.HeaderMD), grpc.Trailer(&metadata.TrailerMD))
+	msg, err := client.DeleteProfile(ctx, &protoReq, grpc.Header(&metadata.HeaderMD), grpc.Trailer(&metadata.TrailerMD))
 	return msg, metadata, err
 
 }
 
-func local_request_PolicyService_DeletePolicy_0(ctx context.Context, marshaler runtime.Marshaler, server PolicyServiceServer, req *http.Request, pathParams map[string]string) (proto.Message, runtime.ServerMetadata, error) {
-	var protoReq DeletePolicyRequest
+func local_request_ProfileService_DeleteProfile_0(ctx context.Context, marshaler runtime.Marshaler, server ProfileServiceServer, req *http.Request, pathParams map[string]string) (proto.Message, runtime.ServerMetadata, error) {
+	var protoReq DeleteProfileRequest
 	var metadata runtime.ServerMetadata
 
 	var (
@@ -2618,57 +2618,57 @@ func local_request_PolicyService_DeletePolicy_0(ctx context.Context, marshaler r
 	if err := req.ParseForm(); err != nil {
 		return nil, metadata, status.Errorf(codes.InvalidArgument, "%v", err)
 	}
-	if err := runtime.PopulateQueryParameters(&protoReq, req.Form, filter_PolicyService_DeletePolicy_0); err != nil {
+	if err := runtime.PopulateQueryParameters(&protoReq, req.Form, filter_ProfileService_DeleteProfile_0); err != nil {
 		return nil, metadata, status.Errorf(codes.InvalidArgument, "%v", err)
 	}
 
-	msg, err := server.DeletePolicy(ctx, &protoReq)
+	msg, err := server.DeleteProfile(ctx, &protoReq)
 	return msg, metadata, err
 
 }
 
 var (
-	filter_PolicyService_ListPolicies_0 = &utilities.DoubleArray{Encoding: map[string]int{}, Base: []int(nil), Check: []int(nil)}
+	filter_ProfileService_ListProfiles_0 = &utilities.DoubleArray{Encoding: map[string]int{}, Base: []int(nil), Check: []int(nil)}
 )
 
-func request_PolicyService_ListPolicies_0(ctx context.Context, marshaler runtime.Marshaler, client PolicyServiceClient, req *http.Request, pathParams map[string]string) (proto.Message, runtime.ServerMetadata, error) {
-	var protoReq ListPoliciesRequest
+func request_ProfileService_ListProfiles_0(ctx context.Context, marshaler runtime.Marshaler, client ProfileServiceClient, req *http.Request, pathParams map[string]string) (proto.Message, runtime.ServerMetadata, error) {
+	var protoReq ListProfilesRequest
 	var metadata runtime.ServerMetadata
 
 	if err := req.ParseForm(); err != nil {
 		return nil, metadata, status.Errorf(codes.InvalidArgument, "%v", err)
 	}
-	if err := runtime.PopulateQueryParameters(&protoReq, req.Form, filter_PolicyService_ListPolicies_0); err != nil {
+	if err := runtime.PopulateQueryParameters(&protoReq, req.Form, filter_ProfileService_ListProfiles_0); err != nil {
 		return nil, metadata, status.Errorf(codes.InvalidArgument, "%v", err)
 	}
 
-	msg, err := client.ListPolicies(ctx, &protoReq, grpc.Header(&metadata.HeaderMD), grpc.Trailer(&metadata.TrailerMD))
+	msg, err := client.ListProfiles(ctx, &protoReq, grpc.Header(&metadata.HeaderMD), grpc.Trailer(&metadata.TrailerMD))
 	return msg, metadata, err
 
 }
 
-func local_request_PolicyService_ListPolicies_0(ctx context.Context, marshaler runtime.Marshaler, server PolicyServiceServer, req *http.Request, pathParams map[string]string) (proto.Message, runtime.ServerMetadata, error) {
-	var protoReq ListPoliciesRequest
+func local_request_ProfileService_ListProfiles_0(ctx context.Context, marshaler runtime.Marshaler, server ProfileServiceServer, req *http.Request, pathParams map[string]string) (proto.Message, runtime.ServerMetadata, error) {
+	var protoReq ListProfilesRequest
 	var metadata runtime.ServerMetadata
 
 	if err := req.ParseForm(); err != nil {
 		return nil, metadata, status.Errorf(codes.InvalidArgument, "%v", err)
 	}
-	if err := runtime.PopulateQueryParameters(&protoReq, req.Form, filter_PolicyService_ListPolicies_0); err != nil {
+	if err := runtime.PopulateQueryParameters(&protoReq, req.Form, filter_ProfileService_ListProfiles_0); err != nil {
 		return nil, metadata, status.Errorf(codes.InvalidArgument, "%v", err)
 	}
 
-	msg, err := server.ListPolicies(ctx, &protoReq)
+	msg, err := server.ListProfiles(ctx, &protoReq)
 	return msg, metadata, err
 
 }
 
 var (
-	filter_PolicyService_GetPolicyById_0 = &utilities.DoubleArray{Encoding: map[string]int{"id": 0}, Base: []int{1, 2, 0, 0}, Check: []int{0, 1, 2, 2}}
+	filter_ProfileService_GetProfileById_0 = &utilities.DoubleArray{Encoding: map[string]int{"id": 0}, Base: []int{1, 2, 0, 0}, Check: []int{0, 1, 2, 2}}
 )
 
-func request_PolicyService_GetPolicyById_0(ctx context.Context, marshaler runtime.Marshaler, client PolicyServiceClient, req *http.Request, pathParams map[string]string) (proto.Message, runtime.ServerMetadata, error) {
-	var protoReq GetPolicyByIdRequest
+func request_ProfileService_GetProfileById_0(ctx context.Context, marshaler runtime.Marshaler, client ProfileServiceClient, req *http.Request, pathParams map[string]string) (proto.Message, runtime.ServerMetadata, error) {
+	var protoReq GetProfileByIdRequest
 	var metadata runtime.ServerMetadata
 
 	var (
@@ -2691,17 +2691,17 @@ func request_PolicyService_GetPolicyById_0(ctx context.Context, marshaler runtim
 	if err := req.ParseForm(); err != nil {
 		return nil, metadata, status.Errorf(codes.InvalidArgument, "%v", err)
 	}
-	if err := runtime.PopulateQueryParameters(&protoReq, req.Form, filter_PolicyService_GetPolicyById_0); err != nil {
+	if err := runtime.PopulateQueryParameters(&protoReq, req.Form, filter_ProfileService_GetProfileById_0); err != nil {
 		return nil, metadata, status.Errorf(codes.InvalidArgument, "%v", err)
 	}
 
-	msg, err := client.GetPolicyById(ctx, &protoReq, grpc.Header(&metadata.HeaderMD), grpc.Trailer(&metadata.TrailerMD))
+	msg, err := client.GetProfileById(ctx, &protoReq, grpc.Header(&metadata.HeaderMD), grpc.Trailer(&metadata.TrailerMD))
 	return msg, metadata, err
 
 }
 
-func local_request_PolicyService_GetPolicyById_0(ctx context.Context, marshaler runtime.Marshaler, server PolicyServiceServer, req *http.Request, pathParams map[string]string) (proto.Message, runtime.ServerMetadata, error) {
-	var protoReq GetPolicyByIdRequest
+func local_request_ProfileService_GetProfileById_0(ctx context.Context, marshaler runtime.Marshaler, server ProfileServiceServer, req *http.Request, pathParams map[string]string) (proto.Message, runtime.ServerMetadata, error) {
+	var protoReq GetProfileByIdRequest
 	var metadata runtime.ServerMetadata
 
 	var (
@@ -2724,21 +2724,21 @@ func local_request_PolicyService_GetPolicyById_0(ctx context.Context, marshaler 
 	if err := req.ParseForm(); err != nil {
 		return nil, metadata, status.Errorf(codes.InvalidArgument, "%v", err)
 	}
-	if err := runtime.PopulateQueryParameters(&protoReq, req.Form, filter_PolicyService_GetPolicyById_0); err != nil {
+	if err := runtime.PopulateQueryParameters(&protoReq, req.Form, filter_ProfileService_GetProfileById_0); err != nil {
 		return nil, metadata, status.Errorf(codes.InvalidArgument, "%v", err)
 	}
 
-	msg, err := server.GetPolicyById(ctx, &protoReq)
+	msg, err := server.GetProfileById(ctx, &protoReq)
 	return msg, metadata, err
 
 }
 
 var (
-	filter_PolicyService_GetPolicyStatusByName_0 = &utilities.DoubleArray{Encoding: map[string]int{"name": 0}, Base: []int{1, 2, 0, 0}, Check: []int{0, 1, 2, 2}}
+	filter_ProfileService_GetProfileStatusByName_0 = &utilities.DoubleArray{Encoding: map[string]int{"name": 0}, Base: []int{1, 2, 0, 0}, Check: []int{0, 1, 2, 2}}
 )
 
-func request_PolicyService_GetPolicyStatusByName_0(ctx context.Context, marshaler runtime.Marshaler, client PolicyServiceClient, req *http.Request, pathParams map[string]string) (proto.Message, runtime.ServerMetadata, error) {
-	var protoReq GetPolicyStatusByNameRequest
+func request_ProfileService_GetProfileStatusByName_0(ctx context.Context, marshaler runtime.Marshaler, client ProfileServiceClient, req *http.Request, pathParams map[string]string) (proto.Message, runtime.ServerMetadata, error) {
+	var protoReq GetProfileStatusByNameRequest
 	var metadata runtime.ServerMetadata
 
 	var (
@@ -2761,17 +2761,17 @@ func request_PolicyService_GetPolicyStatusByName_0(ctx context.Context, marshale
 	if err := req.ParseForm(); err != nil {
 		return nil, metadata, status.Errorf(codes.InvalidArgument, "%v", err)
 	}
-	if err := runtime.PopulateQueryParameters(&protoReq, req.Form, filter_PolicyService_GetPolicyStatusByName_0); err != nil {
+	if err := runtime.PopulateQueryParameters(&protoReq, req.Form, filter_ProfileService_GetProfileStatusByName_0); err != nil {
 		return nil, metadata, status.Errorf(codes.InvalidArgument, "%v", err)
 	}
 
-	msg, err := client.GetPolicyStatusByName(ctx, &protoReq, grpc.Header(&metadata.HeaderMD), grpc.Trailer(&metadata.TrailerMD))
+	msg, err := client.GetProfileStatusByName(ctx, &protoReq, grpc.Header(&metadata.HeaderMD), grpc.Trailer(&metadata.TrailerMD))
 	return msg, metadata, err
 
 }
 
-func local_request_PolicyService_GetPolicyStatusByName_0(ctx context.Context, marshaler runtime.Marshaler, server PolicyServiceServer, req *http.Request, pathParams map[string]string) (proto.Message, runtime.ServerMetadata, error) {
-	var protoReq GetPolicyStatusByNameRequest
+func local_request_ProfileService_GetProfileStatusByName_0(ctx context.Context, marshaler runtime.Marshaler, server ProfileServiceServer, req *http.Request, pathParams map[string]string) (proto.Message, runtime.ServerMetadata, error) {
+	var protoReq GetProfileStatusByNameRequest
 	var metadata runtime.ServerMetadata
 
 	var (
@@ -2794,63 +2794,63 @@ func local_request_PolicyService_GetPolicyStatusByName_0(ctx context.Context, ma
 	if err := req.ParseForm(); err != nil {
 		return nil, metadata, status.Errorf(codes.InvalidArgument, "%v", err)
 	}
-	if err := runtime.PopulateQueryParameters(&protoReq, req.Form, filter_PolicyService_GetPolicyStatusByName_0); err != nil {
+	if err := runtime.PopulateQueryParameters(&protoReq, req.Form, filter_ProfileService_GetProfileStatusByName_0); err != nil {
 		return nil, metadata, status.Errorf(codes.InvalidArgument, "%v", err)
 	}
 
-	msg, err := server.GetPolicyStatusByName(ctx, &protoReq)
+	msg, err := server.GetProfileStatusByName(ctx, &protoReq)
 	return msg, metadata, err
 
 }
 
 var (
-	filter_PolicyService_GetPolicyStatusByProject_0 = &utilities.DoubleArray{Encoding: map[string]int{}, Base: []int(nil), Check: []int(nil)}
+	filter_ProfileService_GetProfileStatusByProject_0 = &utilities.DoubleArray{Encoding: map[string]int{}, Base: []int(nil), Check: []int(nil)}
 )
 
-func request_PolicyService_GetPolicyStatusByProject_0(ctx context.Context, marshaler runtime.Marshaler, client PolicyServiceClient, req *http.Request, pathParams map[string]string) (proto.Message, runtime.ServerMetadata, error) {
-	var protoReq GetPolicyStatusByProjectRequest
+func request_ProfileService_GetProfileStatusByProject_0(ctx context.Context, marshaler runtime.Marshaler, client ProfileServiceClient, req *http.Request, pathParams map[string]string) (proto.Message, runtime.ServerMetadata, error) {
+	var protoReq GetProfileStatusByProjectRequest
 	var metadata runtime.ServerMetadata
 
 	if err := req.ParseForm(); err != nil {
 		return nil, metadata, status.Errorf(codes.InvalidArgument, "%v", err)
 	}
-	if err := runtime.PopulateQueryParameters(&protoReq, req.Form, filter_PolicyService_GetPolicyStatusByProject_0); err != nil {
+	if err := runtime.PopulateQueryParameters(&protoReq, req.Form, filter_ProfileService_GetProfileStatusByProject_0); err != nil {
 		return nil, metadata, status.Errorf(codes.InvalidArgument, "%v", err)
 	}
 
-	msg, err := client.GetPolicyStatusByProject(ctx, &protoReq, grpc.Header(&metadata.HeaderMD), grpc.Trailer(&metadata.TrailerMD))
+	msg, err := client.GetProfileStatusByProject(ctx, &protoReq, grpc.Header(&metadata.HeaderMD), grpc.Trailer(&metadata.TrailerMD))
 	return msg, metadata, err
 
 }
 
-func local_request_PolicyService_GetPolicyStatusByProject_0(ctx context.Context, marshaler runtime.Marshaler, server PolicyServiceServer, req *http.Request, pathParams map[string]string) (proto.Message, runtime.ServerMetadata, error) {
-	var protoReq GetPolicyStatusByProjectRequest
+func local_request_ProfileService_GetProfileStatusByProject_0(ctx context.Context, marshaler runtime.Marshaler, server ProfileServiceServer, req *http.Request, pathParams map[string]string) (proto.Message, runtime.ServerMetadata, error) {
+	var protoReq GetProfileStatusByProjectRequest
 	var metadata runtime.ServerMetadata
 
 	if err := req.ParseForm(); err != nil {
 		return nil, metadata, status.Errorf(codes.InvalidArgument, "%v", err)
 	}
-	if err := runtime.PopulateQueryParameters(&protoReq, req.Form, filter_PolicyService_GetPolicyStatusByProject_0); err != nil {
+	if err := runtime.PopulateQueryParameters(&protoReq, req.Form, filter_ProfileService_GetProfileStatusByProject_0); err != nil {
 		return nil, metadata, status.Errorf(codes.InvalidArgument, "%v", err)
 	}
 
-	msg, err := server.GetPolicyStatusByProject(ctx, &protoReq)
+	msg, err := server.GetProfileStatusByProject(ctx, &protoReq)
 	return msg, metadata, err
 
 }
 
 var (
-	filter_PolicyService_ListRuleTypes_0 = &utilities.DoubleArray{Encoding: map[string]int{}, Base: []int(nil), Check: []int(nil)}
+	filter_ProfileService_ListRuleTypes_0 = &utilities.DoubleArray{Encoding: map[string]int{}, Base: []int(nil), Check: []int(nil)}
 )
 
-func request_PolicyService_ListRuleTypes_0(ctx context.Context, marshaler runtime.Marshaler, client PolicyServiceClient, req *http.Request, pathParams map[string]string) (proto.Message, runtime.ServerMetadata, error) {
+func request_ProfileService_ListRuleTypes_0(ctx context.Context, marshaler runtime.Marshaler, client ProfileServiceClient, req *http.Request, pathParams map[string]string) (proto.Message, runtime.ServerMetadata, error) {
 	var protoReq ListRuleTypesRequest
 	var metadata runtime.ServerMetadata
 
 	if err := req.ParseForm(); err != nil {
 		return nil, metadata, status.Errorf(codes.InvalidArgument, "%v", err)
 	}
-	if err := runtime.PopulateQueryParameters(&protoReq, req.Form, filter_PolicyService_ListRuleTypes_0); err != nil {
+	if err := runtime.PopulateQueryParameters(&protoReq, req.Form, filter_ProfileService_ListRuleTypes_0); err != nil {
 		return nil, metadata, status.Errorf(codes.InvalidArgument, "%v", err)
 	}
 
@@ -2859,14 +2859,14 @@ func request_PolicyService_ListRuleTypes_0(ctx context.Context, marshaler runtim
 
 }
 
-func local_request_PolicyService_ListRuleTypes_0(ctx context.Context, marshaler runtime.Marshaler, server PolicyServiceServer, req *http.Request, pathParams map[string]string) (proto.Message, runtime.ServerMetadata, error) {
+func local_request_ProfileService_ListRuleTypes_0(ctx context.Context, marshaler runtime.Marshaler, server ProfileServiceServer, req *http.Request, pathParams map[string]string) (proto.Message, runtime.ServerMetadata, error) {
 	var protoReq ListRuleTypesRequest
 	var metadata runtime.ServerMetadata
 
 	if err := req.ParseForm(); err != nil {
 		return nil, metadata, status.Errorf(codes.InvalidArgument, "%v", err)
 	}
-	if err := runtime.PopulateQueryParameters(&protoReq, req.Form, filter_PolicyService_ListRuleTypes_0); err != nil {
+	if err := runtime.PopulateQueryParameters(&protoReq, req.Form, filter_ProfileService_ListRuleTypes_0); err != nil {
 		return nil, metadata, status.Errorf(codes.InvalidArgument, "%v", err)
 	}
 
@@ -2876,10 +2876,10 @@ func local_request_PolicyService_ListRuleTypes_0(ctx context.Context, marshaler 
 }
 
 var (
-	filter_PolicyService_GetRuleTypeByName_0 = &utilities.DoubleArray{Encoding: map[string]int{"name": 0}, Base: []int{1, 2, 0, 0}, Check: []int{0, 1, 2, 2}}
+	filter_ProfileService_GetRuleTypeByName_0 = &utilities.DoubleArray{Encoding: map[string]int{"name": 0}, Base: []int{1, 2, 0, 0}, Check: []int{0, 1, 2, 2}}
 )
 
-func request_PolicyService_GetRuleTypeByName_0(ctx context.Context, marshaler runtime.Marshaler, client PolicyServiceClient, req *http.Request, pathParams map[string]string) (proto.Message, runtime.ServerMetadata, error) {
+func request_ProfileService_GetRuleTypeByName_0(ctx context.Context, marshaler runtime.Marshaler, client ProfileServiceClient, req *http.Request, pathParams map[string]string) (proto.Message, runtime.ServerMetadata, error) {
 	var protoReq GetRuleTypeByNameRequest
 	var metadata runtime.ServerMetadata
 
@@ -2903,7 +2903,7 @@ func request_PolicyService_GetRuleTypeByName_0(ctx context.Context, marshaler ru
 	if err := req.ParseForm(); err != nil {
 		return nil, metadata, status.Errorf(codes.InvalidArgument, "%v", err)
 	}
-	if err := runtime.PopulateQueryParameters(&protoReq, req.Form, filter_PolicyService_GetRuleTypeByName_0); err != nil {
+	if err := runtime.PopulateQueryParameters(&protoReq, req.Form, filter_ProfileService_GetRuleTypeByName_0); err != nil {
 		return nil, metadata, status.Errorf(codes.InvalidArgument, "%v", err)
 	}
 
@@ -2912,7 +2912,7 @@ func request_PolicyService_GetRuleTypeByName_0(ctx context.Context, marshaler ru
 
 }
 
-func local_request_PolicyService_GetRuleTypeByName_0(ctx context.Context, marshaler runtime.Marshaler, server PolicyServiceServer, req *http.Request, pathParams map[string]string) (proto.Message, runtime.ServerMetadata, error) {
+func local_request_ProfileService_GetRuleTypeByName_0(ctx context.Context, marshaler runtime.Marshaler, server ProfileServiceServer, req *http.Request, pathParams map[string]string) (proto.Message, runtime.ServerMetadata, error) {
 	var protoReq GetRuleTypeByNameRequest
 	var metadata runtime.ServerMetadata
 
@@ -2936,7 +2936,7 @@ func local_request_PolicyService_GetRuleTypeByName_0(ctx context.Context, marsha
 	if err := req.ParseForm(); err != nil {
 		return nil, metadata, status.Errorf(codes.InvalidArgument, "%v", err)
 	}
-	if err := runtime.PopulateQueryParameters(&protoReq, req.Form, filter_PolicyService_GetRuleTypeByName_0); err != nil {
+	if err := runtime.PopulateQueryParameters(&protoReq, req.Form, filter_ProfileService_GetRuleTypeByName_0); err != nil {
 		return nil, metadata, status.Errorf(codes.InvalidArgument, "%v", err)
 	}
 
@@ -2946,10 +2946,10 @@ func local_request_PolicyService_GetRuleTypeByName_0(ctx context.Context, marsha
 }
 
 var (
-	filter_PolicyService_GetRuleTypeById_0 = &utilities.DoubleArray{Encoding: map[string]int{"id": 0}, Base: []int{1, 2, 0, 0}, Check: []int{0, 1, 2, 2}}
+	filter_ProfileService_GetRuleTypeById_0 = &utilities.DoubleArray{Encoding: map[string]int{"id": 0}, Base: []int{1, 2, 0, 0}, Check: []int{0, 1, 2, 2}}
 )
 
-func request_PolicyService_GetRuleTypeById_0(ctx context.Context, marshaler runtime.Marshaler, client PolicyServiceClient, req *http.Request, pathParams map[string]string) (proto.Message, runtime.ServerMetadata, error) {
+func request_ProfileService_GetRuleTypeById_0(ctx context.Context, marshaler runtime.Marshaler, client ProfileServiceClient, req *http.Request, pathParams map[string]string) (proto.Message, runtime.ServerMetadata, error) {
 	var protoReq GetRuleTypeByIdRequest
 	var metadata runtime.ServerMetadata
 
@@ -2973,7 +2973,7 @@ func request_PolicyService_GetRuleTypeById_0(ctx context.Context, marshaler runt
 	if err := req.ParseForm(); err != nil {
 		return nil, metadata, status.Errorf(codes.InvalidArgument, "%v", err)
 	}
-	if err := runtime.PopulateQueryParameters(&protoReq, req.Form, filter_PolicyService_GetRuleTypeById_0); err != nil {
+	if err := runtime.PopulateQueryParameters(&protoReq, req.Form, filter_ProfileService_GetRuleTypeById_0); err != nil {
 		return nil, metadata, status.Errorf(codes.InvalidArgument, "%v", err)
 	}
 
@@ -2982,7 +2982,7 @@ func request_PolicyService_GetRuleTypeById_0(ctx context.Context, marshaler runt
 
 }
 
-func local_request_PolicyService_GetRuleTypeById_0(ctx context.Context, marshaler runtime.Marshaler, server PolicyServiceServer, req *http.Request, pathParams map[string]string) (proto.Message, runtime.ServerMetadata, error) {
+func local_request_ProfileService_GetRuleTypeById_0(ctx context.Context, marshaler runtime.Marshaler, server ProfileServiceServer, req *http.Request, pathParams map[string]string) (proto.Message, runtime.ServerMetadata, error) {
 	var protoReq GetRuleTypeByIdRequest
 	var metadata runtime.ServerMetadata
 
@@ -3006,7 +3006,7 @@ func local_request_PolicyService_GetRuleTypeById_0(ctx context.Context, marshale
 	if err := req.ParseForm(); err != nil {
 		return nil, metadata, status.Errorf(codes.InvalidArgument, "%v", err)
 	}
-	if err := runtime.PopulateQueryParameters(&protoReq, req.Form, filter_PolicyService_GetRuleTypeById_0); err != nil {
+	if err := runtime.PopulateQueryParameters(&protoReq, req.Form, filter_ProfileService_GetRuleTypeById_0); err != nil {
 		return nil, metadata, status.Errorf(codes.InvalidArgument, "%v", err)
 	}
 
@@ -3015,7 +3015,7 @@ func local_request_PolicyService_GetRuleTypeById_0(ctx context.Context, marshale
 
 }
 
-func request_PolicyService_CreateRuleType_0(ctx context.Context, marshaler runtime.Marshaler, client PolicyServiceClient, req *http.Request, pathParams map[string]string) (proto.Message, runtime.ServerMetadata, error) {
+func request_ProfileService_CreateRuleType_0(ctx context.Context, marshaler runtime.Marshaler, client ProfileServiceClient, req *http.Request, pathParams map[string]string) (proto.Message, runtime.ServerMetadata, error) {
 	var protoReq CreateRuleTypeRequest
 	var metadata runtime.ServerMetadata
 
@@ -3032,7 +3032,7 @@ func request_PolicyService_CreateRuleType_0(ctx context.Context, marshaler runti
 
 }
 
-func local_request_PolicyService_CreateRuleType_0(ctx context.Context, marshaler runtime.Marshaler, server PolicyServiceServer, req *http.Request, pathParams map[string]string) (proto.Message, runtime.ServerMetadata, error) {
+func local_request_ProfileService_CreateRuleType_0(ctx context.Context, marshaler runtime.Marshaler, server ProfileServiceServer, req *http.Request, pathParams map[string]string) (proto.Message, runtime.ServerMetadata, error) {
 	var protoReq CreateRuleTypeRequest
 	var metadata runtime.ServerMetadata
 
@@ -3049,7 +3049,7 @@ func local_request_PolicyService_CreateRuleType_0(ctx context.Context, marshaler
 
 }
 
-func request_PolicyService_UpdateRuleType_0(ctx context.Context, marshaler runtime.Marshaler, client PolicyServiceClient, req *http.Request, pathParams map[string]string) (proto.Message, runtime.ServerMetadata, error) {
+func request_ProfileService_UpdateRuleType_0(ctx context.Context, marshaler runtime.Marshaler, client ProfileServiceClient, req *http.Request, pathParams map[string]string) (proto.Message, runtime.ServerMetadata, error) {
 	var protoReq UpdateRuleTypeRequest
 	var metadata runtime.ServerMetadata
 
@@ -3066,7 +3066,7 @@ func request_PolicyService_UpdateRuleType_0(ctx context.Context, marshaler runti
 
 }
 
-func local_request_PolicyService_UpdateRuleType_0(ctx context.Context, marshaler runtime.Marshaler, server PolicyServiceServer, req *http.Request, pathParams map[string]string) (proto.Message, runtime.ServerMetadata, error) {
+func local_request_ProfileService_UpdateRuleType_0(ctx context.Context, marshaler runtime.Marshaler, server ProfileServiceServer, req *http.Request, pathParams map[string]string) (proto.Message, runtime.ServerMetadata, error) {
 	var protoReq UpdateRuleTypeRequest
 	var metadata runtime.ServerMetadata
 
@@ -3084,10 +3084,10 @@ func local_request_PolicyService_UpdateRuleType_0(ctx context.Context, marshaler
 }
 
 var (
-	filter_PolicyService_DeleteRuleType_0 = &utilities.DoubleArray{Encoding: map[string]int{"id": 0}, Base: []int{1, 2, 0, 0}, Check: []int{0, 1, 2, 2}}
+	filter_ProfileService_DeleteRuleType_0 = &utilities.DoubleArray{Encoding: map[string]int{"id": 0}, Base: []int{1, 2, 0, 0}, Check: []int{0, 1, 2, 2}}
 )
 
-func request_PolicyService_DeleteRuleType_0(ctx context.Context, marshaler runtime.Marshaler, client PolicyServiceClient, req *http.Request, pathParams map[string]string) (proto.Message, runtime.ServerMetadata, error) {
+func request_ProfileService_DeleteRuleType_0(ctx context.Context, marshaler runtime.Marshaler, client ProfileServiceClient, req *http.Request, pathParams map[string]string) (proto.Message, runtime.ServerMetadata, error) {
 	var protoReq DeleteRuleTypeRequest
 	var metadata runtime.ServerMetadata
 
@@ -3111,7 +3111,7 @@ func request_PolicyService_DeleteRuleType_0(ctx context.Context, marshaler runti
 	if err := req.ParseForm(); err != nil {
 		return nil, metadata, status.Errorf(codes.InvalidArgument, "%v", err)
 	}
-	if err := runtime.PopulateQueryParameters(&protoReq, req.Form, filter_PolicyService_DeleteRuleType_0); err != nil {
+	if err := runtime.PopulateQueryParameters(&protoReq, req.Form, filter_ProfileService_DeleteRuleType_0); err != nil {
 		return nil, metadata, status.Errorf(codes.InvalidArgument, "%v", err)
 	}
 
@@ -3120,7 +3120,7 @@ func request_PolicyService_DeleteRuleType_0(ctx context.Context, marshaler runti
 
 }
 
-func local_request_PolicyService_DeleteRuleType_0(ctx context.Context, marshaler runtime.Marshaler, server PolicyServiceServer, req *http.Request, pathParams map[string]string) (proto.Message, runtime.ServerMetadata, error) {
+func local_request_ProfileService_DeleteRuleType_0(ctx context.Context, marshaler runtime.Marshaler, server ProfileServiceServer, req *http.Request, pathParams map[string]string) (proto.Message, runtime.ServerMetadata, error) {
 	var protoReq DeleteRuleTypeRequest
 	var metadata runtime.ServerMetadata
 
@@ -3144,7 +3144,7 @@ func local_request_PolicyService_DeleteRuleType_0(ctx context.Context, marshaler
 	if err := req.ParseForm(); err != nil {
 		return nil, metadata, status.Errorf(codes.InvalidArgument, "%v", err)
 	}
-	if err := runtime.PopulateQueryParameters(&protoReq, req.Form, filter_PolicyService_DeleteRuleType_0); err != nil {
+	if err := runtime.PopulateQueryParameters(&protoReq, req.Form, filter_ProfileService_DeleteRuleType_0); err != nil {
 		return nil, metadata, status.Errorf(codes.InvalidArgument, "%v", err)
 	}
 
@@ -4463,13 +4463,13 @@ func RegisterUserServiceHandlerServer(ctx context.Context, mux *runtime.ServeMux
 	return nil
 }
 
-// RegisterPolicyServiceHandlerServer registers the http handlers for service PolicyService to "mux".
-// UnaryRPC     :call PolicyServiceServer directly.
+// RegisterProfileServiceHandlerServer registers the http handlers for service ProfileService to "mux".
+// UnaryRPC     :call ProfileServiceServer directly.
 // StreamingRPC :currently unsupported pending https://github.com/grpc/grpc-go/issues/906.
-// Note that using this registration option will cause many gRPC library features to stop working. Consider using RegisterPolicyServiceHandlerFromEndpoint instead.
-func RegisterPolicyServiceHandlerServer(ctx context.Context, mux *runtime.ServeMux, server PolicyServiceServer) error {
+// Note that using this registration option will cause many gRPC library features to stop working. Consider using RegisterProfileServiceHandlerFromEndpoint instead.
+func RegisterProfileServiceHandlerServer(ctx context.Context, mux *runtime.ServeMux, server ProfileServiceServer) error {
 
-	mux.Handle("POST", pattern_PolicyService_CreatePolicy_0, func(w http.ResponseWriter, req *http.Request, pathParams map[string]string) {
+	mux.Handle("POST", pattern_ProfileService_CreateProfile_0, func(w http.ResponseWriter, req *http.Request, pathParams map[string]string) {
 		ctx, cancel := context.WithCancel(req.Context())
 		defer cancel()
 		var stream runtime.ServerTransportStream
@@ -4477,12 +4477,12 @@ func RegisterPolicyServiceHandlerServer(ctx context.Context, mux *runtime.ServeM
 		inboundMarshaler, outboundMarshaler := runtime.MarshalerForRequest(mux, req)
 		var err error
 		var annotatedContext context.Context
-		annotatedContext, err = runtime.AnnotateIncomingContext(ctx, mux, req, "/mediator.v1.PolicyService/CreatePolicy", runtime.WithHTTPPathPattern("/api/v1/policy"))
+		annotatedContext, err = runtime.AnnotateIncomingContext(ctx, mux, req, "/mediator.v1.ProfileService/CreateProfile", runtime.WithHTTPPathPattern("/api/v1/profile"))
 		if err != nil {
 			runtime.HTTPError(ctx, mux, outboundMarshaler, w, req, err)
 			return
 		}
-		resp, md, err := local_request_PolicyService_CreatePolicy_0(annotatedContext, inboundMarshaler, server, req, pathParams)
+		resp, md, err := local_request_ProfileService_CreateProfile_0(annotatedContext, inboundMarshaler, server, req, pathParams)
 		md.HeaderMD, md.TrailerMD = metadata.Join(md.HeaderMD, stream.Header()), metadata.Join(md.TrailerMD, stream.Trailer())
 		annotatedContext = runtime.NewServerMetadataContext(annotatedContext, md)
 		if err != nil {
@@ -4490,11 +4490,11 @@ func RegisterPolicyServiceHandlerServer(ctx context.Context, mux *runtime.ServeM
 			return
 		}
 
-		forward_PolicyService_CreatePolicy_0(annotatedContext, mux, outboundMarshaler, w, req, resp, mux.GetForwardResponseOptions()...)
+		forward_ProfileService_CreateProfile_0(annotatedContext, mux, outboundMarshaler, w, req, resp, mux.GetForwardResponseOptions()...)
 
 	})
 
-	mux.Handle("DELETE", pattern_PolicyService_DeletePolicy_0, func(w http.ResponseWriter, req *http.Request, pathParams map[string]string) {
+	mux.Handle("DELETE", pattern_ProfileService_DeleteProfile_0, func(w http.ResponseWriter, req *http.Request, pathParams map[string]string) {
 		ctx, cancel := context.WithCancel(req.Context())
 		defer cancel()
 		var stream runtime.ServerTransportStream
@@ -4502,12 +4502,12 @@ func RegisterPolicyServiceHandlerServer(ctx context.Context, mux *runtime.ServeM
 		inboundMarshaler, outboundMarshaler := runtime.MarshalerForRequest(mux, req)
 		var err error
 		var annotatedContext context.Context
-		annotatedContext, err = runtime.AnnotateIncomingContext(ctx, mux, req, "/mediator.v1.PolicyService/DeletePolicy", runtime.WithHTTPPathPattern("/api/v1/policy/{id}"))
+		annotatedContext, err = runtime.AnnotateIncomingContext(ctx, mux, req, "/mediator.v1.ProfileService/DeleteProfile", runtime.WithHTTPPathPattern("/api/v1/profile/{id}"))
 		if err != nil {
 			runtime.HTTPError(ctx, mux, outboundMarshaler, w, req, err)
 			return
 		}
-		resp, md, err := local_request_PolicyService_DeletePolicy_0(annotatedContext, inboundMarshaler, server, req, pathParams)
+		resp, md, err := local_request_ProfileService_DeleteProfile_0(annotatedContext, inboundMarshaler, server, req, pathParams)
 		md.HeaderMD, md.TrailerMD = metadata.Join(md.HeaderMD, stream.Header()), metadata.Join(md.TrailerMD, stream.Trailer())
 		annotatedContext = runtime.NewServerMetadataContext(annotatedContext, md)
 		if err != nil {
@@ -4515,11 +4515,11 @@ func RegisterPolicyServiceHandlerServer(ctx context.Context, mux *runtime.ServeM
 			return
 		}
 
-		forward_PolicyService_DeletePolicy_0(annotatedContext, mux, outboundMarshaler, w, req, resp, mux.GetForwardResponseOptions()...)
+		forward_ProfileService_DeleteProfile_0(annotatedContext, mux, outboundMarshaler, w, req, resp, mux.GetForwardResponseOptions()...)
 
 	})
 
-	mux.Handle("GET", pattern_PolicyService_ListPolicies_0, func(w http.ResponseWriter, req *http.Request, pathParams map[string]string) {
+	mux.Handle("GET", pattern_ProfileService_ListProfiles_0, func(w http.ResponseWriter, req *http.Request, pathParams map[string]string) {
 		ctx, cancel := context.WithCancel(req.Context())
 		defer cancel()
 		var stream runtime.ServerTransportStream
@@ -4527,12 +4527,12 @@ func RegisterPolicyServiceHandlerServer(ctx context.Context, mux *runtime.ServeM
 		inboundMarshaler, outboundMarshaler := runtime.MarshalerForRequest(mux, req)
 		var err error
 		var annotatedContext context.Context
-		annotatedContext, err = runtime.AnnotateIncomingContext(ctx, mux, req, "/mediator.v1.PolicyService/ListPolicies", runtime.WithHTTPPathPattern("/api/v1/policies"))
+		annotatedContext, err = runtime.AnnotateIncomingContext(ctx, mux, req, "/mediator.v1.ProfileService/ListProfiles", runtime.WithHTTPPathPattern("/api/v1/profiles"))
 		if err != nil {
 			runtime.HTTPError(ctx, mux, outboundMarshaler, w, req, err)
 			return
 		}
-		resp, md, err := local_request_PolicyService_ListPolicies_0(annotatedContext, inboundMarshaler, server, req, pathParams)
+		resp, md, err := local_request_ProfileService_ListProfiles_0(annotatedContext, inboundMarshaler, server, req, pathParams)
 		md.HeaderMD, md.TrailerMD = metadata.Join(md.HeaderMD, stream.Header()), metadata.Join(md.TrailerMD, stream.Trailer())
 		annotatedContext = runtime.NewServerMetadataContext(annotatedContext, md)
 		if err != nil {
@@ -4540,11 +4540,11 @@ func RegisterPolicyServiceHandlerServer(ctx context.Context, mux *runtime.ServeM
 			return
 		}
 
-		forward_PolicyService_ListPolicies_0(annotatedContext, mux, outboundMarshaler, w, req, resp, mux.GetForwardResponseOptions()...)
+		forward_ProfileService_ListProfiles_0(annotatedContext, mux, outboundMarshaler, w, req, resp, mux.GetForwardResponseOptions()...)
 
 	})
 
-	mux.Handle("GET", pattern_PolicyService_GetPolicyById_0, func(w http.ResponseWriter, req *http.Request, pathParams map[string]string) {
+	mux.Handle("GET", pattern_ProfileService_GetProfileById_0, func(w http.ResponseWriter, req *http.Request, pathParams map[string]string) {
 		ctx, cancel := context.WithCancel(req.Context())
 		defer cancel()
 		var stream runtime.ServerTransportStream
@@ -4552,12 +4552,12 @@ func RegisterPolicyServiceHandlerServer(ctx context.Context, mux *runtime.ServeM
 		inboundMarshaler, outboundMarshaler := runtime.MarshalerForRequest(mux, req)
 		var err error
 		var annotatedContext context.Context
-		annotatedContext, err = runtime.AnnotateIncomingContext(ctx, mux, req, "/mediator.v1.PolicyService/GetPolicyById", runtime.WithHTTPPathPattern("/api/v1/policy/{id}"))
+		annotatedContext, err = runtime.AnnotateIncomingContext(ctx, mux, req, "/mediator.v1.ProfileService/GetProfileById", runtime.WithHTTPPathPattern("/api/v1/profile/{id}"))
 		if err != nil {
 			runtime.HTTPError(ctx, mux, outboundMarshaler, w, req, err)
 			return
 		}
-		resp, md, err := local_request_PolicyService_GetPolicyById_0(annotatedContext, inboundMarshaler, server, req, pathParams)
+		resp, md, err := local_request_ProfileService_GetProfileById_0(annotatedContext, inboundMarshaler, server, req, pathParams)
 		md.HeaderMD, md.TrailerMD = metadata.Join(md.HeaderMD, stream.Header()), metadata.Join(md.TrailerMD, stream.Trailer())
 		annotatedContext = runtime.NewServerMetadataContext(annotatedContext, md)
 		if err != nil {
@@ -4565,11 +4565,11 @@ func RegisterPolicyServiceHandlerServer(ctx context.Context, mux *runtime.ServeM
 			return
 		}
 
-		forward_PolicyService_GetPolicyById_0(annotatedContext, mux, outboundMarshaler, w, req, resp, mux.GetForwardResponseOptions()...)
+		forward_ProfileService_GetProfileById_0(annotatedContext, mux, outboundMarshaler, w, req, resp, mux.GetForwardResponseOptions()...)
 
 	})
 
-	mux.Handle("GET", pattern_PolicyService_GetPolicyStatusByName_0, func(w http.ResponseWriter, req *http.Request, pathParams map[string]string) {
+	mux.Handle("GET", pattern_ProfileService_GetProfileStatusByName_0, func(w http.ResponseWriter, req *http.Request, pathParams map[string]string) {
 		ctx, cancel := context.WithCancel(req.Context())
 		defer cancel()
 		var stream runtime.ServerTransportStream
@@ -4577,12 +4577,12 @@ func RegisterPolicyServiceHandlerServer(ctx context.Context, mux *runtime.ServeM
 		inboundMarshaler, outboundMarshaler := runtime.MarshalerForRequest(mux, req)
 		var err error
 		var annotatedContext context.Context
-		annotatedContext, err = runtime.AnnotateIncomingContext(ctx, mux, req, "/mediator.v1.PolicyService/GetPolicyStatusByName", runtime.WithHTTPPathPattern("/api/v1/policy/name/{name}/status"))
+		annotatedContext, err = runtime.AnnotateIncomingContext(ctx, mux, req, "/mediator.v1.ProfileService/GetProfileStatusByName", runtime.WithHTTPPathPattern("/api/v1/profile/name/{name}/status"))
 		if err != nil {
 			runtime.HTTPError(ctx, mux, outboundMarshaler, w, req, err)
 			return
 		}
-		resp, md, err := local_request_PolicyService_GetPolicyStatusByName_0(annotatedContext, inboundMarshaler, server, req, pathParams)
+		resp, md, err := local_request_ProfileService_GetProfileStatusByName_0(annotatedContext, inboundMarshaler, server, req, pathParams)
 		md.HeaderMD, md.TrailerMD = metadata.Join(md.HeaderMD, stream.Header()), metadata.Join(md.TrailerMD, stream.Trailer())
 		annotatedContext = runtime.NewServerMetadataContext(annotatedContext, md)
 		if err != nil {
@@ -4590,11 +4590,11 @@ func RegisterPolicyServiceHandlerServer(ctx context.Context, mux *runtime.ServeM
 			return
 		}
 
-		forward_PolicyService_GetPolicyStatusByName_0(annotatedContext, mux, outboundMarshaler, w, req, resp, mux.GetForwardResponseOptions()...)
+		forward_ProfileService_GetProfileStatusByName_0(annotatedContext, mux, outboundMarshaler, w, req, resp, mux.GetForwardResponseOptions()...)
 
 	})
 
-	mux.Handle("GET", pattern_PolicyService_GetPolicyStatusByProject_0, func(w http.ResponseWriter, req *http.Request, pathParams map[string]string) {
+	mux.Handle("GET", pattern_ProfileService_GetProfileStatusByProject_0, func(w http.ResponseWriter, req *http.Request, pathParams map[string]string) {
 		ctx, cancel := context.WithCancel(req.Context())
 		defer cancel()
 		var stream runtime.ServerTransportStream
@@ -4602,12 +4602,12 @@ func RegisterPolicyServiceHandlerServer(ctx context.Context, mux *runtime.ServeM
 		inboundMarshaler, outboundMarshaler := runtime.MarshalerForRequest(mux, req)
 		var err error
 		var annotatedContext context.Context
-		annotatedContext, err = runtime.AnnotateIncomingContext(ctx, mux, req, "/mediator.v1.PolicyService/GetPolicyStatusByProject", runtime.WithHTTPPathPattern("/api/v1/policy_status"))
+		annotatedContext, err = runtime.AnnotateIncomingContext(ctx, mux, req, "/mediator.v1.ProfileService/GetProfileStatusByProject", runtime.WithHTTPPathPattern("/api/v1/profile_status"))
 		if err != nil {
 			runtime.HTTPError(ctx, mux, outboundMarshaler, w, req, err)
 			return
 		}
-		resp, md, err := local_request_PolicyService_GetPolicyStatusByProject_0(annotatedContext, inboundMarshaler, server, req, pathParams)
+		resp, md, err := local_request_ProfileService_GetProfileStatusByProject_0(annotatedContext, inboundMarshaler, server, req, pathParams)
 		md.HeaderMD, md.TrailerMD = metadata.Join(md.HeaderMD, stream.Header()), metadata.Join(md.TrailerMD, stream.Trailer())
 		annotatedContext = runtime.NewServerMetadataContext(annotatedContext, md)
 		if err != nil {
@@ -4615,11 +4615,11 @@ func RegisterPolicyServiceHandlerServer(ctx context.Context, mux *runtime.ServeM
 			return
 		}
 
-		forward_PolicyService_GetPolicyStatusByProject_0(annotatedContext, mux, outboundMarshaler, w, req, resp, mux.GetForwardResponseOptions()...)
+		forward_ProfileService_GetProfileStatusByProject_0(annotatedContext, mux, outboundMarshaler, w, req, resp, mux.GetForwardResponseOptions()...)
 
 	})
 
-	mux.Handle("GET", pattern_PolicyService_ListRuleTypes_0, func(w http.ResponseWriter, req *http.Request, pathParams map[string]string) {
+	mux.Handle("GET", pattern_ProfileService_ListRuleTypes_0, func(w http.ResponseWriter, req *http.Request, pathParams map[string]string) {
 		ctx, cancel := context.WithCancel(req.Context())
 		defer cancel()
 		var stream runtime.ServerTransportStream
@@ -4627,12 +4627,12 @@ func RegisterPolicyServiceHandlerServer(ctx context.Context, mux *runtime.ServeM
 		inboundMarshaler, outboundMarshaler := runtime.MarshalerForRequest(mux, req)
 		var err error
 		var annotatedContext context.Context
-		annotatedContext, err = runtime.AnnotateIncomingContext(ctx, mux, req, "/mediator.v1.PolicyService/ListRuleTypes", runtime.WithHTTPPathPattern("/api/v1/rule_types"))
+		annotatedContext, err = runtime.AnnotateIncomingContext(ctx, mux, req, "/mediator.v1.ProfileService/ListRuleTypes", runtime.WithHTTPPathPattern("/api/v1/rule_types"))
 		if err != nil {
 			runtime.HTTPError(ctx, mux, outboundMarshaler, w, req, err)
 			return
 		}
-		resp, md, err := local_request_PolicyService_ListRuleTypes_0(annotatedContext, inboundMarshaler, server, req, pathParams)
+		resp, md, err := local_request_ProfileService_ListRuleTypes_0(annotatedContext, inboundMarshaler, server, req, pathParams)
 		md.HeaderMD, md.TrailerMD = metadata.Join(md.HeaderMD, stream.Header()), metadata.Join(md.TrailerMD, stream.Trailer())
 		annotatedContext = runtime.NewServerMetadataContext(annotatedContext, md)
 		if err != nil {
@@ -4640,11 +4640,11 @@ func RegisterPolicyServiceHandlerServer(ctx context.Context, mux *runtime.ServeM
 			return
 		}
 
-		forward_PolicyService_ListRuleTypes_0(annotatedContext, mux, outboundMarshaler, w, req, resp, mux.GetForwardResponseOptions()...)
+		forward_ProfileService_ListRuleTypes_0(annotatedContext, mux, outboundMarshaler, w, req, resp, mux.GetForwardResponseOptions()...)
 
 	})
 
-	mux.Handle("GET", pattern_PolicyService_GetRuleTypeByName_0, func(w http.ResponseWriter, req *http.Request, pathParams map[string]string) {
+	mux.Handle("GET", pattern_ProfileService_GetRuleTypeByName_0, func(w http.ResponseWriter, req *http.Request, pathParams map[string]string) {
 		ctx, cancel := context.WithCancel(req.Context())
 		defer cancel()
 		var stream runtime.ServerTransportStream
@@ -4652,12 +4652,12 @@ func RegisterPolicyServiceHandlerServer(ctx context.Context, mux *runtime.ServeM
 		inboundMarshaler, outboundMarshaler := runtime.MarshalerForRequest(mux, req)
 		var err error
 		var annotatedContext context.Context
-		annotatedContext, err = runtime.AnnotateIncomingContext(ctx, mux, req, "/mediator.v1.PolicyService/GetRuleTypeByName", runtime.WithHTTPPathPattern("/api/v1/rule_type/name/{name}"))
+		annotatedContext, err = runtime.AnnotateIncomingContext(ctx, mux, req, "/mediator.v1.ProfileService/GetRuleTypeByName", runtime.WithHTTPPathPattern("/api/v1/rule_type/name/{name}"))
 		if err != nil {
 			runtime.HTTPError(ctx, mux, outboundMarshaler, w, req, err)
 			return
 		}
-		resp, md, err := local_request_PolicyService_GetRuleTypeByName_0(annotatedContext, inboundMarshaler, server, req, pathParams)
+		resp, md, err := local_request_ProfileService_GetRuleTypeByName_0(annotatedContext, inboundMarshaler, server, req, pathParams)
 		md.HeaderMD, md.TrailerMD = metadata.Join(md.HeaderMD, stream.Header()), metadata.Join(md.TrailerMD, stream.Trailer())
 		annotatedContext = runtime.NewServerMetadataContext(annotatedContext, md)
 		if err != nil {
@@ -4665,11 +4665,11 @@ func RegisterPolicyServiceHandlerServer(ctx context.Context, mux *runtime.ServeM
 			return
 		}
 
-		forward_PolicyService_GetRuleTypeByName_0(annotatedContext, mux, outboundMarshaler, w, req, resp, mux.GetForwardResponseOptions()...)
+		forward_ProfileService_GetRuleTypeByName_0(annotatedContext, mux, outboundMarshaler, w, req, resp, mux.GetForwardResponseOptions()...)
 
 	})
 
-	mux.Handle("GET", pattern_PolicyService_GetRuleTypeById_0, func(w http.ResponseWriter, req *http.Request, pathParams map[string]string) {
+	mux.Handle("GET", pattern_ProfileService_GetRuleTypeById_0, func(w http.ResponseWriter, req *http.Request, pathParams map[string]string) {
 		ctx, cancel := context.WithCancel(req.Context())
 		defer cancel()
 		var stream runtime.ServerTransportStream
@@ -4677,12 +4677,12 @@ func RegisterPolicyServiceHandlerServer(ctx context.Context, mux *runtime.ServeM
 		inboundMarshaler, outboundMarshaler := runtime.MarshalerForRequest(mux, req)
 		var err error
 		var annotatedContext context.Context
-		annotatedContext, err = runtime.AnnotateIncomingContext(ctx, mux, req, "/mediator.v1.PolicyService/GetRuleTypeById", runtime.WithHTTPPathPattern("/api/v1/rule_type/{id}"))
+		annotatedContext, err = runtime.AnnotateIncomingContext(ctx, mux, req, "/mediator.v1.ProfileService/GetRuleTypeById", runtime.WithHTTPPathPattern("/api/v1/rule_type/{id}"))
 		if err != nil {
 			runtime.HTTPError(ctx, mux, outboundMarshaler, w, req, err)
 			return
 		}
-		resp, md, err := local_request_PolicyService_GetRuleTypeById_0(annotatedContext, inboundMarshaler, server, req, pathParams)
+		resp, md, err := local_request_ProfileService_GetRuleTypeById_0(annotatedContext, inboundMarshaler, server, req, pathParams)
 		md.HeaderMD, md.TrailerMD = metadata.Join(md.HeaderMD, stream.Header()), metadata.Join(md.TrailerMD, stream.Trailer())
 		annotatedContext = runtime.NewServerMetadataContext(annotatedContext, md)
 		if err != nil {
@@ -4690,11 +4690,11 @@ func RegisterPolicyServiceHandlerServer(ctx context.Context, mux *runtime.ServeM
 			return
 		}
 
-		forward_PolicyService_GetRuleTypeById_0(annotatedContext, mux, outboundMarshaler, w, req, resp, mux.GetForwardResponseOptions()...)
+		forward_ProfileService_GetRuleTypeById_0(annotatedContext, mux, outboundMarshaler, w, req, resp, mux.GetForwardResponseOptions()...)
 
 	})
 
-	mux.Handle("POST", pattern_PolicyService_CreateRuleType_0, func(w http.ResponseWriter, req *http.Request, pathParams map[string]string) {
+	mux.Handle("POST", pattern_ProfileService_CreateRuleType_0, func(w http.ResponseWriter, req *http.Request, pathParams map[string]string) {
 		ctx, cancel := context.WithCancel(req.Context())
 		defer cancel()
 		var stream runtime.ServerTransportStream
@@ -4702,12 +4702,12 @@ func RegisterPolicyServiceHandlerServer(ctx context.Context, mux *runtime.ServeM
 		inboundMarshaler, outboundMarshaler := runtime.MarshalerForRequest(mux, req)
 		var err error
 		var annotatedContext context.Context
-		annotatedContext, err = runtime.AnnotateIncomingContext(ctx, mux, req, "/mediator.v1.PolicyService/CreateRuleType", runtime.WithHTTPPathPattern("/api/v1/rule_type"))
+		annotatedContext, err = runtime.AnnotateIncomingContext(ctx, mux, req, "/mediator.v1.ProfileService/CreateRuleType", runtime.WithHTTPPathPattern("/api/v1/rule_type"))
 		if err != nil {
 			runtime.HTTPError(ctx, mux, outboundMarshaler, w, req, err)
 			return
 		}
-		resp, md, err := local_request_PolicyService_CreateRuleType_0(annotatedContext, inboundMarshaler, server, req, pathParams)
+		resp, md, err := local_request_ProfileService_CreateRuleType_0(annotatedContext, inboundMarshaler, server, req, pathParams)
 		md.HeaderMD, md.TrailerMD = metadata.Join(md.HeaderMD, stream.Header()), metadata.Join(md.TrailerMD, stream.Trailer())
 		annotatedContext = runtime.NewServerMetadataContext(annotatedContext, md)
 		if err != nil {
@@ -4715,11 +4715,11 @@ func RegisterPolicyServiceHandlerServer(ctx context.Context, mux *runtime.ServeM
 			return
 		}
 
-		forward_PolicyService_CreateRuleType_0(annotatedContext, mux, outboundMarshaler, w, req, resp, mux.GetForwardResponseOptions()...)
+		forward_ProfileService_CreateRuleType_0(annotatedContext, mux, outboundMarshaler, w, req, resp, mux.GetForwardResponseOptions()...)
 
 	})
 
-	mux.Handle("PUT", pattern_PolicyService_UpdateRuleType_0, func(w http.ResponseWriter, req *http.Request, pathParams map[string]string) {
+	mux.Handle("PUT", pattern_ProfileService_UpdateRuleType_0, func(w http.ResponseWriter, req *http.Request, pathParams map[string]string) {
 		ctx, cancel := context.WithCancel(req.Context())
 		defer cancel()
 		var stream runtime.ServerTransportStream
@@ -4727,12 +4727,12 @@ func RegisterPolicyServiceHandlerServer(ctx context.Context, mux *runtime.ServeM
 		inboundMarshaler, outboundMarshaler := runtime.MarshalerForRequest(mux, req)
 		var err error
 		var annotatedContext context.Context
-		annotatedContext, err = runtime.AnnotateIncomingContext(ctx, mux, req, "/mediator.v1.PolicyService/UpdateRuleType", runtime.WithHTTPPathPattern("/api/v1/rule_type"))
+		annotatedContext, err = runtime.AnnotateIncomingContext(ctx, mux, req, "/mediator.v1.ProfileService/UpdateRuleType", runtime.WithHTTPPathPattern("/api/v1/rule_type"))
 		if err != nil {
 			runtime.HTTPError(ctx, mux, outboundMarshaler, w, req, err)
 			return
 		}
-		resp, md, err := local_request_PolicyService_UpdateRuleType_0(annotatedContext, inboundMarshaler, server, req, pathParams)
+		resp, md, err := local_request_ProfileService_UpdateRuleType_0(annotatedContext, inboundMarshaler, server, req, pathParams)
 		md.HeaderMD, md.TrailerMD = metadata.Join(md.HeaderMD, stream.Header()), metadata.Join(md.TrailerMD, stream.Trailer())
 		annotatedContext = runtime.NewServerMetadataContext(annotatedContext, md)
 		if err != nil {
@@ -4740,11 +4740,11 @@ func RegisterPolicyServiceHandlerServer(ctx context.Context, mux *runtime.ServeM
 			return
 		}
 
-		forward_PolicyService_UpdateRuleType_0(annotatedContext, mux, outboundMarshaler, w, req, resp, mux.GetForwardResponseOptions()...)
+		forward_ProfileService_UpdateRuleType_0(annotatedContext, mux, outboundMarshaler, w, req, resp, mux.GetForwardResponseOptions()...)
 
 	})
 
-	mux.Handle("DELETE", pattern_PolicyService_DeleteRuleType_0, func(w http.ResponseWriter, req *http.Request, pathParams map[string]string) {
+	mux.Handle("DELETE", pattern_ProfileService_DeleteRuleType_0, func(w http.ResponseWriter, req *http.Request, pathParams map[string]string) {
 		ctx, cancel := context.WithCancel(req.Context())
 		defer cancel()
 		var stream runtime.ServerTransportStream
@@ -4752,12 +4752,12 @@ func RegisterPolicyServiceHandlerServer(ctx context.Context, mux *runtime.ServeM
 		inboundMarshaler, outboundMarshaler := runtime.MarshalerForRequest(mux, req)
 		var err error
 		var annotatedContext context.Context
-		annotatedContext, err = runtime.AnnotateIncomingContext(ctx, mux, req, "/mediator.v1.PolicyService/DeleteRuleType", runtime.WithHTTPPathPattern("/api/v1/rule_type/{id}"))
+		annotatedContext, err = runtime.AnnotateIncomingContext(ctx, mux, req, "/mediator.v1.ProfileService/DeleteRuleType", runtime.WithHTTPPathPattern("/api/v1/rule_type/{id}"))
 		if err != nil {
 			runtime.HTTPError(ctx, mux, outboundMarshaler, w, req, err)
 			return
 		}
-		resp, md, err := local_request_PolicyService_DeleteRuleType_0(annotatedContext, inboundMarshaler, server, req, pathParams)
+		resp, md, err := local_request_ProfileService_DeleteRuleType_0(annotatedContext, inboundMarshaler, server, req, pathParams)
 		md.HeaderMD, md.TrailerMD = metadata.Join(md.HeaderMD, stream.Header()), metadata.Join(md.TrailerMD, stream.Trailer())
 		annotatedContext = runtime.NewServerMetadataContext(annotatedContext, md)
 		if err != nil {
@@ -4765,7 +4765,7 @@ func RegisterPolicyServiceHandlerServer(ctx context.Context, mux *runtime.ServeM
 			return
 		}
 
-		forward_PolicyService_DeleteRuleType_0(annotatedContext, mux, outboundMarshaler, w, req, resp, mux.GetForwardResponseOptions()...)
+		forward_ProfileService_DeleteRuleType_0(annotatedContext, mux, outboundMarshaler, w, req, resp, mux.GetForwardResponseOptions()...)
 
 	})
 
@@ -6477,9 +6477,9 @@ var (
 	forward_UserService_GetUser_0 = runtime.ForwardResponseMessage
 )
 
-// RegisterPolicyServiceHandlerFromEndpoint is same as RegisterPolicyServiceHandler but
+// RegisterProfileServiceHandlerFromEndpoint is same as RegisterProfileServiceHandler but
 // automatically dials to "endpoint" and closes the connection when "ctx" gets done.
-func RegisterPolicyServiceHandlerFromEndpoint(ctx context.Context, mux *runtime.ServeMux, endpoint string, opts []grpc.DialOption) (err error) {
+func RegisterProfileServiceHandlerFromEndpoint(ctx context.Context, mux *runtime.ServeMux, endpoint string, opts []grpc.DialOption) (err error) {
 	conn, err := grpc.DialContext(ctx, endpoint, opts...)
 	if err != nil {
 		return err
@@ -6499,283 +6499,283 @@ func RegisterPolicyServiceHandlerFromEndpoint(ctx context.Context, mux *runtime.
 		}()
 	}()
 
-	return RegisterPolicyServiceHandler(ctx, mux, conn)
+	return RegisterProfileServiceHandler(ctx, mux, conn)
 }
 
-// RegisterPolicyServiceHandler registers the http handlers for service PolicyService to "mux".
+// RegisterProfileServiceHandler registers the http handlers for service ProfileService to "mux".
 // The handlers forward requests to the grpc endpoint over "conn".
-func RegisterPolicyServiceHandler(ctx context.Context, mux *runtime.ServeMux, conn *grpc.ClientConn) error {
-	return RegisterPolicyServiceHandlerClient(ctx, mux, NewPolicyServiceClient(conn))
+func RegisterProfileServiceHandler(ctx context.Context, mux *runtime.ServeMux, conn *grpc.ClientConn) error {
+	return RegisterProfileServiceHandlerClient(ctx, mux, NewProfileServiceClient(conn))
 }
 
-// RegisterPolicyServiceHandlerClient registers the http handlers for service PolicyService
-// to "mux". The handlers forward requests to the grpc endpoint over the given implementation of "PolicyServiceClient".
-// Note: the gRPC framework executes interceptors within the gRPC handler. If the passed in "PolicyServiceClient"
+// RegisterProfileServiceHandlerClient registers the http handlers for service ProfileService
+// to "mux". The handlers forward requests to the grpc endpoint over the given implementation of "ProfileServiceClient".
+// Note: the gRPC framework executes interceptors within the gRPC handler. If the passed in "ProfileServiceClient"
 // doesn't go through the normal gRPC flow (creating a gRPC client etc.) then it will be up to the passed in
-// "PolicyServiceClient" to call the correct interceptors.
-func RegisterPolicyServiceHandlerClient(ctx context.Context, mux *runtime.ServeMux, client PolicyServiceClient) error {
+// "ProfileServiceClient" to call the correct interceptors.
+func RegisterProfileServiceHandlerClient(ctx context.Context, mux *runtime.ServeMux, client ProfileServiceClient) error {
 
-	mux.Handle("POST", pattern_PolicyService_CreatePolicy_0, func(w http.ResponseWriter, req *http.Request, pathParams map[string]string) {
+	mux.Handle("POST", pattern_ProfileService_CreateProfile_0, func(w http.ResponseWriter, req *http.Request, pathParams map[string]string) {
 		ctx, cancel := context.WithCancel(req.Context())
 		defer cancel()
 		inboundMarshaler, outboundMarshaler := runtime.MarshalerForRequest(mux, req)
 		var err error
 		var annotatedContext context.Context
-		annotatedContext, err = runtime.AnnotateContext(ctx, mux, req, "/mediator.v1.PolicyService/CreatePolicy", runtime.WithHTTPPathPattern("/api/v1/policy"))
+		annotatedContext, err = runtime.AnnotateContext(ctx, mux, req, "/mediator.v1.ProfileService/CreateProfile", runtime.WithHTTPPathPattern("/api/v1/profile"))
 		if err != nil {
 			runtime.HTTPError(ctx, mux, outboundMarshaler, w, req, err)
 			return
 		}
-		resp, md, err := request_PolicyService_CreatePolicy_0(annotatedContext, inboundMarshaler, client, req, pathParams)
+		resp, md, err := request_ProfileService_CreateProfile_0(annotatedContext, inboundMarshaler, client, req, pathParams)
 		annotatedContext = runtime.NewServerMetadataContext(annotatedContext, md)
 		if err != nil {
 			runtime.HTTPError(annotatedContext, mux, outboundMarshaler, w, req, err)
 			return
 		}
 
-		forward_PolicyService_CreatePolicy_0(annotatedContext, mux, outboundMarshaler, w, req, resp, mux.GetForwardResponseOptions()...)
+		forward_ProfileService_CreateProfile_0(annotatedContext, mux, outboundMarshaler, w, req, resp, mux.GetForwardResponseOptions()...)
 
 	})
 
-	mux.Handle("DELETE", pattern_PolicyService_DeletePolicy_0, func(w http.ResponseWriter, req *http.Request, pathParams map[string]string) {
+	mux.Handle("DELETE", pattern_ProfileService_DeleteProfile_0, func(w http.ResponseWriter, req *http.Request, pathParams map[string]string) {
 		ctx, cancel := context.WithCancel(req.Context())
 		defer cancel()
 		inboundMarshaler, outboundMarshaler := runtime.MarshalerForRequest(mux, req)
 		var err error
 		var annotatedContext context.Context
-		annotatedContext, err = runtime.AnnotateContext(ctx, mux, req, "/mediator.v1.PolicyService/DeletePolicy", runtime.WithHTTPPathPattern("/api/v1/policy/{id}"))
+		annotatedContext, err = runtime.AnnotateContext(ctx, mux, req, "/mediator.v1.ProfileService/DeleteProfile", runtime.WithHTTPPathPattern("/api/v1/profile/{id}"))
 		if err != nil {
 			runtime.HTTPError(ctx, mux, outboundMarshaler, w, req, err)
 			return
 		}
-		resp, md, err := request_PolicyService_DeletePolicy_0(annotatedContext, inboundMarshaler, client, req, pathParams)
+		resp, md, err := request_ProfileService_DeleteProfile_0(annotatedContext, inboundMarshaler, client, req, pathParams)
 		annotatedContext = runtime.NewServerMetadataContext(annotatedContext, md)
 		if err != nil {
 			runtime.HTTPError(annotatedContext, mux, outboundMarshaler, w, req, err)
 			return
 		}
 
-		forward_PolicyService_DeletePolicy_0(annotatedContext, mux, outboundMarshaler, w, req, resp, mux.GetForwardResponseOptions()...)
+		forward_ProfileService_DeleteProfile_0(annotatedContext, mux, outboundMarshaler, w, req, resp, mux.GetForwardResponseOptions()...)
 
 	})
 
-	mux.Handle("GET", pattern_PolicyService_ListPolicies_0, func(w http.ResponseWriter, req *http.Request, pathParams map[string]string) {
+	mux.Handle("GET", pattern_ProfileService_ListProfiles_0, func(w http.ResponseWriter, req *http.Request, pathParams map[string]string) {
 		ctx, cancel := context.WithCancel(req.Context())
 		defer cancel()
 		inboundMarshaler, outboundMarshaler := runtime.MarshalerForRequest(mux, req)
 		var err error
 		var annotatedContext context.Context
-		annotatedContext, err = runtime.AnnotateContext(ctx, mux, req, "/mediator.v1.PolicyService/ListPolicies", runtime.WithHTTPPathPattern("/api/v1/policies"))
+		annotatedContext, err = runtime.AnnotateContext(ctx, mux, req, "/mediator.v1.ProfileService/ListProfiles", runtime.WithHTTPPathPattern("/api/v1/profiles"))
 		if err != nil {
 			runtime.HTTPError(ctx, mux, outboundMarshaler, w, req, err)
 			return
 		}
-		resp, md, err := request_PolicyService_ListPolicies_0(annotatedContext, inboundMarshaler, client, req, pathParams)
+		resp, md, err := request_ProfileService_ListProfiles_0(annotatedContext, inboundMarshaler, client, req, pathParams)
 		annotatedContext = runtime.NewServerMetadataContext(annotatedContext, md)
 		if err != nil {
 			runtime.HTTPError(annotatedContext, mux, outboundMarshaler, w, req, err)
 			return
 		}
 
-		forward_PolicyService_ListPolicies_0(annotatedContext, mux, outboundMarshaler, w, req, resp, mux.GetForwardResponseOptions()...)
+		forward_ProfileService_ListProfiles_0(annotatedContext, mux, outboundMarshaler, w, req, resp, mux.GetForwardResponseOptions()...)
 
 	})
 
-	mux.Handle("GET", pattern_PolicyService_GetPolicyById_0, func(w http.ResponseWriter, req *http.Request, pathParams map[string]string) {
+	mux.Handle("GET", pattern_ProfileService_GetProfileById_0, func(w http.ResponseWriter, req *http.Request, pathParams map[string]string) {
 		ctx, cancel := context.WithCancel(req.Context())
 		defer cancel()
 		inboundMarshaler, outboundMarshaler := runtime.MarshalerForRequest(mux, req)
 		var err error
 		var annotatedContext context.Context
-		annotatedContext, err = runtime.AnnotateContext(ctx, mux, req, "/mediator.v1.PolicyService/GetPolicyById", runtime.WithHTTPPathPattern("/api/v1/policy/{id}"))
+		annotatedContext, err = runtime.AnnotateContext(ctx, mux, req, "/mediator.v1.ProfileService/GetProfileById", runtime.WithHTTPPathPattern("/api/v1/profile/{id}"))
 		if err != nil {
 			runtime.HTTPError(ctx, mux, outboundMarshaler, w, req, err)
 			return
 		}
-		resp, md, err := request_PolicyService_GetPolicyById_0(annotatedContext, inboundMarshaler, client, req, pathParams)
+		resp, md, err := request_ProfileService_GetProfileById_0(annotatedContext, inboundMarshaler, client, req, pathParams)
 		annotatedContext = runtime.NewServerMetadataContext(annotatedContext, md)
 		if err != nil {
 			runtime.HTTPError(annotatedContext, mux, outboundMarshaler, w, req, err)
 			return
 		}
 
-		forward_PolicyService_GetPolicyById_0(annotatedContext, mux, outboundMarshaler, w, req, resp, mux.GetForwardResponseOptions()...)
+		forward_ProfileService_GetProfileById_0(annotatedContext, mux, outboundMarshaler, w, req, resp, mux.GetForwardResponseOptions()...)
 
 	})
 
-	mux.Handle("GET", pattern_PolicyService_GetPolicyStatusByName_0, func(w http.ResponseWriter, req *http.Request, pathParams map[string]string) {
+	mux.Handle("GET", pattern_ProfileService_GetProfileStatusByName_0, func(w http.ResponseWriter, req *http.Request, pathParams map[string]string) {
 		ctx, cancel := context.WithCancel(req.Context())
 		defer cancel()
 		inboundMarshaler, outboundMarshaler := runtime.MarshalerForRequest(mux, req)
 		var err error
 		var annotatedContext context.Context
-		annotatedContext, err = runtime.AnnotateContext(ctx, mux, req, "/mediator.v1.PolicyService/GetPolicyStatusByName", runtime.WithHTTPPathPattern("/api/v1/policy/name/{name}/status"))
+		annotatedContext, err = runtime.AnnotateContext(ctx, mux, req, "/mediator.v1.ProfileService/GetProfileStatusByName", runtime.WithHTTPPathPattern("/api/v1/profile/name/{name}/status"))
 		if err != nil {
 			runtime.HTTPError(ctx, mux, outboundMarshaler, w, req, err)
 			return
 		}
-		resp, md, err := request_PolicyService_GetPolicyStatusByName_0(annotatedContext, inboundMarshaler, client, req, pathParams)
+		resp, md, err := request_ProfileService_GetProfileStatusByName_0(annotatedContext, inboundMarshaler, client, req, pathParams)
 		annotatedContext = runtime.NewServerMetadataContext(annotatedContext, md)
 		if err != nil {
 			runtime.HTTPError(annotatedContext, mux, outboundMarshaler, w, req, err)
 			return
 		}
 
-		forward_PolicyService_GetPolicyStatusByName_0(annotatedContext, mux, outboundMarshaler, w, req, resp, mux.GetForwardResponseOptions()...)
+		forward_ProfileService_GetProfileStatusByName_0(annotatedContext, mux, outboundMarshaler, w, req, resp, mux.GetForwardResponseOptions()...)
 
 	})
 
-	mux.Handle("GET", pattern_PolicyService_GetPolicyStatusByProject_0, func(w http.ResponseWriter, req *http.Request, pathParams map[string]string) {
+	mux.Handle("GET", pattern_ProfileService_GetProfileStatusByProject_0, func(w http.ResponseWriter, req *http.Request, pathParams map[string]string) {
 		ctx, cancel := context.WithCancel(req.Context())
 		defer cancel()
 		inboundMarshaler, outboundMarshaler := runtime.MarshalerForRequest(mux, req)
 		var err error
 		var annotatedContext context.Context
-		annotatedContext, err = runtime.AnnotateContext(ctx, mux, req, "/mediator.v1.PolicyService/GetPolicyStatusByProject", runtime.WithHTTPPathPattern("/api/v1/policy_status"))
+		annotatedContext, err = runtime.AnnotateContext(ctx, mux, req, "/mediator.v1.ProfileService/GetProfileStatusByProject", runtime.WithHTTPPathPattern("/api/v1/profile_status"))
 		if err != nil {
 			runtime.HTTPError(ctx, mux, outboundMarshaler, w, req, err)
 			return
 		}
-		resp, md, err := request_PolicyService_GetPolicyStatusByProject_0(annotatedContext, inboundMarshaler, client, req, pathParams)
+		resp, md, err := request_ProfileService_GetProfileStatusByProject_0(annotatedContext, inboundMarshaler, client, req, pathParams)
 		annotatedContext = runtime.NewServerMetadataContext(annotatedContext, md)
 		if err != nil {
 			runtime.HTTPError(annotatedContext, mux, outboundMarshaler, w, req, err)
 			return
 		}
 
-		forward_PolicyService_GetPolicyStatusByProject_0(annotatedContext, mux, outboundMarshaler, w, req, resp, mux.GetForwardResponseOptions()...)
+		forward_ProfileService_GetProfileStatusByProject_0(annotatedContext, mux, outboundMarshaler, w, req, resp, mux.GetForwardResponseOptions()...)
 
 	})
 
-	mux.Handle("GET", pattern_PolicyService_ListRuleTypes_0, func(w http.ResponseWriter, req *http.Request, pathParams map[string]string) {
+	mux.Handle("GET", pattern_ProfileService_ListRuleTypes_0, func(w http.ResponseWriter, req *http.Request, pathParams map[string]string) {
 		ctx, cancel := context.WithCancel(req.Context())
 		defer cancel()
 		inboundMarshaler, outboundMarshaler := runtime.MarshalerForRequest(mux, req)
 		var err error
 		var annotatedContext context.Context
-		annotatedContext, err = runtime.AnnotateContext(ctx, mux, req, "/mediator.v1.PolicyService/ListRuleTypes", runtime.WithHTTPPathPattern("/api/v1/rule_types"))
+		annotatedContext, err = runtime.AnnotateContext(ctx, mux, req, "/mediator.v1.ProfileService/ListRuleTypes", runtime.WithHTTPPathPattern("/api/v1/rule_types"))
 		if err != nil {
 			runtime.HTTPError(ctx, mux, outboundMarshaler, w, req, err)
 			return
 		}
-		resp, md, err := request_PolicyService_ListRuleTypes_0(annotatedContext, inboundMarshaler, client, req, pathParams)
+		resp, md, err := request_ProfileService_ListRuleTypes_0(annotatedContext, inboundMarshaler, client, req, pathParams)
 		annotatedContext = runtime.NewServerMetadataContext(annotatedContext, md)
 		if err != nil {
 			runtime.HTTPError(annotatedContext, mux, outboundMarshaler, w, req, err)
 			return
 		}
 
-		forward_PolicyService_ListRuleTypes_0(annotatedContext, mux, outboundMarshaler, w, req, resp, mux.GetForwardResponseOptions()...)
+		forward_ProfileService_ListRuleTypes_0(annotatedContext, mux, outboundMarshaler, w, req, resp, mux.GetForwardResponseOptions()...)
 
 	})
 
-	mux.Handle("GET", pattern_PolicyService_GetRuleTypeByName_0, func(w http.ResponseWriter, req *http.Request, pathParams map[string]string) {
+	mux.Handle("GET", pattern_ProfileService_GetRuleTypeByName_0, func(w http.ResponseWriter, req *http.Request, pathParams map[string]string) {
 		ctx, cancel := context.WithCancel(req.Context())
 		defer cancel()
 		inboundMarshaler, outboundMarshaler := runtime.MarshalerForRequest(mux, req)
 		var err error
 		var annotatedContext context.Context
-		annotatedContext, err = runtime.AnnotateContext(ctx, mux, req, "/mediator.v1.PolicyService/GetRuleTypeByName", runtime.WithHTTPPathPattern("/api/v1/rule_type/name/{name}"))
+		annotatedContext, err = runtime.AnnotateContext(ctx, mux, req, "/mediator.v1.ProfileService/GetRuleTypeByName", runtime.WithHTTPPathPattern("/api/v1/rule_type/name/{name}"))
 		if err != nil {
 			runtime.HTTPError(ctx, mux, outboundMarshaler, w, req, err)
 			return
 		}
-		resp, md, err := request_PolicyService_GetRuleTypeByName_0(annotatedContext, inboundMarshaler, client, req, pathParams)
+		resp, md, err := request_ProfileService_GetRuleTypeByName_0(annotatedContext, inboundMarshaler, client, req, pathParams)
 		annotatedContext = runtime.NewServerMetadataContext(annotatedContext, md)
 		if err != nil {
 			runtime.HTTPError(annotatedContext, mux, outboundMarshaler, w, req, err)
 			return
 		}
 
-		forward_PolicyService_GetRuleTypeByName_0(annotatedContext, mux, outboundMarshaler, w, req, resp, mux.GetForwardResponseOptions()...)
+		forward_ProfileService_GetRuleTypeByName_0(annotatedContext, mux, outboundMarshaler, w, req, resp, mux.GetForwardResponseOptions()...)
 
 	})
 
-	mux.Handle("GET", pattern_PolicyService_GetRuleTypeById_0, func(w http.ResponseWriter, req *http.Request, pathParams map[string]string) {
+	mux.Handle("GET", pattern_ProfileService_GetRuleTypeById_0, func(w http.ResponseWriter, req *http.Request, pathParams map[string]string) {
 		ctx, cancel := context.WithCancel(req.Context())
 		defer cancel()
 		inboundMarshaler, outboundMarshaler := runtime.MarshalerForRequest(mux, req)
 		var err error
 		var annotatedContext context.Context
-		annotatedContext, err = runtime.AnnotateContext(ctx, mux, req, "/mediator.v1.PolicyService/GetRuleTypeById", runtime.WithHTTPPathPattern("/api/v1/rule_type/{id}"))
+		annotatedContext, err = runtime.AnnotateContext(ctx, mux, req, "/mediator.v1.ProfileService/GetRuleTypeById", runtime.WithHTTPPathPattern("/api/v1/rule_type/{id}"))
 		if err != nil {
 			runtime.HTTPError(ctx, mux, outboundMarshaler, w, req, err)
 			return
 		}
-		resp, md, err := request_PolicyService_GetRuleTypeById_0(annotatedContext, inboundMarshaler, client, req, pathParams)
+		resp, md, err := request_ProfileService_GetRuleTypeById_0(annotatedContext, inboundMarshaler, client, req, pathParams)
 		annotatedContext = runtime.NewServerMetadataContext(annotatedContext, md)
 		if err != nil {
 			runtime.HTTPError(annotatedContext, mux, outboundMarshaler, w, req, err)
 			return
 		}
 
-		forward_PolicyService_GetRuleTypeById_0(annotatedContext, mux, outboundMarshaler, w, req, resp, mux.GetForwardResponseOptions()...)
+		forward_ProfileService_GetRuleTypeById_0(annotatedContext, mux, outboundMarshaler, w, req, resp, mux.GetForwardResponseOptions()...)
 
 	})
 
-	mux.Handle("POST", pattern_PolicyService_CreateRuleType_0, func(w http.ResponseWriter, req *http.Request, pathParams map[string]string) {
+	mux.Handle("POST", pattern_ProfileService_CreateRuleType_0, func(w http.ResponseWriter, req *http.Request, pathParams map[string]string) {
 		ctx, cancel := context.WithCancel(req.Context())
 		defer cancel()
 		inboundMarshaler, outboundMarshaler := runtime.MarshalerForRequest(mux, req)
 		var err error
 		var annotatedContext context.Context
-		annotatedContext, err = runtime.AnnotateContext(ctx, mux, req, "/mediator.v1.PolicyService/CreateRuleType", runtime.WithHTTPPathPattern("/api/v1/rule_type"))
+		annotatedContext, err = runtime.AnnotateContext(ctx, mux, req, "/mediator.v1.ProfileService/CreateRuleType", runtime.WithHTTPPathPattern("/api/v1/rule_type"))
 		if err != nil {
 			runtime.HTTPError(ctx, mux, outboundMarshaler, w, req, err)
 			return
 		}
-		resp, md, err := request_PolicyService_CreateRuleType_0(annotatedContext, inboundMarshaler, client, req, pathParams)
+		resp, md, err := request_ProfileService_CreateRuleType_0(annotatedContext, inboundMarshaler, client, req, pathParams)
 		annotatedContext = runtime.NewServerMetadataContext(annotatedContext, md)
 		if err != nil {
 			runtime.HTTPError(annotatedContext, mux, outboundMarshaler, w, req, err)
 			return
 		}
 
-		forward_PolicyService_CreateRuleType_0(annotatedContext, mux, outboundMarshaler, w, req, resp, mux.GetForwardResponseOptions()...)
+		forward_ProfileService_CreateRuleType_0(annotatedContext, mux, outboundMarshaler, w, req, resp, mux.GetForwardResponseOptions()...)
 
 	})
 
-	mux.Handle("PUT", pattern_PolicyService_UpdateRuleType_0, func(w http.ResponseWriter, req *http.Request, pathParams map[string]string) {
+	mux.Handle("PUT", pattern_ProfileService_UpdateRuleType_0, func(w http.ResponseWriter, req *http.Request, pathParams map[string]string) {
 		ctx, cancel := context.WithCancel(req.Context())
 		defer cancel()
 		inboundMarshaler, outboundMarshaler := runtime.MarshalerForRequest(mux, req)
 		var err error
 		var annotatedContext context.Context
-		annotatedContext, err = runtime.AnnotateContext(ctx, mux, req, "/mediator.v1.PolicyService/UpdateRuleType", runtime.WithHTTPPathPattern("/api/v1/rule_type"))
+		annotatedContext, err = runtime.AnnotateContext(ctx, mux, req, "/mediator.v1.ProfileService/UpdateRuleType", runtime.WithHTTPPathPattern("/api/v1/rule_type"))
 		if err != nil {
 			runtime.HTTPError(ctx, mux, outboundMarshaler, w, req, err)
 			return
 		}
-		resp, md, err := request_PolicyService_UpdateRuleType_0(annotatedContext, inboundMarshaler, client, req, pathParams)
+		resp, md, err := request_ProfileService_UpdateRuleType_0(annotatedContext, inboundMarshaler, client, req, pathParams)
 		annotatedContext = runtime.NewServerMetadataContext(annotatedContext, md)
 		if err != nil {
 			runtime.HTTPError(annotatedContext, mux, outboundMarshaler, w, req, err)
 			return
 		}
 
-		forward_PolicyService_UpdateRuleType_0(annotatedContext, mux, outboundMarshaler, w, req, resp, mux.GetForwardResponseOptions()...)
+		forward_ProfileService_UpdateRuleType_0(annotatedContext, mux, outboundMarshaler, w, req, resp, mux.GetForwardResponseOptions()...)
 
 	})
 
-	mux.Handle("DELETE", pattern_PolicyService_DeleteRuleType_0, func(w http.ResponseWriter, req *http.Request, pathParams map[string]string) {
+	mux.Handle("DELETE", pattern_ProfileService_DeleteRuleType_0, func(w http.ResponseWriter, req *http.Request, pathParams map[string]string) {
 		ctx, cancel := context.WithCancel(req.Context())
 		defer cancel()
 		inboundMarshaler, outboundMarshaler := runtime.MarshalerForRequest(mux, req)
 		var err error
 		var annotatedContext context.Context
-		annotatedContext, err = runtime.AnnotateContext(ctx, mux, req, "/mediator.v1.PolicyService/DeleteRuleType", runtime.WithHTTPPathPattern("/api/v1/rule_type/{id}"))
+		annotatedContext, err = runtime.AnnotateContext(ctx, mux, req, "/mediator.v1.ProfileService/DeleteRuleType", runtime.WithHTTPPathPattern("/api/v1/rule_type/{id}"))
 		if err != nil {
 			runtime.HTTPError(ctx, mux, outboundMarshaler, w, req, err)
 			return
 		}
-		resp, md, err := request_PolicyService_DeleteRuleType_0(annotatedContext, inboundMarshaler, client, req, pathParams)
+		resp, md, err := request_ProfileService_DeleteRuleType_0(annotatedContext, inboundMarshaler, client, req, pathParams)
 		annotatedContext = runtime.NewServerMetadataContext(annotatedContext, md)
 		if err != nil {
 			runtime.HTTPError(annotatedContext, mux, outboundMarshaler, w, req, err)
 			return
 		}
 
-		forward_PolicyService_DeleteRuleType_0(annotatedContext, mux, outboundMarshaler, w, req, resp, mux.GetForwardResponseOptions()...)
+		forward_ProfileService_DeleteRuleType_0(annotatedContext, mux, outboundMarshaler, w, req, resp, mux.GetForwardResponseOptions()...)
 
 	})
 
@@ -6783,55 +6783,55 @@ func RegisterPolicyServiceHandlerClient(ctx context.Context, mux *runtime.ServeM
 }
 
 var (
-	pattern_PolicyService_CreatePolicy_0 = runtime.MustPattern(runtime.NewPattern(1, []int{2, 0, 2, 1, 2, 2}, []string{"api", "v1", "policy"}, ""))
+	pattern_ProfileService_CreateProfile_0 = runtime.MustPattern(runtime.NewPattern(1, []int{2, 0, 2, 1, 2, 2}, []string{"api", "v1", "profile"}, ""))
 
-	pattern_PolicyService_DeletePolicy_0 = runtime.MustPattern(runtime.NewPattern(1, []int{2, 0, 2, 1, 2, 2, 1, 0, 4, 1, 5, 3}, []string{"api", "v1", "policy", "id"}, ""))
+	pattern_ProfileService_DeleteProfile_0 = runtime.MustPattern(runtime.NewPattern(1, []int{2, 0, 2, 1, 2, 2, 1, 0, 4, 1, 5, 3}, []string{"api", "v1", "profile", "id"}, ""))
 
-	pattern_PolicyService_ListPolicies_0 = runtime.MustPattern(runtime.NewPattern(1, []int{2, 0, 2, 1, 2, 2}, []string{"api", "v1", "policies"}, ""))
+	pattern_ProfileService_ListProfiles_0 = runtime.MustPattern(runtime.NewPattern(1, []int{2, 0, 2, 1, 2, 2}, []string{"api", "v1", "profiles"}, ""))
 
-	pattern_PolicyService_GetPolicyById_0 = runtime.MustPattern(runtime.NewPattern(1, []int{2, 0, 2, 1, 2, 2, 1, 0, 4, 1, 5, 3}, []string{"api", "v1", "policy", "id"}, ""))
+	pattern_ProfileService_GetProfileById_0 = runtime.MustPattern(runtime.NewPattern(1, []int{2, 0, 2, 1, 2, 2, 1, 0, 4, 1, 5, 3}, []string{"api", "v1", "profile", "id"}, ""))
 
-	pattern_PolicyService_GetPolicyStatusByName_0 = runtime.MustPattern(runtime.NewPattern(1, []int{2, 0, 2, 1, 2, 2, 2, 3, 1, 0, 4, 1, 5, 3, 2, 4}, []string{"api", "v1", "policy", "name", "status"}, ""))
+	pattern_ProfileService_GetProfileStatusByName_0 = runtime.MustPattern(runtime.NewPattern(1, []int{2, 0, 2, 1, 2, 2, 2, 3, 1, 0, 4, 1, 5, 3, 2, 4}, []string{"api", "v1", "profile", "name", "status"}, ""))
 
-	pattern_PolicyService_GetPolicyStatusByProject_0 = runtime.MustPattern(runtime.NewPattern(1, []int{2, 0, 2, 1, 2, 2}, []string{"api", "v1", "policy_status"}, ""))
+	pattern_ProfileService_GetProfileStatusByProject_0 = runtime.MustPattern(runtime.NewPattern(1, []int{2, 0, 2, 1, 2, 2}, []string{"api", "v1", "profile_status"}, ""))
 
-	pattern_PolicyService_ListRuleTypes_0 = runtime.MustPattern(runtime.NewPattern(1, []int{2, 0, 2, 1, 2, 2}, []string{"api", "v1", "rule_types"}, ""))
+	pattern_ProfileService_ListRuleTypes_0 = runtime.MustPattern(runtime.NewPattern(1, []int{2, 0, 2, 1, 2, 2}, []string{"api", "v1", "rule_types"}, ""))
 
-	pattern_PolicyService_GetRuleTypeByName_0 = runtime.MustPattern(runtime.NewPattern(1, []int{2, 0, 2, 1, 2, 2, 2, 3, 1, 0, 4, 1, 5, 3}, []string{"api", "v1", "rule_type", "name"}, ""))
+	pattern_ProfileService_GetRuleTypeByName_0 = runtime.MustPattern(runtime.NewPattern(1, []int{2, 0, 2, 1, 2, 2, 2, 3, 1, 0, 4, 1, 5, 3}, []string{"api", "v1", "rule_type", "name"}, ""))
 
-	pattern_PolicyService_GetRuleTypeById_0 = runtime.MustPattern(runtime.NewPattern(1, []int{2, 0, 2, 1, 2, 2, 1, 0, 4, 1, 5, 3}, []string{"api", "v1", "rule_type", "id"}, ""))
+	pattern_ProfileService_GetRuleTypeById_0 = runtime.MustPattern(runtime.NewPattern(1, []int{2, 0, 2, 1, 2, 2, 1, 0, 4, 1, 5, 3}, []string{"api", "v1", "rule_type", "id"}, ""))
 
-	pattern_PolicyService_CreateRuleType_0 = runtime.MustPattern(runtime.NewPattern(1, []int{2, 0, 2, 1, 2, 2}, []string{"api", "v1", "rule_type"}, ""))
+	pattern_ProfileService_CreateRuleType_0 = runtime.MustPattern(runtime.NewPattern(1, []int{2, 0, 2, 1, 2, 2}, []string{"api", "v1", "rule_type"}, ""))
 
-	pattern_PolicyService_UpdateRuleType_0 = runtime.MustPattern(runtime.NewPattern(1, []int{2, 0, 2, 1, 2, 2}, []string{"api", "v1", "rule_type"}, ""))
+	pattern_ProfileService_UpdateRuleType_0 = runtime.MustPattern(runtime.NewPattern(1, []int{2, 0, 2, 1, 2, 2}, []string{"api", "v1", "rule_type"}, ""))
 
-	pattern_PolicyService_DeleteRuleType_0 = runtime.MustPattern(runtime.NewPattern(1, []int{2, 0, 2, 1, 2, 2, 1, 0, 4, 1, 5, 3}, []string{"api", "v1", "rule_type", "id"}, ""))
+	pattern_ProfileService_DeleteRuleType_0 = runtime.MustPattern(runtime.NewPattern(1, []int{2, 0, 2, 1, 2, 2, 1, 0, 4, 1, 5, 3}, []string{"api", "v1", "rule_type", "id"}, ""))
 )
 
 var (
-	forward_PolicyService_CreatePolicy_0 = runtime.ForwardResponseMessage
+	forward_ProfileService_CreateProfile_0 = runtime.ForwardResponseMessage
 
-	forward_PolicyService_DeletePolicy_0 = runtime.ForwardResponseMessage
+	forward_ProfileService_DeleteProfile_0 = runtime.ForwardResponseMessage
 
-	forward_PolicyService_ListPolicies_0 = runtime.ForwardResponseMessage
+	forward_ProfileService_ListProfiles_0 = runtime.ForwardResponseMessage
 
-	forward_PolicyService_GetPolicyById_0 = runtime.ForwardResponseMessage
+	forward_ProfileService_GetProfileById_0 = runtime.ForwardResponseMessage
 
-	forward_PolicyService_GetPolicyStatusByName_0 = runtime.ForwardResponseMessage
+	forward_ProfileService_GetProfileStatusByName_0 = runtime.ForwardResponseMessage
 
-	forward_PolicyService_GetPolicyStatusByProject_0 = runtime.ForwardResponseMessage
+	forward_ProfileService_GetProfileStatusByProject_0 = runtime.ForwardResponseMessage
 
-	forward_PolicyService_ListRuleTypes_0 = runtime.ForwardResponseMessage
+	forward_ProfileService_ListRuleTypes_0 = runtime.ForwardResponseMessage
 
-	forward_PolicyService_GetRuleTypeByName_0 = runtime.ForwardResponseMessage
+	forward_ProfileService_GetRuleTypeByName_0 = runtime.ForwardResponseMessage
 
-	forward_PolicyService_GetRuleTypeById_0 = runtime.ForwardResponseMessage
+	forward_ProfileService_GetRuleTypeById_0 = runtime.ForwardResponseMessage
 
-	forward_PolicyService_CreateRuleType_0 = runtime.ForwardResponseMessage
+	forward_ProfileService_CreateRuleType_0 = runtime.ForwardResponseMessage
 
-	forward_PolicyService_UpdateRuleType_0 = runtime.ForwardResponseMessage
+	forward_ProfileService_UpdateRuleType_0 = runtime.ForwardResponseMessage
 
-	forward_PolicyService_DeleteRuleType_0 = runtime.ForwardResponseMessage
+	forward_ProfileService_DeleteRuleType_0 = runtime.ForwardResponseMessage
 )
 
 // RegisterKeyServiceHandlerFromEndpoint is same as RegisterKeyServiceHandler but

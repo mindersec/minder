@@ -46,7 +46,7 @@ func TestNewRuleEvaluatorWorks(t *testing.T) {
 							Type: "jq",
 							Jq: []*pb.RuleType_Definition_Eval_JQComparison{
 								{
-									Policy: &pb.RuleType_Definition_Eval_JQComparison_Operator{
+									Profile: &pb.RuleType_Definition_Eval_JQComparison_Operator{
 										Def: ".",
 									},
 									Ingested: &pb.RuleType_Definition_Eval_JQComparison_Operator{
@@ -132,7 +132,7 @@ func TestNewRuleEvaluatorFails(t *testing.T) {
 			},
 		},
 		{
-			name: "missing jq policy accessor",
+			name: "missing jq profile accessor",
 			args: args{
 				rt: &pb.RuleType{
 					Def: &pb.RuleType_Definition{

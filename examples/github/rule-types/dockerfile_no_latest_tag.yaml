@@ -21,7 +21,7 @@ def:
     type: git
     git:
       branch: main
-  # Defines the configuration for evaluating data ingested against the given policy
+  # Defines the configuration for evaluating data ingested against the given profile
   # This example uses the checks for that github actions are using pinned tags
   # for the uses directive, in the form of SHA-1 hash
   # For example, this wil fail:

@@ -26,8 +26,8 @@ https://docs.stacklok.com/mediator/medic/overview.html
 * [medic docs](medic_docs.md)	 - Generates documentation for the client
 * [medic keys](medic_keys.md)	 - Manage keys within a mediator control plane
 * [medic org](medic_org.md)	 - Manage organizations within a mediator control plane
-* [medic policy](medic_policy.md)	 - Manage policies within a mediator control plane
-* [medic policy_status](medic_policy_status.md)	 - Manage policy status within a mediator control plane
+* [medic profile](medic_profile.md)	 - Manage profiles within a mediator control plane
+* [medic profile_status](medic_profile_status.md)	 - Manage profile status within a mediator control plane
 * [medic project](medic_project.md)	 - Manage projects within a mediator control plane
 * [medic provider](medic_provider.md)	 - Manage providers within a mediator control plane
 * [medic repo](medic_repo.md)	 - Manage repositories within a mediator control plane

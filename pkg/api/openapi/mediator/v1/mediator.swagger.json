@@ -36,7 +36,7 @@
       "name": "UserService"
     },
     {
-      "name": "PolicyService"
+      "name": "ProfileService"
     },
     {
       "name": "KeyService"
@@ -890,56 +890,14 @@
         ]
       }
     },
-    "/api/v1/policies": {
-      "get": {
-        "operationId": "PolicyService_ListPolicies",
-        "responses": {
-          "200": {
-            "description": "A successful response.",
-            "schema": {
-              "$ref": "#/definitions/v1ListPoliciesResponse"
-            }
-          },
-          "default": {
-            "description": "An unexpected error response.",
-            "schema": {
-              "$ref": "#/definitions/rpcStatus"
-            }
-          }
-        },
-        "parameters": [
-          {
-            "name": "context.provider",
-            "in": "query",
-            "required": false,
-            "type": "string"
-          },
-          {
-            "name": "context.organization",
-            "in": "query",
-            "required": false,
-            "type": "string"
-          },
-          {
-            "name": "context.project",
-            "in": "query",
-            "required": false,
-            "type": "string"
-          }
-        ],
-        "tags": [
-          "PolicyService"
-        ]
-      }
-    },
-    "/api/v1/policy": {
+    "/api/v1/profile": {
       "post": {
-        "operationId": "PolicyService_CreatePolicy",
+        "operationId": "ProfileService_CreateProfile",
         "responses": {
           "200": {
             "description": "A successful response.",
             "schema": {
-              "$ref": "#/definitions/v1CreatePolicyResponse"
+              "$ref": "#/definitions/v1CreateProfileResponse"
             }
           },
           "default": {
@@ -955,23 +913,23 @@
             "in": "body",
             "required": true,
             "schema": {
-              "$ref": "#/definitions/v1CreatePolicyRequest"
+              "$ref": "#/definitions/v1CreateProfileRequest"
             }
           }
         ],
         "tags": [
-          "PolicyService"
+          "ProfileService"
         ]
       }
     },
-    "/api/v1/policy/name/{name}/status": {
+    "/api/v1/profile/name/{name}/status": {
       "get": {
-        "operationId": "PolicyService_GetPolicyStatusByName",
+        "operationId": "ProfileService_GetProfileStatusByName",
         "responses": {
           "200": {
             "description": "A successful response.",
             "schema": {
-              "$ref": "#/definitions/v1GetPolicyStatusByNameResponse"
+              "$ref": "#/definitions/v1GetProfileStatusByNameResponse"
             }
           },
           "default": {
@@ -984,7 +942,7 @@
         "parameters": [
           {
             "name": "name",
-            "description": "name is the name of the policy to get",
+            "description": "name is the name of the profile to get",
             "in": "path",
             "required": true,
             "type": "string"
@@ -1043,18 +1001,18 @@
           }
         ],
         "tags": [
-          "PolicyService"
+          "ProfileService"
         ]
       }
     },
-    "/api/v1/policy/{id}": {
+    "/api/v1/profile/{id}": {
       "get": {
-        "operationId": "PolicyService_GetPolicyById",
+        "operationId": "ProfileService_GetProfileById",
         "responses": {
           "200": {
             "description": "A successful response.",
             "schema": {
-              "$ref": "#/definitions/v1GetPolicyByIdResponse"
+              "$ref": "#/definitions/v1GetProfileByIdResponse"
             }
           },
           "default": {
@@ -1067,7 +1025,7 @@
         "parameters": [
           {
             "name": "id",
-            "description": "id is the id of the policy to get",
+            "description": "id is the id of the profile to get",
             "in": "path",
             "required": true,
             "type": "string"
@@ -1092,16 +1050,16 @@
           }
         ],
         "tags": [
-          "PolicyService"
+          "ProfileService"
         ]
       },
       "delete": {
-        "operationId": "PolicyService_DeletePolicy",
+        "operationId": "ProfileService_DeleteProfile",
         "responses": {
           "200": {
             "description": "A successful response.",
             "schema": {
-              "$ref": "#/definitions/v1DeletePolicyResponse"
+              "$ref": "#/definitions/v1DeleteProfileResponse"
             }
           },
           "default": {
@@ -1114,7 +1072,7 @@
         "parameters": [
           {
             "name": "id",
-            "description": "id is the id of the policy to delete",
+            "description": "id is the id of the profile to delete",
             "in": "path",
             "required": true,
             "type": "string"
@@ -1139,18 +1097,18 @@
           }
         ],
         "tags": [
-          "PolicyService"
+          "ProfileService"
         ]
       }
     },
-    "/api/v1/policy_status": {
+    "/api/v1/profile_status": {
       "get": {
-        "operationId": "PolicyService_GetPolicyStatusByProject",
+        "operationId": "ProfileService_GetProfileStatusByProject",
         "responses": {
           "200": {
             "description": "A successful response.",
             "schema": {
-              "$ref": "#/definitions/v1GetPolicyStatusByProjectResponse"
+              "$ref": "#/definitions/v1GetProfileStatusByProjectResponse"
             }
           },
           "default": {
@@ -1181,7 +1139,49 @@
           }
         ],
         "tags": [
-          "PolicyService"
+          "ProfileService"
+        ]
+      }
+    },
+    "/api/v1/profiles": {
+      "get": {
+        "operationId": "ProfileService_ListProfiles",
+        "responses": {
+          "200": {
+            "description": "A successful response.",
+            "schema": {
+              "$ref": "#/definitions/v1ListProfilesResponse"
+            }
+          },
+          "default": {
+            "description": "An unexpected error response.",
+            "schema": {
+              "$ref": "#/definitions/rpcStatus"
+            }
+          }
+        },
+        "parameters": [
+          {
+            "name": "context.provider",
+            "in": "query",
+            "required": false,
+            "type": "string"
+          },
+          {
+            "name": "context.organization",
+            "in": "query",
+            "required": false,
+            "type": "string"
+          },
+          {
+            "name": "context.project",
+            "in": "query",
+            "required": false,
+            "type": "string"
+          }
+        ],
+        "tags": [
+          "ProfileService"
         ]
       }
     },
@@ -1847,7 +1847,7 @@
     },
     "/api/v1/rule_type": {
       "post": {
-        "operationId": "PolicyService_CreateRuleType",
+        "operationId": "ProfileService_CreateRuleType",
         "responses": {
           "200": {
             "description": "A successful response.",
@@ -1874,11 +1874,11 @@
           }
         ],
         "tags": [
-          "PolicyService"
+          "ProfileService"
         ]
       },
       "put": {
-        "operationId": "PolicyService_UpdateRuleType",
+        "operationId": "ProfileService_UpdateRuleType",
         "responses": {
           "200": {
             "description": "A successful response.",
@@ -1905,13 +1905,13 @@
           }
         ],
         "tags": [
-          "PolicyService"
+          "ProfileService"
         ]
       }
     },
     "/api/v1/rule_type/name/{name}": {
       "get": {
-        "operationId": "PolicyService_GetRuleTypeByName",
+        "operationId": "ProfileService_GetRuleTypeByName",
         "responses": {
           "200": {
             "description": "A successful response.",
@@ -1954,13 +1954,13 @@
           }
         ],
         "tags": [
-          "PolicyService"
+          "ProfileService"
         ]
       }
     },
     "/api/v1/rule_type/{id}": {
       "get": {
-        "operationId": "PolicyService_GetRuleTypeById",
+        "operationId": "ProfileService_GetRuleTypeById",
         "responses": {
           "200": {
             "description": "A successful response.",
@@ -2003,11 +2003,11 @@
           }
         ],
         "tags": [
-          "PolicyService"
+          "ProfileService"
         ]
       },
       "delete": {
-        "operationId": "PolicyService_DeleteRuleType",
+        "operationId": "ProfileService_DeleteRuleType",
         "responses": {
           "200": {
             "description": "A successful response.",
@@ -2050,13 +2050,13 @@
           }
         ],
         "tags": [
-          "PolicyService"
+          "ProfileService"
         ]
       }
     },
     "/api/v1/rule_types": {
       "get": {
-        "operationId": "PolicyService_ListRuleTypes",
+        "operationId": "ProfileService_ListRuleTypes",
         "responses": {
           "200": {
             "description": "A successful response.",
@@ -2092,7 +2092,7 @@
           }
         ],
         "tags": [
-          "PolicyService"
+          "ProfileService"
         ]
       }
     },
@@ -2387,7 +2387,7 @@
             "type": "object",
             "$ref": "#/definitions/EvalJQComparison"
           },
-          "description": "jq is only used if the `jq` type is selected.\nIt defines the comparisons that are made between\nthe ingested data and the policy rule."
+          "description": "jq is only used if the `jq` type is selected.\nIt defines the comparisons that are made between\nthe ingested data and the profile rule."
         },
         "rego": {
           "$ref": "#/definitions/EvalRego",
@@ -2461,9 +2461,9 @@
           "$ref": "#/definitions/JQComparisonOperator",
           "title": "Ingested points to the data retrieved in the `ingest` section"
         },
-        "policy": {
+        "profile": {
           "$ref": "#/definitions/JQComparisonOperator",
-          "description": "Policy points to the policy itself."
+          "description": "Profile points to the profile itself."
         }
       }
     },
@@ -2472,11 +2472,11 @@
       "properties": {
         "type": {
           "type": "string",
-          "description": "type is the type of evaluation engine to use\nfor rego. We currently have two modes of operation:\n- deny-by-default: this is the default mode of operation\n  where we deny access by default and allow access only\n  if the policy explicitly allows it. It expects the\n  policy to set an `allow` variable to true or false.\n- constraints: this is the mode of operation where we\n  allow access by default and deny access only if a\n  violation is found. It expects the policy to set a\n  `violations` variable with a \"msg\" field."
+          "description": "type is the type of evaluation engine to use\nfor rego. We currently have two modes of operation:\n- deny-by-default: this is the default mode of operation\n  where we deny access by default and allow access only\n  if the profile explicitly allows it. It expects the\n  profile to set an `allow` variable to true or false.\n- constraints: this is the mode of operation where we\n  allow access by default and deny access only if a\n  violation is found. It expects the profile to set a\n  `violations` variable with a \"msg\" field."
         },
         "def": {
           "type": "string",
-          "description": "def is the definition of the rego policy."
+          "description": "def is the definition of the rego profile."
         }
       }
     },
@@ -2493,7 +2493,7 @@
         }
       }
     },
-    "GetPolicyStatusByNameRequestEntityTypedId": {
+    "GetProfileStatusByNameRequestEntityTypedId": {
       "type": "object",
       "properties": {
         "type": {
@@ -2515,7 +2515,7 @@
         }
       }
     },
-    "PolicyRule": {
+    "ProfileRule": {
       "type": "object",
       "properties": {
         "type": {
@@ -2776,20 +2776,20 @@
         }
       }
     },
-    "v1CreatePolicyRequest": {
+    "v1CreateProfileRequest": {
       "type": "object",
       "properties": {
-        "policy": {
-          "$ref": "#/definitions/v1Policy"
+        "profile": {
+          "$ref": "#/definitions/v1Profile"
         }
       },
-      "title": "Policy service"
+      "title": "Profile service"
     },
-    "v1CreatePolicyResponse": {
+    "v1CreateProfileResponse": {
       "type": "object",
       "properties": {
-        "policy": {
-          "$ref": "#/definitions/v1Policy"
+        "profile": {
+          "$ref": "#/definitions/v1Profile"
         }
       }
     },
@@ -3003,7 +3003,7 @@
       "type": "object",
       "title": "DeleteOrganizationResponse represents a response to a delete organization request"
     },
-    "v1DeletePolicyResponse": {
+    "v1DeleteProfileResponse": {
       "type": "object"
     },
     "v1DeleteProjectResponse": {
@@ -3168,20 +3168,20 @@
         }
       }
     },
-    "v1GetPolicyByIdResponse": {
+    "v1GetProfileByIdResponse": {
       "type": "object",
       "properties": {
-        "policy": {
-          "$ref": "#/definitions/v1Policy"
+        "profile": {
+          "$ref": "#/definitions/v1Profile"
         }
       }
     },
-    "v1GetPolicyStatusByNameResponse": {
+    "v1GetProfileStatusByNameResponse": {
       "type": "object",
       "properties": {
-        "policyStatus": {
-          "$ref": "#/definitions/v1PolicyStatus",
-          "title": "policy_status is the status of the policy"
+        "profileStatus": {
+          "$ref": "#/definitions/v1ProfileStatus",
+          "title": "profile_status is the status of the profile"
         },
         "ruleEvaluationStatus": {
           "type": "array",
@@ -3193,16 +3193,16 @@
         }
       }
     },
-    "v1GetPolicyStatusByProjectResponse": {
+    "v1GetProfileStatusByProjectResponse": {
       "type": "object",
       "properties": {
-        "policyStatus": {
+        "profileStatus": {
           "type": "array",
           "items": {
             "type": "object",
-            "$ref": "#/definitions/v1PolicyStatus"
+            "$ref": "#/definitions/v1ProfileStatus"
           },
-          "title": "policy_status is the status of the policy"
+          "title": "profile_status is the status of the profile"
         }
       }
     },
@@ -3492,14 +3492,14 @@
         }
       }
     },
-    "v1ListPoliciesResponse": {
+    "v1ListProfilesResponse": {
       "type": "object",
       "properties": {
-        "policies": {
+        "profiles": {
           "type": "array",
           "items": {
             "type": "object",
-            "$ref": "#/definitions/v1Policy"
+            "$ref": "#/definitions/v1Profile"
           }
         }
       }
@@ -3558,48 +3558,48 @@
         }
       }
     },
-    "v1Policy": {
+    "v1Profile": {
       "type": "object",
       "properties": {
         "context": {
           "$ref": "#/definitions/mediatorv1Context",
-          "description": "context is the context in which the policy is evaluated."
+          "description": "context is the context in which the profile is evaluated."
         },
         "id": {
           "type": "string",
-          "description": "id is the id of the policy.\nThis is optional and is set by the system."
+          "description": "id is the id of the profile.\nThis is optional and is set by the system."
         },
         "name": {
           "type": "string",
-          "description": "name is the name of the policy instance."
+          "description": "name is the name of the profile instance."
         },
         "repository": {
           "type": "array",
           "items": {
             "type": "object",
-            "$ref": "#/definitions/PolicyRule"
+            "$ref": "#/definitions/ProfileRule"
           },
-          "description": "These are the entities that one could set in the policy."
+          "description": "These are the entities that one could set in the profile."
         },
         "buildEnvironment": {
           "type": "array",
           "items": {
             "type": "object",
-            "$ref": "#/definitions/PolicyRule"
+            "$ref": "#/definitions/ProfileRule"
           }
         },
         "artifact": {
           "type": "array",
           "items": {
             "type": "object",
-            "$ref": "#/definitions/PolicyRule"
+            "$ref": "#/definitions/ProfileRule"
           }
         },
         "pullRequest": {
           "type": "array",
           "items": {
             "type": "object",
-            "$ref": "#/definitions/PolicyRule"
+            "$ref": "#/definitions/ProfileRule"
           }
         },
         "remediate": {
@@ -3607,30 +3607,30 @@
           "title": "whether and how to remediate (on,off,dry_run)\nthis is optional as the default is set by the system"
         }
       },
-      "description": "Policy defines a policy that is user defined."
+      "description": "Profile defines a profile that is user defined."
     },
-    "v1PolicyStatus": {
+    "v1ProfileStatus": {
       "type": "object",
       "properties": {
-        "policyId": {
+        "profileId": {
           "type": "string",
-          "title": "policy_id is the id of the policy"
+          "title": "profile_id is the id of the profile"
         },
-        "policyName": {
+        "profileName": {
           "type": "string",
-          "title": "policy_name is the name of the policy"
+          "title": "profile_name is the name of the profile"
         },
-        "policyStatus": {
+        "profileStatus": {
           "type": "string",
-          "title": "policy_status is the status of the policy"
+          "title": "profile_status is the status of the profile"
         },
         "lastUpdated": {
           "type": "string",
           "format": "date-time",
-          "title": "last_updated is the last time the policy was updated"
+          "title": "last_updated is the last time the profile was updated"
         }
       },
-      "title": "get the overall policy status"
+      "title": "get the overall profile status"
     },
     "v1ProjectRecord": {
       "type": "object",
@@ -3904,9 +3904,9 @@
     "v1RuleEvaluationStatus": {
       "type": "object",
       "properties": {
-        "policyId": {
+        "profileId": {
           "type": "string",
-          "title": "policy_id is the id of the policy"
+          "title": "profile_id is the id of the profile"
         },
         "ruleId": {
           "type": "string",
@@ -3927,7 +3927,7 @@
         "lastUpdated": {
           "type": "string",
           "format": "date-time",
-          "title": "last_updated is the last time the policy was updated"
+          "title": "last_updated is the last time the profile was updated"
         },
         "entityInfo": {
           "type": "object",
@@ -3958,7 +3958,7 @@
           "title": "remediation_details is the description of the remediation attempt if any"
         }
       },
-      "title": "get the status of the rules for a given policy"
+      "title": "get the status of the rules for a given profile"
     },
     "v1RuleType": {
       "type": "object",

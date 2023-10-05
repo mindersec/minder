@@ -29,7 +29,7 @@ import (
 type Config struct {
 	// Type is the type of evaluation to perform
 	Type EvaluationType `json:"type" mapstructure:"type" validate:"required"`
-	// Def is the definition of the policy
+	// Def is the definition of the profile
 	Def string `json:"def" mapstructure:"def" validate:"required"`
 }
 

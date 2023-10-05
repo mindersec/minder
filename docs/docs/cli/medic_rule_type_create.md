@@ -4,7 +4,7 @@ Create a rule type within a mediator control plane
 
 ### Synopsis
 
-The medic rule type create subcommand lets you create new policies for a project
+The medic rule type create subcommand lets you create new profiles for a project
 within a mediator control plane.
 
 ```

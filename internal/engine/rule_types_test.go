@@ -29,9 +29,9 @@ import (
 func TestExampleRulesAreValidatedCorrectly(t *testing.T) {
 	t.Parallel()
 
-	t.Log("parsing example policy")
-	pol, err := engine.ReadPolicyFromFile("../../examples/github/policies/policy.yaml")
-	require.NoError(t, err, "failed to parse example policy")
+	t.Log("parsing example profile")
+	pol, err := engine.ReadProfileFromFile("../../examples/github/profiles/profile.yaml")
+	require.NoError(t, err, "failed to parse example profile")
 
 	// open rules in example directory
 	err = filepath.Walk("../../examples/github/rule-types", func(path string, info os.FileInfo, err error) error {
@@ -64,8 +64,8 @@ func TestExampleRulesAreValidatedCorrectly(t *testing.T) {
 			rval, err := engine.NewRuleValidator(rt)
 			require.NoError(t, err, "failed to create rule validator for rule type %s", path)
 
-			rules, err := engine.GetRulesFromPolicyOfType(pol, rt)
-			require.NoError(t, err, "failed to get rules from policy for rule type %s", path)
+			rules, err := engine.GetRulesFromProfileOfType(pol, rt)
+			require.NoError(t, err, "failed to get rules from profile for rule type %s", path)
 
 			t.Log("validating rules")
 			for _, ruleCall := range rules {

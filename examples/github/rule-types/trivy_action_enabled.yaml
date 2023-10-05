@@ -38,7 +38,7 @@ def:
     type: git
     git:
       branch: main
-  # Defines the configuration for evaluating data ingested against the given policy
+  # Defines the configuration for evaluating data ingested against the given profile
   eval:
     type: rego
     rego:

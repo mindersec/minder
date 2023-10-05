@@ -665,10 +665,10 @@ service UserService {
 
 }
 
-service PolicyService {
-    rpc CreatePolicy (CreatePolicyRequest) returns (CreatePolicyResponse) {
+service ProfileService {
+    rpc CreateProfile (CreateProfileRequest) returns (CreateProfileResponse) {
         option (google.api.http) = {
-            post: "/api/v1/policy"
+            post: "/api/v1/profile"
             body: "*"
         };
 
@@ -678,9 +678,9 @@ service PolicyService {
         };
     }
 
-    rpc DeletePolicy (DeletePolicyRequest) returns (DeletePolicyResponse) {
+    rpc DeleteProfile (DeleteProfileRequest) returns (DeleteProfileResponse) {
         option (google.api.http) = {
-            delete: "/api/v1/policy/{id}"
+            delete: "/api/v1/profile/{id}"
         };
 
         option (rpc_options) = {
@@ -689,9 +689,9 @@ service PolicyService {
         };
     }
 
-    rpc ListPolicies (ListPoliciesRequest) returns (ListPoliciesResponse) {
+    rpc ListProfiles (ListProfilesRequest) returns (ListProfilesResponse) {
         option (google.api.http) = {
-            get: "/api/v1/policies"
+            get: "/api/v1/profiles"
         };
 
         option (rpc_options) = {
@@ -700,15 +700,15 @@ service PolicyService {
         };
     }
 
-    rpc GetPolicyById (GetPolicyByIdRequest) returns (GetPolicyByIdResponse) {
+    rpc GetProfileById (GetProfileByIdRequest) returns (GetProfileByIdResponse) {
         option (google.api.http) = {
-            get: "/api/v1/policy/{id}"
+            get: "/api/v1/profile/{id}"
             };    
     }
 
-    rpc GetPolicyStatusByName (GetPolicyStatusByNameRequest) returns (GetPolicyStatusByNameResponse) {
+    rpc GetProfileStatusByName (GetProfileStatusByNameRequest) returns (GetProfileStatusByNameResponse) {
         option (google.api.http) = {
-            get: "/api/v1/policy/name/{name}/status"
+            get: "/api/v1/profile/name/{name}/status"
         };
 
         option (rpc_options) = {
@@ -717,9 +717,9 @@ service PolicyService {
         };
     }
 
-    rpc GetPolicyStatusByProject (GetPolicyStatusByProjectRequest) returns (GetPolicyStatusByProjectResponse) {
+    rpc GetProfileStatusByProject (GetProfileStatusByProjectRequest) returns (GetProfileStatusByProjectResponse) {
         option (google.api.http) = {
-            get: "/api/v1/policy_status"
+            get: "/api/v1/profile_status"
         };
 
         option (rpc_options) = {
@@ -1426,63 +1426,63 @@ message GetUserResponse {
     repeated RoleRecord roles = 3;
 }
 
-// Policy service
-message CreatePolicyRequest {
-    Policy policy = 1;
+// Profile service
+message CreateProfileRequest {
+    Profile profile = 1;
 }
   
-message CreatePolicyResponse {
-    Policy policy = 1;
+message CreateProfileResponse {
+    Profile profile = 1;
 }
 
-message DeletePolicyRequest {
+message DeleteProfileRequest {
     // context is the context in which the rule type is evaluated.
     Context context = 1;
-    // id is the id of the policy to delete
+    // id is the id of the profile to delete
     string id = 2;
 }
 
-message DeletePolicyResponse {
+message DeleteProfileResponse {
 }
 
-// list policies
-message ListPoliciesRequest {
-    // context is the context which contains the policies
+// list profiles
+message ListProfilesRequest {
+    // context is the context which contains the profiles
     Context context = 1;
 }
 
-message ListPoliciesResponse {
-    repeated Policy policies = 1;
+message ListProfilesResponse {
+    repeated Profile profiles = 1;
 }
 
-// get policy by id
-message GetPolicyByIdRequest {
-    // context is the context which contains the policies
+// get profile by id
+message GetProfileByIdRequest {
+    // context is the context which contains the profiles
     Context context = 1;
-    // id is the id of the policy to get
+    // id is the id of the profile to get
     string id = 2;
 }
 
-message GetPolicyByIdResponse {
-    Policy policy = 1;
+message GetProfileByIdResponse {
+    Profile profile = 1;
 }
 
-// get the overall policy status
-message PolicyStatus {
-    // policy_id is the id of the policy
-    string policy_id = 1;
-    // policy_name is the name of the policy
-    string policy_name = 2;
-    // policy_status is the status of the policy
-    string policy_status = 3;
-    // last_updated is the last time the policy was updated
+// get the overall profile status
+message ProfileStatus {
+    // profile_id is the id of the profile
+    string profile_id = 1;
+    // profile_name is the name of the profile
+    string profile_name = 2;
+    // profile_status is the status of the profile
+    string profile_status = 3;
+    // last_updated is the last time the profile was updated
     google.protobuf.Timestamp last_updated = 4;
 }
 
-// get the status of the rules for a given policy
+// get the status of the rules for a given profile
 message RuleEvaluationStatus {
-    // policy_id is the id of the policy
-    string policy_id = 1;
+    // profile_id is the id of the profile
+    string profile_id = 1;
     // rule_id is the id of the rule
     string rule_id = 2;
     // rule_name is the name of the rule
@@ -1491,7 +1491,7 @@ message RuleEvaluationStatus {
     string entity = 4;
     // status is the status of the evaluation
     string status = 5;
-    // last_updated is the last time the policy was updated
+    // last_updated is the last time the profile was updated
     google.protobuf.Timestamp last_updated = 6;
     // entity_info is the information about the entity
     map<string, string> entity_info = 7;
@@ -1507,10 +1507,10 @@ message RuleEvaluationStatus {
     string remediation_details = 12;
 }
 
-message GetPolicyStatusByNameRequest {
+message GetProfileStatusByNameRequest {
     // context is the context in which the rule type is evaluated.
     Context context = 1;
-    // name is the name of the policy to get
+    // name is the name of the profile to get
     string name = 2;
 
     // EntiryTypeId is a message that carries an ID together with a type to uniquely identify an entity
@@ -1528,22 +1528,22 @@ message GetPolicyStatusByNameRequest {
     string rule = 5;
 }
 
-message GetPolicyStatusByNameResponse {
-    // policy_status is the status of the policy
-    PolicyStatus policy_status = 1;
+message GetProfileStatusByNameResponse {
+    // profile_status is the status of the profile
+    ProfileStatus profile_status = 1;
 
     // rule_evaluation_status is the status of the rules
     repeated RuleEvaluationStatus rule_evaluation_status = 2;
 }
 
-message GetPolicyStatusByProjectRequest {
+message GetProfileStatusByProjectRequest {
     // context is the context in which the rule type is evaluated.
     Context context = 1;
 }
 
-message GetPolicyStatusByProjectResponse {
-    // policy_status is the status of the policy
-    repeated PolicyStatus policy_status = 1;
+message GetProfileStatusByProjectResponse {
+    // profile_status is the status of the profile
+    repeated ProfileStatus profile_status = 1;
 }
 
 message GetPublicKeyRequest {
@@ -1839,8 +1839,8 @@ message RuleType {
                 // Ingested points to the data retrieved in the `ingest` section
                 Operator ingested = 1;
 
-                // Policy points to the policy itself.
-                Operator policy = 2;
+                // Profile points to the profile itself.
+                Operator profile = 2;
             }
 
             message Rego {
@@ -1848,14 +1848,14 @@ message RuleType {
                 // for rego. We currently have two modes of operation:
                 // - deny-by-default: this is the default mode of operation
                 //   where we deny access by default and allow access only
-                //   if the policy explicitly allows it. It expects the
-                //   policy to set an `allow` variable to true or false.
+                //   if the profile explicitly allows it. It expects the
+                //   profile to set an `allow` variable to true or false.
                 // - constraints: this is the mode of operation where we
                 //   allow access by default and deny access only if a
-                //   violation is found. It expects the policy to set a
+                //   violation is found. It expects the profile to set a
                 //   `violations` variable with a "msg" field.
                 string type = 1;
-                // def is the definition of the rego policy.
+                // def is the definition of the rego profile.
                 string def = 2;
             }
 
@@ -1868,7 +1868,7 @@ message RuleType {
 
             // jq is only used if the `jq` type is selected.
             // It defines the comparisons that are made between
-            // the ingested data and the policy rule.
+            // the ingested data and the profile rule.
             repeated JQComparison jq = 2;
 
             // rego is only used if the `rego` type is selected.
@@ -1897,16 +1897,16 @@ message RuleType {
     string guidance = 6;
 }
 
- // Policy defines a policy that is user defined.
- message Policy {
-    // context is the context in which the policy is evaluated.
+ // Profile defines a profile that is user defined.
+ message Profile {
+    // context is the context in which the profile is evaluated.
     Context context = 1;
 
-    // id is the id of the policy.
+    // id is the id of the profile.
     // This is optional and is set by the system.
     optional string id = 2;
 
-    // name is the name of the policy instance.
+    // name is the name of the profile instance.
     string name = 3;
 
     // Rule defines the individual call of a certain rule type.
@@ -1921,7 +1921,7 @@ message RuleType {
         google.protobuf.Struct def = 3;
     }
 
-    // These are the entities that one could set in the policy.
+    // These are the entities that one could set in the profile.
     repeated Rule repository = 4;
     repeated Rule build_environment = 5;
     repeated Rule artifact = 6;

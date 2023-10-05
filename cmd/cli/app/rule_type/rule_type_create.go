@@ -27,11 +27,11 @@ import (
 	mediatorv1 "github.com/stacklok/mediator/pkg/api/protobuf/go/mediator/v1"
 )
 
-// RuleType_createCmd represents the policy create command
+// RuleType_createCmd represents the profile create command
 var RuleType_createCmd = &cobra.Command{
 	Use:   "create",
 	Short: "Create a rule type within a mediator control plane",
-	Long: `The medic rule type create subcommand lets you create new policies for a project
+	Long: `The medic rule type create subcommand lets you create new profiles for a project
 within a mediator control plane.`,
 	PreRun: func(cmd *cobra.Command, args []string) {
 		if err := viper.BindPFlags(cmd.Flags()); err != nil {
@@ -54,7 +54,7 @@ within a mediator control plane.`,
 		}
 		defer conn.Close()
 
-		client := mediatorv1.NewPolicyServiceClient(conn)
+		client := mediatorv1.NewProfileServiceClient(conn)
 		ctx, cancel := util.GetAppContext()
 		defer cancel()
 

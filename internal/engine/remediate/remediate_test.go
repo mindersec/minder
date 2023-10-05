@@ -79,7 +79,7 @@ func TestNewRuleRemediator(t *testing.T) {
 						Type: rest.RemediateType,
 						Rest: &pb.RestType{
 							Method:   "POST",
-							Endpoint: "{{.Policy.endpoint}}",
+							Endpoint: "{{.Profile.endpoint}}",
 							Body:     &simpleBodyTemplate,
 						},
 					},

@@ -36,13 +36,13 @@ def:
       endpoint: "/repos/{{.Entity.Owner}}/{{.Entity.Repository}}/actions/permissions/access"
       # This is the method to use to retrieve the data. It should already default to JSON
       parse: json
-  # Defines the configuration for evaluating data ingested against the given policy
+  # Defines the configuration for evaluating data ingested against the given profile
   eval:
     type: jq
     jq:
       # Ingested points to the data retrieved in the `ingest` section
       - ingested:
           def: ".access_level"
-        # policy points to the policy itself.
-        policy:
+        # profile points to the profile itself.
+        profile:
           def: '.access_level'

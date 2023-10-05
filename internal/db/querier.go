@@ -17,8 +17,8 @@ type Querier interface {
 	CreateArtifact(ctx context.Context, arg CreateArtifactParams) (Artifact, error)
 	CreateArtifactVersion(ctx context.Context, arg CreateArtifactVersionParams) (ArtifactVersion, error)
 	CreateOrganization(ctx context.Context, arg CreateOrganizationParams) (Project, error)
-	CreatePolicy(ctx context.Context, arg CreatePolicyParams) (Policy, error)
-	CreatePolicyForEntity(ctx context.Context, arg CreatePolicyForEntityParams) (EntityPolicy, error)
+	CreateProfile(ctx context.Context, arg CreateProfileParams) (Profile, error)
+	CreateProfileForEntity(ctx context.Context, arg CreateProfileForEntityParams) (EntityProfile, error)
 	CreateProject(ctx context.Context, arg CreateProjectParams) (Project, error)
 	CreateProvider(ctx context.Context, arg CreateProviderParams) (Provider, error)
 	CreateRepository(ctx context.Context, arg CreateRepositoryParams) (Repository, error)
@@ -34,7 +34,7 @@ type Querier interface {
 	DeleteExpiredSessionStates(ctx context.Context) error
 	DeleteOldArtifactVersions(ctx context.Context, arg DeleteOldArtifactVersionsParams) error
 	DeleteOrganization(ctx context.Context, id uuid.UUID) error
-	DeletePolicy(ctx context.Context, id uuid.UUID) error
+	DeleteProfile(ctx context.Context, id uuid.UUID) error
 	DeleteProject(ctx context.Context, id uuid.UUID) ([]DeleteProjectRow, error)
 	DeleteProvider(ctx context.Context, arg DeleteProviderParams) error
 	DeleteRepository(ctx context.Context, id uuid.UUID) error
@@ -56,12 +56,12 @@ type Querier interface {
 	GetOrganizationForUpdate(ctx context.Context, name string) (Project, error)
 	GetParentProjects(ctx context.Context, id uuid.UUID) ([]uuid.UUID, error)
 	GetParentProjectsUntil(ctx context.Context, arg GetParentProjectsUntilParams) ([]uuid.UUID, error)
-	GetPolicyByID(ctx context.Context, id uuid.UUID) (Policy, error)
-	GetPolicyByProjectAndID(ctx context.Context, arg GetPolicyByProjectAndIDParams) ([]GetPolicyByProjectAndIDRow, error)
-	GetPolicyByProjectAndName(ctx context.Context, arg GetPolicyByProjectAndNameParams) ([]GetPolicyByProjectAndNameRow, error)
-	GetPolicyStatusByIdAndProject(ctx context.Context, arg GetPolicyStatusByIdAndProjectParams) (GetPolicyStatusByIdAndProjectRow, error)
-	GetPolicyStatusByNameAndProject(ctx context.Context, arg GetPolicyStatusByNameAndProjectParams) (GetPolicyStatusByNameAndProjectRow, error)
-	GetPolicyStatusByProject(ctx context.Context, projectID uuid.UUID) ([]GetPolicyStatusByProjectRow, error)
+	GetProfileByID(ctx context.Context, id uuid.UUID) (Profile, error)
+	GetProfileByProjectAndID(ctx context.Context, arg GetProfileByProjectAndIDParams) ([]GetProfileByProjectAndIDRow, error)
+	GetProfileByProjectAndName(ctx context.Context, arg GetProfileByProjectAndNameParams) ([]GetProfileByProjectAndNameRow, error)
+	GetProfileStatusByIdAndProject(ctx context.Context, arg GetProfileStatusByIdAndProjectParams) (GetProfileStatusByIdAndProjectRow, error)
+	GetProfileStatusByNameAndProject(ctx context.Context, arg GetProfileStatusByNameAndProjectParams) (GetProfileStatusByNameAndProjectRow, error)
+	GetProfileStatusByProject(ctx context.Context, projectID uuid.UUID) ([]GetProfileStatusByProjectRow, error)
 	GetProjectByID(ctx context.Context, id uuid.UUID) (Project, error)
 	GetProjectByName(ctx context.Context, name string) (Project, error)
 	GetProjectIDPortBySessionState(ctx context.Context, sessionState string) (GetProjectIDPortBySessionStateRow, error)
@@ -90,14 +90,14 @@ type Querier interface {
 	ListArtifactVersionsByArtifactIDAndTag(ctx context.Context, arg ListArtifactVersionsByArtifactIDAndTagParams) ([]ArtifactVersion, error)
 	ListArtifactsByRepoID(ctx context.Context, repositoryID uuid.UUID) ([]Artifact, error)
 	ListOrganizations(ctx context.Context, arg ListOrganizationsParams) ([]Project, error)
-	ListPoliciesByProjectID(ctx context.Context, projectID uuid.UUID) ([]ListPoliciesByProjectIDRow, error)
+	ListProfilesByProjectID(ctx context.Context, projectID uuid.UUID) ([]ListProfilesByProjectIDRow, error)
 	ListProvidersByProjectID(ctx context.Context, projectID uuid.UUID) ([]Provider, error)
 	ListRegisteredRepositoriesByProjectIDAndProvider(ctx context.Context, arg ListRegisteredRepositoriesByProjectIDAndProviderParams) ([]Repository, error)
 	ListRepositoriesByOwner(ctx context.Context, arg ListRepositoriesByOwnerParams) ([]Repository, error)
 	ListRepositoriesByProjectID(ctx context.Context, arg ListRepositoriesByProjectIDParams) ([]Repository, error)
 	ListRoles(ctx context.Context, arg ListRolesParams) ([]Role, error)
 	ListRolesByProjectID(ctx context.Context, arg ListRolesByProjectIDParams) ([]Role, error)
-	ListRuleEvaluationStatusByPolicyId(ctx context.Context, arg ListRuleEvaluationStatusByPolicyIdParams) ([]ListRuleEvaluationStatusByPolicyIdRow, error)
+	ListRuleEvaluationStatusByProfileId(ctx context.Context, arg ListRuleEvaluationStatusByProfileIdParams) ([]ListRuleEvaluationStatusByProfileIdRow, error)
 	ListRuleTypesByProviderAndProject(ctx context.Context, arg ListRuleTypesByProviderAndProjectParams) ([]RuleType, error)
 	ListUsers(ctx context.Context, arg ListUsersParams) ([]User, error)
 	ListUsersByOrganization(ctx context.Context, arg ListUsersByOrganizationParams) ([]User, error)

@@ -53,7 +53,7 @@ func init() {
 	app.RootCmd.AddCommand(testCmd)
 	testCmd.Flags().StringP("rule-type", "r", "", "file to read rule type definition from")
 	testCmd.Flags().StringP("entity", "e", "", "YAML file containing the entity to test the rule against")
-	testCmd.Flags().StringP("policy", "p", "", "YAML file containing a policy to test the rule against")
+	testCmd.Flags().StringP("profile", "p", "", "YAML file containing a profile to test the rule against")
 	testCmd.Flags().StringP("token", "t", "", "token to authenticate to the provider."+
 		"Can also be set via the AUTH_TOKEN environment variable.")
 
@@ -78,7 +78,7 @@ func init() {
 func testCmdRun(cmd *cobra.Command, _ []string) error {
 	rtpath := cmd.Flag("rule-type")
 	epath := cmd.Flag("entity")
-	ppath := cmd.Flag("policy")
+	ppath := cmd.Flag("profile")
 	token := viper.GetString("auth.token")
 
 	// set rego env variable for debugging
@@ -103,12 +103,12 @@ func testCmdRun(cmd *cobra.Command, _ []string) error {
 		return fmt.Errorf("error reading entity from file: %w", err)
 	}
 
-	p, err := engine.ReadPolicyFromFile(ppath.Value.String())
+	p, err := engine.ReadProfileFromFile(ppath.Value.String())
 	if err != nil {
 		return fmt.Errorf("error reading fragment from file: %w", err)
 	}
 
-	rules, err := engine.GetRulesFromPolicyOfType(p, rt)
+	rules, err := engine.GetRulesFromProfileOfType(p, rt)
 	if err != nil {
 		return fmt.Errorf("error getting relevant fragment: %w", err)
 	}
@@ -146,7 +146,7 @@ func runEvaluationForRules(
 	eng *engine.RuleTypeEngine,
 	ent protoreflect.ProtoMessage,
 	rem interfaces.RemediateActionOpt,
-	frags []*mediatorv1.Policy_Rule,
+	frags []*mediatorv1.Profile_Rule,
 ) error {
 	for idx := range frags {
 		frag := frags[idx]
@@ -157,7 +157,7 @@ func runEvaluationForRules(
 		if err != nil {
 			return fmt.Errorf("error validating rule against schema: %w", err)
 		}
-		fmt.Printf("Policy valid according to the JSON schema!\n")
+		fmt.Printf("Profile valid according to the JSON schema!\n")
 
 		var params map[string]any
 		if err := val.ValidateParamsAgainstSchema(frag.GetParams()); err != nil {

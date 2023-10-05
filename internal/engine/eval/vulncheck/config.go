@@ -38,7 +38,7 @@ const (
 	actionReviewPr     action = "review"
 	actionComment      action = "comment"
 	actionCommitStatus action = "commit_status"
-	actionPolicyOnly   action = "policy_only"
+	actionProfileOnly  action = "profile_only"
 )
 
 type packageRepository struct {

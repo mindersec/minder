@@ -29,6 +29,6 @@ echo '$ medic rule_type create -f examples/github/rule-types/'
 echo '---'
 medic rule_type create -f examples/github/rule-types/
 
-#echo '$ medic policy create -f examples/github/policies/policy.yaml'
+#echo '$ medic profile create -f examples/github/profiles/profile.yaml'
 #echo '---'
-medic policy create -f examples/github/policies/policy.yaml
+medic profile create -f examples/github/profiles/profile.yaml

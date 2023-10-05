@@ -115,16 +115,16 @@ func (e *Executor) evalEntityEvent(
 	ectx *EntityContext,
 	cli *providers.ProviderBuilder,
 ) error {
-	// Get policies relevant to group
-	dbpols, err := e.querier.ListPoliciesByProjectID(ctx, *inf.ProjectID)
+	// Get profiles relevant to group
+	dbpols, err := e.querier.ListProfilesByProjectID(ctx, *inf.ProjectID)
 	if err != nil {
-		return fmt.Errorf("error getting policies: %w", err)
+		return fmt.Errorf("error getting profiles: %w", err)
 	}
 
-	for _, pol := range MergeDatabaseListIntoPolicies(dbpols, ectx) {
-		policyID, err := uuid.Parse(*pol.Id)
+	for _, pol := range MergeDatabaseListIntoProfiles(dbpols, ectx) {
+		profileID, err := uuid.Parse(*pol.Id)
 		if err != nil {
-			return fmt.Errorf("error parsing policy ID: %w", err)
+			return fmt.Errorf("error parsing profile ID: %w", err)
 		}
 
 		remAction := interfaces.RemediationActionOptFromString(pol.Remediate)
@@ -135,9 +135,9 @@ func (e *Executor) evalEntityEvent(
 			return fmt.Errorf("error getting rules for entity: %w", err)
 		}
 
-		// Let's evaluate all the rules for this policy
-		err = TraverseRules(relevant, func(rule *pb.Policy_Rule) error {
-			rt, rte, err := e.getEvaluator(ctx, policyID, ectx.Provider.Name, cli, ectx, rule)
+		// Let's evaluate all the rules for this profile
+		err = TraverseRules(relevant, func(rule *pb.Profile_Rule) error {
+			rt, rte, err := e.getEvaluator(ctx, profileID, ectx.Provider.Name, cli, ectx, rule)
 			if err != nil {
 				return err
 			}
@@ -152,7 +152,7 @@ func (e *Executor) evalEntityEvent(
 			logEval(ctx, pol, rule, inf, evalResult, remediateResult)
 
 			return e.createOrUpdateEvalStatus(ctx, inf.evalStatusParams(
-				policyID, ruleTypeID, evalResult, remediateResult))
+				profileID, ruleTypeID, evalResult, remediateResult))
 		})
 
 		if err != nil {
@@ -160,7 +160,7 @@ func (e *Executor) evalEntityEvent(
 			if pol.Id != nil {
 				p = *pol.Id
 			}
-			return fmt.Errorf("error traversing rules for policy %s: %w", p, err)
+			return fmt.Errorf("error traversing rules for profile %s: %w", p, err)
 		}
 	}
 	return nil
@@ -168,13 +168,13 @@ func (e *Executor) evalEntityEvent(
 
 func (e *Executor) getEvaluator(
 	ctx context.Context,
-	policyID uuid.UUID,
+	profileID uuid.UUID,
 	prov string,
 	cli *providers.ProviderBuilder,
 	ectx *EntityContext,
-	rule *pb.Policy_Rule,
+	rule *pb.Profile_Rule,
 ) (*pb.RuleType, *RuleTypeEngine, error) {
-	log.Printf("Evaluating rule: %s for policy %s", rule.Type, policyID)
+	log.Printf("Evaluating rule: %s for profile %s", rule.Type, profileID)
 
 	dbrt, err := e.querier.GetRuleTypeByName(ctx, db.GetRuleTypeByNameParams{
 		Provider:  prov,
@@ -183,12 +183,12 @@ func (e *Executor) getEvaluator(
 	})
 
 	if err != nil {
-		return nil, nil, fmt.Errorf("error getting rule type when traversing policy %s: %w", policyID, err)
+		return nil, nil, fmt.Errorf("error getting rule type when traversing profile %s: %w", profileID, err)
 	}
 
 	rt, err := RuleTypePBFromDB(&dbrt, ectx)
 	if err != nil {
-		return nil, nil, fmt.Errorf("error parsing rule type when traversing policy %s: %w", policyID, err)
+		return nil, nil, fmt.Errorf("error parsing rule type when traversing profile %s: %w", profileID, err)
 	}
 
 	// TODO(jaosorior): Rule types should be cached in memory so
@@ -203,14 +203,14 @@ func (e *Executor) getEvaluator(
 
 func logEval(
 	ctx context.Context,
-	pol *pb.Policy,
-	rule *pb.Policy_Rule,
+	pol *pb.Profile,
+	rule *pb.Profile_Rule,
 	inf *EntityInfoWrapper,
 	evalResult error,
 	remediateResult error,
 ) {
 	logger := zerolog.Ctx(ctx).Debug().
-		Str("policy", pol.Name).
+		Str("profile", pol.Name).
 		Str("ruleType", rule.Type).
 		Str("projectId", inf.ProjectID.String()).
 		Str("repositoryId", inf.OwnershipData[RepositoryIDEventKey])

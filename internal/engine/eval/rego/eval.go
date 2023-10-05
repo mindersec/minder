@@ -50,8 +50,8 @@ type Evaluator struct {
 
 // Input is the input for the rego evaluator
 type Input struct {
-	// Policy is the values set for the policy
-	Policy map[string]any `json:"policy"`
+	// Profile is the values set for the profile
+	Profile map[string]any `json:"profile"`
 	// Ingested is the values set for the ingested data
 	Ingested any `json:"ingested"`
 }
@@ -117,11 +117,11 @@ func (e *Evaluator) Eval(ctx context.Context, pol map[string]any, res *engif.Res
 	}
 
 	rs, err := pq.Eval(ctx, rego.EvalInput(&Input{
-		Policy:   pol,
+		Profile:  pol,
 		Ingested: obj,
 	}))
 	if err != nil {
-		return fmt.Errorf("error evaluating policy. Might be wrong input: %w", err)
+		return fmt.Errorf("error evaluating profile. Might be wrong input: %w", err)
 	}
 
 	return e.reseval.parseResult(rs)

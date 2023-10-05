@@ -30,10 +30,10 @@ import (
 
 // createOrUpdateEvalStatusParams is a helper struct to pass parameters to createOrUpdateEvalStatus
 // to avoid confusion with the parameters order. Since at the moment all our entities are bound to
-// a repo and most policies are expecting a repo, the repoID parameter is mandatory. For entities
+// a repo and most profiles are expecting a repo, the repoID parameter is mandatory. For entities
 // other than artifacts, the artifactID should be 0 which is translated to NULL in the database.
 type createOrUpdateEvalStatusParams struct {
-	policyID       uuid.UUID
+	profileID      uuid.UUID
 	repoID         uuid.UUID
 	artifactID     *uuid.UUID
 	ruleTypeEntity db.Entities
@@ -51,8 +51,8 @@ func (e *Executor) createOrUpdateEvalStatus(
 	}
 
 	if errors.Is(params.evalErr, evalerrors.ErrEvaluationSkipSilently) {
-		log.Printf("silent skip of rule %s for policy %s for entity %s in repo %s",
-			params.ruleTypeID, params.policyID, params.ruleTypeEntity, params.repoID)
+		log.Printf("silent skip of rule %s for profile %s for entity %s in repo %s",
+			params.ruleTypeID, params.profileID, params.ruleTypeEntity, params.repoID)
 		return nil
 	}
 
@@ -65,7 +65,7 @@ func (e *Executor) createOrUpdateEvalStatus(
 	}
 
 	err := e.querier.UpsertRuleEvaluationStatus(ctx, db.UpsertRuleEvaluationStatusParams{
-		PolicyID: params.policyID,
+		ProfileID: params.profileID,
 		RepositoryID: uuid.NullUUID{
 			UUID:  params.repoID,
 			Valid: true,

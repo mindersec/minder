@@ -26,8 +26,8 @@ import (
 const (
 	// InternalReconcilerEventTopic is the topic for internal reconciler events
 	InternalReconcilerEventTopic = "internal.repo.reconciler.event"
-	// InternalPolicyInitEventTopic is the topic for internal init events
-	InternalPolicyInitEventTopic = "internal.policy.init.event"
+	// InternalProfileInitEventTopic is the topic for internal init events
+	InternalProfileInitEventTopic = "internal.profile.init.event"
 )
 
 // Reconciler is a helper that reconciles entities
@@ -54,5 +54,5 @@ func NewReconciler(store db.Store, evt *events.Eventer, authCfg *config.AuthConf
 // Register implements the Consumer interface.
 func (e *Reconciler) Register(r events.Registrar) {
 	r.Register(InternalReconcilerEventTopic, e.handleRepoReconcilerEvent)
-	r.Register(InternalPolicyInitEventTopic, e.handlePolicyInitEvent)
+	r.Register(InternalProfileInitEventTopic, e.handleProfileInitEvent)
 }
