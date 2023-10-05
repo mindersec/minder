@@ -60,9 +60,9 @@
     - [GetOrganizationsResponse](#mediator-v1-GetOrganizationsResponse)
     - [GetPolicyByIdRequest](#mediator-v1-GetPolicyByIdRequest)
     - [GetPolicyByIdResponse](#mediator-v1-GetPolicyByIdResponse)
-    - [GetPolicyStatusByIdRequest](#mediator-v1-GetPolicyStatusByIdRequest)
-    - [GetPolicyStatusByIdRequest.EntityTypedId](#mediator-v1-GetPolicyStatusByIdRequest-EntityTypedId)
-    - [GetPolicyStatusByIdResponse](#mediator-v1-GetPolicyStatusByIdResponse)
+    - [GetPolicyStatusByNameRequest](#mediator-v1-GetPolicyStatusByNameRequest)
+    - [GetPolicyStatusByNameRequest.EntityTypedId](#mediator-v1-GetPolicyStatusByNameRequest-EntityTypedId)
+    - [GetPolicyStatusByNameResponse](#mediator-v1-GetPolicyStatusByNameResponse)
     - [GetPolicyStatusByProjectRequest](#mediator-v1-GetPolicyStatusByProjectRequest)
     - [GetPolicyStatusByProjectResponse](#mediator-v1-GetPolicyStatusByProjectResponse)
     - [GetProjectByIdRequest](#mediator-v1-GetProjectByIdRequest)
@@ -1097,17 +1097,17 @@ get policy by id
 
 
 
-<a name="mediator-v1-GetPolicyStatusByIdRequest"></a>
+<a name="mediator-v1-GetPolicyStatusByNameRequest"></a>
 
-### GetPolicyStatusByIdRequest
+### GetPolicyStatusByNameRequest
 
 
 
 | Field | Type | Label | Description |
 | ----- | ---- | ----- | ----------- |
 | context | [Context](#mediator-v1-Context) |  | context is the context in which the rule type is evaluated. |
-| policy_id | [string](#string) |  | policy_id is the id of the policy to get |
-| entity | [GetPolicyStatusByIdRequest.EntityTypedId](#mediator-v1-GetPolicyStatusByIdRequest-EntityTypedId) |  |  |
+| name | [string](#string) |  | name is the name of the policy to get |
+| entity | [GetPolicyStatusByNameRequest.EntityTypedId](#mediator-v1-GetPolicyStatusByNameRequest-EntityTypedId) |  |  |
 | all | [bool](#bool) |  |  |
 | rule | [string](#string) |  |  |
 
@@ -1116,9 +1116,9 @@ get policy by id
 
 
 
-<a name="mediator-v1-GetPolicyStatusByIdRequest-EntityTypedId"></a>
+<a name="mediator-v1-GetPolicyStatusByNameRequest-EntityTypedId"></a>
 
-### GetPolicyStatusByIdRequest.EntityTypedId
+### GetPolicyStatusByNameRequest.EntityTypedId
 EntiryTypeId is a message that carries an ID together with a type to uniquely identify an entity
 such as (repo, 1), (artifact, 2), ...
 if the struct is reused in other messages, it should be moved to a top-level definition
@@ -1134,9 +1134,9 @@ if the struct is reused in other messages, it should be moved to a top-level def
 
 
 
-<a name="mediator-v1-GetPolicyStatusByIdResponse"></a>
+<a name="mediator-v1-GetPolicyStatusByNameResponse"></a>
 
-### GetPolicyStatusByIdResponse
+### GetPolicyStatusByNameResponse
 
 
 
@@ -3147,7 +3147,7 @@ manage Organizations CRUD
 | DeletePolicy | [DeletePolicyRequest](#mediator-v1-DeletePolicyRequest) | [DeletePolicyResponse](#mediator-v1-DeletePolicyResponse) |  |
 | ListPolicies | [ListPoliciesRequest](#mediator-v1-ListPoliciesRequest) | [ListPoliciesResponse](#mediator-v1-ListPoliciesResponse) |  |
 | GetPolicyById | [GetPolicyByIdRequest](#mediator-v1-GetPolicyByIdRequest) | [GetPolicyByIdResponse](#mediator-v1-GetPolicyByIdResponse) |  |
-| GetPolicyStatusById | [GetPolicyStatusByIdRequest](#mediator-v1-GetPolicyStatusByIdRequest) | [GetPolicyStatusByIdResponse](#mediator-v1-GetPolicyStatusByIdResponse) |  |
+| GetPolicyStatusByName | [GetPolicyStatusByNameRequest](#mediator-v1-GetPolicyStatusByNameRequest) | [GetPolicyStatusByNameResponse](#mediator-v1-GetPolicyStatusByNameResponse) |  |
 | GetPolicyStatusByProject | [GetPolicyStatusByProjectRequest](#mediator-v1-GetPolicyStatusByProjectRequest) | [GetPolicyStatusByProjectResponse](#mediator-v1-GetPolicyStatusByProjectResponse) |  |
 | ListRuleTypes | [ListRuleTypesRequest](#mediator-v1-ListRuleTypesRequest) | [ListRuleTypesResponse](#mediator-v1-ListRuleTypesResponse) |  |
 | GetRuleTypeByName | [GetRuleTypeByNameRequest](#mediator-v1-GetRuleTypeByNameRequest) | [GetRuleTypeByNameResponse](#mediator-v1-GetRuleTypeByNameResponse) |  |

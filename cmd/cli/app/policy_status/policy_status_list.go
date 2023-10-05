@@ -50,7 +50,7 @@ mediator control plane for an specific provider/project or policy id.`,
 
 		provider := viper.GetString("provider")
 		project := viper.GetString("project")
-		policyId := viper.GetString("policy")
+		policyName := viper.GetString("policy")
 		format := viper.GetString("output")
 		all := viper.GetBool("detailed")
 		rule := viper.GetString("rule")
@@ -65,20 +65,20 @@ mediator control plane for an specific provider/project or policy id.`,
 			return fmt.Errorf("provider must be set")
 		}
 
-		req := &pb.GetPolicyStatusByIdRequest{
+		req := &pb.GetPolicyStatusByNameRequest{
 			Context: &pb.Context{
 				Provider: provider,
 			},
-			PolicyId: policyId,
-			All:      all,
-			Rule:     rule,
+			Name: policyName,
+			All:  all,
+			Rule: rule,
 		}
 
 		if project != "" {
 			req.Context.Project = &project
 		}
 
-		resp, err := client.GetPolicyStatusById(ctx, req)
+		resp, err := client.GetPolicyStatusByName(ctx, req)
 		if err != nil {
 			return fmt.Errorf("error getting policy status: %w", err)
 		}
@@ -108,7 +108,7 @@ func init() {
 	PolicyStatusCmd.AddCommand(policystatus_listCmd)
 	policystatus_listCmd.Flags().StringP("provider", "p", "github", "Provider to list policy status for")
 	policystatus_listCmd.Flags().StringP("project", "g", "", "project id to list policy status for")
-	policystatus_listCmd.Flags().StringP("policy", "i", "", "policy id to list policy status for")
+	policystatus_listCmd.Flags().StringP("policy", "i", "", "policy name to list policy status for")
 	policystatus_listCmd.Flags().StringP("output", "o", app.Table, "Output format (json, yaml or table)")
 	policystatus_listCmd.Flags().BoolP("detailed", "d", false, "List all policy violations")
 	policystatus_listCmd.Flags().StringP("rule", "r", "", "Filter policy status list by rule")
@@ -119,7 +119,7 @@ func init() {
 	}
 }
 
-func handlePolicyStatusListTable(cmd *cobra.Command, resp *pb.GetPolicyStatusByIdResponse) {
+func handlePolicyStatusListTable(cmd *cobra.Command, resp *pb.GetPolicyStatusByNameResponse) {
 	table := initializePolicyStatusTable(cmd)
 
 	renderPolicyStatusTable(resp.PolicyStatus, table)
@@ -127,7 +127,7 @@ func handlePolicyStatusListTable(cmd *cobra.Command, resp *pb.GetPolicyStatusByI
 	table.Render()
 }
 
-func handleRuleEvaluationStatusListTable(cmd *cobra.Command, resp *pb.GetPolicyStatusByIdResponse) {
+func handleRuleEvaluationStatusListTable(cmd *cobra.Command, resp *pb.GetPolicyStatusByNameResponse) {
 	table := initializeRuleEvaluationStatusTable(cmd)
 
 	for idx := range resp.RuleEvaluationStatus {

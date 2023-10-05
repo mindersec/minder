@@ -799,6 +799,21 @@ func (mr *MockStoreMockRecorder) GetPolicyStatusByIdAndProject(arg0, arg1 interf
 	return mr.mock.ctrl.RecordCallWithMethodType(mr.mock, "GetPolicyStatusByIdAndProject", reflect.TypeOf((*MockStore)(nil).GetPolicyStatusByIdAndProject), arg0, arg1)
 }
 
+// GetPolicyStatusByNameAndProject mocks base method.
+func (m *MockStore) GetPolicyStatusByNameAndProject(arg0 context.Context, arg1 db.GetPolicyStatusByNameAndProjectParams) (db.GetPolicyStatusByNameAndProjectRow, error) {
+	m.ctrl.T.Helper()
+	ret := m.ctrl.Call(m, "GetPolicyStatusByNameAndProject", arg0, arg1)
+	ret0, _ := ret[0].(db.GetPolicyStatusByNameAndProjectRow)
+	ret1, _ := ret[1].(error)
+	return ret0, ret1
+}
+
+// GetPolicyStatusByNameAndProject indicates an expected call of GetPolicyStatusByNameAndProject.
+func (mr *MockStoreMockRecorder) GetPolicyStatusByNameAndProject(arg0, arg1 interface{}) *gomock.Call {
+	mr.mock.ctrl.T.Helper()
+	return mr.mock.ctrl.RecordCallWithMethodType(mr.mock, "GetPolicyStatusByNameAndProject", reflect.TypeOf((*MockStore)(nil).GetPolicyStatusByNameAndProject), arg0, arg1)
+}
+
 // GetPolicyStatusByProject mocks base method.
 func (m *MockStore) GetPolicyStatusByProject(arg0 context.Context, arg1 uuid.UUID) ([]db.GetPolicyStatusByProjectRow, error) {
 	m.ctrl.T.Helper()

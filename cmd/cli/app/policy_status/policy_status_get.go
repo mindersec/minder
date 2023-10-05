@@ -51,7 +51,7 @@ mediator control plane for an specific provider/project or policy id, entity typ
 
 		provider := viper.GetString("provider")
 		project := viper.GetString("project")
-		policyId := viper.GetString("policy")
+		policyName := viper.GetString("policy")
 		entityId := viper.GetString("entity")
 		entityType := viper.GetString("entity-type")
 		format := viper.GetString("output")
@@ -66,12 +66,12 @@ mediator control plane for an specific provider/project or policy id, entity typ
 			return fmt.Errorf("provider must be set")
 		}
 
-		req := &mediatorv1.GetPolicyStatusByIdRequest{
+		req := &mediatorv1.GetPolicyStatusByNameRequest{
 			Context: &mediatorv1.Context{
 				Provider: provider,
 			},
-			PolicyId: policyId,
-			Entity: &mediatorv1.GetPolicyStatusByIdRequest_EntityTypedId{
+			Name: policyName,
+			Entity: &mediatorv1.GetPolicyStatusByNameRequest_EntityTypedId{
 				Id:   entityId,
 				Type: mediatorv1.EntityFromString(entityType),
 			},
@@ -81,7 +81,7 @@ mediator control plane for an specific provider/project or policy id, entity typ
 			req.Context.Project = &project
 		}
 
-		resp, err := client.GetPolicyStatusById(ctx, req)
+		resp, err := client.GetPolicyStatusByName(ctx, req)
 		if err != nil {
 			return fmt.Errorf("error getting policy status: %w", err)
 		}
@@ -107,7 +107,7 @@ func init() {
 	PolicyStatusCmd.AddCommand(policystatus_getCmd)
 	policystatus_getCmd.Flags().StringP("provider", "p", "github", "Provider to get policy status for")
 	policystatus_getCmd.Flags().StringP("project", "g", "", "project id to get policy status for")
-	policystatus_getCmd.Flags().StringP("policy", "i", "", "policy id to get policy status for")
+	policystatus_getCmd.Flags().StringP("policy", "i", "", "policy name to get policy status for")
 	policystatus_getCmd.Flags().StringP("entity-type", "t", "",
 		fmt.Sprintf("the entity type to get policy status for (one of %s)", entities.KnownTypesCSV()))
 	policystatus_getCmd.Flags().StringP("entity", "e", "", "entity id to get policy status for")
