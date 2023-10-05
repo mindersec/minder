@@ -23,14 +23,16 @@ package auth
 
 import (
 	"fmt"
+	"net/url"
 	"os"
 	"path/filepath"
 
 	"github.com/spf13/cobra"
 	"github.com/spf13/viper"
 
+	"github.com/stacklok/mediator/internal/config"
 	"github.com/stacklok/mediator/internal/util"
-	pb "github.com/stacklok/mediator/pkg/api/protobuf/go/mediator/v1"
+	"github.com/stacklok/mediator/internal/util/cli"
 )
 
 // auth_logoutCmd represents the logout command
@@ -44,18 +46,7 @@ var auth_logoutCmd = &cobra.Command{
 		}
 	},
 	Run: func(cmd *cobra.Command, args []string) {
-		conn, err := util.GrpcForCommand(cmd)
-		util.ExitNicelyOnError(err, "Error getting grpc connection")
-		defer conn.Close()
-
-		client := pb.NewAuthServiceClient(conn)
-		ctx, cancel := util.GetAppContext()
-		defer cancel()
-
-		_, err = client.LogOut(ctx, &pb.LogOutRequest{})
-		util.ExitNicelyOnError(err, "Error logging out")
-
-		// remove credentials file for extra security
+		// remove credentials file
 		xdgConfigHome := os.Getenv("XDG_CONFIG_HOME")
 
 		// just delete token from credentials file
@@ -66,11 +57,18 @@ var auth_logoutCmd = &cobra.Command{
 		}
 
 		filePath := filepath.Join(xdgConfigHome, "mediator", "credentials.json")
-		err = os.Remove(filePath)
+		err := os.Remove(filePath)
 		util.ExitNicelyOnError(err, "Error removing credentials file")
 
-		fmt.Println("User logged out.")
+		cfg, err := config.ReadConfigFromViper(viper.GetViper())
+		util.ExitNicelyOnError(err, "Error reading config")
 
+		parsedURL, err := url.Parse(cfg.Identity.IssuerUrl)
+		util.ExitNicelyOnError(err, "Error parsing issuer URL")
+
+		logoutUrl := parsedURL.JoinPath("realms", cfg.Identity.Realm, "protocol/openid-connect/logout")
+		cli.PrintCmd(cmd, cli.SuccessBanner.Render("You have successfully logged out of the CLI."))
+		cli.PrintCmd(cmd, "If you would like to log out of the browser, you can visit %s", logoutUrl.String())
 	},
 }
 
