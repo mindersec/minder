@@ -170,7 +170,7 @@ func MergeDatabaseListIntoProfiles(ppl []db.ListProfilesByProjectIDRow, ectx *En
 			}
 
 			if p.Remediate.Valid {
-				sRem := string(p.Remediate.RemediateType)
+				sRem := string(p.Remediate.ActionType)
 				profiles[p.Name].Remediate = &sRem
 			}
 		}
@@ -208,7 +208,7 @@ func MergeDatabaseGetIntoProfiles(ppl []db.GetProfileByProjectAndIDRow, ectx *En
 			}
 
 			if p.Remediate.Valid {
-				sRem := string(p.Remediate.RemediateType)
+				sRem := string(p.Remediate.ActionType)
 				profiles[p.Name].Remediate = &sRem
 			}
 		}

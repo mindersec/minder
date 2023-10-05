@@ -176,19 +176,16 @@ default allow = true`,
 
 	// Upload passing status
 	mockStore.EXPECT().
-		UpsertRuleEvaluationStatus(gomock.Any(), db.UpsertRuleEvaluationStatusParams{
+		UpsertRuleEvaluations(gomock.Any(), db.UpsertRuleEvaluationsParams{
 			ProfileID: profileID,
 			RepositoryID: uuid.NullUUID{
 				UUID:  repositoryID,
 				Valid: true,
 			},
-			ArtifactID:        uuid.NullUUID{},
-			RuleTypeID:        ruleTypeID,
-			Entity:            db.EntitiesRepository,
-			EvalStatus:        db.EvalStatusTypesSuccess,
-			RemediationStatus: db.RemediationStatusTypesSkipped,
+			ArtifactID: uuid.NullUUID{},
+			RuleTypeID: ruleTypeID,
+			Entity:     db.EntitiesRepository,
 		}).Return(nil)
-
 	// -- end expectations
 
 	tmpdir := t.TempDir()
