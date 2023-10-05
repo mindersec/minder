@@ -201,6 +201,15 @@ CREATE TABLE entity_profiles (
     updated_at TIMESTAMP NOT NULL DEFAULT NOW()
 );
 
+-- This table is used to track the rules associated with a profile
+CREATE TABLE entity_profile_rules (
+    id UUID NOT NULL DEFAULT gen_random_uuid() PRIMARY KEY,
+    entity_profile_id UUID NOT NULL REFERENCES entity_profiles(id) ON DELETE CASCADE,
+    rule_type_id UUID NOT NULL REFERENCES rule_type(id) ON DELETE CASCADE,
+    created_at TIMESTAMP NOT NULL DEFAULT NOW(),
+    UNIQUE (entity_profile_id, rule_type_id)
+);
+
 create type eval_status_types as enum ('success', 'failure', 'error', 'skipped', 'pending');
 
 create type remediation_status_types as enum ('success', 'failure', 'error', 'skipped', 'not_available');

@@ -287,3 +287,66 @@ func (q *Queries) ListProfilesByProjectID(ctx context.Context, projectID uuid.UU
 	}
 	return items, nil
 }
+
+const listProfilesInstantiatingRuleType = `-- name: ListProfilesInstantiatingRuleType :many
+SELECT profiles.id, profiles.name, profiles.created_at FROM profiles
+JOIN entity_profiles ON profiles.id = entity_profiles.profile_id 
+JOIN entity_profile_rules ON entity_profiles.id = entity_profile_rules.entity_profile_id
+WHERE entity_profile_rules.rule_type_id = $1
+GROUP BY profiles.id
+`
+
+type ListProfilesInstantiatingRuleTypeRow struct {
+	ID        uuid.UUID `json:"id"`
+	Name      string    `json:"name"`
+	CreatedAt time.Time `json:"created_at"`
+}
+
+// get profile information that instantiate a rule. This is done by joining the profiles with entity_profiles, then correlating those
+// with entity_profile_rules. The rule_type_id is used to filter the results. Note that we only really care about the overal profile,
+// so we only return the profile information. We also should group the profiles so that we don't get duplicates.
+func (q *Queries) ListProfilesInstantiatingRuleType(ctx context.Context, ruleTypeID uuid.UUID) ([]ListProfilesInstantiatingRuleTypeRow, error) {
+	rows, err := q.db.QueryContext(ctx, listProfilesInstantiatingRuleType, ruleTypeID)
+	if err != nil {
+		return nil, err
+	}
+	defer rows.Close()
+	items := []ListProfilesInstantiatingRuleTypeRow{}
+	for rows.Next() {
+		var i ListProfilesInstantiatingRuleTypeRow
+		if err := rows.Scan(&i.ID, &i.Name, &i.CreatedAt); err != nil {
+			return nil, err
+		}
+		items = append(items, i)
+	}
+	if err := rows.Close(); err != nil {
+		return nil, err
+	}
+	if err := rows.Err(); err != nil {
+		return nil, err
+	}
+	return items, nil
+}
+
+const upsertRuleInstantiation = `-- name: UpsertRuleInstantiation :one
+INSERT INTO entity_profile_rules (entity_profile_id, rule_type_id)
+VALUES ($1, $2)
+ON CONFLICT (entity_profile_id, rule_type_id) DO NOTHING RETURNING id, entity_profile_id, rule_type_id, created_at
+`
+
+type UpsertRuleInstantiationParams struct {
+	EntityProfileID uuid.UUID `json:"entity_profile_id"`
+	RuleTypeID      uuid.UUID `json:"rule_type_id"`
+}
+
+func (q *Queries) UpsertRuleInstantiation(ctx context.Context, arg UpsertRuleInstantiationParams) (EntityProfileRule, error) {
+	row := q.db.QueryRowContext(ctx, upsertRuleInstantiation, arg.EntityProfileID, arg.RuleTypeID)
+	var i EntityProfileRule
+	err := row.Scan(
+		&i.ID,
+		&i.EntityProfileID,
+		&i.RuleTypeID,
+		&i.CreatedAt,
+	)
+	return i, err
+}

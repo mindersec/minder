@@ -91,6 +91,10 @@ type Querier interface {
 	ListArtifactsByRepoID(ctx context.Context, repositoryID uuid.UUID) ([]Artifact, error)
 	ListOrganizations(ctx context.Context, arg ListOrganizationsParams) ([]Project, error)
 	ListProfilesByProjectID(ctx context.Context, projectID uuid.UUID) ([]ListProfilesByProjectIDRow, error)
+	// get profile information that instantiate a rule. This is done by joining the profiles with entity_profiles, then correlating those
+	// with entity_profile_rules. The rule_type_id is used to filter the results. Note that we only really care about the overal profile,
+	// so we only return the profile information. We also should group the profiles so that we don't get duplicates.
+	ListProfilesInstantiatingRuleType(ctx context.Context, ruleTypeID uuid.UUID) ([]ListProfilesInstantiatingRuleTypeRow, error)
 	ListProvidersByProjectID(ctx context.Context, projectID uuid.UUID) ([]Provider, error)
 	ListRegisteredRepositoriesByProjectIDAndProvider(ctx context.Context, arg ListRegisteredRepositoriesByProjectIDAndProviderParams) ([]Repository, error)
 	ListRepositoriesByOwner(ctx context.Context, arg ListRepositoriesByOwnerParams) ([]Repository, error)
@@ -114,6 +118,7 @@ type Querier interface {
 	UpsertArtifact(ctx context.Context, arg UpsertArtifactParams) (Artifact, error)
 	UpsertArtifactVersion(ctx context.Context, arg UpsertArtifactVersionParams) (ArtifactVersion, error)
 	UpsertRuleEvaluationStatus(ctx context.Context, arg UpsertRuleEvaluationStatusParams) error
+	UpsertRuleInstantiation(ctx context.Context, arg UpsertRuleInstantiationParams) (EntityProfileRule, error)
 }
 
 var _ Querier = (*Queries)(nil)
