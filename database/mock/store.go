@@ -1278,6 +1278,21 @@ func (mr *MockStoreMockRecorder) ListProfilesByProjectID(arg0, arg1 interface{})
 	return mr.mock.ctrl.RecordCallWithMethodType(mr.mock, "ListProfilesByProjectID", reflect.TypeOf((*MockStore)(nil).ListProfilesByProjectID), arg0, arg1)
 }
 
+// ListProfilesInstantiatingRuleType mocks base method.
+func (m *MockStore) ListProfilesInstantiatingRuleType(arg0 context.Context, arg1 uuid.UUID) ([]db.ListProfilesInstantiatingRuleTypeRow, error) {
+	m.ctrl.T.Helper()
+	ret := m.ctrl.Call(m, "ListProfilesInstantiatingRuleType", arg0, arg1)
+	ret0, _ := ret[0].([]db.ListProfilesInstantiatingRuleTypeRow)
+	ret1, _ := ret[1].(error)
+	return ret0, ret1
+}
+
+// ListProfilesInstantiatingRuleType indicates an expected call of ListProfilesInstantiatingRuleType.
+func (mr *MockStoreMockRecorder) ListProfilesInstantiatingRuleType(arg0, arg1 interface{}) *gomock.Call {
+	mr.mock.ctrl.T.Helper()
+	return mr.mock.ctrl.RecordCallWithMethodType(mr.mock, "ListProfilesInstantiatingRuleType", reflect.TypeOf((*MockStore)(nil).ListProfilesInstantiatingRuleType), arg0, arg1)
+}
+
 // ListProvidersByProjectID mocks base method.
 func (m *MockStore) ListProvidersByProjectID(arg0 context.Context, arg1 uuid.UUID) ([]db.Provider, error) {
 	m.ctrl.T.Helper()
@@ -1617,4 +1632,19 @@ func (m *MockStore) UpsertRuleEvaluationStatus(arg0 context.Context, arg1 db.Ups
 func (mr *MockStoreMockRecorder) UpsertRuleEvaluationStatus(arg0, arg1 interface{}) *gomock.Call {
 	mr.mock.ctrl.T.Helper()
 	return mr.mock.ctrl.RecordCallWithMethodType(mr.mock, "UpsertRuleEvaluationStatus", reflect.TypeOf((*MockStore)(nil).UpsertRuleEvaluationStatus), arg0, arg1)
+}
+
+// UpsertRuleInstantiation mocks base method.
+func (m *MockStore) UpsertRuleInstantiation(arg0 context.Context, arg1 db.UpsertRuleInstantiationParams) (db.EntityProfileRule, error) {
+	m.ctrl.T.Helper()
+	ret := m.ctrl.Call(m, "UpsertRuleInstantiation", arg0, arg1)
+	ret0, _ := ret[0].(db.EntityProfileRule)
+	ret1, _ := ret[1].(error)
+	return ret0, ret1
+}
+
+// UpsertRuleInstantiation indicates an expected call of UpsertRuleInstantiation.
+func (mr *MockStoreMockRecorder) UpsertRuleInstantiation(arg0, arg1 interface{}) *gomock.Call {
+	mr.mock.ctrl.T.Helper()
+	return mr.mock.ctrl.RecordCallWithMethodType(mr.mock, "UpsertRuleInstantiation", reflect.TypeOf((*MockStore)(nil).UpsertRuleInstantiation), arg0, arg1)
 }

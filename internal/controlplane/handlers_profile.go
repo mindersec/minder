@@ -21,6 +21,7 @@ import (
 	"errors"
 	"fmt"
 	"log"
+	"strings"
 
 	"github.com/google/uuid"
 	"google.golang.org/grpc/codes"
@@ -133,6 +134,10 @@ func (s *Server) CreateProfile(ctx context.Context,
 		return nil, status.Errorf(codes.InvalidArgument, "invalid profile: %v", err)
 	}
 
+	// We capture the rule instantiations here so we can
+	// track them in the db later.
+	ruleIDs := map[string]uuid.UUID{}
+
 	err = engine.TraverseAllRulesForPipeline(in, func(r *mediatorv1.Profile_Rule) error {
 		// TODO: This will need to be updated to support
 		// the hierarchy tree once that's settled in.
@@ -169,6 +174,8 @@ func (s *Server) CreateProfile(ctx context.Context,
 		if err := rval.ValidateParamsAgainstSchema(r.GetParams()); err != nil {
 			return fmt.Errorf("error validating rule params: %w", err)
 		}
+
+		ruleIDs[r.GetType()] = rtdb.ID
 
 		return nil
 	})
@@ -216,7 +223,7 @@ func (s *Server) CreateProfile(ctx context.Context,
 		mediatorv1.Entity_ENTITY_BUILD_ENVIRONMENTS: in.GetBuildEnvironment(),
 		mediatorv1.Entity_ENTITY_PULL_REQUESTS:      in.GetPullRequest(),
 	} {
-		if err := createProfileRulesForEntity(ctx, ent, &profile, qtx, entRules); err != nil {
+		if err := createProfileRulesForEntity(ctx, ent, &profile, qtx, entRules, ruleIDs); err != nil {
 			return nil, err
 		}
 	}
@@ -253,6 +260,7 @@ func createProfileRulesForEntity(
 	profile *db.Profile,
 	qtx db.Querier,
 	rules []*mediatorv1.Profile_Rule,
+	ruleIDs map[string]uuid.UUID,
 ) error {
 	if rules == nil {
 		return nil
@@ -263,11 +271,24 @@ func createProfileRulesForEntity(
 		log.Printf("error marshalling %s rules: %v", entity, err)
 		return status.Errorf(codes.Internal, "error creating profile")
 	}
-	_, err = qtx.CreateProfileForEntity(ctx, db.CreateProfileForEntityParams{
+	entProf, err := qtx.CreateProfileForEntity(ctx, db.CreateProfileForEntityParams{
 		ProfileID:       profile.ID,
 		Entity:          entities.EntityTypeToDB(entity),
 		ContextualRules: marshalled,
 	})
+
+	for idx := range ruleIDs {
+		ruleID := ruleIDs[idx]
+
+		_, err := qtx.UpsertRuleInstantiation(ctx, db.UpsertRuleInstantiationParams{
+			EntityProfileID: entProf.ID,
+			RuleTypeID:      ruleID,
+		})
+		if err != nil {
+			log.Printf("error creating rule instantiation: %v", err)
+			return status.Errorf(codes.Internal, "error creating profile")
+		}
+	}
 
 	return err
 }
@@ -773,7 +794,7 @@ func (s *Server) DeleteRuleType(
 	ruletype, err := s.store.GetRuleTypeByID(ctx, parsedRuleTypeID)
 	if err != nil {
 		if errors.Is(err, sql.ErrNoRows) {
-			return nil, status.Errorf(codes.NotFound, "rule type %s not found", in.GetId())
+			return nil, util.UserVisibleError(codes.NotFound, "rule type %s not found", in.GetId())
 		}
 		return nil, status.Errorf(codes.Unknown, "failed to get rule type: %s", err)
 	}
@@ -793,10 +814,27 @@ func (s *Server) DeleteRuleType(
 		return nil, status.Errorf(codes.InvalidArgument, "error ensuring default group: %v", err)
 	}
 
+	profileInfo, err := s.store.ListProfilesInstantiatingRuleType(ctx, ruletype.ID)
+	// We have profiles that use this rule type, so we can't delete it
+	if err == nil {
+		profiles := make([]string, 0, len(profileInfo))
+		for _, p := range profileInfo {
+			profiles = append(profiles, p.Name)
+		}
+
+		return nil, util.UserVisibleError(codes.FailedPrecondition,
+			fmt.Sprintf("cannot delete: rule type %s is used by profiles %s", in.GetId(), strings.Join(profiles, ", ")))
+	} else if !errors.Is(err, sql.ErrNoRows) {
+		// If we failed for another reason, return an error
+		return nil, status.Errorf(codes.Unknown, "failed to get profiles: %s", err)
+	}
+
+	// If there are no profiles instantiating this rule type, we can delete it
 	err = s.store.DeleteRuleType(ctx, parsedRuleTypeID)
 	if err != nil {
+		// The rule got deleted in parallel?
 		if errors.Is(err, sql.ErrNoRows) {
-			return nil, status.Errorf(codes.NotFound, "rule type %s not found", in.GetId())
+			return nil, util.UserVisibleError(codes.NotFound, "rule type %s not found", in.GetId())
 		}
 		return nil, status.Errorf(codes.Unknown, "failed to delete rule type: %s", err)
 	}

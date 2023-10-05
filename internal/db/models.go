@@ -266,6 +266,13 @@ type EntityProfile struct {
 	UpdatedAt       time.Time       `json:"updated_at"`
 }
 
+type EntityProfileRule struct {
+	ID              uuid.UUID `json:"id"`
+	EntityProfileID uuid.UUID `json:"entity_profile_id"`
+	RuleTypeID      uuid.UUID `json:"rule_type_id"`
+	CreatedAt       time.Time `json:"created_at"`
+}
+
 type Profile struct {
 	ID        uuid.UUID         `json:"id"`
 	Name      string            `json:"name"`
