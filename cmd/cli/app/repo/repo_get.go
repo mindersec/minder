@@ -128,5 +128,5 @@ func init() {
 	repo_getCmd.Flags().StringP("provider", "p", "", "Name for the provider to enroll")
 	repo_getCmd.Flags().StringP("name", "n", "", "Name of the repository (owner/name format)")
 	repo_getCmd.Flags().StringP("repo-id", "r", "", "ID of the repo to query")
-	repo_getCmd.Flags().BoolP("status", "s", false, "Only return the status of the policies associated to this repo")
+	repo_getCmd.Flags().BoolP("status", "s", false, "Only return the status of the profiles associated to this repo")
 }

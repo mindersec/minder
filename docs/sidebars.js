@@ -59,10 +59,10 @@ const sidebars = {
     },
     {
       type: 'category',
-      label: 'Policy Engine',
+      label: 'Profile Engine',
       items: [
-        'policy_engine/policy_introduction',
-        'policy_engine/manage_policies',
+        'profile_engine/profile_introduction',
+        'profile_engine/manage_profiles',
       ],
     },
     {

@@ -4,7 +4,7 @@ delete a rule type within a mediator controlplane
 
 ### Synopsis
 
-The medic rule type delete subcommand lets you delete policies within a
+The medic rule type delete subcommand lets you delete profiles within a
 mediator control plane.
 
 ```

@@ -92,10 +92,10 @@ func NewRuleValidator(rt *mediatorv1.RuleType) (*RuleValidator, error) {
 	}, nil
 }
 
-// ValidateRuleDefAgainstSchema validates the given contextual policy against the
+// ValidateRuleDefAgainstSchema validates the given contextual profile against the
 // schema for this rule type
-func (r *RuleValidator) ValidateRuleDefAgainstSchema(contextualPolicy map[string]any) error {
-	if err := validateAgainstSchema(r.schema, contextualPolicy); err != nil {
+func (r *RuleValidator) ValidateRuleDefAgainstSchema(contextualProfile map[string]any) error {
+	if err := validateAgainstSchema(r.schema, contextualProfile); err != nil {
 		return &RuleValidationError{
 			RuleType: r.ruleTypeName,
 			Err:      err.Error(),
@@ -230,7 +230,7 @@ func (r *RuleTypeEngine) GetID() string {
 }
 
 // GetRuleInstanceValidator returns the rule instance validator for this rule type.
-// By instance we mean a rule that has been instantiated in a policy from a given rule type.
+// By instance we mean a rule that has been instantiated in a profile from a given rule type.
 func (r *RuleTypeEngine) GetRuleInstanceValidator() *RuleValidator {
 	return r.rval
 }
@@ -285,7 +285,7 @@ func (r *RuleTypeEngine) shouldRemediate(remAction engif.RemediateActionOpt, eva
 	case engif.ActionOptOff:
 		return false, nil
 	case engif.ActionOptUnknown:
-		return false, errors.New("unknown remediation action, check your policy definition")
+		return false, errors.New("unknown remediation action, check your profile definition")
 	case engif.ActionOptDryRun, engif.ActionOptOn:
 		runRemediation = !errors.Is(evalErr, evalerrors.ErrEvaluationSkipped) ||
 			errors.Is(evalErr, evalerrors.ErrEvaluationSkipSilently)
@@ -334,15 +334,15 @@ func RuleTypePBFromDB(rt *db.RuleType, ectx *EntityContext) (*mediatorv1.RuleTyp
 	}, nil
 }
 
-// GetRulesFromPolicyOfType returns the rules from the policy of the given type
-func GetRulesFromPolicyOfType(p *mediatorv1.Policy, rt *mediatorv1.RuleType) ([]*mediatorv1.Policy_Rule, error) {
+// GetRulesFromProfileOfType returns the rules from the profile of the given type
+func GetRulesFromProfileOfType(p *mediatorv1.Profile, rt *mediatorv1.RuleType) ([]*mediatorv1.Profile_Rule, error) {
 	contextualRules, err := GetRulesForEntity(p, mediatorv1.EntityFromString(rt.Def.InEntity))
 	if err != nil {
 		return nil, fmt.Errorf("error getting rules for entity: %w", err)
 	}
 
-	rules := []*mediatorv1.Policy_Rule{}
-	err = TraverseRules(contextualRules, func(r *mediatorv1.Policy_Rule) error {
+	rules := []*mediatorv1.Profile_Rule{}
+	err = TraverseRules(contextualRules, func(r *mediatorv1.Profile_Rule) error {
 		if r.Type == rt.Name {
 			rules = append(rules, r)
 		}

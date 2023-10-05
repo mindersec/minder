@@ -6,7 +6,7 @@ context:
   provider: github
 description: |
   Verifies the settings for selected actions and reusable workflows that are allowed
-  in a repository. To use this rule, the repository policy for allowed_actions must
+  in a repository. To use this rule, the repository profile for allowed_actions must
   be configured to selected.
 guidance: |
   Having an overview over which actions and reusable workflows are allowed in a repository is important and allows for a better overall security posture.
@@ -44,21 +44,21 @@ def:
       endpoint: "/repos/{{.Entity.Owner}}/{{.Entity.Repository}}/actions/permissions/selected-actions"
       # This is the method to use to retrieve the data. It should already default to JSON
       parse: json
-  # Defines the configuration for evaluating data ingested against the given policy
+  # Defines the configuration for evaluating data ingested against the given profile
   eval:
     type: jq
     jq:
       # Ingested points to the data retrieved in the `ingest` section
       - ingested:
           def: ".github_owned_allowed"
-        # policy points to the policy itself.
-        policy:
+        # profile points to the profile itself.
+        profile:
           def: '.github_owned_allowed'
       - ingested:
           def: ".verified_allowed"
-        policy:
+        profile:
           def: '.verified_allowed'
       - ingested:
           def: ".patterns_allowed"
-        policy:
+        profile:
           def: ".patterns_allowed"

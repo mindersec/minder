@@ -282,14 +282,14 @@ func (eiw *EntityInfoWrapper) unmarshalEntity(msg *message.Message) error {
 }
 
 func (eiw *EntityInfoWrapper) evalStatusParams(
-	policyID uuid.UUID,
+	profileID uuid.UUID,
 	ruleTypeID uuid.UUID,
 	evalErr error,
 	remediateErr error,
 ) *createOrUpdateEvalStatusParams {
 	repoID := uuid.MustParse(eiw.OwnershipData[RepositoryIDEventKey])
 	params := &createOrUpdateEvalStatusParams{
-		policyID:       policyID,
+		profileID:      profileID,
 		repoID:         repoID,
 		ruleTypeEntity: entities.EntityTypeToDB(eiw.Type),
 		ruleTypeID:     ruleTypeID,

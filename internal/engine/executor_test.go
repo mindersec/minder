@@ -74,7 +74,7 @@ func TestExecutor_handleEntityEvent(t *testing.T) {
 	providerName := "github"
 	providerID := uuid.New()
 	passthroughRuleType := "passthrough"
-	policyID := uuid.New()
+	profileID := uuid.New()
 	ruleTypeID := uuid.New()
 	repositoryID := uuid.New()
 
@@ -112,8 +112,8 @@ func TestExecutor_handleEntityEvent(t *testing.T) {
 			EncryptedToken: authtoken,
 		}, nil)
 
-	// list one policy
-	crs := []*mediatorv1.Policy_Rule{
+	// list one profile
+	crs := []*mediatorv1.Profile_Rule{
 		{
 			Type: passthroughRuleType,
 			Def:  &structpb.Struct{},
@@ -124,11 +124,11 @@ func TestExecutor_handleEntityEvent(t *testing.T) {
 	require.NoError(t, err, "expected no error")
 
 	mockStore.EXPECT().
-		ListPoliciesByProjectID(gomock.Any(), projectID).
-		Return([]db.ListPoliciesByProjectIDRow{
+		ListProfilesByProjectID(gomock.Any(), projectID).
+		Return([]db.ListProfilesByProjectIDRow{
 			{
-				ID:              policyID,
-				Name:            "test-policy",
+				ID:              profileID,
+				Name:            "test-profile",
 				Entity:          db.EntitiesRepository,
 				Provider:        providerName,
 				ProjectID:       projectID,
@@ -177,7 +177,7 @@ default allow = true`,
 	// Upload passing status
 	mockStore.EXPECT().
 		UpsertRuleEvaluationStatus(gomock.Any(), db.UpsertRuleEvaluationStatusParams{
-			PolicyID: policyID,
+			ProfileID: profileID,
 			RepositoryID: uuid.NullUUID{
 				UUID:  repositoryID,
 				Valid: true,

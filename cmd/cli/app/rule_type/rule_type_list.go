@@ -46,7 +46,7 @@ mediator control plane for an specific project.`,
 		}
 		defer conn.Close()
 
-		client := pb.NewPolicyServiceClient(conn)
+		client := pb.NewProfileServiceClient(conn)
 		ctx, cancel := util.GetAppContext()
 		defer cancel()
 
@@ -68,7 +68,7 @@ mediator control plane for an specific project.`,
 			},
 		})
 		if err != nil {
-			return fmt.Errorf("error getting policies: %w", err)
+			return fmt.Errorf("error getting profiles: %w", err)
 		}
 
 		switch format {

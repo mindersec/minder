@@ -18,7 +18,7 @@ medic repo get [flags]
   -f, --output string     Output format (json or yaml)
   -p, --provider string   Name for the provider to enroll
   -r, --repo-id string    ID of the repo to query
-  -s, --status            Only return the status of the policies associated to this repo
+  -s, --status            Only return the status of the profiles associated to this repo
 ```
 
 ### Options inherited from parent commands

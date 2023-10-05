@@ -111,7 +111,7 @@ func (e *Reconciler) handleArtifactsReconcilerEvent(ctx context.Context, evt *Re
 		return fmt.Errorf("error building client: %w", err)
 	}
 
-	// evaluate policy for repo
+	// evaluate profile for repo
 	repo := &pb.RepositoryResult{
 		Owner:      repository.RepoOwner,
 		Repository: repository.RepoName,

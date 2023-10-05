@@ -53,7 +53,7 @@ def:
     type: artifact
     # Currently no configuration
     artifact: {}
-  # Defines the configuration for evaluating data ingested against the given policy
+  # Defines the configuration for evaluating data ingested against the given profile
   eval:
     type: rego
     rego:
@@ -68,7 +68,7 @@ def:
 
         allow if {
           every artifactVersion in input.ingested {
-            every key, value in input.policy {
+            every key, value in input.profile {
               artifactVersion.Verification[key] == value
             }
           }

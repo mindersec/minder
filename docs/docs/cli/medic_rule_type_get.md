@@ -15,9 +15,9 @@ medic rule_type get [flags]
 
 ```
   -h, --help              help for get
-  -i, --id string         ID for the policy to query
+  -i, --id string         ID for the profile to query
   -o, --output string     Output format (json, yaml or table) (default "table")
-  -p, --provider string   Provider for the policy (default "github")
+  -p, --provider string   Provider for the profile (default "github")
 ```
 
 ### Options inherited from parent commands

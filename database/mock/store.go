@@ -170,34 +170,34 @@ func (mr *MockStoreMockRecorder) CreateOrganization(arg0, arg1 interface{}) *gom
 	return mr.mock.ctrl.RecordCallWithMethodType(mr.mock, "CreateOrganization", reflect.TypeOf((*MockStore)(nil).CreateOrganization), arg0, arg1)
 }
 
-// CreatePolicy mocks base method.
-func (m *MockStore) CreatePolicy(arg0 context.Context, arg1 db.CreatePolicyParams) (db.Policy, error) {
+// CreateProfile mocks base method.
+func (m *MockStore) CreateProfile(arg0 context.Context, arg1 db.CreateProfileParams) (db.Profile, error) {
 	m.ctrl.T.Helper()
-	ret := m.ctrl.Call(m, "CreatePolicy", arg0, arg1)
-	ret0, _ := ret[0].(db.Policy)
+	ret := m.ctrl.Call(m, "CreateProfile", arg0, arg1)
+	ret0, _ := ret[0].(db.Profile)
 	ret1, _ := ret[1].(error)
 	return ret0, ret1
 }
 
-// CreatePolicy indicates an expected call of CreatePolicy.
-func (mr *MockStoreMockRecorder) CreatePolicy(arg0, arg1 interface{}) *gomock.Call {
+// CreateProfile indicates an expected call of CreateProfile.
+func (mr *MockStoreMockRecorder) CreateProfile(arg0, arg1 interface{}) *gomock.Call {
 	mr.mock.ctrl.T.Helper()
-	return mr.mock.ctrl.RecordCallWithMethodType(mr.mock, "CreatePolicy", reflect.TypeOf((*MockStore)(nil).CreatePolicy), arg0, arg1)
+	return mr.mock.ctrl.RecordCallWithMethodType(mr.mock, "CreateProfile", reflect.TypeOf((*MockStore)(nil).CreateProfile), arg0, arg1)
 }
 
-// CreatePolicyForEntity mocks base method.
-func (m *MockStore) CreatePolicyForEntity(arg0 context.Context, arg1 db.CreatePolicyForEntityParams) (db.EntityPolicy, error) {
+// CreateProfileForEntity mocks base method.
+func (m *MockStore) CreateProfileForEntity(arg0 context.Context, arg1 db.CreateProfileForEntityParams) (db.EntityProfile, error) {
 	m.ctrl.T.Helper()
-	ret := m.ctrl.Call(m, "CreatePolicyForEntity", arg0, arg1)
-	ret0, _ := ret[0].(db.EntityPolicy)
+	ret := m.ctrl.Call(m, "CreateProfileForEntity", arg0, arg1)
+	ret0, _ := ret[0].(db.EntityProfile)
 	ret1, _ := ret[1].(error)
 	return ret0, ret1
 }
 
-// CreatePolicyForEntity indicates an expected call of CreatePolicyForEntity.
-func (mr *MockStoreMockRecorder) CreatePolicyForEntity(arg0, arg1 interface{}) *gomock.Call {
+// CreateProfileForEntity indicates an expected call of CreateProfileForEntity.
+func (mr *MockStoreMockRecorder) CreateProfileForEntity(arg0, arg1 interface{}) *gomock.Call {
 	mr.mock.ctrl.T.Helper()
-	return mr.mock.ctrl.RecordCallWithMethodType(mr.mock, "CreatePolicyForEntity", reflect.TypeOf((*MockStore)(nil).CreatePolicyForEntity), arg0, arg1)
+	return mr.mock.ctrl.RecordCallWithMethodType(mr.mock, "CreateProfileForEntity", reflect.TypeOf((*MockStore)(nil).CreateProfileForEntity), arg0, arg1)
 }
 
 // CreateProject mocks base method.
@@ -418,18 +418,18 @@ func (mr *MockStoreMockRecorder) DeleteOrganization(arg0, arg1 interface{}) *gom
 	return mr.mock.ctrl.RecordCallWithMethodType(mr.mock, "DeleteOrganization", reflect.TypeOf((*MockStore)(nil).DeleteOrganization), arg0, arg1)
 }
 
-// DeletePolicy mocks base method.
-func (m *MockStore) DeletePolicy(arg0 context.Context, arg1 uuid.UUID) error {
+// DeleteProfile mocks base method.
+func (m *MockStore) DeleteProfile(arg0 context.Context, arg1 uuid.UUID) error {
 	m.ctrl.T.Helper()
-	ret := m.ctrl.Call(m, "DeletePolicy", arg0, arg1)
+	ret := m.ctrl.Call(m, "DeleteProfile", arg0, arg1)
 	ret0, _ := ret[0].(error)
 	return ret0
 }
 
-// DeletePolicy indicates an expected call of DeletePolicy.
-func (mr *MockStoreMockRecorder) DeletePolicy(arg0, arg1 interface{}) *gomock.Call {
+// DeleteProfile indicates an expected call of DeleteProfile.
+func (mr *MockStoreMockRecorder) DeleteProfile(arg0, arg1 interface{}) *gomock.Call {
 	mr.mock.ctrl.T.Helper()
-	return mr.mock.ctrl.RecordCallWithMethodType(mr.mock, "DeletePolicy", reflect.TypeOf((*MockStore)(nil).DeletePolicy), arg0, arg1)
+	return mr.mock.ctrl.RecordCallWithMethodType(mr.mock, "DeleteProfile", reflect.TypeOf((*MockStore)(nil).DeleteProfile), arg0, arg1)
 }
 
 // DeleteProject mocks base method.
@@ -739,94 +739,94 @@ func (mr *MockStoreMockRecorder) GetParentProjectsUntil(arg0, arg1 interface{}) 
 	return mr.mock.ctrl.RecordCallWithMethodType(mr.mock, "GetParentProjectsUntil", reflect.TypeOf((*MockStore)(nil).GetParentProjectsUntil), arg0, arg1)
 }
 
-// GetPolicyByID mocks base method.
-func (m *MockStore) GetPolicyByID(arg0 context.Context, arg1 uuid.UUID) (db.Policy, error) {
+// GetProfileByID mocks base method.
+func (m *MockStore) GetProfileByID(arg0 context.Context, arg1 uuid.UUID) (db.Profile, error) {
 	m.ctrl.T.Helper()
-	ret := m.ctrl.Call(m, "GetPolicyByID", arg0, arg1)
-	ret0, _ := ret[0].(db.Policy)
+	ret := m.ctrl.Call(m, "GetProfileByID", arg0, arg1)
+	ret0, _ := ret[0].(db.Profile)
 	ret1, _ := ret[1].(error)
 	return ret0, ret1
 }
 
-// GetPolicyByID indicates an expected call of GetPolicyByID.
-func (mr *MockStoreMockRecorder) GetPolicyByID(arg0, arg1 interface{}) *gomock.Call {
+// GetProfileByID indicates an expected call of GetProfileByID.
+func (mr *MockStoreMockRecorder) GetProfileByID(arg0, arg1 interface{}) *gomock.Call {
 	mr.mock.ctrl.T.Helper()
-	return mr.mock.ctrl.RecordCallWithMethodType(mr.mock, "GetPolicyByID", reflect.TypeOf((*MockStore)(nil).GetPolicyByID), arg0, arg1)
+	return mr.mock.ctrl.RecordCallWithMethodType(mr.mock, "GetProfileByID", reflect.TypeOf((*MockStore)(nil).GetProfileByID), arg0, arg1)
 }
 
-// GetPolicyByProjectAndID mocks base method.
-func (m *MockStore) GetPolicyByProjectAndID(arg0 context.Context, arg1 db.GetPolicyByProjectAndIDParams) ([]db.GetPolicyByProjectAndIDRow, error) {
+// GetProfileByProjectAndID mocks base method.
+func (m *MockStore) GetProfileByProjectAndID(arg0 context.Context, arg1 db.GetProfileByProjectAndIDParams) ([]db.GetProfileByProjectAndIDRow, error) {
 	m.ctrl.T.Helper()
-	ret := m.ctrl.Call(m, "GetPolicyByProjectAndID", arg0, arg1)
-	ret0, _ := ret[0].([]db.GetPolicyByProjectAndIDRow)
+	ret := m.ctrl.Call(m, "GetProfileByProjectAndID", arg0, arg1)
+	ret0, _ := ret[0].([]db.GetProfileByProjectAndIDRow)
 	ret1, _ := ret[1].(error)
 	return ret0, ret1
 }
 
-// GetPolicyByProjectAndID indicates an expected call of GetPolicyByProjectAndID.
-func (mr *MockStoreMockRecorder) GetPolicyByProjectAndID(arg0, arg1 interface{}) *gomock.Call {
+// GetProfileByProjectAndID indicates an expected call of GetProfileByProjectAndID.
+func (mr *MockStoreMockRecorder) GetProfileByProjectAndID(arg0, arg1 interface{}) *gomock.Call {
 	mr.mock.ctrl.T.Helper()
-	return mr.mock.ctrl.RecordCallWithMethodType(mr.mock, "GetPolicyByProjectAndID", reflect.TypeOf((*MockStore)(nil).GetPolicyByProjectAndID), arg0, arg1)
+	return mr.mock.ctrl.RecordCallWithMethodType(mr.mock, "GetProfileByProjectAndID", reflect.TypeOf((*MockStore)(nil).GetProfileByProjectAndID), arg0, arg1)
 }
 
-// GetPolicyByProjectAndName mocks base method.
-func (m *MockStore) GetPolicyByProjectAndName(arg0 context.Context, arg1 db.GetPolicyByProjectAndNameParams) ([]db.GetPolicyByProjectAndNameRow, error) {
+// GetProfileByProjectAndName mocks base method.
+func (m *MockStore) GetProfileByProjectAndName(arg0 context.Context, arg1 db.GetProfileByProjectAndNameParams) ([]db.GetProfileByProjectAndNameRow, error) {
 	m.ctrl.T.Helper()
-	ret := m.ctrl.Call(m, "GetPolicyByProjectAndName", arg0, arg1)
-	ret0, _ := ret[0].([]db.GetPolicyByProjectAndNameRow)
+	ret := m.ctrl.Call(m, "GetProfileByProjectAndName", arg0, arg1)
+	ret0, _ := ret[0].([]db.GetProfileByProjectAndNameRow)
 	ret1, _ := ret[1].(error)
 	return ret0, ret1
 }
 
-// GetPolicyByProjectAndName indicates an expected call of GetPolicyByProjectAndName.
-func (mr *MockStoreMockRecorder) GetPolicyByProjectAndName(arg0, arg1 interface{}) *gomock.Call {
+// GetProfileByProjectAndName indicates an expected call of GetProfileByProjectAndName.
+func (mr *MockStoreMockRecorder) GetProfileByProjectAndName(arg0, arg1 interface{}) *gomock.Call {
 	mr.mock.ctrl.T.Helper()
-	return mr.mock.ctrl.RecordCallWithMethodType(mr.mock, "GetPolicyByProjectAndName", reflect.TypeOf((*MockStore)(nil).GetPolicyByProjectAndName), arg0, arg1)
+	return mr.mock.ctrl.RecordCallWithMethodType(mr.mock, "GetProfileByProjectAndName", reflect.TypeOf((*MockStore)(nil).GetProfileByProjectAndName), arg0, arg1)
 }
 
-// GetPolicyStatusByIdAndProject mocks base method.
-func (m *MockStore) GetPolicyStatusByIdAndProject(arg0 context.Context, arg1 db.GetPolicyStatusByIdAndProjectParams) (db.GetPolicyStatusByIdAndProjectRow, error) {
+// GetProfileStatusByIdAndProject mocks base method.
+func (m *MockStore) GetProfileStatusByIdAndProject(arg0 context.Context, arg1 db.GetProfileStatusByIdAndProjectParams) (db.GetProfileStatusByIdAndProjectRow, error) {
 	m.ctrl.T.Helper()
-	ret := m.ctrl.Call(m, "GetPolicyStatusByIdAndProject", arg0, arg1)
-	ret0, _ := ret[0].(db.GetPolicyStatusByIdAndProjectRow)
+	ret := m.ctrl.Call(m, "GetProfileStatusByIdAndProject", arg0, arg1)
+	ret0, _ := ret[0].(db.GetProfileStatusByIdAndProjectRow)
 	ret1, _ := ret[1].(error)
 	return ret0, ret1
 }
 
-// GetPolicyStatusByIdAndProject indicates an expected call of GetPolicyStatusByIdAndProject.
-func (mr *MockStoreMockRecorder) GetPolicyStatusByIdAndProject(arg0, arg1 interface{}) *gomock.Call {
+// GetProfileStatusByIdAndProject indicates an expected call of GetProfileStatusByIdAndProject.
+func (mr *MockStoreMockRecorder) GetProfileStatusByIdAndProject(arg0, arg1 interface{}) *gomock.Call {
 	mr.mock.ctrl.T.Helper()
-	return mr.mock.ctrl.RecordCallWithMethodType(mr.mock, "GetPolicyStatusByIdAndProject", reflect.TypeOf((*MockStore)(nil).GetPolicyStatusByIdAndProject), arg0, arg1)
+	return mr.mock.ctrl.RecordCallWithMethodType(mr.mock, "GetProfileStatusByIdAndProject", reflect.TypeOf((*MockStore)(nil).GetProfileStatusByIdAndProject), arg0, arg1)
 }
 
-// GetPolicyStatusByNameAndProject mocks base method.
-func (m *MockStore) GetPolicyStatusByNameAndProject(arg0 context.Context, arg1 db.GetPolicyStatusByNameAndProjectParams) (db.GetPolicyStatusByNameAndProjectRow, error) {
+// GetProfileStatusByNameAndProject mocks base method.
+func (m *MockStore) GetProfileStatusByNameAndProject(arg0 context.Context, arg1 db.GetProfileStatusByNameAndProjectParams) (db.GetProfileStatusByNameAndProjectRow, error) {
 	m.ctrl.T.Helper()
-	ret := m.ctrl.Call(m, "GetPolicyStatusByNameAndProject", arg0, arg1)
-	ret0, _ := ret[0].(db.GetPolicyStatusByNameAndProjectRow)
+	ret := m.ctrl.Call(m, "GetProfileStatusByNameAndProject", arg0, arg1)
+	ret0, _ := ret[0].(db.GetProfileStatusByNameAndProjectRow)
 	ret1, _ := ret[1].(error)
 	return ret0, ret1
 }
 
-// GetPolicyStatusByNameAndProject indicates an expected call of GetPolicyStatusByNameAndProject.
-func (mr *MockStoreMockRecorder) GetPolicyStatusByNameAndProject(arg0, arg1 interface{}) *gomock.Call {
+// GetProfileStatusByNameAndProject indicates an expected call of GetProfileStatusByNameAndProject.
+func (mr *MockStoreMockRecorder) GetProfileStatusByNameAndProject(arg0, arg1 interface{}) *gomock.Call {
 	mr.mock.ctrl.T.Helper()
-	return mr.mock.ctrl.RecordCallWithMethodType(mr.mock, "GetPolicyStatusByNameAndProject", reflect.TypeOf((*MockStore)(nil).GetPolicyStatusByNameAndProject), arg0, arg1)
+	return mr.mock.ctrl.RecordCallWithMethodType(mr.mock, "GetProfileStatusByNameAndProject", reflect.TypeOf((*MockStore)(nil).GetProfileStatusByNameAndProject), arg0, arg1)
 }
 
-// GetPolicyStatusByProject mocks base method.
-func (m *MockStore) GetPolicyStatusByProject(arg0 context.Context, arg1 uuid.UUID) ([]db.GetPolicyStatusByProjectRow, error) {
+// GetProfileStatusByProject mocks base method.
+func (m *MockStore) GetProfileStatusByProject(arg0 context.Context, arg1 uuid.UUID) ([]db.GetProfileStatusByProjectRow, error) {
 	m.ctrl.T.Helper()
-	ret := m.ctrl.Call(m, "GetPolicyStatusByProject", arg0, arg1)
-	ret0, _ := ret[0].([]db.GetPolicyStatusByProjectRow)
+	ret := m.ctrl.Call(m, "GetProfileStatusByProject", arg0, arg1)
+	ret0, _ := ret[0].([]db.GetProfileStatusByProjectRow)
 	ret1, _ := ret[1].(error)
 	return ret0, ret1
 }
 
-// GetPolicyStatusByProject indicates an expected call of GetPolicyStatusByProject.
-func (mr *MockStoreMockRecorder) GetPolicyStatusByProject(arg0, arg1 interface{}) *gomock.Call {
+// GetProfileStatusByProject indicates an expected call of GetProfileStatusByProject.
+func (mr *MockStoreMockRecorder) GetProfileStatusByProject(arg0, arg1 interface{}) *gomock.Call {
 	mr.mock.ctrl.T.Helper()
-	return mr.mock.ctrl.RecordCallWithMethodType(mr.mock, "GetPolicyStatusByProject", reflect.TypeOf((*MockStore)(nil).GetPolicyStatusByProject), arg0, arg1)
+	return mr.mock.ctrl.RecordCallWithMethodType(mr.mock, "GetProfileStatusByProject", reflect.TypeOf((*MockStore)(nil).GetProfileStatusByProject), arg0, arg1)
 }
 
 // GetProjectByID mocks base method.
@@ -1263,19 +1263,19 @@ func (mr *MockStoreMockRecorder) ListOrganizations(arg0, arg1 interface{}) *gomo
 	return mr.mock.ctrl.RecordCallWithMethodType(mr.mock, "ListOrganizations", reflect.TypeOf((*MockStore)(nil).ListOrganizations), arg0, arg1)
 }
 
-// ListPoliciesByProjectID mocks base method.
-func (m *MockStore) ListPoliciesByProjectID(arg0 context.Context, arg1 uuid.UUID) ([]db.ListPoliciesByProjectIDRow, error) {
+// ListProfilesByProjectID mocks base method.
+func (m *MockStore) ListProfilesByProjectID(arg0 context.Context, arg1 uuid.UUID) ([]db.ListProfilesByProjectIDRow, error) {
 	m.ctrl.T.Helper()
-	ret := m.ctrl.Call(m, "ListPoliciesByProjectID", arg0, arg1)
-	ret0, _ := ret[0].([]db.ListPoliciesByProjectIDRow)
+	ret := m.ctrl.Call(m, "ListProfilesByProjectID", arg0, arg1)
+	ret0, _ := ret[0].([]db.ListProfilesByProjectIDRow)
 	ret1, _ := ret[1].(error)
 	return ret0, ret1
 }
 
-// ListPoliciesByProjectID indicates an expected call of ListPoliciesByProjectID.
-func (mr *MockStoreMockRecorder) ListPoliciesByProjectID(arg0, arg1 interface{}) *gomock.Call {
+// ListProfilesByProjectID indicates an expected call of ListProfilesByProjectID.
+func (mr *MockStoreMockRecorder) ListProfilesByProjectID(arg0, arg1 interface{}) *gomock.Call {
 	mr.mock.ctrl.T.Helper()
-	return mr.mock.ctrl.RecordCallWithMethodType(mr.mock, "ListPoliciesByProjectID", reflect.TypeOf((*MockStore)(nil).ListPoliciesByProjectID), arg0, arg1)
+	return mr.mock.ctrl.RecordCallWithMethodType(mr.mock, "ListProfilesByProjectID", reflect.TypeOf((*MockStore)(nil).ListProfilesByProjectID), arg0, arg1)
 }
 
 // ListProvidersByProjectID mocks base method.
@@ -1368,19 +1368,19 @@ func (mr *MockStoreMockRecorder) ListRolesByProjectID(arg0, arg1 interface{}) *g
 	return mr.mock.ctrl.RecordCallWithMethodType(mr.mock, "ListRolesByProjectID", reflect.TypeOf((*MockStore)(nil).ListRolesByProjectID), arg0, arg1)
 }
 
-// ListRuleEvaluationStatusByPolicyId mocks base method.
-func (m *MockStore) ListRuleEvaluationStatusByPolicyId(arg0 context.Context, arg1 db.ListRuleEvaluationStatusByPolicyIdParams) ([]db.ListRuleEvaluationStatusByPolicyIdRow, error) {
+// ListRuleEvaluationStatusByProfileId mocks base method.
+func (m *MockStore) ListRuleEvaluationStatusByProfileId(arg0 context.Context, arg1 db.ListRuleEvaluationStatusByProfileIdParams) ([]db.ListRuleEvaluationStatusByProfileIdRow, error) {
 	m.ctrl.T.Helper()
-	ret := m.ctrl.Call(m, "ListRuleEvaluationStatusByPolicyId", arg0, arg1)
-	ret0, _ := ret[0].([]db.ListRuleEvaluationStatusByPolicyIdRow)
+	ret := m.ctrl.Call(m, "ListRuleEvaluationStatusByProfileId", arg0, arg1)
+	ret0, _ := ret[0].([]db.ListRuleEvaluationStatusByProfileIdRow)
 	ret1, _ := ret[1].(error)
 	return ret0, ret1
 }
 
-// ListRuleEvaluationStatusByPolicyId indicates an expected call of ListRuleEvaluationStatusByPolicyId.
-func (mr *MockStoreMockRecorder) ListRuleEvaluationStatusByPolicyId(arg0, arg1 interface{}) *gomock.Call {
+// ListRuleEvaluationStatusByProfileId indicates an expected call of ListRuleEvaluationStatusByProfileId.
+func (mr *MockStoreMockRecorder) ListRuleEvaluationStatusByProfileId(arg0, arg1 interface{}) *gomock.Call {
 	mr.mock.ctrl.T.Helper()
-	return mr.mock.ctrl.RecordCallWithMethodType(mr.mock, "ListRuleEvaluationStatusByPolicyId", reflect.TypeOf((*MockStore)(nil).ListRuleEvaluationStatusByPolicyId), arg0, arg1)
+	return mr.mock.ctrl.RecordCallWithMethodType(mr.mock, "ListRuleEvaluationStatusByProfileId", reflect.TypeOf((*MockStore)(nil).ListRuleEvaluationStatusByProfileId), arg0, arg1)
 }
 
 // ListRuleTypesByProviderAndProject mocks base method.

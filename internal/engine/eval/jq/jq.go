@@ -13,7 +13,7 @@
 // limitations under the License.
 // Package rule provides the CLI subcommand for managing rules
 
-// Package jq provides the jq policy evaluator
+// Package jq provides the jq profile evaluator
 package jq
 
 import (
@@ -42,12 +42,12 @@ func NewJQEvaluator(assertions []*pb.RuleType_Definition_Eval_JQComparison) (*Ev
 
 	for idx := range assertions {
 		a := assertions[idx]
-		if a.Policy == nil {
-			return nil, fmt.Errorf("missing policy accessor")
+		if a.Profile == nil {
+			return nil, fmt.Errorf("missing profile accessor")
 		}
 
-		if a.Policy.Def == "" {
-			return nil, fmt.Errorf("missing policy accessor definition")
+		if a.Profile.Def == "" {
+			return nil, fmt.Errorf("missing profile accessor definition")
 		}
 
 		if a.Ingested == nil {
@@ -72,14 +72,14 @@ func (jqe *Evaluator) Eval(ctx context.Context, pol map[string]any, res *engif.R
 	obj := res.Object
 
 	for idx := range jqe.assertions {
-		var policyVal, dataVal any
+		var profileVal, dataVal any
 
 		a := jqe.assertions[idx]
-		policyVal, err := util.JQReadFrom[any](ctx, a.Policy.Def, pol)
+		profileVal, err := util.JQReadFrom[any](ctx, a.Profile.Def, pol)
 		// we ignore util.ErrNoValueFound because we want to allow the JQ accessor to return the default value
 		// which is fine for DeepEqual
 		if err != nil && !errors.Is(err, util.ErrNoValueFound) {
-			return fmt.Errorf("cannot get values from policy accessor: %w", err)
+			return fmt.Errorf("cannot get values from profile accessor: %w", err)
 		}
 
 		dataVal, err = util.JQReadFrom[any](ctx, a.Ingested.Def, obj)
@@ -88,9 +88,9 @@ func (jqe *Evaluator) Eval(ctx context.Context, pol map[string]any, res *engif.R
 		}
 
 		// Deep compare
-		if !reflect.DeepEqual(policyVal, dataVal) {
-			msg := fmt.Sprintf("data does not match policy: for assertion %d, got %v, want %v",
-				idx, dataVal, policyVal)
+		if !reflect.DeepEqual(profileVal, dataVal) {
+			msg := fmt.Sprintf("data does not match profile: for assertion %d, got %v, want %v",
+				idx, dataVal, profileVal)
 
 			marshalledAssertion, err := json.MarshalIndent(a, "", "  ")
 			if err == nil {

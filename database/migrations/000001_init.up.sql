@@ -177,7 +177,7 @@ CREATE TABLE rule_type (
 
 CREATE TYPE remediate_type as enum ('on', 'off', 'dry_run');
 
-CREATE TABLE policies (
+CREATE TABLE profiles (
     id UUID NOT NULL DEFAULT gen_random_uuid() PRIMARY KEY,
     name TEXT NOT NULL,
     provider TEXT NOT NULL,
@@ -188,14 +188,14 @@ CREATE TABLE policies (
     FOREIGN KEY (project_id, provider) REFERENCES providers(project_id, name) ON DELETE CASCADE
 );
 
-CREATE UNIQUE INDEX ON policies(project_id, name);
+CREATE UNIQUE INDEX ON profiles(project_id, name);
 
 CREATE TYPE entities as enum ('repository', 'build_environment', 'artifact', 'pull_request');
 
-CREATE TABLE entity_policies (
+CREATE TABLE entity_profiles (
     id UUID NOT NULL DEFAULT gen_random_uuid() PRIMARY KEY,
     entity entities NOT NULL,
-    policy_id UUID NOT NULL REFERENCES policies(id) ON DELETE CASCADE,
+    profile_id UUID NOT NULL REFERENCES profiles(id) ON DELETE CASCADE,
     contextual_rules JSONB NOT NULL,
     created_at TIMESTAMP NOT NULL DEFAULT NOW(),
     updated_at TIMESTAMP NOT NULL DEFAULT NOW()
@@ -205,20 +205,20 @@ create type eval_status_types as enum ('success', 'failure', 'error', 'skipped',
 
 create type remediation_status_types as enum ('success', 'failure', 'error', 'skipped', 'not_available');
 
--- This table will be used to track the overall status of a policy evaluation
-CREATE TABLE policy_status (
+-- This table will be used to track the overall status of a profile evaluation
+CREATE TABLE profile_status (
     id UUID NOT NULL DEFAULT gen_random_uuid() PRIMARY KEY,
-    policy_id UUID NOT NULL REFERENCES policies(id) ON DELETE CASCADE,
-    policy_status eval_status_types NOT NULL,
+    profile_id UUID NOT NULL REFERENCES profiles(id) ON DELETE CASCADE,
+    profile_status eval_status_types NOT NULL,
     last_updated TIMESTAMP NOT NULL DEFAULT NOW()
 );
 
 -- This table will be used to track the status of each rule evaluation
--- for a given policy
+-- for a given profile
 CREATE TABLE rule_evaluation_status (
     id UUID NOT NULL DEFAULT gen_random_uuid() PRIMARY KEY,
     entity entities NOT NULL,
-    policy_id UUID NOT NULL REFERENCES policies(id) ON DELETE CASCADE,
+    profile_id UUID NOT NULL REFERENCES profiles(id) ON DELETE CASCADE,
     rule_type_id UUID NOT NULL REFERENCES rule_type(id) ON DELETE CASCADE,
     eval_status eval_status_types NOT NULL,
     remediation_status remediation_status_types NOT NULL,
@@ -247,7 +247,7 @@ CREATE UNIQUE INDEX roles_organization_id_name_lower_idx ON roles (organization_
 CREATE INDEX idx_provider_access_tokens_project_id ON provider_access_tokens(project_id);
 CREATE UNIQUE INDEX repositories_repo_id_idx ON repositories(repo_id);
 CREATE UNIQUE INDEX rule_type_idx ON rule_type(provider, project_id, name);
-CREATE UNIQUE INDEX rule_evaluation_status_results_idx ON rule_evaluation_status(policy_id, repository_id, COALESCE(artifact_id, '00000000-0000-0000-0000-000000000000'::UUID), entity, rule_type_id);
+CREATE UNIQUE INDEX rule_evaluation_status_results_idx ON rule_evaluation_status(profile_id, repository_id, COALESCE(artifact_id, '00000000-0000-0000-0000-000000000000'::UUID), entity, rule_type_id);
 CREATE UNIQUE INDEX artifact_name_lower_idx ON artifacts (repository_id, LOWER(artifact_name));
 CREATE UNIQUE INDEX artifact_versions_idx ON artifact_versions (artifact_id, sha);
 CREATE UNIQUE INDEX provider_name_project_id_idx ON providers (name, project_id);
@@ -267,50 +267,50 @@ CREATE TRIGGER delete_eval_statuses
     FOR EACH ROW
     EXECUTE PROCEDURE delete_eval_statuses();
 
--- Create a default status for a policy when it's created
-CREATE OR REPLACE FUNCTION create_default_policy_status() RETURNS TRIGGER AS $$
+-- Create a default status for a profile when it's created
+CREATE OR REPLACE FUNCTION create_default_profile_status() RETURNS TRIGGER AS $$
 BEGIN
-    INSERT INTO policy_status (policy_id, policy_status, last_updated) VALUES (NEW.id, 'pending', NOW());
+    INSERT INTO profile_status (profile_id, profile_status, last_updated) VALUES (NEW.id, 'pending', NOW());
     RETURN NEW;
 END;
 $$ LANGUAGE plpgsql;
 
-CREATE TRIGGER create_default_policy_status
-    AFTER INSERT ON policies
+CREATE TRIGGER create_default_profile_status
+    AFTER INSERT ON profiles
     FOR EACH ROW
-    EXECUTE PROCEDURE create_default_policy_status();
+    EXECUTE PROCEDURE create_default_profile_status();
 
--- Update overall policy status if a rule evaluation status is updated
+-- Update overall profile status if a rule evaluation status is updated
 -- error takes precedence over failure, failure takes precedence over success
-CREATE OR REPLACE FUNCTION update_policy_status() RETURNS TRIGGER AS $$
+CREATE OR REPLACE FUNCTION update_profile_status() RETURNS TRIGGER AS $$
 BEGIN
-    -- keep error if policy had errored
+    -- keep error if profile had errored
     IF (NEW.eval_status = 'error') THEN
-        UPDATE policy_status SET policy_status = 'error', last_updated = NOW() WHERE policy_id = NEW.policy_id;
+        UPDATE profile_status SET profile_status = 'error', last_updated = NOW() WHERE profile_id = NEW.profile_id;
     -- mark status as successful if all evaluations are successful or skipped
-    ELSEIF NOT EXISTS (SELECT * FROM rule_evaluation_status WHERE policy_id = NEW.policy_id AND eval_status != 'success' AND eval_status != 'skipped') THEN
-        UPDATE policy_status SET policy_status = 'success', last_updated = NOW() WHERE policy_id = NEW.policy_id;
-    -- mark policy as successful if it was pending and the new status is success
+    ELSEIF NOT EXISTS (SELECT * FROM rule_evaluation_status WHERE profile_id = NEW.profile_id AND eval_status != 'success' AND eval_status != 'skipped') THEN
+        UPDATE profile_status SET profile_status = 'success', last_updated = NOW() WHERE profile_id = NEW.profile_id;
+    -- mark profile as successful if it was pending and the new status is success
     ELSEIF (NEW.eval_status = 'success') THEN
-        UPDATE policy_status SET policy_status = 'success', last_updated = NOW() WHERE policy_id = NEW.policy_id AND policy_status = 'pending';
+        UPDATE profile_status SET profile_status = 'success', last_updated = NOW() WHERE profile_id = NEW.profile_id AND profile_status = 'pending';
     -- mark status as failed if it was successful or pending and the new status is failure
     -- and there are no errors
-    ELSEIF (NEW.eval_status = 'failure') AND NOT EXISTS (SELECT * FROM rule_evaluation_status WHERE policy_id = NEW.policy_id and eval_status = 'error') THEN
-        UPDATE policy_status SET policy_status = 'failure', last_updated = NOW()
-        WHERE policy_id = NEW.policy_id AND (policy_status = 'success' OR policy_status = 'pending') AND NEW.eval_status = 'failure';
-    -- only mark policy run as skipped if every evaluation was skipped
+    ELSEIF (NEW.eval_status = 'failure') AND NOT EXISTS (SELECT * FROM rule_evaluation_status WHERE profile_id = NEW.profile_id and eval_status = 'error') THEN
+        UPDATE profile_status SET profile_status = 'failure', last_updated = NOW()
+        WHERE profile_id = NEW.profile_id AND (profile_status = 'success' OR profile_status = 'pending') AND NEW.eval_status = 'failure';
+    -- only mark profile run as skipped if every evaluation was skipped
     ELSEIF (NEW.eval_status = 'skipped') THEN
-        UPDATE policy_status SET policy_status = 'skipped', last_updated = NOW()
-        WHERE policy_id = NEW.policy_id AND NOT EXISTS (SELECT * FROM rule_evaluation_status WHERE policy_id = NEW.policy_id AND eval_status != 'skipped');
+        UPDATE profile_status SET profile_status = 'skipped', last_updated = NOW()
+        WHERE profile_id = NEW.profile_id AND NOT EXISTS (SELECT * FROM rule_evaluation_status WHERE profile_id = NEW.profile_id AND eval_status != 'skipped');
     END IF;
     RETURN NEW;
 END;
 $$ LANGUAGE plpgsql;
 
-CREATE TRIGGER update_policy_status
+CREATE TRIGGER update_profile_status
     AFTER INSERT OR UPDATE ON rule_evaluation_status
     FOR EACH ROW
-    EXECUTE PROCEDURE update_policy_status();
+    EXECUTE PROCEDURE update_profile_status();
 
 -- Create default root organization and get id so we can create the root project
 INSERT INTO projects (name, is_organization) VALUES ('Mediator Root', TRUE);

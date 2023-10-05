@@ -415,19 +415,19 @@ func (csh *commitStatusPrHandler) setCommitStatus(
 }
 
 // just satisfies the interface but really does nothing. Useful for testing.
-type policyOnlyPrHandler struct{}
+type profileOnlyPrHandler struct{}
 
-func (policyOnlyPrHandler) trackVulnerableDep(
+func (profileOnlyPrHandler) trackVulnerableDep(
 	_ context.Context,
 	_ *pb.PrDependencies_ContextualDependency,
 	_ patchLocatorFormatter) error {
 	return nil
 }
 
-func (policyOnlyPrHandler) submit(_ context.Context) error {
+func (profileOnlyPrHandler) submit(_ context.Context) error {
 	return nil
 }
 
-func newPolicyOnlyPrHandler() prStatusHandler {
-	return &policyOnlyPrHandler{}
+func newProfileOnlyPrHandler() prStatusHandler {
+	return &profileOnlyPrHandler{}
 }

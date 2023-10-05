@@ -53,7 +53,7 @@ mediator control plane.`,
 		util.ExitNicelyOnError(err, "Error getting grpc connection")
 		defer conn.Close()
 
-		client := pb.NewPolicyServiceClient(conn)
+		client := pb.NewProfileServiceClient(conn)
 		ctx, cancel := util.GetAppContext()
 		defer cancel()
 
@@ -89,9 +89,9 @@ mediator control plane.`,
 
 func init() {
 	ruleTypeCmd.AddCommand(ruleType_getCmd)
-	ruleType_getCmd.Flags().StringP("id", "i", "", "ID for the policy to query")
+	ruleType_getCmd.Flags().StringP("id", "i", "", "ID for the profile to query")
 	ruleType_getCmd.Flags().StringP("output", "o", app.Table, "Output format (json, yaml or table)")
-	ruleType_getCmd.Flags().StringP("provider", "p", "github", "Provider for the policy")
+	ruleType_getCmd.Flags().StringP("provider", "p", "github", "Provider for the profile")
 	// TODO set up project if specified
 
 	if err := ruleType_getCmd.MarkFlagRequired("id"); err != nil {

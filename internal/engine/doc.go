@@ -13,6 +13,6 @@
 // limitations under the License.
 // Package rule provides the CLI subcommand for managing rules
 
-// Package engine provides an implementation of the policy-engine-related
+// Package engine provides an implementation of the profile-engine-related
 // objects, interfaces and functionality.
 package engine

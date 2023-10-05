@@ -257,16 +257,16 @@ type ArtifactVersion struct {
 	CreatedAt             time.Time             `json:"created_at"`
 }
 
-type EntityPolicy struct {
+type EntityProfile struct {
 	ID              uuid.UUID       `json:"id"`
 	Entity          Entities        `json:"entity"`
-	PolicyID        uuid.UUID       `json:"policy_id"`
+	ProfileID       uuid.UUID       `json:"profile_id"`
 	ContextualRules json.RawMessage `json:"contextual_rules"`
 	CreatedAt       time.Time       `json:"created_at"`
 	UpdatedAt       time.Time       `json:"updated_at"`
 }
 
-type Policy struct {
+type Profile struct {
 	ID        uuid.UUID         `json:"id"`
 	Name      string            `json:"name"`
 	Provider  string            `json:"provider"`
@@ -276,11 +276,11 @@ type Policy struct {
 	UpdatedAt time.Time         `json:"updated_at"`
 }
 
-type PolicyStatus struct {
-	ID           uuid.UUID       `json:"id"`
-	PolicyID     uuid.UUID       `json:"policy_id"`
-	PolicyStatus EvalStatusTypes `json:"policy_status"`
-	LastUpdated  time.Time       `json:"last_updated"`
+type ProfileStatus struct {
+	ID            uuid.UUID       `json:"id"`
+	ProfileID     uuid.UUID       `json:"profile_id"`
+	ProfileStatus EvalStatusTypes `json:"profile_status"`
+	LastUpdated   time.Time       `json:"last_updated"`
 }
 
 type Project struct {
@@ -346,7 +346,7 @@ type Role struct {
 type RuleEvaluationStatus struct {
 	ID                     uuid.UUID              `json:"id"`
 	Entity                 Entities               `json:"entity"`
-	PolicyID               uuid.UUID              `json:"policy_id"`
+	ProfileID              uuid.UUID              `json:"profile_id"`
 	RuleTypeID             uuid.UUID              `json:"rule_type_id"`
 	EvalStatus             EvalStatusTypes        `json:"eval_status"`
 	RemediationStatus      RemediationStatusTypes `json:"remediation_status"`

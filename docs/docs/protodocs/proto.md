@@ -16,8 +16,8 @@
     - [CreateKeyPairResponse](#mediator-v1-CreateKeyPairResponse)
     - [CreateOrganizationRequest](#mediator-v1-CreateOrganizationRequest)
     - [CreateOrganizationResponse](#mediator-v1-CreateOrganizationResponse)
-    - [CreatePolicyRequest](#mediator-v1-CreatePolicyRequest)
-    - [CreatePolicyResponse](#mediator-v1-CreatePolicyResponse)
+    - [CreateProfileRequest](#mediator-v1-CreateProfileRequest)
+    - [CreateProfileResponse](#mediator-v1-CreateProfileResponse)
     - [CreateProjectRequest](#mediator-v1-CreateProjectRequest)
     - [CreateProjectResponse](#mediator-v1-CreateProjectResponse)
     - [CreateRoleByOrganizationRequest](#mediator-v1-CreateRoleByOrganizationRequest)
@@ -30,8 +30,8 @@
     - [CreateUserResponse](#mediator-v1-CreateUserResponse)
     - [DeleteOrganizationRequest](#mediator-v1-DeleteOrganizationRequest)
     - [DeleteOrganizationResponse](#mediator-v1-DeleteOrganizationResponse)
-    - [DeletePolicyRequest](#mediator-v1-DeletePolicyRequest)
-    - [DeletePolicyResponse](#mediator-v1-DeletePolicyResponse)
+    - [DeleteProfileRequest](#mediator-v1-DeleteProfileRequest)
+    - [DeleteProfileResponse](#mediator-v1-DeleteProfileResponse)
     - [DeleteProjectRequest](#mediator-v1-DeleteProjectRequest)
     - [DeleteProjectResponse](#mediator-v1-DeleteProjectResponse)
     - [DeleteRoleRequest](#mediator-v1-DeleteRoleRequest)
@@ -58,13 +58,13 @@
     - [GetOrganizationResponse](#mediator-v1-GetOrganizationResponse)
     - [GetOrganizationsRequest](#mediator-v1-GetOrganizationsRequest)
     - [GetOrganizationsResponse](#mediator-v1-GetOrganizationsResponse)
-    - [GetPolicyByIdRequest](#mediator-v1-GetPolicyByIdRequest)
-    - [GetPolicyByIdResponse](#mediator-v1-GetPolicyByIdResponse)
-    - [GetPolicyStatusByNameRequest](#mediator-v1-GetPolicyStatusByNameRequest)
-    - [GetPolicyStatusByNameRequest.EntityTypedId](#mediator-v1-GetPolicyStatusByNameRequest-EntityTypedId)
-    - [GetPolicyStatusByNameResponse](#mediator-v1-GetPolicyStatusByNameResponse)
-    - [GetPolicyStatusByProjectRequest](#mediator-v1-GetPolicyStatusByProjectRequest)
-    - [GetPolicyStatusByProjectResponse](#mediator-v1-GetPolicyStatusByProjectResponse)
+    - [GetProfileByIdRequest](#mediator-v1-GetProfileByIdRequest)
+    - [GetProfileByIdResponse](#mediator-v1-GetProfileByIdResponse)
+    - [GetProfileStatusByNameRequest](#mediator-v1-GetProfileStatusByNameRequest)
+    - [GetProfileStatusByNameRequest.EntityTypedId](#mediator-v1-GetProfileStatusByNameRequest-EntityTypedId)
+    - [GetProfileStatusByNameResponse](#mediator-v1-GetProfileStatusByNameResponse)
+    - [GetProfileStatusByProjectRequest](#mediator-v1-GetProfileStatusByProjectRequest)
+    - [GetProfileStatusByProjectResponse](#mediator-v1-GetProfileStatusByProjectResponse)
     - [GetProjectByIdRequest](#mediator-v1-GetProjectByIdRequest)
     - [GetProjectByIdResponse](#mediator-v1-GetProjectByIdResponse)
     - [GetProjectByNameRequest](#mediator-v1-GetProjectByNameRequest)
@@ -114,8 +114,8 @@
     - [GithubWorkflow](#mediator-v1-GithubWorkflow)
     - [ListArtifactsRequest](#mediator-v1-ListArtifactsRequest)
     - [ListArtifactsResponse](#mediator-v1-ListArtifactsResponse)
-    - [ListPoliciesRequest](#mediator-v1-ListPoliciesRequest)
-    - [ListPoliciesResponse](#mediator-v1-ListPoliciesResponse)
+    - [ListProfilesRequest](#mediator-v1-ListProfilesRequest)
+    - [ListProfilesResponse](#mediator-v1-ListProfilesResponse)
     - [ListRepositoriesRequest](#mediator-v1-ListRepositoriesRequest)
     - [ListRepositoriesResponse](#mediator-v1-ListRepositoriesResponse)
     - [ListRuleTypesRequest](#mediator-v1-ListRuleTypesRequest)
@@ -123,12 +123,12 @@
     - [LogOutRequest](#mediator-v1-LogOutRequest)
     - [LogOutResponse](#mediator-v1-LogOutResponse)
     - [OrganizationRecord](#mediator-v1-OrganizationRecord)
-    - [Policy](#mediator-v1-Policy)
-    - [Policy.Rule](#mediator-v1-Policy-Rule)
-    - [PolicyStatus](#mediator-v1-PolicyStatus)
     - [PrDependencies](#mediator-v1-PrDependencies)
     - [PrDependencies.ContextualDependency](#mediator-v1-PrDependencies-ContextualDependency)
     - [PrDependencies.ContextualDependency.FilePatch](#mediator-v1-PrDependencies-ContextualDependency-FilePatch)
+    - [Profile](#mediator-v1-Profile)
+    - [Profile.Rule](#mediator-v1-Profile-Rule)
+    - [ProfileStatus](#mediator-v1-ProfileStatus)
     - [ProjectRecord](#mediator-v1-ProjectRecord)
     - [Provider](#mediator-v1-Provider)
     - [Provider.Context](#mediator-v1-Provider-Context)
@@ -191,7 +191,7 @@
     - [KeyService](#mediator-v1-KeyService)
     - [OAuthService](#mediator-v1-OAuthService)
     - [OrganizationService](#mediator-v1-OrganizationService)
-    - [PolicyService](#mediator-v1-PolicyService)
+    - [ProfileService](#mediator-v1-ProfileService)
     - [ProjectService](#mediator-v1-ProjectService)
     - [RepositoryService](#mediator-v1-RepositoryService)
     - [RoleService](#mediator-v1-RoleService)
@@ -405,30 +405,30 @@ Organization service
 
 
 
-<a name="mediator-v1-CreatePolicyRequest"></a>
+<a name="mediator-v1-CreateProfileRequest"></a>
 
-### CreatePolicyRequest
-Policy service
-
-
-| Field | Type | Label | Description |
-| ----- | ---- | ----- | ----------- |
-| policy | [Policy](#mediator-v1-Policy) |  |  |
-
-
-
-
-
-
-<a name="mediator-v1-CreatePolicyResponse"></a>
-
-### CreatePolicyResponse
-
+### CreateProfileRequest
+Profile service
 
 
 | Field | Type | Label | Description |
 | ----- | ---- | ----- | ----------- |
-| policy | [Policy](#mediator-v1-Policy) |  |  |
+| profile | [Profile](#mediator-v1-Profile) |  |  |
+
+
+
+
+
+
+<a name="mediator-v1-CreateProfileResponse"></a>
+
+### CreateProfileResponse
+
+
+
+| Field | Type | Label | Description |
+| ----- | ---- | ----- | ----------- |
+| profile | [Profile](#mediator-v1-Profile) |  |  |
 
 
 
@@ -644,25 +644,25 @@ DeleteOrganizationResponse represents a response to a delete organization reques
 
 
 
-<a name="mediator-v1-DeletePolicyRequest"></a>
+<a name="mediator-v1-DeleteProfileRequest"></a>
 
-### DeletePolicyRequest
+### DeleteProfileRequest
 
 
 
 | Field | Type | Label | Description |
 | ----- | ---- | ----- | ----------- |
 | context | [Context](#mediator-v1-Context) |  | context is the context in which the rule type is evaluated. |
-| id | [string](#string) |  | id is the id of the policy to delete |
+| id | [string](#string) |  | id is the id of the profile to delete |
 
 
 
 
 
 
-<a name="mediator-v1-DeletePolicyResponse"></a>
+<a name="mediator-v1-DeleteProfileResponse"></a>
 
-### DeletePolicyResponse
+### DeleteProfileResponse
 
 
 
@@ -1066,48 +1066,48 @@ list organizations
 
 
 
-<a name="mediator-v1-GetPolicyByIdRequest"></a>
+<a name="mediator-v1-GetProfileByIdRequest"></a>
 
-### GetPolicyByIdRequest
-get policy by id
-
-
-| Field | Type | Label | Description |
-| ----- | ---- | ----- | ----------- |
-| context | [Context](#mediator-v1-Context) |  | context is the context which contains the policies |
-| id | [string](#string) |  | id is the id of the policy to get |
-
-
-
-
-
-
-<a name="mediator-v1-GetPolicyByIdResponse"></a>
-
-### GetPolicyByIdResponse
-
+### GetProfileByIdRequest
+get profile by id
 
 
 | Field | Type | Label | Description |
 | ----- | ---- | ----- | ----------- |
-| policy | [Policy](#mediator-v1-Policy) |  |  |
+| context | [Context](#mediator-v1-Context) |  | context is the context which contains the profiles |
+| id | [string](#string) |  | id is the id of the profile to get |
 
 
 
 
 
 
-<a name="mediator-v1-GetPolicyStatusByNameRequest"></a>
+<a name="mediator-v1-GetProfileByIdResponse"></a>
 
-### GetPolicyStatusByNameRequest
+### GetProfileByIdResponse
+
+
+
+| Field | Type | Label | Description |
+| ----- | ---- | ----- | ----------- |
+| profile | [Profile](#mediator-v1-Profile) |  |  |
+
+
+
+
+
+
+<a name="mediator-v1-GetProfileStatusByNameRequest"></a>
+
+### GetProfileStatusByNameRequest
 
 
 
 | Field | Type | Label | Description |
 | ----- | ---- | ----- | ----------- |
 | context | [Context](#mediator-v1-Context) |  | context is the context in which the rule type is evaluated. |
-| name | [string](#string) |  | name is the name of the policy to get |
-| entity | [GetPolicyStatusByNameRequest.EntityTypedId](#mediator-v1-GetPolicyStatusByNameRequest-EntityTypedId) |  |  |
+| name | [string](#string) |  | name is the name of the profile to get |
+| entity | [GetProfileStatusByNameRequest.EntityTypedId](#mediator-v1-GetProfileStatusByNameRequest-EntityTypedId) |  |  |
 | all | [bool](#bool) |  |  |
 | rule | [string](#string) |  |  |
 
@@ -1116,9 +1116,9 @@ get policy by id
 
 
 
-<a name="mediator-v1-GetPolicyStatusByNameRequest-EntityTypedId"></a>
+<a name="mediator-v1-GetProfileStatusByNameRequest-EntityTypedId"></a>
 
-### GetPolicyStatusByNameRequest.EntityTypedId
+### GetProfileStatusByNameRequest.EntityTypedId
 EntiryTypeId is a message that carries an ID together with a type to uniquely identify an entity
 such as (repo, 1), (artifact, 2), ...
 if the struct is reused in other messages, it should be moved to a top-level definition
@@ -1134,15 +1134,15 @@ if the struct is reused in other messages, it should be moved to a top-level def
 
 
 
-<a name="mediator-v1-GetPolicyStatusByNameResponse"></a>
+<a name="mediator-v1-GetProfileStatusByNameResponse"></a>
 
-### GetPolicyStatusByNameResponse
+### GetProfileStatusByNameResponse
 
 
 
 | Field | Type | Label | Description |
 | ----- | ---- | ----- | ----------- |
-| policy_status | [PolicyStatus](#mediator-v1-PolicyStatus) |  | policy_status is the status of the policy |
+| profile_status | [ProfileStatus](#mediator-v1-ProfileStatus) |  | profile_status is the status of the profile |
 | rule_evaluation_status | [RuleEvaluationStatus](#mediator-v1-RuleEvaluationStatus) | repeated | rule_evaluation_status is the status of the rules |
 
 
@@ -1150,9 +1150,9 @@ if the struct is reused in other messages, it should be moved to a top-level def
 
 
 
-<a name="mediator-v1-GetPolicyStatusByProjectRequest"></a>
+<a name="mediator-v1-GetProfileStatusByProjectRequest"></a>
 
-### GetPolicyStatusByProjectRequest
+### GetProfileStatusByProjectRequest
 
 
 
@@ -1165,15 +1165,15 @@ if the struct is reused in other messages, it should be moved to a top-level def
 
 
 
-<a name="mediator-v1-GetPolicyStatusByProjectResponse"></a>
+<a name="mediator-v1-GetProfileStatusByProjectResponse"></a>
 
-### GetPolicyStatusByProjectResponse
+### GetProfileStatusByProjectResponse
 
 
 
 | Field | Type | Label | Description |
 | ----- | ---- | ----- | ----------- |
-| policy_status | [PolicyStatus](#mediator-v1-PolicyStatus) | repeated | policy_status is the status of the policy |
+| profile_status | [ProfileStatus](#mediator-v1-ProfileStatus) | repeated | profile_status is the status of the profile |
 
 
 
@@ -1950,30 +1950,30 @@ GitType defines the git data ingester.
 
 
 
-<a name="mediator-v1-ListPoliciesRequest"></a>
+<a name="mediator-v1-ListProfilesRequest"></a>
 
-### ListPoliciesRequest
-list policies
-
-
-| Field | Type | Label | Description |
-| ----- | ---- | ----- | ----------- |
-| context | [Context](#mediator-v1-Context) |  | context is the context which contains the policies |
-
-
-
-
-
-
-<a name="mediator-v1-ListPoliciesResponse"></a>
-
-### ListPoliciesResponse
-
+### ListProfilesRequest
+list profiles
 
 
 | Field | Type | Label | Description |
 | ----- | ---- | ----- | ----------- |
-| policies | [Policy](#mediator-v1-Policy) | repeated |  |
+| context | [Context](#mediator-v1-Context) |  | context is the context which contains the profiles |
+
+
+
+
+
+
+<a name="mediator-v1-ListProfilesResponse"></a>
+
+### ListProfilesResponse
+
+
+
+| Field | Type | Label | Description |
+| ----- | ---- | ----- | ----------- |
+| profiles | [Profile](#mediator-v1-Profile) | repeated |  |
 
 
 
@@ -2083,63 +2083,6 @@ ListRuleTypesResponse is the response to list rule types.
 
 
 
-<a name="mediator-v1-Policy"></a>
-
-### Policy
-Policy defines a policy that is user defined.
-
-
-| Field | Type | Label | Description |
-| ----- | ---- | ----- | ----------- |
-| context | [Context](#mediator-v1-Context) |  | context is the context in which the policy is evaluated. |
-| id | [string](#string) | optional | id is the id of the policy. This is optional and is set by the system. |
-| name | [string](#string) |  | name is the name of the policy instance. |
-| repository | [Policy.Rule](#mediator-v1-Policy-Rule) | repeated | These are the entities that one could set in the policy. |
-| build_environment | [Policy.Rule](#mediator-v1-Policy-Rule) | repeated |  |
-| artifact | [Policy.Rule](#mediator-v1-Policy-Rule) | repeated |  |
-| pull_request | [Policy.Rule](#mediator-v1-Policy-Rule) | repeated |  |
-| remediate | [string](#string) | optional | whether and how to remediate (on,off,dry_run) this is optional as the default is set by the system |
-
-
-
-
-
-
-<a name="mediator-v1-Policy-Rule"></a>
-
-### Policy.Rule
-Rule defines the individual call of a certain rule type.
-
-
-| Field | Type | Label | Description |
-| ----- | ---- | ----- | ----------- |
-| type | [string](#string) |  | type is the type of the rule to be instantiated. |
-| params | [google.protobuf.Struct](#google-protobuf-Struct) |  | params are the parameters that are passed to the rule. This is optional and depends on the rule type. |
-| def | [google.protobuf.Struct](#google-protobuf-Struct) |  | def is the definition of the rule. This depends on the rule type. |
-
-
-
-
-
-
-<a name="mediator-v1-PolicyStatus"></a>
-
-### PolicyStatus
-get the overall policy status
-
-
-| Field | Type | Label | Description |
-| ----- | ---- | ----- | ----------- |
-| policy_id | [string](#string) |  | policy_id is the id of the policy |
-| policy_name | [string](#string) |  | policy_name is the name of the policy |
-| policy_status | [string](#string) |  | policy_status is the status of the policy |
-| last_updated | [google.protobuf.Timestamp](#google-protobuf-Timestamp) |  | last_updated is the last time the policy was updated |
-
-
-
-
-
-
 <a name="mediator-v1-PrDependencies"></a>
 
 ### PrDependencies
@@ -2182,6 +2125,63 @@ get the overall policy status
 | ----- | ---- | ----- | ----------- |
 | name | [string](#string) |  | file changed, e.g. package-lock.json |
 | patch_url | [string](#string) |  | points to the the raw patchfile |
+
+
+
+
+
+
+<a name="mediator-v1-Profile"></a>
+
+### Profile
+Profile defines a profile that is user defined.
+
+
+| Field | Type | Label | Description |
+| ----- | ---- | ----- | ----------- |
+| context | [Context](#mediator-v1-Context) |  | context is the context in which the profile is evaluated. |
+| id | [string](#string) | optional | id is the id of the profile. This is optional and is set by the system. |
+| name | [string](#string) |  | name is the name of the profile instance. |
+| repository | [Profile.Rule](#mediator-v1-Profile-Rule) | repeated | These are the entities that one could set in the profile. |
+| build_environment | [Profile.Rule](#mediator-v1-Profile-Rule) | repeated |  |
+| artifact | [Profile.Rule](#mediator-v1-Profile-Rule) | repeated |  |
+| pull_request | [Profile.Rule](#mediator-v1-Profile-Rule) | repeated |  |
+| remediate | [string](#string) | optional | whether and how to remediate (on,off,dry_run) this is optional as the default is set by the system |
+
+
+
+
+
+
+<a name="mediator-v1-Profile-Rule"></a>
+
+### Profile.Rule
+Rule defines the individual call of a certain rule type.
+
+
+| Field | Type | Label | Description |
+| ----- | ---- | ----- | ----------- |
+| type | [string](#string) |  | type is the type of the rule to be instantiated. |
+| params | [google.protobuf.Struct](#google-protobuf-Struct) |  | params are the parameters that are passed to the rule. This is optional and depends on the rule type. |
+| def | [google.protobuf.Struct](#google-protobuf-Struct) |  | def is the definition of the rule. This depends on the rule type. |
+
+
+
+
+
+
+<a name="mediator-v1-ProfileStatus"></a>
+
+### ProfileStatus
+get the overall profile status
+
+
+| Field | Type | Label | Description |
+| ----- | ---- | ----- | ----------- |
+| profile_id | [string](#string) |  | profile_id is the id of the profile |
+| profile_name | [string](#string) |  | profile_name is the name of the profile |
+| profile_status | [string](#string) |  | profile_status is the status of the profile |
+| last_updated | [google.protobuf.Timestamp](#google-protobuf-Timestamp) |  | last_updated is the last time the profile was updated |
 
 
 
@@ -2593,17 +2593,17 @@ This is used to fetch data from a REST endpoint.
 <a name="mediator-v1-RuleEvaluationStatus"></a>
 
 ### RuleEvaluationStatus
-get the status of the rules for a given policy
+get the status of the rules for a given profile
 
 
 | Field | Type | Label | Description |
 | ----- | ---- | ----- | ----------- |
-| policy_id | [string](#string) |  | policy_id is the id of the policy |
+| profile_id | [string](#string) |  | profile_id is the id of the profile |
 | rule_id | [string](#string) |  | rule_id is the id of the rule |
 | rule_name | [string](#string) |  | rule_name is the name of the rule |
 | entity | [string](#string) |  | entity is the entity that was evaluated |
 | status | [string](#string) |  | status is the status of the evaluation |
-| last_updated | [google.protobuf.Timestamp](#google-protobuf-Timestamp) |  | last_updated is the last time the policy was updated |
+| last_updated | [google.protobuf.Timestamp](#google-protobuf-Timestamp) |  | last_updated is the last time the profile was updated |
 | entity_info | [RuleEvaluationStatus.EntityInfoEntry](#mediator-v1-RuleEvaluationStatus-EntityInfoEntry) | repeated | entity_info is the information about the entity |
 | details | [string](#string) |  | details is the description of the evaluation if any |
 | guidance | [string](#string) |  | guidance is the guidance for the evaluation if any |
@@ -2684,7 +2684,7 @@ endpoint and how we compare it to the rule.
 | Field | Type | Label | Description |
 | ----- | ---- | ----- | ----------- |
 | type | [string](#string) |  | type is the type of the data evaluation. Right now only `jq` is supported as a driver |
-| jq | [RuleType.Definition.Eval.JQComparison](#mediator-v1-RuleType-Definition-Eval-JQComparison) | repeated | jq is only used if the `jq` type is selected. It defines the comparisons that are made between the ingested data and the policy rule. |
+| jq | [RuleType.Definition.Eval.JQComparison](#mediator-v1-RuleType-Definition-Eval-JQComparison) | repeated | jq is only used if the `jq` type is selected. It defines the comparisons that are made between the ingested data and the profile rule. |
 | rego | [RuleType.Definition.Eval.Rego](#mediator-v1-RuleType-Definition-Eval-Rego) | optional | rego is only used if the `rego` type is selected. |
 | vulncheck | [RuleType.Definition.Eval.Vulncheck](#mediator-v1-RuleType-Definition-Eval-Vulncheck) | optional | vulncheck is only used if the `vulncheck` type is selected. |
 
@@ -2702,7 +2702,7 @@ endpoint and how we compare it to the rule.
 | Field | Type | Label | Description |
 | ----- | ---- | ----- | ----------- |
 | ingested | [RuleType.Definition.Eval.JQComparison.Operator](#mediator-v1-RuleType-Definition-Eval-JQComparison-Operator) |  | Ingested points to the data retrieved in the `ingest` section |
-| policy | [RuleType.Definition.Eval.JQComparison.Operator](#mediator-v1-RuleType-Definition-Eval-JQComparison-Operator) |  | Policy points to the policy itself. |
+| profile | [RuleType.Definition.Eval.JQComparison.Operator](#mediator-v1-RuleType-Definition-Eval-JQComparison-Operator) |  | Profile points to the profile itself. |
 
 
 
@@ -2732,8 +2732,8 @@ endpoint and how we compare it to the rule.
 
 | Field | Type | Label | Description |
 | ----- | ---- | ----- | ----------- |
-| type | [string](#string) |  | type is the type of evaluation engine to use for rego. We currently have two modes of operation: - deny-by-default: this is the default mode of operation where we deny access by default and allow access only if the policy explicitly allows it. It expects the policy to set an `allow` variable to true or false. - constraints: this is the mode of operation where we allow access by default and deny access only if a violation is found. It expects the policy to set a `violations` variable with a &#34;msg&#34; field. |
-| def | [string](#string) |  | def is the definition of the rego policy. |
+| type | [string](#string) |  | type is the type of evaluation engine to use for rego. We currently have two modes of operation: - deny-by-default: this is the default mode of operation where we deny access by default and allow access only if the profile explicitly allows it. It expects the profile to set an `allow` variable to true or false. - constraints: this is the mode of operation where we allow access by default and deny access only if a violation is found. It expects the profile to set a `violations` variable with a &#34;msg&#34; field. |
+| def | [string](#string) |  | def is the definition of the rego profile. |
 
 
 
@@ -3136,19 +3136,19 @@ manage Organizations CRUD
 | DeleteOrganization | [DeleteOrganizationRequest](#mediator-v1-DeleteOrganizationRequest) | [DeleteOrganizationResponse](#mediator-v1-DeleteOrganizationResponse) |  |
 
 
-<a name="mediator-v1-PolicyService"></a>
+<a name="mediator-v1-ProfileService"></a>
 
-### PolicyService
+### ProfileService
 
 
 | Method Name | Request Type | Response Type | Description |
 | ----------- | ------------ | ------------- | ------------|
-| CreatePolicy | [CreatePolicyRequest](#mediator-v1-CreatePolicyRequest) | [CreatePolicyResponse](#mediator-v1-CreatePolicyResponse) |  |
-| DeletePolicy | [DeletePolicyRequest](#mediator-v1-DeletePolicyRequest) | [DeletePolicyResponse](#mediator-v1-DeletePolicyResponse) |  |
-| ListPolicies | [ListPoliciesRequest](#mediator-v1-ListPoliciesRequest) | [ListPoliciesResponse](#mediator-v1-ListPoliciesResponse) |  |
-| GetPolicyById | [GetPolicyByIdRequest](#mediator-v1-GetPolicyByIdRequest) | [GetPolicyByIdResponse](#mediator-v1-GetPolicyByIdResponse) |  |
-| GetPolicyStatusByName | [GetPolicyStatusByNameRequest](#mediator-v1-GetPolicyStatusByNameRequest) | [GetPolicyStatusByNameResponse](#mediator-v1-GetPolicyStatusByNameResponse) |  |
-| GetPolicyStatusByProject | [GetPolicyStatusByProjectRequest](#mediator-v1-GetPolicyStatusByProjectRequest) | [GetPolicyStatusByProjectResponse](#mediator-v1-GetPolicyStatusByProjectResponse) |  |
+| CreateProfile | [CreateProfileRequest](#mediator-v1-CreateProfileRequest) | [CreateProfileResponse](#mediator-v1-CreateProfileResponse) |  |
+| DeleteProfile | [DeleteProfileRequest](#mediator-v1-DeleteProfileRequest) | [DeleteProfileResponse](#mediator-v1-DeleteProfileResponse) |  |
+| ListProfiles | [ListProfilesRequest](#mediator-v1-ListProfilesRequest) | [ListProfilesResponse](#mediator-v1-ListProfilesResponse) |  |
+| GetProfileById | [GetProfileByIdRequest](#mediator-v1-GetProfileByIdRequest) | [GetProfileByIdResponse](#mediator-v1-GetProfileByIdResponse) |  |
+| GetProfileStatusByName | [GetProfileStatusByNameRequest](#mediator-v1-GetProfileStatusByNameRequest) | [GetProfileStatusByNameResponse](#mediator-v1-GetProfileStatusByNameResponse) |  |
+| GetProfileStatusByProject | [GetProfileStatusByProjectRequest](#mediator-v1-GetProfileStatusByProjectRequest) | [GetProfileStatusByProjectResponse](#mediator-v1-GetProfileStatusByProjectResponse) |  |
 | ListRuleTypes | [ListRuleTypesRequest](#mediator-v1-ListRuleTypesRequest) | [ListRuleTypesResponse](#mediator-v1-ListRuleTypesResponse) |  |
 | GetRuleTypeByName | [GetRuleTypeByNameRequest](#mediator-v1-GetRuleTypeByNameRequest) | [GetRuleTypeByNameResponse](#mediator-v1-GetRuleTypeByNameResponse) |  |
 | GetRuleTypeById | [GetRuleTypeByIdRequest](#mediator-v1-GetRuleTypeByIdRequest) | [GetRuleTypeByIdResponse](#mediator-v1-GetRuleTypeByIdResponse) |  |

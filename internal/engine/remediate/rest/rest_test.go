@@ -37,7 +37,7 @@ import (
 
 var (
 	simpleBodyTemplate   = "{\"foo\": \"bar\"}"
-	bodyTemplateWithVars = `{ "enabled": true, "allowed_actions": "{{.Policy.allowed_actions}}" }`
+	bodyTemplateWithVars = `{ "enabled": true, "allowed_actions": "{{.Profile.allowed_actions}}" }`
 	invalidBodyTemplate  = "{\"foo\": {{bar}"
 	validProviderBuilder = providers.NewProviderBuilder(
 		&db.Provider{

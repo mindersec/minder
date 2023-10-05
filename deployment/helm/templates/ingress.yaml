@@ -117,7 +117,7 @@ spec:
             name: mediator-grpc
             port:
               name: grpc
-      - path: /mediator.v1.PolicyService
+      - path: /mediator.v1.ProfileService
         pathType: Prefix
         backend:
           service:

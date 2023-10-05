@@ -28,9 +28,9 @@ import (
 	pb "github.com/stacklok/mediator/pkg/api/protobuf/go/mediator/v1"
 )
 
-// Evaluates a simple query against a simple policy
-// In this case, the policy is a simple "allow" rule.
-// The given policy map is empty since all the policy
+// Evaluates a simple query against a simple profile
+// In this case, the profile is a simple "allow" rule.
+// The given profile map is empty since all the profile
 // needed in ths test case is contained in the rego
 // definition.
 func TestEvaluatorDenyByDefaultEvalSimple(t *testing.T) {
@@ -177,12 +177,12 @@ violations[{"msg": msg}] {
 	require.ErrorContains(t, err, "- evaluation failure: datum should not contain bar")
 }
 
-// Evaluates a simple query against a simple policy
-// In this case, the policy is a simple "allow" rule.
-// The given policy map has a value for the "data" key
+// Evaluates a simple query against a simple profile
+// In this case, the profile is a simple "allow" rule.
+// The given profile map has a value for the "data" key
 // which is used in the rego definition. The ingested
-// data has to match the policy data.
-func TestDenyByDefaultEvaluationWithPolicy(t *testing.T) {
+// data has to match the profile data.
+func TestDenyByDefaultEvaluationWithProfile(t *testing.T) {
 	t.Parallel()
 
 	e, err := rego.NewRegoEvaluator(
@@ -194,7 +194,7 @@ package mediator
 default allow = false
 
 allow {
-	input.policy.data == input.ingested.data
+	input.profile.data == input.ingested.data
 }`,
 		},
 	)
@@ -221,7 +221,7 @@ allow {
 	require.ErrorIs(t, err, engerrors.ErrEvaluationFailed, "should have failed the evaluation")
 }
 
-func TestConstrainedEvaluationWithPolicy(t *testing.T) {
+func TestConstrainedEvaluationWithProfile(t *testing.T) {
 	t.Parallel()
 
 	e, err := rego.NewRegoEvaluator(
@@ -231,8 +231,8 @@ func TestConstrainedEvaluationWithPolicy(t *testing.T) {
 package mediator
 
 violations[{"msg": msg}] {
-	input.policy.data != input.ingested.data
-	msg := sprintf("data did not match policy: %s", [input.policy.data])
+	input.profile.data != input.ingested.data
+	msg := sprintf("data did not match profile: %s", [input.profile.data])
 }`,
 		},
 	)
@@ -257,7 +257,7 @@ violations[{"msg": msg}] {
 		},
 	})
 	require.ErrorIs(t, err, engerrors.ErrEvaluationFailed, "should have failed the evaluation")
-	assert.ErrorContains(t, err, "data did not match policy: foo", "should have failed the evaluation")
+	assert.ErrorContains(t, err, "data did not match profile: foo", "should have failed the evaluation")
 }
 
 func TestCantCreateEvaluatorWithInvalidConfig(t *testing.T) {
@@ -290,8 +290,8 @@ func TestCantCreateEvaluatorWithInvalidConfig(t *testing.T) {
 }
 
 // This test case reflects the scenario where the user provided
-// a rego policy definition that has a syntax error.
-func TestCantEvaluateWithInvalidPolicy(t *testing.T) {
+// a rego profile definition that has a syntax error.
+func TestCantEvaluateWithInvalidProfile(t *testing.T) {
 	t.Parallel()
 
 	e, err := rego.NewRegoEvaluator(
@@ -313,7 +313,7 @@ violations[{"msg": msg}] {`,
 func TestCantEvaluateWithCompilerError(t *testing.T) {
 	t.Parallel()
 
-	// This policy is using a variable that is restricted
+	// This profile is using a variable that is restricted
 	// in OPA's strict mode.
 	e, err := rego.NewRegoEvaluator(
 		&pb.RuleType_Definition_Eval_Rego{

@@ -71,7 +71,7 @@ type Server struct {
 	pb.UnimplementedRoleServiceServer
 	pb.UnimplementedUserServiceServer
 	pb.UnimplementedRepositoryServiceServer
-	pb.UnimplementedPolicyServiceServer
+	pb.UnimplementedProfileServiceServer
 	pb.UnimplementedArtifactServiceServer
 	pb.UnimplementedKeyServiceServer
 	OAuth2       *oauth2.Config
