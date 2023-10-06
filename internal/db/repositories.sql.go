@@ -203,7 +203,7 @@ func (q *Queries) GetRepositoryByRepoName(ctx context.Context, arg GetRepository
 
 const listAllRepositories = `-- name: ListAllRepositories :many
 SELECT id, provider, project_id, repo_owner, repo_name, repo_id, is_private, is_fork, webhook_id, webhook_url, deploy_url, clone_url, created_at, updated_at FROM repositories WHERE provider = $1
-ORDER BY id
+ORDER BY repo_name
 `
 
 func (q *Queries) ListAllRepositories(ctx context.Context, provider string) ([]Repository, error) {
@@ -247,7 +247,7 @@ func (q *Queries) ListAllRepositories(ctx context.Context, provider string) ([]R
 const listRegisteredRepositoriesByProjectIDAndProvider = `-- name: ListRegisteredRepositoriesByProjectIDAndProvider :many
 SELECT id, provider, project_id, repo_owner, repo_name, repo_id, is_private, is_fork, webhook_id, webhook_url, deploy_url, clone_url, created_at, updated_at FROM repositories
 WHERE provider = $1 AND project_id = $2 AND webhook_id IS NOT NULL
-ORDER BY id
+ORDER BY repo_name
 `
 
 type ListRegisteredRepositoriesByProjectIDAndProviderParams struct {
@@ -296,7 +296,7 @@ func (q *Queries) ListRegisteredRepositoriesByProjectIDAndProvider(ctx context.C
 const listRepositoriesByOwner = `-- name: ListRepositoriesByOwner :many
 SELECT id, provider, project_id, repo_owner, repo_name, repo_id, is_private, is_fork, webhook_id, webhook_url, deploy_url, clone_url, created_at, updated_at FROM repositories
 WHERE provider = $1 AND repo_owner = $2
-ORDER BY id
+ORDER BY repo_name
 LIMIT $3
 OFFSET $4
 `
@@ -354,7 +354,7 @@ func (q *Queries) ListRepositoriesByOwner(ctx context.Context, arg ListRepositor
 const listRepositoriesByProjectID = `-- name: ListRepositoriesByProjectID :many
 SELECT id, provider, project_id, repo_owner, repo_name, repo_id, is_private, is_fork, webhook_id, webhook_url, deploy_url, clone_url, created_at, updated_at FROM repositories
 WHERE provider = $1 AND project_id = $2
-ORDER BY id
+ORDER BY repo_name
 LIMIT $3
 OFFSET $4
 `
