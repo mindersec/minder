@@ -816,7 +816,7 @@ func (s *Server) DeleteRuleType(
 
 	profileInfo, err := s.store.ListProfilesInstantiatingRuleType(ctx, ruletype.ID)
 	// We have profiles that use this rule type, so we can't delete it
-	if err == nil {
+	if err == nil && len(profileInfo) > 0 {
 		profiles := make([]string, 0, len(profileInfo))
 		for _, p := range profileInfo {
 			profiles = append(profiles, p.Name)
