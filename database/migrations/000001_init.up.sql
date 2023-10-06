@@ -263,19 +263,6 @@ CREATE UNIQUE INDEX provider_name_project_id_idx ON providers (name, project_id)
 
 -- triggers
 
--- Ensure statuses are deleted if a repository is deleted
-CREATE OR REPLACE FUNCTION delete_eval_statuses() RETURNS TRIGGER AS $$
-BEGIN
-    DELETE FROM rule_evaluation_status WHERE repository_id = OLD.id;
-    RETURN OLD;
-END;
-$$ LANGUAGE plpgsql;
-
-CREATE TRIGGER delete_eval_statuses
-    BEFORE DELETE ON repositories
-    FOR EACH ROW
-    EXECUTE PROCEDURE delete_eval_statuses();
-
 -- Create a default status for a profile when it's created
 CREATE OR REPLACE FUNCTION create_default_profile_status() RETURNS TRIGGER AS $$
 BEGIN
