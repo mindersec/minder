@@ -212,7 +212,7 @@ func readEntityFromFile(fpath string, entType mediatorv1.Entity) (protoreflect.P
 
 	switch entType {
 	case mediatorv1.Entity_ENTITY_REPOSITORIES:
-		out = &mediatorv1.RepositoryResult{}
+		out = &mediatorv1.Repository{}
 	case mediatorv1.Entity_ENTITY_ARTIFACTS:
 		out = &mediatorv1.Artifact{}
 	case mediatorv1.Entity_ENTITY_PULL_REQUESTS:

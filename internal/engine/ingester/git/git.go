@@ -125,7 +125,7 @@ func getCloneUrl(ent protoreflect.ProtoMessage, cfg *IngesterConfig) string {
 
 	// If the entity is a repository get it from the entity
 	// else, get it from the configuration
-	if repo, ok := ent.(*pb.RepositoryResult); ok {
+	if repo, ok := ent.(*pb.Repository); ok {
 		return repo.GetCloneUrl()
 	}
 

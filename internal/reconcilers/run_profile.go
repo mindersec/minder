@@ -131,15 +131,15 @@ func (s *Reconciler) publishProfileInitEvents(
 
 	for _, dbrepo := range dbrepos {
 		// protobufs are our API, so we always execute on these instead of the DB directly.
-		repo := &pb.RepositoryResult{
-			Owner:      dbrepo.RepoOwner,
-			Repository: dbrepo.RepoName,
-			RepoId:     dbrepo.RepoID,
-			HookUrl:    dbrepo.WebhookUrl,
-			DeployUrl:  dbrepo.DeployUrl,
-			CloneUrl:   dbrepo.CloneUrl,
-			CreatedAt:  timestamppb.New(dbrepo.CreatedAt),
-			UpdatedAt:  timestamppb.New(dbrepo.UpdatedAt),
+		repo := &pb.Repository{
+			Owner:     dbrepo.RepoOwner,
+			Name:      dbrepo.RepoName,
+			RepoId:    dbrepo.RepoID,
+			HookUrl:   dbrepo.WebhookUrl,
+			DeployUrl: dbrepo.DeployUrl,
+			CloneUrl:  dbrepo.CloneUrl,
+			CreatedAt: timestamppb.New(dbrepo.CreatedAt),
+			UpdatedAt: timestamppb.New(dbrepo.UpdatedAt),
 		}
 
 		err := engine.NewEntityInfoWrapper().

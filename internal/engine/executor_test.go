@@ -222,10 +222,10 @@ default allow = true`,
 	eiw := engine.NewEntityInfoWrapper().
 		WithProvider(providerName).
 		WithProjectID(projectID).
-		WithRepository(&mediatorv1.RepositoryResult{
-			Repository: "test",
-			RepoId:     123,
-			CloneUrl:   "github.com/foo/bar.git",
+		WithRepository(&mediatorv1.Repository{
+			Name:     "test",
+			RepoId:   123,
+			CloneUrl: "github.com/foo/bar.git",
 		}).WithRepositoryID(repositoryID)
 
 	msg, err := eiw.BuildMessage()

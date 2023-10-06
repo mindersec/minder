@@ -75,6 +75,15 @@ var serveCmd = &cobra.Command{
 			return err
 		}
 
+		// webhook config validation
+		webhookURL := cfg.WebhookConfig.ExternalWebhookURL
+		webhookping := cfg.WebhookConfig.ExternalPingURL
+		webhooksecret := cfg.WebhookConfig.WebhookSecret
+		if webhookURL == "" || webhookping == "" || webhooksecret == "" {
+			return fmt.Errorf("webhook configuration is not set")
+		}
+
+		// Identity
 		parsedURL, err := url.Parse(cfg.Identity.IssuerUrl)
 		if err != nil {
 			return fmt.Errorf("failed to parse issuer URL: %w\n", err)

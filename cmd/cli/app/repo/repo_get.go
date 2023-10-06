@@ -85,7 +85,7 @@ var repo_getCmd = &cobra.Command{
 		defer cancel()
 
 		// check repo by id
-		var repository *pb.RepositoryRecord
+		var repository *pb.Repository
 		if repoid != "" {
 			resp, err := client.GetRepositoryById(ctx, &pb.GetRepositoryByIdRequest{
 				RepositoryId: repoid,

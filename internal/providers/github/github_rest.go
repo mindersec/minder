@@ -24,12 +24,55 @@ import (
 	"net/http"
 
 	"github.com/google/go-github/v53/github"
+
+	mediatorv1 "github.com/stacklok/mediator/pkg/api/protobuf/go/mediator/v1"
 )
 
 var (
 	// ErrNotFound Denotes if the call returned a 404
 	ErrNotFound = errors.New("not found")
 )
+
+// ListUserRepositories returns a list of all repositories for the authenticated user
+func (c *RestClient) ListUserRepositories(ctx context.Context, owner string) ([]*mediatorv1.Repository, error) {
+	repos, err := c.ListAllRepositories(ctx, false, owner)
+	if err != nil {
+		return nil, err
+	}
+
+	return convertRepositories(repos), nil
+}
+
+// ListOrganizationRepsitories returns a list of all repositories for the organization
+func (c *RestClient) ListOrganizationRepsitories(ctx context.Context, owner string) ([]*mediatorv1.Repository, error) {
+	repos, err := c.ListAllRepositories(ctx, true, owner)
+	if err != nil {
+		return nil, err
+	}
+
+	return convertRepositories(repos), nil
+}
+
+func convertRepositories(repos []*github.Repository) []*mediatorv1.Repository {
+	var converted []*mediatorv1.Repository
+	for _, repo := range repos {
+		converted = append(converted, convertRepository(repo))
+	}
+	return converted
+}
+
+func convertRepository(repo *github.Repository) *mediatorv1.Repository {
+	return &mediatorv1.Repository{
+		Name:      repo.GetName(),
+		Owner:     repo.GetOwner().GetLogin(),
+		RepoId:    int32(repo.GetID()), // FIXME this is a 64 bit int
+		HookUrl:   repo.GetHooksURL(),
+		DeployUrl: repo.GetDeploymentsURL(),
+		CloneUrl:  repo.GetCloneURL(),
+		IsPrivate: *repo.Private,
+		IsFork:    *repo.Fork,
+	}
+}
 
 // ListAllRepositories returns a list of all repositories for the authenticated user
 // Two APIs are available, contigent on whether the token is for a user or an organization
@@ -420,4 +463,22 @@ func (c *RestClient) GetOwner() string {
 		return c.owner
 	}
 	return ""
+}
+
+// ListHooks lists all Hooks for the specified repository.
+func (c *RestClient) ListHooks(ctx context.Context, owner, repo string) ([]*github.Hook, error) {
+	list, _, err := c.client.Repositories.ListHooks(ctx, owner, repo, nil)
+	return list, err
+}
+
+// DeleteHook deletes a specified Hook.
+func (c *RestClient) DeleteHook(ctx context.Context, owner, repo string, id int64) error {
+	_, err := c.client.Repositories.DeleteHook(ctx, owner, repo, id)
+	return err
+}
+
+// CreateHook creates a new Hook.
+func (c *RestClient) CreateHook(ctx context.Context, owner, repo string, hook *github.Hook) (*github.Hook, error) {
+	h, _, err := c.client.Repositories.CreateHook(ctx, owner, repo, hook)
+	return h, err
 }

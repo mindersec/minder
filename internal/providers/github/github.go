@@ -43,6 +43,7 @@ var Implements = []db.ProviderType{
 	db.ProviderTypeGithub,
 	db.ProviderTypeGit,
 	db.ProviderTypeRest,
+	db.ProviderTypeRepoLister,
 }
 
 // RestClient is the struct that contains the GitHub REST API client

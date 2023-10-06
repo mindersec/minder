@@ -36,6 +36,7 @@ import (
 
 	ghclient "github.com/stacklok/mediator/internal/providers/github"
 	"github.com/stacklok/mediator/internal/util"
+	"github.com/stacklok/mediator/internal/util/cli"
 	"github.com/stacklok/mediator/internal/util/rand"
 	pb "github.com/stacklok/mediator/pkg/api/protobuf/go/mediator/v1"
 )
@@ -48,16 +49,10 @@ type Response struct {
 // MAX_CALLS is the maximum number of calls to the gRPC server before stopping.
 const MAX_CALLS = 300
 
-// just syncs repos for the specific provider and project
-func syncRepos(ctx context.Context, client pb.RepositoryServiceClient, provider string, project string) error {
-	_, err := client.SyncRepositories(ctx, &pb.SyncRepositoriesRequest{Provider: provider, ProjectId: project})
-	return err
-}
-
 // callBackServer starts a server and handler to listen for the OAuth callback.
 // It will wait for either a success or failure response from the server.
 func callBackServer(ctx context.Context, provider string, project string, port string,
-	wg *sync.WaitGroup, client pb.OAuthServiceClient, since int64, repos_client pb.RepositoryServiceClient) {
+	wg *sync.WaitGroup, client pb.OAuthServiceClient, since int64) {
 	server := &http.Server{
 		Addr:              fmt.Sprintf(":%s", port),
 		ReadHeaderTimeout: time.Second * 10, // Set an appropriate timeout value
@@ -103,9 +98,7 @@ func callBackServer(ctx context.Context, provider string, project string, port s
 			res, err := client.VerifyProviderTokenFrom(clientCtx,
 				&pb.VerifyProviderTokenFromRequest{Provider: provider, ProjectId: project, Timestamp: timestamppb.New(t)})
 			if err == nil && res.Status == "OK" {
-				// we can sync repos
-				err := syncRepos(clientCtx, repos_client, provider, project)
-				util.ExitNicelyOnError(err, "Error syncing repos")
+				return
 			}
 			if err != nil || res.Status == "OK" || calls >= MAX_CALLS {
 				stopServer = true
@@ -141,7 +134,6 @@ actions such as adding repositories.`,
 		defer conn.Close()
 
 		client := pb.NewOAuthServiceClient(conn)
-		repos_client := pb.NewRepositoryServiceClient(conn)
 		ctx, cancel := util.GetAppContext()
 		defer cancel()
 		oAuthCallbackCtx, oAuthCancel := context.WithTimeout(context.Background(), MAX_CALLS*time.Second)
@@ -153,40 +145,41 @@ actions such as adding repositories.`,
 				&pb.StoreProviderTokenRequest{Provider: provider, ProjectId: project, AccessToken: pat, Owner: &owner})
 			util.ExitNicelyOnError(err, "Error storing token")
 
-			err = syncRepos(ctx, repos_client, provider, project)
-			util.ExitNicelyOnError(err, "Error syncing repos")
-			fmt.Println("Provider enrolled successfully")
-		} else {
-			// Get random port
-			port, err := rand.GetRandomPort()
-			util.ExitNicelyOnError(err, "Error getting random port")
-
-			resp, err := client.GetAuthorizationURL(ctx, &pb.GetAuthorizationURLRequest{
-				Provider:  provider,
-				ProjectId: project,
-				Cli:       true,
-				Port:      int32(port),
-				Owner:     &owner,
-			})
-			util.ExitNicelyOnError(err, "Error getting authorization URL")
-
-			fmt.Printf("Your browser will now be opened to: %s\n", resp.GetUrl())
-			fmt.Println("Please follow the instructions on the page to complete the OAuth flow.")
-			fmt.Println("Once the flow is complete, the CLI will close")
-			fmt.Println("If this is a headless environment, please copy and paste the URL into a browser on a different machine.")
-
-			if err := browser.OpenURL(resp.GetUrl()); err != nil {
-				fmt.Fprintf(os.Stderr, "Error opening browser: %s\n", err)
-				os.Exit(1)
-			}
-			openTime := time.Now().Unix()
-
-			var wg sync.WaitGroup
-			wg.Add(1)
-
-			go callBackServer(oAuthCallbackCtx, provider, project, fmt.Sprintf("%d", port), &wg, client, openTime, repos_client)
-			wg.Wait()
+			cli.PrintCmd(cmd, "Provider enrolled successfully")
+			return
 		}
+
+		// Get random port
+		port, err := rand.GetRandomPort()
+		util.ExitNicelyOnError(err, "Error getting random port")
+
+		resp, err := client.GetAuthorizationURL(ctx, &pb.GetAuthorizationURLRequest{
+			Provider:  provider,
+			ProjectId: project,
+			Cli:       true,
+			Port:      int32(port),
+			Owner:     &owner,
+		})
+		util.ExitNicelyOnError(err, "Error getting authorization URL")
+
+		fmt.Printf("Your browser will now be opened to: %s\n", resp.GetUrl())
+		fmt.Println("Please follow the instructions on the page to complete the OAuth flow.")
+		fmt.Println("Once the flow is complete, the CLI will close")
+		fmt.Println("If this is a headless environment, please copy and paste the URL into a browser on a different machine.")
+
+		if err := browser.OpenURL(resp.GetUrl()); err != nil {
+			fmt.Fprintf(os.Stderr, "Error opening browser: %s\n", err)
+			os.Exit(1)
+		}
+		openTime := time.Now().Unix()
+
+		var wg sync.WaitGroup
+		wg.Add(1)
+
+		go callBackServer(oAuthCallbackCtx, provider, project, fmt.Sprintf("%d", port), &wg, client, openTime)
+		wg.Wait()
+
+		cli.PrintCmd(cmd, "Provider enrolled successfully")
 	},
 }
 

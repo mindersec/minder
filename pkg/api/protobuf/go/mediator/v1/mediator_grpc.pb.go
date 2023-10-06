@@ -783,19 +783,19 @@ var AuthService_ServiceDesc = grpc.ServiceDesc{
 }
 
 const (
-	RepositoryService_SyncRepositories_FullMethodName    = "/mediator.v1.RepositoryService/SyncRepositories"
-	RepositoryService_RegisterRepository_FullMethodName  = "/mediator.v1.RepositoryService/RegisterRepository"
-	RepositoryService_ListRepositories_FullMethodName    = "/mediator.v1.RepositoryService/ListRepositories"
-	RepositoryService_GetRepositoryById_FullMethodName   = "/mediator.v1.RepositoryService/GetRepositoryById"
-	RepositoryService_GetRepositoryByName_FullMethodName = "/mediator.v1.RepositoryService/GetRepositoryByName"
+	RepositoryService_RegisterRepository_FullMethodName                 = "/mediator.v1.RepositoryService/RegisterRepository"
+	RepositoryService_ListRemoteRepositoriesFromProvider_FullMethodName = "/mediator.v1.RepositoryService/ListRemoteRepositoriesFromProvider"
+	RepositoryService_ListRepositories_FullMethodName                   = "/mediator.v1.RepositoryService/ListRepositories"
+	RepositoryService_GetRepositoryById_FullMethodName                  = "/mediator.v1.RepositoryService/GetRepositoryById"
+	RepositoryService_GetRepositoryByName_FullMethodName                = "/mediator.v1.RepositoryService/GetRepositoryByName"
 )
 
 // RepositoryServiceClient is the client API for RepositoryService service.
 //
 // For semantics around ctx use and closing/ending streaming RPCs, please refer to https://pkg.go.dev/google.golang.org/grpc/?tab=doc#ClientConn.NewStream.
 type RepositoryServiceClient interface {
-	SyncRepositories(ctx context.Context, in *SyncRepositoriesRequest, opts ...grpc.CallOption) (*SyncRepositoriesResponse, error)
 	RegisterRepository(ctx context.Context, in *RegisterRepositoryRequest, opts ...grpc.CallOption) (*RegisterRepositoryResponse, error)
+	ListRemoteRepositoriesFromProvider(ctx context.Context, in *ListRemoteRepositoriesFromProviderRequest, opts ...grpc.CallOption) (*ListRemoteRepositoriesFromProviderResponse, error)
 	ListRepositories(ctx context.Context, in *ListRepositoriesRequest, opts ...grpc.CallOption) (*ListRepositoriesResponse, error)
 	GetRepositoryById(ctx context.Context, in *GetRepositoryByIdRequest, opts ...grpc.CallOption) (*GetRepositoryByIdResponse, error)
 	GetRepositoryByName(ctx context.Context, in *GetRepositoryByNameRequest, opts ...grpc.CallOption) (*GetRepositoryByNameResponse, error)
@@ -809,18 +809,18 @@ func NewRepositoryServiceClient(cc grpc.ClientConnInterface) RepositoryServiceCl
 	return &repositoryServiceClient{cc}
 }
 
-func (c *repositoryServiceClient) SyncRepositories(ctx context.Context, in *SyncRepositoriesRequest, opts ...grpc.CallOption) (*SyncRepositoriesResponse, error) {
-	out := new(SyncRepositoriesResponse)
-	err := c.cc.Invoke(ctx, RepositoryService_SyncRepositories_FullMethodName, in, out, opts...)
+func (c *repositoryServiceClient) RegisterRepository(ctx context.Context, in *RegisterRepositoryRequest, opts ...grpc.CallOption) (*RegisterRepositoryResponse, error) {
+	out := new(RegisterRepositoryResponse)
+	err := c.cc.Invoke(ctx, RepositoryService_RegisterRepository_FullMethodName, in, out, opts...)
 	if err != nil {
 		return nil, err
 	}
 	return out, nil
 }
 
-func (c *repositoryServiceClient) RegisterRepository(ctx context.Context, in *RegisterRepositoryRequest, opts ...grpc.CallOption) (*RegisterRepositoryResponse, error) {
-	out := new(RegisterRepositoryResponse)
-	err := c.cc.Invoke(ctx, RepositoryService_RegisterRepository_FullMethodName, in, out, opts...)
+func (c *repositoryServiceClient) ListRemoteRepositoriesFromProvider(ctx context.Context, in *ListRemoteRepositoriesFromProviderRequest, opts ...grpc.CallOption) (*ListRemoteRepositoriesFromProviderResponse, error) {
+	out := new(ListRemoteRepositoriesFromProviderResponse)
+	err := c.cc.Invoke(ctx, RepositoryService_ListRemoteRepositoriesFromProvider_FullMethodName, in, out, opts...)
 	if err != nil {
 		return nil, err
 	}
@@ -858,8 +858,8 @@ func (c *repositoryServiceClient) GetRepositoryByName(ctx context.Context, in *G
 // All implementations must embed UnimplementedRepositoryServiceServer
 // for forward compatibility
 type RepositoryServiceServer interface {
-	SyncRepositories(context.Context, *SyncRepositoriesRequest) (*SyncRepositoriesResponse, error)
 	RegisterRepository(context.Context, *RegisterRepositoryRequest) (*RegisterRepositoryResponse, error)
+	ListRemoteRepositoriesFromProvider(context.Context, *ListRemoteRepositoriesFromProviderRequest) (*ListRemoteRepositoriesFromProviderResponse, error)
 	ListRepositories(context.Context, *ListRepositoriesRequest) (*ListRepositoriesResponse, error)
 	GetRepositoryById(context.Context, *GetRepositoryByIdRequest) (*GetRepositoryByIdResponse, error)
 	GetRepositoryByName(context.Context, *GetRepositoryByNameRequest) (*GetRepositoryByNameResponse, error)
@@ -870,11 +870,11 @@ type RepositoryServiceServer interface {
 type UnimplementedRepositoryServiceServer struct {
 }
 
-func (UnimplementedRepositoryServiceServer) SyncRepositories(context.Context, *SyncRepositoriesRequest) (*SyncRepositoriesResponse, error) {
-	return nil, status.Errorf(codes.Unimplemented, "method SyncRepositories not implemented")
-}
 func (UnimplementedRepositoryServiceServer) RegisterRepository(context.Context, *RegisterRepositoryRequest) (*RegisterRepositoryResponse, error) {
 	return nil, status.Errorf(codes.Unimplemented, "method RegisterRepository not implemented")
+}
+func (UnimplementedRepositoryServiceServer) ListRemoteRepositoriesFromProvider(context.Context, *ListRemoteRepositoriesFromProviderRequest) (*ListRemoteRepositoriesFromProviderResponse, error) {
+	return nil, status.Errorf(codes.Unimplemented, "method ListRemoteRepositoriesFromProvider not implemented")
 }
 func (UnimplementedRepositoryServiceServer) ListRepositories(context.Context, *ListRepositoriesRequest) (*ListRepositoriesResponse, error) {
 	return nil, status.Errorf(codes.Unimplemented, "method ListRepositories not implemented")
@@ -898,24 +898,6 @@ func RegisterRepositoryServiceServer(s grpc.ServiceRegistrar, srv RepositoryServ
 	s.RegisterService(&RepositoryService_ServiceDesc, srv)
 }
 
-func _RepositoryService_SyncRepositories_Handler(srv interface{}, ctx context.Context, dec func(interface{}) error, interceptor grpc.UnaryServerInterceptor) (interface{}, error) {
-	in := new(SyncRepositoriesRequest)
-	if err := dec(in); err != nil {
-		return nil, err
-	}
-	if interceptor == nil {
-		return srv.(RepositoryServiceServer).SyncRepositories(ctx, in)
-	}
-	info := &grpc.UnaryServerInfo{
-		Server:     srv,
-		FullMethod: RepositoryService_SyncRepositories_FullMethodName,
-	}
-	handler := func(ctx context.Context, req interface{}) (interface{}, error) {
-		return srv.(RepositoryServiceServer).SyncRepositories(ctx, req.(*SyncRepositoriesRequest))
-	}
-	return interceptor(ctx, in, info, handler)
-}
-
 func _RepositoryService_RegisterRepository_Handler(srv interface{}, ctx context.Context, dec func(interface{}) error, interceptor grpc.UnaryServerInterceptor) (interface{}, error) {
 	in := new(RegisterRepositoryRequest)
 	if err := dec(in); err != nil {
@@ -930,6 +912,24 @@ func _RepositoryService_RegisterRepository_Handler(srv interface{}, ctx context.
 	}
 	handler := func(ctx context.Context, req interface{}) (interface{}, error) {
 		return srv.(RepositoryServiceServer).RegisterRepository(ctx, req.(*RegisterRepositoryRequest))
+	}
+	return interceptor(ctx, in, info, handler)
+}
+
+func _RepositoryService_ListRemoteRepositoriesFromProvider_Handler(srv interface{}, ctx context.Context, dec func(interface{}) error, interceptor grpc.UnaryServerInterceptor) (interface{}, error) {
+	in := new(ListRemoteRepositoriesFromProviderRequest)
+	if err := dec(in); err != nil {
+		return nil, err
+	}
+	if interceptor == nil {
+		return srv.(RepositoryServiceServer).ListRemoteRepositoriesFromProvider(ctx, in)
+	}
+	info := &grpc.UnaryServerInfo{
+		Server:     srv,
+		FullMethod: RepositoryService_ListRemoteRepositoriesFromProvider_FullMethodName,
+	}
+	handler := func(ctx context.Context, req interface{}) (interface{}, error) {
+		return srv.(RepositoryServiceServer).ListRemoteRepositoriesFromProvider(ctx, req.(*ListRemoteRepositoriesFromProviderRequest))
 	}
 	return interceptor(ctx, in, info, handler)
 }
@@ -996,12 +996,12 @@ var RepositoryService_ServiceDesc = grpc.ServiceDesc{
 	HandlerType: (*RepositoryServiceServer)(nil),
 	Methods: []grpc.MethodDesc{
 		{
-			MethodName: "SyncRepositories",
-			Handler:    _RepositoryService_SyncRepositories_Handler,
-		},
-		{
 			MethodName: "RegisterRepository",
 			Handler:    _RepositoryService_RegisterRepository_Handler,
+		},
+		{
+			MethodName: "ListRemoteRepositoriesFromProvider",
+			Handler:    _RepositoryService_ListRemoteRepositoriesFromProvider_Handler,
 		},
 		{
 			MethodName: "ListRepositories",

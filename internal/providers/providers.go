@@ -149,3 +149,21 @@ func (pb *ProviderBuilder) GetGitHub(ctx context.Context) (*ghclient.RestClient,
 
 	return cli, nil
 }
+
+// GetRepoLister returns a repo lister for the provider.
+func (pb *ProviderBuilder) GetRepoLister(ctx context.Context) (provinfv1.RepoLister, error) {
+	if !pb.Implements(db.ProviderTypeRepoLister) {
+		return nil, fmt.Errorf("provider does not implement repo lister")
+	}
+
+	if pb.p.Version != provinfv1.V1 {
+		return nil, fmt.Errorf("provider version not supported")
+	}
+
+	if pb.Implements(db.ProviderTypeGithub) {
+		return pb.GetGitHub(ctx)
+	}
+
+	// TODO: We'll need to add support for other providers here
+	return nil, fmt.Errorf("provider does not implement repo lister")
+}
