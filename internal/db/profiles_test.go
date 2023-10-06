@@ -211,7 +211,7 @@ func TestCreateProfileStatusStoredProcedure(t *testing.T) {
 			expectedStatusAfterModify: EvalStatusTypesSuccess,
 		},
 		{
-			name: "Profile with all skipped evaluations should be success",
+			name: "Profile with all skipped evaluations should be skipped",
 			ruleStatusSetupFn: func(profile Profile, randomEntities *testRandomEntities) {
 				// noop
 			},
@@ -225,7 +225,7 @@ func TestCreateProfileStatusStoredProcedure(t *testing.T) {
 					t, profile.ID, randomEntities.repo.ID, randomEntities.ruleType2.ID,
 					EvalStatusTypesSkipped, "")
 			},
-			expectedStatusAfterModify: EvalStatusTypesSuccess,
+			expectedStatusAfterModify: EvalStatusTypesSkipped,
 		},
 		{
 			name: "Profile with one success and failure rule evaluation, should be failure",

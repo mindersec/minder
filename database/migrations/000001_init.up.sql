@@ -332,6 +332,10 @@ BEGIN
     IF (NEW.status = 'error') THEN
         UPDATE profile_status SET profile_status = 'error', last_updated = NOW()
         WHERE profile_id = v_profile_id;
+        -- only mark profile run as skipped if every evaluation was skipped
+    ELSEIF (NEW.status = 'skipped') THEN
+        UPDATE profile_status SET profile_status = 'skipped', last_updated = NOW()
+        WHERE profile_id = v_profile_id AND NOT EXISTS (SELECT * FROM rule_evaluations res INNER JOIN rule_details_eval rde ON res.id = rde.rule_eval_id WHERE res.profile_id = v_profile_id AND rde.status != 'skipped');
     -- mark status as successful if all evaluations are successful or skipped
     ELSEIF NOT EXISTS (
         SELECT *
@@ -354,10 +358,6 @@ BEGIN
     ) THEN
         UPDATE profile_status SET profile_status = 'failure', last_updated = NOW()
         WHERE profile_id = v_profile_id AND (profile_status = 'success' OR profile_status = 'pending') AND NEW.status = 'failure';
-    -- only mark profile run as skipped if every evaluation was skipped
-    ELSEIF (NEW.status = 'skipped') THEN
-        UPDATE profile_status SET profile_status = 'skipped', last_updated = NOW()
-        WHERE profile_id = v_profile_id AND NOT EXISTS (SELECT * FROM rule_evaluations res INNER JOIN rule_details_eval rde ON res.id = rde.rule_eval_id WHERE res.profile_id = v_profile_id AND rde.status != 'skipped');
     END IF;
     RETURN NEW;
 END;
