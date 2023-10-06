@@ -170,7 +170,7 @@ func runEvaluationForRules(
 
 		evalErr, remediateErr := eng.Eval(context.Background(), ent, def, params, rem)
 		if evalErr != nil {
-			return fmt.Errorf("error evaluating rule type: %w", err)
+			return fmt.Errorf("error evaluating rule type: %w", evalErr)
 		}
 
 		if errors.IsRemediateFatalError(remediateErr) {
