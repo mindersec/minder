@@ -80,7 +80,8 @@ func runTestWithInProcessPostgres(m *testing.M) int {
 
 	dbCfg := embeddedpostgres.DefaultConfig().
 		Database("mediator").
-		RuntimePath(tmpName)
+		RuntimePath(tmpName).
+		Port(5433)
 	postgres := embeddedpostgres.NewDatabase(dbCfg)
 
 	if err := postgres.Start(); err != nil {
@@ -93,7 +94,7 @@ func runTestWithInProcessPostgres(m *testing.M) int {
 		}
 	}()
 
-	testDB, err = sql.Open("postgres", "user=postgres dbname=mediator password=postgres host=localhost sslmode=disable")
+	testDB, err = sql.Open("postgres", "user=postgres dbname=mediator password=postgres host=localhost port=5433 sslmode=disable")
 	if err != nil {
 		log.Println("cannot connect to db test instance:", err)
 		return -1
