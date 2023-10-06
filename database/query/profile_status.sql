@@ -1,14 +1,4 @@
 
--- name: InsertRuleEvaluations :one
-INSERT INTO rule_evaluations (
-    profile_id, repository_id, artifact_id, rule_type_id, entity
-) VALUES ($1, $2, $3, $4, $5)
-RETURNING id;
-
--- name: GetRuleEvaluationID :one
-SELECT id FROM rule_evaluations
-WHERE profile_id = $1;
-
 -- name: UpsertRuleEvaluations :one
 INSERT INTO rule_evaluations (
     profile_id, repository_id, artifact_id, rule_type_id, entity
@@ -81,30 +71,31 @@ INNER JOIN profiles p ON p.id = ps.profile_id
 WHERE p.project_id = $1;
 
 -- name: ListRuleEvaluationsByProfileId :many
-WITH eval_details AS (
-    SELECT
-        rule_eval_id,
-        status AS eval_status,
-        details AS eval_details,
-        last_updated AS eval_last_updated
-    FROM rule_details_eval
-),
-     remediation_details AS (
-         SELECT
-             rule_eval_id,
-             status AS rem_status,
-             details AS rem_details,
-             last_updated AS rem_last_updated
-         FROM rule_details_remediate
-     ),
-     alert_details AS (
-         SELECT
-             rule_eval_id,
-             status AS alert_status,
-             details AS alert_details,
-             last_updated AS alert_last_updated
-         FROM rule_details_alert
-     )
+WITH
+   eval_details AS (
+   SELECT
+       rule_eval_id,
+       status AS eval_status,
+       details AS eval_details,
+       last_updated AS eval_last_updated
+   FROM rule_details_eval
+   ),
+   remediation_details AS (
+       SELECT
+           rule_eval_id,
+           status AS rem_status,
+           details AS rem_details,
+           last_updated AS rem_last_updated
+       FROM rule_details_remediate
+   ),
+   alert_details AS (
+       SELECT
+           rule_eval_id,
+           status AS alert_status,
+           details AS alert_details,
+           last_updated AS alert_last_updated
+       FROM rule_details_alert
+   )
 
 SELECT
     ed.eval_status,

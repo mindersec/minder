@@ -1009,21 +1009,6 @@ func (mr *MockStoreMockRecorder) GetRootProjects(arg0 interface{}) *gomock.Call 
 	return mr.mock.ctrl.RecordCallWithMethodType(mr.mock, "GetRootProjects", reflect.TypeOf((*MockStore)(nil).GetRootProjects), arg0)
 }
 
-// GetRuleEvaluationID mocks base method.
-func (m *MockStore) GetRuleEvaluationID(arg0 context.Context, arg1 uuid.UUID) (uuid.UUID, error) {
-	m.ctrl.T.Helper()
-	ret := m.ctrl.Call(m, "GetRuleEvaluationID", arg0, arg1)
-	ret0, _ := ret[0].(uuid.UUID)
-	ret1, _ := ret[1].(error)
-	return ret0, ret1
-}
-
-// GetRuleEvaluationID indicates an expected call of GetRuleEvaluationID.
-func (mr *MockStoreMockRecorder) GetRuleEvaluationID(arg0, arg1 interface{}) *gomock.Call {
-	mr.mock.ctrl.T.Helper()
-	return mr.mock.ctrl.RecordCallWithMethodType(mr.mock, "GetRuleEvaluationID", reflect.TypeOf((*MockStore)(nil).GetRuleEvaluationID), arg0, arg1)
-}
-
 // GetRuleTypeByID mocks base method.
 func (m *MockStore) GetRuleTypeByID(arg0 context.Context, arg1 uuid.UUID) (db.RuleType, error) {
 	m.ctrl.T.Helper()
@@ -1187,21 +1172,6 @@ func (m *MockStore) GlobalListProviders(arg0 context.Context) ([]db.Provider, er
 func (mr *MockStoreMockRecorder) GlobalListProviders(arg0 interface{}) *gomock.Call {
 	mr.mock.ctrl.T.Helper()
 	return mr.mock.ctrl.RecordCallWithMethodType(mr.mock, "GlobalListProviders", reflect.TypeOf((*MockStore)(nil).GlobalListProviders), arg0)
-}
-
-// InsertRuleEvaluations mocks base method.
-func (m *MockStore) InsertRuleEvaluations(arg0 context.Context, arg1 db.InsertRuleEvaluationsParams) (uuid.UUID, error) {
-	m.ctrl.T.Helper()
-	ret := m.ctrl.Call(m, "InsertRuleEvaluations", arg0, arg1)
-	ret0, _ := ret[0].(uuid.UUID)
-	ret1, _ := ret[1].(error)
-	return ret0, ret1
-}
-
-// InsertRuleEvaluations indicates an expected call of InsertRuleEvaluations.
-func (mr *MockStoreMockRecorder) InsertRuleEvaluations(arg0, arg1 interface{}) *gomock.Call {
-	mr.mock.ctrl.T.Helper()
-	return mr.mock.ctrl.RecordCallWithMethodType(mr.mock, "InsertRuleEvaluations", reflect.TypeOf((*MockStore)(nil).InsertRuleEvaluations), arg0, arg1)
 }
 
 // ListAllRepositories mocks base method.

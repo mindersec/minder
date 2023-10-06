@@ -114,71 +114,32 @@ func (q *Queries) GetProfileStatusByProject(ctx context.Context, projectID uuid.
 	return items, nil
 }
 
-const getRuleEvaluationID = `-- name: GetRuleEvaluationID :one
-SELECT id FROM rule_evaluations
-WHERE profile_id = $1
-`
-
-func (q *Queries) GetRuleEvaluationID(ctx context.Context, profileID uuid.UUID) (uuid.UUID, error) {
-	row := q.db.QueryRowContext(ctx, getRuleEvaluationID, profileID)
-	var id uuid.UUID
-	err := row.Scan(&id)
-	return id, err
-}
-
-const insertRuleEvaluations = `-- name: InsertRuleEvaluations :one
-INSERT INTO rule_evaluations (
-    profile_id, repository_id, artifact_id, rule_type_id, entity
-) VALUES ($1, $2, $3, $4, $5)
-RETURNING id
-`
-
-type InsertRuleEvaluationsParams struct {
-	ProfileID    uuid.UUID     `json:"profile_id"`
-	RepositoryID uuid.NullUUID `json:"repository_id"`
-	ArtifactID   uuid.NullUUID `json:"artifact_id"`
-	RuleTypeID   uuid.UUID     `json:"rule_type_id"`
-	Entity       Entities      `json:"entity"`
-}
-
-func (q *Queries) InsertRuleEvaluations(ctx context.Context, arg InsertRuleEvaluationsParams) (uuid.UUID, error) {
-	row := q.db.QueryRowContext(ctx, insertRuleEvaluations,
-		arg.ProfileID,
-		arg.RepositoryID,
-		arg.ArtifactID,
-		arg.RuleTypeID,
-		arg.Entity,
-	)
-	var id uuid.UUID
-	err := row.Scan(&id)
-	return id, err
-}
-
 const listRuleEvaluationsByProfileId = `-- name: ListRuleEvaluationsByProfileId :many
-WITH eval_details AS (
-    SELECT
-        rule_eval_id,
-        status AS eval_status,
-        details AS eval_details,
-        last_updated AS eval_last_updated
-    FROM rule_details_eval
-),
-     remediation_details AS (
-         SELECT
-             rule_eval_id,
-             status AS rem_status,
-             details AS rem_details,
-             last_updated AS rem_last_updated
-         FROM rule_details_remediate
-     ),
-     alert_details AS (
-         SELECT
-             rule_eval_id,
-             status AS alert_status,
-             details AS alert_details,
-             last_updated AS alert_last_updated
-         FROM rule_details_alert
-     )
+WITH
+   eval_details AS (
+   SELECT
+       rule_eval_id,
+       status AS eval_status,
+       details AS eval_details,
+       last_updated AS eval_last_updated
+   FROM rule_details_eval
+   ),
+   remediation_details AS (
+       SELECT
+           rule_eval_id,
+           status AS rem_status,
+           details AS rem_details,
+           last_updated AS rem_last_updated
+       FROM rule_details_remediate
+   ),
+   alert_details AS (
+       SELECT
+           rule_eval_id,
+           status AS alert_status,
+           details AS alert_details,
+           last_updated AS alert_last_updated
+       FROM rule_details_alert
+   )
 
 SELECT
     ed.eval_status,

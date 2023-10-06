@@ -16,11 +16,9 @@ package engine
 
 import (
 	"context"
-	"database/sql"
 	"errors"
 	"fmt"
 	"log"
-	"time"
 
 	"github.com/google/uuid"
 
@@ -160,17 +158,4 @@ func errorAsRemediationDetails(err error) string {
 	}
 
 	return ""
-}
-
-func setRemediationLastUpdated(err error) sql.NullTime {
-	ret := sql.NullTime{}
-	if evalerrors.IsRemediateInformativeError(err) {
-		// just return a NullString
-		return ret
-	}
-
-	ret.Valid = true
-	ret.Time = time.Now()
-
-	return ret
 }

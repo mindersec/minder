@@ -174,6 +174,7 @@ default allow = true`,
 		Definition: json.RawMessage(marshalledRTD),
 	}, nil)
 
+	ruleEvalId := uuid.New()
 	// Upload passing status
 	mockStore.EXPECT().
 		UpsertRuleEvaluations(gomock.Any(), db.UpsertRuleEvaluationsParams{
@@ -185,7 +186,24 @@ default allow = true`,
 			ArtifactID: uuid.NullUUID{},
 			RuleTypeID: ruleTypeID,
 			Entity:     db.EntitiesRepository,
-		}).Return(nil)
+		}).Return(ruleEvalId, nil)
+
+	ruleEvalDetailsId := uuid.New()
+	mockStore.EXPECT().
+		UpsertRuleDetailsEval(gomock.Any(), db.UpsertRuleDetailsEvalParams{
+			RuleEvalID: ruleEvalId,
+			Status:     db.EvalStatusTypesSuccess,
+			Details:    "",
+		}).Return(ruleEvalDetailsId, nil)
+
+	ruleEvalRemediationId := uuid.New()
+	mockStore.EXPECT().
+		UpsertRuleDetailsRemediate(gomock.Any(), db.UpsertRuleDetailsRemediateParams{
+			RuleEvalID: ruleEvalId,
+			Status:     db.RemediationStatusTypesSkipped,
+			Details:    "",
+		}).Return(ruleEvalRemediationId, nil)
+
 	// -- end expectations
 
 	tmpdir := t.TempDir()
