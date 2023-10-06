@@ -3,7 +3,8 @@ INSERT INTO profiles (
     provider,
     project_id,
     remediate,
-    name) VALUES ($1, $2, $3, $4) RETURNING *;
+    alert,
+    name) VALUES ($1, $2, $3, $4, $5) RETURNING *;
 
 -- name: CreateProfileForEntity :one
 INSERT INTO entity_profiles (

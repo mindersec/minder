@@ -16,11 +16,9 @@ package engine
 
 import (
 	"context"
-	"database/sql"
 	"errors"
 	"fmt"
 	"log"
-	"time"
 
 	"github.com/google/uuid"
 
@@ -64,21 +62,57 @@ func (e *Executor) createOrUpdateEvalStatus(
 		}
 	}
 
-	err := e.querier.UpsertRuleEvaluationStatus(ctx, db.UpsertRuleEvaluationStatusParams{
+	id, err := e.querier.UpsertRuleEvaluations(ctx, db.UpsertRuleEvaluationsParams{
 		ProfileID: params.profileID,
 		RepositoryID: uuid.NullUUID{
 			UUID:  params.repoID,
 			Valid: true,
 		},
-		ArtifactID:             sqlArtifactID,
-		Entity:                 params.ruleTypeEntity,
-		RuleTypeID:             params.ruleTypeID,
-		EvalStatus:             errorAsEvalStatus(params.evalErr),
-		EvalDetails:            errorAsEvalDetails(params.evalErr),
-		RemediationStatus:      errorAsRemediationStatus(params.remediateErr),
-		RemediationDetails:     errorAsRemediationDetails(params.remediateErr),
-		RemediationLastUpdated: setRemediationLastUpdated(params.remediateErr),
+		ArtifactID: sqlArtifactID,
+		Entity:     params.ruleTypeEntity,
+		RuleTypeID: params.ruleTypeID,
 	})
+
+	if err != nil {
+		log.Printf(
+			"error upserting rule eval, profile %s, entity %s, repo %s: %s",
+			params.profileID,
+			params.ruleTypeEntity,
+			params.repoID,
+			err,
+		)
+		return err
+	}
+	_, err = e.querier.UpsertRuleDetailsEval(ctx, db.UpsertRuleDetailsEvalParams{
+		RuleEvalID: id,
+		Status:     errorAsEvalStatus(params.evalErr),
+		Details:    errorAsEvalDetails(params.evalErr),
+	})
+
+	if err != nil {
+		log.Printf(
+			"error upserting rule eval details, profile %s, entity %s, repo %s: %s\"",
+			params.profileID,
+			params.ruleTypeEntity,
+			params.repoID,
+			err,
+		)
+		return err
+	}
+	_, err = e.querier.UpsertRuleDetailsRemediate(ctx, db.UpsertRuleDetailsRemediateParams{
+		RuleEvalID: id,
+		Status:     errorAsRemediationStatus(params.remediateErr),
+		Details:    errorAsRemediationDetails(params.remediateErr),
+	})
+	if err != nil {
+		log.Printf(
+			"error upserting rule remediation details, profile %s, entity %s, repo %s: %s",
+			params.profileID,
+			params.ruleTypeEntity,
+			params.repoID,
+			err,
+		)
+	}
 	return err
 }
 
@@ -124,17 +158,4 @@ func errorAsRemediationDetails(err error) string {
 	}
 
 	return ""
-}
-
-func setRemediationLastUpdated(err error) sql.NullTime {
-	ret := sql.NullTime{}
-	if evalerrors.IsRemediateInformativeError(err) {
-		// just return a NullString
-		return ret
-	}
-
-	ret.Valid = true
-	ret.Time = time.Now()
-
-	return ret
 }

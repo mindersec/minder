@@ -14,7 +14,10 @@
 
 
 DROP TABLE IF EXISTS artifact_versions;
-DROP TABLE IF EXISTS rule_evaluation_status;
+DROP TABLE IF EXISTS rule_evaluations;
+DROP TABLE IF EXISTS rule_details_eval;
+DROP TABLE IF EXISTS rule_details_remediate;
+DROP TABLE IF EXISTS rule_details_alert;
 DROP TABLE IF EXISTS artifacts;
 DROP TABLE IF EXISTS entity_profiles;
 DROP TABLE IF EXISTS profile_status;

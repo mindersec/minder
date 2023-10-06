@@ -96,17 +96,17 @@ func verifyValidProject(ctx context.Context, in *engine.EntityContext) error {
 // validateRemediateType returns the appropriate remediate type or the
 // NULL DB type if the input is invalid, thus letting the server run
 // the profile with the default remediate type.
-func validateRemediateType(r string) db.NullRemediateType {
+func validateRemediateType(r string) db.NullActionType {
 	switch r {
 	case "on":
-		return db.NullRemediateType{RemediateType: db.RemediateTypeOn, Valid: true}
+		return db.NullActionType{ActionType: db.ActionTypeOn, Valid: true}
 	case "off":
-		return db.NullRemediateType{RemediateType: db.RemediateTypeOff, Valid: true}
+		return db.NullActionType{ActionType: db.ActionTypeOff, Valid: true}
 	case "dry_run":
-		return db.NullRemediateType{RemediateType: db.RemediateTypeDryRun, Valid: true}
+		return db.NullActionType{ActionType: db.ActionTypeDryRun, Valid: true}
 	}
 
-	return db.NullRemediateType{Valid: false}
+	return db.NullActionType{Valid: false}
 }
 
 // CreateProfile creates a profile for a group
@@ -390,7 +390,7 @@ func getRuleEvalEntityInfo(
 	store db.Store,
 	entityType *db.NullEntities,
 	selector *uuid.NullUUID,
-	rs db.ListRuleEvaluationStatusByProfileIdRow,
+	rs db.ListRuleEvaluationsByProfileIdRow,
 	providerName string,
 ) map[string]string {
 	entityInfo := map[string]string{
@@ -473,7 +473,7 @@ func (s *Server) GetProfileStatusByName(ctx context.Context,
 
 	// TODO: Handle retrieving status for other types of entities
 	if selector != nil {
-		dbrulestat, err := s.store.ListRuleEvaluationStatusByProfileId(ctx, db.ListRuleEvaluationStatusByProfileIdParams{
+		dbrulestat, err := s.store.ListRuleEvaluationsByProfileId(ctx, db.ListRuleEvaluationsByProfileIdParams{
 			ProfileID:  dbstat.ID,
 			EntityID:   *selector,
 			EntityType: *dbEntity,
@@ -488,7 +488,14 @@ func (s *Server) GetProfileStatusByName(ctx context.Context,
 			rs := rs
 
 			var guidance string
-			if rs.EvalStatus == db.EvalStatusTypesFailure || rs.EvalStatus == db.EvalStatusTypesError {
+
+			// make sure all fields are valid
+			if !rs.EvalStatus.Valid || !rs.EvalDetails.Valid || !rs.RemStatus.Valid || !rs.RemDetails.Valid || !rs.EvalLastUpdated.Valid {
+				log.Println("error rule evaluation value not valid")
+				continue
+			}
+
+			if rs.EvalStatus.EvalStatusTypes == db.EvalStatusTypesFailure || rs.EvalStatus.EvalStatusTypes == db.EvalStatusTypesError {
 				ruleTypeInfo, err := s.store.GetRuleTypeByID(ctx, rs.RuleTypeID)
 				if err != nil {
 					log.Printf("error getting rule type info: %v", err)
@@ -502,13 +509,13 @@ func (s *Server) GetProfileStatusByName(ctx context.Context,
 				RuleId:             rs.RuleTypeID.String(),
 				RuleName:           rs.RuleTypeName,
 				Entity:             string(rs.Entity),
-				Status:             string(rs.EvalStatus),
-				Details:            rs.EvalDetails,
+				Status:             string(rs.EvalStatus.EvalStatusTypes),
+				Details:            rs.EvalDetails.String,
 				EntityInfo:         getRuleEvalEntityInfo(ctx, s.store, dbEntity, selector, rs, entityCtx.GetProvider().Name),
 				Guidance:           guidance,
-				LastUpdated:        timestamppb.New(rs.EvalLastUpdated),
-				RemediationStatus:  string(rs.RemStatus),
-				RemediationDetails: rs.RemDetails,
+				LastUpdated:        timestamppb.New(rs.EvalLastUpdated.Time),
+				RemediationStatus:  string(rs.RemStatus.RemediationStatusTypes),
+				RemediationDetails: rs.RemDetails.String,
 			}
 
 			if rs.RemLastUpdated.Valid {
