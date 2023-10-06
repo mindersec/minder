@@ -4,21 +4,6 @@ jobs:
   test:
     name: Unit testing
     runs-on: ubuntu-latest
-    services:
-      postgres:
-        image: postgres
-        env:
-          POSTGRES_USER: postgres
-          POSTGRES_PASSWORD: postgres
-          POSTGRES_DB: mediator
-        options: >-
-          --health-cmd pg_isready
-          --health-interval 10s
-          --health-timeout 5s
-          --health-retries 5
-        ports:
-          - 5432:5432
-
     steps:
       # Checkout your project with git
       - name: Checkout
@@ -45,10 +30,6 @@ jobs:
       # copy config file into place
       - name: Copy config file
         run: cp config/config.yaml.example ./config.yaml
-
-      # Migrate the database
-      - name: Migrate database
-        run: make migrateup
 
       # Run the tests
       - name: Run tests
