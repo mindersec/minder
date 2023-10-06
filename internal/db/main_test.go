@@ -33,11 +33,23 @@ import (
 	_ "github.com/lib/pq"
 )
 
+const (
+	// DontCleanDBEnvVar is the environment variable that, when set, will
+	// prevent the test database from being cleaned up after the tests are
+	// finished.
+	DontCleanDBEnvVar = "MEDIATOR_TEST_DONT_CLEAN_DB"
+)
+
 var testQueries *Queries
 var testDB *sql.DB
 
 func TestMain(m *testing.M) {
 	os.Exit(runTestWithPostgres(m))
+}
+
+func shouldClean() bool {
+	_, ok := os.LookupEnv(DontCleanDBEnvVar)
+	return !ok
 }
 
 func runTestWithPostgres(m *testing.M) int {
@@ -48,6 +60,9 @@ func runTestWithPostgres(m *testing.M) int {
 	}
 
 	defer func() {
+		if !shouldClean() {
+			return
+		}
 		if err := os.RemoveAll(tmpName); err != nil {
 			log.Println("cannot remove tmpdir:", err)
 		}
@@ -63,6 +78,9 @@ func runTestWithPostgres(m *testing.M) int {
 		return -1
 	}
 	defer func() {
+		if !shouldClean() {
+			return
+		}
 		if err := postgres.Stop(); err != nil {
 			log.Println("cannot stop postgres:", err)
 		}
