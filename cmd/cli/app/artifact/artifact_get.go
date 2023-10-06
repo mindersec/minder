@@ -31,7 +31,7 @@ import (
 var artifact_getCmd = &cobra.Command{
 	Use:   "get",
 	Short: "Get artifact details",
-	Long:  `Artifact get will get artifact details from an artifact, for a given id`,
+	Long:  `Artifact get will get artifact details from an artifact, for a given ID`,
 	PreRun: func(cmd *cobra.Command, args []string) {
 		if err := viper.BindPFlags(cmd.Flags()); err != nil {
 			fmt.Fprintf(os.Stderr, "error binding flags: %s", err)

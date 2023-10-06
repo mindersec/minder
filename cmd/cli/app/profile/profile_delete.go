@@ -28,7 +28,7 @@ import (
 
 var profile_deleteCmd = &cobra.Command{
 	Use:   "delete",
-	Short: "delete a profile within a mediator controlplane",
+	Short: "Delete a profile within a mediator control plane",
 	Long: `The medic profile delete subcommand lets you delete profiles within a
 mediator control plane.`,
 	PreRun: func(cmd *cobra.Command, args []string) {
@@ -64,7 +64,7 @@ mediator control plane.`,
 
 func init() {
 	ProfileCmd.AddCommand(profile_deleteCmd)
-	profile_deleteCmd.Flags().StringP("id", "i", "", "id of profile to delete")
+	profile_deleteCmd.Flags().StringP("id", "i", "", "ID of profile to delete")
 	profile_deleteCmd.Flags().StringP("provider", "p", "github", "Provider for the profile")
 	err := profile_deleteCmd.MarkFlagRequired("id")
 	util.ExitNicelyOnError(err, "Error marking flag as required")

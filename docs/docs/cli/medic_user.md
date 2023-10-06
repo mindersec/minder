@@ -20,7 +20,7 @@ medic user [flags]
 ### Options inherited from parent commands
 
 ```
-      --config string      config file (default is $PWD/config.yaml)
+      --config string      Config file (default is $PWD/config.yaml)
       --grpc-host string   Server host (default "staging.stacklok.dev")
       --grpc-insecure      Allow establishing insecure connections
       --grpc-port int      Server port (default 443)
@@ -28,8 +28,8 @@ medic user [flags]
 
 ### SEE ALSO
 
-* [medic](medic.md)	 - medic controls mediator via the control plane
-* [medic user delete](medic_user_delete.md)	 - delete a user within a mediator controlplane
+* [medic](medic.md)	 - Medic controls mediator via the control plane
+* [medic user delete](medic_user_delete.md)	 - Delete an user within a mediator control plane
 * [medic user get](medic_user_get.md)	 - Get details for an user within a mediator control plane
 * [medic user list](medic_user_list.md)	 - List users within a mediator control plane
 

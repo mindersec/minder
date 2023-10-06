@@ -17,7 +17,7 @@ See each sub-command's help for details on how to use the generated script.
 ### Options inherited from parent commands
 
 ```
-      --config string      config file (default is $PWD/config.yaml)
+      --config string      Config file (default is $PWD/config.yaml)
       --grpc-host string   Server host (default "staging.stacklok.dev")
       --grpc-insecure      Allow establishing insecure connections
       --grpc-port int      Server port (default 443)
@@ -25,7 +25,7 @@ See each sub-command's help for details on how to use the generated script.
 
 ### SEE ALSO
 
-* [medic](medic.md)	 - medic controls mediator via the control plane
+* [medic](medic.md)	 - Medic controls mediator via the control plane
 * [medic completion bash](medic_completion_bash.md)	 - Generate the autocompletion script for bash
 * [medic completion fish](medic_completion_fish.md)	 - Generate the autocompletion script for fish
 * [medic completion powershell](medic_completion_powershell.md)	 - Generate the autocompletion script for powershell

@@ -1,6 +1,6 @@
 ## medic org delete
 
-delete a organization within a mediator controlplane
+Delete an organization within a mediator control plane
 
 ### Synopsis
 
@@ -16,13 +16,13 @@ medic org delete [flags]
 ```
   -f, --force           Force deletion of organization, even if it has associated projects
   -h, --help            help for delete
-  -o, --org-id string   id of organization to delete
+  -o, --org-id string   ID of organization to delete
 ```
 
 ### Options inherited from parent commands
 
 ```
-      --config string      config file (default is $PWD/config.yaml)
+      --config string      Config file (default is $PWD/config.yaml)
       --grpc-host string   Server host (default "staging.stacklok.dev")
       --grpc-insecure      Allow establishing insecure connections
       --grpc-port int      Server port (default 443)

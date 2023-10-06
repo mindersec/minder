@@ -14,19 +14,19 @@ medic profile_status get [flags]
 ### Options
 
 ```
-  -e, --entity string        entity id to get profile status for
+  -e, --entity string        Entity ID to get profile status for
   -t, --entity-type string   the entity type to get profile status for (one of artifact,build_environment,repository)
   -h, --help                 help for get
   -o, --output string        Output format (json, yaml or table) (default "table")
-  -i, --profile string       profile name to get profile status for
-  -g, --project string       project id to get profile status for
+  -i, --profile string       Profile name to get profile status for
+  -g, --project string       Project ID to get profile status for
   -p, --provider string      Provider to get profile status for (default "github")
 ```
 
 ### Options inherited from parent commands
 
 ```
-      --config string      config file (default is $PWD/config.yaml)
+      --config string      Config file (default is $PWD/config.yaml)
       --grpc-host string   Server host (default "staging.stacklok.dev")
       --grpc-insecure      Allow establishing insecure connections
       --grpc-port int      Server port (default 443)

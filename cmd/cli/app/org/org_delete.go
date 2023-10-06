@@ -34,7 +34,7 @@ import (
 
 var org_deleteCmd = &cobra.Command{
 	Use:   "delete",
-	Short: "delete a organization within a mediator controlplane",
+	Short: "Delete an organization within a mediator control plane",
 	Long: `The medic org delete subcommand lets you delete organizations within a
 mediator control plane.`,
 	PreRun: func(cmd *cobra.Command, args []string) {
@@ -69,7 +69,7 @@ mediator control plane.`,
 
 func init() {
 	OrgCmd.AddCommand(org_deleteCmd)
-	org_deleteCmd.Flags().StringP("org-id", "o", "", "id of organization to delete")
+	org_deleteCmd.Flags().StringP("org-id", "o", "", "ID of organization to delete")
 	org_deleteCmd.Flags().BoolP("force", "f", false,
 		"Force deletion of organization, even if it has associated projects")
 	err := org_deleteCmd.MarkFlagRequired("org-id")

@@ -17,13 +17,13 @@ medic keys generate [flags]
   -h, --help                help for generate
   -o, --output string       Output public key to file
   -p, --passphrase string   Passphrase to use for key generation
-  -g, --project-id string   project id to list roles for
+  -g, --project-id string   Project ID to list roles for
 ```
 
 ### Options inherited from parent commands
 
 ```
-      --config string      config file (default is $PWD/config.yaml)
+      --config string      Config file (default is $PWD/config.yaml)
       --grpc-host string   Server host (default "staging.stacklok.dev")
       --grpc-insecure      Allow establishing insecure connections
       --grpc-port int      Server port (default 443)

@@ -1,6 +1,6 @@
 ## medic project delete
 
-delete a project within a mediator controlplane
+Delete a project within a mediator control plane
 
 ### Synopsis
 
@@ -16,13 +16,13 @@ medic project delete [flags]
 ```
   -f, --force               Force deletion of project, even if it's protected or has associated roles (WARNING: removing a protected project may cause loosing mediator access)
   -h, --help                help for delete
-  -g, --project-id string   id of project to delete
+  -g, --project-id string   ID of project to delete
 ```
 
 ### Options inherited from parent commands
 
 ```
-      --config string      config file (default is $PWD/config.yaml)
+      --config string      Config file (default is $PWD/config.yaml)
       --grpc-host string   Server host (default "staging.stacklok.dev")
       --grpc-insecure      Allow establishing insecure connections
       --grpc-port int      Server port (default 443)

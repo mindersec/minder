@@ -31,7 +31,7 @@ var (
 	// RootCmd represents the base command when called without any subcommands
 	RootCmd = &cobra.Command{
 		Use:   "medic",
-		Short: "medic controls mediator via the control plane",
+		Short: "Medic controls mediator via the control plane",
 		Long: `For more information about mediator, please visit:
 https://docs.stacklok.com/mediator/medic/overview.html`,
 	}
@@ -57,7 +57,7 @@ func init() {
 	RootCmd.PersistentFlags().String("grpc-host", "staging.stacklok.dev", "Server host")
 	RootCmd.PersistentFlags().Int("grpc-port", 443, "Server port")
 	RootCmd.PersistentFlags().Bool("grpc-insecure", false, "Allow establishing insecure connections")
-	RootCmd.PersistentFlags().StringVar(&cfgFile, "config", "", "config file (default is $PWD/config.yaml)")
+	RootCmd.PersistentFlags().StringVar(&cfgFile, "config", "", "Config file (default is $PWD/config.yaml)")
 }
 
 func initConfig() {

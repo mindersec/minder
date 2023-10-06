@@ -1,6 +1,6 @@
 ## medic
 
-medic controls mediator via the control plane
+Medic controls mediator via the control plane
 
 ### Synopsis
 
@@ -10,7 +10,7 @@ https://docs.stacklok.com/mediator/medic/overview.html
 ### Options
 
 ```
-      --config string      config file (default is $PWD/config.yaml)
+      --config string      Config file (default is $PWD/config.yaml)
       --grpc-host string   Server host (default "staging.stacklok.dev")
       --grpc-insecure      Allow establishing insecure connections
       --grpc-port int      Server port (default 443)

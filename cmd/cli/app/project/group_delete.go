@@ -34,7 +34,7 @@ import (
 
 var project_deleteCmd = &cobra.Command{
 	Use:   "delete",
-	Short: "delete a project within a mediator controlplane",
+	Short: "Delete a project within a mediator control plane",
 	Long: `The medic project delete subcommand lets you delete projects within a
 mediator control plane.`,
 	PreRun: func(cmd *cobra.Command, args []string) {
@@ -69,7 +69,7 @@ mediator control plane.`,
 
 func init() {
 	ProjectCmd.AddCommand(project_deleteCmd)
-	project_deleteCmd.Flags().StringP("project-id", "g", "", "id of project to delete")
+	project_deleteCmd.Flags().StringP("project-id", "g", "", "ID of project to delete")
 	project_deleteCmd.Flags().BoolP("force", "f", false,
 		"Force deletion of project, even if it's protected or has associated roles "+
 			"(WARNING: removing a protected project may cause loosing mediator access)")

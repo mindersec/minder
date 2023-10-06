@@ -103,7 +103,7 @@ mediator control plane for an specific project.`,
 
 func init() {
 	KeysCmd.AddCommand(genKeys_listCmd)
-	genKeys_listCmd.Flags().StringP("project-id", "g", "", "project id to list roles for")
+	genKeys_listCmd.Flags().StringP("project-id", "g", "", "Project ID to list roles for")
 	genKeys_listCmd.Flags().StringP("output", "o", "", "Output public key to file")
 	genKeys_listCmd.Flags().StringP("passphrase", "p", "", "Passphrase to use for key generation")
 }

@@ -28,7 +28,7 @@ import (
 
 var ruleType_deleteCmd = &cobra.Command{
 	Use:   "delete",
-	Short: "delete a rule type within a mediator controlplane",
+	Short: "Delete a rule type within a mediator control plane",
 	Long: `The medic rule type delete subcommand lets you delete profiles within a
 mediator control plane.`,
 	PreRun: func(cmd *cobra.Command, args []string) {
@@ -61,7 +61,7 @@ mediator control plane.`,
 
 func init() {
 	ruleTypeCmd.AddCommand(ruleType_deleteCmd)
-	ruleType_deleteCmd.Flags().StringP("id", "i", "", "id of rule type to delete")
+	ruleType_deleteCmd.Flags().StringP("id", "i", "", "ID of rule type to delete")
 	err := ruleType_deleteCmd.MarkFlagRequired("id")
 	util.ExitNicelyOnError(err, "Error marking flag as required")
 }
