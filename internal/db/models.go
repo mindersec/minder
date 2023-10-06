@@ -401,6 +401,7 @@ type RuleDetailsAlert struct {
 	RuleEvalID  uuid.UUID        `json:"rule_eval_id"`
 	Status      AlertStatusTypes `json:"status"`
 	Details     string           `json:"details"`
+	Metadata    json.RawMessage  `json:"metadata"`
 	LastUpdated time.Time        `json:"last_updated"`
 }
 

@@ -264,6 +264,7 @@ CREATE TABLE rule_details_alert (
     rule_eval_id UUID NOT NULL REFERENCES rule_evaluations(id) ON DELETE CASCADE,
     status alert_status_types NOT NULL,
     details TEXT NOT NULL,
+    metadata JSONB NOT NULL DEFAULT '{}',
     last_updated TIMESTAMP NOT NULL DEFAULT NOW()
 );
 
