@@ -46,3 +46,10 @@ def:
         # profile points to the profile itself.
         profile:
           def: '.access_level'
+  remediate:
+    type: rest
+    rest:
+      method: PUT
+      endpoint: "/repos/{{.Entity.Owner}}/{{.Entity.Repository}}/actions/permissions/access"
+      body: |
+        { "access_level": "{{.Profile.access_level}}" }
