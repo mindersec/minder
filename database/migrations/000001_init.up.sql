@@ -175,14 +175,15 @@ CREATE TABLE rule_type (
     FOREIGN KEY (project_id, provider) REFERENCES providers(project_id, name) ON DELETE CASCADE
 );
 
-CREATE TYPE remediate_type as enum ('on', 'off', 'dry_run');
+CREATE TYPE action_type as enum ('on', 'off', 'dry_run');
 
 CREATE TABLE profiles (
     id UUID NOT NULL DEFAULT gen_random_uuid() PRIMARY KEY,
     name TEXT NOT NULL,
     provider TEXT NOT NULL,
     project_id UUID NOT NULL,
-    remediate remediate_type,
+    remediate action_type,
+    alert action_type,
     created_at TIMESTAMP NOT NULL DEFAULT NOW(),
     updated_at TIMESTAMP NOT NULL DEFAULT NOW(),
     FOREIGN KEY (project_id, provider) REFERENCES providers(project_id, name) ON DELETE CASCADE
@@ -214,6 +215,8 @@ create type eval_status_types as enum ('success', 'failure', 'error', 'skipped',
 
 create type remediation_status_types as enum ('success', 'failure', 'error', 'skipped', 'not_available');
 
+create type alert_status_types as enum ('on', 'off', 'error', 'skipped', 'not_available');
+
 -- This table will be used to track the overall status of a profile evaluation
 CREATE TABLE profile_status (
     id UUID NOT NULL DEFAULT gen_random_uuid() PRIMARY KEY,
@@ -224,22 +227,45 @@ CREATE TABLE profile_status (
 
 -- This table will be used to track the status of each rule evaluation
 -- for a given profile
-CREATE TABLE rule_evaluation_status (
+CREATE TABLE rule_evaluations (
     id UUID NOT NULL DEFAULT gen_random_uuid() PRIMARY KEY,
     entity entities NOT NULL,
     profile_id UUID NOT NULL REFERENCES profiles(id) ON DELETE CASCADE,
     rule_type_id UUID NOT NULL REFERENCES rule_type(id) ON DELETE CASCADE,
-    eval_status eval_status_types NOT NULL,
-    remediation_status remediation_status_types NOT NULL,
     -- polimorphic references. A status may be associated with a repository, build environment or artifact
     repository_id UUID REFERENCES repositories(id) ON DELETE CASCADE,
-    artifact_id UUID REFERENCES artifacts(id) ON DELETE CASCADE,
-    -- These will be added later
-    -- build_environment_id UUID REFERENCES build_environments(id) ON DELETE CASCADE,
-    eval_details TEXT NOT NULL,
-    eval_last_updated TIMESTAMP NOT NULL DEFAULT NOW(),
-    remediation_details TEXT NOT NULL,
-    remediation_last_updated TIMESTAMP DEFAULT NOW()
+    artifact_id UUID REFERENCES artifacts(id) ON DELETE CASCADE
+);
+
+-- This table will be used to store details about rule evaluation
+-- for a given profile
+CREATE TABLE rule_details_eval (
+    id UUID NOT NULL DEFAULT gen_random_uuid() PRIMARY KEY,
+    rule_eval_id UUID NOT NULL REFERENCES rule_evaluations(id) ON DELETE CASCADE,
+    status eval_status_types NOT NULL,
+    details TEXT NOT NULL,
+    last_updated TIMESTAMP NOT NULL DEFAULT NOW()
+);
+
+-- This table will be used to store details about rule remediation
+-- for a given profile
+CREATE TABLE rule_details_remediate (
+    id UUID NOT NULL DEFAULT gen_random_uuid() PRIMARY KEY,
+    rule_eval_id UUID NOT NULL REFERENCES rule_evaluations(id) ON DELETE CASCADE,
+    status remediation_status_types NOT NULL,
+    details TEXT NOT NULL,
+    last_updated TIMESTAMP NOT NULL DEFAULT NOW()
+);
+
+-- This table will be used to store details about rule alerts
+-- for a given profile
+CREATE TABLE rule_details_alert (
+    id UUID NOT NULL DEFAULT gen_random_uuid() PRIMARY KEY,
+    rule_eval_id UUID NOT NULL REFERENCES rule_evaluations(id) ON DELETE CASCADE,
+    status alert_status_types NOT NULL,
+    details TEXT NOT NULL,
+    metadata JSONB NOT NULL DEFAULT '{}',
+    last_updated TIMESTAMP NOT NULL DEFAULT NOW()
 );
 
 -- Constraint to ensure we don't have a cycle in the project tree
@@ -256,11 +282,13 @@ CREATE UNIQUE INDEX roles_organization_id_name_lower_idx ON roles (organization_
 CREATE INDEX idx_provider_access_tokens_project_id ON provider_access_tokens(project_id);
 CREATE UNIQUE INDEX repositories_repo_id_idx ON repositories(repo_id);
 CREATE UNIQUE INDEX rule_type_idx ON rule_type(provider, project_id, name);
-CREATE UNIQUE INDEX rule_evaluation_status_results_idx ON rule_evaluation_status(profile_id, repository_id, COALESCE(artifact_id, '00000000-0000-0000-0000-000000000000'::UUID), entity, rule_type_id);
+CREATE UNIQUE INDEX rule_evaluations_results_idx ON rule_evaluations(profile_id, repository_id, COALESCE(artifact_id, '00000000-0000-0000-0000-000000000000'::UUID), entity, rule_type_id);
 CREATE UNIQUE INDEX artifact_name_lower_idx ON artifacts (repository_id, LOWER(artifact_name));
 CREATE UNIQUE INDEX artifact_versions_idx ON artifact_versions (artifact_id, sha);
 CREATE UNIQUE INDEX provider_name_project_id_idx ON providers (name, project_id);
-
+CREATE UNIQUE INDEX idx_rule_detail_eval_ids ON rule_details_eval(rule_eval_id);
+CREATE UNIQUE INDEX idx_rule_detail_remediate_ids ON rule_details_remediate(rule_eval_id);
+CREATE UNIQUE INDEX idx_rule_detail_alert_ids ON rule_details_alert(rule_eval_id);
 -- triggers
 
 -- Create a default status for a profile when it's created
@@ -279,35 +307,53 @@ CREATE TRIGGER create_default_profile_status
 -- Update overall profile status if a rule evaluation status is updated
 -- error takes precedence over failure, failure takes precedence over success
 CREATE OR REPLACE FUNCTION update_profile_status() RETURNS TRIGGER AS $$
+DECLARE
+    v_profile_id UUID;
 BEGIN
+    -- Fetch the profile_id for the current rule_eval_id
+    SELECT profile_id INTO v_profile_id
+    FROM rule_evaluations
+    WHERE id = NEW.rule_eval_id;
+
     -- keep error if profile had errored
-    IF (NEW.eval_status = 'error') THEN
-        UPDATE profile_status SET profile_status = 'error', last_updated = NOW() WHERE profile_id = NEW.profile_id;
+    IF (NEW.status = 'error') THEN
+        UPDATE profile_status SET profile_status = 'error', last_updated = NOW()
+        WHERE profile_id = v_profile_id;
+        -- only mark profile run as skipped if every evaluation was skipped
+    ELSEIF (NEW.status = 'skipped') THEN
+        UPDATE profile_status SET profile_status = 'skipped', last_updated = NOW()
+        WHERE profile_id = v_profile_id AND NOT EXISTS (SELECT * FROM rule_evaluations res INNER JOIN rule_details_eval rde ON res.id = rde.rule_eval_id WHERE res.profile_id = v_profile_id AND rde.status != 'skipped');
     -- mark status as successful if all evaluations are successful or skipped
-    ELSEIF NOT EXISTS (SELECT * FROM rule_evaluation_status WHERE profile_id = NEW.profile_id AND eval_status != 'success' AND eval_status != 'skipped') THEN
-        UPDATE profile_status SET profile_status = 'success', last_updated = NOW() WHERE profile_id = NEW.profile_id;
+    ELSEIF NOT EXISTS (
+        SELECT *
+        FROM rule_evaluations res
+        INNER JOIN rule_details_eval rde ON res.id = rde.rule_eval_id
+        WHERE res.profile_id = v_profile_id AND rde.status != 'success' AND rde.status != 'skipped'
+    ) THEN
+        UPDATE profile_status SET profile_status = 'success', last_updated = NOW()
+        WHERE profile_id = v_profile_id;
     -- mark profile as successful if it was pending and the new status is success
-    ELSEIF (NEW.eval_status = 'success') THEN
-        UPDATE profile_status SET profile_status = 'success', last_updated = NOW() WHERE profile_id = NEW.profile_id AND profile_status = 'pending';
+    ELSEIF (NEW.status = 'success') THEN
+        UPDATE profile_status SET profile_status = 'success', last_updated = NOW() WHERE profile_id = v_profile_id AND profile_status = 'pending';
     -- mark status as failed if it was successful or pending and the new status is failure
     -- and there are no errors
-    ELSEIF (NEW.eval_status = 'failure') AND NOT EXISTS (SELECT * FROM rule_evaluation_status WHERE profile_id = NEW.profile_id and eval_status = 'error') THEN
+    ELSIF (NEW.status = 'failure') AND NOT EXISTS (
+        SELECT *
+        FROM rule_evaluations res
+        INNER JOIN rule_details_eval rde ON res.id = rde.rule_eval_id
+        WHERE res.profile_id = v_profile_id AND rde.status = 'error'
+    ) THEN
         UPDATE profile_status SET profile_status = 'failure', last_updated = NOW()
-        WHERE profile_id = NEW.profile_id AND (profile_status = 'success' OR profile_status = 'pending') AND NEW.eval_status = 'failure';
-    -- only mark profile run as skipped if every evaluation was skipped
-    ELSEIF (NEW.eval_status = 'skipped') THEN
-        UPDATE profile_status SET profile_status = 'skipped', last_updated = NOW()
-        WHERE profile_id = NEW.profile_id AND NOT EXISTS (SELECT * FROM rule_evaluation_status WHERE profile_id = NEW.profile_id AND eval_status != 'skipped');
+        WHERE profile_id = v_profile_id AND (profile_status = 'success' OR profile_status = 'pending') AND NEW.status = 'failure';
     END IF;
     RETURN NEW;
 END;
 $$ LANGUAGE plpgsql;
 
 CREATE TRIGGER update_profile_status
-    AFTER INSERT OR UPDATE ON rule_evaluation_status
+    AFTER INSERT OR UPDATE ON rule_details_eval
     FOR EACH ROW
     EXECUTE PROCEDURE update_profile_status();
 
 -- Create default root organization and get id so we can create the root project
 INSERT INTO projects (name, is_organization) VALUES ('Mediator Root', TRUE);
-
