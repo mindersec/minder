@@ -33,14 +33,39 @@ import (
 	_ "github.com/lib/pq"
 )
 
+const (
+	// UseExternalDBEnvVar is the environment variable that, when set, will
+	// enable using an external postgres database instead of the in-process one.
+	// Useful for debugging.
+	UseExternalDBEnvVar = "MEDIATOR_TEST_EXTERNAL_DB"
+)
+
 var testQueries *Queries
 var testDB *sql.DB
 
 func TestMain(m *testing.M) {
-	os.Exit(runTestWithPostgres(m))
+	var runDBTests = runTestWithInProcessPostgres
+	if useExternalDB() {
+		log.Println("Using external database for tests")
+		runDBTests = runTestWithExternalPostgres
+	}
+	os.Exit(runDBTests(m))
 }
 
-func runTestWithPostgres(m *testing.M) int {
+func runTestWithExternalPostgres(m *testing.M) int {
+	connStr := "user=postgres dbname=mediator password=postgres host=localhost sslmode=disable"
+
+	testDB, err := sql.Open("postgres", connStr)
+	if err != nil {
+		log.Fatal("cannot connect to db test instance:", err)
+	}
+
+	testQueries = New(testDB)
+
+	return m.Run()
+}
+
+func runTestWithInProcessPostgres(m *testing.M) int {
 	tmpName, err := os.MkdirTemp("", "mediator-db-test")
 	if err != nil {
 		log.Println("cannot create tmpdir:", err)
@@ -96,4 +121,9 @@ func runTestWithPostgres(m *testing.M) int {
 
 	// Run tests
 	return m.Run()
+}
+
+func useExternalDB() bool {
+	_, ok := os.LookupEnv(UseExternalDBEnvVar)
+	return ok
 }
