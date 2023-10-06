@@ -46,8 +46,6 @@ var repo_listCmd = &cobra.Command{
 			return fmt.Errorf("only %s is supported at this time", github.Github)
 		}
 		projectID := viper.GetString("project-id")
-		limit := viper.GetInt32("limit")
-		offset := viper.GetInt32("offset")
 		format := viper.GetString("output")
 
 		switch format {
@@ -70,8 +68,6 @@ var repo_listCmd = &cobra.Command{
 		resp, err := client.ListRepositories(ctx, &pb.ListRepositoriesRequest{
 			Provider:  provider,
 			ProjectId: projectID,
-			Limit:     int32(limit),
-			Offset:    int32(offset),
 			Filter:    pb.RepoFilter_REPO_FILTER_SHOW_REGISTERED_ONLY,
 		})
 		if err != nil {
@@ -114,8 +110,6 @@ func init() {
 	repo_listCmd.Flags().StringP("output", "f", "", "Output format (json or yaml)")
 	repo_listCmd.Flags().StringP("provider", "n", "", "Name for the provider to enroll")
 	repo_listCmd.Flags().StringP("project-id", "g", "", "ID of the project for repo registration")
-	repo_listCmd.Flags().Int32P("limit", "l", 20, "Number of repos to display per page")
-	repo_listCmd.Flags().Int32P("offset", "o", 0, "Offset of the repos to display")
 	if err := repo_listCmd.MarkFlagRequired("provider"); err != nil {
 		fmt.Fprintf(os.Stderr, "Error marking flag as required: %s\n", err)
 	}
