@@ -23,22 +23,22 @@ package repo
 
 import (
 	"context"
+	"errors"
 	"fmt"
-	"github.com/AlecAivazis/survey/v2"
-	"k8s.io/utils/strings/slices"
 	"os"
 	"strings"
 
-	"errors"
+	"github.com/AlecAivazis/survey/v2"
 	"github.com/spf13/cobra"
 	"github.com/spf13/viper"
+	"k8s.io/utils/strings/slices"
 
 	github "github.com/stacklok/mediator/internal/providers/github"
 	"github.com/stacklok/mediator/internal/util"
 	pb "github.com/stacklok/mediator/pkg/api/protobuf/go/mediator/v1"
 )
 
-var ErrNoRepositoriesSelected = errors.New("No repositories selected")
+var errNoRepositoriesSelected = errors.New("No repositories selected")
 var cfgFlagRepos string
 
 // repo_registerCmd represents the register command to register a repo with the
@@ -85,7 +85,7 @@ var repo_registerCmd = &cobra.Command{
 		// Get the selected repos
 		selectedRepos, err := getSelectedRepositories(listResp, cfgFlagRepos)
 		if err != nil {
-			if errors.Is(err, ErrNoRepositoriesSelected) {
+			if errors.Is(err, errNoRepositoriesSelected) {
 				_, _ = fmt.Fprintf(os.Stderr, "%v\n", err)
 			} else {
 				_, _ = fmt.Fprintf(os.Stderr, "Error getting selected repos: %s\n", err)
@@ -180,7 +180,7 @@ func getSelectedRepositories(listResp *pb.ListRepositoriesResponse, flagRepos st
 
 	// If no repos were selected, exit
 	if len(allSelectedRepos) == 0 {
-		return nil, ErrNoRepositoriesSelected
+		return nil, errNoRepositoriesSelected
 	}
 
 	// Create a slice of Repositories protobufs
