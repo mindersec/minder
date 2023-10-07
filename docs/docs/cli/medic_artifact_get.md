@@ -4,7 +4,7 @@ Get artifact details
 
 ### Synopsis
 
-Artifact get will get artifact details from an artifact, for a given id
+Artifact get will get artifact details from an artifact, for a given ID
 
 ```
 medic artifact get [flags]
@@ -22,7 +22,7 @@ medic artifact get [flags]
 ### Options inherited from parent commands
 
 ```
-      --config string      config file (default is $PWD/config.yaml)
+      --config string      Config file (default is $PWD/config.yaml)
       --grpc-host string   Server host (default "staging.stacklok.dev")
       --grpc-insecure      Allow establishing insecure connections
       --grpc-port int      Server port (default 443)

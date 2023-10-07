@@ -20,7 +20,7 @@ medic role [flags]
 ### Options inherited from parent commands
 
 ```
-      --config string      config file (default is $PWD/config.yaml)
+      --config string      Config file (default is $PWD/config.yaml)
       --grpc-host string   Server host (default "staging.stacklok.dev")
       --grpc-insecure      Allow establishing insecure connections
       --grpc-port int      Server port (default 443)
@@ -28,9 +28,9 @@ medic role [flags]
 
 ### SEE ALSO
 
-* [medic](medic.md)	 - medic controls mediator via the control plane
+* [medic](medic.md)	 - Medic controls mediator via the control plane
 * [medic role create](medic_role_create.md)	 - Create a role within a mediator control plane
-* [medic role delete](medic_role_delete.md)	 - delete a role within a mediator controlplane
+* [medic role delete](medic_role_delete.md)	 - Delete a role within a mediator control plane
 * [medic role get](medic_role_get.md)	 - Get details for an role within a mediator control plane
 * [medic role list](medic_role_list.md)	 - List roles within a mediator control plane
 

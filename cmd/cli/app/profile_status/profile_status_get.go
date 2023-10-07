@@ -106,11 +106,11 @@ mediator control plane for an specific provider/project or profile id, entity ty
 func init() {
 	ProfileStatusCmd.AddCommand(profilestatus_getCmd)
 	profilestatus_getCmd.Flags().StringP("provider", "p", "github", "Provider to get profile status for")
-	profilestatus_getCmd.Flags().StringP("project", "g", "", "project id to get profile status for")
-	profilestatus_getCmd.Flags().StringP("profile", "i", "", "profile name to get profile status for")
+	profilestatus_getCmd.Flags().StringP("project", "g", "", "Project ID to get profile status for")
+	profilestatus_getCmd.Flags().StringP("profile", "i", "", "Profile name to get profile status for")
 	profilestatus_getCmd.Flags().StringP("entity-type", "t", "",
 		fmt.Sprintf("the entity type to get profile status for (one of %s)", entities.KnownTypesCSV()))
-	profilestatus_getCmd.Flags().StringP("entity", "e", "", "entity id to get profile status for")
+	profilestatus_getCmd.Flags().StringP("entity", "e", "", "Entity ID to get profile status for")
 	profilestatus_getCmd.Flags().StringP("output", "o", app.Table, "Output format (json, yaml or table)")
 
 	// mark as required

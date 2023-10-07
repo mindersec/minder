@@ -1,6 +1,6 @@
 ## medic profile delete
 
-delete a profile within a mediator controlplane
+Delete a profile within a mediator control plane
 
 ### Synopsis
 
@@ -15,14 +15,14 @@ medic profile delete [flags]
 
 ```
   -h, --help              help for delete
-  -i, --id string         id of profile to delete
+  -i, --id string         ID of profile to delete
   -p, --provider string   Provider for the profile (default "github")
 ```
 
 ### Options inherited from parent commands
 
 ```
-      --config string      config file (default is $PWD/config.yaml)
+      --config string      Config file (default is $PWD/config.yaml)
       --grpc-host string   Server host (default "staging.stacklok.dev")
       --grpc-insecure      Allow establishing insecure connections
       --grpc-port int      Server port (default 443)

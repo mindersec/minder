@@ -14,17 +14,15 @@ medic repo register [flags]
 
 ```
   -h, --help                help for register
-  -l, --limit int32         Number of repos to display per page (default 20)
-  -o, --offset int32        Offset of the repos to display
   -g, --project-id string   ID of the project for repo registration
   -n, --provider string     Name for the provider to enroll
-      --repo string         List of key-value pairs
+      --repo string         List of repositories to register, i.e owner/repo,owner/repo
 ```
 
 ### Options inherited from parent commands
 
 ```
-      --config string      config file (default is $PWD/config.yaml)
+      --config string      Config file (default is $PWD/config.yaml)
       --grpc-host string   Server host (default "staging.stacklok.dev")
       --grpc-insecure      Allow establishing insecure connections
       --grpc-port int      Server port (default 443)

@@ -186,8 +186,6 @@ func (s *Server) ListRepositories(ctx context.Context,
 	repos, err := s.store.ListRepositoriesByProjectID(ctx, db.ListRepositoriesByProjectIDParams{
 		Provider:  provider.Name,
 		ProjectID: projectID,
-		Limit:     in.Limit,
-		Offset:    in.Offset,
 	})
 
 	if err != nil {

@@ -107,8 +107,8 @@ mediator control plane for an specific provider/project or profile id.`,
 func init() {
 	ProfileStatusCmd.AddCommand(profilestatus_listCmd)
 	profilestatus_listCmd.Flags().StringP("provider", "p", "github", "Provider to list profile status for")
-	profilestatus_listCmd.Flags().StringP("project", "g", "", "project id to list profile status for")
-	profilestatus_listCmd.Flags().StringP("profile", "i", "", "profile name to list profile status for")
+	profilestatus_listCmd.Flags().StringP("project", "g", "", "Project ID to list profile status for")
+	profilestatus_listCmd.Flags().StringP("profile", "i", "", "Profile name to list profile status for")
 	profilestatus_listCmd.Flags().StringP("output", "o", app.Table, "Output format (json, yaml or table)")
 	profilestatus_listCmd.Flags().BoolP("detailed", "d", false, "List all profile violations")
 	profilestatus_listCmd.Flags().StringP("rule", "r", "", "Filter profile status list by rule")

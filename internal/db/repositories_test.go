@@ -175,13 +175,11 @@ func TestListRepositoriesByProjectID(t *testing.T) {
 	arg := ListRepositoriesByProjectIDParams{
 		Provider:  prov.Name,
 		ProjectID: group.ID,
-		Limit:     5,
-		Offset:    5,
 	}
 
 	repos, err := testQueries.ListRepositoriesByProjectID(context.Background(), arg)
 	require.NoError(t, err)
-	require.Len(t, repos, 5)
+	require.NotEmpty(t, repos)
 
 	for _, repo := range repos {
 		require.NotEmpty(t, repo)

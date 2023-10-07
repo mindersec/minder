@@ -145,8 +145,8 @@ mediator control plane for an specific project.`,
 
 func init() {
 	RoleCmd.AddCommand(role_listCmd)
-	role_listCmd.Flags().StringP("org-id", "i", "", "org id to list roles for")
-	role_listCmd.Flags().StringP("project-id", "g", "", "project id to list roles for")
+	role_listCmd.Flags().StringP("org-id", "i", "", "Organisation ID to list roles for")
+	role_listCmd.Flags().StringP("project-id", "g", "", "Project ID to list roles for")
 	role_listCmd.Flags().StringP("output", "o", "", "Output format (json or yaml)")
 	role_listCmd.Flags().Int32P("limit", "l", -1, "Limit the number of results returned")
 	role_listCmd.Flags().Int32P("offset", "f", 0, "Offset the results returned")

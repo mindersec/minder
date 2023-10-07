@@ -34,7 +34,7 @@ import (
 
 var role_deleteCmd = &cobra.Command{
 	Use:   "delete",
-	Short: "delete a role within a mediator controlplane",
+	Short: "Delete a role within a mediator control plane",
 	Long: `The medic role delete subcommand lets you delete roles within a
 mediator control plane.`,
 	PreRun: func(cmd *cobra.Command, args []string) {
@@ -69,7 +69,7 @@ mediator control plane.`,
 
 func init() {
 	RoleCmd.AddCommand(role_deleteCmd)
-	role_deleteCmd.Flags().Int32P("role-id", "r", 0, "id of role to delete")
+	role_deleteCmd.Flags().Int32P("role-id", "r", 0, "ID of role to delete")
 	role_deleteCmd.Flags().BoolP("force", "f", false,
 		"Force deletion of role, even if it's protected or has associated users "+
 			"(WARNING: removing a protected role may cause loosing mediator access)")

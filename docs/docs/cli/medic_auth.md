@@ -20,7 +20,7 @@ medic auth [flags]
 ### Options inherited from parent commands
 
 ```
-      --config string      config file (default is $PWD/config.yaml)
+      --config string      Config file (default is $PWD/config.yaml)
       --grpc-host string   Server host (default "staging.stacklok.dev")
       --grpc-insecure      Allow establishing insecure connections
       --grpc-port int      Server port (default 443)
@@ -28,7 +28,7 @@ medic auth [flags]
 
 ### SEE ALSO
 
-* [medic](medic.md)	 - medic controls mediator via the control plane
+* [medic](medic.md)	 - Medic controls mediator via the control plane
 * [medic auth login](medic_auth_login.md)	 - Login to a mediator control plane.
 * [medic auth logout](medic_auth_logout.md)	 - Logout from mediator control plane.
 * [medic auth refresh](medic_auth_refresh.md)	 - Refresh credentials

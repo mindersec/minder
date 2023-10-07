@@ -27,9 +27,7 @@ SELECT * FROM repositories WHERE provider = $1 AND repo_id = $2 AND project_id =
 -- name: ListRepositoriesByProjectID :many
 SELECT * FROM repositories
 WHERE provider = $1 AND project_id = $2
-ORDER BY repo_name
-LIMIT $3
-OFFSET $4;
+ORDER BY repo_name;
 
 -- name: ListRegisteredRepositoriesByProjectIDAndProvider :many
 SELECT * FROM repositories

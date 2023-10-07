@@ -23,6 +23,7 @@ package repo
 
 import (
 	"context"
+	"errors"
 	"fmt"
 	"os"
 	"strings"
@@ -30,11 +31,15 @@ import (
 	"github.com/AlecAivazis/survey/v2"
 	"github.com/spf13/cobra"
 	"github.com/spf13/viper"
+	"k8s.io/utils/strings/slices"
 
 	github "github.com/stacklok/mediator/internal/providers/github"
 	"github.com/stacklok/mediator/internal/util"
 	pb "github.com/stacklok/mediator/pkg/api/protobuf/go/mediator/v1"
 )
+
+var errNoRepositoriesSelected = errors.New("No repositories selected")
+var cfgFlagRepos string
 
 // repo_registerCmd represents the register command to register a repo with the
 // mediator control plane
@@ -55,8 +60,6 @@ var repo_registerCmd = &cobra.Command{
 			os.Exit(1)
 		}
 		projectID := viper.GetString("project-id")
-		limit := viper.GetInt32("limit")
-		offset := viper.GetInt32("offset")
 
 		conn, err := util.GrpcForCommand(cmd)
 		util.ExitNicelyOnError(err, "Error getting grpc connection")
@@ -69,77 +72,46 @@ var repo_registerCmd = &cobra.Command{
 		req := &pb.ListRepositoriesRequest{
 			Provider:  provider,
 			ProjectId: projectID,
-			Limit:     int32(limit),
-			Offset:    int32(offset),
 			Filter:    pb.RepoFilter_REPO_FILTER_SHOW_NOT_REGISTERED_ONLY,
 		}
 
+		// Get the list of repos
 		listResp, err := client.ListRepositories(ctx, req)
 		if err != nil {
-			fmt.Fprintf(os.Stderr, "Error getting list of repos: %s\n", err)
+			_, _ = fmt.Fprintf(os.Stderr, "Error getting list of repos: %s\n", err)
 			os.Exit(1)
 		}
 
-		var allSelectedRepos []string
-
-		repoNames := make([]string, len(listResp.Results))
-		repoIDs := make(map[string]int32) // Map of repo names to IDs
-
-		if len(listResp.Results) == 0 {
-			fmt.Fprintf(os.Stderr, "No repositories found")
-			os.Exit(1)
-		}
-
-		for i, repo := range listResp.Results {
-			repoNames[i] = fmt.Sprintf("%s/%s", repo.Owner, repo.Name)
-			repoIDs[repoNames[i]] = repo.RepoId
-		}
-
-		var selectedRepos []string
-		prompt := &survey.MultiSelect{
-			Message:  "Select repositories to register with mediator: \n",
-			Options:  repoNames,
-			PageSize: 20, // PageSize determins how many options are shown at once, restricted by limit flag
-		}
-
-		err = survey.AskOne(prompt, &selectedRepos)
+		// Get the selected repos
+		selectedRepos, err := getSelectedRepositories(listResp, cfgFlagRepos)
 		if err != nil {
-			fmt.Fprintf(os.Stderr, "Error getting repo selection: %s\n", err)
+			if errors.Is(err, errNoRepositoriesSelected) {
+				_, _ = fmt.Fprintf(os.Stderr, "%v\n", err)
+			} else {
+				_, _ = fmt.Fprintf(os.Stderr, "Error getting selected repos: %s\n", err)
+			}
 			os.Exit(1)
 		}
-		allSelectedRepos = append(allSelectedRepos, selectedRepos...)
-		repoProtos := make([]*pb.Repositories, len(allSelectedRepos))
 
-		// Convert the selected repos into a slice of Repositories protobufs
-		for i, repo := range allSelectedRepos {
-			splitRepo := strings.Split(repo, "/")
-			if len(splitRepo) != 2 {
-				fmt.Fprintf(os.Stderr, "Unexpected repository name format: %s\n", repo)
-				os.Exit(1)
-			}
-			repoProtos[i] = &pb.Repositories{
-				Owner:  splitRepo[0],
-				Name:   splitRepo[1],
-				RepoId: repoIDs[repo], // This line is new, it sets the ID from the map
-			}
-		}
-
-		// read events from config
+		// Read events from config
 		events := viper.GetStringSlice(fmt.Sprintf("%s.events", provider))
+
 		// Construct the RegisterRepositoryRequest
 		request := &pb.RegisterRepositoryRequest{
 			Provider:     provider,
-			Repositories: repoProtos,
+			Repositories: selectedRepos,
 			Events:       events,
 			ProjectId:    projectID,
 		}
 
+		// Register the repos
 		registerResp, err := client.RegisterRepository(context.Background(), request)
 		if err != nil {
-			fmt.Fprintf(os.Stderr, "Error registering repositories: %s\n", err)
+			_, _ = fmt.Fprintf(os.Stderr, "Error registering repositories: %s\n", err)
 			os.Exit(1)
 		}
 
+		// Print the registered repos
 		for _, repo := range registerResp.Results {
 			fmt.Printf("Registered repository: %s/%s\n", repo.Owner, repo.Repository)
 		}
@@ -149,13 +121,83 @@ var repo_registerCmd = &cobra.Command{
 
 func init() {
 	RepoCmd.AddCommand(repo_registerCmd)
-	var reposFlag string
 	repo_registerCmd.Flags().StringP("provider", "n", "", "Name for the provider to enroll")
 	repo_registerCmd.Flags().StringP("project-id", "g", "", "ID of the project for repo registration")
-	repo_registerCmd.Flags().Int32P("limit", "l", 20, "Number of repos to display per page")
-	repo_registerCmd.Flags().Int32P("offset", "o", 0, "Offset of the repos to display")
-	repo_registerCmd.Flags().StringVar(&reposFlag, "repo", "", "List of key-value pairs")
+	repo_registerCmd.Flags().StringVar(&cfgFlagRepos, "repo", "", "List of repositories to register, i.e owner/repo,owner/repo")
 	if err := repo_registerCmd.MarkFlagRequired("provider"); err != nil {
-		fmt.Fprintf(os.Stderr, "Error marking flag as required: %s\n", err)
+		_, _ = fmt.Fprintf(os.Stderr, "Error marking flag as required: %s\n", err)
 	}
+}
+
+func getSelectedRepositories(listResp *pb.ListRepositoriesResponse, flagRepos string) ([]*pb.Repositories, error) {
+	// If no repos are found, exit
+	if len(listResp.Results) == 0 {
+		return nil, fmt.Errorf("no repositories found")
+	}
+
+	// Create a slice of strings to hold the repo names
+	repoNames := make([]string, len(listResp.Results))
+
+	// Map of repo names to IDs
+	repoIDs := make(map[string]int32)
+
+	// Populate the repoNames slice and repoIDs map
+	for i, repo := range listResp.Results {
+		repoNames[i] = fmt.Sprintf("%s/%s", repo.Owner, repo.Name)
+		repoIDs[repoNames[i]] = repo.RepoId
+	}
+
+	// Create a slice of strings to hold the selected repos
+	var allSelectedRepos []string
+
+	// If the --repo flag is set, use it to select repos
+	if flagRepos != "" {
+		repos := strings.Split(flagRepos, ",")
+		for _, repo := range repos {
+			if !slices.Contains(repoNames, repo) {
+				_, _ = fmt.Fprintf(os.Stderr, "Repository %s not found\n", repo)
+				continue
+			}
+			allSelectedRepos = append(allSelectedRepos, repo)
+		}
+	}
+
+	// The repo flag was empty, or no repositories matched the ones from the flag
+	// Prompt the user to select repos
+	if len(allSelectedRepos) == 0 {
+		var userSelectedRepos []string
+		prompt := &survey.MultiSelect{
+			Message: "Select repositories to register with Mediator: \n",
+			Options: repoNames,
+		}
+		// Prompt the user to select repos, defaulting to 20 per page, but scrollable
+		err := survey.AskOne(prompt, &userSelectedRepos, survey.WithPageSize(20))
+		if err != nil {
+			return nil, fmt.Errorf("error getting repo selection: %s", err)
+		}
+		allSelectedRepos = append(allSelectedRepos, userSelectedRepos...)
+	}
+
+	// If no repos were selected, exit
+	if len(allSelectedRepos) == 0 {
+		return nil, errNoRepositoriesSelected
+	}
+
+	// Create a slice of Repositories protobufs
+	protoRepos := make([]*pb.Repositories, len(allSelectedRepos))
+
+	// Convert the selected repos into a slice of Repositories protobufs
+	for i, repo := range allSelectedRepos {
+		splitRepo := strings.Split(repo, "/")
+		if len(splitRepo) != 2 {
+			_, _ = fmt.Fprintf(os.Stderr, "Unexpected repository name format: %s, skipping registration\n", repo)
+			continue
+		}
+		protoRepos[i] = &pb.Repositories{
+			Owner:  splitRepo[0],
+			Name:   splitRepo[1],
+			RepoId: repoIDs[repo],
+		}
+	}
+	return protoRepos, nil
 }

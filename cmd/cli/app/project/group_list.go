@@ -100,7 +100,7 @@ a mediator control plane.`,
 
 func init() {
 	ProjectCmd.AddCommand(project_listCmd)
-	project_listCmd.Flags().StringP("org-id", "i", "", "org id to list projects for")
+	project_listCmd.Flags().StringP("org-id", "i", "", "Organisation ID to list projects for")
 	project_listCmd.Flags().StringP("output", "o", "", "Output format")
 	project_listCmd.Flags().Int32P("limit", "l", -1, "Limit the number of results returned")
 	project_listCmd.Flags().Int32P("offset", "f", 0, "Offset the results returned")

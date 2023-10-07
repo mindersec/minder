@@ -1,6 +1,6 @@
 ## medic rule_type delete
 
-delete a rule type within a mediator controlplane
+Delete a rule type within a mediator control plane
 
 ### Synopsis
 
@@ -15,13 +15,13 @@ medic rule_type delete [flags]
 
 ```
   -h, --help        help for delete
-  -i, --id string   id of rule type to delete
+  -i, --id string   ID of rule type to delete
 ```
 
 ### Options inherited from parent commands
 
 ```
-      --config string      config file (default is $PWD/config.yaml)
+      --config string      Config file (default is $PWD/config.yaml)
       --grpc-host string   Server host (default "staging.stacklok.dev")
       --grpc-insecure      Allow establishing insecure connections
       --grpc-port int      Server port (default 443)

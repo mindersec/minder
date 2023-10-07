@@ -355,24 +355,15 @@ const listRepositoriesByProjectID = `-- name: ListRepositoriesByProjectID :many
 SELECT id, provider, project_id, repo_owner, repo_name, repo_id, is_private, is_fork, webhook_id, webhook_url, deploy_url, clone_url, created_at, updated_at FROM repositories
 WHERE provider = $1 AND project_id = $2
 ORDER BY repo_name
-LIMIT $3
-OFFSET $4
 `
 
 type ListRepositoriesByProjectIDParams struct {
 	Provider  string    `json:"provider"`
 	ProjectID uuid.UUID `json:"project_id"`
-	Limit     int32     `json:"limit"`
-	Offset    int32     `json:"offset"`
 }
 
 func (q *Queries) ListRepositoriesByProjectID(ctx context.Context, arg ListRepositoriesByProjectIDParams) ([]Repository, error) {
-	rows, err := q.db.QueryContext(ctx, listRepositoriesByProjectID,
-		arg.Provider,
-		arg.ProjectID,
-		arg.Limit,
-		arg.Offset,
-	)
+	rows, err := q.db.QueryContext(ctx, listRepositoriesByProjectID, arg.Provider, arg.ProjectID)
 	if err != nil {
 		return nil, err
 	}

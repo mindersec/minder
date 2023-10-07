@@ -17,8 +17,8 @@ medic profile_status list [flags]
   -d, --detailed          List all profile violations
   -h, --help              help for list
   -o, --output string     Output format (json, yaml or table) (default "table")
-  -i, --profile string    profile name to list profile status for
-  -g, --project string    project id to list profile status for
+  -i, --profile string    Profile name to list profile status for
+  -g, --project string    Project ID to list profile status for
   -p, --provider string   Provider to list profile status for (default "github")
   -r, --rule string       Filter profile status list by rule
 ```
@@ -26,7 +26,7 @@ medic profile_status list [flags]
 ### Options inherited from parent commands
 
 ```
-      --config string      config file (default is $PWD/config.yaml)
+      --config string      Config file (default is $PWD/config.yaml)
       --grpc-host string   Server host (default "staging.stacklok.dev")
       --grpc-insecure      Allow establishing insecure connections
       --grpc-port int      Server port (default 443)
