@@ -199,22 +199,9 @@ will be saved to $XDG_CONFIG_HOME/mediator/credentials.json`,
 
 func renderNewUser(cmd *cobra.Command, newUser *pb.CreateUserResponse) {
 	rows := []table.Row{
-		{"Organization ID", newUser.OrganizationId},
-		{"Organization Name", newUser.OrganizatioName},
-		{"Project ID", newUser.ProjectId},
-		{"Project Name", newUser.ProjectName},
-	}
-
-	if newUser.Email != nil {
-		rows = append(rows, table.Row{"Email", *newUser.Email})
-	}
-
-	if newUser.FirstName != nil {
-		rows = append(rows, table.Row{"First Name", *newUser.FirstName})
-	}
-
-	if newUser.LastName != nil {
-		rows = append(rows, table.Row{"Last Name", *newUser.LastName})
+		{"Email", *newUser.Email},
+		{"First Name", *newUser.FirstName},
+		{"Last Name", *newUser.LastName},
 	}
 
 	renderUserToTable(cmd, rows)
