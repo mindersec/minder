@@ -7,7 +7,7 @@ require (
 	github.com/ThreeDotsLabs/watermill v1.3.4
 	github.com/alexdrl/zerowater v0.0.3
 	github.com/aws/aws-sdk-go-v2/config v1.18.44
-	github.com/aws/aws-sdk-go-v2/feature/rds/auth v1.2.19
+	github.com/aws/aws-sdk-go-v2/feature/rds/auth v1.2.20
 	github.com/charmbracelet/bubbles v0.16.1
 	github.com/charmbracelet/glamour v0.6.0
 	github.com/charmbracelet/lipgloss v0.8.0
