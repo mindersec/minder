@@ -256,39 +256,6 @@
         ]
       }
     },
-    "/api/v1/auth/refresh": {
-      "post": {
-        "summary": "refresh a token",
-        "operationId": "AuthService_RefreshToken",
-        "responses": {
-          "200": {
-            "description": "A successful response.",
-            "schema": {
-              "$ref": "#/definitions/v1RefreshTokenResponse"
-            }
-          },
-          "default": {
-            "description": "An unexpected error response.",
-            "schema": {
-              "$ref": "#/definitions/rpcStatus"
-            }
-          }
-        },
-        "parameters": [
-          {
-            "name": "body",
-            "in": "body",
-            "required": true,
-            "schema": {
-              "$ref": "#/definitions/v1RefreshTokenRequest"
-            }
-          }
-        ],
-        "tags": [
-          "AuthService"
-        ]
-      }
-    },
     "/api/v1/auth/revoke": {
       "post": {
         "summary": "revoke all tokens for all users",
@@ -2387,21 +2354,6 @@
         }
       },
       "title": "Project API Objects"
-    },
-    "v1RefreshTokenRequest": {
-      "type": "object"
-    },
-    "v1RefreshTokenResponse": {
-      "type": "object",
-      "properties": {
-        "accessToken": {
-          "type": "string"
-        },
-        "accessTokenExpiresIn": {
-          "type": "string",
-          "format": "int64"
-        }
-      }
     },
     "v1RegisterRepositoryResponse": {
       "type": "object",

@@ -577,7 +577,6 @@ const (
 	AuthService_LogOut_FullMethodName          = "/mediator.v1.AuthService/LogOut"
 	AuthService_RevokeTokens_FullMethodName    = "/mediator.v1.AuthService/RevokeTokens"
 	AuthService_RevokeUserToken_FullMethodName = "/mediator.v1.AuthService/RevokeUserToken"
-	AuthService_RefreshToken_FullMethodName    = "/mediator.v1.AuthService/RefreshToken"
 	AuthService_Verify_FullMethodName          = "/mediator.v1.AuthService/Verify"
 )
 
@@ -591,8 +590,6 @@ type AuthServiceClient interface {
 	RevokeTokens(ctx context.Context, in *RevokeTokensRequest, opts ...grpc.CallOption) (*RevokeTokensResponse, error)
 	// revoke token for an user
 	RevokeUserToken(ctx context.Context, in *RevokeUserTokenRequest, opts ...grpc.CallOption) (*RevokeUserTokenResponse, error)
-	// refresh a token
-	RefreshToken(ctx context.Context, in *RefreshTokenRequest, opts ...grpc.CallOption) (*RefreshTokenResponse, error)
 	// Verify user has active session to Mediator
 	Verify(ctx context.Context, in *VerifyRequest, opts ...grpc.CallOption) (*VerifyResponse, error)
 }
@@ -632,15 +629,6 @@ func (c *authServiceClient) RevokeUserToken(ctx context.Context, in *RevokeUserT
 	return out, nil
 }
 
-func (c *authServiceClient) RefreshToken(ctx context.Context, in *RefreshTokenRequest, opts ...grpc.CallOption) (*RefreshTokenResponse, error) {
-	out := new(RefreshTokenResponse)
-	err := c.cc.Invoke(ctx, AuthService_RefreshToken_FullMethodName, in, out, opts...)
-	if err != nil {
-		return nil, err
-	}
-	return out, nil
-}
-
 func (c *authServiceClient) Verify(ctx context.Context, in *VerifyRequest, opts ...grpc.CallOption) (*VerifyResponse, error) {
 	out := new(VerifyResponse)
 	err := c.cc.Invoke(ctx, AuthService_Verify_FullMethodName, in, out, opts...)
@@ -660,8 +648,6 @@ type AuthServiceServer interface {
 	RevokeTokens(context.Context, *RevokeTokensRequest) (*RevokeTokensResponse, error)
 	// revoke token for an user
 	RevokeUserToken(context.Context, *RevokeUserTokenRequest) (*RevokeUserTokenResponse, error)
-	// refresh a token
-	RefreshToken(context.Context, *RefreshTokenRequest) (*RefreshTokenResponse, error)
 	// Verify user has active session to Mediator
 	Verify(context.Context, *VerifyRequest) (*VerifyResponse, error)
 	mustEmbedUnimplementedAuthServiceServer()
@@ -679,9 +665,6 @@ func (UnimplementedAuthServiceServer) RevokeTokens(context.Context, *RevokeToken
 }
 func (UnimplementedAuthServiceServer) RevokeUserToken(context.Context, *RevokeUserTokenRequest) (*RevokeUserTokenResponse, error) {
 	return nil, status.Errorf(codes.Unimplemented, "method RevokeUserToken not implemented")
-}
-func (UnimplementedAuthServiceServer) RefreshToken(context.Context, *RefreshTokenRequest) (*RefreshTokenResponse, error) {
-	return nil, status.Errorf(codes.Unimplemented, "method RefreshToken not implemented")
 }
 func (UnimplementedAuthServiceServer) Verify(context.Context, *VerifyRequest) (*VerifyResponse, error) {
 	return nil, status.Errorf(codes.Unimplemented, "method Verify not implemented")
@@ -753,24 +736,6 @@ func _AuthService_RevokeUserToken_Handler(srv interface{}, ctx context.Context, 
 	return interceptor(ctx, in, info, handler)
 }
 
-func _AuthService_RefreshToken_Handler(srv interface{}, ctx context.Context, dec func(interface{}) error, interceptor grpc.UnaryServerInterceptor) (interface{}, error) {
-	in := new(RefreshTokenRequest)
-	if err := dec(in); err != nil {
-		return nil, err
-	}
-	if interceptor == nil {
-		return srv.(AuthServiceServer).RefreshToken(ctx, in)
-	}
-	info := &grpc.UnaryServerInfo{
-		Server:     srv,
-		FullMethod: AuthService_RefreshToken_FullMethodName,
-	}
-	handler := func(ctx context.Context, req interface{}) (interface{}, error) {
-		return srv.(AuthServiceServer).RefreshToken(ctx, req.(*RefreshTokenRequest))
-	}
-	return interceptor(ctx, in, info, handler)
-}
-
 func _AuthService_Verify_Handler(srv interface{}, ctx context.Context, dec func(interface{}) error, interceptor grpc.UnaryServerInterceptor) (interface{}, error) {
 	in := new(VerifyRequest)
 	if err := dec(in); err != nil {
@@ -807,10 +772,6 @@ var AuthService_ServiceDesc = grpc.ServiceDesc{
 		{
 			MethodName: "RevokeUserToken",
 			Handler:    _AuthService_RevokeUserToken_Handler,
-		},
-		{
-			MethodName: "RefreshToken",
-			Handler:    _AuthService_RefreshToken_Handler,
 		},
 		{
 			MethodName: "Verify",

@@ -294,14 +294,6 @@ service AuthService {
         };
     }
 
-    // refresh a token
-    rpc RefreshToken (RefreshTokenRequest) returns (RefreshTokenResponse) {
-        option (google.api.http) = {
-            post: "/api/v1/auth/refresh"
-            body: "*"
-        };
-    }
-
     // Verify user has active session to Mediator
     rpc Verify (VerifyRequest) returns (VerifyResponse) {
         option (google.api.http) = {

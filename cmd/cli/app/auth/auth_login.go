@@ -152,7 +152,11 @@ will be saved to $XDG_CONFIG_HOME/mediator/credentials.json`,
 		token := <-tokenChan
 
 		// save credentials
-		filePath, err := util.SaveCredentials(token)
+		filePath, err := util.SaveCredentials(util.OpenIdCredentials{
+			AccessToken:          token.AccessToken,
+			RefreshToken:         token.RefreshToken,
+			AccessTokenExpiresAt: token.Expiry,
+		})
 		if err != nil {
 			fmt.Println(err)
 		}
@@ -188,8 +192,7 @@ will be saved to $XDG_CONFIG_HOME/mediator/credentials.json`,
 			renderUserInfo(cmd, userInfo)
 		}
 
-		fmt.Printf("Your access credentials saved to %s\n",
-			filePath)
+		cli.PrintCmd(cmd, "Your access credentials have been saved to %s", filePath)
 
 		// shut down the HTTP server
 		err = server.Shutdown(context.Background())
