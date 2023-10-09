@@ -28,7 +28,6 @@ import (
 	"google.golang.org/protobuf/types/known/timestamppb"
 
 	"github.com/stacklok/mediator/internal/db"
-	"github.com/stacklok/mediator/internal/util"
 	pb "github.com/stacklok/mediator/pkg/api/protobuf/go/mediator/v1"
 )
 
@@ -69,7 +68,6 @@ func (s *Server) CreateUser(ctx context.Context,
 
 	var userOrg uuid.UUID
 	var userProject uuid.UUID
-	var userRoles []int32
 
 	orgmeta := &OrgMeta{
 		Company: subject + " - Self enrolled",
@@ -93,17 +91,13 @@ func (s *Server) CreateUser(ctx context.Context,
 	if err != nil {
 		return nil, status.Errorf(codes.Internal, "failed to create organization: %s", err)
 	}
-	orgProject, orgRoles, err := CreateDefaultRecordsForOrg(ctx, qtx, organization, baseName)
+	orgProject, userRoles, err := CreateDefaultRecordsForOrg(ctx, qtx, organization, baseName)
 	if err != nil {
 		return nil, status.Errorf(codes.Internal, "failed to create default organization records: %s", err)
 	}
 
 	userOrg = organization.ID
 	userProject = uuid.MustParse(orgProject.ProjectId)
-	for _, role := range orgRoles {
-		userRoles = append(userRoles, role.Id)
-	}
-
 	user, err := qtx.CreateUser(ctx, db.CreateUserParams{OrganizationID: userOrg,
 		Email:           *stringToNullString(token.Email()),
 		FirstName:       *stringToNullString(token.GivenName()),
@@ -183,236 +177,24 @@ func (s *Server) DeleteUser(ctx context.Context,
 	return &pb.DeleteUserResponse{}, nil
 }
 
-// GetUsers is a service for getting a list of users
-func (s *Server) GetUsers(ctx context.Context,
-	in *pb.GetUsersRequest) (*pb.GetUsersResponse, error) {
-
-	// define default values for limit and offset
-	if in.Limit == nil || *in.Limit == -1 {
-		in.Limit = new(int32)
-		*in.Limit = PaginationLimit
-	}
-	if in.Offset == nil {
-		in.Offset = new(int32)
-		*in.Offset = 0
-	}
-
-	users, err := s.store.ListUsers(ctx, db.ListUsersParams{
-		Limit:  *in.Limit,
-		Offset: *in.Offset,
-	})
-	if err != nil {
-		if errors.Is(err, sql.ErrNoRows) {
-			return nil, util.UserVisibleError(codes.NotFound, "user not found")
-		}
-		return nil, status.Errorf(codes.Internal, "failed to get users: %s", err)
-	}
-
-	var resp pb.GetUsersResponse
-	resp.Users = make([]*pb.UserRecord, 0, len(users))
-	for idx := range users {
-		user := &users[idx]
-		resp.Users = append(resp.Users, &pb.UserRecord{
-			Id:              user.ID,
-			OrganizationId:  user.OrganizationID.String(),
-			Email:           &user.Email.String,
-			IdentitySubject: user.IdentitySubject,
-			FirstName:       &user.FirstName.String,
-			LastName:        &user.LastName.String,
-			CreatedAt:       timestamppb.New(user.CreatedAt),
-			UpdatedAt:       timestamppb.New(user.UpdatedAt),
-		})
-	}
-
-	return &resp, nil
-}
-
-// GetUsersByOrganization is a service for getting a list of users of an organization
-func (s *Server) GetUsersByOrganization(ctx context.Context,
-	in *pb.GetUsersByOrganizationRequest) (*pb.GetUsersByOrganizationResponse, error) {
-	orgID, err := uuid.Parse(in.OrganizationId)
-	if err != nil {
-		return nil, util.UserVisibleError(codes.InvalidArgument, "invalid organization id")
-	}
-
-	// check if user is authorized
-	if err := AuthorizedOnOrg(ctx, orgID); err != nil {
-		return nil, err
-	}
-
-	// define default values for limit and offset
-	if in.Limit == nil || *in.Limit == -1 {
-		in.Limit = new(int32)
-		*in.Limit = PaginationLimit
-	}
-	if in.Offset == nil {
-		in.Offset = new(int32)
-		*in.Offset = 0
-	}
-
-	users, err := s.store.ListUsersByOrganization(ctx, db.ListUsersByOrganizationParams{
-		OrganizationID: orgID,
-		Limit:          *in.Limit,
-		Offset:         *in.Offset,
-	})
-	if err != nil {
-		return nil, status.Errorf(codes.Internal, "failed to get users: %s", err)
-	}
-
-	var resp pb.GetUsersByOrganizationResponse
-	resp.Users = make([]*pb.UserRecord, 0, len(users))
-	for idx := range users {
-		user := &users[idx]
-		resp.Users = append(resp.Users, &pb.UserRecord{
-			Id:              user.ID,
-			OrganizationId:  user.OrganizationID.String(),
-			Email:           &user.Email.String,
-			IdentitySubject: user.IdentitySubject,
-			FirstName:       &user.FirstName.String,
-			LastName:        &user.LastName.String,
-			CreatedAt:       timestamppb.New(user.CreatedAt),
-			UpdatedAt:       timestamppb.New(user.UpdatedAt),
-		})
-	}
-
-	return &resp, nil
-}
-
-// GetUsersByProject is a service for getting a list of users of a project
-func (s *Server) GetUsersByProject(ctx context.Context,
-	in *pb.GetUsersByProjectRequest) (*pb.GetUsersByProjectResponse, error) {
-	projID, err := uuid.Parse(in.ProjectId)
-	if err != nil {
-		return nil, util.UserVisibleError(codes.InvalidArgument, "invalid project id")
-	}
-
-	// check if user is authorized
-	if err := AuthorizedOnProject(ctx, projID); err != nil {
-		return nil, err
-	}
-
-	// define default values for limit and offset
-	if in.Limit == nil || *in.Limit == -1 {
-		in.Limit = new(int32)
-		*in.Limit = PaginationLimit
-	}
-	if in.Offset == nil {
-		in.Offset = new(int32)
-		*in.Offset = 0
-	}
-
-	users, err := s.store.ListUsersByProject(ctx, db.ListUsersByProjectParams{
-		ProjectID: projID,
-		Limit:     *in.Limit,
-		Offset:    *in.Offset,
-	})
-	if err != nil {
-		return nil, status.Errorf(codes.Internal, "failed to get users: %s", err)
-	}
-
-	var resp pb.GetUsersByProjectResponse
-	resp.Users = make([]*pb.UserRecord, 0, len(users))
-	for idx := range users {
-		user := &users[idx]
-		resp.Users = append(resp.Users, &pb.UserRecord{
-			Id:              user.ID,
-			OrganizationId:  user.OrganizationID.String(),
-			Email:           &user.Email.String,
-			IdentitySubject: user.IdentitySubject,
-			FirstName:       &user.FirstName.String,
-			LastName:        &user.LastName.String,
-			CreatedAt:       timestamppb.New(user.CreatedAt),
-			UpdatedAt:       timestamppb.New(user.UpdatedAt),
-		})
-	}
-
-	return &resp, nil
-}
-
-func getUserDependencies(ctx context.Context, store db.Store, user db.User) ([]*pb.ProjectRecord, []*pb.RoleRecord, error) {
-	// get all the roles associated with that user
-	roles, err := store.GetUserRoles(ctx, user.ID)
-	if err != nil {
-		return nil, nil, err
-	}
-
+func getUserDependencies(ctx context.Context, store db.Store, user db.User) ([]*pb.Project, error) {
 	// get all the projects associated with that user
 	projects, err := store.GetUserProjects(ctx, user.ID)
 	if err != nil {
-		return nil, nil, err
-	}
-
-	// convert to right data type
-	var rolesPB []*pb.RoleRecord
-	for idx := range roles {
-		role := &roles[idx]
-		pid := role.ProjectID.UUID.String()
-		rolesPB = append(rolesPB, &pb.RoleRecord{
-			Id:             role.ID,
-			OrganizationId: role.OrganizationID.String(),
-			ProjectId:      &pid,
-			Name:           role.Name,
-			IsAdmin:        role.IsAdmin,
-			IsProtected:    role.IsProtected,
-			CreatedAt:      timestamppb.New(role.CreatedAt),
-			UpdatedAt:      timestamppb.New(role.UpdatedAt),
-		})
-	}
-
-	var projectsPB []*pb.ProjectRecord
-	for _, proj := range projects {
-		projectsPB = append(projectsPB, &pb.ProjectRecord{
-			ProjectId:      proj.ID.String(),
-			OrganizationId: proj.ParentID.UUID.String(),
-			Name:           proj.Name,
-			CreatedAt:      timestamppb.New(proj.CreatedAt),
-			UpdatedAt:      timestamppb.New(proj.UpdatedAt),
-		})
-	}
-
-	return projectsPB, rolesPB, nil
-}
-
-// GetUserById is a service for getting a user by id
-func (s *Server) GetUserById(ctx context.Context,
-	in *pb.GetUserByIdRequest) (*pb.GetUserByIdResponse, error) {
-	if in.UserId == 0 {
-		return nil, status.Error(codes.InvalidArgument, "user id is required")
-	}
-
-	// check if user is authorized
-	if err := AuthorizedOnUser(ctx, in.UserId); err != nil {
 		return nil, err
 	}
 
-	user, err := s.store.GetUserByID(ctx, in.UserId)
-	if err != nil {
-		if errors.Is(err, sql.ErrNoRows) {
-			return nil, status.Error(codes.NotFound, "user not found")
-		}
-		return nil, status.Errorf(codes.Internal, "failed to get user: %s", err)
+	var projectsPB []*pb.Project
+	for _, proj := range projects {
+		projectsPB = append(projectsPB, &pb.Project{
+			ProjectId: proj.ID.String(),
+			Name:      proj.Name,
+			CreatedAt: timestamppb.New(proj.CreatedAt),
+			UpdatedAt: timestamppb.New(proj.UpdatedAt),
+		})
 	}
 
-	projects, roles, err := getUserDependencies(ctx, s.store, user)
-	if err != nil {
-		return nil, status.Errorf(codes.Unknown, "failed to get user dependencies: %s", err)
-	}
-
-	var resp pb.GetUserByIdResponse
-	resp.User = &pb.UserRecord{
-		Id:              user.ID,
-		OrganizationId:  user.OrganizationID.String(),
-		Email:           &user.Email.String,
-		IdentitySubject: user.IdentitySubject,
-		FirstName:       &user.FirstName.String,
-		LastName:        &user.LastName.String,
-		CreatedAt:       timestamppb.New(user.CreatedAt),
-		UpdatedAt:       timestamppb.New(user.UpdatedAt),
-	}
-
-	resp.Projects = projects
-	resp.Roles = roles
-	return &resp, nil
+	return projectsPB, nil
 }
 
 // GetUser is a service for getting personal user details
@@ -449,12 +231,11 @@ func (s *Server) GetUser(ctx context.Context, _ *pb.GetUserRequest) (*pb.GetUser
 		UpdatedAt:       timestamppb.New(user.UpdatedAt),
 	}
 
-	projects, roles, err := getUserDependencies(ctx, s.store, user)
+	projects, err := getUserDependencies(ctx, s.store, user)
 	if err != nil {
 		return nil, status.Errorf(codes.Unknown, "failed to get user dependencies: %s", err)
 	}
 	resp.Projects = projects
-	resp.Roles = roles
 
 	return &resp, nil
 }
