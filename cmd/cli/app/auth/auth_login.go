@@ -199,8 +199,6 @@ will be saved to $XDG_CONFIG_HOME/mediator/credentials.json`,
 
 func renderNewUser(cmd *cobra.Command, newUser *pb.CreateUserResponse) {
 	rows := []table.Row{
-		{"Organization ID", newUser.OrganizationId},
-		{"Organization Name", newUser.OrganizatioName},
 		{"Project ID", newUser.ProjectId},
 		{"Project Name", newUser.ProjectName},
 	}

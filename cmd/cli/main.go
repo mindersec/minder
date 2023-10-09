@@ -22,16 +22,11 @@ import (
 	_ "github.com/stacklok/mediator/cmd/cli/app/artifact"
 	_ "github.com/stacklok/mediator/cmd/cli/app/auth"
 	_ "github.com/stacklok/mediator/cmd/cli/app/docs"
-	_ "github.com/stacklok/mediator/cmd/cli/app/keys"
-	_ "github.com/stacklok/mediator/cmd/cli/app/org"
 	_ "github.com/stacklok/mediator/cmd/cli/app/profile"
 	_ "github.com/stacklok/mediator/cmd/cli/app/profile_status"
-	_ "github.com/stacklok/mediator/cmd/cli/app/project"
 	_ "github.com/stacklok/mediator/cmd/cli/app/provider"
 	_ "github.com/stacklok/mediator/cmd/cli/app/repo"
-	_ "github.com/stacklok/mediator/cmd/cli/app/role"
 	_ "github.com/stacklok/mediator/cmd/cli/app/rule_type"
-	_ "github.com/stacklok/mediator/cmd/cli/app/user"
 )
 
 func main() {
