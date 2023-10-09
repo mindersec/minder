@@ -32,6 +32,8 @@ import (
 	"io"
 	"io/fs"
 	"log"
+	"net/http"
+	"net/url"
 	"os"
 	"path/filepath"
 	"strconv"
@@ -43,7 +45,6 @@ import (
 	_ "github.com/lib/pq" // nolint
 	"github.com/spf13/cobra"
 	"github.com/spf13/viper"
-	"github.com/zitadel/oidc/v2/pkg/oidc"
 	"golang.org/x/term"
 	"google.golang.org/grpc"
 	"google.golang.org/grpc/credentials"
@@ -89,20 +90,11 @@ func GetConfigValue(key string, flagName string, cmd *cobra.Command, defaultValu
 	return defaultValue
 }
 
-// Credentials is a struct to hold the access and refresh tokens
-type Credentials struct {
-	AccessToken           string `json:"access_token"`
-	RefreshToken          string `json:"refresh_token"`
-	AccessTokenExpiresIn  int    `json:"access_token_expires_in"`
-	RefreshTokenExpiresIn int    `json:"refresh_token_expires_in"`
-}
-
 // OpenIdCredentials is a struct to hold the access and refresh tokens
 type OpenIdCredentials struct {
 	AccessToken          string    `json:"access_token"`
 	RefreshToken         string    `json:"refresh_token"`
-	IDToken              string    `json:"IDToken"`
-	AccessTokenExpiresIn time.Time `json:"expiry"`
+	AccessTokenExpiresAt time.Time `json:"expiry"`
 }
 
 func getCredentialsPath() (string, error) {
@@ -124,15 +116,13 @@ func getCredentialsPath() (string, error) {
 
 // JWTTokenCredentials is a helper struct for grpc
 type JWTTokenCredentials struct {
-	accessToken  string
-	refreshToken string
+	accessToken string
 }
 
 // GetRequestMetadata implements the PerRPCCredentials interface.
 func (jwt JWTTokenCredentials) GetRequestMetadata(_ context.Context, _ ...string) (map[string]string, error) {
 	return map[string]string{
 		"authorization": "Bearer " + string(jwt.accessToken),
-		"refresh-token": jwt.refreshToken,
 	}, nil
 }
 
@@ -148,20 +138,23 @@ func GrpcForCommand(cmd *cobra.Command) (*grpc.ClientConn, error) {
 	insecureDefault := grpc_host == "localhost" || grpc_host == "127.0.0.1" || grpc_host == "::1"
 	allowInsecure := GetConfigValue("grpc_server.insecure", "grpc-insecure", cmd, insecureDefault).(bool)
 
-	return GetGrpcConnection(grpc_host, grpc_port, allowInsecure)
+	issuerUrl := GetConfigValue("identity.issuer_url", "identity-url", cmd, "http://localhost:8081").(string)
+	realm := GetConfigValue("identity.realm", "identity-realm", cmd, "stacklok").(string)
+	clientId := GetConfigValue("identity.client_id", "identity-client", cmd, "mediator-cli").(string)
+
+	return GetGrpcConnection(grpc_host, grpc_port, allowInsecure, issuerUrl, realm, clientId)
 }
 
 // GetGrpcConnection is a helper for getting a testing connection for grpc
-func GetGrpcConnection(grpc_host string, grpc_port int, allowInsecure bool) (*grpc.ClientConn, error) {
+func GetGrpcConnection(grpc_host string, grpc_port int, allowInsecure bool, issuerUrl string, realm string, clientId string) (
+	*grpc.ClientConn, error) {
 	address := fmt.Sprintf("%s:%d", grpc_host, grpc_port)
 
 	// read credentials
 	token := ""
-	refreshToken := ""
-	creds, err := LoadCredentials()
+	t, err := GetToken(issuerUrl, realm, clientId)
 	if err == nil {
-		token = creds.AccessToken
-		refreshToken = creds.RefreshToken
+		token = t
 	}
 
 	credentialOpts := credentials.NewTLS(&tls.Config{MinVersion: tls.VersionTLS13})
@@ -171,16 +164,10 @@ func GetGrpcConnection(grpc_host string, grpc_port int, allowInsecure bool) (*gr
 
 	// generate credentials
 	conn, err := grpc.Dial(address, grpc.WithTransportCredentials(credentialOpts),
-		grpc.WithPerRPCCredentials(JWTTokenCredentials{accessToken: token, refreshToken: refreshToken}))
+		grpc.WithPerRPCCredentials(JWTTokenCredentials{accessToken: token}))
 	if err != nil {
 		return nil, fmt.Errorf("error connecting to gRPC server: %v", err)
 	}
-
-	// NOTE: refresh is best effort. We will not error out if it fails
-	// in the case of failure, the credentials won't be refreshed
-	// and user will need to log in again
-
-	//TODO: refresh token
 
 	return conn, nil
 }
@@ -196,7 +183,7 @@ func (tw *TestWriter) Write(p []byte) (n int, err error) {
 }
 
 // SaveCredentials saves the credentials to a file
-func SaveCredentials(tokens *oidc.Tokens[*oidc.IDTokenClaims]) (string, error) {
+func SaveCredentials(tokens OpenIdCredentials) (string, error) {
 	// marshal the credentials to json
 	credsJSON, err := json.Marshal(tokens)
 	if err != nil {
@@ -219,6 +206,78 @@ func SaveCredentials(tokens *oidc.Tokens[*oidc.IDTokenClaims]) (string, error) {
 		return "", fmt.Errorf("error writing credentials to file: %v", err)
 	}
 	return filePath, nil
+}
+
+// GetToken retrieves the access token from the credentials file and refreshes it if necessary
+func GetToken(issuerUrl string, realm string, clientId string) (string, error) {
+	refreshLimit := 10
+	creds, err := LoadCredentials()
+	if err != nil {
+		return "", fmt.Errorf("error loading credentials: %v", err)
+	}
+	needsRefresh := time.Now().Add(time.Duration(refreshLimit) * time.Second).After(creds.AccessTokenExpiresAt)
+
+	if needsRefresh {
+		updatedCreds, err := RefreshCredentials(creds.RefreshToken, issuerUrl, realm, clientId)
+		if err != nil {
+			return "", fmt.Errorf("error refreshing credentials: %v", err)
+		}
+		return updatedCreds.AccessToken, nil
+	}
+
+	return creds.AccessToken, nil
+}
+
+type refreshTokenResponse struct {
+	AccessToken          string `json:"access_token"`
+	RefreshToken         string `json:"refresh_token"`
+	AccessTokenExpiresIn int    `json:"expires_in"`
+}
+
+// RefreshCredentials uses a refresh token to get and save a new set of credentials
+func RefreshCredentials(refreshToken string, issuerUrl string, realm string, clientId string) (OpenIdCredentials, error) {
+
+	parsedURL, err := url.Parse(issuerUrl)
+	if err != nil {
+		return OpenIdCredentials{}, fmt.Errorf("error parsing issuer URL: %v", err)
+	}
+	logoutUrl := parsedURL.JoinPath("realms", realm, "protocol/openid-connect/token")
+
+	data := url.Values{}
+	data.Set("client_id", clientId)
+	data.Set("grant_type", "refresh_token")
+	data.Set("refresh_token", refreshToken)
+
+	req, err := http.NewRequest("POST", logoutUrl.String(), strings.NewReader(data.Encode()))
+	if err != nil {
+		return OpenIdCredentials{}, fmt.Errorf("error creating: %v", err)
+	}
+	req.Header.Add("Content-Type", "application/x-www-form-urlencoded")
+
+	client := &http.Client{}
+	resp, err := client.Do(req)
+	if err != nil {
+		return OpenIdCredentials{}, fmt.Errorf("error fetching new credentials: %v", err)
+	}
+	defer resp.Body.Close()
+
+	tokens := refreshTokenResponse{}
+	err = json.NewDecoder(resp.Body).Decode(&tokens)
+	if err != nil {
+		return OpenIdCredentials{}, fmt.Errorf("error unmarshaling credentials: %v", err)
+	}
+
+	updatedCredentials := OpenIdCredentials{
+		AccessToken:          tokens.AccessToken,
+		RefreshToken:         tokens.RefreshToken,
+		AccessTokenExpiresAt: time.Now().Add(time.Duration(tokens.AccessTokenExpiresIn) * time.Second),
+	}
+	_, err = SaveCredentials(updatedCredentials)
+	if err != nil {
+		return OpenIdCredentials{}, fmt.Errorf("error saving credentials: %v", err)
+	}
+
+	return updatedCredentials, nil
 }
 
 // LoadCredentials loads the credentials from a file

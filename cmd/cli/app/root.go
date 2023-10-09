@@ -57,6 +57,9 @@ func init() {
 	RootCmd.PersistentFlags().String("grpc-host", "staging.stacklok.dev", "Server host")
 	RootCmd.PersistentFlags().Int("grpc-port", 443, "Server port")
 	RootCmd.PersistentFlags().Bool("grpc-insecure", false, "Allow establishing insecure connections")
+	RootCmd.PersistentFlags().String("identity-url", "http://localhost:8081", "Identity server issuer URL")
+	RootCmd.PersistentFlags().String("identity-realm", "stacklok", "Identity server realm")
+	RootCmd.PersistentFlags().String("identity-client", "mediator-cli", "Identity server client ID")
 	RootCmd.PersistentFlags().StringVar(&cfgFile, "config", "", "Config file (default is $PWD/config.yaml)")
 }
 

@@ -21,12 +21,6 @@ import (
 	pb "github.com/stacklok/mediator/pkg/api/protobuf/go/mediator/v1"
 )
 
-// RefreshToken refreshes the access token
-func (_ *Server) RefreshToken(_ context.Context, _ *pb.RefreshTokenRequest) (*pb.RefreshTokenResponse, error) {
-	// TODO: refresh
-	return nil, nil
-}
-
 // Verify verifies the access token
 func (*Server) Verify(ctx context.Context, _ *pb.VerifyRequest) (*pb.VerifyResponse, error) {
 	claims := auth.GetPermissionsFromContext(ctx)
