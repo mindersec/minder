@@ -24,14 +24,9 @@ https://docs.stacklok.com/mediator/medic/overview.html
 * [medic auth](medic_auth.md)	 - Authorize and manage accounts within a mediator control plane
 * [medic completion](medic_completion.md)	 - Generate the autocompletion script for the specified shell
 * [medic docs](medic_docs.md)	 - Generates documentation for the client
-* [medic keys](medic_keys.md)	 - Manage keys within a mediator control plane
-* [medic org](medic_org.md)	 - Manage organizations within a mediator control plane
 * [medic profile](medic_profile.md)	 - Manage profiles within a mediator control plane
 * [medic profile_status](medic_profile_status.md)	 - Manage profile status within a mediator control plane
-* [medic project](medic_project.md)	 - Manage projects within a mediator control plane
 * [medic provider](medic_provider.md)	 - Manage providers within a mediator control plane
 * [medic repo](medic_repo.md)	 - Manage repositories within a mediator control plane
-* [medic role](medic_role.md)	 - Manage roles within a mediator control plane
 * [medic rule_type](medic_rule_type.md)	 - Manage rule types within a mediator control plane
-* [medic user](medic_user.md)	 - Manage users within a mediator control plane
 
