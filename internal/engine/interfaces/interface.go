@@ -46,12 +46,12 @@ type Result struct {
 	Fs billy.Filesystem
 }
 
-// RemediateActionOpt is the type that defines what action to take when remediating
-type RemediateActionOpt int
+// ActionOpt is the type that defines what action to take when remediating
+type ActionOpt int
 
 const (
 	// ActionOptOn means perform the remediation
-	ActionOptOn RemediateActionOpt = iota
+	ActionOptOn ActionOpt = iota
 	// ActionOptOff means do not perform the remediation
 	ActionOptOff
 	// ActionOptDryRun means perform a dry run of the remediation
@@ -62,9 +62,9 @@ const (
 
 const defaultAction = ActionOptOff
 
-// RemediationActionOptFromString returns the RemediateActionOpt from a string representation
-func RemediationActionOptFromString(s *string) RemediateActionOpt {
-	var actionOptMap = map[string]RemediateActionOpt{
+// ActionOptFromString returns the ActionOpt from a string representation
+func ActionOptFromString(s *string) ActionOpt {
+	var actionOptMap = map[string]ActionOpt{
 		"on":      ActionOptOn,
 		"off":     ActionOptOff,
 		"dry_run": ActionOptDryRun,
@@ -83,5 +83,5 @@ func RemediationActionOptFromString(s *string) RemediateActionOpt {
 
 // Remediator is the interface for a rule type remediator
 type Remediator interface {
-	Remediate(ctx context.Context, remAction RemediateActionOpt, ent protoreflect.ProtoMessage, pol map[string]any) error
+	Remediate(ctx context.Context, remAction ActionOpt, ent protoreflect.ProtoMessage, pol map[string]any) error
 }

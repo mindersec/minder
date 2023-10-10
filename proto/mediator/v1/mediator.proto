@@ -1256,6 +1256,16 @@ message RuleType {
             optional RestType rest = 2;
         }
         Remediate remediate = 6;
+
+        message Alert {
+            string type = 1;
+
+            message AlertTypeSA {
+                string severity = 1;
+            }
+            optional AlertTypeSA security_advisory = 2;
+        }
+        Alert alert = 7;
     }
 
     // def is the definition of the rule type.
@@ -1268,8 +1278,8 @@ message RuleType {
     string guidance = 6;
 }
 
- // Profile defines a profile that is user defined.
- message Profile {
+// Profile defines a profile that is user defined.
+message Profile {
     // context is the context in which the profile is evaluated.
     Context context = 1;
 
@@ -1298,7 +1308,11 @@ message RuleType {
     repeated Rule artifact = 6;
     repeated Rule pull_request = 7;
 
-     // whether and how to remediate (on,off,dry_run)
-     // this is optional as the default is set by the system
-     optional string remediate = 8;
- }
+    // whether and how to remediate (on,off,dry_run)
+    // this is optional as the default is set by the system
+    optional string remediate = 8;
+
+    // whether and how to alert (on,off,dry_run)
+    // this is optional as the default is set by the system
+    optional string alert = 9;
+}

@@ -36,7 +36,7 @@ func NewNoopRemediate() (*Remediator, error) {
 // Remediate actually performs the remediation
 func (_ *Remediator) Remediate(
 	_ context.Context,
-	_ interfaces.RemediateActionOpt,
+	_ interfaces.ActionOpt,
 	_ protoreflect.ProtoMessage,
 	_ map[string]any,
 ) error {

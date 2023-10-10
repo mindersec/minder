@@ -240,7 +240,7 @@ func (r *RuleTypeEngine) Eval(
 	ctx context.Context,
 	ent protoreflect.ProtoMessage,
 	pol, params map[string]any,
-	remAction engif.RemediateActionOpt,
+	remAction engif.ActionOpt,
 ) (evalErr error, remediateErr error) {
 	remediateErr = evalerrors.ErrRemediationSkipped
 
@@ -261,7 +261,7 @@ func (r *RuleTypeEngine) tryRemediate(
 	ctx context.Context,
 	ent protoreflect.ProtoMessage,
 	pol map[string]any,
-	remAction engif.RemediateActionOpt,
+	remAction engif.ActionOpt,
 	evalErr error,
 ) error {
 	shouldRemediate, err := r.shouldRemediate(remAction, evalErr)
@@ -274,7 +274,7 @@ func (r *RuleTypeEngine) tryRemediate(
 	return r.rrem.Remediate(ctx, remAction, ent, pol)
 }
 
-func (r *RuleTypeEngine) shouldRemediate(remAction engif.RemediateActionOpt, evalErr error) (bool, error) {
+func (r *RuleTypeEngine) shouldRemediate(remAction engif.ActionOpt, evalErr error) (bool, error) {
 	if r.rrem == nil {
 		return false, nil
 	}

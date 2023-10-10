@@ -105,7 +105,7 @@ type EndpointTemplateParams struct {
 // Remediate actually performs the remediation
 func (r *Remediator) Remediate(
 	ctx context.Context,
-	remAction interfaces.RemediateActionOpt,
+	remAction interfaces.ActionOpt,
 	ent protoreflect.ProtoMessage,
 	pol map[string]any,
 ) error {
