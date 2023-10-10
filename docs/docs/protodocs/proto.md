@@ -72,6 +72,8 @@
     - [ListArtifactsResponse](#mediator-v1-ListArtifactsResponse)
     - [ListProfilesRequest](#mediator-v1-ListProfilesRequest)
     - [ListProfilesResponse](#mediator-v1-ListProfilesResponse)
+    - [ListRemoteRepositoriesFromProviderRequest](#mediator-v1-ListRemoteRepositoriesFromProviderRequest)
+    - [ListRemoteRepositoriesFromProviderResponse](#mediator-v1-ListRemoteRepositoriesFromProviderResponse)
     - [ListRepositoriesRequest](#mediator-v1-ListRepositoriesRequest)
     - [ListRepositoriesResponse](#mediator-v1-ListRepositoriesResponse)
     - [ListRuleTypesRequest](#mediator-v1-ListRuleTypesRequest)
@@ -92,11 +94,11 @@
     - [RESTProviderConfig](#mediator-v1-RESTProviderConfig)
     - [RefreshTokenRequest](#mediator-v1-RefreshTokenRequest)
     - [RefreshTokenResponse](#mediator-v1-RefreshTokenResponse)
+    - [RegisterRepoResult](#mediator-v1-RegisterRepoResult)
+    - [RegisterRepoResult.Status](#mediator-v1-RegisterRepoResult-Status)
     - [RegisterRepositoryRequest](#mediator-v1-RegisterRepositoryRequest)
     - [RegisterRepositoryResponse](#mediator-v1-RegisterRepositoryResponse)
-    - [Repositories](#mediator-v1-Repositories)
-    - [RepositoryRecord](#mediator-v1-RepositoryRecord)
-    - [RepositoryResult](#mediator-v1-RepositoryResult)
+    - [Repository](#mediator-v1-Repository)
     - [RestType](#mediator-v1-RestType)
     - [RevokeOauthProjectTokenRequest](#mediator-v1-RevokeOauthProjectTokenRequest)
     - [RevokeOauthProjectTokenResponse](#mediator-v1-RevokeOauthProjectTokenResponse)
@@ -121,10 +123,9 @@
     - [SignatureVerification](#mediator-v1-SignatureVerification)
     - [StoreProviderTokenRequest](#mediator-v1-StoreProviderTokenRequest)
     - [StoreProviderTokenResponse](#mediator-v1-StoreProviderTokenResponse)
-    - [SyncRepositoriesRequest](#mediator-v1-SyncRepositoriesRequest)
-    - [SyncRepositoriesResponse](#mediator-v1-SyncRepositoriesResponse)
     - [UpdateRuleTypeRequest](#mediator-v1-UpdateRuleTypeRequest)
     - [UpdateRuleTypeResponse](#mediator-v1-UpdateRuleTypeResponse)
+    - [UpstreamRepositoryRef](#mediator-v1-UpstreamRepositoryRef)
     - [UserRecord](#mediator-v1-UserRecord)
     - [VerifyProviderTokenFromRequest](#mediator-v1-VerifyProviderTokenFromRequest)
     - [VerifyProviderTokenFromResponse](#mediator-v1-VerifyProviderTokenFromResponse)
@@ -134,7 +135,6 @@
     - [DepEcosystem](#mediator-v1-DepEcosystem)
     - [Entity](#mediator-v1-Entity)
     - [ObjectOwner](#mediator-v1-ObjectOwner)
-    - [RepoFilter](#mediator-v1-RepoFilter)
   
     - [File-level Extensions](#mediator_v1_mediator-proto-extensions)
   
@@ -851,7 +851,7 @@ if the struct is reused in other messages, it should be moved to a top-level def
 
 | Field | Type | Label | Description |
 | ----- | ---- | ----- | ----------- |
-| repository | [RepositoryRecord](#mediator-v1-RepositoryRecord) |  |  |
+| repository | [Repository](#mediator-v1-Repository) |  |  |
 
 
 
@@ -883,7 +883,7 @@ if the struct is reused in other messages, it should be moved to a top-level def
 
 | Field | Type | Label | Description |
 | ----- | ---- | ----- | ----------- |
-| repository | [RepositoryRecord](#mediator-v1-RepositoryRecord) |  |  |
+| repository | [Repository](#mediator-v1-Repository) |  |  |
 
 
 
@@ -1218,6 +1218,37 @@ list profiles
 
 
 
+<a name="mediator-v1-ListRemoteRepositoriesFromProviderRequest"></a>
+
+### ListRemoteRepositoriesFromProviderRequest
+
+
+
+| Field | Type | Label | Description |
+| ----- | ---- | ----- | ----------- |
+| provider | [string](#string) |  |  |
+| project_id | [string](#string) |  |  |
+
+
+
+
+
+
+<a name="mediator-v1-ListRemoteRepositoriesFromProviderResponse"></a>
+
+### ListRemoteRepositoriesFromProviderResponse
+
+
+
+| Field | Type | Label | Description |
+| ----- | ---- | ----- | ----------- |
+| results | [UpstreamRepositoryRef](#mediator-v1-UpstreamRepositoryRef) | repeated |  |
+
+
+
+
+
+
 <a name="mediator-v1-ListRepositoriesRequest"></a>
 
 ### ListRepositoriesRequest
@@ -1230,7 +1261,6 @@ list profiles
 | project_id | [string](#string) |  |  |
 | limit | [int32](#int32) |  |  |
 | offset | [int32](#int32) |  |  |
-| filter | [RepoFilter](#mediator-v1-RepoFilter) |  |  |
 
 
 
@@ -1245,7 +1275,7 @@ list profiles
 
 | Field | Type | Label | Description |
 | ----- | ---- | ----- | ----------- |
-| results | [RepositoryRecord](#mediator-v1-RepositoryRecord) | repeated |  |
+| results | [Repository](#mediator-v1-Repository) | repeated |  |
 
 
 
@@ -1545,6 +1575,38 @@ RESTProviderConfig contains the configuration for the REST provider.
 
 
 
+<a name="mediator-v1-RegisterRepoResult"></a>
+
+### RegisterRepoResult
+
+
+
+| Field | Type | Label | Description |
+| ----- | ---- | ----- | ----------- |
+| repository | [Repository](#mediator-v1-Repository) |  |  |
+| status | [RegisterRepoResult.Status](#mediator-v1-RegisterRepoResult-Status) |  |  |
+
+
+
+
+
+
+<a name="mediator-v1-RegisterRepoResult-Status"></a>
+
+### RegisterRepoResult.Status
+
+
+
+| Field | Type | Label | Description |
+| ----- | ---- | ----- | ----------- |
+| success | [bool](#bool) |  |  |
+| error | [string](#string) | optional |  |
+
+
+
+
+
+
 <a name="mediator-v1-RegisterRepositoryRequest"></a>
 
 ### RegisterRepositoryRequest
@@ -1555,7 +1617,7 @@ RESTProviderConfig contains the configuration for the REST provider.
 | ----- | ---- | ----- | ----------- |
 | provider | [string](#string) |  |  |
 | project_id | [string](#string) |  |  |
-| repositories | [Repositories](#mediator-v1-Repositories) | repeated |  |
+| repositories | [UpstreamRepositoryRef](#mediator-v1-UpstreamRepositoryRef) | repeated |  |
 | events | [string](#string) | repeated |  |
 
 
@@ -1571,67 +1633,25 @@ RESTProviderConfig contains the configuration for the REST provider.
 
 | Field | Type | Label | Description |
 | ----- | ---- | ----- | ----------- |
-| results | [RepositoryResult](#mediator-v1-RepositoryResult) | repeated |  |
+| results | [RegisterRepoResult](#mediator-v1-RegisterRepoResult) | repeated |  |
 
 
 
 
 
 
-<a name="mediator-v1-Repositories"></a>
+<a name="mediator-v1-Repository"></a>
 
-### Repositories
+### Repository
 
 
 
 | Field | Type | Label | Description |
 | ----- | ---- | ----- | ----------- |
+| id | [string](#string) | optional | This is optional when returning remote repositories |
+| context | [Context](#mediator-v1-Context) | optional |  |
 | owner | [string](#string) |  |  |
 | name | [string](#string) |  |  |
-| repo_id | [int32](#int32) |  |  |
-
-
-
-
-
-
-<a name="mediator-v1-RepositoryRecord"></a>
-
-### RepositoryRecord
-RepositoryRecord is used for registering repositories.
-
-
-| Field | Type | Label | Description |
-| ----- | ---- | ----- | ----------- |
-| id | [string](#string) |  |  |
-| provider | [string](#string) |  |  |
-| project_id | [string](#string) |  |  |
-| owner | [string](#string) |  |  |
-| name | [string](#string) |  |  |
-| repo_id | [int32](#int32) |  |  |
-| is_private | [bool](#bool) |  |  |
-| is_fork | [bool](#bool) |  |  |
-| hook_url | [string](#string) |  |  |
-| deploy_url | [string](#string) |  |  |
-| clone_url | [string](#string) |  |  |
-| created_at | [google.protobuf.Timestamp](#google-protobuf-Timestamp) |  |  |
-| updated_at | [google.protobuf.Timestamp](#google-protobuf-Timestamp) |  |  |
-
-
-
-
-
-
-<a name="mediator-v1-RepositoryResult"></a>
-
-### RepositoryResult
-
-
-
-| Field | Type | Label | Description |
-| ----- | ---- | ----- | ----------- |
-| owner | [string](#string) |  |  |
-| repository | [string](#string) |  |  |
 | repo_id | [int32](#int32) |  |  |
 | hook_id | [int64](#int64) |  |  |
 | hook_url | [string](#string) |  |  |
@@ -1639,10 +1659,10 @@ RepositoryRecord is used for registering repositories.
 | clone_url | [string](#string) |  |  |
 | hook_name | [string](#string) |  |  |
 | hook_type | [string](#string) |  |  |
-| success | [bool](#bool) |  |  |
-| uuid | [string](#string) |  |  |
+| hook_uuid | [string](#string) |  |  |
+| is_private | [bool](#bool) |  |  |
+| is_fork | [bool](#bool) |  |  |
 | registered | [bool](#bool) |  |  |
-| error | [google.protobuf.StringValue](#google-protobuf-StringValue) |  |  |
 | created_at | [google.protobuf.Timestamp](#google-protobuf-Timestamp) |  |  |
 | updated_at | [google.protobuf.Timestamp](#google-protobuf-Timestamp) |  |  |
 
@@ -2038,32 +2058,6 @@ Ingest defines how the data is ingested.
 
 
 
-<a name="mediator-v1-SyncRepositoriesRequest"></a>
-
-### SyncRepositoriesRequest
-
-
-
-| Field | Type | Label | Description |
-| ----- | ---- | ----- | ----------- |
-| provider | [string](#string) |  |  |
-| project_id | [string](#string) |  |  |
-
-
-
-
-
-
-<a name="mediator-v1-SyncRepositoriesResponse"></a>
-
-### SyncRepositoriesResponse
-
-
-
-
-
-
-
 <a name="mediator-v1-UpdateRuleTypeRequest"></a>
 
 ### UpdateRuleTypeRequest
@@ -2088,6 +2082,23 @@ UpdateRuleTypeResponse is the response to update a rule type.
 | Field | Type | Label | Description |
 | ----- | ---- | ----- | ----------- |
 | rule_type | [RuleType](#mediator-v1-RuleType) |  | rule_type is the rule type that was updated. |
+
+
+
+
+
+
+<a name="mediator-v1-UpstreamRepositoryRef"></a>
+
+### UpstreamRepositoryRef
+
+
+
+| Field | Type | Label | Description |
+| ----- | ---- | ----- | ----------- |
+| owner | [string](#string) |  |  |
+| name | [string](#string) |  |  |
+| repo_id | [int32](#int32) |  |  |
 
 
 
@@ -2216,20 +2227,6 @@ Entity defines the entity that is supported by the provider.
 | OBJECT_OWNER_USER | 3 |  |
 
 
-
-<a name="mediator-v1-RepoFilter"></a>
-
-### RepoFilter
-Repo filter enum
-
-| Name | Number | Description |
-| ---- | ------ | ----------- |
-| REPO_FILTER_SHOW_UNSPECIFIED | 0 |  |
-| REPO_FILTER_SHOW_ALL | 1 |  |
-| REPO_FILTER_SHOW_NOT_REGISTERED_ONLY | 2 |  |
-| REPO_FILTER_SHOW_REGISTERED_ONLY | 3 |  |
-
-
  
 
 
@@ -2345,8 +2342,8 @@ protolint:disable:this |
 
 | Method Name | Request Type | Response Type | Description |
 | ----------- | ------------ | ------------- | ------------|
-| SyncRepositories | [SyncRepositoriesRequest](#mediator-v1-SyncRepositoriesRequest) | [SyncRepositoriesResponse](#mediator-v1-SyncRepositoriesResponse) |  |
 | RegisterRepository | [RegisterRepositoryRequest](#mediator-v1-RegisterRepositoryRequest) | [RegisterRepositoryResponse](#mediator-v1-RegisterRepositoryResponse) |  |
+| ListRemoteRepositoriesFromProvider | [ListRemoteRepositoriesFromProviderRequest](#mediator-v1-ListRemoteRepositoriesFromProviderRequest) | [ListRemoteRepositoriesFromProviderResponse](#mediator-v1-ListRemoteRepositoriesFromProviderResponse) |  |
 | ListRepositories | [ListRepositoriesRequest](#mediator-v1-ListRepositoriesRequest) | [ListRepositoriesResponse](#mediator-v1-ListRepositoriesResponse) |  |
 | GetRepositoryById | [GetRepositoryByIdRequest](#mediator-v1-GetRepositoryByIdRequest) | [GetRepositoryByIdResponse](#mediator-v1-GetRepositoryByIdResponse) |  |
 | GetRepositoryByName | [GetRepositoryByNameRequest](#mediator-v1-GetRepositoryByNameRequest) | [GetRepositoryByNameResponse](#mediator-v1-GetRepositoryByNameResponse) |  |

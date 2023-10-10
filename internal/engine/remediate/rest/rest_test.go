@@ -227,7 +227,7 @@ func TestRestRemediate(t *testing.T) {
 			},
 			remArgs: remediateArgs{
 				remAction: interfaces.ActionOptOn,
-				ent: &pb.Repositories{
+				ent: &pb.Repository{
 					Owner:  "OwnerVar",
 					Name:   "NameVar",
 					RepoId: 456,
@@ -265,7 +265,7 @@ func TestRestRemediate(t *testing.T) {
 			},
 			remArgs: remediateArgs{
 				remAction: interfaces.ActionOptDryRun,
-				ent: &pb.Repositories{
+				ent: &pb.Repository{
 					Owner:  "OwnerVar",
 					Name:   "NameVar",
 					RepoId: 456,
@@ -289,7 +289,7 @@ func TestRestRemediate(t *testing.T) {
 			},
 			remArgs: remediateArgs{
 				remAction: interfaces.ActionOptOn,
-				ent: &pb.Repositories{
+				ent: &pb.Repository{
 					Owner:  "OwnerVar",
 					Name:   "NameVar",
 					RepoId: 456,
@@ -315,7 +315,7 @@ func TestRestRemediate(t *testing.T) {
 			},
 			remArgs: remediateArgs{
 				remAction: interfaces.ActionOptUnknown,
-				ent: &pb.Repositories{
+				ent: &pb.Repository{
 					Owner:  "Foo",
 					Name:   "Bar",
 					RepoId: 123,

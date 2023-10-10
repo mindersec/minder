@@ -26,6 +26,8 @@ import (
 	"github.com/go-git/go-git/v5"
 	"github.com/go-playground/validator/v10"
 	"github.com/google/go-github/v53/github"
+
+	mediatorv1 "github.com/stacklok/mediator/pkg/api/protobuf/go/mediator/v1"
 )
 
 // V1 is the version of the providers interface
@@ -61,10 +63,19 @@ type REST interface {
 	Do(ctx context.Context, req *http.Request) (*http.Response, error)
 }
 
+// RepoLister is the interface for listing repositories
+type RepoLister interface {
+	Provider
+
+	ListUserRepositories(context.Context, string) ([]*mediatorv1.Repository, error)
+	ListOrganizationRepsitories(context.Context, string) ([]*mediatorv1.Repository, error)
+}
+
 // GitHub is the interface for interacting with the GitHub REST API
 // Add methods here for interacting with the GitHub Rest API
 type GitHub interface {
 	Provider
+	RepoLister
 	REST
 
 	GetAuthenticatedUser(context.Context) (*github.User, error)
@@ -86,6 +97,9 @@ type GitHub interface {
 	ListFiles(ctx context.Context, owner string, repo string, prNumber int,
 		perPage int, pageNumber int) ([]*github.CommitFile, *github.Response, error)
 	GetOwner() string
+	ListHooks(ctx context.Context, owner, repo string) ([]*github.Hook, error)
+	DeleteHook(ctx context.Context, owner, repo string, id int64) error
+	CreateHook(ctx context.Context, owner, repo string, hook *github.Hook) (*github.Hook, error)
 }
 
 // ParseAndValidate parses the given provider configuration and validates it.

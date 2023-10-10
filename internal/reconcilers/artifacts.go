@@ -112,15 +112,15 @@ func (e *Reconciler) handleArtifactsReconcilerEvent(ctx context.Context, evt *Re
 	}
 
 	// evaluate profile for repo
-	repo := &pb.RepositoryResult{
-		Owner:      repository.RepoOwner,
-		Repository: repository.RepoName,
-		RepoId:     repository.RepoID,
-		HookUrl:    repository.WebhookUrl,
-		DeployUrl:  repository.DeployUrl,
-		CloneUrl:   repository.CloneUrl,
-		CreatedAt:  timestamppb.New(repository.CreatedAt),
-		UpdatedAt:  timestamppb.New(repository.UpdatedAt),
+	repo := &pb.Repository{
+		Owner:     repository.RepoOwner,
+		Name:      repository.RepoName,
+		RepoId:    repository.RepoID,
+		HookUrl:   repository.WebhookUrl,
+		DeployUrl: repository.DeployUrl,
+		CloneUrl:  repository.CloneUrl,
+		CreatedAt: timestamppb.New(repository.CreatedAt),
+		UpdatedAt: timestamppb.New(repository.UpdatedAt),
 	}
 
 	err = engine.NewEntityInfoWrapper().

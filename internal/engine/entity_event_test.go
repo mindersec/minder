@@ -50,9 +50,9 @@ func Test_parseEntityEvent(t *testing.T) {
 		{
 			name: "repository event",
 			args: args{
-				ent: &pb.RepositoryResult{
-					Repository: "test",
-					RepoId:     123,
+				ent: &pb.Repository{
+					Name:   "test",
+					RepoId: 123,
 				},
 				entType:   RepositoryEventEntityType,
 				projectID: projectID,
@@ -61,9 +61,9 @@ func Test_parseEntityEvent(t *testing.T) {
 			},
 			want: &EntityInfoWrapper{
 				ProjectID: &projectID,
-				Entity: &pb.RepositoryResult{
-					Repository: "test",
-					RepoId:     123,
+				Entity: &pb.Repository{
+					Name:   "test",
+					RepoId: 123,
 				},
 				Provider:      "github",
 				Type:          pb.Entity_ENTITY_REPOSITORIES,
@@ -190,7 +190,7 @@ func TestEntityInfoWrapper_RepositoryToMessage(t *testing.T) {
 	eiw := NewEntityInfoWrapper().
 		WithProvider("github").
 		WithProjectID(projectID).
-		WithRepository(&pb.RepositoryResult{
+		WithRepository(&pb.Repository{
 			Owner:  "test",
 			RepoId: 123,
 		}).WithRepositoryID(repoID)
@@ -239,7 +239,7 @@ func TestEntityInfoWrapper_FailsWithoutProjectID(t *testing.T) {
 
 	eiw := NewEntityInfoWrapper().
 		WithProvider("github").
-		WithRepository(&pb.RepositoryResult{
+		WithRepository(&pb.Repository{
 			Owner:  "test",
 			RepoId: 123,
 		}).WithRepositoryID(uuid.New())
@@ -254,7 +254,7 @@ func TestEntityInfoWrapper_FailsWithoutProvider(t *testing.T) {
 
 	eiw := NewEntityInfoWrapper().
 		WithProjectID(uuid.New()).
-		WithRepository(&pb.RepositoryResult{
+		WithRepository(&pb.Repository{
 			Owner:  "test",
 			RepoId: 123,
 		}).WithRepositoryID(uuid.New())

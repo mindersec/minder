@@ -18,7 +18,6 @@ package mediator.v1;
 import "google/api/annotations.proto";
 import "google/protobuf/descriptor.proto";
 import "google/protobuf/timestamp.proto";
-import "google/protobuf/wrappers.proto";
 import "google/protobuf/struct.proto";
 import "google/api/httpbody.proto";
 
@@ -303,20 +302,20 @@ service AuthService {
 }
 
 service RepositoryService {
-    rpc SyncRepositories(SyncRepositoriesRequest) returns (SyncRepositoriesResponse) {
+    rpc RegisterRepository (RegisterRepositoryRequest) returns (RegisterRepositoryResponse) {
         option (google.api.http) = {
-            post: "/api/v1/repositories/provider/{provider}/sync"
+            post: "/api/v1/repository/provider/{provider}/register"
             body: "*"
         };
 
         option (rpc_options) = {
             auth_scope: OBJECT_OWNER_PROJECT
+            owner_only: true
         };
     }
-    rpc RegisterRepository (RegisterRepositoryRequest) returns (RegisterRepositoryResponse) {
+    rpc ListRemoteRepositoriesFromProvider(ListRemoteRepositoriesFromProviderRequest) returns (ListRemoteRepositoriesFromProviderResponse) {
         option (google.api.http) = {
-            post: "/api/v1/repository/provider/{provider}/register"
-            body: "*"
+            get: "/api/v1/repositories/provider/{provider}/remote"
         };
 
         option (rpc_options) = {
@@ -660,65 +659,60 @@ message Project {
 
 // Repositories API objects
 
-message SyncRepositoriesRequest {
+message ListRemoteRepositoriesFromProviderRequest {
     string provider = 1;
     string project_id = 2;
 }
 
-message SyncRepositoriesResponse {
-
+message ListRemoteRepositoriesFromProviderResponse {
+    repeated UpstreamRepositoryRef results = 1;
 }
 
-message RegisterRepositoryRequest {
-    string provider = 1;
-    string project_id = 2;
-    repeated Repositories repositories = 3;
-    repeated string events = 4;
-}
-
-message Repositories {
+message UpstreamRepositoryRef {
     string owner = 1;
     string name = 2;
     int32 repo_id = 3;
 }
 
-message RepositoryResult {
-    string owner = 1;
-    string repository = 2;
-    int32 repo_id = 3;
-    int64 hook_id = 4;
-    string hook_url = 5;
-    string deploy_url = 6;
-    string clone_url = 7;
-    string hook_name = 8;
-    string hook_type = 9;
-    bool success = 10;
-    string uuid = 11;
-    bool registered = 12;
-    google.protobuf.StringValue error = 13;
-    google.protobuf.Timestamp created_at = 14;
-    google.protobuf.Timestamp updated_at = 15;
+message Repository {
+    optional string id = 1; // This is optional when returning remote repositories
+    optional Context context = 2;
+    string owner = 3;
+    string name = 4;
+    int32 repo_id = 5;
+    int64 hook_id = 6;
+    string hook_url = 7;
+    string deploy_url = 8;
+    string clone_url = 9;
+    string hook_name = 10;
+    string hook_type = 11;
+    string hook_uuid = 12;
+    bool is_private = 13;
+    bool is_fork = 14;
+    bool registered = 15;
+    google.protobuf.Timestamp created_at = 16;
+    google.protobuf.Timestamp updated_at = 17;
+}
+
+message RegisterRepositoryRequest {
+    string provider = 1;
+    string project_id = 2;
+    repeated UpstreamRepositoryRef repositories = 3;
+    repeated string events = 4;
+}
+
+message RegisterRepoResult {
+    message Status {
+        bool success = 1;
+        optional string error = 2;
+    }
+
+    Repository repository = 1;
+    Status status = 2;
 }
 
 message RegisterRepositoryResponse {
-    repeated RepositoryResult results = 1;
-}
-
-// RepositoryRecord is used for registering repositories.
-message RepositoryRecord {
-    string id = 1;
-    string provider = 2;
-    string project_id = 3;
-    string owner = 4;
-    string name = 5;
-    int32 repo_id = 6;
-    bool is_private = 7;
-    bool is_fork = 8;
-    string hook_url = 9;
-    string deploy_url = 10;
-    string clone_url = 11;
-    google.protobuf.Timestamp created_at = 12;
-    google.protobuf.Timestamp updated_at = 13;
+    repeated RegisterRepoResult results = 1;
 }
 
 message GetRepositoryByIdRequest {
@@ -726,7 +720,7 @@ message GetRepositoryByIdRequest {
 }
 
 message GetRepositoryByIdResponse {
-    RepositoryRecord repository = 1;
+    Repository repository = 1;
 }
 
 message GetRepositoryByNameRequest {
@@ -736,15 +730,7 @@ message GetRepositoryByNameRequest {
 }
 
 message GetRepositoryByNameResponse {
-    RepositoryRecord repository = 1;
-}
-
-// Repo filter enum
-enum RepoFilter {
-    REPO_FILTER_SHOW_UNSPECIFIED = 0;
-    REPO_FILTER_SHOW_ALL = 1;
-    REPO_FILTER_SHOW_NOT_REGISTERED_ONLY = 2;
-    REPO_FILTER_SHOW_REGISTERED_ONLY = 3;
+    Repository repository = 1;
 }
 
 message ListRepositoriesRequest {
@@ -752,11 +738,10 @@ message ListRepositoriesRequest {
     string project_id = 2;
     int32 limit = 3;
     int32 offset = 4;
-    RepoFilter filter = 5;
 }
 
 message ListRepositoriesResponse {
-    repeated RepositoryRecord results = 1;
+    repeated Repository results = 1;
 }
 
 message VerifyRequest {

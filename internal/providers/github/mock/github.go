@@ -12,6 +12,7 @@ import (
 	git "github.com/go-git/go-git/v5"
 	gomock "github.com/golang/mock/gomock"
 	github "github.com/google/go-github/v53/github"
+	_go "github.com/stacklok/mediator/pkg/api/protobuf/go/mediator/v1"
 )
 
 // MockProvider is a mock of Provider interface.
@@ -184,6 +185,73 @@ func (mr *MockRESTMockRecorder) NewRequest(method, url, body interface{}) *gomoc
 	return mr.mock.ctrl.RecordCallWithMethodType(mr.mock, "NewRequest", reflect.TypeOf((*MockREST)(nil).NewRequest), method, url, body)
 }
 
+// MockRepoLister is a mock of RepoLister interface.
+type MockRepoLister struct {
+	ctrl     *gomock.Controller
+	recorder *MockRepoListerMockRecorder
+}
+
+// MockRepoListerMockRecorder is the mock recorder for MockRepoLister.
+type MockRepoListerMockRecorder struct {
+	mock *MockRepoLister
+}
+
+// NewMockRepoLister creates a new mock instance.
+func NewMockRepoLister(ctrl *gomock.Controller) *MockRepoLister {
+	mock := &MockRepoLister{ctrl: ctrl}
+	mock.recorder = &MockRepoListerMockRecorder{mock}
+	return mock
+}
+
+// EXPECT returns an object that allows the caller to indicate expected use.
+func (m *MockRepoLister) EXPECT() *MockRepoListerMockRecorder {
+	return m.recorder
+}
+
+// GetToken mocks base method.
+func (m *MockRepoLister) GetToken() string {
+	m.ctrl.T.Helper()
+	ret := m.ctrl.Call(m, "GetToken")
+	ret0, _ := ret[0].(string)
+	return ret0
+}
+
+// GetToken indicates an expected call of GetToken.
+func (mr *MockRepoListerMockRecorder) GetToken() *gomock.Call {
+	mr.mock.ctrl.T.Helper()
+	return mr.mock.ctrl.RecordCallWithMethodType(mr.mock, "GetToken", reflect.TypeOf((*MockRepoLister)(nil).GetToken))
+}
+
+// ListOrganizationRepsitories mocks base method.
+func (m *MockRepoLister) ListOrganizationRepsitories(arg0 context.Context, arg1 string) ([]*_go.Repository, error) {
+	m.ctrl.T.Helper()
+	ret := m.ctrl.Call(m, "ListOrganizationRepsitories", arg0, arg1)
+	ret0, _ := ret[0].([]*_go.Repository)
+	ret1, _ := ret[1].(error)
+	return ret0, ret1
+}
+
+// ListOrganizationRepsitories indicates an expected call of ListOrganizationRepsitories.
+func (mr *MockRepoListerMockRecorder) ListOrganizationRepsitories(arg0, arg1 interface{}) *gomock.Call {
+	mr.mock.ctrl.T.Helper()
+	return mr.mock.ctrl.RecordCallWithMethodType(mr.mock, "ListOrganizationRepsitories", reflect.TypeOf((*MockRepoLister)(nil).ListOrganizationRepsitories), arg0, arg1)
+}
+
+// ListUserRepositories mocks base method.
+func (m *MockRepoLister) ListUserRepositories(arg0 context.Context, arg1 string) ([]*_go.Repository, error) {
+	m.ctrl.T.Helper()
+	ret := m.ctrl.Call(m, "ListUserRepositories", arg0, arg1)
+	ret0, _ := ret[0].([]*_go.Repository)
+	ret1, _ := ret[1].(error)
+	return ret0, ret1
+}
+
+// ListUserRepositories indicates an expected call of ListUserRepositories.
+func (mr *MockRepoListerMockRecorder) ListUserRepositories(arg0, arg1 interface{}) *gomock.Call {
+	mr.mock.ctrl.T.Helper()
+	return mr.mock.ctrl.RecordCallWithMethodType(mr.mock, "ListUserRepositories", reflect.TypeOf((*MockRepoLister)(nil).ListUserRepositories), arg0, arg1)
+}
+
 // MockGitHub is a mock of GitHub interface.
 type MockGitHub struct {
 	ctrl     *gomock.Controller
@@ -207,6 +275,21 @@ func (m *MockGitHub) EXPECT() *MockGitHubMockRecorder {
 	return m.recorder
 }
 
+// CreateHook mocks base method.
+func (m *MockGitHub) CreateHook(ctx context.Context, owner, repo string, hook *github.Hook) (*github.Hook, error) {
+	m.ctrl.T.Helper()
+	ret := m.ctrl.Call(m, "CreateHook", ctx, owner, repo, hook)
+	ret0, _ := ret[0].(*github.Hook)
+	ret1, _ := ret[1].(error)
+	return ret0, ret1
+}
+
+// CreateHook indicates an expected call of CreateHook.
+func (mr *MockGitHubMockRecorder) CreateHook(ctx, owner, repo, hook interface{}) *gomock.Call {
+	mr.mock.ctrl.T.Helper()
+	return mr.mock.ctrl.RecordCallWithMethodType(mr.mock, "CreateHook", reflect.TypeOf((*MockGitHub)(nil).CreateHook), ctx, owner, repo, hook)
+}
+
 // CreateReview mocks base method.
 func (m *MockGitHub) CreateReview(arg0 context.Context, arg1, arg2 string, arg3 int, arg4 *github.PullRequestReviewRequest) (*github.PullRequestReview, error) {
 	m.ctrl.T.Helper()
@@ -220,6 +303,20 @@ func (m *MockGitHub) CreateReview(arg0 context.Context, arg1, arg2 string, arg3 
 func (mr *MockGitHubMockRecorder) CreateReview(arg0, arg1, arg2, arg3, arg4 interface{}) *gomock.Call {
 	mr.mock.ctrl.T.Helper()
 	return mr.mock.ctrl.RecordCallWithMethodType(mr.mock, "CreateReview", reflect.TypeOf((*MockGitHub)(nil).CreateReview), arg0, arg1, arg2, arg3, arg4)
+}
+
+// DeleteHook mocks base method.
+func (m *MockGitHub) DeleteHook(ctx context.Context, owner, repo string, id int64) error {
+	m.ctrl.T.Helper()
+	ret := m.ctrl.Call(m, "DeleteHook", ctx, owner, repo, id)
+	ret0, _ := ret[0].(error)
+	return ret0
+}
+
+// DeleteHook indicates an expected call of DeleteHook.
+func (mr *MockGitHubMockRecorder) DeleteHook(ctx, owner, repo, id interface{}) *gomock.Call {
+	mr.mock.ctrl.T.Helper()
+	return mr.mock.ctrl.RecordCallWithMethodType(mr.mock, "DeleteHook", reflect.TypeOf((*MockGitHub)(nil).DeleteHook), ctx, owner, repo, id)
 }
 
 // DismissReview mocks base method.
@@ -460,6 +557,36 @@ func (mr *MockGitHubMockRecorder) ListFiles(ctx, owner, repo, prNumber, perPage,
 	return mr.mock.ctrl.RecordCallWithMethodType(mr.mock, "ListFiles", reflect.TypeOf((*MockGitHub)(nil).ListFiles), ctx, owner, repo, prNumber, perPage, pageNumber)
 }
 
+// ListHooks mocks base method.
+func (m *MockGitHub) ListHooks(ctx context.Context, owner, repo string) ([]*github.Hook, error) {
+	m.ctrl.T.Helper()
+	ret := m.ctrl.Call(m, "ListHooks", ctx, owner, repo)
+	ret0, _ := ret[0].([]*github.Hook)
+	ret1, _ := ret[1].(error)
+	return ret0, ret1
+}
+
+// ListHooks indicates an expected call of ListHooks.
+func (mr *MockGitHubMockRecorder) ListHooks(ctx, owner, repo interface{}) *gomock.Call {
+	mr.mock.ctrl.T.Helper()
+	return mr.mock.ctrl.RecordCallWithMethodType(mr.mock, "ListHooks", reflect.TypeOf((*MockGitHub)(nil).ListHooks), ctx, owner, repo)
+}
+
+// ListOrganizationRepsitories mocks base method.
+func (m *MockGitHub) ListOrganizationRepsitories(arg0 context.Context, arg1 string) ([]*_go.Repository, error) {
+	m.ctrl.T.Helper()
+	ret := m.ctrl.Call(m, "ListOrganizationRepsitories", arg0, arg1)
+	ret0, _ := ret[0].([]*_go.Repository)
+	ret1, _ := ret[1].(error)
+	return ret0, ret1
+}
+
+// ListOrganizationRepsitories indicates an expected call of ListOrganizationRepsitories.
+func (mr *MockGitHubMockRecorder) ListOrganizationRepsitories(arg0, arg1 interface{}) *gomock.Call {
+	mr.mock.ctrl.T.Helper()
+	return mr.mock.ctrl.RecordCallWithMethodType(mr.mock, "ListOrganizationRepsitories", reflect.TypeOf((*MockGitHub)(nil).ListOrganizationRepsitories), arg0, arg1)
+}
+
 // ListPackagesByRepository mocks base method.
 func (m *MockGitHub) ListPackagesByRepository(arg0 context.Context, arg1 bool, arg2, arg3 string, arg4 int64, arg5, arg6 int) ([]*github.Package, error) {
 	m.ctrl.T.Helper()
@@ -488,6 +615,21 @@ func (m *MockGitHub) ListReviews(arg0 context.Context, arg1, arg2 string, arg3 i
 func (mr *MockGitHubMockRecorder) ListReviews(arg0, arg1, arg2, arg3, arg4 interface{}) *gomock.Call {
 	mr.mock.ctrl.T.Helper()
 	return mr.mock.ctrl.RecordCallWithMethodType(mr.mock, "ListReviews", reflect.TypeOf((*MockGitHub)(nil).ListReviews), arg0, arg1, arg2, arg3, arg4)
+}
+
+// ListUserRepositories mocks base method.
+func (m *MockGitHub) ListUserRepositories(arg0 context.Context, arg1 string) ([]*_go.Repository, error) {
+	m.ctrl.T.Helper()
+	ret := m.ctrl.Call(m, "ListUserRepositories", arg0, arg1)
+	ret0, _ := ret[0].([]*_go.Repository)
+	ret1, _ := ret[1].(error)
+	return ret0, ret1
+}
+
+// ListUserRepositories indicates an expected call of ListUserRepositories.
+func (mr *MockGitHubMockRecorder) ListUserRepositories(arg0, arg1 interface{}) *gomock.Call {
+	mr.mock.ctrl.T.Helper()
+	return mr.mock.ctrl.RecordCallWithMethodType(mr.mock, "ListUserRepositories", reflect.TypeOf((*MockGitHub)(nil).ListUserRepositories), arg0, arg1)
 }
 
 // NewRequest mocks base method.

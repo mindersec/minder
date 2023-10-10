@@ -53,7 +53,7 @@
           "default": {
             "description": "An unexpected error response.",
             "schema": {
-              "$ref": "#/definitions/rpcStatus"
+              "$ref": "#/definitions/googlerpcStatus"
             }
           }
         },
@@ -96,7 +96,7 @@
           "default": {
             "description": "An unexpected error response.",
             "schema": {
-              "$ref": "#/definitions/rpcStatus"
+              "$ref": "#/definitions/googlerpcStatus"
             }
           }
         },
@@ -134,7 +134,7 @@
           "default": {
             "description": "An unexpected error response.",
             "schema": {
-              "$ref": "#/definitions/rpcStatus"
+              "$ref": "#/definitions/googlerpcStatus"
             }
           }
         },
@@ -188,7 +188,7 @@
           "default": {
             "description": "An unexpected error response.",
             "schema": {
-              "$ref": "#/definitions/rpcStatus"
+              "$ref": "#/definitions/googlerpcStatus"
             }
           }
         },
@@ -237,7 +237,7 @@
           "default": {
             "description": "An unexpected error response.",
             "schema": {
-              "$ref": "#/definitions/rpcStatus"
+              "$ref": "#/definitions/googlerpcStatus"
             }
           }
         },
@@ -270,7 +270,7 @@
           "default": {
             "description": "An unexpected error response.",
             "schema": {
-              "$ref": "#/definitions/rpcStatus"
+              "$ref": "#/definitions/googlerpcStatus"
             }
           }
         },
@@ -303,7 +303,7 @@
           "default": {
             "description": "An unexpected error response.",
             "schema": {
-              "$ref": "#/definitions/rpcStatus"
+              "$ref": "#/definitions/googlerpcStatus"
             }
           }
         },
@@ -336,7 +336,7 @@
           "default": {
             "description": "An unexpected error response.",
             "schema": {
-              "$ref": "#/definitions/rpcStatus"
+              "$ref": "#/definitions/googlerpcStatus"
             }
           }
         },
@@ -375,7 +375,7 @@
           "default": {
             "description": "An unexpected error response.",
             "schema": {
-              "$ref": "#/definitions/rpcStatus"
+              "$ref": "#/definitions/googlerpcStatus"
             }
           }
         },
@@ -431,7 +431,7 @@
           "default": {
             "description": "An unexpected error response.",
             "schema": {
-              "$ref": "#/definitions/rpcStatus"
+              "$ref": "#/definitions/googlerpcStatus"
             }
           }
         },
@@ -454,7 +454,7 @@
           "default": {
             "description": "An unexpected error response.",
             "schema": {
-              "$ref": "#/definitions/rpcStatus"
+              "$ref": "#/definitions/googlerpcStatus"
             }
           }
         },
@@ -498,7 +498,7 @@
           "default": {
             "description": "An unexpected error response.",
             "schema": {
-              "$ref": "#/definitions/rpcStatus"
+              "$ref": "#/definitions/googlerpcStatus"
             }
           }
         },
@@ -542,7 +542,7 @@
           "default": {
             "description": "An unexpected error response.",
             "schema": {
-              "$ref": "#/definitions/rpcStatus"
+              "$ref": "#/definitions/googlerpcStatus"
             }
           }
         },
@@ -591,7 +591,7 @@
           "default": {
             "description": "An unexpected error response.",
             "schema": {
-              "$ref": "#/definitions/rpcStatus"
+              "$ref": "#/definitions/googlerpcStatus"
             }
           }
         },
@@ -613,7 +613,7 @@
           "default": {
             "description": "An unexpected error response.",
             "schema": {
-              "$ref": "#/definitions/rpcStatus"
+              "$ref": "#/definitions/googlerpcStatus"
             }
           }
         },
@@ -635,7 +635,7 @@
           "default": {
             "description": "An unexpected error response.",
             "schema": {
-              "$ref": "#/definitions/rpcStatus"
+              "$ref": "#/definitions/googlerpcStatus"
             }
           }
         },
@@ -663,7 +663,7 @@
           "default": {
             "description": "An unexpected error response.",
             "schema": {
-              "$ref": "#/definitions/rpcStatus"
+              "$ref": "#/definitions/googlerpcStatus"
             }
           }
         },
@@ -695,7 +695,7 @@
           "default": {
             "description": "An unexpected error response.",
             "schema": {
-              "$ref": "#/definitions/rpcStatus"
+              "$ref": "#/definitions/googlerpcStatus"
             }
           }
         },
@@ -727,7 +727,7 @@
           "default": {
             "description": "An unexpected error response.",
             "schema": {
-              "$ref": "#/definitions/rpcStatus"
+              "$ref": "#/definitions/googlerpcStatus"
             }
           }
         },
@@ -810,7 +810,7 @@
           "default": {
             "description": "An unexpected error response.",
             "schema": {
-              "$ref": "#/definitions/rpcStatus"
+              "$ref": "#/definitions/googlerpcStatus"
             }
           }
         },
@@ -857,7 +857,7 @@
           "default": {
             "description": "An unexpected error response.",
             "schema": {
-              "$ref": "#/definitions/rpcStatus"
+              "$ref": "#/definitions/googlerpcStatus"
             }
           }
         },
@@ -906,7 +906,7 @@
           "default": {
             "description": "An unexpected error response.",
             "schema": {
-              "$ref": "#/definitions/rpcStatus"
+              "$ref": "#/definitions/googlerpcStatus"
             }
           }
         },
@@ -948,7 +948,7 @@
           "default": {
             "description": "An unexpected error response.",
             "schema": {
-              "$ref": "#/definitions/rpcStatus"
+              "$ref": "#/definitions/googlerpcStatus"
             }
           }
         },
@@ -990,7 +990,7 @@
           "default": {
             "description": "An unexpected error response.",
             "schema": {
-              "$ref": "#/definitions/rpcStatus"
+              "$ref": "#/definitions/googlerpcStatus"
             }
           }
         },
@@ -1020,19 +1020,6 @@
             "required": false,
             "type": "integer",
             "format": "int32"
-          },
-          {
-            "name": "filter",
-            "in": "query",
-            "required": false,
-            "type": "string",
-            "enum": [
-              "REPO_FILTER_SHOW_UNSPECIFIED",
-              "REPO_FILTER_SHOW_ALL",
-              "REPO_FILTER_SHOW_NOT_REGISTERED_ONLY",
-              "REPO_FILTER_SHOW_REGISTERED_ONLY"
-            ],
-            "default": "REPO_FILTER_SHOW_UNSPECIFIED"
           }
         ],
         "tags": [
@@ -1040,20 +1027,20 @@
         ]
       }
     },
-    "/api/v1/repositories/provider/{provider}/sync": {
-      "post": {
-        "operationId": "RepositoryService_SyncRepositories",
+    "/api/v1/repositories/provider/{provider}/remote": {
+      "get": {
+        "operationId": "RepositoryService_ListRemoteRepositoriesFromProvider",
         "responses": {
           "200": {
             "description": "A successful response.",
             "schema": {
-              "$ref": "#/definitions/v1SyncRepositoriesResponse"
+              "$ref": "#/definitions/v1ListRemoteRepositoriesFromProviderResponse"
             }
           },
           "default": {
             "description": "An unexpected error response.",
             "schema": {
-              "$ref": "#/definitions/rpcStatus"
+              "$ref": "#/definitions/googlerpcStatus"
             }
           }
         },
@@ -1065,17 +1052,10 @@
             "type": "string"
           },
           {
-            "name": "body",
-            "in": "body",
-            "required": true,
-            "schema": {
-              "type": "object",
-              "properties": {
-                "projectId": {
-                  "type": "string"
-                }
-              }
-            }
+            "name": "projectId",
+            "in": "query",
+            "required": false,
+            "type": "string"
           }
         ],
         "tags": [
@@ -1096,7 +1076,7 @@
           "default": {
             "description": "An unexpected error response.",
             "schema": {
-              "$ref": "#/definitions/rpcStatus"
+              "$ref": "#/definitions/googlerpcStatus"
             }
           }
         },
@@ -1126,7 +1106,7 @@
           "default": {
             "description": "An unexpected error response.",
             "schema": {
-              "$ref": "#/definitions/rpcStatus"
+              "$ref": "#/definitions/googlerpcStatus"
             }
           }
         },
@@ -1168,7 +1148,7 @@
           "default": {
             "description": "An unexpected error response.",
             "schema": {
-              "$ref": "#/definitions/rpcStatus"
+              "$ref": "#/definitions/googlerpcStatus"
             }
           }
         },
@@ -1193,7 +1173,7 @@
                   "type": "array",
                   "items": {
                     "type": "object",
-                    "$ref": "#/definitions/v1Repositories"
+                    "$ref": "#/definitions/v1UpstreamRepositoryRef"
                   }
                 },
                 "events": {
@@ -1224,7 +1204,7 @@
           "default": {
             "description": "An unexpected error response.",
             "schema": {
-              "$ref": "#/definitions/rpcStatus"
+              "$ref": "#/definitions/googlerpcStatus"
             }
           }
         },
@@ -1255,7 +1235,7 @@
           "default": {
             "description": "An unexpected error response.",
             "schema": {
-              "$ref": "#/definitions/rpcStatus"
+              "$ref": "#/definitions/googlerpcStatus"
             }
           }
         },
@@ -1288,7 +1268,7 @@
           "default": {
             "description": "An unexpected error response.",
             "schema": {
-              "$ref": "#/definitions/rpcStatus"
+              "$ref": "#/definitions/googlerpcStatus"
             }
           }
         },
@@ -1337,7 +1317,7 @@
           "default": {
             "description": "An unexpected error response.",
             "schema": {
-              "$ref": "#/definitions/rpcStatus"
+              "$ref": "#/definitions/googlerpcStatus"
             }
           }
         },
@@ -1384,7 +1364,7 @@
           "default": {
             "description": "An unexpected error response.",
             "schema": {
-              "$ref": "#/definitions/rpcStatus"
+              "$ref": "#/definitions/googlerpcStatus"
             }
           }
         },
@@ -1433,7 +1413,7 @@
           "default": {
             "description": "An unexpected error response.",
             "schema": {
-              "$ref": "#/definitions/rpcStatus"
+              "$ref": "#/definitions/googlerpcStatus"
             }
           }
         },
@@ -1475,7 +1455,7 @@
           "default": {
             "description": "An unexpected error response.",
             "schema": {
-              "$ref": "#/definitions/rpcStatus"
+              "$ref": "#/definitions/googlerpcStatus"
             }
           }
         },
@@ -1495,7 +1475,7 @@
           "default": {
             "description": "An unexpected error response.",
             "schema": {
-              "$ref": "#/definitions/rpcStatus"
+              "$ref": "#/definitions/googlerpcStatus"
             }
           }
         },
@@ -1527,7 +1507,7 @@
           "default": {
             "description": "An unexpected error response.",
             "schema": {
-              "$ref": "#/definitions/rpcStatus"
+              "$ref": "#/definitions/googlerpcStatus"
             }
           }
         },
@@ -1735,6 +1715,25 @@
       },
       "description": "Message that represents an arbitrary HTTP body. It should only be used for\npayload formats that can't be represented as JSON, such as raw binary or\nan HTML page.\n\n\nThis message can be used both in streaming and non-streaming API methods in\nthe request as well as the response.\n\nIt can be used as a top-level request field, which is convenient if one\nwants to extract parameters from either the URL or HTTP template into the\nrequest fields and also want access to the raw HTTP body.\n\nExample:\n\n    message GetResourceRequest {\n      // A unique request id.\n      string request_id = 1;\n\n      // The raw HTTP body is bound to this field.\n      google.api.HttpBody http_body = 2;\n\n    }\n\n    service ResourceService {\n      rpc GetResource(GetResourceRequest)\n        returns (google.api.HttpBody);\n      rpc UpdateResource(google.api.HttpBody)\n        returns (google.protobuf.Empty);\n\n    }\n\nExample with streaming methods:\n\n    service CaldavService {\n      rpc GetCalendar(stream google.api.HttpBody)\n        returns (stream google.api.HttpBody);\n      rpc UpdateCalendar(stream google.api.HttpBody)\n        returns (stream google.api.HttpBody);\n\n    }\n\nUse of this type only changes how the request and response bodies are\nhandled, all other features will continue to work unchanged."
     },
+    "googlerpcStatus": {
+      "type": "object",
+      "properties": {
+        "code": {
+          "type": "integer",
+          "format": "int32"
+        },
+        "message": {
+          "type": "string"
+        },
+        "details": {
+          "type": "array",
+          "items": {
+            "type": "object",
+            "$ref": "#/definitions/protobufAny"
+          }
+        }
+      }
+    },
     "mediatorv1Context": {
       "type": "object",
       "properties": {
@@ -1768,25 +1767,6 @@
       ],
       "default": "NULL_VALUE",
       "description": "`NullValue` is a singleton enumeration to represent the null value for the\n`Value` type union.\n\n The JSON representation for `NullValue` is JSON `null`.\n\n - NULL_VALUE: Null value."
-    },
-    "rpcStatus": {
-      "type": "object",
-      "properties": {
-        "code": {
-          "type": "integer",
-          "format": "int32"
-        },
-        "message": {
-          "type": "string"
-        },
-        "details": {
-          "type": "array",
-          "items": {
-            "type": "object",
-            "$ref": "#/definitions/protobufAny"
-          }
-        }
-      }
     },
     "v1Artifact": {
       "type": "object",
@@ -2121,7 +2101,7 @@
       "type": "object",
       "properties": {
         "repository": {
-          "$ref": "#/definitions/v1RepositoryRecord"
+          "$ref": "#/definitions/v1Repository"
         }
       }
     },
@@ -2129,7 +2109,7 @@
       "type": "object",
       "properties": {
         "repository": {
-          "$ref": "#/definitions/v1RepositoryRecord"
+          "$ref": "#/definitions/v1Repository"
         }
       }
     },
@@ -2223,6 +2203,18 @@
         }
       }
     },
+    "v1ListRemoteRepositoriesFromProviderResponse": {
+      "type": "object",
+      "properties": {
+        "results": {
+          "type": "array",
+          "items": {
+            "type": "object",
+            "$ref": "#/definitions/v1UpstreamRepositoryRef"
+          }
+        }
+      }
+    },
     "v1ListRepositoriesResponse": {
       "type": "object",
       "properties": {
@@ -2230,7 +2222,7 @@
           "type": "array",
           "items": {
             "type": "object",
-            "$ref": "#/definitions/v1RepositoryRecord"
+            "$ref": "#/definitions/v1Repository"
           }
         }
       }
@@ -2355,6 +2347,28 @@
       },
       "title": "Project API Objects"
     },
+    "v1RegisterRepoResult": {
+      "type": "object",
+      "properties": {
+        "repository": {
+          "$ref": "#/definitions/v1Repository"
+        },
+        "status": {
+          "$ref": "#/definitions/v1RegisterRepoResultStatus"
+        }
+      }
+    },
+    "v1RegisterRepoResultStatus": {
+      "type": "object",
+      "properties": {
+        "success": {
+          "type": "boolean"
+        },
+        "error": {
+          "type": "string"
+        }
+      }
+    },
     "v1RegisterRepositoryResponse": {
       "type": "object",
       "properties": {
@@ -2362,92 +2376,25 @@
           "type": "array",
           "items": {
             "type": "object",
-            "$ref": "#/definitions/v1RepositoryResult"
+            "$ref": "#/definitions/v1RegisterRepoResult"
           }
         }
       }
     },
-    "v1RepoFilter": {
-      "type": "string",
-      "enum": [
-        "REPO_FILTER_SHOW_UNSPECIFIED",
-        "REPO_FILTER_SHOW_ALL",
-        "REPO_FILTER_SHOW_NOT_REGISTERED_ONLY",
-        "REPO_FILTER_SHOW_REGISTERED_ONLY"
-      ],
-      "default": "REPO_FILTER_SHOW_UNSPECIFIED",
-      "title": "Repo filter enum"
-    },
-    "v1Repositories": {
-      "type": "object",
-      "properties": {
-        "owner": {
-          "type": "string"
-        },
-        "name": {
-          "type": "string"
-        },
-        "repoId": {
-          "type": "integer",
-          "format": "int32"
-        }
-      }
-    },
-    "v1RepositoryRecord": {
+    "v1Repository": {
       "type": "object",
       "properties": {
         "id": {
-          "type": "string"
+          "type": "string",
+          "title": "This is optional when returning remote repositories"
         },
-        "provider": {
-          "type": "string"
-        },
-        "projectId": {
-          "type": "string"
+        "context": {
+          "$ref": "#/definitions/mediatorv1Context"
         },
         "owner": {
           "type": "string"
         },
         "name": {
-          "type": "string"
-        },
-        "repoId": {
-          "type": "integer",
-          "format": "int32"
-        },
-        "isPrivate": {
-          "type": "boolean"
-        },
-        "isFork": {
-          "type": "boolean"
-        },
-        "hookUrl": {
-          "type": "string"
-        },
-        "deployUrl": {
-          "type": "string"
-        },
-        "cloneUrl": {
-          "type": "string"
-        },
-        "createdAt": {
-          "type": "string",
-          "format": "date-time"
-        },
-        "updatedAt": {
-          "type": "string",
-          "format": "date-time"
-        }
-      },
-      "description": "RepositoryRecord is used for registering repositories."
-    },
-    "v1RepositoryResult": {
-      "type": "object",
-      "properties": {
-        "owner": {
-          "type": "string"
-        },
-        "repository": {
           "type": "string"
         },
         "repoId": {
@@ -2473,17 +2420,17 @@
         "hookType": {
           "type": "string"
         },
-        "success": {
+        "hookUuid": {
+          "type": "string"
+        },
+        "isPrivate": {
           "type": "boolean"
         },
-        "uuid": {
-          "type": "string"
+        "isFork": {
+          "type": "boolean"
         },
         "registered": {
           "type": "boolean"
-        },
-        "error": {
-          "type": "string"
         },
         "createdAt": {
           "type": "string",
@@ -2698,9 +2645,6 @@
     "v1StoreProviderTokenResponse": {
       "type": "object"
     },
-    "v1SyncRepositoriesResponse": {
-      "type": "object"
-    },
     "v1UpdateRuleTypeRequest": {
       "type": "object",
       "properties": {
@@ -2720,6 +2664,21 @@
         }
       },
       "description": "UpdateRuleTypeResponse is the response to update a rule type."
+    },
+    "v1UpstreamRepositoryRef": {
+      "type": "object",
+      "properties": {
+        "owner": {
+          "type": "string"
+        },
+        "name": {
+          "type": "string"
+        },
+        "repoId": {
+          "type": "integer",
+          "format": "int32"
+        }
+      }
     },
     "v1UserRecord": {
       "type": "object",

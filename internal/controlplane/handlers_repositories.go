@@ -28,7 +28,7 @@ import (
 	"google.golang.org/protobuf/types/known/timestamppb"
 
 	"github.com/stacklok/mediator/internal/db"
-	"github.com/stacklok/mediator/internal/gh/queries"
+	"github.com/stacklok/mediator/internal/providers"
 	github "github.com/stacklok/mediator/internal/providers/github"
 	"github.com/stacklok/mediator/internal/reconcilers"
 	"github.com/stacklok/mediator/internal/util"
@@ -55,7 +55,7 @@ func (s *Server) RegisterRepository(ctx context.Context,
 	in *pb.RegisterRepositoryRequest) (*pb.RegisterRepositoryResponse, error) {
 	// if we have set no events, give an error
 	if len(in.Events) == 0 {
-		return nil, status.Errorf(codes.InvalidArgument, "no events provided")
+		return nil, util.UserVisibleError(codes.InvalidArgument, "no events provided")
 	}
 
 	projectID, err := getProjectFromRequestOrDefault(ctx, in)
@@ -78,70 +78,77 @@ func (s *Server) RegisterRepository(ctx context.Context,
 	// Check if needs github authorization
 	isGithubAuthorized := s.IsProviderCallAuthorized(ctx, provider, projectID)
 	if !isGithubAuthorized {
-		return nil, status.Errorf(codes.PermissionDenied, "user not authorized to interact with provider")
+		return nil, util.UserVisibleError(codes.PermissionDenied, "user not authorized to interact with provider")
 	}
 
-	decryptedToken, _, err := s.GetProviderAccessToken(ctx, provider.Name, projectID, true)
-
+	p, err := providers.GetProviderBuilder(ctx, provider, projectID, s.store, s.cryptoEngine)
 	if err != nil {
-		return nil, err
+		return nil, status.Errorf(codes.Internal, "cannot get provider builder: %v", err)
 	}
 
 	// Unmarshal the in.GetRepositories() into a struct Repository
-	var repositories []Repository
+	var upstreamRepos []UpstreamRepositoryReference
 	if in.GetRepositories() == nil || len(in.GetRepositories()) <= 0 {
 		return nil, status.Errorf(codes.InvalidArgument, "no repositories provided")
 	}
 
 	for _, repository := range in.GetRepositories() {
-		repositories = append(repositories, Repository{
-			Owner:  repository.GetOwner(),
-			Repo:   repository.GetName(),
-			RepoID: repository.GetRepoId(), // Handle the RepoID here.
+		upstreamRepos = append(upstreamRepos, UpstreamRepositoryReference{
+			Owner:      repository.GetOwner(),
+			Name:       repository.GetName(),
+			UpstreamID: repository.GetRepoId(), // Handle the RepoID here.
 		})
 	}
 
-	registerData, err := RegisterWebHook(ctx, decryptedToken, repositories, in.Events)
+	resultData, err := s.registerWebhookForRepository(
+		ctx, p, upstreamRepos, in.Events)
 	if err != nil {
 		return nil, err
 	}
 
-	var results []*pb.RepositoryResult
+	for idx := range resultData {
+		result := resultData[idx]
+		r := result.Repository
 
-	for _, result := range registerData {
-		// Convert each result to a pb.RepositoryResult object
-		pbResult := &pb.RepositoryResult{
-			Owner:      result.Owner,
-			Repository: result.Repository,
-			RepoId:     result.RepoID,
-			HookId:     result.HookID,
-			HookUrl:    result.HookURL,
-			HookName:   result.HookName,
-			DeployUrl:  result.DeployURL,
-			Success:    result.Success,
-			Uuid:       result.HookUUID,
+		// Convert each result to a pb.Repository object
+		if result.Status.Error != nil {
+			continue
 		}
-		results = append(results, pbResult)
 
 		// update the database
-		_, err = s.store.UpdateRepositoryByID(ctx, db.UpdateRepositoryByIDParams{
-			WebhookID:  sql.NullInt32{Int32: int32(result.HookID), Valid: true},
-			WebhookUrl: result.HookURL,
-			Provider:   provider.Name,
-			ProjectID:  projectID,
-			RepoOwner:  result.Owner,
-			RepoName:   result.Repository,
-			RepoID:     result.RepoID,
-			DeployUrl:  result.DeployURL,
+		dbRepo, err := s.store.CreateRepository(ctx, db.CreateRepositoryParams{
+			Provider:  provider.Name,
+			ProjectID: projectID,
+			RepoOwner: r.Owner,
+			RepoName:  r.Name,
+			RepoID:    r.RepoId,
+			IsPrivate: r.IsPrivate,
+			IsFork:    r.IsFork,
+			WebhookID: sql.NullInt32{
+				Int32: int32(r.HookId),
+				Valid: true,
+			},
+			CloneUrl:   r.CloneUrl,
+			WebhookUrl: r.HookUrl,
+			DeployUrl:  r.DeployUrl,
 		})
+		// even if we set the webhook, if we couldn't create it in the database, we'll return an error
 		if err != nil {
-			return nil, err
+			log.Printf("error creating repository '%s/%s' in database: %v", r.Owner, r.Name, err)
+
+			result.Status.Success = false
+			errorStr := "error creating repository in database"
+			result.Status.Error = &errorStr
+			continue
 		}
 
-		// publish a reconcile event for the registered repositories
-		log.Printf("publishing register event for repository: %s", result.Repository)
+		repoDBID := dbRepo.ID.String()
+		r.Id = &repoDBID
 
-		msg, err := reconcilers.NewRepoReconcilerMessage(in.Provider, result.RepoID, projectID)
+		// publish a reconcile event for the registered repositories
+		log.Printf("publishing register event for repository: %s/%s", r.Owner, r.Name)
+
+		msg, err := reconcilers.NewRepoReconcilerMessage(in.Provider, r.RepoId, projectID)
 		if err != nil {
 			log.Printf("error creating reconciler event: %v", err)
 			continue
@@ -154,7 +161,7 @@ func (s *Server) RegisterRepository(ctx context.Context,
 	}
 
 	response := &pb.RegisterRepositoryResponse{
-		Results: results,
+		Results: resultData,
 	}
 
 	return response, nil
@@ -193,47 +200,30 @@ func (s *Server) ListRepositories(ctx context.Context,
 	}
 
 	var resp pb.ListRepositoriesResponse
-	var results []*pb.RepositoryRecord
-
-	var filterCondition func(*db.Repository) bool
-
-	switch in.Filter {
-	case pb.RepoFilter_REPO_FILTER_SHOW_UNSPECIFIED:
-		return nil, status.Errorf(codes.InvalidArgument, "filter not specified")
-	case pb.RepoFilter_REPO_FILTER_SHOW_ALL:
-		filterCondition = func(_ *db.Repository) bool {
-			return true
-		}
-	case pb.RepoFilter_REPO_FILTER_SHOW_NOT_REGISTERED_ONLY:
-		filterCondition = func(repo *db.Repository) bool {
-			return repo.WebhookUrl == ""
-		}
-	case pb.RepoFilter_REPO_FILTER_SHOW_REGISTERED_ONLY:
-		filterCondition = func(repo *db.Repository) bool {
-			return repo.WebhookUrl != ""
-		}
-	}
+	var results []*pb.Repository
 
 	for _, repo := range repos {
 		repo := repo
 
-		if filterCondition(&repo) {
-			results = append(results, &pb.RepositoryRecord{
-				Id:        repo.ID.String(),
-				Provider:  provider.Name,
-				ProjectId: repo.ProjectID.String(),
-				Owner:     repo.RepoOwner,
-				Name:      repo.RepoName,
-				RepoId:    repo.RepoID,
-				IsPrivate: repo.IsPrivate,
-				IsFork:    repo.IsFork,
-				HookUrl:   repo.WebhookUrl,
-				DeployUrl: repo.DeployUrl,
-				CloneUrl:  repo.CloneUrl,
-				CreatedAt: timestamppb.New(repo.CreatedAt),
-				UpdatedAt: timestamppb.New(repo.UpdatedAt),
-			})
-		}
+		id := repo.ID.String()
+		projID := repo.ProjectID.String()
+		results = append(results, &pb.Repository{
+			Id: &id,
+			Context: &pb.Context{
+				Project:  &projID,
+				Provider: repo.Provider,
+			},
+			Owner:     repo.RepoOwner,
+			Name:      repo.RepoName,
+			RepoId:    repo.RepoID,
+			IsPrivate: repo.IsPrivate,
+			IsFork:    repo.IsFork,
+			HookUrl:   repo.WebhookUrl,
+			DeployUrl: repo.DeployUrl,
+			CloneUrl:  repo.CloneUrl,
+			CreatedAt: timestamppb.New(repo.CreatedAt),
+			UpdatedAt: timestamppb.New(repo.UpdatedAt),
+		})
 	}
 
 	resp.Results = results
@@ -262,21 +252,17 @@ func (s *Server) GetRepositoryById(ctx context.Context,
 		return nil, err
 	}
 
-	provider, err := s.store.GetProviderByName(ctx, db.GetProviderByNameParams{
-		Name:      repo.Provider,
-		ProjectID: repo.ProjectID,
-	})
-	if err != nil {
-		return nil, providerError(fmt.Errorf("provider error: %w", err))
-	}
-
 	createdAt := timestamppb.New(repo.CreatedAt)
 	updatedat := timestamppb.New(repo.UpdatedAt)
 
-	return &pb.GetRepositoryByIdResponse{Repository: &pb.RepositoryRecord{
-		Id:        repo.ID.String(),
-		Provider:  provider.Name,
-		ProjectId: repo.ProjectID.String(),
+	id := repo.ID.String()
+	projID := repo.ProjectID.String()
+	return &pb.GetRepositoryByIdResponse{Repository: &pb.Repository{
+		Id: &id,
+		Context: &pb.Context{
+			Project:  &projID,
+			Provider: repo.Provider,
+		},
 		Owner:     repo.RepoOwner,
 		Name:      repo.RepoName,
 		RepoId:    repo.RepoID,
@@ -336,10 +322,14 @@ func (s *Server) GetRepositoryByName(ctx context.Context,
 	createdAt := timestamppb.New(repo.CreatedAt)
 	updatedat := timestamppb.New(repo.UpdatedAt)
 
-	return &pb.GetRepositoryByNameResponse{Repository: &pb.RepositoryRecord{
-		Id:        repo.ID.String(),
-		Provider:  provider.Name,
-		ProjectId: repo.ProjectID.String(),
+	id := repo.ID.String()
+	projID := repo.ProjectID.String()
+	return &pb.GetRepositoryByNameResponse{Repository: &pb.Repository{
+		Id: &id,
+		Context: &pb.Context{
+			Project:  &projID,
+			Provider: repo.Provider,
+		},
 		Owner:     repo.RepoOwner,
 		Name:      repo.RepoName,
 		RepoId:    repo.RepoID,
@@ -353,8 +343,11 @@ func (s *Server) GetRepositoryByName(ctx context.Context,
 	}}, nil
 }
 
-// SyncRepositories synchronizes the repositories for a given provider and group
-func (s *Server) SyncRepositories(ctx context.Context, in *pb.SyncRepositoriesRequest) (*pb.SyncRepositoriesResponse, error) {
+// ListRemoteRepositoriesFromProvider returns a list of repositories from a provider
+func (s *Server) ListRemoteRepositoriesFromProvider(
+	ctx context.Context,
+	in *pb.ListRemoteRepositoriesFromProviderRequest,
+) (*pb.ListRemoteRepositoriesFromProviderResponse, error) {
 	projectID, err := getProjectFromRequestOrDefault(ctx, in)
 	if err != nil {
 		return nil, util.UserVisibleError(codes.InvalidArgument, err.Error())
@@ -379,14 +372,23 @@ func (s *Server) SyncRepositories(ctx context.Context, in *pb.SyncRepositoriesRe
 		return nil, status.Errorf(codes.PermissionDenied, "user not authorized to interact with provider")
 	}
 
-	token, owner_filter, err := s.GetProviderAccessToken(ctx, provider.Name, projectID, true)
+	// FIXME: this is a hack to get the owner filter from the request
+	_, owner_filter, err := s.GetProviderAccessToken(ctx, provider.Name, projectID, true)
 
 	if err != nil {
 		return nil, status.Errorf(codes.PermissionDenied, "cannot get access token for provider")
 	}
 
-	// Populate the database with the repositories using the GraphQL API
-	client, err := github.NewRestClient(ctx, &pb.GitHubProviderConfig{}, token.AccessToken, owner_filter)
+	p, err := providers.GetProviderBuilder(ctx, provider, projectID, s.store, s.cryptoEngine)
+	if err != nil {
+		return nil, status.Errorf(codes.Internal, "cannot get provider builder: %v", err)
+	}
+
+	if !p.Implements(db.ProviderTypeRepoLister) {
+		return nil, util.UserVisibleError(codes.Unimplemented, "provider does not implement repository listing")
+	}
+
+	client, err := p.GetRepoLister(ctx)
 	if err != nil {
 		return nil, status.Errorf(codes.Internal, "cannot create github client: %v", err)
 	}
@@ -394,20 +396,33 @@ func (s *Server) SyncRepositories(ctx context.Context, in *pb.SyncRepositoriesRe
 	tmoutCtx, cancel := context.WithTimeout(ctx, github.ExpensiveRestCallTimeout)
 	defer cancel()
 
+	var remoteRepos []*pb.Repository
 	isOrg := (owner_filter != "")
-	repos, err := client.ListAllRepositories(tmoutCtx, isOrg, owner_filter)
-	if err != nil {
-		return nil, status.Errorf(codes.Internal, "cannot list repositories: %v", err)
+	if isOrg {
+		remoteRepos, err = client.ListOrganizationRepsitories(tmoutCtx, owner_filter)
+		if err != nil {
+			return nil, util.UserVisibleError(codes.Internal, "cannot list repositories: %v", err)
+		}
+	} else {
+		remoteRepos, err = client.ListUserRepositories(tmoutCtx, owner_filter)
+		if err != nil {
+			return nil, util.UserVisibleError(codes.Internal, "cannot list repositories: %v", err)
+		}
 	}
 
-	// // Insert the repositories into the database
-	// This uses the context with the extended timeout to allow for the
-	// database to be populated with the repositories. Otherwise the original context
-	// expires and the database insertions are cancelled.
-	err = queries.SyncRepositoriesWithDB(tmoutCtx, s.store, repos, provider.Name, projectID)
-	if err != nil {
-		return nil, status.Errorf(codes.Internal, "cannot sync repositories: %v", err)
+	out := &pb.ListRemoteRepositoriesFromProviderResponse{
+		Results: make([]*pb.UpstreamRepositoryRef, 0, len(remoteRepos)),
 	}
 
-	return &pb.SyncRepositoriesResponse{}, nil
+	for idx := range remoteRepos {
+		remoteRepo := remoteRepos[idx]
+		repo := &pb.UpstreamRepositoryRef{
+			Owner:  remoteRepo.Owner,
+			Name:   remoteRepo.Name,
+			RepoId: remoteRepo.RepoId,
+		}
+		out.Results = append(out.Results, repo)
+	}
+
+	return out, nil
 }

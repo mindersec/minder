@@ -29,12 +29,14 @@ import (
 	"strings"
 
 	"github.com/AlecAivazis/survey/v2"
+	"github.com/charmbracelet/bubbles/table"
 	"github.com/spf13/cobra"
 	"github.com/spf13/viper"
 	"k8s.io/utils/strings/slices"
 
 	github "github.com/stacklok/mediator/internal/providers/github"
 	"github.com/stacklok/mediator/internal/util"
+	"github.com/stacklok/mediator/internal/util/cli"
 	pb "github.com/stacklok/mediator/pkg/api/protobuf/go/mediator/v1"
 )
 
@@ -53,7 +55,6 @@ var repo_registerCmd = &cobra.Command{
 		}
 	},
 	Run: func(cmd *cobra.Command, args []string) {
-
 		provider := util.GetConfigValue("provider", "provider", cmd, "").(string)
 		if provider != github.Github {
 			fmt.Fprintf(os.Stderr, "Only %s is supported at this time\n", github.Github)
@@ -69,21 +70,54 @@ var repo_registerCmd = &cobra.Command{
 		ctx, cancel := util.GetAppContext()
 		defer cancel()
 
-		req := &pb.ListRepositoriesRequest{
+		// Get the list of repos
+		listResp, err := client.ListRepositories(ctx, &pb.ListRepositoriesRequest{
 			Provider:  provider,
 			ProjectId: projectID,
-			Filter:    pb.RepoFilter_REPO_FILTER_SHOW_NOT_REGISTERED_ONLY,
-		}
-
-		// Get the list of repos
-		listResp, err := client.ListRepositories(ctx, req)
+		})
 		if err != nil {
-			_, _ = fmt.Fprintf(os.Stderr, "Error getting list of repos: %s\n", err)
+			cli.PrintCmd(cmd, "Error getting list of repos: %s\n", err)
 			os.Exit(1)
 		}
 
+		cli.PrintCmd(cmd, "Found %d registered repositories\n", len(listResp.Results))
+
+		// Get list of remot repos
+		remoteListResp, err := client.ListRemoteRepositoriesFromProvider(ctx, &pb.ListRemoteRepositoriesFromProviderRequest{
+			Provider:  provider,
+			ProjectId: projectID,
+		})
+		if err != nil {
+			cli.PrintCmd(cmd, "Error getting list of remote repos: %s\n", err)
+			os.Exit(1)
+		}
+
+		cli.PrintCmd(cmd, "Found %d remote repositories\n", len(remoteListResp.Results))
+
+		// Unregistered repos are in remoteListResp but not in listResp
+		// build a list of unregistered repos
+		var unregisteredRepos []*pb.UpstreamRepositoryRef
+		for _, remoteRepo := range remoteListResp.Results {
+			found := false
+			for _, repo := range listResp.Results {
+				if remoteRepo.Owner == repo.Owner && remoteRepo.Name == repo.Name {
+					found = true
+					break
+				}
+			}
+			if !found {
+				unregisteredRepos = append(unregisteredRepos, &pb.UpstreamRepositoryRef{
+					Owner:  remoteRepo.Owner,
+					Name:   remoteRepo.Name,
+					RepoId: remoteRepo.RepoId,
+				})
+			}
+		}
+
+		cli.PrintCmd(cmd, "Found %d unregistered repositories\n", len(unregisteredRepos))
+
 		// Get the selected repos
-		selectedRepos, err := getSelectedRepositories(listResp, cfgFlagRepos)
+		selectedRepos, err := getSelectedRepositories(unregisteredRepos, cfgFlagRepos)
 		if err != nil {
 			if errors.Is(err, errNoRepositoriesSelected) {
 				_, _ = fmt.Fprintf(os.Stderr, "%v\n", err)
@@ -111,11 +145,42 @@ var repo_registerCmd = &cobra.Command{
 			os.Exit(1)
 		}
 
-		// Print the registered repos
-		for _, repo := range registerResp.Results {
-			fmt.Printf("Registered repository: %s/%s\n", repo.Owner, repo.Repository)
+		// The result gives a list of repositories with the registration status
+		// Let's parse the results and print the status
+		columns := []table.Column{
+			{Title: "Repository", Width: 35},
+			{Title: "Status", Width: 15},
+			{Title: "Message", Width: 60},
 		}
 
+		rows := make([]table.Row, len(registerResp.Results))
+		for i, result := range registerResp.Results {
+			rows[i] = table.Row{
+				fmt.Sprintf("%s/%s", result.Repository.Owner, result.Repository.Name),
+			}
+
+			if result.Status.Success {
+				rows[i] = append(rows[i], "Registered")
+			} else {
+				rows[i] = append(rows[i], "Failed")
+			}
+
+			if result.Status.Error != nil {
+				rows[i] = append(rows[i], *result.Status.Error)
+			} else {
+				rows[i] = append(rows[i], "")
+			}
+		}
+
+		t := table.New(
+			table.WithColumns(columns),
+			table.WithRows(rows),
+			table.WithFocused(false),
+			table.WithHeight(len(rows)),
+			table.WithStyles(cli.TableHiddenSelectStyles),
+		)
+
+		cli.PrintCmd(cmd, cli.TableRender(t))
 	},
 }
 
@@ -129,20 +194,20 @@ func init() {
 	}
 }
 
-func getSelectedRepositories(listResp *pb.ListRepositoriesResponse, flagRepos string) ([]*pb.Repositories, error) {
+func getSelectedRepositories(repoList []*pb.UpstreamRepositoryRef, flagRepos string) ([]*pb.UpstreamRepositoryRef, error) {
 	// If no repos are found, exit
-	if len(listResp.Results) == 0 {
+	if len(repoList) == 0 {
 		return nil, fmt.Errorf("no repositories found")
 	}
 
 	// Create a slice of strings to hold the repo names
-	repoNames := make([]string, len(listResp.Results))
+	repoNames := make([]string, len(repoList))
 
 	// Map of repo names to IDs
 	repoIDs := make(map[string]int32)
 
 	// Populate the repoNames slice and repoIDs map
-	for i, repo := range listResp.Results {
+	for i, repo := range repoList {
 		repoNames[i] = fmt.Sprintf("%s/%s", repo.Owner, repo.Name)
 		repoIDs[repoNames[i]] = repo.RepoId
 	}
@@ -184,7 +249,7 @@ func getSelectedRepositories(listResp *pb.ListRepositoriesResponse, flagRepos st
 	}
 
 	// Create a slice of Repositories protobufs
-	protoRepos := make([]*pb.Repositories, len(allSelectedRepos))
+	protoRepos := make([]*pb.UpstreamRepositoryRef, len(allSelectedRepos))
 
 	// Convert the selected repos into a slice of Repositories protobufs
 	for i, repo := range allSelectedRepos {
@@ -193,7 +258,7 @@ func getSelectedRepositories(listResp *pb.ListRepositoriesResponse, flagRepos st
 			_, _ = fmt.Fprintf(os.Stderr, "Unexpected repository name format: %s, skipping registration\n", repo)
 			continue
 		}
-		protoRepos[i] = &pb.Repositories{
+		protoRepos[i] = &pb.UpstreamRepositoryRef{
 			Owner:  splitRepo[0],
 			Name:   splitRepo[1],
 			RepoId: repoIDs[repo],

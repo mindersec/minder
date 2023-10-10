@@ -49,7 +49,7 @@ func TestGitIngestWithCloneURLFromRepo(t *testing.T) {
 	))
 	require.NoError(t, err, "expected no error")
 
-	got, err := gi.Ingest(context.Background(), &pb.RepositoryResult{
+	got, err := gi.Ingest(context.Background(), &pb.Repository{
 		CloneUrl: "https://github.com/octocat/Hello-World.git",
 	}, map[string]interface{}{})
 	require.NoError(t, err, "expected no error")

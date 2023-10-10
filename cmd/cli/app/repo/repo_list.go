@@ -19,12 +19,13 @@ import (
 	"fmt"
 	"os"
 
-	"github.com/olekukonko/tablewriter"
+	"github.com/charmbracelet/bubbles/table"
 	"github.com/spf13/cobra"
 	"github.com/spf13/viper"
 
 	github "github.com/stacklok/mediator/internal/providers/github"
 	"github.com/stacklok/mediator/internal/util"
+	"github.com/stacklok/mediator/internal/util/cli"
 	pb "github.com/stacklok/mediator/pkg/api/protobuf/go/mediator/v1"
 )
 
@@ -68,7 +69,6 @@ var repo_listCmd = &cobra.Command{
 		resp, err := client.ListRepositories(ctx, &pb.ListRepositoriesRequest{
 			Provider:  provider,
 			ProjectId: projectID,
-			Filter:    pb.RepoFilter_REPO_FILTER_SHOW_REGISTERED_ONLY,
 		})
 		if err != nil {
 			fmt.Fprintf(os.Stderr, "Error getting repo of repos: %s\n", err)
@@ -77,21 +77,37 @@ var repo_listCmd = &cobra.Command{
 
 		switch format {
 		case "", "table":
-			table := tablewriter.NewWriter(os.Stdout)
-			table.SetHeader([]string{"Id", "Project ID", "Provider Id", "Name", "Is fork", "Is private"})
-
-			for _, v := range resp.Results {
-				row := []string{
-					v.Id,
-					v.ProjectId,
-					fmt.Sprintf("%d", v.GetRepoId()),
-					fmt.Sprintf("%s/%s", v.GetOwner(), v.GetName()),
-					fmt.Sprintf("%t", v.GetIsFork()),
-					fmt.Sprintf("%t", v.GetIsPrivate()),
-				}
-				table.Append(row)
+			columns := []table.Column{
+				{Title: "ID", Width: 40},
+				{Title: "Project", Width: 40},
+				{Title: "Provider", Width: 15},
+				{Title: "Upstream ID", Width: 15},
+				{Title: "Owner", Width: 15},
+				{Title: "Name", Width: 15},
 			}
-			table.Render()
+
+			var rows []table.Row
+			for _, v := range resp.Results {
+				row := table.Row{
+					*v.Id,
+					*v.Context.Project,
+					v.Context.Provider,
+					fmt.Sprintf("%d", v.GetRepoId()),
+					v.GetOwner(),
+					v.GetName(),
+				}
+				rows = append(rows, row)
+			}
+
+			t := table.New(
+				table.WithColumns(columns),
+				table.WithRows(rows),
+				table.WithFocused(false),
+				table.WithHeight(len(rows)),
+				table.WithStyles(cli.TableHiddenSelectStyles),
+			)
+
+			cli.PrintCmd(cmd, cli.TableRender(t))
 		case "json":
 			out, err := util.GetJsonFromProto(resp)
 			util.ExitNicelyOnError(err, "Error getting json from proto")

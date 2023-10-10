@@ -195,10 +195,11 @@ func (ns NullEvalStatusTypes) Value() (driver.Value, error) {
 type ProviderType string
 
 const (
-	ProviderTypeGithub ProviderType = "github"
-	ProviderTypeRest   ProviderType = "rest"
-	ProviderTypeGit    ProviderType = "git"
-	ProviderTypeOci    ProviderType = "oci"
+	ProviderTypeGithub     ProviderType = "github"
+	ProviderTypeRest       ProviderType = "rest"
+	ProviderTypeGit        ProviderType = "git"
+	ProviderTypeOci        ProviderType = "oci"
+	ProviderTypeRepoLister ProviderType = "repo-lister"
 )
 
 func (e *ProviderType) Scan(src interface{}) error {

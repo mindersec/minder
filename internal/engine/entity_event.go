@@ -102,7 +102,7 @@ func (eiw *EntityInfoWrapper) WithArtifact(va *mediatorv1.Artifact) *EntityInfoW
 }
 
 // WithRepository sets the entity to a repository
-func (eiw *EntityInfoWrapper) WithRepository(r *mediatorv1.RepositoryResult) *EntityInfoWrapper {
+func (eiw *EntityInfoWrapper) WithRepository(r *mediatorv1.Repository) *EntityInfoWrapper {
 	eiw.Type = mediatorv1.Entity_ENTITY_REPOSITORIES
 	eiw.Entity = r
 
@@ -149,7 +149,7 @@ func (eiw *EntityInfoWrapper) WithPullRequestNumber(id int32) *EntityInfoWrapper
 // AsRepository sets the entity type to a repository
 func (eiw *EntityInfoWrapper) AsRepository() *EntityInfoWrapper {
 	eiw.Type = mediatorv1.Entity_ENTITY_REPOSITORIES
-	eiw.Entity = &mediatorv1.RepositoryResult{}
+	eiw.Entity = &mediatorv1.Repository{}
 
 	return eiw
 }
