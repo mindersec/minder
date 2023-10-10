@@ -690,3 +690,17 @@ func (mr *MockGitHubMockRecorder) SetCommitStatus(arg0, arg1, arg2, arg3, arg4 i
 	mr.mock.ctrl.T.Helper()
 	return mr.mock.ctrl.RecordCallWithMethodType(mr.mock, "SetCommitStatus", reflect.TypeOf((*MockGitHub)(nil).SetCommitStatus), arg0, arg1, arg2, arg3, arg4)
 }
+
+// UpdateBranchProtection mocks base method.
+func (m *MockGitHub) UpdateBranchProtection(arg0 context.Context, arg1, arg2, arg3 string, arg4 *github.ProtectionRequest) error {
+	m.ctrl.T.Helper()
+	ret := m.ctrl.Call(m, "UpdateBranchProtection", arg0, arg1, arg2, arg3, arg4)
+	ret0, _ := ret[0].(error)
+	return ret0
+}
+
+// UpdateBranchProtection indicates an expected call of UpdateBranchProtection.
+func (mr *MockGitHubMockRecorder) UpdateBranchProtection(arg0, arg1, arg2, arg3, arg4 interface{}) *gomock.Call {
+	mr.mock.ctrl.T.Helper()
+	return mr.mock.ctrl.RecordCallWithMethodType(mr.mock, "UpdateBranchProtection", reflect.TypeOf((*MockGitHub)(nil).UpdateBranchProtection), arg0, arg1, arg2, arg3, arg4)
+}
