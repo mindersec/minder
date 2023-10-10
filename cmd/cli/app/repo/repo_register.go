@@ -80,9 +80,7 @@ var repo_registerCmd = &cobra.Command{
 			os.Exit(1)
 		}
 
-		cli.PrintCmd(cmd, "Found %d registered repositories\n", len(listResp.Results))
-
-		// Get list of remot repos
+		// Get a list of remote repos
 		remoteListResp, err := client.ListRemoteRepositoriesFromProvider(ctx, &pb.ListRemoteRepositoriesFromProviderRequest{
 			Provider:  provider,
 			ProjectId: projectID,
@@ -91,8 +89,6 @@ var repo_registerCmd = &cobra.Command{
 			cli.PrintCmd(cmd, "Error getting list of remote repos: %s\n", err)
 			os.Exit(1)
 		}
-
-		cli.PrintCmd(cmd, "Found %d remote repositories\n", len(remoteListResp.Results))
 
 		// Unregistered repos are in remoteListResp but not in listResp
 		// build a list of unregistered repos
@@ -114,7 +110,8 @@ var repo_registerCmd = &cobra.Command{
 			}
 		}
 
-		cli.PrintCmd(cmd, "Found %d unregistered repositories\n", len(unregisteredRepos))
+		cli.PrintCmd(cmd, "Found %d remote repositories: %d registered and %d unregistered.\n",
+			len(remoteListResp.Results), len(listResp.Results), len(unregisteredRepos))
 
 		// Get the selected repos
 		selectedRepos, err := getSelectedRepositories(unregisteredRepos, cfgFlagRepos)

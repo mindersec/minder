@@ -414,7 +414,11 @@ func (s *Server) ListRemoteRepositoriesFromProvider(
 		Results: make([]*pb.UpstreamRepositoryRef, 0, len(remoteRepos)),
 	}
 
-	for idx := range remoteRepos {
+	for idx, rem := range remoteRepos {
+		// Skip private repositories
+		if rem.IsPrivate {
+			continue
+		}
 		remoteRepo := remoteRepos[idx]
 		repo := &pb.UpstreamRepositoryRef{
 			Owner:  remoteRepo.Owner,
