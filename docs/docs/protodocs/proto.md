@@ -117,6 +117,7 @@
     - [RuleType.Definition.Eval.Vulncheck](#mediator-v1-RuleType-Definition-Eval-Vulncheck)
     - [RuleType.Definition.Ingest](#mediator-v1-RuleType-Definition-Ingest)
     - [RuleType.Definition.Remediate](#mediator-v1-RuleType-Definition-Remediate)
+    - [RuleType.Definition.Remediate.GhBranchProtectionType](#mediator-v1-RuleType-Definition-Remediate-GhBranchProtectionType)
     - [SignatureVerification](#mediator-v1-SignatureVerification)
     - [StoreProviderTokenRequest](#mediator-v1-StoreProviderTokenRequest)
     - [StoreProviderTokenResponse](#mediator-v1-StoreProviderTokenResponse)
@@ -1974,6 +1975,22 @@ Ingest defines how the data is ingested.
 | ----- | ---- | ----- | ----------- |
 | type | [string](#string) |  |  |
 | rest | [RestType](#mediator-v1-RestType) | optional |  |
+| gh_branch_protection | [RuleType.Definition.Remediate.GhBranchProtectionType](#mediator-v1-RuleType-Definition-Remediate-GhBranchProtectionType) | optional |  |
+
+
+
+
+
+
+<a name="mediator-v1-RuleType-Definition-Remediate-GhBranchProtectionType"></a>
+
+### RuleType.Definition.Remediate.GhBranchProtectionType
+
+
+
+| Field | Type | Label | Description |
+| ----- | ---- | ----- | ----------- |
+| patch | [string](#string) |  |  |
 
 
 

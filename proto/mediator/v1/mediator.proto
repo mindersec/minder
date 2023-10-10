@@ -1259,7 +1259,12 @@ message RuleType {
         message Remediate {
             string type = 1;
 
+            message GhBranchProtectionType {
+                string patch = 1;
+            }
+
             optional RestType rest = 2;
+            optional GhBranchProtectionType gh_branch_protection = 3;
         }
         Remediate remediate = 6;
 
