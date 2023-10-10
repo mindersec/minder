@@ -153,17 +153,6 @@ func TestNewRestRemediate(t *testing.T) {
 			wantErr: true,
 		},
 		{
-			name: "nil body template",
-			args: args{
-				restCfg: &pb.RestType{
-					Endpoint: "/repos/Foo/Bar",
-					Body:     nil,
-				},
-				pbuild: validProviderBuilder,
-			},
-			wantErr: true,
-		},
-		{
 			name: "invalid provider builder",
 			args: args{
 				restCfg: &pb.RestType{
@@ -252,6 +241,39 @@ func TestRestRemediate(t *testing.T) {
 				assert.Equal(t, "selected", requestBody.AllowedActions, "unexpected allowed actions")
 
 				defer request.Body.Close()
+				writer.WriteHeader(http.StatusOK)
+			},
+			wantErr: false,
+		},
+		{
+			name: "valid remediate with PUT and no body",
+			newRemArgs: newRestRemediateArgs{
+				restCfg: &pb.RestType{
+					Endpoint: `/repos/{{.Entity.Owner}}/{{.Entity.Name}}/branches/{{ index .Params "branch" }}/protection/required_signatures`,
+					Method:   http.MethodPut,
+				},
+			},
+			remArgs: remediateArgs{
+				remAction: interfaces.ActionOptOn,
+				ent: &pb.Repository{
+					Owner:  "OwnerVar",
+					Name:   "NameVar",
+					RepoId: 456,
+				},
+				params: map[string]any{
+					"branch": "main",
+				},
+			},
+			testHandler: func(writer http.ResponseWriter, request *http.Request) {
+				defer request.Body.Close()
+
+				assert.Equal(t, "/repos/OwnerVar/NameVar/branches/main/protection/required_signatures", request.URL.Path, "unexpected path")
+				assert.Equal(t, http.MethodPut, request.Method, "unexpected method")
+
+				var requestBody struct{}
+				err := json.NewDecoder(request.Body).Decode(&requestBody)
+				assert.NoError(t, err, "unexpected error reading body")
+
 				writer.WriteHeader(http.StatusOK)
 			},
 			wantErr: false,

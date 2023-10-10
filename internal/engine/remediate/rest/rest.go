@@ -74,9 +74,12 @@ func NewRestRemediate(
 		return nil, fmt.Errorf("cannot parse endpoint template: %w", err)
 	}
 
-	bodyTmpl, err := util.ParseNewTemplate(restCfg.Body, "body")
-	if err != nil {
-		return nil, fmt.Errorf("cannot parse body template: %w", err)
+	var bodyTmpl *template.Template
+	if restCfg.Body != nil {
+		bodyTmpl, err = util.ParseNewTemplate(restCfg.Body, "body")
+		if err != nil {
+			return nil, fmt.Errorf("cannot parse body template: %w", err)
+		}
 	}
 
 	method := util.HttpMethodFromString(restCfg.Method, http.MethodPatch)
@@ -124,8 +127,10 @@ func (r *Remediator) Remediate(
 	}
 
 	body := new(bytes.Buffer)
-	if err := r.bodyTemplate.Execute(body, retp); err != nil {
-		return fmt.Errorf("cannot execute endpoint template: %w", err)
+	if r.bodyTemplate != nil {
+		if err := r.bodyTemplate.Execute(body, retp); err != nil {
+			return fmt.Errorf("cannot execute endpoint template: %w", err)
+		}
 	}
 
 	zerolog.Ctx(ctx).Debug().
@@ -134,7 +139,7 @@ func (r *Remediator) Remediate(
 	var err error
 	switch remAction {
 	case interfaces.ActionOptOn:
-		err = r.run(ctx, endpoint.String(), body.String())
+		err = r.run(ctx, endpoint.String(), body.Bytes())
 	case interfaces.ActionOptDryRun:
 		err = r.dryRun(endpoint.String(), body.String())
 	case interfaces.ActionOptOff, interfaces.ActionOptUnknown:
@@ -143,14 +148,18 @@ func (r *Remediator) Remediate(
 	return err
 }
 
-func (r *Remediator) run(ctx context.Context, endpoint string, body string) error {
-	var result map[string]interface{}
-	err := json.Unmarshal([]byte(body), &result)
-	if err != nil {
-		return fmt.Errorf("cannot unmarshal body: %w", err)
+func (r *Remediator) run(ctx context.Context, endpoint string, body []byte) error {
+	// create an empty map, not a nil map to avoid passing nil to NewRequest
+	bodyJson := make(map[string]any)
+
+	if len(body) > 0 {
+		err := json.Unmarshal(body, &bodyJson)
+		if err != nil {
+			return fmt.Errorf("cannot unmarshal body: %w", err)
+		}
 	}
 
-	req, err := r.cli.NewRequest(r.method, endpoint, result)
+	req, err := r.cli.NewRequest(r.method, endpoint, bodyJson)
 	if err != nil {
 		return fmt.Errorf("cannot create request: %w", err)
 	}
