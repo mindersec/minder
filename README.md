@@ -189,37 +189,14 @@ Most values should be quite self explanatory.
 Before running the app, please copy the content of `config/config.yaml.example` into `$PWD/config.yaml` file, and modify to use your own settings.
 
 ## Social login configuration
-_note: this will be improved in the future, to avoid modifying the Keyclaok JSON file_  
-
-You can optionally configure login with GitHub by modifying the Keycloak configuration file.
-
-You may create an OAuth2 application for GitHub [here](https://github.com/settings/developers). Select
+First, create an OAuth2 application for GitHub [here](https://github.com/settings/developers). Select
 `New OAuth App` and fill in the details. The callback URL should be `http://localhost:8081/realms/stacklok/broker/github/endpoint`.
 Create a new client secret for your OAuth2 client.
 
-Then, in the file `identity/import/stacklok-realm-with-user-and-client.json`, replace `identityProviders" : [ ],` with the following, using your generated client ID and client secret:
+Using the client ID and client secret you created above, enable GitHub login on Keycloak by running the following command:
+```bash
+make KC_GITHUB_CLIENT_ID=<client_id> KC_GITHUB_CLIENT_SECRET=<client_secret> github-login
 ```
-”identityProviders" : [
-  {
-  "alias" : "github",
-  "internalId" : "afb4fd44-b6d7-4cff-a4ff-12735ca09b02",
-  "providerId" : "github",
-  "enabled" : true,
-  "updateProfileFirstLoginMode" : "on",
-  "trustEmail" : false,
-  "storeToken" : false,
-  "addReadTokenRoleOnCreate" : false,
-  "authenticateByDefault" : false,
-  "linkOnly" : false,
-  "firstBrokerLoginFlowAlias" : "first broker login",
-  "config" : {
-    "clientSecret" : "the-client-secret-you-generated",
-    "clientId" : "the-client-id-you-generated"
-  }
- }
-],
-```
-Restart the Keycloak instance if it is already running.
 
 # Initial setup / Getting started
 

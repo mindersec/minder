@@ -21,8 +21,10 @@ OS := $(shell uname -s)
 # Container runtime detection
 ifeq (, $(shell which podman-compose))
     COMPOSE?=docker-compose
+    CONTAINER?=docker
 else
     COMPOSE?=podman-compose
+    CONTAINER?=podman
 endif
 
 # Services to run in docker-compose. Defaults to all
@@ -39,7 +41,7 @@ HELM_PACKAGE_VERSION?=0.1.0
 
 default: help
 
-.PHONY: help gen clean-gen build run-cli run-server bootstrap test clean cover lint pre-commit migrateup migratedown sqlc mock cli-docs
+.PHONY: help gen clean-gen build run-cli run-server bootstrap test clean cover lint pre-commit migrateup migratedown sqlc mock cli-docs identity
 
 help: ## list makefile targets
 	@grep -E '^[a-zA-Z_-]+:.*?## .*$$' $(MAKEFILE_LIST) | sort | awk 'BEGIN {FS = ":.*?## "}; {printf "\033[36m%-30s\033[0m %s\n", $$1, $$2}'
@@ -151,3 +153,11 @@ mock:  ## generate mocks
 	mockgen -package mockgh -destination internal/providers/github/mock/github.go -source pkg/providers/v1/providers.go GitHub
 	mockgen -package auth -destination internal/auth/mock/jwtauth.go github.com/stacklok/mediator/internal/auth JwtValidator,KeySetFetcher
 
+github-login:  ## setup GitHub login on Keycloak
+ifndef KC_GITHUB_CLIENT_ID
+	$(error KC_GITHUB_CLIENT_ID is not set)
+endif
+ifndef KC_GITHUB_CLIENT_SECRET
+	$(error KC_GITHUB_CLIENT_SECRET is not set)
+endif
+	$(CONTAINER) exec -it keycloak_container /opt/keycloak/bin/kcadm.sh create identity-provider/instances -r stacklok -s alias=github -s providerId=github -s enabled=true  -s 'config.useJwksUrl="true"' -s config.clientId=$$KC_GITHUB_CLIENT_ID -s config.clientSecret=$$KC_GITHUB_CLIENT_SECRET
