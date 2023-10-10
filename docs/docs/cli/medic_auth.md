@@ -34,6 +34,5 @@ medic auth [flags]
 * [medic](medic.md)	 - Medic controls mediator via the control plane
 * [medic auth login](medic_auth_login.md)	 - Login to a mediator control plane.
 * [medic auth logout](medic_auth_logout.md)	 - Logout from mediator control plane.
-* [medic auth revoke](medic_auth_revoke.md)	 - Revoke access tokens
 * [medic auth revoke_provider](medic_auth_revoke_provider.md)	 - Revoke access tokens for provider
 
