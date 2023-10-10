@@ -203,6 +203,7 @@ func TestRestRemediate(t *testing.T) {
 		remAction interfaces.ActionOpt
 		ent       protoreflect.ProtoMessage
 		pol       map[string]any
+		params    map[string]any
 	}
 
 	type newRestRemediateArgs struct {
@@ -239,6 +240,48 @@ func TestRestRemediate(t *testing.T) {
 			testHandler: func(writer http.ResponseWriter, request *http.Request) {
 				assert.Equal(t, "/repos/OwnerVar/NameVar/actions/permissions", request.URL.Path, "unexpected path")
 				assert.Equal(t, http.MethodPatch, request.Method, "unexpected method")
+
+				var requestBody struct {
+					Enabled        bool   `json:"enabled"`
+					AllowedActions string `json:"allowed_actions"`
+				}
+
+				err := json.NewDecoder(request.Body).Decode(&requestBody)
+				assert.NoError(t, err, "unexpected error decoding body")
+				assert.Equal(t, true, requestBody.Enabled, "unexpected enabled")
+				assert.Equal(t, "selected", requestBody.AllowedActions, "unexpected allowed actions")
+
+				defer request.Body.Close()
+				writer.WriteHeader(http.StatusOK)
+			},
+			wantErr: false,
+		},
+		{
+			name: "valid remediate expanding a branch from parameters",
+			newRemArgs: newRestRemediateArgs{
+				restCfg: &pb.RestType{
+					Endpoint: `/repos/{{.Entity.Owner}}/{{.Entity.Name}}/branches/{{ index .Params "branch" }}/protection`,
+					Body:     &bodyTemplateWithVars,
+					Method:   http.MethodPut,
+				},
+			},
+			remArgs: remediateArgs{
+				remAction: interfaces.ActionOptOn,
+				ent: &pb.Repository{
+					Owner:  "OwnerVar",
+					Name:   "NameVar",
+					RepoId: 456,
+				},
+				pol: map[string]any{
+					"allowed_actions": "selected",
+				},
+				params: map[string]any{
+					"branch": "main",
+				},
+			},
+			testHandler: func(writer http.ResponseWriter, request *http.Request) {
+				assert.Equal(t, "/repos/OwnerVar/NameVar/branches/main/protection", request.URL.Path, "unexpected path")
+				assert.Equal(t, http.MethodPut, request.Method, "unexpected method")
 
 				var requestBody struct {
 					Enabled        bool   `json:"enabled"`
@@ -341,7 +384,7 @@ func TestRestRemediate(t *testing.T) {
 			require.NoError(t, err, "unexpected error creating remediate engine")
 			require.NotNil(t, engine, "expected non-nil remediate engine")
 
-			err = engine.Remediate(context.Background(), tt.remArgs.remAction, tt.remArgs.ent, tt.remArgs.pol)
+			err = engine.Remediate(context.Background(), tt.remArgs.remAction, tt.remArgs.ent, tt.remArgs.pol, tt.remArgs.params)
 			if tt.wantErr {
 				require.Error(t, err, "expected error")
 				return

@@ -100,6 +100,8 @@ type EndpointTemplateParams struct {
 	Entity any
 	// Profile are the parameters to be used in the template
 	Profile map[string]any
+	// Params are the rule instance parameters
+	Params map[string]any
 }
 
 // Remediate actually performs the remediation
@@ -108,10 +110,12 @@ func (r *Remediator) Remediate(
 	remAction interfaces.ActionOpt,
 	ent protoreflect.ProtoMessage,
 	pol map[string]any,
+	params map[string]any,
 ) error {
 	retp := &EndpointTemplateParams{
 		Entity:  ent,
 		Profile: pol,
+		Params:  params,
 	}
 
 	endpoint := new(bytes.Buffer)

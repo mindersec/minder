@@ -39,6 +39,7 @@ func (_ *Remediator) Remediate(
 	_ interfaces.ActionOpt,
 	_ protoreflect.ProtoMessage,
 	_ map[string]any,
+	_ map[string]any,
 ) error {
 	return enginerr.ErrRemediationNotAvailable
 }
