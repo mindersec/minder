@@ -113,10 +113,10 @@ func (s *Server) HandleGitHubWebHook() http.HandlerFunc {
 		m.Metadata.Set("id", github.DeliveryID(r))
 		m.Metadata.Set("provider", string(db.ProviderTypeGithub))
 		m.Metadata.Set("source", "https://api.github.com/") // TODO: handle other sources
-
 		m.Metadata.Set("type", github.WebHookType(r))
 		// m.Metadata.Set("subject", ghEvent.GetRepo().GetFullName())
 		// m.Metadata.Set("time", ghEvent.GetCreatedAt().String())
+
 		log.Printf("publishing of type: %s", m.Metadata["type"])
 
 		if err := s.parseGithubEventForProcessing(rawWBPayload, m); err != nil {
@@ -179,10 +179,18 @@ func (s *Server) registerWebhookForRepository(
 			},
 		}
 
-		// Let's verify that the repository actually exists.
+		// let's verify that the repository actually exists.
 		repoGet, err := client.GetRepository(ctx, repo.Owner, repo.Name)
 		if err != nil {
 			errorStr := err.Error()
+			regResult.Status.Error = &errorStr
+			registerData = append(registerData, regResult)
+			continue
+		}
+
+		// skip if we try to register a private repository
+		if repoGet.GetPrivate() {
+			errorStr := "repository is private"
 			regResult.Status.Error = &errorStr
 			registerData = append(registerData, regResult)
 			continue
