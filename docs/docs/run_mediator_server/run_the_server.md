@@ -95,7 +95,7 @@ or:
 mediator-server migrate up
 ```
 
-# Identity Provider
+## Identity Provider
 Mediator requires a Keycloak instance to be running. You can install this locally, or use a container.
 
 Should you install locally, you will need to configure the client on Keycloak.
@@ -117,6 +117,32 @@ A simple way to get started is to use the provided `docker-compose` file.
 
 ```bash
 docker-compose up -d keycloak
+```
+
+### Social login
+Once you have a Keycloak instance running locally, you can set up GitHub authentication.
+
+#### Create a GitHub OAuth Application
+
+1. Navigate to [GitHub Developer Settings](https://github.com/settings/profile)
+2. Select "Developer Settings" from the left hand menu
+3. Select "OAuth Apps" from the left hand menu
+4. Select "New OAuth App"
+5. Enter the following details:
+    - Application Name: `Stacklok Identity Provider`
+    - Homepage URL: `http://localhost:8081` or the URL you specified as the `issuer_url` in your `config.yaml`
+    - Authorization callback URL: `http://localhost:8081/realms/stacklok/broker/github/endpoint`
+6. Select "Register Application"
+7. Generate a client secret
+
+![github oauth2 page](./images/github-settings-application.png)
+
+#### Enable GitHub login
+
+Using the client ID and client secret you created above, enable GitHub login your local Keycloak instance by running the 
+following command:
+```bash
+make KC_GITHUB_CLIENT_ID=<client_id> KC_GITHUB_CLIENT_SECRET=<client_secret> github-login
 ```
 
 ## Create encryption keys
