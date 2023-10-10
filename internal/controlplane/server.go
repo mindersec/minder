@@ -65,7 +65,6 @@ type Server struct {
 	vldtr      auth.JwtValidator
 	pb.UnimplementedHealthServiceServer
 	pb.UnimplementedOAuthServiceServer
-	pb.UnimplementedAuthServiceServer
 	pb.UnimplementedUserServiceServer
 	pb.UnimplementedRepositoryServiceServer
 	pb.UnimplementedProfileServiceServer

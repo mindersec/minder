@@ -78,8 +78,6 @@
     - [ListRepositoriesResponse](#mediator-v1-ListRepositoriesResponse)
     - [ListRuleTypesRequest](#mediator-v1-ListRuleTypesRequest)
     - [ListRuleTypesResponse](#mediator-v1-ListRuleTypesResponse)
-    - [LogOutRequest](#mediator-v1-LogOutRequest)
-    - [LogOutResponse](#mediator-v1-LogOutResponse)
     - [PrDependencies](#mediator-v1-PrDependencies)
     - [PrDependencies.ContextualDependency](#mediator-v1-PrDependencies-ContextualDependency)
     - [PrDependencies.ContextualDependency.FilePatch](#mediator-v1-PrDependencies-ContextualDependency-FilePatch)
@@ -104,10 +102,6 @@
     - [RevokeOauthProjectTokenResponse](#mediator-v1-RevokeOauthProjectTokenResponse)
     - [RevokeOauthTokensRequest](#mediator-v1-RevokeOauthTokensRequest)
     - [RevokeOauthTokensResponse](#mediator-v1-RevokeOauthTokensResponse)
-    - [RevokeTokensRequest](#mediator-v1-RevokeTokensRequest)
-    - [RevokeTokensResponse](#mediator-v1-RevokeTokensResponse)
-    - [RevokeUserTokenRequest](#mediator-v1-RevokeUserTokenRequest)
-    - [RevokeUserTokenResponse](#mediator-v1-RevokeUserTokenResponse)
     - [RpcOptions](#mediator-v1-RpcOptions)
     - [RuleEvaluationStatus](#mediator-v1-RuleEvaluationStatus)
     - [RuleEvaluationStatus.EntityInfoEntry](#mediator-v1-RuleEvaluationStatus-EntityInfoEntry)
@@ -129,8 +123,6 @@
     - [UserRecord](#mediator-v1-UserRecord)
     - [VerifyProviderTokenFromRequest](#mediator-v1-VerifyProviderTokenFromRequest)
     - [VerifyProviderTokenFromResponse](#mediator-v1-VerifyProviderTokenFromResponse)
-    - [VerifyRequest](#mediator-v1-VerifyRequest)
-    - [VerifyResponse](#mediator-v1-VerifyResponse)
   
     - [DepEcosystem](#mediator-v1-DepEcosystem)
     - [Entity](#mediator-v1-Entity)
@@ -139,7 +131,6 @@
     - [File-level Extensions](#mediator_v1_mediator-proto-extensions)
   
     - [ArtifactService](#mediator-v1-ArtifactService)
-    - [AuthService](#mediator-v1-AuthService)
     - [BranchProtectionService](#mediator-v1-BranchProtectionService)
     - [HealthService](#mediator-v1-HealthService)
     - [KeyService](#mediator-v1-KeyService)
@@ -1312,26 +1303,6 @@ ListRuleTypesResponse is the response to list rule types.
 
 
 
-<a name="mediator-v1-LogOutRequest"></a>
-
-### LogOutRequest
-
-
-
-
-
-
-
-<a name="mediator-v1-LogOutResponse"></a>
-
-### LogOutResponse
-
-
-
-
-
-
-
 <a name="mediator-v1-PrDependencies"></a>
 
 ### PrDependencies
@@ -1742,51 +1713,6 @@ This is used to fetch data from a REST endpoint.
 
 
 
-<a name="mediator-v1-RevokeTokensRequest"></a>
-
-### RevokeTokensRequest
-
-
-
-
-
-
-
-<a name="mediator-v1-RevokeTokensResponse"></a>
-
-### RevokeTokensResponse
-
-
-
-
-
-
-
-<a name="mediator-v1-RevokeUserTokenRequest"></a>
-
-### RevokeUserTokenRequest
-
-
-
-| Field | Type | Label | Description |
-| ----- | ---- | ----- | ----------- |
-| user_id | [int32](#int32) |  |  |
-
-
-
-
-
-
-<a name="mediator-v1-RevokeUserTokenResponse"></a>
-
-### RevokeUserTokenResponse
-
-
-
-
-
-
-
 <a name="mediator-v1-RpcOptions"></a>
 
 ### RpcOptions
@@ -2158,31 +2084,6 @@ user record to be returned
 
 
 
-
-<a name="mediator-v1-VerifyRequest"></a>
-
-### VerifyRequest
-
-
-
-
-
-
-
-<a name="mediator-v1-VerifyResponse"></a>
-
-### VerifyResponse
-
-
-
-| Field | Type | Label | Description |
-| ----- | ---- | ----- | ----------- |
-| status | [string](#string) |  |  |
-
-
-
-
-
  
 
 
@@ -2249,19 +2150,6 @@ Entity defines the entity that is supported by the provider.
 | ----------- | ------------ | ------------- | ------------|
 | ListArtifacts | [ListArtifactsRequest](#mediator-v1-ListArtifactsRequest) | [ListArtifactsResponse](#mediator-v1-ListArtifactsResponse) |  |
 | GetArtifactById | [GetArtifactByIdRequest](#mediator-v1-GetArtifactByIdRequest) | [GetArtifactByIdResponse](#mediator-v1-GetArtifactByIdResponse) |  |
-
-
-<a name="mediator-v1-AuthService"></a>
-
-### AuthService
-
-
-| Method Name | Request Type | Response Type | Description |
-| ----------- | ------------ | ------------- | ------------|
-| LogOut | [LogOutRequest](#mediator-v1-LogOutRequest) | [LogOutResponse](#mediator-v1-LogOutResponse) | Logout of Mediator |
-| RevokeTokens | [RevokeTokensRequest](#mediator-v1-RevokeTokensRequest) | [RevokeTokensResponse](#mediator-v1-RevokeTokensResponse) | revoke all tokens for all users |
-| RevokeUserToken | [RevokeUserTokenRequest](#mediator-v1-RevokeUserTokenRequest) | [RevokeUserTokenResponse](#mediator-v1-RevokeUserTokenResponse) | revoke token for an user |
-| Verify | [VerifyRequest](#mediator-v1-VerifyRequest) | [VerifyResponse](#mediator-v1-VerifyResponse) | Verify user has active session to Mediator |
 
 
 <a name="mediator-v1-BranchProtectionService"></a>
