@@ -276,49 +276,51 @@ func (s *Server) parseGithubEventForProcessing(
 		return fmt.Errorf("error unmarshalling payload: %w", err)
 	}
 
+	ctx := context.Background()
+
+	// get information about the repository from the payload
+	dbRepo, err := getRepoInformationFromPayload(ctx, s.store, payload)
+	if err != nil {
+		return fmt.Errorf("error getting repo information from payload: %w", err)
+	}
+
+	// get the provider for the repository
+	prov, err := s.store.GetProviderByName(ctx, db.GetProviderByNameParams{
+		Name:      dbRepo.Provider,
+		ProjectID: dbRepo.ProjectID,
+	})
+	if err != nil {
+		return fmt.Errorf("error getting provider: %w", err)
+	}
+
+	provBuilder, err := providers.GetProviderBuilder(ctx, prov, dbRepo.ProjectID, s.store, s.cryptoEngine)
+	if err != nil {
+		return fmt.Errorf("error building client: %w", err)
+	}
+
 	// determine if the payload is an artifact published event
 	// TODO: this needs to be managed via signals
 	hook_type := msg.Metadata.Get("type")
 	if hook_type == "package" {
 		if payload["action"] == "published" {
 			return s.parseArtifactPublishedEvent(
-				context.Background(), payload, msg)
+				ctx, payload, msg, dbRepo, provBuilder)
 		}
 	} else if hook_type == "pull_request" {
 		if payload["action"] == "opened" || payload["action"] == "synchronize" {
-			return s.parsePullRequestModEvent(
-				context.Background(), payload, msg)
+			return parsePullRequestModEvent(
+				ctx, payload, msg, dbRepo, provBuilder)
 		}
 	}
 
-	// determine if the payload is a repository event
-	_, isRepo := payload["repository"]
-	if !isRepo {
-		log.Printf("could not determine relevant entity for event. Skipping execution.")
-		return nil
-	}
-
-	return s.parseRepoEvent(context.Background(), payload, msg)
+	return parseRepoEvent(msg, dbRepo, provBuilder.GetName())
 }
 
-func (s *Server) parseRepoEvent(
-	ctx context.Context,
-	whPayload map[string]any,
+func parseRepoEvent(
 	msg *message.Message,
+	dbrepo db.Repository,
+	providerName string,
 ) error {
-	dbrepo, err := getRepoInformationFromPayload(ctx, s.store, whPayload)
-	if err != nil {
-		return err
-	}
-
-	provider, err := s.store.GetProviderByName(ctx, db.GetProviderByNameParams{
-		Name:      dbrepo.Provider,
-		ProjectID: dbrepo.ProjectID,
-	})
-	if err != nil {
-		return fmt.Errorf("error getting provider: %w", err)
-	}
-
 	// protobufs are our API, so we always execute on these instead of the DB directly.
 	repo := &pb.Repository{
 		Owner:     dbrepo.RepoOwner,
@@ -332,7 +334,7 @@ func (s *Server) parseRepoEvent(
 	}
 
 	eiw := engine.NewEntityInfoWrapper().
-		WithProvider(provider.Name).
+		WithProvider(providerName).
 		WithRepository(repo).
 		WithProjectID(dbrepo.ProjectID).
 		WithRepositoryID(dbrepo.ID)
@@ -344,6 +346,8 @@ func (s *Server) parseArtifactPublishedEvent(
 	ctx context.Context,
 	whPayload map[string]any,
 	msg *message.Message,
+	dbrepo db.Repository,
+	prov *providers.ProviderBuilder,
 ) error {
 	// we need to have information about package and repository
 	if whPayload["package"] == nil || whPayload["repository"] == nil {
@@ -351,36 +355,16 @@ func (s *Server) parseArtifactPublishedEvent(
 		return nil
 	}
 
-	// extract information about repository so we can identity the group and associated rules
-	dbrepo, err := getRepoInformationFromPayload(ctx, s.store, whPayload)
-	if err != nil {
-		return fmt.Errorf("error getting repo information from payload: %w", err)
-	}
-	g := dbrepo.ProjectID
-
-	prov, err := s.store.GetProviderByName(ctx, db.GetProviderByNameParams{
-		Name:      dbrepo.Provider,
-		ProjectID: dbrepo.ProjectID,
-	})
-	if err != nil {
-		return fmt.Errorf("error getting provider: %w", err)
-	}
-
-	p, err := providers.GetProviderBuilder(ctx, prov, g, s.store, s.cryptoEngine)
-	if err != nil {
-		return fmt.Errorf("error building client: %w", err)
-	}
-
 	// NOTE(jaosorior): this webhook is very specific to github
-	if !p.Implements(db.ProviderTypeGithub) {
-		log.Printf("provider %s is not supported for github webhook", p.GetName())
+	if !prov.Implements(db.ProviderTypeGithub) {
+		log.Printf("provider %s is not supported for github webhook", prov.GetName())
 		return nil
 	}
 
-	cli, err := p.GetGitHub(ctx)
+	cli, err := prov.GetGitHub(ctx)
 	if err != nil {
 		log.Printf("error creating github provider: %v", err)
-		return nil
+		return err
 	}
 
 	tempArtifact, err := gatherArtifact(ctx, cli, s.store, whPayload)
@@ -400,7 +384,7 @@ func (s *Server) parseArtifactPublishedEvent(
 
 	eiw := engine.NewEntityInfoWrapper().
 		WithArtifact(pbArtifact).
-		WithProvider(prov.Name).
+		WithProvider(prov.GetName()).
 		WithProjectID(dbrepo.ProjectID).
 		WithRepositoryID(dbrepo.ID).
 		WithArtifactID(dbArtifact.ID)
@@ -408,38 +392,20 @@ func (s *Server) parseArtifactPublishedEvent(
 	return eiw.ToMessage(msg)
 }
 
-func (s *Server) parsePullRequestModEvent(
+func parsePullRequestModEvent(
 	ctx context.Context,
 	whPayload map[string]any,
 	msg *message.Message,
+	dbrepo db.Repository,
+	prov *providers.ProviderBuilder,
 ) error {
-	// extract information about repository so we can identify the group and associated rules
-	dbrepo, err := getRepoInformationFromPayload(ctx, s.store, whPayload)
-	if err != nil {
-		return fmt.Errorf("error getting repo information from payload: %w", err)
-	}
-	g := dbrepo.ProjectID
-
-	prov, err := s.store.GetProviderByName(ctx, db.GetProviderByNameParams{
-		Name:      dbrepo.Provider,
-		ProjectID: dbrepo.ProjectID,
-	})
-	if err != nil {
-		return fmt.Errorf("error getting provider: %w", err)
-	}
-
-	p, err := providers.GetProviderBuilder(ctx, prov, g, s.store, s.cryptoEngine)
-	if err != nil {
-		return fmt.Errorf("error building client: %w", err)
-	}
-
 	// NOTE(jaosorior): this webhook is very specific to github
-	if !p.Implements(db.ProviderTypeGithub) {
-		log.Printf("provider %s is not supported for github webhook", p.GetName())
+	if !prov.Implements(db.ProviderTypeGithub) {
+		log.Printf("provider %s is not supported for github webhook", prov.GetName())
 		return nil
 	}
 
-	cli, err := p.GetGitHub(ctx)
+	cli, err := prov.GetGitHub(ctx)
 	if err != nil {
 		log.Printf("error creating github provider: %v", err)
 		return nil
@@ -460,7 +426,7 @@ func (s *Server) parsePullRequestModEvent(
 	eiw := engine.NewEntityInfoWrapper().
 		WithPullRequest(prEvalInfo).
 		WithPullRequestNumber(prEvalInfo.Number).
-		WithProvider(prov.Name).
+		WithProvider(prov.GetName()).
 		WithProjectID(dbrepo.ProjectID).
 		WithRepositoryID(dbrepo.ID)
 
@@ -869,6 +835,15 @@ func getRepoInformationFromPayload(
 	repoInfo, ok := payload["repository"].(map[string]any)
 	if !ok {
 		return db.Repository{}, fmt.Errorf("unable to determine repository for event: %w", ErrRepoNotFound)
+	}
+
+	// ignore processing webhooks for private repositories
+	isPrivate, ok := repoInfo["private"].(bool)
+	if ok {
+		if isPrivate {
+			return db.Repository{},
+				fmt.Errorf("webhook events from private repos are not allowed. Skipping execution")
+		}
 	}
 
 	id, err := parseRepoID(repoInfo["id"])
