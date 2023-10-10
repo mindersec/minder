@@ -15,9 +15,6 @@
       "name": "OAuthService"
     },
     {
-      "name": "AuthService"
-    },
-    {
       "name": "RepositoryService"
     },
     {
@@ -223,72 +220,6 @@
         ]
       }
     },
-    "/api/v1/auth/logout": {
-      "post": {
-        "summary": "Logout of Mediator",
-        "operationId": "AuthService_LogOut",
-        "responses": {
-          "200": {
-            "description": "A successful response.",
-            "schema": {
-              "$ref": "#/definitions/v1LogOutResponse"
-            }
-          },
-          "default": {
-            "description": "An unexpected error response.",
-            "schema": {
-              "$ref": "#/definitions/googlerpcStatus"
-            }
-          }
-        },
-        "parameters": [
-          {
-            "name": "body",
-            "in": "body",
-            "required": true,
-            "schema": {
-              "$ref": "#/definitions/v1LogOutRequest"
-            }
-          }
-        ],
-        "tags": [
-          "AuthService"
-        ]
-      }
-    },
-    "/api/v1/auth/revoke": {
-      "post": {
-        "summary": "revoke all tokens for all users",
-        "operationId": "AuthService_RevokeTokens",
-        "responses": {
-          "200": {
-            "description": "A successful response.",
-            "schema": {
-              "$ref": "#/definitions/v1RevokeTokensResponse"
-            }
-          },
-          "default": {
-            "description": "An unexpected error response.",
-            "schema": {
-              "$ref": "#/definitions/googlerpcStatus"
-            }
-          }
-        },
-        "parameters": [
-          {
-            "name": "body",
-            "in": "body",
-            "required": true,
-            "schema": {
-              "$ref": "#/definitions/v1RevokeTokensRequest"
-            }
-          }
-        ],
-        "tags": [
-          "AuthService"
-        ]
-      }
-    },
     "/api/v1/auth/revoke-all": {
       "post": {
         "summary": "RevokeOauthTokens is used to revoke all tokens\nthis a nuclear option and should only be used in emergencies",
@@ -319,46 +250,6 @@
         ],
         "tags": [
           "OAuthService"
-        ]
-      }
-    },
-    "/api/v1/auth/revoke/{userId}": {
-      "post": {
-        "summary": "revoke token for an user",
-        "operationId": "AuthService_RevokeUserToken",
-        "responses": {
-          "200": {
-            "description": "A successful response.",
-            "schema": {
-              "$ref": "#/definitions/v1RevokeUserTokenResponse"
-            }
-          },
-          "default": {
-            "description": "An unexpected error response.",
-            "schema": {
-              "$ref": "#/definitions/googlerpcStatus"
-            }
-          }
-        },
-        "parameters": [
-          {
-            "name": "userId",
-            "in": "path",
-            "required": true,
-            "type": "integer",
-            "format": "int32"
-          },
-          {
-            "name": "body",
-            "in": "body",
-            "required": true,
-            "schema": {
-              "type": "object"
-            }
-          }
-        ],
-        "tags": [
-          "AuthService"
         ]
       }
     },
@@ -414,29 +305,6 @@
         ],
         "tags": [
           "OAuthService"
-        ]
-      }
-    },
-    "/api/v1/auth/verify": {
-      "get": {
-        "summary": "Verify user has active session to Mediator",
-        "operationId": "AuthService_Verify",
-        "responses": {
-          "200": {
-            "description": "A successful response.",
-            "schema": {
-              "$ref": "#/definitions/v1VerifyResponse"
-            }
-          },
-          "default": {
-            "description": "An unexpected error response.",
-            "schema": {
-              "$ref": "#/definitions/googlerpcStatus"
-            }
-          }
-        },
-        "tags": [
-          "AuthService"
         ]
       }
     },
@@ -2241,12 +2109,6 @@
       },
       "description": "ListRuleTypesResponse is the response to list rule types."
     },
-    "v1LogOutRequest": {
-      "type": "object"
-    },
-    "v1LogOutResponse": {
-      "type": "object"
-    },
     "v1Profile": {
       "type": "object",
       "properties": {
@@ -2486,15 +2348,6 @@
         }
       }
     },
-    "v1RevokeTokensRequest": {
-      "type": "object"
-    },
-    "v1RevokeTokensResponse": {
-      "type": "object"
-    },
-    "v1RevokeUserTokenResponse": {
-      "type": "object"
-    },
     "v1RuleEvaluationStatus": {
       "type": "object",
       "properties": {
@@ -2714,14 +2567,6 @@
       "title": "user record to be returned"
     },
     "v1VerifyProviderTokenFromResponse": {
-      "type": "object",
-      "properties": {
-        "status": {
-          "type": "string"
-        }
-      }
-    },
-    "v1VerifyResponse": {
       "type": "object",
       "properties": {
         "status": {

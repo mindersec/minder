@@ -260,47 +260,6 @@ service OAuthService {
 
 }
 
-service AuthService {
-    // Logout of Mediator
-    rpc LogOut (LogOutRequest) returns (LogOutResponse) {
-        option (google.api.http) = {
-            post: "/api/v1/auth/logout"
-            body: "*"
-        };
-    }
-
-    // revoke all tokens for all users
-    rpc RevokeTokens (RevokeTokensRequest) returns (RevokeTokensResponse) {
-        option (google.api.http) = {
-            post: "/api/v1/auth/revoke"
-            body: "*"
-        };
-
-        option (rpc_options) = {
-            root_admin_only: true
-        };
-    }
-
-    // revoke token for an user
-    rpc RevokeUserToken (RevokeUserTokenRequest) returns (RevokeUserTokenResponse) {
-        option (google.api.http) = {
-            post: "/api/v1/auth/revoke/{user_id}"
-            body: "*"
-        };
-
-        option (rpc_options) = {
-            root_admin_only: true
-        };
-    }
-
-    // Verify user has active session to Mediator
-    rpc Verify (VerifyRequest) returns (VerifyResponse) {
-        option (google.api.http) = {
-            get: "/api/v1/auth/verify"
-        };
-    }
-}
-
 service RepositoryService {
     rpc RegisterRepository (RegisterRepositoryRequest) returns (RegisterRepositoryResponse) {
         option (google.api.http) = {
@@ -605,25 +564,6 @@ message ExchangeCodeForTokenWEBResponse {
     string status = 4;
 }
 
-message LogOutRequest {
-}
-
-message LogOutResponse {
-}
-
-message RevokeTokensRequest {
-}
-
-message RevokeTokensResponse {
-}
-
-message RevokeUserTokenRequest {
-    int32 user_id = 1;
-}
-
-message RevokeUserTokenResponse {
-}
-
 message RevokeOauthTokensRequest {
 }
 
@@ -742,13 +682,6 @@ message ListRepositoriesRequest {
 
 message ListRepositoriesResponse {
     repeated Repository results = 1;
-}
-
-message VerifyRequest {
-}
-
-message VerifyResponse {
-    string status = 1;
 }
 
 message VerifyProviderTokenFromRequest {
