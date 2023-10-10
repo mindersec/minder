@@ -169,12 +169,12 @@ func runEvaluationForRules(
 		}
 
 		evalErr, remediateErr := eng.Eval(context.Background(), ent, def, params, rem)
-		if evalErr != nil {
-			return fmt.Errorf("error evaluating rule type: %w", evalErr)
-		}
-
 		if errors.IsRemediateFatalError(remediateErr) {
 			fmt.Printf("Remediation failed with fatal error: %s", remediateErr)
+		}
+
+		if evalErr != nil {
+			return fmt.Errorf("error evaluating rule type: %w", evalErr)
 		}
 
 		fmt.Printf("The rule type is valid and the entity conforms to it\n")
