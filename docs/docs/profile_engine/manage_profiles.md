@@ -83,7 +83,7 @@ def:
       # for each repository in the organization, we use a template that
       # will be evaluated for each repository. The structure to use is the
       # protobuf structure for the entity that is being evaluated.
-      endpoint: "/repos/{{.Entity.Owner}}/{{.Entity.Repository}}"
+      endpoint: "/repos/{{.Entity.Owner}}/{{.Entity.Name}}"
       # This is the method to use to retrieve the data. It should already default to JSON
       parse: json
   # Defines the configuration for evaluating data ingested against the given profile

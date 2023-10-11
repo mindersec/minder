@@ -34,7 +34,7 @@ def:
   ingest:
     type: rest
     rest:
-      endpoint: "/repos/{{.Entity.Owner}}/{{.Entity.Repository}}/actions/permissions/workflow"
+      endpoint: "/repos/{{.Entity.Owner}}/{{.Entity.Name}}/actions/permissions/workflow"
       parse: json
   # Defines the configuration for evaluating data ingested against the given profile
   eval:

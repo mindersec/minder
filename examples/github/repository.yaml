@@ -1,6 +1,6 @@
 ---
 owner: stacklok
-repository: Demo-Repo-Go
+name: Demo-Repo-Go
 repoId: 605597568
 HookUrl:
 clone_url: "https://github.com/stacklok/Demo-Repo-Go.git"
