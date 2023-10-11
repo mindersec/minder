@@ -1095,6 +1095,11 @@ message DeleteRuleTypeResponse {
 // RestType defines the rest data evaluation.
 // This is used to fetch data from a REST endpoint.
 message RestType {
+    message Fallback {
+        int32 http_code = 1;
+        string body = 2;
+    }
+
     // endpoint is the endpoint to fetch data from.
     // This can be a URL or the path on the API.bool
     // This is a required field and must be set.
@@ -1113,6 +1118,10 @@ message RestType {
 
     // parse is the parsing mechanism to be used to parse the data.
     string parse = 5;
+
+    // fallback provides a body that the ingester would return in case
+    // the REST call returns a non-200 status code.
+    repeated Fallback fallback = 6;
 }
 
 // BuiltinType defines the builtin data evaluation.

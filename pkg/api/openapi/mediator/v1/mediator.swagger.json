@@ -1579,6 +1579,18 @@
       },
       "description": "Rule defines the individual call of a certain rule type."
     },
+    "RestTypeFallback": {
+      "type": "object",
+      "properties": {
+        "httpCode": {
+          "type": "integer",
+          "format": "int32"
+        },
+        "body": {
+          "type": "string"
+        }
+      }
+    },
     "apiHttpBody": {
       "type": "object",
       "properties": {
@@ -2352,6 +2364,14 @@
         "parse": {
           "type": "string",
           "description": "parse is the parsing mechanism to be used to parse the data."
+        },
+        "fallback": {
+          "type": "array",
+          "items": {
+            "type": "object",
+            "$ref": "#/definitions/RestTypeFallback"
+          },
+          "description": "fallback provides a body that the ingester would return in case\nthe REST call returns a non-200 status code."
         }
       },
       "description": "RestType defines the rest data evaluation.\nThis is used to fetch data from a REST endpoint."
