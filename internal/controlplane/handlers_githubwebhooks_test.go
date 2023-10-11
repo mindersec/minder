@@ -24,6 +24,7 @@ import (
 	"bytes"
 	"context"
 	"database/sql"
+	"encoding/base64"
 	"encoding/json"
 	"fmt"
 	"net/http"
@@ -38,8 +39,10 @@ import (
 	"github.com/stretchr/testify/mock"
 	"github.com/stretchr/testify/require"
 	"github.com/stretchr/testify/suite"
+	"golang.org/x/oauth2"
 
 	mockdb "github.com/stacklok/mediator/database/mock"
+	"github.com/stacklok/mediator/internal/crypto"
 	"github.com/stacklok/mediator/internal/db"
 	"github.com/stacklok/mediator/internal/engine"
 	"github.com/stacklok/mediator/internal/util/rand"
@@ -220,6 +223,27 @@ func (s *UnitTestSuite) TestHandleWebHookRepository() {
 	providerName := "github"
 	repositoryID := uuid.New()
 	projectID := uuid.New()
+
+	// create a test oauth2 token
+	token := oauth2.Token{
+		AccessToken: "test",
+		TokenType:   "test",
+	}
+	// marshal the token
+	byteToken, err := json.Marshal(token)
+	require.NoError(t, err, "failed to marshal decryptedToken")
+	// encrypt the token
+	encryptedToken, err := crypto.EncryptBytes("test", byteToken)
+	require.NoError(t, err, "failed to encrypt token")
+
+	// Encode the token to Base64
+	encodedToken := base64.StdEncoding.EncodeToString(encryptedToken)
+	mockStore.EXPECT().GetAccessTokenByProjectID(gomock.Any(), gomock.Any()).Return(db.ProviderAccessToken{
+		EncryptedToken: encodedToken,
+		ID:             1,
+		ProjectID:      projectID,
+		Provider:       providerName,
+	}, nil)
 
 	mockStore.EXPECT().
 		GetRepositoryByRepoID(gomock.Any(), gomock.Any()).
