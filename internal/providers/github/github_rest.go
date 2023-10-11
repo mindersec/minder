@@ -484,7 +484,8 @@ func (c *RestClient) CreateHook(ctx context.Context, owner, repo string, hook *g
 }
 
 // CreateSecurityAdvisory creates a new security advisory
-func (c *RestClient) CreateSecurityAdvisory(ctx context.Context, owner, repo, severity, summary, description string, v []*github.AdvisoryVulnerability) (string, error) {
+func (c *RestClient) CreateSecurityAdvisory(ctx context.Context, owner, repo, severity, summary, description string,
+	v []*github.AdvisoryVulnerability) (string, error) {
 	u := fmt.Sprintf("repos/%v/%v/security-advisories", owner, repo)
 
 	payload := &struct {
