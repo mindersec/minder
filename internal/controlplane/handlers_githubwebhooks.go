@@ -123,13 +123,12 @@ func (s *Server) HandleGitHubWebHook() http.HandlerFunc {
 		log.Printf("publishing of type: %s", m.Metadata["type"])
 
 		if err := s.parseGithubEventForProcessing(rawWBPayload, m); err != nil {
+			log.Printf("Error parsing github webhook message: %v", err)
 			// We won't leak when a repository or artifact is not found.
 			if errors.Is(err, ErrRepoNotFound) || errors.Is(err, ErrArtifactNotFound) || errors.Is(err, ErrRepoIsPrivate) {
-				log.Printf("repository or artifact not found: %v", err)
 				w.WriteHeader(http.StatusOK)
 				return
 			}
-			log.Printf("Error parsing github webhook message: %v", err)
 			w.WriteHeader(http.StatusInternalServerError)
 			return
 		}
