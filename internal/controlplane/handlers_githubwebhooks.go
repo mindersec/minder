@@ -79,11 +79,11 @@ type UpstreamRepositoryReference struct {
 // ErrRepoNotFound is returned when a repository is not found
 var ErrRepoNotFound = errors.New("repository not found")
 
-// ErrRepoIsPrivate is returned when a repository is private
-var ErrRepoIsPrivate = errors.New("repository is private")
-
 // ErrArtifactNotFound is returned when an artifact is not found
 var ErrArtifactNotFound = errors.New("artifact not found")
+
+// ErrRepoIsPrivate is returned when a repository is private
+var ErrRepoIsPrivate = errors.New("repository is private")
 
 // HandleGitHubWebHook handles incoming GitHub webhooks
 // See https://docs.github.com/en/developers/webhooks-and-events/webhooks/about-webhooks
@@ -123,12 +123,17 @@ func (s *Server) HandleGitHubWebHook() http.HandlerFunc {
 		log.Printf("publishing of type: %s", m.Metadata["type"])
 
 		if err := s.parseGithubEventForProcessing(rawWBPayload, m); err != nil {
-			log.Printf("Error parsing github webhook message: %v", err)
 			// We won't leak when a repository or artifact is not found.
-			if errors.Is(err, ErrRepoNotFound) || errors.Is(err, ErrArtifactNotFound) || errors.Is(err, ErrRepoIsPrivate) {
+			if errors.Is(err, ErrRepoNotFound) || errors.Is(err, ErrArtifactNotFound) {
+				log.Printf("Repository or artifact not found: %v", err)
+				w.WriteHeader(http.StatusOK)
+				return
+			} else if errors.Is(err, ErrRepoIsPrivate) {
+				log.Printf("Skipped webhook event processing: %v", err)
 				w.WriteHeader(http.StatusOK)
 				return
 			}
+			log.Printf("Error parsing github webhook message: %v", err)
 			w.WriteHeader(http.StatusInternalServerError)
 			return
 		}
@@ -843,7 +848,7 @@ func getRepoInformationFromPayload(
 	isPrivate, ok := repoInfo["private"].(bool)
 	if ok {
 		if isPrivate {
-			return db.Repository{}, fmt.Errorf("skip processing webhook event. %w", ErrRepoIsPrivate)
+			return db.Repository{}, ErrRepoIsPrivate
 		}
 	}
 
