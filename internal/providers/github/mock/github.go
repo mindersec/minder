@@ -275,6 +275,20 @@ func (m *MockGitHub) EXPECT() *MockGitHubMockRecorder {
 	return m.recorder
 }
 
+// CloseSecurityAdvisory mocks base method.
+func (m *MockGitHub) CloseSecurityAdvisory(ctx context.Context, owner, repo, id string) error {
+	m.ctrl.T.Helper()
+	ret := m.ctrl.Call(m, "CloseSecurityAdvisory", ctx, owner, repo, id)
+	ret0, _ := ret[0].(error)
+	return ret0
+}
+
+// CloseSecurityAdvisory indicates an expected call of CloseSecurityAdvisory.
+func (mr *MockGitHubMockRecorder) CloseSecurityAdvisory(ctx, owner, repo, id interface{}) *gomock.Call {
+	mr.mock.ctrl.T.Helper()
+	return mr.mock.ctrl.RecordCallWithMethodType(mr.mock, "CloseSecurityAdvisory", reflect.TypeOf((*MockGitHub)(nil).CloseSecurityAdvisory), ctx, owner, repo, id)
+}
+
 // CreateHook mocks base method.
 func (m *MockGitHub) CreateHook(ctx context.Context, owner, repo string, hook *github.Hook) (*github.Hook, error) {
 	m.ctrl.T.Helper()
@@ -303,6 +317,21 @@ func (m *MockGitHub) CreateReview(arg0 context.Context, arg1, arg2 string, arg3 
 func (mr *MockGitHubMockRecorder) CreateReview(arg0, arg1, arg2, arg3, arg4 interface{}) *gomock.Call {
 	mr.mock.ctrl.T.Helper()
 	return mr.mock.ctrl.RecordCallWithMethodType(mr.mock, "CreateReview", reflect.TypeOf((*MockGitHub)(nil).CreateReview), arg0, arg1, arg2, arg3, arg4)
+}
+
+// CreateSecurityAdvisory mocks base method.
+func (m *MockGitHub) CreateSecurityAdvisory(ctx context.Context, owner, repo, severity, summary, description string, v []*github.AdvisoryVulnerability) (string, error) {
+	m.ctrl.T.Helper()
+	ret := m.ctrl.Call(m, "CreateSecurityAdvisory", ctx, owner, repo, severity, summary, description, v)
+	ret0, _ := ret[0].(string)
+	ret1, _ := ret[1].(error)
+	return ret0, ret1
+}
+
+// CreateSecurityAdvisory indicates an expected call of CreateSecurityAdvisory.
+func (mr *MockGitHubMockRecorder) CreateSecurityAdvisory(ctx, owner, repo, severity, summary, description, v interface{}) *gomock.Call {
+	mr.mock.ctrl.T.Helper()
+	return mr.mock.ctrl.RecordCallWithMethodType(mr.mock, "CreateSecurityAdvisory", reflect.TypeOf((*MockGitHub)(nil).CreateSecurityAdvisory), ctx, owner, repo, severity, summary, description, v)
 }
 
 // DeleteHook mocks base method.

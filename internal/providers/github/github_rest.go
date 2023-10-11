@@ -482,3 +482,64 @@ func (c *RestClient) CreateHook(ctx context.Context, owner, repo string, hook *g
 	h, _, err := c.client.Repositories.CreateHook(ctx, owner, repo, hook)
 	return h, err
 }
+
+// CreateSecurityAdvisory creates a new security advisory
+func (c *RestClient) CreateSecurityAdvisory(ctx context.Context, owner, repo, severity, summary, description string, v []*github.AdvisoryVulnerability) (string, error) {
+	u := fmt.Sprintf("repos/%v/%v/security-advisories", owner, repo)
+
+	payload := &struct {
+		Summary         string                          `json:"summary"`
+		Description     string                          `json:"description"`
+		Severity        string                          `json:"severity"`
+		Vulnerabilities []*github.AdvisoryVulnerability `json:"vulnerabilities"`
+	}{
+		Summary:         summary,
+		Description:     description,
+		Severity:        severity,
+		Vulnerabilities: v,
+	}
+	req, err := c.client.NewRequest("POST", u, payload)
+	if err != nil {
+		return "", err
+	}
+
+	res := &struct {
+		ID string `json:"ghsa_id"`
+	}{}
+
+	resp, err := c.client.Do(ctx, req, res)
+	if err != nil {
+		return "", err
+	}
+
+	if resp.StatusCode != http.StatusCreated {
+		return "", fmt.Errorf("error creating security advisory: %v", resp.Status)
+	}
+	return res.ID, nil
+}
+
+// CloseSecurityAdvisory closes a security advisory
+func (c *RestClient) CloseSecurityAdvisory(ctx context.Context, owner, repo, id string) error {
+	u := fmt.Sprintf("repos/%v/%v/security-advisories/%v", owner, repo, id)
+
+	payload := &struct {
+		State string `json:"state"`
+	}{
+		State: "closed",
+	}
+
+	req, err := c.client.NewRequest("PATCH", u, payload)
+	if err != nil {
+		return err
+	}
+
+	resp, err := c.client.Do(ctx, req, nil)
+	if err != nil {
+		return err
+	}
+
+	if resp.StatusCode != http.StatusOK {
+		return fmt.Errorf("error closing security advisory: %v", resp.Status)
+	}
+	return nil
+}
