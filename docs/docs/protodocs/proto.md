@@ -98,6 +98,7 @@
     - [RegisterRepositoryResponse](#mediator-v1-RegisterRepositoryResponse)
     - [Repository](#mediator-v1-Repository)
     - [RestType](#mediator-v1-RestType)
+    - [RestType.Fallback](#mediator-v1-RestType-Fallback)
     - [RevokeOauthProjectTokenRequest](#mediator-v1-RevokeOauthProjectTokenRequest)
     - [RevokeOauthProjectTokenResponse](#mediator-v1-RevokeOauthProjectTokenResponse)
     - [RevokeOauthTokensRequest](#mediator-v1-RevokeOauthTokensRequest)
@@ -1659,6 +1660,23 @@ This is used to fetch data from a REST endpoint.
 | headers | [string](#string) | repeated | headers are the headers to be sent to the endpoint. |
 | body | [string](#string) | optional | body is the body to be sent to the endpoint. |
 | parse | [string](#string) |  | parse is the parsing mechanism to be used to parse the data. |
+| fallback | [RestType.Fallback](#mediator-v1-RestType-Fallback) | repeated | fallback provides a body that the ingester would return in case the REST call returns a non-200 status code. |
+
+
+
+
+
+
+<a name="mediator-v1-RestType-Fallback"></a>
+
+### RestType.Fallback
+
+
+
+| Field | Type | Label | Description |
+| ----- | ---- | ----- | ----------- |
+| http_code | [int32](#int32) |  |  |
+| body | [string](#string) |  |  |
 
 
 

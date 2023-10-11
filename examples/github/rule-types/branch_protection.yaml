@@ -82,6 +82,10 @@ def:
       endpoint: '/repos/{{.Entity.Owner}}/{{.Entity.Name}}/branches/{{ index .Params "branch" }}/protection'
       # This is the method to use to retrieve the data. It should already default to JSON
       parse: json
+      fallback:
+        - http_code: 404
+          body: |
+            {"http_status": 404, "message": "Not Protected"}
   # Defines the configuration for evaluating data ingested against the given profile
   eval:
     type: jq

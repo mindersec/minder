@@ -19,6 +19,7 @@ import (
 	"bytes"
 	"context"
 	"encoding/json"
+	"errors"
 	"fmt"
 	"io"
 	"log"
@@ -26,6 +27,8 @@ import (
 	"strings"
 	"text/template"
 
+	"github.com/google/go-github/v53/github"
+	"github.com/rs/zerolog"
 	"google.golang.org/protobuf/reflect/protoreflect"
 
 	engif "github.com/stacklok/mediator/internal/engine/interfaces"
@@ -40,12 +43,20 @@ const (
 	RestRuleDataIngestType = "rest"
 )
 
+type ingestorFallback struct {
+	// httpCode is the HTTP status code to return
+	httpCode int
+	// Body is the body to return
+	body string
+}
+
 // Ingestor is the engine for a rule type that uses REST data ingest
 type Ingestor struct {
 	restCfg          *pb.RestType
 	cli              provifv1.REST
 	endpointTemplate *template.Template
 	method           string
+	fallback         []ingestorFallback
 }
 
 // NewRestRuleDataIngest creates a new REST rule data ingest engine
@@ -69,11 +80,21 @@ func NewRestRuleDataIngest(
 		return nil, fmt.Errorf("cannot get http client: %w", err)
 	}
 
+	fallback := make([]ingestorFallback, len(restCfg.Fallback))
+	for _, fb := range restCfg.Fallback {
+		fb := fb
+		fallback = append(fallback, ingestorFallback{
+			httpCode: int(fb.HttpCode),
+			body:     fb.Body,
+		})
+	}
+
 	return &Ingestor{
 		restCfg:          restCfg,
 		cli:              cli,
 		endpointTemplate: tmpl,
 		method:           method,
+		fallback:         fallback,
 	}, nil
 }
 
@@ -108,35 +129,93 @@ func (rdi *Ingestor) Ingest(ctx context.Context, ent protoreflect.ProtoMessage, 
 		return nil, fmt.Errorf("cannot create request: %w", err)
 	}
 
-	resp, err := rdi.cli.Do(ctx, req)
+	respRdr, err := rdi.doRequest(ctx, req)
 	if err != nil {
-		return nil, fmt.Errorf("cannot make request: %w", err)
+		return nil, fmt.Errorf("cannot do request: %w", err)
 	}
 
 	defer func() {
-		if err := resp.Body.Close(); err != nil {
+		if err := respRdr.Close(); err != nil {
 			log.Printf("cannot close response body: %v", err)
 		}
 	}()
 
+	data, err := rdi.parseBody(respRdr)
+	if err != nil {
+		return nil, fmt.Errorf("cannot parse body: %w", err)
+	}
+
+	return &engif.Result{
+		Object: data,
+	}, nil
+}
+
+func (rdi *Ingestor) doRequest(ctx context.Context, req *http.Request) (io.ReadCloser, error) {
+	resp, err := rdi.cli.Do(ctx, req)
+	if err == nil {
+		return resp.Body, nil
+	} else if fallbackBody := errorToFallback(err, rdi.fallback); fallbackBody != nil {
+		// the go-github REST API has a funny way of returning HTTP status codes,
+		// on a non-200 status it will return a github.ErrorResponse
+		// whereas the standard library will return nil error and the HTTP status code in the response
+		return fallbackBody, nil
+	} else if err != nil {
+		return nil, fmt.Errorf("cannot make request: %w", err)
+	}
+
+	// handles the usual case of http clients that return nil error and the HTTP status code in the response
+	if fallbackBody := httpStatusToFallback(resp.StatusCode, rdi.fallback); fallbackBody != nil {
+		return fallbackBody, nil
+	}
+
+	// this should be dead code, but better return error than crash
+	return nil, nil
+}
+
+func errorToFallback(err error, fallback []ingestorFallback) io.ReadCloser {
+	var respErr *github.ErrorResponse
+	if errors.As(err, &respErr) {
+		if respErr.Response != nil {
+			return httpStatusToFallback(respErr.Response.StatusCode, fallback)
+		}
+	}
+
+	return nil
+}
+
+func httpStatusToFallback(httpStatus int, fallback []ingestorFallback) io.ReadCloser {
+	for _, fb := range fallback {
+		if fb.httpCode == httpStatus {
+			zerolog.Ctx(context.Background()).Debug().Msgf("falling back to body [%s]", fb.body)
+			return io.NopCloser(strings.NewReader(fb.body))
+		}
+	}
+
+	return nil
+}
+
+func (rdi *Ingestor) parseBody(body io.Reader) (any, error) {
 	var data any
+	var err error
+
+	if body == nil {
+		return nil, nil
+	}
 
 	if rdi.restCfg.Parse == "json" {
 		var jsonData any
-		dec := json.NewDecoder(resp.Body)
+		dec := json.NewDecoder(body)
 		if err := dec.Decode(&jsonData); err != nil {
 			return nil, fmt.Errorf("cannot decode json: %w", err)
 		}
 
 		data = jsonData
 	} else {
-		data, err = io.ReadAll(resp.Body)
+		data, err = io.ReadAll(body)
 		if err != nil {
 			return nil, fmt.Errorf("cannot read response body: %w", err)
 		}
 	}
 
-	return &engif.Result{
-		Object: data,
-	}, nil
+	return data, nil
 }
