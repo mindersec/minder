@@ -83,5 +83,10 @@ func ActionOptFromString(s *string) ActionOpt {
 
 // Remediator is the interface for a rule type remediator
 type Remediator interface {
-	Remediate(ctx context.Context, remAction ActionOpt, ent protoreflect.ProtoMessage, pol map[string]any) error
+	Remediate(
+		ctx context.Context,
+		remAction ActionOpt,
+		ent protoreflect.ProtoMessage,
+		pol map[string]any,
+		params map[string]any) error
 }
