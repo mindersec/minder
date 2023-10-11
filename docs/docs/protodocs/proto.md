@@ -107,6 +107,8 @@
     - [RuleEvaluationStatus.EntityInfoEntry](#mediator-v1-RuleEvaluationStatus-EntityInfoEntry)
     - [RuleType](#mediator-v1-RuleType)
     - [RuleType.Definition](#mediator-v1-RuleType-Definition)
+    - [RuleType.Definition.Alert](#mediator-v1-RuleType-Definition-Alert)
+    - [RuleType.Definition.Alert.AlertTypeSA](#mediator-v1-RuleType-Definition-Alert-AlertTypeSA)
     - [RuleType.Definition.Eval](#mediator-v1-RuleType-Definition-Eval)
     - [RuleType.Definition.Eval.JQComparison](#mediator-v1-RuleType-Definition-Eval-JQComparison)
     - [RuleType.Definition.Eval.JQComparison.Operator](#mediator-v1-RuleType-Definition-Eval-JQComparison-Operator)
@@ -1367,6 +1369,7 @@ Profile defines a profile that is user defined.
 | artifact | [Profile.Rule](#mediator-v1-Profile-Rule) | repeated |  |
 | pull_request | [Profile.Rule](#mediator-v1-Profile-Rule) | repeated |  |
 | remediate | [string](#string) | optional | whether and how to remediate (on,off,dry_run) this is optional as the default is set by the system |
+| alert | [string](#string) | optional | whether and how to alert (on,off,dry_run) this is optional as the default is set by the system |
 
 
 
@@ -1809,6 +1812,38 @@ Definition defines the rule type. It encompases the schema and the data evaluati
 | ingest | [RuleType.Definition.Ingest](#mediator-v1-RuleType-Definition-Ingest) |  |  |
 | eval | [RuleType.Definition.Eval](#mediator-v1-RuleType-Definition-Eval) |  |  |
 | remediate | [RuleType.Definition.Remediate](#mediator-v1-RuleType-Definition-Remediate) |  |  |
+| alert | [RuleType.Definition.Alert](#mediator-v1-RuleType-Definition-Alert) |  |  |
+
+
+
+
+
+
+<a name="mediator-v1-RuleType-Definition-Alert"></a>
+
+### RuleType.Definition.Alert
+
+
+
+| Field | Type | Label | Description |
+| ----- | ---- | ----- | ----------- |
+| type | [string](#string) |  |  |
+| security_advisory | [RuleType.Definition.Alert.AlertTypeSA](#mediator-v1-RuleType-Definition-Alert-AlertTypeSA) | optional |  |
+
+
+
+
+
+
+<a name="mediator-v1-RuleType-Definition-Alert-AlertTypeSA"></a>
+
+### RuleType.Definition.Alert.AlertTypeSA
+
+
+
+| Field | Type | Label | Description |
+| ----- | ---- | ----- | ----------- |
+| severity | [string](#string) |  |  |
 
 
 

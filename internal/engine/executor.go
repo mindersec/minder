@@ -126,8 +126,7 @@ func (e *Executor) evalEntityEvent(
 		if err != nil {
 			return fmt.Errorf("error parsing profile ID: %w", err)
 		}
-
-		remAction := interfaces.RemediationActionOptFromString(pol.Remediate)
+		remAction := interfaces.ActionOptFromString(pol.Remediate)
 
 		// Get only these rules that are relevant for this entity type
 		relevant, err := GetRulesForEntity(pol, inf.Type)

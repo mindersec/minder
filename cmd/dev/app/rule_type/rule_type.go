@@ -139,13 +139,13 @@ func testCmdRun(cmd *cobra.Command, _ []string) error {
 		return fmt.Errorf("no rules found with type %s", rt.Name)
 	}
 
-	return runEvaluationForRules(eng, ent, interfaces.RemediationActionOptFromString(p.Remediate), rules)
+	return runEvaluationForRules(eng, ent, interfaces.ActionOptFromString(p.Remediate), rules)
 }
 
 func runEvaluationForRules(
 	eng *engine.RuleTypeEngine,
 	ent protoreflect.ProtoMessage,
-	rem interfaces.RemediateActionOpt,
+	rem interfaces.ActionOpt,
 	frags []*mediatorv1.Profile_Rule,
 ) error {
 	for idx := range frags {

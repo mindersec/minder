@@ -93,10 +93,10 @@ func verifyValidProject(ctx context.Context, in *engine.EntityContext) error {
 	return nil
 }
 
-// validateRemediateType returns the appropriate remediate type or the
+// validateActionType returns the appropriate remediate type or the
 // NULL DB type if the input is invalid, thus letting the server run
 // the profile with the default remediate type.
-func validateRemediateType(r string) db.NullActionType {
+func validateActionType(r string) db.NullActionType {
 	switch r {
 	case "on":
 		return db.NullActionType{ActionType: db.ActionTypeOn, Valid: true}
@@ -206,7 +206,7 @@ func (s *Server) CreateProfile(ctx context.Context,
 		Provider:  provider.Name,
 		ProjectID: entityCtx.GetProject().GetID(),
 		Name:      in.GetName(),
-		Remediate: validateRemediateType(in.GetRemediate()),
+		Remediate: validateActionType(in.GetRemediate()),
 	}
 
 	// Create profile

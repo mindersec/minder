@@ -1401,6 +1401,25 @@
     }
   },
   "definitions": {
+    "AlertAlertTypeSA": {
+      "type": "object",
+      "properties": {
+        "severity": {
+          "type": "string"
+        }
+      }
+    },
+    "DefinitionAlert": {
+      "type": "object",
+      "properties": {
+        "type": {
+          "type": "string"
+        },
+        "securityAdvisory": {
+          "$ref": "#/definitions/AlertAlertTypeSA"
+        }
+      }
+    },
     "DefinitionEval": {
       "type": "object",
       "properties": {
@@ -2156,6 +2175,10 @@
         "remediate": {
           "type": "string",
           "title": "whether and how to remediate (on,off,dry_run)\nthis is optional as the default is set by the system"
+        },
+        "alert": {
+          "type": "string",
+          "title": "whether and how to alert (on,off,dry_run)\nthis is optional as the default is set by the system"
         }
       },
       "description": "Profile defines a profile that is user defined."
@@ -2460,6 +2483,9 @@
         },
         "remediate": {
           "$ref": "#/definitions/DefinitionRemediate"
+        },
+        "alert": {
+          "$ref": "#/definitions/DefinitionAlert"
         }
       },
       "description": "Definition defines the rule type. It encompases the schema and the data evaluation."

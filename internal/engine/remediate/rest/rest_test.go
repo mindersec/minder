@@ -200,7 +200,7 @@ func TestRestRemediate(t *testing.T) {
 	t.Parallel()
 
 	type remediateArgs struct {
-		remAction interfaces.RemediateActionOpt
+		remAction interfaces.ActionOpt
 		ent       protoreflect.ProtoMessage
 		pol       map[string]any
 	}
