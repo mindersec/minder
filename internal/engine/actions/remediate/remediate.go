@@ -22,6 +22,7 @@ import (
 
 	"github.com/stacklok/mediator/internal/engine/actions/remediate/gh_branch_protect"
 	"github.com/stacklok/mediator/internal/engine/actions/remediate/noop"
+	"github.com/stacklok/mediator/internal/engine/actions/remediate/pull_request"
 	"github.com/stacklok/mediator/internal/engine/actions/remediate/rest"
 	engif "github.com/stacklok/mediator/internal/engine/interfaces"
 	"github.com/stacklok/mediator/internal/providers"
@@ -51,6 +52,13 @@ func NewRuleRemediator(rt *pb.RuleType, pbuild *providers.ProviderBuilder) (engi
 			return nil, fmt.Errorf("remediations engine missing gh_branch_protection configuration")
 		}
 		return gh_branch_protect.NewGhBranchProtectRemediator(ActionType, rem.GetGhBranchProtection(), pbuild)
+
+	case pull_request.RemediateType:
+		if rem.GetPullRequest() == nil {
+			return nil, fmt.Errorf("remediations engine missing pull request configuration")
+		}
+
+		return pull_request.NewPullRequestRemediate(ActionType, rem.GetPullRequest(), pbuild)
 	}
 
 	return nil, fmt.Errorf("unknown remediation type: %s", rem.GetType())
