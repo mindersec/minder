@@ -17,7 +17,7 @@ https://docs.stacklok.com/mediator/medic/overview.html
   -h, --help                     help for medic
       --identity-client string   Identity server client ID (default "mediator-cli")
       --identity-realm string    Identity server realm (default "stacklok")
-      --identity-url string      Identity server issuer URL (default "http://localhost:8081")
+      --identity-url string      Identity server issuer URL (default "https://auth.staging.stacklok.dev")
 ```
 
 ### SEE ALSO

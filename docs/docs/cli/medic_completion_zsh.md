@@ -48,7 +48,7 @@ medic completion zsh [flags]
       --grpc-port int            Server port (default 443)
       --identity-client string   Identity server client ID (default "mediator-cli")
       --identity-realm string    Identity server realm (default "stacklok")
-      --identity-url string      Identity server issuer URL (default "http://localhost:8081")
+      --identity-url string      Identity server issuer URL (default "https://auth.staging.stacklok.dev")
 ```
 
 ### SEE ALSO
