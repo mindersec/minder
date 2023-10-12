@@ -17,10 +17,28 @@ package config
 
 // IdentityConfig is the configuration for the identity provider
 type IdentityConfig struct {
+	Cli    CliIdentityConfig    `mapstructure:"cli"`
+	Server ServerIdentityConfig `mapstructure:"server"`
+}
+
+// CliIdentityConfig is the configuration for the identity provider in the mediator cli
+type CliIdentityConfig struct {
 	// IssuerUrl is the base URL where the identity server is running
 	IssuerUrl string `mapstructure:"issuer_url" default:"http://localhost:8081"`
 	// Realm is the Keycloak realm that the client belongs to
 	Realm string `mapstructure:"realm" default:"stacklok"`
 	// ClientId is the client ID that identifies the mediator CLI
 	ClientId string `mapstructure:"client_id" default:"mediator-cli"`
+}
+
+// ServerIdentityConfig is the configuration for the identity provider in mediator server
+type ServerIdentityConfig struct {
+	// IssuerUrl is the base URL where the identity server is running
+	IssuerUrl string `mapstructure:"issuer_url" default:"http://localhost:8081"`
+	// Realm is the Keycloak realm that the client belongs to
+	Realm string `mapstructure:"realm" default:"stacklok"`
+	// ClientId is the client ID that identifies the mediator server
+	ClientId string `mapstructure:"client_id" default:"mediator-server"`
+	// ClientSecret is the client secret for the mediator server
+	ClientSecret string `mapstructure:"client_secret" default:"secret"`
 }

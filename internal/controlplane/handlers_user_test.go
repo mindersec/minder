@@ -17,6 +17,9 @@ package controlplane
 import (
 	"context"
 	"database/sql"
+	"encoding/json"
+	"net/http"
+	"net/http/httptest"
 	"testing"
 	"time"
 
@@ -25,6 +28,7 @@ import (
 	"github.com/lestrrat-go/jwx/v2/jwt/openid"
 	"github.com/stretchr/testify/assert"
 	"github.com/stretchr/testify/require"
+	"golang.org/x/oauth2"
 	"google.golang.org/grpc/codes"
 	"google.golang.org/grpc/metadata"
 
@@ -36,6 +40,11 @@ import (
 	"github.com/stacklok/mediator/internal/db"
 	"github.com/stacklok/mediator/internal/events"
 	pb "github.com/stacklok/mediator/pkg/api/protobuf/go/mediator/v1"
+)
+
+const (
+	//nolint:gosec // not credentials, just an endpoint
+	tokenEndpoint = "/realms/stacklok/protocol/openid-connect/token"
 )
 
 func TestCreateUserDBMock(t *testing.T) {
@@ -281,21 +290,13 @@ func TestDeleteUserDBMock(t *testing.T) {
 	defer ctrl.Finish()
 
 	mockStore := mockdb.NewMockStore(ctrl)
+	mockJwtValidator := mockjwt.NewMockJwtValidator(ctrl)
 
-	request := &pb.DeleteUserRequest{Id: 1}
+	request := &pb.DeleteUserRequest{}
 
 	orgID := uuid.New()
 	projectID := uuid.New()
 
-	expectedUser := db.User{
-		ID:             1,
-		OrganizationID: orgID,
-		Email:          sql.NullString{String: "test@stacklok.com", Valid: true},
-		FirstName:      sql.NullString{String: "Foo", Valid: true},
-		LastName:       sql.NullString{String: "Bar", Valid: true},
-		CreatedAt:      time.Now(),
-		UpdatedAt:      time.Now(),
-	}
 	// Create a new context and set the claims value
 	ctx := auth.WithPermissionsContext(context.Background(), auth.UserPermissions{
 		UserId:         1,
@@ -306,12 +307,50 @@ func TestDeleteUserDBMock(t *testing.T) {
 			{RoleID: 1, IsAdmin: true, ProjectID: &projectID, OrganizationID: orgID}},
 	})
 
+	// Create header metadata
+	md := metadata.New(map[string]string{
+		"authorization": "bearer some-access-token",
+	})
+
+	// Create a new context with added header metadata
+	ctx = metadata.NewIncomingContext(ctx, md)
+
+	testServer := httptest.NewServer(http.HandlerFunc(func(w http.ResponseWriter, r *http.Request) {
+		switch r.URL.Path {
+		case tokenEndpoint:
+			data := oauth2.Token{
+				AccessToken: "some-token",
+			}
+			w.Header().Add("Content-Type", "application/json")
+			w.WriteHeader(http.StatusOK)
+			err := json.NewEncoder(w).Encode(data)
+			if err != nil {
+				t.Fatal(err)
+			}
+		case "/admin/realms/stacklok/users/subject1":
+			w.WriteHeader(http.StatusNoContent)
+		default:
+			t.Fatalf("Unexpected call to mock server endpoint %s", r.URL.Path)
+		}
+	}))
+	defer testServer.Close()
+
+	tokenResult, _ := openid.NewBuilder().Subject("subject1").Build()
+	mockJwtValidator.EXPECT().ParseAndValidate(gomock.Any()).Return(tokenResult, nil)
+
+	tx := sql.Tx{}
+	mockStore.EXPECT().BeginTransaction().Return(&tx, nil)
+	mockStore.EXPECT().GetQuerierWithTransaction(gomock.Any()).Return(mockStore)
 	mockStore.EXPECT().
-		GetUserByID(ctx, gomock.Any()).
-		Return(expectedUser, nil)
+		GetUserBySubject(gomock.Any(), "subject1").
+		Return(db.User{
+			OrganizationID: orgID,
+		}, nil)
 	mockStore.EXPECT().
-		DeleteUser(ctx, gomock.Any()).
+		DeleteOrganization(gomock.Any(), orgID).
 		Return(nil)
+	mockStore.EXPECT().Commit(gomock.Any())
+	mockStore.EXPECT().Rollback(gomock.Any())
 
 	crypeng := crypto.NewEngine("test")
 
@@ -319,7 +358,16 @@ func TestDeleteUserDBMock(t *testing.T) {
 		store: mockStore,
 		cfg: &config.Config{
 			Salt: config.DefaultConfigForTest().Salt,
+			Identity: config.IdentityConfig{
+				Server: config.ServerIdentityConfig{
+					IssuerUrl:    testServer.URL,
+					Realm:        "stacklok",
+					ClientId:     "client-id",
+					ClientSecret: "client-secret",
+				},
+			},
 		},
+		vldtr:        mockJwtValidator,
 		cryptoEngine: crypeng,
 	}
 
@@ -332,30 +380,36 @@ func TestDeleteUserDBMock(t *testing.T) {
 func TestDeleteUser_gRPC(t *testing.T) {
 	t.Parallel()
 
-	force := true
-
 	orgID := uuid.New()
 	projectID := uuid.New()
 
 	testCases := []struct {
 		name               string
 		req                *pb.DeleteUserRequest
-		buildStubs         func(store *mockdb.MockStore)
+		buildStubs         func(store *mockdb.MockStore, jwt *mockjwt.MockJwtValidator)
 		checkResponse      func(t *testing.T, res *pb.DeleteUserResponse, err error)
 		expectedStatusCode codes.Code
 	}{
 		{
 			name: "Success",
-			req: &pb.DeleteUserRequest{
-				Id:    1,
-				Force: &force,
-			},
-			buildStubs: func(store *mockdb.MockStore) {
+			req:  &pb.DeleteUserRequest{},
+			buildStubs: func(store *mockdb.MockStore, jwt *mockjwt.MockJwtValidator) {
+				tokenResult, _ := openid.NewBuilder().Subject("subject1").Build()
+				jwt.EXPECT().ParseAndValidate(gomock.Any()).Return(tokenResult, nil)
+
+				tx := sql.Tx{}
+				store.EXPECT().BeginTransaction().Return(&tx, nil)
+				store.EXPECT().GetQuerierWithTransaction(gomock.Any()).Return(store)
 				store.EXPECT().
-					GetUserByID(gomock.Any(), gomock.Any()).Return(db.User{}, nil).Times(1)
+					GetUserBySubject(gomock.Any(), "subject1").
+					Return(db.User{
+						OrganizationID: orgID,
+					}, nil)
 				store.EXPECT().
-					DeleteUser(gomock.Any(), gomock.Any()).Return(nil).
-					Times(1)
+					DeleteOrganization(gomock.Any(), orgID).
+					Return(nil)
+				store.EXPECT().Commit(gomock.Any())
+				store.EXPECT().Rollback(gomock.Any())
 			},
 			checkResponse: func(t *testing.T, res *pb.DeleteUserResponse, err error) {
 				t.Helper()
@@ -365,23 +419,6 @@ func TestDeleteUser_gRPC(t *testing.T) {
 				assert.Equal(t, &pb.DeleteUserResponse{}, res)
 			},
 			expectedStatusCode: codes.OK,
-		},
-		{
-			name: "EmptyRequest",
-			req: &pb.DeleteUserRequest{
-				Id: 0,
-			},
-			buildStubs: func(store *mockdb.MockStore) {
-				// No expectations, as CreateRole should not be called
-			},
-			checkResponse: func(t *testing.T, res *pb.DeleteUserResponse, err error) {
-				t.Helper()
-
-				// Assert the expected behavior when the request is empty
-				assert.Error(t, err)
-				assert.Nil(t, res)
-			},
-			expectedStatusCode: codes.InvalidArgument,
 		},
 	}
 	// Create a new context and set the claims value
@@ -394,6 +431,14 @@ func TestDeleteUser_gRPC(t *testing.T) {
 			{RoleID: 1, IsAdmin: true, ProjectID: &projectID, OrganizationID: orgID}},
 	})
 
+	// Create header metadata
+	md := metadata.New(map[string]string{
+		"authorization": "bearer some-access-token",
+	})
+
+	// Create a new context with added header metadata
+	ctx = metadata.NewIncomingContext(ctx, md)
+
 	for i := range testCases {
 		tc := testCases[i]
 		t.Run(tc.name, func(t *testing.T) {
@@ -403,8 +448,28 @@ func TestDeleteUser_gRPC(t *testing.T) {
 			defer ctrl.Finish()
 
 			mockStore := mockdb.NewMockStore(ctrl)
-			tc.buildStubs(mockStore)
 			mockJwtValidator := mockjwt.NewMockJwtValidator(ctrl)
+			tc.buildStubs(mockStore, mockJwtValidator)
+
+			testServer := httptest.NewServer(http.HandlerFunc(func(w http.ResponseWriter, r *http.Request) {
+				switch r.URL.Path {
+				case tokenEndpoint:
+					data := oauth2.Token{
+						AccessToken: "some-token",
+					}
+					w.Header().Add("Content-Type", "application/json")
+					w.WriteHeader(http.StatusOK)
+					err := json.NewEncoder(w).Encode(data)
+					if err != nil {
+						t.Fatal(err)
+					}
+				case "/admin/realms/stacklok/users/subject1":
+					w.WriteHeader(http.StatusNoContent)
+				default:
+					t.Fatalf("Unexpected call to mock server endpoint %s", r.URL.Path)
+				}
+			}))
+			defer testServer.Close()
 
 			evt, err := events.Setup()
 			require.NoError(t, err, "failed to setup eventer")
@@ -412,6 +477,14 @@ func TestDeleteUser_gRPC(t *testing.T) {
 				Salt: config.DefaultConfigForTest().Salt,
 				Auth: config.AuthConfig{
 					TokenKey: generateTokenKey(t),
+				},
+				Identity: config.IdentityConfig{
+					Server: config.ServerIdentityConfig{
+						IssuerUrl:    testServer.URL,
+						Realm:        "stacklok",
+						ClientId:     "client-id",
+						ClientSecret: "client-secret",
+					},
 				},
 			}, mockJwtValidator)
 			require.NoError(t, err, "failed to create test server")

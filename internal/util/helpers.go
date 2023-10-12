@@ -138,9 +138,9 @@ func GrpcForCommand(cmd *cobra.Command) (*grpc.ClientConn, error) {
 	insecureDefault := grpc_host == "localhost" || grpc_host == "127.0.0.1" || grpc_host == "::1"
 	allowInsecure := GetConfigValue("grpc_server.insecure", "grpc-insecure", cmd, insecureDefault).(bool)
 
-	issuerUrl := GetConfigValue("identity.issuer_url", "identity-url", cmd, "https://auth.staging.stacklok.dev").(string)
-	realm := GetConfigValue("identity.realm", "identity-realm", cmd, "stacklok").(string)
-	clientId := GetConfigValue("identity.client_id", "identity-client", cmd, "mediator-cli").(string)
+	issuerUrl := GetConfigValue("identity.cli.issuer_url", "identity-url", cmd, "https://auth.staging.stacklok.dev").(string)
+	realm := GetConfigValue("identity.cli.realm", "identity-realm", cmd, "stacklok").(string)
+	clientId := GetConfigValue("identity.cli.client_id", "identity-client", cmd, "mediator-cli").(string)
 
 	return GetGrpcConnection(grpc_host, grpc_port, allowInsecure, issuerUrl, realm, clientId)
 }
@@ -206,6 +206,28 @@ func SaveCredentials(tokens OpenIdCredentials) (string, error) {
 		return "", fmt.Errorf("error writing credentials to file: %v", err)
 	}
 	return filePath, nil
+}
+
+// RemoveCredentials removes the local credentials file
+func RemoveCredentials() error {
+	// remove credentials file
+	xdgConfigHome := os.Getenv("XDG_CONFIG_HOME")
+
+	// just delete token from credentials file
+	if xdgConfigHome == "" {
+		homeDir, err := os.UserHomeDir()
+		if err != nil {
+			return fmt.Errorf("error getting home directory: %v", err)
+		}
+		xdgConfigHome = filepath.Join(homeDir, ".config")
+	}
+
+	filePath := filepath.Join(xdgConfigHome, "mediator", "credentials.json")
+	err := os.Remove(filePath)
+	if err != nil {
+		return fmt.Errorf("error removing credentials file: %v", err)
+	}
+	return nil
 }
 
 // GetToken retrieves the access token from the credentials file and refreshes it if necessary

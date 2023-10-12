@@ -45,9 +45,15 @@ database:
   sslmode: disable
 
 identity:
-  issuer_url: http://localhost:8081
-  realm: stacklok
-  client_id: mediator-cli
+  cli:
+    issuer_url: http://localhost:8081
+    realm: stacklok
+    client_id: mediator-cli
+  server:
+    issuer_url: http://localhost:8081
+    realm: stacklok
+    client_id: mediator-server
+    client_secret: secret
 
 # Crypto (these should be ultimately stored in a secure vault)
 # sample keys can be generated with:
