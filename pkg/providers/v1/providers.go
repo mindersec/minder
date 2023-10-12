@@ -100,6 +100,9 @@ type GitHub interface {
 	ListHooks(ctx context.Context, owner, repo string) ([]*github.Hook, error)
 	DeleteHook(ctx context.Context, owner, repo string, id int64) error
 	CreateHook(ctx context.Context, owner, repo string, hook *github.Hook) (*github.Hook, error)
+	CreateSecurityAdvisory(ctx context.Context, owner, repo, severity, summary, description string,
+		v []*github.AdvisoryVulnerability) (string, error)
+	CloseSecurityAdvisory(ctx context.Context, owner, repo, id string) error
 }
 
 // ParseAndValidate parses the given provider configuration and validates it.
