@@ -79,3 +79,26 @@ def:
             input.profile.apply_if_file != ""
             not file.exists(input.profile.apply_if_file)
         }
+  remediate:
+    type: pull_request
+    pull_request:
+      title: "Add Dependabot configuration for {{.Profile.package_ecosystem }}"
+      body: |
+        This is a Mediator automated pull request.
+        
+        This pull request adds a Dependabot configuration to the repository to handle
+        package updates for {{.Profile.package_ecosystem }}.
+        
+        For more information, see
+        https://docs.github.com/en/code-security/dependabot/dependabot-version-updates/configuration-options-for-the-dependabot.yml-file
+      contents:
+        - path: .github/dependabot.yml
+          action: replace
+          content: |
+            version: 2
+            updates:
+              - package-ecosystem: "{{.Profile.package_ecosystem }}"
+                directory: "/"
+                schedule:
+                  interval: "{{.Profile.schedule_interval }}"
+                open-pull-requests-limit: 10

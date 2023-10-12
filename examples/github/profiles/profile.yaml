@@ -25,7 +25,9 @@ repository:
       default_workflow_permissions: read
       can_approve_pull_request_reviews: false
   - type: codeql_enabled
-    def: {}
+    def:
+      languages: [go, javascript, typescript]
+      schedule_interval: '30 4-6 * * *'
   - type: actions_check_pinned_tags
     def: {}
   - type: dependabot_configured
