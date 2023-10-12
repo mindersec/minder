@@ -40,7 +40,6 @@ import (
 	"google.golang.org/grpc/codes"
 	"google.golang.org/grpc/status"
 
-	"github.com/stacklok/mediator/internal/config"
 	mcrypto "github.com/stacklok/mediator/internal/crypto"
 	"github.com/stacklok/mediator/internal/util"
 	"github.com/stacklok/mediator/internal/util/cli"
@@ -74,14 +73,14 @@ will be saved to $XDG_CONFIG_HOME/mediator/credentials.json`,
 	},
 	Run: func(cmd *cobra.Command, args []string) {
 		ctx := context.Background()
-		cfg, err := config.ReadConfigFromViper(viper.GetViper())
-		util.ExitNicelyOnError(err, "unable to read config")
 
-		clientID := cfg.Identity.ClientId
+		issuerUrlStr := util.GetConfigValue("identity.issuer_url", "identity-url", cmd, "https://auth.staging.stacklok.dev").(string)
+		realm := util.GetConfigValue("identity.realm", "identity-realm", cmd, "stacklok").(string)
+		clientID := util.GetConfigValue("identity.client_id", "identity-client", cmd, "mediator-cli").(string)
 
-		parsedURL, err := url.Parse(cfg.Identity.IssuerUrl)
+		parsedURL, err := url.Parse(issuerUrlStr)
 		util.ExitNicelyOnError(err, "Error parsing issuer URL")
-		issuerUrl := parsedURL.JoinPath("realms", cfg.Identity.Realm)
+		issuerUrl := parsedURL.JoinPath("realms", realm)
 		scopes := []string{"openid"}
 		callbackPath := "/auth/callback"
 

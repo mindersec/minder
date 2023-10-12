@@ -30,7 +30,6 @@ import (
 	"github.com/spf13/cobra"
 	"github.com/spf13/viper"
 
-	"github.com/stacklok/mediator/internal/config"
 	"github.com/stacklok/mediator/internal/util"
 	"github.com/stacklok/mediator/internal/util/cli"
 )
@@ -60,13 +59,13 @@ var auth_logoutCmd = &cobra.Command{
 		err := os.Remove(filePath)
 		util.ExitNicelyOnError(err, "Error removing credentials file")
 
-		cfg, err := config.ReadConfigFromViper(viper.GetViper())
-		util.ExitNicelyOnError(err, "Error reading config")
+		issuerUrlStr := util.GetConfigValue("identity.issuer_url", "identity-url", cmd, "https://auth.staging.stacklok.dev").(string)
+		realm := util.GetConfigValue("identity.realm", "identity-realm", cmd, "stacklok").(string)
 
-		parsedURL, err := url.Parse(cfg.Identity.IssuerUrl)
+		parsedURL, err := url.Parse(issuerUrlStr)
 		util.ExitNicelyOnError(err, "Error parsing issuer URL")
 
-		logoutUrl := parsedURL.JoinPath("realms", cfg.Identity.Realm, "protocol/openid-connect/logout")
+		logoutUrl := parsedURL.JoinPath("realms", realm, "protocol/openid-connect/logout")
 		cli.PrintCmd(cmd, cli.SuccessBanner.Render("You have successfully logged out of the CLI."))
 		cli.PrintCmd(cmd, "If you would like to log out of the browser, you can visit %s", logoutUrl.String())
 	},
