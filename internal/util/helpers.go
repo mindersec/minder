@@ -138,7 +138,7 @@ func GrpcForCommand(cmd *cobra.Command) (*grpc.ClientConn, error) {
 	insecureDefault := grpc_host == "localhost" || grpc_host == "127.0.0.1" || grpc_host == "::1"
 	allowInsecure := GetConfigValue("grpc_server.insecure", "grpc-insecure", cmd, insecureDefault).(bool)
 
-	issuerUrl := GetConfigValue("identity.issuer_url", "identity-url", cmd, "http://localhost:8081").(string)
+	issuerUrl := GetConfigValue("identity.issuer_url", "identity-url", cmd, "https://auth.staging.stacklok.dev").(string)
 	realm := GetConfigValue("identity.realm", "identity-realm", cmd, "stacklok").(string)
 	clientId := GetConfigValue("identity.client_id", "identity-client", cmd, "mediator-cli").(string)
 
