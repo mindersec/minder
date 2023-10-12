@@ -27,11 +27,11 @@ import (
 	"google.golang.org/protobuf/types/known/structpb"
 
 	"github.com/stacklok/mediator/internal/db"
+	"github.com/stacklok/mediator/internal/engine/actions/remediate"
 	evalerrors "github.com/stacklok/mediator/internal/engine/errors"
 	"github.com/stacklok/mediator/internal/engine/eval"
 	"github.com/stacklok/mediator/internal/engine/ingester"
 	engif "github.com/stacklok/mediator/internal/engine/interfaces"
-	"github.com/stacklok/mediator/internal/engine/remediate"
 	"github.com/stacklok/mediator/internal/providers"
 	mediatorv1 "github.com/stacklok/mediator/pkg/api/protobuf/go/mediator/v1"
 )

@@ -20,9 +20,9 @@ package remediate
 import (
 	"fmt"
 
+	"github.com/stacklok/mediator/internal/engine/actions/remediate/noop"
+	"github.com/stacklok/mediator/internal/engine/actions/remediate/rest"
 	engif "github.com/stacklok/mediator/internal/engine/interfaces"
-	"github.com/stacklok/mediator/internal/engine/remediate/noop"
-	"github.com/stacklok/mediator/internal/engine/remediate/rest"
 	"github.com/stacklok/mediator/internal/providers"
 	pb "github.com/stacklok/mediator/pkg/api/protobuf/go/mediator/v1"
 )
