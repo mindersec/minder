@@ -60,7 +60,7 @@ func TestNewRuleRemediator(t *testing.T) {
 		name        string
 		ruleType    *pb.RuleType
 		wantError   bool
-		wantType    engif.Remediator
+		wantType    engif.Action
 		provBuilder *providers.ProviderBuilder
 	}{
 		{

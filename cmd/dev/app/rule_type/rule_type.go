@@ -34,7 +34,7 @@ import (
 	"github.com/stacklok/mediator/internal/engine"
 	"github.com/stacklok/mediator/internal/engine/errors"
 	"github.com/stacklok/mediator/internal/engine/eval/rego"
-	"github.com/stacklok/mediator/internal/engine/interfaces"
+	engif "github.com/stacklok/mediator/internal/engine/interfaces"
 	"github.com/stacklok/mediator/internal/providers"
 	"github.com/stacklok/mediator/internal/util/jsonyaml"
 	mediatorv1 "github.com/stacklok/mediator/pkg/api/protobuf/go/mediator/v1"
@@ -139,13 +139,13 @@ func testCmdRun(cmd *cobra.Command, _ []string) error {
 		return fmt.Errorf("no rules found with type %s", rt.Name)
 	}
 
-	return runEvaluationForRules(eng, ent, interfaces.ActionOptFromString(p.Remediate), rules)
+	return runEvaluationForRules(eng, ent, p, rules)
 }
 
 func runEvaluationForRules(
 	eng *engine.RuleTypeEngine,
 	ent protoreflect.ProtoMessage,
-	rem interfaces.ActionOpt,
+	profile *mediatorv1.Profile,
 	frags []*mediatorv1.Profile_Rule,
 ) error {
 	for idx := range frags {
@@ -167,14 +167,24 @@ func runEvaluationForRules(
 		if frag.GetParams() != nil {
 			params = frag.GetParams().AsMap()
 		}
+		evalStatus := &engine.EvalStatusParams{
+			Actions: map[string]engif.ActionOpt{
+				"remediate": engif.ActionOptFromString(profile.Remediate),
+				"alert":     engif.ActionOptFromString(profile.Alert),
+			},
+		}
+		// Perform rule evaluation
+		eng.Eval(context.Background(), ent, def, params, evalStatus)
 
-		evalErr, remediateErr := eng.Eval(context.Background(), ent, def, params, rem)
-		if errors.IsRemediateFatalError(remediateErr) {
-			fmt.Printf("Remediation failed with fatal error: %s", remediateErr)
+		// Perform the actions, if any
+		eng.Actions(context.Background(), ent, def, params, evalStatus)
+
+		if errors.IsActionFatalError(evalStatus.ActionsErr.RemediateErr) {
+			fmt.Printf("Remediation failed with fatal error: %s", evalStatus.ActionsErr.RemediateErr)
 		}
 
-		if evalErr != nil {
-			return fmt.Errorf("error evaluating rule type: %w", evalErr)
+		if evalStatus.EvalErr != nil {
+			return fmt.Errorf("error evaluating rule type: %w", evalStatus.EvalErr)
 		}
 
 		fmt.Printf("The rule type is valid and the entity conforms to it\n")

@@ -48,28 +48,34 @@ func NewErrEvaluationSkipSilently(sfmt string, args ...any) error {
 	return fmt.Errorf("%w: %s", ErrEvaluationSkipSilently, msg)
 }
 
-// ErrRemediationSkipped is an error code that indicates that the remediation was not performed at all because
-// the evaluation passed and the remediation was not needed.
-var ErrRemediationSkipped = errors.New("remediation not performed")
+// ErrActionSkipped is an error code that indicates that the action was not performed at all because
+// the evaluation passed and the action was not needed.
+var ErrActionSkipped = errors.New("action not performed")
 
-// IsRemediateInformativeError returns true if the error is an informative error that should not be reported to the user
-func IsRemediateInformativeError(err error) bool {
-	return errors.Is(err, ErrRemediationSkipped) || errors.Is(err, ErrRemediationNotAvailable)
+// IsActionInformativeError returns true if the error is an informative error that should not be reported to the user
+func IsActionInformativeError(err error) bool {
+	return errors.Is(err, ErrActionSkipped) || errors.Is(err, ErrActionNotAvailable)
 }
 
-// IsRemediateFatalError returns true if the error is a fatal error that should stop be reported to the user
-func IsRemediateFatalError(err error) bool {
-	return err != nil && !IsRemediateInformativeError(err)
+// IsActionFatalError returns true if the error is a fatal error that should stop be reported to the user
+func IsActionFatalError(err error) bool {
+	return err != nil && !IsActionInformativeError(err)
 }
 
-// ErrRemediateFailed is an error code that indicates that the remediation was attempted but failed.
-var ErrRemediateFailed = errors.New("remediation failed")
+// ErrActionFailed is an error code that indicates that the action was attempted but failed.
+var ErrActionFailed = errors.New("action failed")
 
-// NewErrRemediationFailed creates a new remediation error
-func NewErrRemediationFailed(sfmt string, args ...any) error {
+// NewErrActionFailed creates a new action error
+func NewErrActionFailed(sfmt string, args ...any) error {
 	msg := fmt.Sprintf(sfmt, args...)
-	return fmt.Errorf("%w: %s", ErrRemediateFailed, msg)
+	return fmt.Errorf("%w: %s", ErrActionFailed, msg)
 }
 
-// ErrRemediationNotAvailable is an error code that indicates that the remediation was not available for this rule_type
-var ErrRemediationNotAvailable = errors.New("remediation not available")
+// ErrActionNotAvailable is an error code that indicates that the action was not available for this rule_type
+var ErrActionNotAvailable = errors.New("action not available")
+
+// ActionsError is the error wrapper for actions
+type ActionsError struct {
+	RemediateErr error
+	AlertErr     error
+}

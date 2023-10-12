@@ -57,18 +57,19 @@ var (
 
 // Remediator keeps the status for a rule type that uses REST remediation
 type Remediator struct {
-	cli provifv1.REST
-
+	actionType       string
 	method           string
+	cli              provifv1.REST
 	endpointTemplate *template.Template
 	bodyTemplate     *template.Template
 }
 
 // NewRestRemediate creates a new REST rule data ingest engine
-func NewRestRemediate(
-	restCfg *pb.RestType,
-	pbuild *providers.ProviderBuilder,
-) (*Remediator, error) {
+func NewRestRemediate(actionType string, restCfg *pb.RestType, pbuild *providers.ProviderBuilder) (*Remediator, error) {
+	if actionType == "" {
+		return nil, fmt.Errorf("action type cannot be empty")
+	}
+
 	endpointTmpl, err := util.ParseNewTemplate(&restCfg.Endpoint, "endpoint")
 	if err != nil {
 		return nil, fmt.Errorf("cannot parse endpoint template: %w", err)
@@ -91,6 +92,7 @@ func NewRestRemediate(
 
 	return &Remediator{
 		cli:              cli,
+		actionType:       actionType,
 		method:           method,
 		endpointTemplate: endpointTmpl,
 		bodyTemplate:     bodyTmpl,
@@ -101,14 +103,50 @@ func NewRestRemediate(
 type EndpointTemplateParams struct {
 	// Entity is the entity to be evaluated
 	Entity any
-	// Profile are the parameters to be used in the template
+	// Profile is the parameters to be used in the template
 	Profile map[string]any
 	// Params are the rule instance parameters
 	Params map[string]any
 }
 
-// Remediate actually performs the remediation
-func (r *Remediator) Remediate(
+// Type returns the action type of the remediation engine
+func (r *Remediator) Type() string {
+	return r.actionType
+}
+
+// GetState returns the alert action state read from the profile
+func (_ *Remediator) GetState(p *pb.Profile) interfaces.ActionOpt {
+	return interfaces.ActionOptFromString(p.Remediate)
+}
+
+// IsSkippable returns true if the remediation is skippable
+func (_ *Remediator) IsSkippable(remAction interfaces.ActionOpt, evalErr error) bool {
+	var skipRemediation bool
+
+	switch remAction {
+	case interfaces.ActionOptOff:
+		// Remediation is off, skip
+		return true
+	case interfaces.ActionOptUnknown:
+		// Remediation is unknown, skip
+		log.Printf("unknown remediation action, check your profile definition")
+		return true
+	case interfaces.ActionOptDryRun, interfaces.ActionOptOn:
+		// Remediation is on or dry-run, do not skip yet. Check the evaluation error
+		skipRemediation =
+			// rule evaluation was skipped, skip remediation
+			errors.Is(evalErr, enginerr.ErrEvaluationSkipped) ||
+				// rule evaluation was skipped silently, skip remediation
+				errors.Is(evalErr, enginerr.ErrEvaluationSkipSilently) ||
+				// rule evaluation had no error, skip remediation
+				evalErr == nil
+	}
+	// everything else, do not skip
+	return skipRemediation
+}
+
+// Do perform the remediation
+func (r *Remediator) Do(
 	ctx context.Context,
 	remAction interfaces.ActionOpt,
 	ent protoreflect.ProtoMessage,
@@ -212,7 +250,7 @@ func httpErrorCodeToErr(httpCode int) error {
 	}
 
 	if err != nil {
-		return enginerr.NewErrRemediationFailed("remediation failed: %s", err)
+		return enginerr.NewErrActionFailed("remediation failed: %s", err)
 	}
 
 	return nil

@@ -22,6 +22,8 @@ import (
 
 	billy "github.com/go-git/go-billy/v5"
 	"google.golang.org/protobuf/reflect/protoreflect"
+
+	pb "github.com/stacklok/mediator/pkg/api/protobuf/go/mediator/v1"
 )
 
 // Ingester is the interface for a rule type ingester
@@ -81,12 +83,10 @@ func ActionOptFromString(s *string) ActionOpt {
 	return ActionOptUnknown
 }
 
-// Remediator is the interface for a rule type remediator
-type Remediator interface {
-	Remediate(
-		ctx context.Context,
-		remAction ActionOpt,
-		ent protoreflect.ProtoMessage,
-		pol map[string]any,
-		params map[string]any) error
+// Action is the interface for a rule type action
+type Action interface {
+	Type() string
+	GetState(*pb.Profile) ActionOpt
+	IsSkippable(ActionOpt, error) bool
+	Do(context.Context, ActionOpt, protoreflect.ProtoMessage, map[string]any, map[string]any) error
 }

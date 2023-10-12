@@ -13,40 +13,40 @@
 // limitations under the License.
 // Package rule provides the CLI subcommand for managing rules
 
-// Package remediate provides necessary interfaces and implementations for
-// remediating rules.
-package remediate
+// Package alert provides necessary interfaces and implementations for
+// processing alerts.
+package alert
 
 import (
 	"fmt"
 
-	"github.com/stacklok/mediator/internal/engine/actions/remediate/noop"
-	"github.com/stacklok/mediator/internal/engine/actions/remediate/rest"
+	"github.com/stacklok/mediator/internal/engine/actions/alert/noop"
+	"github.com/stacklok/mediator/internal/engine/actions/alert/security_advisory"
 	engif "github.com/stacklok/mediator/internal/engine/interfaces"
 	"github.com/stacklok/mediator/internal/providers"
 	pb "github.com/stacklok/mediator/pkg/api/protobuf/go/mediator/v1"
 )
 
 const (
-	// ActionType is the action type of the remediation engine
-	ActionType = "remediate"
+	// ActionType is the action type of the alert engine
+	ActionType = "alert"
 )
 
-// NewRuleRemediator creates a new rule remediator
-func NewRuleRemediator(rt *pb.RuleType, pbuild *providers.ProviderBuilder) (engif.Action, error) {
-	rem := rt.Def.GetRemediate()
-	if rem == nil {
-		return noop.NewNoopRemediate(ActionType)
+// NewRuleAlert creates a new rule alert engine
+func NewRuleAlert(rt *pb.RuleType, pbuild *providers.ProviderBuilder) (engif.Action, error) {
+	alertCfg := rt.Def.GetAlert()
+	if alertCfg == nil {
+		return noop.NewNoopAlert(ActionType)
 	}
 
 	// nolint:revive // let's keep the switch here, it would be nicer to extend a switch in the future
-	switch rem.GetType() {
-	case rest.RemediateType:
-		if rem.GetRest() == nil {
-			return nil, fmt.Errorf("remediations engine missing rest configuration")
+	switch alertCfg.GetType() {
+	case security_advisory.SecurityAdvisoryType:
+		if alertCfg.GetSecurityAdvisory() == nil {
+			return nil, fmt.Errorf("alert engine missing security-advisory configuration")
 		}
-		return rest.NewRestRemediate(ActionType, rem.GetRest(), pbuild)
+		return security_advisory.NewSecurityAdvisoryAlert(ActionType, alertCfg.GetSecurityAdvisory(), pbuild)
 	}
 
-	return nil, fmt.Errorf("unknown remediation type: %s", rem.GetType())
+	return nil, fmt.Errorf("unknown alert type: %s", alertCfg.GetType())
 }
