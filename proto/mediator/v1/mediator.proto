@@ -1263,8 +1263,31 @@ message RuleType {
                 string patch = 1;
             }
 
+            // the name stutters a bit but we already use a PullRequest message for handling PR entities
+            message PullRequestRemediation {
+                message Content {
+                    // the file to patch
+                    string path = 1;
+                    // how to patch the file. For now, only replace is supported
+                    string action = 2;
+                    // the content of the file
+                    string content = 4;
+                    // the GIT mode of the file. Not UNIX mode! String because the GH API also uses strings
+                    // the usual modes are: 100644 for regular files, 100755 for executable files and
+                    // 040000 for submodules (which we don't use but now you know the meaning of the 1 in 100644)
+                    optional string mode = 3;
+                }
+
+                // the title of the PR
+                string title = 1;
+                // the body of the PR
+                string body = 2;
+                repeated Content contents = 3;
+            }
+
             optional RestType rest = 2;
             optional GhBranchProtectionType gh_branch_protection = 3;
+            optional PullRequestRemediation pull_request = 4;
         }
         Remediate remediate = 6;
 

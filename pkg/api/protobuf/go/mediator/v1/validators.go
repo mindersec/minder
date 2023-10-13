@@ -173,3 +173,51 @@ func validateRule(r *Profile_Rule) error {
 
 	return nil
 }
+
+var _ Validator = (*RuleType_Definition_Remediate_PullRequestRemediation)(nil)
+
+// Validate validates a rule definition
+func (prRem *RuleType_Definition_Remediate_PullRequestRemediation) Validate() error {
+	if prRem == nil {
+		return errors.New("pull request remediation is nil")
+	}
+
+	if prRem.Title == "" {
+		return errors.New("title is required")
+	}
+
+	if prRem.Body == "" {
+		return errors.New("body is required")
+	}
+
+	if len(prRem.Contents) == 0 {
+		return errors.New("contents are required")
+	}
+
+	for i := range prRem.Contents {
+		cnt := prRem.Contents[i]
+		if cnt == nil {
+			return fmt.Errorf("content (index %d) is nil", i)
+		}
+		if err := cnt.Validate(); err != nil {
+			return err
+		}
+	}
+
+	return nil
+}
+
+var _ Validator = (*RuleType_Definition_Remediate_PullRequestRemediation_Content)(nil)
+
+// Validate validates a pull request remediation content
+func (prContent *RuleType_Definition_Remediate_PullRequestRemediation_Content) Validate() error {
+	if prContent.Path == "" {
+		return fmt.Errorf("content path is required")
+	}
+
+	if prContent.Content == "" {
+		return fmt.Errorf("content is required")
+	}
+
+	return nil
+}

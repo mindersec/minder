@@ -118,6 +118,8 @@
     - [RuleType.Definition.Ingest](#mediator-v1-RuleType-Definition-Ingest)
     - [RuleType.Definition.Remediate](#mediator-v1-RuleType-Definition-Remediate)
     - [RuleType.Definition.Remediate.GhBranchProtectionType](#mediator-v1-RuleType-Definition-Remediate-GhBranchProtectionType)
+    - [RuleType.Definition.Remediate.PullRequestRemediation](#mediator-v1-RuleType-Definition-Remediate-PullRequestRemediation)
+    - [RuleType.Definition.Remediate.PullRequestRemediation.Content](#mediator-v1-RuleType-Definition-Remediate-PullRequestRemediation-Content)
     - [SignatureVerification](#mediator-v1-SignatureVerification)
     - [StoreProviderTokenRequest](#mediator-v1-StoreProviderTokenRequest)
     - [StoreProviderTokenResponse](#mediator-v1-StoreProviderTokenResponse)
@@ -1976,6 +1978,7 @@ Ingest defines how the data is ingested.
 | type | [string](#string) |  |  |
 | rest | [RestType](#mediator-v1-RestType) | optional |  |
 | gh_branch_protection | [RuleType.Definition.Remediate.GhBranchProtectionType](#mediator-v1-RuleType-Definition-Remediate-GhBranchProtectionType) | optional |  |
+| pull_request | [RuleType.Definition.Remediate.PullRequestRemediation](#mediator-v1-RuleType-Definition-Remediate-PullRequestRemediation) | optional |  |
 
 
 
@@ -1991,6 +1994,41 @@ Ingest defines how the data is ingested.
 | Field | Type | Label | Description |
 | ----- | ---- | ----- | ----------- |
 | patch | [string](#string) |  |  |
+
+
+
+
+
+
+<a name="mediator-v1-RuleType-Definition-Remediate-PullRequestRemediation"></a>
+
+### RuleType.Definition.Remediate.PullRequestRemediation
+the name stutters a bit but we already use a PullRequest message for handling PR entities
+
+
+| Field | Type | Label | Description |
+| ----- | ---- | ----- | ----------- |
+| title | [string](#string) |  | the title of the PR |
+| body | [string](#string) |  | the body of the PR |
+| contents | [RuleType.Definition.Remediate.PullRequestRemediation.Content](#mediator-v1-RuleType-Definition-Remediate-PullRequestRemediation-Content) | repeated |  |
+
+
+
+
+
+
+<a name="mediator-v1-RuleType-Definition-Remediate-PullRequestRemediation-Content"></a>
+
+### RuleType.Definition.Remediate.PullRequestRemediation.Content
+
+
+
+| Field | Type | Label | Description |
+| ----- | ---- | ----- | ----------- |
+| path | [string](#string) |  | the file to patch |
+| action | [string](#string) |  | how to patch the file. For now, only replace is supported |
+| content | [string](#string) |  | the content of the file |
+| mode | [string](#string) | optional | the GIT mode of the file. Not UNIX mode! String because the GH API also uses strings the usual modes are: 100644 for regular files, 100755 for executable files and 040000 for submodules (which we don&#39;t use but now you know the meaning of the 1 in 100644) |
 
 
 
