@@ -162,7 +162,7 @@ type RuleTypeEngine struct {
 	// reval is the rule evaluator
 	reval engif.Evaluator
 
-	// ra is the rule actions engine
+	// rae is the rule actions engine
 	rae *actions.RuleActionsEngine
 
 	rval *RuleValidator
