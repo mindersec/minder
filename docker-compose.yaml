@@ -113,6 +113,7 @@ services:
     environment:
       KEYCLOAK_ADMIN: admin
       KEYCLOAK_ADMIN_PASSWORD: admin
+      KC_MEDIATOR_SERVER_SECRET: secret
     ports:
       - "8081:8080"
     volumes:

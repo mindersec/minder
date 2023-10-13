@@ -84,15 +84,20 @@ var serveCmd = &cobra.Command{
 		}
 
 		// Identity
-		parsedURL, err := url.Parse(cfg.Identity.IssuerUrl)
+		parsedURL, err := url.Parse(cfg.Identity.Server.IssuerUrl)
 		if err != nil {
 			return fmt.Errorf("failed to parse issuer URL: %w\n", err)
 		}
 
-		jwksUrl := parsedURL.JoinPath("realms", cfg.Identity.Realm, "protocol/openid-connect/certs")
+		jwksUrl := parsedURL.JoinPath("realms", cfg.Identity.Server.Realm, "protocol/openid-connect/certs")
 		vldtr, err := auth.NewJwtValidator(ctx, jwksUrl.String())
 		if err != nil {
 			return fmt.Errorf("failed to fetch and cache identity provider JWKS: %w\n", err)
+		}
+
+		err = controlplane.SubscribeToIdentityEvents(ctx, store, cfg)
+		if err != nil {
+			return fmt.Errorf("unable to subscribe to identity server events: %w", err)
 		}
 
 		s, err := controlplane.NewServer(store, evt, cfg, vldtr)

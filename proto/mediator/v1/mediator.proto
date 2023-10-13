@@ -340,7 +340,7 @@ service UserService {
 
     rpc DeleteUser (DeleteUserRequest) returns (DeleteUserResponse) {
         option (google.api.http) = {
-            delete: "/api/v1/user/{id}"
+            delete: "/api/v1/user"
         };
 
         option (rpc_options) = {
@@ -768,8 +768,6 @@ message CreateUserResponse {
 }
 
 message DeleteUserRequest {
-    int32 id = 1;
-    optional bool force = 2;
 }
 
 message DeleteUserResponse {

@@ -463,12 +463,6 @@ DeleteRuleTypeResponse is the response to delete a rule type.
 
 
 
-| Field | Type | Label | Description |
-| ----- | ---- | ----- | ----------- |
-| id | [int32](#int32) |  |  |
-| force | [bool](#bool) | optional |  |
-
-
 
 
 

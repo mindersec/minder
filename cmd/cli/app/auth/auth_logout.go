@@ -25,7 +25,6 @@ import (
 	"fmt"
 	"net/url"
 	"os"
-	"path/filepath"
 
 	"github.com/spf13/cobra"
 	"github.com/spf13/viper"
@@ -45,22 +44,12 @@ var auth_logoutCmd = &cobra.Command{
 		}
 	},
 	Run: func(cmd *cobra.Command, args []string) {
-		// remove credentials file
-		xdgConfigHome := os.Getenv("XDG_CONFIG_HOME")
+		err := util.RemoveCredentials()
+		util.ExitNicelyOnError(err, "Error removing credentials")
 
-		// just delete token from credentials file
-		if xdgConfigHome == "" {
-			homeDir, err := os.UserHomeDir()
-			util.ExitNicelyOnError(err, "Error getting home directory")
-			xdgConfigHome = filepath.Join(homeDir, ".config")
-		}
-
-		filePath := filepath.Join(xdgConfigHome, "mediator", "credentials.json")
-		err := os.Remove(filePath)
-		util.ExitNicelyOnError(err, "Error removing credentials file")
-
-		issuerUrlStr := util.GetConfigValue("identity.issuer_url", "identity-url", cmd, "https://auth.staging.stacklok.dev").(string)
-		realm := util.GetConfigValue("identity.realm", "identity-realm", cmd, "stacklok").(string)
+		issuerUrlStr := util.GetConfigValue("identity.cli.issuer_url", "identity-url", cmd,
+			"https://auth.staging.stacklok.dev").(string)
+		realm := util.GetConfigValue("identity.cli.realm", "identity-realm", cmd, "stacklok").(string)
 
 		parsedURL, err := url.Parse(issuerUrlStr)
 		util.ExitNicelyOnError(err, "Error parsing issuer URL")

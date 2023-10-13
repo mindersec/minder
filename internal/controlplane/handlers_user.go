@@ -19,10 +19,13 @@ import (
 	"database/sql"
 	"encoding/json"
 	"errors"
+	"net/http"
+	"net/url"
 
-	"github.com/go-playground/validator/v10"
 	"github.com/google/uuid"
 	gauth "github.com/grpc-ecosystem/go-grpc-middleware/v2/interceptors/auth"
+	"golang.org/x/oauth2"
+	"golang.org/x/oauth2/clientcredentials"
 	"google.golang.org/grpc/codes"
 	"google.golang.org/grpc/status"
 	"google.golang.org/protobuf/types/known/timestamppb"
@@ -137,41 +140,60 @@ func (s *Server) CreateUser(ctx context.Context,
 	}, nil
 }
 
-type deleteUserValidation struct {
-	Id int32 `db:"id" validate:"required"`
-}
-
-// DeleteUser is a service for deleting an user
+// DeleteUser is a service for user self deletion
 func (s *Server) DeleteUser(ctx context.Context,
-	in *pb.DeleteUserRequest) (*pb.DeleteUserResponse, error) {
-	validator := validator.New()
-	err := validator.Struct(deleteUserValidation{Id: in.Id})
+	_ *pb.DeleteUserRequest) (*pb.DeleteUserResponse, error) {
+
+	tokenString, err := gauth.AuthFromMD(ctx, "bearer")
 	if err != nil {
-		return nil, status.Errorf(codes.InvalidArgument, "invalid argument: %s", err.Error())
+		return nil, status.Errorf(codes.InvalidArgument, "no auth token: %v", err)
 	}
 
-	// first check if the user exists and is not protected
-	user, err := s.store.GetUserByID(ctx, in.Id)
+	token, err := s.vldtr.ParseAndValidate(tokenString)
 	if err != nil {
-		if errors.Is(err, sql.ErrNoRows) {
-			return nil, status.Error(codes.NotFound, "user not found")
-		}
-		return nil, status.Errorf(codes.Internal, "failed to get user: %s", err)
+		return nil, status.Errorf(codes.Unauthenticated, "failed to parse bearer token: %v", err)
 	}
 
-	// check if user is authorized
-	if err := AuthorizedOnOrg(ctx, user.OrganizationID); err != nil {
-		return nil, err
-	}
+	subject := token.Subject()
 
-	if in.Force == nil {
-		isProtected := false
-		in.Force = &isProtected
-	}
-
-	err = s.store.DeleteUser(ctx, in.Id)
+	parsedURL, err := url.Parse(s.cfg.Identity.Server.IssuerUrl)
 	if err != nil {
-		return nil, status.Errorf(codes.Internal, "failed to delete user: %s", err)
+		return nil, status.Errorf(codes.Internal, "failed to parse issuer URL: %v", err)
+	}
+
+	tokenUrl := parsedURL.JoinPath("realms", s.cfg.Identity.Server.Realm, "protocol/openid-connect/token")
+
+	clientCredentials := clientcredentials.Config{
+		ClientID:     s.cfg.Identity.Server.ClientId,
+		ClientSecret: s.cfg.Identity.Server.ClientSecret,
+		TokenURL:     tokenUrl.String(),
+	}
+
+	ccToken, err := clientCredentials.Token(ctx)
+	if err != nil {
+		return nil, status.Errorf(codes.Internal, "failed to get client access token: %v", err)
+	}
+
+	deleteUrl := parsedURL.JoinPath("admin/realms", s.cfg.Identity.Server.Realm, "users", subject)
+	request, err := http.NewRequest("DELETE", deleteUrl.String(), nil)
+	if err != nil {
+		return nil, status.Errorf(codes.Internal, "failed to construct account deletion request: %v", err)
+	}
+
+	client := oauth2.NewClient(ctx, oauth2.StaticTokenSource(ccToken))
+	resp, err := client.Do(request)
+	if err != nil {
+		return nil, status.Errorf(codes.Internal, "failed to delete account on IdP: %v", err)
+	}
+	defer resp.Body.Close()
+
+	if resp.StatusCode != http.StatusNoContent {
+		return nil, status.Errorf(codes.Internal, "unexpected status code when deleting account: %d", resp.StatusCode)
+	}
+
+	err = DeleteUser(ctx, s.store, subject)
+	if err != nil {
+		return nil, status.Errorf(codes.Internal, "failed to delete user from database: %v", err)
 	}
 
 	return &pb.DeleteUserResponse{}, nil
