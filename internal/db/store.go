@@ -22,12 +22,23 @@
 package db
 
 import (
+	"context"
 	"database/sql"
+	"fmt"
+
+	"github.com/google/uuid"
 )
+
+// ExtendQuerier extends the Querier interface with custom queries
+type ExtendQuerier interface {
+	Querier
+	GetRuleEvaluationByProfileIdAndRuleType(context.Context, uuid.UUID, NullEntities, uuid.NullUUID,
+		sql.NullString) (ListRuleEvaluationsByProfileIdRow, error)
+}
 
 // Store provides all functions to execute db queries and transactions
 type Store interface {
-	Querier
+	ExtendQuerier
 	CheckHealth() error
 	BeginTransaction() (*sql.Tx, error)
 	GetQuerierWithTransaction(tx *sql.Tx) Querier
@@ -72,4 +83,31 @@ func NewStore(db *sql.DB) Store {
 		db:      db,
 		Queries: New(db),
 	}
+}
+
+// GetRuleEvaluationByProfileIdAndRuleType returns the rule evaluation for a given profile and its rule name
+func (s *SQLStore) GetRuleEvaluationByProfileIdAndRuleType(
+	ctx context.Context,
+	profileID uuid.UUID,
+	entityType NullEntities,
+	entityID uuid.NullUUID,
+	ruleName sql.NullString,
+) (ListRuleEvaluationsByProfileIdRow, error) {
+	params := ListRuleEvaluationsByProfileIdParams{
+		ProfileID:  profileID,
+		EntityType: entityType,
+		EntityID:   entityID,
+		RuleName:   ruleName,
+	}
+	res, err := s.ListRuleEvaluationsByProfileId(ctx, params)
+	if err != nil {
+		return ListRuleEvaluationsByProfileIdRow{}, err
+	}
+
+	// Single row expected
+	if len(res) != 1 {
+		return ListRuleEvaluationsByProfileIdRow{},
+			fmt.Errorf("GetRuleEvaluationByProfileIdAndRuleType - expected 1 row, got %d", len(res))
+	}
+	return res[0], nil
 }

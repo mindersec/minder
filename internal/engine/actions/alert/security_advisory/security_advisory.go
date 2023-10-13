@@ -89,7 +89,7 @@ func (a *Alert) Do(
 	_ map[string]any,
 	_ map[string]any,
 ) error {
-	// TODO: Implement
+	// TODO: Implement alerting through security advisory
 	// 1. Prepare the current alert state from the alert details database table
 	// 2. Prepare the new alert state from the rule evaluation parameters
 	// 3. If the new rule evaluation state is failing AND we have an alert triggered, return

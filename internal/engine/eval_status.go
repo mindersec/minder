@@ -71,12 +71,6 @@ func (e *Executor) createEvalStatusParams(
 		}
 	}
 
-	pullRequestNumber, ok := inf.OwnershipData[PullRequestIDEventKey]
-	if ok {
-		// todo: plug into DB
-		fmt.Println("pullRequestNumber", pullRequestNumber)
-	}
-
 	// TODO: implement storing existing db status here
 	_ = ctx
 	_ = e
