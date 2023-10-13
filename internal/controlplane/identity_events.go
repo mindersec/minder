@@ -75,9 +75,15 @@ func HandleEvents(ctx context.Context, store db.Store, cfg *config.Config) {
 
 	tokenUrl := parsedURL.JoinPath("realms", cfg.Identity.Server.Realm, "protocol/openid-connect/token")
 
+	clientSecret, err := cfg.Identity.Server.GetClientSecret()
+	if err != nil {
+		zerolog.Ctx(ctx).Error().Msgf("failed to get client secret: %v", err)
+		return
+	}
+
 	clientCredentials := clientcredentials.Config{
 		ClientID:     cfg.Identity.Server.ClientId,
-		ClientSecret: cfg.Identity.Server.ClientSecret,
+		ClientSecret: clientSecret,
 		TokenURL:     tokenUrl.String(),
 	}
 

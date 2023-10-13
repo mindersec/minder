@@ -15,6 +15,12 @@
 
 package config
 
+import (
+	"fmt"
+	"os"
+	"path/filepath"
+)
+
 // IdentityConfig is the configuration for the identity provider
 type IdentityConfig struct {
 	Cli    CliIdentityConfig    `mapstructure:"cli"`
@@ -41,4 +47,18 @@ type ServerIdentityConfig struct {
 	ClientId string `mapstructure:"client_id" default:"mediator-server"`
 	// ClientSecret is the client secret for the mediator server
 	ClientSecret string `mapstructure:"client_secret" default:"secret"`
+	// ClientSecretFile is the location of a file containing the client secret for the mediator server (optional)
+	ClientSecretFile string `mapstructure:"client_secret_file"`
+}
+
+// GetClientSecret returns the mediator-server client secret
+func (sic *ServerIdentityConfig) GetClientSecret() (string, error) {
+	if sic.ClientSecretFile != "" {
+		data, err := os.ReadFile(filepath.Clean(sic.ClientSecretFile))
+		if err != nil {
+			return "", fmt.Errorf("failed to read mediator secret from file: %w", err)
+		}
+		return string(data), nil
+	}
+	return sic.ClientSecret, nil
 }
