@@ -22,6 +22,7 @@ import (
 
 	"google.golang.org/protobuf/reflect/protoreflect"
 
+	"github.com/stacklok/mediator/internal/db"
 	enginerr "github.com/stacklok/mediator/internal/engine/errors"
 	"github.com/stacklok/mediator/internal/engine/interfaces"
 	pb "github.com/stacklok/mediator/pkg/api/protobuf/go/mediator/v1"
@@ -42,8 +43,8 @@ func (r *Remediator) Type() string {
 	return r.actionType
 }
 
-// GetState returns the off state of the noop engine
-func (_ *Remediator) GetState(_ *pb.Profile) interfaces.ActionOpt {
+// GetOnOffState returns the off state of the noop engine
+func (_ *Remediator) GetOnOffState(_ *pb.Profile) interfaces.ActionOpt {
 	return interfaces.ActionOptOff
 }
 
@@ -59,6 +60,7 @@ func (r *Remediator) Do(
 	_ protoreflect.ProtoMessage,
 	_ map[string]any,
 	_ map[string]any,
+	_ db.ListRuleEvaluationsByProfileIdRow,
 ) error {
 	return fmt.Errorf("%s:%w", r.Type(), enginerr.ErrActionNotAvailable)
 }

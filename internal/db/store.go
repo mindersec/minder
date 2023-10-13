@@ -32,8 +32,8 @@ import (
 // ExtendQuerier extends the Querier interface with custom queries
 type ExtendQuerier interface {
 	Querier
-	GetRuleEvaluationByProfileIdAndRuleType(context.Context, uuid.UUID, NullEntities, uuid.NullUUID,
-		sql.NullString) (ListRuleEvaluationsByProfileIdRow, error)
+	GetRuleEvaluationByProfileIdAndRuleType(ctx context.Context, profileID uuid.UUID, entityType NullEntities,
+		entityID uuid.NullUUID, ruleName sql.NullString) (ListRuleEvaluationsByProfileIdRow, error)
 }
 
 // Store provides all functions to execute db queries and transactions
@@ -86,7 +86,7 @@ func NewStore(db *sql.DB) Store {
 }
 
 // GetRuleEvaluationByProfileIdAndRuleType returns the rule evaluation for a given profile and its rule name
-func (s *SQLStore) GetRuleEvaluationByProfileIdAndRuleType(
+func (q *Queries) GetRuleEvaluationByProfileIdAndRuleType(
 	ctx context.Context,
 	profileID uuid.UUID,
 	entityType NullEntities,
@@ -99,7 +99,7 @@ func (s *SQLStore) GetRuleEvaluationByProfileIdAndRuleType(
 		EntityID:   entityID,
 		RuleName:   ruleName,
 	}
-	res, err := s.ListRuleEvaluationsByProfileId(ctx, params)
+	res, err := q.ListRuleEvaluationsByProfileId(ctx, params)
 	if err != nil {
 		return ListRuleEvaluationsByProfileIdRow{}, err
 	}

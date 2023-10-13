@@ -16,6 +16,7 @@ package engine
 
 import (
 	"context"
+	"database/sql"
 	"errors"
 	"fmt"
 	"log"
@@ -34,22 +35,22 @@ import (
 // a repo and most profiles are expecting a repo, the repoID parameter is mandatory. For entities
 // other than artifacts, the artifactID should be 0 which is translated to NULL in the database.
 type EvalStatusParams struct {
-	profileID      uuid.UUID
-	repoID         uuid.UUID
-	artifactID     uuid.NullUUID
-	ruleTypeEntity db.Entities
-	ruleTypeID     uuid.UUID
-	Actions        map[string]interfaces.ActionOpt
-	EvalErr        error
-	ActionsErr     *evalerrors.ActionsError
-
-	// TODO: implement storing existing db status here
+	profileID        uuid.UUID
+	repoID           uuid.UUID
+	artifactID       uuid.NullUUID
+	entityType       db.Entities
+	ruleTypeID       uuid.UUID
+	ActionsOnOff     map[string]interfaces.ActionOpt
+	EvalStatusFromDb db.ListRuleEvaluationsByProfileIdRow
+	EvalErr          error
+	ActionsErr       evalerrors.ActionsError
 }
 
 func (e *Executor) createEvalStatusParams(
 	ctx context.Context,
 	inf *EntityInfoWrapper,
 	profile *pb.Profile,
+	rule *pb.Profile_Rule,
 ) (*EvalStatusParams, error) {
 	// Get Profile UUID
 	profileID, err := uuid.Parse(*profile.Id)
@@ -58,9 +59,9 @@ func (e *Executor) createEvalStatusParams(
 	}
 
 	params := &EvalStatusParams{
-		profileID:      profileID,
-		repoID:         uuid.MustParse(inf.OwnershipData[RepositoryIDEventKey]),
-		ruleTypeEntity: entities.EntityTypeToDB(inf.Type),
+		profileID:  profileID,
+		repoID:     uuid.MustParse(inf.OwnershipData[RepositoryIDEventKey]),
+		entityType: entities.EntityTypeToDB(inf.Type),
 	}
 
 	artifactID, ok := inf.OwnershipData[ArtifactIDEventKey]
@@ -71,9 +72,37 @@ func (e *Executor) createEvalStatusParams(
 		}
 	}
 
-	// TODO: implement storing existing db status here
-	_ = ctx
-	_ = e
+	// Prepare params for fetching the current rule evaluation from the database
+	entityType := db.NullEntities{
+		Entities: params.entityType,
+		Valid:    true}
+	entityID := uuid.NullUUID{}
+	if params.entityType == db.EntitiesArtifact {
+		entityID = params.artifactID
+	} else if params.entityType == db.EntitiesRepository {
+		entityID = uuid.NullUUID{
+			UUID:  params.repoID,
+			Valid: true,
+		}
+	}
+	ruleName := sql.NullString{
+		String: rule.Type,
+		Valid:  true,
+	}
+
+	// Get the current rule evaluation from the database
+	evalStatus, err := e.querier.GetRuleEvaluationByProfileIdAndRuleType(ctx,
+		params.profileID,
+		entityType,
+		entityID,
+		ruleName,
+	)
+	if err != nil {
+		return nil, fmt.Errorf("error getting rule evaluation status from db: %w", err)
+	}
+
+	// Save the current rule evaluation status to the evalParams
+	params.EvalStatusFromDb = evalStatus
 	return params, nil
 }
 
@@ -89,7 +118,7 @@ func (e *Executor) createOrUpdateEvalStatus(
 	// Check if we should skip silently
 	if errors.Is(evalParams.EvalErr, evalerrors.ErrEvaluationSkipSilently) {
 		log.Printf("silent skip of rule %s for profile %s for entity %s in repo %s",
-			evalParams.ruleTypeID, evalParams.profileID, evalParams.ruleTypeEntity, evalParams.repoID)
+			evalParams.ruleTypeID, evalParams.profileID, evalParams.entityType, evalParams.repoID)
 		return nil
 	}
 
@@ -101,7 +130,7 @@ func (e *Executor) createOrUpdateEvalStatus(
 			Valid: true,
 		},
 		ArtifactID: evalParams.artifactID,
-		Entity:     evalParams.ruleTypeEntity,
+		Entity:     evalParams.entityType,
 		RuleTypeID: evalParams.ruleTypeID,
 	})
 
@@ -109,7 +138,7 @@ func (e *Executor) createOrUpdateEvalStatus(
 		log.Printf(
 			"error upserting rule eval, profile %s, entity %s, repo %s: %s",
 			evalParams.profileID,
-			evalParams.ruleTypeEntity,
+			evalParams.entityType,
 			evalParams.repoID,
 			err,
 		)
@@ -126,7 +155,7 @@ func (e *Executor) createOrUpdateEvalStatus(
 		log.Printf(
 			"error upserting rule eval details, profile %s, entity %s, repo %s: %s\"",
 			evalParams.profileID,
-			evalParams.ruleTypeEntity,
+			evalParams.entityType,
 			evalParams.repoID,
 			err,
 		)
@@ -142,7 +171,7 @@ func (e *Executor) createOrUpdateEvalStatus(
 		log.Printf(
 			"error upserting rule remediation details, profile %s, entity %s, repo %s: %s",
 			evalParams.profileID,
-			evalParams.ruleTypeEntity,
+			evalParams.entityType,
 			evalParams.repoID,
 			err,
 		)
@@ -157,7 +186,7 @@ func (e *Executor) createOrUpdateEvalStatus(
 		log.Printf(
 			"error upserting rule alert details, profile %s, entity %s, repo %s: %s",
 			evalParams.profileID,
-			evalParams.ruleTypeEntity,
+			evalParams.entityType,
 			evalParams.repoID,
 			err,
 		)

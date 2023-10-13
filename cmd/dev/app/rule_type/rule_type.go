@@ -168,7 +168,7 @@ func runEvaluationForRules(
 			params = frag.GetParams().AsMap()
 		}
 		evalStatus := &engine.EvalStatusParams{
-			Actions: map[string]engif.ActionOpt{
+			ActionsOnOff: map[string]engif.ActionOpt{
 				"remediate": engif.ActionOptFromString(profile.Remediate),
 				"alert":     engif.ActionOptFromString(profile.Alert),
 			},

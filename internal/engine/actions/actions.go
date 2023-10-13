@@ -24,6 +24,7 @@ import (
 
 	"google.golang.org/protobuf/reflect/protoreflect"
 
+	"github.com/stacklok/mediator/internal/db"
 	"github.com/stacklok/mediator/internal/engine/actions/alert"
 	"github.com/stacklok/mediator/internal/engine/actions/remediate"
 	enginerr "github.com/stacklok/mediator/internal/engine/errors"
@@ -60,10 +61,17 @@ func NewRuleActions(rt *mediatorv1.RuleType, pbuild *providers.ProviderBuilder) 
 }
 
 // DoActions processes all actions i.e., remediation and alerts
-func (rae *RuleActionsEngine) DoActions(ctx context.Context, ent protoreflect.ProtoMessage, ruleDef map[string]any,
-	ruleParams map[string]any, actionStates map[string]engif.ActionOpt, evalErr error) *enginerr.ActionsError {
+func (rae *RuleActionsEngine) DoActions(
+	ctx context.Context,
+	ent protoreflect.ProtoMessage,
+	ruleDef map[string]any,
+	ruleParams map[string]any,
+	actionsOnOff map[string]engif.ActionOpt,
+	evalErr error,
+	dbEvalStatus db.ListRuleEvaluationsByProfileIdRow,
+) enginerr.ActionsError {
 	// TODO: revisit skipping actions
-	err := &enginerr.ActionsError{
+	err := enginerr.ActionsError{
 		RemediateErr: enginerr.ErrActionSkipped,
 		AlertErr:     enginerr.ErrActionSkipped,
 	}
@@ -76,7 +84,7 @@ func (rae *RuleActionsEngine) DoActions(ctx context.Context, ent protoreflect.Pr
 		log.Printf("action engine not found: %s", remediate.ActionType)
 		err.RemediateErr = fmt.Errorf("%s:%w", remediate.ActionType, enginerr.ErrActionNotAvailable)
 	} else {
-		skipRemediate = remediateEngine.IsSkippable(actionStates[remediate.ActionType], evalErr)
+		skipRemediate = remediateEngine.IsSkippable(actionsOnOff[remediate.ActionType], evalErr)
 	}
 
 	// Load alert action engine
@@ -85,7 +93,7 @@ func (rae *RuleActionsEngine) DoActions(ctx context.Context, ent protoreflect.Pr
 		log.Printf("action engine not found: %s", alert.ActionType)
 		err.AlertErr = fmt.Errorf("%s:%w", alert.ActionType, enginerr.ErrActionNotAvailable)
 	} else {
-		skipAlert = alertEngine.IsSkippable(actionStates[alert.ActionType], evalErr)
+		skipAlert = alertEngine.IsSkippable(actionsOnOff[alert.ActionType], evalErr)
 	}
 
 	// Exit early if both should be skipped
@@ -95,22 +103,22 @@ func (rae *RuleActionsEngine) DoActions(ctx context.Context, ent protoreflect.Pr
 
 	// Try remediating first
 	if !skipRemediate {
-		err.RemediateErr = remediateEngine.Do(ctx, actionStates[remediate.ActionType], ent, ruleDef, ruleParams)
+		err.RemediateErr = remediateEngine.Do(ctx, actionsOnOff[remediate.ActionType], ent, ruleDef, ruleParams, dbEvalStatus)
 	}
 
 	// If remediate failed fatally and alert actions should not be skipped, try alerting
 	if enginerr.IsActionFatalError(err.RemediateErr) && !skipAlert {
-		err.AlertErr = alertEngine.Do(ctx, actionStates[alert.ActionType], ent, ruleDef, ruleParams)
+		err.AlertErr = alertEngine.Do(ctx, actionsOnOff[alert.ActionType], ent, ruleDef, ruleParams, dbEvalStatus)
 	}
 
 	return err
 }
 
-// GetStates returns a map of the action states for all actions - on, off, ect.
-func (rae *RuleActionsEngine) GetStates(profile *mediatorv1.Profile) map[string]engif.ActionOpt {
+// GetActionsOnOffStates returns a map of the action states for all actions - on, off, ect.
+func (rae *RuleActionsEngine) GetActionsOnOffStates(profile *mediatorv1.Profile) map[string]engif.ActionOpt {
 	res := map[string]engif.ActionOpt{}
 	for _, action := range rae.actions {
-		res[action.Type()] = action.GetState(profile)
+		res[action.Type()] = action.GetOnOffState(profile)
 	}
 	return res
 }

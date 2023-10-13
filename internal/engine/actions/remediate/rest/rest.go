@@ -29,6 +29,7 @@ import (
 	"github.com/rs/zerolog"
 	"google.golang.org/protobuf/reflect/protoreflect"
 
+	"github.com/stacklok/mediator/internal/db"
 	enginerr "github.com/stacklok/mediator/internal/engine/errors"
 	"github.com/stacklok/mediator/internal/engine/interfaces"
 	"github.com/stacklok/mediator/internal/providers"
@@ -114,8 +115,8 @@ func (r *Remediator) Type() string {
 	return r.actionType
 }
 
-// GetState returns the alert action state read from the profile
-func (_ *Remediator) GetState(p *pb.Profile) interfaces.ActionOpt {
+// GetOnOffState returns the alert action state read from the profile
+func (_ *Remediator) GetOnOffState(p *pb.Profile) interfaces.ActionOpt {
 	return interfaces.ActionOptFromString(p.Remediate)
 }
 
@@ -148,15 +149,17 @@ func (_ *Remediator) IsSkippable(remAction interfaces.ActionOpt, evalErr error) 
 // Do perform the remediation
 func (r *Remediator) Do(
 	ctx context.Context,
-	remAction interfaces.ActionOpt,
-	ent protoreflect.ProtoMessage,
-	pol map[string]any,
-	params map[string]any,
+	setting interfaces.ActionOpt,
+	entity protoreflect.ProtoMessage,
+	ruleDef map[string]any,
+	ruleParams map[string]any,
+	dbEvalStatus db.ListRuleEvaluationsByProfileIdRow,
 ) error {
+	_ = dbEvalStatus
 	retp := &EndpointTemplateParams{
-		Entity:  ent,
-		Profile: pol,
-		Params:  params,
+		Entity:  entity,
+		Profile: ruleDef,
+		Params:  ruleParams,
 	}
 
 	endpoint := new(bytes.Buffer)
@@ -175,7 +178,7 @@ func (r *Remediator) Do(
 		Msgf("remediating with endpoint: [%s] and body [%+v]", endpoint.String(), body.String())
 
 	var err error
-	switch remAction {
+	switch setting {
 	case interfaces.ActionOptOn:
 		err = r.run(ctx, endpoint.String(), body.Bytes())
 	case interfaces.ActionOptDryRun:

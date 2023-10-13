@@ -170,7 +170,7 @@ func (e *Executor) getEvaluator(
 	log.Printf("Evaluating rule: %s for profile: %s", rule.Type, *profile.Id)
 
 	// Create eval status params
-	params, err := e.createEvalStatusParams(ctx, inf, profile)
+	params, err := e.createEvalStatusParams(ctx, inf, profile, rule)
 	if err != nil {
 		return nil, nil, fmt.Errorf("error creating eval status params: %w", err)
 	}
@@ -207,7 +207,7 @@ func (e *Executor) getEvaluator(
 	}
 
 	// Get the action states for this profile - on, off, ect.
-	params.Actions = rte.rae.GetStates(profile)
+	params.ActionsOnOff = rte.rae.GetActionsOnOffStates(profile)
 
 	// All okay
 	return params, rte, nil
@@ -233,21 +233,19 @@ func logEval(
 	logger.Err(evalParams.EvalErr).Msg("evaluated rule")
 
 	// log remediation
-	if errors.Is(evalParams.ActionsErr.RemediateErr, evalerrors.ErrActionSkipped) {
-		logger.Msg("remediation skipped")
-	} else if errors.Is(evalParams.ActionsErr.RemediateErr, evalerrors.ErrActionNotAvailable) {
-		logger.Msg("remediation not supported")
-	} else {
-		logger.Err(evalParams.ActionsErr.RemediateErr).Msg("remediated rule")
-	}
+	logAction(ctx, "remediate", evalParams.ActionsErr.RemediateErr)
 
 	// log alert
-	// TODO: update error types for alert and remediation
-	if errors.Is(evalParams.ActionsErr.AlertErr, evalerrors.ErrActionSkipped) {
-		logger.Msg("alert skipped")
-	} else if errors.Is(evalParams.ActionsErr.AlertErr, evalerrors.ErrActionNotAvailable) {
-		logger.Msg("alert not supported")
+	logAction(ctx, "alert", evalParams.ActionsErr.AlertErr)
+}
+
+func logAction(ctx context.Context, actionType string, err error) {
+	logger := zerolog.Ctx(ctx)
+	if errors.Is(err, evalerrors.ErrActionSkipped) {
+		logger.Debug().Str("action", actionType).Msg("skipped")
+	} else if errors.Is(err, evalerrors.ErrActionNotAvailable) {
+		logger.Debug().Str("action", actionType).Msg("not supported")
 	} else {
-		logger.Err(evalParams.ActionsErr.AlertErr).Msg("alerted for rule")
+		logger.Err(err).Str("action", actionType).Msg("processed for rule")
 	}
 }

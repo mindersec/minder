@@ -23,6 +23,7 @@ import (
 
 	"google.golang.org/protobuf/reflect/protoreflect"
 
+	"github.com/stacklok/mediator/internal/db"
 	enginerr "github.com/stacklok/mediator/internal/engine/errors"
 	"github.com/stacklok/mediator/internal/engine/interfaces"
 	"github.com/stacklok/mediator/internal/providers"
@@ -33,8 +34,6 @@ import (
 const (
 	// SecurityAdvisoryType is the type of the security advisory alert engine
 	SecurityAdvisoryType = "security-advisory"
-	// ActionType is the action type of the alert engine
-	ActionType = "alert"
 )
 
 // Alert is the structure backing the security-advisory alert action
@@ -64,12 +63,12 @@ func NewSecurityAdvisoryAlert(
 }
 
 // Type returns the action type of the security-advisory engine
-func (a *Alert) Type() string {
-	return a.actionType
+func (alert *Alert) Type() string {
+	return alert.actionType
 }
 
-// GetState returns the alert action state read from the profile
-func (_ *Alert) GetState(p *pb.Profile) interfaces.ActionOpt {
+// GetOnOffState returns the alert action state read from the profile
+func (_ *Alert) GetOnOffState(p *pb.Profile) interfaces.ActionOpt {
 	return interfaces.ActionOptFromString(p.Alert)
 }
 
@@ -82,12 +81,13 @@ func (_ *Alert) IsSkippable(actionState interfaces.ActionOpt, evalErr error) boo
 }
 
 // Do alerts through security advisory
-func (a *Alert) Do(
+func (alert *Alert) Do(
 	_ context.Context,
 	_ interfaces.ActionOpt,
 	_ protoreflect.ProtoMessage,
 	_ map[string]any,
 	_ map[string]any,
+	_ db.ListRuleEvaluationsByProfileIdRow,
 ) error {
 	// TODO: Implement alerting through security advisory
 	// 1. Prepare the current alert state from the alert details database table
@@ -99,5 +99,5 @@ func (a *Alert) Do(
 	// 7. Process the alert
 	// 8. If the alert is created, save the alert ID in the alert details database table
 	// 9. If the alert is closed, remove the alert ID from the alert details database table
-	return fmt.Errorf("%s:%w", a.Type(), enginerr.ErrActionNotAvailable)
+	return fmt.Errorf("%s:%w", alert.Type(), enginerr.ErrActionNotAvailable)
 }

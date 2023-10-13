@@ -23,6 +23,7 @@ import (
 	billy "github.com/go-git/go-billy/v5"
 	"google.golang.org/protobuf/reflect/protoreflect"
 
+	"github.com/stacklok/mediator/internal/db"
 	pb "github.com/stacklok/mediator/pkg/api/protobuf/go/mediator/v1"
 )
 
@@ -86,7 +87,8 @@ func ActionOptFromString(s *string) ActionOpt {
 // Action is the interface for a rule type action
 type Action interface {
 	Type() string
-	GetState(*pb.Profile) ActionOpt
+	GetOnOffState(*pb.Profile) ActionOpt
 	IsSkippable(ActionOpt, error) bool
-	Do(context.Context, ActionOpt, protoreflect.ProtoMessage, map[string]any, map[string]any) error
+	Do(ctx context.Context, setting ActionOpt, entity protoreflect.ProtoMessage, ruleDef map[string]any,
+		ruleParam map[string]any, dbEvalStatus db.ListRuleEvaluationsByProfileIdRow) error
 }

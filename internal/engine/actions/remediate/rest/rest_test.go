@@ -401,12 +401,12 @@ func TestRestRemediate(t *testing.T) {
 			testServer := httptest.NewServer(tt.testHandler)
 			defer testServer.Close()
 			tt.newRemArgs.pbuild = testGithubProviderBuilder(testServer.URL)
-
+			dbEvalStatus := db.ListRuleEvaluationsByProfileIdRow{}
 			engine, err := NewRestRemediate("remediate", tt.newRemArgs.restCfg, tt.newRemArgs.pbuild)
 			require.NoError(t, err, "unexpected error creating remediate engine")
 			require.NotNil(t, engine, "expected non-nil remediate engine")
 
-			err = engine.Do(context.Background(), tt.remArgs.remAction, tt.remArgs.ent, tt.remArgs.pol, tt.remArgs.params)
+			err = engine.Do(context.Background(), tt.remArgs.remAction, tt.remArgs.ent, tt.remArgs.pol, tt.remArgs.params, dbEvalStatus)
 			if tt.wantErr {
 				require.Error(t, err, "expected error")
 				return

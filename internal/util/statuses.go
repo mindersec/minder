@@ -40,7 +40,7 @@ type NiceStatus struct {
 	Name string
 	// Description
 	Description string
-	// Actions, reasons and links
+	// ActionsOnOff, reasons and links
 	Details string
 }
 

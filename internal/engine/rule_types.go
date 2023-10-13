@@ -241,7 +241,7 @@ func (r *RuleTypeEngine) Eval(ctx context.Context, ent protoreflect.ProtoMessage
 	result, err := r.rdi.Ingest(ctx, ent, ruleParams)
 	if err != nil {
 		evalParams.EvalErr = fmt.Errorf("error ingesting data: %w", err)
-		evalParams.ActionsErr = &evalerrors.ActionsError{
+		evalParams.ActionsErr = evalerrors.ActionsError{
 			RemediateErr: evalerrors.ErrActionSkipped,
 			AlertErr:     evalerrors.ErrActionSkipped,
 		}
@@ -261,8 +261,16 @@ func (r *RuleTypeEngine) Actions(
 		errors.Is(evalParams.ActionsErr.RemediateErr, evalerrors.ErrActionSkipped) {
 		return
 	}
+
 	// Process actions
-	evalParams.ActionsErr = r.rae.DoActions(ctx, ent, ruleDef, ruleParams, evalParams.Actions, evalParams.EvalErr)
+	evalParams.ActionsErr = r.rae.DoActions(ctx,
+		ent,
+		ruleDef,
+		ruleParams,
+		evalParams.ActionsOnOff,
+		evalParams.EvalErr,
+		evalParams.EvalStatusFromDb,
+	)
 }
 
 // RuleDefFromDB converts a rule type definition from the database to a protobuf
