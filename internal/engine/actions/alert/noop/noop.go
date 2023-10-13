@@ -30,16 +30,16 @@ import (
 
 // Alert is the structure backing the noop alert
 type Alert struct {
-	actionType string
+	actionType interfaces.ActionType
 }
 
 // NewNoopAlert creates a new noop alert engine
-func NewNoopAlert(actionType string) (*Alert, error) {
+func NewNoopAlert(actionType interfaces.ActionType) (*Alert, error) {
 	return &Alert{actionType: actionType}, nil
 }
 
 // Type returns the action type of the noop engine
-func (a *Alert) Type() string {
+func (a *Alert) Type() interfaces.ActionType {
 	return a.actionType
 }
 

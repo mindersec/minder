@@ -30,16 +30,17 @@ import (
 
 // Remediator is the structure backing the noop remediator
 type Remediator struct {
-	actionType string
+	actionType interfaces.ActionType
+	skipFunc   interfaces.IsSkipFn
 }
 
 // NewNoopRemediate creates a new noop remediation engine
-func NewNoopRemediate(actionType string) (*Remediator, error) {
-	return &Remediator{actionType: actionType}, nil
+func NewNoopRemediate(actionType interfaces.ActionType, isSkipFn interfaces.IsSkipFn) (*Remediator, error) {
+	return &Remediator{actionType: actionType, skipFunc: isSkipFn}, nil
 }
 
 // Type returns the action type of the noop engine
-func (r *Remediator) Type() string {
+func (r *Remediator) Type() interfaces.ActionType {
 	return r.actionType
 }
 
@@ -49,8 +50,8 @@ func (_ *Remediator) GetOnOffState(_ *pb.Profile) interfaces.ActionOpt {
 }
 
 // IsSkippable returns true if the remediation is skippable
-func (_ *Remediator) IsSkippable(_ context.Context, _ interfaces.ActionOpt, _ error) bool {
-	return true
+func (r *Remediator) IsSkippable(ctx context.Context, act interfaces.ActionOpt, err error) bool {
+	return r.skipFunc(ctx, act, err)
 }
 
 // Do perform the remediation

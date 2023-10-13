@@ -20,8 +20,8 @@ package actions
 import (
 	"context"
 	"fmt"
-	"log"
 
+	"github.com/rs/zerolog"
 	"google.golang.org/protobuf/reflect/protoreflect"
 
 	"github.com/stacklok/mediator/internal/db"
@@ -35,7 +35,7 @@ import (
 
 // RuleActionsEngine is the engine responsible for processing all actions i.e., remediation and alerts
 type RuleActionsEngine struct {
-	actions map[string]engif.Action
+	actions map[engif.ActionType]engif.Action
 }
 
 // NewRuleActions creates a new rule actions engine
@@ -53,7 +53,7 @@ func NewRuleActions(rt *mediatorv1.RuleType, pbuild *providers.ProviderBuilder) 
 	}
 
 	return &RuleActionsEngine{
-		actions: map[string]engif.Action{
+		actions: map[engif.ActionType]engif.Action{
 			remEngine.Type():   remEngine,
 			alertEngine.Type(): alertEngine,
 		},
@@ -66,10 +66,11 @@ func (rae *RuleActionsEngine) DoActions(
 	ent protoreflect.ProtoMessage,
 	ruleDef map[string]any,
 	ruleParams map[string]any,
-	actionsOnOff map[string]engif.ActionOpt,
+	actionsOnOff engif.ActionsOnOffList,
 	evalErr error,
 	dbEvalStatus db.ListRuleEvaluationsByProfileIdRow,
 ) enginerr.ActionsError {
+	logger := zerolog.Ctx(ctx)
 	// TODO: revisit skipping actions
 	err := enginerr.ActionsError{
 		RemediateErr: enginerr.ErrActionSkipped,
@@ -81,7 +82,7 @@ func (rae *RuleActionsEngine) DoActions(
 	// Load remediate action engine
 	remediateEngine, remOK := rae.actions[remediate.ActionType]
 	if !remOK {
-		log.Printf("action engine not found: %s", remediate.ActionType)
+		logger.Debug().Msg(fmt.Sprintf("action engine not found: %s", remediate.ActionType))
 		err.RemediateErr = fmt.Errorf("%s:%w", remediate.ActionType, enginerr.ErrActionNotAvailable)
 	} else {
 		skipRemediate = remediateEngine.IsSkippable(ctx, actionsOnOff[remediate.ActionType], evalErr)
@@ -90,7 +91,7 @@ func (rae *RuleActionsEngine) DoActions(
 	// Load alert action engine
 	alertEngine, alertOK := rae.actions[alert.ActionType]
 	if !alertOK {
-		log.Printf("action engine not found: %s", alert.ActionType)
+		logger.Debug().Msg(fmt.Sprintf("action engine not found: %s", alert.ActionType))
 		err.AlertErr = fmt.Errorf("%s:%w", alert.ActionType, enginerr.ErrActionNotAvailable)
 	} else {
 		skipAlert = alertEngine.IsSkippable(ctx, actionsOnOff[alert.ActionType], evalErr)
@@ -115,8 +116,8 @@ func (rae *RuleActionsEngine) DoActions(
 }
 
 // GetActionsOnOffStates returns a map of the action states for all actions - on, off, ect.
-func (rae *RuleActionsEngine) GetActionsOnOffStates(profile *mediatorv1.Profile) map[string]engif.ActionOpt {
-	res := map[string]engif.ActionOpt{}
+func (rae *RuleActionsEngine) GetActionsOnOffStates(profile *mediatorv1.Profile) engif.ActionsOnOffList {
+	res := engif.ActionsOnOffList{}
 	for _, action := range rae.actions {
 		res[action.Type()] = action.GetOnOffState(profile)
 	}

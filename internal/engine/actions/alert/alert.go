@@ -27,10 +27,8 @@ import (
 	pb "github.com/stacklok/mediator/pkg/api/protobuf/go/mediator/v1"
 )
 
-const (
-	// ActionType is the action type of the alert engine
-	ActionType = "alert"
-)
+// ActionType is the type of the alert engine
+var ActionType engif.ActionType = "alert"
 
 // NewRuleAlert creates a new rule alert engine
 func NewRuleAlert(rt *pb.RuleType, pbuild *providers.ProviderBuilder) (engif.Action, error) {

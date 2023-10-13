@@ -35,7 +35,7 @@ import (
 	provifv1 "github.com/stacklok/mediator/pkg/providers/v1"
 )
 
-const TestActionTypeValid = "remediate"
+var TestActionTypeValid interfaces.ActionType = "remediate-test"
 
 var (
 	simpleBodyTemplate   = "{\"foo\": \"bar\"}"
@@ -72,6 +72,10 @@ var (
 		db.ProviderAccessToken{},
 		"token",
 	)
+	// noSkipFn is a function that always returns false(run remediation)
+	noSkipFn = func(_ context.Context, _ interfaces.ActionOpt, _ error) bool {
+		return false
+	}
 )
 
 func testGithubProviderBuilder(baseURL string) *providers.ProviderBuilder {
@@ -103,7 +107,7 @@ func TestNewRestRemediate(t *testing.T) {
 	type args struct {
 		restCfg    *pb.RestType
 		pbuild     *providers.ProviderBuilder
-		actionType string
+		actionType interfaces.ActionType
 	}
 	tests := []struct {
 		name    string
@@ -190,7 +194,7 @@ func TestNewRestRemediate(t *testing.T) {
 		t.Run(tt.name, func(t *testing.T) {
 			t.Parallel()
 
-			got, err := NewRestRemediate(tt.args.actionType, tt.args.restCfg, tt.args.pbuild)
+			got, err := NewRestRemediate(tt.args.actionType, noSkipFn, tt.args.restCfg, tt.args.pbuild)
 			if tt.wantErr {
 				require.Error(t, err, "expected error")
 				require.Nil(t, got, "expected nil")
@@ -422,7 +426,7 @@ func TestRestRemediate(t *testing.T) {
 			defer testServer.Close()
 			tt.newRemArgs.pbuild = testGithubProviderBuilder(testServer.URL)
 			dbEvalStatus := db.ListRuleEvaluationsByProfileIdRow{}
-			engine, err := NewRestRemediate(TestActionTypeValid, tt.newRemArgs.restCfg, tt.newRemArgs.pbuild)
+			engine, err := NewRestRemediate(TestActionTypeValid, noSkipFn, tt.newRemArgs.restCfg, tt.newRemArgs.pbuild)
 			require.NoError(t, err, "unexpected error creating remediate engine")
 			require.NotNil(t, engine, "expected non-nil remediate engine")
 

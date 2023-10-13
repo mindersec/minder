@@ -39,13 +39,13 @@ const (
 
 // Alert is the structure backing the security-advisory alert action
 type Alert struct {
-	actionType string
+	actionType interfaces.ActionType
 	cli        provifv1.REST
 }
 
 // NewSecurityAdvisoryAlert creates a new security-advisory alert action
 func NewSecurityAdvisoryAlert(
-	actionType string,
+	actionType interfaces.ActionType,
 	saCfg *pb.RuleType_Definition_Alert_AlertTypeSA,
 	pbuild *providers.ProviderBuilder,
 ) (*Alert, error) {
@@ -64,7 +64,7 @@ func NewSecurityAdvisoryAlert(
 }
 
 // Type returns the action type of the security-advisory engine
-func (alert *Alert) Type() string {
+func (alert *Alert) Type() interfaces.ActionType {
 	return alert.actionType
 }
 

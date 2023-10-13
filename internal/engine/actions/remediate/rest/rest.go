@@ -58,17 +58,24 @@ var (
 
 // Remediator keeps the status for a rule type that uses REST remediation
 type Remediator struct {
-	actionType       string
+	actionType       interfaces.ActionType
 	method           string
 	cli              provifv1.REST
 	endpointTemplate *template.Template
 	bodyTemplate     *template.Template
+	skipFunc         interfaces.IsSkipFn
 }
 
 // NewRestRemediate creates a new REST rule data ingest engine
-func NewRestRemediate(actionType string, restCfg *pb.RestType, pbuild *providers.ProviderBuilder) (*Remediator, error) {
+func NewRestRemediate(actionType interfaces.ActionType, isSkipFn interfaces.IsSkipFn, restCfg *pb.RestType,
+	pbuild *providers.ProviderBuilder,
+) (*Remediator, error) {
 	if actionType == "" {
 		return nil, fmt.Errorf("action type cannot be empty")
+	}
+
+	if isSkipFn == nil {
+		return nil, fmt.Errorf("missing IsSkippable function, cannot be nil")
 	}
 
 	endpointTmpl, err := util.ParseNewTemplate(&restCfg.Endpoint, "endpoint")
@@ -97,6 +104,7 @@ func NewRestRemediate(actionType string, restCfg *pb.RestType, pbuild *providers
 		method:           method,
 		endpointTemplate: endpointTmpl,
 		bodyTemplate:     bodyTmpl,
+		skipFunc:         isSkipFn,
 	}, nil
 }
 
@@ -111,7 +119,7 @@ type EndpointTemplateParams struct {
 }
 
 // Type returns the action type of the remediation engine
-func (r *Remediator) Type() string {
+func (r *Remediator) Type() interfaces.ActionType {
 	return r.actionType
 }
 
@@ -121,29 +129,8 @@ func (_ *Remediator) GetOnOffState(p *pb.Profile) interfaces.ActionOpt {
 }
 
 // IsSkippable returns true if the remediation is skippable
-func (_ *Remediator) IsSkippable(_ context.Context, remAction interfaces.ActionOpt, evalErr error) bool {
-	var skipRemediation bool
-
-	switch remAction {
-	case interfaces.ActionOptOff:
-		// Remediation is off, skip
-		return true
-	case interfaces.ActionOptUnknown:
-		// Remediation is unknown, skip
-		log.Printf("unknown remediation action, check your profile definition")
-		return true
-	case interfaces.ActionOptDryRun, interfaces.ActionOptOn:
-		// Remediation is on or dry-run, do not skip yet. Check the evaluation error
-		skipRemediation =
-			// rule evaluation was skipped, skip remediation
-			errors.Is(evalErr, enginerr.ErrEvaluationSkipped) ||
-				// rule evaluation was skipped silently, skip remediation
-				errors.Is(evalErr, enginerr.ErrEvaluationSkipSilently) ||
-				// rule evaluation had no error, skip remediation
-				evalErr == nil
-	}
-	// everything else, do not skip
-	return skipRemediation
+func (r *Remediator) IsSkippable(ctx context.Context, remAction interfaces.ActionOpt, evalErr error) bool {
+	return r.skipFunc(ctx, remAction, evalErr)
 }
 
 // Do perform the remediation

@@ -18,7 +18,6 @@ import (
 	"context"
 	"errors"
 	"fmt"
-	"log"
 
 	"github.com/ThreeDotsLabs/watermill/message"
 	"github.com/google/uuid"
@@ -167,7 +166,8 @@ func (e *Executor) getEvaluator(
 	profile *pb.Profile,
 	rule *pb.Profile_Rule,
 ) (*EvalStatusParams, *RuleTypeEngine, error) {
-	log.Printf("Evaluating rule: %s for profile: %s", rule.Type, *profile.Id)
+	logger := zerolog.Ctx(ctx)
+	logger.Debug().Msg(fmt.Sprintf("Evaluating rule: %s for profile: %s", rule.Type, *profile.Id))
 
 	// Create eval status params
 	params, err := e.createEvalStatusParams(ctx, inf, profile, rule)

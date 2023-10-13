@@ -40,7 +40,7 @@ type EvalStatusParams struct {
 	artifactID       uuid.NullUUID
 	entityType       db.Entities
 	ruleTypeID       uuid.UUID
-	ActionsOnOff     map[string]interfaces.ActionOpt
+	ActionsOnOff     interfaces.ActionsOnOffList
 	EvalStatusFromDb db.ListRuleEvaluationsByProfileIdRow
 	EvalErr          error
 	ActionsErr       evalerrors.ActionsError

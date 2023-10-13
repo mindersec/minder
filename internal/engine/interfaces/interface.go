@@ -84,11 +84,21 @@ func ActionOptFromString(s *string) ActionOpt {
 	return ActionOptUnknown
 }
 
+// ActionType represents the type of action, i.e., remediate, alert, etc.
+type ActionType string
+
 // Action is the interface for a rule type action
 type Action interface {
-	Type() string
+	Type() ActionType
 	GetOnOffState(*pb.Profile) ActionOpt
 	IsSkippable(context.Context, ActionOpt, error) bool
 	Do(ctx context.Context, setting ActionOpt, entity protoreflect.ProtoMessage, ruleDef map[string]any,
 		ruleParam map[string]any, dbEvalStatus db.ListRuleEvaluationsByProfileIdRow) error
 }
+
+// ActionsOnOffList is a map of action types to action options, i.e., remediate: on, alert: off
+type ActionsOnOffList map[ActionType]ActionOpt
+
+// IsSkipFn is a pointer to a function that determines if an action should be skipped
+// usually used in Actions.IsSkippable(
+type IsSkipFn func(ctx context.Context, remAction ActionOpt, evalErr error) bool
