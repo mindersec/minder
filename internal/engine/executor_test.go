@@ -82,6 +82,14 @@ func TestExecutor_handleEntityEvent(t *testing.T) {
 
 	// -- start expectations
 
+	// not valuable yet, but would have to be updated once actions start using this
+	mockStore.EXPECT().GetRuleEvaluationByProfileIdAndRuleType(gomock.Any(),
+		gomock.Any(),
+		gomock.Any(),
+		gomock.Any(),
+		gomock.Any(),
+	).Return(db.ListRuleEvaluationsByProfileIdRow{}, nil)
+
 	// get group information
 	mockStore.EXPECT().
 		GetProjectByID(gomock.Any(), projectID).
@@ -175,6 +183,7 @@ default allow = true`,
 	}, nil)
 
 	ruleEvalId := uuid.New()
+
 	// Upload passing status
 	mockStore.EXPECT().
 		UpsertRuleEvaluations(gomock.Any(), db.UpsertRuleEvaluationsParams{
@@ -188,6 +197,7 @@ default allow = true`,
 			Entity:     db.EntitiesRepository,
 		}).Return(ruleEvalId, nil)
 
+	// Mock upserting eval details status
 	ruleEvalDetailsId := uuid.New()
 	mockStore.EXPECT().
 		UpsertRuleDetailsEval(gomock.Any(), db.UpsertRuleDetailsEvalParams{
@@ -196,6 +206,7 @@ default allow = true`,
 			Details:    "",
 		}).Return(ruleEvalDetailsId, nil)
 
+	// Mock upserting remediate status
 	ruleEvalRemediationId := uuid.New()
 	mockStore.EXPECT().
 		UpsertRuleDetailsRemediate(gomock.Any(), db.UpsertRuleDetailsRemediateParams{
@@ -204,6 +215,14 @@ default allow = true`,
 			Details:    "",
 		}).Return(ruleEvalRemediationId, nil)
 
+	// Mock upserting alert status
+	ruleEvalAlertId := uuid.New()
+	mockStore.EXPECT().
+		UpsertRuleDetailsAlert(gomock.Any(), db.UpsertRuleDetailsAlertParams{
+			RuleEvalID: ruleEvalId,
+			Status:     db.AlertStatusTypesSkipped,
+			Details:    "",
+		}).Return(ruleEvalAlertId, nil)
 	// -- end expectations
 
 	tmpdir := t.TempDir()
