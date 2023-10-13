@@ -124,14 +124,10 @@ var repo_registerCmd = &cobra.Command{
 			os.Exit(1)
 		}
 
-		// Read events from config
-		events := viper.GetStringSlice(fmt.Sprintf("%s.events", provider))
-
 		// Construct the RegisterRepositoryRequest
 		request := &pb.RegisterRepositoryRequest{
 			Provider:     provider,
 			Repositories: selectedRepos,
-			Events:       events,
 			ProjectId:    projectID,
 		}
 

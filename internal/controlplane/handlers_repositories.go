@@ -53,11 +53,6 @@ import (
 // nolint: gocyclo
 func (s *Server) RegisterRepository(ctx context.Context,
 	in *pb.RegisterRepositoryRequest) (*pb.RegisterRepositoryResponse, error) {
-	// if we have set no events, give an error
-	if len(in.Events) == 0 {
-		return nil, util.UserVisibleError(codes.InvalidArgument, "no events provided")
-	}
-
 	projectID, err := getProjectFromRequestOrDefault(ctx, in)
 	if err != nil {
 		return nil, util.UserVisibleError(codes.InvalidArgument, err.Error())
@@ -100,8 +95,9 @@ func (s *Server) RegisterRepository(ctx context.Context,
 		})
 	}
 
+	allEvents := []string{"*"}
 	resultData, err := s.registerWebhookForRepository(
-		ctx, p, upstreamRepos, in.Events)
+		ctx, p, upstreamRepos, allEvents)
 	if err != nil {
 		return nil, err
 	}

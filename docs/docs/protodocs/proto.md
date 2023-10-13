@@ -1587,7 +1587,6 @@ RESTProviderConfig contains the configuration for the REST provider.
 | provider | [string](#string) |  |  |
 | project_id | [string](#string) |  |  |
 | repositories | [UpstreamRepositoryRef](#mediator-v1-UpstreamRepositoryRef) | repeated |  |
-| events | [string](#string) | repeated |  |
 
 
 
