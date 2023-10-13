@@ -44,7 +44,7 @@ const (
 )
 
 const (
-	// if no mode is specified, create a regular file with 0644 UNIX permissions
+	// if no Mode is specified, create a regular file with 0644 UNIX permissions
 	ghModeNonExecFile = "100644"
 	dflBranchBaseName = "mediator"
 	dflBranchFrom     = "main"
@@ -60,19 +60,19 @@ const (
 
 	dryRunTemplateName = "dryRun"
 	dryRunTmpl         = `{{- range . }}
-Path: {{ .path }}
-Content: {{ .content }}
-Mode: {{ .mode }}
+Path: {{ .Path }}
+Content: {{ .Content }}
+Mode: {{ .Mode }}
 --------------------------
 {{- end }}
 `
 )
 
 type prEntry struct {
-	path            string
+	Path            string
 	contentTemplate *template.Template
-	content         string
-	mode            string
+	Content         string
+	Mode            string
 }
 
 // Remediator is the remediation engine for the Pull Request remediation type
@@ -131,7 +131,7 @@ func prConfigToEntries(prCfg *pb.RuleType_Definition_Remediate_PullRequestRemedi
 	for i := range prCfg.Contents {
 		cnt := prCfg.Contents[i]
 
-		contentTemplate, err := util.ParseNewTemplate(&cnt.Content, fmt.Sprintf("content[%d]", i))
+		contentTemplate, err := util.ParseNewTemplate(&cnt.Content, fmt.Sprintf("Content[%d]", i))
 		if err != nil {
 			return nil, fmt.Errorf("cannot parse content template (index %d): %w", i, err)
 		}
@@ -142,8 +142,8 @@ func prConfigToEntries(prCfg *pb.RuleType_Definition_Remediate_PullRequestRemedi
 		}
 
 		entries[i] = prEntry{
-			path:            cnt.Path,
-			mode:            mode,
+			Path:            cnt.Path,
+			Mode:            mode,
 			contentTemplate: contentTemplate,
 		}
 	}
@@ -320,7 +320,7 @@ func (r *Remediator) expandContents(
 		if err := entry.contentTemplate.Execute(content, tmplParams); err != nil {
 			return fmt.Errorf("cannot execute content template (index %d): %w", i, err)
 		}
-		entry.content = content.String()
+		entry.Content = content.String()
 	}
 
 	return nil
@@ -335,7 +335,7 @@ func (r *Remediator) createTreeEntries(
 	for i := range r.entries {
 		entry := r.entries[i]
 		blob := &github.Blob{
-			Content:  github.String(entry.content),
+			Content:  github.String(entry.Content),
 			Encoding: github.String("utf-8"),
 		}
 		newBlob, err := r.cli.CreateBlob(ctx, repo.GetOwner(), repo.GetName(), blob)
@@ -345,8 +345,8 @@ func (r *Remediator) createTreeEntries(
 
 		treeEntries = append(treeEntries, &github.TreeEntry{
 			SHA:  newBlob.SHA,
-			Path: github.String(entry.path),
-			Mode: github.String(entry.mode),
+			Path: github.String(entry.Path),
+			Mode: github.String(entry.Mode),
 			Type: github.String("blob"),
 		})
 	}
@@ -399,11 +399,11 @@ func (r *Remediator) contentSha1() (string, error) {
 	var combinedContents string
 
 	for i := range r.entries {
-		if len(r.entries[i].content) == 0 {
+		if len(r.entries[i].Content) == 0 {
 			// just making sure we call contentSha1() after expandContents()
 			return "", fmt.Errorf("content (index %d) is empty", i)
 		}
-		combinedContents += r.entries[i].path + r.entries[i].content
+		combinedContents += r.entries[i].Path + r.entries[i].Content
 	}
 
 	// #nosec G401 - we're not using sha1 for crypto, only to quickly compare contents

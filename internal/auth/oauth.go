@@ -64,7 +64,7 @@ func NewOAuthConfig(provider string, cli bool) (*oauth2.Config, error) {
 		if provider == Google {
 			return []string{"profile", "email"}
 		}
-		return []string{"user:email", "repo", "read:packages", "write:packages", "read:org"}
+		return []string{"user:email", "repo", "read:packages", "write:packages", "workflow", "read:org"}
 	}
 
 	endpoint := func(provider string) oauth2.Endpoint {
