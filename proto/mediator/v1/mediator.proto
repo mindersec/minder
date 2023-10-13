@@ -638,7 +638,6 @@ message RegisterRepositoryRequest {
     string provider = 1;
     string project_id = 2;
     repeated UpstreamRepositoryRef repositories = 3;
-    repeated string events = 4;
 }
 
 message RegisterRepoResult {
