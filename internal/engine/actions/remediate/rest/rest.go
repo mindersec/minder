@@ -121,7 +121,7 @@ func (_ *Remediator) GetOnOffState(p *pb.Profile) interfaces.ActionOpt {
 }
 
 // IsSkippable returns true if the remediation is skippable
-func (_ *Remediator) IsSkippable(remAction interfaces.ActionOpt, evalErr error) bool {
+func (_ *Remediator) IsSkippable(_ context.Context, remAction interfaces.ActionOpt, evalErr error) bool {
 	var skipRemediation bool
 
 	switch remAction {

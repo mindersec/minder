@@ -19,9 +19,9 @@ import (
 	"database/sql"
 	"errors"
 	"fmt"
-	"log"
 
 	"github.com/google/uuid"
+	"github.com/rs/zerolog"
 
 	"github.com/stacklok/mediator/internal/db"
 	evalerrors "github.com/stacklok/mediator/internal/engine/errors"
@@ -110,6 +110,7 @@ func (e *Executor) createOrUpdateEvalStatus(
 	ctx context.Context,
 	evalParams *EvalStatusParams,
 ) error {
+	logger := zerolog.Ctx(ctx)
 	// Make sure evalParams is not nil
 	if evalParams == nil {
 		return fmt.Errorf("createEvalStatusParams cannot be nil")
@@ -117,7 +118,7 @@ func (e *Executor) createOrUpdateEvalStatus(
 
 	// Check if we should skip silently
 	if errors.Is(evalParams.EvalErr, evalerrors.ErrEvaluationSkipSilently) {
-		log.Printf("silent skip of rule %s for profile %s for entity %s in repo %s",
+		logger.Debug().Msgf("silent skip of rule %s for profile %s for entity %s in repo %s",
 			evalParams.ruleTypeID, evalParams.profileID, evalParams.entityType, evalParams.repoID)
 		return nil
 	}
@@ -135,13 +136,8 @@ func (e *Executor) createOrUpdateEvalStatus(
 	})
 
 	if err != nil {
-		log.Printf(
-			"error upserting rule eval, profile %s, entity %s, repo %s: %s",
-			evalParams.profileID,
-			evalParams.entityType,
-			evalParams.repoID,
-			err,
-		)
+		logger.Error().Msgf("error upserting rule eval, profile %s, entity %s, repo %s: %s",
+			evalParams.profileID, evalParams.entityType, evalParams.repoID, err)
 		return err
 	}
 	// Upsert evaluation details
@@ -152,13 +148,8 @@ func (e *Executor) createOrUpdateEvalStatus(
 	})
 
 	if err != nil {
-		log.Printf(
-			"error upserting rule eval details, profile %s, entity %s, repo %s: %s\"",
-			evalParams.profileID,
-			evalParams.entityType,
-			evalParams.repoID,
-			err,
-		)
+		logger.Error().Msgf("error upserting rule eval details, profile %s, entity %s, repo %s: %s",
+			evalParams.profileID, evalParams.entityType, evalParams.repoID, err)
 		return err
 	}
 	// Upsert remediation details
@@ -168,13 +159,8 @@ func (e *Executor) createOrUpdateEvalStatus(
 		Details:    errorAsActionDetails(evalParams.ActionsErr.RemediateErr),
 	})
 	if err != nil {
-		log.Printf(
-			"error upserting rule remediation details, profile %s, entity %s, repo %s: %s",
-			evalParams.profileID,
-			evalParams.entityType,
-			evalParams.repoID,
-			err,
-		)
+		logger.Error().Msgf("error upserting rule remediation details, profile %s, entity %s, repo %s: %s",
+			evalParams.profileID, evalParams.entityType, evalParams.repoID, err)
 	}
 	// Upsert alert details
 	_, err = e.querier.UpsertRuleDetailsAlert(ctx, db.UpsertRuleDetailsAlertParams{
@@ -183,13 +169,8 @@ func (e *Executor) createOrUpdateEvalStatus(
 		Details:    errorAsActionDetails(evalParams.ActionsErr.AlertErr),
 	})
 	if err != nil {
-		log.Printf(
-			"error upserting rule alert details, profile %s, entity %s, repo %s: %s",
-			evalParams.profileID,
-			evalParams.entityType,
-			evalParams.repoID,
-			err,
-		)
+		logger.Error().Msgf("error upserting rule alert details, profile %s, entity %s, repo %s: %s",
+			evalParams.profileID, evalParams.entityType, evalParams.repoID, err)
 	}
 	return err
 }

@@ -21,6 +21,7 @@ import (
 	"context"
 	"fmt"
 
+	"github.com/rs/zerolog"
 	"google.golang.org/protobuf/reflect/protoreflect"
 
 	"github.com/stacklok/mediator/internal/db"
@@ -73,25 +74,33 @@ func (_ *Alert) GetOnOffState(p *pb.Profile) interfaces.ActionOpt {
 }
 
 // IsSkippable returns true if the alert is skippable
-func (_ *Alert) IsSkippable(actionState interfaces.ActionOpt, evalErr error) bool {
+func (_ *Alert) IsSkippable(ctx context.Context, actionState interfaces.ActionOpt, evalErr error) bool {
 	// TODO: Implement this
-	_ = actionState
-	_ = evalErr
-	return true
+	logger := zerolog.Ctx(ctx)
+	logger.Debug().Msgf("Alert action: evaluating if %s should be skipped: %v, %d", SecurityAdvisoryType, evalErr, actionState)
+	return false
 }
 
 // Do alerts through security advisory
 func (alert *Alert) Do(
-	_ context.Context,
-	_ interfaces.ActionOpt,
-	_ protoreflect.ProtoMessage,
-	_ map[string]any,
-	_ map[string]any,
-	_ db.ListRuleEvaluationsByProfileIdRow,
+	ctx context.Context,
+	setting interfaces.ActionOpt,
+	entity protoreflect.ProtoMessage,
+	ruleDef map[string]any,
+	ruleParams map[string]any,
+	dbEvalStatus db.ListRuleEvaluationsByProfileIdRow,
 ) error {
-	// TODO: Implement alerting through security advisory
-	// 1. Prepare the current alert state from the alert details database table
-	// 2. Prepare the new alert state from the rule evaluation parameters
+	// TODO: Implement this
+	_ = setting
+	_ = entity
+	_ = ruleDef
+	_ = ruleParams
+	_ = dbEvalStatus
+	logger := zerolog.Ctx(ctx)
+	logger.Debug().Msgf("Alert action: processing %s action for %s", SecurityAdvisoryType, entity)
+
+	// 1. Prepare the current alert state (from db)
+	// 2. Prepare the new alert state from rule evaluation parameters
 	// 3. If the new rule evaluation state is failing AND we have an alert triggered, return
 	// 4. If the new rule evaluation state is failing AND we don't have an alert, create an alert
 	// 5. If the new rule evaluation state is passing AND we have an alert triggered, close the alert

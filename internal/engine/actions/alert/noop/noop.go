@@ -49,7 +49,7 @@ func (_ *Alert) GetOnOffState(_ *pb.Profile) interfaces.ActionOpt {
 }
 
 // IsSkippable returns true if the alert is skippable
-func (_ *Alert) IsSkippable(_ interfaces.ActionOpt, _ error) bool {
+func (_ *Alert) IsSkippable(_ context.Context, _ interfaces.ActionOpt, _ error) bool {
 	return true
 }
 

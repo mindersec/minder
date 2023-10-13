@@ -84,7 +84,7 @@ func (rae *RuleActionsEngine) DoActions(
 		log.Printf("action engine not found: %s", remediate.ActionType)
 		err.RemediateErr = fmt.Errorf("%s:%w", remediate.ActionType, enginerr.ErrActionNotAvailable)
 	} else {
-		skipRemediate = remediateEngine.IsSkippable(actionsOnOff[remediate.ActionType], evalErr)
+		skipRemediate = remediateEngine.IsSkippable(ctx, actionsOnOff[remediate.ActionType], evalErr)
 	}
 
 	// Load alert action engine
@@ -93,7 +93,7 @@ func (rae *RuleActionsEngine) DoActions(
 		log.Printf("action engine not found: %s", alert.ActionType)
 		err.AlertErr = fmt.Errorf("%s:%w", alert.ActionType, enginerr.ErrActionNotAvailable)
 	} else {
-		skipAlert = alertEngine.IsSkippable(actionsOnOff[alert.ActionType], evalErr)
+		skipAlert = alertEngine.IsSkippable(ctx, actionsOnOff[alert.ActionType], evalErr)
 	}
 
 	// Exit early if both should be skipped

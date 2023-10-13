@@ -88,7 +88,7 @@ func ActionOptFromString(s *string) ActionOpt {
 type Action interface {
 	Type() string
 	GetOnOffState(*pb.Profile) ActionOpt
-	IsSkippable(ActionOpt, error) bool
+	IsSkippable(context.Context, ActionOpt, error) bool
 	Do(ctx context.Context, setting ActionOpt, entity protoreflect.ProtoMessage, ruleDef map[string]any,
 		ruleParam map[string]any, dbEvalStatus db.ListRuleEvaluationsByProfileIdRow) error
 }
