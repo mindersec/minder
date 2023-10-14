@@ -29,7 +29,6 @@ import (
 	"github.com/rs/zerolog"
 	"google.golang.org/protobuf/reflect/protoreflect"
 
-	"github.com/stacklok/mediator/internal/db"
 	enginerr "github.com/stacklok/mediator/internal/engine/errors"
 	"github.com/stacklok/mediator/internal/engine/interfaces"
 	"github.com/stacklok/mediator/internal/providers"
@@ -63,19 +62,14 @@ type Remediator struct {
 	cli              provifv1.REST
 	endpointTemplate *template.Template
 	bodyTemplate     *template.Template
-	skipFunc         interfaces.IsSkipFn
 }
 
 // NewRestRemediate creates a new REST rule data ingest engine
-func NewRestRemediate(actionType interfaces.ActionType, isSkipFn interfaces.IsSkipFn, restCfg *pb.RestType,
+func NewRestRemediate(actionType interfaces.ActionType, restCfg *pb.RestType,
 	pbuild *providers.ProviderBuilder,
 ) (*Remediator, error) {
 	if actionType == "" {
 		return nil, fmt.Errorf("action type cannot be empty")
-	}
-
-	if isSkipFn == nil {
-		return nil, fmt.Errorf("missing IsSkippable function, cannot be nil")
 	}
 
 	endpointTmpl, err := util.ParseNewTemplate(&restCfg.Endpoint, "endpoint")
@@ -104,7 +98,6 @@ func NewRestRemediate(actionType interfaces.ActionType, isSkipFn interfaces.IsSk
 		method:           method,
 		endpointTemplate: endpointTmpl,
 		bodyTemplate:     bodyTmpl,
-		skipFunc:         isSkipFn,
 	}, nil
 }
 
@@ -128,21 +121,15 @@ func (_ *Remediator) GetOnOffState(p *pb.Profile) interfaces.ActionOpt {
 	return interfaces.ActionOptFromString(p.Remediate)
 }
 
-// IsSkippable returns true if the remediation is skippable
-func (r *Remediator) IsSkippable(ctx context.Context, remAction interfaces.ActionOpt, evalErr error) bool {
-	return r.skipFunc(ctx, remAction, evalErr)
-}
-
 // Do perform the remediation
 func (r *Remediator) Do(
 	ctx context.Context,
+	_ interfaces.ActionCmd,
 	setting interfaces.ActionOpt,
 	entity protoreflect.ProtoMessage,
 	ruleDef map[string]any,
 	ruleParams map[string]any,
-	dbEvalStatus db.ListRuleEvaluationsByProfileIdRow,
 ) error {
-	_ = dbEvalStatus
 	retp := &EndpointTemplateParams{
 		Entity:  entity,
 		Profile: ruleDef,

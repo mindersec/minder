@@ -34,7 +34,6 @@ import (
 	"github.com/stacklok/mediator/internal/engine"
 	"github.com/stacklok/mediator/internal/engine/errors"
 	"github.com/stacklok/mediator/internal/engine/eval/rego"
-	engif "github.com/stacklok/mediator/internal/engine/interfaces"
 	"github.com/stacklok/mediator/internal/providers"
 	"github.com/stacklok/mediator/internal/util/jsonyaml"
 	mediatorv1 "github.com/stacklok/mediator/pkg/api/protobuf/go/mediator/v1"
@@ -114,7 +113,7 @@ func testCmdRun(cmd *cobra.Command, _ []string) error {
 	}
 
 	// TODO: Read this from a providers file instead so we can make it pluggable
-	eng, err := engine.NewRuleTypeEngine(rt, providers.NewProviderBuilder(
+	eng, err := engine.NewRuleTypeEngine(p, rt, providers.NewProviderBuilder(
 		&db.Provider{
 			Name:    "test",
 			Version: "v1",
@@ -139,13 +138,12 @@ func testCmdRun(cmd *cobra.Command, _ []string) error {
 		return fmt.Errorf("no rules found with type %s", rt.Name)
 	}
 
-	return runEvaluationForRules(eng, ent, p, rules)
+	return runEvaluationForRules(eng, ent, rules)
 }
 
 func runEvaluationForRules(
 	eng *engine.RuleTypeEngine,
 	ent protoreflect.ProtoMessage,
-	profile *mediatorv1.Profile,
 	frags []*mediatorv1.Profile_Rule,
 ) error {
 	for idx := range frags {
@@ -167,12 +165,8 @@ func runEvaluationForRules(
 		if frag.GetParams() != nil {
 			params = frag.GetParams().AsMap()
 		}
-		evalStatus := &engine.EvalStatusParams{
-			ActionsOnOff: engif.ActionsOnOffList{
-				"remediate": engif.ActionOptFromString(profile.Remediate),
-				"alert":     engif.ActionOptFromString(profile.Alert),
-			},
-		}
+		// Create the eval status params
+		evalStatus := &engine.EvalStatusParams{}
 		// Perform rule evaluation
 		eng.Eval(context.Background(), ent, def, params, evalStatus)
 

@@ -19,6 +19,8 @@ package errors
 import (
 	"errors"
 	"fmt"
+
+	"github.com/stacklok/mediator/internal/db"
 )
 
 // ErrEvaluationFailed is an error that occurs during evaluation of a rule.
@@ -78,4 +80,59 @@ var ErrActionNotAvailable = errors.New("action not available")
 type ActionsError struct {
 	RemediateErr error
 	AlertErr     error
+}
+
+// ErrorAsEvalStatus returns the evaluation status for a given error
+func ErrorAsEvalStatus(err error) db.EvalStatusTypes {
+	if errors.Is(err, ErrEvaluationFailed) {
+		return db.EvalStatusTypesFailure
+	} else if errors.Is(err, ErrEvaluationSkipped) {
+		return db.EvalStatusTypesSkipped
+	} else if err != nil {
+		return db.EvalStatusTypesError
+	}
+	return db.EvalStatusTypesSuccess
+}
+
+// ErrorAsEvalDetails returns the evaluation details for a given error
+func ErrorAsEvalDetails(err error) string {
+	if err != nil {
+		return err.Error()
+	}
+
+	return ""
+}
+
+// ErrorAsRemediationStatus returns the remediation status for a given error
+func ErrorAsRemediationStatus(err error) db.RemediationStatusTypes {
+	if err == nil {
+		return db.RemediationStatusTypesSuccess
+	}
+
+	switch err != nil {
+	case errors.Is(err, ErrActionFailed):
+		return db.RemediationStatusTypesFailure
+	case errors.Is(err, ErrActionSkipped):
+		return db.RemediationStatusTypesSkipped
+	case errors.Is(err, ErrActionNotAvailable):
+		return db.RemediationStatusTypesNotAvailable
+	}
+	return db.RemediationStatusTypesError
+}
+
+// ErrorAsAlertStatus returns the alert status for a given error
+func ErrorAsAlertStatus(err error) db.AlertStatusTypes {
+	if err == nil {
+		return db.AlertStatusTypesOn
+	}
+
+	switch err != nil {
+	case errors.Is(err, ErrActionFailed):
+		return db.AlertStatusTypesError
+	case errors.Is(err, ErrActionSkipped):
+		return db.AlertStatusTypesSkipped
+	case errors.Is(err, ErrActionNotAvailable):
+		return db.AlertStatusTypesNotAvailable
+	}
+	return db.AlertStatusTypesError
 }

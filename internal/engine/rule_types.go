@@ -173,7 +173,8 @@ type RuleTypeEngine struct {
 }
 
 // NewRuleTypeEngine creates a new rule type engine
-func NewRuleTypeEngine(rt *mediatorv1.RuleType, cli *providers.ProviderBuilder) (*RuleTypeEngine, error) {
+func NewRuleTypeEngine(p *mediatorv1.Profile, rt *mediatorv1.RuleType, cli *providers.ProviderBuilder,
+) (*RuleTypeEngine, error) {
 	rval, err := NewRuleValidator(rt)
 	if err != nil {
 		return nil, fmt.Errorf("cannot create rule validator: %w", err)
@@ -189,7 +190,7 @@ func NewRuleTypeEngine(rt *mediatorv1.RuleType, cli *providers.ProviderBuilder) 
 		return nil, fmt.Errorf("cannot create rule evaluator: %w", err)
 	}
 
-	ae, err := actions.NewRuleActions(rt, cli)
+	ae, err := actions.NewRuleActions(p, rt, cli)
 	if err != nil {
 		return nil, fmt.Errorf("cannot create rule actions engine: %w", err)
 	}
@@ -255,7 +256,8 @@ func (r *RuleTypeEngine) Actions(
 	ctx context.Context,
 	ent protoreflect.ProtoMessage,
 	ruleDef, ruleParams map[string]any,
-	evalParams *EvalStatusParams) {
+	evalParams *EvalStatusParams,
+) {
 	// Skip actions in case ingesting failed during evaluation
 	if errors.Is(evalParams.ActionsErr.AlertErr, evalerrors.ErrActionSkipped) &&
 		errors.Is(evalParams.ActionsErr.RemediateErr, evalerrors.ErrActionSkipped) {
@@ -267,7 +269,6 @@ func (r *RuleTypeEngine) Actions(
 		ent,
 		ruleDef,
 		ruleParams,
-		evalParams.ActionsOnOff,
 		evalParams.EvalErr,
 		evalParams.EvalStatusFromDb,
 	)

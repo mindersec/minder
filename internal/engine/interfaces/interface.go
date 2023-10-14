@@ -23,7 +23,6 @@ import (
 	billy "github.com/go-git/go-billy/v5"
 	"google.golang.org/protobuf/reflect/protoreflect"
 
-	"github.com/stacklok/mediator/internal/db"
 	pb "github.com/stacklok/mediator/pkg/api/protobuf/go/mediator/v1"
 )
 
@@ -91,14 +90,18 @@ type ActionType string
 type Action interface {
 	Type() ActionType
 	GetOnOffState(*pb.Profile) ActionOpt
-	IsSkippable(context.Context, ActionOpt, error) bool
-	Do(ctx context.Context, setting ActionOpt, entity protoreflect.ProtoMessage, ruleDef map[string]any,
-		ruleParam map[string]any, dbEvalStatus db.ListRuleEvaluationsByProfileIdRow) error
+	Do(ctx context.Context, cmd ActionCmd, setting ActionOpt, entity protoreflect.ProtoMessage, ruleDef map[string]any,
+		ruleParam map[string]any) error
 }
 
-// ActionsOnOffList is a map of action types to action options, i.e., remediate: on, alert: off
-type ActionsOnOffList map[ActionType]ActionOpt
+// ActionCmd is the type that defines what effect an action should have
+type ActionCmd string
 
-// IsSkipFn is a pointer to a function that determines if an action should be skipped
-// usually used in Actions.IsSkippable(
-type IsSkipFn func(ctx context.Context, remAction ActionOpt, evalErr error) bool
+const (
+	// ActionCmdOff means turn off the action
+	ActionCmdOff ActionCmd = "action_cmd_off"
+	// ActionCmdOn means turn on the action
+	ActionCmdOn ActionCmd = "action_cmd_on"
+	// ActionCmdDoNothing means the action should do nothing
+	ActionCmdDoNothing ActionCmd = "action_cmd_do_nothing"
+)

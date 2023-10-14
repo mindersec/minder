@@ -24,7 +24,6 @@ import (
 	"github.com/rs/zerolog"
 	"google.golang.org/protobuf/reflect/protoreflect"
 
-	"github.com/stacklok/mediator/internal/db"
 	enginerr "github.com/stacklok/mediator/internal/engine/errors"
 	"github.com/stacklok/mediator/internal/engine/interfaces"
 	"github.com/stacklok/mediator/internal/providers"
@@ -73,40 +72,22 @@ func (_ *Alert) GetOnOffState(p *pb.Profile) interfaces.ActionOpt {
 	return interfaces.ActionOptFromString(p.Alert)
 }
 
-// IsSkippable returns true if the alert is skippable
-func (_ *Alert) IsSkippable(ctx context.Context, actionState interfaces.ActionOpt, evalErr error) bool {
-	// TODO: Implement this
-	logger := zerolog.Ctx(ctx)
-	logger.Debug().Msgf("Alert action: evaluating if %s should be skipped: %v, %d", SecurityAdvisoryType, evalErr, actionState)
-	return false
-}
-
 // Do alerts through security advisory
 func (alert *Alert) Do(
 	ctx context.Context,
+	cmd interfaces.ActionCmd,
 	setting interfaces.ActionOpt,
 	entity protoreflect.ProtoMessage,
 	ruleDef map[string]any,
 	ruleParams map[string]any,
-	dbEvalStatus db.ListRuleEvaluationsByProfileIdRow,
 ) error {
 	// TODO: Implement this
+	_ = cmd
 	_ = setting
 	_ = entity
 	_ = ruleDef
 	_ = ruleParams
-	_ = dbEvalStatus
 	logger := zerolog.Ctx(ctx)
-	logger.Debug().Msgf("Alert action: processing %s action for %s", SecurityAdvisoryType, entity)
-
-	// 1. Prepare the current alert state (from db)
-	// 2. Prepare the new alert state from rule evaluation parameters
-	// 3. If the new rule evaluation state is failing AND we have an alert triggered, return
-	// 4. If the new rule evaluation state is failing AND we don't have an alert, create an alert
-	// 5. If the new rule evaluation state is passing AND we have an alert triggered, close the alert
-	// 6. If the new rule evaluation state is passing AND we don't have an alert triggered, return
-	// 7. Process the alert
-	// 8. If the alert is created, save the alert ID in the alert details database table
-	// 9. If the alert is closed, remove the alert ID from the alert details database table
+	logger.Debug().Msgf("Alert action: processing %s action for %s: %s", SecurityAdvisoryType, entity, cmd)
 	return fmt.Errorf("%s:%w", alert.Type(), enginerr.ErrActionNotAvailable)
 }

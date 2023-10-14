@@ -184,13 +184,13 @@ func (e *Executor) getEvaluator(
 		Name:      rule.Type,
 	})
 	if err != nil {
-		return nil, nil, fmt.Errorf("error getting rule type when traversing profile %s: %w", params.profileID, err)
+		return nil, nil, fmt.Errorf("error getting rule type when traversing profile %s: %w", params.ProfileID, err)
 	}
 
 	// Parse the rule type
 	rt, err := RuleTypePBFromDB(&dbrt, ectx)
 	if err != nil {
-		return nil, nil, fmt.Errorf("error parsing rule type when traversing profile %s: %w", params.profileID, err)
+		return nil, nil, fmt.Errorf("error parsing rule type when traversing profile %s: %w", params.ProfileID, err)
 	}
 
 	// Save the rule type uuid
@@ -198,16 +198,13 @@ func (e *Executor) getEvaluator(
 	if err != nil {
 		return nil, nil, fmt.Errorf("error parsing rule type ID: %w", err)
 	}
-	params.ruleTypeID = ruleTypeID
+	params.RuleTypeID = ruleTypeID
 
 	// Create the rule type engine
-	rte, err := NewRuleTypeEngine(rt, cli)
+	rte, err := NewRuleTypeEngine(profile, rt, cli)
 	if err != nil {
 		return nil, nil, fmt.Errorf("error creating rule type engine: %w", err)
 	}
-
-	// Get the action states for this profile - on, off, ect.
-	params.ActionsOnOff = rte.rae.GetActionsOnOffStates(profile)
 
 	// All okay
 	return params, rte, nil
@@ -223,10 +220,10 @@ func logEval(
 		Str("profile", pol.Name).
 		Str("ruleType", rule.Type).
 		Str("projectId", inf.ProjectID.String()).
-		Str("repositoryId", evalParams.repoID.String())
+		Str("repositoryId", evalParams.RepoID.String())
 
-	if evalParams.artifactID.Valid {
-		logger = logger.Str("artifactId", evalParams.artifactID.UUID.String())
+	if evalParams.ArtifactID.Valid {
+		logger = logger.Str("artifactId", evalParams.ArtifactID.UUID.String())
 	}
 
 	// log evaluation

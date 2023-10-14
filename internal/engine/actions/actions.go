@@ -19,6 +19,7 @@ package actions
 
 import (
 	"context"
+	"errors"
 	"fmt"
 
 	"github.com/rs/zerolog"
@@ -35,11 +36,13 @@ import (
 
 // RuleActionsEngine is the engine responsible for processing all actions i.e., remediation and alerts
 type RuleActionsEngine struct {
-	actions map[engif.ActionType]engif.Action
+	actions      map[engif.ActionType]engif.Action
+	actionsOnOff map[engif.ActionType]engif.ActionOpt
 }
 
 // NewRuleActions creates a new rule actions engine
-func NewRuleActions(rt *mediatorv1.RuleType, pbuild *providers.ProviderBuilder) (*RuleActionsEngine, error) {
+func NewRuleActions(p *mediatorv1.Profile, rt *mediatorv1.RuleType, pbuild *providers.ProviderBuilder,
+) (*RuleActionsEngine, error) {
 	// Create the remediation engine
 	remEngine, err := remediate.NewRuleRemediator(rt, pbuild)
 	if err != nil {
@@ -57,6 +60,10 @@ func NewRuleActions(rt *mediatorv1.RuleType, pbuild *providers.ProviderBuilder) 
 			remEngine.Type():   remEngine,
 			alertEngine.Type(): alertEngine,
 		},
+		actionsOnOff: map[engif.ActionType]engif.ActionOpt{
+			remEngine.Type():   remEngine.GetOnOffState(p),
+			alertEngine.Type(): alertEngine.GetOnOffState(p),
+		},
 	}, nil
 }
 
@@ -66,12 +73,13 @@ func (rae *RuleActionsEngine) DoActions(
 	ent protoreflect.ProtoMessage,
 	ruleDef map[string]any,
 	ruleParams map[string]any,
-	actionsOnOff engif.ActionsOnOffList,
 	evalErr error,
 	dbEvalStatus db.ListRuleEvaluationsByProfileIdRow,
 ) enginerr.ActionsError {
+	// Get logger
 	logger := zerolog.Ctx(ctx)
-	// TODO: revisit skipping actions
+
+	// Default to return that we skipped all actions
 	err := enginerr.ActionsError{
 		RemediateErr: enginerr.ErrActionSkipped,
 		AlertErr:     enginerr.ErrActionSkipped,
@@ -80,46 +88,111 @@ func (rae *RuleActionsEngine) DoActions(
 	skipAlert := true
 
 	// Load remediate action engine
-	remediateEngine, remOK := rae.actions[remediate.ActionType]
-	if !remOK {
+	remediateEngine, ok := rae.actions[remediate.ActionType]
+	if !ok {
 		logger.Debug().Msg(fmt.Sprintf("action engine not found: %s", remediate.ActionType))
 		err.RemediateErr = fmt.Errorf("%s:%w", remediate.ActionType, enginerr.ErrActionNotAvailable)
 	} else {
-		skipRemediate = remediateEngine.IsSkippable(ctx, actionsOnOff[remediate.ActionType], evalErr)
+		skipRemediate = rae.isSkippable(ctx, remediate.ActionType, evalErr)
 	}
 
 	// Load alert action engine
-	alertEngine, alertOK := rae.actions[alert.ActionType]
-	if !alertOK {
+	alertEngine, ok := rae.actions[alert.ActionType]
+	if !ok {
 		logger.Debug().Msg(fmt.Sprintf("action engine not found: %s", alert.ActionType))
 		err.AlertErr = fmt.Errorf("%s:%w", alert.ActionType, enginerr.ErrActionNotAvailable)
 	} else {
-		skipAlert = alertEngine.IsSkippable(ctx, actionsOnOff[alert.ActionType], evalErr)
+		skipAlert = rae.isSkippable(ctx, alert.ActionType, evalErr)
 	}
 
 	// Exit early if both should be skipped
 	if skipRemediate && skipAlert {
+		// err is still set to skip all actions
 		return err
 	}
 
-	// Try remediating first
+	// Try remediating
 	if !skipRemediate {
-		err.RemediateErr = remediateEngine.Do(ctx, actionsOnOff[remediate.ActionType], ent, ruleDef, ruleParams, dbEvalStatus)
+		res := shouldRemediate(dbEvalStatus, evalErr)
+		err.RemediateErr = remediateEngine.Do(ctx, res, rae.actionsOnOff[remediate.ActionType], ent, ruleDef, ruleParams)
 	}
 
-	// If remediate failed fatally and alert actions should not be skipped, try alerting
-	if enginerr.IsActionFatalError(err.RemediateErr) && !skipAlert {
-		err.AlertErr = alertEngine.Do(ctx, actionsOnOff[alert.ActionType], ent, ruleDef, ruleParams, dbEvalStatus)
+	// Try alerting
+	if !skipAlert {
+		res := shouldAlert(dbEvalStatus, evalErr, err.RemediateErr)
+		err.AlertErr = alertEngine.Do(ctx, res, rae.actionsOnOff[alert.ActionType], ent, ruleDef, ruleParams)
 	}
 
 	return err
 }
 
-// GetActionsOnOffStates returns a map of the action states for all actions - on, off, ect.
-func (rae *RuleActionsEngine) GetActionsOnOffStates(profile *mediatorv1.Profile) engif.ActionsOnOffList {
-	res := engif.ActionsOnOffList{}
-	for _, action := range rae.actions {
-		res[action.Type()] = action.GetOnOffState(profile)
+// shouldRemediate returns the action command for remediation taking into account previous evaluations
+func shouldRemediate(prevEvalFromDb db.ListRuleEvaluationsByProfileIdRow, evalErr error) engif.ActionCmd {
+	_ = prevEvalFromDb
+	_ = evalErr
+	return engif.ActionCmdOn
+}
+
+// shouldAlert returns the action command for alerting taking into account previous evaluations
+func shouldAlert(prevEvalFromDb db.ListRuleEvaluationsByProfileIdRow, evalErr error, remErr error) engif.ActionCmd {
+	// Start simple without taking into account the remediation status
+	_ = remErr
+	newEval := enginerr.ErrorAsEvalStatus(evalErr)
+	prevAlert := db.AlertStatusTypesSkipped
+	if prevEvalFromDb.AlertStatus.Valid {
+		prevAlert = prevEvalFromDb.AlertStatus.AlertStatusTypes
 	}
-	return res
+
+	// Start evaluation scenarios
+	// Case 1 - Evaluation has PASSED, but the Alert was ON.
+	if db.EvalStatusTypesSuccess == newEval && db.AlertStatusTypesOn == prevAlert {
+		// We should turn it OFF.
+		return engif.ActionCmdOff
+	}
+
+	// Case 2 - Evaluation has FAILED, but the alert was OFF.
+	if db.EvalStatusTypesFailure == newEval && db.AlertStatusTypesOff == prevAlert {
+		// We should turn it ON.
+		return engif.ActionCmdOn
+	}
+
+	// Do nothing in all other cases
+	return engif.ActionCmdDoNothing
+}
+
+// isSkippable returns true if the action should be skipped
+func (rae *RuleActionsEngine) isSkippable(ctx context.Context, actionType engif.ActionType, evalErr error) bool {
+	var skipRemediation bool
+
+	logger := zerolog.Ctx(ctx)
+
+	// Get the profile option set for this action type
+	actionOnOff, ok := rae.actionsOnOff[actionType]
+	if !ok {
+		// If the action is not found, definitely skip it
+		return true
+	}
+	// Check the action option
+	switch actionOnOff {
+	case engif.ActionOptOff:
+		// Action is off, skip
+		return true
+	case engif.ActionOptUnknown:
+		// Action is unknown, skip
+		logger.Debug().Msg("unknown action option, check your profile definition")
+		return true
+	case engif.ActionOptDryRun, engif.ActionOptOn:
+		// Action is on or dry-run, do not skip yet. Check the evaluation error
+		skipRemediation =
+			// rule evaluation was skipped, skip action too
+			errors.Is(evalErr, enginerr.ErrEvaluationSkipped) ||
+				// rule evaluation was skipped silently, skip action
+				errors.Is(evalErr, enginerr.ErrEvaluationSkipSilently) ||
+				// TODO: (radoslav) Discuss this with Jakub and decide if we want to skip remediation too
+				// rule evaluation had no error, skip action if actionType IS NOT alert
+				(evalErr == nil && actionType != alert.ActionType)
+	}
+	// Everything else, do not skip
+	return skipRemediation
+
 }

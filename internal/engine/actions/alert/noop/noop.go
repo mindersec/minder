@@ -22,7 +22,6 @@ import (
 
 	"google.golang.org/protobuf/reflect/protoreflect"
 
-	"github.com/stacklok/mediator/internal/db"
 	enginerr "github.com/stacklok/mediator/internal/engine/errors"
 	"github.com/stacklok/mediator/internal/engine/interfaces"
 	pb "github.com/stacklok/mediator/pkg/api/protobuf/go/mediator/v1"
@@ -48,19 +47,14 @@ func (_ *Alert) GetOnOffState(_ *pb.Profile) interfaces.ActionOpt {
 	return interfaces.ActionOptOff
 }
 
-// IsSkippable returns true if the alert is skippable
-func (_ *Alert) IsSkippable(_ context.Context, _ interfaces.ActionOpt, _ error) bool {
-	return true
-}
-
 // Do perform the noop alert
 func (a *Alert) Do(
 	_ context.Context,
+	_ interfaces.ActionCmd,
 	_ interfaces.ActionOpt,
 	_ protoreflect.ProtoMessage,
 	_ map[string]any,
 	_ map[string]any,
-	_ db.ListRuleEvaluationsByProfileIdRow,
 ) error {
 	return fmt.Errorf("%s:%w", a.Type(), enginerr.ErrActionNotAvailable)
 }

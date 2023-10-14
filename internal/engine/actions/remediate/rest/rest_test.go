@@ -35,8 +35,6 @@ import (
 	provifv1 "github.com/stacklok/mediator/pkg/providers/v1"
 )
 
-var TestActionTypeValid interfaces.ActionType = "remediate-test"
-
 var (
 	simpleBodyTemplate   = "{\"foo\": \"bar\"}"
 	bodyTemplateWithVars = `{ "enabled": true, "allowed_actions": "{{.Profile.allowed_actions}}" }`
@@ -72,10 +70,7 @@ var (
 		db.ProviderAccessToken{},
 		"token",
 	)
-	// noSkipFn is a function that always returns false(run remediation)
-	noSkipFn = func(_ context.Context, _ interfaces.ActionOpt, _ error) bool {
-		return false
-	}
+	TestActionTypeValid interfaces.ActionType = "remediate-test"
 )
 
 func testGithubProviderBuilder(baseURL string) *providers.ProviderBuilder {
@@ -194,7 +189,7 @@ func TestNewRestRemediate(t *testing.T) {
 		t.Run(tt.name, func(t *testing.T) {
 			t.Parallel()
 
-			got, err := NewRestRemediate(tt.args.actionType, noSkipFn, tt.args.restCfg, tt.args.pbuild)
+			got, err := NewRestRemediate(tt.args.actionType, tt.args.restCfg, tt.args.pbuild)
 			if tt.wantErr {
 				require.Error(t, err, "expected error")
 				require.Nil(t, got, "expected nil")
@@ -425,12 +420,12 @@ func TestRestRemediate(t *testing.T) {
 			testServer := httptest.NewServer(tt.testHandler)
 			defer testServer.Close()
 			tt.newRemArgs.pbuild = testGithubProviderBuilder(testServer.URL)
-			dbEvalStatus := db.ListRuleEvaluationsByProfileIdRow{}
-			engine, err := NewRestRemediate(TestActionTypeValid, noSkipFn, tt.newRemArgs.restCfg, tt.newRemArgs.pbuild)
+			engine, err := NewRestRemediate(TestActionTypeValid, tt.newRemArgs.restCfg, tt.newRemArgs.pbuild)
 			require.NoError(t, err, "unexpected error creating remediate engine")
 			require.NotNil(t, engine, "expected non-nil remediate engine")
 
-			err = engine.Do(context.Background(), tt.remArgs.remAction, tt.remArgs.ent, tt.remArgs.pol, tt.remArgs.params, dbEvalStatus)
+			err = engine.Do(context.Background(), interfaces.ActionCmdOn, tt.remArgs.remAction, tt.remArgs.ent,
+				tt.remArgs.pol, tt.remArgs.params)
 			if tt.wantErr {
 				require.Error(t, err, "expected error")
 				return

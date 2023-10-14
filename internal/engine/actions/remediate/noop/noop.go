@@ -22,7 +22,6 @@ import (
 
 	"google.golang.org/protobuf/reflect/protoreflect"
 
-	"github.com/stacklok/mediator/internal/db"
 	enginerr "github.com/stacklok/mediator/internal/engine/errors"
 	"github.com/stacklok/mediator/internal/engine/interfaces"
 	pb "github.com/stacklok/mediator/pkg/api/protobuf/go/mediator/v1"
@@ -31,12 +30,11 @@ import (
 // Remediator is the structure backing the noop remediator
 type Remediator struct {
 	actionType interfaces.ActionType
-	skipFunc   interfaces.IsSkipFn
 }
 
 // NewNoopRemediate creates a new noop remediation engine
-func NewNoopRemediate(actionType interfaces.ActionType, isSkipFn interfaces.IsSkipFn) (*Remediator, error) {
-	return &Remediator{actionType: actionType, skipFunc: isSkipFn}, nil
+func NewNoopRemediate(actionType interfaces.ActionType) (*Remediator, error) {
+	return &Remediator{actionType: actionType}, nil
 }
 
 // Type returns the action type of the noop engine
@@ -49,19 +47,14 @@ func (_ *Remediator) GetOnOffState(_ *pb.Profile) interfaces.ActionOpt {
 	return interfaces.ActionOptOff
 }
 
-// IsSkippable returns true if the remediation is skippable
-func (r *Remediator) IsSkippable(ctx context.Context, act interfaces.ActionOpt, err error) bool {
-	return r.skipFunc(ctx, act, err)
-}
-
 // Do perform the remediation
 func (r *Remediator) Do(
 	_ context.Context,
+	_ interfaces.ActionCmd,
 	_ interfaces.ActionOpt,
 	_ protoreflect.ProtoMessage,
 	_ map[string]any,
 	_ map[string]any,
-	_ db.ListRuleEvaluationsByProfileIdRow,
 ) error {
 	return fmt.Errorf("%s:%w", r.Type(), enginerr.ErrActionNotAvailable)
 }
