@@ -104,10 +104,13 @@ func (q *Queries) GetRuleEvaluationByProfileIdAndRuleType(
 		return ListRuleEvaluationsByProfileIdRow{}, err
 	}
 
-	// Single row expected
-	if len(res) != 1 {
-		return ListRuleEvaluationsByProfileIdRow{},
-			fmt.Errorf("GetRuleEvaluationByProfileIdAndRuleType - expected 1 row, got %d", len(res))
+	// Single or no row expected
+	switch len(res) {
+	case 0:
+		return ListRuleEvaluationsByProfileIdRow{}, nil
+	case 1:
+		return res[0], nil
 	}
-	return res[0], nil
+	return ListRuleEvaluationsByProfileIdRow{},
+		fmt.Errorf("GetRuleEvaluationByProfileIdAndRuleType - expected 1 row, got %d", len(res))
 }
