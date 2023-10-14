@@ -167,7 +167,10 @@ func (e *Executor) getEvaluator(
 	rule *pb.Profile_Rule,
 ) (*EvalStatusParams, *RuleTypeEngine, error) {
 	logger := zerolog.Ctx(ctx)
-	logger.Debug().Msg(fmt.Sprintf("Evaluating rule: %s for profile: %s", rule.Type, *profile.Id))
+	logger.Info().
+		Str("rule_type", rule.Type).
+		Str("profile_id", *profile.Id).
+		Msg("begin evaluating rule")
 
 	// Create eval status params
 	params, err := e.createEvalStatusParams(ctx, inf, profile, rule)

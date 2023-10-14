@@ -60,6 +60,8 @@ func NewRuleActions(p *mediatorv1.Profile, rt *mediatorv1.RuleType, pbuild *prov
 			remEngine.Type():   remEngine,
 			alertEngine.Type(): alertEngine,
 		},
+		// The on/off state of the actions is an integral part of the action engine
+		// and should be set upon creation.
 		actionsOnOff: map[engif.ActionType]engif.ActionOpt{
 			remEngine.Type():   remEngine.GetOnOffState(p),
 			alertEngine.Type(): alertEngine.GetOnOffState(p),
@@ -90,7 +92,7 @@ func (rae *RuleActionsEngine) DoActions(
 	// Load remediate action engine
 	remediateEngine, ok := rae.actions[remediate.ActionType]
 	if !ok {
-		logger.Debug().Msg(fmt.Sprintf("action engine not found: %s", remediate.ActionType))
+		logger.Error().Str("action_type", string(remediate.ActionType)).Msg("not found")
 		err.RemediateErr = fmt.Errorf("%s:%w", remediate.ActionType, enginerr.ErrActionNotAvailable)
 	} else {
 		skipRemediate = rae.isSkippable(ctx, remediate.ActionType, evalErr)
@@ -99,16 +101,10 @@ func (rae *RuleActionsEngine) DoActions(
 	// Load alert action engine
 	alertEngine, ok := rae.actions[alert.ActionType]
 	if !ok {
-		logger.Debug().Msg(fmt.Sprintf("action engine not found: %s", alert.ActionType))
+		logger.Error().Str("action_type", string(alert.ActionType)).Msg("not found")
 		err.AlertErr = fmt.Errorf("%s:%w", alert.ActionType, enginerr.ErrActionNotAvailable)
 	} else {
 		skipAlert = rae.isSkippable(ctx, alert.ActionType, evalErr)
-	}
-
-	// Exit early if both should be skipped
-	if skipRemediate && skipAlert {
-		// err is still set to skip all actions
-		return err
 	}
 
 	// Try remediating
@@ -130,6 +126,11 @@ func (rae *RuleActionsEngine) DoActions(
 func shouldRemediate(prevEvalFromDb db.ListRuleEvaluationsByProfileIdRow, evalErr error) engif.ActionCmd {
 	_ = prevEvalFromDb
 	_ = evalErr
+	// To be used in the future in case we decide to implement specific condition handling for performing a remediation
+	// that is not solely based on the current evaluation error.
+	// Example: Skip remediation if remediate_type is PR, the evalErr is failing, but we already have the last
+	// remediate status set to "success", meaning we created a PR remediation,
+	// it's just not merged yet so no need to create another one
 	return engif.ActionCmdOn
 }
 
@@ -179,7 +180,7 @@ func (rae *RuleActionsEngine) isSkippable(ctx context.Context, actionType engif.
 		return true
 	case engif.ActionOptUnknown:
 		// Action is unknown, skip
-		logger.Debug().Msg("unknown action option, check your profile definition")
+		logger.Info().Msg("unknown action option, check your profile definition")
 		return true
 	case engif.ActionOptDryRun, engif.ActionOptOn:
 		// Action is on or dry-run, do not skip yet. Check the evaluation error
@@ -188,7 +189,6 @@ func (rae *RuleActionsEngine) isSkippable(ctx context.Context, actionType engif.
 			errors.Is(evalErr, enginerr.ErrEvaluationSkipped) ||
 				// rule evaluation was skipped silently, skip action
 				errors.Is(evalErr, enginerr.ErrEvaluationSkipSilently) ||
-				// TODO: (radoslav) Discuss this with Jakub and decide if we want to skip remediation too
 				// rule evaluation had no error, skip action if actionType IS NOT alert
 				(evalErr == nil && actionType != alert.ActionType)
 	}

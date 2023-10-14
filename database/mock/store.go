@@ -891,10 +891,10 @@ func (mr *MockStoreMockRecorder) GetProviderByName(arg0, arg1 interface{}) *gomo
 }
 
 // GetQuerierWithTransaction mocks base method.
-func (m *MockStore) GetQuerierWithTransaction(arg0 *sql.Tx) db.Querier {
+func (m *MockStore) GetQuerierWithTransaction(arg0 *sql.Tx) db.ExtendQuerier {
 	m.ctrl.T.Helper()
 	ret := m.ctrl.Call(m, "GetQuerierWithTransaction", arg0)
-	ret0, _ := ret[0].(db.Querier)
+	ret0, _ := ret[0].(db.ExtendQuerier)
 	return ret0
 }
 

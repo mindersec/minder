@@ -116,8 +116,12 @@ func (e *Executor) createOrUpdateEvalStatus(
 
 	// Check if we should skip silently
 	if errors.Is(evalParams.EvalErr, evalerrors.ErrEvaluationSkipSilently) {
-		logger.Debug().Msgf("silent skip of rule %s for profile %s for entity %s in repo %s",
-			evalParams.RuleTypeID, evalParams.ProfileID, evalParams.EntityType, evalParams.RepoID)
+		logger.Debug().
+			Str("repo_id", evalParams.RepoID.String()).
+			Str("entity_type", string(evalParams.EntityType)).
+			Str("rule_type_id", evalParams.RuleTypeID.String()).
+			Str("profile_id", evalParams.ProfileID.String()).
+			Msg("rule evaluation skipped silently")
 		return nil
 	}
 
@@ -134,8 +138,11 @@ func (e *Executor) createOrUpdateEvalStatus(
 	})
 
 	if err != nil {
-		logger.Error().Msgf("error upserting rule eval, profile %s, entity %s, repo %s: %s",
-			evalParams.ProfileID, evalParams.EntityType, evalParams.RepoID, err)
+		logger.Err(err).
+			Str("repo_id", evalParams.RepoID.String()).
+			Str("entity_type", string(evalParams.EntityType)).
+			Str("profile_id", evalParams.ProfileID.String()).
+			Msg("error upserting rule evaluation")
 		return err
 	}
 	// Upsert evaluation details
@@ -146,8 +153,11 @@ func (e *Executor) createOrUpdateEvalStatus(
 	})
 
 	if err != nil {
-		logger.Error().Msgf("error upserting rule eval details, profile %s, entity %s, repo %s: %s",
-			evalParams.ProfileID, evalParams.EntityType, evalParams.RepoID, err)
+		logger.Err(err).
+			Str("repo_id", evalParams.RepoID.String()).
+			Str("entity_type", string(evalParams.EntityType)).
+			Str("profile_id", evalParams.ProfileID.String()).
+			Msg("error upserting rule evaluation details")
 		return err
 	}
 	// Upsert remediation details
@@ -157,8 +167,11 @@ func (e *Executor) createOrUpdateEvalStatus(
 		Details:    errorAsActionDetails(evalParams.ActionsErr.RemediateErr),
 	})
 	if err != nil {
-		logger.Error().Msgf("error upserting rule remediation details, profile %s, entity %s, repo %s: %s",
-			evalParams.ProfileID, evalParams.EntityType, evalParams.RepoID, err)
+		logger.Err(err).
+			Str("repo_id", evalParams.RepoID.String()).
+			Str("entity_type", string(evalParams.EntityType)).
+			Str("profile_id", evalParams.ProfileID.String()).
+			Msg("error upserting rule remediation details")
 	}
 	// Upsert alert details
 	_, err = e.querier.UpsertRuleDetailsAlert(ctx, db.UpsertRuleDetailsAlertParams{
@@ -167,8 +180,11 @@ func (e *Executor) createOrUpdateEvalStatus(
 		Details:    errorAsActionDetails(evalParams.ActionsErr.AlertErr),
 	})
 	if err != nil {
-		logger.Error().Msgf("error upserting rule alert details, profile %s, entity %s, repo %s: %s",
-			evalParams.ProfileID, evalParams.EntityType, evalParams.RepoID, err)
+		logger.Err(err).
+			Str("repo_id", evalParams.RepoID.String()).
+			Str("entity_type", string(evalParams.EntityType)).
+			Str("profile_id", evalParams.ProfileID.String()).
+			Msg("error upserting rule alert details")
 	}
 	return err
 }

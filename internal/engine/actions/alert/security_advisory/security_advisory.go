@@ -82,12 +82,14 @@ func (alert *Alert) Do(
 	ruleParams map[string]any,
 ) error {
 	// TODO: Implement this
-	_ = cmd
 	_ = setting
 	_ = entity
 	_ = ruleDef
 	_ = ruleParams
 	logger := zerolog.Ctx(ctx)
-	logger.Debug().Msgf("Alert action: processing %s action for %s: %s", SecurityAdvisoryType, entity, cmd)
+	logger.Info().
+		Str("alert_type", SecurityAdvisoryType).
+		Str("cmd", string(cmd)).
+		Msg("alert action not implemented")
 	return fmt.Errorf("%s:%w", alert.Type(), enginerr.ErrActionNotAvailable)
 }

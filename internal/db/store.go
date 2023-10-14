@@ -41,7 +41,7 @@ type Store interface {
 	ExtendQuerier
 	CheckHealth() error
 	BeginTransaction() (*sql.Tx, error)
-	GetQuerierWithTransaction(tx *sql.Tx) Querier
+	GetQuerierWithTransaction(tx *sql.Tx) ExtendQuerier
 	Commit(tx *sql.Tx) error
 	Rollback(tx *sql.Tx) error
 }
@@ -63,7 +63,7 @@ func (s *SQLStore) BeginTransaction() (*sql.Tx, error) {
 }
 
 // GetQuerierWithTransaction returns a new Querier with the provided transaction
-func (*SQLStore) GetQuerierWithTransaction(tx *sql.Tx) Querier {
+func (*SQLStore) GetQuerierWithTransaction(tx *sql.Tx) ExtendQuerier {
 	return New(tx)
 }
 
