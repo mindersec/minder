@@ -16,144 +16,181 @@ package engine
 
 import (
 	"context"
+	"database/sql"
 	"errors"
 	"fmt"
-	"log"
 
 	"github.com/google/uuid"
+	"github.com/rs/zerolog"
 
 	"github.com/stacklok/mediator/internal/db"
 	evalerrors "github.com/stacklok/mediator/internal/engine/errors"
+	"github.com/stacklok/mediator/internal/entities"
+	pb "github.com/stacklok/mediator/pkg/api/protobuf/go/mediator/v1"
 )
 
-// createOrUpdateEvalStatusParams is a helper struct to pass parameters to createOrUpdateEvalStatus
+// EvalStatusParams is a helper struct to pass parameters to createOrUpdateEvalStatus
 // to avoid confusion with the parameters order. Since at the moment all our entities are bound to
-// a repo and most profiles are expecting a repo, the repoID parameter is mandatory. For entities
-// other than artifacts, the artifactID should be 0 which is translated to NULL in the database.
-type createOrUpdateEvalStatusParams struct {
-	profileID      uuid.UUID
-	repoID         uuid.UUID
-	artifactID     *uuid.UUID
-	ruleTypeEntity db.Entities
-	ruleTypeID     uuid.UUID
-	evalErr        error
-	remediateErr   error
+// a repo and most profiles are expecting a repo, the RepoID parameter is mandatory. For entities
+// other than artifacts, the ArtifactID should be 0 which is translated to NULL in the database.
+type EvalStatusParams struct {
+	ProfileID        uuid.UUID
+	RepoID           uuid.UUID
+	ArtifactID       uuid.NullUUID
+	EntityType       db.Entities
+	RuleTypeID       uuid.UUID
+	EvalStatusFromDb db.ListRuleEvaluationsByProfileIdRow
+	EvalErr          error
+	ActionsErr       evalerrors.ActionsError
 }
 
-func (e *Executor) createOrUpdateEvalStatus(
+func (e *Executor) createEvalStatusParams(
 	ctx context.Context,
-	params *createOrUpdateEvalStatusParams,
-) error {
-	if params == nil {
-		return fmt.Errorf("createOrUpdateEvalStatusParams cannot be nil")
+	inf *EntityInfoWrapper,
+	profile *pb.Profile,
+	rule *pb.Profile_Rule,
+) (*EvalStatusParams, error) {
+	// Get Profile UUID
+	profileID, err := uuid.Parse(*profile.Id)
+	if err != nil {
+		return nil, fmt.Errorf("error parsing profile ID: %w", err)
 	}
 
-	if errors.Is(params.evalErr, evalerrors.ErrEvaluationSkipSilently) {
-		log.Printf("silent skip of rule %s for profile %s for entity %s in repo %s",
-			params.ruleTypeID, params.profileID, params.ruleTypeEntity, params.repoID)
-		return nil
+	params := &EvalStatusParams{
+		ProfileID:  profileID,
+		RepoID:     uuid.MustParse(inf.OwnershipData[RepositoryIDEventKey]),
+		EntityType: entities.EntityTypeToDB(inf.Type),
 	}
 
-	var sqlArtifactID uuid.NullUUID
-	if params.artifactID != nil {
-		sqlArtifactID = uuid.NullUUID{
-			UUID:  *params.artifactID,
+	artifactID, ok := inf.OwnershipData[ArtifactIDEventKey]
+	if ok {
+		params.ArtifactID = uuid.NullUUID{
+			UUID:  uuid.MustParse(artifactID),
 			Valid: true,
 		}
 	}
 
+	// Prepare params for fetching the current rule evaluation from the database
+	entityType := db.NullEntities{
+		Entities: params.EntityType,
+		Valid:    true}
+	entityID := uuid.NullUUID{}
+	if params.EntityType == db.EntitiesArtifact {
+		entityID = params.ArtifactID
+	} else if params.EntityType == db.EntitiesRepository {
+		entityID = uuid.NullUUID{
+			UUID:  params.RepoID,
+			Valid: true,
+		}
+	}
+	ruleName := sql.NullString{
+		String: rule.Type,
+		Valid:  true,
+	}
+
+	// Get the current rule evaluation from the database
+	evalStatus, err := e.querier.GetRuleEvaluationByProfileIdAndRuleType(ctx,
+		params.ProfileID,
+		entityType,
+		entityID,
+		ruleName,
+	)
+	if err != nil {
+		return nil, fmt.Errorf("error getting rule evaluation status from db: %w", err)
+	}
+
+	// Save the current rule evaluation status to the evalParams
+	params.EvalStatusFromDb = evalStatus
+	return params, nil
+}
+
+func (e *Executor) createOrUpdateEvalStatus(
+	ctx context.Context,
+	evalParams *EvalStatusParams,
+) error {
+	logger := zerolog.Ctx(ctx)
+	// Make sure evalParams is not nil
+	if evalParams == nil {
+		return fmt.Errorf("createEvalStatusParams cannot be nil")
+	}
+
+	// Check if we should skip silently
+	if errors.Is(evalParams.EvalErr, evalerrors.ErrEvaluationSkipSilently) {
+		logger.Debug().
+			Str("repo_id", evalParams.RepoID.String()).
+			Str("entity_type", string(evalParams.EntityType)).
+			Str("rule_type_id", evalParams.RuleTypeID.String()).
+			Str("profile_id", evalParams.ProfileID.String()).
+			Msg("rule evaluation skipped silently")
+		return nil
+	}
+
+	// Upsert evaluation
 	id, err := e.querier.UpsertRuleEvaluations(ctx, db.UpsertRuleEvaluationsParams{
-		ProfileID: params.profileID,
+		ProfileID: evalParams.ProfileID,
 		RepositoryID: uuid.NullUUID{
-			UUID:  params.repoID,
+			UUID:  evalParams.RepoID,
 			Valid: true,
 		},
-		ArtifactID: sqlArtifactID,
-		Entity:     params.ruleTypeEntity,
-		RuleTypeID: params.ruleTypeID,
+		ArtifactID: evalParams.ArtifactID,
+		Entity:     evalParams.EntityType,
+		RuleTypeID: evalParams.RuleTypeID,
 	})
 
 	if err != nil {
-		log.Printf(
-			"error upserting rule eval, profile %s, entity %s, repo %s: %s",
-			params.profileID,
-			params.ruleTypeEntity,
-			params.repoID,
-			err,
-		)
+		logger.Err(err).
+			Str("repo_id", evalParams.RepoID.String()).
+			Str("entity_type", string(evalParams.EntityType)).
+			Str("profile_id", evalParams.ProfileID.String()).
+			Msg("error upserting rule evaluation")
 		return err
 	}
+	// Upsert evaluation details
 	_, err = e.querier.UpsertRuleDetailsEval(ctx, db.UpsertRuleDetailsEvalParams{
 		RuleEvalID: id,
-		Status:     errorAsEvalStatus(params.evalErr),
-		Details:    errorAsEvalDetails(params.evalErr),
+		Status:     evalerrors.ErrorAsEvalStatus(evalParams.EvalErr),
+		Details:    evalerrors.ErrorAsEvalDetails(evalParams.EvalErr),
 	})
 
 	if err != nil {
-		log.Printf(
-			"error upserting rule eval details, profile %s, entity %s, repo %s: %s\"",
-			params.profileID,
-			params.ruleTypeEntity,
-			params.repoID,
-			err,
-		)
+		logger.Err(err).
+			Str("repo_id", evalParams.RepoID.String()).
+			Str("entity_type", string(evalParams.EntityType)).
+			Str("profile_id", evalParams.ProfileID.String()).
+			Msg("error upserting rule evaluation details")
 		return err
 	}
+	// Upsert remediation details
 	_, err = e.querier.UpsertRuleDetailsRemediate(ctx, db.UpsertRuleDetailsRemediateParams{
 		RuleEvalID: id,
-		Status:     errorAsRemediationStatus(params.remediateErr),
-		Details:    errorAsRemediationDetails(params.remediateErr),
+		Status:     evalerrors.ErrorAsRemediationStatus(evalParams.ActionsErr.RemediateErr),
+		Details:    errorAsActionDetails(evalParams.ActionsErr.RemediateErr),
 	})
 	if err != nil {
-		log.Printf(
-			"error upserting rule remediation details, profile %s, entity %s, repo %s: %s",
-			params.profileID,
-			params.ruleTypeEntity,
-			params.repoID,
-			err,
-		)
+		logger.Err(err).
+			Str("repo_id", evalParams.RepoID.String()).
+			Str("entity_type", string(evalParams.EntityType)).
+			Str("profile_id", evalParams.ProfileID.String()).
+			Msg("error upserting rule remediation details")
+	}
+	// Upsert alert details
+	_, err = e.querier.UpsertRuleDetailsAlert(ctx, db.UpsertRuleDetailsAlertParams{
+		RuleEvalID: id,
+		Status:     evalerrors.ErrorAsAlertStatus(evalParams.ActionsErr.AlertErr),
+		Details:    errorAsActionDetails(evalParams.ActionsErr.AlertErr),
+	})
+	if err != nil {
+		logger.Err(err).
+			Str("repo_id", evalParams.RepoID.String()).
+			Str("entity_type", string(evalParams.EntityType)).
+			Str("profile_id", evalParams.ProfileID.String()).
+			Msg("error upserting rule alert details")
 	}
 	return err
 }
 
-func errorAsEvalStatus(err error) db.EvalStatusTypes {
-	if errors.Is(err, evalerrors.ErrEvaluationFailed) {
-		return db.EvalStatusTypesFailure
-	} else if errors.Is(err, evalerrors.ErrEvaluationSkipped) {
-		return db.EvalStatusTypesSkipped
-	} else if err != nil {
-		return db.EvalStatusTypesError
-	}
-	return db.EvalStatusTypesSuccess
-}
-
-func errorAsEvalDetails(err error) string {
-	if err != nil {
-		return err.Error()
-	}
-
-	return ""
-}
-
-func errorAsRemediationStatus(err error) db.RemediationStatusTypes {
-	if err == nil {
-		return db.RemediationStatusTypesSuccess
-	}
-
-	switch err != nil {
-	case errors.Is(err, evalerrors.ErrRemediateFailed):
-		return db.RemediationStatusTypesFailure
-	case errors.Is(err, evalerrors.ErrRemediationSkipped):
-		return db.RemediationStatusTypesSkipped
-	case errors.Is(err, evalerrors.ErrRemediationNotAvailable):
-		return db.RemediationStatusTypesNotAvailable
-	}
-
-	return db.RemediationStatusTypesError
-}
-
-func errorAsRemediationDetails(err error) string {
-	if evalerrors.IsRemediateFatalError(err) {
+func errorAsActionDetails(err error) string {
+	if evalerrors.IsActionFatalError(err) {
 		return err.Error()
 	}
 

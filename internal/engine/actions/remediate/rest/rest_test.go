@@ -70,6 +70,7 @@ var (
 		db.ProviderAccessToken{},
 		"token",
 	)
+	TestActionTypeValid interfaces.ActionType = "remediate-test"
 )
 
 func testGithubProviderBuilder(baseURL string) *providers.ProviderBuilder {
@@ -99,8 +100,9 @@ func TestNewRestRemediate(t *testing.T) {
 	t.Parallel()
 
 	type args struct {
-		restCfg *pb.RestType
-		pbuild  *providers.ProviderBuilder
+		restCfg    *pb.RestType
+		pbuild     *providers.ProviderBuilder
+		actionType interfaces.ActionType
 	}
 	tests := []struct {
 		name    string
@@ -108,13 +110,26 @@ func TestNewRestRemediate(t *testing.T) {
 		wantErr bool
 	}{
 		{
+			name: "invalid action type",
+			args: args{
+				restCfg: &pb.RestType{
+					Endpoint: "/repos/Foo/Bar",
+					Body:     &simpleBodyTemplate,
+				},
+				pbuild:     validProviderBuilder,
+				actionType: "",
+			},
+			wantErr: true,
+		},
+		{
 			name: "valid rest remediatior",
 			args: args{
 				restCfg: &pb.RestType{
 					Endpoint: "/repos/Foo/Bar",
 					Body:     &simpleBodyTemplate,
 				},
-				pbuild: validProviderBuilder,
+				pbuild:     validProviderBuilder,
+				actionType: TestActionTypeValid,
 			},
 			wantErr: false,
 		},
@@ -126,7 +141,8 @@ func TestNewRestRemediate(t *testing.T) {
 					Body:     &simpleBodyTemplate,
 					Method:   "POST",
 				},
-				pbuild: validProviderBuilder,
+				pbuild:     validProviderBuilder,
+				actionType: TestActionTypeValid,
 			},
 			wantErr: false,
 		},
@@ -137,7 +153,8 @@ func TestNewRestRemediate(t *testing.T) {
 					Endpoint: "/{{ .repos/Foo/Bar",
 					Body:     &simpleBodyTemplate,
 				},
-				pbuild: validProviderBuilder,
+				pbuild:     validProviderBuilder,
+				actionType: TestActionTypeValid,
 			},
 			wantErr: true,
 		},
@@ -148,7 +165,8 @@ func TestNewRestRemediate(t *testing.T) {
 					Endpoint: "/repos/Foo/Bar",
 					Body:     &invalidBodyTemplate,
 				},
-				pbuild: validProviderBuilder,
+				pbuild:     validProviderBuilder,
+				actionType: TestActionTypeValid,
 			},
 			wantErr: true,
 		},
@@ -159,7 +177,8 @@ func TestNewRestRemediate(t *testing.T) {
 					Endpoint: "/repos/Foo/Bar",
 					Body:     &simpleBodyTemplate,
 				},
-				pbuild: invalidProviderBuilder,
+				pbuild:     invalidProviderBuilder,
+				actionType: TestActionTypeValid,
 			},
 			wantErr: true,
 		},
@@ -170,7 +189,7 @@ func TestNewRestRemediate(t *testing.T) {
 		t.Run(tt.name, func(t *testing.T) {
 			t.Parallel()
 
-			got, err := NewRestRemediate(tt.args.restCfg, tt.args.pbuild)
+			got, err := NewRestRemediate(tt.args.actionType, tt.args.restCfg, tt.args.pbuild)
 			if tt.wantErr {
 				require.Error(t, err, "expected error")
 				require.Nil(t, got, "expected nil")
@@ -401,12 +420,12 @@ func TestRestRemediate(t *testing.T) {
 			testServer := httptest.NewServer(tt.testHandler)
 			defer testServer.Close()
 			tt.newRemArgs.pbuild = testGithubProviderBuilder(testServer.URL)
-
-			engine, err := NewRestRemediate(tt.newRemArgs.restCfg, tt.newRemArgs.pbuild)
+			engine, err := NewRestRemediate(TestActionTypeValid, tt.newRemArgs.restCfg, tt.newRemArgs.pbuild)
 			require.NoError(t, err, "unexpected error creating remediate engine")
 			require.NotNil(t, engine, "expected non-nil remediate engine")
 
-			err = engine.Remediate(context.Background(), tt.remArgs.remAction, tt.remArgs.ent, tt.remArgs.pol, tt.remArgs.params)
+			err = engine.Do(context.Background(), interfaces.ActionCmdOn, tt.remArgs.remAction, tt.remArgs.ent,
+				tt.remArgs.pol, tt.remArgs.params)
 			if tt.wantErr {
 				require.Error(t, err, "expected error")
 				return

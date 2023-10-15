@@ -22,6 +22,8 @@ import (
 
 	billy "github.com/go-git/go-billy/v5"
 	"google.golang.org/protobuf/reflect/protoreflect"
+
+	pb "github.com/stacklok/mediator/pkg/api/protobuf/go/mediator/v1"
 )
 
 // Ingester is the interface for a rule type ingester
@@ -81,12 +83,25 @@ func ActionOptFromString(s *string) ActionOpt {
 	return ActionOptUnknown
 }
 
-// Remediator is the interface for a rule type remediator
-type Remediator interface {
-	Remediate(
-		ctx context.Context,
-		remAction ActionOpt,
-		ent protoreflect.ProtoMessage,
-		pol map[string]any,
-		params map[string]any) error
+// ActionType represents the type of action, i.e., remediate, alert, etc.
+type ActionType string
+
+// Action is the interface for a rule type action
+type Action interface {
+	Type() ActionType
+	GetOnOffState(*pb.Profile) ActionOpt
+	Do(ctx context.Context, cmd ActionCmd, setting ActionOpt, entity protoreflect.ProtoMessage, ruleDef map[string]any,
+		ruleParam map[string]any) error
 }
+
+// ActionCmd is the type that defines what effect an action should have
+type ActionCmd string
+
+const (
+	// ActionCmdOff means turn off the action
+	ActionCmdOff ActionCmd = "action_cmd_off"
+	// ActionCmdOn means turn on the action
+	ActionCmdOn ActionCmd = "action_cmd_on"
+	// ActionCmdDoNothing means the action should do nothing
+	ActionCmdDoNothing ActionCmd = "action_cmd_do_nothing"
+)

@@ -18,28 +18,43 @@ package noop
 
 import (
 	"context"
+	"fmt"
 
 	"google.golang.org/protobuf/reflect/protoreflect"
 
 	enginerr "github.com/stacklok/mediator/internal/engine/errors"
 	"github.com/stacklok/mediator/internal/engine/interfaces"
+	pb "github.com/stacklok/mediator/pkg/api/protobuf/go/mediator/v1"
 )
 
 // Remediator is the structure backing the noop remediator
-type Remediator struct{}
-
-// NewNoopRemediate creates a new noop remediation engine
-func NewNoopRemediate() (*Remediator, error) {
-	return &Remediator{}, nil
+type Remediator struct {
+	actionType interfaces.ActionType
 }
 
-// Remediate actually performs the remediation
-func (_ *Remediator) Remediate(
+// NewNoopRemediate creates a new noop remediation engine
+func NewNoopRemediate(actionType interfaces.ActionType) (*Remediator, error) {
+	return &Remediator{actionType: actionType}, nil
+}
+
+// Type returns the action type of the noop engine
+func (r *Remediator) Type() interfaces.ActionType {
+	return r.actionType
+}
+
+// GetOnOffState returns the off state of the noop engine
+func (_ *Remediator) GetOnOffState(_ *pb.Profile) interfaces.ActionOpt {
+	return interfaces.ActionOptOff
+}
+
+// Do perform the remediation
+func (r *Remediator) Do(
 	_ context.Context,
+	_ interfaces.ActionCmd,
 	_ interfaces.ActionOpt,
 	_ protoreflect.ProtoMessage,
 	_ map[string]any,
 	_ map[string]any,
 ) error {
-	return enginerr.ErrRemediationNotAvailable
+	return fmt.Errorf("%s:%w", r.Type(), enginerr.ErrActionNotAvailable)
 }

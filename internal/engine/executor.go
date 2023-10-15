@@ -18,7 +18,6 @@ import (
 	"context"
 	"errors"
 	"fmt"
-	"log"
 
 	"github.com/ThreeDotsLabs/watermill/message"
 	"github.com/google/uuid"
@@ -28,7 +27,6 @@ import (
 	"github.com/stacklok/mediator/internal/crypto"
 	"github.com/stacklok/mediator/internal/db"
 	evalerrors "github.com/stacklok/mediator/internal/engine/errors"
-	"github.com/stacklok/mediator/internal/engine/interfaces"
 	"github.com/stacklok/mediator/internal/events"
 	"github.com/stacklok/mediator/internal/providers"
 	pb "github.com/stacklok/mediator/pkg/api/protobuf/go/mediator/v1"
@@ -122,12 +120,6 @@ func (e *Executor) evalEntityEvent(
 	}
 
 	for _, pol := range MergeDatabaseListIntoProfiles(dbpols, ectx) {
-		profileID, err := uuid.Parse(*pol.Id)
-		if err != nil {
-			return fmt.Errorf("error parsing profile ID: %w", err)
-		}
-		remAction := interfaces.ActionOptFromString(pol.Remediate)
-
 		// Get only these rules that are relevant for this entity type
 		relevant, err := GetRulesForEntity(pol, inf.Type)
 		if err != nil {
@@ -136,22 +128,23 @@ func (e *Executor) evalEntityEvent(
 
 		// Let's evaluate all the rules for this profile
 		err = TraverseRules(relevant, func(rule *pb.Profile_Rule) error {
-			rt, rte, err := e.getEvaluator(ctx, profileID, ectx.Provider.Name, cli, ectx, rule)
+			// Get the engine evaluator for this rule type
+			evalParams, rte, err := e.getEvaluator(ctx, inf, ectx, cli, pol, rule)
 			if err != nil {
 				return err
 			}
 
-			ruleTypeID, err := uuid.Parse(*rt.Id)
-			if err != nil {
-				return fmt.Errorf("error parsing rule type ID: %w", err)
-			}
+			// Evaluate the rule
+			rte.Eval(ctx, inf.Entity, rule.Def.AsMap(), rule.Params.AsMap(), evalParams)
 
-			evalResult, remediateResult := rte.Eval(ctx, inf.Entity, rule.Def.AsMap(), rule.Params.AsMap(), remAction)
+			// Perform actions, if any
+			rte.Actions(ctx, inf.Entity, rule.Def.AsMap(), rule.Params.AsMap(), evalParams)
 
-			logEval(ctx, pol, rule, inf, evalResult, remediateResult)
+			// Log the evaluation
+			logEval(ctx, pol, rule, inf, evalParams)
 
-			return e.createOrUpdateEvalStatus(ctx, inf.evalStatusParams(
-				profileID, ruleTypeID, evalResult, remediateResult))
+			// Create or update the evaluation status
+			return e.createOrUpdateEvalStatus(ctx, evalParams)
 		})
 
 		if err != nil {
@@ -167,37 +160,57 @@ func (e *Executor) evalEntityEvent(
 
 func (e *Executor) getEvaluator(
 	ctx context.Context,
-	profileID uuid.UUID,
-	prov string,
-	cli *providers.ProviderBuilder,
+	inf *EntityInfoWrapper,
 	ectx *EntityContext,
+	cli *providers.ProviderBuilder,
+	profile *pb.Profile,
 	rule *pb.Profile_Rule,
-) (*pb.RuleType, *RuleTypeEngine, error) {
-	log.Printf("Evaluating rule: %s for profile %s", rule.Type, profileID)
+) (*EvalStatusParams, *RuleTypeEngine, error) {
+	logger := zerolog.Ctx(ctx)
+	logger.Info().
+		Str("rule_type", rule.Type).
+		Str("profile_id", *profile.Id).
+		Msg("begin evaluating rule")
 
+	// Create eval status params
+	params, err := e.createEvalStatusParams(ctx, inf, profile, rule)
+	if err != nil {
+		return nil, nil, fmt.Errorf("error creating eval status params: %w", err)
+	}
+
+	// Load Rule Type from database
+	// TODO(jaosorior): Rule types should be cached in memory so
+	// we don't have to query the database for each rule.
 	dbrt, err := e.querier.GetRuleTypeByName(ctx, db.GetRuleTypeByNameParams{
-		Provider:  prov,
+		Provider:  ectx.Provider.Name,
 		ProjectID: ectx.Project.ID,
 		Name:      rule.Type,
 	})
-
 	if err != nil {
-		return nil, nil, fmt.Errorf("error getting rule type when traversing profile %s: %w", profileID, err)
+		return nil, nil, fmt.Errorf("error getting rule type when traversing profile %s: %w", params.ProfileID, err)
 	}
 
+	// Parse the rule type
 	rt, err := RuleTypePBFromDB(&dbrt, ectx)
 	if err != nil {
-		return nil, nil, fmt.Errorf("error parsing rule type when traversing profile %s: %w", profileID, err)
+		return nil, nil, fmt.Errorf("error parsing rule type when traversing profile %s: %w", params.ProfileID, err)
 	}
 
-	// TODO(jaosorior): Rule types should be cached in memory so
-	// we don't have to query the database for each rule.
-	rte, err := NewRuleTypeEngine(rt, cli)
+	// Save the rule type uuid
+	ruleTypeID, err := uuid.Parse(*rt.Id)
+	if err != nil {
+		return nil, nil, fmt.Errorf("error parsing rule type ID: %w", err)
+	}
+	params.RuleTypeID = ruleTypeID
+
+	// Create the rule type engine
+	rte, err := NewRuleTypeEngine(profile, rt, cli)
 	if err != nil {
 		return nil, nil, fmt.Errorf("error creating rule type engine: %w", err)
 	}
 
-	return rt, rte, nil
+	// All okay
+	return params, rte, nil
 }
 
 func logEval(
@@ -205,26 +218,34 @@ func logEval(
 	pol *pb.Profile,
 	rule *pb.Profile_Rule,
 	inf *EntityInfoWrapper,
-	evalResult error,
-	remediateResult error,
-) {
+	evalParams *EvalStatusParams) {
 	logger := zerolog.Ctx(ctx).Debug().
 		Str("profile", pol.Name).
 		Str("ruleType", rule.Type).
 		Str("projectId", inf.ProjectID.String()).
-		Str("repositoryId", inf.OwnershipData[RepositoryIDEventKey])
+		Str("repositoryId", evalParams.RepoID.String())
 
-	if aID, ok := inf.OwnershipData[ArtifactIDEventKey]; ok {
-		logger = logger.Str("artifactId", aID)
+	if evalParams.ArtifactID.Valid {
+		logger = logger.Str("artifactId", evalParams.ArtifactID.UUID.String())
 	}
 
-	logger.Err(evalResult).Msg("evaluated rule")
+	// log evaluation
+	logger.Err(evalParams.EvalErr).Msg("evaluated rule")
 
-	if errors.Is(remediateResult, evalerrors.ErrRemediationSkipped) {
-		logger.Msg("remediation skipped")
-	} else if errors.Is(remediateResult, evalerrors.ErrRemediationNotAvailable) {
-		logger.Msg("remediation not supported")
+	// log remediation
+	logAction(ctx, "remediate", evalParams.ActionsErr.RemediateErr)
+
+	// log alert
+	logAction(ctx, "alert", evalParams.ActionsErr.AlertErr)
+}
+
+func logAction(ctx context.Context, actionType string, err error) {
+	logger := zerolog.Ctx(ctx)
+	if errors.Is(err, evalerrors.ErrActionSkipped) {
+		logger.Debug().Str("action", actionType).Msg("skipped")
+	} else if errors.Is(err, evalerrors.ErrActionNotAvailable) {
+		logger.Debug().Str("action", actionType).Msg("not supported")
 	} else {
-		logger.Err(remediateResult).Msg("remediated rule")
+		logger.Err(err).Str("action", actionType).Msg("processed for rule")
 	}
 }

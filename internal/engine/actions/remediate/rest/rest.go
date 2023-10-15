@@ -57,18 +57,21 @@ var (
 
 // Remediator keeps the status for a rule type that uses REST remediation
 type Remediator struct {
-	cli provifv1.REST
-
+	actionType       interfaces.ActionType
 	method           string
+	cli              provifv1.REST
 	endpointTemplate *template.Template
 	bodyTemplate     *template.Template
 }
 
 // NewRestRemediate creates a new REST rule data ingest engine
-func NewRestRemediate(
-	restCfg *pb.RestType,
+func NewRestRemediate(actionType interfaces.ActionType, restCfg *pb.RestType,
 	pbuild *providers.ProviderBuilder,
 ) (*Remediator, error) {
+	if actionType == "" {
+		return nil, fmt.Errorf("action type cannot be empty")
+	}
+
 	endpointTmpl, err := util.ParseNewTemplate(&restCfg.Endpoint, "endpoint")
 	if err != nil {
 		return nil, fmt.Errorf("cannot parse endpoint template: %w", err)
@@ -91,6 +94,7 @@ func NewRestRemediate(
 
 	return &Remediator{
 		cli:              cli,
+		actionType:       actionType,
 		method:           method,
 		endpointTemplate: endpointTmpl,
 		bodyTemplate:     bodyTmpl,
@@ -101,24 +105,35 @@ func NewRestRemediate(
 type EndpointTemplateParams struct {
 	// Entity is the entity to be evaluated
 	Entity any
-	// Profile are the parameters to be used in the template
+	// Profile is the parameters to be used in the template
 	Profile map[string]any
 	// Params are the rule instance parameters
 	Params map[string]any
 }
 
-// Remediate actually performs the remediation
-func (r *Remediator) Remediate(
+// Type returns the action type of the remediation engine
+func (r *Remediator) Type() interfaces.ActionType {
+	return r.actionType
+}
+
+// GetOnOffState returns the alert action state read from the profile
+func (_ *Remediator) GetOnOffState(p *pb.Profile) interfaces.ActionOpt {
+	return interfaces.ActionOptFromString(p.Remediate)
+}
+
+// Do perform the remediation
+func (r *Remediator) Do(
 	ctx context.Context,
-	remAction interfaces.ActionOpt,
-	ent protoreflect.ProtoMessage,
-	pol map[string]any,
-	params map[string]any,
+	_ interfaces.ActionCmd,
+	setting interfaces.ActionOpt,
+	entity protoreflect.ProtoMessage,
+	ruleDef map[string]any,
+	ruleParams map[string]any,
 ) error {
 	retp := &EndpointTemplateParams{
-		Entity:  ent,
-		Profile: pol,
-		Params:  params,
+		Entity:  entity,
+		Profile: ruleDef,
+		Params:  ruleParams,
 	}
 
 	endpoint := new(bytes.Buffer)
@@ -137,7 +152,7 @@ func (r *Remediator) Remediate(
 		Msgf("remediating with endpoint: [%s] and body [%+v]", endpoint.String(), body.String())
 
 	var err error
-	switch remAction {
+	switch setting {
 	case interfaces.ActionOptOn:
 		err = r.run(ctx, endpoint.String(), body.Bytes())
 	case interfaces.ActionOptDryRun:
@@ -212,7 +227,7 @@ func httpErrorCodeToErr(httpCode int) error {
 	}
 
 	if err != nil {
-		return enginerr.NewErrRemediationFailed("remediation failed: %s", err)
+		return enginerr.NewErrActionFailed("remediation failed: %s", err)
 	}
 
 	return nil

@@ -22,7 +22,6 @@ import (
 	"google.golang.org/protobuf/encoding/protojson"
 	"google.golang.org/protobuf/reflect/protoreflect"
 
-	"github.com/stacklok/mediator/internal/entities"
 	"github.com/stacklok/mediator/internal/events"
 	mediatorv1 "github.com/stacklok/mediator/pkg/api/protobuf/go/mediator/v1"
 )
@@ -279,37 +278,6 @@ func (eiw *EntityInfoWrapper) withID(key string, id string) {
 
 func (eiw *EntityInfoWrapper) unmarshalEntity(msg *message.Message) error {
 	return protojson.Unmarshal(msg.Payload, eiw.Entity)
-}
-
-func (eiw *EntityInfoWrapper) evalStatusParams(
-	profileID uuid.UUID,
-	ruleTypeID uuid.UUID,
-	evalErr error,
-	remediateErr error,
-) *createOrUpdateEvalStatusParams {
-	repoID := uuid.MustParse(eiw.OwnershipData[RepositoryIDEventKey])
-	params := &createOrUpdateEvalStatusParams{
-		profileID:      profileID,
-		repoID:         repoID,
-		ruleTypeEntity: entities.EntityTypeToDB(eiw.Type),
-		ruleTypeID:     ruleTypeID,
-		evalErr:        evalErr,
-		remediateErr:   remediateErr,
-	}
-
-	artifactID, ok := eiw.OwnershipData[ArtifactIDEventKey]
-	if ok {
-		aID := uuid.MustParse(artifactID)
-		params.artifactID = &aID
-	}
-
-	pullRequestNumber, ok := eiw.OwnershipData[PullRequestIDEventKey]
-	if ok {
-		// todo: plug into DB
-		fmt.Println("pullRequestNumber", pullRequestNumber)
-	}
-
-	return params
 }
 
 func pbEntityTypeToString(t mediatorv1.Entity) (string, error) {

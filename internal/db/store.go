@@ -22,15 +22,26 @@
 package db
 
 import (
+	"context"
 	"database/sql"
+	"fmt"
+
+	"github.com/google/uuid"
 )
+
+// ExtendQuerier extends the Querier interface with custom queries
+type ExtendQuerier interface {
+	Querier
+	GetRuleEvaluationByProfileIdAndRuleType(ctx context.Context, profileID uuid.UUID, entityType NullEntities,
+		entityID uuid.NullUUID, ruleName sql.NullString) (ListRuleEvaluationsByProfileIdRow, error)
+}
 
 // Store provides all functions to execute db queries and transactions
 type Store interface {
-	Querier
+	ExtendQuerier
 	CheckHealth() error
 	BeginTransaction() (*sql.Tx, error)
-	GetQuerierWithTransaction(tx *sql.Tx) Querier
+	GetQuerierWithTransaction(tx *sql.Tx) ExtendQuerier
 	Commit(tx *sql.Tx) error
 	Rollback(tx *sql.Tx) error
 }
@@ -52,7 +63,7 @@ func (s *SQLStore) BeginTransaction() (*sql.Tx, error) {
 }
 
 // GetQuerierWithTransaction returns a new Querier with the provided transaction
-func (*SQLStore) GetQuerierWithTransaction(tx *sql.Tx) Querier {
+func (*SQLStore) GetQuerierWithTransaction(tx *sql.Tx) ExtendQuerier {
 	return New(tx)
 }
 
@@ -72,4 +83,34 @@ func NewStore(db *sql.DB) Store {
 		db:      db,
 		Queries: New(db),
 	}
+}
+
+// GetRuleEvaluationByProfileIdAndRuleType returns the rule evaluation for a given profile and its rule name
+func (q *Queries) GetRuleEvaluationByProfileIdAndRuleType(
+	ctx context.Context,
+	profileID uuid.UUID,
+	entityType NullEntities,
+	entityID uuid.NullUUID,
+	ruleName sql.NullString,
+) (ListRuleEvaluationsByProfileIdRow, error) {
+	params := ListRuleEvaluationsByProfileIdParams{
+		ProfileID:  profileID,
+		EntityType: entityType,
+		EntityID:   entityID,
+		RuleName:   ruleName,
+	}
+	res, err := q.ListRuleEvaluationsByProfileId(ctx, params)
+	if err != nil {
+		return ListRuleEvaluationsByProfileIdRow{}, err
+	}
+
+	// Single or no row expected
+	switch len(res) {
+	case 0:
+		return ListRuleEvaluationsByProfileIdRow{}, nil
+	case 1:
+		return res[0], nil
+	}
+	return ListRuleEvaluationsByProfileIdRow{},
+		fmt.Errorf("GetRuleEvaluationByProfileIdAndRuleType - expected 1 row, got %d", len(res))
 }
