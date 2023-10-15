@@ -682,3 +682,11 @@ func (c *RestClient) ListPullRequests(
 
 	return prs, nil
 }
+
+// CreateComment creates a comment on a pull request or an issue
+func (c *RestClient) CreateComment(ctx context.Context, owner, repo string, number int, comment string) error {
+	_, _, err := c.client.Issues.CreateComment(ctx, owner, repo, number, &github.IssueComment{
+		Body: &comment,
+	})
+	return err
+}
