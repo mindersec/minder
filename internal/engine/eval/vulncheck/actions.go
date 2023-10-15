@@ -29,6 +29,7 @@ type prStatusHandler interface {
 	trackVulnerableDep(
 		ctx context.Context,
 		dep *pb.PrDependencies_ContextualDependency,
+		vulnResp *VulnerabilityResponse,
 		patch patchLocatorFormatter,
 	) error
 	submit(ctx context.Context) error

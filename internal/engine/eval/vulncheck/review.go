@@ -215,6 +215,7 @@ func newReviewPrHandler(
 func (ra *reviewPrHandler) trackVulnerableDep(
 	ctx context.Context,
 	dep *pb.PrDependencies_ContextualDependency,
+	_ *VulnerabilityResponse,
 	patch patchLocatorFormatter,
 ) error {
 	location, err := locateDepInPr(ctx, ra.cli, dep, patch)
@@ -420,7 +421,9 @@ type profileOnlyPrHandler struct{}
 func (profileOnlyPrHandler) trackVulnerableDep(
 	_ context.Context,
 	_ *pb.PrDependencies_ContextualDependency,
-	_ patchLocatorFormatter) error {
+	_ *VulnerabilityResponse,
+	_ patchLocatorFormatter,
+) error {
 	return nil
 }
 

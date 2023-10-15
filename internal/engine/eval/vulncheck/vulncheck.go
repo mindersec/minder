@@ -108,7 +108,7 @@ func (e *Evaluator) Eval(ctx context.Context, pol map[string]any, res *engif.Res
 			return fmt.Errorf("failed to send package request: %w", err)
 		}
 
-		if err := prReplyHandler.trackVulnerableDep(ctx, dep, patch); err != nil {
+		if err := prReplyHandler.trackVulnerableDep(ctx, dep, response, patch); err != nil {
 			return fmt.Errorf("failed to add package patch for further processing: %w", err)
 		}
 	}
