@@ -50,6 +50,8 @@ func newPrStatusHandler(
 		return newReviewPrHandler(ctx, pr, client, withVulnsFoundReviewStatus(github.String("COMMENT")))
 	case actionProfileOnly:
 		return newProfileOnlyPrHandler(), nil
+	case actionSummary:
+		return newSummaryPrHandler(ctx, pr, client)
 	default:
 		return nil, fmt.Errorf("unknown action: %s", action)
 	}
