@@ -20,6 +20,7 @@ package remediate
 import (
 	"fmt"
 
+	"github.com/stacklok/mediator/internal/engine/actions/remediate/gh_branch_protect"
 	"github.com/stacklok/mediator/internal/engine/actions/remediate/noop"
 	"github.com/stacklok/mediator/internal/engine/actions/remediate/rest"
 	engif "github.com/stacklok/mediator/internal/engine/interfaces"
@@ -44,6 +45,12 @@ func NewRuleRemediator(rt *pb.RuleType, pbuild *providers.ProviderBuilder) (engi
 			return nil, fmt.Errorf("remediations engine missing rest configuration")
 		}
 		return rest.NewRestRemediate(ActionType, rem.GetRest(), pbuild)
+
+	case gh_branch_protect.RemediateType:
+		if rem.GetGhBranchProtection() == nil {
+			return nil, fmt.Errorf("remediations engine missing gh_branch_protection configuration")
+		}
+		return gh_branch_protect.NewGhBranchProtectRemediator(ActionType, rem.GetGhBranchProtection(), pbuild)
 	}
 
 	return nil, fmt.Errorf("unknown remediation type: %s", rem.GetType())

@@ -411,6 +411,14 @@ func (c *RestClient) GetBranchProtection(ctx context.Context, owner string,
 	return protection, nil
 }
 
+// UpdateBranchProtection updates the branch protection for a given branch
+func (c *RestClient) UpdateBranchProtection(
+	ctx context.Context, owner, repo, branch string, preq *github.ProtectionRequest,
+) error {
+	_, _, err := c.client.Repositories.UpdateBranchProtection(ctx, owner, repo, branch, preq)
+	return err
+}
+
 // GetAuthenticatedUser returns the authenticated user
 func (c *RestClient) GetAuthenticatedUser(ctx context.Context) (*github.User, error) {
 	user, _, err := c.client.Users.Get(ctx, "")

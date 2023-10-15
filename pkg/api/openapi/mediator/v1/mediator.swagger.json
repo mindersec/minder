@@ -1461,6 +1461,9 @@
         },
         "rest": {
           "$ref": "#/definitions/v1RestType"
+        },
+        "ghBranchProtection": {
+          "$ref": "#/definitions/RemediateGhBranchProtectionType"
         }
       }
     },
@@ -1555,6 +1558,14 @@
         }
       },
       "description": "Rule defines the individual call of a certain rule type."
+    },
+    "RemediateGhBranchProtectionType": {
+      "type": "object",
+      "properties": {
+        "patch": {
+          "type": "string"
+        }
+      }
     },
     "RestTypeFallback": {
       "type": "object",
