@@ -215,6 +215,7 @@ func newReviewPrHandler(
 func (ra *reviewPrHandler) trackVulnerableDep(
 	ctx context.Context,
 	dep *pb.PrDependencies_ContextualDependency,
+	_ *VulnerabilityResponse,
 	patch patchLocatorFormatter,
 ) error {
 	location, err := locateDepInPr(ctx, ra.cli, dep, patch)
@@ -414,13 +415,152 @@ func (csh *commitStatusPrHandler) setCommitStatus(
 	return err
 }
 
+// summaryPrHandler is a prStatusHandler that adds a summary text to the PR as a comment.
+type summaryPrHandler struct {
+	cli provifv1.GitHub
+	pr  *pb.PullRequest
+
+	logger      zerolog.Logger
+	trackedDeps []dependencyVulnerabilities
+	headerTmpl  *template.Template
+	rowsTmpl    *template.Template
+}
+
+const (
+	tableVulnerabilitiesHeaderName = "vulnerabilitiesTableHeader"
+	tableVulnerabilitiesHeader     = `### Summary of vulnerabilities found
+Mediator found the following vulnerabilities in this PR:
+<table>
+  <tr>
+    <th>Ecosystem</th>
+    <th>Name</th>
+    <th>Version</th>
+    <th>Vulnerability ID</th>
+    <th>Summary</th>
+    <th>Introduced</th>
+    <th>Fixed</th>
+  </tr>
+`
+	tableVulnerabilitiesRowsName = "vulnerabilitiesTableRow"
+	tableVulnerabilitiesRows     = `
+  {{ range .Vulnerabilities }}
+  <tr>
+    <td>{{ $.DependencyEcosystem }}</td>
+    <td>{{ $.DependencyName }}</td>
+    <td>{{ $.DependencyVersion }}</td>
+    <td>{{ .ID }}</td>
+    <td>{{ .Summary }}</td>
+    <td>{{ .Introduced }}</td>
+    <td>{{ .Fixed }}</td>
+  </tr>
+  {{ end }}
+`
+	tableVulnerabilitiesFooter = "</table>"
+)
+
+type dependencyVulnerabilities struct {
+	Dependency      *pb.Dependency
+	Vulnerabilities []Vulnerability
+}
+
+func (sph *summaryPrHandler) trackVulnerableDep(
+	_ context.Context,
+	dep *pb.PrDependencies_ContextualDependency,
+	vulnResp *VulnerabilityResponse,
+	_ patchLocatorFormatter,
+) error {
+	sph.trackedDeps = append(sph.trackedDeps, dependencyVulnerabilities{
+		Dependency:      dep.Dep,
+		Vulnerabilities: vulnResp.Vulns,
+	})
+	return nil
+}
+
+func (sph *summaryPrHandler) submit(ctx context.Context) error {
+	summary, err := sph.generateSummary()
+	if err != nil {
+		return fmt.Errorf("could not generate summary: %w", err)
+	}
+
+	err = sph.cli.CreateComment(ctx, sph.pr.GetRepoOwner(), sph.pr.GetRepoName(), int(sph.pr.GetNumber()), summary)
+	if err != nil {
+		return fmt.Errorf("could not create comment: %w", err)
+	}
+
+	return nil
+}
+
+func (sph *summaryPrHandler) generateSummary() (string, error) {
+	var summary strings.Builder
+
+	var headerBuf bytes.Buffer
+	if err := sph.headerTmpl.Execute(&headerBuf, nil); err != nil {
+		return "", fmt.Errorf("could not execute template: %w", err)
+	}
+	summary.WriteString(headerBuf.String())
+
+	for i := range sph.trackedDeps {
+		var rowBuf bytes.Buffer
+
+		if err := sph.rowsTmpl.Execute(&rowBuf, struct {
+			DependencyEcosystem string
+			DependencyName      string
+			DependencyVersion   string
+			Vulnerabilities     []Vulnerability
+		}{
+			DependencyEcosystem: pbEcosystemAsString(sph.trackedDeps[i].Dependency.Ecosystem),
+			DependencyName:      sph.trackedDeps[i].Dependency.Name,
+			DependencyVersion:   sph.trackedDeps[i].Dependency.Version,
+			Vulnerabilities:     sph.trackedDeps[i].Vulnerabilities,
+		}); err != nil {
+			return "", fmt.Errorf("could not execute template: %w", err)
+		}
+		summary.WriteString(rowBuf.String())
+	}
+	summary.WriteString(tableVulnerabilitiesFooter)
+
+	return summary.String(), nil
+}
+
+func newSummaryPrHandler(
+	ctx context.Context,
+	pr *pb.PullRequest,
+	cli provifv1.GitHub,
+) (prStatusHandler, error) {
+	logger := zerolog.Ctx(ctx).With().
+		Int32("pull-number", pr.Number).
+		Str("repo-owner", pr.RepoOwner).
+		Str("repo-name", pr.RepoName).
+		Logger()
+
+	headerTmpl, err := template.New(tableVulnerabilitiesHeaderName).Parse(tableVulnerabilitiesHeader)
+	if err != nil {
+		return nil, fmt.Errorf("could not parse dependency template: %w", err)
+	}
+	rowsTmpl, err := template.New(tableVulnerabilitiesRowsName).Parse(tableVulnerabilitiesRows)
+	if err != nil {
+		return nil, fmt.Errorf("could not parse vulnerability template: %w", err)
+	}
+
+	return &summaryPrHandler{
+		cli:         cli,
+		pr:          pr,
+		logger:      logger,
+		headerTmpl:  headerTmpl,
+		rowsTmpl:    rowsTmpl,
+		trackedDeps: make([]dependencyVulnerabilities, 0),
+	}, nil
+}
+
 // just satisfies the interface but really does nothing. Useful for testing.
 type profileOnlyPrHandler struct{}
 
 func (profileOnlyPrHandler) trackVulnerableDep(
 	_ context.Context,
 	_ *pb.PrDependencies_ContextualDependency,
-	_ patchLocatorFormatter) error {
+	_ *VulnerabilityResponse,
+	_ patchLocatorFormatter,
+) error {
 	return nil
 }
 

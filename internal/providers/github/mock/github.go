@@ -304,6 +304,20 @@ func (mr *MockGitHubMockRecorder) CreateBlob(ctx, owner, repo, blob interface{})
 	return mr.mock.ctrl.RecordCallWithMethodType(mr.mock, "CreateBlob", reflect.TypeOf((*MockGitHub)(nil).CreateBlob), ctx, owner, repo, blob)
 }
 
+// CreateComment mocks base method.
+func (m *MockGitHub) CreateComment(ctx context.Context, owner, repo string, number int, comment string) error {
+	m.ctrl.T.Helper()
+	ret := m.ctrl.Call(m, "CreateComment", ctx, owner, repo, number, comment)
+	ret0, _ := ret[0].(error)
+	return ret0
+}
+
+// CreateComment indicates an expected call of CreateComment.
+func (mr *MockGitHubMockRecorder) CreateComment(ctx, owner, repo, number, comment interface{}) *gomock.Call {
+	mr.mock.ctrl.T.Helper()
+	return mr.mock.ctrl.RecordCallWithMethodType(mr.mock, "CreateComment", reflect.TypeOf((*MockGitHub)(nil).CreateComment), ctx, owner, repo, number, comment)
+}
+
 // CreateCommit mocks base method.
 func (m *MockGitHub) CreateCommit(ctx context.Context, owner, repo, message string, tree *github.Tree, parentSha string) (*github.Commit, error) {
 	m.ctrl.T.Helper()

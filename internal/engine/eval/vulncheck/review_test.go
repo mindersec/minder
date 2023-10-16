@@ -137,7 +137,7 @@ func TestReviewPrHandlerVulnerabilitiesDifferentIdentities(t *testing.T) {
 		NewRequest("GET", server.URL, nil).
 		Return(http.NewRequest("GET", server.URL, nil))
 
-	err = handler.trackVulnerableDep(context.TODO(), dep, patchPackage)
+	err = handler.trackVulnerableDep(context.TODO(), dep, nil, patchPackage)
 	require.NoError(t, err)
 
 	expBody, err := createReviewBody(vulnsFoundText)
@@ -322,7 +322,7 @@ func TestCommitStatusPrHandlerWithVulnerabilities(t *testing.T) {
 		NewRequest("GET", server.URL, nil).
 		Return(http.NewRequest("GET", server.URL, nil))
 
-	err = handler.trackVulnerableDep(context.TODO(), dep, patchPackage)
+	err = handler.trackVulnerableDep(context.TODO(), dep, nil, patchPackage)
 	require.NoError(t, err)
 
 	expBody, err := createReviewBody(vulnsFoundText)
