@@ -100,15 +100,22 @@ Mediator requires a Keycloak instance to be running. You can install this locall
 
 Should you install locally, you will need to configure the client on Keycloak.
 You will need the following:
-- A Keycloak realm where the mediator client can be registered
-- A registered client with the redirect URI `http://localhost/*`
+- A Keycloak realm with event saving turned on for the "Delete account" event.
+- A registered public client with the redirect URI `http://localhost/*`. This is used for the mediator CLI.
+- A registered confidential client with a service account that can manage users and view events. This is used for the mediator server.
 
 You will also need to set certain configuration options in your `config.yaml` file, to reflect your local Keycloak configuration.
 ```yaml
 identity:
-  issuer_url: http://localhost:8081
-  realm: stacklok
-  client_id: mediator-cli
+  cli:
+    issuer_url: http://localhost:8081
+    realm: stacklok
+    client_id: mediator-cli
+  server:
+    issuer_url: http://localhost:8081
+    realm: stacklok
+    client_id: mediator-server
+    client_secret: secret
 ```
 
 ### Using a container
