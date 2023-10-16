@@ -163,9 +163,14 @@ func (s *Server) DeleteUser(ctx context.Context,
 
 	tokenUrl := parsedURL.JoinPath("realms", s.cfg.Identity.Server.Realm, "protocol/openid-connect/token")
 
+	clientSecret, err := s.cfg.Identity.Server.GetClientSecret()
+	if err != nil {
+		return nil, status.Errorf(codes.Internal, "failed to get client secret: %v", err)
+	}
+
 	clientCredentials := clientcredentials.Config{
 		ClientID:     s.cfg.Identity.Server.ClientId,
-		ClientSecret: s.cfg.Identity.Server.ClientSecret,
+		ClientSecret: clientSecret,
 		TokenURL:     tokenUrl.String(),
 	}
 
