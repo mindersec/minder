@@ -33,7 +33,7 @@ import (
 
 const (
 	// SecurityAdvisoryType is the type of the security advisory alert engine
-	SecurityAdvisoryType = "security-advisory"
+	SecurityAdvisoryType = "security_advisory"
 )
 
 // Alert is the structure backing the security-advisory alert action
