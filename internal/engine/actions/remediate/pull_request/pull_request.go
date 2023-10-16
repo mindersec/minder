@@ -280,13 +280,17 @@ func (r *Remediator) run(
 }
 
 func (r *Remediator) getCommitShaFrom(ctx context.Context, repo *pb.Repository, branchFrom string) (string, error) {
-	refName := fmt.Sprintf("refs/heads/%s", branchFrom)
+	refName := refFromBranch(branchFrom)
 	fromRef, err := r.cli.GetRef(ctx, repo.GetOwner(), repo.GetName(), refName)
 	if err != nil {
 		return "", fmt.Errorf("error getting commit ref: %w", err)
 	}
 
 	return fromRef.GetObject().GetSHA(), nil
+}
+
+func refFromBranch(branchFrom string) string {
+	return fmt.Sprintf("refs/heads/%s", branchFrom)
 }
 
 func (r *Remediator) getTreeShaFrom(ctx context.Context, repo *pb.Repository, commitSha string) (string, error) {
@@ -366,7 +370,7 @@ func (r *Remediator) createOrUpdateBranch(
 		return "", fmt.Errorf("error creating commit: %w", err)
 	}
 
-	newBranch := "refs/heads/" + branchBaseName(dflBranchBaseName, title)
+	newBranch := refFromBranch(branchBaseName(title))
 	_, err = r.cli.CreateRef(ctx, repo.GetOwner(), repo.GetName(), newBranch, *commit.SHA)
 	if err != nil {
 		var ghErr *github.ErrorResponse
@@ -381,9 +385,10 @@ func (r *Remediator) createOrUpdateBranch(
 	return newBranch, nil
 }
 
-func branchBaseName(branchBaseName, prTitle string) string {
+func branchBaseName(prTitle string) string {
+	baseName := dflBranchBaseName
 	normalizedPrTitle := strings.ReplaceAll(strings.ToLower(prTitle), " ", "_")
-	return fmt.Sprintf("%s_%s", branchBaseName, normalizedPrTitle)
+	return fmt.Sprintf("%s_%s", baseName, normalizedPrTitle)
 }
 
 func getBranchFrom(ctx context.Context, params map[string]any) string {
