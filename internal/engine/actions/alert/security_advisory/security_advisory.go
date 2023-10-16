@@ -90,6 +90,16 @@ func (alert *Alert) Do(
 	logger.Info().
 		Str("alert_type", SecurityAdvisoryType).
 		Str("cmd", string(cmd)).
-		Msg("alert action not implemented")
-	return fmt.Errorf("%s:%w", alert.Type(), enginerr.ErrActionNotAvailable)
+		Msg("alert through security advisory")
+	switch cmd {
+	case interfaces.ActionCmdOff:
+		logger.Debug().Msg("turn off the security-advisory alert")
+		return fmt.Errorf("%s:%w", alert.Type(), enginerr.ErrActionTurnedOff)
+	case interfaces.ActionCmdOn:
+		logger.Debug().Msg("turn on the security-advisory alert")
+		return nil
+	default:
+		logger.Debug().Msg("skip processing the security-advisory alert")
+		return enginerr.ErrActionSkipped
+	}
 }
