@@ -104,6 +104,15 @@ type GitHub interface {
 	CreateSecurityAdvisory(ctx context.Context, owner, repo, severity, summary, description string,
 		v []*github.AdvisoryVulnerability) (string, error)
 	CloseSecurityAdvisory(ctx context.Context, owner, repo, id string) error
+	GetRef(ctx context.Context, owner, repo, refString string) (*github.Reference, error)
+	GetCommit(ctx context.Context, owner, repo, commitSHA string) (*github.Commit, error)
+	CreateBlob(ctx context.Context, owner, repo string, blob *github.Blob) (*github.Blob, error)
+	CreateTree(ctx context.Context, owner, repo, base string, entries []*github.TreeEntry) (*github.Tree, error)
+	CreateCommit(ctx context.Context, owner, repo, message string, tree *github.Tree, parentSha string) (*github.Commit, error)
+	CreateRef(ctx context.Context, owner, repo, ref, sha string) (*github.Reference, error)
+	UpdateRef(ctx context.Context, owner, repo, ref, sha string, force bool) (*github.Reference, error)
+	CreatePullRequest(ctx context.Context, owner, repo, title, body, head, base string) (*github.PullRequest, error)
+	ListPullRequests(ctx context.Context, owner, repo string, opt *github.PullRequestListOptions) ([]*github.PullRequest, error)
 }
 
 // ParseAndValidate parses the given provider configuration and validates it.

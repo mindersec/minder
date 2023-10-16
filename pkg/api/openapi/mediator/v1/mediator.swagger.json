@@ -1464,6 +1464,9 @@
         },
         "ghBranchProtection": {
           "$ref": "#/definitions/RemediateGhBranchProtectionType"
+        },
+        "pullRequest": {
+          "$ref": "#/definitions/RemediatePullRequestRemediation"
         }
       }
     },
@@ -1559,6 +1562,27 @@
       },
       "description": "Rule defines the individual call of a certain rule type."
     },
+    "PullRequestRemediationContent": {
+      "type": "object",
+      "properties": {
+        "path": {
+          "type": "string",
+          "title": "the file to patch"
+        },
+        "action": {
+          "type": "string",
+          "title": "how to patch the file. For now, only replace is supported"
+        },
+        "content": {
+          "type": "string",
+          "title": "the content of the file"
+        },
+        "mode": {
+          "type": "string",
+          "title": "the GIT mode of the file. Not UNIX mode! String because the GH API also uses strings\nthe usual modes are: 100644 for regular files, 100755 for executable files and\n040000 for submodules (which we don't use but now you know the meaning of the 1 in 100644)"
+        }
+      }
+    },
     "RemediateGhBranchProtectionType": {
       "type": "object",
       "properties": {
@@ -1566,6 +1590,27 @@
           "type": "string"
         }
       }
+    },
+    "RemediatePullRequestRemediation": {
+      "type": "object",
+      "properties": {
+        "title": {
+          "type": "string",
+          "title": "the title of the PR"
+        },
+        "body": {
+          "type": "string",
+          "title": "the body of the PR"
+        },
+        "contents": {
+          "type": "array",
+          "items": {
+            "type": "object",
+            "$ref": "#/definitions/PullRequestRemediationContent"
+          }
+        }
+      },
+      "title": "the name stutters a bit but we already use a PullRequest message for handling PR entities"
     },
     "RestTypeFallback": {
       "type": "object",
