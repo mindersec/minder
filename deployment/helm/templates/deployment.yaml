@@ -69,6 +69,8 @@ spec:
             value: "/secrets/auth/refresh_token_rsa.pub"
           - name: "AUTH_TOKEN_KEY"
             value: "/secrets/auth/token_key_passphrase"
+          - name: "IDENTITY_SERVER_CLIENT_SECRET_FILE"
+            value: "/secrets/identity/identity_client_secret"
           
           # ko will always specify a digest, so we don't need to worry about
           # CRI image caching
@@ -105,6 +107,8 @@ spec:
             mountPath: /secrets/auth
           - name: app-secrets
             mountPath: /secrets/app
+          - name: identity-secrets
+            mountPath: /secrets/identity
       volumes:
       - name: config
         configMap:
@@ -120,3 +124,6 @@ spec:
       - name: app-secrets
         secret:
           secretName: mediator-github-secrets
+      - name: identity-secrets
+        secret:
+          secretName: mediator-identity-secrets
