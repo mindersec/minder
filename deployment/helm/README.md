@@ -23,6 +23,10 @@ these helm charts, you will need the following:
     - `client_id`: The GitHub client ID to be used by Mediator
     - `client_secret`: The GitHub client secret to be used by Mediator
 
+  - `mediator-identity-secrets`: Needs to contain the OAuth 2 client secret for mediator
+    server when authenticating with Keycloak. In particular, the following keys are required:
+    - `identity_client_secret`: The Keycloak client secret to be used by Mediator server
+
 - In addition, if you are using Mediator images which require authentication,
   you will want to create a `docker-registry` type credential with the name
   `mediator-pull-secret`
