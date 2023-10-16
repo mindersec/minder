@@ -75,3 +75,8 @@ def:
           not regex.match(`^[a-fA-F0-9]+$`, parts[1])
           msg := sprintf("Workflow '%v' uses an unpinned action '%v' in job '%v' step '%v'", [workflows[w], s.uses, job_name, step_num])
         }
+  # Defines the configuration for alerting on the rule
+  alert:
+    type: security_advisory
+    security_advisory:
+      severity: "medium"

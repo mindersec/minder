@@ -60,3 +60,8 @@ def:
     gh_branch_protection:
       patch: |
         {"allow_fork_syncing":{{ .Profile.allow_fork_syncing }} }
+  # Defines the configuration for alerting on the rule
+  alert:
+    type: security_advisory
+    security_advisory:
+      severity: "medium"

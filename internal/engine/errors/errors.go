@@ -17,6 +17,7 @@
 package errors
 
 import (
+	"encoding/json"
 	"errors"
 	"fmt"
 
@@ -77,12 +78,14 @@ func NewErrActionFailed(sfmt string, args ...any) error {
 var ErrActionNotAvailable = errors.New("action not available")
 
 // ErrActionTurnedOff is an error code that indicates that the action is turned off for this rule_type
-var ErrActionTurnedOff = errors.New("action not available")
+var ErrActionTurnedOff = errors.New("action turned off")
 
 // ActionsError is the error wrapper for actions
 type ActionsError struct {
-	RemediateErr error
-	AlertErr     error
+	RemediateErr  error
+	RemediateMeta json.RawMessage
+	AlertErr      error
+	AlertMeta     json.RawMessage
 }
 
 // ErrorAsEvalStatus returns the evaluation status for a given error

@@ -54,3 +54,8 @@ def:
           def: ".required_signatures.enabled"
         profile:
           def: ".required_signatures"
+  # Defines the configuration for alerting on the rule
+  alert:
+    type: security_advisory
+    security_advisory:
+      severity: "medium"

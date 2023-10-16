@@ -221,6 +221,7 @@ default allow = true`,
 		UpsertRuleDetailsAlert(gomock.Any(), db.UpsertRuleDetailsAlertParams{
 			RuleEvalID: ruleEvalId,
 			Status:     db.AlertStatusTypesSkipped,
+			Metadata:   json.RawMessage{},
 			Details:    "",
 		}).Return(ruleEvalAlertId, nil)
 	// -- end expectations

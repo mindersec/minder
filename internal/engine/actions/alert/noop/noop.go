@@ -18,6 +18,7 @@ package noop
 
 import (
 	"context"
+	"encoding/json"
 	"fmt"
 
 	"google.golang.org/protobuf/reflect/protoreflect"
@@ -37,9 +38,14 @@ func NewNoopAlert(actionType interfaces.ActionType) (*Alert, error) {
 	return &Alert{actionType: actionType}, nil
 }
 
-// Type returns the action type of the noop engine
-func (a *Alert) Type() interfaces.ActionType {
+// ParentType returns the action type of the noop engine
+func (a *Alert) ParentType() interfaces.ActionType {
 	return a.actionType
+}
+
+// SubType returns the action subtype of the remediation engine
+func (_ *Alert) SubType() string {
+	return "noop"
 }
 
 // GetOnOffState returns the off state of the noop engine
@@ -55,6 +61,7 @@ func (a *Alert) Do(
 	_ protoreflect.ProtoMessage,
 	_ map[string]any,
 	_ map[string]any,
-) error {
-	return fmt.Errorf("%s:%w", a.Type(), enginerr.ErrActionNotAvailable)
+	_ *json.RawMessage,
+) (json.RawMessage, error) {
+	return nil, fmt.Errorf("%s:%w", a.ParentType(), enginerr.ErrActionNotAvailable)
 }

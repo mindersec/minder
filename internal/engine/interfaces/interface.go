@@ -19,6 +19,7 @@ package interfaces
 
 import (
 	"context"
+	"encoding/json"
 
 	billy "github.com/go-git/go-billy/v5"
 	"google.golang.org/protobuf/reflect/protoreflect"
@@ -88,10 +89,11 @@ type ActionType string
 
 // Action is the interface for a rule type action
 type Action interface {
-	Type() ActionType
+	ParentType() ActionType
+	SubType() string
 	GetOnOffState(*pb.Profile) ActionOpt
 	Do(ctx context.Context, cmd ActionCmd, setting ActionOpt, entity protoreflect.ProtoMessage, ruleDef map[string]any,
-		ruleParam map[string]any) error
+		ruleParam map[string]any, metadata *json.RawMessage) (json.RawMessage, error)
 }
 
 // ActionCmd is the type that defines what effect an action should have
@@ -99,9 +101,9 @@ type ActionCmd string
 
 const (
 	// ActionCmdOff means turn off the action
-	ActionCmdOff ActionCmd = "action_cmd_off"
+	ActionCmdOff ActionCmd = "turn_off"
 	// ActionCmdOn means turn on the action
-	ActionCmdOn ActionCmd = "action_cmd_on"
+	ActionCmdOn ActionCmd = "turn_on"
 	// ActionCmdDoNothing means the action should do nothing
-	ActionCmdDoNothing ActionCmd = "action_cmd_do_nothing"
+	ActionCmdDoNothing ActionCmd = "do_nothing"
 )

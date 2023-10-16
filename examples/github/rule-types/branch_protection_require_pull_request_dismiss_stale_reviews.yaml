@@ -60,3 +60,8 @@ def:
     gh_branch_protection:
       patch: |
         {"required_pull_request_reviews":{"dismiss_stale_reviews":{{ .Profile.dismiss_stale_reviews }}}}
+  # Defines the configuration for alerting on the rule
+  alert:
+    type: security_advisory
+    security_advisory:
+      severity: "medium"

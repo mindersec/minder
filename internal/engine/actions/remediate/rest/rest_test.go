@@ -424,10 +424,11 @@ func TestRestRemediate(t *testing.T) {
 			require.NoError(t, err, "unexpected error creating remediate engine")
 			require.NotNil(t, engine, "expected non-nil remediate engine")
 
-			err = engine.Do(context.Background(), interfaces.ActionCmdOn, tt.remArgs.remAction, tt.remArgs.ent,
-				tt.remArgs.pol, tt.remArgs.params)
+			retMeta, err := engine.Do(context.Background(), interfaces.ActionCmdOn, tt.remArgs.remAction, tt.remArgs.ent,
+				tt.remArgs.pol, tt.remArgs.params, nil)
 			if tt.wantErr {
 				require.Error(t, err, "expected error")
+				require.Nil(t, retMeta, "expected nil metadata")
 				return
 			}
 

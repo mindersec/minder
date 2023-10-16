@@ -111,9 +111,14 @@ type EndpointTemplateParams struct {
 	Params map[string]any
 }
 
-// Type returns the action type of the remediation engine
-func (r *Remediator) Type() interfaces.ActionType {
+// ParentType returns the action type of the remediation engine
+func (r *Remediator) ParentType() interfaces.ActionType {
 	return r.actionType
+}
+
+// SubType returns the action subtype of the remediation engine
+func (_ *Remediator) SubType() string {
+	return RemediateType
 }
 
 // GetOnOffState returns the alert action state read from the profile
@@ -129,7 +134,8 @@ func (r *Remediator) Do(
 	entity protoreflect.ProtoMessage,
 	ruleDef map[string]any,
 	ruleParams map[string]any,
-) error {
+	_ *json.RawMessage,
+) (json.RawMessage, error) {
 	retp := &EndpointTemplateParams{
 		Entity:  entity,
 		Profile: ruleDef,
@@ -138,13 +144,13 @@ func (r *Remediator) Do(
 
 	endpoint := new(bytes.Buffer)
 	if err := r.endpointTemplate.Execute(endpoint, retp); err != nil {
-		return fmt.Errorf("cannot execute endpoint template: %w", err)
+		return nil, fmt.Errorf("cannot execute endpoint template: %w", err)
 	}
 
 	body := new(bytes.Buffer)
 	if r.bodyTemplate != nil {
 		if err := r.bodyTemplate.Execute(body, retp); err != nil {
-			return fmt.Errorf("cannot execute endpoint template: %w", err)
+			return nil, fmt.Errorf("cannot execute endpoint template: %w", err)
 		}
 	}
 
@@ -160,7 +166,7 @@ func (r *Remediator) Do(
 	case interfaces.ActionOptOff, interfaces.ActionOptUnknown:
 		err = errors.New("unexpected action")
 	}
-	return err
+	return nil, err
 }
 
 func (r *Remediator) run(ctx context.Context, endpoint string, body []byte) error {

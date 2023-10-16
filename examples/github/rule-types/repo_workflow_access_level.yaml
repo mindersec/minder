@@ -53,3 +53,8 @@ def:
       endpoint: "/repos/{{.Entity.Owner}}/{{.Entity.Name}}/actions/permissions/access"
       body: |
         { "access_level": "{{.Profile.access_level}}" }
+  # Defines the configuration for alerting on the rule
+  alert:
+    type: security_advisory
+    security_advisory:
+      severity: "medium"

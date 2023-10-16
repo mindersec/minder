@@ -269,9 +269,10 @@ func TestBranchProtectionRemediate(t *testing.T) {
 
 			tt.mockSetup(mockClient)
 
-			err = engine.Do(context.Background(), interfaces.ActionCmdOn, tt.remArgs.remAction, tt.remArgs.ent, tt.remArgs.pol, tt.remArgs.params)
+			retMeta, err := engine.Do(context.Background(), interfaces.ActionCmdOn, tt.remArgs.remAction, tt.remArgs.ent, tt.remArgs.pol, tt.remArgs.params, nil)
 			if tt.wantErr {
 				require.Error(t, err, "expected error")
+				require.Nil(t, retMeta, "expected nil metadata")
 				return
 			}
 

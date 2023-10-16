@@ -85,9 +85,14 @@ type PatchTemplateParams struct {
 	Params map[string]any
 }
 
-// Type returns the action type of the remediation engine
-func (r *GhBranchProtectRemediator) Type() interfaces.ActionType {
+// ParentType returns the action type of the remediation engine
+func (r *GhBranchProtectRemediator) ParentType() interfaces.ActionType {
 	return r.actionType
+}
+
+// SubType returns the action subtype of the remediation engine
+func (_ *GhBranchProtectRemediator) SubType() string {
+	return RemediateType
 }
 
 // GetOnOffState returns the alert action state read from the profile
@@ -103,7 +108,8 @@ func (r *GhBranchProtectRemediator) Do(
 	ent protoreflect.ProtoMessage,
 	pol map[string]any,
 	params map[string]any,
-) error {
+	_ *json.RawMessage,
+) (json.RawMessage, error) {
 	retp := &PatchTemplateParams{
 		Entity:  ent,
 		Profile: pol,
@@ -112,12 +118,12 @@ func (r *GhBranchProtectRemediator) Do(
 
 	repo, ok := ent.(*pb.Repository)
 	if !ok {
-		return fmt.Errorf("expected repository, got %T", ent)
+		return nil, fmt.Errorf("expected repository, got %T", ent)
 	}
 
 	branch, err := util.JQReadFrom[string](ctx, ".branch", params)
 	if err != nil {
-		return fmt.Errorf("error reading branch from params: %w", err)
+		return nil, fmt.Errorf("error reading branch from params: %w", err)
 	}
 
 	// get the current protection
@@ -127,7 +133,7 @@ func (r *GhBranchProtectRemediator) Do(
 		// which appear quite sensible
 		res = &github.Protection{}
 	} else if err != nil {
-		return fmt.Errorf("error getting branch protection: %w", err)
+		return nil, fmt.Errorf("error getting branch protection: %w", err)
 	}
 
 	req := protectionResultToRequest(res)
@@ -135,14 +141,14 @@ func (r *GhBranchProtectRemediator) Do(
 	var patch bytes.Buffer
 	err = r.patchTemplate.Execute(&patch, retp)
 	if err != nil {
-		return fmt.Errorf("cannot execute endpoint template: %w", err)
+		return nil, fmt.Errorf("cannot execute endpoint template: %w", err)
 	}
 
 	zerolog.Ctx(ctx).Debug().Str("patch", patch.String()).Msg("patch")
 
 	updatedRequest, err := patchRequest(req, patch.Bytes())
 	if err != nil {
-		return fmt.Errorf("error patching request: %w", err)
+		return nil, fmt.Errorf("error patching request: %w", err)
 	}
 
 	switch remAction {
@@ -153,7 +159,7 @@ func (r *GhBranchProtectRemediator) Do(
 	case interfaces.ActionOptOff, interfaces.ActionOptUnknown:
 		err = errors.New("unexpected action")
 	}
-	return err
+	return nil, err
 }
 
 func dryRun(baseUrl, owner, repo, branch string, req *github.ProtectionRequest) error {

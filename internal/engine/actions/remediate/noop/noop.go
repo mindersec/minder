@@ -18,6 +18,7 @@ package noop
 
 import (
 	"context"
+	"encoding/json"
 	"fmt"
 
 	"google.golang.org/protobuf/reflect/protoreflect"
@@ -37,9 +38,14 @@ func NewNoopRemediate(actionType interfaces.ActionType) (*Remediator, error) {
 	return &Remediator{actionType: actionType}, nil
 }
 
-// Type returns the action type of the noop engine
-func (r *Remediator) Type() interfaces.ActionType {
+// ParentType returns the action type of the noop engine
+func (r *Remediator) ParentType() interfaces.ActionType {
 	return r.actionType
+}
+
+// SubType returns the action subtype of the remediation engine
+func (_ *Remediator) SubType() string {
+	return "noop"
 }
 
 // GetOnOffState returns the off state of the noop engine
@@ -55,6 +61,7 @@ func (r *Remediator) Do(
 	_ protoreflect.ProtoMessage,
 	_ map[string]any,
 	_ map[string]any,
-) error {
-	return fmt.Errorf("%s:%w", r.Type(), enginerr.ErrActionNotAvailable)
+	_ *json.RawMessage,
+) (json.RawMessage, error) {
+	return nil, fmt.Errorf("%s:%w", r.ParentType(), enginerr.ErrActionNotAvailable)
 }

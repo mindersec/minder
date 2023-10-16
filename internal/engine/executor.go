@@ -178,7 +178,7 @@ func (e *Executor) getEvaluator(
 		return nil, nil, fmt.Errorf("error creating eval status params: %w", err)
 	}
 
-	// Load Rule Type from database
+	// Load Rule ParentType from database
 	// TODO(jaosorior): Rule types should be cached in memory so
 	// we don't have to query the database for each rule.
 	dbrt, err := e.querier.GetRuleTypeByName(ctx, db.GetRuleTypeByNameParams{

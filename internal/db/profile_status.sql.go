@@ -8,9 +8,11 @@ package db
 import (
 	"context"
 	"database/sql"
+	"encoding/json"
 	"time"
 
 	"github.com/google/uuid"
+	"github.com/sqlc-dev/pqtype"
 )
 
 const getProfileStatusByIdAndProject = `-- name: GetProfileStatusByIdAndProject :one
@@ -137,6 +139,7 @@ WITH
            rule_eval_id,
            status AS alert_status,
            details AS alert_details,
+           metadata AS alert_metadata,
            last_updated AS alert_last_updated
        FROM rule_details_alert
    )
@@ -150,6 +153,7 @@ SELECT
     rd.rem_last_updated,
     ad.alert_status,
     ad.alert_details,
+    ad.alert_metadata,
     ad.alert_last_updated,
     res.repository_id,
     res.entity,
@@ -191,6 +195,7 @@ type ListRuleEvaluationsByProfileIdRow struct {
 	RemLastUpdated   sql.NullTime               `json:"rem_last_updated"`
 	AlertStatus      NullAlertStatusTypes       `json:"alert_status"`
 	AlertDetails     sql.NullString             `json:"alert_details"`
+	AlertMetadata    pqtype.NullRawMessage      `json:"alert_metadata"`
 	AlertLastUpdated sql.NullTime               `json:"alert_last_updated"`
 	RepositoryID     uuid.NullUUID              `json:"repository_id"`
 	Entity           Entities                   `json:"entity"`
@@ -224,6 +229,7 @@ func (q *Queries) ListRuleEvaluationsByProfileId(ctx context.Context, arg ListRu
 			&i.RemLastUpdated,
 			&i.AlertStatus,
 			&i.AlertDetails,
+			&i.AlertMetadata,
 			&i.AlertLastUpdated,
 			&i.RepositoryID,
 			&i.Entity,
@@ -251,15 +257,17 @@ INSERT INTO rule_details_alert (
     rule_eval_id,
     status,
     details,
+    metadata,
     last_updated
 )
-VALUES ($1, $2, $3, NOW())
+VALUES ($1, $2, $3, $4::jsonb, NOW())
 ON CONFLICT(rule_eval_id)
     DO UPDATE SET
                   status = $2,
                   details = $3,
+                  metadata = $4::jsonb,
                   last_updated = NOW()
-    WHERE rule_details_alert.rule_eval_id = $1
+    WHERE rule_details_alert.rule_eval_id = $1 AND $2 != 'skipped'
 RETURNING id
 `
 
@@ -267,10 +275,16 @@ type UpsertRuleDetailsAlertParams struct {
 	RuleEvalID uuid.UUID        `json:"rule_eval_id"`
 	Status     AlertStatusTypes `json:"status"`
 	Details    string           `json:"details"`
+	Metadata   json.RawMessage  `json:"metadata"`
 }
 
 func (q *Queries) UpsertRuleDetailsAlert(ctx context.Context, arg UpsertRuleDetailsAlertParams) (uuid.UUID, error) {
-	row := q.db.QueryRowContext(ctx, upsertRuleDetailsAlert, arg.RuleEvalID, arg.Status, arg.Details)
+	row := q.db.QueryRowContext(ctx, upsertRuleDetailsAlert,
+		arg.RuleEvalID,
+		arg.Status,
+		arg.Details,
+		arg.Metadata,
+	)
 	var id uuid.UUID
 	err := row.Scan(&id)
 	return id, err

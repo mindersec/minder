@@ -39,7 +39,7 @@ type EvalStatusParams struct {
 	ArtifactID       uuid.NullUUID
 	EntityType       db.Entities
 	RuleTypeID       uuid.UUID
-	EvalStatusFromDb db.ListRuleEvaluationsByProfileIdRow
+	EvalStatusFromDb *db.ListRuleEvaluationsByProfileIdRow
 	EvalErr          error
 	ActionsErr       evalerrors.ActionsError
 }
@@ -60,6 +60,10 @@ func (e *Executor) createEvalStatusParams(
 		ProfileID:  profileID,
 		RepoID:     uuid.MustParse(inf.OwnershipData[RepositoryIDEventKey]),
 		EntityType: entities.EntityTypeToDB(inf.Type),
+		ActionsErr: evalerrors.ActionsError{
+			RemediateErr: evalerrors.ErrActionSkipped,
+			AlertErr:     evalerrors.ErrActionSkipped,
+		},
 	}
 
 	artifactID, ok := inf.OwnershipData[ArtifactIDEventKey]
@@ -100,7 +104,8 @@ func (e *Executor) createEvalStatusParams(
 	}
 
 	// Save the current rule evaluation status to the evalParams
-	params.EvalStatusFromDb = evalStatus
+	params.EvalStatusFromDb = &evalStatus
+
 	return params, nil
 }
 
@@ -178,6 +183,7 @@ func (e *Executor) createOrUpdateEvalStatus(
 		RuleEvalID: id,
 		Status:     evalerrors.ErrorAsAlertStatus(evalParams.ActionsErr.AlertErr),
 		Details:    errorAsActionDetails(evalParams.ActionsErr.AlertErr),
+		Metadata:   evalParams.ActionsErr.AlertMeta,
 	})
 	if err != nil {
 		logger.Err(err).

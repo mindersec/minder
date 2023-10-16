@@ -17,7 +17,6 @@ package engine
 
 import (
 	"context"
-	"errors"
 	"fmt"
 	"strings"
 
@@ -28,7 +27,6 @@ import (
 
 	"github.com/stacklok/mediator/internal/db"
 	"github.com/stacklok/mediator/internal/engine/actions"
-	evalerrors "github.com/stacklok/mediator/internal/engine/errors"
 	"github.com/stacklok/mediator/internal/engine/eval"
 	"github.com/stacklok/mediator/internal/engine/ingester"
 	engif "github.com/stacklok/mediator/internal/engine/interfaces"
@@ -242,10 +240,6 @@ func (r *RuleTypeEngine) Eval(ctx context.Context, ent protoreflect.ProtoMessage
 	result, err := r.rdi.Ingest(ctx, ent, ruleParams)
 	if err != nil {
 		evalParams.EvalErr = fmt.Errorf("error ingesting data: %w", err)
-		evalParams.ActionsErr = evalerrors.ActionsError{
-			RemediateErr: evalerrors.ErrActionSkipped,
-			AlertErr:     evalerrors.ErrActionSkipped,
-		}
 		return
 	}
 	evalParams.EvalErr = r.reval.Eval(ctx, ruleDef, result)
@@ -258,12 +252,6 @@ func (r *RuleTypeEngine) Actions(
 	ruleDef, ruleParams map[string]any,
 	evalParams *EvalStatusParams,
 ) {
-	// Skip actions in case ingesting failed during evaluation
-	if errors.Is(evalParams.ActionsErr.AlertErr, evalerrors.ErrActionSkipped) &&
-		errors.Is(evalParams.ActionsErr.RemediateErr, evalerrors.ErrActionSkipped) {
-		return
-	}
-
 	// Process actions
 	evalParams.ActionsErr = r.rae.DoActions(ctx,
 		ent,

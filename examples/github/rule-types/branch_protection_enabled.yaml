@@ -56,3 +56,8 @@ def:
         allow if {
           input.ingested.url != ""
         }
+  # Defines the configuration for alerting on the rule
+  alert:
+    type: security_advisory
+    security_advisory:
+      severity: "medium"

@@ -19,6 +19,7 @@ import (
 	"bytes"
 	"context"
 	"crypto/sha1" // #nosec G505 - we're not using sha1 for crypto, only to quickly compare contents
+	"encoding/json"
 	"errors"
 	"fmt"
 	"log"
@@ -161,9 +162,14 @@ type PrTemplateParams struct {
 	Params map[string]any
 }
 
-// Type returns the action type of the remediation engine
-func (r *Remediator) Type() interfaces.ActionType {
+// ParentType returns the action type of the remediation engine
+func (r *Remediator) ParentType() interfaces.ActionType {
 	return r.actionType
+}
+
+// SubType returns the action subtype of the remediation engine
+func (_ *Remediator) SubType() string {
+	return RemediateType
 }
 
 // GetOnOffState returns the alert action state read from the profile
@@ -179,10 +185,11 @@ func (r *Remediator) Do(
 	ent protoreflect.ProtoMessage,
 	pol map[string]any,
 	params map[string]any,
-) error {
+	_ *json.RawMessage,
+) (json.RawMessage, error) {
 	repo, ok := ent.(*pb.Repository)
 	if !ok {
-		return fmt.Errorf("expected repository, got %T", ent)
+		return nil, fmt.Errorf("expected repository, got %T", ent)
 	}
 
 	tmplParams := &PrTemplateParams{
@@ -193,16 +200,16 @@ func (r *Remediator) Do(
 
 	title := new(bytes.Buffer)
 	if err := r.titleTemplate.Execute(title, tmplParams); err != nil {
-		return fmt.Errorf("cannot execute title template: %w", err)
+		return nil, fmt.Errorf("cannot execute title template: %w", err)
 	}
 
 	if err := r.expandContents(tmplParams); err != nil {
-		return fmt.Errorf("cannot expand contents: %w", err)
+		return nil, fmt.Errorf("cannot expand contents: %w", err)
 	}
 
 	prFullBodyText, magicComment, err := r.getPrBodyText(tmplParams)
 	if err != nil {
-		return fmt.Errorf("cannot create PR full body text: %w", err)
+		return nil, fmt.Errorf("cannot create PR full body text: %w", err)
 	}
 
 	var remErr error
@@ -210,11 +217,11 @@ func (r *Remediator) Do(
 	case interfaces.ActionOptOn:
 		alreadyExists, err := prAlreadyExists(ctx, r.cli, repo, magicComment)
 		if err != nil {
-			return fmt.Errorf("cannot check if PR already exists: %w", err)
+			return nil, fmt.Errorf("cannot check if PR already exists: %w", err)
 		}
 		if alreadyExists {
 			zerolog.Ctx(ctx).Info().Msg("PR already exists, won't create a new one")
-			return nil
+			return nil, nil
 		}
 		remErr = r.run(ctx, repo, title.String(), prFullBodyText, params)
 	case interfaces.ActionOptDryRun:
@@ -223,7 +230,7 @@ func (r *Remediator) Do(
 	case interfaces.ActionOptOff, interfaces.ActionOptUnknown:
 		remErr = errors.New("unexpected action")
 	}
-	return remErr
+	return nil, remErr
 }
 
 func dryRun(title, body string, entries []prEntry) {

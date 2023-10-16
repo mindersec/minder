@@ -60,3 +60,8 @@ def:
       endpoint: "/repos/{{.Entity.Owner}}/{{.Entity.Name}}/actions/permissions"
       body: |
         { "enabled": true, "allowed_actions": "{{.Profile.allowed_actions}}" }
+  # Defines the configuration for alerting on the rule
+  alert:
+    type: security_advisory
+    security_advisory:
+      severity: "medium"

@@ -59,3 +59,8 @@ def:
     gh_branch_protection:
       patch: |
         {"required_pull_request_reviews":{"require_last_push_approval":{{ .Profile.require_last_push_approval }}}}
+  # Defines the configuration for alerting on the rule
+  alert:
+    type: security_advisory
+    security_advisory:
+      severity: "medium"
