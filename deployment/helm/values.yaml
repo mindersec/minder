@@ -29,7 +29,10 @@ db:
 
 aws:
   accountID: "123456789012"
-  iamRole: "mediator-role"
+  migrate:
+    iamRole: "mediator_migrate_role"
+  server:
+    iamRole: "mediator_server_role"
 
 # Additional configuration yaml beyond what's in config.yaml.example
 extra_config: |
