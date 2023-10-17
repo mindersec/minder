@@ -38,14 +38,15 @@ import (
 
 const (
 	// AlertType is the type of the security advisory alert engine
-	AlertType              = "security_advisory"
-	summaryTmplStrName     = "summary"
-	descriptionTmplStrName = "description"
-	summaryTmplStr         = "mediator: profile {{.Profile} failed with rule {{.Rule}"
-	descriptionTmplStr     = `
+	AlertType                   = "security_advisory"
+	summaryTmplStrName          = "summary"
+	descriptionTmplNoRemStrName = "description_no_remediate"
+	descriptionTmplStrName      = "description"
+	summaryTmplStr              = `mediator: profile {{.Profile}} failed with rule {{.Rule}}`
+	descriptionTmplNoRemStr     = `
 **Description:**
 
-Mediator detected a potential security vulnerability in {{.Package}}.
+Mediator detected a potential security vulnerability in {{.Repository}}.
 
 This is marked as a {{.Severity}} severity vulnerability according to the {{.Rule}} rule type definition.
 
@@ -53,25 +54,50 @@ This is marked as a {{.Severity}} severity vulnerability according to the {{.Rul
 
 - Profile: {{.Profile}}
 - Rule: {{.Rule}}
-- Package: {{.Package}}
+- Repository: {{.Repository}}
 - Severity: {{.Severity}}
 
-**Next Steps:**
+**Remediation:**
 
-- Mediator may have already tried to resolve this assuming the remediate feature is available. Please check if there are any pending remediate actions that need review and approval.
-- In case Mediator was not able to remediate this or you want to resolve this manually, please follow the guidance below to resolve this issue.
+- Enable the auto-remediate feature in {{.Profile}} profile to allow for Mediator to automatically remediate such vulnerabilities in the future (depends on the remediate action being available for the given rule type).
+- Please follow the guidance below to resolve this issue manually.
 
 **Guidance:**
 
 {{.Guidance}}
 
+**Notes:**
+
+This security advisory is opened because the alert feature is enabled in {{.Profile}} and will be closed automatically once the issue for rule {{.Rule}} is resolved.
+
+If you have any questions or think this was wrongly evaluated, please reach out to the Mediator team.
+`
+	descriptionTmplStr = `
+**Description:**
+
+Mediator detected a potential security vulnerability in {{.Repository}}.
+
+This is marked as a {{.Severity}} severity vulnerability according to the {{.Rule}} rule type definition.
+
+**Details:**
+
+- Profile: {{.Profile}}
+- Rule: {{.Rule}}
+- Repository: {{.Repository}}
+- Severity: {{.Severity}}
+
 **Remediation:**
 
-Enable the remediate feature in {{.Profile}} profile to automatically remediate such vulnerabilities in the future (depends on the remediate feature being available for the rule type).
+- You have the remediate feature enabled in your profile, so Mediator may have already tried to resolve this. Please check if there are any pending remediate actions, i.e. opened pull requests that need review and approval. 
+- In case Mediator was not able to remediate this automatically or you want to do it manually, please follow the guidance below to resolve this issue.
+
+**Guidance:**
+
+{{.Guidance}}
 
 **Notes:**
 
-This security advisory will be closed automatically once the issue for rule {{.Rule}} is resolved.
+This security advisory is opened because the alert feature is enabled in {{.Profile}} and will be closed automatically once the issue for rule {{.Rule}} is resolved.
 
 If you have any questions or think this was wrongly evaluated, please reach out to the Mediator team.
 `
@@ -79,21 +105,17 @@ If you have any questions or think this was wrongly evaluated, please reach out 
 
 // Alert is the structure backing the security-advisory alert action
 type Alert struct {
-	actionType      interfaces.ActionType
-	cli             provifv1.GitHub
-	saCfg           *pb.RuleType_Definition_Alert_AlertTypeSA
-	summaryTmpl     *template.Template
-	descriptionTmpl *template.Template
+	actionType           interfaces.ActionType
+	cli                  provifv1.GitHub
+	saCfg                *pb.RuleType_Definition_Alert_AlertTypeSA
+	summaryTmpl          *template.Template
+	descriptionTmpl      *template.Template
+	descriptionNoRemTmpl *template.Template
 }
 
 type paramsSA struct {
 	// Used by the template
-	Profile  string
-	Rule     string
-	Package  string
-	Severity string
-	Guidance string
-	// Used by the action
+	Template        templateParamsSA
 	Owner           string
 	Repo            string
 	GHSA_ID         string
@@ -103,6 +125,13 @@ type paramsSA struct {
 	Metadata        *alertMetadata
 }
 
+type templateParamsSA struct {
+	Profile    string
+	Rule       string
+	Repository string
+	Severity   string
+	Guidance   string
+}
 type alertMetadata struct {
 	ID string `json:"ghsa_id,omitempty"`
 }
@@ -121,6 +150,10 @@ func NewSecurityAdvisoryAlert(
 	if err != nil {
 		return nil, fmt.Errorf("cannot parse summary template: %w", err)
 	}
+	descNoRemT, err := template.New(descriptionTmplNoRemStrName).Parse(descriptionTmplNoRemStr)
+	if err != nil {
+		return nil, fmt.Errorf("cannot parse description template: %w", err)
+	}
 	descT, err := template.New(descriptionTmplStrName).Parse(descriptionTmplStr)
 	if err != nil {
 		return nil, fmt.Errorf("cannot parse description template: %w", err)
@@ -132,11 +165,12 @@ func NewSecurityAdvisoryAlert(
 	}
 	// Create the alert action
 	return &Alert{
-		actionType:      actionType,
-		cli:             cli,
-		saCfg:           saCfg,
-		summaryTmpl:     sumT,
-		descriptionTmpl: descT,
+		actionType:           actionType,
+		cli:                  cli,
+		saCfg:                saCfg,
+		summaryTmpl:          sumT,
+		descriptionTmpl:      descT,
+		descriptionNoRemTmpl: descNoRemT,
 	}, nil
 }
 
@@ -161,8 +195,7 @@ func (alert *Alert) Do(
 	cmd interfaces.ActionCmd,
 	setting interfaces.ActionOpt,
 	entity protoreflect.ProtoMessage,
-	ruleDef map[string]any,
-	ruleParams map[string]any,
+	evalParams *interfaces.EvalStatusParams,
 	metadata *json.RawMessage,
 ) (json.RawMessage, error) {
 	logger := zerolog.Ctx(ctx)
@@ -172,7 +205,7 @@ func (alert *Alert) Do(
 		Msg("begin processing")
 
 	// Get the parameters for the security advisory - owner, repo, etc.
-	params, err := alert.getParamsForSecurityAdvisory(ctx, entity, ruleDef, ruleParams, metadata)
+	params, err := alert.getParamsForSecurityAdvisory(ctx, entity, evalParams, metadata)
 	if err != nil {
 		return nil, fmt.Errorf("error extracting details: %w", err)
 	}
@@ -200,7 +233,7 @@ func (alert *Alert) run(ctx context.Context, params *paramsSA, cmd interfaces.Ac
 		id, err := alert.cli.CreateSecurityAdvisory(ctx,
 			params.Owner,
 			params.Repo,
-			params.Severity,
+			params.Template.Severity,
 			params.Summary,
 			params.Description,
 			params.Vulnerabilities)
@@ -270,13 +303,12 @@ func (alert *Alert) runDry(ctx context.Context, params *paramsSA, cmd interfaces
 func (alert *Alert) getParamsForSecurityAdvisory(
 	ctx context.Context,
 	entity protoreflect.ProtoMessage,
-	_ map[string]any,
-	_ map[string]any,
+	evalParams *interfaces.EvalStatusParams,
 	metadata *json.RawMessage,
 ) (*paramsSA, error) {
 	logger := zerolog.Ctx(ctx)
 	params := &paramsSA{}
-
+	_ = evalParams
 	switch entity := entity.(type) {
 	case *pb.Repository:
 		params.Owner = entity.GetOwner()
@@ -291,11 +323,11 @@ func (alert *Alert) getParamsForSecurityAdvisory(
 		return nil, fmt.Errorf("expected repository, pull request or artifact, got %T", entity)
 	}
 	// TODO: Verify if this is the correct format
-	packageName := fmt.Sprintf("%s/%s", params.Owner, params.Repo)
+	params.Template.Repository = fmt.Sprintf("%s/%s", params.Owner, params.Repo)
 	params.Vulnerabilities = []*github.AdvisoryVulnerability{
 		{
 			Package: &github.VulnerabilityPackage{
-				Name: &packageName,
+				Name: &params.Template.Repository,
 			},
 		},
 	}
@@ -310,16 +342,29 @@ func (alert *Alert) getParamsForSecurityAdvisory(
 			params.Metadata = meta
 		}
 	}
-	// TODO: populate summary and description
+	// Get the severity
+	params.Template.Severity = alert.saCfg.Severity
+	// Get the guidance
+	params.Template.Guidance = evalParams.RuleType.Guidance
+	// Get the rule type name
+	params.Template.Rule = evalParams.RuleType.Name
+	// Get the profile name
+	params.Template.Profile = evalParams.Profile.Name
+
 	var summaryStr strings.Builder
-	err := alert.summaryTmpl.Execute(&summaryStr, params)
+	err := alert.summaryTmpl.Execute(&summaryStr, params.Template)
 	if err != nil {
 		return nil, fmt.Errorf("error executing summary template: %w", err)
 	}
 	params.Summary = summaryStr.String()
 
 	var descriptionStr strings.Builder
-	err = alert.descriptionTmpl.Execute(&descriptionStr, params)
+	// Get the description template depending if remediation is available
+	if interfaces.ActionOptFromString(evalParams.Profile.Remediate) == interfaces.ActionOptOn {
+		err = alert.descriptionTmpl.Execute(&descriptionStr, params.Template)
+	} else {
+		err = alert.descriptionNoRemTmpl.Execute(&descriptionStr, params.Template)
+	}
 	if err != nil {
 		return nil, fmt.Errorf("error executing description template: %w", err)
 	}

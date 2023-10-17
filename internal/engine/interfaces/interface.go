@@ -20,6 +20,9 @@ package interfaces
 import (
 	"context"
 	"encoding/json"
+	"github.com/google/uuid"
+	"github.com/stacklok/mediator/internal/db"
+	evalerrors "github.com/stacklok/mediator/internal/engine/errors"
 
 	billy "github.com/go-git/go-billy/v5"
 	"google.golang.org/protobuf/reflect/protoreflect"
@@ -92,8 +95,8 @@ type Action interface {
 	ParentType() ActionType
 	SubType() string
 	GetOnOffState(*pb.Profile) ActionOpt
-	Do(ctx context.Context, cmd ActionCmd, setting ActionOpt, entity protoreflect.ProtoMessage, ruleDef map[string]any,
-		ruleParam map[string]any, metadata *json.RawMessage) (json.RawMessage, error)
+	Do(ctx context.Context, cmd ActionCmd, setting ActionOpt, entity protoreflect.ProtoMessage,
+		evalParams *EvalStatusParams, metadata *json.RawMessage) (json.RawMessage, error)
 }
 
 // ActionCmd is the type that defines what effect an action should have
@@ -107,3 +110,21 @@ const (
 	// ActionCmdDoNothing means the action should do nothing
 	ActionCmdDoNothing ActionCmd = "do_nothing"
 )
+
+// EvalStatusParams is a helper struct to pass parameters to createOrUpdateEvalStatus
+// to avoid confusion with the parameters order. Since at the moment all our entities are bound to
+// a repo and most profiles are expecting a repo, the RepoID parameter is mandatory. For entities
+// other than artifacts, the ArtifactID should be 0 which is translated to NULL in the database.
+type EvalStatusParams struct {
+	Profile          *pb.Profile
+	Rule             *pb.Profile_Rule
+	RuleType         *pb.RuleType
+	ProfileID        uuid.UUID
+	RepoID           uuid.UUID
+	ArtifactID       uuid.NullUUID
+	EntityType       db.Entities
+	RuleTypeID       uuid.UUID
+	EvalStatusFromDb *db.ListRuleEvaluationsByProfileIdRow
+	EvalErr          error
+	ActionsErr       evalerrors.ActionsError
+}

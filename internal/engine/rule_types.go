@@ -22,7 +22,6 @@ import (
 
 	"github.com/xeipuuv/gojsonschema"
 	"google.golang.org/protobuf/encoding/protojson"
-	"google.golang.org/protobuf/reflect/protoreflect"
 	"google.golang.org/protobuf/types/known/structpb"
 
 	"github.com/stacklok/mediator/internal/db"
@@ -235,31 +234,23 @@ func (r *RuleTypeEngine) GetRuleInstanceValidator() *RuleValidator {
 }
 
 // Eval runs the rule type engine against the given entity
-func (r *RuleTypeEngine) Eval(ctx context.Context, ent protoreflect.ProtoMessage, ruleDef, ruleParams map[string]any,
-	evalParams *EvalStatusParams) {
-	result, err := r.rdi.Ingest(ctx, ent, ruleParams)
+func (r *RuleTypeEngine) Eval(ctx context.Context, inf *EntityInfoWrapper, evalParams *engif.EvalStatusParams) {
+	result, err := r.rdi.Ingest(ctx, inf.Entity, evalParams.Rule.Params.AsMap())
 	if err != nil {
 		evalParams.EvalErr = fmt.Errorf("error ingesting data: %w", err)
 		return
 	}
-	evalParams.EvalErr = r.reval.Eval(ctx, ruleDef, result)
+	evalParams.EvalErr = r.reval.Eval(ctx, evalParams.Rule.Def.AsMap(), result)
 }
 
 // Actions runs all actions for the rule type engine against the given entity
 func (r *RuleTypeEngine) Actions(
 	ctx context.Context,
-	ent protoreflect.ProtoMessage,
-	ruleDef, ruleParams map[string]any,
-	evalParams *EvalStatusParams,
+	inf *EntityInfoWrapper,
+	evalParams *engif.EvalStatusParams,
 ) {
 	// Process actions
-	evalParams.ActionsErr = r.rae.DoActions(ctx,
-		ent,
-		ruleDef,
-		ruleParams,
-		evalParams.EvalErr,
-		evalParams.EvalStatusFromDb,
-	)
+	evalParams.ActionsErr = r.rae.DoActions(ctx, inf.Entity, evalParams)
 }
 
 // RuleDefFromDB converts a rule type definition from the database to a protobuf

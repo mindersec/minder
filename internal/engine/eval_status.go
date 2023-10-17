@@ -19,6 +19,7 @@ import (
 	"database/sql"
 	"errors"
 	"fmt"
+	engif "github.com/stacklok/mediator/internal/engine/interfaces"
 
 	"github.com/google/uuid"
 	"github.com/rs/zerolog"
@@ -29,34 +30,21 @@ import (
 	pb "github.com/stacklok/mediator/pkg/api/protobuf/go/mediator/v1"
 )
 
-// EvalStatusParams is a helper struct to pass parameters to createOrUpdateEvalStatus
-// to avoid confusion with the parameters order. Since at the moment all our entities are bound to
-// a repo and most profiles are expecting a repo, the RepoID parameter is mandatory. For entities
-// other than artifacts, the ArtifactID should be 0 which is translated to NULL in the database.
-type EvalStatusParams struct {
-	ProfileID        uuid.UUID
-	RepoID           uuid.UUID
-	ArtifactID       uuid.NullUUID
-	EntityType       db.Entities
-	RuleTypeID       uuid.UUID
-	EvalStatusFromDb *db.ListRuleEvaluationsByProfileIdRow
-	EvalErr          error
-	ActionsErr       evalerrors.ActionsError
-}
-
 func (e *Executor) createEvalStatusParams(
 	ctx context.Context,
 	inf *EntityInfoWrapper,
 	profile *pb.Profile,
 	rule *pb.Profile_Rule,
-) (*EvalStatusParams, error) {
+) (*engif.EvalStatusParams, error) {
 	// Get Profile UUID
 	profileID, err := uuid.Parse(*profile.Id)
 	if err != nil {
 		return nil, fmt.Errorf("error parsing profile ID: %w", err)
 	}
 
-	params := &EvalStatusParams{
+	params := &engif.EvalStatusParams{
+		Rule:       rule,
+		Profile:    profile,
 		ProfileID:  profileID,
 		RepoID:     uuid.MustParse(inf.OwnershipData[RepositoryIDEventKey]),
 		EntityType: entities.EntityTypeToDB(inf.Type),
@@ -111,7 +99,7 @@ func (e *Executor) createEvalStatusParams(
 
 func (e *Executor) createOrUpdateEvalStatus(
 	ctx context.Context,
-	evalParams *EvalStatusParams,
+	evalParams *engif.EvalStatusParams,
 ) error {
 	logger := zerolog.Ctx(ctx)
 	// Make sure evalParams is not nil
