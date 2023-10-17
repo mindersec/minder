@@ -20,7 +20,6 @@ import (
 	"context"
 	"fmt"
 	"io"
-	"net/http"
 	"strings"
 	"text/template"
 
@@ -100,6 +99,7 @@ func countLeadingWhitespace(line string) int {
 }
 
 func locateDepInPr(
+	ctx context.Context,
 	client provifv1.GitHub,
 	dep *pb.PrDependencies_ContextualDependency,
 	patch patchLocatorFormatter,
@@ -108,9 +108,7 @@ func locateDepInPr(
 	if err != nil {
 		return nil, fmt.Errorf("could not create request: %w", err)
 	}
-	// TODO:(jakub) I couldn't make this work with the GH proxyClient
-	netClient := &http.Client{}
-	resp, err := netClient.Do(req)
+	resp, err := client.Do(ctx, req)
 	if err != nil {
 		return nil, fmt.Errorf("could not send request: %w", err)
 	}
@@ -219,7 +217,7 @@ func (ra *reviewPrHandler) trackVulnerableDep(
 	_ *VulnerabilityResponse,
 	patch patchLocatorFormatter,
 ) error {
-	location, err := locateDepInPr(ra.cli, dep, patch)
+	location, err := locateDepInPr(ctx, ra.cli, dep, patch)
 	if err != nil {
 		return fmt.Errorf("could not locate dependency in PR: %w", err)
 	}
