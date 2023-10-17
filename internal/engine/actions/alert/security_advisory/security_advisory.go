@@ -21,6 +21,8 @@ import (
 	"context"
 	"encoding/json"
 	"fmt"
+	"strings"
+	"text/template"
 
 	"github.com/google/go-github/v53/github"
 	"github.com/rs/zerolog"
@@ -36,20 +38,65 @@ import (
 
 const (
 	// AlertType is the type of the security advisory alert engine
-	AlertType = "security_advisory"
+	AlertType              = "security_advisory"
+	summaryTmplStrName     = "summary"
+	descriptionTmplStrName = "description"
+	summaryTmplStr         = "mediator: profile {{.Profile} failed with rule {{.Rule}"
+	descriptionTmplStr     = `
+**Description:**
+
+Mediator detected a potential security vulnerability in {{.Package}}.
+
+This is marked as a {{.Severity}} severity vulnerability according to the {{.Rule}} rule type definition.
+
+**Details:**
+
+- Profile: {{.Profile}}
+- Rule: {{.Rule}}
+- Package: {{.Package}}
+- Severity: {{.Severity}}
+
+**Next Steps:**
+
+- Mediator may have already tried to resolve this assuming the remediate feature is available. Please check if there are any pending remediate actions that need review and approval.
+- In case Mediator was not able to remediate this or you want to resolve this manually, please follow the guidance below to resolve this issue.
+
+**Guidance:**
+
+{{.Guidance}}
+
+**Remediation:**
+
+Enable the remediate feature in {{.Profile}} profile to automatically remediate such vulnerabilities in the future (depends on the remediate feature being available for the rule type).
+
+**Notes:**
+
+This security advisory will be closed automatically once the issue for rule {{.Rule}} is resolved.
+
+If you have any questions or think this was wrongly evaluated, please reach out to the Mediator team.
+`
 )
 
 // Alert is the structure backing the security-advisory alert action
 type Alert struct {
-	actionType interfaces.ActionType
-	cli        provifv1.GitHub
+	actionType      interfaces.ActionType
+	cli             provifv1.GitHub
+	saCfg           *pb.RuleType_Definition_Alert_AlertTypeSA
+	summaryTmpl     *template.Template
+	descriptionTmpl *template.Template
 }
 
 type paramsSA struct {
+	// Used by the template
+	Profile  string
+	Rule     string
+	Package  string
+	Severity string
+	Guidance string
+	// Used by the action
 	Owner           string
 	Repo            string
-	Severity        string
-	ID              string
+	GHSA_ID         string
 	Summary         string
 	Description     string
 	Vulnerabilities []*github.AdvisoryVulnerability
@@ -69,14 +116,27 @@ func NewSecurityAdvisoryAlert(
 	if actionType == "" {
 		return nil, fmt.Errorf("action type cannot be empty")
 	}
+	// Parse the templates for summary and description
+	sumT, err := template.New(summaryTmplStrName).Parse(summaryTmplStr)
+	if err != nil {
+		return nil, fmt.Errorf("cannot parse summary template: %w", err)
+	}
+	descT, err := template.New(descriptionTmplStrName).Parse(descriptionTmplStr)
+	if err != nil {
+		return nil, fmt.Errorf("cannot parse description template: %w", err)
+	}
+	// Get the GitHub client
 	cli, err := pbuild.GetGitHub(context.Background())
 	if err != nil {
 		return nil, fmt.Errorf("cannot get http client: %w", err)
 	}
-	_ = saCfg
+	// Create the alert action
 	return &Alert{
-		actionType: actionType,
-		cli:        cli,
+		actionType:      actionType,
+		cli:             cli,
+		saCfg:           saCfg,
+		summaryTmpl:     sumT,
+		descriptionTmpl: descT,
 	}, nil
 }
 
@@ -157,13 +217,13 @@ func (alert *Alert) run(ctx context.Context, params *paramsSA, cmd interfaces.Ac
 	// Close a security advisory
 	case interfaces.ActionCmdOff:
 		if params.Metadata == nil || params.Metadata.ID == "" {
-			return nil, fmt.Errorf("cannot close security-advisory without an ID: %w", enginerr.ErrActionSkipped)
+			return nil, fmt.Errorf("cannot close security-advisory without GHSA_ID: %w", enginerr.ErrActionSkipped)
 		}
 		err := alert.cli.CloseSecurityAdvisory(ctx, params.Owner, params.Repo, params.Metadata.ID)
 		if err != nil {
 			return nil, fmt.Errorf("error closing security advisory: %w, %w", err, enginerr.ErrActionFailed)
 		}
-		logger.Info().Str("ghsa_id", params.ID).Msg("closed security advisory")
+		logger.Info().Str("ghsa_id", params.GHSA_ID).Msg("closed security advisory")
 		// Success - return ErrActionTurnedOff to indicate the action was successful
 		return nil, fmt.Errorf("%s : %w", alert.ParentType(), enginerr.ErrActionTurnedOff)
 	case interfaces.ActionCmdDoNothing:
@@ -191,9 +251,9 @@ func (alert *Alert) runDry(ctx context.Context, params *paramsSA, cmd interfaces
 	// Close a security advisory
 	case interfaces.ActionCmdOff:
 		if params.Metadata == nil || params.Metadata.ID == "" {
-			return fmt.Errorf("cannot close a security-advisory without an ID: %w", enginerr.ErrActionSkipped)
+			return fmt.Errorf("cannot close a security-advisory without GHSA_ID: %w", enginerr.ErrActionSkipped)
 		}
-		endpoint := fmt.Sprintf("repos/%v/%v/security-advisories/%v", params.Owner, params.Repo, params.ID)
+		endpoint := fmt.Sprintf("repos/%v/%v/security-advisories/%v", params.Owner, params.Repo, params.GHSA_ID)
 		body := "{\"state\": \"closed\"}"
 		curlCmd, err := util.GenerateCurlCommand("PATCH", alert.cli.GetBaseURL(), endpoint, body)
 		if err != nil {
@@ -207,7 +267,7 @@ func (alert *Alert) runDry(ctx context.Context, params *paramsSA, cmd interfaces
 }
 
 // getParamsForSecurityAdvisory extracts the details from the entity
-func (_ *Alert) getParamsForSecurityAdvisory(
+func (alert *Alert) getParamsForSecurityAdvisory(
 	ctx context.Context,
 	entity protoreflect.ProtoMessage,
 	_ map[string]any,
@@ -251,5 +311,18 @@ func (_ *Alert) getParamsForSecurityAdvisory(
 		}
 	}
 	// TODO: populate summary and description
+	var summaryStr strings.Builder
+	err := alert.summaryTmpl.Execute(&summaryStr, params)
+	if err != nil {
+		return nil, fmt.Errorf("error executing summary template: %w", err)
+	}
+	params.Summary = summaryStr.String()
+
+	var descriptionStr strings.Builder
+	err = alert.descriptionTmpl.Execute(&descriptionStr, params)
+	if err != nil {
+		return nil, fmt.Errorf("error executing description template: %w", err)
+	}
+	params.Description = descriptionStr.String()
 	return params, nil
 }
