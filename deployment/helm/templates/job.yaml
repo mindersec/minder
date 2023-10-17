@@ -20,7 +20,7 @@ kind: ServiceAccount
 metadata:
   name: db-update
   annotations:
-    eks.amazonaws.com/role-arn: "arn:aws:iam::{{ .Values.aws.accountID }}:role/{{ .Values.aws.iamRole }}"
+    eks.amazonaws.com/role-arn: "arn:aws:iam::{{ .Values.aws.accountID }}:role/{{ .Values.aws.migrate.iamRole }}"
     helm.sh/hook-delete-policy: before-hook-creation
     helm.sh/hook: pre-install,pre-upgrade
   labels:
