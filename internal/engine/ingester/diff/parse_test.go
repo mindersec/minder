@@ -102,3 +102,224 @@ cloud.google.com/go/compute/metadata v0.2.3/go.mod h1:VAV5nSsACxMJvgaAuX6Pk2Aawl
 		})
 	}
 }
+
+func TestPyPiParse(t *testing.T) {
+	t.Parallel()
+
+	tests := []struct {
+		description          string
+		content              string
+		expectedCount        int
+		expectedDependencies []*pb.Dependency
+	}{
+		{
+			description: "Single addition, exact version",
+			content: `
+ Flask
++requests==2.19.0`,
+			expectedCount: 1,
+			expectedDependencies: []*pb.Dependency{
+				{
+					Ecosystem: pb.DepEcosystem_DEP_ECOSYSTEM_PYPI,
+					Name:      "requests",
+					Version:   "2.19.0",
+				},
+			},
+		},
+		{
+			description: "Single addition, exact version, comment",
+			content: `
+ Flask
++# this version has a CVE
++requests==2.19.0`,
+			expectedCount: 1,
+			expectedDependencies: []*pb.Dependency{
+				{
+					Ecosystem: pb.DepEcosystem_DEP_ECOSYSTEM_PYPI,
+					Name:      "requests",
+					Version:   "2.19.0",
+				},
+			},
+		},
+		{
+			description: "Single addition, exact version, whitespace",
+			content: `
+ Flask
++ 
++requests==2.19.0`,
+			expectedCount: 1,
+			expectedDependencies: []*pb.Dependency{
+				{
+					Ecosystem: pb.DepEcosystem_DEP_ECOSYSTEM_PYPI,
+					Name:      "requests",
+					Version:   "2.19.0",
+				},
+			},
+		},
+		{
+			description: "Single addition, greater or equal version",
+			content: `
+ Flask
++requests>=2.19.0`,
+			expectedCount: 1,
+			expectedDependencies: []*pb.Dependency{
+				{
+					Ecosystem: pb.DepEcosystem_DEP_ECOSYSTEM_PYPI,
+					Name:      "requests",
+					Version:   "2.19.0",
+				},
+			},
+		},
+		{
+			description: "Single addition, greater or equal version",
+			content: `
+ Flask
++requests>=2.19.0`,
+			expectedCount: 1,
+			expectedDependencies: []*pb.Dependency{
+				{
+					Ecosystem: pb.DepEcosystem_DEP_ECOSYSTEM_PYPI,
+					Name:      "requests",
+					Version:   "2.19.0",
+				},
+			},
+		},
+		{
+			description: "Single addition, exact version, comment",
+			content: `
+ Flask
++requests==2.19.0 # this version has a CVE`,
+			expectedCount: 1,
+			expectedDependencies: []*pb.Dependency{
+				{
+					Ecosystem: pb.DepEcosystem_DEP_ECOSYSTEM_PYPI,
+					Name:      "requests",
+					Version:   "2.19.0",
+				},
+			},
+		},
+		{
+			description: "Single addition, wildcard version",
+			content: `
+ Flask
++requests==2.*`,
+			expectedCount: 1,
+			expectedDependencies: []*pb.Dependency{
+				{
+					Ecosystem: pb.DepEcosystem_DEP_ECOSYSTEM_PYPI,
+					Name:      "requests",
+					Version:   "2",
+				},
+			},
+		},
+		{
+			description: "Single addition, no version",
+			content: `
+ Flask
++requests`,
+			expectedCount: 1,
+			expectedDependencies: []*pb.Dependency{
+				{
+					Ecosystem: pb.DepEcosystem_DEP_ECOSYSTEM_PYPI,
+					Name:      "requests",
+					Version:   "",
+				},
+			},
+		},
+		{
+			description: "Single addition, lower or equal version",
+			content: `
+ Flask
++requests<=2.19.0`,
+			expectedCount: 1,
+			expectedDependencies: []*pb.Dependency{
+				{
+					Ecosystem: pb.DepEcosystem_DEP_ECOSYSTEM_PYPI,
+					Name:      "requests",
+					Version:   "2.19.0",
+				},
+			},
+		},
+		{
+			description: "Single addition, version range",
+			content: `
+ Flask
++requests<3,>=2.0`,
+			expectedCount: 1,
+			expectedDependencies: []*pb.Dependency{
+				{
+					Ecosystem: pb.DepEcosystem_DEP_ECOSYSTEM_PYPI,
+					Name:      "requests",
+					Version:   "2.0",
+				},
+			},
+		},
+		{
+			description: "Single addition, version range reversed",
+			content: `
+ Flask
++requests>=2.0,<3`,
+			expectedCount: 1,
+			expectedDependencies: []*pb.Dependency{
+				{
+					Ecosystem: pb.DepEcosystem_DEP_ECOSYSTEM_PYPI,
+					Name:      "requests",
+					Version:   "2.0",
+				},
+			},
+		},
+		{
+			description: "Multiple additions",
+			content: `
+ Flask
++requests>=2.0,<3
++pandas<0.25.0,>=0.24.0
++numpy==1.16.0`,
+			expectedCount: 3,
+			expectedDependencies: []*pb.Dependency{
+				{
+					Ecosystem: pb.DepEcosystem_DEP_ECOSYSTEM_PYPI,
+					Name:      "requests",
+					Version:   "2.0",
+				},
+				{
+					Ecosystem: pb.DepEcosystem_DEP_ECOSYSTEM_PYPI,
+					Name:      "pandas",
+					Version:   "0.24.0",
+				},
+				{
+					Ecosystem: pb.DepEcosystem_DEP_ECOSYSTEM_PYPI,
+					Name:      "numpy",
+					Version:   "1.16.0",
+				},
+			},
+		},
+		{
+			description: "No additions",
+			content: `
+ Flask
+# just a comment
+`,
+			expectedCount:        0,
+			expectedDependencies: []*pb.Dependency{},
+		},
+	}
+	for _, tt := range tests {
+		tt := tt
+		t.Run(tt.description, func(t *testing.T) {
+			t.Parallel()
+			got, err := requirementsParse(tt.content)
+			if err != nil {
+				t.Fatalf("goParse() returned error: %v", err)
+			}
+
+			assert.Equal(t, tt.expectedCount, len(got), "mismatched dependency count")
+
+			for i, expectedDep := range tt.expectedDependencies {
+				if !proto.Equal(expectedDep, got[i]) {
+					t.Errorf("mismatch at index %d: expected %v, got %v", i, expectedDep, got[i])
+				}
+			}
+		})
+	}
+}

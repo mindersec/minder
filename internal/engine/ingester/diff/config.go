@@ -23,6 +23,8 @@ const (
 	DepEcosystemNPM DependencyEcosystem = "npm"
 	// DepEcosystemGo is the go dependency ecosystem
 	DepEcosystemGo DependencyEcosystem = "go"
+	// DepEcosystemPyPI is the python dependency ecosystem
+	DepEcosystemPyPI DependencyEcosystem = "pypi"
 	// DepEcosystemNone is the fallback value
 	DepEcosystemNone DependencyEcosystem = ""
 )
