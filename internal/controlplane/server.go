@@ -28,9 +28,11 @@ import (
 	"github.com/prometheus/client_golang/prometheus/promhttp"
 	"go.opentelemetry.io/contrib/instrumentation/google.golang.org/grpc/otelgrpc"
 	"go.opentelemetry.io/otel"
+	"go.opentelemetry.io/otel/attribute"
 	"go.opentelemetry.io/otel/exporters/prometheus"
 	stdout "go.opentelemetry.io/otel/exporters/stdout/stdouttrace"
 	"go.opentelemetry.io/otel/propagation"
+	"go.opentelemetry.io/otel/sdk/instrumentation"
 	sdkmetric "go.opentelemetry.io/otel/sdk/metric"
 	"go.opentelemetry.io/otel/sdk/resource"
 	sdktrace "go.opentelemetry.io/otel/sdk/trace"
@@ -130,9 +132,22 @@ func initMetrics(r sdkmetric.Reader) *sdkmetric.MeterProvider {
 		// TODO: Make this auto-generated
 		semconv.ServiceVersion("v0.1.0"),
 	)
+	// By default/spec (?!), otel includes net.sock.peer.{addr,port}.
+	// See https://github.com/open-telemetry/opentelemetry-go-contrib/issues/3071
+	// This exposes a DoS vector and needlessly blows up the RPC metrics.
+	// This view filters the peer address and port out of the metrics.
+	rpcPeerFilter := sdkmetric.NewView(
+		sdkmetric.Instrument{Scope: instrumentation.Scope{
+			Name: "go.opentelemetry.io/contrib/instrumentation/google.golang.org/grpc/otelgrpc",
+		}},
+		sdkmetric.Stream{AttributeFilter: attribute.NewDenyKeysFilter(
+			"net.sock.peer.addr", "net.sock.peer.port",
+		)},
+	)
 	mp := sdkmetric.NewMeterProvider(
 		sdkmetric.WithResource(res),
 		sdkmetric.WithReader(r),
+		sdkmetric.WithView(rpcPeerFilter),
 	)
 
 	otel.SetMeterProvider(mp)
