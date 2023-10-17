@@ -37,3 +37,7 @@ aws:
 # Additional configuration yaml beyond what's in config.yaml.example
 extra_config: |
   # Add content here
+
+# Additional configuration yaml that's applied to the migration job
+extra_config_migrate: |
+  # Add even more content here
