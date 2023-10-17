@@ -46,7 +46,7 @@ data:
   config.yaml: |
     {{ .Files.Get "config.yaml.example" | nindent 4 }}
   overrides.yaml: |
-    {{ .Values.extra_config | nindent 4}}
+    {{ .Values.extra_config_migrate | nindent 4}}
 
 ---
 
