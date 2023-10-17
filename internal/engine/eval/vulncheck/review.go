@@ -83,6 +83,7 @@ func createReviewBody(reviewText string) (string, error) {
 }
 
 type reviewLocation struct {
+	line              string
 	lineToChange      int
 	leadingWhitespace int
 }
@@ -99,7 +100,6 @@ func countLeadingWhitespace(line string) int {
 }
 
 func locateDepInPr(
-	_ context.Context,
 	client provifv1.GitHub,
 	dep *pb.PrDependencies_ContextualDependency,
 	patch patchLocatorFormatter,
@@ -127,6 +127,7 @@ func locateDepInPr(
 		if patch.LineHasDependency(line) {
 			loc.leadingWhitespace = countLeadingWhitespace(line)
 			loc.lineToChange = i + 1
+			loc.line = line
 			break
 		}
 	}
@@ -218,12 +219,12 @@ func (ra *reviewPrHandler) trackVulnerableDep(
 	_ *VulnerabilityResponse,
 	patch patchLocatorFormatter,
 ) error {
-	location, err := locateDepInPr(ctx, ra.cli, dep, patch)
+	location, err := locateDepInPr(ra.cli, dep, patch)
 	if err != nil {
 		return fmt.Errorf("could not locate dependency in PR: %w", err)
 	}
 
-	comment := patch.IndentedString(location.leadingWhitespace)
+	comment := patch.IndentedString(location.leadingWhitespace, location.line, dep.Dep)
 	body := reviewBodyWithSuggestion(comment)
 	lineTo := len(strings.Split(comment, "\n")) - 1
 

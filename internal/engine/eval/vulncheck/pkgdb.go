@@ -25,6 +25,7 @@ import (
 	"net/url"
 	"strings"
 
+	"github.com/stacklok/mediator/internal/util"
 	pb "github.com/stacklok/mediator/pkg/api/protobuf/go/mediator/v1"
 )
 
@@ -41,9 +42,13 @@ func urlFromEndpointAndPaths(
 	return u, nil
 }
 
+// The patchLocatorFormatter interface is used to format the patch suggestion
+// for the particular package manager. The interface should probably be refactored
+// and each type implementing its own interface should handle the indenting rather
+// than the review handler.
 type patchLocatorFormatter interface {
 	LineHasDependency(line string) bool
-	IndentedString(int) string
+	IndentedString(indent int, oldDepLine string, oldDep *pb.Dependency) string
 }
 
 // RepoQuerier is the interface for querying a repository
@@ -72,6 +77,8 @@ func (rc *repoCache) newRepository(ecoConfig *ecosystemConfig) (RepoQuerier, err
 		repo = newNpmRepository(ecoConfig.PackageRepository.Url)
 	case "go":
 		repo = newGoProxySumRepository(ecoConfig.PackageRepository.Url, ecoConfig.SumRepository.Url)
+	case "pypi":
+		repo = newPyPIRepository(ecoConfig.PackageRepository.Url)
 	default:
 		return nil, fmt.Errorf("unknown ecosystem: %s", ecoConfig.Name)
 	}
@@ -89,8 +96,8 @@ type packageJson struct {
 	} `json:"dist"`
 }
 
-func (pj *packageJson) IndentedString(leadingWhitespace int) string {
-	padding := fmt.Sprintf("%*s", leadingWhitespace, "")
+func (pj *packageJson) IndentedString(indent int, _ string, _ *pb.Dependency) string {
+	padding := fmt.Sprintf("%*s", indent, "")
 	innerPadding := padding + "  " // Add 2 extra spaces
 
 	// format each line with leadingWhitespace and 2 extra spaces
@@ -105,6 +112,89 @@ func (pj *packageJson) IndentedString(leadingWhitespace int) string {
 func (pj *packageJson) LineHasDependency(line string) bool {
 	pkgLine := fmt.Sprintf(`"%s": {`, pj.Name)
 	return strings.Contains(line, pkgLine)
+}
+
+// check that pypi repository implements RepoQuerier
+var _ RepoQuerier = (*pypiRepository)(nil)
+
+type pypiRepository struct {
+	client   *http.Client
+	endpoint string
+}
+
+// PyPiReply is the reply from the PyPi API
+type PyPiReply struct {
+	Info struct {
+		Name    string `json:"name"`
+		Version string `json:"version"`
+	} `json:"info"`
+}
+
+// IndentedString returns the patch suggestion for a requirement.txt file
+// This method satisfies the patchLocatorFormatter interface where different
+// package managers have different patch formats and different ways of presenting
+// them. Since PyPi doesn't indent, but can specify zero or multiple versions, we
+// don't care about the indent parameter. This is ripe for refactoring, though,
+// see the comment in the patchLocatorFormatter interface.
+func (p *PyPiReply) IndentedString(_ int, oldDepLine string, oldDep *pb.Dependency) string {
+	return strings.Replace(oldDepLine, oldDep.Version, p.Info.Version, 1)
+}
+
+// LineHasDependency returns true if the requirement.txt line is for the same package as the receiver
+func (p *PyPiReply) LineHasDependency(line string) bool {
+	nameMatch := util.PyRequestsNameRegexp.FindStringIndex(line)
+	if nameMatch == nil {
+		return false
+	}
+
+	name := strings.TrimSpace(line[:nameMatch[0]])
+	return name == p.Info.Name
+}
+
+func (p *pypiRepository) SendRecvRequest(ctx context.Context, dep *pb.Dependency) (patchLocatorFormatter, error) {
+	req, err := p.newRequest(ctx, dep)
+	if err != nil {
+		return nil, fmt.Errorf("could not create request: %w", err)
+	}
+
+	resp, err := p.client.Do(req)
+	if err != nil {
+		return nil, fmt.Errorf("could not send request: %w", err)
+	}
+	defer resp.Body.Close()
+
+	if resp.StatusCode != http.StatusOK {
+		return nil, fmt.Errorf("received non-200 response: %d", resp.StatusCode)
+	}
+
+	var pkgJson PyPiReply
+	dec := json.NewDecoder(resp.Body)
+	if err := dec.Decode(&pkgJson); err != nil {
+		return nil, fmt.Errorf("could not unmarshal response: %w", err)
+	}
+
+	return &pkgJson, nil
+}
+
+func newPyPIRepository(endpoint string) *pypiRepository {
+	return &pypiRepository{
+		client:   &http.Client{},
+		endpoint: endpoint,
+	}
+}
+
+func (p *pypiRepository) newRequest(ctx context.Context, dep *pb.Dependency) (*http.Request, error) {
+	u, err := urlFromEndpointAndPaths(p.endpoint, dep.Name, "json")
+	if err != nil {
+		return nil, fmt.Errorf("could not parse endpoint: %w", err)
+	}
+
+	req, err := http.NewRequest("GET", u.String(), nil)
+	if err != nil {
+		return nil, fmt.Errorf("could not create request: %w", err)
+	}
+	req = req.WithContext(ctx)
+	return req, nil
 }
 
 type npmRepository struct {
@@ -171,7 +261,7 @@ type goModPackage struct {
 	DependencyHash string `json:"dependency_hash"`
 }
 
-func (gmp *goModPackage) IndentedString(_ int) string {
+func (gmp *goModPackage) IndentedString(_ int, _ string, _ *pb.Dependency) string {
 	return fmt.Sprintf("%s %s %s\n%s %s/go.mod %s",
 		gmp.Name, gmp.Version, gmp.ModuleHash,
 		gmp.Name, gmp.Version, gmp.DependencyHash)

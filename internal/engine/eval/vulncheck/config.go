@@ -87,6 +87,8 @@ func pbEcosystemAsString(ecosystem pb.DepEcosystem) string {
 		return "npm"
 	case pb.DepEcosystem_DEP_ECOSYSTEM_GO:
 		return "Go"
+	case pb.DepEcosystem_DEP_ECOSYSTEM_PYPI:
+		return "PyPI"
 	case pb.DepEcosystem_DEP_ECOSYSTEM_UNSPECIFIED:
 		// this shouldn't happen
 		return ""
