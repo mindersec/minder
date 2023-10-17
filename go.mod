@@ -209,7 +209,7 @@ require (
 	github.com/kevinburke/ssh_config v1.2.0 // indirect
 	github.com/klauspost/compress v1.17.0 // indirect
 	github.com/leodido/go-urn v1.2.4 // indirect
-	github.com/lestrrat-go/jwx/v2 v2.0.13
+	github.com/lestrrat-go/jwx/v2 v2.0.14
 	github.com/letsencrypt/boulder v0.0.0-20221109233200-85aa52084eaf // indirect
 	github.com/lithammer/shortuuid/v3 v3.0.7 // indirect
 	github.com/lucasb-eyer/go-colorful v1.2.0 // indirect
