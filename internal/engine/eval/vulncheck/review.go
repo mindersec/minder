@@ -492,6 +492,10 @@ func (sph *summaryPrHandler) submit(ctx context.Context) error {
 
 func (sph *summaryPrHandler) generateSummary() (string, error) {
 	var summary strings.Builder
+	if len(sph.trackedDeps) == 0 {
+		summary.WriteString(noVulsFoundText)
+		return summary.String(), nil
+	}
 
 	var headerBuf bytes.Buffer
 	if err := sph.headerTmpl.Execute(&headerBuf, nil); err != nil {
