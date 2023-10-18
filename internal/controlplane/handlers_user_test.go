@@ -39,6 +39,7 @@ import (
 	"github.com/stacklok/mediator/internal/crypto"
 	"github.com/stacklok/mediator/internal/db"
 	"github.com/stacklok/mediator/internal/events"
+	"github.com/stacklok/mediator/internal/telemetry/noop"
 	pb "github.com/stacklok/mediator/pkg/api/protobuf/go/mediator/v1"
 )
 
@@ -162,6 +163,7 @@ func TestCreateUserDBMock(t *testing.T) {
 				},
 				cryptoEngine: crypeng,
 				vldtr:        mockJwtValidator,
+				telemetry:    &noop.Telemetry{},
 			}
 
 			resp, err := server.CreateUser(ctx, tc.req)
@@ -269,12 +271,17 @@ func TestCreateUser_gRPC(t *testing.T) {
 			tc.buildStubs(mockStore, mockJwtValidator)
 			evt, err := events.Setup()
 			require.NoError(t, err, "failed to setup eventer")
-			server, err := NewServer(mockStore, evt, &config.Config{
-				Salt: config.DefaultConfigForTest().Salt,
-				Auth: config.AuthConfig{
-					TokenKey: generateTokenKey(t),
-				},
-			}, mockJwtValidator)
+			server := &Server{
+				store: mockStore,
+				cfg: &config.Config{
+					Salt: config.DefaultConfigForTest().Salt,
+					Auth: config.AuthConfig{
+						TokenKey: generateTokenKey(t),
+					}},
+				evt:       evt,
+				vldtr:     mockJwtValidator,
+				telemetry: &noop.Telemetry{},
+			}
 			require.NoError(t, err, "failed to create test server")
 
 			resp, err := server.CreateUser(ctx, tc.req)

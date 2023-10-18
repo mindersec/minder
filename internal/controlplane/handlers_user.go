@@ -126,6 +126,8 @@ func (s *Server) CreateUser(ctx context.Context,
 		return nil, status.Errorf(codes.Internal, "failed to commit transaction: %s", err)
 	}
 
+	s.telemetry.UserRegistered(ctx)
+
 	return &pb.CreateUserResponse{
 		Id:              user.ID,
 		OrganizationId:  user.OrganizationID.String(),

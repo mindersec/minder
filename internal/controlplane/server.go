@@ -48,6 +48,8 @@ import (
 	"github.com/stacklok/mediator/internal/db"
 	"github.com/stacklok/mediator/internal/events"
 	"github.com/stacklok/mediator/internal/logger"
+	"github.com/stacklok/mediator/internal/telemetry"
+	"github.com/stacklok/mediator/internal/telemetry/noop"
 	"github.com/stacklok/mediator/internal/util"
 	pb "github.com/stacklok/mediator/pkg/api/protobuf/go/mediator/v1"
 )
@@ -65,6 +67,7 @@ type Server struct {
 	evt        *events.Eventer
 	grpcServer *grpc.Server
 	vldtr      auth.JwtValidator
+	telemetry  telemetry.Telemetry
 	pb.UnimplementedHealthServiceServer
 	pb.UnimplementedOAuthServiceServer
 	pb.UnimplementedUserServiceServer
@@ -266,6 +269,8 @@ func (s *Server) StartHTTPServer(ctx context.Context) error {
 				log.Printf("failed to start metrics server: %v", err)
 			}
 		}()
+	} else {
+		s.telemetry = &noop.Telemetry{}
 	}
 
 	// start the HTTP server
@@ -303,6 +308,11 @@ func (s *Server) startMetricServer(ctx context.Context) error {
 	defer shutdownHandler("MeterProvider", func(ctx context.Context) error {
 		return mp.Shutdown(ctx)
 	})
+
+	s.telemetry, err = telemetry.NewOtelTelemetry()
+	if err != nil {
+		return fmt.Errorf("could not initialize telemetry: %w", err)
+	}
 
 	handler := promhttp.Handler()
 	mux := http.NewServeMux()
