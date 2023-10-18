@@ -17,10 +17,12 @@ jobs:
     steps:
     - name: Checkout code
       uses: actions/checkout@v4
+      with:
+        fetch-depth: 0
 
     - name: Verify Migration Files
       run: |
-        modified_files=$(git diff --name-only origin/${{ github.base_ref }}...${{ github.head_ref }} -- 'database/migrations/' | grep '.sql' || true)
+        modified_files=$(git diff --name-only origin/${{ github.base_ref }} HEAD -- 'database/migrations/' | grep '.sql' || true)
 
         if [ -n "$modified_files" ]; then
           echo "Error: Modifying existing migration files is not allowed."
