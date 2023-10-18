@@ -44,62 +44,64 @@ const (
 	descriptionTmplStrName      = "description"
 	summaryTmplStr              = `mediator: profile {{.Profile}} failed with rule {{.Rule}}`
 	descriptionTmplNoRemStr     = `
-**Description:**
+Mediator has detected a potential security vulnerability in your repository - **{{.Repository}}**. 
+This vulnerability has been classified with a severity level of **{{.Severity}}**, as per the configuration defined in the **{{.Rule}}** rule type.
 
-Mediator detected a potential security vulnerability in {{.Repository}}.
+The purpose of this security advisory is to alert you to the presence of this vulnerability. Please note that this advisory has been automatically generated as a result of having the alert feature enabled within the **{{.Profile}}** profile.
 
-This is marked as a {{.Severity}} severity vulnerability according to the {{.Rule}} rule type definition.
+Once the issue associated with the **{{.Rule}}** rule is resolved, this advisory will be automatically closed.
 
-**Details:**
+**Remediation**
+
+To address this security vulnerability, we recommend taking the following actions:
+
+1. Enable the auto-remediate feature within the **{{.Profile}}** profile. This will empower Mediator to automatically remediate this and other vulnerabilities in the future, provided that a remediation action is available for the given rule type. In the case of the **{{.Rule}}** rule type, the remediation action is **{{.RuleRemediation}}**.
+2. Alternatively, you can manually address this issue by following the guidance provided below.
+
+**Guidance**
+
+{{.Guidance}}
+
+**Details**
 
 - Profile: {{.Profile}}
 - Rule: {{.Rule}}
 - Repository: {{.Repository}}
 - Severity: {{.Severity}}
 
-**Remediation:**
+**About**
 
-- Enable the auto-remediate feature in {{.Profile}} profile to allow for Mediator to automatically remediate such vulnerabilities in the future (depends on the remediate action being available for the given rule type).
-- Please follow the guidance below to resolve this issue manually.
-
-**Guidance:**
-
-{{.Guidance}}
-
-**Notes:**
-
-This security advisory is opened because the alert feature is enabled in {{.Profile}} and will be closed automatically once the issue for rule {{.Rule}} is resolved.
-
-If you have any questions or think this was wrongly evaluated, please reach out to the Mediator team.
+If you have any questions or believe that this evaluation is incorrect, please don't hesitate to reach out to the Mediator team.
 `
 	descriptionTmplStr = `
-**Description:**
+Mediator has detected a potential security vulnerability in your repository - **{{.Repository}}**. 
+This vulnerability has been classified with a severity level of **{{.Severity}}**, as per the configuration defined in the **{{.Rule}}** rule type.
 
-Mediator detected a potential security vulnerability in {{.Repository}}.
+The purpose of this security advisory is to alert you to the presence of this vulnerability. Please note that this advisory has been automatically generated as a result of having the alert feature enabled within the **{{.Profile}}** profile.
 
-This is marked as a {{.Severity}} severity vulnerability according to the {{.Rule}} rule type definition.
+Once the issue associated with the **{{.Rule}}** rule is resolved, this advisory will be automatically closed.
 
-**Details:**
+**Remediation**
+
+To address this security vulnerability, we recommend taking the following actions:
+
+1. Since you've turned on the remediate feature in your profile, Mediator may have already taken steps to address this issue. Please check for pending remediation actions, such as open pull requests, that require your review and approval.
+2. In case Mediator was not able to remediate this automatically, please refer to the guidance below to resolve the issue manually.
+
+**Guidance**
+
+{{.Guidance}}
+
+**Details**
 
 - Profile: {{.Profile}}
 - Rule: {{.Rule}}
 - Repository: {{.Repository}}
 - Severity: {{.Severity}}
 
-**Remediation:**
+**About**
 
-- You have the remediate feature enabled in your profile, so Mediator may have already tried to resolve this. Please check if there are any pending remediate actions, i.e. opened pull requests that need review and approval. 
-- In case Mediator was not able to remediate this automatically or you want to do it manually, please follow the guidance below to resolve this issue.
-
-**Guidance:**
-
-{{.Guidance}}
-
-**Notes:**
-
-This security advisory is opened because the alert feature is enabled in {{.Profile}} and will be closed automatically once the issue for rule {{.Rule}} is resolved.
-
-If you have any questions or think this was wrongly evaluated, please reach out to the Mediator team.
+If you have any questions or believe that this evaluation is incorrect, please don't hesitate to reach out to the Mediator team.
 `
 )
 
@@ -126,11 +128,12 @@ type paramsSA struct {
 }
 
 type templateParamsSA struct {
-	Profile    string
-	Rule       string
-	Repository string
-	Severity   string
-	Guidance   string
+	Profile         string
+	Rule            string
+	Repository      string
+	Severity        string
+	Guidance        string
+	RuleRemediation string
 }
 type alertMetadata struct {
 	ID string `json:"ghsa_id,omitempty"`
@@ -324,10 +327,12 @@ func (alert *Alert) getParamsForSecurityAdvisory(
 	}
 	// TODO: Verify if this is the correct format
 	params.Template.Repository = fmt.Sprintf("%s/%s", params.Owner, params.Repo)
+	ecosystem := "other"
 	params.Vulnerabilities = []*github.AdvisoryVulnerability{
 		{
 			Package: &github.VulnerabilityPackage{
-				Name: &params.Template.Repository,
+				Name:      &params.Template.Repository,
+				Ecosystem: &ecosystem,
 			},
 		},
 	}
@@ -350,7 +355,12 @@ func (alert *Alert) getParamsForSecurityAdvisory(
 	params.Template.Rule = evalParams.RuleType.Name
 	// Get the profile name
 	params.Template.Profile = evalParams.Profile.Name
-
+	// Check if remediation is available for the rule type
+	if evalParams.RuleType.Def.Remediate != nil {
+		params.Template.RuleRemediation = "already available"
+	} else {
+		params.Template.RuleRemediation = "not available yet"
+	}
 	var summaryStr strings.Builder
 	err := alert.summaryTmpl.Execute(&summaryStr, params.Template)
 	if err != nil {

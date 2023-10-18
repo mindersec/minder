@@ -19,13 +19,13 @@ import (
 	"database/sql"
 	"errors"
 	"fmt"
-	engif "github.com/stacklok/mediator/internal/engine/interfaces"
 
 	"github.com/google/uuid"
 	"github.com/rs/zerolog"
 
 	"github.com/stacklok/mediator/internal/db"
 	evalerrors "github.com/stacklok/mediator/internal/engine/errors"
+	engif "github.com/stacklok/mediator/internal/engine/interfaces"
 	"github.com/stacklok/mediator/internal/entities"
 	pb "github.com/stacklok/mediator/pkg/api/protobuf/go/mediator/v1"
 )

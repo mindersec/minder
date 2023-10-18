@@ -20,13 +20,13 @@ package interfaces
 import (
 	"context"
 	"encoding/json"
-	"github.com/google/uuid"
-	"github.com/stacklok/mediator/internal/db"
-	evalerrors "github.com/stacklok/mediator/internal/engine/errors"
 
 	billy "github.com/go-git/go-billy/v5"
+	"github.com/google/uuid"
 	"google.golang.org/protobuf/reflect/protoreflect"
 
+	"github.com/stacklok/mediator/internal/db"
+	evalerrors "github.com/stacklok/mediator/internal/engine/errors"
 	pb "github.com/stacklok/mediator/pkg/api/protobuf/go/mediator/v1"
 )
 
