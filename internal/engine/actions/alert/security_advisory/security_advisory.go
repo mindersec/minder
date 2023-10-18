@@ -38,27 +38,40 @@ import (
 
 const (
 	// AlertType is the type of the security advisory alert engine
-	AlertType                   = "security_advisory"
-	summaryTmplStrName          = "summary"
-	descriptionTmplNoRemStrName = "description_no_remediate"
-	descriptionTmplStrName      = "description"
-	summaryTmplStr              = `mediator: profile {{.Profile}} failed with rule {{.Rule}}`
+	AlertType                = "security_advisory"
+	tmplSummaryName          = "summary"
+	tmplSummary              = `mediator: profile {{.Profile}} failed with rule {{.Rule}}`
+	tmplDescriptionNameNoRem = "description_no_remediate"
+	tmplDescriptionNameRem   = "description"
 	// nolint:lll
-	descriptionTmplNoRemStr = `
-Mediator has detected a potential security vulnerability in your repository - **{{.Repository}}**. 
-This vulnerability has been classified with a severity level of **{{.Severity}}**, as per the configuration defined in the **{{.Rule}}** rule type.
+	tmplPart1Top = `
+Mediator has detected a potential security exposure in your repository - **{{.Repository}}**.
+This exposure has been classified with a severity level of **{{.Severity}}**, as per the configuration defined in the **{{.Rule}}** rule type.
 
-The purpose of this security advisory is to alert you to the presence of this vulnerability. Please note that this advisory has been automatically generated as a result of having the alert feature enabled within the **{{.Profile}}** profile.
+The purpose of this security advisory is to alert you to the presence of this exposure. Please note that this advisory has been automatically generated as a result of having the alert feature enabled within the **{{.Profile}}** profile.
 
 Once the issue associated with the **{{.Rule}}** rule is resolved, this advisory will be automatically closed.
-
+`
+	// nolint:lll
+	tmplPart2MiddleNoRem = `
 **Remediation**
 
-To address this security vulnerability, we recommend taking the following actions:
+To address this security exposure, we recommend taking the following actions:
 
 1. Enable the auto-remediate feature within the **{{.Profile}}** profile. This will allow Mediator to automatically remediate this and other vulnerabilities in the future, provided that a remediation action is available for the given rule type. In the case of the **{{.Rule}}** rule type, the remediation action is **{{.RuleRemediation}}**.
 2. Alternatively, you can manually address this issue by following the guidance provided below.
+`
+	// nolint:lll
+	tmplPart2MiddleRem = `
+**Remediation**
 
+To address this security exposure, we recommend taking the following actions:
+
+1. Since you've turned on the remediate feature in your profile, Mediator may have already taken steps to address this issue. Please check for pending remediation actions, such as open pull requests, that require your review and approval.
+2. In case Mediator was not able to remediate this automatically, please refer to the guidance below to resolve the issue manually.
+`
+	// nolint:lll
+	tmplPart3Bottom = `
 **Guidance**
 
 {{.Guidance}}
@@ -74,37 +87,6 @@ To address this security vulnerability, we recommend taking the following action
 
 If you have any questions or believe that this evaluation is incorrect, please don't hesitate to reach out to the Mediator team.
 `
-	//nolint:lll
-	descriptionTmplStr = `
-Mediator has detected a potential security vulnerability in your repository - **{{.Repository}}**. 
-This vulnerability has been classified with a severity level of **{{.Severity}}**, as per the configuration defined in the **{{.Rule}}** rule type.
-
-The purpose of this security advisory is to alert you to the presence of this vulnerability. Please note that this advisory has been automatically generated as a result of having the alert feature enabled within the **{{.Profile}}** profile.
-
-Once the issue associated with the **{{.Rule}}** rule is resolved, this advisory will be automatically closed.
-
-**Remediation**
-
-To address this security vulnerability, we recommend taking the following actions:
-
-1. Since you've turned on the remediate feature in your profile, Mediator may have already taken steps to address this issue. Please check for pending remediation actions, such as open pull requests, that require your review and approval.
-2. In case Mediator was not able to remediate this automatically, please refer to the guidance below to resolve the issue manually.
-
-**Guidance**
-
-{{.Guidance}}
-
-**Details**
-
-- Profile: {{.Profile}}
-- Rule: {{.Rule}}
-- Repository: {{.Repository}}
-- Severity: {{.Severity}}
-
-**About**
-
-If you have any questions or believe that this evaluation is incorrect, please don't hesitate to reach out to the Mediator team.
-` //nolint:lll
 )
 
 // Alert is the structure backing the security-advisory alert action
@@ -151,15 +133,17 @@ func NewSecurityAdvisoryAlert(
 		return nil, fmt.Errorf("action type cannot be empty")
 	}
 	// Parse the templates for summary and description
-	sumT, err := template.New(summaryTmplStrName).Parse(summaryTmplStr)
+	sumT, err := template.New(tmplSummaryName).Parse(tmplSummary)
 	if err != nil {
 		return nil, fmt.Errorf("cannot parse summary template: %w", err)
 	}
-	descNoRemT, err := template.New(descriptionTmplNoRemStrName).Parse(descriptionTmplNoRemStr)
+	descriptionTmplNoRemStr := strings.Join([]string{tmplPart1Top, tmplPart2MiddleNoRem, tmplPart3Bottom}, "\n")
+	descNoRemT, err := template.New(tmplDescriptionNameNoRem).Parse(descriptionTmplNoRemStr)
 	if err != nil {
 		return nil, fmt.Errorf("cannot parse description template: %w", err)
 	}
-	descT, err := template.New(descriptionTmplStrName).Parse(descriptionTmplStr)
+	descriptionTmplStr := strings.Join([]string{tmplPart1Top, tmplPart2MiddleRem, tmplPart3Bottom}, "\n")
+	descT, err := template.New(tmplDescriptionNameRem).Parse(descriptionTmplStr)
 	if err != nil {
 		return nil, fmt.Errorf("cannot parse description template: %w", err)
 	}
