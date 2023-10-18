@@ -43,7 +43,8 @@ const (
 	descriptionTmplNoRemStrName = "description_no_remediate"
 	descriptionTmplStrName      = "description"
 	summaryTmplStr              = `mediator: profile {{.Profile}} failed with rule {{.Rule}}`
-	descriptionTmplNoRemStr     = `
+	// nolint:lll
+	descriptionTmplNoRemStr = `
 Mediator has detected a potential security vulnerability in your repository - **{{.Repository}}**. 
 This vulnerability has been classified with a severity level of **{{.Severity}}**, as per the configuration defined in the **{{.Rule}}** rule type.
 
@@ -55,7 +56,7 @@ Once the issue associated with the **{{.Rule}}** rule is resolved, this advisory
 
 To address this security vulnerability, we recommend taking the following actions:
 
-1. Enable the auto-remediate feature within the **{{.Profile}}** profile. This will empower Mediator to automatically remediate this and other vulnerabilities in the future, provided that a remediation action is available for the given rule type. In the case of the **{{.Rule}}** rule type, the remediation action is **{{.RuleRemediation}}**.
+1. Enable the auto-remediate feature within the **{{.Profile}}** profile. This will allow Mediator to automatically remediate this and other vulnerabilities in the future, provided that a remediation action is available for the given rule type. In the case of the **{{.Rule}}** rule type, the remediation action is **{{.RuleRemediation}}**.
 2. Alternatively, you can manually address this issue by following the guidance provided below.
 
 **Guidance**
@@ -73,6 +74,7 @@ To address this security vulnerability, we recommend taking the following action
 
 If you have any questions or believe that this evaluation is incorrect, please don't hesitate to reach out to the Mediator team.
 `
+	//nolint:lll
 	descriptionTmplStr = `
 Mediator has detected a potential security vulnerability in your repository - **{{.Repository}}**. 
 This vulnerability has been classified with a severity level of **{{.Severity}}**, as per the configuration defined in the **{{.Rule}}** rule type.
@@ -102,7 +104,7 @@ To address this security vulnerability, we recommend taking the following action
 **About**
 
 If you have any questions or believe that this evaluation is incorrect, please don't hesitate to reach out to the Mediator team.
-`
+` //nolint:lll
 )
 
 // Alert is the structure backing the security-advisory alert action

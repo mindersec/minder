@@ -214,14 +214,15 @@ default allow = true`,
 			Status:     db.RemediationStatusTypesSkipped,
 			Details:    "",
 		}).Return(ruleEvalRemediationId, nil)
-
+	// Empty metadata
+	meta, _ := json.Marshal(map[string]any{})
 	// Mock upserting alert status
 	ruleEvalAlertId := uuid.New()
 	mockStore.EXPECT().
 		UpsertRuleDetailsAlert(gomock.Any(), db.UpsertRuleDetailsAlertParams{
 			RuleEvalID: ruleEvalId,
 			Status:     db.AlertStatusTypesSkipped,
-			Metadata:   json.RawMessage{},
+			Metadata:   meta,
 			Details:    "",
 		}).Return(ruleEvalAlertId, nil)
 	// -- end expectations

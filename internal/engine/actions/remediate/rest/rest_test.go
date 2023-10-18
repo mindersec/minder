@@ -19,6 +19,7 @@ package rest
 import (
 	"context"
 	"encoding/json"
+	"fmt"
 	"net/http"
 	"net/http/httptest"
 	"strings"
@@ -27,6 +28,7 @@ import (
 	"github.com/stretchr/testify/assert"
 	"github.com/stretchr/testify/require"
 	"google.golang.org/protobuf/reflect/protoreflect"
+	"google.golang.org/protobuf/types/known/structpb"
 
 	"github.com/stacklok/mediator/internal/db"
 	"github.com/stacklok/mediator/internal/engine/interfaces"
@@ -424,8 +426,25 @@ func TestRestRemediate(t *testing.T) {
 			require.NoError(t, err, "unexpected error creating remediate engine")
 			require.NotNil(t, engine, "expected non-nil remediate engine")
 
+			structPol, err := structpb.NewStruct(tt.remArgs.pol)
+			if err != nil {
+				fmt.Printf("Error creating Struct: %v\n", err)
+				return
+			}
+			structParams, err := structpb.NewStruct(tt.remArgs.params)
+			if err != nil {
+				fmt.Printf("Error creating Struct: %v\n", err)
+				return
+			}
+			evalParams := &interfaces.EvalStatusParams{
+				Rule: &pb.Profile_Rule{
+					Def:    structPol,
+					Params: structParams,
+				},
+			}
+
 			retMeta, err := engine.Do(context.Background(), interfaces.ActionCmdOn, tt.remArgs.remAction, tt.remArgs.ent,
-				tt.remArgs.pol, tt.remArgs.params, nil)
+				evalParams, nil)
 			if tt.wantErr {
 				require.Error(t, err, "expected error")
 				require.Nil(t, retMeta, "expected nil metadata")
