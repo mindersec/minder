@@ -106,6 +106,7 @@ services:
         retries: 5
       networks:
         - app_net
+
   keycloak:
     container_name: keycloak_container
     image: quay.io/keycloak/keycloak:22.0
@@ -114,6 +115,12 @@ services:
       KEYCLOAK_ADMIN: admin
       KEYCLOAK_ADMIN_PASSWORD: admin
       KC_MEDIATOR_SERVER_SECRET: secret
+      KC_HEALTH_ENABLED: "true"
+    healthcheck:
+      test: ["CMD", "/opt/keycloak/bin/kcadm.sh", "get", "realms/stacklok", "--fields", "enabled"]
+      interval: 10s
+      timeout: 5s
+      retries: 10
     ports:
       - "8081:8080"
     volumes:
