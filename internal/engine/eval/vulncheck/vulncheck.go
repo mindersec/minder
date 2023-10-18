@@ -75,6 +75,10 @@ func (e *Evaluator) Eval(ctx context.Context, pol map[string]any, res *engif.Res
 	pkgRepoCache := newRepoCache()
 
 	for _, dep := range prdeps.Deps {
+		if dep.Dep == nil || dep.Dep.Version == "" {
+			continue
+		}
+
 		ecoConfig := ruleConfig.getEcosystemConfig(dep.Dep.Ecosystem)
 		if ecoConfig == nil {
 			fmt.Printf("Skipping dependency %s because ecosystem %s is not configured\n", dep.Dep.Name, dep.Dep.Ecosystem)
