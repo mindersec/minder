@@ -21,6 +21,7 @@ import (
 	"fmt"
 
 	"github.com/stacklok/mediator/internal/engine/eval/jq"
+	"github.com/stacklok/mediator/internal/engine/eval/package_intelligence"
 	"github.com/stacklok/mediator/internal/engine/eval/rego"
 	"github.com/stacklok/mediator/internal/engine/eval/vulncheck"
 	engif "github.com/stacklok/mediator/internal/engine/interfaces"
@@ -39,7 +40,7 @@ func NewRuleEvaluator(rt *pb.RuleType, cli *providers.ProviderBuilder) (engif.Ev
 	switch rt.Def.Eval.Type {
 	case "jq":
 		if rt.Def.Eval.GetJq() == nil {
-			return nil, fmt.Errorf("rule type engine missing rest configuration")
+			return nil, fmt.Errorf("rule type engine missing jq configuration")
 		}
 
 		return jq.NewJQEvaluator(e.GetJq())
@@ -47,6 +48,11 @@ func NewRuleEvaluator(rt *pb.RuleType, cli *providers.ProviderBuilder) (engif.Ev
 		return rego.NewRegoEvaluator(e.GetRego())
 	case vulncheck.VulncheckEvalType:
 		return vulncheck.NewVulncheckEvaluator(e.GetVulncheck(), cli)
+	case package_intelligence.PiEvalType:
+		if rt.Def.Eval.GetPackageIntelligence() == nil {
+			return nil, fmt.Errorf("rule type engine missing package_intelligence configuration")
+		}
+		return package_intelligence.NewPackageIntelligenceEvaluator(e.GetPackageIntelligence(), cli)
 	default:
 		return nil, fmt.Errorf("unsupported rule type engine: %s", rt.Def.Eval.Type)
 	}
