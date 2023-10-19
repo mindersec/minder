@@ -75,6 +75,12 @@ func initConfig() {
 	viper.AutomaticEnv()
 
 	if err := viper.ReadInConfig(); err != nil {
-		fmt.Println("Error reading config file:", err)
+		if _, ok := err.(viper.ConfigFileNotFoundError); ok {
+			// Config file not found; use default values
+			fmt.Println("No config file present, using default values.")
+		} else {
+			// Some other error occurred
+			fmt.Println("Error reading config file:", err)
+		}
 	}
 }
