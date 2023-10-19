@@ -24,7 +24,7 @@ import (
 	"net/http"
 
 	"github.com/google/go-github/v53/github"
-
+	engerrors "github.com/stacklok/mediator/internal/engine/errors"
 	mediatorv1 "github.com/stacklok/mediator/pkg/api/protobuf/go/mediator/v1"
 )
 
@@ -546,11 +546,8 @@ func (c *RestClient) CloseSecurityAdvisory(ctx context.Context, owner, repo, id 
 	if err != nil {
 		return err
 	}
-
-	if resp.StatusCode != http.StatusOK {
-		return fmt.Errorf("error closing security advisory: %v", resp.Status)
-	}
-	return nil
+	// Translate the HTTP status code to an error, nil if between 200 and 299
+	return engerrors.HTTPErrorCodeToErr(resp.StatusCode)
 }
 
 // GetRef fetches a single reference in a repository.

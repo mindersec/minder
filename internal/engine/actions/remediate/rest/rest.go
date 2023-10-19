@@ -21,6 +21,7 @@ import (
 	"encoding/json"
 	"errors"
 	"fmt"
+	engerrors "github.com/stacklok/mediator/internal/engine/errors"
 	"log"
 	"net/http"
 	"text/template"
@@ -29,7 +30,6 @@ import (
 	"github.com/rs/zerolog"
 	"google.golang.org/protobuf/reflect/protoreflect"
 
-	enginerr "github.com/stacklok/mediator/internal/engine/errors"
 	"github.com/stacklok/mediator/internal/engine/interfaces"
 	"github.com/stacklok/mediator/internal/providers"
 	"github.com/stacklok/mediator/internal/util"
@@ -40,19 +40,6 @@ import (
 const (
 	// RemediateType is the type of the REST remediation engine
 	RemediateType = "rest"
-)
-
-var (
-	// ErrUnauthorized is returned when the remediation request is unauthorized
-	ErrUnauthorized = errors.New("unauthorized")
-	// ErrForbidden is returned when the remediation request is forbidden
-	ErrForbidden = errors.New("forbidden")
-	// ErrClientError is returned when the remediation request is a client error
-	ErrClientError = errors.New("client error")
-	// ErrServerError is returned when the remediation request is a server error
-	ErrServerError = errors.New("server error")
-	// ErrOther is returned when the remediation request is an other error
-	ErrOther = errors.New("other error")
 )
 
 // Remediator keeps the status for a rule type that uses REST remediation
@@ -201,8 +188,11 @@ func (r *Remediator) run(ctx context.Context, endpoint string, body []byte) erro
 			log.Printf("cannot close response body: %v", err)
 		}
 	}()
-
-	return httpErrorCodeToErr(resp.StatusCode)
+	// Translate the http status code response to an error
+	if engerrors.HTTPErrorCodeToErr(resp.StatusCode) != nil {
+		return engerrors.NewErrActionFailed("remediation failed: %s", err)
+	}
+	return nil
 }
 
 func (r *Remediator) dryRun(endpoint, body string) error {
@@ -212,28 +202,5 @@ func (r *Remediator) dryRun(endpoint, body string) error {
 	}
 
 	log.Printf("run the following curl command: \n%s\n", curlCmd)
-	return nil
-}
-
-func httpErrorCodeToErr(httpCode int) error {
-	var err = ErrOther
-
-	switch {
-	case httpCode >= 200 && httpCode < 300:
-		err = nil
-	case httpCode == 401:
-		err = ErrUnauthorized
-	case httpCode == 403:
-		err = ErrForbidden
-	case httpCode >= 400 && httpCode < 500:
-		err = ErrClientError
-	case httpCode >= 500:
-		err = ErrServerError
-	}
-
-	if err != nil {
-		return enginerr.NewErrActionFailed("remediation failed: %s", err)
-	}
-
 	return nil
 }

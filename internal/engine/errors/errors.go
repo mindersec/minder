@@ -144,3 +144,44 @@ func ErrorAsAlertStatus(err error) db.AlertStatusTypes {
 	}
 	return db.AlertStatusTypesError
 }
+
+var (
+	// ErrUnauthorized is returned when a request is unauthorized
+	ErrUnauthorized = errors.New("unauthorized")
+	// ErrForbidden is returned when a request is forbidden
+	ErrForbidden = errors.New("forbidden")
+	// ErrNotFound is returned when a resource is not found
+	ErrNotFound = errors.New("not found")
+	// ErrValidateOrSpammed is returned when a request is a validation or spammed error
+	ErrValidateOrSpammed = errors.New("validation or spammed error")
+	// ErrClientError is returned when a request is a client error
+	ErrClientError = errors.New("client error")
+	// ErrServerError is returned when a request is a server error
+	ErrServerError = errors.New("server error")
+	// ErrOther is returned when a request is another error
+	ErrOther = errors.New("other error")
+)
+
+// HTTPErrorCodeToErr converts an HTTP error code to an error
+func HTTPErrorCodeToErr(httpCode int) error {
+	var err = ErrOther
+
+	switch {
+	case httpCode >= 200 && httpCode < 300:
+		return nil
+	case httpCode == 401:
+		return ErrUnauthorized
+	case httpCode == 403:
+		return ErrForbidden
+	case httpCode == 404:
+		return ErrNotFound
+	case httpCode == 422:
+		return ErrValidateOrSpammed
+	case httpCode >= 400 && httpCode < 500:
+		return ErrClientError
+	case httpCode >= 500:
+		return ErrServerError
+	}
+
+	return err
+}

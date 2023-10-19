@@ -20,6 +20,7 @@ package security_advisory
 import (
 	"context"
 	"encoding/json"
+	"errors"
 	"fmt"
 	"strings"
 	"text/template"
@@ -234,18 +235,24 @@ func (alert *Alert) run(ctx context.Context, params *paramsSA, cmd interfaces.Ac
 			return nil, fmt.Errorf("error marshalling alert metadata json: %w", err)
 		}
 		// Success - return the new metadata for storing the ghsa_id
-		logger.Info().Str("ghsa_id", id).Msg("opened a security advisory")
+		logger.Info().Str("ghsa_id", id).Msg("security advisory opened")
 		return newMeta, nil
 	// Close a security advisory
 	case interfaces.ActionCmdOff:
 		if params.Metadata == nil || params.Metadata.ID == "" {
-			return nil, fmt.Errorf("cannot close security-advisory without GHSA_ID: %w", enginerr.ErrActionSkipped)
+			// We cannot do anything without the GHSA_ID, so we assume that closing this is a success
+			return nil, fmt.Errorf("no security advisory GHSA_ID provided: %w", enginerr.ErrActionTurnedOff)
 		}
 		err := alert.cli.CloseSecurityAdvisory(ctx, params.Owner, params.Repo, params.Metadata.ID)
 		if err != nil {
+			if errors.Is(err, enginerr.ErrNotFound) {
+				// There's no security advisory with such GHSA_ID anymore (perhaps it was closed manually).
+				// We exit by stating that the action was turned off.
+				return nil, fmt.Errorf("security advisory already closed: %w, %w", err, enginerr.ErrActionTurnedOff)
+			}
 			return nil, fmt.Errorf("error closing security advisory: %w, %w", err, enginerr.ErrActionFailed)
 		}
-		logger.Info().Str("ghsa_id", params.GHSA_ID).Msg("closed security advisory")
+		logger.Info().Str("ghsa_id", params.GHSA_ID).Msg("security advisory closed")
 		// Success - return ErrActionTurnedOff to indicate the action was successful
 		return nil, fmt.Errorf("%s : %w", alert.ParentType(), enginerr.ErrActionTurnedOff)
 	case interfaces.ActionCmdDoNothing:
@@ -273,7 +280,8 @@ func (alert *Alert) runDry(ctx context.Context, params *paramsSA, cmd interfaces
 	// Close a security advisory
 	case interfaces.ActionCmdOff:
 		if params.Metadata == nil || params.Metadata.ID == "" {
-			return fmt.Errorf("cannot close a security-advisory without GHSA_ID: %w", enginerr.ErrActionSkipped)
+			// We cannot do anything without the GHSA_ID, so we assume that closing this is a success
+			return fmt.Errorf("no security advisory GHSA_ID provided: %w", enginerr.ErrActionTurnedOff)
 		}
 		endpoint := fmt.Sprintf("repos/%v/%v/security-advisories/%v", params.Owner, params.Repo, params.GHSA_ID)
 		body := "{\"state\": \"closed\"}"
@@ -297,7 +305,8 @@ func (alert *Alert) getParamsForSecurityAdvisory(
 ) (*paramsSA, error) {
 	logger := zerolog.Ctx(ctx)
 	params := &paramsSA{}
-	_ = evalParams
+
+	// Get the owner and repo from the entity
 	switch entity := entity.(type) {
 	case *pb.Repository:
 		params.Owner = entity.GetOwner()
@@ -311,7 +320,6 @@ func (alert *Alert) getParamsForSecurityAdvisory(
 	default:
 		return nil, fmt.Errorf("expected repository, pull request or artifact, got %T", entity)
 	}
-	// TODO: Verify if this is the correct format
 	params.Template.Repository = fmt.Sprintf("%s/%s", params.Owner, params.Repo)
 	ecosystem := "other"
 	params.Vulnerabilities = []*github.AdvisoryVulnerability{
@@ -333,6 +341,7 @@ func (alert *Alert) getParamsForSecurityAdvisory(
 			params.Metadata = meta
 		}
 	}
+	// Process the summary and description templates
 	// Get the severity
 	params.Template.Severity = alert.saCfg.Severity
 	// Get the guidance
