@@ -50,7 +50,7 @@ This exposure has been classified with a severity level of **{{.Severity}}**, as
 
 The purpose of this security advisory is to alert you to the presence of this exposure. Please note that this advisory has been automatically generated as a result of having the alert feature enabled within the **{{.Profile}}** profile.
 
-Once the issue associated with the **{{.Rule}}** rule is resolved, this advisory will be automatically closed.
+This advisory will be automatically closed once the issue associated with the **{{.Rule}}** rule is resolved.
 `
 	// nolint:lll
 	tmplPart2MiddleNoRem = `
