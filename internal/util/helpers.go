@@ -36,6 +36,7 @@ import (
 	"net/url"
 	"os"
 	"path/filepath"
+	"regexp"
 	"strconv"
 	"strings"
 	"syscall"
@@ -56,6 +57,14 @@ import (
 	"github.com/stacklok/mediator/internal/db"
 	"github.com/stacklok/mediator/internal/util/jsonyaml"
 	mediatorv1 "github.com/stacklok/mediator/pkg/api/protobuf/go/mediator/v1"
+)
+
+var (
+	// PyRequestsVersionRegexp is a regexp to match a line in a requirements.txt file, including the package version
+	// and the comparison operators
+	PyRequestsVersionRegexp = regexp.MustCompile(`\s*(>=|<=|==|>|<|!=)\s*(\d+(\.\d+)*(\*)?)`)
+	// PyRequestsNameRegexp is a regexp to match a line in a requirements.txt file, parsing out the package name
+	PyRequestsNameRegexp = regexp.MustCompile(`\s*(>=|<=|==|>|<|!=)`)
 )
 
 // GetConfigValue is a helper function that retrieves a configuration value

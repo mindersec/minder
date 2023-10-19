@@ -17,8 +17,11 @@ package vulncheck
 
 import (
 	"context"
+	"fmt"
+	"io"
 	"net/http"
 	"net/http/httptest"
+	"strings"
 	"testing"
 
 	"github.com/golang/mock/gomock"
@@ -136,13 +139,19 @@ func TestReviewPrHandlerVulnerabilitiesDifferentIdentities(t *testing.T) {
 	mockClient.EXPECT().
 		NewRequest("GET", server.URL, nil).
 		Return(http.NewRequest("GET", server.URL, nil))
+	mockClient.EXPECT().
+		Do(gomock.Any(), gomock.Any()).
+		Return(&http.Response{
+			StatusCode: http.StatusOK,
+			Body:       io.NopCloser(strings.NewReader(fmt.Sprintf(`"%s": {`, patchPackage.Name))),
+		}, nil)
 
 	err = handler.trackVulnerableDep(context.TODO(), dep, nil, patchPackage)
 	require.NoError(t, err)
 
 	expBody, err := createReviewBody(vulnsFoundText)
 	require.NoError(t, err)
-	expCommentBody := reviewBodyWithSuggestion(patchPackage.IndentedString(0))
+	expCommentBody := reviewBodyWithSuggestion(patchPackage.IndentedString(0, "", nil))
 
 	mockClient.EXPECT().
 		ListReviews(gomock.Any(), pr.RepoOwner, pr.RepoName, int(pr.Number), nil).
@@ -321,13 +330,19 @@ func TestCommitStatusPrHandlerWithVulnerabilities(t *testing.T) {
 	mockClient.EXPECT().
 		NewRequest("GET", server.URL, nil).
 		Return(http.NewRequest("GET", server.URL, nil))
+	mockClient.EXPECT().
+		Do(gomock.Any(), gomock.Any()).
+		Return(&http.Response{
+			StatusCode: http.StatusOK,
+			Body:       io.NopCloser(strings.NewReader(fmt.Sprintf(`"%s": {`, patchPackage.Name))),
+		}, nil)
 
 	err = handler.trackVulnerableDep(context.TODO(), dep, nil, patchPackage)
 	require.NoError(t, err)
 
 	expBody, err := createReviewBody(vulnsFoundText)
 	require.NoError(t, err)
-	expCommentBody := reviewBodyWithSuggestion(patchPackage.IndentedString(0))
+	expCommentBody := reviewBodyWithSuggestion(patchPackage.IndentedString(0, "", nil))
 
 	mockClient.EXPECT().
 		ListReviews(gomock.Any(), pr.RepoOwner, pr.RepoName, int(pr.Number), nil).

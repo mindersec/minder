@@ -2198,6 +2198,7 @@ user record to be returned
 | DEP_ECOSYSTEM_UNSPECIFIED | 0 |  |
 | DEP_ECOSYSTEM_NPM | 1 |  |
 | DEP_ECOSYSTEM_GO | 2 |  |
+| DEP_ECOSYSTEM_PYPI | 3 |  |
 
 
 

@@ -20,7 +20,6 @@ import (
 	"context"
 	"fmt"
 	"io"
-	"net/http"
 	"strings"
 	"text/template"
 
@@ -83,6 +82,7 @@ func createReviewBody(reviewText string) (string, error) {
 }
 
 type reviewLocation struct {
+	line              string
 	lineToChange      int
 	leadingWhitespace int
 }
@@ -99,7 +99,7 @@ func countLeadingWhitespace(line string) int {
 }
 
 func locateDepInPr(
-	_ context.Context,
+	ctx context.Context,
 	client provifv1.GitHub,
 	dep *pb.PrDependencies_ContextualDependency,
 	patch patchLocatorFormatter,
@@ -108,9 +108,7 @@ func locateDepInPr(
 	if err != nil {
 		return nil, fmt.Errorf("could not create request: %w", err)
 	}
-	// TODO:(jakub) I couldn't make this work with the GH proxyClient
-	netClient := &http.Client{}
-	resp, err := netClient.Do(req)
+	resp, err := client.Do(ctx, req)
 	if err != nil {
 		return nil, fmt.Errorf("could not send request: %w", err)
 	}
@@ -127,6 +125,7 @@ func locateDepInPr(
 		if patch.LineHasDependency(line) {
 			loc.leadingWhitespace = countLeadingWhitespace(line)
 			loc.lineToChange = i + 1
+			loc.line = line
 			break
 		}
 	}
@@ -223,17 +222,22 @@ func (ra *reviewPrHandler) trackVulnerableDep(
 		return fmt.Errorf("could not locate dependency in PR: %w", err)
 	}
 
-	comment := patch.IndentedString(location.leadingWhitespace)
+	comment := patch.IndentedString(location.leadingWhitespace, location.line, dep.Dep)
 	body := reviewBodyWithSuggestion(comment)
 	lineTo := len(strings.Split(comment, "\n")) - 1
 
 	reviewComment := &github.DraftReviewComment{
-		Path:      github.String(dep.File.Name),
-		Position:  nil,
-		StartLine: github.Int(location.lineToChange),
-		Line:      github.Int(location.lineToChange + lineTo),
-		Body:      github.String(body),
+		Path: github.String(dep.File.Name),
+		Body: github.String(body),
 	}
+
+	if lineTo > 0 {
+		reviewComment.StartLine = github.Int(location.lineToChange)
+		reviewComment.Line = github.Int(location.lineToChange + lineTo)
+	} else {
+		reviewComment.Line = github.Int(location.lineToChange)
+	}
+
 	ra.comments = append(ra.comments, reviewComment)
 
 	ra.logger.Debug().

@@ -116,7 +116,168 @@ func TestNpmPkgDb(t *testing.T) {
 				assert.Error(t, err, "Expected error")
 			} else {
 				assert.NoError(t, err, "Expected no error")
-				require.Equal(t, tt.expectReply.IndentedString(0), reply.IndentedString(0), "expected reply to match mock data")
+				require.Equal(t, tt.expectReply.IndentedString(0, "", nil), reply.IndentedString(0, "", nil), "expected reply to match mock data")
+			}
+		})
+	}
+}
+
+func TestPyPiReplyLineHasDependency(t *testing.T) {
+	t.Parallel()
+
+	tests := []struct {
+		name         string
+		line         string
+		reply        *PyPiReply
+		expectRetval bool
+	}{
+		{
+			name: "Match, equal version",
+			line: "requests==2.19.0",
+			reply: &PyPiReply{
+				Info: struct {
+					Name    string `json:"name"`
+					Version string `json:"version"`
+				}{
+					Name:    "requests",
+					Version: "3.4.5",
+				},
+			},
+			expectRetval: true,
+		},
+		{
+			name: "Match, less or equal version",
+			line: "requests<=2.19.0",
+			reply: &PyPiReply{
+				Info: struct {
+					Name    string `json:"name"`
+					Version string `json:"version"`
+				}{
+					Name:    "requests",
+					Version: "3.4.5",
+				},
+			},
+			expectRetval: true,
+		},
+		{
+			name: "Match, greater or equal version",
+			line: "requests>=2.19.0",
+			reply: &PyPiReply{
+				Info: struct {
+					Name    string `json:"name"`
+					Version string `json:"version"`
+				}{
+					Name:    "requests",
+					Version: "3.4.5",
+				},
+			},
+			expectRetval: true,
+		},
+		{
+			name: "Not a match greater or equal version",
+			line: "otherpackage>=2.19.0",
+			reply: &PyPiReply{
+				Info: struct {
+					Name    string `json:"name"`
+					Version string `json:"version"`
+				}{
+					Name:    "requests",
+					Version: "3.4.5",
+				},
+			},
+			expectRetval: false,
+		},
+	}
+
+	for _, tt := range tests {
+		tt := tt
+		t.Run(tt.name, func(t *testing.T) {
+			t.Parallel()
+		})
+
+		require.Equal(t, tt.expectRetval, tt.reply.LineHasDependency(tt.line), "expected reply to match mock data")
+	}
+}
+
+func TestPyPiPkgDb(t *testing.T) {
+	t.Parallel()
+
+	tests := []struct {
+		name            string
+		mockPyPiHandler http.HandlerFunc
+		depName         string
+		expectError     bool
+		expectReply     string
+	}{
+		{
+			name: "ValidResponse",
+			mockPyPiHandler: func(w http.ResponseWriter, r *http.Request) {
+				data := PyPiReply{}
+				data.Info.Name = "requests"
+				data.Info.Version = "2.25.1"
+
+				w.WriteHeader(http.StatusOK)
+				err := json.NewEncoder(w).Encode(data)
+				if err != nil {
+					t.Fatal(err)
+				}
+			},
+			depName:     "requests",
+			expectReply: "requests>=2.25.1",
+		},
+		{
+			name: "Non200Response",
+			mockPyPiHandler: func(w http.ResponseWriter, r *http.Request) {
+				w.WriteHeader(http.StatusNotFound)
+				_, err := w.Write([]byte("Not Found"))
+				if err != nil {
+					t.Fatal(err)
+				}
+			},
+			depName:     "non-existing-package",
+			expectError: true,
+		},
+		{
+			name: "InvalidJSON",
+			mockPyPiHandler: func(w http.ResponseWriter, r *http.Request) {
+				w.WriteHeader(http.StatusOK)
+				_, err := w.Write([]byte("{ invalid json }"))
+				if err != nil {
+					t.Fatal(err)
+				}
+			},
+			depName:     "package-with-invalid-json",
+			expectError: true,
+		},
+	}
+
+	for _, tt := range tests {
+		tt := tt
+		t.Run(tt.name, func(t *testing.T) {
+			t.Parallel()
+
+			pyPiMockServer := httptest.NewServer(tt.mockPyPiHandler)
+			defer pyPiMockServer.Close()
+
+			repo := newPyPIRepository(pyPiMockServer.URL)
+			assert.NotNil(t, repo, "Failed to create repository")
+
+			dep := &pb.Dependency{
+				Name: tt.depName,
+			}
+
+			reply, err := repo.SendRecvRequest(context.Background(), dep)
+			if tt.expectError {
+				assert.Error(t, err, "Expected error")
+			} else {
+				assert.NoError(t, err, "Expected no error")
+				actualReply := reply.IndentedString(0,
+					"requests>=2.19.0",
+					&pb.Dependency{
+						Name:    "requests",
+						Version: "2.19.0",
+					})
+				require.Equal(t, tt.expectReply, actualReply, "expected reply to match mock data")
 			}
 		})
 	}
@@ -271,7 +432,7 @@ golang.org/x/text v0.13.0 h1:ablQoSUd0tRdKxZewP80B+BaqeKJuVhuRxj/dkrun3k=`))
 				assert.Error(t, err, "Expected error")
 			} else {
 				assert.NoError(t, err, "Expected no error")
-				require.Equal(t, tt.expectReply.IndentedString(0), reply.IndentedString(0), "expected reply to match mock data")
+				require.Equal(t, tt.expectReply.IndentedString(0, "", nil), reply.IndentedString(0, "", nil), "expected reply to match mock data")
 			}
 		})
 	}
