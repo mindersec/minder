@@ -24,8 +24,8 @@ import (
 	"time"
 
 	"github.com/grpc-ecosystem/grpc-gateway/v2/runtime"
-	_ "github.com/lib/pq" // This is required for the postgres driver
 	"github.com/prometheus/client_golang/prometheus/promhttp"
+	_ "github.com/signalfx/splunk-otel-go/instrumentation/github.com/lib/pq/splunkpq" // Auto-instrumented version of lib/pq
 	"go.opentelemetry.io/contrib/instrumentation/google.golang.org/grpc/otelgrpc"
 	"go.opentelemetry.io/otel"
 	"go.opentelemetry.io/otel/attribute"

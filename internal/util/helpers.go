@@ -43,7 +43,7 @@ import (
 	"time"
 
 	"github.com/google/uuid"
-	_ "github.com/lib/pq" // nolint
+	_ "github.com/signalfx/splunk-otel-go/instrumentation/github.com/lib/pq/splunkpq" // nolint
 	"github.com/spf13/cobra"
 	"github.com/spf13/viper"
 	"golang.org/x/term"

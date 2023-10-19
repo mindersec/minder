@@ -25,6 +25,7 @@ import (
 	"github.com/aws/aws-sdk-go-v2/config"
 	"github.com/aws/aws-sdk-go-v2/feature/rds/auth"
 	"github.com/rs/zerolog"
+	"github.com/signalfx/splunk-otel-go/instrumentation/database/sql/splunksql"
 	"github.com/spf13/pflag"
 	"github.com/spf13/viper"
 
@@ -98,7 +99,7 @@ func (c *DatabaseConfig) GetDBURI(ctx context.Context) string {
 // GetDBConnection returns a connection to the database
 func (c *DatabaseConfig) GetDBConnection(ctx context.Context) (*sql.DB, string, error) {
 	uri := c.GetDBURI(ctx)
-	conn, err := sql.Open("postgres", uri)
+	conn, err := splunksql.Open("postgres", uri)
 	if err != nil {
 		return nil, "", err
 	}
