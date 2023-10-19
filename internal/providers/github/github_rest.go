@@ -24,6 +24,7 @@ import (
 	"net/http"
 
 	"github.com/google/go-github/v53/github"
+
 	engerrors "github.com/stacklok/mediator/internal/engine/errors"
 	mediatorv1 "github.com/stacklok/mediator/pkg/api/protobuf/go/mediator/v1"
 )
