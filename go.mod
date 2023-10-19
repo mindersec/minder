@@ -29,7 +29,7 @@ require (
 	github.com/lib/pq v1.10.9
 	github.com/mitchellh/mapstructure v1.5.0
 	github.com/olekukonko/tablewriter v0.0.5
-	github.com/open-policy-agent/opa v0.57.0
+	github.com/open-policy-agent/opa v0.57.1
 	github.com/pkg/browser v0.0.0-20210911075715-681adbf594b8
 	github.com/prometheus/client_golang v1.17.0
 	github.com/robfig/cron/v3 v3.0.1
@@ -276,8 +276,6 @@ require (
 	github.com/yuin/goldmark-emoji v1.0.1 // indirect
 	github.com/zitadel/oidc/v2 v2.11.0
 	go.mongodb.org/mongo-driver v1.11.3 // indirect
-	go.opentelemetry.io/otel/exporters/otlp/otlptrace v1.18.0 // indirect
-	go.opentelemetry.io/otel/exporters/otlp/otlptrace/otlptracegrpc v1.18.0 // indirect
 	go.opentelemetry.io/otel/metric v1.19.0 // indirect
 	go.step.sm/crypto v0.35.0 // indirect
 	go.uber.org/atomic v1.11.0 // indirect
