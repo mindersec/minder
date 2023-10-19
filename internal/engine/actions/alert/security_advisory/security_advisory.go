@@ -164,13 +164,13 @@ func NewSecurityAdvisoryAlert(
 	}, nil
 }
 
-// ParentType returns the action type of the security-advisory engine
-func (alert *Alert) ParentType() interfaces.ActionType {
+// Class returns the action type of the security-advisory engine
+func (alert *Alert) Class() interfaces.ActionType {
 	return alert.actionType
 }
 
-// SubType returns the action subtype of the remediation engine
-func (_ *Alert) SubType() string {
+// Type returns the action subtype of the remediation engine
+func (_ *Alert) Type() string {
 	return AlertType
 }
 
@@ -254,7 +254,7 @@ func (alert *Alert) run(ctx context.Context, params *paramsSA, cmd interfaces.Ac
 		}
 		logger.Info().Str("ghsa_id", params.GHSA_ID).Msg("security advisory closed")
 		// Success - return ErrActionTurnedOff to indicate the action was successful
-		return nil, fmt.Errorf("%s : %w", alert.ParentType(), enginerr.ErrActionTurnedOff)
+		return nil, fmt.Errorf("%s : %w", alert.Class(), enginerr.ErrActionTurnedOff)
 	case interfaces.ActionCmdDoNothing:
 		return nil, enginerr.ErrActionSkipped
 	}

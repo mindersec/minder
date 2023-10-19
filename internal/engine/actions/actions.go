@@ -60,14 +60,14 @@ func NewRuleActions(p *mediatorv1.Profile, rt *mediatorv1.RuleType, pbuild *prov
 
 	return &RuleActionsEngine{
 		actions: map[engif.ActionType]engif.Action{
-			remEngine.ParentType():   remEngine,
-			alertEngine.ParentType(): alertEngine,
+			remEngine.Class():   remEngine,
+			alertEngine.Class(): alertEngine,
 		},
 		// The on/off state of the actions is an integral part of the action engine
 		// and should be set upon creation.
 		actionsOnOff: map[engif.ActionType]engif.ActionOpt{
-			remEngine.ParentType():   remEngine.GetOnOffState(p),
-			alertEngine.ParentType(): alertEngine.GetOnOffState(p),
+			remEngine.Class():   remEngine.GetOnOffState(p),
+			alertEngine.Class(): alertEngine.GetOnOffState(p),
 		},
 	}, nil
 }
@@ -116,7 +116,7 @@ func (rae *RuleActionsEngine) DoActions(
 	// Try alerting
 	if !skipAlert {
 		// Decide if we should alert
-		cmd := shouldAlert(evalParams.EvalStatusFromDb, evalParams.EvalErr, result.RemediateErr, remediateEngine.SubType())
+		cmd := shouldAlert(evalParams.EvalStatusFromDb, evalParams.EvalErr, result.RemediateErr, remediateEngine.Type())
 		// Run alerting
 		result.AlertMeta, result.AlertErr = rae.processAction(ctx, alert.ActionType, cmd, ent, evalParams,
 			getMeta(evalParams.EvalStatusFromDb.AlertMetadata))

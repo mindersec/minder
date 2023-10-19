@@ -98,13 +98,13 @@ type EndpointTemplateParams struct {
 	Params map[string]any
 }
 
-// ParentType returns the action type of the remediation engine
-func (r *Remediator) ParentType() interfaces.ActionType {
+// Class returns the action type of the remediation engine
+func (r *Remediator) Class() interfaces.ActionType {
 	return r.actionType
 }
 
-// SubType returns the action subtype of the remediation engine
-func (_ *Remediator) SubType() string {
+// Type returns the action subtype of the remediation engine
+func (_ *Remediator) Type() string {
 	return RemediateType
 }
 

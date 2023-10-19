@@ -38,13 +38,13 @@ func NewNoopAlert(actionType interfaces.ActionType) (*Alert, error) {
 	return &Alert{actionType: actionType}, nil
 }
 
-// ParentType returns the action type of the noop engine
-func (a *Alert) ParentType() interfaces.ActionType {
+// Class returns the action type of the noop engine
+func (a *Alert) Class() interfaces.ActionType {
 	return a.actionType
 }
 
-// SubType returns the action subtype of the remediation engine
-func (_ *Alert) SubType() string {
+// Type returns the action subtype of the remediation engine
+func (_ *Alert) Type() string {
 	return "noop"
 }
 
@@ -62,5 +62,5 @@ func (a *Alert) Do(
 	_ *interfaces.EvalStatusParams,
 	_ *json.RawMessage,
 ) (json.RawMessage, error) {
-	return nil, fmt.Errorf("%s:%w", a.ParentType(), enginerr.ErrActionNotAvailable)
+	return nil, fmt.Errorf("%s:%w", a.Class(), enginerr.ErrActionNotAvailable)
 }

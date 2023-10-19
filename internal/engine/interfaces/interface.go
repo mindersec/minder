@@ -90,8 +90,8 @@ type ActionType string
 
 // Action is the interface for a rule type action
 type Action interface {
-	ParentType() ActionType
-	SubType() string
+	Class() ActionType
+	Type() string
 	GetOnOffState(*pb.Profile) ActionOpt
 	Do(ctx context.Context, cmd ActionCmd, setting ActionOpt, entity protoreflect.ProtoMessage,
 		evalParams *EvalStatusParams, metadata *json.RawMessage) (json.RawMessage, error)
