@@ -97,7 +97,7 @@ func (_ *GhBranchProtectRemediator) SubType() string {
 
 // GetOnOffState returns the alert action state read from the profile
 func (_ *GhBranchProtectRemediator) GetOnOffState(p *pb.Profile) interfaces.ActionOpt {
-	return interfaces.ActionOptFromString(p.Remediate)
+	return interfaces.ActionOptFromString(p.Remediate, interfaces.ActionOptOff)
 }
 
 // Do perform the remediation

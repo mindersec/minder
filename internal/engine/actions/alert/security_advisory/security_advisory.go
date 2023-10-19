@@ -175,7 +175,7 @@ func (_ *Alert) SubType() string {
 
 // GetOnOffState returns the alert action state read from the profile
 func (_ *Alert) GetOnOffState(p *pb.Profile) interfaces.ActionOpt {
-	return interfaces.ActionOptFromString(p.Alert)
+	return interfaces.ActionOptFromString(p.Alert, interfaces.ActionOptOn)
 }
 
 // Do alerts through security advisory
@@ -356,7 +356,7 @@ func (alert *Alert) getParamsForSecurityAdvisory(
 
 	var descriptionStr strings.Builder
 	// Get the description template depending if remediation is available
-	if interfaces.ActionOptFromString(evalParams.Profile.Remediate) == interfaces.ActionOptOn {
+	if interfaces.ActionOptFromString(evalParams.Profile.Remediate, interfaces.ActionOptOff) == interfaces.ActionOptOn {
 		err = alert.descriptionTmpl.Execute(&descriptionStr, params.Template)
 	} else {
 		err = alert.descriptionNoRemTmpl.Execute(&descriptionStr, params.Template)

@@ -66,10 +66,8 @@ const (
 	ActionOptUnknown
 )
 
-const defaultAction = ActionOptOff
-
 // ActionOptFromString returns the ActionOpt from a string representation
-func ActionOptFromString(s *string) ActionOpt {
+func ActionOptFromString(s *string, defAction ActionOpt) ActionOpt {
 	var actionOptMap = map[string]ActionOpt{
 		"on":      ActionOptOn,
 		"off":     ActionOptOff,
@@ -77,7 +75,7 @@ func ActionOptFromString(s *string) ActionOpt {
 	}
 
 	if s == nil {
-		return defaultAction
+		return defAction
 	}
 
 	if v, ok := actionOptMap[*s]; ok {
