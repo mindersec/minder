@@ -25,41 +25,33 @@ import (
 
 	"github.com/stacklok/mediator/internal/db"
 	evalerrors "github.com/stacklok/mediator/internal/engine/errors"
+	engif "github.com/stacklok/mediator/internal/engine/interfaces"
 	"github.com/stacklok/mediator/internal/entities"
 	pb "github.com/stacklok/mediator/pkg/api/protobuf/go/mediator/v1"
 )
-
-// EvalStatusParams is a helper struct to pass parameters to createOrUpdateEvalStatus
-// to avoid confusion with the parameters order. Since at the moment all our entities are bound to
-// a repo and most profiles are expecting a repo, the RepoID parameter is mandatory. For entities
-// other than artifacts, the ArtifactID should be 0 which is translated to NULL in the database.
-type EvalStatusParams struct {
-	ProfileID        uuid.UUID
-	RepoID           uuid.UUID
-	ArtifactID       uuid.NullUUID
-	EntityType       db.Entities
-	RuleTypeID       uuid.UUID
-	EvalStatusFromDb db.ListRuleEvaluationsByProfileIdRow
-	EvalErr          error
-	ActionsErr       evalerrors.ActionsError
-}
 
 func (e *Executor) createEvalStatusParams(
 	ctx context.Context,
 	inf *EntityInfoWrapper,
 	profile *pb.Profile,
 	rule *pb.Profile_Rule,
-) (*EvalStatusParams, error) {
+) (*engif.EvalStatusParams, error) {
 	// Get Profile UUID
 	profileID, err := uuid.Parse(*profile.Id)
 	if err != nil {
 		return nil, fmt.Errorf("error parsing profile ID: %w", err)
 	}
 
-	params := &EvalStatusParams{
+	params := &engif.EvalStatusParams{
+		Rule:       rule,
+		Profile:    profile,
 		ProfileID:  profileID,
 		RepoID:     uuid.MustParse(inf.OwnershipData[RepositoryIDEventKey]),
 		EntityType: entities.EntityTypeToDB(inf.Type),
+		ActionsErr: evalerrors.ActionsError{
+			RemediateErr: evalerrors.ErrActionSkipped,
+			AlertErr:     evalerrors.ErrActionSkipped,
+		},
 	}
 
 	artifactID, ok := inf.OwnershipData[ArtifactIDEventKey]
@@ -100,13 +92,14 @@ func (e *Executor) createEvalStatusParams(
 	}
 
 	// Save the current rule evaluation status to the evalParams
-	params.EvalStatusFromDb = evalStatus
+	params.EvalStatusFromDb = &evalStatus
+
 	return params, nil
 }
 
 func (e *Executor) createOrUpdateEvalStatus(
 	ctx context.Context,
-	evalParams *EvalStatusParams,
+	evalParams *engif.EvalStatusParams,
 ) error {
 	logger := zerolog.Ctx(ctx)
 	// Make sure evalParams is not nil
@@ -178,6 +171,7 @@ func (e *Executor) createOrUpdateEvalStatus(
 		RuleEvalID: id,
 		Status:     evalerrors.ErrorAsAlertStatus(evalParams.ActionsErr.AlertErr),
 		Details:    errorAsActionDetails(evalParams.ActionsErr.AlertErr),
+		Metadata:   evalParams.ActionsErr.AlertMeta,
 	})
 	if err != nil {
 		logger.Err(err).

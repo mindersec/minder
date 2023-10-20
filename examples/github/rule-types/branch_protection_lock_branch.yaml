@@ -60,3 +60,8 @@ def:
     gh_branch_protection:
       patch: |
         {"lock_branch":{{ .Profile.lock_branch }} }
+  # Defines the configuration for alerting on the rule
+  alert:
+    type: security_advisory
+    security_advisory:
+      severity: "medium"

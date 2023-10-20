@@ -26,6 +26,7 @@ import (
 	"github.com/google/go-github/v53/github"
 	"github.com/stretchr/testify/require"
 	"google.golang.org/protobuf/reflect/protoreflect"
+	"google.golang.org/protobuf/types/known/structpb"
 
 	"github.com/stacklok/mediator/internal/db"
 	"github.com/stacklok/mediator/internal/engine/interfaces"
@@ -269,9 +270,27 @@ func TestBranchProtectionRemediate(t *testing.T) {
 
 			tt.mockSetup(mockClient)
 
-			err = engine.Do(context.Background(), interfaces.ActionCmdOn, tt.remArgs.remAction, tt.remArgs.ent, tt.remArgs.pol, tt.remArgs.params)
+			structPol, err := structpb.NewStruct(tt.remArgs.pol)
+			if err != nil {
+				fmt.Printf("Error creating Struct: %v\n", err)
+				return
+			}
+			structParams, err := structpb.NewStruct(tt.remArgs.params)
+			if err != nil {
+				fmt.Printf("Error creating Struct: %v\n", err)
+				return
+			}
+			evalParams := &interfaces.EvalStatusParams{
+				Rule: &pb.Profile_Rule{
+					Def:    structPol,
+					Params: structParams,
+				},
+			}
+
+			retMeta, err := engine.Do(context.Background(), interfaces.ActionCmdOn, tt.remArgs.remAction, tt.remArgs.ent, evalParams, nil)
 			if tt.wantErr {
 				require.Error(t, err, "expected error")
+				require.Nil(t, retMeta, "expected nil metadata")
 				return
 			}
 

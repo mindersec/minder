@@ -67,3 +67,8 @@ def:
             # Check if the step is a trivy action
             startswith(step.uses, "aquasecurity/trivy-action@")
         }
+  # Defines the configuration for alerting on the rule
+  alert:
+    type: security_advisory
+    security_advisory:
+      severity: "medium"

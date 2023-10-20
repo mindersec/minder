@@ -59,3 +59,8 @@ def:
     gh_branch_protection:
       patch: |
         {"enforce_admins": {{ .Profile.enforce_admins }} }
+  # Defines the configuration for alerting on the rule
+  alert:
+    type: security_advisory
+    security_advisory:
+      severity: "medium"

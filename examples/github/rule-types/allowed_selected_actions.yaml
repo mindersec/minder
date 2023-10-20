@@ -62,6 +62,7 @@ def:
           def: ".patterns_allowed"
         profile:
           def: ".patterns_allowed"
+  # Defines the configuration for remediating on the rule
   remediate:
     type: rest
     rest:
@@ -69,3 +70,8 @@ def:
       endpoint: "/repos/{{.Entity.Owner}}/{{.Entity.Name}}/actions/permissions/selected-actions"
       body: |
         {"github_owned_allowed":{{ .Profile.github_owned_allowed }},"verified_allowed":{{ .Profile.verified_allowed }},"patterns_allowed":[{{range $index, $pattern := .Profile.patterns_allowed}}{{if $index}},{{end}}"{{ $pattern }}"{{end}}]}
+  # Defines the configuration for alerting on the rule
+  alert:
+    type: security_advisory
+    security_advisory:
+      severity: "medium"

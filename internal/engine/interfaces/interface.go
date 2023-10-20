@@ -19,10 +19,14 @@ package interfaces
 
 import (
 	"context"
+	"encoding/json"
 
 	billy "github.com/go-git/go-billy/v5"
+	"github.com/google/uuid"
 	"google.golang.org/protobuf/reflect/protoreflect"
 
+	"github.com/stacklok/mediator/internal/db"
+	evalerrors "github.com/stacklok/mediator/internal/engine/errors"
 	pb "github.com/stacklok/mediator/pkg/api/protobuf/go/mediator/v1"
 )
 
@@ -62,10 +66,8 @@ const (
 	ActionOptUnknown
 )
 
-const defaultAction = ActionOptOff
-
 // ActionOptFromString returns the ActionOpt from a string representation
-func ActionOptFromString(s *string) ActionOpt {
+func ActionOptFromString(s *string, defAction ActionOpt) ActionOpt {
 	var actionOptMap = map[string]ActionOpt{
 		"on":      ActionOptOn,
 		"off":     ActionOptOff,
@@ -73,7 +75,7 @@ func ActionOptFromString(s *string) ActionOpt {
 	}
 
 	if s == nil {
-		return defaultAction
+		return defAction
 	}
 
 	if v, ok := actionOptMap[*s]; ok {
@@ -88,10 +90,11 @@ type ActionType string
 
 // Action is the interface for a rule type action
 type Action interface {
-	Type() ActionType
+	Class() ActionType
+	Type() string
 	GetOnOffState(*pb.Profile) ActionOpt
-	Do(ctx context.Context, cmd ActionCmd, setting ActionOpt, entity protoreflect.ProtoMessage, ruleDef map[string]any,
-		ruleParam map[string]any) error
+	Do(ctx context.Context, cmd ActionCmd, setting ActionOpt, entity protoreflect.ProtoMessage,
+		evalParams *EvalStatusParams, metadata *json.RawMessage) (json.RawMessage, error)
 }
 
 // ActionCmd is the type that defines what effect an action should have
@@ -99,9 +102,27 @@ type ActionCmd string
 
 const (
 	// ActionCmdOff means turn off the action
-	ActionCmdOff ActionCmd = "action_cmd_off"
+	ActionCmdOff ActionCmd = "turn_off"
 	// ActionCmdOn means turn on the action
-	ActionCmdOn ActionCmd = "action_cmd_on"
+	ActionCmdOn ActionCmd = "turn_on"
 	// ActionCmdDoNothing means the action should do nothing
-	ActionCmdDoNothing ActionCmd = "action_cmd_do_nothing"
+	ActionCmdDoNothing ActionCmd = "do_nothing"
 )
+
+// EvalStatusParams is a helper struct to pass parameters to createOrUpdateEvalStatus
+// to avoid confusion with the parameters order. Since at the moment all our entities are bound to
+// a repo and most profiles are expecting a repo, the RepoID parameter is mandatory. For entities
+// other than artifacts, the ArtifactID should be 0 which is translated to NULL in the database.
+type EvalStatusParams struct {
+	Profile          *pb.Profile
+	Rule             *pb.Profile_Rule
+	RuleType         *pb.RuleType
+	ProfileID        uuid.UUID
+	RepoID           uuid.UUID
+	ArtifactID       uuid.NullUUID
+	EntityType       db.Entities
+	RuleTypeID       uuid.UUID
+	EvalStatusFromDb *db.ListRuleEvaluationsByProfileIdRow
+	EvalErr          error
+	ActionsErr       evalerrors.ActionsError
+}

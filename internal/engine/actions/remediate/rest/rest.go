@@ -29,7 +29,7 @@ import (
 	"github.com/rs/zerolog"
 	"google.golang.org/protobuf/reflect/protoreflect"
 
-	enginerr "github.com/stacklok/mediator/internal/engine/errors"
+	engerrors "github.com/stacklok/mediator/internal/engine/errors"
 	"github.com/stacklok/mediator/internal/engine/interfaces"
 	"github.com/stacklok/mediator/internal/providers"
 	"github.com/stacklok/mediator/internal/util"
@@ -40,19 +40,6 @@ import (
 const (
 	// RemediateType is the type of the REST remediation engine
 	RemediateType = "rest"
-)
-
-var (
-	// ErrUnauthorized is returned when the remediation request is unauthorized
-	ErrUnauthorized = errors.New("unauthorized")
-	// ErrForbidden is returned when the remediation request is forbidden
-	ErrForbidden = errors.New("forbidden")
-	// ErrClientError is returned when the remediation request is a client error
-	ErrClientError = errors.New("client error")
-	// ErrServerError is returned when the remediation request is a server error
-	ErrServerError = errors.New("server error")
-	// ErrOther is returned when the remediation request is an other error
-	ErrOther = errors.New("other error")
 )
 
 // Remediator keeps the status for a rule type that uses REST remediation
@@ -111,14 +98,19 @@ type EndpointTemplateParams struct {
 	Params map[string]any
 }
 
-// Type returns the action type of the remediation engine
-func (r *Remediator) Type() interfaces.ActionType {
+// Class returns the action type of the remediation engine
+func (r *Remediator) Class() interfaces.ActionType {
 	return r.actionType
+}
+
+// Type returns the action subtype of the remediation engine
+func (_ *Remediator) Type() string {
+	return RemediateType
 }
 
 // GetOnOffState returns the alert action state read from the profile
 func (_ *Remediator) GetOnOffState(p *pb.Profile) interfaces.ActionOpt {
-	return interfaces.ActionOptFromString(p.Remediate)
+	return interfaces.ActionOptFromString(p.Remediate, interfaces.ActionOptOff)
 }
 
 // Do perform the remediation
@@ -127,24 +119,24 @@ func (r *Remediator) Do(
 	_ interfaces.ActionCmd,
 	setting interfaces.ActionOpt,
 	entity protoreflect.ProtoMessage,
-	ruleDef map[string]any,
-	ruleParams map[string]any,
-) error {
+	evalParams *interfaces.EvalStatusParams,
+	_ *json.RawMessage,
+) (json.RawMessage, error) {
 	retp := &EndpointTemplateParams{
 		Entity:  entity,
-		Profile: ruleDef,
-		Params:  ruleParams,
+		Profile: evalParams.Rule.Def.AsMap(),
+		Params:  evalParams.Rule.Params.AsMap(),
 	}
 
 	endpoint := new(bytes.Buffer)
 	if err := r.endpointTemplate.Execute(endpoint, retp); err != nil {
-		return fmt.Errorf("cannot execute endpoint template: %w", err)
+		return nil, fmt.Errorf("cannot execute endpoint template: %w", err)
 	}
 
 	body := new(bytes.Buffer)
 	if r.bodyTemplate != nil {
 		if err := r.bodyTemplate.Execute(body, retp); err != nil {
-			return fmt.Errorf("cannot execute endpoint template: %w", err)
+			return nil, fmt.Errorf("cannot execute endpoint template: %w", err)
 		}
 	}
 
@@ -160,7 +152,7 @@ func (r *Remediator) Do(
 	case interfaces.ActionOptOff, interfaces.ActionOptUnknown:
 		err = errors.New("unexpected action")
 	}
-	return err
+	return nil, err
 }
 
 func (r *Remediator) run(ctx context.Context, endpoint string, body []byte) error {
@@ -196,8 +188,11 @@ func (r *Remediator) run(ctx context.Context, endpoint string, body []byte) erro
 			log.Printf("cannot close response body: %v", err)
 		}
 	}()
-
-	return httpErrorCodeToErr(resp.StatusCode)
+	// Translate the http status code response to an error
+	if engerrors.HTTPErrorCodeToErr(resp.StatusCode) != nil {
+		return engerrors.NewErrActionFailed("remediation failed: %s", err)
+	}
+	return nil
 }
 
 func (r *Remediator) dryRun(endpoint, body string) error {
@@ -207,28 +202,5 @@ func (r *Remediator) dryRun(endpoint, body string) error {
 	}
 
 	log.Printf("run the following curl command: \n%s\n", curlCmd)
-	return nil
-}
-
-func httpErrorCodeToErr(httpCode int) error {
-	var err = ErrOther
-
-	switch {
-	case httpCode >= 200 && httpCode < 300:
-		err = nil
-	case httpCode == 401:
-		err = ErrUnauthorized
-	case httpCode == 403:
-		err = ErrForbidden
-	case httpCode >= 400 && httpCode < 500:
-		err = ErrClientError
-	case httpCode >= 500:
-		err = ErrServerError
-	}
-
-	if err != nil {
-		return enginerr.NewErrActionFailed("remediation failed: %s", err)
-	}
-
 	return nil
 }

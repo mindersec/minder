@@ -48,3 +48,8 @@ def:
 
           msg := sprintf("Dockerfile contains 'latest' tag in import: %s", [from_line])
         }
+  # Defines the configuration for alerting on the rule
+  alert:
+    type: security_advisory
+    security_advisory:
+      severity: "medium"

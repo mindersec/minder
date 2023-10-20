@@ -50,3 +50,8 @@ def:
           def: ".can_approve_pull_request_reviews"
         profile:
           def: ".can_approve_pull_request_reviews"
+  # Defines the configuration for alerting on the rule
+  alert:
+    type: security_advisory
+    security_advisory:
+      severity: "medium"

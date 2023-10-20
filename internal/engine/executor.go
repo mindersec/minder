@@ -27,6 +27,7 @@ import (
 	"github.com/stacklok/mediator/internal/crypto"
 	"github.com/stacklok/mediator/internal/db"
 	evalerrors "github.com/stacklok/mediator/internal/engine/errors"
+	engif "github.com/stacklok/mediator/internal/engine/interfaces"
 	"github.com/stacklok/mediator/internal/events"
 	"github.com/stacklok/mediator/internal/providers"
 	pb "github.com/stacklok/mediator/pkg/api/protobuf/go/mediator/v1"
@@ -119,9 +120,9 @@ func (e *Executor) evalEntityEvent(
 		return fmt.Errorf("error getting profiles: %w", err)
 	}
 
-	for _, pol := range MergeDatabaseListIntoProfiles(dbpols, ectx) {
+	for _, profile := range MergeDatabaseListIntoProfiles(dbpols, ectx) {
 		// Get only these rules that are relevant for this entity type
-		relevant, err := GetRulesForEntity(pol, inf.Type)
+		relevant, err := GetRulesForEntity(profile, inf.Type)
 		if err != nil {
 			return fmt.Errorf("error getting rules for entity: %w", err)
 		}
@@ -129,28 +130,28 @@ func (e *Executor) evalEntityEvent(
 		// Let's evaluate all the rules for this profile
 		err = TraverseRules(relevant, func(rule *pb.Profile_Rule) error {
 			// Get the engine evaluator for this rule type
-			evalParams, rte, err := e.getEvaluator(ctx, inf, ectx, cli, pol, rule)
+			evalParams, rte, err := e.getEvaluator(ctx, inf, ectx, cli, profile, rule)
 			if err != nil {
 				return err
 			}
 
 			// Evaluate the rule
-			rte.Eval(ctx, inf.Entity, rule.Def.AsMap(), rule.Params.AsMap(), evalParams)
+			rte.Eval(ctx, inf, evalParams)
 
 			// Perform actions, if any
-			rte.Actions(ctx, inf.Entity, rule.Def.AsMap(), rule.Params.AsMap(), evalParams)
+			rte.Actions(ctx, inf, evalParams)
 
 			// Log the evaluation
-			logEval(ctx, pol, rule, inf, evalParams)
+			logEval(ctx, inf, evalParams)
 
 			// Create or update the evaluation status
 			return e.createOrUpdateEvalStatus(ctx, evalParams)
 		})
 
 		if err != nil {
-			p := pol.Name
-			if pol.Id != nil {
-				p = *pol.Id
+			p := profile.Name
+			if profile.Id != nil {
+				p = *profile.Id
 			}
 			return fmt.Errorf("error traversing rules for profile %s: %w", p, err)
 		}
@@ -165,7 +166,7 @@ func (e *Executor) getEvaluator(
 	cli *providers.ProviderBuilder,
 	profile *pb.Profile,
 	rule *pb.Profile_Rule,
-) (*EvalStatusParams, *RuleTypeEngine, error) {
+) (*engif.EvalStatusParams, *RuleTypeEngine, error) {
 	logger := zerolog.Ctx(ctx)
 	logger.Info().
 		Str("rule_type", rule.Type).
@@ -178,7 +179,7 @@ func (e *Executor) getEvaluator(
 		return nil, nil, fmt.Errorf("error creating eval status params: %w", err)
 	}
 
-	// Load Rule Type from database
+	// Load Rule Class from database
 	// TODO(jaosorior): Rule types should be cached in memory so
 	// we don't have to query the database for each rule.
 	dbrt, err := e.querier.GetRuleTypeByName(ctx, db.GetRuleTypeByNameParams{
@@ -202,6 +203,7 @@ func (e *Executor) getEvaluator(
 		return nil, nil, fmt.Errorf("error parsing rule type ID: %w", err)
 	}
 	params.RuleTypeID = ruleTypeID
+	params.RuleType = rt
 
 	// Create the rule type engine
 	rte, err := NewRuleTypeEngine(profile, rt, cli)
@@ -215,13 +217,11 @@ func (e *Executor) getEvaluator(
 
 func logEval(
 	ctx context.Context,
-	pol *pb.Profile,
-	rule *pb.Profile_Rule,
 	inf *EntityInfoWrapper,
-	evalParams *EvalStatusParams) {
+	evalParams *engif.EvalStatusParams) {
 	logger := zerolog.Ctx(ctx).Debug().
-		Str("profile", pol.Name).
-		Str("ruleType", rule.Type).
+		Str("profile", evalParams.Profile.Name).
+		Str("ruleType", evalParams.Rule.Type).
 		Str("projectId", inf.ProjectID.String()).
 		Str("repositoryId", evalParams.RepoID.String())
 

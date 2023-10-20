@@ -60,3 +60,8 @@ def:
     gh_branch_protection:
       patch: |
         {"required_conversation_resolution":{{ .Profile.required_conversation_resolution }} }
+  # Defines the configuration for alerting on the rule
+  alert:
+    type: security_advisory
+    security_advisory:
+      severity: "medium"

@@ -102,3 +102,8 @@ def:
                 schedule:
                   interval: "{{.Profile.schedule_interval }}"
                 open-pull-requests-limit: 10
+  # Defines the configuration for alerting on the rule
+  alert:
+    type: security_advisory
+    security_advisory:
+      severity: "medium"

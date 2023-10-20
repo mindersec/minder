@@ -60,3 +60,8 @@ def:
     gh_branch_protection:
       patch: |
         {"required_pull_request_reviews":{"required_approving_review_count":{{ .Profile.required_approving_review_count }}}}
+  # Defines the configuration for alerting on the rule
+  alert:
+    type: security_advisory
+    security_advisory:
+      severity: "medium"
