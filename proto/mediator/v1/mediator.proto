@@ -1244,6 +1244,11 @@ message RuleType {
                 string endpoint = 2;
             }
 
+            message PackageIntelligence {
+                // e.g. https://staging.stacklok.dev/
+                string endpoint = 1;
+            }
+
             // jq is only used if the `jq` type is selected.
             // It defines the comparisons that are made between
             // the ingested data and the profile rule.
@@ -1254,6 +1259,9 @@ message RuleType {
 
             // vulncheck is only used if the `vulncheck` type is selected.
             optional Vulncheck vulncheck = 4;
+
+            // package_intelligence is only used if the `package_intelligence` type is selected.
+            optional PackageIntelligence package_intelligence = 5;
         }
         Eval eval = 5;
 

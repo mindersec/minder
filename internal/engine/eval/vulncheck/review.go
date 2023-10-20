@@ -516,7 +516,7 @@ func (sph *summaryPrHandler) generateSummary() (string, error) {
 			DependencyVersion   string
 			Vulnerabilities     []Vulnerability
 		}{
-			DependencyEcosystem: pbEcosystemAsString(sph.trackedDeps[i].Dependency.Ecosystem),
+			DependencyEcosystem: sph.trackedDeps[i].Dependency.Ecosystem.AsString(),
 			DependencyName:      sph.trackedDeps[i].Dependency.Name,
 			DependencyVersion:   sph.trackedDeps[i].Dependency.Version,
 			Vulnerabilities:     sph.trackedDeps[i].Vulnerabilities,

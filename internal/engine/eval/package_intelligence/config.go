@@ -12,8 +12,8 @@
 // See the License for the specific language governing permissions and
 // limitations under the License.
 
-// Package vulncheck provides the vulnerability check evaluator
-package vulncheck
+// Package package_intelligence provides an evaluator that uses the package intelligence API
+package package_intelligence
 
 import (
 	"errors"
@@ -27,24 +27,10 @@ import (
 	pb "github.com/stacklok/mediator/pkg/api/protobuf/go/mediator/v1"
 )
 
-type vulnDbType string
-
-const (
-	vulnDbTypeOsv vulnDbType = "osv"
-)
-
-type packageRepository struct {
-	Url string `json:"url" mapstructure:"url" validate:"required"`
-}
-
 type ecosystemConfig struct {
 	Name string `json:"name" mapstructure:"name" validate:"required"`
 	//nolint:lll
-	DbType vulnDbType `json:"vulnerability_database_type" mapstructure:"vulnerability_database_type" validate:"required"`
-	//nolint:lll
-	DbEndpoint        string            `json:"vulnerability_database_endpoint" mapstructure:"vulnerability_database_endpoint" validate:"required"`
-	PackageRepository packageRepository `json:"package_repository" mapstructure:"package_repository" validate:"required"`
-	SumRepository     packageRepository `json:"sum_repository" mapstructure:"sum_repository" validate:"required"`
+	Score float64 `json:"score" mapstructure:"score" validate:"required"`
 }
 
 // config is the configuration for the vulncheck evaluator

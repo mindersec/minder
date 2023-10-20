@@ -113,6 +113,7 @@
     - [RuleType.Definition.Eval](#mediator-v1-RuleType-Definition-Eval)
     - [RuleType.Definition.Eval.JQComparison](#mediator-v1-RuleType-Definition-Eval-JQComparison)
     - [RuleType.Definition.Eval.JQComparison.Operator](#mediator-v1-RuleType-Definition-Eval-JQComparison-Operator)
+    - [RuleType.Definition.Eval.PackageIntelligence](#mediator-v1-RuleType-Definition-Eval-PackageIntelligence)
     - [RuleType.Definition.Eval.Rego](#mediator-v1-RuleType-Definition-Eval-Rego)
     - [RuleType.Definition.Eval.Vulncheck](#mediator-v1-RuleType-Definition-Eval-Vulncheck)
     - [RuleType.Definition.Ingest](#mediator-v1-RuleType-Definition-Ingest)
@@ -1878,6 +1879,7 @@ endpoint and how we compare it to the rule.
 | jq | [RuleType.Definition.Eval.JQComparison](#mediator-v1-RuleType-Definition-Eval-JQComparison) | repeated | jq is only used if the `jq` type is selected. It defines the comparisons that are made between the ingested data and the profile rule. |
 | rego | [RuleType.Definition.Eval.Rego](#mediator-v1-RuleType-Definition-Eval-Rego) | optional | rego is only used if the `rego` type is selected. |
 | vulncheck | [RuleType.Definition.Eval.Vulncheck](#mediator-v1-RuleType-Definition-Eval-Vulncheck) | optional | vulncheck is only used if the `vulncheck` type is selected. |
+| package_intelligence | [RuleType.Definition.Eval.PackageIntelligence](#mediator-v1-RuleType-Definition-Eval-PackageIntelligence) | optional | package_intelligence is only used if the `package_intelligence` type is selected. |
 
 
 
@@ -1909,6 +1911,21 @@ endpoint and how we compare it to the rule.
 | Field | Type | Label | Description |
 | ----- | ---- | ----- | ----------- |
 | def | [string](#string) |  |  |
+
+
+
+
+
+
+<a name="mediator-v1-RuleType-Definition-Eval-PackageIntelligence"></a>
+
+### RuleType.Definition.Eval.PackageIntelligence
+
+
+
+| Field | Type | Label | Description |
+| ----- | ---- | ----- | ----------- |
+| endpoint | [string](#string) |  | e.g. https://staging.stacklok.dev/ |
 
 
 

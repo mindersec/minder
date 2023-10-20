@@ -1419,6 +1419,10 @@
         "vulncheck": {
           "$ref": "#/definitions/EvalVulncheck",
           "description": "vulncheck is only used if the `vulncheck` type is selected."
+        },
+        "packageIntelligence": {
+          "$ref": "#/definitions/EvalPackageIntelligence",
+          "description": "package_intelligence is only used if the `package_intelligence` type is selected."
         }
       },
       "description": "Eval defines the data evaluation definition.\nThis pertains to the way we traverse data from the upstream\nendpoint and how we compare it to the rule."
@@ -1493,6 +1497,15 @@
         "profile": {
           "$ref": "#/definitions/JQComparisonOperator",
           "description": "Profile points to the profile itself."
+        }
+      }
+    },
+    "EvalPackageIntelligence": {
+      "type": "object",
+      "properties": {
+        "endpoint": {
+          "type": "string",
+          "title": "e.g. https://staging.stacklok.dev/"
         }
       }
     },
