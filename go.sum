@@ -921,6 +921,12 @@ github.com/sergi/go-diff v1.3.1/go.mod h1:aMJSSKb2lpPvRNec0+w3fl7LP9IOFzdc9Pa4NF
 github.com/shibumi/go-pathspec v1.3.0 h1:QUyMZhFo0Md5B8zV8x2tesohbb5kfbpTi9rBnKh5dkI=
 github.com/shibumi/go-pathspec v1.3.0/go.mod h1:Xutfslp817l2I1cZvgcfeMQJG5QnU2lh5tVaaMCl3jE=
 github.com/shurcooL/sanitized_anchor_name v1.0.0/go.mod h1:1NzhyTcUVG4SuEtjjoZeVRXNmyL/1OwPU0+IJeTBvfc=
+github.com/signalfx/splunk-otel-go/instrumentation/database/sql/splunksql v1.9.0 h1:Jk5yE1mlIHhI01P2vINMon3VGyDoutR+uta1LLVcM5E=
+github.com/signalfx/splunk-otel-go/instrumentation/database/sql/splunksql v1.9.0/go.mod h1:R0iO8Gf+o6Ur6lgXnkV6XTLMKj0LiTxogPu4w+9SCR0=
+github.com/signalfx/splunk-otel-go/instrumentation/github.com/lib/pq/splunkpq v1.9.0 h1:XHa4AvHOILKn8uznpyArd5FNejP9VaUE1DuBDhaU3IA=
+github.com/signalfx/splunk-otel-go/instrumentation/github.com/lib/pq/splunkpq v1.9.0/go.mod h1:FacW6APpBAij4HJO7v5Z/q4DX8XwtjpnaESWUYfZ3gY=
+github.com/signalfx/splunk-otel-go/instrumentation/internal v1.9.0 h1:jMtn6yQVWkZv5hP27xyszjf9Yc9nzz6U9ogalwD3HkI=
+github.com/signalfx/splunk-otel-go/instrumentation/internal v1.9.0/go.mod h1:LNoiOUmMI77p93X9bnFej+eYLTbsPfifgyW28oKMIOI=
 github.com/sigstore/cosign/v2 v2.2.0 h1:MV/ALD1/e/JgxXXCdCNxlIRk2NB3Irb4MKPozd8SPR8=
 github.com/sigstore/cosign/v2 v2.2.0/go.mod h1:Kcm7lTZbpiEpA3wPCqRygTUdLpX8CNT+36rODTCBr1M=
 github.com/sigstore/fulcio v1.4.0 h1:05+k8BFvwTQzfCkVxESWzCN4b70KIRliGYz0Upmdrs8=
