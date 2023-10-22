@@ -124,6 +124,10 @@ func TraverseAllRulesForPipeline(p *pb.Profile, fn func(*pb.Profile_Rule) error)
 		return fmt.Errorf("error traversing build environment rules: %w", err)
 	}
 
+	if err := TraverseRules(p.PullRequest, fn); err != nil {
+		return fmt.Errorf("error traversing pull_request rules: %w", err)
+	}
+
 	if err := TraverseRules(p.Artifact, fn); err != nil {
 		return fmt.Errorf("error traversing artifact rules: %w", err)
 	}
