@@ -55,9 +55,7 @@ func TestGRPCHealthCheck(t *testing.T) {
 	defer cancel()
 
 	resp, err := client.CheckHealth(ctx, &pb.CheckHealthRequest{}, grpc.WaitForReady(true))
-	if err != nil {
-		t.Fatalf("Health check failed: %v", err)
-	}
+	assert.NoError(t, err, "Failed to check health")
 
 	assert.Equal(t, "OK", resp.Status, "Expected health check status to be 'ok'")
 }
