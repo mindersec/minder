@@ -1,9 +1,9 @@
 
 -- name: UpsertRuleEvaluations :one
 INSERT INTO rule_evaluations (
-    profile_id, repository_id, artifact_id, rule_type_id, entity
-) VALUES ($1, $2, $3, $4, $5)
-ON CONFLICT (profile_id, repository_id, COALESCE(artifact_id, '00000000-0000-0000-0000-000000000000'::UUID), entity, rule_type_id)
+    profile_id, repository_id, artifact_id, pull_request_id, rule_type_id, entity
+) VALUES ($1, $2, $3, $4, $5, $6)
+ON CONFLICT (profile_id, repository_id, COALESCE(artifact_id, '00000000-0000-0000-0000-000000000000'::UUID), COALESCE(pull_request_id, '00000000-0000-0000-0000-000000000000'::UUID), entity, rule_type_id)
   DO UPDATE SET profile_id = $1
 RETURNING id;
 
@@ -129,6 +129,8 @@ WHERE res.profile_id = $1 AND
         CASE
             WHEN sqlc.narg(entity_type)::entities = 'repository' AND res.repository_id = sqlc.narg(entity_id)::UUID THEN true
             WHEN sqlc.narg(entity_type)::entities  = 'artifact' AND res.artifact_id = sqlc.narg(entity_id)::UUID THEN true
+            WHEN sqlc.narg(entity_type)::entities  = 'artifact' AND res.artifact_id = sqlc.narg(entity_id)::UUID THEN true
+            WHEN sqlc.narg(entity_type)::entities  = 'pull_request' AND res.pull_request_id = sqlc.narg(entity_id)::UUID THEN true
             WHEN sqlc.narg(entity_id)::UUID IS NULL THEN true
             ELSE false
             END
