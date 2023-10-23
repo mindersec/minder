@@ -37,6 +37,7 @@ import (
 )
 
 func grpcConnect(t *testing.T) *grpc.ClientConn {
+	t.Helper()
 	grpcHost := os.Getenv("GRPC_HOST")
 	assert.NotEmpty(t, grpcHost, "GRPC_HOST environment variable is not set")
 
@@ -47,6 +48,7 @@ func grpcConnect(t *testing.T) *grpc.ClientConn {
 }
 
 func TestGRPCHealthCheck(t *testing.T) {
+	t.Parallel()
 	conn := grpcConnect(t)
 	defer conn.Close()
 
@@ -61,6 +63,7 @@ func TestGRPCHealthCheck(t *testing.T) {
 }
 
 func TestHTTPHealthCheck(t *testing.T) {
+	t.Parallel()
 	httpHost := os.Getenv("HTTP_HOST")
 	assert.NotEmpty(t, httpHost, "HTTP_HOST environment variable is not set")
 
@@ -76,6 +79,7 @@ func TestHTTPHealthCheck(t *testing.T) {
 }
 
 func TestAuthUserService(t *testing.T) {
+	t.Parallel()
 	conn := grpcConnect(t)
 	defer conn.Close()
 
@@ -94,6 +98,7 @@ func TestAuthUserService(t *testing.T) {
 }
 
 func TestGetAuthorizationURL(t *testing.T) {
+	t.Parallel()
 	owner := "stacklok"
 	ctx := context.Background()
 	conn := grpcConnect(t)
@@ -112,6 +117,7 @@ func TestGetAuthorizationURL(t *testing.T) {
 }
 
 func TestStoreProviderToken(t *testing.T) {
+	t.Parallel()
 	owner := "stacklok"
 	ctx := context.Background()
 	conn := grpcConnect(t)
@@ -129,7 +135,7 @@ func TestStoreProviderToken(t *testing.T) {
 }
 
 func TestRevokeProviderToken(t *testing.T) {
-
+	t.Parallel()
 	ctx := context.Background()
 	conn := grpcConnect(t)
 	defer conn.Close()
