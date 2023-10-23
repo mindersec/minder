@@ -62,19 +62,33 @@ func (e *Executor) createEvalStatusParams(
 		}
 	}
 
+	pullRequestID, ok := inf.OwnershipData[PullRequestIDEventKey]
+	if ok {
+		params.PullRequestID = uuid.NullUUID{
+			UUID:  uuid.MustParse(pullRequestID),
+			Valid: true,
+		}
+	}
+
 	// Prepare params for fetching the current rule evaluation from the database
 	entityType := db.NullEntities{
 		Entities: params.EntityType,
 		Valid:    true}
 	entityID := uuid.NullUUID{}
-	if params.EntityType == db.EntitiesArtifact {
+	switch params.EntityType {
+	case db.EntitiesArtifact:
 		entityID = params.ArtifactID
-	} else if params.EntityType == db.EntitiesRepository {
+	case db.EntitiesRepository:
 		entityID = uuid.NullUUID{
 			UUID:  params.RepoID,
 			Valid: true,
 		}
+	case db.EntitiesPullRequest:
+		entityID = params.PullRequestID
+	case db.EntitiesBuildEnvironment:
+		return nil, fmt.Errorf("build environment entity type not supported")
 	}
+
 	ruleName := sql.NullString{
 		String: rule.Type,
 		Valid:  true,

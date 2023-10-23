@@ -137,10 +137,9 @@ func (eiw *EntityInfoWrapper) WithArtifactID(id uuid.UUID) *EntityInfoWrapper {
 	return eiw
 }
 
-// WithPullRequestNumber sets the pull request ID
-func (eiw *EntityInfoWrapper) WithPullRequestNumber(id int32) *EntityInfoWrapper {
-	strid := fmt.Sprintf("%d", id)
-	eiw.withID(PullRequestIDEventKey, strid)
+// WithPullRequestID sets the pull request ID
+func (eiw *EntityInfoWrapper) WithPullRequestID(id uuid.UUID) *EntityInfoWrapper {
+	eiw.withID(PullRequestIDEventKey, id.String())
 
 	return eiw
 }
