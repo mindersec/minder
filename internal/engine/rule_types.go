@@ -18,6 +18,7 @@ package engine
 import (
 	"context"
 	"fmt"
+	"log"
 	"strings"
 
 	"github.com/xeipuuv/gojsonschema"
@@ -27,6 +28,7 @@ import (
 	"github.com/stacklok/mediator/internal/db"
 	"github.com/stacklok/mediator/internal/engine/actions"
 	"github.com/stacklok/mediator/internal/engine/eval"
+	"github.com/stacklok/mediator/internal/engine/ingestcache"
 	"github.com/stacklok/mediator/internal/engine/ingester"
 	engif "github.com/stacklok/mediator/internal/engine/interfaces"
 	"github.com/stacklok/mediator/internal/providers"
@@ -167,10 +169,15 @@ type RuleTypeEngine struct {
 	rt *mediatorv1.RuleType
 
 	cli *providers.ProviderBuilder
+
+	ingestCache ingestcache.Cache
 }
 
 // NewRuleTypeEngine creates a new rule type engine
-func NewRuleTypeEngine(p *mediatorv1.Profile, rt *mediatorv1.RuleType, cli *providers.ProviderBuilder,
+func NewRuleTypeEngine(
+	p *mediatorv1.Profile,
+	rt *mediatorv1.RuleType,
+	cli *providers.ProviderBuilder,
 ) (*RuleTypeEngine, error) {
 	rval, err := NewRuleValidator(rt)
 	if err != nil {
@@ -197,12 +204,13 @@ func NewRuleTypeEngine(p *mediatorv1.Profile, rt *mediatorv1.RuleType, cli *prov
 			Name:     rt.Name,
 			Provider: rt.Context.Provider,
 		},
-		rval:  rval,
-		rdi:   rdi,
-		reval: reval,
-		rae:   ae,
-		rt:    rt,
-		cli:   cli,
+		rval:        rval,
+		rdi:         rdi,
+		reval:       reval,
+		rae:         ae,
+		rt:          rt,
+		cli:         cli,
+		ingestCache: ingestcache.NewNoopCache(),
 	}
 
 	// Set organization if it exists
@@ -221,6 +229,12 @@ func NewRuleTypeEngine(p *mediatorv1.Profile, rt *mediatorv1.RuleType, cli *prov
 	return rte, nil
 }
 
+// WithIngesterCache sets the ingester cache for the rule type engine
+func (r *RuleTypeEngine) WithIngesterCache(ingestCache ingestcache.Cache) *RuleTypeEngine {
+	r.ingestCache = ingestCache
+	return r
+}
+
 // GetID returns the ID of the rule type. The ID is meant to be
 // a serializable unique identifier for the rule type.
 func (r *RuleTypeEngine) GetID() string {
@@ -235,11 +249,20 @@ func (r *RuleTypeEngine) GetRuleInstanceValidator() *RuleValidator {
 
 // Eval runs the rule type engine against the given entity
 func (r *RuleTypeEngine) Eval(ctx context.Context, inf *EntityInfoWrapper, evalParams *engif.EvalStatusParams) {
-	result, err := r.rdi.Ingest(ctx, inf.Entity, evalParams.Rule.Params.AsMap())
-	if err != nil {
-		evalParams.EvalErr = fmt.Errorf("error ingesting data: %w", err)
-		return
+	result, ok := r.ingestCache.Get(r.rdi, inf.Entity, evalParams.Rule.Params)
+	if !ok {
+		var err error
+		result, err = r.rdi.Ingest(ctx, inf.Entity, evalParams.Rule.Params.AsMap())
+		if err != nil {
+			evalParams.EvalErr = fmt.Errorf("error ingesting data: %w", err)
+			return
+		}
+
+		r.ingestCache.Set(r.rdi, inf.Entity, evalParams.Rule.Params, result)
+	} else {
+		log.Printf("Using cached result for %s", r.GetID())
 	}
+
 	evalParams.EvalErr = r.reval.Eval(ctx, evalParams.Rule.Def.AsMap(), result)
 }
 

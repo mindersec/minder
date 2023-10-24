@@ -34,6 +34,10 @@ import (
 type Ingester interface {
 	// Ingest does the actual data ingestion for a rule type
 	Ingest(ctx context.Context, ent protoreflect.ProtoMessage, params map[string]any) (*Result, error)
+	// GetType returns the type of the ingester
+	GetType() string
+	// GetConfig returns the config for the ingester
+	GetConfig() protoreflect.ProtoMessage
 }
 
 // Evaluator is the interface for a rule type evaluator
