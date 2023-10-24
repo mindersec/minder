@@ -171,9 +171,11 @@ func (e *Eventer) Register(
 				})
 
 				if retriable {
-					return nil
+					// if the error is retriable, return it so that the message is retried
+					return err
 				}
-				return err
+				// otherwise, we've done all we can, so return nil so that the message is acked
+				return nil
 			}
 
 			return nil
