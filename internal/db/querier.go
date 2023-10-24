@@ -13,6 +13,7 @@ import (
 type Querier interface {
 	AddUserProject(ctx context.Context, arg AddUserProjectParams) (UserProject, error)
 	AddUserRole(ctx context.Context, arg AddUserRoleParams) (UserRole, error)
+	CountUsers(ctx context.Context) (int64, error)
 	CreateAccessToken(ctx context.Context, arg CreateAccessTokenParams) (ProviderAccessToken, error)
 	CreateArtifact(ctx context.Context, arg CreateArtifactParams) (Artifact, error)
 	CreateArtifactVersion(ctx context.Context, arg CreateArtifactVersionParams) (ArtifactVersion, error)

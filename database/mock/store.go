@@ -110,6 +110,21 @@ func (mr *MockStoreMockRecorder) Commit(arg0 interface{}) *gomock.Call {
 	return mr.mock.ctrl.RecordCallWithMethodType(mr.mock, "Commit", reflect.TypeOf((*MockStore)(nil).Commit), arg0)
 }
 
+// CountUsers mocks base method.
+func (m *MockStore) CountUsers(arg0 context.Context) (int64, error) {
+	m.ctrl.T.Helper()
+	ret := m.ctrl.Call(m, "CountUsers", arg0)
+	ret0, _ := ret[0].(int64)
+	ret1, _ := ret[1].(error)
+	return ret0, ret1
+}
+
+// CountUsers indicates an expected call of CountUsers.
+func (mr *MockStoreMockRecorder) CountUsers(arg0 interface{}) *gomock.Call {
+	mr.mock.ctrl.T.Helper()
+	return mr.mock.ctrl.RecordCallWithMethodType(mr.mock, "CountUsers", reflect.TypeOf((*MockStore)(nil).CountUsers), arg0)
+}
+
 // CreateAccessToken mocks base method.
 func (m *MockStore) CreateAccessToken(arg0 context.Context, arg1 db.CreateAccessTokenParams) (db.ProviderAccessToken, error) {
 	m.ctrl.T.Helper()

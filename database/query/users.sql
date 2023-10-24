@@ -31,3 +31,5 @@ ORDER BY users.id
 LIMIT $2
 OFFSET $3;
 
+-- name: CountUsers :one
+SELECT COUNT(*) FROM users;
