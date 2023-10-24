@@ -14,7 +14,7 @@ guidance: |
   https://docs.sigstore.dev/signing/signing_with_containers
 def:
   # Defines the section of the pipeline the rule will appear in.
-  # This will affect the template that is used to render multiple parts
+  # This will affect the template used to render multiple parts
   # of the rule.
   in_entity: artifact
   # Defines the schema for parameters that will be passed to the rule
