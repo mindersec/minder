@@ -12,6 +12,17 @@ import (
 	"github.com/google/uuid"
 )
 
+const countUsers = `-- name: CountUsers :one
+SELECT COUNT(*) FROM users
+`
+
+func (q *Queries) CountUsers(ctx context.Context) (int64, error) {
+	row := q.db.QueryRowContext(ctx, countUsers)
+	var count int64
+	err := row.Scan(&count)
+	return count, err
+}
+
 const createUser = `-- name: CreateUser :one
 INSERT INTO users (organization_id, email, identity_subject, first_name, last_name) VALUES ($1, $2, $3, $4, $5) RETURNING id, organization_id, email, identity_subject, first_name, last_name, created_at, updated_at
 `
