@@ -10,11 +10,11 @@ guidance: |
   It is recommended to use a checksum instead, as that's immutable and will always point to the same image.
 def:
   # Defines the section of the pipeline the rule will appear in.
-  # This will affect the template that is used to render multiple parts
+  # This will affect the template used to render multiple parts
   # of the rule.
   in_entity: repository
   # Defines the schema for writing a rule with this rule being checked
-  # In this case there is no settings that need to be configured
+  # In this case there are no settings that need to be configured
   rule_schema: {}
   # Defines the configuration for ingesting data relevant for the rule
   ingest:
@@ -22,8 +22,8 @@ def:
     git:
       branch: main
   # Defines the configuration for evaluating data ingested against the given profile
-  # This example uses the checks for that github actions are using pinned tags
-  # for the uses directive, in the form of SHA-1 hash
+  # This example uses the checks for that GitHub actions are using pinned tags
+  # for the use directive, in the form of SHA-1 hash.
   # For example, this wil fail:
   # uses: actions/checkout@v2
   # This will pass:

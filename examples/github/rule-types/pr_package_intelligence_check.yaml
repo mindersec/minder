@@ -4,7 +4,7 @@ type: rule-type
 name: pr_package_intelligence_check
 context:
   provider: github
-description: Verifies that pull requests do not add any dependecies with low package intelligence scores
+description: Verifies that pull requests do not add any dependencies with low package intelligence scores
 guidance: |
   For every pull request submitted to a repository, this rule will check if the pull request
   adds a new dependency with a low package intelligence score. If a dependency with a low

@@ -10,11 +10,11 @@ description: |
 guidance: |
   Actions and reusable workflows in your private repositories can be shared with other private repositories owned by the same user or organization.
 
-  For information about private repositories, see
+  For more information, see
   https://docs.github.com/en/repositories/managing-your-repositorys-settings-and-features/enabling-features-for-your-repository/managing-github-actions-settings-for-a-repository#allowing-access-to-components-in-a-private-repository
 def:
   # Defines the section of the pipeline the rule will appear in.
-  # This will affect the template that is used to render multiple parts
+  # This will affect the template used to render multiple parts
   # of the rule.
   in_entity: repository
   # Defines the schema for writing a rule with this rule being checked
