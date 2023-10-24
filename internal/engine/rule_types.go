@@ -249,7 +249,7 @@ func (r *RuleTypeEngine) GetRuleInstanceValidator() *RuleValidator {
 
 // Eval runs the rule type engine against the given entity
 func (r *RuleTypeEngine) Eval(ctx context.Context, inf *EntityInfoWrapper, evalParams *engif.EvalStatusParams) {
-	result, ok := r.ingestCache.Get(r.rdi, inf.Entity, evalParams)
+	result, ok := r.ingestCache.Get(r.rdi, inf.Entity, evalParams.Rule.Params)
 	if !ok {
 		var err error
 		result, err = r.rdi.Ingest(ctx, inf.Entity, evalParams.Rule.Params.AsMap())
@@ -258,7 +258,7 @@ func (r *RuleTypeEngine) Eval(ctx context.Context, inf *EntityInfoWrapper, evalP
 			return
 		}
 
-		r.ingestCache.Set(r.rdi, inf.Entity, evalParams, result)
+		r.ingestCache.Set(r.rdi, inf.Entity, evalParams.Rule.Params, result)
 	} else {
 		log.Printf("Using cached result for %s", r.GetID())
 	}

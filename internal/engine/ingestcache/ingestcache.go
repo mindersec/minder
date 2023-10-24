@@ -48,9 +48,9 @@ func NewCache() Cache {
 func (c *cache) Get(
 	ingester engif.Ingester,
 	entity protoreflect.ProtoMessage,
-	params *engif.EvalStatusParams,
+	params *structpb.Struct,
 ) (*engif.Result, bool) {
-	key, err := buildCacheKey(ingester, entity, params.Rule.Params)
+	key, err := buildCacheKey(ingester, entity, params)
 	if err != nil {
 		// TODO we might want to log this
 		log.Printf("error building cache key: %v", err)
@@ -64,10 +64,10 @@ func (c *cache) Get(
 func (c *cache) Set(
 	ingester engif.Ingester,
 	entity protoreflect.ProtoMessage,
-	params *engif.EvalStatusParams,
+	params *structpb.Struct,
 	result *engif.Result,
 ) {
-	key, err := buildCacheKey(ingester, entity, params.Rule.Params)
+	key, err := buildCacheKey(ingester, entity, params)
 	if err != nil {
 		// TODO we might want to log this
 		log.Printf("error building cache key: %v", err)

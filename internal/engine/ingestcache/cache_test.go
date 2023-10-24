@@ -38,7 +38,7 @@ func TestCache(t *testing.T) {
 	type args struct {
 		in0 engif.Ingester
 		in1 protoreflect.ProtoMessage
-		in2 *engif.EvalStatusParams
+		in2 *structpb.Struct
 	}
 	tests := []struct {
 		name string
@@ -51,15 +51,11 @@ func TestCache(t *testing.T) {
 				in1: &mediatorv1.RestType{
 					Endpoint: "http://localhost:8080",
 				},
-				in2: &engif.EvalStatusParams{
-					Rule: &mediatorv1.Profile_Rule{
-						Params: &structpb.Struct{
-							Fields: map[string]*structpb.Value{
-								"foo": {
-									Kind: &structpb.Value_StringValue{
-										StringValue: "bar",
-									},
-								},
+				in2: &structpb.Struct{
+					Fields: map[string]*structpb.Value{
+						"foo": {
+							Kind: &structpb.Value_StringValue{
+								StringValue: "bar",
 							},
 						},
 					},
@@ -73,9 +69,7 @@ func TestCache(t *testing.T) {
 				in1: &mediatorv1.RestType{
 					Endpoint: "http://localhost:8080",
 				},
-				in2: &engif.EvalStatusParams{
-					Rule: &mediatorv1.Profile_Rule{},
-				},
+				in2: nil,
 			},
 		},
 		{
@@ -85,15 +79,11 @@ func TestCache(t *testing.T) {
 				in1: &mediatorv1.BuiltinType{
 					Method: "foo",
 				},
-				in2: &engif.EvalStatusParams{
-					Rule: &mediatorv1.Profile_Rule{
-						Params: &structpb.Struct{
-							Fields: map[string]*structpb.Value{
-								"bar": {
-									Kind: &structpb.Value_StringValue{
-										StringValue: "barbar",
-									},
-								},
+				in2: &structpb.Struct{
+					Fields: map[string]*structpb.Value{
+						"bar": {
+							Kind: &structpb.Value_StringValue{
+								StringValue: "barbar",
 							},
 						},
 					},
@@ -105,15 +95,11 @@ func TestCache(t *testing.T) {
 			args: args{
 				in0: &artifact.Ingest{},
 				in1: nil, // Artifacts have no config
-				in2: &engif.EvalStatusParams{
-					Rule: &mediatorv1.Profile_Rule{
-						Params: &structpb.Struct{
-							Fields: map[string]*structpb.Value{
-								"baz": {
-									Kind: &structpb.Value_StringValue{
-										StringValue: "bazbaz",
-									},
-								},
+				in2: &structpb.Struct{
+					Fields: map[string]*structpb.Value{
+						"baz": {
+							Kind: &structpb.Value_StringValue{
+								StringValue: "bazbaz",
 							},
 						},
 					},
@@ -132,15 +118,11 @@ func TestCache(t *testing.T) {
 						},
 					},
 				},
-				in2: &engif.EvalStatusParams{
-					Rule: &mediatorv1.Profile_Rule{
-						Params: &structpb.Struct{
-							Fields: map[string]*structpb.Value{
-								"qux": {
-									Kind: &structpb.Value_StringValue{
-										StringValue: "quxqux",
-									},
-								},
+				in2: &structpb.Struct{
+					Fields: map[string]*structpb.Value{
+						"qux": {
+							Kind: &structpb.Value_StringValue{
+								StringValue: "quxqux",
 							},
 						},
 					},
@@ -154,15 +136,11 @@ func TestCache(t *testing.T) {
 				in1: &mediatorv1.GitType{
 					CloneUrl: "http://localhost:8080",
 				},
-				in2: &engif.EvalStatusParams{
-					Rule: &mediatorv1.Profile_Rule{
-						Params: &structpb.Struct{
-							Fields: map[string]*structpb.Value{
-								"quux": {
-									Kind: &structpb.Value_StringValue{
-										StringValue: "quxqux",
-									},
-								},
+				in2: &structpb.Struct{
+					Fields: map[string]*structpb.Value{
+						"quux": {
+							Kind: &structpb.Value_StringValue{
+								StringValue: "quxqux",
 							},
 						},
 					},
