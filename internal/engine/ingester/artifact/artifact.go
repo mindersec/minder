@@ -46,6 +46,16 @@ func NewArtifactDataIngest(
 	return &Ingest{}, nil
 }
 
+// GetType returns the type of the artifact rule data ingest engine
+func (*Ingest) GetType() string {
+	return ArtifactRuleDataIngestType
+}
+
+// GetConfig returns the config for the artifact rule data ingest engine
+func (*Ingest) GetConfig() proto.Message {
+	return nil
+}
+
 // Ingest checks the passed in artifact, makes sure it is applicable to the current rule
 // and if it is, returns the appropriately marshalled data.
 func (_ *Ingest) Ingest(

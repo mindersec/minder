@@ -66,6 +66,16 @@ func NewDiffIngester(
 	}, nil
 }
 
+// GetType returns the type of the diff rule data ingest engine
+func (*Diff) GetType() string {
+	return DiffRuleDataIngestType
+}
+
+// GetConfig returns the config for the diff rule data ingest engine
+func (di *Diff) GetConfig() protoreflect.ProtoMessage {
+	return di.cfg
+}
+
 // Ingest ingests a pull request and returns a list of dependencies
 func (di *Diff) Ingest(
 	ctx context.Context,

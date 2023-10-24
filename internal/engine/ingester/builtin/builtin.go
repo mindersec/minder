@@ -67,6 +67,16 @@ func (*BuiltinRuleDataIngest) FileContext() billy.Filesystem {
 	return nil
 }
 
+// GetType returns the type of the builtin rule data ingest engine
+func (*BuiltinRuleDataIngest) GetType() string {
+	return BuiltinRuleDataIngestType
+}
+
+// GetConfig returns the config for the builtin rule data ingest engine
+func (idi *BuiltinRuleDataIngest) GetConfig() protoreflect.ProtoMessage {
+	return idi.builtinCfg
+}
+
 // Ingest calls the builtin method and populates the data to be returned
 func (idi *BuiltinRuleDataIngest) Ingest(ctx context.Context, ent protoreflect.ProtoMessage, params map[string]any) (*engif.Result, error) {
 	method, err := idi.ruleMethods.GetMethod(idi.method)

@@ -67,6 +67,16 @@ func NewGitIngester(cfg *pb.GitType, pbuild *providers.ProviderBuilder) (*Git, e
 	}, nil
 }
 
+// GetType returns the type of the git rule data ingest engine
+func (*Git) GetType() string {
+	return GitRuleDataIngestType
+}
+
+// GetConfig returns the config for the git rule data ingest engine
+func (gi *Git) GetConfig() protoreflect.ProtoMessage {
+	return gi.cfg
+}
+
 // Ingest does the actual data ingestion for a rule type by cloning a git repo
 func (gi *Git) Ingest(ctx context.Context, ent protoreflect.ProtoMessage, params map[string]any) (*engif.Result, error) {
 	userCfg := &IngesterConfig{}
