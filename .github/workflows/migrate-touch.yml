@@ -22,12 +22,22 @@ jobs:
 
     - name: Verify Migration Files
       run: |
-        modified_files=$(git diff --name-only origin/${{ github.base_ref }} HEAD -- 'database/migrations/' | grep '.sql' || true)
+        # Check out the base branch
+        git checkout $GITHUB_BASE_REF
+        # Get files in migration directory before our changes
+        BEFORE=$(find database/migrations/ -type f | sort)
+        echo "Files before: $BEFORE"
 
-        if [ -n "$modified_files" ]; then
-          echo "Error: Modifying existing migration files is not allowed."
-          echo "Modified files:"
-          echo "$modified_files"
-          exit 1
-        fi
+        # Check out our changes
+        git checkout $GITHUB_SHA -- database/migrations/
+
+        # Verify that the existing migration files were not touched by the new changes
+        modified=$(git diff --name-only origin/$GITHUB_BASE_REF $GITHUB_SHA -- database/migrations/)
+        echo "Files modified: $modified"
+        for file in $modified; do
+          if [[ $BEFORE == *"$file"* ]]; then
+            echo "ERROR: $file was modified by this PR. Please only add new migrations to the database/migrations/ directory."
+            exit 1
+          fi
+        done
       shell: bash
