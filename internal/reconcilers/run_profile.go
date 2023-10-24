@@ -30,6 +30,7 @@ import (
 
 	"github.com/stacklok/mediator/internal/db"
 	"github.com/stacklok/mediator/internal/engine"
+	"github.com/stacklok/mediator/internal/events"
 	"github.com/stacklok/mediator/internal/util"
 	pb "github.com/stacklok/mediator/pkg/api/protobuf/go/mediator/v1"
 )
@@ -55,7 +56,7 @@ func NewProfileInitMessage(provider string, projectID uuid.UUID) (*message.Messa
 	}
 
 	msg := message.NewMessage(uuid.New().String(), evtStr)
-	msg.Metadata.Set("provider", provider)
+	msg.Metadata.Set(events.ProviderTypeKey, provider)
 	return msg, nil
 }
 
@@ -64,7 +65,7 @@ func NewProfileInitMessage(provider string, projectID uuid.UUID) (*message.Messa
 // for the group and sending a profile evaluation event for each one.
 func (e *Reconciler) handleProfileInitEvent(msg *message.Message) error {
 	ctx := msg.Context()
-	prov := msg.Metadata.Get("provider")
+	prov := msg.Metadata.Get(events.ProviderTypeKey)
 
 	var evt ProfileInitEvent
 	if err := json.Unmarshal(msg.Payload, &evt); err != nil {

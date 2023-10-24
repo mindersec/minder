@@ -47,6 +47,7 @@ import (
 	"github.com/stacklok/mediator/internal/container"
 	"github.com/stacklok/mediator/internal/db"
 	"github.com/stacklok/mediator/internal/engine"
+	"github.com/stacklok/mediator/internal/events"
 	"github.com/stacklok/mediator/internal/providers"
 	"github.com/stacklok/mediator/internal/util"
 	pb "github.com/stacklok/mediator/pkg/api/protobuf/go/mediator/v1"
@@ -76,17 +77,64 @@ type UpstreamRepositoryReference struct {
 	UpstreamID int32
 }
 
-// ErrRepoNotFound is returned when a repository is not found
-var ErrRepoNotFound = errors.New("repository not found")
+// errRepoNotFound is returned when a repository is not found
+var errRepoNotFound = errors.New("repository not found")
 
-// ErrArtifactNotFound is returned when an artifact is not found
-var ErrArtifactNotFound = errors.New("artifact not found")
+// errArtifactNotFound is returned when an artifact is not found
+var errArtifactNotFound = errors.New("artifact not found")
 
-// ErrRepoIsPrivate is returned when a repository is private
-var ErrRepoIsPrivate = errors.New("repository is private")
+// errRepoIsPrivate is returned when a repository is private
+var errRepoIsPrivate = errors.New("repository is private")
 
-// ErrPrNotHandled is returned when a pull request is not handled
-var ErrPrNotHandled = errors.New("pull request not handled")
+// errNotHandled is returned when a webhook event is not handled
+var errNotHandled = errors.New("webhook event not handled")
+
+// newErrNotHandled returns a new errNotHandled error
+func newErrNotHandled(smft string, args ...any) error {
+	msg := fmt.Sprintf(smft, args...)
+	return fmt.Errorf("%w: %s", errNotHandled, msg)
+}
+
+// https://docs.github.com/en/webhooks/webhook-events-and-payloads#about-webhook-events-and-payloads
+var repoEvents = []string{
+	"branch_protection_configuration",
+	"branch_protection_rule",
+	"code_scanning_alert",
+	"create", // a tag or branch is created
+	"member",
+	"meta", // webhook itself
+	"repository_vulnerability_alert",
+	"org_block",
+	"organization",
+	"public",
+	// listening to push makes sure we evaluate on pushes to branches we need to check, but might be too noisy
+	// for topic branches
+	"push",
+	"repository",
+	"repository_advisory",
+	"repository_import",
+	"repository_ruleset",
+	"secret_scanning_alert",
+	"secret_scanning_alert_location",
+	"security_advisory",
+	"security_and_analysis",
+	"team",
+	"team_add",
+}
+
+func entityFromWebhookEventTypeKey(m *message.Message) pb.Entity {
+	key := m.Metadata.Get(events.GithubWebhookEventTypeKey)
+	switch {
+	case key == "package":
+		return pb.Entity_ENTITY_ARTIFACTS
+	case key == "pull_request":
+		return pb.Entity_ENTITY_PULL_REQUESTS
+	case slices.Contains(repoEvents, key):
+		return pb.Entity_ENTITY_REPOSITORIES
+	}
+
+	return pb.Entity_ENTITY_UNSPECIFIED
+}
 
 // HandleGitHubWebHook handles incoming GitHub webhooks
 // See https://docs.github.com/en/developers/webhooks-and-events/webhooks/about-webhooks
@@ -116,10 +164,10 @@ func (s *Server) HandleGitHubWebHook() http.HandlerFunc {
 
 		// TODO: extract sender and event time from payload portably
 		m := message.NewMessage(uuid.New().String(), nil)
-		m.Metadata.Set("id", github.DeliveryID(r))
-		m.Metadata.Set("provider", string(db.ProviderTypeGithub))
-		m.Metadata.Set("source", "https://api.github.com/") // TODO: handle other sources
-		m.Metadata.Set("type", github.WebHookType(r))
+		m.Metadata.Set(events.ProviderDeliveryIdKey, github.DeliveryID(r))
+		m.Metadata.Set(events.ProviderTypeKey, string(db.ProviderTypeGithub))
+		m.Metadata.Set(events.ProviderSourceKey, "https://api.github.com/") // TODO: handle other sources
+		m.Metadata.Set(events.GithubWebhookEventTypeKey, github.WebHookType(r))
 		// m.Metadata.Set("subject", ghEvent.GetRepo().GetFullName())
 		// m.Metadata.Set("time", ghEvent.GetCreatedAt().String())
 
@@ -127,19 +175,20 @@ func (s *Server) HandleGitHubWebHook() http.HandlerFunc {
 
 		if err := s.parseGithubEventForProcessing(rawWBPayload, m); err != nil {
 			// We won't leak when a repository or artifact is not found.
-			if errors.Is(err, ErrRepoNotFound) || errors.Is(err, ErrArtifactNotFound) {
+			if errors.Is(err, errRepoNotFound) || errors.Is(err, errArtifactNotFound) {
 				log.Printf("Repository or artifact not found: %v", err)
 				w.WriteHeader(http.StatusOK)
 				return
-			} else if errors.Is(err, ErrRepoIsPrivate) {
+			} else if errors.Is(err, errRepoIsPrivate) {
 				log.Printf("Skipped webhook event processing: %v", err)
 				w.WriteHeader(http.StatusOK)
 				return
-			} else if errors.Is(err, ErrPrNotHandled) {
-				log.Printf("skipped PR processing")
+			} else if errors.Is(err, errNotHandled) {
+				log.Printf("Skipped webhook event processing: %v", err)
 				w.WriteHeader(http.StatusOK)
 				return
 			}
+
 			log.Printf("Error parsing github webhook message: %v", err)
 			w.WriteHeader(http.StatusInternalServerError)
 			return
@@ -163,7 +212,7 @@ func (s *Server) registerWebhookForRepository(
 	ctx context.Context,
 	pbuild *providers.ProviderBuilder,
 	repositories []UpstreamRepositoryReference,
-	events []string,
+	ghEvents []string,
 ) ([]*pb.RegisterRepoResult, error) {
 
 	var registerData []*pb.RegisterRepoResult
@@ -228,7 +277,7 @@ func (s *Server) registerWebhookForRepository(
 				"ping_url":     ping,
 				"secret":       secret,
 			},
-			Events: events,
+			Events: ghEvents,
 		}
 
 		// if we have an existing hook for same repo, delete it
@@ -293,12 +342,17 @@ func (s *Server) parseGithubEventForProcessing(
 	rawWHPayload []byte,
 	msg *message.Message,
 ) error {
+	ent := entityFromWebhookEventTypeKey(msg)
+	if ent == pb.Entity_ENTITY_UNSPECIFIED {
+		return newErrNotHandled("event %s not handled", msg.Metadata.Get(events.GithubWebhookEventTypeKey))
+	}
+
+	ctx := context.Background()
+
 	var payload map[string]any
 	if err := json.Unmarshal(rawWHPayload, &payload); err != nil {
 		return fmt.Errorf("error unmarshalling payload: %w", err)
 	}
-
-	ctx := context.Background()
 
 	// get information about the repository from the payload
 	dbRepo, err := getRepoInformationFromPayload(ctx, s.store, payload)
@@ -320,20 +374,26 @@ func (s *Server) parseGithubEventForProcessing(
 		return fmt.Errorf("error building client: %w", err)
 	}
 
-	// determine if the payload is an artifact published event
-	// TODO: this needs to be managed via signals
-	hook_type := msg.Metadata.Get("type")
-	if hook_type == "package" {
-		if payload["action"] == "published" {
-			return s.parseArtifactPublishedEvent(
-				ctx, payload, msg, dbRepo, provBuilder)
-		}
-	} else if hook_type == "pull_request" {
-		return parsePullRequestModEvent(
-			ctx, payload, msg, dbRepo, s.store, provBuilder)
+	var action string // explicit declaration to use the default value
+	action, err = util.JQReadFrom[string](ctx, ".action", payload)
+	if err != nil && !errors.Is(err, util.ErrNoValueFound) {
+		return fmt.Errorf("error getting action from payload: %w", err)
 	}
 
-	return parseRepoEvent(msg, dbRepo, provBuilder.GetName())
+	// determine if the payload is an artifact published event
+	// TODO: this needs to be managed via signals
+	if ent == pb.Entity_ENTITY_ARTIFACTS && action == "published" {
+		return s.parseArtifactPublishedEvent(
+			ctx, payload, msg, dbRepo, provBuilder)
+	} else if ent == pb.Entity_ENTITY_PULL_REQUESTS {
+		return parsePullRequestModEvent(
+			ctx, payload, msg, dbRepo, s.store, provBuilder)
+	} else if ent == pb.Entity_ENTITY_REPOSITORIES {
+		return parseRepoEvent(msg, dbRepo, provBuilder.GetName())
+	}
+
+	return newErrNotHandled("event %s with action %s not handled",
+		msg.Metadata.Get(events.GithubWebhookEventTypeKey), action)
 }
 
 func parseRepoEvent(
@@ -613,7 +673,7 @@ func gatherArtifact(
 		}
 		if storedVersion == nil {
 			// return an error that would be caught by the webhook HTTP handler and not retried
-			return nil, ErrArtifactNotFound
+			return nil, errArtifactNotFound
 		}
 		// let's continue with the stored version
 		// now get information for signature and workflow
@@ -874,11 +934,11 @@ func reconcilePrWithDb(
 				prEvalInfo.Number, dbrepo.RepoOwner, dbrepo.RepoName)
 		}
 		retPr = nil
-		retErr = ErrPrNotHandled
+		retErr = errNotHandled
 	default:
 		log.Printf("action %s is not handled for pull requests", prEvalInfo.Action)
 		retPr = nil
-		retErr = ErrPrNotHandled
+		retErr = errNotHandled
 	}
 
 	return retPr, retErr
@@ -907,14 +967,14 @@ func getRepoInformationFromPayload(
 ) (db.Repository, error) {
 	repoInfo, ok := payload["repository"].(map[string]any)
 	if !ok {
-		return db.Repository{}, fmt.Errorf("unable to determine repository for event: %w", ErrRepoNotFound)
+		return db.Repository{}, fmt.Errorf("unable to determine repository for event: %w", errRepoNotFound)
 	}
 
 	// ignore processing webhooks for private repositories
 	isPrivate, ok := repoInfo["private"].(bool)
 	if ok {
 		if isPrivate {
-			return db.Repository{}, ErrRepoIsPrivate
+			return db.Repository{}, errRepoIsPrivate
 		}
 	}
 
@@ -933,14 +993,14 @@ func getRepoInformationFromPayload(
 		if errors.Is(err, sql.ErrNoRows) {
 			log.Printf("repository %d not found", id)
 			// no use in continuing if the repository doesn't exist
-			return db.Repository{}, fmt.Errorf("repository %d not found: %w", id, ErrRepoNotFound)
+			return db.Repository{}, fmt.Errorf("repository %d not found: %w", id, errRepoNotFound)
 		}
 		return db.Repository{}, fmt.Errorf("error getting repository: %w", err)
 	}
 
 	if dbrepo.ProjectID.String() == "" {
 		return db.Repository{}, fmt.Errorf("no group found for repository %s/%s: %w",
-			dbrepo.RepoOwner, dbrepo.RepoName, ErrRepoNotFound)
+			dbrepo.RepoOwner, dbrepo.RepoName, errRepoNotFound)
 	}
 
 	return dbrepo, nil
