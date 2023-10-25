@@ -33,6 +33,14 @@ import (
 	"github.com/rs/zerolog"
 )
 
+// Metadata added to Messages
+const (
+	ProviderDeliveryIdKey     = "id"
+	ProviderTypeKey           = "provider"
+	ProviderSourceKey         = "source"
+	GithubWebhookEventTypeKey = "type"
+)
+
 // Handler is an alias for the watermill handler type, which is both wordy and may be
 // detail we don't want to expose.
 type Handler = message.NoPublishHandlerFunc
