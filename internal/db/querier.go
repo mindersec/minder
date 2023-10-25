@@ -22,6 +22,7 @@ type Querier interface {
 	CreateProfileForEntity(ctx context.Context, arg CreateProfileForEntityParams) (EntityProfile, error)
 	CreateProject(ctx context.Context, arg CreateProjectParams) (Project, error)
 	CreateProvider(ctx context.Context, arg CreateProviderParams) (Provider, error)
+	CreatePullRequest(ctx context.Context, arg CreatePullRequestParams) (PullRequest, error)
 	CreateRepository(ctx context.Context, arg CreateRepositoryParams) (Repository, error)
 	CreateRole(ctx context.Context, arg CreateRoleParams) (Role, error)
 	CreateRuleType(ctx context.Context, arg CreateRuleTypeParams) (RuleType, error)
@@ -37,6 +38,7 @@ type Querier interface {
 	DeleteProfile(ctx context.Context, id uuid.UUID) error
 	DeleteProject(ctx context.Context, id uuid.UUID) ([]DeleteProjectRow, error)
 	DeleteProvider(ctx context.Context, arg DeleteProviderParams) error
+	DeletePullRequest(ctx context.Context, arg DeletePullRequestParams) error
 	DeleteRepository(ctx context.Context, id uuid.UUID) error
 	DeleteRole(ctx context.Context, id int32) error
 	DeleteRuleType(ctx context.Context, id uuid.UUID) error
@@ -67,6 +69,7 @@ type Querier interface {
 	GetProjectIDPortBySessionState(ctx context.Context, sessionState string) (GetProjectIDPortBySessionStateRow, error)
 	GetProviderByID(ctx context.Context, arg GetProviderByIDParams) (Provider, error)
 	GetProviderByName(ctx context.Context, arg GetProviderByNameParams) (Provider, error)
+	GetPullRequest(ctx context.Context, arg GetPullRequestParams) (PullRequest, error)
 	GetRepositoryByID(ctx context.Context, id uuid.UUID) (Repository, error)
 	GetRepositoryByIDAndProject(ctx context.Context, arg GetRepositoryByIDAndProjectParams) (Repository, error)
 	GetRepositoryByRepoID(ctx context.Context, repoID int32) (Repository, error)
@@ -116,6 +119,7 @@ type Querier interface {
 	UpdateRuleType(ctx context.Context, arg UpdateRuleTypeParams) error
 	UpsertArtifact(ctx context.Context, arg UpsertArtifactParams) (Artifact, error)
 	UpsertArtifactVersion(ctx context.Context, arg UpsertArtifactVersionParams) (ArtifactVersion, error)
+	UpsertPullRequest(ctx context.Context, arg UpsertPullRequestParams) (PullRequest, error)
 	UpsertRuleDetailsAlert(ctx context.Context, arg UpsertRuleDetailsAlertParams) (uuid.UUID, error)
 	UpsertRuleDetailsEval(ctx context.Context, arg UpsertRuleDetailsEvalParams) (uuid.UUID, error)
 	UpsertRuleDetailsRemediate(ctx context.Context, arg UpsertRuleDetailsRemediateParams) (uuid.UUID, error)

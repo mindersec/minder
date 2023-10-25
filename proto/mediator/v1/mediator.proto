@@ -149,6 +149,8 @@ message PullRequest {
     string repo_name = 5;    // The name of the repo, will be used to submit a review
 
     int64 author_id = 6;    // The author of the PR, will be used to check if we can request changes
+
+    string action = 7;       // The action that triggered the webhook
 }
 
 enum DepEcosystem {

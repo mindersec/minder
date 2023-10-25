@@ -85,6 +85,9 @@ var ErrArtifactNotFound = errors.New("artifact not found")
 // ErrRepoIsPrivate is returned when a repository is private
 var ErrRepoIsPrivate = errors.New("repository is private")
 
+// ErrPrNotHandled is returned when a pull request is not handled
+var ErrPrNotHandled = errors.New("pull request not handled")
+
 // HandleGitHubWebHook handles incoming GitHub webhooks
 // See https://docs.github.com/en/developers/webhooks-and-events/webhooks/about-webhooks
 // for more information.
@@ -130,6 +133,10 @@ func (s *Server) HandleGitHubWebHook() http.HandlerFunc {
 				return
 			} else if errors.Is(err, ErrRepoIsPrivate) {
 				log.Printf("Skipped webhook event processing: %v", err)
+				w.WriteHeader(http.StatusOK)
+				return
+			} else if errors.Is(err, ErrPrNotHandled) {
+				log.Printf("skipped PR processing")
 				w.WriteHeader(http.StatusOK)
 				return
 			}
@@ -322,10 +329,8 @@ func (s *Server) parseGithubEventForProcessing(
 				ctx, payload, msg, dbRepo, provBuilder)
 		}
 	} else if hook_type == "pull_request" {
-		if payload["action"] == "opened" || payload["action"] == "synchronize" {
-			return parsePullRequestModEvent(
-				ctx, payload, msg, dbRepo, provBuilder)
-		}
+		return parsePullRequestModEvent(
+			ctx, payload, msg, dbRepo, s.store, provBuilder)
 	}
 
 	return parseRepoEvent(msg, dbRepo, provBuilder.GetName())
@@ -412,6 +417,7 @@ func parsePullRequestModEvent(
 	whPayload map[string]any,
 	msg *message.Message,
 	dbrepo db.Repository,
+	store db.Store,
 	prov *providers.ProviderBuilder,
 ) error {
 	// NOTE(jaosorior): this webhook is very specific to github
@@ -431,6 +437,11 @@ func parsePullRequestModEvent(
 		return fmt.Errorf("error getting pull request information from payload: %w", err)
 	}
 
+	dbPr, err := reconcilePrWithDb(ctx, store, dbrepo, prEvalInfo)
+	if err != nil {
+		return fmt.Errorf("error reconciling PR with DB: %w", err)
+	}
+
 	err = updatePullRequestInfoFromProvider(ctx, cli, dbrepo, prEvalInfo)
 	if err != nil {
 		return fmt.Errorf("error updating pull request information from provider: %w", err)
@@ -440,7 +451,7 @@ func parsePullRequestModEvent(
 
 	eiw := engine.NewEntityInfoWrapper().
 		WithPullRequest(prEvalInfo).
-		WithPullRequestNumber(prEvalInfo.Number).
+		WithPullRequestID(dbPr.ID).
 		WithProvider(prov.GetName()).
 		WithProjectID(dbrepo.ProjectID).
 		WithRepositoryID(dbrepo.ID)
@@ -818,13 +829,60 @@ func getPullRequestInfoFromPayload(
 		return nil, fmt.Errorf("error getting pull request author ID from payload: %w", err)
 	}
 
+	action, err := util.JQReadFrom[string](ctx, ".action", payload)
+	if err != nil {
+		return nil, fmt.Errorf("error getting action from payload: %w", err)
+	}
+
 	return &pb.PullRequest{
 		Url:      prUrl,
 		Number:   int32(prNumber),
 		AuthorId: int64(prAuthorId),
+		Action:   action,
 	}, nil
 }
 
+func reconcilePrWithDb(
+	ctx context.Context,
+	store db.Store,
+	dbrepo db.Repository,
+	prEvalInfo *pb.PullRequest,
+) (*db.PullRequest, error) {
+	var retErr error
+	var retPr *db.PullRequest
+
+	switch prEvalInfo.Action {
+	case "opened", "synchronize":
+		dbPr, err := store.UpsertPullRequest(ctx, db.UpsertPullRequestParams{
+			RepositoryID: dbrepo.ID,
+			PrNumber:     int64(prEvalInfo.Number),
+		})
+		if err != nil {
+			return nil, fmt.Errorf(
+				"cannot upsert PR %d in repo %s/%s",
+				prEvalInfo.Number, dbrepo.RepoOwner, dbrepo.RepoName)
+		}
+		retPr = &dbPr
+		retErr = nil
+	case "closed":
+		err := store.DeletePullRequest(ctx, db.DeletePullRequestParams{
+			RepositoryID: dbrepo.ID,
+			PrNumber:     int64(prEvalInfo.Number),
+		})
+		if err != nil && !errors.Is(err, sql.ErrNoRows) {
+			return nil, fmt.Errorf("cannot delete PR record %d in repo %s/%s",
+				prEvalInfo.Number, dbrepo.RepoOwner, dbrepo.RepoName)
+		}
+		retPr = nil
+		retErr = ErrPrNotHandled
+	default:
+		log.Printf("action %s is not handled for pull requests", prEvalInfo.Action)
+		retPr = nil
+		retErr = ErrPrNotHandled
+	}
+
+	return retPr, retErr
+}
 func updatePullRequestInfoFromProvider(
 	ctx context.Context,
 	cli provifv1.GitHub,

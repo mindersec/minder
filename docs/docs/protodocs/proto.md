@@ -1501,6 +1501,7 @@ This is used to define the connection to the provider.
 | repo_owner | [string](#string) |  | The owner of the repo, will be used to submit a review |
 | repo_name | [string](#string) |  | The name of the repo, will be used to submit a review |
 | author_id | [int64](#int64) |  | The author of the PR, will be used to check if we can request changes |
+| action | [string](#string) |  | The action that triggered the webhook |
 
 
 

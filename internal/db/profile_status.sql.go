@@ -173,6 +173,8 @@ WHERE res.profile_id = $1 AND
         CASE
             WHEN $2::entities = 'repository' AND res.repository_id = $3::UUID THEN true
             WHEN $2::entities  = 'artifact' AND res.artifact_id = $3::UUID THEN true
+            WHEN $2::entities  = 'artifact' AND res.artifact_id = $3::UUID THEN true
+            WHEN $2::entities  = 'pull_request' AND res.pull_request_id = $3::UUID THEN true
             WHEN $3::UUID IS NULL THEN true
             ELSE false
             END
@@ -352,19 +354,20 @@ func (q *Queries) UpsertRuleDetailsRemediate(ctx context.Context, arg UpsertRule
 
 const upsertRuleEvaluations = `-- name: UpsertRuleEvaluations :one
 INSERT INTO rule_evaluations (
-    profile_id, repository_id, artifact_id, rule_type_id, entity
-) VALUES ($1, $2, $3, $4, $5)
-ON CONFLICT (profile_id, repository_id, COALESCE(artifact_id, '00000000-0000-0000-0000-000000000000'::UUID), entity, rule_type_id)
+    profile_id, repository_id, artifact_id, pull_request_id, rule_type_id, entity
+) VALUES ($1, $2, $3, $4, $5, $6)
+ON CONFLICT (profile_id, repository_id, COALESCE(artifact_id, '00000000-0000-0000-0000-000000000000'::UUID), COALESCE(pull_request_id, '00000000-0000-0000-0000-000000000000'::UUID), entity, rule_type_id)
   DO UPDATE SET profile_id = $1
 RETURNING id
 `
 
 type UpsertRuleEvaluationsParams struct {
-	ProfileID    uuid.UUID     `json:"profile_id"`
-	RepositoryID uuid.NullUUID `json:"repository_id"`
-	ArtifactID   uuid.NullUUID `json:"artifact_id"`
-	RuleTypeID   uuid.UUID     `json:"rule_type_id"`
-	Entity       Entities      `json:"entity"`
+	ProfileID     uuid.UUID     `json:"profile_id"`
+	RepositoryID  uuid.NullUUID `json:"repository_id"`
+	ArtifactID    uuid.NullUUID `json:"artifact_id"`
+	PullRequestID uuid.NullUUID `json:"pull_request_id"`
+	RuleTypeID    uuid.UUID     `json:"rule_type_id"`
+	Entity        Entities      `json:"entity"`
 }
 
 func (q *Queries) UpsertRuleEvaluations(ctx context.Context, arg UpsertRuleEvaluationsParams) (uuid.UUID, error) {
@@ -372,6 +375,7 @@ func (q *Queries) UpsertRuleEvaluations(ctx context.Context, arg UpsertRuleEvalu
 		arg.ProfileID,
 		arg.RepositoryID,
 		arg.ArtifactID,
+		arg.PullRequestID,
 		arg.RuleTypeID,
 		arg.Entity,
 	)
