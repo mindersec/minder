@@ -18,14 +18,8 @@ projectname?=mediator
 # Unfortunately, we need OS detection for docker-compose
 OS := $(shell uname -s)
 
-# Container runtime detection
-ifeq (, $(shell which podman-compose))
-    COMPOSE?=docker-compose
-    CONTAINER?=docker
-else
-    COMPOSE?=podman-compose
-    CONTAINER?=podman
-endif
+COMPOSE?=docker-compose
+CONTAINER?=docker
 
 # Services to run in docker-compose. Defaults to all
 services?=
@@ -78,10 +72,6 @@ run-docker:  ## run the app under docker.
 	# We also need to remove the build: directives to use ko builds
 	# ko resolve will fill in the image: field in the compose file, but it adds a yaml document separator
 	sed -e '/^  *build:/d'  -e 's|  image: mediator:latest|  image: ko://github.com/stacklok/mediator/cmd/server|' docker-compose.yaml | ko resolve --base-import-paths --platform linux/$(DOCKERARCH) -f - | sed 's/^--*$$//' > .resolved-compose.yaml
-	# MacOS can't tolerate the ":z" flag, Linux needs it.  https://github.com/containers/podman-compose/issues/509
-ifeq ($(OS),Darwin)
-	sed -i '' 's/:z$$//' .resolved-compose.yaml
-endif
 	@echo "Running docker-compose up $(services)"
 	$(COMPOSE) -f .resolved-compose.yaml down && $(COMPOSE) -f .resolved-compose.yaml up $(COMPOSE_ARGS) $(services)
 	rm .resolved-compose.yaml*
