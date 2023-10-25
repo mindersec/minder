@@ -16,7 +16,6 @@ It is currently in early development.
 - [Docker](https://docs.docker.com/get-docker/) or..
 - [Podman](https://podman.io/getting-started/installation)
 - [Docker Compose](https://docs.docker.com/compose/install/) or..
-- [Podman Compose](https://github.com/containers/podman-compose#installation)
 
 Once you have these and have [cloned the repository](#clone-the-repository), you'll also need to [install the other tools](#install-tools) and make sure that `$HOME/go/bin` is in your `PATH`.
 
@@ -81,7 +80,7 @@ The application will be available on `http://localhost:8080` and gRPC on `localh
 
 ## Running the server under Compose:
 
-**NOTE: the command will be either `docker-compose` or `podman-compose`, depending on which tool you installed.**  You'll need to install the [`ko`](https://ko.build/install/) tool do the build and run.
+**NOTE: the command will be `docker-compose`.**  You'll need to install the [`ko`](https://ko.build/install/) tool do the build and run.
 
 ```bash
 # The repo to push to; "ko.local" is a special string meaning your local Docker repo
