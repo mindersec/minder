@@ -5,6 +5,8 @@ type: profile
 name: acme-github-profile
 context:
   provider: github
+alert: "on"
+remediate: "off"
 repository:
   - type: secret_scanning
     def:

@@ -5,6 +5,8 @@ type: profile
 name: acme-github-profile-artifact
 context:
   provider: github
+alert: "on"
+remediate: "off"
 artifact:
   - type: artifact_signature
     params:
