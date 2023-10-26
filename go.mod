@@ -14,7 +14,7 @@ require (
 	github.com/evanphx/json-patch/v5 v5.7.0
 	github.com/fergusstrange/embedded-postgres v1.24.0
 	github.com/go-git/go-billy/v5 v5.5.0
-	github.com/go-git/go-git/v5 v5.9.0
+	github.com/go-git/go-git/v5 v5.10.0
 	github.com/go-playground/validator/v10 v10.15.5
 	github.com/golang-jwt/jwt/v4 v4.5.0
 	github.com/golang-migrate/migrate/v4 v4.16.2
