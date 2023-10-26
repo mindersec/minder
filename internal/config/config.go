@@ -40,6 +40,7 @@ type Config struct {
 	Salt          CryptoConfig       `mapstructure:"salt"`
 	Auth          AuthConfig         `mapstructure:"auth"`
 	WebhookConfig WebhookConfig      `mapstructure:"webhook-config"`
+	Events        EventConfig        `mapstructure:"events"`
 }
 
 // DefaultConfigForTest returns a configuration with all the struct defaults set,

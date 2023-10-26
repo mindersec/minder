@@ -107,3 +107,8 @@ github:
     # [*] for all events. It can also be a list such as [push,branch_protection_rule].
     # Please check complete list on https://docs.github.com/es/webhooks-and-events/webhooks/webhook-events-and-payloads
     events: ["*"]
+
+events:
+  driver: go-channel
+  router_close_timeout: 10s
+  go-channel: {}

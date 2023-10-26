@@ -86,7 +86,10 @@ func getgRPCConnection() (*grpc.ClientConn, error) {
 func newDefaultServer(t *testing.T, mockStore *mockdb.MockStore) *Server {
 	t.Helper()
 
-	evt, err := events.Setup()
+	evt, err := events.Setup(context.Background(), &config.EventConfig{
+		Driver:    "go-channel",
+		GoChannel: &config.GoChannelEventConfig{},
+	})
 	require.NoError(t, err, "failed to setup eventer")
 
 	var c *config.Config
