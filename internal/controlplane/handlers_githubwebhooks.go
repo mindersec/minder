@@ -141,6 +141,15 @@ func entityFromWebhookEventTypeKey(m *message.Message) pb.Entity {
 // for more information.
 func (s *Server) HandleGitHubWebHook() http.HandlerFunc {
 	return func(w http.ResponseWriter, r *http.Request) {
+		wes := webhookEventState{
+			typ:      "unknown",
+			accepted: false,
+			error:    true,
+		}
+		defer func() {
+			s.mt.webhookEventTypeCount(r.Context(), wes)
+		}()
+
 		// Validate the payload signature. This is required for security reasons.
 		// See https://docs.github.com/en/developers/webhooks-and-events/webhooks/securing-your-webhooks
 		// for more information. Note that this is not required for the GitHub App
@@ -159,76 +168,66 @@ func (s *Server) HandleGitHubWebHook() http.HandlerFunc {
 		typ := github.WebHookType(r)
 		if typ == "ping" {
 			log.Printf("ping received")
+			wes.error = false
 			return
 		}
+		wes.typ = typ
 
 		// TODO: extract sender and event time from payload portably
 		m := message.NewMessage(uuid.New().String(), nil)
 		m.Metadata.Set(events.ProviderDeliveryIdKey, github.DeliveryID(r))
 		m.Metadata.Set(events.ProviderTypeKey, string(db.ProviderTypeGithub))
 		m.Metadata.Set(events.ProviderSourceKey, "https://api.github.com/") // TODO: handle other sources
-		m.Metadata.Set(events.GithubWebhookEventTypeKey, github.WebHookType(r))
+		m.Metadata.Set(events.GithubWebhookEventTypeKey, typ)
 		// m.Metadata.Set("subject", ghEvent.GetRepo().GetFullName())
 		// m.Metadata.Set("time", ghEvent.GetCreatedAt().String())
 
 		log.Printf("publishing of type: %s", m.Metadata["type"])
 
 		if err := s.parseGithubEventForProcessing(rawWBPayload, m); err != nil {
-			handleParseError(r.Context(), w, typ, err)
+			wes = handleParseError(typ, err)
+			if wes.error {
+				w.WriteHeader(http.StatusInternalServerError)
+			}
 			return
 		}
 
-		if err := s.evt.Publish(engine.InternalEntityEventTopic, m); err != nil {
-			webhookEventTypeCount(r.Context(), webhookEventState{
-				typ:      m.Metadata.Get(events.GithubWebhookEventTypeKey),
-				accepted: true,
-				error:    true,
-			})
+		wes.accepted = true
 
+		if err := s.evt.Publish(engine.InternalEntityEventTopic, m); err != nil {
+			wes.error = true
 			log.Printf("Error publishing message: %v", err)
 			w.WriteHeader(http.StatusInternalServerError)
 			return
 		}
 
-		webhookEventTypeCount(r.Context(), webhookEventState{
-			typ:      m.Metadata.Get(events.GithubWebhookEventTypeKey),
-			accepted: true,
-			error:    false,
-		})
-
+		wes.error = false
 		w.WriteHeader(http.StatusOK)
 	}
 }
 
-func handleParseError(ctx context.Context, w http.ResponseWriter, typ string, parseErr error) {
-	errMap := map[error]string{
-		errRepoNotFound:     "repository not found",
-		errArtifactNotFound: "artifact not found",
-		errRepoIsPrivate:    "repository is private",
-		errNotHandled:       "webhook event not handled",
+func handleParseError(typ string, parseErr error) webhookEventState {
+	state := webhookEventState{typ: typ, accepted: false, error: true}
+
+	var logMsg string
+	switch {
+	case errors.Is(parseErr, errRepoNotFound):
+		state.error = false
+		logMsg = "repository not found"
+	case errors.Is(parseErr, errArtifactNotFound):
+		state.error = false
+		logMsg = "artifact not found"
+	case errors.Is(parseErr, errRepoIsPrivate):
+		state.error = false
+		logMsg = "repository is private"
+	case errors.Is(parseErr, errNotHandled):
+		state.error = false
+		logMsg = fmt.Sprintf("webhook event not handled (%v)", parseErr)
+	default:
+		logMsg = fmt.Sprintf("Error parsing github webhook message: %v", parseErr)
 	}
-
-	for err, msg := range errMap {
-		if errors.Is(parseErr, err) {
-			webhookEventTypeCount(ctx, webhookEventState{
-				typ:      typ,
-				accepted: false,
-				error:    false,
-			})
-
-			log.Print(msg)
-			w.WriteHeader(http.StatusOK)
-			return
-		}
-	}
-
-	webhookEventTypeCount(ctx, webhookEventState{
-		typ:      typ,
-		accepted: false,
-		error:    true,
-	})
-	log.Printf("Error parsing github webhook message: %v", parseErr)
-	w.WriteHeader(http.StatusInternalServerError)
+	log.Print(logMsg)
+	return state
 }
 
 // registerWebhookForRepository registers a set repository and sets up the webhook for each of them

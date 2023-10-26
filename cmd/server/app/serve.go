@@ -100,7 +100,9 @@ var serveCmd = &cobra.Command{
 			return fmt.Errorf("unable to subscribe to identity server events: %w", err)
 		}
 
-		s, err := controlplane.NewServer(store, evt, cfg, vldtr)
+		serverMetrics := controlplane.NewMetrics()
+
+		s, err := controlplane.NewServer(store, evt, serverMetrics, cfg, vldtr)
 		if err != nil {
 			return fmt.Errorf("unable to create server: %w", err)
 		}

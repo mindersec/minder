@@ -17,7 +17,7 @@ package controlplane
 
 import (
 	"context"
-	"net/http"
+	"fmt"
 
 	"go.opentelemetry.io/otel"
 	"go.opentelemetry.io/otel/attribute"
@@ -26,15 +26,24 @@ import (
 	"github.com/stacklok/mediator/internal/db"
 )
 
-// webhook http codes by type
-var webhookStatusCodeCounter metric.Int64Counter
+type metrics struct {
+	meter metric.Meter
 
-// webhook event type counter
-var webhookEventTypeCounter metric.Int64Counter
+	// webhook http codes by type
+	webhookStatusCodeCounter metric.Int64Counter
+	// webhook event type counter
+	webhookEventTypeCounter metric.Int64Counter
+}
 
-func initInstruments(store db.Store) error {
-	meter := otel.Meter("controlplane")
-	_, err := meter.Int64ObservableGauge("user.count",
+// NewMetrics creates a new controlplane metrics instance.
+func NewMetrics() *metrics {
+	return &metrics{
+		meter: otel.Meter("controlplane"),
+	}
+}
+
+func (m *metrics) initInstruments(store db.Store) error {
+	_, err := m.meter.Int64ObservableGauge("user.count",
 		metric.WithDescription("Number of users in the database"),
 		metric.WithUnit("users"),
 		metric.WithInt64Callback(func(ctx context.Context, observer metric.Int64Observer) error {
@@ -47,10 +56,10 @@ func initInstruments(store db.Store) error {
 		}),
 	)
 	if err != nil {
-		return err
+		return fmt.Errorf("failed to create user count gauge: %w", err)
 	}
 
-	_, err = meter.Int64ObservableGauge("profile_entity.count",
+	_, err = m.meter.Int64ObservableGauge("profile_entity.count",
 		metric.WithDescription("Number of profiles in the database, labeled by entity type"),
 		metric.WithUnit("profiles"),
 		metric.WithInt64Callback(func(ctx context.Context, observer metric.Int64Observer) error {
@@ -68,41 +77,24 @@ func initInstruments(store db.Store) error {
 		}),
 	)
 	if err != nil {
-		return err
+		return fmt.Errorf("failed to create profile count gauge: %w", err)
 	}
 
-	webhookStatusCodeCounter, err = meter.Int64Counter("webhook.status_code",
+	m.webhookStatusCodeCounter, err = m.meter.Int64Counter("webhook.status_code",
 		metric.WithDescription("Number of webhook requests by status code"),
 		metric.WithUnit("requests"))
 	if err != nil {
-		return err
+		return fmt.Errorf("failed to create webhook status code counter: %w", err)
 	}
 
-	webhookEventTypeCounter, err = meter.Int64Counter("webhook.event_type",
+	m.webhookEventTypeCounter, err = m.meter.Int64Counter("webhook.event_type",
 		metric.WithDescription("Number of webhook events by event type"),
 		metric.WithUnit("events"))
 	if err != nil {
-		return err
+		return fmt.Errorf("failed to create webhook event type counter: %w", err)
 	}
 
 	return nil
-}
-
-func webhookStatusCodeMiddleware(next http.Handler) http.HandlerFunc {
-	return func(w http.ResponseWriter, r *http.Request) {
-		recorder := &statusRecorder{ResponseWriter: w}
-		next.ServeHTTP(recorder, r)
-
-		statusCode := recorder.status
-		labels := []attribute.KeyValue{
-			attribute.Int("status_code", statusCode),
-		}
-		ctx := r.Context()
-
-		if webhookStatusCodeCounter != nil {
-			webhookStatusCodeCounter.Add(ctx, 1, metric.WithAttributes(labels...))
-		}
-	}
 }
 
 type webhookEventState struct {
@@ -114,8 +106,8 @@ type webhookEventState struct {
 	error bool
 }
 
-func webhookEventTypeCount(ctx context.Context, state webhookEventState) {
-	if webhookEventTypeCounter == nil {
+func (m *metrics) webhookEventTypeCount(ctx context.Context, state webhookEventState) {
+	if m.webhookEventTypeCounter == nil {
 		return
 	}
 
@@ -124,15 +116,5 @@ func webhookEventTypeCount(ctx context.Context, state webhookEventState) {
 		attribute.Bool("webhook_event.accepted", state.accepted),
 		attribute.Bool("webhook_event.error", state.error),
 	}
-	webhookStatusCodeCounter.Add(ctx, 1, metric.WithAttributes(labels...))
-}
-
-type statusRecorder struct {
-	http.ResponseWriter
-	status int
-}
-
-func (r *statusRecorder) WriteHeader(statusCode int) {
-	r.status = statusCode
-	r.ResponseWriter.WriteHeader(statusCode)
+	m.webhookEventTypeCounter.Add(ctx, 1, metric.WithAttributes(labels...))
 }

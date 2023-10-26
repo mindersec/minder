@@ -27,6 +27,7 @@ import (
 	"github.com/prometheus/client_golang/prometheus/promhttp"
 	_ "github.com/signalfx/splunk-otel-go/instrumentation/github.com/lib/pq/splunkpq" // Auto-instrumented version of lib/pq
 	"go.opentelemetry.io/contrib/instrumentation/google.golang.org/grpc/otelgrpc"
+	"go.opentelemetry.io/contrib/instrumentation/net/http/otelhttp"
 	"go.opentelemetry.io/otel"
 	"go.opentelemetry.io/otel/attribute"
 	"go.opentelemetry.io/otel/exporters/prometheus"
@@ -63,6 +64,7 @@ type Server struct {
 	store      db.Store
 	cfg        *config.Config
 	evt        *events.Eventer
+	mt         *metrics
 	grpcServer *grpc.Server
 	vldtr      auth.JwtValidator
 	pb.UnimplementedHealthServiceServer
@@ -79,7 +81,7 @@ type Server struct {
 }
 
 // NewServer creates a new server instance
-func NewServer(store db.Store, evt *events.Eventer, cfg *config.Config, vldtr auth.JwtValidator) (*Server, error) {
+func NewServer(store db.Store, evt *events.Eventer, cpm *metrics, cfg *config.Config, vldtr auth.JwtValidator) (*Server, error) {
 	eng, err := crypto.EngineFromAuthConfig(&cfg.Auth)
 	if err != nil {
 		return nil, fmt.Errorf("failed to create crypto engine: %w", err)
@@ -90,6 +92,7 @@ func NewServer(store db.Store, evt *events.Eventer, cfg *config.Config, vldtr au
 		evt:          evt,
 		cryptoEngine: eng,
 		vldtr:        vldtr,
+		mt:           cpm,
 	}, nil
 }
 
@@ -245,8 +248,10 @@ func (s *Server) StartHTTPServer(ctx context.Context) error {
 
 	fs := http.FileServer(http.Dir("assets/"))
 
+	mw := otelhttp.NewMiddleware("webhook")
+
 	mux.Handle("/", gwmux)
-	mux.HandleFunc("/api/v1/webhook/", webhookStatusCodeMiddleware(s.HandleGitHubWebHook()))
+	mux.Handle("/api/v1/webhook/", mw(s.HandleGitHubWebHook()))
 	mux.Handle("/static/", http.StripPrefix("/static/", fs))
 
 	errch := make(chan error)
@@ -304,7 +309,7 @@ func (s *Server) startMetricServer(ctx context.Context) error {
 		return mp.Shutdown(ctx)
 	})
 
-	err = initInstruments(s.store)
+	err = s.mt.initInstruments(s.store)
 	if err != nil {
 		return fmt.Errorf("could not initialize instruments: %w", err)
 	}
