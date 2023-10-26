@@ -105,7 +105,6 @@ type paramsSA struct {
 	Template        templateParamsSA
 	Owner           string
 	Repo            string
-	GHSA_ID         string
 	Summary         string
 	Description     string
 	Vulnerabilities []*github.AdvisoryVulnerability
@@ -252,7 +251,7 @@ func (alert *Alert) run(ctx context.Context, params *paramsSA, cmd interfaces.Ac
 			}
 			return nil, fmt.Errorf("error closing security advisory: %w, %w", err, enginerr.ErrActionFailed)
 		}
-		logger.Info().Str("ghsa_id", params.GHSA_ID).Msg("security advisory closed")
+		logger.Info().Str("ghsa_id", params.Metadata.ID).Msg("security advisory closed")
 		// Success - return ErrActionTurnedOff to indicate the action was successful
 		return nil, fmt.Errorf("%s : %w", alert.Class(), enginerr.ErrActionTurnedOff)
 	case interfaces.ActionCmdDoNothing:
@@ -283,7 +282,8 @@ func (alert *Alert) runDry(ctx context.Context, params *paramsSA, cmd interfaces
 			// We cannot do anything without the GHSA_ID, so we assume that closing this is a success
 			return fmt.Errorf("no security advisory GHSA_ID provided: %w", enginerr.ErrActionTurnedOff)
 		}
-		endpoint := fmt.Sprintf("repos/%v/%v/security-advisories/%v", params.Owner, params.Repo, params.GHSA_ID)
+		endpoint := fmt.Sprintf("repos/%v/%v/security-advisories/%v",
+			params.Owner, params.Repo, params.Metadata.ID)
 		body := "{\"state\": \"closed\"}"
 		curlCmd, err := util.GenerateCurlCommand("PATCH", alert.cli.GetBaseURL(), endpoint, body)
 		if err != nil {

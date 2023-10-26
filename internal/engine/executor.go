@@ -254,6 +254,8 @@ func logAction(ctx context.Context, actionType string, err error) {
 		logger.Debug().Str("action", actionType).Msg("skipped")
 	} else if errors.Is(err, evalerrors.ErrActionNotAvailable) {
 		logger.Debug().Str("action", actionType).Msg("not supported")
+	} else if errors.Is(err, evalerrors.ErrActionTurnedOff) {
+		logger.Debug().Str("action", actionType).Msg("turned off")
 	} else {
 		logger.Err(err).Str("action", actionType).Msg("processed for rule")
 	}
