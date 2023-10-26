@@ -4,6 +4,8 @@ type: profile
 name: acme-github-profile-pr-vuln-check
 context:
   provider: github
+alert: "on"
+remediate: "off"
 pull_request:
   - type: pr_vulnerability_check
     def:
