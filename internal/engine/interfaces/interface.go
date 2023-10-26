@@ -133,6 +133,10 @@ type EvalStatusParams struct {
 	actionsErr       evalerrors.ActionsError
 }
 
+// Ensure EvalStatusParams implements the necessary interfaces
+var _ ActionsParams = (*EvalStatusParams)(nil)
+var _ EvalParams = (*EvalStatusParams)(nil)
+
 // GetEvalErr returns the evaluation error
 func (e *EvalStatusParams) GetEvalErr() error {
 	return e.evalErr
