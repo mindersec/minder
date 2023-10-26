@@ -50,6 +50,27 @@ func initInstruments(store db.Store) error {
 		return err
 	}
 
+	_, err = meter.Int64ObservableGauge("profile_entity.count",
+		metric.WithDescription("Number of profiles in the database, labeled by entity type"),
+		metric.WithUnit("profiles"),
+		metric.WithInt64Callback(func(ctx context.Context, observer metric.Int64Observer) error {
+			rows, err := store.CountProfilesByEntityType(ctx)
+			if err != nil {
+				return err
+			}
+			for _, row := range rows {
+				labels := []attribute.KeyValue{
+					attribute.String("entity_type", string(row.ProfileEntity)),
+				}
+				observer.Observe(row.NumProfiles, metric.WithAttributes(labels...))
+			}
+			return nil
+		}),
+	)
+	if err != nil {
+		return err
+	}
+
 	webhookStatusCodeCounter, err = meter.Int64Counter("webhook.status_code",
 		metric.WithDescription("Number of webhook requests by status code"),
 		metric.WithUnit("requests"))
