@@ -33,10 +33,11 @@ Before we accept a non-trivial patch or pull request we will need you to sign th
 * Create an issue outlining the fix or feature.
 * Fork the mediator repository to your own github account and clone it locally.
 * Hack on your changes.
-* Correctly format your commit message see [Commit Messages](#Commit Message Guidelines) below.
+* Correctly format your commit messages, see [Commit Messages](#Commit Message Guidelines) below.
+* Open a PR by ensuring the title and its description reflect the content of the PR.
 * Ensure that CI passes, if it fails, fix the failures.
 * Every pull request requires a review from the core Mediator team before merging.
-* If your pull request consists of more than one commit, please squash your commits
+* Once approved, all of your commits will be squashed into a single commit with your PR title.
 
 #### Commit Message Guidelines
 We follow the commit formatting recommendations found on [Chris Beams' How to Write a Git Commit Message article](https://chris.beams.io/posts/git-commit/).
