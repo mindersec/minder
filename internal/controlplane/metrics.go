@@ -17,15 +17,20 @@ package controlplane
 
 import (
 	"context"
-	"github.com/stacklok/mediator/internal/db"
+	"net/http"
+
 	"go.opentelemetry.io/otel"
 	"go.opentelemetry.io/otel/attribute"
 	"go.opentelemetry.io/otel/metric"
-	"net/http"
+
+	"github.com/stacklok/mediator/internal/db"
 )
 
 // webhook http codes by type
 var webhookStatusCodeCounter metric.Int64Counter
+
+// webhook event type counter
+var webhookEventTypeCounter metric.Int64Counter
 
 func initInstruments(store db.Store) error {
 	meter := otel.Meter("controlplane")
@@ -48,6 +53,17 @@ func initInstruments(store db.Store) error {
 	webhookStatusCodeCounter, err = meter.Int64Counter("webhook.status_code",
 		metric.WithDescription("Number of webhook requests by status code"),
 		metric.WithUnit("requests"))
+	if err != nil {
+		return err
+	}
+
+	webhookEventTypeCounter, err = meter.Int64Counter("webhook.event_type",
+		metric.WithDescription("Number of webhook events by event type"),
+		metric.WithUnit("events"))
+	if err != nil {
+		return err
+	}
+
 	return nil
 }
 
@@ -66,6 +82,28 @@ func webhookStatusCodeMiddleware(next http.Handler) http.HandlerFunc {
 			webhookStatusCodeCounter.Add(ctx, 1, metric.WithAttributes(labels...))
 		}
 	}
+}
+
+type webhookEventState struct {
+	// the type of the event, e.g. pull_request, repository, workflow_run, ...
+	typ string
+	// whether the event was accepted by engine or filtered out
+	accepted bool
+	// whether there was an error processing the event
+	error bool
+}
+
+func webhookEventTypeCount(ctx context.Context, state webhookEventState) {
+	if webhookEventTypeCounter == nil {
+		return
+	}
+
+	labels := []attribute.KeyValue{
+		attribute.String("webhook_event.type", state.typ),
+		attribute.Bool("webhook_event.accepted", state.accepted),
+		attribute.Bool("webhook_event.error", state.error),
+	}
+	webhookStatusCodeCounter.Add(ctx, 1, metric.WithAttributes(labels...))
 }
 
 type statusRecorder struct {

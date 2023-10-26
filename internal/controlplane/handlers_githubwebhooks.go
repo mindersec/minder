@@ -174,34 +174,61 @@ func (s *Server) HandleGitHubWebHook() http.HandlerFunc {
 		log.Printf("publishing of type: %s", m.Metadata["type"])
 
 		if err := s.parseGithubEventForProcessing(rawWBPayload, m); err != nil {
-			// We won't leak when a repository or artifact is not found.
-			if errors.Is(err, errRepoNotFound) || errors.Is(err, errArtifactNotFound) {
-				log.Printf("Repository or artifact not found: %v", err)
-				w.WriteHeader(http.StatusOK)
-				return
-			} else if errors.Is(err, errRepoIsPrivate) {
-				log.Printf("Skipped webhook event processing: %v", err)
-				w.WriteHeader(http.StatusOK)
-				return
-			} else if errors.Is(err, errNotHandled) {
-				log.Printf("Skipped webhook event processing: %v", err)
-				w.WriteHeader(http.StatusOK)
-				return
-			}
-
-			log.Printf("Error parsing github webhook message: %v", err)
-			w.WriteHeader(http.StatusInternalServerError)
+			handleParseError(r.Context(), w, typ, err)
 			return
 		}
 
 		if err := s.evt.Publish(engine.InternalEntityEventTopic, m); err != nil {
+			webhookEventTypeCount(r.Context(), webhookEventState{
+				typ:      m.Metadata.Get(events.GithubWebhookEventTypeKey),
+				accepted: true,
+				error:    true,
+			})
+
 			log.Printf("Error publishing message: %v", err)
 			w.WriteHeader(http.StatusInternalServerError)
 			return
 		}
 
+		webhookEventTypeCount(r.Context(), webhookEventState{
+			typ:      m.Metadata.Get(events.GithubWebhookEventTypeKey),
+			accepted: true,
+			error:    false,
+		})
+
 		w.WriteHeader(http.StatusOK)
 	}
+}
+
+func handleParseError(ctx context.Context, w http.ResponseWriter, typ string, parseErr error) {
+	errMap := map[error]string{
+		errRepoNotFound:     "repository not found",
+		errArtifactNotFound: "artifact not found",
+		errRepoIsPrivate:    "repository is private",
+		errNotHandled:       "webhook event not handled",
+	}
+
+	for err, msg := range errMap {
+		if errors.Is(parseErr, err) {
+			webhookEventTypeCount(ctx, webhookEventState{
+				typ:      typ,
+				accepted: false,
+				error:    false,
+			})
+
+			log.Print(msg)
+			w.WriteHeader(http.StatusOK)
+			return
+		}
+	}
+
+	webhookEventTypeCount(ctx, webhookEventState{
+		typ:      typ,
+		accepted: false,
+		error:    true,
+	})
+	log.Printf("Error parsing github webhook message: %v", parseErr)
+	w.WriteHeader(http.StatusInternalServerError)
 }
 
 // registerWebhookForRepository registers a set repository and sets up the webhook for each of them
