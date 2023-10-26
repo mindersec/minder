@@ -42,28 +42,16 @@ func (e *Executor) createEvalStatusParams(
 		return nil, fmt.Errorf("error parsing profile ID: %w", err)
 	}
 
+	repoID, artID, prID := inf.GetEntityDBIDs()
+
 	params := &engif.EvalStatusParams{
-		Rule:       rule,
-		Profile:    profile,
-		ProfileID:  profileID,
-		RepoID:     uuid.MustParse(inf.OwnershipData[RepositoryIDEventKey]),
-		EntityType: entities.EntityTypeToDB(inf.Type),
-	}
-
-	artifactID, ok := inf.OwnershipData[ArtifactIDEventKey]
-	if ok {
-		params.ArtifactID = uuid.NullUUID{
-			UUID:  uuid.MustParse(artifactID),
-			Valid: true,
-		}
-	}
-
-	pullRequestID, ok := inf.OwnershipData[PullRequestIDEventKey]
-	if ok {
-		params.PullRequestID = uuid.NullUUID{
-			UUID:  uuid.MustParse(pullRequestID),
-			Valid: true,
-		}
+		Rule:          rule,
+		Profile:       profile,
+		ProfileID:     profileID,
+		EntityType:    entities.EntityTypeToDB(inf.Type),
+		RepoID:        repoID,
+		ArtifactID:    artID,
+		PullRequestID: prID,
 	}
 
 	// Prepare params for fetching the current rule evaluation from the database

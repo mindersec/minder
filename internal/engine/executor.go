@@ -28,6 +28,7 @@ import (
 	evalerrors "github.com/stacklok/minder/internal/engine/errors"
 	"github.com/stacklok/minder/internal/engine/ingestcache"
 	engif "github.com/stacklok/minder/internal/engine/interfaces"
+	"github.com/stacklok/minder/internal/entities"
 	"github.com/stacklok/minder/internal/events"
 	"github.com/stacklok/minder/internal/providers"
 	providertelemetry "github.com/stacklok/minder/internal/providers/telemetry"
@@ -35,15 +36,19 @@ import (
 )
 
 const (
-	// InternalEntityEventTopic is the topic for internal webhook events
-	InternalEntityEventTopic = "internal.entity.event"
+	// ExecuteEntityEventTopic is the topic for internal webhook events
+	ExecuteEntityEventTopic = "execute.entity.event"
+	// FlushEntityEventTopic is the topic for flushing internal webhook events
+	FlushEntityEventTopic = "flush.entity.event"
 )
 
 // Executor is the engine that executes the rules for a given event
 type Executor struct {
 	querier  db.Store
+	evt      *events.Eventer
 	crypteng *crypto.Engine
 	provMt   providertelemetry.ProviderMetrics
+	aggrMdw  events.AggregatorMiddleware
 }
 
 // ExecutorOption is a function that modifies an executor
@@ -56,10 +61,18 @@ func WithProviderMetrics(mt providertelemetry.ProviderMetrics) ExecutorOption {
 	}
 }
 
+// WithAggregatorMiddleware sets the aggregator middleware for the executor
+func WithAggregatorMiddleware(mdw events.AggregatorMiddleware) ExecutorOption {
+	return func(e *Executor) {
+		e.aggrMdw = mdw
+	}
+}
+
 // NewExecutor creates a new executor
 func NewExecutor(
 	querier db.Store,
 	authCfg *config.AuthConfig,
+	evt *events.Eventer,
 	opts ...ExecutorOption,
 ) (*Executor, error) {
 	crypteng, err := crypto.EngineFromAuthConfig(authCfg)
@@ -71,6 +84,7 @@ func NewExecutor(
 		querier:  querier,
 		crypteng: crypteng,
 		provMt:   providertelemetry.NewNoopMetrics(),
+		evt:      evt,
 	}
 
 	for _, opt := range opts {
@@ -82,18 +96,31 @@ func NewExecutor(
 
 // Register implements the Consumer interface.
 func (e *Executor) Register(r events.Registrar) {
-	r.Register(InternalEntityEventTopic, e.HandleEntityEvent)
+	if e.aggrMdw == nil {
+		r.Register(ExecuteEntityEventTopic, e.HandleEntityEvent)
+	} else {
+		r.Register(ExecuteEntityEventTopic, e.HandleEntityEvent,
+			e.aggrMdw.AggregateMiddleware)
+	}
 }
 
 // HandleEntityEvent handles events coming from webhooks/signals
 // as well as the init event.
 func (e *Executor) HandleEntityEvent(msg *message.Message) error {
-	inf, err := parseEntityEvent(msg)
+	ctx := msg.Context()
+
+	inf, err := ParseEntityEvent(msg)
 	if err != nil {
 		return fmt.Errorf("error unmarshalling payload: %w", err)
 	}
 
-	ctx := msg.Context()
+	if err := inf.withExecutionIDFromMessage(msg); err != nil {
+		logger := zerolog.Ctx(ctx)
+		logger.Info().
+			Str("message_id", msg.UUID).
+			Msg("message does not contain execution ID, skipping")
+		return nil
+	}
 
 	projectID := inf.ProjectID
 
@@ -145,6 +172,8 @@ func (e *Executor) evalEntityEvent(
 	// access.
 	ingestCache := ingestcache.NewCache()
 
+	defer e.releaseLockAndFlush(ctx, inf)
+
 	// Get profiles relevant to group
 	dbpols, err := e.querier.ListProfilesByProjectID(ctx, *inf.ProjectID)
 	if err != nil {
@@ -165,6 +194,9 @@ func (e *Executor) evalEntityEvent(
 			if err != nil {
 				return err
 			}
+
+			// Update the lock lease at the end of the evaluation
+			defer e.updateLockLease(ctx, *inf.ExecutionID, evalParams)
 
 			// Evaluate the rule
 			evalParams.SetEvalErr(rte.Eval(ctx, inf, evalParams))
@@ -187,6 +219,7 @@ func (e *Executor) evalEntityEvent(
 			return fmt.Errorf("error traversing rules for profile %s: %w", p, err)
 		}
 	}
+
 	return nil
 }
 
@@ -241,6 +274,77 @@ func (e *Executor) getEvaluator(
 
 	// All okay
 	return params, rte, nil
+}
+
+func (e *Executor) updateLockLease(
+	ctx context.Context,
+	executionID uuid.UUID,
+	params *engif.EvalStatusParams,
+) {
+	logger := zerolog.Ctx(ctx).Info().
+		Str("entity_type", string(params.EntityType)).
+		Str("execution_id", executionID.String()).
+		Str("repo_id", params.RepoID.String())
+	if params.ArtifactID.Valid {
+		logger = logger.Str("artifact_id", params.ArtifactID.UUID.String())
+	}
+	if params.PullRequestID.Valid {
+		logger = logger.Str("pull_request_id", params.PullRequestID.UUID.String())
+	}
+
+	if err := e.querier.UpdateLease(ctx, db.UpdateLeaseParams{
+		Entity:        params.EntityType,
+		RepositoryID:  params.RepoID,
+		ArtifactID:    params.ArtifactID,
+		PullRequestID: params.PullRequestID,
+		LockedBy:      executionID,
+	}); err != nil {
+		logger.Err(err).Msg("error updating lock lease")
+		return
+	}
+
+	logger.Msg("lock lease updated")
+}
+
+func (e *Executor) releaseLockAndFlush(
+	ctx context.Context,
+	inf *EntityInfoWrapper,
+) {
+	repoID, artID, prID := inf.GetEntityDBIDs()
+
+	logger := zerolog.Ctx(ctx).Info().
+		Str("entity_type", inf.Type.ToString()).
+		Str("execution_id", inf.ExecutionID.String()).
+		Str("repo_id", repoID.String())
+
+	if artID.Valid {
+		logger = logger.Str("artifact_id", artID.UUID.String())
+	}
+	if prID.Valid {
+		logger = logger.Str("pull_request_id", prID.UUID.String())
+	}
+
+	if err := e.querier.ReleaseLock(ctx, db.ReleaseLockParams{
+		Entity:        entities.EntityTypeToDB(inf.Type),
+		RepositoryID:  repoID,
+		ArtifactID:    artID,
+		PullRequestID: prID,
+		LockedBy:      *inf.ExecutionID,
+	}); err != nil {
+		logger.Err(err).Msg("error updating lock lease")
+	}
+
+	// We don't need to unset the execution ID because the event is going to be
+	// deleted from the database anyway. The aggregator will take care of that.
+	msg, err := inf.BuildMessage()
+	if err != nil {
+		logger.Err(err).Msg("error building message")
+		return
+	}
+
+	if err := e.evt.Publish(FlushEntityEventTopic, msg); err != nil {
+		logger.Err(err).Msg("error publishing flush event")
+	}
 }
 
 func logEval(
