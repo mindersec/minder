@@ -59,17 +59,17 @@ spec:
           - "--github-client-id-file=/secrets/app/client_id"
           - "--github-client-secret-file=/secrets/app/client_secret"
           env:
-          - name: "AUTH_ACCESS_TOKEN_PRIVATE_KEY"
+          - name: "MEDIATOR_AUTH_ACCESS_TOKEN_PRIVATE_KEY"
             value: "/secrets/auth/access_token_rsa"
-          - name: "AUTH_ACCESS_TOKEN_PUBLIC_KEY"
+          - name: "MEDIATOR_AUTH_ACCESS_TOKEN_PUBLIC_KEY"
             value: "/secrets/auth/access_token_rsa.pub"
-          - name: "AUTH_REFRESH_TOKEN_PRIVATE_KEY"
+          - name: "MEDIATOR_AUTH_REFRESH_TOKEN_PRIVATE_KEY"
             value: "/secrets/auth/refresh_token_rsa"
-          - name: "AUTH_REFRESH_TOKEN_PUBLIC_KEY"
+          - name: "MEDIATOR_AUTH_REFRESH_TOKEN_PUBLIC_KEY"
             value: "/secrets/auth/refresh_token_rsa.pub"
-          - name: "AUTH_TOKEN_KEY"
+          - name: "MEDIATOR_AUTH_TOKEN_KEY"
             value: "/secrets/auth/token_key_passphrase"
-          - name: "IDENTITY_SERVER_CLIENT_SECRET_FILE"
+          - name: "MEDIATOR_IDENTITY_SERVER_CLIENT_SECRET_FILE"
             value: "/secrets/identity/identity_client_secret"
           
           # ko will always specify a digest, so we don't need to worry about
