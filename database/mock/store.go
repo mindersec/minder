@@ -647,6 +647,36 @@ func (mr *MockStoreMockRecorder) DeleteUser(arg0, arg1 interface{}) *gomock.Call
 	return mr.mock.ctrl.RecordCallWithMethodType(mr.mock, "DeleteUser", reflect.TypeOf((*MockStore)(nil).DeleteUser), arg0, arg1)
 }
 
+// EnqueueFlush mocks base method.
+func (m *MockStore) EnqueueFlush(arg0 context.Context, arg1 db.EnqueueFlushParams) (db.FlushCache, error) {
+	m.ctrl.T.Helper()
+	ret := m.ctrl.Call(m, "EnqueueFlush", arg0, arg1)
+	ret0, _ := ret[0].(db.FlushCache)
+	ret1, _ := ret[1].(error)
+	return ret0, ret1
+}
+
+// EnqueueFlush indicates an expected call of EnqueueFlush.
+func (mr *MockStoreMockRecorder) EnqueueFlush(arg0, arg1 interface{}) *gomock.Call {
+	mr.mock.ctrl.T.Helper()
+	return mr.mock.ctrl.RecordCallWithMethodType(mr.mock, "EnqueueFlush", reflect.TypeOf((*MockStore)(nil).EnqueueFlush), arg0, arg1)
+}
+
+// FlushCache mocks base method.
+func (m *MockStore) FlushCache(arg0 context.Context, arg1 db.FlushCacheParams) (db.FlushCache, error) {
+	m.ctrl.T.Helper()
+	ret := m.ctrl.Call(m, "FlushCache", arg0, arg1)
+	ret0, _ := ret[0].(db.FlushCache)
+	ret1, _ := ret[1].(error)
+	return ret0, ret1
+}
+
+// FlushCache indicates an expected call of FlushCache.
+func (mr *MockStoreMockRecorder) FlushCache(arg0, arg1 interface{}) *gomock.Call {
+	mr.mock.ctrl.T.Helper()
+	return mr.mock.ctrl.RecordCallWithMethodType(mr.mock, "FlushCache", reflect.TypeOf((*MockStore)(nil).FlushCache), arg0, arg1)
+}
+
 // GetAccessTokenByProjectID mocks base method.
 func (m *MockStore) GetAccessTokenByProjectID(arg0 context.Context, arg1 db.GetAccessTokenByProjectIDParams) (db.ProviderAccessToken, error) {
 	m.ctrl.T.Helper()
@@ -1067,6 +1097,21 @@ func (mr *MockStoreMockRecorder) GetPullRequest(arg0, arg1 interface{}) *gomock.
 	return mr.mock.ctrl.RecordCallWithMethodType(mr.mock, "GetPullRequest", reflect.TypeOf((*MockStore)(nil).GetPullRequest), arg0, arg1)
 }
 
+// GetPullRequestByID mocks base method.
+func (m *MockStore) GetPullRequestByID(arg0 context.Context, arg1 uuid.UUID) (db.PullRequest, error) {
+	m.ctrl.T.Helper()
+	ret := m.ctrl.Call(m, "GetPullRequestByID", arg0, arg1)
+	ret0, _ := ret[0].(db.PullRequest)
+	ret1, _ := ret[1].(error)
+	return ret0, ret1
+}
+
+// GetPullRequestByID indicates an expected call of GetPullRequestByID.
+func (mr *MockStoreMockRecorder) GetPullRequestByID(arg0, arg1 interface{}) *gomock.Call {
+	mr.mock.ctrl.T.Helper()
+	return mr.mock.ctrl.RecordCallWithMethodType(mr.mock, "GetPullRequestByID", reflect.TypeOf((*MockStore)(nil).GetPullRequestByID), arg0, arg1)
+}
+
 // GetQuerierWithTransaction mocks base method.
 func (m *MockStore) GetQuerierWithTransaction(arg0 *sql.Tx) db.ExtendQuerier {
 	m.ctrl.T.Helper()
@@ -1426,6 +1471,21 @@ func (mr *MockStoreMockRecorder) ListArtifactsByRepoID(arg0, arg1 interface{}) *
 	return mr.mock.ctrl.RecordCallWithMethodType(mr.mock, "ListArtifactsByRepoID", reflect.TypeOf((*MockStore)(nil).ListArtifactsByRepoID), arg0, arg1)
 }
 
+// ListFlushCache mocks base method.
+func (m *MockStore) ListFlushCache(arg0 context.Context) ([]db.FlushCache, error) {
+	m.ctrl.T.Helper()
+	ret := m.ctrl.Call(m, "ListFlushCache", arg0)
+	ret0, _ := ret[0].([]db.FlushCache)
+	ret1, _ := ret[1].(error)
+	return ret0, ret1
+}
+
+// ListFlushCache indicates an expected call of ListFlushCache.
+func (mr *MockStoreMockRecorder) ListFlushCache(arg0 interface{}) *gomock.Call {
+	mr.mock.ctrl.T.Helper()
+	return mr.mock.ctrl.RecordCallWithMethodType(mr.mock, "ListFlushCache", reflect.TypeOf((*MockStore)(nil).ListFlushCache), arg0)
+}
+
 // ListOrganizations mocks base method.
 func (m *MockStore) ListOrganizations(arg0 context.Context, arg1 db.ListOrganizationsParams) ([]db.Project, error) {
 	m.ctrl.T.Helper()
@@ -1651,6 +1711,35 @@ func (mr *MockStoreMockRecorder) ListUsersByRoleId(arg0, arg1 interface{}) *gomo
 	return mr.mock.ctrl.RecordCallWithMethodType(mr.mock, "ListUsersByRoleId", reflect.TypeOf((*MockStore)(nil).ListUsersByRoleId), arg0, arg1)
 }
 
+// LockIfThresholdNotExceeded mocks base method.
+func (m *MockStore) LockIfThresholdNotExceeded(arg0 context.Context, arg1 db.LockIfThresholdNotExceededParams) (db.EntityExecutionLock, error) {
+	m.ctrl.T.Helper()
+	ret := m.ctrl.Call(m, "LockIfThresholdNotExceeded", arg0, arg1)
+	ret0, _ := ret[0].(db.EntityExecutionLock)
+	ret1, _ := ret[1].(error)
+	return ret0, ret1
+}
+
+// LockIfThresholdNotExceeded indicates an expected call of LockIfThresholdNotExceeded.
+func (mr *MockStoreMockRecorder) LockIfThresholdNotExceeded(arg0, arg1 interface{}) *gomock.Call {
+	mr.mock.ctrl.T.Helper()
+	return mr.mock.ctrl.RecordCallWithMethodType(mr.mock, "LockIfThresholdNotExceeded", reflect.TypeOf((*MockStore)(nil).LockIfThresholdNotExceeded), arg0, arg1)
+}
+
+// ReleaseLock mocks base method.
+func (m *MockStore) ReleaseLock(arg0 context.Context, arg1 db.ReleaseLockParams) error {
+	m.ctrl.T.Helper()
+	ret := m.ctrl.Call(m, "ReleaseLock", arg0, arg1)
+	ret0, _ := ret[0].(error)
+	return ret0
+}
+
+// ReleaseLock indicates an expected call of ReleaseLock.
+func (mr *MockStoreMockRecorder) ReleaseLock(arg0, arg1 interface{}) *gomock.Call {
+	mr.mock.ctrl.T.Helper()
+	return mr.mock.ctrl.RecordCallWithMethodType(mr.mock, "ReleaseLock", reflect.TypeOf((*MockStore)(nil).ReleaseLock), arg0, arg1)
+}
+
 // Rollback mocks base method.
 func (m *MockStore) Rollback(arg0 *sql.Tx) error {
 	m.ctrl.T.Helper()
@@ -1678,6 +1767,20 @@ func (m *MockStore) UpdateAccessToken(arg0 context.Context, arg1 db.UpdateAccess
 func (mr *MockStoreMockRecorder) UpdateAccessToken(arg0, arg1 interface{}) *gomock.Call {
 	mr.mock.ctrl.T.Helper()
 	return mr.mock.ctrl.RecordCallWithMethodType(mr.mock, "UpdateAccessToken", reflect.TypeOf((*MockStore)(nil).UpdateAccessToken), arg0, arg1)
+}
+
+// UpdateLease mocks base method.
+func (m *MockStore) UpdateLease(arg0 context.Context, arg1 db.UpdateLeaseParams) error {
+	m.ctrl.T.Helper()
+	ret := m.ctrl.Call(m, "UpdateLease", arg0, arg1)
+	ret0, _ := ret[0].(error)
+	return ret0
+}
+
+// UpdateLease indicates an expected call of UpdateLease.
+func (mr *MockStoreMockRecorder) UpdateLease(arg0, arg1 interface{}) *gomock.Call {
+	mr.mock.ctrl.T.Helper()
+	return mr.mock.ctrl.RecordCallWithMethodType(mr.mock, "UpdateLease", reflect.TypeOf((*MockStore)(nil).UpdateLease), arg0, arg1)
 }
 
 // UpdateOrganization mocks base method.

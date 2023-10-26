@@ -15,6 +15,7 @@
 package engine_test
 
 import (
+	"context"
 	"encoding/base64"
 	"encoding/json"
 	"os"
@@ -32,6 +33,8 @@ import (
 	"github.com/stacklok/minder/internal/crypto"
 	"github.com/stacklok/minder/internal/db"
 	"github.com/stacklok/minder/internal/engine"
+	"github.com/stacklok/minder/internal/events"
+	"github.com/stacklok/minder/internal/util/testqueue"
 	minderv1 "github.com/stacklok/minder/pkg/api/protobuf/go/minder/v1"
 )
 
@@ -77,6 +80,7 @@ func TestExecutor_handleEntityEvent(t *testing.T) {
 	profileID := uuid.New()
 	ruleTypeID := uuid.New()
 	repositoryID := uuid.New()
+	executionID := uuid.New()
 
 	authtoken := generateFakeAccessToken(t)
 
@@ -225,6 +229,27 @@ default allow = true`,
 			Metadata:   meta,
 			Details:    "",
 		}).Return(ruleEvalAlertId, nil)
+
+	// Mock update lease for lock
+	mockStore.EXPECT().
+		UpdateLease(gomock.Any(), db.UpdateLeaseParams{
+			Entity:        db.EntitiesRepository,
+			RepositoryID:  repositoryID,
+			ArtifactID:    uuid.NullUUID{},
+			PullRequestID: uuid.NullUUID{},
+			LockedBy:      executionID,
+		}).Return(nil)
+
+	// Mock release lock
+	mockStore.EXPECT().
+		ReleaseLock(gomock.Any(), db.ReleaseLockParams{
+			Entity:        db.EntitiesRepository,
+			RepositoryID:  repositoryID,
+			ArtifactID:    uuid.NullUUID{},
+			PullRequestID: uuid.NullUUID{},
+			LockedBy:      executionID,
+		}).Return(nil)
+
 	// -- end expectations
 
 	tmpdir := t.TempDir()
@@ -235,10 +260,29 @@ default allow = true`,
 	err = os.WriteFile(tokenKeyPath, []byte(fakeTokenKey), 0600)
 	require.NoError(t, err, "expected no error")
 
+	evt, err := events.Setup(context.Background(), &config.EventConfig{
+		Driver: "go-channel",
+		GoChannel: config.GoChannelEventConfig{
+			BlockPublishUntilSubscriberAck: true,
+		},
+	})
+	require.NoError(t, err, "failed to setup eventer")
+
+	go func() {
+		t.Log("Running eventer")
+		err := evt.Run(context.Background())
+		require.NoError(t, err, "failed to run eventer")
+	}()
+
+	pq := testqueue.NewPassthroughQueue()
+	queued := pq.GetQueue()
+
 	e, err := engine.NewExecutor(mockStore, &config.AuthConfig{
 		TokenKey: tokenKeyPath,
-	})
+	}, evt)
 	require.NoError(t, err, "expected no error")
+
+	evt.Register(engine.FlushEntityEventTopic, pq.Pass)
 
 	eiw := engine.NewEntityInfoWrapper().
 		WithProvider(providerName).
@@ -247,10 +291,24 @@ default allow = true`,
 			Name:     "test",
 			RepoId:   123,
 			CloneUrl: "github.com/foo/bar.git",
-		}).WithRepositoryID(repositoryID)
+		}).WithRepositoryID(repositoryID).
+		WithExecutionID(executionID)
 
 	msg, err := eiw.BuildMessage()
 	require.NoError(t, err, "expected no error")
 
-	require.NoError(t, e.HandleEntityEvent(msg), "expected no error")
+	// Run in the background
+	go func() {
+		t.Log("Running entity event handler")
+		require.NoError(t, e.HandleEntityEvent(msg), "expected no error")
+	}()
+
+	t.Log("waiting for eventer to start")
+	<-evt.Running()
+
+	// expect flush
+	t.Log("waiting for flush")
+	require.NotNil(t, <-queued, "expected message")
+
+	require.NoError(t, evt.Close(), "expected no error")
 }

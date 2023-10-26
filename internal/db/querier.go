@@ -53,6 +53,8 @@ type Querier interface {
 	DeleteSessionStateByProjectID(ctx context.Context, arg DeleteSessionStateByProjectIDParams) error
 	DeleteSigningKey(ctx context.Context, arg DeleteSigningKeyParams) error
 	DeleteUser(ctx context.Context, id int32) error
+	EnqueueFlush(ctx context.Context, arg EnqueueFlushParams) (FlushCache, error)
+	FlushCache(ctx context.Context, arg FlushCacheParams) (FlushCache, error)
 	GetAccessTokenByProjectID(ctx context.Context, arg GetAccessTokenByProjectIDParams) (ProviderAccessToken, error)
 	GetAccessTokenByProvider(ctx context.Context, provider string) ([]ProviderAccessToken, error)
 	GetAccessTokenSinceDate(ctx context.Context, arg GetAccessTokenSinceDateParams) (ProviderAccessToken, error)
@@ -83,6 +85,7 @@ type Querier interface {
 	GetProviderByID(ctx context.Context, arg GetProviderByIDParams) (Provider, error)
 	GetProviderByName(ctx context.Context, arg GetProviderByNameParams) (Provider, error)
 	GetPullRequest(ctx context.Context, arg GetPullRequestParams) (PullRequest, error)
+	GetPullRequestByID(ctx context.Context, id uuid.UUID) (PullRequest, error)
 	GetRepositoryByID(ctx context.Context, id uuid.UUID) (Repository, error)
 	GetRepositoryByIDAndProject(ctx context.Context, arg GetRepositoryByIDAndProjectParams) (Repository, error)
 	GetRepositoryByRepoID(ctx context.Context, repoID int32) (Repository, error)
@@ -105,6 +108,7 @@ type Querier interface {
 	ListArtifactVersionsByArtifactID(ctx context.Context, arg ListArtifactVersionsByArtifactIDParams) ([]ArtifactVersion, error)
 	ListArtifactVersionsByArtifactIDAndTag(ctx context.Context, arg ListArtifactVersionsByArtifactIDAndTagParams) ([]ArtifactVersion, error)
 	ListArtifactsByRepoID(ctx context.Context, repositoryID uuid.UUID) ([]Artifact, error)
+	ListFlushCache(ctx context.Context) ([]FlushCache, error)
 	ListOrganizations(ctx context.Context, arg ListOrganizationsParams) ([]Project, error)
 	ListProfilesByProjectID(ctx context.Context, projectID uuid.UUID) ([]ListProfilesByProjectIDRow, error)
 	// get profile information that instantiate a rule. This is done by joining the profiles with entity_profiles, then correlating those
@@ -123,7 +127,18 @@ type Querier interface {
 	ListUsersByOrganization(ctx context.Context, arg ListUsersByOrganizationParams) ([]User, error)
 	ListUsersByProject(ctx context.Context, arg ListUsersByProjectParams) ([]User, error)
 	ListUsersByRoleId(ctx context.Context, roleID int32) ([]int32, error)
+	// LockIfThresholdNotExceeded is used to lock an entity for execution. It will
+	// attempt to insert or update the entity_execution_lock table only if the
+	// last_lock_time is older than the threshold. If the lock is successful, it
+	// will return the lock record. If the lock is unsuccessful, it will return
+	// NULL.
+	LockIfThresholdNotExceeded(ctx context.Context, arg LockIfThresholdNotExceededParams) (EntityExecutionLock, error)
+	// ReleaseLock is used to release a lock on an entity. It will delete the
+	// entity_execution_lock record if the lock is held by the given locked_by
+	// value.
+	ReleaseLock(ctx context.Context, arg ReleaseLockParams) error
 	UpdateAccessToken(ctx context.Context, arg UpdateAccessTokenParams) (ProviderAccessToken, error)
+	UpdateLease(ctx context.Context, arg UpdateLeaseParams) error
 	UpdateOrganization(ctx context.Context, arg UpdateOrganizationParams) (Project, error)
 	UpdateProfile(ctx context.Context, arg UpdateProfileParams) (Profile, error)
 	// set clone_url if the value is not an empty string

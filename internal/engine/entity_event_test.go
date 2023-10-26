@@ -163,7 +163,7 @@ func Test_parseEntityEvent(t *testing.T) {
 				msg.Metadata.Set(PullRequestIDEventKey, tt.args.ownership["pull_request_id"])
 			}
 
-			got, err := parseEntityEvent(msg)
+			got, err := ParseEntityEvent(msg)
 			if tt.wantErr {
 				require.Error(t, err, "expected error")
 				require.Nil(t, got, "expected nil entity info")

@@ -23,6 +23,7 @@ import (
 	"net/http"
 	"time"
 
+	"github.com/ThreeDotsLabs/watermill/message"
 	"github.com/grpc-ecosystem/grpc-gateway/v2/runtime"
 	"github.com/prometheus/client_golang/prometheus/promhttp"
 	_ "github.com/signalfx/splunk-otel-go/instrumentation/github.com/lib/pq/splunkpq" // Auto-instrumented version of lib/pq
@@ -145,8 +146,8 @@ func (s *Server) initTracer() (*sdktrace.TracerProvider, error) {
 }
 
 // Register implements events.Registrar
-func (s *Server) Register(topic string, handler events.Handler) {
-	s.evt.Register(topic, handler)
+func (s *Server) Register(topic string, handler events.Handler, mdw ...message.HandlerMiddleware) {
+	s.evt.Register(topic, handler, mdw...)
 }
 
 // ConsumeEvents implements events.Registrar

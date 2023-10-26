@@ -62,7 +62,7 @@ type Registrar interface {
 	// functions, or to call Register multiple times with different topics and the same
 	// handler function.  It's allowed to call Register with both argument the same, but
 	// then events will be delivered twice to the handler, which is probably not what you want.
-	Register(topic string, handler Handler)
+	Register(topic string, handler Handler, mdw ...message.HandlerMiddleware)
 
 	// HandleAll registers all the consumers with the registrar
 	// TODO: should this be a different interface?
@@ -74,6 +74,12 @@ type Registrar interface {
 // event router using the HandleAll interface.
 type Consumer interface {
 	Register(Registrar)
+}
+
+// AggregatorMiddleware is an interface that allows the eventer to
+// add middleware to the router
+type AggregatorMiddleware interface {
+	AggregateMiddleware(h message.HandlerFunc) message.HandlerFunc
 }
 
 // Eventer is a wrapper over the relevant eventing objects in such
@@ -215,10 +221,11 @@ func (e *Eventer) Publish(topic string, messages ...*message.Message) error {
 func (e *Eventer) Register(
 	topic string,
 	handler message.NoPublishHandlerFunc,
+	mdw ...message.HandlerMiddleware,
 ) {
 	// From https://stackoverflow.com/questions/7052693/how-to-get-the-name-of-a-function-in-go
 	funcName := fmt.Sprintf("%s-%s", runtime.FuncForPC(reflect.ValueOf(handler).Pointer()).Name(), topic)
-	e.router.AddNoPublisherHandler(
+	hand := e.router.AddNoPublisherHandler(
 		funcName,
 		topic,
 		e.webhookSubscriber,
@@ -243,6 +250,10 @@ func (e *Eventer) Register(
 			return nil
 		},
 	)
+
+	for _, m := range mdw {
+		hand.AddMiddleware(m)
+	}
 }
 
 // ConsumeEvents allows registration of multiple consumers easily

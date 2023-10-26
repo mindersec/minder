@@ -74,6 +74,24 @@ func (q *Queries) GetPullRequest(ctx context.Context, arg GetPullRequestParams) 
 	return i, err
 }
 
+const getPullRequestByID = `-- name: GetPullRequestByID :one
+SELECT id, repository_id, pr_number, created_at, updated_at FROM pull_requests
+WHERE id = $1
+`
+
+func (q *Queries) GetPullRequestByID(ctx context.Context, id uuid.UUID) (PullRequest, error) {
+	row := q.db.QueryRowContext(ctx, getPullRequestByID, id)
+	var i PullRequest
+	err := row.Scan(
+		&i.ID,
+		&i.RepositoryID,
+		&i.PrNumber,
+		&i.CreatedAt,
+		&i.UpdatedAt,
+	)
+	return i, err
+}
+
 const upsertPullRequest = `-- name: UpsertPullRequest :one
 INSERT INTO pull_requests (
     repository_id,
