@@ -183,7 +183,7 @@ func (r *Remediator) Do(
 	_ interfaces.ActionCmd,
 	remAction interfaces.ActionOpt,
 	ent protoreflect.ProtoMessage,
-	evalParams *interfaces.EvalStatusParams,
+	params interfaces.ActionsParams,
 	_ *json.RawMessage,
 ) (json.RawMessage, error) {
 	repo, ok := ent.(*pb.Repository)
@@ -193,8 +193,8 @@ func (r *Remediator) Do(
 
 	tmplParams := &PrTemplateParams{
 		Entity:  ent,
-		Profile: evalParams.Rule.Def.AsMap(),
-		Params:  evalParams.Rule.Params.AsMap(),
+		Profile: params.GetRule().Def.AsMap(),
+		Params:  params.GetRule().Params.AsMap(),
 	}
 
 	title := new(bytes.Buffer)
@@ -222,7 +222,7 @@ func (r *Remediator) Do(
 			zerolog.Ctx(ctx).Info().Msg("PR already exists, won't create a new one")
 			return nil, nil
 		}
-		remErr = r.run(ctx, repo, title.String(), prFullBodyText, evalParams.Rule.Params.AsMap())
+		remErr = r.run(ctx, repo, title.String(), prFullBodyText, params.GetRule().Params.AsMap())
 	case interfaces.ActionOptDryRun:
 		dryRun(title.String(), prFullBodyText, r.entries)
 		remErr = nil

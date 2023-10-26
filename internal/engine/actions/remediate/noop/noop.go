@@ -59,7 +59,7 @@ func (r *Remediator) Do(
 	_ interfaces.ActionCmd,
 	_ interfaces.ActionOpt,
 	_ protoreflect.ProtoMessage,
-	_ *interfaces.EvalStatusParams,
+	_ interfaces.ActionsParams,
 	_ *json.RawMessage,
 ) (json.RawMessage, error) {
 	return nil, fmt.Errorf("%s:%w", r.Class(), enginerr.ErrActionNotAvailable)

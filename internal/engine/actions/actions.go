@@ -76,7 +76,7 @@ func NewRuleActions(p *mediatorv1.Profile, rt *mediatorv1.RuleType, pbuild *prov
 func (rae *RuleActionsEngine) DoActions(
 	ctx context.Context,
 	ent protoreflect.ProtoMessage,
-	evalParams *engif.EvalStatusParams,
+	params engif.ActionsParams,
 ) enginerr.ActionsError {
 	// Get logger
 	logger := zerolog.Ctx(ctx)
@@ -92,7 +92,7 @@ func (rae *RuleActionsEngine) DoActions(
 		logger.Error().Str("action_type", string(remediate.ActionType)).Msg("not found")
 		result.RemediateErr = fmt.Errorf("%s:%w", remediate.ActionType, enginerr.ErrActionNotAvailable)
 	} else {
-		skipRemediate = rae.isSkippable(ctx, remediate.ActionType, evalParams.EvalErr)
+		skipRemediate = rae.isSkippable(ctx, remediate.ActionType, params.GetEvalErr())
 	}
 
 	// Verify the alert action engine is available and get its status - on/off/dry-run
@@ -101,25 +101,25 @@ func (rae *RuleActionsEngine) DoActions(
 		logger.Error().Str("action_type", string(alert.ActionType)).Msg("not found")
 		result.AlertErr = fmt.Errorf("%s:%w", alert.ActionType, enginerr.ErrActionNotAvailable)
 	} else {
-		skipAlert = rae.isSkippable(ctx, alert.ActionType, evalParams.EvalErr)
+		skipAlert = rae.isSkippable(ctx, alert.ActionType, params.GetEvalErr())
 	}
 
 	// Try remediating
 	if !skipRemediate {
 		// Decide if we should remediate
-		cmd := shouldRemediate(evalParams.EvalStatusFromDb, evalParams.EvalErr)
+		cmd := shouldRemediate(params.GetEvalStatusFromDb(), params.GetEvalErr())
 		// Run remediation
-		result.RemediateMeta, result.RemediateErr = rae.processAction(ctx, remediate.ActionType, cmd, ent, evalParams,
+		result.RemediateMeta, result.RemediateErr = rae.processAction(ctx, remediate.ActionType, cmd, ent, params,
 			nil)
 	}
 
 	// Try alerting
 	if !skipAlert {
 		// Decide if we should alert
-		cmd := shouldAlert(evalParams.EvalStatusFromDb, evalParams.EvalErr, result.RemediateErr, remediateEngine.Type())
+		cmd := shouldAlert(params.GetEvalStatusFromDb(), params.GetEvalErr(), result.RemediateErr, remediateEngine.Type())
 		// Run alerting
-		result.AlertMeta, result.AlertErr = rae.processAction(ctx, alert.ActionType, cmd, ent, evalParams,
-			getMeta(evalParams.EvalStatusFromDb.AlertMetadata))
+		result.AlertMeta, result.AlertErr = rae.processAction(ctx, alert.ActionType, cmd, ent, params,
+			getMeta(params.GetEvalStatusFromDb().AlertMetadata))
 	}
 	return result
 }
@@ -130,29 +130,13 @@ func (rae *RuleActionsEngine) processAction(
 	actionType engif.ActionType,
 	cmd engif.ActionCmd,
 	ent protoreflect.ProtoMessage,
-	evalParams *engif.EvalStatusParams,
+	params engif.ActionsParams,
 	metadata *json.RawMessage,
 ) (json.RawMessage, error) {
-	var retMeta json.RawMessage
-	// Get logger
-	logger := zerolog.Ctx(ctx)
 	// Get action engine
 	action := rae.actions[actionType]
-	// Run the action
-	newMeta, retErr := action.Do(ctx, cmd, rae.actionsOnOff[actionType], ent, evalParams, metadata)
-	// Make sure we don't try to push a nil json.RawMessage accidentally
-	if newMeta != nil {
-		retMeta = newMeta
-	} else {
-		// Default to an empty json struct if the action did not return anything
-		m, err := json.Marshal(&map[string]any{})
-		if err != nil {
-			logger.Error().Err(err).Msg("error marshaling empty json.RawMessage")
-		}
-		retMeta = m
-	}
 	// Return the result of the action
-	return retMeta, retErr
+	return action.Do(ctx, cmd, rae.actionsOnOff[actionType], ent, params, metadata)
 }
 
 // shouldRemediate returns the action command for remediation taking into account previous evaluations

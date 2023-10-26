@@ -27,6 +27,7 @@ import (
 
 	"github.com/stacklok/mediator/internal/db"
 	"github.com/stacklok/mediator/internal/engine/actions"
+	enginerr "github.com/stacklok/mediator/internal/engine/errors"
 	"github.com/stacklok/mediator/internal/engine/eval"
 	"github.com/stacklok/mediator/internal/engine/ingestcache"
 	"github.com/stacklok/mediator/internal/engine/ingester"
@@ -215,7 +216,7 @@ func NewRuleTypeEngine(
 
 	// Set organization if it exists
 	if rt.Context.Organization != nil && *rt.Context.Organization != "" {
-		// We need to clone the string because the pointer is to a string literal
+		// We need to clone the string because the pointer is to a string literal,
 		// and we don't want to modify that
 		org := strings.Clone(*rt.Context.Organization)
 		rte.Meta.Organization = &org
@@ -248,32 +249,35 @@ func (r *RuleTypeEngine) GetRuleInstanceValidator() *RuleValidator {
 }
 
 // Eval runs the rule type engine against the given entity
-func (r *RuleTypeEngine) Eval(ctx context.Context, inf *EntityInfoWrapper, evalParams *engif.EvalStatusParams) {
-	result, ok := r.ingestCache.Get(r.rdi, inf.Entity, evalParams.Rule.Params)
+func (r *RuleTypeEngine) Eval(ctx context.Context, inf *EntityInfoWrapper, params engif.EvalParams) error {
+	// Try looking at the ingesting cache first
+	result, ok := r.ingestCache.Get(r.rdi, inf.Entity, params.GetRule().Params)
 	if !ok {
 		var err error
-		result, err = r.rdi.Ingest(ctx, inf.Entity, evalParams.Rule.Params.AsMap())
+		// Ingest the data needed for the rule evaluation
+		result, err = r.rdi.Ingest(ctx, inf.Entity, params.GetRule().Params.AsMap())
 		if err != nil {
-			evalParams.EvalErr = fmt.Errorf("error ingesting data: %w", err)
-			return
+			// Ingesting failed, so we can't evaluate the rule.
+			// Note that for some types of ingesting the evalErr can already be set from the ingester.
+			return fmt.Errorf("error ingesting data: %w", err)
 		}
 
-		r.ingestCache.Set(r.rdi, inf.Entity, evalParams.Rule.Params, result)
+		r.ingestCache.Set(r.rdi, inf.Entity, params.GetRule().Params, result)
 	} else {
 		log.Printf("Using cached result for %s", r.GetID())
 	}
-
-	evalParams.EvalErr = r.reval.Eval(ctx, evalParams.Rule.Def.AsMap(), result)
+	// Process evaluation
+	return r.reval.Eval(ctx, params.GetRule().Def.AsMap(), result)
 }
 
 // Actions runs all actions for the rule type engine against the given entity
 func (r *RuleTypeEngine) Actions(
 	ctx context.Context,
 	inf *EntityInfoWrapper,
-	evalParams *engif.EvalStatusParams,
-) {
+	params engif.ActionsParams,
+) enginerr.ActionsError {
 	// Process actions
-	evalParams.ActionsErr = r.rae.DoActions(ctx, inf.Entity, evalParams)
+	return r.rae.DoActions(ctx, inf.Entity, params)
 }
 
 // RuleDefFromDB converts a rule type definition from the database to a protobuf
