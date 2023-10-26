@@ -23,6 +23,7 @@ import (
 
 	billy "github.com/go-git/go-billy/v5"
 	"github.com/google/uuid"
+	"github.com/rs/zerolog"
 	"google.golang.org/protobuf/reflect/protoreflect"
 
 	"github.com/stacklok/mediator/internal/db"
@@ -98,7 +99,7 @@ type Action interface {
 	Type() string
 	GetOnOffState(*pb.Profile) ActionOpt
 	Do(ctx context.Context, cmd ActionCmd, setting ActionOpt, entity protoreflect.ProtoMessage,
-		evalParams *EvalStatusParams, metadata *json.RawMessage) (json.RawMessage, error)
+		params ActionsParams, metadata *json.RawMessage) (json.RawMessage, error)
 }
 
 // ActionCmd is the type that defines what effect an action should have
@@ -114,9 +115,9 @@ const (
 )
 
 // EvalStatusParams is a helper struct to pass parameters to createOrUpdateEvalStatus
-// to avoid confusion with the parameters order. Since at the moment all our entities are bound to
+// to avoid confusion with the parameters' order. Since at the moment, all our entities are bound to
 // a repo and most profiles are expecting a repo, the RepoID parameter is mandatory. For entities
-// other than artifacts, the ArtifactID should be 0 which is translated to NULL in the database.
+// other than artifacts, the ArtifactID should be 0 that is translated to NULL in the database.
 type EvalStatusParams struct {
 	Profile          *pb.Profile
 	Rule             *pb.Profile_Rule
@@ -128,6 +129,83 @@ type EvalStatusParams struct {
 	EntityType       db.Entities
 	RuleTypeID       uuid.UUID
 	EvalStatusFromDb *db.ListRuleEvaluationsByProfileIdRow
-	EvalErr          error
-	ActionsErr       evalerrors.ActionsError
+	evalErr          error
+	actionsErr       evalerrors.ActionsError
+}
+
+// GetEvalErr returns the evaluation error
+func (e *EvalStatusParams) GetEvalErr() error {
+	return e.evalErr
+}
+
+// SetEvalErr sets the evaluation error
+func (e *EvalStatusParams) SetEvalErr(err error) {
+	e.evalErr = err
+}
+
+// SetActionsErr sets the actions' error
+func (e *EvalStatusParams) SetActionsErr(ctx context.Context, actionErr evalerrors.ActionsError) {
+	// Get logger
+	logger := zerolog.Ctx(ctx)
+
+	// Make sure we don't try to push a nil json.RawMessage accidentally
+	if actionErr.AlertMeta == nil {
+		// Default to an empty json struct if the action did not return anything
+		m, err := json.Marshal(&map[string]any{})
+		if err != nil {
+			// This should never happen since we are marshaling an empty struct
+			logger.Error().Err(err).Msg("error marshaling empty json.RawMessage")
+		}
+		actionErr.AlertMeta = m
+	}
+	if actionErr.RemediateMeta == nil {
+		// Default to an empty json struct if the action did not return anything
+		m, err := json.Marshal(&map[string]any{})
+		if err != nil {
+			// This should never happen since we are marshaling an empty struct
+			logger.Error().Err(err).Msg("error marshaling empty json.RawMessage")
+		}
+		actionErr.RemediateMeta = m
+	}
+	// All okay
+	e.actionsErr = actionErr
+}
+
+// GetActionsErr returns the actions' error
+func (e *EvalStatusParams) GetActionsErr() evalerrors.ActionsError {
+	return e.actionsErr
+}
+
+// GetRule returns the rule
+func (e *EvalStatusParams) GetRule() *pb.Profile_Rule {
+	return e.Rule
+}
+
+// GetEvalStatusFromDb returns the evaluation status from the database
+func (e *EvalStatusParams) GetEvalStatusFromDb() *db.ListRuleEvaluationsByProfileIdRow {
+	return e.EvalStatusFromDb
+}
+
+// GetRuleType returns the rule type
+func (e *EvalStatusParams) GetRuleType() *pb.RuleType {
+	return e.RuleType
+}
+
+// GetProfile returns the profile
+func (e *EvalStatusParams) GetProfile() *pb.Profile {
+	return e.Profile
+}
+
+// EvalParams is the interface used for a rule type evaluator
+type EvalParams interface {
+	GetRule() *pb.Profile_Rule
+}
+
+// ActionsParams is the interface used for processing a rule type action
+type ActionsParams interface {
+	GetEvalErr() error
+	GetEvalStatusFromDb() *db.ListRuleEvaluationsByProfileIdRow
+	GetRuleType() *pb.RuleType
+	GetProfile() *pb.Profile
+	GetRule() *pb.Profile_Rule
 }

@@ -169,17 +169,17 @@ func runEvaluationForRules(
 			Rule: frag,
 		}
 		// Perform rule evaluation
-		eng.Eval(context.Background(), inf, evalStatus)
+		evalStatus.SetEvalErr(eng.Eval(context.Background(), inf, evalStatus))
 
 		// Perform the actions, if any
-		eng.Actions(context.Background(), inf, evalStatus)
+		evalStatus.SetActionsErr(context.Background(), eng.Actions(context.Background(), inf, evalStatus))
 
-		if errors.IsActionFatalError(evalStatus.ActionsErr.RemediateErr) {
-			fmt.Printf("Remediation failed with fatal error: %s", evalStatus.ActionsErr.RemediateErr)
+		if errors.IsActionFatalError(evalStatus.GetActionsErr().RemediateErr) {
+			fmt.Printf("Remediation failed with fatal error: %s", evalStatus.GetActionsErr().RemediateErr)
 		}
 
-		if evalStatus.EvalErr != nil {
-			return fmt.Errorf("error evaluating rule type: %w", evalStatus.EvalErr)
+		if evalStatus.GetEvalErr() != nil {
+			return fmt.Errorf("error evaluating rule type: %w", evalStatus.GetEvalErr())
 		}
 
 		fmt.Printf("The rule type is valid and the entity conforms to it\n")

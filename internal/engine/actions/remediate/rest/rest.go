@@ -119,13 +119,13 @@ func (r *Remediator) Do(
 	_ interfaces.ActionCmd,
 	setting interfaces.ActionOpt,
 	entity protoreflect.ProtoMessage,
-	evalParams *interfaces.EvalStatusParams,
+	params interfaces.ActionsParams,
 	_ *json.RawMessage,
 ) (json.RawMessage, error) {
 	retp := &EndpointTemplateParams{
 		Entity:  entity,
-		Profile: evalParams.Rule.Def.AsMap(),
-		Params:  evalParams.Rule.Params.AsMap(),
+		Profile: params.GetRule().Def.AsMap(),
+		Params:  params.GetRule().Params.AsMap(),
 	}
 
 	endpoint := new(bytes.Buffer)

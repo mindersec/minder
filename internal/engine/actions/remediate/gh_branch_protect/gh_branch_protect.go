@@ -106,13 +106,13 @@ func (r *GhBranchProtectRemediator) Do(
 	_ interfaces.ActionCmd,
 	remAction interfaces.ActionOpt,
 	ent protoreflect.ProtoMessage,
-	evalParams *interfaces.EvalStatusParams,
+	params interfaces.ActionsParams,
 	_ *json.RawMessage,
 ) (json.RawMessage, error) {
 	retp := &PatchTemplateParams{
 		Entity:  ent,
-		Profile: evalParams.Rule.Def.AsMap(),
-		Params:  evalParams.Rule.Params.AsMap(),
+		Profile: params.GetRule().Def.AsMap(),
+		Params:  params.GetRule().Params.AsMap(),
 	}
 
 	repo, ok := ent.(*pb.Repository)
@@ -120,7 +120,7 @@ func (r *GhBranchProtectRemediator) Do(
 		return nil, fmt.Errorf("expected repository, got %T", ent)
 	}
 
-	branch, err := util.JQReadFrom[string](ctx, ".branch", evalParams.Rule.Params.AsMap())
+	branch, err := util.JQReadFrom[string](ctx, ".branch", params.GetRule().Params.AsMap())
 	if err != nil {
 		return nil, fmt.Errorf("error reading branch from params: %w", err)
 	}

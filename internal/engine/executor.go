@@ -142,10 +142,10 @@ func (e *Executor) evalEntityEvent(
 			}
 
 			// Evaluate the rule
-			rte.Eval(ctx, inf, evalParams)
+			evalParams.SetEvalErr(rte.Eval(ctx, inf, evalParams))
 
 			// Perform actions, if any
-			rte.Actions(ctx, inf, evalParams)
+			evalParams.SetActionsErr(ctx, rte.Actions(ctx, inf, evalParams))
 
 			// Log the evaluation
 			logEval(ctx, inf, evalParams)
@@ -227,25 +227,25 @@ func (e *Executor) getEvaluator(
 func logEval(
 	ctx context.Context,
 	inf *EntityInfoWrapper,
-	evalParams *engif.EvalStatusParams) {
+	params *engif.EvalStatusParams) {
 	logger := zerolog.Ctx(ctx).Debug().
-		Str("profile", evalParams.Profile.Name).
-		Str("ruleType", evalParams.Rule.Type).
+		Str("profile", params.Profile.Name).
+		Str("ruleType", params.Rule.Type).
 		Str("projectId", inf.ProjectID.String()).
-		Str("repositoryId", evalParams.RepoID.String())
+		Str("repositoryId", params.RepoID.String())
 
-	if evalParams.ArtifactID.Valid {
-		logger = logger.Str("artifactId", evalParams.ArtifactID.UUID.String())
+	if params.ArtifactID.Valid {
+		logger = logger.Str("artifactId", params.ArtifactID.UUID.String())
 	}
 
 	// log evaluation
-	logger.Err(evalParams.EvalErr).Msg("evaluated rule")
+	logger.Err(params.GetEvalErr()).Msg("evaluated rule")
 
 	// log remediation
-	logAction(ctx, "remediate", evalParams.ActionsErr.RemediateErr)
+	logAction(ctx, "remediate", params.GetActionsErr().RemediateErr)
 
 	// log alert
-	logAction(ctx, "alert", evalParams.ActionsErr.AlertErr)
+	logAction(ctx, "alert", params.GetActionsErr().AlertErr)
 }
 
 func logAction(ctx context.Context, actionType string, err error) {

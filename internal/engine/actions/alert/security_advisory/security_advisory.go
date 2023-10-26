@@ -185,7 +185,7 @@ func (alert *Alert) Do(
 	cmd interfaces.ActionCmd,
 	setting interfaces.ActionOpt,
 	entity protoreflect.ProtoMessage,
-	evalParams *interfaces.EvalStatusParams,
+	params interfaces.ActionsParams,
 	metadata *json.RawMessage,
 ) (json.RawMessage, error) {
 	logger := zerolog.Ctx(ctx)
@@ -195,7 +195,7 @@ func (alert *Alert) Do(
 		Msg("begin processing")
 
 	// Get the parameters for the security advisory - owner, repo, etc.
-	params, err := alert.getParamsForSecurityAdvisory(ctx, entity, evalParams, metadata)
+	p, err := alert.getParamsForSecurityAdvisory(ctx, entity, params, metadata)
 	if err != nil {
 		return nil, fmt.Errorf("error extracting details: %w", err)
 	}
@@ -203,9 +203,9 @@ func (alert *Alert) Do(
 	// Process the command based on the action setting
 	switch setting {
 	case interfaces.ActionOptOn:
-		return alert.run(ctx, params, cmd)
+		return alert.run(ctx, p, cmd)
 	case interfaces.ActionOptDryRun:
-		return nil, alert.runDry(ctx, params, cmd)
+		return nil, alert.runDry(ctx, p, cmd)
 	case interfaces.ActionOptOff, interfaces.ActionOptUnknown:
 		return nil, fmt.Errorf("unexpected action setting: %w", enginerr.ErrActionFailed)
 	}
@@ -300,32 +300,32 @@ func (alert *Alert) runDry(ctx context.Context, params *paramsSA, cmd interfaces
 func (alert *Alert) getParamsForSecurityAdvisory(
 	ctx context.Context,
 	entity protoreflect.ProtoMessage,
-	evalParams *interfaces.EvalStatusParams,
+	params interfaces.ActionsParams,
 	metadata *json.RawMessage,
 ) (*paramsSA, error) {
 	logger := zerolog.Ctx(ctx)
-	params := &paramsSA{}
+	result := &paramsSA{}
 
 	// Get the owner and repo from the entity
 	switch entity := entity.(type) {
 	case *pb.Repository:
-		params.Owner = entity.GetOwner()
-		params.Repo = entity.GetName()
+		result.Owner = entity.GetOwner()
+		result.Repo = entity.GetName()
 	case *pb.PullRequest:
-		params.Owner = entity.GetRepoOwner()
-		params.Repo = entity.GetRepoName()
+		result.Owner = entity.GetRepoOwner()
+		result.Repo = entity.GetRepoName()
 	case *pb.Artifact:
-		params.Owner = entity.GetOwner()
-		params.Repo = entity.GetRepository()
+		result.Owner = entity.GetOwner()
+		result.Repo = entity.GetRepository()
 	default:
 		return nil, fmt.Errorf("expected repository, pull request or artifact, got %T", entity)
 	}
-	params.Template.Repository = fmt.Sprintf("%s/%s", params.Owner, params.Repo)
+	result.Template.Repository = fmt.Sprintf("%s/%s", result.Owner, result.Repo)
 	ecosystem := "other"
-	params.Vulnerabilities = []*github.AdvisoryVulnerability{
+	result.Vulnerabilities = []*github.AdvisoryVulnerability{
 		{
 			Package: &github.VulnerabilityPackage{
-				Name:      &params.Template.Repository,
+				Name:      &result.Template.Repository,
 				Ecosystem: &ecosystem,
 			},
 		},
@@ -338,41 +338,41 @@ func (alert *Alert) getParamsForSecurityAdvisory(
 			// There's nothing saved apparently, so no need to fail here, but do log the error
 			logger.Debug().Msgf("error unmarshalling alert metadata: %v", err)
 		} else {
-			params.Metadata = meta
+			result.Metadata = meta
 		}
 	}
 	// Process the summary and description templates
 	// Get the severity
-	params.Template.Severity = alert.saCfg.Severity
+	result.Template.Severity = alert.saCfg.Severity
 	// Get the guidance
-	params.Template.Guidance = evalParams.RuleType.Guidance
+	result.Template.Guidance = params.GetRuleType().Guidance
 	// Get the rule type name
-	params.Template.Rule = evalParams.RuleType.Name
+	result.Template.Rule = params.GetRuleType().Name
 	// Get the profile name
-	params.Template.Profile = evalParams.Profile.Name
+	result.Template.Profile = params.GetProfile().Name
 	// Check if remediation is available for the rule type
-	if evalParams.RuleType.Def.Remediate != nil {
-		params.Template.RuleRemediation = "already available"
+	if params.GetRuleType().Def.Remediate != nil {
+		result.Template.RuleRemediation = "already available"
 	} else {
-		params.Template.RuleRemediation = "not available yet"
+		result.Template.RuleRemediation = "not available yet"
 	}
 	var summaryStr strings.Builder
-	err := alert.summaryTmpl.Execute(&summaryStr, params.Template)
+	err := alert.summaryTmpl.Execute(&summaryStr, result.Template)
 	if err != nil {
 		return nil, fmt.Errorf("error executing summary template: %w", err)
 	}
-	params.Summary = summaryStr.String()
+	result.Summary = summaryStr.String()
 
 	var descriptionStr strings.Builder
 	// Get the description template depending if remediation is available
-	if interfaces.ActionOptFromString(evalParams.Profile.Remediate, interfaces.ActionOptOff) == interfaces.ActionOptOn {
-		err = alert.descriptionTmpl.Execute(&descriptionStr, params.Template)
+	if interfaces.ActionOptFromString(params.GetProfile().Remediate, interfaces.ActionOptOff) == interfaces.ActionOptOn {
+		err = alert.descriptionTmpl.Execute(&descriptionStr, result.Template)
 	} else {
-		err = alert.descriptionNoRemTmpl.Execute(&descriptionStr, params.Template)
+		err = alert.descriptionNoRemTmpl.Execute(&descriptionStr, result.Template)
 	}
 	if err != nil {
 		return nil, fmt.Errorf("error executing description template: %w", err)
 	}
-	params.Description = descriptionStr.String()
-	return params, nil
+	result.Description = descriptionStr.String()
+	return result, nil
 }

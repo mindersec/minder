@@ -48,10 +48,6 @@ func (e *Executor) createEvalStatusParams(
 		ProfileID:  profileID,
 		RepoID:     uuid.MustParse(inf.OwnershipData[RepositoryIDEventKey]),
 		EntityType: entities.EntityTypeToDB(inf.Type),
-		ActionsErr: evalerrors.ActionsError{
-			RemediateErr: evalerrors.ErrActionSkipped,
-			AlertErr:     evalerrors.ErrActionSkipped,
-		},
 	}
 
 	artifactID, ok := inf.OwnershipData[ArtifactIDEventKey]
@@ -113,85 +109,85 @@ func (e *Executor) createEvalStatusParams(
 
 func (e *Executor) createOrUpdateEvalStatus(
 	ctx context.Context,
-	evalParams *engif.EvalStatusParams,
+	params *engif.EvalStatusParams,
 ) error {
 	logger := zerolog.Ctx(ctx)
 	// Make sure evalParams is not nil
-	if evalParams == nil {
+	if params == nil {
 		return fmt.Errorf("createEvalStatusParams cannot be nil")
 	}
 
 	// Check if we should skip silently
-	if errors.Is(evalParams.EvalErr, evalerrors.ErrEvaluationSkipSilently) {
+	if errors.Is(params.GetEvalErr(), evalerrors.ErrEvaluationSkipSilently) {
 		logger.Debug().
-			Str("repo_id", evalParams.RepoID.String()).
-			Str("entity_type", string(evalParams.EntityType)).
-			Str("rule_type_id", evalParams.RuleTypeID.String()).
-			Str("profile_id", evalParams.ProfileID.String()).
+			Str("repo_id", params.RepoID.String()).
+			Str("entity_type", string(params.EntityType)).
+			Str("rule_type_id", params.RuleTypeID.String()).
+			Str("profile_id", params.ProfileID.String()).
 			Msg("rule evaluation skipped silently")
 		return nil
 	}
 
 	// Upsert evaluation
 	id, err := e.querier.UpsertRuleEvaluations(ctx, db.UpsertRuleEvaluationsParams{
-		ProfileID: evalParams.ProfileID,
+		ProfileID: params.ProfileID,
 		RepositoryID: uuid.NullUUID{
-			UUID:  evalParams.RepoID,
+			UUID:  params.RepoID,
 			Valid: true,
 		},
-		ArtifactID: evalParams.ArtifactID,
-		Entity:     evalParams.EntityType,
-		RuleTypeID: evalParams.RuleTypeID,
+		ArtifactID: params.ArtifactID,
+		Entity:     params.EntityType,
+		RuleTypeID: params.RuleTypeID,
 	})
 
 	if err != nil {
 		logger.Err(err).
-			Str("repo_id", evalParams.RepoID.String()).
-			Str("entity_type", string(evalParams.EntityType)).
-			Str("profile_id", evalParams.ProfileID.String()).
+			Str("repo_id", params.RepoID.String()).
+			Str("entity_type", string(params.EntityType)).
+			Str("profile_id", params.ProfileID.String()).
 			Msg("error upserting rule evaluation")
 		return err
 	}
 	// Upsert evaluation details
 	_, err = e.querier.UpsertRuleDetailsEval(ctx, db.UpsertRuleDetailsEvalParams{
 		RuleEvalID: id,
-		Status:     evalerrors.ErrorAsEvalStatus(evalParams.EvalErr),
-		Details:    evalerrors.ErrorAsEvalDetails(evalParams.EvalErr),
+		Status:     evalerrors.ErrorAsEvalStatus(params.GetEvalErr()),
+		Details:    evalerrors.ErrorAsEvalDetails(params.GetEvalErr()),
 	})
 
 	if err != nil {
 		logger.Err(err).
-			Str("repo_id", evalParams.RepoID.String()).
-			Str("entity_type", string(evalParams.EntityType)).
-			Str("profile_id", evalParams.ProfileID.String()).
+			Str("repo_id", params.RepoID.String()).
+			Str("entity_type", string(params.EntityType)).
+			Str("profile_id", params.ProfileID.String()).
 			Msg("error upserting rule evaluation details")
 		return err
 	}
 	// Upsert remediation details
 	_, err = e.querier.UpsertRuleDetailsRemediate(ctx, db.UpsertRuleDetailsRemediateParams{
 		RuleEvalID: id,
-		Status:     evalerrors.ErrorAsRemediationStatus(evalParams.ActionsErr.RemediateErr),
-		Details:    errorAsActionDetails(evalParams.ActionsErr.RemediateErr),
+		Status:     evalerrors.ErrorAsRemediationStatus(params.GetActionsErr().RemediateErr),
+		Details:    errorAsActionDetails(params.GetActionsErr().RemediateErr),
 	})
 	if err != nil {
 		logger.Err(err).
-			Str("repo_id", evalParams.RepoID.String()).
-			Str("entity_type", string(evalParams.EntityType)).
-			Str("profile_id", evalParams.ProfileID.String()).
+			Str("repo_id", params.RepoID.String()).
+			Str("entity_type", string(params.EntityType)).
+			Str("profile_id", params.ProfileID.String()).
 			Msg("error upserting rule remediation details")
 	}
 	// Upsert alert details
 	_, err = e.querier.UpsertRuleDetailsAlert(ctx, db.UpsertRuleDetailsAlertParams{
 		RuleEvalID: id,
-		Status:     evalerrors.ErrorAsAlertStatus(evalParams.ActionsErr.AlertErr),
-		Details:    errorAsActionDetails(evalParams.ActionsErr.AlertErr),
-		Metadata:   evalParams.ActionsErr.AlertMeta,
+		Status:     evalerrors.ErrorAsAlertStatus(params.GetActionsErr().AlertErr),
+		Details:    errorAsActionDetails(params.GetActionsErr().AlertErr),
+		Metadata:   params.GetActionsErr().AlertMeta,
 	})
 	if err != nil {
 		logger.Err(err).
-			Str("repo_id", evalParams.RepoID.String()).
-			Str("entity_type", string(evalParams.EntityType)).
-			Str("profile_id", evalParams.ProfileID.String()).
+			Str("repo_id", params.RepoID.String()).
+			Str("entity_type", string(params.EntityType)).
+			Str("profile_id", params.ProfileID.String()).
 			Msg("error upserting rule alert details")
 	}
 	return err
