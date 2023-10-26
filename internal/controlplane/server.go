@@ -31,7 +31,6 @@ import (
 	"go.opentelemetry.io/otel/attribute"
 	"go.opentelemetry.io/otel/exporters/prometheus"
 	stdout "go.opentelemetry.io/otel/exporters/stdout/stdouttrace"
-	"go.opentelemetry.io/otel/metric"
 	"go.opentelemetry.io/otel/propagation"
 	"go.opentelemetry.io/otel/sdk/instrumentation"
 	sdkmetric "go.opentelemetry.io/otel/sdk/metric"
@@ -247,7 +246,7 @@ func (s *Server) StartHTTPServer(ctx context.Context) error {
 	fs := http.FileServer(http.Dir("assets/"))
 
 	mux.Handle("/", gwmux)
-	mux.HandleFunc("/api/v1/webhook/", s.HandleGitHubWebHook())
+	mux.HandleFunc("/api/v1/webhook/", webhookStatusCodeMiddleware(s.HandleGitHubWebHook()))
 	mux.Handle("/static/", http.StripPrefix("/static/", fs))
 
 	errch := make(chan error)
@@ -340,26 +339,6 @@ func (s *Server) startMetricServer(ctx context.Context) error {
 
 		return server.Shutdown(shutdownCtx)
 	}
-}
-
-func initInstruments(store db.Store) error {
-	meter := otel.Meter("controlplane")
-	_, err := meter.Int64ObservableGauge("user.count",
-		metric.WithDescription("Number of users in the database"),
-		metric.WithUnit("users"),
-		metric.WithInt64Callback(func(ctx context.Context, observer metric.Int64Observer) error {
-			c, err := store.CountUsers(ctx)
-			if err != nil {
-				return err
-			}
-			observer.Observe(c)
-			return nil
-		}),
-	)
-	if err != nil {
-		return err
-	}
-	return nil
 }
 
 // HandleEvents starts the event handler and blocks while handling events.
