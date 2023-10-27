@@ -34,6 +34,17 @@ aws:
   server:
     iamRole: "mediator_server_role"
 
+migrationSettings:
+  image: ko://github.com/stacklok/mediator/cmd/migrate
+  imagePullPolicy: "IfNotPresent"
+  resources:
+    requests:
+      cpu: 200m
+      memory: 200Mi
+    limits:
+      cpu: 1
+      memory: 300Mi
+
 # Configurable settings for the main deployment
 deploymentSettings:
   image: ko://github.com/stacklok/mediator/cmd/server

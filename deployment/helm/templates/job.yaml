@@ -83,7 +83,7 @@ spec:
             capabilities:
               drop:
                 - ALL
-          image: ko://github.com/stacklok/mediator/cmd/server
+          image: {{ .Values.migrationSettings.image }}
           args:
           - "migrate"
           - "up"
@@ -95,14 +95,9 @@ spec:
           - "--config=/config/overrides.yaml"
           # ko will always specify a digest, so we don't need to worry about
           # CRI image caching
-          imagePullPolicy: IfNotPresent
+          imagePullPolicy: {{ .Values.migrationSettings.imagePullPolicy }}
           resources:
-            requests:
-              cpu: 200m
-              memory: 200Mi
-            limits:
-              cpu: 1
-              memory: 300Mi
+            {{- toYaml .Values.migrationSettings.resources | nindent 12 }}
           volumeMounts:
           - name: config
             mountPath: /config
