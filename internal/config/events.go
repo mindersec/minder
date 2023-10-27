@@ -15,14 +15,12 @@
 
 package config
 
-import "time"
-
 // EventConfig is the configuration for mediator's eventing system.
 type EventConfig struct {
 	// Driver is the driver used to store events
 	Driver string `mapstructure:"driver" default:"go-channel"`
-	// RouterCloseTimeout is the timeout for closing the router
-	RouterCloseTimeout time.Duration `mapstructure:"router_close_timeout" default:"10s"`
+	// RouterCloseTimeout is the timeout for closing the router in seconds
+	RouterCloseTimeout int64 `mapstructure:"router_close_timeout" default:"10"`
 	// GoChannel is the configuration for the go channel event driver
 	GoChannel *GoChannelEventConfig `mapstructure:"go-channel"`
 }

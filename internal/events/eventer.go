@@ -93,7 +93,9 @@ func Setup(ctx context.Context, cfg *config.EventConfig) (*Eventer, error) {
 	l := zerowater.NewZerologLoggerAdapter(
 		zerolog.Ctx(ctx).With().Str("component", "watermill").Logger())
 	// TODO: parameterize CloseTimeout for testing
-	router, err := message.NewRouter(message.RouterConfig{CloseTimeout: cfg.RouterCloseTimeout}, l)
+	router, err := message.NewRouter(message.RouterConfig{
+		CloseTimeout: time.Duration(cfg.RouterCloseTimeout) * time.Second,
+	}, l)
 	if err != nil {
 		return nil, err
 	}
