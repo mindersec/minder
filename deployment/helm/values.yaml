@@ -35,7 +35,7 @@ aws:
     iamRole: "mediator_server_role"
 
 migrationSettings:
-  image: ko://github.com/stacklok/mediator/cmd/migrate
+  image: ko://github.com/stacklok/mediator/cmd/server
   imagePullPolicy: "IfNotPresent"
   resources:
     requests:
