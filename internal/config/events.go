@@ -22,7 +22,7 @@ type EventConfig struct {
 	// RouterCloseTimeout is the timeout for closing the router in seconds
 	RouterCloseTimeout int64 `mapstructure:"router_close_timeout" default:"10"`
 	// GoChannel is the configuration for the go channel event driver
-	GoChannel *GoChannelEventConfig `mapstructure:"go-channel"`
+	GoChannel *GoChannelEventConfig `mapstructure:"go-channel" default:"{}"`
 }
 
 // GoChannelEventConfig is the configuration for the go channel event driver
