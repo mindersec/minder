@@ -474,14 +474,11 @@ type SigningKey struct {
 }
 
 type User struct {
-	ID              int32          `json:"id"`
-	OrganizationID  uuid.UUID      `json:"organization_id"`
-	Email           sql.NullString `json:"email"`
-	IdentitySubject string         `json:"identity_subject"`
-	FirstName       sql.NullString `json:"first_name"`
-	LastName        sql.NullString `json:"last_name"`
-	CreatedAt       time.Time      `json:"created_at"`
-	UpdatedAt       time.Time      `json:"updated_at"`
+	ID              int32     `json:"id"`
+	OrganizationID  uuid.UUID `json:"organization_id"`
+	IdentitySubject string    `json:"identity_subject"`
+	CreatedAt       time.Time `json:"created_at"`
+	UpdatedAt       time.Time `json:"updated_at"`
 }
 
 type UserProject struct {

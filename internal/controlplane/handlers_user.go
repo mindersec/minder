@@ -34,13 +34,6 @@ import (
 	pb "github.com/stacklok/mediator/pkg/api/protobuf/go/mediator/v1"
 )
 
-func stringToNullString(s string) *sql.NullString {
-	if s == "" {
-		return &sql.NullString{Valid: false}
-	}
-	return &sql.NullString{String: s, Valid: true}
-}
-
 // CreateUser is a service for user self registration
 //
 //gocyclo:ignore
@@ -102,9 +95,6 @@ func (s *Server) CreateUser(ctx context.Context,
 	userOrg = organization.ID
 	userProject = uuid.MustParse(orgProject.ProjectId)
 	user, err := qtx.CreateUser(ctx, db.CreateUserParams{OrganizationID: userOrg,
-		Email:           *stringToNullString(token.Email()),
-		FirstName:       *stringToNullString(token.GivenName()),
-		LastName:        *stringToNullString(token.FamilyName()),
 		IdentitySubject: subject})
 	if err != nil {
 		return nil, status.Errorf(codes.Internal, "failed to create user: %s", err)
@@ -132,10 +122,7 @@ func (s *Server) CreateUser(ctx context.Context,
 		OrganizatioName: organization.Name,
 		ProjectId:       userProject.String(),
 		ProjectName:     orgProject.Name,
-		Email:           &user.Email.String,
 		IdentitySubject: user.IdentitySubject,
-		FirstName:       &user.FirstName.String,
-		LastName:        &user.LastName.String,
 		CreatedAt:       timestamppb.New(user.CreatedAt),
 	}, nil
 }
@@ -250,10 +237,7 @@ func (s *Server) GetUser(ctx context.Context, _ *pb.GetUserRequest) (*pb.GetUser
 	resp.User = &pb.UserRecord{
 		Id:              user.ID,
 		OrganizationId:  user.OrganizationID.String(),
-		Email:           &user.Email.String,
 		IdentitySubject: user.IdentitySubject,
-		FirstName:       &user.FirstName.String,
-		LastName:        &user.LastName.String,
 		CreatedAt:       timestamppb.New(user.CreatedAt),
 		UpdatedAt:       timestamppb.New(user.UpdatedAt),
 	}

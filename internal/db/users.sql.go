@@ -7,7 +7,6 @@ package db
 
 import (
 	"context"
-	"database/sql"
 
 	"github.com/google/uuid"
 )
@@ -24,33 +23,21 @@ func (q *Queries) CountUsers(ctx context.Context) (int64, error) {
 }
 
 const createUser = `-- name: CreateUser :one
-INSERT INTO users (organization_id, email, identity_subject, first_name, last_name) VALUES ($1, $2, $3, $4, $5) RETURNING id, organization_id, email, identity_subject, first_name, last_name, created_at, updated_at
+INSERT INTO users (organization_id, identity_subject) VALUES ($1, $2) RETURNING id, organization_id, identity_subject, created_at, updated_at
 `
 
 type CreateUserParams struct {
-	OrganizationID  uuid.UUID      `json:"organization_id"`
-	Email           sql.NullString `json:"email"`
-	IdentitySubject string         `json:"identity_subject"`
-	FirstName       sql.NullString `json:"first_name"`
-	LastName        sql.NullString `json:"last_name"`
+	OrganizationID  uuid.UUID `json:"organization_id"`
+	IdentitySubject string    `json:"identity_subject"`
 }
 
 func (q *Queries) CreateUser(ctx context.Context, arg CreateUserParams) (User, error) {
-	row := q.db.QueryRowContext(ctx, createUser,
-		arg.OrganizationID,
-		arg.Email,
-		arg.IdentitySubject,
-		arg.FirstName,
-		arg.LastName,
-	)
+	row := q.db.QueryRowContext(ctx, createUser, arg.OrganizationID, arg.IdentitySubject)
 	var i User
 	err := row.Scan(
 		&i.ID,
 		&i.OrganizationID,
-		&i.Email,
 		&i.IdentitySubject,
-		&i.FirstName,
-		&i.LastName,
 		&i.CreatedAt,
 		&i.UpdatedAt,
 	)
@@ -67,7 +54,7 @@ func (q *Queries) DeleteUser(ctx context.Context, id int32) error {
 }
 
 const getUserByID = `-- name: GetUserByID :one
-SELECT id, organization_id, email, identity_subject, first_name, last_name, created_at, updated_at FROM users WHERE id = $1
+SELECT id, organization_id, identity_subject, created_at, updated_at FROM users WHERE id = $1
 `
 
 func (q *Queries) GetUserByID(ctx context.Context, id int32) (User, error) {
@@ -76,10 +63,7 @@ func (q *Queries) GetUserByID(ctx context.Context, id int32) (User, error) {
 	err := row.Scan(
 		&i.ID,
 		&i.OrganizationID,
-		&i.Email,
 		&i.IdentitySubject,
-		&i.FirstName,
-		&i.LastName,
 		&i.CreatedAt,
 		&i.UpdatedAt,
 	)
@@ -87,7 +71,7 @@ func (q *Queries) GetUserByID(ctx context.Context, id int32) (User, error) {
 }
 
 const getUserBySubject = `-- name: GetUserBySubject :one
-SELECT id, organization_id, email, identity_subject, first_name, last_name, created_at, updated_at FROM users WHERE identity_subject = $1
+SELECT id, organization_id, identity_subject, created_at, updated_at FROM users WHERE identity_subject = $1
 `
 
 func (q *Queries) GetUserBySubject(ctx context.Context, identitySubject string) (User, error) {
@@ -96,10 +80,7 @@ func (q *Queries) GetUserBySubject(ctx context.Context, identitySubject string) 
 	err := row.Scan(
 		&i.ID,
 		&i.OrganizationID,
-		&i.Email,
 		&i.IdentitySubject,
-		&i.FirstName,
-		&i.LastName,
 		&i.CreatedAt,
 		&i.UpdatedAt,
 	)
@@ -107,7 +88,7 @@ func (q *Queries) GetUserBySubject(ctx context.Context, identitySubject string) 
 }
 
 const listUsers = `-- name: ListUsers :many
-SELECT id, organization_id, email, identity_subject, first_name, last_name, created_at, updated_at FROM users
+SELECT id, organization_id, identity_subject, created_at, updated_at FROM users
 ORDER BY id
 LIMIT $1
 OFFSET $2
@@ -130,10 +111,7 @@ func (q *Queries) ListUsers(ctx context.Context, arg ListUsersParams) ([]User, e
 		if err := rows.Scan(
 			&i.ID,
 			&i.OrganizationID,
-			&i.Email,
 			&i.IdentitySubject,
-			&i.FirstName,
-			&i.LastName,
 			&i.CreatedAt,
 			&i.UpdatedAt,
 		); err != nil {
@@ -151,7 +129,7 @@ func (q *Queries) ListUsers(ctx context.Context, arg ListUsersParams) ([]User, e
 }
 
 const listUsersByOrganization = `-- name: ListUsersByOrganization :many
-SELECT id, organization_id, email, identity_subject, first_name, last_name, created_at, updated_at FROM users
+SELECT id, organization_id, identity_subject, created_at, updated_at FROM users
 WHERE organization_id = $1
 ORDER BY id
 LIMIT $2
@@ -176,10 +154,7 @@ func (q *Queries) ListUsersByOrganization(ctx context.Context, arg ListUsersByOr
 		if err := rows.Scan(
 			&i.ID,
 			&i.OrganizationID,
-			&i.Email,
 			&i.IdentitySubject,
-			&i.FirstName,
-			&i.LastName,
 			&i.CreatedAt,
 			&i.UpdatedAt,
 		); err != nil {
@@ -197,7 +172,7 @@ func (q *Queries) ListUsersByOrganization(ctx context.Context, arg ListUsersByOr
 }
 
 const listUsersByProject = `-- name: ListUsersByProject :many
-SELECT users.id, users.organization_id, users.email, users.identity_subject, users.first_name, users.last_name, users.created_at, users.updated_at FROM users
+SELECT users.id, users.organization_id, users.identity_subject, users.created_at, users.updated_at FROM users
 JOIN user_projects ON users.id = user_projects.user_id
 WHERE user_projects.project_id = $1
 ORDER BY users.id
@@ -223,10 +198,7 @@ func (q *Queries) ListUsersByProject(ctx context.Context, arg ListUsersByProject
 		if err := rows.Scan(
 			&i.ID,
 			&i.OrganizationID,
-			&i.Email,
 			&i.IdentitySubject,
-			&i.FirstName,
-			&i.LastName,
 			&i.CreatedAt,
 			&i.UpdatedAt,
 		); err != nil {

@@ -398,10 +398,7 @@ User service
 | organizatio_name | [string](#string) |  |  |
 | project_id | [string](#string) |  |  |
 | project_name | [string](#string) |  |  |
-| email | [string](#string) | optional |  |
 | identity_subject | [string](#string) |  |  |
-| first_name | [string](#string) | optional |  |
-| last_name | [string](#string) | optional |  |
 | created_at | [google.protobuf.Timestamp](#google-protobuf-Timestamp) |  |  |
 
 
@@ -2160,10 +2157,7 @@ user record to be returned
 | ----- | ---- | ----- | ----------- |
 | id | [int32](#int32) |  |  |
 | organization_id | [string](#string) |  |  |
-| email | [string](#string) | optional |  |
 | identity_subject | [string](#string) |  |  |
-| first_name | [string](#string) | optional |  |
-| last_name | [string](#string) | optional |  |
 | created_at | [google.protobuf.Timestamp](#google-protobuf-Timestamp) |  |  |
 | updated_at | [google.protobuf.Timestamp](#google-protobuf-Timestamp) |  |  |
 

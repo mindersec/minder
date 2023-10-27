@@ -206,18 +206,6 @@ func renderNewUser(cmd *cobra.Command, newUser *pb.CreateUserResponse) {
 		{"Project Name", newUser.ProjectName},
 	}
 
-	if newUser.Email != nil {
-		rows = append(rows, table.Row{"Email", *newUser.Email})
-	}
-
-	if newUser.FirstName != nil {
-		rows = append(rows, table.Row{"First Name", *newUser.FirstName})
-	}
-
-	if newUser.LastName != nil {
-		rows = append(rows, table.Row{"Last Name", *newUser.LastName})
-	}
-
 	renderUserToTable(cmd, rows)
 }
 
@@ -234,19 +222,6 @@ func renderUserInfo(cmd *cobra.Command, user *pb.GetUserResponse) {
 
 	rows := []table.Row{
 		{projectKey, strings.Join(projects, ", ")},
-	}
-
-	userInfo := user.GetUser()
-	if userInfo.Email != nil {
-		rows = append(rows, table.Row{"Email", *userInfo.Email})
-	}
-
-	if userInfo.FirstName != nil {
-		rows = append(rows, table.Row{"First Name", *userInfo.FirstName})
-	}
-
-	if userInfo.LastName != nil {
-		rows = append(rows, table.Row{"Last Name", *userInfo.LastName})
 	}
 
 	renderUserToTable(cmd, rows)
