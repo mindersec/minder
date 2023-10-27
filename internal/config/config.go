@@ -102,6 +102,15 @@ func setViperStructDefaults(v *viper.Viper, prefix string, s any) {
 		// Extract a default value the `default` struct tag
 		// we don't support all value types yet, but we can add them as needed
 		value := field.Tag.Get("default")
+
+		if field.Type.Kind() == reflect.Pointer {
+			// using '{}' as a default tells us we initialize the struct
+			if value == "{}" {
+				setViperStructDefaults(v, valueName+".", reflect.Zero(field.Type).Interface())
+			}
+			continue
+		}
+
 		defaultValue := reflect.Zero(field.Type).Interface()
 		var err error // We handle errors at the end of the switch
 		fieldType := field.Type.Kind()
