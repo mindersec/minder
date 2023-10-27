@@ -165,29 +165,30 @@ func (s *Server) HandleGitHubWebHook() http.HandlerFunc {
 			return
 		}
 
-		typ := github.WebHookType(r)
-		if typ == "ping" {
+		wes.typ = github.WebHookType(r)
+		if wes.typ == "ping" {
 			log.Printf("ping received")
 			wes.error = false
 			return
 		}
-		wes.typ = typ
 
 		// TODO: extract sender and event time from payload portably
 		m := message.NewMessage(uuid.New().String(), nil)
 		m.Metadata.Set(events.ProviderDeliveryIdKey, github.DeliveryID(r))
 		m.Metadata.Set(events.ProviderTypeKey, string(db.ProviderTypeGithub))
 		m.Metadata.Set(events.ProviderSourceKey, "https://api.github.com/") // TODO: handle other sources
-		m.Metadata.Set(events.GithubWebhookEventTypeKey, typ)
+		m.Metadata.Set(events.GithubWebhookEventTypeKey, wes.typ)
 		// m.Metadata.Set("subject", ghEvent.GetRepo().GetFullName())
 		// m.Metadata.Set("time", ghEvent.GetCreatedAt().String())
 
 		log.Printf("publishing of type: %s", m.Metadata["type"])
 
 		if err := s.parseGithubEventForProcessing(rawWBPayload, m); err != nil {
-			wes = handleParseError(typ, err)
+			wes = handleParseError(wes.typ, err)
 			if wes.error {
 				w.WriteHeader(http.StatusInternalServerError)
+			} else {
+				w.WriteHeader(http.StatusOK)
 			}
 			return
 		}

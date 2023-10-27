@@ -18,6 +18,7 @@ package controlplane
 import (
 	"context"
 	"fmt"
+	"sync"
 
 	"go.opentelemetry.io/otel"
 	"go.opentelemetry.io/otel/attribute"
@@ -27,7 +28,8 @@ import (
 )
 
 type metrics struct {
-	meter metric.Meter
+	meter           metric.Meter
+	instrumentsOnce sync.Once
 
 	// webhook http codes by type
 	webhookStatusCodeCounter metric.Int64Counter
@@ -43,6 +45,14 @@ func NewMetrics() *metrics {
 }
 
 func (m *metrics) initInstruments(store db.Store) error {
+	var err error
+	m.instrumentsOnce.Do(func() {
+		err = m.initInstrumentsOnce(store)
+	})
+	return err
+}
+
+func (m *metrics) initInstrumentsOnce(store db.Store) error {
 	_, err := m.meter.Int64ObservableGauge("user.count",
 		metric.WithDescription("Number of users in the database"),
 		metric.WithUnit("users"),
