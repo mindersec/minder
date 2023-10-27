@@ -83,7 +83,7 @@ helm:  ## build the helm chart to a local archive, using ko for the image build
 		helm package --version="${HELM_PACKAGE_VERSION}" .
 	git checkout deployment/helm/values.yaml
 
-helm-template: ## builds the container and renders the helm templates
+helm-template: ## renders the helm templates which is useful for debugging
 	cd deployment/helm; \
 		helm dependency update && \
 		helm template .
