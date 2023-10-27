@@ -17,8 +17,7 @@ kind: HorizontalPodAutoscaler
 metadata:
   name: mediator
   labels:
-    # This includes a newline, so ko sees this as valid yaml
-    # {{ include "common.labels.standard" (dict "customLabels" .Values.commonLabels "context" $ ) | nindent 4 }}
+    {{ include "common.labels.standard" (dict "customLabels" .Values.commonLabels "context" $ ) | nindent 4 }}
 spec:
   scaleTargetRef:
     apiVersion: apps/v1
