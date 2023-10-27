@@ -17,8 +17,7 @@ kind: Deployment
 metadata:
   name: mediator
   labels:
-    # This includes a newline, so ko sees this as valid yaml
-    # {{ include "common.labels.standard" (dict "customLabels" .Values.commonLabels "context" $ ) | nindent 4 }}
+    {{ include "common.labels.standard" (dict "customLabels" .Values.commonLabels "context" $ ) | nindent 4 }}
 spec:
   # We'll use autoscaling, sometimes clamped to one instance
   selector:
@@ -29,8 +28,7 @@ spec:
       labels:
         app: '{{ include "common.names.name" . }}'
       annotations:
-        # This includes a newline, so ko sees this as valid yaml
-        # {{ include "common.annotations.pods" (dict "customAnnotationsPods" .Values.commonAnnotationsPods "context" $ ) | nindent 8 }}
+        {{ include "common.annotations.pods" (dict "customAnnotationsPods" .Values.commonAnnotationsPods "context" $ ) | nindent 8 }}
     spec:
       serviceAccountName: mediator
       containers:
@@ -45,7 +43,7 @@ spec:
             capabilities:
               drop:
                 - ALL
-          image: ko://github.com/stacklok/mediator/cmd/server
+          image: {{ .Values.deploymentSettings.image }}
           args:
           - "serve"
           - "--db-host={{ .Values.db.host }}"
@@ -74,7 +72,7 @@ spec:
           
           # ko will always specify a digest, so we don't need to worry about
           # CRI image caching
-          imagePullPolicy: IfNotPresent
+          imagePullPolicy: "{{ .Values.deploymentSettings.imagePullPolicy }}"
           ports:
             - name: http
               containerPort: !!int "{{ .Values.service.httpPort }}"
@@ -94,12 +92,7 @@ spec:
               path: /api/v1/health
               port: http
           resources:
-            requests:
-              cpu: 1
-              memory: 1Gi
-            limits:
-              cpu: 4
-              memory: 1.5Gi
+            {{- toYaml .Values.deploymentSettings.resources | nindent 12 }}
           volumeMounts:
           - name: config
             mountPath: /config
@@ -109,6 +102,9 @@ spec:
             mountPath: /secrets/app
           - name: identity-secrets
             mountPath: /secrets/identity
+          {{- if .Values.deploymentSettings.extraVolumeMounts }}
+          {{- toYaml .Values.deploymentSettings.extraVolumeMounts | nindent 12 }}
+          {{- end }}
       volumes:
       - name: config
         configMap:
@@ -127,3 +123,6 @@ spec:
       - name: identity-secrets
         secret:
           secretName: mediator-identity-secrets
+      {{- if .Values.deploymentSettings.extraVolumes }}
+      {{- toYaml .Values.deploymentSettings.extraVolumes | nindent 6 }}
+      {{- end }}

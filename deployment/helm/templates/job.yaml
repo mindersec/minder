@@ -24,8 +24,7 @@ metadata:
     helm.sh/hook-delete-policy: before-hook-creation
     helm.sh/hook: pre-install,pre-upgrade
   labels:
-    # This includes a newline, so ko sees this as valid yaml
-    # {{ include "common.labels.standard" (dict "customLabels" .Values.commonLabels "context" $ ) | nindent 4 }}
+    {{ include "common.labels.standard" (dict "customLabels" .Values.commonLabels "context" $ ) | nindent 4 }}
 imagePullSecrets:
 - name: mediator-pull-secret
 ---
@@ -84,7 +83,7 @@ spec:
             capabilities:
               drop:
                 - ALL
-          image: ko://github.com/stacklok/mediator/cmd/server
+          image: {{ .Values.migrationSettings.image }}
           args:
           - "migrate"
           - "up"
@@ -96,14 +95,9 @@ spec:
           - "--config=/config/overrides.yaml"
           # ko will always specify a digest, so we don't need to worry about
           # CRI image caching
-          imagePullPolicy: IfNotPresent
+          imagePullPolicy: {{ .Values.migrationSettings.imagePullPolicy }}
           resources:
-            requests:
-              cpu: 200m
-              memory: 200Mi
-            limits:
-              cpu: 1
-              memory: 300Mi
+            {{- toYaml .Values.migrationSettings.resources | nindent 12 }}
           volumeMounts:
           - name: config
             mountPath: /config

@@ -34,6 +34,33 @@ aws:
   server:
     iamRole: "mediator_server_role"
 
+migrationSettings:
+  image: ko://github.com/stacklok/mediator/cmd/server
+  imagePullPolicy: "IfNotPresent"
+  resources:
+    requests:
+      cpu: 200m
+      memory: 200Mi
+    limits:
+      cpu: 1
+      memory: 300Mi
+
+# Configurable settings for the main deployment
+deploymentSettings:
+  image: ko://github.com/stacklok/mediator/cmd/server
+  imagePullPolicy: "IfNotPresent"
+  resources:
+    requests:
+      cpu: 1
+      memory: 1Gi
+    limits:
+      cpu: 4
+      memory: 1.5Gi
+  # Additional volumes to mount
+  extraVolumes: null
+  # Additional volume mounts
+  extraVolumeMounts: null
+
 # Additional configuration yaml beyond what's in config.yaml.example
 extra_config: |
   # Add content here
