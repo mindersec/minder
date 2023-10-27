@@ -187,12 +187,6 @@ func (alert *Alert) Do(
 	params interfaces.ActionsParams,
 	metadata *json.RawMessage,
 ) (json.RawMessage, error) {
-	logger := zerolog.Ctx(ctx)
-	logger.Info().
-		Str("alert_type", AlertType).
-		Str("cmd", string(cmd)).
-		Msg("begin processing")
-
 	// Get the parameters for the security advisory - owner, repo, etc.
 	p, err := alert.getParamsForSecurityAdvisory(ctx, entity, params, metadata)
 	if err != nil {
