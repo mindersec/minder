@@ -263,7 +263,7 @@ func TestCreateUser_gRPC(t *testing.T) {
 				GoChannel: config.GoChannelEventConfig{},
 			})
 			require.NoError(t, err, "failed to setup eventer")
-			server, err := NewServer(mockStore, evt, &config.Config{
+			server, err := NewServer(mockStore, evt, NewMetrics(), &config.Config{
 				Salt: config.DefaultConfigForTest().Salt,
 				Auth: config.AuthConfig{
 					TokenKey: generateTokenKey(t),
@@ -470,7 +470,7 @@ func TestDeleteUser_gRPC(t *testing.T) {
 				GoChannel: config.GoChannelEventConfig{},
 			})
 			require.NoError(t, err, "failed to setup eventer")
-			server, err := NewServer(mockStore, evt, &config.Config{
+			server, err := NewServer(mockStore, evt, NewMetrics(), &config.Config{
 				Salt: config.DefaultConfigForTest().Salt,
 				Auth: config.AuthConfig{
 					TokenKey: generateTokenKey(t),

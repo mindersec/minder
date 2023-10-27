@@ -141,6 +141,15 @@ func entityFromWebhookEventTypeKey(m *message.Message) pb.Entity {
 // for more information.
 func (s *Server) HandleGitHubWebHook() http.HandlerFunc {
 	return func(w http.ResponseWriter, r *http.Request) {
+		wes := webhookEventState{
+			typ:      "unknown",
+			accepted: false,
+			error:    true,
+		}
+		defer func() {
+			s.mt.webhookEventTypeCount(r.Context(), wes)
+		}()
+
 		// Validate the payload signature. This is required for security reasons.
 		// See https://docs.github.com/en/developers/webhooks-and-events/webhooks/securing-your-webhooks
 		// for more information. Note that this is not required for the GitHub App
@@ -156,9 +165,10 @@ func (s *Server) HandleGitHubWebHook() http.HandlerFunc {
 			return
 		}
 
-		typ := github.WebHookType(r)
-		if typ == "ping" {
+		wes.typ = github.WebHookType(r)
+		if wes.typ == "ping" {
 			log.Printf("ping received")
+			wes.error = false
 			return
 		}
 
@@ -167,41 +177,58 @@ func (s *Server) HandleGitHubWebHook() http.HandlerFunc {
 		m.Metadata.Set(events.ProviderDeliveryIdKey, github.DeliveryID(r))
 		m.Metadata.Set(events.ProviderTypeKey, string(db.ProviderTypeGithub))
 		m.Metadata.Set(events.ProviderSourceKey, "https://api.github.com/") // TODO: handle other sources
-		m.Metadata.Set(events.GithubWebhookEventTypeKey, github.WebHookType(r))
+		m.Metadata.Set(events.GithubWebhookEventTypeKey, wes.typ)
 		// m.Metadata.Set("subject", ghEvent.GetRepo().GetFullName())
 		// m.Metadata.Set("time", ghEvent.GetCreatedAt().String())
 
 		log.Printf("publishing of type: %s", m.Metadata["type"])
 
 		if err := s.parseGithubEventForProcessing(rawWBPayload, m); err != nil {
-			// We won't leak when a repository or artifact is not found.
-			if errors.Is(err, errRepoNotFound) || errors.Is(err, errArtifactNotFound) {
-				log.Printf("Repository or artifact not found: %v", err)
+			wes = handleParseError(wes.typ, err)
+			if wes.error {
+				w.WriteHeader(http.StatusInternalServerError)
+			} else {
 				w.WriteHeader(http.StatusOK)
-				return
-			} else if errors.Is(err, errRepoIsPrivate) {
-				log.Printf("Skipped webhook event processing: %v", err)
-				w.WriteHeader(http.StatusOK)
-				return
-			} else if errors.Is(err, errNotHandled) {
-				log.Printf("Skipped webhook event processing: %v", err)
-				w.WriteHeader(http.StatusOK)
-				return
 			}
-
-			log.Printf("Error parsing github webhook message: %v", err)
-			w.WriteHeader(http.StatusInternalServerError)
 			return
 		}
 
+		wes.accepted = true
+
 		if err := s.evt.Publish(engine.InternalEntityEventTopic, m); err != nil {
+			wes.error = true
 			log.Printf("Error publishing message: %v", err)
 			w.WriteHeader(http.StatusInternalServerError)
 			return
 		}
 
+		wes.error = false
 		w.WriteHeader(http.StatusOK)
 	}
+}
+
+func handleParseError(typ string, parseErr error) webhookEventState {
+	state := webhookEventState{typ: typ, accepted: false, error: true}
+
+	var logMsg string
+	switch {
+	case errors.Is(parseErr, errRepoNotFound):
+		state.error = false
+		logMsg = "repository not found"
+	case errors.Is(parseErr, errArtifactNotFound):
+		state.error = false
+		logMsg = "artifact not found"
+	case errors.Is(parseErr, errRepoIsPrivate):
+		state.error = false
+		logMsg = "repository is private"
+	case errors.Is(parseErr, errNotHandled):
+		state.error = false
+		logMsg = fmt.Sprintf("webhook event not handled (%v)", parseErr)
+	default:
+		logMsg = fmt.Sprintf("Error parsing github webhook message: %v", parseErr)
+	}
+	log.Print(logMsg)
+	return state
 }
 
 // registerWebhookForRepository registers a set repository and sets up the webhook for each of them

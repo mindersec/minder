@@ -13,6 +13,41 @@ import (
 	"github.com/google/uuid"
 )
 
+const countProfilesByEntityType = `-- name: CountProfilesByEntityType :many
+SELECT COUNT(p.id) AS num_profiles, ep.entity AS profile_entity
+FROM profiles AS p
+         JOIN entity_profiles AS ep ON p.id = ep.profile_id
+GROUP BY ep.entity
+`
+
+type CountProfilesByEntityTypeRow struct {
+	NumProfiles   int64    `json:"num_profiles"`
+	ProfileEntity Entities `json:"profile_entity"`
+}
+
+func (q *Queries) CountProfilesByEntityType(ctx context.Context) ([]CountProfilesByEntityTypeRow, error) {
+	rows, err := q.db.QueryContext(ctx, countProfilesByEntityType)
+	if err != nil {
+		return nil, err
+	}
+	defer rows.Close()
+	items := []CountProfilesByEntityTypeRow{}
+	for rows.Next() {
+		var i CountProfilesByEntityTypeRow
+		if err := rows.Scan(&i.NumProfiles, &i.ProfileEntity); err != nil {
+			return nil, err
+		}
+		items = append(items, i)
+	}
+	if err := rows.Close(); err != nil {
+		return nil, err
+	}
+	if err := rows.Err(); err != nil {
+		return nil, err
+	}
+	return items, nil
+}
+
 const createProfile = `-- name: CreateProfile :one
 INSERT INTO profiles (  
     provider,
