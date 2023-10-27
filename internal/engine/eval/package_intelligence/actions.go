@@ -125,8 +125,8 @@ func (sph *summaryPrHandler) generateSummary() (string, error) {
 		var rowBuf bytes.Buffer
 
 		nonZeroAlternatives := make([]PiAlternative, 0)
-		for _, alt := range sph.trackedAlternatives[i].piReply.Alternatives {
-			if alt.Summary.Score != 0 {
+		for _, alt := range sph.trackedAlternatives[i].piReply.Alternatives.Packages {
+			if alt.Summary.Score > sph.trackedAlternatives[i].piReply.Summary.Score {
 				nonZeroAlternatives = append(nonZeroAlternatives, alt)
 			}
 		}

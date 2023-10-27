@@ -67,7 +67,10 @@ type PiReply struct {
 	Summary     struct {
 		Score float64 `json:"score"`
 	} `json:"summary"`
-	Alternatives []PiAlternative `json:"alternatives"`
+	Alternatives struct {
+		Status   string          `json:"status"`
+		Packages []PiAlternative `json:"packages"`
+	} `json:"alternatives"`
 }
 
 func newPiClient(baseUrl string) *piClient {
