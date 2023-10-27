@@ -16,7 +16,6 @@ package engine
 
 import (
 	"context"
-	"errors"
 	"fmt"
 
 	"github.com/ThreeDotsLabs/watermill/message"
@@ -174,12 +173,6 @@ func (e *Executor) getEvaluator(
 	rule *pb.Profile_Rule,
 	ingestCache ingestcache.Cache,
 ) (*engif.EvalStatusParams, *RuleTypeEngine, error) {
-	logger := zerolog.Ctx(ctx)
-	logger.Info().
-		Str("rule_type", rule.Type).
-		Str("profile_id", *profile.Id).
-		Msg("begin evaluating rule")
-
 	// Create eval status params
 	params, err := e.createEvalStatusParams(ctx, inf, profile, rule)
 	if err != nil {
@@ -228,33 +221,30 @@ func logEval(
 	ctx context.Context,
 	inf *EntityInfoWrapper,
 	params *engif.EvalStatusParams) {
-	logger := zerolog.Ctx(ctx).Debug().
+	logger := zerolog.Ctx(ctx)
+	evalLog := logger.Debug().
 		Str("profile", params.Profile.Name).
 		Str("ruleType", params.Rule.Type).
+		Str("eval_status", string(evalerrors.ErrorAsEvalStatus(params.GetEvalErr()))).
 		Str("projectId", inf.ProjectID.String()).
 		Str("repositoryId", params.RepoID.String())
 
 	if params.ArtifactID.Valid {
-		logger = logger.Str("artifactId", params.ArtifactID.UUID.String())
+		evalLog = evalLog.Str("artifactId", params.ArtifactID.UUID.String())
 	}
 
 	// log evaluation
-	logger.Err(params.GetEvalErr()).Msg("evaluated rule")
+	evalLog.Err(params.GetEvalErr()).Msg("result - evaluation")
 
 	// log remediation
-	logAction(ctx, "remediate", params.GetActionsErr().RemediateErr)
+	logger.Debug().
+		Str("action", "remediate").
+		Str("action_status", string(evalerrors.ErrorAsRemediationStatus(params.GetActionsErr().RemediateErr))).
+		Msg("result - action")
 
 	// log alert
-	logAction(ctx, "alert", params.GetActionsErr().AlertErr)
-}
-
-func logAction(ctx context.Context, actionType string, err error) {
-	logger := zerolog.Ctx(ctx)
-	if errors.Is(err, evalerrors.ErrActionSkipped) {
-		logger.Debug().Str("action", actionType).Msg("skipped")
-	} else if errors.Is(err, evalerrors.ErrActionNotAvailable) {
-		logger.Debug().Str("action", actionType).Msg("not supported")
-	} else {
-		logger.Err(err).Str("action", actionType).Msg("processed for rule")
-	}
+	logger.Debug().
+		Str("action", "alert").
+		Str("action_status", string(evalerrors.ErrorAsAlertStatus(params.GetActionsErr().AlertErr))).
+		Msg("result - action")
 }

@@ -136,6 +136,11 @@ func (rae *RuleActionsEngine) processAction(
 	// Get action engine
 	action := rae.actions[actionType]
 	// Return the result of the action
+	logger := zerolog.Ctx(ctx)
+	logger.Debug().
+		Str("action", string(actionType)).
+		Str("cmd", string(cmd)).
+		Msg("invoking action")
 	return action.Do(ctx, cmd, rae.actionsOnOff[actionType], ent, params, metadata)
 }
 
