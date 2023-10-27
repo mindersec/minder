@@ -83,9 +83,10 @@ helm:  ## build the helm chart to a local archive, using ko for the image build
 		helm package --version="${HELM_PACKAGE_VERSION}" .
 	git checkout deployment/helm/values.yaml
 
-helm-template:
+helm-template: ## builds the container and renders the helm templates
 	cd deployment/helm; \
-	    ko resolve --platform=${KO_PLATFORMS} --base-import-paths -f values.yaml
+		helm dependency update && \
+		helm template .
 
 bootstrap: ## install build deps
 	go generate -tags tools tools/tools.go
