@@ -110,5 +110,5 @@ github:
 
 events:
   driver: go-channel
-  router_close_timeout: 10s
+  router_close_timeout: 10
   go-channel: {}
