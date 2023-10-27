@@ -1890,16 +1890,7 @@
         "projectName": {
           "type": "string"
         },
-        "email": {
-          "type": "string"
-        },
         "identitySubject": {
-          "type": "string"
-        },
-        "firstName": {
-          "type": "string"
-        },
-        "lastName": {
           "type": "string"
         },
         "createdAt": {
@@ -2635,16 +2626,7 @@
         "organizationId": {
           "type": "string"
         },
-        "email": {
-          "type": "string"
-        },
         "identitySubject": {
-          "type": "string"
-        },
-        "firstName": {
-          "type": "string"
-        },
-        "lastName": {
           "type": "string"
         },
         "createdAt": {
