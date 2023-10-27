@@ -77,10 +77,15 @@ run-docker:  ## run the app under docker.
 	rm .resolved-compose.yaml*
 
 helm:  ## build the helm chart to a local archive, using ko for the image build
-	cd deployment/helm; rm -f templates/combined.yml && \
-	    ko resolve --platform=${KO_PLATFORMS} --base-import-paths --push=${KO_PUSH_IMAGE} -f templates/ > templates/combined.yml && \
+	cd deployment/helm; && \
+	    ko resolve --platform=${KO_PLATFORMS} --base-import-paths --push=${KO_PUSH_IMAGE} -f values.yaml && \
 		helm dependency update && \
 		helm package --version="${HELM_PACKAGE_VERSION}" .
+	git checkout deployment/helm/values.yaml
+
+helm-template:
+	cd deployment/helm; \
+	    ko resolve --platform=${KO_PLATFORMS} --base-import-paths -f values.yaml
 
 bootstrap: ## install build deps
 	go generate -tags tools tools/tools.go

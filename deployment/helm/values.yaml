@@ -36,6 +36,7 @@ aws:
 
 # Configurable settings for the main deployment
 deploymentSettings:
+  image: ko://github.com/stacklok/mediator/cmd/server
   imagePullPolicy: "IfNotPresent"
   resources:
     requests:
