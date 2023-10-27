@@ -258,7 +258,10 @@ func TestCreateUser_gRPC(t *testing.T) {
 			mockStore := mockdb.NewMockStore(ctrl)
 			mockJwtValidator := mockjwt.NewMockJwtValidator(ctrl)
 			tc.buildStubs(mockStore, mockJwtValidator)
-			evt, err := events.Setup()
+			evt, err := events.Setup(context.Background(), &config.EventConfig{
+				Driver:    "go-channel",
+				GoChannel: config.GoChannelEventConfig{},
+			})
 			require.NoError(t, err, "failed to setup eventer")
 			server, err := NewServer(mockStore, evt, &config.Config{
 				Salt: config.DefaultConfigForTest().Salt,
@@ -462,7 +465,10 @@ func TestDeleteUser_gRPC(t *testing.T) {
 			}))
 			defer testServer.Close()
 
-			evt, err := events.Setup()
+			evt, err := events.Setup(context.Background(), &config.EventConfig{
+				Driver:    "go-channel",
+				GoChannel: config.GoChannelEventConfig{},
+			})
 			require.NoError(t, err, "failed to setup eventer")
 			server, err := NewServer(mockStore, evt, &config.Config{
 				Salt: config.DefaultConfigForTest().Salt,
