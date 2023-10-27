@@ -269,7 +269,7 @@ func TestCreateUser_gRPC(t *testing.T) {
 			tc.buildStubs(mockStore, mockJwtValidator)
 			evt, err := events.Setup(context.Background(), &config.EventConfig{
 				Driver:    "go-channel",
-				GoChannel: &config.GoChannelEventConfig{},
+				GoChannel: config.GoChannelEventConfig{},
 			})
 			require.NoError(t, err, "failed to setup eventer")
 			server, err := NewServer(mockStore, evt, &config.Config{
@@ -476,7 +476,7 @@ func TestDeleteUser_gRPC(t *testing.T) {
 
 			evt, err := events.Setup(context.Background(), &config.EventConfig{
 				Driver:    "go-channel",
-				GoChannel: &config.GoChannelEventConfig{},
+				GoChannel: config.GoChannelEventConfig{},
 			})
 			require.NoError(t, err, "failed to setup eventer")
 			server, err := NewServer(mockStore, evt, &config.Config{

@@ -88,7 +88,7 @@ func newDefaultServer(t *testing.T, mockStore *mockdb.MockStore) *Server {
 
 	evt, err := events.Setup(context.Background(), &config.EventConfig{
 		Driver:    "go-channel",
-		GoChannel: &config.GoChannelEventConfig{},
+		GoChannel: config.GoChannelEventConfig{},
 	})
 	require.NoError(t, err, "failed to setup eventer")
 

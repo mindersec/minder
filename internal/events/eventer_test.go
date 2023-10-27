@@ -40,7 +40,7 @@ type eventPair struct {
 func driverConfig() *config.EventConfig {
 	return &config.EventConfig{
 		Driver:    "gochannel",
-		GoChannel: &config.GoChannelEventConfig{},
+		GoChannel: config.GoChannelEventConfig{},
 	}
 }
 
