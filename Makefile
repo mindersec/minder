@@ -78,9 +78,11 @@ run-docker:  ## run the app under docker.
 
 helm:  ## build the helm chart to a local archive, using ko for the image build
 	cd deployment/helm; \
-	    ko resolve --platform=${KO_PLATFORMS} --base-import-paths --push=${KO_PUSH_IMAGE} -f values.yaml && \
+	    ko resolve --platform=${KO_PLATFORMS} --base-import-paths --push=${KO_PUSH_IMAGE} -f values.yaml > values.tmp.yaml && \
+		mv values.tmp.yaml values.yaml && \
 		helm dependency update && \
-		helm package --version="${HELM_PACKAGE_VERSION}" .
+		helm package --version="${HELM_PACKAGE_VERSION}" . && \
+		cat values.yaml
 	git checkout deployment/helm/values.yaml
 
 helm-template: ## renders the helm templates which is useful for debugging
