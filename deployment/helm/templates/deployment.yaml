@@ -74,7 +74,7 @@ spec:
           
           # ko will always specify a digest, so we don't need to worry about
           # CRI image caching
-          imagePullPolicy: IfNotPresent
+          imagePullPolicy: "{{ .Values.deploymentSettings.imagePullPolicy }}}}"
           ports:
             - name: http
               containerPort: !!int "{{ .Values.service.httpPort }}"
@@ -94,12 +94,7 @@ spec:
               path: /api/v1/health
               port: http
           resources:
-            requests:
-              cpu: 1
-              memory: 1Gi
-            limits:
-              cpu: 4
-              memory: 1.5Gi
+            {{- toYaml .Values.deploymentSettings.resources | nindent 12 }}
           volumeMounts:
           - name: config
             mountPath: /config
@@ -109,6 +104,9 @@ spec:
             mountPath: /secrets/app
           - name: identity-secrets
             mountPath: /secrets/identity
+          {{- if .Values.deploymentSettings.extraVolumeMounts }}
+          {{- toYaml .Values.deploymentSettings.extraVolumeMounts | nindent 12 }}
+          {{- end }}
       volumes:
       - name: config
         configMap:
@@ -127,3 +125,6 @@ spec:
       - name: identity-secrets
         secret:
           secretName: mediator-identity-secrets
+      {{- if .Values.deploymentSettings.extraVolumes }}
+      {{- toYaml .Values.deploymentSettings.extraVolumes | nindent 6 }}
+      {{- end }}
