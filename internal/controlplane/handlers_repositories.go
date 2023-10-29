@@ -91,7 +91,7 @@ func (s *Server) RegisterRepository(ctx context.Context,
 
 	allEvents := []string{"*"}
 	resultData, err := s.registerWebhookForRepository(
-		ctx, p, upstreamRepos, allEvents)
+		ctx, p, projectID, upstreamRepos, allEvents)
 	if err != nil {
 		return nil, err
 	}
@@ -400,7 +400,7 @@ func (s *Server) ListRemoteRepositoriesFromProvider(
 
 	for idx, rem := range remoteRepos {
 		// Skip private repositories
-		if rem.IsPrivate {
+		if rem.IsPrivate && !projectAllowsPrivateRepos(ctx, s.store, projectID) {
 			continue
 		}
 		remoteRepo := remoteRepos[idx]

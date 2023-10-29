@@ -238,6 +238,7 @@ func handleParseError(typ string, parseErr error) webhookEventState {
 func (s *Server) registerWebhookForRepository(
 	ctx context.Context,
 	pbuild *providers.ProviderBuilder,
+	projectID uuid.UUID,
 	repositories []UpstreamRepositoryReference,
 	ghEvents []string,
 ) ([]*pb.RegisterRepoResult, error) {
@@ -279,7 +280,7 @@ func (s *Server) registerWebhookForRepository(
 		}
 
 		// skip if we try to register a private repository
-		if repoGet.GetPrivate() {
+		if repoGet.GetPrivate() && !projectAllowsPrivateRepos(ctx, s.store, projectID) {
 			errorStr := "repository is private"
 			regResult.Status.Error = &errorStr
 			registerData = append(registerData, regResult)
@@ -997,20 +998,10 @@ func getRepoInformationFromPayload(
 		return db.Repository{}, fmt.Errorf("unable to determine repository for event: %w", errRepoNotFound)
 	}
 
-	// ignore processing webhooks for private repositories
-	isPrivate, ok := repoInfo["private"].(bool)
-	if ok {
-		if isPrivate {
-			return db.Repository{}, errRepoIsPrivate
-		}
-	}
-
 	id, err := parseRepoID(repoInfo["id"])
 	if err != nil {
 		return db.Repository{}, fmt.Errorf("error parsing repository ID: %w", err)
 	}
-
-	log.Printf("handling event for repository %d", id)
 
 	// At this point, we're unsure what the group ID is, so we need to look it up.
 	// It's the same case for the provider. We can gather this information from the
@@ -1029,6 +1020,16 @@ func getRepoInformationFromPayload(
 		return db.Repository{}, fmt.Errorf("no group found for repository %s/%s: %w",
 			dbrepo.RepoOwner, dbrepo.RepoName, errRepoNotFound)
 	}
+
+	// ignore processing webhooks for private repositories
+	isPrivate, ok := repoInfo["private"].(bool)
+	if ok {
+		if isPrivate && !projectAllowsPrivateRepos(ctx, store, dbrepo.ProjectID) {
+			return db.Repository{}, errRepoIsPrivate
+		}
+	}
+
+	log.Printf("handling event for repository %d", id)
 
 	return dbrepo, nil
 }
@@ -1049,4 +1050,20 @@ func parseRepoID(repoID any) (int32, error) {
 	default:
 		return 0, fmt.Errorf("unknown type for repoID: %T", v)
 	}
+}
+
+func projectAllowsPrivateRepos(ctx context.Context, store db.Store, projectID uuid.UUID) bool {
+	// we're throwing away the result because we're really not interested in what the feature
+	// sets, just that it's enabled
+	_, err := store.GetFeatureInProject(ctx, db.GetFeatureInProjectParams{
+		ProjectID: projectID,
+		Feature:   "private_repositories_enabled",
+	})
+	if errors.Is(err, sql.ErrNoRows) {
+		return false
+	} else if err != nil {
+		log.Printf("error getting features for project %s: %v", projectID, err)
+		return false
+	}
+	return true
 }
