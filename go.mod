@@ -74,6 +74,7 @@ require (
 	github.com/containerd/console v1.0.4-0.20230313162750-1ae8d489ac81 // indirect
 	github.com/decred/dcrd/dcrec/secp256k1/v4 v4.2.0 // indirect
 	github.com/felixge/httpsnoop v1.0.3 // indirect
+	github.com/go-chi/chi/v5 v5.0.8 // indirect
 	github.com/gorilla/schema v1.2.0 // indirect
 	github.com/lestrrat-go/blackmagic v1.0.2 // indirect
 	github.com/lestrrat-go/httpcc v1.0.1 // indirect
