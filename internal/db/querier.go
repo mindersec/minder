@@ -6,6 +6,7 @@ package db
 
 import (
 	"context"
+	"encoding/json"
 
 	"github.com/google/uuid"
 )
@@ -54,6 +55,9 @@ type Querier interface {
 	GetArtifactVersionByID(ctx context.Context, id uuid.UUID) (ArtifactVersion, error)
 	GetArtifactVersionBySha(ctx context.Context, sha string) (ArtifactVersion, error)
 	GetChildrenProjects(ctx context.Context, id uuid.UUID) ([]GetChildrenProjectsRow, error)
+	// GetFeatureInProject verifies if a feature is available for a specific project.
+	// It returns the settings for the feature if it is available.
+	GetFeatureInProject(ctx context.Context, arg GetFeatureInProjectParams) (json.RawMessage, error)
 	GetOrganization(ctx context.Context, id uuid.UUID) (Project, error)
 	GetOrganizationByName(ctx context.Context, name string) (Project, error)
 	GetOrganizationForUpdate(ctx context.Context, name string) (Project, error)
