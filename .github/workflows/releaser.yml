@@ -112,6 +112,7 @@ jobs:
     with:
       base64-subjects: "${{ needs.release.outputs.hashes }}"
       upload-assets: true # upload to a new release
+      private-repository: true # remove this line after going public
   verification:
     name: Verify provenance of assets (SLSA3)
     needs:
