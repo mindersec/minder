@@ -1524,16 +1524,7 @@
     },
     "EvalVulncheck": {
       "type": "object",
-      "properties": {
-        "db": {
-          "type": "string",
-          "title": "db is the database to use for the vulncheck, e.g. OSV"
-        },
-        "endpoint": {
-          "type": "string",
-          "title": "e.g. https://api.osv.dev/v1/query"
-        }
-      }
+      "title": "no configuration for now"
     },
     "GetProfileStatusByNameRequestEntityTypedId": {
       "type": "object",

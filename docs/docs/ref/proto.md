@@ -1470,13 +1470,7 @@ endpoint and how we compare it to the rule.
 <a name="mediator-v1-RuleType-Definition-Eval-Vulncheck"></a>
 
 #### RuleType.Definition.Eval.Vulncheck
-
-
-
-| Field | Type | Label | Description |
-| ----- | ---- | ----- | ----------- |
-| db | [string](#string) |  | db is the database to use for the vulncheck, e.g. OSV |
-| endpoint | [string](#string) |  | e.g. https://api.osv.dev/v1/query |
+no configuration for now
 
 
 <a name="mediator-v1-RuleType-Definition-Ingest"></a>
