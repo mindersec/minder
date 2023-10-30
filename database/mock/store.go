@@ -7,6 +7,7 @@ package mockdb
 import (
 	context "context"
 	sql "database/sql"
+	json "encoding/json"
 	reflect "reflect"
 
 	gomock "github.com/golang/mock/gomock"
@@ -108,21 +109,6 @@ func (m *MockStore) Commit(arg0 *sql.Tx) error {
 func (mr *MockStoreMockRecorder) Commit(arg0 interface{}) *gomock.Call {
 	mr.mock.ctrl.T.Helper()
 	return mr.mock.ctrl.RecordCallWithMethodType(mr.mock, "Commit", reflect.TypeOf((*MockStore)(nil).Commit), arg0)
-}
-
-// CountProfiles mocks base method.
-func (m *MockStore) CountProfiles(arg0 context.Context) (int64, error) {
-	m.ctrl.T.Helper()
-	ret := m.ctrl.Call(m, "CountProfiles", arg0)
-	ret0, _ := ret[0].(int64)
-	ret1, _ := ret[1].(error)
-	return ret0, ret1
-}
-
-// CountProfiles indicates an expected call of CountProfiles.
-func (mr *MockStoreMockRecorder) CountProfiles(arg0 interface{}) *gomock.Call {
-	mr.mock.ctrl.T.Helper()
-	return mr.mock.ctrl.RecordCallWithMethodType(mr.mock, "CountProfiles", reflect.TypeOf((*MockStore)(nil).CountProfiles), arg0)
 }
 
 // CountProfilesByEntityType mocks base method.
@@ -722,6 +708,21 @@ func (m *MockStore) GetChildrenProjects(arg0 context.Context, arg1 uuid.UUID) ([
 func (mr *MockStoreMockRecorder) GetChildrenProjects(arg0, arg1 interface{}) *gomock.Call {
 	mr.mock.ctrl.T.Helper()
 	return mr.mock.ctrl.RecordCallWithMethodType(mr.mock, "GetChildrenProjects", reflect.TypeOf((*MockStore)(nil).GetChildrenProjects), arg0, arg1)
+}
+
+// GetFeatureInProject mocks base method.
+func (m *MockStore) GetFeatureInProject(arg0 context.Context, arg1 db.GetFeatureInProjectParams) (json.RawMessage, error) {
+	m.ctrl.T.Helper()
+	ret := m.ctrl.Call(m, "GetFeatureInProject", arg0, arg1)
+	ret0, _ := ret[0].(json.RawMessage)
+	ret1, _ := ret[1].(error)
+	return ret0, ret1
+}
+
+// GetFeatureInProject indicates an expected call of GetFeatureInProject.
+func (mr *MockStoreMockRecorder) GetFeatureInProject(arg0, arg1 interface{}) *gomock.Call {
+	mr.mock.ctrl.T.Helper()
+	return mr.mock.ctrl.RecordCallWithMethodType(mr.mock, "GetFeatureInProject", reflect.TypeOf((*MockStore)(nil).GetFeatureInProject), arg0, arg1)
 }
 
 // GetOrganization mocks base method.

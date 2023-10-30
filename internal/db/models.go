@@ -303,6 +303,13 @@ type ArtifactVersion struct {
 	CreatedAt             time.Time             `json:"created_at"`
 }
 
+type Entitlement struct {
+	ID        uuid.UUID `json:"id"`
+	Feature   string    `json:"feature"`
+	ProjectID uuid.UUID `json:"project_id"`
+	CreatedAt time.Time `json:"created_at"`
+}
+
 type EntityProfile struct {
 	ID              uuid.UUID       `json:"id"`
 	Entity          Entities        `json:"entity"`
@@ -317,6 +324,13 @@ type EntityProfileRule struct {
 	EntityProfileID uuid.UUID `json:"entity_profile_id"`
 	RuleTypeID      uuid.UUID `json:"rule_type_id"`
 	CreatedAt       time.Time `json:"created_at"`
+}
+
+type Feature struct {
+	Name      string          `json:"name"`
+	Settings  json.RawMessage `json:"settings"`
+	CreatedAt time.Time       `json:"created_at"`
+	UpdatedAt time.Time       `json:"updated_at"`
 }
 
 type Profile struct {
