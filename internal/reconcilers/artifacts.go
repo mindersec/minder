@@ -106,7 +106,7 @@ func (e *Reconciler) handleArtifactsReconcilerEvent(ctx context.Context, evt *Re
 		return fmt.Errorf("error retrieving provider: %w", err)
 	}
 
-	p, err := providers.GetProviderBuilder(ctx, prov, evt.Project, e.store, e.crypteng)
+	p, err := providers.GetProviderBuilder(ctx, prov, evt.Project, e.store, e.crypteng, e.provMt)
 	if err != nil {
 		return fmt.Errorf("error building client: %w", err)
 	}

@@ -28,6 +28,7 @@ import (
 	gitclient "github.com/stacklok/mediator/internal/providers/git"
 	ghclient "github.com/stacklok/mediator/internal/providers/github"
 	httpclient "github.com/stacklok/mediator/internal/providers/http"
+	"github.com/stacklok/mediator/internal/providers/telemetry"
 	provinfv1 "github.com/stacklok/mediator/pkg/providers/v1"
 )
 
@@ -39,6 +40,7 @@ func GetProviderBuilder(
 	projectID uuid.UUID,
 	store db.Store,
 	crypteng *crypto.Engine,
+	metrics telemetry.ProviderMetrics,
 ) (*ProviderBuilder, error) {
 	encToken, err := store.GetAccessTokenByProjectID(ctx,
 		db.GetAccessTokenByProjectIDParams{Provider: prov.Name, ProjectID: projectID})
@@ -51,7 +53,7 @@ func GetProviderBuilder(
 		return nil, fmt.Errorf("error decrypting access token: %w", err)
 	}
 
-	return NewProviderBuilder(&prov, encToken, decryptedToken.AccessToken), nil
+	return NewProviderBuilder(&prov, encToken, decryptedToken.AccessToken, metrics), nil
 }
 
 // ProviderBuilder is a utility struct which allows for the creation of
@@ -60,6 +62,7 @@ type ProviderBuilder struct {
 	p        *db.Provider
 	tokenInf db.ProviderAccessToken
 	tok      string
+	metrics  telemetry.ProviderMetrics
 }
 
 // NewProviderBuilder creates a new provider builder.
@@ -67,11 +70,13 @@ func NewProviderBuilder(
 	p *db.Provider,
 	tokenInf db.ProviderAccessToken,
 	tok string,
+	metrics telemetry.ProviderMetrics,
 ) *ProviderBuilder {
 	return &ProviderBuilder{
 		p:        p,
 		tokenInf: tokenInf,
 		tok:      tok,
+		metrics:  metrics,
 	}
 }
 
@@ -123,7 +128,7 @@ func (pb *ProviderBuilder) GetHTTP(ctx context.Context) (provinfv1.REST, error) 
 		return nil, fmt.Errorf("error parsing http config: %w", err)
 	}
 
-	return httpclient.NewREST(cfg, pb.tok)
+	return httpclient.NewREST(cfg, pb.metrics, pb.tok)
 }
 
 // GetGitHub returns a github client for the provider.
@@ -142,7 +147,7 @@ func (pb *ProviderBuilder) GetGitHub(ctx context.Context) (*ghclient.RestClient,
 		return nil, fmt.Errorf("error parsing github config: %w", err)
 	}
 
-	cli, err := ghclient.NewRestClient(ctx, cfg, pb.GetToken(), pb.tokenInf.OwnerFilter.String)
+	cli, err := ghclient.NewRestClient(ctx, cfg, pb.metrics, pb.GetToken(), pb.tokenInf.OwnerFilter.String)
 	if err != nil {
 		return nil, fmt.Errorf("error creating github client: %w", err)
 	}

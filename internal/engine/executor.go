@@ -30,6 +30,7 @@ import (
 	engif "github.com/stacklok/mediator/internal/engine/interfaces"
 	"github.com/stacklok/mediator/internal/events"
 	"github.com/stacklok/mediator/internal/providers"
+	providertelemetry "github.com/stacklok/mediator/internal/providers/telemetry"
 	pb "github.com/stacklok/mediator/pkg/api/protobuf/go/minder/v1"
 )
 
@@ -42,10 +43,15 @@ const (
 type Executor struct {
 	querier  db.Store
 	crypteng *crypto.Engine
+	provMt   providertelemetry.ProviderMetrics
 }
 
 // NewExecutor creates a new executor
-func NewExecutor(querier db.Store, authCfg *config.AuthConfig) (*Executor, error) {
+func NewExecutor(
+	querier db.Store,
+	authCfg *config.AuthConfig,
+	provMt providertelemetry.ProviderMetrics,
+) (*Executor, error) {
 	crypteng, err := crypto.EngineFromAuthConfig(authCfg)
 	if err != nil {
 		return nil, err
@@ -54,6 +60,7 @@ func NewExecutor(querier db.Store, authCfg *config.AuthConfig) (*Executor, error
 	return &Executor{
 		querier:  querier,
 		crypteng: crypteng,
+		provMt:   provMt,
 	}, nil
 }
 
@@ -89,7 +96,7 @@ func (e *Executor) HandleEntityEvent(msg *message.Message) error {
 		return fmt.Errorf("error getting provider: %w", err)
 	}
 
-	cli, err := providers.GetProviderBuilder(ctx, provider, *projectID, e.querier, e.crypteng)
+	cli, err := providers.GetProviderBuilder(ctx, provider, *projectID, e.querier, e.crypteng, e.provMt)
 	if err != nil {
 		return fmt.Errorf("error building client: %w", err)
 	}

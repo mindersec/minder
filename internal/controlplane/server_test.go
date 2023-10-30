@@ -36,6 +36,7 @@ import (
 	mockjwt "github.com/stacklok/mediator/internal/auth/mock"
 	"github.com/stacklok/mediator/internal/config"
 	"github.com/stacklok/mediator/internal/events"
+	provtelemetry "github.com/stacklok/mediator/internal/providers/telemetry"
 	legacy "github.com/stacklok/mediator/pkg/api/protobuf/go/mediator/v1"
 	pb "github.com/stacklok/mediator/pkg/api/protobuf/go/minder/v1"
 )
@@ -105,7 +106,7 @@ func newDefaultServer(t *testing.T, mockStore *mockdb.MockStore) *Server {
 	defer ctrl.Finish()
 	mockJwt := mockjwt.NewMockJwtValidator(ctrl)
 
-	server, err := NewServer(mockStore, evt, NewMetrics(), c, mockJwt)
+	server, err := NewServer(mockStore, evt, NewMetrics(), provtelemetry.NewNoopMetrics(), c, mockJwt)
 	require.NoError(t, err, "failed to create server")
 	return server
 }

@@ -21,6 +21,7 @@ import (
 	"github.com/stacklok/mediator/internal/crypto"
 	"github.com/stacklok/mediator/internal/db"
 	"github.com/stacklok/mediator/internal/events"
+	providertelemetry "github.com/stacklok/mediator/internal/providers/telemetry"
 )
 
 const (
@@ -35,10 +36,16 @@ type Reconciler struct {
 	store    db.Store
 	evt      *events.Eventer
 	crypteng *crypto.Engine
+	provMt   providertelemetry.ProviderMetrics
 }
 
 // NewReconciler creates a new reconciler object
-func NewReconciler(store db.Store, evt *events.Eventer, authCfg *config.AuthConfig) (*Reconciler, error) {
+func NewReconciler(
+	store db.Store,
+	evt *events.Eventer,
+	authCfg *config.AuthConfig,
+	provMt providertelemetry.ProviderMetrics,
+) (*Reconciler, error) {
 	crypteng, err := crypto.EngineFromAuthConfig(authCfg)
 	if err != nil {
 		return nil, err
@@ -48,6 +55,7 @@ func NewReconciler(store db.Store, evt *events.Eventer, authCfg *config.AuthConf
 		store:    store,
 		evt:      evt,
 		crypteng: crypteng,
+		provMt:   provMt,
 	}, nil
 }
 

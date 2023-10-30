@@ -50,6 +50,7 @@ import (
 	"github.com/stacklok/mediator/internal/db"
 	"github.com/stacklok/mediator/internal/events"
 	"github.com/stacklok/mediator/internal/logger"
+	provtelemetry "github.com/stacklok/mediator/internal/providers/telemetry"
 	"github.com/stacklok/mediator/internal/util"
 	legacy "github.com/stacklok/mediator/pkg/api/protobuf/go/mediator/v1"
 	pb "github.com/stacklok/mediator/pkg/api/protobuf/go/minder/v1"
@@ -67,6 +68,7 @@ type Server struct {
 	cfg        *config.Config
 	evt        *events.Eventer
 	mt         *metrics
+	provMt     provtelemetry.ProviderMetrics
 	grpcServer *grpc.Server
 	vldtr      auth.JwtValidator
 	pb.UnimplementedHealthServiceServer
@@ -90,7 +92,14 @@ type Server struct {
 }
 
 // NewServer creates a new server instance
-func NewServer(store db.Store, evt *events.Eventer, cpm *metrics, cfg *config.Config, vldtr auth.JwtValidator) (*Server, error) {
+func NewServer(
+	store db.Store,
+	evt *events.Eventer,
+	cpm *metrics,
+	provMetrics provtelemetry.ProviderMetrics,
+	cfg *config.Config,
+	vldtr auth.JwtValidator,
+) (*Server, error) {
 	eng, err := crypto.EngineFromAuthConfig(&cfg.Auth)
 	if err != nil {
 		return nil, fmt.Errorf("failed to create crypto engine: %w", err)
@@ -102,6 +111,7 @@ func NewServer(store db.Store, evt *events.Eventer, cpm *metrics, cfg *config.Co
 		cryptoEngine: eng,
 		vldtr:        vldtr,
 		mt:           cpm,
+		provMt:       provMetrics,
 	}, nil
 }
 

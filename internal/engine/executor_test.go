@@ -32,6 +32,7 @@ import (
 	"github.com/stacklok/mediator/internal/crypto"
 	"github.com/stacklok/mediator/internal/db"
 	"github.com/stacklok/mediator/internal/engine"
+	provtelemetry "github.com/stacklok/mediator/internal/providers/telemetry"
 	minderv1 "github.com/stacklok/mediator/pkg/api/protobuf/go/minder/v1"
 )
 
@@ -237,7 +238,7 @@ default allow = true`,
 
 	e, err := engine.NewExecutor(mockStore, &config.AuthConfig{
 		TokenKey: tokenKeyPath,
-	})
+	}, provtelemetry.NewNoopMetrics())
 	require.NoError(t, err, "expected no error")
 
 	eiw := engine.NewEntityInfoWrapper().
