@@ -1,9 +1,6 @@
 ---
-id: run_the_server
-title: Run the server
-sidebar_position: 4
-slug: /run-the-server
-displayed_sidebar: mediator
+title: Run the Server
+sidebar_position: 10
 ---
 
 # Run a mediator server

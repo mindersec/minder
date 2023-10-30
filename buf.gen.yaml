@@ -28,6 +28,7 @@ plugins:
       - paths=source_relative
   - name: openapiv2
     out: pkg/api/openapi
-  - plugin: buf.build/community/pseudomuto-doc:v1.5.1
-    out: docs/docs/protodocs
-    opt: "markdown,proto.md"
+  - plugin: doc
+  #buf.build/community/pseudomuto-doc:v1.5.1
+    out: docs/docs/ref
+    opt: "docs/proto_template.tmpl,proto.md"

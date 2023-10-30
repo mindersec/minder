@@ -99,6 +99,7 @@ bootstrap: ## install build deps
 		github.com/grpc-ecosystem/grpc-gateway/v2/protoc-gen-grpc-gateway \
 		github.com/grpc-ecosystem/grpc-gateway/v2/protoc-gen-openapiv2 \
 			google.golang.org/protobuf/cmd/protoc-gen-go google.golang.org/grpc/cmd/protoc-gen-go-grpc \
+			github.com/pseudomuto/protoc-gen-doc/cmd/protoc-gen-doc \
 			github.com/kyleconroy/sqlc
 	# Create a config.yaml if it doesn't exist
 	# TODO: remove this when all config is handled in internal/config

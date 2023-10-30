@@ -1,9 +1,6 @@
 ---
-id: mediator_architecture
 title: Architecture
-sidebar_position: 2
-slug: /architecture
-displayed_sidebar: mediator
+sidebar_position: 60
 ---
 
 # System Architecture

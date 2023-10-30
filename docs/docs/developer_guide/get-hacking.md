@@ -1,9 +1,6 @@
 ---
-id: get_hacking
 title: Get Hacking
 sidebar_position: 1
-slug: /get_hacking
-displayed_sidebar: mediator
 ---
 
 # Get Hacking

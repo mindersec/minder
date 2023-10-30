@@ -1,9 +1,6 @@
 ---
-id: login_medic
 title: Login with Medic
-sidebar_position: 1
-slug: /run-the-login_medic
-displayed_sidebar: mediator
+sidebar_position: 10
 ---
 
 ## Prerequisites

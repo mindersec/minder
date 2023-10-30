@@ -1,9 +1,6 @@
 ---
-id: mediator_intro
 title: Mediator
 sidebar_position: 1
-slug: /
-displayed_sidebar: mediator
 ---
 
 ![mediator logo](./images/mediator.png)

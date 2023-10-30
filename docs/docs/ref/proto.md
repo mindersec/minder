@@ -1,151 +1,9 @@
+---
+sidebar_position: 60
+toc_max_heading_level: 4
+---
 # Protocol Documentation
 <a name="top"></a>
-
-## Table of Contents
-
-- [mediator/v1/mediator.proto](#mediator_v1_mediator-proto)
-    - [Artifact](#mediator-v1-Artifact)
-    - [ArtifactType](#mediator-v1-ArtifactType)
-    - [ArtifactVersion](#mediator-v1-ArtifactVersion)
-    - [BranchProtection](#mediator-v1-BranchProtection)
-    - [BuiltinType](#mediator-v1-BuiltinType)
-    - [CheckHealthRequest](#mediator-v1-CheckHealthRequest)
-    - [CheckHealthResponse](#mediator-v1-CheckHealthResponse)
-    - [Context](#mediator-v1-Context)
-    - [CreateKeyPairRequest](#mediator-v1-CreateKeyPairRequest)
-    - [CreateKeyPairResponse](#mediator-v1-CreateKeyPairResponse)
-    - [CreateProfileRequest](#mediator-v1-CreateProfileRequest)
-    - [CreateProfileResponse](#mediator-v1-CreateProfileResponse)
-    - [CreateRuleTypeRequest](#mediator-v1-CreateRuleTypeRequest)
-    - [CreateRuleTypeResponse](#mediator-v1-CreateRuleTypeResponse)
-    - [CreateUserRequest](#mediator-v1-CreateUserRequest)
-    - [CreateUserResponse](#mediator-v1-CreateUserResponse)
-    - [DeleteProfileRequest](#mediator-v1-DeleteProfileRequest)
-    - [DeleteProfileResponse](#mediator-v1-DeleteProfileResponse)
-    - [DeleteRuleTypeRequest](#mediator-v1-DeleteRuleTypeRequest)
-    - [DeleteRuleTypeResponse](#mediator-v1-DeleteRuleTypeResponse)
-    - [DeleteUserRequest](#mediator-v1-DeleteUserRequest)
-    - [DeleteUserResponse](#mediator-v1-DeleteUserResponse)
-    - [Dependency](#mediator-v1-Dependency)
-    - [DiffType](#mediator-v1-DiffType)
-    - [DiffType.Ecosystem](#mediator-v1-DiffType-Ecosystem)
-    - [ExchangeCodeForTokenCLIRequest](#mediator-v1-ExchangeCodeForTokenCLIRequest)
-    - [ExchangeCodeForTokenWEBRequest](#mediator-v1-ExchangeCodeForTokenWEBRequest)
-    - [ExchangeCodeForTokenWEBResponse](#mediator-v1-ExchangeCodeForTokenWEBResponse)
-    - [GetArtifactByIdRequest](#mediator-v1-GetArtifactByIdRequest)
-    - [GetArtifactByIdResponse](#mediator-v1-GetArtifactByIdResponse)
-    - [GetAuthorizationURLRequest](#mediator-v1-GetAuthorizationURLRequest)
-    - [GetAuthorizationURLResponse](#mediator-v1-GetAuthorizationURLResponse)
-    - [GetBranchProtectionRequest](#mediator-v1-GetBranchProtectionRequest)
-    - [GetBranchProtectionResponse](#mediator-v1-GetBranchProtectionResponse)
-    - [GetProfileByIdRequest](#mediator-v1-GetProfileByIdRequest)
-    - [GetProfileByIdResponse](#mediator-v1-GetProfileByIdResponse)
-    - [GetProfileStatusByNameRequest](#mediator-v1-GetProfileStatusByNameRequest)
-    - [GetProfileStatusByNameRequest.EntityTypedId](#mediator-v1-GetProfileStatusByNameRequest-EntityTypedId)
-    - [GetProfileStatusByNameResponse](#mediator-v1-GetProfileStatusByNameResponse)
-    - [GetProfileStatusByProjectRequest](#mediator-v1-GetProfileStatusByProjectRequest)
-    - [GetProfileStatusByProjectResponse](#mediator-v1-GetProfileStatusByProjectResponse)
-    - [GetPublicKeyRequest](#mediator-v1-GetPublicKeyRequest)
-    - [GetPublicKeyResponse](#mediator-v1-GetPublicKeyResponse)
-    - [GetRepositoryByIdRequest](#mediator-v1-GetRepositoryByIdRequest)
-    - [GetRepositoryByIdResponse](#mediator-v1-GetRepositoryByIdResponse)
-    - [GetRepositoryByNameRequest](#mediator-v1-GetRepositoryByNameRequest)
-    - [GetRepositoryByNameResponse](#mediator-v1-GetRepositoryByNameResponse)
-    - [GetRuleTypeByIdRequest](#mediator-v1-GetRuleTypeByIdRequest)
-    - [GetRuleTypeByIdResponse](#mediator-v1-GetRuleTypeByIdResponse)
-    - [GetRuleTypeByNameRequest](#mediator-v1-GetRuleTypeByNameRequest)
-    - [GetRuleTypeByNameResponse](#mediator-v1-GetRuleTypeByNameResponse)
-    - [GetSecretByIdRequest](#mediator-v1-GetSecretByIdRequest)
-    - [GetSecretByIdResponse](#mediator-v1-GetSecretByIdResponse)
-    - [GetSecretsRequest](#mediator-v1-GetSecretsRequest)
-    - [GetSecretsResponse](#mediator-v1-GetSecretsResponse)
-    - [GetUserRequest](#mediator-v1-GetUserRequest)
-    - [GetUserResponse](#mediator-v1-GetUserResponse)
-    - [GetVulnerabilitiesRequest](#mediator-v1-GetVulnerabilitiesRequest)
-    - [GetVulnerabilitiesResponse](#mediator-v1-GetVulnerabilitiesResponse)
-    - [GetVulnerabilityByIdRequest](#mediator-v1-GetVulnerabilityByIdRequest)
-    - [GetVulnerabilityByIdResponse](#mediator-v1-GetVulnerabilityByIdResponse)
-    - [GitHubProviderConfig](#mediator-v1-GitHubProviderConfig)
-    - [GitType](#mediator-v1-GitType)
-    - [GithubWorkflow](#mediator-v1-GithubWorkflow)
-    - [ListArtifactsRequest](#mediator-v1-ListArtifactsRequest)
-    - [ListArtifactsResponse](#mediator-v1-ListArtifactsResponse)
-    - [ListProfilesRequest](#mediator-v1-ListProfilesRequest)
-    - [ListProfilesResponse](#mediator-v1-ListProfilesResponse)
-    - [ListRemoteRepositoriesFromProviderRequest](#mediator-v1-ListRemoteRepositoriesFromProviderRequest)
-    - [ListRemoteRepositoriesFromProviderResponse](#mediator-v1-ListRemoteRepositoriesFromProviderResponse)
-    - [ListRepositoriesRequest](#mediator-v1-ListRepositoriesRequest)
-    - [ListRepositoriesResponse](#mediator-v1-ListRepositoriesResponse)
-    - [ListRuleTypesRequest](#mediator-v1-ListRuleTypesRequest)
-    - [ListRuleTypesResponse](#mediator-v1-ListRuleTypesResponse)
-    - [PrDependencies](#mediator-v1-PrDependencies)
-    - [PrDependencies.ContextualDependency](#mediator-v1-PrDependencies-ContextualDependency)
-    - [PrDependencies.ContextualDependency.FilePatch](#mediator-v1-PrDependencies-ContextualDependency-FilePatch)
-    - [Profile](#mediator-v1-Profile)
-    - [Profile.Rule](#mediator-v1-Profile-Rule)
-    - [ProfileStatus](#mediator-v1-ProfileStatus)
-    - [Project](#mediator-v1-Project)
-    - [Provider](#mediator-v1-Provider)
-    - [Provider.Context](#mediator-v1-Provider-Context)
-    - [Provider.Definition](#mediator-v1-Provider-Definition)
-    - [PullRequest](#mediator-v1-PullRequest)
-    - [RESTProviderConfig](#mediator-v1-RESTProviderConfig)
-    - [RefreshTokenRequest](#mediator-v1-RefreshTokenRequest)
-    - [RefreshTokenResponse](#mediator-v1-RefreshTokenResponse)
-    - [RegisterRepoResult](#mediator-v1-RegisterRepoResult)
-    - [RegisterRepoResult.Status](#mediator-v1-RegisterRepoResult-Status)
-    - [RegisterRepositoryRequest](#mediator-v1-RegisterRepositoryRequest)
-    - [RegisterRepositoryResponse](#mediator-v1-RegisterRepositoryResponse)
-    - [Repository](#mediator-v1-Repository)
-    - [RestType](#mediator-v1-RestType)
-    - [RestType.Fallback](#mediator-v1-RestType-Fallback)
-    - [RevokeOauthProjectTokenRequest](#mediator-v1-RevokeOauthProjectTokenRequest)
-    - [RevokeOauthProjectTokenResponse](#mediator-v1-RevokeOauthProjectTokenResponse)
-    - [RevokeOauthTokensRequest](#mediator-v1-RevokeOauthTokensRequest)
-    - [RevokeOauthTokensResponse](#mediator-v1-RevokeOauthTokensResponse)
-    - [RpcOptions](#mediator-v1-RpcOptions)
-    - [RuleEvaluationStatus](#mediator-v1-RuleEvaluationStatus)
-    - [RuleEvaluationStatus.EntityInfoEntry](#mediator-v1-RuleEvaluationStatus-EntityInfoEntry)
-    - [RuleType](#mediator-v1-RuleType)
-    - [RuleType.Definition](#mediator-v1-RuleType-Definition)
-    - [RuleType.Definition.Alert](#mediator-v1-RuleType-Definition-Alert)
-    - [RuleType.Definition.Alert.AlertTypeSA](#mediator-v1-RuleType-Definition-Alert-AlertTypeSA)
-    - [RuleType.Definition.Eval](#mediator-v1-RuleType-Definition-Eval)
-    - [RuleType.Definition.Eval.JQComparison](#mediator-v1-RuleType-Definition-Eval-JQComparison)
-    - [RuleType.Definition.Eval.JQComparison.Operator](#mediator-v1-RuleType-Definition-Eval-JQComparison-Operator)
-    - [RuleType.Definition.Eval.Rego](#mediator-v1-RuleType-Definition-Eval-Rego)
-    - [RuleType.Definition.Eval.Vulncheck](#mediator-v1-RuleType-Definition-Eval-Vulncheck)
-    - [RuleType.Definition.Ingest](#mediator-v1-RuleType-Definition-Ingest)
-    - [RuleType.Definition.Remediate](#mediator-v1-RuleType-Definition-Remediate)
-    - [RuleType.Definition.Remediate.GhBranchProtectionType](#mediator-v1-RuleType-Definition-Remediate-GhBranchProtectionType)
-    - [RuleType.Definition.Remediate.PullRequestRemediation](#mediator-v1-RuleType-Definition-Remediate-PullRequestRemediation)
-    - [RuleType.Definition.Remediate.PullRequestRemediation.Content](#mediator-v1-RuleType-Definition-Remediate-PullRequestRemediation-Content)
-    - [SignatureVerification](#mediator-v1-SignatureVerification)
-    - [StoreProviderTokenRequest](#mediator-v1-StoreProviderTokenRequest)
-    - [StoreProviderTokenResponse](#mediator-v1-StoreProviderTokenResponse)
-    - [UpdateRuleTypeRequest](#mediator-v1-UpdateRuleTypeRequest)
-    - [UpdateRuleTypeResponse](#mediator-v1-UpdateRuleTypeResponse)
-    - [UpstreamRepositoryRef](#mediator-v1-UpstreamRepositoryRef)
-    - [UserRecord](#mediator-v1-UserRecord)
-    - [VerifyProviderTokenFromRequest](#mediator-v1-VerifyProviderTokenFromRequest)
-    - [VerifyProviderTokenFromResponse](#mediator-v1-VerifyProviderTokenFromResponse)
-  
-    - [DepEcosystem](#mediator-v1-DepEcosystem)
-    - [Entity](#mediator-v1-Entity)
-    - [ObjectOwner](#mediator-v1-ObjectOwner)
-  
-    - [File-level Extensions](#mediator_v1_mediator-proto-extensions)
-  
-    - [ArtifactService](#mediator-v1-ArtifactService)
-    - [BranchProtectionService](#mediator-v1-BranchProtectionService)
-    - [HealthService](#mediator-v1-HealthService)
-    - [KeyService](#mediator-v1-KeyService)
-    - [OAuthService](#mediator-v1-OAuthService)
-    - [ProfileService](#mediator-v1-ProfileService)
-    - [RepositoryService](#mediator-v1-RepositoryService)
-    - [UserService](#mediator-v1-UserService)
-  
-- [Scalar Value Types](#scalar-value-types)
 
 
 
@@ -154,11 +12,119 @@
 
 ## mediator/v1/mediator.proto
 
+### Services
 
+<a name="mediator-v1-ArtifactService"></a>
+
+#### ArtifactService
+
+
+| Method Name | Request Type | Response Type | Description |
+| ----------- | ------------ | ------------- | ------------|
+| ListArtifacts | [ListArtifactsRequest](#mediator-v1-ListArtifactsRequest) | [ListArtifactsResponse](#mediator-v1-ListArtifactsResponse) |  |
+| GetArtifactById | [GetArtifactByIdRequest](#mediator-v1-GetArtifactByIdRequest) | [GetArtifactByIdResponse](#mediator-v1-GetArtifactByIdResponse) |  |
+
+
+<a name="mediator-v1-BranchProtectionService"></a>
+
+#### BranchProtectionService
+Get Branch Protection Settings
+
+| Method Name | Request Type | Response Type | Description |
+| ----------- | ------------ | ------------- | ------------|
+| GetBranchProtection | [GetBranchProtectionRequest](#mediator-v1-GetBranchProtectionRequest) | [GetBranchProtectionResponse](#mediator-v1-GetBranchProtectionResponse) |  |
+
+
+<a name="mediator-v1-HealthService"></a>
+
+#### HealthService
+Simple Health Check Service
+replies with OK
+
+| Method Name | Request Type | Response Type | Description |
+| ----------- | ------------ | ------------- | ------------|
+| CheckHealth | [CheckHealthRequest](#mediator-v1-CheckHealthRequest) | [CheckHealthResponse](#mediator-v1-CheckHealthResponse) |  |
+
+
+<a name="mediator-v1-KeyService"></a>
+
+#### KeyService
+
+
+| Method Name | Request Type | Response Type | Description |
+| ----------- | ------------ | ------------- | ------------|
+| GetPublicKey | [GetPublicKeyRequest](#mediator-v1-GetPublicKeyRequest) | [GetPublicKeyResponse](#mediator-v1-GetPublicKeyResponse) |  |
+| CreateKeyPair | [CreateKeyPairRequest](#mediator-v1-CreateKeyPairRequest) | [CreateKeyPairResponse](#mediator-v1-CreateKeyPairResponse) |  |
+
+
+<a name="mediator-v1-OAuthService"></a>
+
+#### OAuthService
+
+
+| Method Name | Request Type | Response Type | Description |
+| ----------- | ------------ | ------------- | ------------|
+| GetAuthorizationURL | [GetAuthorizationURLRequest](#mediator-v1-GetAuthorizationURLRequest) | [GetAuthorizationURLResponse](#mediator-v1-GetAuthorizationURLResponse) |  |
+| ExchangeCodeForTokenCLI | [ExchangeCodeForTokenCLIRequest](#mediator-v1-ExchangeCodeForTokenCLIRequest) | [.google.api.HttpBody](#google-api-HttpBody) | buf:lint:ignore RPC_RESPONSE_STANDARD_NAME  protolint:disable:this |
+| ExchangeCodeForTokenWEB | [ExchangeCodeForTokenWEBRequest](#mediator-v1-ExchangeCodeForTokenWEBRequest) | [ExchangeCodeForTokenWEBResponse](#mediator-v1-ExchangeCodeForTokenWEBResponse) |  |
+| StoreProviderToken | [StoreProviderTokenRequest](#mediator-v1-StoreProviderTokenRequest) | [StoreProviderTokenResponse](#mediator-v1-StoreProviderTokenResponse) |  |
+| RevokeOauthTokens | [RevokeOauthTokensRequest](#mediator-v1-RevokeOauthTokensRequest) | [RevokeOauthTokensResponse](#mediator-v1-RevokeOauthTokensResponse) | RevokeOauthTokens is used to revoke all tokens this a nuclear option and should only be used in emergencies |
+| RevokeOauthProjectToken | [RevokeOauthProjectTokenRequest](#mediator-v1-RevokeOauthProjectTokenRequest) | [RevokeOauthProjectTokenResponse](#mediator-v1-RevokeOauthProjectTokenResponse) | revoke token for a project |
+| VerifyProviderTokenFrom | [VerifyProviderTokenFromRequest](#mediator-v1-VerifyProviderTokenFromRequest) | [VerifyProviderTokenFromResponse](#mediator-v1-VerifyProviderTokenFromResponse) | VerifyProviderTokenFrom verifies that a token has been created for a provider since given timestamp |
+
+
+<a name="mediator-v1-ProfileService"></a>
+
+#### ProfileService
+
+
+| Method Name | Request Type | Response Type | Description |
+| ----------- | ------------ | ------------- | ------------|
+| CreateProfile | [CreateProfileRequest](#mediator-v1-CreateProfileRequest) | [CreateProfileResponse](#mediator-v1-CreateProfileResponse) |  |
+| DeleteProfile | [DeleteProfileRequest](#mediator-v1-DeleteProfileRequest) | [DeleteProfileResponse](#mediator-v1-DeleteProfileResponse) |  |
+| ListProfiles | [ListProfilesRequest](#mediator-v1-ListProfilesRequest) | [ListProfilesResponse](#mediator-v1-ListProfilesResponse) |  |
+| GetProfileById | [GetProfileByIdRequest](#mediator-v1-GetProfileByIdRequest) | [GetProfileByIdResponse](#mediator-v1-GetProfileByIdResponse) |  |
+| GetProfileStatusByName | [GetProfileStatusByNameRequest](#mediator-v1-GetProfileStatusByNameRequest) | [GetProfileStatusByNameResponse](#mediator-v1-GetProfileStatusByNameResponse) |  |
+| GetProfileStatusByProject | [GetProfileStatusByProjectRequest](#mediator-v1-GetProfileStatusByProjectRequest) | [GetProfileStatusByProjectResponse](#mediator-v1-GetProfileStatusByProjectResponse) |  |
+| ListRuleTypes | [ListRuleTypesRequest](#mediator-v1-ListRuleTypesRequest) | [ListRuleTypesResponse](#mediator-v1-ListRuleTypesResponse) |  |
+| GetRuleTypeByName | [GetRuleTypeByNameRequest](#mediator-v1-GetRuleTypeByNameRequest) | [GetRuleTypeByNameResponse](#mediator-v1-GetRuleTypeByNameResponse) |  |
+| GetRuleTypeById | [GetRuleTypeByIdRequest](#mediator-v1-GetRuleTypeByIdRequest) | [GetRuleTypeByIdResponse](#mediator-v1-GetRuleTypeByIdResponse) |  |
+| CreateRuleType | [CreateRuleTypeRequest](#mediator-v1-CreateRuleTypeRequest) | [CreateRuleTypeResponse](#mediator-v1-CreateRuleTypeResponse) |  |
+| UpdateRuleType | [UpdateRuleTypeRequest](#mediator-v1-UpdateRuleTypeRequest) | [UpdateRuleTypeResponse](#mediator-v1-UpdateRuleTypeResponse) |  |
+| DeleteRuleType | [DeleteRuleTypeRequest](#mediator-v1-DeleteRuleTypeRequest) | [DeleteRuleTypeResponse](#mediator-v1-DeleteRuleTypeResponse) |  |
+
+
+<a name="mediator-v1-RepositoryService"></a>
+
+#### RepositoryService
+
+
+| Method Name | Request Type | Response Type | Description |
+| ----------- | ------------ | ------------- | ------------|
+| RegisterRepository | [RegisterRepositoryRequest](#mediator-v1-RegisterRepositoryRequest) | [RegisterRepositoryResponse](#mediator-v1-RegisterRepositoryResponse) |  |
+| ListRemoteRepositoriesFromProvider | [ListRemoteRepositoriesFromProviderRequest](#mediator-v1-ListRemoteRepositoriesFromProviderRequest) | [ListRemoteRepositoriesFromProviderResponse](#mediator-v1-ListRemoteRepositoriesFromProviderResponse) |  |
+| ListRepositories | [ListRepositoriesRequest](#mediator-v1-ListRepositoriesRequest) | [ListRepositoriesResponse](#mediator-v1-ListRepositoriesResponse) |  |
+| GetRepositoryById | [GetRepositoryByIdRequest](#mediator-v1-GetRepositoryByIdRequest) | [GetRepositoryByIdResponse](#mediator-v1-GetRepositoryByIdResponse) |  |
+| GetRepositoryByName | [GetRepositoryByNameRequest](#mediator-v1-GetRepositoryByNameRequest) | [GetRepositoryByNameResponse](#mediator-v1-GetRepositoryByNameResponse) |  |
+
+
+<a name="mediator-v1-UserService"></a>
+
+#### UserService
+manage Users CRUD
+
+| Method Name | Request Type | Response Type | Description |
+| ----------- | ------------ | ------------- | ------------|
+| CreateUser | [CreateUserRequest](#mediator-v1-CreateUserRequest) | [CreateUserResponse](#mediator-v1-CreateUserResponse) |  |
+| DeleteUser | [DeleteUserRequest](#mediator-v1-DeleteUserRequest) | [DeleteUserResponse](#mediator-v1-DeleteUserResponse) |  |
+| GetUser | [GetUserRequest](#mediator-v1-GetUserRequest) | [GetUserResponse](#mediator-v1-GetUserResponse) |  |
+
+
+### Messages
 
 <a name="mediator-v1-Artifact"></a>
 
-### Artifact
+#### Artifact
 
 
 
@@ -174,23 +140,15 @@
 | created_at | [google.protobuf.Timestamp](#google-protobuf-Timestamp) |  |  |
 
 
-
-
-
-
 <a name="mediator-v1-ArtifactType"></a>
 
-### ArtifactType
+#### ArtifactType
 ArtifactType defines the artifact data evaluation.
-
-
-
-
 
 
 <a name="mediator-v1-ArtifactVersion"></a>
 
-### ArtifactVersion
+#### ArtifactVersion
 
 
 
@@ -204,13 +162,9 @@ ArtifactType defines the artifact data evaluation.
 | created_at | [google.protobuf.Timestamp](#google-protobuf-Timestamp) |  |  |
 
 
-
-
-
-
 <a name="mediator-v1-BranchProtection"></a>
 
-### BranchProtection
+#### BranchProtection
 
 
 
@@ -220,13 +174,9 @@ ArtifactType defines the artifact data evaluation.
 | is_protected | [bool](#bool) |  | Add other relevant fields |
 
 
-
-
-
-
 <a name="mediator-v1-BuiltinType"></a>
 
-### BuiltinType
+#### BuiltinType
 BuiltinType defines the builtin data evaluation.
 
 
@@ -235,23 +185,15 @@ BuiltinType defines the builtin data evaluation.
 | method | [string](#string) |  |  |
 
 
-
-
-
-
 <a name="mediator-v1-CheckHealthRequest"></a>
 
-### CheckHealthRequest
-
-
-
-
+#### CheckHealthRequest
 
 
 
 <a name="mediator-v1-CheckHealthResponse"></a>
 
-### CheckHealthResponse
+#### CheckHealthResponse
 
 
 
@@ -260,13 +202,9 @@ BuiltinType defines the builtin data evaluation.
 | status | [string](#string) |  |  |
 
 
-
-
-
-
 <a name="mediator-v1-Context"></a>
 
-### Context
+#### Context
 Context defines the context in which a rule is evaluated.
 this normally refers to a combination of the provider, organization and project.
 
@@ -278,13 +216,9 @@ this normally refers to a combination of the provider, organization and project.
 | project | [string](#string) | optional |  |
 
 
-
-
-
-
 <a name="mediator-v1-CreateKeyPairRequest"></a>
 
-### CreateKeyPairRequest
+#### CreateKeyPairRequest
 
 
 
@@ -294,13 +228,9 @@ this normally refers to a combination of the provider, organization and project.
 | project_id | [string](#string) |  |  |
 
 
-
-
-
-
 <a name="mediator-v1-CreateKeyPairResponse"></a>
 
-### CreateKeyPairResponse
+#### CreateKeyPairResponse
 
 
 
@@ -310,13 +240,9 @@ this normally refers to a combination of the provider, organization and project.
 | public_key | [string](#string) |  |  |
 
 
-
-
-
-
 <a name="mediator-v1-CreateProfileRequest"></a>
 
-### CreateProfileRequest
+#### CreateProfileRequest
 Profile service
 
 
@@ -325,13 +251,9 @@ Profile service
 | profile | [Profile](#mediator-v1-Profile) |  |  |
 
 
-
-
-
-
 <a name="mediator-v1-CreateProfileResponse"></a>
 
-### CreateProfileResponse
+#### CreateProfileResponse
 
 
 
@@ -340,13 +262,9 @@ Profile service
 | profile | [Profile](#mediator-v1-Profile) |  |  |
 
 
-
-
-
-
 <a name="mediator-v1-CreateRuleTypeRequest"></a>
 
-### CreateRuleTypeRequest
+#### CreateRuleTypeRequest
 CreateRuleTypeRequest is the request to create a rule type.
 
 
@@ -355,13 +273,9 @@ CreateRuleTypeRequest is the request to create a rule type.
 | rule_type | [RuleType](#mediator-v1-RuleType) |  | rule_type is the rule type to be created. |
 
 
-
-
-
-
 <a name="mediator-v1-CreateRuleTypeResponse"></a>
 
-### CreateRuleTypeResponse
+#### CreateRuleTypeResponse
 CreateRuleTypeResponse is the response to create a rule type.
 
 
@@ -370,23 +284,15 @@ CreateRuleTypeResponse is the response to create a rule type.
 | rule_type | [RuleType](#mediator-v1-RuleType) |  | rule_type is the rule type that was created. |
 
 
-
-
-
-
 <a name="mediator-v1-CreateUserRequest"></a>
 
-### CreateUserRequest
+#### CreateUserRequest
 User service
-
-
-
-
 
 
 <a name="mediator-v1-CreateUserResponse"></a>
 
-### CreateUserResponse
+#### CreateUserResponse
 
 
 
@@ -404,13 +310,9 @@ User service
 | created_at | [google.protobuf.Timestamp](#google-protobuf-Timestamp) |  |  |
 
 
-
-
-
-
 <a name="mediator-v1-DeleteProfileRequest"></a>
 
-### DeleteProfileRequest
+#### DeleteProfileRequest
 
 
 
@@ -420,23 +322,15 @@ User service
 | id | [string](#string) |  | id is the id of the profile to delete |
 
 
-
-
-
-
 <a name="mediator-v1-DeleteProfileResponse"></a>
 
-### DeleteProfileResponse
-
-
-
-
+#### DeleteProfileResponse
 
 
 
 <a name="mediator-v1-DeleteRuleTypeRequest"></a>
 
-### DeleteRuleTypeRequest
+#### DeleteRuleTypeRequest
 DeleteRuleTypeRequest is the request to delete a rule type.
 
 
@@ -446,43 +340,27 @@ DeleteRuleTypeRequest is the request to delete a rule type.
 | id | [string](#string) |  | id is the id of the rule type to be deleted. |
 
 
-
-
-
-
 <a name="mediator-v1-DeleteRuleTypeResponse"></a>
 
-### DeleteRuleTypeResponse
+#### DeleteRuleTypeResponse
 DeleteRuleTypeResponse is the response to delete a rule type.
-
-
-
-
 
 
 <a name="mediator-v1-DeleteUserRequest"></a>
 
-### DeleteUserRequest
-
-
-
-
+#### DeleteUserRequest
 
 
 
 <a name="mediator-v1-DeleteUserResponse"></a>
 
-### DeleteUserResponse
-
-
-
-
+#### DeleteUserResponse
 
 
 
 <a name="mediator-v1-Dependency"></a>
 
-### Dependency
+#### Dependency
 
 
 
@@ -493,13 +371,9 @@ DeleteRuleTypeResponse is the response to delete a rule type.
 | version | [string](#string) |  |  |
 
 
-
-
-
-
 <a name="mediator-v1-DiffType"></a>
 
-### DiffType
+#### DiffType
 DiffType defines the diff data ingester.
 
 
@@ -508,13 +382,9 @@ DiffType defines the diff data ingester.
 | ecosystems | [DiffType.Ecosystem](#mediator-v1-DiffType-Ecosystem) | repeated |  |
 
 
-
-
-
-
 <a name="mediator-v1-DiffType-Ecosystem"></a>
 
-### DiffType.Ecosystem
+#### DiffType.Ecosystem
 
 
 
@@ -524,13 +394,9 @@ DiffType defines the diff data ingester.
 | depfile | [string](#string) |  | depfile is the file that contains the dependencies for this ecosystem |
 
 
-
-
-
-
 <a name="mediator-v1-ExchangeCodeForTokenCLIRequest"></a>
 
-### ExchangeCodeForTokenCLIRequest
+#### ExchangeCodeForTokenCLIRequest
 
 
 
@@ -543,13 +409,9 @@ DiffType defines the diff data ingester.
 | redirect_uri | [string](#string) |  |  |
 
 
-
-
-
-
 <a name="mediator-v1-ExchangeCodeForTokenWEBRequest"></a>
 
-### ExchangeCodeForTokenWEBRequest
+#### ExchangeCodeForTokenWEBRequest
 
 
 
@@ -561,13 +423,9 @@ DiffType defines the diff data ingester.
 | redirect_uri | [string](#string) |  |  |
 
 
-
-
-
-
 <a name="mediator-v1-ExchangeCodeForTokenWEBResponse"></a>
 
-### ExchangeCodeForTokenWEBResponse
+#### ExchangeCodeForTokenWEBResponse
 
 
 
@@ -579,13 +437,9 @@ DiffType defines the diff data ingester.
 | status | [string](#string) |  |  |
 
 
-
-
-
-
 <a name="mediator-v1-GetArtifactByIdRequest"></a>
 
-### GetArtifactByIdRequest
+#### GetArtifactByIdRequest
 
 
 
@@ -596,13 +450,9 @@ DiffType defines the diff data ingester.
 | tag | [string](#string) |  |  |
 
 
-
-
-
-
 <a name="mediator-v1-GetArtifactByIdResponse"></a>
 
-### GetArtifactByIdResponse
+#### GetArtifactByIdResponse
 
 
 
@@ -612,13 +462,9 @@ DiffType defines the diff data ingester.
 | versions | [ArtifactVersion](#mediator-v1-ArtifactVersion) | repeated |  |
 
 
-
-
-
-
 <a name="mediator-v1-GetAuthorizationURLRequest"></a>
 
-### GetAuthorizationURLRequest
+#### GetAuthorizationURLRequest
 
 
 
@@ -631,13 +477,9 @@ DiffType defines the diff data ingester.
 | owner | [string](#string) | optional |  |
 
 
-
-
-
-
 <a name="mediator-v1-GetAuthorizationURLResponse"></a>
 
-### GetAuthorizationURLResponse
+#### GetAuthorizationURLResponse
 
 
 
@@ -646,23 +488,15 @@ DiffType defines the diff data ingester.
 | url | [string](#string) |  |  |
 
 
-
-
-
-
 <a name="mediator-v1-GetBranchProtectionRequest"></a>
 
-### GetBranchProtectionRequest
-
-
-
-
+#### GetBranchProtectionRequest
 
 
 
 <a name="mediator-v1-GetBranchProtectionResponse"></a>
 
-### GetBranchProtectionResponse
+#### GetBranchProtectionResponse
 
 
 
@@ -671,13 +505,9 @@ DiffType defines the diff data ingester.
 | branch_protections | [BranchProtection](#mediator-v1-BranchProtection) | repeated |  |
 
 
-
-
-
-
 <a name="mediator-v1-GetProfileByIdRequest"></a>
 
-### GetProfileByIdRequest
+#### GetProfileByIdRequest
 get profile by id
 
 
@@ -687,13 +517,9 @@ get profile by id
 | id | [string](#string) |  | id is the id of the profile to get |
 
 
-
-
-
-
 <a name="mediator-v1-GetProfileByIdResponse"></a>
 
-### GetProfileByIdResponse
+#### GetProfileByIdResponse
 
 
 
@@ -702,13 +528,9 @@ get profile by id
 | profile | [Profile](#mediator-v1-Profile) |  |  |
 
 
-
-
-
-
 <a name="mediator-v1-GetProfileStatusByNameRequest"></a>
 
-### GetProfileStatusByNameRequest
+#### GetProfileStatusByNameRequest
 
 
 
@@ -721,13 +543,9 @@ get profile by id
 | rule | [string](#string) |  |  |
 
 
-
-
-
-
 <a name="mediator-v1-GetProfileStatusByNameRequest-EntityTypedId"></a>
 
-### GetProfileStatusByNameRequest.EntityTypedId
+#### GetProfileStatusByNameRequest.EntityTypedId
 EntiryTypeId is a message that carries an ID together with a type to uniquely identify an entity
 such as (repo, 1), (artifact, 2), ...
 if the struct is reused in other messages, it should be moved to a top-level definition
@@ -739,13 +557,9 @@ if the struct is reused in other messages, it should be moved to a top-level def
 | id | [string](#string) |  | id is the ID of the entity to get status for. Incompatible with `all` |
 
 
-
-
-
-
 <a name="mediator-v1-GetProfileStatusByNameResponse"></a>
 
-### GetProfileStatusByNameResponse
+#### GetProfileStatusByNameResponse
 
 
 
@@ -755,13 +569,9 @@ if the struct is reused in other messages, it should be moved to a top-level def
 | rule_evaluation_status | [RuleEvaluationStatus](#mediator-v1-RuleEvaluationStatus) | repeated | rule_evaluation_status is the status of the rules |
 
 
-
-
-
-
 <a name="mediator-v1-GetProfileStatusByProjectRequest"></a>
 
-### GetProfileStatusByProjectRequest
+#### GetProfileStatusByProjectRequest
 
 
 
@@ -770,13 +580,9 @@ if the struct is reused in other messages, it should be moved to a top-level def
 | context | [Context](#mediator-v1-Context) |  | context is the context in which the rule type is evaluated. |
 
 
-
-
-
-
 <a name="mediator-v1-GetProfileStatusByProjectResponse"></a>
 
-### GetProfileStatusByProjectResponse
+#### GetProfileStatusByProjectResponse
 
 
 
@@ -785,13 +591,9 @@ if the struct is reused in other messages, it should be moved to a top-level def
 | profile_status | [ProfileStatus](#mediator-v1-ProfileStatus) | repeated | profile_status is the status of the profile |
 
 
-
-
-
-
 <a name="mediator-v1-GetPublicKeyRequest"></a>
 
-### GetPublicKeyRequest
+#### GetPublicKeyRequest
 
 
 
@@ -800,13 +602,9 @@ if the struct is reused in other messages, it should be moved to a top-level def
 | key_identifier | [string](#string) |  |  |
 
 
-
-
-
-
 <a name="mediator-v1-GetPublicKeyResponse"></a>
 
-### GetPublicKeyResponse
+#### GetPublicKeyResponse
 
 
 
@@ -815,13 +613,9 @@ if the struct is reused in other messages, it should be moved to a top-level def
 | public_key | [string](#string) |  |  |
 
 
-
-
-
-
 <a name="mediator-v1-GetRepositoryByIdRequest"></a>
 
-### GetRepositoryByIdRequest
+#### GetRepositoryByIdRequest
 
 
 
@@ -830,13 +624,9 @@ if the struct is reused in other messages, it should be moved to a top-level def
 | repository_id | [string](#string) |  |  |
 
 
-
-
-
-
 <a name="mediator-v1-GetRepositoryByIdResponse"></a>
 
-### GetRepositoryByIdResponse
+#### GetRepositoryByIdResponse
 
 
 
@@ -845,13 +635,9 @@ if the struct is reused in other messages, it should be moved to a top-level def
 | repository | [Repository](#mediator-v1-Repository) |  |  |
 
 
-
-
-
-
 <a name="mediator-v1-GetRepositoryByNameRequest"></a>
 
-### GetRepositoryByNameRequest
+#### GetRepositoryByNameRequest
 
 
 
@@ -862,13 +648,9 @@ if the struct is reused in other messages, it should be moved to a top-level def
 | name | [string](#string) |  |  |
 
 
-
-
-
-
 <a name="mediator-v1-GetRepositoryByNameResponse"></a>
 
-### GetRepositoryByNameResponse
+#### GetRepositoryByNameResponse
 
 
 
@@ -877,13 +659,9 @@ if the struct is reused in other messages, it should be moved to a top-level def
 | repository | [Repository](#mediator-v1-Repository) |  |  |
 
 
-
-
-
-
 <a name="mediator-v1-GetRuleTypeByIdRequest"></a>
 
-### GetRuleTypeByIdRequest
+#### GetRuleTypeByIdRequest
 GetRuleTypeByIdRequest is the request to get a rule type by id.
 
 
@@ -893,13 +671,9 @@ GetRuleTypeByIdRequest is the request to get a rule type by id.
 | id | [string](#string) |  | id is the id of the rule type. |
 
 
-
-
-
-
 <a name="mediator-v1-GetRuleTypeByIdResponse"></a>
 
-### GetRuleTypeByIdResponse
+#### GetRuleTypeByIdResponse
 GetRuleTypeByIdResponse is the response to get a rule type by id.
 
 
@@ -908,13 +682,9 @@ GetRuleTypeByIdResponse is the response to get a rule type by id.
 | rule_type | [RuleType](#mediator-v1-RuleType) |  | rule_type is the rule type. |
 
 
-
-
-
-
 <a name="mediator-v1-GetRuleTypeByNameRequest"></a>
 
-### GetRuleTypeByNameRequest
+#### GetRuleTypeByNameRequest
 GetRuleTypeByNameRequest is the request to get a rule type by name.
 
 
@@ -924,13 +694,9 @@ GetRuleTypeByNameRequest is the request to get a rule type by name.
 | name | [string](#string) |  | name is the name of the rule type. |
 
 
-
-
-
-
 <a name="mediator-v1-GetRuleTypeByNameResponse"></a>
 
-### GetRuleTypeByNameResponse
+#### GetRuleTypeByNameResponse
 GetRuleTypeByNameResponse is the response to get a rule type by name.
 
 
@@ -939,13 +705,9 @@ GetRuleTypeByNameResponse is the response to get a rule type by name.
 | rule_type | [RuleType](#mediator-v1-RuleType) |  | rule_type is the rule type. |
 
 
-
-
-
-
 <a name="mediator-v1-GetSecretByIdRequest"></a>
 
-### GetSecretByIdRequest
+#### GetSecretByIdRequest
 
 
 
@@ -954,13 +716,9 @@ GetRuleTypeByNameResponse is the response to get a rule type by name.
 | id | [string](#string) |  |  |
 
 
-
-
-
-
 <a name="mediator-v1-GetSecretByIdResponse"></a>
 
-### GetSecretByIdResponse
+#### GetSecretByIdResponse
 
 
 
@@ -971,23 +729,15 @@ GetRuleTypeByNameResponse is the response to get a rule type by name.
 | description | [string](#string) |  | Add other relevant fields |
 
 
-
-
-
-
 <a name="mediator-v1-GetSecretsRequest"></a>
 
-### GetSecretsRequest
-
-
-
-
+#### GetSecretsRequest
 
 
 
 <a name="mediator-v1-GetSecretsResponse"></a>
 
-### GetSecretsResponse
+#### GetSecretsResponse
 
 
 
@@ -996,24 +746,16 @@ GetRuleTypeByNameResponse is the response to get a rule type by name.
 | secrets | [GetSecretByIdResponse](#mediator-v1-GetSecretByIdResponse) | repeated |  |
 
 
-
-
-
-
 <a name="mediator-v1-GetUserRequest"></a>
 
-### GetUserRequest
+#### GetUserRequest
 list users
 get user
 
 
-
-
-
-
 <a name="mediator-v1-GetUserResponse"></a>
 
-### GetUserResponse
+#### GetUserResponse
 
 
 
@@ -1023,23 +765,15 @@ get user
 | projects | [Project](#mediator-v1-Project) | repeated |  |
 
 
-
-
-
-
 <a name="mediator-v1-GetVulnerabilitiesRequest"></a>
 
-### GetVulnerabilitiesRequest
-
-
-
-
+#### GetVulnerabilitiesRequest
 
 
 
 <a name="mediator-v1-GetVulnerabilitiesResponse"></a>
 
-### GetVulnerabilitiesResponse
+#### GetVulnerabilitiesResponse
 
 
 
@@ -1048,13 +782,9 @@ get user
 | vulns | [GetVulnerabilityByIdResponse](#mediator-v1-GetVulnerabilityByIdResponse) | repeated |  |
 
 
-
-
-
-
 <a name="mediator-v1-GetVulnerabilityByIdRequest"></a>
 
-### GetVulnerabilityByIdRequest
+#### GetVulnerabilityByIdRequest
 
 
 
@@ -1063,13 +793,9 @@ get user
 | id | [string](#string) |  |  |
 
 
-
-
-
-
 <a name="mediator-v1-GetVulnerabilityByIdResponse"></a>
 
-### GetVulnerabilityByIdResponse
+#### GetVulnerabilityByIdResponse
 
 
 
@@ -1089,13 +815,9 @@ get user
 | created_at | [google.protobuf.Timestamp](#google-protobuf-Timestamp) |  |  |
 
 
-
-
-
-
 <a name="mediator-v1-GitHubProviderConfig"></a>
 
-### GitHubProviderConfig
+#### GitHubProviderConfig
 GitHubProviderConfig contains the configuration for the GitHub client
 
 Endpoint: is the GitHub API endpoint
@@ -1110,13 +832,9 @@ naming convention
 | endpoint | [string](#string) |  | Endpoint is the GitHub API endpoint. If using the public GitHub API, Endpoint can be left blank. |
 
 
-
-
-
-
 <a name="mediator-v1-GitType"></a>
 
-### GitType
+#### GitType
 GitType defines the git data ingester.
 
 
@@ -1126,13 +844,9 @@ GitType defines the git data ingester.
 | branch | [string](#string) |  | branch is the branch of the git repository. |
 
 
-
-
-
-
 <a name="mediator-v1-GithubWorkflow"></a>
 
-### GithubWorkflow
+#### GithubWorkflow
 
 
 
@@ -1144,13 +858,9 @@ GitType defines the git data ingester.
 | trigger | [string](#string) |  |  |
 
 
-
-
-
-
 <a name="mediator-v1-ListArtifactsRequest"></a>
 
-### ListArtifactsRequest
+#### ListArtifactsRequest
 
 
 
@@ -1160,13 +870,9 @@ GitType defines the git data ingester.
 | project_id | [string](#string) |  |  |
 
 
-
-
-
-
 <a name="mediator-v1-ListArtifactsResponse"></a>
 
-### ListArtifactsResponse
+#### ListArtifactsResponse
 
 
 
@@ -1175,13 +881,9 @@ GitType defines the git data ingester.
 | results | [Artifact](#mediator-v1-Artifact) | repeated |  |
 
 
-
-
-
-
 <a name="mediator-v1-ListProfilesRequest"></a>
 
-### ListProfilesRequest
+#### ListProfilesRequest
 list profiles
 
 
@@ -1190,13 +892,9 @@ list profiles
 | context | [Context](#mediator-v1-Context) |  | context is the context which contains the profiles |
 
 
-
-
-
-
 <a name="mediator-v1-ListProfilesResponse"></a>
 
-### ListProfilesResponse
+#### ListProfilesResponse
 
 
 
@@ -1205,13 +903,9 @@ list profiles
 | profiles | [Profile](#mediator-v1-Profile) | repeated |  |
 
 
-
-
-
-
 <a name="mediator-v1-ListRemoteRepositoriesFromProviderRequest"></a>
 
-### ListRemoteRepositoriesFromProviderRequest
+#### ListRemoteRepositoriesFromProviderRequest
 
 
 
@@ -1221,13 +915,9 @@ list profiles
 | project_id | [string](#string) |  |  |
 
 
-
-
-
-
 <a name="mediator-v1-ListRemoteRepositoriesFromProviderResponse"></a>
 
-### ListRemoteRepositoriesFromProviderResponse
+#### ListRemoteRepositoriesFromProviderResponse
 
 
 
@@ -1236,13 +926,9 @@ list profiles
 | results | [UpstreamRepositoryRef](#mediator-v1-UpstreamRepositoryRef) | repeated |  |
 
 
-
-
-
-
 <a name="mediator-v1-ListRepositoriesRequest"></a>
 
-### ListRepositoriesRequest
+#### ListRepositoriesRequest
 
 
 
@@ -1254,13 +940,9 @@ list profiles
 | offset | [int32](#int32) |  |  |
 
 
-
-
-
-
 <a name="mediator-v1-ListRepositoriesResponse"></a>
 
-### ListRepositoriesResponse
+#### ListRepositoriesResponse
 
 
 
@@ -1269,13 +951,9 @@ list profiles
 | results | [Repository](#mediator-v1-Repository) | repeated |  |
 
 
-
-
-
-
 <a name="mediator-v1-ListRuleTypesRequest"></a>
 
-### ListRuleTypesRequest
+#### ListRuleTypesRequest
 ListRuleTypesRequest is the request to list rule types.
 
 
@@ -1284,13 +962,9 @@ ListRuleTypesRequest is the request to list rule types.
 | context | [Context](#mediator-v1-Context) |  | context is the context in which the rule types are evaluated. |
 
 
-
-
-
-
 <a name="mediator-v1-ListRuleTypesResponse"></a>
 
-### ListRuleTypesResponse
+#### ListRuleTypesResponse
 ListRuleTypesResponse is the response to list rule types.
 
 
@@ -1299,13 +973,9 @@ ListRuleTypesResponse is the response to list rule types.
 | rule_types | [RuleType](#mediator-v1-RuleType) | repeated | rule_types is the list of rule types. |
 
 
-
-
-
-
 <a name="mediator-v1-PrDependencies"></a>
 
-### PrDependencies
+#### PrDependencies
 
 
 
@@ -1315,13 +985,9 @@ ListRuleTypesResponse is the response to list rule types.
 | deps | [PrDependencies.ContextualDependency](#mediator-v1-PrDependencies-ContextualDependency) | repeated |  |
 
 
-
-
-
-
 <a name="mediator-v1-PrDependencies-ContextualDependency"></a>
 
-### PrDependencies.ContextualDependency
+#### PrDependencies.ContextualDependency
 
 
 
@@ -1331,13 +997,9 @@ ListRuleTypesResponse is the response to list rule types.
 | file | [PrDependencies.ContextualDependency.FilePatch](#mediator-v1-PrDependencies-ContextualDependency-FilePatch) |  |  |
 
 
-
-
-
-
 <a name="mediator-v1-PrDependencies-ContextualDependency-FilePatch"></a>
 
-### PrDependencies.ContextualDependency.FilePatch
+#### PrDependencies.ContextualDependency.FilePatch
 
 
 
@@ -1347,13 +1009,9 @@ ListRuleTypesResponse is the response to list rule types.
 | patch_url | [string](#string) |  | points to the the raw patchfile |
 
 
-
-
-
-
 <a name="mediator-v1-Profile"></a>
 
-### Profile
+#### Profile
 Profile defines a profile that is user defined.
 
 
@@ -1370,13 +1028,9 @@ Profile defines a profile that is user defined.
 | alert | [string](#string) | optional | whether and how to alert (on,off,dry_run) this is optional as the default is set by the system |
 
 
-
-
-
-
 <a name="mediator-v1-Profile-Rule"></a>
 
-### Profile.Rule
+#### Profile.Rule
 Rule defines the individual call of a certain rule type.
 
 
@@ -1387,13 +1041,9 @@ Rule defines the individual call of a certain rule type.
 | def | [google.protobuf.Struct](#google-protobuf-Struct) |  | def is the definition of the rule. This depends on the rule type. |
 
 
-
-
-
-
 <a name="mediator-v1-ProfileStatus"></a>
 
-### ProfileStatus
+#### ProfileStatus
 get the overall profile status
 
 
@@ -1405,13 +1055,9 @@ get the overall profile status
 | last_updated | [google.protobuf.Timestamp](#google-protobuf-Timestamp) |  | last_updated is the last time the profile was updated |
 
 
-
-
-
-
 <a name="mediator-v1-Project"></a>
 
-### Project
+#### Project
 Project API Objects
 
 
@@ -1425,13 +1071,9 @@ Project API Objects
 | updated_at | [google.protobuf.Timestamp](#google-protobuf-Timestamp) |  |  |
 
 
-
-
-
-
 <a name="mediator-v1-Provider"></a>
 
-### Provider
+#### Provider
 Provider defines a provider that is used to connect to a certain service.
 This is used to define the context in which a rule is evaluated and serves
 as a data ingestion point. They are top level entities and are scoped to
@@ -1447,13 +1089,9 @@ an organization.
 | def | [Provider.Definition](#mediator-v1-Provider-Definition) |  |  |
 
 
-
-
-
-
 <a name="mediator-v1-Provider-Context"></a>
 
-### Provider.Context
+#### Provider.Context
 Context defines the context in which a provider is evaluated.
 Given thta a provider is a top level entity, it may only be scoped to
 an organization.
@@ -1465,13 +1103,9 @@ an organization.
 | project | [string](#string) |  |  |
 
 
-
-
-
-
 <a name="mediator-v1-Provider-Definition"></a>
 
-### Provider.Definition
+#### Provider.Definition
 Definition defines the definition of the provider.
 This is used to define the connection to the provider.
 
@@ -1482,13 +1116,9 @@ This is used to define the connection to the provider.
 | github | [GitHubProviderConfig](#mediator-v1-GitHubProviderConfig) | optional | github is the GitHub provider configuration. |
 
 
-
-
-
-
 <a name="mediator-v1-PullRequest"></a>
 
-### PullRequest
+#### PullRequest
 
 
 
@@ -1502,13 +1132,9 @@ This is used to define the connection to the provider.
 | author_id | [int64](#int64) |  | The author of the PR, will be used to check if we can request changes |
 
 
-
-
-
-
 <a name="mediator-v1-RESTProviderConfig"></a>
 
-### RESTProviderConfig
+#### RESTProviderConfig
 RESTProviderConfig contains the configuration for the REST provider.
 
 
@@ -1517,23 +1143,15 @@ RESTProviderConfig contains the configuration for the REST provider.
 | base_url | [string](#string) |  | base_url is the base URL for the REST provider. |
 
 
-
-
-
-
 <a name="mediator-v1-RefreshTokenRequest"></a>
 
-### RefreshTokenRequest
-
-
-
-
+#### RefreshTokenRequest
 
 
 
 <a name="mediator-v1-RefreshTokenResponse"></a>
 
-### RefreshTokenResponse
+#### RefreshTokenResponse
 
 
 
@@ -1543,13 +1161,9 @@ RESTProviderConfig contains the configuration for the REST provider.
 | access_token_expires_in | [int64](#int64) |  |  |
 
 
-
-
-
-
 <a name="mediator-v1-RegisterRepoResult"></a>
 
-### RegisterRepoResult
+#### RegisterRepoResult
 
 
 
@@ -1559,13 +1173,9 @@ RESTProviderConfig contains the configuration for the REST provider.
 | status | [RegisterRepoResult.Status](#mediator-v1-RegisterRepoResult-Status) |  |  |
 
 
-
-
-
-
 <a name="mediator-v1-RegisterRepoResult-Status"></a>
 
-### RegisterRepoResult.Status
+#### RegisterRepoResult.Status
 
 
 
@@ -1575,13 +1185,9 @@ RESTProviderConfig contains the configuration for the REST provider.
 | error | [string](#string) | optional |  |
 
 
-
-
-
-
 <a name="mediator-v1-RegisterRepositoryRequest"></a>
 
-### RegisterRepositoryRequest
+#### RegisterRepositoryRequest
 
 
 
@@ -1592,13 +1198,9 @@ RESTProviderConfig contains the configuration for the REST provider.
 | repositories | [UpstreamRepositoryRef](#mediator-v1-UpstreamRepositoryRef) | repeated |  |
 
 
-
-
-
-
 <a name="mediator-v1-RegisterRepositoryResponse"></a>
 
-### RegisterRepositoryResponse
+#### RegisterRepositoryResponse
 
 
 
@@ -1607,13 +1209,9 @@ RESTProviderConfig contains the configuration for the REST provider.
 | results | [RegisterRepoResult](#mediator-v1-RegisterRepoResult) | repeated |  |
 
 
-
-
-
-
 <a name="mediator-v1-Repository"></a>
 
-### Repository
+#### Repository
 
 
 
@@ -1638,13 +1236,9 @@ RESTProviderConfig contains the configuration for the REST provider.
 | updated_at | [google.protobuf.Timestamp](#google-protobuf-Timestamp) |  |  |
 
 
-
-
-
-
 <a name="mediator-v1-RestType"></a>
 
-### RestType
+#### RestType
 RestType defines the rest data evaluation.
 This is used to fetch data from a REST endpoint.
 
@@ -1659,13 +1253,9 @@ This is used to fetch data from a REST endpoint.
 | fallback | [RestType.Fallback](#mediator-v1-RestType-Fallback) | repeated | fallback provides a body that the ingester would return in case the REST call returns a non-200 status code. |
 
 
-
-
-
-
 <a name="mediator-v1-RestType-Fallback"></a>
 
-### RestType.Fallback
+#### RestType.Fallback
 
 
 
@@ -1675,13 +1265,9 @@ This is used to fetch data from a REST endpoint.
 | body | [string](#string) |  |  |
 
 
-
-
-
-
 <a name="mediator-v1-RevokeOauthProjectTokenRequest"></a>
 
-### RevokeOauthProjectTokenRequest
+#### RevokeOauthProjectTokenRequest
 
 
 
@@ -1691,33 +1277,21 @@ This is used to fetch data from a REST endpoint.
 | project_id | [string](#string) |  |  |
 
 
-
-
-
-
 <a name="mediator-v1-RevokeOauthProjectTokenResponse"></a>
 
-### RevokeOauthProjectTokenResponse
-
-
-
-
+#### RevokeOauthProjectTokenResponse
 
 
 
 <a name="mediator-v1-RevokeOauthTokensRequest"></a>
 
-### RevokeOauthTokensRequest
-
-
-
-
+#### RevokeOauthTokensRequest
 
 
 
 <a name="mediator-v1-RevokeOauthTokensResponse"></a>
 
-### RevokeOauthTokensResponse
+#### RevokeOauthTokensResponse
 
 
 
@@ -1726,13 +1300,9 @@ This is used to fetch data from a REST endpoint.
 | revoked_tokens | [int32](#int32) |  |  |
 
 
-
-
-
-
 <a name="mediator-v1-RpcOptions"></a>
 
-### RpcOptions
+#### RpcOptions
 
 
 
@@ -1745,13 +1315,9 @@ This is used to fetch data from a REST endpoint.
 | auth_scope | [ObjectOwner](#mediator-v1-ObjectOwner) |  |  |
 
 
-
-
-
-
 <a name="mediator-v1-RuleEvaluationStatus"></a>
 
-### RuleEvaluationStatus
+#### RuleEvaluationStatus
 get the status of the rules for a given profile
 
 
@@ -1771,13 +1337,9 @@ get the status of the rules for a given profile
 | remediation_details | [string](#string) |  | remediation_details is the description of the remediation attempt if any |
 
 
-
-
-
-
 <a name="mediator-v1-RuleEvaluationStatus-EntityInfoEntry"></a>
 
-### RuleEvaluationStatus.EntityInfoEntry
+#### RuleEvaluationStatus.EntityInfoEntry
 
 
 
@@ -1787,15 +1349,11 @@ get the status of the rules for a given profile
 | value | [string](#string) |  |  |
 
 
-
-
-
-
 <a name="mediator-v1-RuleType"></a>
 
-### RuleType
+#### RuleType
 RuleType defines rules that may or may not be user defined.
-The version is assumed from the folder&#39;s version.
+The version is assumed from the folder's version.
 
 
 | Field | Type | Label | Description |
@@ -1808,13 +1366,9 @@ The version is assumed from the folder&#39;s version.
 | guidance | [string](#string) |  | guidance are instructions we give the user in case a rule fails. |
 
 
-
-
-
-
 <a name="mediator-v1-RuleType-Definition"></a>
 
-### RuleType.Definition
+#### RuleType.Definition
 Definition defines the rule type. It encompases the schema and the data evaluation.
 
 
@@ -1829,13 +1383,9 @@ Definition defines the rule type. It encompases the schema and the data evaluati
 | alert | [RuleType.Definition.Alert](#mediator-v1-RuleType-Definition-Alert) |  |  |
 
 
-
-
-
-
 <a name="mediator-v1-RuleType-Definition-Alert"></a>
 
-### RuleType.Definition.Alert
+#### RuleType.Definition.Alert
 
 
 
@@ -1845,13 +1395,9 @@ Definition defines the rule type. It encompases the schema and the data evaluati
 | security_advisory | [RuleType.Definition.Alert.AlertTypeSA](#mediator-v1-RuleType-Definition-Alert-AlertTypeSA) | optional |  |
 
 
-
-
-
-
 <a name="mediator-v1-RuleType-Definition-Alert-AlertTypeSA"></a>
 
-### RuleType.Definition.Alert.AlertTypeSA
+#### RuleType.Definition.Alert.AlertTypeSA
 
 
 
@@ -1860,13 +1406,9 @@ Definition defines the rule type. It encompases the schema and the data evaluati
 | severity | [string](#string) |  |  |
 
 
-
-
-
-
 <a name="mediator-v1-RuleType-Definition-Eval"></a>
 
-### RuleType.Definition.Eval
+#### RuleType.Definition.Eval
 Eval defines the data evaluation definition.
 This pertains to the way we traverse data from the upstream
 endpoint and how we compare it to the rule.
@@ -1880,13 +1422,9 @@ endpoint and how we compare it to the rule.
 | vulncheck | [RuleType.Definition.Eval.Vulncheck](#mediator-v1-RuleType-Definition-Eval-Vulncheck) | optional | vulncheck is only used if the `vulncheck` type is selected. |
 
 
-
-
-
-
 <a name="mediator-v1-RuleType-Definition-Eval-JQComparison"></a>
 
-### RuleType.Definition.Eval.JQComparison
+#### RuleType.Definition.Eval.JQComparison
 
 
 
@@ -1896,13 +1434,9 @@ endpoint and how we compare it to the rule.
 | profile | [RuleType.Definition.Eval.JQComparison.Operator](#mediator-v1-RuleType-Definition-Eval-JQComparison-Operator) |  | Profile points to the profile itself. |
 
 
-
-
-
-
 <a name="mediator-v1-RuleType-Definition-Eval-JQComparison-Operator"></a>
 
-### RuleType.Definition.Eval.JQComparison.Operator
+#### RuleType.Definition.Eval.JQComparison.Operator
 
 
 
@@ -1911,29 +1445,21 @@ endpoint and how we compare it to the rule.
 | def | [string](#string) |  |  |
 
 
-
-
-
-
 <a name="mediator-v1-RuleType-Definition-Eval-Rego"></a>
 
-### RuleType.Definition.Eval.Rego
+#### RuleType.Definition.Eval.Rego
 
 
 
 | Field | Type | Label | Description |
 | ----- | ---- | ----- | ----------- |
-| type | [string](#string) |  | type is the type of evaluation engine to use for rego. We currently have two modes of operation: - deny-by-default: this is the default mode of operation where we deny access by default and allow access only if the profile explicitly allows it. It expects the profile to set an `allow` variable to true or false. - constraints: this is the mode of operation where we allow access by default and deny access only if a violation is found. It expects the profile to set a `violations` variable with a &#34;msg&#34; field. |
+| type | [string](#string) |  | type is the type of evaluation engine to use for rego. We currently have two modes of operation: - deny-by-default: this is the default mode of operation where we deny access by default and allow access only if the profile explicitly allows it. It expects the profile to set an `allow` variable to true or false. - constraints: this is the mode of operation where we allow access by default and deny access only if a violation is found. It expects the profile to set a `violations` variable with a "msg" field. |
 | def | [string](#string) |  | def is the definition of the rego profile. |
-
-
-
-
 
 
 <a name="mediator-v1-RuleType-Definition-Eval-Vulncheck"></a>
 
-### RuleType.Definition.Eval.Vulncheck
+#### RuleType.Definition.Eval.Vulncheck
 
 
 
@@ -1943,13 +1469,9 @@ endpoint and how we compare it to the rule.
 | endpoint | [string](#string) |  | e.g. https://api.osv.dev/v1/query |
 
 
-
-
-
-
 <a name="mediator-v1-RuleType-Definition-Ingest"></a>
 
-### RuleType.Definition.Ingest
+#### RuleType.Definition.Ingest
 Ingest defines how the data is ingested.
 
 
@@ -1963,13 +1485,9 @@ Ingest defines how the data is ingested.
 | diff | [DiffType](#mediator-v1-DiffType) | optional | diff is the diff data ingestion. |
 
 
-
-
-
-
 <a name="mediator-v1-RuleType-Definition-Remediate"></a>
 
-### RuleType.Definition.Remediate
+#### RuleType.Definition.Remediate
 
 
 
@@ -1981,13 +1499,9 @@ Ingest defines how the data is ingested.
 | pull_request | [RuleType.Definition.Remediate.PullRequestRemediation](#mediator-v1-RuleType-Definition-Remediate-PullRequestRemediation) | optional |  |
 
 
-
-
-
-
 <a name="mediator-v1-RuleType-Definition-Remediate-GhBranchProtectionType"></a>
 
-### RuleType.Definition.Remediate.GhBranchProtectionType
+#### RuleType.Definition.Remediate.GhBranchProtectionType
 
 
 
@@ -1996,13 +1510,9 @@ Ingest defines how the data is ingested.
 | patch | [string](#string) |  |  |
 
 
-
-
-
-
 <a name="mediator-v1-RuleType-Definition-Remediate-PullRequestRemediation"></a>
 
-### RuleType.Definition.Remediate.PullRequestRemediation
+#### RuleType.Definition.Remediate.PullRequestRemediation
 the name stutters a bit but we already use a PullRequest message for handling PR entities
 
 
@@ -2013,13 +1523,9 @@ the name stutters a bit but we already use a PullRequest message for handling PR
 | contents | [RuleType.Definition.Remediate.PullRequestRemediation.Content](#mediator-v1-RuleType-Definition-Remediate-PullRequestRemediation-Content) | repeated |  |
 
 
-
-
-
-
 <a name="mediator-v1-RuleType-Definition-Remediate-PullRequestRemediation-Content"></a>
 
-### RuleType.Definition.Remediate.PullRequestRemediation.Content
+#### RuleType.Definition.Remediate.PullRequestRemediation.Content
 
 
 
@@ -2028,16 +1534,12 @@ the name stutters a bit but we already use a PullRequest message for handling PR
 | path | [string](#string) |  | the file to patch |
 | action | [string](#string) |  | how to patch the file. For now, only replace is supported |
 | content | [string](#string) |  | the content of the file |
-| mode | [string](#string) | optional | the GIT mode of the file. Not UNIX mode! String because the GH API also uses strings the usual modes are: 100644 for regular files, 100755 for executable files and 040000 for submodules (which we don&#39;t use but now you know the meaning of the 1 in 100644) |
-
-
-
-
+| mode | [string](#string) | optional | the GIT mode of the file. Not UNIX mode! String because the GH API also uses strings the usual modes are: 100644 for regular files, 100755 for executable files and 040000 for submodules (which we don't use but now you know the meaning of the 1 in 100644) |
 
 
 <a name="mediator-v1-SignatureVerification"></a>
 
-### SignatureVerification
+#### SignatureVerification
 
 
 
@@ -2053,13 +1555,9 @@ the name stutters a bit but we already use a PullRequest message for handling PR
 | signature_time | [google.protobuf.Timestamp](#google-protobuf-Timestamp) | optional |  |
 
 
-
-
-
-
 <a name="mediator-v1-StoreProviderTokenRequest"></a>
 
-### StoreProviderTokenRequest
+#### StoreProviderTokenRequest
 
 
 
@@ -2071,23 +1569,15 @@ the name stutters a bit but we already use a PullRequest message for handling PR
 | owner | [string](#string) | optional |  |
 
 
-
-
-
-
 <a name="mediator-v1-StoreProviderTokenResponse"></a>
 
-### StoreProviderTokenResponse
-
-
-
-
+#### StoreProviderTokenResponse
 
 
 
 <a name="mediator-v1-UpdateRuleTypeRequest"></a>
 
-### UpdateRuleTypeRequest
+#### UpdateRuleTypeRequest
 UpdateRuleTypeRequest is the request to update a rule type.
 
 
@@ -2096,13 +1586,9 @@ UpdateRuleTypeRequest is the request to update a rule type.
 | rule_type | [RuleType](#mediator-v1-RuleType) |  | rule_type is the rule type to be updated. |
 
 
-
-
-
-
 <a name="mediator-v1-UpdateRuleTypeResponse"></a>
 
-### UpdateRuleTypeResponse
+#### UpdateRuleTypeResponse
 UpdateRuleTypeResponse is the response to update a rule type.
 
 
@@ -2111,13 +1597,9 @@ UpdateRuleTypeResponse is the response to update a rule type.
 | rule_type | [RuleType](#mediator-v1-RuleType) |  | rule_type is the rule type that was updated. |
 
 
-
-
-
-
 <a name="mediator-v1-UpstreamRepositoryRef"></a>
 
-### UpstreamRepositoryRef
+#### UpstreamRepositoryRef
 
 
 
@@ -2128,13 +1610,9 @@ UpdateRuleTypeResponse is the response to update a rule type.
 | repo_id | [int32](#int32) |  |  |
 
 
-
-
-
-
 <a name="mediator-v1-UserRecord"></a>
 
-### UserRecord
+#### UserRecord
 user record to be returned
 
 
@@ -2150,13 +1628,9 @@ user record to be returned
 | updated_at | [google.protobuf.Timestamp](#google-protobuf-Timestamp) |  |  |
 
 
-
-
-
-
 <a name="mediator-v1-VerifyProviderTokenFromRequest"></a>
 
-### VerifyProviderTokenFromRequest
+#### VerifyProviderTokenFromRequest
 
 
 
@@ -2167,13 +1641,9 @@ user record to be returned
 | timestamp | [google.protobuf.Timestamp](#google-protobuf-Timestamp) |  |  |
 
 
-
-
-
-
 <a name="mediator-v1-VerifyProviderTokenFromResponse"></a>
 
-### VerifyProviderTokenFromResponse
+#### VerifyProviderTokenFromResponse
 
 
 
@@ -2182,10 +1652,12 @@ user record to be returned
 | status | [string](#string) |  |  |
 
 
+| Extension | Type | Base | Number | Description |
+| --------- | ---- | ---- | ------ | ----------- |
+| rpc_options | RpcOptions | .google.protobuf.MethodOptions | 51077 |  |
 
 
 
- 
 
 
 <a name="mediator-v1-DepEcosystem"></a>
@@ -2199,7 +1671,6 @@ user record to be returned
 | DEP_ECOSYSTEM_NPM | 1 |  |
 | DEP_ECOSYSTEM_GO | 2 |  |
 | DEP_ECOSYSTEM_PYPI | 3 |  |
-
 
 
 <a name="mediator-v1-Entity"></a>
@@ -2216,7 +1687,6 @@ Entity defines the entity that is supported by the provider.
 | ENTITY_PULL_REQUESTS | 4 |  |
 
 
-
 <a name="mediator-v1-ObjectOwner"></a>
 
 ### ObjectOwner
@@ -2230,7 +1700,6 @@ Entity defines the entity that is supported by the provider.
 | OBJECT_OWNER_USER | 3 |  |
 
 
- 
 
 
 <a name="mediator_v1_mediator-proto-extensions"></a>
@@ -2240,117 +1709,7 @@ Entity defines the entity that is supported by the provider.
 | --------- | ---- | ---- | ------ | ----------- |
 | rpc_options | RpcOptions | .google.protobuf.MethodOptions | 51077 |  |
 
- 
 
-
-<a name="mediator-v1-ArtifactService"></a>
-
-### ArtifactService
-
-
-| Method Name | Request Type | Response Type | Description |
-| ----------- | ------------ | ------------- | ------------|
-| ListArtifacts | [ListArtifactsRequest](#mediator-v1-ListArtifactsRequest) | [ListArtifactsResponse](#mediator-v1-ListArtifactsResponse) |  |
-| GetArtifactById | [GetArtifactByIdRequest](#mediator-v1-GetArtifactByIdRequest) | [GetArtifactByIdResponse](#mediator-v1-GetArtifactByIdResponse) |  |
-
-
-<a name="mediator-v1-BranchProtectionService"></a>
-
-### BranchProtectionService
-Get Branch Protection Settings
-
-| Method Name | Request Type | Response Type | Description |
-| ----------- | ------------ | ------------- | ------------|
-| GetBranchProtection | [GetBranchProtectionRequest](#mediator-v1-GetBranchProtectionRequest) | [GetBranchProtectionResponse](#mediator-v1-GetBranchProtectionResponse) |  |
-
-
-<a name="mediator-v1-HealthService"></a>
-
-### HealthService
-Simple Health Check Service
-replies with OK
-
-| Method Name | Request Type | Response Type | Description |
-| ----------- | ------------ | ------------- | ------------|
-| CheckHealth | [CheckHealthRequest](#mediator-v1-CheckHealthRequest) | [CheckHealthResponse](#mediator-v1-CheckHealthResponse) |  |
-
-
-<a name="mediator-v1-KeyService"></a>
-
-### KeyService
-
-
-| Method Name | Request Type | Response Type | Description |
-| ----------- | ------------ | ------------- | ------------|
-| GetPublicKey | [GetPublicKeyRequest](#mediator-v1-GetPublicKeyRequest) | [GetPublicKeyResponse](#mediator-v1-GetPublicKeyResponse) |  |
-| CreateKeyPair | [CreateKeyPairRequest](#mediator-v1-CreateKeyPairRequest) | [CreateKeyPairResponse](#mediator-v1-CreateKeyPairResponse) |  |
-
-
-<a name="mediator-v1-OAuthService"></a>
-
-### OAuthService
-
-
-| Method Name | Request Type | Response Type | Description |
-| ----------- | ------------ | ------------- | ------------|
-| GetAuthorizationURL | [GetAuthorizationURLRequest](#mediator-v1-GetAuthorizationURLRequest) | [GetAuthorizationURLResponse](#mediator-v1-GetAuthorizationURLResponse) |  |
-| ExchangeCodeForTokenCLI | [ExchangeCodeForTokenCLIRequest](#mediator-v1-ExchangeCodeForTokenCLIRequest) | [.google.api.HttpBody](#google-api-HttpBody) | buf:lint:ignore RPC_RESPONSE_STANDARD_NAME
-
-protolint:disable:this |
-| ExchangeCodeForTokenWEB | [ExchangeCodeForTokenWEBRequest](#mediator-v1-ExchangeCodeForTokenWEBRequest) | [ExchangeCodeForTokenWEBResponse](#mediator-v1-ExchangeCodeForTokenWEBResponse) |  |
-| StoreProviderToken | [StoreProviderTokenRequest](#mediator-v1-StoreProviderTokenRequest) | [StoreProviderTokenResponse](#mediator-v1-StoreProviderTokenResponse) |  |
-| RevokeOauthTokens | [RevokeOauthTokensRequest](#mediator-v1-RevokeOauthTokensRequest) | [RevokeOauthTokensResponse](#mediator-v1-RevokeOauthTokensResponse) | RevokeOauthTokens is used to revoke all tokens this a nuclear option and should only be used in emergencies |
-| RevokeOauthProjectToken | [RevokeOauthProjectTokenRequest](#mediator-v1-RevokeOauthProjectTokenRequest) | [RevokeOauthProjectTokenResponse](#mediator-v1-RevokeOauthProjectTokenResponse) | revoke token for a project |
-| VerifyProviderTokenFrom | [VerifyProviderTokenFromRequest](#mediator-v1-VerifyProviderTokenFromRequest) | [VerifyProviderTokenFromResponse](#mediator-v1-VerifyProviderTokenFromResponse) | VerifyProviderTokenFrom verifies that a token has been created for a provider since given timestamp |
-
-
-<a name="mediator-v1-ProfileService"></a>
-
-### ProfileService
-
-
-| Method Name | Request Type | Response Type | Description |
-| ----------- | ------------ | ------------- | ------------|
-| CreateProfile | [CreateProfileRequest](#mediator-v1-CreateProfileRequest) | [CreateProfileResponse](#mediator-v1-CreateProfileResponse) |  |
-| DeleteProfile | [DeleteProfileRequest](#mediator-v1-DeleteProfileRequest) | [DeleteProfileResponse](#mediator-v1-DeleteProfileResponse) |  |
-| ListProfiles | [ListProfilesRequest](#mediator-v1-ListProfilesRequest) | [ListProfilesResponse](#mediator-v1-ListProfilesResponse) |  |
-| GetProfileById | [GetProfileByIdRequest](#mediator-v1-GetProfileByIdRequest) | [GetProfileByIdResponse](#mediator-v1-GetProfileByIdResponse) |  |
-| GetProfileStatusByName | [GetProfileStatusByNameRequest](#mediator-v1-GetProfileStatusByNameRequest) | [GetProfileStatusByNameResponse](#mediator-v1-GetProfileStatusByNameResponse) |  |
-| GetProfileStatusByProject | [GetProfileStatusByProjectRequest](#mediator-v1-GetProfileStatusByProjectRequest) | [GetProfileStatusByProjectResponse](#mediator-v1-GetProfileStatusByProjectResponse) |  |
-| ListRuleTypes | [ListRuleTypesRequest](#mediator-v1-ListRuleTypesRequest) | [ListRuleTypesResponse](#mediator-v1-ListRuleTypesResponse) |  |
-| GetRuleTypeByName | [GetRuleTypeByNameRequest](#mediator-v1-GetRuleTypeByNameRequest) | [GetRuleTypeByNameResponse](#mediator-v1-GetRuleTypeByNameResponse) |  |
-| GetRuleTypeById | [GetRuleTypeByIdRequest](#mediator-v1-GetRuleTypeByIdRequest) | [GetRuleTypeByIdResponse](#mediator-v1-GetRuleTypeByIdResponse) |  |
-| CreateRuleType | [CreateRuleTypeRequest](#mediator-v1-CreateRuleTypeRequest) | [CreateRuleTypeResponse](#mediator-v1-CreateRuleTypeResponse) |  |
-| UpdateRuleType | [UpdateRuleTypeRequest](#mediator-v1-UpdateRuleTypeRequest) | [UpdateRuleTypeResponse](#mediator-v1-UpdateRuleTypeResponse) |  |
-| DeleteRuleType | [DeleteRuleTypeRequest](#mediator-v1-DeleteRuleTypeRequest) | [DeleteRuleTypeResponse](#mediator-v1-DeleteRuleTypeResponse) |  |
-
-
-<a name="mediator-v1-RepositoryService"></a>
-
-### RepositoryService
-
-
-| Method Name | Request Type | Response Type | Description |
-| ----------- | ------------ | ------------- | ------------|
-| RegisterRepository | [RegisterRepositoryRequest](#mediator-v1-RegisterRepositoryRequest) | [RegisterRepositoryResponse](#mediator-v1-RegisterRepositoryResponse) |  |
-| ListRemoteRepositoriesFromProvider | [ListRemoteRepositoriesFromProviderRequest](#mediator-v1-ListRemoteRepositoriesFromProviderRequest) | [ListRemoteRepositoriesFromProviderResponse](#mediator-v1-ListRemoteRepositoriesFromProviderResponse) |  |
-| ListRepositories | [ListRepositoriesRequest](#mediator-v1-ListRepositoriesRequest) | [ListRepositoriesResponse](#mediator-v1-ListRepositoriesResponse) |  |
-| GetRepositoryById | [GetRepositoryByIdRequest](#mediator-v1-GetRepositoryByIdRequest) | [GetRepositoryByIdResponse](#mediator-v1-GetRepositoryByIdResponse) |  |
-| GetRepositoryByName | [GetRepositoryByNameRequest](#mediator-v1-GetRepositoryByNameRequest) | [GetRepositoryByNameResponse](#mediator-v1-GetRepositoryByNameResponse) |  |
-
-
-<a name="mediator-v1-UserService"></a>
-
-### UserService
-manage Users CRUD
-
-| Method Name | Request Type | Response Type | Description |
-| ----------- | ------------ | ------------- | ------------|
-| CreateUser | [CreateUserRequest](#mediator-v1-CreateUserRequest) | [CreateUserResponse](#mediator-v1-CreateUserResponse) |  |
-| DeleteUser | [DeleteUserRequest](#mediator-v1-DeleteUserRequest) | [DeleteUserResponse](#mediator-v1-DeleteUserResponse) |  |
-| GetUser | [GetUserRequest](#mediator-v1-GetUserRequest) | [GetUserResponse](#mediator-v1-GetUserResponse) |  |
-
- 
 
 
 
@@ -2373,4 +1732,3 @@ manage Users CRUD
 | <a name="bool" /> bool |  | bool | boolean | boolean | bool | bool | boolean | TrueClass/FalseClass |
 | <a name="string" /> string | A string must always contain UTF-8 encoded or 7-bit ASCII text. | string | String | str/unicode | string | string | string | String (UTF-8) |
 | <a name="bytes" /> bytes | May contain any arbitrary sequence of bytes. | string | ByteString | str | []byte | ByteString | string | String (ASCII-8BIT) |
-
