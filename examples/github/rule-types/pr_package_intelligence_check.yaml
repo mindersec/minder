@@ -49,5 +49,4 @@ def:
   # Defines the configuration for evaluating data ingested against the given profile
   eval:
     type: package_intelligence
-    package_intelligence:
-      endpoint: https://staging.stacklok.dev/
+    package_intelligence: {}
