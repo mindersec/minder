@@ -24,7 +24,7 @@ package tools
 //go:generate go install golang.org/x/tools/cmd/goimports
 //go:generate go install golang.org/x/lint/golint
 //go:generate go install github.com/go-critic/go-critic/cmd/gocritic
-//go:generate go install github.com/kyleconroy/sqlc/cmd/sqlc
+//go:generate go install github.com/sqlc-dev/sqlc/cmd/sqlc
 //go:generate go install github.com/bufbuild/buf/cmd/buf
 
 // nolint
@@ -37,8 +37,8 @@ import (
 	_ "github.com/gotesttools/gotestfmt/v2/cmd/gotestfmt"
 	_ "github.com/grpc-ecosystem/grpc-gateway/v2/protoc-gen-grpc-gateway"
 	_ "github.com/grpc-ecosystem/grpc-gateway/v2/protoc-gen-openapiv2"
-	_ "github.com/kyleconroy/sqlc/cmd/sqlc"
 	_ "github.com/pseudomuto/protoc-gen-doc/cmd/protoc-gen-doc"
+	_ "github.com/sqlc-dev/sqlc/cmd/sqlc"
 	_ "golang.org/x/lint/golint"
 	_ "golang.org/x/tools/cmd/goimports"
 	_ "google.golang.org/grpc/cmd/protoc-gen-go-grpc"

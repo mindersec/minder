@@ -1,6 +1,6 @@
 module github.com/stacklok/mediator
 
-go 1.20
+go 1.21
 
 require (
 	github.com/AlecAivazis/survey/v2 v2.3.7
@@ -16,6 +16,7 @@ require (
 	github.com/go-git/go-billy/v5 v5.5.0
 	github.com/go-git/go-git/v5 v5.10.0
 	github.com/go-playground/validator/v10 v10.15.5
+	github.com/goccy/go-json v0.10.2
 	github.com/golang-jwt/jwt/v4 v4.5.0
 	github.com/golang-migrate/migrate/v4 v4.16.2
 	github.com/golang/mock v1.6.0
@@ -73,7 +74,6 @@ require (
 	github.com/containerd/console v1.0.4-0.20230313162750-1ae8d489ac81 // indirect
 	github.com/decred/dcrd/dcrec/secp256k1/v4 v4.2.0 // indirect
 	github.com/felixge/httpsnoop v1.0.3 // indirect
-	github.com/goccy/go-json v0.10.2 // indirect
 	github.com/gorilla/schema v1.2.0 // indirect
 	github.com/lestrrat-go/blackmagic v1.0.2 // indirect
 	github.com/lestrrat-go/httpcc v1.0.1 // indirect
