@@ -18,7 +18,6 @@ import (
 	"context"
 	"fmt"
 	"strings"
-	"time"
 
 	"github.com/google/uuid"
 	gauth "github.com/grpc-ecosystem/go-grpc-middleware/v2/interceptors/auth"
@@ -48,10 +47,6 @@ func getRpcOptions(ctx context.Context) *mediator.RpcOptions {
 	// nil value default is okay here
 	opts, _ := ctx.Value(rpcOptionsKey{}).(*mediator.RpcOptions)
 	return opts
-}
-
-var githubAuthorizations = []string{
-	"/mediator.v1.RepositoryService/AddRepository",
 }
 
 // checks if an user is superadmin
@@ -192,44 +187,6 @@ func AuthorizedOnUser(ctx context.Context, userId int32) error {
 		return nil
 	}
 	return util.UserVisibleError(codes.PermissionDenied, "user is not authorized to access this user")
-}
-
-// IsProviderCallAuthorized checks if the request is authorized
-func (s *Server) IsProviderCallAuthorized(ctx context.Context, provider db.Provider, projectID uuid.UUID) bool {
-	if provider.ProjectID != projectID {
-		return false
-	}
-
-	// currently everything is github
-	method, ok := grpc.Method(ctx)
-	if !ok {
-		return false
-	}
-
-	for _, item := range githubAuthorizations {
-		if item == method {
-			// check the github token
-			encToken, _, err := s.GetProviderAccessToken(ctx, provider.Name, projectID, true)
-			if err != nil {
-				return false
-			}
-
-			// check if token is expired
-			if encToken.Expiry.Unix() < time.Now().Unix() {
-				// remove from the database and deny the request
-				_ = s.store.DeleteAccessToken(ctx, db.DeleteAccessTokenParams{Provider: provider.Name, ProjectID: projectID})
-
-				// remove from github
-				err := auth.DeleteAccessToken(ctx, provider.Name, encToken.AccessToken)
-
-				if err != nil {
-					zerolog.Ctx(ctx).Error().Msgf("Error deleting access token: %v", err)
-				}
-				return false
-			}
-		}
-	}
-	return true
 }
 
 // AuthUnaryInterceptor is a server interceptor for authentication

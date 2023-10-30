@@ -70,12 +70,6 @@ func (s *Server) RegisterRepository(ctx context.Context,
 		return nil, providerError(fmt.Errorf("provider error: %w", err))
 	}
 
-	// Check if needs github authorization
-	isGithubAuthorized := s.IsProviderCallAuthorized(ctx, provider, projectID)
-	if !isGithubAuthorized {
-		return nil, util.UserVisibleError(codes.PermissionDenied, "user not authorized to interact with provider")
-	}
-
 	p, err := providers.GetProviderBuilder(ctx, provider, projectID, s.store, s.cryptoEngine)
 	if err != nil {
 		return nil, status.Errorf(codes.Internal, "cannot get provider builder: %v", err)
@@ -360,12 +354,6 @@ func (s *Server) ListRemoteRepositoriesFromProvider(
 	})
 	if err != nil {
 		return nil, providerError(fmt.Errorf("provider error: %w", err))
-	}
-
-	// Check if needs github authorization
-	isGithubAuthorized := s.IsProviderCallAuthorized(ctx, provider, projectID)
-	if !isGithubAuthorized {
-		return nil, status.Errorf(codes.PermissionDenied, "user not authorized to interact with provider")
 	}
 
 	// FIXME: this is a hack to get the owner filter from the request

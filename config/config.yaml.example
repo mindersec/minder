@@ -65,8 +65,6 @@ auth:
   access_token_public_key: "./.ssh/access_token_rsa.pub"
   refresh_token_private_key: "./.ssh/refresh_token_rsa"
   refresh_token_public_key: "./.ssh/refresh_token_rsa.pub"
-  token_expiry: 3600
-  refresh_expiry: 86400
   nonce_period: 3600
   token_key: "./.ssh/token_key_passphrase"
 

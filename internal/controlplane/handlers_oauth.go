@@ -21,11 +21,9 @@ import (
 	"encoding/json"
 	"errors"
 	"fmt"
-	"time"
 
 	"github.com/google/uuid"
 	"github.com/rs/zerolog/log"
-	"github.com/spf13/viper"
 	"go.opentelemetry.io/otel/attribute"
 	"go.opentelemetry.io/otel/trace"
 	"golang.org/x/oauth2"
@@ -179,15 +177,10 @@ func (s *Server) ExchangeCodeForTokenCLI(ctx context.Context,
 		return nil, err
 	}
 
-	// github does not provide refresh token or expiry, set a manual expiry time
-	viper.SetDefault("github.access_token_expiry", 86400)
-	expiryTime := time.Now().Add(time.Duration(viper.GetInt("github.access_token_expiry")) * time.Second)
-
 	ftoken := &oauth2.Token{
 		AccessToken:  token.AccessToken,
 		TokenType:    token.TokenType,
 		RefreshToken: "",
-		Expiry:       expiryTime,
 	}
 
 	// Convert token to JSON
@@ -221,7 +214,6 @@ func (s *Server) ExchangeCodeForTokenCLI(ctx context.Context,
 		ProjectID:      stateData.ProjectID,
 		Provider:       provider.Name,
 		EncryptedToken: encodedToken,
-		ExpirationTime: expiryTime,
 		OwnerFilter:    owner,
 	})
 	if err != nil {
@@ -397,14 +389,9 @@ func (s *Server) StoreProviderToken(ctx context.Context,
 		return nil, status.Errorf(codes.InvalidArgument, "invalid token provided")
 	}
 
-	// github does not provide refresh token or expiry, set a manual expiry time
-	viper.SetDefault("github.access_token_expiry", 86400)
-	expiryTime := time.Now().Add(time.Duration(viper.GetInt("github.access_token_expiry")) * time.Second)
-
 	ftoken := &oauth2.Token{
 		AccessToken:  in.AccessToken,
 		RefreshToken: "",
-		Expiry:       expiryTime,
 	}
 
 	// Convert token to JSON
@@ -429,7 +416,7 @@ func (s *Server) StoreProviderToken(ctx context.Context,
 	}
 
 	_, err = s.store.CreateAccessToken(ctx, db.CreateAccessTokenParams{ProjectID: projectID, Provider: provider.Name,
-		EncryptedToken: encodedToken, ExpirationTime: expiryTime, OwnerFilter: owner})
+		EncryptedToken: encodedToken, OwnerFilter: owner})
 
 	if err != nil {
 		return nil, status.Errorf(codes.Internal, "error storing access token: %v", err)
