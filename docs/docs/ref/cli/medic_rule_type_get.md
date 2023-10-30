@@ -1,3 +1,6 @@
+---
+title: medic rule type get
+---
 ## medic rule_type get
 
 Get details for a rule type within a mediator control plane

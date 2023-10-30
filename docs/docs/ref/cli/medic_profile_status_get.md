@@ -1,3 +1,6 @@
+---
+title: medic profile status get
+---
 ## medic profile_status get
 
 Get profile status within a mediator control plane

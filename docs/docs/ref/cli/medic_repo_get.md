@@ -1,3 +1,6 @@
+---
+title: medic repo get
+---
 ## medic repo get
 
 Get repository in the mediator control plane

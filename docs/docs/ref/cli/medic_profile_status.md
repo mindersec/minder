@@ -1,3 +1,6 @@
+---
+title: medic profile status
+---
 ## medic profile_status
 
 Manage profile status within a mediator control plane

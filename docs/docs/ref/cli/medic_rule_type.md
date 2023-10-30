@@ -1,3 +1,6 @@
+---
+title: medic rule type
+---
 ## medic rule_type
 
 Manage rule types within a mediator control plane

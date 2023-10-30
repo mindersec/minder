@@ -1,3 +1,6 @@
+---
+title: medic rule type create
+---
 ## medic rule_type create
 
 Create a rule type within a mediator control plane

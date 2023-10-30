@@ -1,3 +1,6 @@
+---
+title: medic artifact
+---
 ## medic artifact
 
 Manage artifacts within a mediator control plane

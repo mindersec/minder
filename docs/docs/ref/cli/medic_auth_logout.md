@@ -1,3 +1,6 @@
+---
+title: medic auth logout
+---
 ## medic auth logout
 
 Logout from mediator control plane.

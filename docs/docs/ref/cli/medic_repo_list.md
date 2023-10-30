@@ -1,3 +1,6 @@
+---
+title: medic repo list
+---
 ## medic repo list
 
 List repositories in the mediator control plane

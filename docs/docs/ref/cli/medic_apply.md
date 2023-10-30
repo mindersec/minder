@@ -1,3 +1,6 @@
+---
+title: medic apply
+---
 ## medic apply
 
 Appy a configuration to a mediator control plane

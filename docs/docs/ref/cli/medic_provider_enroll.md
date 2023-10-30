@@ -1,3 +1,6 @@
+---
+title: medic provider enroll
+---
 ## medic provider enroll
 
 Enroll a provider within the mediator control plane

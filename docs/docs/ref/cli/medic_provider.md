@@ -1,3 +1,6 @@
+---
+title: medic provider
+---
 ## medic provider
 
 Manage providers within a mediator control plane

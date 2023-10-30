@@ -1,3 +1,6 @@
+---
+title: medic docs
+---
 ## medic docs
 
 Generates documentation for the client

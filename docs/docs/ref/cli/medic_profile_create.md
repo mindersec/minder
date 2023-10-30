@@ -1,3 +1,6 @@
+---
+title: medic profile create
+---
 ## medic profile create
 
 Create a profile within a mediator control plane

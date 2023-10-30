@@ -1,3 +1,6 @@
+---
+title: medic auth delete
+---
 ## medic auth delete
 
 Permanently delete account

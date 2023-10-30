@@ -55,8 +55,10 @@ clean-gen:
 	rm -rf $(shell find pkg/api -iname "*.go") & rm -rf $(shell find pkg/api -iname "*.swagger.json") & rm -rf pkg/api/protodocs
 
 cli-docs:
-	@rm -rf docs/docs/cli
-	@mkdir -p docs/docs/cli
+	@rm -rf docs/docs/ref/cli
+	@mkdir -p docs/docs/ref/cli
+	@echo 'label: Mediator client documentation' > docs/docs/ref/cli/_category_.yml
+	@echo 'position: 20' >> docs/docs/ref/cli/_category_.yml
 	@go run cmd/cli/main.go docs
 
 build: ## build golang binary

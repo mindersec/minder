@@ -1,3 +1,6 @@
+---
+title: medic profile status list
+---
 ## medic profile_status list
 
 List profile status within a mediator control plane

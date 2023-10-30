@@ -1,3 +1,6 @@
+---
+title: medic repo
+---
 ## medic repo
 
 Manage repositories within a mediator control plane

@@ -1,3 +1,6 @@
+---
+title: medic auth revoke provider
+---
 ## medic auth revoke_provider
 
 Revoke access tokens for provider

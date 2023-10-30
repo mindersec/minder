@@ -1,3 +1,6 @@
+---
+title: medic completion bash
+---
 ## medic completion bash
 
 Generate the autocompletion script for bash

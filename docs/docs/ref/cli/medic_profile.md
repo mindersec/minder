@@ -1,3 +1,6 @@
+---
+title: medic profile
+---
 ## medic profile
 
 Manage profiles within a mediator control plane

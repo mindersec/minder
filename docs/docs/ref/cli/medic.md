@@ -1,3 +1,6 @@
+---
+title: medic
+---
 ## medic
 
 Medic controls mediator via the control plane

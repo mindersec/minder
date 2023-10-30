@@ -1,3 +1,6 @@
+---
+title: medic auth
+---
 ## medic auth
 
 Authorize and manage accounts within a mediator control plane

@@ -1,3 +1,6 @@
+---
+title: medic repo register
+---
 ## medic repo register
 
 Register a repo with the mediator control plane

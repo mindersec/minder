@@ -1,3 +1,6 @@
+---
+title: medic profile delete
+---
 ## medic profile delete
 
 Delete a profile within a mediator control plane

@@ -1,3 +1,6 @@
+---
+title: medic artifact get
+---
 ## medic artifact get
 
 Get artifact details

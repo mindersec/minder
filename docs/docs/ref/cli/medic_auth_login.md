@@ -1,3 +1,6 @@
+---
+title: medic auth login
+---
 ## medic auth login
 
 Login to a mediator control plane.

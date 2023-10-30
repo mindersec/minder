@@ -1,3 +1,6 @@
+---
+title: medic profile get
+---
 ## medic profile get
 
 Get details for a profile within a mediator control plane

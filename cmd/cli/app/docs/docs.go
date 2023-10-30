@@ -17,6 +17,10 @@
 package apply
 
 import (
+	"fmt"
+	"path/filepath"
+	"strings"
+
 	"github.com/spf13/cobra"
 	"github.com/spf13/cobra/doc"
 	"github.com/spf13/viper"
@@ -37,7 +41,17 @@ var DocsCmd = &cobra.Command{
 	Run: func(cmd *cobra.Command, args []string) {
 		// We auto-generate the docs daily, so don't include the date at the bottom.
 		app.RootCmd.DisableAutoGenTag = true
-		err := doc.GenMarkdownTree(app.RootCmd, "./docs/docs/cli")
+		// We need to add header material, since GenMarkdownTree always
+		// generates an h2 and not an h1.
+		//  See https://github.com/spf13/cobra/issues/1948
+		prefix := func(filename string) string {
+			// Undo the transformation in https://github.com/spf13/cobra/blob/v1.7.0/doc/md_docs.go#L141
+			filename = filepath.Base(filename)
+			cmdString := strings.ReplaceAll(strings.TrimSuffix(filename, ".md"), "_", " ")
+			return fmt.Sprintf("---\ntitle: %s\n---\n", cmdString)
+		}
+		identity := func(s string) string { return s }
+		err := doc.GenMarkdownTreeCustom(app.RootCmd, "./docs/docs/ref/cli",prefix, identity)
 		if err != nil {
 			panic(err)
 		}

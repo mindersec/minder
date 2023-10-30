@@ -1,3 +1,6 @@
+---
+title: medic completion
+---
 ## medic completion
 
 Generate the autocompletion script for the specified shell

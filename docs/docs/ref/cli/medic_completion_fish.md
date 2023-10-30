@@ -1,3 +1,6 @@
+---
+title: medic completion fish
+---
 ## medic completion fish
 
 Generate the autocompletion script for fish

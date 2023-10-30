@@ -1,3 +1,6 @@
+---
+title: medic rule type list
+---
 ## medic rule_type list
 
 List rule types within a mediator control plane

@@ -1,3 +1,6 @@
+---
+title: medic completion powershell
+---
 ## medic completion powershell
 
 Generate the autocompletion script for powershell

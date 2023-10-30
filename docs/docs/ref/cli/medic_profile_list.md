@@ -1,3 +1,6 @@
+---
+title: medic profile list
+---
 ## medic profile list
 
 List profiles within a mediator control plane

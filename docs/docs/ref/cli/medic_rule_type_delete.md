@@ -1,3 +1,6 @@
+---
+title: medic rule type delete
+---
 ## medic rule_type delete
 
 Delete a rule type within a mediator control plane

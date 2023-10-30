@@ -1,3 +1,6 @@
+---
+title: medic completion zsh
+---
 ## medic completion zsh
 
 Generate the autocompletion script for zsh

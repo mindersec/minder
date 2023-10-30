@@ -1,3 +1,6 @@
+---
+title: medic artifact list
+---
 ## medic artifact list
 
 List artifacts from a provider
