@@ -19,10 +19,9 @@ builds:
       - -trimpath
       - -tags=netgo
     ldflags:
-      - "-X main.Version={{ .Env.VERSION }}"
-      - "-X main.Commit={{ .Env.COMMIT }}"
-      - "-X main.CommitDate={{ .Env.COMMIT_DATE }}"
-      - "-X main.TreeState={{ .Env.TREE_STATE }}"
+      - "-X main.version={{ .Version }}"
+      - "-X main.commit={{ .Commit }}"
+      - "-X main.date={{ .Date }}"
     goos:
       - linux
       - windows
