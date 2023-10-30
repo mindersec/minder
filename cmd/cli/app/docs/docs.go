@@ -43,7 +43,7 @@ var DocsCmd = &cobra.Command{
 		app.RootCmd.DisableAutoGenTag = true
 		// We need to add header material, since GenMarkdownTree always
 		// generates an h2 and not an h1.
-		//  See https://github.com/spf13/cobra/issues/1948
+		// See https://github.com/spf13/cobra/issues/1948
 		prefix := func(filename string) string {
 			// Undo the transformation in https://github.com/spf13/cobra/blob/v1.7.0/doc/md_docs.go#L141
 			filename = filepath.Base(filename)
@@ -51,7 +51,7 @@ var DocsCmd = &cobra.Command{
 			return fmt.Sprintf("---\ntitle: %s\n---\n", cmdString)
 		}
 		identity := func(s string) string { return s }
-		err := doc.GenMarkdownTreeCustom(app.RootCmd, "./docs/docs/ref/cli",prefix, identity)
+		err := doc.GenMarkdownTreeCustom(app.RootCmd, "./docs/docs/ref/cli", prefix, identity)
 		if err != nil {
 			panic(err)
 		}
