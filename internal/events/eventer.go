@@ -142,7 +142,7 @@ func instantiateDriver(driver string, cfg *config.EventConfig) (message.Publishe
 func buildGoChannelDriver(cfg *config.EventConfig) (message.Publisher, message.Subscriber, error) {
 	pubsub := gochannel.NewGoChannel(gochannel.Config{
 		OutputChannelBuffer: cfg.GoChannel.BufferSize,
-		Persistent:          true,
+		Persistent:          cfg.GoChannel.PersistEvents,
 	}, nil)
 
 	return pubsub, pubsub, nil
