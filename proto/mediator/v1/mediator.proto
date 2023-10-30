@@ -1234,10 +1234,7 @@ message RuleType {
             }
 
             message Vulncheck {
-                // db is the database to use for the vulncheck, e.g. OSV
-                string db = 1;
-                // e.g. https://api.osv.dev/v1/query
-                string endpoint = 2;
+                // no configuration for now
             }
 
             message PackageIntelligence {
