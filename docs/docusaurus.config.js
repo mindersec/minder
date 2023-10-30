@@ -26,8 +26,7 @@ const redocusaurus = [
     specs: [
       {
         id: 'mediator-api',
-        spec: './pkg/api/openapi/mediator/v1/mediator.swagger.json',
-        route: '/api',
+        spec: '../pkg/api/openapi/mediator/v1/mediator.swagger.json',
       },
     ],
   }
@@ -71,9 +70,10 @@ const config = {
       'classic',
       {
         docs: {
-          sidebarPath: require.resolve('./sidebars.js'),
           routeBasePath: '/',
+          sidebarPath: require.resolve('./sidebars.js'),
         },
+        blog: false,
         theme: {
           customCss: require.resolve('./src/css/custom.css'),
         },
@@ -99,15 +99,15 @@ const config = {
           src: 'img/stacklok-logo.svg',
         },
         items: [
-          {
-            type: 'html',
-            position: 'right',
-            value: 'Mediator version:',
-          },   
-          {
-            type: 'docsVersionDropdown',
-            position: 'right',
-          },
+          // {
+          //   type: 'html',
+          //   position: 'right',
+          //   value: 'Mediator version:',
+          // },   
+          // {
+          //   type: 'docsVersionDropdown',
+          //   position: 'right',
+          // },
           {
             href: 'https://github.com/stacklok/mediator',
             label: 'GitHub',

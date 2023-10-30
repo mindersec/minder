@@ -1,9 +1,6 @@
 ---
-id: profile_introduction
 title: Profile Introduction
-sidebar_position: 1
-slug: /profile_introduction
-displayed_sidebar: mediator
+sidebar_position: 10
 ---
 
 # Profile Introduction

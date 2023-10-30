@@ -1,9 +1,6 @@
 ---
-id: register_repos
 title: Register Repositories
-sidebar_position: 2
-slug: /register_repos
-displayed_sidebar: mediator
+sidebar_position: 30
 ---
 
 ## Register repositories

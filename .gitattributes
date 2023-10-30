@@ -6,8 +6,8 @@
 
 /database/mock/*.go linguist-generated=true
 /docs/docs/cli/*.md linguist-generated=true
-/docs/docs/db/schema.md linguist-generated=true
-/docs/docs/protodocs/proto.md linguist-generated=true
+/docs/docs/ref/schema.md linguist-generated=true
+/docs/docs/ref/proto.md linguist-generated=true
 /pkg/api/openapi/** linguist-generated=true
 /pkg/api/protobuf/go/mediator/v1/*.pb.go linguist-generated=true
 /pkg/api/protobuf/go/mediator/v1/*.gw.go linguist-generated=true

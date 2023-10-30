@@ -1,9 +1,6 @@
 ---
-id: manage_profiles
 title: Manage profiles and violations
-sidebar_position: 2
-slug: /manage_profiles
-displayed_sidebar: mediator
+sidebar_position: 20
 ---
 
 # Manage profiles

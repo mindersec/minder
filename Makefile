@@ -49,8 +49,10 @@ clean-gen:
 	rm -rf $(shell find pkg/api -iname "*.go") & rm -rf $(shell find pkg/api -iname "*.swagger.json") & rm -rf pkg/api/protodocs
 
 cli-docs:
-	@rm -rf docs/docs/cli
-	@mkdir -p docs/docs/cli
+	@rm -rf docs/docs/ref/cli
+	@mkdir -p docs/docs/ref/cli
+	@echo 'label: Mediator client documentation' > docs/docs/ref/cli/_category_.yml
+	@echo 'position: 20' >> docs/docs/ref/cli/_category_.yml
 	@go run cmd/cli/main.go docs
 
 build: ## build golang binary
@@ -97,6 +99,7 @@ bootstrap: ## install build deps
 		github.com/grpc-ecosystem/grpc-gateway/v2/protoc-gen-grpc-gateway \
 		github.com/grpc-ecosystem/grpc-gateway/v2/protoc-gen-openapiv2 \
 			google.golang.org/protobuf/cmd/protoc-gen-go google.golang.org/grpc/cmd/protoc-gen-go-grpc \
+			github.com/pseudomuto/protoc-gen-doc/cmd/protoc-gen-doc \
 			github.com/kyleconroy/sqlc
 	# Create a config.yaml if it doesn't exist
 	# TODO: remove this when all config is handled in internal/config
