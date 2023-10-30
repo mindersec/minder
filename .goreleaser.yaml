@@ -44,7 +44,7 @@ brews:
     description: 'Medic is the client CLI for interacting with Mediator by Stacklok.'
     folder: Formula
     commit_author:
-      name: 'Stacklok, Inc.'
+      name: stacklokbot
       email: contact@stacklok.com
     repository:
       owner: stacklok
