@@ -19,6 +19,7 @@ package eval
 
 import (
 	"fmt"
+	"os"
 
 	"github.com/stacklok/mediator/internal/engine/eval/jq"
 	"github.com/stacklok/mediator/internal/engine/eval/package_intelligence"
@@ -49,10 +50,14 @@ func NewRuleEvaluator(rt *pb.RuleType, cli *providers.ProviderBuilder) (engif.Ev
 	case vulncheck.VulncheckEvalType:
 		return vulncheck.NewVulncheckEvaluator(e.GetVulncheck(), cli)
 	case package_intelligence.PiEvalType:
-		if rt.Def.Eval.GetPackageIntelligence() == nil {
+		pie := e.GetPackageIntelligence()
+		if pie == nil {
 			return nil, fmt.Errorf("rule type engine missing package_intelligence configuration")
 		}
-		return package_intelligence.NewPackageIntelligenceEvaluator(e.GetPackageIntelligence(), cli)
+		if pie.GetEndpoint() == "" {
+			pie.Endpoint = os.Getenv("MEDIATOR_UNSTABLE_PACKAGE_INTELLIGENCE_ENDPOINT")
+		}
+		return package_intelligence.NewPackageIntelligenceEvaluator(pie, cli)
 	default:
 		return nil, fmt.Errorf("unsupported rule type engine: %s", rt.Def.Eval.Type)
 	}
