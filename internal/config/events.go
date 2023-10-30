@@ -30,4 +30,6 @@ type EventConfig struct {
 type GoChannelEventConfig struct {
 	// BufferSize is the size of the buffer for the go channel
 	BufferSize int64 `mapstructure:"buffer_size" default:"0"`
+	// PersistEvents is whether or not to persist events to the channel
+	PersistEvents bool `mapstructure:"persist_events" default:"false"`
 }
