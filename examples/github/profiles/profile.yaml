@@ -141,3 +141,11 @@ pull_request:
           vulnerability_database_endpoint: https://api.osv.dev/v1/query
           package_repository:
             url: https://pypi.org/pypi
+  - type: pr_trusty_check
+    def:
+      action: summary
+      ecosystem_config:
+        - name: npm
+          score: 5
+        - name: pypi
+          score: 5
