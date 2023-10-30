@@ -31,6 +31,16 @@ import (
 	"github.com/ThreeDotsLabs/watermill/pubsub/gochannel"
 	"github.com/alexdrl/zerowater"
 	"github.com/rs/zerolog"
+
+	"github.com/stacklok/mediator/internal/config"
+)
+
+// Metadata added to Messages
+const (
+	ProviderDeliveryIdKey     = "id"
+	ProviderTypeKey           = "provider"
+	ProviderSourceKey         = "source"
+	GithubWebhookEventTypeKey = "type"
 )
 
 // Handler is an alias for the watermill handler type, which is both wordy and may be
@@ -75,11 +85,17 @@ var _ message.Publisher = (*Eventer)(nil)
 
 // Setup creates an Eventer object which isolates the watermill setup code
 // TODO: pass in logger
-func Setup() (*Eventer, error) {
+func Setup(ctx context.Context, cfg *config.EventConfig) (*Eventer, error) {
+	if cfg == nil {
+		return nil, errors.New("event config is nil")
+	}
+
 	l := zerowater.NewZerologLoggerAdapter(
-		zerolog.Ctx(context.TODO()).With().Str("component", "watermill").Logger())
+		zerolog.Ctx(ctx).With().Str("component", "watermill").Logger())
 	// TODO: parameterize CloseTimeout for testing
-	router, err := message.NewRouter(message.RouterConfig{CloseTimeout: time.Second * 10}, l)
+	router, err := message.NewRouter(message.RouterConfig{
+		CloseTimeout: time.Duration(cfg.RouterCloseTimeout) * time.Second,
+	}, l)
 	if err != nil {
 		return nil, err
 	}
@@ -102,15 +118,34 @@ func Setup() (*Eventer, error) {
 		middleware.Recoverer,
 	)
 
-	webhpubsub := gochannel.NewGoChannel(gochannel.Config{
-		Persistent: true,
-	}, l)
+	pub, sub, err := instantiateDriver(cfg.Driver, cfg)
+	if err != nil {
+		return nil, fmt.Errorf("failed instantiating driver: %w", err)
+	}
 
 	return &Eventer{
 		router:            router,
-		webhookPublisher:  webhpubsub,
-		webhookSubscriber: webhpubsub,
+		webhookPublisher:  pub,
+		webhookSubscriber: sub,
 	}, nil
+}
+
+func instantiateDriver(driver string, cfg *config.EventConfig) (message.Publisher, message.Subscriber, error) {
+	switch driver {
+	case "go-channel":
+		return buildGoChannelDriver(cfg)
+	default:
+		return nil, nil, fmt.Errorf("unknown driver %s", driver)
+	}
+}
+
+func buildGoChannelDriver(cfg *config.EventConfig) (message.Publisher, message.Subscriber, error) {
+	pubsub := gochannel.NewGoChannel(gochannel.Config{
+		OutputChannelBuffer: cfg.GoChannel.BufferSize,
+		Persistent:          true,
+	}, nil)
+
+	return pubsub, pubsub, nil
 }
 
 // Close closes the router
@@ -171,9 +206,11 @@ func (e *Eventer) Register(
 				})
 
 				if retriable {
-					return nil
+					// if the error is retriable, return it so that the message is retried
+					return err
 				}
-				return err
+				// otherwise, we've done all we can, so return nil so that the message is acked
+				return nil
 			}
 
 			return nil

@@ -34,6 +34,7 @@ import (
 	"github.com/stacklok/mediator/internal/engine"
 	"github.com/stacklok/mediator/internal/engine/errors"
 	"github.com/stacklok/mediator/internal/engine/eval/rego"
+	engif "github.com/stacklok/mediator/internal/engine/interfaces"
 	"github.com/stacklok/mediator/internal/providers"
 	"github.com/stacklok/mediator/internal/util/jsonyaml"
 	mediatorv1 "github.com/stacklok/mediator/pkg/api/protobuf/go/mediator/v1"
@@ -130,6 +131,9 @@ func testCmdRun(cmd *cobra.Command, _ []string) error {
 		db.ProviderAccessToken{},
 		token,
 	))
+	inf := &engine.EntityInfoWrapper{
+		Entity: ent,
+	}
 	if err != nil {
 		return fmt.Errorf("error creating rule type engine: %w", err)
 	}
@@ -138,47 +142,44 @@ func testCmdRun(cmd *cobra.Command, _ []string) error {
 		return fmt.Errorf("no rules found with type %s", rt.Name)
 	}
 
-	return runEvaluationForRules(eng, ent, rules)
+	return runEvaluationForRules(eng, inf, rules)
 }
 
 func runEvaluationForRules(
 	eng *engine.RuleTypeEngine,
-	ent protoreflect.ProtoMessage,
+	inf *engine.EntityInfoWrapper,
 	frags []*mediatorv1.Profile_Rule,
 ) error {
 	for idx := range frags {
 		frag := frags[idx]
 
-		def := frag.Def.AsMap()
 		val := eng.GetRuleInstanceValidator()
-		err := val.ValidateRuleDefAgainstSchema(def)
+		err := val.ValidateRuleDefAgainstSchema(frag.Def.AsMap())
 		if err != nil {
 			return fmt.Errorf("error validating rule against schema: %w", err)
 		}
 		fmt.Printf("Profile valid according to the JSON schema!\n")
 
-		var params map[string]any
 		if err := val.ValidateParamsAgainstSchema(frag.GetParams()); err != nil {
 			return fmt.Errorf("error validating params against schema: %w", err)
 		}
 
-		if frag.GetParams() != nil {
-			params = frag.GetParams().AsMap()
-		}
 		// Create the eval status params
-		evalStatus := &engine.EvalStatusParams{}
+		evalStatus := &engif.EvalStatusParams{
+			Rule: frag,
+		}
 		// Perform rule evaluation
-		eng.Eval(context.Background(), ent, def, params, evalStatus)
+		evalStatus.SetEvalErr(eng.Eval(context.Background(), inf, evalStatus))
 
 		// Perform the actions, if any
-		eng.Actions(context.Background(), ent, def, params, evalStatus)
+		evalStatus.SetActionsErr(context.Background(), eng.Actions(context.Background(), inf, evalStatus))
 
-		if errors.IsActionFatalError(evalStatus.ActionsErr.RemediateErr) {
-			fmt.Printf("Remediation failed with fatal error: %s", evalStatus.ActionsErr.RemediateErr)
+		if errors.IsActionFatalError(evalStatus.GetActionsErr().RemediateErr) {
+			fmt.Printf("Remediation failed with fatal error: %s", evalStatus.GetActionsErr().RemediateErr)
 		}
 
-		if evalStatus.EvalErr != nil {
-			return fmt.Errorf("error evaluating rule type: %w", evalStatus.EvalErr)
+		if evalStatus.GetEvalErr() != nil {
+			return fmt.Errorf("error evaluating rule type: %w", evalStatus.GetEvalErr())
 		}
 
 		fmt.Printf("The rule type is valid and the entity conforms to it\n")

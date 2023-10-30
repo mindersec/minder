@@ -303,10 +303,7 @@ User service
 | organizatio_name | [string](#string) |  |  |
 | project_id | [string](#string) |  |  |
 | project_name | [string](#string) |  |  |
-| email | [string](#string) | optional |  |
 | identity_subject | [string](#string) |  |  |
-| first_name | [string](#string) | optional |  |
-| last_name | [string](#string) | optional |  |
 | created_at | [google.protobuf.Timestamp](#google-protobuf-Timestamp) |  |  |
 
 
@@ -1130,6 +1127,7 @@ This is used to define the connection to the provider.
 | repo_owner | [string](#string) |  | The owner of the repo, will be used to submit a review |
 | repo_name | [string](#string) |  | The name of the repo, will be used to submit a review |
 | author_id | [int64](#int64) |  | The author of the PR, will be used to check if we can request changes |
+| action | [string](#string) |  | The action that triggered the webhook |
 
 
 <a name="mediator-v1-RESTProviderConfig"></a>
@@ -1420,6 +1418,7 @@ endpoint and how we compare it to the rule.
 | jq | [RuleType.Definition.Eval.JQComparison](#mediator-v1-RuleType-Definition-Eval-JQComparison) | repeated | jq is only used if the `jq` type is selected. It defines the comparisons that are made between the ingested data and the profile rule. |
 | rego | [RuleType.Definition.Eval.Rego](#mediator-v1-RuleType-Definition-Eval-Rego) | optional | rego is only used if the `rego` type is selected. |
 | vulncheck | [RuleType.Definition.Eval.Vulncheck](#mediator-v1-RuleType-Definition-Eval-Vulncheck) | optional | vulncheck is only used if the `vulncheck` type is selected. |
+| package_intelligence | [RuleType.Definition.Eval.PackageIntelligence](#mediator-v1-RuleType-Definition-Eval-PackageIntelligence) | optional | package_intelligence is only used if the `package_intelligence` type is selected. |
 
 
 <a name="mediator-v1-RuleType-Definition-Eval-JQComparison"></a>
@@ -1443,6 +1442,17 @@ endpoint and how we compare it to the rule.
 | Field | Type | Label | Description |
 | ----- | ---- | ----- | ----------- |
 | def | [string](#string) |  |  |
+
+
+<a name="mediator-v1-RuleType-Definition-Eval-PackageIntelligence"></a>
+
+#### RuleType.Definition.Eval.PackageIntelligence
+
+
+
+| Field | Type | Label | Description |
+| ----- | ---- | ----- | ----------- |
+| endpoint | [string](#string) |  | e.g. https://staging.stacklok.dev/ |
 
 
 <a name="mediator-v1-RuleType-Definition-Eval-Rego"></a>
@@ -1620,10 +1630,7 @@ user record to be returned
 | ----- | ---- | ----- | ----------- |
 | id | [int32](#int32) |  |  |
 | organization_id | [string](#string) |  |  |
-| email | [string](#string) | optional |  |
 | identity_subject | [string](#string) |  |  |
-| first_name | [string](#string) | optional |  |
-| last_name | [string](#string) | optional |  |
 | created_at | [google.protobuf.Timestamp](#google-protobuf-Timestamp) |  |  |
 | updated_at | [google.protobuf.Timestamp](#google-protobuf-Timestamp) |  |  |
 

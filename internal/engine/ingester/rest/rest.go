@@ -106,6 +106,16 @@ type EndpointTemplateParams struct {
 	Params map[string]any
 }
 
+// GetType returns the type of the REST rule data ingest engine
+func (*Ingestor) GetType() string {
+	return RestRuleDataIngestType
+}
+
+// GetConfig returns the config for the REST rule data ingest engine
+func (rdi *Ingestor) GetConfig() protoreflect.ProtoMessage {
+	return rdi.restCfg
+}
+
 // Ingest calls the REST endpoint and returns the data
 func (rdi *Ingestor) Ingest(ctx context.Context, ent protoreflect.ProtoMessage, params map[string]any) (*engif.Result, error) {
 	endpoint := new(bytes.Buffer)

@@ -19,8 +19,7 @@ metadata:
   annotations:
     alb.ingress.kubernetes.io/healthcheck-path: "/api/v1/health"
   labels:
-    # This includes a newline, so ko sees this as valid yaml
-    # {{ include "common.labels.standard" (dict "customLabels" .Values.commonLabels "context" $ ) | nindent 4 }}
+    {{ include "common.labels.standard" (dict "customLabels" .Values.commonLabels "context" $ ) | nindent 4 }}
 spec:
   type: ClusterIP
   ports:
@@ -44,8 +43,7 @@ metadata:
     # For some reason, ALB defaults to 12 (unimplemented) as a success code
     alb.ingress.kubernetes.io/success-codes: "0"
   labels:
-    # This includes a newline, so ko sees this as valid yaml
-    # {{ include "common.labels.standard" (dict "customLabels" .Values.commonLabels "context" $ ) | nindent 4 }}
+    {{ include "common.labels.standard" (dict "customLabels" .Values.commonLabels "context" $ ) | nindent 4 }}
 spec:
   type: ClusterIP
   ports:
@@ -63,8 +61,7 @@ kind: Service
 metadata:
   name: mediator-metrics
   labels:
-  # This includes a newline, so ko sees this as valid yaml
-  # {{ include "common.labels.standard" (dict "customLabels" .Values.commonLabels "context" $ ) | nindent 4 }}
+  {{ include "common.labels.standard" (dict "customLabels" .Values.commonLabels "context" $ ) | nindent 4 }}
 spec:
   type: ClusterIP
   ports:

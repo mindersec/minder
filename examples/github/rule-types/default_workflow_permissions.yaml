@@ -9,7 +9,7 @@ description: |
   when running workflows in a repository, as well as if GitHub Actions
   can submit approving pull request reviews.
 guidance: |
-  Having control over the default workflow permissions for a repositry is important and allows for a better security posture.
+  Having control over the default workflow permissions for a repository is important and allows for a better security posture.
 
   For more information, see
   https://docs.github.com/en/rest/actions/permissions#set-default-workflow-permissions-for-a-repository
@@ -50,3 +50,8 @@ def:
           def: ".can_approve_pull_request_reviews"
         profile:
           def: ".can_approve_pull_request_reviews"
+  # Defines the configuration for alerting on the rule
+  alert:
+    type: security_advisory
+    security_advisory:
+      severity: "medium"

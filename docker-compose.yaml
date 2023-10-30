@@ -49,15 +49,17 @@ services:
       # Use viper environment variables to set specific paths to keys;
       # these values are relative paths in config.yaml, but it's not clear
       # what they are relative _to_...
-      - AUTH_ACCESS_TOKEN_PRIVATE_KEY=/app/.ssh/access_token_rsa
-      - AUTH_ACCESS_TOKEN_PUBLIC_KEY=/app/.ssh/access_token_rsa.pub
-      - AUTH_REFRESH_TOKEN_PRIVATE_KEY=/app/.ssh/refresh_token_rsa
-      - AUTH_REFRESH_TOKEN_PUBLIC_KEY=/app/.ssh/refresh_token_rsa.pub
-      - AUTH_TOKEN_KEY=/app/.ssh/token_key_passphrase
+      - MEDIATOR_AUTH_ACCESS_TOKEN_PRIVATE_KEY=/app/.ssh/access_token_rsa
+      - MEDIATOR_AUTH_ACCESS_TOKEN_PUBLIC_KEY=/app/.ssh/access_token_rsa.pub
+      - MEDIATOR_AUTH_REFRESH_TOKEN_PRIVATE_KEY=/app/.ssh/refresh_token_rsa
+      - MEDIATOR_AUTH_REFRESH_TOKEN_PUBLIC_KEY=/app/.ssh/refresh_token_rsa.pub
+      - MEDIATOR_AUTH_TOKEN_KEY=/app/.ssh/token_key_passphrase
     networks:
       - app_net
     depends_on:
       postgres:
+        condition: service_healthy
+      keycloak:
         condition: service_healthy
 #      migrate:
 #        condition: service_completed_successfully

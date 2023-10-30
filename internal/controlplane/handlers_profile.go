@@ -207,6 +207,7 @@ func (s *Server) CreateProfile(ctx context.Context,
 		ProjectID: entityCtx.GetProject().GetID(),
 		Name:      in.GetName(),
 		Remediate: validateActionType(in.GetRemediate()),
+		Alert:     validateActionType(in.GetAlert()),
 	}
 
 	// Create profile

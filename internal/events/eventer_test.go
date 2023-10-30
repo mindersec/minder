@@ -21,6 +21,7 @@ import (
 
 	"github.com/ThreeDotsLabs/watermill/message"
 
+	"github.com/stacklok/mediator/internal/config"
 	"github.com/stacklok/mediator/internal/events"
 )
 
@@ -34,6 +35,13 @@ type fakeConsumer struct {
 type eventPair struct {
 	topic string
 	msg   *message.Message
+}
+
+func driverConfig() *config.EventConfig {
+	return &config.EventConfig{
+		Driver:    "go-channel",
+		GoChannel: config.GoChannelEventConfig{},
+	}
 }
 
 func (f *fakeConsumer) Register(r events.Registrar) {
@@ -108,7 +116,7 @@ func TestEventer(t *testing.T) {
 		t.Run(tt.name, func(t *testing.T) {
 			t.Parallel()
 
-			eventer, err := events.Setup()
+			eventer, err := events.Setup(context.Background(), driverConfig())
 			if err != nil {
 				t.Errorf("Setup() error = %v", err)
 				return

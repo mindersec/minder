@@ -86,7 +86,10 @@ func getgRPCConnection() (*grpc.ClientConn, error) {
 func newDefaultServer(t *testing.T, mockStore *mockdb.MockStore) *Server {
 	t.Helper()
 
-	evt, err := events.Setup()
+	evt, err := events.Setup(context.Background(), &config.EventConfig{
+		Driver:    "go-channel",
+		GoChannel: config.GoChannelEventConfig{},
+	})
 	require.NoError(t, err, "failed to setup eventer")
 
 	var c *config.Config
@@ -100,7 +103,7 @@ func newDefaultServer(t *testing.T, mockStore *mockdb.MockStore) *Server {
 	defer ctrl.Finish()
 	mockJwt := mockjwt.NewMockJwtValidator(ctrl)
 
-	server, err := NewServer(mockStore, evt, c, mockJwt)
+	server, err := NewServer(mockStore, evt, NewMetrics(), c, mockJwt)
 	require.NoError(t, err, "failed to create server")
 	return server
 }

@@ -71,9 +71,6 @@ func TestCreateUserDBMock(t *testing.T) {
 					ID:              1,
 					OrganizationID:  orgID,
 					IdentitySubject: "subject1",
-					Email:           sql.NullString{String: "test@stacklok.com", Valid: true},
-					FirstName:       sql.NullString{String: "Foo", Valid: true},
-					LastName:        sql.NullString{String: "Bar", Valid: true},
 					CreatedAt:       time.Now(),
 					UpdatedAt:       time.Now(),
 				}
@@ -98,10 +95,7 @@ func TestCreateUserDBMock(t *testing.T) {
 				store.EXPECT().CreateProvider(gomock.Any(), gomock.Any())
 				store.EXPECT().
 					CreateUser(gomock.Any(), db.CreateUserParams{OrganizationID: orgID,
-						IdentitySubject: "subject1",
-						Email:           sql.NullString{String: "test@stacklok.com", Valid: true},
-						FirstName:       sql.NullString{String: "Foo", Valid: true},
-						LastName:        sql.NullString{String: "Bar", Valid: true}}).
+						IdentitySubject: "subject1"}).
 					Return(returnedUser, nil)
 				store.EXPECT().AddUserProject(gomock.Any(), db.AddUserProjectParams{UserID: 1, ProjectID: projectID})
 				store.EXPECT().AddUserRole(gomock.Any(), db.AddUserRoleParams{UserID: 1, RoleID: 2})
@@ -117,10 +111,7 @@ func TestCreateUserDBMock(t *testing.T) {
 				assert.NoError(t, err)
 				assert.NotNil(t, res)
 				assert.Equal(t, int32(1), res.Id)
-				assert.Equal(t, "test@stacklok.com", *res.Email)
 				assert.Equal(t, orgID.String(), res.OrganizationId)
-				assert.Equal(t, "Foo", *res.FirstName)
-				assert.Equal(t, "Bar", *res.LastName)
 			},
 		},
 	}
@@ -267,9 +258,12 @@ func TestCreateUser_gRPC(t *testing.T) {
 			mockStore := mockdb.NewMockStore(ctrl)
 			mockJwtValidator := mockjwt.NewMockJwtValidator(ctrl)
 			tc.buildStubs(mockStore, mockJwtValidator)
-			evt, err := events.Setup()
+			evt, err := events.Setup(context.Background(), &config.EventConfig{
+				Driver:    "go-channel",
+				GoChannel: config.GoChannelEventConfig{},
+			})
 			require.NoError(t, err, "failed to setup eventer")
-			server, err := NewServer(mockStore, evt, &config.Config{
+			server, err := NewServer(mockStore, evt, NewMetrics(), &config.Config{
 				Salt: config.DefaultConfigForTest().Salt,
 				Auth: config.AuthConfig{
 					TokenKey: generateTokenKey(t),
@@ -471,9 +465,12 @@ func TestDeleteUser_gRPC(t *testing.T) {
 			}))
 			defer testServer.Close()
 
-			evt, err := events.Setup()
+			evt, err := events.Setup(context.Background(), &config.EventConfig{
+				Driver:    "go-channel",
+				GoChannel: config.GoChannelEventConfig{},
+			})
 			require.NoError(t, err, "failed to setup eventer")
-			server, err := NewServer(mockStore, evt, &config.Config{
+			server, err := NewServer(mockStore, evt, NewMetrics(), &config.Config{
 				Salt: config.DefaultConfigForTest().Salt,
 				Auth: config.AuthConfig{
 					TokenKey: generateTokenKey(t),

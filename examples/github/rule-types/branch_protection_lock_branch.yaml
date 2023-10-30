@@ -6,13 +6,13 @@ context:
   provider: github
 description: Whether the branch is locked
 guidance: |
-  ## Can set the branch as read-only. Users cannot push to the branch.
+  Can set the branch as read-only. Users cannot push to the branch.
 
   For more information, see
   https://docs.github.com/en/repositories/configuring-branches-and-merges-in-your-repository/managing-protected-branches/managing-a-branch-protection-rule
 def:
   # Defines the section of the pipeline the rule will appear in.
-  # This will affect the template that is used to render multiple parts
+  # This will affect the template used to render multiple parts
   # of the rule.
   in_entity: repository
   # Defines the schema for parameters that will be passed to the rule
@@ -60,3 +60,8 @@ def:
     gh_branch_protection:
       patch: |
         {"lock_branch":{{ .Profile.lock_branch }} }
+  # Defines the configuration for alerting on the rule
+  alert:
+    type: security_advisory
+    security_advisory:
+      severity: "medium"

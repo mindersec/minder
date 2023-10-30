@@ -1,9 +1,9 @@
 
 -- name: UpsertRuleEvaluations :one
 INSERT INTO rule_evaluations (
-    profile_id, repository_id, artifact_id, rule_type_id, entity
-) VALUES ($1, $2, $3, $4, $5)
-ON CONFLICT (profile_id, repository_id, COALESCE(artifact_id, '00000000-0000-0000-0000-000000000000'::UUID), entity, rule_type_id)
+    profile_id, repository_id, artifact_id, pull_request_id, rule_type_id, entity
+) VALUES ($1, $2, $3, $4, $5, $6)
+ON CONFLICT (profile_id, repository_id, COALESCE(artifact_id, '00000000-0000-0000-0000-000000000000'::UUID), COALESCE(pull_request_id, '00000000-0000-0000-0000-000000000000'::UUID), entity, rule_type_id)
   DO UPDATE SET profile_id = $1
 RETURNING id;
 
@@ -44,13 +44,15 @@ INSERT INTO rule_details_alert (
     rule_eval_id,
     status,
     details,
+    metadata,
     last_updated
 )
-VALUES ($1, $2, $3, NOW())
+VALUES ($1, $2, $3, sqlc.arg(metadata)::jsonb, NOW())
 ON CONFLICT(rule_eval_id)
     DO UPDATE SET
-                  status = $2,
-                  details = $3,
+                  status = CASE WHEN $2 != 'skipped' THEN $2 ELSE rule_details_alert.status END,
+                  details = CASE WHEN $2 != 'skipped' THEN $3 ELSE rule_details_alert.details END,
+                  metadata = CASE WHEN $2 != 'skipped' THEN sqlc.arg(metadata)::jsonb ELSE rule_details_alert.metadata END,
                   last_updated = NOW()
     WHERE rule_details_alert.rule_eval_id = $1
 RETURNING id;
@@ -93,6 +95,7 @@ WITH
            rule_eval_id,
            status AS alert_status,
            details AS alert_details,
+           metadata AS alert_metadata,
            last_updated AS alert_last_updated
        FROM rule_details_alert
    )
@@ -106,6 +109,7 @@ SELECT
     rd.rem_last_updated,
     ad.alert_status,
     ad.alert_details,
+    ad.alert_metadata,
     ad.alert_last_updated,
     res.repository_id,
     res.entity,
@@ -125,6 +129,8 @@ WHERE res.profile_id = $1 AND
         CASE
             WHEN sqlc.narg(entity_type)::entities = 'repository' AND res.repository_id = sqlc.narg(entity_id)::UUID THEN true
             WHEN sqlc.narg(entity_type)::entities  = 'artifact' AND res.artifact_id = sqlc.narg(entity_id)::UUID THEN true
+            WHEN sqlc.narg(entity_type)::entities  = 'artifact' AND res.artifact_id = sqlc.narg(entity_id)::UUID THEN true
+            WHEN sqlc.narg(entity_type)::entities  = 'pull_request' AND res.pull_request_id = sqlc.narg(entity_id)::UUID THEN true
             WHEN sqlc.narg(entity_id)::UUID IS NULL THEN true
             ELSE false
             END

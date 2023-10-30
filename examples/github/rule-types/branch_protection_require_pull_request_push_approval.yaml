@@ -6,13 +6,13 @@ context:
   provider: github
 description: Require that the most recent push to a branch be approved by someone other than the person who pushed it.
 guidance: |
-  ## The most recent push to a branch must be approved by someone other than the person who pushed it.
+  The most recent push to a branch must be approved by someone other than the person who pushed it.
 
   For more information, see
   https://docs.github.com/en/repositories/configuring-branches-and-merges-in-your-repository/managing-protected-branches/managing-a-branch-protection-rule
 def:
   # Defines the section of the pipeline the rule will appear in.
-  # This will affect the template that is used to render multiple parts
+  # This will affect the template used to render multiple parts
   # of the rule.
   in_entity: repository
   # Defines the schema for parameters that will be passed to the rule
@@ -59,3 +59,8 @@ def:
     gh_branch_protection:
       patch: |
         {"required_pull_request_reviews":{"require_last_push_approval":{{ .Profile.require_last_push_approval }}}}
+  # Defines the configuration for alerting on the rule
+  alert:
+    type: security_advisory
+    security_advisory:
+      severity: "medium"

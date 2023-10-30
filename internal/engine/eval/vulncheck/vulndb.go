@@ -136,7 +136,7 @@ func (o *osvdb) NewQuery(ctx context.Context, dep *pb.Dependency, eco pb.DepEcos
 		"version": dep.Version,
 		"package": map[string]string{
 			"name":      dep.Name,
-			"ecosystem": pbEcosystemAsString(eco),
+			"ecosystem": eco.AsString(),
 		},
 	}
 

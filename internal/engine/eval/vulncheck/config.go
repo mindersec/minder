@@ -23,6 +23,7 @@ import (
 	"github.com/go-playground/validator/v10"
 	"github.com/mitchellh/mapstructure"
 
+	"github.com/stacklok/mediator/internal/engine/eval/pr_actions"
 	pb "github.com/stacklok/mediator/pkg/api/protobuf/go/mediator/v1"
 )
 
@@ -30,16 +31,6 @@ type vulnDbType string
 
 const (
 	vulnDbTypeOsv vulnDbType = "osv"
-)
-
-type action string
-
-const (
-	actionReviewPr     action = "review"
-	actionComment      action = "comment"
-	actionCommitStatus action = "commit_status"
-	actionProfileOnly  action = "profile_only"
-	actionSummary      action = "summary"
 )
 
 type packageRepository struct {
@@ -58,7 +49,7 @@ type ecosystemConfig struct {
 
 // config is the configuration for the vulncheck evaluator
 type config struct {
-	Action          action            `json:"action" mapstructure:"action" validate:"required"`
+	Action          pr_actions.Action `json:"action" mapstructure:"action" validate:"required"`
 	EcosystemConfig []ecosystemConfig `json:"ecosystem_config" mapstructure:"ecosystem_config" validate:"required"`
 }
 
@@ -81,24 +72,8 @@ func parseConfig(ruleCfg map[string]any) (*config, error) {
 	return &conf, nil
 }
 
-func pbEcosystemAsString(ecosystem pb.DepEcosystem) string {
-	switch ecosystem {
-	case pb.DepEcosystem_DEP_ECOSYSTEM_NPM:
-		return "npm"
-	case pb.DepEcosystem_DEP_ECOSYSTEM_GO:
-		return "Go"
-	case pb.DepEcosystem_DEP_ECOSYSTEM_PYPI:
-		return "PyPI"
-	case pb.DepEcosystem_DEP_ECOSYSTEM_UNSPECIFIED:
-		// this shouldn't happen
-		return ""
-	default:
-		return ""
-	}
-}
-
 func (c *config) getEcosystemConfig(ecosystem pb.DepEcosystem) *ecosystemConfig {
-	sEco := pbEcosystemAsString(ecosystem)
+	sEco := ecosystem.AsString()
 	if sEco == "" {
 		return nil
 	}

@@ -14,11 +14,11 @@ guidance: |
   https://docs.github.com/en/code-security/dependabot/dependabot-version-updates/configuration-options-for-the-dependabot.yml-file
 def:
   # Defines the section of the pipeline the rule will appear in.
-  # This will affect the template that is used to render multiple parts
+  # This will affect the template used to render multiple parts
   # of the rule.
   in_entity: repository
   # Defines the schema for writing a rule with this rule being checked
-  # In this case there is no settings that need to be configured
+  # In this case there are no settings that need to be configured
   rule_schema:
     type: object
     properties:
@@ -102,3 +102,8 @@ def:
                 schedule:
                   interval: "{{.Profile.schedule_interval }}"
                 open-pull-requests-limit: 10
+  # Defines the configuration for alerting on the rule
+  alert:
+    type: security_advisory
+    security_advisory:
+      severity: "medium"

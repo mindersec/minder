@@ -6,14 +6,10 @@ context:
   provider: github
 description: Verifies that the Trivy action is enabled for the repository and scanning
 guidance: |
-  ## Please set up trivy!
-
   Trivy is an open source vulnerability scanner for repositories, containers and other
   artifacts provided by Aqua Security. It is used to scan for vulnerabilities in the
   codebase and dependencies. This rule ensures that the Trivy action is enabled for
   the repository and scanning is performed.
-
-  For more information on the Trivy action, see https://github.com/marketplace/actions/aqua-security-trivy
 
   Set it up by adding the following to your workflow:
 
@@ -25,13 +21,16 @@ guidance: |
       format: json
       exit-code: 1
   ```
+  
+  For more information, see
+  https://github.com/marketplace/actions/aqua-security-trivy
 def:
   # Defines the section of the pipeline the rule will appear in.
-  # This will affect the template that is used to render multiple parts
+  # This will affect the template used to render multiple parts
   # of the rule.
   in_entity: repository
   # Defines the schema for writing a rule with this rule being checked
-  # In this case there is no settings that need to be configured
+  # In this case there are no settings that need to be configured
   rule_schema: {}
   # Defines the configuration for ingesting data relevant for the rule
   ingest:
@@ -67,3 +66,8 @@ def:
             # Check if the step is a trivy action
             startswith(step.uses, "aquasecurity/trivy-action@")
         }
+  # Defines the configuration for alerting on the rule
+  alert:
+    type: security_advisory
+    security_advisory:
+      severity: "medium"

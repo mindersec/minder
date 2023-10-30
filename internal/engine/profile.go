@@ -124,6 +124,10 @@ func TraverseAllRulesForPipeline(p *pb.Profile, fn func(*pb.Profile_Rule) error)
 		return fmt.Errorf("error traversing build environment rules: %w", err)
 	}
 
+	if err := TraverseRules(p.PullRequest, fn); err != nil {
+		return fmt.Errorf("error traversing pull_request rules: %w", err)
+	}
+
 	if err := TraverseRules(p.Artifact, fn); err != nil {
 		return fmt.Errorf("error traversing artifact rules: %w", err)
 	}
@@ -172,6 +176,11 @@ func MergeDatabaseListIntoProfiles(ppl []db.ListProfilesByProjectIDRow, ectx *En
 			if p.Remediate.Valid {
 				sRem := string(p.Remediate.ActionType)
 				profiles[p.Name].Remediate = &sRem
+			}
+
+			if p.Alert.Valid {
+				sAlert := string(p.Alert.ActionType)
+				profiles[p.Name].Alert = &sAlert
 			}
 		}
 		if pm := rowInfoToProfileMap(profiles[p.Name], p.Entity, p.ContextualRules); pm != nil {

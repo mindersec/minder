@@ -6,13 +6,13 @@ context:
   provider: github
 description: Whether the branch can be deleted
 guidance: |
-  ## Allow users with push access to delete matching branches.
+  Allow users with push access to delete matching branches.
 
   For more information, see
   https://docs.github.com/en/repositories/configuring-branches-and-merges-in-your-repository/managing-protected-branches/managing-a-branch-protection-rule
 def:
   # Defines the section of the pipeline the rule will appear in.
-  # This will affect the template that is used to render multiple parts
+  # This will affect the template used to render multiple parts
   # of the rule.
   in_entity: repository
   # Defines the schema for parameters that will be passed to the rule
@@ -59,3 +59,8 @@ def:
     gh_branch_protection:
       patch: |
         {"allow_deletions":{{ .Profile.allow_deletions }} }
+  # Defines the configuration for alerting on the rule
+  alert:
+    type: security_advisory
+    security_advisory:
+      severity: "medium"

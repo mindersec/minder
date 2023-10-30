@@ -19,7 +19,7 @@ guidance: |
   https://docs.github.com/en/repositories/managing-your-repositorys-settings-and-features/enabling-features-for-your-repository/managing-github-actions-settings-for-a-repository#managing-github-actions-permissions-for-your-repository
 def:
   # Defines the section of the pipeline the rule will appear in.
-  # This will affect the template that is used to render multiple parts
+  # This will affect the template used to render multiple parts
   # of the rule.
   in_entity: repository
   # Defines the schema for writing a rule with this rule being checked
@@ -60,3 +60,8 @@ def:
       endpoint: "/repos/{{.Entity.Owner}}/{{.Entity.Name}}/actions/permissions"
       body: |
         { "enabled": true, "allowed_actions": "{{.Profile.allowed_actions}}" }
+  # Defines the configuration for alerting on the rule
+  alert:
+    type: security_advisory
+    security_advisory:
+      severity: "medium"

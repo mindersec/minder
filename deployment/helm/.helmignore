@@ -22,6 +22,3 @@
 *.tmproj
 .vscode/
 README.md
-
-# Note that we can't use negative patterns here, see https://github.com/helm/helm/issues/3622
-templates/*.yaml

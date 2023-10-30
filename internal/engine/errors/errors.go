@@ -17,6 +17,7 @@
 package errors
 
 import (
+	"encoding/json"
 	"errors"
 	"fmt"
 
@@ -56,7 +57,7 @@ var ErrActionSkipped = errors.New("action not performed")
 
 // IsActionInformativeError returns true if the error is an informative error that should not be reported to the user
 func IsActionInformativeError(err error) bool {
-	return errors.Is(err, ErrActionSkipped) || errors.Is(err, ErrActionNotAvailable)
+	return errors.Is(err, ErrActionSkipped) || errors.Is(err, ErrActionNotAvailable) || errors.Is(err, ErrActionTurnedOff)
 }
 
 // IsActionFatalError returns true if the error is a fatal error that should stop be reported to the user
@@ -76,10 +77,15 @@ func NewErrActionFailed(sfmt string, args ...any) error {
 // ErrActionNotAvailable is an error code that indicates that the action was not available for this rule_type
 var ErrActionNotAvailable = errors.New("action not available")
 
+// ErrActionTurnedOff is an error code that indicates that the action is turned off for this rule_type
+var ErrActionTurnedOff = errors.New("action turned off")
+
 // ActionsError is the error wrapper for actions
 type ActionsError struct {
-	RemediateErr error
-	AlertErr     error
+	RemediateErr  error
+	RemediateMeta json.RawMessage
+	AlertErr      error
+	AlertMeta     json.RawMessage
 }
 
 // ErrorAsEvalStatus returns the evaluation status for a given error
@@ -127,6 +133,8 @@ func ErrorAsAlertStatus(err error) db.AlertStatusTypes {
 	}
 
 	switch err != nil {
+	case errors.Is(err, ErrActionTurnedOff):
+		return db.AlertStatusTypesOff
 	case errors.Is(err, ErrActionFailed):
 		return db.AlertStatusTypesError
 	case errors.Is(err, ErrActionSkipped):
@@ -135,4 +143,45 @@ func ErrorAsAlertStatus(err error) db.AlertStatusTypes {
 		return db.AlertStatusTypesNotAvailable
 	}
 	return db.AlertStatusTypesError
+}
+
+var (
+	// ErrUnauthorized is returned when a request is unauthorized
+	ErrUnauthorized = errors.New("unauthorized")
+	// ErrForbidden is returned when a request is forbidden
+	ErrForbidden = errors.New("forbidden")
+	// ErrNotFound is returned when a resource is not found
+	ErrNotFound = errors.New("not found")
+	// ErrValidateOrSpammed is returned when a request is a validation or spammed error
+	ErrValidateOrSpammed = errors.New("validation or spammed error")
+	// ErrClientError is returned when a request is a client error
+	ErrClientError = errors.New("client error")
+	// ErrServerError is returned when a request is a server error
+	ErrServerError = errors.New("server error")
+	// ErrOther is returned when a request is another error
+	ErrOther = errors.New("other error")
+)
+
+// HTTPErrorCodeToErr converts an HTTP error code to an error
+func HTTPErrorCodeToErr(httpCode int) error {
+	var err = ErrOther
+
+	switch {
+	case httpCode >= 200 && httpCode < 300:
+		return nil
+	case httpCode == 401:
+		return ErrUnauthorized
+	case httpCode == 403:
+		return ErrForbidden
+	case httpCode == 404:
+		return ErrNotFound
+	case httpCode == 422:
+		return ErrValidateOrSpammed
+	case httpCode >= 400 && httpCode < 500:
+		return ErrClientError
+	case httpCode >= 500:
+		return ErrServerError
+	}
+
+	return err
 }

@@ -14,11 +14,12 @@ guidance: |
   https://docs.sigstore.dev/signing/signing_with_containers
 def:
   # Defines the section of the pipeline the rule will appear in.
-  # This will affect the template that is used to render multiple parts
+  # This will affect the template used to render multiple parts
   # of the rule.
   in_entity: artifact
   # Defines the schema for parameters that will be passed to the rule
   param_schema:
+    type: object
     properties:
       name:
         type: string
@@ -38,16 +39,14 @@ def:
       - tags
   # Defines the schema for writing a rule with this rule being checked
   rule_schema:
+    type: "object"
     properties:
-      artifact_signature:
-        type: "object"
-        properties:
-          is_signed:
-            type: boolean
-            description: "Set to true to enforce artifact being signed."
-          is_verified:
-            type: boolean
-            description: "Set to true to enforce artifact signature being verified."
+      is_signed:
+        type: boolean
+        description: "Set to true to enforce artifact being signed."
+      is_verified:
+        type: boolean
+        description: "Set to true to enforce artifact signature being verified."
   # Defines the configuration for ingesting data relevant for the rule
   ingest:
     type: artifact
@@ -73,3 +72,8 @@ def:
             }
           }
         }
+  # Defines the configuration for alerting on the rule
+  alert:
+    type: security_advisory
+    security_advisory:
+      severity: "medium"

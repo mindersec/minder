@@ -39,7 +39,7 @@ func NewRuleAlert(rt *pb.RuleType, pbuild *providers.ProviderBuilder) (engif.Act
 
 	// nolint:revive // let's keep the switch here, it would be nicer to extend a switch in the future
 	switch alertCfg.GetType() {
-	case security_advisory.SecurityAdvisoryType:
+	case security_advisory.AlertType:
 		if alertCfg.GetSecurityAdvisory() == nil {
 			return nil, fmt.Errorf("alert engine missing security-advisory configuration")
 		}

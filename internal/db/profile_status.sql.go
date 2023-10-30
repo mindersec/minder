@@ -8,9 +8,11 @@ package db
 import (
 	"context"
 	"database/sql"
+	"encoding/json"
 	"time"
 
 	"github.com/google/uuid"
+	"github.com/sqlc-dev/pqtype"
 )
 
 const getProfileStatusByIdAndProject = `-- name: GetProfileStatusByIdAndProject :one
@@ -137,6 +139,7 @@ WITH
            rule_eval_id,
            status AS alert_status,
            details AS alert_details,
+           metadata AS alert_metadata,
            last_updated AS alert_last_updated
        FROM rule_details_alert
    )
@@ -150,6 +153,7 @@ SELECT
     rd.rem_last_updated,
     ad.alert_status,
     ad.alert_details,
+    ad.alert_metadata,
     ad.alert_last_updated,
     res.repository_id,
     res.entity,
@@ -169,6 +173,8 @@ WHERE res.profile_id = $1 AND
         CASE
             WHEN $2::entities = 'repository' AND res.repository_id = $3::UUID THEN true
             WHEN $2::entities  = 'artifact' AND res.artifact_id = $3::UUID THEN true
+            WHEN $2::entities  = 'artifact' AND res.artifact_id = $3::UUID THEN true
+            WHEN $2::entities  = 'pull_request' AND res.pull_request_id = $3::UUID THEN true
             WHEN $3::UUID IS NULL THEN true
             ELSE false
             END
@@ -191,6 +197,7 @@ type ListRuleEvaluationsByProfileIdRow struct {
 	RemLastUpdated   sql.NullTime               `json:"rem_last_updated"`
 	AlertStatus      NullAlertStatusTypes       `json:"alert_status"`
 	AlertDetails     sql.NullString             `json:"alert_details"`
+	AlertMetadata    pqtype.NullRawMessage      `json:"alert_metadata"`
 	AlertLastUpdated sql.NullTime               `json:"alert_last_updated"`
 	RepositoryID     uuid.NullUUID              `json:"repository_id"`
 	Entity           Entities                   `json:"entity"`
@@ -224,6 +231,7 @@ func (q *Queries) ListRuleEvaluationsByProfileId(ctx context.Context, arg ListRu
 			&i.RemLastUpdated,
 			&i.AlertStatus,
 			&i.AlertDetails,
+			&i.AlertMetadata,
 			&i.AlertLastUpdated,
 			&i.RepositoryID,
 			&i.Entity,
@@ -251,13 +259,15 @@ INSERT INTO rule_details_alert (
     rule_eval_id,
     status,
     details,
+    metadata,
     last_updated
 )
-VALUES ($1, $2, $3, NOW())
+VALUES ($1, $2, $3, $4::jsonb, NOW())
 ON CONFLICT(rule_eval_id)
     DO UPDATE SET
-                  status = $2,
-                  details = $3,
+                  status = CASE WHEN $2 != 'skipped' THEN $2 ELSE rule_details_alert.status END,
+                  details = CASE WHEN $2 != 'skipped' THEN $3 ELSE rule_details_alert.details END,
+                  metadata = CASE WHEN $2 != 'skipped' THEN $4::jsonb ELSE rule_details_alert.metadata END,
                   last_updated = NOW()
     WHERE rule_details_alert.rule_eval_id = $1
 RETURNING id
@@ -267,10 +277,16 @@ type UpsertRuleDetailsAlertParams struct {
 	RuleEvalID uuid.UUID        `json:"rule_eval_id"`
 	Status     AlertStatusTypes `json:"status"`
 	Details    string           `json:"details"`
+	Metadata   json.RawMessage  `json:"metadata"`
 }
 
 func (q *Queries) UpsertRuleDetailsAlert(ctx context.Context, arg UpsertRuleDetailsAlertParams) (uuid.UUID, error) {
-	row := q.db.QueryRowContext(ctx, upsertRuleDetailsAlert, arg.RuleEvalID, arg.Status, arg.Details)
+	row := q.db.QueryRowContext(ctx, upsertRuleDetailsAlert,
+		arg.RuleEvalID,
+		arg.Status,
+		arg.Details,
+		arg.Metadata,
+	)
 	var id uuid.UUID
 	err := row.Scan(&id)
 	return id, err
@@ -338,19 +354,20 @@ func (q *Queries) UpsertRuleDetailsRemediate(ctx context.Context, arg UpsertRule
 
 const upsertRuleEvaluations = `-- name: UpsertRuleEvaluations :one
 INSERT INTO rule_evaluations (
-    profile_id, repository_id, artifact_id, rule_type_id, entity
-) VALUES ($1, $2, $3, $4, $5)
-ON CONFLICT (profile_id, repository_id, COALESCE(artifact_id, '00000000-0000-0000-0000-000000000000'::UUID), entity, rule_type_id)
+    profile_id, repository_id, artifact_id, pull_request_id, rule_type_id, entity
+) VALUES ($1, $2, $3, $4, $5, $6)
+ON CONFLICT (profile_id, repository_id, COALESCE(artifact_id, '00000000-0000-0000-0000-000000000000'::UUID), COALESCE(pull_request_id, '00000000-0000-0000-0000-000000000000'::UUID), entity, rule_type_id)
   DO UPDATE SET profile_id = $1
 RETURNING id
 `
 
 type UpsertRuleEvaluationsParams struct {
-	ProfileID    uuid.UUID     `json:"profile_id"`
-	RepositoryID uuid.NullUUID `json:"repository_id"`
-	ArtifactID   uuid.NullUUID `json:"artifact_id"`
-	RuleTypeID   uuid.UUID     `json:"rule_type_id"`
-	Entity       Entities      `json:"entity"`
+	ProfileID     uuid.UUID     `json:"profile_id"`
+	RepositoryID  uuid.NullUUID `json:"repository_id"`
+	ArtifactID    uuid.NullUUID `json:"artifact_id"`
+	PullRequestID uuid.NullUUID `json:"pull_request_id"`
+	RuleTypeID    uuid.UUID     `json:"rule_type_id"`
+	Entity        Entities      `json:"entity"`
 }
 
 func (q *Queries) UpsertRuleEvaluations(ctx context.Context, arg UpsertRuleEvaluationsParams) (uuid.UUID, error) {
@@ -358,6 +375,7 @@ func (q *Queries) UpsertRuleEvaluations(ctx context.Context, arg UpsertRuleEvalu
 		arg.ProfileID,
 		arg.RepositoryID,
 		arg.ArtifactID,
+		arg.PullRequestID,
 		arg.RuleTypeID,
 		arg.Entity,
 	)

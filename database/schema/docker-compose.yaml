@@ -17,7 +17,7 @@ version: '3.2'
 services:
   postgres:
     container_name: postgres_container
-    image: postgres:14-alpine
+    image: postgres:15-alpine
     restart: always
     environment:
       POSTGRES_USER: postgres
@@ -55,7 +55,7 @@ services:
     networks:
       - app_net
   schemaspy:
-    image: schemaspy/schemaspy:snapshot
+    image: schemaspy/schemaspy:6.2.4
     volumes:
       - ./output:/output
       - ./config:/config

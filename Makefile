@@ -18,14 +18,8 @@ projectname?=mediator
 # Unfortunately, we need OS detection for docker-compose
 OS := $(shell uname -s)
 
-# Container runtime detection
-ifeq (, $(shell which podman-compose))
-    COMPOSE?=docker-compose
-    CONTAINER?=docker
-else
-    COMPOSE?=podman-compose
-    CONTAINER?=podman
-endif
+COMPOSE?=docker-compose
+CONTAINER?=docker
 
 # Services to run in docker-compose. Defaults to all
 services?=
@@ -80,19 +74,23 @@ run-docker:  ## run the app under docker.
 	# We also need to remove the build: directives to use ko builds
 	# ko resolve will fill in the image: field in the compose file, but it adds a yaml document separator
 	sed -e '/^  *build:/d'  -e 's|  image: mediator:latest|  image: ko://github.com/stacklok/mediator/cmd/server|' docker-compose.yaml | ko resolve --base-import-paths --platform linux/$(DOCKERARCH) -f - | sed 's/^--*$$//' > .resolved-compose.yaml
-	# MacOS can't tolerate the ":z" flag, Linux needs it.  https://github.com/containers/podman-compose/issues/509
-ifeq ($(OS),Darwin)
-	sed -i '' 's/:z$$//' .resolved-compose.yaml
-endif
 	@echo "Running docker-compose up $(services)"
 	$(COMPOSE) -f .resolved-compose.yaml down && $(COMPOSE) -f .resolved-compose.yaml up $(COMPOSE_ARGS) $(services)
 	rm .resolved-compose.yaml*
 
 helm:  ## build the helm chart to a local archive, using ko for the image build
-	cd deployment/helm; rm -f templates/combined.yml && \
-	    ko resolve --platform=${KO_PLATFORMS} --base-import-paths --push=${KO_PUSH_IMAGE} -f templates/ > templates/combined.yml && \
+	cd deployment/helm; \
+	    ko resolve --platform=${KO_PLATFORMS} --base-import-paths --push=${KO_PUSH_IMAGE} -f values.yaml > values.tmp.yaml && \
+		mv values.tmp.yaml values.yaml && \
 		helm dependency update && \
-		helm package --version="${HELM_PACKAGE_VERSION}" .
+		helm package --version="${HELM_PACKAGE_VERSION}" . && \
+		cat values.yaml
+	git checkout deployment/helm/values.yaml
+
+helm-template: ## renders the helm templates which is useful for debugging
+	cd deployment/helm; \
+		helm dependency update && \
+		helm template .
 
 bootstrap: ## install build deps
 	go generate -tags tools tools/tools.go

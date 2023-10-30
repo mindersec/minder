@@ -47,3 +47,8 @@ WHERE entity_profile_rules.rule_type_id = $1
 GROUP BY profiles.id;
 
 
+-- name: CountProfilesByEntityType :many
+SELECT COUNT(p.id) AS num_profiles, ep.entity AS profile_entity
+FROM profiles AS p
+         JOIN entity_profiles AS ep ON p.id = ep.profile_id
+GROUP BY ep.entity;

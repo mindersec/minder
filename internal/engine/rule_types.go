@@ -17,19 +17,19 @@ package engine
 
 import (
 	"context"
-	"errors"
 	"fmt"
+	"log"
 	"strings"
 
 	"github.com/xeipuuv/gojsonschema"
 	"google.golang.org/protobuf/encoding/protojson"
-	"google.golang.org/protobuf/reflect/protoreflect"
 	"google.golang.org/protobuf/types/known/structpb"
 
 	"github.com/stacklok/mediator/internal/db"
 	"github.com/stacklok/mediator/internal/engine/actions"
-	evalerrors "github.com/stacklok/mediator/internal/engine/errors"
+	enginerr "github.com/stacklok/mediator/internal/engine/errors"
 	"github.com/stacklok/mediator/internal/engine/eval"
+	"github.com/stacklok/mediator/internal/engine/ingestcache"
 	"github.com/stacklok/mediator/internal/engine/ingester"
 	engif "github.com/stacklok/mediator/internal/engine/interfaces"
 	"github.com/stacklok/mediator/internal/providers"
@@ -170,10 +170,15 @@ type RuleTypeEngine struct {
 	rt *mediatorv1.RuleType
 
 	cli *providers.ProviderBuilder
+
+	ingestCache ingestcache.Cache
 }
 
 // NewRuleTypeEngine creates a new rule type engine
-func NewRuleTypeEngine(p *mediatorv1.Profile, rt *mediatorv1.RuleType, cli *providers.ProviderBuilder,
+func NewRuleTypeEngine(
+	p *mediatorv1.Profile,
+	rt *mediatorv1.RuleType,
+	cli *providers.ProviderBuilder,
 ) (*RuleTypeEngine, error) {
 	rval, err := NewRuleValidator(rt)
 	if err != nil {
@@ -200,17 +205,18 @@ func NewRuleTypeEngine(p *mediatorv1.Profile, rt *mediatorv1.RuleType, cli *prov
 			Name:     rt.Name,
 			Provider: rt.Context.Provider,
 		},
-		rval:  rval,
-		rdi:   rdi,
-		reval: reval,
-		rae:   ae,
-		rt:    rt,
-		cli:   cli,
+		rval:        rval,
+		rdi:         rdi,
+		reval:       reval,
+		rae:         ae,
+		rt:          rt,
+		cli:         cli,
+		ingestCache: ingestcache.NewNoopCache(),
 	}
 
 	// Set organization if it exists
 	if rt.Context.Organization != nil && *rt.Context.Organization != "" {
-		// We need to clone the string because the pointer is to a string literal
+		// We need to clone the string because the pointer is to a string literal,
 		// and we don't want to modify that
 		org := strings.Clone(*rt.Context.Organization)
 		rte.Meta.Organization = &org
@@ -222,6 +228,12 @@ func NewRuleTypeEngine(p *mediatorv1.Profile, rt *mediatorv1.RuleType, cli *prov
 	}
 
 	return rte, nil
+}
+
+// WithIngesterCache sets the ingester cache for the rule type engine
+func (r *RuleTypeEngine) WithIngesterCache(ingestCache ingestcache.Cache) *RuleTypeEngine {
+	r.ingestCache = ingestCache
+	return r
 }
 
 // GetID returns the ID of the rule type. The ID is meant to be
@@ -237,41 +249,35 @@ func (r *RuleTypeEngine) GetRuleInstanceValidator() *RuleValidator {
 }
 
 // Eval runs the rule type engine against the given entity
-func (r *RuleTypeEngine) Eval(ctx context.Context, ent protoreflect.ProtoMessage, ruleDef, ruleParams map[string]any,
-	evalParams *EvalStatusParams) {
-	result, err := r.rdi.Ingest(ctx, ent, ruleParams)
-	if err != nil {
-		evalParams.EvalErr = fmt.Errorf("error ingesting data: %w", err)
-		evalParams.ActionsErr = evalerrors.ActionsError{
-			RemediateErr: evalerrors.ErrActionSkipped,
-			AlertErr:     evalerrors.ErrActionSkipped,
+func (r *RuleTypeEngine) Eval(ctx context.Context, inf *EntityInfoWrapper, params engif.EvalParams) error {
+	// Try looking at the ingesting cache first
+	result, ok := r.ingestCache.Get(r.rdi, inf.Entity, params.GetRule().Params)
+	if !ok {
+		var err error
+		// Ingest the data needed for the rule evaluation
+		result, err = r.rdi.Ingest(ctx, inf.Entity, params.GetRule().Params.AsMap())
+		if err != nil {
+			// Ingesting failed, so we can't evaluate the rule.
+			// Note that for some types of ingesting the evalErr can already be set from the ingester.
+			return fmt.Errorf("error ingesting data: %w", err)
 		}
-		return
+
+		r.ingestCache.Set(r.rdi, inf.Entity, params.GetRule().Params, result)
+	} else {
+		log.Printf("Using cached result for %s", r.GetID())
 	}
-	evalParams.EvalErr = r.reval.Eval(ctx, ruleDef, result)
+	// Process evaluation
+	return r.reval.Eval(ctx, params.GetRule().Def.AsMap(), result)
 }
 
 // Actions runs all actions for the rule type engine against the given entity
 func (r *RuleTypeEngine) Actions(
 	ctx context.Context,
-	ent protoreflect.ProtoMessage,
-	ruleDef, ruleParams map[string]any,
-	evalParams *EvalStatusParams,
-) {
-	// Skip actions in case ingesting failed during evaluation
-	if errors.Is(evalParams.ActionsErr.AlertErr, evalerrors.ErrActionSkipped) &&
-		errors.Is(evalParams.ActionsErr.RemediateErr, evalerrors.ErrActionSkipped) {
-		return
-	}
-
+	inf *EntityInfoWrapper,
+	params engif.ActionsParams,
+) enginerr.ActionsError {
 	// Process actions
-	evalParams.ActionsErr = r.rae.DoActions(ctx,
-		ent,
-		ruleDef,
-		ruleParams,
-		evalParams.EvalErr,
-		evalParams.EvalStatusFromDb,
-	)
+	return r.rae.DoActions(ctx, inf.Entity, params)
 }
 
 // RuleDefFromDB converts a rule type definition from the database to a protobuf

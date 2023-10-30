@@ -149,6 +149,8 @@ message PullRequest {
     string repo_name = 5;    // The name of the repo, will be used to submit a review
 
     int64 author_id = 6;    // The author of the PR, will be used to check if we can request changes
+
+    string action = 7;       // The action that triggered the webhook
 }
 
 enum DepEcosystem {
@@ -760,11 +762,8 @@ message CreateUserResponse {
     string organizatio_name = 3;
     string project_id = 4;
     string project_name = 5;
-    optional string email = 6;
-    string identity_subject = 7;
-    optional string first_name = 8;
-    optional string last_name = 9;
-    google.protobuf.Timestamp created_at = 10;
+    string identity_subject = 6;
+    google.protobuf.Timestamp created_at = 7;
 }
 
 message DeleteUserRequest {
@@ -777,12 +776,9 @@ message DeleteUserResponse {
 message UserRecord {
     int32 id = 1;
     string organization_id = 2;
-    optional string email = 3;
-    string identity_subject = 4;
-    optional string first_name = 5;
-    optional string last_name = 6;
-    google.protobuf.Timestamp created_at = 7;
-    google.protobuf.Timestamp updated_at = 8;
+    string identity_subject = 3;
+    google.protobuf.Timestamp created_at = 4;
+    google.protobuf.Timestamp updated_at = 5;
 }
 
 // list users
@@ -1244,6 +1240,11 @@ message RuleType {
                 string endpoint = 2;
             }
 
+            message PackageIntelligence {
+                // e.g. https://staging.stacklok.dev/
+                string endpoint = 1;
+            }
+
             // jq is only used if the `jq` type is selected.
             // It defines the comparisons that are made between
             // the ingested data and the profile rule.
@@ -1254,6 +1255,9 @@ message RuleType {
 
             // vulncheck is only used if the `vulncheck` type is selected.
             optional Vulncheck vulncheck = 4;
+
+            // package_intelligence is only used if the `package_intelligence` type is selected.
+            optional PackageIntelligence package_intelligence = 5;
         }
         Eval eval = 5;
 

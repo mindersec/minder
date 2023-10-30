@@ -21,6 +21,7 @@ import (
 
 	"github.com/google/go-github/v53/github"
 
+	"github.com/stacklok/mediator/internal/engine/eval/pr_actions"
 	pb "github.com/stacklok/mediator/pkg/api/protobuf/go/mediator/v1"
 	provifv1 "github.com/stacklok/mediator/pkg/providers/v1"
 )
@@ -37,20 +38,20 @@ type prStatusHandler interface {
 
 func newPrStatusHandler(
 	ctx context.Context,
-	action action,
+	action pr_actions.Action,
 	pr *pb.PullRequest,
 	client provifv1.GitHub,
 ) (prStatusHandler, error) {
 	switch action {
-	case actionReviewPr:
+	case pr_actions.ActionReviewPr:
 		return newReviewPrHandler(ctx, pr, client)
-	case actionCommitStatus:
+	case pr_actions.ActionCommitStatus:
 		return newCommitStatusPrHandler(ctx, pr, client)
-	case actionComment:
+	case pr_actions.ActionComment:
 		return newReviewPrHandler(ctx, pr, client, withVulnsFoundReviewStatus(github.String("COMMENT")))
-	case actionProfileOnly:
+	case pr_actions.ActionProfileOnly:
 		return newProfileOnlyPrHandler(), nil
-	case actionSummary:
+	case pr_actions.ActionSummary:
 		return newSummaryPrHandler(ctx, pr, client)
 	default:
 		return nil, fmt.Errorf("unknown action: %s", action)

@@ -123,7 +123,7 @@ func upsertRemediationStatus(
 
 func upsertAlertStatus(
 	t *testing.T, profileID uuid.UUID, repoID uuid.UUID, ruleTypeID uuid.UUID,
-	alertStatus AlertStatusTypes, details string,
+	alertStatus AlertStatusTypes, details string, metadata json.RawMessage,
 ) {
 	t.Helper()
 
@@ -142,6 +142,7 @@ func upsertAlertStatus(
 	_, err = testQueries.UpsertRuleDetailsAlert(context.Background(), UpsertRuleDetailsAlertParams{
 		RuleEvalID: id,
 		Status:     alertStatus,
+		Metadata:   metadata,
 		Details:    details,
 	})
 	require.NoError(t, err)
@@ -508,7 +509,7 @@ func TestListRuleEvaluations(t *testing.T) {
 					RemediationStatusTypesSuccess, "this rule was remediated")
 				upsertAlertStatus(
 					t, profile.ID, randomEntities.repo.ID, randomEntities.ruleType1.ID,
-					AlertStatusTypesOn, "we alerted about this rule")
+					AlertStatusTypesOn, "we alerted about this rule", json.RawMessage(`{"ghsa_id": "GHSA-xxxx-xxxx-xxxx"}`))
 			},
 			sc: statusCount{
 				EvalStatusTypesFailure: 1,

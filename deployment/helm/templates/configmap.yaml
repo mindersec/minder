@@ -17,8 +17,7 @@ kind: ConfigMap
 metadata:
   name: mediator-config
   labels:
-    # This includes a newline, so ko sees this as valid yaml
-    # {{ include "common.labels.standard" (dict "customLabels" .Values.commonLabels "context" $ ) | nindent 4 }}
+    {{ include "common.labels.standard" (dict "customLabels" .Values.commonLabels "context" $ ) | nindent 4 }}
 data:
   config.yaml: |
     {{ .Files.Get "config.yaml.example" | nindent 4 }}

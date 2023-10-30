@@ -30,6 +30,7 @@ import (
 
 	"github.com/stacklok/mediator/internal/db"
 	"github.com/stacklok/mediator/internal/engine"
+	"github.com/stacklok/mediator/internal/events"
 	"github.com/stacklok/mediator/internal/util"
 	pb "github.com/stacklok/mediator/pkg/api/protobuf/go/mediator/v1"
 )
@@ -55,7 +56,7 @@ func NewProfileInitMessage(provider string, projectID uuid.UUID) (*message.Messa
 	}
 
 	msg := message.NewMessage(uuid.New().String(), evtStr)
-	msg.Metadata.Set("provider", provider)
+	msg.Metadata.Set(events.ProviderTypeKey, provider)
 	return msg, nil
 }
 
@@ -63,7 +64,8 @@ func NewProfileInitMessage(provider string, projectID uuid.UUID) (*message.Messa
 // It is responsible for iterating over all registered repositories
 // for the group and sending a profile evaluation event for each one.
 func (e *Reconciler) handleProfileInitEvent(msg *message.Message) error {
-	prov := msg.Metadata.Get("provider")
+	ctx := msg.Context()
+	prov := msg.Metadata.Get(events.ProviderTypeKey)
 
 	var evt ProfileInitEvent
 	if err := json.Unmarshal(msg.Payload, &evt); err != nil {
@@ -75,6 +77,7 @@ func (e *Reconciler) handleProfileInitEvent(msg *message.Message) error {
 	if err := validate.Struct(evt); err != nil {
 		// We don't return the event since there's no use
 		// retrying it if it's invalid.
+		zerolog.Ctx(ctx).Error().Err(err).Msg("error validating event")
 		log.Printf("error validating event: %v", err)
 		return nil
 	}
@@ -87,7 +90,7 @@ func (e *Reconciler) handleProfileInitEvent(msg *message.Message) error {
 		if errors.Is(err, sql.ErrNoRows) {
 			// We don't return the event since there's no use
 			// retrying it if the provider doesn't exist.
-			log.Printf("provider %s not found", prov)
+			zerolog.Ctx(ctx).Error().Str("provider", prov).Msg("provider not found")
 			return nil
 		}
 
@@ -104,12 +107,11 @@ func (e *Reconciler) handleProfileInitEvent(msg *message.Message) error {
 		},
 	}
 
-	ctx := msg.Context()
-	log.Printf("handling profile init event for group %d", evt.Project)
+	zerolog.Ctx(ctx).Debug().Str("provider", prov).Msg("handling profile init event")
 	if err := e.publishProfileInitEvents(ctx, ectx); err != nil {
 		// We don't return an error since watermill will retry
 		// the message.
-		log.Printf("publishProfileInitEvents: error publishing profile events: %v", err)
+		zerolog.Ctx(ctx).Error().Str("provider", prov).Msg("error publishing profile events")
 		return nil
 	}
 

@@ -22,7 +22,6 @@ package db
 
 import (
 	"context"
-	"database/sql"
 	"testing"
 	"time"
 
@@ -30,13 +29,6 @@ import (
 
 	"github.com/stacklok/mediator/internal/util/rand"
 )
-
-func stringToNullString(s string) sql.NullString {
-	if s == "" {
-		return sql.NullString{}
-	}
-	return sql.NullString{String: s, Valid: true}
-}
 
 func createRandomUser(t *testing.T, org Project) User {
 	t.Helper()
@@ -46,19 +38,13 @@ func createRandomUser(t *testing.T, org Project) User {
 	arg := CreateUserParams{
 		OrganizationID:  org.ID,
 		IdentitySubject: rand.RandomString(10, seed),
-		Email:           stringToNullString(rand.RandomEmail(seed)),
-		FirstName:       stringToNullString(rand.RandomName(seed)),
-		LastName:        stringToNullString(rand.RandomName(seed)),
 	}
 
 	user, err := testQueries.CreateUser(context.Background(), arg)
 	require.NoError(t, err)
 	require.NotEmpty(t, user)
 
-	require.Equal(t, arg.Email, user.Email)
 	require.Equal(t, arg.OrganizationID, user.OrganizationID)
-	require.Equal(t, arg.FirstName, user.FirstName)
-	require.Equal(t, arg.LastName, user.LastName)
 
 	require.NotZero(t, user.ID)
 	require.NotZero(t, user.CreatedAt)
@@ -87,9 +73,6 @@ func TestGetUser(t *testing.T) {
 
 	require.Equal(t, user1.ID, user2.ID)
 	require.Equal(t, user1.OrganizationID, user2.OrganizationID)
-	require.Equal(t, user1.Email, user2.Email)
-	require.Equal(t, user1.FirstName, user2.FirstName)
-	require.Equal(t, user1.LastName, user2.LastName)
 
 	require.NotZero(t, user2.CreatedAt)
 	require.NotZero(t, user2.UpdatedAt)

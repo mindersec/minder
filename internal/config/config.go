@@ -40,6 +40,7 @@ type Config struct {
 	Salt          CryptoConfig       `mapstructure:"salt"`
 	Auth          AuthConfig         `mapstructure:"auth"`
 	WebhookConfig WebhookConfig      `mapstructure:"webhook-config"`
+	Events        EventConfig        `mapstructure:"events"`
 }
 
 // DefaultConfigForTest returns a configuration with all the struct defaults set,
@@ -67,6 +68,7 @@ func ReadConfigFromViper(v *viper.Viper) (*Config, error) {
 // SetViperDefaults sets the default values for the configuration to be picked
 // up by viper
 func SetViperDefaults(v *viper.Viper) {
+	viper.SetEnvPrefix("mediator")
 	viper.SetEnvKeyReplacer(strings.NewReplacer(".", "_"))
 	setViperStructDefaults(v, "", Config{})
 }

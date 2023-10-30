@@ -369,6 +369,14 @@ type ProviderAccessToken struct {
 	UpdatedAt      time.Time      `json:"updated_at"`
 }
 
+type PullRequest struct {
+	ID           uuid.UUID `json:"id"`
+	RepositoryID uuid.UUID `json:"repository_id"`
+	PrNumber     int64     `json:"pr_number"`
+	CreatedAt    time.Time `json:"created_at"`
+	UpdatedAt    time.Time `json:"updated_at"`
+}
+
 type Repository struct {
 	ID         uuid.UUID     `json:"id"`
 	Provider   string        `json:"provider"`
@@ -423,12 +431,13 @@ type RuleDetailsRemediate struct {
 }
 
 type RuleEvaluation struct {
-	ID           uuid.UUID     `json:"id"`
-	Entity       Entities      `json:"entity"`
-	ProfileID    uuid.UUID     `json:"profile_id"`
-	RuleTypeID   uuid.UUID     `json:"rule_type_id"`
-	RepositoryID uuid.NullUUID `json:"repository_id"`
-	ArtifactID   uuid.NullUUID `json:"artifact_id"`
+	ID            uuid.UUID     `json:"id"`
+	Entity        Entities      `json:"entity"`
+	ProfileID     uuid.UUID     `json:"profile_id"`
+	RuleTypeID    uuid.UUID     `json:"rule_type_id"`
+	RepositoryID  uuid.NullUUID `json:"repository_id"`
+	ArtifactID    uuid.NullUUID `json:"artifact_id"`
+	PullRequestID uuid.NullUUID `json:"pull_request_id"`
 }
 
 type RuleType struct {
@@ -465,14 +474,11 @@ type SigningKey struct {
 }
 
 type User struct {
-	ID              int32          `json:"id"`
-	OrganizationID  uuid.UUID      `json:"organization_id"`
-	Email           sql.NullString `json:"email"`
-	IdentitySubject string         `json:"identity_subject"`
-	FirstName       sql.NullString `json:"first_name"`
-	LastName        sql.NullString `json:"last_name"`
-	CreatedAt       time.Time      `json:"created_at"`
-	UpdatedAt       time.Time      `json:"updated_at"`
+	ID              int32     `json:"id"`
+	OrganizationID  uuid.UUID `json:"organization_id"`
+	IdentitySubject string    `json:"identity_subject"`
+	CreatedAt       time.Time `json:"created_at"`
+	UpdatedAt       time.Time `json:"updated_at"`
 }
 
 type UserProject struct {
