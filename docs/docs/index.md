@@ -28,7 +28,7 @@ tooling and processes.
 
 ## Architecture
 
-Mediator consists of a single golang binary which requires a backing Postgres database.  For more details on the architecture, see the [System Architecture](./architecture) section.
+Mediator consists of a single golang binary which requires a backing Postgres database.  For more details on the architecture, see the [System Architecture](./developer_guide/architecture) section.
 
 ## Status
 
