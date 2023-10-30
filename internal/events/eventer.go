@@ -26,10 +26,12 @@ import (
 	"time"
 
 	"github.com/ThreeDotsLabs/watermill"
+	"github.com/ThreeDotsLabs/watermill/components/metrics"
 	"github.com/ThreeDotsLabs/watermill/message"
 	"github.com/ThreeDotsLabs/watermill/message/router/middleware"
 	"github.com/ThreeDotsLabs/watermill/pubsub/gochannel"
 	"github.com/alexdrl/zerowater"
+	promgo "github.com/prometheus/client_golang/prometheus"
 	"github.com/rs/zerolog"
 
 	"github.com/stacklok/mediator/internal/config"
@@ -41,6 +43,11 @@ const (
 	ProviderTypeKey           = "provider"
 	ProviderSourceKey         = "source"
 	GithubWebhookEventTypeKey = "type"
+)
+
+const (
+	metricsNamespace = "mediator"
+	metricsSubsystem = "eventer"
 )
 
 // Handler is an alias for the watermill handler type, which is both wordy and may be
@@ -100,6 +107,12 @@ func Setup(ctx context.Context, cfg *config.EventConfig) (*Eventer, error) {
 		return nil, err
 	}
 
+	metricsBuilder := metrics.NewPrometheusMetricsBuilder(
+		promgo.DefaultRegisterer,
+		metricsNamespace,
+		metricsSubsystem)
+	metricsBuilder.AddPrometheusRouterMetrics(router)
+
 	// Router level middleware are executed for every message sent to the router
 	router.AddMiddleware(
 		// CorrelationID will copy the correlation id from the incoming message's metadata to the produced messages
@@ -123,10 +136,20 @@ func Setup(ctx context.Context, cfg *config.EventConfig) (*Eventer, error) {
 		return nil, fmt.Errorf("failed instantiating driver: %w", err)
 	}
 
+	pubWithMetrics, err := metricsBuilder.DecoratePublisher(pub)
+	if err != nil {
+		return nil, fmt.Errorf("failed to decorate publisher: %w", err)
+	}
+
+	subWithMetrics, err := metricsBuilder.DecorateSubscriber(sub)
+	if err != nil {
+		return nil, fmt.Errorf("failed to decorate subscriber: %w", err)
+	}
+
 	return &Eventer{
 		router:            router,
-		webhookPublisher:  pub,
-		webhookSubscriber: sub,
+		webhookPublisher:  pubWithMetrics,
+		webhookSubscriber: subWithMetrics,
 	}, nil
 }
 
