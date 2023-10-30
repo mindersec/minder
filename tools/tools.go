@@ -37,12 +37,8 @@ import (
 	_ "github.com/gotesttools/gotestfmt/v2/cmd/gotestfmt"
 	_ "github.com/grpc-ecosystem/grpc-gateway/v2/protoc-gen-grpc-gateway"
 	_ "github.com/grpc-ecosystem/grpc-gateway/v2/protoc-gen-openapiv2"
-<<<<<<< HEAD
-	_ "github.com/kyleconroy/sqlc/cmd/sqlc"
 	_ "github.com/pseudomuto/protoc-gen-doc/cmd/protoc-gen-doc"
-=======
 	_ "github.com/sqlc-dev/sqlc/cmd/sqlc"
->>>>>>> acc19f7f (fix go.mod for tools)
 	_ "golang.org/x/lint/golint"
 	_ "golang.org/x/tools/cmd/goimports"
 	_ "google.golang.org/grpc/cmd/protoc-gen-go-grpc"
