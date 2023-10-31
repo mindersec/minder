@@ -1,6 +1,6 @@
 swagger: '2.0'
 info:
-  title: mediator/v1/mediator.proto
+  title: minder/v1/minder.proto
   version: version not set
 tags:
   - name: HealthService
