@@ -54,10 +54,8 @@ type piClient struct {
 
 // PiAlternative is an alternative package returned from the package intelligence API
 type PiAlternative struct {
-	PackageName string `json:"package_name"`
-	Summary     struct {
-		Score float64 `json:"score"`
-	} `json:"summary"`
+	PackageName string  `json:"package_name"`
+	Score       float64 `json:"score"`
 }
 
 // PiReply is the response from the package intelligence API
