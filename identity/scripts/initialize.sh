@@ -34,9 +34,9 @@ status=0
   /opt/keycloak/bin/kcadm.sh add-roles -r stacklok --rname default-roles-stacklok --rolename delete-account --cclientid account
 fi
 
-# Create client mediator-cli
-if ! /opt/keycloak/bin/kcadm.sh get clients -r stacklok --fields 'clientId' | grep -q "mediator-cli"; then
-  /opt/keycloak/bin/kcadm.sh create clients -r stacklok -s clientId=mediator-cli -s 'redirectUris=["http://localhost/*"]' -s publicClient=true -s enabled=true
+# Create client minder-cli
+if ! /opt/keycloak/bin/kcadm.sh get clients -r stacklok --fields 'clientId' | grep -q "minder-cli"; then
+  /opt/keycloak/bin/kcadm.sh create clients -r stacklok -s clientId=minder-cli -s 'redirectUris=["http://localhost/*"]' -s publicClient=true -s enabled=true
 fi
 
 # Create client mediator-ui
@@ -44,13 +44,13 @@ if ! /opt/keycloak/bin/kcadm.sh get clients -r stacklok --fields 'clientId' | gr
   /opt/keycloak/bin/kcadm.sh create clients -r stacklok -s clientId=mediator-ui -s 'redirectUris=["http://localhost/*"]' -s publicClient=true -s enabled=true
 fi
 
-# Create client mediator-server to receive account deletion events
-if ! /opt/keycloak/bin/kcadm.sh get clients -r stacklok --fields 'clientId' | grep -q "mediator-server"; then
-  /opt/keycloak/bin/kcadm.sh create clients -r stacklok -s clientId=mediator-server -s serviceAccountsEnabled=true -s clientAuthenticatorType=client-secret -s secret="$KC_MEDIATOR_SERVER_SECRET" -s enabled=true
+# Create client minder-server to receive account deletion events
+if ! /opt/keycloak/bin/kcadm.sh get clients -r stacklok --fields 'clientId' | grep -q "minder-server"; then
+  /opt/keycloak/bin/kcadm.sh create clients -r stacklok -s clientId=minder-server -s serviceAccountsEnabled=true -s clientAuthenticatorType=client-secret -s secret="$KC_MEDIATOR_SERVER_SECRET" -s enabled=true
 
-  # Give mediator-server the capability to view events
-  /opt/keycloak/bin/kcadm.sh add-roles -r stacklok --uusername service-account-mediator-server --cclientid realm-management --rolename view-events
+  # Give minder-server the capability to view events
+  /opt/keycloak/bin/kcadm.sh add-roles -r stacklok --uusername service-account-minder-server --cclientid realm-management --rolename view-events
 
-  # Give mediator-server the capability to delete users
-  /opt/keycloak/bin/kcadm.sh add-roles -r stacklok --uusername service-account-mediator-server --cclientid realm-management --rolename manage-users
+  # Give minder-server the capability to delete users
+  /opt/keycloak/bin/kcadm.sh add-roles -r stacklok --uusername service-account-minder-server --cclientid realm-management --rolename manage-users
 fi

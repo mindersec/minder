@@ -18,7 +18,7 @@ https://docs.stacklok.com/minder
       --grpc-insecure            Allow establishing insecure connections
       --grpc-port int            Server port (default 443)
   -h, --help                     help for minder
-      --identity-client string   Identity server client ID (default "mediator-cli")
+      --identity-client string   Identity server client ID (default "minder-cli")
       --identity-realm string    Identity server realm (default "stacklok")
       --identity-url string      Identity server issuer URL (default "https://auth.staging.stacklok.dev")
 ```
