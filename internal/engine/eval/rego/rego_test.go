@@ -25,7 +25,7 @@ import (
 	engerrors "github.com/stacklok/mediator/internal/engine/errors"
 	"github.com/stacklok/mediator/internal/engine/eval/rego"
 	engif "github.com/stacklok/mediator/internal/engine/interfaces"
-	pb "github.com/stacklok/mediator/pkg/api/protobuf/go/minder/v1"
+	minderv1 "github.com/stacklok/mediator/pkg/api/protobuf/go/minder/v1"
 )
 
 // Evaluates a simple query against a simple profile
@@ -37,7 +37,7 @@ func TestEvaluatorDenyByDefaultEvalSimple(t *testing.T) {
 	t.Parallel()
 
 	e, err := rego.NewRegoEvaluator(
-		&pb.RuleType_Definition_Eval_Rego{
+		&minderv1.RuleType_Definition_Eval_Rego{
 			Type: rego.DenyByDefaultEvaluationType.String(),
 			Def: `
 package minder
@@ -74,7 +74,7 @@ func TestEvaluatorDenyByDefaultSkip(t *testing.T) {
 	t.Parallel()
 
 	e, err := rego.NewRegoEvaluator(
-		&pb.RuleType_Definition_Eval_Rego{
+		&minderv1.RuleType_Definition_Eval_Rego{
 			Type: rego.DenyByDefaultEvaluationType.String(),
 			Def: `
 package minder
@@ -108,7 +108,7 @@ func TestEvaluatorDenyByConstraintsEvalSimple(t *testing.T) {
 	t.Parallel()
 
 	e, err := rego.NewRegoEvaluator(
-		&pb.RuleType_Definition_Eval_Rego{
+		&minderv1.RuleType_Definition_Eval_Rego{
 			Type: rego.ConstraintsEvaluationType.String(),
 			Def: `
 package minder
@@ -145,7 +145,7 @@ func TestEvaluatorDenyByConstraintsEvalMultiple(t *testing.T) {
 	t.Parallel()
 
 	e, err := rego.NewRegoEvaluator(
-		&pb.RuleType_Definition_Eval_Rego{
+		&minderv1.RuleType_Definition_Eval_Rego{
 			Type: rego.ConstraintsEvaluationType.String(),
 			Def: `
 package minder
@@ -186,7 +186,7 @@ func TestDenyByDefaultEvaluationWithProfile(t *testing.T) {
 	t.Parallel()
 
 	e, err := rego.NewRegoEvaluator(
-		&pb.RuleType_Definition_Eval_Rego{
+		&minderv1.RuleType_Definition_Eval_Rego{
 			Type: rego.DenyByDefaultEvaluationType.String(),
 			Def: `
 package minder
@@ -225,7 +225,7 @@ func TestConstrainedEvaluationWithProfile(t *testing.T) {
 	t.Parallel()
 
 	e, err := rego.NewRegoEvaluator(
-		&pb.RuleType_Definition_Eval_Rego{
+		&minderv1.RuleType_Definition_Eval_Rego{
 			Type: rego.ConstraintsEvaluationType.String(),
 			Def: `
 package minder
@@ -273,7 +273,7 @@ func TestCantCreateEvaluatorWithInvalidConfig(t *testing.T) {
 	t.Run("empty", func(t *testing.T) {
 		t.Parallel()
 
-		_, err := rego.NewRegoEvaluator(&pb.RuleType_Definition_Eval_Rego{})
+		_, err := rego.NewRegoEvaluator(&minderv1.RuleType_Definition_Eval_Rego{})
 		require.Error(t, err, "should have failed to create evaluator")
 	})
 
@@ -281,7 +281,7 @@ func TestCantCreateEvaluatorWithInvalidConfig(t *testing.T) {
 		t.Parallel()
 
 		_, err := rego.NewRegoEvaluator(
-			&pb.RuleType_Definition_Eval_Rego{
+			&minderv1.RuleType_Definition_Eval_Rego{
 				Type: "invalid",
 			},
 		)
@@ -295,7 +295,7 @@ func TestCantEvaluateWithInvalidProfile(t *testing.T) {
 	t.Parallel()
 
 	e, err := rego.NewRegoEvaluator(
-		&pb.RuleType_Definition_Eval_Rego{
+		&minderv1.RuleType_Definition_Eval_Rego{
 			Type: rego.ConstraintsEvaluationType.String(),
 			Def: `
 package minder
@@ -316,7 +316,7 @@ func TestCantEvaluateWithCompilerError(t *testing.T) {
 	// This profile is using a variable that is restricted
 	// in OPA's strict mode.
 	e, err := rego.NewRegoEvaluator(
-		&pb.RuleType_Definition_Eval_Rego{
+		&minderv1.RuleType_Definition_Eval_Rego{
 			Type: rego.ConstraintsEvaluationType.String(),
 			Def: `
 package minder

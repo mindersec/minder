@@ -22,7 +22,7 @@ import (
 	"github.com/go-playground/validator/v10"
 	"github.com/mitchellh/mapstructure"
 
-	pb "github.com/stacklok/mediator/pkg/api/protobuf/go/minder/v1"
+	minderv1 "github.com/stacklok/mediator/pkg/api/protobuf/go/minder/v1"
 )
 
 // Config is the configuration for the rego evaluator
@@ -44,7 +44,7 @@ func (c *Config) getEvalType() resultEvaluator {
 	return nil
 }
 
-func parseConfig(cfg *pb.RuleType_Definition_Eval_Rego) (*Config, error) {
+func parseConfig(cfg *minderv1.RuleType_Definition_Eval_Rego) (*Config, error) {
 	if cfg == nil {
 		return nil, errors.New("config was missing")
 	}

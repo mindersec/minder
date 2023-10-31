@@ -25,7 +25,7 @@ import (
 	"github.com/open-policy-agent/opa/topdown/print"
 
 	engif "github.com/stacklok/mediator/internal/engine/interfaces"
-	pb "github.com/stacklok/mediator/pkg/api/protobuf/go/minder/v1"
+	minderv1 "github.com/stacklok/mediator/pkg/api/protobuf/go/minder/v1"
 )
 
 const (
@@ -70,7 +70,7 @@ func (*hook) Print(_ print.Context, msg string) error {
 var _ print.Hook = (*hook)(nil)
 
 // NewRegoEvaluator creates a new rego evaluator
-func NewRegoEvaluator(cfg *pb.RuleType_Definition_Eval_Rego) (*Evaluator, error) {
+func NewRegoEvaluator(cfg *minderv1.RuleType_Definition_Eval_Rego) (*Evaluator, error) {
 	c, err := parseConfig(cfg)
 	if err != nil {
 		return nil, fmt.Errorf("could not parse rego config: %w", err)
