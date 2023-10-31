@@ -114,7 +114,7 @@ var serveCmd = &cobra.Command{
 
 		s.ConsumeEvents(aggr)
 
-		exec, err := engine.NewExecutor(store, &cfg.Auth, evt,
+		exec, err := engine.NewExecutor(ctx, store, &cfg.Auth, evt,
 			engine.WithProviderMetrics(providerMetrics),
 			engine.WithAggregatorMiddleware(aggr))
 		if err != nil {

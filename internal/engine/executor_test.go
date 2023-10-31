@@ -277,7 +277,11 @@ default allow = true`,
 	pq := testqueue.NewPassthroughQueue()
 	queued := pq.GetQueue()
 
-	e, err := engine.NewExecutor(mockStore, &config.AuthConfig{
+	testTimeout := 5 * time.Second
+	ctx, cancel := context.WithTimeout(context.Background(), testTimeout)
+	defer cancel()
+
+	e, err := engine.NewExecutor(ctx, mockStore, &config.AuthConfig{
 		TokenKey: tokenKeyPath,
 	}, evt)
 	require.NoError(t, err, "expected no error")
@@ -311,4 +315,6 @@ default allow = true`,
 	require.NotNil(t, <-queued, "expected message")
 
 	require.NoError(t, evt.Close(), "expected no error")
+
+	e.Wait()
 }
