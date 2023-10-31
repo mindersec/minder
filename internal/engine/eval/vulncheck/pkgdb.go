@@ -25,6 +25,7 @@ import (
 	"net/url"
 	"strings"
 
+	"github.com/puzpuzpuz/xsync"
 	"github.com/stacklok/mediator/internal/util"
 	pb "github.com/stacklok/mediator/pkg/api/protobuf/go/minder/v1"
 )
@@ -57,17 +58,17 @@ type RepoQuerier interface {
 }
 
 type repoCache struct {
-	cache map[string]RepoQuerier
+	cache *xsync.MapOf[string, RepoQuerier]
 }
 
 func newRepoCache() *repoCache {
 	return &repoCache{
-		cache: make(map[string]RepoQuerier),
+		cache: xsync.NewMapOf[RepoQuerier](),
 	}
 }
 
 func (rc *repoCache) newRepository(ecoConfig *ecosystemConfig) (RepoQuerier, error) {
-	if repo, exists := rc.cache[ecoConfig.Name]; exists {
+	if repo, exists := rc.cache.Load(ecoConfig.Name); exists {
 		return repo, nil
 	}
 
@@ -83,7 +84,7 @@ func (rc *repoCache) newRepository(ecoConfig *ecosystemConfig) (RepoQuerier, err
 		return nil, fmt.Errorf("unknown ecosystem: %s", ecoConfig.Name)
 	}
 
-	rc.cache[ecoConfig.Name] = repo
+	rc.cache.Store(ecoConfig.Name, repo)
 	return repo, nil
 }
 
