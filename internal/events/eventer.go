@@ -173,6 +173,8 @@ func buildGoChannelDriver(cfg *config.EventConfig) (message.Publisher, message.S
 
 // Close closes the router
 func (e *Eventer) Close() error {
+	e.webhookPublisher.Close()
+	e.webhookSubscriber.Close()
 	return e.router.Close()
 }
 

@@ -52,7 +52,11 @@ func (f *fakeConsumer) Register(r events.Registrar) {
 
 func fakeHandler(id string, out chan eventPair) events.Handler {
 	return func(msg *message.Message) error {
-		out <- eventPair{id, msg.Copy()}
+		ctx := msg.Context()
+		select {
+		case out <- eventPair{id, msg.Copy()}:
+		case <-ctx.Done():
+		}
 		return nil
 	}
 }
@@ -116,14 +120,18 @@ func TestEventer(t *testing.T) {
 		t.Run(tt.name, func(t *testing.T) {
 			t.Parallel()
 
-			eventer, err := events.Setup(context.Background(), driverConfig())
+			out := make(chan eventPair, len(tt.want))
+			defer close(out)
+
+			ctx, cancel := context.WithCancel(context.Background())
+			defer cancel()
+
+			eventer, err := events.Setup(ctx, driverConfig())
 			if err != nil {
 				t.Errorf("Setup() error = %v", err)
 				return
 			}
 
-			out := make(chan eventPair, len(tt.want))
-			defer close(out)
 			for _, c := range tt.consumers {
 				c.out = out
 				if c.makeHandler == nil {
@@ -133,7 +141,7 @@ func TestEventer(t *testing.T) {
 				eventer.ConsumeEvents(&local)
 			}
 
-			go eventer.Run(context.Background())
+			go eventer.Run(ctx)
 			defer eventer.Close()
 			<-eventer.Running()
 
@@ -159,6 +167,10 @@ func TestEventer(t *testing.T) {
 			if err := eventer.Close(); err != nil {
 				t.Errorf("Close() error = %v", err)
 			}
+
+			t.Log("Explicitly cancel context")
+			cancel()
+
 			for topic, msgs := range tt.want {
 				if len(msgs) != len(received[topic]) {
 					t.Errorf("wanted %d messages for topic %q, got %d", len(msgs), topic, len(received[topic]))
