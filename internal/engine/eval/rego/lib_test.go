@@ -25,7 +25,7 @@ import (
 	engerrors "github.com/stacklok/mediator/internal/engine/errors"
 	"github.com/stacklok/mediator/internal/engine/eval/rego"
 	engif "github.com/stacklok/mediator/internal/engine/interfaces"
-	pb "github.com/stacklok/mediator/pkg/api/protobuf/go/minder/v1"
+	minderv1 "github.com/stacklok/mediator/pkg/api/protobuf/go/minder/v1"
 )
 
 func TestFileExistsWithExistingFile(t *testing.T) {
@@ -38,10 +38,10 @@ func TestFileExistsWithExistingFile(t *testing.T) {
 	require.NoError(t, err, "could not create file")
 
 	e, err := rego.NewRegoEvaluator(
-		&pb.RuleType_Definition_Eval_Rego{
+		&minderv1.RuleType_Definition_Eval_Rego{
 			Type: rego.DenyByDefaultEvaluationType.String(),
 			Def: `
-package mediator
+package minder
 
 default allow = false
 
@@ -68,10 +68,10 @@ func TestFileExistsWithNonExistentFile(t *testing.T) {
 	fs := memfs.New()
 
 	e, err := rego.NewRegoEvaluator(
-		&pb.RuleType_Definition_Eval_Rego{
+		&minderv1.RuleType_Definition_Eval_Rego{
 			Type: rego.DenyByDefaultEvaluationType.String(),
 			Def: `
-package mediator
+package minder
 
 default allow = false
 
@@ -104,10 +104,10 @@ func TestFileReadWithContentsMatching(t *testing.T) {
 	require.NoError(t, err, "could not write to file")
 
 	e, err := rego.NewRegoEvaluator(
-		&pb.RuleType_Definition_Eval_Rego{
+		&minderv1.RuleType_Definition_Eval_Rego{
 			Type: rego.DenyByDefaultEvaluationType.String(),
 			Def: `
-package mediator
+package minder
 
 default allow = false
 
@@ -141,10 +141,10 @@ func TestFileReadWithContentsNotMatching(t *testing.T) {
 	require.NoError(t, err, "could not write to file")
 
 	e, err := rego.NewRegoEvaluator(
-		&pb.RuleType_Definition_Eval_Rego{
+		&minderv1.RuleType_Definition_Eval_Rego{
 			Type: rego.DenyByDefaultEvaluationType.String(),
 			Def: `
-package mediator
+package minder
 
 default allow = false
 
@@ -171,10 +171,10 @@ func TestFileLsWithUnexistentFile(t *testing.T) {
 	fs := memfs.New()
 
 	e, err := rego.NewRegoEvaluator(
-		&pb.RuleType_Definition_Eval_Rego{
+		&minderv1.RuleType_Definition_Eval_Rego{
 			Type: rego.DenyByDefaultEvaluationType.String(),
 			Def: `
-package mediator
+package minder
 
 default allow = false
 
@@ -203,10 +203,10 @@ func TestFileLsWithEmptyDirectory(t *testing.T) {
 	require.NoError(t, err, "could not create directory")
 
 	e, err := rego.NewRegoEvaluator(
-		&pb.RuleType_Definition_Eval_Rego{
+		&minderv1.RuleType_Definition_Eval_Rego{
 			Type: rego.DenyByDefaultEvaluationType.String(),
 			Def: `
-package mediator
+package minder
 
 default allow = false
 
@@ -239,10 +239,10 @@ func TestFileLsWithSingleFile(t *testing.T) {
 	require.NoError(t, err, "could not create file")
 
 	e, err := rego.NewRegoEvaluator(
-		&pb.RuleType_Definition_Eval_Rego{
+		&minderv1.RuleType_Definition_Eval_Rego{
 			Type: rego.DenyByDefaultEvaluationType.String(),
 			Def: `
-package mediator
+package minder
 
 default allow = false
 
@@ -276,10 +276,10 @@ func TestFileLsWithSingleFileDirect(t *testing.T) {
 	require.NoError(t, err, "could not create file")
 
 	e, err := rego.NewRegoEvaluator(
-		&pb.RuleType_Definition_Eval_Rego{
+		&minderv1.RuleType_Definition_Eval_Rego{
 			Type: rego.DenyByDefaultEvaluationType.String(),
 			Def: `
-package mediator
+package minder
 
 default allow = false
 
@@ -317,10 +317,10 @@ func TestFileLsWithMultipleFiles(t *testing.T) {
 	require.NoError(t, err, "could not create file")
 
 	e, err := rego.NewRegoEvaluator(
-		&pb.RuleType_Definition_Eval_Rego{
+		&minderv1.RuleType_Definition_Eval_Rego{
 			Type: rego.DenyByDefaultEvaluationType.String(),
 			Def: `
-package mediator
+package minder
 
 default allow = false
 
@@ -360,10 +360,10 @@ func TestFileLsWithSimpleSymlink(t *testing.T) {
 	require.NoError(t, err, "could not create symlink")
 
 	e, err := rego.NewRegoEvaluator(
-		&pb.RuleType_Definition_Eval_Rego{
+		&minderv1.RuleType_Definition_Eval_Rego{
 			Type: rego.DenyByDefaultEvaluationType.String(),
 			Def: `
-package mediator
+package minder
 
 default allow = false
 
@@ -398,10 +398,10 @@ func TestFileLsWithSymlinkToDir(t *testing.T) {
 	require.NoError(t, err, "could not create file")
 
 	e, err := rego.NewRegoEvaluator(
-		&pb.RuleType_Definition_Eval_Rego{
+		&minderv1.RuleType_Definition_Eval_Rego{
 			Type: rego.DenyByDefaultEvaluationType.String(),
 			Def: `
-package mediator
+package minder
 
 default allow = false
 
