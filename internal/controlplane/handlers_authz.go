@@ -34,18 +34,18 @@ import (
 	"github.com/stacklok/mediator/internal/auth"
 	"github.com/stacklok/mediator/internal/db"
 	"github.com/stacklok/mediator/internal/util"
-	mediator "github.com/stacklok/mediator/pkg/api/protobuf/go/minder/v1"
+	minder "github.com/stacklok/mediator/pkg/api/protobuf/go/minder/v1"
 )
 
 type rpcOptionsKey struct{}
 
-func withRpcOptions(ctx context.Context, opts *mediator.RpcOptions) context.Context {
+func withRpcOptions(ctx context.Context, opts *minder.RpcOptions) context.Context {
 	return context.WithValue(ctx, rpcOptionsKey{}, opts)
 }
 
-func getRpcOptions(ctx context.Context) *mediator.RpcOptions {
+func getRpcOptions(ctx context.Context) *minder.RpcOptions {
 	// nil value default is okay here
-	opts, _ := ctx.Value(rpcOptionsKey{}).(*mediator.RpcOptions)
+	opts, _ := ctx.Value(rpcOptionsKey{}).(*minder.RpcOptions)
 	return opts
 }
 
@@ -128,7 +128,7 @@ func AuthorizedOnOrg(ctx context.Context, orgId uuid.UUID) error {
 		return nil
 	}
 	opts := getRpcOptions(ctx)
-	if opts.GetAuthScope() != mediator.ObjectOwner_OBJECT_OWNER_ORGANIZATION {
+	if opts.GetAuthScope() != minder.ObjectOwner_OBJECT_OWNER_ORGANIZATION {
 		return status.Errorf(codes.Internal, "Called IsOrgAuthorized on non-org method, should be %v", opts.GetAuthScope())
 	}
 	if claims.OrganizationId != orgId {
@@ -151,7 +151,7 @@ func AuthorizedOnProject(ctx context.Context, projectID uuid.UUID) error {
 		return nil
 	}
 	opts := getRpcOptions(ctx)
-	if opts.GetAuthScope() != mediator.ObjectOwner_OBJECT_OWNER_PROJECT {
+	if opts.GetAuthScope() != minder.ObjectOwner_OBJECT_OWNER_PROJECT {
 		return status.Errorf(codes.Internal, "Called IsProjectAuthorized on non-group method, should be %v", opts.GetAuthScope())
 	}
 
@@ -179,7 +179,7 @@ func AuthorizedOnUser(ctx context.Context, userId int32) error {
 		return nil
 	}
 	opts := getRpcOptions(ctx)
-	if opts.GetAuthScope() != mediator.ObjectOwner_OBJECT_OWNER_USER {
+	if opts.GetAuthScope() != minder.ObjectOwner_OBJECT_OWNER_USER {
 		zerolog.Ctx(ctx).Error().Msgf("Called IsUserAuthorized on non-user method, should be %v", opts.GetAuthScope())
 	}
 
@@ -232,14 +232,14 @@ func AuthUnaryInterceptor(ctx context.Context, req interface{}, info *grpc.Unary
 	return handler(ctx, req)
 }
 
-func optionsForMethod(info *grpc.UnaryServerInfo) (*mediator.RpcOptions, error) {
+func optionsForMethod(info *grpc.UnaryServerInfo) (*minder.RpcOptions, error) {
 	formattedName := strings.ReplaceAll(info.FullMethod[1:], "/", ".")
 	descriptor, err := protoregistry.GlobalFiles.FindDescriptorByName(protoreflect.FullName(formattedName))
 	if err != nil {
 		return nil, fmt.Errorf("unable to find descriptor for %q: %w", formattedName, err)
 	}
-	extension := proto.GetExtension(descriptor.Options(), mediator.E_RpcOptions)
-	opts, ok := extension.(*mediator.RpcOptions)
+	extension := proto.GetExtension(descriptor.Options(), minder.E_RpcOptions)
+	opts, ok := extension.(*minder.RpcOptions)
 	if !ok {
 		return nil, fmt.Errorf("couldn't decode option for %q, wrong type: %T", formattedName, extension)
 	}
