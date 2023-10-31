@@ -15,6 +15,7 @@
 package engine_test
 
 import (
+	"context"
 	"encoding/base64"
 	"encoding/json"
 	"os"
@@ -235,7 +236,11 @@ default allow = true`,
 	err = os.WriteFile(tokenKeyPath, []byte(fakeTokenKey), 0600)
 	require.NoError(t, err, "expected no error")
 
-	e, err := engine.NewExecutor(mockStore, &config.AuthConfig{
+	testTimeout := 5 * time.Second
+	ctx, cancel := context.WithTimeout(context.Background(), testTimeout)
+	defer cancel()
+
+	e, err := engine.NewExecutor(ctx, mockStore, &config.AuthConfig{
 		TokenKey: tokenKeyPath,
 	})
 	require.NoError(t, err, "expected no error")
@@ -253,4 +258,6 @@ default allow = true`,
 	require.NoError(t, err, "expected no error")
 
 	require.NoError(t, e.HandleEntityEvent(msg), "expected no error")
+
+	e.Wait()
 }

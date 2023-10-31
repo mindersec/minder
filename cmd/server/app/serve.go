@@ -109,7 +109,7 @@ var serveCmd = &cobra.Command{
 			return fmt.Errorf("unable to create server: %w", err)
 		}
 
-		exec, err := engine.NewExecutor(store, &cfg.Auth, engine.WithProviderMetrics(providerMetrics))
+		exec, err := engine.NewExecutor(ctx, store, &cfg.Auth, engine.WithProviderMetrics(providerMetrics))
 		if err != nil {
 			return fmt.Errorf("unable to create executor: %w", err)
 		}

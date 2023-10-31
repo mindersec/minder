@@ -17,6 +17,8 @@ package engine
 import (
 	"context"
 	"fmt"
+	"sync"
+	"time"
 
 	"github.com/ThreeDotsLabs/watermill/message"
 	"github.com/google/uuid"
@@ -39,11 +41,21 @@ const (
 	InternalEntityEventTopic = "internal.entity.event"
 )
 
+const (
+	// DefaultExecutionTimeout is the timeout for execution of a set
+	// of profiles on an entity.
+	DefaultExecutionTimeout = 5 * time.Minute
+)
+
 // Executor is the engine that executes the rules for a given event
 type Executor struct {
-	querier  db.Store
-	crypteng *crypto.Engine
-	provMt   providertelemetry.ProviderMetrics
+	querier    db.Store
+	crypteng   *crypto.Engine
+	provMt     providertelemetry.ProviderMetrics
+	executions *sync.WaitGroup
+	// terminationcontext is used to terminate the executor
+	// when the server is shutting down.
+	terminationcontext context.Context
 }
 
 // ExecutorOption is a function that modifies an executor
@@ -58,6 +70,7 @@ func WithProviderMetrics(mt providertelemetry.ProviderMetrics) ExecutorOption {
 
 // NewExecutor creates a new executor
 func NewExecutor(
+	ctx context.Context,
 	querier db.Store,
 	authCfg *config.AuthConfig,
 	opts ...ExecutorOption,
@@ -68,9 +81,11 @@ func NewExecutor(
 	}
 
 	e := &Executor{
-		querier:  querier,
-		crypteng: crypteng,
-		provMt:   providertelemetry.NewNoopMetrics(),
+		querier:            querier,
+		crypteng:           crypteng,
+		provMt:             providertelemetry.NewNoopMetrics(),
+		executions:         &sync.WaitGroup{},
+		terminationcontext: ctx,
 	}
 
 	for _, opt := range opts {
@@ -85,15 +100,41 @@ func (e *Executor) Register(r events.Registrar) {
 	r.Register(InternalEntityEventTopic, e.HandleEntityEvent)
 }
 
+// Wait waits for all the executions to finish.
+func (e *Executor) Wait() {
+	e.executions.Wait()
+}
+
 // HandleEntityEvent handles events coming from webhooks/signals
 // as well as the init event.
 func (e *Executor) HandleEntityEvent(msg *message.Message) error {
+	// Let's not share memory with the caller
+	msg = msg.Copy()
+
 	inf, err := parseEntityEvent(msg)
 	if err != nil {
 		return fmt.Errorf("error unmarshalling payload: %w", err)
 	}
 
-	ctx := msg.Context()
+	e.executions.Add(1)
+	go func() {
+		defer e.executions.Done()
+		// TODO: Make this timeout configurable
+		ctx, cancel := context.WithTimeout(e.terminationcontext, DefaultExecutionTimeout)
+		defer cancel()
+
+		if err := e.prepAndEvalEntityEvent(ctx, inf); err != nil {
+			zerolog.Ctx(ctx).Info().
+				Str("project", inf.ProjectID.String()).
+				Str("provider", inf.Provider).
+				Str("entity", inf.Type.String()).
+				Err(err).Msg("got error while evaluating entity event")
+		}
+	}()
+
+	return nil
+}
+func (e *Executor) prepAndEvalEntityEvent(ctx context.Context, inf *EntityInfoWrapper) error {
 
 	projectID := inf.ProjectID
 
