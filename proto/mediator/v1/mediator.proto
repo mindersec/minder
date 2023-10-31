@@ -195,6 +195,28 @@ service RepositoryService {
             owner_only: false
         };
     }
+
+    rpc DeleteRepositoryById (minder.v1.DeleteRepositoryByIdRequest) returns (minder.v1.DeleteRepositoryByIdResponse) {
+        option (google.api.http) = {
+            delete: "/api/v1/repository/id/{repository_id}"
+        };
+
+        option (minder.v1.rpc_options) = {
+            auth_scope: OBJECT_OWNER_PROJECT
+            owner_only: true
+        };
+    }
+
+    rpc DeleteRepositoryByName (minder.v1.DeleteRepositoryByNameRequest) returns (minder.v1.DeleteRepositoryByNameResponse) {
+        option (google.api.http) = {
+            delete: "/api/v1/repository/provider/{provider}/name/{name}"
+        };
+
+        option (minder.v1.rpc_options) = {
+            auth_scope: OBJECT_OWNER_PROJECT
+            owner_only: true
+        };
+    }
 }
 
 // Get Branch Protection Settings

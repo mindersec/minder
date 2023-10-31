@@ -333,6 +333,89 @@ func (s *Server) GetRepositoryByName(ctx context.Context,
 	}}, nil
 }
 
+// DeleteRepositoryById deletes a repository by name
+func (s *Server) DeleteRepositoryById(ctx context.Context,
+	in *pb.DeleteRepositoryByIdRequest) (*pb.DeleteRepositoryByIdResponse, error) {
+	parsedRepositoryID, err := uuid.Parse(in.RepositoryId)
+	if err != nil {
+		return nil, util.UserVisibleError(codes.InvalidArgument, "invalid repository ID")
+	}
+
+	// read the repository
+	repo, err := s.store.GetRepositoryByID(ctx, parsedRepositoryID)
+	if errors.Is(err, sql.ErrNoRows) {
+		return nil, status.Errorf(codes.NotFound, "repository not found")
+	} else if err != nil {
+		return nil, status.Errorf(codes.Internal, "cannot read repository: %v", err)
+	}
+
+	// check if user is authorized
+	if err := AuthorizedOnProject(ctx, repo.ProjectID); err != nil {
+		return nil, err
+	}
+
+	// delete the repository
+	if err := s.store.DeleteRepository(ctx, repo.ID); err != nil {
+		return nil, err
+	}
+
+	// return the response with the id of the deleted repository
+	return &pb.DeleteRepositoryByIdResponse{
+		RepositoryId: in.RepositoryId,
+	}, nil
+}
+
+// DeleteRepositoryByName deletes a repository by name
+func (s *Server) DeleteRepositoryByName(ctx context.Context,
+	in *pb.DeleteRepositoryByNameRequest) (*pb.DeleteRepositoryByNameResponse, error) {
+	// split repo name in owner and name
+	fragments := strings.Split(in.Name, "/")
+	if len(fragments) != 2 {
+		return nil, status.Errorf(codes.InvalidArgument, "invalid repository name, needs to have the format: owner/name")
+	}
+
+	projectID, err := getProjectFromRequestOrDefault(ctx, in)
+	if err != nil {
+		return nil, util.UserVisibleError(codes.InvalidArgument, err.Error())
+	}
+
+	// check if user is authorized
+	if err := AuthorizedOnProject(ctx, projectID); err != nil {
+		return nil, err
+	}
+
+	provider, err := s.store.GetProviderByName(ctx, db.GetProviderByNameParams{
+		Name:      in.Provider,
+		ProjectID: projectID,
+	})
+	if err != nil {
+		return nil, providerError(fmt.Errorf("provider error: %w", err))
+	}
+
+	repo, err := s.store.GetRepositoryByRepoName(ctx,
+		db.GetRepositoryByRepoNameParams{Provider: provider.Name, RepoOwner: fragments[0], RepoName: fragments[1]})
+
+	if errors.Is(err, sql.ErrNoRows) {
+		return nil, status.Errorf(codes.NotFound, "repository not found")
+	} else if err != nil {
+		return nil, err
+	}
+	// check if user is authorized
+	if err := AuthorizedOnProject(ctx, repo.ProjectID); err != nil {
+		return nil, err
+	}
+
+	// delete the repository
+	if err := s.store.DeleteRepository(ctx, repo.ID); err != nil {
+		return nil, err
+	}
+
+	// return the response with the name of the deleted repository
+	return &pb.DeleteRepositoryByNameResponse{
+		Name: in.Name,
+	}, nil
+}
+
 // ListRemoteRepositoriesFromProvider returns a list of repositories from a provider
 func (s *Server) ListRemoteRepositoriesFromProvider(
 	ctx context.Context,

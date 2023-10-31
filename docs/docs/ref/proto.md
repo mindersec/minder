@@ -106,6 +106,8 @@ replies with OK
 | ListRepositories | [ListRepositoriesRequest](#minder-v1-ListRepositoriesRequest) | [ListRepositoriesResponse](#minder-v1-ListRepositoriesResponse) |  |
 | GetRepositoryById | [GetRepositoryByIdRequest](#minder-v1-GetRepositoryByIdRequest) | [GetRepositoryByIdResponse](#minder-v1-GetRepositoryByIdResponse) |  |
 | GetRepositoryByName | [GetRepositoryByNameRequest](#minder-v1-GetRepositoryByNameRequest) | [GetRepositoryByNameResponse](#minder-v1-GetRepositoryByNameResponse) |  |
+| DeleteRepositoryById | [DeleteRepositoryByIdRequest](#minder-v1-DeleteRepositoryByIdRequest) | [DeleteRepositoryByIdResponse](#minder-v1-DeleteRepositoryByIdResponse) |  |
+| DeleteRepositoryByName | [DeleteRepositoryByNameRequest](#minder-v1-DeleteRepositoryByNameRequest) | [DeleteRepositoryByNameResponse](#minder-v1-DeleteRepositoryByNameResponse) |  |
 
 
 <a name="minder-v1-UserService"></a>
@@ -323,6 +325,52 @@ User service
 
 #### DeleteProfileResponse
 
+
+
+<a name="minder-v1-DeleteRepositoryByIdRequest"></a>
+
+#### DeleteRepositoryByIdRequest
+
+
+
+| Field | Type | Label | Description |
+| ----- | ---- | ----- | ----------- |
+| repository_id | [string](#string) |  |  |
+
+
+<a name="minder-v1-DeleteRepositoryByIdResponse"></a>
+
+#### DeleteRepositoryByIdResponse
+
+
+
+| Field | Type | Label | Description |
+| ----- | ---- | ----- | ----------- |
+| repository_id | [string](#string) |  |  |
+
+
+<a name="minder-v1-DeleteRepositoryByNameRequest"></a>
+
+#### DeleteRepositoryByNameRequest
+
+
+
+| Field | Type | Label | Description |
+| ----- | ---- | ----- | ----------- |
+| provider | [string](#string) |  |  |
+| project_id | [string](#string) |  |  |
+| name | [string](#string) |  |  |
+
+
+<a name="minder-v1-DeleteRepositoryByNameResponse"></a>
+
+#### DeleteRepositoryByNameResponse
+
+
+
+| Field | Type | Label | Description |
+| ----- | ---- | ----- | ----------- |
+| name | [string](#string) |  |  |
 
 
 <a name="minder-v1-DeleteRuleTypeRequest"></a>

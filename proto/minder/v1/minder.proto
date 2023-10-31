@@ -316,6 +316,28 @@ service RepositoryService {
             owner_only: false
         };
     }
+
+    rpc DeleteRepositoryById (DeleteRepositoryByIdRequest) returns (DeleteRepositoryByIdResponse) {
+        option (google.api.http) = {
+            delete: "/api/v1/repository/id/{repository_id}"
+        };
+
+        option (minder.v1.rpc_options) = {
+            auth_scope: OBJECT_OWNER_PROJECT
+            owner_only: true
+        };
+    }
+
+    rpc DeleteRepositoryByName (DeleteRepositoryByNameRequest) returns (DeleteRepositoryByNameResponse) {
+        option (google.api.http) = {
+            delete: "/api/v1/repository/provider/{provider}/name/{name}"
+        };
+
+        option (minder.v1.rpc_options) = {
+            auth_scope: OBJECT_OWNER_PROJECT
+            owner_only: true
+        };
+    }
 }
 
 // Get Branch Protection Settings
@@ -665,6 +687,14 @@ message GetRepositoryByIdResponse {
     Repository repository = 1;
 }
 
+message DeleteRepositoryByIdRequest {
+    string repository_id = 1;
+}
+
+message DeleteRepositoryByIdResponse {
+    string repository_id = 1;
+}
+
 message GetRepositoryByNameRequest {
     string provider = 1;
     string project_id = 2;
@@ -673,6 +703,16 @@ message GetRepositoryByNameRequest {
 
 message GetRepositoryByNameResponse {
     Repository repository = 1;
+}
+
+message DeleteRepositoryByNameRequest {
+    string provider = 1;
+    string project_id = 2;
+    string name = 3;
+}
+
+message DeleteRepositoryByNameResponse {
+    string name = 1;
 }
 
 message ListRepositoriesRequest {
