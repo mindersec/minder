@@ -25,7 +25,7 @@ import (
 	"github.com/stacklok/mediator/cmd/cli/app"
 	"github.com/stacklok/mediator/internal/entities"
 	"github.com/stacklok/mediator/internal/util"
-	mediatorv1 "github.com/stacklok/mediator/pkg/api/protobuf/go/mediator/v1"
+	minderv1 "github.com/stacklok/mediator/pkg/api/protobuf/go/minder/v1"
 )
 
 var profilestatus_getCmd = &cobra.Command{
@@ -45,7 +45,7 @@ minder control plane for an specific provider/project or profile id, entity type
 		}
 		defer conn.Close()
 
-		client := mediatorv1.NewProfileServiceClient(conn)
+		client := minderv1.NewProfileServiceClient(conn)
 		ctx, cancel := util.GetAppContext()
 		defer cancel()
 
@@ -66,14 +66,14 @@ minder control plane for an specific provider/project or profile id, entity type
 			return fmt.Errorf("provider must be set")
 		}
 
-		req := &mediatorv1.GetProfileStatusByNameRequest{
-			Context: &mediatorv1.Context{
+		req := &minderv1.GetProfileStatusByNameRequest{
+			Context: &minderv1.Context{
 				Provider: provider,
 			},
 			Name: profileName,
-			Entity: &mediatorv1.GetProfileStatusByNameRequest_EntityTypedId{
+			Entity: &minderv1.GetProfileStatusByNameRequest_EntityTypedId{
 				Id:   entityId,
-				Type: mediatorv1.EntityFromString(entityType),
+				Type: minderv1.EntityFromString(entityType),
 			},
 		}
 

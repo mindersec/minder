@@ -1,6 +1,6 @@
 ---
 name: User story
-about: Suggest an idea / feature  for mediator or related projects
+about: Suggest an idea / feature  for Minder
 title: As a __ I want a __ so I can __
 labels: user-story
 assignees: ''

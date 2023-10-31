@@ -28,7 +28,7 @@ import (
 
 	"github.com/stacklok/mediator/internal/db"
 	evalerrors "github.com/stacklok/mediator/internal/engine/errors"
-	pb "github.com/stacklok/mediator/pkg/api/protobuf/go/mediator/v1"
+	pb "github.com/stacklok/mediator/pkg/api/protobuf/go/minder/v1"
 )
 
 // Ingester is the interface for a rule type ingester

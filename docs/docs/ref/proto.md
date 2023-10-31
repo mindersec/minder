@@ -7,35 +7,35 @@ toc_max_heading_level: 4
 
 
 
-<a name="mediator_v1_mediator-proto"></a>
+<a name="minder_v1_minder-proto"></a>
 <p align="right"><a href="#top">Top</a></p>
 
-## mediator/v1/mediator.proto
+## minder/v1/minder.proto
 
 ### Services
 
-<a name="mediator-v1-ArtifactService"></a>
+<a name="minder-v1-ArtifactService"></a>
 
 #### ArtifactService
 
 
 | Method Name | Request Type | Response Type | Description |
 | ----------- | ------------ | ------------- | ------------|
-| ListArtifacts | [ListArtifactsRequest](#mediator-v1-ListArtifactsRequest) | [ListArtifactsResponse](#mediator-v1-ListArtifactsResponse) |  |
-| GetArtifactById | [GetArtifactByIdRequest](#mediator-v1-GetArtifactByIdRequest) | [GetArtifactByIdResponse](#mediator-v1-GetArtifactByIdResponse) |  |
+| ListArtifacts | [ListArtifactsRequest](#minder-v1-ListArtifactsRequest) | [ListArtifactsResponse](#minder-v1-ListArtifactsResponse) |  |
+| GetArtifactById | [GetArtifactByIdRequest](#minder-v1-GetArtifactByIdRequest) | [GetArtifactByIdResponse](#minder-v1-GetArtifactByIdResponse) |  |
 
 
-<a name="mediator-v1-BranchProtectionService"></a>
+<a name="minder-v1-BranchProtectionService"></a>
 
 #### BranchProtectionService
 Get Branch Protection Settings
 
 | Method Name | Request Type | Response Type | Description |
 | ----------- | ------------ | ------------- | ------------|
-| GetBranchProtection | [GetBranchProtectionRequest](#mediator-v1-GetBranchProtectionRequest) | [GetBranchProtectionResponse](#mediator-v1-GetBranchProtectionResponse) |  |
+| GetBranchProtection | [GetBranchProtectionRequest](#minder-v1-GetBranchProtectionRequest) | [GetBranchProtectionResponse](#minder-v1-GetBranchProtectionResponse) |  |
 
 
-<a name="mediator-v1-HealthService"></a>
+<a name="minder-v1-HealthService"></a>
 
 #### HealthService
 Simple Health Check Service
@@ -43,86 +43,86 @@ replies with OK
 
 | Method Name | Request Type | Response Type | Description |
 | ----------- | ------------ | ------------- | ------------|
-| CheckHealth | [CheckHealthRequest](#mediator-v1-CheckHealthRequest) | [CheckHealthResponse](#mediator-v1-CheckHealthResponse) |  |
+| CheckHealth | [CheckHealthRequest](#minder-v1-CheckHealthRequest) | [CheckHealthResponse](#minder-v1-CheckHealthResponse) |  |
 
 
-<a name="mediator-v1-KeyService"></a>
+<a name="minder-v1-KeyService"></a>
 
 #### KeyService
 
 
 | Method Name | Request Type | Response Type | Description |
 | ----------- | ------------ | ------------- | ------------|
-| GetPublicKey | [GetPublicKeyRequest](#mediator-v1-GetPublicKeyRequest) | [GetPublicKeyResponse](#mediator-v1-GetPublicKeyResponse) |  |
-| CreateKeyPair | [CreateKeyPairRequest](#mediator-v1-CreateKeyPairRequest) | [CreateKeyPairResponse](#mediator-v1-CreateKeyPairResponse) |  |
+| GetPublicKey | [GetPublicKeyRequest](#minder-v1-GetPublicKeyRequest) | [GetPublicKeyResponse](#minder-v1-GetPublicKeyResponse) |  |
+| CreateKeyPair | [CreateKeyPairRequest](#minder-v1-CreateKeyPairRequest) | [CreateKeyPairResponse](#minder-v1-CreateKeyPairResponse) |  |
 
 
-<a name="mediator-v1-OAuthService"></a>
+<a name="minder-v1-OAuthService"></a>
 
 #### OAuthService
 
 
 | Method Name | Request Type | Response Type | Description |
 | ----------- | ------------ | ------------- | ------------|
-| GetAuthorizationURL | [GetAuthorizationURLRequest](#mediator-v1-GetAuthorizationURLRequest) | [GetAuthorizationURLResponse](#mediator-v1-GetAuthorizationURLResponse) |  |
-| ExchangeCodeForTokenCLI | [ExchangeCodeForTokenCLIRequest](#mediator-v1-ExchangeCodeForTokenCLIRequest) | [.google.api.HttpBody](#google-api-HttpBody) | buf:lint:ignore RPC_RESPONSE_STANDARD_NAME  protolint:disable:this |
-| ExchangeCodeForTokenWEB | [ExchangeCodeForTokenWEBRequest](#mediator-v1-ExchangeCodeForTokenWEBRequest) | [ExchangeCodeForTokenWEBResponse](#mediator-v1-ExchangeCodeForTokenWEBResponse) |  |
-| StoreProviderToken | [StoreProviderTokenRequest](#mediator-v1-StoreProviderTokenRequest) | [StoreProviderTokenResponse](#mediator-v1-StoreProviderTokenResponse) |  |
-| RevokeOauthTokens | [RevokeOauthTokensRequest](#mediator-v1-RevokeOauthTokensRequest) | [RevokeOauthTokensResponse](#mediator-v1-RevokeOauthTokensResponse) | RevokeOauthTokens is used to revoke all tokens this a nuclear option and should only be used in emergencies |
-| RevokeOauthProjectToken | [RevokeOauthProjectTokenRequest](#mediator-v1-RevokeOauthProjectTokenRequest) | [RevokeOauthProjectTokenResponse](#mediator-v1-RevokeOauthProjectTokenResponse) | revoke token for a project |
-| VerifyProviderTokenFrom | [VerifyProviderTokenFromRequest](#mediator-v1-VerifyProviderTokenFromRequest) | [VerifyProviderTokenFromResponse](#mediator-v1-VerifyProviderTokenFromResponse) | VerifyProviderTokenFrom verifies that a token has been created for a provider since given timestamp |
+| GetAuthorizationURL | [GetAuthorizationURLRequest](#minder-v1-GetAuthorizationURLRequest) | [GetAuthorizationURLResponse](#minder-v1-GetAuthorizationURLResponse) |  |
+| ExchangeCodeForTokenCLI | [ExchangeCodeForTokenCLIRequest](#minder-v1-ExchangeCodeForTokenCLIRequest) | [.google.api.HttpBody](#google-api-HttpBody) | buf:lint:ignore RPC_RESPONSE_STANDARD_NAME  protolint:disable:this |
+| ExchangeCodeForTokenWEB | [ExchangeCodeForTokenWEBRequest](#minder-v1-ExchangeCodeForTokenWEBRequest) | [ExchangeCodeForTokenWEBResponse](#minder-v1-ExchangeCodeForTokenWEBResponse) |  |
+| StoreProviderToken | [StoreProviderTokenRequest](#minder-v1-StoreProviderTokenRequest) | [StoreProviderTokenResponse](#minder-v1-StoreProviderTokenResponse) |  |
+| RevokeOauthTokens | [RevokeOauthTokensRequest](#minder-v1-RevokeOauthTokensRequest) | [RevokeOauthTokensResponse](#minder-v1-RevokeOauthTokensResponse) | RevokeOauthTokens is used to revoke all tokens this a nuclear option and should only be used in emergencies |
+| RevokeOauthProjectToken | [RevokeOauthProjectTokenRequest](#minder-v1-RevokeOauthProjectTokenRequest) | [RevokeOauthProjectTokenResponse](#minder-v1-RevokeOauthProjectTokenResponse) | revoke token for a project |
+| VerifyProviderTokenFrom | [VerifyProviderTokenFromRequest](#minder-v1-VerifyProviderTokenFromRequest) | [VerifyProviderTokenFromResponse](#minder-v1-VerifyProviderTokenFromResponse) | VerifyProviderTokenFrom verifies that a token has been created for a provider since given timestamp |
 
 
-<a name="mediator-v1-ProfileService"></a>
+<a name="minder-v1-ProfileService"></a>
 
 #### ProfileService
 
 
 | Method Name | Request Type | Response Type | Description |
 | ----------- | ------------ | ------------- | ------------|
-| CreateProfile | [CreateProfileRequest](#mediator-v1-CreateProfileRequest) | [CreateProfileResponse](#mediator-v1-CreateProfileResponse) |  |
-| DeleteProfile | [DeleteProfileRequest](#mediator-v1-DeleteProfileRequest) | [DeleteProfileResponse](#mediator-v1-DeleteProfileResponse) |  |
-| ListProfiles | [ListProfilesRequest](#mediator-v1-ListProfilesRequest) | [ListProfilesResponse](#mediator-v1-ListProfilesResponse) |  |
-| GetProfileById | [GetProfileByIdRequest](#mediator-v1-GetProfileByIdRequest) | [GetProfileByIdResponse](#mediator-v1-GetProfileByIdResponse) |  |
-| GetProfileStatusByName | [GetProfileStatusByNameRequest](#mediator-v1-GetProfileStatusByNameRequest) | [GetProfileStatusByNameResponse](#mediator-v1-GetProfileStatusByNameResponse) |  |
-| GetProfileStatusByProject | [GetProfileStatusByProjectRequest](#mediator-v1-GetProfileStatusByProjectRequest) | [GetProfileStatusByProjectResponse](#mediator-v1-GetProfileStatusByProjectResponse) |  |
-| ListRuleTypes | [ListRuleTypesRequest](#mediator-v1-ListRuleTypesRequest) | [ListRuleTypesResponse](#mediator-v1-ListRuleTypesResponse) |  |
-| GetRuleTypeByName | [GetRuleTypeByNameRequest](#mediator-v1-GetRuleTypeByNameRequest) | [GetRuleTypeByNameResponse](#mediator-v1-GetRuleTypeByNameResponse) |  |
-| GetRuleTypeById | [GetRuleTypeByIdRequest](#mediator-v1-GetRuleTypeByIdRequest) | [GetRuleTypeByIdResponse](#mediator-v1-GetRuleTypeByIdResponse) |  |
-| CreateRuleType | [CreateRuleTypeRequest](#mediator-v1-CreateRuleTypeRequest) | [CreateRuleTypeResponse](#mediator-v1-CreateRuleTypeResponse) |  |
-| UpdateRuleType | [UpdateRuleTypeRequest](#mediator-v1-UpdateRuleTypeRequest) | [UpdateRuleTypeResponse](#mediator-v1-UpdateRuleTypeResponse) |  |
-| DeleteRuleType | [DeleteRuleTypeRequest](#mediator-v1-DeleteRuleTypeRequest) | [DeleteRuleTypeResponse](#mediator-v1-DeleteRuleTypeResponse) |  |
+| CreateProfile | [CreateProfileRequest](#minder-v1-CreateProfileRequest) | [CreateProfileResponse](#minder-v1-CreateProfileResponse) |  |
+| DeleteProfile | [DeleteProfileRequest](#minder-v1-DeleteProfileRequest) | [DeleteProfileResponse](#minder-v1-DeleteProfileResponse) |  |
+| ListProfiles | [ListProfilesRequest](#minder-v1-ListProfilesRequest) | [ListProfilesResponse](#minder-v1-ListProfilesResponse) |  |
+| GetProfileById | [GetProfileByIdRequest](#minder-v1-GetProfileByIdRequest) | [GetProfileByIdResponse](#minder-v1-GetProfileByIdResponse) |  |
+| GetProfileStatusByName | [GetProfileStatusByNameRequest](#minder-v1-GetProfileStatusByNameRequest) | [GetProfileStatusByNameResponse](#minder-v1-GetProfileStatusByNameResponse) |  |
+| GetProfileStatusByProject | [GetProfileStatusByProjectRequest](#minder-v1-GetProfileStatusByProjectRequest) | [GetProfileStatusByProjectResponse](#minder-v1-GetProfileStatusByProjectResponse) |  |
+| ListRuleTypes | [ListRuleTypesRequest](#minder-v1-ListRuleTypesRequest) | [ListRuleTypesResponse](#minder-v1-ListRuleTypesResponse) |  |
+| GetRuleTypeByName | [GetRuleTypeByNameRequest](#minder-v1-GetRuleTypeByNameRequest) | [GetRuleTypeByNameResponse](#minder-v1-GetRuleTypeByNameResponse) |  |
+| GetRuleTypeById | [GetRuleTypeByIdRequest](#minder-v1-GetRuleTypeByIdRequest) | [GetRuleTypeByIdResponse](#minder-v1-GetRuleTypeByIdResponse) |  |
+| CreateRuleType | [CreateRuleTypeRequest](#minder-v1-CreateRuleTypeRequest) | [CreateRuleTypeResponse](#minder-v1-CreateRuleTypeResponse) |  |
+| UpdateRuleType | [UpdateRuleTypeRequest](#minder-v1-UpdateRuleTypeRequest) | [UpdateRuleTypeResponse](#minder-v1-UpdateRuleTypeResponse) |  |
+| DeleteRuleType | [DeleteRuleTypeRequest](#minder-v1-DeleteRuleTypeRequest) | [DeleteRuleTypeResponse](#minder-v1-DeleteRuleTypeResponse) |  |
 
 
-<a name="mediator-v1-RepositoryService"></a>
+<a name="minder-v1-RepositoryService"></a>
 
 #### RepositoryService
 
 
 | Method Name | Request Type | Response Type | Description |
 | ----------- | ------------ | ------------- | ------------|
-| RegisterRepository | [RegisterRepositoryRequest](#mediator-v1-RegisterRepositoryRequest) | [RegisterRepositoryResponse](#mediator-v1-RegisterRepositoryResponse) |  |
-| ListRemoteRepositoriesFromProvider | [ListRemoteRepositoriesFromProviderRequest](#mediator-v1-ListRemoteRepositoriesFromProviderRequest) | [ListRemoteRepositoriesFromProviderResponse](#mediator-v1-ListRemoteRepositoriesFromProviderResponse) |  |
-| ListRepositories | [ListRepositoriesRequest](#mediator-v1-ListRepositoriesRequest) | [ListRepositoriesResponse](#mediator-v1-ListRepositoriesResponse) |  |
-| GetRepositoryById | [GetRepositoryByIdRequest](#mediator-v1-GetRepositoryByIdRequest) | [GetRepositoryByIdResponse](#mediator-v1-GetRepositoryByIdResponse) |  |
-| GetRepositoryByName | [GetRepositoryByNameRequest](#mediator-v1-GetRepositoryByNameRequest) | [GetRepositoryByNameResponse](#mediator-v1-GetRepositoryByNameResponse) |  |
+| RegisterRepository | [RegisterRepositoryRequest](#minder-v1-RegisterRepositoryRequest) | [RegisterRepositoryResponse](#minder-v1-RegisterRepositoryResponse) |  |
+| ListRemoteRepositoriesFromProvider | [ListRemoteRepositoriesFromProviderRequest](#minder-v1-ListRemoteRepositoriesFromProviderRequest) | [ListRemoteRepositoriesFromProviderResponse](#minder-v1-ListRemoteRepositoriesFromProviderResponse) |  |
+| ListRepositories | [ListRepositoriesRequest](#minder-v1-ListRepositoriesRequest) | [ListRepositoriesResponse](#minder-v1-ListRepositoriesResponse) |  |
+| GetRepositoryById | [GetRepositoryByIdRequest](#minder-v1-GetRepositoryByIdRequest) | [GetRepositoryByIdResponse](#minder-v1-GetRepositoryByIdResponse) |  |
+| GetRepositoryByName | [GetRepositoryByNameRequest](#minder-v1-GetRepositoryByNameRequest) | [GetRepositoryByNameResponse](#minder-v1-GetRepositoryByNameResponse) |  |
 
 
-<a name="mediator-v1-UserService"></a>
+<a name="minder-v1-UserService"></a>
 
 #### UserService
 manage Users CRUD
 
 | Method Name | Request Type | Response Type | Description |
 | ----------- | ------------ | ------------- | ------------|
-| CreateUser | [CreateUserRequest](#mediator-v1-CreateUserRequest) | [CreateUserResponse](#mediator-v1-CreateUserResponse) |  |
-| DeleteUser | [DeleteUserRequest](#mediator-v1-DeleteUserRequest) | [DeleteUserResponse](#mediator-v1-DeleteUserResponse) |  |
-| GetUser | [GetUserRequest](#mediator-v1-GetUserRequest) | [GetUserResponse](#mediator-v1-GetUserResponse) |  |
+| CreateUser | [CreateUserRequest](#minder-v1-CreateUserRequest) | [CreateUserResponse](#minder-v1-CreateUserResponse) |  |
+| DeleteUser | [DeleteUserRequest](#minder-v1-DeleteUserRequest) | [DeleteUserResponse](#minder-v1-DeleteUserResponse) |  |
+| GetUser | [GetUserRequest](#minder-v1-GetUserRequest) | [GetUserResponse](#minder-v1-GetUserResponse) |  |
 
 
 ### Messages
 
-<a name="mediator-v1-Artifact"></a>
+<a name="minder-v1-Artifact"></a>
 
 #### Artifact
 
@@ -136,17 +136,17 @@ manage Users CRUD
 | type | [string](#string) |  |  |
 | visibility | [string](#string) |  |  |
 | repository | [string](#string) |  |  |
-| versions | [ArtifactVersion](#mediator-v1-ArtifactVersion) | repeated |  |
+| versions | [ArtifactVersion](#minder-v1-ArtifactVersion) | repeated |  |
 | created_at | [google.protobuf.Timestamp](#google-protobuf-Timestamp) |  |  |
 
 
-<a name="mediator-v1-ArtifactType"></a>
+<a name="minder-v1-ArtifactType"></a>
 
 #### ArtifactType
 ArtifactType defines the artifact data evaluation.
 
 
-<a name="mediator-v1-ArtifactVersion"></a>
+<a name="minder-v1-ArtifactVersion"></a>
 
 #### ArtifactVersion
 
@@ -157,12 +157,12 @@ ArtifactType defines the artifact data evaluation.
 | version_id | [int64](#int64) |  |  |
 | tags | [string](#string) | repeated |  |
 | sha | [string](#string) |  |  |
-| signature_verification | [SignatureVerification](#mediator-v1-SignatureVerification) |  |  |
-| github_workflow | [GithubWorkflow](#mediator-v1-GithubWorkflow) | optional |  |
+| signature_verification | [SignatureVerification](#minder-v1-SignatureVerification) |  |  |
+| github_workflow | [GithubWorkflow](#minder-v1-GithubWorkflow) | optional |  |
 | created_at | [google.protobuf.Timestamp](#google-protobuf-Timestamp) |  |  |
 
 
-<a name="mediator-v1-BranchProtection"></a>
+<a name="minder-v1-BranchProtection"></a>
 
 #### BranchProtection
 
@@ -174,7 +174,7 @@ ArtifactType defines the artifact data evaluation.
 | is_protected | [bool](#bool) |  | Add other relevant fields |
 
 
-<a name="mediator-v1-BuiltinType"></a>
+<a name="minder-v1-BuiltinType"></a>
 
 #### BuiltinType
 BuiltinType defines the builtin data evaluation.
@@ -185,13 +185,13 @@ BuiltinType defines the builtin data evaluation.
 | method | [string](#string) |  |  |
 
 
-<a name="mediator-v1-CheckHealthRequest"></a>
+<a name="minder-v1-CheckHealthRequest"></a>
 
 #### CheckHealthRequest
 
 
 
-<a name="mediator-v1-CheckHealthResponse"></a>
+<a name="minder-v1-CheckHealthResponse"></a>
 
 #### CheckHealthResponse
 
@@ -202,7 +202,7 @@ BuiltinType defines the builtin data evaluation.
 | status | [string](#string) |  |  |
 
 
-<a name="mediator-v1-Context"></a>
+<a name="minder-v1-Context"></a>
 
 #### Context
 Context defines the context in which a rule is evaluated.
@@ -216,7 +216,7 @@ this normally refers to a combination of the provider, organization and project.
 | project | [string](#string) | optional |  |
 
 
-<a name="mediator-v1-CreateKeyPairRequest"></a>
+<a name="minder-v1-CreateKeyPairRequest"></a>
 
 #### CreateKeyPairRequest
 
@@ -228,7 +228,7 @@ this normally refers to a combination of the provider, organization and project.
 | project_id | [string](#string) |  |  |
 
 
-<a name="mediator-v1-CreateKeyPairResponse"></a>
+<a name="minder-v1-CreateKeyPairResponse"></a>
 
 #### CreateKeyPairResponse
 
@@ -240,7 +240,7 @@ this normally refers to a combination of the provider, organization and project.
 | public_key | [string](#string) |  |  |
 
 
-<a name="mediator-v1-CreateProfileRequest"></a>
+<a name="minder-v1-CreateProfileRequest"></a>
 
 #### CreateProfileRequest
 Profile service
@@ -248,10 +248,10 @@ Profile service
 
 | Field | Type | Label | Description |
 | ----- | ---- | ----- | ----------- |
-| profile | [Profile](#mediator-v1-Profile) |  |  |
+| profile | [Profile](#minder-v1-Profile) |  |  |
 
 
-<a name="mediator-v1-CreateProfileResponse"></a>
+<a name="minder-v1-CreateProfileResponse"></a>
 
 #### CreateProfileResponse
 
@@ -259,10 +259,10 @@ Profile service
 
 | Field | Type | Label | Description |
 | ----- | ---- | ----- | ----------- |
-| profile | [Profile](#mediator-v1-Profile) |  |  |
+| profile | [Profile](#minder-v1-Profile) |  |  |
 
 
-<a name="mediator-v1-CreateRuleTypeRequest"></a>
+<a name="minder-v1-CreateRuleTypeRequest"></a>
 
 #### CreateRuleTypeRequest
 CreateRuleTypeRequest is the request to create a rule type.
@@ -270,10 +270,10 @@ CreateRuleTypeRequest is the request to create a rule type.
 
 | Field | Type | Label | Description |
 | ----- | ---- | ----- | ----------- |
-| rule_type | [RuleType](#mediator-v1-RuleType) |  | rule_type is the rule type to be created. |
+| rule_type | [RuleType](#minder-v1-RuleType) |  | rule_type is the rule type to be created. |
 
 
-<a name="mediator-v1-CreateRuleTypeResponse"></a>
+<a name="minder-v1-CreateRuleTypeResponse"></a>
 
 #### CreateRuleTypeResponse
 CreateRuleTypeResponse is the response to create a rule type.
@@ -281,16 +281,16 @@ CreateRuleTypeResponse is the response to create a rule type.
 
 | Field | Type | Label | Description |
 | ----- | ---- | ----- | ----------- |
-| rule_type | [RuleType](#mediator-v1-RuleType) |  | rule_type is the rule type that was created. |
+| rule_type | [RuleType](#minder-v1-RuleType) |  | rule_type is the rule type that was created. |
 
 
-<a name="mediator-v1-CreateUserRequest"></a>
+<a name="minder-v1-CreateUserRequest"></a>
 
 #### CreateUserRequest
 User service
 
 
-<a name="mediator-v1-CreateUserResponse"></a>
+<a name="minder-v1-CreateUserResponse"></a>
 
 #### CreateUserResponse
 
@@ -307,7 +307,7 @@ User service
 | created_at | [google.protobuf.Timestamp](#google-protobuf-Timestamp) |  |  |
 
 
-<a name="mediator-v1-DeleteProfileRequest"></a>
+<a name="minder-v1-DeleteProfileRequest"></a>
 
 #### DeleteProfileRequest
 
@@ -315,17 +315,17 @@ User service
 
 | Field | Type | Label | Description |
 | ----- | ---- | ----- | ----------- |
-| context | [Context](#mediator-v1-Context) |  | context is the context in which the rule type is evaluated. |
+| context | [Context](#minder-v1-Context) |  | context is the context in which the rule type is evaluated. |
 | id | [string](#string) |  | id is the id of the profile to delete |
 
 
-<a name="mediator-v1-DeleteProfileResponse"></a>
+<a name="minder-v1-DeleteProfileResponse"></a>
 
 #### DeleteProfileResponse
 
 
 
-<a name="mediator-v1-DeleteRuleTypeRequest"></a>
+<a name="minder-v1-DeleteRuleTypeRequest"></a>
 
 #### DeleteRuleTypeRequest
 DeleteRuleTypeRequest is the request to delete a rule type.
@@ -333,29 +333,29 @@ DeleteRuleTypeRequest is the request to delete a rule type.
 
 | Field | Type | Label | Description |
 | ----- | ---- | ----- | ----------- |
-| context | [Context](#mediator-v1-Context) |  | context is the context in which the rule type is evaluated. |
+| context | [Context](#minder-v1-Context) |  | context is the context in which the rule type is evaluated. |
 | id | [string](#string) |  | id is the id of the rule type to be deleted. |
 
 
-<a name="mediator-v1-DeleteRuleTypeResponse"></a>
+<a name="minder-v1-DeleteRuleTypeResponse"></a>
 
 #### DeleteRuleTypeResponse
 DeleteRuleTypeResponse is the response to delete a rule type.
 
 
-<a name="mediator-v1-DeleteUserRequest"></a>
+<a name="minder-v1-DeleteUserRequest"></a>
 
 #### DeleteUserRequest
 
 
 
-<a name="mediator-v1-DeleteUserResponse"></a>
+<a name="minder-v1-DeleteUserResponse"></a>
 
 #### DeleteUserResponse
 
 
 
-<a name="mediator-v1-Dependency"></a>
+<a name="minder-v1-Dependency"></a>
 
 #### Dependency
 
@@ -363,12 +363,12 @@ DeleteRuleTypeResponse is the response to delete a rule type.
 
 | Field | Type | Label | Description |
 | ----- | ---- | ----- | ----------- |
-| ecosystem | [DepEcosystem](#mediator-v1-DepEcosystem) |  |  |
+| ecosystem | [DepEcosystem](#minder-v1-DepEcosystem) |  |  |
 | name | [string](#string) |  |  |
 | version | [string](#string) |  |  |
 
 
-<a name="mediator-v1-DiffType"></a>
+<a name="minder-v1-DiffType"></a>
 
 #### DiffType
 DiffType defines the diff data ingester.
@@ -376,10 +376,10 @@ DiffType defines the diff data ingester.
 
 | Field | Type | Label | Description |
 | ----- | ---- | ----- | ----------- |
-| ecosystems | [DiffType.Ecosystem](#mediator-v1-DiffType-Ecosystem) | repeated |  |
+| ecosystems | [DiffType.Ecosystem](#minder-v1-DiffType-Ecosystem) | repeated |  |
 
 
-<a name="mediator-v1-DiffType-Ecosystem"></a>
+<a name="minder-v1-DiffType-Ecosystem"></a>
 
 #### DiffType.Ecosystem
 
@@ -391,7 +391,7 @@ DiffType defines the diff data ingester.
 | depfile | [string](#string) |  | depfile is the file that contains the dependencies for this ecosystem |
 
 
-<a name="mediator-v1-ExchangeCodeForTokenCLIRequest"></a>
+<a name="minder-v1-ExchangeCodeForTokenCLIRequest"></a>
 
 #### ExchangeCodeForTokenCLIRequest
 
@@ -406,7 +406,7 @@ DiffType defines the diff data ingester.
 | redirect_uri | [string](#string) |  |  |
 
 
-<a name="mediator-v1-ExchangeCodeForTokenWEBRequest"></a>
+<a name="minder-v1-ExchangeCodeForTokenWEBRequest"></a>
 
 #### ExchangeCodeForTokenWEBRequest
 
@@ -420,7 +420,7 @@ DiffType defines the diff data ingester.
 | redirect_uri | [string](#string) |  |  |
 
 
-<a name="mediator-v1-ExchangeCodeForTokenWEBResponse"></a>
+<a name="minder-v1-ExchangeCodeForTokenWEBResponse"></a>
 
 #### ExchangeCodeForTokenWEBResponse
 
@@ -434,7 +434,7 @@ DiffType defines the diff data ingester.
 | status | [string](#string) |  |  |
 
 
-<a name="mediator-v1-GetArtifactByIdRequest"></a>
+<a name="minder-v1-GetArtifactByIdRequest"></a>
 
 #### GetArtifactByIdRequest
 
@@ -447,7 +447,7 @@ DiffType defines the diff data ingester.
 | tag | [string](#string) |  |  |
 
 
-<a name="mediator-v1-GetArtifactByIdResponse"></a>
+<a name="minder-v1-GetArtifactByIdResponse"></a>
 
 #### GetArtifactByIdResponse
 
@@ -455,11 +455,11 @@ DiffType defines the diff data ingester.
 
 | Field | Type | Label | Description |
 | ----- | ---- | ----- | ----------- |
-| artifact | [Artifact](#mediator-v1-Artifact) |  |  |
-| versions | [ArtifactVersion](#mediator-v1-ArtifactVersion) | repeated |  |
+| artifact | [Artifact](#minder-v1-Artifact) |  |  |
+| versions | [ArtifactVersion](#minder-v1-ArtifactVersion) | repeated |  |
 
 
-<a name="mediator-v1-GetAuthorizationURLRequest"></a>
+<a name="minder-v1-GetAuthorizationURLRequest"></a>
 
 #### GetAuthorizationURLRequest
 
@@ -474,7 +474,7 @@ DiffType defines the diff data ingester.
 | owner | [string](#string) | optional |  |
 
 
-<a name="mediator-v1-GetAuthorizationURLResponse"></a>
+<a name="minder-v1-GetAuthorizationURLResponse"></a>
 
 #### GetAuthorizationURLResponse
 
@@ -485,13 +485,13 @@ DiffType defines the diff data ingester.
 | url | [string](#string) |  |  |
 
 
-<a name="mediator-v1-GetBranchProtectionRequest"></a>
+<a name="minder-v1-GetBranchProtectionRequest"></a>
 
 #### GetBranchProtectionRequest
 
 
 
-<a name="mediator-v1-GetBranchProtectionResponse"></a>
+<a name="minder-v1-GetBranchProtectionResponse"></a>
 
 #### GetBranchProtectionResponse
 
@@ -499,10 +499,10 @@ DiffType defines the diff data ingester.
 
 | Field | Type | Label | Description |
 | ----- | ---- | ----- | ----------- |
-| branch_protections | [BranchProtection](#mediator-v1-BranchProtection) | repeated |  |
+| branch_protections | [BranchProtection](#minder-v1-BranchProtection) | repeated |  |
 
 
-<a name="mediator-v1-GetProfileByIdRequest"></a>
+<a name="minder-v1-GetProfileByIdRequest"></a>
 
 #### GetProfileByIdRequest
 get profile by id
@@ -510,11 +510,11 @@ get profile by id
 
 | Field | Type | Label | Description |
 | ----- | ---- | ----- | ----------- |
-| context | [Context](#mediator-v1-Context) |  | context is the context which contains the profiles |
+| context | [Context](#minder-v1-Context) |  | context is the context which contains the profiles |
 | id | [string](#string) |  | id is the id of the profile to get |
 
 
-<a name="mediator-v1-GetProfileByIdResponse"></a>
+<a name="minder-v1-GetProfileByIdResponse"></a>
 
 #### GetProfileByIdResponse
 
@@ -522,10 +522,10 @@ get profile by id
 
 | Field | Type | Label | Description |
 | ----- | ---- | ----- | ----------- |
-| profile | [Profile](#mediator-v1-Profile) |  |  |
+| profile | [Profile](#minder-v1-Profile) |  |  |
 
 
-<a name="mediator-v1-GetProfileStatusByNameRequest"></a>
+<a name="minder-v1-GetProfileStatusByNameRequest"></a>
 
 #### GetProfileStatusByNameRequest
 
@@ -533,14 +533,14 @@ get profile by id
 
 | Field | Type | Label | Description |
 | ----- | ---- | ----- | ----------- |
-| context | [Context](#mediator-v1-Context) |  | context is the context in which the rule type is evaluated. |
+| context | [Context](#minder-v1-Context) |  | context is the context in which the rule type is evaluated. |
 | name | [string](#string) |  | name is the name of the profile to get |
-| entity | [GetProfileStatusByNameRequest.EntityTypedId](#mediator-v1-GetProfileStatusByNameRequest-EntityTypedId) |  |  |
+| entity | [GetProfileStatusByNameRequest.EntityTypedId](#minder-v1-GetProfileStatusByNameRequest-EntityTypedId) |  |  |
 | all | [bool](#bool) |  |  |
 | rule | [string](#string) |  |  |
 
 
-<a name="mediator-v1-GetProfileStatusByNameRequest-EntityTypedId"></a>
+<a name="minder-v1-GetProfileStatusByNameRequest-EntityTypedId"></a>
 
 #### GetProfileStatusByNameRequest.EntityTypedId
 EntiryTypeId is a message that carries an ID together with a type to uniquely identify an entity
@@ -550,11 +550,11 @@ if the struct is reused in other messages, it should be moved to a top-level def
 
 | Field | Type | Label | Description |
 | ----- | ---- | ----- | ----------- |
-| type | [Entity](#mediator-v1-Entity) |  | entity is the entity to get status for. Incompatible with `all` |
+| type | [Entity](#minder-v1-Entity) |  | entity is the entity to get status for. Incompatible with `all` |
 | id | [string](#string) |  | id is the ID of the entity to get status for. Incompatible with `all` |
 
 
-<a name="mediator-v1-GetProfileStatusByNameResponse"></a>
+<a name="minder-v1-GetProfileStatusByNameResponse"></a>
 
 #### GetProfileStatusByNameResponse
 
@@ -562,11 +562,11 @@ if the struct is reused in other messages, it should be moved to a top-level def
 
 | Field | Type | Label | Description |
 | ----- | ---- | ----- | ----------- |
-| profile_status | [ProfileStatus](#mediator-v1-ProfileStatus) |  | profile_status is the status of the profile |
-| rule_evaluation_status | [RuleEvaluationStatus](#mediator-v1-RuleEvaluationStatus) | repeated | rule_evaluation_status is the status of the rules |
+| profile_status | [ProfileStatus](#minder-v1-ProfileStatus) |  | profile_status is the status of the profile |
+| rule_evaluation_status | [RuleEvaluationStatus](#minder-v1-RuleEvaluationStatus) | repeated | rule_evaluation_status is the status of the rules |
 
 
-<a name="mediator-v1-GetProfileStatusByProjectRequest"></a>
+<a name="minder-v1-GetProfileStatusByProjectRequest"></a>
 
 #### GetProfileStatusByProjectRequest
 
@@ -574,10 +574,10 @@ if the struct is reused in other messages, it should be moved to a top-level def
 
 | Field | Type | Label | Description |
 | ----- | ---- | ----- | ----------- |
-| context | [Context](#mediator-v1-Context) |  | context is the context in which the rule type is evaluated. |
+| context | [Context](#minder-v1-Context) |  | context is the context in which the rule type is evaluated. |
 
 
-<a name="mediator-v1-GetProfileStatusByProjectResponse"></a>
+<a name="minder-v1-GetProfileStatusByProjectResponse"></a>
 
 #### GetProfileStatusByProjectResponse
 
@@ -585,10 +585,10 @@ if the struct is reused in other messages, it should be moved to a top-level def
 
 | Field | Type | Label | Description |
 | ----- | ---- | ----- | ----------- |
-| profile_status | [ProfileStatus](#mediator-v1-ProfileStatus) | repeated | profile_status is the status of the profile |
+| profile_status | [ProfileStatus](#minder-v1-ProfileStatus) | repeated | profile_status is the status of the profile |
 
 
-<a name="mediator-v1-GetPublicKeyRequest"></a>
+<a name="minder-v1-GetPublicKeyRequest"></a>
 
 #### GetPublicKeyRequest
 
@@ -599,7 +599,7 @@ if the struct is reused in other messages, it should be moved to a top-level def
 | key_identifier | [string](#string) |  |  |
 
 
-<a name="mediator-v1-GetPublicKeyResponse"></a>
+<a name="minder-v1-GetPublicKeyResponse"></a>
 
 #### GetPublicKeyResponse
 
@@ -610,7 +610,7 @@ if the struct is reused in other messages, it should be moved to a top-level def
 | public_key | [string](#string) |  |  |
 
 
-<a name="mediator-v1-GetRepositoryByIdRequest"></a>
+<a name="minder-v1-GetRepositoryByIdRequest"></a>
 
 #### GetRepositoryByIdRequest
 
@@ -621,7 +621,7 @@ if the struct is reused in other messages, it should be moved to a top-level def
 | repository_id | [string](#string) |  |  |
 
 
-<a name="mediator-v1-GetRepositoryByIdResponse"></a>
+<a name="minder-v1-GetRepositoryByIdResponse"></a>
 
 #### GetRepositoryByIdResponse
 
@@ -629,10 +629,10 @@ if the struct is reused in other messages, it should be moved to a top-level def
 
 | Field | Type | Label | Description |
 | ----- | ---- | ----- | ----------- |
-| repository | [Repository](#mediator-v1-Repository) |  |  |
+| repository | [Repository](#minder-v1-Repository) |  |  |
 
 
-<a name="mediator-v1-GetRepositoryByNameRequest"></a>
+<a name="minder-v1-GetRepositoryByNameRequest"></a>
 
 #### GetRepositoryByNameRequest
 
@@ -645,7 +645,7 @@ if the struct is reused in other messages, it should be moved to a top-level def
 | name | [string](#string) |  |  |
 
 
-<a name="mediator-v1-GetRepositoryByNameResponse"></a>
+<a name="minder-v1-GetRepositoryByNameResponse"></a>
 
 #### GetRepositoryByNameResponse
 
@@ -653,10 +653,10 @@ if the struct is reused in other messages, it should be moved to a top-level def
 
 | Field | Type | Label | Description |
 | ----- | ---- | ----- | ----------- |
-| repository | [Repository](#mediator-v1-Repository) |  |  |
+| repository | [Repository](#minder-v1-Repository) |  |  |
 
 
-<a name="mediator-v1-GetRuleTypeByIdRequest"></a>
+<a name="minder-v1-GetRuleTypeByIdRequest"></a>
 
 #### GetRuleTypeByIdRequest
 GetRuleTypeByIdRequest is the request to get a rule type by id.
@@ -664,11 +664,11 @@ GetRuleTypeByIdRequest is the request to get a rule type by id.
 
 | Field | Type | Label | Description |
 | ----- | ---- | ----- | ----------- |
-| context | [Context](#mediator-v1-Context) |  | context is the context in which the rule type is evaluated. |
+| context | [Context](#minder-v1-Context) |  | context is the context in which the rule type is evaluated. |
 | id | [string](#string) |  | id is the id of the rule type. |
 
 
-<a name="mediator-v1-GetRuleTypeByIdResponse"></a>
+<a name="minder-v1-GetRuleTypeByIdResponse"></a>
 
 #### GetRuleTypeByIdResponse
 GetRuleTypeByIdResponse is the response to get a rule type by id.
@@ -676,10 +676,10 @@ GetRuleTypeByIdResponse is the response to get a rule type by id.
 
 | Field | Type | Label | Description |
 | ----- | ---- | ----- | ----------- |
-| rule_type | [RuleType](#mediator-v1-RuleType) |  | rule_type is the rule type. |
+| rule_type | [RuleType](#minder-v1-RuleType) |  | rule_type is the rule type. |
 
 
-<a name="mediator-v1-GetRuleTypeByNameRequest"></a>
+<a name="minder-v1-GetRuleTypeByNameRequest"></a>
 
 #### GetRuleTypeByNameRequest
 GetRuleTypeByNameRequest is the request to get a rule type by name.
@@ -687,11 +687,11 @@ GetRuleTypeByNameRequest is the request to get a rule type by name.
 
 | Field | Type | Label | Description |
 | ----- | ---- | ----- | ----------- |
-| context | [Context](#mediator-v1-Context) |  | context is the context in which the rule type is evaluated. |
+| context | [Context](#minder-v1-Context) |  | context is the context in which the rule type is evaluated. |
 | name | [string](#string) |  | name is the name of the rule type. |
 
 
-<a name="mediator-v1-GetRuleTypeByNameResponse"></a>
+<a name="minder-v1-GetRuleTypeByNameResponse"></a>
 
 #### GetRuleTypeByNameResponse
 GetRuleTypeByNameResponse is the response to get a rule type by name.
@@ -699,10 +699,10 @@ GetRuleTypeByNameResponse is the response to get a rule type by name.
 
 | Field | Type | Label | Description |
 | ----- | ---- | ----- | ----------- |
-| rule_type | [RuleType](#mediator-v1-RuleType) |  | rule_type is the rule type. |
+| rule_type | [RuleType](#minder-v1-RuleType) |  | rule_type is the rule type. |
 
 
-<a name="mediator-v1-GetSecretByIdRequest"></a>
+<a name="minder-v1-GetSecretByIdRequest"></a>
 
 #### GetSecretByIdRequest
 
@@ -713,7 +713,7 @@ GetRuleTypeByNameResponse is the response to get a rule type by name.
 | id | [string](#string) |  |  |
 
 
-<a name="mediator-v1-GetSecretByIdResponse"></a>
+<a name="minder-v1-GetSecretByIdResponse"></a>
 
 #### GetSecretByIdResponse
 
@@ -726,13 +726,13 @@ GetRuleTypeByNameResponse is the response to get a rule type by name.
 | description | [string](#string) |  | Add other relevant fields |
 
 
-<a name="mediator-v1-GetSecretsRequest"></a>
+<a name="minder-v1-GetSecretsRequest"></a>
 
 #### GetSecretsRequest
 
 
 
-<a name="mediator-v1-GetSecretsResponse"></a>
+<a name="minder-v1-GetSecretsResponse"></a>
 
 #### GetSecretsResponse
 
@@ -740,17 +740,17 @@ GetRuleTypeByNameResponse is the response to get a rule type by name.
 
 | Field | Type | Label | Description |
 | ----- | ---- | ----- | ----------- |
-| secrets | [GetSecretByIdResponse](#mediator-v1-GetSecretByIdResponse) | repeated |  |
+| secrets | [GetSecretByIdResponse](#minder-v1-GetSecretByIdResponse) | repeated |  |
 
 
-<a name="mediator-v1-GetUserRequest"></a>
+<a name="minder-v1-GetUserRequest"></a>
 
 #### GetUserRequest
 list users
 get user
 
 
-<a name="mediator-v1-GetUserResponse"></a>
+<a name="minder-v1-GetUserResponse"></a>
 
 #### GetUserResponse
 
@@ -758,17 +758,17 @@ get user
 
 | Field | Type | Label | Description |
 | ----- | ---- | ----- | ----------- |
-| user | [UserRecord](#mediator-v1-UserRecord) | optional |  |
-| projects | [Project](#mediator-v1-Project) | repeated |  |
+| user | [UserRecord](#minder-v1-UserRecord) | optional |  |
+| projects | [Project](#minder-v1-Project) | repeated |  |
 
 
-<a name="mediator-v1-GetVulnerabilitiesRequest"></a>
+<a name="minder-v1-GetVulnerabilitiesRequest"></a>
 
 #### GetVulnerabilitiesRequest
 
 
 
-<a name="mediator-v1-GetVulnerabilitiesResponse"></a>
+<a name="minder-v1-GetVulnerabilitiesResponse"></a>
 
 #### GetVulnerabilitiesResponse
 
@@ -776,10 +776,10 @@ get user
 
 | Field | Type | Label | Description |
 | ----- | ---- | ----- | ----------- |
-| vulns | [GetVulnerabilityByIdResponse](#mediator-v1-GetVulnerabilityByIdResponse) | repeated |  |
+| vulns | [GetVulnerabilityByIdResponse](#minder-v1-GetVulnerabilityByIdResponse) | repeated |  |
 
 
-<a name="mediator-v1-GetVulnerabilityByIdRequest"></a>
+<a name="minder-v1-GetVulnerabilityByIdRequest"></a>
 
 #### GetVulnerabilityByIdRequest
 
@@ -790,7 +790,7 @@ get user
 | id | [string](#string) |  |  |
 
 
-<a name="mediator-v1-GetVulnerabilityByIdResponse"></a>
+<a name="minder-v1-GetVulnerabilityByIdResponse"></a>
 
 #### GetVulnerabilityByIdResponse
 
@@ -812,7 +812,7 @@ get user
 | created_at | [google.protobuf.Timestamp](#google-protobuf-Timestamp) |  |  |
 
 
-<a name="mediator-v1-GitHubProviderConfig"></a>
+<a name="minder-v1-GitHubProviderConfig"></a>
 
 #### GitHubProviderConfig
 GitHubProviderConfig contains the configuration for the GitHub client
@@ -829,7 +829,7 @@ naming convention
 | endpoint | [string](#string) |  | Endpoint is the GitHub API endpoint. If using the public GitHub API, Endpoint can be left blank. |
 
 
-<a name="mediator-v1-GitType"></a>
+<a name="minder-v1-GitType"></a>
 
 #### GitType
 GitType defines the git data ingester.
@@ -841,7 +841,7 @@ GitType defines the git data ingester.
 | branch | [string](#string) |  | branch is the branch of the git repository. |
 
 
-<a name="mediator-v1-GithubWorkflow"></a>
+<a name="minder-v1-GithubWorkflow"></a>
 
 #### GithubWorkflow
 
@@ -855,7 +855,7 @@ GitType defines the git data ingester.
 | trigger | [string](#string) |  |  |
 
 
-<a name="mediator-v1-ListArtifactsRequest"></a>
+<a name="minder-v1-ListArtifactsRequest"></a>
 
 #### ListArtifactsRequest
 
@@ -867,7 +867,7 @@ GitType defines the git data ingester.
 | project_id | [string](#string) |  |  |
 
 
-<a name="mediator-v1-ListArtifactsResponse"></a>
+<a name="minder-v1-ListArtifactsResponse"></a>
 
 #### ListArtifactsResponse
 
@@ -875,10 +875,10 @@ GitType defines the git data ingester.
 
 | Field | Type | Label | Description |
 | ----- | ---- | ----- | ----------- |
-| results | [Artifact](#mediator-v1-Artifact) | repeated |  |
+| results | [Artifact](#minder-v1-Artifact) | repeated |  |
 
 
-<a name="mediator-v1-ListProfilesRequest"></a>
+<a name="minder-v1-ListProfilesRequest"></a>
 
 #### ListProfilesRequest
 list profiles
@@ -886,10 +886,10 @@ list profiles
 
 | Field | Type | Label | Description |
 | ----- | ---- | ----- | ----------- |
-| context | [Context](#mediator-v1-Context) |  | context is the context which contains the profiles |
+| context | [Context](#minder-v1-Context) |  | context is the context which contains the profiles |
 
 
-<a name="mediator-v1-ListProfilesResponse"></a>
+<a name="minder-v1-ListProfilesResponse"></a>
 
 #### ListProfilesResponse
 
@@ -897,10 +897,10 @@ list profiles
 
 | Field | Type | Label | Description |
 | ----- | ---- | ----- | ----------- |
-| profiles | [Profile](#mediator-v1-Profile) | repeated |  |
+| profiles | [Profile](#minder-v1-Profile) | repeated |  |
 
 
-<a name="mediator-v1-ListRemoteRepositoriesFromProviderRequest"></a>
+<a name="minder-v1-ListRemoteRepositoriesFromProviderRequest"></a>
 
 #### ListRemoteRepositoriesFromProviderRequest
 
@@ -912,7 +912,7 @@ list profiles
 | project_id | [string](#string) |  |  |
 
 
-<a name="mediator-v1-ListRemoteRepositoriesFromProviderResponse"></a>
+<a name="minder-v1-ListRemoteRepositoriesFromProviderResponse"></a>
 
 #### ListRemoteRepositoriesFromProviderResponse
 
@@ -920,10 +920,10 @@ list profiles
 
 | Field | Type | Label | Description |
 | ----- | ---- | ----- | ----------- |
-| results | [UpstreamRepositoryRef](#mediator-v1-UpstreamRepositoryRef) | repeated |  |
+| results | [UpstreamRepositoryRef](#minder-v1-UpstreamRepositoryRef) | repeated |  |
 
 
-<a name="mediator-v1-ListRepositoriesRequest"></a>
+<a name="minder-v1-ListRepositoriesRequest"></a>
 
 #### ListRepositoriesRequest
 
@@ -937,7 +937,7 @@ list profiles
 | offset | [int32](#int32) |  |  |
 
 
-<a name="mediator-v1-ListRepositoriesResponse"></a>
+<a name="minder-v1-ListRepositoriesResponse"></a>
 
 #### ListRepositoriesResponse
 
@@ -945,10 +945,10 @@ list profiles
 
 | Field | Type | Label | Description |
 | ----- | ---- | ----- | ----------- |
-| results | [Repository](#mediator-v1-Repository) | repeated |  |
+| results | [Repository](#minder-v1-Repository) | repeated |  |
 
 
-<a name="mediator-v1-ListRuleTypesRequest"></a>
+<a name="minder-v1-ListRuleTypesRequest"></a>
 
 #### ListRuleTypesRequest
 ListRuleTypesRequest is the request to list rule types.
@@ -956,10 +956,10 @@ ListRuleTypesRequest is the request to list rule types.
 
 | Field | Type | Label | Description |
 | ----- | ---- | ----- | ----------- |
-| context | [Context](#mediator-v1-Context) |  | context is the context in which the rule types are evaluated. |
+| context | [Context](#minder-v1-Context) |  | context is the context in which the rule types are evaluated. |
 
 
-<a name="mediator-v1-ListRuleTypesResponse"></a>
+<a name="minder-v1-ListRuleTypesResponse"></a>
 
 #### ListRuleTypesResponse
 ListRuleTypesResponse is the response to list rule types.
@@ -967,10 +967,10 @@ ListRuleTypesResponse is the response to list rule types.
 
 | Field | Type | Label | Description |
 | ----- | ---- | ----- | ----------- |
-| rule_types | [RuleType](#mediator-v1-RuleType) | repeated | rule_types is the list of rule types. |
+| rule_types | [RuleType](#minder-v1-RuleType) | repeated | rule_types is the list of rule types. |
 
 
-<a name="mediator-v1-PrDependencies"></a>
+<a name="minder-v1-PrDependencies"></a>
 
 #### PrDependencies
 
@@ -978,11 +978,11 @@ ListRuleTypesResponse is the response to list rule types.
 
 | Field | Type | Label | Description |
 | ----- | ---- | ----- | ----------- |
-| pr | [PullRequest](#mediator-v1-PullRequest) |  |  |
-| deps | [PrDependencies.ContextualDependency](#mediator-v1-PrDependencies-ContextualDependency) | repeated |  |
+| pr | [PullRequest](#minder-v1-PullRequest) |  |  |
+| deps | [PrDependencies.ContextualDependency](#minder-v1-PrDependencies-ContextualDependency) | repeated |  |
 
 
-<a name="mediator-v1-PrDependencies-ContextualDependency"></a>
+<a name="minder-v1-PrDependencies-ContextualDependency"></a>
 
 #### PrDependencies.ContextualDependency
 
@@ -990,11 +990,11 @@ ListRuleTypesResponse is the response to list rule types.
 
 | Field | Type | Label | Description |
 | ----- | ---- | ----- | ----------- |
-| dep | [Dependency](#mediator-v1-Dependency) |  |  |
-| file | [PrDependencies.ContextualDependency.FilePatch](#mediator-v1-PrDependencies-ContextualDependency-FilePatch) |  |  |
+| dep | [Dependency](#minder-v1-Dependency) |  |  |
+| file | [PrDependencies.ContextualDependency.FilePatch](#minder-v1-PrDependencies-ContextualDependency-FilePatch) |  |  |
 
 
-<a name="mediator-v1-PrDependencies-ContextualDependency-FilePatch"></a>
+<a name="minder-v1-PrDependencies-ContextualDependency-FilePatch"></a>
 
 #### PrDependencies.ContextualDependency.FilePatch
 
@@ -1006,7 +1006,7 @@ ListRuleTypesResponse is the response to list rule types.
 | patch_url | [string](#string) |  | points to the the raw patchfile |
 
 
-<a name="mediator-v1-Profile"></a>
+<a name="minder-v1-Profile"></a>
 
 #### Profile
 Profile defines a profile that is user defined.
@@ -1014,18 +1014,18 @@ Profile defines a profile that is user defined.
 
 | Field | Type | Label | Description |
 | ----- | ---- | ----- | ----------- |
-| context | [Context](#mediator-v1-Context) |  | context is the context in which the profile is evaluated. |
+| context | [Context](#minder-v1-Context) |  | context is the context in which the profile is evaluated. |
 | id | [string](#string) | optional | id is the id of the profile. This is optional and is set by the system. |
 | name | [string](#string) |  | name is the name of the profile instance. |
-| repository | [Profile.Rule](#mediator-v1-Profile-Rule) | repeated | These are the entities that one could set in the profile. |
-| build_environment | [Profile.Rule](#mediator-v1-Profile-Rule) | repeated |  |
-| artifact | [Profile.Rule](#mediator-v1-Profile-Rule) | repeated |  |
-| pull_request | [Profile.Rule](#mediator-v1-Profile-Rule) | repeated |  |
+| repository | [Profile.Rule](#minder-v1-Profile-Rule) | repeated | These are the entities that one could set in the profile. |
+| build_environment | [Profile.Rule](#minder-v1-Profile-Rule) | repeated |  |
+| artifact | [Profile.Rule](#minder-v1-Profile-Rule) | repeated |  |
+| pull_request | [Profile.Rule](#minder-v1-Profile-Rule) | repeated |  |
 | remediate | [string](#string) | optional | whether and how to remediate (on,off,dry_run) this is optional as the default is set by the system |
 | alert | [string](#string) | optional | whether and how to alert (on,off,dry_run) this is optional as the default is set by the system |
 
 
-<a name="mediator-v1-Profile-Rule"></a>
+<a name="minder-v1-Profile-Rule"></a>
 
 #### Profile.Rule
 Rule defines the individual call of a certain rule type.
@@ -1038,7 +1038,7 @@ Rule defines the individual call of a certain rule type.
 | def | [google.protobuf.Struct](#google-protobuf-Struct) |  | def is the definition of the rule. This depends on the rule type. |
 
 
-<a name="mediator-v1-ProfileStatus"></a>
+<a name="minder-v1-ProfileStatus"></a>
 
 #### ProfileStatus
 get the overall profile status
@@ -1052,7 +1052,7 @@ get the overall profile status
 | last_updated | [google.protobuf.Timestamp](#google-protobuf-Timestamp) |  | last_updated is the last time the profile was updated |
 
 
-<a name="mediator-v1-Project"></a>
+<a name="minder-v1-Project"></a>
 
 #### Project
 Project API Objects
@@ -1068,7 +1068,7 @@ Project API Objects
 | updated_at | [google.protobuf.Timestamp](#google-protobuf-Timestamp) |  |  |
 
 
-<a name="mediator-v1-Provider"></a>
+<a name="minder-v1-Provider"></a>
 
 #### Provider
 Provider defines a provider that is used to connect to a certain service.
@@ -1080,13 +1080,13 @@ an organization.
 | Field | Type | Label | Description |
 | ----- | ---- | ----- | ----------- |
 | name | [string](#string) |  |  |
-| context | [Provider.Context](#mediator-v1-Provider-Context) |  |  |
+| context | [Provider.Context](#minder-v1-Provider-Context) |  |  |
 | version | [string](#string) |  | Version defines the version of the provider. Currently only v1 is supported. |
 | implements | [string](#string) | repeated | Implements defines the provider types that this provider implements. This is used to determine the interface to use to interact with the provider. This is a required field and must be set. currently, the following interfaces are supported: - rest - github - git |
-| def | [Provider.Definition](#mediator-v1-Provider-Definition) |  |  |
+| def | [Provider.Definition](#minder-v1-Provider-Definition) |  |  |
 
 
-<a name="mediator-v1-Provider-Context"></a>
+<a name="minder-v1-Provider-Context"></a>
 
 #### Provider.Context
 Context defines the context in which a provider is evaluated.
@@ -1100,7 +1100,7 @@ an organization.
 | project | [string](#string) |  |  |
 
 
-<a name="mediator-v1-Provider-Definition"></a>
+<a name="minder-v1-Provider-Definition"></a>
 
 #### Provider.Definition
 Definition defines the definition of the provider.
@@ -1109,11 +1109,11 @@ This is used to define the connection to the provider.
 
 | Field | Type | Label | Description |
 | ----- | ---- | ----- | ----------- |
-| rest | [RESTProviderConfig](#mediator-v1-RESTProviderConfig) | optional | rest is the REST provider configuration. |
-| github | [GitHubProviderConfig](#mediator-v1-GitHubProviderConfig) | optional | github is the GitHub provider configuration. |
+| rest | [RESTProviderConfig](#minder-v1-RESTProviderConfig) | optional | rest is the REST provider configuration. |
+| github | [GitHubProviderConfig](#minder-v1-GitHubProviderConfig) | optional | github is the GitHub provider configuration. |
 
 
-<a name="mediator-v1-PullRequest"></a>
+<a name="minder-v1-PullRequest"></a>
 
 #### PullRequest
 
@@ -1130,7 +1130,7 @@ This is used to define the connection to the provider.
 | action | [string](#string) |  | The action that triggered the webhook |
 
 
-<a name="mediator-v1-RESTProviderConfig"></a>
+<a name="minder-v1-RESTProviderConfig"></a>
 
 #### RESTProviderConfig
 RESTProviderConfig contains the configuration for the REST provider.
@@ -1141,13 +1141,13 @@ RESTProviderConfig contains the configuration for the REST provider.
 | base_url | [string](#string) |  | base_url is the base URL for the REST provider. |
 
 
-<a name="mediator-v1-RefreshTokenRequest"></a>
+<a name="minder-v1-RefreshTokenRequest"></a>
 
 #### RefreshTokenRequest
 
 
 
-<a name="mediator-v1-RefreshTokenResponse"></a>
+<a name="minder-v1-RefreshTokenResponse"></a>
 
 #### RefreshTokenResponse
 
@@ -1159,7 +1159,7 @@ RESTProviderConfig contains the configuration for the REST provider.
 | access_token_expires_in | [int64](#int64) |  |  |
 
 
-<a name="mediator-v1-RegisterRepoResult"></a>
+<a name="minder-v1-RegisterRepoResult"></a>
 
 #### RegisterRepoResult
 
@@ -1167,11 +1167,11 @@ RESTProviderConfig contains the configuration for the REST provider.
 
 | Field | Type | Label | Description |
 | ----- | ---- | ----- | ----------- |
-| repository | [Repository](#mediator-v1-Repository) |  |  |
-| status | [RegisterRepoResult.Status](#mediator-v1-RegisterRepoResult-Status) |  |  |
+| repository | [Repository](#minder-v1-Repository) |  |  |
+| status | [RegisterRepoResult.Status](#minder-v1-RegisterRepoResult-Status) |  |  |
 
 
-<a name="mediator-v1-RegisterRepoResult-Status"></a>
+<a name="minder-v1-RegisterRepoResult-Status"></a>
 
 #### RegisterRepoResult.Status
 
@@ -1183,7 +1183,7 @@ RESTProviderConfig contains the configuration for the REST provider.
 | error | [string](#string) | optional |  |
 
 
-<a name="mediator-v1-RegisterRepositoryRequest"></a>
+<a name="minder-v1-RegisterRepositoryRequest"></a>
 
 #### RegisterRepositoryRequest
 
@@ -1193,10 +1193,10 @@ RESTProviderConfig contains the configuration for the REST provider.
 | ----- | ---- | ----- | ----------- |
 | provider | [string](#string) |  |  |
 | project_id | [string](#string) |  |  |
-| repositories | [UpstreamRepositoryRef](#mediator-v1-UpstreamRepositoryRef) | repeated |  |
+| repositories | [UpstreamRepositoryRef](#minder-v1-UpstreamRepositoryRef) | repeated |  |
 
 
-<a name="mediator-v1-RegisterRepositoryResponse"></a>
+<a name="minder-v1-RegisterRepositoryResponse"></a>
 
 #### RegisterRepositoryResponse
 
@@ -1204,10 +1204,10 @@ RESTProviderConfig contains the configuration for the REST provider.
 
 | Field | Type | Label | Description |
 | ----- | ---- | ----- | ----------- |
-| results | [RegisterRepoResult](#mediator-v1-RegisterRepoResult) | repeated |  |
+| results | [RegisterRepoResult](#minder-v1-RegisterRepoResult) | repeated |  |
 
 
-<a name="mediator-v1-Repository"></a>
+<a name="minder-v1-Repository"></a>
 
 #### Repository
 
@@ -1216,7 +1216,7 @@ RESTProviderConfig contains the configuration for the REST provider.
 | Field | Type | Label | Description |
 | ----- | ---- | ----- | ----------- |
 | id | [string](#string) | optional | This is optional when returning remote repositories |
-| context | [Context](#mediator-v1-Context) | optional |  |
+| context | [Context](#minder-v1-Context) | optional |  |
 | owner | [string](#string) |  |  |
 | name | [string](#string) |  |  |
 | repo_id | [int32](#int32) |  |  |
@@ -1234,7 +1234,7 @@ RESTProviderConfig contains the configuration for the REST provider.
 | updated_at | [google.protobuf.Timestamp](#google-protobuf-Timestamp) |  |  |
 
 
-<a name="mediator-v1-RestType"></a>
+<a name="minder-v1-RestType"></a>
 
 #### RestType
 RestType defines the rest data evaluation.
@@ -1248,10 +1248,10 @@ This is used to fetch data from a REST endpoint.
 | headers | [string](#string) | repeated | headers are the headers to be sent to the endpoint. |
 | body | [string](#string) | optional | body is the body to be sent to the endpoint. |
 | parse | [string](#string) |  | parse is the parsing mechanism to be used to parse the data. |
-| fallback | [RestType.Fallback](#mediator-v1-RestType-Fallback) | repeated | fallback provides a body that the ingester would return in case the REST call returns a non-200 status code. |
+| fallback | [RestType.Fallback](#minder-v1-RestType-Fallback) | repeated | fallback provides a body that the ingester would return in case the REST call returns a non-200 status code. |
 
 
-<a name="mediator-v1-RestType-Fallback"></a>
+<a name="minder-v1-RestType-Fallback"></a>
 
 #### RestType.Fallback
 
@@ -1263,7 +1263,7 @@ This is used to fetch data from a REST endpoint.
 | body | [string](#string) |  |  |
 
 
-<a name="mediator-v1-RevokeOauthProjectTokenRequest"></a>
+<a name="minder-v1-RevokeOauthProjectTokenRequest"></a>
 
 #### RevokeOauthProjectTokenRequest
 
@@ -1275,19 +1275,19 @@ This is used to fetch data from a REST endpoint.
 | project_id | [string](#string) |  |  |
 
 
-<a name="mediator-v1-RevokeOauthProjectTokenResponse"></a>
+<a name="minder-v1-RevokeOauthProjectTokenResponse"></a>
 
 #### RevokeOauthProjectTokenResponse
 
 
 
-<a name="mediator-v1-RevokeOauthTokensRequest"></a>
+<a name="minder-v1-RevokeOauthTokensRequest"></a>
 
 #### RevokeOauthTokensRequest
 
 
 
-<a name="mediator-v1-RevokeOauthTokensResponse"></a>
+<a name="minder-v1-RevokeOauthTokensResponse"></a>
 
 #### RevokeOauthTokensResponse
 
@@ -1298,7 +1298,7 @@ This is used to fetch data from a REST endpoint.
 | revoked_tokens | [int32](#int32) |  |  |
 
 
-<a name="mediator-v1-RpcOptions"></a>
+<a name="minder-v1-RpcOptions"></a>
 
 #### RpcOptions
 
@@ -1310,10 +1310,10 @@ This is used to fetch data from a REST endpoint.
 | no_log | [bool](#bool) |  |  |
 | owner_only | [bool](#bool) |  |  |
 | root_admin_only | [bool](#bool) |  |  |
-| auth_scope | [ObjectOwner](#mediator-v1-ObjectOwner) |  |  |
+| auth_scope | [ObjectOwner](#minder-v1-ObjectOwner) |  |  |
 
 
-<a name="mediator-v1-RuleEvaluationStatus"></a>
+<a name="minder-v1-RuleEvaluationStatus"></a>
 
 #### RuleEvaluationStatus
 get the status of the rules for a given profile
@@ -1327,7 +1327,7 @@ get the status of the rules for a given profile
 | entity | [string](#string) |  | entity is the entity that was evaluated |
 | status | [string](#string) |  | status is the status of the evaluation |
 | last_updated | [google.protobuf.Timestamp](#google-protobuf-Timestamp) |  | last_updated is the last time the profile was updated |
-| entity_info | [RuleEvaluationStatus.EntityInfoEntry](#mediator-v1-RuleEvaluationStatus-EntityInfoEntry) | repeated | entity_info is the information about the entity |
+| entity_info | [RuleEvaluationStatus.EntityInfoEntry](#minder-v1-RuleEvaluationStatus-EntityInfoEntry) | repeated | entity_info is the information about the entity |
 | details | [string](#string) |  | details is the description of the evaluation if any |
 | guidance | [string](#string) |  | guidance is the guidance for the evaluation if any |
 | remediation_status | [string](#string) |  | remediation_status is the status of the remediation |
@@ -1335,7 +1335,7 @@ get the status of the rules for a given profile
 | remediation_details | [string](#string) |  | remediation_details is the description of the remediation attempt if any |
 
 
-<a name="mediator-v1-RuleEvaluationStatus-EntityInfoEntry"></a>
+<a name="minder-v1-RuleEvaluationStatus-EntityInfoEntry"></a>
 
 #### RuleEvaluationStatus.EntityInfoEntry
 
@@ -1347,7 +1347,7 @@ get the status of the rules for a given profile
 | value | [string](#string) |  |  |
 
 
-<a name="mediator-v1-RuleType"></a>
+<a name="minder-v1-RuleType"></a>
 
 #### RuleType
 RuleType defines rules that may or may not be user defined.
@@ -1358,13 +1358,13 @@ The version is assumed from the folder's version.
 | ----- | ---- | ----- | ----------- |
 | id | [string](#string) | optional | id is the id of the rule type. This is mostly optional and is set by the server. |
 | name | [string](#string) |  | name is the name of the rule type. |
-| context | [Context](#mediator-v1-Context) |  | context is the context in which the rule is evaluated. |
-| def | [RuleType.Definition](#mediator-v1-RuleType-Definition) |  | def is the definition of the rule type. |
+| context | [Context](#minder-v1-Context) |  | context is the context in which the rule is evaluated. |
+| def | [RuleType.Definition](#minder-v1-RuleType-Definition) |  | def is the definition of the rule type. |
 | description | [string](#string) |  | description is the description of the rule type. |
 | guidance | [string](#string) |  | guidance are instructions we give the user in case a rule fails. |
 
 
-<a name="mediator-v1-RuleType-Definition"></a>
+<a name="minder-v1-RuleType-Definition"></a>
 
 #### RuleType.Definition
 Definition defines the rule type. It encompases the schema and the data evaluation.
@@ -1375,13 +1375,13 @@ Definition defines the rule type. It encompases the schema and the data evaluati
 | in_entity | [string](#string) |  | in_entity is the entity in which the rule is evaluated. This can be repository, build_environment or artifact. |
 | rule_schema | [google.protobuf.Struct](#google-protobuf-Struct) |  | rule_schema is the schema of the rule. This is expressed in JSON Schema. |
 | param_schema | [google.protobuf.Struct](#google-protobuf-Struct) | optional | param_schema is the schema of the parameters that are passed to the rule. This is expressed in JSON Schema. |
-| ingest | [RuleType.Definition.Ingest](#mediator-v1-RuleType-Definition-Ingest) |  |  |
-| eval | [RuleType.Definition.Eval](#mediator-v1-RuleType-Definition-Eval) |  |  |
-| remediate | [RuleType.Definition.Remediate](#mediator-v1-RuleType-Definition-Remediate) |  |  |
-| alert | [RuleType.Definition.Alert](#mediator-v1-RuleType-Definition-Alert) |  |  |
+| ingest | [RuleType.Definition.Ingest](#minder-v1-RuleType-Definition-Ingest) |  |  |
+| eval | [RuleType.Definition.Eval](#minder-v1-RuleType-Definition-Eval) |  |  |
+| remediate | [RuleType.Definition.Remediate](#minder-v1-RuleType-Definition-Remediate) |  |  |
+| alert | [RuleType.Definition.Alert](#minder-v1-RuleType-Definition-Alert) |  |  |
 
 
-<a name="mediator-v1-RuleType-Definition-Alert"></a>
+<a name="minder-v1-RuleType-Definition-Alert"></a>
 
 #### RuleType.Definition.Alert
 
@@ -1390,10 +1390,10 @@ Definition defines the rule type. It encompases the schema and the data evaluati
 | Field | Type | Label | Description |
 | ----- | ---- | ----- | ----------- |
 | type | [string](#string) |  |  |
-| security_advisory | [RuleType.Definition.Alert.AlertTypeSA](#mediator-v1-RuleType-Definition-Alert-AlertTypeSA) | optional |  |
+| security_advisory | [RuleType.Definition.Alert.AlertTypeSA](#minder-v1-RuleType-Definition-Alert-AlertTypeSA) | optional |  |
 
 
-<a name="mediator-v1-RuleType-Definition-Alert-AlertTypeSA"></a>
+<a name="minder-v1-RuleType-Definition-Alert-AlertTypeSA"></a>
 
 #### RuleType.Definition.Alert.AlertTypeSA
 
@@ -1404,7 +1404,7 @@ Definition defines the rule type. It encompases the schema and the data evaluati
 | severity | [string](#string) |  |  |
 
 
-<a name="mediator-v1-RuleType-Definition-Eval"></a>
+<a name="minder-v1-RuleType-Definition-Eval"></a>
 
 #### RuleType.Definition.Eval
 Eval defines the data evaluation definition.
@@ -1415,13 +1415,13 @@ endpoint and how we compare it to the rule.
 | Field | Type | Label | Description |
 | ----- | ---- | ----- | ----------- |
 | type | [string](#string) |  | type is the type of the data evaluation. Right now only `jq` is supported as a driver |
-| jq | [RuleType.Definition.Eval.JQComparison](#mediator-v1-RuleType-Definition-Eval-JQComparison) | repeated | jq is only used if the `jq` type is selected. It defines the comparisons that are made between the ingested data and the profile rule. |
-| rego | [RuleType.Definition.Eval.Rego](#mediator-v1-RuleType-Definition-Eval-Rego) | optional | rego is only used if the `rego` type is selected. |
-| vulncheck | [RuleType.Definition.Eval.Vulncheck](#mediator-v1-RuleType-Definition-Eval-Vulncheck) | optional | vulncheck is only used if the `vulncheck` type is selected. |
-| package_intelligence | [RuleType.Definition.Eval.PackageIntelligence](#mediator-v1-RuleType-Definition-Eval-PackageIntelligence) | optional | package_intelligence is only used if the `package_intelligence` type is selected. |
+| jq | [RuleType.Definition.Eval.JQComparison](#minder-v1-RuleType-Definition-Eval-JQComparison) | repeated | jq is only used if the `jq` type is selected. It defines the comparisons that are made between the ingested data and the profile rule. |
+| rego | [RuleType.Definition.Eval.Rego](#minder-v1-RuleType-Definition-Eval-Rego) | optional | rego is only used if the `rego` type is selected. |
+| vulncheck | [RuleType.Definition.Eval.Vulncheck](#minder-v1-RuleType-Definition-Eval-Vulncheck) | optional | vulncheck is only used if the `vulncheck` type is selected. |
+| package_intelligence | [RuleType.Definition.Eval.PackageIntelligence](#minder-v1-RuleType-Definition-Eval-PackageIntelligence) | optional | package_intelligence is only used if the `package_intelligence` type is selected. |
 
 
-<a name="mediator-v1-RuleType-Definition-Eval-JQComparison"></a>
+<a name="minder-v1-RuleType-Definition-Eval-JQComparison"></a>
 
 #### RuleType.Definition.Eval.JQComparison
 
@@ -1429,11 +1429,11 @@ endpoint and how we compare it to the rule.
 
 | Field | Type | Label | Description |
 | ----- | ---- | ----- | ----------- |
-| ingested | [RuleType.Definition.Eval.JQComparison.Operator](#mediator-v1-RuleType-Definition-Eval-JQComparison-Operator) |  | Ingested points to the data retrieved in the `ingest` section |
-| profile | [RuleType.Definition.Eval.JQComparison.Operator](#mediator-v1-RuleType-Definition-Eval-JQComparison-Operator) |  | Profile points to the profile itself. |
+| ingested | [RuleType.Definition.Eval.JQComparison.Operator](#minder-v1-RuleType-Definition-Eval-JQComparison-Operator) |  | Ingested points to the data retrieved in the `ingest` section |
+| profile | [RuleType.Definition.Eval.JQComparison.Operator](#minder-v1-RuleType-Definition-Eval-JQComparison-Operator) |  | Profile points to the profile itself. |
 
 
-<a name="mediator-v1-RuleType-Definition-Eval-JQComparison-Operator"></a>
+<a name="minder-v1-RuleType-Definition-Eval-JQComparison-Operator"></a>
 
 #### RuleType.Definition.Eval.JQComparison.Operator
 
@@ -1444,7 +1444,7 @@ endpoint and how we compare it to the rule.
 | def | [string](#string) |  |  |
 
 
-<a name="mediator-v1-RuleType-Definition-Eval-PackageIntelligence"></a>
+<a name="minder-v1-RuleType-Definition-Eval-PackageIntelligence"></a>
 
 #### RuleType.Definition.Eval.PackageIntelligence
 
@@ -1455,7 +1455,7 @@ endpoint and how we compare it to the rule.
 | endpoint | [string](#string) |  | e.g. https://staging.stacklok.dev/ |
 
 
-<a name="mediator-v1-RuleType-Definition-Eval-Rego"></a>
+<a name="minder-v1-RuleType-Definition-Eval-Rego"></a>
 
 #### RuleType.Definition.Eval.Rego
 
@@ -1467,13 +1467,13 @@ endpoint and how we compare it to the rule.
 | def | [string](#string) |  | def is the definition of the rego profile. |
 
 
-<a name="mediator-v1-RuleType-Definition-Eval-Vulncheck"></a>
+<a name="minder-v1-RuleType-Definition-Eval-Vulncheck"></a>
 
 #### RuleType.Definition.Eval.Vulncheck
 no configuration for now
 
 
-<a name="mediator-v1-RuleType-Definition-Ingest"></a>
+<a name="minder-v1-RuleType-Definition-Ingest"></a>
 
 #### RuleType.Definition.Ingest
 Ingest defines how the data is ingested.
@@ -1482,14 +1482,14 @@ Ingest defines how the data is ingested.
 | Field | Type | Label | Description |
 | ----- | ---- | ----- | ----------- |
 | type | [string](#string) |  | type is the type of the data ingestion. we currently support rest, artifact and builtin. |
-| rest | [RestType](#mediator-v1-RestType) | optional | rest is the rest data ingestion. this is only used if the type is rest. |
-| builtin | [BuiltinType](#mediator-v1-BuiltinType) | optional | builtin is the builtin data ingestion. |
-| artifact | [ArtifactType](#mediator-v1-ArtifactType) | optional | artifact is the artifact data ingestion. |
-| git | [GitType](#mediator-v1-GitType) | optional | git is the git data ingestion. |
-| diff | [DiffType](#mediator-v1-DiffType) | optional | diff is the diff data ingestion. |
+| rest | [RestType](#minder-v1-RestType) | optional | rest is the rest data ingestion. this is only used if the type is rest. |
+| builtin | [BuiltinType](#minder-v1-BuiltinType) | optional | builtin is the builtin data ingestion. |
+| artifact | [ArtifactType](#minder-v1-ArtifactType) | optional | artifact is the artifact data ingestion. |
+| git | [GitType](#minder-v1-GitType) | optional | git is the git data ingestion. |
+| diff | [DiffType](#minder-v1-DiffType) | optional | diff is the diff data ingestion. |
 
 
-<a name="mediator-v1-RuleType-Definition-Remediate"></a>
+<a name="minder-v1-RuleType-Definition-Remediate"></a>
 
 #### RuleType.Definition.Remediate
 
@@ -1498,12 +1498,12 @@ Ingest defines how the data is ingested.
 | Field | Type | Label | Description |
 | ----- | ---- | ----- | ----------- |
 | type | [string](#string) |  |  |
-| rest | [RestType](#mediator-v1-RestType) | optional |  |
-| gh_branch_protection | [RuleType.Definition.Remediate.GhBranchProtectionType](#mediator-v1-RuleType-Definition-Remediate-GhBranchProtectionType) | optional |  |
-| pull_request | [RuleType.Definition.Remediate.PullRequestRemediation](#mediator-v1-RuleType-Definition-Remediate-PullRequestRemediation) | optional |  |
+| rest | [RestType](#minder-v1-RestType) | optional |  |
+| gh_branch_protection | [RuleType.Definition.Remediate.GhBranchProtectionType](#minder-v1-RuleType-Definition-Remediate-GhBranchProtectionType) | optional |  |
+| pull_request | [RuleType.Definition.Remediate.PullRequestRemediation](#minder-v1-RuleType-Definition-Remediate-PullRequestRemediation) | optional |  |
 
 
-<a name="mediator-v1-RuleType-Definition-Remediate-GhBranchProtectionType"></a>
+<a name="minder-v1-RuleType-Definition-Remediate-GhBranchProtectionType"></a>
 
 #### RuleType.Definition.Remediate.GhBranchProtectionType
 
@@ -1514,7 +1514,7 @@ Ingest defines how the data is ingested.
 | patch | [string](#string) |  |  |
 
 
-<a name="mediator-v1-RuleType-Definition-Remediate-PullRequestRemediation"></a>
+<a name="minder-v1-RuleType-Definition-Remediate-PullRequestRemediation"></a>
 
 #### RuleType.Definition.Remediate.PullRequestRemediation
 the name stutters a bit but we already use a PullRequest message for handling PR entities
@@ -1524,10 +1524,10 @@ the name stutters a bit but we already use a PullRequest message for handling PR
 | ----- | ---- | ----- | ----------- |
 | title | [string](#string) |  | the title of the PR |
 | body | [string](#string) |  | the body of the PR |
-| contents | [RuleType.Definition.Remediate.PullRequestRemediation.Content](#mediator-v1-RuleType-Definition-Remediate-PullRequestRemediation-Content) | repeated |  |
+| contents | [RuleType.Definition.Remediate.PullRequestRemediation.Content](#minder-v1-RuleType-Definition-Remediate-PullRequestRemediation-Content) | repeated |  |
 
 
-<a name="mediator-v1-RuleType-Definition-Remediate-PullRequestRemediation-Content"></a>
+<a name="minder-v1-RuleType-Definition-Remediate-PullRequestRemediation-Content"></a>
 
 #### RuleType.Definition.Remediate.PullRequestRemediation.Content
 
@@ -1541,7 +1541,7 @@ the name stutters a bit but we already use a PullRequest message for handling PR
 | mode | [string](#string) | optional | the GIT mode of the file. Not UNIX mode! String because the GH API also uses strings the usual modes are: 100644 for regular files, 100755 for executable files and 040000 for submodules (which we don't use but now you know the meaning of the 1 in 100644) |
 
 
-<a name="mediator-v1-SignatureVerification"></a>
+<a name="minder-v1-SignatureVerification"></a>
 
 #### SignatureVerification
 
@@ -1559,7 +1559,7 @@ the name stutters a bit but we already use a PullRequest message for handling PR
 | signature_time | [google.protobuf.Timestamp](#google-protobuf-Timestamp) | optional |  |
 
 
-<a name="mediator-v1-StoreProviderTokenRequest"></a>
+<a name="minder-v1-StoreProviderTokenRequest"></a>
 
 #### StoreProviderTokenRequest
 
@@ -1573,13 +1573,13 @@ the name stutters a bit but we already use a PullRequest message for handling PR
 | owner | [string](#string) | optional |  |
 
 
-<a name="mediator-v1-StoreProviderTokenResponse"></a>
+<a name="minder-v1-StoreProviderTokenResponse"></a>
 
 #### StoreProviderTokenResponse
 
 
 
-<a name="mediator-v1-UpdateRuleTypeRequest"></a>
+<a name="minder-v1-UpdateRuleTypeRequest"></a>
 
 #### UpdateRuleTypeRequest
 UpdateRuleTypeRequest is the request to update a rule type.
@@ -1587,10 +1587,10 @@ UpdateRuleTypeRequest is the request to update a rule type.
 
 | Field | Type | Label | Description |
 | ----- | ---- | ----- | ----------- |
-| rule_type | [RuleType](#mediator-v1-RuleType) |  | rule_type is the rule type to be updated. |
+| rule_type | [RuleType](#minder-v1-RuleType) |  | rule_type is the rule type to be updated. |
 
 
-<a name="mediator-v1-UpdateRuleTypeResponse"></a>
+<a name="minder-v1-UpdateRuleTypeResponse"></a>
 
 #### UpdateRuleTypeResponse
 UpdateRuleTypeResponse is the response to update a rule type.
@@ -1598,10 +1598,10 @@ UpdateRuleTypeResponse is the response to update a rule type.
 
 | Field | Type | Label | Description |
 | ----- | ---- | ----- | ----------- |
-| rule_type | [RuleType](#mediator-v1-RuleType) |  | rule_type is the rule type that was updated. |
+| rule_type | [RuleType](#minder-v1-RuleType) |  | rule_type is the rule type that was updated. |
 
 
-<a name="mediator-v1-UpstreamRepositoryRef"></a>
+<a name="minder-v1-UpstreamRepositoryRef"></a>
 
 #### UpstreamRepositoryRef
 
@@ -1614,7 +1614,7 @@ UpdateRuleTypeResponse is the response to update a rule type.
 | repo_id | [int32](#int32) |  |  |
 
 
-<a name="mediator-v1-UserRecord"></a>
+<a name="minder-v1-UserRecord"></a>
 
 #### UserRecord
 user record to be returned
@@ -1629,7 +1629,7 @@ user record to be returned
 | updated_at | [google.protobuf.Timestamp](#google-protobuf-Timestamp) |  |  |
 
 
-<a name="mediator-v1-VerifyProviderTokenFromRequest"></a>
+<a name="minder-v1-VerifyProviderTokenFromRequest"></a>
 
 #### VerifyProviderTokenFromRequest
 
@@ -1642,7 +1642,7 @@ user record to be returned
 | timestamp | [google.protobuf.Timestamp](#google-protobuf-Timestamp) |  |  |
 
 
-<a name="mediator-v1-VerifyProviderTokenFromResponse"></a>
+<a name="minder-v1-VerifyProviderTokenFromResponse"></a>
 
 #### VerifyProviderTokenFromResponse
 
@@ -1661,7 +1661,7 @@ user record to be returned
 
 
 
-<a name="mediator-v1-DepEcosystem"></a>
+<a name="minder-v1-DepEcosystem"></a>
 
 ### DepEcosystem
 
@@ -1674,7 +1674,7 @@ user record to be returned
 | DEP_ECOSYSTEM_PYPI | 3 |  |
 
 
-<a name="mediator-v1-Entity"></a>
+<a name="minder-v1-Entity"></a>
 
 ### Entity
 Entity defines the entity that is supported by the provider.
@@ -1688,7 +1688,7 @@ Entity defines the entity that is supported by the provider.
 | ENTITY_PULL_REQUESTS | 4 |  |
 
 
-<a name="mediator-v1-ObjectOwner"></a>
+<a name="minder-v1-ObjectOwner"></a>
 
 ### ObjectOwner
 
@@ -1703,7 +1703,7 @@ Entity defines the entity that is supported by the provider.
 
 
 
-<a name="mediator_v1_mediator-proto-extensions"></a>
+<a name="minder_v1_minder-proto-extensions"></a>
 
 ### File-level Extensions
 | Extension | Type | Base | Number | Description |

@@ -24,7 +24,7 @@ import (
 	"github.com/spf13/cobra"
 	"gopkg.in/yaml.v2"
 
-	pb "github.com/stacklok/mediator/pkg/api/protobuf/go/mediator/v1"
+	pb "github.com/stacklok/mediator/pkg/api/protobuf/go/minder/v1"
 )
 
 const (

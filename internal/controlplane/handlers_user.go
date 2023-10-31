@@ -31,7 +31,7 @@ import (
 	"google.golang.org/protobuf/types/known/timestamppb"
 
 	"github.com/stacklok/mediator/internal/db"
-	pb "github.com/stacklok/mediator/pkg/api/protobuf/go/mediator/v1"
+	pb "github.com/stacklok/mediator/pkg/api/protobuf/go/minder/v1"
 )
 
 // CreateUser is a service for user self registration

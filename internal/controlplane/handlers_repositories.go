@@ -32,7 +32,7 @@ import (
 	github "github.com/stacklok/mediator/internal/providers/github"
 	"github.com/stacklok/mediator/internal/reconcilers"
 	"github.com/stacklok/mediator/internal/util"
-	pb "github.com/stacklok/mediator/pkg/api/protobuf/go/mediator/v1"
+	pb "github.com/stacklok/mediator/pkg/api/protobuf/go/minder/v1"
 )
 
 // RegisterRepository adds repositories to the database and registers a webhook

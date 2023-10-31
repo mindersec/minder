@@ -37,7 +37,7 @@ import (
 	github "github.com/stacklok/mediator/internal/providers/github"
 	"github.com/stacklok/mediator/internal/util"
 	"github.com/stacklok/mediator/internal/util/cli"
-	pb "github.com/stacklok/mediator/pkg/api/protobuf/go/mediator/v1"
+	pb "github.com/stacklok/mediator/pkg/api/protobuf/go/minder/v1"
 )
 
 var errNoRepositoriesSelected = errors.New("No repositories selected")

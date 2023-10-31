@@ -21,7 +21,7 @@ import (
 	"google.golang.org/protobuf/types/known/structpb"
 	"gopkg.in/yaml.v2"
 
-	mediatorv1 "github.com/stacklok/mediator/pkg/api/protobuf/go/mediator/v1"
+	minderv1 "github.com/stacklok/mediator/pkg/api/protobuf/go/minder/v1"
 )
 
 func initializeTable(cmd *cobra.Command) *tablewriter.Table {
@@ -37,26 +37,26 @@ func initializeTable(cmd *cobra.Command) *tablewriter.Table {
 }
 
 func renderProfileTable(
-	p *mediatorv1.Profile,
+	p *minderv1.Profile,
 	table *tablewriter.Table,
 ) {
 	// repositories
-	renderEntityRuleSets(p, mediatorv1.RepositoryEntity, p.Repository, table)
+	renderEntityRuleSets(p, minderv1.RepositoryEntity, p.Repository, table)
 
 	// build_environments
-	renderEntityRuleSets(p, mediatorv1.BuildEnvironmentEntity, p.BuildEnvironment, table)
+	renderEntityRuleSets(p, minderv1.BuildEnvironmentEntity, p.BuildEnvironment, table)
 
 	// artifacts
-	renderEntityRuleSets(p, mediatorv1.ArtifactEntity, p.Artifact, table)
+	renderEntityRuleSets(p, minderv1.ArtifactEntity, p.Artifact, table)
 
 	// artifacts
-	renderEntityRuleSets(p, mediatorv1.PullRequestEntity, p.PullRequest, table)
+	renderEntityRuleSets(p, minderv1.PullRequestEntity, p.PullRequest, table)
 }
 
 func renderEntityRuleSets(
-	p *mediatorv1.Profile,
-	entType mediatorv1.EntityType,
-	rs []*mediatorv1.Profile_Rule,
+	p *minderv1.Profile,
+	entType minderv1.EntityType,
+	rs []*minderv1.Profile_Rule,
 	table *tablewriter.Table,
 ) {
 	for idx := range rs {
@@ -67,9 +67,9 @@ func renderEntityRuleSets(
 }
 
 func renderRuleTable(
-	p *mediatorv1.Profile,
-	entType mediatorv1.EntityType,
-	rule *mediatorv1.Profile_Rule,
+	p *minderv1.Profile,
+	entType minderv1.EntityType,
+	rule *minderv1.Profile_Rule,
 	table *tablewriter.Table,
 ) {
 

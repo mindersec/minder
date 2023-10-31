@@ -46,6 +46,92 @@ spec:
             name: mediator-grpc
             port:
               name: grpc
+      - path: /minder.v1.OAuthService
+        pathType: Prefix
+        backend:
+          service:
+            name: mediator-grpc
+            port:
+              name: grpc
+      - path: /minder.v1.AuthService
+        pathType: Prefix
+        backend:
+          service:
+            name: mediator-grpc
+            port:
+              name: grpc
+      - path: /minder.v1.VulnerabilitiesService
+        pathType: Prefix
+        backend:
+          service:
+            name: mediator-grpc
+            port:
+              name: grpc
+      - path: /minder.v1.SecretsService
+        pathType: Prefix
+        backend:
+          service:
+            name: mediator-grpc
+            port:
+              name: grpc
+      - path: /minder.v1.RepositoryService
+        pathType: Prefix
+        backend:
+          service:
+            name: mediator-grpc
+            port:
+              name: grpc
+      - path: /minder.v1.BranchProtectionService
+        pathType: Prefix
+        backend:
+          service:
+            name: mediator-grpc
+            port:
+              name: grpc
+      - path: /minder.v1.OrganizationService
+        pathType: Prefix
+        backend:
+          service:
+            name: mediator-grpc
+            port:
+              name: grpc
+      - path: /minder.v1.GroupService
+        pathType: Prefix
+        backend:
+          service:
+            name: mediator-grpc
+            port:
+              name: grpc
+      - path: /minder.v1.RoleService
+        pathType: Prefix
+        backend:
+          service:
+            name: mediator-grpc
+            port:
+              name: grpc
+      - path: /minder.v1.UserService
+        pathType: Prefix
+        backend:
+          service:
+            name: mediator-grpc
+            port:
+              name: grpc
+      - path: /minder.v1.ProfileService
+        pathType: Prefix
+        backend:
+          service:
+            name: mediator-grpc
+            port:
+              name: grpc
+      - path: /minder.v1.KeyService
+        pathType: Prefix
+        backend:
+          service:
+            name: mediator-grpc
+            port:
+              name: grpc
+      # Legacy compatibility endpoints.
+      # Delete once we've got all other configuration swapped over.
       - path: /mediator.v1.OAuthService
         pathType: Prefix
         backend:

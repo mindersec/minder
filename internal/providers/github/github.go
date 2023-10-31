@@ -26,7 +26,7 @@ import (
 	"golang.org/x/oauth2"
 
 	"github.com/stacklok/mediator/internal/db"
-	mediatorv1 "github.com/stacklok/mediator/pkg/api/protobuf/go/mediator/v1"
+	minderv1 "github.com/stacklok/mediator/pkg/api/protobuf/go/minder/v1"
 	provifv1 "github.com/stacklok/mediator/pkg/providers/v1"
 )
 
@@ -62,7 +62,7 @@ var _ provifv1.GitHub = (*RestClient)(nil)
 // the GitHubConfig struct
 func NewRestClient(
 	ctx context.Context,
-	config *mediatorv1.GitHubProviderConfig,
+	config *minderv1.GitHubProviderConfig,
 	token string,
 	owner string,
 ) (*RestClient, error) {
@@ -89,9 +89,9 @@ func NewRestClient(
 }
 
 // ParseV1Config parses the raw config into a GitHubConfig struct
-func ParseV1Config(rawCfg json.RawMessage) (*mediatorv1.GitHubProviderConfig, error) {
+func ParseV1Config(rawCfg json.RawMessage) (*minderv1.GitHubProviderConfig, error) {
 	type wrapper struct {
-		GitHub *mediatorv1.GitHubProviderConfig `json:"github" yaml:"github" mapstructure:"github" validate:"required"`
+		GitHub *minderv1.GitHubProviderConfig `json:"github" yaml:"github" mapstructure:"github" validate:"required"`
 	}
 
 	var w wrapper

@@ -45,7 +45,7 @@ import (
 	"google.golang.org/protobuf/types/known/timestamppb"
 
 	"github.com/stacklok/mediator/internal/util"
-	pb "github.com/stacklok/mediator/pkg/api/protobuf/go/mediator/v1"
+	pb "github.com/stacklok/mediator/pkg/api/protobuf/go/minder/v1"
 	provifv1 "github.com/stacklok/mediator/pkg/providers/v1"
 )
 

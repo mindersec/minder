@@ -22,7 +22,7 @@ import (
 	"github.com/google/go-github/v53/github"
 
 	"github.com/stacklok/mediator/internal/engine/eval/pr_actions"
-	pb "github.com/stacklok/mediator/pkg/api/protobuf/go/mediator/v1"
+	pb "github.com/stacklok/mediator/pkg/api/protobuf/go/minder/v1"
 	provifv1 "github.com/stacklok/mediator/pkg/providers/v1"
 )
 

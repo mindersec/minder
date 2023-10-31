@@ -19,10 +19,11 @@
 // - protoc             (unknown)
 // source: mediator/v1/mediator.proto
 
-package _go
+package v1
 
 import (
 	context "context"
+	v1 "github.com/stacklok/mediator/pkg/api/protobuf/go/minder/v1"
 	httpbody "google.golang.org/genproto/googleapis/api/httpbody"
 	grpc "google.golang.org/grpc"
 	codes "google.golang.org/grpc/codes"
@@ -42,7 +43,7 @@ const (
 //
 // For semantics around ctx use and closing/ending streaming RPCs, please refer to https://pkg.go.dev/google.golang.org/grpc/?tab=doc#ClientConn.NewStream.
 type HealthServiceClient interface {
-	CheckHealth(ctx context.Context, in *CheckHealthRequest, opts ...grpc.CallOption) (*CheckHealthResponse, error)
+	CheckHealth(ctx context.Context, in *v1.CheckHealthRequest, opts ...grpc.CallOption) (*v1.CheckHealthResponse, error)
 }
 
 type healthServiceClient struct {
@@ -53,8 +54,8 @@ func NewHealthServiceClient(cc grpc.ClientConnInterface) HealthServiceClient {
 	return &healthServiceClient{cc}
 }
 
-func (c *healthServiceClient) CheckHealth(ctx context.Context, in *CheckHealthRequest, opts ...grpc.CallOption) (*CheckHealthResponse, error) {
-	out := new(CheckHealthResponse)
+func (c *healthServiceClient) CheckHealth(ctx context.Context, in *v1.CheckHealthRequest, opts ...grpc.CallOption) (*v1.CheckHealthResponse, error) {
+	out := new(v1.CheckHealthResponse)
 	err := c.cc.Invoke(ctx, HealthService_CheckHealth_FullMethodName, in, out, opts...)
 	if err != nil {
 		return nil, err
@@ -66,7 +67,7 @@ func (c *healthServiceClient) CheckHealth(ctx context.Context, in *CheckHealthRe
 // All implementations must embed UnimplementedHealthServiceServer
 // for forward compatibility
 type HealthServiceServer interface {
-	CheckHealth(context.Context, *CheckHealthRequest) (*CheckHealthResponse, error)
+	CheckHealth(context.Context, *v1.CheckHealthRequest) (*v1.CheckHealthResponse, error)
 	mustEmbedUnimplementedHealthServiceServer()
 }
 
@@ -74,7 +75,7 @@ type HealthServiceServer interface {
 type UnimplementedHealthServiceServer struct {
 }
 
-func (UnimplementedHealthServiceServer) CheckHealth(context.Context, *CheckHealthRequest) (*CheckHealthResponse, error) {
+func (UnimplementedHealthServiceServer) CheckHealth(context.Context, *v1.CheckHealthRequest) (*v1.CheckHealthResponse, error) {
 	return nil, status.Errorf(codes.Unimplemented, "method CheckHealth not implemented")
 }
 func (UnimplementedHealthServiceServer) mustEmbedUnimplementedHealthServiceServer() {}
@@ -91,7 +92,7 @@ func RegisterHealthServiceServer(s grpc.ServiceRegistrar, srv HealthServiceServe
 }
 
 func _HealthService_CheckHealth_Handler(srv interface{}, ctx context.Context, dec func(interface{}) error, interceptor grpc.UnaryServerInterceptor) (interface{}, error) {
-	in := new(CheckHealthRequest)
+	in := new(v1.CheckHealthRequest)
 	if err := dec(in); err != nil {
 		return nil, err
 	}
@@ -103,7 +104,7 @@ func _HealthService_CheckHealth_Handler(srv interface{}, ctx context.Context, de
 		FullMethod: HealthService_CheckHealth_FullMethodName,
 	}
 	handler := func(ctx context.Context, req interface{}) (interface{}, error) {
-		return srv.(HealthServiceServer).CheckHealth(ctx, req.(*CheckHealthRequest))
+		return srv.(HealthServiceServer).CheckHealth(ctx, req.(*v1.CheckHealthRequest))
 	}
 	return interceptor(ctx, in, info, handler)
 }
@@ -133,8 +134,8 @@ const (
 //
 // For semantics around ctx use and closing/ending streaming RPCs, please refer to https://pkg.go.dev/google.golang.org/grpc/?tab=doc#ClientConn.NewStream.
 type ArtifactServiceClient interface {
-	ListArtifacts(ctx context.Context, in *ListArtifactsRequest, opts ...grpc.CallOption) (*ListArtifactsResponse, error)
-	GetArtifactById(ctx context.Context, in *GetArtifactByIdRequest, opts ...grpc.CallOption) (*GetArtifactByIdResponse, error)
+	ListArtifacts(ctx context.Context, in *v1.ListArtifactsRequest, opts ...grpc.CallOption) (*v1.ListArtifactsResponse, error)
+	GetArtifactById(ctx context.Context, in *v1.GetArtifactByIdRequest, opts ...grpc.CallOption) (*v1.GetArtifactByIdResponse, error)
 }
 
 type artifactServiceClient struct {
@@ -145,8 +146,8 @@ func NewArtifactServiceClient(cc grpc.ClientConnInterface) ArtifactServiceClient
 	return &artifactServiceClient{cc}
 }
 
-func (c *artifactServiceClient) ListArtifacts(ctx context.Context, in *ListArtifactsRequest, opts ...grpc.CallOption) (*ListArtifactsResponse, error) {
-	out := new(ListArtifactsResponse)
+func (c *artifactServiceClient) ListArtifacts(ctx context.Context, in *v1.ListArtifactsRequest, opts ...grpc.CallOption) (*v1.ListArtifactsResponse, error) {
+	out := new(v1.ListArtifactsResponse)
 	err := c.cc.Invoke(ctx, ArtifactService_ListArtifacts_FullMethodName, in, out, opts...)
 	if err != nil {
 		return nil, err
@@ -154,8 +155,8 @@ func (c *artifactServiceClient) ListArtifacts(ctx context.Context, in *ListArtif
 	return out, nil
 }
 
-func (c *artifactServiceClient) GetArtifactById(ctx context.Context, in *GetArtifactByIdRequest, opts ...grpc.CallOption) (*GetArtifactByIdResponse, error) {
-	out := new(GetArtifactByIdResponse)
+func (c *artifactServiceClient) GetArtifactById(ctx context.Context, in *v1.GetArtifactByIdRequest, opts ...grpc.CallOption) (*v1.GetArtifactByIdResponse, error) {
+	out := new(v1.GetArtifactByIdResponse)
 	err := c.cc.Invoke(ctx, ArtifactService_GetArtifactById_FullMethodName, in, out, opts...)
 	if err != nil {
 		return nil, err
@@ -167,8 +168,8 @@ func (c *artifactServiceClient) GetArtifactById(ctx context.Context, in *GetArti
 // All implementations must embed UnimplementedArtifactServiceServer
 // for forward compatibility
 type ArtifactServiceServer interface {
-	ListArtifacts(context.Context, *ListArtifactsRequest) (*ListArtifactsResponse, error)
-	GetArtifactById(context.Context, *GetArtifactByIdRequest) (*GetArtifactByIdResponse, error)
+	ListArtifacts(context.Context, *v1.ListArtifactsRequest) (*v1.ListArtifactsResponse, error)
+	GetArtifactById(context.Context, *v1.GetArtifactByIdRequest) (*v1.GetArtifactByIdResponse, error)
 	mustEmbedUnimplementedArtifactServiceServer()
 }
 
@@ -176,10 +177,10 @@ type ArtifactServiceServer interface {
 type UnimplementedArtifactServiceServer struct {
 }
 
-func (UnimplementedArtifactServiceServer) ListArtifacts(context.Context, *ListArtifactsRequest) (*ListArtifactsResponse, error) {
+func (UnimplementedArtifactServiceServer) ListArtifacts(context.Context, *v1.ListArtifactsRequest) (*v1.ListArtifactsResponse, error) {
 	return nil, status.Errorf(codes.Unimplemented, "method ListArtifacts not implemented")
 }
-func (UnimplementedArtifactServiceServer) GetArtifactById(context.Context, *GetArtifactByIdRequest) (*GetArtifactByIdResponse, error) {
+func (UnimplementedArtifactServiceServer) GetArtifactById(context.Context, *v1.GetArtifactByIdRequest) (*v1.GetArtifactByIdResponse, error) {
 	return nil, status.Errorf(codes.Unimplemented, "method GetArtifactById not implemented")
 }
 func (UnimplementedArtifactServiceServer) mustEmbedUnimplementedArtifactServiceServer() {}
@@ -196,7 +197,7 @@ func RegisterArtifactServiceServer(s grpc.ServiceRegistrar, srv ArtifactServiceS
 }
 
 func _ArtifactService_ListArtifacts_Handler(srv interface{}, ctx context.Context, dec func(interface{}) error, interceptor grpc.UnaryServerInterceptor) (interface{}, error) {
-	in := new(ListArtifactsRequest)
+	in := new(v1.ListArtifactsRequest)
 	if err := dec(in); err != nil {
 		return nil, err
 	}
@@ -208,13 +209,13 @@ func _ArtifactService_ListArtifacts_Handler(srv interface{}, ctx context.Context
 		FullMethod: ArtifactService_ListArtifacts_FullMethodName,
 	}
 	handler := func(ctx context.Context, req interface{}) (interface{}, error) {
-		return srv.(ArtifactServiceServer).ListArtifacts(ctx, req.(*ListArtifactsRequest))
+		return srv.(ArtifactServiceServer).ListArtifacts(ctx, req.(*v1.ListArtifactsRequest))
 	}
 	return interceptor(ctx, in, info, handler)
 }
 
 func _ArtifactService_GetArtifactById_Handler(srv interface{}, ctx context.Context, dec func(interface{}) error, interceptor grpc.UnaryServerInterceptor) (interface{}, error) {
-	in := new(GetArtifactByIdRequest)
+	in := new(v1.GetArtifactByIdRequest)
 	if err := dec(in); err != nil {
 		return nil, err
 	}
@@ -226,7 +227,7 @@ func _ArtifactService_GetArtifactById_Handler(srv interface{}, ctx context.Conte
 		FullMethod: ArtifactService_GetArtifactById_FullMethodName,
 	}
 	handler := func(ctx context.Context, req interface{}) (interface{}, error) {
-		return srv.(ArtifactServiceServer).GetArtifactById(ctx, req.(*GetArtifactByIdRequest))
+		return srv.(ArtifactServiceServer).GetArtifactById(ctx, req.(*v1.GetArtifactByIdRequest))
 	}
 	return interceptor(ctx, in, info, handler)
 }
@@ -265,18 +266,18 @@ const (
 //
 // For semantics around ctx use and closing/ending streaming RPCs, please refer to https://pkg.go.dev/google.golang.org/grpc/?tab=doc#ClientConn.NewStream.
 type OAuthServiceClient interface {
-	GetAuthorizationURL(ctx context.Context, in *GetAuthorizationURLRequest, opts ...grpc.CallOption) (*GetAuthorizationURLResponse, error)
+	GetAuthorizationURL(ctx context.Context, in *v1.GetAuthorizationURLRequest, opts ...grpc.CallOption) (*v1.GetAuthorizationURLResponse, error)
 	// buf:lint:ignore RPC_RESPONSE_STANDARD_NAME
-	ExchangeCodeForTokenCLI(ctx context.Context, in *ExchangeCodeForTokenCLIRequest, opts ...grpc.CallOption) (*httpbody.HttpBody, error)
-	ExchangeCodeForTokenWEB(ctx context.Context, in *ExchangeCodeForTokenWEBRequest, opts ...grpc.CallOption) (*ExchangeCodeForTokenWEBResponse, error)
-	StoreProviderToken(ctx context.Context, in *StoreProviderTokenRequest, opts ...grpc.CallOption) (*StoreProviderTokenResponse, error)
+	ExchangeCodeForTokenCLI(ctx context.Context, in *v1.ExchangeCodeForTokenCLIRequest, opts ...grpc.CallOption) (*httpbody.HttpBody, error)
+	ExchangeCodeForTokenWEB(ctx context.Context, in *v1.ExchangeCodeForTokenWEBRequest, opts ...grpc.CallOption) (*v1.ExchangeCodeForTokenWEBResponse, error)
+	StoreProviderToken(ctx context.Context, in *v1.StoreProviderTokenRequest, opts ...grpc.CallOption) (*v1.StoreProviderTokenResponse, error)
 	// RevokeOauthTokens is used to revoke all tokens
 	// this a nuclear option and should only be used in emergencies
-	RevokeOauthTokens(ctx context.Context, in *RevokeOauthTokensRequest, opts ...grpc.CallOption) (*RevokeOauthTokensResponse, error)
+	RevokeOauthTokens(ctx context.Context, in *v1.RevokeOauthTokensRequest, opts ...grpc.CallOption) (*v1.RevokeOauthTokensResponse, error)
 	// revoke token for a project
-	RevokeOauthProjectToken(ctx context.Context, in *RevokeOauthProjectTokenRequest, opts ...grpc.CallOption) (*RevokeOauthProjectTokenResponse, error)
+	RevokeOauthProjectToken(ctx context.Context, in *v1.RevokeOauthProjectTokenRequest, opts ...grpc.CallOption) (*v1.RevokeOauthProjectTokenResponse, error)
 	// VerifyProviderTokenFrom verifies that a token has been created for a provider since given timestamp
-	VerifyProviderTokenFrom(ctx context.Context, in *VerifyProviderTokenFromRequest, opts ...grpc.CallOption) (*VerifyProviderTokenFromResponse, error)
+	VerifyProviderTokenFrom(ctx context.Context, in *v1.VerifyProviderTokenFromRequest, opts ...grpc.CallOption) (*v1.VerifyProviderTokenFromResponse, error)
 }
 
 type oAuthServiceClient struct {
@@ -287,8 +288,8 @@ func NewOAuthServiceClient(cc grpc.ClientConnInterface) OAuthServiceClient {
 	return &oAuthServiceClient{cc}
 }
 
-func (c *oAuthServiceClient) GetAuthorizationURL(ctx context.Context, in *GetAuthorizationURLRequest, opts ...grpc.CallOption) (*GetAuthorizationURLResponse, error) {
-	out := new(GetAuthorizationURLResponse)
+func (c *oAuthServiceClient) GetAuthorizationURL(ctx context.Context, in *v1.GetAuthorizationURLRequest, opts ...grpc.CallOption) (*v1.GetAuthorizationURLResponse, error) {
+	out := new(v1.GetAuthorizationURLResponse)
 	err := c.cc.Invoke(ctx, OAuthService_GetAuthorizationURL_FullMethodName, in, out, opts...)
 	if err != nil {
 		return nil, err
@@ -296,7 +297,7 @@ func (c *oAuthServiceClient) GetAuthorizationURL(ctx context.Context, in *GetAut
 	return out, nil
 }
 
-func (c *oAuthServiceClient) ExchangeCodeForTokenCLI(ctx context.Context, in *ExchangeCodeForTokenCLIRequest, opts ...grpc.CallOption) (*httpbody.HttpBody, error) {
+func (c *oAuthServiceClient) ExchangeCodeForTokenCLI(ctx context.Context, in *v1.ExchangeCodeForTokenCLIRequest, opts ...grpc.CallOption) (*httpbody.HttpBody, error) {
 	out := new(httpbody.HttpBody)
 	err := c.cc.Invoke(ctx, OAuthService_ExchangeCodeForTokenCLI_FullMethodName, in, out, opts...)
 	if err != nil {
@@ -305,8 +306,8 @@ func (c *oAuthServiceClient) ExchangeCodeForTokenCLI(ctx context.Context, in *Ex
 	return out, nil
 }
 
-func (c *oAuthServiceClient) ExchangeCodeForTokenWEB(ctx context.Context, in *ExchangeCodeForTokenWEBRequest, opts ...grpc.CallOption) (*ExchangeCodeForTokenWEBResponse, error) {
-	out := new(ExchangeCodeForTokenWEBResponse)
+func (c *oAuthServiceClient) ExchangeCodeForTokenWEB(ctx context.Context, in *v1.ExchangeCodeForTokenWEBRequest, opts ...grpc.CallOption) (*v1.ExchangeCodeForTokenWEBResponse, error) {
+	out := new(v1.ExchangeCodeForTokenWEBResponse)
 	err := c.cc.Invoke(ctx, OAuthService_ExchangeCodeForTokenWEB_FullMethodName, in, out, opts...)
 	if err != nil {
 		return nil, err
@@ -314,8 +315,8 @@ func (c *oAuthServiceClient) ExchangeCodeForTokenWEB(ctx context.Context, in *Ex
 	return out, nil
 }
 
-func (c *oAuthServiceClient) StoreProviderToken(ctx context.Context, in *StoreProviderTokenRequest, opts ...grpc.CallOption) (*StoreProviderTokenResponse, error) {
-	out := new(StoreProviderTokenResponse)
+func (c *oAuthServiceClient) StoreProviderToken(ctx context.Context, in *v1.StoreProviderTokenRequest, opts ...grpc.CallOption) (*v1.StoreProviderTokenResponse, error) {
+	out := new(v1.StoreProviderTokenResponse)
 	err := c.cc.Invoke(ctx, OAuthService_StoreProviderToken_FullMethodName, in, out, opts...)
 	if err != nil {
 		return nil, err
@@ -323,8 +324,8 @@ func (c *oAuthServiceClient) StoreProviderToken(ctx context.Context, in *StorePr
 	return out, nil
 }
 
-func (c *oAuthServiceClient) RevokeOauthTokens(ctx context.Context, in *RevokeOauthTokensRequest, opts ...grpc.CallOption) (*RevokeOauthTokensResponse, error) {
-	out := new(RevokeOauthTokensResponse)
+func (c *oAuthServiceClient) RevokeOauthTokens(ctx context.Context, in *v1.RevokeOauthTokensRequest, opts ...grpc.CallOption) (*v1.RevokeOauthTokensResponse, error) {
+	out := new(v1.RevokeOauthTokensResponse)
 	err := c.cc.Invoke(ctx, OAuthService_RevokeOauthTokens_FullMethodName, in, out, opts...)
 	if err != nil {
 		return nil, err
@@ -332,8 +333,8 @@ func (c *oAuthServiceClient) RevokeOauthTokens(ctx context.Context, in *RevokeOa
 	return out, nil
 }
 
-func (c *oAuthServiceClient) RevokeOauthProjectToken(ctx context.Context, in *RevokeOauthProjectTokenRequest, opts ...grpc.CallOption) (*RevokeOauthProjectTokenResponse, error) {
-	out := new(RevokeOauthProjectTokenResponse)
+func (c *oAuthServiceClient) RevokeOauthProjectToken(ctx context.Context, in *v1.RevokeOauthProjectTokenRequest, opts ...grpc.CallOption) (*v1.RevokeOauthProjectTokenResponse, error) {
+	out := new(v1.RevokeOauthProjectTokenResponse)
 	err := c.cc.Invoke(ctx, OAuthService_RevokeOauthProjectToken_FullMethodName, in, out, opts...)
 	if err != nil {
 		return nil, err
@@ -341,8 +342,8 @@ func (c *oAuthServiceClient) RevokeOauthProjectToken(ctx context.Context, in *Re
 	return out, nil
 }
 
-func (c *oAuthServiceClient) VerifyProviderTokenFrom(ctx context.Context, in *VerifyProviderTokenFromRequest, opts ...grpc.CallOption) (*VerifyProviderTokenFromResponse, error) {
-	out := new(VerifyProviderTokenFromResponse)
+func (c *oAuthServiceClient) VerifyProviderTokenFrom(ctx context.Context, in *v1.VerifyProviderTokenFromRequest, opts ...grpc.CallOption) (*v1.VerifyProviderTokenFromResponse, error) {
+	out := new(v1.VerifyProviderTokenFromResponse)
 	err := c.cc.Invoke(ctx, OAuthService_VerifyProviderTokenFrom_FullMethodName, in, out, opts...)
 	if err != nil {
 		return nil, err
@@ -354,18 +355,18 @@ func (c *oAuthServiceClient) VerifyProviderTokenFrom(ctx context.Context, in *Ve
 // All implementations must embed UnimplementedOAuthServiceServer
 // for forward compatibility
 type OAuthServiceServer interface {
-	GetAuthorizationURL(context.Context, *GetAuthorizationURLRequest) (*GetAuthorizationURLResponse, error)
+	GetAuthorizationURL(context.Context, *v1.GetAuthorizationURLRequest) (*v1.GetAuthorizationURLResponse, error)
 	// buf:lint:ignore RPC_RESPONSE_STANDARD_NAME
-	ExchangeCodeForTokenCLI(context.Context, *ExchangeCodeForTokenCLIRequest) (*httpbody.HttpBody, error)
-	ExchangeCodeForTokenWEB(context.Context, *ExchangeCodeForTokenWEBRequest) (*ExchangeCodeForTokenWEBResponse, error)
-	StoreProviderToken(context.Context, *StoreProviderTokenRequest) (*StoreProviderTokenResponse, error)
+	ExchangeCodeForTokenCLI(context.Context, *v1.ExchangeCodeForTokenCLIRequest) (*httpbody.HttpBody, error)
+	ExchangeCodeForTokenWEB(context.Context, *v1.ExchangeCodeForTokenWEBRequest) (*v1.ExchangeCodeForTokenWEBResponse, error)
+	StoreProviderToken(context.Context, *v1.StoreProviderTokenRequest) (*v1.StoreProviderTokenResponse, error)
 	// RevokeOauthTokens is used to revoke all tokens
 	// this a nuclear option and should only be used in emergencies
-	RevokeOauthTokens(context.Context, *RevokeOauthTokensRequest) (*RevokeOauthTokensResponse, error)
+	RevokeOauthTokens(context.Context, *v1.RevokeOauthTokensRequest) (*v1.RevokeOauthTokensResponse, error)
 	// revoke token for a project
-	RevokeOauthProjectToken(context.Context, *RevokeOauthProjectTokenRequest) (*RevokeOauthProjectTokenResponse, error)
+	RevokeOauthProjectToken(context.Context, *v1.RevokeOauthProjectTokenRequest) (*v1.RevokeOauthProjectTokenResponse, error)
 	// VerifyProviderTokenFrom verifies that a token has been created for a provider since given timestamp
-	VerifyProviderTokenFrom(context.Context, *VerifyProviderTokenFromRequest) (*VerifyProviderTokenFromResponse, error)
+	VerifyProviderTokenFrom(context.Context, *v1.VerifyProviderTokenFromRequest) (*v1.VerifyProviderTokenFromResponse, error)
 	mustEmbedUnimplementedOAuthServiceServer()
 }
 
@@ -373,25 +374,25 @@ type OAuthServiceServer interface {
 type UnimplementedOAuthServiceServer struct {
 }
 
-func (UnimplementedOAuthServiceServer) GetAuthorizationURL(context.Context, *GetAuthorizationURLRequest) (*GetAuthorizationURLResponse, error) {
+func (UnimplementedOAuthServiceServer) GetAuthorizationURL(context.Context, *v1.GetAuthorizationURLRequest) (*v1.GetAuthorizationURLResponse, error) {
 	return nil, status.Errorf(codes.Unimplemented, "method GetAuthorizationURL not implemented")
 }
-func (UnimplementedOAuthServiceServer) ExchangeCodeForTokenCLI(context.Context, *ExchangeCodeForTokenCLIRequest) (*httpbody.HttpBody, error) {
+func (UnimplementedOAuthServiceServer) ExchangeCodeForTokenCLI(context.Context, *v1.ExchangeCodeForTokenCLIRequest) (*httpbody.HttpBody, error) {
 	return nil, status.Errorf(codes.Unimplemented, "method ExchangeCodeForTokenCLI not implemented")
 }
-func (UnimplementedOAuthServiceServer) ExchangeCodeForTokenWEB(context.Context, *ExchangeCodeForTokenWEBRequest) (*ExchangeCodeForTokenWEBResponse, error) {
+func (UnimplementedOAuthServiceServer) ExchangeCodeForTokenWEB(context.Context, *v1.ExchangeCodeForTokenWEBRequest) (*v1.ExchangeCodeForTokenWEBResponse, error) {
 	return nil, status.Errorf(codes.Unimplemented, "method ExchangeCodeForTokenWEB not implemented")
 }
-func (UnimplementedOAuthServiceServer) StoreProviderToken(context.Context, *StoreProviderTokenRequest) (*StoreProviderTokenResponse, error) {
+func (UnimplementedOAuthServiceServer) StoreProviderToken(context.Context, *v1.StoreProviderTokenRequest) (*v1.StoreProviderTokenResponse, error) {
 	return nil, status.Errorf(codes.Unimplemented, "method StoreProviderToken not implemented")
 }
-func (UnimplementedOAuthServiceServer) RevokeOauthTokens(context.Context, *RevokeOauthTokensRequest) (*RevokeOauthTokensResponse, error) {
+func (UnimplementedOAuthServiceServer) RevokeOauthTokens(context.Context, *v1.RevokeOauthTokensRequest) (*v1.RevokeOauthTokensResponse, error) {
 	return nil, status.Errorf(codes.Unimplemented, "method RevokeOauthTokens not implemented")
 }
-func (UnimplementedOAuthServiceServer) RevokeOauthProjectToken(context.Context, *RevokeOauthProjectTokenRequest) (*RevokeOauthProjectTokenResponse, error) {
+func (UnimplementedOAuthServiceServer) RevokeOauthProjectToken(context.Context, *v1.RevokeOauthProjectTokenRequest) (*v1.RevokeOauthProjectTokenResponse, error) {
 	return nil, status.Errorf(codes.Unimplemented, "method RevokeOauthProjectToken not implemented")
 }
-func (UnimplementedOAuthServiceServer) VerifyProviderTokenFrom(context.Context, *VerifyProviderTokenFromRequest) (*VerifyProviderTokenFromResponse, error) {
+func (UnimplementedOAuthServiceServer) VerifyProviderTokenFrom(context.Context, *v1.VerifyProviderTokenFromRequest) (*v1.VerifyProviderTokenFromResponse, error) {
 	return nil, status.Errorf(codes.Unimplemented, "method VerifyProviderTokenFrom not implemented")
 }
 func (UnimplementedOAuthServiceServer) mustEmbedUnimplementedOAuthServiceServer() {}
@@ -408,7 +409,7 @@ func RegisterOAuthServiceServer(s grpc.ServiceRegistrar, srv OAuthServiceServer)
 }
 
 func _OAuthService_GetAuthorizationURL_Handler(srv interface{}, ctx context.Context, dec func(interface{}) error, interceptor grpc.UnaryServerInterceptor) (interface{}, error) {
-	in := new(GetAuthorizationURLRequest)
+	in := new(v1.GetAuthorizationURLRequest)
 	if err := dec(in); err != nil {
 		return nil, err
 	}
@@ -420,13 +421,13 @@ func _OAuthService_GetAuthorizationURL_Handler(srv interface{}, ctx context.Cont
 		FullMethod: OAuthService_GetAuthorizationURL_FullMethodName,
 	}
 	handler := func(ctx context.Context, req interface{}) (interface{}, error) {
-		return srv.(OAuthServiceServer).GetAuthorizationURL(ctx, req.(*GetAuthorizationURLRequest))
+		return srv.(OAuthServiceServer).GetAuthorizationURL(ctx, req.(*v1.GetAuthorizationURLRequest))
 	}
 	return interceptor(ctx, in, info, handler)
 }
 
 func _OAuthService_ExchangeCodeForTokenCLI_Handler(srv interface{}, ctx context.Context, dec func(interface{}) error, interceptor grpc.UnaryServerInterceptor) (interface{}, error) {
-	in := new(ExchangeCodeForTokenCLIRequest)
+	in := new(v1.ExchangeCodeForTokenCLIRequest)
 	if err := dec(in); err != nil {
 		return nil, err
 	}
@@ -438,13 +439,13 @@ func _OAuthService_ExchangeCodeForTokenCLI_Handler(srv interface{}, ctx context.
 		FullMethod: OAuthService_ExchangeCodeForTokenCLI_FullMethodName,
 	}
 	handler := func(ctx context.Context, req interface{}) (interface{}, error) {
-		return srv.(OAuthServiceServer).ExchangeCodeForTokenCLI(ctx, req.(*ExchangeCodeForTokenCLIRequest))
+		return srv.(OAuthServiceServer).ExchangeCodeForTokenCLI(ctx, req.(*v1.ExchangeCodeForTokenCLIRequest))
 	}
 	return interceptor(ctx, in, info, handler)
 }
 
 func _OAuthService_ExchangeCodeForTokenWEB_Handler(srv interface{}, ctx context.Context, dec func(interface{}) error, interceptor grpc.UnaryServerInterceptor) (interface{}, error) {
-	in := new(ExchangeCodeForTokenWEBRequest)
+	in := new(v1.ExchangeCodeForTokenWEBRequest)
 	if err := dec(in); err != nil {
 		return nil, err
 	}
@@ -456,13 +457,13 @@ func _OAuthService_ExchangeCodeForTokenWEB_Handler(srv interface{}, ctx context.
 		FullMethod: OAuthService_ExchangeCodeForTokenWEB_FullMethodName,
 	}
 	handler := func(ctx context.Context, req interface{}) (interface{}, error) {
-		return srv.(OAuthServiceServer).ExchangeCodeForTokenWEB(ctx, req.(*ExchangeCodeForTokenWEBRequest))
+		return srv.(OAuthServiceServer).ExchangeCodeForTokenWEB(ctx, req.(*v1.ExchangeCodeForTokenWEBRequest))
 	}
 	return interceptor(ctx, in, info, handler)
 }
 
 func _OAuthService_StoreProviderToken_Handler(srv interface{}, ctx context.Context, dec func(interface{}) error, interceptor grpc.UnaryServerInterceptor) (interface{}, error) {
-	in := new(StoreProviderTokenRequest)
+	in := new(v1.StoreProviderTokenRequest)
 	if err := dec(in); err != nil {
 		return nil, err
 	}
@@ -474,13 +475,13 @@ func _OAuthService_StoreProviderToken_Handler(srv interface{}, ctx context.Conte
 		FullMethod: OAuthService_StoreProviderToken_FullMethodName,
 	}
 	handler := func(ctx context.Context, req interface{}) (interface{}, error) {
-		return srv.(OAuthServiceServer).StoreProviderToken(ctx, req.(*StoreProviderTokenRequest))
+		return srv.(OAuthServiceServer).StoreProviderToken(ctx, req.(*v1.StoreProviderTokenRequest))
 	}
 	return interceptor(ctx, in, info, handler)
 }
 
 func _OAuthService_RevokeOauthTokens_Handler(srv interface{}, ctx context.Context, dec func(interface{}) error, interceptor grpc.UnaryServerInterceptor) (interface{}, error) {
-	in := new(RevokeOauthTokensRequest)
+	in := new(v1.RevokeOauthTokensRequest)
 	if err := dec(in); err != nil {
 		return nil, err
 	}
@@ -492,13 +493,13 @@ func _OAuthService_RevokeOauthTokens_Handler(srv interface{}, ctx context.Contex
 		FullMethod: OAuthService_RevokeOauthTokens_FullMethodName,
 	}
 	handler := func(ctx context.Context, req interface{}) (interface{}, error) {
-		return srv.(OAuthServiceServer).RevokeOauthTokens(ctx, req.(*RevokeOauthTokensRequest))
+		return srv.(OAuthServiceServer).RevokeOauthTokens(ctx, req.(*v1.RevokeOauthTokensRequest))
 	}
 	return interceptor(ctx, in, info, handler)
 }
 
 func _OAuthService_RevokeOauthProjectToken_Handler(srv interface{}, ctx context.Context, dec func(interface{}) error, interceptor grpc.UnaryServerInterceptor) (interface{}, error) {
-	in := new(RevokeOauthProjectTokenRequest)
+	in := new(v1.RevokeOauthProjectTokenRequest)
 	if err := dec(in); err != nil {
 		return nil, err
 	}
@@ -510,13 +511,13 @@ func _OAuthService_RevokeOauthProjectToken_Handler(srv interface{}, ctx context.
 		FullMethod: OAuthService_RevokeOauthProjectToken_FullMethodName,
 	}
 	handler := func(ctx context.Context, req interface{}) (interface{}, error) {
-		return srv.(OAuthServiceServer).RevokeOauthProjectToken(ctx, req.(*RevokeOauthProjectTokenRequest))
+		return srv.(OAuthServiceServer).RevokeOauthProjectToken(ctx, req.(*v1.RevokeOauthProjectTokenRequest))
 	}
 	return interceptor(ctx, in, info, handler)
 }
 
 func _OAuthService_VerifyProviderTokenFrom_Handler(srv interface{}, ctx context.Context, dec func(interface{}) error, interceptor grpc.UnaryServerInterceptor) (interface{}, error) {
-	in := new(VerifyProviderTokenFromRequest)
+	in := new(v1.VerifyProviderTokenFromRequest)
 	if err := dec(in); err != nil {
 		return nil, err
 	}
@@ -528,7 +529,7 @@ func _OAuthService_VerifyProviderTokenFrom_Handler(srv interface{}, ctx context.
 		FullMethod: OAuthService_VerifyProviderTokenFrom_FullMethodName,
 	}
 	handler := func(ctx context.Context, req interface{}) (interface{}, error) {
-		return srv.(OAuthServiceServer).VerifyProviderTokenFrom(ctx, req.(*VerifyProviderTokenFromRequest))
+		return srv.(OAuthServiceServer).VerifyProviderTokenFrom(ctx, req.(*v1.VerifyProviderTokenFromRequest))
 	}
 	return interceptor(ctx, in, info, handler)
 }
@@ -585,11 +586,11 @@ const (
 //
 // For semantics around ctx use and closing/ending streaming RPCs, please refer to https://pkg.go.dev/google.golang.org/grpc/?tab=doc#ClientConn.NewStream.
 type RepositoryServiceClient interface {
-	RegisterRepository(ctx context.Context, in *RegisterRepositoryRequest, opts ...grpc.CallOption) (*RegisterRepositoryResponse, error)
-	ListRemoteRepositoriesFromProvider(ctx context.Context, in *ListRemoteRepositoriesFromProviderRequest, opts ...grpc.CallOption) (*ListRemoteRepositoriesFromProviderResponse, error)
-	ListRepositories(ctx context.Context, in *ListRepositoriesRequest, opts ...grpc.CallOption) (*ListRepositoriesResponse, error)
-	GetRepositoryById(ctx context.Context, in *GetRepositoryByIdRequest, opts ...grpc.CallOption) (*GetRepositoryByIdResponse, error)
-	GetRepositoryByName(ctx context.Context, in *GetRepositoryByNameRequest, opts ...grpc.CallOption) (*GetRepositoryByNameResponse, error)
+	RegisterRepository(ctx context.Context, in *v1.RegisterRepositoryRequest, opts ...grpc.CallOption) (*v1.RegisterRepositoryResponse, error)
+	ListRemoteRepositoriesFromProvider(ctx context.Context, in *v1.ListRemoteRepositoriesFromProviderRequest, opts ...grpc.CallOption) (*v1.ListRemoteRepositoriesFromProviderResponse, error)
+	ListRepositories(ctx context.Context, in *v1.ListRepositoriesRequest, opts ...grpc.CallOption) (*v1.ListRepositoriesResponse, error)
+	GetRepositoryById(ctx context.Context, in *v1.GetRepositoryByIdRequest, opts ...grpc.CallOption) (*v1.GetRepositoryByIdResponse, error)
+	GetRepositoryByName(ctx context.Context, in *v1.GetRepositoryByNameRequest, opts ...grpc.CallOption) (*v1.GetRepositoryByNameResponse, error)
 }
 
 type repositoryServiceClient struct {
@@ -600,8 +601,8 @@ func NewRepositoryServiceClient(cc grpc.ClientConnInterface) RepositoryServiceCl
 	return &repositoryServiceClient{cc}
 }
 
-func (c *repositoryServiceClient) RegisterRepository(ctx context.Context, in *RegisterRepositoryRequest, opts ...grpc.CallOption) (*RegisterRepositoryResponse, error) {
-	out := new(RegisterRepositoryResponse)
+func (c *repositoryServiceClient) RegisterRepository(ctx context.Context, in *v1.RegisterRepositoryRequest, opts ...grpc.CallOption) (*v1.RegisterRepositoryResponse, error) {
+	out := new(v1.RegisterRepositoryResponse)
 	err := c.cc.Invoke(ctx, RepositoryService_RegisterRepository_FullMethodName, in, out, opts...)
 	if err != nil {
 		return nil, err
@@ -609,8 +610,8 @@ func (c *repositoryServiceClient) RegisterRepository(ctx context.Context, in *Re
 	return out, nil
 }
 
-func (c *repositoryServiceClient) ListRemoteRepositoriesFromProvider(ctx context.Context, in *ListRemoteRepositoriesFromProviderRequest, opts ...grpc.CallOption) (*ListRemoteRepositoriesFromProviderResponse, error) {
-	out := new(ListRemoteRepositoriesFromProviderResponse)
+func (c *repositoryServiceClient) ListRemoteRepositoriesFromProvider(ctx context.Context, in *v1.ListRemoteRepositoriesFromProviderRequest, opts ...grpc.CallOption) (*v1.ListRemoteRepositoriesFromProviderResponse, error) {
+	out := new(v1.ListRemoteRepositoriesFromProviderResponse)
 	err := c.cc.Invoke(ctx, RepositoryService_ListRemoteRepositoriesFromProvider_FullMethodName, in, out, opts...)
 	if err != nil {
 		return nil, err
@@ -618,8 +619,8 @@ func (c *repositoryServiceClient) ListRemoteRepositoriesFromProvider(ctx context
 	return out, nil
 }
 
-func (c *repositoryServiceClient) ListRepositories(ctx context.Context, in *ListRepositoriesRequest, opts ...grpc.CallOption) (*ListRepositoriesResponse, error) {
-	out := new(ListRepositoriesResponse)
+func (c *repositoryServiceClient) ListRepositories(ctx context.Context, in *v1.ListRepositoriesRequest, opts ...grpc.CallOption) (*v1.ListRepositoriesResponse, error) {
+	out := new(v1.ListRepositoriesResponse)
 	err := c.cc.Invoke(ctx, RepositoryService_ListRepositories_FullMethodName, in, out, opts...)
 	if err != nil {
 		return nil, err
@@ -627,8 +628,8 @@ func (c *repositoryServiceClient) ListRepositories(ctx context.Context, in *List
 	return out, nil
 }
 
-func (c *repositoryServiceClient) GetRepositoryById(ctx context.Context, in *GetRepositoryByIdRequest, opts ...grpc.CallOption) (*GetRepositoryByIdResponse, error) {
-	out := new(GetRepositoryByIdResponse)
+func (c *repositoryServiceClient) GetRepositoryById(ctx context.Context, in *v1.GetRepositoryByIdRequest, opts ...grpc.CallOption) (*v1.GetRepositoryByIdResponse, error) {
+	out := new(v1.GetRepositoryByIdResponse)
 	err := c.cc.Invoke(ctx, RepositoryService_GetRepositoryById_FullMethodName, in, out, opts...)
 	if err != nil {
 		return nil, err
@@ -636,8 +637,8 @@ func (c *repositoryServiceClient) GetRepositoryById(ctx context.Context, in *Get
 	return out, nil
 }
 
-func (c *repositoryServiceClient) GetRepositoryByName(ctx context.Context, in *GetRepositoryByNameRequest, opts ...grpc.CallOption) (*GetRepositoryByNameResponse, error) {
-	out := new(GetRepositoryByNameResponse)
+func (c *repositoryServiceClient) GetRepositoryByName(ctx context.Context, in *v1.GetRepositoryByNameRequest, opts ...grpc.CallOption) (*v1.GetRepositoryByNameResponse, error) {
+	out := new(v1.GetRepositoryByNameResponse)
 	err := c.cc.Invoke(ctx, RepositoryService_GetRepositoryByName_FullMethodName, in, out, opts...)
 	if err != nil {
 		return nil, err
@@ -649,11 +650,11 @@ func (c *repositoryServiceClient) GetRepositoryByName(ctx context.Context, in *G
 // All implementations must embed UnimplementedRepositoryServiceServer
 // for forward compatibility
 type RepositoryServiceServer interface {
-	RegisterRepository(context.Context, *RegisterRepositoryRequest) (*RegisterRepositoryResponse, error)
-	ListRemoteRepositoriesFromProvider(context.Context, *ListRemoteRepositoriesFromProviderRequest) (*ListRemoteRepositoriesFromProviderResponse, error)
-	ListRepositories(context.Context, *ListRepositoriesRequest) (*ListRepositoriesResponse, error)
-	GetRepositoryById(context.Context, *GetRepositoryByIdRequest) (*GetRepositoryByIdResponse, error)
-	GetRepositoryByName(context.Context, *GetRepositoryByNameRequest) (*GetRepositoryByNameResponse, error)
+	RegisterRepository(context.Context, *v1.RegisterRepositoryRequest) (*v1.RegisterRepositoryResponse, error)
+	ListRemoteRepositoriesFromProvider(context.Context, *v1.ListRemoteRepositoriesFromProviderRequest) (*v1.ListRemoteRepositoriesFromProviderResponse, error)
+	ListRepositories(context.Context, *v1.ListRepositoriesRequest) (*v1.ListRepositoriesResponse, error)
+	GetRepositoryById(context.Context, *v1.GetRepositoryByIdRequest) (*v1.GetRepositoryByIdResponse, error)
+	GetRepositoryByName(context.Context, *v1.GetRepositoryByNameRequest) (*v1.GetRepositoryByNameResponse, error)
 	mustEmbedUnimplementedRepositoryServiceServer()
 }
 
@@ -661,19 +662,19 @@ type RepositoryServiceServer interface {
 type UnimplementedRepositoryServiceServer struct {
 }
 
-func (UnimplementedRepositoryServiceServer) RegisterRepository(context.Context, *RegisterRepositoryRequest) (*RegisterRepositoryResponse, error) {
+func (UnimplementedRepositoryServiceServer) RegisterRepository(context.Context, *v1.RegisterRepositoryRequest) (*v1.RegisterRepositoryResponse, error) {
 	return nil, status.Errorf(codes.Unimplemented, "method RegisterRepository not implemented")
 }
-func (UnimplementedRepositoryServiceServer) ListRemoteRepositoriesFromProvider(context.Context, *ListRemoteRepositoriesFromProviderRequest) (*ListRemoteRepositoriesFromProviderResponse, error) {
+func (UnimplementedRepositoryServiceServer) ListRemoteRepositoriesFromProvider(context.Context, *v1.ListRemoteRepositoriesFromProviderRequest) (*v1.ListRemoteRepositoriesFromProviderResponse, error) {
 	return nil, status.Errorf(codes.Unimplemented, "method ListRemoteRepositoriesFromProvider not implemented")
 }
-func (UnimplementedRepositoryServiceServer) ListRepositories(context.Context, *ListRepositoriesRequest) (*ListRepositoriesResponse, error) {
+func (UnimplementedRepositoryServiceServer) ListRepositories(context.Context, *v1.ListRepositoriesRequest) (*v1.ListRepositoriesResponse, error) {
 	return nil, status.Errorf(codes.Unimplemented, "method ListRepositories not implemented")
 }
-func (UnimplementedRepositoryServiceServer) GetRepositoryById(context.Context, *GetRepositoryByIdRequest) (*GetRepositoryByIdResponse, error) {
+func (UnimplementedRepositoryServiceServer) GetRepositoryById(context.Context, *v1.GetRepositoryByIdRequest) (*v1.GetRepositoryByIdResponse, error) {
 	return nil, status.Errorf(codes.Unimplemented, "method GetRepositoryById not implemented")
 }
-func (UnimplementedRepositoryServiceServer) GetRepositoryByName(context.Context, *GetRepositoryByNameRequest) (*GetRepositoryByNameResponse, error) {
+func (UnimplementedRepositoryServiceServer) GetRepositoryByName(context.Context, *v1.GetRepositoryByNameRequest) (*v1.GetRepositoryByNameResponse, error) {
 	return nil, status.Errorf(codes.Unimplemented, "method GetRepositoryByName not implemented")
 }
 func (UnimplementedRepositoryServiceServer) mustEmbedUnimplementedRepositoryServiceServer() {}
@@ -690,7 +691,7 @@ func RegisterRepositoryServiceServer(s grpc.ServiceRegistrar, srv RepositoryServ
 }
 
 func _RepositoryService_RegisterRepository_Handler(srv interface{}, ctx context.Context, dec func(interface{}) error, interceptor grpc.UnaryServerInterceptor) (interface{}, error) {
-	in := new(RegisterRepositoryRequest)
+	in := new(v1.RegisterRepositoryRequest)
 	if err := dec(in); err != nil {
 		return nil, err
 	}
@@ -702,13 +703,13 @@ func _RepositoryService_RegisterRepository_Handler(srv interface{}, ctx context.
 		FullMethod: RepositoryService_RegisterRepository_FullMethodName,
 	}
 	handler := func(ctx context.Context, req interface{}) (interface{}, error) {
-		return srv.(RepositoryServiceServer).RegisterRepository(ctx, req.(*RegisterRepositoryRequest))
+		return srv.(RepositoryServiceServer).RegisterRepository(ctx, req.(*v1.RegisterRepositoryRequest))
 	}
 	return interceptor(ctx, in, info, handler)
 }
 
 func _RepositoryService_ListRemoteRepositoriesFromProvider_Handler(srv interface{}, ctx context.Context, dec func(interface{}) error, interceptor grpc.UnaryServerInterceptor) (interface{}, error) {
-	in := new(ListRemoteRepositoriesFromProviderRequest)
+	in := new(v1.ListRemoteRepositoriesFromProviderRequest)
 	if err := dec(in); err != nil {
 		return nil, err
 	}
@@ -720,13 +721,13 @@ func _RepositoryService_ListRemoteRepositoriesFromProvider_Handler(srv interface
 		FullMethod: RepositoryService_ListRemoteRepositoriesFromProvider_FullMethodName,
 	}
 	handler := func(ctx context.Context, req interface{}) (interface{}, error) {
-		return srv.(RepositoryServiceServer).ListRemoteRepositoriesFromProvider(ctx, req.(*ListRemoteRepositoriesFromProviderRequest))
+		return srv.(RepositoryServiceServer).ListRemoteRepositoriesFromProvider(ctx, req.(*v1.ListRemoteRepositoriesFromProviderRequest))
 	}
 	return interceptor(ctx, in, info, handler)
 }
 
 func _RepositoryService_ListRepositories_Handler(srv interface{}, ctx context.Context, dec func(interface{}) error, interceptor grpc.UnaryServerInterceptor) (interface{}, error) {
-	in := new(ListRepositoriesRequest)
+	in := new(v1.ListRepositoriesRequest)
 	if err := dec(in); err != nil {
 		return nil, err
 	}
@@ -738,13 +739,13 @@ func _RepositoryService_ListRepositories_Handler(srv interface{}, ctx context.Co
 		FullMethod: RepositoryService_ListRepositories_FullMethodName,
 	}
 	handler := func(ctx context.Context, req interface{}) (interface{}, error) {
-		return srv.(RepositoryServiceServer).ListRepositories(ctx, req.(*ListRepositoriesRequest))
+		return srv.(RepositoryServiceServer).ListRepositories(ctx, req.(*v1.ListRepositoriesRequest))
 	}
 	return interceptor(ctx, in, info, handler)
 }
 
 func _RepositoryService_GetRepositoryById_Handler(srv interface{}, ctx context.Context, dec func(interface{}) error, interceptor grpc.UnaryServerInterceptor) (interface{}, error) {
-	in := new(GetRepositoryByIdRequest)
+	in := new(v1.GetRepositoryByIdRequest)
 	if err := dec(in); err != nil {
 		return nil, err
 	}
@@ -756,13 +757,13 @@ func _RepositoryService_GetRepositoryById_Handler(srv interface{}, ctx context.C
 		FullMethod: RepositoryService_GetRepositoryById_FullMethodName,
 	}
 	handler := func(ctx context.Context, req interface{}) (interface{}, error) {
-		return srv.(RepositoryServiceServer).GetRepositoryById(ctx, req.(*GetRepositoryByIdRequest))
+		return srv.(RepositoryServiceServer).GetRepositoryById(ctx, req.(*v1.GetRepositoryByIdRequest))
 	}
 	return interceptor(ctx, in, info, handler)
 }
 
 func _RepositoryService_GetRepositoryByName_Handler(srv interface{}, ctx context.Context, dec func(interface{}) error, interceptor grpc.UnaryServerInterceptor) (interface{}, error) {
-	in := new(GetRepositoryByNameRequest)
+	in := new(v1.GetRepositoryByNameRequest)
 	if err := dec(in); err != nil {
 		return nil, err
 	}
@@ -774,7 +775,7 @@ func _RepositoryService_GetRepositoryByName_Handler(srv interface{}, ctx context
 		FullMethod: RepositoryService_GetRepositoryByName_FullMethodName,
 	}
 	handler := func(ctx context.Context, req interface{}) (interface{}, error) {
-		return srv.(RepositoryServiceServer).GetRepositoryByName(ctx, req.(*GetRepositoryByNameRequest))
+		return srv.(RepositoryServiceServer).GetRepositoryByName(ctx, req.(*v1.GetRepositoryByNameRequest))
 	}
 	return interceptor(ctx, in, info, handler)
 }
@@ -819,7 +820,7 @@ const (
 //
 // For semantics around ctx use and closing/ending streaming RPCs, please refer to https://pkg.go.dev/google.golang.org/grpc/?tab=doc#ClientConn.NewStream.
 type BranchProtectionServiceClient interface {
-	GetBranchProtection(ctx context.Context, in *GetBranchProtectionRequest, opts ...grpc.CallOption) (*GetBranchProtectionResponse, error)
+	GetBranchProtection(ctx context.Context, in *v1.GetBranchProtectionRequest, opts ...grpc.CallOption) (*v1.GetBranchProtectionResponse, error)
 }
 
 type branchProtectionServiceClient struct {
@@ -830,8 +831,8 @@ func NewBranchProtectionServiceClient(cc grpc.ClientConnInterface) BranchProtect
 	return &branchProtectionServiceClient{cc}
 }
 
-func (c *branchProtectionServiceClient) GetBranchProtection(ctx context.Context, in *GetBranchProtectionRequest, opts ...grpc.CallOption) (*GetBranchProtectionResponse, error) {
-	out := new(GetBranchProtectionResponse)
+func (c *branchProtectionServiceClient) GetBranchProtection(ctx context.Context, in *v1.GetBranchProtectionRequest, opts ...grpc.CallOption) (*v1.GetBranchProtectionResponse, error) {
+	out := new(v1.GetBranchProtectionResponse)
 	err := c.cc.Invoke(ctx, BranchProtectionService_GetBranchProtection_FullMethodName, in, out, opts...)
 	if err != nil {
 		return nil, err
@@ -843,7 +844,7 @@ func (c *branchProtectionServiceClient) GetBranchProtection(ctx context.Context,
 // All implementations must embed UnimplementedBranchProtectionServiceServer
 // for forward compatibility
 type BranchProtectionServiceServer interface {
-	GetBranchProtection(context.Context, *GetBranchProtectionRequest) (*GetBranchProtectionResponse, error)
+	GetBranchProtection(context.Context, *v1.GetBranchProtectionRequest) (*v1.GetBranchProtectionResponse, error)
 	mustEmbedUnimplementedBranchProtectionServiceServer()
 }
 
@@ -851,7 +852,7 @@ type BranchProtectionServiceServer interface {
 type UnimplementedBranchProtectionServiceServer struct {
 }
 
-func (UnimplementedBranchProtectionServiceServer) GetBranchProtection(context.Context, *GetBranchProtectionRequest) (*GetBranchProtectionResponse, error) {
+func (UnimplementedBranchProtectionServiceServer) GetBranchProtection(context.Context, *v1.GetBranchProtectionRequest) (*v1.GetBranchProtectionResponse, error) {
 	return nil, status.Errorf(codes.Unimplemented, "method GetBranchProtection not implemented")
 }
 func (UnimplementedBranchProtectionServiceServer) mustEmbedUnimplementedBranchProtectionServiceServer() {
@@ -869,7 +870,7 @@ func RegisterBranchProtectionServiceServer(s grpc.ServiceRegistrar, srv BranchPr
 }
 
 func _BranchProtectionService_GetBranchProtection_Handler(srv interface{}, ctx context.Context, dec func(interface{}) error, interceptor grpc.UnaryServerInterceptor) (interface{}, error) {
-	in := new(GetBranchProtectionRequest)
+	in := new(v1.GetBranchProtectionRequest)
 	if err := dec(in); err != nil {
 		return nil, err
 	}
@@ -881,7 +882,7 @@ func _BranchProtectionService_GetBranchProtection_Handler(srv interface{}, ctx c
 		FullMethod: BranchProtectionService_GetBranchProtection_FullMethodName,
 	}
 	handler := func(ctx context.Context, req interface{}) (interface{}, error) {
-		return srv.(BranchProtectionServiceServer).GetBranchProtection(ctx, req.(*GetBranchProtectionRequest))
+		return srv.(BranchProtectionServiceServer).GetBranchProtection(ctx, req.(*v1.GetBranchProtectionRequest))
 	}
 	return interceptor(ctx, in, info, handler)
 }
@@ -912,9 +913,9 @@ const (
 //
 // For semantics around ctx use and closing/ending streaming RPCs, please refer to https://pkg.go.dev/google.golang.org/grpc/?tab=doc#ClientConn.NewStream.
 type UserServiceClient interface {
-	CreateUser(ctx context.Context, in *CreateUserRequest, opts ...grpc.CallOption) (*CreateUserResponse, error)
-	DeleteUser(ctx context.Context, in *DeleteUserRequest, opts ...grpc.CallOption) (*DeleteUserResponse, error)
-	GetUser(ctx context.Context, in *GetUserRequest, opts ...grpc.CallOption) (*GetUserResponse, error)
+	CreateUser(ctx context.Context, in *v1.CreateUserRequest, opts ...grpc.CallOption) (*v1.CreateUserResponse, error)
+	DeleteUser(ctx context.Context, in *v1.DeleteUserRequest, opts ...grpc.CallOption) (*v1.DeleteUserResponse, error)
+	GetUser(ctx context.Context, in *v1.GetUserRequest, opts ...grpc.CallOption) (*v1.GetUserResponse, error)
 }
 
 type userServiceClient struct {
@@ -925,8 +926,8 @@ func NewUserServiceClient(cc grpc.ClientConnInterface) UserServiceClient {
 	return &userServiceClient{cc}
 }
 
-func (c *userServiceClient) CreateUser(ctx context.Context, in *CreateUserRequest, opts ...grpc.CallOption) (*CreateUserResponse, error) {
-	out := new(CreateUserResponse)
+func (c *userServiceClient) CreateUser(ctx context.Context, in *v1.CreateUserRequest, opts ...grpc.CallOption) (*v1.CreateUserResponse, error) {
+	out := new(v1.CreateUserResponse)
 	err := c.cc.Invoke(ctx, UserService_CreateUser_FullMethodName, in, out, opts...)
 	if err != nil {
 		return nil, err
@@ -934,8 +935,8 @@ func (c *userServiceClient) CreateUser(ctx context.Context, in *CreateUserReques
 	return out, nil
 }
 
-func (c *userServiceClient) DeleteUser(ctx context.Context, in *DeleteUserRequest, opts ...grpc.CallOption) (*DeleteUserResponse, error) {
-	out := new(DeleteUserResponse)
+func (c *userServiceClient) DeleteUser(ctx context.Context, in *v1.DeleteUserRequest, opts ...grpc.CallOption) (*v1.DeleteUserResponse, error) {
+	out := new(v1.DeleteUserResponse)
 	err := c.cc.Invoke(ctx, UserService_DeleteUser_FullMethodName, in, out, opts...)
 	if err != nil {
 		return nil, err
@@ -943,8 +944,8 @@ func (c *userServiceClient) DeleteUser(ctx context.Context, in *DeleteUserReques
 	return out, nil
 }
 
-func (c *userServiceClient) GetUser(ctx context.Context, in *GetUserRequest, opts ...grpc.CallOption) (*GetUserResponse, error) {
-	out := new(GetUserResponse)
+func (c *userServiceClient) GetUser(ctx context.Context, in *v1.GetUserRequest, opts ...grpc.CallOption) (*v1.GetUserResponse, error) {
+	out := new(v1.GetUserResponse)
 	err := c.cc.Invoke(ctx, UserService_GetUser_FullMethodName, in, out, opts...)
 	if err != nil {
 		return nil, err
@@ -956,9 +957,9 @@ func (c *userServiceClient) GetUser(ctx context.Context, in *GetUserRequest, opt
 // All implementations must embed UnimplementedUserServiceServer
 // for forward compatibility
 type UserServiceServer interface {
-	CreateUser(context.Context, *CreateUserRequest) (*CreateUserResponse, error)
-	DeleteUser(context.Context, *DeleteUserRequest) (*DeleteUserResponse, error)
-	GetUser(context.Context, *GetUserRequest) (*GetUserResponse, error)
+	CreateUser(context.Context, *v1.CreateUserRequest) (*v1.CreateUserResponse, error)
+	DeleteUser(context.Context, *v1.DeleteUserRequest) (*v1.DeleteUserResponse, error)
+	GetUser(context.Context, *v1.GetUserRequest) (*v1.GetUserResponse, error)
 	mustEmbedUnimplementedUserServiceServer()
 }
 
@@ -966,13 +967,13 @@ type UserServiceServer interface {
 type UnimplementedUserServiceServer struct {
 }
 
-func (UnimplementedUserServiceServer) CreateUser(context.Context, *CreateUserRequest) (*CreateUserResponse, error) {
+func (UnimplementedUserServiceServer) CreateUser(context.Context, *v1.CreateUserRequest) (*v1.CreateUserResponse, error) {
 	return nil, status.Errorf(codes.Unimplemented, "method CreateUser not implemented")
 }
-func (UnimplementedUserServiceServer) DeleteUser(context.Context, *DeleteUserRequest) (*DeleteUserResponse, error) {
+func (UnimplementedUserServiceServer) DeleteUser(context.Context, *v1.DeleteUserRequest) (*v1.DeleteUserResponse, error) {
 	return nil, status.Errorf(codes.Unimplemented, "method DeleteUser not implemented")
 }
-func (UnimplementedUserServiceServer) GetUser(context.Context, *GetUserRequest) (*GetUserResponse, error) {
+func (UnimplementedUserServiceServer) GetUser(context.Context, *v1.GetUserRequest) (*v1.GetUserResponse, error) {
 	return nil, status.Errorf(codes.Unimplemented, "method GetUser not implemented")
 }
 func (UnimplementedUserServiceServer) mustEmbedUnimplementedUserServiceServer() {}
@@ -989,7 +990,7 @@ func RegisterUserServiceServer(s grpc.ServiceRegistrar, srv UserServiceServer) {
 }
 
 func _UserService_CreateUser_Handler(srv interface{}, ctx context.Context, dec func(interface{}) error, interceptor grpc.UnaryServerInterceptor) (interface{}, error) {
-	in := new(CreateUserRequest)
+	in := new(v1.CreateUserRequest)
 	if err := dec(in); err != nil {
 		return nil, err
 	}
@@ -1001,13 +1002,13 @@ func _UserService_CreateUser_Handler(srv interface{}, ctx context.Context, dec f
 		FullMethod: UserService_CreateUser_FullMethodName,
 	}
 	handler := func(ctx context.Context, req interface{}) (interface{}, error) {
-		return srv.(UserServiceServer).CreateUser(ctx, req.(*CreateUserRequest))
+		return srv.(UserServiceServer).CreateUser(ctx, req.(*v1.CreateUserRequest))
 	}
 	return interceptor(ctx, in, info, handler)
 }
 
 func _UserService_DeleteUser_Handler(srv interface{}, ctx context.Context, dec func(interface{}) error, interceptor grpc.UnaryServerInterceptor) (interface{}, error) {
-	in := new(DeleteUserRequest)
+	in := new(v1.DeleteUserRequest)
 	if err := dec(in); err != nil {
 		return nil, err
 	}
@@ -1019,13 +1020,13 @@ func _UserService_DeleteUser_Handler(srv interface{}, ctx context.Context, dec f
 		FullMethod: UserService_DeleteUser_FullMethodName,
 	}
 	handler := func(ctx context.Context, req interface{}) (interface{}, error) {
-		return srv.(UserServiceServer).DeleteUser(ctx, req.(*DeleteUserRequest))
+		return srv.(UserServiceServer).DeleteUser(ctx, req.(*v1.DeleteUserRequest))
 	}
 	return interceptor(ctx, in, info, handler)
 }
 
 func _UserService_GetUser_Handler(srv interface{}, ctx context.Context, dec func(interface{}) error, interceptor grpc.UnaryServerInterceptor) (interface{}, error) {
-	in := new(GetUserRequest)
+	in := new(v1.GetUserRequest)
 	if err := dec(in); err != nil {
 		return nil, err
 	}
@@ -1037,7 +1038,7 @@ func _UserService_GetUser_Handler(srv interface{}, ctx context.Context, dec func
 		FullMethod: UserService_GetUser_FullMethodName,
 	}
 	handler := func(ctx context.Context, req interface{}) (interface{}, error) {
-		return srv.(UserServiceServer).GetUser(ctx, req.(*GetUserRequest))
+		return srv.(UserServiceServer).GetUser(ctx, req.(*v1.GetUserRequest))
 	}
 	return interceptor(ctx, in, info, handler)
 }
@@ -1085,18 +1086,18 @@ const (
 //
 // For semantics around ctx use and closing/ending streaming RPCs, please refer to https://pkg.go.dev/google.golang.org/grpc/?tab=doc#ClientConn.NewStream.
 type ProfileServiceClient interface {
-	CreateProfile(ctx context.Context, in *CreateProfileRequest, opts ...grpc.CallOption) (*CreateProfileResponse, error)
-	DeleteProfile(ctx context.Context, in *DeleteProfileRequest, opts ...grpc.CallOption) (*DeleteProfileResponse, error)
-	ListProfiles(ctx context.Context, in *ListProfilesRequest, opts ...grpc.CallOption) (*ListProfilesResponse, error)
-	GetProfileById(ctx context.Context, in *GetProfileByIdRequest, opts ...grpc.CallOption) (*GetProfileByIdResponse, error)
-	GetProfileStatusByName(ctx context.Context, in *GetProfileStatusByNameRequest, opts ...grpc.CallOption) (*GetProfileStatusByNameResponse, error)
-	GetProfileStatusByProject(ctx context.Context, in *GetProfileStatusByProjectRequest, opts ...grpc.CallOption) (*GetProfileStatusByProjectResponse, error)
-	ListRuleTypes(ctx context.Context, in *ListRuleTypesRequest, opts ...grpc.CallOption) (*ListRuleTypesResponse, error)
-	GetRuleTypeByName(ctx context.Context, in *GetRuleTypeByNameRequest, opts ...grpc.CallOption) (*GetRuleTypeByNameResponse, error)
-	GetRuleTypeById(ctx context.Context, in *GetRuleTypeByIdRequest, opts ...grpc.CallOption) (*GetRuleTypeByIdResponse, error)
-	CreateRuleType(ctx context.Context, in *CreateRuleTypeRequest, opts ...grpc.CallOption) (*CreateRuleTypeResponse, error)
-	UpdateRuleType(ctx context.Context, in *UpdateRuleTypeRequest, opts ...grpc.CallOption) (*UpdateRuleTypeResponse, error)
-	DeleteRuleType(ctx context.Context, in *DeleteRuleTypeRequest, opts ...grpc.CallOption) (*DeleteRuleTypeResponse, error)
+	CreateProfile(ctx context.Context, in *v1.CreateProfileRequest, opts ...grpc.CallOption) (*v1.CreateProfileResponse, error)
+	DeleteProfile(ctx context.Context, in *v1.DeleteProfileRequest, opts ...grpc.CallOption) (*v1.DeleteProfileResponse, error)
+	ListProfiles(ctx context.Context, in *v1.ListProfilesRequest, opts ...grpc.CallOption) (*v1.ListProfilesResponse, error)
+	GetProfileById(ctx context.Context, in *v1.GetProfileByIdRequest, opts ...grpc.CallOption) (*v1.GetProfileByIdResponse, error)
+	GetProfileStatusByName(ctx context.Context, in *v1.GetProfileStatusByNameRequest, opts ...grpc.CallOption) (*v1.GetProfileStatusByNameResponse, error)
+	GetProfileStatusByProject(ctx context.Context, in *v1.GetProfileStatusByProjectRequest, opts ...grpc.CallOption) (*v1.GetProfileStatusByProjectResponse, error)
+	ListRuleTypes(ctx context.Context, in *v1.ListRuleTypesRequest, opts ...grpc.CallOption) (*v1.ListRuleTypesResponse, error)
+	GetRuleTypeByName(ctx context.Context, in *v1.GetRuleTypeByNameRequest, opts ...grpc.CallOption) (*v1.GetRuleTypeByNameResponse, error)
+	GetRuleTypeById(ctx context.Context, in *v1.GetRuleTypeByIdRequest, opts ...grpc.CallOption) (*v1.GetRuleTypeByIdResponse, error)
+	CreateRuleType(ctx context.Context, in *v1.CreateRuleTypeRequest, opts ...grpc.CallOption) (*v1.CreateRuleTypeResponse, error)
+	UpdateRuleType(ctx context.Context, in *v1.UpdateRuleTypeRequest, opts ...grpc.CallOption) (*v1.UpdateRuleTypeResponse, error)
+	DeleteRuleType(ctx context.Context, in *v1.DeleteRuleTypeRequest, opts ...grpc.CallOption) (*v1.DeleteRuleTypeResponse, error)
 }
 
 type profileServiceClient struct {
@@ -1107,8 +1108,8 @@ func NewProfileServiceClient(cc grpc.ClientConnInterface) ProfileServiceClient {
 	return &profileServiceClient{cc}
 }
 
-func (c *profileServiceClient) CreateProfile(ctx context.Context, in *CreateProfileRequest, opts ...grpc.CallOption) (*CreateProfileResponse, error) {
-	out := new(CreateProfileResponse)
+func (c *profileServiceClient) CreateProfile(ctx context.Context, in *v1.CreateProfileRequest, opts ...grpc.CallOption) (*v1.CreateProfileResponse, error) {
+	out := new(v1.CreateProfileResponse)
 	err := c.cc.Invoke(ctx, ProfileService_CreateProfile_FullMethodName, in, out, opts...)
 	if err != nil {
 		return nil, err
@@ -1116,8 +1117,8 @@ func (c *profileServiceClient) CreateProfile(ctx context.Context, in *CreateProf
 	return out, nil
 }
 
-func (c *profileServiceClient) DeleteProfile(ctx context.Context, in *DeleteProfileRequest, opts ...grpc.CallOption) (*DeleteProfileResponse, error) {
-	out := new(DeleteProfileResponse)
+func (c *profileServiceClient) DeleteProfile(ctx context.Context, in *v1.DeleteProfileRequest, opts ...grpc.CallOption) (*v1.DeleteProfileResponse, error) {
+	out := new(v1.DeleteProfileResponse)
 	err := c.cc.Invoke(ctx, ProfileService_DeleteProfile_FullMethodName, in, out, opts...)
 	if err != nil {
 		return nil, err
@@ -1125,8 +1126,8 @@ func (c *profileServiceClient) DeleteProfile(ctx context.Context, in *DeleteProf
 	return out, nil
 }
 
-func (c *profileServiceClient) ListProfiles(ctx context.Context, in *ListProfilesRequest, opts ...grpc.CallOption) (*ListProfilesResponse, error) {
-	out := new(ListProfilesResponse)
+func (c *profileServiceClient) ListProfiles(ctx context.Context, in *v1.ListProfilesRequest, opts ...grpc.CallOption) (*v1.ListProfilesResponse, error) {
+	out := new(v1.ListProfilesResponse)
 	err := c.cc.Invoke(ctx, ProfileService_ListProfiles_FullMethodName, in, out, opts...)
 	if err != nil {
 		return nil, err
@@ -1134,8 +1135,8 @@ func (c *profileServiceClient) ListProfiles(ctx context.Context, in *ListProfile
 	return out, nil
 }
 
-func (c *profileServiceClient) GetProfileById(ctx context.Context, in *GetProfileByIdRequest, opts ...grpc.CallOption) (*GetProfileByIdResponse, error) {
-	out := new(GetProfileByIdResponse)
+func (c *profileServiceClient) GetProfileById(ctx context.Context, in *v1.GetProfileByIdRequest, opts ...grpc.CallOption) (*v1.GetProfileByIdResponse, error) {
+	out := new(v1.GetProfileByIdResponse)
 	err := c.cc.Invoke(ctx, ProfileService_GetProfileById_FullMethodName, in, out, opts...)
 	if err != nil {
 		return nil, err
@@ -1143,8 +1144,8 @@ func (c *profileServiceClient) GetProfileById(ctx context.Context, in *GetProfil
 	return out, nil
 }
 
-func (c *profileServiceClient) GetProfileStatusByName(ctx context.Context, in *GetProfileStatusByNameRequest, opts ...grpc.CallOption) (*GetProfileStatusByNameResponse, error) {
-	out := new(GetProfileStatusByNameResponse)
+func (c *profileServiceClient) GetProfileStatusByName(ctx context.Context, in *v1.GetProfileStatusByNameRequest, opts ...grpc.CallOption) (*v1.GetProfileStatusByNameResponse, error) {
+	out := new(v1.GetProfileStatusByNameResponse)
 	err := c.cc.Invoke(ctx, ProfileService_GetProfileStatusByName_FullMethodName, in, out, opts...)
 	if err != nil {
 		return nil, err
@@ -1152,8 +1153,8 @@ func (c *profileServiceClient) GetProfileStatusByName(ctx context.Context, in *G
 	return out, nil
 }
 
-func (c *profileServiceClient) GetProfileStatusByProject(ctx context.Context, in *GetProfileStatusByProjectRequest, opts ...grpc.CallOption) (*GetProfileStatusByProjectResponse, error) {
-	out := new(GetProfileStatusByProjectResponse)
+func (c *profileServiceClient) GetProfileStatusByProject(ctx context.Context, in *v1.GetProfileStatusByProjectRequest, opts ...grpc.CallOption) (*v1.GetProfileStatusByProjectResponse, error) {
+	out := new(v1.GetProfileStatusByProjectResponse)
 	err := c.cc.Invoke(ctx, ProfileService_GetProfileStatusByProject_FullMethodName, in, out, opts...)
 	if err != nil {
 		return nil, err
@@ -1161,8 +1162,8 @@ func (c *profileServiceClient) GetProfileStatusByProject(ctx context.Context, in
 	return out, nil
 }
 
-func (c *profileServiceClient) ListRuleTypes(ctx context.Context, in *ListRuleTypesRequest, opts ...grpc.CallOption) (*ListRuleTypesResponse, error) {
-	out := new(ListRuleTypesResponse)
+func (c *profileServiceClient) ListRuleTypes(ctx context.Context, in *v1.ListRuleTypesRequest, opts ...grpc.CallOption) (*v1.ListRuleTypesResponse, error) {
+	out := new(v1.ListRuleTypesResponse)
 	err := c.cc.Invoke(ctx, ProfileService_ListRuleTypes_FullMethodName, in, out, opts...)
 	if err != nil {
 		return nil, err
@@ -1170,8 +1171,8 @@ func (c *profileServiceClient) ListRuleTypes(ctx context.Context, in *ListRuleTy
 	return out, nil
 }
 
-func (c *profileServiceClient) GetRuleTypeByName(ctx context.Context, in *GetRuleTypeByNameRequest, opts ...grpc.CallOption) (*GetRuleTypeByNameResponse, error) {
-	out := new(GetRuleTypeByNameResponse)
+func (c *profileServiceClient) GetRuleTypeByName(ctx context.Context, in *v1.GetRuleTypeByNameRequest, opts ...grpc.CallOption) (*v1.GetRuleTypeByNameResponse, error) {
+	out := new(v1.GetRuleTypeByNameResponse)
 	err := c.cc.Invoke(ctx, ProfileService_GetRuleTypeByName_FullMethodName, in, out, opts...)
 	if err != nil {
 		return nil, err
@@ -1179,8 +1180,8 @@ func (c *profileServiceClient) GetRuleTypeByName(ctx context.Context, in *GetRul
 	return out, nil
 }
 
-func (c *profileServiceClient) GetRuleTypeById(ctx context.Context, in *GetRuleTypeByIdRequest, opts ...grpc.CallOption) (*GetRuleTypeByIdResponse, error) {
-	out := new(GetRuleTypeByIdResponse)
+func (c *profileServiceClient) GetRuleTypeById(ctx context.Context, in *v1.GetRuleTypeByIdRequest, opts ...grpc.CallOption) (*v1.GetRuleTypeByIdResponse, error) {
+	out := new(v1.GetRuleTypeByIdResponse)
 	err := c.cc.Invoke(ctx, ProfileService_GetRuleTypeById_FullMethodName, in, out, opts...)
 	if err != nil {
 		return nil, err
@@ -1188,8 +1189,8 @@ func (c *profileServiceClient) GetRuleTypeById(ctx context.Context, in *GetRuleT
 	return out, nil
 }
 
-func (c *profileServiceClient) CreateRuleType(ctx context.Context, in *CreateRuleTypeRequest, opts ...grpc.CallOption) (*CreateRuleTypeResponse, error) {
-	out := new(CreateRuleTypeResponse)
+func (c *profileServiceClient) CreateRuleType(ctx context.Context, in *v1.CreateRuleTypeRequest, opts ...grpc.CallOption) (*v1.CreateRuleTypeResponse, error) {
+	out := new(v1.CreateRuleTypeResponse)
 	err := c.cc.Invoke(ctx, ProfileService_CreateRuleType_FullMethodName, in, out, opts...)
 	if err != nil {
 		return nil, err
@@ -1197,8 +1198,8 @@ func (c *profileServiceClient) CreateRuleType(ctx context.Context, in *CreateRul
 	return out, nil
 }
 
-func (c *profileServiceClient) UpdateRuleType(ctx context.Context, in *UpdateRuleTypeRequest, opts ...grpc.CallOption) (*UpdateRuleTypeResponse, error) {
-	out := new(UpdateRuleTypeResponse)
+func (c *profileServiceClient) UpdateRuleType(ctx context.Context, in *v1.UpdateRuleTypeRequest, opts ...grpc.CallOption) (*v1.UpdateRuleTypeResponse, error) {
+	out := new(v1.UpdateRuleTypeResponse)
 	err := c.cc.Invoke(ctx, ProfileService_UpdateRuleType_FullMethodName, in, out, opts...)
 	if err != nil {
 		return nil, err
@@ -1206,8 +1207,8 @@ func (c *profileServiceClient) UpdateRuleType(ctx context.Context, in *UpdateRul
 	return out, nil
 }
 
-func (c *profileServiceClient) DeleteRuleType(ctx context.Context, in *DeleteRuleTypeRequest, opts ...grpc.CallOption) (*DeleteRuleTypeResponse, error) {
-	out := new(DeleteRuleTypeResponse)
+func (c *profileServiceClient) DeleteRuleType(ctx context.Context, in *v1.DeleteRuleTypeRequest, opts ...grpc.CallOption) (*v1.DeleteRuleTypeResponse, error) {
+	out := new(v1.DeleteRuleTypeResponse)
 	err := c.cc.Invoke(ctx, ProfileService_DeleteRuleType_FullMethodName, in, out, opts...)
 	if err != nil {
 		return nil, err
@@ -1219,18 +1220,18 @@ func (c *profileServiceClient) DeleteRuleType(ctx context.Context, in *DeleteRul
 // All implementations must embed UnimplementedProfileServiceServer
 // for forward compatibility
 type ProfileServiceServer interface {
-	CreateProfile(context.Context, *CreateProfileRequest) (*CreateProfileResponse, error)
-	DeleteProfile(context.Context, *DeleteProfileRequest) (*DeleteProfileResponse, error)
-	ListProfiles(context.Context, *ListProfilesRequest) (*ListProfilesResponse, error)
-	GetProfileById(context.Context, *GetProfileByIdRequest) (*GetProfileByIdResponse, error)
-	GetProfileStatusByName(context.Context, *GetProfileStatusByNameRequest) (*GetProfileStatusByNameResponse, error)
-	GetProfileStatusByProject(context.Context, *GetProfileStatusByProjectRequest) (*GetProfileStatusByProjectResponse, error)
-	ListRuleTypes(context.Context, *ListRuleTypesRequest) (*ListRuleTypesResponse, error)
-	GetRuleTypeByName(context.Context, *GetRuleTypeByNameRequest) (*GetRuleTypeByNameResponse, error)
-	GetRuleTypeById(context.Context, *GetRuleTypeByIdRequest) (*GetRuleTypeByIdResponse, error)
-	CreateRuleType(context.Context, *CreateRuleTypeRequest) (*CreateRuleTypeResponse, error)
-	UpdateRuleType(context.Context, *UpdateRuleTypeRequest) (*UpdateRuleTypeResponse, error)
-	DeleteRuleType(context.Context, *DeleteRuleTypeRequest) (*DeleteRuleTypeResponse, error)
+	CreateProfile(context.Context, *v1.CreateProfileRequest) (*v1.CreateProfileResponse, error)
+	DeleteProfile(context.Context, *v1.DeleteProfileRequest) (*v1.DeleteProfileResponse, error)
+	ListProfiles(context.Context, *v1.ListProfilesRequest) (*v1.ListProfilesResponse, error)
+	GetProfileById(context.Context, *v1.GetProfileByIdRequest) (*v1.GetProfileByIdResponse, error)
+	GetProfileStatusByName(context.Context, *v1.GetProfileStatusByNameRequest) (*v1.GetProfileStatusByNameResponse, error)
+	GetProfileStatusByProject(context.Context, *v1.GetProfileStatusByProjectRequest) (*v1.GetProfileStatusByProjectResponse, error)
+	ListRuleTypes(context.Context, *v1.ListRuleTypesRequest) (*v1.ListRuleTypesResponse, error)
+	GetRuleTypeByName(context.Context, *v1.GetRuleTypeByNameRequest) (*v1.GetRuleTypeByNameResponse, error)
+	GetRuleTypeById(context.Context, *v1.GetRuleTypeByIdRequest) (*v1.GetRuleTypeByIdResponse, error)
+	CreateRuleType(context.Context, *v1.CreateRuleTypeRequest) (*v1.CreateRuleTypeResponse, error)
+	UpdateRuleType(context.Context, *v1.UpdateRuleTypeRequest) (*v1.UpdateRuleTypeResponse, error)
+	DeleteRuleType(context.Context, *v1.DeleteRuleTypeRequest) (*v1.DeleteRuleTypeResponse, error)
 	mustEmbedUnimplementedProfileServiceServer()
 }
 
@@ -1238,40 +1239,40 @@ type ProfileServiceServer interface {
 type UnimplementedProfileServiceServer struct {
 }
 
-func (UnimplementedProfileServiceServer) CreateProfile(context.Context, *CreateProfileRequest) (*CreateProfileResponse, error) {
+func (UnimplementedProfileServiceServer) CreateProfile(context.Context, *v1.CreateProfileRequest) (*v1.CreateProfileResponse, error) {
 	return nil, status.Errorf(codes.Unimplemented, "method CreateProfile not implemented")
 }
-func (UnimplementedProfileServiceServer) DeleteProfile(context.Context, *DeleteProfileRequest) (*DeleteProfileResponse, error) {
+func (UnimplementedProfileServiceServer) DeleteProfile(context.Context, *v1.DeleteProfileRequest) (*v1.DeleteProfileResponse, error) {
 	return nil, status.Errorf(codes.Unimplemented, "method DeleteProfile not implemented")
 }
-func (UnimplementedProfileServiceServer) ListProfiles(context.Context, *ListProfilesRequest) (*ListProfilesResponse, error) {
+func (UnimplementedProfileServiceServer) ListProfiles(context.Context, *v1.ListProfilesRequest) (*v1.ListProfilesResponse, error) {
 	return nil, status.Errorf(codes.Unimplemented, "method ListProfiles not implemented")
 }
-func (UnimplementedProfileServiceServer) GetProfileById(context.Context, *GetProfileByIdRequest) (*GetProfileByIdResponse, error) {
+func (UnimplementedProfileServiceServer) GetProfileById(context.Context, *v1.GetProfileByIdRequest) (*v1.GetProfileByIdResponse, error) {
 	return nil, status.Errorf(codes.Unimplemented, "method GetProfileById not implemented")
 }
-func (UnimplementedProfileServiceServer) GetProfileStatusByName(context.Context, *GetProfileStatusByNameRequest) (*GetProfileStatusByNameResponse, error) {
+func (UnimplementedProfileServiceServer) GetProfileStatusByName(context.Context, *v1.GetProfileStatusByNameRequest) (*v1.GetProfileStatusByNameResponse, error) {
 	return nil, status.Errorf(codes.Unimplemented, "method GetProfileStatusByName not implemented")
 }
-func (UnimplementedProfileServiceServer) GetProfileStatusByProject(context.Context, *GetProfileStatusByProjectRequest) (*GetProfileStatusByProjectResponse, error) {
+func (UnimplementedProfileServiceServer) GetProfileStatusByProject(context.Context, *v1.GetProfileStatusByProjectRequest) (*v1.GetProfileStatusByProjectResponse, error) {
 	return nil, status.Errorf(codes.Unimplemented, "method GetProfileStatusByProject not implemented")
 }
-func (UnimplementedProfileServiceServer) ListRuleTypes(context.Context, *ListRuleTypesRequest) (*ListRuleTypesResponse, error) {
+func (UnimplementedProfileServiceServer) ListRuleTypes(context.Context, *v1.ListRuleTypesRequest) (*v1.ListRuleTypesResponse, error) {
 	return nil, status.Errorf(codes.Unimplemented, "method ListRuleTypes not implemented")
 }
-func (UnimplementedProfileServiceServer) GetRuleTypeByName(context.Context, *GetRuleTypeByNameRequest) (*GetRuleTypeByNameResponse, error) {
+func (UnimplementedProfileServiceServer) GetRuleTypeByName(context.Context, *v1.GetRuleTypeByNameRequest) (*v1.GetRuleTypeByNameResponse, error) {
 	return nil, status.Errorf(codes.Unimplemented, "method GetRuleTypeByName not implemented")
 }
-func (UnimplementedProfileServiceServer) GetRuleTypeById(context.Context, *GetRuleTypeByIdRequest) (*GetRuleTypeByIdResponse, error) {
+func (UnimplementedProfileServiceServer) GetRuleTypeById(context.Context, *v1.GetRuleTypeByIdRequest) (*v1.GetRuleTypeByIdResponse, error) {
 	return nil, status.Errorf(codes.Unimplemented, "method GetRuleTypeById not implemented")
 }
-func (UnimplementedProfileServiceServer) CreateRuleType(context.Context, *CreateRuleTypeRequest) (*CreateRuleTypeResponse, error) {
+func (UnimplementedProfileServiceServer) CreateRuleType(context.Context, *v1.CreateRuleTypeRequest) (*v1.CreateRuleTypeResponse, error) {
 	return nil, status.Errorf(codes.Unimplemented, "method CreateRuleType not implemented")
 }
-func (UnimplementedProfileServiceServer) UpdateRuleType(context.Context, *UpdateRuleTypeRequest) (*UpdateRuleTypeResponse, error) {
+func (UnimplementedProfileServiceServer) UpdateRuleType(context.Context, *v1.UpdateRuleTypeRequest) (*v1.UpdateRuleTypeResponse, error) {
 	return nil, status.Errorf(codes.Unimplemented, "method UpdateRuleType not implemented")
 }
-func (UnimplementedProfileServiceServer) DeleteRuleType(context.Context, *DeleteRuleTypeRequest) (*DeleteRuleTypeResponse, error) {
+func (UnimplementedProfileServiceServer) DeleteRuleType(context.Context, *v1.DeleteRuleTypeRequest) (*v1.DeleteRuleTypeResponse, error) {
 	return nil, status.Errorf(codes.Unimplemented, "method DeleteRuleType not implemented")
 }
 func (UnimplementedProfileServiceServer) mustEmbedUnimplementedProfileServiceServer() {}
@@ -1288,7 +1289,7 @@ func RegisterProfileServiceServer(s grpc.ServiceRegistrar, srv ProfileServiceSer
 }
 
 func _ProfileService_CreateProfile_Handler(srv interface{}, ctx context.Context, dec func(interface{}) error, interceptor grpc.UnaryServerInterceptor) (interface{}, error) {
-	in := new(CreateProfileRequest)
+	in := new(v1.CreateProfileRequest)
 	if err := dec(in); err != nil {
 		return nil, err
 	}
@@ -1300,13 +1301,13 @@ func _ProfileService_CreateProfile_Handler(srv interface{}, ctx context.Context,
 		FullMethod: ProfileService_CreateProfile_FullMethodName,
 	}
 	handler := func(ctx context.Context, req interface{}) (interface{}, error) {
-		return srv.(ProfileServiceServer).CreateProfile(ctx, req.(*CreateProfileRequest))
+		return srv.(ProfileServiceServer).CreateProfile(ctx, req.(*v1.CreateProfileRequest))
 	}
 	return interceptor(ctx, in, info, handler)
 }
 
 func _ProfileService_DeleteProfile_Handler(srv interface{}, ctx context.Context, dec func(interface{}) error, interceptor grpc.UnaryServerInterceptor) (interface{}, error) {
-	in := new(DeleteProfileRequest)
+	in := new(v1.DeleteProfileRequest)
 	if err := dec(in); err != nil {
 		return nil, err
 	}
@@ -1318,13 +1319,13 @@ func _ProfileService_DeleteProfile_Handler(srv interface{}, ctx context.Context,
 		FullMethod: ProfileService_DeleteProfile_FullMethodName,
 	}
 	handler := func(ctx context.Context, req interface{}) (interface{}, error) {
-		return srv.(ProfileServiceServer).DeleteProfile(ctx, req.(*DeleteProfileRequest))
+		return srv.(ProfileServiceServer).DeleteProfile(ctx, req.(*v1.DeleteProfileRequest))
 	}
 	return interceptor(ctx, in, info, handler)
 }
 
 func _ProfileService_ListProfiles_Handler(srv interface{}, ctx context.Context, dec func(interface{}) error, interceptor grpc.UnaryServerInterceptor) (interface{}, error) {
-	in := new(ListProfilesRequest)
+	in := new(v1.ListProfilesRequest)
 	if err := dec(in); err != nil {
 		return nil, err
 	}
@@ -1336,13 +1337,13 @@ func _ProfileService_ListProfiles_Handler(srv interface{}, ctx context.Context, 
 		FullMethod: ProfileService_ListProfiles_FullMethodName,
 	}
 	handler := func(ctx context.Context, req interface{}) (interface{}, error) {
-		return srv.(ProfileServiceServer).ListProfiles(ctx, req.(*ListProfilesRequest))
+		return srv.(ProfileServiceServer).ListProfiles(ctx, req.(*v1.ListProfilesRequest))
 	}
 	return interceptor(ctx, in, info, handler)
 }
 
 func _ProfileService_GetProfileById_Handler(srv interface{}, ctx context.Context, dec func(interface{}) error, interceptor grpc.UnaryServerInterceptor) (interface{}, error) {
-	in := new(GetProfileByIdRequest)
+	in := new(v1.GetProfileByIdRequest)
 	if err := dec(in); err != nil {
 		return nil, err
 	}
@@ -1354,13 +1355,13 @@ func _ProfileService_GetProfileById_Handler(srv interface{}, ctx context.Context
 		FullMethod: ProfileService_GetProfileById_FullMethodName,
 	}
 	handler := func(ctx context.Context, req interface{}) (interface{}, error) {
-		return srv.(ProfileServiceServer).GetProfileById(ctx, req.(*GetProfileByIdRequest))
+		return srv.(ProfileServiceServer).GetProfileById(ctx, req.(*v1.GetProfileByIdRequest))
 	}
 	return interceptor(ctx, in, info, handler)
 }
 
 func _ProfileService_GetProfileStatusByName_Handler(srv interface{}, ctx context.Context, dec func(interface{}) error, interceptor grpc.UnaryServerInterceptor) (interface{}, error) {
-	in := new(GetProfileStatusByNameRequest)
+	in := new(v1.GetProfileStatusByNameRequest)
 	if err := dec(in); err != nil {
 		return nil, err
 	}
@@ -1372,13 +1373,13 @@ func _ProfileService_GetProfileStatusByName_Handler(srv interface{}, ctx context
 		FullMethod: ProfileService_GetProfileStatusByName_FullMethodName,
 	}
 	handler := func(ctx context.Context, req interface{}) (interface{}, error) {
-		return srv.(ProfileServiceServer).GetProfileStatusByName(ctx, req.(*GetProfileStatusByNameRequest))
+		return srv.(ProfileServiceServer).GetProfileStatusByName(ctx, req.(*v1.GetProfileStatusByNameRequest))
 	}
 	return interceptor(ctx, in, info, handler)
 }
 
 func _ProfileService_GetProfileStatusByProject_Handler(srv interface{}, ctx context.Context, dec func(interface{}) error, interceptor grpc.UnaryServerInterceptor) (interface{}, error) {
-	in := new(GetProfileStatusByProjectRequest)
+	in := new(v1.GetProfileStatusByProjectRequest)
 	if err := dec(in); err != nil {
 		return nil, err
 	}
@@ -1390,13 +1391,13 @@ func _ProfileService_GetProfileStatusByProject_Handler(srv interface{}, ctx cont
 		FullMethod: ProfileService_GetProfileStatusByProject_FullMethodName,
 	}
 	handler := func(ctx context.Context, req interface{}) (interface{}, error) {
-		return srv.(ProfileServiceServer).GetProfileStatusByProject(ctx, req.(*GetProfileStatusByProjectRequest))
+		return srv.(ProfileServiceServer).GetProfileStatusByProject(ctx, req.(*v1.GetProfileStatusByProjectRequest))
 	}
 	return interceptor(ctx, in, info, handler)
 }
 
 func _ProfileService_ListRuleTypes_Handler(srv interface{}, ctx context.Context, dec func(interface{}) error, interceptor grpc.UnaryServerInterceptor) (interface{}, error) {
-	in := new(ListRuleTypesRequest)
+	in := new(v1.ListRuleTypesRequest)
 	if err := dec(in); err != nil {
 		return nil, err
 	}
@@ -1408,13 +1409,13 @@ func _ProfileService_ListRuleTypes_Handler(srv interface{}, ctx context.Context,
 		FullMethod: ProfileService_ListRuleTypes_FullMethodName,
 	}
 	handler := func(ctx context.Context, req interface{}) (interface{}, error) {
-		return srv.(ProfileServiceServer).ListRuleTypes(ctx, req.(*ListRuleTypesRequest))
+		return srv.(ProfileServiceServer).ListRuleTypes(ctx, req.(*v1.ListRuleTypesRequest))
 	}
 	return interceptor(ctx, in, info, handler)
 }
 
 func _ProfileService_GetRuleTypeByName_Handler(srv interface{}, ctx context.Context, dec func(interface{}) error, interceptor grpc.UnaryServerInterceptor) (interface{}, error) {
-	in := new(GetRuleTypeByNameRequest)
+	in := new(v1.GetRuleTypeByNameRequest)
 	if err := dec(in); err != nil {
 		return nil, err
 	}
@@ -1426,13 +1427,13 @@ func _ProfileService_GetRuleTypeByName_Handler(srv interface{}, ctx context.Cont
 		FullMethod: ProfileService_GetRuleTypeByName_FullMethodName,
 	}
 	handler := func(ctx context.Context, req interface{}) (interface{}, error) {
-		return srv.(ProfileServiceServer).GetRuleTypeByName(ctx, req.(*GetRuleTypeByNameRequest))
+		return srv.(ProfileServiceServer).GetRuleTypeByName(ctx, req.(*v1.GetRuleTypeByNameRequest))
 	}
 	return interceptor(ctx, in, info, handler)
 }
 
 func _ProfileService_GetRuleTypeById_Handler(srv interface{}, ctx context.Context, dec func(interface{}) error, interceptor grpc.UnaryServerInterceptor) (interface{}, error) {
-	in := new(GetRuleTypeByIdRequest)
+	in := new(v1.GetRuleTypeByIdRequest)
 	if err := dec(in); err != nil {
 		return nil, err
 	}
@@ -1444,13 +1445,13 @@ func _ProfileService_GetRuleTypeById_Handler(srv interface{}, ctx context.Contex
 		FullMethod: ProfileService_GetRuleTypeById_FullMethodName,
 	}
 	handler := func(ctx context.Context, req interface{}) (interface{}, error) {
-		return srv.(ProfileServiceServer).GetRuleTypeById(ctx, req.(*GetRuleTypeByIdRequest))
+		return srv.(ProfileServiceServer).GetRuleTypeById(ctx, req.(*v1.GetRuleTypeByIdRequest))
 	}
 	return interceptor(ctx, in, info, handler)
 }
 
 func _ProfileService_CreateRuleType_Handler(srv interface{}, ctx context.Context, dec func(interface{}) error, interceptor grpc.UnaryServerInterceptor) (interface{}, error) {
-	in := new(CreateRuleTypeRequest)
+	in := new(v1.CreateRuleTypeRequest)
 	if err := dec(in); err != nil {
 		return nil, err
 	}
@@ -1462,13 +1463,13 @@ func _ProfileService_CreateRuleType_Handler(srv interface{}, ctx context.Context
 		FullMethod: ProfileService_CreateRuleType_FullMethodName,
 	}
 	handler := func(ctx context.Context, req interface{}) (interface{}, error) {
-		return srv.(ProfileServiceServer).CreateRuleType(ctx, req.(*CreateRuleTypeRequest))
+		return srv.(ProfileServiceServer).CreateRuleType(ctx, req.(*v1.CreateRuleTypeRequest))
 	}
 	return interceptor(ctx, in, info, handler)
 }
 
 func _ProfileService_UpdateRuleType_Handler(srv interface{}, ctx context.Context, dec func(interface{}) error, interceptor grpc.UnaryServerInterceptor) (interface{}, error) {
-	in := new(UpdateRuleTypeRequest)
+	in := new(v1.UpdateRuleTypeRequest)
 	if err := dec(in); err != nil {
 		return nil, err
 	}
@@ -1480,13 +1481,13 @@ func _ProfileService_UpdateRuleType_Handler(srv interface{}, ctx context.Context
 		FullMethod: ProfileService_UpdateRuleType_FullMethodName,
 	}
 	handler := func(ctx context.Context, req interface{}) (interface{}, error) {
-		return srv.(ProfileServiceServer).UpdateRuleType(ctx, req.(*UpdateRuleTypeRequest))
+		return srv.(ProfileServiceServer).UpdateRuleType(ctx, req.(*v1.UpdateRuleTypeRequest))
 	}
 	return interceptor(ctx, in, info, handler)
 }
 
 func _ProfileService_DeleteRuleType_Handler(srv interface{}, ctx context.Context, dec func(interface{}) error, interceptor grpc.UnaryServerInterceptor) (interface{}, error) {
-	in := new(DeleteRuleTypeRequest)
+	in := new(v1.DeleteRuleTypeRequest)
 	if err := dec(in); err != nil {
 		return nil, err
 	}
@@ -1498,7 +1499,7 @@ func _ProfileService_DeleteRuleType_Handler(srv interface{}, ctx context.Context
 		FullMethod: ProfileService_DeleteRuleType_FullMethodName,
 	}
 	handler := func(ctx context.Context, req interface{}) (interface{}, error) {
-		return srv.(ProfileServiceServer).DeleteRuleType(ctx, req.(*DeleteRuleTypeRequest))
+		return srv.(ProfileServiceServer).DeleteRuleType(ctx, req.(*v1.DeleteRuleTypeRequest))
 	}
 	return interceptor(ctx, in, info, handler)
 }
@@ -1572,8 +1573,8 @@ const (
 //
 // For semantics around ctx use and closing/ending streaming RPCs, please refer to https://pkg.go.dev/google.golang.org/grpc/?tab=doc#ClientConn.NewStream.
 type KeyServiceClient interface {
-	GetPublicKey(ctx context.Context, in *GetPublicKeyRequest, opts ...grpc.CallOption) (*GetPublicKeyResponse, error)
-	CreateKeyPair(ctx context.Context, in *CreateKeyPairRequest, opts ...grpc.CallOption) (*CreateKeyPairResponse, error)
+	GetPublicKey(ctx context.Context, in *v1.GetPublicKeyRequest, opts ...grpc.CallOption) (*v1.GetPublicKeyResponse, error)
+	CreateKeyPair(ctx context.Context, in *v1.CreateKeyPairRequest, opts ...grpc.CallOption) (*v1.CreateKeyPairResponse, error)
 }
 
 type keyServiceClient struct {
@@ -1584,8 +1585,8 @@ func NewKeyServiceClient(cc grpc.ClientConnInterface) KeyServiceClient {
 	return &keyServiceClient{cc}
 }
 
-func (c *keyServiceClient) GetPublicKey(ctx context.Context, in *GetPublicKeyRequest, opts ...grpc.CallOption) (*GetPublicKeyResponse, error) {
-	out := new(GetPublicKeyResponse)
+func (c *keyServiceClient) GetPublicKey(ctx context.Context, in *v1.GetPublicKeyRequest, opts ...grpc.CallOption) (*v1.GetPublicKeyResponse, error) {
+	out := new(v1.GetPublicKeyResponse)
 	err := c.cc.Invoke(ctx, KeyService_GetPublicKey_FullMethodName, in, out, opts...)
 	if err != nil {
 		return nil, err
@@ -1593,8 +1594,8 @@ func (c *keyServiceClient) GetPublicKey(ctx context.Context, in *GetPublicKeyReq
 	return out, nil
 }
 
-func (c *keyServiceClient) CreateKeyPair(ctx context.Context, in *CreateKeyPairRequest, opts ...grpc.CallOption) (*CreateKeyPairResponse, error) {
-	out := new(CreateKeyPairResponse)
+func (c *keyServiceClient) CreateKeyPair(ctx context.Context, in *v1.CreateKeyPairRequest, opts ...grpc.CallOption) (*v1.CreateKeyPairResponse, error) {
+	out := new(v1.CreateKeyPairResponse)
 	err := c.cc.Invoke(ctx, KeyService_CreateKeyPair_FullMethodName, in, out, opts...)
 	if err != nil {
 		return nil, err
@@ -1606,8 +1607,8 @@ func (c *keyServiceClient) CreateKeyPair(ctx context.Context, in *CreateKeyPairR
 // All implementations must embed UnimplementedKeyServiceServer
 // for forward compatibility
 type KeyServiceServer interface {
-	GetPublicKey(context.Context, *GetPublicKeyRequest) (*GetPublicKeyResponse, error)
-	CreateKeyPair(context.Context, *CreateKeyPairRequest) (*CreateKeyPairResponse, error)
+	GetPublicKey(context.Context, *v1.GetPublicKeyRequest) (*v1.GetPublicKeyResponse, error)
+	CreateKeyPair(context.Context, *v1.CreateKeyPairRequest) (*v1.CreateKeyPairResponse, error)
 	mustEmbedUnimplementedKeyServiceServer()
 }
 
@@ -1615,10 +1616,10 @@ type KeyServiceServer interface {
 type UnimplementedKeyServiceServer struct {
 }
 
-func (UnimplementedKeyServiceServer) GetPublicKey(context.Context, *GetPublicKeyRequest) (*GetPublicKeyResponse, error) {
+func (UnimplementedKeyServiceServer) GetPublicKey(context.Context, *v1.GetPublicKeyRequest) (*v1.GetPublicKeyResponse, error) {
 	return nil, status.Errorf(codes.Unimplemented, "method GetPublicKey not implemented")
 }
-func (UnimplementedKeyServiceServer) CreateKeyPair(context.Context, *CreateKeyPairRequest) (*CreateKeyPairResponse, error) {
+func (UnimplementedKeyServiceServer) CreateKeyPair(context.Context, *v1.CreateKeyPairRequest) (*v1.CreateKeyPairResponse, error) {
 	return nil, status.Errorf(codes.Unimplemented, "method CreateKeyPair not implemented")
 }
 func (UnimplementedKeyServiceServer) mustEmbedUnimplementedKeyServiceServer() {}
@@ -1635,7 +1636,7 @@ func RegisterKeyServiceServer(s grpc.ServiceRegistrar, srv KeyServiceServer) {
 }
 
 func _KeyService_GetPublicKey_Handler(srv interface{}, ctx context.Context, dec func(interface{}) error, interceptor grpc.UnaryServerInterceptor) (interface{}, error) {
-	in := new(GetPublicKeyRequest)
+	in := new(v1.GetPublicKeyRequest)
 	if err := dec(in); err != nil {
 		return nil, err
 	}
@@ -1647,13 +1648,13 @@ func _KeyService_GetPublicKey_Handler(srv interface{}, ctx context.Context, dec 
 		FullMethod: KeyService_GetPublicKey_FullMethodName,
 	}
 	handler := func(ctx context.Context, req interface{}) (interface{}, error) {
-		return srv.(KeyServiceServer).GetPublicKey(ctx, req.(*GetPublicKeyRequest))
+		return srv.(KeyServiceServer).GetPublicKey(ctx, req.(*v1.GetPublicKeyRequest))
 	}
 	return interceptor(ctx, in, info, handler)
 }
 
 func _KeyService_CreateKeyPair_Handler(srv interface{}, ctx context.Context, dec func(interface{}) error, interceptor grpc.UnaryServerInterceptor) (interface{}, error) {
-	in := new(CreateKeyPairRequest)
+	in := new(v1.CreateKeyPairRequest)
 	if err := dec(in); err != nil {
 		return nil, err
 	}
@@ -1665,7 +1666,7 @@ func _KeyService_CreateKeyPair_Handler(srv interface{}, ctx context.Context, dec
 		FullMethod: KeyService_CreateKeyPair_FullMethodName,
 	}
 	handler := func(ctx context.Context, req interface{}) (interface{}, error) {
-		return srv.(KeyServiceServer).CreateKeyPair(ctx, req.(*CreateKeyPairRequest))
+		return srv.(KeyServiceServer).CreateKeyPair(ctx, req.(*v1.CreateKeyPairRequest))
 	}
 	return interceptor(ctx, in, info, handler)
 }

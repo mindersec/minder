@@ -24,7 +24,7 @@ import (
 	"golang.org/x/exp/slices"
 
 	"github.com/stacklok/mediator/internal/util"
-	mediatorv1 "github.com/stacklok/mediator/pkg/api/protobuf/go/mediator/v1"
+	mediatorv1 "github.com/stacklok/mediator/pkg/api/protobuf/go/minder/v1"
 )
 
 // RuleType_createCmd represents the profile create command

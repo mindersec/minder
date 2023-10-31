@@ -27,7 +27,7 @@ import (
 	"github.com/stacklok/mediator/internal/db"
 	"github.com/stacklok/mediator/internal/entities"
 	"github.com/stacklok/mediator/internal/util/jsonyaml"
-	pb "github.com/stacklok/mediator/pkg/api/protobuf/go/mediator/v1"
+	pb "github.com/stacklok/mediator/pkg/api/protobuf/go/minder/v1"
 )
 
 // RuleValidationError is used to report errors from evaluating a rule, including
