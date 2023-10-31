@@ -26,6 +26,7 @@ import (
 	"strings"
 
 	"github.com/puzpuzpuz/xsync"
+
 	"github.com/stacklok/mediator/internal/util"
 	pb "github.com/stacklok/mediator/pkg/api/protobuf/go/minder/v1"
 )
