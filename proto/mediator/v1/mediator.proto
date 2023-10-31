@@ -17,8 +17,6 @@ syntax = "proto3";
 package mediator.v1;
 import "google/api/annotations.proto";
 import "google/protobuf/descriptor.proto";
-import "google/protobuf/timestamp.proto";
-import "google/protobuf/struct.proto";
 import "google/api/httpbody.proto";
 import "minder/v1/minder.proto";
 
