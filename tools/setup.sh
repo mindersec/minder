@@ -17,18 +17,18 @@
 
 set -eux
 
-medic() {
+minder() {
   go run ./cmd/cli/main.go "$@";
 }
 # use root:root for credentials
-medic auth login
+minder auth login
 
-medic provider enroll -n github
+minder provider enroll -n github
 
-echo '$ medic rule_type create -f examples/github/rule-types/'
+echo '$ minder rule_type create -f examples/github/rule-types/'
 echo '---'
-medic rule_type create -f examples/github/rule-types/
+minder rule_type create -f examples/github/rule-types/
 
-#echo '$ medic profile create -f examples/github/profiles/profile.yaml'
+#echo '$ minder profile create -f examples/github/profiles/profile.yaml'
 #echo '---'
-medic profile create -f examples/github/profiles/profile.yaml
+minder profile create -f examples/github/profiles/profile.yaml

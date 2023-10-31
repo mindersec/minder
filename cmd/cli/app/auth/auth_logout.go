@@ -36,8 +36,8 @@ import (
 // auth_logoutCmd represents the logout command
 var auth_logoutCmd = &cobra.Command{
 	Use:   "logout",
-	Short: "Logout from mediator control plane.",
-	Long:  `Logout from mediator control plane. Credentials will be removed from $XDG_CONFIG_HOME/mediator/credentials.json`,
+	Short: "Logout from minder control plane.",
+	Long:  `Logout from minder control plane. Credentials will be removed from $XDG_CONFIG_HOME/minder/credentials.json`,
 	PreRun: func(cmd *cobra.Command, args []string) {
 		if err := viper.BindPFlags(cmd.Flags()); err != nil {
 			fmt.Fprintf(os.Stderr, "Error binding flags: %s\n", err)

@@ -19,7 +19,7 @@
 // It does make a good example of how to use the generated client code
 // for others to use as a reference.
 
-// Package auth provides the auth command project for the medic CLI.
+// Package auth provides the auth command project for the minder CLI.
 package auth
 
 import (
@@ -31,9 +31,9 @@ import (
 // AuthCmd represents the account command
 var AuthCmd = &cobra.Command{
 	Use:   "auth",
-	Short: "Authorize and manage accounts within a mediator control plane",
-	Long: `The medic auth command project lets you create accounts and grant or revoke
-authorization to existing accounts within a mediator control plane.`,
+	Short: "Authorize and manage accounts within a minder control plane",
+	Long: `The minder auth command project lets you create accounts and grant or revoke
+authorization to existing accounts within a minder control plane.`,
 	RunE: func(cmd *cobra.Command, args []string) error {
 		return cmd.Usage()
 	},

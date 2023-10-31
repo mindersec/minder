@@ -110,9 +110,9 @@ func callBackServer(ctx context.Context, provider string, project string, port s
 
 var enrollProviderCmd = &cobra.Command{
 	Use:   "enroll",
-	Short: "Enroll a provider within the mediator control plane",
-	Long: `The medic provider enroll command allows a user to enroll a provider
-such as GitHub into the mediator control plane. Once enrolled, users can perform
+	Short: "Enroll a provider within the minder control plane",
+	Long: `The minder provider enroll command allows a user to enroll a provider
+such as GitHub into the minder control plane. Once enrolled, users can perform
 actions such as adding repositories.`,
 	PreRun: func(cmd *cobra.Command, args []string) {
 		if err := viper.BindPFlags(cmd.Flags()); err != nil {

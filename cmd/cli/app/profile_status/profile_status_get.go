@@ -30,9 +30,9 @@ import (
 
 var profilestatus_getCmd = &cobra.Command{
 	Use:   "get",
-	Short: "Get profile status within a mediator control plane",
-	Long: `The medic profile_status get subcommand lets you get profile status within a
-mediator control plane for an specific provider/project or profile id, entity type and entity id.`,
+	Short: "Get profile status within a minder control plane",
+	Long: `The minder profile_status get subcommand lets you get profile status within a
+minder control plane for an specific provider/project or profile id, entity type and entity id.`,
 	PreRun: func(cmd *cobra.Command, args []string) {
 		if err := viper.BindPFlags(cmd.Flags()); err != nil {
 			fmt.Fprintf(os.Stderr, "Error binding flags: %s\n", err)

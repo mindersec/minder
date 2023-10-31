@@ -29,9 +29,9 @@ import (
 
 var profile_listCmd = &cobra.Command{
 	Use:   "list",
-	Short: "List profiles within a mediator control plane",
-	Long: `The medic profile list subcommand lets you list profiles within a
-mediator control plane for an specific project.`,
+	Short: "List profiles within a minder control plane",
+	Long: `The minder profile list subcommand lets you list profiles within a
+minder control plane for an specific project.`,
 	PreRun: func(cmd *cobra.Command, args []string) {
 		if err := viper.BindPFlags(cmd.Flags()); err != nil {
 			fmt.Fprintf(os.Stderr, "Error binding flags: %s\n", err)

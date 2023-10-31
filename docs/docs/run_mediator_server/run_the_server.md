@@ -3,13 +3,13 @@ title: Run the Server
 sidebar_position: 10
 ---
 
-# Run a mediator server
+# Run a minder server
 
-Mediator is platform, comprising of a controlplane, a CLI, a database and an identity provider.
+Minder is platform, comprising of a controlplane, a CLI, a database and an identity provider.
 
 The control plane runs two endpoints, a gRPC endpoint and a HTTP endpoint.
 
-Mediator is controlled and managed via the CLI application `medic`.
+Minder is controlled and managed via the CLI application `minder`.
 
 PostgreSQL is used as the database.
 
@@ -45,7 +45,7 @@ git clone git@github.com:stacklok/mediator.git
 make build
 ```
 
-This will create two binaries, `bin/mediator-server` and `bin/medic`.
+This will create two binaries, `bin/mediator-server` and `bin/minder`.
 
 You may now copy these into a location on your path, or run them directly from the `bin` directory.
 

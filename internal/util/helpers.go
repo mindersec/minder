@@ -119,7 +119,7 @@ func getCredentialsPath() (string, error) {
 		xdgConfigHome = filepath.Join(homeDir, ".config")
 	}
 
-	filePath := filepath.Join(xdgConfigHome, "mediator", "credentials.json")
+	filePath := filepath.Join(xdgConfigHome, "minder", "credentials.json")
 	return filePath, nil
 }
 

@@ -31,9 +31,9 @@ var (
 	// RootCmd represents the base command when called without any subcommands
 	RootCmd = &cobra.Command{
 		Use:   "medev",
-		Short: "medev provides developer tooling for the mediator",
-		Long: `For more information about mediator, please visit:
-https://docs.stacklok.com/mediator/medev/overview.html`,
+		Short: "medev provides developer tooling for minder",
+		Long: `For more information about minder, please visit:
+https://docs.stacklok.com/minder`,
 	}
 )
 

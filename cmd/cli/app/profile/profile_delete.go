@@ -28,9 +28,9 @@ import (
 
 var profile_deleteCmd = &cobra.Command{
 	Use:   "delete",
-	Short: "Delete a profile within a mediator control plane",
-	Long: `The medic profile delete subcommand lets you delete profiles within a
-mediator control plane.`,
+	Short: "Delete a profile within a minder control plane",
+	Long: `The minder profile delete subcommand lets you delete profiles within a
+minder control plane.`,
 	PreRun: func(cmd *cobra.Command, args []string) {
 		if err := viper.BindPFlags(cmd.Flags()); err != nil {
 			fmt.Fprintf(os.Stderr, "Error binding flags: %s\n", err)

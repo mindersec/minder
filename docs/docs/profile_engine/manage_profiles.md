@@ -111,7 +111,7 @@ actions to comply with the profile.
 
 ## Prerequisites
 
-- The `medic` CLI application
+- The `minder` CLI application
 - [At least one repository is registered for Mediator](../getting_started/register_repos.md)
 
 ## List rule types
@@ -124,7 +124,7 @@ Covered rule types are now:
 You can list all profile types registered in Mediator:
 
 ```bash
-medic rule_type list --provider github
+minder rule_type list --provider github
 ```
 
 By default, a rule type is providing some recommended default values, so users can create profiles
@@ -137,7 +137,7 @@ Before creating a profile, we need to ensure that all rule types exist in mediat
 A rule type can be created by pointing to a directory (or file) containing the rule type definition:
 
 ```bash
-medic rule_type create -f ./examples/github/rule-types
+minder rule_type create -f ./examples/github/rule-types
 ```
 
 Where the yaml files in the directory `rule-types` may look as the example above.
@@ -157,7 +157,7 @@ The profile can be created by using the provided defaults, or by providing a new
 For creating based on a file:
 
 ```bash
-medic profile create -f ./examples/github/profiles/profile.yaml
+minder profile create -f ./examples/github/profiles/profile.yaml
 ```
 
 Where `profile.yaml` may look as the example above.
@@ -183,11 +183,11 @@ Profile status will inform about:
 Profile status can be checked using the following commands
 
 ```bash
-medic profile_status list --profile 1
+minder profile_status list --profile 1
 ```
 
 To view all of the rule evaluations, use the following
 
 ```bash
-medic profile_status list --profile 1 --detailed
+minder profile_status list --profile 1 --detailed
 ```

@@ -57,7 +57,7 @@ cli-docs:
 
 build: ## build golang binary
 	# @go build -ldflags "-X main.version=$(shell git describe --abbrev=0 --tags)" -o bin/$(projectname)
-	CGO_ENABLED=0 go build -trimpath -o ./bin/medic ./cmd/cli
+	CGO_ENABLED=0 go build -trimpath -o ./bin/minder ./cmd/cli
 	CGO_ENABLED=0 go build -trimpath -o ./bin/$(projectname)-server ./cmd/server
 	CGO_ENABLED=0 go build -trimpath -o ./bin/medev ./cmd/dev
 

@@ -29,9 +29,9 @@ import (
 
 var ruleType_getCmd = &cobra.Command{
 	Use:   "get",
-	Short: "Get details for a rule type within a mediator control plane",
-	Long: `The medic rule_type get subcommand lets you retrieve details for a rule type within a
-mediator control plane.`,
+	Short: "Get details for a rule type within a minder control plane",
+	Long: `The minder rule_type get subcommand lets you retrieve details for a rule type within a
+minder control plane.`,
 	PreRun: func(cmd *cobra.Command, args []string) {
 		if err := viper.BindPFlags(cmd.Flags()); err != nil {
 			fmt.Fprintf(os.Stderr, "Error binding flags: %s\n", err)

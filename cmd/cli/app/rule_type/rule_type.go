@@ -25,9 +25,9 @@ import (
 // ruleTypeCmd is the root command for the rule subcommands
 var ruleTypeCmd = &cobra.Command{
 	Use:   "rule_type",
-	Short: "Manage rule types within a mediator control plane",
-	Long: `The medic rule_type subcommands allows the management of rule types within
-a mediator controlplane.`,
+	Short: "Manage rule types within a minder control plane",
+	Long: `The minder rule_type subcommands allows the management of rule types within
+a minder control plane.`,
 	RunE: func(cmd *cobra.Command, args []string) error {
 		return cmd.Usage()
 	},

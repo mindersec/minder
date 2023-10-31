@@ -25,9 +25,9 @@ import (
 // ProfileCmd is the root command for the profile subcommands
 var ProfileCmd = &cobra.Command{
 	Use:   "profile",
-	Short: "Manage profiles within a mediator control plane",
-	Long: `The medic profile subcommands allows the management of profiles within
-a mediator controlplane.`,
+	Short: "Manage profiles within a minder control plane",
+	Long: `The minder profile subcommands allows the management of profiles within
+a minder controlplane.`,
 	RunE: func(cmd *cobra.Command, args []string) error {
 		return cmd.Usage()
 	},
