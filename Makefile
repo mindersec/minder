@@ -119,7 +119,7 @@ bootstrap: ## install build deps
 	chmod 644 .ssh/*
 
 test: clean ## display test coverage
-	go test -json -v ./... | gotestfmt
+	go test -json -race -v ./... | gotestfmt
 
 clean: ## clean up environment
 	rm -rf dist/* & rm -rf bin/*
