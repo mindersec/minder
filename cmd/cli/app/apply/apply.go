@@ -13,7 +13,7 @@
 // See the License for the specific language governing permissions and
 // limitations under the License.
 
-// Package apply provides the apply command for the medic CLI
+// Package apply provides the apply command for the minder CLI
 package apply
 
 import (
@@ -65,8 +65,8 @@ func parseContent(data []byte) ([]objectParameters, error) {
 // ApplyCmd is the root command for the apply subcommands
 var ApplyCmd = &cobra.Command{
 	Use:   "apply (-f FILENAME)",
-	Short: "Appy a configuration to a mediator control plane",
-	Long:  `The medic apply command applies a configuration to a mediator control plane.`,
+	Short: "Appy a configuration to a minder control plane",
+	Long:  `The minder apply command applies a configuration to a minder control plane.`,
 	PreRun: func(cmd *cobra.Command, args []string) {
 		err := viper.BindPFlags(cmd.Flags())
 		util.ExitNicelyOnError(err, "Error binding flags")

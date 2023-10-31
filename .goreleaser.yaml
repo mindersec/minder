@@ -5,7 +5,7 @@
 # Feel free to remove those if you don't want/need to use them.
 # yaml-language-server: $schema=https://goreleaser.com/static/schema.json
 # vim: set ts=2 sw=2 tw=0 fo=cnqoj
-project_name: medic
+project_name: minder
 before:
   hooks:
     - go mod tidy
@@ -41,7 +41,7 @@ archives:
 # This section defines how to release to homebrew.
 brews:
   - homepage: 'https://github.com/stacklok/mediator'
-    description: 'Medic is the client CLI for interacting with Mediator by Stacklok.'
+    description: 'minder is the client CLI for interacting with Minder by Stacklok.'
     folder: Formula
     commit_author:
       name: stacklokbot
@@ -51,7 +51,7 @@ brews:
       name: homebrew-tap
       token: "{{ .Env.HOMEBREW_TAP_GITHUB_TOKEN }}"
     test: |
-      system "#{bin}/medic --help"
+      system "#{bin}/minder --help"
 # This section defines whether we want to release the source code too.
 source:
   enabled: true

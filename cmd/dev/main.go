@@ -13,7 +13,7 @@
 // See the License for the specific language governing permissions and
 // limitations under the License.
 
-// Package main provides the entrypoint for the mediator cli
+// Package main provides the entrypoint for the rule development cli
 package main
 
 import (

@@ -32,9 +32,9 @@ import (
 // Profile_createCmd represents the profile create command
 var Profile_createCmd = &cobra.Command{
 	Use:   "create",
-	Short: "Create a profile within a mediator control plane",
-	Long: `The medic profile create subcommand lets you create new profiles for a project
-within a mediator control plane.`,
+	Short: "Create a profile within a minder control plane",
+	Long: `The minder profile create subcommand lets you create new profiles for a project
+within a minder control plane.`,
 	PreRun: func(cmd *cobra.Command, args []string) {
 		if err := viper.BindPFlags(cmd.Flags()); err != nil {
 			fmt.Fprintf(os.Stderr, "Error binding flags: %s\n", err)

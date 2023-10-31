@@ -28,9 +28,9 @@ import (
 
 var ruleType_deleteCmd = &cobra.Command{
 	Use:   "delete",
-	Short: "Delete a rule type within a mediator control plane",
-	Long: `The medic rule type delete subcommand lets you delete profiles within a
-mediator control plane.`,
+	Short: "Delete a rule type within a minder control plane",
+	Long: `The minder rule type delete subcommand lets you delete profiles within a
+minder control plane.`,
 	PreRun: func(cmd *cobra.Command, args []string) {
 		if err := viper.BindPFlags(cmd.Flags()); err != nil {
 			fmt.Fprintf(os.Stderr, "Error binding flags: %s\n", err)

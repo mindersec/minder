@@ -25,9 +25,9 @@ import (
 // ProfileStatusCmd is the root command for the profile_status subcommands
 var ProfileStatusCmd = &cobra.Command{
 	Use:   "profile_status",
-	Short: "Manage profile status within a mediator control plane",
-	Long: `The medic profile_status subcommands allows the management of profile status within
-a mediator controlplane.`,
+	Short: "Manage profile status within a minder control plane",
+	Long: `The minder profile_status subcommands allows the management of profile status within
+a minder control plane.`,
 	RunE: func(cmd *cobra.Command, args []string) error {
 		return cmd.Usage()
 	},

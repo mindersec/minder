@@ -31,8 +31,8 @@ import (
 // ProviderCmd is the root command for the provider subcommands
 var ProviderCmd = &cobra.Command{
 	Use:   "provider",
-	Short: "Manage providers within a mediator control plane",
-	Long:  `The medic provider commands manage providers within a mediator control plane.`,
+	Short: "Manage providers within a minder control plane",
+	Long:  `The minder provider commands manage providers within a minder control plane.`,
 	RunE: func(cmd *cobra.Command, args []string) error {
 		return cmd.Usage()
 	},

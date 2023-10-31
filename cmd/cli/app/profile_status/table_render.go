@@ -197,7 +197,7 @@ func guidanceOrEncouragement(status, guidance string) string {
 		return "No guidance available for this rule 😞"
 	}
 
-	// TODO: use a color scheme for mediator instead of a pre-defined one.
+	// TODO: use a color scheme for minder instead of a pre-defined one.
 	// Related-to: https://github.com/stacklok/mediator/issues/1006
 	renderedGuidance, err := glamour.Render(guidance, "dark")
 	if err != nil {

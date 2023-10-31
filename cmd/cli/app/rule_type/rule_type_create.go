@@ -30,9 +30,9 @@ import (
 // RuleType_createCmd represents the profile create command
 var RuleType_createCmd = &cobra.Command{
 	Use:   "create",
-	Short: "Create a rule type within a mediator control plane",
-	Long: `The medic rule type create subcommand lets you create new profiles for a project
-within a mediator control plane.`,
+	Short: "Create a rule type within a minder control plane",
+	Long: `The minder rule type create subcommand lets you create new profiles for a project
+within a minder control plane.`,
 	PreRun: func(cmd *cobra.Command, args []string) {
 		if err := viper.BindPFlags(cmd.Flags()); err != nil {
 			fmt.Fprintf(os.Stderr, "Error binding flags: %s\n", err)
