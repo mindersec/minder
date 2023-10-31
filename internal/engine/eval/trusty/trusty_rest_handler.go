@@ -12,8 +12,8 @@
 // See the License for the specific language governing permissions and
 // limitations under the License.
 
-// Package package_intelligence provides an evaluator that uses the package intelligence API
-package package_intelligence
+// Package trusty provides an evaluator that uses the trusty API
+package trusty
 
 import (
 	"context"
@@ -47,38 +47,38 @@ func urlFromEndpointAndPaths(
 	return u, nil
 }
 
-type piClient struct {
+type trustyClient struct {
 	client  *http.Client
 	baseUrl string
 }
 
-// PiAlternative is an alternative package returned from the package intelligence API
-type PiAlternative struct {
+// Alternative is an alternative package returned from the package intelligence API
+type Alternative struct {
 	PackageName string  `json:"package_name"`
 	Score       float64 `json:"score"`
 }
 
-// PiReply is the response from the package intelligence API
-type PiReply struct {
+// Reply is the response from the package intelligence API
+type Reply struct {
 	PackageName string `json:"package_name"`
 	PackageType string `json:"package_type"`
 	Summary     struct {
 		Score float64 `json:"score"`
 	} `json:"summary"`
 	Alternatives struct {
-		Status   string          `json:"status"`
-		Packages []PiAlternative `json:"packages"`
+		Status   string        `json:"status"`
+		Packages []Alternative `json:"packages"`
 	} `json:"alternatives"`
 }
 
-func newPiClient(baseUrl string) *piClient {
-	return &piClient{
+func newPiClient(baseUrl string) *trustyClient {
+	return &trustyClient{
 		client:  &http.Client{},
 		baseUrl: baseUrl,
 	}
 }
 
-func (p *piClient) newRequest(ctx context.Context, dep *pb.Dependency) (*http.Request, error) {
+func (p *trustyClient) newRequest(ctx context.Context, dep *pb.Dependency) (*http.Request, error) {
 	u, err := urlFromEndpointAndPaths(p.baseUrl, "pi/v1/report", dep.Name, strings.ToLower(dep.Ecosystem.AsString()))
 	if err != nil {
 		return nil, fmt.Errorf("could not parse endpoint: %w", err)
@@ -92,7 +92,7 @@ func (p *piClient) newRequest(ctx context.Context, dep *pb.Dependency) (*http.Re
 	return req, nil
 }
 
-func (p *piClient) SendRecvRequest(ctx context.Context, dep *pb.Dependency) (*PiReply, error) {
+func (p *trustyClient) SendRecvRequest(ctx context.Context, dep *pb.Dependency) (*Reply, error) {
 	req, err := p.newRequest(ctx, dep)
 	if err != nil {
 		return nil, fmt.Errorf("could not create request: %w", err)
@@ -108,7 +108,7 @@ func (p *piClient) SendRecvRequest(ctx context.Context, dep *pb.Dependency) (*Pi
 		return nil, fmt.Errorf("received non-200 response: %d", resp.StatusCode)
 	}
 
-	var piReply PiReply
+	var piReply Reply
 	dec := json.NewDecoder(resp.Body)
 	if err := dec.Decode(&piReply); err != nil {
 		return nil, fmt.Errorf("could not unmarshal response: %w", err)

@@ -1237,7 +1237,7 @@ message RuleType {
                 // no configuration for now
             }
 
-            message PackageIntelligence {
+            message Trusty {
                 // e.g. https://staging.stacklok.dev/
                 string endpoint = 1;
             }
@@ -1253,8 +1253,8 @@ message RuleType {
             // vulncheck is only used if the `vulncheck` type is selected.
             optional Vulncheck vulncheck = 4;
 
-            // package_intelligence is only used if the `package_intelligence` type is selected.
-            optional PackageIntelligence package_intelligence = 5;
+            // trusty is only used if the `trusty` type is selected.
+            optional Trusty trusty = 5;
         }
         Eval eval = 5;
 
