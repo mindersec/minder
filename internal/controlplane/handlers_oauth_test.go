@@ -30,7 +30,7 @@ import (
 	"github.com/stacklok/mediator/internal/auth"
 	"github.com/stacklok/mediator/internal/db"
 	ghclient "github.com/stacklok/mediator/internal/providers/github"
-	pb "github.com/stacklok/mediator/pkg/api/protobuf/go/mediator/v1"
+	pb "github.com/stacklok/mediator/pkg/api/protobuf/go/minder/v1"
 )
 
 func TestNewOAuthConfig(t *testing.T) {

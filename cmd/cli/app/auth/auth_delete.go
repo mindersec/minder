@@ -26,7 +26,7 @@ import (
 
 	"github.com/stacklok/mediator/internal/util"
 	"github.com/stacklok/mediator/internal/util/cli"
-	pb "github.com/stacklok/mediator/pkg/api/protobuf/go/mediator/v1"
+	pb "github.com/stacklok/mediator/pkg/api/protobuf/go/minder/v1"
 )
 
 // auth_deleteCmd represents the account deletion command

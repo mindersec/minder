@@ -34,7 +34,7 @@ import (
 	enginerr "github.com/stacklok/mediator/internal/engine/errors"
 	engif "github.com/stacklok/mediator/internal/engine/interfaces"
 	"github.com/stacklok/mediator/internal/providers"
-	mediatorv1 "github.com/stacklok/mediator/pkg/api/protobuf/go/mediator/v1"
+	minderv1 "github.com/stacklok/mediator/pkg/api/protobuf/go/minder/v1"
 )
 
 // RuleActionsEngine is the engine responsible for processing all actions i.e., remediation and alerts
@@ -44,7 +44,7 @@ type RuleActionsEngine struct {
 }
 
 // NewRuleActions creates a new rule actions engine
-func NewRuleActions(p *mediatorv1.Profile, rt *mediatorv1.RuleType, pbuild *providers.ProviderBuilder,
+func NewRuleActions(p *minderv1.Profile, rt *minderv1.RuleType, pbuild *providers.ProviderBuilder,
 ) (*RuleActionsEngine, error) {
 	// Create the remediation engine
 	remEngine, err := remediate.NewRuleRemediator(rt, pbuild)

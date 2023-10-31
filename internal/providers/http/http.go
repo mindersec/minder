@@ -25,7 +25,7 @@ import (
 
 	"golang.org/x/oauth2"
 
-	mediatorv1 "github.com/stacklok/mediator/pkg/api/protobuf/go/mediator/v1"
+	minderv1 "github.com/stacklok/mediator/pkg/api/protobuf/go/minder/v1"
 	provifv1 "github.com/stacklok/mediator/pkg/providers/v1"
 )
 
@@ -40,7 +40,7 @@ type REST struct {
 var _ provifv1.REST = (*REST)(nil)
 
 // NewREST creates a new RESTful client.
-func NewREST(config *mediatorv1.RESTProviderConfig, tok string) (*REST, error) {
+func NewREST(config *minderv1.RESTProviderConfig, tok string) (*REST, error) {
 	var cli *http.Client
 
 	if tok != "" {
@@ -98,9 +98,9 @@ func (h *REST) Do(ctx context.Context, req *http.Request) (*http.Response, error
 }
 
 // ParseV1Config parses the raw config into a HTTPConfig struct
-func ParseV1Config(rawCfg json.RawMessage) (*mediatorv1.RESTProviderConfig, error) {
+func ParseV1Config(rawCfg json.RawMessage) (*minderv1.RESTProviderConfig, error) {
 	type wrapper struct {
-		REST *mediatorv1.RESTProviderConfig `json:"rest" validate:"required"`
+		REST *minderv1.RESTProviderConfig `json:"rest" validate:"required"`
 	}
 
 	var w wrapper

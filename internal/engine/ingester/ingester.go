@@ -27,7 +27,7 @@ import (
 	"github.com/stacklok/mediator/internal/engine/ingester/rest"
 	engif "github.com/stacklok/mediator/internal/engine/interfaces"
 	"github.com/stacklok/mediator/internal/providers"
-	pb "github.com/stacklok/mediator/pkg/api/protobuf/go/mediator/v1"
+	pb "github.com/stacklok/mediator/pkg/api/protobuf/go/minder/v1"
 )
 
 // test that the ingester implementations implements the interface

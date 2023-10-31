@@ -32,7 +32,7 @@ import (
 	"github.com/stacklok/mediator/internal/crypto"
 	"github.com/stacklok/mediator/internal/db"
 	"github.com/stacklok/mediator/internal/engine"
-	mediatorv1 "github.com/stacklok/mediator/pkg/api/protobuf/go/mediator/v1"
+	minderv1 "github.com/stacklok/mediator/pkg/api/protobuf/go/minder/v1"
 )
 
 const (
@@ -121,7 +121,7 @@ func TestExecutor_handleEntityEvent(t *testing.T) {
 		}, nil)
 
 	// list one profile
-	crs := []*mediatorv1.Profile_Rule{
+	crs := []*minderv1.Profile_Rule{
 		{
 			Type: passthroughRuleType,
 			Def:  &structpb.Struct{},
@@ -147,18 +147,18 @@ func TestExecutor_handleEntityEvent(t *testing.T) {
 		}, nil)
 
 	// get relevant rule
-	ruleTypeDef := &mediatorv1.RuleType_Definition{
-		InEntity:   mediatorv1.RepositoryEntity.String(),
+	ruleTypeDef := &minderv1.RuleType_Definition{
+		InEntity:   minderv1.RepositoryEntity.String(),
 		RuleSchema: &structpb.Struct{},
-		Ingest: &mediatorv1.RuleType_Definition_Ingest{
+		Ingest: &minderv1.RuleType_Definition_Ingest{
 			Type: "builtin",
-			Builtin: &mediatorv1.BuiltinType{
+			Builtin: &minderv1.BuiltinType{
 				Method: "Passthrough",
 			},
 		},
-		Eval: &mediatorv1.RuleType_Definition_Eval{
+		Eval: &minderv1.RuleType_Definition_Eval{
 			Type: "rego",
-			Rego: &mediatorv1.RuleType_Definition_Eval_Rego{
+			Rego: &minderv1.RuleType_Definition_Eval_Rego{
 				Type: "deny-by-default",
 				Def: `package mediator
 default allow = true`,
@@ -243,7 +243,7 @@ default allow = true`,
 	eiw := engine.NewEntityInfoWrapper().
 		WithProvider(providerName).
 		WithProjectID(projectID).
-		WithRepository(&mediatorv1.Repository{
+		WithRepository(&minderv1.Repository{
 			Name:     "test",
 			RepoId:   123,
 			CloneUrl: "github.com/foo/bar.git",

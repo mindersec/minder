@@ -44,7 +44,7 @@ import (
 	"github.com/stacklok/mediator/internal/util"
 	"github.com/stacklok/mediator/internal/util/cli"
 	"github.com/stacklok/mediator/internal/util/rand"
-	pb "github.com/stacklok/mediator/pkg/api/protobuf/go/mediator/v1"
+	pb "github.com/stacklok/mediator/pkg/api/protobuf/go/minder/v1"
 )
 
 func userRegistered(ctx context.Context, client pb.UserServiceClient) (bool, *pb.GetUserResponse, error) {

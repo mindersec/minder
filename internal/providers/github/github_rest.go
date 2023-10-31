@@ -26,7 +26,7 @@ import (
 	"github.com/google/go-github/v53/github"
 
 	engerrors "github.com/stacklok/mediator/internal/engine/errors"
-	mediatorv1 "github.com/stacklok/mediator/pkg/api/protobuf/go/mediator/v1"
+	minderv1 "github.com/stacklok/mediator/pkg/api/protobuf/go/minder/v1"
 )
 
 var (
@@ -35,7 +35,7 @@ var (
 )
 
 // ListUserRepositories returns a list of all repositories for the authenticated user
-func (c *RestClient) ListUserRepositories(ctx context.Context, owner string) ([]*mediatorv1.Repository, error) {
+func (c *RestClient) ListUserRepositories(ctx context.Context, owner string) ([]*minderv1.Repository, error) {
 	repos, err := c.ListAllRepositories(ctx, false, owner)
 	if err != nil {
 		return nil, err
@@ -45,7 +45,7 @@ func (c *RestClient) ListUserRepositories(ctx context.Context, owner string) ([]
 }
 
 // ListOrganizationRepsitories returns a list of all repositories for the organization
-func (c *RestClient) ListOrganizationRepsitories(ctx context.Context, owner string) ([]*mediatorv1.Repository, error) {
+func (c *RestClient) ListOrganizationRepsitories(ctx context.Context, owner string) ([]*minderv1.Repository, error) {
 	repos, err := c.ListAllRepositories(ctx, true, owner)
 	if err != nil {
 		return nil, err
@@ -54,16 +54,16 @@ func (c *RestClient) ListOrganizationRepsitories(ctx context.Context, owner stri
 	return convertRepositories(repos), nil
 }
 
-func convertRepositories(repos []*github.Repository) []*mediatorv1.Repository {
-	var converted []*mediatorv1.Repository
+func convertRepositories(repos []*github.Repository) []*minderv1.Repository {
+	var converted []*minderv1.Repository
 	for _, repo := range repos {
 		converted = append(converted, convertRepository(repo))
 	}
 	return converted
 }
 
-func convertRepository(repo *github.Repository) *mediatorv1.Repository {
-	return &mediatorv1.Repository{
+func convertRepository(repo *github.Repository) *minderv1.Repository {
+	return &minderv1.Repository{
 		Name:      repo.GetName(),
 		Owner:     repo.GetOwner().GetLogin(),
 		RepoId:    int32(repo.GetID()), // FIXME this is a 64 bit int

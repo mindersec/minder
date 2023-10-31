@@ -36,7 +36,7 @@ import (
 	"github.com/stacklok/mediator/internal/engine"
 	"github.com/stacklok/mediator/internal/providers"
 	"github.com/stacklok/mediator/internal/providers/github"
-	pb "github.com/stacklok/mediator/pkg/api/protobuf/go/mediator/v1"
+	pb "github.com/stacklok/mediator/pkg/api/protobuf/go/minder/v1"
 )
 
 // CONTAINER_TYPE is the type for container artifacts

@@ -24,7 +24,7 @@ import (
 	"golang.org/x/exp/slices"
 
 	"github.com/stacklok/mediator/internal/db"
-	mediatorv1 "github.com/stacklok/mediator/pkg/api/protobuf/go/mediator/v1"
+	minderv1 "github.com/stacklok/mediator/pkg/api/protobuf/go/minder/v1"
 )
 
 // KnownTypesCSV returns a comma separated list of known entity types. Useful for UI
@@ -32,10 +32,10 @@ func KnownTypesCSV() string {
 	var keys []string
 
 	// Iterate through the map and append keys to the slice
-	for _, pbval := range mediatorv1.Entity_value {
-		ent := mediatorv1.Entity(pbval)
+	for _, pbval := range minderv1.Entity_value {
+		ent := minderv1.Entity(pbval)
 		// PRs are not a first-class object
-		if !ent.IsValid() || ent == mediatorv1.Entity_ENTITY_PULL_REQUESTS {
+		if !ent.IsValid() || ent == minderv1.Entity_ENTITY_PULL_REQUESTS {
 			continue
 		}
 		keys = append(keys, ent.ToString())
@@ -46,35 +46,35 @@ func KnownTypesCSV() string {
 }
 
 // EntityTypeFromDB returns the entity type from the database entity
-func EntityTypeFromDB(entity db.Entities) mediatorv1.Entity {
+func EntityTypeFromDB(entity db.Entities) minderv1.Entity {
 	switch entity {
 	case db.EntitiesRepository:
-		return mediatorv1.Entity_ENTITY_REPOSITORIES
+		return minderv1.Entity_ENTITY_REPOSITORIES
 	case db.EntitiesBuildEnvironment:
-		return mediatorv1.Entity_ENTITY_BUILD_ENVIRONMENTS
+		return minderv1.Entity_ENTITY_BUILD_ENVIRONMENTS
 	case db.EntitiesArtifact:
-		return mediatorv1.Entity_ENTITY_ARTIFACTS
+		return minderv1.Entity_ENTITY_ARTIFACTS
 	case db.EntitiesPullRequest:
-		return mediatorv1.Entity_ENTITY_PULL_REQUESTS
+		return minderv1.Entity_ENTITY_PULL_REQUESTS
 	default:
-		return mediatorv1.Entity_ENTITY_UNSPECIFIED
+		return minderv1.Entity_ENTITY_UNSPECIFIED
 	}
 }
 
 // EntityTypeToDB returns the database entity from the protobuf entity type
-func EntityTypeToDB(entity mediatorv1.Entity) db.Entities {
+func EntityTypeToDB(entity minderv1.Entity) db.Entities {
 	var dbEnt db.Entities
 
 	switch entity {
-	case mediatorv1.Entity_ENTITY_REPOSITORIES:
+	case minderv1.Entity_ENTITY_REPOSITORIES:
 		dbEnt = db.EntitiesRepository
-	case mediatorv1.Entity_ENTITY_BUILD_ENVIRONMENTS:
+	case minderv1.Entity_ENTITY_BUILD_ENVIRONMENTS:
 		dbEnt = db.EntitiesBuildEnvironment
-	case mediatorv1.Entity_ENTITY_ARTIFACTS:
+	case minderv1.Entity_ENTITY_ARTIFACTS:
 		dbEnt = db.EntitiesArtifact
-	case mediatorv1.Entity_ENTITY_PULL_REQUESTS:
+	case minderv1.Entity_ENTITY_PULL_REQUESTS:
 		dbEnt = db.EntitiesPullRequest
-	case mediatorv1.Entity_ENTITY_UNSPECIFIED:
+	case minderv1.Entity_ENTITY_UNSPECIFIED:
 		// This shouldn't happen
 	}
 

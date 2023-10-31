@@ -28,6 +28,10 @@ const redocusaurus = [
         id: 'mediator-api',
         spec: '../pkg/api/openapi/mediator/v1/mediator.swagger.json',
       },
+      {
+        id: 'minder-api',
+        spec: '../pkg/api/openapi/minder/v1/minder.swagger.json',
+      },
     ],
   }
 ]

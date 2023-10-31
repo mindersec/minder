@@ -27,7 +27,7 @@ import (
 	"github.com/go-playground/validator/v10"
 	"github.com/google/go-github/v53/github"
 
-	mediatorv1 "github.com/stacklok/mediator/pkg/api/protobuf/go/mediator/v1"
+	minderv1 "github.com/stacklok/mediator/pkg/api/protobuf/go/minder/v1"
 )
 
 // V1 is the version of the providers interface
@@ -67,8 +67,8 @@ type REST interface {
 type RepoLister interface {
 	Provider
 
-	ListUserRepositories(context.Context, string) ([]*mediatorv1.Repository, error)
-	ListOrganizationRepsitories(context.Context, string) ([]*mediatorv1.Repository, error)
+	ListUserRepositories(context.Context, string) ([]*minderv1.Repository, error)
+	ListOrganizationRepsitories(context.Context, string) ([]*minderv1.Repository, error)
 }
 
 // GitHub is the interface for interacting with the GitHub REST API

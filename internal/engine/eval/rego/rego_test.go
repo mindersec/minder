@@ -25,7 +25,7 @@ import (
 	engerrors "github.com/stacklok/mediator/internal/engine/errors"
 	"github.com/stacklok/mediator/internal/engine/eval/rego"
 	engif "github.com/stacklok/mediator/internal/engine/interfaces"
-	pb "github.com/stacklok/mediator/pkg/api/protobuf/go/mediator/v1"
+	pb "github.com/stacklok/mediator/pkg/api/protobuf/go/minder/v1"
 )
 
 // Evaluates a simple query against a simple profile
