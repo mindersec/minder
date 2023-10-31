@@ -19,7 +19,7 @@ import (
 	"github.com/olekukonko/tablewriter"
 	"github.com/spf13/cobra"
 
-	pb "github.com/stacklok/mediator/pkg/api/protobuf/go/minder/v1"
+	minderv1 "github.com/stacklok/mediator/pkg/api/protobuf/go/minder/v1"
 )
 
 func initializeTable(cmd *cobra.Command) *tablewriter.Table {
@@ -35,7 +35,7 @@ func initializeTable(cmd *cobra.Command) *tablewriter.Table {
 }
 
 func renderRuleTypeTable(
-	rt *pb.RuleType,
+	rt *minderv1.RuleType,
 	table *tablewriter.Table,
 ) {
 	row := []string{

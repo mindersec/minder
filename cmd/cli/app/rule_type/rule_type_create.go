@@ -24,7 +24,7 @@ import (
 	"golang.org/x/exp/slices"
 
 	"github.com/stacklok/mediator/internal/util"
-	mediatorv1 "github.com/stacklok/mediator/pkg/api/protobuf/go/minder/v1"
+	minderv1 "github.com/stacklok/mediator/pkg/api/protobuf/go/minder/v1"
 )
 
 // RuleType_createCmd represents the profile create command
@@ -54,7 +54,7 @@ within a minder control plane.`,
 		}
 		defer conn.Close()
 
-		client := mediatorv1.NewProfileServiceClient(conn)
+		client := minderv1.NewProfileServiceClient(conn)
 		ctx, cancel := util.GetAppContext()
 		defer cancel()
 
@@ -72,13 +72,13 @@ within a minder control plane.`,
 			}
 			defer closer()
 
-			r, err := mediatorv1.ParseRuleType(preader)
+			r, err := minderv1.ParseRuleType(preader)
 			if err != nil {
 				return fmt.Errorf("error parsing rule type: %w", err)
 			}
 
 			// create a rule
-			resp, err := client.CreateRuleType(ctx, &mediatorv1.CreateRuleTypeRequest{
+			resp, err := client.CreateRuleType(ctx, &minderv1.CreateRuleTypeRequest{
 				RuleType: r,
 			})
 			if err != nil {
