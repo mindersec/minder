@@ -23,7 +23,7 @@ import (
 	"github.com/spf13/viper"
 
 	"github.com/stacklok/mediator/internal/util"
-	pb "github.com/stacklok/mediator/pkg/api/protobuf/go/minder/v1"
+	minderv1 "github.com/stacklok/mediator/pkg/api/protobuf/go/minder/v1"
 )
 
 var ruleType_deleteCmd = &cobra.Command{
@@ -45,12 +45,12 @@ minder control plane.`,
 		util.ExitNicelyOnError(err, "Error getting grpc connection")
 		defer conn.Close()
 
-		client := pb.NewProfileServiceClient(conn)
+		client := minderv1.NewProfileServiceClient(conn)
 		ctx, cancel := util.GetAppContext()
 		defer cancel()
 
-		_, err = client.DeleteRuleType(ctx, &pb.DeleteRuleTypeRequest{
-			Context: &pb.Context{},
+		_, err = client.DeleteRuleType(ctx, &minderv1.DeleteRuleTypeRequest{
+			Context: &minderv1.Context{},
 			Id:      id,
 		})
 

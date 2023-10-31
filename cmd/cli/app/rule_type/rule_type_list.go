@@ -24,7 +24,7 @@ import (
 
 	"github.com/stacklok/mediator/cmd/cli/app"
 	"github.com/stacklok/mediator/internal/util"
-	pb "github.com/stacklok/mediator/pkg/api/protobuf/go/minder/v1"
+	minderv1 "github.com/stacklok/mediator/pkg/api/protobuf/go/minder/v1"
 )
 
 var ruleType_listCmd = &cobra.Command{
@@ -46,7 +46,7 @@ minder control plane for an specific project.`,
 		}
 		defer conn.Close()
 
-		client := pb.NewProfileServiceClient(conn)
+		client := minderv1.NewProfileServiceClient(conn)
 		ctx, cancel := util.GetAppContext()
 		defer cancel()
 
@@ -60,8 +60,8 @@ minder control plane for an specific project.`,
 			fmt.Fprintf(os.Stderr, "Error: invalid format: %s\n", format)
 		}
 
-		resp, err := client.ListRuleTypes(ctx, &pb.ListRuleTypesRequest{
-			Context: &pb.Context{
+		resp, err := client.ListRuleTypes(ctx, &minderv1.ListRuleTypesRequest{
+			Context: &minderv1.Context{
 				Provider: provider,
 				// TODO set up project if specified
 				// Currently it's inferred from the authorization token
@@ -102,7 +102,7 @@ func init() {
 	}
 }
 
-func handleListTableOutput(cmd *cobra.Command, resp *pb.ListRuleTypesResponse) {
+func handleListTableOutput(cmd *cobra.Command, resp *minderv1.ListRuleTypesResponse) {
 	table := initializeTable(cmd)
 
 	for _, v := range resp.RuleTypes {
