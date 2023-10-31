@@ -1,10 +1,10 @@
 Continuous integration | License 
  ----------------------|---------
- [![Continuous integration](https://github.com/stacklok/mediator/actions/workflows/main.yml/badge.svg)](https://github.com/stacklok/mediator/actions/workflows/main.yml) | [![License: Apache 2.0](https://img.shields.io/badge/License-Apache2.0-brightgreen.svg)](https://opensource.org/licenses/Apache-2.0)
+ [![Continuous integration](https://github.com/stacklok/minder/actions/workflows/main.yml/badge.svg)](https://github.com/stacklok/minder/actions/workflows/main.yml) | [![License: Apache 2.0](https://img.shields.io/badge/License-Apache2.0-brightgreen.svg)](https://opensource.org/licenses/Apache-2.0)
 
-# Mediator
+# Minder
 
-Mediator is a platform to manage the security of your software supply chain.
+Minder is a platform to manage the security of your software supply chain.
 
 It is currently in early development.
 
@@ -22,7 +22,7 @@ Once you have these and have [cloned the repository](#clone-the-repository), you
 ## Clone the repository
 
 ```bash
-git clone git@github.com:stacklok/mediator.git
+git clone git@github.com:stacklok/minder.git
 ```
 
 ## Build the application
@@ -33,13 +33,13 @@ make build
 
 ## Initialize the configuration
 
-Before running the makefile targets, you need to initialize the application's configuration file. You may do so by doing
+Before running the makefile targets, initialize the application's configuration file. You may do so by doing.
 
 ```bash
 cp config/config.yaml.example config.yaml
 ```
 
-Alernatively, you may simply bootstrap the whole development environment, which includes initializing this file with:
+Alternatively, you may bootstrap the whole development environment, which includes initializing this file with:
 
 ```bash
 make bootstrap
@@ -47,7 +47,7 @@ make bootstrap
 
 ## Initialize the database
 
-Both the `mediator` application and the tests need a Postgres database to be running.  For development use, the standard defaults should suffice:
+Both the `minder` application and the tests need a Postgres database to be running.  For development use, the standard defaults should suffice:
 
 ```bash
 docker-compose up -d postgres
@@ -56,7 +56,7 @@ make migrateup
 
 ## Start the identity provider (Keycloak)
 
-In order to login, we rely on an identity provider that stores the usernames and passwords.
+To login, we rely on an identity provider that stores the usernames and passwords.
 
 ```bash
 docker-compose up -d keycloak
@@ -64,10 +64,10 @@ docker-compose up -d keycloak
 
 ## Run the application
 
-You will need to [initialize the database](#initialize-the-database) before you can start the application.  Then run the application:
+You must [initialize the database](#initialize-the-database) before starting the application.  Then run the application:
 
 ```bash
-bin/mediator-server serve
+bin/minder-server serve
 ```
 
 Or direct from source
@@ -118,11 +118,11 @@ This will open a browser window with the identity provider login page.
 
 ## APIs
 
-API Doc [here](https://mediator-docs.stacklok.dev/api)
+API Doc [here](https://minder-docs.stacklok.dev/api)
 
-The APIs are defined in protobuf [here](https://github.com/stacklok/mediator/blob/main/proto/mediator/v1/mediator.proto).
+The APIs are defined in protobuf [here](https://github.com/stacklok/minder/blob/main/proto/minder/v1/minder.proto).
 
-An OpenAPI / swagger spec is generated to [JSON](https://github.com/stacklok/mediator/blob/main/pkg/api/openapi/mediator/v1/mediator.swagger.json) 
+An OpenAPI / swagger spec is generated to [JSON](https://github.com/stacklok/minder/blob/main/pkg/api/openapi/minder/v1/minder.swagger.json) 
 
 It can be accessed over gRPC or HTTP using [gprc-gateway](https://grpc-ecosystem.github.io/grpc-gateway/).
 
@@ -138,7 +138,7 @@ make gen
 
 # Database migrations and tooling
 
-Mediator uses [sqlc](https://sqlc.dev/) to generate Go code from SQL.
+Minder uses [sqlc](https://sqlc.dev/) to generate Go code from SQL.
 
 The main configuration file is `sqlc.yaml`.
 
@@ -165,25 +165,25 @@ make migratedown
 
 # Mock
 
-Mediator uses [mockgen](https://github.com/golang/mock) to generate mocks.
+Minder uses [mockgen](https://github.com/golang/mock) to generate mocks.
 
 To generate the mocks, run:
 
 ```bash
-mockgen -package mockdb -destination database/mock/store.go github.com/stacklok/mediator/internal/db Store
+mockgen -package mockdb -destination database/mock/store.go github.com/stacklok/minder/internal/db Store
 ```
 and
 ```bash
-mockgen -package auth -destination internal/auth/mock/jwtauth.go github.com/stacklok/mediator/internal/auth JwtValidator,KeySetFetcher
+mockgen -package auth -destination internal/auth/mock/jwtauth.go github.com/stacklok/minder/internal/auth JwtValidator,KeySetFetcher
 ```
 
 # Configuration
 
-Mediator uses [viper](https://github.com/spf13/viper) for configuration.
+Minder uses [viper](https://github.com/spf13/viper) for configuration.
 
 An example configuration file is `config/config.yaml.example`.
 
-Most values should be quite self explanatory.
+Most values should be quite self-explanatory.
 
 Before running the app, please copy the content of `config/config.yaml.example` into `$PWD/config.yaml` file, and modify to use your own settings.
 
@@ -215,7 +215,7 @@ Upon successful authentication you can close your browser.
 You will see the following prompt in your terminal:
 
 ```
-You have been successfully logged in. Your access credentials saved to /var/home/jaosorior/.config/mediator/credentials.json
+You have been successfully logged in. Your access credentials saved to /var/home/jaosorior/.config/minder/credentials.json
 ```
 
 ## Enroll provider
@@ -244,5 +244,5 @@ Now that you've granted the GitHub app permissions to access your repositories, 
 go run ./cmd/cli/main.go repo register -n github
 ```
 
-Once you've registered the repositories, the mediator server will listen for events from GitHub and will
+Once you've registered the repositories, the minder server will listen for events from GitHub and will
 automatically create the necessary webhooks for you.
