@@ -53,7 +53,7 @@ mediator policies. Below is a summary of the packages with low scores and their 
     <td>{{ $.DependencyName }}</td>
     <td>{{ $.DependencyScore }}</td>
     <td><a href="{{ $.BaseUrl }}/{{ $.DependencyEcosystem }}/{{ .PackageName }}" >{{ .PackageName }}</a></td>
-    <td>{{ .Summary.Score }}</td>
+    <td>{{ .Score }}</td>
   </tr>
   {{ end }}
 `
@@ -126,7 +126,7 @@ func (sph *summaryPrHandler) generateSummary() (string, error) {
 
 		nonZeroAlternatives := make([]PiAlternative, 0)
 		for _, alt := range sph.trackedAlternatives[i].piReply.Alternatives.Packages {
-			if alt.Summary.Score > sph.trackedAlternatives[i].piReply.Summary.Score {
+			if alt.Score > sph.trackedAlternatives[i].piReply.Summary.Score {
 				nonZeroAlternatives = append(nonZeroAlternatives, alt)
 			}
 		}
