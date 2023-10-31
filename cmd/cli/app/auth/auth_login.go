@@ -74,10 +74,10 @@ will be saved to $XDG_CONFIG_HOME/minder/credentials.json`,
 	Run: func(cmd *cobra.Command, args []string) {
 		ctx := context.Background()
 
-		issuerUrlStr := util.GetConfigValue("identity.cli.issuer_url", "identity-url", cmd,
+		issuerUrlStr := util.GetConfigValue(viper.GetViper(), "identity.cli.issuer_url", "identity-url", cmd,
 			"https://auth.staging.stacklok.dev").(string)
-		realm := util.GetConfigValue("identity.cli.realm", "identity-realm", cmd, "stacklok").(string)
-		clientID := util.GetConfigValue("identity.cli.client_id", "identity-client", cmd, "mediator-cli").(string)
+		realm := util.GetConfigValue(viper.GetViper(), "identity.cli.realm", "identity-realm", cmd, "stacklok").(string)
+		clientID := util.GetConfigValue(viper.GetViper(), "identity.cli.client_id", "identity-client", cmd, "mediator-cli").(string)
 
 		parsedURL, err := url.Parse(issuerUrlStr)
 		util.ExitNicelyOnError(err, "Error parsing issuer URL")
@@ -161,7 +161,7 @@ will be saved to $XDG_CONFIG_HOME/minder/credentials.json`,
 			fmt.Println(err)
 		}
 
-		conn, err := util.GrpcForCommand(cmd)
+		conn, err := util.GrpcForCommand(cmd, viper.GetViper())
 		util.ExitNicelyOnError(err, "Error getting grpc connection")
 		defer conn.Close()
 		client := pb.NewUserServiceClient(conn)

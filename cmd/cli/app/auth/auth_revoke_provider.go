@@ -44,16 +44,16 @@ var Auth_revokeproviderCmd = &cobra.Command{
 	},
 	Run: func(cmd *cobra.Command, args []string) {
 		// check if we need to revoke all tokens or the user one
-		all := util.GetConfigValue("all", "all", cmd, false).(bool)
+		all := util.GetConfigValue(viper.GetViper(), "all", "all", cmd, false).(bool)
 		project := viper.GetString("project-id")
-		provider := util.GetConfigValue("provider", "provider", cmd, "").(string)
+		provider := util.GetConfigValue(viper.GetViper(), "provider", "provider", cmd, "").(string)
 
 		if all && project != "" {
 			fmt.Fprintf(os.Stderr, "Error: you can't use --all and --project-id together\n")
 			os.Exit(1)
 		}
 
-		conn, err := util.GrpcForCommand(cmd)
+		conn, err := util.GrpcForCommand(cmd, viper.GetViper())
 		util.ExitNicelyOnError(err, "Error getting grpc connection")
 		defer conn.Close()
 

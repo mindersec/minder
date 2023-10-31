@@ -41,7 +41,7 @@ minder control plane.`,
 		id := viper.GetString("id")
 		provider := viper.GetString("provider")
 
-		conn, err := util.GrpcForCommand(cmd)
+		conn, err := util.GrpcForCommand(cmd, viper.GetViper())
 
 		util.ExitNicelyOnError(err, "Error getting grpc connection")
 		defer conn.Close()

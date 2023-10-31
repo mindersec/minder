@@ -41,7 +41,7 @@ within a minder control plane.`,
 		}
 	},
 	RunE: func(cmd *cobra.Command, args []string) error {
-		f := util.GetConfigValue("file", "file", cmd, "").(string)
+		f := util.GetConfigValue(viper.GetViper(), "file", "file", cmd, "").(string)
 		proj := viper.GetString("project")
 
 		var err error
@@ -66,7 +66,7 @@ within a minder control plane.`,
 			preader = fopen
 		}
 
-		conn, err := util.GrpcForCommand(cmd)
+		conn, err := util.GrpcForCommand(cmd, viper.GetViper())
 		util.ExitNicelyOnError(err, "Error getting grpc connection")
 		defer conn.Close()
 

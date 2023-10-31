@@ -48,7 +48,7 @@ within a minder control plane.`,
 			return fmt.Errorf("error validating file arg: %w", err)
 		}
 
-		conn, err := util.GrpcForCommand(cmd)
+		conn, err := util.GrpcForCommand(cmd, viper.GetViper())
 		if err != nil {
 			return fmt.Errorf("error getting grpc connection: %w", err)
 		}

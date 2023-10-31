@@ -78,8 +78,8 @@ var (
 //
 // Returns:
 // - The updated configuration value based on the flag, if it is set, or the original value otherwise.
-func GetConfigValue(key string, flagName string, cmd *cobra.Command, defaultValue interface{}) interface{} {
-	value := viper.Get(key)
+func GetConfigValue(v *viper.Viper, key string, flagName string, cmd *cobra.Command, defaultValue interface{}) interface{} {
+	value := v.Get(key)
 	if cmd.Flags().Changed(flagName) {
 		switch defaultValue.(type) {
 		case string:
@@ -141,15 +141,15 @@ func (JWTTokenCredentials) RequireTransportSecurity() bool {
 }
 
 // GrpcForCommand is a helper for getting a testing connection from cobra flags
-func GrpcForCommand(cmd *cobra.Command) (*grpc.ClientConn, error) {
-	grpc_host := GetConfigValue("grpc_server.host", "grpc-host", cmd, "staging.stacklok.dev").(string)
-	grpc_port := GetConfigValue("grpc_server.port", "grpc-port", cmd, 443).(int)
+func GrpcForCommand(cmd *cobra.Command, v *viper.Viper) (*grpc.ClientConn, error) {
+	grpc_host := GetConfigValue(v, "grpc_server.host", "grpc-host", cmd, "staging.stacklok.dev").(string)
+	grpc_port := GetConfigValue(v, "grpc_server.port", "grpc-port", cmd, 443).(int)
 	insecureDefault := grpc_host == "localhost" || grpc_host == "127.0.0.1" || grpc_host == "::1"
-	allowInsecure := GetConfigValue("grpc_server.insecure", "grpc-insecure", cmd, insecureDefault).(bool)
+	allowInsecure := GetConfigValue(v, "grpc_server.insecure", "grpc-insecure", cmd, insecureDefault).(bool)
 
-	issuerUrl := GetConfigValue("identity.cli.issuer_url", "identity-url", cmd, "https://auth.staging.stacklok.dev").(string)
-	realm := GetConfigValue("identity.cli.realm", "identity-realm", cmd, "stacklok").(string)
-	clientId := GetConfigValue("identity.cli.client_id", "identity-client", cmd, "mediator-cli").(string)
+	issuerUrl := GetConfigValue(v, "identity.cli.issuer_url", "identity-url", cmd, "https://auth.staging.stacklok.dev").(string)
+	realm := GetConfigValue(v, "identity.cli.realm", "identity-realm", cmd, "stacklok").(string)
+	clientId := GetConfigValue(v, "identity.cli.client_id", "identity-client", cmd, "mediator-cli").(string)
 
 	return GetGrpcConnection(grpc_host, grpc_port, allowInsecure, issuerUrl, realm, clientId)
 }

@@ -54,7 +54,7 @@ var auth_deleteCmd = &cobra.Command{
 		ctx, cancel := util.GetAppContext()
 		defer cancel()
 
-		conn, err := util.GrpcForCommand(cmd)
+		conn, err := util.GrpcForCommand(cmd, viper.GetViper())
 		util.ExitNicelyOnError(err, "Error getting grpc connection")
 		defer conn.Close()
 		client := pb.NewUserServiceClient(conn)

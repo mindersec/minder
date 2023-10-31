@@ -72,7 +72,7 @@ var ApplyCmd = &cobra.Command{
 		util.ExitNicelyOnError(err, "Error binding flags")
 	},
 	Run: func(cmd *cobra.Command, args []string) {
-		f := util.GetConfigValue("file", "file", cmd, "").(string)
+		f := util.GetConfigValue(viper.GetViper(), "file", "file", cmd, "").(string)
 
 		var data []byte
 		var err error

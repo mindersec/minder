@@ -40,7 +40,7 @@ minder control plane.`,
 		// delete the profile via GRPC
 		id := viper.GetString("id")
 
-		conn, err := util.GrpcForCommand(cmd)
+		conn, err := util.GrpcForCommand(cmd, viper.GetViper())
 
 		util.ExitNicelyOnError(err, "Error getting grpc connection")
 		defer conn.Close()

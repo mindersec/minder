@@ -40,7 +40,7 @@ var repo_listCmd = &cobra.Command{
 	},
 	RunE: func(cmd *cobra.Command, args []string) error {
 
-		provider := util.GetConfigValue("provider", "provider", cmd, "").(string)
+		provider := util.GetConfigValue(viper.GetViper(), "provider", "provider", cmd, "").(string)
 		if provider != github.Github {
 			return fmt.Errorf("only %s is supported at this time", github.Github)
 		}
@@ -56,7 +56,7 @@ var repo_listCmd = &cobra.Command{
 			return fmt.Errorf("invalid output format: %s", format)
 		}
 
-		conn, err := util.GrpcForCommand(cmd)
+		conn, err := util.GrpcForCommand(cmd, viper.GetViper())
 		util.ExitNicelyOnError(err, "Error getting grpc connection")
 		defer conn.Close()
 

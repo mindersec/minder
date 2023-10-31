@@ -38,7 +38,7 @@ minder control plane for an specific provider/project or profile id.`,
 		}
 	},
 	RunE: func(cmd *cobra.Command, args []string) error {
-		conn, err := util.GrpcForCommand(cmd)
+		conn, err := util.GrpcForCommand(cmd, viper.GetViper())
 		if err != nil {
 			return fmt.Errorf("error getting grpc connection: %w", err)
 		}
