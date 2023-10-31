@@ -40,7 +40,7 @@ minder control plane for an specific project.`,
 	RunE: func(cmd *cobra.Command, args []string) error {
 		format := viper.GetString("output")
 
-		conn, err := util.GrpcForCommand(cmd)
+		conn, err := util.GrpcForCommand(cmd, viper.GetViper())
 		if err != nil {
 			return fmt.Errorf("error getting grpc connection: %w", err)
 		}

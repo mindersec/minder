@@ -47,9 +47,9 @@ var auth_logoutCmd = &cobra.Command{
 		err := util.RemoveCredentials()
 		util.ExitNicelyOnError(err, "Error removing credentials")
 
-		issuerUrlStr := util.GetConfigValue("identity.cli.issuer_url", "identity-url", cmd,
+		issuerUrlStr := util.GetConfigValue(viper.GetViper(), "identity.cli.issuer_url", "identity-url", cmd,
 			"https://auth.staging.stacklok.dev").(string)
-		realm := util.GetConfigValue("identity.cli.realm", "identity-realm", cmd, "stacklok").(string)
+		realm := util.GetConfigValue(viper.GetViper(), "identity.cli.realm", "identity-realm", cmd, "stacklok").(string)
 
 		parsedURL, err := url.Parse(issuerUrlStr)
 		util.ExitNicelyOnError(err, "Error parsing issuer URL")

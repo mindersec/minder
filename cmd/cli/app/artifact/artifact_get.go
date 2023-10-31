@@ -36,7 +36,7 @@ var artifact_getCmd = &cobra.Command{
 		}
 	},
 	RunE: func(cmd *cobra.Command, args []string) error {
-		tag := util.GetConfigValue("tag", "tag", cmd, "").(string)
+		tag := util.GetConfigValue(viper.GetViper(), "tag", "tag", cmd, "").(string)
 		artifactID := viper.GetString("id")
 		latest_versions := viper.GetInt32("latest-versions")
 
@@ -46,7 +46,7 @@ var artifact_getCmd = &cobra.Command{
 			os.Exit(1)
 		}
 
-		conn, err := util.GrpcForCommand(cmd)
+		conn, err := util.GrpcForCommand(cmd, viper.GetViper())
 		util.ExitNicelyOnError(err, "Error getting grpc connection")
 		defer conn.Close()
 

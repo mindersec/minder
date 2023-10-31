@@ -46,10 +46,10 @@ var repo_getCmd = &cobra.Command{
 	},
 	RunE: func(cmd *cobra.Command, args []string) error {
 
-		provider := util.GetConfigValue("provider", "provider", cmd, "").(string)
+		provider := util.GetConfigValue(viper.GetViper(), "provider", "provider", cmd, "").(string)
 		repoid := viper.GetString("repo-id")
 		format := viper.GetString("output")
-		name := util.GetConfigValue("name", "name", cmd, "").(string)
+		name := util.GetConfigValue(viper.GetViper(), "name", "name", cmd, "").(string)
 
 		// if name is set, repo-id cannot be set
 		if name != "" && repoid != "" {
@@ -74,7 +74,7 @@ var repo_getCmd = &cobra.Command{
 			return fmt.Errorf("invalid output format: %s", format)
 		}
 
-		conn, err := util.GrpcForCommand(cmd)
+		conn, err := util.GrpcForCommand(cmd, viper.GetViper())
 		util.ExitNicelyOnError(err, "Error getting grpc connection")
 		defer conn.Close()
 
@@ -101,7 +101,7 @@ var repo_getCmd = &cobra.Command{
 			repository = resp.Repository
 		}
 
-		status := util.GetConfigValue("status", "status", cmd, false).(bool)
+		status := util.GetConfigValue(viper.GetViper(), "status", "status", cmd, false).(bool)
 		if status {
 			// TODO: implement this
 		} else {

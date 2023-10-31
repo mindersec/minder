@@ -55,14 +55,14 @@ var repo_registerCmd = &cobra.Command{
 		}
 	},
 	Run: func(cmd *cobra.Command, args []string) {
-		provider := util.GetConfigValue("provider", "provider", cmd, "").(string)
+		provider := util.GetConfigValue(viper.GetViper(), "provider", "provider", cmd, "").(string)
 		if provider != github.Github {
 			fmt.Fprintf(os.Stderr, "Only %s is supported at this time\n", github.Github)
 			os.Exit(1)
 		}
 		projectID := viper.GetString("project-id")
 
-		conn, err := util.GrpcForCommand(cmd)
+		conn, err := util.GrpcForCommand(cmd, viper.GetViper())
 		util.ExitNicelyOnError(err, "Error getting grpc connection")
 		defer conn.Close()
 

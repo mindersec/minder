@@ -75,7 +75,9 @@ func TestGetConfigValue(t *testing.T) {
 		t.Run(tc.name, func(t *testing.T) {
 			t.Parallel()
 
-			viper.Set(tc.key, tc.defaultValue)
+			v := viper.New()
+
+			v.Set(tc.key, tc.defaultValue)
 
 			cmd := &cobra.Command{}
 			switch tc.defaultValue.(type) {
@@ -100,7 +102,7 @@ func TestGetConfigValue(t *testing.T) {
 				}
 			}
 
-			result := util.GetConfigValue(tc.key, tc.flagName, cmd, tc.defaultValue)
+			result := util.GetConfigValue(v, tc.key, tc.flagName, cmd, tc.defaultValue)
 			assert.Equal(t, tc.expected, result)
 		})
 	}
