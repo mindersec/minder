@@ -30,7 +30,7 @@ flowchart LR
     end
 
     cloud([GitHub])
-    cli("<code>medic</code> CLI")
+    cli("<code>minder</code> CLI")
     click cli "https://github.com/stacklok/mediator/tree/main/cmd/cli"
 
     db[(Postgres)]

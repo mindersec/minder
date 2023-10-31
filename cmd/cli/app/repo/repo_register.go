@@ -37,18 +37,18 @@ import (
 	github "github.com/stacklok/mediator/internal/providers/github"
 	"github.com/stacklok/mediator/internal/util"
 	"github.com/stacklok/mediator/internal/util/cli"
-	pb "github.com/stacklok/mediator/pkg/api/protobuf/go/mediator/v1"
+	pb "github.com/stacklok/mediator/pkg/api/protobuf/go/minder/v1"
 )
 
 var errNoRepositoriesSelected = errors.New("No repositories selected")
 var cfgFlagRepos string
 
 // repo_registerCmd represents the register command to register a repo with the
-// mediator control plane
+// minder control plane
 var repo_registerCmd = &cobra.Command{
 	Use:   "register",
-	Short: "Register a repo with the mediator control plane",
-	Long:  `Repo register is used to register a repo with the mediator control plane`,
+	Short: "Register a repo with the minder control plane",
+	Long:  `Repo register is used to register a repo with the minder control plane`,
 	PreRun: func(cmd *cobra.Command, args []string) {
 		if err := viper.BindPFlags(cmd.Flags()); err != nil {
 			fmt.Fprintf(os.Stderr, "Error binding flags: %s\n", err)
@@ -225,7 +225,7 @@ func getSelectedRepositories(repoList []*pb.UpstreamRepositoryRef, flagRepos str
 	if len(allSelectedRepos) == 0 {
 		var userSelectedRepos []string
 		prompt := &survey.MultiSelect{
-			Message: "Select repositories to register with Mediator: \n",
+			Message: "Select repositories to register with Minder: \n",
 			Options: repoNames,
 		}
 		// Prompt the user to select repos, defaulting to 20 per page, but scrollable

@@ -50,7 +50,8 @@ import (
 	"github.com/stacklok/mediator/internal/events"
 	"github.com/stacklok/mediator/internal/logger"
 	"github.com/stacklok/mediator/internal/util"
-	pb "github.com/stacklok/mediator/pkg/api/protobuf/go/mediator/v1"
+	legacy "github.com/stacklok/mediator/pkg/api/protobuf/go/mediator/v1"
+	pb "github.com/stacklok/mediator/pkg/api/protobuf/go/minder/v1"
 )
 
 const metricsPath = "/metrics"
@@ -74,6 +75,13 @@ type Server struct {
 	pb.UnimplementedProfileServiceServer
 	pb.UnimplementedArtifactServiceServer
 	pb.UnimplementedKeyServiceServer
+	legacy.UnsafeHealthServiceServer
+	legacy.UnsafeOAuthServiceServer
+	legacy.UnsafeUserServiceServer
+	legacy.UnsafeRepositoryServiceServer
+	legacy.UnsafeProfileServiceServer
+	legacy.UnsafeArtifactServiceServer
+	legacy.UnsafeKeyServiceServer
 	OAuth2       *oauth2.Config
 	ClientID     string
 	ClientSecret string

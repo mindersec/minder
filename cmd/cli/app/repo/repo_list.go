@@ -26,15 +26,13 @@ import (
 	github "github.com/stacklok/mediator/internal/providers/github"
 	"github.com/stacklok/mediator/internal/util"
 	"github.com/stacklok/mediator/internal/util/cli"
-	pb "github.com/stacklok/mediator/pkg/api/protobuf/go/mediator/v1"
+	pb "github.com/stacklok/mediator/pkg/api/protobuf/go/minder/v1"
 )
 
-// repo_listCmd represents the list command to list repos with the
-// mediator control plane
 var repo_listCmd = &cobra.Command{
 	Use:   "list",
-	Short: "List repositories in the mediator control plane",
-	Long:  `Repo list is used to register a repo with the mediator control plane`,
+	Short: "List repositories in the minder control plane",
+	Long:  `Repo list is used to register a repo with the minder control plane`,
 	PreRun: func(cmd *cobra.Command, args []string) {
 		if err := viper.BindPFlags(cmd.Flags()); err != nil {
 			fmt.Fprintf(os.Stderr, "error binding flags: %s", err)

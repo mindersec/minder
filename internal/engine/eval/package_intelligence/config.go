@@ -24,7 +24,7 @@ import (
 	"github.com/mitchellh/mapstructure"
 
 	"github.com/stacklok/mediator/internal/engine/eval/pr_actions"
-	pb "github.com/stacklok/mediator/pkg/api/protobuf/go/mediator/v1"
+	pb "github.com/stacklok/mediator/pkg/api/protobuf/go/minder/v1"
 )
 
 type ecosystemConfig struct {

@@ -32,7 +32,7 @@ import (
 	"github.com/stacklok/mediator/internal/engine"
 	"github.com/stacklok/mediator/internal/events"
 	"github.com/stacklok/mediator/internal/util"
-	pb "github.com/stacklok/mediator/pkg/api/protobuf/go/mediator/v1"
+	pb "github.com/stacklok/mediator/pkg/api/protobuf/go/minder/v1"
 )
 
 // ProfileInitEvent is an event that is sent to the reconciler topic

@@ -30,11 +30,11 @@ type EvaluationType string
 
 const (
 	// DenyByDefaultEvaluationType is the deny-by-default evaluation type
-	// It uses the rego query "data.mediator.allow" to determine if the
+	// It uses the rego query "data.minder.allow" to determine if the
 	// object is allowed.
 	DenyByDefaultEvaluationType EvaluationType = "deny-by-default"
 	// ConstraintsEvaluationType is the constraints evaluation type
-	// It uses the rego query "data.mediator.violations[results]" to determine
+	// It uses the rego query "data.minder.violations[results]" to determine
 	// if the object violates any constraints. If there are any violations,
 	// the object is denied. Denials may contain a message specified through
 	// the "msg" key.
@@ -54,7 +54,7 @@ type denyByDefaultEvaluator struct {
 }
 
 func (*denyByDefaultEvaluator) getQuery() func(r *rego.Rego) {
-	return rego.Query("data.mediator")
+	return rego.Query(RegoQueryPrefix)
 }
 
 func (*denyByDefaultEvaluator) parseResult(rs rego.ResultSet) error {
@@ -108,7 +108,7 @@ type constraintsEvaluator struct {
 }
 
 func (*constraintsEvaluator) getQuery() func(r *rego.Rego) {
-	return rego.Query("data.mediator.violations[details]")
+	return rego.Query(fmt.Sprintf("%s.violations[details]", RegoQueryPrefix))
 }
 
 func (*constraintsEvaluator) parseResult(rs rego.ResultSet) error {

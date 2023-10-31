@@ -24,14 +24,14 @@ import (
 
 	"github.com/stacklok/mediator/cmd/cli/app"
 	"github.com/stacklok/mediator/internal/util"
-	pb "github.com/stacklok/mediator/pkg/api/protobuf/go/mediator/v1"
+	minderv1 "github.com/stacklok/mediator/pkg/api/protobuf/go/minder/v1"
 )
 
 var ruleType_listCmd = &cobra.Command{
 	Use:   "list",
-	Short: "List rule types within a mediator control plane",
-	Long: `The medic rule_type list subcommand lets you list rule type within a
-mediator control plane for an specific project.`,
+	Short: "List rule types within a minder control plane",
+	Long: `The minder rule_type list subcommand lets you list rule type within a
+minder control plane for an specific project.`,
 	PreRun: func(cmd *cobra.Command, args []string) {
 		if err := viper.BindPFlags(cmd.Flags()); err != nil {
 			fmt.Fprintf(os.Stderr, "Error binding flags: %s\n", err)
@@ -46,7 +46,7 @@ mediator control plane for an specific project.`,
 		}
 		defer conn.Close()
 
-		client := pb.NewProfileServiceClient(conn)
+		client := minderv1.NewProfileServiceClient(conn)
 		ctx, cancel := util.GetAppContext()
 		defer cancel()
 
@@ -60,8 +60,8 @@ mediator control plane for an specific project.`,
 			fmt.Fprintf(os.Stderr, "Error: invalid format: %s\n", format)
 		}
 
-		resp, err := client.ListRuleTypes(ctx, &pb.ListRuleTypesRequest{
-			Context: &pb.Context{
+		resp, err := client.ListRuleTypes(ctx, &minderv1.ListRuleTypesRequest{
+			Context: &minderv1.Context{
 				Provider: provider,
 				// TODO set up project if specified
 				// Currently it's inferred from the authorization token
@@ -102,7 +102,7 @@ func init() {
 	}
 }
 
-func handleListTableOutput(cmd *cobra.Command, resp *pb.ListRuleTypesResponse) {
+func handleListTableOutput(cmd *cobra.Command, resp *minderv1.ListRuleTypesResponse) {
 	table := initializeTable(cmd)
 
 	for _, v := range resp.RuleTypes {

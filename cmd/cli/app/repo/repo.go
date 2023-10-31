@@ -31,9 +31,9 @@ import (
 // RepoCmd is the root command for the repo subcommands
 var RepoCmd = &cobra.Command{
 	Use:   "repo",
-	Short: "Manage repositories within a mediator control plane",
-	Long: `The medic repo commands allow the management of repositories within a 
-mediator control plane.`,
+	Short: "Manage repositories within a minder control plane",
+	Long: `The minder repo commands allow the management of repositories within a 
+minder control plane.`,
 	RunE: func(cmd *cobra.Command, args []string) error {
 		return cmd.Usage()
 	},

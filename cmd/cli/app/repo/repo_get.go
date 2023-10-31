@@ -25,7 +25,7 @@ import (
 	"github.com/stacklok/mediator/cmd/cli/app"
 	github "github.com/stacklok/mediator/internal/providers/github"
 	"github.com/stacklok/mediator/internal/util"
-	pb "github.com/stacklok/mediator/pkg/api/protobuf/go/mediator/v1"
+	pb "github.com/stacklok/mediator/pkg/api/protobuf/go/minder/v1"
 )
 
 const (
@@ -35,12 +35,10 @@ const (
 	formatDefault = "" // it actually defaults to table
 )
 
-// repo_listCmd represents the list command to list repos with the
-// mediator control plane
 var repo_getCmd = &cobra.Command{
 	Use:   "get",
-	Short: "Get repository in the mediator control plane",
-	Long:  `Repo get is used to get a repo with the mediator control plane`,
+	Short: "Get repository in the minder control plane",
+	Long:  `Repo get is used to get a repo with the minder control plane`,
 	PreRun: func(cmd *cobra.Command, args []string) {
 		if err := viper.BindPFlags(cmd.Flags()); err != nil {
 			fmt.Fprintf(os.Stderr, "error binding flags: %s", err)

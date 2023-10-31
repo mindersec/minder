@@ -24,14 +24,14 @@ import (
 
 	"github.com/stacklok/mediator/cmd/cli/app"
 	"github.com/stacklok/mediator/internal/util"
-	pb "github.com/stacklok/mediator/pkg/api/protobuf/go/mediator/v1"
+	pb "github.com/stacklok/mediator/pkg/api/protobuf/go/minder/v1"
 )
 
 var profilestatus_listCmd = &cobra.Command{
 	Use:   "list",
-	Short: "List profile status within a mediator control plane",
-	Long: `The medic profile_status list subcommand lets you list profile status within a
-mediator control plane for an specific provider/project or profile id.`,
+	Short: "List profile status within a minder control plane",
+	Long: `The minder profile_status list subcommand lets you list profile status within a
+minder control plane for an specific provider/project or profile id.`,
 	PreRun: func(cmd *cobra.Command, args []string) {
 		if err := viper.BindPFlags(cmd.Flags()); err != nil {
 			fmt.Fprintf(os.Stderr, "Error binding flags: %s\n", err)

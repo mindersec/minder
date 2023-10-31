@@ -25,14 +25,14 @@ import (
 	"github.com/stacklok/mediator/cmd/cli/app"
 	"github.com/stacklok/mediator/internal/entities"
 	"github.com/stacklok/mediator/internal/util"
-	mediatorv1 "github.com/stacklok/mediator/pkg/api/protobuf/go/mediator/v1"
+	minderv1 "github.com/stacklok/mediator/pkg/api/protobuf/go/minder/v1"
 )
 
 var profilestatus_getCmd = &cobra.Command{
 	Use:   "get",
-	Short: "Get profile status within a mediator control plane",
-	Long: `The medic profile_status get subcommand lets you get profile status within a
-mediator control plane for an specific provider/project or profile id, entity type and entity id.`,
+	Short: "Get profile status within a minder control plane",
+	Long: `The minder profile_status get subcommand lets you get profile status within a
+minder control plane for an specific provider/project or profile id, entity type and entity id.`,
 	PreRun: func(cmd *cobra.Command, args []string) {
 		if err := viper.BindPFlags(cmd.Flags()); err != nil {
 			fmt.Fprintf(os.Stderr, "Error binding flags: %s\n", err)
@@ -45,7 +45,7 @@ mediator control plane for an specific provider/project or profile id, entity ty
 		}
 		defer conn.Close()
 
-		client := mediatorv1.NewProfileServiceClient(conn)
+		client := minderv1.NewProfileServiceClient(conn)
 		ctx, cancel := util.GetAppContext()
 		defer cancel()
 
@@ -66,14 +66,14 @@ mediator control plane for an specific provider/project or profile id, entity ty
 			return fmt.Errorf("provider must be set")
 		}
 
-		req := &mediatorv1.GetProfileStatusByNameRequest{
-			Context: &mediatorv1.Context{
+		req := &minderv1.GetProfileStatusByNameRequest{
+			Context: &minderv1.Context{
 				Provider: provider,
 			},
 			Name: profileName,
-			Entity: &mediatorv1.GetProfileStatusByNameRequest_EntityTypedId{
+			Entity: &minderv1.GetProfileStatusByNameRequest_EntityTypedId{
 				Id:   entityId,
-				Type: mediatorv1.EntityFromString(entityType),
+				Type: minderv1.EntityFromString(entityType),
 			},
 		}
 

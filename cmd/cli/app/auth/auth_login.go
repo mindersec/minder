@@ -44,7 +44,7 @@ import (
 	"github.com/stacklok/mediator/internal/util"
 	"github.com/stacklok/mediator/internal/util/cli"
 	"github.com/stacklok/mediator/internal/util/rand"
-	pb "github.com/stacklok/mediator/pkg/api/protobuf/go/mediator/v1"
+	pb "github.com/stacklok/mediator/pkg/api/protobuf/go/minder/v1"
 )
 
 func userRegistered(ctx context.Context, client pb.UserServiceClient) (bool, *pb.GetUserResponse, error) {
@@ -63,9 +63,9 @@ func userRegistered(ctx context.Context, client pb.UserServiceClient) (bool, *pb
 // auth_loginCmd represents the login command
 var auth_loginCmd = &cobra.Command{
 	Use:   "login",
-	Short: "Login to a mediator control plane.",
-	Long: `Login to a mediator control plane. Upon successful login, credentials
-will be saved to $XDG_CONFIG_HOME/mediator/credentials.json`,
+	Short: "Login to a minder control plane.",
+	Long: `Login to a minder control plane. Upon successful login, credentials
+will be saved to $XDG_CONFIG_HOME/minder/credentials.json`,
 	PreRun: func(cmd *cobra.Command, args []string) {
 		if err := viper.BindPFlags(cmd.Flags()); err != nil {
 			cli.Print(cmd.ErrOrStderr(), "Error binding flags: %s\n", err)
@@ -178,7 +178,7 @@ will be saved to $XDG_CONFIG_HOME/mediator/credentials.json`,
 			cli.PrintCmd(cmd, cli.SuccessBanner.Render(
 				"You have been successfully registered. Welcome!"))
 			cli.PrintCmd(cmd, cli.WarningBanner.Render(
-				"Mediator is currently under active development and considered experimental, "+
+				"Minder is currently under active development and considered experimental, "+
 					" we therefore provide no data retention or service stability guarantees.",
 			))
 			cli.PrintCmd(cmd, cli.Header.Render("Here are your details:"))

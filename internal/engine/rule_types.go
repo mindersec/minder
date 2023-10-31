@@ -33,7 +33,7 @@ import (
 	"github.com/stacklok/mediator/internal/engine/ingester"
 	engif "github.com/stacklok/mediator/internal/engine/interfaces"
 	"github.com/stacklok/mediator/internal/providers"
-	mediatorv1 "github.com/stacklok/mediator/pkg/api/protobuf/go/mediator/v1"
+	minderv1 "github.com/stacklok/mediator/pkg/api/protobuf/go/minder/v1"
 )
 
 // RuleMeta is the metadata for a rule
@@ -68,7 +68,7 @@ type RuleValidator struct {
 }
 
 // NewRuleValidator creates a new rule validator
-func NewRuleValidator(rt *mediatorv1.RuleType) (*RuleValidator, error) {
+func NewRuleValidator(rt *minderv1.RuleType) (*RuleValidator, error) {
 	// Load schemas
 	schemaLoader := gojsonschema.NewGoLoader(rt.Def.RuleSchema)
 	schema, err := gojsonschema.NewSchema(schemaLoader)
@@ -167,7 +167,7 @@ type RuleTypeEngine struct {
 
 	rval *RuleValidator
 
-	rt *mediatorv1.RuleType
+	rt *minderv1.RuleType
 
 	cli *providers.ProviderBuilder
 
@@ -176,8 +176,8 @@ type RuleTypeEngine struct {
 
 // NewRuleTypeEngine creates a new rule type engine
 func NewRuleTypeEngine(
-	p *mediatorv1.Profile,
-	rt *mediatorv1.RuleType,
+	p *minderv1.Profile,
+	rt *minderv1.RuleType,
 	cli *providers.ProviderBuilder,
 ) (*RuleTypeEngine, error) {
 	rval, err := NewRuleValidator(rt)
@@ -282,8 +282,8 @@ func (r *RuleTypeEngine) Actions(
 
 // RuleDefFromDB converts a rule type definition from the database to a protobuf
 // rule type definition
-func RuleDefFromDB(r *db.RuleType) (*mediatorv1.RuleType_Definition, error) {
-	def := &mediatorv1.RuleType_Definition{}
+func RuleDefFromDB(r *db.RuleType) (*minderv1.RuleType_Definition, error) {
+	def := &minderv1.RuleType_Definition{}
 
 	if err := protojson.Unmarshal(r.Definition, def); err != nil {
 		return nil, fmt.Errorf("cannot unmarshal rule type definition: %w", err)
@@ -293,7 +293,7 @@ func RuleDefFromDB(r *db.RuleType) (*mediatorv1.RuleType_Definition, error) {
 
 // RuleTypePBFromDB converts a rule type from the database to a protobuf
 // rule type
-func RuleTypePBFromDB(rt *db.RuleType, ectx *EntityContext) (*mediatorv1.RuleType, error) {
+func RuleTypePBFromDB(rt *db.RuleType, ectx *EntityContext) (*minderv1.RuleType, error) {
 	gname := ectx.GetProject().GetName()
 
 	def, err := RuleDefFromDB(rt)
@@ -303,10 +303,10 @@ func RuleTypePBFromDB(rt *db.RuleType, ectx *EntityContext) (*mediatorv1.RuleTyp
 
 	id := rt.ID.String()
 
-	return &mediatorv1.RuleType{
+	return &minderv1.RuleType{
 		Id:   &id,
 		Name: rt.Name,
-		Context: &mediatorv1.Context{
+		Context: &minderv1.Context{
 			Provider: ectx.GetProvider().Name,
 			Project:  &gname,
 		},
@@ -317,14 +317,14 @@ func RuleTypePBFromDB(rt *db.RuleType, ectx *EntityContext) (*mediatorv1.RuleTyp
 }
 
 // GetRulesFromProfileOfType returns the rules from the profile of the given type
-func GetRulesFromProfileOfType(p *mediatorv1.Profile, rt *mediatorv1.RuleType) ([]*mediatorv1.Profile_Rule, error) {
-	contextualRules, err := GetRulesForEntity(p, mediatorv1.EntityFromString(rt.Def.InEntity))
+func GetRulesFromProfileOfType(p *minderv1.Profile, rt *minderv1.RuleType) ([]*minderv1.Profile_Rule, error) {
+	contextualRules, err := GetRulesForEntity(p, minderv1.EntityFromString(rt.Def.InEntity))
 	if err != nil {
 		return nil, fmt.Errorf("error getting rules for entity: %w", err)
 	}
 
-	rules := []*mediatorv1.Profile_Rule{}
-	err = TraverseRules(contextualRules, func(r *mediatorv1.Profile_Rule) error {
+	rules := []*minderv1.Profile_Rule{}
+	err = TraverseRules(contextualRules, func(r *minderv1.Profile_Rule) error {
 		if r.Type == rt.Name {
 			rules = append(rules, r)
 		}

@@ -23,14 +23,14 @@ import (
 	"google.golang.org/protobuf/types/known/structpb"
 
 	"github.com/stacklok/mediator/internal/engine"
-	mediatorv1 "github.com/stacklok/mediator/pkg/api/protobuf/go/mediator/v1"
+	minderv1 "github.com/stacklok/mediator/pkg/api/protobuf/go/minder/v1"
 )
 
 var (
 	defaultOrg = "ACME"
 )
 
-func compareProfiles(t *testing.T, a *mediatorv1.Profile, b *mediatorv1.Profile) {
+func compareProfiles(t *testing.T, a *minderv1.Profile, b *minderv1.Profile) {
 	t.Helper()
 
 	require.Equal(t, a.Name, b.Name, "profile names should match")
@@ -40,7 +40,7 @@ func compareProfiles(t *testing.T, a *mediatorv1.Profile, b *mediatorv1.Profile)
 	compareEntityRules(t, a.Artifact, b.Artifact)
 }
 
-func compareEntityRules(t *testing.T, a []*mediatorv1.Profile_Rule, b []*mediatorv1.Profile_Rule) {
+func compareEntityRules(t *testing.T, a []*minderv1.Profile_Rule, b []*minderv1.Profile_Rule) {
 	t.Helper()
 
 	require.Equal(t, len(a), len(b), "rule sets should have the same length")
@@ -50,7 +50,7 @@ func compareEntityRules(t *testing.T, a []*mediatorv1.Profile_Rule, b []*mediato
 	}
 }
 
-func compareRule(t *testing.T, a *mediatorv1.Profile_Rule, b *mediatorv1.Profile_Rule) {
+func compareRule(t *testing.T, a *minderv1.Profile_Rule, b *minderv1.Profile_Rule) {
 	t.Helper()
 
 	require.Equal(t, a.Type, b.Type, "rule types should match")
@@ -110,7 +110,7 @@ func TestParseYAML(t *testing.T) {
 	tests := []struct {
 		name    string
 		profile string
-		want    *mediatorv1.Profile
+		want    *minderv1.Profile
 		wantErr bool
 		errIs   error
 	}{
@@ -141,13 +141,13 @@ artifact:
     def:
       state: exists
 `,
-			want: &mediatorv1.Profile{
+			want: &minderv1.Profile{
 				Name: "acme-github-profile",
-				Context: &mediatorv1.Context{
+				Context: &minderv1.Context{
 					Organization: &defaultOrg,
 					Provider:     "github",
 				},
-				Repository: []*mediatorv1.Profile_Rule{
+				Repository: []*minderv1.Profile_Rule{
 					{
 						Type: "secret_scanning",
 						Def: &structpb.Struct{
@@ -161,7 +161,7 @@ artifact:
 						},
 					},
 				},
-				BuildEnvironment: []*mediatorv1.Profile_Rule{
+				BuildEnvironment: []*minderv1.Profile_Rule{
 					{
 						Type: "no_org_wide_github_action_permissions",
 						Def: &structpb.Struct{
@@ -175,7 +175,7 @@ artifact:
 						},
 					},
 				},
-				Artifact: []*mediatorv1.Profile_Rule{
+				Artifact: []*minderv1.Profile_Rule{
 					{
 						Type: "ctlog_entry",
 						Params: &structpb.Struct{
@@ -225,13 +225,13 @@ repository:
     def:
       enabled: true
 `,
-			want: &mediatorv1.Profile{
+			want: &minderv1.Profile{
 				Name: "acme-github-profile",
-				Context: &mediatorv1.Context{
+				Context: &minderv1.Context{
 					Organization: &defaultOrg,
 					Provider:     "github",
 				},
-				Repository: []*mediatorv1.Profile_Rule{
+				Repository: []*minderv1.Profile_Rule{
 					{
 						Type: "secret_scanning",
 						Def: &structpb.Struct{
@@ -277,7 +277,7 @@ repository:
   - type: secret_scanning
 `,
 			wantErr: true,
-			errIs:   mediatorv1.ErrValidationFailed,
+			errIs:   minderv1.ErrValidationFailed,
 		},
 		{
 			name: "invalid with nil rule",
@@ -296,7 +296,7 @@ repository:
       enabled: true
 `,
 			wantErr: true,
-			errIs:   mediatorv1.ErrValidationFailed,
+			errIs:   minderv1.ErrValidationFailed,
 		},
 		{
 			name: "invalid with no name",
@@ -310,7 +310,7 @@ repository:
       enabled: true
 `,
 			wantErr: true,
-			errIs:   mediatorv1.ErrValidationFailed,
+			errIs:   minderv1.ErrValidationFailed,
 		},
 	}
 	for _, tt := range tests {
@@ -339,13 +339,13 @@ repository:
 func TestGetRulesForEntity(t *testing.T) {
 	t.Parallel()
 
-	pol := &mediatorv1.Profile{
+	pol := &minderv1.Profile{
 		Name: "acme-github-profile",
-		Context: &mediatorv1.Context{
+		Context: &minderv1.Context{
 			Organization: &defaultOrg,
 			Provider:     "github",
 		},
-		Repository: []*mediatorv1.Profile_Rule{
+		Repository: []*minderv1.Profile_Rule{
 			{
 				Type: "secret_scanning",
 				Def: &structpb.Struct{
@@ -359,7 +359,7 @@ func TestGetRulesForEntity(t *testing.T) {
 				},
 			},
 		},
-		BuildEnvironment: []*mediatorv1.Profile_Rule{
+		BuildEnvironment: []*minderv1.Profile_Rule{
 			{
 				Type: "no_org_wide_github_action_permissions",
 				Def: &structpb.Struct{
@@ -373,7 +373,7 @@ func TestGetRulesForEntity(t *testing.T) {
 				},
 			},
 		},
-		Artifact: []*mediatorv1.Profile_Rule{
+		Artifact: []*minderv1.Profile_Rule{
 			{
 				Type: "ctlog_entry",
 				Params: &structpb.Struct{
@@ -409,22 +409,22 @@ func TestGetRulesForEntity(t *testing.T) {
 	}
 
 	type args struct {
-		p      *mediatorv1.Profile
-		entity mediatorv1.Entity
+		p      *minderv1.Profile
+		entity minderv1.Entity
 	}
 	tests := []struct {
 		name    string
 		args    args
-		want    []*mediatorv1.Profile_Rule
+		want    []*minderv1.Profile_Rule
 		wantErr bool
 	}{
 		{
 			name: "valid rules for repository",
 			args: args{
 				p:      pol,
-				entity: mediatorv1.Entity_ENTITY_REPOSITORIES,
+				entity: minderv1.Entity_ENTITY_REPOSITORIES,
 			},
-			want: []*mediatorv1.Profile_Rule{
+			want: []*minderv1.Profile_Rule{
 				{
 					Type: "secret_scanning",
 					Def: &structpb.Struct{
@@ -443,9 +443,9 @@ func TestGetRulesForEntity(t *testing.T) {
 			name: "valid rules for build environment",
 			args: args{
 				p:      pol,
-				entity: mediatorv1.Entity_ENTITY_BUILD_ENVIRONMENTS,
+				entity: minderv1.Entity_ENTITY_BUILD_ENVIRONMENTS,
 			},
-			want: []*mediatorv1.Profile_Rule{
+			want: []*minderv1.Profile_Rule{
 				{
 					Type: "no_org_wide_github_action_permissions",
 					Def: &structpb.Struct{
@@ -464,9 +464,9 @@ func TestGetRulesForEntity(t *testing.T) {
 			name: "valid rules for artifacts",
 			args: args{
 				p:      pol,
-				entity: mediatorv1.Entity_ENTITY_ARTIFACTS,
+				entity: minderv1.Entity_ENTITY_ARTIFACTS,
 			},
-			want: []*mediatorv1.Profile_Rule{
+			want: []*minderv1.Profile_Rule{
 				{
 					Type: "ctlog_entry",
 					Params: &structpb.Struct{
@@ -521,7 +521,7 @@ func TestGetRulesForEntity(t *testing.T) {
 func TestFilterRulesForType(t *testing.T) {
 	t.Parallel()
 
-	crs := []*mediatorv1.Profile_Rule{
+	crs := []*minderv1.Profile_Rule{
 		{
 			Type: "secret_scanning",
 			Def: &structpb.Struct{
@@ -580,8 +580,8 @@ func TestFilterRulesForType(t *testing.T) {
 	}
 
 	type args struct {
-		cr []*mediatorv1.Profile_Rule
-		rt *mediatorv1.RuleType
+		cr []*minderv1.Profile_Rule
+		rt *minderv1.RuleType
 	}
 	tests := []struct {
 		name    string
@@ -593,7 +593,7 @@ func TestFilterRulesForType(t *testing.T) {
 			name: "valid filter for secret scanning",
 			args: args{
 				cr: crs,
-				rt: &mediatorv1.RuleType{
+				rt: &minderv1.RuleType{
 					Name: "secret_scanning",
 				},
 			},
@@ -603,7 +603,7 @@ func TestFilterRulesForType(t *testing.T) {
 			name: "valid filter for no_org_wide_github_action_permissions",
 			args: args{
 				cr: crs,
-				rt: &mediatorv1.RuleType{
+				rt: &minderv1.RuleType{
 					Name: "no_org_wide_github_action_permissions",
 				},
 			},
@@ -613,7 +613,7 @@ func TestFilterRulesForType(t *testing.T) {
 			name: "valid filter for ctlog_entry",
 			args: args{
 				cr: crs,
-				rt: &mediatorv1.RuleType{
+				rt: &minderv1.RuleType{
 					Name: "ctlog_entry",
 				},
 			},
@@ -626,8 +626,8 @@ func TestFilterRulesForType(t *testing.T) {
 		t.Run(tt.name, func(t *testing.T) {
 			t.Parallel()
 
-			got := []*mediatorv1.Profile_Rule{}
-			err := engine.TraverseRules(tt.args.cr, func(pp *mediatorv1.Profile_Rule) error {
+			got := []*minderv1.Profile_Rule{}
+			err := engine.TraverseRules(tt.args.cr, func(pp *minderv1.Profile_Rule) error {
 				if pp.Type == tt.args.rt.Name {
 					got = append(got, pp)
 				}

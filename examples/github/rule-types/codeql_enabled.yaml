@@ -49,7 +49,7 @@ def:
     rego:
       type: deny-by-default
       def: |
-        package mediator
+        package minder
 
         default allow := false
 

@@ -24,3 +24,5 @@ lint:
   use:
     - DEFAULT
   allow_comment_ignores: true
+  except:
+  - RPC_REQUEST_RESPONSE_UNIQUE

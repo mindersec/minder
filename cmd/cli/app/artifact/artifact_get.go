@@ -23,11 +23,9 @@ import (
 	"github.com/spf13/viper"
 
 	"github.com/stacklok/mediator/internal/util"
-	pb "github.com/stacklok/mediator/pkg/api/protobuf/go/mediator/v1"
+	pb "github.com/stacklok/mediator/pkg/api/protobuf/go/minder/v1"
 )
 
-// repo_listCmd represents the list command to list repos with the
-// mediator control plane
 var artifact_getCmd = &cobra.Command{
 	Use:   "get",
 	Short: "Get artifact details",

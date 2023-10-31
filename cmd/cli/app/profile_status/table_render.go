@@ -24,7 +24,7 @@ import (
 	"github.com/spf13/cobra"
 	"gopkg.in/yaml.v2"
 
-	pb "github.com/stacklok/mediator/pkg/api/protobuf/go/mediator/v1"
+	pb "github.com/stacklok/mediator/pkg/api/protobuf/go/minder/v1"
 )
 
 const (
@@ -197,7 +197,7 @@ func guidanceOrEncouragement(status, guidance string) string {
 		return "No guidance available for this rule 😞"
 	}
 
-	// TODO: use a color scheme for mediator instead of a pre-defined one.
+	// TODO: use a color scheme for minder instead of a pre-defined one.
 	// Related-to: https://github.com/stacklok/mediator/issues/1006
 	renderedGuidance, err := glamour.Render(guidance, "dark")
 	if err != nil {

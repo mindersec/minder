@@ -30,7 +30,8 @@ import (
 	engif "github.com/stacklok/mediator/internal/engine/interfaces"
 )
 
-var mediatorRegoLib = []func(res *engif.Result) func(*rego.Rego){
+// MinderRegoLib contains the minder-specific functions for rego
+var MinderRegoLib = []func(res *engif.Result) func(*rego.Rego){
 	FileExists,
 	FileLs,
 	FileRead,
@@ -38,7 +39,7 @@ var mediatorRegoLib = []func(res *engif.Result) func(*rego.Rego){
 
 func instantiateRegoLib(res *engif.Result) []func(*rego.Rego) {
 	var lib []func(*rego.Rego)
-	for _, f := range mediatorRegoLib {
+	for _, f := range MinderRegoLib {
 		lib = append(lib, f(res))
 	}
 	return lib

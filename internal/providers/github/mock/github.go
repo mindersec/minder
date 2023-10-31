@@ -12,7 +12,7 @@ import (
 	git "github.com/go-git/go-git/v5"
 	gomock "github.com/golang/mock/gomock"
 	github "github.com/google/go-github/v53/github"
-	_go "github.com/stacklok/mediator/pkg/api/protobuf/go/mediator/v1"
+	v1 "github.com/stacklok/mediator/pkg/api/protobuf/go/minder/v1"
 )
 
 // MockProvider is a mock of Provider interface.
@@ -223,10 +223,10 @@ func (mr *MockRepoListerMockRecorder) GetToken() *gomock.Call {
 }
 
 // ListOrganizationRepsitories mocks base method.
-func (m *MockRepoLister) ListOrganizationRepsitories(arg0 context.Context, arg1 string) ([]*_go.Repository, error) {
+func (m *MockRepoLister) ListOrganizationRepsitories(arg0 context.Context, arg1 string) ([]*v1.Repository, error) {
 	m.ctrl.T.Helper()
 	ret := m.ctrl.Call(m, "ListOrganizationRepsitories", arg0, arg1)
-	ret0, _ := ret[0].([]*_go.Repository)
+	ret0, _ := ret[0].([]*v1.Repository)
 	ret1, _ := ret[1].(error)
 	return ret0, ret1
 }
@@ -238,10 +238,10 @@ func (mr *MockRepoListerMockRecorder) ListOrganizationRepsitories(arg0, arg1 int
 }
 
 // ListUserRepositories mocks base method.
-func (m *MockRepoLister) ListUserRepositories(arg0 context.Context, arg1 string) ([]*_go.Repository, error) {
+func (m *MockRepoLister) ListUserRepositories(arg0 context.Context, arg1 string) ([]*v1.Repository, error) {
 	m.ctrl.T.Helper()
 	ret := m.ctrl.Call(m, "ListUserRepositories", arg0, arg1)
-	ret0, _ := ret[0].([]*_go.Repository)
+	ret0, _ := ret[0].([]*v1.Repository)
 	ret1, _ := ret[1].(error)
 	return ret0, ret1
 }
@@ -721,10 +721,10 @@ func (mr *MockGitHubMockRecorder) ListHooks(ctx, owner, repo interface{}) *gomoc
 }
 
 // ListOrganizationRepsitories mocks base method.
-func (m *MockGitHub) ListOrganizationRepsitories(arg0 context.Context, arg1 string) ([]*_go.Repository, error) {
+func (m *MockGitHub) ListOrganizationRepsitories(arg0 context.Context, arg1 string) ([]*v1.Repository, error) {
 	m.ctrl.T.Helper()
 	ret := m.ctrl.Call(m, "ListOrganizationRepsitories", arg0, arg1)
-	ret0, _ := ret[0].([]*_go.Repository)
+	ret0, _ := ret[0].([]*v1.Repository)
 	ret1, _ := ret[1].(error)
 	return ret0, ret1
 }
@@ -781,10 +781,10 @@ func (mr *MockGitHubMockRecorder) ListReviews(arg0, arg1, arg2, arg3, arg4 inter
 }
 
 // ListUserRepositories mocks base method.
-func (m *MockGitHub) ListUserRepositories(arg0 context.Context, arg1 string) ([]*_go.Repository, error) {
+func (m *MockGitHub) ListUserRepositories(arg0 context.Context, arg1 string) ([]*v1.Repository, error) {
 	m.ctrl.T.Helper()
 	ret := m.ctrl.Call(m, "ListUserRepositories", arg0, arg1)
-	ret0, _ := ret[0].([]*_go.Repository)
+	ret0, _ := ret[0].([]*v1.Repository)
 	ret1, _ := ret[1].(error)
 	return ret0, ret1
 }
