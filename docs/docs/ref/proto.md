@@ -1418,7 +1418,7 @@ endpoint and how we compare it to the rule.
 | jq | [RuleType.Definition.Eval.JQComparison](#minder-v1-RuleType-Definition-Eval-JQComparison) | repeated | jq is only used if the `jq` type is selected. It defines the comparisons that are made between the ingested data and the profile rule. |
 | rego | [RuleType.Definition.Eval.Rego](#minder-v1-RuleType-Definition-Eval-Rego) | optional | rego is only used if the `rego` type is selected. |
 | vulncheck | [RuleType.Definition.Eval.Vulncheck](#minder-v1-RuleType-Definition-Eval-Vulncheck) | optional | vulncheck is only used if the `vulncheck` type is selected. |
-| package_intelligence | [RuleType.Definition.Eval.PackageIntelligence](#minder-v1-RuleType-Definition-Eval-PackageIntelligence) | optional | package_intelligence is only used if the `package_intelligence` type is selected. |
+| trusty | [RuleType.Definition.Eval.Trusty](#minder-v1-RuleType-Definition-Eval-Trusty) | optional | trusty is only used if the `trusty` type is selected. |
 
 
 <a name="minder-v1-RuleType-Definition-Eval-JQComparison"></a>
@@ -1444,17 +1444,6 @@ endpoint and how we compare it to the rule.
 | def | [string](#string) |  |  |
 
 
-<a name="minder-v1-RuleType-Definition-Eval-PackageIntelligence"></a>
-
-#### RuleType.Definition.Eval.PackageIntelligence
-
-
-
-| Field | Type | Label | Description |
-| ----- | ---- | ----- | ----------- |
-| endpoint | [string](#string) |  | e.g. https://staging.stacklok.dev/ |
-
-
 <a name="minder-v1-RuleType-Definition-Eval-Rego"></a>
 
 #### RuleType.Definition.Eval.Rego
@@ -1465,6 +1454,17 @@ endpoint and how we compare it to the rule.
 | ----- | ---- | ----- | ----------- |
 | type | [string](#string) |  | type is the type of evaluation engine to use for rego. We currently have two modes of operation: - deny-by-default: this is the default mode of operation where we deny access by default and allow access only if the profile explicitly allows it. It expects the profile to set an `allow` variable to true or false. - constraints: this is the mode of operation where we allow access by default and deny access only if a violation is found. It expects the profile to set a `violations` variable with a "msg" field. |
 | def | [string](#string) |  | def is the definition of the rego profile. |
+
+
+<a name="minder-v1-RuleType-Definition-Eval-Trusty"></a>
+
+#### RuleType.Definition.Eval.Trusty
+
+
+
+| Field | Type | Label | Description |
+| ----- | ---- | ----- | ----------- |
+| endpoint | [string](#string) |  | e.g. https://staging.stacklok.dev/ |
 
 
 <a name="minder-v1-RuleType-Definition-Eval-Vulncheck"></a>

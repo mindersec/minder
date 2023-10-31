@@ -22,8 +22,8 @@ import (
 	"os"
 
 	"github.com/stacklok/mediator/internal/engine/eval/jq"
-	"github.com/stacklok/mediator/internal/engine/eval/package_intelligence"
 	"github.com/stacklok/mediator/internal/engine/eval/rego"
+	"github.com/stacklok/mediator/internal/engine/eval/trusty"
 	"github.com/stacklok/mediator/internal/engine/eval/vulncheck"
 	engif "github.com/stacklok/mediator/internal/engine/interfaces"
 	"github.com/stacklok/mediator/internal/providers"
@@ -49,15 +49,15 @@ func NewRuleEvaluator(rt *pb.RuleType, cli *providers.ProviderBuilder) (engif.Ev
 		return rego.NewRegoEvaluator(e.GetRego())
 	case vulncheck.VulncheckEvalType:
 		return vulncheck.NewVulncheckEvaluator(e.GetVulncheck(), cli)
-	case package_intelligence.PiEvalType:
-		pie := e.GetPackageIntelligence()
-		if pie == nil {
-			return nil, fmt.Errorf("rule type engine missing package_intelligence configuration")
+	case trusty.TrustyEvalType:
+		trustyEvalConfig := e.GetTrusty()
+		if trustyEvalConfig == nil {
+			return nil, fmt.Errorf("rule type engine missing trusty configuration")
 		}
-		if pie.GetEndpoint() == "" {
-			pie.Endpoint = os.Getenv("MEDIATOR_UNSTABLE_PACKAGE_INTELLIGENCE_ENDPOINT")
+		if trustyEvalConfig.GetEndpoint() == "" {
+			trustyEvalConfig.Endpoint = os.Getenv("MEDIATOR_UNSTABLE_TRUSTY_ENDPOINT")
 		}
-		return package_intelligence.NewPackageIntelligenceEvaluator(pie, cli)
+		return trusty.NewTrustyEvaluator(trustyEvalConfig, cli)
 	default:
 		return nil, fmt.Errorf("unsupported rule type engine: %s", rt.Def.Eval.Type)
 	}

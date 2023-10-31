@@ -12,8 +12,8 @@
 // See the License for the specific language governing permissions and
 // limitations under the License.
 
-// Package package_intelligence provides an evaluator that uses the package intelligence API
-package package_intelligence
+// Package trusty provides an evaluator that uses the trusty API
+package trusty
 
 import (
 	"errors"

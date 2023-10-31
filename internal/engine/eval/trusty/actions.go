@@ -12,8 +12,8 @@
 // See the License for the specific language governing permissions and
 // limitations under the License.
 
-// Package package_intelligence provides an evaluator that uses the package intelligence API
-package package_intelligence
+// Package trusty provides an evaluator that uses the trusty API
+package trusty
 
 import (
 	"bytes"
@@ -60,15 +60,15 @@ mediator policies. Below is a summary of the packages with low scores and their 
 )
 
 type dependencyAlternatives struct {
-	Dependency *pb.Dependency
-	piReply    *PiReply
+	Dependency  *pb.Dependency
+	trustyReply *Reply
 }
 
 // summaryPrHandler is a prStatusHandler that adds a summary text to the PR as a comment.
 type summaryPrHandler struct {
-	cli   provifv1.GitHub
-	pr    *pb.PullRequest
-	piUrl string
+	cli       provifv1.GitHub
+	pr        *pb.PullRequest
+	trustyUrl string
 
 	trackedAlternatives []dependencyAlternatives
 	headerTmpl          *template.Template
@@ -77,11 +77,11 @@ type summaryPrHandler struct {
 
 func (sph *summaryPrHandler) trackAlternatives(
 	dep *pb.PrDependencies_ContextualDependency,
-	piReply *PiReply,
+	trustyReply *Reply,
 ) {
 	sph.trackedAlternatives = append(sph.trackedAlternatives, dependencyAlternatives{
-		Dependency: dep.Dep,
-		piReply:    piReply,
+		Dependency:  dep.Dep,
+		trustyReply: trustyReply,
 	})
 }
 
@@ -112,9 +112,9 @@ func (sph *summaryPrHandler) generateSummary() (string, error) {
 	}
 	summary.WriteString(headerBuf.String())
 
-	piUrl, err := url.Parse(sph.piUrl)
+	piUrl, err := url.Parse(sph.trustyUrl)
 	if err != nil {
-		return "", fmt.Errorf("could not parse piUrl: %w", err)
+		return "", fmt.Errorf("could not parse trustyUrl: %w", err)
 	}
 	appUrl := url.URL{
 		Scheme: piUrl.Scheme,
@@ -124,10 +124,10 @@ func (sph *summaryPrHandler) generateSummary() (string, error) {
 	for i := range sph.trackedAlternatives {
 		var rowBuf bytes.Buffer
 
-		nonZeroAlternatives := make([]PiAlternative, 0)
-		for _, alt := range sph.trackedAlternatives[i].piReply.Alternatives.Packages {
-			if alt.Score > sph.trackedAlternatives[i].piReply.Summary.Score {
-				nonZeroAlternatives = append(nonZeroAlternatives, alt)
+		higherScoringAlternatives := make([]Alternative, 0)
+		for _, alt := range sph.trackedAlternatives[i].trustyReply.Alternatives.Packages {
+			if alt.Score > sph.trackedAlternatives[i].trustyReply.Summary.Score {
+				higherScoringAlternatives = append(higherScoringAlternatives, alt)
 			}
 		}
 
@@ -135,13 +135,13 @@ func (sph *summaryPrHandler) generateSummary() (string, error) {
 			DependencyEcosystem string
 			DependencyName      string
 			DependencyScore     float64
-			Alternatives        []PiAlternative
+			Alternatives        []Alternative
 			BaseUrl             string
 		}{
 			DependencyEcosystem: strings.ToLower(sph.trackedAlternatives[i].Dependency.Ecosystem.AsString()),
 			DependencyName:      sph.trackedAlternatives[i].Dependency.Name,
-			DependencyScore:     sph.trackedAlternatives[i].piReply.Summary.Score,
-			Alternatives:        nonZeroAlternatives,
+			DependencyScore:     sph.trackedAlternatives[i].trustyReply.Summary.Score,
+			Alternatives:        higherScoringAlternatives,
 			BaseUrl:             appUrl.String(),
 		}); err != nil {
 			return "", fmt.Errorf("could not execute template: %w", err)
@@ -156,7 +156,7 @@ func (sph *summaryPrHandler) generateSummary() (string, error) {
 func newSummaryPrHandler(
 	pr *pb.PullRequest,
 	cli provifv1.GitHub,
-	piUrl string,
+	trustyUrl string,
 ) (*summaryPrHandler, error) {
 	headerTmpl, err := template.New(tableHeaderTmplName).Parse(tableTemplateHeader)
 	if err != nil {
@@ -170,7 +170,7 @@ func newSummaryPrHandler(
 	return &summaryPrHandler{
 		cli:                 cli,
 		pr:                  pr,
-		piUrl:               piUrl,
+		trustyUrl:           trustyUrl,
 		headerTmpl:          headerTmpl,
 		rowsTmpl:            rowsTmpl,
 		trackedAlternatives: make([]dependencyAlternatives, 0),

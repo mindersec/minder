@@ -12,8 +12,8 @@
 // See the License for the specific language governing permissions and
 // limitations under the License.
 
-// Package package_intelligence provides an evaluator that uses the package intelligence API
-package package_intelligence
+// Package trusty provides an evaluator that uses the trusty API
+package trusty
 
 import (
 	"context"
@@ -29,19 +29,19 @@ import (
 )
 
 const (
-	// PiEvalType is the type of the package_intelligence evaluator
-	PiEvalType = "package_intelligence"
+	// TrustyEvalType is the type of the trusty evaluator
+	TrustyEvalType = "trusty"
 )
 
-// Evaluator is the package_intelligence evaluator
+// Evaluator is the trusty evaluator
 type Evaluator struct {
 	cli      provifv1.GitHub
 	endpoint string
 }
 
-// NewPackageIntelligenceEvaluator creates a new package_intelligence evaluator
-func NewPackageIntelligenceEvaluator(
-	pie *pb.RuleType_Definition_Eval_PackageIntelligence,
+// NewTrustyEvaluator creates a new trusty evaluator
+func NewTrustyEvaluator(
+	pie *pb.RuleType_Definition_Eval_Trusty,
 	pbuild *providers.ProviderBuilder,
 ) (*Evaluator, error) {
 	if pbuild == nil {
@@ -116,7 +116,7 @@ func (e *Evaluator) Eval(ctx context.Context, pol map[string]any, res *engif.Res
 		if resp == nil || resp.PackageName == "" {
 			logger.Info().
 				Str("dependency", dep.Dep.Name).
-				Msgf("no package intelligence data for dependency, skipping")
+				Msgf("no trusty data for dependency, skipping")
 			continue
 		}
 
