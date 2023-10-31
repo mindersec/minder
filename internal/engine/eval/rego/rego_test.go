@@ -40,7 +40,7 @@ func TestEvaluatorDenyByDefaultEvalSimple(t *testing.T) {
 		&pb.RuleType_Definition_Eval_Rego{
 			Type: rego.DenyByDefaultEvaluationType.String(),
 			Def: `
-package mediator
+package minder
 
 default allow = false
 
@@ -77,7 +77,7 @@ func TestEvaluatorDenyByDefaultSkip(t *testing.T) {
 		&pb.RuleType_Definition_Eval_Rego{
 			Type: rego.DenyByDefaultEvaluationType.String(),
 			Def: `
-package mediator
+package minder
 
 default allow = false
 
@@ -111,7 +111,7 @@ func TestEvaluatorDenyByConstraintsEvalSimple(t *testing.T) {
 		&pb.RuleType_Definition_Eval_Rego{
 			Type: rego.ConstraintsEvaluationType.String(),
 			Def: `
-package mediator
+package minder
 
 violations[{"msg": msg}] {
 	input.ingested.data != "foo"
@@ -148,7 +148,7 @@ func TestEvaluatorDenyByConstraintsEvalMultiple(t *testing.T) {
 		&pb.RuleType_Definition_Eval_Rego{
 			Type: rego.ConstraintsEvaluationType.String(),
 			Def: `
-package mediator
+package minder
 
 violations[{"msg": msg}] {
 	input.ingested.data == "foo"
@@ -189,7 +189,7 @@ func TestDenyByDefaultEvaluationWithProfile(t *testing.T) {
 		&pb.RuleType_Definition_Eval_Rego{
 			Type: rego.DenyByDefaultEvaluationType.String(),
 			Def: `
-package mediator
+package minder
 
 default allow = false
 
@@ -228,7 +228,7 @@ func TestConstrainedEvaluationWithProfile(t *testing.T) {
 		&pb.RuleType_Definition_Eval_Rego{
 			Type: rego.ConstraintsEvaluationType.String(),
 			Def: `
-package mediator
+package minder
 
 violations[{"msg": msg}] {
 	input.profile.data != input.ingested.data
@@ -298,7 +298,7 @@ func TestCantEvaluateWithInvalidProfile(t *testing.T) {
 		&pb.RuleType_Definition_Eval_Rego{
 			Type: rego.ConstraintsEvaluationType.String(),
 			Def: `
-package mediator
+package minder
 
 violations[{"msg": msg}] {`,
 		},
@@ -319,7 +319,7 @@ func TestCantEvaluateWithCompilerError(t *testing.T) {
 		&pb.RuleType_Definition_Eval_Rego{
 			Type: rego.ConstraintsEvaluationType.String(),
 			Def: `
-package mediator
+package minder
 
 violations[{"msg": msg}] {
 	input := 12345

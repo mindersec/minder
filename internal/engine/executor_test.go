@@ -160,7 +160,7 @@ func TestExecutor_handleEntityEvent(t *testing.T) {
 			Type: "rego",
 			Rego: &minderv1.RuleType_Definition_Eval_Rego{
 				Type: "deny-by-default",
-				Def: `package mediator
+				Def: `package minder
 default allow = true`,
 			},
 		},

@@ -33,7 +33,7 @@ def:
     rego:
       type: constraints
       def: |
-        package mediator
+        package minder
 
         violations[{"msg": msg}] {
           # Read Dockerfile

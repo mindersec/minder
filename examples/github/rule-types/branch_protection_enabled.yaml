@@ -46,7 +46,7 @@ def:
     rego:
       type: deny-by-default
       def: |
-        package mediator
+        package minder
         
         import future.keywords.every
         import future.keywords.if

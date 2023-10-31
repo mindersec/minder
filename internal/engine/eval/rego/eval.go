@@ -31,6 +31,10 @@ import (
 const (
 	// RegoEvalType is the type of the rego evaluator
 	RegoEvalType = "rego"
+	// MinderRegoFile is the default rego file for minder.
+	MinderRegoFile = "minder.rego"
+	// RegoQueryPrefix is the prefix for rego queries
+	RegoQueryPrefix = "data.minder"
 )
 
 const (
@@ -40,8 +44,7 @@ const (
 
 // Evaluator is the evaluator for rego rules
 // It initializes the rego engine and evaluates the rules
-// The default rego package is "mediator"
-// The default rego query is "data.mediator.allow"
+// The default rego package is "minder"
 type Evaluator struct {
 	cfg      *Config
 	regoOpts []func(*rego.Rego)
@@ -80,7 +83,7 @@ func NewRegoEvaluator(cfg *pb.RuleType_Definition_Eval_Rego) (*Evaluator, error)
 		reseval: re,
 		regoOpts: []func(*rego.Rego){
 			re.getQuery(),
-			rego.Module("mediator.rego", c.Def),
+			rego.Module(MinderRegoFile, c.Def),
 			rego.Strict(true),
 		},
 	}

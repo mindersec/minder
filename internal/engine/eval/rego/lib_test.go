@@ -41,7 +41,7 @@ func TestFileExistsWithExistingFile(t *testing.T) {
 		&pb.RuleType_Definition_Eval_Rego{
 			Type: rego.DenyByDefaultEvaluationType.String(),
 			Def: `
-package mediator
+package minder
 
 default allow = false
 
@@ -71,7 +71,7 @@ func TestFileExistsWithNonExistentFile(t *testing.T) {
 		&pb.RuleType_Definition_Eval_Rego{
 			Type: rego.DenyByDefaultEvaluationType.String(),
 			Def: `
-package mediator
+package minder
 
 default allow = false
 
@@ -107,7 +107,7 @@ func TestFileReadWithContentsMatching(t *testing.T) {
 		&pb.RuleType_Definition_Eval_Rego{
 			Type: rego.DenyByDefaultEvaluationType.String(),
 			Def: `
-package mediator
+package minder
 
 default allow = false
 
@@ -144,7 +144,7 @@ func TestFileReadWithContentsNotMatching(t *testing.T) {
 		&pb.RuleType_Definition_Eval_Rego{
 			Type: rego.DenyByDefaultEvaluationType.String(),
 			Def: `
-package mediator
+package minder
 
 default allow = false
 
@@ -174,7 +174,7 @@ func TestFileLsWithUnexistentFile(t *testing.T) {
 		&pb.RuleType_Definition_Eval_Rego{
 			Type: rego.DenyByDefaultEvaluationType.String(),
 			Def: `
-package mediator
+package minder
 
 default allow = false
 
@@ -206,7 +206,7 @@ func TestFileLsWithEmptyDirectory(t *testing.T) {
 		&pb.RuleType_Definition_Eval_Rego{
 			Type: rego.DenyByDefaultEvaluationType.String(),
 			Def: `
-package mediator
+package minder
 
 default allow = false
 
@@ -242,7 +242,7 @@ func TestFileLsWithSingleFile(t *testing.T) {
 		&pb.RuleType_Definition_Eval_Rego{
 			Type: rego.DenyByDefaultEvaluationType.String(),
 			Def: `
-package mediator
+package minder
 
 default allow = false
 
@@ -279,7 +279,7 @@ func TestFileLsWithSingleFileDirect(t *testing.T) {
 		&pb.RuleType_Definition_Eval_Rego{
 			Type: rego.DenyByDefaultEvaluationType.String(),
 			Def: `
-package mediator
+package minder
 
 default allow = false
 
@@ -320,7 +320,7 @@ func TestFileLsWithMultipleFiles(t *testing.T) {
 		&pb.RuleType_Definition_Eval_Rego{
 			Type: rego.DenyByDefaultEvaluationType.String(),
 			Def: `
-package mediator
+package minder
 
 default allow = false
 
@@ -363,7 +363,7 @@ func TestFileLsWithSimpleSymlink(t *testing.T) {
 		&pb.RuleType_Definition_Eval_Rego{
 			Type: rego.DenyByDefaultEvaluationType.String(),
 			Def: `
-package mediator
+package minder
 
 default allow = false
 
@@ -401,7 +401,7 @@ func TestFileLsWithSymlinkToDir(t *testing.T) {
 		&pb.RuleType_Definition_Eval_Rego{
 			Type: rego.DenyByDefaultEvaluationType.String(),
 			Def: `
-package mediator
+package minder
 
 default allow = false
 

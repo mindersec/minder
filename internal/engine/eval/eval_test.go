@@ -68,7 +68,7 @@ func TestNewRuleEvaluatorWorks(t *testing.T) {
 							Type: "rego",
 							Rego: &pb.RuleType_Definition_Eval_Rego{
 								Type: rego.DenyByDefaultEvaluationType.String(),
-								Def:  "package mediator\n\ndefault allow = false\n\nallow {\n\tinput.ingested.data == \"foo\"\n}",
+								Def:  "package minder\n\ndefault allow = false\n\nallow {\n\tinput.ingested.data == \"foo\"\n}",
 							},
 						},
 					},
