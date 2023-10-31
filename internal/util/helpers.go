@@ -149,7 +149,7 @@ func GrpcForCommand(cmd *cobra.Command, v *viper.Viper) (*grpc.ClientConn, error
 
 	issuerUrl := GetConfigValue(v, "identity.cli.issuer_url", "identity-url", cmd, "https://auth.staging.stacklok.dev").(string)
 	realm := GetConfigValue(v, "identity.cli.realm", "identity-realm", cmd, "stacklok").(string)
-	clientId := GetConfigValue(v, "identity.cli.client_id", "identity-client", cmd, "mediator-cli").(string)
+	clientId := GetConfigValue(v, "identity.cli.client_id", "identity-client", cmd, "minder-cli").(string)
 
 	return GetGrpcConnection(grpc_host, grpc_port, allowInsecure, issuerUrl, realm, clientId)
 }

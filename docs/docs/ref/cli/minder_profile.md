@@ -27,7 +27,7 @@ minder profile [flags]
       --grpc-host string         Server host (default "staging.stacklok.dev")
       --grpc-insecure            Allow establishing insecure connections
       --grpc-port int            Server port (default 443)
-      --identity-client string   Identity server client ID (default "mediator-cli")
+      --identity-client string   Identity server client ID (default "minder-cli")
       --identity-realm string    Identity server realm (default "stacklok")
       --identity-url string      Identity server issuer URL (default "https://auth.staging.stacklok.dev")
 ```

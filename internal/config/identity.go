@@ -34,7 +34,7 @@ type CliIdentityConfig struct {
 	// Realm is the Keycloak realm that the client belongs to
 	Realm string `mapstructure:"realm" default:"stacklok"`
 	// ClientId is the client ID that identifies the mediator CLI
-	ClientId string `mapstructure:"client_id" default:"mediator-cli"`
+	ClientId string `mapstructure:"client_id" default:"minder-cli"`
 }
 
 // ServerIdentityConfig is the configuration for the identity provider in mediator server
@@ -44,14 +44,14 @@ type ServerIdentityConfig struct {
 	// Realm is the Keycloak realm that the client belongs to
 	Realm string `mapstructure:"realm" default:"stacklok"`
 	// ClientId is the client ID that identifies the mediator server
-	ClientId string `mapstructure:"client_id" default:"mediator-server"`
+	ClientId string `mapstructure:"client_id" default:"minder-server"`
 	// ClientSecret is the client secret for the mediator server
 	ClientSecret string `mapstructure:"client_secret" default:"secret"`
 	// ClientSecretFile is the location of a file containing the client secret for the mediator server (optional)
 	ClientSecretFile string `mapstructure:"client_secret_file"`
 }
 
-// GetClientSecret returns the mediator-server client secret
+// GetClientSecret returns the minder-server client secret
 func (sic *ServerIdentityConfig) GetClientSecret() (string, error) {
 	if sic.ClientSecretFile != "" {
 		data, err := os.ReadFile(filepath.Clean(sic.ClientSecretFile))

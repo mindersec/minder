@@ -48,11 +48,11 @@ identity:
   cli:
     issuer_url: http://localhost:8081
     realm: stacklok
-    client_id: mediator-cli
+    client_id: minder-cli
   server:
     issuer_url: http://localhost:8081
     realm: stacklok
-    client_id: mediator-server
+    client_id: minder-server
     client_secret: secret
 
 # Crypto (these should be ultimately stored in a secure vault)
