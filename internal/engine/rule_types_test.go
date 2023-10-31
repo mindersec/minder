@@ -23,7 +23,7 @@ import (
 	"github.com/stretchr/testify/require"
 
 	"github.com/stacklok/mediator/internal/engine"
-	mediatorv1 "github.com/stacklok/mediator/pkg/api/protobuf/go/mediator/v1"
+	minderv1 "github.com/stacklok/mediator/pkg/api/protobuf/go/minder/v1"
 )
 
 func TestExampleRulesAreValidatedCorrectly(t *testing.T) {
@@ -56,7 +56,7 @@ func TestExampleRulesAreValidatedCorrectly(t *testing.T) {
 			defer f.Close()
 
 			t.Log("parsing rule type", path)
-			rt, err := mediatorv1.ParseRuleType(f)
+			rt, err := minderv1.ParseRuleType(f)
 			require.NoError(t, err, "failed to parse rule type %s", path)
 			require.NotNil(t, rt, "failed to parse rule type %s", path)
 

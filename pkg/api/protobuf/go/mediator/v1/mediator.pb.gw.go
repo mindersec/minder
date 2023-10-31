@@ -2,11 +2,11 @@
 // source: mediator/v1/mediator.proto
 
 /*
-Package _go is a reverse proxy.
+Package v1 is a reverse proxy.
 
 It translates gRPC into RESTful JSON APIs.
 */
-package _go
+package v1
 
 import (
 	"context"
@@ -15,6 +15,7 @@ import (
 
 	"github.com/grpc-ecosystem/grpc-gateway/v2/runtime"
 	"github.com/grpc-ecosystem/grpc-gateway/v2/utilities"
+	v1_0 "github.com/stacklok/mediator/pkg/api/protobuf/go/minder/v1"
 	"google.golang.org/grpc"
 	"google.golang.org/grpc/codes"
 	"google.golang.org/grpc/grpclog"
@@ -32,7 +33,7 @@ var _ = utilities.NewDoubleArray
 var _ = metadata.Join
 
 func request_HealthService_CheckHealth_0(ctx context.Context, marshaler runtime.Marshaler, client HealthServiceClient, req *http.Request, pathParams map[string]string) (proto.Message, runtime.ServerMetadata, error) {
-	var protoReq CheckHealthRequest
+	var protoReq v1_0.CheckHealthRequest
 	var metadata runtime.ServerMetadata
 
 	msg, err := client.CheckHealth(ctx, &protoReq, grpc.Header(&metadata.HeaderMD), grpc.Trailer(&metadata.TrailerMD))
@@ -41,7 +42,7 @@ func request_HealthService_CheckHealth_0(ctx context.Context, marshaler runtime.
 }
 
 func local_request_HealthService_CheckHealth_0(ctx context.Context, marshaler runtime.Marshaler, server HealthServiceServer, req *http.Request, pathParams map[string]string) (proto.Message, runtime.ServerMetadata, error) {
-	var protoReq CheckHealthRequest
+	var protoReq v1_0.CheckHealthRequest
 	var metadata runtime.ServerMetadata
 
 	msg, err := server.CheckHealth(ctx, &protoReq)
@@ -54,7 +55,7 @@ var (
 )
 
 func request_ArtifactService_ListArtifacts_0(ctx context.Context, marshaler runtime.Marshaler, client ArtifactServiceClient, req *http.Request, pathParams map[string]string) (proto.Message, runtime.ServerMetadata, error) {
-	var protoReq ListArtifactsRequest
+	var protoReq v1_0.ListArtifactsRequest
 	var metadata runtime.ServerMetadata
 
 	var (
@@ -87,7 +88,7 @@ func request_ArtifactService_ListArtifacts_0(ctx context.Context, marshaler runt
 }
 
 func local_request_ArtifactService_ListArtifacts_0(ctx context.Context, marshaler runtime.Marshaler, server ArtifactServiceServer, req *http.Request, pathParams map[string]string) (proto.Message, runtime.ServerMetadata, error) {
-	var protoReq ListArtifactsRequest
+	var protoReq v1_0.ListArtifactsRequest
 	var metadata runtime.ServerMetadata
 
 	var (
@@ -124,7 +125,7 @@ var (
 )
 
 func request_ArtifactService_GetArtifactById_0(ctx context.Context, marshaler runtime.Marshaler, client ArtifactServiceClient, req *http.Request, pathParams map[string]string) (proto.Message, runtime.ServerMetadata, error) {
-	var protoReq GetArtifactByIdRequest
+	var protoReq v1_0.GetArtifactByIdRequest
 	var metadata runtime.ServerMetadata
 
 	var (
@@ -157,7 +158,7 @@ func request_ArtifactService_GetArtifactById_0(ctx context.Context, marshaler ru
 }
 
 func local_request_ArtifactService_GetArtifactById_0(ctx context.Context, marshaler runtime.Marshaler, server ArtifactServiceServer, req *http.Request, pathParams map[string]string) (proto.Message, runtime.ServerMetadata, error) {
-	var protoReq GetArtifactByIdRequest
+	var protoReq v1_0.GetArtifactByIdRequest
 	var metadata runtime.ServerMetadata
 
 	var (
@@ -194,7 +195,7 @@ var (
 )
 
 func request_OAuthService_GetAuthorizationURL_0(ctx context.Context, marshaler runtime.Marshaler, client OAuthServiceClient, req *http.Request, pathParams map[string]string) (proto.Message, runtime.ServerMetadata, error) {
-	var protoReq GetAuthorizationURLRequest
+	var protoReq v1_0.GetAuthorizationURLRequest
 	var metadata runtime.ServerMetadata
 
 	if err := req.ParseForm(); err != nil {
@@ -210,7 +211,7 @@ func request_OAuthService_GetAuthorizationURL_0(ctx context.Context, marshaler r
 }
 
 func local_request_OAuthService_GetAuthorizationURL_0(ctx context.Context, marshaler runtime.Marshaler, server OAuthServiceServer, req *http.Request, pathParams map[string]string) (proto.Message, runtime.ServerMetadata, error) {
-	var protoReq GetAuthorizationURLRequest
+	var protoReq v1_0.GetAuthorizationURLRequest
 	var metadata runtime.ServerMetadata
 
 	if err := req.ParseForm(); err != nil {
@@ -230,7 +231,7 @@ var (
 )
 
 func request_OAuthService_ExchangeCodeForTokenCLI_0(ctx context.Context, marshaler runtime.Marshaler, client OAuthServiceClient, req *http.Request, pathParams map[string]string) (proto.Message, runtime.ServerMetadata, error) {
-	var protoReq ExchangeCodeForTokenCLIRequest
+	var protoReq v1_0.ExchangeCodeForTokenCLIRequest
 	var metadata runtime.ServerMetadata
 
 	var (
@@ -263,7 +264,7 @@ func request_OAuthService_ExchangeCodeForTokenCLI_0(ctx context.Context, marshal
 }
 
 func local_request_OAuthService_ExchangeCodeForTokenCLI_0(ctx context.Context, marshaler runtime.Marshaler, server OAuthServiceServer, req *http.Request, pathParams map[string]string) (proto.Message, runtime.ServerMetadata, error) {
-	var protoReq ExchangeCodeForTokenCLIRequest
+	var protoReq v1_0.ExchangeCodeForTokenCLIRequest
 	var metadata runtime.ServerMetadata
 
 	var (
@@ -300,7 +301,7 @@ var (
 )
 
 func request_OAuthService_ExchangeCodeForTokenWEB_0(ctx context.Context, marshaler runtime.Marshaler, client OAuthServiceClient, req *http.Request, pathParams map[string]string) (proto.Message, runtime.ServerMetadata, error) {
-	var protoReq ExchangeCodeForTokenWEBRequest
+	var protoReq v1_0.ExchangeCodeForTokenWEBRequest
 	var metadata runtime.ServerMetadata
 
 	var (
@@ -333,7 +334,7 @@ func request_OAuthService_ExchangeCodeForTokenWEB_0(ctx context.Context, marshal
 }
 
 func local_request_OAuthService_ExchangeCodeForTokenWEB_0(ctx context.Context, marshaler runtime.Marshaler, server OAuthServiceServer, req *http.Request, pathParams map[string]string) (proto.Message, runtime.ServerMetadata, error) {
-	var protoReq ExchangeCodeForTokenWEBRequest
+	var protoReq v1_0.ExchangeCodeForTokenWEBRequest
 	var metadata runtime.ServerMetadata
 
 	var (
@@ -366,7 +367,7 @@ func local_request_OAuthService_ExchangeCodeForTokenWEB_0(ctx context.Context, m
 }
 
 func request_OAuthService_StoreProviderToken_0(ctx context.Context, marshaler runtime.Marshaler, client OAuthServiceClient, req *http.Request, pathParams map[string]string) (proto.Message, runtime.ServerMetadata, error) {
-	var protoReq StoreProviderTokenRequest
+	var protoReq v1_0.StoreProviderTokenRequest
 	var metadata runtime.ServerMetadata
 
 	newReader, berr := utilities.IOReaderFactory(req.Body)
@@ -400,7 +401,7 @@ func request_OAuthService_StoreProviderToken_0(ctx context.Context, marshaler ru
 }
 
 func local_request_OAuthService_StoreProviderToken_0(ctx context.Context, marshaler runtime.Marshaler, server OAuthServiceServer, req *http.Request, pathParams map[string]string) (proto.Message, runtime.ServerMetadata, error) {
-	var protoReq StoreProviderTokenRequest
+	var protoReq v1_0.StoreProviderTokenRequest
 	var metadata runtime.ServerMetadata
 
 	newReader, berr := utilities.IOReaderFactory(req.Body)
@@ -434,7 +435,7 @@ func local_request_OAuthService_StoreProviderToken_0(ctx context.Context, marsha
 }
 
 func request_OAuthService_RevokeOauthTokens_0(ctx context.Context, marshaler runtime.Marshaler, client OAuthServiceClient, req *http.Request, pathParams map[string]string) (proto.Message, runtime.ServerMetadata, error) {
-	var protoReq RevokeOauthTokensRequest
+	var protoReq v1_0.RevokeOauthTokensRequest
 	var metadata runtime.ServerMetadata
 
 	newReader, berr := utilities.IOReaderFactory(req.Body)
@@ -451,7 +452,7 @@ func request_OAuthService_RevokeOauthTokens_0(ctx context.Context, marshaler run
 }
 
 func local_request_OAuthService_RevokeOauthTokens_0(ctx context.Context, marshaler runtime.Marshaler, server OAuthServiceServer, req *http.Request, pathParams map[string]string) (proto.Message, runtime.ServerMetadata, error) {
-	var protoReq RevokeOauthTokensRequest
+	var protoReq v1_0.RevokeOauthTokensRequest
 	var metadata runtime.ServerMetadata
 
 	newReader, berr := utilities.IOReaderFactory(req.Body)
@@ -468,7 +469,7 @@ func local_request_OAuthService_RevokeOauthTokens_0(ctx context.Context, marshal
 }
 
 func request_OAuthService_RevokeOauthProjectToken_0(ctx context.Context, marshaler runtime.Marshaler, client OAuthServiceClient, req *http.Request, pathParams map[string]string) (proto.Message, runtime.ServerMetadata, error) {
-	var protoReq RevokeOauthProjectTokenRequest
+	var protoReq v1_0.RevokeOauthProjectTokenRequest
 	var metadata runtime.ServerMetadata
 
 	newReader, berr := utilities.IOReaderFactory(req.Body)
@@ -512,7 +513,7 @@ func request_OAuthService_RevokeOauthProjectToken_0(ctx context.Context, marshal
 }
 
 func local_request_OAuthService_RevokeOauthProjectToken_0(ctx context.Context, marshaler runtime.Marshaler, server OAuthServiceServer, req *http.Request, pathParams map[string]string) (proto.Message, runtime.ServerMetadata, error) {
-	var protoReq RevokeOauthProjectTokenRequest
+	var protoReq v1_0.RevokeOauthProjectTokenRequest
 	var metadata runtime.ServerMetadata
 
 	newReader, berr := utilities.IOReaderFactory(req.Body)
@@ -560,7 +561,7 @@ var (
 )
 
 func request_OAuthService_VerifyProviderTokenFrom_0(ctx context.Context, marshaler runtime.Marshaler, client OAuthServiceClient, req *http.Request, pathParams map[string]string) (proto.Message, runtime.ServerMetadata, error) {
-	var protoReq VerifyProviderTokenFromRequest
+	var protoReq v1_0.VerifyProviderTokenFromRequest
 	var metadata runtime.ServerMetadata
 
 	var (
@@ -603,7 +604,7 @@ func request_OAuthService_VerifyProviderTokenFrom_0(ctx context.Context, marshal
 }
 
 func local_request_OAuthService_VerifyProviderTokenFrom_0(ctx context.Context, marshaler runtime.Marshaler, server OAuthServiceServer, req *http.Request, pathParams map[string]string) (proto.Message, runtime.ServerMetadata, error) {
-	var protoReq VerifyProviderTokenFromRequest
+	var protoReq v1_0.VerifyProviderTokenFromRequest
 	var metadata runtime.ServerMetadata
 
 	var (
@@ -646,7 +647,7 @@ func local_request_OAuthService_VerifyProviderTokenFrom_0(ctx context.Context, m
 }
 
 func request_RepositoryService_RegisterRepository_0(ctx context.Context, marshaler runtime.Marshaler, client RepositoryServiceClient, req *http.Request, pathParams map[string]string) (proto.Message, runtime.ServerMetadata, error) {
-	var protoReq RegisterRepositoryRequest
+	var protoReq v1_0.RegisterRepositoryRequest
 	var metadata runtime.ServerMetadata
 
 	newReader, berr := utilities.IOReaderFactory(req.Body)
@@ -680,7 +681,7 @@ func request_RepositoryService_RegisterRepository_0(ctx context.Context, marshal
 }
 
 func local_request_RepositoryService_RegisterRepository_0(ctx context.Context, marshaler runtime.Marshaler, server RepositoryServiceServer, req *http.Request, pathParams map[string]string) (proto.Message, runtime.ServerMetadata, error) {
-	var protoReq RegisterRepositoryRequest
+	var protoReq v1_0.RegisterRepositoryRequest
 	var metadata runtime.ServerMetadata
 
 	newReader, berr := utilities.IOReaderFactory(req.Body)
@@ -718,7 +719,7 @@ var (
 )
 
 func request_RepositoryService_ListRemoteRepositoriesFromProvider_0(ctx context.Context, marshaler runtime.Marshaler, client RepositoryServiceClient, req *http.Request, pathParams map[string]string) (proto.Message, runtime.ServerMetadata, error) {
-	var protoReq ListRemoteRepositoriesFromProviderRequest
+	var protoReq v1_0.ListRemoteRepositoriesFromProviderRequest
 	var metadata runtime.ServerMetadata
 
 	var (
@@ -751,7 +752,7 @@ func request_RepositoryService_ListRemoteRepositoriesFromProvider_0(ctx context.
 }
 
 func local_request_RepositoryService_ListRemoteRepositoriesFromProvider_0(ctx context.Context, marshaler runtime.Marshaler, server RepositoryServiceServer, req *http.Request, pathParams map[string]string) (proto.Message, runtime.ServerMetadata, error) {
-	var protoReq ListRemoteRepositoriesFromProviderRequest
+	var protoReq v1_0.ListRemoteRepositoriesFromProviderRequest
 	var metadata runtime.ServerMetadata
 
 	var (
@@ -788,7 +789,7 @@ var (
 )
 
 func request_RepositoryService_ListRepositories_0(ctx context.Context, marshaler runtime.Marshaler, client RepositoryServiceClient, req *http.Request, pathParams map[string]string) (proto.Message, runtime.ServerMetadata, error) {
-	var protoReq ListRepositoriesRequest
+	var protoReq v1_0.ListRepositoriesRequest
 	var metadata runtime.ServerMetadata
 
 	var (
@@ -821,7 +822,7 @@ func request_RepositoryService_ListRepositories_0(ctx context.Context, marshaler
 }
 
 func local_request_RepositoryService_ListRepositories_0(ctx context.Context, marshaler runtime.Marshaler, server RepositoryServiceServer, req *http.Request, pathParams map[string]string) (proto.Message, runtime.ServerMetadata, error) {
-	var protoReq ListRepositoriesRequest
+	var protoReq v1_0.ListRepositoriesRequest
 	var metadata runtime.ServerMetadata
 
 	var (
@@ -854,7 +855,7 @@ func local_request_RepositoryService_ListRepositories_0(ctx context.Context, mar
 }
 
 func request_RepositoryService_GetRepositoryById_0(ctx context.Context, marshaler runtime.Marshaler, client RepositoryServiceClient, req *http.Request, pathParams map[string]string) (proto.Message, runtime.ServerMetadata, error) {
-	var protoReq GetRepositoryByIdRequest
+	var protoReq v1_0.GetRepositoryByIdRequest
 	var metadata runtime.ServerMetadata
 
 	var (
@@ -880,7 +881,7 @@ func request_RepositoryService_GetRepositoryById_0(ctx context.Context, marshale
 }
 
 func local_request_RepositoryService_GetRepositoryById_0(ctx context.Context, marshaler runtime.Marshaler, server RepositoryServiceServer, req *http.Request, pathParams map[string]string) (proto.Message, runtime.ServerMetadata, error) {
-	var protoReq GetRepositoryByIdRequest
+	var protoReq v1_0.GetRepositoryByIdRequest
 	var metadata runtime.ServerMetadata
 
 	var (
@@ -910,7 +911,7 @@ var (
 )
 
 func request_RepositoryService_GetRepositoryByName_0(ctx context.Context, marshaler runtime.Marshaler, client RepositoryServiceClient, req *http.Request, pathParams map[string]string) (proto.Message, runtime.ServerMetadata, error) {
-	var protoReq GetRepositoryByNameRequest
+	var protoReq v1_0.GetRepositoryByNameRequest
 	var metadata runtime.ServerMetadata
 
 	var (
@@ -953,7 +954,7 @@ func request_RepositoryService_GetRepositoryByName_0(ctx context.Context, marsha
 }
 
 func local_request_RepositoryService_GetRepositoryByName_0(ctx context.Context, marshaler runtime.Marshaler, server RepositoryServiceServer, req *http.Request, pathParams map[string]string) (proto.Message, runtime.ServerMetadata, error) {
-	var protoReq GetRepositoryByNameRequest
+	var protoReq v1_0.GetRepositoryByNameRequest
 	var metadata runtime.ServerMetadata
 
 	var (
@@ -996,7 +997,7 @@ func local_request_RepositoryService_GetRepositoryByName_0(ctx context.Context, 
 }
 
 func request_BranchProtectionService_GetBranchProtection_0(ctx context.Context, marshaler runtime.Marshaler, client BranchProtectionServiceClient, req *http.Request, pathParams map[string]string) (proto.Message, runtime.ServerMetadata, error) {
-	var protoReq GetBranchProtectionRequest
+	var protoReq v1_0.GetBranchProtectionRequest
 	var metadata runtime.ServerMetadata
 
 	msg, err := client.GetBranchProtection(ctx, &protoReq, grpc.Header(&metadata.HeaderMD), grpc.Trailer(&metadata.TrailerMD))
@@ -1005,7 +1006,7 @@ func request_BranchProtectionService_GetBranchProtection_0(ctx context.Context, 
 }
 
 func local_request_BranchProtectionService_GetBranchProtection_0(ctx context.Context, marshaler runtime.Marshaler, server BranchProtectionServiceServer, req *http.Request, pathParams map[string]string) (proto.Message, runtime.ServerMetadata, error) {
-	var protoReq GetBranchProtectionRequest
+	var protoReq v1_0.GetBranchProtectionRequest
 	var metadata runtime.ServerMetadata
 
 	msg, err := server.GetBranchProtection(ctx, &protoReq)
@@ -1014,7 +1015,7 @@ func local_request_BranchProtectionService_GetBranchProtection_0(ctx context.Con
 }
 
 func request_UserService_CreateUser_0(ctx context.Context, marshaler runtime.Marshaler, client UserServiceClient, req *http.Request, pathParams map[string]string) (proto.Message, runtime.ServerMetadata, error) {
-	var protoReq CreateUserRequest
+	var protoReq v1_0.CreateUserRequest
 	var metadata runtime.ServerMetadata
 
 	newReader, berr := utilities.IOReaderFactory(req.Body)
@@ -1031,7 +1032,7 @@ func request_UserService_CreateUser_0(ctx context.Context, marshaler runtime.Mar
 }
 
 func local_request_UserService_CreateUser_0(ctx context.Context, marshaler runtime.Marshaler, server UserServiceServer, req *http.Request, pathParams map[string]string) (proto.Message, runtime.ServerMetadata, error) {
-	var protoReq CreateUserRequest
+	var protoReq v1_0.CreateUserRequest
 	var metadata runtime.ServerMetadata
 
 	newReader, berr := utilities.IOReaderFactory(req.Body)
@@ -1048,7 +1049,7 @@ func local_request_UserService_CreateUser_0(ctx context.Context, marshaler runti
 }
 
 func request_UserService_DeleteUser_0(ctx context.Context, marshaler runtime.Marshaler, client UserServiceClient, req *http.Request, pathParams map[string]string) (proto.Message, runtime.ServerMetadata, error) {
-	var protoReq DeleteUserRequest
+	var protoReq v1_0.DeleteUserRequest
 	var metadata runtime.ServerMetadata
 
 	msg, err := client.DeleteUser(ctx, &protoReq, grpc.Header(&metadata.HeaderMD), grpc.Trailer(&metadata.TrailerMD))
@@ -1057,7 +1058,7 @@ func request_UserService_DeleteUser_0(ctx context.Context, marshaler runtime.Mar
 }
 
 func local_request_UserService_DeleteUser_0(ctx context.Context, marshaler runtime.Marshaler, server UserServiceServer, req *http.Request, pathParams map[string]string) (proto.Message, runtime.ServerMetadata, error) {
-	var protoReq DeleteUserRequest
+	var protoReq v1_0.DeleteUserRequest
 	var metadata runtime.ServerMetadata
 
 	msg, err := server.DeleteUser(ctx, &protoReq)
@@ -1066,7 +1067,7 @@ func local_request_UserService_DeleteUser_0(ctx context.Context, marshaler runti
 }
 
 func request_UserService_GetUser_0(ctx context.Context, marshaler runtime.Marshaler, client UserServiceClient, req *http.Request, pathParams map[string]string) (proto.Message, runtime.ServerMetadata, error) {
-	var protoReq GetUserRequest
+	var protoReq v1_0.GetUserRequest
 	var metadata runtime.ServerMetadata
 
 	msg, err := client.GetUser(ctx, &protoReq, grpc.Header(&metadata.HeaderMD), grpc.Trailer(&metadata.TrailerMD))
@@ -1075,7 +1076,7 @@ func request_UserService_GetUser_0(ctx context.Context, marshaler runtime.Marsha
 }
 
 func local_request_UserService_GetUser_0(ctx context.Context, marshaler runtime.Marshaler, server UserServiceServer, req *http.Request, pathParams map[string]string) (proto.Message, runtime.ServerMetadata, error) {
-	var protoReq GetUserRequest
+	var protoReq v1_0.GetUserRequest
 	var metadata runtime.ServerMetadata
 
 	msg, err := server.GetUser(ctx, &protoReq)
@@ -1084,7 +1085,7 @@ func local_request_UserService_GetUser_0(ctx context.Context, marshaler runtime.
 }
 
 func request_ProfileService_CreateProfile_0(ctx context.Context, marshaler runtime.Marshaler, client ProfileServiceClient, req *http.Request, pathParams map[string]string) (proto.Message, runtime.ServerMetadata, error) {
-	var protoReq CreateProfileRequest
+	var protoReq v1_0.CreateProfileRequest
 	var metadata runtime.ServerMetadata
 
 	newReader, berr := utilities.IOReaderFactory(req.Body)
@@ -1101,7 +1102,7 @@ func request_ProfileService_CreateProfile_0(ctx context.Context, marshaler runti
 }
 
 func local_request_ProfileService_CreateProfile_0(ctx context.Context, marshaler runtime.Marshaler, server ProfileServiceServer, req *http.Request, pathParams map[string]string) (proto.Message, runtime.ServerMetadata, error) {
-	var protoReq CreateProfileRequest
+	var protoReq v1_0.CreateProfileRequest
 	var metadata runtime.ServerMetadata
 
 	newReader, berr := utilities.IOReaderFactory(req.Body)
@@ -1122,7 +1123,7 @@ var (
 )
 
 func request_ProfileService_DeleteProfile_0(ctx context.Context, marshaler runtime.Marshaler, client ProfileServiceClient, req *http.Request, pathParams map[string]string) (proto.Message, runtime.ServerMetadata, error) {
-	var protoReq DeleteProfileRequest
+	var protoReq v1_0.DeleteProfileRequest
 	var metadata runtime.ServerMetadata
 
 	var (
@@ -1155,7 +1156,7 @@ func request_ProfileService_DeleteProfile_0(ctx context.Context, marshaler runti
 }
 
 func local_request_ProfileService_DeleteProfile_0(ctx context.Context, marshaler runtime.Marshaler, server ProfileServiceServer, req *http.Request, pathParams map[string]string) (proto.Message, runtime.ServerMetadata, error) {
-	var protoReq DeleteProfileRequest
+	var protoReq v1_0.DeleteProfileRequest
 	var metadata runtime.ServerMetadata
 
 	var (
@@ -1192,7 +1193,7 @@ var (
 )
 
 func request_ProfileService_ListProfiles_0(ctx context.Context, marshaler runtime.Marshaler, client ProfileServiceClient, req *http.Request, pathParams map[string]string) (proto.Message, runtime.ServerMetadata, error) {
-	var protoReq ListProfilesRequest
+	var protoReq v1_0.ListProfilesRequest
 	var metadata runtime.ServerMetadata
 
 	if err := req.ParseForm(); err != nil {
@@ -1208,7 +1209,7 @@ func request_ProfileService_ListProfiles_0(ctx context.Context, marshaler runtim
 }
 
 func local_request_ProfileService_ListProfiles_0(ctx context.Context, marshaler runtime.Marshaler, server ProfileServiceServer, req *http.Request, pathParams map[string]string) (proto.Message, runtime.ServerMetadata, error) {
-	var protoReq ListProfilesRequest
+	var protoReq v1_0.ListProfilesRequest
 	var metadata runtime.ServerMetadata
 
 	if err := req.ParseForm(); err != nil {
@@ -1228,7 +1229,7 @@ var (
 )
 
 func request_ProfileService_GetProfileById_0(ctx context.Context, marshaler runtime.Marshaler, client ProfileServiceClient, req *http.Request, pathParams map[string]string) (proto.Message, runtime.ServerMetadata, error) {
-	var protoReq GetProfileByIdRequest
+	var protoReq v1_0.GetProfileByIdRequest
 	var metadata runtime.ServerMetadata
 
 	var (
@@ -1261,7 +1262,7 @@ func request_ProfileService_GetProfileById_0(ctx context.Context, marshaler runt
 }
 
 func local_request_ProfileService_GetProfileById_0(ctx context.Context, marshaler runtime.Marshaler, server ProfileServiceServer, req *http.Request, pathParams map[string]string) (proto.Message, runtime.ServerMetadata, error) {
-	var protoReq GetProfileByIdRequest
+	var protoReq v1_0.GetProfileByIdRequest
 	var metadata runtime.ServerMetadata
 
 	var (
@@ -1298,7 +1299,7 @@ var (
 )
 
 func request_ProfileService_GetProfileStatusByName_0(ctx context.Context, marshaler runtime.Marshaler, client ProfileServiceClient, req *http.Request, pathParams map[string]string) (proto.Message, runtime.ServerMetadata, error) {
-	var protoReq GetProfileStatusByNameRequest
+	var protoReq v1_0.GetProfileStatusByNameRequest
 	var metadata runtime.ServerMetadata
 
 	var (
@@ -1331,7 +1332,7 @@ func request_ProfileService_GetProfileStatusByName_0(ctx context.Context, marsha
 }
 
 func local_request_ProfileService_GetProfileStatusByName_0(ctx context.Context, marshaler runtime.Marshaler, server ProfileServiceServer, req *http.Request, pathParams map[string]string) (proto.Message, runtime.ServerMetadata, error) {
-	var protoReq GetProfileStatusByNameRequest
+	var protoReq v1_0.GetProfileStatusByNameRequest
 	var metadata runtime.ServerMetadata
 
 	var (
@@ -1368,7 +1369,7 @@ var (
 )
 
 func request_ProfileService_GetProfileStatusByProject_0(ctx context.Context, marshaler runtime.Marshaler, client ProfileServiceClient, req *http.Request, pathParams map[string]string) (proto.Message, runtime.ServerMetadata, error) {
-	var protoReq GetProfileStatusByProjectRequest
+	var protoReq v1_0.GetProfileStatusByProjectRequest
 	var metadata runtime.ServerMetadata
 
 	if err := req.ParseForm(); err != nil {
@@ -1384,7 +1385,7 @@ func request_ProfileService_GetProfileStatusByProject_0(ctx context.Context, mar
 }
 
 func local_request_ProfileService_GetProfileStatusByProject_0(ctx context.Context, marshaler runtime.Marshaler, server ProfileServiceServer, req *http.Request, pathParams map[string]string) (proto.Message, runtime.ServerMetadata, error) {
-	var protoReq GetProfileStatusByProjectRequest
+	var protoReq v1_0.GetProfileStatusByProjectRequest
 	var metadata runtime.ServerMetadata
 
 	if err := req.ParseForm(); err != nil {
@@ -1404,7 +1405,7 @@ var (
 )
 
 func request_ProfileService_ListRuleTypes_0(ctx context.Context, marshaler runtime.Marshaler, client ProfileServiceClient, req *http.Request, pathParams map[string]string) (proto.Message, runtime.ServerMetadata, error) {
-	var protoReq ListRuleTypesRequest
+	var protoReq v1_0.ListRuleTypesRequest
 	var metadata runtime.ServerMetadata
 
 	if err := req.ParseForm(); err != nil {
@@ -1420,7 +1421,7 @@ func request_ProfileService_ListRuleTypes_0(ctx context.Context, marshaler runti
 }
 
 func local_request_ProfileService_ListRuleTypes_0(ctx context.Context, marshaler runtime.Marshaler, server ProfileServiceServer, req *http.Request, pathParams map[string]string) (proto.Message, runtime.ServerMetadata, error) {
-	var protoReq ListRuleTypesRequest
+	var protoReq v1_0.ListRuleTypesRequest
 	var metadata runtime.ServerMetadata
 
 	if err := req.ParseForm(); err != nil {
@@ -1440,7 +1441,7 @@ var (
 )
 
 func request_ProfileService_GetRuleTypeByName_0(ctx context.Context, marshaler runtime.Marshaler, client ProfileServiceClient, req *http.Request, pathParams map[string]string) (proto.Message, runtime.ServerMetadata, error) {
-	var protoReq GetRuleTypeByNameRequest
+	var protoReq v1_0.GetRuleTypeByNameRequest
 	var metadata runtime.ServerMetadata
 
 	var (
@@ -1473,7 +1474,7 @@ func request_ProfileService_GetRuleTypeByName_0(ctx context.Context, marshaler r
 }
 
 func local_request_ProfileService_GetRuleTypeByName_0(ctx context.Context, marshaler runtime.Marshaler, server ProfileServiceServer, req *http.Request, pathParams map[string]string) (proto.Message, runtime.ServerMetadata, error) {
-	var protoReq GetRuleTypeByNameRequest
+	var protoReq v1_0.GetRuleTypeByNameRequest
 	var metadata runtime.ServerMetadata
 
 	var (
@@ -1510,7 +1511,7 @@ var (
 )
 
 func request_ProfileService_GetRuleTypeById_0(ctx context.Context, marshaler runtime.Marshaler, client ProfileServiceClient, req *http.Request, pathParams map[string]string) (proto.Message, runtime.ServerMetadata, error) {
-	var protoReq GetRuleTypeByIdRequest
+	var protoReq v1_0.GetRuleTypeByIdRequest
 	var metadata runtime.ServerMetadata
 
 	var (
@@ -1543,7 +1544,7 @@ func request_ProfileService_GetRuleTypeById_0(ctx context.Context, marshaler run
 }
 
 func local_request_ProfileService_GetRuleTypeById_0(ctx context.Context, marshaler runtime.Marshaler, server ProfileServiceServer, req *http.Request, pathParams map[string]string) (proto.Message, runtime.ServerMetadata, error) {
-	var protoReq GetRuleTypeByIdRequest
+	var protoReq v1_0.GetRuleTypeByIdRequest
 	var metadata runtime.ServerMetadata
 
 	var (
@@ -1576,7 +1577,7 @@ func local_request_ProfileService_GetRuleTypeById_0(ctx context.Context, marshal
 }
 
 func request_ProfileService_CreateRuleType_0(ctx context.Context, marshaler runtime.Marshaler, client ProfileServiceClient, req *http.Request, pathParams map[string]string) (proto.Message, runtime.ServerMetadata, error) {
-	var protoReq CreateRuleTypeRequest
+	var protoReq v1_0.CreateRuleTypeRequest
 	var metadata runtime.ServerMetadata
 
 	newReader, berr := utilities.IOReaderFactory(req.Body)
@@ -1593,7 +1594,7 @@ func request_ProfileService_CreateRuleType_0(ctx context.Context, marshaler runt
 }
 
 func local_request_ProfileService_CreateRuleType_0(ctx context.Context, marshaler runtime.Marshaler, server ProfileServiceServer, req *http.Request, pathParams map[string]string) (proto.Message, runtime.ServerMetadata, error) {
-	var protoReq CreateRuleTypeRequest
+	var protoReq v1_0.CreateRuleTypeRequest
 	var metadata runtime.ServerMetadata
 
 	newReader, berr := utilities.IOReaderFactory(req.Body)
@@ -1610,7 +1611,7 @@ func local_request_ProfileService_CreateRuleType_0(ctx context.Context, marshale
 }
 
 func request_ProfileService_UpdateRuleType_0(ctx context.Context, marshaler runtime.Marshaler, client ProfileServiceClient, req *http.Request, pathParams map[string]string) (proto.Message, runtime.ServerMetadata, error) {
-	var protoReq UpdateRuleTypeRequest
+	var protoReq v1_0.UpdateRuleTypeRequest
 	var metadata runtime.ServerMetadata
 
 	newReader, berr := utilities.IOReaderFactory(req.Body)
@@ -1627,7 +1628,7 @@ func request_ProfileService_UpdateRuleType_0(ctx context.Context, marshaler runt
 }
 
 func local_request_ProfileService_UpdateRuleType_0(ctx context.Context, marshaler runtime.Marshaler, server ProfileServiceServer, req *http.Request, pathParams map[string]string) (proto.Message, runtime.ServerMetadata, error) {
-	var protoReq UpdateRuleTypeRequest
+	var protoReq v1_0.UpdateRuleTypeRequest
 	var metadata runtime.ServerMetadata
 
 	newReader, berr := utilities.IOReaderFactory(req.Body)
@@ -1648,7 +1649,7 @@ var (
 )
 
 func request_ProfileService_DeleteRuleType_0(ctx context.Context, marshaler runtime.Marshaler, client ProfileServiceClient, req *http.Request, pathParams map[string]string) (proto.Message, runtime.ServerMetadata, error) {
-	var protoReq DeleteRuleTypeRequest
+	var protoReq v1_0.DeleteRuleTypeRequest
 	var metadata runtime.ServerMetadata
 
 	var (
@@ -1681,7 +1682,7 @@ func request_ProfileService_DeleteRuleType_0(ctx context.Context, marshaler runt
 }
 
 func local_request_ProfileService_DeleteRuleType_0(ctx context.Context, marshaler runtime.Marshaler, server ProfileServiceServer, req *http.Request, pathParams map[string]string) (proto.Message, runtime.ServerMetadata, error) {
-	var protoReq DeleteRuleTypeRequest
+	var protoReq v1_0.DeleteRuleTypeRequest
 	var metadata runtime.ServerMetadata
 
 	var (
@@ -1718,7 +1719,7 @@ var (
 )
 
 func request_KeyService_GetPublicKey_0(ctx context.Context, marshaler runtime.Marshaler, client KeyServiceClient, req *http.Request, pathParams map[string]string) (proto.Message, runtime.ServerMetadata, error) {
-	var protoReq GetPublicKeyRequest
+	var protoReq v1_0.GetPublicKeyRequest
 	var metadata runtime.ServerMetadata
 
 	if err := req.ParseForm(); err != nil {
@@ -1734,7 +1735,7 @@ func request_KeyService_GetPublicKey_0(ctx context.Context, marshaler runtime.Ma
 }
 
 func local_request_KeyService_GetPublicKey_0(ctx context.Context, marshaler runtime.Marshaler, server KeyServiceServer, req *http.Request, pathParams map[string]string) (proto.Message, runtime.ServerMetadata, error) {
-	var protoReq GetPublicKeyRequest
+	var protoReq v1_0.GetPublicKeyRequest
 	var metadata runtime.ServerMetadata
 
 	if err := req.ParseForm(); err != nil {
@@ -1750,7 +1751,7 @@ func local_request_KeyService_GetPublicKey_0(ctx context.Context, marshaler runt
 }
 
 func request_KeyService_CreateKeyPair_0(ctx context.Context, marshaler runtime.Marshaler, client KeyServiceClient, req *http.Request, pathParams map[string]string) (proto.Message, runtime.ServerMetadata, error) {
-	var protoReq CreateKeyPairRequest
+	var protoReq v1_0.CreateKeyPairRequest
 	var metadata runtime.ServerMetadata
 
 	newReader, berr := utilities.IOReaderFactory(req.Body)
@@ -1767,7 +1768,7 @@ func request_KeyService_CreateKeyPair_0(ctx context.Context, marshaler runtime.M
 }
 
 func local_request_KeyService_CreateKeyPair_0(ctx context.Context, marshaler runtime.Marshaler, server KeyServiceServer, req *http.Request, pathParams map[string]string) (proto.Message, runtime.ServerMetadata, error) {
-	var protoReq CreateKeyPairRequest
+	var protoReq v1_0.CreateKeyPairRequest
 	var metadata runtime.ServerMetadata
 
 	newReader, berr := utilities.IOReaderFactory(req.Body)

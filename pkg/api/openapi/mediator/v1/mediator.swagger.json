@@ -1670,7 +1670,7 @@
         }
       }
     },
-    "mediatorv1Context": {
+    "minderv1Context": {
       "type": "object",
       "properties": {
         "provider": {
@@ -2172,7 +2172,7 @@
       "type": "object",
       "properties": {
         "context": {
-          "$ref": "#/definitions/mediatorv1Context",
+          "$ref": "#/definitions/minderv1Context",
           "description": "context is the context in which the profile is evaluated."
         },
         "id": {
@@ -2314,7 +2314,7 @@
           "title": "This is optional when returning remote repositories"
         },
         "context": {
-          "$ref": "#/definitions/mediatorv1Context"
+          "$ref": "#/definitions/minderv1Context"
         },
         "owner": {
           "type": "string"
@@ -2490,7 +2490,7 @@
           "description": "name is the name of the rule type."
         },
         "context": {
-          "$ref": "#/definitions/mediatorv1Context",
+          "$ref": "#/definitions/minderv1Context",
           "description": "context is the context in which the rule is evaluated."
         },
         "def": {

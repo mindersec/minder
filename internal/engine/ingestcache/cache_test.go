@@ -29,7 +29,7 @@ import (
 	"github.com/stacklok/mediator/internal/engine/ingester/git"
 	"github.com/stacklok/mediator/internal/engine/ingester/rest"
 	engif "github.com/stacklok/mediator/internal/engine/interfaces"
-	mediatorv1 "github.com/stacklok/mediator/pkg/api/protobuf/go/mediator/v1"
+	minderv1 "github.com/stacklok/mediator/pkg/api/protobuf/go/minder/v1"
 )
 
 func TestCache(t *testing.T) {
@@ -48,7 +48,7 @@ func TestCache(t *testing.T) {
 			name: "REST",
 			args: args{
 				in0: &rest.Ingestor{},
-				in1: &mediatorv1.RestType{
+				in1: &minderv1.RestType{
 					Endpoint: "http://localhost:8080",
 				},
 				in2: &structpb.Struct{
@@ -66,7 +66,7 @@ func TestCache(t *testing.T) {
 			name: "REST with no params",
 			args: args{
 				in0: &rest.Ingestor{},
-				in1: &mediatorv1.RestType{
+				in1: &minderv1.RestType{
 					Endpoint: "http://localhost:8080",
 				},
 				in2: nil,
@@ -76,7 +76,7 @@ func TestCache(t *testing.T) {
 			name: "Builtin",
 			args: args{
 				in0: &builtin.BuiltinRuleDataIngest{},
-				in1: &mediatorv1.BuiltinType{
+				in1: &minderv1.BuiltinType{
 					Method: "foo",
 				},
 				in2: &structpb.Struct{
@@ -110,8 +110,8 @@ func TestCache(t *testing.T) {
 			name: "Diff",
 			args: args{
 				in0: &diff.Diff{},
-				in1: &mediatorv1.DiffType{
-					Ecosystems: []*mediatorv1.DiffType_Ecosystem{
+				in1: &minderv1.DiffType{
+					Ecosystems: []*minderv1.DiffType_Ecosystem{
 						{
 							Name:    "beer",
 							Depfile: "is.good",
@@ -133,7 +133,7 @@ func TestCache(t *testing.T) {
 			name: "Git",
 			args: args{
 				in0: &git.Git{},
-				in1: &mediatorv1.GitType{
+				in1: &minderv1.GitType{
 					CloneUrl: "http://localhost:8080",
 				},
 				in2: &structpb.Struct{

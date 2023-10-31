@@ -19,7 +19,7 @@
 // - protoc             (unknown)
 // source: minder/v1/minder.proto
 
-package _go
+package v1
 
 import (
 	context "context"

@@ -23,7 +23,7 @@ import (
 	"google.golang.org/protobuf/reflect/protoreflect"
 
 	"github.com/stacklok/mediator/internal/events"
-	mediatorv1 "github.com/stacklok/mediator/pkg/api/protobuf/go/mediator/v1"
+	mediatorv1 "github.com/stacklok/mediator/pkg/api/protobuf/go/minder/v1"
 )
 
 // EntityInfoWrapper is a helper struct to gather information

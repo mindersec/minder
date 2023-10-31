@@ -30,7 +30,7 @@ import (
 	"github.com/stretchr/testify/require"
 
 	mock_ghclient "github.com/stacklok/mediator/internal/providers/github/mock"
-	pb "github.com/stacklok/mediator/pkg/api/protobuf/go/mediator/v1"
+	pb "github.com/stacklok/mediator/pkg/api/protobuf/go/minder/v1"
 )
 
 const (

@@ -12,7 +12,7 @@ import (
 	git "github.com/go-git/go-git/v5"
 	gomock "github.com/golang/mock/gomock"
 	github "github.com/google/go-github/v53/github"
-	_go "github.com/stacklok/mediator/pkg/api/protobuf/go/mediator/v1"
+	_go "github.com/stacklok/mediator/pkg/api/protobuf/go/minder/v1"
 )
 
 // MockProvider is a mock of Provider interface.

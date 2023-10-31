@@ -37,7 +37,7 @@ import (
 	engif "github.com/stacklok/mediator/internal/engine/interfaces"
 	"github.com/stacklok/mediator/internal/providers"
 	"github.com/stacklok/mediator/internal/util/jsonyaml"
-	mediatorv1 "github.com/stacklok/mediator/pkg/api/protobuf/go/mediator/v1"
+	mediatorv1 "github.com/stacklok/mediator/pkg/api/protobuf/go/minder/v1"
 )
 
 // TestCmd is the root command for the rule subcommands

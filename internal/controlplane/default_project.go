@@ -27,7 +27,7 @@ import (
 
 	"github.com/stacklok/mediator/internal/db"
 	github "github.com/stacklok/mediator/internal/providers/github"
-	pb "github.com/stacklok/mediator/pkg/api/protobuf/go/mediator/v1"
+	pb "github.com/stacklok/mediator/pkg/api/protobuf/go/minder/v1"
 )
 
 // OrgMeta is the metadata associated with an organization

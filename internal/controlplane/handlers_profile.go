@@ -34,7 +34,7 @@ import (
 	"github.com/stacklok/mediator/internal/entities"
 	"github.com/stacklok/mediator/internal/reconcilers"
 	"github.com/stacklok/mediator/internal/util"
-	mediatorv1 "github.com/stacklok/mediator/pkg/api/protobuf/go/mediator/v1"
+	mediatorv1 "github.com/stacklok/mediator/pkg/api/protobuf/go/minder/v1"
 )
 
 // authAndContextValidation is a helper function to initialize entity context info and validate input

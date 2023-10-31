@@ -20,38 +20,19 @@ import "google/protobuf/descriptor.proto";
 import "google/protobuf/timestamp.proto";
 import "google/protobuf/struct.proto";
 import "google/api/httpbody.proto";
+import "minder/v1/minder.proto";
 
-
-option go_package = "github.com/stacklok/mediator/pkg/api/protobuf/go";
-
-enum ObjectOwner {
-    OBJECT_OWNER_UNSPECIFIED = 0;
-    OBJECT_OWNER_ORGANIZATION = 1;
-    OBJECT_OWNER_PROJECT = 2;
-    OBJECT_OWNER_USER = 3;
-}
-
-message RpcOptions {
-    bool anonymous = 1;
-    bool no_log = 2;
-    bool owner_only = 3;
-    bool root_admin_only = 4;
-    ObjectOwner auth_scope = 5;
-}
-
-extend google.protobuf.MethodOptions {
-    RpcOptions rpc_options = 51077;
-}
+option go_package = "github.com/stacklok/mediator/pkg/api/protobuf/go/mediator/v1";
 
 // Simple Health Check Service
 // replies with OK
 service HealthService {
-    rpc CheckHealth (CheckHealthRequest) returns (CheckHealthResponse) {
+    rpc CheckHealth (minder.v1.CheckHealthRequest) returns (minder.v1.CheckHealthResponse) {
         option (google.api.http) = {
             get: "/api/v1/health"
         };
 
-        option (rpc_options) = {
+        option (minder.v1.rpc_options) = {
             anonymous: true
             no_log: true
         };
@@ -59,204 +40,104 @@ service HealthService {
 }
 
 service ArtifactService {
-    rpc ListArtifacts (ListArtifactsRequest) returns (ListArtifactsResponse) {
+    rpc ListArtifacts (minder.v1.ListArtifactsRequest) returns (minder.v1.ListArtifactsResponse) {
         option (google.api.http) = {
             get: "/api/v1/artifacts/{provider}"
         };
 
-        option (rpc_options) = {
+        option (minder.v1.rpc_options) = {
             // TODO: this should probably be available to non-root users
             root_admin_only: true
             auth_scope: OBJECT_OWNER_PROJECT
         };
     }
 
-    rpc GetArtifactById (GetArtifactByIdRequest) returns (GetArtifactByIdResponse) {
+    rpc GetArtifactById (minder.v1.GetArtifactByIdRequest) returns (minder.v1.GetArtifactByIdResponse) {
         option (google.api.http) = {
             get: "/api/v1/artifact/{id}"
         };
 
-        option (rpc_options) = {
+        option (minder.v1.rpc_options) = {
             auth_scope: OBJECT_OWNER_PROJECT
         };
     }
 }
 
-message ListArtifactsRequest {
-    string provider = 1;
-    string project_id = 2;
-}
-
-message ListArtifactsResponse {
-    repeated Artifact results = 1;
-}
-
-message Artifact {
-    string artifact_pk = 1;
-    string owner = 2;
-    string name = 3;
-    string type = 4;
-    string visibility = 5;
-    string repository = 6;
-    repeated ArtifactVersion versions = 7;
-    google.protobuf.Timestamp created_at = 8;
-}
-
-message GithubWorkflow {
-    string name = 1;
-    string repository = 2;
-    string commit_sha = 3;
-    string trigger = 4;
-}
-
-message SignatureVerification {
-    bool is_signed = 1;
-    bool is_verified = 2;
-    bool is_bundle_verified = 3;
-    optional string cert_identity = 4;
-    optional string cert_issuer = 5;
-    optional string rekor_log_id = 6;
-    optional int32 rekor_log_index = 7;
-    optional google.protobuf.Timestamp signature_time = 8;
-}
-
-message ArtifactVersion {
-    int64 version_id = 1;
-    repeated string tags = 2;
-    string sha = 3;
-    SignatureVerification signature_verification = 4;
-    optional GithubWorkflow github_workflow = 5;
-    google.protobuf.Timestamp created_at = 6;
-}
-
-message GetArtifactByIdRequest {
-    string id = 1;
-    int32 latest_versions = 5;
-    string tag = 6;
-}
-
-message GetArtifactByIdResponse {
-    Artifact artifact = 1;
-    repeated ArtifactVersion versions = 2;
-}
-
-message PullRequest {
-    string url = 1;         // The full URL to the PR
-    string commit_sha = 2;   // Commit SHA of the PR HEAD. Will be useful to submit a review
-    int32 number = 3;       // The sequential PR number (not the DB PK!)
-
-    string repo_owner = 4;   // The owner of the repo, will be used to submit a review
-    string repo_name = 5;    // The name of the repo, will be used to submit a review
-
-    int64 author_id = 6;    // The author of the PR, will be used to check if we can request changes
-
-    string action = 7;       // The action that triggered the webhook
-}
-
-enum DepEcosystem {
-    DEP_ECOSYSTEM_UNSPECIFIED = 0;
-    DEP_ECOSYSTEM_NPM = 1;
-    DEP_ECOSYSTEM_GO = 2;
-    DEP_ECOSYSTEM_PYPI = 3;
-}
-
-message Dependency {
-    DepEcosystem ecosystem = 1;
-
-    string name = 2;
-    string version = 3;
-}
-
-message PrDependencies {
-    message ContextualDependency {
-        message FilePatch {
-            string name = 1;      // file changed, e.g. package-lock.json
-            string patch_url = 2;  // points to the the raw patchfile
-        }
-
-        Dependency dep = 1;
-        FilePatch file = 2;
-    }
-
-    PullRequest pr = 1;
-    repeated ContextualDependency deps = 2;
-}
-
 service OAuthService {
-    rpc GetAuthorizationURL (GetAuthorizationURLRequest) returns (GetAuthorizationURLResponse) {
+    rpc GetAuthorizationURL (minder.v1.GetAuthorizationURLRequest) returns (minder.v1.GetAuthorizationURLResponse) {
         option (google.api.http) = {
             get: "/api/v1/auth/url"
         };
 
-        option (rpc_options) = {
+        option (minder.v1.rpc_options) = {
             auth_scope: OBJECT_OWNER_PROJECT
             owner_only: true
         };
     }
     // buf:lint:ignore RPC_RESPONSE_STANDARD_NAME
-    rpc ExchangeCodeForTokenCLI (ExchangeCodeForTokenCLIRequest) returns (google.api.HttpBody) {  // protolint:disable:this
+    rpc ExchangeCodeForTokenCLI (minder.v1.ExchangeCodeForTokenCLIRequest) returns (google.api.HttpBody) {  // protolint:disable:this
         option (google.api.http) = {
             get: "/api/v1/auth/callback/{provider}/cli"
         };
 
-        option (rpc_options) = {
+        option (minder.v1.rpc_options) = {
             anonymous: true  // Don't need token auth for code exchange
         };
     }
-    rpc ExchangeCodeForTokenWEB (ExchangeCodeForTokenWEBRequest) returns (ExchangeCodeForTokenWEBResponse) {
+    rpc ExchangeCodeForTokenWEB (minder.v1.ExchangeCodeForTokenWEBRequest) returns (minder.v1.ExchangeCodeForTokenWEBResponse) {
         option (google.api.http) = {
             get: "/api/v1/auth/callback/{provider}/web"
         };
 
-        option (rpc_options) = {
+        option (minder.v1.rpc_options) = {
             anonymous: true  // Don't need token auth for code exchange
         };
     }
 
-    rpc StoreProviderToken (StoreProviderTokenRequest) returns (StoreProviderTokenResponse) {
+    rpc StoreProviderToken (minder.v1.StoreProviderTokenRequest) returns (minder.v1.StoreProviderTokenResponse) {
         option (google.api.http) = {
             post: "/api/v1/auth/{provider}/token"
             body: "*"
         };
 
-        option (rpc_options) = {
+        option (minder.v1.rpc_options) = {
             auth_scope: OBJECT_OWNER_PROJECT
         };
     }
 
     // RevokeOauthTokens is used to revoke all tokens
     // this a nuclear option and should only be used in emergencies
-    rpc RevokeOauthTokens (RevokeOauthTokensRequest) returns (RevokeOauthTokensResponse) {
+    rpc RevokeOauthTokens (minder.v1.RevokeOauthTokensRequest) returns (minder.v1.RevokeOauthTokensResponse) {
         option (google.api.http) = {
             post: "/api/v1/auth/revoke-all"
             body: "*"
         };
 
-        option (rpc_options) = {
+        option (minder.v1.rpc_options) = {
             root_admin_only: true
         };
     }
 
     // revoke token for a project
-    rpc RevokeOauthProjectToken (RevokeOauthProjectTokenRequest) returns (RevokeOauthProjectTokenResponse) {
+    rpc RevokeOauthProjectToken (minder.v1.RevokeOauthProjectTokenRequest) returns (minder.v1.RevokeOauthProjectTokenResponse) {
         option (google.api.http) = {
             post: "/api/v1/auth/{provider}/revoke/{project_id}"
             body: "*"
         };
 
-        option (rpc_options) = {
+        option (minder.v1.rpc_options) = {
             auth_scope: OBJECT_OWNER_PROJECT
             owner_only: true
         };
     }
 
     // VerifyProviderTokenFrom verifies that a token has been created for a provider since given timestamp
-    rpc VerifyProviderTokenFrom (VerifyProviderTokenFromRequest) returns (VerifyProviderTokenFromResponse) {
+    rpc VerifyProviderTokenFrom (minder.v1.VerifyProviderTokenFromRequest) returns (minder.v1.VerifyProviderTokenFromResponse) {
         option (google.api.http) = {
             get: "/api/v1/auth/verify/{provider}/{timestamp}"
         };
 
-        option (rpc_options) = {
+        option (minder.v1.rpc_options) = {
             auth_scope: OBJECT_OWNER_PROJECT
         };
     }
@@ -264,54 +145,54 @@ service OAuthService {
 }
 
 service RepositoryService {
-    rpc RegisterRepository (RegisterRepositoryRequest) returns (RegisterRepositoryResponse) {
+    rpc RegisterRepository (minder.v1.RegisterRepositoryRequest) returns (minder.v1.RegisterRepositoryResponse) {
         option (google.api.http) = {
             post: "/api/v1/repository/provider/{provider}/register"
             body: "*"
         };
 
-        option (rpc_options) = {
+        option (minder.v1.rpc_options) = {
             auth_scope: OBJECT_OWNER_PROJECT
             owner_only: true
         };
     }
-    rpc ListRemoteRepositoriesFromProvider(ListRemoteRepositoriesFromProviderRequest) returns (ListRemoteRepositoriesFromProviderResponse) {
+    rpc ListRemoteRepositoriesFromProvider(minder.v1.ListRemoteRepositoriesFromProviderRequest) returns (minder.v1.ListRemoteRepositoriesFromProviderResponse) {
         option (google.api.http) = {
             get: "/api/v1/repositories/provider/{provider}/remote"
         };
 
-        option (rpc_options) = {
+        option (minder.v1.rpc_options) = {
             auth_scope: OBJECT_OWNER_PROJECT
             owner_only: true
         };
     }
-    rpc ListRepositories (ListRepositoriesRequest) returns (ListRepositoriesResponse) {
+    rpc ListRepositories (minder.v1.ListRepositoriesRequest) returns (minder.v1.ListRepositoriesResponse) {
         option (google.api.http) = {
             get: "/api/v1/repositories/provider/{provider}"
         };
 
-        option (rpc_options) = {
+        option (minder.v1.rpc_options) = {
             auth_scope: OBJECT_OWNER_PROJECT
             owner_only: false
         };
     }
-    rpc GetRepositoryById (GetRepositoryByIdRequest) returns (GetRepositoryByIdResponse) {
+    rpc GetRepositoryById (minder.v1.GetRepositoryByIdRequest) returns (minder.v1.GetRepositoryByIdResponse) {
         option (google.api.http) = {
             get: "/api/v1/repository/id/{repository_id}"
         };
 
-        option (rpc_options) = {
+        option (minder.v1.rpc_options) = {
             auth_scope: OBJECT_OWNER_PROJECT
             owner_only: false
         };
     }
 
-    rpc GetRepositoryByName (GetRepositoryByNameRequest) returns (GetRepositoryByNameResponse) {
+    rpc GetRepositoryByName (minder.v1.GetRepositoryByNameRequest) returns (minder.v1.GetRepositoryByNameResponse) {
         option (google.api.http) = {
             get: "/api/v1/repository/provider/{provider}/name/{name}"
         };
 
-        option (rpc_options) = {
+        option (minder.v1.rpc_options) = {
             auth_scope: OBJECT_OWNER_PROJECT
             owner_only: false
         };
@@ -320,7 +201,7 @@ service RepositoryService {
 
 // Get Branch Protection Settings
 service BranchProtectionService {
-    rpc GetBranchProtection (GetBranchProtectionRequest) returns (GetBranchProtectionResponse) {
+    rpc GetBranchProtection (minder.v1.GetBranchProtectionRequest) returns (minder.v1.GetBranchProtectionResponse) {
         option (google.api.http) = {
         get: "/api/v1/branchprotection"
         };
@@ -329,35 +210,35 @@ service BranchProtectionService {
 
 // manage Users CRUD
 service UserService {
-    rpc CreateUser (CreateUserRequest) returns (CreateUserResponse) {
+    rpc CreateUser (minder.v1.CreateUserRequest) returns (minder.v1.CreateUserResponse) {
         option (google.api.http) = {
             post: "/api/v1/user"
             body: "*"
         };
 
-        option (rpc_options) = {
+        option (minder.v1.rpc_options) = {
             auth_scope: OBJECT_OWNER_ORGANIZATION
             owner_only: true
         };
     }
 
-    rpc DeleteUser (DeleteUserRequest) returns (DeleteUserResponse) {
+    rpc DeleteUser (minder.v1.DeleteUserRequest) returns (minder.v1.DeleteUserResponse) {
         option (google.api.http) = {
             delete: "/api/v1/user"
         };
 
-        option (rpc_options) = {
+        option (minder.v1.rpc_options) = {
             auth_scope: OBJECT_OWNER_ORGANIZATION
             owner_only: true
         };
     }
 
-    rpc GetUser (GetUserRequest) returns (GetUserResponse) {
+    rpc GetUser (minder.v1.GetUserRequest) returns (minder.v1.GetUserResponse) {
         option (google.api.http) = {
             get: "/api/v1/user"
         };
 
-        option (rpc_options) = {
+        option (minder.v1.rpc_options) = {
             auth_scope: OBJECT_OWNER_USER
             owner_only: false
         };
@@ -366,131 +247,131 @@ service UserService {
 }
 
 service ProfileService {
-    rpc CreateProfile (CreateProfileRequest) returns (CreateProfileResponse) {
+    rpc CreateProfile (minder.v1.CreateProfileRequest) returns (minder.v1.CreateProfileResponse) {
         option (google.api.http) = {
             post: "/api/v1/profile"
             body: "*"
         };
 
-        option (rpc_options) = {
+        option (minder.v1.rpc_options) = {
             auth_scope: OBJECT_OWNER_PROJECT
             owner_only: true
         };
     }
 
-    rpc DeleteProfile (DeleteProfileRequest) returns (DeleteProfileResponse) {
+    rpc DeleteProfile (minder.v1.DeleteProfileRequest) returns (minder.v1.DeleteProfileResponse) {
         option (google.api.http) = {
             delete: "/api/v1/profile/{id}"
         };
 
-        option (rpc_options) = {
+        option (minder.v1.rpc_options) = {
             auth_scope: OBJECT_OWNER_PROJECT
             owner_only: true
         };
     }
 
-    rpc ListProfiles (ListProfilesRequest) returns (ListProfilesResponse) {
+    rpc ListProfiles (minder.v1.ListProfilesRequest) returns (minder.v1.ListProfilesResponse) {
         option (google.api.http) = {
             get: "/api/v1/profiles"
         };
 
-        option (rpc_options) = {
+        option (minder.v1.rpc_options) = {
             auth_scope: OBJECT_OWNER_PROJECT
             owner_only: false
         };
     }
 
-    rpc GetProfileById (GetProfileByIdRequest) returns (GetProfileByIdResponse) {
+    rpc GetProfileById (minder.v1.GetProfileByIdRequest) returns (minder.v1.GetProfileByIdResponse) {
         option (google.api.http) = {
             get: "/api/v1/profile/{id}"
             };    
     }
 
-    rpc GetProfileStatusByName (GetProfileStatusByNameRequest) returns (GetProfileStatusByNameResponse) {
+    rpc GetProfileStatusByName (minder.v1.GetProfileStatusByNameRequest) returns (minder.v1.GetProfileStatusByNameResponse) {
         option (google.api.http) = {
             get: "/api/v1/profile/name/{name}/status"
         };
 
-        option (rpc_options) = {
+        option (minder.v1.rpc_options) = {
             auth_scope: OBJECT_OWNER_PROJECT
             owner_only: false
         };
     }
 
-    rpc GetProfileStatusByProject (GetProfileStatusByProjectRequest) returns (GetProfileStatusByProjectResponse) {
+    rpc GetProfileStatusByProject (minder.v1.GetProfileStatusByProjectRequest) returns (minder.v1.GetProfileStatusByProjectResponse) {
         option (google.api.http) = {
             get: "/api/v1/profile_status"
         };
 
-        option (rpc_options) = {
+        option (minder.v1.rpc_options) = {
             auth_scope: OBJECT_OWNER_PROJECT
             owner_only: false
         };
     }    
 
-    rpc ListRuleTypes (ListRuleTypesRequest) returns (ListRuleTypesResponse) {
+    rpc ListRuleTypes (minder.v1.ListRuleTypesRequest) returns (minder.v1.ListRuleTypesResponse) {
         option (google.api.http) = {
             get: "/api/v1/rule_types"
         };
 
-        option (rpc_options) = {
+        option (minder.v1.rpc_options) = {
             auth_scope: OBJECT_OWNER_PROJECT
             owner_only: false
         };
     }
 
-    rpc GetRuleTypeByName (GetRuleTypeByNameRequest) returns (GetRuleTypeByNameResponse) {
+    rpc GetRuleTypeByName (minder.v1.GetRuleTypeByNameRequest) returns (minder.v1.GetRuleTypeByNameResponse) {
         option (google.api.http) = {
             get: "/api/v1/rule_type/name/{name}"
         };
 
-        option (rpc_options) = {
+        option (minder.v1.rpc_options) = {
             auth_scope: OBJECT_OWNER_PROJECT
             owner_only: false
         };
     }
 
-    rpc GetRuleTypeById (GetRuleTypeByIdRequest) returns (GetRuleTypeByIdResponse) {
+    rpc GetRuleTypeById (minder.v1.GetRuleTypeByIdRequest) returns (minder.v1.GetRuleTypeByIdResponse) {
         option (google.api.http) = {
             get: "/api/v1/rule_type/{id}"
         };
 
-        option (rpc_options) = {
+        option (minder.v1.rpc_options) = {
             auth_scope: OBJECT_OWNER_PROJECT
             owner_only: false
         };
     }
 
-    rpc CreateRuleType (CreateRuleTypeRequest) returns (CreateRuleTypeResponse) {
+    rpc CreateRuleType (minder.v1.CreateRuleTypeRequest) returns (minder.v1.CreateRuleTypeResponse) {
         option (google.api.http) = {
             post: "/api/v1/rule_type"
             body: "*"
         };
 
-        option (rpc_options) = {
+        option (minder.v1.rpc_options) = {
             auth_scope: OBJECT_OWNER_PROJECT
             owner_only: true
         };
     }
 
-    rpc UpdateRuleType (UpdateRuleTypeRequest) returns (UpdateRuleTypeResponse) {
+    rpc UpdateRuleType (minder.v1.UpdateRuleTypeRequest) returns (minder.v1.UpdateRuleTypeResponse) {
         option (google.api.http) = {
             put: "/api/v1/rule_type"
             body: "*"
         };
 
-        option (rpc_options) = {
+        option (minder.v1.rpc_options) = {
             auth_scope: OBJECT_OWNER_PROJECT
             owner_only: true
         };
     }
 
-    rpc DeleteRuleType (DeleteRuleTypeRequest) returns (DeleteRuleTypeResponse) {
+    rpc DeleteRuleType (minder.v1.DeleteRuleTypeRequest) returns (minder.v1.DeleteRuleTypeResponse) {
         option (google.api.http) = {
             delete: "/api/v1/rule_type/{id}"
         };
 
-        option (rpc_options) = {
+        option (minder.v1.rpc_options) = {
             auth_scope: OBJECT_OWNER_PROJECT
             owner_only: true
         };
@@ -498,857 +379,20 @@ service ProfileService {
 }
 
 service KeyService {
-    rpc GetPublicKey (GetPublicKeyRequest) returns (GetPublicKeyResponse) {
+    rpc GetPublicKey (minder.v1.GetPublicKeyRequest) returns (minder.v1.GetPublicKeyResponse) {
         option (google.api.http) = {
             get: "/api/v1/key"
         };
     }
-    rpc CreateKeyPair (CreateKeyPairRequest) returns (CreateKeyPairResponse) {
+    rpc CreateKeyPair (minder.v1.CreateKeyPairRequest) returns (minder.v1.CreateKeyPairResponse) {
         option (google.api.http) = {
             post: "/api/v1/key"
             body: "*"
         };
 
-        option (rpc_options) = {
+        option (minder.v1.rpc_options) = {
             auth_scope: OBJECT_OWNER_PROJECT
             owner_only: true
         };
     }
-}
-
-message CheckHealthRequest {
-}
-
-message CheckHealthResponse {
-    string status = 1;
-}
-
-message GetAuthorizationURLRequest {
-    string provider = 1;
-    string project_id = 2;
-    bool  cli = 3;
-    int32  port = 4;
-    optional string owner = 5;
-}
-
-message GetAuthorizationURLResponse {
-    string url = 1;
-}
-
-message ExchangeCodeForTokenCLIRequest {
-    string provider = 1;
-    string project_id = 2;
-    string code = 3;
-    string state = 4;
-    string redirect_uri = 5;
-}
-
-message StoreProviderTokenRequest {
-    string provider = 1;
-    string project_id = 2;
-    string access_token = 3;
-    optional string owner = 4;
-}
-
-message StoreProviderTokenResponse {    
-}
-
-message ExchangeCodeForTokenWEBRequest{
-    string provider = 1;
-    string project_id = 2;
-    string code = 3;
-    string redirect_uri = 4;
-}
-
-message ExchangeCodeForTokenWEBResponse {
-    string access_token = 1;
-    string token_type = 2;
-    int64  expires_in = 3;
-    string status = 4;
-}
-
-message RevokeOauthTokensRequest {
-}
-
-message RevokeOauthTokensResponse {
-    int32 revoked_tokens = 1;
-}
-
-message RevokeOauthProjectTokenRequest {
-    string provider = 1;
-    string project_id = 2;
-}
-
-message RevokeOauthProjectTokenResponse {
-}
-
-message RefreshTokenRequest {    
-}
-
-message RefreshTokenResponse {
-    string access_token = 2;
-    int64  access_token_expires_in = 3;
-}
-
-// Project API Objects
-message Project {
-    string project_id = 1;
-    string name = 3;
-    string description = 4;
-    bool is_protected = 5;
-    google.protobuf.Timestamp created_at = 6;
-    google.protobuf.Timestamp updated_at = 7;    
-}
-
-// Repositories API objects
-
-message ListRemoteRepositoriesFromProviderRequest {
-    string provider = 1;
-    string project_id = 2;
-}
-
-message ListRemoteRepositoriesFromProviderResponse {
-    repeated UpstreamRepositoryRef results = 1;
-}
-
-message UpstreamRepositoryRef {
-    string owner = 1;
-    string name = 2;
-    int32 repo_id = 3;
-}
-
-message Repository {
-    optional string id = 1; // This is optional when returning remote repositories
-    optional Context context = 2;
-    string owner = 3;
-    string name = 4;
-    int32 repo_id = 5;
-    int64 hook_id = 6;
-    string hook_url = 7;
-    string deploy_url = 8;
-    string clone_url = 9;
-    string hook_name = 10;
-    string hook_type = 11;
-    string hook_uuid = 12;
-    bool is_private = 13;
-    bool is_fork = 14;
-    bool registered = 15;
-    google.protobuf.Timestamp created_at = 16;
-    google.protobuf.Timestamp updated_at = 17;
-}
-
-message RegisterRepositoryRequest {
-    string provider = 1;
-    string project_id = 2;
-    repeated UpstreamRepositoryRef repositories = 3;
-}
-
-message RegisterRepoResult {
-    message Status {
-        bool success = 1;
-        optional string error = 2;
-    }
-
-    Repository repository = 1;
-    Status status = 2;
-}
-
-message RegisterRepositoryResponse {
-    repeated RegisterRepoResult results = 1;
-}
-
-message GetRepositoryByIdRequest {
-    string repository_id = 1;
-}
-
-message GetRepositoryByIdResponse {
-    Repository repository = 1;
-}
-
-message GetRepositoryByNameRequest {
-    string provider = 1;
-    string project_id = 2;
-    string name = 3;
-}
-
-message GetRepositoryByNameResponse {
-    Repository repository = 1;
-}
-
-message ListRepositoriesRequest {
-    string provider = 1;
-    string project_id = 2;
-    int32 limit = 3;
-    int32 offset = 4;
-}
-
-message ListRepositoriesResponse {
-    repeated Repository results = 1;
-}
-
-message VerifyProviderTokenFromRequest {
-    string provider = 1;
-    string project_id = 2;
-    google.protobuf.Timestamp timestamp = 3;
-}
-
-message VerifyProviderTokenFromResponse {
-    string status = 1;
-}
-
-message GetVulnerabilitiesRequest {
-}
-
-message GetVulnerabilityByIdRequest {
-  string id = 1;
-}
-
-message GetVulnerabilityByIdResponse {
-  // May require adjustment, currently set up for GitHub Security Advisories only
-  string id = 1;
-  int64 github_id = 2;
-  int64 repo_id = 3;
-  string repo_name = 4;
-  string package_name = 5;
-  string severity = 6;
-  string version_affected = 7;
-  string upgrade_version = 8;
-  string ghsaid = 9;
-  string advisroy_url = 10;
-  google.protobuf.Timestamp  scanned_at = 11;
-  google.protobuf.Timestamp  created_at = 12;
-}
-
-message GetVulnerabilitiesResponse {
-  repeated GetVulnerabilityByIdResponse vulns = 1;
-}
-
-message GetSecretsRequest {
-}
-
-message GetSecretsResponse {
-  repeated GetSecretByIdResponse secrets = 1;
-}
-
-message GetSecretByIdRequest {
-  string id = 1;
-}
-
-message GetSecretByIdResponse {
-  string id = 1;
-  string name = 2;
-  string description = 3;
-  // Add other relevant fields
-}
-message GetBranchProtectionRequest {
-}
-
-message BranchProtection {
-  string branch = 1;
-  bool is_protected = 2;
-  // Add other relevant fields
-}
-
-message GetBranchProtectionResponse {
-  repeated BranchProtection branch_protections = 1;
-}
-
-// User service
-message CreateUserRequest { }
-
-message CreateUserResponse {
-    int32 id = 1;
-    string organization_id = 2;
-    string organizatio_name = 3;
-    string project_id = 4;
-    string project_name = 5;
-    string identity_subject = 6;
-    google.protobuf.Timestamp created_at = 7;
-}
-
-message DeleteUserRequest {
-}
-
-message DeleteUserResponse {
-}
-
-// user record to be returned
-message UserRecord {
-    int32 id = 1;
-    string organization_id = 2;
-    string identity_subject = 3;
-    google.protobuf.Timestamp created_at = 4;
-    google.protobuf.Timestamp updated_at = 5;
-}
-
-// list users
-// get user
-message GetUserRequest {
-}
-
-message GetUserResponse {
-    optional UserRecord user = 1;
-    repeated Project projects = 2;
-}
-
-// Profile service
-message CreateProfileRequest {
-    Profile profile = 1;
-}
-  
-message CreateProfileResponse {
-    Profile profile = 1;
-}
-
-message DeleteProfileRequest {
-    // context is the context in which the rule type is evaluated.
-    Context context = 1;
-    // id is the id of the profile to delete
-    string id = 2;
-}
-
-message DeleteProfileResponse {
-}
-
-// list profiles
-message ListProfilesRequest {
-    // context is the context which contains the profiles
-    Context context = 1;
-}
-
-message ListProfilesResponse {
-    repeated Profile profiles = 1;
-}
-
-// get profile by id
-message GetProfileByIdRequest {
-    // context is the context which contains the profiles
-    Context context = 1;
-    // id is the id of the profile to get
-    string id = 2;
-}
-
-message GetProfileByIdResponse {
-    Profile profile = 1;
-}
-
-// get the overall profile status
-message ProfileStatus {
-    // profile_id is the id of the profile
-    string profile_id = 1;
-    // profile_name is the name of the profile
-    string profile_name = 2;
-    // profile_status is the status of the profile
-    string profile_status = 3;
-    // last_updated is the last time the profile was updated
-    google.protobuf.Timestamp last_updated = 4;
-}
-
-// get the status of the rules for a given profile
-message RuleEvaluationStatus {
-    // profile_id is the id of the profile
-    string profile_id = 1;
-    // rule_id is the id of the rule
-    string rule_id = 2;
-    // rule_name is the name of the rule
-    string rule_name = 3;
-    // entity is the entity that was evaluated
-    string entity = 4;
-    // status is the status of the evaluation
-    string status = 5;
-    // last_updated is the last time the profile was updated
-    google.protobuf.Timestamp last_updated = 6;
-    // entity_info is the information about the entity
-    map<string, string> entity_info = 7;
-    // details is the description of the evaluation if any
-    string details = 8;
-    // guidance is the guidance for the evaluation if any
-    string guidance = 9;
-    // remediation_status is the status of the remediation
-    string remediation_status = 10;
-    // remediation_last_updated is the last time the remediation was performed or attempted
-    optional google.protobuf.Timestamp remediation_last_updated = 11;
-    // remediation_details is the description of the remediation attempt if any
-    string remediation_details = 12;
-}
-
-message GetProfileStatusByNameRequest {
-    // context is the context in which the rule type is evaluated.
-    Context context = 1;
-    // name is the name of the profile to get
-    string name = 2;
-
-    // EntiryTypeId is a message that carries an ID together with a type to uniquely identify an entity
-    // such as (repo, 1), (artifact, 2), ...
-    // if the struct is reused in other messages, it should be moved to a top-level definition
-    message EntityTypedId {
-        // entity is the entity to get status for. Incompatible with `all`
-        Entity type = 1;
-        // id is the ID of the entity to get status for. Incompatible with `all`
-        string id = 2;
-    }
-
-    EntityTypedId entity = 3;
-    bool all = 4;
-    string rule = 5;
-}
-
-message GetProfileStatusByNameResponse {
-    // profile_status is the status of the profile
-    ProfileStatus profile_status = 1;
-
-    // rule_evaluation_status is the status of the rules
-    repeated RuleEvaluationStatus rule_evaluation_status = 2;
-}
-
-message GetProfileStatusByProjectRequest {
-    // context is the context in which the rule type is evaluated.
-    Context context = 1;
-}
-
-message GetProfileStatusByProjectResponse {
-    // profile_status is the status of the profile
-    repeated ProfileStatus profile_status = 1;
-}
-
-message GetPublicKeyRequest {
-    string key_identifier = 1;
-}
-
-message GetPublicKeyResponse {
-    string public_key = 1;
-}
-
-message CreateKeyPairRequest {
-    string passphrase = 1;
-    string project_id = 2;
-}
-
-message CreateKeyPairResponse {
-    string key_identifier = 1;
-    string public_key = 2;
-}
-
-// Entity defines the entity that is supported by the provider.
-enum Entity {
-    ENTITY_UNSPECIFIED = 0;
-    ENTITY_REPOSITORIES = 1;
-    ENTITY_BUILD_ENVIRONMENTS = 2;
-    ENTITY_ARTIFACTS = 3;
-    ENTITY_PULL_REQUESTS = 4;
-}
-
-// RESTProviderConfig contains the configuration for the REST provider.
-message RESTProviderConfig {
-    // base_url is the base URL for the REST provider.
-	string base_url = 1;
-}
-
-// GitHubProviderConfig contains the configuration for the GitHub client
-//
-// Endpoint: is the GitHub API endpoint
-//
-// If using the public GitHub API, Endpoint can be left blank
-// disable revive linting for this struct as there is nothing wrong with the
-// naming convention
-message GitHubProviderConfig {
-    // Endpoint is the GitHub API endpoint. If using the public GitHub API, Endpoint can be left blank.
-	string endpoint = 1;
-}
-
-// Provider defines a provider that is used to connect to a certain service.
-// This is used to define the context in which a rule is evaluated and serves
-// as a data ingestion point. They are top level entities and are scoped to
-// an organization.
-message Provider {
-    string name = 1;
-
-    // Context defines the context in which a provider is evaluated.
-    // Given thta a provider is a top level entity, it may only be scoped to
-    // an organization.
-    message Context {
-        string organization = 1;
-        string project = 2;
-    }
-
-    Context context = 2;
-
-    // Version defines the version of the provider. Currently only v1 is supported.
-    string version = 3;
-
-    // Implements defines the provider types that this provider implements.
-    // This is used to determine the interface to use to interact with the provider.
-    // This is a required field and must be set.
-    // currently, the following interfaces are supported:
-    // - rest
-    // - github
-    // - git
-    repeated string implements = 4;
-
-    // Definition defines the definition of the provider.
-    // This is used to define the connection to the provider.
-    message Definition {
-        // rest is the REST provider configuration.
-        optional RESTProviderConfig rest = 1;
-
-        // github is the GitHub provider configuration.
-        optional GitHubProviderConfig github = 2;
-    }
-
-    Definition def = 5;
-}
-
-// Context defines the context in which a rule is evaluated.
-// this normally refers to a combination of the provider, organization and project.
-message Context {
-    string provider = 1;
-    optional string organization = 2;
-    optional string project = 3;
-}
-
-// --- START RuleType CRUD definitions
-
-// ListRuleTypesRequest is the request to list rule types.
-message ListRuleTypesRequest {
-    // context is the context in which the rule types are evaluated.
-    Context context = 1;
-}
-
-// ListRuleTypesResponse is the response to list rule types.
-message ListRuleTypesResponse {
-    // rule_types is the list of rule types.
-    repeated RuleType rule_types = 1;
-}
-
-// GetRuleTypeByNameRequest is the request to get a rule type by name.
-message GetRuleTypeByNameRequest {
-    // context is the context in which the rule type is evaluated.
-    Context context = 1;
-    // name is the name of the rule type.
-    string name = 2;
-}
-
-// GetRuleTypeByNameResponse is the response to get a rule type by name.
-message GetRuleTypeByNameResponse {
-    // rule_type is the rule type.
-    RuleType rule_type = 1;
-}
-
-// GetRuleTypeByIdRequest is the request to get a rule type by id.
-message GetRuleTypeByIdRequest {
-    // context is the context in which the rule type is evaluated.
-    Context context = 1;
-    // id is the id of the rule type.
-    string id = 2;
-}
-
-// GetRuleTypeByIdResponse is the response to get a rule type by id.
-message GetRuleTypeByIdResponse {
-    // rule_type is the rule type.
-    RuleType rule_type = 1;
-}
-
-// CreateRuleTypeRequest is the request to create a rule type.
-message CreateRuleTypeRequest {
-    // rule_type is the rule type to be created.
-    RuleType rule_type = 1;
-}
-
-// CreateRuleTypeResponse is the response to create a rule type.
-message CreateRuleTypeResponse {
-    // rule_type is the rule type that was created.
-    RuleType rule_type = 1;
-}
-
-// UpdateRuleTypeRequest is the request to update a rule type.
-message UpdateRuleTypeRequest {
-    // rule_type is the rule type to be updated.
-    RuleType rule_type = 2;
-}
-
-// UpdateRuleTypeResponse is the response to update a rule type.
-message UpdateRuleTypeResponse {
-    // rule_type is the rule type that was updated.
-    RuleType rule_type = 1;
-}
-
-// DeleteRuleTypeRequest is the request to delete a rule type.
-message DeleteRuleTypeRequest {
-    // context is the context in which the rule type is evaluated.
-    Context context = 1;
-    // id is the id of the rule type to be deleted.
-    string id = 2;
-}
-
-// DeleteRuleTypeResponse is the response to delete a rule type.
-message DeleteRuleTypeResponse {
-}
-
-// --- END RuleType CRUD definitions
-
-// RestType defines the rest data evaluation.
-// This is used to fetch data from a REST endpoint.
-message RestType {
-    message Fallback {
-        int32 http_code = 1;
-        string body = 2;
-    }
-
-    // endpoint is the endpoint to fetch data from.
-    // This can be a URL or the path on the API.bool
-    // This is a required field and must be set.
-    // This is also evaluated via a template which allows
-    // us dynamically fill in the values.
-    string endpoint = 1;
-
-    // method is the method to use to fetch data.
-    string method = 2;
-
-    // headers are the headers to be sent to the endpoint.
-    repeated string headers = 3;
-
-    // body is the body to be sent to the endpoint.
-    optional string body = 4;
-
-    // parse is the parsing mechanism to be used to parse the data.
-    string parse = 5;
-
-    // fallback provides a body that the ingester would return in case
-    // the REST call returns a non-200 status code.
-    repeated Fallback fallback = 6;
-}
-
-// BuiltinType defines the builtin data evaluation.
-message BuiltinType {
-    string method = 1;
-}
-
-// ArtifactType defines the artifact data evaluation.
-message ArtifactType {
-}
-
-// GitType defines the git data ingester.
-message GitType {
-    // clone_url is the url of the git repository.
-    string clone_url = 1;
-
-    // branch is the branch of the git repository.
-    string branch = 2;
-}
-
-// DiffType defines the diff data ingester.
-message DiffType {
-    message Ecosystem {
-        // name is the name of the ecosystem.
-        string name = 1;
-        // depfile is the file that contains the dependencies for this ecosystem
-        string depfile = 2;
-    }
-    repeated Ecosystem ecosystems = 1;
-}
-
-// RuleType defines rules that may or may not be user defined.
-// The version is assumed from the folder's version.
-message RuleType {
-    // id is the id of the rule type.
-    // This is mostly optional and is set by the server.
-    optional string id = 1;
-
-    // name is the name of the rule type.
-    string name = 2;
-
-    // context is the context in which the rule is evaluated.
-    Context context = 3;
-
-    // Definition defines the rule type. It encompases the schema and the data evaluation.
-    message Definition {
-        // in_entity is the entity in which the rule is evaluated.
-        // This can be repository, build_environment or artifact.
-        string in_entity = 1;
-
-        // rule_schema is the schema of the rule. This is expressed in JSON Schema.
-        google.protobuf.Struct rule_schema = 2;
-
-        // param_schema is the schema of the parameters that are passed to the rule.
-        // This is expressed in JSON Schema.
-        optional google.protobuf.Struct param_schema = 3;
-
-        // Ingest defines how the data is ingested.
-        message Ingest {
-            // type is the type of the data ingestion.
-            // we currently support rest, artifact and builtin.
-            string type = 1;
-
-            // rest is the rest data ingestion.
-            // this is only used if the type is rest.
-            optional RestType rest = 3;
-
-            // builtin is the builtin data ingestion.
-            optional BuiltinType builtin = 4;
-
-            // artifact is the artifact data ingestion.
-            optional ArtifactType artifact = 5;
-
-            // git is the git data ingestion.
-            optional GitType git = 6;
-
-            // diff is the diff data ingestion.
-            optional DiffType diff = 7;
-        }
-        Ingest ingest = 4;
-
-        // Eval defines the data evaluation definition.
-        // This pertains to the way we traverse data from the upstream
-        // endpoint and how we compare it to the rule.
-        message Eval {
-            // type is the type of the data evaluation.
-            // Right now only `jq` is supported as a driver
-            string type = 1;
-
-            message JQComparison {
-                message Operator {
-                    string def = 1;
-                }
-
-                // Ingested points to the data retrieved in the `ingest` section
-                Operator ingested = 1;
-
-                // Profile points to the profile itself.
-                Operator profile = 2;
-            }
-
-            message Rego {
-                // type is the type of evaluation engine to use
-                // for rego. We currently have two modes of operation:
-                // - deny-by-default: this is the default mode of operation
-                //   where we deny access by default and allow access only
-                //   if the profile explicitly allows it. It expects the
-                //   profile to set an `allow` variable to true or false.
-                // - constraints: this is the mode of operation where we
-                //   allow access by default and deny access only if a
-                //   violation is found. It expects the profile to set a
-                //   `violations` variable with a "msg" field.
-                string type = 1;
-                // def is the definition of the rego profile.
-                string def = 2;
-            }
-
-            message Vulncheck {
-                // no configuration for now
-            }
-
-            message PackageIntelligence {
-                // e.g. https://staging.stacklok.dev/
-                string endpoint = 1;
-            }
-
-            // jq is only used if the `jq` type is selected.
-            // It defines the comparisons that are made between
-            // the ingested data and the profile rule.
-            repeated JQComparison jq = 2;
-
-            // rego is only used if the `rego` type is selected.
-            optional Rego rego = 3;
-
-            // vulncheck is only used if the `vulncheck` type is selected.
-            optional Vulncheck vulncheck = 4;
-
-            // package_intelligence is only used if the `package_intelligence` type is selected.
-            optional PackageIntelligence package_intelligence = 5;
-        }
-        Eval eval = 5;
-
-        message Remediate {
-            string type = 1;
-
-            message GhBranchProtectionType {
-                string patch = 1;
-            }
-
-            // the name stutters a bit but we already use a PullRequest message for handling PR entities
-            message PullRequestRemediation {
-                message Content {
-                    // the file to patch
-                    string path = 1;
-                    // how to patch the file. For now, only replace is supported
-                    string action = 2;
-                    // the content of the file
-                    string content = 4;
-                    // the GIT mode of the file. Not UNIX mode! String because the GH API also uses strings
-                    // the usual modes are: 100644 for regular files, 100755 for executable files and
-                    // 040000 for submodules (which we don't use but now you know the meaning of the 1 in 100644)
-                    optional string mode = 3;
-                }
-
-                // the title of the PR
-                string title = 1;
-                // the body of the PR
-                string body = 2;
-                repeated Content contents = 3;
-            }
-
-            optional RestType rest = 2;
-            optional GhBranchProtectionType gh_branch_protection = 3;
-            optional PullRequestRemediation pull_request = 4;
-        }
-        Remediate remediate = 6;
-
-        message Alert {
-            string type = 1;
-
-            message AlertTypeSA {
-                string severity = 1;
-            }
-            optional AlertTypeSA security_advisory = 2;
-        }
-        Alert alert = 7;
-    }
-
-    // def is the definition of the rule type.
-    Definition def = 4;
-
-    // description is the description of the rule type.
-    string description = 5;
-
-    // guidance are instructions we give the user in case a rule fails.
-    string guidance = 6;
-}
-
-// Profile defines a profile that is user defined.
-message Profile {
-    // context is the context in which the profile is evaluated.
-    Context context = 1;
-
-    // id is the id of the profile.
-    // This is optional and is set by the system.
-    optional string id = 2;
-
-    // name is the name of the profile instance.
-    string name = 3;
-
-    // Rule defines the individual call of a certain rule type.
-    message Rule {
-        // type is the type of the rule to be instantiated.
-        string type = 1;
-        // params are the parameters that are passed to the rule.
-        // This is optional and depends on the rule type.
-        google.protobuf.Struct params = 2;
-        // def is the definition of the rule.
-        // This depends on the rule type.
-        google.protobuf.Struct def = 3;
-    }
-
-    // These are the entities that one could set in the profile.
-    repeated Rule repository = 4;
-    repeated Rule build_environment = 5;
-    repeated Rule artifact = 6;
-    repeated Rule pull_request = 7;
-
-    // whether and how to remediate (on,off,dry_run)
-    // this is optional as the default is set by the system
-    optional string remediate = 8;
-
-    // whether and how to alert (on,off,dry_run)
-    // this is optional as the default is set by the system
-    optional string alert = 9;
 }
