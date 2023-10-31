@@ -52,6 +52,39 @@ brews:
       token: "{{ .Env.HOMEBREW_TAP_GITHUB_TOKEN }}"
     test: |
       system "#{bin}/minder --help"
+# This section defines how to release to winget.
+winget:
+  - name: minder
+    publisher: stacklok
+    license: Apache-2.0
+    license_url: "https://github.com/stacklok/mediator/blob/main/LICENSE"
+    copyright: Stacklok, Inc.
+    homepage: https://stacklok.com
+    short_description: 'minder is the client CLI for interacting with Minder by Stacklok.'
+    publisher_support_url: "https://github.com/stacklok/mediator/issues/new/choose"
+    package_identifier: "stacklok.minder"
+    url_template: "https://github.com/stacklok/mediator/releases/download/{{ .Tag }}/{{ .ArtifactName }}"
+    skip_upload: auto
+    release_notes: "{{.Changelog}}"
+    tags:
+      - golang
+      - cli
+    commit_author:
+      name: stacklokbot
+      email: contact@stacklok.com
+    goamd64: v1
+    repository:
+      owner: stacklok
+      name: winget-pkgs
+      branch: "minder-{{.Version}}"
+      token: "{{ .Env.WINGET_GITHUB_TOKEN }}"
+      pull_request:
+        enabled: false # TODO: enable once we release
+        draft: false
+        base:
+          owner: microsoft
+          name: winget-pkgs
+          branch: master
 # This section defines whether we want to release the source code too.
 source:
   enabled: true
