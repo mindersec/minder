@@ -926,11 +926,9 @@ definitions:
       vulncheck:
         $ref: '#/definitions/EvalVulncheck'
         description: vulncheck is only used if the `vulncheck` type is selected.
-      packageIntelligence:
-        $ref: '#/definitions/EvalPackageIntelligence'
-        description: >-
-          package_intelligence is only used if the `package_intelligence` type
-          is selected.
+      trusty:
+        $ref: '#/definitions/EvalTrusty'
+        description: trusty is only used if the `trusty` type is selected.
     description: |-
       Eval defines the data evaluation definition.
       This pertains to the way we traverse data from the upstream
@@ -990,12 +988,6 @@ definitions:
       profile:
         $ref: '#/definitions/JQComparisonOperator'
         description: Profile points to the profile itself.
-  EvalPackageIntelligence:
-    type: object
-    properties:
-      endpoint:
-        type: string
-        title: e.g. https://staging.stacklok.dev/
   EvalRego:
     type: object
     properties:
@@ -1015,6 +1007,12 @@ definitions:
       def:
         type: string
         description: def is the definition of the rego profile.
+  EvalTrusty:
+    type: object
+    properties:
+      endpoint:
+        type: string
+        title: e.g. https://staging.stacklok.dev/
   EvalVulncheck:
     type: object
     title: no configuration for now
