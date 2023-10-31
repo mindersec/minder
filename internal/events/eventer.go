@@ -173,6 +173,10 @@ func buildGoChannelDriver(cfg *config.EventConfig) (message.Publisher, message.S
 
 // Close closes the router
 func (e *Eventer) Close() error {
+	//nolint:gosec // It's fine if there's an error as long as we close the router
+	e.webhookPublisher.Close()
+	//nolint:gosec // It's fine if there's an error as long as we close the router
+	e.webhookSubscriber.Close()
 	return e.router.Close()
 }
 

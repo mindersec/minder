@@ -95,15 +95,17 @@ func (s *UnitTestSuite) TestHandleWebHookPing() {
 	srv := newDefaultServer(t, mockStore)
 	defer srv.evt.Close()
 
+	pq := newPassthroughQueue()
+	queued := pq.getQueue()
+
+	srv.evt.Register(engine.InternalEntityEventTopic, pq.pass)
+
 	go func() {
 		err := srv.evt.Run(context.Background())
 		require.NoError(t, err, "failed to run eventer")
 	}()
 
-	pq := newPassthroughQueue()
-	queued := pq.getQueue()
-
-	srv.evt.Register(engine.InternalEntityEventTopic, pq.pass)
+	<-srv.evt.Running()
 
 	hook := srv.HandleGitHubWebHook()
 	port, err := rand.GetRandomPort()
@@ -146,15 +148,17 @@ func (s *UnitTestSuite) TestHandleWebHookUnexistentRepository() {
 	srv := newDefaultServer(t, mockStore)
 	defer srv.evt.Close()
 
+	pq := newPassthroughQueue()
+	queued := pq.getQueue()
+
+	srv.evt.Register(engine.InternalEntityEventTopic, pq.pass)
+
 	go func() {
 		err := srv.evt.Run(context.Background())
 		require.NoError(t, err, "failed to run eventer")
 	}()
 
-	pq := newPassthroughQueue()
-	queued := pq.getQueue()
-
-	srv.evt.Register(engine.InternalEntityEventTopic, pq.pass)
+	<-srv.evt.Running()
 
 	mockStore.EXPECT().
 		GetRepositoryByRepoID(gomock.Any(), gomock.Any()).
@@ -210,15 +214,17 @@ func (s *UnitTestSuite) TestHandleWebHookRepository() {
 	srv := newDefaultServer(t, mockStore)
 	defer srv.evt.Close()
 
+	pq := newPassthroughQueue()
+	queued := pq.getQueue()
+
+	srv.evt.Register(engine.InternalEntityEventTopic, pq.pass)
+
 	go func() {
 		err := srv.evt.Run(context.Background())
 		require.NoError(t, err, "failed to run eventer")
 	}()
 
-	pq := newPassthroughQueue()
-	queued := pq.getQueue()
-
-	srv.evt.Register(engine.InternalEntityEventTopic, pq.pass)
+	<-srv.evt.Running()
 
 	providerName := "github"
 	repositoryID := uuid.New()
@@ -325,15 +331,17 @@ func (s *UnitTestSuite) TestHandleWebHookUnexistentRepoPackage() {
 	srv := newDefaultServer(t, mockStore)
 	defer srv.evt.Close()
 
+	pq := newPassthroughQueue()
+	queued := pq.getQueue()
+
+	srv.evt.Register(engine.InternalEntityEventTopic, pq.pass)
+
 	go func() {
 		err := srv.evt.Run(context.Background())
 		require.NoError(t, err, "failed to run eventer")
 	}()
 
-	pq := newPassthroughQueue()
-	queued := pq.getQueue()
-
-	srv.evt.Register(engine.InternalEntityEventTopic, pq.pass)
+	<-srv.evt.Running()
 
 	mockStore.EXPECT().
 		GetRepositoryByRepoID(gomock.Any(), gomock.Any()).
