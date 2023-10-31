@@ -28,6 +28,8 @@ If you are reporting a bug, please help to speed up problem diagnosis by providi
 #### Sign the Contributor License Agreement
 Before we accept a non-trivial patch or pull request we will need you to sign the [Contributor License Agreement](https://github.com/stacklok/mediator). Signing the contributor’s agreement does not grant anyone commit rights to the main repository, but it does mean that we can accept your contributions, and you will get an author credit if we do. Active contributors might be asked to join the core team, and given the ability to merge pull requests.
 
+#### Not sure how to start contributing...
+PRs to resolve existing issues are greatly appreciated and issues labeled as ["good first issue"](https://github.com/stacklok/mediator/issues?q=is%3Aopen+is%3Aissue+label%3A%22good+first+issue%22) are a great place to start!
 
 #### Pull Request Process
 * Create an issue outlining the fix or feature.
