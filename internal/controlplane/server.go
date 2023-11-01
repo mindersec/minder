@@ -43,6 +43,7 @@ import (
 	"google.golang.org/grpc/credentials/insecure"
 	"google.golang.org/grpc/reflection"
 
+	"github.com/stacklok/mediator/internal/assets"
 	"github.com/stacklok/mediator/internal/auth"
 	"github.com/stacklok/mediator/internal/config"
 	"github.com/stacklok/mediator/internal/crypto"
@@ -254,13 +255,13 @@ func (s *Server) StartHTTPServer(ctx context.Context) error {
 	// register the services (declared within register_handlers.go)
 	RegisterGatewayHTTPHandlers(ctx, gwmux, s.cfg.GRPCServer.GetAddress(), opts)
 
-	fs := http.FileServer(http.Dir("assets/"))
+	fs := http.FileServer(http.FS(assets.StaticAssets))
 
 	mw := otelhttp.NewMiddleware("webhook")
 
 	mux.Handle("/", gwmux)
 	mux.Handle("/api/v1/webhook/", mw(s.HandleGitHubWebHook()))
-	mux.Handle("/static/", http.StripPrefix("/static/", fs))
+	mux.Handle("/static/", fs)
 
 	errch := make(chan error)
 

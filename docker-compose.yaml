@@ -39,7 +39,6 @@ services:
       - "9090:9090"
     volumes:
           - ./config.yaml:/app/config.yaml:z
-          - ./assets:/assets:z
           # If you don't want to store your GitHub client ID and secret in the main
           # config file, point to them here:
           # - ./.github_client_id:/secrets/github_client_id:z
