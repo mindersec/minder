@@ -622,6 +622,24 @@ paths:
           type: string
       tags:
         - RepositoryService
+    delete:
+      operationId: RepositoryService_DeleteRepositoryById
+      responses:
+        '200':
+          description: A successful response.
+          schema:
+            $ref: '#/definitions/v1DeleteRepositoryByIdResponse'
+        default:
+          description: An unexpected error response.
+          schema:
+            $ref: '#/definitions/googlerpcStatus'
+      parameters:
+        - name: repositoryId
+          in: path
+          required: true
+          type: string
+      tags:
+        - RepositoryService
   /api/v1/repository/provider/{provider}/name/{name}:
     get:
       operationId: RepositoryService_GetRepositoryByName
@@ -630,6 +648,32 @@ paths:
           description: A successful response.
           schema:
             $ref: '#/definitions/v1GetRepositoryByNameResponse'
+        default:
+          description: An unexpected error response.
+          schema:
+            $ref: '#/definitions/googlerpcStatus'
+      parameters:
+        - name: provider
+          in: path
+          required: true
+          type: string
+        - name: name
+          in: path
+          required: true
+          type: string
+        - name: projectId
+          in: query
+          required: false
+          type: string
+      tags:
+        - RepositoryService
+    delete:
+      operationId: RepositoryService_DeleteRepositoryByName
+      responses:
+        '200':
+          description: A successful response.
+          schema:
+            $ref: '#/definitions/v1DeleteRepositoryByNameResponse'
         default:
           description: An unexpected error response.
           schema:
@@ -1505,6 +1549,16 @@ definitions:
         format: date-time
   v1DeleteProfileResponse:
     type: object
+  v1DeleteRepositoryByIdResponse:
+    type: object
+    properties:
+      repositoryId:
+        type: string
+  v1DeleteRepositoryByNameResponse:
+    type: object
+    properties:
+      name:
+        type: string
   v1DeleteRuleTypeResponse:
     type: object
     description: DeleteRuleTypeResponse is the response to delete a rule type.
