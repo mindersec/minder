@@ -334,7 +334,7 @@ func LoadCredentials() (OpenIdCredentials, error) {
 
 // GetAppContext is a helper for getting the cmd app context
 func GetAppContext() (context.Context, context.CancelFunc) {
-	viper.SetDefault("cli.context_timeout", 5)
+	viper.SetDefault("cli.context_timeout", 10)
 	timeout := viper.GetInt("cli.context_timeout")
 
 	ctx, cancel := context.WithTimeout(context.Background(), time.Duration(timeout)*time.Second)
