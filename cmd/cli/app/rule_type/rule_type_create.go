@@ -17,8 +17,10 @@ package rule_type
 
 import (
 	"fmt"
+	"io"
 	"os"
 
+	"github.com/olekukonko/tablewriter"
 	"github.com/spf13/cobra"
 	"github.com/spf13/viper"
 	"golang.org/x/exp/slices"
@@ -55,8 +57,6 @@ within a minder control plane.`,
 		defer conn.Close()
 
 		client := minderv1.NewProfileServiceClient(conn)
-		ctx, cancel := util.GetAppContext()
-		defer cancel()
 
 		expfiles, err := util.ExpandFileArgs(files)
 		if err != nil {
@@ -66,32 +66,47 @@ within a minder control plane.`,
 		table := initializeTable(cmd)
 
 		for _, f := range expfiles {
-			preader, closer, err := util.OpenFileArg(f, cmd.InOrStdin())
-			if err != nil {
-				return fmt.Errorf("error opening file arg: %w", err)
-			}
-			defer closer()
-
-			r, err := minderv1.ParseRuleType(preader)
-			if err != nil {
-				return fmt.Errorf("error parsing rule type: %w", err)
-			}
-
-			// create a rule
-			resp, err := client.CreateRuleType(ctx, &minderv1.CreateRuleTypeRequest{
-				RuleType: r,
-			})
-			if err != nil {
+			if err := createOneRuleType(client, table, f, os.Stdin); err != nil {
 				return fmt.Errorf("error creating rule type: %w", err)
 			}
-
-			renderRuleTypeTable(resp.RuleType, table)
 		}
 
 		table.Render()
 
 		return nil
 	},
+}
+
+func createOneRuleType(
+	client minderv1.ProfileServiceClient,
+	table *tablewriter.Table,
+	f string,
+	dashOpen io.Reader,
+) error {
+	ctx, cancel := util.GetAppContext()
+	defer cancel()
+
+	preader, closer, err := util.OpenFileArg(f, dashOpen)
+	if err != nil {
+		return fmt.Errorf("error opening file arg: %w", err)
+	}
+	defer closer()
+
+	r, err := minderv1.ParseRuleType(preader)
+	if err != nil {
+		return fmt.Errorf("error parsing rule type: %w", err)
+	}
+
+	// create a rule
+	resp, err := client.CreateRuleType(ctx, &minderv1.CreateRuleTypeRequest{
+		RuleType: r,
+	})
+	if err != nil {
+		return fmt.Errorf("error creating rule type: %w", err)
+	}
+
+	renderRuleTypeTable(resp.RuleType, table)
+	return nil
 }
 
 func validateFilesArg(files []string) error {
