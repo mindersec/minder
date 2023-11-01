@@ -1,5 +1,5 @@
 ---
-title: Mediator
+title: Minder
 sidebar_position: 1
 ---
 
