@@ -83,7 +83,7 @@ func viperLogLevelToZerologLevel(viperLogLevel string) zerolog.Level {
 func Interceptor( /*logLevel string, logFormat string, logFile string*/ ) grpc.UnaryServerInterceptor {
 	return func(ctx context.Context, req interface{}, info *grpc.UnaryServerInfo, handler grpc.UnaryHandler) (interface{}, error) {
 		// Don't log health checks, they spam the logs
-		if info.FullMethod == "/mediator.v1.HealthService/CheckHealth" {
+		if info.FullMethod == "/minder.v1.HealthService/CheckHealth" {
 			return handler(ctx, req)
 		}
 		// Attach the resource to all logging events in the context
