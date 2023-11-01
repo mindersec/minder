@@ -1,23 +1,27 @@
 ---
-title: minder repo
+title: minder repo delete
 ---
-## minder repo
+## minder repo delete
 
-Manage repositories within a minder control plane
+delete repository
 
 ### Synopsis
 
-The minder repo commands allow the management of repositories within a 
-minder control plane.
+Repo delete is used to delete a repository within the minder control plane
 
 ```
-minder repo [flags]
+minder repo delete [flags]
 ```
 
 ### Options
 
 ```
-  -h, --help   help for repo
+  -h, --help              help for delete
+  -n, --name string       Name of the repository (owner/name format)
+  -f, --output string     Output format (json or yaml)
+  -p, --provider string   Name of the enrolled provider
+  -r, --repo-id string    ID of the repo to delete
+  -s, --status            Only return the status of the profiles associated to this repo
 ```
 
 ### Options inherited from parent commands
@@ -34,9 +38,5 @@ minder repo [flags]
 
 ### SEE ALSO
 
-* [minder](minder.md)	 - Minder controls the hosted minder service
-* [minder repo delete](minder_repo_delete.md)	 - delete repository
-* [minder repo get](minder_repo_get.md)	 - Get repository in the minder control plane
-* [minder repo list](minder_repo_list.md)	 - List repositories in the minder control plane
-* [minder repo register](minder_repo_register.md)	 - Register a repo with the minder control plane
+* [minder repo](minder_repo.md)	 - Manage repositories within a minder control plane
 
