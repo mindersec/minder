@@ -579,6 +579,8 @@ const (
 	RepositoryService_ListRepositories_FullMethodName                   = "/minder.v1.RepositoryService/ListRepositories"
 	RepositoryService_GetRepositoryById_FullMethodName                  = "/minder.v1.RepositoryService/GetRepositoryById"
 	RepositoryService_GetRepositoryByName_FullMethodName                = "/minder.v1.RepositoryService/GetRepositoryByName"
+	RepositoryService_DeleteRepositoryById_FullMethodName               = "/minder.v1.RepositoryService/DeleteRepositoryById"
+	RepositoryService_DeleteRepositoryByName_FullMethodName             = "/minder.v1.RepositoryService/DeleteRepositoryByName"
 )
 
 // RepositoryServiceClient is the client API for RepositoryService service.
@@ -590,6 +592,8 @@ type RepositoryServiceClient interface {
 	ListRepositories(ctx context.Context, in *ListRepositoriesRequest, opts ...grpc.CallOption) (*ListRepositoriesResponse, error)
 	GetRepositoryById(ctx context.Context, in *GetRepositoryByIdRequest, opts ...grpc.CallOption) (*GetRepositoryByIdResponse, error)
 	GetRepositoryByName(ctx context.Context, in *GetRepositoryByNameRequest, opts ...grpc.CallOption) (*GetRepositoryByNameResponse, error)
+	DeleteRepositoryById(ctx context.Context, in *DeleteRepositoryByIdRequest, opts ...grpc.CallOption) (*DeleteRepositoryByIdResponse, error)
+	DeleteRepositoryByName(ctx context.Context, in *DeleteRepositoryByNameRequest, opts ...grpc.CallOption) (*DeleteRepositoryByNameResponse, error)
 }
 
 type repositoryServiceClient struct {
@@ -645,6 +649,24 @@ func (c *repositoryServiceClient) GetRepositoryByName(ctx context.Context, in *G
 	return out, nil
 }
 
+func (c *repositoryServiceClient) DeleteRepositoryById(ctx context.Context, in *DeleteRepositoryByIdRequest, opts ...grpc.CallOption) (*DeleteRepositoryByIdResponse, error) {
+	out := new(DeleteRepositoryByIdResponse)
+	err := c.cc.Invoke(ctx, RepositoryService_DeleteRepositoryById_FullMethodName, in, out, opts...)
+	if err != nil {
+		return nil, err
+	}
+	return out, nil
+}
+
+func (c *repositoryServiceClient) DeleteRepositoryByName(ctx context.Context, in *DeleteRepositoryByNameRequest, opts ...grpc.CallOption) (*DeleteRepositoryByNameResponse, error) {
+	out := new(DeleteRepositoryByNameResponse)
+	err := c.cc.Invoke(ctx, RepositoryService_DeleteRepositoryByName_FullMethodName, in, out, opts...)
+	if err != nil {
+		return nil, err
+	}
+	return out, nil
+}
+
 // RepositoryServiceServer is the server API for RepositoryService service.
 // All implementations must embed UnimplementedRepositoryServiceServer
 // for forward compatibility
@@ -654,6 +676,8 @@ type RepositoryServiceServer interface {
 	ListRepositories(context.Context, *ListRepositoriesRequest) (*ListRepositoriesResponse, error)
 	GetRepositoryById(context.Context, *GetRepositoryByIdRequest) (*GetRepositoryByIdResponse, error)
 	GetRepositoryByName(context.Context, *GetRepositoryByNameRequest) (*GetRepositoryByNameResponse, error)
+	DeleteRepositoryById(context.Context, *DeleteRepositoryByIdRequest) (*DeleteRepositoryByIdResponse, error)
+	DeleteRepositoryByName(context.Context, *DeleteRepositoryByNameRequest) (*DeleteRepositoryByNameResponse, error)
 	mustEmbedUnimplementedRepositoryServiceServer()
 }
 
@@ -675,6 +699,12 @@ func (UnimplementedRepositoryServiceServer) GetRepositoryById(context.Context, *
 }
 func (UnimplementedRepositoryServiceServer) GetRepositoryByName(context.Context, *GetRepositoryByNameRequest) (*GetRepositoryByNameResponse, error) {
 	return nil, status.Errorf(codes.Unimplemented, "method GetRepositoryByName not implemented")
+}
+func (UnimplementedRepositoryServiceServer) DeleteRepositoryById(context.Context, *DeleteRepositoryByIdRequest) (*DeleteRepositoryByIdResponse, error) {
+	return nil, status.Errorf(codes.Unimplemented, "method DeleteRepositoryById not implemented")
+}
+func (UnimplementedRepositoryServiceServer) DeleteRepositoryByName(context.Context, *DeleteRepositoryByNameRequest) (*DeleteRepositoryByNameResponse, error) {
+	return nil, status.Errorf(codes.Unimplemented, "method DeleteRepositoryByName not implemented")
 }
 func (UnimplementedRepositoryServiceServer) mustEmbedUnimplementedRepositoryServiceServer() {}
 
@@ -779,6 +809,42 @@ func _RepositoryService_GetRepositoryByName_Handler(srv interface{}, ctx context
 	return interceptor(ctx, in, info, handler)
 }
 
+func _RepositoryService_DeleteRepositoryById_Handler(srv interface{}, ctx context.Context, dec func(interface{}) error, interceptor grpc.UnaryServerInterceptor) (interface{}, error) {
+	in := new(DeleteRepositoryByIdRequest)
+	if err := dec(in); err != nil {
+		return nil, err
+	}
+	if interceptor == nil {
+		return srv.(RepositoryServiceServer).DeleteRepositoryById(ctx, in)
+	}
+	info := &grpc.UnaryServerInfo{
+		Server:     srv,
+		FullMethod: RepositoryService_DeleteRepositoryById_FullMethodName,
+	}
+	handler := func(ctx context.Context, req interface{}) (interface{}, error) {
+		return srv.(RepositoryServiceServer).DeleteRepositoryById(ctx, req.(*DeleteRepositoryByIdRequest))
+	}
+	return interceptor(ctx, in, info, handler)
+}
+
+func _RepositoryService_DeleteRepositoryByName_Handler(srv interface{}, ctx context.Context, dec func(interface{}) error, interceptor grpc.UnaryServerInterceptor) (interface{}, error) {
+	in := new(DeleteRepositoryByNameRequest)
+	if err := dec(in); err != nil {
+		return nil, err
+	}
+	if interceptor == nil {
+		return srv.(RepositoryServiceServer).DeleteRepositoryByName(ctx, in)
+	}
+	info := &grpc.UnaryServerInfo{
+		Server:     srv,
+		FullMethod: RepositoryService_DeleteRepositoryByName_FullMethodName,
+	}
+	handler := func(ctx context.Context, req interface{}) (interface{}, error) {
+		return srv.(RepositoryServiceServer).DeleteRepositoryByName(ctx, req.(*DeleteRepositoryByNameRequest))
+	}
+	return interceptor(ctx, in, info, handler)
+}
+
 // RepositoryService_ServiceDesc is the grpc.ServiceDesc for RepositoryService service.
 // It's only intended for direct use with grpc.RegisterService,
 // and not to be introspected or modified (even as a copy)
@@ -805,6 +871,14 @@ var RepositoryService_ServiceDesc = grpc.ServiceDesc{
 		{
 			MethodName: "GetRepositoryByName",
 			Handler:    _RepositoryService_GetRepositoryByName_Handler,
+		},
+		{
+			MethodName: "DeleteRepositoryById",
+			Handler:    _RepositoryService_DeleteRepositoryById_Handler,
+		},
+		{
+			MethodName: "DeleteRepositoryByName",
+			Handler:    _RepositoryService_DeleteRepositoryByName_Handler,
 		},
 	},
 	Streams:  []grpc.StreamDesc{},
