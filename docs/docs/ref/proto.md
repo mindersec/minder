@@ -383,12 +383,19 @@ DeleteRuleTypeRequest is the request to delete a rule type.
 | ----- | ---- | ----- | ----------- |
 | context | [Context](#minder-v1-Context) |  | context is the context in which the rule type is evaluated. |
 | id | [string](#string) |  | id is the id of the rule type to be deleted. |
+| delete_all | [bool](#bool) |  |  |
 
 
 <a name="minder-v1-DeleteRuleTypeResponse"></a>
 
 #### DeleteRuleTypeResponse
 DeleteRuleTypeResponse is the response to delete a rule type.
+
+
+| Field | Type | Label | Description |
+| ----- | ---- | ----- | ----------- |
+| deleted_rule_types | [string](#string) | repeated |  |
+| remaining_rule_types | [string](#string) | repeated |  |
 
 
 <a name="minder-v1-DeleteUserRequest"></a>
