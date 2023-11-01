@@ -79,7 +79,7 @@ func (s *Server) RegisterRepository(ctx context.Context,
 	// Unmarshal the in.GetRepositories() into a struct Repository
 	var upstreamRepos []UpstreamRepositoryReference
 	if in.GetRepositories() == nil || len(in.GetRepositories()) <= 0 {
-		return nil, status.Errorf(codes.InvalidArgument, "no repositories provided")
+		return nil, util.UserVisibleError(codes.InvalidArgument, "no repositories provided")
 	}
 
 	for _, repository := range in.GetRepositories() {
@@ -94,7 +94,7 @@ func (s *Server) RegisterRepository(ctx context.Context,
 	resultData, err := s.registerWebhookForRepository(
 		ctx, p, projectID, upstreamRepos, allEvents)
 	if err != nil {
-		return nil, err
+		return nil, util.UserVisibleError(codes.Internal, "cannot register webhook: %v", err)
 	}
 
 	for idx := range resultData {
@@ -276,7 +276,7 @@ func (s *Server) GetRepositoryByName(ctx context.Context,
 	// split repo name in owner and name
 	fragments := strings.Split(in.Name, "/")
 	if len(fragments) != 2 {
-		return nil, status.Errorf(codes.InvalidArgument, "invalid repository name, needs to have the format: owner/name")
+		return nil, util.UserVisibleError(codes.InvalidArgument, "invalid repository name, needs to have the format: owner/name")
 	}
 
 	projectID, err := getProjectFromRequestOrDefault(ctx, in)
@@ -372,7 +372,7 @@ func (s *Server) DeleteRepositoryByName(ctx context.Context,
 	// split repo name in owner and name
 	fragments := strings.Split(in.Name, "/")
 	if len(fragments) != 2 {
-		return nil, status.Errorf(codes.InvalidArgument, "invalid repository name, needs to have the format: owner/name")
+		return nil, util.UserVisibleError(codes.InvalidArgument, "invalid repository name, needs to have the format: owner/name")
 	}
 
 	projectID, err := getProjectFromRequestOrDefault(ctx, in)
