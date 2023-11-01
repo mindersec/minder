@@ -23,6 +23,7 @@ import (
 	"github.com/charmbracelet/bubbles/table"
 	"github.com/spf13/cobra"
 	"github.com/spf13/viper"
+	"google.golang.org/grpc"
 
 	"github.com/stacklok/mediator/internal/util"
 	"github.com/stacklok/mediator/internal/util/cli"
@@ -51,8 +52,9 @@ var authWhoamiCmd = &cobra.Command{
 
 		userInfo, err := client.GetUser(ctx, &pb.GetUserRequest{})
 		util.ExitNicelyOnError(err, "Error getting information for user")
+
 		cli.PrintCmd(cmd, cli.Header.Render("Here are your details:"))
-		renderUserInfoWhoami(cmd, userInfo)
+		renderUserInfoWhoami(cmd, conn, userInfo)
 	},
 }
 
@@ -60,7 +62,7 @@ func init() {
 	AuthCmd.AddCommand(authWhoamiCmd)
 }
 
-func renderUserInfoWhoami(cmd *cobra.Command, user *pb.GetUserResponse) {
+func renderUserInfoWhoami(cmd *cobra.Command, conn *grpc.ClientConn, user *pb.GetUserResponse) {
 	projects := []string{}
 	for _, project := range user.Projects {
 		projects = append(projects, fmt.Sprintf("%s:%s", project.GetName(), project.GetProjectId()))
@@ -69,6 +71,7 @@ func renderUserInfoWhoami(cmd *cobra.Command, user *pb.GetUserResponse) {
 	subjectKey := "Subject"
 	createdKey := "Created At"
 	updatedKey := "Updated At"
+	minderSrvKey := "Minder Server"
 	projectKey := "Projects"
 	if len(projects) > 1 {
 		projectKey += "s"
@@ -85,6 +88,9 @@ func renderUserInfoWhoami(cmd *cobra.Command, user *pb.GetUserResponse) {
 		},
 		{
 			projectKey, strings.Join(projects, ", "),
+		},
+		{
+			minderSrvKey, conn.Target(),
 		},
 	}
 

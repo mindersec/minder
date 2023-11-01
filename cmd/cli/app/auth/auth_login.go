@@ -37,6 +37,7 @@ import (
 	"github.com/zitadel/oidc/v2/pkg/client/rp"
 	httphelper "github.com/zitadel/oidc/v2/pkg/http"
 	"github.com/zitadel/oidc/v2/pkg/oidc"
+	"google.golang.org/grpc"
 	"google.golang.org/grpc/codes"
 	"google.golang.org/grpc/status"
 
@@ -189,7 +190,7 @@ will be saved to $XDG_CONFIG_HOME/minder/credentials.json`,
 				"You have successfully logged in."))
 
 			cli.PrintCmd(cmd, cli.Header.Render("Here are your details:"))
-			renderUserInfo(cmd, userInfo)
+			renderUserInfo(cmd, conn, userInfo)
 		}
 
 		cli.PrintCmd(cmd, "Your access credentials have been saved to %s", filePath)
@@ -209,19 +210,25 @@ func renderNewUser(cmd *cobra.Command, newUser *pb.CreateUserResponse) {
 	renderUserToTable(cmd, rows)
 }
 
-func renderUserInfo(cmd *cobra.Command, user *pb.GetUserResponse) {
+func renderUserInfo(cmd *cobra.Command, conn *grpc.ClientConn, user *pb.GetUserResponse) {
 	projects := []string{}
 	for _, project := range user.Projects {
 		projects = append(projects, project.GetName())
 	}
 
+	minderSrvKey := "Minder Server"
 	projectKey := "Project Name"
 	if len(projects) > 1 {
 		projectKey += "s"
 	}
 
 	rows := []table.Row{
-		{projectKey, strings.Join(projects, ", ")},
+		{
+			projectKey, strings.Join(projects, ", "),
+		},
+		{
+			minderSrvKey, conn.Target(),
+		},
 	}
 
 	renderUserToTable(cmd, rows)
