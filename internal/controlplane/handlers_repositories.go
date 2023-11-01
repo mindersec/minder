@@ -23,6 +23,7 @@ import (
 	"strings"
 
 	"github.com/google/uuid"
+	"github.com/rs/zerolog"
 	"google.golang.org/grpc/codes"
 	"google.golang.org/grpc/status"
 	"google.golang.org/protobuf/types/known/timestamppb"
@@ -348,6 +349,11 @@ func (s *Server) ListRemoteRepositoriesFromProvider(
 		return nil, err
 	}
 
+	zerolog.Ctx(ctx).Debug().
+		Str("provider", in.Provider).
+		Str("projectID", projectID.String()).
+		Msgf("listing repositories for provider: %s", in.Provider)
+
 	provider, err := s.store.GetProviderByName(ctx, db.GetProviderByNameParams{
 		Name:      in.Provider,
 		ProjectID: projectID,
@@ -383,11 +389,13 @@ func (s *Server) ListRemoteRepositoriesFromProvider(
 	var remoteRepos []*pb.Repository
 	isOrg := (owner_filter != "")
 	if isOrg {
+		zerolog.Ctx(ctx).Debug().Msgf("listing repositories for organization")
 		remoteRepos, err = client.ListOrganizationRepsitories(tmoutCtx, owner_filter)
 		if err != nil {
 			return nil, util.UserVisibleError(codes.Internal, "cannot list repositories: %v", err)
 		}
 	} else {
+		zerolog.Ctx(ctx).Debug().Msgf("listing repositories for the user")
 		remoteRepos, err = client.ListUserRepositories(tmoutCtx, owner_filter)
 		if err != nil {
 			return nil, util.UserVisibleError(codes.Internal, "cannot list repositories: %v", err)
@@ -398,9 +406,16 @@ func (s *Server) ListRemoteRepositoriesFromProvider(
 		Results: make([]*pb.UpstreamRepositoryRef, 0, len(remoteRepos)),
 	}
 
+	allowsPrivateRepos := projectAllowsPrivateRepos(ctx, s.store, projectID)
+	if !allowsPrivateRepos {
+		zerolog.Ctx(ctx).Info().Msg("filtering out private repositories")
+	} else {
+		zerolog.Ctx(ctx).Info().Msg("including private repositories")
+	}
+
 	for idx, rem := range remoteRepos {
 		// Skip private repositories
-		if rem.IsPrivate && !projectAllowsPrivateRepos(ctx, s.store, projectID) {
+		if rem.IsPrivate && !allowsPrivateRepos {
 			continue
 		}
 		remoteRepo := remoteRepos[idx]
