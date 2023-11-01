@@ -17,9 +17,11 @@ package telemetry
 
 import (
 	"fmt"
+	"log"
 	"net/http"
 	"time"
 
+	"github.com/puzpuzpuz/xsync"
 	"go.opentelemetry.io/otel"
 	"go.opentelemetry.io/otel/attribute"
 	"go.opentelemetry.io/otel/metric"
@@ -68,14 +70,20 @@ var _ HttpClientMetrics = (*httpClientMetrics)(nil)
 type httpClientMetrics struct {
 	providersMeter metric.Meter
 
-	httpProviderHistograms map[db.ProviderType]metric.Int64Histogram
+	httpProviderHistograms *xsync.MapOf[db.ProviderType, metric.Int64Histogram]
+}
+
+func newProviderMapOf[V any]() *xsync.MapOf[db.ProviderType, V] {
+	return xsync.NewTypedMapOf[db.ProviderType, V](func(k db.ProviderType) uint64 {
+		return xsync.StrHash64(string(k))
+	})
 }
 
 // newHttpClientMetrics creates a new http provider metrics instance.
 func newHttpClientMetrics() *httpClientMetrics {
 	return &httpClientMetrics{
 		providersMeter:         otel.Meter("providers"),
-		httpProviderHistograms: make(map[db.ProviderType]metric.Int64Histogram),
+		httpProviderHistograms: newProviderMapOf[metric.Int64Histogram](),
 	}
 }
 
@@ -87,26 +95,25 @@ func (m *httpClientMetrics) createProviderHistogram(providerType db.ProviderType
 	)
 }
 
-func (m *httpClientMetrics) getHistogramForProvider(providerType db.ProviderType) (metric.Int64Histogram, error) {
-	histogram, ok := m.httpProviderHistograms[providerType]
-	if !ok {
-		var err error
-		histogram, err = m.createProviderHistogram(providerType)
+func (m *httpClientMetrics) getHistogramForProvider(providerType db.ProviderType) metric.Int64Histogram {
+	histogram, _ := m.httpProviderHistograms.LoadOrCompute(providerType, func() metric.Int64Histogram {
+		newHistogram, err := m.createProviderHistogram(providerType)
 		if err != nil {
-			return nil, err
+			log.Printf("failed to create histogram for provider %s: %v", providerType, err)
+			return nil
 		}
-		m.httpProviderHistograms[providerType] = histogram
-	}
-	return histogram, nil
+		return newHistogram
+	})
+	return histogram
 }
 
 func (m *httpClientMetrics) NewDurationRoundTripper(
 	wrapped http.RoundTripper,
 	providerType db.ProviderType,
 ) (http.RoundTripper, error) {
-	histogram, err := m.getHistogramForProvider(providerType)
-	if err != nil {
-		return nil, err
+	histogram := m.getHistogramForProvider(providerType)
+	if histogram == nil {
+		return nil, fmt.Errorf("failed to retrieve histogram for provider %s", providerType)
 	}
 
 	return &instrumentedRoundTripper{
