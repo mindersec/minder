@@ -45,7 +45,7 @@ brews:
     folder: Formula
     commit_author:
       name: stacklokbot
-      email: contact@stacklok.com
+      email: info@stacklok.com
     repository:
       owner: stacklok
       name: homebrew-tap
@@ -71,7 +71,7 @@ winget:
       - cli
     commit_author:
       name: stacklokbot
-      email: contact@stacklok.com
+      email: info@stacklok.com
     goamd64: v1
     repository:
       owner: stacklok
