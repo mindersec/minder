@@ -42,6 +42,7 @@ func (irt *instrumentedRoundTripper) RoundTrip(r *http.Request) (*http.Response,
 	duration := time.Since(startTime).Milliseconds()
 	labels := []attribute.KeyValue{
 		attribute.String("http_method", r.Method),
+		attribute.String("http_host", r.URL.Host),
 		attribute.Int("http_status_code", resp.StatusCode),
 	}
 	irt.durationHistogram.Record(r.Context(), duration, metric.WithAttributes(labels...))
