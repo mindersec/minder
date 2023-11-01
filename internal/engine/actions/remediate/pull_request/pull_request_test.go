@@ -33,7 +33,6 @@ import (
 	"github.com/stacklok/mediator/internal/engine/interfaces"
 	"github.com/stacklok/mediator/internal/providers"
 	mock_ghclient "github.com/stacklok/mediator/internal/providers/github/mock"
-	provtelemetry "github.com/stacklok/mediator/internal/providers/telemetry"
 	pb "github.com/stacklok/mediator/pkg/api/protobuf/go/minder/v1"
 	provifv1 "github.com/stacklok/mediator/pkg/providers/v1"
 )
@@ -80,7 +79,6 @@ func testGithubProviderBuilder(baseURL string) *providers.ProviderBuilder {
 		},
 		db.ProviderAccessToken{},
 		"token",
-		provtelemetry.NewNoopMetrics(),
 	)
 }
 

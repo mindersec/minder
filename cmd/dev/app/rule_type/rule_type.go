@@ -36,7 +36,6 @@ import (
 	"github.com/stacklok/mediator/internal/engine/eval/rego"
 	engif "github.com/stacklok/mediator/internal/engine/interfaces"
 	"github.com/stacklok/mediator/internal/providers"
-	provtelemetry "github.com/stacklok/mediator/internal/providers/telemetry"
 	"github.com/stacklok/mediator/internal/util/jsonyaml"
 	minderv1 "github.com/stacklok/mediator/pkg/api/protobuf/go/minder/v1"
 )
@@ -131,7 +130,6 @@ func testCmdRun(cmd *cobra.Command, _ []string) error {
 		},
 		db.ProviderAccessToken{},
 		token,
-		provtelemetry.NewNoopMetrics(),
 	))
 	inf := &engine.EntityInfoWrapper{
 		Entity: ent,

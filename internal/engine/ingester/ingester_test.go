@@ -29,7 +29,6 @@ import (
 	"github.com/stacklok/mediator/internal/engine/ingester/git"
 	"github.com/stacklok/mediator/internal/engine/ingester/rest"
 	"github.com/stacklok/mediator/internal/providers"
-	provtelemetry "github.com/stacklok/mediator/internal/providers/telemetry"
 	pb "github.com/stacklok/mediator/pkg/api/protobuf/go/minder/v1"
 	provifv1 "github.com/stacklok/mediator/pkg/providers/v1"
 )
@@ -178,7 +177,6 @@ func TestNewRuleDataIngest(t *testing.T) {
 				},
 				db.ProviderAccessToken{},
 				"token",
-				provtelemetry.NewNoopMetrics(),
 			))
 			if tt.wantErr {
 				require.Error(t, err, "Expected error")

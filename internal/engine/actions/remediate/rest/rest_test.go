@@ -33,7 +33,6 @@ import (
 	"github.com/stacklok/mediator/internal/db"
 	"github.com/stacklok/mediator/internal/engine/interfaces"
 	"github.com/stacklok/mediator/internal/providers"
-	provtelemetry "github.com/stacklok/mediator/internal/providers/telemetry"
 	pb "github.com/stacklok/mediator/pkg/api/protobuf/go/minder/v1"
 	provifv1 "github.com/stacklok/mediator/pkg/providers/v1"
 )
@@ -57,7 +56,6 @@ var (
 		},
 		db.ProviderAccessToken{},
 		"token",
-		provtelemetry.NewNoopMetrics(),
 	)
 	invalidProviderBuilder = providers.NewProviderBuilder(
 		&db.Provider{
@@ -73,7 +71,6 @@ var (
 		},
 		db.ProviderAccessToken{},
 		"token",
-		provtelemetry.NewNoopMetrics(),
 	)
 	TestActionTypeValid interfaces.ActionType = "remediate-test"
 )
@@ -98,7 +95,6 @@ func testGithubProviderBuilder(baseURL string) *providers.ProviderBuilder {
 		},
 		db.ProviderAccessToken{},
 		"token",
-		provtelemetry.NewNoopMetrics(),
 	)
 }
 

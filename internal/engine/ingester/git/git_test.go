@@ -25,7 +25,6 @@ import (
 	"github.com/stacklok/mediator/internal/db"
 	gitengine "github.com/stacklok/mediator/internal/engine/ingester/git"
 	"github.com/stacklok/mediator/internal/providers"
-	provtelemetry "github.com/stacklok/mediator/internal/providers/telemetry"
 	pb "github.com/stacklok/mediator/pkg/api/protobuf/go/minder/v1"
 	provifv1 "github.com/stacklok/mediator/pkg/providers/v1"
 )
@@ -47,7 +46,6 @@ func TestGitIngestWithCloneURLFromRepo(t *testing.T) {
 		},
 		db.ProviderAccessToken{},
 		"",
-		provtelemetry.NewNoopMetrics(),
 	))
 	require.NoError(t, err, "expected no error")
 
@@ -87,7 +85,6 @@ func TestGitIngestWithCloneURLFromParams(t *testing.T) {
 		},
 		db.ProviderAccessToken{},
 		"",
-		provtelemetry.NewNoopMetrics(),
 	))
 	require.NoError(t, err, "expected no error")
 
@@ -127,7 +124,6 @@ func TestGitIngestWithCustomBranchFromParams(t *testing.T) {
 		},
 		db.ProviderAccessToken{},
 		"",
-		provtelemetry.NewNoopMetrics(),
 	))
 	require.NoError(t, err, "expected no error")
 
@@ -169,7 +165,6 @@ func TestGitIngestFailsBecauseOfAuthorization(t *testing.T) {
 		},
 		db.ProviderAccessToken{},
 		"foobar",
-		provtelemetry.NewNoopMetrics(),
 	),
 	)
 	require.NoError(t, err, "expected no error")
@@ -198,7 +193,6 @@ func TestGitIngestFailsBecauseOfUnexistentCloneUrl(t *testing.T) {
 		db.ProviderAccessToken{},
 		// No authentication is the right thing in this case.
 		"",
-		provtelemetry.NewNoopMetrics(),
 	))
 	require.NoError(t, err, "expected no error")
 

@@ -53,7 +53,7 @@ func GetProviderBuilder(
 		return nil, fmt.Errorf("error decrypting access token: %w", err)
 	}
 
-	return NewProviderBuilder(&prov, encToken, decryptedToken.AccessToken, metrics), nil
+	return NewProviderBuilder(&prov, encToken, decryptedToken.AccessToken, WithProviderMetrics(metrics)), nil
 }
 
 // ProviderBuilder is a utility struct which allows for the creation of
@@ -65,19 +65,35 @@ type ProviderBuilder struct {
 	metrics  telemetry.ProviderMetrics
 }
 
+// Option is a function which can be used to set options on the ProviderBuilder.
+type Option func(*ProviderBuilder)
+
+// WithProviderMetrics sets the metrics for the ProviderBuilder
+func WithProviderMetrics(metrics telemetry.ProviderMetrics) Option {
+	return func(pb *ProviderBuilder) {
+		pb.metrics = metrics
+	}
+}
+
 // NewProviderBuilder creates a new provider builder.
 func NewProviderBuilder(
 	p *db.Provider,
 	tokenInf db.ProviderAccessToken,
 	tok string,
-	metrics telemetry.ProviderMetrics,
+	opts ...Option,
 ) *ProviderBuilder {
-	return &ProviderBuilder{
+	pb := &ProviderBuilder{
 		p:        p,
 		tokenInf: tokenInf,
 		tok:      tok,
-		metrics:  metrics,
+		metrics:  telemetry.NewNoopMetrics(),
 	}
+
+	for _, opt := range opts {
+		opt(pb)
+	}
+
+	return pb
 }
 
 // Implements returns true if the provider implements the given type.
