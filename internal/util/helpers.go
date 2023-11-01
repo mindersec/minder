@@ -231,7 +231,7 @@ func RemoveCredentials() error {
 		xdgConfigHome = filepath.Join(homeDir, ".config")
 	}
 
-	filePath := filepath.Join(xdgConfigHome, "mediator", "credentials.json")
+	filePath := filepath.Join(xdgConfigHome, "minder", "credentials.json")
 	err := os.Remove(filePath)
 	if err != nil {
 		return fmt.Errorf("error removing credentials file: %v", err)
