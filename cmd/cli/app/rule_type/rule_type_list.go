@@ -72,11 +72,11 @@ minder control plane for an specific project.`,
 		}
 
 		switch format {
-		case app.YAML:
+		case app.JSON:
 			out, err := util.GetJsonFromProto(resp)
 			util.ExitNicelyOnError(err, "Error getting json from proto")
 			fmt.Println(out)
-		case app.JSON:
+		case app.YAML:
 			out, err := util.GetYamlFromProto(resp)
 			util.ExitNicelyOnError(err, "Error getting yaml from proto")
 			fmt.Println(out)
