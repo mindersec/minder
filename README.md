@@ -4,9 +4,9 @@ Continuous integration | License
 
 # Minder
 
-Minder is a platform to manage the security of your software supply chain.
+Minder is a platform to manage the security of your software supply chain. It helps teams automate and enforce secure supply chain best practices across the software development lifecycle.  
 
-It is currently in early development.
+It is currently in early and active development and is considered experimental.
 
 # Get Hacking (Development)
 
