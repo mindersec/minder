@@ -46,22 +46,38 @@ type Executor struct {
 	provMt   providertelemetry.ProviderMetrics
 }
 
+// ExecutorOption is a function that modifies an executor
+type ExecutorOption func(*Executor)
+
+// WithProviderMetrics sets the provider metrics for the executor
+func WithProviderMetrics(mt providertelemetry.ProviderMetrics) ExecutorOption {
+	return func(e *Executor) {
+		e.provMt = mt
+	}
+}
+
 // NewExecutor creates a new executor
 func NewExecutor(
 	querier db.Store,
 	authCfg *config.AuthConfig,
-	provMt providertelemetry.ProviderMetrics,
+	opts ...ExecutorOption,
 ) (*Executor, error) {
 	crypteng, err := crypto.EngineFromAuthConfig(authCfg)
 	if err != nil {
 		return nil, err
 	}
 
-	return &Executor{
+	e := &Executor{
 		querier:  querier,
 		crypteng: crypteng,
-		provMt:   provMt,
-	}, nil
+		provMt:   providertelemetry.NewNoopMetrics(),
+	}
+
+	for _, opt := range opts {
+		opt(e)
+	}
+
+	return e, nil
 }
 
 // Register implements the Consumer interface.
@@ -96,7 +112,10 @@ func (e *Executor) HandleEntityEvent(msg *message.Message) error {
 		return fmt.Errorf("error getting provider: %w", err)
 	}
 
-	cli, err := providers.GetProviderBuilder(ctx, provider, *projectID, e.querier, e.crypteng, e.provMt)
+	pbOpts := []providers.ProviderBuilderOption{
+		providers.WithProviderMetrics(e.provMt),
+	}
+	cli, err := providers.GetProviderBuilder(ctx, provider, *projectID, e.querier, e.crypteng, pbOpts...)
 	if err != nil {
 		return fmt.Errorf("error building client: %w", err)
 	}

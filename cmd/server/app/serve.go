@@ -104,19 +104,19 @@ var serveCmd = &cobra.Command{
 		serverMetrics := controlplane.NewMetrics()
 		providerMetrics := provtelemetry.NewProviderMetrics()
 
-		s, err := controlplane.NewServer(store, evt, serverMetrics, providerMetrics, cfg, vldtr)
+		s, err := controlplane.NewServer(store, evt, serverMetrics, cfg, vldtr, controlplane.WithProviderMetrics(providerMetrics))
 		if err != nil {
 			return fmt.Errorf("unable to create server: %w", err)
 		}
 
-		exec, err := engine.NewExecutor(store, &cfg.Auth, providerMetrics)
+		exec, err := engine.NewExecutor(store, &cfg.Auth, engine.WithProviderMetrics(providerMetrics))
 		if err != nil {
 			return fmt.Errorf("unable to create executor: %w", err)
 		}
 
 		s.ConsumeEvents(exec)
 
-		rec, err := reconcilers.NewReconciler(store, evt, &cfg.Auth, providerMetrics)
+		rec, err := reconcilers.NewReconciler(store, evt, &cfg.Auth, reconcilers.WithProviderMetrics(providerMetrics))
 		if err != nil {
 			return fmt.Errorf("unable to create reconciler: %w", err)
 		}

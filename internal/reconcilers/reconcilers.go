@@ -39,24 +39,40 @@ type Reconciler struct {
 	provMt   providertelemetry.ProviderMetrics
 }
 
+// ReconcilerOption is a function that modifies a reconciler
+type ReconcilerOption func(*Reconciler)
+
+// WithProviderMetrics sets the provider metrics for the reconciler
+func WithProviderMetrics(mt providertelemetry.ProviderMetrics) ReconcilerOption {
+	return func(r *Reconciler) {
+		r.provMt = mt
+	}
+}
+
 // NewReconciler creates a new reconciler object
 func NewReconciler(
 	store db.Store,
 	evt *events.Eventer,
 	authCfg *config.AuthConfig,
-	provMt providertelemetry.ProviderMetrics,
+	opts ...ReconcilerOption,
 ) (*Reconciler, error) {
 	crypteng, err := crypto.EngineFromAuthConfig(authCfg)
 	if err != nil {
 		return nil, err
 	}
 
-	return &Reconciler{
+	r := &Reconciler{
 		store:    store,
 		evt:      evt,
 		crypteng: crypteng,
-		provMt:   provMt,
-	}, nil
+		provMt:   providertelemetry.NewNoopMetrics(),
+	}
+
+	for _, opt := range opts {
+		opt(r)
+	}
+
+	return r, nil
 }
 
 // Register implements the Consumer interface.

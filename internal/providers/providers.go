@@ -40,7 +40,7 @@ func GetProviderBuilder(
 	projectID uuid.UUID,
 	store db.Store,
 	crypteng *crypto.Engine,
-	metrics telemetry.ProviderMetrics,
+	opts ...ProviderBuilderOption,
 ) (*ProviderBuilder, error) {
 	encToken, err := store.GetAccessTokenByProjectID(ctx,
 		db.GetAccessTokenByProjectIDParams{Provider: prov.Name, ProjectID: projectID})
@@ -53,7 +53,7 @@ func GetProviderBuilder(
 		return nil, fmt.Errorf("error decrypting access token: %w", err)
 	}
 
-	return NewProviderBuilder(&prov, encToken, decryptedToken.AccessToken, WithProviderMetrics(metrics)), nil
+	return NewProviderBuilder(&prov, encToken, decryptedToken.AccessToken, opts...), nil
 }
 
 // ProviderBuilder is a utility struct which allows for the creation of
@@ -65,11 +65,11 @@ type ProviderBuilder struct {
 	metrics  telemetry.ProviderMetrics
 }
 
-// Option is a function which can be used to set options on the ProviderBuilder.
-type Option func(*ProviderBuilder)
+// ProviderBuilderOption is a function which can be used to set options on the ProviderBuilder.
+type ProviderBuilderOption func(*ProviderBuilder)
 
 // WithProviderMetrics sets the metrics for the ProviderBuilder
-func WithProviderMetrics(metrics telemetry.ProviderMetrics) Option {
+func WithProviderMetrics(metrics telemetry.ProviderMetrics) ProviderBuilderOption {
 	return func(pb *ProviderBuilder) {
 		pb.metrics = metrics
 	}
@@ -80,7 +80,7 @@ func NewProviderBuilder(
 	p *db.Provider,
 	tokenInf db.ProviderAccessToken,
 	tok string,
-	opts ...Option,
+	opts ...ProviderBuilderOption,
 ) *ProviderBuilder {
 	pb := &ProviderBuilder{
 		p:        p,

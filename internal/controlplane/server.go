@@ -91,28 +91,44 @@ type Server struct {
 	cryptoEngine *crypto.Engine
 }
 
+// ServerOption is a function that modifies a server
+type ServerOption func(*Server)
+
+// WithProviderMetrics sets the provider metrics for the server
+func WithProviderMetrics(mt provtelemetry.ProviderMetrics) ServerOption {
+	return func(s *Server) {
+		s.provMt = mt
+	}
+}
+
 // NewServer creates a new server instance
 func NewServer(
 	store db.Store,
 	evt *events.Eventer,
 	cpm *metrics,
-	provMetrics provtelemetry.ProviderMetrics,
 	cfg *config.Config,
 	vldtr auth.JwtValidator,
+	opts ...ServerOption,
 ) (*Server, error) {
 	eng, err := crypto.EngineFromAuthConfig(&cfg.Auth)
 	if err != nil {
 		return nil, fmt.Errorf("failed to create crypto engine: %w", err)
 	}
-	return &Server{
+	s := &Server{
 		store:        store,
 		cfg:          cfg,
 		evt:          evt,
 		cryptoEngine: eng,
 		vldtr:        vldtr,
 		mt:           cpm,
-		provMt:       provMetrics,
-	}, nil
+		provMt:       provtelemetry.NewNoopMetrics(),
+	}
+
+	for _, opt := range opts {
+		opt(s)
+	}
+
+	return s, nil
 }
 
 var _ (events.Registrar) = (*Server)(nil)

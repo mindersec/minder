@@ -71,7 +71,10 @@ func (s *Server) RegisterRepository(ctx context.Context,
 		return nil, providerError(fmt.Errorf("provider error: %w", err))
 	}
 
-	p, err := providers.GetProviderBuilder(ctx, provider, projectID, s.store, s.cryptoEngine, s.provMt)
+	pbOpts := []providers.ProviderBuilderOption{
+		providers.WithProviderMetrics(s.provMt),
+	}
+	p, err := providers.GetProviderBuilder(ctx, provider, projectID, s.store, s.cryptoEngine, pbOpts...)
 	if err != nil {
 		return nil, status.Errorf(codes.Internal, "cannot get provider builder: %v", err)
 	}
@@ -452,7 +455,10 @@ func (s *Server) ListRemoteRepositoriesFromProvider(
 		return nil, status.Errorf(codes.PermissionDenied, "cannot get access token for provider")
 	}
 
-	p, err := providers.GetProviderBuilder(ctx, provider, projectID, s.store, s.cryptoEngine, s.provMt)
+	pbOpts := []providers.ProviderBuilderOption{
+		providers.WithProviderMetrics(s.provMt),
+	}
+	p, err := providers.GetProviderBuilder(ctx, provider, projectID, s.store, s.cryptoEngine, pbOpts...)
 	if err != nil {
 		return nil, status.Errorf(codes.Internal, "cannot get provider builder: %v", err)
 	}

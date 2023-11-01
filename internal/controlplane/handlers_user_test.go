@@ -39,7 +39,6 @@ import (
 	"github.com/stacklok/mediator/internal/crypto"
 	"github.com/stacklok/mediator/internal/db"
 	"github.com/stacklok/mediator/internal/events"
-	provtelemetry "github.com/stacklok/mediator/internal/providers/telemetry"
 	pb "github.com/stacklok/mediator/pkg/api/protobuf/go/minder/v1"
 )
 
@@ -264,7 +263,7 @@ func TestCreateUser_gRPC(t *testing.T) {
 				GoChannel: config.GoChannelEventConfig{},
 			})
 			require.NoError(t, err, "failed to setup eventer")
-			server, err := NewServer(mockStore, evt, NewMetrics(), provtelemetry.NewNoopMetrics(), &config.Config{
+			server, err := NewServer(mockStore, evt, NewMetrics(), &config.Config{
 				Salt: config.DefaultConfigForTest().Salt,
 				Auth: config.AuthConfig{
 					TokenKey: generateTokenKey(t),
@@ -471,7 +470,7 @@ func TestDeleteUser_gRPC(t *testing.T) {
 				GoChannel: config.GoChannelEventConfig{},
 			})
 			require.NoError(t, err, "failed to setup eventer")
-			server, err := NewServer(mockStore, evt, NewMetrics(), provtelemetry.NewNoopMetrics(), &config.Config{
+			server, err := NewServer(mockStore, evt, NewMetrics(), &config.Config{
 				Salt: config.DefaultConfigForTest().Salt,
 				Auth: config.AuthConfig{
 					TokenKey: generateTokenKey(t),
