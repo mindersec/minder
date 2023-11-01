@@ -39,6 +39,7 @@ import (
 	"github.com/ThreeDotsLabs/watermill/message"
 	"github.com/google/go-github/v53/github"
 	"github.com/google/uuid"
+	"github.com/rs/zerolog"
 	"github.com/spf13/viper"
 	"golang.org/x/exp/slices"
 	"google.golang.org/protobuf/encoding/protojson"
@@ -1065,5 +1066,9 @@ func projectAllowsPrivateRepos(ctx context.Context, store db.Store, projectID uu
 		log.Printf("error getting features for project %s: %v", projectID, err)
 		return false
 	}
+
+	zerolog.Ctx(ctx).Debug().
+		Str("project_id", projectID.String()).
+		Msg("project allows private repositories")
 	return true
 }
