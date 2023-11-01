@@ -39,7 +39,7 @@ metadata:
   annotations:
     alb.ingress.kubernetes.io/backend-protocol-version: "GRPC"
     alb.ingress.kubernetes.io/healthcheck-protocol: "HTTP"
-    alb.ingress.kubernetes.io/healthcheck-path: "/mediator.v1.HealthService/CheckHealth"
+    alb.ingress.kubernetes.io/healthcheck-path: "/minder.v1.HealthService/CheckHealth"
     # For some reason, ALB defaults to 12 (unimplemented) as a success code
     alb.ingress.kubernetes.io/success-codes: "0"
   labels:
