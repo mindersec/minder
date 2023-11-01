@@ -29,6 +29,11 @@ jobs:
       - name: Checkout
         uses: actions/checkout@v4
 
+      - name: Setup Go
+        uses: actions/setup-go@v4
+        with:
+          go-version-file: 'go.mod'
+
       - uses: ko-build/setup-ko@v0.6
 
       - uses: azure/setup-helm@v3
