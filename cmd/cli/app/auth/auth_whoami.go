@@ -75,7 +75,7 @@ func renderUserInfoWhoami(cmd *cobra.Command, user *pb.GetUserResponse) {
 	}
 	rows := []table.Row{
 		{
-			subjectKey, user.GetUser().GetOrganizationId(),
+			subjectKey, user.GetUser().GetIdentitySubject(),
 		},
 		{
 			createdKey, user.GetUser().GetCreatedAt().AsTime().String(),
