@@ -12,7 +12,17 @@ import TabItem from '@theme/TabItem';
 
 ## Create the PR vulnerability check rule
 Start by creating a rule that checks if a pull request adds a new dependency with known vulnerabilities. If it does,
-Minder will review the PR and suggest changes.  
+Minder will review the PR and suggest changes.
+
+Note that Minder is only able to review a PR if it's running under a different
+user than the one that created the PR. If the PR is created by the same user,
+Minder only provide a comment with the vulnerability information. An alternative
+is to use the `commit-status` action instead of `review` where Minder will set
+the commit status to `failure` if the PR introduces a new vulnerability which can
+then be used to block the PR. This requires an additional step though, where
+the repo needs to require the `minder.stacklok.dev/pr-vulncheck` status to
+be passing.
+
 This is a reference rule provider by the Minder team.
 
 Fetch all the reference rules by cloning the [minder-rules-and-profiles repository](https://github.com/stacklok/minder-rules-and-profiles).

@@ -32,7 +32,7 @@ import (
 
 const (
 	reviewBodyMagicComment = "<!-- mediator: pr-review-body -->"
-	commitStatusContext    = "mediator.stacklok.dev/pr-vulncheck"
+	commitStatusContext    = "minder.stacklok.dev/pr-vulncheck"
 	vulnsFoundText         = `
 Mediator found vulnerable dependencies in this PR. Either push an updated
 version or accept the proposed changes. Note that accepting the changes will
