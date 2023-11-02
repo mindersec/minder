@@ -5,11 +5,11 @@ sidebar_position: 20
 
 ## Goal
 
-The goal of this tutorial is to show how show how Minder can ensure
+The goal of this tutorial is to show how Minder can ensure
 that enrolled repos have secret scanning enabled.  Secret scanning is
 one of several settings which can be managed by Minder.  When you
-apply a Minder policy to enrolled repositories, it will remediate (fix)
-the setting if it is changed to violate the policy.
+apply a Minder profile to enrolled repositories, it will remediate (fix)
+the setting if it is changed to violate the profile.
 
 ## Prerequisites
 
@@ -59,7 +59,7 @@ Check the status of the profile:
 minder profile_status list --profile github-profile
 ```
 
-With remediation on, the profile status should be "Success" when the repository has been updated to match the policy.
+With remediation on, the profile status should be "Success" when the repository has been updated to match the profile.
 If you navigate to your repository settings with your browser, you should see that secret scanning
 feature is enabled. Toggling the feature off should trigger a new profile status check and the
 secret scanning feature should be enabled again in github.
@@ -74,6 +74,6 @@ and look for the `remediate` attribute. If it's not present, the rule type doesn
 remediation. Alternatively, browse the [rule types directory](https://github.com/stacklok/minder-rules-and-profiles/tree/main/rule-types/github)
 of the minder-rules-and-profiles repository.
 
-Furthermore, remediations that open a pull request such as the `depenabot` rule type only attempt
+Furthermore, remediations that open a pull request such as the `dependabot` rule type only attempt
 to replace the target file, overwriting its contents. This means that if you want to keep the current
 changes, you need to merge the contents manually.
