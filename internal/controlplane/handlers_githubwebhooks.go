@@ -50,6 +50,7 @@ import (
 	"github.com/stacklok/mediator/internal/engine"
 	"github.com/stacklok/mediator/internal/events"
 	"github.com/stacklok/mediator/internal/providers"
+	githubprovider "github.com/stacklok/mediator/internal/providers/github"
 	"github.com/stacklok/mediator/internal/util"
 	pb "github.com/stacklok/mediator/pkg/api/protobuf/go/minder/v1"
 	provifv1 "github.com/stacklok/mediator/pkg/providers/v1"
@@ -236,6 +237,7 @@ func handleParseError(typ string, parseErr error) webhookEventState {
 // and returns the registration result for each repository.
 // If an error occurs, the registration is aborted and the error is returned.
 // https://docs.github.com/en/rest/reference/repos#create-a-repository-webhook
+// nolint:gocyclo
 func (s *Server) registerWebhookForRepository(
 	ctx context.Context,
 	pbuild *providers.ProviderBuilder,
@@ -270,6 +272,10 @@ func (s *Server) registerWebhookForRepository(
 				Success: false,
 			},
 		}
+
+		logger := zerolog.Ctx(ctx).With().
+			Str("repoName", repo.Name).
+			Str("repoOwner", repo.Owner).Logger()
 
 		// let's verify that the repository actually exists.
 		repoGet, err := client.GetRepository(ctx, repo.Owner, repo.Name)
@@ -311,10 +317,13 @@ func (s *Server) registerWebhookForRepository(
 
 		// if we have an existing hook for same repo, delete it
 		hooks, err := client.ListHooks(ctx, repo.Owner, repo.Name)
-		if err != nil {
+		if errors.Is(err, githubprovider.ErrNotFound) {
+			logger.Debug().Msg("no hooks found")
+		} else if err != nil {
 			errorStr := err.Error()
 			regResult.Status.Error = &errorStr
 			registerData = append(registerData, regResult)
+			logger.Error().Msg("error listing hooks")
 			continue
 		}
 		for _, h := range hooks {
@@ -334,6 +343,7 @@ func (s *Server) registerWebhookForRepository(
 						errorStr := err.Error()
 						regResult.Status.Error = &errorStr
 						registerData = append(registerData, regResult)
+						logger.Error().Msg("error deleting hook")
 						continue
 					}
 				}
@@ -346,6 +356,7 @@ func (s *Server) registerWebhookForRepository(
 			errorStr := err.Error()
 			regResult.Status.Error = &errorStr
 			registerData = append(registerData, regResult)
+			logger.Error().Msg("error creating hook")
 			continue
 		}
 

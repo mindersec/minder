@@ -476,7 +476,11 @@ func (c *RestClient) GetOwner() string {
 
 // ListHooks lists all Hooks for the specified repository.
 func (c *RestClient) ListHooks(ctx context.Context, owner, repo string) ([]*github.Hook, error) {
-	list, _, err := c.client.Repositories.ListHooks(ctx, owner, repo, nil)
+	list, resp, err := c.client.Repositories.ListHooks(ctx, owner, repo, nil)
+	if err != nil && resp.StatusCode == http.StatusNotFound {
+		// return empty list so that the caller can ignore the error and iterate over the empty list
+		return []*github.Hook{}, fmt.Errorf("hooks not found for repository %s/%s: %w", owner, repo, ErrNotFound)
+	}
 	return list, err
 }
 
