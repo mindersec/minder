@@ -418,7 +418,9 @@ func (s *Server) StoreProviderToken(ctx context.Context,
 	_, err = s.store.CreateAccessToken(ctx, db.CreateAccessTokenParams{ProjectID: projectID, Provider: provider.Name,
 		EncryptedToken: encodedToken, OwnerFilter: owner})
 
-	if err != nil {
+	if db.ErrIsUniqueViolation(err) {
+		return nil, util.UserVisibleError(codes.AlreadyExists, "token already exists")
+	} else if err != nil {
 		return nil, status.Errorf(codes.Internal, "error storing access token: %v", err)
 	}
 	return &pb.StoreProviderTokenResponse{}, nil

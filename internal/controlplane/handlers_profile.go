@@ -212,7 +212,10 @@ func (s *Server) CreateProfile(ctx context.Context,
 
 	// Create profile
 	profile, err := qtx.CreateProfile(ctx, params)
-	if err != nil {
+	if db.ErrIsUniqueViolation(err) {
+		log.Printf("profile already exists: %v", err)
+		return nil, util.UserVisibleError(codes.AlreadyExists, "profile already exists")
+	} else if err != nil {
 		log.Printf("error creating profile: %v", err)
 		return nil, status.Errorf(codes.Internal, "error creating profile")
 	}
