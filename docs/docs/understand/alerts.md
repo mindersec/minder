@@ -22,7 +22,23 @@ In the alert, you'll be able to see details such as:
 
 Minder supports alerts of type GitHub Security Advisory.
 
-## Configuring alerts
+The following is an example of how the alert definition looks like for a give rule type:
+
+```yaml
+---
+version: v1
+type: rule-type
+name: artifact_signature
+...
+def:
+  # Defines the configuration for alerting on the rule
+  alert:
+    type: security_advisory
+    security_advisory:
+      severity: "medium"
+```
+
+## Configuring alerts in profiles
 
 Alerts are configured in the `alert` section of the profile yaml file. The following example shows how to configure
 alerts for a profile:
