@@ -3,7 +3,7 @@ title: Minder
 sidebar_position: 1
 ---
 
-![minder logo](./images/minder.png)
+![minder logo](./images/Minder.png)
 
 # What is Minder?
 
