@@ -1,6 +1,6 @@
 ---
 title: Minder providers
-sidebar_position: 20
+sidebar_position: 10
 ---
 
 # Providers in Minder

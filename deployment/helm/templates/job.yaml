@@ -15,6 +15,7 @@
 # We need a separate service account for the db-update job, because
 # it runs as a helm pre-install hook, and the mediator service account
 # won't have been installed at that point.
+{{ if eq .Values.serviceAccounts.migrate "" }}
 apiVersion: v1
 kind: ServiceAccount
 metadata:
@@ -27,6 +28,7 @@ metadata:
     {{ include "common.labels.standard" (dict "customLabels" .Values.commonLabels "context" $ ) | nindent 4 }}
 imagePullSecrets:
 - name: mediator-pull-secret
+{{ end }}
 ---
 apiVersion: v1
 kind: ConfigMap
@@ -69,7 +71,7 @@ spec:
       labels:
         app: db-init
     spec:
-      serviceAccountName: db-update
+      serviceAccountName: {{ .Values.serviceAccounts.migrate | default "db-update" }}
       restartPolicy: Never
       containers:
         - name: mediator-dbinit
