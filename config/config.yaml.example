@@ -56,16 +56,9 @@ identity:
     client_secret: secret
 
 # Crypto (these should be ultimately stored in a secure vault)
-# sample keys can be generated with:
-# ssh-keygen -t rsa -b 2048 -m PEM -f access_token_rsa
-# Don't add passphrase
-# openssl rsa -in access_token_rsa -pubout -outform PEM -out access_token_rsa.pub
+# The token key can be generated with:
+#   openssl rand -base64 32 > .ssh/token_key_passphrase
 auth:
-  access_token_private_key: "./.ssh/access_token_rsa"
-  access_token_public_key: "./.ssh/access_token_rsa.pub"
-  refresh_token_private_key: "./.ssh/refresh_token_rsa"
-  refresh_token_public_key: "./.ssh/refresh_token_rsa.pub"
-  nonce_period: 3600
   token_key: "./.ssh/token_key_passphrase"
 
 # Password Salting, these values are using argon2id
