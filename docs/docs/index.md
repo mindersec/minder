@@ -3,11 +3,11 @@ title: Minder
 sidebar_position: 1
 ---
 
-![mediator logo](./images/mediator.png)
+![minder logo](./images/minder.png)
 
 # What is Minder?
 
-Minder is an open platform to manage the security of your software supply chain.
+Minder by Stacklok is an open platform to manage the security of your software supply chain.
 
 Minder unifies the security of your software supply chain by providing a single
 place to manage your security profiles and a central location to view and remediate
