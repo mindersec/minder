@@ -3,8 +3,7 @@ title: Minder
 sidebar_position: 1
 ---
 
-<img width="799" alt="image" src="https://github.com/stacklok/minder/assets/137318000/d9eff876-677a-4db6-9693-99c9876effbe">
-
+<img width="799" alt="image" src="./images/Minder.png">
 
 # What is Minder?
 
