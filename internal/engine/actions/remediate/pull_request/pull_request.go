@@ -47,14 +47,14 @@ const (
 const (
 	// if no Mode is specified, create a regular file with 0644 UNIX permissions
 	ghModeNonExecFile = "100644"
-	dflBranchBaseName = "mediator"
+	dflBranchBaseName = "minder"
 	dflBranchFrom     = "main"
 	dflBranchTo       = "main"
 )
 
 const (
 	prMagicTemplateName = "prMagicComment"
-	prBodyMagicTemplate = `<!-- mediator: pr-remediation-body: { "ContentSha": "{{.ContentSha}}" } -->`
+	prBodyMagicTemplate = `<!-- minder: pr-remediation-body: { "ContentSha": "{{.ContentSha}}" } -->`
 
 	prTemplateName = "prBody"
 	prBodyTmplStr  = "{{.MagicComment}}\n\n{{.PrText}}"
