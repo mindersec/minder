@@ -41,12 +41,12 @@ const (
 	// AlertType is the type of the security advisory alert engine
 	AlertType                = "security_advisory"
 	tmplSummaryName          = "summary"
-	tmplSummary              = `mediator: profile {{.Profile}} failed with rule {{.Rule}}`
+	tmplSummary              = `minder: profile {{.Profile}} failed with rule {{.Rule}}`
 	tmplDescriptionNameNoRem = "description_no_remediate"
 	tmplDescriptionNameRem   = "description"
 	// nolint:lll
 	tmplPart1Top = `
-Mediator has detected a potential security exposure in your repository - **{{.Repository}}**.
+Minder has detected a potential security exposure in your repository - **{{.Repository}}**.
 This exposure has been classified with a severity level of **{{.Severity}}**, as per the configuration defined in the **{{.Rule}}** rule type.
 
 The purpose of this security advisory is to alert you to the presence of this exposure. Please note that this advisory has been automatically generated as a result of having the alert feature enabled within the **{{.Profile}}** profile.
@@ -59,7 +59,7 @@ This advisory will be automatically closed once the issue associated with the **
 
 To address this security exposure, we recommend taking the following actions:
 
-1. Enable the auto-remediate feature within the **{{.Profile}}** profile. This will allow Mediator to automatically remediate this and other vulnerabilities in the future, provided that a remediation action is available for the given rule type. In the case of the **{{.Rule}}** rule type, the remediation action is **{{.RuleRemediation}}**.
+1. Enable the auto-remediate feature within the **{{.Profile}}** profile. This will allow Minder to automatically remediate this and other vulnerabilities in the future, provided that a remediation action is available for the given rule type. In the case of the **{{.Rule}}** rule type, the remediation action is **{{.RuleRemediation}}**.
 2. Alternatively, you can manually address this issue by following the guidance provided below.
 `
 	// nolint:lll
@@ -68,8 +68,8 @@ To address this security exposure, we recommend taking the following actions:
 
 To address this security exposure, we recommend taking the following actions:
 
-1. Since you've turned on the remediate feature in your profile, Mediator may have already taken steps to address this issue. Please check for pending remediation actions, such as open pull requests, that require your review and approval.
-2. In case Mediator was not able to remediate this automatically, please refer to the guidance below to resolve the issue manually.
+1. Since you've turned on the remediate feature in your profile, Minder may have already taken steps to address this issue. Please check for pending remediation actions, such as open pull requests, that require your review and approval.
+2. In case Minder was not able to remediate this automatically, please refer to the guidance below to resolve the issue manually.
 `
 	// nolint:lll
 	tmplPart3Bottom = `
@@ -86,7 +86,7 @@ To address this security exposure, we recommend taking the following actions:
 
 **About**
 
-If you have any questions or believe that this evaluation is incorrect, please don't hesitate to reach out to the Mediator team.
+If you have any questions or believe that this evaluation is incorrect, please don't hesitate to reach out to the Minder team at info@stacklok.com.
 `
 )
 

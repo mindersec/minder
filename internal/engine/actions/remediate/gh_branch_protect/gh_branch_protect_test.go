@@ -41,7 +41,7 @@ const (
 	reviewCountPatch = `{"required_pull_request_reviews":{"required_approving_review_count":{{ .Profile.required_approving_review_count }}}}`
 
 	repoOwner = "stacklok"
-	repoName  = "mediator"
+	repoName  = "minder"
 )
 
 var TestActionTypeValid interfaces.ActionType = "remediate-test"

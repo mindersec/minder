@@ -41,7 +41,7 @@ const (
 	ghApiUrl = "https://api.github.com"
 
 	repoOwner = "stacklok"
-	repoName  = "mediator"
+	repoName  = "minder"
 
 	refSha        = "f254eba2db416be8d94aa35bcf3a1c41b6a6926c"
 	treeSha       = "f00cf9d55a642ec402f407dd7c3aaff69a17658b"
@@ -52,7 +52,7 @@ const (
 	newCommitSha  = "new-commit-sha"
 
 	commitTitle = "Add Dependabot configuration for gomod"
-	prBody      = `<!-- mediator: pr-remediation-body: { "ContentSha": "1041e57c2fac284bdb7827ce55c6e3cb609e97b9" } -->
+	prBody      = `<!-- minder: pr-remediation-body: { "ContentSha": "1041e57c2fac284bdb7827ce55c6e3cb609e97b9" } -->
 
 Adds Dependabot configuration for gomod`
 )
