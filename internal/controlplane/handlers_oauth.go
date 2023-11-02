@@ -23,6 +23,7 @@ import (
 	"fmt"
 
 	"github.com/google/uuid"
+	"github.com/rs/zerolog"
 	"github.com/rs/zerolog/log"
 	"go.opentelemetry.io/otel/attribute"
 	"go.opentelemetry.io/otel/trace"
@@ -296,7 +297,10 @@ func (s *Server) RevokeOauthTokens(ctx context.Context, _ *pb.RevokeOauthTokensR
 		provider := providers[idx]
 		// need to read all tokens from the provider and revoke them
 		tokens, err := s.store.GetAccessTokenByProvider(ctx, provider.Name)
-		if err != nil {
+		if errors.Is(err, sql.ErrNoRows) {
+			zerolog.Ctx(ctx).Info().Str("provider", provider.Name).Msgf("no tokens found, skipping")
+			continue
+		} else if err != nil {
 			return nil, status.Errorf(codes.Internal, "error getting access tokens: %v", err)
 		}
 
