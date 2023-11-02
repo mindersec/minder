@@ -5,9 +5,11 @@ sidebar_position: 20
 
 ## Goal
 
-The goal of this tutorial is to show how can Minder automatically fix
-repository settings that do not align with the profile settings and reconcile
-the repository with the profile.
+The goal of this tutorial is to show how show how Minder can ensure
+that enrolled repos have secret scanning enabled.  Secret scanning is
+one of several settings which can be managed by Minder.  When you
+apply a Minder policy to enrolled repositories, it will remediate (fix)
+the setting if it is changed to violate the policy.
 
 ## Prerequisites
 
