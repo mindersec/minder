@@ -34,7 +34,7 @@ jobs:
       run: |
         set -e
 
-        while [ "$(docker logs mediator_migrate_1 | grep 'Database migration completed successfully')" = "" ]; do
+        while [ "$(docker logs minder_migrate_1 | grep 'Database migration completed successfully')" = "" ]; do
           sleep 1
         done
         
