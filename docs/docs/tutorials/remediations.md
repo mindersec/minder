@@ -17,7 +17,7 @@ In order to follow the tutorial, ensure that you have completed the tutorial on
 ## Creating a profile with `remediate: on`
 
 At the moment, Minder doesn't support editing profiles. In order to create the
-same profile just with `remediate: on`, you need to delete the old profile and create
+same profile with `remediate: on`, you need to delete the existing profile and create
 a new one.
 
 Get the currently installed profiles:
