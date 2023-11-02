@@ -11,6 +11,7 @@ is enabled on the registered repository.
 
 * The `minder` CLI application
 * A Stacklok account
+* For enrolling an organization, a GitHub account that is either an Owner in the organization or an Admin on the repositories
 
 ## Enroll a provider
 The first step is to tell Minder where to find your repositories.  
@@ -24,6 +25,15 @@ minder provider enroll --provider github
 ```
 
 This command will open a window in your browser, prompting you to authorize Stacklok to access some data on GitHub.
+
+When enrolling an organization, use the `--owner` flag of the `minder provider enroll` command to specify the organization name:
+```bash
+minder provider enroll --provider github --owner test-org
+```
+The `--owner` flag is not required when enrolling repositories from your personal account.
+
+Note: If you are enrolling an organization, the account you use to enroll must be an Owner in the organization
+or an Admin on the repositories you will be registering.
 
 ## Register repositories
 Once you have enrolled a provider, you can register repositories from that provider.
@@ -118,3 +128,10 @@ provided by GitHub.
 
 Navigate to the repository on GitHub, click on the Security tab and view the Security Advisories.
 Notice that the advisory titled `mediator: profile github-profile failed with rule secret_scanning` is now closed.
+
+## Delete registered repositories
+If you wish to delete a registered repository, you can do so with the following command:
+```bash
+minder repo delete -n $REPO_NAME --provider github
+```
+where `$REPO_NAME` is the fully-qualified name (`owner/name`) of the repository you wish to delete, for example `testorg/testrepo`.
