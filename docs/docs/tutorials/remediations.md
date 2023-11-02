@@ -57,7 +57,7 @@ Check the status of the profile:
 minder profile_status list --profile github-profile
 ```
 
-Now regardless of the repository settings, the profile status should be "Success".
+With remediation on, the profile status should be "Success" when the repository has been updated to match the policy.
 If you navigate to your repository settings with your browser, you should see that secret scanning
 feature is enabled. Toggling the feature off should trigger a new profile status check and the
 secret scanning feature should be enabled again in github.
