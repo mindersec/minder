@@ -16,50 +16,15 @@
 package config
 
 import (
-	"crypto/rsa"
-	"crypto/x509"
-	"encoding/pem"
 	"fmt"
 	"os"
 	"path/filepath"
-
-	"github.com/golang-jwt/jwt/v4"
 )
 
 // AuthConfig is the configuration for the auth package
 type AuthConfig struct {
-	// AccessTokenPrivateKey is the private key used to sign the access token for authn/z
-	AccessTokenPrivateKey string `mapstructure:"access_token_private_key" default:"./.ssh/access_token_rsa"`
-	// AccessTokenPublicKey is the public key used to verify the access token for authn/z
-	AccessTokenPublicKey string `mapstructure:"access_token_public_key" default:"./.ssh/access_token_rsa.pub"`
-	// RefreshTokenPrivateKey is the private key used to sign the refresh token for authn/z
-	RefreshTokenPrivateKey string `mapstructure:"refresh_token_private_key" default:"./.ssh/refresh_token_rsa"`
-	// RefreshTokenPublicKey is the public key used to verify the refresh token for authn/z
-	RefreshTokenPublicKey string `mapstructure:"refresh_token_public_key" default:"./.ssh/refresh_token_rsa.pub"`
-	// NoncePeriod is the period in seconds for which a nonce is valid
-	NoncePeriod int64 `mapstructure:"nonce_period" default:"3600"`
 	// TokenKey is the key used to store the provider's token in the database
 	TokenKey string `mapstructure:"token_key" default:"./.ssh/token_key_passphrase"`
-}
-
-// GetAccessTokenPrivateKey returns the private key used to sign the access token
-func (acfg *AuthConfig) GetAccessTokenPrivateKey() (*rsa.PrivateKey, error) {
-	return readRSAPrivateKey(acfg.AccessTokenPrivateKey)
-}
-
-// GetAccessTokenPublicKey returns the public key used to verify the access token
-func (acfg *AuthConfig) GetAccessTokenPublicKey() (*rsa.PublicKey, error) {
-	return readRSAPublicKey(acfg.AccessTokenPublicKey)
-}
-
-// GetRefreshTokenPrivateKey returns the private key used to sign the refresh token
-func (acfg *AuthConfig) GetRefreshTokenPrivateKey() (*rsa.PrivateKey, error) {
-	return readRSAPrivateKey(acfg.RefreshTokenPrivateKey)
-}
-
-// GetRefreshTokenPublicKey returns the public key used to verify the refresh token
-func (acfg *AuthConfig) GetRefreshTokenPublicKey() (*rsa.PublicKey, error) {
-	return readRSAPublicKey(acfg.RefreshTokenPublicKey)
 }
 
 // GetTokenKey returns a key used to encrypt the provider's token in the database
@@ -75,40 +40,4 @@ func readKey(keypath string) ([]byte, error) {
 	}
 
 	return data, nil
-}
-
-func readRSAPrivateKey(keypath string) (*rsa.PrivateKey, error) {
-	keyBytes, err := readKey(keypath)
-	if err != nil {
-		return nil, err
-	}
-	return jwt.ParseRSAPrivateKeyFromPEM(keyBytes)
-}
-
-func readRSAPublicKey(keypath string) (*rsa.PublicKey, error) {
-	keyBytes, err := readKey(keypath)
-	if err != nil {
-		return nil, err
-	}
-	// We'd like to use jwt.ParseRSAPublicKeyFromPEM here, but existing code
-	// uses ParsePKCS1PublicKey and ParsePKIXPublicKey, and the jwt method appears
-	// to only call the latter, despite documenting doing both.
-	// Ref: https://github.com/golang-jwt/jwt/blob/v4.5.0/rsa_utils.go#L79
-	pemBlock, _ := pem.Decode(keyBytes)
-	if pemBlock == nil {
-		return nil, fmt.Errorf("failed to decode PEM block in %q", keypath)
-	}
-	key, err := x509.ParsePKCS1PublicKey(pemBlock.Bytes)
-	if err != nil {
-		// try another method
-		aKey, err := x509.ParsePKIXPublicKey(pemBlock.Bytes)
-		if err != nil {
-			return nil, fmt.Errorf("could not find PKCS1 or PKIX public key in %q: %w", keypath, err)
-		}
-		var ok bool
-		if key, ok = aKey.(*rsa.PublicKey); !ok {
-			return nil, fmt.Errorf("wrong key type in %q, expected RSA public key", keypath)
-		}
-	}
-	return key, nil
 }

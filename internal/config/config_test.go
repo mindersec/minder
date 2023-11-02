@@ -27,7 +27,6 @@ import (
 	"github.com/stretchr/testify/require"
 
 	"github.com/stacklok/mediator/internal/config"
-	"github.com/stacklok/mediator/internal/util/rand"
 )
 
 func TestReadValidConfig(t *testing.T) {
@@ -144,10 +143,9 @@ func TestReadAuthConfig(t *testing.T) {
 	t.Parallel()
 
 	testCases := []struct {
-		name            string
-		mutate          func(*testing.T, *config.AuthConfig)
-		publicKeyError  string
-		privateKeyError string
+		name     string
+		mutate   func(*testing.T, *config.AuthConfig)
+		keyError string
 	}{
 		{
 			name: "valid config",
@@ -156,24 +154,9 @@ func TestReadAuthConfig(t *testing.T) {
 			name: "missing keys",
 			mutate: func(t *testing.T, cfg *config.AuthConfig) {
 				t.Helper()
-				require.NoError(t, os.Remove(cfg.AccessTokenPrivateKey))
-				require.NoError(t, os.Remove(cfg.AccessTokenPublicKey))
+				require.NoError(t, os.Remove(cfg.TokenKey))
 			},
-			publicKeyError:  "no such file or directory",
-			privateKeyError: "no such file or directory",
-		},
-		{
-			name: "bad formats",
-			mutate: func(t *testing.T, cfg *config.AuthConfig) {
-				t.Helper()
-				privateBytes, err := os.ReadFile(cfg.AccessTokenPrivateKey)
-				require.NoError(t, err)
-
-				require.NoError(t, os.WriteFile(cfg.AccessTokenPublicKey, privateBytes, 0600))
-				require.NoError(t, os.WriteFile(cfg.AccessTokenPrivateKey, []byte("bad format"), 0600))
-			},
-			publicKeyError:  "could not find PKCS1 or PKIX public key in",
-			privateKeyError: "Key must be a PEM encoded PKCS1 or PKCS8 key",
+			keyError: "no such file or directory",
 		},
 	}
 
@@ -183,11 +166,9 @@ func TestReadAuthConfig(t *testing.T) {
 			t.Parallel()
 			tmpdir := t.TempDir()
 			cfg := config.AuthConfig{
-				AccessTokenPrivateKey: filepath.Join(tmpdir, "access_token_private.pem"),
-				AccessTokenPublicKey:  filepath.Join(tmpdir, "access_token_public.pem"),
+				TokenKey: filepath.Join(tmpdir, "token_key"),
 			}
-			err := rand.RandomKeypairFile(2048, cfg.AccessTokenPrivateKey, cfg.AccessTokenPublicKey)
-			if err != nil {
+			if err := os.WriteFile(cfg.TokenKey, []byte("test"), 0600); err != nil {
 				t.Fatalf("Error generating access token key pair: %v", err)
 			}
 
@@ -195,11 +176,8 @@ func TestReadAuthConfig(t *testing.T) {
 				tc.mutate(t, &cfg)
 			}
 
-			if _, err := cfg.GetAccessTokenPrivateKey(); !errMatches(err, tc.privateKeyError) {
-				t.Errorf("Expected error containing %q, but got %v", tc.privateKeyError, err)
-			}
-			if _, err := cfg.GetAccessTokenPublicKey(); !errMatches(err, tc.publicKeyError) {
-				t.Errorf("Expected error containing %q, but got %v", tc.publicKeyError, err)
+			if _, err := cfg.GetTokenKey(); !errMatches(err, tc.keyError) {
+				t.Errorf("Expected error containing %q, but got %v", tc.keyError, err)
 			}
 		})
 	}
