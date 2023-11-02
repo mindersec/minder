@@ -179,8 +179,8 @@ github.com/aws/aws-sdk-go v1.45.26 h1:PJ2NJNY5N/yeobLYe1Y+xLdavBi67ZI8gvph6ftwVC
 github.com/aws/aws-sdk-go v1.45.26/go.mod h1:aVsgQcEevwlmQ7qHE9I3h+dtQgpqhFB+i8Phjh7fkwI=
 github.com/aws/aws-sdk-go-v2 v1.7.1/go.mod h1:L5LuPC1ZgDr2xQS7AmIec/Jlc7O/Y1u2KxJyNVab250=
 github.com/aws/aws-sdk-go-v2 v1.14.0/go.mod h1:ZA3Y8V0LrlWj63MQAnRHgKf/5QB//LSZCPNWlWrNGLU=
-github.com/aws/aws-sdk-go-v2 v1.22.0 h1:CpTS3XO3MWNel8ohoazkLZC6scvkYL2k+m0yzFJ17Hg=
-github.com/aws/aws-sdk-go-v2 v1.22.0/go.mod h1:Kd0OJtkW3Q0M0lUWGszapWjEvrXDzRW+D21JNsroB+c=
+github.com/aws/aws-sdk-go-v2 v1.22.1 h1:sjnni/AuoTXxHitsIdT0FwmqUuNUuHtufcVDErVFT9U=
+github.com/aws/aws-sdk-go-v2 v1.22.1/go.mod h1:Kd0OJtkW3Q0M0lUWGszapWjEvrXDzRW+D21JNsroB+c=
 github.com/aws/aws-sdk-go-v2/config v1.5.0/go.mod h1:RWlPOAW3E3tbtNAqTwvSW54Of/yP3oiZXMI0xfUdjyA=
 github.com/aws/aws-sdk-go-v2/config v1.20.0 h1:q2+/mqFhY0J9m3Tb5RGFE3R4sdaUkIe4k2EuDfE3c08=
 github.com/aws/aws-sdk-go-v2/config v1.20.0/go.mod h1:7+1riCZXyT+sAGvneR5j+Zl1GyfbBUNQurpQTE6FP6k=
@@ -190,8 +190,8 @@ github.com/aws/aws-sdk-go-v2/credentials v1.14.0/go.mod h1:q/3oaTPlamrQWHPwJe56M
 github.com/aws/aws-sdk-go-v2/feature/ec2/imds v1.3.0/go.mod h1:2LAuqPx1I6jNfaGDucWfA2zqQCYCOMCDHiCOciALyNw=
 github.com/aws/aws-sdk-go-v2/feature/ec2/imds v1.14.0 h1:lF/cVllNAPKgjDwN2RsQUX9g/f6hXer9f10ubLFSoug=
 github.com/aws/aws-sdk-go-v2/feature/ec2/imds v1.14.0/go.mod h1:c28nJNzMVVb9TQpZ5q4tzZvwEJwf/7So7Ie2s90l1Fw=
-github.com/aws/aws-sdk-go-v2/feature/rds/auth v1.3.0 h1:r2WImSdIF2R/Ih9/Z33a99bd5+uilg4SywZzaE0HV7o=
-github.com/aws/aws-sdk-go-v2/feature/rds/auth v1.3.0/go.mod h1:QUvZqGmPcvWb+vmmk4mQ9JvVNfDXXqvv6s80GTCeYZc=
+github.com/aws/aws-sdk-go-v2/feature/rds/auth v1.3.1 h1:eXZjfbvJqzGV5akX59GyCkhi999N9RqDY1rbWaVaJgw=
+github.com/aws/aws-sdk-go-v2/feature/rds/auth v1.3.1/go.mod h1:WcNORy8CDu4f37ssE723/+UNhZ1YP9uspPDHSx+CvIM=
 github.com/aws/aws-sdk-go-v2/internal/configsources v1.1.5/go.mod h1:2hXc8ooJqF2nAznsbJQIn+7h851/bu8GVC80OVTTqf8=
 github.com/aws/aws-sdk-go-v2/internal/configsources v1.2.0 h1:tN6dNNE4SzMuyMnVtQJXGVKX177/d5Zy4MuA1HA4KUc=
 github.com/aws/aws-sdk-go-v2/internal/configsources v1.2.0/go.mod h1:F6MXWETIeetAHwFHyoHEqrcB3NpijFv9nLP5h9CXtT0=
