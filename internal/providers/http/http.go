@@ -25,6 +25,8 @@ import (
 
 	"golang.org/x/oauth2"
 
+	"github.com/stacklok/mediator/internal/db"
+	"github.com/stacklok/mediator/internal/providers/telemetry"
 	minderv1 "github.com/stacklok/mediator/pkg/api/protobuf/go/minder/v1"
 	provifv1 "github.com/stacklok/mediator/pkg/providers/v1"
 )
@@ -40,8 +42,13 @@ type REST struct {
 var _ provifv1.REST = (*REST)(nil)
 
 // NewREST creates a new RESTful client.
-func NewREST(config *minderv1.RESTProviderConfig, tok string) (*REST, error) {
+func NewREST(
+	config *minderv1.RESTProviderConfig,
+	metrics telemetry.HttpClientMetrics,
+	tok string,
+) (*REST, error) {
 	var cli *http.Client
+	var err error
 
 	if tok != "" {
 		ts := oauth2.StaticTokenSource(
@@ -52,8 +59,13 @@ func NewREST(config *minderv1.RESTProviderConfig, tok string) (*REST, error) {
 		cli = &http.Client{}
 	}
 
+	cli.Transport, err = metrics.NewDurationRoundTripper(cli.Transport, db.ProviderTypeRest)
+	if err != nil {
+		return nil, fmt.Errorf("error creating duration round tripper: %w", err)
+	}
+
 	var baseURL *url.URL
-	baseURL, err := baseURL.Parse(config.GetBaseUrl())
+	baseURL, err = baseURL.Parse(config.GetBaseUrl())
 	if err != nil {
 		return nil, err
 	}

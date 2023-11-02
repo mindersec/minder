@@ -21,6 +21,7 @@ import (
 	"github.com/stacklok/mediator/internal/crypto"
 	"github.com/stacklok/mediator/internal/db"
 	"github.com/stacklok/mediator/internal/events"
+	providertelemetry "github.com/stacklok/mediator/internal/providers/telemetry"
 )
 
 const (
@@ -35,20 +36,43 @@ type Reconciler struct {
 	store    db.Store
 	evt      *events.Eventer
 	crypteng *crypto.Engine
+	provMt   providertelemetry.ProviderMetrics
+}
+
+// ReconcilerOption is a function that modifies a reconciler
+type ReconcilerOption func(*Reconciler)
+
+// WithProviderMetrics sets the provider metrics for the reconciler
+func WithProviderMetrics(mt providertelemetry.ProviderMetrics) ReconcilerOption {
+	return func(r *Reconciler) {
+		r.provMt = mt
+	}
 }
 
 // NewReconciler creates a new reconciler object
-func NewReconciler(store db.Store, evt *events.Eventer, authCfg *config.AuthConfig) (*Reconciler, error) {
+func NewReconciler(
+	store db.Store,
+	evt *events.Eventer,
+	authCfg *config.AuthConfig,
+	opts ...ReconcilerOption,
+) (*Reconciler, error) {
 	crypteng, err := crypto.EngineFromAuthConfig(authCfg)
 	if err != nil {
 		return nil, err
 	}
 
-	return &Reconciler{
+	r := &Reconciler{
 		store:    store,
 		evt:      evt,
 		crypteng: crypteng,
-	}, nil
+		provMt:   providertelemetry.NewNoopMetrics(),
+	}
+
+	for _, opt := range opts {
+		opt(r)
+	}
+
+	return r, nil
 }
 
 // Register implements the Consumer interface.

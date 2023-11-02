@@ -50,6 +50,7 @@ import (
 	"github.com/stacklok/mediator/internal/db"
 	"github.com/stacklok/mediator/internal/events"
 	"github.com/stacklok/mediator/internal/logger"
+	provtelemetry "github.com/stacklok/mediator/internal/providers/telemetry"
 	"github.com/stacklok/mediator/internal/util"
 	legacy "github.com/stacklok/mediator/pkg/api/protobuf/go/mediator/v1"
 	pb "github.com/stacklok/mediator/pkg/api/protobuf/go/minder/v1"
@@ -67,6 +68,7 @@ type Server struct {
 	cfg        *config.Config
 	evt        *events.Eventer
 	mt         *metrics
+	provMt     provtelemetry.ProviderMetrics
 	grpcServer *grpc.Server
 	vldtr      auth.JwtValidator
 	pb.UnimplementedHealthServiceServer
@@ -89,20 +91,44 @@ type Server struct {
 	cryptoEngine *crypto.Engine
 }
 
+// ServerOption is a function that modifies a server
+type ServerOption func(*Server)
+
+// WithProviderMetrics sets the provider metrics for the server
+func WithProviderMetrics(mt provtelemetry.ProviderMetrics) ServerOption {
+	return func(s *Server) {
+		s.provMt = mt
+	}
+}
+
 // NewServer creates a new server instance
-func NewServer(store db.Store, evt *events.Eventer, cpm *metrics, cfg *config.Config, vldtr auth.JwtValidator) (*Server, error) {
+func NewServer(
+	store db.Store,
+	evt *events.Eventer,
+	cpm *metrics,
+	cfg *config.Config,
+	vldtr auth.JwtValidator,
+	opts ...ServerOption,
+) (*Server, error) {
 	eng, err := crypto.EngineFromAuthConfig(&cfg.Auth)
 	if err != nil {
 		return nil, fmt.Errorf("failed to create crypto engine: %w", err)
 	}
-	return &Server{
+	s := &Server{
 		store:        store,
 		cfg:          cfg,
 		evt:          evt,
 		cryptoEngine: eng,
 		vldtr:        vldtr,
 		mt:           cpm,
-	}, nil
+		provMt:       provtelemetry.NewNoopMetrics(),
+	}
+
+	for _, opt := range opts {
+		opt(s)
+	}
+
+	return s, nil
 }
 
 var _ (events.Registrar) = (*Server)(nil)

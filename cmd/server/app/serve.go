@@ -34,6 +34,7 @@ import (
 	"github.com/stacklok/mediator/internal/engine"
 	"github.com/stacklok/mediator/internal/events"
 	"github.com/stacklok/mediator/internal/logger"
+	provtelemetry "github.com/stacklok/mediator/internal/providers/telemetry"
 	"github.com/stacklok/mediator/internal/reconcilers"
 )
 
@@ -101,20 +102,21 @@ var serveCmd = &cobra.Command{
 		}
 
 		serverMetrics := controlplane.NewMetrics()
+		providerMetrics := provtelemetry.NewProviderMetrics()
 
-		s, err := controlplane.NewServer(store, evt, serverMetrics, cfg, vldtr)
+		s, err := controlplane.NewServer(store, evt, serverMetrics, cfg, vldtr, controlplane.WithProviderMetrics(providerMetrics))
 		if err != nil {
 			return fmt.Errorf("unable to create server: %w", err)
 		}
 
-		exec, err := engine.NewExecutor(store, &cfg.Auth)
+		exec, err := engine.NewExecutor(store, &cfg.Auth, engine.WithProviderMetrics(providerMetrics))
 		if err != nil {
 			return fmt.Errorf("unable to create executor: %w", err)
 		}
 
 		s.ConsumeEvents(exec)
 
-		rec, err := reconcilers.NewReconciler(store, evt, &cfg.Auth)
+		rec, err := reconcilers.NewReconciler(store, evt, &cfg.Auth, reconcilers.WithProviderMetrics(providerMetrics))
 		if err != nil {
 			return fmt.Errorf("unable to create reconciler: %w", err)
 		}

@@ -20,6 +20,7 @@ import (
 
 	"github.com/stretchr/testify/assert"
 
+	provtelemetry "github.com/stacklok/mediator/internal/providers/telemetry"
 	minderv1 "github.com/stacklok/mediator/pkg/api/protobuf/go/minder/v1"
 )
 
@@ -28,7 +29,10 @@ func TestNewRestClient(t *testing.T) {
 
 	client, err := NewRestClient(context.Background(), &minderv1.GitHubProviderConfig{
 		Endpoint: "https://api.github.com",
-	}, "token", "")
+	},
+		provtelemetry.NewNoopMetrics(),
+		"token", "")
+
 	assert.NoError(t, err)
 	assert.NotNil(t, client)
 }

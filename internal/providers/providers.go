@@ -28,6 +28,7 @@ import (
 	gitclient "github.com/stacklok/mediator/internal/providers/git"
 	ghclient "github.com/stacklok/mediator/internal/providers/github"
 	httpclient "github.com/stacklok/mediator/internal/providers/http"
+	"github.com/stacklok/mediator/internal/providers/telemetry"
 	provinfv1 "github.com/stacklok/mediator/pkg/providers/v1"
 )
 
@@ -39,6 +40,7 @@ func GetProviderBuilder(
 	projectID uuid.UUID,
 	store db.Store,
 	crypteng *crypto.Engine,
+	opts ...ProviderBuilderOption,
 ) (*ProviderBuilder, error) {
 	encToken, err := store.GetAccessTokenByProjectID(ctx,
 		db.GetAccessTokenByProjectIDParams{Provider: prov.Name, ProjectID: projectID})
@@ -51,7 +53,7 @@ func GetProviderBuilder(
 		return nil, fmt.Errorf("error decrypting access token: %w", err)
 	}
 
-	return NewProviderBuilder(&prov, encToken, decryptedToken.AccessToken), nil
+	return NewProviderBuilder(&prov, encToken, decryptedToken.AccessToken, opts...), nil
 }
 
 // ProviderBuilder is a utility struct which allows for the creation of
@@ -60,6 +62,17 @@ type ProviderBuilder struct {
 	p        *db.Provider
 	tokenInf db.ProviderAccessToken
 	tok      string
+	metrics  telemetry.ProviderMetrics
+}
+
+// ProviderBuilderOption is a function which can be used to set options on the ProviderBuilder.
+type ProviderBuilderOption func(*ProviderBuilder)
+
+// WithProviderMetrics sets the metrics for the ProviderBuilder
+func WithProviderMetrics(metrics telemetry.ProviderMetrics) ProviderBuilderOption {
+	return func(pb *ProviderBuilder) {
+		pb.metrics = metrics
+	}
 }
 
 // NewProviderBuilder creates a new provider builder.
@@ -67,12 +80,20 @@ func NewProviderBuilder(
 	p *db.Provider,
 	tokenInf db.ProviderAccessToken,
 	tok string,
+	opts ...ProviderBuilderOption,
 ) *ProviderBuilder {
-	return &ProviderBuilder{
+	pb := &ProviderBuilder{
 		p:        p,
 		tokenInf: tokenInf,
 		tok:      tok,
+		metrics:  telemetry.NewNoopMetrics(),
 	}
+
+	for _, opt := range opts {
+		opt(pb)
+	}
+
+	return pb
 }
 
 // Implements returns true if the provider implements the given type.
@@ -123,7 +144,7 @@ func (pb *ProviderBuilder) GetHTTP(ctx context.Context) (provinfv1.REST, error) 
 		return nil, fmt.Errorf("error parsing http config: %w", err)
 	}
 
-	return httpclient.NewREST(cfg, pb.tok)
+	return httpclient.NewREST(cfg, pb.metrics, pb.tok)
 }
 
 // GetGitHub returns a github client for the provider.
@@ -142,7 +163,7 @@ func (pb *ProviderBuilder) GetGitHub(ctx context.Context) (*ghclient.RestClient,
 		return nil, fmt.Errorf("error parsing github config: %w", err)
 	}
 
-	cli, err := ghclient.NewRestClient(ctx, cfg, pb.GetToken(), pb.tokenInf.OwnerFilter.String)
+	cli, err := ghclient.NewRestClient(ctx, cfg, pb.metrics, pb.GetToken(), pb.tokenInf.OwnerFilter.String)
 	if err != nil {
 		return nil, fmt.Errorf("error creating github client: %w", err)
 	}

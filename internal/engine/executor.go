@@ -30,6 +30,7 @@ import (
 	engif "github.com/stacklok/mediator/internal/engine/interfaces"
 	"github.com/stacklok/mediator/internal/events"
 	"github.com/stacklok/mediator/internal/providers"
+	providertelemetry "github.com/stacklok/mediator/internal/providers/telemetry"
 	pb "github.com/stacklok/mediator/pkg/api/protobuf/go/minder/v1"
 )
 
@@ -42,19 +43,41 @@ const (
 type Executor struct {
 	querier  db.Store
 	crypteng *crypto.Engine
+	provMt   providertelemetry.ProviderMetrics
+}
+
+// ExecutorOption is a function that modifies an executor
+type ExecutorOption func(*Executor)
+
+// WithProviderMetrics sets the provider metrics for the executor
+func WithProviderMetrics(mt providertelemetry.ProviderMetrics) ExecutorOption {
+	return func(e *Executor) {
+		e.provMt = mt
+	}
 }
 
 // NewExecutor creates a new executor
-func NewExecutor(querier db.Store, authCfg *config.AuthConfig) (*Executor, error) {
+func NewExecutor(
+	querier db.Store,
+	authCfg *config.AuthConfig,
+	opts ...ExecutorOption,
+) (*Executor, error) {
 	crypteng, err := crypto.EngineFromAuthConfig(authCfg)
 	if err != nil {
 		return nil, err
 	}
 
-	return &Executor{
+	e := &Executor{
 		querier:  querier,
 		crypteng: crypteng,
-	}, nil
+		provMt:   providertelemetry.NewNoopMetrics(),
+	}
+
+	for _, opt := range opts {
+		opt(e)
+	}
+
+	return e, nil
 }
 
 // Register implements the Consumer interface.
@@ -89,7 +112,10 @@ func (e *Executor) HandleEntityEvent(msg *message.Message) error {
 		return fmt.Errorf("error getting provider: %w", err)
 	}
 
-	cli, err := providers.GetProviderBuilder(ctx, provider, *projectID, e.querier, e.crypteng)
+	pbOpts := []providers.ProviderBuilderOption{
+		providers.WithProviderMetrics(e.provMt),
+	}
+	cli, err := providers.GetProviderBuilder(ctx, provider, *projectID, e.querier, e.crypteng, pbOpts...)
 	if err != nil {
 		return fmt.Errorf("error building client: %w", err)
 	}

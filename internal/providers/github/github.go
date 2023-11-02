@@ -26,6 +26,7 @@ import (
 	"golang.org/x/oauth2"
 
 	"github.com/stacklok/mediator/internal/db"
+	"github.com/stacklok/mediator/internal/providers/telemetry"
 	minderv1 "github.com/stacklok/mediator/pkg/api/protobuf/go/minder/v1"
 	provifv1 "github.com/stacklok/mediator/pkg/providers/v1"
 )
@@ -63,13 +64,21 @@ var _ provifv1.GitHub = (*RestClient)(nil)
 func NewRestClient(
 	ctx context.Context,
 	config *minderv1.GitHubProviderConfig,
+	metrics telemetry.HttpClientMetrics,
 	token string,
 	owner string,
 ) (*RestClient, error) {
+	var err error
+
 	ts := oauth2.StaticTokenSource(
 		&oauth2.Token{AccessToken: token},
 	)
 	tc := oauth2.NewClient(ctx, ts)
+
+	tc.Transport, err = metrics.NewDurationRoundTripper(tc.Transport, db.ProviderTypeGithub)
+	if err != nil {
+		return nil, fmt.Errorf("error creating duration round tripper: %w", err)
+	}
 
 	ghClient := github.NewClient(tc)
 
