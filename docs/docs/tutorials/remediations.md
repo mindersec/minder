@@ -30,7 +30,7 @@ Find the ID of the profile you want to remove and delete it:
 minder profile delete -i $ID
 ```
 
-Edit the YAML file of the profile you want to change and change the `remediate` attribute
+Edit the YAML file of the profile you want to use and set the `remediate` attribute to
 to `on`:
 ```yaml
 ---
