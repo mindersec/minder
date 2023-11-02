@@ -27,6 +27,9 @@ hostname: "mediator.example.com"
 db:
   host: "postgres.postgres"
 
+trusty:
+  endpoint: "http://pi.pi:8000"
+
 # NOTE: we are migrating from AWS-specific annotations to a "pre-create the service account" model.
 # If serviceAccounts.migrate or serviceAccount.server are set, these values will be ignored.
 aws:
