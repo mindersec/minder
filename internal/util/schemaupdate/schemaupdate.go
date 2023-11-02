@@ -29,14 +29,8 @@ import (
 // ValidateSchemaUpdate validates that the new json schema doesn't break
 // profiles using this rule type
 func ValidateSchemaUpdate(oldRuleSchema *structpb.Struct, newRuleSchema *structpb.Struct) error {
-	if schemaIsNilOrEmpty(oldRuleSchema) && schemaIsNilOrEmpty(newRuleSchema) {
-		// If both are nil, we're good
-		// profiles using this rule type won't break
-		return nil
-	}
-
-	if !schemaIsNilOrEmpty(oldRuleSchema) && schemaIsNilOrEmpty(newRuleSchema) {
-		// If old is not nil and new is nil, we're good
+	if len(newRuleSchema.GetFields()) == 0 {
+		// If the new schema is empty (including nil), we're good
 		// The rule type has removed the schema and profiles
 		// won't break
 		return nil
