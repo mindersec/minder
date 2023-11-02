@@ -19,7 +19,7 @@ _Last updated: November 2023_
 
 ## Next
 * **Report CVEs, Trusty scores, and license info for ingested SBOMs:** Ingest SBOMS and identify dependencies; show CVEs, Trusty scores, and license information including any changes over time.
-* **Block PRs based on vulnerabilities and Trusty scores:** In addition to adding comments to pull requests (as is currently available), add the option to block pull requests as a policy remediation.
+* **Block PRs based on Trusty scores:** In addition to adding comments to pull requests (as is currently available), add the option to block pull requests as a policy remediation.
 * **Create policy to manage licenses in PRs:** Add a rule type to block and/or add comments to pull requests based on the licenses of the dependencies they import.
 * **Automate the generation and signing of SLSA provenance statements:** Enable users to generate SLSA provenance statements (e.g. through SLSA GitHub generator) and sign them with Sigstore.
 * **Export a Minder 'badge/certification' that shows what practices a project followed:** Create a badge that OSS maintainers and enterprise developers can create and share with others that asserts the Minder practices and policies their projects follow.
