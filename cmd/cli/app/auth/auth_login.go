@@ -184,7 +184,7 @@ will be saved to $XDG_CONFIG_HOME/minder/credentials.json`,
 			))
 			cli.PrintCmd(cmd, cli.Header.Render("Here are your details:"))
 
-			renderNewUser(cmd, newUser)
+			renderNewUser(cmd, conn, newUser)
 		} else {
 			cli.PrintCmd(cmd, cli.SuccessBanner.Render(
 				"You have successfully logged in."))
@@ -201,10 +201,12 @@ will be saved to $XDG_CONFIG_HOME/minder/credentials.json`,
 	},
 }
 
-func renderNewUser(cmd *cobra.Command, newUser *pb.CreateUserResponse) {
+func renderNewUser(cmd *cobra.Command, conn *grpc.ClientConn, newUser *pb.CreateUserResponse) {
+
 	rows := []table.Row{
 		{"Project ID", newUser.ProjectId},
 		{"Project Name", newUser.ProjectName},
+		{"Minder Server", conn.Target()},
 	}
 
 	renderUserToTable(cmd, rows)
