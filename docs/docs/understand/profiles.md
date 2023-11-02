@@ -11,6 +11,8 @@ repositories.
 
 Profiles are defined in a YAML file and can be easily configured to meet your compliance requirements.
 
+You can find a list of available profiles in the [https://github.com/stacklok/minder-rules-and-profiles](https://github.com/stacklok/minder-rules-and-profiles/tree/main/profiles/github) repository.
+
 ## Rules
 
 Each rule type within a profile is evaluated against your repositories that are registered with Minder.
@@ -18,6 +20,27 @@ Each rule type within a profile is evaluated against your repositories that are 
 The available entity rule type groups are `repository`, `pull_request`, and `artifact`.
 
 Each rule type group has a set of rules that can be configured individually.
+
+The available properties for each rule type can be found in their YAML file under the `def.rule_schema.properties` section.
+
+For example, the `secret_scanning` rule type has the following `enabled` property:
+
+```yaml
+---
+version: v1
+type: rule-type
+name: secret_scanning
+---
+def:
+  # Defines the schema for writing a rule with this rule being checked
+  rule_schema:
+    properties:
+      enabled:
+        type: boolean
+        default: true
+```
+
+You can find a list of available rules in the [https://github.com/stacklok/minder-rules-and-profiles](https://github.com/stacklok/minder-rules-and-profiles/tree/main/rule-types/github) repository.
 
 ## Actions
 
@@ -36,20 +59,46 @@ and `remediate` (Default: `off`).
 
 ## Example profile
 
-Here's a profile which has a `repository` entity group with a rule of type `secret_scanning` set to `enabled: true` and
-its `alert` and `remediate` features are both turned `on`:
+Here's a profile which has a single rule for each entity group and its `alert` and `remediate` features are both 
+turned `on`:
 
-    ```yaml
-    ---
-    version: v1
-    type: profile
-    name: github-profile
-    context:
-      provider: github
-    alert: "on"
-    remediate: "on"
-    repository:
-      - type: secret_scanning
-        def:
-          enabled: true
-    ```
+```yaml
+---
+version: v1
+type: profile
+name: github-profile
+context:
+  provider: github
+alert: "on"
+remediate: "on"
+repository:
+  - type: secret_scanning
+    def:
+      enabled: true
+artifact:
+  - type: artifact_signature
+    params:
+      tags: [main]
+      name: my-artifact
+    def:
+      is_signed: true
+      is_verified: true
+      is_bundle_verified: true
+pull_request:
+  - type: pr_vulnerability_check
+    def:
+      action: review
+      ecosystem_config:
+        - name: npm
+          vulnerability_database_type: osv
+          vulnerability_database_endpoint: https://api.osv.dev/v1/query
+          package_repository:
+            url: https://registry.npmjs.org
+        - name: go
+          vulnerability_database_type: osv
+          vulnerability_database_endpoint: https://vuln.go.dev
+          package_repository:
+            url: https://proxy.golang.org
+          sum_repository:
+            url: https://sum.golang.org
+```
