@@ -27,12 +27,19 @@ hostname: "mediator.example.com"
 db:
   host: "postgres.postgres"
 
+# NOTE: we are migrating from AWS-specific annotations to a "pre-create the service account" model.
+# If serviceAccounts.migrate or serviceAccount.server are set, these values will be ignored.
 aws:
   accountID: "123456789012"
   migrate:
     iamRole: "mediator_migrate_role"
   server:
     iamRole: "mediator_server_role"
+
+serviceAccounts:
+  # If non-empty, mediator will use the named ServiceAccount resources rather than creating a ServiceAccount
+  migrate: ""
+  server: ""
 
 migrationSettings:
   image: ko://github.com/stacklok/mediator/cmd/server

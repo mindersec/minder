@@ -30,7 +30,7 @@ spec:
       annotations:
         {{ include "common.annotations.pods" (dict "customAnnotationsPods" .Values.commonAnnotationsPods "context" $ ) | nindent 8 }}
     spec:
-      serviceAccountName: mediator
+      serviceAccountName: {{ .Values.serviceAccounts.server | default "mediator" }}
       containers:
         - name: mediator
           # restricted security context:
