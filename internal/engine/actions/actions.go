@@ -190,7 +190,7 @@ func shouldAlert(
 	}
 
 	// Case 2 - Do nothing if the evaluation status has not changed
-	if newEval == prevEval {
+	if newEval == prevEval && prevAlert != db.AlertStatusTypesError {
 		return engif.ActionCmdDoNothing
 	}
 
