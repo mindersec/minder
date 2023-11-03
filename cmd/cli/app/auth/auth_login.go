@@ -144,7 +144,7 @@ will be saved to $XDG_CONFIG_HOME/minder/credentials.json`,
 
 		// open user's browser to login page
 		if err := browser.OpenURL(loginUrl); err != nil {
-			fmt.Printf("You may login by pasting this URL into your browser: %s", loginUrl)
+			cli.PrintCmd(cmd, "You may login by pasting this URL into your browser: %s", loginUrl)
 		}
 
 		cli.PrintCmd(cmd, "Waiting for token...\n")
