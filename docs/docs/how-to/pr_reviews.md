@@ -129,3 +129,7 @@ Create the profile in Minder:
 ```
 minder profile create -f profile.yaml
 ```
+
+Once the profile is created, Minder will monitor any pull requests to the registered repositories. If a pull 
+request brings in a dependency with a known vulnerability, then Minder will add a review to the pull request and
+suggest changes.

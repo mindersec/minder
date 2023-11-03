@@ -8,8 +8,30 @@ sidebar_position: 20
 * The `minder` CLI application
 * A Stacklok account
 
-## Create a rule
-The first step to creating a profile is to create the rules that your profile will apply.  
+## Use a reference rule
+The first step to creating a profile is to create the rules that your profile will apply.
+
+The Minder team has provided several reference rules for common use cases. To get started quickly, create a rule from
+the set of references.
+
+Fetch all the reference rules by cloning the [minder-rules-and-profiles repository](https://github.com/stacklok/minder-rules-and-profiles).
+```
+git clone https://github.com/stacklok/minder-rules-and-profiles.git
+```
+
+In that directory you can find all the reference rules and profiles.
+```
+cd minder-rules-and-profiles
+```
+
+Create the `secret_scanning` rule type in Minder:
+```
+minder rule_type create -f rule-types/github/secret_scanning.yaml
+```
+
+## Write your own rule
+This section describes how to write your own rule, using the existing rule `secret_scanning` as a reference. If you've
+already created the `secret_scanning` rule, you may choose to skip this section.
 
 Start by creating a rule that checks if secret scanning is enabled.  
 
