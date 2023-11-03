@@ -16,10 +16,8 @@
 package rule_type
 
 import (
-	"bufio"
 	"fmt"
 	"os"
-	"strings"
 
 	"github.com/spf13/cobra"
 	"github.com/spf13/viper"
@@ -55,17 +53,12 @@ minder control plane.`,
 			fmt.Fprintf(os.Stderr, "Either id or deleteAll needs to be set")
 			return
 		}
-
-		// Ask for confirmation if deleteAll is set on purpose
 		if deleteAll {
-			reader := bufio.NewReader(os.Stdin)
-
-			fmt.Print("Warning: Are you sure you want to permanently delete all of your rule types? (yes/no): ")
-			response, _ := reader.ReadString('\n')
-
-			response = strings.ToLower(strings.TrimSpace(response))
-			if response != "yes" && response != "y" {
-				cli.PrintCmd(cmd, cli.Header.Render("Delete account operation cancelled."))
+			// Ask for confirmation if deleteAll is set on purpose
+			yes := cli.PrintYesNoPrompt(cmd,
+				"Are you sure you want to permanently delete all of your rule types? (yes/no): ",
+				"Delete all rule types operation cancelled.")
+			if !yes {
 				return
 			}
 		}
@@ -78,30 +71,59 @@ minder control plane.`,
 		ctx, cancel := util.GetAppContext()
 		defer cancel()
 
-		// Delete the rule type(s)
-		resp, err := client.DeleteRuleType(ctx, &minderv1.DeleteRuleTypeRequest{
-			Context: &minderv1.Context{
-				Provider: viper.GetString("provider"),
-			},
-			Id:        id,
-			DeleteAll: deleteAll,
-		})
-		util.ExitNicelyOnError(err, "Error deleting rule type(s)")
+		// List of rule types to delete
+		rulesToDelete := []*minderv1.RuleType{}
+		if !deleteAll {
+			// Add the rule type for deletion
+			rulesToDelete = append(rulesToDelete, &minderv1.RuleType{Id: &id})
+		} else {
+			// List all rule types
+			resp, err := client.ListRuleTypes(ctx, &minderv1.ListRuleTypesRequest{
+				Context: &minderv1.Context{
+					Provider: viper.GetString("provider"),
+					// TODO set up project if specified
+					// Currently it's inferred from the authorization token
+				},
+			})
+			if err != nil {
+				cmd.Println("Error getting rule types")
+				return
+			}
+			rulesToDelete = append(rulesToDelete, resp.RuleTypes...)
+		}
+		deletedRuleTypes := []string{}
+		remainingRuleTypes := []string{}
+		// Delete the rule types set for deletion
+		for _, ruleType := range rulesToDelete {
+			_, err = client.DeleteRuleType(ctx, &minderv1.DeleteRuleTypeRequest{
+				Context: &minderv1.Context{},
+				Id:      ruleType.GetId(),
+			})
+			if err != nil {
+				remainingRuleTypes = append(remainingRuleTypes, ruleType.GetName())
+				continue
+			}
+			rule := ruleType.GetId()
+			if ruleType.GetName() != "" {
+				rule = ruleType.GetName()
+			}
+			deletedRuleTypes = append(deletedRuleTypes, rule)
+		}
 
 		// Print the results
-		if len(resp.DeletedRuleTypes) == 0 && len(resp.RemainingRuleTypes) == 0 {
+		if len(deletedRuleTypes) == 0 && len(remainingRuleTypes) == 0 {
 			cmd.Println("There are no rule types to delete")
 			return
 		}
-		if len(resp.DeletedRuleTypes) > 0 {
-			cmd.Println("The following rule type(s) were successfully deleted:")
-			for _, ruleType := range resp.DeletedRuleTypes {
+		if len(deletedRuleTypes) > 0 {
+			cmd.Println("\nThe following rule type(s) were successfully deleted:")
+			for _, ruleType := range deletedRuleTypes {
 				cmd.Println(ruleType)
 			}
 		}
-		if len(resp.RemainingRuleTypes) > 0 {
-			cmd.Println("The following rule type(s) are referenced by existing profiles and were not deleted:")
-			for _, ruleType := range resp.RemainingRuleTypes {
+		if len(remainingRuleTypes) > 0 {
+			cmd.Println("\nThe following rule type(s) are referenced by existing profiles and were not deleted:")
+			for _, ruleType := range remainingRuleTypes {
 				cmd.Println(ruleType)
 			}
 		}

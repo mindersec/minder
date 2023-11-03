@@ -19,10 +19,9 @@ import (
 	"database/sql"
 	"errors"
 	"fmt"
+	"strings"
 
 	"github.com/google/uuid"
-	"github.com/rs/zerolog"
-	"github.com/zitadel/oidc/v2/pkg/strings"
 	"google.golang.org/grpc/codes"
 	"google.golang.org/grpc/status"
 
@@ -249,130 +248,61 @@ func (s *Server) DeleteRuleType(
 	ctx context.Context,
 	in *minderv1.DeleteRuleTypeRequest,
 ) (*minderv1.DeleteRuleTypeResponse, error) {
-	ctx, err := s.authAndContextValidation(ctx, in.GetContext())
+	parsedRuleTypeID, err := uuid.Parse(in.GetId())
+	if err != nil {
+		return nil, util.UserVisibleError(codes.InvalidArgument, "invalid rule type ID")
+	}
+
+	// first read rule type by id, so we can get provider
+	ruletype, err := s.store.GetRuleTypeByID(ctx, parsedRuleTypeID)
+	if err != nil {
+		if errors.Is(err, sql.ErrNoRows) {
+			return nil, util.UserVisibleError(codes.NotFound, "rule type %s not found", in.GetId())
+		}
+		return nil, status.Errorf(codes.Unknown, "failed to get rule type: %s", err)
+	}
+
+	prov, err := s.store.GetProviderByName(ctx, db.GetProviderByNameParams{
+		Name:      ruletype.Provider,
+		ProjectID: ruletype.ProjectID,
+	})
+	if err != nil {
+		return nil, status.Errorf(codes.Unknown, "failed to get provider: %s", err)
+	}
+
+	in.Context.Provider = prov.Name
+
+	ctx, err = s.authAndContextValidation(ctx, in.GetContext())
 	if err != nil {
 		return nil, status.Errorf(codes.InvalidArgument, "error ensuring default group: %v", err)
 	}
-	logger := zerolog.Ctx(ctx)
 
-	ruleTypeList := []db.RuleType{}
-
-	// Check if we delete a single rule type or all
-	if !in.GetDeleteAll() {
-		parsedRuleTypeID, err := uuid.Parse(in.GetId())
-		if err != nil {
-			return nil, util.UserVisibleError(codes.InvalidArgument, "invalid rule type ID")
-		}
-		// Get the rule type to delete by ID
-		ruleType, err := s.store.GetRuleTypeByID(ctx, parsedRuleTypeID)
-		if err != nil {
-			if errors.Is(err, sql.ErrNoRows) {
-				return nil, util.UserVisibleError(codes.NotFound, "rule type %s not found", in.GetId())
+	profileInfo, err := s.store.ListProfilesInstantiatingRuleType(ctx, ruletype.ID)
+	// We have profiles that use this rule type, so we can't delete it
+	if err == nil {
+		if len(profileInfo) > 0 {
+			profiles := make([]string, 0, len(profileInfo))
+			for _, p := range profileInfo {
+				profiles = append(profiles, p.Name)
 			}
-			return nil, status.Errorf(codes.Unknown, "failed to get rule type: %s", err)
-		}
-		// Append to the list of rule types to delete
-		ruleTypeList = append(ruleTypeList, ruleType)
-	} else {
-		// We are about to delete all rule types
 
-		// Get entity context
-		entityCtx := engine.EntityFromContext(ctx)
-
-		// Get all rule types
-		ruleTypes, err := s.store.ListRuleTypesByProviderAndProject(ctx, db.ListRuleTypesByProviderAndProjectParams{
-			Provider:  entityCtx.GetProvider().Name,
-			ProjectID: entityCtx.GetProject().GetID(),
-		})
-		if err != nil {
-			return nil, status.Errorf(codes.Unknown, "failed to get rule types: %s", err)
+			return nil, util.UserVisibleError(codes.FailedPrecondition,
+				fmt.Sprintf("cannot delete: rule type %s is used by profiles %s", in.GetId(), strings.Join(profiles, ", ")))
 		}
-		// Append to the list of rule types to delete
-		ruleTypeList = append(ruleTypeList, ruleTypes...)
+	} else if !errors.Is(err, sql.ErrNoRows) {
+		// If we failed for another reason, return an error
+		return nil, status.Errorf(codes.Unknown, "failed to get profiles: %s", err)
 	}
 
-	// Get the list of rule types that are not used by profiles
-	ruleTypeListToDelete, err := s.getRuleTypeDeleteList(ctx, ruleTypeList, in)
+	// If there are no profiles instantiating this rule type, we can delete it
+	err = s.store.DeleteRuleType(ctx, parsedRuleTypeID)
 	if err != nil {
-		return nil, status.Errorf(codes.Unknown, "failed to get rule types delete list: %s", err)
+		// The rule got deleted in parallel?
+		if errors.Is(err, sql.ErrNoRows) {
+			return nil, util.UserVisibleError(codes.NotFound, "rule type %s not found", in.GetId())
+		}
+		return nil, status.Errorf(codes.Unknown, "failed to delete rule type: %s", err)
 	}
 
-	// Delete all rule types that are not used by profiles
-	deleted := []string{}
-	for _, ruleTypeID := range ruleTypeListToDelete {
-		err = s.store.DeleteRuleType(ctx, ruleTypeID.ID)
-		if err != nil {
-			if errors.Is(err, sql.ErrNoRows) {
-				// The rule got deleted in parallel? Store and log it and continue trying to delete the rest
-				logger.Info().Str("rule_type_id", ruleTypeID.ID.String()).Msg("rule type not found")
-			} else {
-				// Log if we failed with something else and continue trying to delete the rest, no need to error out?
-				logger.Error().Err(err).Msg("failed to delete rule type")
-				continue
-			}
-		}
-		// Store the rule types that were deleted
-		deleted = append(deleted, ruleTypeID.Name)
-	}
-
-	// Calculate the list of rule types that were not deleted
-	remaining := []string{}
-	for _, ruleType := range ruleTypeList {
-		if !strings.Contains(deleted, ruleType.Name) {
-			remaining = append(remaining, ruleType.Name)
-		}
-	}
-	// Return the list of rule types that were deleted and the list of rule types that failed to delete
-	return &minderv1.DeleteRuleTypeResponse{
-		DeletedRuleTypes:   deleted,
-		RemainingRuleTypes: remaining,
-	}, nil
-}
-
-func (s *Server) getRuleTypeDeleteList(ctx context.Context, ruleTypeList []db.RuleType,
-	in *minderv1.DeleteRuleTypeRequest) ([]db.RuleType, error) {
-	logger := zerolog.Ctx(ctx)
-
-	ruleTypeListToDelete := []db.RuleType{}
-
-	// Collect only rule types that are not used by profiles
-	for _, ruletype := range ruleTypeList {
-		prov, err := s.store.GetProviderByName(ctx, db.GetProviderByNameParams{
-			Name:      ruletype.Provider,
-			ProjectID: ruletype.ProjectID,
-		})
-		if err != nil {
-			return nil, status.Errorf(codes.Unknown, "failed to get provider: %s", err)
-		}
-
-		in.Context.Provider = prov.Name
-
-		ctx, err = s.authAndContextValidation(ctx, in.GetContext())
-		if err != nil {
-			return nil, status.Errorf(codes.InvalidArgument, "error ensuring default group: %v", err)
-		}
-		// Get profiles that use this rule type
-		profileInfo, err := s.store.ListProfilesInstantiatingRuleType(ctx, ruletype.ID)
-
-		// We have profiles that use this rule type, so we can't delete it
-		if err == nil {
-			if len(profileInfo) > 0 {
-				profiles := make([]string, 0, len(profileInfo))
-				for _, p := range profileInfo {
-					profiles = append(profiles, p.Name)
-				}
-				// Cannot delete a rule type used by a profile, log it and continue trying to delete the rest
-				logger.Info().Str("rule_type_id", ruletype.ID.String()).Strs("profiles", profiles).
-					Msg("cannot delete rule type is used by profiles ")
-				continue
-			}
-		} else if !errors.Is(err, sql.ErrNoRows) {
-			// Error our if we failed with something else
-			return nil, status.Errorf(codes.Unknown, "failed to get profiles: %s", err)
-		}
-		// Store the rule type for deletion
-		ruleTypeListToDelete = append(ruleTypeListToDelete, ruletype)
-	}
-	// Return the list of rule types that are not used by profiles
-	return ruleTypeListToDelete, nil
+	return &minderv1.DeleteRuleTypeResponse{}, nil
 }

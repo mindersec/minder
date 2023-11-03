@@ -1118,13 +1118,10 @@ message DeleteRuleTypeRequest {
     Context context = 1;
     // id is the id of the rule type to be deleted.
     string id = 2;
-    bool delete_all = 3;
 }
 
 // DeleteRuleTypeResponse is the response to delete a rule type.
 message DeleteRuleTypeResponse {
-    repeated string deleted_rule_types = 1;
-    repeated string remaining_rule_types = 2;
 }
 
 // --- END RuleType CRUD definitions

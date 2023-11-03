@@ -1319,12 +1319,6 @@
             "in": "query",
             "required": false,
             "type": "string"
-          },
-          {
-            "name": "deleteAll",
-            "in": "query",
-            "required": false,
-            "type": "boolean"
           }
         ],
         "tags": [
@@ -1981,20 +1975,6 @@
     },
     "v1DeleteRuleTypeResponse": {
       "type": "object",
-      "properties": {
-        "deletedRuleTypes": {
-          "type": "array",
-          "items": {
-            "type": "string"
-          }
-        },
-        "remainingRuleTypes": {
-          "type": "array",
-          "items": {
-            "type": "string"
-          }
-        }
-      },
       "description": "DeleteRuleTypeResponse is the response to delete a rule type."
     },
     "v1DeleteUserResponse": {
