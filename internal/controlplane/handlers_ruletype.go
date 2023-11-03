@@ -28,6 +28,7 @@ import (
 	"github.com/stacklok/mediator/internal/db"
 	"github.com/stacklok/mediator/internal/engine"
 	"github.com/stacklok/mediator/internal/util"
+	"github.com/stacklok/mediator/internal/util/schemaupdate"
 	minderv1 "github.com/stacklok/mediator/pkg/api/protobuf/go/minder/v1"
 )
 
@@ -217,11 +218,36 @@ func (s *Server) UpdateRuleType(
 		return nil, status.Errorf(codes.Internal, "failed to get rule type: %s", err)
 	}
 
+	oldrt, err := engine.RuleTypePBFromDB(&rtdb, entityCtx)
+	if err != nil {
+		return nil, status.Errorf(codes.Internal, "cannot convert rule type %s to pb: %v", in.GetName(), err)
+	}
+
+	// First we validate that the incoming rule is valid
 	if err := in.Validate(); err != nil {
 		if errors.Is(err, minderv1.ErrInvalidRuleType) {
 			return nil, util.UserVisibleError(codes.InvalidArgument, "Couldn't update rule: %s", err)
 		}
 		return nil, status.Errorf(codes.Unavailable, "invalid rule type definition: %s", err)
+	}
+
+	_, err = s.store.ListProfilesInstantiatingRuleType(ctx, rtdb.ID)
+	// We have profiles that use this rule type, so we need to
+	// validate that the incoming rule is valid against the old rule
+	if err == nil {
+		// Then we validate that the incoming rule is valid against the old rule
+		if err := schemaupdate.ValidateSchemaUpdate(
+			oldrt.GetDef().GetRuleSchema(), in.GetDef().GetRuleSchema()); err != nil {
+			return nil, util.UserVisibleError(
+				codes.InvalidArgument, "Couldn't update rule: Rule schema update is invalid: %s", err)
+		}
+		if err := schemaupdate.ValidateSchemaUpdate(
+			oldrt.GetDef().GetParamSchema(), in.GetDef().GetParamSchema()); err != nil {
+			return nil, util.UserVisibleError(
+				codes.InvalidArgument, "Couldn't update rule: Parameter schema update is invalid: %s", err)
+		}
+	} else if !errors.Is(err, sql.ErrNoRows) {
+		return nil, util.UserVisibleError(codes.Unknown, "failed to get profiles used by rule: %s", err)
 	}
 
 	def, err := util.GetBytesFromProto(in.GetDef())

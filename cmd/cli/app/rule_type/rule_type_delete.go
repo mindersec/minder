@@ -74,8 +74,21 @@ minder control plane.`,
 		// List of rule types to delete
 		rulesToDelete := []*minderv1.RuleType{}
 		if !deleteAll {
+			// Fetch the rule type from the DB, so we can get its name
+			rtype, err := client.GetRuleTypeById(ctx, &minderv1.GetRuleTypeByIdRequest{
+				Context: &minderv1.Context{
+					Provider: viper.GetString("provider"),
+					// TODO set up project if specified
+					// Currently it's inferred from the authorization token
+				},
+				Id: id,
+			})
+			if err != nil {
+				cmd.Println("Error getting rule type")
+				return
+			}
 			// Add the rule type for deletion
-			rulesToDelete = append(rulesToDelete, &minderv1.RuleType{Id: &id})
+			rulesToDelete = append(rulesToDelete, rtype.RuleType)
 		} else {
 			// List all rule types
 			resp, err := client.ListRuleTypes(ctx, &minderv1.ListRuleTypesRequest{
@@ -103,11 +116,7 @@ minder control plane.`,
 				remainingRuleTypes = append(remainingRuleTypes, ruleType.GetName())
 				continue
 			}
-			rule := ruleType.GetId()
-			if ruleType.GetName() != "" {
-				rule = ruleType.GetName()
-			}
-			deletedRuleTypes = append(deletedRuleTypes, rule)
+			deletedRuleTypes = append(deletedRuleTypes, ruleType.GetName())
 		}
 
 		// Print the results
