@@ -34,11 +34,11 @@ import (
 	"github.com/spf13/viper"
 	"google.golang.org/protobuf/types/known/timestamppb"
 
-	ghclient "github.com/stacklok/mediator/internal/providers/github"
-	"github.com/stacklok/mediator/internal/util"
-	"github.com/stacklok/mediator/internal/util/cli"
-	"github.com/stacklok/mediator/internal/util/rand"
-	pb "github.com/stacklok/mediator/pkg/api/protobuf/go/minder/v1"
+	ghclient "github.com/stacklok/minder/internal/providers/github"
+	"github.com/stacklok/minder/internal/util"
+	"github.com/stacklok/minder/internal/util/cli"
+	"github.com/stacklok/minder/internal/util/rand"
+	pb "github.com/stacklok/minder/pkg/api/protobuf/go/minder/v1"
 )
 
 // Response is the response from the OAuth callback server.
@@ -169,7 +169,7 @@ actions such as adding repositories.`,
 
 		if err := browser.OpenURL(resp.GetUrl()); err != nil {
 			fmt.Fprintf(os.Stderr, "Error opening browser: %s\n", err)
-			os.Exit(1)
+			fmt.Println("Please copy and paste the URL into a browser.")
 		}
 		openTime := time.Now().Unix()
 

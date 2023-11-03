@@ -23,10 +23,10 @@ import (
 	"fmt"
 	"reflect"
 
-	evalerrors "github.com/stacklok/mediator/internal/engine/errors"
-	engif "github.com/stacklok/mediator/internal/engine/interfaces"
-	"github.com/stacklok/mediator/internal/util"
-	pb "github.com/stacklok/mediator/pkg/api/protobuf/go/minder/v1"
+	evalerrors "github.com/stacklok/minder/internal/engine/errors"
+	engif "github.com/stacklok/minder/internal/engine/interfaces"
+	"github.com/stacklok/minder/internal/util"
+	pb "github.com/stacklok/minder/pkg/api/protobuf/go/minder/v1"
 )
 
 // Evaluator is an Evaluator that uses the jq library to evaluate rules

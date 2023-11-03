@@ -1241,7 +1241,7 @@ RESTProviderConfig contains the configuration for the REST provider.
 | ----- | ---- | ----- | ----------- |
 | provider | [string](#string) |  |  |
 | project_id | [string](#string) |  |  |
-| repositories | [UpstreamRepositoryRef](#minder-v1-UpstreamRepositoryRef) | repeated |  |
+| repository | [UpstreamRepositoryRef](#minder-v1-UpstreamRepositoryRef) |  |  |
 
 
 <a name="minder-v1-RegisterRepositoryResponse"></a>
@@ -1252,7 +1252,7 @@ RESTProviderConfig contains the configuration for the REST provider.
 
 | Field | Type | Label | Description |
 | ----- | ---- | ----- | ----------- |
-| results | [RegisterRepoResult](#minder-v1-RegisterRepoResult) | repeated |  |
+| result | [RegisterRepoResult](#minder-v1-RegisterRepoResult) |  |  |
 
 
 <a name="minder-v1-Repository"></a>

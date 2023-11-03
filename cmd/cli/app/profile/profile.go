@@ -19,7 +19,7 @@ package profile
 import (
 	"github.com/spf13/cobra"
 
-	"github.com/stacklok/mediator/cmd/cli/app"
+	"github.com/stacklok/minder/cmd/cli/app"
 )
 
 // ProfileCmd is the root command for the profile subcommands

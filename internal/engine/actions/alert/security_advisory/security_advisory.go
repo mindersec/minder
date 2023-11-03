@@ -29,12 +29,12 @@ import (
 	"github.com/rs/zerolog"
 	"google.golang.org/protobuf/reflect/protoreflect"
 
-	enginerr "github.com/stacklok/mediator/internal/engine/errors"
-	"github.com/stacklok/mediator/internal/engine/interfaces"
-	"github.com/stacklok/mediator/internal/providers"
-	"github.com/stacklok/mediator/internal/util"
-	pb "github.com/stacklok/mediator/pkg/api/protobuf/go/minder/v1"
-	provifv1 "github.com/stacklok/mediator/pkg/providers/v1"
+	enginerr "github.com/stacklok/minder/internal/engine/errors"
+	"github.com/stacklok/minder/internal/engine/interfaces"
+	"github.com/stacklok/minder/internal/providers"
+	"github.com/stacklok/minder/internal/util"
+	pb "github.com/stacklok/minder/pkg/api/protobuf/go/minder/v1"
+	provifv1 "github.com/stacklok/minder/pkg/providers/v1"
 )
 
 const (

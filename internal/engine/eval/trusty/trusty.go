@@ -21,11 +21,11 @@ import (
 
 	"github.com/rs/zerolog"
 
-	"github.com/stacklok/mediator/internal/engine/eval/pr_actions"
-	engif "github.com/stacklok/mediator/internal/engine/interfaces"
-	"github.com/stacklok/mediator/internal/providers"
-	pb "github.com/stacklok/mediator/pkg/api/protobuf/go/minder/v1"
-	provifv1 "github.com/stacklok/mediator/pkg/providers/v1"
+	"github.com/stacklok/minder/internal/engine/eval/pr_actions"
+	engif "github.com/stacklok/minder/internal/engine/interfaces"
+	"github.com/stacklok/minder/internal/providers"
+	pb "github.com/stacklok/minder/pkg/api/protobuf/go/minder/v1"
+	provifv1 "github.com/stacklok/minder/pkg/providers/v1"
 )
 
 const (
@@ -71,6 +71,10 @@ func (e *Evaluator) Eval(ctx context.Context, pol map[string]any, res *engif.Res
 	prdeps, ok := res.Object.(pb.PrDependencies)
 	if !ok {
 		return fmt.Errorf("invalid object type for vulncheck evaluator")
+	}
+
+	if len(prdeps.Deps) == 0 {
+		return nil
 	}
 
 	ruleConfig, err := parseConfig(pol)

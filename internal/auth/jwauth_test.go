@@ -27,8 +27,8 @@ import (
 	"github.com/stretchr/testify/assert"
 	"github.com/stretchr/testify/require"
 
-	mockjwt "github.com/stacklok/mediator/internal/auth/mock"
-	"github.com/stacklok/mediator/internal/util/rand"
+	mockjwt "github.com/stacklok/minder/internal/auth/mock"
+	"github.com/stacklok/minder/internal/util/rand"
 )
 
 func TestParseAndValidate(t *testing.T) {

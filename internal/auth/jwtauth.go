@@ -19,12 +19,17 @@ import (
 	"context"
 	"errors"
 	"fmt"
+	"net/url"
 
 	"github.com/google/uuid"
 	"github.com/lestrrat-go/jwx/v2/jwk"
 	"github.com/lestrrat-go/jwx/v2/jwt"
 	"github.com/lestrrat-go/jwx/v2/jwt/openid"
+	"github.com/spf13/cobra"
+	"github.com/spf13/viper"
 	"golang.org/x/exp/slices"
+
+	"github.com/stacklok/minder/internal/util"
 )
 
 // RoleInfo contains the role information for a user
@@ -157,4 +162,41 @@ func IsAuthorizedForProject(ctx context.Context, projectID uuid.UUID) bool {
 func GetUserProjects(ctx context.Context) ([]uuid.UUID, error) {
 	permissions := GetPermissionsFromContext(ctx)
 	return permissions.ProjectIds, nil
+}
+
+// UserDetails is a helper struct for getting user details
+type UserDetails struct {
+	Name  string
+	Email string
+}
+
+// GetUserDetails is a helper for getting user details such as name and email from the jwt token
+func GetUserDetails(ctx context.Context, cmd *cobra.Command, v *viper.Viper) (*UserDetails, error) {
+	// Extract the config details
+	issuerUrl := util.GetConfigValue(v, "identity.cli.issuer_url", "identity-url", cmd, "https://auth.staging.stacklok.dev").(string)
+	realm := util.GetConfigValue(v, "identity.cli.realm", "identity-realm", cmd, "stacklok").(string)
+	clientId := util.GetConfigValue(v, "identity.cli.client_id", "identity-client", cmd, "minder-cli").(string)
+
+	t, err := util.GetToken(issuerUrl, realm, clientId)
+	if err != nil {
+		return nil, err
+	}
+	parsedURL, err := url.Parse(issuerUrl)
+	if err != nil {
+		return nil, fmt.Errorf("failed to parse issuer URL: %w\n", err)
+	}
+	jwksUrl := parsedURL.JoinPath("realms", realm, "protocol/openid-connect/certs")
+	vldtr, err := NewJwtValidator(ctx, jwksUrl.String())
+	if err != nil {
+		return nil, fmt.Errorf("failed to fetch and cache identity provider JWKS: %w\n", err)
+	}
+	token, err := vldtr.ParseAndValidate(t)
+	if err != nil {
+		return nil, fmt.Errorf("failed to parse and validate token: %w\n", err)
+	}
+
+	return &UserDetails{
+		Email: token.Email(),
+		Name:  fmt.Sprintf("%s %s", token.GivenName(), token.FamilyName()),
+	}, nil
 }

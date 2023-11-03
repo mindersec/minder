@@ -35,7 +35,7 @@ import (
 	"golang.org/x/oauth2/github"
 	"golang.org/x/oauth2/google"
 
-	"github.com/stacklok/mediator/internal/util"
+	"github.com/stacklok/minder/internal/util"
 )
 
 const (

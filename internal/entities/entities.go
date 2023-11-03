@@ -23,8 +23,8 @@ import (
 
 	"golang.org/x/exp/slices"
 
-	"github.com/stacklok/mediator/internal/db"
-	minderv1 "github.com/stacklok/mediator/pkg/api/protobuf/go/minder/v1"
+	"github.com/stacklok/minder/internal/db"
+	minderv1 "github.com/stacklok/minder/pkg/api/protobuf/go/minder/v1"
 )
 
 // KnownTypesCSV returns a comma separated list of known entity types. Useful for UI

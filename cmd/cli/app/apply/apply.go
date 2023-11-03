@@ -30,8 +30,8 @@ import (
 	"google.golang.org/grpc/status"
 	"gopkg.in/yaml.v3"
 
-	"github.com/stacklok/mediator/cmd/cli/app"
-	"github.com/stacklok/mediator/internal/util"
+	"github.com/stacklok/minder/cmd/cli/app"
+	"github.com/stacklok/minder/internal/util"
 )
 
 type objectParameters struct {

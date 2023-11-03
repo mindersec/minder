@@ -34,10 +34,10 @@ import (
 	"github.com/spf13/viper"
 	"k8s.io/utils/strings/slices"
 
-	github "github.com/stacklok/mediator/internal/providers/github"
-	"github.com/stacklok/mediator/internal/util"
-	"github.com/stacklok/mediator/internal/util/cli"
-	pb "github.com/stacklok/mediator/pkg/api/protobuf/go/minder/v1"
+	github "github.com/stacklok/minder/internal/providers/github"
+	"github.com/stacklok/minder/internal/util"
+	"github.com/stacklok/minder/internal/util/cli"
+	pb "github.com/stacklok/minder/pkg/api/protobuf/go/minder/v1"
 )
 
 var errNoRepositoriesSelected = errors.New("No repositories selected")
@@ -124,20 +124,26 @@ var repo_registerCmd = &cobra.Command{
 			os.Exit(1)
 		}
 
-		// Construct the RegisterRepositoryRequest
-		request := &pb.RegisterRepositoryRequest{
-			Provider:     provider,
-			Repositories: selectedRepos,
-			ProjectId:    projectID,
+		results := []*pb.RegisterRepoResult{}
+		for idx := range selectedRepos {
+			repo := selectedRepos[idx]
+			// Construct the RegisterRepositoryRequest
+			request := &pb.RegisterRepositoryRequest{
+				Provider:   provider,
+				Repository: repo,
+				ProjectId:  projectID,
+			}
+
+			result, err := client.RegisterRepository(context.Background(), request)
+			if err != nil {
+				_, _ = fmt.Fprintf(os.Stderr, "Error registering repository %s: %s\n", repo.Name, err)
+				continue
+			}
+
+			results = append(results, result.Result)
 		}
 
 		// Register the repos
-		registerResp, err := client.RegisterRepository(context.Background(), request)
-		if err != nil {
-			_, _ = fmt.Fprintf(os.Stderr, "Error registering repositories: %s\n", err)
-			os.Exit(1)
-		}
-
 		// The result gives a list of repositories with the registration status
 		// Let's parse the results and print the status
 		columns := []table.Column{
@@ -146,8 +152,8 @@ var repo_registerCmd = &cobra.Command{
 			{Title: "Message", Width: 60},
 		}
 
-		rows := make([]table.Row, len(registerResp.Results))
-		for i, result := range registerResp.Results {
+		rows := make([]table.Row, len(results))
+		for i, result := range results {
 			rows[i] = table.Row{
 				fmt.Sprintf("%s/%s", result.Repository.Owner, result.Repository.Name),
 			}

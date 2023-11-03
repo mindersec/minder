@@ -18,7 +18,7 @@ package telemetry
 import (
 	"net/http"
 
-	"github.com/stacklok/mediator/internal/db"
+	"github.com/stacklok/minder/internal/db"
 )
 
 type noop struct{}

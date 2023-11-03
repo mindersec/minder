@@ -16,17 +16,16 @@
 package auth
 
 import (
-	"bufio"
 	"fmt"
 	"os"
-	"strings"
 
 	"github.com/spf13/cobra"
 	"github.com/spf13/viper"
 
-	"github.com/stacklok/mediator/internal/util"
-	"github.com/stacklok/mediator/internal/util/cli"
-	pb "github.com/stacklok/mediator/pkg/api/protobuf/go/minder/v1"
+	"github.com/stacklok/minder/internal/auth"
+	"github.com/stacklok/minder/internal/util"
+	"github.com/stacklok/minder/internal/util/cli"
+	pb "github.com/stacklok/minder/pkg/api/protobuf/go/minder/v1"
 )
 
 // auth_deleteCmd represents the account deletion command
@@ -40,17 +39,6 @@ var auth_deleteCmd = &cobra.Command{
 		}
 	},
 	Run: func(cmd *cobra.Command, args []string) {
-		reader := bufio.NewReader(os.Stdin)
-
-		fmt.Print("Are you sure you want to permanently delete your account? (yes/no): ")
-		response, _ := reader.ReadString('\n')
-
-		response = strings.ToLower(strings.TrimSpace(response))
-		if response != "yes" && response != "y" {
-			cli.PrintCmd(cmd, cli.Header.Render("Delete account operation cancelled."))
-			return
-		}
-
 		ctx, cancel := util.GetAppContext()
 		defer cancel()
 
@@ -58,6 +46,26 @@ var auth_deleteCmd = &cobra.Command{
 		util.ExitNicelyOnError(err, "Error getting grpc connection")
 		defer conn.Close()
 		client := pb.NewUserServiceClient(conn)
+
+		// Ensure the user already exists in the local database
+		_, _, err = userRegistered(ctx, client)
+		util.ExitNicelyOnError(err, "Error fetching user")
+
+		// Get user details - name, email from the jwt token
+		userDetails, err := auth.GetUserDetails(ctx, cmd, viper.GetViper())
+		util.ExitNicelyOnError(err, "Error fetching user details")
+
+		// Confirm user wants to delete their account
+		yes := cli.PrintYesNoPrompt(cmd,
+			fmt.Sprintf(
+				"Are you sure you want to permanently delete your account? (yes/no): \n\nName: %s\nEmail: %s",
+				userDetails.Name,
+				userDetails.Email,
+			),
+			"Delete account operation cancelled.")
+		if !yes {
+			return
+		}
 
 		_, err = client.DeleteUser(ctx, &pb.DeleteUserRequest{})
 		util.ExitNicelyOnError(err, "Error registering user")

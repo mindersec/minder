@@ -22,11 +22,11 @@ import (
 
 	"github.com/stretchr/testify/require"
 
-	"github.com/stacklok/mediator/internal/db"
-	gitengine "github.com/stacklok/mediator/internal/engine/ingester/git"
-	"github.com/stacklok/mediator/internal/providers"
-	pb "github.com/stacklok/mediator/pkg/api/protobuf/go/minder/v1"
-	provifv1 "github.com/stacklok/mediator/pkg/providers/v1"
+	"github.com/stacklok/minder/internal/db"
+	gitengine "github.com/stacklok/minder/internal/engine/ingester/git"
+	"github.com/stacklok/minder/internal/providers"
+	pb "github.com/stacklok/minder/pkg/api/protobuf/go/minder/v1"
+	provifv1 "github.com/stacklok/minder/pkg/providers/v1"
 )
 
 func TestGitIngestWithCloneURLFromRepo(t *testing.T) {
@@ -170,7 +170,7 @@ func TestGitIngestFailsBecauseOfAuthorization(t *testing.T) {
 	require.NoError(t, err, "expected no error")
 
 	got, err := gi.Ingest(context.Background(), &pb.Artifact{}, map[string]any{
-		"clone_url": "https://github.com/stacklok/mediator.git",
+		"clone_url": "https://github.com/stacklok/minder.git",
 	})
 	require.Error(t, err, "expected error")
 	require.Nil(t, got, "expected nil result")

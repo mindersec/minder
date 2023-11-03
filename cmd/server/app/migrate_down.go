@@ -27,8 +27,8 @@ import (
 	"github.com/spf13/cobra"
 	"github.com/spf13/viper"
 
-	"github.com/stacklok/mediator/internal/config"
-	"github.com/stacklok/mediator/internal/logger"
+	"github.com/stacklok/minder/internal/config"
+	"github.com/stacklok/minder/internal/logger"
 )
 
 var downCmd = &cobra.Command{

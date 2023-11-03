@@ -18,4 +18,4 @@ As of time of writing, mediator supports the following evaluation engines:
 Each engine is designed to be extensible, allowing you to integrate your own
 logic and processes.
 
-Please see the [examples](https://github.com/stacklok/mediator/tree/main/examples) directory for examples of profiles, and [Manage Profiles](./manage_profiles.md) for more details on how to set up profiles and rule types.
+Please see the [examples](https://github.com/stacklok/minder/tree/main/examples) directory for examples of profiles, and [Manage Profiles](./manage_profiles.md) for more details on how to set up profiles and rule types.

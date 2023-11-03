@@ -15,7 +15,7 @@ import (
 
 	"github.com/grpc-ecosystem/grpc-gateway/v2/runtime"
 	"github.com/grpc-ecosystem/grpc-gateway/v2/utilities"
-	v1_0 "github.com/stacklok/mediator/pkg/api/protobuf/go/minder/v1"
+	v1_0 "github.com/stacklok/minder/pkg/api/protobuf/go/minder/v1"
 	"google.golang.org/grpc"
 	"google.golang.org/grpc/codes"
 	"google.golang.org/grpc/grpclog"

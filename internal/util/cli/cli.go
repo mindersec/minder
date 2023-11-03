@@ -23,8 +23,11 @@
 package cli
 
 import (
+	"bufio"
 	"fmt"
 	"io"
+	"os"
+	"strings"
 
 	"github.com/spf13/cobra"
 )
@@ -37,4 +40,24 @@ func PrintCmd(cmd *cobra.Command, msg string, args ...interface{}) {
 // Print prints a message using the given io.Writer
 func Print(out io.Writer, msg string, args ...interface{}) {
 	fmt.Fprintf(out, msg+"\n", args...)
+}
+
+// PrintYesNoPrompt prints a yes/no prompt to the user and returns false if the user did not respond with yes or y
+func PrintYesNoPrompt(cmd *cobra.Command, promptMsg, fallbackMsg string) bool {
+	reader := bufio.NewReader(os.Stdin)
+	// Print the warning banner with the prompt message
+	PrintCmd(cmd, WarningBanner.Render(promptMsg))
+
+	// Read the response
+	response, _ := reader.ReadString('\n')
+
+	// Normalise the response
+	response = strings.ToLower(strings.TrimSpace(response))
+	if response != "yes" && response != "y" {
+		// Prompt was not confirmed, print the fallback message and return false
+		PrintCmd(cmd, Header.Render(fallbackMsg))
+		return false
+	}
+	// Prompt was confirmed, return true
+	return true
 }

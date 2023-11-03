@@ -17,11 +17,11 @@
 package reconcilers
 
 import (
-	"github.com/stacklok/mediator/internal/config"
-	"github.com/stacklok/mediator/internal/crypto"
-	"github.com/stacklok/mediator/internal/db"
-	"github.com/stacklok/mediator/internal/events"
-	providertelemetry "github.com/stacklok/mediator/internal/providers/telemetry"
+	"github.com/stacklok/minder/internal/config"
+	"github.com/stacklok/minder/internal/crypto"
+	"github.com/stacklok/minder/internal/db"
+	"github.com/stacklok/minder/internal/events"
+	providertelemetry "github.com/stacklok/minder/internal/providers/telemetry"
 )
 
 const (

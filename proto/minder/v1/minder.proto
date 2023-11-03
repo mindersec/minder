@@ -22,7 +22,7 @@ import "google/protobuf/struct.proto";
 import "google/api/httpbody.proto";
 
 
-option go_package = "github.com/stacklok/mediator/pkg/api/protobuf/go/minder/v1";
+option go_package = "github.com/stacklok/minder/pkg/api/protobuf/go/minder/v1";
 
 enum ObjectOwner {
     OBJECT_OWNER_UNSPECIFIED = 0;
@@ -662,7 +662,7 @@ message Repository {
 message RegisterRepositoryRequest {
     string provider = 1;
     string project_id = 2;
-    repeated UpstreamRepositoryRef repositories = 3;
+    UpstreamRepositoryRef repository = 3;
 }
 
 message RegisterRepoResult {
@@ -676,7 +676,7 @@ message RegisterRepoResult {
 }
 
 message RegisterRepositoryResponse {
-    repeated RegisterRepoResult results = 1;
+    RegisterRepoResult result = 1;
 }
 
 message GetRepositoryByIdRequest {

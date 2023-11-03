@@ -3,7 +3,7 @@ title: Minder
 sidebar_position: 1
 ---
 
-<img width="799" alt="image" src="./images/Minder.png">
+<img width="799" alt="image" src="./images/Minder-whitetxt.svg">
 
 # What is Minder?
 
@@ -24,4 +24,4 @@ Minder can be deployed as a Helm chart and provides a CLI tool ‘minder’. Sta
 
 Experimental stage
 
-The public roadmap for Minder is available here: [link]
+The public roadmap for Minder is available here: [link](./understand/roadmap.md)

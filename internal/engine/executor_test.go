@@ -27,12 +27,12 @@ import (
 	"golang.org/x/oauth2"
 	"google.golang.org/protobuf/types/known/structpb"
 
-	mockdb "github.com/stacklok/mediator/database/mock"
-	"github.com/stacklok/mediator/internal/config"
-	"github.com/stacklok/mediator/internal/crypto"
-	"github.com/stacklok/mediator/internal/db"
-	"github.com/stacklok/mediator/internal/engine"
-	minderv1 "github.com/stacklok/mediator/pkg/api/protobuf/go/minder/v1"
+	mockdb "github.com/stacklok/minder/database/mock"
+	"github.com/stacklok/minder/internal/config"
+	"github.com/stacklok/minder/internal/crypto"
+	"github.com/stacklok/minder/internal/db"
+	"github.com/stacklok/minder/internal/engine"
+	minderv1 "github.com/stacklok/minder/pkg/api/protobuf/go/minder/v1"
 )
 
 const (

@@ -21,8 +21,8 @@ import (
 
 	"github.com/ThreeDotsLabs/watermill/message"
 
-	"github.com/stacklok/mediator/internal/config"
-	"github.com/stacklok/mediator/internal/events"
+	"github.com/stacklok/minder/internal/config"
+	"github.com/stacklok/minder/internal/events"
 )
 
 type fakeConsumer struct {

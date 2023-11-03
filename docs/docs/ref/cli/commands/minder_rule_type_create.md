@@ -7,7 +7,7 @@ Create a rule type within a minder control plane
 
 ### Synopsis
 
-The minder rule type create subcommand lets you create new profiles for a project
+The minder rule type create subcommand lets you create new rule types for a project
 within a minder control plane.
 
 ```

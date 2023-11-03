@@ -19,7 +19,7 @@ package telemetry
 import (
 	"net/http"
 
-	"github.com/stacklok/mediator/internal/db"
+	"github.com/stacklok/minder/internal/db"
 )
 
 // HttpClientMetrics provides the httpClientMetrics for http clients

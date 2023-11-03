@@ -30,8 +30,8 @@ import (
 	"golang.org/x/oauth2"
 	"golang.org/x/oauth2/clientcredentials"
 
-	"github.com/stacklok/mediator/internal/config"
-	"github.com/stacklok/mediator/internal/db"
+	"github.com/stacklok/minder/internal/config"
+	"github.com/stacklok/minder/internal/db"
 )
 
 const (

@@ -24,7 +24,7 @@ import (
 	"go.opentelemetry.io/otel/attribute"
 	"go.opentelemetry.io/otel/metric"
 
-	"github.com/stacklok/mediator/internal/db"
+	"github.com/stacklok/minder/internal/db"
 )
 
 type metrics struct {

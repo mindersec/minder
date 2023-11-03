@@ -25,15 +25,15 @@ import (
 	"google.golang.org/protobuf/encoding/protojson"
 	"google.golang.org/protobuf/types/known/structpb"
 
-	"github.com/stacklok/mediator/internal/db"
-	"github.com/stacklok/mediator/internal/engine/actions"
-	enginerr "github.com/stacklok/mediator/internal/engine/errors"
-	"github.com/stacklok/mediator/internal/engine/eval"
-	"github.com/stacklok/mediator/internal/engine/ingestcache"
-	"github.com/stacklok/mediator/internal/engine/ingester"
-	engif "github.com/stacklok/mediator/internal/engine/interfaces"
-	"github.com/stacklok/mediator/internal/providers"
-	minderv1 "github.com/stacklok/mediator/pkg/api/protobuf/go/minder/v1"
+	"github.com/stacklok/minder/internal/db"
+	"github.com/stacklok/minder/internal/engine/actions"
+	enginerr "github.com/stacklok/minder/internal/engine/errors"
+	"github.com/stacklok/minder/internal/engine/eval"
+	"github.com/stacklok/minder/internal/engine/ingestcache"
+	"github.com/stacklok/minder/internal/engine/ingester"
+	engif "github.com/stacklok/minder/internal/engine/interfaces"
+	"github.com/stacklok/minder/internal/providers"
+	minderv1 "github.com/stacklok/minder/pkg/api/protobuf/go/minder/v1"
 )
 
 // RuleMeta is the metadata for a rule

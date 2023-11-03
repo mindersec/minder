@@ -41,11 +41,11 @@ import (
 	"github.com/stretchr/testify/suite"
 	"golang.org/x/oauth2"
 
-	mockdb "github.com/stacklok/mediator/database/mock"
-	"github.com/stacklok/mediator/internal/crypto"
-	"github.com/stacklok/mediator/internal/db"
-	"github.com/stacklok/mediator/internal/engine"
-	"github.com/stacklok/mediator/internal/util/rand"
+	mockdb "github.com/stacklok/minder/database/mock"
+	"github.com/stacklok/minder/internal/crypto"
+	"github.com/stacklok/minder/internal/db"
+	"github.com/stacklok/minder/internal/engine"
+	"github.com/stacklok/minder/internal/util/rand"
 )
 
 // MockClient is a mock implementation of the GitHub client.

@@ -21,9 +21,9 @@ import (
 
 	"github.com/stretchr/testify/require"
 
-	evalerrors "github.com/stacklok/mediator/internal/engine/errors"
-	"github.com/stacklok/mediator/internal/engine/ingester/artifact"
-	pb "github.com/stacklok/mediator/pkg/api/protobuf/go/minder/v1"
+	evalerrors "github.com/stacklok/minder/internal/engine/errors"
+	"github.com/stacklok/minder/internal/engine/ingester/artifact"
+	pb "github.com/stacklok/minder/pkg/api/protobuf/go/minder/v1"
 )
 
 func TestArtifactIngestMatchingName(t *testing.T) {

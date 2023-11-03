@@ -22,10 +22,10 @@ import (
 	memfs "github.com/go-git/go-billy/v5/memfs"
 	"github.com/stretchr/testify/require"
 
-	engerrors "github.com/stacklok/mediator/internal/engine/errors"
-	"github.com/stacklok/mediator/internal/engine/eval/rego"
-	engif "github.com/stacklok/mediator/internal/engine/interfaces"
-	minderv1 "github.com/stacklok/mediator/pkg/api/protobuf/go/minder/v1"
+	engerrors "github.com/stacklok/minder/internal/engine/errors"
+	"github.com/stacklok/minder/internal/engine/eval/rego"
+	engif "github.com/stacklok/minder/internal/engine/interfaces"
+	minderv1 "github.com/stacklok/minder/pkg/api/protobuf/go/minder/v1"
 )
 
 func TestFileExistsWithExistingFile(t *testing.T) {

@@ -23,13 +23,13 @@ import (
 	"github.com/google/uuid"
 	"golang.org/x/exp/slices"
 
-	"github.com/stacklok/mediator/internal/crypto"
-	"github.com/stacklok/mediator/internal/db"
-	gitclient "github.com/stacklok/mediator/internal/providers/git"
-	ghclient "github.com/stacklok/mediator/internal/providers/github"
-	httpclient "github.com/stacklok/mediator/internal/providers/http"
-	"github.com/stacklok/mediator/internal/providers/telemetry"
-	provinfv1 "github.com/stacklok/mediator/pkg/providers/v1"
+	"github.com/stacklok/minder/internal/crypto"
+	"github.com/stacklok/minder/internal/db"
+	gitclient "github.com/stacklok/minder/internal/providers/git"
+	ghclient "github.com/stacklok/minder/internal/providers/github"
+	httpclient "github.com/stacklok/minder/internal/providers/http"
+	"github.com/stacklok/minder/internal/providers/telemetry"
+	provinfv1 "github.com/stacklok/minder/pkg/providers/v1"
 )
 
 // GetProviderBuilder is a utility function which allows for the creation of

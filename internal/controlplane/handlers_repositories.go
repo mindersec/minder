@@ -28,30 +28,18 @@ import (
 	"google.golang.org/grpc/status"
 	"google.golang.org/protobuf/types/known/timestamppb"
 
-	"github.com/stacklok/mediator/internal/db"
-	"github.com/stacklok/mediator/internal/providers"
-	github "github.com/stacklok/mediator/internal/providers/github"
-	"github.com/stacklok/mediator/internal/reconcilers"
-	"github.com/stacklok/mediator/internal/util"
-	pb "github.com/stacklok/mediator/pkg/api/protobuf/go/minder/v1"
+	"github.com/stacklok/minder/internal/db"
+	"github.com/stacklok/minder/internal/providers"
+	github "github.com/stacklok/minder/internal/providers/github"
+	"github.com/stacklok/minder/internal/reconcilers"
+	"github.com/stacklok/minder/internal/util"
+	pb "github.com/stacklok/minder/pkg/api/protobuf/go/minder/v1"
 )
 
 // RegisterRepository adds repositories to the database and registers a webhook
 // Once a user had enrolled in a group (they have a valid token), they can register
-// repositories to be monitored by the mediator by provisioning a webhook on the
+// repositories to be monitored by the minder by provisioning a webhook on the
 // repositor(ies).
-// The API is called with a slice of repositories to register and a slice of events
-// e.g.
-//
-//	grpcurl -plaintext -d '{
-//		"repositories": [
-//			{ "owner": "acme", "name": "widgets" },
-//			{ "owner": "acme", "name": "gadgets" }
-//		  ],
-//		  "events": [ "push", "issues" ]
-//	}' 127.0.0.1:8090 mediator.v1.RepositoryService/RegisterRepository
-//
-// nolint: gocyclo
 func (s *Server) RegisterRepository(ctx context.Context,
 	in *pb.RegisterRepositoryRequest) (*pb.RegisterRepositoryResponse, error) {
 	projectID, err := getProjectFromRequestOrDefault(ctx, in)
@@ -80,82 +68,72 @@ func (s *Server) RegisterRepository(ctx context.Context,
 	}
 
 	// Unmarshal the in.GetRepositories() into a struct Repository
-	var upstreamRepos []UpstreamRepositoryReference
-	if in.GetRepositories() == nil || len(in.GetRepositories()) <= 0 {
-		return nil, util.UserVisibleError(codes.InvalidArgument, "no repositories provided")
+	if in.GetRepository() == nil || in.GetRepository().Name == "" {
+		return nil, util.UserVisibleError(codes.InvalidArgument, "no repository provided")
 	}
 
-	for _, repository := range in.GetRepositories() {
-		upstreamRepos = append(upstreamRepos, UpstreamRepositoryReference{
-			Owner:      repository.GetOwner(),
-			Name:       repository.GetName(),
-			UpstreamID: repository.GetRepoId(), // Handle the RepoID here.
-		})
-	}
+	repo := in.GetRepository()
 
 	allEvents := []string{"*"}
-	resultData, err := s.registerWebhookForRepository(
-		ctx, p, projectID, upstreamRepos, allEvents)
+	result, err := s.registerWebhookForRepository(
+		ctx, p, projectID, repo, allEvents)
 	if err != nil {
 		return nil, util.UserVisibleError(codes.Internal, "cannot register webhook: %v", err)
 	}
 
-	for idx := range resultData {
-		result := resultData[idx]
-		r := result.Repository
-
-		// Convert each result to a pb.Repository object
-		if result.Status.Error != nil {
-			continue
-		}
-
-		// update the database
-		dbRepo, err := s.store.CreateRepository(ctx, db.CreateRepositoryParams{
-			Provider:  provider.Name,
-			ProjectID: projectID,
-			RepoOwner: r.Owner,
-			RepoName:  r.Name,
-			RepoID:    r.RepoId,
-			IsPrivate: r.IsPrivate,
-			IsFork:    r.IsFork,
-			WebhookID: sql.NullInt32{
-				Int32: int32(r.HookId),
-				Valid: true,
-			},
-			CloneUrl:   r.CloneUrl,
-			WebhookUrl: r.HookUrl,
-			DeployUrl:  r.DeployUrl,
-		})
-		// even if we set the webhook, if we couldn't create it in the database, we'll return an error
-		if err != nil {
-			log.Printf("error creating repository '%s/%s' in database: %v", r.Owner, r.Name, err)
-
-			result.Status.Success = false
-			errorStr := "error creating repository in database"
-			result.Status.Error = &errorStr
-			continue
-		}
-
-		repoDBID := dbRepo.ID.String()
-		r.Id = &repoDBID
-
-		// publish a reconcile event for the registered repositories
-		log.Printf("publishing register event for repository: %s/%s", r.Owner, r.Name)
-
-		msg, err := reconcilers.NewRepoReconcilerMessage(in.Provider, r.RepoId, projectID)
-		if err != nil {
-			log.Printf("error creating reconciler event: %v", err)
-			continue
-		}
-
-		// This is a non-fatal error, so we'll just log it and continue with the next ones
-		if err := s.evt.Publish(reconcilers.InternalReconcilerEventTopic, msg); err != nil {
-			log.Printf("error publishing reconciler event: %v", err)
-		}
-	}
+	r := result.Repository
 
 	response := &pb.RegisterRepositoryResponse{
-		Results: resultData,
+		Result: result,
+	}
+
+	// Convert each result to a pb.Repository object
+	if result.Status.Error != nil {
+		return response, nil
+	}
+
+	// update the database
+	dbRepo, err := s.store.CreateRepository(ctx, db.CreateRepositoryParams{
+		Provider:  provider.Name,
+		ProjectID: projectID,
+		RepoOwner: r.Owner,
+		RepoName:  r.Name,
+		RepoID:    r.RepoId,
+		IsPrivate: r.IsPrivate,
+		IsFork:    r.IsFork,
+		WebhookID: sql.NullInt32{
+			Int32: int32(r.HookId),
+			Valid: true,
+		},
+		CloneUrl:   r.CloneUrl,
+		WebhookUrl: r.HookUrl,
+		DeployUrl:  r.DeployUrl,
+	})
+	// even if we set the webhook, if we couldn't create it in the database, we'll return an error
+	if err != nil {
+		log.Printf("error creating repository '%s/%s' in database: %v", r.Owner, r.Name, err)
+
+		result.Status.Success = false
+		errorStr := "error creating repository in database"
+		result.Status.Error = &errorStr
+		return response, nil
+	}
+
+	repoDBID := dbRepo.ID.String()
+	r.Id = &repoDBID
+
+	// publish a reconcile event for the registered repositories
+	log.Printf("publishing register event for repository: %s/%s", r.Owner, r.Name)
+
+	msg, err := reconcilers.NewRepoReconcilerMessage(in.Provider, r.RepoId, projectID)
+	if err != nil {
+		log.Printf("error creating reconciler event: %v", err)
+		return response, nil
+	}
+
+	// This is a non-fatal error, so we'll just log it and continue with the next ones
+	if err := s.evt.Publish(reconcilers.InternalReconcilerEventTopic, msg); err != nil {
+		log.Printf("error publishing reconciler event: %v", err)
 	}
 
 	return response, nil

@@ -26,7 +26,7 @@ import (
 	"google.golang.org/protobuf/reflect/protoreflect"
 	"google.golang.org/protobuf/types/known/structpb"
 
-	engif "github.com/stacklok/mediator/internal/engine/interfaces"
+	engif "github.com/stacklok/minder/internal/engine/interfaces"
 )
 
 // ErrBuildingCacheKey is the error returned when building a cache key fails

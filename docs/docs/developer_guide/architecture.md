@@ -21,17 +21,17 @@ flowchart LR
         grpc>GRPC endpoint]
         click grpc "/api" "GRPC auto-generated documentation"
         web>HTTP endpoint]
-        click web "https://github.com/stacklok/mediator/blob/main/internal/controlplane/server.go#L210" "Webserver URL registration code"
+        click web "https://github.com/stacklok/minder/blob/main/internal/controlplane/server.go#L210" "Webserver URL registration code"
         events("watermill")
         click events "https://watermill.io/docs" "Watermill event processing library"
 
         handler>Event handlers]
-        click handler "https://github.com/stacklok/mediator/blob/main/cmd/server/app/serve.go#L69" "Registered event handlers"
+        click handler "https://github.com/stacklok/minder/blob/main/cmd/server/app/serve.go#L69" "Registered event handlers"
     end
 
     cloud([GitHub])
     cli("<code>minder</code> CLI")
-    click cli "https://github.com/stacklok/mediator/tree/main/cmd/cli"
+    click cli "https://github.com/stacklok/minder/tree/main/cmd/cli"
 
     db[(Postgres)]
     click postgres "/db/mediator_db_schema" "Database schema"

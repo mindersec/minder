@@ -32,12 +32,12 @@ import (
 	"google.golang.org/grpc/credentials/insecure"
 	"google.golang.org/grpc/test/bufconn"
 
-	mockdb "github.com/stacklok/mediator/database/mock"
-	mockjwt "github.com/stacklok/mediator/internal/auth/mock"
-	"github.com/stacklok/mediator/internal/config"
-	"github.com/stacklok/mediator/internal/events"
-	legacy "github.com/stacklok/mediator/pkg/api/protobuf/go/mediator/v1"
-	pb "github.com/stacklok/mediator/pkg/api/protobuf/go/minder/v1"
+	mockdb "github.com/stacklok/minder/database/mock"
+	mockjwt "github.com/stacklok/minder/internal/auth/mock"
+	"github.com/stacklok/minder/internal/config"
+	"github.com/stacklok/minder/internal/events"
+	legacy "github.com/stacklok/minder/pkg/api/protobuf/go/mediator/v1"
+	pb "github.com/stacklok/minder/pkg/api/protobuf/go/minder/v1"
 )
 
 const bufSize = 1024 * 1024

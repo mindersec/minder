@@ -26,7 +26,7 @@ import (
 	"go.opentelemetry.io/otel/attribute"
 	"go.opentelemetry.io/otel/metric"
 
-	"github.com/stacklok/mediator/internal/db"
+	"github.com/stacklok/minder/internal/db"
 )
 
 var _ http.RoundTripper = (*instrumentedRoundTripper)(nil)
@@ -45,8 +45,12 @@ func (irt *instrumentedRoundTripper) RoundTrip(r *http.Request) (*http.Response,
 	labels := []attribute.KeyValue{
 		attribute.String("http_method", r.Method),
 		attribute.String("http_host", r.URL.Host),
-		attribute.Int("http_status_code", resp.StatusCode),
 	}
+
+	if resp != nil {
+		labels = append(labels, attribute.Int("http_status_code", resp.StatusCode))
+	}
+
 	irt.durationHistogram.Record(r.Context(), duration, metric.WithAttributes(labels...))
 
 	return resp, err

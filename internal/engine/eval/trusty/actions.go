@@ -23,17 +23,17 @@ import (
 	"strings"
 	"text/template"
 
-	pb "github.com/stacklok/mediator/pkg/api/protobuf/go/minder/v1"
-	provifv1 "github.com/stacklok/mediator/pkg/providers/v1"
+	pb "github.com/stacklok/minder/pkg/api/protobuf/go/minder/v1"
+	provifv1 "github.com/stacklok/minder/pkg/providers/v1"
 )
 
 const (
-	noLowScoresText = "Mediator analyzed this PR and found no low scores for any of the dependencies."
+	noLowScoresText = "Minder analyzed this PR and found no low scores for any of the dependencies."
 
 	tableHeaderTmplName = "alternativesTableHeader"
 	tableTemplateHeader = `### Summary of packages with low scores
-Mediator detected that this PR is adding dependencies whose score is lower than the threshold configured with
-mediator policies. Below is a summary of the packages with low scores and their alternatives.
+Minder detected that this PR is adding dependencies whose score is lower than the threshold configured with
+Minder policies. Below is a summary of the packages with low scores and their alternatives.
 
 <table>
   <tr>

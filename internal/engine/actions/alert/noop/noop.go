@@ -23,9 +23,9 @@ import (
 
 	"google.golang.org/protobuf/reflect/protoreflect"
 
-	enginerr "github.com/stacklok/mediator/internal/engine/errors"
-	"github.com/stacklok/mediator/internal/engine/interfaces"
-	pb "github.com/stacklok/mediator/pkg/api/protobuf/go/minder/v1"
+	enginerr "github.com/stacklok/minder/internal/engine/errors"
+	"github.com/stacklok/minder/internal/engine/interfaces"
+	pb "github.com/stacklok/minder/pkg/api/protobuf/go/minder/v1"
 )
 
 // Alert is the structure backing the noop alert

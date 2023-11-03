@@ -20,7 +20,7 @@ import (
 	"fmt"
 	"io"
 
-	"github.com/stacklok/mediator/internal/util/jsonyaml"
+	"github.com/stacklok/minder/internal/util/jsonyaml"
 )
 
 // ParseRuleType parses a rule type from a reader

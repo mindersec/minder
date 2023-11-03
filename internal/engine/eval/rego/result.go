@@ -22,7 +22,7 @@ import (
 
 	"github.com/open-policy-agent/opa/rego"
 
-	engerrors "github.com/stacklok/mediator/internal/engine/errors"
+	engerrors "github.com/stacklok/minder/internal/engine/errors"
 )
 
 // EvaluationType is the type of evaluation to perform

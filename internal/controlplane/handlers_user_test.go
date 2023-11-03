@@ -32,14 +32,14 @@ import (
 	"google.golang.org/grpc/codes"
 	"google.golang.org/grpc/metadata"
 
-	mockdb "github.com/stacklok/mediator/database/mock"
-	"github.com/stacklok/mediator/internal/auth"
-	mockjwt "github.com/stacklok/mediator/internal/auth/mock"
-	"github.com/stacklok/mediator/internal/config"
-	"github.com/stacklok/mediator/internal/crypto"
-	"github.com/stacklok/mediator/internal/db"
-	"github.com/stacklok/mediator/internal/events"
-	pb "github.com/stacklok/mediator/pkg/api/protobuf/go/minder/v1"
+	mockdb "github.com/stacklok/minder/database/mock"
+	"github.com/stacklok/minder/internal/auth"
+	mockjwt "github.com/stacklok/minder/internal/auth/mock"
+	"github.com/stacklok/minder/internal/config"
+	"github.com/stacklok/minder/internal/crypto"
+	"github.com/stacklok/minder/internal/db"
+	"github.com/stacklok/minder/internal/events"
+	pb "github.com/stacklok/minder/pkg/api/protobuf/go/minder/v1"
 )
 
 const (

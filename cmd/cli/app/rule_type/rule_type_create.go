@@ -17,23 +17,20 @@ package rule_type
 
 import (
 	"fmt"
-	"io"
 	"os"
 
-	"github.com/olekukonko/tablewriter"
 	"github.com/spf13/cobra"
 	"github.com/spf13/viper"
-	"golang.org/x/exp/slices"
 
-	"github.com/stacklok/mediator/internal/util"
-	minderv1 "github.com/stacklok/mediator/pkg/api/protobuf/go/minder/v1"
+	"github.com/stacklok/minder/internal/util"
+	minderv1 "github.com/stacklok/minder/pkg/api/protobuf/go/minder/v1"
 )
 
 // RuleType_createCmd represents the profile create command
 var RuleType_createCmd = &cobra.Command{
 	Use:   "create",
 	Short: "Create a rule type within a minder control plane",
-	Long: `The minder rule type create subcommand lets you create new profiles for a project
+	Long: `The minder rule type create subcommand lets you create new rule types for a project
 within a minder control plane.`,
 	PreRun: func(cmd *cobra.Command, args []string) {
 		if err := viper.BindPFlags(cmd.Flags()); err != nil {
@@ -65,9 +62,27 @@ within a minder control plane.`,
 
 		table := initializeTable(cmd)
 
+		ctx, cancel := util.GetAppContext()
+		defer cancel()
+
+		createFunc := func(fileName string, rt *minderv1.RuleType) (*minderv1.RuleType, error) {
+			resprt, err := client.CreateRuleType(ctx, &minderv1.CreateRuleTypeRequest{
+				RuleType: rt,
+			})
+			if err != nil {
+				return nil, fmt.Errorf("error creating rule type from %s: %w", fileName, err)
+			}
+
+			return resprt.RuleType, nil
+		}
+
 		for _, f := range expfiles {
-			if err := createOneRuleType(client, table, f, os.Stdin); err != nil {
-				return fmt.Errorf("error creating rule type: %w", err)
+			if shouldSkipFile(f) {
+				continue
+			}
+
+			if err := execOnOneRuleType(table, f, os.Stdin, createFunc); err != nil {
+				return fmt.Errorf("error creating rule type %s: %w", f, err)
 			}
 		}
 
@@ -75,54 +90,6 @@ within a minder control plane.`,
 
 		return nil
 	},
-}
-
-func createOneRuleType(
-	client minderv1.ProfileServiceClient,
-	table *tablewriter.Table,
-	f string,
-	dashOpen io.Reader,
-) error {
-	ctx, cancel := util.GetAppContext()
-	defer cancel()
-
-	preader, closer, err := util.OpenFileArg(f, dashOpen)
-	if err != nil {
-		return fmt.Errorf("error opening file arg: %w", err)
-	}
-	defer closer()
-
-	r, err := minderv1.ParseRuleType(preader)
-	if err != nil {
-		return fmt.Errorf("error parsing rule type: %w", err)
-	}
-
-	// create a rule
-	resp, err := client.CreateRuleType(ctx, &minderv1.CreateRuleTypeRequest{
-		RuleType: r,
-	})
-	if err != nil {
-		return fmt.Errorf("error creating rule type: %w", err)
-	}
-
-	renderRuleTypeTable(resp.RuleType, table)
-	return nil
-}
-
-func validateFilesArg(files []string) error {
-	if files == nil {
-		return fmt.Errorf("error: file must be set")
-	}
-
-	if slices.Contains(files, "") {
-		return fmt.Errorf("error: file must be set")
-	}
-
-	if slices.Contains(files, "-") && len(files) > 1 {
-		return fmt.Errorf("error: cannot use stdin with other files")
-	}
-
-	return nil
 }
 
 func init() {

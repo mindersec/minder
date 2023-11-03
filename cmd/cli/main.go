@@ -17,16 +17,16 @@
 package main
 
 import (
-	"github.com/stacklok/mediator/cmd/cli/app"
-	_ "github.com/stacklok/mediator/cmd/cli/app/apply"
-	_ "github.com/stacklok/mediator/cmd/cli/app/artifact"
-	_ "github.com/stacklok/mediator/cmd/cli/app/auth"
-	_ "github.com/stacklok/mediator/cmd/cli/app/docs"
-	_ "github.com/stacklok/mediator/cmd/cli/app/profile"
-	_ "github.com/stacklok/mediator/cmd/cli/app/profile_status"
-	_ "github.com/stacklok/mediator/cmd/cli/app/provider"
-	_ "github.com/stacklok/mediator/cmd/cli/app/repo"
-	_ "github.com/stacklok/mediator/cmd/cli/app/rule_type"
+	"github.com/stacklok/minder/cmd/cli/app"
+	_ "github.com/stacklok/minder/cmd/cli/app/apply"
+	_ "github.com/stacklok/minder/cmd/cli/app/artifact"
+	_ "github.com/stacklok/minder/cmd/cli/app/auth"
+	_ "github.com/stacklok/minder/cmd/cli/app/docs"
+	_ "github.com/stacklok/minder/cmd/cli/app/profile"
+	_ "github.com/stacklok/minder/cmd/cli/app/profile_status"
+	_ "github.com/stacklok/minder/cmd/cli/app/provider"
+	_ "github.com/stacklok/minder/cmd/cli/app/repo"
+	_ "github.com/stacklok/minder/cmd/cli/app/rule_type"
 )
 
 func main() {

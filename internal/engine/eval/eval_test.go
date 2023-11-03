@@ -22,9 +22,9 @@ import (
 
 	"github.com/stretchr/testify/assert"
 
-	"github.com/stacklok/mediator/internal/engine/eval"
-	"github.com/stacklok/mediator/internal/engine/eval/rego"
-	pb "github.com/stacklok/mediator/pkg/api/protobuf/go/minder/v1"
+	"github.com/stacklok/minder/internal/engine/eval"
+	"github.com/stacklok/minder/internal/engine/eval/rego"
+	pb "github.com/stacklok/minder/pkg/api/protobuf/go/minder/v1"
 )
 
 func TestNewRuleEvaluatorWorks(t *testing.T) {
