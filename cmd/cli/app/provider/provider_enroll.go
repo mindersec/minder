@@ -169,7 +169,7 @@ actions such as adding repositories.`,
 
 		if err := browser.OpenURL(resp.GetUrl()); err != nil {
 			fmt.Fprintf(os.Stderr, "Error opening browser: %s\n", err)
-			os.Exit(1)
+			fmt.Println("Please copy and paste the URL into a browser.")
 		}
 		openTime := time.Now().Unix()
 
