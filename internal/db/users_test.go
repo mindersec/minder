@@ -27,7 +27,7 @@ import (
 
 	"github.com/stretchr/testify/require"
 
-	"github.com/stacklok/mediator/internal/util/rand"
+	"github.com/stacklok/minder/internal/util/rand"
 )
 
 func createRandomUser(t *testing.T, org Project) User {

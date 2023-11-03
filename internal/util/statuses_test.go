@@ -22,7 +22,7 @@ import (
 	"github.com/stretchr/testify/require"
 	"google.golang.org/grpc/codes"
 
-	"github.com/stacklok/mediator/internal/util"
+	"github.com/stacklok/minder/internal/util"
 )
 
 func TestNiceStatusCreation(t *testing.T) {

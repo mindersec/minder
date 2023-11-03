@@ -23,7 +23,7 @@ package v1
 
 import (
 	context "context"
-	v1 "github.com/stacklok/mediator/pkg/api/protobuf/go/minder/v1"
+	v1 "github.com/stacklok/minder/pkg/api/protobuf/go/minder/v1"
 	httpbody "google.golang.org/genproto/googleapis/api/httpbody"
 	grpc "google.golang.org/grpc"
 	codes "google.golang.org/grpc/codes"

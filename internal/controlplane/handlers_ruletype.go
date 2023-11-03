@@ -25,11 +25,11 @@ import (
 	"google.golang.org/grpc/codes"
 	"google.golang.org/grpc/status"
 
-	"github.com/stacklok/mediator/internal/db"
-	"github.com/stacklok/mediator/internal/engine"
-	"github.com/stacklok/mediator/internal/util"
-	"github.com/stacklok/mediator/internal/util/schemaupdate"
-	minderv1 "github.com/stacklok/mediator/pkg/api/protobuf/go/minder/v1"
+	"github.com/stacklok/minder/internal/db"
+	"github.com/stacklok/minder/internal/engine"
+	"github.com/stacklok/minder/internal/util"
+	"github.com/stacklok/minder/internal/util/schemaupdate"
+	minderv1 "github.com/stacklok/minder/pkg/api/protobuf/go/minder/v1"
 )
 
 // ListRuleTypes is a method to list all rule types for a given context

@@ -19,10 +19,10 @@ import (
 	"context"
 	"fmt"
 
-	engif "github.com/stacklok/mediator/internal/engine/interfaces"
-	"github.com/stacklok/mediator/internal/providers"
-	pb "github.com/stacklok/mediator/pkg/api/protobuf/go/minder/v1"
-	provifv1 "github.com/stacklok/mediator/pkg/providers/v1"
+	engif "github.com/stacklok/minder/internal/engine/interfaces"
+	"github.com/stacklok/minder/internal/providers"
+	pb "github.com/stacklok/minder/pkg/api/protobuf/go/minder/v1"
+	provifv1 "github.com/stacklok/minder/pkg/providers/v1"
 )
 
 const (

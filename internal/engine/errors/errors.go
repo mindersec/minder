@@ -21,7 +21,7 @@ import (
 	"errors"
 	"fmt"
 
-	"github.com/stacklok/mediator/internal/db"
+	"github.com/stacklok/minder/internal/db"
 )
 
 // ErrEvaluationFailed is an error that occurs during evaluation of a rule.

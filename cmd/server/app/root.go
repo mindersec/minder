@@ -23,9 +23,9 @@ import (
 	"github.com/spf13/cobra"
 	"github.com/spf13/viper"
 
-	"github.com/stacklok/mediator/internal/auth"
-	"github.com/stacklok/mediator/internal/config"
-	"github.com/stacklok/mediator/internal/util"
+	"github.com/stacklok/minder/internal/auth"
+	"github.com/stacklok/minder/internal/config"
+	"github.com/stacklok/minder/internal/util"
 )
 
 var (

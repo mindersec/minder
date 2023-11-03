@@ -25,8 +25,8 @@ import (
 	"google.golang.org/grpc/codes"
 	"google.golang.org/grpc/status"
 
-	"github.com/stacklok/mediator/internal/auth"
-	"github.com/stacklok/mediator/internal/util"
+	"github.com/stacklok/minder/internal/auth"
+	"github.com/stacklok/minder/internal/util"
 )
 
 // ProjectIDGetter is an interface that can be implemented by a request

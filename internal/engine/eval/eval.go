@@ -21,13 +21,13 @@ import (
 	"fmt"
 	"os"
 
-	"github.com/stacklok/mediator/internal/engine/eval/jq"
-	"github.com/stacklok/mediator/internal/engine/eval/rego"
-	"github.com/stacklok/mediator/internal/engine/eval/trusty"
-	"github.com/stacklok/mediator/internal/engine/eval/vulncheck"
-	engif "github.com/stacklok/mediator/internal/engine/interfaces"
-	"github.com/stacklok/mediator/internal/providers"
-	pb "github.com/stacklok/mediator/pkg/api/protobuf/go/minder/v1"
+	"github.com/stacklok/minder/internal/engine/eval/jq"
+	"github.com/stacklok/minder/internal/engine/eval/rego"
+	"github.com/stacklok/minder/internal/engine/eval/trusty"
+	"github.com/stacklok/minder/internal/engine/eval/vulncheck"
+	engif "github.com/stacklok/minder/internal/engine/interfaces"
+	"github.com/stacklok/minder/internal/providers"
+	pb "github.com/stacklok/minder/pkg/api/protobuf/go/minder/v1"
 )
 
 // NewRuleEvaluator creates a new rule data evaluator

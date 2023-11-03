@@ -29,7 +29,7 @@ import (
 	"github.com/spf13/viper"
 	"golang.org/x/exp/slices"
 
-	"github.com/stacklok/mediator/internal/util"
+	"github.com/stacklok/minder/internal/util"
 )
 
 // RoleInfo contains the role information for a user

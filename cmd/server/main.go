@@ -16,7 +16,7 @@
 // Package main provides the entrypoint for the mediator server
 package main
 
-import "github.com/stacklok/mediator/cmd/server/app"
+import "github.com/stacklok/minder/cmd/server/app"
 
 func main() {
 	app.Execute()

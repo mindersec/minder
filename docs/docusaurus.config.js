@@ -113,7 +113,7 @@ const config = {
           //   position: 'right',
           // },
           {
-            href: 'https://github.com/stacklok/mediator',
+            href: 'https://github.com/stacklok/minder',
             label: 'GitHub',
             position: 'right',
           },
@@ -153,7 +153,7 @@ const config = {
               },
               {
                 label: 'GitHub',
-                href: 'https://github.com/stacklok/mediator',
+                href: 'https://github.com/stacklok/minder',
               },
             ],
           },

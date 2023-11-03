@@ -24,7 +24,7 @@ import (
 	"github.com/spf13/cobra"
 	"gopkg.in/yaml.v2"
 
-	pb "github.com/stacklok/mediator/pkg/api/protobuf/go/minder/v1"
+	pb "github.com/stacklok/minder/pkg/api/protobuf/go/minder/v1"
 )
 
 const (
@@ -198,7 +198,7 @@ func guidanceOrEncouragement(status, guidance string) string {
 	}
 
 	// TODO: use a color scheme for minder instead of a pre-defined one.
-	// Related-to: https://github.com/stacklok/mediator/issues/1006
+	// Related-to: https://github.com/stacklok/minder/issues/1006
 	renderedGuidance, err := glamour.Render(guidance, "dark")
 	if err != nil {
 		return guidance

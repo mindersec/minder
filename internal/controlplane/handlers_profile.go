@@ -27,13 +27,13 @@ import (
 	"google.golang.org/grpc/status"
 	"google.golang.org/protobuf/types/known/timestamppb"
 
-	"github.com/stacklok/mediator/internal/auth"
-	"github.com/stacklok/mediator/internal/db"
-	"github.com/stacklok/mediator/internal/engine"
-	"github.com/stacklok/mediator/internal/entities"
-	"github.com/stacklok/mediator/internal/reconcilers"
-	"github.com/stacklok/mediator/internal/util"
-	minderv1 "github.com/stacklok/mediator/pkg/api/protobuf/go/minder/v1"
+	"github.com/stacklok/minder/internal/auth"
+	"github.com/stacklok/minder/internal/db"
+	"github.com/stacklok/minder/internal/engine"
+	"github.com/stacklok/minder/internal/entities"
+	"github.com/stacklok/minder/internal/reconcilers"
+	"github.com/stacklok/minder/internal/util"
+	minderv1 "github.com/stacklok/minder/pkg/api/protobuf/go/minder/v1"
 )
 
 // authAndContextValidation is a helper function to initialize entity context info and validate input

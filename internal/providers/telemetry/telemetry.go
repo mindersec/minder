@@ -26,7 +26,7 @@ import (
 	"go.opentelemetry.io/otel/attribute"
 	"go.opentelemetry.io/otel/metric"
 
-	"github.com/stacklok/mediator/internal/db"
+	"github.com/stacklok/minder/internal/db"
 )
 
 var _ http.RoundTripper = (*instrumentedRoundTripper)(nil)

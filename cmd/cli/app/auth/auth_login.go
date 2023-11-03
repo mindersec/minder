@@ -41,11 +41,11 @@ import (
 	"google.golang.org/grpc/codes"
 	"google.golang.org/grpc/status"
 
-	mcrypto "github.com/stacklok/mediator/internal/crypto"
-	"github.com/stacklok/mediator/internal/util"
-	"github.com/stacklok/mediator/internal/util/cli"
-	"github.com/stacklok/mediator/internal/util/rand"
-	pb "github.com/stacklok/mediator/pkg/api/protobuf/go/minder/v1"
+	mcrypto "github.com/stacklok/minder/internal/crypto"
+	"github.com/stacklok/minder/internal/util"
+	"github.com/stacklok/minder/internal/util/cli"
+	"github.com/stacklok/minder/internal/util/rand"
+	pb "github.com/stacklok/minder/pkg/api/protobuf/go/minder/v1"
 )
 
 func userRegistered(ctx context.Context, client pb.UserServiceClient) (bool, *pb.GetUserResponse, error) {

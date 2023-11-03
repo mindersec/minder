@@ -45,15 +45,15 @@ import (
 	"google.golang.org/protobuf/encoding/protojson"
 	"google.golang.org/protobuf/types/known/timestamppb"
 
-	"github.com/stacklok/mediator/internal/container"
-	"github.com/stacklok/mediator/internal/db"
-	"github.com/stacklok/mediator/internal/engine"
-	"github.com/stacklok/mediator/internal/events"
-	"github.com/stacklok/mediator/internal/providers"
-	githubprovider "github.com/stacklok/mediator/internal/providers/github"
-	"github.com/stacklok/mediator/internal/util"
-	pb "github.com/stacklok/mediator/pkg/api/protobuf/go/minder/v1"
-	provifv1 "github.com/stacklok/mediator/pkg/providers/v1"
+	"github.com/stacklok/minder/internal/container"
+	"github.com/stacklok/minder/internal/db"
+	"github.com/stacklok/minder/internal/engine"
+	"github.com/stacklok/minder/internal/events"
+	"github.com/stacklok/minder/internal/providers"
+	githubprovider "github.com/stacklok/minder/internal/providers/github"
+	"github.com/stacklok/minder/internal/util"
+	pb "github.com/stacklok/minder/pkg/api/protobuf/go/minder/v1"
+	provifv1 "github.com/stacklok/minder/pkg/providers/v1"
 )
 
 // CONTAINER_TYPE is the type for container artifacts

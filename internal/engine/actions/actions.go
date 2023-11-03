@@ -27,14 +27,14 @@ import (
 	"github.com/sqlc-dev/pqtype"
 	"google.golang.org/protobuf/reflect/protoreflect"
 
-	"github.com/stacklok/mediator/internal/db"
-	"github.com/stacklok/mediator/internal/engine/actions/alert"
-	"github.com/stacklok/mediator/internal/engine/actions/remediate"
-	"github.com/stacklok/mediator/internal/engine/actions/remediate/pull_request"
-	enginerr "github.com/stacklok/mediator/internal/engine/errors"
-	engif "github.com/stacklok/mediator/internal/engine/interfaces"
-	"github.com/stacklok/mediator/internal/providers"
-	minderv1 "github.com/stacklok/mediator/pkg/api/protobuf/go/minder/v1"
+	"github.com/stacklok/minder/internal/db"
+	"github.com/stacklok/minder/internal/engine/actions/alert"
+	"github.com/stacklok/minder/internal/engine/actions/remediate"
+	"github.com/stacklok/minder/internal/engine/actions/remediate/pull_request"
+	enginerr "github.com/stacklok/minder/internal/engine/errors"
+	engif "github.com/stacklok/minder/internal/engine/interfaces"
+	"github.com/stacklok/minder/internal/providers"
+	minderv1 "github.com/stacklok/minder/pkg/api/protobuf/go/minder/v1"
 )
 
 // RuleActionsEngine is the engine responsible for processing all actions i.e., remediation and alerts

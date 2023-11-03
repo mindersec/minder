@@ -18,17 +18,17 @@ plugins:
   - name: go 
     out: .
     #out: pkg/api/protobuf/go
-    opt: module=github.com/stacklok/mediator
+    opt: module=github.com/stacklok/minder
   - name: go-grpc
     out: .
     #out: pkg/api/protobuf/go
     opt:
-      - module=github.com/stacklok/mediator
+      - module=github.com/stacklok/minder
   - name: grpc-gateway
     out: .
     #out: pkg/api/protobuf/go
     opt:
-     - module=github.com/stacklok/mediator
+     - module=github.com/stacklok/minder
   - name: openapiv2
     out: pkg/api/openapi
   - plugin: doc

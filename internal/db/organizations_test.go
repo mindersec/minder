@@ -31,7 +31,7 @@ import (
 
 	"github.com/stretchr/testify/require"
 
-	"github.com/stacklok/mediator/internal/util/rand"
+	"github.com/stacklok/minder/internal/util/rand"
 )
 
 // A helper function to create a random organization

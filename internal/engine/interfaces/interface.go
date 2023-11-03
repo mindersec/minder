@@ -26,9 +26,9 @@ import (
 	"github.com/rs/zerolog"
 	"google.golang.org/protobuf/reflect/protoreflect"
 
-	"github.com/stacklok/mediator/internal/db"
-	evalerrors "github.com/stacklok/mediator/internal/engine/errors"
-	pb "github.com/stacklok/mediator/pkg/api/protobuf/go/minder/v1"
+	"github.com/stacklok/minder/internal/db"
+	evalerrors "github.com/stacklok/minder/internal/engine/errors"
+	pb "github.com/stacklok/minder/pkg/api/protobuf/go/minder/v1"
 )
 
 // Ingester is the interface for a rule type ingester

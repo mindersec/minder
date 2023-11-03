@@ -21,7 +21,7 @@ import (
 	"google.golang.org/protobuf/encoding/protojson"
 	"google.golang.org/protobuf/types/known/structpb"
 
-	"github.com/stacklok/mediator/internal/util/schemaupdate"
+	"github.com/stacklok/minder/internal/util/schemaupdate"
 )
 
 func TestValidateSchemaUpdate(t *testing.T) {

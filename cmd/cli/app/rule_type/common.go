@@ -24,8 +24,8 @@ import (
 	"github.com/olekukonko/tablewriter"
 	"golang.org/x/exp/slices"
 
-	"github.com/stacklok/mediator/internal/util"
-	minderv1 "github.com/stacklok/mediator/pkg/api/protobuf/go/minder/v1"
+	"github.com/stacklok/minder/internal/util"
+	minderv1 "github.com/stacklok/minder/pkg/api/protobuf/go/minder/v1"
 )
 
 func execOnOneRuleType(

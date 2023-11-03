@@ -22,16 +22,16 @@ import (
 	"github.com/google/uuid"
 	"github.com/rs/zerolog"
 
-	"github.com/stacklok/mediator/internal/config"
-	"github.com/stacklok/mediator/internal/crypto"
-	"github.com/stacklok/mediator/internal/db"
-	evalerrors "github.com/stacklok/mediator/internal/engine/errors"
-	"github.com/stacklok/mediator/internal/engine/ingestcache"
-	engif "github.com/stacklok/mediator/internal/engine/interfaces"
-	"github.com/stacklok/mediator/internal/events"
-	"github.com/stacklok/mediator/internal/providers"
-	providertelemetry "github.com/stacklok/mediator/internal/providers/telemetry"
-	pb "github.com/stacklok/mediator/pkg/api/protobuf/go/minder/v1"
+	"github.com/stacklok/minder/internal/config"
+	"github.com/stacklok/minder/internal/crypto"
+	"github.com/stacklok/minder/internal/db"
+	evalerrors "github.com/stacklok/minder/internal/engine/errors"
+	"github.com/stacklok/minder/internal/engine/ingestcache"
+	engif "github.com/stacklok/minder/internal/engine/interfaces"
+	"github.com/stacklok/minder/internal/events"
+	"github.com/stacklok/minder/internal/providers"
+	providertelemetry "github.com/stacklok/minder/internal/providers/telemetry"
+	pb "github.com/stacklok/minder/pkg/api/protobuf/go/minder/v1"
 )
 
 const (

@@ -29,8 +29,8 @@ import (
 	"github.com/spf13/cobra"
 	"github.com/spf13/viper"
 
-	"github.com/stacklok/mediator/internal/util"
-	"github.com/stacklok/mediator/internal/util/cli"
+	"github.com/stacklok/minder/internal/util"
+	"github.com/stacklok/minder/internal/util/cli"
 )
 
 // auth_logoutCmd represents the logout command

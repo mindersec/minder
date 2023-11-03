@@ -23,7 +23,7 @@ import (
 	"net/url"
 	"strings"
 
-	pb "github.com/stacklok/mediator/pkg/api/protobuf/go/minder/v1"
+	pb "github.com/stacklok/minder/pkg/api/protobuf/go/minder/v1"
 )
 
 func urlFromEndpointAndPaths(

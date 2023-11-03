@@ -19,7 +19,7 @@ package profile_status
 import (
 	"github.com/spf13/cobra"
 
-	"github.com/stacklok/mediator/cmd/cli/app"
+	"github.com/stacklok/minder/cmd/cli/app"
 )
 
 // ProfileStatusCmd is the root command for the profile_status subcommands

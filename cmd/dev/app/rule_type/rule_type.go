@@ -29,15 +29,15 @@ import (
 	"github.com/spf13/viper"
 	"google.golang.org/protobuf/reflect/protoreflect"
 
-	"github.com/stacklok/mediator/cmd/dev/app"
-	"github.com/stacklok/mediator/internal/db"
-	"github.com/stacklok/mediator/internal/engine"
-	"github.com/stacklok/mediator/internal/engine/errors"
-	"github.com/stacklok/mediator/internal/engine/eval/rego"
-	engif "github.com/stacklok/mediator/internal/engine/interfaces"
-	"github.com/stacklok/mediator/internal/providers"
-	"github.com/stacklok/mediator/internal/util/jsonyaml"
-	minderv1 "github.com/stacklok/mediator/pkg/api/protobuf/go/minder/v1"
+	"github.com/stacklok/minder/cmd/dev/app"
+	"github.com/stacklok/minder/internal/db"
+	"github.com/stacklok/minder/internal/engine"
+	"github.com/stacklok/minder/internal/engine/errors"
+	"github.com/stacklok/minder/internal/engine/eval/rego"
+	engif "github.com/stacklok/minder/internal/engine/interfaces"
+	"github.com/stacklok/minder/internal/providers"
+	"github.com/stacklok/minder/internal/util/jsonyaml"
+	minderv1 "github.com/stacklok/minder/pkg/api/protobuf/go/minder/v1"
 )
 
 // TestCmd is the root command for the rule subcommands

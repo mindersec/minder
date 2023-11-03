@@ -21,7 +21,7 @@ import (
 
 	"github.com/spf13/viper"
 
-	"github.com/stacklok/mediator/cmd/server/app"
+	"github.com/stacklok/minder/cmd/server/app"
 )
 
 type testWriter struct {

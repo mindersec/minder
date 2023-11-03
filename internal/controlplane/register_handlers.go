@@ -22,8 +22,8 @@ import (
 	"github.com/grpc-ecosystem/grpc-gateway/v2/runtime"
 	"google.golang.org/grpc"
 
-	legacy "github.com/stacklok/mediator/pkg/api/protobuf/go/mediator/v1"
-	pb "github.com/stacklok/mediator/pkg/api/protobuf/go/minder/v1"
+	legacy "github.com/stacklok/minder/pkg/api/protobuf/go/mediator/v1"
+	pb "github.com/stacklok/minder/pkg/api/protobuf/go/minder/v1"
 )
 
 // RegisterGatewayHTTPHandlers registers the gateway HTTP handlers

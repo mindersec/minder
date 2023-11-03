@@ -20,7 +20,7 @@ import "google/protobuf/descriptor.proto";
 import "google/api/httpbody.proto";
 import "minder/v1/minder.proto";
 
-option go_package = "github.com/stacklok/mediator/pkg/api/protobuf/go/mediator/v1";
+option go_package = "github.com/stacklok/minder/pkg/api/protobuf/go/mediator/v1";
 
 // Simple Health Check Service
 // replies with OK

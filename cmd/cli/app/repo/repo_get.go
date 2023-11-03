@@ -22,10 +22,10 @@ import (
 	"github.com/spf13/cobra"
 	"github.com/spf13/viper"
 
-	"github.com/stacklok/mediator/cmd/cli/app"
-	github "github.com/stacklok/mediator/internal/providers/github"
-	"github.com/stacklok/mediator/internal/util"
-	pb "github.com/stacklok/mediator/pkg/api/protobuf/go/minder/v1"
+	"github.com/stacklok/minder/cmd/cli/app"
+	github "github.com/stacklok/minder/internal/providers/github"
+	"github.com/stacklok/minder/internal/util"
+	pb "github.com/stacklok/minder/pkg/api/protobuf/go/minder/v1"
 )
 
 const (
