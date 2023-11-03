@@ -264,6 +264,10 @@ func (s *Server) UpdateRuleType(
 		return nil, status.Errorf(codes.Unknown, "failed to create rule type: %s", err)
 	}
 
+	// ensure ID is set
+	rtypeIDStr := rtdb.ID.String()
+	in.Id = &rtypeIDStr
+
 	return &minderv1.UpdateRuleTypeResponse{
 		RuleType: in,
 	}, nil
