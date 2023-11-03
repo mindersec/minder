@@ -72,13 +72,6 @@ func newTagIsASignatureError(msg, signatureTag string) *tagIsASignatureError {
 	return &tagIsASignatureError{message: msg, signatureTag: signatureTag}
 }
 
-// UpstreamRepositoryReference represents a GitHub repository
-type UpstreamRepositoryReference struct {
-	Owner      string
-	Name       string
-	UpstreamID int32
-}
-
 // errRepoNotFound is returned when a repository is not found
 var errRepoNotFound = errors.New("repository not found")
 
@@ -237,16 +230,13 @@ func handleParseError(typ string, parseErr error) webhookEventState {
 // and returns the registration result for each repository.
 // If an error occurs, the registration is aborted and the error is returned.
 // https://docs.github.com/en/rest/reference/repos#create-a-repository-webhook
-// nolint:gocyclo
 func (s *Server) registerWebhookForRepository(
 	ctx context.Context,
 	pbuild *providers.ProviderBuilder,
 	projectID uuid.UUID,
-	repositories []UpstreamRepositoryReference,
+	repo *pb.UpstreamRepositoryRef,
 	ghEvents []string,
-) ([]*pb.RegisterRepoResult, error) {
-
-	var registerData []*pb.RegisterRepoResult
+) (*pb.RegisterRepoResult, error) {
 
 	if !pbuild.Implements(db.ProviderTypeGithub) {
 		return nil, fmt.Errorf("provider %s is not supported for github webhook", pbuild.GetName())
@@ -261,121 +251,109 @@ func (s *Server) registerWebhookForRepository(
 	ping := s.cfg.WebhookConfig.ExternalPingURL
 	secret := s.cfg.WebhookConfig.WebhookSecret
 
-	for _, repo := range repositories {
-		regResult := &pb.RegisterRepoResult{
-			Repository: &pb.Repository{
-				Name:   repo.Name,
-				Owner:  repo.Owner,
-				RepoId: repo.UpstreamID,
-			},
-			Status: &pb.RegisterRepoResult_Status{
-				Success: false,
-			},
-		}
+	regResult := &pb.RegisterRepoResult{
+		Repository: &pb.Repository{
+			Name:   repo.Name,
+			Owner:  repo.Owner,
+			RepoId: repo.RepoId,
+		},
+		Status: &pb.RegisterRepoResult_Status{
+			Success: false,
+		},
+	}
 
-		logger := zerolog.Ctx(ctx).With().
-			Str("repoName", repo.Name).
-			Str("repoOwner", repo.Owner).Logger()
+	logger := zerolog.Ctx(ctx).With().
+		Str("repoName", repo.Name).
+		Str("repoOwner", repo.Owner).Logger()
 
-		// let's verify that the repository actually exists.
-		repoGet, err := client.GetRepository(ctx, repo.Owner, repo.Name)
-		if err != nil {
-			errorStr := err.Error()
-			regResult.Status.Error = &errorStr
-			registerData = append(registerData, regResult)
-			continue
-		}
+	// let's verify that the repository actually exists.
+	repoGet, err := client.GetRepository(ctx, repo.Owner, repo.Name)
+	if err != nil {
+		errorStr := err.Error()
+		regResult.Status.Error = &errorStr
+		return regResult, nil
+	}
 
-		// skip if we try to register a private repository
-		if repoGet.GetPrivate() && !projectAllowsPrivateRepos(ctx, s.store, projectID) {
-			errorStr := "repository is private"
-			regResult.Status.Error = &errorStr
-			registerData = append(registerData, regResult)
-			continue
-		}
+	// skip if we try to register a private repository
+	if repoGet.GetPrivate() && !projectAllowsPrivateRepos(ctx, s.store, projectID) {
+		errorStr := "repository is private"
+		regResult.Status.Error = &errorStr
+		return regResult, nil
+	}
 
-		urlUUID := uuid.New().String()
+	urlUUID := uuid.New().String()
 
-		webhookUrl := fmt.Sprintf("%s/%s", url, urlUUID)
-		parsedOriginalURL, err := urlparser.Parse(webhookUrl)
-		if err != nil {
-			errStr := err.Error()
-			regResult.Status.Error = &errStr
-			registerData = append(registerData, regResult)
-			continue
-		}
+	webhookUrl := fmt.Sprintf("%s/%s", url, urlUUID)
+	parsedOriginalURL, err := urlparser.Parse(webhookUrl)
+	if err != nil {
+		errStr := err.Error()
+		regResult.Status.Error = &errStr
+		return regResult, nil
+	}
 
-		hook := &github.Hook{
-			Config: map[string]interface{}{
-				"url":          webhookUrl,
-				"content_type": "json",
-				"ping_url":     ping,
-				"secret":       secret,
-			},
-			Events: ghEvents,
-		}
+	hook := &github.Hook{
+		Config: map[string]interface{}{
+			"url":          webhookUrl,
+			"content_type": "json",
+			"ping_url":     ping,
+			"secret":       secret,
+		},
+		Events: ghEvents,
+	}
 
-		// if we have an existing hook for same repo, delete it
-		hooks, err := client.ListHooks(ctx, repo.Owner, repo.Name)
-		if errors.Is(err, githubprovider.ErrNotFound) {
-			logger.Debug().Msg("no hooks found")
-		} else if err != nil {
-			errorStr := err.Error()
-			regResult.Status.Error = &errorStr
-			registerData = append(registerData, regResult)
-			logger.Error().Msg("error listing hooks")
-			continue
-		}
-		for _, h := range hooks {
-			config_url := h.Config["url"].(string)
-			if config_url != "" {
-				parsedURL, err := urlparser.Parse(config_url)
+	// if we have an existing hook for same repo, delete it
+	hooks, err := client.ListHooks(ctx, repo.Owner, repo.Name)
+	if errors.Is(err, githubprovider.ErrNotFound) {
+		logger.Debug().Msg("no hooks found")
+	} else if err != nil {
+		errorStr := err.Error()
+		regResult.Status.Error = &errorStr
+		logger.Error().Msg("error listing hooks")
+		return regResult, nil
+	}
+	for _, h := range hooks {
+		config_url := h.Config["url"].(string)
+		if config_url != "" {
+			parsedURL, err := urlparser.Parse(config_url)
+			if err != nil {
+				errorStr := err.Error()
+				regResult.Status.Error = &errorStr
+				return regResult, nil
+			}
+			if parsedURL.Host == parsedOriginalURL.Host {
+				// it is our hook, we can remove it
+				err = client.DeleteHook(ctx, repo.Owner, repo.Name, h.GetID())
 				if err != nil {
 					errorStr := err.Error()
 					regResult.Status.Error = &errorStr
-					registerData = append(registerData, regResult)
-					continue
-				}
-				if parsedURL.Host == parsedOriginalURL.Host {
-					// it is our hook, we can remove it
-					err = client.DeleteHook(ctx, repo.Owner, repo.Name, h.GetID())
-					if err != nil {
-						errorStr := err.Error()
-						regResult.Status.Error = &errorStr
-						registerData = append(registerData, regResult)
-						logger.Error().Msg("error deleting hook")
-						continue
-					}
+					logger.Error().Msg("error deleting hook")
+					return regResult, nil
 				}
 			}
 		}
-
-		// Attempt to register webhook
-		mhook, err := client.CreateHook(ctx, repo.Owner, repo.Name, hook)
-		if err != nil {
-			errorStr := err.Error()
-			regResult.Status.Error = &errorStr
-			registerData = append(registerData, regResult)
-			logger.Error().Msg("error creating hook")
-			continue
-		}
-
-		regResult.Status.Success = true
-		regResult.Repository.HookId = mhook.GetID()
-		regResult.Repository.HookUrl = mhook.GetURL()
-		regResult.Repository.DeployUrl = webhookUrl
-		regResult.Repository.CloneUrl = *repoGet.CloneURL
-		regResult.Repository.HookType = mhook.GetType()
-		regResult.Repository.HookName = mhook.GetName()
-		regResult.Repository.HookUuid = urlUUID
-		regResult.Repository.IsPrivate = repoGet.GetPrivate()
-		regResult.Repository.IsFork = repoGet.GetFork()
-
-		registerData = append(registerData, regResult)
-
 	}
 
-	return registerData, nil
+	// Attempt to register webhook
+	mhook, err := client.CreateHook(ctx, repo.Owner, repo.Name, hook)
+	if err != nil {
+		errorStr := err.Error()
+		regResult.Status.Error = &errorStr
+		logger.Error().Msg("error creating hook")
+		return regResult, nil
+	}
+
+	regResult.Status.Success = true
+	regResult.Repository.HookId = mhook.GetID()
+	regResult.Repository.HookUrl = mhook.GetURL()
+	regResult.Repository.DeployUrl = webhookUrl
+	regResult.Repository.CloneUrl = *repoGet.CloneURL
+	regResult.Repository.HookType = mhook.GetType()
+	regResult.Repository.HookName = mhook.GetName()
+	regResult.Repository.HookUuid = urlUUID
+	regResult.Repository.IsPrivate = repoGet.GetPrivate()
+	regResult.Repository.IsFork = repoGet.GetFork()
+
+	return regResult, nil
 }
 
 func (s *Server) parseGithubEventForProcessing(
