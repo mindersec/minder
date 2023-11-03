@@ -29,6 +29,7 @@ import (
 	"github.com/spf13/viper"
 
 	"github.com/stacklok/mediator/internal/util"
+	"github.com/stacklok/mediator/internal/util/cli"
 	pb "github.com/stacklok/mediator/pkg/api/protobuf/go/minder/v1"
 )
 
@@ -53,6 +54,14 @@ var Auth_revokeproviderCmd = &cobra.Command{
 			os.Exit(1)
 		}
 
+		if all {
+			yes := cli.PrintYesNoPrompt(cmd,
+				"Are you sure you want to revoke all access tokens for your provider? (yes/no): ",
+				"Delete provider access tokens cancelled.")
+			if !yes {
+				return
+			}
+		}
 		conn, err := util.GrpcForCommand(cmd, viper.GetViper())
 		util.ExitNicelyOnError(err, "Error getting grpc connection")
 		defer conn.Close()
