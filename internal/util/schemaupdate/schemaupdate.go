@@ -73,11 +73,7 @@ func ValidateSchemaUpdate(oldRuleSchema *structpb.Struct, newRuleSchema *structp
 
 	// objects need further validation. We need to make sure that
 	// the new schema is a superset of the old schema
-	if err := validateObjectSchemaUpdate(oldSchemaMap, newSchemaMap); err != nil {
-		return err
-	}
-
-	return nil
+	return validateObjectSchemaUpdate(oldSchemaMap, newSchemaMap)
 }
 
 func getOrInferType(schemaMap map[string]any) (string, error) {
@@ -96,11 +92,11 @@ func getOrInferType(schemaMap map[string]any) (string, error) {
 
 func validateObjectSchemaUpdate(oldSchemaMap, newSchemaMap map[string]any) error {
 	if err := validateRequired(oldSchemaMap, newSchemaMap); err != nil {
-		return err
+		return fmt.Errorf("failed to validate required fields: %v", err)
 	}
 
 	if err := validateProperties(oldSchemaMap, newSchemaMap); err != nil {
-		return err
+		return fmt.Errorf("failed to validate properties: %v", err)
 	}
 
 	return nil
