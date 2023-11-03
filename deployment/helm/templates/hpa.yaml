@@ -23,13 +23,12 @@ spec:
     apiVersion: apps/v1
     kind: Deployment
     name: mediator
-  minReplicas: 1
-  # Clamp to 1 at the moment
-  maxReplicas: 1
+  minReplicas: {{ .Values.hpaSettings.minReplicas }}
+  maxReplicas: {{ .Values.hpaSettings.maxReplicas }}
   metrics:
     - type: Resource
       resource:
         name: cpu
         target:
           type: Utilization
-          averageUtilization: 60
+          averageUtilization: {{ .Values.hpaSettings.metrics.cpu.targetAverageUtilization }}
