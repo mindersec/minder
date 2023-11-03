@@ -17,13 +17,16 @@ package schemaupdate_test
 import (
 	"testing"
 
-	"github.com/stacklok/mediator/internal/util/schemaupdate"
 	"github.com/stretchr/testify/require"
 	"google.golang.org/protobuf/encoding/protojson"
 	"google.golang.org/protobuf/types/known/structpb"
+
+	"github.com/stacklok/mediator/internal/util/schemaupdate"
 )
 
 func TestValidateSchemaUpdate(t *testing.T) {
+	t.Parallel()
+
 	type args struct {
 		oldRuleSchemaDef string
 		newRuleSchemaDef string
@@ -175,7 +178,10 @@ func TestValidateSchemaUpdate(t *testing.T) {
 		},
 	}
 	for _, tt := range tests {
+		tt := tt
 		t.Run(tt.name, func(t *testing.T) {
+			t.Parallel()
+
 			oldRuleSchema := &structpb.Struct{}
 			newRuleSchema := &structpb.Struct{}
 			require.NoError(t, protojson.Unmarshal([]byte(tt.args.oldRuleSchemaDef), oldRuleSchema),
