@@ -10,7 +10,6 @@ is enabled on the registered repository.
 ## Prerequisites
 
 * The `minder` CLI application
-* A Stacklok account
 * For enrolling an organization, a GitHub account that is either an Owner in the organization or an Admin on the repositories
 
 ## Enroll a provider
@@ -24,7 +23,7 @@ This will allow you to later enroll your account's repositories.
 minder provider enroll --provider github
 ```
 
-This command will open a window in your browser, prompting you to authorize Stacklok to access some data on GitHub.
+This command will open a window in your browser, prompting you to authorize Minder to access some data on GitHub.
 
 When enrolling an organization, use the `--owner` flag of the `minder provider enroll` command to specify the organization name:
 ```bash
@@ -47,7 +46,7 @@ Navigate through the repositories using the arrow keys and select one or more re
 by using the space key.  
 Press the enter key once you have selected all the desired repositories.
 
-You can see the list of repositories registered in Mediator.
+You can see the list of repositories registered in Minder.
 ```
 minder repo list --provider github
 ```
