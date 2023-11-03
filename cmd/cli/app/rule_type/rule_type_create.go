@@ -19,6 +19,7 @@ import (
 	"fmt"
 	"io"
 	"os"
+	"path/filepath"
 
 	"github.com/olekukonko/tablewriter"
 	"github.com/spf13/cobra"
@@ -66,8 +67,19 @@ within a minder control plane.`,
 		table := initializeTable(cmd)
 
 		for _, f := range expfiles {
+			// if the file is not json or yaml, skip it
+			// Get file extension
+			ext := filepath.Ext(f)
+			switch ext {
+			case ".yaml", ".yml", ".json":
+				// do nothing
+			default:
+				fmt.Fprintf(os.Stderr, "Skipping file %s: not a yaml or json file\n", f)
+				continue
+			}
+
 			if err := createOneRuleType(client, table, f, os.Stdin); err != nil {
-				return fmt.Errorf("error creating rule type: %w", err)
+				return fmt.Errorf("error creating rule type %s: %w", f, err)
 			}
 		}
 
