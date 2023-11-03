@@ -44,6 +44,13 @@ serviceAccounts:
   migrate: ""
   server: ""
 
+hpaSettings:
+  minReplicas: 1
+  maxReplicas: 1
+  metrics:
+    cpu:
+      targetAverageUtilization: 60
+
 migrationSettings:
   image: ko://github.com/stacklok/mediator/cmd/server
   imagePullPolicy: "IfNotPresent"
