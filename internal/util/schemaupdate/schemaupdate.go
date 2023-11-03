@@ -66,9 +66,13 @@ func ValidateSchemaUpdate(oldRuleSchema *structpb.Struct, newRuleSchema *structp
 		return fmt.Errorf("cannot change type of rule schema")
 	}
 
-	if oldTypeCast != "object" {
+	if oldTypeCast != "object" && oldTypeCast != "array" {
 		// the change is fine
 		return nil
+	}
+
+	if oldTypeCast == "array" {
+		return validateArraySchemaUpdate(oldSchemaMap, newSchemaMap)
 	}
 
 	// objects need further validation. We need to make sure that
@@ -176,4 +180,41 @@ func schemaIsNilOrEmpty(schema *structpb.Struct) bool {
 	}
 
 	return len(schema.AsMap()) == 0
+}
+
+func validateArraySchemaUpdate(oldSchemaMap, newSchemaMap map[string]any) error {
+	if err := validateItems(oldSchemaMap, newSchemaMap); err != nil {
+		return fmt.Errorf("failed to validate items: %v", err)
+	}
+
+	return nil
+}
+
+func validateItems(oldSchemaMap, newSchemaMap map[string]any) error {
+	oldItems, hasOldItems := oldSchemaMap["items"]
+	newItems, hasNewItems := newSchemaMap["items"]
+
+	if !hasNewItems || !hasOldItems {
+		// If we don't have items in either schema, we're good
+		// profiles using this rule type won't break
+		return fmt.Errorf("cannot remove items from rule schema")
+	}
+
+	oldItemsMap, ok := oldItems.(map[string]any)
+	if !ok {
+		return fmt.Errorf("invalid old items field")
+	}
+
+	newItemsMap, ok := newItems.(map[string]any)
+	if !ok {
+		return fmt.Errorf("invalid new items field")
+	}
+
+	// The new schema should be a superset of the old schema
+	// if it's not, we may break profiles using this rule type
+	if !reflect.DeepEqual(newItemsMap, oldItemsMap) {
+		return fmt.Errorf("cannot change items type of rule schema")
+	}
+
+	return nil
 }

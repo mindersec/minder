@@ -176,6 +176,24 @@ func TestValidateSchemaUpdate(t *testing.T) {
 				}`,
 			},
 		},
+		{
+			name: "Changing the items type of an array should error",
+			args: args{
+				oldRuleSchemaDef: `{
+					"type": "array",
+					"items": {
+						"type": "string"
+					}
+				}`,
+				newRuleSchemaDef: `{
+					"type": "array",
+					"items": {
+						"type": "bool"
+					}
+				}`,
+			},
+			wantErr: true,
+		},
 	}
 	for _, tt := range tests {
 		tt := tt
