@@ -18,7 +18,7 @@ package schemaupdate
 
 import (
 	"fmt"
-	"maps"
+	"reflect"
 
 	"dario.cat/mergo"
 	"github.com/barkimedes/go-deepcopy"
@@ -117,7 +117,7 @@ func validateProperties(oldSchemaMap, newSchemaMap map[string]any) error {
 
 	// The new schema should be a superset of the old schema
 	// if it's not, we may break profiles using this rule type
-	if !maps.Equal(newSchemaMap, castedDst) {
+	if !reflect.DeepEqual(newSchemaMap, castedDst) {
 		return fmt.Errorf("cannot remove properties from rule schema")
 	}
 
