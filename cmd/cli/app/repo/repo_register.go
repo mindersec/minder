@@ -127,12 +127,11 @@ var repo_registerCmd = &cobra.Command{
 		results := []*pb.RegisterRepoResult{}
 		for idx := range selectedRepos {
 			repo := selectedRepos[idx]
-			repoRegList := []*pb.UpstreamRepositoryRef{repo}
 			// Construct the RegisterRepositoryRequest
 			request := &pb.RegisterRepositoryRequest{
-				Provider:     provider,
-				Repositories: repoRegList,
-				ProjectId:    projectID,
+				Provider:   provider,
+				Repository: repo,
+				ProjectId:  projectID,
 			}
 
 			result, err := client.RegisterRepository(context.Background(), request)
@@ -141,7 +140,7 @@ var repo_registerCmd = &cobra.Command{
 				continue
 			}
 
-			results = append(results, result.Results...)
+			results = append(results, result.Result)
 		}
 
 		// Register the repos
