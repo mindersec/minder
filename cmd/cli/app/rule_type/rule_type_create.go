@@ -25,8 +25,6 @@ import (
 	"github.com/spf13/cobra"
 	"github.com/spf13/viper"
 	"golang.org/x/exp/slices"
-	"google.golang.org/grpc/codes"
-	"google.golang.org/grpc/status"
 
 	"github.com/stacklok/mediator/internal/util"
 	minderv1 "github.com/stacklok/mediator/pkg/api/protobuf/go/minder/v1"
@@ -68,11 +66,9 @@ within a minder control plane.`,
 
 		table := initializeTable(cmd)
 
-		skippedRuleTypes := []string{}
-		renderTable := false
 		for _, f := range expfiles {
 			// if the file is not json or yaml, skip it
-			// Get the file extension
+			// Get file extension
 			ext := filepath.Ext(f)
 			switch ext {
 			case ".yaml", ".yml", ".json":
@@ -81,31 +77,13 @@ within a minder control plane.`,
 				fmt.Fprintf(os.Stderr, "Skipping file %s: not a yaml or json file\n", f)
 				continue
 			}
+
 			if err := createOneRuleType(client, table, f, os.Stdin); err != nil {
-				if rpcStatus, ok := status.FromError(err); ok {
-					// Let's not fail if it already exists explicitly, but do print the message to the user
-					if rpcStatus.Code() == codes.AlreadyExists {
-						skippedRuleTypes = append(skippedRuleTypes, f)
-						continue
-					}
-				}
 				return fmt.Errorf("error creating rule type %s: %w", f, err)
 			}
-			renderTable = true
 		}
 
-		// Do not render the table if we skipped all files because they already exist
-		if renderTable {
-			table.Render()
-		}
-
-		// Print the skipped rule types
-		if len(skippedRuleTypes) > 0 {
-			cmd.Printf("The following rule type(s) were not created as they already exist: \n\n")
-			for _, ruleType := range skippedRuleTypes {
-				cmd.Println(ruleType)
-			}
-		}
+		table.Render()
 
 		return nil
 	},
