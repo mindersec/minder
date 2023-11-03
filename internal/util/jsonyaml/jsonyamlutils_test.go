@@ -26,7 +26,7 @@ import (
 
 	"github.com/stretchr/testify/assert"
 
-	"github.com/stacklok/mediator/internal/util/jsonyaml"
+	"github.com/stacklok/minder/internal/util/jsonyaml"
 )
 
 func TestConvertYAMLToJSON(t *testing.T) {

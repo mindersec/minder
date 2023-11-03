@@ -27,7 +27,7 @@ import (
 	"github.com/open-policy-agent/opa/rego"
 	"github.com/open-policy-agent/opa/types"
 
-	engif "github.com/stacklok/mediator/internal/engine/interfaces"
+	engif "github.com/stacklok/minder/internal/engine/interfaces"
 )
 
 // MinderRegoLib contains the minder-specific functions for rego

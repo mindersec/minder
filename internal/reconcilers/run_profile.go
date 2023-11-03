@@ -28,11 +28,11 @@ import (
 	"github.com/rs/zerolog"
 	"google.golang.org/protobuf/types/known/timestamppb"
 
-	"github.com/stacklok/mediator/internal/db"
-	"github.com/stacklok/mediator/internal/engine"
-	"github.com/stacklok/mediator/internal/events"
-	"github.com/stacklok/mediator/internal/util"
-	pb "github.com/stacklok/mediator/pkg/api/protobuf/go/minder/v1"
+	"github.com/stacklok/minder/internal/db"
+	"github.com/stacklok/minder/internal/engine"
+	"github.com/stacklok/minder/internal/events"
+	"github.com/stacklok/minder/internal/util"
+	pb "github.com/stacklok/minder/pkg/api/protobuf/go/minder/v1"
 )
 
 // ProfileInitEvent is an event that is sent to the reconciler topic

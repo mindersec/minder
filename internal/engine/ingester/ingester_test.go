@@ -23,14 +23,14 @@ import (
 
 	"github.com/stretchr/testify/require"
 
-	"github.com/stacklok/mediator/internal/db"
-	"github.com/stacklok/mediator/internal/engine/ingester/artifact"
-	"github.com/stacklok/mediator/internal/engine/ingester/builtin"
-	"github.com/stacklok/mediator/internal/engine/ingester/git"
-	"github.com/stacklok/mediator/internal/engine/ingester/rest"
-	"github.com/stacklok/mediator/internal/providers"
-	pb "github.com/stacklok/mediator/pkg/api/protobuf/go/minder/v1"
-	provifv1 "github.com/stacklok/mediator/pkg/providers/v1"
+	"github.com/stacklok/minder/internal/db"
+	"github.com/stacklok/minder/internal/engine/ingester/artifact"
+	"github.com/stacklok/minder/internal/engine/ingester/builtin"
+	"github.com/stacklok/minder/internal/engine/ingester/git"
+	"github.com/stacklok/minder/internal/engine/ingester/rest"
+	"github.com/stacklok/minder/internal/providers"
+	pb "github.com/stacklok/minder/pkg/api/protobuf/go/minder/v1"
+	provifv1 "github.com/stacklok/minder/pkg/providers/v1"
 )
 
 func TestNewRuleDataIngest(t *testing.T) {

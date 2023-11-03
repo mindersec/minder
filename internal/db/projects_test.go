@@ -33,7 +33,7 @@ import (
 	"github.com/stretchr/testify/assert"
 	"github.com/stretchr/testify/require"
 
-	"github.com/stacklok/mediator/internal/util/rand"
+	"github.com/stacklok/minder/internal/util/rand"
 )
 
 func createRandomProject(t *testing.T, orgID uuid.UUID) Project {

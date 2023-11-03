@@ -22,10 +22,10 @@ import (
 	"google.golang.org/grpc/codes"
 	"google.golang.org/grpc/status"
 
-	mcrypto "github.com/stacklok/mediator/internal/crypto"
-	"github.com/stacklok/mediator/internal/db"
-	"github.com/stacklok/mediator/internal/util"
-	pb "github.com/stacklok/mediator/pkg/api/protobuf/go/minder/v1"
+	mcrypto "github.com/stacklok/minder/internal/crypto"
+	"github.com/stacklok/minder/internal/db"
+	"github.com/stacklok/minder/internal/util"
+	pb "github.com/stacklok/minder/pkg/api/protobuf/go/minder/v1"
 )
 
 // CreateKeyPair creates a new key pair for a given group

@@ -23,8 +23,8 @@ import (
 	"github.com/go-playground/validator/v10"
 	"github.com/mitchellh/mapstructure"
 
-	"github.com/stacklok/mediator/internal/engine/eval/pr_actions"
-	pb "github.com/stacklok/mediator/pkg/api/protobuf/go/minder/v1"
+	"github.com/stacklok/minder/internal/engine/eval/pr_actions"
+	pb "github.com/stacklok/minder/pkg/api/protobuf/go/minder/v1"
 )
 
 type ecosystemConfig struct {

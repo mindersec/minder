@@ -12,7 +12,7 @@ linters-settings:
     sections:
       - standard
       - default
-      - prefix(github.com/stacklok/mediator)
+      - prefix(github.com/stacklok/minder)
   revive:
     # see https://github.com/mgechev/revive#available-rules for details.
     ignore-generated-header: true

@@ -21,7 +21,7 @@ import (
 	"google.golang.org/protobuf/reflect/protoreflect"
 	"google.golang.org/protobuf/types/known/structpb"
 
-	engif "github.com/stacklok/mediator/internal/engine/interfaces"
+	engif "github.com/stacklok/minder/internal/engine/interfaces"
 )
 
 // Cache is the interface for the ingest cache.

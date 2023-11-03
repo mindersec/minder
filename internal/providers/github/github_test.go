@@ -20,8 +20,8 @@ import (
 
 	"github.com/stretchr/testify/assert"
 
-	provtelemetry "github.com/stacklok/mediator/internal/providers/telemetry"
-	minderv1 "github.com/stacklok/mediator/pkg/api/protobuf/go/minder/v1"
+	provtelemetry "github.com/stacklok/minder/internal/providers/telemetry"
+	minderv1 "github.com/stacklok/minder/pkg/api/protobuf/go/minder/v1"
 )
 
 func TestNewRestClient(t *testing.T) {

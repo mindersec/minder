@@ -42,7 +42,7 @@ import (
 	"google.golang.org/grpc/codes"
 	"google.golang.org/grpc/status"
 
-	"github.com/stacklok/mediator/internal/config"
+	"github.com/stacklok/minder/internal/config"
 )
 
 var (

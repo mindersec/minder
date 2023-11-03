@@ -25,9 +25,9 @@ import (
 	"github.com/spf13/viper"
 	"google.golang.org/grpc"
 
-	"github.com/stacklok/mediator/internal/util"
-	"github.com/stacklok/mediator/internal/util/cli"
-	pb "github.com/stacklok/mediator/pkg/api/protobuf/go/minder/v1"
+	"github.com/stacklok/minder/internal/util"
+	"github.com/stacklok/minder/internal/util/cli"
+	pb "github.com/stacklok/minder/pkg/api/protobuf/go/minder/v1"
 )
 
 // authWhoamiCmd represents the whoami command

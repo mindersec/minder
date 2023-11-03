@@ -24,11 +24,11 @@ import (
 	"github.com/stretchr/testify/assert"
 	"google.golang.org/grpc/codes"
 
-	mockdb "github.com/stacklok/mediator/database/mock"
-	"github.com/stacklok/mediator/internal/auth"
-	"github.com/stacklok/mediator/internal/config"
-	"github.com/stacklok/mediator/internal/db"
-	pb "github.com/stacklok/mediator/pkg/api/protobuf/go/minder/v1"
+	mockdb "github.com/stacklok/minder/database/mock"
+	"github.com/stacklok/minder/internal/auth"
+	"github.com/stacklok/minder/internal/config"
+	"github.com/stacklok/minder/internal/db"
+	pb "github.com/stacklok/minder/pkg/api/protobuf/go/minder/v1"
 )
 
 func TestKeysHandler(t *testing.T) {

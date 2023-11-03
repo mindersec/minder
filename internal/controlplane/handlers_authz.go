@@ -31,10 +31,10 @@ import (
 	"google.golang.org/protobuf/reflect/protoreflect"
 	"google.golang.org/protobuf/reflect/protoregistry"
 
-	"github.com/stacklok/mediator/internal/auth"
-	"github.com/stacklok/mediator/internal/db"
-	"github.com/stacklok/mediator/internal/util"
-	minder "github.com/stacklok/mediator/pkg/api/protobuf/go/minder/v1"
+	"github.com/stacklok/minder/internal/auth"
+	"github.com/stacklok/minder/internal/db"
+	"github.com/stacklok/minder/internal/util"
+	minder "github.com/stacklok/minder/pkg/api/protobuf/go/minder/v1"
 )
 
 type rpcOptionsKey struct{}

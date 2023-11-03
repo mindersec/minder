@@ -27,15 +27,15 @@ import (
 	"github.com/spf13/viper"
 	"golang.org/x/sync/errgroup"
 
-	"github.com/stacklok/mediator/internal/auth"
-	"github.com/stacklok/mediator/internal/config"
-	"github.com/stacklok/mediator/internal/controlplane"
-	"github.com/stacklok/mediator/internal/db"
-	"github.com/stacklok/mediator/internal/engine"
-	"github.com/stacklok/mediator/internal/events"
-	"github.com/stacklok/mediator/internal/logger"
-	provtelemetry "github.com/stacklok/mediator/internal/providers/telemetry"
-	"github.com/stacklok/mediator/internal/reconcilers"
+	"github.com/stacklok/minder/internal/auth"
+	"github.com/stacklok/minder/internal/config"
+	"github.com/stacklok/minder/internal/controlplane"
+	"github.com/stacklok/minder/internal/db"
+	"github.com/stacklok/minder/internal/engine"
+	"github.com/stacklok/minder/internal/events"
+	"github.com/stacklok/minder/internal/logger"
+	provtelemetry "github.com/stacklok/minder/internal/providers/telemetry"
+	"github.com/stacklok/minder/internal/reconcilers"
 )
 
 var serveCmd = &cobra.Command{

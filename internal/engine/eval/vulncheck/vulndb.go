@@ -23,7 +23,7 @@ import (
 	"net/http"
 	"time"
 
-	pb "github.com/stacklok/mediator/pkg/api/protobuf/go/minder/v1"
+	pb "github.com/stacklok/minder/pkg/api/protobuf/go/minder/v1"
 )
 
 // Vulnerability is a vulnerability JSON representation

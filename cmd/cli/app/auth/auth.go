@@ -25,7 +25,7 @@ package auth
 import (
 	"github.com/spf13/cobra"
 
-	"github.com/stacklok/mediator/cmd/cli/app"
+	"github.com/stacklok/minder/cmd/cli/app"
 )
 
 // AuthCmd represents the account command

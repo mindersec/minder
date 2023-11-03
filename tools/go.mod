@@ -1,4 +1,4 @@
-module github.com/stacklok/mediator/tools
+module github.com/stacklok/minder/tools
 
 go 1.21
 

@@ -75,9 +75,9 @@ go run cmd/cli/main.go --help
 
 ## APIs
 
-The APIs are defined in protobuf [here](https://github.com/stacklok/mediator/blob/main/proto/minder/v1/minder.proto).
+The APIs are defined in protobuf [here](https://github.com/stacklok/minder/blob/main/proto/minder/v1/minder.proto).
 
-An OpenAPI / swagger spec is generated to [here](https://github.com/stacklok/mediator/blob/main/pkg/api/openapi/proto/minder/v1/minder.swagger.json)
+An OpenAPI / swagger spec is generated to [here](https://github.com/stacklok/minder/blob/main/pkg/api/openapi/proto/minder/v1/minder.swagger.json)
 
 It can be accessed over gRPC or HTTP using [gprc-gateway](https://grpc-ecosystem.github.io/grpc-gateway/).
 

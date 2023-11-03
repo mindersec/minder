@@ -24,9 +24,9 @@ import (
 	"google.golang.org/protobuf/proto"
 	"k8s.io/apimachinery/pkg/util/sets"
 
-	evalerrors "github.com/stacklok/mediator/internal/engine/errors"
-	engif "github.com/stacklok/mediator/internal/engine/interfaces"
-	pb "github.com/stacklok/mediator/pkg/api/protobuf/go/minder/v1"
+	evalerrors "github.com/stacklok/minder/internal/engine/errors"
+	engif "github.com/stacklok/minder/internal/engine/interfaces"
+	pb "github.com/stacklok/minder/pkg/api/protobuf/go/minder/v1"
 )
 
 const (

@@ -25,9 +25,9 @@ import (
 	"google.golang.org/grpc/status"
 	"google.golang.org/protobuf/types/known/timestamppb"
 
-	"github.com/stacklok/mediator/internal/db"
-	github "github.com/stacklok/mediator/internal/providers/github"
-	pb "github.com/stacklok/mediator/pkg/api/protobuf/go/minder/v1"
+	"github.com/stacklok/minder/internal/db"
+	github "github.com/stacklok/minder/internal/providers/github"
+	pb "github.com/stacklok/minder/pkg/api/protobuf/go/minder/v1"
 )
 
 // OrgMeta is the metadata associated with an organization

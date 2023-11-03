@@ -44,7 +44,7 @@ jobs:
   #         github_token: ${{ secrets.GITHUB_TOKEN }}
   #     - uses: bufbuild/buf-breaking-action@v1
   #       with:
-  #         against: "https://github.com/stacklok/mediator.git#branch=main"
+  #         against: "https://github.com/stacklok/minder.git#branch=main"
 
   sqlc-generation:
     runs-on: ubuntu-latest

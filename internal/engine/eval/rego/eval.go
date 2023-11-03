@@ -24,8 +24,8 @@ import (
 	"github.com/open-policy-agent/opa/rego"
 	"github.com/open-policy-agent/opa/topdown/print"
 
-	engif "github.com/stacklok/mediator/internal/engine/interfaces"
-	minderv1 "github.com/stacklok/mediator/pkg/api/protobuf/go/minder/v1"
+	engif "github.com/stacklok/minder/internal/engine/interfaces"
+	minderv1 "github.com/stacklok/minder/pkg/api/protobuf/go/minder/v1"
 )
 
 const (

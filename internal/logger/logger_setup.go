@@ -22,7 +22,7 @@ import (
 
 	"github.com/rs/zerolog"
 
-	"github.com/stacklok/mediator/internal/config"
+	"github.com/stacklok/minder/internal/config"
 )
 
 // FromFlags configures logging and returns a logger with settings matching

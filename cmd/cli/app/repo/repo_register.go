@@ -34,10 +34,10 @@ import (
 	"github.com/spf13/viper"
 	"k8s.io/utils/strings/slices"
 
-	github "github.com/stacklok/mediator/internal/providers/github"
-	"github.com/stacklok/mediator/internal/util"
-	"github.com/stacklok/mediator/internal/util/cli"
-	pb "github.com/stacklok/mediator/pkg/api/protobuf/go/minder/v1"
+	github "github.com/stacklok/minder/internal/providers/github"
+	"github.com/stacklok/minder/internal/util"
+	"github.com/stacklok/minder/internal/util/cli"
+	pb "github.com/stacklok/minder/pkg/api/protobuf/go/minder/v1"
 )
 
 var errNoRepositoriesSelected = errors.New("No repositories selected")

@@ -34,7 +34,7 @@ import (
 	promgo "github.com/prometheus/client_golang/prometheus"
 	"github.com/rs/zerolog"
 
-	"github.com/stacklok/mediator/internal/config"
+	"github.com/stacklok/minder/internal/config"
 )
 
 // Metadata added to Messages

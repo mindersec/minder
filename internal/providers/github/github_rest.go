@@ -25,8 +25,8 @@ import (
 
 	"github.com/google/go-github/v53/github"
 
-	engerrors "github.com/stacklok/mediator/internal/engine/errors"
-	minderv1 "github.com/stacklok/mediator/pkg/api/protobuf/go/minder/v1"
+	engerrors "github.com/stacklok/minder/internal/engine/errors"
+	minderv1 "github.com/stacklok/minder/pkg/api/protobuf/go/minder/v1"
 )
 
 var (

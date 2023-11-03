@@ -52,7 +52,7 @@ hpaSettings:
       targetAverageUtilization: 60
 
 migrationSettings:
-  image: ko://github.com/stacklok/mediator/cmd/server
+  image: ko://github.com/stacklok/minder/cmd/server
   imagePullPolicy: "IfNotPresent"
   resources:
     requests:
@@ -64,7 +64,7 @@ migrationSettings:
 
 # Configurable settings for the main deployment
 deploymentSettings:
-  image: ko://github.com/stacklok/mediator/cmd/server
+  image: ko://github.com/stacklok/minder/cmd/server
   imagePullPolicy: "IfNotPresent"
   resources:
     requests:

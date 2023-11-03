@@ -26,9 +26,9 @@ import (
 	"github.com/google/uuid"
 	"golang.org/x/oauth2"
 
-	mockdb "github.com/stacklok/mediator/database/mock"
-	"github.com/stacklok/mediator/internal/config"
-	"github.com/stacklok/mediator/internal/db"
+	mockdb "github.com/stacklok/minder/database/mock"
+	"github.com/stacklok/minder/internal/config"
+	"github.com/stacklok/minder/internal/db"
 )
 
 func TestHandleEvents(t *testing.T) {

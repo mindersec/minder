@@ -22,14 +22,14 @@ import (
 	"google.golang.org/protobuf/reflect/protoreflect"
 	"google.golang.org/protobuf/types/known/structpb"
 
-	"github.com/stacklok/mediator/internal/engine/ingestcache"
-	"github.com/stacklok/mediator/internal/engine/ingester/artifact"
-	"github.com/stacklok/mediator/internal/engine/ingester/builtin"
-	"github.com/stacklok/mediator/internal/engine/ingester/diff"
-	"github.com/stacklok/mediator/internal/engine/ingester/git"
-	"github.com/stacklok/mediator/internal/engine/ingester/rest"
-	engif "github.com/stacklok/mediator/internal/engine/interfaces"
-	minderv1 "github.com/stacklok/mediator/pkg/api/protobuf/go/minder/v1"
+	"github.com/stacklok/minder/internal/engine/ingestcache"
+	"github.com/stacklok/minder/internal/engine/ingester/artifact"
+	"github.com/stacklok/minder/internal/engine/ingester/builtin"
+	"github.com/stacklok/minder/internal/engine/ingester/diff"
+	"github.com/stacklok/minder/internal/engine/ingester/git"
+	"github.com/stacklok/minder/internal/engine/ingester/rest"
+	engif "github.com/stacklok/minder/internal/engine/interfaces"
+	minderv1 "github.com/stacklok/minder/pkg/api/protobuf/go/minder/v1"
 )
 
 func TestCache(t *testing.T) {

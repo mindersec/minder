@@ -44,9 +44,9 @@ import (
 	"google.golang.org/protobuf/proto"
 	"google.golang.org/protobuf/types/known/timestamppb"
 
-	"github.com/stacklok/mediator/internal/util"
-	pb "github.com/stacklok/mediator/pkg/api/protobuf/go/minder/v1"
-	provifv1 "github.com/stacklok/mediator/pkg/providers/v1"
+	"github.com/stacklok/minder/internal/util"
+	pb "github.com/stacklok/minder/pkg/api/protobuf/go/minder/v1"
+	provifv1 "github.com/stacklok/minder/pkg/providers/v1"
 )
 
 // REGISTRY is the default registry

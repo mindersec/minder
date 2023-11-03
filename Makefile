@@ -73,7 +73,7 @@ run-docker:  ## run the app under docker.
 	# podman (at least) doesn't seem to like multi-arch images, and sometimes picks the wrong one (e.g. amd64 on arm64)
 	# We also need to remove the build: directives to use ko builds
 	# ko resolve will fill in the image: field in the compose file, but it adds a yaml document separator
-	sed -e '/^  *build:/d'  -e 's|  image: mediator:latest|  image: ko://github.com/stacklok/mediator/cmd/server|' docker-compose.yaml | ko resolve --base-import-paths --platform linux/$(DOCKERARCH) -f - | sed 's/^--*$$//' > .resolved-compose.yaml
+	sed -e '/^  *build:/d'  -e 's|  image: mediator:latest|  image: ko://github.com/stacklok/minder/cmd/server|' docker-compose.yaml | ko resolve --base-import-paths --platform linux/$(DOCKERARCH) -f - | sed 's/^--*$$//' > .resolved-compose.yaml
 	@echo "Running docker-compose up $(services)"
 	$(COMPOSE) -f .resolved-compose.yaml down && $(COMPOSE) -f .resolved-compose.yaml up $(COMPOSE_ARGS) $(services)
 	rm .resolved-compose.yaml*
@@ -143,9 +143,9 @@ dbschema:	## generate database schema with schema spy, monitor file until doc is
 	cd database/schema && $(COMPOSE) down -v && rm -rf output
 
 mock:  ## generate mocks
-	mockgen -package mockdb -destination database/mock/store.go github.com/stacklok/mediator/internal/db Store
+	mockgen -package mockdb -destination database/mock/store.go github.com/stacklok/minder/internal/db Store
 	mockgen -package mockgh -destination internal/providers/github/mock/github.go -source pkg/providers/v1/providers.go GitHub
-	mockgen -package auth -destination internal/auth/mock/jwtauth.go github.com/stacklok/mediator/internal/auth JwtValidator,KeySetFetcher
+	mockgen -package auth -destination internal/auth/mock/jwtauth.go github.com/stacklok/minder/internal/auth JwtValidator,KeySetFetcher
 
 github-login:  ## setup GitHub login on Keycloak
 ifndef KC_GITHUB_CLIENT_ID

@@ -26,7 +26,7 @@ import (
 	"github.com/spf13/viper"
 	"github.com/stretchr/testify/require"
 
-	"github.com/stacklok/mediator/internal/config"
+	"github.com/stacklok/minder/internal/config"
 )
 
 func TestReadValidConfig(t *testing.T) {
