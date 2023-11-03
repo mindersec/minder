@@ -718,11 +718,8 @@ paths:
             properties:
               projectId:
                 type: string
-              repositories:
-                type: array
-                items:
-                  type: object
-                  $ref: '#/definitions/v1UpstreamRepositoryRef'
+              repository:
+                $ref: '#/definitions/v1UpstreamRepositoryRef'
       tags:
         - RepositoryService
   /api/v1/rule_type:
@@ -1844,11 +1841,8 @@ definitions:
   v1RegisterRepositoryResponse:
     type: object
     properties:
-      results:
-        type: array
-        items:
-          type: object
-          $ref: '#/definitions/v1RegisterRepoResult'
+      result:
+        $ref: '#/definitions/v1RegisterRepoResult'
   v1Repository:
     type: object
     properties:
