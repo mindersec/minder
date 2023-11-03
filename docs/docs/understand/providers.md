@@ -28,3 +28,7 @@ minder provider enroll --provider github --owner specific-org
 
 Note: If you are enrolling an organization, the account you use to enroll must be an Owner in the organization
 or an Admin on the repositories you will be registering.
+
+Once a provider is enrolled, public repositories from that provider can be registered with Minder. Security profiles
+can then be applied to the registered repositories, giving you an overview of your security posture and providing
+remediations to improve your security posture.
