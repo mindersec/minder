@@ -34,18 +34,18 @@ const (
 	reviewBodyMagicComment = "<!-- mediator: pr-review-body -->"
 	commitStatusContext    = "minder.stacklok.dev/pr-vulncheck"
 	vulnsFoundText         = `
-Mediator found vulnerable dependencies in this PR. Either push an updated
+Minder found vulnerable dependencies in this PR. Either push an updated
 version or accept the proposed changes. Note that accepting the changes will
-include mediator as a co-author of this PR.
+include Minder as a co-author of this PR.
 `
 	vulnsFoundTextShort = `
 Vulnerable dependencies found.
 `
 	noVulsFoundText = `
-Mediator analyzed this PR and found no vulnerable dependencies.
+Minder analyzed this PR and found no vulnerable dependencies.
 `
 	reviewBodyDismissCommentText = `
-Previous mediator review was dismissed because the PR was updated.
+Previous Minder review was dismissed because the PR was updated.
 `
 )
 

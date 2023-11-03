@@ -73,6 +73,10 @@ func (e *Evaluator) Eval(ctx context.Context, pol map[string]any, res *engif.Res
 		return fmt.Errorf("invalid object type for vulncheck evaluator")
 	}
 
+	if len(prdeps.Deps) == 0 {
+		return nil
+	}
+
 	ruleConfig, err := parseConfig(pol)
 	if err != nil {
 		return fmt.Errorf("failed to parse config: %w", err)
