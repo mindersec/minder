@@ -52,6 +52,8 @@ func NewVulncheckEvaluator(_ *pb.RuleType_Definition_Eval_Vulncheck, pbuild *pro
 }
 
 // Eval implements the Evaluator interface.
+//
+//nolint:gocyclo
 func (e *Evaluator) Eval(ctx context.Context, pol map[string]any, res *engif.Result) error {
 	var evalErr error
 
@@ -60,6 +62,10 @@ func (e *Evaluator) Eval(ctx context.Context, pol map[string]any, res *engif.Res
 	prdeps, ok := res.Object.(pb.PrDependencies)
 	if !ok {
 		return fmt.Errorf("invalid object type for vulncheck evaluator")
+	}
+
+	if len(prdeps.Deps) == 0 {
+		return nil
 	}
 
 	ruleConfig, err := parseConfig(pol)
