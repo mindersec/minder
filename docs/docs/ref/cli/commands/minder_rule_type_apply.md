@@ -1,24 +1,24 @@
 ---
-title: minder rule type create
+title: minder rule type apply
 ---
-## minder rule_type create
+## minder rule_type apply
 
-Create a rule type within a minder control plane
+Apply a rule type within a minder control plane
 
 ### Synopsis
 
-The minder rule type create subcommand lets you create new rule types for a project
+The minder rule type apply subcommand lets you create or update rule types for a project
 within a minder control plane.
 
 ```
-minder rule_type create [flags]
+minder rule_type apply [flags]
 ```
 
 ### Options
 
 ```
   -f, --file stringArray   Path to the YAML defining the rule type (or - for stdin). Can be specified multiple times. Can be a directory.
-  -h, --help               help for create
+  -h, --help               help for apply
 ```
 
 ### Options inherited from parent commands

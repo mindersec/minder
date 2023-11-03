@@ -1,24 +1,24 @@
 ---
-title: minder rule type create
+title: minder rule type update
 ---
-## minder rule_type create
+## minder rule_type update
 
-Create a rule type within a minder control plane
+Update a rule type within a minder control plane
 
 ### Synopsis
 
-The minder rule type create subcommand lets you create new rule types for a project
+The minder rule type update subcommand lets you update rule types for a project
 within a minder control plane.
 
 ```
-minder rule_type create [flags]
+minder rule_type update [flags]
 ```
 
 ### Options
 
 ```
   -f, --file stringArray   Path to the YAML defining the rule type (or - for stdin). Can be specified multiple times. Can be a directory.
-  -h, --help               help for create
+  -h, --help               help for update
 ```
 
 ### Options inherited from parent commands
