@@ -3,11 +3,11 @@ title: minder rule type delete
 ---
 ## minder rule_type delete
 
-Delete a rule type within a minder control plane
+Delete a rule type
 
 ### Synopsis
 
-The minder rule type delete subcommand lets you delete profiles within a
+The minder rule type delete subcommand lets you delete rule types within a
 minder control plane.
 
 ```
@@ -17,8 +17,10 @@ minder rule_type delete [flags]
 ### Options
 
 ```
-  -h, --help        help for delete
-  -i, --id string   ID of rule type to delete
+  -a, --all               Warning: Deletes all rule types
+  -h, --help              help for delete
+  -i, --id string         ID of rule type to delete
+  -p, --provider string   Provider to list rule types for
 ```
 
 ### Options inherited from parent commands
