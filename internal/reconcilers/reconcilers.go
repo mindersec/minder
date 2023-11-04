@@ -13,7 +13,7 @@
 // limitations under the License.
 
 // Package reconcilers contains the reconcilers for the various types of
-// entities in mediator.
+// entities in minder.
 package reconcilers
 
 import (

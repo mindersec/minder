@@ -36,7 +36,7 @@ Alternatively, you can build from source.
 ### Clone the repository
 
 ```bash
-git clone git@github.com:stacklok/mediator.git
+git clone git@github.com:stacklok/minder.git
 ```
 
 ### Build the application
@@ -45,18 +45,18 @@ git clone git@github.com:stacklok/mediator.git
 make build
 ```
 
-This will create two binaries, `bin/mediator-server` and `bin/minder`.
+This will create two binaries, `bin/minder-server` and `bin/minder`.
 
 You may now copy these into a location on your path, or run them directly from the `bin` directory.
 
 You will also need a configuration file. You can copy the example configuration file from `configs/config.yaml.example` to `$(PWD)/config.yaml`.
 
 If you prefer to use a different file name or location, you can specify this using the `--config` 
-flag, e.g. `mediator-server --config /file/path/mediator.yaml serve` when you later run the application.
+flag, e.g. `minder-server --config /file/path/config.yaml serve` when you later run the application.
 
 ## Database creation
 
-Mediator requires a PostgreSQL database to be running. You can install this locally, or use a container.
+Minder requires a PostgreSQL database to be running. You can install this locally, or use a container.
 
 Should you install locally, you will need to set certain configuration options in your `config.yaml` file, to reflect your local database configuration.
 
@@ -66,7 +66,7 @@ database:
   dbport: 5432
   dbuser: postgres
   dbpass: postgres
-  dbname: mediator
+  dbname: minder
   sslmode: disable
 ```
 
@@ -80,7 +80,7 @@ docker-compose up -d postgres
 
 ### Create the database
 
-Once you have a running database, you can create the database using the `mediator-server` CLI tool or via the `make` command.
+Once you have a running database, you can create the database using the `minder-server` CLI tool or via the `make` command.
 
 ```bash
 make migrateup
@@ -89,17 +89,17 @@ make migrateup
 or:
 
 ```bash
-mediator-server migrate up
+minder-server migrate up
 ```
 
 ## Identity Provider
-Mediator requires a Keycloak instance to be running. You can install this locally, or use a container.
+Minder requires a Keycloak instance to be running. You can install this locally, or use a container.
 
 Should you install locally, you will need to configure the client on Keycloak.
 You will need the following:
 - A Keycloak realm with event saving turned on for the "Delete account" event.
 - A registered public client with the redirect URI `http://localhost/*`. This is used for the minder CLI.
-- A registered confidential client with a service account that can manage users and view events. This is used for the mediator server.
+- A registered confidential client with a service account that can manage users and view events. This is used for the minder server.
 
 You will also need to set certain configuration options in your `config.yaml` file, to reflect your local Keycloak configuration.
 ```yaml
@@ -151,7 +151,7 @@ make KC_GITHUB_CLIENT_ID=<client_id> KC_GITHUB_CLIENT_SECRET=<client_secret> git
 
 ## Create encryption keys
 
-The default configuration expects these keys to be in a directory named `.ssh`, relative to where you run the `mediator-server` binary.
+The default configuration expects these keys to be in a directory named `.ssh`, relative to where you run the `minder-server` binary.
 Start by creating the `.ssh` directory.
 
 ```bash
@@ -182,7 +182,7 @@ auth:
 ## Run the application
 
 ```bash
-mediator-server serve
+minder-server serve
 ```
 
 The application will be available on `http://localhost:8080` and gRPC on `localhost:8090`.

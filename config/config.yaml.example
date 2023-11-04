@@ -27,7 +27,7 @@ metric_server:
 logging:
   level: "debug"
   format: "json"
-  #logFile: "/var/log/mediator.log"
+  #logFile: "/var/log/minder.log"
 
 tracing:
   enabled: false
@@ -41,7 +41,7 @@ database:
   dbport: 5432
   dbuser: postgres
   dbpass: postgres
-  dbname: mediator
+  dbname: minder
   sslmode: disable
 
 identity:
@@ -82,7 +82,7 @@ salt:
 # Webhook Configuration
 # change example.com to an exposed IP / domain
 # webhook_secret is set withing the webhook sent to github. Github then signs
-# the payload sent to mediator and mediator verifies.
+# the payload sent to minder and minder verifies.
 webhook-config:
   external_webhook_url: "https://example.com/api/v1/webhook/github"
   external_ping_url: "https://example.com/api/v1/health"

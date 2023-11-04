@@ -45,6 +45,6 @@ jobs:
 
         tables=$(grep -Ri 'CREATE TABLE' database/migrations | sed -E 's/.*CREATE TABLE (IF NOT EXISTS )?(.*) \(/\2/i')
         for table in $tables; do
-          docker exec $(docker ps -a | grep postgres | awk '{print $1}') psql -U postgres -d mediator -c "SELECT * FROM $table"
+          docker exec $(docker ps -a | grep postgres | awk '{print $1}') psql -U postgres -d minder -c "SELECT * FROM $table"
         done 
 

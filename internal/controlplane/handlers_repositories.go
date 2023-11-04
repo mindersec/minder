@@ -141,7 +141,7 @@ func (s *Server) RegisterRepository(ctx context.Context,
 
 // ListRepositories returns a list of repositories for a given group
 // This function will typically be called by the client to get a list of
-// repositories that are registered present in the mediator database
+// repositories that are registered present in the minder database
 // The API is called with a group id, limit and offset
 func (s *Server) ListRepositories(ctx context.Context,
 	in *pb.ListRepositoriesRequest) (*pb.ListRepositoriesResponse, error) {
@@ -250,7 +250,7 @@ func (s *Server) GetRepositoryById(ctx context.Context,
 
 // GetRepositoryByName returns information about a repository.
 // This function will typically be called by the client to get a
-// repository which is already registered and present in the mediator database
+// repository which is already registered and present in the minder database
 // The API is called with a group id
 func (s *Server) GetRepositoryByName(ctx context.Context,
 	in *pb.GetRepositoryByNameRequest) (*pb.GetRepositoryByNameResponse, error) {

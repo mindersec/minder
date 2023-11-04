@@ -15,9 +15,9 @@
 
 version: '3.2'
 services:
-  mediator:
+  minder:
     build: .
-    image: mediator:latest
+    image: minder:latest
 
     command: [
       "serve",
@@ -65,7 +65,7 @@ services:
 #        condition: service_completed_successfully
   migrate:
     build: .
-    image: mediator:latest
+    image: minder:latest
 
     command: [
       "migrate",
@@ -98,7 +98,7 @@ services:
       environment:
         POSTGRES_USER: postgres
         POSTGRES_PASSWORD: postgres
-        POSTGRES_DB: mediator
+        POSTGRES_DB: minder
       ports:
         - "5432:5432"
       healthcheck:

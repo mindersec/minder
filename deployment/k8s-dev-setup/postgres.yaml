@@ -87,7 +87,7 @@ spec:
               name: postgres-root-pw
               key: password
         - name: POSTGRES_DB
-          value: mediator
+          value: minder
         - name: POSTGRES_USER
           value: postgres
         # Yes, we're using temporary storage for our database.  YOLO, baby!

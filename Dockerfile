@@ -24,7 +24,7 @@ RUN go mod download
 # Add source code
 ADD ./ $APP_ROOT/src/
 
-RUN CGO_ENABLED=0 go build -trimpath -o mediator-server ./cmd/server
+RUN CGO_ENABLED=0 go build -trimpath -o minder-server ./cmd/server
 
 # Create a "nobody" non-root user for the next image by crafting an /etc/passwd
 # file that the next image can copy in. This is necessary since the next image
@@ -43,7 +43,7 @@ WORKDIR /app
 ADD --chown=65534:65534 ./cmd/server/kodata/config.yaml /app
 ADD --chown=65534:65534 ./cmd/server/kodata/database/migrations /app/database/migrations
 
-COPY --from=builder /opt/app-root/src/mediator-server /usr/bin/mediator-server
+COPY --from=builder /opt/app-root/src/minder-server /usr/bin/minder-server
 
 # Copy the certs from the builder stage
 COPY --from=builder /etc/ssl/certs/ca-certificates.crt /etc/ssl/certs/
@@ -56,4 +56,4 @@ COPY --from=builder /etc_passwd /etc/passwd
 USER nobody
 
 # Set the binary as the entrypoint of the container
-ENTRYPOINT ["/usr/bin/mediator-server"]
+ENTRYPOINT ["/usr/bin/minder-server"]

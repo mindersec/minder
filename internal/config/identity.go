@@ -27,27 +27,27 @@ type IdentityConfig struct {
 	Server ServerIdentityConfig `mapstructure:"server"`
 }
 
-// CliIdentityConfig is the configuration for the identity provider in the mediator cli
+// CliIdentityConfig is the configuration for the identity provider in the minder cli
 type CliIdentityConfig struct {
 	// IssuerUrl is the base URL where the identity server is running
 	IssuerUrl string `mapstructure:"issuer_url" default:"http://localhost:8081"`
 	// Realm is the Keycloak realm that the client belongs to
 	Realm string `mapstructure:"realm" default:"stacklok"`
-	// ClientId is the client ID that identifies the mediator CLI
+	// ClientId is the client ID that identifies the minder CLI
 	ClientId string `mapstructure:"client_id" default:"minder-cli"`
 }
 
-// ServerIdentityConfig is the configuration for the identity provider in mediator server
+// ServerIdentityConfig is the configuration for the identity provider in minder server
 type ServerIdentityConfig struct {
 	// IssuerUrl is the base URL where the identity server is running
 	IssuerUrl string `mapstructure:"issuer_url" default:"http://localhost:8081"`
 	// Realm is the Keycloak realm that the client belongs to
 	Realm string `mapstructure:"realm" default:"stacklok"`
-	// ClientId is the client ID that identifies the mediator server
+	// ClientId is the client ID that identifies the minder server
 	ClientId string `mapstructure:"client_id" default:"minder-server"`
-	// ClientSecret is the client secret for the mediator server
+	// ClientSecret is the client secret for the minder server
 	ClientSecret string `mapstructure:"client_secret" default:"secret"`
-	// ClientSecretFile is the location of a file containing the client secret for the mediator server (optional)
+	// ClientSecretFile is the location of a file containing the client secret for the minder server (optional)
 	ClientSecretFile string `mapstructure:"client_secret_file"`
 }
 
@@ -56,7 +56,7 @@ func (sic *ServerIdentityConfig) GetClientSecret() (string, error) {
 	if sic.ClientSecretFile != "" {
 		data, err := os.ReadFile(filepath.Clean(sic.ClientSecretFile))
 		if err != nil {
-			return "", fmt.Errorf("failed to read mediator secret from file: %w", err)
+			return "", fmt.Errorf("failed to read minder secret from file: %w", err)
 		}
 		return string(data), nil
 	}

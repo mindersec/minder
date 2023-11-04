@@ -61,7 +61,7 @@ func (g *Git) Clone(ctx context.Context, url, branch string) (*git.Repository, e
 	if g.token != "" {
 		opts.Auth = &http.BasicAuth{
 			// the Username can be anything but it can't be empty
-			Username: "mediator-user",
+			Username: "minder-user",
 			Password: g.token,
 		}
 	}

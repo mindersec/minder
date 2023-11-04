@@ -40,7 +40,7 @@ type DatabaseConfig struct {
 	Port     int    `mapstructure:"dbport" default:"5432"`
 	User     string `mapstructure:"dbuser" default:"postgres"`
 	Password string `mapstructure:"dbpass" default:"postgres"`
-	Name     string `mapstructure:"dbname" default:"mediator"`
+	Name     string `mapstructure:"dbname" default:"minder"`
 	SSLMode  string `mapstructure:"sslmode" default:"disable"`
 
 	// If set, use credentials from the specified cloud provider.
@@ -142,7 +142,7 @@ func RegisterDatabaseFlags(v *viper.Viper, flags *pflag.FlagSet) error {
 	}
 
 	err = util.BindConfigFlagWithShort(
-		v, flags, "database.dbname", "db-name", "d", "mediator", "Database name", flags.StringP)
+		v, flags, "database.dbname", "db-name", "d", "minder", "Database name", flags.StringP)
 	if err != nil {
 		return err
 	}

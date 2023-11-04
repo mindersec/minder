@@ -68,7 +68,7 @@ func ReadConfigFromViper(v *viper.Viper) (*Config, error) {
 // SetViperDefaults sets the default values for the configuration to be picked
 // up by viper
 func SetViperDefaults(v *viper.Viper) {
-	v.SetEnvPrefix("mediator")
+	v.SetEnvPrefix("minder")
 	v.SetEnvKeyReplacer(strings.NewReplacer(".", "_"))
 	setViperStructDefaults(v, "", Config{})
 }

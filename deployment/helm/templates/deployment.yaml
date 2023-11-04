@@ -15,7 +15,7 @@
 apiVersion: apps/v1
 kind: Deployment
 metadata:
-  name: mediator
+  name: minder
   labels:
     {{ include "common.labels.standard" (dict "customLabels" .Values.commonLabels "context" $ ) | nindent 4 }}
 spec:
@@ -30,9 +30,9 @@ spec:
       annotations:
         {{ include "common.annotations.pods" (dict "customAnnotationsPods" .Values.commonAnnotationsPods "context" $ ) | nindent 8 }}
     spec:
-      serviceAccountName: {{ .Values.serviceAccounts.server | default "mediator" }}
+      serviceAccountName: {{ .Values.serviceAccounts.server | default "minder" }}
       containers:
-        - name: mediator
+        - name: minder
           # restricted security context:
           # https://kubernetes.io/docs/concepts/security/pod-security-standards/
           securityContext:
@@ -103,7 +103,7 @@ spec:
       volumes:
       - name: config
         configMap:
-          name: mediator-config
+          name: minder-config
           items:
           - key: config.yaml
             path: config.yaml
@@ -111,13 +111,13 @@ spec:
             path: overrides.yaml
       - name: auth-secrets
         secret:
-          secretName: mediator-auth-secrets
+          secretName: minder-auth-secrets
       - name: app-secrets
         secret:
-          secretName: mediator-github-secrets
+          secretName: minder-github-secrets
       - name: identity-secrets
         secret:
-          secretName: mediator-identity-secrets
+          secretName: minder-identity-secrets
       {{- if .Values.deploymentSettings.extraVolumes }}
       {{- toYaml .Values.deploymentSettings.extraVolumes | nindent 6 }}
       {{- end }}

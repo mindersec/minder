@@ -13,7 +13,7 @@
 # See the License for the specific language governing permissions and
 # limitations under the License.
 
-projectname?=mediator
+projectname?=minder
 
 # Unfortunately, we need OS detection for docker-compose
 OS := $(shell uname -s)
@@ -73,7 +73,7 @@ run-docker:  ## run the app under docker.
 	# podman (at least) doesn't seem to like multi-arch images, and sometimes picks the wrong one (e.g. amd64 on arm64)
 	# We also need to remove the build: directives to use ko builds
 	# ko resolve will fill in the image: field in the compose file, but it adds a yaml document separator
-	sed -e '/^  *build:/d'  -e 's|  image: mediator:latest|  image: ko://github.com/stacklok/minder/cmd/server|' docker-compose.yaml | ko resolve --base-import-paths --platform linux/$(DOCKERARCH) -f - | sed 's/^--*$$//' > .resolved-compose.yaml
+	sed -e '/^  *build:/d'  -e 's|  image: minder:latest|  image: ko://github.com/stacklok/minder/cmd/server|' docker-compose.yaml | ko resolve --base-import-paths --platform linux/$(DOCKERARCH) -f - | sed 's/^--*$$//' > .resolved-compose.yaml
 	@echo "Running docker-compose up $(services)"
 	$(COMPOSE) -f .resolved-compose.yaml down && $(COMPOSE) -f .resolved-compose.yaml up $(COMPOSE_ARGS) $(services)
 	rm .resolved-compose.yaml*
@@ -139,7 +139,7 @@ dbschema:	## generate database schema with schema spy, monitor file until doc is
 	mkdir -p database/schema/output && chmod a+w database/schema/output
 	cd database/schema && $(COMPOSE) run -u 1001:1001 --rm schemaspy -configFile /config/schemaspy.properties -imageformat png
 	sleep 10
-	cp database/schema/output/diagrams/summary/relationships.real.large.png docs/static/img/mediator/schema.png
+	cp database/schema/output/diagrams/summary/relationships.real.large.png docs/static/img/minder/schema.png
 	cd database/schema && $(COMPOSE) down -v && rm -rf output
 
 mock:  ## generate mocks

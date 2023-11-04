@@ -10,11 +10,11 @@ interfaces for different components. In addition to the GRPC and HTTP service
 ports, it also leverages the [watermill library](https://watermill.io) to queue
 and route events within the application.
 
-The following is a high-level diagram of the mediator architecture
+The following is a high-level diagram of the Minder architecture
 
 ```mermaid
 flowchart LR
-    subgraph mediator
+    subgraph minder
         %% flow from top to bottom
         direction TB
 
@@ -34,7 +34,7 @@ flowchart LR
     click cli "https://github.com/stacklok/minder/tree/main/cmd/cli"
 
     db[(Postgres)]
-    click postgres "/db/mediator_db_schema" "Database schema"
+    click postgres "/db/minder_db_schema" "Database schema"
 
     cli --> grpc
     cli --OAuth--> web

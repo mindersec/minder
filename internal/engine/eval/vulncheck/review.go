@@ -31,7 +31,7 @@ import (
 )
 
 const (
-	reviewBodyMagicComment = "<!-- mediator: pr-review-body -->"
+	reviewBodyMagicComment = "<!-- minder: pr-review-body -->"
 	commitStatusContext    = "minder.stacklok.dev/pr-vulncheck"
 	vulnsFoundText         = `
 Minder found vulnerable dependencies in this PR. Either push an updated
@@ -145,8 +145,8 @@ type reviewPrHandler struct {
 	cli provifv1.GitHub
 	pr  *pb.PullRequest
 
-	mediatorReview *github.PullRequestReview
-	failStatus     *string
+	minderReview *github.PullRequestReview
+	failStatus   *string
 
 	comments []*github.DraftReviewComment
 	status   *string
@@ -185,7 +185,7 @@ func newReviewPrHandler(
 		return nil, fmt.Errorf("could not get authenticated user: %w", err)
 	}
 
-	// if the user wants mediator to request changes on a pull request, they need to
+	// if the user wants minder to request changes on a pull request, they need to
 	// be different identities
 	var failStatus *string
 	if pr.AuthorId == cliUser.GetID() {
@@ -252,15 +252,15 @@ func (ra *reviewPrHandler) submit(ctx context.Context) error {
 		return fmt.Errorf("could not find previous review: %w", err)
 	}
 
-	if ra.mediatorReview != nil {
+	if ra.minderReview != nil {
 		err := ra.dismissReview(ctx)
 		if err != nil {
 			ra.logger.Error().Err(err).
-				Int64("review-id", ra.mediatorReview.GetID()).
+				Int64("review-id", ra.minderReview.GetID()).
 				Msg("could not dismiss previous review")
 		}
 		ra.logger.Debug().
-			Int64("review-id", ra.mediatorReview.GetID()).
+			Int64("review-id", ra.minderReview.GetID()).
 			Msg("dismissed previous review")
 	}
 
@@ -280,7 +280,7 @@ func (ra *reviewPrHandler) setStatus() {
 		ra.status = ra.failStatus
 		ra.logger.Debug().Msg("vulnerabilities found")
 	} else {
-		// if this pass produced no comments, resolve the mediator review
+		// if this pass produced no comments, resolve the minder review
 		ra.status = github.String("COMMENT")
 		ra.text = github.String(noVulsFoundText)
 		ra.logger.Debug().Msg("no vulnerabilities found")
@@ -295,10 +295,10 @@ func (ra *reviewPrHandler) findPreviousReview(ctx context.Context) error {
 		return fmt.Errorf("could not list reviews: %w", err)
 	}
 
-	ra.mediatorReview = nil
+	ra.minderReview = nil
 	for _, r := range reviews {
 		if strings.HasPrefix(r.GetBody(), reviewBodyMagicComment) && r.GetState() != "DISMISSED" {
-			ra.mediatorReview = r
+			ra.minderReview = r
 			break
 		}
 	}
@@ -334,7 +334,7 @@ func (ra *reviewPrHandler) submitReview(ctx context.Context) error {
 }
 
 func (ra *reviewPrHandler) dismissReview(ctx context.Context) error {
-	if ra.mediatorReview == nil {
+	if ra.minderReview == nil {
 		return nil
 	}
 
@@ -347,7 +347,7 @@ func (ra *reviewPrHandler) dismissReview(ctx context.Context) error {
 		ra.pr.RepoOwner,
 		ra.pr.RepoName,
 		int(ra.pr.Number),
-		ra.mediatorReview.GetID(),
+		ra.minderReview.GetID(),
 		dismissReview)
 	if err != nil {
 		return fmt.Errorf("could not dismiss review: %w", err)

@@ -145,8 +145,8 @@ CREATE TABLE artifact_versions (
     version BIGINT NOT NULL,
     tags TEXT,
     sha TEXT NOT NULL,
-    signature_verification JSONB,       -- see /proto/mediator/v1/mediator.proto#L82
-    github_workflow JSONB,              -- see /proto/mediator/v1/mediator.proto#L75
+    signature_verification JSONB,       -- see /proto/minder/v1/minder.proto#L82
+    github_workflow JSONB,              -- see /proto/minder/v1/minder.proto#L75
     created_at TIMESTAMP NOT NULL DEFAULT NOW()
 );
 

@@ -1,8 +1,8 @@
 ---
-title: Mediator DB schema
+title: Minder DB schema
 sidebar_position: 95
 ---
 
-Following there is the mediator DB schema
+Following there is the Minder DB schema
 
-<img src='/img/mediator/schema.png' alt="Schema image" style={{width:'100%'}} />
+<img src='/img/minder/schema.png' alt="Schema image" style={{width:'100%'}} />

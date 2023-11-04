@@ -15,7 +15,7 @@
 apiVersion: v1
 kind: Service
 metadata:
-  name: mediator-http
+  name: minder-http
   annotations:
     alb.ingress.kubernetes.io/healthcheck-path: "/api/v1/health"
   labels:
@@ -28,14 +28,14 @@ spec:
       protocol: TCP
       name: http
   selector:
-    app: mediator
+    app: minder
 
 ---
 
 apiVersion: v1
 kind: Service
 metadata:
-  name: mediator-grpc
+  name: minder-grpc
   annotations:
     alb.ingress.kubernetes.io/backend-protocol-version: "GRPC"
     alb.ingress.kubernetes.io/healthcheck-protocol: "HTTP"
@@ -52,14 +52,14 @@ spec:
       protocol: TCP
       name: grpc
   selector:
-    app: mediator
+    app: minder
 
 ---
 
 apiVersion: v1
 kind: Service
 metadata:
-  name: mediator-metrics
+  name: minder-metrics
   labels:
   {{ include "common.labels.standard" (dict "customLabels" .Values.commonLabels "context" $ ) | nindent 4 }}
 spec:
@@ -70,4 +70,4 @@ spec:
       protocol: TCP
       name: metrics
   selector:
-    app: mediator
+    app: minder

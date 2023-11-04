@@ -15,7 +15,7 @@
 
 package config
 
-// EventConfig is the configuration for mediator's eventing system.
+// EventConfig is the configuration for minder's eventing system.
 type EventConfig struct {
 	// Driver is the driver used to store events
 	Driver string `mapstructure:"driver" default:"go-channel"`
@@ -26,7 +26,7 @@ type EventConfig struct {
 }
 
 // GoChannelEventConfig is the configuration for the go channel event driver
-// for mediator's eventing system.
+// for minder's eventing system.
 type GoChannelEventConfig struct {
 	// BufferSize is the size of the buffer for the go channel
 	BufferSize int64 `mapstructure:"buffer_size" default:"0"`

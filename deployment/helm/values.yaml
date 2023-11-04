@@ -13,7 +13,7 @@
 # limitations under the License.
 
 
-# Default values for mediator.
+# Default values for minder.
 # This is a YAML-formatted file.
 # Declare variables to be passed into your templates.
 
@@ -22,7 +22,7 @@ service:
   grpcPort: 8090
   metricPort: 9090
 
-hostname: "mediator.example.com"
+hostname: "minder.example.com"
 
 db:
   host: "postgres.postgres"
@@ -35,12 +35,12 @@ trusty:
 aws:
   accountID: "123456789012"
   migrate:
-    iamRole: "mediator_migrate_role"
+    iamRole: "minder_migrate_role"
   server:
-    iamRole: "mediator_server_role"
+    iamRole: "minder_server_role"
 
 serviceAccounts:
-  # If non-empty, mediator will use the named ServiceAccount resources rather than creating a ServiceAccount
+  # If non-empty, minder will use the named ServiceAccount resources rather than creating a ServiceAccount
   migrate: ""
   server: ""
 

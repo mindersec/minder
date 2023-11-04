@@ -37,7 +37,7 @@ const (
 	githubSubmitterID = 144222806
 	githubMediatorID  = 123456789
 
-	mediatorReviewID = 987654321
+	minderReviewID = 987654321
 
 	commitSHA = "27d6810b861c81e8c61e09c651875f5a976781d1"
 )
@@ -205,12 +205,12 @@ func TestReviewPrHandlerVulnerabilitiesDismissReview(t *testing.T) {
 		ListReviews(gomock.Any(), pr.RepoOwner, pr.RepoName, int(pr.Number), nil).
 		Return([]*github.PullRequestReview{
 			{
-				ID:   github.Int64(mediatorReviewID),
+				ID:   github.Int64(minderReviewID),
 				Body: github.String(reviewBodyMagicComment),
 			},
 		}, nil)
 
-	mockClient.EXPECT().DismissReview(gomock.Any(), pr.RepoOwner, pr.RepoName, int(pr.Number), int64(mediatorReviewID),
+	mockClient.EXPECT().DismissReview(gomock.Any(), pr.RepoOwner, pr.RepoName, int(pr.Number), int64(minderReviewID),
 		&github.PullRequestReviewDismissalRequest{
 			Message: github.String(reviewBodyDismissCommentText),
 		})

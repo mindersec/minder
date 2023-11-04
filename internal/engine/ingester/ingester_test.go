@@ -132,7 +132,7 @@ func TestNewRuleDataIngest(t *testing.T) {
 						Ingest: &pb.RuleType_Definition_Ingest{
 							Type: git.GitRuleDataIngestType,
 							Git: &pb.GitType{
-								CloneUrl: "https://github.com/staklok/mediator.git",
+								CloneUrl: "https://github.com/staklok/minder.git",
 							},
 						},
 					},

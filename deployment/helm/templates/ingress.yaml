@@ -15,11 +15,11 @@
 apiVersion: networking.k8s.io/v1
 kind: Ingress
 metadata:
-  name: mediator
+  name: minder
   labels:
     {{ include "common.labels.standard" (dict "customLabels" .Values.commonLabels "context" $ ) | nindent 4 }}
   annotations:
-    alb.ingress.kubernetes.io/group.name: mediator-vip
+    alb.ingress.kubernetes.io/group.name: minder-vip
     alb.ingress.kubernetes.io/group.order: '200'
     alb.ingress.kubernetes.io/listen-ports: '[{"HTTP": 80},{"HTTPS":443}]'
     alb.ingress.kubernetes.io/scheme: internet-facing
@@ -32,7 +32,7 @@ spec:
   tls:
   - hosts:
     - "{{ .Values.hostname }}"
-    secretName: mediator-tls
+    secretName: minder-tls
   rules:
   - host: "{{ .Values.hostname }}"
     http:
@@ -43,91 +43,91 @@ spec:
         pathType: Prefix
         backend:
           service:
-            name: mediator-grpc
+            name: minder-grpc
             port:
               name: grpc
       - path: /minder.v1.OAuthService
         pathType: Prefix
         backend:
           service:
-            name: mediator-grpc
+            name: minder-grpc
             port:
               name: grpc
       - path: /minder.v1.AuthService
         pathType: Prefix
         backend:
           service:
-            name: mediator-grpc
+            name: minder-grpc
             port:
               name: grpc
       - path: /minder.v1.VulnerabilitiesService
         pathType: Prefix
         backend:
           service:
-            name: mediator-grpc
+            name: minder-grpc
             port:
               name: grpc
       - path: /minder.v1.SecretsService
         pathType: Prefix
         backend:
           service:
-            name: mediator-grpc
+            name: minder-grpc
             port:
               name: grpc
       - path: /minder.v1.RepositoryService
         pathType: Prefix
         backend:
           service:
-            name: mediator-grpc
+            name: minder-grpc
             port:
               name: grpc
       - path: /minder.v1.BranchProtectionService
         pathType: Prefix
         backend:
           service:
-            name: mediator-grpc
+            name: minder-grpc
             port:
               name: grpc
       - path: /minder.v1.OrganizationService
         pathType: Prefix
         backend:
           service:
-            name: mediator-grpc
+            name: minder-grpc
             port:
               name: grpc
       - path: /minder.v1.GroupService
         pathType: Prefix
         backend:
           service:
-            name: mediator-grpc
+            name: minder-grpc
             port:
               name: grpc
       - path: /minder.v1.RoleService
         pathType: Prefix
         backend:
           service:
-            name: mediator-grpc
+            name: minder-grpc
             port:
               name: grpc
       - path: /minder.v1.UserService
         pathType: Prefix
         backend:
           service:
-            name: mediator-grpc
+            name: minder-grpc
             port:
               name: grpc
       - path: /minder.v1.ProfileService
         pathType: Prefix
         backend:
           service:
-            name: mediator-grpc
+            name: minder-grpc
             port:
               name: grpc
       - path: /minder.v1.KeyService
         pathType: Prefix
         backend:
           service:
-            name: mediator-grpc
+            name: minder-grpc
             port:
               name: grpc
       # Legacy compatibility endpoints.
@@ -136,90 +136,90 @@ spec:
         pathType: Prefix
         backend:
           service:
-            name: mediator-grpc
+            name: minder-grpc
             port:
               name: grpc
       - path: /mediator.v1.AuthService
         pathType: Prefix
         backend:
           service:
-            name: mediator-grpc
+            name: minder-grpc
             port:
               name: grpc
       - path: /mediator.v1.VulnerabilitiesService
         pathType: Prefix
         backend:
           service:
-            name: mediator-grpc
+            name: minder-grpc
             port:
               name: grpc
       - path: /mediator.v1.SecretsService
         pathType: Prefix
         backend:
           service:
-            name: mediator-grpc
+            name: minder-grpc
             port:
               name: grpc
       - path: /mediator.v1.RepositoryService
         pathType: Prefix
         backend:
           service:
-            name: mediator-grpc
+            name: minder-grpc
             port:
               name: grpc
       - path: /mediator.v1.BranchProtectionService
         pathType: Prefix
         backend:
           service:
-            name: mediator-grpc
+            name: minder-grpc
             port:
               name: grpc
       - path: /mediator.v1.OrganizationService
         pathType: Prefix
         backend:
           service:
-            name: mediator-grpc
+            name: minder-grpc
             port:
               name: grpc
       - path: /mediator.v1.GroupService
         pathType: Prefix
         backend:
           service:
-            name: mediator-grpc
+            name: minder-grpc
             port:
               name: grpc
       - path: /mediator.v1.RoleService
         pathType: Prefix
         backend:
           service:
-            name: mediator-grpc
+            name: minder-grpc
             port:
               name: grpc
       - path: /mediator.v1.UserService
         pathType: Prefix
         backend:
           service:
-            name: mediator-grpc
+            name: minder-grpc
             port:
               name: grpc
       - path: /mediator.v1.ProfileService
         pathType: Prefix
         backend:
           service:
-            name: mediator-grpc
+            name: minder-grpc
             port:
               name: grpc
       - path: /mediator.v1.KeyService
         pathType: Prefix
         backend:
           service:
-            name: mediator-grpc
+            name: minder-grpc
             port:
               name: grpc
       - path: /
         pathType: Prefix
         backend:
           service:
-            name: mediator-http
+            name: minder-http
             port:
               name: http

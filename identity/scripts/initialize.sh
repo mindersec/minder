@@ -39,9 +39,9 @@ if ! /opt/keycloak/bin/kcadm.sh get clients -r stacklok --fields 'clientId' | gr
   /opt/keycloak/bin/kcadm.sh create clients -r stacklok -s clientId=minder-cli -s 'redirectUris=["http://localhost/*"]' -s publicClient=true -s enabled=true
 fi
 
-# Create client mediator-ui
-if ! /opt/keycloak/bin/kcadm.sh get clients -r stacklok --fields 'clientId' | grep -q "mediator-ui"; then
-  /opt/keycloak/bin/kcadm.sh create clients -r stacklok -s clientId=mediator-ui -s 'redirectUris=["http://localhost/*"]' -s publicClient=true -s enabled=true
+# Create client minder-ui
+if ! /opt/keycloak/bin/kcadm.sh get clients -r stacklok --fields 'clientId' | grep -q "minder-ui"; then
+  /opt/keycloak/bin/kcadm.sh create clients -r stacklok -s clientId=minder-ui -s 'redirectUris=["http://localhost/*"]' -s publicClient=true -s enabled=true
 fi
 
 # Create client minder-server to receive account deletion events
