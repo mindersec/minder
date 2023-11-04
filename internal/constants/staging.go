@@ -22,4 +22,6 @@ const (
 	IdentitySeverURL = "https://auth.staging.stacklok.dev"
 	// MinderGRPCHost is the host of the minder gRPC server
 	MinderGRPCHost = "staging.stacklok.dev"
+	// TrustyHttpURL is the URL of the trusty server
+	TrustyHttpURL = "https://app.staging.stacklok.dev/"
 )

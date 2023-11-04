@@ -19,10 +19,10 @@ import (
 	"bytes"
 	"context"
 	"fmt"
-	"net/url"
 	"strings"
 	"text/template"
 
+	"github.com/stacklok/minder/internal/constants"
 	pb "github.com/stacklok/minder/pkg/api/protobuf/go/minder/v1"
 	provifv1 "github.com/stacklok/minder/pkg/providers/v1"
 )
@@ -112,15 +112,6 @@ func (sph *summaryPrHandler) generateSummary() (string, error) {
 	}
 	summary.WriteString(headerBuf.String())
 
-	piUrl, err := url.Parse(sph.trustyUrl)
-	if err != nil {
-		return "", fmt.Errorf("could not parse trustyUrl: %w", err)
-	}
-	appUrl := url.URL{
-		Scheme: piUrl.Scheme,
-		Host:   fmt.Sprintf("app.%s", piUrl.Host),
-	}
-
 	for i := range sph.trackedAlternatives {
 		var rowBuf bytes.Buffer
 
@@ -142,7 +133,7 @@ func (sph *summaryPrHandler) generateSummary() (string, error) {
 			DependencyName:      sph.trackedAlternatives[i].Dependency.Name,
 			DependencyScore:     sph.trackedAlternatives[i].trustyReply.Summary.Score,
 			Alternatives:        higherScoringAlternatives,
-			BaseUrl:             appUrl.String(),
+			BaseUrl:             constants.TrustyHttpURL,
 		}); err != nil {
 			return "", fmt.Errorf("could not execute template: %w", err)
 		}
