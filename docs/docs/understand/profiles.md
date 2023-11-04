@@ -1,5 +1,5 @@
 ---
-title: Minder profiles
+title: Profiles
 sidebar_position: 20
 ---
 

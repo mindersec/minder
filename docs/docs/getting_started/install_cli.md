@@ -1,5 +1,5 @@
 ---
-title: Install with Minder
+title: Install Minder
 sidebar_position: 10
 ---
 
