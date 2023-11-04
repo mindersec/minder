@@ -59,7 +59,7 @@ This advisory will be automatically closed once the issue associated with the **
 
 To address this security exposure, we recommend taking the following actions:
 
-1. Enable the auto-remediate feature within the **{{.Profile}}** profile. This will allow Minder to automatically remediate this and other vulnerabilities in the future, provided that a remediation action is available for the given rule type. In the case of the **{{.Rule}}** rule type, the remediation action is **{{.RuleRemediation}}**.
+1. Enable the auto-remediate feature within the **{{.Profile}}** profile by following the [Minder documentation](https://minder.stacklok.github.io/understand/remediation). This will allow Minder to automatically remediate this and other vulnerabilities in the future, provided that a remediation action is available for the given rule type. In the case of the **{{.Rule}}** rule type, the remediation action is **{{.RuleRemediation}}**.
 2. Alternatively, you can manually address this issue by following the guidance provided below.
 `
 	// nolint:lll
