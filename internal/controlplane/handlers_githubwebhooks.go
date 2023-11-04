@@ -19,7 +19,7 @@
 // It does make a good example of how to use the generated client code
 // for others to use as a reference.
 
-// Package controlplane contains the control plane API for the mediator.
+// Package controlplane contains the control plane API for the minder.
 package controlplane
 
 import (

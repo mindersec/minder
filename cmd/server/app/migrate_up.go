@@ -13,7 +13,7 @@
 // See the License for the specific language governing permissions and
 // limitations under the License.
 
-// Package app provides the entrypoint for the mediator migrations
+// Package app provides the entrypoint for the minder migrations
 package app
 
 import (

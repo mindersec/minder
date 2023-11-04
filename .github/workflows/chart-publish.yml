@@ -22,7 +22,7 @@ jobs:
       packages: write
 
     env:
-      BASE_REPO: "ghcr.io/stacklok/mediator"
+      BASE_REPO: "ghcr.io/stacklok/minder"
 
 
     steps:
@@ -63,5 +63,5 @@ jobs:
       - name: Push Helm Chart
         run: |
           cd deployment/helm
-          helm push mediator-*.tgz oci://$BASE_REPO/helm
+          helm push minder-*.tgz oci://$BASE_REPO/helm
 

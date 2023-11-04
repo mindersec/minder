@@ -15,9 +15,9 @@
 
 version: '3.2'
 services:
-  mediator:
+  minder:
     build: .
-    image: mediator:latest
+    image: minder:latest
 
     command: [
       "serve",
@@ -49,11 +49,11 @@ services:
       # Use viper environment variables to set specific paths to keys;
       # these values are relative paths in config.yaml, but it's not clear
       # what they are relative _to_...
-      - MEDIATOR_AUTH_ACCESS_TOKEN_PRIVATE_KEY=/app/.ssh/access_token_rsa
-      - MEDIATOR_AUTH_ACCESS_TOKEN_PUBLIC_KEY=/app/.ssh/access_token_rsa.pub
-      - MEDIATOR_AUTH_REFRESH_TOKEN_PRIVATE_KEY=/app/.ssh/refresh_token_rsa
-      - MEDIATOR_AUTH_REFRESH_TOKEN_PUBLIC_KEY=/app/.ssh/refresh_token_rsa.pub
-      - MEDIATOR_AUTH_TOKEN_KEY=/app/.ssh/token_key_passphrase
+      - MINDER_AUTH_ACCESS_TOKEN_PRIVATE_KEY=/app/.ssh/access_token_rsa
+      - MINDER_AUTH_ACCESS_TOKEN_PUBLIC_KEY=/app/.ssh/access_token_rsa.pub
+      - MINDER_AUTH_REFRESH_TOKEN_PRIVATE_KEY=/app/.ssh/refresh_token_rsa
+      - MINDER_AUTH_REFRESH_TOKEN_PUBLIC_KEY=/app/.ssh/refresh_token_rsa.pub
+      - MINDER_AUTH_TOKEN_KEY=/app/.ssh/token_key_passphrase
     networks:
       - app_net
     depends_on:
@@ -65,7 +65,7 @@ services:
 #        condition: service_completed_successfully
   migrate:
     build: .
-    image: mediator:latest
+    image: minder:latest
 
     command: [
       "migrate",
@@ -98,7 +98,7 @@ services:
       environment:
         POSTGRES_USER: postgres
         POSTGRES_PASSWORD: postgres
-        POSTGRES_DB: mediator
+        POSTGRES_DB: minder
       ports:
         - "5432:5432"
       healthcheck:
@@ -116,7 +116,7 @@ services:
     environment:
       KEYCLOAK_ADMIN: admin
       KEYCLOAK_ADMIN_PASSWORD: admin
-      KC_MEDIATOR_SERVER_SECRET: secret
+      KC_MINDER_SERVER_SECRET: secret
       KC_HEALTH_ENABLED: "true"
     healthcheck:
       test: ["CMD", "/opt/keycloak/bin/kcadm.sh", "get", "realms/stacklok", "--fields", "enabled"]

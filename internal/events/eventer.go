@@ -46,7 +46,7 @@ const (
 )
 
 const (
-	metricsNamespace = "mediator"
+	metricsNamespace = "minder"
 	metricsSubsystem = "eventer"
 )
 

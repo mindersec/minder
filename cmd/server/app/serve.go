@@ -40,8 +40,8 @@ import (
 
 var serveCmd = &cobra.Command{
 	Use:   "serve",
-	Short: "Start the mediator platform",
-	Long:  `Starts the mediator platform, which includes the gRPC server and the HTTP gateway.`,
+	Short: "Start the minder platform",
+	Long:  `Starts the minder platform, which includes the gRPC server and the HTTP gateway.`,
 	RunE: func(cmd *cobra.Command, args []string) error {
 
 		ctx, cancel := signal.NotifyContext(cmd.Context(), os.Interrupt)

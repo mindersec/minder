@@ -15,7 +15,7 @@
 apiVersion: apps/v1
 kind: Deployment
 metadata:
-  name: mediator
+  name: minder
   labels:
     {{ include "common.labels.standard" (dict "customLabels" .Values.commonLabels "context" $ ) | nindent 4 }}
 spec:
@@ -30,9 +30,9 @@ spec:
       annotations:
         {{ include "common.annotations.pods" (dict "customAnnotationsPods" .Values.commonAnnotationsPods "context" $ ) | nindent 8 }}
     spec:
-      serviceAccountName: {{ .Values.serviceAccounts.server | default "mediator" }}
+      serviceAccountName: {{ .Values.serviceAccounts.server | default "minder" }}
       containers:
-        - name: mediator
+        - name: minder
           # restricted security context:
           # https://kubernetes.io/docs/concepts/security/pod-security-standards/
           securityContext:
@@ -58,11 +58,11 @@ spec:
           - "--github-client-id-file=/secrets/app/client_id"
           - "--github-client-secret-file=/secrets/app/client_secret"
           env:
-          - name: "MEDIATOR_AUTH_TOKEN_KEY"
+          - name: "MINDER_AUTH_TOKEN_KEY"
             value: "/secrets/auth/token_key_passphrase"
-          - name: "MEDIATOR_IDENTITY_SERVER_CLIENT_SECRET_FILE"
+          - name: "MINDER_IDENTITY_SERVER_CLIENT_SECRET_FILE"
             value: "/secrets/identity/identity_client_secret"
-          - name: "MEDIATOR_UNSTABLE_TRUSTY_ENDPOINT"
+          - name: "MINDER_UNSTABLE_TRUSTY_ENDPOINT"
             value: "{{ .Values.trusty.endpoint }}"
           
           # ko will always specify a digest, so we don't need to worry about
@@ -103,7 +103,7 @@ spec:
       volumes:
       - name: config
         configMap:
-          name: mediator-config
+          name: minder-config
           items:
           - key: config.yaml
             path: config.yaml
@@ -111,13 +111,13 @@ spec:
             path: overrides.yaml
       - name: auth-secrets
         secret:
-          secretName: mediator-auth-secrets
+          secretName: minder-auth-secrets
       - name: app-secrets
         secret:
-          secretName: mediator-github-secrets
+          secretName: minder-github-secrets
       - name: identity-secrets
         secret:
-          secretName: mediator-identity-secrets
+          secretName: minder-identity-secrets
       {{- if .Values.deploymentSettings.extraVolumes }}
       {{- toYaml .Values.deploymentSettings.extraVolumes | nindent 6 }}
       {{- end }}

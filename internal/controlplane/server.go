@@ -52,7 +52,6 @@ import (
 	"github.com/stacklok/minder/internal/logger"
 	provtelemetry "github.com/stacklok/minder/internal/providers/telemetry"
 	"github.com/stacklok/minder/internal/util"
-	legacy "github.com/stacklok/minder/pkg/api/protobuf/go/mediator/v1"
 	pb "github.com/stacklok/minder/pkg/api/protobuf/go/minder/v1"
 )
 
@@ -78,13 +77,6 @@ type Server struct {
 	pb.UnimplementedProfileServiceServer
 	pb.UnimplementedArtifactServiceServer
 	pb.UnimplementedKeyServiceServer
-	legacy.UnsafeHealthServiceServer
-	legacy.UnsafeOAuthServiceServer
-	legacy.UnsafeUserServiceServer
-	legacy.UnsafeRepositoryServiceServer
-	legacy.UnsafeProfileServiceServer
-	legacy.UnsafeArtifactServiceServer
-	legacy.UnsafeKeyServiceServer
 	OAuth2       *oauth2.Config
 	ClientID     string
 	ClientSecret string
@@ -166,7 +158,7 @@ func initMetrics(r sdkmetric.Reader) *sdkmetric.MeterProvider {
 	// See the go.opentelemetry.io/otel/sdk/resource package for more
 	res := resource.NewWithAttributes(
 		semconv.SchemaURL,
-		semconv.ServiceName("mediator"),
+		semconv.ServiceName("minder"),
 		// TODO: Make this auto-generated
 		semconv.ServiceVersion("v0.1.0"),
 	)
@@ -333,7 +325,7 @@ func (s *Server) StartHTTPServer(ctx context.Context) error {
 func (s *Server) startMetricServer(ctx context.Context) error {
 	// pull-based Prometheus exporter
 	prometheusExporter, err := prometheus.New(
-		prometheus.WithNamespace("mediator"),
+		prometheus.WithNamespace("minder"),
 	)
 	if err != nil {
 		return fmt.Errorf("could not initialize metrics: %w", err)

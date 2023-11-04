@@ -1,5 +1,5 @@
 
-# Contributing to Mediator
+# Contributing to Minder
 First off, thank you for taking the time to contribute to Minder! :+1: :tada: Minder is released under the Apache 2.0 license. If you would like to contribute something or want to hack on the code, this document should help you get started. You can find some hints for starting development in Minder's  [README](https://github.com/stacklok/minder/blob/main/README.md).
 
 ### Table of contents 
@@ -33,12 +33,12 @@ PRs to resolve existing issues are greatly appreciated and issues labeled as ["g
 
 #### Pull Request Process
 * Create an issue outlining the fix or feature.
-* Fork the mediator repository to your own github account and clone it locally.
+* Fork the Minder repository to your own github account and clone it locally.
 * Hack on your changes.
 * Correctly format your commit messages, see [Commit Message Guidelines](#Commit-Message-Guidelines) below.
 * Open a PR by ensuring the title and its description reflect the content of the PR.
 * Ensure that CI passes, if it fails, fix the failures.
-* Every pull request requires a review from the core Mediator team before merging.
+* Every pull request requires a review from the core Minder team before merging.
 * Once approved, all of your commits will be squashed into a single commit with your PR title.
 
 #### Commit Message Guidelines

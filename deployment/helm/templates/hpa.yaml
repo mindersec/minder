@@ -15,14 +15,14 @@
 apiVersion: autoscaling/v2
 kind: HorizontalPodAutoscaler
 metadata:
-  name: mediator
+  name: minder
   labels:
     {{ include "common.labels.standard" (dict "customLabels" .Values.commonLabels "context" $ ) | nindent 4 }}
 spec:
   scaleTargetRef:
     apiVersion: apps/v1
     kind: Deployment
-    name: mediator
+    name: minder
   minReplicas: {{ .Values.hpaSettings.minReplicas }}
   maxReplicas: {{ .Values.hpaSettings.maxReplicas }}
   metrics:

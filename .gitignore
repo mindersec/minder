@@ -43,7 +43,7 @@ Thumbs.db
 # asdf
 .tool-versions
 
-# Mediator-specific files
+# Minder-specific files
 .ssh/
 cmd/server/__debug_bin
 .resolved-compose.yaml

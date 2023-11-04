@@ -1,4 +1,4 @@
-# Docs for minder
+# Docs for Minder
 
 ## Building the docs locally
 

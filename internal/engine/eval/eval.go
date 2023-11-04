@@ -55,7 +55,7 @@ func NewRuleEvaluator(rt *pb.RuleType, cli *providers.ProviderBuilder) (engif.Ev
 			return nil, fmt.Errorf("rule type engine missing trusty configuration")
 		}
 		if trustyEvalConfig.GetEndpoint() == "" {
-			trustyEvalConfig.Endpoint = os.Getenv("MEDIATOR_UNSTABLE_TRUSTY_ENDPOINT")
+			trustyEvalConfig.Endpoint = os.Getenv("MINDER_UNSTABLE_TRUSTY_ENDPOINT")
 		}
 		return trusty.NewTrustyEvaluator(trustyEvalConfig, cli)
 	default:

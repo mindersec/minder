@@ -21,7 +21,7 @@ Currently disabled.
 apiVersion: v1
 kind: Pod
 metadata:
-  name: "{{ include "mediator.fullname" . }}-test-connection"
+  name: "{{ include "minder.fullname" . }}-test-connection"
   labels:
     {{- include "common.labels" . | nindent 4 }}
   annotations:
@@ -31,6 +31,6 @@ spec:
     - name: wget
       image: busybox
       command: ['wget']
-      args: ['{{ include "mediator.fullname" . }}:{{ .Values.service.port }}']
+      args: ['{{ include "minder.fullname" . }}:{{ .Values.service.port }}']
   restartPolicy: Never
 */}}

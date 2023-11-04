@@ -5,9 +5,9 @@ sidebar_position: 20
 
 # Getting Started (Configuring OAuth Provider)
 
-Mediator currently only supports GitHub as an OAuth provider. Later versions will support other providers.
+Minder currently only supports GitHub as an OAuth provider. Later versions will support other providers.
 
-Mediator uses OAuth2 to authenticate users. This means that you will need to configure an OAuth2 provider, to allow enrollment of users into Mediator.
+Minder uses OAuth2 to authenticate users. This means that you will need to configure an OAuth2 provider, to allow enrollment of users into Minder.
 
 ## Prerequisites
 
@@ -20,7 +20,7 @@ Mediator uses OAuth2 to authenticate users. This means that you will need to con
 3. Select "OAuth Apps" from the left hand menu
 4. Select "New OAuth App"
 5. Enter the following details:
-   - Application Name: `Mediator`
+   - Application Name: `Minder`
    - Homepage URL: `http://localhost:8080`
    - Authorization callback URL: `http://localhost:8080/api/v1/auth/callback/github`
 6. Select "Register Application"

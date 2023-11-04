@@ -135,7 +135,7 @@ func TestReadDefaultConfig(t *testing.T) {
 
 	cfg := config.DefaultConfigForTest()
 	require.Equal(t, "debug", cfg.LoggingConfig.Level)
-	require.Equal(t, "mediator", cfg.Database.Name)
+	require.Equal(t, "minder", cfg.Database.Name)
 	require.Equal(t, "./.ssh/token_key_passphrase", cfg.Auth.TokenKey)
 }
 

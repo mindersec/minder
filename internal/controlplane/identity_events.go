@@ -61,7 +61,7 @@ func SubscribeToIdentityEvents(ctx context.Context, store db.Store, cfg *config.
 	return nil
 }
 
-// HandleEvents fetches events from the identity provider and performs any related changes to the mediator database
+// HandleEvents fetches events from the identity provider and performs any related changes to the minder database
 func HandleEvents(ctx context.Context, store db.Store, cfg *config.Config) {
 	d := time.Now().Add(time.Duration(10) * time.Minute)
 	ctx, cancel := context.WithDeadline(ctx, d)
@@ -128,7 +128,7 @@ func HandleEvents(ctx context.Context, store db.Store, cfg *config.Config) {
 	}
 }
 
-// DeleteUser deletes a user and all their associated data from the mediator database
+// DeleteUser deletes a user and all their associated data from the minder database
 func DeleteUser(ctx context.Context, store db.Store, userId string) error {
 	tx, err := store.BeginTransaction()
 	if err != nil {

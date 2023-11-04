@@ -39,14 +39,14 @@ if ! /opt/keycloak/bin/kcadm.sh get clients -r stacklok --fields 'clientId' | gr
   /opt/keycloak/bin/kcadm.sh create clients -r stacklok -s clientId=minder-cli -s 'redirectUris=["http://localhost/*"]' -s publicClient=true -s enabled=true
 fi
 
-# Create client mediator-ui
-if ! /opt/keycloak/bin/kcadm.sh get clients -r stacklok --fields 'clientId' | grep -q "mediator-ui"; then
-  /opt/keycloak/bin/kcadm.sh create clients -r stacklok -s clientId=mediator-ui -s 'redirectUris=["http://localhost/*"]' -s publicClient=true -s enabled=true
+# Create client minder-ui
+if ! /opt/keycloak/bin/kcadm.sh get clients -r stacklok --fields 'clientId' | grep -q "minder-ui"; then
+  /opt/keycloak/bin/kcadm.sh create clients -r stacklok -s clientId=minder-ui -s 'redirectUris=["http://localhost/*"]' -s publicClient=true -s enabled=true
 fi
 
 # Create client minder-server to receive account deletion events
 if ! /opt/keycloak/bin/kcadm.sh get clients -r stacklok --fields 'clientId' | grep -q "minder-server"; then
-  /opt/keycloak/bin/kcadm.sh create clients -r stacklok -s clientId=minder-server -s serviceAccountsEnabled=true -s clientAuthenticatorType=client-secret -s secret="$KC_MEDIATOR_SERVER_SECRET" -s enabled=true
+  /opt/keycloak/bin/kcadm.sh create clients -r stacklok -s clientId=minder-server -s serviceAccountsEnabled=true -s clientAuthenticatorType=client-secret -s secret="$KC_MINDER_SERVER_SECRET" -s enabled=true
 
   # Give minder-server the capability to view events
   /opt/keycloak/bin/kcadm.sh add-roles -r stacklok --uusername service-account-minder-server --cclientid realm-management --rolename view-events

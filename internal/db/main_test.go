@@ -37,7 +37,7 @@ const (
 	// UseExternalDBEnvVar is the environment variable that, when set, will
 	// enable using an external postgres database instead of the in-process one.
 	// Useful for debugging.
-	UseExternalDBEnvVar = "MEDIATOR_TEST_EXTERNAL_DB"
+	UseExternalDBEnvVar = "MINDER_TEST_EXTERNAL_DB"
 )
 
 var testQueries *Queries
@@ -53,7 +53,7 @@ func TestMain(m *testing.M) {
 }
 
 func runTestWithExternalPostgres(m *testing.M) int {
-	connStr := "user=postgres dbname=mediator password=postgres host=localhost sslmode=disable"
+	connStr := "user=postgres dbname=minder password=postgres host=localhost sslmode=disable"
 
 	testDB, err := sql.Open("postgres", connStr)
 	if err != nil {
@@ -66,7 +66,7 @@ func runTestWithExternalPostgres(m *testing.M) int {
 }
 
 func runTestWithInProcessPostgres(m *testing.M) int {
-	tmpName, err := os.MkdirTemp("", "mediator-db-test")
+	tmpName, err := os.MkdirTemp("", "minder-db-test")
 	if err != nil {
 		log.Println("cannot create tmpdir:", err)
 		return -1
@@ -79,7 +79,7 @@ func runTestWithInProcessPostgres(m *testing.M) int {
 	}()
 
 	dbCfg := embeddedpostgres.DefaultConfig().
-		Database("mediator").
+		Database("minder").
 		RuntimePath(tmpName).
 		Port(5433)
 	postgres := embeddedpostgres.NewDatabase(dbCfg)
@@ -94,7 +94,7 @@ func runTestWithInProcessPostgres(m *testing.M) int {
 		}
 	}()
 
-	testDB, err = sql.Open("postgres", "user=postgres dbname=mediator password=postgres host=localhost port=5433 sslmode=disable")
+	testDB, err = sql.Open("postgres", "user=postgres dbname=minder password=postgres host=localhost port=5433 sslmode=disable")
 	if err != nil {
 		log.Println("cannot connect to db test instance:", err)
 		return -1

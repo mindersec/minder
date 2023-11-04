@@ -16,7 +16,7 @@ sidebar_position: 1
 ## Clone the repository
 
 ```bash
-git clone git@github.com:stacklok/mediator.git
+git clone git@github.com:stacklok/minder.git
 ```
 
 ## Build the application
@@ -37,7 +37,7 @@ KO_DOCKER_REPO=ko.local services=postgres make run-docker
 Then run the application
 
 ```bash
-bin/mediator-server serve
+bin/minder-server serve
 ```
 
 Or direct from source
@@ -94,7 +94,7 @@ make gen
 
 # Database migrations and tooling
 
-Mediator uses [sqlc](https://sqlc.dev/) to generate Go code from SQL.
+Minder uses [sqlc](https://sqlc.dev/) to generate Go code from SQL.
 
 The main configuration file is `sqlc.yaml`.
 

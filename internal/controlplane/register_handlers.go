@@ -22,7 +22,6 @@ import (
 	"github.com/grpc-ecosystem/grpc-gateway/v2/runtime"
 	"google.golang.org/grpc"
 
-	legacy "github.com/stacklok/minder/pkg/api/protobuf/go/mediator/v1"
 	pb "github.com/stacklok/minder/pkg/api/protobuf/go/minder/v1"
 )
 
@@ -86,13 +85,4 @@ func RegisterGRPCServices(s *Server) {
 
 	// Register the Artifact service
 	pb.RegisterArtifactServiceServer(s.grpcServer, s)
-
-	// Register the legacy versions of the same.
-	legacy.RegisterHealthServiceServer(s.grpcServer, s)
-	legacy.RegisterOAuthServiceServer(s.grpcServer, s)
-	legacy.RegisterUserServiceServer(s.grpcServer, s)
-	legacy.RegisterRepositoryServiceServer(s.grpcServer, s)
-	legacy.RegisterProfileServiceServer(s.grpcServer, s)
-	legacy.RegisterKeyServiceServer(s.grpcServer, s)
-	legacy.RegisterArtifactServiceServer(s.grpcServer, s)
 }

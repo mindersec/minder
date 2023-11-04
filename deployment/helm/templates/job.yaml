@@ -13,7 +13,7 @@
 # limitations under the License.
 
 # We need a separate service account for the db-update job, because
-# it runs as a helm pre-install hook, and the mediator service account
+# it runs as a helm pre-install hook, and the minder service account
 # won't have been installed at that point.
 {{ if eq .Values.serviceAccounts.migrate "" }}
 apiVersion: v1
@@ -27,7 +27,7 @@ metadata:
   labels:
     {{ include "common.labels.standard" (dict "customLabels" .Values.commonLabels "context" $ ) | nindent 4 }}
 imagePullSecrets:
-- name: mediator-pull-secret
+- name: minder-pull-secret
 {{ end }}
 ---
 apiVersion: v1
@@ -39,7 +39,7 @@ metadata:
     helm.sh/hook: pre-install,pre-upgrade
   labels:
     helm.sh/chart: '{{ .Chart.Name }}-{{ .Chart.Version | replace "+" "_" }}'
-    app.kubernetes.io/name: mediator
+    app.kubernetes.io/name: minder
     app.kubernetes.io/instance: "{{ .Release.Name }}"
     app.kubernetes.io/version: "{{ .Chart.AppVersion }}"
     app.kubernetes.io/managed-by: "{{ .Release.Service }}"
@@ -61,7 +61,7 @@ metadata:
     helm.sh/hook-weight: "5"
   labels:
     helm.sh/chart: '{{ .Chart.Name }}-{{ .Chart.Version | replace "+" "_" }}'
-    app.kubernetes.io/name: mediator
+    app.kubernetes.io/name: minder
     app.kubernetes.io/instance: "{{ .Release.Name }}"
     app.kubernetes.io/version: "{{ .Chart.AppVersion }}"
     app.kubernetes.io/managed-by: "{{ .Release.Service }}"
@@ -74,7 +74,7 @@ spec:
       serviceAccountName: {{ .Values.serviceAccounts.migrate | default "db-update" }}
       restartPolicy: Never
       containers:
-        - name: mediator-dbinit
+        - name: minder-dbinit
           # restricted security context:
           # https://kubernetes.io/docs/concepts/security/pod-security-standards/
           securityContext:

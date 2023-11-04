@@ -180,7 +180,7 @@ func (s *UnitTestSuite) TestHandleWebHookUnexistentRepository() {
 	event := github.MetaEvent{
 		Repo: &github.Repository{
 			ID:   github.Int64(12345),
-			Name: github.String("stacklok/mediator"),
+			Name: github.String("stacklok/minder"),
 		},
 		Org: &github.Organization{
 			Login: github.String("stacklok"),
@@ -286,7 +286,7 @@ func (s *UnitTestSuite) TestHandleWebHookRepository() {
 	event := github.MetaEvent{
 		Repo: &github.Repository{
 			ID:   github.Int64(12345),
-			Name: github.String("stacklok/mediator"),
+			Name: github.String("stacklok/minder"),
 		},
 		Org: &github.Organization{
 			Login: github.String("stacklok"),
@@ -364,7 +364,7 @@ func (s *UnitTestSuite) TestHandleWebHookUnexistentRepoPackage() {
 		Action: github.String("published"),
 		Repo: &github.Repository{
 			ID:   github.Int64(12345),
-			Name: github.String("stacklok/mediator"),
+			Name: github.String("stacklok/minder"),
 		},
 		Org: &github.Organization{
 			Login: github.String("stacklok"),

@@ -1,5 +1,5 @@
 ---
-# This is a sample provider integrating mediator with GitHub
+# This is a sample provider integrating minder with GitHub
 # There are details which you'll need to fill in yourself.
 version: v1
 type: provider

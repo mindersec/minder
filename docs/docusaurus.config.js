@@ -25,10 +25,6 @@ const redocusaurus = [
   {
     specs: [
       {
-        id: 'mediator-api',
-        spec: '../pkg/api/openapi/mediator/v1/mediator.swagger.json',
-      },
-      {
         id: 'minder-api',
         spec: '../pkg/api/openapi/minder/v1/minder.swagger.json',
       },
@@ -38,8 +34,8 @@ const redocusaurus = [
 
 /** @type {import('@docusaurus/types').Config} */
 const config = {
-  title: 'Mediator docs',
-  tagline: 'Documentation site for Mediator',
+  title: 'Minder docs',
+  tagline: 'Documentation site for Minder',
   favicon: 'img/stacklok-favicon.png',
   themes: ['@docusaurus/theme-mermaid', 'docusaurus-theme-redoc'],
 
@@ -52,7 +48,7 @@ const config = {
   // GitHub pages deployment config.
   // If you aren't using GitHub pages, you don't need these.
   organizationName: 'stacklok', // Usually your GitHub org/user name.
-  projectName: 'mediator', // Usually your repo name.
+  projectName: 'minder', // Usually your repo name.
   trailingSlash: false,
   onBrokenLinks: 'throw',
   onBrokenMarkdownLinks: 'warn',
@@ -97,7 +93,7 @@ const config = {
       // Replace with your project's social card
       image: 'img/stacklok-logo.svg',
       navbar: {
-        title: 'Mediator docs',
+        title: 'Minder docs',
         logo: {
           alt: 'Stacklok Logo',
           src: 'img/stacklok-logo.svg',
@@ -106,7 +102,7 @@ const config = {
           // {
           //   type: 'html',
           //   position: 'right',
-          //   value: 'Mediator version:',
+          //   value: 'Minder version:',
           // },   
           // {
           //   type: 'docsVersionDropdown',
@@ -126,7 +122,7 @@ const config = {
             title: 'Docs',
             items: [
               {
-                label: 'Mediator',
+                label: 'Minder',
                 to: '/',
               },
             ],

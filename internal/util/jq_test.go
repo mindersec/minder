@@ -13,7 +13,7 @@
 // See the License for the specific language governing permissions and
 // limitations under the License.
 
-// Package util provides helper functions for the mediator CLI.
+// Package util provides helper functions for the minder CLI.
 package util_test
 
 import (

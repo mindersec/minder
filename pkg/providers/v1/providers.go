@@ -13,7 +13,7 @@
 // limitations under the License.
 
 // Package v1 for providers provides the public interfaces for the providers
-// implemented by mediator. The providers are the sources of the data
+// implemented by minder. The providers are the sources of the data
 // that is used by the rules.
 package v1
 

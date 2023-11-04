@@ -13,8 +13,8 @@
 # limitations under the License.
 
 apiVersion: v2
-name: mediator
-description: Deploy Mediator on Kubernetes
+name: minder
+description: Deploy Minder on Kubernetes
 
 # A chart can be either an 'application' or a 'library' chart.
 #

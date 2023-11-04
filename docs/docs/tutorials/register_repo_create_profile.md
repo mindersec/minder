@@ -119,14 +119,14 @@ Disable secret scanning in one of the registered repositories, by following thes
 provided by GitHub.
 
 Navigate to the repository on GitHub, click on the Security tab and view the Security Advisories.  
-Notice that there is a new advisory titled `mediator: profile github-profile failed with rule secret_scanning`.
+Notice that there is a new advisory titled `minder: profile github-profile failed with rule secret_scanning`.
 
 Enable secret scanning in the same registered repository, by following these
 [instructions](https://docs.github.com/en/code-security/secret-scanning/configuring-secret-scanning-for-your-repositories)
 provided by GitHub.
 
 Navigate to the repository on GitHub, click on the Security tab and view the Security Advisories.
-Notice that the advisory titled `mediator: profile github-profile failed with rule secret_scanning` is now closed.
+Notice that the advisory titled `minder: profile github-profile failed with rule secret_scanning` is now closed.
 
 ## Delete registered repositories
 If you wish to delete a registered repository, you can do so with the following command:

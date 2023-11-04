@@ -5,7 +5,7 @@ sidebar_position: 20
 
 # Manage profiles
 
-In order to detect security deviations from repositories or other entities, Mediator is relying on the concepts of **Profiles**.
+In order to detect security deviations from repositories or other entities, Minder is relying on the concepts of **Profiles**.
 A profile is a definition of a verification we want to do on an entity in a pipeline.
 A **profile** is an instance of a profile type applied to an specific group, with the relevant settings filled in.
 
@@ -112,7 +112,7 @@ actions to comply with the profile.
 ## Prerequisites
 
 - The `minder` CLI application
-- [At least one repository is registered for Mediator](../getting_started/register_repos.md)
+- [At least one repository is registered for Minder](../getting_started/register_repos.md)
 
 ## List rule types
 
@@ -121,7 +121,7 @@ Covered rule types are now:
 - branch_protection: controls the branch protection rules on a repo
 - secret_scanning: enforces secret scanning for a repo
 
-You can list all profile types registered in Mediator:
+You can list all profile types registered in Minder:
 
 ```bash
 minder rule_type list --provider github
@@ -132,7 +132,7 @@ by using those defaults without having to create a new profile from scratch.
 
 ## Create a rule type
 
-Before creating a profile, we need to ensure that all rule types exist in mediator.
+Before creating a profile, we need to ensure that all rule types exist in Minder.
 
 A rule type can be created by pointing to a directory (or file) containing the rule type definition:
 
