@@ -37,7 +37,7 @@ const (
 	// UseExternalDBEnvVar is the environment variable that, when set, will
 	// enable using an external postgres database instead of the in-process one.
 	// Useful for debugging.
-	UseExternalDBEnvVar = "MEDIATOR_TEST_EXTERNAL_DB"
+	UseExternalDBEnvVar = "MINDER_TEST_EXTERNAL_DB"
 )
 
 var testQueries *Queries

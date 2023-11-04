@@ -58,11 +58,11 @@ spec:
           - "--github-client-id-file=/secrets/app/client_id"
           - "--github-client-secret-file=/secrets/app/client_secret"
           env:
-          - name: "MEDIATOR_AUTH_TOKEN_KEY"
+          - name: "MINDER_AUTH_TOKEN_KEY"
             value: "/secrets/auth/token_key_passphrase"
-          - name: "MEDIATOR_IDENTITY_SERVER_CLIENT_SECRET_FILE"
+          - name: "MINDER_IDENTITY_SERVER_CLIENT_SECRET_FILE"
             value: "/secrets/identity/identity_client_secret"
-          - name: "MEDIATOR_UNSTABLE_TRUSTY_ENDPOINT"
+          - name: "MINDER_UNSTABLE_TRUSTY_ENDPOINT"
             value: "{{ .Values.trusty.endpoint }}"
           
           # ko will always specify a digest, so we don't need to worry about
