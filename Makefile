@@ -33,6 +33,9 @@ KO_PUSH_IMAGE?=false
 KO_PLATFORMS=linux/amd64,linux/arm64
 HELM_PACKAGE_VERSION?=0.1.0
 
+TARGET_ENV?=staging
+BUILDTAGS?=$(TARGET_ENV)
+
 default: help
 
 .PHONY: help gen clean-gen build run-cli run-server bootstrap test clean cover lint pre-commit migrateup migratedown sqlc mock cli-docs identity
@@ -57,15 +60,15 @@ cli-docs:
 
 build: ## build golang binary
 	# @go build -ldflags "-X main.version=$(shell git describe --abbrev=0 --tags)" -o bin/$(projectname)
-	CGO_ENABLED=0 go build -trimpath -o ./bin/minder ./cmd/cli
-	CGO_ENABLED=0 go build -trimpath -o ./bin/$(projectname)-server ./cmd/server
-	CGO_ENABLED=0 go build -trimpath -o ./bin/medev ./cmd/dev
+	CGO_ENABLED=0 go build -trimpath -tags '$(BUILDTAGS)' -o ./bin/minder ./cmd/cli
+	CGO_ENABLED=0 go build -trimpath -tags '$(BUILDTAGS)' -o ./bin/$(projectname)-server ./cmd/server
+	CGO_ENABLED=0 go build -trimpath -tags '$(BUILDTAGS)' -o ./bin/medev ./cmd/dev
 
 run-cli: ## run the CLI, needs additional arguments
-	@go run -ldflags "-X main.version=$(shell git describe --abbrev=0 --tags)"  ./cmd/cli
+	@go run -ldflags "-X main.version=$(shell git describe --abbrev=0 --tags)" -tags '$(BUILDTAGS)' ./cmd/cli
 
 run-server: ## run the app
-	@go run -ldflags "-X main.version=$(shell git describe --abbrev=0 --tags)"  ./cmd/server serve
+	@go run -ldflags "-X main.version=$(shell git describe --abbrev=0 --tags)" -tags '$(BUILDTAGS)' ./cmd/server serve
 
 DOCKERARCH := $(shell uname -m | sed 's/x86_64/amd64/' | sed 's/aarch64/arm64/')
 
