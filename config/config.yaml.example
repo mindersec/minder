@@ -50,7 +50,7 @@ identity:
     realm: stacklok
     client_id: minder-cli
   server:
-    issuer_url: http://localhost:8081
+    issuer_url: http://keycloak:8080
     realm: stacklok
     client_id: minder-server
     client_secret: secret
