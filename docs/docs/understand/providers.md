@@ -1,5 +1,5 @@
 ---
-title: Minder providers
+title: Providers
 sidebar_position: 10
 ---
 

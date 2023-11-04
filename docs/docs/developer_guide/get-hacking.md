@@ -8,10 +8,8 @@ sidebar_position: 1
 ## Prerequisites
 
 - [Go](https://golang.org/doc/install)
-- [Docker](https://docs.docker.com/get-docker/) or..
-- [Podman](https://podman.io/getting-started/installation)
-- [Docker Compose](https://docs.docker.com/compose/install/) or..
-- [Podman Compose](https://github.com/containers/podman-compose#installation)
+- [Docker](https://docs.docker.com/get-docker/)
+- [Docker Compose](https://docs.docker.com/compose/install/)
 
 ## Clone the repository
 
@@ -31,7 +29,7 @@ Note that the application requires a database to be running. This can be achieve
 using docker-compose:
 
 ```bash
-KO_DOCKER_REPO=ko.local services=postgres make run-docker
+KO_DOCKER_REPO=ko.local services="postgres keycloak migrateup" make run-docker
 ```
 
 Then run the application
@@ -46,20 +44,17 @@ Or direct from source
 go run cmd/server/main.go serve
 ```
 
-The application will be available on `http://localhost:8080` and gRPC on `localhost:8090`.
+The application will be available on `https://localhost:8080` and gRPC on `https://localhost:8090`.
 
 ## Run the tests
-
-First, make sure the database schema is installed and the migration ran:
-```bash
-make migrateup
-```
 
 ```bash
 make test
 ```
 
 ## Install tools
+
+You may bootstrap the whole development environment, which includes initializing the `config.yaml` file with:
 
 ```bash
 make bootstrap
@@ -117,4 +112,25 @@ make migrateup
 
 ```bash
 make migratedown
+```
+
+# Viper configuration
+
+Minder uses [viper](https://github.com/spf13/viper) for configuration.
+
+An example configuration file is `config/config.yaml.example`.
+
+Most values should be quite self-explanatory.
+
+Before running the app, please copy the content of `config/config.yaml.example` into `$PWD/config.yaml` file,
+and modify to use your own settings.
+
+# Keycloak configuration for social login (GitHub)
+Create an OAuth2 application for GitHub [here](https://github.com/settings/developers). Select
+`New OAuth App` and fill in the details. The callback URL should be `http://localhost:8081/realms/stacklok/broker/github/endpoint`.
+Create a new client secret for your OAuth2 client.
+
+Using the client ID and client secret you created above, enable GitHub login on Keycloak by running the following command:
+```bash
+make KC_GITHUB_CLIENT_ID=<client_id> KC_GITHUB_CLIENT_SECRET=<client_secret> github-login
 ```

@@ -1,5 +1,5 @@
 ---
-title: Minder alerts
+title: Alerts
 sidebar_position: 60
 ---
 
