@@ -13,7 +13,7 @@
 # limitations under the License.
 
 # This is a set of manifests to create an INSECURE postgresql instance for use
-# during Mediator development. For production use, you should use a managed
+# during Minder development. For production use, you should use a managed
 # postgresql instance, either from a Helm chart, operator, or cloud provider.
 
 # We deploy to the `postgres' namespace:

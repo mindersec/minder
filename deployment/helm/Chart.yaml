@@ -14,7 +14,7 @@
 
 apiVersion: v2
 name: minder
-description: Deploy Mediator on Kubernetes
+description: Deploy Minder on Kubernetes
 
 # A chart can be either an 'application' or a 'library' chart.
 #

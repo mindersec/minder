@@ -20,21 +20,21 @@ these helm charts, you will need the following:
 
   - `minder-github-secrets`: Needs to contain API credentials for a GitHub
     app. In particular, the following keys are required:
-    - `client_id`: The GitHub client ID to be used by Mediator
-    - `client_secret`: The GitHub client secret to be used by Mediator
+    - `client_id`: The GitHub client ID to be used by Minder
+    - `client_secret`: The GitHub client secret to be used by Minder
 
   - `minder-identity-secrets`: Needs to contain the OAuth 2 client secret for minder
     server when authenticating with Keycloak. In particular, the following keys are required:
-    - `identity_client_secret`: The Keycloak client secret to be used by Mediator server
+    - `identity_client_secret`: The Keycloak client secret to be used by Minder server
 
-- In addition, if you are using Mediator images which require authentication,
+- In addition, if you are using Minder images which require authentication,
   you will want to create a `docker-registry` type credential with the name
   `minder-pull-secret`
 
 ## Building and running
 
 You can build a (local) helm chart with `make helm` at the top-level of the
-Mediator repository. You can then run it with:
+Minder repository. You can then run it with:
 
 ```helm
 helm install minder config/helm/minder-0.1.0.tgz

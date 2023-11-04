@@ -17,11 +17,11 @@ You can also register a repository (or set of repositories) by name:
 minder repo register --provider github --repo "owner:repo1,owner:repo2"
 ```
 
-A webhook will now be created in each repository, and selected repositories will be considered registered within Mediator. Any events that now occur in any registered repository will be sent to Mediator, and processed accordingly.
+A webhook will now be created in each repository, and selected repositories will be considered registered within Minder. Any events that now occur in any registered repository will be sent to Minder, and processed accordingly.
 
 ## List and Get Repositories
 
-You can list all repositories registered in Mediator:
+You can list all repositories registered in Minder:
 
 ```bash
 minder repo list -n github

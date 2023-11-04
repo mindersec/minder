@@ -433,7 +433,7 @@ type summaryPrHandler struct {
 const (
 	tableVulnerabilitiesHeaderName = "vulnerabilitiesTableHeader"
 	tableVulnerabilitiesHeader     = `### Summary of vulnerabilities found
-Mediator found the following vulnerabilities in this PR:
+Minder found the following vulnerabilities in this PR:
 <table>
   <tr>
     <th>Ecosystem</th>

@@ -73,7 +73,7 @@ def:
     pull_request:
       title: "Add CodeQL configuration"
       body: |
-        This is a Mediator automated pull request.
+        This is a Minder automated pull request.
         
         This pull request adds a CodeQL workflow to the repository.
         

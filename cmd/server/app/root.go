@@ -33,7 +33,7 @@ var (
 	// RootCmd represents the base command when called without any subcommands
 	RootCmd = &cobra.Command{
 		Use:   "minder-server",
-		Short: "Mediator control plane server",
+		Short: "Minder control plane server",
 		Long:  ``,
 	}
 )

@@ -35,7 +35,7 @@ import (
 
 const (
 	githubSubmitterID = 144222806
-	githubMediatorID  = 123456789
+	githubMinderID    = 123456789
 
 	minderReviewID = 987654321
 
@@ -99,7 +99,7 @@ func TestReviewPrHandlerVulnerabilitiesDifferentIdentities(t *testing.T) {
 	}
 
 	mockClient.EXPECT().GetAuthenticatedUser(gomock.Any()).Return(&github.User{
-		ID: github.Int64(githubMediatorID),
+		ID: github.Int64(githubMinderID),
 	}, nil)
 	handler, err := newReviewPrHandler(context.TODO(), pr, mockClient)
 	require.NoError(t, err)
@@ -290,7 +290,7 @@ func TestCommitStatusPrHandlerWithVulnerabilities(t *testing.T) {
 	}
 
 	mockClient.EXPECT().GetAuthenticatedUser(gomock.Any()).Return(&github.User{
-		ID: github.Int64(githubMediatorID),
+		ID: github.Int64(githubMinderID),
 	}, nil)
 	handler, err := newCommitStatusPrHandler(context.TODO(), pr, mockClient)
 	require.NoError(t, err)

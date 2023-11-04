@@ -15,7 +15,7 @@ PostgreSQL is used as the database.
 
 Keycloak is used as the identity provider.
 
-There are two methods to get started with Mediator, either by downloading the
+There are two methods to get started with Minder, either by downloading the
 latest release, building from source or (quickest) using the provided `docker-compose`
 file.
 

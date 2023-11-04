@@ -5,7 +5,7 @@ sidebar_position: 60
 
 # System Architecture
 
-While it is built as a single container, Mediator implements several external
+While it is built as a single container, Minder implements several external
 interfaces for different components. In addition to the GRPC and HTTP service
 ports, it also leverages the [watermill library](https://watermill.io) to queue
 and route events within the application.

@@ -63,7 +63,7 @@ func (s *GRPCServerConfig) GetAddress() string {
 	return fmt.Sprintf("%s:%d", s.Host, s.Port)
 }
 
-// RegisterServerFlags registers the flags for the Mediator server
+// RegisterServerFlags registers the flags for the Minder server
 func RegisterServerFlags(v *viper.Viper, flags *pflag.FlagSet) error {
 	// Register the flags for the HTTP server
 	if err := registerHTTPServerFlags(v, flags); err != nil {

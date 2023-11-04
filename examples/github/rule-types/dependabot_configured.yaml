@@ -84,7 +84,7 @@ def:
     pull_request:
       title: "Add Dependabot configuration for {{.Profile.package_ecosystem }}"
       body: |
-        This is a Mediator automated pull request.
+        This is a Minder automated pull request.
         
         This pull request adds a Dependabot configuration to the repository to handle
         package updates for {{.Profile.package_ecosystem }}.

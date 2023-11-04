@@ -356,4 +356,4 @@ CREATE TRIGGER update_profile_status
     EXECUTE PROCEDURE update_profile_status();
 
 -- Create default root organization and get id so we can create the root project
-INSERT INTO projects (name, is_organization) VALUES ('Mediator Root', TRUE);
+INSERT INTO projects (name, is_organization) VALUES ('Minder Root', TRUE);
