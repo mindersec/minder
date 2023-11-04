@@ -41,6 +41,7 @@ import (
 	"google.golang.org/grpc/codes"
 	"google.golang.org/grpc/status"
 
+	"github.com/stacklok/minder/internal/constants"
 	mcrypto "github.com/stacklok/minder/internal/crypto"
 	"github.com/stacklok/minder/internal/util"
 	"github.com/stacklok/minder/internal/util/cli"
@@ -76,7 +77,7 @@ will be saved to $XDG_CONFIG_HOME/minder/credentials.json`,
 		ctx := context.Background()
 
 		issuerUrlStr := util.GetConfigValue(viper.GetViper(), "identity.cli.issuer_url", "identity-url", cmd,
-			"https://auth.staging.stacklok.dev").(string)
+			constants.IdentitySeverURL).(string)
 		realm := util.GetConfigValue(viper.GetViper(), "identity.cli.realm", "identity-realm", cmd, "stacklok").(string)
 		clientID := util.GetConfigValue(viper.GetViper(), "identity.cli.client_id", "identity-client", cmd, "minder-cli").(string)
 

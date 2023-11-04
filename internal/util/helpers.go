@@ -54,6 +54,7 @@ import (
 	"google.golang.org/protobuf/reflect/protoreflect"
 	"google.golang.org/protobuf/types/known/timestamppb"
 
+	"github.com/stacklok/minder/internal/constants"
 	"github.com/stacklok/minder/internal/db"
 	"github.com/stacklok/minder/internal/util/jsonyaml"
 	minderv1 "github.com/stacklok/minder/pkg/api/protobuf/go/minder/v1"
@@ -142,12 +143,12 @@ func (JWTTokenCredentials) RequireTransportSecurity() bool {
 
 // GrpcForCommand is a helper for getting a testing connection from cobra flags
 func GrpcForCommand(cmd *cobra.Command, v *viper.Viper) (*grpc.ClientConn, error) {
-	grpc_host := GetConfigValue(v, "grpc_server.host", "grpc-host", cmd, "staging.stacklok.dev").(string)
+	grpc_host := GetConfigValue(v, "grpc_server.host", "grpc-host", cmd, constants.MinderGRPCHost).(string)
 	grpc_port := GetConfigValue(v, "grpc_server.port", "grpc-port", cmd, 443).(int)
 	insecureDefault := grpc_host == "localhost" || grpc_host == "127.0.0.1" || grpc_host == "::1"
 	allowInsecure := GetConfigValue(v, "grpc_server.insecure", "grpc-insecure", cmd, insecureDefault).(bool)
 
-	issuerUrl := GetConfigValue(v, "identity.cli.issuer_url", "identity-url", cmd, "https://auth.staging.stacklok.dev").(string)
+	issuerUrl := GetConfigValue(v, "identity.cli.issuer_url", "identity-url", cmd, constants.IdentitySeverURL).(string)
 	realm := GetConfigValue(v, "identity.cli.realm", "identity-realm", cmd, "stacklok").(string)
 	clientId := GetConfigValue(v, "identity.cli.client_id", "identity-client", cmd, "minder-cli").(string)
 

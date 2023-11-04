@@ -29,6 +29,7 @@ import (
 	"github.com/spf13/cobra"
 	"github.com/spf13/viper"
 
+	"github.com/stacklok/minder/internal/constants"
 	"github.com/stacklok/minder/internal/util"
 	"github.com/stacklok/minder/internal/util/cli"
 )
@@ -48,7 +49,7 @@ var auth_logoutCmd = &cobra.Command{
 		util.ExitNicelyOnError(err, "Error removing credentials")
 
 		issuerUrlStr := util.GetConfigValue(viper.GetViper(), "identity.cli.issuer_url", "identity-url", cmd,
-			"https://auth.staging.stacklok.dev").(string)
+			constants.IdentitySeverURL).(string)
 		realm := util.GetConfigValue(viper.GetViper(), "identity.cli.realm", "identity-realm", cmd, "stacklok").(string)
 
 		parsedURL, err := url.Parse(issuerUrlStr)
