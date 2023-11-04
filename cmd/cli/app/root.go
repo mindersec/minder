@@ -18,6 +18,7 @@ package app
 
 import (
 	"fmt"
+	"os"
 
 	"github.com/spf13/cobra"
 	"github.com/spf13/viper"
@@ -77,10 +78,10 @@ func initConfig() {
 	if err := viper.ReadInConfig(); err != nil {
 		if _, ok := err.(viper.ConfigFileNotFoundError); ok {
 			// Config file not found; use default values
-			fmt.Println("No config file present, using default values.")
+			fmt.Fprintln(os.Stderr, "No config file present, using default values.")
 		} else {
 			// Some other error occurred
-			fmt.Println("Error reading config file:", err)
+			fmt.Fprintln(os.Stderr, "Error reading config file:", err)
 		}
 	}
 }
