@@ -79,7 +79,7 @@ winget:
       branch: "minder-{{.Version}}"
       token: "{{ .Env.WINGET_GITHUB_TOKEN }}"
       pull_request:
-        enabled: false # TODO: enable once we release
+        enabled: true
         draft: false
         base:
           owner: microsoft
