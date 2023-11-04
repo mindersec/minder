@@ -3,7 +3,7 @@ title: Minder
 sidebar_position: 1
 ---
 
-<img width="799" alt="image" src="./images/Minder-whitetxt.svg">
+![minder logo](./images/Minder-whitetxt.svg)
 
 # What is Minder?
 
