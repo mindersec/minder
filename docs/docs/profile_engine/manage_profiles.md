@@ -132,7 +132,7 @@ by using those defaults without having to create a new profile from scratch.
 
 ## Create a rule type
 
-Before creating a profile, we need to ensure that all rule types exist in minder.
+Before creating a profile, we need to ensure that all rule types exist in Minder.
 
 A rule type can be created by pointing to a directory (or file) containing the rule type definition:
 

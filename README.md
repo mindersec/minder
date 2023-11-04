@@ -244,5 +244,5 @@ Now that you've granted the GitHub app permissions to access your repositories, 
 go run ./cmd/cli/main.go repo register -n github
 ```
 
-Once you've registered the repositories, the minder server will listen for events from GitHub and will
+Once you've registered the repositories, the Minder server will listen for events from GitHub and will
 automatically create the necessary webhooks for you.
