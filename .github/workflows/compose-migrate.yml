@@ -5,10 +5,6 @@ name: Compose Migrate test
 on:
   workflow_call:
 
-  pull_request:
-    branches:
-    - main
-
 jobs:
   docker:
     timeout-minutes: 10
