@@ -111,13 +111,13 @@ spec:
             path: overrides.yaml
       - name: auth-secrets
         secret:
-          secretName: minder-auth-secrets
+          secretName: {{ .Values.deploymentSettings.secrets.authSecretName }}
       - name: app-secrets
         secret:
-          secretName: minder-github-secrets
+          secretName: {{ .Values.deploymentSettings.secrets.appSecretName }}
       - name: identity-secrets
         secret:
-          secretName: minder-identity-secrets
+          secretName: {{ .Values.deploymentSettings.secrets.identitySecretName }}
       {{- if .Values.deploymentSettings.extraVolumes }}
       {{- toYaml .Values.deploymentSettings.extraVolumes | nindent 6 }}
       {{- end }}
