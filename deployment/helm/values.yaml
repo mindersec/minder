@@ -44,6 +44,9 @@ serviceAccounts:
   migrate: ""
   server: ""
 
+ingress:
+  annotations: {}
+
 hpaSettings:
   minReplicas: 1
   maxReplicas: 1

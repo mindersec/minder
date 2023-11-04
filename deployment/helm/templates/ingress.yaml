@@ -18,15 +18,7 @@ metadata:
   name: minder
   labels:
     {{ include "common.labels.standard" (dict "customLabels" .Values.commonLabels "context" $ ) | nindent 4 }}
-  annotations:
-    alb.ingress.kubernetes.io/group.name: minder-vip
-    alb.ingress.kubernetes.io/group.order: '200'
-    alb.ingress.kubernetes.io/listen-ports: '[{"HTTP": 80},{"HTTPS":443}]'
-    alb.ingress.kubernetes.io/scheme: internet-facing
-    alb.ingress.kubernetes.io/ssl-redirect: "443"
-    alb.ingress.kubernetes.io/target-type: ip
-#    ALB doesn't use support cert-manager, but maybe someone else will benefit from it?
-    cert-manager.io/cluster-issuer: letsencrypt
+  annotations: {{ .Values.ingress.annotations | toYaml | nindent 4 }}
 spec:
   # Don't set ingressClassName for now, assume default
   tls:
