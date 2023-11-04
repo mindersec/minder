@@ -52,7 +52,6 @@ import (
 	"github.com/stacklok/minder/internal/logger"
 	provtelemetry "github.com/stacklok/minder/internal/providers/telemetry"
 	"github.com/stacklok/minder/internal/util"
-	legacy "github.com/stacklok/minder/pkg/api/protobuf/go/mediator/v1"
 	pb "github.com/stacklok/minder/pkg/api/protobuf/go/minder/v1"
 )
 
@@ -78,13 +77,6 @@ type Server struct {
 	pb.UnimplementedProfileServiceServer
 	pb.UnimplementedArtifactServiceServer
 	pb.UnimplementedKeyServiceServer
-	legacy.UnsafeHealthServiceServer
-	legacy.UnsafeOAuthServiceServer
-	legacy.UnsafeUserServiceServer
-	legacy.UnsafeRepositoryServiceServer
-	legacy.UnsafeProfileServiceServer
-	legacy.UnsafeArtifactServiceServer
-	legacy.UnsafeKeyServiceServer
 	OAuth2       *oauth2.Config
 	ClientID     string
 	ClientSecret string

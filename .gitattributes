@@ -9,8 +9,6 @@
 /docs/docs/ref/schema.md linguist-generated=true
 /docs/docs/ref/proto.md linguist-generated=true
 /pkg/api/openapi/** linguist-generated=true
-/pkg/api/protobuf/go/mediator/v1/*.pb.go linguist-generated=true
-/pkg/api/protobuf/go/mediator/v1/*.gw.go linguist-generated=true
 /pkg/api/protobuf/go/minder/v1/*.pb.go linguist-generated=true
 /pkg/api/protobuf/go/minder/v1/*.gw.go linguist-generated=true
 /internal/db/db.go linguist-generated=true

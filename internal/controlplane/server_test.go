@@ -36,7 +36,6 @@ import (
 	mockjwt "github.com/stacklok/minder/internal/auth/mock"
 	"github.com/stacklok/minder/internal/config"
 	"github.com/stacklok/minder/internal/events"
-	legacy "github.com/stacklok/minder/pkg/api/protobuf/go/mediator/v1"
 	pb "github.com/stacklok/minder/pkg/api/protobuf/go/minder/v1"
 )
 
@@ -56,7 +55,6 @@ func init() {
 		ClientID:     "test",
 		ClientSecret: "test",
 	})
-	legacy.RegisterHealthServiceServer(s, &Server{})
 	go func() {
 		if err := s.Serve(lis); err != nil {
 			log.Fatalf("Server exited with error: %v", err)
@@ -134,22 +132,6 @@ func TestHealth(t *testing.T) {
 	defer conn.Close()
 
 	client := pb.NewHealthServiceClient(conn)
-	_, err = client.CheckHealth(context.Background(), &pb.CheckHealthRequest{})
-	if err != nil {
-		t.Fatalf("Failed to get health: %v", err)
-	}
-}
-
-func TestLegacyHealth(t *testing.T) {
-	t.Parallel()
-
-	conn, err := getgRPCConnection()
-	if err != nil {
-		t.Fatalf("Failed to dial bufnet: %v", err)
-	}
-	defer conn.Close()
-
-	client := legacy.NewHealthServiceClient(conn)
 	_, err = client.CheckHealth(context.Background(), &pb.CheckHealthRequest{})
 	if err != nil {
 		t.Fatalf("Failed to get health: %v", err)
