@@ -77,6 +77,11 @@ deploymentSettings:
   extraVolumes: null
   # Additional volume mounts
   extraVolumeMounts: null
+  secrets:
+    authSecretName: "minder-auth-secrets"
+    appSecretName: "minder-github-secrets"
+    identitySecretName: "minder-identity-secrets"
+
 
 # Additional configuration yaml beyond what's in config.yaml.example
 extra_config: |
