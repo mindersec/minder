@@ -2,8 +2,7 @@
 title: Auto-remediation via pull request
 sidebar_position: 30
 ---
-import Tabs from '@theme/Tabs';
-import TabItem from '@theme/TabItem';
+# Creating a Pull Request for Autoremediation
 
 ## Prerequisites
 
@@ -93,11 +92,11 @@ Once the profile is created, Minder will monitor all of your registered reposito
 i.e., Go, NPM, etc.
 
 If a repository does not have Dependabot enabled, Minder will create a pull request with the necessary configuration
-to enable it. Alongside the PR, Minder will also create a Security Advisory alert that will be present until the issue
+to enable it. Alongside the pull request, Minder will also create a Security Advisory alert that will be present until the issue
 is resolved.
 
 ## Limitations
 
 * The pull request auto remediation feature is only available for rule types that support it.
 * There's no support for creating pull requests that modify the content of existing files yet.
-* The created pull request should be closed manually if the issue is resolved through other means. The profile status and any related alerts will be updated/closed automatically though.
+* The created pull request should be closed manually if the issue is resolved through other means. The profile status and any related alerts will be updated/closed automatically.
