@@ -4,7 +4,7 @@
 
 ---
 
-[Installation](https://minder.stacklok.github.io/getting_started/install_cli) | [Documentation](https://minder.stacklok.github.io) | [Discussions](https://github.com/stacklok/minder/discussions) | [Releases](https://github.com/stacklok/minder/releases)
+[Installation](https://minder-docs.stacklok.dev/getting_started/install_cli) | [Documentation](https://minder-docs.stacklok.dev) | [Discussions](https://github.com/stacklok/minder/discussions) | [Releases](https://github.com/stacklok/minder/releases)
 
 ---
 
@@ -75,8 +75,8 @@ Minder supports GitHub as a provider to enroll repositories. To enroll your prov
 minder provider enroll --provider github  --group-id <group-id>
 ```
 
-Note: Provide the --group-id flag, if your user belongs to multiple groups.
-For this example, we will use the default group 1, so we do not need to provide the flag.
+Note: Provide the --group-id flag, if your user belongs to multiple groups. You can omit the group-id
+flag if you want to enroll user owned repositories (default --group-id=1).
 
 A browser session will open, and you will be prompted to login to your GitHub.
 Once you have granted Minder access, you will be redirected back, and the user will be enrolled.
@@ -95,7 +95,10 @@ automatically create the necessary webhooks for you.
 
 Now you can run `minder` commands against the public instance of Minder where you can manage your registered repositories
 and create custom profiles that would help ensure your repositories are configured consistently and securely.
-For more information, see the Minder documentation - [Docs](https://minder.stacklok.github.io).
+
+For more information about `minder`, see:
+* `minder` CLI commands - [Docs](https://minder-docs.stacklok.dev/ref/cli/commands/minder).
+* Minder documentation - [Docs](https://minder-docs.stacklok.dev).
 
 # Development
 
@@ -139,7 +142,7 @@ cp config/config.yaml.example config.yaml
 
 You'd also have to set up an OAuth2 application for `minder-server` to use.
 Once completed, update the configuration file with the appropriate values.
-See the documentation on how to do that - [Docs](https://minder.stacklok.github.io/run_minder_server/config_oauth).
+See the documentation on how to do that - [Docs](https://minder-docs.stacklok.dev/run_minder_server/config_oauth).
 
 #### Run `minder-server`
 
@@ -178,13 +181,13 @@ Upon completion, you should see that the Minder Server is set to `localhost:8090
 
 ### Development guidelines
 
-You can find more detailed information about the development process in the [Developer Guide](https://minder.stacklok.github.io/developer_guide/get-hacking).
+You can find more detailed information about the development process in the [Developer Guide](https://minder-docs.stacklok.dev/developer_guide/get-hacking).
 
 ## Minder API
 
-* REST API documentation - [Link](https://minder.stacklok.github.io/ref/api).
+* REST API documentation - [Link](https://minder-docs.stacklok.dev/ref/api).
 
-* Proto API documentation - [Link](https://minder.stacklok.github.io/ref/proto).
+* Proto API documentation - [Link](https://minder-docs.stacklok.dev/ref/proto).
 
 * Protobuf - [Link](https://github.com/stacklok/minder/blob/main/proto/minder/v1/minder.proto).
 

@@ -40,7 +40,7 @@ const config = {
   themes: ['@docusaurus/theme-mermaid', 'docusaurus-theme-redoc'],
 
   // Set the production url of your site here
-  url: 'https://stacklok.github.io',
+  url: 'https://minder-docs.stacklok.dev/',
   // Set the /<baseUrl>/ pathname under which your site is served
   // For GitHub pages deployment, it is often '/<projectName>/'
   baseUrl: '/',
