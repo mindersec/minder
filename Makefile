@@ -56,7 +56,7 @@ cli-docs:
 	@mkdir -p docs/docs/ref/cli/commands
 	@echo 'label: Commands' > docs/docs/ref/cli/commands/_category_.yml
 	@echo 'position: 20' >> docs/docs/ref/cli/commands/_category_.yml
-	@go run cmd/cli/main.go docs
+	@go run -tags '$(BUILDTAGS)' cmd/cli/main.go docs
 
 build: ## build golang binary
 	# @go build -ldflags "-X main.version=$(shell git describe --abbrev=0 --tags)" -o bin/$(projectname)
@@ -134,9 +134,9 @@ sqlc: ## generate sqlc files
 	sqlc generate
 
 migrateup: ## run migrate up
-	@go run cmd/server/main.go migrate up --yes     
+	@go run -tags '$(BUILDTAGS)' cmd/server/main.go migrate up --yes
 migratedown: ## run migrate down
-	@go run cmd/server/main.go migrate down
+	@go run -tags '$(BUILDTAGS)' cmd/server/main.go migrate down
 
 dbschema:	## generate database schema with schema spy, monitor file until doc is created and copy it
 	mkdir -p database/schema/output && chmod a+w database/schema/output
