@@ -2,8 +2,8 @@
 title: Setting up a profile for alerts
 sidebar_position: 40
 ---
-import Tabs from '@theme/Tabs';
-import TabItem from '@theme/TabItem';
+
+# Setting up a Profile for Alerts
 
 ## Prerequisites
 

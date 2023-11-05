@@ -2,8 +2,8 @@
 title: Setting up a profile for auto-remediation
 sidebar_position: 50
 ---
-import Tabs from '@theme/Tabs';
-import TabItem from '@theme/TabItem';
+
+# Setting up a Profile for Autoremediation
 
 ## Prerequisites
 
