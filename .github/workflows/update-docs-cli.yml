@@ -23,7 +23,7 @@ jobs:
         shell: bash
         run: |
           cp config/config.yaml.example config.yaml
-          make cli-docs
+          TARGET_ENV=prod make cli-docs
 
       - name: Extract Commit SHA and Details
         id: extract_commit_details

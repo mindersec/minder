@@ -29,6 +29,7 @@ import (
 	"github.com/spf13/viper"
 	"golang.org/x/exp/slices"
 
+	"github.com/stacklok/minder/internal/constants"
 	"github.com/stacklok/minder/internal/util"
 )
 
@@ -173,7 +174,7 @@ type UserDetails struct {
 // GetUserDetails is a helper for getting user details such as name and email from the jwt token
 func GetUserDetails(ctx context.Context, cmd *cobra.Command, v *viper.Viper) (*UserDetails, error) {
 	// Extract the config details
-	issuerUrl := util.GetConfigValue(v, "identity.cli.issuer_url", "identity-url", cmd, "https://auth.staging.stacklok.dev").(string)
+	issuerUrl := util.GetConfigValue(v, "identity.cli.issuer_url", "identity-url", cmd, constants.IdentitySeverURL).(string)
 	realm := util.GetConfigValue(v, "identity.cli.realm", "identity-realm", cmd, "stacklok").(string)
 	clientId := util.GetConfigValue(v, "identity.cli.client_id", "identity-client", cmd, "minder-cli").(string)
 
