@@ -18,7 +18,7 @@ In order to follow the tutorial, ensure that you have completed the tutorial on
 
 ## Creating a profile with `remediate: on`
 
-At the moment, Minder doesn't support editing profiles. In order to create the
+Minder doesn't currently support editing profiles. In order to create the
 same profile with `remediate: on`, you need to delete the existing profile and create
 a new one.
 
@@ -32,7 +32,7 @@ Find the ID of the profile you want to remove and delete it:
 minder profile delete -i $ID
 ```
 
-Edit the YAML file of the profile you want to use and set the `remediate` attribute to
+Edit the YAML file of the profile you want to use and set the `remediate` attribute
 to `on`:
 ```yaml
 ---
@@ -60,13 +60,13 @@ minder profile_status list --profile github-profile
 ```
 
 With remediation on, the profile status should be "Success" when the repository has been updated to match the profile.
-If you navigate to your repository settings with your browser, you should see that secret scanning
+If you navigate to your repository settings with your browser, you should see that the secret scanning
 feature is enabled. Toggling the feature off should trigger a new profile status check and the
-secret scanning feature should be enabled again in github.
+secret scanning feature should be enabled again in GitHub.
 
 ## Current limitations
 At the time of writing, not all `rule_type` objects support remediation. To find out which
-do, you can run:
+rule types support remediation, you can run:
 ```shell
 minder rule_type get -i $ID -oyaml
 ```
