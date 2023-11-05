@@ -64,4 +64,9 @@ are set to require a passing commit status.
       url: https://proxy.golang.org
     sum_repository:
       url: https://sum.golang.org
+  - name: pypi
+    vulnerability_database_type: osv
+    vulnerability_database_endpoint: https://api.osv.dev/v1/query
+    package_repository:
+      url: https://pypi.org/pypi
 ```
