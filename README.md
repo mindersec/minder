@@ -72,11 +72,8 @@ Upon completion, you should see that the Minder Server is set to `api.stacklok.c
 Minder supports GitHub as a provider to enroll repositories. To enroll your provider, run:
 
 ```bash
-minder provider enroll --provider github  --group-id <group-id>
+minder provider enroll --provider github
 ```
-
-Note: Provide the --group-id flag, if your user belongs to multiple groups. You can omit the group-id
-flag if you want to enroll user owned repositories (default --group-id=1).
 
 A browser session will open, and you will be prompted to login to your GitHub.
 Once you have granted Minder access, you will be redirected back, and the user will be enrolled.

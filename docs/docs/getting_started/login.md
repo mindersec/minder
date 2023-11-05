@@ -22,9 +22,7 @@ Once logged in:
 2. Enroll a user with the given provider
 
 ```bash
-minder provider enroll --provider github --group-id <group-id>
+minder provider enroll --provider github
 ```
 
-> __Note__: Provide the `--group-id` flag if your user belongs to multiple groups. For this example, we will use the default group `1`, so we do not need to provide the flag.
-> 
 A browser session will open, and you will be prompted to login to your GitHub account. Once you have granted Minder access, you will be redirected back, and the user will be enrolled. The `minder` CLI application will report the session is complete.
