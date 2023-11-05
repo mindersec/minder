@@ -17,7 +17,18 @@ import TabItem from '@theme/TabItem';
 ## Create a rule type that has support for pull request auto remediation
 
 The pull request auto remediation feature provides the functionality to fix a failed rule type by creating a pull request. 
-This feature is only available for rule types that support it.
+
+This feature is only available for rule types that support it. To find out if a rule type supports it, check the
+`remediate` section in their `<alert-type>.yaml` file. It should have the `pull_request` section defined like below:
+
+```yaml
+version: v1
+type: rule-type
+...
+  remediate:
+    type: pull_request
+...
+```
 
 In this example, we will use a rule type that checks if a repository has Dependabot enabled. If it's not enabled, Minder
 will create a pull request that enables Dependabot. The rule type is called `dependabot_configured.yaml` and is one of 
