@@ -133,3 +133,7 @@ minder profile create -f profile.yaml
 Once the profile is created, Minder will monitor any pull requests to the registered repositories. If a pull 
 request brings in a dependency with a known vulnerability, then Minder will add a review to the pull request and
 suggest changes.
+
+Alerts are complementary to the remediation feature. If you have both `alert` and `remediation` enabled for a profile,
+Minder will attempt to remediate it first. If the remediation fails, Minder will create an alert. If the remediation
+succeeds, Minder will close any previously opened alerts related to that rule.

@@ -34,11 +34,13 @@ git clone https://github.com/stacklok/minder-rules-and-profiles.git
 ```
 
 In that directory, you can find all the reference rules and profiles.
+
 ```bash
 cd minder-rules-and-profiles
 ```
 
 Create the `license` rule type in Minder:
+
 ```bash
 minder rule_type create -f rule-types/github/license.yaml
 ```
@@ -65,6 +67,7 @@ repository:
 ```
 
 Create the profile in Minder:
+
 ```bash
 minder profile create -f profile.yaml
 ```
