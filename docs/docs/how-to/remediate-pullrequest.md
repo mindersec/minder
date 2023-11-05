@@ -22,17 +22,17 @@ the reference rule types provided by the Minder team.
 
 Fetch all the reference rules by cloning the [minder-rules-and-profiles repository](https://github.com/stacklok/minder-rules-and-profiles).
 
-```
+```bash
 git clone https://github.com/stacklok/minder-rules-and-profiles.git
 ```
 
 In that directory you can find all the reference rules and profiles.
-```
+```bash
 cd minder-rules-and-profiles
 ```
 
 Create the `dependabot_configured` rule type in Minder:
-```
+```bash
 minder rule_type create -f rule-types/github/dependabot_configured.yaml
 ```
 
@@ -85,7 +85,7 @@ repository:
 </Tabs>
 
 Create the profile in Minder:
-```
+```bash
 minder profile create -f profile.yaml
 ```
 
@@ -95,3 +95,9 @@ i.e., Go, NPM, etc.
 If a repository does not have Dependabot enabled, Minder will create a pull request with the necessary configuration
 to enable it. Alongside the PR, Minder will also create a Security Advisory alert that will be present until the issue
 is resolved.
+
+## Limitations
+
+* The pull request auto remediation feature is only available for rule types that support it.
+* There's no support for creating pull requests that modify the content of existing files yet.
+* The created pull request should be closed manually if the issue is resolved through other means. The profile status and any related alerts will be updated/closed automatically though.
