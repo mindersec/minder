@@ -5,11 +5,11 @@ sidebar_position: 20
 
 # Profiles in Minder
 
-Profiles in Minder are the foundation of your compliance monitoring strategy, allowing you to group and manage
+Profiles in Minder allow you to group and manage
 rules for various entity types, such as repositories, pull requests, and artifacts, across your registered GitHub
 repositories.
 
-Profiles are defined in a YAML file and can be easily configured to meet your compliance requirements.
+Profiles are defined in a YAML file and can be configured to meet your compliance requirements.
 
 You can find a list of available profiles in the [https://github.com/stacklok/minder-rules-and-profiles](https://github.com/stacklok/minder-rules-and-profiles/tree/main/profiles/github) repository.
 
