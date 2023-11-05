@@ -110,6 +110,10 @@ repository:
       branch: main
     def:
       required_signatures: false
+  - type: license
+    def:
+      license_filename: LICENSE
+      license_type: ""
 artifact:
   - type: artifact_signature
     params:
