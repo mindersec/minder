@@ -82,7 +82,7 @@ def:
         { "security_and_analysis": {"secret_scanning": { "status": "enabled" } } }
 ```
 In this example, the `sample_rule` defines a remediation action that performs a PATCH request to an endpoint. This
-request will change the modify the state of the repository ensuring it complies with the rule.
+request will modify the state of the repository ensuring it complies with the rule.
 
 Now, let's see how this works in practice within a profile. Consider the following profile configuration with 
 remediation turned on:
