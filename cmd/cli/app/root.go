@@ -23,6 +23,7 @@ import (
 	"github.com/spf13/cobra"
 	"github.com/spf13/viper"
 
+	"github.com/stacklok/minder/internal/constants"
 	"github.com/stacklok/minder/internal/util"
 )
 
@@ -55,10 +56,10 @@ func Execute() {
 
 func init() {
 	cobra.OnInitialize(initConfig)
-	RootCmd.PersistentFlags().String("grpc-host", "staging.stacklok.dev", "Server host")
+	RootCmd.PersistentFlags().String("grpc-host", constants.MinderGRPCHost, "Server host")
 	RootCmd.PersistentFlags().Int("grpc-port", 443, "Server port")
 	RootCmd.PersistentFlags().Bool("grpc-insecure", false, "Allow establishing insecure connections")
-	RootCmd.PersistentFlags().String("identity-url", "https://auth.staging.stacklok.dev", "Identity server issuer URL")
+	RootCmd.PersistentFlags().String("identity-url", constants.IdentitySeverURL, "Identity server issuer URL")
 	RootCmd.PersistentFlags().String("identity-realm", "stacklok", "Identity server realm")
 	RootCmd.PersistentFlags().String("identity-client", "minder-cli", "Identity server client ID")
 	RootCmd.PersistentFlags().StringVar(&cfgFile, "config", "", "Config file (default is $PWD/config.yaml)")
