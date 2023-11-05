@@ -2,6 +2,10 @@
 title: Auto-remediation via pull request
 sidebar_position: 30
 ---
+
+import Tabs from '@theme/Tabs';
+import TabItem from '@theme/TabItem';
+
 # Creating a Pull Request for Autoremediation
 
 ## Prerequisites
@@ -25,12 +29,14 @@ Fetch all the reference rules by cloning the [minder-rules-and-profiles reposito
 git clone https://github.com/stacklok/minder-rules-and-profiles.git
 ```
 
-In that directory you can find all the reference rules and profiles.
+In that directory, you can find all the reference rules and profiles.
+
 ```bash
 cd minder-rules-and-profiles
 ```
 
 Create the `dependabot_configured` rule type in Minder:
+
 ```bash
 minder rule_type create -f rule-types/github/dependabot_configured.yaml
 ```
@@ -39,6 +45,7 @@ minder rule_type create -f rule-types/github/dependabot_configured.yaml
 Next, create a profile that applies the rule to all registered repositories.
 
 Create a new file called `profile.yaml`.
+
 Based on your source code language, paste the following profile definition into the newly created file.
 
 <Tabs>
@@ -84,6 +91,7 @@ repository:
 </Tabs>
 
 Create the profile in Minder:
+
 ```bash
 minder profile create -f profile.yaml
 ```
@@ -94,6 +102,10 @@ i.e., Go, NPM, etc.
 If a repository does not have Dependabot enabled, Minder will create a pull request with the necessary configuration
 to enable it. Alongside the pull request, Minder will also create a Security Advisory alert that will be present until the issue
 is resolved.
+
+Alerts are complementary to the remediation feature. If you have both `alert` and `remediation` enabled for a profile,
+Minder will attempt to remediate it first. If the remediation fails, Minder will create an alert. If the remediation
+succeeds, Minder will close any previously opened alerts related to that rule.
 
 ## Limitations
 
