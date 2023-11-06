@@ -31,6 +31,20 @@ allowing users to integrate with their existing tooling and processes.
 * **Dependency management:** Manage dependency security posture by helping developers make better choices and enforcing controls. Minder is integrated with [Trusty by Stacklok](https://trustypkg.dev) to enable policy-driven dependency management based on the risk level of dependencies.
 
 ---
+## Stacklok Instance
+
+Your friends at Stacklok have set up a public instance of Minder that you can use for free. The Minder CLI tool
+(`minder`) from our official releases is configured to use this instance by default. You can also use the public
+instance by running `minder auth login` and following the prompts.
+
+```bash
+minder auth login --grpc-host api.stacklok.com --identity-url https://auth.stacklok.com
+```
+
+Note that it's not possible to register private repositories. If you'd like to use Minder with private repositories,
+feel free to [contact us](mailto:hello@stacklok.com)! We'd be thrilled to help you out.
+
+---
 # Getting Started
 
 ## Installation
