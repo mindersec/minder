@@ -65,8 +65,6 @@ service ArtifactService {
         };
 
         option (rpc_options) = {
-            // TODO: this should probably be available to non-root users
-            root_admin_only: true
             auth_scope: OBJECT_OWNER_PROJECT
         };
     }
