@@ -34,4 +34,5 @@ https://docs.stacklok.com/minder
 * [minder provider](minder_provider.md)	 - Manage providers within a minder control plane
 * [minder repo](minder_repo.md)	 - Manage repositories within a minder control plane
 * [minder rule_type](minder_rule_type.md)	 - Manage rule types within a minder control plane
+* [minder version](minder_version.md)	 - Print the version of the minder CLI
 
