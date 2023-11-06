@@ -149,34 +149,28 @@ following command:
 make KC_GITHUB_CLIENT_ID=<client_id> KC_GITHUB_CLIENT_SECRET=<client_secret> github-login
 ```
 
-## Create encryption keys
+## Create token key passphrase
+
+Create a token key passphrase that is used when storing the provider's token in the database. 
 
 The default configuration expects these keys to be in a directory named `.ssh`, relative to where you run the `minder-server` binary.
 Start by creating the `.ssh` directory.
 
 ```bash
-mkdir .ssh && cd .ssh
+mkdir .ssh
 ```
 
-You can create the encryption keys using the `openssl` CLI tool.
+You can create the passphrase using the `openssl` CLI tool.
 
 ```bash
-# First generate an RSA key pair
-ssh-keygen -t rsa -b 2048 -m PEM -f access_token_rsa
-ssh-keygen -t rsa -b 2048 -m PEM -f refresh_token_rsa
-# For passwordless keys, run the following:
-openssl rsa -in access_token_rsa -pubout -outform PEM -out access_token_rsa.pub
-openssl rsa -in access_token_rsa -pubout -outform PEM -out access_token_rsa.pub
+openssl rand -base64 32 > .ssh/token_key_passphrase
 ```
 
-If your keys live in a directory other than `.ssh`, you can specify the location of the keys in the `config.yaml` file.
+If your key lives in a directory other than `.ssh`, you can specify the location of the key in the `config.yaml` file.
 
 ```yaml
 auth:
-  access_token_private_key: "./.ssh/access_token_rsa"
-  access_token_public_key: "./.ssh/access_token_rsa.pub"
-  refresh_token_private_key: "./.ssh/refresh_token_rsa"
-  refresh_token_public_key: "./.ssh/refresh_token_rsa.pub"
+   token_key: "./.ssh/token_key_passphrase"
 ```
 
 ## Run the application
