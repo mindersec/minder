@@ -24,9 +24,10 @@ package cli
 
 import (
 	"fmt"
+	"io"
+
 	"github.com/erikgeiser/promptkit/confirmation"
 	"github.com/spf13/cobra"
-	"io"
 )
 
 // PrintCmd prints a message using the output defined in the cobra Command
