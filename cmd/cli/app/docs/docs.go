@@ -51,7 +51,7 @@ var DocsCmd = &cobra.Command{
 			return fmt.Sprintf("---\ntitle: %s\n---\n", cmdString)
 		}
 		identity := func(s string) string { return s }
-		err := doc.GenMarkdownTreeCustom(app.RootCmd, "./docs/docs/ref/cli/commands", prefix, identity)
+		err := doc.GenMarkdownTreeCustom(app.RootCmd, "./docs/docs/ref/cli", prefix, identity)
 		if err != nil {
 			panic(err)
 		}
