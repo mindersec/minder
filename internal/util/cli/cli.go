@@ -23,13 +23,10 @@
 package cli
 
 import (
-	"bufio"
 	"fmt"
-	"io"
-	"os"
-	"strings"
-
+	"github.com/erikgeiser/promptkit/confirmation"
 	"github.com/spf13/cobra"
+	"io"
 )
 
 // PrintCmd prints a message using the output defined in the cobra Command
@@ -43,21 +40,21 @@ func Print(out io.Writer, msg string, args ...interface{}) {
 }
 
 // PrintYesNoPrompt prints a yes/no prompt to the user and returns false if the user did not respond with yes or y
-func PrintYesNoPrompt(cmd *cobra.Command, promptMsg, fallbackMsg string) bool {
-	reader := bufio.NewReader(os.Stdin)
+func PrintYesNoPrompt(cmd *cobra.Command, promptMsg, confirmMsg, fallbackMsg string) bool {
 	// Print the warning banner with the prompt message
 	PrintCmd(cmd, WarningBanner.Render(promptMsg))
 
-	// Read the response
-	response, _ := reader.ReadString('\n')
-
-	// Normalise the response
-	response = strings.ToLower(strings.TrimSpace(response))
-	if response != "yes" && response != "y" {
-		// Prompt was not confirmed, print the fallback message and return false
-		PrintCmd(cmd, Header.Render(fallbackMsg))
-		return false
+	// Prompt the user for confirmation
+	input := confirmation.New(confirmMsg, confirmation.No)
+	ok, err := input.RunPrompt()
+	if err != nil {
+		PrintCmd(cmd, WarningBanner.Render(fmt.Sprintf("Error reading input: %v", err)))
+		ok = false
 	}
-	// Prompt was confirmed, return true
-	return true
+
+	// If the user did not confirm, print the fallback message
+	if !ok {
+		PrintCmd(cmd, Header.Render(fallbackMsg))
+	}
+	return ok
 }

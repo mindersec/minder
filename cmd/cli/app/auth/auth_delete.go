@@ -58,10 +58,11 @@ var auth_deleteCmd = &cobra.Command{
 		// Confirm user wants to delete their account
 		yes := cli.PrintYesNoPrompt(cmd,
 			fmt.Sprintf(
-				"Are you sure you want to permanently delete your account? (yes/no): \n\nName: %s\nEmail: %s",
+				"You are about to permanently delete your account. \n\nName: %s\nEmail: %s",
 				userDetails.Name,
 				userDetails.Email,
 			),
+			"Are you sure?",
 			"Delete account operation cancelled.")
 		if !yes {
 			return
