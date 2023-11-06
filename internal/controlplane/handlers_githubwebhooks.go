@@ -519,7 +519,9 @@ func parsePullRequestModEvent(
 	}
 
 	dbPr, err := reconcilePrWithDb(ctx, store, dbrepo, prEvalInfo)
-	if err != nil {
+	if errors.Is(err, errNotHandled) {
+		return err
+	} else if err != nil {
 		return fmt.Errorf("error reconciling PR with DB: %w", err)
 	}
 
