@@ -15,6 +15,9 @@
 
 projectname?=minder
 
+# Profile and Rule examples
+include examples/Makefile
+
 # Unfortunately, we need OS detection for docker-compose
 OS := $(shell uname -s)
 
@@ -38,19 +41,22 @@ BUILDTAGS?=$(TARGET_ENV)
 
 default: help
 
-.PHONY: help gen clean-gen build run-cli run-server bootstrap test clean cover lint pre-commit migrateup migratedown sqlc mock cli-docs identity
-
+.PHONY: help
 help: ## list makefile targets
 	@grep -E '^[a-zA-Z_-]+:.*?## .*$$' $(MAKEFILE_LIST) | sort | awk 'BEGIN {FS = ":.*?## "}; {printf "\033[36m%-30s\033[0m %s\n", $$1, $$2}'
 
+.PHONY: gen
 gen: buf sqlc mock ## Run code generation targets (buf, sqlc, mock)
 
+.PHONY: buf
 buf:  ## Run protobuf code generation
 	buf generate
 
+.PHONY: clean-gen
 clean-gen:
 	rm -rf $(shell find pkg/api -iname "*.go") & rm -rf $(shell find pkg/api -iname "*.swagger.json") & rm -rf pkg/api/protodocs
 
+.PHONY: cli-docs
 cli-docs:
 	@rm -rf docs/docs/ref/cli/commands
 	@mkdir -p docs/docs/ref/cli/commands
@@ -58,6 +64,7 @@ cli-docs:
 	@echo 'position: 20' >> docs/docs/ref/cli/commands/_category_.yml
 	@go run -tags '$(BUILDTAGS)' cmd/cli/main.go docs
 
+.PHONY: build
 build: ## build golang binary
 	CGO_ENABLED=0 go build \
 		-trimpath \
@@ -67,14 +74,17 @@ build: ## build golang binary
 	CGO_ENABLED=0 go build -trimpath -tags '$(BUILDTAGS)' -o ./bin/$(projectname)-server ./cmd/server
 	CGO_ENABLED=0 go build -trimpath -tags '$(BUILDTAGS)' -o ./bin/medev ./cmd/dev
 
+.PHONY: run-cli
 run-cli: ## run the CLI, needs additional arguments
 	@go run -ldflags "-X main.version=$(shell git describe --abbrev=0 --tags)" -tags '$(BUILDTAGS)' ./cmd/cli
 
+.PHONY: run-server
 run-server: ## run the app
 	@go run -ldflags "-X main.version=$(shell git describe --abbrev=0 --tags)" -tags '$(BUILDTAGS)' ./cmd/server serve
 
 DOCKERARCH := $(shell uname -m | sed 's/x86_64/amd64/' | sed 's/aarch64/arm64/')
 
+.PHONY: run-docker
 run-docker:  ## run the app under docker.
 	# podman (at least) doesn't seem to like multi-arch images, and sometimes picks the wrong one (e.g. amd64 on arm64)
 	# We also need to remove the build: directives to use ko builds
@@ -84,6 +94,7 @@ run-docker:  ## run the app under docker.
 	$(COMPOSE) -f .resolved-compose.yaml down && $(COMPOSE) -f .resolved-compose.yaml up $(COMPOSE_ARGS) $(services)
 	rm .resolved-compose.yaml*
 
+.PHONY: helm
 helm:  ## build the helm chart to a local archive, using ko for the image build
 	cd deployment/helm; \
 	    ko resolve --platform=${KO_PLATFORMS} --base-import-paths --push=${KO_PUSH_IMAGE} -f values.yaml > values.tmp.yaml && \
@@ -93,11 +104,13 @@ helm:  ## build the helm chart to a local archive, using ko for the image build
 		cat values.yaml
 	git checkout deployment/helm/values.yaml
 
+.PHONY: helm-template
 helm-template: ## renders the helm templates which is useful for debugging
 	cd deployment/helm; \
 		helm dependency update && \
 		helm template .
 
+.PHONY: bootstrap
 bootstrap: ## install build deps
 	go generate -tags tools tools/tools.go
 	# N.B. each line runs in a different subshell, so we don't need to undo the 'cd' here
@@ -117,30 +130,40 @@ bootstrap: ## install build deps
 	# Make sure the keys are readable by the docker user
 	chmod 644 .ssh/*
 
+.PHONY: test
 test: clean ## display test coverage
 	go test -json -race -v ./... | gotestfmt
 
+.PHONY: clean
 clean: ## clean up environment
 	rm -rf dist/* & rm -rf bin/*
 
+.PHONY: cover
 cover: ## display test coverage
 	go test -v -race $(shell go list ./... | grep -v /vendor/) -v -coverprofile=coverage.out
 	go tool cover -func=coverage.out
 
+.PHONY: lint
 lint: ## lint go files
 	golangci-lint run
 
+.PHONY: pre-commit
 pre-commit:	## run pre-commit hooks
 	pre-commit run --all-files
 
+.PHONY: sqlc
 sqlc: ## generate sqlc files
 	sqlc generate
 
+.PHONY: migrateup
 migrateup: ## run migrate up
 	@go run -tags '$(BUILDTAGS)' cmd/server/main.go migrate up --yes
+
+.PHONY: migratedown
 migratedown: ## run migrate down
 	@go run -tags '$(BUILDTAGS)' cmd/server/main.go migrate down
 
+.PHONY: dbschema
 dbschema:	## generate database schema with schema spy, monitor file until doc is created and copy it
 	mkdir -p database/schema/output && chmod a+w database/schema/output
 	cd database/schema && $(COMPOSE) run -u 1001:1001 --rm schemaspy -configFile /config/schemaspy.properties -imageformat png
@@ -148,11 +171,13 @@ dbschema:	## generate database schema with schema spy, monitor file until doc is
 	cp database/schema/output/diagrams/summary/relationships.real.large.png docs/static/img/minder/schema.png
 	cd database/schema && $(COMPOSE) down -v && rm -rf output
 
+.PHONY: mock
 mock:  ## generate mocks
 	mockgen -package mockdb -destination database/mock/store.go github.com/stacklok/minder/internal/db Store
 	mockgen -package mockgh -destination internal/providers/github/mock/github.go -source pkg/providers/v1/providers.go GitHub
 	mockgen -package auth -destination internal/auth/mock/jwtauth.go github.com/stacklok/minder/internal/auth JwtValidator,KeySetFetcher
 
+.PHONY: github-login
 github-login:  ## setup GitHub login on Keycloak
 ifndef KC_GITHUB_CLIENT_ID
 	$(error KC_GITHUB_CLIENT_ID is not set)
