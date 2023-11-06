@@ -235,11 +235,19 @@ repository:
 ```
 
 Finally, create your profile in Minder:
-```
+```bash
 minder profile create -f profile.yaml
 ```
 
 Check the status of your profile and see which repositories satisfy the rules by running:
-```
+```bash
 minder profile_status list --profile my-first-profile --detailed
+```
+
+At the moment, the `profile_status list` with the `--detailed` flag lists all the repositories that match the rules.
+To get a more detailed view of the profile status, use the `-o json` flag to get the output in JSON format and then
+filter the output using `jq`. For example, to get all rules that pertain to the repository `minder` and have failed,
+run the following command:
+```bash
+minder profile_status list --provider=github -i stacklok-remediate-profile -d -ojson 2>/dev/null | jq  -C '.ruleEvaluationStatus | map(select(.entityInfo.repo_name == "minder" and .status == "failure"))'
 ```
