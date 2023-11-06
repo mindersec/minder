@@ -56,7 +56,8 @@ minder control plane.`,
 		if deleteAll {
 			// Ask for confirmation if deleteAll is set on purpose
 			yes := cli.PrintYesNoPrompt(cmd,
-				"Are you sure you want to permanently delete all of your rule types? (yes/no): ",
+				"You are about to permanently delete all of your rule types.",
+				"Are you sure?",
 				"Delete all rule types operation cancelled.")
 			if !yes {
 				return

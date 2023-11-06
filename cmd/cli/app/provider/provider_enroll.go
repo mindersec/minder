@@ -135,7 +135,8 @@ actions such as adding repositories.`,
 			ownerPromptStr = fmt.Sprintf("the %s organisation", owner)
 		}
 		yes := cli.PrintYesNoPrompt(cmd,
-			fmt.Sprintf("You are about to enroll repositories from %s. Confirm? (yes/no): \n", ownerPromptStr),
+			fmt.Sprintf("You are about to enroll repositories from %s.", ownerPromptStr),
+			"Do you confirm?",
 			"Enroll operation cancelled.")
 		if !yes {
 			return
