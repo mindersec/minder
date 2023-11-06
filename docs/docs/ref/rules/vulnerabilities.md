@@ -5,20 +5,24 @@ sidebar_position: 60
 
 # Known Vulnerabilities Rule
 
+The following rule type is available for known vulnerabilities.
+
+## `pr_vulnerability_check` - Verifies that pull requests do not add dependencies with known vulnerabilities
+
 For every pull request submitted to a repository, this rule will check if the pull request
 adds a new dependency with known vulnerabilities based on the [OSV database](https://osv.dev/). If it does, the rule will fail and the
 pull request will be rejected or commented on.
 
-## Entity
+### Entity
  - `pull_request`
 
-## Type
+### Type
  - `pr_vulnerability_check`
 
-## Rule Parameters
+### Rule Parameters
  - None
 
-## Rule Definition Options
+### Rule Definition Options
 
 The `pr_vulnerability_check` rule has the following options:
 
@@ -45,7 +49,7 @@ Minder identity, the PR will only be commented on.
 Also note that if `commit_status` action is selected, the PR can only be prevented from merging if the branch protection rules
 are set to require a passing commit status.
 
-## Examples
+### Examples
 
 ```yaml
 - type: pr_vulnerability_check
