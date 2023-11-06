@@ -10,7 +10,9 @@ This roadmap should serve as a reference point for Minder users and community me
 
 ## How to contribute
 
-Have any questions or comments about items on the Minder roadmap? Share your feedback via [TBD]. Interested in contributing to Minder? Check out our [Contributor Guidelines](https://github.com/stacklok/minder/blob/main/CONTRIBUTING.md).
+Have any questions or comments about items on the Minder roadmap? Share your feedback via [Minder GitHub Discussions](https://github.com/stacklok/minder/discussions). Interested in contributing to Minder? Check out our [Contributor Guidelines](https://github.com/stacklok/minder/blob/main/CONTRIBUTING.md).
+
+
 
 _Last updated: November 2023_
 
