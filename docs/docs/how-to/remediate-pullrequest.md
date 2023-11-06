@@ -1,6 +1,6 @@
 ---
 title: Auto-remediation via pull request
-sidebar_position: 30
+sidebar_position: 65
 ---
 
 import Tabs from '@theme/Tabs';
