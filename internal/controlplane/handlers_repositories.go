@@ -430,7 +430,7 @@ func (s *Server) ListRemoteRepositoriesFromProvider(
 	_, owner_filter, err := s.getProviderAccessToken(ctx, provider.Name, projectID, true)
 
 	if err != nil {
-		return nil, status.Errorf(codes.PermissionDenied, "cannot get access token for provider")
+		return nil, util.UserVisibleError(codes.PermissionDenied, "cannot get access token for provider: did you run `minder provider enroll`?")
 	}
 
 	pbOpts := []providers.ProviderBuilderOption{
