@@ -41,7 +41,7 @@ require (
 	github.com/signalfx/splunk-otel-go/instrumentation/github.com/lib/pq/splunkpq v1.9.0
 	github.com/sigstore/cosign/v2 v2.2.0
 	github.com/sigstore/sigstore v1.7.5
-	github.com/spf13/cobra v1.7.0
+	github.com/spf13/cobra v1.8.0
 	github.com/spf13/pflag v1.0.5
 	github.com/spf13/viper v1.17.0
 	github.com/sqlc-dev/pqtype v0.3.0
