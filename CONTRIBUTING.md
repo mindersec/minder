@@ -33,7 +33,7 @@ PRs to resolve existing issues are greatly appreciated and issues labeled as ["g
 
 #### Pull Request Process
 * Create an issue outlining the fix or feature.
-* Fork the Minder repository to your own github account and clone it locally.
+* Fork the Minder repository to your own GitHub account and clone it locally.
 * Hack on your changes.
 * Correctly format your commit messages, see [Commit Message Guidelines](#Commit-Message-Guidelines) below.
 * Open a PR by ensuring the title and its description reflect the content of the PR.

@@ -185,7 +185,7 @@ var repo_registerCmd = &cobra.Command{
 
 func init() {
 	RepoCmd.AddCommand(repo_registerCmd)
-	repo_registerCmd.Flags().StringP("provider", "n", "", "Name for the provider to enroll")
+	repo_registerCmd.Flags().StringP("provider", "p", "", "Name for the provider to enroll")
 	repo_registerCmd.Flags().StringP("project-id", "g", "", "ID of the project for repo registration")
 	repo_registerCmd.Flags().StringVar(&cfgFlagRepos, "repo", "", "List of repositories to register, i.e owner/repo,owner/repo")
 	if err := repo_registerCmd.MarkFlagRequired("provider"); err != nil {
