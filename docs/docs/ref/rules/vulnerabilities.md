@@ -3,7 +3,7 @@ title: Known Vulnerabilities
 sidebar_position: 60
 ---
 
-# Known Vulnerabilities Policy
+# Known Vulnerabilities Rule
 
 For every pull request submitted to a repository, this rule will check if the pull request
 adds a new dependency with known vulnerabilities based on the [OSV database](https://osv.dev/). If it does, the rule will fail and the

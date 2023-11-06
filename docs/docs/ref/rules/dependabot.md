@@ -3,7 +3,7 @@ title: Dependabot
 sidebar_position: 30
 ---
 
-# Dependabot Policy
+# Dependabot Rule
 
 The following rule type is available for Dependabot.
 
