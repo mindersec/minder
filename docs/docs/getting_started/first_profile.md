@@ -1,9 +1,9 @@
 ---
-title: Enabling Secret Scanning
+title: Creating your first profile
 sidebar_position: 40
 ---
 
-# Enabling Secret Scanning using Minder Profiles
+# Creating your first profile
 
 Minder uses [profiles](../how-to/create_profile.md) to specify common,
 consistent configuration which should be enforced on all registered
