@@ -1,6 +1,6 @@
 ---
 title: Enabling pull request reviews
-sidebar_position: 10
+sidebar_position: 50
 ---
 import Tabs from '@theme/Tabs';
 import TabItem from '@theme/TabItem';
