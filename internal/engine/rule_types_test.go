@@ -30,11 +30,11 @@ func TestExampleRulesAreValidatedCorrectly(t *testing.T) {
 	t.Parallel()
 
 	t.Log("parsing example profile")
-	pol, err := engine.ReadProfileFromFile("../../examples/github/profiles/profile.yaml")
-	require.NoError(t, err, "failed to parse example profile")
+	pol, err := engine.ReadProfileFromFile("../../examples/rules-and-profiles/profiles/github/profile.yaml")
+	require.NoError(t, err, "failed to parse example profile, make sure to do - make init-examples")
 
 	// open rules in example directory
-	err = filepath.Walk("../../examples/github/rule-types", func(path string, info os.FileInfo, err error) error {
+	err = filepath.Walk("../../examples/rules-and-profiles/rule-types/github", func(path string, info os.FileInfo, err error) error {
 		// skip directories
 		if info.IsDir() {
 			return nil

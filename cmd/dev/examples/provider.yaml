@@ -1,0 +1,37 @@
+#
+# Copyright 2023 Stacklok, Inc
+#
+# Licensed under the Apache License, Version 2.0 (the "License");
+# you may not use this file except in compliance with the License.
+# You may obtain a copy of the License at
+#
+#      http://www.apache.org/licenses/LICENSE-2.0
+#
+# Unless required by applicable law or agreed to in writing, software
+# distributed under the License is distributed on an "AS IS" BASIS,
+# WITHOUT WARRANTIES OR CONDITIONS OF ANY KIND, either express or implied.
+# See the License for the specific language governing permissions and
+# limitations under the License.
+
+---
+# This is a sample provider integrating minder with GitHub
+# There are details which you'll need to fill in yourself.
+version: v1
+type: provider
+name: github
+context:
+  organization: ACME
+def:
+  endpoint: 'https://api.github.com/'
+  auth:
+    type: oauth2
+    client_id: 'your-client-id'
+    client_secret: 'your-client-secret'
+    scopes: ['repo', 'read:org']
+  client_types:
+  - rest
+  - graphql
+  entities:
+  - repositories
+  - build_environments
+  - artifacts
