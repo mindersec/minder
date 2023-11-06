@@ -58,10 +58,10 @@ clean-gen:
 
 .PHONY: cli-docs
 cli-docs:
-	@rm -rf docs/docs/ref/cli/commands
-	@mkdir -p docs/docs/ref/cli/commands
-	@echo 'label: Commands' > docs/docs/ref/cli/commands/_category_.yml
-	@echo 'position: 20' >> docs/docs/ref/cli/commands/_category_.yml
+	@rm -rf docs/docs/ref/cli
+	@mkdir -p docs/docs/ref/cli
+	@echo 'label: Minder CLI' > docs/docs/ref/cli/_category_.yml
+	@echo 'position: 20' >> docs/docs/ref/cli/_category_.yml
 	@go run -tags '$(BUILDTAGS)' cmd/cli/main.go docs
 
 .PHONY: build
