@@ -5,7 +5,7 @@ sidebar_position: 70
 
 # Automatic Remediation with Minder
 
-In [Enabling Secret Scanning](./first_profile.md), we wrote a rule to open a
+In [Creating your first profile](./first_profile.md), we wrote a rule to open a
 security advisory when repo configuration drifted from the configured profile
 in Minder.  In this tutorial, we will show how Minder can automatically
 resolve the misconfiguration and ensure that enrolled repos have secret
