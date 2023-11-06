@@ -91,12 +91,12 @@ const config = {
           respectPrefersColorScheme: false,
         },        
       // Replace with your project's social card
-      image: 'img/stacklok-logo.svg',
+      image: 'img/Stacklok_darkMode_b.png',
       navbar: {
         title: 'Minder docs',
         logo: {
           alt: 'Stacklok Logo',
-          src: 'img/stacklok-logo.svg',
+          src: 'img/Stacklok_darkMode_b.png',
         },
         items: [
           // {
