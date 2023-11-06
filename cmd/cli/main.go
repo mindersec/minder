@@ -18,7 +18,6 @@ package main
 
 import (
 	"github.com/stacklok/minder/cmd/cli/app"
-	_ "github.com/stacklok/minder/cmd/cli/app/apply"
 	_ "github.com/stacklok/minder/cmd/cli/app/artifact"
 	_ "github.com/stacklok/minder/cmd/cli/app/auth"
 	_ "github.com/stacklok/minder/cmd/cli/app/docs"
