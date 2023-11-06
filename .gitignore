@@ -59,3 +59,6 @@ docs/.docusaurus
 /deployment/helm/templates/combined.yml
 /deployment/helm/charts
 /deployment/helm/*.tgz
+
+# Ignore examples cloned repo
+examples/rules-and-profiles/
