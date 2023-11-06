@@ -8,7 +8,7 @@ The following rule type is available for branch protection.
 
 ## `branch_protection_allow_deletions` - Whether the branch can be deleted
 
-Allow users with push access to delete matching branches.
+This rule allows you to allow users with push access to delete matching branches.
 
 ### Entity
 - `repository`
@@ -27,7 +27,7 @@ The `branch_protection_allow_deletions` rule supports the following options:
 
 ## `branch_protection_allow_force_pushes` - Whether force pushes are allowed to the branch
 
-Permit force pushes for all users with push access.
+This rule allows you to permit force pushes for all users with push access.
 
 ### Entity
 - `repository`
@@ -103,7 +103,7 @@ The `branch_protection_enforce_admins` rule supports the following options:
 
 ## `branch_protection_lock_branch` - Whether the branch is locked
 
-Can set the branch as read-only. Users cannot push to the branch.
+This rule allows you to set the branch as read-only. Users cannot push to the branch.
 
 ### Entity
 - `repository`
@@ -139,7 +139,7 @@ The `branch_protection_require_conversation_resolution` rule supports the follow
 
 ## `branch_protection_require_linear_history` - Whether the branch requires a linear history with no merge commits
 
-Prevent merge commits from being pushed to matching branches.
+This rule allows you to prevent merge commits from being pushed to matching branches.
 
 ### Entity
 - `repository`
@@ -175,7 +175,7 @@ The `branch_protection_require_pull_request_approving_review_count` rule support
 
 ## `branch_protection_require_pull_request_code_owners_review` - Verifies that a branch requires review from code owners
 
-Require an approved review in pull requests including files with a designated code owner.
+This rule allows you to require an approved review in pull requests including files with a designated code owner.
 
 ### Entity
 - `repository`
@@ -229,7 +229,7 @@ The `branch_protection_require_pull_request_last_push_approval` rule supports th
 
 ## `branch_protection_require_pull_requests` - Verifies that a branch requires pull requests
 
-Require that a pull request be opened before merging to a branch.
+This rule allows you to require that a pull request be opened before merging to a branch.
 
 ### Entity
 - `repository`
