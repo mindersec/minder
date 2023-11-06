@@ -257,8 +257,8 @@ func (s *Server) ExchangeCodeForTokenWEB(ctx context.Context,
 	}, nil
 }
 
-// GetProviderAccessToken returns the access token for providers
-func (s *Server) GetProviderAccessToken(ctx context.Context, provider string,
+// getProviderAccessToken returns the access token for providers
+func (s *Server) getProviderAccessToken(ctx context.Context, provider string,
 	projectID uuid.UUID, checkAuthz bool) (oauth2.Token, string, error) {
 	// check if user is authorized
 	if checkAuthz {

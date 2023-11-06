@@ -427,7 +427,7 @@ func (s *Server) ListRemoteRepositoriesFromProvider(
 	}
 
 	// FIXME: this is a hack to get the owner filter from the request
-	_, owner_filter, err := s.GetProviderAccessToken(ctx, provider.Name, projectID, true)
+	_, owner_filter, err := s.getProviderAccessToken(ctx, provider.Name, projectID, true)
 
 	if err != nil {
 		return nil, status.Errorf(codes.PermissionDenied, "cannot get access token for provider")
