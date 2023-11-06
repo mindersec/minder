@@ -17,4 +17,4 @@ default: init-examples
 
 .PHONY: init-examples
 init-examples: ## clone example rules and profiles
-	git clone https://github.com/stacklok/minder-rules-and-profiles.git examples/rules-and-profiles
+	git clone https://github.com/stacklok/minder-rules-and-profiles.git examples/rules-and-profiles | true

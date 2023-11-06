@@ -131,7 +131,7 @@ bootstrap: ## install build deps
 	chmod 644 .ssh/*
 
 .PHONY: test
-test: clean ## display test coverage
+test: clean init-examples ## display test coverage
 	go test -json -race -v ./... | gotestfmt
 
 .PHONY: clean
