@@ -1,18 +1,18 @@
 ---
-title: Activity Score
+title: Trusty Score
 sidebar_position: 20
 ---
 
-# Activity Score Threshold Rule
+# Trusty Score Threshold Rule
 
-The following rule type is available for [Trusty](https://www.trustypkg.dev/) activity score threshold.
+The following rule type is available for [Trusty](https://www.trustypkg.dev/) score threshold.
 
-## `pr_trusty_check` - Verifies that pull requests do not add any dependencies with low Trusty scores
+## `pr_trusty_check` - Verifies that pull requests do not add any dependencies with Trusty scores below a certain threshold 
 
-This rule allows you to monitor new Pull requests for newly added dependencies with low
+This rule allows you to monitor new pull requests for newly added dependencies with low
 [Trusty](https://www.trustypkg.dev/) scores.
 For every pull request submitted to a repository, this rule will check if the pull request adds a new dependency with
-a low Trusty score. If a dependency with a low score is added, the PR will be commented on.
+a Trusty score below a threshold that you define. If a dependency with a low score is added, the PR will be commented on.
 
 ## Entity
 - `pull_request`
