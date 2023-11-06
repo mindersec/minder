@@ -1,15 +1,15 @@
 ---
-title: Presence of a LICENSE file
+title: Presence of a License File
 sidebar_position: 80
 ---
 
-# Presence of a LICENSE file
+# Presence of a License File Rule
 
-The following rule type is available for verifying if a license file is present and it's of a certain type.
+The following rule type is available for verifying if a license file is present and it is of a certain type.
 
-## `license` - Verifies that there's a license file of a given type present in the repository.
+## `license` - Verifies if there is a license file of a given type present in the repository
 
-This rule allows you to monitor if a license file is present in the repository and its license type complies with
+This rule allows you to monitor if a license file is present in the repository and if its license type complies with
 the configured license type in your profile.
 
 ### Entity
