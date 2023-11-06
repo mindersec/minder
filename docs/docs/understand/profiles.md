@@ -5,13 +5,23 @@ sidebar_position: 20
 
 # Profiles in Minder
 
+Minder allows you to define profiles for your software supply chain.
+
 Profiles in Minder allow you to group and manage
 rules for various entity types, such as repositories, pull requests, and artifacts, across your registered GitHub
 repositories.
 
-Profiles are defined in a YAML file and can be configured to meet your compliance requirements.
+The anatomy of a profile is the profile itself, which outlines the rules to be
+checked, the rule types, and the evaluation engine. Profiles are defined in a YAML file and can be configured to meet your compliance requirements.
+As of time of writing, Minder supports the following evaluation engines:
 
-You can find a list of available profiles in the [https://github.com/stacklok/minder-rules-and-profiles](https://github.com/stacklok/minder-rules-and-profiles/tree/main/profiles/github) repository.
+* **[Open Profile Agent](https://www.openprofileagent.org/)** (OPA) profile language.
+* **[JQ](https://jqlang.github.io/jq/)** - a lightweight and flexible command-line JSON processor.
+
+Each engine is designed to be extensible, allowing you to integrate your own
+logic and processes.
+
+Stacklok has published [a set of example profiles on GitHub](https://github.com/stacklok/minder-rules-and-profiles/tree/main/profiles/github); see [Managing Profiles](../how-to/manage_profiles.md) for more details on how to set up profiles and rule types.
 
 ## Rules
 
