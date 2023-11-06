@@ -37,3 +37,13 @@ You can also get a specific repository:
 ```bash
 minder repo get -n github -r {$repo_id}
 ```
+
+## Deleting a registered repository
+
+If you want to stop monitoring a repository, you can delete it from Minder by using the `repo delete` command:
+
+```bash
+minder repo delete --provider github --name "owner:repo1"
+```
+
+This will delete the repository from Minder and remove the webhook from the repository. 
