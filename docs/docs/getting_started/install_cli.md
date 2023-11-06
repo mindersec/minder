@@ -1,5 +1,5 @@
 ---
-title: Install Minder
+title: Install Minder CLI
 sidebar_position: 10
 ---
 
