@@ -23,7 +23,7 @@ minder() {
 # use root:root for credentials
 minder auth login
 
-minder provider enroll -n github
+minder provider enroll -p github
 
 echo '$ minder rule_type create -f examples/github/rule-types/'
 echo '---'

@@ -29,13 +29,13 @@ Any events that now occur in your registered repositories will be sent to Minder
 You can list all repositories registered in Minder:
 
 ```bash
-minder repo list -n github
+minder repo list --provider github
 ```
 
 You can also get a specific repository:
 
 ```bash
-minder repo get -n github -r {$repo_id}
+minder repo get --provider github -r {$repo_id}
 ```
 
 ## Deleting a registered repository

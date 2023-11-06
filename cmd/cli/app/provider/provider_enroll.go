@@ -197,7 +197,7 @@ actions such as adding repositories.`,
 
 func init() {
 	ProviderCmd.AddCommand(enrollProviderCmd)
-	enrollProviderCmd.Flags().StringP("provider", "n", "", "Name for the provider to enroll")
+	enrollProviderCmd.Flags().StringP("provider", "p", "", "Name for the provider to enroll")
 	enrollProviderCmd.Flags().StringP("project-id", "g", "", "ID of the project for enrolling the provider")
 	enrollProviderCmd.Flags().StringP("token", "t", "", "Personal Access Token (PAT) to use for enrollment")
 	enrollProviderCmd.Flags().StringP("owner", "o", "", "Owner to filter on for provider resources")

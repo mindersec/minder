@@ -87,7 +87,7 @@ var Auth_revokeproviderCmd = &cobra.Command{
 
 func init() {
 	AuthCmd.AddCommand(Auth_revokeproviderCmd)
-	Auth_revokeproviderCmd.Flags().StringP("provider", "n", "", "Name for the provider to revoke tokens for")
+	Auth_revokeproviderCmd.Flags().StringP("provider", "p", "", "Name for the provider to revoke tokens for")
 	Auth_revokeproviderCmd.Flags().StringP("project-id", "g", "", "ID of the project for repo registration")
 	Auth_revokeproviderCmd.Flags().BoolP("all", "a", false, "Revoke all tokens")
 }
