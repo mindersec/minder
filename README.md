@@ -1,7 +1,6 @@
 ![minder logo](./docs/docs/images/Minder.png)
 
-[![Continuous integration](https://github.com/stacklok/minder/actions/workflows/main.yml/badge.svg)](https://github.com/stacklok/minder/actions/workflows/main.yml) | [![License: Apache 2.0](https://img.shields.io/badge/License-Apache2.0-brightgreen.svg)](https://opensource.org/licenses/Apache-2.0)
-
+[![Continuous integration](https://github.com/stacklok/minder/actions/workflows/main.yml/badge.svg)](https://github.com/stacklok/minder/actions/workflows/main.yml) | [![License: Apache 2.0](https://img.shields.io/badge/License-Apache2.0-brightgreen.svg)](https://opensource.org/licenses/Apache-2.0) | [![SLSA 3](https://slsa.dev/images/gh-badge-level3.svg)](https://slsa.dev)
 ---
 
 [Installation](https://minder-docs.stacklok.dev/getting_started/install_cli) | [Documentation](https://minder-docs.stacklok.dev) | [Discussions](https://github.com/stacklok/minder/discussions) | [Releases](https://github.com/stacklok/minder/releases)
@@ -193,6 +192,19 @@ You can find more detailed information about the development process in the [Dev
 ## Contributing
 
 We welcome contributions to Minder. Please see our [Contributing](./CONTRIBUTING.md) guide for more information.
+
+## Provenance
+
+The Minder project follows the best practices for software supply chain security and transparency.
+
+All released assets:
+
+* Have a generated and verifiable SLSA Build Level 3 provenance. For more information, see the [SLSA website](https://slsa.dev).
+* Have been signed and verified during release using the [Sigstore](https://sigstore.dev) project.
+This ensures that
+they are tamper-proof and can be verified by anyone.
+* Have an SBOM archive generated and published along with the release.
+This allows users to understand the dependencies of the project and their security posture.
 
 ## License
 
