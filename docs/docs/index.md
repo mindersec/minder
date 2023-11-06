@@ -24,4 +24,4 @@ Minder can be deployed as a Helm chart and provides a CLI tool ‘minder’. Sta
 
 Experimental stage
 
-The public roadmap for Minder is available here: [link](./understand/roadmap.md)
+The public roadmap for Minder is available here: [link](./about/roadmap.md)
