@@ -129,6 +129,18 @@ actions such as adding repositories.`,
 		pat := util.GetConfigValue(viper.GetViper(), "token", "token", cmd, "").(string)
 		owner := util.GetConfigValue(viper.GetViper(), "owner", "owner", cmd, "").(string)
 
+		// Ask for confirmation if an owner is set on purpose
+		ownerPromptStr := "your personal account"
+		if owner != "" {
+			ownerPromptStr = fmt.Sprintf("the %s organisation", owner)
+		}
+		yes := cli.PrintYesNoPrompt(cmd,
+			fmt.Sprintf("You are about to enroll repositories from %s. Confirm? (yes/no): \n", ownerPromptStr),
+			"Enroll operation cancelled.")
+		if !yes {
+			return
+		}
+
 		conn, err := util.GrpcForCommand(cmd, viper.GetViper())
 		util.ExitNicelyOnError(err, "Error getting grpc connection")
 		defer conn.Close()
