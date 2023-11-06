@@ -16,30 +16,7 @@ registered repositories.
 * [The `minder` CLI application](./install_cli.md)
 * [A Minder account](./login.md)
 * [An enrolled GitHub token](./login.md#enrolling-the-github-provider) that is either an Owner in the organization or an Admin on the repositories
-
-## Register repositories
-
-Once you have enrolled a provider, you can register repositories from that provider.
-
-```bash
-minder repo register --provider github
-```
-
-This command will show a list of the public repositories available for
-registration.  Navigate through the repositories using the arrow keys and
-select one or more repositories for registration using the space key.  Press
-enter once you have selected all the desired repositories.
-
-You can also register a repository (or set of repositories) by name:
-
-```bash
-minder repo register --provider github --repo "owner:repo1,owner:repo2"
-```
-
-You can see the list of repositories registered in Minder with the `repo list` command:
-```bash
-minder repo list --provider github
-```
+* [One or more repositories registered with Minder](./register_repos.md)
 
 ## Creating and applying profiles
 
@@ -55,7 +32,11 @@ rule, and then use `minder rule_type create` to define the secret scanning rule.
 
 ```bash
 curl -LO https://raw.githubusercontent.com/stacklok/minder-rules-and-profiles/main/rule-types/github/secret_scanning.yaml
+```
 
+Once you've downloaded the rule definition, you can create it in your Minder account:
+
+```bash
 minder rule_type create -f secret_scanning.yaml
 ```
 
@@ -91,6 +72,17 @@ minder profile_status list --profile github-profile
 If all registered repositories have secret scanning enabled, you will see the `OVERALL STATUS` is `Success`, otherwise the 
 overall status is `Failure`.
 
+```
++--------------------------------------+----------------+----------------+----------------------+
+|                  ID                  |      NAME      | OVERALL STATUS |     LAST UPDATED     |
++--------------------------------------+----------------+----------------+----------------------+
+| 1abcae55-5eb8-4d9e-847c-18e605fbc1cc | github-profile | ✅ Success     | 2023-11-06T17:42:04Z |
++--------------------------------------+----------------+----------------+----------------------+
+```
+
+If secret scanning is not enabled, you will see `❌ Failure` instead of `✅ Success`.
+
+
 See a detailed view of which repositories satisfy the secret scanning rule:
 ```
 minder profile_status list --profile github-profile --detailed
@@ -99,7 +91,7 @@ minder profile_status list --profile github-profile --detailed
 ## Viewing alerts
 
 Disable secret scanning in one of the registered repositories, by following 
-[these instructions provided by GitHub](https://docs.github.com/en/code-security/secret-scanning/configuring-secret-scanning-for-your-repositories).
+[these instructions provided by GitHub](https://docs.github.com/en/code-security/secret-scanning/configuring-secret-scanning-for-your-repositories):
 
 Navigate to the repository on GitHub, click on the Security tab and view the Security Advisories.  
 Notice that there is a new advisory titled `minder: profile github-profile failed with rule secret_scanning`.
