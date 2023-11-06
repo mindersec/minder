@@ -17,15 +17,6 @@
 name: PR
 on:
   pull_request:
-    branches:
-      - main
-      - release-*
-    paths-ignore:
-      - "**.md"
-      - "docs/**"
-      - "**.txt"
-      - "images/**"
-      - "LICENSE"
 
 permissions:
   contents: read
