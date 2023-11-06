@@ -3,7 +3,7 @@ title: Code Scanning
 sidebar_position: 40
 ---
 
-# Code Scanning (CodeQL) Policy
+# Code Scanning (CodeQL) Rule
 
 The following rule type is available for Code Scanning (CodeQL).
 

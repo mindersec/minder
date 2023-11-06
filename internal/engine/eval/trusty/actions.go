@@ -33,7 +33,7 @@ const (
 	tableHeaderTmplName = "alternativesTableHeader"
 	tableTemplateHeader = `### Summary of packages with low scores
 Minder detected that this PR is adding dependencies whose score is lower than the threshold configured with
-Minder policies. Below is a summary of the packages with low scores and their alternatives.
+Minder profiles. Below is a summary of the packages with low scores and their alternatives.
 
 <table>
   <tr>

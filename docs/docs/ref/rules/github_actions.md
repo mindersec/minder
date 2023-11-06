@@ -3,7 +3,7 @@ title: GitHub Actions
 sidebar_position: 70
 ---
 
-# GitHub Actions Configuration Policy
+# GitHub Actions Configuration Rules
 
 There are several rule types that can be used to configure GitHub Actions.
 

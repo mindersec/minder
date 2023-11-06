@@ -3,7 +3,7 @@ title: Activity Score
 sidebar_position: 20
 ---
 
-# Activity Score Threshold Policy
+# Activity Score Threshold Rule
 
 The following rule type is available for [Trusty](https://www.trustypkg.dev/) activity score threshold.
 
