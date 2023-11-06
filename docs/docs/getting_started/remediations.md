@@ -1,39 +1,33 @@
 ---
 title: Automatic Remediations
-sidebar_position: 20
+sidebar_position: 70
 ---
 
-## Goal
+# Automatic Remediation with Minder
 
-The goal of this tutorial is to show how Minder can ensure
-that enrolled repos have secret scanning enabled.  Secret scanning is
-one of several settings which can be managed by Minder.  When you
-apply a Minder profile to enrolled repositories, it will remediate (fix)
-the setting if it is changed to violate the profile.
+In [Enabling Secret Scanning](./secret_scanning.md), we wrote a rule to open a
+security advisory when repo configuration drifted from the configured profile
+in Minder.  In this tutorial, we will show how Minder can automatically
+resolve the misconfiguration and ensure that enrolled repos have secret
+scanning enabled.  Secret scanning isone of several settings which can be
+managed by Minder.  When you apply a Minder profile to enrolled repositories,
+it will remediate (fix) the setting if it is changed to violate the profile.
 
 ## Prerequisites
 
-In order to follow the tutorial, ensure that you have completed the tutorial on
-[registering repositories](register_repo_create_profile.md) first.
+* [The `minder` CLI application](./install_cli.md)
+* [A Minder account](./login.md)
+* [An enrolled GitHub token](./login.md#enrolling-the-github-provider) that is either an Owner in the organization or an Admin on the repositories
+* [A registered repository in Minder](./secret_scanning.md#register-repositories)
+* [The `secret_scanning`` rule type](./secret_scanning.md#creating-and-applying-profiles)
+* [A policy to open security advisories when secret scanning is off](./secret_scanning.md#creating-and-applying-profiles)
 
 ## Creating a profile with `remediate: on`
 
-Minder doesn't currently support editing profiles. In order to create the
-same profile with `remediate: on`, you need to delete the existing profile and create
-a new one.
+Minder doesn't currently support editing profiles, so we will create a new profile with `remediate: on`.
 
-Get the currently installed profiles:
-```shell
-minder profile list --provider=github
-```
-
-Find the ID of the profile you want to remove and delete it:
-```shell
-minder profile delete -i $ID
-```
-
-Edit the YAML file of the profile you want to use and set the `remediate` attribute
-to `on`:
+Edit the YAML file of the [profile from the secret-scanning tutorial](./secret_scanning.md#creating-and-applying-profiles)
+and set the `remediate` attribute to `on`:
 ```yaml
 ---
 version: v1

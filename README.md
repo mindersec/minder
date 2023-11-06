@@ -37,23 +37,23 @@ allowing users to integrate with their existing tooling and processes.
 
 You can install `minder` using one of the following methods:
 
-* **Homebrew**
+### MacOS (Homebrew)
 
 ```bash
 brew install stacklok/tap/minder
 ```
 
-* **Winget**
+### Windows (Winget)
 
 ```bash
 winget install stacklok.minder
 ```
 
-* **Releases**
+### Releases
 
 Download the latest release from - [minder/releases](https://github.com/stacklok/minder/releases).
 
-* **Build it from source** 
+### Build it from source
 
 Build `minder` and `minder-server` from source by following - [#build-from-source](#build-from-source).
 
