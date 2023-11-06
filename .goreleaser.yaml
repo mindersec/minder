@@ -23,6 +23,7 @@ builds:
       - "-X main.Commit={{ .Env.COMMIT }}"
       - "-X main.CommitDate={{ .Env.COMMIT_DATE }}"
       - "-X main.TreeState={{ .Env.TREE_STATE }}"
+      - "-X github.com/stacklok/minder/internal/constants.CLIVersion={{ .Env.VERSION }}"
     goos:
       - linux
       - windows

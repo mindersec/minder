@@ -13,22 +13,27 @@
 // See the License for the specific language governing permissions and
 // limitations under the License.
 
-// Package main provides the entrypoint for the minder cli
-package main
+// Package version provides the version command for the minder CLI
+package version
 
 import (
+	"github.com/spf13/cobra"
+
 	"github.com/stacklok/minder/cmd/cli/app"
-	_ "github.com/stacklok/minder/cmd/cli/app/artifact"
-	_ "github.com/stacklok/minder/cmd/cli/app/auth"
-	_ "github.com/stacklok/minder/cmd/cli/app/docs"
-	_ "github.com/stacklok/minder/cmd/cli/app/profile"
-	_ "github.com/stacklok/minder/cmd/cli/app/profile_status"
-	_ "github.com/stacklok/minder/cmd/cli/app/provider"
-	_ "github.com/stacklok/minder/cmd/cli/app/repo"
-	_ "github.com/stacklok/minder/cmd/cli/app/rule_type"
-	_ "github.com/stacklok/minder/cmd/cli/app/version"
+	"github.com/stacklok/minder/internal/constants"
+	"github.com/stacklok/minder/internal/util/cli"
 )
 
-func main() {
-	app.Execute()
+// VersionCmd is the version command
+var VersionCmd = &cobra.Command{
+	Use:   "version",
+	Short: "Print the version of the minder CLI",
+	Long:  `The minder version command prints the version of the minder CLI.`,
+	Run: func(cmd *cobra.Command, _ []string) {
+		cli.PrintCmd(cmd, constants.VerboseCLIVersion)
+	},
+}
+
+func init() {
+	app.RootCmd.AddCommand(VersionCmd)
 }

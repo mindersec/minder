@@ -59,8 +59,11 @@ cli-docs:
 	@go run -tags '$(BUILDTAGS)' cmd/cli/main.go docs
 
 build: ## build golang binary
-	# @go build -ldflags "-X main.version=$(shell git describe --abbrev=0 --tags)" -o bin/$(projectname)
-	CGO_ENABLED=0 go build -trimpath -tags '$(BUILDTAGS)' -o ./bin/minder ./cmd/cli
+	CGO_ENABLED=0 go build \
+		-trimpath \
+		-tags '$(BUILDTAGS)' \
+		-ldflags "-X github.com/stacklok/minder/internal/constants.CLIVersion=$(shell git describe --abbrev=0 --tags)+ref.$(shell git rev-parse --short HEAD)" \
+		-o ./bin/minder ./cmd/cli
 	CGO_ENABLED=0 go build -trimpath -tags '$(BUILDTAGS)' -o ./bin/$(projectname)-server ./cmd/server
 	CGO_ENABLED=0 go build -trimpath -tags '$(BUILDTAGS)' -o ./bin/medev ./cmd/dev
 

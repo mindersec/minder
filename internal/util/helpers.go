@@ -173,8 +173,11 @@ func GetGrpcConnection(grpc_host string, grpc_port int, allowInsecure bool, issu
 	}
 
 	// generate credentials
-	conn, err := grpc.Dial(address, grpc.WithTransportCredentials(credentialOpts),
-		grpc.WithPerRPCCredentials(JWTTokenCredentials{accessToken: token}))
+	conn, err := grpc.Dial(
+		address, grpc.WithTransportCredentials(credentialOpts),
+		grpc.WithPerRPCCredentials(JWTTokenCredentials{accessToken: token}),
+		grpc.WithUserAgent(fmt.Sprintf("minder-cli/%s", constants.CLIVersion)),
+	)
 	if err != nil {
 		return nil, fmt.Errorf("error connecting to gRPC server: %v", err)
 	}
