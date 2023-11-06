@@ -17,7 +17,12 @@ You can also register a repository (or set of repositories) by name:
 minder repo register --provider github --repo "owner:repo1,owner:repo2"
 ```
 
-A webhook will now be created in each repository, and selected repositories will be considered registered within Minder. Any events that now occur in any registered repository will be sent to Minder, and processed accordingly.
+A webhook will now be created in each repository that you've selected for registering with Minder.
+You should see a list of the repositories that have been registered.
+
+After registration, Minder will go through your existing profiles and apply them against these repositories.
+
+Any events that now occur in your registered repositories will be sent to Minder and processed accordingly.
 
 ## List and Get Repositories
 
