@@ -14,7 +14,7 @@ minder repo register --provider github
 You can also register a repository (or set of repositories) by name:
 
 ```bash
-minder repo register --provider github --repo "owner:repo1,owner:repo2"
+minder repo register --provider github --repo "owner/repo1,owner/repo2"
 ```
 
 A webhook will now be created in each repository that you've selected for registering with Minder.
@@ -43,7 +43,7 @@ minder repo get --provider github -r {$repo_id}
 If you want to stop monitoring a repository, you can delete it from Minder by using the `repo delete` command:
 
 ```bash
-minder repo delete --provider github --name "owner:repo1"
+minder repo delete --provider github --name "owner/repo1"
 ```
 
 This will delete the repository from Minder and remove the webhook from the repository. 
