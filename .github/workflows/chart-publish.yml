@@ -20,6 +20,7 @@ jobs:
     permissions:
       contents: read
       packages: write
+      id-token: write # To sign the provenance.
 
     env:
       BASE_REPO: "ghcr.io/stacklok/minder"
@@ -65,3 +66,11 @@ jobs:
           cd deployment/helm
           helm push minder-*.tgz oci://$BASE_REPO/helm
 
+      - name: Sign the published helm chart and ko image
+        # This step uses the identity token to provision an ephemeral certificate
+        # against the sigstore community Fulcio instance.
+        run: |
+          # Sign the ko image
+          cosign sign --yes $BASE_REPO/server
+          # Sign the helm chart
+          cosign sign --yes $BASE_REPO/helm/minder@${{ steps.version-string.outputs.tag }}
