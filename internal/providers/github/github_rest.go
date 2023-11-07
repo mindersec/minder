@@ -445,8 +445,8 @@ func (c *RestClient) GetBaseURL() string {
 // which will be resolved to the BaseURL of the Client. Relative URLS should
 // always be specified without a preceding slash. If specified, the value
 // pointed to by body is JSON encoded and included as the request body.
-func (c *RestClient) NewRequest(method, url string, body any) (*http.Request, error) {
-	return c.client.NewRequest(method, url, body)
+func (c *RestClient) NewRequest(method, requestUrl string, body any) (*http.Request, error) {
+	return c.client.NewRequest(method, requestUrl, body)
 }
 
 // Do sends an API request and returns the API response.
