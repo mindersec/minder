@@ -15,7 +15,7 @@ The anatomy of a profile is the profile itself, which outlines the rules to be
 checked, the rule types, and the evaluation engine. Profiles are defined in a YAML file and can be configured to meet your compliance requirements.
 As of time of writing, Minder supports the following evaluation engines:
 
-* **[Open Profile Agent](https://www.openprofileagent.org/)** (OPA) profile language.
+* **[Rego](https://www.openpolicyagent.org/docs/latest/policy-language/)** Open Policy Agents's native query language, Rego.
 * **[JQ](https://jqlang.github.io/jq/)** - a lightweight and flexible command-line JSON processor.
 
 Each engine is designed to be extensible, allowing you to integrate your own
