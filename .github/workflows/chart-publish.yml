@@ -29,8 +29,6 @@ jobs:
     steps:
       - name: Install Cosign
         uses: sigstore/cosign-installer@v3.1.2
-        with:
-          cosign-release: 'v2.1.1'
       - name: Checkout
         uses: actions/checkout@v4
       - name: Setup Go
@@ -76,4 +74,4 @@ jobs:
           # Sign the ko image
           cosign sign --yes $BASE_REPO/server
           # Sign the helm chart
-          cosign sign --yes $BASE_REPO/helm/minder@${{ steps.version-string.outputs.tag }}
+          cosign sign --yes $BASE_REPO/helm/minder:${{ steps.version-string.outputs.tag }}
