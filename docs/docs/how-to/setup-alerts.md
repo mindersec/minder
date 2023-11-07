@@ -11,7 +11,7 @@ sidebar_position: 70
 * A Minder account
 * An enrolled Provider (e.g., GitHub) and registered repositories
 
-## Create a rule types that you want to be alerted on
+## Create a rule type that you want to be alerted on
 
 The `alert` feature is available for all rule types that have the `alert` section defined in their `<alert-type>.yaml`
 file. Alerts are a core feature of Minder providing you with notifications about the status of your registered
