@@ -22,6 +22,7 @@ import (
 	"fmt"
 	"io"
 	"net/http"
+	"net/url"
 
 	"github.com/google/go-github/v53/github"
 
@@ -211,6 +212,7 @@ func (c *RestClient) GetPackageByName(ctx context.Context, isOrg bool, owner str
 	var pkg *github.Package
 	var err error
 
+	package_name = url.PathEscape(package_name)
 	if isOrg {
 		pkg, _, err = c.client.Organizations.GetPackage(ctx, owner, package_type, package_name)
 		if err != nil {
@@ -232,6 +234,7 @@ func (c *RestClient) GetPackageVersions(ctx context.Context, isOrg bool, owner s
 	var err error
 	state := "active"
 
+	package_name = url.PathEscape(package_name)
 	if isOrg {
 		versions, _, err = c.client.Organizations.PackageGetAllVersions(ctx, owner, package_type,
 			package_name, &github.PackageListOptions{PackageType: &package_type, State: &state})
@@ -255,6 +258,8 @@ func (c *RestClient) GetPackageVersionByTag(ctx context.Context, isOrg bool, own
 	var versions []*github.PackageVersion
 	var err error
 	state := "active"
+
+	package_name = url.PathEscape(package_name)
 
 	if isOrg {
 		versions, _, err = c.client.Organizations.PackageGetAllVersions(ctx, owner, package_type,
@@ -294,6 +299,8 @@ func (c *RestClient) GetPackageVersionById(
 ) (*github.PackageVersion, error) {
 	var pkgVersion *github.PackageVersion
 	var err error
+
+	packageName = url.PathEscape(packageName)
 
 	if isOrg {
 		pkgVersion, _, err = c.client.Organizations.PackageGetVersion(ctx, owner, packageType, packageName, version)
