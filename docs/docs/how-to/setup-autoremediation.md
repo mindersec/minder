@@ -11,7 +11,7 @@ sidebar_position: 60
 * A Minder account
 * An enrolled Provider (e.g., GitHub) and registered repositories
 
-## Create a rule types that you want to use auto-remediation on
+## Create a rule type that you want to use auto-remediation on
 
 The `remediate` feature is available for all rule types that have the `remediate` section defined in their
 `<alert-type>.yaml` file. When the `remediate` feature is turned `on`, Minder will try to automatically remediate failed
