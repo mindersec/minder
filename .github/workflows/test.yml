@@ -19,13 +19,7 @@ jobs:
       - name: Set up gotestfmt
         uses: GoTestTools/gotestfmt-action@v2
         with:
-          # Optional: pass GITHUB_TOKEN to avoid rate limiting.
           token: ${{ secrets.GITHUB_TOKEN }}
-          # Optional: pass the gotestfmt version you want to run.
-          version: v2.0.0
-          # Optional: pass an organization name and repo to use a fork
-          org: GoTestTools
-          repo: gotestfmt
 
       # copy config file into place
       - name: Copy config file
