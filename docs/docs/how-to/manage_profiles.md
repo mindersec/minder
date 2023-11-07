@@ -39,7 +39,7 @@ repository:
           allow_fork_syncing: true
 ```
 
-The full example is available in the [examples directory](https://github.com/stacklok/minder/blob/main/examples/github/profiles/profile.yaml).
+The full example is available in the [examples directory](https://github.com/stacklok/minder-rules-and-profiles).
 
 This profile is checking that secret scanning is enabled for all repositories belonging to the ACME organization,
 and that the `main` branch is protected, requiring at least one approval from a code owner before landing a pull request.
@@ -96,7 +96,7 @@ def:
 
 ```
 
-The full example is available in the [examples directory](https://github.com/stacklok/minder/tree/main/examples/github/rule-types)
+The full example is available in the [examples directory](https://github.com/stacklok/minder-rules-and-profiles)
 
 This rule type is checking that secret scanning is enabled for all repositories belonging to the ACME organization.
 
