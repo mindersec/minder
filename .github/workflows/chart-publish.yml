@@ -76,4 +76,4 @@ jobs:
           # Sign the ko image
           cosign sign --yes $BASE_REPO/server
           # Sign the helm chart
-          cosign sign --yes $BASE_REPO/helm/minder@${{ steps.version-string.outputs.tag }}
+          cosign sign --yes $BASE_REPO/helm/minder:${{ steps.version-string.outputs.tag }}
