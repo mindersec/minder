@@ -91,7 +91,7 @@ minder profile_status list --profile github-profile --detailed
 ## Viewing alerts
 
 Disable secret scanning in one of the registered repositories, by following 
-[these instructions provided by GitHub](https://docs.github.com/en/code-security/secret-scanning/configuring-secret-scanning-for-your-repositories):
+[these instructions provided by GitHub](https://docs.github.com/en/code-security/secret-scanning/configuring-secret-scanning-for-your-repositories).
 
 Navigate to the repository on GitHub, click on the Security tab and view the Security Advisories.  
 Notice that there is a new advisory titled `minder: profile github-profile failed with rule secret_scanning`.
@@ -103,8 +103,10 @@ Navigate to the repository on GitHub, click on the Security tab and view the Sec
 Notice that the advisory titled `minder: profile github-profile failed with rule secret_scanning` is now closed.
 
 ## Delete registered repositories
-If you wish to delete a registered repository, you can do so with the following command:
+If you want to stop monitoring a repository, you can delete it from Minder by using the `repo delete` command:
 ```bash
-minder repo delete -n $REPO_NAME --provider github
+minder repo delete --provider github --name $REPO_NAME
 ```
 where `$REPO_NAME` is the fully-qualified name (`owner/name`) of the repository you wish to delete, for example `testorg/testrepo`.
+
+This will delete the repository from Minder and remove the webhook from the repository. 
