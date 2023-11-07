@@ -107,7 +107,7 @@ Now you can run `minder` commands against the public instance of Minder where yo
 and create custom profiles that would help ensure your repositories are configured consistently and securely.
 
 For more information about `minder`, see:
-* `minder` CLI commands - [Docs](https://minder-docs.stacklok.dev/ref/cli/commands/minder).
+* `minder` CLI commands - [Docs](https://minder-docs.stacklok.dev/ref/cli/minder).
 * Minder documentation - [Docs](https://minder-docs.stacklok.dev).
 
 # Development
