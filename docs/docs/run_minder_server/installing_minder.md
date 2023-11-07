@@ -1,4 +1,9 @@
-# Installing Minder
+---
+sidebar_label: Helm Install
+sidebar_position: 80
+---
+
+# Installing Minder with Helm
 
 ## Keycloak Installation
 Minder is designed to operate without storing user credentials or personal information. To achieve this, it relies on an external identity provider. While Minder is compatible with any OpenID Connect (OIDC)-enabled identity provider, we have thoroughly tested it with Keycloak and thus recommend it for a seamless integration.
@@ -16,7 +21,6 @@ After the installation of Keycloak, there are specific settings and configuratio
     - **minder-cli:** A client for command-line interactions.
     - **minder-server:** A client for server-side operations.
 3) Identity Provider Linkage: Connect your chosen Identity Provider (e.g., GitHub, Google) to Keycloak. To facilitate this process, you may use the initialization script available at [Minder Identity Initialization Script](https://github.com/stacklok/minder/blob/main/identity/scripts/initialize.sh).
-4) OAuth2 Application: For GitHub integration, you will need to create a GitHub OAuth2 application to link user identities in Keycloak.
 
 ## Postgres Installation
 Minder requires a dedicated Postgres database to store its operational data. The database must have a dedicated user with the necessary privileges and credentials.
@@ -30,12 +34,18 @@ It is recommended to use two distinct database users:
 You can find our database migration scripts at [Minder Database Migrations](https://github.com/stacklok/minder/tree/main/database/migrations).
 
 ## Ingress Configuration
-Your ingress controller must be capable of handling both gRPC and HTTP/1 protocols. Please note that HTTP/2 compatibility has not been tested and is not guaranteed.
+Your ingress controller must be capable of handling both gRPC and HTTP/1 protocols.
 
 Minder exposes both HTTP and gRPC APIs, and our default Helm chart configuration enables ingress for both protocols. If your ingress solution requires different settings, please disable the default ingress in the Helm chart and configure it manually to meet your environment's needs.
 
 ## GitHub OAuth Application
 For Minder to interact with GitHub repositories, a GitHub OAuth2 application is required. This is essential for Minder's operation, as it will use this application to authenticate and perform actions on GitHub repositories.
+
+Please ensure the following secrets are securely stored and handled, as they contain sensitive information crucial for the authentication and operation of Minder's integrations:
+
+- **minder-identity-secrets:** a secret with the key identity_client_secret and the value being the keycloak minder-server client secret.
+- **minder-auth-secrets:** a secret with the key token_key_passphrase and unique content, used to encrypt tokens in the database.
+- **minder-github-secrets:** a secret with the keys client_id and client_secret that contains the GitHub OAuth app secrets.
 
 ## Helm Chart Parameters
 ### Minder
