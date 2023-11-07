@@ -72,6 +72,15 @@ SELECT p.id, p.name, ps.profile_status, ps.last_updated FROM profile_status ps
 INNER JOIN profiles p ON p.id = ps.profile_id
 WHERE p.project_id = $1;
 
+-- DeleteRuleStatusesForProfileAndRuleType deletes a rule evaluation
+-- but locks the table before doing so.
+
+-- name: DeleteRuleStatusesForProfileAndRuleType :exec
+DELETE FROM rule_evaluations
+WHERE id IN (
+    SELECT id FROM rule_evaluations as re
+    WHERE re.profile_id = $1 AND re.rule_type_id = $2 FOR UPDATE);
+
 -- name: ListRuleEvaluationsByProfileId :many
 WITH
    eval_details AS (

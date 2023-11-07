@@ -398,6 +398,18 @@ service ProfileService {
         };
     }
 
+    rpc UpdateProfile (UpdateProfileRequest) returns (UpdateProfileResponse) {
+        option (google.api.http) = {
+            put: "/api/v1/profile"
+            body: "*"
+        };
+
+        option (rpc_options) = {
+            auth_scope: OBJECT_OWNER_PROJECT
+            owner_only: true
+        };
+    }
+
     rpc DeleteProfile (DeleteProfileRequest) returns (DeleteProfileResponse) {
         option (google.api.http) = {
             delete: "/api/v1/profile/{id}"
@@ -833,8 +845,16 @@ message GetUserResponse {
 message CreateProfileRequest {
     Profile profile = 1;
 }
-  
+
 message CreateProfileResponse {
+    Profile profile = 1;
+}
+
+message UpdateProfileRequest {
+    Profile profile = 1;
+}
+
+message UpdateProfileResponse {
     Profile profile = 1;
 }
 

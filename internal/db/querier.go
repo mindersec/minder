@@ -38,11 +38,16 @@ type Querier interface {
 	DeleteOldArtifactVersions(ctx context.Context, arg DeleteOldArtifactVersionsParams) error
 	DeleteOrganization(ctx context.Context, id uuid.UUID) error
 	DeleteProfile(ctx context.Context, id uuid.UUID) error
+	DeleteProfileForEntity(ctx context.Context, arg DeleteProfileForEntityParams) error
 	DeleteProject(ctx context.Context, id uuid.UUID) ([]DeleteProjectRow, error)
 	DeleteProvider(ctx context.Context, arg DeleteProviderParams) error
 	DeletePullRequest(ctx context.Context, arg DeletePullRequestParams) error
 	DeleteRepository(ctx context.Context, id uuid.UUID) error
 	DeleteRole(ctx context.Context, id int32) error
+	DeleteRuleInstantiation(ctx context.Context, arg DeleteRuleInstantiationParams) error
+	// DeleteRuleStatusesForProfileAndRuleType deletes a rule evaluation
+	// but locks the table before doing so.
+	DeleteRuleStatusesForProfileAndRuleType(ctx context.Context, arg DeleteRuleStatusesForProfileAndRuleTypeParams) error
 	DeleteRuleType(ctx context.Context, id uuid.UUID) error
 	DeleteSessionState(ctx context.Context, id int32) error
 	DeleteSessionStateByProjectID(ctx context.Context, arg DeleteSessionStateByProjectIDParams) error
@@ -55,6 +60,7 @@ type Querier interface {
 	GetArtifactVersionByID(ctx context.Context, id uuid.UUID) (ArtifactVersion, error)
 	GetArtifactVersionBySha(ctx context.Context, sha string) (ArtifactVersion, error)
 	GetChildrenProjects(ctx context.Context, id uuid.UUID) ([]GetChildrenProjectsRow, error)
+	GetEntityProfileByProjectAndName(ctx context.Context, arg GetEntityProfileByProjectAndNameParams) ([]GetEntityProfileByProjectAndNameRow, error)
 	// GetFeatureInProject verifies if a feature is available for a specific project.
 	// It returns the settings for the feature if it is available.
 	GetFeatureInProject(ctx context.Context, arg GetFeatureInProjectParams) (json.RawMessage, error)
@@ -64,8 +70,10 @@ type Querier interface {
 	GetParentProjects(ctx context.Context, id uuid.UUID) ([]uuid.UUID, error)
 	GetParentProjectsUntil(ctx context.Context, arg GetParentProjectsUntilParams) ([]uuid.UUID, error)
 	GetProfileByID(ctx context.Context, id uuid.UUID) (Profile, error)
+	GetProfileByIDAndLock(ctx context.Context, id uuid.UUID) (Profile, error)
+	GetProfileByNameAndLock(ctx context.Context, arg GetProfileByNameAndLockParams) (Profile, error)
 	GetProfileByProjectAndID(ctx context.Context, arg GetProfileByProjectAndIDParams) ([]GetProfileByProjectAndIDRow, error)
-	GetProfileByProjectAndName(ctx context.Context, arg GetProfileByProjectAndNameParams) ([]GetProfileByProjectAndNameRow, error)
+	GetProfileForEntity(ctx context.Context, arg GetProfileForEntityParams) (EntityProfile, error)
 	GetProfileStatusByIdAndProject(ctx context.Context, arg GetProfileStatusByIdAndProjectParams) (GetProfileStatusByIdAndProjectRow, error)
 	GetProfileStatusByNameAndProject(ctx context.Context, arg GetProfileStatusByNameAndProjectParams) (GetProfileStatusByNameAndProjectRow, error)
 	GetProfileStatusByProject(ctx context.Context, projectID uuid.UUID) ([]GetProfileStatusByProjectRow, error)
@@ -117,6 +125,7 @@ type Querier interface {
 	ListUsersByRoleId(ctx context.Context, roleID int32) ([]int32, error)
 	UpdateAccessToken(ctx context.Context, arg UpdateAccessTokenParams) (ProviderAccessToken, error)
 	UpdateOrganization(ctx context.Context, arg UpdateOrganizationParams) (Project, error)
+	UpdateProfile(ctx context.Context, arg UpdateProfileParams) (Profile, error)
 	// set clone_url if the value is not an empty string
 	UpdateRepository(ctx context.Context, arg UpdateRepositoryParams) (Repository, error)
 	UpdateRepositoryByID(ctx context.Context, arg UpdateRepositoryByIDParams) (Repository, error)
@@ -124,6 +133,7 @@ type Querier interface {
 	UpdateRuleType(ctx context.Context, arg UpdateRuleTypeParams) error
 	UpsertArtifact(ctx context.Context, arg UpsertArtifactParams) (Artifact, error)
 	UpsertArtifactVersion(ctx context.Context, arg UpsertArtifactVersionParams) (ArtifactVersion, error)
+	UpsertProfileForEntity(ctx context.Context, arg UpsertProfileForEntityParams) (EntityProfile, error)
 	UpsertPullRequest(ctx context.Context, arg UpsertPullRequestParams) (PullRequest, error)
 	UpsertRuleDetailsAlert(ctx context.Context, arg UpsertRuleDetailsAlertParams) (uuid.UUID, error)
 	UpsertRuleDetailsEval(ctx context.Context, arg UpsertRuleDetailsEvalParams) (uuid.UUID, error)

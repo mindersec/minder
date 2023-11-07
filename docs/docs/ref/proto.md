@@ -81,6 +81,7 @@ replies with OK
 | Method Name | Request Type | Response Type | Description |
 | ----------- | ------------ | ------------- | ------------|
 | CreateProfile | [CreateProfileRequest](#minder-v1-CreateProfileRequest) | [CreateProfileResponse](#minder-v1-CreateProfileResponse) |  |
+| UpdateProfile | [UpdateProfileRequest](#minder-v1-UpdateProfileRequest) | [UpdateProfileResponse](#minder-v1-UpdateProfileResponse) |  |
 | DeleteProfile | [DeleteProfileRequest](#minder-v1-DeleteProfileRequest) | [DeleteProfileResponse](#minder-v1-DeleteProfileResponse) |  |
 | ListProfiles | [ListProfilesRequest](#minder-v1-ListProfilesRequest) | [ListProfilesResponse](#minder-v1-ListProfilesResponse) |  |
 | GetProfileById | [GetProfileByIdRequest](#minder-v1-GetProfileByIdRequest) | [GetProfileByIdResponse](#minder-v1-GetProfileByIdResponse) |  |
@@ -1625,6 +1626,28 @@ the name stutters a bit but we already use a PullRequest message for handling PR
 
 #### StoreProviderTokenResponse
 
+
+
+<a name="minder-v1-UpdateProfileRequest"></a>
+
+#### UpdateProfileRequest
+
+
+
+| Field | Type | Label | Description |
+| ----- | ---- | ----- | ----------- |
+| profile | [Profile](#minder-v1-Profile) |  |  |
+
+
+<a name="minder-v1-UpdateProfileResponse"></a>
+
+#### UpdateProfileResponse
+
+
+
+| Field | Type | Label | Description |
+| ----- | ---- | ----- | ----------- |
+| profile | [Profile](#minder-v1-Profile) |  |  |
 
 
 <a name="minder-v1-UpdateRuleTypeRequest"></a>

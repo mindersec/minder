@@ -15,6 +15,26 @@ import (
 	"github.com/sqlc-dev/pqtype"
 )
 
+const deleteRuleStatusesForProfileAndRuleType = `-- name: DeleteRuleStatusesForProfileAndRuleType :exec
+
+DELETE FROM rule_evaluations
+WHERE id IN (
+    SELECT id FROM rule_evaluations as re
+    WHERE re.profile_id = $1 AND re.rule_type_id = $2 FOR UPDATE)
+`
+
+type DeleteRuleStatusesForProfileAndRuleTypeParams struct {
+	ProfileID  uuid.UUID `json:"profile_id"`
+	RuleTypeID uuid.UUID `json:"rule_type_id"`
+}
+
+// DeleteRuleStatusesForProfileAndRuleType deletes a rule evaluation
+// but locks the table before doing so.
+func (q *Queries) DeleteRuleStatusesForProfileAndRuleType(ctx context.Context, arg DeleteRuleStatusesForProfileAndRuleTypeParams) error {
+	_, err := q.db.ExecContext(ctx, deleteRuleStatusesForProfileAndRuleType, arg.ProfileID, arg.RuleTypeID)
+	return err
+}
+
 const getProfileStatusByIdAndProject = `-- name: GetProfileStatusByIdAndProject :one
 SELECT p.id, p.name, ps.profile_status, ps.last_updated FROM profile_status ps
 INNER JOIN profiles p ON p.id = ps.profile_id

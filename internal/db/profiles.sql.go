@@ -124,12 +124,150 @@ func (q *Queries) DeleteProfile(ctx context.Context, id uuid.UUID) error {
 	return err
 }
 
+const deleteProfileForEntity = `-- name: DeleteProfileForEntity :exec
+DELETE FROM entity_profiles WHERE profile_id = $1 AND entity = $2
+`
+
+type DeleteProfileForEntityParams struct {
+	ProfileID uuid.UUID `json:"profile_id"`
+	Entity    Entities  `json:"entity"`
+}
+
+func (q *Queries) DeleteProfileForEntity(ctx context.Context, arg DeleteProfileForEntityParams) error {
+	_, err := q.db.ExecContext(ctx, deleteProfileForEntity, arg.ProfileID, arg.Entity)
+	return err
+}
+
+const deleteRuleInstantiation = `-- name: DeleteRuleInstantiation :exec
+DELETE FROM entity_profile_rules WHERE entity_profile_id = $1 AND rule_type_id = $2
+`
+
+type DeleteRuleInstantiationParams struct {
+	EntityProfileID uuid.UUID `json:"entity_profile_id"`
+	RuleTypeID      uuid.UUID `json:"rule_type_id"`
+}
+
+func (q *Queries) DeleteRuleInstantiation(ctx context.Context, arg DeleteRuleInstantiationParams) error {
+	_, err := q.db.ExecContext(ctx, deleteRuleInstantiation, arg.EntityProfileID, arg.RuleTypeID)
+	return err
+}
+
+const getEntityProfileByProjectAndName = `-- name: GetEntityProfileByProjectAndName :many
+SELECT profiles.id, name, provider, project_id, remediate, alert, profiles.created_at, profiles.updated_at, entity_profiles.id, entity, profile_id, contextual_rules, entity_profiles.created_at, entity_profiles.updated_at FROM profiles JOIN entity_profiles ON profiles.id = entity_profiles.profile_id
+WHERE profiles.project_id = $1 AND profiles.name = $2
+`
+
+type GetEntityProfileByProjectAndNameParams struct {
+	ProjectID uuid.UUID `json:"project_id"`
+	Name      string    `json:"name"`
+}
+
+type GetEntityProfileByProjectAndNameRow struct {
+	ID              uuid.UUID       `json:"id"`
+	Name            string          `json:"name"`
+	Provider        string          `json:"provider"`
+	ProjectID       uuid.UUID       `json:"project_id"`
+	Remediate       NullActionType  `json:"remediate"`
+	Alert           NullActionType  `json:"alert"`
+	CreatedAt       time.Time       `json:"created_at"`
+	UpdatedAt       time.Time       `json:"updated_at"`
+	ID_2            uuid.UUID       `json:"id_2"`
+	Entity          Entities        `json:"entity"`
+	ProfileID       uuid.UUID       `json:"profile_id"`
+	ContextualRules json.RawMessage `json:"contextual_rules"`
+	CreatedAt_2     time.Time       `json:"created_at_2"`
+	UpdatedAt_2     time.Time       `json:"updated_at_2"`
+}
+
+func (q *Queries) GetEntityProfileByProjectAndName(ctx context.Context, arg GetEntityProfileByProjectAndNameParams) ([]GetEntityProfileByProjectAndNameRow, error) {
+	rows, err := q.db.QueryContext(ctx, getEntityProfileByProjectAndName, arg.ProjectID, arg.Name)
+	if err != nil {
+		return nil, err
+	}
+	defer rows.Close()
+	items := []GetEntityProfileByProjectAndNameRow{}
+	for rows.Next() {
+		var i GetEntityProfileByProjectAndNameRow
+		if err := rows.Scan(
+			&i.ID,
+			&i.Name,
+			&i.Provider,
+			&i.ProjectID,
+			&i.Remediate,
+			&i.Alert,
+			&i.CreatedAt,
+			&i.UpdatedAt,
+			&i.ID_2,
+			&i.Entity,
+			&i.ProfileID,
+			&i.ContextualRules,
+			&i.CreatedAt_2,
+			&i.UpdatedAt_2,
+		); err != nil {
+			return nil, err
+		}
+		items = append(items, i)
+	}
+	if err := rows.Close(); err != nil {
+		return nil, err
+	}
+	if err := rows.Err(); err != nil {
+		return nil, err
+	}
+	return items, nil
+}
+
 const getProfileByID = `-- name: GetProfileByID :one
 SELECT id, name, provider, project_id, remediate, alert, created_at, updated_at FROM profiles WHERE id = $1
 `
 
 func (q *Queries) GetProfileByID(ctx context.Context, id uuid.UUID) (Profile, error) {
 	row := q.db.QueryRowContext(ctx, getProfileByID, id)
+	var i Profile
+	err := row.Scan(
+		&i.ID,
+		&i.Name,
+		&i.Provider,
+		&i.ProjectID,
+		&i.Remediate,
+		&i.Alert,
+		&i.CreatedAt,
+		&i.UpdatedAt,
+	)
+	return i, err
+}
+
+const getProfileByIDAndLock = `-- name: GetProfileByIDAndLock :one
+SELECT id, name, provider, project_id, remediate, alert, created_at, updated_at FROM profiles WHERE id = $1 FOR UPDATE
+`
+
+func (q *Queries) GetProfileByIDAndLock(ctx context.Context, id uuid.UUID) (Profile, error) {
+	row := q.db.QueryRowContext(ctx, getProfileByIDAndLock, id)
+	var i Profile
+	err := row.Scan(
+		&i.ID,
+		&i.Name,
+		&i.Provider,
+		&i.ProjectID,
+		&i.Remediate,
+		&i.Alert,
+		&i.CreatedAt,
+		&i.UpdatedAt,
+	)
+	return i, err
+}
+
+const getProfileByNameAndLock = `-- name: GetProfileByNameAndLock :one
+SELECT id, name, provider, project_id, remediate, alert, created_at, updated_at FROM profiles WHERE name = $1 AND project_id = $2 FOR UPDATE
+`
+
+type GetProfileByNameAndLockParams struct {
+	Name      string    `json:"name"`
+	ProjectID uuid.UUID `json:"project_id"`
+}
+
+func (q *Queries) GetProfileByNameAndLock(ctx context.Context, arg GetProfileByNameAndLockParams) (Profile, error) {
+	row := q.db.QueryRowContext(ctx, getProfileByNameAndLock, arg.Name, arg.ProjectID)
 	var i Profile
 	err := row.Scan(
 		&i.ID,
@@ -209,69 +347,27 @@ func (q *Queries) GetProfileByProjectAndID(ctx context.Context, arg GetProfileBy
 	return items, nil
 }
 
-const getProfileByProjectAndName = `-- name: GetProfileByProjectAndName :many
-SELECT profiles.id, name, provider, project_id, remediate, alert, profiles.created_at, profiles.updated_at, entity_profiles.id, entity, profile_id, contextual_rules, entity_profiles.created_at, entity_profiles.updated_at FROM profiles JOIN entity_profiles ON profiles.id = entity_profiles.profile_id
-WHERE profiles.project_id = $1 AND profiles.name = $2
+const getProfileForEntity = `-- name: GetProfileForEntity :one
+SELECT id, entity, profile_id, contextual_rules, created_at, updated_at FROM entity_profiles WHERE profile_id = $1 AND entity = $2
 `
 
-type GetProfileByProjectAndNameParams struct {
-	ProjectID uuid.UUID `json:"project_id"`
-	Name      string    `json:"name"`
+type GetProfileForEntityParams struct {
+	ProfileID uuid.UUID `json:"profile_id"`
+	Entity    Entities  `json:"entity"`
 }
 
-type GetProfileByProjectAndNameRow struct {
-	ID              uuid.UUID       `json:"id"`
-	Name            string          `json:"name"`
-	Provider        string          `json:"provider"`
-	ProjectID       uuid.UUID       `json:"project_id"`
-	Remediate       NullActionType  `json:"remediate"`
-	Alert           NullActionType  `json:"alert"`
-	CreatedAt       time.Time       `json:"created_at"`
-	UpdatedAt       time.Time       `json:"updated_at"`
-	ID_2            uuid.UUID       `json:"id_2"`
-	Entity          Entities        `json:"entity"`
-	ProfileID       uuid.UUID       `json:"profile_id"`
-	ContextualRules json.RawMessage `json:"contextual_rules"`
-	CreatedAt_2     time.Time       `json:"created_at_2"`
-	UpdatedAt_2     time.Time       `json:"updated_at_2"`
-}
-
-func (q *Queries) GetProfileByProjectAndName(ctx context.Context, arg GetProfileByProjectAndNameParams) ([]GetProfileByProjectAndNameRow, error) {
-	rows, err := q.db.QueryContext(ctx, getProfileByProjectAndName, arg.ProjectID, arg.Name)
-	if err != nil {
-		return nil, err
-	}
-	defer rows.Close()
-	items := []GetProfileByProjectAndNameRow{}
-	for rows.Next() {
-		var i GetProfileByProjectAndNameRow
-		if err := rows.Scan(
-			&i.ID,
-			&i.Name,
-			&i.Provider,
-			&i.ProjectID,
-			&i.Remediate,
-			&i.Alert,
-			&i.CreatedAt,
-			&i.UpdatedAt,
-			&i.ID_2,
-			&i.Entity,
-			&i.ProfileID,
-			&i.ContextualRules,
-			&i.CreatedAt_2,
-			&i.UpdatedAt_2,
-		); err != nil {
-			return nil, err
-		}
-		items = append(items, i)
-	}
-	if err := rows.Close(); err != nil {
-		return nil, err
-	}
-	if err := rows.Err(); err != nil {
-		return nil, err
-	}
-	return items, nil
+func (q *Queries) GetProfileForEntity(ctx context.Context, arg GetProfileForEntityParams) (EntityProfile, error) {
+	row := q.db.QueryRowContext(ctx, getProfileForEntity, arg.ProfileID, arg.Entity)
+	var i EntityProfile
+	err := row.Scan(
+		&i.ID,
+		&i.Entity,
+		&i.ProfileID,
+		&i.ContextualRules,
+		&i.CreatedAt,
+		&i.UpdatedAt,
+	)
+	return i, err
 }
 
 const listProfilesByProjectID = `-- name: ListProfilesByProjectID :many
@@ -372,6 +468,66 @@ func (q *Queries) ListProfilesInstantiatingRuleType(ctx context.Context, ruleTyp
 		return nil, err
 	}
 	return items, nil
+}
+
+const updateProfile = `-- name: UpdateProfile :one
+UPDATE profiles SET
+    remediate = $2,
+    alert = $3,
+    updated_at = NOW()
+WHERE id = $1 RETURNING id, name, provider, project_id, remediate, alert, created_at, updated_at
+`
+
+type UpdateProfileParams struct {
+	ID        uuid.UUID      `json:"id"`
+	Remediate NullActionType `json:"remediate"`
+	Alert     NullActionType `json:"alert"`
+}
+
+func (q *Queries) UpdateProfile(ctx context.Context, arg UpdateProfileParams) (Profile, error) {
+	row := q.db.QueryRowContext(ctx, updateProfile, arg.ID, arg.Remediate, arg.Alert)
+	var i Profile
+	err := row.Scan(
+		&i.ID,
+		&i.Name,
+		&i.Provider,
+		&i.ProjectID,
+		&i.Remediate,
+		&i.Alert,
+		&i.CreatedAt,
+		&i.UpdatedAt,
+	)
+	return i, err
+}
+
+const upsertProfileForEntity = `-- name: UpsertProfileForEntity :one
+INSERT INTO entity_profiles (
+    entity,
+    profile_id,
+    contextual_rules) VALUES ($1, $2, $3::jsonb)
+ON CONFLICT (entity, profile_id) DO UPDATE SET
+    contextual_rules = $3::jsonb
+RETURNING id, entity, profile_id, contextual_rules, created_at, updated_at
+`
+
+type UpsertProfileForEntityParams struct {
+	Entity          Entities        `json:"entity"`
+	ProfileID       uuid.UUID       `json:"profile_id"`
+	ContextualRules json.RawMessage `json:"contextual_rules"`
+}
+
+func (q *Queries) UpsertProfileForEntity(ctx context.Context, arg UpsertProfileForEntityParams) (EntityProfile, error) {
+	row := q.db.QueryRowContext(ctx, upsertProfileForEntity, arg.Entity, arg.ProfileID, arg.ContextualRules)
+	var i EntityProfile
+	err := row.Scan(
+		&i.ID,
+		&i.Entity,
+		&i.ProfileID,
+		&i.ContextualRules,
+		&i.CreatedAt,
+		&i.UpdatedAt,
+	)
+	return i, err
 }
 
 const upsertRuleInstantiation = `-- name: UpsertRuleInstantiation :one
