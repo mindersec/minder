@@ -108,6 +108,7 @@ and create custom profiles that would help ensure your repositories are configur
 
 For more information about `minder`, see:
 * `minder` CLI commands - [Docs](https://minder-docs.stacklok.dev/ref/cli/minder).
+* `minder` REST API Documentation - [Docs](https://minder-docs.stacklok.dev/ref/api).
 * Minder documentation - [Docs](https://minder-docs.stacklok.dev).
 
 # Development
