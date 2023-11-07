@@ -9,7 +9,7 @@ In [Creating your first profile](./first_profile.md), we wrote a rule to open a
 security advisory when repo configuration drifted from the configured profile
 in Minder.  In this tutorial, we will show how Minder can automatically
 resolve the misconfiguration and ensure that enrolled repos have secret
-scanning enabled.  Secret scanning isone of several settings which can be
+scanning enabled.  Secret scanning is one of several settings which can be
 managed by Minder.  When you apply a Minder profile to enrolled repositories,
 it will remediate (fix) the setting if it is changed to violate the profile.
 
@@ -19,20 +19,20 @@ it will remediate (fix) the setting if it is changed to violate the profile.
 * [A Minder account](./login.md)
 * [An enrolled GitHub token](./login.md#enrolling-the-github-provider) that is either an Owner in the organization or an Admin on the repositories
 * [A registered repository in Minder](./first_profile.md#register-repositories)
-* [The `secret_scanning`` rule type](./first_profile.md#creating-and-applying-profiles)
+* [The `secret_scanning` rule type](./first_profile.md#creating-and-applying-profiles)
 * [A policy to open security advisories when secret scanning is off](./first_profile.md#creating-and-applying-profiles)
 
 ## Creating a profile with `remediate: on`
 
 Minder doesn't currently support editing profiles, so we will create a new profile with `remediate: on`.
 
-Edit the YAML file of the [profile from the secret-scanning tutorial](./first_profile.md#creating-and-applying-profiles)
-and set the `remediate` attribute to `on`:
+Create a new file called `profile-remediate.yaml`.
+Paste the following profile definition into the newly created file, setting the `remediate` attribute to `on`:
 ```yaml
 ---
 version: v1
 type: profile
-name: github-profile
+name: github-profile-remediate
 context:
   provider: github
 alert: "on"
@@ -45,12 +45,12 @@ repository:
 
 Create the profile in Minder:
 ```
-minder profile create -f profile.yaml
+minder profile create -f profile-remediate.yaml
 ```
 
 Check the status of the profile:
 ```
-minder profile_status list --profile github-profile
+minder profile_status list --profile github-profile-remediate
 ```
 
 With remediation on, the profile status should be "Success" when the repository has been updated to match the profile.
