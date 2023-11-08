@@ -247,13 +247,13 @@ func TestBranchProtectionRemediate(t *testing.T) {
 		},
 	}
 
-	mockClient := mock_ghclient.NewMockGitHub(ctrl)
-
 	for _, tt := range tests {
 		tt := tt
 
 		t.Run(tt.name, func(t *testing.T) {
 			t.Parallel()
+
+			mockClient := mock_ghclient.NewMockGitHub(ctrl)
 
 			engine, err := NewGhBranchProtectRemediator(tt.newRemArgs.actionType, tt.newRemArgs.ghp, tt.newRemArgs.pbuild)
 			if tt.wantInitErr {
