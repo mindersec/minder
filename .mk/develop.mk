@@ -15,6 +15,8 @@
 
 DOCKERARCH := $(shell uname -m | sed 's/x86_64/amd64/' | sed 's/aarch64/arm64/')
 
+RUN_DOCKER_NO_TEARDOWN?=false
+
 .PHONY: run-cli
 run-cli: ## run the CLI, needs additional arguments
 	@go run -ldflags "-X main.version=$(shell git describe --abbrev=0 --tags)" -tags '$(BUILDTAGS)' ./cmd/cli
@@ -23,15 +25,24 @@ run-cli: ## run the CLI, needs additional arguments
 run-server: ## run the app
 	@go run -ldflags "-X main.version=$(shell git describe --abbrev=0 --tags)" -tags '$(BUILDTAGS)' ./cmd/server serve
 
+.PHONY: run-docker-teardown
+run-docker-teardown:
+ifeq ($(RUN_DOCKER_NO_TEARDOWN),false)
+	@echo "Running docker-compose down"
+	@$(COMPOSE) down
+else
+	@echo "Skipping docker-compose down"
+endif
+
 .PHONY: run-docker
-run-docker: ## run the app under docker-compose
+run-docker: run-docker-teardown ## run the app under docker-compose
 	@echo "Running docker-compose up $(services)..."
 	@echo "Building the minder-server image..."
 	@# podman (at least) doesn't seem to like multi-arch images, and sometimes picks the wrong one (e.g. amd64 on arm64)
 	@# We also need to remove the build: directives to use ko builds
 	@# ko resolve will fill in the image: field in the compose file, but it adds a yaml document separator
 	@sed -e '/^  *build:/d'  -e 's|  image: minder:latest|  image: ko://github.com/stacklok/minder/cmd/server|' docker-compose.yaml | ko resolve --base-import-paths --platform linux/$(DOCKERARCH) -f - | sed 's/^--*$$//' > .resolved-compose.yaml
-	@$(COMPOSE) -f .resolved-compose.yaml down && $(COMPOSE) -f .resolved-compose.yaml up $(COMPOSE_ARGS) $(services)
+	@$(COMPOSE) -f .resolved-compose.yaml up $(COMPOSE_ARGS) $(services)
 	@rm .resolved-compose.yaml*
 
 .PHONY: stop-docker
