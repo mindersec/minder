@@ -181,7 +181,6 @@ func TestCreateProfileStatusStoredProcedure(t *testing.T) {
 
 	tests := []struct {
 		name                      string
-		profile                   Profile
 		ruleStatusSetupFn         func(profile Profile, randomEntities *testRandomEntities)
 		expectedStatusAfterSetup  EvalStatusTypes
 		ruleStatusModifyFn        func(profile Profile, randomEntities *testRandomEntities)
@@ -334,18 +333,18 @@ func TestCreateProfileStatusStoredProcedure(t *testing.T) {
 		t.Run(tt.name, func(t *testing.T) {
 			t.Parallel()
 
-			tt.profile = createRandomProfile(t, randomEntities.prov.Name, randomEntities.proj.ID)
-			require.NotEmpty(t, tt.profile)
+			profile := createRandomProfile(t, randomEntities.prov.Name, randomEntities.proj.ID)
+			require.NotEmpty(t, profile)
 
-			tt.ruleStatusSetupFn(tt.profile, randomEntities)
-			prfStatusRow := profileIDStatusByIdAndProject(t, tt.profile.ID, randomEntities.proj.ID)
+			tt.ruleStatusSetupFn(profile, randomEntities)
+			prfStatusRow := profileIDStatusByIdAndProject(t, profile.ID, randomEntities.proj.ID)
 			require.Equal(t, prfStatusRow.ProfileStatus, tt.expectedStatusAfterSetup)
 
-			tt.ruleStatusModifyFn(tt.profile, randomEntities)
-			prfStatusRow = profileIDStatusByIdAndProject(t, tt.profile.ID, randomEntities.proj.ID)
+			tt.ruleStatusModifyFn(profile, randomEntities)
+			prfStatusRow = profileIDStatusByIdAndProject(t, profile.ID, randomEntities.proj.ID)
 			require.Equal(t, prfStatusRow.ProfileStatus, tt.expectedStatusAfterModify)
 
-			err := testQueries.DeleteProfile(context.Background(), tt.profile.ID)
+			err := testQueries.DeleteProfile(context.Background(), profile.ID)
 			require.NoError(t, err)
 		})
 	}
