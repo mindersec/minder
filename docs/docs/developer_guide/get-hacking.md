@@ -29,7 +29,7 @@ Note that the application requires a database to be running. This can be achieve
 using docker-compose:
 
 ```bash
-KO_DOCKER_REPO=ko.local services="postgres keycloak migrateup" make run-docker
+services="postgres keycloak migrateup" make run-docker
 ```
 
 Then run the application

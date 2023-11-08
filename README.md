@@ -160,7 +160,7 @@ See the documentation on how to do that - [Docs](https://minder-docs.stacklok.de
 Start `minder-server` along with its dependant services (`keycloak` and `postgres`) by running:
 
 ```bash
-KO_DOCKER_REPO=ko.local make run-docker
+make run-docker
 ```
 
 #### Configure social login (GitHub)

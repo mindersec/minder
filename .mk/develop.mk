@@ -37,11 +37,12 @@ endif
 .PHONY: run-docker
 run-docker: run-docker-teardown ## run the app under docker-compose
 	@echo "Running docker-compose up $(services)..."
-	@echo "Building the minder-server image..."
+	@echo "Building the minder-server image (KO_DOCKER_REPO=$(KO_DOCKER_REPO))..."
+
 	@# podman (at least) doesn't seem to like multi-arch images, and sometimes picks the wrong one (e.g. amd64 on arm64)
 	@# We also need to remove the build: directives to use ko builds
 	@# ko resolve will fill in the image: field in the compose file, but it adds a yaml document separator
-	@sed -e '/^  *build:/d'  -e 's|  image: minder:latest|  image: ko://github.com/stacklok/minder/cmd/server|' docker-compose.yaml | ko resolve --base-import-paths --platform linux/$(DOCKERARCH) -f - | sed 's/^--*$$//' > .resolved-compose.yaml
+	@sed -e '/^  *build:/d'  -e 's|  image: minder:latest|  image: ko://github.com/stacklok/minder/cmd/server|' docker-compose.yaml | KO_DOCKER_REPO=$(KO_DOCKER_REPO) ko resolve --base-import-paths --platform linux/$(DOCKERARCH) -f - | sed 's/^--*$$//' > .resolved-compose.yaml
 	@$(COMPOSE) -f .resolved-compose.yaml up $(COMPOSE_ARGS) $(services)
 	@rm .resolved-compose.yaml*
 
