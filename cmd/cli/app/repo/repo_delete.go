@@ -40,7 +40,6 @@ var repoDeleteCmd = &cobra.Command{
 
 		provider := util.GetConfigValue(viper.GetViper(), "provider", "provider", cmd, "").(string)
 		repoid := viper.GetString("repo-id")
-		format := viper.GetString("output")
 		name := util.GetConfigValue(viper.GetViper(), "name", "name", cmd, "").(string)
 
 		// if name is set, repo-id cannot be set
@@ -56,14 +55,6 @@ var repoDeleteCmd = &cobra.Command{
 		// if name is set, provider needs to be set
 		if name != "" && provider == "" {
 			return fmt.Errorf("provider needs to be set if name is set")
-		}
-
-		switch format {
-		case formatJSON:
-		case formatYAML:
-		case formatDefault:
-		default:
-			return fmt.Errorf("invalid output format: %s", format)
 		}
 
 		conn, err := util.GrpcForCommand(cmd, viper.GetViper())
@@ -98,25 +89,10 @@ var repoDeleteCmd = &cobra.Command{
 		if status {
 			// TODO: implement this
 		} else {
-			var out string
-			var err error
-			// print result just in JSON or YAML
-			if format == "" || format == formatJSON {
-				if repoid != "" {
-					out, err = util.GetJsonFromProto(deletedRepoID)
-				} else {
-					out, err = util.GetJsonFromProto(deletedRepoName)
-				}
-				util.ExitNicelyOnError(err, "Error getting json from proto")
-				fmt.Println(out)
+			if repoid != "" {
+				cmd.Println("Successfully deleted repo with id:", deletedRepoID.RepositoryId)
 			} else {
-				if repoid != "" {
-					out, err = util.GetYamlFromProto(deletedRepoID)
-				} else {
-					out, err = util.GetYamlFromProto(deletedRepoName)
-				}
-				util.ExitNicelyOnError(err, "Error getting json from proto")
-				fmt.Println(out)
+				cmd.Println("Successfully deleted repo with name:", deletedRepoName.Name)
 			}
 		}
 		return nil
@@ -125,7 +101,6 @@ var repoDeleteCmd = &cobra.Command{
 
 func init() {
 	RepoCmd.AddCommand(repoDeleteCmd)
-	repoDeleteCmd.Flags().StringP("output", "f", "", "Output format (json or yaml)")
 	repoDeleteCmd.Flags().StringP("provider", "p", "", "Name of the enrolled provider")
 	repoDeleteCmd.Flags().StringP("name", "n", "", "Name of the repository (owner/name format)")
 	repoDeleteCmd.Flags().StringP("repo-id", "r", "", "ID of the repo to delete")
