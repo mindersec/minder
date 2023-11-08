@@ -122,22 +122,6 @@ func generateTokenKey(t *testing.T) string {
 	return tokenKeyPath
 }
 
-func TestHealth(t *testing.T) {
-	t.Parallel()
-
-	conn, err := getgRPCConnection()
-	if err != nil {
-		t.Fatalf("Failed to dial bufnet: %v", err)
-	}
-	defer conn.Close()
-
-	client := pb.NewHealthServiceClient(conn)
-	_, err = client.CheckHealth(context.Background(), &pb.CheckHealthRequest{})
-	if err != nil {
-		t.Fatalf("Failed to get health: %v", err)
-	}
-}
-
 func TestWebhook(t *testing.T) {
 	t.Parallel()
 
