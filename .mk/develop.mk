@@ -26,7 +26,7 @@ run-server: ## run the app
 	@go run -ldflags "-X main.version=$(shell git describe --abbrev=0 --tags)" -tags '$(BUILDTAGS)' ./cmd/server serve
 
 .PHONY: run-docker-teardown
-run-docker-teardown:
+run-docker-teardown: ## teardown the docker-compose environment
 ifeq ($(RUN_DOCKER_NO_TEARDOWN),false)
 	@echo "Running docker-compose down"
 	@$(COMPOSE) down
