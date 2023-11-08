@@ -23,6 +23,7 @@ package auth
 
 import (
 	"context"
+	_ "embed"
 	"fmt"
 	"net/http"
 	"net/url"
@@ -48,6 +49,9 @@ import (
 	"github.com/stacklok/minder/internal/util/rand"
 	pb "github.com/stacklok/minder/pkg/api/protobuf/go/minder/v1"
 )
+
+//go:embed html/login_success.html
+var loginSuccessHtml []byte
 
 func userRegistered(ctx context.Context, client pb.UserServiceClient) (bool, *pb.GetUserResponse, error) {
 	res, err := client.GetUser(ctx, &pb.GetUserRequest{})
@@ -121,9 +125,13 @@ will be saved to $XDG_CONFIG_HOME/minder/credentials.json`,
 			rp rp.RelyingParty) {
 
 			tokenChan <- tokens
-			msg := "<div><h2>Authentication successful</h2><div>You may now close this tab and return to your terminal.</div></div>"
 			// send a success message to the browser
-			fmt.Fprint(w, msg)
+			w.Header().Set("Content-Type", "text/html; charset=utf-8")
+			_, err := w.Write(loginSuccessHtml)
+			if err != nil {
+				// if we cannot display the success page, just print a success message
+				cli.PrintCmd(cmd, "Authentication Successful")
+			}
 		}
 		http.Handle("/login", rp.AuthURLHandler(stateFn, provider))
 		http.Handle(callbackPath, rp.CodeExchangeHandler(callback, provider))
