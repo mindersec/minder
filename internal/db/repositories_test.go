@@ -24,7 +24,6 @@ package db
 import (
 	"context"
 	"database/sql"
-	"errors"
 	"testing"
 	"time"
 
@@ -36,18 +35,6 @@ import (
 
 type RepositoryOption func(*CreateRepositoryParams)
 
-func deleteRepositoryByRepoId(params CreateRepositoryParams) error {
-	repo, err := testQueries.GetRepositoryByRepoID(
-		context.Background(), params.RepoID)
-	if errors.Is(err, sql.ErrNoRows) {
-		return nil
-	}
-	if err != nil {
-		return err
-	}
-	return testQueries.DeleteRepository(context.Background(), repo.ID)
-}
-
 func createRandomRepository(t *testing.T, project uuid.UUID, prov string, opts ...RepositoryOption) Repository {
 	t.Helper()
 
@@ -57,7 +44,7 @@ func createRandomRepository(t *testing.T, project uuid.UUID, prov string, opts .
 		ProjectID:  project,
 		RepoOwner:  rand.RandomName(seed),
 		RepoName:   rand.RandomName(seed),
-		RepoID:     int32(rand.RandomInt(0, 1000, seed)),
+		RepoID:     int32(rand.RandomInt(0, 2000, seed)),
 		IsPrivate:  false,
 		IsFork:     false,
 		WebhookID:  sql.NullInt32{Int32: int32(rand.RandomInt(0, 1000, seed)), Valid: true},
@@ -69,8 +56,17 @@ func createRandomRepository(t *testing.T, project uuid.UUID, prov string, opts .
 		o(&arg)
 	}
 
-	// Avoid unique constraint violation
-	require.NoError(t, deleteRepositoryByRepoId(arg))
+	// Avoid unique constraint violation by checking if repo with same
+	// RepoID exists and incrementing seed until it doesn't.
+	for {
+		_, err := testQueries.GetRepositoryByRepoID(context.Background(), arg.RepoID)
+		if err != sql.ErrNoRows {
+			seed++
+			arg.RepoID = int32(rand.RandomInt(0, 2000, seed))
+		} else {
+			break
+		}
+	}
 
 	repo, err := testQueries.CreateRepository(context.Background(), arg)
 	require.NoError(t, err)
