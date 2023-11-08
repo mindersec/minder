@@ -25,6 +25,9 @@ package controlplane
 import (
 	"context"
 
+	"google.golang.org/grpc/codes"
+	"google.golang.org/grpc/status"
+
 	pb "github.com/stacklok/minder/pkg/api/protobuf/go/minder/v1"
 )
 
@@ -32,11 +35,9 @@ import (
 const PaginationLimit = 10
 
 // CheckHealth is a simple health check for monitoring
-// The lintcheck is disabled because the unused-receiver is required by
-// the implementation. UnimplementedHealthServiceServer is initialized
-// within the Server struct
-//
-//revive:disable:unused-receiver
 func (s *Server) CheckHealth(_ context.Context, _ *pb.CheckHealthRequest) (*pb.CheckHealthResponse, error) {
+	if err := s.store.CheckHealth(); err != nil {
+		return nil, status.Errorf(codes.Internal, "failed to check health: %v", err)
+	}
 	return &pb.CheckHealthResponse{Status: "OK"}, nil
 }

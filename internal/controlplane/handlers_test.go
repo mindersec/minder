@@ -18,13 +18,25 @@ import (
 	"context"
 	"testing"
 
+	"github.com/golang/mock/gomock"
+
+	mockdb "github.com/stacklok/minder/database/mock"
 	pb "github.com/stacklok/minder/pkg/api/protobuf/go/minder/v1"
 )
 
 func TestCheckHealth(t *testing.T) {
 	t.Parallel()
 
-	server := Server{}
+	ctrl := gomock.NewController(t)
+	defer ctrl.Finish()
+
+	mockStore := mockdb.NewMockStore(ctrl)
+
+	mockStore.EXPECT().CheckHealth().Return(nil)
+
+	server := Server{
+		store: mockStore,
+	}
 	response, err := server.CheckHealth(context.Background(), &pb.CheckHealthRequest{})
 	if err != nil {
 		t.Errorf("Error in CheckHealth: %v", err)

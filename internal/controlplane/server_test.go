@@ -18,7 +18,6 @@ package controlplane
 import (
 	"context"
 	"log"
-	"net"
 	"net/http"
 	"net/http/httptest"
 	"os"
@@ -29,7 +28,6 @@ import (
 	"github.com/golang/mock/gomock"
 	"github.com/stretchr/testify/require"
 	"google.golang.org/grpc"
-	"google.golang.org/grpc/credentials/insecure"
 	"google.golang.org/grpc/test/bufconn"
 
 	mockdb "github.com/stacklok/minder/database/mock"
@@ -69,20 +67,6 @@ func init() {
 	// It would be nice if we could Close() the httpServer, but we leak it in the test instead
 }
 
-func bufDialer(context.Context, string) (net.Conn, error) {
-	return lis.Dial()
-}
-
-func getgRPCConnection() (*grpc.ClientConn, error) {
-	conn, err := grpc.DialContext(context.Background(), "bufnet",
-		grpc.WithContextDialer(bufDialer),
-		grpc.WithTransportCredentials(insecure.NewCredentials()))
-	if err != nil {
-		return nil, err
-	}
-	return conn, nil
-}
-
 func newDefaultServer(t *testing.T, mockStore *mockdb.MockStore) *Server {
 	t.Helper()
 
@@ -120,22 +104,6 @@ func generateTokenKey(t *testing.T) string {
 	require.NoError(t, err, "failed to write token key to file")
 
 	return tokenKeyPath
-}
-
-func TestHealth(t *testing.T) {
-	t.Parallel()
-
-	conn, err := getgRPCConnection()
-	if err != nil {
-		t.Fatalf("Failed to dial bufnet: %v", err)
-	}
-	defer conn.Close()
-
-	client := pb.NewHealthServiceClient(conn)
-	_, err = client.CheckHealth(context.Background(), &pb.CheckHealthRequest{})
-	if err != nil {
-		t.Fatalf("Failed to get health: %v", err)
-	}
 }
 
 func TestWebhook(t *testing.T) {
