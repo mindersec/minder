@@ -1,0 +1,26 @@
+name: Report a bug
+description: Tell us about a bug or issue you may have identified.
+title: "Provide a general summary of the issue"
+labels: [bug]
+assignees: "-"
+body:
+  - type: markdown
+    attributes:
+      value: "To expedite our maintainers' efforts, please search for [duplicate or closed issues](https://github.com/stacklok/minder/issues?q=is%3Aissue+) and familiarize yourself with our [contributing guidelines](https://github.com/stacklok/minder/blob/main/CONTRIBUTING.md)."
+  - type: textarea
+    id: what-happened
+    attributes:
+      label: Describe the issue
+      description: A clear and concise description of what the bug is. If applicable, add screenshots to illustrate the problem.
+    validations:
+      required: true
+  - type: textarea
+    id: reproduce-steps
+    attributes:
+      label: To Reproduce
+      description: Describe the steps to reproduce the behavior.
+  - type: input
+    id: version
+    attributes:
+      label: What version are you using?
+      placeholder: "e.g., v5.1.0 or v4.5.2"
