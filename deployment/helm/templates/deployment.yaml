@@ -64,6 +64,8 @@ spec:
             value: "/secrets/identity/identity_client_secret"
           - name: "MINDER_UNSTABLE_TRUSTY_ENDPOINT"
             value: "{{ .Values.trusty.endpoint }}"
+          - name: "SIGSTORE_NO_CACHE"
+            value: "true"
           
           # ko will always specify a digest, so we don't need to worry about
           # CRI image caching
