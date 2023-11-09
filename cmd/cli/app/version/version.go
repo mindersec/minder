@@ -22,6 +22,7 @@ import (
 	"github.com/stacklok/minder/cmd/cli/app"
 	"github.com/stacklok/minder/internal/constants"
 	"github.com/stacklok/minder/internal/util/cli"
+	"github.com/stacklok/minder/internal/util/cli/useragent"
 )
 
 // VersionCmd is the version command
@@ -31,6 +32,7 @@ var VersionCmd = &cobra.Command{
 	Long:  `The minder version command prints the version of the minder CLI.`,
 	Run: func(cmd *cobra.Command, _ []string) {
 		cli.PrintCmd(cmd, constants.VerboseCLIVersion)
+		cli.PrintCmd(cmd, "User Agent: %s", useragent.GetUserAgent())
 	},
 }
 

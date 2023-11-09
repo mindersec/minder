@@ -56,6 +56,7 @@ import (
 
 	"github.com/stacklok/minder/internal/constants"
 	"github.com/stacklok/minder/internal/db"
+	"github.com/stacklok/minder/internal/util/cli/useragent"
 	"github.com/stacklok/minder/internal/util/jsonyaml"
 	minderv1 "github.com/stacklok/minder/pkg/api/protobuf/go/minder/v1"
 )
@@ -152,11 +153,16 @@ func GrpcForCommand(cmd *cobra.Command, v *viper.Viper) (*grpc.ClientConn, error
 	realm := GetConfigValue(v, "identity.cli.realm", "identity-realm", cmd, "stacklok").(string)
 	clientId := GetConfigValue(v, "identity.cli.client_id", "identity-client", cmd, "minder-cli").(string)
 
-	return GetGrpcConnection(grpc_host, grpc_port, allowInsecure, issuerUrl, realm, clientId)
+	return GetGrpcConnection(
+		grpc_host, grpc_port, allowInsecure, issuerUrl, realm, clientId, grpc.WithUserAgent(useragent.GetUserAgent()))
 }
 
 // GetGrpcConnection is a helper for getting a testing connection for grpc
-func GetGrpcConnection(grpc_host string, grpc_port int, allowInsecure bool, issuerUrl string, realm string, clientId string) (
+func GetGrpcConnection(
+	grpc_host string, grpc_port int,
+	allowInsecure bool,
+	issuerUrl string, realm string, clientId string,
+	opts ...grpc.DialOption) (
 	*grpc.ClientConn, error) {
 	address := fmt.Sprintf("%s:%d", grpc_host, grpc_port)
 
@@ -172,12 +178,14 @@ func GetGrpcConnection(grpc_host string, grpc_port int, allowInsecure bool, issu
 		credentialOpts = insecure.NewCredentials()
 	}
 
-	// generate credentials
-	conn, err := grpc.Dial(
-		address, grpc.WithTransportCredentials(credentialOpts),
+	dialOpts := []grpc.DialOption{
+		grpc.WithTransportCredentials(credentialOpts),
 		grpc.WithPerRPCCredentials(JWTTokenCredentials{accessToken: token}),
-		grpc.WithUserAgent(fmt.Sprintf("minder-cli/%s", constants.CLIVersion)),
-	)
+	}
+	dialOpts = append(dialOpts, opts...)
+
+	// generate credentials
+	conn, err := grpc.Dial(address, dialOpts...)
 	if err != nil {
 		return nil, fmt.Errorf("error connecting to gRPC server: %v", err)
 	}

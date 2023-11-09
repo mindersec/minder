@@ -44,7 +44,7 @@ const (
 	verboseTemplate = `Version: {{.Version}}
 Go Version: {{.GoVersion}}
 Git Commit: {{.Commit}}
-Built: {{.Time}}
+Commit Date: {{.Time}}
 OS/Arch: {{.OS}}/{{.Arch}}
 Dirty: {{.Modified}}`
 )
