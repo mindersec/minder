@@ -135,9 +135,10 @@ func (e *Executor) createOrUpdateEvalStatus(
 			UUID:  params.RepoID,
 			Valid: true,
 		},
-		ArtifactID: params.ArtifactID,
-		Entity:     params.EntityType,
-		RuleTypeID: params.RuleTypeID,
+		ArtifactID:    params.ArtifactID,
+		Entity:        params.EntityType,
+		RuleTypeID:    params.RuleTypeID,
+		PullRequestID: params.PullRequestID,
 	})
 
 	if err != nil {
