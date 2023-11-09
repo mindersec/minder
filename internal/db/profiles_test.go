@@ -323,6 +323,36 @@ func TestCreateProfileStatusStoredProcedure(t *testing.T) {
 			},
 			expectedStatusAfterModify: EvalStatusTypesFailure,
 		},
+		{
+			name: "Skipped then failure results in failure",
+			ruleStatusSetupFn: func(profile Profile, randomEntities *testRandomEntities) {
+				upsertEvalStatus(
+					t, profile.ID, randomEntities.repo.ID, randomEntities.ruleType1.ID,
+					EvalStatusTypesSkipped, "")
+			},
+			expectedStatusAfterSetup: EvalStatusTypesSkipped,
+			ruleStatusModifyFn: func(profile Profile, randomEntities *testRandomEntities) {
+				upsertEvalStatus(
+					t, profile.ID, randomEntities.repo.ID, randomEntities.ruleType2.ID,
+					EvalStatusTypesFailure, "")
+			},
+			expectedStatusAfterModify: EvalStatusTypesFailure,
+		},
+		{
+			name: "Skipped then success results in success",
+			ruleStatusSetupFn: func(profile Profile, randomEntities *testRandomEntities) {
+				upsertEvalStatus(
+					t, profile.ID, randomEntities.repo.ID, randomEntities.ruleType1.ID,
+					EvalStatusTypesSkipped, "")
+			},
+			expectedStatusAfterSetup: EvalStatusTypesSkipped,
+			ruleStatusModifyFn: func(profile Profile, randomEntities *testRandomEntities) {
+				upsertEvalStatus(
+					t, profile.ID, randomEntities.repo.ID, randomEntities.ruleType2.ID,
+					EvalStatusTypesSuccess, "")
+			},
+			expectedStatusAfterModify: EvalStatusTypesSuccess,
+		},
 	}
 
 	randomEntities := createTestRandomEntities(t)
@@ -338,11 +368,143 @@ func TestCreateProfileStatusStoredProcedure(t *testing.T) {
 
 			tt.ruleStatusSetupFn(profile, randomEntities)
 			prfStatusRow := profileIDStatusByIdAndProject(t, profile.ID, randomEntities.proj.ID)
-			require.Equal(t, prfStatusRow.ProfileStatus, tt.expectedStatusAfterSetup)
+			require.Equal(t, tt.expectedStatusAfterSetup, prfStatusRow.ProfileStatus)
 
 			tt.ruleStatusModifyFn(profile, randomEntities)
 			prfStatusRow = profileIDStatusByIdAndProject(t, profile.ID, randomEntities.proj.ID)
-			require.Equal(t, prfStatusRow.ProfileStatus, tt.expectedStatusAfterModify)
+			require.Equal(t, tt.expectedStatusAfterModify, prfStatusRow.ProfileStatus)
+
+			err := testQueries.DeleteProfile(context.Background(), profile.ID)
+			require.NoError(t, err)
+		})
+	}
+}
+
+func TestCreateProfileStatusStoredDeleteProcedure(t *testing.T) {
+	t.Parallel()
+
+	tests := []struct {
+		name                      string
+		ruleStatusSetupFn         func(profile Profile, randomEntities *testRandomEntities, delRepo *Repository)
+		expectedStatusAfterSetup  EvalStatusTypes
+		ruleStatusDeleteFn        func(delRepo *Repository)
+		expectedStatusAfterModify EvalStatusTypes
+	}{
+		{
+			name: "Removing last failure results in success",
+			ruleStatusSetupFn: func(profile Profile, randomEntities *testRandomEntities, delRepo *Repository) {
+				upsertEvalStatus(
+					t, profile.ID, randomEntities.repo.ID, randomEntities.ruleType1.ID,
+					EvalStatusTypesSuccess, "")
+				upsertEvalStatus(
+					t, profile.ID, randomEntities.repo.ID, randomEntities.ruleType2.ID,
+					EvalStatusTypesSuccess, "")
+
+				upsertEvalStatus(
+					t, profile.ID, delRepo.ID, randomEntities.ruleType1.ID,
+					EvalStatusTypesFailure, "")
+				upsertEvalStatus(
+					t, profile.ID, delRepo.ID, randomEntities.ruleType2.ID,
+					EvalStatusTypesSuccess, "")
+			},
+			expectedStatusAfterSetup: EvalStatusTypesFailure,
+			ruleStatusDeleteFn: func(delRepo *Repository) {
+				err := testQueries.DeleteRepository(context.Background(), delRepo.ID)
+				require.NoError(t, err)
+			},
+			expectedStatusAfterModify: EvalStatusTypesSuccess,
+		},
+		{
+			name: "Removing last error results in failure",
+			ruleStatusSetupFn: func(profile Profile, randomEntities *testRandomEntities, delRepo *Repository) {
+				upsertEvalStatus(
+					t, profile.ID, randomEntities.repo.ID, randomEntities.ruleType1.ID,
+					EvalStatusTypesFailure, "")
+				upsertEvalStatus(
+					t, profile.ID, randomEntities.repo.ID, randomEntities.ruleType2.ID,
+					EvalStatusTypesSuccess, "")
+
+				upsertEvalStatus(
+					t, profile.ID, delRepo.ID, randomEntities.ruleType1.ID,
+					EvalStatusTypesSuccess, "")
+				upsertEvalStatus(
+					t, profile.ID, delRepo.ID, randomEntities.ruleType2.ID,
+					EvalStatusTypesError, "")
+			},
+
+			expectedStatusAfterSetup: EvalStatusTypesError,
+			ruleStatusDeleteFn: func(delRepo *Repository) {
+				err := testQueries.DeleteRepository(context.Background(), delRepo.ID)
+				require.NoError(t, err)
+			},
+			expectedStatusAfterModify: EvalStatusTypesFailure,
+		},
+		{
+			name: "Removing one error retains the other one",
+			ruleStatusSetupFn: func(profile Profile, randomEntities *testRandomEntities, delRepo *Repository) {
+				upsertEvalStatus(
+					t, profile.ID, randomEntities.repo.ID, randomEntities.ruleType1.ID,
+					EvalStatusTypesFailure, "")
+				upsertEvalStatus(
+					t, profile.ID, randomEntities.repo.ID, randomEntities.ruleType2.ID,
+					EvalStatusTypesError, "")
+
+				upsertEvalStatus(
+					t, profile.ID, delRepo.ID, randomEntities.ruleType1.ID,
+					EvalStatusTypesSuccess, "")
+				upsertEvalStatus(
+					t, profile.ID, delRepo.ID, randomEntities.ruleType2.ID,
+					EvalStatusTypesError, "")
+			},
+
+			expectedStatusAfterSetup: EvalStatusTypesError,
+			ruleStatusDeleteFn: func(delRepo *Repository) {
+				err := testQueries.DeleteRepository(context.Background(), delRepo.ID)
+				require.NoError(t, err)
+			},
+			expectedStatusAfterModify: EvalStatusTypesError,
+		},
+		{
+			name: "Removing all but skipped returns skipped",
+			ruleStatusSetupFn: func(profile Profile, randomEntities *testRandomEntities, delRepo *Repository) {
+				upsertEvalStatus(
+					t, profile.ID, randomEntities.repo.ID, randomEntities.ruleType1.ID,
+					EvalStatusTypesSkipped, "")
+
+				upsertEvalStatus(
+					t, profile.ID, delRepo.ID, randomEntities.ruleType1.ID,
+					EvalStatusTypesFailure, "")
+			},
+
+			expectedStatusAfterSetup: EvalStatusTypesFailure,
+			ruleStatusDeleteFn: func(delRepo *Repository) {
+				err := testQueries.DeleteRepository(context.Background(), delRepo.ID)
+				require.NoError(t, err)
+			},
+			expectedStatusAfterModify: EvalStatusTypesSkipped,
+		},
+	}
+
+	randomEntities := createTestRandomEntities(t)
+
+	for _, tt := range tests {
+		tt := tt
+
+		t.Run(tt.name, func(t *testing.T) {
+			t.Parallel()
+
+			profile := createRandomProfile(t, randomEntities.prov.Name, randomEntities.proj.ID)
+			require.NotEmpty(t, profile)
+
+			delRepo := createRandomRepository(t, randomEntities.proj.ID, randomEntities.prov.Name)
+
+			tt.ruleStatusSetupFn(profile, randomEntities, &delRepo)
+			prfStatusRow := profileIDStatusByIdAndProject(t, profile.ID, randomEntities.proj.ID)
+			require.Equal(t, tt.expectedStatusAfterSetup, prfStatusRow.ProfileStatus)
+
+			tt.ruleStatusDeleteFn(&delRepo)
+			prfStatusRow = profileIDStatusByIdAndProject(t, profile.ID, randomEntities.proj.ID)
+			require.Equal(t, tt.expectedStatusAfterModify, prfStatusRow.ProfileStatus)
 
 			err := testQueries.DeleteProfile(context.Background(), profile.ID)
 			require.NoError(t, err)
