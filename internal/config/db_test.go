@@ -17,8 +17,6 @@ package config_test
 
 import (
 	"context"
-	"database/sql/driver"
-	"errors"
 	"net/url"
 	"os"
 	"testing"
@@ -27,44 +25,9 @@ import (
 	"github.com/stacklok/minder/internal/config"
 )
 
-// TODO: add this with a fake DB connection driver
-type fakeDriver struct {
-	conns string
-}
-
-var _ (driver.Driver) = (*fakeDriver)(nil)
-var _ (driver.DriverContext) = (*fakeDriver)(nil)
-var _ (driver.Connector) = (*fakeDriver)(nil)
-var _ (driver.Conn) = (*fakeDriver)(nil)
-
-func (f fakeDriver) Open(name string) (driver.Conn, error) {
-	return nil, errors.ErrUnsupported
-}
-func (f fakeDriver) OpenConnector(name string) (driver.Connector, error) {
-	return fakeDriver{name}, errors.ErrUnsupported
-}
-func (f fakeDriver) Connect(ctx context.Context) (driver.Conn, error) {
-	return &fakeDriver{f.conns}, nil
-}
-func (f fakeDriver) Driver() driver.Driver {
-	return &f
-}
-
-func (f *fakeDriver) Prepare(query string) (driver.Stmt, error) {
-	return nil, errors.ErrUnsupported
-}
-
-func (f *fakeDriver) Close() error {
-	return nil
-}
-
-func (f *fakeDriver) Begin() (driver.Tx, error) {
-	return nil, errors.ErrUnsupported
-}
-
+// nolint: gocyclo
 func TestDatabaseConfig_GetDBConnection(t *testing.T) {
 	t.Parallel()
-	// sql.Register("postgres", &fakeDriver{})
 	tests := []struct {
 		name     string
 		config   config.DatabaseConfig
@@ -73,6 +36,7 @@ func TestDatabaseConfig_GetDBConnection(t *testing.T) {
 	}{{
 		name: "defaults",
 		want: func(t *testing.T, got []string) {
+			t.Helper()
 			want := "postgres://postgres:postgres@localhost:5432/minder?sslmode=disable"
 			if got[0] != want {
 				t.Errorf("DatabaseConfig.GetDBConnection() = %v, want %v", got[0], want)
@@ -89,6 +53,7 @@ func TestDatabaseConfig_GetDBConnection(t *testing.T) {
 			SSLMode:  "enabled",
 		},
 		want: func(t *testing.T, got []string) {
+			t.Helper()
 			want := "postgres://user:pass@host:123/database?sslmode=enabled"
 			if got[0] != want {
 				t.Errorf("DatabaseConfig.GetDBConnection() = %v, want %v", got[0], want)
@@ -99,41 +64,28 @@ func TestDatabaseConfig_GetDBConnection(t *testing.T) {
 		config:   config.DatabaseConfig{CloudProviderCredentials: "aws"},
 		numTries: 2,
 		want: func(t *testing.T, got []string) {
+			t.Helper()
 			urls := make([]url.URL, 0, len(got))
 			for _, urlStr := range got {
-				u, err := url.Parse(urlStr)
-				if err != nil {
-					t.Errorf("Unable to parse URL %q", urlStr)
-				} else {
-					urls = append(urls, *u)
-				}
+				urls = append(urls, MustParseURL(urlStr))
 			}
 			basePassword, _ := urls[0].User.Password()
+			// nolint: G101 // This one doesn't actually have a hard-coded password
+			expectedNoPasswdURL := "postgres://postgres:@localhost:5432/minder?sslmode=disable"
 			for i, u := range urls {
-				if u.Scheme != "postgres" {
-					t.Errorf("Expected postgres scheme, got %q", u.Scheme)
-				}
-				if u.Host != "localhost:5432" {
-					t.Errorf("Unexpected host, got %q", u.Host)
-				}
-				if u.Path != "/minder" {
-					t.Errorf("Unexpected path, got %q", u.Path)
-				}
-				if u.User.Username() != "postgres" {
-					t.Errorf("Unexpected username, got %q", u.User.Username())
-				}
-				if pw, set := u.User.Password(); !set || pw == "postgres" {
-					t.Errorf("Expected token, not static password")
-				}
-				if pw, _ := u.User.Password(); i != 0 && pw == basePassword {
+				base, pw := URLExtractPass(u)
+				if i != 0 && pw == basePassword {
 					t.Errorf("Expected different token for each connection")
+				}
+				if base.String() != expectedNoPasswdURL {
+					t.Errorf("Expected base URL %q, got %q", expectedNoPasswdURL, base.String())
 				}
 			}
 		},
 	}}
 	for _, testcase := range tests {
+		tt := testcase
 		t.Run(testcase.name, func(t *testing.T) {
-			tt := testcase
 			t.Parallel()
 			c := config.DefaultConfigForTest()
 			if tt.config.Host != "" {
@@ -158,10 +110,14 @@ func TestDatabaseConfig_GetDBConnection(t *testing.T) {
 				c.Database.CloudProviderCredentials = tt.config.CloudProviderCredentials
 			}
 			if tt.config.AWSRegion != "" {
-				tt.config.AWSRegion = tt.config.AWSRegion
+				c.Database.AWSRegion = tt.config.AWSRegion
 			}
-			os.Setenv("AWS_ACCESS_KEY_ID", "1123")
-			os.Setenv("AWS_SECRET_ACCESS_KEY", "abc")
+			if os.Setenv("AWS_ACCESS_KEY_ID", "1123") != nil {
+				t.Error("Unable to set env var AWS_ACCESS_KEY_ID")
+			}
+			if os.Setenv("AWS_SECRET_ACCESS_KEY", "abc") != nil {
+				t.Error("Unable to set env var AWS_ACCESS_KEY_ID")
+			}
 
 			connStrings := make([]string, 0, tt.numTries)
 			t.Logf("DB config is %v", c.Database)
@@ -175,4 +131,18 @@ func TestDatabaseConfig_GetDBConnection(t *testing.T) {
 			}
 		})
 	}
+}
+
+func MustParseURL(s string) url.URL {
+	u, err := url.Parse(s)
+	if err != nil {
+		panic(err)
+	}
+	return *u
+}
+
+func URLExtractPass(u url.URL) (url.URL, string) {
+	pw, _ := u.User.Password()
+	u.User = url.UserPassword(u.User.Username(), "")
+	return u, pw
 }
