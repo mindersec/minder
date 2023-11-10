@@ -18,7 +18,9 @@ package vulncheck
 import (
 	"context"
 	"fmt"
+	"strings"
 
+	evalerrors "github.com/stacklok/minder/internal/engine/errors"
 	engif "github.com/stacklok/minder/internal/engine/interfaces"
 	"github.com/stacklok/minder/internal/providers"
 	pb "github.com/stacklok/minder/pkg/api/protobuf/go/minder/v1"
@@ -55,7 +57,7 @@ func NewVulncheckEvaluator(_ *pb.RuleType_Definition_Eval_Vulncheck, pbuild *pro
 //
 //nolint:gocyclo
 func (e *Evaluator) Eval(ctx context.Context, pol map[string]any, res *engif.Result) error {
-	var evalErr error
+	var vulnerablePackages []string
 
 	// TODO(jhrozek): Fix this!
 	//nolint:govet
@@ -105,8 +107,7 @@ func (e *Evaluator) Eval(ctx context.Context, pol map[string]any, res *engif.Res
 			continue
 		}
 
-		// TODO(jhrozek): this should be a list of vulnerabilities
-		evalErr = fmt.Errorf("vulnerabilities found for %s", dep.Dep.Name)
+		vulnerablePackages = append(vulnerablePackages, dep.Dep.Name)
 
 		pkgRepo, err := pkgRepoCache.newRepository(ecoConfig)
 		if err != nil {
@@ -127,7 +128,10 @@ func (e *Evaluator) Eval(ctx context.Context, pol map[string]any, res *engif.Res
 		return fmt.Errorf("failed to submit pr action: %w", err)
 	}
 
-	return evalErr
+	if len(vulnerablePackages) > 0 {
+		return evalerrors.NewErrEvaluationFailed(fmt.Sprintf("vulnerable packages: %s", strings.Join(vulnerablePackages, ",")))
+	}
+	return nil
 }
 
 func (_ *Evaluator) getVulnDb(dbType vulnDbType, endpoint string) (vulnDb, error) {
