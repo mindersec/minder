@@ -21,7 +21,6 @@ import (
 	"errors"
 	"fmt"
 	"os"
-	"path/filepath"
 
 	"github.com/golang-migrate/migrate/v4"
 	_ "github.com/golang-migrate/migrate/v4/database/postgres" // nolint
@@ -37,7 +36,7 @@ import (
 var upCmd = &cobra.Command{
 	Use:   "up",
 	Short: "migrate the database to the latest version",
-	Long:  `Command to install the latest version of sigwatch`,
+	Long:  `Command to upgrade database`,
 	RunE: func(cmd *cobra.Command, args []string) error {
 		cfg, err := config.ReadConfigFromViper(viper.GetViper())
 		if err != nil {
@@ -71,13 +70,26 @@ var upCmd = &cobra.Command{
 			}
 		}
 
-		configPath := "file://" + filepath.Join(os.Getenv("KO_DATA_PATH"), "database/migrations")
+		configPath := getMigrateConfigPath()
 		m, err := migrate.New(configPath, connString)
 		if err != nil {
 			fmt.Printf("Error while creating migration instance (%s): %v\n", configPath, err)
 			os.Exit(1)
 		}
-		if err := m.Up(); err != nil {
+
+		var usteps uint
+		usteps, err = cmd.Flags().GetUint("num-steps")
+		if err != nil {
+			fmt.Printf("Error while getting num-steps flag: %v", err)
+		}
+
+		if usteps == 0 {
+			err = m.Up()
+		} else {
+			err = m.Steps(int(usteps))
+		}
+
+		if err != nil {
 			if !errors.Is(err, migrate.ErrNoChange) {
 				fmt.Printf("Error while migrating database: %v\n", err)
 				os.Exit(1)
@@ -85,6 +97,7 @@ var upCmd = &cobra.Command{
 				fmt.Println("Database already up-to-date")
 			}
 		}
+
 		fmt.Println("Database migration completed successfully")
 		return nil
 	},

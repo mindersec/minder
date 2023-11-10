@@ -13,6 +13,7 @@
 // See the License for the specific language governing permissions and
 // limitations under the License.
 
+// Package app provides the entrypoint for the minder migrations
 package app
 
 import (
@@ -30,10 +31,11 @@ import (
 	"github.com/stacklok/minder/internal/logger"
 )
 
-var downCmd = &cobra.Command{
-	Use:   "down",
-	Short: "migrate a down a database version",
-	Long:  `Command to downgrade database`,
+// versionCmd represents the version command
+var versionCmd = &cobra.Command{
+	Use:   "version",
+	Short: "get the db version",
+	Long:  `Command to get the database version`,
 	RunE: func(cmd *cobra.Command, args []string) error {
 		cfg, err := config.ReadConfigFromViper(viper.GetViper())
 		if err != nil {
@@ -49,24 +51,6 @@ var downCmd = &cobra.Command{
 		}
 		defer dbConn.Close()
 
-		yes, err := cmd.Flags().GetBool("yes")
-		if err != nil {
-			fmt.Printf("Error getting flag yes: %v", err)
-		}
-		if !yes {
-			fmt.Print("WARNING: Running this command will change the database structure. Are you want to continue? (y/n): ")
-			var response string
-			_, err := fmt.Scanln(&response)
-			if err != nil {
-				return fmt.Errorf("error reading response: %w", err)
-			}
-
-			if response == "n" {
-				fmt.Println("Exiting...")
-				return nil
-			}
-		}
-
 		configPath := getMigrateConfigPath()
 		m, err := migrate.New(configPath, connString)
 		if err != nil {
@@ -74,28 +58,17 @@ var downCmd = &cobra.Command{
 			os.Exit(1)
 		}
 
-		var usteps uint
-		usteps, err = cmd.Flags().GetUint("num-steps")
+		version, dirty, err := m.Version()
 		if err != nil {
-			fmt.Printf("Error while getting num-steps flag: %v", err)
-		}
-
-		if usteps == 0 {
-			err = m.Down()
-		} else {
-			err = m.Steps(-1 * int(usteps))
-		}
-
-		if err != nil {
-			fmt.Printf("Error while migrating database: %v\n", err)
+			fmt.Printf("Error while getting migration version: %v\n", err)
 			os.Exit(1)
 		}
 
-		fmt.Println("Database migration down done with success")
+		fmt.Printf("Version=%v dirty=%v\n", version, dirty)
 		return nil
 	},
 }
 
 func init() {
-	migrateCmd.AddCommand(downCmd)
+	migrateCmd.AddCommand(versionCmd)
 }
