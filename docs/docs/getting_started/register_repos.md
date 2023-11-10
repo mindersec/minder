@@ -3,6 +3,12 @@ title: Register Repositories
 sidebar_position: 30
 ---
 
+## Prerequisites
+
+* [The `minder` CLI application](./install_cli.md)
+* [A Minder account](./login.md)
+* [An enrolled GitHub token](./login.md#enrolling-the-github-provider) that is either an Owner in the organization or an Admin on the repositories
+
 ## Register repositories
 
 Now that you have enrolled with GitHub as a provider, you can now register repositories. We will use the `repo` command.
