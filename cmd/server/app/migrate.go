@@ -16,6 +16,9 @@
 package app
 
 import (
+	"os"
+	"path/filepath"
+
 	"github.com/spf13/cobra"
 )
 
@@ -32,4 +35,9 @@ var migrateCmd = &cobra.Command{
 func init() {
 	RootCmd.AddCommand(migrateCmd)
 	migrateCmd.PersistentFlags().BoolP("yes", "y", false, "Answer yes to all questions")
+	migrateCmd.PersistentFlags().UintP("num-steps", "n", 0, "Number of steps to migrate")
+}
+
+func getMigrateConfigPath() string {
+	return "file://" + filepath.Join(os.Getenv("KO_DATA_PATH"), "database/migrations")
 }
