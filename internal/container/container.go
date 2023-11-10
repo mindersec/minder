@@ -67,6 +67,10 @@ func artifactImageRef(registry, owner, artifactName, versionName string) string 
 	if registry == "" {
 		registry = REGISTRY
 	}
+
+	// NOTE(jaosorior): The owner can't be upper-cased.
+	owner = strings.ToLower(owner)
+
 	return fmt.Sprintf("%s/%s/%s@%s", registry, owner, artifactName, versionName)
 }
 
@@ -87,7 +91,8 @@ func GetArtifactSignatureAndWorkflowInfo(
 	signatureVerification, githubWorkflow, validateErr := ValidateSignature(ctx,
 		cli.GetToken(), ownerLogin, imageRef)
 	if validateErr != nil {
-		err = ErrSigValidation
+		err = fmt.Errorf("%w: errorvalidating image-ref %s: %s", ErrSigValidation,
+			imageRef, validateErr.Error())
 		return
 	}
 
