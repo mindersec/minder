@@ -47,6 +47,7 @@ Minder analyzed this PR and found no vulnerable dependencies.
 	reviewBodyDismissCommentText = `
 Previous Minder review was dismissed because the PR was updated.
 `
+	vulnFoundWithNoPatch = "Vulnerability found, but no patched version exists yet."
 )
 
 const (
@@ -222,9 +223,15 @@ func (ra *reviewPrHandler) trackVulnerableDep(
 		return fmt.Errorf("could not locate dependency in PR: %w", err)
 	}
 
-	comment := patch.IndentedString(location.leadingWhitespace, location.line, dep.Dep)
-	body := reviewBodyWithSuggestion(comment)
-	lineTo := len(strings.Split(comment, "\n")) - 1
+	var body string
+	var lineTo int
+	if patch.HasPatchedVersion() {
+		comment := patch.IndentedString(location.leadingWhitespace, location.line, dep.Dep)
+		body = reviewBodyWithSuggestion(comment)
+		lineTo = len(strings.Split(comment, "\n")) - 1
+	} else {
+		body = vulnFoundWithNoPatch
+	}
 
 	reviewComment := &github.DraftReviewComment{
 		Path: github.String(dep.File.Name),

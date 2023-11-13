@@ -32,15 +32,17 @@ func TestNpmPkgDb(t *testing.T) {
 	t.Parallel()
 
 	tests := []struct {
-		name        string
-		mockHandler http.HandlerFunc
-		depName     string
-		expectError bool
-		expectReply *packageJson
+		name           string
+		mockHandler    http.HandlerFunc
+		depName        string
+		patchedVersion string
+		expectError    bool
+		expectReply    *packageJson
 	}{
 		{
-			name: "ValidResponse",
+			name: "ValidResponseLatest",
 			mockHandler: func(w http.ResponseWriter, r *http.Request) {
+				assert.Equal(t, "/my-package/latest", r.URL.Path, "unexpected path")
 				data := packageJson{
 					Name:    "my-package",
 					Version: "1.0.0",
@@ -62,6 +64,41 @@ func TestNpmPkgDb(t *testing.T) {
 			expectReply: &packageJson{
 				Name:    "my-package",
 				Version: "1.0.0",
+				Dist: struct {
+					Integrity string `json:"integrity"`
+					Tarball   string `json:"tarball"`
+				}{
+					Integrity: "sha512-...",
+					Tarball:   "https://example.com/path/to/tarball.tgz",
+				},
+			},
+		},
+		{
+			name: "ValidResponseVersioned",
+			mockHandler: func(w http.ResponseWriter, r *http.Request) {
+				assert.Equal(t, "/my-package/1.0.1", r.URL.Path, "unexpected path")
+				data := packageJson{
+					Name:    "my-package",
+					Version: "1.0.1",
+					Dist: struct {
+						Integrity string `json:"integrity"`
+						Tarball   string `json:"tarball"`
+					}{
+						Integrity: "sha512-...",
+						Tarball:   "https://example.com/path/to/tarball.tgz",
+					},
+				}
+				w.WriteHeader(http.StatusOK)
+				err := json.NewEncoder(w).Encode(data)
+				if err != nil {
+					t.Fatal(err)
+				}
+			},
+			depName:        "my-package",
+			patchedVersion: "1.0.1",
+			expectReply: &packageJson{
+				Name:    "my-package",
+				Version: "1.0.1",
 				Dist: struct {
 					Integrity string `json:"integrity"`
 					Tarball   string `json:"tarball"`
@@ -111,7 +148,11 @@ func TestNpmPkgDb(t *testing.T) {
 				Name: tt.depName,
 			}
 
-			reply, err := repo.SendRecvRequest(context.Background(), dep)
+			var latest bool
+			if tt.patchedVersion == "" {
+				latest = true
+			}
+			reply, err := repo.SendRecvRequest(context.Background(), dep, tt.patchedVersion, latest)
 			if tt.expectError {
 				assert.Error(t, err, "Expected error")
 			} else {
@@ -206,12 +247,14 @@ func TestPyPiPkgDb(t *testing.T) {
 		name            string
 		mockPyPiHandler http.HandlerFunc
 		depName         string
+		patchedVersion  string
 		expectError     bool
 		expectReply     string
 	}{
 		{
-			name: "ValidResponse",
+			name: "ValidResponseLatest",
 			mockPyPiHandler: func(w http.ResponseWriter, r *http.Request) {
+				assert.Equal(t, "/requests/json", r.URL.Path, "unexpected path")
 				data := PyPiReply{}
 				data.Info.Name = "requests"
 				data.Info.Version = "2.25.1"
@@ -224,6 +267,24 @@ func TestPyPiPkgDb(t *testing.T) {
 			},
 			depName:     "requests",
 			expectReply: "requests>=2.25.1",
+		},
+		{
+			name: "ValidResponseVersioned",
+			mockPyPiHandler: func(w http.ResponseWriter, r *http.Request) {
+				assert.Equal(t, "/requests/2.25.0/json", r.URL.Path, "unexpected path")
+				data := PyPiReply{}
+				data.Info.Name = "requests"
+				data.Info.Version = "2.25.0"
+
+				w.WriteHeader(http.StatusOK)
+				err := json.NewEncoder(w).Encode(data)
+				if err != nil {
+					t.Fatal(err)
+				}
+			},
+			depName:        "requests",
+			patchedVersion: "2.25.0",
+			expectReply:    "requests>=2.25.0",
 		},
 		{
 			name: "Non200Response",
@@ -266,7 +327,11 @@ func TestPyPiPkgDb(t *testing.T) {
 				Name: tt.depName,
 			}
 
-			reply, err := repo.SendRecvRequest(context.Background(), dep)
+			var latest bool
+			if tt.patchedVersion == "" {
+				latest = true
+			}
+			reply, err := repo.SendRecvRequest(context.Background(), dep, tt.patchedVersion, latest)
 			if tt.expectError {
 				assert.Error(t, err, "Expected error")
 			} else {
@@ -291,12 +356,14 @@ func TestGoPkgDb(t *testing.T) {
 		mockProxyHandler http.HandlerFunc
 		mockSumHandler   http.HandlerFunc
 		depName          string
+		patchedVersion   string
 		expectError      bool
 		expectReply      *goModPackage
 	}{
 		{
-			name: "ValidResponse",
+			name: "ValidResponseLatest",
 			mockProxyHandler: func(w http.ResponseWriter, r *http.Request) {
+				assert.Equal(t, "/golang.org/x/text/@latest", r.URL.Path, "unexpected path")
 				data := goModPackage{
 					Name:    "golang.org/x/text",
 					Version: "v0.13.0",
@@ -324,6 +391,42 @@ go.sum database tree
 			expectReply: &goModPackage{
 				Name:           "golang.org/x/text",
 				Version:        "v0.13.0",
+				ModuleHash:     "h1:ablQoSUd0tRdKxZewP80B+BaqeKJuVhuRxj/dkrun3k=",
+				DependencyHash: "h1:TvPlkZtksWOMsz7fbANvkp4WM8x/WCo/om8BMLbz+aE=",
+			},
+		},
+		{
+			name: "ValidResponseVersioned",
+			mockProxyHandler: func(w http.ResponseWriter, r *http.Request) {
+				assert.Equal(t, "/golang.org/x/text/@v/v0.13.1.info", r.URL.Path, "unexpected path")
+				data := goModPackage{
+					Name:    "golang.org/x/text",
+					Version: "v0.13.1",
+				}
+				w.WriteHeader(http.StatusOK)
+				err := json.NewEncoder(w).Encode(data)
+				if err != nil {
+					t.Fatal(err)
+				}
+			},
+			mockSumHandler: func(w http.ResponseWriter, r *http.Request) {
+				w.WriteHeader(http.StatusOK)
+				_, err := w.Write([]byte(`19383665
+golang.org/x/text v0.13.1 h1:ablQoSUd0tRdKxZewP80B+BaqeKJuVhuRxj/dkrun3k=
+golang.org/x/text v0.13.1/go.mod h1:TvPlkZtksWOMsz7fbANvkp4WM8x/WCo/om8BMLbz+aE=
+
+go.sum database tree
+19777102
++g50vJoV4VVGa6aiQF3LYGUZHEP4pvGkW38vlR7WKtU=
+
+— sum.golang.org Az3griMTLHyRzj7jMuyEt85a2JnegVME6Lx3xLEBdzTd3FMDiD5y3bHV24rcl0yijOtWxV0zyygwTdo/rnaennuoqgU=`))
+				assert.NoError(t, err, "Failed to write mock response")
+			},
+			depName:        "golang.org/x/text",
+			patchedVersion: "0.13.1",
+			expectReply: &goModPackage{
+				Name:           "golang.org/x/text",
+				Version:        "v0.13.1",
 				ModuleHash:     "h1:ablQoSUd0tRdKxZewP80B+BaqeKJuVhuRxj/dkrun3k=",
 				DependencyHash: "h1:TvPlkZtksWOMsz7fbANvkp4WM8x/WCo/om8BMLbz+aE=",
 			},
@@ -427,7 +530,11 @@ golang.org/x/text v0.13.0 h1:ablQoSUd0tRdKxZewP80B+BaqeKJuVhuRxj/dkrun3k=`))
 				Name: tt.depName,
 			}
 
-			reply, err := repo.SendRecvRequest(context.Background(), dep)
+			var latest bool
+			if tt.patchedVersion == "" {
+				latest = true
+			}
+			reply, err := repo.SendRecvRequest(context.Background(), dep, tt.patchedVersion, latest)
 			if tt.expectError {
 				assert.Error(t, err, "Expected error")
 			} else {

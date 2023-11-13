@@ -18,7 +18,10 @@ package vulncheck
 import (
 	"context"
 	"fmt"
+	"sort"
 	"strings"
+
+	"github.com/hashicorp/go-version"
 
 	evalerrors "github.com/stacklok/minder/internal/engine/errors"
 	engif "github.com/stacklok/minder/internal/engine/interfaces"
@@ -114,12 +117,19 @@ func (e *Evaluator) Eval(ctx context.Context, pol map[string]any, res *engif.Res
 			return fmt.Errorf("failed to create package repository: %w", err)
 		}
 
-		patch, err := pkgRepo.SendRecvRequest(ctx, dep.Dep)
-		if err != nil {
-			return fmt.Errorf("failed to send package request: %w", err)
+		patched, latest, noFix := getPatchedVersion(response.Vulns)
+
+		var patchFormatter patchLocatorFormatter
+		if noFix {
+			patchFormatter = pkgRepo.NoPatchAvailableFormatter(dep.Dep)
+		} else {
+			patchFormatter, err = pkgRepo.SendRecvRequest(ctx, dep.Dep, patched, latest)
+			if err != nil {
+				return fmt.Errorf("failed to send package request: %w", err)
+			}
 		}
 
-		if err := prReplyHandler.trackVulnerableDep(ctx, dep, response, patch); err != nil {
+		if err := prReplyHandler.trackVulnerableDep(ctx, dep, response, patchFormatter); err != nil {
 			return fmt.Errorf("failed to add package patch for further processing: %w", err)
 		}
 	}
@@ -132,6 +142,34 @@ func (e *Evaluator) Eval(ctx context.Context, pol map[string]any, res *engif.Res
 		return evalerrors.NewErrEvaluationFailed(fmt.Sprintf("vulnerable packages: %s", strings.Join(vulnerablePackages, ",")))
 	}
 	return nil
+}
+
+// getPatchedVersion returns a version that patches all known vulnerabilities. If no such version exists, it returns
+// the version that patches the most vulnerabilities. If none of the vulnerabilities have patches, it returns the
+// empty string.
+func getPatchedVersion(vulns []Vulnerability) (fixedVersion string, latest bool, noFix bool) {
+	var patches []*version.Version
+	for _, vuln := range vulns {
+		if vuln.Type == "SEMVER" {
+			if vuln.Fixed != "" {
+				newVersion, err := version.NewVersion(vuln.Fixed)
+				if err == nil {
+					patches = append(patches, newVersion)
+				}
+			}
+		} else {
+			// without semver we cannot tell which version is fixed, so return the latest
+			if vuln.Fixed != "" {
+				return "", true, false
+			}
+		}
+
+	}
+	if len(patches) == 0 {
+		return "", false, true
+	}
+	sort.Sort(version.Collection(patches))
+	return patches[len(patches)-1].String(), false, false
 }
 
 func (_ *Evaluator) getVulnDb(dbType vulnDbType, endpoint string) (vulnDb, error) {
@@ -154,7 +192,7 @@ func (_ *Evaluator) queryVulnDb(
 		return nil, fmt.Errorf("failed to create vulncheck request: %w", err)
 	}
 
-	response, err := db.SendRecvRequest(req)
+	response, err := db.SendRecvRequest(req, dep)
 	if err != nil {
 		return nil, fmt.Errorf("failed to send vulncheck request: %w", err)
 	}
