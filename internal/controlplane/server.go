@@ -199,14 +199,19 @@ func (s *Server) StartGRPCServer(ctx context.Context) error {
 		logger.Interceptor(),
 		AuthUnaryInterceptor,
 	}
+
+	options := []grpc.ServerOption{
+		grpc.Creds(insecure.NewCredentials()),
+		grpc.ChainUnaryInterceptor(interceptors...),
+	}
+
 	otelGRPCOpts := s.getOTELGRPCInterceptorOpts()
 	if len(otelGRPCOpts) > 0 {
-		interceptors = append(interceptors, otelgrpc.UnaryServerInterceptor(otelGRPCOpts...))
+		options = append(options, grpc.StatsHandler(otelgrpc.NewServerHandler()))
 	}
 
 	s.grpcServer = grpc.NewServer(
-		grpc.Creds(insecure.NewCredentials()),
-		grpc.ChainUnaryInterceptor(interceptors...),
+		options...,
 	)
 
 	// register the services (declared within register_handlers.go)
