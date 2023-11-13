@@ -18,9 +18,11 @@ package trusty
 import (
 	"context"
 	"fmt"
+	"strings"
 
 	"github.com/rs/zerolog"
 
+	evalerrors "github.com/stacklok/minder/internal/engine/errors"
 	"github.com/stacklok/minder/internal/engine/eval/pr_actions"
 	engif "github.com/stacklok/minder/internal/engine/interfaces"
 	"github.com/stacklok/minder/internal/providers"
@@ -64,8 +66,10 @@ func NewTrustyEvaluator(
 }
 
 // Eval implements the Evaluator interface.
+//
+//nolint:gocyclo
 func (e *Evaluator) Eval(ctx context.Context, pol map[string]any, res *engif.Result) error {
-	var evalErr error
+	var lowScoringPackages []string
 
 	//nolint:govet
 	prdeps, ok := res.Object.(pb.PrDependencies)
@@ -146,8 +150,7 @@ func (e *Evaluator) Eval(ctx context.Context, pol map[string]any, res *engif.Res
 			Float64("threshold", ecoConfig.Score).
 			Msgf("the dependency has lower score than threshold, tracking")
 
-		evalErr = fmt.Errorf("score for %s is %f is lower than threshold %f",
-			dep.Dep.Name, resp.Summary.Score, ecoConfig.Score)
+		lowScoringPackages = append(lowScoringPackages, dep.Dep.Name)
 
 		prSummaryHandler.trackAlternatives(dep, resp)
 	}
@@ -156,7 +159,10 @@ func (e *Evaluator) Eval(ctx context.Context, pol map[string]any, res *engif.Res
 		return fmt.Errorf("failed to submit summary: %w", err)
 	}
 
-	return evalErr
+	if len(lowScoringPackages) > 0 {
+		return evalerrors.NewErrEvaluationFailed(fmt.Sprintf("packages with low score: %s", strings.Join(lowScoringPackages, ",")))
+	}
+	return nil
 }
 
 func isActionImplemented(action pr_actions.Action) bool {
