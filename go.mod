@@ -50,12 +50,12 @@ require (
 	github.com/xeipuuv/gojsonschema v1.2.0
 	go.opentelemetry.io/contrib/instrumentation/google.golang.org/grpc/otelgrpc v0.45.0
 	go.opentelemetry.io/contrib/instrumentation/net/http/otelhttp v0.45.0
-	go.opentelemetry.io/otel v1.19.0
+	go.opentelemetry.io/otel v1.20.0
 	go.opentelemetry.io/otel/exporters/prometheus v0.42.0
 	go.opentelemetry.io/otel/exporters/stdout/stdouttrace v1.19.0
 	go.opentelemetry.io/otel/sdk v1.19.0
 	go.opentelemetry.io/otel/sdk/metric v1.19.0
-	go.opentelemetry.io/otel/trace v1.19.0
+	go.opentelemetry.io/otel/trace v1.20.0
 	golang.org/x/crypto v0.15.0
 	golang.org/x/exp v0.0.0-20231006140011-7918f672742d
 	golang.org/x/oauth2 v0.14.0
@@ -287,7 +287,7 @@ require (
 	github.com/yuin/goldmark-emoji v1.0.2 // indirect
 	github.com/zitadel/oidc/v2 v2.11.0
 	go.mongodb.org/mongo-driver v1.12.1 // indirect
-	go.opentelemetry.io/otel/metric v1.19.0
+	go.opentelemetry.io/otel/metric v1.20.0
 	go.step.sm/crypto v0.36.1 // indirect
 	go.uber.org/atomic v1.11.0 // indirect
 	go.uber.org/multierr v1.11.0 // indirect
