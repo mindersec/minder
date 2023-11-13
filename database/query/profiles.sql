@@ -6,11 +6,33 @@ INSERT INTO profiles (
     alert,
     name) VALUES ($1, $2, $3, $4, $5) RETURNING *;
 
+-- name: UpdateProfile :one
+UPDATE profiles SET
+    remediate = $2,
+    alert = $3,
+    updated_at = NOW()
+WHERE id = $1 RETURNING *;
+
 -- name: CreateProfileForEntity :one
 INSERT INTO entity_profiles (
     entity,
     profile_id,
     contextual_rules) VALUES ($1, $2, sqlc.arg(contextual_rules)::jsonb) RETURNING *;
+
+-- name: UpsertProfileForEntity :one
+INSERT INTO entity_profiles (
+    entity,
+    profile_id,
+    contextual_rules) VALUES ($1, $2, sqlc.arg(contextual_rules)::jsonb)
+ON CONFLICT (entity, profile_id) DO UPDATE SET
+    contextual_rules = sqlc.arg(contextual_rules)::jsonb
+RETURNING *;
+
+-- name: DeleteProfileForEntity :exec
+DELETE FROM entity_profiles WHERE profile_id = $1 AND entity = $2;
+
+-- name: GetProfileForEntity :one
+SELECT * FROM entity_profiles WHERE profile_id = $1 AND entity = $2;
 
 -- name: GetProfileByProjectAndID :many
 SELECT * FROM profiles JOIN entity_profiles ON profiles.id = entity_profiles.profile_id
@@ -19,7 +41,13 @@ WHERE profiles.project_id = $1 AND profiles.id = $2;
 -- name: GetProfileByID :one
 SELECT * FROM profiles WHERE id = $1;
 
--- name: GetProfileByProjectAndName :many
+-- name: GetProfileByIDAndLock :one
+SELECT * FROM profiles WHERE id = $1 FOR UPDATE;
+
+-- name: GetProfileByNameAndLock :one
+SELECT * FROM profiles WHERE name = $1 AND project_id = $2 FOR UPDATE;
+
+-- name: GetEntityProfileByProjectAndName :many
 SELECT * FROM profiles JOIN entity_profiles ON profiles.id = entity_profiles.profile_id
 WHERE profiles.project_id = $1 AND profiles.name = $2;
 
@@ -35,6 +63,9 @@ WHERE id = $1;
 INSERT INTO entity_profile_rules (entity_profile_id, rule_type_id)
 VALUES ($1, $2)
 ON CONFLICT (entity_profile_id, rule_type_id) DO NOTHING RETURNING *;
+
+-- name: DeleteRuleInstantiation :exec
+DELETE FROM entity_profile_rules WHERE entity_profile_id = $1 AND rule_type_id = $2;
 
 -- name: ListProfilesInstantiatingRuleType :many
 -- get profile information that instantiate a rule. This is done by joining the profiles with entity_profiles, then correlating those
