@@ -371,6 +371,25 @@ paths:
             $ref: '#/definitions/v1CreateProfileRequest'
       tags:
         - ProfileService
+    put:
+      operationId: ProfileService_UpdateProfile
+      responses:
+        '200':
+          description: A successful response.
+          schema:
+            $ref: '#/definitions/v1UpdateProfileResponse'
+        default:
+          description: An unexpected error response.
+          schema:
+            $ref: '#/definitions/googlerpcStatus'
+      parameters:
+        - name: body
+          in: body
+          required: true
+          schema:
+            $ref: '#/definitions/v1UpdateProfileRequest'
+      tags:
+        - ProfileService
   /api/v1/profile/name/{name}/status:
     get:
       operationId: ProfileService_GetProfileStatusByName
@@ -2059,6 +2078,16 @@ definitions:
         format: date-time
   v1StoreProviderTokenResponse:
     type: object
+  v1UpdateProfileRequest:
+    type: object
+    properties:
+      profile:
+        $ref: '#/definitions/v1Profile'
+  v1UpdateProfileResponse:
+    type: object
+    properties:
+      profile:
+        $ref: '#/definitions/v1Profile'
   v1UpdateRuleTypeRequest:
     type: object
     properties:
