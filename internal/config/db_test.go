@@ -70,7 +70,7 @@ func TestDatabaseConfig_GetDBConnection(t *testing.T) {
 				urls = append(urls, MustParseURL(urlStr))
 			}
 			basePassword, _ := urls[0].User.Password()
-			// nolint: G101 // This one doesn't actually have a hard-coded password
+			// #nosec G101 // This one doesn't actually have a hard-coded password
 			expectedNoPasswdURL := "postgres://postgres:@localhost:5432/minder?sslmode=disable"
 			for i, u := range urls {
 				base, pw := URLExtractPass(u)
@@ -122,7 +122,8 @@ func TestDatabaseConfig_GetDBConnection(t *testing.T) {
 			connStrings := make([]string, 0, tt.numTries)
 			t.Logf("DB config is %v", c.Database)
 			for {
-				_, uri, _ := c.Database.GetDBConnection(context.Background())
+				_, closer, uri, _ := c.Database.GetDBConnection(context.Background())
+				defer closer()
 				connStrings = append(connStrings, uri)
 				if len(connStrings) >= tt.numTries {
 					break

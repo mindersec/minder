@@ -47,11 +47,12 @@ var upCmd = &cobra.Command{
 		ctx := logger.FromFlags(cfg.LoggingConfig).WithContext(context.Background())
 
 		// Database configuration
-		dbConn, connString, err := cfg.Database.GetDBConnection(ctx)
+		dbConn, closer, connString, err := cfg.Database.GetDBConnection(ctx)
 		if err != nil {
 			return fmt.Errorf("unable to connect to database: %w", err)
 		}
 		defer dbConn.Close()
+		defer closer()
 
 		yes, err := cmd.Flags().GetBool("yes")
 		if err != nil {

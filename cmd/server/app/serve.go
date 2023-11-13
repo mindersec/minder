@@ -60,11 +60,12 @@ var serveCmd = &cobra.Command{
 		zerolog.Ctx(ctx).Info().Msgf("Initializing logger in level: %s", cfg.LoggingConfig.Level)
 
 		// Database configuration
-		dbConn, _, err := cfg.Database.GetDBConnection(ctx)
+		dbConn, closer, _, err := cfg.Database.GetDBConnection(ctx)
 		if err != nil {
 			return fmt.Errorf("unable to connect to database: %w", err)
 		}
 		defer dbConn.Close()
+		defer closer()
 
 		store := db.NewStore(dbConn)
 

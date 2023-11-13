@@ -20,7 +20,10 @@ import (
 	"database/sql"
 	"fmt"
 	"net/url"
+	"os"
+	"time"
 
+	"github.com/aws/aws-sdk-go-v2/aws"
 	"github.com/aws/aws-sdk-go-v2/config"
 	"github.com/aws/aws-sdk-go-v2/feature/rds/auth"
 	"github.com/rs/zerolog"
@@ -49,61 +52,47 @@ type DatabaseConfig struct {
 	AWSRegion string `mapstructure:"aws_region"`
 }
 
+// AuthCloser is a function used to shut down any re-authentication code if needed.
+type AuthCloser func()
+
 // getDBCreds fetches the database credentials from the AWS environment or
 // returns the statically-configured password from DatabaseConfig if not in
 // a cloud environment.
-func (c *DatabaseConfig) getDBCreds(ctx context.Context) string {
-	if c.CloudProviderCredentials == "" {
-		zerolog.Ctx(ctx).Info().Msg("No cloud provider credentials specified, using password")
-		return c.Password
-	}
+func (c *DatabaseConfig) getDBCreds(ctx context.Context) (string, AuthCloser) {
 	if c.CloudProviderCredentials == awsCredsProvider {
-		zerolog.Ctx(ctx).Info().Msg("Using AWS credentials")
-		cfg, err := config.LoadDefaultConfig(ctx)
-		if err != nil {
-			// May not be running on AWS, so skip
-			zerolog.Ctx(ctx).Warn().Err(err).Msg("Unable to load AWS config")
-			fmt.Printf("Failed to load config\n")
-			return c.Password
+		if closer := startUpdateAwsPass(ctx, c); closer != nil {
+			return "", closer
 		}
-		authToken, err := auth.BuildAuthToken(
-			ctx, fmt.Sprintf("%s:%d", c.Host, c.Port), c.AWSRegion, c.User, cfg.Credentials)
-		if err != nil {
-			zerolog.Ctx(ctx).Err(err).Msg("Unable to build auth token")
-			fmt.Printf("Failed to create auth token: %v\n", err)
-			return c.Password
-		}
-		return authToken
 	}
-	zerolog.Ctx(ctx).Info().Msgf("Unrecoginized cloud provider %q, using password", c.CloudProviderCredentials)
-	return c.Password
+	zerolog.Ctx(ctx).Info().Msg("No cloud provider credentials specified, using password")
+	return c.Password, func() {}
 }
 
 // GetDBURI returns the database URI
-func (c *DatabaseConfig) GetDBURI(ctx context.Context) string {
-	authToken := c.getDBCreds(ctx)
+func (c *DatabaseConfig) GetDBURI(ctx context.Context) (string, AuthCloser) {
+	authToken, closer := c.getDBCreds(ctx)
 
 	return fmt.Sprintf("postgres://%s:%s@%s:%d/%s?sslmode=%s",
-		c.User, url.QueryEscape(authToken), c.Host, c.Port, c.Name, c.SSLMode)
+		c.User, url.QueryEscape(authToken), c.Host, c.Port, c.Name, c.SSLMode), closer
 }
 
 // GetDBConnection returns a connection to the database
-func (c *DatabaseConfig) GetDBConnection(ctx context.Context) (*sql.DB, string, error) {
-	uri := c.GetDBURI(ctx)
+func (c *DatabaseConfig) GetDBConnection(ctx context.Context) (*sql.DB, func(), string, error) {
+	uri, closer := c.GetDBURI(ctx)
 	conn, err := splunksql.Open("postgres", uri)
 	if err != nil {
-		return nil, uri, err
+		return nil, closer, uri, err
 	}
 
 	// Ensure we actually connected to the database, per Go docs
 	if err := conn.Ping(); err != nil {
 		//nolint:gosec // Not much we can do about an error here.
 		conn.Close()
-		return nil, uri, err
+		return nil, closer, uri, err
 	}
 
 	zerolog.Ctx(ctx).Info().Msg("Connected to DB")
-	return conn, uri, err
+	return conn, closer, uri, err
 }
 
 // RegisterDatabaseFlags registers the flags for the database configuration
@@ -140,4 +129,50 @@ func RegisterDatabaseFlags(v *viper.Viper, flags *pflag.FlagSet) error {
 
 	return util.BindConfigFlagWithShort(
 		v, flags, "database.sslmode", "db-sslmode", "s", "disable", "Database sslmode", flags.StringP)
+}
+
+// Returns nil if unable to start AWS auth
+func startUpdateAwsPass(ctx context.Context, c *DatabaseConfig) AuthCloser {
+	if os.Getenv("PGPASSFILE") == "" {
+		zerolog.Ctx(ctx).Info().Msg("Unable to find $PGPASSFILE, not using AWS auth")
+		return nil
+	}
+	cfg, err := config.LoadDefaultConfig(ctx)
+	if err != nil {
+		// May not be running on AWS, so skip
+		zerolog.Ctx(ctx).Warn().Err(err).Msg("Unable to load AWS config")
+		return nil
+	}
+	// Attempt one load to ensure that we can actually get a token
+	if err := storeAwsAuthToken(ctx, cfg, c); err != nil {
+		zerolog.Ctx(ctx).Warn().Err(err).Msg("Unable to store AWS auth token")
+		return nil
+	}
+	closeChan := make(chan struct{})
+	go func() {
+		zerolog.Ctx(ctx).Info().Msg("Starting AWS credential refresh loop")
+		for {
+			select {
+			case <-closeChan:
+				return
+			default:
+				time.Sleep(10 * time.Minute) // token is good for 15 minutes
+				if err := storeAwsAuthToken(ctx, cfg, c); err != nil {
+					zerolog.Ctx(ctx).Warn().Err(err).Msg("Unable to store AWS auth token")
+				}
+			}
+		}
+	}()
+
+	return func() { close(closeChan) }
+}
+
+// Assumes that $PGPASSFILE is set.
+func storeAwsAuthToken(ctx context.Context, cfg aws.Config, c *DatabaseConfig) error {
+	authToken, err := auth.BuildAuthToken(
+		ctx, fmt.Sprintf("%s:%d", c.Host, c.Port), c.AWSRegion, c.User, cfg.Credentials)
+	if err != nil {
+		return err
+	}
+	return os.WriteFile(os.Getenv("PGPASSFILE"), []byte(authToken), 0600)
 }
