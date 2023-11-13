@@ -19,6 +19,7 @@ import (
 	"bufio"
 	"encoding/json"
 	"fmt"
+	"regexp"
 	"strings"
 
 	"github.com/stacklok/minder/internal/util"
@@ -119,10 +120,16 @@ func pyReqNormalizeLine(line string) string {
 func pyReqAddPkgName(depList []*pb.Dependency, pkgName, version string) []*pb.Dependency {
 	dep := &pb.Dependency{
 		Ecosystem: pb.DepEcosystem_DEP_ECOSYSTEM_PYPI,
-		Name:      pkgName,
+		Name:      pyNormalizeName(pkgName),
 		Version:   version,
 	}
 	return append(depList, dep)
+}
+
+func pyNormalizeName(pkgName string) string {
+	regex := regexp.MustCompile(`[-_.]+`)
+	result := regex.ReplaceAllString(pkgName, "-")
+	return strings.ToLower(result)
 }
 
 func goParse(patch string) ([]*pb.Dependency, error) {
