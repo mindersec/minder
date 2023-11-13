@@ -39,4 +39,5 @@ minder profile [flags]
 * [minder profile delete](minder_profile_delete.md)	 - Delete a profile within a minder control plane
 * [minder profile get](minder_profile_get.md)	 - Get details for a profile within a minder control plane
 * [minder profile list](minder_profile_list.md)	 - List profiles within a minder control plane
+* [minder profile update](minder_profile_update.md)	 - Update a profile within a minder control plane
 
