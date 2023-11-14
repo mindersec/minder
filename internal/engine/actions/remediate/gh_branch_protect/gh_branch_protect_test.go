@@ -89,6 +89,33 @@ func (m *protectionRequestMatcher) Matches(x interface{}) bool {
 		}
 	}
 
+	if m.exp.RequiredStatusChecks != nil {
+		if req.RequiredStatusChecks == nil {
+			return false
+		}
+
+		if len(req.RequiredStatusChecks.Contexts) != len(m.exp.RequiredStatusChecks.Contexts) {
+			return false
+		}
+
+		for i, c := range req.RequiredStatusChecks.Contexts {
+			if c != m.exp.RequiredStatusChecks.Contexts[i] {
+				return false
+			}
+		}
+
+		if len(req.RequiredStatusChecks.Checks) != len(m.exp.RequiredStatusChecks.Checks) {
+			return false
+		}
+
+		for i, c := range req.RequiredStatusChecks.Checks {
+			if c.Context != m.exp.RequiredStatusChecks.Checks[i].Context ||
+				*c.AppID != *m.exp.RequiredStatusChecks.Checks[i].AppID {
+				return false
+			}
+		}
+	}
+
 	return req.RequiredPullRequestReviews.RequiredApprovingReviewCount == m.exp.RequiredPullRequestReviews.RequiredApprovingReviewCount &&
 		req.AllowDeletions == m.exp.AllowDeletions
 }
@@ -227,6 +254,15 @@ func TestBranchProtectionRemediate(t *testing.T) {
 								RequiredApprovingReviewCount: 1,
 							},
 							AllowForcePushes: &github.AllowForcePushes{Enabled: true},
+							RequiredStatusChecks: &github.RequiredStatusChecks{
+								Contexts: []string{"ci"},
+								Checks: []*github.RequiredStatusCheck{
+									{
+										Context: "ci",
+										AppID:   github.Int64(1234),
+									},
+								},
+							},
 						},
 						nil)
 
@@ -239,6 +275,14 @@ func TestBranchProtectionRemediate(t *testing.T) {
 									RequiredApprovingReviewCount: 2,
 								},
 								AllowForcePushes: github.Bool(true),
+								RequiredStatusChecks: &github.RequiredStatusChecks{
+									Checks: []*github.RequiredStatusCheck{
+										{
+											Context: "ci",
+											AppID:   github.Int64(1234),
+										},
+									},
+								},
 							},
 						),
 					).
