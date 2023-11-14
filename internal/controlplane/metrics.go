@@ -69,6 +69,22 @@ func (m *metrics) initInstrumentsOnce(store db.Store) error {
 		return fmt.Errorf("failed to create user count gauge: %w", err)
 	}
 
+	_, err = m.meter.Int64ObservableGauge("repository.count",
+		metric.WithDescription("Number of repositories in the database"),
+		metric.WithUnit("repositories"),
+		metric.WithInt64Callback(func(ctx context.Context, observer metric.Int64Observer) error {
+			c, err := store.CountRepositories(ctx)
+			if err != nil {
+				return err
+			}
+			observer.Observe(c)
+			return nil
+		}),
+	)
+	if err != nil {
+		return fmt.Errorf("failed to create repository count gauge: %w", err)
+	}
+
 	_, err = m.meter.Int64ObservableGauge("profile_entity.count",
 		metric.WithDescription("Number of profiles in the database, labeled by entity type"),
 		metric.WithUnit("profiles"),

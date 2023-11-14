@@ -82,3 +82,6 @@ WHERE repo_id = $1 RETURNING *;
 -- name: DeleteRepository :exec
 DELETE FROM repositories
 WHERE id = $1;
+
+-- name: CountRepositories :one
+SELECT COUNT(*) FROM repositories;
