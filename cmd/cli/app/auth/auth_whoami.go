@@ -18,7 +18,6 @@ package auth
 import (
 	"fmt"
 	"os"
-	"strings"
 
 	"github.com/charmbracelet/bubbles/table"
 	"github.com/spf13/cobra"
@@ -63,19 +62,10 @@ func init() {
 }
 
 func renderUserInfoWhoami(cmd *cobra.Command, conn *grpc.ClientConn, user *pb.GetUserResponse) {
-	projects := []string{}
-	for _, project := range user.Projects {
-		projects = append(projects, fmt.Sprintf("%s:%s", project.GetName(), project.GetProjectId()))
-	}
-
 	subjectKey := "Subject"
 	createdKey := "Created At"
 	updatedKey := "Updated At"
 	minderSrvKey := "Minder Server"
-	projectKey := "Projects"
-	if len(projects) > 1 {
-		projectKey += "s"
-	}
 	rows := []table.Row{
 		{
 			subjectKey, user.GetUser().GetIdentitySubject(),
@@ -87,11 +77,17 @@ func renderUserInfoWhoami(cmd *cobra.Command, conn *grpc.ClientConn, user *pb.Ge
 			updatedKey, user.GetUser().GetUpdatedAt().AsTime().String(),
 		},
 		{
-			projectKey, strings.Join(projects, ", "),
-		},
-		{
 			minderSrvKey, conn.Target(),
 		},
+	}
+
+	projectKey := "Project"
+	for idx, project := range user.Projects {
+		if len(user.Projects) > 1 {
+			projectKey = fmt.Sprintf("Project #%d", idx+1)
+		}
+		projectVal := fmt.Sprintf("%s / %s", project.GetName(), project.GetProjectId())
+		rows = append(rows, table.Row{projectKey, projectVal})
 	}
 
 	renderUserToTable(cmd, rows)
