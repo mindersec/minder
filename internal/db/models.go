@@ -414,7 +414,6 @@ type Role struct {
 	ProjectID      uuid.NullUUID `json:"project_id"`
 	Name           string        `json:"name"`
 	IsAdmin        bool          `json:"is_admin"`
-	IsProtected    bool          `json:"is_protected"`
 	CreatedAt      time.Time     `json:"created_at"`
 	UpdatedAt      time.Time     `json:"updated_at"`
 }

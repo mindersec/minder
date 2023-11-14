@@ -120,29 +120,6 @@ func lookupUserPermissions(ctx context.Context, store db.Store, tok openid.Token
 	return claims, nil
 }
 
-// AuthorizedOnOrg checks if the request is authorized for the given
-// organization, and returns an error if the request is not authorized.
-func AuthorizedOnOrg(ctx context.Context, orgId uuid.UUID) error {
-	claims := auth.GetPermissionsFromContext(ctx)
-	if isSuperadmin(claims) {
-		return nil
-	}
-	opts := getRpcOptions(ctx)
-	if opts.GetAuthScope() != minder.ObjectOwner_OBJECT_OWNER_ORGANIZATION {
-		return status.Errorf(codes.Internal, "Called IsOrgAuthorized on non-org method, should be %v", opts.GetAuthScope())
-	}
-	if claims.OrganizationId != orgId {
-		return util.UserVisibleError(codes.PermissionDenied, "user is not authorized to access this organization")
-	}
-	isOwner := func(role auth.RoleInfo) bool {
-		return role.ProjectID.String() == "" && role.OrganizationID == orgId && role.IsAdmin
-	}
-	if opts.GetOwnerOnly() && !slices.ContainsFunc(claims.Roles, isOwner) {
-		return util.UserVisibleError(codes.PermissionDenied, "user is not an administrator on this organization")
-	}
-	return nil
-}
-
 // AuthorizedOnProject checks if the request is authorized for the given
 // group, and returns an error if the request is not authorized.
 func AuthorizedOnProject(ctx context.Context, projectID uuid.UUID) error {
@@ -169,24 +146,6 @@ func AuthorizedOnProject(ctx context.Context, projectID uuid.UUID) error {
 		return util.UserVisibleError(codes.PermissionDenied, "user is not an administrator on this project")
 	}
 	return nil
-}
-
-// AuthorizedOnUser checks if the request is authorized for the given
-// user, and returns an error if the request is not authorized.
-func AuthorizedOnUser(ctx context.Context, userId int32) error {
-	claims := auth.GetPermissionsFromContext(ctx)
-	if isSuperadmin(claims) {
-		return nil
-	}
-	opts := getRpcOptions(ctx)
-	if opts.GetAuthScope() != minder.ObjectOwner_OBJECT_OWNER_USER {
-		zerolog.Ctx(ctx).Error().Msgf("Called IsUserAuthorized on non-user method, should be %v", opts.GetAuthScope())
-	}
-
-	if claims.UserId == userId {
-		return nil
-	}
-	return util.UserVisibleError(codes.PermissionDenied, "user is not authorized to access this user")
 }
 
 // AuthUnaryInterceptor is a server interceptor for authentication

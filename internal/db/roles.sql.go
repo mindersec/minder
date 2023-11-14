@@ -16,11 +16,10 @@ INSERT INTO roles (
     organization_id,
     project_id, 
     name,
-    is_admin,
-    is_protected
+    is_admin
     ) VALUES (
-        $1, $2, $3, $4, $5
-) RETURNING id, organization_id, project_id, name, is_admin, is_protected, created_at, updated_at
+        $1, $2, $3, $4
+) RETURNING id, organization_id, project_id, name, is_admin, created_at, updated_at
 `
 
 type CreateRoleParams struct {
@@ -28,7 +27,6 @@ type CreateRoleParams struct {
 	ProjectID      uuid.NullUUID `json:"project_id"`
 	Name           string        `json:"name"`
 	IsAdmin        bool          `json:"is_admin"`
-	IsProtected    bool          `json:"is_protected"`
 }
 
 func (q *Queries) CreateRole(ctx context.Context, arg CreateRoleParams) (Role, error) {
@@ -37,7 +35,6 @@ func (q *Queries) CreateRole(ctx context.Context, arg CreateRoleParams) (Role, e
 		arg.ProjectID,
 		arg.Name,
 		arg.IsAdmin,
-		arg.IsProtected,
 	)
 	var i Role
 	err := row.Scan(
@@ -46,7 +43,6 @@ func (q *Queries) CreateRole(ctx context.Context, arg CreateRoleParams) (Role, e
 		&i.ProjectID,
 		&i.Name,
 		&i.IsAdmin,
-		&i.IsProtected,
 		&i.CreatedAt,
 		&i.UpdatedAt,
 	)
@@ -63,7 +59,7 @@ func (q *Queries) DeleteRole(ctx context.Context, id int32) error {
 }
 
 const getRoleByID = `-- name: GetRoleByID :one
-SELECT id, organization_id, project_id, name, is_admin, is_protected, created_at, updated_at FROM roles WHERE id = $1
+SELECT id, organization_id, project_id, name, is_admin, created_at, updated_at FROM roles WHERE id = $1
 `
 
 func (q *Queries) GetRoleByID(ctx context.Context, id int32) (Role, error) {
@@ -75,7 +71,6 @@ func (q *Queries) GetRoleByID(ctx context.Context, id int32) (Role, error) {
 		&i.ProjectID,
 		&i.Name,
 		&i.IsAdmin,
-		&i.IsProtected,
 		&i.CreatedAt,
 		&i.UpdatedAt,
 	)
@@ -83,7 +78,7 @@ func (q *Queries) GetRoleByID(ctx context.Context, id int32) (Role, error) {
 }
 
 const getRoleByName = `-- name: GetRoleByName :one
-SELECT id, organization_id, project_id, name, is_admin, is_protected, created_at, updated_at FROM roles WHERE organization_id =$1 AND name = $2
+SELECT id, organization_id, project_id, name, is_admin, created_at, updated_at FROM roles WHERE organization_id =$1 AND name = $2
 `
 
 type GetRoleByNameParams struct {
@@ -100,7 +95,6 @@ func (q *Queries) GetRoleByName(ctx context.Context, arg GetRoleByNameParams) (R
 		&i.ProjectID,
 		&i.Name,
 		&i.IsAdmin,
-		&i.IsProtected,
 		&i.CreatedAt,
 		&i.UpdatedAt,
 	)
@@ -108,7 +102,7 @@ func (q *Queries) GetRoleByName(ctx context.Context, arg GetRoleByNameParams) (R
 }
 
 const listRoles = `-- name: ListRoles :many
-SELECT id, organization_id, project_id, name, is_admin, is_protected, created_at, updated_at FROM roles
+SELECT id, organization_id, project_id, name, is_admin, created_at, updated_at FROM roles
 WHERE organization_id = $1
 ORDER BY id
 LIMIT $2
@@ -136,7 +130,6 @@ func (q *Queries) ListRoles(ctx context.Context, arg ListRolesParams) ([]Role, e
 			&i.ProjectID,
 			&i.Name,
 			&i.IsAdmin,
-			&i.IsProtected,
 			&i.CreatedAt,
 			&i.UpdatedAt,
 		); err != nil {
@@ -154,7 +147,7 @@ func (q *Queries) ListRoles(ctx context.Context, arg ListRolesParams) ([]Role, e
 }
 
 const listRolesByProjectID = `-- name: ListRolesByProjectID :many
-SELECT id, organization_id, project_id, name, is_admin, is_protected, created_at, updated_at FROM roles WHERE project_id = $1 ORDER BY id LIMIT $2 OFFSET $3
+SELECT id, organization_id, project_id, name, is_admin, created_at, updated_at FROM roles WHERE project_id = $1 ORDER BY id LIMIT $2 OFFSET $3
 `
 
 type ListRolesByProjectIDParams struct {
@@ -178,7 +171,6 @@ func (q *Queries) ListRolesByProjectID(ctx context.Context, arg ListRolesByProje
 			&i.ProjectID,
 			&i.Name,
 			&i.IsAdmin,
-			&i.IsProtected,
 			&i.CreatedAt,
 			&i.UpdatedAt,
 		); err != nil {
@@ -197,8 +189,8 @@ func (q *Queries) ListRolesByProjectID(ctx context.Context, arg ListRolesByProje
 
 const updateRole = `-- name: UpdateRole :one
 UPDATE roles 
-SET organization_id = $2, project_id = $3, name = $4, is_admin = $5, is_protected = $6, updated_at = NOW() 
-WHERE id = $1 RETURNING id, organization_id, project_id, name, is_admin, is_protected, created_at, updated_at
+SET organization_id = $2, project_id = $3, name = $4, is_admin = $5, updated_at = NOW()
+WHERE id = $1 RETURNING id, organization_id, project_id, name, is_admin, created_at, updated_at
 `
 
 type UpdateRoleParams struct {
@@ -207,7 +199,6 @@ type UpdateRoleParams struct {
 	ProjectID      uuid.NullUUID `json:"project_id"`
 	Name           string        `json:"name"`
 	IsAdmin        bool          `json:"is_admin"`
-	IsProtected    bool          `json:"is_protected"`
 }
 
 func (q *Queries) UpdateRole(ctx context.Context, arg UpdateRoleParams) (Role, error) {
@@ -217,7 +208,6 @@ func (q *Queries) UpdateRole(ctx context.Context, arg UpdateRoleParams) (Role, e
 		arg.ProjectID,
 		arg.Name,
 		arg.IsAdmin,
-		arg.IsProtected,
 	)
 	var i Role
 	err := row.Scan(
@@ -226,7 +216,6 @@ func (q *Queries) UpdateRole(ctx context.Context, arg UpdateRoleParams) (Role, e
 		&i.ProjectID,
 		&i.Name,
 		&i.IsAdmin,
-		&i.IsProtected,
 		&i.CreatedAt,
 		&i.UpdatedAt,
 	)

@@ -38,14 +38,12 @@ type OrgMeta struct {
 // ProjectMeta is the metadata associated with a project
 type ProjectMeta struct {
 	Description string `json:"description"`
-	IsProtected bool   `json:"is_protected"`
 }
 
 // CreateDefaultRecordsForOrg creates the default records, such as projects, roles and provider for the organization
 func CreateDefaultRecordsForOrg(ctx context.Context, qtx db.Querier,
 	org db.Project, projectName string) (*pb.Project, []int32, error) {
 	projectmeta := &ProjectMeta{
-		IsProtected: true,
 		Description: fmt.Sprintf("Default admin project for %s", org.Name),
 	}
 
@@ -71,7 +69,6 @@ func CreateDefaultRecordsForOrg(ctx context.Context, qtx db.Querier,
 		ProjectId:   project.ID.String(),
 		Name:        project.Name,
 		Description: projectmeta.Description,
-		IsProtected: projectmeta.IsProtected,
 		CreatedAt:   timestamppb.New(project.CreatedAt),
 		UpdatedAt:   timestamppb.New(project.UpdatedAt),
 	}
@@ -82,7 +79,6 @@ func CreateDefaultRecordsForOrg(ctx context.Context, qtx db.Querier,
 		OrganizationID: org.ID,
 		Name:           fmt.Sprintf("%s-org-admin", org.Name),
 		IsAdmin:        true,
-		IsProtected:    true,
 	})
 	if err != nil {
 		return nil, nil, status.Errorf(codes.Internal, "failed to create default org role: %v", err)
@@ -94,7 +90,6 @@ func CreateDefaultRecordsForOrg(ctx context.Context, qtx db.Querier,
 		ProjectID:      uuid.NullUUID{UUID: project.ID, Valid: true},
 		Name:           fmt.Sprintf("%s-project-admin", org.Name),
 		IsAdmin:        true,
-		IsProtected:    true,
 	})
 
 	if err != nil {

@@ -627,9 +627,8 @@ message Project {
     string project_id = 1;
     string name = 3;
     string description = 4;
-    bool is_protected = 5;
     google.protobuf.Timestamp created_at = 6;
-    google.protobuf.Timestamp updated_at = 7;    
+    google.protobuf.Timestamp updated_at = 7;
 }
 
 // Repositories API objects
