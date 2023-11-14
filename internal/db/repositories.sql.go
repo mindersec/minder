@@ -12,6 +12,17 @@ import (
 	"github.com/google/uuid"
 )
 
+const countRepositories = `-- name: CountRepositories :one
+SELECT COUNT(*) FROM repositories
+`
+
+func (q *Queries) CountRepositories(ctx context.Context) (int64, error) {
+	row := q.db.QueryRowContext(ctx, countRepositories)
+	var count int64
+	err := row.Scan(&count)
+	return count, err
+}
+
 const createRepository = `-- name: CreateRepository :one
 INSERT INTO repositories (
     provider,

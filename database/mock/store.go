@@ -126,6 +126,21 @@ func (mr *MockStoreMockRecorder) CountProfilesByEntityType(arg0 interface{}) *go
 	return mr.mock.ctrl.RecordCallWithMethodType(mr.mock, "CountProfilesByEntityType", reflect.TypeOf((*MockStore)(nil).CountProfilesByEntityType), arg0)
 }
 
+// CountRepositories mocks base method.
+func (m *MockStore) CountRepositories(arg0 context.Context) (int64, error) {
+	m.ctrl.T.Helper()
+	ret := m.ctrl.Call(m, "CountRepositories", arg0)
+	ret0, _ := ret[0].(int64)
+	ret1, _ := ret[1].(error)
+	return ret0, ret1
+}
+
+// CountRepositories indicates an expected call of CountRepositories.
+func (mr *MockStoreMockRecorder) CountRepositories(arg0 interface{}) *gomock.Call {
+	mr.mock.ctrl.T.Helper()
+	return mr.mock.ctrl.RecordCallWithMethodType(mr.mock, "CountRepositories", reflect.TypeOf((*MockStore)(nil).CountRepositories), arg0)
+}
+
 // CountUsers mocks base method.
 func (m *MockStore) CountUsers(arg0 context.Context) (int64, error) {
 	m.ctrl.T.Helper()
