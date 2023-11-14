@@ -924,8 +924,8 @@ github.com/shibumi/go-pathspec v1.3.0 h1:QUyMZhFo0Md5B8zV8x2tesohbb5kfbpTi9rBnKh
 github.com/shibumi/go-pathspec v1.3.0/go.mod h1:Xutfslp817l2I1cZvgcfeMQJG5QnU2lh5tVaaMCl3jE=
 github.com/signalfx/splunk-otel-go/instrumentation/database/sql/splunksql v1.10.0 h1:kCPC6eh3Aa+wPL/bA+rZOlQ20z6sZIn6aXpX99XPOrg=
 github.com/signalfx/splunk-otel-go/instrumentation/database/sql/splunksql v1.10.0/go.mod h1:okK58oBBX9ny0QBjRkRHWdX9Ps2O3oAU2tXUhnNUExc=
-github.com/signalfx/splunk-otel-go/instrumentation/github.com/lib/pq/splunkpq v1.9.0 h1:XHa4AvHOILKn8uznpyArd5FNejP9VaUE1DuBDhaU3IA=
-github.com/signalfx/splunk-otel-go/instrumentation/github.com/lib/pq/splunkpq v1.9.0/go.mod h1:FacW6APpBAij4HJO7v5Z/q4DX8XwtjpnaESWUYfZ3gY=
+github.com/signalfx/splunk-otel-go/instrumentation/github.com/lib/pq/splunkpq v1.10.0 h1:k3eHIbdzCcxvBdglxy63R8JWzwZsm8l2pA28mQT/r9k=
+github.com/signalfx/splunk-otel-go/instrumentation/github.com/lib/pq/splunkpq v1.10.0/go.mod h1:nxa0OoUWIZTCng1FLYy1gTIKxyB/QSok97knfEdMGFM=
 github.com/signalfx/splunk-otel-go/instrumentation/internal v1.10.0 h1:w/Z+Xrfxq0lJmOw1dxSxapsh/WQ9XOZxtRsoM9qYtQA=
 github.com/signalfx/splunk-otel-go/instrumentation/internal v1.10.0/go.mod h1:epJoY7N5L632S7S0E5lfxGw2r2BbK2AwTl3v7ernHA0=
 github.com/sigstore/cosign/v2 v2.2.1 h1:HauwPOMYYaVdQsnvUbF0P+ZsVPrkTB0G7Eq65+z1bQc=
