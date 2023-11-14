@@ -23,7 +23,7 @@ INSERT INTO entity_execution_lock(
 DO UPDATE SET
     locked_by = gen_random_uuid(),
     last_lock_time = NOW()
-WHERE entity_execution_lock.last_lock_time < NOW() - (@interval::TEXT || ' seconds')::interval
+WHERE entity_execution_lock.last_lock_time < (NOW() - (@interval::TEXT || ' seconds')::interval)
 RETURNING *;
 
 -- ReleaseLock is used to release a lock on an entity. It will delete the

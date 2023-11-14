@@ -131,7 +131,7 @@ func (e *EEA) aggregate(msg *message.Message) (*message.Message, error) {
 		return nil, fmt.Errorf("error locking: %w", err)
 	}
 
-	logger.Msg("event ready to be executed")
+	logger.Str("execution_id", res.LockedBy.String()).Msg("event ready to be executed")
 	msg.Metadata.Set(engine.ExecutionIDKey, res.LockedBy.String())
 
 	return msg, nil

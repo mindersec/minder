@@ -141,7 +141,7 @@ INSERT INTO entity_execution_lock(
 DO UPDATE SET
     locked_by = gen_random_uuid(),
     last_lock_time = NOW()
-WHERE entity_execution_lock.last_lock_time < NOW() - ($5::TEXT || ' seconds')::interval
+WHERE entity_execution_lock.last_lock_time < (NOW() - ($5::TEXT || ' seconds')::interval)
 RETURNING id, entity, locked_by, last_lock_time, repository_id, artifact_id, pull_request_id
 `
 
