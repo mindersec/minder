@@ -51,11 +51,13 @@ func urlFromEndpointAndPaths(
 type patchLocatorFormatter interface {
 	LineHasDependency(line string) bool
 	IndentedString(indent int, oldDepLine string, oldDep *pb.Dependency) string
+	HasPatchedVersion() bool
 }
 
 // RepoQuerier is the interface for querying a repository
 type RepoQuerier interface {
-	SendRecvRequest(ctx context.Context, dep *pb.Dependency) (patchLocatorFormatter, error)
+	SendRecvRequest(ctx context.Context, dep *pb.Dependency, patched string, latest bool) (patchLocatorFormatter, error)
+	NoPatchAvailableFormatter(dep *pb.Dependency) patchLocatorFormatter
 }
 
 type repoCache struct {
@@ -116,6 +118,10 @@ func (pj *packageJson) LineHasDependency(line string) bool {
 	return strings.Contains(line, pkgLine)
 }
 
+func (pj *packageJson) HasPatchedVersion() bool {
+	return pj.Version != ""
+}
+
 // check that pypi repository implements RepoQuerier
 var _ RepoQuerier = (*pypiRepository)(nil)
 
@@ -153,8 +159,14 @@ func (p *PyPiReply) LineHasDependency(line string) bool {
 	return name == p.Info.Name
 }
 
-func (p *pypiRepository) SendRecvRequest(ctx context.Context, dep *pb.Dependency) (patchLocatorFormatter, error) {
-	req, err := p.newRequest(ctx, dep)
+// HasPatchedVersion returns true if the vulnerable package can be updated to a patched version
+func (p *PyPiReply) HasPatchedVersion() bool {
+	return p.Info.Version != ""
+}
+
+func (p *pypiRepository) SendRecvRequest(ctx context.Context, dep *pb.Dependency, patched string, latest bool,
+) (patchLocatorFormatter, error) {
+	req, err := p.newRequest(ctx, dep, patched, latest)
 	if err != nil {
 		return nil, fmt.Errorf("could not create request: %w", err)
 	}
@@ -178,6 +190,15 @@ func (p *pypiRepository) SendRecvRequest(ctx context.Context, dep *pb.Dependency
 	return &pkgJson, nil
 }
 
+func (_ *pypiRepository) NoPatchAvailableFormatter(dep *pb.Dependency) patchLocatorFormatter {
+	return &PyPiReply{
+		Info: struct {
+			Name    string `json:"name"`
+			Version string `json:"version"`
+		}{Name: dep.Name, Version: ""},
+	}
+}
+
 func newPyPIRepository(endpoint string) *pypiRepository {
 	return &pypiRepository{
 		client:   &http.Client{},
@@ -185,8 +206,16 @@ func newPyPIRepository(endpoint string) *pypiRepository {
 	}
 }
 
-func (p *pypiRepository) newRequest(ctx context.Context, dep *pb.Dependency) (*http.Request, error) {
-	u, err := urlFromEndpointAndPaths(p.endpoint, dep.Name, "json")
+func (p *pypiRepository) newRequest(ctx context.Context, dep *pb.Dependency, patched string, latest bool) (*http.Request, error) {
+	var u *url.URL
+	var err error
+
+	if latest {
+		u, err = urlFromEndpointAndPaths(p.endpoint, dep.Name, "json")
+	} else {
+		u, err = urlFromEndpointAndPaths(p.endpoint, dep.Name, patched, "json")
+	}
+
 	if err != nil {
 		return nil, fmt.Errorf("could not parse endpoint: %w", err)
 	}
@@ -214,8 +243,14 @@ func newNpmRepository(endpoint string) *npmRepository {
 // check that npmRepository implements RepoQuerier
 var _ RepoQuerier = (*npmRepository)(nil)
 
-func (n *npmRepository) newRequest(ctx context.Context, dep *pb.Dependency) (*http.Request, error) {
-	u, err := urlFromEndpointAndPaths(n.endpoint, dep.Name, "latest")
+func (n *npmRepository) newRequest(ctx context.Context, dep *pb.Dependency, patched string, latest bool) (*http.Request, error) {
+	var version string
+	if latest {
+		version = "latest"
+	} else {
+		version = patched
+	}
+	u, err := urlFromEndpointAndPaths(n.endpoint, dep.Name, version)
 	if err != nil {
 		return nil, fmt.Errorf("could not parse endpoint: %w", err)
 	}
@@ -228,8 +263,9 @@ func (n *npmRepository) newRequest(ctx context.Context, dep *pb.Dependency) (*ht
 	return req, nil
 }
 
-func (n *npmRepository) SendRecvRequest(ctx context.Context, dep *pb.Dependency) (patchLocatorFormatter, error) {
-	req, err := n.newRequest(ctx, dep)
+func (n *npmRepository) SendRecvRequest(ctx context.Context, dep *pb.Dependency, patched string, latest bool,
+) (patchLocatorFormatter, error) {
+	req, err := n.newRequest(ctx, dep, patched, latest)
 	if err != nil {
 		return nil, fmt.Errorf("could not create request: %w", err)
 	}
@@ -251,6 +287,13 @@ func (n *npmRepository) SendRecvRequest(ctx context.Context, dep *pb.Dependency)
 	}
 
 	return &pkgJson, nil
+}
+
+func (_ *npmRepository) NoPatchAvailableFormatter(dep *pb.Dependency) patchLocatorFormatter {
+	return &packageJson{
+		Name:    dep.Name,
+		Version: "",
+	}
 }
 
 type goModPackage struct {
@@ -277,6 +320,10 @@ func (gmp *goModPackage) LineHasDependency(line string) bool {
 	return parts[0] == gmp.Name && parts[1] == gmp.oldVersion
 }
 
+func (gmp *goModPackage) HasPatchedVersion() bool {
+	return gmp.Version != ""
+}
+
 type goProxyRepository struct {
 	proxyClient   *http.Client
 	sumClient     *http.Client
@@ -296,8 +343,23 @@ func newGoProxySumRepository(proxyEndpoint, sumEndpoint string) *goProxyReposito
 // check that npmRepository implements RepoQuerier
 var _ RepoQuerier = (*goProxyRepository)(nil)
 
-func (r *goProxyRepository) goProxyRequest(ctx context.Context, dep *pb.Dependency) (*http.Request, error) {
-	u, err := urlFromEndpointAndPaths(r.proxyEndpoint, dep.Name, "@latest")
+func (r *goProxyRepository) goProxyRequest(ctx context.Context, dep *pb.Dependency, patched string, latest bool,
+) (*http.Request, error) {
+	var u *url.URL
+	var err error
+
+	if latest {
+		u, err = urlFromEndpointAndPaths(r.proxyEndpoint, dep.Name, "@latest")
+	} else {
+		var version string
+		if !strings.HasPrefix(patched, "v") {
+			version = "v" + patched
+		} else {
+			version = patched
+		}
+		u, err = urlFromEndpointAndPaths(r.proxyEndpoint, dep.Name, "@v", version+".info")
+	}
+
 	if err != nil {
 		return nil, fmt.Errorf("could not parse endpoint: %w", err)
 	}
@@ -362,8 +424,9 @@ func parseGoSumReply(goPkg *goModPackage, reply io.Reader) error {
 	return nil
 }
 
-func (r *goProxyRepository) SendRecvRequest(ctx context.Context, dep *pb.Dependency) (patchLocatorFormatter, error) {
-	proxyReq, err := r.goProxyRequest(ctx, dep)
+func (r *goProxyRepository) SendRecvRequest(ctx context.Context, dep *pb.Dependency, patched string, latest bool,
+) (patchLocatorFormatter, error) {
+	proxyReq, err := r.goProxyRequest(ctx, dep, patched, latest)
 	if err != nil {
 		return nil, fmt.Errorf("could not create pkg db request: %w", err)
 	}
@@ -388,7 +451,7 @@ func (r *goProxyRepository) SendRecvRequest(ctx context.Context, dep *pb.Depende
 	}
 
 	if goPackage.Version == "" {
-		return nil, fmt.Errorf("could not find latest version for %s", dep.Name)
+		return nil, fmt.Errorf("could not find patched version for %s", dep.Name)
 	}
 
 	sumReq, err := r.goSumRequest(ctx, goPackage.Name, goPackage.Version)
@@ -411,4 +474,11 @@ func (r *goProxyRepository) SendRecvRequest(ctx context.Context, dep *pb.Depende
 	}
 
 	return goPackage, nil
+}
+
+func (_ *goProxyRepository) NoPatchAvailableFormatter(dep *pb.Dependency) patchLocatorFormatter {
+	return &goModPackage{
+		Name:       dep.Name,
+		oldVersion: dep.Version,
+	}
 }

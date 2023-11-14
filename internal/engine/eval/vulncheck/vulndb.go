@@ -21,7 +21,10 @@ import (
 	"encoding/json"
 	"fmt"
 	"net/http"
+	"strings"
 	"time"
+
+	"github.com/hashicorp/go-version"
 
 	pb "github.com/stacklok/minder/pkg/api/protobuf/go/minder/v1"
 )
@@ -33,6 +36,7 @@ type Vulnerability struct {
 	Details    string `json:"details"`
 	Introduced string `json:"introduced,omitempty"`
 	Fixed      string `json:"fixed,omitempty"`
+	Type       string `json:"type"`
 }
 
 // VulnerabilityResponse is a response from the vulnerability database
@@ -43,7 +47,7 @@ type VulnerabilityResponse struct {
 // TODO(jakub): it's ugly that we depend on types from ingester/diff
 type vulnDb interface {
 	NewQuery(ctx context.Context, dep *pb.Dependency, eco pb.DepEcosystem) (*http.Request, error)
-	SendRecvRequest(r *http.Request) (*VulnerabilityResponse, error)
+	SendRecvRequest(r *http.Request, dep *pb.Dependency) (*VulnerabilityResponse, error)
 }
 
 // OSVResponse is a response from the OSV database
@@ -91,7 +95,7 @@ type OSVResponse struct {
 	} `json:"vulns"`
 }
 
-func toVulnerabilityResponse(osvResp *OSVResponse) *VulnerabilityResponse {
+func toVulnerabilityResponse(osvResp *OSVResponse, dep *pb.Dependency) *VulnerabilityResponse {
 	var vulnResp VulnerabilityResponse
 
 	for _, osvVuln := range osvResp.Vulns {
@@ -101,16 +105,32 @@ func toVulnerabilityResponse(osvResp *OSVResponse) *VulnerabilityResponse {
 			Details: osvVuln.Details,
 		}
 
-		// TODO(jakub): this only takes the first introduced/fixed version
+	affectedLoop:
 		for _, affected := range osvVuln.Affected {
 			for _, r := range affected.Ranges {
+				vuln.Type = r.Type
+				var introduced string
+				var fixed string
 				for _, event := range r.Events {
 					if event.Introduced != "" {
-						vuln.Introduced = event.Introduced
+						introduced = event.Introduced
 					}
 					if event.Fixed != "" {
-						vuln.Fixed = event.Fixed
+						fixed = event.Fixed
 					}
+				}
+				if r.Type == "SEMVER" && currentVersionInRange(dep.Version, introduced, fixed) {
+					// we have found the fixed version with the smallest delta from the current version
+					vuln.Introduced = introduced
+					vuln.Fixed = fixed
+					break affectedLoop
+				}
+				// if we can't determine which range the current version belongs to, use any range
+				if introduced != "" {
+					vuln.Introduced = introduced
+				}
+				if fixed != "" {
+					vuln.Fixed = fixed
 				}
 			}
 		}
@@ -119,6 +139,26 @@ func toVulnerabilityResponse(osvResp *OSVResponse) *VulnerabilityResponse {
 		vulnResp.Vulns = append(vulnResp.Vulns, vuln)
 	}
 	return &vulnResp
+}
+
+func currentVersionInRange(currentVersion string, introducedVersion string, fixedVersion string) bool {
+	if introducedVersion == "" || fixedVersion == "" {
+		return false
+	}
+	versionString := strings.TrimPrefix(currentVersion, "v")
+	current, err := version.NewVersion(versionString)
+	if err != nil {
+		return false
+	}
+	introduced, err := version.NewVersion(introducedVersion)
+	if err != nil {
+		return false
+	}
+	fixed, err := version.NewVersion(fixedVersion)
+	if err != nil {
+		return false
+	}
+	return introduced.LessThanOrEqual(current) && fixed.GreaterThan(current)
 }
 
 type osvdb struct {
@@ -155,7 +195,7 @@ func (o *osvdb) NewQuery(ctx context.Context, dep *pb.Dependency, eco pb.DepEcos
 	return req, nil
 }
 
-func (_ *osvdb) SendRecvRequest(r *http.Request) (*VulnerabilityResponse, error) {
+func (_ *osvdb) SendRecvRequest(r *http.Request, dep *pb.Dependency) (*VulnerabilityResponse, error) {
 	client := &http.Client{}
 	resp, err := client.Do(r)
 	if err != nil {
@@ -174,5 +214,5 @@ func (_ *osvdb) SendRecvRequest(r *http.Request) (*VulnerabilityResponse, error)
 		return nil, fmt.Errorf("could not decode response body: %w", err)
 	}
 
-	return toVulnerabilityResponse(&response), nil
+	return toVulnerabilityResponse(&response, dep), nil
 }
