@@ -81,14 +81,7 @@ func renderUserInfoWhoami(cmd *cobra.Command, conn *grpc.ClientConn, user *pb.Ge
 		},
 	}
 
-	projectKey := "Project"
-	for idx, project := range user.Projects {
-		if len(user.Projects) > 1 {
-			projectKey = fmt.Sprintf("Project #%d", idx+1)
-		}
-		projectVal := fmt.Sprintf("%s / %s", project.GetName(), project.GetProjectId())
-		rows = append(rows, table.Row{projectKey, projectVal})
-	}
+	rows = append(rows, getProjectTableRows(user.Projects)...)
 
 	renderUserToTable(cmd, rows)
 }

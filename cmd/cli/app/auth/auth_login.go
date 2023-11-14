@@ -27,7 +27,6 @@ import (
 	"fmt"
 	"net/http"
 	"net/url"
-	"strings"
 	"time"
 
 	"github.com/charmbracelet/bubbles/table"
@@ -222,25 +221,14 @@ func renderNewUser(cmd *cobra.Command, conn *grpc.ClientConn, newUser *pb.Create
 }
 
 func renderUserInfo(cmd *cobra.Command, conn *grpc.ClientConn, user *pb.GetUserResponse) {
-	projects := []string{}
-	for _, project := range user.Projects {
-		projects = append(projects, project.GetName())
-	}
-
 	minderSrvKey := "Minder Server"
-	projectKey := "Project Name"
-	if len(projects) > 1 {
-		projectKey += "s"
-	}
-
 	rows := []table.Row{
-		{
-			projectKey, strings.Join(projects, ", "),
-		},
 		{
 			minderSrvKey, conn.Target(),
 		},
 	}
+
+	rows = append(rows, getProjectTableRows(user.Projects)...)
 
 	renderUserToTable(cmd, rows)
 }
