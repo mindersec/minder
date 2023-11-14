@@ -95,26 +95,58 @@ A browser session will open, and you will be prompted to login to your GitHub.
 Once you have granted Minder access, you will be redirected back, and the user will be enrolled.
 The minder CLI application will report the session is complete.
 
-## Register a repository
+## Quickstart
 
-Now that you've granted the GitHub app permissions to access your repositories, you can register them:
+Minder provides a "happy path" that allows you to create a profile with enabled secret scanning for
+repositories of your choice in just a few seconds. To do so, run:
 
 ```bash
-minder repo register --provider github
+minder quickstart --provider github
 ```
 
-Once you've registered the repositories, the Minder server will listen for events from GitHub and will
-automatically create the necessary webhooks for you.
+This will prompt you to select the repositories you'd like to enable secret scanning for, create the `secret_scanning`
+rule type and create a profile with secret scanning enabled for the selected repositories.
 
-Now you can run `minder` commands against the public instance of Minder where you can manage your registered repositories
-and create custom profiles that would help ensure your repositories are configured consistently and securely.
+To see the status of your profile, run:
+
+```bash
+minder profile_status list --profile quickstart-profile --detailed
+```
+
+You should see the overall profile status and a detailed view of the rule evaluation statuses for each of your registered repositories.
+
+Minder will continue to keep track of your repositories and will ensure to fix any drifts from the desired state by
+using the `remediate` feature or alert you, if needed, using the `alert` feature.
+
+Congratulations! 🎉 You've now successfully created your first profile!
+
+## What's next?
+
+You can now continue to explore Minder's features by adding or removing more repositories, create more profiles with
+various rules, and much more. There's a lot more to Minder than just secret scanning. 
+
+The `secret_scanning` rule is just one of the many rule types that Minder supports. 
+
+You can see the full list of ready-to-use rules and profiles
+maintained by Minder's team here - [stacklok/minder-rules-and-profiles](https://github.com/stacklok/minder-rules-and-profiles).
+
+In case there's something you don't find there yet, Minder is designed to be extensible.
+This allows for users to create their own custom rule types and profiles and ensure the specifics of their security
+posture are attested to.
+
+Now that you have everything set up, you can continue to run `minder` commands against the public instance of Minder
+where you can manage your registered repositories, create profiles, rules and much more, so you can ensure your repositories are
+configured consistently and securely.
 
 For more information about `minder`, see:
 * `minder` CLI commands - [Docs](https://minder-docs.stacklok.dev/ref/cli/minder).
 * `minder` REST API Documentation - [Docs](https://minder-docs.stacklok.dev/ref/api).
+* `minder` rules and profiles maintained by Minder's team - [GitHub](https://github.com/stacklok/minder-rules-and-profiles).
 * Minder documentation - [Docs](https://minder-docs.stacklok.dev).
 
 # Development
+
+This section describes how to build and run Minder from source.
 
 ## Build from source
 

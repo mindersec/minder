@@ -104,10 +104,10 @@ func init() {
 }
 
 func handleListTableOutput(cmd *cobra.Command, resp *pb.ListProfilesResponse) {
-	table := initializeTable(cmd)
+	table := InitializeTable(cmd)
 
 	for _, v := range resp.Profiles {
-		renderProfileTable(v, table)
+		RenderProfileTable(v, table)
 	}
 	table.Render()
 }
