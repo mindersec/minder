@@ -1834,8 +1834,6 @@ definitions:
         type: string
       description:
         type: string
-      isProtected:
-        type: boolean
       createdAt:
         type: string
         format: date-time
