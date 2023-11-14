@@ -34,7 +34,7 @@ func (q *Queries) AddUserRole(ctx context.Context, arg AddUserRoleParams) (UserR
 }
 
 const getUserRoles = `-- name: GetUserRoles :many
-SELECT roles.id, organization_id, project_id, name, is_admin, is_protected, created_at, updated_at, user_roles.id, user_id, role_id FROM roles INNER JOIN user_roles ON roles.id = user_roles.role_id WHERE user_roles.user_id = $1
+SELECT roles.id, organization_id, project_id, name, is_admin, created_at, updated_at, user_roles.id, user_id, role_id FROM roles INNER JOIN user_roles ON roles.id = user_roles.role_id WHERE user_roles.user_id = $1
 `
 
 type GetUserRolesRow struct {
@@ -43,7 +43,6 @@ type GetUserRolesRow struct {
 	ProjectID      uuid.NullUUID `json:"project_id"`
 	Name           string        `json:"name"`
 	IsAdmin        bool          `json:"is_admin"`
-	IsProtected    bool          `json:"is_protected"`
 	CreatedAt      time.Time     `json:"created_at"`
 	UpdatedAt      time.Time     `json:"updated_at"`
 	ID_2           int32         `json:"id_2"`
@@ -66,7 +65,6 @@ func (q *Queries) GetUserRoles(ctx context.Context, userID int32) ([]GetUserRole
 			&i.ProjectID,
 			&i.Name,
 			&i.IsAdmin,
-			&i.IsProtected,
 			&i.CreatedAt,
 			&i.UpdatedAt,
 			&i.ID_2,

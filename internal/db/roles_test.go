@@ -81,7 +81,6 @@ func TestGetRole(t *testing.T) {
 	require.NotZero(t, role2.CreatedAt)
 	require.NotZero(t, role2.UpdatedAt)
 	require.False(t, role2.IsAdmin)
-	require.False(t, role2.IsProtected)
 }
 
 func TestUpdateRole(t *testing.T) {
