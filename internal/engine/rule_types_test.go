@@ -60,6 +60,8 @@ func TestExampleRulesAreValidatedCorrectly(t *testing.T) {
 			require.NoError(t, err, "failed to parse rule type %s", path)
 			require.NotNil(t, rt, "failed to parse rule type %s", path)
 
+			require.NoError(t, rt.Validate(), "failed to validate rule type %s", path)
+
 			t.Log("creating rule validator")
 			rval, err := engine.NewRuleValidator(rt)
 			require.NoError(t, err, "failed to create rule validator for rule type %s", path)
