@@ -17,13 +17,17 @@ package diff
 
 import (
 	"bufio"
-	"encoding/json"
-	"fmt"
+	"path/filepath"
 	"regexp"
 	"strings"
 
 	"github.com/stacklok/minder/internal/util"
 	pb "github.com/stacklok/minder/pkg/api/protobuf/go/minder/v1"
+)
+
+var (
+	versionRegex        = regexp.MustCompile(`^\+\s*"version"\s*:\s*"([^"\n]*)"\s*(?:,|$)`)
+	dependencyNameRegex = regexp.MustCompile(`\s*"([^"]+)"\s*:\s*{\s*`)
 )
 
 type ecosystemParser func(string) ([]*pb.Dependency, error)
@@ -161,62 +165,67 @@ func goParse(patch string) ([]*pb.Dependency, error) {
 	return deps, nil
 }
 
-type npmDependency struct {
-	Version      string                    `json:"version"`
-	Resolved     string                    `json:"resolved"`
-	Integrity    string                    `json:"integrity"`
-	Requires     map[string]string         `json:"requires,omitempty"`
-	Dependencies map[string]*npmDependency `json:"dependencies,omitempty"`
-	Optional     bool                      `json:"optional,omitempty"`
-}
-
-type npmRoot struct {
-	Deps map[string]*npmDependency
-}
-
-// TODO(jakub): this is a hacky way to parse the npm patch file
 func npmParse(patch string) ([]*pb.Dependency, error) {
 	lines := strings.Split(patch, "\n")
-	var output strings.Builder
 
-	// Write the start of the JSON object to the output
-	output.WriteString("{\n")
+	var deps []*pb.Dependency
 
-	// Start of crazy code to parse the patch file
-	// What we do here is first grab all the lines that start with "+"
-	// Then we remove the "+" symbol and write the modified line to the output
-	// We then add a { to the start of the output and a } to the end, so we have a valid JSON object
-	// Then we convert the string builder to a string and unmarshal it into the Package struct
-	for _, line := range lines {
-		// Check if the line starts with "+"
-		if strings.HasPrefix(line, "+") {
-			// Remove the "+" symbol and write the modified line to the output
-			line = strings.TrimPrefix(line, "+")
-			output.WriteString(line + "\n")
+	for i, line := range lines {
+		// Check if the line contains a version
+		matches := versionRegex.FindStringSubmatch(line)
+		if len(matches) > 1 {
+			version := matches[1]
+			name := findDependencyName(i, lines)
+			// The version is not always a dependency version. It may also be the version of the package in this repo,
+			// or the version of the root project. See https://docs.npmjs.com/cli/v10/configuring-npm/package-lock-json
+			if name != "" {
+				deps = append(deps, &pb.Dependency{
+					Ecosystem: pb.DepEcosystem_DEP_ECOSYSTEM_NPM,
+					Name:      name,
+					Version:   version,
+				})
+			}
 		}
 	}
 
-	//if string ends with a comma, remove it
-	outputString := strings.TrimSuffix(output.String(), ",\n")
-	outputString = outputString + "\n}"
-
-	// Convert the string builder to a string and unmarshal it into the Package struct
-	root := &npmRoot{
-		Deps: make(map[string]*npmDependency),
-	}
-
-	err := json.Unmarshal([]byte(outputString), &root.Deps)
-	if err != nil {
-		return nil, fmt.Errorf("failed to unmarshal npm package: %w", err)
-	}
-
-	deps := make([]*pb.Dependency, 0, len(root.Deps))
-	for name, dep := range root.Deps {
-		deps = append(deps, &pb.Dependency{
-			Ecosystem: pb.DepEcosystem_DEP_ECOSYSTEM_NPM,
-			Name:      name,
-			Version:   dep.Version,
-		})
-	}
 	return deps, nil
+}
+
+// findDependencyName iterates over all the previous lines to find the JSON key containing the parent dependency name.
+// If the parent key does not correspond to a dependency (i.e. it could be the root project), then an empty string is
+// returned.
+func findDependencyName(i int, lines []string) string {
+	closingBraces := 0
+	for j := i - 1; j >= 0; j-- {
+		if strings.Contains(lines[j], "}") {
+			closingBraces = closingBraces + 1
+		}
+		if strings.Contains(lines[j], "{") {
+			if closingBraces == 0 {
+				matches := dependencyNameRegex.FindStringSubmatch(lines[j])
+				if len(matches) > 1 {
+					// extract the dependency name from the key, which is the dependency path
+					dependencyPath := matches[1]
+					return getDependencyName(dependencyPath)
+				}
+				return ""
+			}
+			closingBraces = closingBraces - 1
+		}
+	}
+	return ""
+}
+
+func getDependencyName(dependencyPath string) string {
+	dependencyName := filepath.Base(dependencyPath)
+	dir := filepath.Dir(dependencyPath)
+
+	// Check if the parent directory starts with "@", meaning that the dependency has a scope.
+	// See https://docs.npmjs.com/cli/v10/using-npm/scope
+	if strings.HasPrefix(filepath.Base(dir), "@") {
+		// Prefix the dependency name with the scope
+		return filepath.Join(filepath.Base(dir), dependencyName)
+	}
+
+	return dependencyName
 }

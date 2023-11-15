@@ -163,6 +163,54 @@ func TestNpmPkgDb(t *testing.T) {
 	}
 }
 
+func TestPackageJsonLineHasDependency(t *testing.T) {
+	t.Parallel()
+
+	tests := []struct {
+		name         string
+		line         string
+		pj           *packageJson
+		expectRetval bool
+	}{
+		{
+			name: "MatchWithScope",
+			line: "\"node_modules/@types/node\": {",
+			pj: &packageJson{
+				Name:    "@types/node",
+				Version: "20.9.0",
+			},
+			expectRetval: true,
+		},
+		{
+			name: "MatchNoScope",
+			line: "\"node_modules/lodash\": {",
+			pj: &packageJson{
+				Name:    "lodash",
+				Version: "4.17.21",
+			},
+			expectRetval: true,
+		},
+		{
+			name: "NoMatch",
+			line: "\"node_modules/other\": {",
+			pj: &packageJson{
+				Name:    "lodash",
+				Version: "4.17.21",
+			},
+			expectRetval: false,
+		},
+	}
+
+	for _, tt := range tests {
+		tt := tt
+		t.Run(tt.name, func(t *testing.T) {
+			t.Parallel()
+		})
+
+		require.Equal(t, tt.expectRetval, tt.pj.LineHasDependency(tt.line), "expected reply to match mock data")
+	}
+}
+
 func TestPyPiReplyLineHasDependency(t *testing.T) {
 	t.Parallel()
 
