@@ -14,13 +14,13 @@
 # limitations under the License.
 
 .PHONY: build
-build: build-minder-cli build-minder-server build-medev ## build all binaries
+build: build-minder-cli build-minder-server build-mindev ## build all binaries
 
 
-.PHONY: build-medev
-build-medev: ## build golang binary
-	@echo "Building medev..."
-	@CGO_ENABLED=0 go build -trimpath -tags '$(BUILDTAGS)' -o ./bin/medev ./cmd/dev
+.PHONY: build-mindev
+build-mindev: ## build mindev golang binary
+	@echo "Building mindev..."
+	@CGO_ENABLED=0 go build -trimpath -tags '$(BUILDTAGS)' -o ./bin/mindev ./cmd/dev
 
 .PHONY: build-minder-cli
 build-minder-cli: ## build minder cli

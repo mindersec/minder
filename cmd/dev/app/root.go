@@ -13,7 +13,7 @@
 // See the License for the specific language governing permissions and
 // limitations under the License.
 
-// Package app provides the root command for the medev CLI
+// Package app provides the root command for the mindev CLI
 package app
 
 import (
@@ -30,8 +30,8 @@ var (
 
 	// RootCmd represents the base command when called without any subcommands
 	RootCmd = &cobra.Command{
-		Use:   "medev",
-		Short: "medev provides developer tooling for minder",
+		Use:   "mindev",
+		Short: "mindev provides developer tooling for minder",
 		Long: `For more information about minder, please visit:
 https://docs.stacklok.com/minder`,
 	}
