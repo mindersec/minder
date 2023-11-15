@@ -43,6 +43,7 @@ func commonAttributes(ctx context.Context, res *status.Status, duration time.Dur
 			"http.user_agent":   meta.Get("user-agent"),
 			"http.content-type": meta.Get("content-type"),
 			"http.duration":     duration.String(),
+			"http.forwarded":    meta.Get("x-forwarded-for"),
 		})
 	}
 	return data
