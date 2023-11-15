@@ -263,14 +263,22 @@ func logEval(
 	evalLog.Err(params.GetEvalErr()).Msg("result - evaluation")
 
 	// log remediation
-	logger.Err(params.GetActionsErr().RemediateErr).
+	logger.Err(filterActionErrorForLogging(params.GetActionsErr().RemediateErr)).
 		Str("action", "remediate").
 		Str("action_status", string(evalerrors.ErrorAsRemediationStatus(params.GetActionsErr().RemediateErr))).
 		Msg("result - action")
 
 	// log alert
-	logger.Err(params.GetActionsErr().AlertErr).
+	logger.Err(filterActionErrorForLogging(params.GetActionsErr().AlertErr)).
 		Str("action", "alert").
 		Str("action_status", string(evalerrors.ErrorAsAlertStatus(params.GetActionsErr().AlertErr))).
 		Msg("result - action")
+}
+
+func filterActionErrorForLogging(err error) error {
+	if evalerrors.IsActionFatalError(err) {
+		return err
+	}
+
+	return nil
 }
