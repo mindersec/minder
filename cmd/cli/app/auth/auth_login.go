@@ -89,6 +89,11 @@ will be saved to $XDG_CONFIG_HOME/minder/credentials.json`,
 		util.ExitNicelyOnError(err, "Error parsing issuer URL")
 		issuerUrl := parsedURL.JoinPath("realms", realm)
 		scopes := []string{"openid"}
+
+		offline := viper.GetBool("offline")
+		if offline {
+			scopes = append(scopes, "offline_access")
+		}
 		callbackPath := "/auth/callback"
 
 		// create encrypted cookie handler to mitigate CSRF attacks
@@ -264,4 +269,9 @@ func renderUserToTable(cmd *cobra.Command, rows []table.Row) {
 
 func init() {
 	AuthCmd.AddCommand(auth_loginCmd)
+	auth_loginCmd.Flags().BoolP("offline", "o", false, "Whether to allow offline tokens")
+	err := auth_loginCmd.Flags().MarkHidden("offline")
+	if err != nil {
+		util.ExitNicelyOnError(err, "error marking flag as hidden")
+	}
 }
