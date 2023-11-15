@@ -202,7 +202,9 @@ func (e *EEA) FlushAll(ctx context.Context) error {
 
 		eiw, err := e.buildEntityWrapper(ctx, cache.Entity,
 			cache.RepositoryID, cache.ArtifactID, cache.PullRequestID)
-		if err != nil {
+		if err != nil && errors.Is(err, sql.ErrNoRows) {
+			continue
+		} else if err != nil {
 			return fmt.Errorf("error flushing cache: %w", err)
 		}
 
