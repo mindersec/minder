@@ -61,4 +61,4 @@ docs/.docusaurus
 /deployment/helm/*.tgz
 
 # Ignore examples cloned repo
-examples/rules-and-profiles/
+examples/rules-and-profiles
