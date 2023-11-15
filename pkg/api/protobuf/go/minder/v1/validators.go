@@ -99,9 +99,9 @@ func (rt *RuleType) Validate() error {
 
 // Validate validates a rule type definition
 func (def *RuleType_Definition) Validate() error {
-	// if !entities.IsValidEntity(entities.FromString(def.InEntity)) {
-	// 	return fmt.Errorf("%w: invalid entity type: %s", ErrInvalidRuleTypeDefinition, def.InEntity)
-	// }
+	if !EntityFromString(def.InEntity).IsValid() {
+		return fmt.Errorf("%w: invalid entity type: %s", ErrInvalidRuleTypeDefinition, def.InEntity)
+	}
 
 	if def.RuleSchema == nil {
 		return fmt.Errorf("%w: rule schema is nil", ErrInvalidRuleTypeDefinition)
