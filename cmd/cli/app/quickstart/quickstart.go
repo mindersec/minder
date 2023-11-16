@@ -283,25 +283,20 @@ var cmd = &cobra.Command{
 				if st.Code() != codes.AlreadyExists {
 					return fmt.Errorf("error creating profile: %w", err)
 				}
-				cmd.Println("Profile already exists")
-				return nil
+				cmd.Println("Hey, it seems you already tried the quickstart command and created such a profile. " +
+					"In case you have registered new repositories this time, the profile will be already applied " +
+					"to them.")
+			} else {
+				return fmt.Errorf("error creating profile: %w", err)
 			}
-			return fmt.Errorf("error creating profile: %w", err)
+		} else {
+			table := profile.InitializeTable(cmd)
+			profile.RenderProfileTable(resp.GetProfile(), table)
+			table.Render()
 		}
-
-		table := profile.InitializeTable(cmd)
-		profile.RenderProfileTable(resp.GetProfile(), table)
-		table.Render()
 
 		// Finish - Confirm profile creation
-		yes = cli.PrintYesNoPrompt(cmd,
-			stepPromptMsgFinish,
-			"Finish?",
-			"Quickstart operation completed.")
-		if !yes {
-			return nil
-		}
-
+		cli.PrintCmd(cmd, cli.WarningBanner.Render(stepPromptMsgFinish))
 		return nil
 	},
 }
