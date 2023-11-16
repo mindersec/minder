@@ -16,12 +16,6 @@ these helm charts, you will need the following:
 
 - The following Kubernetes secrets:
 
-  - `minder-auth-secrets`: Needs to contain public and private keys for access
-    and refresh tokens. The keys must be named as follows:
-
-    - `access_token_rsa`, `access_token_rsa.pub`
-    - `refresh_token_rsa`, `refresh_token_rsa.pub`
-
   - `minder-github-secrets`: Needs to contain API credentials for a GitHub
     app. In particular, the following keys are required:
     - `client_id`: The GitHub client ID to be used by Minder
@@ -52,40 +46,36 @@ installed in the namespace specified by your current Kubernetes context.
 | Key | Type | Default | Description |
 |-----|------|---------|-------------|
 | aws.accountID | string | `"123456789012"` |  |
-| aws.migrate.iamRole | string | `"minder_migrate_role"` |  |
-| aws.server.iamRole | string | `"minder_server_role"` |  |
-| db.host | string | `"postgres.postgres"` |  |
-| deploymentSettings.extraVolumeMounts | string | `nil` |  |
-| deploymentSettings.extraVolumes | string | `nil` |  |
-| deploymentSettings.image | string | `"ko://github.com/stacklok/minder/cmd/server"` |  |
-| deploymentSettings.imagePullPolicy | string | `"IfNotPresent"` |  |
-| deploymentSettings.resources.limits.cpu | int | `4` |  |
-| deploymentSettings.resources.limits.memory | string | `"1.5Gi"` |  |
-| deploymentSettings.resources.requests.cpu | int | `1` |  |
-| deploymentSettings.resources.requests.memory | string | `"1Gi"` |  |
-| deploymentSettings.secrets.appSecretName | string | `"minder-github-secrets"` |  |
-| deploymentSettings.secrets.authSecretName | string | `"minder-auth-secrets"` |  |
-| deploymentSettings.secrets.identitySecretName | string | `"minder-identity-secrets"` |  |
-| deploymentSettings.sidecarContainers | string | `nil` |  |
-| extra_config | string | `"# Add content here\n"` |  |
-| extra_config_migrate | string | `"# Add even more content here\n"` |  |
-| hostname | string | `"minder.example.com"` |  |
-| hpaSettings.maxReplicas | int | `1` |  |
-| hpaSettings.metrics.cpu.targetAverageUtilization | int | `60` |  |
-| hpaSettings.minReplicas | int | `1` |  |
-| ingress.annotations | object | `{}` |  |
-| migrationSettings.extraVolumeMounts | string | `nil` |  |
-| migrationSettings.extraVolumes | string | `nil` |  |
-| migrationSettings.image | string | `"ko://github.com/stacklok/minder/cmd/server"` |  |
-| migrationSettings.imagePullPolicy | string | `"IfNotPresent"` |  |
-| migrationSettings.resources.limits.cpu | int | `1` |  |
-| migrationSettings.resources.limits.memory | string | `"300Mi"` |  |
-| migrationSettings.resources.requests.cpu | string | `"200m"` |  |
-| migrationSettings.resources.requests.memory | string | `"200Mi"` |  |
-| migrationSettings.sidecarContainers | string | `nil` |  |
-| service.grpcPort | int | `8090` |  |
-| service.httpPort | int | `8080` |  |
-| service.metricPort | int | `9090` |  |
-| serviceAccounts.migrate | string | `""` |  |
-| serviceAccounts.server | string | `""` |  |
-| trusty.endpoint | string | `"http://pi.pi:8000"` |  |
+| aws.migrate | object, optional | `{"iamRole":"minder_migrate_role"}` | AWS IAM migration settings |
+| aws.migrate.iamRole | string | `"minder_migrate_role"` | IAM role to use for the migration job |
+| aws.server | object, optional | `{"iamRole":"minder_server_role"}` | AWS IAM server settings |
+| aws.server.iamRole | string | `"minder_server_role"` | IAM role to use for the server |
+| db.host | string | `"postgres.postgres"` | database host to use |
+| deploymentSettings.extraVolumeMounts | array, optional | `nil` | Additional volume mounts |
+| deploymentSettings.extraVolumes | array, optional | `nil` | Additional volumes to mount |
+| deploymentSettings.image | string | `"ko://github.com/stacklok/minder/cmd/server"` | image to use for the main deployment |
+| deploymentSettings.imagePullPolicy | string | `"IfNotPresent"` | image pull policy to use for the main deployment |
+| deploymentSettings.resources | object | `{"limits":{"cpu":4,"memory":"1.5Gi"},"requests":{"cpu":1,"memory":"1Gi"}}` | resources to use for the main deployment |
+| deploymentSettings.secrets.appSecretName | string | `"minder-github-secrets"` | name of the secret containing the github configuration |
+| deploymentSettings.secrets.authSecretName | string | `"minder-auth-secrets"` | name of the secret containing the auth configuration |
+| deploymentSettings.secrets.identitySecretName | string | `"minder-identity-secrets"` | name of the secret containing the identity configuration |
+| deploymentSettings.sidecarContainers | array, optional | `nil` | Additional configuration for sidecar containers |
+| extra_config | string | `"# Add content here\n"` | Additional configuration yaml beyond what's in config.yaml.example |
+| extra_config_migrate | string | `"# Add even more content here\n"` | Additional configuration yaml that's applied to the migration job |
+| hostname | string | `"minder.example.com"` | hostname to ue for the ingress configuration |
+| hpaSettings.maxReplicas | int | `1` | maximum number of replicas for the HPA |
+| hpaSettings.metrics | object | `{"cpu":{"targetAverageUtilization":60}}` | metrics to use for the HPA |
+| hpaSettings.minReplicas | int | `1` | minimum number of replicas for the HPA |
+| ingress.annotations | object, optional | `{}` | annotations to use for the ingress |
+| migrationSettings.extraVolumeMounts | array, optional | `nil` | Additional volume mounts |
+| migrationSettings.extraVolumes | array, optional | `nil` | Additional volumes to mount |
+| migrationSettings.image | string | `"ko://github.com/stacklok/minder/cmd/server"` | image to use for the migration job |
+| migrationSettings.imagePullPolicy | string | `"IfNotPresent"` | image pull policy to use for the migration job |
+| migrationSettings.resources | object | `{"limits":{"cpu":1,"memory":"300Mi"},"requests":{"cpu":"200m","memory":"200Mi"}}` | resources to use for the migration job |
+| migrationSettings.sidecarContainers | array, optional | `nil` | Additional configuration for sidecar containers |
+| service.grpcPort | int | `8090` | port for the gRPC API |
+| service.httpPort | int | `8080` | port for the HTTP API |
+| service.metricPort | int | `9090` | port for the metrics endpoint |
+| serviceAccounts.migrate | string, optional | `""` | If non-empty, minder will use the named ServiceAccount resources rather than creating a ServiceAccount |
+| serviceAccounts.server | string, optional | `""` | If non-empty, minder will use the named ServiceAccount resources rather than creating a ServiceAccount |
+| trusty.endpoint | string | `"http://pi.pi:8000"` | trusty host to use |
