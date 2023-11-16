@@ -30,11 +30,96 @@ import (
 
 	"github.com/stacklok/minder/cmd/cli/app"
 	"github.com/stacklok/minder/cmd/cli/app/profile"
+	minderprov "github.com/stacklok/minder/cmd/cli/app/provider"
 	"github.com/stacklok/minder/cmd/cli/app/repo"
 	"github.com/stacklok/minder/internal/engine"
 	"github.com/stacklok/minder/internal/util"
 	"github.com/stacklok/minder/internal/util/cli"
 	minderv1 "github.com/stacklok/minder/pkg/api/protobuf/go/minder/v1"
+)
+
+const (
+	// nolint:lll
+	stepPromptMsgWelcome = `
+Welcome! 👋 
+
+You are about to go through the quickstart process for Minder. Throughout this, you will: 
+
+* Enroll your provider
+* Register your repositories
+* Create a rule type
+* Create a profile
+
+Let's get started!
+`
+	// nolint:lll
+	stepPromptMsgEnroll = `
+Step 1 - Enroll your provider.
+
+This will enroll the provider for your repositories.
+
+Currently Minder works with Github, but we are planning support for other providers too!
+
+The command we are about to do is the following:
+
+minder provider enroll --provider github
+`
+	// nolint:lll
+	stepPromptMsgRegister = `
+Step 2 - Register your repositories.
+
+Now that you have enrolled your provider successfully, you can register your repositories.
+
+The command we are about to do is the following:
+
+minder repo register --provider github
+`
+	// nolint:lll
+	stepPromptMsgRuleType = `
+Step 3 - Create your first rule type - secret_scanning.
+
+Now that you have registered your repositories with Minder, let's create your first rule type!
+
+For the purpose of this quickstart, we are going to use a rule of type "secret_scanning" (secret_scanning.yaml).
+Secret scanning is about protecting you from accidentally leaking secrets in your repository.
+
+The command we are about to do is the following:
+
+minder rule_type create -f secret_scanning.yaml
+`
+	// nolint:lll
+	stepPromptMsgProfile = `
+Step 4 - Create your first profile.
+
+So far you have enrolled a provider, registered your repositories and created a rule type for secrets scanning.
+It's time to stitch all of that together by creating a profile. 
+
+Let's create a profile that enables secret scanning for all of your registered repositories. 
+
+We'll enable the remediate and alert features too, so Minder can automatically remediate any non-compliant repositories and alert you if needed.
+
+Your profile will be applied to the following repositories:
+
+%s
+
+The command we are about to do is the following:
+
+minder profile create -f quickstart-profile.yaml
+`
+	// nolint:lll
+	stepPromptMsgFinish = `
+Congratulations! 🎉 You've now successfully created your first profile in Minder!
+
+You can now continue to explore Minder's features by adding or removing more repositories, create custom profiles with various rules, and much more.
+
+For more information about Minder, see:
+* GitHub - https://github.com/stacklok/minder
+* CLI commands - https://minder-docs.stacklok.dev/ref/cli/minder
+* Rules and profiles maintained by Minder's team - https://github.com/stacklok/minder-rules-and-profiles
+* Official documentation - https://minder-docs.stacklok.dev
+
+Thank you for using Minder!
+`
 )
 
 //go:embed embed*
@@ -52,12 +137,46 @@ var cmd = &cobra.Command{
 	RunE: func(cmd *cobra.Command, args []string) error {
 		proj := viper.GetString("project")
 		provider := viper.GetString("provider")
+
+		// Confirm user wants to go through the quickstart process
+		yes := cli.PrintYesNoPrompt(cmd,
+			stepPromptMsgWelcome,
+			"Proceed?",
+			"Quickstart operation cancelled.")
+		if !yes {
+			return nil
+		}
+
+		// Step 1 - Confirm enrolling
+		yes = cli.PrintYesNoPrompt(cmd,
+			stepPromptMsgEnroll,
+			"Proceed?",
+			"Quickstart operation cancelled.")
+		if !yes {
+			return nil
+		}
+
+		// Enroll provider
+		msg, err := minderprov.EnrollProviderCmd(cmd, args)
+		if err != nil {
+			return fmt.Errorf("%s: %w", msg, err)
+		}
+
 		// Get the grpc connection and other resources
 		conn, err := util.GrpcForCommand(cmd, viper.GetViper())
 		if err != nil {
 			return fmt.Errorf("error getting grpc connection: %w", err)
 		}
 		defer conn.Close()
+
+		// Step 2 - Confirm repository registration
+		yes = cli.PrintYesNoPrompt(cmd,
+			stepPromptMsgRegister,
+			"Proceed?",
+			"Quickstart operation cancelled.")
+		if !yes {
+			return nil
+		}
 
 		// Prompt to register repositories
 		results, msg, err := repo.RegisterCmd(cmd, args)
@@ -69,9 +188,9 @@ var cmd = &cobra.Command{
 			registeredRepos = append(registeredRepos, repo)
 		}
 
-		// Confirm user wants to proceed with the quickstart process of creating a rule type
-		yes := cli.PrintYesNoPrompt(cmd,
-			"You are about to create a rule of type - secret_scanning:",
+		// Step 3 - Confirm rule type creation
+		yes = cli.PrintYesNoPrompt(cmd,
+			stepPromptMsgRuleType,
 			"Proceed?",
 			"Quickstart operation cancelled.")
 		if !yes {
@@ -90,6 +209,7 @@ var cmd = &cobra.Command{
 		if err != nil {
 			return fmt.Errorf("error parsing rule type: %w", err)
 		}
+
 		if rt.Context == nil {
 			rt.Context = &minderv1.Context{}
 		}
@@ -120,13 +240,9 @@ var cmd = &cobra.Command{
 			}
 		}
 
-		// Confirm user wants to proceed with the quickstart process of creating a profile
+		// Step 4 - Confirm profile creation
 		yes = cli.PrintYesNoPrompt(cmd,
-			fmt.Sprintf(
-				"You are about to create a profile in Minder with the following properties:\n\n"+
-					"Rules: secret_scanning (enabled)\n\nSelected repositories:\n\n%s",
-				strings.Join(registeredRepos[:], "\n"),
-			),
+			fmt.Sprintf(stepPromptMsgProfile, strings.Join(registeredRepos[:], "\n")),
 			"Proceed?",
 			"Quickstart operation cancelled.")
 		if !yes {
@@ -144,7 +260,7 @@ var cmd = &cobra.Command{
 		}
 
 		if p.Context == nil {
-			rt.Context = &minderv1.Context{}
+			p.Context = &minderv1.Context{}
 		}
 
 		if proj != "" {
@@ -176,6 +292,16 @@ var cmd = &cobra.Command{
 		table := profile.InitializeTable(cmd)
 		profile.RenderProfileTable(resp.GetProfile(), table)
 		table.Render()
+
+		// Finish - Confirm profile creation
+		yes = cli.PrintYesNoPrompt(cmd,
+			stepPromptMsgFinish,
+			"Finish?",
+			"Quickstart operation completed.")
+		if !yes {
+			return nil
+		}
+
 		return nil
 	},
 }
@@ -184,6 +310,8 @@ func init() {
 	app.RootCmd.AddCommand(cmd)
 	cmd.Flags().StringP("project", "r", "", "Project to create the quickstart profile in")
 	cmd.Flags().StringP("provider", "p", "", "Name of the provider")
+	cmd.Flags().StringP("token", "t", "", "Personal Access Token (PAT) to use for enrollment")
+	cmd.Flags().StringP("owner", "o", "", "Owner to filter on for provider resources")
 	if err := cmd.MarkFlagRequired("provider"); err != nil {
 		_, _ = fmt.Fprintf(os.Stderr, "Error marking flag as required: %s\n", err)
 	}

@@ -120,86 +120,101 @@ actions such as adding repositories.`,
 		}
 	},
 	Run: func(cmd *cobra.Command, args []string) {
-		provider := util.GetConfigValue(viper.GetViper(), "provider", "provider", cmd, "").(string)
-		if provider != ghclient.Github {
-			fmt.Fprintf(os.Stderr, "Only %s is supported at this time\n", ghclient.Github)
-			os.Exit(1)
+		msg, err := EnrollProviderCmd(cmd, args)
+		util.ExitNicelyOnError(err, msg)
+	},
+}
+
+// EnrollProviderCmd is the command for enrolling a provider
+func EnrollProviderCmd(cmd *cobra.Command, _ []string) (string, error) {
+	provider := util.GetConfigValue(viper.GetViper(), "provider", "provider", cmd, "").(string)
+	if provider != ghclient.Github {
+		msg := fmt.Sprintf("Only %s is supported at this time", ghclient.Github)
+		return "", fmt.Errorf(msg)
+	}
+	project := viper.GetString("project")
+	pat := util.GetConfigValue(viper.GetViper(), "token", "token", cmd, "").(string)
+	owner := util.GetConfigValue(viper.GetViper(), "owner", "owner", cmd, "").(string)
+
+	// Ask for confirmation if an owner is set on purpose
+	ownerPromptStr := "your personal account"
+	if owner != "" {
+		ownerPromptStr = fmt.Sprintf("the %s organisation", owner)
+	}
+	yes := cli.PrintYesNoPrompt(cmd,
+		fmt.Sprintf("You are about to enroll repositories from %s.", ownerPromptStr),
+		"Do you confirm?",
+		"Enroll operation cancelled.")
+	if !yes {
+		return "", nil
+	}
+
+	conn, err := util.GrpcForCommand(cmd, viper.GetViper())
+	if err != nil {
+		return "Error getting grpc connection", err
+	}
+	defer conn.Close()
+
+	client := pb.NewOAuthServiceClient(conn)
+	ctx, cancel := util.GetAppContext()
+	defer cancel()
+	oAuthCallbackCtx, oAuthCancel := context.WithTimeout(context.Background(), MAX_CALLS*time.Second)
+	defer oAuthCancel()
+
+	if pat != "" {
+		// use pat for enrollment
+		_, err := client.StoreProviderToken(context.Background(),
+			&pb.StoreProviderTokenRequest{Provider: provider, ProjectId: project, AccessToken: pat, Owner: &owner})
+		if err != nil {
+			return "Error storing token", err
 		}
-		project := viper.GetString("project-id")
-		pat := util.GetConfigValue(viper.GetViper(), "token", "token", cmd, "").(string)
-		owner := util.GetConfigValue(viper.GetViper(), "owner", "owner", cmd, "").(string)
-
-		// Ask for confirmation if an owner is set on purpose
-		ownerPromptStr := "your personal account"
-		if owner != "" {
-			ownerPromptStr = fmt.Sprintf("the %s organisation", owner)
-		}
-		yes := cli.PrintYesNoPrompt(cmd,
-			fmt.Sprintf("You are about to enroll repositories from %s.", ownerPromptStr),
-			"Do you confirm?",
-			"Enroll operation cancelled.")
-		if !yes {
-			return
-		}
-
-		conn, err := util.GrpcForCommand(cmd, viper.GetViper())
-		util.ExitNicelyOnError(err, "Error getting grpc connection")
-		defer conn.Close()
-
-		client := pb.NewOAuthServiceClient(conn)
-		ctx, cancel := util.GetAppContext()
-		defer cancel()
-		oAuthCallbackCtx, oAuthCancel := context.WithTimeout(context.Background(), MAX_CALLS*time.Second)
-		defer oAuthCancel()
-
-		if pat != "" {
-			// use pat for enrollment
-			_, err := client.StoreProviderToken(context.Background(),
-				&pb.StoreProviderTokenRequest{Provider: provider, ProjectId: project, AccessToken: pat, Owner: &owner})
-			util.ExitNicelyOnError(err, "Error storing token")
-
-			cli.PrintCmd(cmd, "Provider enrolled successfully")
-			return
-		}
-
-		// Get random port
-		port, err := rand.GetRandomPort()
-		util.ExitNicelyOnError(err, "Error getting random port")
-
-		resp, err := client.GetAuthorizationURL(ctx, &pb.GetAuthorizationURLRequest{
-			Provider:  provider,
-			ProjectId: project,
-			Cli:       true,
-			Port:      int32(port),
-			Owner:     &owner,
-		})
-		util.ExitNicelyOnError(err, "Error getting authorization URL")
-
-		fmt.Printf("Your browser will now be opened to: %s\n", resp.GetUrl())
-		fmt.Println("Please follow the instructions on the page to complete the OAuth flow.")
-		fmt.Println("Once the flow is complete, the CLI will close")
-		fmt.Println("If this is a headless environment, please copy and paste the URL into a browser on a different machine.")
-
-		if err := browser.OpenURL(resp.GetUrl()); err != nil {
-			fmt.Fprintf(os.Stderr, "Error opening browser: %s\n", err)
-			fmt.Println("Please copy and paste the URL into a browser.")
-		}
-		openTime := time.Now().Unix()
-
-		var wg sync.WaitGroup
-		wg.Add(1)
-
-		go callBackServer(oAuthCallbackCtx, provider, project, fmt.Sprintf("%d", port), &wg, client, openTime)
-		wg.Wait()
 
 		cli.PrintCmd(cmd, "Provider enrolled successfully")
-	},
+		return "", nil
+	}
+
+	// Get random port
+	port, err := rand.GetRandomPort()
+	if err != nil {
+		return "Error getting random port", err
+	}
+
+	resp, err := client.GetAuthorizationURL(ctx, &pb.GetAuthorizationURLRequest{
+		Provider:  provider,
+		ProjectId: project,
+		Cli:       true,
+		Port:      int32(port),
+		Owner:     &owner,
+	})
+	if err != nil {
+		return "Error getting authorization URL", err
+	}
+
+	fmt.Printf("Your browser will now be opened to: %s\n", resp.GetUrl())
+	fmt.Println("Please follow the instructions on the page to complete the OAuth flow.")
+	fmt.Println("Once the flow is complete, the CLI will close")
+	fmt.Println("If this is a headless environment, please copy and paste the URL into a browser on a different machine.")
+
+	if err := browser.OpenURL(resp.GetUrl()); err != nil {
+		fmt.Fprintf(os.Stderr, "Error opening browser: %s\n", err)
+		fmt.Println("Please copy and paste the URL into a browser.")
+	}
+	openTime := time.Now().Unix()
+
+	var wg sync.WaitGroup
+	wg.Add(1)
+
+	go callBackServer(oAuthCallbackCtx, provider, project, fmt.Sprintf("%d", port), &wg, client, openTime)
+	wg.Wait()
+
+	cli.PrintCmd(cmd, "Provider enrolled successfully")
+	return "", nil
 }
 
 func init() {
 	ProviderCmd.AddCommand(enrollProviderCmd)
 	enrollProviderCmd.Flags().StringP("provider", "p", "", "Name for the provider to enroll")
-	enrollProviderCmd.Flags().StringP("project-id", "g", "", "ID of the project for enrolling the provider")
+	enrollProviderCmd.Flags().StringP("project", "r", "", "ID of the project for enrolling the provider")
 	enrollProviderCmd.Flags().StringP("token", "t", "", "Personal Access Token (PAT) to use for enrollment")
 	enrollProviderCmd.Flags().StringP("owner", "o", "", "Owner to filter on for provider resources")
 	if err := enrollProviderCmd.MarkFlagRequired("provider"); err != nil {
