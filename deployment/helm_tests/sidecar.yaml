@@ -1,0 +1,121 @@
+# Copyright 2023 Stacklok, Inc
+#
+# Licensed under the Apache License, Version 2.0 (the "License");
+# you may not use this file except in compliance with the License.
+# You may obtain a copy of the License at
+#
+#      http://www.apache.org/licenses/LICENSE-2.0
+#
+# Unless required by applicable law or agreed to in writing, software
+# distributed under the License is distributed on an "AS IS" BASIS,
+# WITHOUT WARRANTIES OR CONDITIONS OF ANY KIND, either express or implied.
+# See the License for the specific language governing permissions and
+# limitations under the License.
+
+hostname: "minder-test.example.com"
+db:
+  host: postgres.postgres.svc
+
+serviceAccounts:
+  server: minder
+  migrate: migrate-job
+
+ingress:
+  annotations:
+    cert-manager.io/cluster-issuer: prod-issuer
+
+hpaSettings:
+  minReplicas: 1
+  maxReplicas: 3
+  metrics:
+    cpu:
+      targetAverageUtilization: 60
+
+deploymentSettings:
+  resources:
+    requests:
+      cpu: 0.5
+      memory: 800Mi
+    limits:
+      cpu: 1
+      memory: 1.8Gi
+  secrets:
+    authSecretName: "minder-auth-secrets"
+    appSecretName: "minder-github-api-secrets"
+    identitySecretName: "minder-identity-secrets"
+  extraEnv:
+  - name: "PGPASSFILE"
+    value: "/secrets/db/.pgpass"
+  extraVolumeMounts:
+  - name: db-password
+    mountPath: /secrets/db
+  extraVolumes:
+  - name: db-password
+    emptyDir:
+      medium: Memory
+      sizeLimit: 1Mi
+  sidecarContainers:
+  - name: fetch-secrets
+    image: bitnami/kubectl
+    command: ["/bin/bash"]
+    args: 
+    - "-c"
+    - "while true; do kubectl get secret minder-db-password -o jsonpath='{.data.password}' | base64 -d > /secrets/db/.pgpass; sleep 300; done"
+    volumeMounts:
+    - name: db-password
+      mountPath: /secrets/db
+
+migrationSettings:
+  sidecarContainers:
+  - name: fetch-secrets
+    image: bitnami/kubectl
+    command: ["/bin/bash"]
+    args: 
+    - "-c"
+    - "while true; do kubectl get secret minder-migrate-password -o jsonpath='{.data.password}' | base64 -d > /secrets/db/.pgpass; sleep 300; done"
+    volumeMounts:
+    - name: db-password
+      mountPath: /secrets/db
+  extraEnv:
+  - name: "PGPASSFILE"
+    value: "/secrets/db/.pgpass"
+  extraVolumeMounts:
+  - name: db-password
+    mountPath: /secrets/db
+  extraVolumes:
+  - name: db-password
+    emptyDir:
+      medium: Memory
+      sizeLimit: 1Mi
+
+extra_config: |
+  database:
+    dbuser: minder
+    dbname: minder
+    sslmode: disabled
+
+  identity:
+    server:
+      issuer_url: http://keycloak-deployment.keycloak.svc:80
+      realm: minder
+      client_id: minder-server
+
+  github:
+    redirect_uri: "https://minder-test.example.com/api/v1/auth/callback/github"
+
+  webhook-config:
+    external_webhook_url: "https://minder-test.example.com/api/v1/webhook/github"
+    external_ping_url: "https://minder-test.example.com/api/v1/health"
+    webhook_secret: "this-is-unused"
+
+  events:
+    driver: go-channel
+    router_close_timeout: 30
+    go-channel:
+      buffer_size: 200
+
+extra_config_migrate: |
+  database:
+    dbuser: migrate-job
+    dbname: minder
+    sslmode: disabled

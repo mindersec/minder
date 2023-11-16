@@ -1,0 +1,857 @@
+---
+# Source: minder/templates/configmap.yaml
+# Copyright 2023 Stacklok, Inc
+#
+# Licensed under the Apache License, Version 2.0 (the "License");
+# you may not use this file except in compliance with the License.
+# You may obtain a copy of the License at
+#
+#      http://www.apache.org/licenses/LICENSE-2.0
+#
+# Unless required by applicable law or agreed to in writing, software
+# distributed under the License is distributed on an "AS IS" BASIS,
+# WITHOUT WARRANTIES OR CONDITIONS OF ANY KIND, either express or implied.
+# See the License for the specific language governing permissions and
+# limitations under the License.
+
+apiVersion: v1
+kind: ConfigMap
+metadata:
+  name: minder-config
+  labels:
+    
+    app.kubernetes.io/instance: minder
+    app.kubernetes.io/managed-by: Helm
+    app.kubernetes.io/name: minder
+    app.kubernetes.io/version: "2023-07-31"
+    helm.sh/chart: minder-0.1.0
+data:
+  config.yaml: |
+    
+    #
+    # Copyright 2023 Stacklok, Inc.
+    #
+    # Licensed under the Apache License, Version 2.0 (the "License");
+    # you may not use this file except in compliance with the License.
+    # You may obtain a copy of the License at
+    #
+    #     http://www.apache.org/licenses/LICENSE-2.0
+    #
+    # Unless required by applicable law or agreed to in writing, software
+    # distributed under the License is distributed on an "AS IS" BASIS,
+    # WITHOUT WARRANTIES OR CONDITIONS OF ANY KIND, either express or implied.
+    # See the License for the specific language governing permissions and
+    # limitations under the License.
+    
+    # HTTP, gRPC & metrics server configuration
+    http_server:
+      host: "127.0.0.1"
+      port: 8080
+    grpc_server:
+      host: "127.0.0.1"
+      port: 8090
+    metric_server:
+      host: "127.0.0.1"
+      port: 9090
+    
+    logging:
+      level: "debug"
+      format: "json"
+      #logFile: "/var/log/minder.log"
+    
+    tracing:
+      enabled: false
+      #sample_ratio: 0.1
+    
+    metrics:
+      enabled: true
+    
+    database:
+      dbhost: "localhost"
+      dbport: 5432
+      dbuser: postgres
+      dbpass: postgres
+      dbname: minder
+      sslmode: disable
+    
+    identity:
+      cli:
+        issuer_url: http://localhost:8081
+        realm: stacklok
+        client_id: minder-cli
+      server:
+        issuer_url: http://keycloak:8080 # Use http://localhost:8081 instead for running minder outside of docker-compose
+        realm: stacklok
+        client_id: minder-server
+        client_secret: secret
+    
+    # Crypto (these should be ultimately stored in a secure vault)
+    # The token key can be generated with:
+    #   openssl rand -base64 32 > .ssh/token_key_passphrase
+    auth:
+      token_key: "./.ssh/token_key_passphrase"
+    
+    # Password Salting, these values are using argon2id
+    # https://en.wikipedia.org/wiki/Argon2
+    # Argon has resistance against side-channel timing attacks and tradeoff attacks
+    # but it is computationally expensive.
+    # If this is a problematic, we could use bcrypt instead.
+    # https://en.wikipedia.org/wiki/Bcrypt
+    salt:
+      # The amount of memory used by the algorithm (in kibibytes).
+      memory: 65536
+      # the amount of iterations
+      iterations:  50
+      # degree of parallelism (number of threads)
+      parallelism: 4
+      # the length of the salt to be used
+      salt_length: 16
+      # the desired number of returned bytes
+      key_length: 32
+    
+    # Webhook Configuration
+    # change example.com to an exposed IP / domain
+    # webhook_secret is set withing the webhook sent to github. Github then signs
+    # the payload sent to minder and minder verifies.
+    webhook-config:
+      external_webhook_url: "https://example.com/api/v1/webhook/github"
+      external_ping_url: "https://example.com/api/v1/health"
+      webhook_secret: "your-password"
+    
+    # OAuth2 Configuration (used during enrollment)
+    # These values are to be set within the GitHub OAuth2 App page
+    github:
+        client_id: "abcde....."
+        client_secret: "abcde....."
+        payload_secret: "your-password"
+        redirect_uri: "http://localhost:8080/api/v1/auth/callback/github"
+        # [*] for all events. It can also be a list such as [push,branch_protection_rule].
+        # Please check complete list on https://docs.github.com/es/webhooks-and-events/webhooks/webhook-events-and-payloads
+        events: ["*"]
+    
+    events:
+      driver: go-channel
+      router_close_timeout: 10
+      go-channel: {}
+    
+  overrides.yaml: |
+    
+    database:
+      dbuser: minder
+      dbname: minder
+      sslmode: disabled
+    
+    identity:
+      server:
+        issuer_url: http://keycloak-deployment.keycloak.svc:80
+        realm: minder
+        client_id: minder-server
+    
+    github:
+      redirect_uri: "https://minder-test.example.com/api/v1/auth/callback/github"
+    
+    webhook-config:
+      external_webhook_url: "https://minder-test.example.com/api/v1/webhook/github"
+      external_ping_url: "https://minder-test.example.com/api/v1/health"
+      webhook_secret: "this-is-unused"
+    
+    events:
+      driver: go-channel
+      router_close_timeout: 30
+      go-channel:
+        buffer_size: 200
+---
+# Source: minder/templates/service.yaml
+# Copyright 2023 Stacklok, Inc
+#
+# Licensed under the Apache License, Version 2.0 (the "License");
+# you may not use this file except in compliance with the License.
+# You may obtain a copy of the License at
+#
+#      http://www.apache.org/licenses/LICENSE-2.0
+#
+# Unless required by applicable law or agreed to in writing, software
+# distributed under the License is distributed on an "AS IS" BASIS,
+# WITHOUT WARRANTIES OR CONDITIONS OF ANY KIND, either express or implied.
+# See the License for the specific language governing permissions and
+# limitations under the License.
+
+apiVersion: v1
+kind: Service
+metadata:
+  name: minder-http
+  annotations:
+    alb.ingress.kubernetes.io/healthcheck-path: "/api/v1/health"
+  labels:
+    
+    app.kubernetes.io/instance: minder
+    app.kubernetes.io/managed-by: Helm
+    app.kubernetes.io/name: minder
+    app.kubernetes.io/version: "2023-07-31"
+    helm.sh/chart: minder-0.1.0
+spec:
+  type: ClusterIP
+  ports:
+    - port: !!int "8080"
+      targetPort: http
+      protocol: TCP
+      name: http
+  selector:
+    app: minder
+---
+# Source: minder/templates/service.yaml
+apiVersion: v1
+kind: Service
+metadata:
+  name: minder-grpc
+  annotations:
+    alb.ingress.kubernetes.io/backend-protocol-version: "GRPC"
+    alb.ingress.kubernetes.io/healthcheck-protocol: "HTTP"
+    alb.ingress.kubernetes.io/healthcheck-path: "/minder.v1.HealthService/CheckHealth"
+    # For some reason, ALB defaults to 12 (unimplemented) as a success code
+    alb.ingress.kubernetes.io/success-codes: "0"
+  labels:
+    
+    app.kubernetes.io/instance: minder
+    app.kubernetes.io/managed-by: Helm
+    app.kubernetes.io/name: minder
+    app.kubernetes.io/version: "2023-07-31"
+    helm.sh/chart: minder-0.1.0
+spec:
+  type: ClusterIP
+  ports:
+    - port: !!int "8090"
+      targetPort: grpc
+      protocol: TCP
+      name: grpc
+  selector:
+    app: minder
+---
+# Source: minder/templates/service.yaml
+apiVersion: v1
+kind: Service
+metadata:
+  name: minder-metrics
+  labels:
+  
+    app.kubernetes.io/instance: minder
+    app.kubernetes.io/managed-by: Helm
+    app.kubernetes.io/name: minder
+    app.kubernetes.io/version: "2023-07-31"
+    helm.sh/chart: minder-0.1.0
+spec:
+  type: ClusterIP
+  ports:
+    - port: !!int "9090"
+      targetPort: http
+      protocol: TCP
+      name: metrics
+  selector:
+    app: minder
+---
+# Source: minder/templates/deployment.yaml
+# Copyright 2023 Stacklok, Inc
+#
+# Licensed under the Apache License, Version 2.0 (the "License");
+# you may not use this file except in compliance with the License.
+# You may obtain a copy of the License at
+#
+#      http://www.apache.org/licenses/LICENSE-2.0
+#
+# Unless required by applicable law or agreed to in writing, software
+# distributed under the License is distributed on an "AS IS" BASIS,
+# WITHOUT WARRANTIES OR CONDITIONS OF ANY KIND, either express or implied.
+# See the License for the specific language governing permissions and
+# limitations under the License.
+
+apiVersion: apps/v1
+kind: Deployment
+metadata:
+  name: minder
+  labels:
+    
+    app.kubernetes.io/instance: minder
+    app.kubernetes.io/managed-by: Helm
+    app.kubernetes.io/name: minder
+    app.kubernetes.io/version: "2023-07-31"
+    helm.sh/chart: minder-0.1.0
+spec:
+  # We'll use autoscaling, sometimes clamped to one instance
+  selector:
+    matchLabels:
+      app: 'minder'
+  template:
+    metadata:
+      labels:
+        app: 'minder'
+      annotations:
+        
+        prometheus.io/scrape: "true"
+        prometheus.io/port: "9090"
+        prometheus.io/path: "/metrics"
+    spec:
+      serviceAccountName: minder
+      containers:
+        - name: minder
+          # restricted security context:
+          # https://kubernetes.io/docs/concepts/security/pod-security-standards/
+          securityContext:
+            allowPrivilegeEscalation: false
+            runAsNonRoot: true
+            readOnlyRootFilesystem: true
+            seccompProfile:
+              type: RuntimeDefault
+            capabilities:
+              drop:
+                - ALL
+          image: ko://github.com/stacklok/minder/cmd/server
+          args:
+          - "serve"
+          - "--db-host=postgres.postgres.svc"
+          - "--config=/config/config.yaml"
+          # We use two config files, one with all the defaults, and one with
+          # additional override values from helm.  (This is a viper feature.)
+          - "--config=/config/overrides.yaml"
+          - "--grpc-host=0.0.0.0"
+          - "--http-host=0.0.0.0"
+          - "--metric-host=0.0.0.0"
+          - "--github-client-id-file=/secrets/app/client_id"
+          - "--github-client-secret-file=/secrets/app/client_secret"
+          env:
+          - name: "MINDER_AUTH_TOKEN_KEY"
+            value: "/secrets/auth/token_key_passphrase"
+          - name: "MINDER_IDENTITY_SERVER_CLIENT_SECRET_FILE"
+            value: "/secrets/identity/identity_client_secret"
+          - name: "MINDER_UNSTABLE_TRUSTY_ENDPOINT"
+            value: "http://pi.pi:8000"
+          - name: "SIGSTORE_NO_CACHE"
+            value: "true"
+          - name: PGPASSFILE
+            value: /secrets/db/.pgpass
+          
+          # ko will always specify a digest, so we don't need to worry about
+          # CRI image caching
+          imagePullPolicy: "IfNotPresent"
+          ports:
+            - name: http
+              containerPort: !!int "8080"
+              protocol: TCP
+            - name: grpc
+              containerPort: !!int "8090"
+              protocol: TCP
+            - name: metric
+              containerPort: !!int "9090"
+              protocol: TCP
+          livenessProbe:
+            httpGet:
+              path: /api/v1/health
+              port: http
+          readinessProbe:
+            httpGet:
+              path: /api/v1/health
+              port: http
+          resources:
+            limits:
+              cpu: 1
+              memory: 1.8Gi
+            requests:
+              cpu: 0.5
+              memory: 800Mi
+          volumeMounts:
+          - name: config
+            mountPath: /config
+          - name: auth-secrets
+            mountPath: /secrets/auth
+          - name: app-secrets
+            mountPath: /secrets/app
+          - name: identity-secrets
+            mountPath: /secrets/identity
+          - mountPath: /secrets/db
+            name: db-password
+        - args:
+          - -c
+          - while true; do kubectl get secret minder-db-password -o jsonpath='{.data.password}'
+            | base64 -d > /secrets/db/.pgpass; sleep 300; done
+          command:
+          - /bin/bash
+          image: bitnami/kubectl
+          name: fetch-secrets
+          volumeMounts:
+          - mountPath: /secrets/db
+            name: db-password
+      volumes:
+      - name: config
+        configMap:
+          name: minder-config
+          items:
+          - key: config.yaml
+            path: config.yaml
+          - key: overrides.yaml
+            path: overrides.yaml
+      - name: auth-secrets
+        secret:
+          secretName: minder-auth-secrets
+      - name: app-secrets
+        secret:
+          secretName: minder-github-api-secrets
+      - name: identity-secrets
+        secret:
+          secretName: minder-identity-secrets
+      - emptyDir:
+          medium: Memory
+          sizeLimit: 1Mi
+        name: db-password
+---
+# Source: minder/templates/hpa.yaml
+# Copyright 2023 Stacklok, Inc
+#
+# Licensed under the Apache License, Version 2.0 (the "License");
+# you may not use this file except in compliance with the License.
+# You may obtain a copy of the License at
+#
+#      http://www.apache.org/licenses/LICENSE-2.0
+#
+# Unless required by applicable law or agreed to in writing, software
+# distributed under the License is distributed on an "AS IS" BASIS,
+# WITHOUT WARRANTIES OR CONDITIONS OF ANY KIND, either express or implied.
+# See the License for the specific language governing permissions and
+# limitations under the License.
+
+apiVersion: autoscaling/v2
+kind: HorizontalPodAutoscaler
+metadata:
+  name: minder
+  labels:
+    
+    app.kubernetes.io/instance: minder
+    app.kubernetes.io/managed-by: Helm
+    app.kubernetes.io/name: minder
+    app.kubernetes.io/version: "2023-07-31"
+    helm.sh/chart: minder-0.1.0
+spec:
+  scaleTargetRef:
+    apiVersion: apps/v1
+    kind: Deployment
+    name: minder
+  minReplicas: 1
+  maxReplicas: 3
+  metrics:
+    - type: Resource
+      resource:
+        name: cpu
+        target:
+          type: Utilization
+          averageUtilization: 60
+---
+# Source: minder/templates/ingress.yaml
+# Copyright 2023 Stacklok, Inc
+#
+# Licensed under the Apache License, Version 2.0 (the "License");
+# you may not use this file except in compliance with the License.
+# You may obtain a copy of the License at
+#
+#      http://www.apache.org/licenses/LICENSE-2.0
+#
+# Unless required by applicable law or agreed to in writing, software
+# distributed under the License is distributed on an "AS IS" BASIS,
+# WITHOUT WARRANTIES OR CONDITIONS OF ANY KIND, either express or implied.
+# See the License for the specific language governing permissions and
+# limitations under the License.
+
+apiVersion: networking.k8s.io/v1
+kind: Ingress
+metadata:
+  name: minder
+  labels:
+    
+    app.kubernetes.io/instance: minder
+    app.kubernetes.io/managed-by: Helm
+    app.kubernetes.io/name: minder
+    app.kubernetes.io/version: "2023-07-31"
+    helm.sh/chart: minder-0.1.0
+  annotations: 
+    cert-manager.io/cluster-issuer: prod-issuer
+spec:
+  # Don't set ingressClassName for now, assume default
+  tls:
+  - hosts:
+    - "minder-test.example.com"
+    secretName: minder-tls
+  rules:
+  - host: "minder-test.example.com"
+    http:
+      paths:
+      # We use Prefix matches on gRPC service names because Ingress API
+      # doesn't support matching on Content-Type: application/grpc
+      - path: /grpc.reflection.v1alpha.ServerReflection
+        pathType: Prefix
+        backend:
+          service:
+            name: minder-grpc
+            port:
+              name: grpc
+      - path: /minder.v1.OAuthService
+        pathType: Prefix
+        backend:
+          service:
+            name: minder-grpc
+            port:
+              name: grpc
+      - path: /minder.v1.AuthService
+        pathType: Prefix
+        backend:
+          service:
+            name: minder-grpc
+            port:
+              name: grpc
+      - path: /minder.v1.ArtifactService
+        pathType: Prefix
+        backend:
+          service:
+            name: minder-grpc
+            port:
+              name: grpc
+      - path: /minder.v1.VulnerabilitiesService
+        pathType: Prefix
+        backend:
+          service:
+            name: minder-grpc
+            port:
+              name: grpc
+      - path: /minder.v1.SecretsService
+        pathType: Prefix
+        backend:
+          service:
+            name: minder-grpc
+            port:
+              name: grpc
+      - path: /minder.v1.RepositoryService
+        pathType: Prefix
+        backend:
+          service:
+            name: minder-grpc
+            port:
+              name: grpc
+      - path: /minder.v1.BranchProtectionService
+        pathType: Prefix
+        backend:
+          service:
+            name: minder-grpc
+            port:
+              name: grpc
+      - path: /minder.v1.OrganizationService
+        pathType: Prefix
+        backend:
+          service:
+            name: minder-grpc
+            port:
+              name: grpc
+      - path: /minder.v1.GroupService
+        pathType: Prefix
+        backend:
+          service:
+            name: minder-grpc
+            port:
+              name: grpc
+      - path: /minder.v1.RoleService
+        pathType: Prefix
+        backend:
+          service:
+            name: minder-grpc
+            port:
+              name: grpc
+      - path: /minder.v1.UserService
+        pathType: Prefix
+        backend:
+          service:
+            name: minder-grpc
+            port:
+              name: grpc
+      - path: /minder.v1.ProfileService
+        pathType: Prefix
+        backend:
+          service:
+            name: minder-grpc
+            port:
+              name: grpc
+      - path: /minder.v1.KeyService
+        pathType: Prefix
+        backend:
+          service:
+            name: minder-grpc
+            port:
+              name: grpc
+      - path: /
+        pathType: Prefix
+        backend:
+          service:
+            name: minder-http
+            port:
+              name: http
+---
+# Source: minder/templates/job.yaml
+# Copyright 2023 Stacklok, Inc
+#
+# Licensed under the Apache License, Version 2.0 (the "License");
+# you may not use this file except in compliance with the License.
+# You may obtain a copy of the License at
+#
+#      http://www.apache.org/licenses/LICENSE-2.0
+#
+# Unless required by applicable law or agreed to in writing, software
+# distributed under the License is distributed on an "AS IS" BASIS,
+# WITHOUT WARRANTIES OR CONDITIONS OF ANY KIND, either express or implied.
+# See the License for the specific language governing permissions and
+# limitations under the License.
+
+# We need a separate service account for the db-update job, because
+# it runs as a helm pre-install hook, and the minder service account
+# won't have been installed at that point.
+---
+# Source: minder/templates/serviceaccount.yaml
+# Copyright 2023 Stacklok, Inc
+#
+# Licensed under the Apache License, Version 2.0 (the "License");
+# you may not use this file except in compliance with the License.
+# You may obtain a copy of the License at
+#
+#      http://www.apache.org/licenses/LICENSE-2.0
+#
+# Unless required by applicable law or agreed to in writing, software
+# distributed under the License is distributed on an "AS IS" BASIS,
+# WITHOUT WARRANTIES OR CONDITIONS OF ANY KIND, either express or implied.
+# See the License for the specific language governing permissions and
+# limitations under the License.
+---
+# Source: minder/templates/tests/test-connection.yaml
+# Copyright 2023 Stacklok, Inc
+#
+# Licensed under the Apache License, Version 2.0 (the "License");
+# you may not use this file except in compliance with the License.
+# You may obtain a copy of the License at
+#
+#      http://www.apache.org/licenses/LICENSE-2.0
+#
+# Unless required by applicable law or agreed to in writing, software
+# distributed under the License is distributed on an "AS IS" BASIS,
+# WITHOUT WARRANTIES OR CONDITIONS OF ANY KIND, either express or implied.
+# See the License for the specific language governing permissions and
+# limitations under the License.
+---
+# Source: minder/templates/job.yaml
+apiVersion: v1
+kind: ConfigMap
+metadata:
+  name: db-update-config
+  annotations:
+    helm.sh/hook-delete-policy: before-hook-creation
+    helm.sh/hook: pre-install,pre-upgrade
+  labels:
+    helm.sh/chart: 'minder-0.1.0'
+    app.kubernetes.io/name: minder
+    app.kubernetes.io/instance: "minder"
+    app.kubernetes.io/version: "2023-07-31"
+    app.kubernetes.io/managed-by: "Helm"
+data:
+  config.yaml: |
+    
+    #
+    # Copyright 2023 Stacklok, Inc.
+    #
+    # Licensed under the Apache License, Version 2.0 (the "License");
+    # you may not use this file except in compliance with the License.
+    # You may obtain a copy of the License at
+    #
+    #     http://www.apache.org/licenses/LICENSE-2.0
+    #
+    # Unless required by applicable law or agreed to in writing, software
+    # distributed under the License is distributed on an "AS IS" BASIS,
+    # WITHOUT WARRANTIES OR CONDITIONS OF ANY KIND, either express or implied.
+    # See the License for the specific language governing permissions and
+    # limitations under the License.
+    
+    # HTTP, gRPC & metrics server configuration
+    http_server:
+      host: "127.0.0.1"
+      port: 8080
+    grpc_server:
+      host: "127.0.0.1"
+      port: 8090
+    metric_server:
+      host: "127.0.0.1"
+      port: 9090
+    
+    logging:
+      level: "debug"
+      format: "json"
+      #logFile: "/var/log/minder.log"
+    
+    tracing:
+      enabled: false
+      #sample_ratio: 0.1
+    
+    metrics:
+      enabled: true
+    
+    database:
+      dbhost: "localhost"
+      dbport: 5432
+      dbuser: postgres
+      dbpass: postgres
+      dbname: minder
+      sslmode: disable
+    
+    identity:
+      cli:
+        issuer_url: http://localhost:8081
+        realm: stacklok
+        client_id: minder-cli
+      server:
+        issuer_url: http://keycloak:8080 # Use http://localhost:8081 instead for running minder outside of docker-compose
+        realm: stacklok
+        client_id: minder-server
+        client_secret: secret
+    
+    # Crypto (these should be ultimately stored in a secure vault)
+    # The token key can be generated with:
+    #   openssl rand -base64 32 > .ssh/token_key_passphrase
+    auth:
+      token_key: "./.ssh/token_key_passphrase"
+    
+    # Password Salting, these values are using argon2id
+    # https://en.wikipedia.org/wiki/Argon2
+    # Argon has resistance against side-channel timing attacks and tradeoff attacks
+    # but it is computationally expensive.
+    # If this is a problematic, we could use bcrypt instead.
+    # https://en.wikipedia.org/wiki/Bcrypt
+    salt:
+      # The amount of memory used by the algorithm (in kibibytes).
+      memory: 65536
+      # the amount of iterations
+      iterations:  50
+      # degree of parallelism (number of threads)
+      parallelism: 4
+      # the length of the salt to be used
+      salt_length: 16
+      # the desired number of returned bytes
+      key_length: 32
+    
+    # Webhook Configuration
+    # change example.com to an exposed IP / domain
+    # webhook_secret is set withing the webhook sent to github. Github then signs
+    # the payload sent to minder and minder verifies.
+    webhook-config:
+      external_webhook_url: "https://example.com/api/v1/webhook/github"
+      external_ping_url: "https://example.com/api/v1/health"
+      webhook_secret: "your-password"
+    
+    # OAuth2 Configuration (used during enrollment)
+    # These values are to be set within the GitHub OAuth2 App page
+    github:
+        client_id: "abcde....."
+        client_secret: "abcde....."
+        payload_secret: "your-password"
+        redirect_uri: "http://localhost:8080/api/v1/auth/callback/github"
+        # [*] for all events. It can also be a list such as [push,branch_protection_rule].
+        # Please check complete list on https://docs.github.com/es/webhooks-and-events/webhooks/webhook-events-and-payloads
+        events: ["*"]
+    
+    events:
+      driver: go-channel
+      router_close_timeout: 10
+      go-channel: {}
+    
+  overrides.yaml: |
+    
+    database:
+      dbuser: migrate-job
+      dbname: minder
+      sslmode: disabled
+---
+# Source: minder/templates/job.yaml
+apiVersion: batch/v1
+kind: Job
+metadata:
+  name: db-update
+  annotations:
+    helm.sh/hook-delete-policy: hook-succeeded
+    helm.sh/hook: pre-install,pre-upgrade
+    helm.sh/hook-weight: "5"
+  labels:
+    helm.sh/chart: 'minder-0.1.0'
+    app.kubernetes.io/name: minder
+    app.kubernetes.io/instance: "minder"
+    app.kubernetes.io/version: "2023-07-31"
+    app.kubernetes.io/managed-by: "Helm"
+spec:
+  template:
+    metadata:
+      labels:
+        app: db-init
+    spec:
+      serviceAccountName: migrate-job
+      restartPolicy: Never
+      containers:
+        - name: minder-dbinit
+          # restricted security context:
+          # https://kubernetes.io/docs/concepts/security/pod-security-standards/
+          securityContext:
+            allowPrivilegeEscalation: false
+            runAsNonRoot: true
+            seccompProfile:
+              type: RuntimeDefault
+            capabilities:
+              drop:
+                - ALL
+          image: ko://github.com/stacklok/minder/cmd/server
+          args:
+          - "migrate"
+          - "up"
+          - "--yes"
+          - "--db-host=postgres.postgres.svc"
+          - "--config=/config/config.yaml"
+          # We use two config files, one with all the defaults, and one with
+          # additional override values from helm.  (This is a viper feature.)
+          - "--config=/config/overrides.yaml"
+          # ko will always specify a digest, so we don't need to worry about
+          # CRI image caching
+          imagePullPolicy: IfNotPresent
+          resources:
+            limits:
+              cpu: 1
+              memory: 300Mi
+            requests:
+              cpu: 200m
+              memory: 200Mi
+          env:
+            - name: PGPASSFILE
+              value: /secrets/db/.pgpass
+          volumeMounts:
+          - name: config
+            mountPath: /config
+          - mountPath: /secrets/db
+            name: db-password
+        - args:
+          - -c
+          - while true; do kubectl get secret minder-migrate-password -o jsonpath='{.data.password}'
+            | base64 -d > /secrets/db/.pgpass; sleep 300; done
+          command:
+          - /bin/bash
+          image: bitnami/kubectl
+          name: fetch-secrets
+          volumeMounts:
+          - mountPath: /secrets/db
+            name: db-password
+      volumes:
+      - name: config
+        configMap:
+          name: db-update-config
+          items:
+          - key: config.yaml
+            path: config.yaml
+          - key: overrides.yaml
+            path: overrides.yaml
+      - emptyDir:
+          medium: Memory
+          sizeLimit: 1Mi
+        name: db-password

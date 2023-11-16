@@ -64,6 +64,12 @@ migrationSettings:
     limits:
       cpu: 1
       memory: 300Mi
+  # Additional volumes to mount
+  extraVolumes: null
+  # Additional volume mounts
+  extraVolumeMounts: null
+  # Additional configuration for sidecar containers
+  sidecarContainers: null
 
 # Configurable settings for the main deployment
 deploymentSettings:
@@ -84,6 +90,8 @@ deploymentSettings:
     authSecretName: "minder-auth-secrets"
     appSecretName: "minder-github-secrets"
     identitySecretName: "minder-identity-secrets"
+  # Additional configuration for sidecar containers
+  sidecarContainers: null
 
 
 # Additional configuration yaml beyond what's in config.yaml.example
@@ -93,3 +101,4 @@ extra_config: |
 # Additional configuration yaml that's applied to the migration job
 extra_config_migrate: |
   # Add even more content here
+
