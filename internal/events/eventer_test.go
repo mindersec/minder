@@ -126,7 +126,7 @@ func TestEventer(t *testing.T) {
 			ctx, cancel := context.WithCancel(context.Background())
 			defer cancel()
 
-			eventer, err := events.Setup(ctx, driverConfig())
+			eventer, err := events.Setup(ctx, driverConfig(), nil)
 			if err != nil {
 				t.Errorf("Setup() error = %v", err)
 				return

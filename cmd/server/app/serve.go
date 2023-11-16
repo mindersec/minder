@@ -71,7 +71,7 @@ var serveCmd = &cobra.Command{
 
 		errg, ctx := errgroup.WithContext(ctx)
 
-		evt, err := events.Setup(ctx, &cfg.Events)
+		evt, err := events.Setup(ctx, &cfg.Events, dbConn)
 		if err != nil {
 			log.Printf("Failed to set up eventer: %v", err)
 			return err

@@ -19,6 +19,7 @@ package events
 
 import (
 	"context"
+	"database/sql"
 	"errors"
 	"fmt"
 	"reflect"
@@ -26,6 +27,7 @@ import (
 	"time"
 
 	"github.com/ThreeDotsLabs/watermill"
+	watermillsql "github.com/ThreeDotsLabs/watermill-sql/v2/pkg/sql"
 	"github.com/ThreeDotsLabs/watermill/components/metrics"
 	"github.com/ThreeDotsLabs/watermill/message"
 	"github.com/ThreeDotsLabs/watermill/message/router/middleware"
@@ -98,7 +100,7 @@ var _ message.Publisher = (*Eventer)(nil)
 
 // Setup creates an Eventer object which isolates the watermill setup code
 // TODO: pass in logger
-func Setup(ctx context.Context, cfg *config.EventConfig) (*Eventer, error) {
+func Setup(ctx context.Context, cfg *config.EventConfig, db *sql.DB) (*Eventer, error) {
 	if cfg == nil {
 		return nil, errors.New("event config is nil")
 	}
@@ -137,7 +139,7 @@ func Setup(ctx context.Context, cfg *config.EventConfig) (*Eventer, error) {
 		middleware.Recoverer,
 	)
 
-	pub, sub, err := instantiateDriver(cfg.Driver, cfg)
+	pub, sub, err := instantiateDriver(cfg.Driver, cfg, db)
 	if err != nil {
 		return nil, fmt.Errorf("failed instantiating driver: %w", err)
 	}
@@ -159,10 +161,12 @@ func Setup(ctx context.Context, cfg *config.EventConfig) (*Eventer, error) {
 	}, nil
 }
 
-func instantiateDriver(driver string, cfg *config.EventConfig) (message.Publisher, message.Subscriber, error) {
+func instantiateDriver(driver string, cfg *config.EventConfig, db *sql.DB) (message.Publisher, message.Subscriber, error) {
 	switch driver {
 	case "go-channel":
 		return buildGoChannelDriver(cfg)
+	case "postgresql":
+		return buildPostgreSQLDriver(db)
 	default:
 		return nil, nil, fmt.Errorf("unknown driver %s", driver)
 	}
@@ -175,6 +179,35 @@ func buildGoChannelDriver(cfg *config.EventConfig) (message.Publisher, message.S
 	}, nil)
 
 	return pubsub, pubsub, nil
+}
+
+func buildPostgreSQLDriver(db *sql.DB) (message.Publisher, message.Subscriber, error) {
+	publisher, err := watermillsql.NewPublisher(
+		db,
+		watermillsql.PublisherConfig{
+			SchemaAdapter:        watermillsql.DefaultPostgreSQLSchema{},
+			AutoInitializeSchema: true,
+		},
+		watermill.NewStdLogger(false, false),
+	)
+	if err != nil {
+		return nil, nil, fmt.Errorf("failed to create SQL publisher: %w", err)
+	}
+
+	subscriber, err := watermillsql.NewSubscriber(
+		db,
+		watermillsql.SubscriberConfig{
+			SchemaAdapter:    watermillsql.DefaultPostgreSQLSchema{},
+			OffsetsAdapter:   watermillsql.DefaultPostgreSQLOffsetsAdapter{},
+			InitializeSchema: true,
+		},
+		watermill.NewStdLogger(false, false),
+	)
+	if err != nil {
+		return nil, nil, fmt.Errorf("failed to create SQL subscriber: %w", err)
+	}
+
+	return publisher, subscriber, nil
 }
 
 // Close closes the router
