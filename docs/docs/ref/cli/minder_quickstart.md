@@ -1,27 +1,25 @@
 ---
-title: minder provider enroll
+title: minder quickstart
 ---
-## minder provider enroll
+## minder quickstart
 
-Enroll a provider within the minder control plane
+Quickstart minder
 
 ### Synopsis
 
-The minder provider enroll command allows a user to enroll a provider
-such as GitHub into the minder control plane. Once enrolled, users can perform
-actions such as adding repositories.
+The quickstart command provide the means to quickly get started with minder
 
 ```
-minder provider enroll [flags]
+minder quickstart [flags]
 ```
 
 ### Options
 
 ```
-  -h, --help              help for enroll
+  -h, --help              help for quickstart
   -o, --owner string      Owner to filter on for provider resources
-  -r, --project string    ID of the project for enrolling the provider
-  -p, --provider string   Name for the provider to enroll
+  -r, --project string    Project to create the quickstart profile in
+  -p, --provider string   Name of the provider (default "github")
   -t, --token string      Personal Access Token (PAT) to use for enrollment
 ```
 
@@ -39,5 +37,5 @@ minder provider enroll [flags]
 
 ### SEE ALSO
 
-* [minder provider](minder_provider.md)	 - Manage providers within a minder control plane
+* [minder](minder.md)	 - Minder controls the hosted minder service
 
