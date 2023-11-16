@@ -1,0 +1,63 @@
+hostname: "minder-test.example.com"
+db:
+  host: postgres.postgres.svc
+
+serviceAccounts:
+  server: minder
+  migrate: migrate-job
+
+ingress:
+  annotations:
+    cert-manager.io/cluster-issuer: prod-issuer
+
+hpaSettings:
+  minReplicas: 1
+  maxReplicas: 3
+  metrics:
+    cpu:
+      targetAverageUtilization: 60
+
+deploymentSettings:
+  resources:
+    requests:
+      cpu: 0.5
+      memory: 800Mi
+    limits:
+      cpu: 1
+      memory: 1.8Gi
+  secrets:
+    authSecretName: "minder-auth-secrets"
+    appSecretName: "minder-github-api-secrets"
+    identitySecretName: "minder-identity-secrets"
+
+extra_config: |
+  database:
+    dbuser: minder
+    dbname: minder
+    sslmode: disabled
+
+  identity:
+    server:
+      issuer_url: http://keycloak-deployment.keycloak.svc:80
+      realm: minder
+      client_id: minder-server
+
+  github:
+    redirect_uri: "https://minder-test.example.com/api/v1/auth/callback/github"
+
+  webhook-config:
+    external_webhook_url: "https://minder-test.example.com/api/v1/webhook/github"
+    external_ping_url: "https://minder-test.example.com/api/v1/health"
+    webhook_secret: "this-is-unused"
+
+  events:
+    driver: go-channel
+    router_close_timeout: 30
+    go-channel:
+      buffer_size: 200
+
+extra_config_migrate: |
+  database:
+    dbuser: migrate-job
+    dbname: minder
+    sslmode: disabled

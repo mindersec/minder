@@ -15,6 +15,9 @@ jobs:
         with:
           go-version-file: 'go.mod'
 
+      - name: Set up helm (test dependency)
+        uses: azure/setup-helm@v3
+
       # Install gotestfmt on the VM running the action.
       - name: Set up gotestfmt
         uses: GoTestTools/gotestfmt-action@v2

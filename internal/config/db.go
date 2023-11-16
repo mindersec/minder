@@ -21,6 +21,7 @@ import (
 	"fmt"
 	"net/url"
 	"sync"
+	"time"
 
 	"github.com/aws/aws-sdk-go-v2/config"
 	"github.com/aws/aws-sdk-go-v2/feature/rds/auth"
@@ -104,15 +105,22 @@ func (c *DatabaseConfig) GetDBConnection(ctx context.Context) (*sql.DB, string, 
 		return nil, "", err
 	}
 
-	// Ensure we actually connected to the database, per Go docs
-	if err := conn.Ping(); err != nil {
-		//nolint:gosec // Not much we can do about an error here.
-		conn.Close()
-		return nil, "", err
+	var err error
+	for i := 0; i < 8; i++ {
+		// Ensure we actually connected to the database, per Go docs
+		err = conn.Ping()
+		if err != nil {
+			zerolog.Ctx(ctx).Warn().Err(err).Msg("Unable to initialize connection to DB, retry %d", i)
+			time.Sleep(1 * time.Second)
+			continue
+		}
+		zerolog.Ctx(ctx).Info().Msg("Connected to DB")
+		return conn, uri, err
 	}
 
-	zerolog.Ctx(ctx).Info().Msg("Connected to DB")
-	return conn, uri, err
+	//nolint:gosec // Not much we can do about an error here.
+	conn.Close()
+	return nil, "", err
 }
 
 // RegisterDatabaseFlags registers the flags for the database configuration

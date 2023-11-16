@@ -100,9 +100,19 @@ spec:
           imagePullPolicy: {{ .Values.migrationSettings.imagePullPolicy }}
           resources:
             {{- toYaml .Values.migrationSettings.resources | nindent 12 }}
+          {{- if .Values.migrationSettings.extraEnv }}
+          env:
+          {{- toYaml .Values.migrationSettings.extraEnv | nindent 12 }}
+          {{- end }}
           volumeMounts:
           - name: config
             mountPath: /config
+          {{- if .Values.migrationSettings.extraVolumeMounts }}
+          {{- toYaml .Values.migrationSettings.extraVolumeMounts | nindent 10 }}
+          {{- end }}
+        {{- if .Values.migrationSettings.sidecarContainers }}
+        {{- toYaml .Values.migrationSettings.sidecarContainers | nindent 8 }}
+        {{- end }}
       volumes:
       - name: config
         configMap:
@@ -112,4 +122,7 @@ spec:
             path: config.yaml
           - key: overrides.yaml
             path: overrides.yaml
+      {{- if .Values.migrationSettings.extraVolumes }}
+      {{- toYaml .Values.migrationSettings.extraVolumes | nindent 6 }}
+      {{- end }}
  

@@ -66,6 +66,9 @@ spec:
             value: "{{ .Values.trusty.endpoint }}"
           - name: "SIGSTORE_NO_CACHE"
             value: "true"
+          {{- if .Values.deploymentSettings.extraEnv }}
+          {{- toYaml .Values.deploymentSettings.extraEnv | nindent 10 }}
+          {{- end }}
           
           # ko will always specify a digest, so we don't need to worry about
           # CRI image caching
@@ -100,8 +103,11 @@ spec:
           - name: identity-secrets
             mountPath: /secrets/identity
           {{- if .Values.deploymentSettings.extraVolumeMounts }}
-          {{- toYaml .Values.deploymentSettings.extraVolumeMounts | nindent 12 }}
+          {{- toYaml .Values.deploymentSettings.extraVolumeMounts | nindent 10 }}
           {{- end }}
+        {{- if .Values.deploymentSettings.sidecarContainers }}
+        {{- toYaml .Values.deploymentSettings.sidecarContainers | nindent 8 }}
+        {{- end }}
       volumes:
       - name: config
         configMap:
