@@ -1,12 +1,12 @@
-name: Update docs for client
+name: Update docs for helm
 on:
   push:
     branches:
       - main
     paths:
-      - "cmd/cli/**"
+      - "deployment/**"
 jobs:
-  update-docs-cli:
+  update-docs-helm:
     runs-on: ubuntu-latest
     permissions:
       contents: write
