@@ -31,6 +31,7 @@ import (
 	"github.com/stacklok/minder/internal/config"
 	"github.com/stacklok/minder/internal/controlplane"
 	"github.com/stacklok/minder/internal/db"
+	"github.com/stacklok/minder/internal/eea"
 	"github.com/stacklok/minder/internal/engine"
 	"github.com/stacklok/minder/internal/events"
 	"github.com/stacklok/minder/internal/logger"
@@ -109,7 +110,13 @@ var serveCmd = &cobra.Command{
 			return fmt.Errorf("unable to create server: %w", err)
 		}
 
-		exec, err := engine.NewExecutor(store, &cfg.Auth, engine.WithProviderMetrics(providerMetrics))
+		aggr := eea.NewEEA(store, evt, &cfg.Events.Aggregator)
+
+		s.ConsumeEvents(aggr)
+
+		exec, err := engine.NewExecutor(ctx, store, &cfg.Auth, evt,
+			engine.WithProviderMetrics(providerMetrics),
+			engine.WithAggregatorMiddleware(aggr))
 		if err != nil {
 			return fmt.Errorf("unable to create executor: %w", err)
 		}
@@ -133,6 +140,13 @@ var serveCmd = &cobra.Command{
 		})
 
 		errg.Go(s.HandleEvents(ctx))
+
+		// Wait for event handlers to start running
+		<-evt.Running()
+
+		if err := aggr.FlushAll(ctx); err != nil {
+			return fmt.Errorf("error flushing cache: %w", err)
+		}
 
 		return errg.Wait()
 	},

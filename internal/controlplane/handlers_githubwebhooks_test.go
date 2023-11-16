@@ -31,7 +31,6 @@ import (
 	"testing"
 	"time"
 
-	"github.com/ThreeDotsLabs/watermill/message"
 	"github.com/golang/mock/gomock"
 	"github.com/google/go-github/v53/github"
 	"github.com/google/uuid"
@@ -46,6 +45,7 @@ import (
 	"github.com/stacklok/minder/internal/db"
 	"github.com/stacklok/minder/internal/engine"
 	"github.com/stacklok/minder/internal/util/rand"
+	"github.com/stacklok/minder/internal/util/testqueue"
 )
 
 // MockClient is a mock implementation of the GitHub client.
@@ -95,10 +95,10 @@ func (s *UnitTestSuite) TestHandleWebHookPing() {
 	srv := newDefaultServer(t, mockStore)
 	defer srv.evt.Close()
 
-	pq := newPassthroughQueue()
-	queued := pq.getQueue()
+	pq := testqueue.NewPassthroughQueue()
+	queued := pq.GetQueue()
 
-	srv.evt.Register(engine.InternalEntityEventTopic, pq.pass)
+	srv.evt.Register(engine.ExecuteEntityEventTopic, pq.Pass)
 
 	go func() {
 		err := srv.evt.Run(context.Background())
@@ -148,10 +148,10 @@ func (s *UnitTestSuite) TestHandleWebHookUnexistentRepository() {
 	srv := newDefaultServer(t, mockStore)
 	defer srv.evt.Close()
 
-	pq := newPassthroughQueue()
-	queued := pq.getQueue()
+	pq := testqueue.NewPassthroughQueue()
+	queued := pq.GetQueue()
 
-	srv.evt.Register(engine.InternalEntityEventTopic, pq.pass)
+	srv.evt.Register(engine.ExecuteEntityEventTopic, pq.Pass)
 
 	go func() {
 		err := srv.evt.Run(context.Background())
@@ -214,10 +214,10 @@ func (s *UnitTestSuite) TestHandleWebHookRepository() {
 	srv := newDefaultServer(t, mockStore)
 	defer srv.evt.Close()
 
-	pq := newPassthroughQueue()
-	queued := pq.getQueue()
+	pq := testqueue.NewPassthroughQueue()
+	queued := pq.GetQueue()
 
-	srv.evt.Register(engine.InternalEntityEventTopic, pq.pass)
+	srv.evt.Register(engine.ExecuteEntityEventTopic, pq.Pass)
 
 	go func() {
 		err := srv.evt.Run(context.Background())
@@ -331,10 +331,10 @@ func (s *UnitTestSuite) TestHandleWebHookUnexistentRepoPackage() {
 	srv := newDefaultServer(t, mockStore)
 	defer srv.evt.Close()
 
-	pq := newPassthroughQueue()
-	queued := pq.getQueue()
+	pq := testqueue.NewPassthroughQueue()
+	queued := pq.GetQueue()
 
-	srv.evt.Register(engine.InternalEntityEventTopic, pq.pass)
+	srv.evt.Register(engine.ExecuteEntityEventTopic, pq.Pass)
 
 	go func() {
 		err := srv.evt.Run(context.Background())
@@ -392,23 +392,4 @@ func TestAll(t *testing.T) {
 
 	RunUnitTestSuite(t)
 	// Call other test runner functions for additional test suites
-}
-
-type passthroughQueue struct {
-	ch chan *message.Message
-}
-
-func newPassthroughQueue() *passthroughQueue {
-	return &passthroughQueue{
-		ch: make(chan *message.Message),
-	}
-}
-
-func (q *passthroughQueue) getQueue() <-chan *message.Message {
-	return q.ch
-}
-
-func (q *passthroughQueue) pass(msg *message.Message) error {
-	q.ch <- msg
-	return nil
 }

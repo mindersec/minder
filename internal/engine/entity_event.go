@@ -52,6 +52,7 @@ type EntityInfoWrapper struct {
 	Entity        protoreflect.ProtoMessage
 	Type          minderv1.Entity
 	OwnershipData map[string]string
+	ExecutionID   *uuid.UUID
 }
 
 const (
@@ -76,6 +77,8 @@ const (
 	ArtifactIDEventKey = "artifact_id"
 	// PullRequestIDEventKey is the key for the pull request ID
 	PullRequestIDEventKey = "pull_request_id"
+	// ExecutionIDKey is the key for the execution ID. This is set when acquiring a lock.
+	ExecutionIDKey = "execution_id"
 )
 
 // NewEntityInfoWrapper creates a new EntityInfoWrapper
@@ -144,6 +147,13 @@ func (eiw *EntityInfoWrapper) WithPullRequestID(id uuid.UUID) *EntityInfoWrapper
 	return eiw
 }
 
+// WithExecutionID sets the execution ID
+func (eiw *EntityInfoWrapper) WithExecutionID(id uuid.UUID) *EntityInfoWrapper {
+	eiw.ExecutionID = &id
+
+	return eiw
+}
+
 // AsRepository sets the entity type to a repository
 func (eiw *EntityInfoWrapper) AsRepository() *EntityInfoWrapper {
 	eiw.Type = minderv1.Entity_ENTITY_REPOSITORIES
@@ -188,7 +198,7 @@ func (eiw *EntityInfoWrapper) Publish(evt *events.Eventer) error {
 		return err
 	}
 
-	if err := evt.Publish(InternalEntityEventTopic, msg); err != nil {
+	if err := evt.Publish(ExecuteEntityEventTopic, msg); err != nil {
 		return fmt.Errorf("error publishing entity event: %w", err)
 	}
 
@@ -210,6 +220,10 @@ func (eiw *EntityInfoWrapper) ToMessage(msg *message.Message) error {
 		return fmt.Errorf("provider is required")
 	}
 
+	if eiw.ExecutionID != nil {
+		msg.Metadata.Set(ExecutionIDKey, eiw.ExecutionID.String())
+	}
+
 	msg.Metadata.Set(ProviderEventKey, eiw.Provider)
 	msg.Metadata.Set(EntityTypeEventKey, typ)
 	msg.Metadata.Set(ProjectIDEventKey, eiw.ProjectID.String())
@@ -222,6 +236,30 @@ func (eiw *EntityInfoWrapper) ToMessage(msg *message.Message) error {
 	}
 
 	return nil
+}
+
+// GetEntityDBIDs returns the repository, artifact and pull request IDs
+// from the ownership data
+func (eiw *EntityInfoWrapper) GetEntityDBIDs() (repoID uuid.UUID, artifactID uuid.NullUUID, pullRequestID uuid.NullUUID) {
+	repoID = uuid.MustParse(eiw.OwnershipData[RepositoryIDEventKey])
+
+	strArtifactID, ok := eiw.OwnershipData[ArtifactIDEventKey]
+	if ok {
+		artifactID = uuid.NullUUID{
+			UUID:  uuid.MustParse(strArtifactID),
+			Valid: true,
+		}
+	}
+
+	strPullRequestID, ok := eiw.OwnershipData[PullRequestIDEventKey]
+	if ok {
+		pullRequestID = uuid.NullUUID{
+			UUID:  uuid.MustParse(strPullRequestID),
+			Valid: true,
+		}
+	}
+
+	return repoID, artifactID, pullRequestID
 }
 
 func (eiw *EntityInfoWrapper) withProjectIDFromMessage(msg *message.Message) error {
@@ -259,6 +297,21 @@ func (eiw *EntityInfoWrapper) withArtifactIDFromMessage(msg *message.Message) er
 
 func (eiw *EntityInfoWrapper) withPullRequestIDFromMessage(msg *message.Message) error {
 	return eiw.withIDFromMessage(msg, PullRequestIDEventKey)
+}
+
+func (eiw *EntityInfoWrapper) withExecutionIDFromMessage(msg *message.Message) error {
+	executionID := msg.Metadata.Get(ExecutionIDKey)
+	if executionID == "" {
+		return fmt.Errorf("%s not found in metadata", ExecutionIDKey)
+	}
+
+	id, err := uuid.Parse(executionID)
+	if err != nil {
+		return fmt.Errorf("error parsing execution ID: %w", err)
+	}
+
+	eiw.ExecutionID = &id
+	return nil
 }
 
 func (eiw *EntityInfoWrapper) withIDFromMessage(msg *message.Message, key string) error {
@@ -305,7 +358,8 @@ func getIDFromMessage(msg *message.Message, key string) (string, error) {
 	return rawID, nil
 }
 
-func parseEntityEvent(msg *message.Message) (*EntityInfoWrapper, error) {
+// ParseEntityEvent parses a message.Message and returns an EntityInfoWrapper
+func ParseEntityEvent(msg *message.Message) (*EntityInfoWrapper, error) {
 	out := &EntityInfoWrapper{
 		OwnershipData: make(map[string]string),
 	}

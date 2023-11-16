@@ -190,7 +190,7 @@ func (s *Server) HandleGitHubWebHook() http.HandlerFunc {
 
 		wes.accepted = true
 
-		if err := s.evt.Publish(engine.InternalEntityEventTopic, m); err != nil {
+		if err := s.evt.Publish(engine.ExecuteEntityEventTopic, m); err != nil {
 			wes.error = true
 			log.Printf("Error publishing message: %v", err)
 			w.WriteHeader(http.StatusInternalServerError)

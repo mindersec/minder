@@ -525,8 +525,31 @@ func Int32FromString(v string) (int32, error) {
 	return int32(asInt32), nil
 }
 
+// GetRepository retrieves a repository from the database
+// and converts it to a protobuf
+func GetRepository(ctx context.Context, store db.ExtendQuerier, repoID uuid.UUID) (*minderv1.Repository, error) {
+	dbrepo, err := store.GetRepositoryByID(ctx, repoID)
+	if err != nil {
+		return nil, fmt.Errorf("error getting repository: %w", err)
+	}
+
+	strRepoID := repoID.String()
+	return &minderv1.Repository{
+		Id:        &strRepoID,
+		Owner:     dbrepo.RepoOwner,
+		Name:      dbrepo.RepoName,
+		RepoId:    dbrepo.RepoID,
+		HookUrl:   dbrepo.WebhookUrl,
+		DeployUrl: dbrepo.DeployUrl,
+		CloneUrl:  dbrepo.CloneUrl,
+		CreatedAt: timestamppb.New(dbrepo.CreatedAt),
+		UpdatedAt: timestamppb.New(dbrepo.UpdatedAt),
+	}, nil
+}
+
 // GetArtifactWithVersions retrieves an artifact and its versions from the database
-func GetArtifactWithVersions(ctx context.Context, store db.Store, repoID, artifactID uuid.UUID) (*minderv1.Artifact, error) {
+func GetArtifactWithVersions(
+	ctx context.Context, store db.ExtendQuerier, repoID, artifactID uuid.UUID) (*minderv1.Artifact, error) {
 	// Get repository data - we need the owner and name
 	dbrepo, err := store.GetRepositoryByID(ctx, repoID)
 	if errors.Is(err, sql.ErrNoRows) {
@@ -593,5 +616,35 @@ func GetArtifactWithVersions(ctx context.Context, store db.Store, repoID, artifa
 		Repository: dbrepo.RepoName,
 		Versions:   listArtifactVersions,
 		CreatedAt:  timestamppb.New(artifact.CreatedAt),
+	}, nil
+}
+
+// GetPullRequest retrieves a pull request from the database
+// and converts it to a protobuf
+func GetPullRequest(
+	ctx context.Context,
+	store db.ExtendQuerier,
+	repoID, pullRequestID uuid.UUID,
+) (*minderv1.PullRequest, error) {
+	// Get repository data - we need the owner and name
+	dbrepo, err := store.GetRepositoryByID(ctx, repoID)
+	if errors.Is(err, sql.ErrNoRows) {
+		return nil, fmt.Errorf("repository not found")
+	} else if err != nil {
+		return nil, fmt.Errorf("cannot read repository: %v", err)
+	}
+
+	dbpr, err := store.GetPullRequestByID(ctx, pullRequestID)
+	if errors.Is(err, sql.ErrNoRows) {
+		return nil, fmt.Errorf("pull request not found")
+	} else if err != nil {
+		return nil, fmt.Errorf("cannot read pull request: %v", err)
+	}
+
+	// TODO: Do we need extra columns in the pull request table?
+	return &minderv1.PullRequest{
+		Number:    int32(dbpr.PrNumber), // TODO: this should be int64
+		RepoOwner: dbrepo.RepoOwner,
+		RepoName:  dbrepo.RepoName,
 	}, nil
 }

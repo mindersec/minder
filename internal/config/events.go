@@ -23,6 +23,8 @@ type EventConfig struct {
 	RouterCloseTimeout int64 `mapstructure:"router_close_timeout" default:"10"`
 	// GoChannel is the configuration for the go channel event driver
 	GoChannel GoChannelEventConfig `mapstructure:"go-channel" default:"{}"`
+	// Aggregator is the configuration for the event aggregator middleware
+	Aggregator AggregatorConfig `mapstructure:"aggregator" default:"{}"`
 }
 
 // GoChannelEventConfig is the configuration for the go channel event driver
@@ -32,4 +34,14 @@ type GoChannelEventConfig struct {
 	BufferSize int64 `mapstructure:"buffer_size" default:"0"`
 	// PersistEvents is whether or not to persist events to the channel
 	PersistEvents bool `mapstructure:"persist_events" default:"false"`
+	// BlockPublishUntilSubscriberAck is whether or not to block publishing until
+	// the subscriber acks the message. This is useful for testing.
+	BlockPublishUntilSubscriberAck bool `mapstructure:"block_publish_until_subscriber_ack" default:"false"`
+}
+
+// AggregatorConfig is the configuration for the event aggregator middleware
+type AggregatorConfig struct {
+	// LockInterval is the interval for locking events in seconds.
+	// This is the threshold between rule evaluations + actions.
+	LockInterval int64 `mapstructure:"lock_interval" default:"30"`
 }

@@ -310,6 +310,16 @@ type Entitlement struct {
 	CreatedAt time.Time `json:"created_at"`
 }
 
+type EntityExecutionLock struct {
+	ID            uuid.UUID     `json:"id"`
+	Entity        Entities      `json:"entity"`
+	LockedBy      uuid.UUID     `json:"locked_by"`
+	LastLockTime  time.Time     `json:"last_lock_time"`
+	RepositoryID  uuid.UUID     `json:"repository_id"`
+	ArtifactID    uuid.NullUUID `json:"artifact_id"`
+	PullRequestID uuid.NullUUID `json:"pull_request_id"`
+}
+
 type EntityProfile struct {
 	ID              uuid.UUID       `json:"id"`
 	Entity          Entities        `json:"entity"`
@@ -331,6 +341,15 @@ type Feature struct {
 	Settings  json.RawMessage `json:"settings"`
 	CreatedAt time.Time       `json:"created_at"`
 	UpdatedAt time.Time       `json:"updated_at"`
+}
+
+type FlushCache struct {
+	ID            uuid.UUID     `json:"id"`
+	Entity        Entities      `json:"entity"`
+	RepositoryID  uuid.UUID     `json:"repository_id"`
+	ArtifactID    uuid.NullUUID `json:"artifact_id"`
+	PullRequestID uuid.NullUUID `json:"pull_request_id"`
+	QueuedAt      time.Time     `json:"queued_at"`
 }
 
 type Profile struct {
