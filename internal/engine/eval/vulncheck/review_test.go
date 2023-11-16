@@ -151,7 +151,7 @@ func TestReviewPrHandlerVulnerabilitiesDifferentIdentities(t *testing.T) {
 
 	expBody, err := createReviewBody(vulnsFoundText)
 	require.NoError(t, err)
-	expCommentBody := reviewBodyWithSuggestion(patchPackage.IndentedString(0, "", nil))
+	expCommentBody := reviewBodyWithSuggestion(patchPackage.IndentedString(0, fmt.Sprintf(`"%s": {`, patchPackage.Name), nil))
 
 	mockClient.EXPECT().
 		ListReviews(gomock.Any(), pr.RepoOwner, pr.RepoName, int(pr.Number), nil).
@@ -424,7 +424,7 @@ func TestCommitStatusPrHandlerWithVulnerabilities(t *testing.T) {
 
 	expBody, err := createReviewBody(vulnsFoundText)
 	require.NoError(t, err)
-	expCommentBody := reviewBodyWithSuggestion(patchPackage.IndentedString(0, "", nil))
+	expCommentBody := reviewBodyWithSuggestion(patchPackage.IndentedString(0, fmt.Sprintf(`"%s": {`, patchPackage.Name), nil))
 
 	mockClient.EXPECT().
 		ListReviews(gomock.Any(), pr.RepoOwner, pr.RepoName, int(pr.Number), nil).
