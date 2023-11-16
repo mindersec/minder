@@ -59,14 +59,14 @@ func NewRestRemediate(actionType interfaces.ActionType, restCfg *pb.RestType,
 		return nil, fmt.Errorf("action type cannot be empty")
 	}
 
-	endpointTmpl, err := util.ParseNewTemplate(&restCfg.Endpoint, "endpoint")
+	endpointTmpl, err := util.ParseNewTextTemplate(&restCfg.Endpoint, "endpoint")
 	if err != nil {
 		return nil, fmt.Errorf("cannot parse endpoint template: %w", err)
 	}
 
 	var bodyTmpl *template.Template
 	if restCfg.Body != nil {
-		bodyTmpl, err = util.ParseNewTemplate(restCfg.Body, "body")
+		bodyTmpl, err = util.ParseNewTextTemplate(restCfg.Body, "body")
 		if err != nil {
 			return nil, fmt.Errorf("cannot parse body template: %w", err)
 		}

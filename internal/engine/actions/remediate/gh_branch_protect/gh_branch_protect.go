@@ -59,7 +59,7 @@ func NewGhBranchProtectRemediator(
 		return nil, fmt.Errorf("action type cannot be empty")
 	}
 
-	patchTemplate, err := util.ParseNewTemplate(&ghp.Patch, "patch")
+	patchTemplate, err := util.ParseNewTextTemplate(&ghp.Patch, "patch")
 	if err != nil {
 		return nil, fmt.Errorf("cannot parse patch template: %w", err)
 	}

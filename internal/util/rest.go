@@ -19,6 +19,7 @@ package util
 import (
 	"bytes"
 	"fmt"
+	htmltemplate "html/template"
 	"net/url"
 	"strings"
 	"text/template"
@@ -34,13 +35,28 @@ func HttpMethodFromString(inMeth, dfl string) string {
 	return method
 }
 
-// ParseNewTemplate parses a named template from a string, ensuring it is not empty
-func ParseNewTemplate(tmpl *string, name string) (*template.Template, error) {
+// ParseNewTextTemplate parses a named template from a string, ensuring it is not empty
+func ParseNewTextTemplate(tmpl *string, name string) (*template.Template, error) {
 	if tmpl == nil || len(*tmpl) == 0 {
 		return nil, fmt.Errorf("missing template")
 	}
 
-	t := template.New(name)
+	t := template.New(name).Option("missingkey=error")
+	t, err := t.Parse(*tmpl)
+	if err != nil {
+		return nil, fmt.Errorf("cannot parse template: %w", err)
+	}
+
+	return t, nil
+}
+
+// ParseNewHtmlTemplate parses a named template from a string, ensuring it is not empty
+func ParseNewHtmlTemplate(tmpl *string, name string) (*htmltemplate.Template, error) {
+	if tmpl == nil || len(*tmpl) == 0 {
+		return nil, fmt.Errorf("missing template")
+	}
+
+	t := htmltemplate.New(name).Option("missingkey=error")
 	t, err := t.Parse(*tmpl)
 	if err != nil {
 		return nil, fmt.Errorf("cannot parse template: %w", err)
@@ -59,7 +75,7 @@ func GenerateCurlCommand(method, apiBaseURL, endpoint, body string) (string, err
  {{.URL}} \
  -d '{{.Body}}'`
 
-	tmpl, err := template.New("curlCmd").Parse(tmplStr)
+	tmpl, err := template.New("curlCmd").Option("missingkey=error").Parse(tmplStr)
 	if err != nil {
 		return "", err
 	}

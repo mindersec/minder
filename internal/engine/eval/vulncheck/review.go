@@ -19,6 +19,7 @@ import (
 	"bytes"
 	"context"
 	"fmt"
+	htmltemplate "html/template"
 	"io"
 	"strings"
 	"text/template"
@@ -62,7 +63,7 @@ type reviewTemplateData struct {
 
 func createReviewBody(reviewText string) (string, error) {
 	// Create and parse the template
-	tmpl, err := template.New(reviewTemplateName).Parse(reviewTmplStr)
+	tmpl, err := template.New(reviewTemplateName).Option("missingkey=error").Parse(reviewTmplStr)
 	if err != nil {
 		return "", err
 	}
@@ -433,8 +434,8 @@ type summaryPrHandler struct {
 
 	logger      zerolog.Logger
 	trackedDeps []dependencyVulnerabilities
-	headerTmpl  *template.Template
-	rowsTmpl    *template.Template
+	headerTmpl  *htmltemplate.Template
+	rowsTmpl    *htmltemplate.Template
 }
 
 const (
@@ -548,11 +549,11 @@ func newSummaryPrHandler(
 		Str("repo-name", pr.RepoName).
 		Logger()
 
-	headerTmpl, err := template.New(tableVulnerabilitiesHeaderName).Parse(tableVulnerabilitiesHeader)
+	headerTmpl, err := htmltemplate.New(tableVulnerabilitiesHeaderName).Parse(tableVulnerabilitiesHeader)
 	if err != nil {
 		return nil, fmt.Errorf("could not parse dependency template: %w", err)
 	}
-	rowsTmpl, err := template.New(tableVulnerabilitiesRowsName).Parse(tableVulnerabilitiesRows)
+	rowsTmpl, err := htmltemplate.New(tableVulnerabilitiesRowsName).Parse(tableVulnerabilitiesRows)
 	if err != nil {
 		return nil, fmt.Errorf("could not parse vulnerability template: %w", err)
 	}

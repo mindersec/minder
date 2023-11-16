@@ -22,8 +22,8 @@ import (
 	"encoding/json"
 	"errors"
 	"fmt"
+	htmltemplate "html/template"
 	"strings"
-	"text/template"
 
 	"github.com/google/go-github/v53/github"
 	"github.com/rs/zerolog"
@@ -95,9 +95,9 @@ type Alert struct {
 	actionType           interfaces.ActionType
 	cli                  provifv1.GitHub
 	saCfg                *pb.RuleType_Definition_Alert_AlertTypeSA
-	summaryTmpl          *template.Template
-	descriptionTmpl      *template.Template
-	descriptionNoRemTmpl *template.Template
+	summaryTmpl          *htmltemplate.Template
+	descriptionTmpl      *htmltemplate.Template
+	descriptionNoRemTmpl *htmltemplate.Template
 }
 
 type paramsSA struct {
@@ -133,17 +133,17 @@ func NewSecurityAdvisoryAlert(
 		return nil, fmt.Errorf("action type cannot be empty")
 	}
 	// Parse the templates for summary and description
-	sumT, err := template.New(tmplSummaryName).Parse(tmplSummary)
+	sumT, err := htmltemplate.New(tmplSummaryName).Option("missingkey=error").Parse(tmplSummary)
 	if err != nil {
 		return nil, fmt.Errorf("cannot parse summary template: %w", err)
 	}
 	descriptionTmplNoRemStr := strings.Join([]string{tmplPart1Top, tmplPart2MiddleNoRem, tmplPart3Bottom}, "\n")
-	descNoRemT, err := template.New(tmplDescriptionNameNoRem).Parse(descriptionTmplNoRemStr)
+	descNoRemT, err := htmltemplate.New(tmplDescriptionNameNoRem).Option("missingkey=error").Parse(descriptionTmplNoRemStr)
 	if err != nil {
 		return nil, fmt.Errorf("cannot parse description template: %w", err)
 	}
 	descriptionTmplStr := strings.Join([]string{tmplPart1Top, tmplPart2MiddleRem, tmplPart3Bottom}, "\n")
-	descT, err := template.New(tmplDescriptionNameRem).Parse(descriptionTmplStr)
+	descT, err := htmltemplate.New(tmplDescriptionNameRem).Option("missingkey=error").Parse(descriptionTmplStr)
 	if err != nil {
 		return nil, fmt.Errorf("cannot parse description template: %w", err)
 	}
