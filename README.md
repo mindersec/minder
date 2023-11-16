@@ -83,29 +83,18 @@ minder auth login
 
 Upon completion, you should see that the Minder Server is set to `api.stacklok.com`.
 
-## Enroll a repository provider
-
-Minder supports GitHub as a provider to enroll repositories. To enroll your provider, run:
-
-```bash
-minder provider enroll --provider github
-```
-
-A browser session will open, and you will be prompted to login to your GitHub.
-Once you have granted Minder access, you will be redirected back, and the user will be enrolled.
-The minder CLI application will report the session is complete.
-
 ## Quickstart
 
-Minder provides a "happy path" that allows you to create a profile with enabled secret scanning for
-repositories of your choice in just a few seconds. To do so, run:
+Minder provides a "happy path" that guides you through the process of creating your first profile in Minder. 
+In just a few seconds, you will register your repositories and enable secret scanning protection for all of them.
+To do so, run:
 
 ```bash
 minder quickstart --provider github
 ```
 
-This will prompt you to select the repositories you'd like to enable secret scanning for, create the `secret_scanning`
-rule type and create a profile with secret scanning enabled for the selected repositories.
+This will prompt you to enroll your provider, select the repositories you'd like, create the `secret_scanning`
+rule type and create a profile which enables secret scanning for the selected repositories.
 
 To see the status of your profile, run:
 
