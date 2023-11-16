@@ -304,10 +304,7 @@ var cmd = &cobra.Command{
 func init() {
 	app.RootCmd.AddCommand(cmd)
 	cmd.Flags().StringP("project", "r", "", "Project to create the quickstart profile in")
-	cmd.Flags().StringP("provider", "p", "", "Name of the provider")
+	cmd.Flags().StringP("provider", "p", "github", "Name of the provider")
 	cmd.Flags().StringP("token", "t", "", "Personal Access Token (PAT) to use for enrollment")
 	cmd.Flags().StringP("owner", "o", "", "Owner to filter on for provider resources")
-	if err := cmd.MarkFlagRequired("provider"); err != nil {
-		_, _ = fmt.Fprintf(os.Stderr, "Error marking flag as required: %s\n", err)
-	}
 }

@@ -90,7 +90,7 @@ In just a few seconds, you will register your repositories and enable secret sca
 To do so, run:
 
 ```bash
-minder quickstart --provider github
+minder quickstart
 ```
 
 This will prompt you to enroll your provider, select the repositories you'd like, create the `secret_scanning`
