@@ -1,0 +1,64 @@
+name: Update docs for helm
+on:
+  push:
+    branches:
+      - main
+    paths:
+      - "deployment/**"
+jobs:
+  update-docs-helm:
+    runs-on: ubuntu-latest
+    permissions:
+      contents: write
+      pull-requests: write
+    env:
+      HELM_DOCS_VERSION: 1.11.3
+    steps:
+      - name: Checkout repository
+        uses: actions/checkout@v4
+
+      - name: Set up Go
+        uses: actions/setup-go@v4
+        with:
+          go-version-file: "go.mod"
+
+      - name: install helm-docs
+        run: |
+          cd /tmp
+          wget https://github.com/norwoodj/helm-docs/releases/download/v${{env.HELM_DOCS_VERSION}}/helm-docs_${{env.HELM_DOCS_VERSION}}_Linux_x86_64.tar.gz
+          tar -xvf helm-docs_${{env.HELM_DOCS_VERSION}}_Linux_x86_64.tar.gz
+          sudo mv helm-docs /usr/local/sbin
+
+      - name: run helm-docs
+        run: |
+          make helm-docs
+
+      - name: Extract Commit SHA and Details
+        id: extract_commit_details
+        run: |
+          COMMIT_SHA="${{ github.sha }}"
+          COMMIT_DATE=$(git show -s --format=%cd --date=format:'%Y-%m-%d %H:%M:%S' $commit_sha)
+          COMMIT_AUTHOR=$(git show -s --format='%an' $commit_sha)
+          echo "commit_sha=$COMMIT_SHA" >> $GITHUB_OUTPUT
+          echo "commit_date=$COMMIT_DATE" >> $GITHUB_OUTPUT
+          echo "commit_author=$COMMIT_AUTHOR" >> $GITHUB_OUTPUT
+
+      - name: Commit and push changes
+        uses: peter-evans/create-pull-request@v5
+        with:
+          commit-message: Update helm documentation
+          committer: GitHub <noreply@github.com>
+          author: ${{ github.actor }} <${{ github.actor }}@users.noreply.github.com>
+          signoff: false
+          branch-suffix: timestamp
+          delete-branch: true
+          title: "Auto-generated helm documentation update - ${{ steps.extract_commit_details.outputs.commit_date }}"
+          body: |
+            ** Source commit **
+              - Commit SHA: [${{ steps.extract_commit_details.outputs.commit_sha }}](${{ github.server_url }}/${{ github.repository }}/commit/${{ steps.extract_commit_details.outputs.commit_sha}})
+            - Date: ${{ steps.extract_commit_details.outputs.commit_date }}
+            - Author: ${{ steps.extract_commit_details.outputs.commit_author }}
+          labels: |
+            docs
+            automated pr
+          draft: false

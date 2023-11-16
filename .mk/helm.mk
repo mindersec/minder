@@ -28,3 +28,8 @@ helm-template: ## renders the helm templates which is useful for debugging
 	cd deployment/helm; \
 		helm dependency update && \
 		helm template .
+
+.PHONY: helm-docs
+helm-docs: ## generate the helm docs
+	cd deployment/helm; \
+		helm-docs -t README.md.gotmpl -o README.md
