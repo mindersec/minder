@@ -97,9 +97,9 @@ func init() {
 }
 
 func handleGetTableOutput(cmd *cobra.Command, profile *pb.Profile) {
-	table := initializeTable(cmd)
+	table := InitializeTable(cmd)
 
-	renderProfileTable(profile, table)
+	RenderProfileTable(profile, table)
 
 	table.Render()
 }

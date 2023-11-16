@@ -95,8 +95,8 @@ within a minder control plane.`,
 			return fmt.Errorf("error updating profile: %w", err)
 		}
 
-		table := initializeTable(cmd)
-		renderProfileTable(resp.GetProfile(), table)
+		table := InitializeTable(cmd)
+		RenderProfileTable(resp.GetProfile(), table)
 		table.Render()
 		return nil
 	},

@@ -24,7 +24,8 @@ import (
 	minderv1 "github.com/stacklok/minder/pkg/api/protobuf/go/minder/v1"
 )
 
-func initializeTable(cmd *cobra.Command) *tablewriter.Table {
+// InitializeTable initializes the table for rendering profiles
+func InitializeTable(cmd *cobra.Command) *tablewriter.Table {
 	table := tablewriter.NewWriter(cmd.OutOrStdout())
 	table.SetHeader([]string{"Id", "Name", "Provider", "Entity", "Rule", "Rule Params", "Rule Definition"})
 	table.SetRowLine(true)
@@ -36,7 +37,8 @@ func initializeTable(cmd *cobra.Command) *tablewriter.Table {
 	return table
 }
 
-func renderProfileTable(
+// RenderProfileTable renders the profile table
+func RenderProfileTable(
 	p *minderv1.Profile,
 	table *tablewriter.Table,
 ) {
