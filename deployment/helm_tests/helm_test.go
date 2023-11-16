@@ -44,6 +44,11 @@ func Test_HelmValues(t *testing.T) {
 		t.Fatalf("Unable to find YAML files: %v", err)
 	}
 
+	cmd := exec.Command("helm", "dependency", "update", "../helm")
+	if output, err := cmd.CombinedOutput(); err != nil {
+		t.Fatalf("Unable to run helm dependency update: %v\n%s", err, output)
+	}
+
 	for _, yamlFile := range yamlFiles {
 		filename := filepath.Join(testDir, yamlFile)
 		t.Run(yamlFile, func(t *testing.T) {
