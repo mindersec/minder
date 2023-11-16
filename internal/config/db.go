@@ -105,12 +105,11 @@ func (c *DatabaseConfig) GetDBConnection(ctx context.Context) (*sql.DB, string, 
 		return nil, "", err
 	}
 
-	var err error
 	for i := 0; i < 8; i++ {
 		// Ensure we actually connected to the database, per Go docs
 		err = conn.Ping()
 		if err != nil {
-			zerolog.Ctx(ctx).Warn().Err(err).Msg("Unable to initialize connection to DB, retry %d", i)
+			zerolog.Ctx(ctx).Warn().Err(err).Msgf("Unable to initialize connection to DB, retry %d", i)
 			time.Sleep(1 * time.Second)
 			continue
 		}

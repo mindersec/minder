@@ -1,3 +1,18 @@
+//
+// Copyright 2023 Stacklok, Inc.
+//
+// Licensed under the Apache License, Version 2.0 (the "License");
+// you may not use this file except in compliance with the License.
+// You may obtain a copy of the License at
+//
+//     http://www.apache.org/licenses/LICENSE-2.0
+//
+// Unless required by applicable law or agreed to in writing, software
+// distributed under the License is distributed on an "AS IS" BASIS,
+// WITHOUT WARRANTIES OR CONDITIONS OF ANY KIND, either express or implied.
+// See the License for the specific language governing permissions and
+// limitations under the License.
+
 package main
 
 import (
@@ -34,6 +49,7 @@ func Test_HelmValues(t *testing.T) {
 		t.Run(yamlFile, func(t *testing.T) {
 			t.Parallel()
 
+			// nolint:gosec // G204 warns of subprocess launched with variable, but we control the variable (above)
 			cmd := exec.Command("helm", "template", "minder", "-f", filename, "--debug", "../helm")
 
 			out, err := cmd.Output()
@@ -45,7 +61,7 @@ func Test_HelmValues(t *testing.T) {
 				t.Fatalf("Unable to run helm template: %v", err)
 			}
 			if *overwrite {
-				if err := os.WriteFile(fmt.Sprintf("%s-out", filename), out, 0644); err != nil {
+				if err := os.WriteFile(fmt.Sprintf("%s-out", filename), out, 0600); err != nil {
 					t.Fatalf("Unable to write output file: %v", err)
 				}
 			}
