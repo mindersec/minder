@@ -32,6 +32,7 @@ https://docs.stacklok.com/minder
 * [minder profile](minder_profile.md)	 - Manage profiles within a minder control plane
 * [minder profile_status](minder_profile_status.md)	 - Manage profile status within a minder control plane
 * [minder provider](minder_provider.md)	 - Manage providers within a minder control plane
+* [minder quickstart](minder_quickstart.md)	 - Quickstart minder
 * [minder repo](minder_repo.md)	 - Manage repositories within a minder control plane
 * [minder rule_type](minder_rule_type.md)	 - Manage rule types within a minder control plane
 * [minder version](minder_version.md)	 - Print the version of the minder CLI
