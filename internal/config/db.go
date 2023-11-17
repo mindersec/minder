@@ -156,6 +156,9 @@ func RegisterDatabaseFlags(v *viper.Viper, flags *pflag.FlagSet) error {
 
 	err = util.BindConfigFlagWithShort(
 		v, flags, "database.sslmode", "db-sslmode", "s", "disable", "Database sslmode", flags.StringP)
+	if err != nil {
+		return err
+	}
 
 	err = util.BindConfigFlagWithShort(
 		v, flags, "database_queue.dbhost", "db-events-host", "Q", "localhost", "Database Events host", flags.StringP)
