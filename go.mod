@@ -40,7 +40,7 @@ require (
 	github.com/robfig/cron/v3 v3.0.1
 	github.com/rs/zerolog v1.31.0
 	github.com/secure-systems-lab/go-securesystemslib v0.7.0
-	github.com/signalfx/splunk-otel-go/instrumentation/database/sql/splunksql v1.10.0
+	github.com/signalfx/splunk-otel-go/instrumentation/database/sql/splunksql v1.11.0
 	github.com/signalfx/splunk-otel-go/instrumentation/github.com/lib/pq/splunkpq v1.10.0
 	github.com/sigstore/cosign/v2 v2.2.1
 	github.com/sigstore/sigstore v1.7.5
@@ -100,7 +100,7 @@ require (
 	github.com/sagikazarmark/locafero v0.3.0 // indirect
 	github.com/sagikazarmark/slog-shim v0.1.0 // indirect
 	github.com/segmentio/asm v1.2.0 // indirect
-	github.com/signalfx/splunk-otel-go/instrumentation/internal v1.10.0 // indirect
+	github.com/signalfx/splunk-otel-go/instrumentation/internal v1.11.0 // indirect
 	github.com/sourcegraph/conc v0.3.0 // indirect
 	github.com/xi2/xz v0.0.0-20171230120015-48954b6210f8 // indirect
 	gopkg.in/go-jose/go-jose.v2 v2.6.1 // indirect
