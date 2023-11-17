@@ -265,7 +265,7 @@ default allow = true`,
 		GoChannel: config.GoChannelEventConfig{
 			BlockPublishUntilSubscriberAck: true,
 		},
-	})
+	}, nil)
 	require.NoError(t, err, "failed to setup eventer")
 
 	go func() {

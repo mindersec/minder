@@ -25,6 +25,7 @@ services:
       "--http-host=0.0.0.0",
       "--metric-host=0.0.0.0",
       "--db-host=postgres",
+      "--db-events-host=postgres_queue",
       "--config=/app/config.yaml",
       # If you don't want to store your GitHub client ID and secret in the main
       # config file, point to them here:
@@ -60,6 +61,8 @@ services:
     depends_on:
       postgres:
         condition: service_healthy
+      postgres_queue:
+        condition: service_healthy  
       keycloak:
         condition: service_healthy
 #      migrate:
@@ -109,6 +112,23 @@ services:
         retries: 5
       networks:
         - app_net
+  postgres_queue:
+    container_name: postgres_queue_container
+    image: postgres:15-alpine
+    restart: always
+    environment:
+      POSTGRES_USER: postgres
+      POSTGRES_PASSWORD: postgres
+      POSTGRES_DB: minder-queue
+    networks:
+      - app_net
+    ports:
+      - "5433:5432"  
+    healthcheck:
+      test: ["CMD-SHELL", "pg_isready"]
+      interval: 10s
+      timeout: 5s
+      retries: 5      
 
   keycloak:
     container_name: keycloak_container

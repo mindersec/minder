@@ -154,6 +154,39 @@ func RegisterDatabaseFlags(v *viper.Viper, flags *pflag.FlagSet) error {
 		return err
 	}
 
-	return util.BindConfigFlagWithShort(
+	err = util.BindConfigFlagWithShort(
 		v, flags, "database.sslmode", "db-sslmode", "s", "disable", "Database sslmode", flags.StringP)
+
+	err = util.BindConfigFlagWithShort(
+		v, flags, "database_queue.dbhost", "db-events-host", "Q", "localhost", "Database Events host", flags.StringP)
+	if err != nil {
+		return err
+	}
+
+	err = util.BindConfigFlag(
+		v, flags, "database_queue.dbport", "db-events-port", 5432, "Database Events port", flags.Int)
+	if err != nil {
+		return err
+	}
+
+	err = util.BindConfigFlagWithShort(
+		v, flags, "database_queue.dbuser", "db-events-user", "U", "postgres", "Database Events user", flags.StringP)
+	if err != nil {
+		return err
+	}
+
+	err = util.BindConfigFlagWithShort(
+		v, flags, "database_queue.dbpass", "db-events-pass", "W", "postgres", "Database Events password", flags.StringP)
+	if err != nil {
+		return err
+	}
+
+	err = util.BindConfigFlagWithShort(
+		v, flags, "database_queue.dbname", "db-events-name", "N", "minder-queue", "Database Events name", flags.StringP)
+	if err != nil {
+		return err
+	}
+
+	return util.BindConfigFlagWithShort(
+		v, flags, "database_queue.sslmode", "db-events-sslmode", "M", "disable", "Database Events sslmode", flags.StringP)
 }

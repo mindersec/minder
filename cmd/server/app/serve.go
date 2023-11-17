@@ -16,6 +16,7 @@
 package app
 
 import (
+	"database/sql"
 	"fmt"
 	"log"
 	"net/url"
@@ -65,13 +66,29 @@ var serveCmd = &cobra.Command{
 		if err != nil {
 			return fmt.Errorf("unable to connect to database: %w", err)
 		}
-		defer dbConn.Close()
+		defer func(dbConn *sql.DB) {
+			err := dbConn.Close()
+			if err != nil {
+				log.Printf("error closing database connection: %v", err)
+			}
+		}(dbConn)
 
 		store := db.NewStore(dbConn)
 
+		dbConnEvents, _, err := cfg.DatabaseQueue.GetDBConnection(ctx)
+		if err != nil {
+			return fmt.Errorf("unable to connect to events database: %w", err)
+		}
+		defer func(dbConnEvents *sql.DB) {
+			err := dbConnEvents.Close()
+			if err != nil {
+				log.Printf("error closing events database connection: %v", err)
+			}
+		}(dbConnEvents)
+
 		errg, ctx := errgroup.WithContext(ctx)
 
-		evt, err := events.Setup(ctx, &cfg.Events, dbConn)
+		evt, err := events.Setup(ctx, &cfg.Events, dbConnEvents)
 		if err != nil {
 			log.Printf("Failed to set up eventer: %v", err)
 			return err

@@ -56,7 +56,7 @@ func TestAggregator(t *testing.T) {
 			BufferSize:                     concurrentEvents,
 			BlockPublishUntilSubscriberAck: true,
 		},
-	})
+	}, nil)
 	require.NoError(t, err)
 
 	// we'll wait 2 seconds for the lock to be available
