@@ -58,7 +58,8 @@ minder control plane.`,
 			yes := cli.PrintYesNoPrompt(cmd,
 				"You are about to permanently delete all of your rule types.",
 				"Are you sure?",
-				"Delete all rule types operation cancelled.")
+				"Delete all rule types operation cancelled.",
+				false)
 			if !yes {
 				return
 			}

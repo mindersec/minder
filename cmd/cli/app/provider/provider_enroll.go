@@ -144,7 +144,8 @@ func EnrollProviderCmd(cmd *cobra.Command, _ []string) (string, error) {
 	yes := cli.PrintYesNoPrompt(cmd,
 		fmt.Sprintf("You are about to enroll repositories from %s.", ownerPromptStr),
 		"Do you confirm?",
-		"Enroll operation cancelled.")
+		"Enroll operation cancelled.",
+		true)
 	if !yes {
 		return "", nil
 	}
