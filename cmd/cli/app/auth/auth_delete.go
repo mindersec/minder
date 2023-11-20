@@ -63,7 +63,8 @@ var auth_deleteCmd = &cobra.Command{
 				userDetails.Email,
 			),
 			"Are you sure?",
-			"Delete account operation cancelled.")
+			"Delete account operation cancelled.",
+			false)
 		if !yes {
 			return
 		}

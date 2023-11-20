@@ -142,7 +142,8 @@ var cmd = &cobra.Command{
 		yes := cli.PrintYesNoPrompt(cmd,
 			stepPromptMsgWelcome,
 			"Proceed?",
-			"Quickstart operation cancelled.")
+			"Quickstart operation cancelled.",
+			true)
 		if !yes {
 			return nil
 		}
@@ -151,7 +152,8 @@ var cmd = &cobra.Command{
 		yes = cli.PrintYesNoPrompt(cmd,
 			stepPromptMsgEnroll,
 			"Proceed?",
-			"Quickstart operation cancelled.")
+			"Quickstart operation cancelled.",
+			true)
 		if !yes {
 			return nil
 		}
@@ -173,7 +175,8 @@ var cmd = &cobra.Command{
 		yes = cli.PrintYesNoPrompt(cmd,
 			stepPromptMsgRegister,
 			"Proceed?",
-			"Quickstart operation cancelled.")
+			"Quickstart operation cancelled.",
+			true)
 		if !yes {
 			return nil
 		}
@@ -192,7 +195,8 @@ var cmd = &cobra.Command{
 		yes = cli.PrintYesNoPrompt(cmd,
 			stepPromptMsgRuleType,
 			"Proceed?",
-			"Quickstart operation cancelled.")
+			"Quickstart operation cancelled.",
+			true)
 		if !yes {
 			return nil
 		}
@@ -244,7 +248,8 @@ var cmd = &cobra.Command{
 		yes = cli.PrintYesNoPrompt(cmd,
 			fmt.Sprintf(stepPromptMsgProfile, strings.Join(registeredRepos[:], "\n")),
 			"Proceed?",
-			"Quickstart operation cancelled.")
+			"Quickstart operation cancelled.",
+			true)
 		if !yes {
 			return nil
 		}
