@@ -289,7 +289,7 @@ require (
 	github.com/yashtewari/glob-intersection v0.2.0 // indirect
 	github.com/yuin/goldmark v1.6.0 // indirect
 	github.com/yuin/goldmark-emoji v1.0.2 // indirect
-	github.com/zitadel/oidc/v2 v2.11.0
+	github.com/zitadel/oidc/v2 v2.12.0
 	go.mongodb.org/mongo-driver v1.12.1 // indirect
 	go.opentelemetry.io/otel/metric v1.21.0
 	go.step.sm/crypto v0.36.1 // indirect
