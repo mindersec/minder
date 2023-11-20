@@ -4,7 +4,6 @@
 ---
 
 [Installation](https://minder-docs.stacklok.dev/getting_started/install_cli) | [Documentation](https://minder-docs.stacklok.dev) | [Discussions](https://github.com/stacklok/minder/discussions) | [Releases](https://github.com/stacklok/minder/releases)
-
 ---
 
 # What is Minder?
@@ -29,25 +28,21 @@ allowing users to integrate with their existing tooling and processes.
 * **Artifact attestation:** Continuously verify that packages are signed to ensure they’re tamper-proof, using the open source project Sigstore.
 * **Dependency management:** Manage dependency security posture by helping developers make better choices and enforcing controls. Minder is integrated with [Trusty by Stacklok](https://trustypkg.dev) to enable policy-driven dependency management based on the risk level of dependencies.
 
----
-## Getting Started Quickstart (< 5 minutes)
+## Public instance
 
 Your friends at Stacklok have set up a public instance of Minder that you can use for free. The Minder CLI tool
 (`minder`) from our official releases is configured to use this instance by default. Follow Stacklok's Minder [Getting Started Guide](https://docs.stacklok.com/minder/getting_started/install_cli) to quickly try out Minder's features without having to build and deploy OSS Monder. 
-
-
-You can also use the public
-instance by running `minder auth login` and following the prompts.
-
-```bash
-minder auth login --grpc-host api.stacklok.com --identity-url https://auth.stacklok.com
-```
 
 Note that it's not possible to register private repositories. If you'd like to use Minder with private repositories,
 feel free to [contact us](mailto:hello@stacklok.com)! We'd be thrilled to help you out.
 
 ---
-# Getting Started
+# Getting Started (< 1 minute)
+
+Minder provides a "happy path" that guides you through the process of creating your first profile in Minder. 
+In just a few seconds, you will register your repositories and enable secret scanning protection for all of them!
+
+<img src="https://github.com/stacklok/minder/assets/16540482/00646f28-2f48-43f2-bb2b-4a791782d7e3" width="80%"/>
 
 ## Installation
 
@@ -85,7 +80,7 @@ Upon completion, you should see that the Minder Server is set to `api.stacklok.c
 
 ## Quickstart
 
-Minder provides a "happy path" that guides you through the process of creating your first profile in Minder. 
+The `quickstart` command guides you through the process of creating your first profile in Minder. 
 In just a few seconds, you will register your repositories and enable secret scanning protection for all of them.
 To do so, run:
 
