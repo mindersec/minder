@@ -75,27 +75,9 @@ var serveCmd = &cobra.Command{
 
 		store := db.NewStore(dbConn)
 
-		// Get a separate database connection for eventing. This is done to separate concerns from the main database.
-		// It is used for the lifetime of the application, hence it is initialised here.
-		// This is not ideal from a Clean Code perspective, but it is the simplest way to
-		// ensure that the connection is closed when the application exits.
-		var dbConnEvents *sql.DB
-		if cfg.Events.Driver == events.SQLDriver {
-			dbConnEvents, _, err = cfg.Events.SQLPubSub.GetDBConnection(ctx)
-			if err != nil {
-				return fmt.Errorf("unable to connect to events database: %w", err)
-			}
-			defer func(dbConnEvents *sql.DB) {
-				err := dbConnEvents.Close()
-				if err != nil {
-					log.Printf("error closing events database connection: %v", err)
-				}
-			}(dbConnEvents)
-		}
-
 		errg, ctx := errgroup.WithContext(ctx)
 
-		evt, err := events.Setup(ctx, &cfg.Events, dbConnEvents)
+		evt, err := events.Setup(ctx, &cfg.Events)
 		if err != nil {
 			log.Printf("Failed to set up eventer: %v", err)
 			return err
