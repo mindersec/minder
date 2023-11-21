@@ -45,6 +45,9 @@ const (
 	ProviderTypeKey           = "provider"
 	ProviderSourceKey         = "source"
 	GithubWebhookEventTypeKey = "type"
+
+	GoChannelDriver = "go-channel"
+	SQLDriver       = "sql"
 )
 
 const (
@@ -163,9 +166,9 @@ func Setup(ctx context.Context, cfg *config.EventConfig, db *sql.DB) (*Eventer, 
 
 func instantiateDriver(driver string, cfg *config.EventConfig, db *sql.DB) (message.Publisher, message.Subscriber, error) {
 	switch driver {
-	case "go-channel":
+	case GoChannelDriver:
 		return buildGoChannelDriver(cfg)
-	case "postgresql":
+	case SQLDriver:
 		return buildPostgreSQLDriver(db)
 	default:
 		return nil, nil, fmt.Errorf("unknown driver %s", driver)

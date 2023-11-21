@@ -66,6 +66,11 @@ spec:
             value: "{{ .Values.trusty.endpoint }}"
           - name: "SIGSTORE_NO_CACHE"
             value: "true"
+          - name: "MINDER_DB_PASSWORD"
+            valueFrom:
+              secretKeyRef:
+                name: minder-identity-secrets
+                key: password
           {{- if .Values.deploymentSettings.extraEnv }}
           {{- toYaml .Values.deploymentSettings.extraEnv | nindent 10 }}
           {{- end }}
