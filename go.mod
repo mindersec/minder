@@ -1,3 +1,5 @@
+# A dummy change to go.mod, do not merge
+
 module github.com/stacklok/minder
 
 go 1.21
