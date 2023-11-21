@@ -24,7 +24,7 @@ type EventConfig struct {
 	// GoChannel is the configuration for the go channel event driver
 	GoChannel GoChannelEventConfig `mapstructure:"go-channel" default:"{}"`
 	// SQLPubSub is the configuration for the database event driver
-	SQLPubSub DatabaseConfig `mapstructure:"sql" default:"{}"`
+	SQLPubSub SQLEventConfig `mapstructure:"sql" default:"{}"`
 	// Aggregator is the configuration for the event aggregator middleware
 	Aggregator AggregatorConfig `mapstructure:"aggregator" default:"{}"`
 }
@@ -39,6 +39,13 @@ type GoChannelEventConfig struct {
 	// BlockPublishUntilSubscriberAck is whether or not to block publishing until
 	// the subscriber acks the message. This is useful for testing.
 	BlockPublishUntilSubscriberAck bool `mapstructure:"block_publish_until_subscriber_ack" default:"false"`
+}
+
+// SQLEventConfig is the configuration for the database event driver
+type SQLEventConfig struct {
+	// InitSchema is whether or not to initialize the schema
+	InitSchema bool           `mapstructure:"init_schema" default:"true"`
+	Connection DatabaseConfig `mapstructure:"connection" default:"{}"`
 }
 
 // AggregatorConfig is the configuration for the event aggregator middleware
