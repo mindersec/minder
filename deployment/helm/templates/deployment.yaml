@@ -66,7 +66,7 @@ spec:
             value: "{{ .Values.trusty.endpoint }}"
           - name: "SIGSTORE_NO_CACHE"
             value: "true"
-          - name: "MINDER_DB_PASSWORD"
+          - name: "MINDER_DB_PASS"
             valueFrom:
               secretKeyRef:
                 name: minder-identity-secrets
