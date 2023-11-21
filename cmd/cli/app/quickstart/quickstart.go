@@ -115,7 +115,7 @@ You can now continue to explore Minder's features by adding or removing more rep
 For more information about Minder, see:
 * GitHub - https://github.com/stacklok/minder
 * CLI commands - https://minder-docs.stacklok.dev/ref/cli/minder
-* Rules and profiles maintained by Minder's team - https://github.com/stacklok/minder-rules-and-profiles
+* Minder rules & profiles - https://github.com/stacklok/minder-rules-and-profiles
 * Official documentation - https://minder-docs.stacklok.dev
 
 Thank you for using Minder!
@@ -142,7 +142,8 @@ var cmd = &cobra.Command{
 		yes := cli.PrintYesNoPrompt(cmd,
 			stepPromptMsgWelcome,
 			"Proceed?",
-			"Quickstart operation cancelled.")
+			"Quickstart operation cancelled.",
+			true)
 		if !yes {
 			return nil
 		}
@@ -151,7 +152,8 @@ var cmd = &cobra.Command{
 		yes = cli.PrintYesNoPrompt(cmd,
 			stepPromptMsgEnroll,
 			"Proceed?",
-			"Quickstart operation cancelled.")
+			"Quickstart operation cancelled.",
+			true)
 		if !yes {
 			return nil
 		}
@@ -173,7 +175,8 @@ var cmd = &cobra.Command{
 		yes = cli.PrintYesNoPrompt(cmd,
 			stepPromptMsgRegister,
 			"Proceed?",
-			"Quickstart operation cancelled.")
+			"Quickstart operation cancelled.",
+			true)
 		if !yes {
 			return nil
 		}
@@ -192,7 +195,8 @@ var cmd = &cobra.Command{
 		yes = cli.PrintYesNoPrompt(cmd,
 			stepPromptMsgRuleType,
 			"Proceed?",
-			"Quickstart operation cancelled.")
+			"Quickstart operation cancelled.",
+			true)
 		if !yes {
 			return nil
 		}
@@ -244,7 +248,8 @@ var cmd = &cobra.Command{
 		yes = cli.PrintYesNoPrompt(cmd,
 			fmt.Sprintf(stepPromptMsgProfile, strings.Join(registeredRepos[:], "\n")),
 			"Proceed?",
-			"Quickstart operation cancelled.")
+			"Quickstart operation cancelled.",
+			true)
 		if !yes {
 			return nil
 		}
@@ -275,6 +280,7 @@ var cmd = &cobra.Command{
 		ctx, cancel = util.GetAppContext()
 		defer cancel()
 
+		alreadyExists := ""
 		resp, err := client.CreateProfile(ctx, &minderv1.CreateProfileRequest{
 			Profile: p,
 		})
@@ -283,20 +289,26 @@ var cmd = &cobra.Command{
 				if st.Code() != codes.AlreadyExists {
 					return fmt.Errorf("error creating profile: %w", err)
 				}
-				cmd.Println("Hey, it seems you already tried the quickstart command and created such a profile. " +
-					"In case you have registered new repositories this time, the profile will be already applied " +
-					"to them.")
+				alreadyExists = "Hey, it seems you already tried the quickstart command and created such a profile. " +
+					"In case you have registered new repositories, the profile will be already applied to them."
 			} else {
 				return fmt.Errorf("error creating profile: %w", err)
 			}
-		} else {
-			table := profile.InitializeTable(cmd)
-			profile.RenderProfileTable(resp.GetProfile(), table)
-			table.Render()
 		}
 
 		// Finish - Confirm profile creation
 		cli.PrintCmd(cmd, cli.WarningBanner.Render(stepPromptMsgFinish))
+
+		// Print the "profile already exists" message, if needed
+		if alreadyExists != "" {
+			cli.PrintCmd(cmd, cli.WarningBanner.Render(alreadyExists))
+		} else {
+			// Print the profile create result table
+			cmd.Println("Profile details (minder profile list -p github):")
+			table := profile.InitializeTable(cmd)
+			profile.RenderProfileTable(resp.GetProfile(), table)
+			table.Render()
+		}
 		return nil
 	},
 }

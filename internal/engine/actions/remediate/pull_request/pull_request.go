@@ -22,6 +22,7 @@ import (
 	"encoding/json"
 	"errors"
 	"fmt"
+	htmltemplate "html/template"
 	"log"
 	"net/http"
 	"os"
@@ -81,8 +82,8 @@ type Remediator struct {
 	cli        provifv1.GitHub
 	actionType interfaces.ActionType
 
-	titleTemplate *template.Template
-	bodyTemplate  *template.Template
+	titleTemplate *htmltemplate.Template
+	bodyTemplate  *htmltemplate.Template
 	entries       []prEntry
 }
 
@@ -97,12 +98,12 @@ func NewPullRequestRemediate(
 		return nil, fmt.Errorf("pull request remediation config is invalid: %w", err)
 	}
 
-	titleTmpl, err := util.ParseNewTemplate(&prCfg.Title, "title")
+	titleTmpl, err := util.ParseNewHtmlTemplate(&prCfg.Title, "title")
 	if err != nil {
 		return nil, fmt.Errorf("cannot parse title template: %w", err)
 	}
 
-	bodyTmpl, err := util.ParseNewTemplate(&prCfg.Body, "body")
+	bodyTmpl, err := util.ParseNewHtmlTemplate(&prCfg.Body, "body")
 	if err != nil {
 		return nil, fmt.Errorf("cannot parse body template: %w", err)
 	}
@@ -132,7 +133,7 @@ func prConfigToEntries(prCfg *pb.RuleType_Definition_Remediate_PullRequestRemedi
 	for i := range prCfg.Contents {
 		cnt := prCfg.Contents[i]
 
-		contentTemplate, err := util.ParseNewTemplate(&cnt.Content, fmt.Sprintf("Content[%d]", i))
+		contentTemplate, err := util.ParseNewTextTemplate(&cnt.Content, fmt.Sprintf("Content[%d]", i))
 		if err != nil {
 			return nil, fmt.Errorf("cannot parse content template (index %d): %w", i, err)
 		}
@@ -233,7 +234,7 @@ func (r *Remediator) Do(
 }
 
 func dryRun(title, body string, entries []prEntry) {
-	tmpl, err := template.New(dryRunTemplateName).Parse(dryRunTmpl)
+	tmpl, err := template.New(dryRunTemplateName).Option("missingkey=error").Parse(dryRunTmpl)
 	if err != nil {
 		log.Fatalf("Error parsing template: %v", err)
 	}
@@ -422,7 +423,7 @@ func (r *Remediator) contentSha1() (string, error) {
 }
 
 func (r *Remediator) prMagicComment() (string, error) {
-	tmpl, err := template.New(prMagicTemplateName).Parse(prBodyMagicTemplate)
+	tmpl, err := template.New(prMagicTemplateName).Option("missingkey=error").Parse(prBodyMagicTemplate)
 	if err != nil {
 		return "", err
 	}
@@ -467,7 +468,7 @@ func (r *Remediator) getPrBodyText(tmplParams *PrTemplateParams) (string, string
 }
 
 func createReviewBody(prText, magicComment string) (string, error) {
-	tmpl, err := template.New(prTemplateName).Parse(prBodyTmplStr)
+	tmpl, err := template.New(prTemplateName).Option("missingkey=error").Parse(prBodyTmplStr)
 	if err != nil {
 		return "", err
 	}

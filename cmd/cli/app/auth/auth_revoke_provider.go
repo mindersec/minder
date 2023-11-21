@@ -58,7 +58,8 @@ var Auth_revokeproviderCmd = &cobra.Command{
 			yes := cli.PrintYesNoPrompt(cmd,
 				"You are about to revoke the access tokens for your provider.",
 				"Are you sure?",
-				"Delete provider access tokens cancelled.")
+				"Delete provider access tokens cancelled.",
+				false)
 			if !yes {
 				return
 			}

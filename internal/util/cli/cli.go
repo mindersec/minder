@@ -41,12 +41,18 @@ func Print(out io.Writer, msg string, args ...interface{}) {
 }
 
 // PrintYesNoPrompt prints a yes/no prompt to the user and returns false if the user did not respond with yes or y
-func PrintYesNoPrompt(cmd *cobra.Command, promptMsg, confirmMsg, fallbackMsg string) bool {
+func PrintYesNoPrompt(cmd *cobra.Command, promptMsg, confirmMsg, fallbackMsg string, defaultYes bool) bool {
 	// Print the warning banner with the prompt message
 	PrintCmd(cmd, WarningBanner.Render(promptMsg))
 
+	// Determine the default confirmation value
+	defConf := confirmation.No
+	if defaultYes {
+		defConf = confirmation.Yes
+	}
+
 	// Prompt the user for confirmation
-	input := confirmation.New(confirmMsg, confirmation.No)
+	input := confirmation.New(confirmMsg, defConf)
 	ok, err := input.RunPrompt()
 	if err != nil {
 		PrintCmd(cmd, WarningBanner.Render(fmt.Sprintf("Error reading input: %v", err)))
