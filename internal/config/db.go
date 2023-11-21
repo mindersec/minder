@@ -154,42 +154,6 @@ func RegisterDatabaseFlags(v *viper.Viper, flags *pflag.FlagSet) error {
 		return err
 	}
 
-	err = util.BindConfigFlagWithShort(
-		v, flags, "database.sslmode", "db-sslmode", "s", "disable", "Database sslmode", flags.StringP)
-	if err != nil {
-		return err
-	}
-
-	err = util.BindConfigFlagWithShort(
-		v, flags, "events.sql.dbhost", "db-events-host", "Q", "localhost", "Database Events host", flags.StringP)
-	if err != nil {
-		return err
-	}
-
-	err = util.BindConfigFlag(
-		v, flags, "events.sql.dbport", "db-events-port", 5432, "Database Events port", flags.Int)
-	if err != nil {
-		return err
-	}
-
-	err = util.BindConfigFlagWithShort(
-		v, flags, "events.sql.dbuser", "db-events-user", "U", "postgres", "Database Events user", flags.StringP)
-	if err != nil {
-		return err
-	}
-
-	err = util.BindConfigFlagWithShort(
-		v, flags, "events.sql.dbpass", "db-events-pass", "W", "postgres", "Database Events password", flags.StringP)
-	if err != nil {
-		return err
-	}
-
-	err = util.BindConfigFlagWithShort(
-		v, flags, "events.sql.dbname", "db-events-name", "N", "minder-queue", "Database Events name", flags.StringP)
-	if err != nil {
-		return err
-	}
-
 	return util.BindConfigFlagWithShort(
-		v, flags, "events.sql.sslmode", "db-events-sslmode", "M", "disable", "Database Events sslmode", flags.StringP)
+		v, flags, "database.sslmode", "db-sslmode", "s", "disable", "Database sslmode", flags.StringP)
 }
