@@ -19,8 +19,8 @@ import (
 	"bytes"
 	"context"
 	"fmt"
+	htmltemplate "html/template"
 	"strings"
-	"text/template"
 
 	"github.com/stacklok/minder/internal/constants"
 	pb "github.com/stacklok/minder/pkg/api/protobuf/go/minder/v1"
@@ -71,8 +71,8 @@ type summaryPrHandler struct {
 	trustyUrl string
 
 	trackedAlternatives []dependencyAlternatives
-	headerTmpl          *template.Template
-	rowsTmpl            *template.Template
+	headerTmpl          *htmltemplate.Template
+	rowsTmpl            *htmltemplate.Template
 }
 
 func (sph *summaryPrHandler) trackAlternatives(
@@ -149,11 +149,11 @@ func newSummaryPrHandler(
 	cli provifv1.GitHub,
 	trustyUrl string,
 ) (*summaryPrHandler, error) {
-	headerTmpl, err := template.New(tableHeaderTmplName).Parse(tableTemplateHeader)
+	headerTmpl, err := htmltemplate.New(tableHeaderTmplName).Parse(tableTemplateHeader)
 	if err != nil {
 		return nil, fmt.Errorf("could not parse dependency template: %w", err)
 	}
-	rowsTmpl, err := template.New(tableRowsTmplName).Parse(tableTemplateRow)
+	rowsTmpl, err := htmltemplate.New(tableRowsTmplName).Parse(tableTemplateRow)
 	if err != nil {
 		return nil, fmt.Errorf("could not parse vulnerability template: %w", err)
 	}

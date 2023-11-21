@@ -68,7 +68,7 @@ func NewRestRuleDataIngest(
 		return nil, fmt.Errorf("missing endpoint")
 	}
 
-	tmpl, err := util.ParseNewTemplate(&restCfg.Endpoint, "endpoint")
+	tmpl, err := util.ParseNewTextTemplate(&restCfg.Endpoint, "endpoint")
 	if err != nil {
 		return nil, fmt.Errorf("cannot parse endpoint template: %w", err)
 	}
