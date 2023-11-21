@@ -1,6 +1,6 @@
 ---
 title: Creating your first profile
-sidebar_position: 40
+sidebar_position: 60
 ---
 
 # Creating your first profile
