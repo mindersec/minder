@@ -72,6 +72,7 @@ require (
 )
 
 require (
+	github.com/ThreeDotsLabs/watermill-sql/v2 v2.0.0 // indirect
 	github.com/atotto/clipboard v0.1.4 // indirect
 	github.com/aws/aws-sdk-go-v2/service/ecr v1.20.2 // indirect
 	github.com/aws/aws-sdk-go-v2/service/ecrpublic v1.18.2 // indirect

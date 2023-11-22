@@ -21,11 +21,13 @@ import (
 	"context"
 	"errors"
 	"fmt"
+	"log"
 	"reflect"
 	"runtime"
 	"time"
 
 	"github.com/ThreeDotsLabs/watermill"
+	watermillsql "github.com/ThreeDotsLabs/watermill-sql/v2/pkg/sql"
 	"github.com/ThreeDotsLabs/watermill/components/metrics"
 	"github.com/ThreeDotsLabs/watermill/message"
 	"github.com/ThreeDotsLabs/watermill/message/router/middleware"
@@ -43,6 +45,9 @@ const (
 	ProviderTypeKey           = "provider"
 	ProviderSourceKey         = "source"
 	GithubWebhookEventTypeKey = "type"
+
+	GoChannelDriver = "go-channel"
+	SQLDriver       = "sql"
 )
 
 const (
@@ -82,6 +87,8 @@ type AggregatorMiddleware interface {
 	AggregateMiddleware(h message.HandlerFunc) message.HandlerFunc
 }
 
+type driverCloser func()
+
 // Eventer is a wrapper over the relevant eventing objects in such
 // a way that they can be easily accessible and configurable.
 type Eventer struct {
@@ -91,6 +98,8 @@ type Eventer struct {
 	// webhookSubscriber will subscribe to the webhook topic and handle incoming events
 	webhookSubscriber message.Subscriber
 	// TODO: We'll have a Final publisher that will publish to the final topic
+
+	closer driverCloser
 }
 
 var _ Registrar = (*Eventer)(nil)
@@ -137,7 +146,7 @@ func Setup(ctx context.Context, cfg *config.EventConfig) (*Eventer, error) {
 		middleware.Recoverer,
 	)
 
-	pub, sub, err := instantiateDriver(cfg.Driver, cfg)
+	pub, sub, cl, err := instantiateDriver(ctx, cfg.Driver, cfg)
 	if err != nil {
 		return nil, fmt.Errorf("failed instantiating driver: %w", err)
 	}
@@ -156,33 +165,86 @@ func Setup(ctx context.Context, cfg *config.EventConfig) (*Eventer, error) {
 		router:            router,
 		webhookPublisher:  pubWithMetrics,
 		webhookSubscriber: subWithMetrics,
+		closer: func() {
+			//nolint:gosec // It's fine if there's an error as long as we close the router
+			pubWithMetrics.Close()
+			//nolint:gosec // It's fine if there's an error as long as we close the router
+			subWithMetrics.Close()
+			// driver close
+			cl()
+		},
 	}, nil
 }
 
-func instantiateDriver(driver string, cfg *config.EventConfig) (message.Publisher, message.Subscriber, error) {
+func instantiateDriver(
+	ctx context.Context,
+	driver string,
+	cfg *config.EventConfig,
+) (message.Publisher, message.Subscriber, driverCloser, error) {
 	switch driver {
-	case "go-channel":
+	case GoChannelDriver:
 		return buildGoChannelDriver(cfg)
+	case SQLDriver:
+		return buildPostgreSQLDriver(ctx, cfg)
 	default:
-		return nil, nil, fmt.Errorf("unknown driver %s", driver)
+		return nil, nil, nil, fmt.Errorf("unknown driver %s", driver)
 	}
 }
 
-func buildGoChannelDriver(cfg *config.EventConfig) (message.Publisher, message.Subscriber, error) {
+func buildGoChannelDriver(cfg *config.EventConfig) (message.Publisher, message.Subscriber, driverCloser, error) {
 	pubsub := gochannel.NewGoChannel(gochannel.Config{
 		OutputChannelBuffer: cfg.GoChannel.BufferSize,
 		Persistent:          cfg.GoChannel.PersistEvents,
 	}, nil)
 
-	return pubsub, pubsub, nil
+	return pubsub, pubsub, func() {}, nil
+}
+
+func buildPostgreSQLDriver(
+	ctx context.Context,
+	cfg *config.EventConfig,
+) (message.Publisher, message.Subscriber, driverCloser, error) {
+	db, _, err := cfg.SQLPubSub.Connection.GetDBConnection(ctx)
+	if err != nil {
+		return nil, nil, nil, fmt.Errorf("unable to connect to events database: %w", err)
+	}
+
+	publisher, err := watermillsql.NewPublisher(
+		db,
+		watermillsql.PublisherConfig{
+			SchemaAdapter:        watermillsql.DefaultPostgreSQLSchema{},
+			AutoInitializeSchema: true,
+		},
+		watermill.NewStdLogger(false, false),
+	)
+	if err != nil {
+		return nil, nil, nil, fmt.Errorf("failed to create SQL publisher: %w", err)
+	}
+
+	subscriber, err := watermillsql.NewSubscriber(
+		db,
+		watermillsql.SubscriberConfig{
+			SchemaAdapter:    watermillsql.DefaultPostgreSQLSchema{},
+			OffsetsAdapter:   watermillsql.DefaultPostgreSQLOffsetsAdapter{},
+			InitializeSchema: true,
+		},
+		watermill.NewStdLogger(false, false),
+	)
+	if err != nil {
+		return nil, nil, nil, fmt.Errorf("failed to create SQL subscriber: %w", err)
+	}
+
+	return publisher, subscriber, func() {
+		err := db.Close()
+		if err != nil {
+			log.Printf("error closing events database connection: %v", err)
+		}
+	}, nil
 }
 
 // Close closes the router
 func (e *Eventer) Close() error {
-	//nolint:gosec // It's fine if there's an error as long as we close the router
-	e.webhookPublisher.Close()
-	//nolint:gosec // It's fine if there's an error as long as we close the router
-	e.webhookSubscriber.Close()
+	e.closer()
 	return e.router.Close()
 }
 
