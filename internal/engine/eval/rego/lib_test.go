@@ -421,3 +421,136 @@ allow {
 	})
 	require.NoError(t, err, "could not evaluate")
 }
+
+const (
+	buildWorkflow = `
+on:
+  workflow_call:
+jobs:
+  build:
+    name: Verify build
+    runs-on: ubuntu-latest
+    steps:
+      - uses: actions/checkout@v4 # v3.5.0
+      - name: Extract version of Go to use
+        run: echo "GOVERSION=$(sed -n 's/^go \([0-9.]*\)/\1/p' go.mod)" >> $GITHUB_ENV
+      - uses: actions/setup-go@v4 # v4.0.0
+        with:
+          go-version-file: 'go.mod'
+      - name: build
+        run: make build
+`
+
+	// checkout is missing from this workflow on purpose - I (jakub) wanted
+	// to test that the actions are merged together
+	testWorkflow = `
+on:
+  workflow_call:
+jobs:
+  test:
+    name: Unit testing
+    runs-on: ubuntu-latest
+    steps:
+      # Install Go on the VM running the action.
+      - name: Set up Go
+        uses: actions/setup-go@v4
+        with:
+          go-version-file: 'go.mod'
+
+      - name: Set up helm (test dependency)
+        uses: azure/setup-helm@v3
+
+      # Install gotestfmt on the VM running the action.
+      - name: Set up gotestfmt
+        uses: GoTestTools/gotestfmt-action@v2
+        with:
+          token: ${{ secrets.GITHUB_TOKEN }}
+
+      # copy config file into place
+      - name: Copy config file
+        run: cp config/config.yaml.example ./config.yaml
+
+      # Run the tests
+      - name: Run tests
+        run: make test
+`
+)
+
+func TestListGithubActionsDirectory(t *testing.T) {
+	t.Parallel()
+
+	fs := memfs.New()
+	err := fs.MkdirAll("workflows", 0755)
+	require.NoError(t, err, "could not create directory")
+
+	buildFile, err := fs.Create("workflows/build.yml")
+	require.NoError(t, err, "could not create build file")
+	_, err = buildFile.Write([]byte(buildWorkflow))
+	require.NoError(t, err, "could not write to build file")
+
+	testFile, err := fs.Create("workflows/test.yml")
+	require.NoError(t, err, "could not create test file")
+	_, err = testFile.Write([]byte(testWorkflow))
+	require.NoError(t, err, "could not write to test file")
+
+	e, err := rego.NewRegoEvaluator(
+		&minderv1.RuleType_Definition_Eval_Rego{
+			Type: rego.DenyByDefaultEvaluationType.String(),
+			Def: `
+package minder
+
+default allow = false
+
+allow {
+	actions := github_workflow.ls_actions("workflows")
+	expected_set = {"actions/checkout", "actions/setup-go", "GoTestTools/gotestfmt-action", "azure/setup-helm"}
+	actions == expected_set
+}`,
+		},
+	)
+	require.NoError(t, err, "could not create evaluator")
+
+	emptyPol := map[string]any{}
+
+	err = e.Eval(context.Background(), emptyPol, &engif.Result{
+		Object: nil,
+		Fs:     fs,
+	})
+	require.NoError(t, err, "could not evaluate")
+}
+
+func TestListGithubActionsFile(t *testing.T) {
+	t.Parallel()
+
+	fs := memfs.New()
+
+	buildFile, err := fs.Create("build.yml")
+	require.NoError(t, err, "could not create build file")
+	_, err = buildFile.Write([]byte(buildWorkflow))
+	require.NoError(t, err, "could not write to build file")
+
+	e, err := rego.NewRegoEvaluator(
+		&minderv1.RuleType_Definition_Eval_Rego{
+			Type: rego.DenyByDefaultEvaluationType.String(),
+			Def: `
+package minder
+
+default allow = false
+
+allow {
+	actions := github_workflow.ls_actions("build.yml")
+	expected_set = {"actions/checkout", "actions/setup-go"}
+	actions == expected_set
+}`,
+		},
+	)
+	require.NoError(t, err, "could not create evaluator")
+
+	emptyPol := map[string]any{}
+
+	err = e.Eval(context.Background(), emptyPol, &engif.Result{
+		Object: nil,
+		Fs:     fs,
+	})
+	require.NoError(t, err, "could not evaluate")
+}

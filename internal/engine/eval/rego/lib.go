@@ -26,6 +26,8 @@ import (
 	"github.com/open-policy-agent/opa/ast"
 	"github.com/open-policy-agent/opa/rego"
 	"github.com/open-policy-agent/opa/types"
+	frizgh "github.com/stacklok/frizbee/pkg/ghactions"
+	"gopkg.in/yaml.v3"
 
 	engif "github.com/stacklok/minder/internal/engine/interfaces"
 )
@@ -35,6 +37,7 @@ var MinderRegoLib = []func(res *engif.Result) func(*rego.Rego){
 	FileExists,
 	FileLs,
 	FileRead,
+	ListGithubActions,
 }
 
 func instantiateRegoLib(res *engif.Result) []func(*rego.Rego) {
@@ -215,14 +218,12 @@ func fileLsHandleFile(path string) (*ast.Term, error) {
 	), nil
 }
 
-func fileLsHandleDir(path string, fs billy.Filesystem) (*ast.Term, error) {
-	// Get the files in the directory
-	paths, err := fs.ReadDir(path)
+func fileLsHandleDir(path string, bfs billy.Filesystem) (*ast.Term, error) {
+	paths, err := bfs.ReadDir(path)
 	if err != nil {
 		return nil, err
 	}
 
-	// Create a list of files
 	var files []*ast.Term
 	for _, p := range paths {
 		fpath := filepath.Join(path, p.Name())
@@ -231,4 +232,48 @@ func fileLsHandleDir(path string, fs billy.Filesystem) (*ast.Term, error) {
 
 	return ast.NewTerm(
 		ast.NewArray(files...)), nil
+}
+
+// ListGithubActions is a rego function that lists the actions in a directory
+// in the filesystem being evaluated (which comes from the ingester).
+// It takes one argument, the path to the directory to list. It's exposed
+// as `github_workflow.ls_actions`.
+// The function returns a set of strings, each string being the name of an action.
+// The frizbee library guarantees that the actions are unique.
+func ListGithubActions(res *engif.Result) func(*rego.Rego) {
+	return rego.Function1(
+		&rego.Function{
+			Name: "github_workflow.ls_actions",
+			Decl: types.NewFunction(types.Args(types.S), types.NewSet(types.S)),
+		},
+		func(bctx rego.BuiltinContext, op1 *ast.Term) (*ast.Term, error) {
+			var base string
+			if err := ast.As(op1.Value, &base); err != nil {
+				return nil, err
+			}
+
+			if res.Fs == nil {
+				return nil, fmt.Errorf("cannot list actions without a filesystem")
+			}
+
+			var terms []*ast.Term
+			err := frizgh.TraverseGitHubActionWorkflows(res.Fs, base, func(path string, wflow *yaml.Node) error {
+				actions, err := frizgh.ListActionsInYAML(wflow)
+				if err != nil {
+					return err
+				}
+
+				for _, a := range actions {
+					terms = append(terms, ast.StringTerm(a.Action))
+				}
+
+				return nil
+			})
+			if err != nil {
+				return nil, err
+			}
+
+			return ast.SetTerm(terms...), nil
+		},
+	)
 }
