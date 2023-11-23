@@ -109,6 +109,10 @@ func getApplicableArtifactVersions(
 
 	// get all versions of the artifact that are applicable to this rule
 	for _, artifactVersion := range artifact.Versions {
+		if !isProcessable(artifactVersion.Tags) {
+			continue
+		}
+
 		if tagMatcher.MatchTag(artifactVersion.Tags...) {
 			applicableArtifactVersions = append(applicableArtifactVersions, struct {
 				Verification   any
@@ -134,4 +138,18 @@ func getApplicableArtifactVersions(
 	}
 	// return the list of applicable artifact versions
 	return result, nil
+}
+
+func isProcessable(tags []string) bool {
+	if len(tags) == 0 {
+		return false
+	}
+
+	for _, tag := range tags {
+		if tag == "" {
+			return false
+		}
+	}
+
+	return true
 }
