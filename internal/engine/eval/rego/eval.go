@@ -57,6 +57,8 @@ type Input struct {
 	Profile map[string]any `json:"profile"`
 	// Ingested is the values set for the ingested data
 	Ingested any `json:"ingested"`
+	// OutputFormat is the format to output violations in
+	OutputFormat ConstraintsViolationsFormat `json:"output_format"`
 }
 
 type hook struct {
@@ -120,8 +122,9 @@ func (e *Evaluator) Eval(ctx context.Context, pol map[string]any, res *engif.Res
 	}
 
 	rs, err := pq.Eval(ctx, rego.EvalInput(&Input{
-		Profile:  pol,
-		Ingested: obj,
+		Profile:      pol,
+		Ingested:     obj,
+		OutputFormat: e.cfg.ViolationFormat,
 	}))
 	if err != nil {
 		return fmt.Errorf("error evaluating profile. Might be wrong input: %w", err)

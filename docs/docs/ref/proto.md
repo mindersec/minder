@@ -1502,6 +1502,7 @@ endpoint and how we compare it to the rule.
 | ----- | ---- | ----- | ----------- |
 | type | [string](#string) |  | type is the type of evaluation engine to use for rego. We currently have two modes of operation: - deny-by-default: this is the default mode of operation where we deny access by default and allow access only if the profile explicitly allows it. It expects the profile to set an `allow` variable to true or false. - constraints: this is the mode of operation where we allow access by default and deny access only if a violation is found. It expects the profile to set a `violations` variable with a "msg" field. |
 | def | [string](#string) |  | def is the definition of the rego profile. |
+| violation_format | [string](#string) | optional | how are violations reported. This is only used if the `constraints` type is selected. The default is `text` which returns human-readable text. The other option is `json` which returns a JSON array containing the violations. |
 
 
 <a name="minder-v1-RuleType-Definition-Eval-Trusty"></a>

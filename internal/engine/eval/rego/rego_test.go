@@ -17,6 +17,7 @@ package rego_test
 
 import (
 	"context"
+	"encoding/json"
 	"testing"
 
 	"github.com/stretchr/testify/assert"
@@ -173,8 +174,8 @@ violations[{"msg": msg}] {
 		},
 	})
 	require.ErrorIs(t, err, engerrors.ErrEvaluationFailed, "should have failed the evaluation")
-	require.ErrorContains(t, err, "- evaluation failure: data should not contain foo\n")
-	require.ErrorContains(t, err, "- evaluation failure: datum should not contain bar")
+	require.ErrorContains(t, err, "- data should not contain foo\n")
+	require.ErrorContains(t, err, "- datum should not contain bar")
 }
 
 // Evaluates a simple query against a simple profile
@@ -258,6 +259,138 @@ violations[{"msg": msg}] {
 	})
 	require.ErrorIs(t, err, engerrors.ErrEvaluationFailed, "should have failed the evaluation")
 	assert.ErrorContains(t, err, "data did not match profile: foo", "should have failed the evaluation")
+}
+
+const (
+	jsonPolicyDef = `
+package minder
+
+violations[{"msg": msg}] {
+  expected_set := {x | x := input.profile.data[_]}
+  input_set := {x | x := input.ingested.data[_]}
+
+  intersection := expected_set & input_set
+  not count(intersection) == count(input.ingested.data)
+
+  difference := [x | x := input.ingested.data[_]; not intersection[x]]
+  
+  msg = format_message(difference, input.output_format)
+}
+
+format_message(difference, format) = msg {
+    format == "json"
+	json_body := {"actions_not_allowed": difference}
+    msg := json.marshal(json_body)
+}
+
+format_message(difference, format) = msg {
+    not format == "json"
+	msg := sprintf("extra actions found in workflows but not allowed in the profile: %v", [difference])
+}
+`
+)
+
+func TestConstraintsJSONOutput(t *testing.T) {
+	t.Parallel()
+
+	violationFormat := rego.ConstraintsViolationsOutputJSON.String()
+	e, err := rego.NewRegoEvaluator(
+		&minderv1.RuleType_Definition_Eval_Rego{
+			Type:            rego.ConstraintsEvaluationType.String(),
+			ViolationFormat: &violationFormat,
+			Def:             jsonPolicyDef,
+		},
+	)
+	require.NoError(t, err, "could not create evaluator")
+
+	pol := map[string]any{
+		"data": []string{"foo", "bar"},
+	}
+
+	err = e.Eval(context.Background(), pol, &engif.Result{
+		Object: map[string]any{
+			"data": []string{"foo", "bar", "baz"},
+		},
+	})
+	require.ErrorIs(t, err, engerrors.ErrEvaluationFailed, "should have failed the evaluation")
+
+	// check that the error payload msg is JSON in the expected format
+	errmsg := engerrors.ErrorAsEvalDetails(err)
+	var result []struct {
+		ActionsNotAllowed []string `json:"actions_not_allowed"`
+	}
+	err = json.Unmarshal([]byte(errmsg), &result)
+	require.NoError(t, err, "could not unmarshal error JSON")
+	assert.Len(t, result, 1, "should have one result")
+	assert.Contains(t, result[0].ActionsNotAllowed, "baz", "should have baz in the result")
+}
+
+func TestConstraintsJSONFalback(t *testing.T) {
+	t.Parallel()
+
+	violationFormat := rego.ConstraintsViolationsOutputJSON.String()
+	e, err := rego.NewRegoEvaluator(
+		&minderv1.RuleType_Definition_Eval_Rego{
+			Type:            rego.ConstraintsEvaluationType.String(),
+			ViolationFormat: &violationFormat,
+			Def: `
+package minder
+
+violations[{"msg": msg}] {
+	input.profile.data != input.ingested.data
+	msg := sprintf("data did not match profile: %s", [input.profile.data])
+}`,
+		},
+	)
+	require.NoError(t, err, "could not create evaluator")
+
+	pol := map[string]any{
+		"data": "foo",
+	}
+
+	err = e.Eval(context.Background(), pol, &engif.Result{
+		Object: map[string]any{
+			"data": "bar",
+		},
+	})
+	require.ErrorIs(t, err, engerrors.ErrEvaluationFailed, "should have failed the evaluation")
+
+	// check that the error payload msg is JSON in the expected format
+	errmsg := engerrors.ErrorAsEvalDetails(err)
+	var result []struct {
+		Msg string `json:"msg"`
+	}
+	err = json.Unmarshal([]byte(errmsg), &result)
+	require.NoError(t, err, "could not unmarshal error JSON")
+	assert.Len(t, result, 1, "should have one result")
+}
+
+func TestOutputTypePassedIntoRule(t *testing.T) {
+	t.Parallel()
+
+	e, err := rego.NewRegoEvaluator(
+		&minderv1.RuleType_Definition_Eval_Rego{
+			Type: rego.ConstraintsEvaluationType.String(),
+			Def:  jsonPolicyDef,
+		},
+	)
+	require.NoError(t, err, "could not create evaluator")
+
+	pol := map[string]any{
+		"data": []string{"one", "two"},
+	}
+
+	err = e.Eval(context.Background(), pol, &engif.Result{
+		Object: map[string]any{
+			"data": []string{"two", "three"},
+		},
+	})
+	require.Error(t, err, "should have failed the evaluation")
+	require.ErrorIs(t, err, engerrors.ErrEvaluationFailed, "should have failed the evaluation")
+
+	errmsg := engerrors.ErrorAsEvalDetails(err)
+	assert.Contains(t, errmsg, "extra actions found in workflows but not allowed in the profile", "should have the expected error message")
+	assert.Contains(t, errmsg, "three", "should have the expected content")
 }
 
 func TestCantCreateEvaluatorWithInvalidConfig(t *testing.T) {
