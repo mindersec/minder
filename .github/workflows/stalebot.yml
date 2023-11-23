@@ -13,6 +13,12 @@
 # See the License for the specific language governing permissions and
 # limitations under the License.
 
+# This action closes stale issues and PRs that have had no activity for a period of time.
+# Issues:
+# All issues labeled with "needs-triage" are covered by this check.
+# Once the issue is triaged by a maintainer, the label should be removed and the issue will no longer be considered stale.
+# PRs:
+# All PRs are covered by this check.
 name: 'Close stale issues and PRs'
 on:
   schedule:
@@ -26,7 +32,8 @@ jobs:
     steps:
       - uses: actions/stale@v8
         with:
-          stale-issue-message: 'This issue is stale because it has been open 30 days with no activity. Remove stale label or comment or this will be closed in 5 days.'
-          stale-pr-message: 'This PR is stale because it has been open 30 days with no activity. Remove stale label or comment or this will be closed in 5 days.'
+          stale-issue-message: 'This issue is stale because it has been open 30 days with no activity. Remove stale label or comment or this will be closed in 30 days.'
+          stale-pr-message: 'This PR is stale because it has been open 30 days with no activity. Remove stale label or comment or this will be closed in 30 days.'
           days-before-stale: 30
-          days-before-close: 5
+          days-before-close: 30
+          any-of-issue-labels: 'needs-triage' # only issues with this label are considered for closing
