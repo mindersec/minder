@@ -211,3 +211,104 @@ func TestArtifactIngestMatchAnyName(t *testing.T) {
 	require.NoError(t, err, "expected no error")
 	require.NotNil(t, got, "expected non-nil result")
 }
+
+func TestArtifactWithMatchingRegexp(t *testing.T) {
+	t.Parallel()
+
+	ing, err := artifact.NewArtifactDataIngest(nil)
+	require.NoError(t, err, "expected no error")
+
+	got, err := ing.Ingest(context.Background(), &pb.Artifact{
+		Type: "container",
+		Name: "matching-name",
+		Versions: []*pb.ArtifactVersion{
+			{
+				Tags: []string{"v1.0.0"},
+			},
+		},
+	}, map[string]interface{}{
+		"name":      "matching-name",
+		"tag_regex": "^v[0-9]+\\.[0-9]+\\.[0-9]+$",
+	})
+
+	require.NoError(t, err, "expected no error")
+	require.NotNil(t, got, "expected non-nil result")
+}
+
+func TestArtifactWithMultipleTagsAndMatchingRegexp(t *testing.T) {
+	t.Parallel()
+
+	ing, err := artifact.NewArtifactDataIngest(nil)
+	require.NoError(t, err, "expected no error")
+
+	got, err := ing.Ingest(context.Background(), &pb.Artifact{
+		Type: "container",
+		Name: "matching-name",
+		Versions: []*pb.ArtifactVersion{
+			{
+				Tags: []string{
+					"v2.0.0",
+					"latest",
+				},
+			},
+		},
+	}, map[string]interface{}{
+		"name":      "matching-name",
+		"tag_regex": "^v[0-9]+\\.[0-9]+\\.[0-9]+$",
+	})
+
+	require.NoError(t, err, "expected no error")
+	require.NotNil(t, got, "expected non-nil result")
+}
+
+func TestArtifactWithTagThatDoesntMatchRegexp(t *testing.T) {
+	t.Parallel()
+
+	ing, err := artifact.NewArtifactDataIngest(nil)
+	require.NoError(t, err, "expected no error")
+
+	got, err := ing.Ingest(context.Background(), &pb.Artifact{
+		Type: "container",
+		Name: "matching-name",
+		Versions: []*pb.ArtifactVersion{
+			{
+				Tags: []string{
+					"latest",
+				},
+			},
+		},
+	}, map[string]interface{}{
+		"name":      "matching-name",
+		"tag_regex": "^v[0-9]+\\.[0-9]+\\.[0-9]+$",
+	})
+
+	require.Error(t, err, "expected error")
+	require.Nil(t, got, "expected nil result")
+}
+
+func TestArtifactWithMultipleTagsThatDontMatchRegexp(t *testing.T) {
+	t.Parallel()
+
+	ing, err := artifact.NewArtifactDataIngest(nil)
+	require.NoError(t, err, "expected no error")
+
+	got, err := ing.Ingest(context.Background(), &pb.Artifact{
+		Type: "container",
+		Name: "matching-name",
+		Versions: []*pb.ArtifactVersion{
+			{
+				Tags: []string{
+					"latest",
+					"pr-123",
+					"testing",
+				},
+			},
+		},
+	}, map[string]interface{}{
+		"name":      "matching-name",
+		"tag_regex": "^v[0-9]+\\.[0-9]+\\.[0-9]+$",
+	})
+
+	require.Error(t, err, "expected error")
+	require.Nil(t, got, "expected nil result")
+}

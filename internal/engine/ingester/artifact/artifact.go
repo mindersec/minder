@@ -22,7 +22,6 @@ import (
 	"fmt"
 
 	"google.golang.org/protobuf/proto"
-	"k8s.io/apimachinery/pkg/util/sets"
 
 	evalerrors "github.com/stacklok/minder/internal/engine/errors"
 	engif "github.com/stacklok/minder/internal/engine/interfaces"
@@ -102,27 +101,15 @@ func getApplicableArtifactVersions(
 		return nil, evalerrors.NewErrEvaluationSkipSilently("artifact name mismatch")
 	}
 
+	// Build a tag matcher based on the configuration
+	tagMatcher, err := buildTagMatcher(cfg.Tags, cfg.TagRegex)
+	if err != nil {
+		return nil, err
+	}
+
 	// get all versions of the artifact that are applicable to this rule
 	for _, artifactVersion := range artifact.Versions {
-		// skip artifact versions without tags
-		if len(artifactVersion.Tags) == 0 || artifactVersion.Tags[0] == "" {
-			continue
-		}
-
-		// rule without tags is treated as a wildcard and matches all tagged artifacts
-		// this might be configurable in the future
-		if len(cfg.Tags) == 0 {
-			applicableArtifactVersions = append(applicableArtifactVersions, struct {
-				Verification   any
-				GithubWorkflow any
-			}{artifactVersion.SignatureVerification, artifactVersion.GithubWorkflow})
-			continue
-		}
-
-		// make sure all rule tags are present in the artifact version tags
-		haveTags := sets.New(artifactVersion.Tags...)
-		tagsOk := haveTags.HasAll(cfg.Tags...)
-		if tagsOk {
+		if tagMatcher.MatchTag(artifactVersion.Tags...) {
 			applicableArtifactVersions = append(applicableArtifactVersions, struct {
 				Verification   any
 				GithubWorkflow any
