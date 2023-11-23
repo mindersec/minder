@@ -29,6 +29,10 @@ func buildTagMatcher(tags []string, tagRegex string) (tagMatcher, error) {
 
 	// tags specified, build a list matcher
 	if len(tags) > 0 {
+		stags := sets.New(tags...)
+		if stags.HasAny("") {
+			return nil, fmt.Errorf("cannot specify empty tag")
+		}
 		return &tagListMatcher{tags: tags}, nil
 	}
 

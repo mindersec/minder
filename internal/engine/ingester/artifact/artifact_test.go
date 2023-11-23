@@ -312,3 +312,30 @@ func TestArtifactWithMultipleTagsThatDontMatchRegexp(t *testing.T) {
 	require.Error(t, err, "expected error")
 	require.Nil(t, got, "expected nil result")
 }
+
+func TestArtifactWithEmptyTagShouldError(t *testing.T) {
+	t.Parallel()
+
+	ing, err := artifact.NewArtifactDataIngest(nil)
+	require.NoError(t, err, "expected no error")
+
+	got, err := ing.Ingest(context.Background(), &pb.Artifact{
+		Type: "container",
+		Name: "matching-name",
+		Versions: []*pb.ArtifactVersion{
+			{
+				Tags: []string{
+					"latest",
+					"pr-123",
+					"testing",
+				},
+			},
+		},
+	}, map[string]interface{}{
+		"name": "matching-name",
+		"tags": []string{""},
+	})
+
+	require.Error(t, err, "expected error")
+	require.Nil(t, got, "expected nil result")
+}
