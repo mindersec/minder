@@ -24,13 +24,32 @@ import (
 	"github.com/stacklok/minder/internal/db"
 )
 
+// EvaluationError is a custom error type for evaluation errors.
+type EvaluationError struct {
+	Base error
+	Msg  string
+}
+
+// Unwrap returns the base error, allowing errors.Is to work with wrapped errors.
+func (e *EvaluationError) Unwrap() error {
+	return e.Base
+}
+
+// Error implements the error interface for EvaluationError.
+func (e *EvaluationError) Error() string {
+	return fmt.Sprintf("%v: %s", e.Base, e.Msg)
+}
+
 // ErrEvaluationFailed is an error that occurs during evaluation of a rule.
 var ErrEvaluationFailed = errors.New("evaluation failure")
 
-// NewErrEvaluationFailed creates a new evaluation error
+// NewErrEvaluationFailed creates a new evaluation error with a formatted message.
 func NewErrEvaluationFailed(sfmt string, args ...any) error {
 	msg := fmt.Sprintf(sfmt, args...)
-	return fmt.Errorf("%w: %s", ErrEvaluationFailed, msg)
+	return &EvaluationError{
+		Base: ErrEvaluationFailed,
+		Msg:  msg,
+	}
 }
 
 // ErrEvaluationSkipped specifies that the rule was evaluated but skipped.
@@ -102,7 +121,10 @@ func ErrorAsEvalStatus(err error) db.EvalStatusTypes {
 
 // ErrorAsEvalDetails returns the evaluation details for a given error
 func ErrorAsEvalDetails(err error) string {
-	if err != nil {
+	var evalErr *EvaluationError
+	if errors.As(err, &evalErr) {
+		return evalErr.Msg
+	} else if err != nil {
 		return err.Error()
 	}
 
