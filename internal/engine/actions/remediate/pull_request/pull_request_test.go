@@ -340,7 +340,7 @@ func TestPullRequestRemediate(t *testing.T) {
 				},
 			}
 
-			retMeta, err := engine.Do(context.Background(), interfaces.ActionCmdOn, tt.remArgs.remAction, tt.remArgs.ent, evalParams, nil)
+			retMeta, err := engine.Do(context.Background(), interfaces.ActionCmdOn, tt.remArgs.remAction, tt.remArgs.ent, evalParams, nil, nil)
 			if tt.wantErr {
 				require.Error(t, err, "expected error")
 				require.Nil(t, retMeta, "expected nil metadata")

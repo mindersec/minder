@@ -108,6 +108,7 @@ func (r *GhBranchProtectRemediator) Do(
 	ent protoreflect.ProtoMessage,
 	params interfaces.ActionsParams,
 	_ *json.RawMessage,
+	_ *interfaces.Result,
 ) (json.RawMessage, error) {
 	retp := &PatchTemplateParams{
 		Entity:  ent,

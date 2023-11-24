@@ -186,6 +186,7 @@ func (alert *Alert) Do(
 	entity protoreflect.ProtoMessage,
 	params interfaces.ActionsParams,
 	metadata *json.RawMessage,
+	_ *interfaces.Result,
 ) (json.RawMessage, error) {
 	// Get the parameters for the security advisory - owner, repo, etc.
 	p, err := alert.getParamsForSecurityAdvisory(ctx, entity, params, metadata)

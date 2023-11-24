@@ -168,11 +168,17 @@ func runEvaluationForRules(
 		evalStatus := &engif.EvalStatusParams{
 			Rule: frag,
 		}
-		// Perform rule evaluation
-		evalStatus.SetEvalErr(eng.Eval(context.Background(), inf, evalStatus))
+		ctx := context.Background()
+		res, err := eng.Ingest(ctx, inf, evalStatus)
+		if err != nil {
+			evalStatus.SetEvalErr(err)
+		} else {
+			// Perform rule evaluation
+			evalStatus.SetEvalErr(eng.Eval(ctx, evalStatus, res))
+		}
 
 		// Perform the actions, if any
-		evalStatus.SetActionsErr(context.Background(), eng.Actions(context.Background(), inf, evalStatus))
+		evalStatus.SetActionsErr(ctx, eng.Actions(ctx, inf, evalStatus, res))
 
 		if errors.IsActionFatalError(evalStatus.GetActionsErr().RemediateErr) {
 			fmt.Printf("Remediation failed with fatal error: %s", evalStatus.GetActionsErr().RemediateErr)

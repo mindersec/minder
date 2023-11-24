@@ -121,6 +121,7 @@ func (r *Remediator) Do(
 	entity protoreflect.ProtoMessage,
 	params interfaces.ActionsParams,
 	_ *json.RawMessage,
+	_ *interfaces.Result,
 ) (json.RawMessage, error) {
 	retp := &EndpointTemplateParams{
 		Entity:  entity,

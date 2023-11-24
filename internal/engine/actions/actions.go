@@ -77,6 +77,7 @@ func (rae *RuleActionsEngine) DoActions(
 	ctx context.Context,
 	ent protoreflect.ProtoMessage,
 	params engif.ActionsParams,
+	ingestres *engif.Result,
 ) enginerr.ActionsError {
 	// Get logger
 	logger := zerolog.Ctx(ctx)
@@ -110,7 +111,7 @@ func (rae *RuleActionsEngine) DoActions(
 		cmd := shouldRemediate(params.GetEvalStatusFromDb(), params.GetEvalErr())
 		// Run remediation
 		result.RemediateMeta, result.RemediateErr = rae.processAction(ctx, remediate.ActionType, cmd, ent, params,
-			nil)
+			nil, ingestres)
 	}
 
 	// Try alerting
@@ -119,7 +120,7 @@ func (rae *RuleActionsEngine) DoActions(
 		cmd := shouldAlert(params.GetEvalStatusFromDb(), params.GetEvalErr(), result.RemediateErr, remediateEngine.Type())
 		// Run alerting
 		result.AlertMeta, result.AlertErr = rae.processAction(ctx, alert.ActionType, cmd, ent, params,
-			getMeta(params.GetEvalStatusFromDb().AlertMetadata))
+			getMeta(params.GetEvalStatusFromDb().AlertMetadata), ingestres)
 	}
 	return result
 }
@@ -132,6 +133,7 @@ func (rae *RuleActionsEngine) processAction(
 	ent protoreflect.ProtoMessage,
 	params engif.ActionsParams,
 	metadata *json.RawMessage,
+	ingestres *engif.Result,
 ) (json.RawMessage, error) {
 	// Get action engine
 	action := rae.actions[actionType]
@@ -141,7 +143,7 @@ func (rae *RuleActionsEngine) processAction(
 		Str("action", string(actionType)).
 		Str("cmd", string(cmd)).
 		Msg("invoking action")
-	return action.Do(ctx, cmd, rae.actionsOnOff[actionType], ent, params, metadata)
+	return action.Do(ctx, cmd, rae.actionsOnOff[actionType], ent, params, metadata, ingestres)
 }
 
 // shouldRemediate returns the action command for remediation taking into account previous evaluations

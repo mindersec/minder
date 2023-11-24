@@ -186,6 +186,7 @@ func (r *Remediator) Do(
 	ent protoreflect.ProtoMessage,
 	params interfaces.ActionsParams,
 	_ *json.RawMessage,
+	_ *interfaces.Result,
 ) (json.RawMessage, error) {
 	repo, ok := ent.(*pb.Repository)
 	if !ok {

@@ -239,11 +239,16 @@ func (e *Executor) evalEntityEvent(
 			// Update the lock lease at the end of the evaluation
 			defer e.updateLockLease(ctx, *inf.ExecutionID, evalParams)
 
-			// Evaluate the rule
-			evalParams.SetEvalErr(rte.Eval(ctx, inf, evalParams))
+			res, err := rte.Ingest(ctx, inf, evalParams)
+			if err != nil {
+				evalParams.SetEvalErr(err)
+			} else {
+				// Evaluate the rule
+				evalParams.SetEvalErr(rte.Eval(ctx, evalParams, res))
+			}
 
 			// Perform actions, if any
-			evalParams.SetActionsErr(ctx, rte.Actions(ctx, inf, evalParams))
+			evalParams.SetActionsErr(ctx, rte.Actions(ctx, inf, evalParams, res))
 
 			// Log the evaluation
 			logEval(ctx, inf, evalParams)

@@ -99,7 +99,7 @@ type Action interface {
 	Type() string
 	GetOnOffState(*pb.Profile) ActionOpt
 	Do(ctx context.Context, cmd ActionCmd, setting ActionOpt, entity protoreflect.ProtoMessage,
-		params ActionsParams, metadata *json.RawMessage) (json.RawMessage, error)
+		params ActionsParams, metadata *json.RawMessage, ingestres *Result) (json.RawMessage, error)
 }
 
 // ActionCmd is the type that defines what effect an action should have

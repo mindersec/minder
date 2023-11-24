@@ -248,8 +248,8 @@ func (r *RuleTypeEngine) GetRuleInstanceValidator() *RuleValidator {
 	return r.rval
 }
 
-// Eval runs the rule type engine against the given entity
-func (r *RuleTypeEngine) Eval(ctx context.Context, inf *EntityInfoWrapper, params engif.EvalParams) error {
+// Ingest ingests the data needed for the rule evaluation
+func (r *RuleTypeEngine) Ingest(ctx context.Context, inf *EntityInfoWrapper, params engif.EvalParams) (*engif.Result, error) {
 	// Try looking at the ingesting cache first
 	result, ok := r.ingestCache.Get(r.rdi, inf.Entity, params.GetRule().Params)
 	if !ok {
@@ -259,13 +259,19 @@ func (r *RuleTypeEngine) Eval(ctx context.Context, inf *EntityInfoWrapper, param
 		if err != nil {
 			// Ingesting failed, so we can't evaluate the rule.
 			// Note that for some types of ingesting the evalErr can already be set from the ingester.
-			return fmt.Errorf("error ingesting data: %w", err)
+			return nil, fmt.Errorf("error ingesting data: %w", err)
 		}
 
 		r.ingestCache.Set(r.rdi, inf.Entity, params.GetRule().Params, result)
 	} else {
 		log.Printf("Using cached result for %s", r.GetID())
 	}
+
+	return result, nil
+}
+
+// Eval runs the rule type engine against the given entity
+func (r *RuleTypeEngine) Eval(ctx context.Context, params engif.EvalParams, result *engif.Result) error {
 	// Process evaluation
 	return r.reval.Eval(ctx, params.GetRule().Def.AsMap(), result)
 }
@@ -275,9 +281,10 @@ func (r *RuleTypeEngine) Actions(
 	ctx context.Context,
 	inf *EntityInfoWrapper,
 	params engif.ActionsParams,
+	ingestres *engif.Result,
 ) enginerr.ActionsError {
 	// Process actions
-	return r.rae.DoActions(ctx, inf.Entity, params)
+	return r.rae.DoActions(ctx, inf.Entity, params, ingestres)
 }
 
 // RuleDefFromDB converts a rule type definition from the database to a protobuf
