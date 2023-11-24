@@ -15,8 +15,9 @@
 
 # This action closes stale issues and PRs that have had no activity for a period of time.
 # Issues:
-# All issues labeled with "needs-triage" are covered by this check.
-# Once the issue is triaged by a maintainer, the label should be removed and the issue will no longer be considered stale.
+# All issues labeled with "waiting-for-feedback" are covered by this check.
+# The label should be manually added when there's additional information requested from the author (or someone else)
+# that is needed for triaging.
 # PRs:
 # All PRs are covered by this check.
 name: 'Close stale issues and PRs'
