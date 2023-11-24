@@ -32,8 +32,8 @@ jobs:
     steps:
       - uses: actions/stale@v8
         with:
-          stale-issue-message: 'This issue is stale because it has been open 30 days with no activity. Remove stale label or comment or this will be closed in 30 days.'
-          stale-pr-message: 'This PR is stale because it has been open 30 days with no activity. Remove stale label or comment or this will be closed in 30 days.'
+          stale-issue-message: 'This issue needs additional information before we can continue. It is now marked as stale because it has been open for 30 days with no activity. Please provide the necessary details to continue or it will be closed in 30 days.'
+          stale-pr-message: 'This PR needs additional information before we can continue. It is now marked as stale because it has been open for 30 days with no activity. Please provide the necessary details to continue or it will be closed in 30 days.'
+          any-of-issue-labels: 'waiting-for-feedback' # only issues with this label are considered for closing
           days-before-stale: 30
           days-before-close: 30
-          any-of-issue-labels: 'needs-triage' # only issues with this label are considered for closing
