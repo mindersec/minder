@@ -41,6 +41,7 @@ minder control plane.`,
 		// Delete the rule type via GRPC
 		id := viper.GetString("id")
 		deleteAll := viper.GetBool("all")
+		yesFlag := util.GetConfigValue(viper.GetViper(), "yes", "yes", cmd, false).(bool)
 
 		// If id is set, deleteAll cannot be set
 		if id != "" && deleteAll {
@@ -53,7 +54,8 @@ minder control plane.`,
 			fmt.Fprintf(os.Stderr, "Either id or deleteAll needs to be set")
 			return
 		}
-		if deleteAll {
+
+		if deleteAll && !yesFlag {
 			// Ask for confirmation if deleteAll is set on purpose
 			yes := cli.PrintYesNoPrompt(cmd,
 				"You are about to permanently delete all of your rule types.",
@@ -146,6 +148,7 @@ func init() {
 	ruleType_deleteCmd.Flags().StringP("provider", "p", "", "Provider to list rule types for")
 	ruleType_deleteCmd.Flags().StringP("id", "i", "", "ID of rule type to delete")
 	ruleType_deleteCmd.Flags().BoolP("all", "a", false, "Warning: Deletes all rule types")
+	ruleType_deleteCmd.Flags().BoolP("yes", "y", false, "Bypass yes/no prompt when deleting all rule types")
 	err := ruleType_deleteCmd.MarkFlagRequired("provider")
 	util.ExitNicelyOnError(err, "Error marking flag as required")
 }
