@@ -16,7 +16,7 @@
 package rego
 
 import (
-	"errors"
+	"encoding/json"
 	"fmt"
 	"strings"
 
@@ -43,6 +43,20 @@ const (
 
 func (e EvaluationType) String() string {
 	return string(e)
+}
+
+// ConstraintsViolationsFormat is the format to output violations in
+type ConstraintsViolationsFormat string
+
+const (
+	// ConstraintsViolationsOutputText specifies that the violations should be printed as human-readable text
+	ConstraintsViolationsOutputText ConstraintsViolationsFormat = "text"
+	// ConstraintsViolationsOutputJSON specifies that violations should be output as JSON
+	ConstraintsViolationsOutputJSON ConstraintsViolationsFormat = "json"
+)
+
+func (c ConstraintsViolationsFormat) String() string {
+	return string(c)
 }
 
 type resultEvaluator interface {
@@ -105,52 +119,132 @@ func (*denyByDefaultEvaluator) parseResult(rs rego.ResultSet) error {
 }
 
 type constraintsEvaluator struct {
+	format ConstraintsViolationsFormat
 }
 
 func (*constraintsEvaluator) getQuery() func(r *rego.Rego) {
 	return rego.Query(fmt.Sprintf("%s.violations[details]", RegoQueryPrefix))
 }
 
-func (*constraintsEvaluator) parseResult(rs rego.ResultSet) error {
+func (c *constraintsEvaluator) parseResult(rs rego.ResultSet) error {
 	if len(rs) == 0 {
 		// There were no violations
 		return nil
 	}
 
 	// Gather violations into one
-	violations := make([]string, 0, len(rs))
+	resBuilder := c.resultsBuilder(rs)
+	if resBuilder == nil {
+		return fmt.Errorf("invalid format: %s", c.format)
+	}
 	for _, r := range rs {
-		v := resultToViolation(r)
-		if errors.Is(v, engerrors.ErrEvaluationFailed) {
-			violations = append(violations, v.Error())
-		} else {
-			return fmt.Errorf("unexpected error in rego violation: %w", v)
+		v, err := resultToViolation(r)
+		if err != nil {
+			return fmt.Errorf("unexpected error in rego violation: %w", err)
+		}
+
+		err = resBuilder.addResult(v)
+		if err != nil {
+			return fmt.Errorf("cannot add result: %w", err)
 		}
 	}
 
-	return engerrors.NewErrEvaluationFailed("Evaluation failures: \n - %s", strings.Join(violations, "\n - "))
+	return resBuilder.formatResults()
 }
 
-func resultToViolation(r rego.Result) error {
+func (c *constraintsEvaluator) resultsBuilder(rs rego.ResultSet) resultBuilder {
+	switch c.format {
+	case ConstraintsViolationsOutputText:
+		return newStringResultBuilder(rs)
+	case ConstraintsViolationsOutputJSON:
+		return newJSONResultBuilder(rs)
+	default:
+		return nil
+	}
+}
+
+func resultToViolation(r rego.Result) (any, error) {
 	det := r.Bindings["details"]
 	if det == nil {
-		return fmt.Errorf("missing details in result")
+		return nil, fmt.Errorf("missing details in result")
 	}
 
 	detmap, ok := det.(map[string]interface{})
 	if !ok {
-		return fmt.Errorf("details is not a map")
+		return nil, fmt.Errorf("details is not a map")
 	}
 
 	msg, ok := detmap["msg"]
 	if !ok {
-		return fmt.Errorf("missing msg in details")
+		return nil, fmt.Errorf("missing msg in details")
 	}
+
+	return msg, nil
+}
+
+type resultBuilder interface {
+	addResult(msg any) error
+	formatResults() error
+}
+
+type stringResultBuilder struct {
+	results []string
+}
+
+func newStringResultBuilder(rs rego.ResultSet) *stringResultBuilder {
+	return &stringResultBuilder{
+		results: make([]string, 0, len(rs)),
+	}
+}
+
+func (srb *stringResultBuilder) addResult(msg any) error {
+	msgstr, ok := msg.(string)
+	if !ok {
+		return fmt.Errorf("msg is not a string")
+	}
+	srb.results = append(srb.results, msgstr)
+	return nil
+}
+
+func (srb *stringResultBuilder) formatResults() error {
+	return engerrors.NewErrEvaluationFailed("Evaluation failures: \n - %s", strings.Join(srb.results, "\n - "))
+}
+
+type jsonResultBuilder struct {
+	results []map[string]interface{}
+}
+
+func newJSONResultBuilder(rs rego.ResultSet) *jsonResultBuilder {
+	return &jsonResultBuilder{
+		results: make([]map[string]interface{}, 0, len(rs)),
+	}
+}
+
+func (jrb *jsonResultBuilder) addResult(msg any) error {
+	var result map[string]interface{}
 
 	msgstr, ok := msg.(string)
 	if !ok {
 		return fmt.Errorf("msg is not a string")
 	}
 
-	return engerrors.NewErrEvaluationFailed(msgstr)
+	err := json.NewDecoder(strings.NewReader(msgstr)).Decode(&result)
+	if err != nil {
+		// fallback
+		result = map[string]interface{}{
+			"msg": msgstr,
+		}
+	}
+
+	jrb.results = append(jrb.results, result)
+	return nil
+}
+
+func (jrb *jsonResultBuilder) formatResults() error {
+	jsonArray, err := json.Marshal(jrb.results)
+	if err != nil {
+		return fmt.Errorf("failed to marshal violations: %w", err)
+	}
+
+	return engerrors.NewErrEvaluationFailed(string(jsonArray))
 }
