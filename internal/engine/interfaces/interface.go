@@ -22,6 +22,7 @@ import (
 	"encoding/json"
 
 	billy "github.com/go-git/go-billy/v5"
+	"github.com/go-git/go-git/v5/storage"
 	"github.com/google/uuid"
 	"github.com/rs/zerolog"
 	"google.golang.org/protobuf/reflect/protoreflect"
@@ -55,6 +56,10 @@ type Result struct {
 	// is normally used by the evaluator to do rule evaluation. The filesystem
 	// may be a git repo, or a memory filesystem.
 	Fs billy.Filesystem
+	// Storer is the git storer that was created as a result of the ingestion.
+	// FIXME: It might be cleaner to either wrap both Fs and Storer in a struct
+	// or pass out the git.Repository structure instead of the storer.
+	Storer storage.Storer
 }
 
 // ActionOpt is the type that defines what action to take when remediating
