@@ -120,6 +120,8 @@ deploymentSettings:
     appSecretName: "minder-github-secrets"
     # -- (string) name of the secret containing the identity configuration
     identitySecretName: "minder-identity-secrets"
+    # -- (string) name of the secret containing the database queue configuration
+    dbQueueSecretName: "minder-db-queue-secrets"
   # -- (array, optional) Additional configuration for sidecar containers
   sidecarContainers: null
 

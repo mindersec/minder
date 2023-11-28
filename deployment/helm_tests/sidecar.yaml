@@ -43,6 +43,7 @@ deploymentSettings:
     authSecretName: "minder-auth-secrets"
     appSecretName: "minder-github-api-secrets"
     identitySecretName: "minder-identity-secrets"
+    dbQueueSecretName: "minder-db-queue-secrets"
   extraEnv:
   - name: "PGPASSFILE"
     value: "/secrets/db/.pgpass"

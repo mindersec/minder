@@ -126,6 +126,9 @@ spec:
       - name: identity-secrets
         secret:
           secretName: {{ .Values.deploymentSettings.secrets.identitySecretName }}
+      - name: db-queue-secrets
+        secret:
+          secretName: {{ .Values.deploymentSettings.secrets.dbQueueSecretName }}
       {{- if .Values.deploymentSettings.extraVolumes }}
       {{- toYaml .Values.deploymentSettings.extraVolumes | nindent 6 }}
       {{- end }}

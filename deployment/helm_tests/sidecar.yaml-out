@@ -397,6 +397,9 @@ spec:
       - name: identity-secrets
         secret:
           secretName: minder-identity-secrets
+      - name: db-queue-secrets
+        secret:
+          secretName: minder-db-queue-secrets
       - emptyDir:
           medium: Memory
           sizeLimit: 1Mi

@@ -382,6 +382,9 @@ spec:
       - name: identity-secrets
         secret:
           secretName: minder-identity-secrets
+      - name: db-queue-secrets
+        secret:
+          secretName: minder-db-queue-secrets
 ---
 # Source: minder/templates/hpa.yaml
 # Copyright 2023 Stacklok, Inc
