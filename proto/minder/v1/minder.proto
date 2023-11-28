@@ -338,15 +338,6 @@ service RepositoryService {
     }
 }
 
-// Get Branch Protection Settings
-service BranchProtectionService {
-    rpc GetBranchProtection (GetBranchProtectionRequest) returns (GetBranchProtectionResponse) {
-        option (google.api.http) = {
-        get: "/api/v1/branchprotection"
-        };
-    }
-}
-
 // manage Users CRUD
 service UserService {
     rpc CreateUser (CreateUserRequest) returns (CreateUserResponse) {

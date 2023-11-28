@@ -25,16 +25,6 @@ toc_max_heading_level: 4
 | GetArtifactById | [GetArtifactByIdRequest](#minder-v1-GetArtifactByIdRequest) | [GetArtifactByIdResponse](#minder-v1-GetArtifactByIdResponse) |  |
 
 
-<a name="minder-v1-BranchProtectionService"></a>
-
-#### BranchProtectionService
-Get Branch Protection Settings
-
-| Method Name | Request Type | Response Type | Description |
-| ----------- | ------------ | ------------- | ------------|
-| GetBranchProtection | [GetBranchProtectionRequest](#minder-v1-GetBranchProtectionRequest) | [GetBranchProtectionResponse](#minder-v1-GetBranchProtectionResponse) |  |
-
-
 <a name="minder-v1-HealthService"></a>
 
 #### HealthService
