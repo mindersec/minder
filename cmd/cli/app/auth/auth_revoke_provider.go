@@ -46,6 +46,7 @@ var Auth_revokeproviderCmd = &cobra.Command{
 	Run: func(cmd *cobra.Command, args []string) {
 		// check if we need to revoke all tokens or the user one
 		all := util.GetConfigValue(viper.GetViper(), "all", "all", cmd, false).(bool)
+		yesFlag := util.GetConfigValue(viper.GetViper(), "yes", "yes", cmd, false).(bool)
 		project := viper.GetString("project-id")
 		provider := util.GetConfigValue(viper.GetViper(), "provider", "provider", cmd, "").(string)
 
@@ -54,7 +55,7 @@ var Auth_revokeproviderCmd = &cobra.Command{
 			os.Exit(1)
 		}
 
-		if all {
+		if all && !yesFlag {
 			yes := cli.PrintYesNoPrompt(cmd,
 				"You are about to revoke the access tokens for your provider.",
 				"Are you sure?",
@@ -64,6 +65,7 @@ var Auth_revokeproviderCmd = &cobra.Command{
 				return
 			}
 		}
+
 		conn, err := util.GrpcForCommand(cmd, viper.GetViper())
 		util.ExitNicelyOnError(err, "Error getting grpc connection")
 		defer conn.Close()
@@ -92,4 +94,5 @@ func init() {
 	Auth_revokeproviderCmd.Flags().StringP("provider", "p", "", "Name for the provider to revoke tokens for")
 	Auth_revokeproviderCmd.Flags().StringP("project-id", "g", "", "ID of the project for repo registration")
 	Auth_revokeproviderCmd.Flags().BoolP("all", "a", false, "Revoke all tokens")
+	Auth_revokeproviderCmd.Flags().BoolP("yes", "y", false, "Bypass yes/no prompt when revoking all tokens")
 }

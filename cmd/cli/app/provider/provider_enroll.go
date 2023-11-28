@@ -135,19 +135,23 @@ func EnrollProviderCmd(cmd *cobra.Command, _ []string) (string, error) {
 	project := viper.GetString("project")
 	pat := util.GetConfigValue(viper.GetViper(), "token", "token", cmd, "").(string)
 	owner := util.GetConfigValue(viper.GetViper(), "owner", "owner", cmd, "").(string)
+	yesFlag := util.GetConfigValue(viper.GetViper(), "yes", "yes", cmd, false).(bool)
 
 	// Ask for confirmation if an owner is set on purpose
 	ownerPromptStr := "your personal account"
 	if owner != "" {
 		ownerPromptStr = fmt.Sprintf("the %s organisation", owner)
 	}
-	yes := cli.PrintYesNoPrompt(cmd,
-		fmt.Sprintf("You are about to enroll repositories from %s.", ownerPromptStr),
-		"Do you confirm?",
-		"Enroll operation cancelled.",
-		true)
-	if !yes {
-		return "", nil
+
+	if !yesFlag {
+		yes := cli.PrintYesNoPrompt(cmd,
+			fmt.Sprintf("You are about to enroll repositories from %s.", ownerPromptStr),
+			"Do you confirm?",
+			"Enroll operation cancelled.",
+			true)
+		if !yes {
+			return "", nil
+		}
 	}
 
 	conn, err := util.GrpcForCommand(cmd, viper.GetViper())
@@ -218,6 +222,7 @@ func init() {
 	enrollProviderCmd.Flags().StringP("project", "r", "", "ID of the project for enrolling the provider")
 	enrollProviderCmd.Flags().StringP("token", "t", "", "Personal Access Token (PAT) to use for enrollment")
 	enrollProviderCmd.Flags().StringP("owner", "o", "", "Owner to filter on for provider resources")
+	enrollProviderCmd.Flags().BoolP("yes", "y", false, "Bypass yes/no prompt when enrolling new provider")
 	if err := enrollProviderCmd.MarkFlagRequired("provider"); err != nil {
 		fmt.Fprintf(os.Stderr, "Error marking flag as required: %s\n", err)
 	}
