@@ -20,6 +20,7 @@ minder auth revoke_provider [flags]
   -h, --help                help for revoke_provider
   -g, --project-id string   ID of the project for repo registration
   -p, --provider string     Name for the provider to revoke tokens for
+  -y, --yes                 Bypass yes/no prompt when revoking all tokens
 ```
 
 ### Options inherited from parent commands

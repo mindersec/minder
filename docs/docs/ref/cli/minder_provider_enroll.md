@@ -23,6 +23,7 @@ minder provider enroll [flags]
   -r, --project string    ID of the project for enrolling the provider
   -p, --provider string   Name for the provider to enroll
   -t, --token string      Personal Access Token (PAT) to use for enrollment
+  -y, --yes               Bypass yes/no prompt when enrolling new provider
 ```
 
 ### Options inherited from parent commands
