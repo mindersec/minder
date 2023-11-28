@@ -7,7 +7,6 @@ tags:
   - name: ArtifactService
   - name: OAuthService
   - name: RepositoryService
-  - name: BranchProtectionService
   - name: UserService
   - name: ProfileService
   - name: KeyService
@@ -285,20 +284,6 @@ paths:
                 type: string
       tags:
         - OAuthService
-  /api/v1/branchprotection:
-    get:
-      operationId: BranchProtectionService_GetBranchProtection
-      responses:
-        '200':
-          description: A successful response.
-          schema:
-            $ref: '#/definitions/v1GetBranchProtectionResponse'
-        default:
-          description: An unexpected error response.
-          schema:
-            $ref: '#/definitions/googlerpcStatus'
-      tags:
-        - BranchProtectionService
   /api/v1/health:
     get:
       operationId: HealthService_CheckHealth
@@ -1067,6 +1052,13 @@ definitions:
       def:
         type: string
         description: def is the definition of the rego profile.
+      violationFormat:
+        type: string
+        description: |-
+          how are violations reported. This is only used if the
+          `constraints` type is selected. The default is `text`
+          which returns human-readable text. The other option is
+          `json` which returns a JSON array containing the violations.
   EvalTrusty:
     type: object
     properties:
@@ -1317,7 +1309,10 @@ definitions:
 
           protobuf release, and it is not used for type URLs beginning with
 
-          type.googleapis.com.
+          type.googleapis.com. As of May 2023, there are no widely used type
+          server
+
+          implementations and no plans to implement one.
 
 
           Schemes other than `http`, `https` (or the empty scheme) might be
@@ -1359,7 +1354,7 @@ definitions:
             foo = any.unpack(Foo.getDefaultInstance());
           }
 
-      Example 3: Pack and unpack a message in Python.
+       Example 3: Pack and unpack a message in Python.
 
           foo = Foo(...)
           any = Any()
@@ -1369,7 +1364,7 @@ definitions:
             any.Unpack(foo)
             ...
 
-      Example 4: Pack and unpack a message in Go
+       Example 4: Pack and unpack a message in Go
 
            foo := &pb.Foo{...}
            any, err := anypb.New(foo)
@@ -1395,6 +1390,7 @@ definitions:
 
       JSON
 
+      ====
 
       The JSON representation of an `Any` value uses the regular
 
@@ -1435,7 +1431,7 @@ definitions:
       `NullValue` is a singleton enumeration to represent the null value for the
       `Value` type union.
 
-       The JSON representation for `NullValue` is JSON `null`.
+      The JSON representation for `NullValue` is JSON `null`.
 
        - NULL_VALUE: Null value.
   v1Artifact:
@@ -1483,14 +1479,6 @@ definitions:
       createdAt:
         type: string
         format: date-time
-  v1BranchProtection:
-    type: object
-    properties:
-      branch:
-        type: string
-      isProtected:
-        type: boolean
-        title: Add other relevant fields
   v1BuiltinType:
     type: object
     properties:
@@ -1626,14 +1614,6 @@ definitions:
     properties:
       url:
         type: string
-  v1GetBranchProtectionResponse:
-    type: object
-    properties:
-      branchProtections:
-        type: array
-        items:
-          type: object
-          $ref: '#/definitions/v1BranchProtection'
   v1GetProfileByIdResponse:
     type: object
     properties:
