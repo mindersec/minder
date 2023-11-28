@@ -21,6 +21,7 @@ minder rule_type delete [flags]
   -h, --help              help for delete
   -i, --id string         ID of rule type to delete
   -p, --provider string   Provider to list rule types for
+  -y, --yes               Bypass yes/no prompt when deleting all rule types
 ```
 
 ### Options inherited from parent commands
