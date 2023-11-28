@@ -1137,24 +1137,6 @@ func local_request_RepositoryService_DeleteRepositoryByName_0(ctx context.Contex
 
 }
 
-func request_BranchProtectionService_GetBranchProtection_0(ctx context.Context, marshaler runtime.Marshaler, client BranchProtectionServiceClient, req *http.Request, pathParams map[string]string) (proto.Message, runtime.ServerMetadata, error) {
-	var protoReq GetBranchProtectionRequest
-	var metadata runtime.ServerMetadata
-
-	msg, err := client.GetBranchProtection(ctx, &protoReq, grpc.Header(&metadata.HeaderMD), grpc.Trailer(&metadata.TrailerMD))
-	return msg, metadata, err
-
-}
-
-func local_request_BranchProtectionService_GetBranchProtection_0(ctx context.Context, marshaler runtime.Marshaler, server BranchProtectionServiceServer, req *http.Request, pathParams map[string]string) (proto.Message, runtime.ServerMetadata, error) {
-	var protoReq GetBranchProtectionRequest
-	var metadata runtime.ServerMetadata
-
-	msg, err := server.GetBranchProtection(ctx, &protoReq)
-	return msg, metadata, err
-
-}
-
 func request_UserService_CreateUser_0(ctx context.Context, marshaler runtime.Marshaler, client UserServiceClient, req *http.Request, pathParams map[string]string) (proto.Message, runtime.ServerMetadata, error) {
 	var protoReq CreateUserRequest
 	var metadata runtime.ServerMetadata
@@ -2420,40 +2402,6 @@ func RegisterRepositoryServiceHandlerServer(ctx context.Context, mux *runtime.Se
 	return nil
 }
 
-// RegisterBranchProtectionServiceHandlerServer registers the http handlers for service BranchProtectionService to "mux".
-// UnaryRPC     :call BranchProtectionServiceServer directly.
-// StreamingRPC :currently unsupported pending https://github.com/grpc/grpc-go/issues/906.
-// Note that using this registration option will cause many gRPC library features to stop working. Consider using RegisterBranchProtectionServiceHandlerFromEndpoint instead.
-func RegisterBranchProtectionServiceHandlerServer(ctx context.Context, mux *runtime.ServeMux, server BranchProtectionServiceServer) error {
-
-	mux.Handle("GET", pattern_BranchProtectionService_GetBranchProtection_0, func(w http.ResponseWriter, req *http.Request, pathParams map[string]string) {
-		ctx, cancel := context.WithCancel(req.Context())
-		defer cancel()
-		var stream runtime.ServerTransportStream
-		ctx = grpc.NewContextWithServerTransportStream(ctx, &stream)
-		inboundMarshaler, outboundMarshaler := runtime.MarshalerForRequest(mux, req)
-		var err error
-		var annotatedContext context.Context
-		annotatedContext, err = runtime.AnnotateIncomingContext(ctx, mux, req, "/minder.v1.BranchProtectionService/GetBranchProtection", runtime.WithHTTPPathPattern("/api/v1/branchprotection"))
-		if err != nil {
-			runtime.HTTPError(ctx, mux, outboundMarshaler, w, req, err)
-			return
-		}
-		resp, md, err := local_request_BranchProtectionService_GetBranchProtection_0(annotatedContext, inboundMarshaler, server, req, pathParams)
-		md.HeaderMD, md.TrailerMD = metadata.Join(md.HeaderMD, stream.Header()), metadata.Join(md.TrailerMD, stream.Trailer())
-		annotatedContext = runtime.NewServerMetadataContext(annotatedContext, md)
-		if err != nil {
-			runtime.HTTPError(annotatedContext, mux, outboundMarshaler, w, req, err)
-			return
-		}
-
-		forward_BranchProtectionService_GetBranchProtection_0(annotatedContext, mux, outboundMarshaler, w, req, resp, mux.GetForwardResponseOptions()...)
-
-	})
-
-	return nil
-}
-
 // RegisterUserServiceHandlerServer registers the http handlers for service UserService to "mux".
 // UnaryRPC     :call UserServiceServer directly.
 // StreamingRPC :currently unsupported pending https://github.com/grpc/grpc-go/issues/906.
@@ -3551,77 +3499,6 @@ var (
 	forward_RepositoryService_DeleteRepositoryById_0 = runtime.ForwardResponseMessage
 
 	forward_RepositoryService_DeleteRepositoryByName_0 = runtime.ForwardResponseMessage
-)
-
-// RegisterBranchProtectionServiceHandlerFromEndpoint is same as RegisterBranchProtectionServiceHandler but
-// automatically dials to "endpoint" and closes the connection when "ctx" gets done.
-func RegisterBranchProtectionServiceHandlerFromEndpoint(ctx context.Context, mux *runtime.ServeMux, endpoint string, opts []grpc.DialOption) (err error) {
-	conn, err := grpc.DialContext(ctx, endpoint, opts...)
-	if err != nil {
-		return err
-	}
-	defer func() {
-		if err != nil {
-			if cerr := conn.Close(); cerr != nil {
-				grpclog.Infof("Failed to close conn to %s: %v", endpoint, cerr)
-			}
-			return
-		}
-		go func() {
-			<-ctx.Done()
-			if cerr := conn.Close(); cerr != nil {
-				grpclog.Infof("Failed to close conn to %s: %v", endpoint, cerr)
-			}
-		}()
-	}()
-
-	return RegisterBranchProtectionServiceHandler(ctx, mux, conn)
-}
-
-// RegisterBranchProtectionServiceHandler registers the http handlers for service BranchProtectionService to "mux".
-// The handlers forward requests to the grpc endpoint over "conn".
-func RegisterBranchProtectionServiceHandler(ctx context.Context, mux *runtime.ServeMux, conn *grpc.ClientConn) error {
-	return RegisterBranchProtectionServiceHandlerClient(ctx, mux, NewBranchProtectionServiceClient(conn))
-}
-
-// RegisterBranchProtectionServiceHandlerClient registers the http handlers for service BranchProtectionService
-// to "mux". The handlers forward requests to the grpc endpoint over the given implementation of "BranchProtectionServiceClient".
-// Note: the gRPC framework executes interceptors within the gRPC handler. If the passed in "BranchProtectionServiceClient"
-// doesn't go through the normal gRPC flow (creating a gRPC client etc.) then it will be up to the passed in
-// "BranchProtectionServiceClient" to call the correct interceptors.
-func RegisterBranchProtectionServiceHandlerClient(ctx context.Context, mux *runtime.ServeMux, client BranchProtectionServiceClient) error {
-
-	mux.Handle("GET", pattern_BranchProtectionService_GetBranchProtection_0, func(w http.ResponseWriter, req *http.Request, pathParams map[string]string) {
-		ctx, cancel := context.WithCancel(req.Context())
-		defer cancel()
-		inboundMarshaler, outboundMarshaler := runtime.MarshalerForRequest(mux, req)
-		var err error
-		var annotatedContext context.Context
-		annotatedContext, err = runtime.AnnotateContext(ctx, mux, req, "/minder.v1.BranchProtectionService/GetBranchProtection", runtime.WithHTTPPathPattern("/api/v1/branchprotection"))
-		if err != nil {
-			runtime.HTTPError(ctx, mux, outboundMarshaler, w, req, err)
-			return
-		}
-		resp, md, err := request_BranchProtectionService_GetBranchProtection_0(annotatedContext, inboundMarshaler, client, req, pathParams)
-		annotatedContext = runtime.NewServerMetadataContext(annotatedContext, md)
-		if err != nil {
-			runtime.HTTPError(annotatedContext, mux, outboundMarshaler, w, req, err)
-			return
-		}
-
-		forward_BranchProtectionService_GetBranchProtection_0(annotatedContext, mux, outboundMarshaler, w, req, resp, mux.GetForwardResponseOptions()...)
-
-	})
-
-	return nil
-}
-
-var (
-	pattern_BranchProtectionService_GetBranchProtection_0 = runtime.MustPattern(runtime.NewPattern(1, []int{2, 0, 2, 1, 2, 2}, []string{"api", "v1", "branchprotection"}, ""))
-)
-
-var (
-	forward_BranchProtectionService_GetBranchProtection_0 = runtime.ForwardResponseMessage
 )
 
 // RegisterUserServiceHandlerFromEndpoint is same as RegisterUserServiceHandler but
