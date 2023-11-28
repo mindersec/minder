@@ -17,7 +17,7 @@ require (
 	github.com/evanphx/json-patch/v5 v5.7.0
 	github.com/fergusstrange/embedded-postgres v1.25.0
 	github.com/go-git/go-billy/v5 v5.5.0
-	github.com/go-git/go-git/v5 v5.10.0
+	github.com/go-git/go-git/v5 v5.10.1
 	github.com/go-playground/validator/v10 v10.16.0
 	github.com/goccy/go-json v0.10.2
 	github.com/golang-migrate/migrate/v4 v4.16.2
@@ -129,7 +129,6 @@ require (
 	github.com/OneOfOne/xxhash v1.2.8 // indirect
 	github.com/ProtonMail/go-crypto v0.0.0-20230923063757-afb1ddc0824c // indirect
 	github.com/ThalesIgnite/crypto11 v1.2.5 // indirect
-	github.com/acomagu/bufpipe v1.0.4 // indirect
 	github.com/agnivade/levenshtein v1.1.1 // indirect
 	github.com/alecthomas/chroma v0.10.0 // indirect
 	github.com/alibabacloud-go/alibabacloud-gateway-spi v0.0.4 // indirect
