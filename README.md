@@ -60,15 +60,15 @@ brew install stacklok/tap/minder
 winget install stacklok.minder
 ```
 
-### Releases
+### Download a release
 
-Download the latest release from - [minder/releases](https://github.com/stacklok/minder/releases).
+Download the latest release from [minder/releases](https://github.com/stacklok/minder/releases).
 
 ### Build it from source
 
-Build `minder` and `minder-server` from source by following - [#build-from-source](#build-from-source).
+Build `minder` and `minder-server` from source by following the [build from source guide](#build-from-source).
 
-## Run minder
+## Logging in to Minder
 
 To use `minder` with the public instance of Minder (`api.stacklok.com`), run: 
 
@@ -78,7 +78,7 @@ minder auth login
 
 Upon completion, you should see that the Minder Server is set to `api.stacklok.com`.
 
-## Quickstart
+## Run Minder quickstart
 
 The `quickstart` command guides you through the process of creating your first profile in Minder. 
 In just a few seconds, you will register your repositories and enable secret scanning protection for all of them.
