@@ -39,22 +39,31 @@ feel free to [contact us](mailto:hello@stacklok.com)! We'd be thrilled to help y
 ---
 # Getting Started (< 1 minute)
 
-Minder provides a "happy path" that guides you through the process of creating your first profile in Minder. 
-In just a few seconds, you will register your repositories and enable secret scanning protection for all of them!
+Getting up and running with Minder takes under a minute and is as easy as:
+
+1. Installing Minder
+2. Logging in to Minder
+3. and running `minder quickstart` to create your first profile.
+
+In just a few seconds, you will register your repositories and enable secret scanning protection for all of them! 🤯
 
 <img src="https://github.com/stacklok/minder/assets/16540482/00646f28-2f48-43f2-bb2b-4a791782d7e3" width="80%"/>
 
 ## Installation
 
-You can install `minder` using one of the following methods:
+Choose your preferred method to install `minder`:
 
 ### MacOS (Homebrew)
+
+Make sure you have [Homebrew](https://brew.sh/) installed.
 
 ```bash
 brew install stacklok/tap/minder
 ```
 
 ### Windows (Winget)
+
+Make sure you have [Winget](https://learn.microsoft.com/en-us/windows/package-manager/winget/) installed.
 
 ```bash
 winget install stacklok.minder
@@ -70,7 +79,7 @@ Build `minder` and `minder-server` from source by following the [build from sour
 
 ## Logging in to Minder
 
-To use `minder` with the public instance of Minder (`api.stacklok.com`), run: 
+To use `minder` with the [public instance](#public-instance) of Minder (`api.stacklok.com`), log in by running: 
 
 ```bash
 minder auth login
@@ -78,10 +87,11 @@ minder auth login
 
 Upon completion, you should see that the Minder Server is set to `api.stacklok.com`.
 
+
 ## Run Minder quickstart
 
-The `quickstart` command guides you through the process of creating your first profile in Minder. 
-In just a few seconds, you will register your repositories and enable secret scanning protection for all of them.
+The `quickstart` command guides you through creating your first profile in Minder, register your repositories, and enabling secret scanning protection for your repositories in seconds.
+
 To do so, run:
 
 ```bash
