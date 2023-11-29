@@ -520,25 +520,6 @@ service ProfileService {
     }
 }
 
-service KeyService {
-    rpc GetPublicKey (GetPublicKeyRequest) returns (GetPublicKeyResponse) {
-        option (google.api.http) = {
-            get: "/api/v1/key"
-        };
-    }
-    rpc CreateKeyPair (CreateKeyPairRequest) returns (CreateKeyPairResponse) {
-        option (google.api.http) = {
-            post: "/api/v1/key"
-            body: "*"
-        };
-
-        option (rpc_options) = {
-            auth_scope: OBJECT_OWNER_PROJECT
-            owner_only: true
-        };
-    }
-}
-
 message CheckHealthRequest {
 }
 

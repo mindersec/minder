@@ -22,9 +22,6 @@
     },
     {
       "name": "ProfileService"
-    },
-    {
-      "name": "KeyService"
     }
   ],
   "consumes": [
@@ -462,66 +459,6 @@
         },
         "tags": [
           "HealthService"
-        ]
-      }
-    },
-    "/api/v1/key": {
-      "get": {
-        "operationId": "KeyService_GetPublicKey",
-        "responses": {
-          "200": {
-            "description": "A successful response.",
-            "schema": {
-              "$ref": "#/definitions/v1GetPublicKeyResponse"
-            }
-          },
-          "default": {
-            "description": "An unexpected error response.",
-            "schema": {
-              "$ref": "#/definitions/googlerpcStatus"
-            }
-          }
-        },
-        "parameters": [
-          {
-            "name": "keyIdentifier",
-            "in": "query",
-            "required": false,
-            "type": "string"
-          }
-        ],
-        "tags": [
-          "KeyService"
-        ]
-      },
-      "post": {
-        "operationId": "KeyService_CreateKeyPair",
-        "responses": {
-          "200": {
-            "description": "A successful response.",
-            "schema": {
-              "$ref": "#/definitions/v1CreateKeyPairResponse"
-            }
-          },
-          "default": {
-            "description": "An unexpected error response.",
-            "schema": {
-              "$ref": "#/definitions/googlerpcStatus"
-            }
-          }
-        },
-        "parameters": [
-          {
-            "name": "body",
-            "in": "body",
-            "required": true,
-            "schema": {
-              "$ref": "#/definitions/v1CreateKeyPairRequest"
-            }
-          }
-        ],
-        "tags": [
-          "KeyService"
         ]
       }
     },
@@ -1860,28 +1797,6 @@
         }
       }
     },
-    "v1CreateKeyPairRequest": {
-      "type": "object",
-      "properties": {
-        "passphrase": {
-          "type": "string"
-        },
-        "projectId": {
-          "type": "string"
-        }
-      }
-    },
-    "v1CreateKeyPairResponse": {
-      "type": "object",
-      "properties": {
-        "keyIdentifier": {
-          "type": "string"
-        },
-        "publicKey": {
-          "type": "string"
-        }
-      }
-    },
     "v1CreateProfileRequest": {
       "type": "object",
       "properties": {
@@ -2078,14 +1993,6 @@
             "$ref": "#/definitions/v1ProfileStatus"
           },
           "title": "profile_status is the status of the profile"
-        }
-      }
-    },
-    "v1GetPublicKeyResponse": {
-      "type": "object",
-      "properties": {
-        "publicKey": {
-          "type": "string"
         }
       }
     },

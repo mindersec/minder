@@ -77,7 +77,6 @@ type Server struct {
 	pb.UnimplementedRepositoryServiceServer
 	pb.UnimplementedProfileServiceServer
 	pb.UnimplementedArtifactServiceServer
-	pb.UnimplementedKeyServiceServer
 	OAuth2       *oauth2.Config
 	ClientID     string
 	ClientSecret string
