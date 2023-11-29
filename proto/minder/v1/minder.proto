@@ -1241,9 +1241,7 @@ message RuleType {
                     string action = 2;
                     // the content of the file
                     string content = 4;
-                    // the GIT mode of the file. Not UNIX mode! String because the GH API also uses strings
-                    // the usual modes are: 100644 for regular files, 100755 for executable files and
-                    // 040000 for submodules (which we don't use but now you know the meaning of the 1 in 100644)
+                    // The UNIX file permissions to set on the file
                     optional string mode = 3;
                 }
 
@@ -1252,6 +1250,13 @@ message RuleType {
                 // the body of the PR
                 string body = 2;
                 repeated Content contents = 3;
+                // the method to use to create the PR. For now, these are supported:
+                // -- minder.content - ensures that the content of the file is exactly as specified
+                //                     refer to the Content message for more details
+                // -- minder.frizbee.actions.replace_tags_with_sha - finds any github actions within a workflow
+                //                                                   file and replaces the tag with the SHA using
+                //                                                   the frizbee library
+                string method = 4;
             }
 
             optional RestType rest = 2;

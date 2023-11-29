@@ -614,3 +614,8 @@ func (c *RestClient) CreateComment(ctx context.Context, owner, repo string, numb
 	})
 	return err
 }
+
+// GetClient returns the underlying GitHub client
+func (r *RestClient) GetClient() *github.Client {
+	return r.client
+}

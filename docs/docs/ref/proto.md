@@ -1506,6 +1506,7 @@ the name stutters a bit but we already use a PullRequest message for handling PR
 | title | [string](#string) |  | the title of the PR |
 | body | [string](#string) |  | the body of the PR |
 | contents | [RuleType.Definition.Remediate.PullRequestRemediation.Content](#minder-v1-RuleType-Definition-Remediate-PullRequestRemediation-Content) | repeated |  |
+| method | [string](#string) |  | the method to use to create the PR. For now, these are supported: -- minder.content - ensures that the content of the file is exactly as specified refer to the Content message for more details -- minder.frizbee.actions.replace_tags_with_sha - finds any github actions within a workflow file and replaces the tag with the SHA using the frizbee library |
 
 
 <a name="minder-v1-RuleType-Definition-Remediate-PullRequestRemediation-Content"></a>
@@ -1519,7 +1520,7 @@ the name stutters a bit but we already use a PullRequest message for handling PR
 | path | [string](#string) |  | the file to patch |
 | action | [string](#string) |  | how to patch the file. For now, only replace is supported |
 | content | [string](#string) |  | the content of the file |
-| mode | [string](#string) | optional | the GIT mode of the file. Not UNIX mode! String because the GH API also uses strings the usual modes are: 100644 for regular files, 100755 for executable files and 040000 for submodules (which we don't use but now you know the meaning of the 1 in 100644) |
+| mode | [string](#string) | optional | The UNIX file permissions to set on the file |
 
 
 <a name="minder-v1-SignatureVerification"></a>
