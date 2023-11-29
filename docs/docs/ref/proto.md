@@ -36,17 +36,6 @@ replies with OK
 | CheckHealth | [CheckHealthRequest](#minder-v1-CheckHealthRequest) | [CheckHealthResponse](#minder-v1-CheckHealthResponse) |  |
 
 
-<a name="minder-v1-KeyService"></a>
-
-#### KeyService
-
-
-| Method Name | Request Type | Response Type | Description |
-| ----------- | ------------ | ------------- | ------------|
-| GetPublicKey | [GetPublicKeyRequest](#minder-v1-GetPublicKeyRequest) | [GetPublicKeyResponse](#minder-v1-GetPublicKeyResponse) |  |
-| CreateKeyPair | [CreateKeyPairRequest](#minder-v1-CreateKeyPairRequest) | [CreateKeyPairResponse](#minder-v1-CreateKeyPairResponse) |  |
-
-
 <a name="minder-v1-OAuthService"></a>
 
 #### OAuthService
