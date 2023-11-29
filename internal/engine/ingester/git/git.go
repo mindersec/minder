@@ -108,6 +108,7 @@ func (gi *Git) Ingest(ctx context.Context, ent protoreflect.ProtoMessage, params
 	return &engif.Result{
 		Object: nil,
 		Fs:     wt.Filesystem,
+		Storer: r.Storer,
 	}, nil
 }
 

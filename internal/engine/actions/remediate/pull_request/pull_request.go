@@ -23,12 +23,21 @@ import (
 	"errors"
 	"fmt"
 	htmltemplate "html/template"
+	"io"
 	"log"
-	"net/http"
 	"os"
+	"path/filepath"
 	"strings"
 	"text/template"
+	"time"
 
+	"github.com/go-git/go-billy/v5"
+	"github.com/go-git/go-git/v5"
+	"github.com/go-git/go-git/v5/config"
+	"github.com/go-git/go-git/v5/plumbing"
+	"github.com/go-git/go-git/v5/plumbing/object"
+	githttp "github.com/go-git/go-git/v5/plumbing/transport/http"
+	"github.com/go-git/go-git/v5/storage"
 	"github.com/google/go-github/v53/github"
 	"github.com/rs/zerolog"
 	"google.golang.org/protobuf/reflect/protoreflect"
@@ -79,7 +88,8 @@ type prEntry struct {
 
 // Remediator is the remediation engine for the Pull Request remediation type
 type Remediator struct {
-	cli        provifv1.GitHub
+	ghCli      provifv1.GitHub
+	gitCli     provifv1.Git
 	actionType interfaces.ActionType
 
 	titleTemplate *htmltemplate.Template
@@ -108,9 +118,14 @@ func NewPullRequestRemediate(
 		return nil, fmt.Errorf("cannot parse body template: %w", err)
 	}
 
-	cli, err := pbuild.GetGitHub(context.Background())
+	ghCli, err := pbuild.GetGitHub(context.Background())
 	if err != nil {
 		return nil, fmt.Errorf("failed to get github client: %w", err)
+	}
+
+	gitCli, err := pbuild.GetGit()
+	if err != nil {
+		return nil, fmt.Errorf("failed to get git client: %w", err)
 	}
 
 	entries, err := prConfigToEntries(prCfg)
@@ -119,7 +134,8 @@ func NewPullRequestRemediate(
 	}
 
 	return &Remediator{
-		cli:        cli,
+		ghCli:      ghCli,
+		gitCli:     gitCli,
 		actionType: actionType,
 
 		titleTemplate: titleTmpl,
@@ -198,6 +214,11 @@ func (r *Remediator) Do(
 		Params:  params.GetRule().Params.AsMap(),
 	}
 
+	ingested := params.GetIngestResult()
+	if ingested == nil || ingested.Fs == nil || ingested.Storer == nil {
+		return nil, errors.New("ingested filesystem is nil or no git repo was ingested")
+	}
+
 	title := new(bytes.Buffer)
 	if err := r.titleTemplate.Execute(title, tmplParams); err != nil {
 		return nil, fmt.Errorf("cannot execute title template: %w", err)
@@ -215,7 +236,7 @@ func (r *Remediator) Do(
 	var remErr error
 	switch remAction {
 	case interfaces.ActionOptOn:
-		alreadyExists, err := prAlreadyExists(ctx, r.cli, repo, magicComment)
+		alreadyExists, err := prAlreadyExists(ctx, r.ghCli, repo, magicComment)
 		if err != nil {
 			return nil, fmt.Errorf("cannot check if PR already exists: %w", err)
 		}
@@ -223,7 +244,7 @@ func (r *Remediator) Do(
 			zerolog.Ctx(ctx).Info().Msg("PR already exists, won't create a new one")
 			return nil, nil
 		}
-		remErr = r.run(ctx, repo, title.String(), prFullBodyText, params.GetRule().Params.AsMap())
+		remErr = r.runGit(ctx, ingested.Fs, ingested.Storer, repo, title.String(), prFullBodyText)
 	case interfaces.ActionOptDryRun:
 		dryRun(title.String(), prFullBodyText, r.entries)
 		remErr = nil
@@ -247,79 +268,150 @@ func dryRun(title, body string, entries []prEntry) {
 	}
 }
 
-func (r *Remediator) run(
+func (r *Remediator) runGit(
 	ctx context.Context,
-	repo *pb.Repository,
+	fs billy.Filesystem,
+	storer storage.Storer,
+	pbRepo *pb.Repository,
 	title, body string,
-	params map[string]any,
 ) error {
-	branchFrom := getBranchFrom(ctx, params)
+	logger := zerolog.Ctx(ctx).With().Str("repo", pbRepo.String()).Logger()
 
-	commitShaFrom, err := r.getCommitShaFrom(ctx, repo, branchFrom)
+	repo, err := git.Open(storer, fs)
 	if err != nil {
-		return fmt.Errorf("cannot get ref from: %w", err)
+		return fmt.Errorf("cannot open git repo: %w", err)
 	}
 
-	treeShaFrom, err := r.getTreeShaFrom(ctx, repo, commitShaFrom)
+	wt, err := repo.Worktree()
 	if err != nil {
-		return fmt.Errorf("cannot get tree from: %w", err)
+		return fmt.Errorf("cannot get worktree: %w", err)
 	}
 
-	tree, err := r.createTree(ctx, repo, treeShaFrom)
+	logger.Debug().Msg("Getting authenticated user")
+	u, err := r.ghCli.GetAuthenticatedUser(ctx)
 	if err != nil {
-		return fmt.Errorf("error creating tree: %w", err)
+		return fmt.Errorf("cannot get authenticated user: %w", err)
 	}
 
-	newBranch, err := r.createOrUpdateBranch(ctx, repo, title, tree, commitShaFrom)
+	logger.Debug().Str("branch", branchBaseName(title)).Msg("Checking out branch")
+	err = wt.Checkout(&git.CheckoutOptions{
+		Branch: plumbing.NewBranchReferenceName(branchBaseName(title)),
+		Create: true,
+	})
 	if err != nil {
-		return fmt.Errorf("error creating or updating branch: %w", err)
+		return fmt.Errorf("cannot checkout branch: %w", err)
 	}
 
-	_, err = r.cli.CreatePullRequest(
-		ctx, repo.GetOwner(), repo.GetName(),
+	logger.Debug().Msg("Creating file entries")
+	if err := r.createEntries(fs); err != nil {
+		return fmt.Errorf("cannot create entries: %w", err)
+	}
+
+	logger.Debug().Msg("Staging changes")
+	for _, entry := range r.entries {
+		if _, err := wt.Add(entry.Path); err != nil {
+			return fmt.Errorf("cannot add file %s: %w", entry.Path, err)
+		}
+	}
+
+	logger.Debug().Msg("Committing changes")
+	_, err = wt.Commit(title, &git.CommitOptions{
+		Author: &object.Signature{
+			Name:  u.GetName(),
+			Email: u.GetEmail(),
+			When:  time.Now(),
+		},
+	})
+	if err != nil {
+		return fmt.Errorf("cannot commit: %w", err)
+	}
+
+	refspec := refFromBranch(branchBaseName(title))
+
+	var b bytes.Buffer
+	err = repo.PushContext(ctx,
+		&git.PushOptions{
+			RemoteName: guessRemote(repo),
+			Force:      true,
+			RefSpecs: []config.RefSpec{
+				config.RefSpec(
+					fmt.Sprintf("+%s:%s", refspec, refspec),
+				),
+			},
+			Auth: &githttp.BasicAuth{
+				Username: u.GetName(),
+				Password: r.ghCli.GetToken(),
+			},
+			Progress: &b,
+		})
+	if err != nil {
+		return fmt.Errorf("cannot push: %w", err)
+	}
+	zerolog.Ctx(ctx).Debug().Msgf("Push output: %s", b.String())
+
+	_, err = r.ghCli.CreatePullRequest(
+		ctx, pbRepo.GetOwner(), pbRepo.GetName(),
 		title, body,
-		newBranch, dflBranchTo,
+		refspec,
+		dflBranchTo,
 	)
 	if err != nil {
 		return fmt.Errorf("cannot create pull request: %w", err)
 	}
+
+	zerolog.Ctx(ctx).Info().Msg("Pull request created")
 	return nil
 }
 
-func (r *Remediator) getCommitShaFrom(ctx context.Context, repo *pb.Repository, branchFrom string) (string, error) {
-	refName := refFromBranch(branchFrom)
-	fromRef, err := r.cli.GetRef(ctx, repo.GetOwner(), repo.GetName(), refName)
+func guessRemote(gitRepo *git.Repository) string {
+	remotes, err := gitRepo.Remotes()
 	if err != nil {
-		return "", fmt.Errorf("error getting commit ref: %w", err)
+		return ""
 	}
 
-	return fromRef.GetObject().GetSHA(), nil
+	if len(remotes) == 0 {
+		return ""
+	}
+
+	for _, remote := range remotes {
+		if remote.Config().Name == "origin" {
+			return remote.Config().Name
+		}
+	}
+
+	return remotes[0].Config().Name
+}
+
+func (r *Remediator) createEntries(fs billy.Filesystem) error {
+	for _, entry := range r.entries {
+		if err := writeEntry(entry, fs); err != nil {
+			return fmt.Errorf("cannot write entry %s: %w", entry.Path, err)
+		}
+	}
+	return nil
+}
+
+func writeEntry(entry prEntry, fs billy.Filesystem) error {
+	if err := fs.MkdirAll(filepath.Dir(entry.Path), 0755); err != nil {
+		return fmt.Errorf("cannot create directory: %w", err)
+	}
+
+	f, err := fs.Create(entry.Path)
+	if err != nil {
+		return fmt.Errorf("cannot create file: %w", err)
+	}
+	defer f.Close()
+
+	_, err = io.WriteString(f, entry.Content)
+	if err != nil {
+		return fmt.Errorf("cannot write to file: %w", err)
+	}
+
+	return nil
 }
 
 func refFromBranch(branchFrom string) string {
 	return fmt.Sprintf("refs/heads/%s", branchFrom)
-}
-
-func (r *Remediator) getTreeShaFrom(ctx context.Context, repo *pb.Repository, commitSha string) (string, error) {
-	commit, err := r.cli.GetCommit(ctx, repo.GetOwner(), repo.GetName(), commitSha)
-	if err != nil {
-		return "", fmt.Errorf("error getting commit: %w", err)
-	}
-	return commit.GetTree().GetSHA(), nil
-}
-
-func (r *Remediator) createTree(ctx context.Context, repo *pb.Repository, treeShaFrom string) (*github.Tree, error) {
-	treeEntries, err := r.createTreeEntries(ctx, repo)
-	if err != nil {
-		return nil, fmt.Errorf("error creating tree entries: %w", err)
-	}
-
-	tree, err := r.cli.CreateTree(ctx, repo.GetOwner(), repo.GetName(), treeShaFrom, treeEntries)
-	if err != nil {
-		return nil, fmt.Errorf("error creating tree: %w", err)
-	}
-
-	return tree, nil
 }
 
 func (r *Remediator) expandContents(
@@ -337,74 +429,10 @@ func (r *Remediator) expandContents(
 	return nil
 }
 
-func (r *Remediator) createTreeEntries(
-	ctx context.Context,
-	repo *pb.Repository,
-) ([]*github.TreeEntry, error) {
-	var treeEntries []*github.TreeEntry
-
-	for i := range r.entries {
-		entry := r.entries[i]
-		blob := &github.Blob{
-			Content:  github.String(entry.Content),
-			Encoding: github.String("utf-8"),
-		}
-		newBlob, err := r.cli.CreateBlob(ctx, repo.GetOwner(), repo.GetName(), blob)
-		if err != nil {
-			return nil, fmt.Errorf("error creating blob: %w", err)
-		}
-
-		treeEntries = append(treeEntries, &github.TreeEntry{
-			SHA:  newBlob.SHA,
-			Path: github.String(entry.Path),
-			Mode: github.String(entry.Mode),
-			Type: github.String("blob"),
-		})
-	}
-
-	return treeEntries, nil
-}
-
-func (r *Remediator) createOrUpdateBranch(
-	ctx context.Context,
-	repo *pb.Repository,
-	title string,
-	tree *github.Tree,
-	commitShaFrom string,
-) (string, error) {
-	commit, err := r.cli.CreateCommit(ctx, repo.GetOwner(), repo.GetName(), title, tree, commitShaFrom)
-	if err != nil {
-		return "", fmt.Errorf("error creating commit: %w", err)
-	}
-
-	newBranch := refFromBranch(branchBaseName(title))
-	_, err = r.cli.CreateRef(ctx, repo.GetOwner(), repo.GetName(), newBranch, *commit.SHA)
-	if err != nil {
-		var ghErr *github.ErrorResponse
-		if errors.As(err, &ghErr) && ghErr.Response.StatusCode == http.StatusUnprocessableEntity {
-			_, ghErr := r.cli.UpdateRef(ctx, repo.GetOwner(), repo.GetName(), newBranch, *commit.SHA, true)
-			if ghErr != nil {
-				return "", fmt.Errorf("cannot update ref: %w", ghErr)
-			}
-		}
-	}
-
-	return newBranch, nil
-}
-
 func branchBaseName(prTitle string) string {
 	baseName := dflBranchBaseName
 	normalizedPrTitle := strings.ReplaceAll(strings.ToLower(prTitle), " ", "_")
 	return fmt.Sprintf("%s_%s", baseName, normalizedPrTitle)
-}
-
-func getBranchFrom(ctx context.Context, params map[string]any) string {
-	branchFrom, err := util.JQReadFrom[string](ctx, ".branch", params)
-	if err != nil {
-		zerolog.Ctx(ctx).Info().Msgf("error reading branchFrom from params, using default: %s", dflBranchFrom)
-		branchFrom = dflBranchFrom
-	}
-	return branchFrom
 }
 
 func (r *Remediator) contentSha1() (string, error) {
