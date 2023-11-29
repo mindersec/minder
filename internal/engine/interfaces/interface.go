@@ -119,6 +119,7 @@ const (
 // a repo and most profiles are expecting a repo, the RepoID parameter is mandatory. For entities
 // other than artifacts, the ArtifactID should be 0 that is translated to NULL in the database.
 type EvalStatusParams struct {
+	Result           *Result
 	Profile          *pb.Profile
 	Rule             *pb.Profile_Rule
 	RuleType         *pb.RuleType
@@ -200,16 +201,28 @@ func (e *EvalStatusParams) GetProfile() *pb.Profile {
 	return e.Profile
 }
 
+// SetIngestResult sets the result of the ingestion for use later on in the actions
+func (e *EvalStatusParams) SetIngestResult(res *Result) {
+	e.Result = res
+}
+
+// GetIngestResult returns the result of the ingestion, if any
+func (e *EvalStatusParams) GetIngestResult() *Result {
+	return e.Result
+}
+
 // EvalParams is the interface used for a rule type evaluator
 type EvalParams interface {
 	GetRule() *pb.Profile_Rule
+	SetIngestResult(*Result)
+	GetIngestResult() *Result
 }
 
 // ActionsParams is the interface used for processing a rule type action
 type ActionsParams interface {
+	EvalParams
 	GetEvalErr() error
 	GetEvalStatusFromDb() *db.ListRuleEvaluationsByProfileIdRow
 	GetRuleType() *pb.RuleType
 	GetProfile() *pb.Profile
-	GetRule() *pb.Profile_Rule
 }

@@ -266,6 +266,8 @@ func (r *RuleTypeEngine) Eval(ctx context.Context, inf *EntityInfoWrapper, param
 	} else {
 		log.Printf("Using cached result for %s", r.GetID())
 	}
+
+	params.SetIngestResult(result)
 	// Process evaluation
 	return r.reval.Eval(ctx, params.GetRule().Def.AsMap(), result)
 }
