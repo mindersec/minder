@@ -21,7 +21,6 @@ import (
 
 	"github.com/golang/mock/gomock"
 	"github.com/google/uuid"
-	"github.com/stretchr/testify/assert"
 	"golang.org/x/oauth2/github"
 	"golang.org/x/oauth2/google"
 	"google.golang.org/grpc/codes"
@@ -29,7 +28,6 @@ import (
 	mockdb "github.com/stacklok/minder/database/mock"
 	"github.com/stacklok/minder/internal/auth"
 	"github.com/stacklok/minder/internal/db"
-	ghclient "github.com/stacklok/minder/internal/providers/github"
 	pb "github.com/stacklok/minder/pkg/api/protobuf/go/minder/v1"
 )
 
@@ -170,84 +168,4 @@ func TestGetAuthorizationURL(t *testing.T) {
 			tc.checkResponse(t, res, err)
 		})
 	}
-}
-
-func TestRevokeOauthTokens_gRPC(t *testing.T) {
-	t.Parallel()
-
-	orgID := uuid.New()
-	projectID := uuid.New()
-
-	ctx := auth.WithPermissionsContext(context.Background(), auth.UserPermissions{
-		UserId:         1,
-		OrganizationId: orgID,
-		ProjectIds:     []uuid.UUID{projectID},
-		Roles: []auth.RoleInfo{
-			{RoleID: 1, IsAdmin: true, ProjectID: &projectID, OrganizationID: orgID}},
-	})
-
-	ctrl := gomock.NewController(t)
-	defer ctrl.Finish()
-
-	mockStore := mockdb.NewMockStore(ctrl)
-
-	providerUUID := uuid.New()
-
-	mockStore.EXPECT().
-		GlobalListProviders(gomock.Any()).
-		Return([]db.Provider{
-			{
-				ID:   providerUUID,
-				Name: ghclient.Github,
-			},
-		}, nil)
-	mockStore.EXPECT().GetAccessTokenByProvider(gomock.Any(), gomock.Any())
-
-	server := newDefaultServer(t, mockStore)
-
-	res, err := server.RevokeOauthTokens(ctx, &pb.RevokeOauthTokensRequest{})
-
-	assert.NoError(t, err)
-	assert.NotNil(t, res)
-}
-
-func RevokeOauthProjectToken_gRPC(t *testing.T) {
-	t.Helper()
-
-	orgID := uuid.New()
-	projectID := uuid.New()
-
-	ctx := auth.WithPermissionsContext(context.Background(), auth.UserPermissions{
-		UserId:         1,
-		OrganizationId: orgID,
-		ProjectIds:     []uuid.UUID{projectID},
-		Roles: []auth.RoleInfo{
-			{RoleID: 1, IsAdmin: true, ProjectID: &projectID, OrganizationID: orgID}},
-	})
-
-	ctrl := gomock.NewController(t)
-	defer ctrl.Finish()
-
-	providerUUID := uuid.New()
-
-	mockStore := mockdb.NewMockStore(ctrl)
-
-	mockStore.EXPECT().
-		GetProviderByName(gomock.Any(), db.GetProviderByNameParams{
-			Name:      ghclient.Github,
-			ProjectID: projectID,
-		}).
-		Return(db.Provider{
-			ID:   providerUUID,
-			Name: ghclient.Github,
-		}, nil)
-	mockStore.EXPECT().GetAccessTokenByProjectID(gomock.Any(), gomock.Any())
-
-	server := newDefaultServer(t, mockStore)
-
-	res, err := server.RevokeOauthProjectToken(ctx, &pb.RevokeOauthProjectTokenRequest{
-		Provider: ghclient.Github, ProjectId: projectID.String()})
-
-	assert.NoError(t, err)
-	assert.NotNil(t, res)
 }

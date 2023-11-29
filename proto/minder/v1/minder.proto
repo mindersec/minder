@@ -222,32 +222,6 @@ service OAuthService {
         };
     }
 
-    // RevokeOauthTokens is used to revoke all tokens
-    // this a nuclear option and should only be used in emergencies
-    rpc RevokeOauthTokens (RevokeOauthTokensRequest) returns (RevokeOauthTokensResponse) {
-        option (google.api.http) = {
-            post: "/api/v1/auth/revoke-all"
-            body: "*"
-        };
-
-        option (rpc_options) = {
-            root_admin_only: true
-        };
-    }
-
-    // revoke token for a project
-    rpc RevokeOauthProjectToken (RevokeOauthProjectTokenRequest) returns (RevokeOauthProjectTokenResponse) {
-        option (google.api.http) = {
-            post: "/api/v1/auth/{provider}/revoke/{project_id}"
-            body: "*"
-        };
-
-        option (rpc_options) = {
-            auth_scope: OBJECT_OWNER_PROJECT
-            owner_only: true
-        };
-    }
-
     // VerifyProviderTokenFrom verifies that a token has been created for a provider since given timestamp
     rpc VerifyProviderTokenFrom (VerifyProviderTokenFromRequest) returns (VerifyProviderTokenFromResponse) {
         option (google.api.http) = {

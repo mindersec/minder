@@ -23,8 +23,6 @@ import (
 	"fmt"
 
 	"github.com/google/uuid"
-	"github.com/rs/zerolog"
-	"github.com/rs/zerolog/log"
 	"go.opentelemetry.io/otel/attribute"
 	"go.opentelemetry.io/otel/trace"
 	"golang.org/x/oauth2"
@@ -281,91 +279,6 @@ func (s *Server) getProviderAccessToken(ctx context.Context, provider string,
 	// base64 decode the token
 	decryptedToken.Expiry = encToken.ExpirationTime
 	return decryptedToken, encToken.OwnerFilter.String, nil
-}
-
-// RevokeOauthTokens revokes the all oauth tokens for a provider
-// This is in case of a security breach, where we need to revoke all tokens
-func (s *Server) RevokeOauthTokens(ctx context.Context, _ *pb.RevokeOauthTokensRequest) (*pb.RevokeOauthTokensResponse, error) {
-	providers, err := s.store.GlobalListProviders(ctx)
-	if err != nil {
-		return nil, status.Errorf(codes.InvalidArgument, "unable to list providers: %v", err)
-	}
-
-	revoked_tokens := 0
-
-	for idx := range providers {
-		provider := providers[idx]
-		// need to read all tokens from the provider and revoke them
-		tokens, err := s.store.GetAccessTokenByProvider(ctx, provider.Name)
-		if errors.Is(err, sql.ErrNoRows) {
-			zerolog.Ctx(ctx).Info().Str("provider", provider.Name).Msgf("no tokens found, skipping")
-			continue
-		} else if err != nil {
-			return nil, status.Errorf(codes.Internal, "error getting access tokens: %v", err)
-		}
-
-		for _, token := range tokens {
-			objToken, err := s.cryptoEngine.DecryptOAuthToken(token.EncryptedToken)
-			if err != nil {
-				// just log and continue
-				log.Error().Msgf("error decrypting token: %v", err)
-			} else {
-				// remove token from db
-				_ = s.store.DeleteAccessToken(ctx, db.DeleteAccessTokenParams{Provider: provider.Name, ProjectID: token.ProjectID})
-
-				// remove from provider
-				err := auth.DeleteAccessToken(ctx, provider.Name, objToken.AccessToken)
-
-				if err != nil {
-					log.Error().Msgf("Error deleting access token: %v", err)
-				}
-				revoked_tokens++
-			}
-		}
-	}
-	return &pb.RevokeOauthTokensResponse{RevokedTokens: int32(revoked_tokens)}, nil
-}
-
-// RevokeOauthProjectToken revokes the oauth token for a group
-func (s *Server) RevokeOauthProjectToken(ctx context.Context,
-	in *pb.RevokeOauthProjectTokenRequest) (*pb.RevokeOauthProjectTokenResponse, error) {
-	projectID, err := getProjectFromRequestOrDefault(ctx, in)
-	if err != nil {
-		return nil, util.UserVisibleError(codes.InvalidArgument, err.Error())
-	}
-
-	// check if user is authorized
-	if err := AuthorizedOnProject(ctx, projectID); err != nil {
-		return nil, err
-	}
-
-	provider, err := s.store.GetProviderByName(ctx, db.GetProviderByNameParams{
-		Name: in.Provider, ProjectID: projectID})
-	if err != nil {
-		return nil, providerError(fmt.Errorf("provider error: %w", err))
-	}
-
-	// need to read the token for the provider and group
-	token, err := s.store.GetAccessTokenByProjectID(ctx,
-		db.GetAccessTokenByProjectIDParams{Provider: provider.Name, ProjectID: projectID})
-	if err != nil {
-		return nil, status.Errorf(codes.Internal, "error getting access token: %v", err)
-	}
-
-	objToken, err := s.cryptoEngine.DecryptOAuthToken(token.EncryptedToken)
-	if err != nil {
-		return nil, status.Errorf(codes.Internal, "error decrypting token: %v", err)
-	}
-	// remove token from db
-	_ = s.store.DeleteAccessToken(ctx, db.DeleteAccessTokenParams{Provider: provider.Name, ProjectID: token.ProjectID})
-
-	// remove from provider
-	err = auth.DeleteAccessToken(ctx, provider.Name, objToken.AccessToken)
-
-	if err != nil {
-		log.Error().Msgf("Error deleting access token: %v", err)
-	}
-	return &pb.RevokeOauthProjectTokenResponse{}, nil
 }
 
 // StoreProviderToken stores the provider token for a group

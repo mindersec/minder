@@ -256,8 +256,6 @@ const (
 	OAuthService_ExchangeCodeForTokenCLI_FullMethodName = "/minder.v1.OAuthService/ExchangeCodeForTokenCLI"
 	OAuthService_ExchangeCodeForTokenWEB_FullMethodName = "/minder.v1.OAuthService/ExchangeCodeForTokenWEB"
 	OAuthService_StoreProviderToken_FullMethodName      = "/minder.v1.OAuthService/StoreProviderToken"
-	OAuthService_RevokeOauthTokens_FullMethodName       = "/minder.v1.OAuthService/RevokeOauthTokens"
-	OAuthService_RevokeOauthProjectToken_FullMethodName = "/minder.v1.OAuthService/RevokeOauthProjectToken"
 	OAuthService_VerifyProviderTokenFrom_FullMethodName = "/minder.v1.OAuthService/VerifyProviderTokenFrom"
 )
 
@@ -270,11 +268,6 @@ type OAuthServiceClient interface {
 	ExchangeCodeForTokenCLI(ctx context.Context, in *ExchangeCodeForTokenCLIRequest, opts ...grpc.CallOption) (*httpbody.HttpBody, error)
 	ExchangeCodeForTokenWEB(ctx context.Context, in *ExchangeCodeForTokenWEBRequest, opts ...grpc.CallOption) (*ExchangeCodeForTokenWEBResponse, error)
 	StoreProviderToken(ctx context.Context, in *StoreProviderTokenRequest, opts ...grpc.CallOption) (*StoreProviderTokenResponse, error)
-	// RevokeOauthTokens is used to revoke all tokens
-	// this a nuclear option and should only be used in emergencies
-	RevokeOauthTokens(ctx context.Context, in *RevokeOauthTokensRequest, opts ...grpc.CallOption) (*RevokeOauthTokensResponse, error)
-	// revoke token for a project
-	RevokeOauthProjectToken(ctx context.Context, in *RevokeOauthProjectTokenRequest, opts ...grpc.CallOption) (*RevokeOauthProjectTokenResponse, error)
 	// VerifyProviderTokenFrom verifies that a token has been created for a provider since given timestamp
 	VerifyProviderTokenFrom(ctx context.Context, in *VerifyProviderTokenFromRequest, opts ...grpc.CallOption) (*VerifyProviderTokenFromResponse, error)
 }
@@ -323,24 +316,6 @@ func (c *oAuthServiceClient) StoreProviderToken(ctx context.Context, in *StorePr
 	return out, nil
 }
 
-func (c *oAuthServiceClient) RevokeOauthTokens(ctx context.Context, in *RevokeOauthTokensRequest, opts ...grpc.CallOption) (*RevokeOauthTokensResponse, error) {
-	out := new(RevokeOauthTokensResponse)
-	err := c.cc.Invoke(ctx, OAuthService_RevokeOauthTokens_FullMethodName, in, out, opts...)
-	if err != nil {
-		return nil, err
-	}
-	return out, nil
-}
-
-func (c *oAuthServiceClient) RevokeOauthProjectToken(ctx context.Context, in *RevokeOauthProjectTokenRequest, opts ...grpc.CallOption) (*RevokeOauthProjectTokenResponse, error) {
-	out := new(RevokeOauthProjectTokenResponse)
-	err := c.cc.Invoke(ctx, OAuthService_RevokeOauthProjectToken_FullMethodName, in, out, opts...)
-	if err != nil {
-		return nil, err
-	}
-	return out, nil
-}
-
 func (c *oAuthServiceClient) VerifyProviderTokenFrom(ctx context.Context, in *VerifyProviderTokenFromRequest, opts ...grpc.CallOption) (*VerifyProviderTokenFromResponse, error) {
 	out := new(VerifyProviderTokenFromResponse)
 	err := c.cc.Invoke(ctx, OAuthService_VerifyProviderTokenFrom_FullMethodName, in, out, opts...)
@@ -359,11 +334,6 @@ type OAuthServiceServer interface {
 	ExchangeCodeForTokenCLI(context.Context, *ExchangeCodeForTokenCLIRequest) (*httpbody.HttpBody, error)
 	ExchangeCodeForTokenWEB(context.Context, *ExchangeCodeForTokenWEBRequest) (*ExchangeCodeForTokenWEBResponse, error)
 	StoreProviderToken(context.Context, *StoreProviderTokenRequest) (*StoreProviderTokenResponse, error)
-	// RevokeOauthTokens is used to revoke all tokens
-	// this a nuclear option and should only be used in emergencies
-	RevokeOauthTokens(context.Context, *RevokeOauthTokensRequest) (*RevokeOauthTokensResponse, error)
-	// revoke token for a project
-	RevokeOauthProjectToken(context.Context, *RevokeOauthProjectTokenRequest) (*RevokeOauthProjectTokenResponse, error)
 	// VerifyProviderTokenFrom verifies that a token has been created for a provider since given timestamp
 	VerifyProviderTokenFrom(context.Context, *VerifyProviderTokenFromRequest) (*VerifyProviderTokenFromResponse, error)
 	mustEmbedUnimplementedOAuthServiceServer()
@@ -384,12 +354,6 @@ func (UnimplementedOAuthServiceServer) ExchangeCodeForTokenWEB(context.Context, 
 }
 func (UnimplementedOAuthServiceServer) StoreProviderToken(context.Context, *StoreProviderTokenRequest) (*StoreProviderTokenResponse, error) {
 	return nil, status.Errorf(codes.Unimplemented, "method StoreProviderToken not implemented")
-}
-func (UnimplementedOAuthServiceServer) RevokeOauthTokens(context.Context, *RevokeOauthTokensRequest) (*RevokeOauthTokensResponse, error) {
-	return nil, status.Errorf(codes.Unimplemented, "method RevokeOauthTokens not implemented")
-}
-func (UnimplementedOAuthServiceServer) RevokeOauthProjectToken(context.Context, *RevokeOauthProjectTokenRequest) (*RevokeOauthProjectTokenResponse, error) {
-	return nil, status.Errorf(codes.Unimplemented, "method RevokeOauthProjectToken not implemented")
 }
 func (UnimplementedOAuthServiceServer) VerifyProviderTokenFrom(context.Context, *VerifyProviderTokenFromRequest) (*VerifyProviderTokenFromResponse, error) {
 	return nil, status.Errorf(codes.Unimplemented, "method VerifyProviderTokenFrom not implemented")
@@ -479,42 +443,6 @@ func _OAuthService_StoreProviderToken_Handler(srv interface{}, ctx context.Conte
 	return interceptor(ctx, in, info, handler)
 }
 
-func _OAuthService_RevokeOauthTokens_Handler(srv interface{}, ctx context.Context, dec func(interface{}) error, interceptor grpc.UnaryServerInterceptor) (interface{}, error) {
-	in := new(RevokeOauthTokensRequest)
-	if err := dec(in); err != nil {
-		return nil, err
-	}
-	if interceptor == nil {
-		return srv.(OAuthServiceServer).RevokeOauthTokens(ctx, in)
-	}
-	info := &grpc.UnaryServerInfo{
-		Server:     srv,
-		FullMethod: OAuthService_RevokeOauthTokens_FullMethodName,
-	}
-	handler := func(ctx context.Context, req interface{}) (interface{}, error) {
-		return srv.(OAuthServiceServer).RevokeOauthTokens(ctx, req.(*RevokeOauthTokensRequest))
-	}
-	return interceptor(ctx, in, info, handler)
-}
-
-func _OAuthService_RevokeOauthProjectToken_Handler(srv interface{}, ctx context.Context, dec func(interface{}) error, interceptor grpc.UnaryServerInterceptor) (interface{}, error) {
-	in := new(RevokeOauthProjectTokenRequest)
-	if err := dec(in); err != nil {
-		return nil, err
-	}
-	if interceptor == nil {
-		return srv.(OAuthServiceServer).RevokeOauthProjectToken(ctx, in)
-	}
-	info := &grpc.UnaryServerInfo{
-		Server:     srv,
-		FullMethod: OAuthService_RevokeOauthProjectToken_FullMethodName,
-	}
-	handler := func(ctx context.Context, req interface{}) (interface{}, error) {
-		return srv.(OAuthServiceServer).RevokeOauthProjectToken(ctx, req.(*RevokeOauthProjectTokenRequest))
-	}
-	return interceptor(ctx, in, info, handler)
-}
-
 func _OAuthService_VerifyProviderTokenFrom_Handler(srv interface{}, ctx context.Context, dec func(interface{}) error, interceptor grpc.UnaryServerInterceptor) (interface{}, error) {
 	in := new(VerifyProviderTokenFromRequest)
 	if err := dec(in); err != nil {
@@ -555,14 +483,6 @@ var OAuthService_ServiceDesc = grpc.ServiceDesc{
 		{
 			MethodName: "StoreProviderToken",
 			Handler:    _OAuthService_StoreProviderToken_Handler,
-		},
-		{
-			MethodName: "RevokeOauthTokens",
-			Handler:    _OAuthService_RevokeOauthTokens_Handler,
-		},
-		{
-			MethodName: "RevokeOauthProjectToken",
-			Handler:    _OAuthService_RevokeOauthProjectToken_Handler,
 		},
 		{
 			MethodName: "VerifyProviderTokenFrom",
