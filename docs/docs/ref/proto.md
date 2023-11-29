@@ -47,8 +47,6 @@ replies with OK
 | ExchangeCodeForTokenCLI | [ExchangeCodeForTokenCLIRequest](#minder-v1-ExchangeCodeForTokenCLIRequest) | [.google.api.HttpBody](#google-api-HttpBody) | buf:lint:ignore RPC_RESPONSE_STANDARD_NAME  protolint:disable:this |
 | ExchangeCodeForTokenWEB | [ExchangeCodeForTokenWEBRequest](#minder-v1-ExchangeCodeForTokenWEBRequest) | [ExchangeCodeForTokenWEBResponse](#minder-v1-ExchangeCodeForTokenWEBResponse) |  |
 | StoreProviderToken | [StoreProviderTokenRequest](#minder-v1-StoreProviderTokenRequest) | [StoreProviderTokenResponse](#minder-v1-StoreProviderTokenResponse) |  |
-| RevokeOauthTokens | [RevokeOauthTokensRequest](#minder-v1-RevokeOauthTokensRequest) | [RevokeOauthTokensResponse](#minder-v1-RevokeOauthTokensResponse) | RevokeOauthTokens is used to revoke all tokens this a nuclear option and should only be used in emergencies |
-| RevokeOauthProjectToken | [RevokeOauthProjectTokenRequest](#minder-v1-RevokeOauthProjectTokenRequest) | [RevokeOauthProjectTokenResponse](#minder-v1-RevokeOauthProjectTokenResponse) | revoke token for a project |
 | VerifyProviderTokenFrom | [VerifyProviderTokenFromRequest](#minder-v1-VerifyProviderTokenFromRequest) | [VerifyProviderTokenFromResponse](#minder-v1-VerifyProviderTokenFromResponse) | VerifyProviderTokenFrom verifies that a token has been created for a provider since given timestamp |
 
 
