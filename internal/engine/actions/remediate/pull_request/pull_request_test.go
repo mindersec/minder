@@ -19,10 +19,17 @@ import (
 	"context"
 	"encoding/json"
 	"fmt"
-	"net/http"
 	"strings"
 	"testing"
+	"time"
 
+	"github.com/go-git/go-billy/v5/memfs"
+	"github.com/go-git/go-billy/v5/osfs"
+	"github.com/go-git/go-git/v5"
+	"github.com/go-git/go-git/v5/plumbing"
+	"github.com/go-git/go-git/v5/plumbing/object"
+	"github.com/go-git/go-git/v5/storage/filesystem"
+	"github.com/go-git/go-git/v5/storage/memory"
 	"github.com/golang/mock/gomock"
 	"github.com/google/go-github/v53/github"
 	"github.com/stretchr/testify/require"
@@ -43,18 +50,13 @@ const (
 	repoOwner = "stacklok"
 	repoName  = "minder"
 
-	refSha        = "f254eba2db416be8d94aa35bcf3a1c41b6a6926c"
-	treeSha       = "f00cf9d55a642ec402f407dd7c3aaff69a17658b"
-	branchFrom    = "dependabot/gomod"
-	dependabotSha = "dependabot-sha"
-	readmeSha     = "readme-sha"
-	newTreeSha    = "new-tree-sha"
-	newCommitSha  = "new-commit-sha"
-
 	commitTitle = "Add Dependabot configuration for gomod"
 	prBody      = `<!-- minder: pr-remediation-body: { "ContentSha": "1041e57c2fac284bdb7827ce55c6e3cb609e97b9" } -->
 
 Adds Dependabot configuration for gomod`
+
+	authorLogin = "stacklok-bot"
+	authorEmail = "bot@stacklok.com"
 )
 
 var TestActionTypeValid interfaces.ActionType = "remediate-test"
@@ -74,7 +76,7 @@ func testGithubProviderBuilder(baseURL string) *providers.ProviderBuilder {
 		&db.Provider{
 			Name:       "github",
 			Version:    provifv1.V1,
-			Implements: []db.ProviderType{db.ProviderTypeGithub, db.ProviderTypeRest},
+			Implements: []db.ProviderType{db.ProviderTypeGithub, db.ProviderTypeRest, db.ProviderTypeGit},
 			Definition: json.RawMessage(definitionJSON),
 		},
 		db.ProviderAccessToken{},
@@ -129,73 +131,134 @@ func happyPathMockSetup(mockGitHub *mock_ghclient.MockGitHub) {
 	mockGitHub.EXPECT().
 		ListPullRequests(gomock.Any(), repoOwner, repoName, gomock.Any()).Return([]*github.PullRequest{}, nil)
 	mockGitHub.EXPECT().
-		GetRef(gomock.Any(), repoOwner, repoName, refFromBranch(branchFrom)).
-		Return(
-			&github.Reference{
-				Object: &github.GitObject{
-					SHA: github.String(refSha),
-				},
-			},
-			nil)
+		GetAuthenticatedUser(gomock.Any()).Return(&github.User{
+		Email: github.String("test@stacklok.com"),
+		Login: github.String("stacklok-bot"),
+	}, nil)
 	mockGitHub.EXPECT().
-		GetCommit(gomock.Any(), repoOwner, repoName, refSha).
-		Return(
-			&github.Commit{
-				Tree: &github.Tree{
-					SHA: github.String(treeSha),
-				},
-			},
-			nil)
-	mockGitHub.EXPECT().
-		CreateBlob(gomock.Any(), repoOwner, repoName, &github.Blob{
-			Content:  github.String("dependabot config for gomod"),
-			Encoding: github.String("utf-8"),
-		}).
-		Return(
-			&github.Blob{
-				SHA: github.String(dependabotSha),
-			},
-			nil)
-	mockGitHub.EXPECT().
-		CreateBlob(gomock.Any(), repoOwner, repoName, &github.Blob{
-			Content:  github.String("This project uses dependabot"),
-			Encoding: github.String("utf-8"),
-		}).
-		Return(
-			&github.Blob{
-				SHA: github.String(readmeSha),
-			},
-			nil)
-	mockGitHub.EXPECT().
-		CreateTree(gomock.Any(), repoOwner, repoName, treeSha,
-			[]*github.TreeEntry{
-				{
-					Path: github.String(".github/dependabot.yml"),
-					Mode: github.String("100644"),
-					Type: github.String("blob"),
-					SHA:  github.String(dependabotSha),
-				},
-				{
-					Path: github.String("README.md"),
-					Mode: github.String("100644"),
-					Type: github.String("blob"),
-					SHA:  github.String(readmeSha),
-				},
-			}).
-		Return(
-			&github.Tree{
-				SHA: github.String(newTreeSha),
-			}, nil)
-	mockGitHub.EXPECT().
-		CreateCommit(gomock.Any(), repoOwner, repoName, commitTitle,
-			&github.Tree{
-				SHA: github.String(newTreeSha),
-			}, refSha).
-		Return(
-			&github.Commit{
-				SHA: github.String(newCommitSha),
-			}, nil)
+		GetToken().Return("token")
+}
 
+func mockRepoSetup(t *testing.T, postSetupHooks ...hookFunc) (*git.Repository, error) {
+	t.Helper()
+
+	upstream, err := mockUpstreamSetup(t, postSetupHooks...)
+	if err != nil {
+		return nil, err
+	}
+
+	clone, err := mockCloneSetup(upstream)
+	if err != nil {
+		return nil, err
+	}
+
+	return clone, nil
+}
+
+type hookFunc func(*git.Repository) error
+
+func mockUpstreamSetup(t *testing.T, postSetupHooks ...hookFunc) (*git.Repository, error) {
+	t.Helper()
+
+	tmpdir := t.TempDir()
+	fsStorer := filesystem.NewStorage(osfs.New(tmpdir), nil)
+	// we create an OS filesystem with a bound OS so that the git repo can be
+	// references as an upstream remote using file:// URL
+	fs := osfs.New(tmpdir, osfs.WithBoundOS())
+
+	// initialize the repo with a commit or else creating a branch will fail
+	r, err := git.Init(fsStorer, fs)
+	if err != nil {
+		return nil, err
+	}
+
+	wt, err := r.Worktree()
+	if err != nil {
+		return nil, err
+	}
+
+	// create a dummy commit or else checking out a branch fails
+	// TODO(jakub): is this something to handle in the engine?
+	f, err := wt.Filesystem.Create(".gitignore")
+	if err != nil {
+		return nil, err
+	}
+
+	_, err = f.Write([]byte("This is a test repo"))
+	if err != nil {
+		return nil, err
+	}
+
+	_, err = wt.Add(".gitignore")
+	if err != nil {
+		return nil, err
+	}
+
+	_, err = wt.Commit("initial commit", &git.CommitOptions{
+		Author: &object.Signature{
+			Name:  authorLogin,
+			Email: authorEmail,
+			When:  time.Now(),
+		},
+	})
+	if err != nil {
+		return nil, err
+	}
+
+	for _, hook := range postSetupHooks {
+		if err := hook(r); err != nil {
+			return nil, err
+		}
+	}
+
+	return r, nil
+}
+
+func mockCloneSetup(upstream *git.Repository) (*git.Repository, error) {
+	mfs := memfs.New()
+	memStorer := memory.NewStorage()
+
+	upstreamWt, err := upstream.Worktree()
+	if err != nil {
+		return nil, err
+	}
+
+	upstreamRoot := upstreamWt.Filesystem.Root()
+	clone, err := git.Clone(memStorer, mfs, &git.CloneOptions{
+		URL: "file://" + upstreamRoot,
+	})
+	if err != nil {
+		return nil, err
+	}
+
+	return clone, nil
+}
+
+func defaultMockRepoSetup(t *testing.T) (*git.Repository, error) {
+	t.Helper()
+
+	return mockRepoSetup(t)
+}
+
+func mockRepoSetupWithBranch(t *testing.T) (*git.Repository, error) {
+	t.Helper()
+
+	return mockRepoSetup(t, func(repo *git.Repository) error {
+		headRef, err := repo.Head()
+		if err != nil {
+			return err
+		}
+
+		// for some reason just checkout the new branch was throwing a panic
+		// this is just a convoluted way of creating a new branch
+		ref := plumbing.NewHashReference(
+			plumbing.ReferenceName(
+				refFromBranch(branchBaseName(commitTitle)),
+			),
+			headRef.Hash())
+
+		return repo.Storer.SetReference(ref)
+	})
 }
 
 func TestPullRequestRemediate(t *testing.T) {
@@ -216,6 +279,7 @@ func TestPullRequestRemediate(t *testing.T) {
 		name        string
 		newRemArgs  *newPullRequestRemediateArgs
 		remArgs     *remediateArgs
+		repoSetup   func(*testing.T) (*git.Repository, error)
 		mockSetup   func(*mock_ghclient.MockGitHub)
 		wantErr     bool
 		wantInitErr bool
@@ -227,15 +291,11 @@ func TestPullRequestRemediate(t *testing.T) {
 				pbuild:     testGithubProviderBuilder(ghApiUrl),
 				actionType: TestActionTypeValid,
 			},
-			remArgs: createTestRemArgs(),
+			remArgs:   createTestRemArgs(),
+			repoSetup: defaultMockRepoSetup,
 			mockSetup: func(mockGitHub *mock_ghclient.MockGitHub) {
 				happyPathMockSetup(mockGitHub)
 
-				mockGitHub.EXPECT().
-					CreateRef(gomock.Any(), repoOwner, repoName,
-						refFromBranch(branchBaseName(commitTitle)),
-						newCommitSha).
-					Return(nil, nil)
 				mockGitHub.EXPECT().
 					CreatePullRequest(
 						gomock.Any(),
@@ -252,26 +312,11 @@ func TestPullRequestRemediate(t *testing.T) {
 				pbuild:     testGithubProviderBuilder(ghApiUrl),
 				actionType: TestActionTypeValid,
 			},
-			remArgs: createTestRemArgs(),
+			remArgs:   createTestRemArgs(),
+			repoSetup: mockRepoSetupWithBranch,
 			mockSetup: func(mockGitHub *mock_ghclient.MockGitHub) {
 				happyPathMockSetup(mockGitHub)
 
-				// tests that createRef detects that the branch already exists and updateRef force-pushes
-				mockGitHub.EXPECT().
-					CreateRef(gomock.Any(), repoOwner, repoName,
-						refFromBranch(branchBaseName(commitTitle)),
-						newCommitSha).
-					Return(
-						nil, &github.ErrorResponse{
-							Response: &http.Response{
-								StatusCode: http.StatusUnprocessableEntity,
-							},
-						})
-				mockGitHub.EXPECT().
-					UpdateRef(gomock.Any(), repoOwner, repoName,
-						refFromBranch(branchBaseName(commitTitle)),
-						newCommitSha, true).
-					Return(nil, nil)
 				mockGitHub.EXPECT().
 					CreatePullRequest(
 						gomock.Any(),
@@ -288,7 +333,8 @@ func TestPullRequestRemediate(t *testing.T) {
 				pbuild:     testGithubProviderBuilder(ghApiUrl),
 				actionType: TestActionTypeValid,
 			},
-			remArgs: createTestRemArgs(),
+			remArgs:   createTestRemArgs(),
+			repoSetup: defaultMockRepoSetup,
 			mockSetup: func(mockGitHub *mock_ghclient.MockGitHub) {
 				mockGitHub.EXPECT().
 					ListPullRequests(gomock.Any(), repoOwner, repoName, gomock.Any()).
@@ -316,7 +362,7 @@ func TestPullRequestRemediate(t *testing.T) {
 
 			require.NoError(t, err, "unexpected error creating remediate engine")
 			// TODO(jakub): providerBuilder should be an interface so we can pass in mock more easily
-			engine.cli = mockClient
+			engine.ghCli = mockClient
 
 			require.NoError(t, err, "unexpected error creating remediate engine")
 			require.NotNil(t, engine, "expected non-nil remediate engine")
@@ -340,7 +386,22 @@ func TestPullRequestRemediate(t *testing.T) {
 				},
 			}
 
-			retMeta, err := engine.Do(context.Background(), interfaces.ActionCmdOn, tt.remArgs.remAction, tt.remArgs.ent, evalParams, nil)
+			testrepo, err := tt.repoSetup(t)
+			require.NoError(t, err, "unexpected error creating test repo")
+			testWt, err := testrepo.Worktree()
+			require.NoError(t, err, "unexpected error creating test worktree")
+
+			evalParams.SetIngestResult(
+				&interfaces.Result{
+					Fs:     testWt.Filesystem,
+					Storer: testrepo.Storer,
+				})
+			retMeta, err := engine.Do(context.Background(),
+				interfaces.ActionCmdOn,
+				tt.remArgs.remAction,
+				tt.remArgs.ent,
+				evalParams,
+				nil)
 			if tt.wantErr {
 				require.Error(t, err, "expected error")
 				require.Nil(t, retMeta, "expected nil metadata")
