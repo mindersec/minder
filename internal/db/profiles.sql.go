@@ -48,6 +48,17 @@ func (q *Queries) CountProfilesByEntityType(ctx context.Context) ([]CountProfile
 	return items, nil
 }
 
+const countProfilesByName = `-- name: CountProfilesByName :one
+SELECT COUNT(*) AS num_named_profiles FROM profiles WHERE name = $1
+`
+
+func (q *Queries) CountProfilesByName(ctx context.Context, name string) (int64, error) {
+	row := q.db.QueryRowContext(ctx, countProfilesByName, name)
+	var num_named_profiles int64
+	err := row.Scan(&num_named_profiles)
+	return num_named_profiles, err
+}
+
 const createProfile = `-- name: CreateProfile :one
 INSERT INTO profiles (  
     provider,

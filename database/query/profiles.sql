@@ -83,3 +83,6 @@ SELECT COUNT(p.id) AS num_profiles, ep.entity AS profile_entity
 FROM profiles AS p
          JOIN entity_profiles AS ep ON p.id = ep.profile_id
 GROUP BY ep.entity;
+
+-- name: CountProfilesByName :one
+SELECT COUNT(*) AS num_named_profiles FROM profiles WHERE name = $1;
