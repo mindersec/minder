@@ -106,6 +106,25 @@ func (m *metrics) initInstrumentsOnce(store db.Store) error {
 		return fmt.Errorf("failed to create profile count gauge: %w", err)
 	}
 
+	_, err = m.meter.Int64ObservableGauge("profile.quickstart.count",
+		metric.WithDescription("Number of quickstart profiles in the database"),
+		metric.WithUnit("profiles"),
+		metric.WithInt64Callback(func(ctx context.Context, observer metric.Int64Observer) error {
+			// the profile name is currently hardcoded in cmd/cli/app/quickstart/embed/profile.yaml
+			const quickstartProfileName = "quickstart-profile"
+
+			num, err := store.CountProfilesByName(ctx, quickstartProfileName)
+			if err != nil {
+				return err
+			}
+			observer.Observe(num)
+			return nil
+		}),
+	)
+	if err != nil {
+		return fmt.Errorf("failed to create the quickstart profile count gauge: %w", err)
+	}
+
 	m.webhookStatusCodeCounter, err = m.meter.Int64Counter("webhook.status_code",
 		metric.WithDescription("Number of webhook requests by status code"),
 		metric.WithUnit("requests"))

@@ -15,6 +15,7 @@ type Querier interface {
 	AddUserProject(ctx context.Context, arg AddUserProjectParams) (UserProject, error)
 	AddUserRole(ctx context.Context, arg AddUserRoleParams) (UserRole, error)
 	CountProfilesByEntityType(ctx context.Context) ([]CountProfilesByEntityTypeRow, error)
+	CountProfilesByName(ctx context.Context, name string) (int64, error)
 	CountRepositories(ctx context.Context) (int64, error)
 	CountUsers(ctx context.Context) (int64, error)
 	CreateAccessToken(ctx context.Context, arg CreateAccessTokenParams) (ProviderAccessToken, error)
