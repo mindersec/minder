@@ -38,6 +38,5 @@ minder auth [flags]
 * [minder auth delete](minder_auth_delete.md)	 - Permanently delete account
 * [minder auth login](minder_auth_login.md)	 - Login to a minder control plane.
 * [minder auth logout](minder_auth_logout.md)	 - Logout from minder control plane.
-* [minder auth revoke_provider](minder_auth_revoke_provider.md)	 - Revoke access tokens for provider
 * [minder auth whoami](minder_auth_whoami.md)	 - whoami for current user
 
