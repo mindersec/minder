@@ -61,3 +61,6 @@ docs/.docusaurus
 
 # Ignore examples cloned repo
 examples/rules-and-profiles
+
+# Generated goreleaser artifacts
+/dist
