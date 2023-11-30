@@ -36,3 +36,5 @@ jobs:
     uses: ./.github/workflows/security.yml
   compose-migrate:
     uses: ./.github/workflows/compose-migrate.yml
+  commit-lint:
+    uses: ./.github/workflows/commit-lint.yml
