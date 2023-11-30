@@ -33,11 +33,16 @@ import (
 	"net"
 	"os"
 	"path/filepath"
+	"sync/atomic"
 )
+
+// seedGuard makes sure each call to NewRand is initialized with a unique seed.
+var seedGuard atomic.Int64
 
 // NewRand returns a new instance of rand.Rand with a fixed source.
 func NewRand(seed int64) *rand.Rand {
-	return rand.New(rand.NewSource(seed))
+	seedGuard.Add(1)
+	return rand.New(rand.NewSource(seed + seedGuard.Load()))
 }
 
 // RandomInt returns a random integer between min and max.
