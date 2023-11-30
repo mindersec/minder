@@ -261,6 +261,14 @@ func (ra *reviewPrHandler) submit(ctx context.Context) error {
 	}
 
 	if ra.minderReview != nil {
+		if ra.minderReview.CommitID != nil && *ra.minderReview.CommitID == ra.pr.CommitSha {
+			// if the previous review was on the same commit, keep it
+			ra.logger.Debug().
+				Int64("review-id", ra.minderReview.GetID()).
+				Msg("previous review was on the same commit, will keep it")
+			return nil
+		}
+
 		err := ra.dismissReview(ctx)
 		if err != nil {
 			ra.logger.Error().Err(err).
