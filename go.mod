@@ -23,7 +23,7 @@ require (
 	github.com/golang-migrate/migrate/v4 v4.16.2
 	github.com/golang/mock v1.6.0
 	github.com/google/go-cmp v0.6.0
-	github.com/google/go-containerregistry v0.16.1
+	github.com/google/go-containerregistry v0.17.0
 	github.com/google/go-github/v53 v53.2.0
 	github.com/google/uuid v1.4.0
 	github.com/gorilla/securecookie v1.1.2
