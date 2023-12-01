@@ -24,7 +24,7 @@ import (
 	"net/http"
 	"net/url"
 
-	"github.com/google/go-github/v53/github"
+	"github.com/google/go-github/v56/github"
 
 	engerrors "github.com/stacklok/minder/internal/engine/errors"
 	minderv1 "github.com/stacklok/minder/pkg/api/protobuf/go/minder/v1"

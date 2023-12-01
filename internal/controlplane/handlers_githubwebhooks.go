@@ -37,7 +37,7 @@ import (
 	"time"
 
 	"github.com/ThreeDotsLabs/watermill/message"
-	"github.com/google/go-github/v53/github"
+	"github.com/google/go-github/v56/github"
 	"github.com/google/uuid"
 	"github.com/rs/zerolog"
 	"github.com/spf13/viper"

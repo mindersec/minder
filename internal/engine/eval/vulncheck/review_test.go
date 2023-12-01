@@ -25,7 +25,7 @@ import (
 	"testing"
 
 	"github.com/golang/mock/gomock"
-	"github.com/google/go-github/v53/github"
+	"github.com/google/go-github/v56/github"
 	"github.com/stretchr/testify/assert"
 	"github.com/stretchr/testify/require"
 

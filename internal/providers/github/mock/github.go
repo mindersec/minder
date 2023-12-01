@@ -11,7 +11,7 @@ import (
 
 	git "github.com/go-git/go-git/v5"
 	gomock "github.com/golang/mock/gomock"
-	github "github.com/google/go-github/v53/github"
+	github "github.com/google/go-github/v56/github"
 	v1 "github.com/stacklok/minder/pkg/api/protobuf/go/minder/v1"
 )
 
