@@ -12,8 +12,6 @@
 // See the License for the specific language governing permissions and
 // limitations under the License.
 
-// Package rule_type provides the CLI subcommand for developing rules
-// e.g. the 'rule type test' subcommand.
 package rule_type
 
 import (
@@ -29,7 +27,6 @@ import (
 	"github.com/spf13/viper"
 	"google.golang.org/protobuf/reflect/protoreflect"
 
-	"github.com/stacklok/minder/cmd/dev/app"
 	"github.com/stacklok/minder/internal/db"
 	"github.com/stacklok/minder/internal/engine"
 	"github.com/stacklok/minder/internal/engine/errors"
@@ -40,17 +37,16 @@ import (
 	minderv1 "github.com/stacklok/minder/pkg/api/protobuf/go/minder/v1"
 )
 
-// TestCmd is the root command for the rule subcommands
-var testCmd = &cobra.Command{
-	Use:          "rule type test",
-	Short:        "test a rule type definition",
-	Long:         `The 'rule type test' subcommand allows you test a rule type definition`,
-	RunE:         testCmdRun,
-	SilenceUsage: true,
-}
+// CmdTest is the root command for the rule subcommands
+func CmdTest() *cobra.Command {
+	var testCmd = &cobra.Command{
+		Use:          "test",
+		Short:        "test a rule type definition",
+		Long:         `The 'rule type test' subcommand allows you test a rule type definition`,
+		RunE:         testCmdRun,
+		SilenceUsage: true,
+	}
 
-func init() {
-	app.RootCmd.AddCommand(testCmd)
 	testCmd.Flags().StringP("rule-type", "r", "", "file to read rule type definition from")
 	testCmd.Flags().StringP("entity", "e", "", "YAML file containing the entity to test the rule against")
 	testCmd.Flags().StringP("profile", "p", "", "YAML file containing a profile to test the rule against")
@@ -73,6 +69,7 @@ func init() {
 	}
 	// bind environment variable
 	viper.SetEnvKeyReplacer(strings.NewReplacer(".", "_"))
+	return testCmd
 }
 
 func testCmdRun(cmd *cobra.Command, _ []string) error {
