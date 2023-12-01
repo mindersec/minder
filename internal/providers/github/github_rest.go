@@ -24,7 +24,7 @@ import (
 	"net/http"
 	"net/url"
 
-	"github.com/google/go-github/v53/github"
+	"github.com/google/go-github/v56/github"
 
 	engerrors "github.com/stacklok/minder/internal/engine/errors"
 	minderv1 "github.com/stacklok/minder/pkg/api/protobuf/go/minder/v1"
@@ -560,103 +560,6 @@ func (c *RestClient) CloseSecurityAdvisory(ctx context.Context, owner, repo, id 
 	}
 	// Translate the HTTP status code to an error, nil if between 200 and 299
 	return engerrors.HTTPErrorCodeToErr(resp.StatusCode)
-}
-
-// GetRef fetches a single reference in a repository.
-func (c *RestClient) GetRef(ctx context.Context, owner, repo, refString string) (*github.Reference, error) {
-	ref, _, err := c.client.Git.GetRef(ctx, owner, repo, refString)
-	if err != nil {
-		return nil, err
-	}
-
-	return ref, nil
-}
-
-// GetCommit fetches a single commit in a repository.
-func (c *RestClient) GetCommit(ctx context.Context, owner, repo, commitSHA string) (*github.Commit, error) {
-	commit, _, err := c.client.Git.GetCommit(ctx, owner, repo, commitSHA)
-	if err != nil {
-		return nil, err
-	}
-
-	return commit, nil
-}
-
-// CreateBlob creates a blob in a repository.
-func (c *RestClient) CreateBlob(ctx context.Context, owner, repo string, blob *github.Blob) (*github.Blob, error) {
-	b, _, err := c.client.Git.CreateBlob(ctx, owner, repo, blob)
-	if err != nil {
-		return nil, err
-	}
-
-	return b, nil
-}
-
-// CreateTree creates a tree in a repository.
-func (c *RestClient) CreateTree(
-	ctx context.Context,
-	owner, repo, base string,
-	entries []*github.TreeEntry,
-) (*github.Tree, error) {
-	t, _, err := c.client.Git.CreateTree(ctx, owner, repo, base, entries)
-	if err != nil {
-		return nil, err
-	}
-
-	return t, nil
-}
-
-// CreateCommit creates a commit in a repository.
-func (c *RestClient) CreateCommit(
-	ctx context.Context,
-	owner, repo, message string,
-	tree *github.Tree,
-	parentSha string,
-) (*github.Commit, error) {
-	commit, _, err := c.client.Git.CreateCommit(ctx, owner, repo, &github.Commit{
-		Message: github.String(message),
-		Tree:    tree,
-		Parents: []*github.Commit{
-			{
-				SHA: github.String(parentSha),
-			},
-		},
-	})
-	if err != nil {
-		return nil, err
-	}
-
-	return commit, nil
-}
-
-// CreateRef creates a reference in a repository.
-func (c *RestClient) CreateRef(ctx context.Context, owner, repo, ref, sha string) (*github.Reference, error) {
-	r, _, err := c.client.Git.CreateRef(ctx, owner, repo, &github.Reference{
-		Ref: github.String(ref),
-		Object: &github.GitObject{
-			SHA: github.String(sha),
-		},
-	})
-	if err != nil {
-		return nil, err
-	}
-
-	return r, nil
-}
-
-// UpdateRef updates a reference in a repository.
-func (c *RestClient) UpdateRef(ctx context.Context, owner, repo, ref, sha string, force bool) (*github.Reference, error) {
-	r, _, err := c.client.Git.UpdateRef(ctx, owner, repo, &github.Reference{
-		Ref: github.String(ref),
-		Object: &github.GitObject{
-			SHA: github.String(sha),
-		},
-	}, force)
-	if err != nil {
-		return nil, err
-	}
-
-	return r, nil
 }
 
 // CreatePullRequest creates a pull request in a repository.
