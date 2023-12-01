@@ -75,12 +75,15 @@ require (
 )
 
 require (
+	github.com/Blank-Xu/sql-adapter v1.0.0 // indirect
 	github.com/atotto/clipboard v0.1.4 // indirect
 	github.com/aws/aws-sdk-go-v2/service/ecr v1.20.2 // indirect
 	github.com/aws/aws-sdk-go-v2/service/ecrpublic v1.18.2 // indirect
 	github.com/aws/aws-sdk-go-v2/service/internal/accept-encoding v1.10.3 // indirect
 	github.com/awslabs/amazon-ecr-credential-helper/ecr-login v0.0.0-20231024185945-8841054dbdb8 // indirect
 	github.com/aymanbagabas/go-osc52/v2 v2.0.1 // indirect
+	github.com/casbin/casbin/v2 v2.79.0 // indirect
+	github.com/casbin/govaluate v1.1.0 // indirect
 	github.com/charmbracelet/bubbletea v0.24.2 // indirect
 	github.com/containerd/console v1.0.4-0.20230313162750-1ae8d489ac81 // indirect
 	github.com/deckarep/golang-set/v2 v2.4.0 // indirect

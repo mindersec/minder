@@ -23,12 +23,16 @@ import (
 	"os"
 	"os/signal"
 
+	sqladapter "github.com/Blank-Xu/sql-adapter"
+	"github.com/casbin/casbin/v2"
+	"github.com/casbin/casbin/v2/model"
 	"github.com/rs/zerolog"
 	"github.com/spf13/cobra"
 	"github.com/spf13/viper"
 	"golang.org/x/sync/errgroup"
 
 	"github.com/stacklok/minder/internal/auth"
+	"github.com/stacklok/minder/internal/authz"
 	"github.com/stacklok/minder/internal/config"
 	"github.com/stacklok/minder/internal/controlplane"
 	"github.com/stacklok/minder/internal/db"
@@ -75,6 +79,26 @@ var serveCmd = &cobra.Command{
 
 		store := db.NewStore(dbConn)
 
+		adp, err := sqladapter.NewAdapterWithContext(ctx, dbConn, "postgres", authz.SQLTable)
+		if err != nil {
+			return fmt.Errorf("unable to create casbin adapter: %w", err)
+		}
+
+		casbm, err := model.NewModelFromString(authz.Model)
+		if err != nil {
+			return fmt.Errorf("unable to create casbin model: %w", err)
+		}
+
+		enf, err := casbin.NewEnforcer(casbm, adp)
+		if err != nil {
+			return fmt.Errorf("unable to create casbin enforcer: %w", err)
+		}
+
+		// Load the policy from DB.
+		if err = enf.LoadPolicy(); err != nil {
+			log.Println("LoadPolicy failed, err: ", err)
+		}
+
 		errg, ctx := errgroup.WithContext(ctx)
 
 		evt, err := events.Setup(ctx, &cfg.Events)
@@ -111,7 +135,7 @@ var serveCmd = &cobra.Command{
 		serverMetrics := controlplane.NewMetrics()
 		providerMetrics := provtelemetry.NewProviderMetrics()
 
-		s, err := controlplane.NewServer(store, evt, serverMetrics, cfg, vldtr, controlplane.WithProviderMetrics(providerMetrics))
+		s, err := controlplane.NewServer(store, evt, serverMetrics, cfg, vldtr, enf, controlplane.WithProviderMetrics(providerMetrics))
 		if err != nil {
 			return fmt.Errorf("unable to create server: %w", err)
 		}

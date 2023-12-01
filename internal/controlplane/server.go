@@ -24,6 +24,7 @@ import (
 	"time"
 
 	"github.com/ThreeDotsLabs/watermill/message"
+	"github.com/casbin/casbin/v2"
 	"github.com/grpc-ecosystem/grpc-gateway/v2/runtime"
 	"github.com/prometheus/client_golang/prometheus/promhttp"
 	_ "github.com/signalfx/splunk-otel-go/instrumentation/github.com/lib/pq/splunkpq" // Auto-instrumented version of lib/pq
@@ -46,6 +47,7 @@ import (
 
 	"github.com/stacklok/minder/internal/assets"
 	"github.com/stacklok/minder/internal/auth"
+	"github.com/stacklok/minder/internal/authz"
 	"github.com/stacklok/minder/internal/config"
 	"github.com/stacklok/minder/internal/crypto"
 	"github.com/stacklok/minder/internal/db"
@@ -81,6 +83,7 @@ type Server struct {
 	ClientID     string
 	ClientSecret string
 	cryptoEngine *crypto.Engine
+	enf          *casbin.Enforcer
 }
 
 // ServerOption is a function that modifies a server
@@ -100,6 +103,7 @@ func NewServer(
 	cpm *metrics,
 	cfg *config.Config,
 	vldtr auth.JwtValidator,
+	enf *casbin.Enforcer,
 	opts ...ServerOption,
 ) (*Server, error) {
 	eng, err := crypto.EngineFromAuthConfig(&cfg.Auth)
@@ -113,6 +117,7 @@ func NewServer(
 		cryptoEngine: eng,
 		vldtr:        vldtr,
 		mt:           cpm,
+		enf:          enf,
 		provMt:       provtelemetry.NewNoopMetrics(),
 	}
 
@@ -197,7 +202,7 @@ func (s *Server) StartGRPCServer(ctx context.Context) error {
 		// TODO: this has no test coverage!
 		util.SanitizingInterceptor(),
 		logger.Interceptor(),
-		AuthUnaryInterceptor,
+		authz.AuthzInterceptor(s.enf, s.vldtr),
 	}
 
 	options := []grpc.ServerOption{

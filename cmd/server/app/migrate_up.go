@@ -22,6 +22,7 @@ import (
 	"fmt"
 	"os"
 
+	sqladapter "github.com/Blank-Xu/sql-adapter"
 	"github.com/golang-migrate/migrate/v4"
 	_ "github.com/golang-migrate/migrate/v4/database/postgres" // nolint
 	_ "github.com/golang-migrate/migrate/v4/source/file"       // nolint
@@ -99,6 +100,14 @@ var upCmd = &cobra.Command{
 		}
 
 		fmt.Println("Database migration completed successfully")
+
+		fmt.Println("Ensuring casbin authorization table exists")
+
+		// This will create the casbin_authz table if it doesn't exist
+		_, err = sqladapter.NewAdapterWithContext(ctx, dbConn, "postgres", "casbin_authz")
+		if err != nil {
+			return fmt.Errorf("unable to create casbin adapter: %w", err)
+		}
 		return nil
 	},
 }
