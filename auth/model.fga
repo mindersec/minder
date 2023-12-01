@@ -1,0 +1,42 @@
+model
+  schema 1.1
+
+type user
+
+type project
+  relations
+    define parent: [project]
+
+    define admin: [user] or admin from parent
+    define editor: [user] or admin or editor from parent
+    define viewer: [user] or editor or viewer from parent
+
+    define getter: viewer
+    define creator: admin
+    define updater: admin
+    define deleter: admin
+
+    define repo_getter: viewer
+    define repo_creator: editor
+    define repo_updater: editor
+    define repo_deleter: editor
+
+    define artifact_getter: viewer
+    define artifact_creator: editor
+    define artifact_updater: editor
+    define artifact_deleter: editor
+
+    define pr_getter: viewer
+    define pr_creator: editor
+    define pr_updater: editor
+    define pr_deleter: editor
+
+    define provider_getter: viewer
+    define provider_creator: admin
+    define provider_updater: admin
+    define provider_deleter: admin
+
+    define rule_type_getter: viewer
+    define rule_type_creator: editor
+    define rule_type_updater: editor
+    define rule_type_deleter: editor
