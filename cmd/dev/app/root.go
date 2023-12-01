@@ -22,6 +22,7 @@ import (
 	"github.com/spf13/cobra"
 	"github.com/spf13/viper"
 
+	"github.com/stacklok/minder/cmd/dev/app/rule_type"
 	"github.com/stacklok/minder/internal/util"
 )
 
@@ -46,6 +47,8 @@ func Execute() {
 func init() {
 	cobra.OnInitialize(initConfig)
 	RootCmd.PersistentFlags().StringVar(&cfgFile, "config", "", "config file (default is $PWD/config.yaml)")
+
+	RootCmd.AddCommand(rule_type.CmdRuleType())
 }
 
 func initConfig() {
