@@ -8,7 +8,7 @@ require (
 	github.com/ThreeDotsLabs/watermill-sql/v2 v2.0.0
 	github.com/alexdrl/zerowater v0.0.3
 	github.com/aws/aws-sdk-go-v2/config v1.25.10
-	github.com/aws/aws-sdk-go-v2/feature/rds/auth v1.3.7
+	github.com/aws/aws-sdk-go-v2/feature/rds/auth v1.3.8
 	github.com/barkimedes/go-deepcopy v0.0.0-20220514131651-17c30cfc62df
 	github.com/charmbracelet/bubbles v0.16.1
 	github.com/charmbracelet/glamour v0.6.0
@@ -143,7 +143,7 @@ require (
 	github.com/alibabacloud-go/tea-xml v1.1.3 // indirect
 	github.com/aliyun/credentials-go v1.3.1 // indirect
 	github.com/asaskevich/govalidator v0.0.0-20230301143203-a9d515a09cc2 // indirect
-	github.com/aws/aws-sdk-go-v2 v1.23.4 // indirect
+	github.com/aws/aws-sdk-go-v2 v1.23.5 // indirect
 	github.com/aws/aws-sdk-go-v2/credentials v1.16.8 // indirect
 	github.com/aws/aws-sdk-go-v2/feature/ec2/imds v1.14.8 // indirect
 	github.com/aws/aws-sdk-go-v2/internal/configsources v1.2.7 // indirect
