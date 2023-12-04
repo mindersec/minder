@@ -148,7 +148,7 @@ func (s *Server) DeleteUser(ctx context.Context,
 		return nil, status.Errorf(codes.Internal, "failed to parse issuer URL: %v", err)
 	}
 
-	tokenUrl := parsedURL.JoinPath("realms", s.cfg.Identity.Server.Realm, "protocol/openid-connect/token")
+	tokenUrl := parsedURL.JoinPath("realms/stacklok/protocol/openid-connect/token")
 
 	clientSecret, err := s.cfg.Identity.Server.GetClientSecret()
 	if err != nil {
@@ -166,7 +166,7 @@ func (s *Server) DeleteUser(ctx context.Context,
 		return nil, status.Errorf(codes.Internal, "failed to get client access token: %v", err)
 	}
 
-	deleteUrl := parsedURL.JoinPath("admin/realms", s.cfg.Identity.Server.Realm, "users", subject)
+	deleteUrl := parsedURL.JoinPath("admin/realms/stacklok/users", subject)
 	request, err := http.NewRequest("DELETE", deleteUrl.String(), nil)
 	if err != nil {
 		return nil, status.Errorf(codes.Internal, "failed to construct account deletion request: %v", err)

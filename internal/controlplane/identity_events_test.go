@@ -78,7 +78,6 @@ func TestHandleEvents(t *testing.T) {
 		Identity: config.IdentityConfig{
 			Server: config.ServerIdentityConfig{
 				IssuerUrl:    server.URL,
-				Realm:        "stacklok",
 				ClientId:     "client-id",
 				ClientSecret: "client-secret",
 			},

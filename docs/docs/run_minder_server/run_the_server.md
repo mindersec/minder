@@ -97,7 +97,7 @@ Minder requires a Keycloak instance to be running. You can install this locally,
 
 Should you install locally, you will need to configure the client on Keycloak.
 You will need the following:
-- A Keycloak realm with event saving turned on for the "Delete account" event.
+- A Keycloak realm named "stacklok" with event saving turned on for the "Delete account" event.
 - A registered public client with the redirect URI `http://localhost/*`. This is used for the minder CLI.
 - A registered confidential client with a service account that can manage users and view events. This is used for the minder server.
 
@@ -106,11 +106,9 @@ You will also need to set certain configuration options in your `config.yaml` fi
 identity:
   cli:
     issuer_url: http://localhost:8081
-    realm: stacklok
     client_id: minder-cli
   server:
     issuer_url: http://localhost:8081
-    realm: stacklok
     client_id: minder-server
     client_secret: secret
 ```

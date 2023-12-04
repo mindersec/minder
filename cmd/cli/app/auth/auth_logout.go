@@ -50,12 +50,11 @@ var auth_logoutCmd = &cobra.Command{
 
 		issuerUrlStr := util.GetConfigValue(viper.GetViper(), "identity.cli.issuer_url", "identity-url", cmd,
 			constants.IdentitySeverURL).(string)
-		realm := util.GetConfigValue(viper.GetViper(), "identity.cli.realm", "identity-realm", cmd, "stacklok").(string)
 
 		parsedURL, err := url.Parse(issuerUrlStr)
 		util.ExitNicelyOnError(err, "Error parsing issuer URL")
 
-		logoutUrl := parsedURL.JoinPath("realms", realm, "protocol/openid-connect/logout")
+		logoutUrl := parsedURL.JoinPath("realms/stacklok/protocol/openid-connect/logout")
 		cli.PrintCmd(cmd, cli.SuccessBanner.Render("You have successfully logged out of the CLI."))
 		cli.PrintCmd(cmd, "If you would like to log out of the browser, you can visit %s", logoutUrl.String())
 	},

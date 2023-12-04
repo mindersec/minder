@@ -31,8 +31,6 @@ type IdentityConfig struct {
 type CliIdentityConfig struct {
 	// IssuerUrl is the base URL where the identity server is running
 	IssuerUrl string `mapstructure:"issuer_url" default:"http://localhost:8081"`
-	// Realm is the Keycloak realm that the client belongs to
-	Realm string `mapstructure:"realm" default:"stacklok"`
 	// ClientId is the client ID that identifies the minder CLI
 	ClientId string `mapstructure:"client_id" default:"minder-cli"`
 }
@@ -41,8 +39,6 @@ type CliIdentityConfig struct {
 type ServerIdentityConfig struct {
 	// IssuerUrl is the base URL where the identity server is running
 	IssuerUrl string `mapstructure:"issuer_url" default:"http://localhost:8081"`
-	// Realm is the Keycloak realm that the client belongs to
-	Realm string `mapstructure:"realm" default:"stacklok"`
 	// ClientId is the client ID that identifies the minder server
 	ClientId string `mapstructure:"client_id" default:"minder-server"`
 	// ClientSecret is the client secret for the minder server

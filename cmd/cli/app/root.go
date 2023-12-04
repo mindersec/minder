@@ -60,7 +60,6 @@ func init() {
 	RootCmd.PersistentFlags().Int("grpc-port", 443, "Server port")
 	RootCmd.PersistentFlags().Bool("grpc-insecure", false, "Allow establishing insecure connections")
 	RootCmd.PersistentFlags().String("identity-url", constants.IdentitySeverURL, "Identity server issuer URL")
-	RootCmd.PersistentFlags().String("identity-realm", "stacklok", "Identity server realm")
 	RootCmd.PersistentFlags().String("identity-client", "minder-cli", "Identity server client ID")
 	RootCmd.PersistentFlags().StringVar(&cfgFile, "config", "", "Config file (default is $PWD/config.yaml)")
 }
