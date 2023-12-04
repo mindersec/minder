@@ -1,15 +1,30 @@
+# N.B. The OpenFGA language parser is a bit finicky, and does not like
+# un-terminated apostrophes, and only allows comments at the beginning
+# of blocks.  I am sure these will be fixed over time.
+#
+# See https://github.com/openfga/language/issues/24 for some details.
+
 model
   schema 1.1
 
 type user
 
+type group
+  relations
+    define member: [user, group#member] or admin
+    define admin: [user, group#member]
+
+# We use per-resource-type permissions off of "project" because
+# we do not allow granting permissions on individual resources, only
+# on projects.  This allows us to minimize the amount of state we
+# need to keep consistent between OpenFGA and the main database.
 type project
   relations
     define parent: [project]
 
-    define admin: [user] or admin from parent
-    define editor: [user] or admin or editor from parent
-    define viewer: [user] or editor or viewer from parent
+    define admin: [user, group#member] or admin from parent
+    define editor: [user, group#member] or admin or editor from parent
+    define viewer: [user, group#member] or editor or viewer from parent
 
     define getter: viewer
     define creator: admin
