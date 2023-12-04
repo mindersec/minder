@@ -126,7 +126,7 @@ data:
         payload_secret: "your-password"
         redirect_uri: "http://localhost:8080/api/v1/auth/callback/github"
         # [*] for all events. It can also be a list such as [push,branch_protection_rule].
-        # Please check complete list on https://docs.github.com/es/webhooks-and-events/webhooks/webhook-events-and-payloads
+        # Please check complete list on https://docs.github.com/en/webhooks-and-events/webhooks/webhook-events-and-payloads
         events: ["*"]
     
     events:
@@ -753,7 +753,7 @@ data:
         payload_secret: "your-password"
         redirect_uri: "http://localhost:8080/api/v1/auth/callback/github"
         # [*] for all events. It can also be a list such as [push,branch_protection_rule].
-        # Please check complete list on https://docs.github.com/es/webhooks-and-events/webhooks/webhook-events-and-payloads
+        # Please check complete list on https://docs.github.com/en/webhooks-and-events/webhooks/webhook-events-and-payloads
         events: ["*"]
     
     events:
