@@ -148,6 +148,10 @@ This section describes how to build and run Minder from source.
 
 You'd need the following tools available - [Go](https://golang.org/doc/install), [Docker](https://docs.docker.com/get-docker/) and [Docker Compose](https://docs.docker.com/compose/install/).
 
+To build and run `minder-server`, you will also need [ko](https://ko.build/install/).
+
+To run the test suite via `make test`, you will need [gotestfmt](https://github.com/GoTestTools/gotestfmt#installing) and [helm](https://github.com/helm/helm/releases).
+
 ### Clone the repository
 
 ```bash
@@ -156,7 +160,7 @@ git clone git@github.com:stacklok/minder.git
 
 ## Build 
 
-Run the following to build `minder` and `minder-server`(binaries will be present at `./bin/`)
+Run the following to build `minder` and `minder-server` (binaries will be present at `./bin/`)
 
 ```bash
 make build
