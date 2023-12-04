@@ -1567,7 +1567,7 @@ the name stutters a bit but we already use a PullRequest message for handling PR
 | cert_identity | [string](#string) | optional |  |
 | cert_issuer | [string](#string) | optional |  |
 | rekor_log_id | [string](#string) | optional |  |
-| rekor_log_index | [int32](#int32) | optional |  |
+| rekor_log_index | [double](#double) | optional |  |
 | signature_time | [google.protobuf.Timestamp](#google-protobuf-Timestamp) | optional |  |
 
 

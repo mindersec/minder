@@ -62,7 +62,7 @@ func TestArtifactAPIEscapes(t *testing.T) {
 		{
 			name: "GetPackageVersions escapes the package name",
 			testHandler: func(w http.ResponseWriter, r *http.Request) {
-				assert.Equal(t, "/orgs/stacklok/packages/container/helm%2Fmediator/versions?package_type=container&state=active", r.URL.RequestURI())
+				assert.Equal(t, "/orgs/stacklok/packages/container/helm%2Fmediator/versions?package_type=container&page=1&per_page=100&state=active", r.URL.RequestURI())
 				w.WriteHeader(http.StatusOK)
 			},
 			cliFn: func(cli *RestClient) {
@@ -73,7 +73,7 @@ func TestArtifactAPIEscapes(t *testing.T) {
 		{
 			name: "GetPackageVersionByTag escapes the package name",
 			testHandler: func(w http.ResponseWriter, r *http.Request) {
-				assert.Equal(t, "/orgs/stacklok/packages/container/helm%2Fmediator/versions?package_type=container&state=active", r.URL.RequestURI())
+				assert.Equal(t, "/orgs/stacklok/packages/container/helm%2Fmediator/versions?package_type=container&page=1&per_page=100&state=active", r.URL.RequestURI())
 				w.WriteHeader(http.StatusOK)
 			},
 			cliFn: func(cli *RestClient) {

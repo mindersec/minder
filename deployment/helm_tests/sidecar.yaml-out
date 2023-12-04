@@ -321,8 +321,6 @@ spec:
             value: "/secrets/identity/identity_client_secret"
           - name: "MINDER_UNSTABLE_TRUSTY_ENDPOINT"
             value: "https://api.trustypkg.dev"
-          - name: "SIGSTORE_NO_CACHE"
-            value: "true"
           - name: PGPASSFILE
             value: /secrets/db/.pgpass
           
@@ -363,6 +361,8 @@ spec:
             mountPath: /secrets/app
           - name: identity-secrets
             mountPath: /secrets/identity
+          - name: sigstore-tuf-cache
+            mountPath: /tmp/minder-cache
           - mountPath: /secrets/db
             name: db-password
         - args:
@@ -394,6 +394,9 @@ spec:
       - name: identity-secrets
         secret:
           secretName: minder-identity-secrets
+      - name: sigstore-tuf-cache
+        emptyDir:
+          sizeLimit: 500Mi
       - emptyDir:
           medium: Memory
           sizeLimit: 1Mi

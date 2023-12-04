@@ -73,7 +73,8 @@ func (q *Queries) DeleteArtifactVersion(ctx context.Context, id uuid.UUID) error
 
 const deleteOldArtifactVersions = `-- name: DeleteOldArtifactVersions :exec
 DELETE FROM artifact_versions
-WHERE artifact_id = $1 AND created_at <= $2
+WHERE artifact_id = $1
+  AND (created_at <= $2 OR tags IS NULL OR tags = '')
 `
 
 type DeleteOldArtifactVersionsParams struct {

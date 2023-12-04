@@ -34,7 +34,6 @@ import (
 	"sort"
 	"strconv"
 	"strings"
-	"time"
 
 	"github.com/ThreeDotsLabs/watermill/message"
 	"github.com/google/go-github/v56/github"
@@ -45,19 +44,17 @@ import (
 	"google.golang.org/protobuf/encoding/protojson"
 	"google.golang.org/protobuf/types/known/timestamppb"
 
-	"github.com/stacklok/minder/internal/container"
 	"github.com/stacklok/minder/internal/db"
 	"github.com/stacklok/minder/internal/engine"
 	"github.com/stacklok/minder/internal/events"
 	"github.com/stacklok/minder/internal/providers"
 	githubprovider "github.com/stacklok/minder/internal/providers/github"
+	"github.com/stacklok/minder/internal/reconcilers"
 	"github.com/stacklok/minder/internal/util"
+	"github.com/stacklok/minder/internal/verifier"
 	pb "github.com/stacklok/minder/pkg/api/protobuf/go/minder/v1"
 	provifv1 "github.com/stacklok/minder/pkg/providers/v1"
 )
-
-// CONTAINER_TYPE is the type for container artifacts
-var CONTAINER_TYPE = "container"
 
 type tagIsASignatureError struct {
 	message      string
@@ -77,6 +74,9 @@ var errRepoNotFound = errors.New("repository not found")
 
 // errArtifactNotFound is returned when an artifact is not found
 var errArtifactNotFound = errors.New("artifact not found")
+
+// errArtifactVersionSkipped is returned when an artifact is skipped because it has no tags
+var errArtifactVersionSkipped = errors.New("artifact version skipped, has no tags")
 
 // errRepoIsPrivate is returned when a repository is private
 var errRepoIsPrivate = errors.New("repository is private")
@@ -219,6 +219,9 @@ func handleParseError(typ string, parseErr error) webhookEventState {
 	case errors.Is(parseErr, errNotHandled):
 		state.error = false
 		logMsg = fmt.Sprintf("webhook event not handled (%v)", parseErr)
+	case errors.Is(parseErr, errArtifactVersionSkipped):
+		state.error = false
+		logMsg = "artifact version skipped, has no tags"
 	default:
 		logMsg = fmt.Sprintf("Error parsing github webhook message: %v", parseErr)
 	}
@@ -608,7 +611,7 @@ func gatherArtifactInfo(
 
 	// we also need to fill in the visibility which is not in the payload
 	isOrg := client.GetOwner() != ""
-	ghArtifact, err := client.GetPackageByName(ctx, isOrg, artifact.Owner, CONTAINER_TYPE, artifact.Name)
+	ghArtifact, err := client.GetPackageByName(ctx, isOrg, artifact.Owner, string(verifier.ArtifactTypeContainer), artifact.Name)
 	if err != nil {
 		return nil, fmt.Errorf("error extracting artifact from repo: %w", err)
 	}
@@ -720,25 +723,22 @@ func storeSignatureAndWorkflowInVersion(
 	artifactOwnerLogin, artifactName, packageVersionName string,
 	version *pb.ArtifactVersion,
 ) error {
-	// now get information for signature and workflow
-	sigInfo, workflowInfo, err := container.GetArtifactSignatureAndWorkflowInfo(
-		ctx, client, artifactOwnerLogin, artifactName, packageVersionName)
+	// get the verifier for sigstore
+	artifactVerifier, err := verifier.NewVerifier(verifier.VerifierSigstore, client.GetToken())
 	if err != nil {
-		return fmt.Errorf("error getting signature and workflow info: %w", err)
+		return fmt.Errorf("error getting sigstore verifier: %w", err)
+	}
+	defer artifactVerifier.ClearCache()
+
+	// now get information for signature and workflow
+	res, err := artifactVerifier.Verify(ctx, verifier.ArtifactTypeContainer, "",
+		artifactOwnerLogin, artifactName, packageVersionName)
+	if err != nil {
+		log.Printf("no signature information found for: %s", res.URI)
 	}
 
-	ghWorkflow := &pb.GithubWorkflow{}
-	if err := protojson.Unmarshal(workflowInfo, ghWorkflow); err != nil {
-		return err
-	}
-
-	sigVerification := &pb.SignatureVerification{}
-	if err := protojson.Unmarshal(sigInfo, sigVerification); err != nil {
-		return err
-	}
-
-	version.SignatureVerification = sigVerification
-	version.GithubWorkflow = ghWorkflow
+	version.SignatureVerification = res.SignatureInfoProto()
+	version.GithubWorkflow = res.WorkflowInfoProto()
 	return nil
 }
 
@@ -757,15 +757,22 @@ func updateArtifactVersionFromRegistry(
 	// we'll grab the artifact version from the REST endpoint because we need the visibility
 	// and createdAt fields which are not in the payload
 	isOrg := client.GetOwner() != ""
-	ghVersion, err := client.GetPackageVersionById(ctx, isOrg, artifactOwnerLogin, CONTAINER_TYPE, artifactName, version.VersionId)
+	ghVersion, err := client.GetPackageVersionById(ctx, isOrg,
+		artifactOwnerLogin, string(verifier.ArtifactTypeContainer), artifactName, version.VersionId)
 	if err != nil {
 		return fmt.Errorf("error getting package version from repository: %w", err)
 	}
 
 	tags := ghVersion.Metadata.Container.Tags
-	if container.TagsContainSignature(tags) {
+
+	// if the artifact has no tags, skip it
+	if len(tags) == 0 {
+		return errArtifactVersionSkipped
+	}
+	sigTag := verifier.GetSignatureTag(tags)
+	if sigTag != "" {
 		// handle the case where a signature arrives later than the image
-		return newTagIsASignatureError("version is a signature", container.FindSignatureTag(tags))
+		return newTagIsASignatureError("version is a signature", sigTag)
 	}
 	sort.Strings(tags)
 
@@ -819,9 +826,8 @@ func upsertVersionedArtifact(
 		return nil, nil, fmt.Errorf("error upserting artifact: %w", err)
 	}
 
-	thirtyDaysAgo := time.Now().AddDate(0, 0, -30)
 	err = qtx.DeleteOldArtifactVersions(ctx,
-		db.DeleteOldArtifactVersionsParams{ArtifactID: dbArtifact.ID, CreatedAt: thirtyDaysAgo})
+		db.DeleteOldArtifactVersionsParams{ArtifactID: dbArtifact.ID, CreatedAt: reconcilers.ArtifactTypeContainerRetentionPeriod})
 	if err != nil {
 		// just log error, we will not remove older for now
 		log.Printf("error removing older artifact versions: %v", err)
@@ -831,40 +837,8 @@ func upsertVersionedArtifact(
 	// If found, the existing artifact is updated by removing the incoming tag from its tags column.
 	// Loop through all incoming tags
 	for _, incomingTag := range newArtifactVersion.Tags {
-		// Search artifact versions having the incoming tag (there should be at most 1 or no matches at all)
-		existingArtifactVersions, err := qtx.ListArtifactVersionsByArtifactIDAndTag(ctx,
-			db.ListArtifactVersionsByArtifactIDAndTagParams{ArtifactID: dbArtifact.ID,
-				Tags:  sql.NullString{Valid: true, String: incomingTag},
-				Limit: sql.NullInt32{Valid: false, Int32: 0}})
-		if errors.Is(err, sql.ErrNoRows) {
-			// There are no tagged versions matching the incoming tag, all okay
-			continue
-		} else if err != nil {
-			// Unexpected failure
-			return nil, nil, fmt.Errorf("failed during repository synchronization: %w", err)
-		}
-		// Loop through all artifact versions that matched the incoming tag
-		for _, existing := range existingArtifactVersions {
-			if !existing.Tags.Valid {
-				continue
-			}
-			// Rebuild the list of tags removing anything that would conflict with the incoming tag
-			newTags := slices.DeleteFunc(strings.Split(existing.Tags.String, ","), func(in string) bool { return in == incomingTag })
-			newTagsSQL := sql.NullString{String: strings.Join(newTags, ",")}
-			newTagsSQL.Valid = len(newTagsSQL.String) > 0
-			// Update the versioned artifact row in the store (we shouldn't change anything else except the tags value)
-			_, err := qtx.UpsertArtifactVersion(ctx, db.UpsertArtifactVersionParams{
-				ArtifactID:            existing.ArtifactID,
-				Version:               existing.Version,
-				Tags:                  newTagsSQL,
-				Sha:                   existing.Sha,
-				CreatedAt:             existing.CreatedAt,
-				SignatureVerification: existing.SignatureVerification.RawMessage,
-				GithubWorkflow:        existing.GithubWorkflow.RawMessage,
-			})
-			if err != nil {
-				return nil, nil, fmt.Errorf("error upserting artifact %s with version %d: %w", existing.ArtifactID, existing.Version, err)
-			}
+		if err = processArtifactVersionConflicts(ctx, qtx, dbArtifact, incomingTag); err != nil {
+			return nil, nil, fmt.Errorf("error processing artifact version conflicts: %w", err)
 		}
 	}
 
@@ -891,6 +865,58 @@ func upsertVersionedArtifact(
 	}
 
 	return &dbArtifact, &dbVersion, nil
+}
+
+func processArtifactVersionConflicts(ctx context.Context, qtx db.Querier, dbArtifact db.Artifact, incomingTag string) error {
+	// Search artifact versions having the incoming tag (there should be at most 1 or no matches at all)
+	existingArtifactVersions, err := qtx.ListArtifactVersionsByArtifactIDAndTag(ctx,
+		db.ListArtifactVersionsByArtifactIDAndTagParams{ArtifactID: dbArtifact.ID,
+			Tags:  sql.NullString{Valid: true, String: incomingTag},
+			Limit: sql.NullInt32{Valid: false, Int32: 0}})
+	if errors.Is(err, sql.ErrNoRows) {
+		// There are no tagged versions matching the incoming tag, all okay
+		return nil
+	} else if err != nil {
+		// Unexpected failure
+		return fmt.Errorf("failed during repository synchronization: %w", err)
+	}
+	// Loop through all artifact versions that matched the incoming tag
+	for _, existing := range existingArtifactVersions {
+		if !existing.Tags.Valid {
+			continue
+		}
+		// Rebuild the list of tags removing anything that would conflict with the incoming tag
+		newTags := slices.DeleteFunc(strings.Split(existing.Tags.String, ","),
+			func(in string) bool { return in == incomingTag })
+		// Delete the versioned artifact row from the store if its list of tags becomes empty
+		if len(newTags) == 0 {
+			err := qtx.DeleteArtifactVersion(ctx, existing.ID)
+			if err != nil {
+				return fmt.Errorf("error deleting artifact version %d: %w", existing.ID, err)
+			}
+			// Deletion went okay, let's continue with the next version
+			continue
+		}
+		// Rebuild the list of remaining tags for the existing versioned artifact
+		newTagsSQL := sql.NullString{String: strings.Join(newTags, ",")}
+		newTagsSQL.Valid = len(newTagsSQL.String) > 0
+		// Update the versioned artifact row in the store (we shouldn't change anything else except the tags value)
+		_, err := qtx.UpsertArtifactVersion(ctx, db.UpsertArtifactVersionParams{
+			ArtifactID:            existing.ArtifactID,
+			Version:               existing.Version,
+			Tags:                  newTagsSQL,
+			Sha:                   existing.Sha,
+			CreatedAt:             existing.CreatedAt,
+			SignatureVerification: existing.SignatureVerification.RawMessage,
+			GithubWorkflow:        existing.GithubWorkflow.RawMessage,
+		})
+		if err != nil {
+			return fmt.Errorf("error upserting artifact %s with version %d: %w", existing.ArtifactID, existing.Version, err)
+		}
+
+	}
+	// All okay
+	return nil
 }
 
 func getPullRequestInfoFromPayload(
