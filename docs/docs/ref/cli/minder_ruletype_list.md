@@ -1,17 +1,17 @@
 ---
-title: minder rule type list
+title: minder ruletype list
 ---
-## minder rule_type list
+## minder ruletype list
 
 List rule types within a minder control plane
 
 ### Synopsis
 
-The minder rule_type list subcommand lets you list rule type within a
+The minder ruletype list subcommand lets you list rule type within a
 minder control plane for an specific project.
 
 ```
-minder rule_type list [flags]
+minder ruletype list [flags]
 ```
 
 ### Options
@@ -36,5 +36,5 @@ minder rule_type list [flags]
 
 ### SEE ALSO
 
-* [minder rule_type](minder_rule_type.md)	 - Manage rule types within a minder control plane
+* [minder ruletype](minder_ruletype.md)	 - Manage rule types within a minder control plane
 

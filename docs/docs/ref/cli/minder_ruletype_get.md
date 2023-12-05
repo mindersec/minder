@@ -1,17 +1,17 @@
 ---
-title: minder rule type get
+title: minder ruletype get
 ---
-## minder rule_type get
+## minder ruletype get
 
 Get details for a rule type within a minder control plane
 
 ### Synopsis
 
-The minder rule_type get subcommand lets you retrieve details for a rule type within a
+The minder ruletype get subcommand lets you retrieve details for a rule type within a
 minder control plane.
 
 ```
-minder rule_type get [flags]
+minder ruletype get [flags]
 ```
 
 ### Options
@@ -37,5 +37,5 @@ minder rule_type get [flags]
 
 ### SEE ALSO
 
-* [minder rule_type](minder_rule_type.md)	 - Manage rule types within a minder control plane
+* [minder ruletype](minder_ruletype.md)	 - Manage rule types within a minder control plane
 
