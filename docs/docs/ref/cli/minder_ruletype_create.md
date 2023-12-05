@@ -1,7 +1,7 @@
 ---
-title: minder rule type create
+title: minder ruletype create
 ---
-## minder rule_type create
+## minder ruletype create
 
 Create a rule type within a minder control plane
 
@@ -11,7 +11,7 @@ The minder rule type create subcommand lets you create new rule types for a proj
 within a minder control plane.
 
 ```
-minder rule_type create [flags]
+minder ruletype create [flags]
 ```
 
 ### Options
@@ -35,5 +35,5 @@ minder rule_type create [flags]
 
 ### SEE ALSO
 
-* [minder rule_type](minder_rule_type.md)	 - Manage rule types within a minder control plane
+* [minder ruletype](minder_ruletype.md)	 - Manage rule types within a minder control plane
 

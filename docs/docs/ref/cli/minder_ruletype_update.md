@@ -1,24 +1,24 @@
 ---
-title: minder rule type apply
+title: minder ruletype update
 ---
-## minder rule_type apply
+## minder ruletype update
 
-Apply a rule type within a minder control plane
+Update a rule type within a minder control plane
 
 ### Synopsis
 
-The minder rule type apply subcommand lets you create or update rule types for a project
+The minder rule type update subcommand lets you update rule types for a project
 within a minder control plane.
 
 ```
-minder rule_type apply [flags]
+minder ruletype update [flags]
 ```
 
 ### Options
 
 ```
   -f, --file stringArray   Path to the YAML defining the rule type (or - for stdin). Can be specified multiple times. Can be a directory.
-  -h, --help               help for apply
+  -h, --help               help for update
 ```
 
 ### Options inherited from parent commands
@@ -35,5 +35,5 @@ minder rule_type apply [flags]
 
 ### SEE ALSO
 
-* [minder rule_type](minder_rule_type.md)	 - Manage rule types within a minder control plane
+* [minder ruletype](minder_ruletype.md)	 - Manage rule types within a minder control plane
 
