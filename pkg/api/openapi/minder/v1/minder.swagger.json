@@ -1547,7 +1547,7 @@
         },
         "method": {
           "type": "string",
-          "title": "the method to use to create the PR. For now, these are supported:\n-- minder.content - ensures that the content of the file is exactly as specified\n                    refer to the Content message for more details\n-- minder.frizbee.actions.replace_tags_with_sha - finds any github actions within a workflow\n                                                  file and replaces the tag with the SHA using\n                                                  the frizbee library"
+          "title": "the method to use to create the PR. For now, these are supported:\n-- minder.content - ensures that the content of the file is exactly as specified\n                    refer to the Content message for more details\n-- minder.actions.replace_tags_with_sha - finds any github actions within a workflow\n                                          file and replaces the tag with the SHA"
         }
       },
       "title": "the name stutters a bit but we already use a PullRequest message for handling PR entities"

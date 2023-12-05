@@ -1506,7 +1506,7 @@ the name stutters a bit but we already use a PullRequest message for handling PR
 | title | [string](#string) |  | the title of the PR |
 | body | [string](#string) |  | the body of the PR |
 | contents | [RuleType.Definition.Remediate.PullRequestRemediation.Content](#minder-v1-RuleType-Definition-Remediate-PullRequestRemediation-Content) | repeated |  |
-| method | [string](#string) |  | the method to use to create the PR. For now, these are supported: -- minder.content - ensures that the content of the file is exactly as specified refer to the Content message for more details -- minder.frizbee.actions.replace_tags_with_sha - finds any github actions within a workflow file and replaces the tag with the SHA using the frizbee library |
+| method | [string](#string) |  | the method to use to create the PR. For now, these are supported: -- minder.content - ensures that the content of the file is exactly as specified refer to the Content message for more details -- minder.actions.replace_tags_with_sha - finds any github actions within a workflow file and replaces the tag with the SHA |
 
 
 <a name="minder-v1-RuleType-Definition-Remediate-PullRequestRemediation-Content"></a>

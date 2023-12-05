@@ -1253,9 +1253,8 @@ message RuleType {
                 // the method to use to create the PR. For now, these are supported:
                 // -- minder.content - ensures that the content of the file is exactly as specified
                 //                     refer to the Content message for more details
-                // -- minder.frizbee.actions.replace_tags_with_sha - finds any github actions within a workflow
-                //                                                   file and replaces the tag with the SHA using
-                //                                                   the frizbee library
+                // -- minder.actions.replace_tags_with_sha - finds any github actions within a workflow
+                //                                           file and replaces the tag with the SHA
                 string method = 4;
             }
 

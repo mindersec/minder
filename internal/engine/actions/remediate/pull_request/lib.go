@@ -42,7 +42,7 @@ import (
 
 const (
 	minderContentModification = "minder.content"
-	minderFrizbeeTagResolve   = "minder.frizbee.actions.replace_tags_with_sha"
+	minderFrizbeeTagResolve   = "minder.actions.replace_tags_with_sha"
 )
 
 type fsChanges interface {

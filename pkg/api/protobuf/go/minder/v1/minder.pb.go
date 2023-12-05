@@ -7609,10 +7609,9 @@ type RuleType_Definition_Remediate_PullRequestRemediation struct {
 	//
 	//	refer to the Content message for more details
 	//
-	// -- minder.frizbee.actions.replace_tags_with_sha - finds any github actions within a workflow
+	// -- minder.actions.replace_tags_with_sha - finds any github actions within a workflow
 	//
-	//	file and replaces the tag with the SHA using
-	//	the frizbee library
+	//	file and replaces the tag with the SHA
 	Method string `protobuf:"bytes,4,opt,name=method,proto3" json:"method,omitempty"`
 }
 
