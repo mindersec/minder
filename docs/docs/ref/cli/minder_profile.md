@@ -34,6 +34,7 @@ minder profile [flags]
 ### SEE ALSO
 
 * [minder](minder.md)	 - Minder controls the hosted minder service
+* [minder profile apply](minder_profile_apply.md)	 - Create or update a profile within a minder control plane
 * [minder profile create](minder_profile_create.md)	 - Create a profile within a minder control plane
 * [minder profile delete](minder_profile_delete.md)	 - Delete a profile within a minder control plane
 * [minder profile get](minder_profile_get.md)	 - Get details for a profile within a minder control plane
