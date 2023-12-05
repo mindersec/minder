@@ -53,12 +53,12 @@ type Project struct {
 	Name string
 }
 
-// GetID returns the ID of the group
+// GetID returns the ID of the project
 func (g Project) GetID() uuid.UUID {
 	return g.ID
 }
 
-// GetName returns the name of the group
+// GetName returns the name of the project
 func (g Project) GetName() string {
 	return g.Name
 }
@@ -77,7 +77,7 @@ type EntityContext struct {
 	Provider Provider
 }
 
-// GetProject returns the group of the entity
+// GetProject returns the project of the entity
 func (c *EntityContext) GetProject() Project {
 	return c.Project
 }
@@ -92,17 +92,17 @@ func (c *EntityContext) GetProvider() Provider {
 // user-friendly information about an object.
 func GetContextFromInput(ctx context.Context, in *pb.Context, q db.Querier) (*EntityContext, error) {
 	if in.Project == nil || *in.Project == "" {
-		return nil, fmt.Errorf("invalid context: missing group")
+		return nil, fmt.Errorf("invalid context: missing project")
 	}
 
-	group, err := q.GetProjectByName(ctx, *in.Project)
+	project, err := q.GetProjectByName(ctx, *in.Project)
 	if err != nil {
 		return nil, fmt.Errorf("unable to get context: %w", err)
 	}
 
 	prov, err := q.GetProviderByName(ctx, db.GetProviderByNameParams{
 		Name:      in.Provider,
-		ProjectID: group.ID,
+		ProjectID: project.ID,
 	})
 	if err != nil {
 		return nil, fmt.Errorf("unable to get context: failed getting provider: %w", err)
@@ -110,8 +110,8 @@ func GetContextFromInput(ctx context.Context, in *pb.Context, q db.Querier) (*En
 
 	return &EntityContext{
 		Project: Project{
-			ID:   group.ID,
-			Name: group.Name,
+			ID:   project.ID,
+			Name: project.Name,
 		},
 		Provider: Provider{
 			ID:   prov.ID,

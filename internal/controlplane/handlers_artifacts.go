@@ -31,7 +31,7 @@ import (
 	pb "github.com/stacklok/minder/pkg/api/protobuf/go/minder/v1"
 )
 
-// ListArtifacts lists all artifacts for a given group and provider
+// ListArtifacts lists all artifacts for a given project and provider
 // nolint:gocyclo
 func (s *Server) ListArtifacts(ctx context.Context, in *pb.ListArtifactsRequest) (*pb.ListArtifactsResponse, error) {
 	projectID, err := getProjectFromRequestOrDefault(ctx, in)
@@ -52,7 +52,7 @@ func (s *Server) ListArtifacts(ctx context.Context, in *pb.ListArtifactsRequest)
 		return nil, providerError(err)
 	}
 
-	// first read all the repositories for provider and group
+	// first read all the repositories for provider and project
 	repositories, err := s.store.ListRegisteredRepositoriesByProjectIDAndProvider(ctx,
 		db.ListRegisteredRepositoriesByProjectIDAndProviderParams{Provider: provider.Name, ProjectID: projectID})
 	if err != nil {

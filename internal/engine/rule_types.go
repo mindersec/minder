@@ -45,7 +45,7 @@ type RuleMeta struct {
 	Provider string
 	// Organization is the ID of the organization that this rule is for
 	Organization *string
-	// Project is the ID of the group that this rule is for
+	// Project is the ID of the project that this rule is for
 	Project *string
 }
 

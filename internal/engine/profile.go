@@ -149,7 +149,7 @@ func TraverseRules(rules []*pb.Profile_Rule, fn func(*pb.Profile_Rule) error) er
 }
 
 // MergeDatabaseListIntoProfiles merges the database list profiles into the given
-// profiles map. This assumes that the profiles belong to the same group.
+// profiles map. This assumes that the profiles belong to the same project.
 //
 // TODO(jaosorior): This will have to consider the project tree once we	migrate to that
 func MergeDatabaseListIntoProfiles(ppl []db.ListProfilesByProjectIDRow, ectx *EntityContext) map[string]*pb.Profile {
@@ -192,7 +192,7 @@ func MergeDatabaseListIntoProfiles(ppl []db.ListProfilesByProjectIDRow, ectx *En
 }
 
 // MergeDatabaseGetIntoProfiles merges the database get profiles into the given
-// profiles map. This assumes that the profiles belong to the same group.
+// profiles map. This assumes that the profiles belong to the same project.
 //
 // TODO(jaosorior): This will have to consider the project tree once we migrate to that
 func MergeDatabaseGetIntoProfiles(ppl []db.GetProfileByProjectAndIDRow, ectx *EntityContext) map[string]*pb.Profile {
@@ -230,7 +230,7 @@ func MergeDatabaseGetIntoProfiles(ppl []db.GetProfileByProjectAndIDRow, ectx *En
 }
 
 // rowInfoToProfileMap adds the database row information to the given map of
-// profiles. This assumes that the profiles belong to the same group.
+// profiles. This assumes that the profiles belong to the same project.
 // Note that this function is thought to be called from scpecific Merge functions
 // and thus the logic is targetted to that.
 func rowInfoToProfileMap(

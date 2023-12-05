@@ -68,8 +68,8 @@ func (s *Server) authAndContextValidation(ctx context.Context, inout *minderv1.C
 	return engine.WithEntityContext(ctx, entityCtx), nil
 }
 
-// ensureDefaultProjectForContext ensures a valid group is set in the context or sets the default group
-// if the group is not set in the incoming entity context, it'll set it.
+// ensureDefaultProjectForContext ensures a valid project is set in the context or sets the default project
+// if the project is not set in the incoming entity context, it'll set it.
 func (s *Server) ensureDefaultProjectForContext(ctx context.Context, inout *minderv1.Context) error {
 	// Project is already set
 	if inout.GetProject() != "" {
@@ -78,19 +78,19 @@ func (s *Server) ensureDefaultProjectForContext(ctx context.Context, inout *mind
 
 	gid, err := auth.GetDefaultProject(ctx)
 	if err != nil {
-		return status.Errorf(codes.InvalidArgument, "cannot infer group id")
+		return status.Errorf(codes.InvalidArgument, "cannot infer project id")
 	}
 
 	g, err := s.store.GetProjectByID(ctx, gid)
 	if err != nil {
-		return status.Errorf(codes.InvalidArgument, "cannot infer group id")
+		return status.Errorf(codes.InvalidArgument, "cannot infer project id")
 	}
 
 	inout.Project = &g.Name
 	return nil
 }
 
-// verifyValidProject verifies that the group is valid and the user is authorized to access it
+// verifyValidProject verifies that the project is valid and the user is authorized to access it
 // TODO: This will have to change once we have the hierarchy tree in place.
 func verifyValidProject(ctx context.Context, in *engine.EntityContext) error {
 	if !auth.IsAuthorizedForProject(ctx, in.GetProject().GetID()) {
@@ -116,14 +116,14 @@ func validateActionType(r string) db.NullActionType {
 	return db.NullActionType{Valid: false}
 }
 
-// CreateProfile creates a profile for a group
+// CreateProfile creates a profile for a project
 func (s *Server) CreateProfile(ctx context.Context,
 	cpr *minderv1.CreateProfileRequest) (*minderv1.CreateProfileResponse, error) {
 	in := cpr.GetProfile()
 
 	ctx, err := s.authAndContextValidation(ctx, in.GetContext())
 	if err != nil {
-		return nil, status.Errorf(codes.InvalidArgument, "error ensuring default group: %v", err)
+		return nil, status.Errorf(codes.InvalidArgument, "error ensuring default project: %v", err)
 	}
 
 	entityCtx := engine.EntityFromContext(ctx)
@@ -273,7 +273,7 @@ func (s *Server) DeleteProfile(ctx context.Context,
 	in *minderv1.DeleteProfileRequest) (*minderv1.DeleteProfileResponse, error) {
 	_, err := s.authAndContextValidation(ctx, in.GetContext())
 	if err != nil {
-		return nil, status.Errorf(codes.InvalidArgument, "error ensuring default group: %v", err)
+		return nil, status.Errorf(codes.InvalidArgument, "error ensuring default project: %v", err)
 	}
 
 	parsedProfileID, err := uuid.Parse(in.Id)
@@ -297,12 +297,12 @@ func (s *Server) DeleteProfile(ctx context.Context,
 	return &minderv1.DeleteProfileResponse{}, nil
 }
 
-// ListProfiles is a method to get all profiles for a group
+// ListProfiles is a method to get all profiles for a project
 func (s *Server) ListProfiles(ctx context.Context,
 	in *minderv1.ListProfilesRequest) (*minderv1.ListProfilesResponse, error) {
 	ctx, err := s.authAndContextValidation(ctx, in.GetContext())
 	if err != nil {
-		return nil, status.Errorf(codes.InvalidArgument, "error ensuring default group: %v", err)
+		return nil, status.Errorf(codes.InvalidArgument, "error ensuring default project: %v", err)
 	}
 
 	entityCtx := engine.EntityFromContext(ctx)
@@ -326,7 +326,7 @@ func (s *Server) GetProfileById(ctx context.Context,
 	in *minderv1.GetProfileByIdRequest) (*minderv1.GetProfileByIdResponse, error) {
 	ctx, err := s.authAndContextValidation(ctx, in.GetContext())
 	if err != nil {
-		return nil, status.Errorf(codes.InvalidArgument, "error ensuring default group: %v", err)
+		return nil, status.Errorf(codes.InvalidArgument, "error ensuring default project: %v", err)
 	}
 
 	entityCtx := engine.EntityFromContext(ctx)
@@ -422,7 +422,7 @@ func (s *Server) GetProfileStatusByName(ctx context.Context,
 	in *minderv1.GetProfileStatusByNameRequest) (*minderv1.GetProfileStatusByNameResponse, error) {
 	ctx, err := s.authAndContextValidation(ctx, in.GetContext())
 	if err != nil {
-		return nil, status.Errorf(codes.InvalidArgument, "error ensuring default group: %v", err)
+		return nil, status.Errorf(codes.InvalidArgument, "error ensuring default project: %v", err)
 	}
 
 	entityCtx := engine.EntityFromContext(ctx)
@@ -533,12 +533,12 @@ func (s *Server) GetProfileStatusByName(ctx context.Context,
 	}, nil
 }
 
-// GetProfileStatusByProject is a method to get profile status for a group
+// GetProfileStatusByProject is a method to get profile status for a project
 func (s *Server) GetProfileStatusByProject(ctx context.Context,
 	in *minderv1.GetProfileStatusByProjectRequest) (*minderv1.GetProfileStatusByProjectResponse, error) {
 	ctx, err := s.authAndContextValidation(ctx, in.GetContext())
 	if err != nil {
-		return nil, status.Errorf(codes.InvalidArgument, "error ensuring default group: %v", err)
+		return nil, status.Errorf(codes.InvalidArgument, "error ensuring default project: %v", err)
 	}
 
 	entityCtx := engine.EntityFromContext(ctx)
@@ -547,7 +547,7 @@ func (s *Server) GetProfileStatusByProject(ctx context.Context,
 	dbstats, err := s.store.GetProfileStatusByProject(ctx, entityCtx.Project.ID)
 	if err != nil {
 		if errors.Is(err, sql.ErrNoRows) {
-			return nil, status.Errorf(codes.NotFound, "profile statuses not found for group")
+			return nil, status.Errorf(codes.NotFound, "profile statuses not found for project")
 		}
 		return nil, status.Errorf(codes.Unknown, "failed to get profile status: %s", err)
 	}
@@ -576,7 +576,7 @@ func (s *Server) UpdateProfile(ctx context.Context,
 
 	ctx, err := s.authAndContextValidation(ctx, in.GetContext())
 	if err != nil {
-		return nil, status.Errorf(codes.InvalidArgument, "error ensuring default group: %v", err)
+		return nil, status.Errorf(codes.InvalidArgument, "error ensuring default project: %v", err)
 	}
 
 	entityCtx := engine.EntityFromContext(ctx)

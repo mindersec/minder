@@ -37,7 +37,7 @@ import (
 )
 
 // RegisterRepository adds repositories to the database and registers a webhook
-// Once a user had enrolled in a group (they have a valid token), they can register
+// Once a user had enrolled in a project (they have a valid token), they can register
 // repositories to be monitored by the minder by provisioning a webhook on the
 // repositor(ies).
 func (s *Server) RegisterRepository(ctx context.Context,
@@ -139,10 +139,10 @@ func (s *Server) RegisterRepository(ctx context.Context,
 	return response, nil
 }
 
-// ListRepositories returns a list of repositories for a given group
+// ListRepositories returns a list of repositories for a given project
 // This function will typically be called by the client to get a list of
 // repositories that are registered present in the minder database
-// The API is called with a group id, limit and offset
+// The API is called with a project id, limit and offset
 func (s *Server) ListRepositories(ctx context.Context,
 	in *pb.ListRepositoriesRequest) (*pb.ListRepositoriesResponse, error) {
 	projectID, err := getProjectFromRequestOrDefault(ctx, in)
@@ -251,7 +251,7 @@ func (s *Server) GetRepositoryById(ctx context.Context,
 // GetRepositoryByName returns information about a repository.
 // This function will typically be called by the client to get a
 // repository which is already registered and present in the minder database
-// The API is called with a group id
+// The API is called with a project id
 func (s *Server) GetRepositoryByName(ctx context.Context,
 	in *pb.GetRepositoryByNameRequest) (*pb.GetRepositoryByNameResponse, error) {
 	// split repo name in owner and name
