@@ -81,12 +81,11 @@ will be saved to $XDG_CONFIG_HOME/minder/credentials.json`,
 
 		issuerUrlStr := util.GetConfigValue(viper.GetViper(), "identity.cli.issuer_url", "identity-url", cmd,
 			constants.IdentitySeverURL).(string)
-		realm := util.GetConfigValue(viper.GetViper(), "identity.cli.realm", "identity-realm", cmd, "stacklok").(string)
 		clientID := util.GetConfigValue(viper.GetViper(), "identity.cli.client_id", "identity-client", cmd, "minder-cli").(string)
 
 		parsedURL, err := url.Parse(issuerUrlStr)
 		util.ExitNicelyOnError(err, "Error parsing issuer URL")
-		issuerUrl := parsedURL.JoinPath("realms", realm)
+		issuerUrl := parsedURL.JoinPath("realms/stacklok")
 		scopes := []string{"openid"}
 		callbackPath := "/auth/callback"
 

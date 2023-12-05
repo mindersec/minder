@@ -47,11 +47,9 @@ database:
 identity:
   cli:
     issuer_url: http://localhost:8081
-    realm: stacklok
     client_id: minder-cli
   server:
     issuer_url: http://keycloak:8080 # Use http://localhost:8081 instead for running minder outside of docker-compose
-    realm: stacklok
     client_id: minder-server
     client_secret: secret
 
