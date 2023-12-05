@@ -451,8 +451,8 @@ github.com/go-playground/universal-translator v0.18.1 h1:Bcnm0ZwsGyWbCzImXv+pAJn
 github.com/go-playground/universal-translator v0.18.1/go.mod h1:xekY+UJKNuX9WP91TpwSH2VMlDf28Uj24BCp08ZFTUY=
 github.com/go-playground/validator/v10 v10.16.0 h1:x+plE831WK4vaKHO/jpgUGsvLKIqRRkz6M78GuJAfGE=
 github.com/go-playground/validator/v10 v10.16.0/go.mod h1:9iXMNT7sEkjXb0I+enO7QXmzG6QCsPWY4zveKFVRSyU=
-github.com/go-rod/rod v0.114.4 h1:FpkNFukjCuZLwnoLs+S9aCL95o/EMec6M+41UmvQay8=
-github.com/go-rod/rod v0.114.4/go.mod h1:aiedSEFg5DwG/fnNbUOTPMTTWX3MRj6vIs/a684Mthw=
+github.com/go-rod/rod v0.114.5 h1:1x6oqnslwFVuXJbJifgxspJUd3O4ntaGhRLHt+4Er9c=
+github.com/go-rod/rod v0.114.5/go.mod h1:aiedSEFg5DwG/fnNbUOTPMTTWX3MRj6vIs/a684Mthw=
 github.com/go-sql-driver/mysql v1.7.1 h1:lUIinVbN1DY0xBg0eMOzmmtGoHwWBbvnWubQUrtU8EI=
 github.com/go-sql-driver/mysql v1.7.1/go.mod h1:OXbVy3sEdcQ2Doequ6Z5BW6fXNQTmx+9S1MCJN5yJMI=
 github.com/go-stack/stack v1.8.0/go.mod h1:v0f6uXyyMGvRgIKkXu+yp6POWl0qKG85gN/melR3HDY=
@@ -956,8 +956,8 @@ github.com/sigstore/fulcio v1.4.3 h1:9JcUCZjjVhRF9fmhVuz6i1RyhCc/EGCD7MOl+iqCJLQ
 github.com/sigstore/fulcio v1.4.3/go.mod h1:BQPWo7cfxmJwgaHlphUHUpFkp5+YxeJes82oo39m5og=
 github.com/sigstore/rekor v1.3.3 h1:pLZ0UjutL7SUdeiysmJCabnRqvI7DsIxnJj8c/+e0Fk=
 github.com/sigstore/rekor v1.3.3/go.mod h1:GO3udo2Xiu3/Uz4/U3vgjVq7w5Yq7eSpAFP1z7gE+yA=
-github.com/sigstore/sigstore v1.7.5 h1:ij55dBhLwjICmLTBJZm7SqoQLdsu/oowDanACcJNs48=
-github.com/sigstore/sigstore v1.7.5/go.mod h1:9OCmYWhzuq/G4e1cy9m297tuMRJ1LExyrXY3ZC3Zt/s=
+github.com/sigstore/sigstore v1.7.6 h1:zB0woXx+3Bp7dk7AjklHF1VhXBdCs84VXkZbp0IHLv8=
+github.com/sigstore/sigstore v1.7.6/go.mod h1:FJE+NpEZIs4QKqZl4B2RtaVLVDcDtocAwTiNlexeBkY=
 github.com/sigstore/sigstore/pkg/signature/kms/aws v1.7.5 h1:ilufPp36exfpivctI3ElU4ZTckP3eVu6RxYebBb6u+M=
 github.com/sigstore/sigstore/pkg/signature/kms/aws v1.7.5/go.mod h1:121n8nBnuXbcI6K0hIBo/0EMYiyXqGVzbIYd0rV0ZWw=
 github.com/sigstore/sigstore/pkg/signature/kms/azure v1.7.5 h1:gLdNJJo+xMf7+IeFRlyA/Pjavndo9rivmf5ioYeuPmM=
