@@ -37,7 +37,7 @@ import (
 
 // ProfileInitEvent is an event that is sent to the reconciler topic
 // when a new profile is created. It is used to initialize the profile
-// by iterating over all registered entities for the relevant group
+// by iterating over all registered entities for the relevant project
 // and sending a profile evaluation event for each one.
 type ProfileInitEvent struct {
 	// Project is the project that the event is relevant to
@@ -62,7 +62,7 @@ func NewProfileInitMessage(provider string, projectID uuid.UUID) (*message.Messa
 
 // handleProfileInitEvent handles a profile init event.
 // It is responsible for iterating over all registered repositories
-// for the group and sending a profile evaluation event for each one.
+// for the project and sending a profile evaluation event for each one.
 func (e *Reconciler) handleProfileInitEvent(msg *message.Message) error {
 	ctx := msg.Context()
 	prov := msg.Metadata.Get(events.ProviderTypeKey)

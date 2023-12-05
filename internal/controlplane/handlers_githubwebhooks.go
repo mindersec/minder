@@ -998,7 +998,7 @@ func getRepoInformationFromPayload(
 		return db.Repository{}, fmt.Errorf("error parsing repository ID: %w", err)
 	}
 
-	// At this point, we're unsure what the group ID is, so we need to look it up.
+	// At this point, we're unsure what the project ID is, so we need to look it up.
 	// It's the same case for the provider. We can gather this information from the
 	// repository ID.
 	dbrepo, err := store.GetRepositoryByRepoID(ctx, id)
@@ -1012,7 +1012,7 @@ func getRepoInformationFromPayload(
 	}
 
 	if dbrepo.ProjectID.String() == "" {
-		return db.Repository{}, fmt.Errorf("no group found for repository %s/%s: %w",
+		return db.Repository{}, fmt.Errorf("no project found for repository %s/%s: %w",
 			dbrepo.RepoOwner, dbrepo.RepoName, errRepoNotFound)
 	}
 

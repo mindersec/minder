@@ -85,7 +85,7 @@ func (s *Server) GetAuthorizationURL(ctx context.Context,
 		Valid: true,
 	}
 
-	// Delete any existing session state for the group
+	// Delete any existing session state for the project
 	err = s.store.DeleteSessionStateByProjectID(ctx, db.DeleteSessionStateByProjectIDParams{
 		Provider:  provider.Name,
 		ProjectID: projectID})
@@ -100,7 +100,7 @@ func (s *Server) GetAuthorizationURL(ctx context.Context,
 		owner = sql.NullString{Valid: true, String: *req.Owner}
 	}
 
-	// Insert the new session state into the database along with the user's group ID
+	// Insert the new session state into the database along with the user's project ID
 	// retrieved from the JWT token
 	_, err = s.store.CreateSessionState(ctx, db.CreateSessionStateParams{
 		Provider:     provider.Name,
@@ -149,7 +149,7 @@ func (s *Server) ExchangeCodeForTokenCLI(ctx context.Context,
 	// get projectID from session along with state nonce from the database
 	stateData, err := s.store.GetProjectIDPortBySessionState(ctx, in.State)
 	if err != nil {
-		return nil, status.Errorf(codes.Unknown, "error getting group ID by session state: %s", err)
+		return nil, status.Errorf(codes.Unknown, "error getting project ID by session state: %s", err)
 	}
 
 	// get provider
@@ -281,7 +281,7 @@ func (s *Server) getProviderAccessToken(ctx context.Context, provider string,
 	return decryptedToken, encToken.OwnerFilter.String, nil
 }
 
-// StoreProviderToken stores the provider token for a group
+// StoreProviderToken stores the provider token for a project
 func (s *Server) StoreProviderToken(ctx context.Context,
 	in *pb.StoreProviderTokenRequest) (*pb.StoreProviderTokenResponse, error) {
 	projectID, err := getProjectFromRequestOrDefault(ctx, in)

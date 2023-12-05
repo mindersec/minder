@@ -43,7 +43,7 @@ func providerError(err error) error {
 }
 
 func getProjectFromRequestOrDefault(ctx context.Context, in ProjectIDGetter) (uuid.UUID, error) {
-	// if we do not have a group, check if we can infer it
+	// if we do not have a project ID, check if we can infer it
 	if in.GetProjectId() == "" {
 		proj, err := auth.GetDefaultProject(ctx)
 		if err != nil {

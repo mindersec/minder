@@ -39,7 +39,7 @@ func (s *Server) ListRuleTypes(
 ) (*minderv1.ListRuleTypesResponse, error) {
 	ctx, err := s.authAndContextValidation(ctx, in.GetContext())
 	if err != nil {
-		return nil, status.Errorf(codes.InvalidArgument, "error ensuring default group: %v", err)
+		return nil, status.Errorf(codes.InvalidArgument, "error ensuring default project: %v", err)
 	}
 
 	entityCtx := engine.EntityFromContext(ctx)
@@ -74,7 +74,7 @@ func (s *Server) GetRuleTypeByName(
 ) (*minderv1.GetRuleTypeByNameResponse, error) {
 	ctx, err := s.authAndContextValidation(ctx, in.GetContext())
 	if err != nil {
-		return nil, status.Errorf(codes.InvalidArgument, "error ensuring default group: %v", err)
+		return nil, status.Errorf(codes.InvalidArgument, "error ensuring default project: %v", err)
 	}
 
 	entityCtx := engine.EntityFromContext(ctx)
@@ -107,7 +107,7 @@ func (s *Server) GetRuleTypeById(
 ) (*minderv1.GetRuleTypeByIdResponse, error) {
 	ctx, err := s.authAndContextValidation(ctx, in.GetContext())
 	if err != nil {
-		return nil, status.Errorf(codes.InvalidArgument, "error ensuring default group: %v", err)
+		return nil, status.Errorf(codes.InvalidArgument, "error ensuring default project: %v", err)
 	}
 
 	entityCtx := engine.EntityFromContext(ctx)
@@ -143,7 +143,7 @@ func (s *Server) CreateRuleType(
 
 	ctx, err := s.authAndContextValidation(ctx, in.GetContext())
 	if err != nil {
-		return nil, status.Errorf(codes.InvalidArgument, "error ensuring default group: %v", err)
+		return nil, status.Errorf(codes.InvalidArgument, "error ensuring default project: %v", err)
 	}
 
 	entityCtx := engine.EntityFromContext(ctx)
@@ -201,7 +201,7 @@ func (s *Server) UpdateRuleType(
 
 	ctx, err := s.authAndContextValidation(ctx, in.GetContext())
 	if err != nil {
-		return nil, status.Errorf(codes.InvalidArgument, "error ensuring default group: %v", err)
+		return nil, status.Errorf(codes.InvalidArgument, "error ensuring default project: %v", err)
 	}
 
 	entityCtx := engine.EntityFromContext(ctx)
@@ -304,7 +304,7 @@ func (s *Server) DeleteRuleType(
 
 	ctx, err = s.authAndContextValidation(ctx, in.GetContext())
 	if err != nil {
-		return nil, status.Errorf(codes.InvalidArgument, "error ensuring default group: %v", err)
+		return nil, status.Errorf(codes.InvalidArgument, "error ensuring default project: %v", err)
 	}
 
 	profileInfo, err := s.store.ListProfilesInstantiatingRuleType(ctx, ruletype.ID)

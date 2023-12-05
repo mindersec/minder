@@ -143,23 +143,23 @@ func WithPermissionsContext(ctx context.Context, claims UserPermissions) context
 	return context.WithValue(ctx, tokenContextKey, claims)
 }
 
-// GetDefaultProject returns the default group id for the user
+// GetDefaultProject returns the default project id for the user
 func GetDefaultProject(ctx context.Context) (uuid.UUID, error) {
 	permissions := GetPermissionsFromContext(ctx)
 	if len(permissions.ProjectIds) != 1 {
-		return uuid.UUID{}, errors.New("cannot get default group")
+		return uuid.UUID{}, errors.New("cannot get default project")
 	}
 	return permissions.ProjectIds[0], nil
 }
 
-// IsAuthorizedForProject returns true if the user is authorized for the given group
+// IsAuthorizedForProject returns true if the user is authorized for the given project
 func IsAuthorizedForProject(ctx context.Context, projectID uuid.UUID) bool {
 	permissions := GetPermissionsFromContext(ctx)
 
 	return slices.Contains(permissions.ProjectIds, projectID)
 }
 
-// GetUserProjects returns all the groups where an user belongs to
+// GetUserProjects returns all the projects where a user belongs to
 func GetUserProjects(ctx context.Context) ([]uuid.UUID, error) {
 	permissions := GetPermissionsFromContext(ctx)
 	return permissions.ProjectIds, nil

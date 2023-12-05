@@ -168,7 +168,7 @@ func (e *Executor) prepAndEvalEntityEvent(ctx context.Context, inf *EntityInfoWr
 	// get project info
 	project, err := e.querier.GetProjectByID(ctx, *projectID)
 	if err != nil {
-		return fmt.Errorf("error getting group: %w", err)
+		return fmt.Errorf("error getting project: %w", err)
 	}
 
 	provider, err := e.querier.GetProviderByName(ctx, db.GetProviderByNameParams{
@@ -215,7 +215,7 @@ func (e *Executor) evalEntityEvent(
 
 	defer e.releaseLockAndFlush(ctx, inf)
 
-	// Get profiles relevant to group
+	// Get profiles relevant to project
 	dbpols, err := e.querier.ListProfilesByProjectID(ctx, *inf.ProjectID)
 	if err != nil {
 		return fmt.Errorf("error getting profiles: %w", err)
