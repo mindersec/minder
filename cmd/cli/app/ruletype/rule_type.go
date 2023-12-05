@@ -13,8 +13,8 @@
 // See the License for the specific language governing permissions and
 // limitations under the License.
 
-// Package rule_type provides the CLI subcommand for managing rules
-package rule_type
+// Package ruletype provides the CLI subcommand for managing rules
+package ruletype
 
 import (
 	"github.com/spf13/cobra"
@@ -24,9 +24,9 @@ import (
 
 // ruleTypeCmd is the root command for the rule subcommands
 var ruleTypeCmd = &cobra.Command{
-	Use:   "rule_type",
+	Use:   "ruletype",
 	Short: "Manage rule types within a minder control plane",
-	Long: `The minder rule_type subcommands allows the management of rule types within
+	Long: `The minder ruletype subcommands allows the management of rule types within
 a minder control plane.`,
 	RunE: func(cmd *cobra.Command, args []string) error {
 		return cmd.Usage()
