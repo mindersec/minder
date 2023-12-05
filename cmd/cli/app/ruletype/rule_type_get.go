@@ -13,7 +13,7 @@
 // See the License for the specific language governing permissions and
 // limitations under the License.
 
-package rule_type
+package ruletype
 
 import (
 	"fmt"
@@ -30,7 +30,7 @@ import (
 var ruleType_getCmd = &cobra.Command{
 	Use:   "get",
 	Short: "Get details for a rule type within a minder control plane",
-	Long: `The minder rule_type get subcommand lets you retrieve details for a rule type within a
+	Long: `The minder ruletype get subcommand lets you retrieve details for a rule type within a
 minder control plane.`,
 	PreRun: func(cmd *cobra.Command, args []string) {
 		if err := viper.BindPFlags(cmd.Flags()); err != nil {

@@ -26,7 +26,7 @@ import (
 	_ "github.com/stacklok/minder/cmd/cli/app/provider"
 	_ "github.com/stacklok/minder/cmd/cli/app/quickstart"
 	_ "github.com/stacklok/minder/cmd/cli/app/repo"
-	_ "github.com/stacklok/minder/cmd/cli/app/rule_type"
+	_ "github.com/stacklok/minder/cmd/cli/app/ruletype"
 	_ "github.com/stacklok/minder/cmd/cli/app/version"
 )
 

@@ -13,7 +13,7 @@
 // See the License for the specific language governing permissions and
 // limitations under the License.
 
-package rule_type
+package ruletype
 
 import (
 	"github.com/olekukonko/tablewriter"

@@ -13,7 +13,7 @@
 // See the License for the specific language governing permissions and
 // limitations under the License.
 
-package rule_type
+package ruletype
 
 import (
 	"fmt"
@@ -21,18 +21,16 @@ import (
 
 	"github.com/spf13/cobra"
 	"github.com/spf13/viper"
-	"google.golang.org/grpc/codes"
-	"google.golang.org/grpc/status"
 
 	"github.com/stacklok/minder/internal/util"
 	minderv1 "github.com/stacklok/minder/pkg/api/protobuf/go/minder/v1"
 )
 
-// RuleType_applyCmd represents the profile create command
-var RuleType_applyCmd = &cobra.Command{
-	Use:   "apply",
-	Short: "Apply a rule type within a minder control plane",
-	Long: `The minder rule type apply subcommand lets you create or update rule types for a project
+// RuleType_createCmd represents the profile create command
+var RuleType_createCmd = &cobra.Command{
+	Use:   "create",
+	Short: "Create a rule type within a minder control plane",
+	Long: `The minder rule type create subcommand lets you create new rule types for a project
 within a minder control plane.`,
 	PreRun: func(cmd *cobra.Command, args []string) {
 		if err := viper.BindPFlags(cmd.Flags()); err != nil {
@@ -67,34 +65,15 @@ within a minder control plane.`,
 		ctx, cancel := util.GetAppContext()
 		defer cancel()
 
-		applyFunc := func(fileName string, rt *minderv1.RuleType) (*minderv1.RuleType, error) {
-			createResp, err := client.CreateRuleType(ctx, &minderv1.CreateRuleTypeRequest{
+		createFunc := func(fileName string, rt *minderv1.RuleType) (*minderv1.RuleType, error) {
+			resprt, err := client.CreateRuleType(ctx, &minderv1.CreateRuleTypeRequest{
 				RuleType: rt,
 			})
-
-			if err == nil {
-				return createResp.RuleType, nil
-			}
-
-			st, ok := status.FromError(err)
-			if !ok {
-				// We can't parse the error, so just return it
-				return nil, fmt.Errorf("error creating rule type from %s: %w", fileName, err)
-			}
-
-			if st.Code() != codes.AlreadyExists {
-				return nil, fmt.Errorf("error creating rule type from %s: %w", fileName, err)
-			}
-
-			updateResp, err := client.UpdateRuleType(ctx, &minderv1.UpdateRuleTypeRequest{
-				RuleType: rt,
-			})
-
 			if err != nil {
-				return nil, fmt.Errorf("error updating rule type from %s: %w", fileName, err)
+				return nil, fmt.Errorf("error creating rule type from %s: %w", fileName, err)
 			}
 
-			return updateResp.RuleType, nil
+			return resprt.RuleType, nil
 		}
 
 		for _, f := range expfiles {
@@ -102,7 +81,7 @@ within a minder control plane.`,
 				continue
 			}
 
-			if err := execOnOneRuleType(table, f, os.Stdin, applyFunc); err != nil {
+			if err := execOnOneRuleType(table, f, os.Stdin, createFunc); err != nil {
 				return fmt.Errorf("error creating rule type %s: %w", f, err)
 			}
 		}
@@ -114,7 +93,7 @@ within a minder control plane.`,
 }
 
 func init() {
-	ruleTypeCmd.AddCommand(RuleType_applyCmd)
-	RuleType_applyCmd.Flags().StringArrayP("file", "f", []string{},
+	ruleTypeCmd.AddCommand(RuleType_createCmd)
+	RuleType_createCmd.Flags().StringArrayP("file", "f", []string{},
 		"Path to the YAML defining the rule type (or - for stdin). Can be specified multiple times. Can be a directory.")
 }
