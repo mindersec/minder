@@ -21,16 +21,18 @@ import (
 
 	"github.com/spf13/cobra"
 	"github.com/spf13/viper"
+	"google.golang.org/grpc/codes"
+	"google.golang.org/grpc/status"
 
 	"github.com/stacklok/minder/internal/util"
 	pb "github.com/stacklok/minder/pkg/api/protobuf/go/minder/v1"
 )
 
-// Profile_createCmd represents the profile create command
-var Profile_createCmd = &cobra.Command{
-	Use:   "create",
-	Short: "Create a profile within a minder control plane",
-	Long: `The minder profile create subcommand lets you create new profiles for a project
+// Profile_applyCmd represents the profile apply command
+var Profile_applyCmd = &cobra.Command{
+	Use:   "apply",
+	Short: "Create or update a profile within a minder control plane",
+	Long: `The minder profile apply subcommand lets you create or update new profiles for a project
 within a minder control plane.`,
 	PreRun: func(cmd *cobra.Command, args []string) {
 		if err := viper.BindPFlags(cmd.Flags()); err != nil {
@@ -51,19 +53,36 @@ within a minder control plane.`,
 
 		table := InitializeTable(cmd)
 
-		createFunc := func(f string, p *pb.Profile) (*pb.Profile, error) {
+		applyFunc := func(f string, p *pb.Profile) (*pb.Profile, error) {
 			// create a profile
 			resp, err := client.CreateProfile(ctx, &pb.CreateProfileRequest{
 				Profile: p,
 			})
-			if err != nil {
-				return nil, err
+			if err == nil {
+				return resp.GetProfile(), nil
 			}
 
-			return resp.GetProfile(), nil
+			st, ok := status.FromError(err)
+			if !ok {
+				// We can't parse the error, so just return it
+				return nil, fmt.Errorf("error creating rule type from %s: %w", f, err)
+			}
+
+			if st.Code() != codes.AlreadyExists {
+				return nil, fmt.Errorf("error creating rule type from %s: %w", f, err)
+			}
+
+			updateResp, err := client.UpdateProfile(ctx, &pb.UpdateProfileRequest{
+				Profile: p,
+			})
+			if err != nil {
+				return nil, fmt.Errorf("error updating rule type from %s: %w", f, err)
+			}
+
+			return updateResp.GetProfile(), nil
 		}
 
-		if err := execOnOneProfile(table, f, cmd.InOrStdin(), proj, createFunc); err != nil {
+		if err := execOnOneProfile(table, f, cmd.InOrStdin(), proj, applyFunc); err != nil {
 			return err
 		}
 
@@ -73,11 +92,11 @@ within a minder control plane.`,
 }
 
 func init() {
-	ProfileCmd.AddCommand(Profile_createCmd)
-	Profile_createCmd.Flags().StringP("file", "f", "", "Path to the YAML defining the profile (or - for stdin)")
-	if err := Profile_createCmd.MarkFlagRequired("file"); err != nil {
+	ProfileCmd.AddCommand(Profile_applyCmd)
+	Profile_applyCmd.Flags().StringP("file", "f", "", "Path to the YAML defining the profile (or - for stdin)")
+	if err := Profile_applyCmd.MarkFlagRequired("file"); err != nil {
 		fmt.Fprintf(os.Stderr, "Error marking flag required: %s\n", err)
 		os.Exit(1)
 	}
-	Profile_createCmd.Flags().StringP("project", "p", "", "Project to create the profile in")
+	Profile_applyCmd.Flags().StringP("project", "p", "", "Project to create the profile in")
 }
