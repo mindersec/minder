@@ -27,7 +27,6 @@ import (
 	"github.com/lestrrat-go/jwx/v2/jwt/openid"
 	"github.com/spf13/cobra"
 	"github.com/spf13/viper"
-	"golang.org/x/exp/slices"
 
 	"github.com/stacklok/minder/internal/constants"
 	"github.com/stacklok/minder/internal/util"
@@ -150,19 +149,6 @@ func GetDefaultProject(ctx context.Context) (uuid.UUID, error) {
 		return uuid.UUID{}, errors.New("cannot get default project")
 	}
 	return permissions.ProjectIds[0], nil
-}
-
-// IsAuthorizedForProject returns true if the user is authorized for the given project
-func IsAuthorizedForProject(ctx context.Context, projectID uuid.UUID) bool {
-	permissions := GetPermissionsFromContext(ctx)
-
-	return slices.Contains(permissions.ProjectIds, projectID)
-}
-
-// GetUserProjects returns all the projects where a user belongs to
-func GetUserProjects(ctx context.Context) ([]uuid.UUID, error) {
-	permissions := GetPermissionsFromContext(ctx)
-	return permissions.ProjectIds, nil
 }
 
 // UserDetails is a helper struct for getting user details

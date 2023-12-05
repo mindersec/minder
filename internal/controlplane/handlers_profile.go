@@ -93,7 +93,7 @@ func (s *Server) ensureDefaultProjectForContext(ctx context.Context, inout *mind
 // verifyValidProject verifies that the project is valid and the user is authorized to access it
 // TODO: This will have to change once we have the hierarchy tree in place.
 func verifyValidProject(ctx context.Context, in *engine.EntityContext) error {
-	if !auth.IsAuthorizedForProject(ctx, in.GetProject().GetID()) {
+	if err := AuthorizedOnProject(ctx, in.GetProject().GetID()); err != nil {
 		return status.Errorf(codes.PermissionDenied, "user is not authorized to access this resource")
 	}
 
