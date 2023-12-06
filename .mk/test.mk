@@ -18,8 +18,12 @@ clean: ## clean up environment
 	rm -rf dist/* & rm -rf bin/*
 
 .PHONY: test
-test: clean init-examples ## run tests
+test: clean init-examples ## run tests in verbose mode
 	go test -json -race -v ./... | gotestfmt
+
+.PHONY: test-silent
+test-silent: clean init-examples ## run tests in a silent mode (errors only output)
+	go test -json -race -v ./... | gotestfmt -hide "all"
 
 .PHONY: cover
 cover: ## display test coverage
