@@ -91,11 +91,27 @@ func (e *EEA) aggregate(msg *message.Message) (*message.Message, error) {
 		Str("repository_id", repoID.String())
 
 	// We need to check that the resources still exist before attempting to lock them.
-	// TODO: handle artifact_id and pull_request_id or refactor this to remove the foreign keys.
+	// TODO: consider whether we need foreign key checks on the locks.
 	if _, err := e.querier.GetRepositoryByID(ctx, repoID); err != nil {
 		if errors.Is(err, sql.ErrNoRows) {
 			logger.Msg("Skipping event because repository no longer exists")
 			return nil, nil
+		}
+	}
+	if artifactID.Valid {
+		if _, err := e.querier.GetArtifactByID(ctx, artifactID.UUID); err != nil {
+			if errors.Is(err, sql.ErrNoRows) {
+				logger.Msg("Skipping event because artifact no longer exists")
+				return nil, nil
+			}
+		}
+	}
+	if pullRequestID.Valid {
+		if _, err := e.querier.GetPullRequestByID(ctx, pullRequestID.UUID); err != nil {
+			if errors.Is(err, sql.ErrNoRows) {
+				logger.Msg("Skipping event because pull request no longer exists")
+				return nil, nil
+			}
 		}
 	}
 
