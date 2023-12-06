@@ -35,7 +35,7 @@ db:
 # trusty settings
 trusty:
   # -- (string) trusty host to use
-  endpoint: "http://pi.pi:8000"
+  endpoint: "https://api.trustypkg.dev"
 
 # AWS-specific configuration
 # NOTE: we are migrating from AWS-specific annotations to a "pre-create the service account" model.

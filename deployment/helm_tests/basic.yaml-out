@@ -320,7 +320,7 @@ spec:
           - name: "MINDER_IDENTITY_SERVER_CLIENT_SECRET_FILE"
             value: "/secrets/identity/identity_client_secret"
           - name: "MINDER_UNSTABLE_TRUSTY_ENDPOINT"
-            value: "http://pi.pi:8000"
+            value: "http://trusty.trusty:8080"
           - name: "SIGSTORE_NO_CACHE"
             value: "true"
           

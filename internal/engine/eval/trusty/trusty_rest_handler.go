@@ -79,7 +79,7 @@ func newPiClient(baseUrl string) *trustyClient {
 }
 
 func (p *trustyClient) newRequest(ctx context.Context, dep *pb.Dependency) (*http.Request, error) {
-	u, err := urlFromEndpointAndPaths(p.baseUrl, "pi/v1/report", dep.Name, strings.ToLower(dep.Ecosystem.AsString()))
+	u, err := urlFromEndpointAndPaths(p.baseUrl, "v1/report", dep.Name, strings.ToLower(dep.Ecosystem.AsString()))
 	if err != nil {
 		return nil, fmt.Errorf("could not parse endpoint: %w", err)
 	}
