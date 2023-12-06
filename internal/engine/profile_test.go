@@ -27,7 +27,7 @@ import (
 )
 
 var (
-	defaultOrg = "ACME"
+	defaultProvider = "github"
 )
 
 func compareProfiles(t *testing.T, a *minderv1.Profile, b *minderv1.Profile) {
@@ -144,8 +144,7 @@ artifact:
 			want: &minderv1.Profile{
 				Name: "acme-github-profile",
 				Context: &minderv1.Context{
-					Organization: &defaultOrg,
-					Provider:     "github",
+					Provider: &defaultProvider,
 				},
 				Repository: []*minderv1.Profile_Rule{
 					{
@@ -228,8 +227,7 @@ repository:
 			want: &minderv1.Profile{
 				Name: "acme-github-profile",
 				Context: &minderv1.Context{
-					Organization: &defaultOrg,
-					Provider:     "github",
+					Provider: &defaultProvider,
 				},
 				Repository: []*minderv1.Profile_Rule{
 					{
@@ -342,8 +340,7 @@ func TestGetRulesForEntity(t *testing.T) {
 	pol := &minderv1.Profile{
 		Name: "acme-github-profile",
 		Context: &minderv1.Context{
-			Organization: &defaultOrg,
-			Provider:     "github",
+			Provider: &defaultProvider,
 		},
 		Repository: []*minderv1.Profile_Rule{
 			{

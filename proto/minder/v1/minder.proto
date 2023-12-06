@@ -966,14 +966,6 @@ message GitHubProviderConfig {
 message Provider {
     string name = 1;
 
-    // Context defines the context in which a provider is evaluated.
-    // Given thta a provider is a top level entity, it may only be scoped to
-    // an organization.
-    message Context {
-        string organization = 1;
-        string project = 2;
-    }
-
     Context context = 2;
 
     // Version defines the version of the provider. Currently only v1 is supported.
@@ -1004,8 +996,7 @@ message Provider {
 // Context defines the context in which a rule is evaluated.
 // this normally refers to a combination of the provider, organization and project.
 message Context {
-    string provider = 1;
-    optional string organization = 2;
+    optional string provider = 1;
     optional string project = 3;
 }
 

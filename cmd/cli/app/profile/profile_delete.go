@@ -52,7 +52,7 @@ minder control plane.`,
 
 		_, err = client.DeleteProfile(ctx, &pb.DeleteProfileRequest{
 			Context: &pb.Context{
-				Provider: provider,
+				Provider: &provider,
 			},
 			Id: id,
 		})

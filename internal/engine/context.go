@@ -101,7 +101,7 @@ func GetContextFromInput(ctx context.Context, in *pb.Context, q db.Querier) (*En
 	}
 
 	prov, err := q.GetProviderByName(ctx, db.GetProviderByNameParams{
-		Name:      in.Provider,
+		Name:      *in.Provider,
 		ProjectID: project.ID,
 	})
 	if err != nil {
