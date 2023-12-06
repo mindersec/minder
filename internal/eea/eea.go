@@ -76,6 +76,7 @@ func (e *EEA) AggregateMiddleware(h message.HandlerFunc) message.HandlerFunc {
 	}
 }
 
+// nolint:gocyclo // TODO: hacking in the TODO about foreign keys pushed this over the limit.
 func (e *EEA) aggregate(msg *message.Message) (*message.Message, error) {
 	ctx := msg.Context()
 	inf, err := engine.ParseEntityEvent(msg)
