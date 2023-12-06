@@ -51,7 +51,7 @@ require (
 	github.com/sqlc-dev/pqtype v0.3.0
 	github.com/stacklok/frizbee v0.0.5
 	github.com/stretchr/testify v1.8.4
-	github.com/styrainc/regal v0.13.0
+	github.com/styrainc/regal v0.14.0
 	github.com/xeipuuv/gojsonschema v1.2.0
 	go.opentelemetry.io/contrib/instrumentation/google.golang.org/grpc/otelgrpc v0.46.1
 	go.opentelemetry.io/contrib/instrumentation/net/http/otelhttp v0.46.1
@@ -269,7 +269,7 @@ require (
 	github.com/sigstore/fulcio v1.4.3 // indirect
 	github.com/sigstore/rekor v1.3.3 // indirect
 	github.com/sigstore/timestamp-authority v1.2.0 // indirect
-	github.com/sirupsen/logrus v1.9.3 // indirect
+	github.com/sirupsen/logrus v1.9.4-0.20230606125235-dd1b4c2e81af // indirect
 	github.com/skeema/knownhosts v1.2.1 // indirect
 	github.com/skratchdot/open-golang v0.0.0-20200116055534-eef842397966 // indirect
 	github.com/sony/gobreaker v0.5.0 // indirect
