@@ -85,6 +85,20 @@ func (e *EEA) aggregate(msg *message.Message) (*message.Message, error) {
 
 	repoID, artifactID, pullRequestID := inf.GetEntityDBIDs()
 
+	logger := zerolog.Ctx(ctx).Info()
+	logger = logger.Str("event", msg.UUID).
+		Str("entity", inf.Type.ToString()).
+		Str("repository_id", repoID.String())
+
+	// We need to check that the resources still exist before attempting to lock them.
+	// TODO: handle artifact_id and pull_request_id or refactor this to remove the foreign keys.
+	if _, err := e.querier.GetRepositoryByID(ctx, repoID); err != nil {
+		if errors.Is(err, sql.ErrNoRows) {
+			logger.Msg("Skipping event because repository no longer exists")
+			return nil, nil
+		}
+	}
+
 	res, err := e.querier.LockIfThresholdNotExceeded(ctx, db.LockIfThresholdNotExceededParams{
 		Entity:        entities.EntityTypeToDB(inf.Type),
 		RepositoryID:  repoID,
@@ -92,11 +106,6 @@ func (e *EEA) aggregate(msg *message.Message) (*message.Message, error) {
 		PullRequestID: pullRequestID,
 		Interval:      fmt.Sprintf("%d", e.cfg.LockInterval),
 	})
-
-	logger := zerolog.Ctx(ctx).Info()
-	logger = logger.Str("event", msg.UUID).
-		Str("entity", inf.Type.ToString()).
-		Str("repository_id", repoID.String())
 
 	if artifactID.Valid {
 		logger = logger.Str("artifact_id", artifactID.UUID.String())
