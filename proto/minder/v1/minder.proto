@@ -998,6 +998,8 @@ message Provider {
 message Context {
     optional string provider = 1;
     optional string project = 3;
+
+    optional string retired_organization = 2;
 }
 
 // --- START RuleType CRUD definitions

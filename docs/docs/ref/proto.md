@@ -193,6 +193,7 @@ this normally refers to a combination of the provider, organization and project.
 | ----- | ---- | ----- | ----------- |
 | provider | [string](#string) | optional |  |
 | project | [string](#string) | optional |  |
+| retired_organization | [string](#string) | optional |  |
 
 
 <a name="minder-v1-CreateKeyPairRequest"></a>

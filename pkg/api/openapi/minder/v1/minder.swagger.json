@@ -484,6 +484,12 @@
             "type": "string"
           },
           {
+            "name": "context.retiredOrganization",
+            "in": "query",
+            "required": false,
+            "type": "string"
+          },
+          {
             "name": "entity.type",
             "description": "entity is the entity to get status for. Incompatible with `all`",
             "in": "query",
@@ -559,6 +565,12 @@
             "in": "query",
             "required": false,
             "type": "string"
+          },
+          {
+            "name": "context.retiredOrganization",
+            "in": "query",
+            "required": false,
+            "type": "string"
           }
         ],
         "tags": [
@@ -600,6 +612,12 @@
             "in": "query",
             "required": false,
             "type": "string"
+          },
+          {
+            "name": "context.retiredOrganization",
+            "in": "query",
+            "required": false,
+            "type": "string"
           }
         ],
         "tags": [
@@ -636,6 +654,12 @@
             "in": "query",
             "required": false,
             "type": "string"
+          },
+          {
+            "name": "context.retiredOrganization",
+            "in": "query",
+            "required": false,
+            "type": "string"
           }
         ],
         "tags": [
@@ -669,6 +693,12 @@
           },
           {
             "name": "context.project",
+            "in": "query",
+            "required": false,
+            "type": "string"
+          },
+          {
+            "name": "context.retiredOrganization",
             "in": "query",
             "required": false,
             "type": "string"
@@ -1051,6 +1081,12 @@
             "in": "query",
             "required": false,
             "type": "string"
+          },
+          {
+            "name": "context.retiredOrganization",
+            "in": "query",
+            "required": false,
+            "type": "string"
           }
         ],
         "tags": [
@@ -1091,6 +1127,12 @@
           },
           {
             "name": "context.project",
+            "in": "query",
+            "required": false,
+            "type": "string"
+          },
+          {
+            "name": "context.retiredOrganization",
             "in": "query",
             "required": false,
             "type": "string"
@@ -1135,6 +1177,12 @@
             "in": "query",
             "required": false,
             "type": "string"
+          },
+          {
+            "name": "context.retiredOrganization",
+            "in": "query",
+            "required": false,
+            "type": "string"
           }
         ],
         "tags": [
@@ -1168,6 +1216,12 @@
           },
           {
             "name": "context.project",
+            "in": "query",
+            "required": false,
+            "type": "string"
+          },
+          {
+            "name": "context.retiredOrganization",
             "in": "query",
             "required": false,
             "type": "string"
@@ -1657,6 +1711,9 @@
           "type": "string"
         },
         "project": {
+          "type": "string"
+        },
+        "retiredOrganization": {
           "type": "string"
         }
       },
