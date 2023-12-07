@@ -54,9 +54,7 @@ import (
 	"google.golang.org/protobuf/reflect/protoreflect"
 	"google.golang.org/protobuf/types/known/timestamppb"
 
-	"github.com/stacklok/minder/internal/constants"
 	"github.com/stacklok/minder/internal/db"
-	"github.com/stacklok/minder/internal/util/cli/useragent"
 	"github.com/stacklok/minder/internal/util/jsonyaml"
 	minderv1 "github.com/stacklok/minder/pkg/api/protobuf/go/minder/v1"
 )
@@ -140,20 +138,6 @@ func (jwt JWTTokenCredentials) GetRequestMetadata(_ context.Context, _ ...string
 // RequireTransportSecurity implements the PerRPCCredentials interface.
 func (JWTTokenCredentials) RequireTransportSecurity() bool {
 	return false
-}
-
-// GrpcForCommand is a helper for getting a testing connection from cobra flags
-func GrpcForCommand(cmd *cobra.Command, v *viper.Viper) (*grpc.ClientConn, error) {
-	grpc_host := GetConfigValue(v, "grpc_server.host", "grpc-host", cmd, constants.MinderGRPCHost).(string)
-	grpc_port := GetConfigValue(v, "grpc_server.port", "grpc-port", cmd, 443).(int)
-	insecureDefault := grpc_host == "localhost" || grpc_host == "127.0.0.1" || grpc_host == "::1"
-	allowInsecure := GetConfigValue(v, "grpc_server.insecure", "grpc-insecure", cmd, insecureDefault).(bool)
-
-	issuerUrl := GetConfigValue(v, "identity.cli.issuer_url", "identity-url", cmd, constants.IdentitySeverURL).(string)
-	clientId := GetConfigValue(v, "identity.cli.client_id", "identity-client", cmd, "minder-cli").(string)
-
-	return GetGrpcConnection(
-		grpc_host, grpc_port, allowInsecure, issuerUrl, clientId, grpc.WithUserAgent(useragent.GetUserAgent()))
 }
 
 // GetGrpcConnection is a helper for getting a testing connection for grpc
@@ -341,15 +325,6 @@ func LoadCredentials() (OpenIdCredentials, error) {
 		return OpenIdCredentials{}, fmt.Errorf("error unmarshaling credentials: %v", err)
 	}
 	return creds, nil
-}
-
-// GetAppContext is a helper for getting the cmd app context
-func GetAppContext() (context.Context, context.CancelFunc) {
-	viper.SetDefault("cli.context_timeout", 10)
-	timeout := viper.GetInt("cli.context_timeout")
-
-	ctx, cancel := context.WithTimeout(context.Background(), time.Duration(timeout)*time.Second)
-	return ctx, cancel
 }
 
 // WriteToFile writes the content to a file if the out parameter is not empty.

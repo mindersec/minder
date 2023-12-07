@@ -23,11 +23,19 @@
 package cli
 
 import (
+	"context"
 	"fmt"
 	"io"
+	"time"
 
 	"github.com/erikgeiser/promptkit/confirmation"
 	"github.com/spf13/cobra"
+	"github.com/spf13/viper"
+	"google.golang.org/grpc"
+
+	"github.com/stacklok/minder/internal/constants"
+	"github.com/stacklok/minder/internal/util"
+	"github.com/stacklok/minder/internal/util/cli/useragent"
 )
 
 // PrintCmd prints a message using the output defined in the cobra Command
@@ -64,4 +72,46 @@ func PrintYesNoPrompt(cmd *cobra.Command, promptMsg, confirmMsg, fallbackMsg str
 		PrintCmd(cmd, Header.Render(fallbackMsg))
 	}
 	return ok
+}
+
+// GrpcForCommand is a helper for getting a testing connection from cobra flags
+func GrpcForCommand(cmd *cobra.Command, v *viper.Viper) (*grpc.ClientConn, error) {
+	grpc_host := util.GetConfigValue(v, "grpc_server.host", "grpc-host", cmd, constants.MinderGRPCHost).(string)
+	grpc_port := util.GetConfigValue(v, "grpc_server.port", "grpc-port", cmd, 443).(int)
+	insecureDefault := grpc_host == "localhost" || grpc_host == "127.0.0.1" || grpc_host == "::1"
+	allowInsecure := util.GetConfigValue(v, "grpc_server.insecure", "grpc-insecure", cmd, insecureDefault).(bool)
+
+	issuerUrl := util.GetConfigValue(v, "identity.cli.issuer_url", "identity-url", cmd, constants.IdentitySeverURL).(string)
+	clientId := util.GetConfigValue(v, "identity.cli.client_id", "identity-client", cmd, "minder-cli").(string)
+
+	return util.GetGrpcConnection(
+		grpc_host, grpc_port, allowInsecure, issuerUrl, clientId, grpc.WithUserAgent(useragent.GetUserAgent()))
+}
+
+// GetAppContext is a helper for getting the cmd app context
+func GetAppContext(ctx context.Context, v *viper.Viper) (context.Context, context.CancelFunc) {
+	v.SetDefault("cli.context_timeout", 10)
+	timeout := v.GetInt("cli.context_timeout")
+
+	ctx, cancel := context.WithTimeout(ctx, time.Duration(timeout)*time.Second)
+	return ctx, cancel
+}
+
+// GRPCClientWrapRunE is a wrapper for cobra commands that sets up the grpc client and context
+func GRPCClientWrapRunE(
+	runEFunc func(ctx context.Context, cmd *cobra.Command, c *grpc.ClientConn) error,
+) func(cmd *cobra.Command, args []string) error {
+	return func(cmd *cobra.Command, args []string) error {
+		ctx, cancel := GetAppContext(cmd.Context(), viper.GetViper())
+		defer cancel()
+
+		c, err := GrpcForCommand(cmd, viper.GetViper())
+		if err != nil {
+			return err
+		}
+
+		defer c.Close()
+
+		return runEFunc(ctx, cmd, c)
+	}
 }

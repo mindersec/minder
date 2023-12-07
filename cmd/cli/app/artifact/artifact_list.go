@@ -16,6 +16,7 @@
 package artifact
 
 import (
+	"context"
 	"fmt"
 	"os"
 	"time"
@@ -23,9 +24,11 @@ import (
 	"github.com/olekukonko/tablewriter"
 	"github.com/spf13/cobra"
 	"github.com/spf13/viper"
+	"google.golang.org/grpc"
 
 	"github.com/stacklok/minder/internal/auth"
 	"github.com/stacklok/minder/internal/util"
+	"github.com/stacklok/minder/internal/util/cli"
 	pb "github.com/stacklok/minder/pkg/api/protobuf/go/minder/v1"
 )
 
@@ -38,7 +41,7 @@ var artifact_listCmd = &cobra.Command{
 			fmt.Fprintf(os.Stderr, "error binding flags: %s", err)
 		}
 	},
-	RunE: func(cmd *cobra.Command, args []string) error {
+	RunE: cli.GRPCClientWrapRunE(func(ctx context.Context, cmd *cobra.Command, conn *grpc.ClientConn) error {
 		format := viper.GetString("output")
 
 		provider := util.GetConfigValue(viper.GetViper(), "provider", "provider", cmd, "").(string)
@@ -56,13 +59,7 @@ var artifact_listCmd = &cobra.Command{
 			return fmt.Errorf("invalid output format: %s", format)
 		}
 
-		conn, err := util.GrpcForCommand(cmd, viper.GetViper())
-		util.ExitNicelyOnError(err, "Error getting grpc connection")
-		defer conn.Close()
-
 		client := pb.NewArtifactServiceClient(conn)
-		ctx, cancel := util.GetAppContext()
-		defer cancel()
 
 		artifacts, err := client.ListArtifacts(
 			ctx,
@@ -106,7 +103,7 @@ var artifact_listCmd = &cobra.Command{
 		}
 
 		return nil
-	},
+	}),
 }
 
 func init() {

@@ -18,6 +18,7 @@
 package quickstart
 
 import (
+	"context"
 	"embed"
 	"fmt"
 	"os"
@@ -25,6 +26,7 @@ import (
 
 	"github.com/spf13/cobra"
 	"github.com/spf13/viper"
+	"google.golang.org/grpc"
 	"google.golang.org/grpc/codes"
 	"google.golang.org/grpc/status"
 
@@ -134,7 +136,7 @@ var cmd = &cobra.Command{
 			fmt.Fprintf(os.Stderr, "Error binding flags: %s\n", err)
 		}
 	},
-	RunE: func(cmd *cobra.Command, args []string) error {
+	RunE: cli.GRPCClientWrapRunE(func(ctx context.Context, cmd *cobra.Command, conn *grpc.ClientConn) error {
 		proj := viper.GetString("project")
 		provider := viper.GetString("provider")
 
@@ -159,17 +161,10 @@ var cmd = &cobra.Command{
 		}
 
 		// Enroll provider
-		msg, err := minderprov.EnrollProviderCmd(cmd, args)
+		err := minderprov.EnrollProviderCmd(ctx, cmd, conn)
 		if err != nil {
-			return fmt.Errorf("%s: %w", msg, err)
+			return err
 		}
-
-		// Get the grpc connection and other resources
-		conn, err := util.GrpcForCommand(cmd, viper.GetViper())
-		if err != nil {
-			return fmt.Errorf("error getting grpc connection: %w", err)
-		}
-		defer conn.Close()
 
 		// Step 2 - Confirm repository registration
 		yes = cli.PrintYesNoPrompt(cmd,
@@ -182,7 +177,7 @@ var cmd = &cobra.Command{
 		}
 
 		// Prompt to register repositories
-		results, msg, err := repo.RegisterCmd(cmd, args)
+		results, msg, err := repo.RegisterCmd(ctx, cmd, conn)
 		util.ExitNicelyOnError(err, msg)
 
 		var registeredRepos []string
@@ -227,7 +222,7 @@ var cmd = &cobra.Command{
 		}
 
 		// Create the rule type in minder (new context, so we don't time out)
-		ctx, cancel := util.GetAppContext()
+		ctx, cancel := cli.GetAppContext(cmd.Context(), viper.GetViper())
 		defer cancel()
 
 		_, err = client.CreateRuleType(ctx, &minderv1.CreateRuleTypeRequest{
@@ -277,7 +272,7 @@ var cmd = &cobra.Command{
 		}
 
 		// Create the profile in minder (new context, so we don't time out)
-		ctx, cancel = util.GetAppContext()
+		ctx, cancel = cli.GetAppContext(cmd.Context(), viper.GetViper())
 		defer cancel()
 
 		alreadyExists := ""
@@ -310,7 +305,7 @@ var cmd = &cobra.Command{
 			table.Render()
 		}
 		return nil
-	},
+	}),
 }
 
 func init() {

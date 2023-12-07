@@ -32,6 +32,7 @@ import (
 	"github.com/charmbracelet/bubbles/table"
 	"github.com/spf13/cobra"
 	"github.com/spf13/viper"
+	"google.golang.org/grpc"
 	"k8s.io/utils/strings/slices"
 
 	github "github.com/stacklok/minder/internal/providers/github"
@@ -54,10 +55,11 @@ var repoRegisterCmd = &cobra.Command{
 			fmt.Fprintf(os.Stderr, "Error binding flags: %s\n", err)
 		}
 	},
-	Run: func(cmd *cobra.Command, args []string) {
-		_, msg, err := RegisterCmd(cmd, args)
+	RunE: cli.GRPCClientWrapRunE(func(ctx context.Context, cmd *cobra.Command, conn *grpc.ClientConn) error {
+		_, msg, err := RegisterCmd(ctx, cmd, conn)
 		util.ExitNicelyOnError(err, msg)
-	},
+		return nil
+	}),
 }
 
 func init() {
@@ -146,7 +148,7 @@ func getSelectedRepositories(repoList []*pb.UpstreamRepositoryRef, flagRepos str
 // RegisterCmd represents the register command to register a repo with minder
 //
 //nolint:gocyclo
-func RegisterCmd(cmd *cobra.Command, _ []string) ([]*pb.RegisterRepoResult, string, error) {
+func RegisterCmd(ctx context.Context, cmd *cobra.Command, conn *grpc.ClientConn) ([]*pb.RegisterRepoResult, string, error) {
 	provider := util.GetConfigValue(viper.GetViper(), "provider", "provider", cmd, "").(string)
 	if provider != github.Github {
 		msg := fmt.Sprintf("Only %s is supported at this time", github.Github)
@@ -154,16 +156,7 @@ func RegisterCmd(cmd *cobra.Command, _ []string) ([]*pb.RegisterRepoResult, stri
 	}
 	projectID := viper.GetString("project-id")
 
-	conn, err := util.GrpcForCommand(cmd, viper.GetViper())
-	if err != nil {
-		msg := "Error getting grpc connection"
-		return nil, msg, err
-	}
-	defer conn.Close()
-
 	client := pb.NewRepositoryServiceClient(conn)
-	ctx, cancel := util.GetAppContext()
-	defer cancel()
 
 	// Get the list of repos
 	listResp, err := client.ListRepositories(ctx, &pb.ListRepositoriesRequest{

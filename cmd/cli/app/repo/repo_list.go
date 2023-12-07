@@ -16,12 +16,14 @@
 package repo
 
 import (
+	"context"
 	"fmt"
 	"os"
 
 	"github.com/charmbracelet/bubbles/table"
 	"github.com/spf13/cobra"
 	"github.com/spf13/viper"
+	"google.golang.org/grpc"
 
 	github "github.com/stacklok/minder/internal/providers/github"
 	"github.com/stacklok/minder/internal/util"
@@ -38,8 +40,7 @@ var repo_listCmd = &cobra.Command{
 			fmt.Fprintf(os.Stderr, "error binding flags: %s", err)
 		}
 	},
-	RunE: func(cmd *cobra.Command, args []string) error {
-
+	RunE: cli.GRPCClientWrapRunE(func(ctx context.Context, cmd *cobra.Command, conn *grpc.ClientConn) error {
 		provider := util.GetConfigValue(viper.GetViper(), "provider", "provider", cmd, "").(string)
 		if provider != github.Github {
 			return fmt.Errorf("only %s is supported at this time", github.Github)
@@ -56,13 +57,7 @@ var repo_listCmd = &cobra.Command{
 			return fmt.Errorf("invalid output format: %s", format)
 		}
 
-		conn, err := util.GrpcForCommand(cmd, viper.GetViper())
-		util.ExitNicelyOnError(err, "Error getting grpc connection")
-		defer conn.Close()
-
 		client := pb.NewRepositoryServiceClient(conn)
-		ctx, cancel := util.GetAppContext()
-		defer cancel()
 
 		resp, err := client.ListRepositories(ctx, &pb.ListRepositoriesRequest{
 			Provider:  provider,
@@ -116,7 +111,7 @@ var repo_listCmd = &cobra.Command{
 			fmt.Println(out)
 		}
 		return nil
-	},
+	}),
 }
 
 func init() {

@@ -16,14 +16,17 @@
 package profile
 
 import (
+	"context"
 	"fmt"
 	"os"
 
 	"github.com/spf13/cobra"
 	"github.com/spf13/viper"
+	"google.golang.org/grpc"
 
 	"github.com/stacklok/minder/cmd/cli/app"
 	"github.com/stacklok/minder/internal/util"
+	"github.com/stacklok/minder/internal/util/cli"
 	pb "github.com/stacklok/minder/pkg/api/protobuf/go/minder/v1"
 )
 
@@ -37,18 +40,10 @@ minder control plane for an specific project.`,
 			fmt.Fprintf(os.Stderr, "Error binding flags: %s\n", err)
 		}
 	},
-	RunE: func(cmd *cobra.Command, args []string) error {
+	RunE: cli.GRPCClientWrapRunE(func(ctx context.Context, cmd *cobra.Command, conn *grpc.ClientConn) error {
 		format := viper.GetString("output")
 
-		conn, err := util.GrpcForCommand(cmd, viper.GetViper())
-		if err != nil {
-			return fmt.Errorf("error getting grpc connection: %w", err)
-		}
-		defer conn.Close()
-
 		client := pb.NewProfileServiceClient(conn)
-		ctx, cancel := util.GetAppContext()
-		defer cancel()
 
 		provider := viper.GetString("provider")
 
@@ -87,7 +82,7 @@ minder control plane for an specific project.`,
 
 		// this is unreachable
 		return nil
-	},
+	}),
 }
 
 func init() {

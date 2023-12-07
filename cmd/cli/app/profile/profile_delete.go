@@ -16,13 +16,16 @@
 package profile
 
 import (
+	"context"
 	"fmt"
 	"os"
 
 	"github.com/spf13/cobra"
 	"github.com/spf13/viper"
+	"google.golang.org/grpc"
 
 	"github.com/stacklok/minder/internal/util"
+	"github.com/stacklok/minder/internal/util/cli"
 	pb "github.com/stacklok/minder/pkg/api/protobuf/go/minder/v1"
 )
 
@@ -36,21 +39,14 @@ minder control plane.`,
 			fmt.Fprintf(os.Stderr, "Error binding flags: %s\n", err)
 		}
 	},
-	Run: func(cmd *cobra.Command, args []string) {
+	RunE: cli.GRPCClientWrapRunE(func(ctx context.Context, cmd *cobra.Command, conn *grpc.ClientConn) error {
 		// delete the profile via GRPC
 		id := viper.GetString("id")
 		provider := viper.GetString("provider")
 
-		conn, err := util.GrpcForCommand(cmd, viper.GetViper())
-
-		util.ExitNicelyOnError(err, "Error getting grpc connection")
-		defer conn.Close()
-
 		client := pb.NewProfileServiceClient(conn)
-		ctx, cancel := util.GetAppContext()
-		defer cancel()
 
-		_, err = client.DeleteProfile(ctx, &pb.DeleteProfileRequest{
+		_, err := client.DeleteProfile(ctx, &pb.DeleteProfileRequest{
 			Context: &pb.Context{
 				Provider: provider,
 			},
@@ -59,7 +55,9 @@ minder control plane.`,
 
 		util.ExitNicelyOnError(err, "Error deleting profile")
 		cmd.Println("Successfully deleted profile with id:", id)
-	},
+
+		return nil
+	}),
 }
 
 func init() {

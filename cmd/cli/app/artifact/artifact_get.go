@@ -16,13 +16,16 @@
 package artifact
 
 import (
+	"context"
 	"fmt"
 	"os"
 
 	"github.com/spf13/cobra"
 	"github.com/spf13/viper"
+	"google.golang.org/grpc"
 
 	"github.com/stacklok/minder/internal/util"
+	"github.com/stacklok/minder/internal/util/cli"
 	pb "github.com/stacklok/minder/pkg/api/protobuf/go/minder/v1"
 )
 
@@ -35,7 +38,7 @@ var artifact_getCmd = &cobra.Command{
 			fmt.Fprintf(os.Stderr, "error binding flags: %s", err)
 		}
 	},
-	RunE: func(cmd *cobra.Command, args []string) error {
+	RunE: cli.GRPCClientWrapRunE(func(ctx context.Context, cmd *cobra.Command, conn *grpc.ClientConn) error {
 		tag := util.GetConfigValue(viper.GetViper(), "tag", "tag", cmd, "").(string)
 		artifactID := viper.GetString("id")
 		latest_versions := viper.GetInt32("latest-versions")
@@ -46,13 +49,7 @@ var artifact_getCmd = &cobra.Command{
 			os.Exit(1)
 		}
 
-		conn, err := util.GrpcForCommand(cmd, viper.GetViper())
-		util.ExitNicelyOnError(err, "Error getting grpc connection")
-		defer conn.Close()
-
 		client := pb.NewArtifactServiceClient(conn)
-		ctx, cancel := util.GetAppContext()
-		defer cancel()
 
 		// check artifact by name
 		art, err := client.GetArtifactById(ctx, &pb.GetArtifactByIdRequest{
@@ -65,7 +62,7 @@ var artifact_getCmd = &cobra.Command{
 		util.ExitNicelyOnError(err, "Error getting json from proto")
 		fmt.Println(out)
 		return nil
-	},
+	}),
 }
 
 func init() {
