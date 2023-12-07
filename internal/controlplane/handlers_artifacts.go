@@ -44,10 +44,7 @@ func (s *Server) ListArtifacts(ctx context.Context, in *pb.ListArtifactsRequest)
 		return nil, err
 	}
 
-	provider, err := s.store.GetProviderByName(ctx, db.GetProviderByNameParams{
-		Name:      in.Provider,
-		ProjectID: projectID,
-	})
+	provider, err := getProviderFromRequestOrDefault(ctx, s.store, in, projectID)
 	if err != nil {
 		return nil, providerError(err)
 	}

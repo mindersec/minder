@@ -59,10 +59,7 @@ func (s *Server) GetAuthorizationURL(ctx context.Context,
 	defer span.End()
 
 	// get provider info
-	provider, err := s.store.GetProviderByName(ctx, db.GetProviderByNameParams{
-		Name:      req.Provider,
-		ProjectID: projectID,
-	})
+	provider, err := getProviderFromRequestOrDefault(ctx, s.store, req, projectID)
 	if err != nil {
 		return nil, providerError(fmt.Errorf("provider error: %w", err))
 	}
@@ -153,10 +150,7 @@ func (s *Server) ExchangeCodeForTokenCLI(ctx context.Context,
 	}
 
 	// get provider
-	provider, err := s.store.GetProviderByName(ctx, db.GetProviderByNameParams{
-		Name:      in.Provider,
-		ProjectID: stateData.ProjectID,
-	})
+	provider, err := getProviderFromRequestOrDefault(ctx, s.store, in, stateData.ProjectID)
 	if err != nil {
 		return nil, providerError(fmt.Errorf("provider error: %w", err))
 	}
@@ -294,8 +288,7 @@ func (s *Server) StoreProviderToken(ctx context.Context,
 		return nil, err
 	}
 
-	provider, err := s.store.GetProviderByName(ctx, db.GetProviderByNameParams{
-		Name: in.Provider, ProjectID: projectID})
+	provider, err := getProviderFromRequestOrDefault(ctx, s.store, in, projectID)
 	if err != nil {
 		return nil, providerError(fmt.Errorf("provider error: %w", err))
 	}
@@ -356,8 +349,7 @@ func (s *Server) VerifyProviderTokenFrom(ctx context.Context,
 		return nil, err
 	}
 
-	provider, err := s.store.GetProviderByName(ctx, db.GetProviderByNameParams{
-		Name: in.Provider, ProjectID: projectID})
+	provider, err := getProviderFromRequestOrDefault(ctx, s.store, in, projectID)
 	if err != nil {
 		return nil, providerError(fmt.Errorf("provider error: %w", err))
 	}

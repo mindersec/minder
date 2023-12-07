@@ -91,7 +91,7 @@ var repoDeleteCmd = &cobra.Command{
 
 func init() {
 	RepoCmd.AddCommand(repoDeleteCmd)
-	repoDeleteCmd.Flags().StringP("provider", "p", "", "Name of the enrolled provider")
+	repoDeleteCmd.Flags().StringP("provider", "p", "github", "Name of the enrolled provider")
 	repoDeleteCmd.Flags().StringP("name", "n", "", "Name of the repository (owner/name format)")
 	repoDeleteCmd.Flags().StringP("repo-id", "r", "", "ID of the repo to delete")
 	repoDeleteCmd.Flags().BoolP("status", "s", false, "Only return the status of the profiles associated to this repo")

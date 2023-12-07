@@ -112,9 +112,6 @@ var repo_listCmd = &cobra.Command{
 func init() {
 	RepoCmd.AddCommand(repo_listCmd)
 	repo_listCmd.Flags().StringP("output", "f", "", "Output format (json or yaml)")
-	repo_listCmd.Flags().StringP("provider", "p", "", "Name for the provider to enroll")
+	repo_listCmd.Flags().StringP("provider", "p", "github", "Name for the provider to enroll")
 	repo_listCmd.Flags().StringP("project-id", "g", "", "ID of the project for repo registration")
-	if err := repo_listCmd.MarkFlagRequired("provider"); err != nil {
-		fmt.Fprintf(os.Stderr, "Error marking flag as required: %s\n", err)
-	}
 }

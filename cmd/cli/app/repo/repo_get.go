@@ -113,7 +113,7 @@ var repo_getCmd = &cobra.Command{
 func init() {
 	RepoCmd.AddCommand(repo_getCmd)
 	repo_getCmd.Flags().StringP("output", "f", "", "Output format (json or yaml)")
-	repo_getCmd.Flags().StringP("provider", "p", "", "Name for the provider to enroll")
+	repo_getCmd.Flags().StringP("provider", "p", "github", "Name for the provider to enroll")
 	repo_getCmd.Flags().StringP("name", "n", "", "Name of the repository (owner/name format)")
 	repo_getCmd.Flags().StringP("repo-id", "r", "", "ID of the repo to query")
 	repo_getCmd.Flags().BoolP("status", "s", false, "Only return the status of the profiles associated to this repo")

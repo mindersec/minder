@@ -52,9 +52,7 @@ func (s *Server) RegisterRepository(ctx context.Context,
 		return nil, err
 	}
 
-	provider, err := s.store.GetProviderByName(ctx, db.GetProviderByNameParams{
-		Name:      in.GetProvider(),
-		ProjectID: projectID})
+	provider, err := getProviderFromRequestOrDefault(ctx, s.store, in, projectID)
 	if err != nil {
 		return nil, providerError(fmt.Errorf("provider error: %w", err))
 	}
@@ -155,9 +153,7 @@ func (s *Server) ListRepositories(ctx context.Context,
 		return nil, err
 	}
 
-	provider, err := s.store.GetProviderByName(ctx, db.GetProviderByNameParams{
-		Name:      in.GetProvider(),
-		ProjectID: projectID})
+	provider, err := getProviderFromRequestOrDefault(ctx, s.store, in, projectID)
 	if err != nil {
 		return nil, providerError(fmt.Errorf("provider error: %w", err))
 	}
@@ -270,10 +266,7 @@ func (s *Server) GetRepositoryByName(ctx context.Context,
 		return nil, err
 	}
 
-	provider, err := s.store.GetProviderByName(ctx, db.GetProviderByNameParams{
-		Name:      in.Provider,
-		ProjectID: projectID,
-	})
+	provider, err := getProviderFromRequestOrDefault(ctx, s.store, in, projectID)
 	if err != nil {
 		return nil, providerError(fmt.Errorf("provider error: %w", err))
 	}
@@ -366,10 +359,7 @@ func (s *Server) DeleteRepositoryByName(ctx context.Context,
 		return nil, err
 	}
 
-	provider, err := s.store.GetProviderByName(ctx, db.GetProviderByNameParams{
-		Name:      in.Provider,
-		ProjectID: projectID,
-	})
+	provider, err := getProviderFromRequestOrDefault(ctx, s.store, in, projectID)
 	if err != nil {
 		return nil, providerError(fmt.Errorf("provider error: %w", err))
 	}
@@ -418,10 +408,7 @@ func (s *Server) ListRemoteRepositoriesFromProvider(
 		Str("projectID", projectID.String()).
 		Msgf("listing repositories for provider: %s", in.Provider)
 
-	provider, err := s.store.GetProviderByName(ctx, db.GetProviderByNameParams{
-		Name:      in.Provider,
-		ProjectID: projectID,
-	})
+	provider, err := getProviderFromRequestOrDefault(ctx, s.store, in, projectID)
 	if err != nil {
 		return nil, providerError(fmt.Errorf("provider error: %w", err))
 	}
