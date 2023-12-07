@@ -226,23 +226,33 @@ func (e *EEA) FlushAll(ctx context.Context) error {
 	for _, cache := range caches {
 		cache := cache
 
+		// ensure that the eiw has a project ID (invariant checked elsewhere)
+		r, err := e.querier.GetRepositoryByID(ctx, cache.RepositoryID)
+		if err != nil {
+			if errors.Is(err, sql.ErrNoRows) {
+				zerolog.Ctx(ctx).Info().Msg("No project found for repository, skipping")
+				continue
+			}
+			return fmt.Errorf("unable to look up project for repository %s: %w", cache.RepositoryID, err)
+		}
+
 		eiw, err := e.buildEntityWrapper(ctx, cache.Entity,
-			cache.RepositoryID, cache.ArtifactID, cache.PullRequestID)
+			cache.RepositoryID, r.ProjectID, cache.ArtifactID, cache.PullRequestID)
 		if err != nil && errors.Is(err, sql.ErrNoRows) {
 			continue
 		} else if err != nil {
-			return fmt.Errorf("error flushing cache: %w", err)
+			return fmt.Errorf("error building entity wrapper: %w", err)
 		}
 
 		msg, err := eiw.BuildMessage()
 		if err != nil {
-			return fmt.Errorf("error flushing cache: %w", err)
+			return fmt.Errorf("error building message: %w", err)
 		}
 
 		msg.SetContext(ctx)
 
 		if err := e.FlushMessageHandler(msg); err != nil {
-			return fmt.Errorf("error flushing cache: %w", err)
+			return fmt.Errorf("error flushing messages: %w", err)
 		}
 	}
 
@@ -253,15 +263,16 @@ func (e *EEA) buildEntityWrapper(
 	ctx context.Context,
 	entity db.Entities,
 	repoID uuid.UUID,
+	projID uuid.UUID,
 	artID, prID uuid.NullUUID,
 ) (*engine.EntityInfoWrapper, error) {
 	switch entity {
 	case db.EntitiesRepository:
-		return e.buildRepositoryInfoWrapper(ctx, repoID)
+		return e.buildRepositoryInfoWrapper(ctx, repoID, projID)
 	case db.EntitiesArtifact:
-		return e.buildArtifactInfoWrapper(ctx, repoID, artID)
+		return e.buildArtifactInfoWrapper(ctx, repoID, projID, artID)
 	case db.EntitiesPullRequest:
-		return e.buildPullRequestInfoWrapper(ctx, repoID, prID)
+		return e.buildPullRequestInfoWrapper(ctx, repoID, projID, prID)
 	case db.EntitiesBuildEnvironment:
 		return nil, fmt.Errorf("build environment entity not supported")
 	default:
@@ -272,6 +283,7 @@ func (e *EEA) buildEntityWrapper(
 func (e *EEA) buildRepositoryInfoWrapper(
 	ctx context.Context,
 	repoID uuid.UUID,
+	projID uuid.UUID,
 ) (*engine.EntityInfoWrapper, error) {
 	r, err := util.GetRepository(ctx, e.querier, repoID)
 	if err != nil {
@@ -280,12 +292,14 @@ func (e *EEA) buildRepositoryInfoWrapper(
 
 	return engine.NewEntityInfoWrapper().
 		WithRepository(r).
-		WithRepositoryID(repoID), nil
+		WithRepositoryID(repoID).
+		WithProjectID(projID), nil
 }
 
 func (e *EEA) buildArtifactInfoWrapper(
 	ctx context.Context,
 	repoID uuid.UUID,
+	projID uuid.UUID,
 	artID uuid.NullUUID,
 ) (*engine.EntityInfoWrapper, error) {
 	a, err := util.GetArtifactWithVersions(ctx, e.querier, repoID, artID.UUID)
@@ -295,6 +309,7 @@ func (e *EEA) buildArtifactInfoWrapper(
 
 	return engine.NewEntityInfoWrapper().
 		WithRepositoryID(repoID).
+		WithProjectID(projID).
 		WithArtifact(a).
 		WithArtifactID(artID.UUID), nil
 }
@@ -302,6 +317,7 @@ func (e *EEA) buildArtifactInfoWrapper(
 func (e *EEA) buildPullRequestInfoWrapper(
 	ctx context.Context,
 	repoID uuid.UUID,
+	projID uuid.UUID,
 	prID uuid.NullUUID,
 ) (*engine.EntityInfoWrapper, error) {
 	pr, err := util.GetPullRequest(ctx, e.querier, repoID, prID.UUID)
@@ -311,6 +327,7 @@ func (e *EEA) buildPullRequestInfoWrapper(
 
 	return engine.NewEntityInfoWrapper().
 		WithRepositoryID(repoID).
+		WithProjectID(projID).
 		WithPullRequest(pr).
 		WithPullRequestID(prID.UUID), nil
 }
