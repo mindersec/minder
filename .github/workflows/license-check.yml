@@ -7,7 +7,7 @@ jobs:
     steps:
       - uses: actions/checkout@v4 # v3.5.0
 
-      - uses: actions/setup-go@v4 # v4.0.0
+      - uses: actions/setup-go@v5 # v4.0.0
         with:
           go-version-file: "go.mod"
       - name: Install addlicense
