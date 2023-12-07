@@ -223,7 +223,7 @@ var cmd = &cobra.Command{
 		}
 
 		if provider != "" {
-			rt.Context.Provider = provider
+			rt.Context.Provider = &provider
 		}
 
 		// Create the rule type in minder (new context, so we don't time out)
@@ -273,7 +273,7 @@ var cmd = &cobra.Command{
 		}
 
 		if provider != "" {
-			p.Context.Provider = provider
+			p.Context.Provider = &provider
 		}
 
 		// Create the profile in minder (new context, so we don't time out)

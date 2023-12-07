@@ -89,9 +89,10 @@ func testCmdRun(cmd *cobra.Command, _ []string) error {
 		return fmt.Errorf("error reading rule type from file: %w", err)
 	}
 
+	provider := "test"
 	rootProject := "00000000-0000-0000-0000-000000000002"
 	rt.Context = &minderv1.Context{
-		Provider: "test",
+		Provider: &provider,
 		Project:  &rootProject,
 	}
 

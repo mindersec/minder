@@ -79,9 +79,10 @@ minder control plane.`,
 		rulesToDelete := []*minderv1.RuleType{}
 		if !deleteAll {
 			// Fetch the rule type from the DB, so we can get its name
+			provider := viper.GetString("provider")
 			rtype, err := client.GetRuleTypeById(ctx, &minderv1.GetRuleTypeByIdRequest{
 				Context: &minderv1.Context{
-					Provider: viper.GetString("provider"),
+					Provider: &provider,
 					// TODO set up project if specified
 					// Currently it's inferred from the authorization token
 				},
@@ -95,9 +96,10 @@ minder control plane.`,
 			rulesToDelete = append(rulesToDelete, rtype.RuleType)
 		} else {
 			// List all rule types
+			provider := viper.GetString("provider")
 			resp, err := client.ListRuleTypes(ctx, &minderv1.ListRuleTypesRequest{
 				Context: &minderv1.Context{
-					Provider: viper.GetString("provider"),
+					Provider: &provider,
 					// TODO set up project if specified
 					// Currently it's inferred from the authorization token
 				},

@@ -203,7 +203,7 @@ func NewRuleTypeEngine(
 	rte := &RuleTypeEngine{
 		Meta: RuleMeta{
 			Name:     rt.Name,
-			Provider: rt.Context.Provider,
+			Provider: *rt.Context.Provider,
 		},
 		rval:        rval,
 		rdi:         rdi,
@@ -214,17 +214,11 @@ func NewRuleTypeEngine(
 		ingestCache: ingestcache.NewNoopCache(),
 	}
 
-	// Set organization if it exists
-	if rt.Context.Organization != nil && *rt.Context.Organization != "" {
-		// We need to clone the string because the pointer is to a string literal,
-		// and we don't want to modify that
-		org := strings.Clone(*rt.Context.Organization)
-		rte.Meta.Organization = &org
-	} else if rt.Context.Project != nil && *rt.Context.Project != "" {
+	if rt.Context.Project != nil && *rt.Context.Project != "" {
 		prj := strings.Clone(*rt.Context.Project)
 		rte.Meta.Project = &prj
 	} else {
-		return nil, fmt.Errorf("rule type context must have an organization or project")
+		return nil, fmt.Errorf("rule type context must have a project")
 	}
 
 	return rte, nil
@@ -304,12 +298,13 @@ func RuleTypePBFromDB(rt *db.RuleType, ectx *EntityContext) (*minderv1.RuleType,
 	}
 
 	id := rt.ID.String()
+	name := ectx.GetProvider().Name
 
 	return &minderv1.RuleType{
 		Id:   &id,
 		Name: rt.Name,
 		Context: &minderv1.Context{
-			Provider: ectx.GetProvider().Name,
+			Provider: &name,
 			Project:  &gname,
 		},
 		Description: rt.Description,

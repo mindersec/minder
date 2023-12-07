@@ -89,7 +89,7 @@ var repo_listCmd = &cobra.Command{
 				row := table.Row{
 					*v.Id,
 					*v.Context.Project,
-					v.Context.Provider,
+					*v.Context.Provider,
 					fmt.Sprintf("%d", v.GetRepoId()),
 					v.GetOwner(),
 					v.GetName(),

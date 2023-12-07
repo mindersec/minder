@@ -67,7 +67,7 @@ minder control plane for an specific provider/project or profile id.`,
 
 		req := &pb.GetProfileStatusByNameRequest{
 			Context: &pb.Context{
-				Provider: provider,
+				Provider: &provider,
 			},
 			Name: profileName,
 			All:  all,

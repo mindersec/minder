@@ -61,7 +61,7 @@ minder control plane.`,
 
 		rtype, err := client.GetRuleTypeById(ctx, &minderv1.GetRuleTypeByIdRequest{
 			Context: &minderv1.Context{
-				Provider: provider,
+				Provider: &provider,
 				// TODO set up project if specified
 				// Currently it's inferred from the authorization token
 			},

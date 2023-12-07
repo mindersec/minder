@@ -56,7 +56,7 @@ minder control plane.`,
 		id := viper.GetString("id")
 		profile, err := client.GetProfileById(ctx, &pb.GetProfileByIdRequest{
 			Context: &pb.Context{
-				Provider: provider,
+				Provider: &provider,
 				// TODO set up project if specified
 				// Currently it's inferred from the authorization token
 			},

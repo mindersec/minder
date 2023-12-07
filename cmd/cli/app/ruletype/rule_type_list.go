@@ -62,7 +62,7 @@ minder control plane for an specific project.`,
 
 		resp, err := client.ListRuleTypes(ctx, &minderv1.ListRuleTypesRequest{
 			Context: &minderv1.Context{
-				Provider: provider,
+				Provider: &provider,
 				// TODO set up project if specified
 				// Currently it's inferred from the authorization token
 			},

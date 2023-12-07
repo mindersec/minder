@@ -191,9 +191,9 @@ this normally refers to a combination of the provider, organization and project.
 
 | Field | Type | Label | Description |
 | ----- | ---- | ----- | ----------- |
-| provider | [string](#string) |  |  |
-| organization | [string](#string) | optional |  |
+| provider | [string](#string) | optional |  |
 | project | [string](#string) | optional |  |
+| retired_organization | [string](#string) | optional |  |
 
 
 <a name="minder-v1-CreateKeyPairRequest"></a>
@@ -1105,24 +1105,10 @@ an organization.
 | Field | Type | Label | Description |
 | ----- | ---- | ----- | ----------- |
 | name | [string](#string) |  |  |
-| context | [Provider.Context](#minder-v1-Provider-Context) |  |  |
+| context | [Context](#minder-v1-Context) |  |  |
 | version | [string](#string) |  | Version defines the version of the provider. Currently only v1 is supported. |
 | implements | [string](#string) | repeated | Implements defines the provider types that this provider implements. This is used to determine the interface to use to interact with the provider. This is a required field and must be set. currently, the following interfaces are supported: - rest - github - git |
 | def | [Provider.Definition](#minder-v1-Provider-Definition) |  |  |
-
-
-<a name="minder-v1-Provider-Context"></a>
-
-#### Provider.Context
-Context defines the context in which a provider is evaluated.
-Given thta a provider is a top level entity, it may only be scoped to
-an organization.
-
-
-| Field | Type | Label | Description |
-| ----- | ---- | ----- | ----------- |
-| organization | [string](#string) |  |  |
-| project | [string](#string) |  |  |
 
 
 <a name="minder-v1-Provider-Definition"></a>
