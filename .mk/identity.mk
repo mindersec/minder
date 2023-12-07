@@ -13,7 +13,7 @@
 # See the License for the specific language governing permissions and
 # limitations under the License.
 
-.PHONY: github-login
+.PHONY: github-login password-login
 github-login: ## setup GitHub login on Keycloak
 ifndef KC_GITHUB_CLIENT_ID
 	$(error KC_GITHUB_CLIENT_ID is not set)
@@ -23,3 +23,9 @@ ifndef KC_GITHUB_CLIENT_SECRET
 endif
 	@echo "Setting up GitHub login..."
 	@$(CONTAINER) exec -it keycloak_container /opt/keycloak/bin/kcadm.sh create identity-provider/instances -r stacklok -s alias=github -s providerId=github -s enabled=true  -s 'config.useJwksUrl="true"' -s config.clientId=$$KC_GITHUB_CLIENT_ID -s config.clientSecret=$$KC_GITHUB_CLIENT_SECRET
+
+password-login:
+	@echo "Setting up password login..."
+	@$(CONTAINER) exec -it keycloak_container /opt/keycloak/bin/kcadm.sh config credentials --server http://localhost:8080 --realm master --user admin --password admin
+	@$(CONTAINER) exec -it keycloak_container /opt/keycloak/bin/kcadm.sh create users -r stacklok -s username=testuser -s enabled=true
+	@$(CONTAINER) exec -it keycloak_container /opt/keycloak/bin/kcadm.sh set-password -r stacklok --username testuser --new-password tester
