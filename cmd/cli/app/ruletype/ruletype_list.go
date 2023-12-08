@@ -81,15 +81,10 @@ minder control plane for an specific project.`,
 
 func init() {
 	ruleTypeCmd.AddCommand(ruleType_listCmd)
-	ruleType_listCmd.Flags().StringP("provider", "p", "", "Provider to list rule types for")
+	ruleType_listCmd.Flags().StringP("provider", "p", "github", "Provider to list rule types for")
 	ruleType_listCmd.Flags().StringP("output", "o", app.Table, "Output format (json, yaml or table)")
 	// TODO: Take project ID into account
 	// ruleType_listCmd.Flags().Int32P("project-id", "g", 0, "project id to list roles for")
-
-	if err := ruleType_listCmd.MarkFlagRequired("provider"); err != nil {
-		fmt.Fprintf(os.Stderr, "Error marking flag as required: %s\n", err)
-		os.Exit(1)
-	}
 }
 
 func handleListTableOutput(cmd *cobra.Command, resp *minderv1.ListRuleTypesResponse) {

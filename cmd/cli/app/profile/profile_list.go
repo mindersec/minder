@@ -18,7 +18,6 @@ package profile
 import (
 	"context"
 	"fmt"
-	"os"
 
 	"github.com/spf13/cobra"
 	"github.com/spf13/viper"
@@ -82,15 +81,10 @@ minder control plane for an specific project.`,
 
 func init() {
 	ProfileCmd.AddCommand(profile_listCmd)
-	profile_listCmd.Flags().StringP("provider", "p", "", "Provider to list profiles for")
+	profile_listCmd.Flags().StringP("provider", "p", "github", "Provider to list profiles for")
 	profile_listCmd.Flags().StringP("output", "o", app.Table, "Output format (json, yaml or table)")
 	// TODO: Take project ID into account
 	// profile_listCmd.Flags().Int32P("project-id", "g", 0, "project id to list roles for")
-
-	if err := profile_listCmd.MarkFlagRequired("provider"); err != nil {
-		fmt.Fprintf(os.Stderr, "Error marking flag as required: %s\n", err)
-		os.Exit(1)
-	}
 }
 
 func handleListTableOutput(cmd *cobra.Command, resp *pb.ListProfilesResponse) {

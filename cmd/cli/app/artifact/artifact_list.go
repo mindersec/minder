@@ -104,10 +104,6 @@ var artifact_listCmd = &cobra.Command{
 func init() {
 	ArtifactCmd.AddCommand(artifact_listCmd)
 	artifact_listCmd.Flags().StringP("output", "f", "", "Output format (json or yaml)")
-	artifact_listCmd.Flags().StringP("provider", "p", "", "Name for the provider to enroll")
+	artifact_listCmd.Flags().StringP("provider", "p", "github", "Name for the provider to enroll")
 	artifact_listCmd.Flags().StringP("project-id", "g", "", "ID of the project for repo registration")
-
-	if err := artifact_listCmd.MarkFlagRequired("provider"); err != nil {
-		fmt.Fprintf(os.Stderr, "Error marking flag as required: %s\n", err)
-	}
 }

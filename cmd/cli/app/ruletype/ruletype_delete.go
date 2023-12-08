@@ -135,10 +135,8 @@ minder control plane.`,
 
 func init() {
 	ruleTypeCmd.AddCommand(ruleType_deleteCmd)
-	ruleType_deleteCmd.Flags().StringP("provider", "p", "", "Provider to list rule types for")
+	ruleType_deleteCmd.Flags().StringP("provider", "p", "github", "Provider to list rule types for")
 	ruleType_deleteCmd.Flags().StringP("id", "i", "", "ID of rule type to delete")
 	ruleType_deleteCmd.Flags().BoolP("all", "a", false, "Warning: Deletes all rule types")
 	ruleType_deleteCmd.Flags().BoolP("yes", "y", false, "Bypass yes/no prompt when deleting all rule types")
-	err := ruleType_deleteCmd.MarkFlagRequired("provider")
-	util.ExitNicelyOnError(err, "Error marking flag as required")
 }
