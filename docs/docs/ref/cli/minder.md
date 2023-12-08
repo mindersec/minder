@@ -29,7 +29,6 @@ https://docs.stacklok.com/minder
 * [minder completion](minder_completion.md)	 - Generate the autocompletion script for the specified shell
 * [minder docs](minder_docs.md)	 - Generates documentation for the client
 * [minder profile](minder_profile.md)	 - Manage profiles within a minder control plane
-* [minder profile_status](minder_profile_status.md)	 - Manage profile status within a minder control plane
 * [minder provider](minder_provider.md)	 - Manage providers within a minder control plane
 * [minder quickstart](minder_quickstart.md)	 - Quickstart minder
 * [minder repo](minder_repo.md)	 - Manage repositories within a minder control plane
