@@ -36,11 +36,6 @@ var artifact_listCmd = &cobra.Command{
 	Use:   "list",
 	Short: "List artifacts from a provider",
 	Long:  `Artifact list will list artifacts from a provider`,
-	PreRun: func(cmd *cobra.Command, args []string) {
-		if err := viper.BindPFlags(cmd.Flags()); err != nil {
-			fmt.Fprintf(os.Stderr, "error binding flags: %s", err)
-		}
-	},
 	RunE: cli.GRPCClientWrapRunE(func(ctx context.Context, cmd *cobra.Command, conn *grpc.ClientConn) error {
 		format := viper.GetString("output")
 

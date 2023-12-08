@@ -38,11 +38,6 @@ var Profile_updateCmd = &cobra.Command{
 	Short: "Update a profile within a minder control plane",
 	Long: `The minder profile update subcommand lets you update profiles for a project
 within a minder control plane.`,
-	PreRun: func(cmd *cobra.Command, args []string) {
-		if err := viper.BindPFlags(cmd.Flags()); err != nil {
-			fmt.Fprintf(os.Stderr, "Error binding flags: %s\n", err)
-		}
-	},
 	RunE: cli.GRPCClientWrapRunE(func(ctx context.Context, cmd *cobra.Command, conn *grpc.ClientConn) error {
 		f := util.GetConfigValue(viper.GetViper(), "file", "file", cmd, "").(string)
 		proj := viper.GetString("project")

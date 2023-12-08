@@ -18,7 +18,6 @@ package profile_status
 import (
 	"context"
 	"fmt"
-	"os"
 
 	"github.com/spf13/cobra"
 	"github.com/spf13/viper"
@@ -36,11 +35,6 @@ var profilestatus_getCmd = &cobra.Command{
 	Short: "Get profile status within a minder control plane",
 	Long: `The minder profile_status get subcommand lets you get profile status within a
 minder control plane for an specific provider/project or profile id, entity type and entity id.`,
-	PreRun: func(cmd *cobra.Command, args []string) {
-		if err := viper.BindPFlags(cmd.Flags()); err != nil {
-			fmt.Fprintf(os.Stderr, "Error binding flags: %s\n", err)
-		}
-	},
 	RunE: cli.GRPCClientWrapRunE(func(ctx context.Context, cmd *cobra.Command, conn *grpc.ClientConn) error {
 		client := minderv1.NewProfileServiceClient(conn)
 

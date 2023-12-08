@@ -17,8 +17,6 @@ package profile
 
 import (
 	"context"
-	"fmt"
-	"os"
 
 	"github.com/spf13/cobra"
 	"github.com/spf13/viper"
@@ -34,11 +32,6 @@ var profile_deleteCmd = &cobra.Command{
 	Short: "Delete a profile within a minder control plane",
 	Long: `The minder profile delete subcommand lets you delete profiles within a
 minder control plane.`,
-	PreRun: func(cmd *cobra.Command, args []string) {
-		if err := viper.BindPFlags(cmd.Flags()); err != nil {
-			fmt.Fprintf(os.Stderr, "Error binding flags: %s\n", err)
-		}
-	},
 	RunE: cli.GRPCClientWrapRunE(func(ctx context.Context, cmd *cobra.Command, conn *grpc.ClientConn) error {
 		// delete the profile via GRPC
 		id := viper.GetString("id")

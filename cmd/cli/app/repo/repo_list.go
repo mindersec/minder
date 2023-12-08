@@ -35,11 +35,6 @@ var repo_listCmd = &cobra.Command{
 	Use:   "list",
 	Short: "List repositories in the minder control plane",
 	Long:  `Repo list is used to register a repo with the minder control plane`,
-	PreRun: func(cmd *cobra.Command, args []string) {
-		if err := viper.BindPFlags(cmd.Flags()); err != nil {
-			fmt.Fprintf(os.Stderr, "error binding flags: %s", err)
-		}
-	},
 	RunE: cli.GRPCClientWrapRunE(func(ctx context.Context, cmd *cobra.Command, conn *grpc.ClientConn) error {
 		provider := util.GetConfigValue(viper.GetViper(), "provider", "provider", cmd, "").(string)
 		if provider != github.Github {

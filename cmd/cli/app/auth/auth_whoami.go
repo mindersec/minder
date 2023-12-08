@@ -17,12 +17,9 @@ package auth
 
 import (
 	"context"
-	"fmt"
-	"os"
 
 	"github.com/charmbracelet/bubbles/table"
 	"github.com/spf13/cobra"
-	"github.com/spf13/viper"
 	"google.golang.org/grpc"
 
 	"github.com/stacklok/minder/internal/util"
@@ -35,11 +32,6 @@ var authWhoamiCmd = &cobra.Command{
 	Use:   "whoami",
 	Short: "whoami for current user",
 	Long:  `whoami gets information about the current user from the minder server`,
-	PreRun: func(cmd *cobra.Command, args []string) {
-		if err := viper.BindPFlags(cmd.Flags()); err != nil {
-			fmt.Fprintf(os.Stderr, "Error binding flags: %s\n", err)
-		}
-	},
 	RunE: cli.GRPCClientWrapRunE(func(ctx context.Context, cmd *cobra.Command, conn *grpc.ClientConn) error {
 		client := pb.NewUserServiceClient(conn)
 

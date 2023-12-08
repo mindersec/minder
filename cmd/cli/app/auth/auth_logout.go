@@ -22,9 +22,7 @@
 package auth
 
 import (
-	"fmt"
 	"net/url"
-	"os"
 
 	"github.com/spf13/cobra"
 	"github.com/spf13/viper"
@@ -39,11 +37,6 @@ var auth_logoutCmd = &cobra.Command{
 	Use:   "logout",
 	Short: "Logout from minder control plane.",
 	Long:  `Logout from minder control plane. Credentials will be removed from $XDG_CONFIG_HOME/minder/credentials.json`,
-	PreRun: func(cmd *cobra.Command, args []string) {
-		if err := viper.BindPFlags(cmd.Flags()); err != nil {
-			fmt.Fprintf(os.Stderr, "Error binding flags: %s\n", err)
-		}
-	},
 	Run: func(cmd *cobra.Command, args []string) {
 		err := util.RemoveCredentials()
 		util.ExitNicelyOnError(err, "Error removing credentials")

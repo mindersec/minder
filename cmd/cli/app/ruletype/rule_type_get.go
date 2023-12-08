@@ -35,11 +35,6 @@ var ruleType_getCmd = &cobra.Command{
 	Short: "Get details for a rule type within a minder control plane",
 	Long: `The minder ruletype get subcommand lets you retrieve details for a rule type within a
 minder control plane.`,
-	PreRun: func(cmd *cobra.Command, args []string) {
-		if err := viper.BindPFlags(cmd.Flags()); err != nil {
-			fmt.Fprintf(os.Stderr, "Error binding flags: %s\n", err)
-		}
-	},
 	RunE: cli.GRPCClientWrapRunE(func(ctx context.Context, cmd *cobra.Command, conn *grpc.ClientConn) error {
 		provider := viper.GetString("provider")
 		format := viper.GetString("output")
