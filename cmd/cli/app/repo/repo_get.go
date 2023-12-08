@@ -16,15 +16,18 @@
 package repo
 
 import (
+	"context"
 	"fmt"
 	"os"
 
 	"github.com/spf13/cobra"
 	"github.com/spf13/viper"
+	"google.golang.org/grpc"
 
 	"github.com/stacklok/minder/cmd/cli/app"
 	github "github.com/stacklok/minder/internal/providers/github"
 	"github.com/stacklok/minder/internal/util"
+	"github.com/stacklok/minder/internal/util/cli"
 	pb "github.com/stacklok/minder/pkg/api/protobuf/go/minder/v1"
 )
 
@@ -44,8 +47,7 @@ var repo_getCmd = &cobra.Command{
 			fmt.Fprintf(os.Stderr, "error binding flags: %s", err)
 		}
 	},
-	RunE: func(cmd *cobra.Command, args []string) error {
-
+	RunE: cli.GRPCClientWrapRunE(func(ctx context.Context, cmd *cobra.Command, conn *grpc.ClientConn) error {
 		provider := util.GetConfigValue(viper.GetViper(), "provider", "provider", cmd, "").(string)
 		repoid := viper.GetString("repo-id")
 		format := viper.GetString("output")
@@ -74,13 +76,7 @@ var repo_getCmd = &cobra.Command{
 			return fmt.Errorf("invalid output format: %s", format)
 		}
 
-		conn, err := util.GrpcForCommand(cmd, viper.GetViper())
-		util.ExitNicelyOnError(err, "Error getting grpc connection")
-		defer conn.Close()
-
 		client := pb.NewRepositoryServiceClient(conn)
-		ctx, cancel := util.GetAppContext()
-		defer cancel()
 
 		// check repo by id
 		var repository *pb.Repository
@@ -117,7 +113,7 @@ var repo_getCmd = &cobra.Command{
 			}
 		}
 		return nil
-	},
+	}),
 }
 
 func init() {

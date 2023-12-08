@@ -16,13 +16,16 @@
 package ruletype
 
 import (
+	"context"
 	"fmt"
 	"os"
 
 	"github.com/spf13/cobra"
 	"github.com/spf13/viper"
+	"google.golang.org/grpc"
 
 	"github.com/stacklok/minder/internal/util"
+	"github.com/stacklok/minder/internal/util/cli"
 	minderv1 "github.com/stacklok/minder/pkg/api/protobuf/go/minder/v1"
 )
 
@@ -37,7 +40,7 @@ within a minder control plane.`,
 			fmt.Fprintf(os.Stderr, "Error binding flags: %s\n", err)
 		}
 	},
-	RunE: func(cmd *cobra.Command, args []string) error {
+	RunE: cli.GRPCClientWrapRunE(func(ctx context.Context, cmd *cobra.Command, conn *grpc.ClientConn) error {
 		files, err := cmd.Flags().GetStringArray("file")
 		if err != nil {
 			return fmt.Errorf("error getting file flag: %w", err)
@@ -47,12 +50,6 @@ within a minder control plane.`,
 			return fmt.Errorf("error validating file arg: %w", err)
 		}
 
-		conn, err := util.GrpcForCommand(cmd, viper.GetViper())
-		if err != nil {
-			return fmt.Errorf("error getting grpc connection: %w", err)
-		}
-		defer conn.Close()
-
 		client := minderv1.NewProfileServiceClient(conn)
 
 		expfiles, err := util.ExpandFileArgs(files)
@@ -61,9 +58,6 @@ within a minder control plane.`,
 		}
 
 		table := initializeTable(cmd)
-
-		ctx, cancel := util.GetAppContext()
-		defer cancel()
 
 		createFunc := func(fileName string, rt *minderv1.RuleType) (*minderv1.RuleType, error) {
 			resprt, err := client.CreateRuleType(ctx, &minderv1.CreateRuleTypeRequest{
@@ -89,7 +83,7 @@ within a minder control plane.`,
 		table.Render()
 
 		return nil
-	},
+	}),
 }
 
 func init() {

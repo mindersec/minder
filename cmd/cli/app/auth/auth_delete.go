@@ -16,11 +16,12 @@
 package auth
 
 import (
+	"context"
 	"fmt"
-	"os"
 
 	"github.com/spf13/cobra"
 	"github.com/spf13/viper"
+	"google.golang.org/grpc"
 
 	"github.com/stacklok/minder/internal/auth"
 	"github.com/stacklok/minder/internal/util"
@@ -33,22 +34,18 @@ var auth_deleteCmd = &cobra.Command{
 	Use:   "delete",
 	Short: "Permanently delete account",
 	Long:  `Permanently delete account. All associated user data will be permanently removed.`,
-	PreRun: func(cmd *cobra.Command, args []string) {
+	PreRunE: func(cmd *cobra.Command, args []string) error {
 		if err := viper.BindPFlags(cmd.Flags()); err != nil {
-			fmt.Fprintf(os.Stderr, "Error binding flags: %s\n", err)
+			return fmt.Errorf("Error binding flags: %s", err)
 		}
-	},
-	Run: func(cmd *cobra.Command, args []string) {
-		ctx, cancel := util.GetAppContext()
-		defer cancel()
 
-		conn, err := util.GrpcForCommand(cmd, viper.GetViper())
-		util.ExitNicelyOnError(err, "Error getting grpc connection")
-		defer conn.Close()
+		return nil
+	},
+	RunE: cli.GRPCClientWrapRunE(func(ctx context.Context, cmd *cobra.Command, conn *grpc.ClientConn) error {
 		client := pb.NewUserServiceClient(conn)
 
 		// Ensure the user already exists in the local database
-		_, _, err = userRegistered(ctx, client)
+		_, _, err := userRegistered(ctx, client)
 		util.ExitNicelyOnError(err, "Error fetching user")
 
 		// Get user details - name, email from the jwt token
@@ -66,7 +63,7 @@ var auth_deleteCmd = &cobra.Command{
 			"Delete account operation cancelled.",
 			false)
 		if !yes {
-			return
+			return nil
 		}
 
 		_, err = client.DeleteUser(ctx, &pb.DeleteUserRequest{})
@@ -80,7 +77,9 @@ var auth_deleteCmd = &cobra.Command{
 		}
 		cli.PrintCmd(cmd, cli.SuccessBanner.Render("Successfully deleted account. It may take up to 48 hours for "+
 			"all data to be removed."))
-	},
+
+		return nil
+	}),
 }
 
 func init() {

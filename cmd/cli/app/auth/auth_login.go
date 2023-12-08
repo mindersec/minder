@@ -169,7 +169,7 @@ will be saved to $XDG_CONFIG_HOME/minder/credentials.json`,
 			fmt.Println(err)
 		}
 
-		conn, err := util.GrpcForCommand(cmd, viper.GetViper())
+		conn, err := cli.GrpcForCommand(cmd, viper.GetViper())
 		util.ExitNicelyOnError(err, "Error getting grpc connection")
 		defer conn.Close()
 		client := pb.NewUserServiceClient(conn)

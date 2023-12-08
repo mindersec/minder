@@ -32,6 +32,7 @@ import (
 	"github.com/pkg/browser"
 	"github.com/spf13/cobra"
 	"github.com/spf13/viper"
+	"google.golang.org/grpc"
 	"google.golang.org/protobuf/types/known/timestamppb"
 
 	ghclient "github.com/stacklok/minder/internal/providers/github"
@@ -119,18 +120,15 @@ actions such as adding repositories.`,
 			fmt.Fprintf(os.Stderr, "Error binding flags: %s\n", err)
 		}
 	},
-	Run: func(cmd *cobra.Command, args []string) {
-		msg, err := EnrollProviderCmd(cmd, args)
-		util.ExitNicelyOnError(err, msg)
-	},
+	RunE: cli.GRPCClientWrapRunE(EnrollProviderCmd),
 }
 
 // EnrollProviderCmd is the command for enrolling a provider
-func EnrollProviderCmd(cmd *cobra.Command, _ []string) (string, error) {
+func EnrollProviderCmd(ctx context.Context, cmd *cobra.Command, conn *grpc.ClientConn) error {
 	provider := util.GetConfigValue(viper.GetViper(), "provider", "provider", cmd, "").(string)
 	if provider != ghclient.Github {
 		msg := fmt.Sprintf("Only %s is supported at this time", ghclient.Github)
-		return "", fmt.Errorf(msg)
+		return fmt.Errorf(msg)
 	}
 	project := viper.GetString("project")
 	pat := util.GetConfigValue(viper.GetViper(), "token", "token", cmd, "").(string)
@@ -150,19 +148,11 @@ func EnrollProviderCmd(cmd *cobra.Command, _ []string) (string, error) {
 			"Enroll operation cancelled.",
 			true)
 		if !yes {
-			return "", nil
+			return nil
 		}
 	}
 
-	conn, err := util.GrpcForCommand(cmd, viper.GetViper())
-	if err != nil {
-		return "Error getting grpc connection", err
-	}
-	defer conn.Close()
-
 	client := pb.NewOAuthServiceClient(conn)
-	ctx, cancel := util.GetAppContext()
-	defer cancel()
 	oAuthCallbackCtx, oAuthCancel := context.WithTimeout(context.Background(), MAX_CALLS*time.Second)
 	defer oAuthCancel()
 
@@ -171,17 +161,17 @@ func EnrollProviderCmd(cmd *cobra.Command, _ []string) (string, error) {
 		_, err := client.StoreProviderToken(context.Background(),
 			&pb.StoreProviderTokenRequest{Provider: provider, ProjectId: project, AccessToken: pat, Owner: &owner})
 		if err != nil {
-			return "Error storing token", err
+			return fmt.Errorf("error storing token: %w", err)
 		}
 
 		cli.PrintCmd(cmd, "Provider enrolled successfully")
-		return "", nil
+		return nil
 	}
 
 	// Get random port
 	port, err := rand.GetRandomPort()
 	if err != nil {
-		return "Error getting random port", err
+		return fmt.Errorf("error getting random port: %w", err)
 	}
 
 	resp, err := client.GetAuthorizationURL(ctx, &pb.GetAuthorizationURLRequest{
@@ -192,7 +182,7 @@ func EnrollProviderCmd(cmd *cobra.Command, _ []string) (string, error) {
 		Owner:     &owner,
 	})
 	if err != nil {
-		return "Error getting authorization URL", err
+		return fmt.Errorf("error getting authorization URL: %w", err)
 	}
 
 	fmt.Printf("Your browser will now be opened to: %s\n", resp.GetUrl())
@@ -213,7 +203,7 @@ func EnrollProviderCmd(cmd *cobra.Command, _ []string) (string, error) {
 	wg.Wait()
 
 	cli.PrintCmd(cmd, "Provider enrolled successfully")
-	return "", nil
+	return nil
 }
 
 func init() {

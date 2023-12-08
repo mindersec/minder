@@ -16,6 +16,7 @@
 package auth
 
 import (
+	"context"
 	"fmt"
 	"os"
 
@@ -39,14 +40,7 @@ var authWhoamiCmd = &cobra.Command{
 			fmt.Fprintf(os.Stderr, "Error binding flags: %s\n", err)
 		}
 	},
-	Run: func(cmd *cobra.Command, args []string) {
-		ctx, cancel := util.GetAppContext()
-		defer cancel()
-
-		conn, err := util.GrpcForCommand(cmd, viper.GetViper())
-		util.ExitNicelyOnError(err, "Error getting grpc connection")
-		defer conn.Close()
-
+	RunE: cli.GRPCClientWrapRunE(func(ctx context.Context, cmd *cobra.Command, conn *grpc.ClientConn) error {
 		client := pb.NewUserServiceClient(conn)
 
 		userInfo, err := client.GetUser(ctx, &pb.GetUserRequest{})
@@ -54,7 +48,8 @@ var authWhoamiCmd = &cobra.Command{
 
 		cli.PrintCmd(cmd, cli.Header.Render("Here are your details:"))
 		renderUserInfoWhoami(cmd, conn, userInfo)
-	},
+		return nil
+	}),
 }
 
 func init() {

@@ -16,11 +16,14 @@
 package ruletype
 
 import (
+	"context"
+	"errors"
 	"fmt"
 	"os"
 
 	"github.com/spf13/cobra"
 	"github.com/spf13/viper"
+	"google.golang.org/grpc"
 
 	"github.com/stacklok/minder/internal/util"
 	"github.com/stacklok/minder/internal/util/cli"
@@ -37,7 +40,7 @@ minder control plane.`,
 			fmt.Fprintf(os.Stderr, "Error binding flags: %s\n", err)
 		}
 	},
-	Run: func(cmd *cobra.Command, args []string) {
+	RunE: cli.GRPCClientWrapRunE(func(ctx context.Context, cmd *cobra.Command, conn *grpc.ClientConn) error {
 		// Delete the rule type via GRPC
 		id := viper.GetString("id")
 		deleteAll := viper.GetBool("all")
@@ -45,14 +48,12 @@ minder control plane.`,
 
 		// If id is set, deleteAll cannot be set
 		if id != "" && deleteAll {
-			fmt.Fprintf(os.Stderr, "Cannot set both id and deleteAll")
-			return
+			return errors.New("cannot set both id and deleteAll")
 		}
 
 		// Either name or deleteAll needs to be set
 		if id == "" && !deleteAll {
-			fmt.Fprintf(os.Stderr, "Either id or deleteAll needs to be set")
-			return
+			return errors.New("Either id or deleteAll needs to be set")
 		}
 
 		if deleteAll && !yesFlag {
@@ -63,17 +64,10 @@ minder control plane.`,
 				"Delete all rule types operation cancelled.",
 				false)
 			if !yes {
-				return
+				return nil
 			}
 		}
-		// Create GRPC connection
-		conn, err := util.GrpcForCommand(cmd, viper.GetViper())
-		util.ExitNicelyOnError(err, "Error getting grpc connection")
-		defer conn.Close()
-
 		client := minderv1.NewProfileServiceClient(conn)
-		ctx, cancel := util.GetAppContext()
-		defer cancel()
 
 		// List of rule types to delete
 		rulesToDelete := []*minderv1.RuleType{}
@@ -89,8 +83,7 @@ minder control plane.`,
 				Id: id,
 			})
 			if err != nil {
-				cmd.Println("Error getting rule type")
-				return
+				return fmt.Errorf("Error getting rule type: %w", err)
 			}
 			// Add the rule type for deletion
 			rulesToDelete = append(rulesToDelete, rtype.RuleType)
@@ -105,8 +98,7 @@ minder control plane.`,
 				},
 			})
 			if err != nil {
-				cmd.Println("Error getting rule types")
-				return
+				return fmt.Errorf("Error listing rule types: %w", err)
 			}
 			rulesToDelete = append(rulesToDelete, resp.RuleTypes...)
 		}
@@ -114,7 +106,7 @@ minder control plane.`,
 		remainingRuleTypes := []string{}
 		// Delete the rule types set for deletion
 		for _, ruleType := range rulesToDelete {
-			_, err = client.DeleteRuleType(ctx, &minderv1.DeleteRuleTypeRequest{
+			_, err := client.DeleteRuleType(ctx, &minderv1.DeleteRuleTypeRequest{
 				Context: &minderv1.Context{},
 				Id:      ruleType.GetId(),
 			})
@@ -128,7 +120,7 @@ minder control plane.`,
 		// Print the results
 		if len(deletedRuleTypes) == 0 && len(remainingRuleTypes) == 0 {
 			cmd.Println("There are no rule types to delete")
-			return
+			return nil
 		}
 		if len(deletedRuleTypes) > 0 {
 			cmd.Println("\nThe following rule type(s) were successfully deleted:")
@@ -142,7 +134,9 @@ minder control plane.`,
 				cmd.Println(ruleType)
 			}
 		}
-	},
+
+		return nil
+	}),
 }
 
 func init() {

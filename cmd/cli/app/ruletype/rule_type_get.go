@@ -16,14 +16,17 @@
 package ruletype
 
 import (
+	"context"
 	"fmt"
 	"os"
 
 	"github.com/spf13/cobra"
 	"github.com/spf13/viper"
+	"google.golang.org/grpc"
 
 	"github.com/stacklok/minder/cmd/cli/app"
 	"github.com/stacklok/minder/internal/util"
+	"github.com/stacklok/minder/internal/util/cli"
 	minderv1 "github.com/stacklok/minder/pkg/api/protobuf/go/minder/v1"
 )
 
@@ -37,7 +40,7 @@ minder control plane.`,
 			fmt.Fprintf(os.Stderr, "Error binding flags: %s\n", err)
 		}
 	},
-	RunE: func(cmd *cobra.Command, args []string) error {
+	RunE: cli.GRPCClientWrapRunE(func(ctx context.Context, cmd *cobra.Command, conn *grpc.ClientConn) error {
 		provider := viper.GetString("provider")
 		format := viper.GetString("output")
 
@@ -49,13 +52,7 @@ minder control plane.`,
 			return fmt.Errorf("error: invalid format: %s", format)
 		}
 
-		conn, err := util.GrpcForCommand(cmd, viper.GetViper())
-		util.ExitNicelyOnError(err, "Error getting grpc connection")
-		defer conn.Close()
-
 		client := minderv1.NewProfileServiceClient(conn)
-		ctx, cancel := util.GetAppContext()
-		defer cancel()
 
 		id := viper.GetString("id")
 
@@ -84,7 +81,7 @@ minder control plane.`,
 			handleGetTableOutput(cmd, rtype.GetRuleType())
 		}
 		return nil
-	},
+	}),
 }
 
 func init() {
