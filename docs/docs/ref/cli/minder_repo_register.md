@@ -18,7 +18,7 @@ minder repo register [flags]
 ```
   -h, --help                help for register
   -g, --project-id string   ID of the project for repo registration
-  -p, --provider string     Name for the provider to enroll
+  -p, --provider string     Name for the provider to enroll (default "github")
       --repo string         List of repositories to register, i.e owner/repo,owner/repo
 ```
 

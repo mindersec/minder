@@ -19,7 +19,7 @@ minder ruletype list [flags]
 ```
   -h, --help              help for list
   -o, --output string     Output format (json, yaml or table) (default "table")
-  -p, --provider string   Provider to list rule types for
+  -p, --provider string   Provider to list rule types for (default "github")
 ```
 
 ### Options inherited from parent commands
