@@ -1,17 +1,17 @@
 ---
 title: minder profile status get
 ---
-## minder profile_status get
+## minder profile status get
 
 Get profile status within a minder control plane
 
 ### Synopsis
 
-The minder profile_status get subcommand lets you get profile status within a
+The minder profile status get subcommand lets you get profile status within a
 minder control plane for an specific provider/project or profile id, entity type and entity id.
 
 ```
-minder profile_status get [flags]
+minder profile status get [flags]
 ```
 
 ### Options
@@ -39,5 +39,5 @@ minder profile_status get [flags]
 
 ### SEE ALSO
 
-* [minder profile_status](minder_profile_status.md)	 - Manage profile status within a minder control plane
+* [minder profile status](minder_profile_status.md)	 - Manage profile status within a minder control plane
 

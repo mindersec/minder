@@ -1,17 +1,17 @@
 ---
 title: minder profile status list
 ---
-## minder profile_status list
+## minder profile status list
 
 List profile status within a minder control plane
 
 ### Synopsis
 
-The minder profile_status list subcommand lets you list profile status within a
+The minder profile status list subcommand lets you list profile status within a
 minder control plane for an specific provider/project or profile id.
 
 ```
-minder profile_status list [flags]
+minder profile status list [flags]
 ```
 
 ### Options
@@ -39,5 +39,5 @@ minder profile_status list [flags]
 
 ### SEE ALSO
 
-* [minder profile_status](minder_profile_status.md)	 - Manage profile status within a minder control plane
+* [minder profile status](minder_profile_status.md)	 - Manage profile status within a minder control plane
 
