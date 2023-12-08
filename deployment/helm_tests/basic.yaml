@@ -16,6 +16,9 @@ hostname: "minder-test.example.com"
 db:
   host: postgres.postgres.svc
 
+trusty:
+  endpoint: http://trusty.trusty:8080
+
 serviceAccounts:
   server: minder
   migrate: migrate-job

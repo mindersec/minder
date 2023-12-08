@@ -78,4 +78,4 @@ installed in the namespace specified by your current Kubernetes context.
 | service.metricPort | int | `9090` | port for the metrics endpoint |
 | serviceAccounts.migrate | string, optional | `""` | If non-empty, minder will use the named ServiceAccount resources rather than creating a ServiceAccount |
 | serviceAccounts.server | string, optional | `""` | If non-empty, minder will use the named ServiceAccount resources rather than creating a ServiceAccount |
-| trusty.endpoint | string | `"http://pi.pi:8000"` | trusty host to use |
+| trusty.endpoint | string | `"https://api.trustypkg.dev"` | Trusty host to use |
