@@ -18,7 +18,7 @@ minder repo delete [flags]
 ```
   -h, --help              help for delete
   -n, --name string       Name of the repository (owner/name format)
-  -p, --provider string   Name of the enrolled provider
+  -p, --provider string   Name of the enrolled provider (default "github")
   -r, --repo-id string    ID of the repo to delete
   -s, --status            Only return the status of the profiles associated to this repo
 ```

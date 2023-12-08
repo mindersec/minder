@@ -19,7 +19,7 @@ minder repo get [flags]
   -h, --help              help for get
   -n, --name string       Name of the repository (owner/name format)
   -f, --output string     Output format (json or yaml)
-  -p, --provider string   Name for the provider to enroll
+  -p, --provider string   Name for the provider to enroll (default "github")
   -r, --repo-id string    ID of the repo to query
   -s, --status            Only return the status of the profiles associated to this repo
 ```

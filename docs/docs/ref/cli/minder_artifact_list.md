@@ -19,7 +19,7 @@ minder artifact list [flags]
   -h, --help                help for list
   -f, --output string       Output format (json or yaml)
   -g, --project-id string   ID of the project for repo registration
-  -p, --provider string     Name for the provider to enroll
+  -p, --provider string     Name for the provider to enroll (default "github")
 ```
 
 ### Options inherited from parent commands

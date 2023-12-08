@@ -20,7 +20,7 @@ minder ruletype delete [flags]
   -a, --all               Warning: Deletes all rule types
   -h, --help              help for delete
   -i, --id string         ID of rule type to delete
-  -p, --provider string   Provider to list rule types for
+  -p, --provider string   Provider to list rule types for (default "github")
   -y, --yes               Bypass yes/no prompt when deleting all rule types
 ```
 

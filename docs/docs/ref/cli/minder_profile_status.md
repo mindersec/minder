@@ -1,23 +1,23 @@
 ---
 title: minder profile status
 ---
-## minder profile_status
+## minder profile status
 
 Manage profile status within a minder control plane
 
 ### Synopsis
 
-The minder profile_status subcommands allows the management of profile status within
+The minder profile status subcommand allows the management of profile status within
 a minder control plane.
 
 ```
-minder profile_status [flags]
+minder profile status [flags]
 ```
 
 ### Options
 
 ```
-  -h, --help   help for profile_status
+  -h, --help   help for status
 ```
 
 ### Options inherited from parent commands
@@ -33,7 +33,7 @@ minder profile_status [flags]
 
 ### SEE ALSO
 
-* [minder](minder.md)	 - Minder controls the hosted minder service
-* [minder profile_status get](minder_profile_status_get.md)	 - Get profile status within a minder control plane
-* [minder profile_status list](minder_profile_status_list.md)	 - List profile status within a minder control plane
+* [minder profile](minder_profile.md)	 - Manage profiles within a minder control plane
+* [minder profile status get](minder_profile_status_get.md)	 - Get profile status within a minder control plane
+* [minder profile status list](minder_profile_status_list.md)	 - List profile status within a minder control plane
 

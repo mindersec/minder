@@ -19,7 +19,7 @@ minder profile list [flags]
 ```
   -h, --help              help for list
   -o, --output string     Output format (json, yaml or table) (default "table")
-  -p, --provider string   Provider to list profiles for
+  -p, --provider string   Provider to list profiles for (default "github")
 ```
 
 ### Options inherited from parent commands
