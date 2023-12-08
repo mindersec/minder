@@ -22,7 +22,7 @@ import (
 	_ "github.com/stacklok/minder/cmd/cli/app/auth"
 	_ "github.com/stacklok/minder/cmd/cli/app/docs"
 	_ "github.com/stacklok/minder/cmd/cli/app/profile"
-	_ "github.com/stacklok/minder/cmd/cli/app/profile_status"
+	_ "github.com/stacklok/minder/cmd/cli/app/profile/status"
 	_ "github.com/stacklok/minder/cmd/cli/app/provider"
 	_ "github.com/stacklok/minder/cmd/cli/app/quickstart"
 	_ "github.com/stacklok/minder/cmd/cli/app/repo"

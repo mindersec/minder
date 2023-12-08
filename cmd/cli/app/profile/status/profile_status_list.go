@@ -13,7 +13,7 @@
 // See the License for the specific language governing permissions and
 // limitations under the License.
 
-package profile_status
+package status
 
 import (
 	"context"
@@ -33,7 +33,7 @@ import (
 var profilestatus_listCmd = &cobra.Command{
 	Use:   "list",
 	Short: "List profile status within a minder control plane",
-	Long: `The minder profile_status list subcommand lets you list profile status within a
+	Long: `The minder profile status list subcommand lets you list profile status within a
 minder control plane for an specific provider/project or profile id.`,
 	RunE: cli.GRPCClientWrapRunE(func(ctx context.Context, cmd *cobra.Command, conn *grpc.ClientConn) error {
 		client := pb.NewProfileServiceClient(conn)

@@ -13,20 +13,20 @@
 // See the License for the specific language governing permissions and
 // limitations under the License.
 
-// Package profile_status provides the CLI subcommand for managing profile statuses
-package profile_status
+// Package status provides the CLI subcommand for managing profile statuses
+package status
 
 import (
 	"github.com/spf13/cobra"
 
-	"github.com/stacklok/minder/cmd/cli/app"
+	"github.com/stacklok/minder/cmd/cli/app/profile"
 )
 
 // ProfileStatusCmd is the root command for the profile_status subcommands
 var ProfileStatusCmd = &cobra.Command{
-	Use:   "profile_status",
+	Use:   "status",
 	Short: "Manage profile status within a minder control plane",
-	Long: `The minder profile_status subcommands allows the management of profile status within
+	Long: `The minder profile status subcommand allows the management of profile status within
 a minder control plane.`,
 	RunE: func(cmd *cobra.Command, args []string) error {
 		return cmd.Usage()
@@ -34,5 +34,5 @@ a minder control plane.`,
 }
 
 func init() {
-	app.RootCmd.AddCommand(ProfileStatusCmd)
+	profile.ProfileCmd.AddCommand(ProfileStatusCmd)
 }
