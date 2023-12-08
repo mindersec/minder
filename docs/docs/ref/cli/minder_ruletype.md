@@ -39,5 +39,4 @@ minder ruletype [flags]
 * [minder ruletype delete](minder_ruletype_delete.md)	 - Delete a rule type
 * [minder ruletype get](minder_ruletype_get.md)	 - Get details for a rule type within a minder control plane
 * [minder ruletype list](minder_ruletype_list.md)	 - List rule types within a minder control plane
-* [minder ruletype update](minder_ruletype_update.md)	 - Update a rule type within a minder control plane
 
