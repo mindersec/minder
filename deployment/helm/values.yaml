@@ -17,24 +17,24 @@
 
 # service settings
 service:
-  # -- (int) port for the HTTP API
+  # -- (int) Port for the HTTP API
   httpPort: 8080
-  # -- (int) port for the gRPC API
+  # -- (int) Port for the gRPC API
   grpcPort: 8090
-  # -- (int) port for the metrics endpoint
+  # -- (int) Port for the metrics endpoint
   metricPort: 9090
 
-# -- (string) hostname to ue for the ingress configuration
+# -- (string) Hostname to use for the ingress configuration
 hostname: "minder.example.com"
 
 # database settings
 db:
-  # -- (string) database host to use
+  # -- (string) Database host to use
   host: "postgres.postgres"
 
 # trusty settings
 trusty:
-  # -- (string) trusty host to use
+  # -- (string) Trusty host to use
   endpoint: "https://api.trustypkg.dev"
 
 # AWS-specific configuration
@@ -65,22 +65,22 @@ ingress:
   annotations: {}
 
 hpaSettings:
-  # -- (int) minimum number of replicas for the HPA
+  # -- (int) Minimum number of replicas for the HPA
   minReplicas: 1
-  # -- (int) maximum number of replicas for the HPA
+  # -- (int) Maximum number of replicas for the HPA
   maxReplicas: 1
-  # -- (object) metrics to use for the HPA
+  # -- (object) Metrics to use for the HPA
   metrics:
     cpu:
       targetAverageUtilization: 60
 
 # Configurable settings for the migration job
 migrationSettings:
-  # -- (string) image to use for the migration job
+  # -- (string) Image to use for the migration job
   image: ko://github.com/stacklok/minder/cmd/server
-  # -- (string) image pull policy to use for the migration job
+  # -- (string) Image pull policy to use for the migration job
   imagePullPolicy: "IfNotPresent"
-  # -- (object) resources to use for the migration job
+  # -- (object) Resources to use for the migration job
   resources:
     requests:
       cpu: 200m
@@ -97,11 +97,11 @@ migrationSettings:
 
 # Configurable settings for the main deployment
 deploymentSettings:
-  # -- (string) image to use for the main deployment
+  # -- (string) Image to use for the main deployment
   image: ko://github.com/stacklok/minder/cmd/server
-  # -- (string) image pull policy to use for the main deployment
+  # -- (string) Image pull policy to use for the main deployment
   imagePullPolicy: "IfNotPresent"
-  # -- (object) resources to use for the main deployment
+  # -- (object) Resources to use for the main deployment
   resources:
     requests:
       cpu: 1
@@ -114,11 +114,11 @@ deploymentSettings:
   # -- (array, optional) Additional volume mounts
   extraVolumeMounts: null
   secrets:
-    # -- (string) name of the secret containing the auth configuration
+    # -- (string) Name of the secret containing the auth configuration
     authSecretName: "minder-auth-secrets"
-    # -- (string) name of the secret containing the github configuration
+    # -- (string) Name of the secret containing the GitHub configuration
     appSecretName: "minder-github-secrets"
-    # -- (string) name of the secret containing the identity configuration
+    # -- (string) Name of the secret containing the identity configuration
     identitySecretName: "minder-identity-secrets"
   # -- (array, optional) Additional configuration for sidecar containers
   sidecarContainers: null
