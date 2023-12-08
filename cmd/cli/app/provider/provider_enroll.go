@@ -115,11 +115,6 @@ var enrollProviderCmd = &cobra.Command{
 	Long: `The minder provider enroll command allows a user to enroll a provider
 such as GitHub into the minder control plane. Once enrolled, users can perform
 actions such as adding repositories.`,
-	PreRun: func(cmd *cobra.Command, args []string) {
-		if err := viper.BindPFlags(cmd.Flags()); err != nil {
-			fmt.Fprintf(os.Stderr, "Error binding flags: %s\n", err)
-		}
-	},
 	RunE: cli.GRPCClientWrapRunE(EnrollProviderCmd),
 }
 

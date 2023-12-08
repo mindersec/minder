@@ -102,6 +102,10 @@ func GRPCClientWrapRunE(
 	runEFunc func(ctx context.Context, cmd *cobra.Command, c *grpc.ClientConn) error,
 ) func(cmd *cobra.Command, args []string) error {
 	return func(cmd *cobra.Command, args []string) error {
+		if err := viper.BindPFlags(cmd.Flags()); err != nil {
+			return fmt.Errorf("error binding flags: %s", err)
+		}
+
 		ctx, cancel := GetAppContext(cmd.Context(), viper.GetViper())
 		defer cancel()
 

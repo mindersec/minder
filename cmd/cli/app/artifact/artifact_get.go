@@ -33,11 +33,6 @@ var artifact_getCmd = &cobra.Command{
 	Use:   "get",
 	Short: "Get artifact details",
 	Long:  `Artifact get will get artifact details from an artifact, for a given ID`,
-	PreRun: func(cmd *cobra.Command, args []string) {
-		if err := viper.BindPFlags(cmd.Flags()); err != nil {
-			fmt.Fprintf(os.Stderr, "error binding flags: %s", err)
-		}
-	},
 	RunE: cli.GRPCClientWrapRunE(func(ctx context.Context, cmd *cobra.Command, conn *grpc.ClientConn) error {
 		tag := util.GetConfigValue(viper.GetViper(), "tag", "tag", cmd, "").(string)
 		artifactID := viper.GetString("id")

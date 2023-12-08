@@ -34,13 +34,6 @@ var auth_deleteCmd = &cobra.Command{
 	Use:   "delete",
 	Short: "Permanently delete account",
 	Long:  `Permanently delete account. All associated user data will be permanently removed.`,
-	PreRunE: func(cmd *cobra.Command, args []string) error {
-		if err := viper.BindPFlags(cmd.Flags()); err != nil {
-			return fmt.Errorf("Error binding flags: %s", err)
-		}
-
-		return nil
-	},
 	RunE: cli.GRPCClientWrapRunE(func(ctx context.Context, cmd *cobra.Command, conn *grpc.ClientConn) error {
 		client := pb.NewUserServiceClient(conn)
 

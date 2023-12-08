@@ -18,7 +18,6 @@ package repo
 import (
 	"context"
 	"fmt"
-	"os"
 
 	"github.com/spf13/cobra"
 	"github.com/spf13/viper"
@@ -42,11 +41,6 @@ var repo_getCmd = &cobra.Command{
 	Use:   "get",
 	Short: "Get repository in the minder control plane",
 	Long:  `Repo get is used to get a repo with the minder control plane`,
-	PreRun: func(cmd *cobra.Command, args []string) {
-		if err := viper.BindPFlags(cmd.Flags()); err != nil {
-			fmt.Fprintf(os.Stderr, "error binding flags: %s", err)
-		}
-	},
 	RunE: cli.GRPCClientWrapRunE(func(ctx context.Context, cmd *cobra.Command, conn *grpc.ClientConn) error {
 		provider := util.GetConfigValue(viper.GetViper(), "provider", "provider", cmd, "").(string)
 		repoid := viper.GetString("repo-id")

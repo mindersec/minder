@@ -50,11 +50,6 @@ var repoRegisterCmd = &cobra.Command{
 	Use:   "register",
 	Short: "Register a repo with the minder control plane",
 	Long:  `Repo register is used to register a repo with the minder control plane`,
-	PreRun: func(cmd *cobra.Command, args []string) {
-		if err := viper.BindPFlags(cmd.Flags()); err != nil {
-			fmt.Fprintf(os.Stderr, "Error binding flags: %s\n", err)
-		}
-	},
 	RunE: cli.GRPCClientWrapRunE(func(ctx context.Context, cmd *cobra.Command, conn *grpc.ClientConn) error {
 		_, msg, err := RegisterCmd(ctx, cmd, conn)
 		util.ExitNicelyOnError(err, msg)

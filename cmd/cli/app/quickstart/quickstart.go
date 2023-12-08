@@ -21,7 +21,6 @@ import (
 	"context"
 	"embed"
 	"fmt"
-	"os"
 	"strings"
 
 	"github.com/spf13/cobra"
@@ -131,11 +130,6 @@ var cmd = &cobra.Command{
 	Use:   "quickstart",
 	Short: "Quickstart minder",
 	Long:  "The quickstart command provide the means to quickly get started with minder",
-	PreRun: func(cmd *cobra.Command, args []string) {
-		if err := viper.BindPFlags(cmd.Flags()); err != nil {
-			fmt.Fprintf(os.Stderr, "Error binding flags: %s\n", err)
-		}
-	},
 	RunE: cli.GRPCClientWrapRunE(func(ctx context.Context, cmd *cobra.Command, conn *grpc.ClientConn) error {
 		proj := viper.GetString("project")
 		provider := viper.GetString("provider")
