@@ -9,7 +9,6 @@ tags:
   - name: RepositoryService
   - name: UserService
   - name: ProfileService
-  - name: KeyService
 consumes:
   - application/json
 produces:
@@ -134,29 +133,6 @@ paths:
           type: string
       tags:
         - OAuthService
-  /api/v1/auth/revoke-all:
-    post:
-      summary: |-
-        RevokeOauthTokens is used to revoke all tokens
-        this a nuclear option and should only be used in emergencies
-      operationId: OAuthService_RevokeOauthTokens
-      responses:
-        '200':
-          description: A successful response.
-          schema:
-            $ref: '#/definitions/v1RevokeOauthTokensResponse'
-        default:
-          description: An unexpected error response.
-          schema:
-            $ref: '#/definitions/googlerpcStatus'
-      parameters:
-        - name: body
-          in: body
-          required: true
-          schema:
-            $ref: '#/definitions/v1RevokeOauthTokensRequest'
-      tags:
-        - OAuthService
   /api/v1/auth/url:
     get:
       operationId: OAuthService_GetAuthorizationURL
@@ -224,35 +200,6 @@ paths:
           type: string
       tags:
         - OAuthService
-  /api/v1/auth/{provider}/revoke/{projectId}:
-    post:
-      summary: revoke token for a project
-      operationId: OAuthService_RevokeOauthProjectToken
-      responses:
-        '200':
-          description: A successful response.
-          schema:
-            $ref: '#/definitions/v1RevokeOauthProjectTokenResponse'
-        default:
-          description: An unexpected error response.
-          schema:
-            $ref: '#/definitions/googlerpcStatus'
-      parameters:
-        - name: provider
-          in: path
-          required: true
-          type: string
-        - name: projectId
-          in: path
-          required: true
-          type: string
-        - name: body
-          in: body
-          required: true
-          schema:
-            type: object
-      tags:
-        - OAuthService
   /api/v1/auth/{provider}/token:
     post:
       operationId: OAuthService_StoreProviderToken
@@ -298,44 +245,6 @@ paths:
             $ref: '#/definitions/googlerpcStatus'
       tags:
         - HealthService
-  /api/v1/key:
-    get:
-      operationId: KeyService_GetPublicKey
-      responses:
-        '200':
-          description: A successful response.
-          schema:
-            $ref: '#/definitions/v1GetPublicKeyResponse'
-        default:
-          description: An unexpected error response.
-          schema:
-            $ref: '#/definitions/googlerpcStatus'
-      parameters:
-        - name: keyIdentifier
-          in: query
-          required: false
-          type: string
-      tags:
-        - KeyService
-    post:
-      operationId: KeyService_CreateKeyPair
-      responses:
-        '200':
-          description: A successful response.
-          schema:
-            $ref: '#/definitions/v1CreateKeyPairResponse'
-        default:
-          description: An unexpected error response.
-          schema:
-            $ref: '#/definitions/googlerpcStatus'
-      parameters:
-        - name: body
-          in: body
-          required: true
-          schema:
-            $ref: '#/definitions/v1CreateKeyPairRequest'
-      tags:
-        - KeyService
   /api/v1/profile:
     post:
       operationId: ProfileService_CreateProfile
@@ -397,11 +306,11 @@ paths:
           in: query
           required: false
           type: string
-        - name: context.organization
+        - name: context.project
           in: query
           required: false
           type: string
-        - name: context.project
+        - name: context.retiredOrganization
           in: query
           required: false
           type: string
@@ -456,11 +365,11 @@ paths:
           in: query
           required: false
           type: string
-        - name: context.organization
+        - name: context.project
           in: query
           required: false
           type: string
-        - name: context.project
+        - name: context.retiredOrganization
           in: query
           required: false
           type: string
@@ -487,11 +396,11 @@ paths:
           in: query
           required: false
           type: string
-        - name: context.organization
+        - name: context.project
           in: query
           required: false
           type: string
-        - name: context.project
+        - name: context.retiredOrganization
           in: query
           required: false
           type: string
@@ -514,11 +423,11 @@ paths:
           in: query
           required: false
           type: string
-        - name: context.organization
+        - name: context.project
           in: query
           required: false
           type: string
-        - name: context.project
+        - name: context.retiredOrganization
           in: query
           required: false
           type: string
@@ -541,11 +450,11 @@ paths:
           in: query
           required: false
           type: string
-        - name: context.organization
+        - name: context.project
           in: query
           required: false
           type: string
-        - name: context.project
+        - name: context.retiredOrganization
           in: query
           required: false
           type: string
@@ -789,11 +698,11 @@ paths:
           in: query
           required: false
           type: string
-        - name: context.organization
+        - name: context.project
           in: query
           required: false
           type: string
-        - name: context.project
+        - name: context.retiredOrganization
           in: query
           required: false
           type: string
@@ -821,11 +730,11 @@ paths:
           in: query
           required: false
           type: string
-        - name: context.organization
+        - name: context.project
           in: query
           required: false
           type: string
-        - name: context.project
+        - name: context.retiredOrganization
           in: query
           required: false
           type: string
@@ -852,11 +761,11 @@ paths:
           in: query
           required: false
           type: string
-        - name: context.organization
+        - name: context.project
           in: query
           required: false
           type: string
-        - name: context.project
+        - name: context.retiredOrganization
           in: query
           required: false
           type: string
@@ -879,11 +788,11 @@ paths:
           in: query
           required: false
           type: string
-        - name: context.organization
+        - name: context.project
           in: query
           required: false
           type: string
-        - name: context.project
+        - name: context.retiredOrganization
           in: query
           required: false
           type: string
@@ -1249,20 +1158,6 @@ definitions:
         items:
           type: object
           $ref: '#/definitions/protobufAny'
-  minderv1Context:
-    type: object
-    properties:
-      provider:
-        type: string
-      organization:
-        type: string
-      project:
-        type: string
-    description: >-
-      Context defines the context in which a rule is evaluated.
-
-      this normally refers to a combination of the provider, organization and
-      project.
   protobufAny:
     type: object
     properties:
@@ -1309,10 +1204,7 @@ definitions:
 
           protobuf release, and it is not used for type URLs beginning with
 
-          type.googleapis.com. As of May 2023, there are no widely used type
-          server
-
-          implementations and no plans to implement one.
+          type.googleapis.com.
 
 
           Schemes other than `http`, `https` (or the empty scheme) might be
@@ -1354,7 +1246,7 @@ definitions:
             foo = any.unpack(Foo.getDefaultInstance());
           }
 
-       Example 3: Pack and unpack a message in Python.
+      Example 3: Pack and unpack a message in Python.
 
           foo = Foo(...)
           any = Any()
@@ -1364,7 +1256,7 @@ definitions:
             any.Unpack(foo)
             ...
 
-       Example 4: Pack and unpack a message in Go
+      Example 4: Pack and unpack a message in Go
 
            foo := &pb.Foo{...}
            any, err := anypb.New(foo)
@@ -1390,7 +1282,6 @@ definitions:
 
       JSON
 
-      ====
 
       The JSON representation of an `Any` value uses the regular
 
@@ -1431,7 +1322,7 @@ definitions:
       `NullValue` is a singleton enumeration to represent the null value for the
       `Value` type union.
 
-      The JSON representation for `NullValue` is JSON `null`.
+       The JSON representation for `NullValue` is JSON `null`.
 
        - NULL_VALUE: Null value.
   v1Artifact:
@@ -1490,20 +1381,20 @@ definitions:
     properties:
       status:
         type: string
-  v1CreateKeyPairRequest:
+  v1Context:
     type: object
     properties:
-      passphrase:
+      provider:
         type: string
-      projectId:
+      project:
         type: string
-  v1CreateKeyPairResponse:
-    type: object
-    properties:
-      keyIdentifier:
+      retiredOrganization:
         type: string
-      publicKey:
-        type: string
+    description: >-
+      Context defines the context in which a rule is evaluated.
+
+      this normally refers to a combination of the provider, organization and
+      project.
   v1CreateProfileRequest:
     type: object
     properties:
@@ -1640,11 +1531,6 @@ definitions:
           type: object
           $ref: '#/definitions/v1ProfileStatus'
         title: profile_status is the status of the profile
-  v1GetPublicKeyResponse:
-    type: object
-    properties:
-      publicKey:
-        type: string
   v1GetRepositoryByIdResponse:
     type: object
     properties:
@@ -1746,7 +1632,7 @@ definitions:
     type: object
     properties:
       context:
-        $ref: '#/definitions/minderv1Context'
+        $ref: '#/definitions/v1Context'
         description: context is the context in which the profile is evaluated.
       id:
         type: string
@@ -1847,7 +1733,7 @@ definitions:
         type: string
         title: This is optional when returning remote repositories
       context:
-        $ref: '#/definitions/minderv1Context'
+        $ref: '#/definitions/v1Context'
       owner:
         type: string
       name:
@@ -1918,16 +1804,6 @@ definitions:
     description: |-
       RestType defines the rest data evaluation.
       This is used to fetch data from a REST endpoint.
-  v1RevokeOauthProjectTokenResponse:
-    type: object
-  v1RevokeOauthTokensRequest:
-    type: object
-  v1RevokeOauthTokensResponse:
-    type: object
-    properties:
-      revokedTokens:
-        type: integer
-        format: int32
   v1RuleEvaluationStatus:
     type: object
     properties:
@@ -1988,7 +1864,7 @@ definitions:
         type: string
         description: name is the name of the rule type.
       context:
-        $ref: '#/definitions/minderv1Context'
+        $ref: '#/definitions/v1Context'
         description: context is the context in which the rule is evaluated.
       def:
         $ref: '#/definitions/v1RuleTypeDefinition'
