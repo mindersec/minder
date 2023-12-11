@@ -26,7 +26,6 @@ import (
 	"github.com/spf13/viper"
 	"google.golang.org/grpc"
 
-	"github.com/stacklok/minder/internal/auth"
 	"github.com/stacklok/minder/internal/util"
 	"github.com/stacklok/minder/internal/util/cli"
 	pb "github.com/stacklok/minder/pkg/api/protobuf/go/minder/v1"
@@ -40,9 +39,6 @@ var artifact_listCmd = &cobra.Command{
 		format := viper.GetString("output")
 
 		provider := util.GetConfigValue(viper.GetViper(), "provider", "provider", cmd, "").(string)
-		if provider != auth.Github {
-			return fmt.Errorf("only %s is supported at this time", auth.Github)
-		}
 		projectID := viper.GetString("project-id")
 
 		switch format {
@@ -65,7 +61,7 @@ var artifact_listCmd = &cobra.Command{
 		)
 
 		if err != nil {
-			return fmt.Errorf("error getting artifacts: %s", err)
+			return cli.MessageAndError(cmd, "Couldn't list artifacts", err)
 		}
 
 		switch format {
@@ -89,12 +85,16 @@ var artifact_listCmd = &cobra.Command{
 			table.Render()
 		case "json":
 			out, err := util.GetJsonFromProto(artifacts)
-			util.ExitNicelyOnError(err, "Error getting json from proto")
-			fmt.Println(out)
+			if err != nil {
+				return cli.MessageAndError(cmd, "Error getting json from proto", err)
+			}
+			cli.PrintCmd(cmd, out)
 		case "yaml":
 			out, err := util.GetYamlFromProto(artifacts)
-			util.ExitNicelyOnError(err, "Error getting yaml from proto")
-			fmt.Println(out)
+			if err != nil {
+				return cli.MessageAndError(cmd, "Error getting yaml from proto", err)
+			}
+			cli.PrintCmd(cmd, out)
 		}
 
 		return nil

@@ -58,7 +58,7 @@ within a minder control plane.`,
 				RuleType: rt,
 			})
 			if err != nil {
-				return nil, fmt.Errorf("error creating rule type from %s: %w", fileName, err)
+				return nil, cli.MessageAndError(cmd, fmt.Sprintf("Error creating rule type from %s", fileName), err)
 			}
 
 			return resprt.RuleType, nil
@@ -70,7 +70,7 @@ within a minder control plane.`,
 			}
 
 			if err := execOnOneRuleType(table, f, os.Stdin, createFunc); err != nil {
-				return fmt.Errorf("error creating rule type %s: %w", f, err)
+				return err
 			}
 		}
 

@@ -51,8 +51,9 @@ var repoRegisterCmd = &cobra.Command{
 	Short: "Register a repo with the minder control plane",
 	Long:  `Repo register is used to register a repo with the minder control plane`,
 	RunE: cli.GRPCClientWrapRunE(func(ctx context.Context, cmd *cobra.Command, conn *grpc.ClientConn) error {
-		_, msg, err := RegisterCmd(ctx, cmd, conn)
-		util.ExitNicelyOnError(err, msg)
+		if _, msg, err := RegisterCmd(ctx, cmd, conn); err != nil {
+			return cli.MessageAndError(cmd, msg, err)
+		}
 		return nil
 	}),
 }

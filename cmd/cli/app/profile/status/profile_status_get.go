@@ -18,6 +18,7 @@ package status
 import (
 	"context"
 	"fmt"
+	"os"
 
 	"github.com/spf13/cobra"
 	"github.com/spf13/viper"
@@ -78,12 +79,16 @@ minder control plane for an specific provider/project or profile id, entity type
 		switch format {
 		case app.JSON:
 			out, err := util.GetJsonFromProto(resp)
-			util.ExitNicelyOnError(err, "Error getting json from proto")
-			fmt.Println(out)
+			if err != nil {
+				return cli.MessageAndError(cmd, "Error getting json from proto", err)
+			}
+			cli.PrintCmd(cmd, out)
 		case app.YAML:
 			out, err := util.GetYamlFromProto(resp)
-			util.ExitNicelyOnError(err, "Error getting yaml from proto")
-			fmt.Println(out)
+			if err != nil {
+				return cli.MessageAndError(cmd, "Error getting yaml from proto", err)
+			}
+			cli.PrintCmd(cmd, out)
 		case app.Table:
 			handleProfileStatusListTable(cmd, resp)
 		}
@@ -104,9 +109,11 @@ func init() {
 
 	// mark as required
 	if err := profilestatus_getCmd.MarkFlagRequired("profile"); err != nil {
-		util.ExitNicelyOnError(err, "error marking flag as required")
+		fmt.Printf("Error marking flag as required: %s", err)
+		os.Exit(1)
 	}
 	if err := profilestatus_getCmd.MarkFlagRequired("entity"); err != nil {
-		util.ExitNicelyOnError(err, "error marking flag as required")
+		fmt.Printf("Error marking flag as required: %s", err)
+		os.Exit(1)
 	}
 }

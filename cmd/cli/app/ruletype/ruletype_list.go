@@ -64,12 +64,16 @@ minder control plane for an specific project.`,
 		switch format {
 		case app.JSON:
 			out, err := util.GetJsonFromProto(resp)
-			util.ExitNicelyOnError(err, "Error getting json from proto")
-			fmt.Println(out)
+			if err != nil {
+				return fmt.Errorf("error getting json from proto: %w", err)
+			}
+			cmd.Println(out)
 		case app.YAML:
 			out, err := util.GetYamlFromProto(resp)
-			util.ExitNicelyOnError(err, "Error getting yaml from proto")
-			fmt.Println(out)
+			if err != nil {
+				return fmt.Errorf("error getting yaml from proto: %w", err)
+			}
+			cmd.Println(out)
 		case app.Table:
 			handleListTableOutput(cmd, resp)
 		}
