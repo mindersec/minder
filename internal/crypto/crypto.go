@@ -142,6 +142,9 @@ func VerifyCertChain(certIn []byte, roots *x509.CertPool) (bool, error) {
 
 // EncryptBytes encrypts a row of data using AES-CFB.
 func EncryptBytes(key string, data []byte) ([]byte, error) {
+	if len(data) > 1024*1024*32 {
+		return nil, status.Errorf(codes.InvalidArgument, "data is too large (>32MB)")
+	}
 	block, err := aes.NewCipher(deriveKey(key))
 	if err != nil {
 		return nil, status.Errorf(codes.Unknown, "failed to create cipher: %s", err)
