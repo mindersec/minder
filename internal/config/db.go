@@ -38,22 +38,13 @@ type DatabaseConfig struct {
 	Password string `mapstructure:"dbpass" default:"postgres"`
 	Name     string `mapstructure:"dbname" default:"minder"`
 	SSLMode  string `mapstructure:"sslmode" default:"disable"`
-
-	// connection string
-	connString string
-}
-
-// GetDBURI returns the database URI
-func (c *DatabaseConfig) GetDBURI() string {
-	c.connString = fmt.Sprintf("postgres://%s:%s@%s:%d/%s?sslmode=%s",
-		c.User, url.QueryEscape(c.Password), c.Host, c.Port, c.Name, c.SSLMode)
-
-	return c.connString
 }
 
 // GetDBConnection returns a connection to the database
 func (c *DatabaseConfig) GetDBConnection(ctx context.Context) (*sql.DB, string, error) {
-	uri := c.GetDBURI()
+	uri := fmt.Sprintf("postgres://%s:%s@%s:%d/%s?sslmode=%s",
+		c.User, url.QueryEscape(c.Password), c.Host, c.Port, c.Name, c.SSLMode)
+
 	conn, err := splunksql.Open("postgres", uri)
 	if err != nil {
 		return nil, "", err
