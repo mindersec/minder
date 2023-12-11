@@ -28,7 +28,6 @@ import (
 	"text/template"
 
 	"github.com/go-git/go-billy/v5"
-	go_github "github.com/google/go-github/v56/github"
 	"github.com/rs/zerolog/log"
 	fzconfig "github.com/stacklok/frizbee/pkg/config"
 	"github.com/stacklok/frizbee/pkg/ghactions"
@@ -38,6 +37,7 @@ import (
 	"github.com/stacklok/minder/internal/engine/interfaces"
 	"github.com/stacklok/minder/internal/util"
 	pb "github.com/stacklok/minder/pkg/api/protobuf/go/minder/v1"
+	v1 "github.com/stacklok/minder/pkg/providers/v1"
 )
 
 const (
@@ -146,7 +146,7 @@ type fsModifier interface {
 
 type modificationConstructorParams struct {
 	prCfg *pb.RuleType_Definition_Remediate_PullRequestRemediation
-	ghCli *go_github.Client
+	ghCli v1.GitHub
 	bfs   billy.Filesystem
 }
 
@@ -290,7 +290,7 @@ var _ fsModifier = (*frizbeeTagResolveModification)(nil)
 type frizbeeTagResolveModification struct {
 	fsChangeSet
 
-	ghCli *go_github.Client
+	ghCli v1.GitHub
 }
 
 var _ modificationConstructor = newFrizbeeTagResolveModification

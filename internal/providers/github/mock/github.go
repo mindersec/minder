@@ -451,20 +451,6 @@ func (mr *MockGitHubMockRecorder) GetBranchProtection(arg0, arg1, arg2, arg3 int
 	return mr.mock.ctrl.RecordCallWithMethodType(mr.mock, "GetBranchProtection", reflect.TypeOf((*MockGitHub)(nil).GetBranchProtection), arg0, arg1, arg2, arg3)
 }
 
-// GetClient mocks base method.
-func (m *MockGitHub) GetClient() *github.Client {
-	m.ctrl.T.Helper()
-	ret := m.ctrl.Call(m, "GetClient")
-	ret0, _ := ret[0].(*github.Client)
-	return ret0
-}
-
-// GetClient indicates an expected call of GetClient.
-func (mr *MockGitHubMockRecorder) GetClient() *gomock.Call {
-	mr.mock.ctrl.T.Helper()
-	return mr.mock.ctrl.RecordCallWithMethodType(mr.mock, "GetClient", reflect.TypeOf((*MockGitHub)(nil).GetClient))
-}
-
 // GetOwner mocks base method.
 func (m *MockGitHub) GetOwner() string {
 	m.ctrl.T.Helper()

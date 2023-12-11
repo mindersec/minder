@@ -128,8 +128,6 @@ func createTestRemArgs() *remediateArgs {
 }
 
 func happyPathMockSetup(mockGitHub *mock_ghclient.MockGitHub) {
-	mockGitHub.EXPECT().
-		GetClient().Return(&github.Client{})
 	// no pull requst so far
 	mockGitHub.EXPECT().
 		ListPullRequests(gomock.Any(), repoOwner, repoName, gomock.Any()).Return([]*github.PullRequest{}, nil)
@@ -339,8 +337,6 @@ func TestPullRequestRemediate(t *testing.T) {
 			remArgs:   createTestRemArgs(),
 			repoSetup: defaultMockRepoSetup,
 			mockSetup: func(mockGitHub *mock_ghclient.MockGitHub) {
-				mockGitHub.EXPECT().
-					GetClient().Return(&github.Client{})
 				mockGitHub.EXPECT().
 					ListPullRequests(gomock.Any(), repoOwner, repoName, gomock.Any()).
 					Return([]*github.PullRequest{

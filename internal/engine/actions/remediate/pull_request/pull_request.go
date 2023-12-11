@@ -181,7 +181,7 @@ func (r *Remediator) Do(
 
 	modification, err := r.modificationRegistry.getModification(getMethod(r.prCfg), &modificationConstructorParams{
 		prCfg: r.prCfg,
-		ghCli: r.ghCli.GetClient(),
+		ghCli: r.ghCli,
 		bfs:   ingested.Fs,
 	})
 	if err != nil {
