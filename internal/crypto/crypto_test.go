@@ -92,7 +92,7 @@ func TestIsNonceValid(t *testing.T) {
 		t.Errorf("Error in generateState: %v", err)
 	}
 
-	valid, err := IsNonceValid(nonce)
+	valid, err := IsNonceValid(nonce, 3600)
 	if err != nil {
 		t.Errorf("Error in isNonceValid: %v", err)
 	}
@@ -103,7 +103,7 @@ func TestIsNonceValid(t *testing.T) {
 
 	invalid := "AAAAAGSDmJ_tKMkuUmeoOBdSQGWXq3BE_Zp7IrUFVUau5HcPa-yvzQ"
 
-	valid, err = IsNonceValid(invalid)
+	valid, err = IsNonceValid(invalid, 3600)
 	if err != nil {
 		t.Errorf("Error in isNonceValid: %v", err)
 	}

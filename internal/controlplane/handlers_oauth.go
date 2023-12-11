@@ -133,7 +133,7 @@ func (s *Server) ExchangeCodeForTokenCLI(ctx context.Context,
 	defer span.End()
 
 	// Check the nonce to make sure it's valid
-	valid, err := mcrypto.IsNonceValid(in.State)
+	valid, err := mcrypto.IsNonceValid(in.State, s.cfg.Auth.NoncePeriod)
 
 	if err != nil {
 		return nil, status.Errorf(codes.Unknown, "error checking nonce: %s", err)
