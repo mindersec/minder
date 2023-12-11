@@ -99,9 +99,11 @@ func TestGetAuthorizationURL(t *testing.T) {
 		{
 			name: "Success",
 			req: &pb.GetAuthorizationURLRequest{
-				Provider: "github",
-				Port:     8080,
-				Cli:      true,
+				Context: &pb.Context{
+					Provider: "github",
+				},
+				Port: 8080,
+				Cli:  true,
 			},
 			buildStubs: func(store *mockdb.MockStore) {
 				store.EXPECT().

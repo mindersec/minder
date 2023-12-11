@@ -70,7 +70,7 @@ minder control plane.`,
 			provider := viper.GetString("provider")
 			rtype, err := client.GetRuleTypeById(ctx, &minderv1.GetRuleTypeByIdRequest{
 				Context: &minderv1.Context{
-					Provider: &provider,
+					Provider: provider,
 					// TODO set up project if specified
 					// Currently it's inferred from the authorization token
 				},
@@ -86,7 +86,7 @@ minder control plane.`,
 			provider := viper.GetString("provider")
 			resp, err := client.ListRuleTypes(ctx, &minderv1.ListRuleTypesRequest{
 				Context: &minderv1.Context{
-					Provider: &provider,
+					Provider: provider,
 					// TODO set up project if specified
 					// Currently it's inferred from the authorization token
 				},

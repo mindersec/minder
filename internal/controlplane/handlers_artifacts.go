@@ -34,7 +34,7 @@ import (
 // ListArtifacts lists all artifacts for a given project and provider
 // nolint:gocyclo
 func (s *Server) ListArtifacts(ctx context.Context, in *pb.ListArtifactsRequest) (*pb.ListArtifactsResponse, error) {
-	projectID, err := getProjectFromRequestOrDefault(ctx, in)
+	projectID, err := getProjectFromRequestOrDefault(ctx, in.Context)
 	if err != nil {
 		return nil, util.UserVisibleError(codes.InvalidArgument, err.Error())
 	}
@@ -44,7 +44,7 @@ func (s *Server) ListArtifacts(ctx context.Context, in *pb.ListArtifactsRequest)
 		return nil, err
 	}
 
-	provider, err := getProviderFromRequestOrDefault(ctx, s.store, in, projectID)
+	provider, err := getProviderFromRequestOrDefault(ctx, s.store, in.Context, projectID)
 	if err != nil {
 		return nil, providerError(err)
 	}

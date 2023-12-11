@@ -56,6 +56,24 @@
             "type": "string"
           },
           {
+            "name": "context.provider",
+            "in": "query",
+            "required": false,
+            "type": "string"
+          },
+          {
+            "name": "context.project",
+            "in": "query",
+            "required": false,
+            "type": "string"
+          },
+          {
+            "name": "context.retiredOrganization",
+            "in": "query",
+            "required": false,
+            "type": "string"
+          },
+          {
             "name": "latestVersions",
             "in": "query",
             "required": false,
@@ -74,7 +92,7 @@
         ]
       }
     },
-    "/api/v1/artifacts/{provider}": {
+    "/api/v1/artifacts/{context.provider}": {
       "get": {
         "operationId": "ArtifactService_ListArtifacts",
         "responses": {
@@ -93,13 +111,31 @@
         },
         "parameters": [
           {
-            "name": "provider",
+            "name": "context.provider",
             "in": "path",
             "required": true,
             "type": "string"
           },
           {
-            "name": "projectId",
+            "name": "context.project",
+            "in": "query",
+            "required": false,
+            "type": "string"
+          },
+          {
+            "name": "context.retiredOrganization",
+            "in": "query",
+            "required": false,
+            "type": "string"
+          },
+          {
+            "name": "retiredProvider",
+            "in": "query",
+            "required": false,
+            "type": "string"
+          },
+          {
+            "name": "retiredProjectId",
             "in": "query",
             "required": false,
             "type": "string"
@@ -110,7 +146,7 @@
         ]
       }
     },
-    "/api/v1/auth/callback/{provider}/cli": {
+    "/api/v1/auth/callback/{context.provider}/cli": {
       "get": {
         "summary": "buf:lint:ignore RPC_RESPONSE_STANDARD_NAME",
         "description": "protolint:disable:this",
@@ -131,13 +167,19 @@
         },
         "parameters": [
           {
-            "name": "provider",
+            "name": "context.provider",
             "in": "path",
             "required": true,
             "type": "string"
           },
           {
-            "name": "projectId",
+            "name": "context.project",
+            "in": "query",
+            "required": false,
+            "type": "string"
+          },
+          {
+            "name": "context.retiredOrganization",
             "in": "query",
             "required": false,
             "type": "string"
@@ -159,6 +201,18 @@
             "in": "query",
             "required": false,
             "type": "string"
+          },
+          {
+            "name": "retiredProvider",
+            "in": "query",
+            "required": false,
+            "type": "string"
+          },
+          {
+            "name": "retiredProjectId",
+            "in": "query",
+            "required": false,
+            "type": "string"
           }
         ],
         "tags": [
@@ -166,7 +220,7 @@
         ]
       }
     },
-    "/api/v1/auth/callback/{provider}/web": {
+    "/api/v1/auth/callback/{context.provider}/web": {
       "get": {
         "operationId": "OAuthService_ExchangeCodeForTokenWEB",
         "responses": {
@@ -185,13 +239,19 @@
         },
         "parameters": [
           {
-            "name": "provider",
+            "name": "context.provider",
             "in": "path",
             "required": true,
             "type": "string"
           },
           {
-            "name": "projectId",
+            "name": "context.project",
+            "in": "query",
+            "required": false,
+            "type": "string"
+          },
+          {
+            "name": "context.retiredOrganization",
             "in": "query",
             "required": false,
             "type": "string"
@@ -204,6 +264,18 @@
           },
           {
             "name": "redirectUri",
+            "in": "query",
+            "required": false,
+            "type": "string"
+          },
+          {
+            "name": "retiredProvider",
+            "in": "query",
+            "required": false,
+            "type": "string"
+          },
+          {
+            "name": "retiredProjectId",
             "in": "query",
             "required": false,
             "type": "string"
@@ -233,13 +305,19 @@
         },
         "parameters": [
           {
-            "name": "provider",
+            "name": "context.provider",
             "in": "query",
             "required": false,
             "type": "string"
           },
           {
-            "name": "projectId",
+            "name": "context.project",
+            "in": "query",
+            "required": false,
+            "type": "string"
+          },
+          {
+            "name": "context.retiredOrganization",
             "in": "query",
             "required": false,
             "type": "string"
@@ -262,6 +340,18 @@
             "in": "query",
             "required": false,
             "type": "string"
+          },
+          {
+            "name": "retiredProvider",
+            "in": "query",
+            "required": false,
+            "type": "string"
+          },
+          {
+            "name": "retiredProjectId",
+            "in": "query",
+            "required": false,
+            "type": "string"
           }
         ],
         "tags": [
@@ -269,7 +359,7 @@
         ]
       }
     },
-    "/api/v1/auth/verify/{provider}/{timestamp}": {
+    "/api/v1/auth/verify/{context.provider}/{timestamp}": {
       "get": {
         "summary": "VerifyProviderTokenFrom verifies that a token has been created for a provider since given timestamp",
         "operationId": "OAuthService_VerifyProviderTokenFrom",
@@ -289,7 +379,7 @@
         },
         "parameters": [
           {
-            "name": "provider",
+            "name": "context.provider",
             "in": "path",
             "required": true,
             "type": "string"
@@ -302,7 +392,25 @@
             "format": "date-time"
           },
           {
-            "name": "projectId",
+            "name": "context.project",
+            "in": "query",
+            "required": false,
+            "type": "string"
+          },
+          {
+            "name": "context.retiredOrganization",
+            "in": "query",
+            "required": false,
+            "type": "string"
+          },
+          {
+            "name": "retiredProvider",
+            "in": "query",
+            "required": false,
+            "type": "string"
+          },
+          {
+            "name": "retiredProjectId",
             "in": "query",
             "required": false,
             "type": "string"
@@ -313,7 +421,7 @@
         ]
       }
     },
-    "/api/v1/auth/{provider}/token": {
+    "/api/v1/auth/{context.provider}/token": {
       "post": {
         "operationId": "OAuthService_StoreProviderToken",
         "responses": {
@@ -332,7 +440,7 @@
         },
         "parameters": [
           {
-            "name": "provider",
+            "name": "context.provider",
             "in": "path",
             "required": true,
             "type": "string"
@@ -344,13 +452,28 @@
             "schema": {
               "type": "object",
               "properties": {
-                "projectId": {
-                  "type": "string"
+                "context": {
+                  "type": "object",
+                  "properties": {
+                    "project": {
+                      "type": "string"
+                    },
+                    "retiredOrganization": {
+                      "type": "string"
+                    }
+                  },
+                  "description": "Context defines the context in which a rule is evaluated.\nthis normally refers to a combination of the provider, organization and project."
                 },
                 "accessToken": {
                   "type": "string"
                 },
                 "owner": {
+                  "type": "string"
+                },
+                "retiredProvider": {
+                  "type": "string"
+                },
+                "retiredProjectId": {
                   "type": "string"
                 }
               }
@@ -709,7 +832,7 @@
         ]
       }
     },
-    "/api/v1/repositories/provider/{provider}": {
+    "/api/v1/repositories/provider/{context.provider}": {
       "get": {
         "operationId": "RepositoryService_ListRepositories",
         "responses": {
@@ -728,13 +851,19 @@
         },
         "parameters": [
           {
-            "name": "provider",
+            "name": "context.provider",
             "in": "path",
             "required": true,
             "type": "string"
           },
           {
-            "name": "projectId",
+            "name": "context.project",
+            "in": "query",
+            "required": false,
+            "type": "string"
+          },
+          {
+            "name": "context.retiredOrganization",
             "in": "query",
             "required": false,
             "type": "string"
@@ -752,6 +881,18 @@
             "required": false,
             "type": "integer",
             "format": "int32"
+          },
+          {
+            "name": "retiredProvider",
+            "in": "query",
+            "required": false,
+            "type": "string"
+          },
+          {
+            "name": "retiredProjectId",
+            "in": "query",
+            "required": false,
+            "type": "string"
           }
         ],
         "tags": [
@@ -759,7 +900,7 @@
         ]
       }
     },
-    "/api/v1/repositories/provider/{provider}/remote": {
+    "/api/v1/repositories/provider/{context.provider}/remote": {
       "get": {
         "operationId": "RepositoryService_ListRemoteRepositoriesFromProvider",
         "responses": {
@@ -778,13 +919,31 @@
         },
         "parameters": [
           {
-            "name": "provider",
+            "name": "context.provider",
             "in": "path",
             "required": true,
             "type": "string"
           },
           {
-            "name": "projectId",
+            "name": "context.project",
+            "in": "query",
+            "required": false,
+            "type": "string"
+          },
+          {
+            "name": "context.retiredOrganization",
+            "in": "query",
+            "required": false,
+            "type": "string"
+          },
+          {
+            "name": "retiredProvider",
+            "in": "query",
+            "required": false,
+            "type": "string"
+          },
+          {
+            "name": "retiredProjectId",
             "in": "query",
             "required": false,
             "type": "string"
@@ -818,6 +977,24 @@
             "in": "path",
             "required": true,
             "type": "string"
+          },
+          {
+            "name": "context.provider",
+            "in": "query",
+            "required": false,
+            "type": "string"
+          },
+          {
+            "name": "context.project",
+            "in": "query",
+            "required": false,
+            "type": "string"
+          },
+          {
+            "name": "context.retiredOrganization",
+            "in": "query",
+            "required": false,
+            "type": "string"
           }
         ],
         "tags": [
@@ -846,6 +1023,24 @@
             "in": "path",
             "required": true,
             "type": "string"
+          },
+          {
+            "name": "context.provider",
+            "in": "query",
+            "required": false,
+            "type": "string"
+          },
+          {
+            "name": "context.project",
+            "in": "query",
+            "required": false,
+            "type": "string"
+          },
+          {
+            "name": "context.retiredOrganization",
+            "in": "query",
+            "required": false,
+            "type": "string"
           }
         ],
         "tags": [
@@ -853,7 +1048,7 @@
         ]
       }
     },
-    "/api/v1/repository/provider/{provider}/name/{name}": {
+    "/api/v1/repository/provider/{context.provider}/name/{name}": {
       "get": {
         "operationId": "RepositoryService_GetRepositoryByName",
         "responses": {
@@ -872,7 +1067,7 @@
         },
         "parameters": [
           {
-            "name": "provider",
+            "name": "context.provider",
             "in": "path",
             "required": true,
             "type": "string"
@@ -884,7 +1079,25 @@
             "type": "string"
           },
           {
-            "name": "projectId",
+            "name": "context.project",
+            "in": "query",
+            "required": false,
+            "type": "string"
+          },
+          {
+            "name": "context.retiredOrganization",
+            "in": "query",
+            "required": false,
+            "type": "string"
+          },
+          {
+            "name": "retiredProvider",
+            "in": "query",
+            "required": false,
+            "type": "string"
+          },
+          {
+            "name": "retiredProjectId",
             "in": "query",
             "required": false,
             "type": "string"
@@ -912,7 +1125,7 @@
         },
         "parameters": [
           {
-            "name": "provider",
+            "name": "context.provider",
             "in": "path",
             "required": true,
             "type": "string"
@@ -924,7 +1137,25 @@
             "type": "string"
           },
           {
-            "name": "projectId",
+            "name": "context.project",
+            "in": "query",
+            "required": false,
+            "type": "string"
+          },
+          {
+            "name": "context.retiredOrganization",
+            "in": "query",
+            "required": false,
+            "type": "string"
+          },
+          {
+            "name": "retiredProvider",
+            "in": "query",
+            "required": false,
+            "type": "string"
+          },
+          {
+            "name": "retiredProjectId",
             "in": "query",
             "required": false,
             "type": "string"
@@ -935,7 +1166,7 @@
         ]
       }
     },
-    "/api/v1/repository/provider/{provider}/register": {
+    "/api/v1/repository/provider/{context.provider}/register": {
       "post": {
         "operationId": "RepositoryService_RegisterRepository",
         "responses": {
@@ -954,7 +1185,7 @@
         },
         "parameters": [
           {
-            "name": "provider",
+            "name": "context.provider",
             "in": "path",
             "required": true,
             "type": "string"
@@ -966,11 +1197,26 @@
             "schema": {
               "type": "object",
               "properties": {
-                "projectId": {
-                  "type": "string"
+                "context": {
+                  "type": "object",
+                  "properties": {
+                    "project": {
+                      "type": "string"
+                    },
+                    "retiredOrganization": {
+                      "type": "string"
+                    }
+                  },
+                  "description": "Context defines the context in which a rule is evaluated.\nthis normally refers to a combination of the provider, organization and project."
                 },
                 "repository": {
                   "$ref": "#/definitions/v1UpstreamRepositoryRef"
+                },
+                "retiredProvider": {
+                  "type": "string"
+                },
+                "retiredProjectId": {
+                  "type": "string"
                 }
               }
             }
@@ -1249,6 +1495,26 @@
             }
           }
         },
+        "parameters": [
+          {
+            "name": "context.provider",
+            "in": "query",
+            "required": false,
+            "type": "string"
+          },
+          {
+            "name": "context.project",
+            "in": "query",
+            "required": false,
+            "type": "string"
+          },
+          {
+            "name": "context.retiredOrganization",
+            "in": "query",
+            "required": false,
+            "type": "string"
+          }
+        ],
         "tags": [
           "UserService"
         ]
@@ -1269,6 +1535,26 @@
             }
           }
         },
+        "parameters": [
+          {
+            "name": "context.provider",
+            "in": "query",
+            "required": false,
+            "type": "string"
+          },
+          {
+            "name": "context.project",
+            "in": "query",
+            "required": false,
+            "type": "string"
+          },
+          {
+            "name": "context.retiredOrganization",
+            "in": "query",
+            "required": false,
+            "type": "string"
+          }
+        ],
         "tags": [
           "UserService"
         ]
@@ -1722,6 +2008,9 @@
     "v1CreateProfileRequest": {
       "type": "object",
       "properties": {
+        "context": {
+          "$ref": "#/definitions/v1Context"
+        },
         "profile": {
           "$ref": "#/definitions/v1Profile"
         }
@@ -1739,6 +2028,9 @@
     "v1CreateRuleTypeRequest": {
       "type": "object",
       "properties": {
+        "context": {
+          "$ref": "#/definitions/v1Context"
+        },
         "ruleType": {
           "$ref": "#/definitions/v1RuleType",
           "description": "rule_type is the rule type to be created."
@@ -1758,6 +2050,11 @@
     },
     "v1CreateUserRequest": {
       "type": "object",
+      "properties": {
+        "context": {
+          "$ref": "#/definitions/v1Context"
+        }
+      },
       "title": "User service"
     },
     "v1CreateUserResponse": {
@@ -2447,6 +2744,9 @@
     "v1UpdateProfileRequest": {
       "type": "object",
       "properties": {
+        "context": {
+          "$ref": "#/definitions/v1Context"
+        },
         "profile": {
           "$ref": "#/definitions/v1Profile"
         }
@@ -2463,6 +2763,9 @@
     "v1UpdateRuleTypeRequest": {
       "type": "object",
       "properties": {
+        "context": {
+          "$ref": "#/definitions/v1Context"
+        },
         "ruleType": {
           "$ref": "#/definitions/v1RuleType",
           "description": "rule_type is the rule type to be updated."

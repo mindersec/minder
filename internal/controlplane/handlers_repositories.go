@@ -42,7 +42,7 @@ import (
 // repositor(ies).
 func (s *Server) RegisterRepository(ctx context.Context,
 	in *pb.RegisterRepositoryRequest) (*pb.RegisterRepositoryResponse, error) {
-	projectID, err := getProjectFromRequestOrDefault(ctx, in)
+	projectID, err := getProjectFromRequestOrDefault(ctx, in.Context)
 	if err != nil {
 		return nil, util.UserVisibleError(codes.InvalidArgument, err.Error())
 	}
@@ -52,7 +52,7 @@ func (s *Server) RegisterRepository(ctx context.Context,
 		return nil, err
 	}
 
-	provider, err := getProviderFromRequestOrDefault(ctx, s.store, in, projectID)
+	provider, err := getProviderFromRequestOrDefault(ctx, s.store, in.Context, projectID)
 	if err != nil {
 		return nil, providerError(fmt.Errorf("provider error: %w", err))
 	}
@@ -123,7 +123,7 @@ func (s *Server) RegisterRepository(ctx context.Context,
 	// publish a reconcile event for the registered repositories
 	log.Printf("publishing register event for repository: %s/%s", r.Owner, r.Name)
 
-	msg, err := reconcilers.NewRepoReconcilerMessage(in.Provider, r.RepoId, projectID)
+	msg, err := reconcilers.NewRepoReconcilerMessage(in.Context.Provider, r.RepoId, projectID)
 	if err != nil {
 		log.Printf("error creating reconciler event: %v", err)
 		return response, nil
@@ -143,7 +143,7 @@ func (s *Server) RegisterRepository(ctx context.Context,
 // The API is called with a project id, limit and offset
 func (s *Server) ListRepositories(ctx context.Context,
 	in *pb.ListRepositoriesRequest) (*pb.ListRepositoriesResponse, error) {
-	projectID, err := getProjectFromRequestOrDefault(ctx, in)
+	projectID, err := getProjectFromRequestOrDefault(ctx, in.Context)
 	if err != nil {
 		return nil, util.UserVisibleError(codes.InvalidArgument, err.Error())
 	}
@@ -153,7 +153,7 @@ func (s *Server) ListRepositories(ctx context.Context,
 		return nil, err
 	}
 
-	provider, err := getProviderFromRequestOrDefault(ctx, s.store, in, projectID)
+	provider, err := getProviderFromRequestOrDefault(ctx, s.store, in.Context, projectID)
 	if err != nil {
 		return nil, providerError(fmt.Errorf("provider error: %w", err))
 	}
@@ -179,7 +179,7 @@ func (s *Server) ListRepositories(ctx context.Context,
 			Id: &id,
 			Context: &pb.Context{
 				Project:  &projID,
-				Provider: &repo.Provider,
+				Provider: repo.Provider,
 			},
 			Owner:     repo.RepoOwner,
 			Name:      repo.RepoName,
@@ -229,7 +229,7 @@ func (s *Server) GetRepositoryById(ctx context.Context,
 		Id: &id,
 		Context: &pb.Context{
 			Project:  &projID,
-			Provider: &repo.Provider,
+			Provider: repo.Provider,
 		},
 		Owner:     repo.RepoOwner,
 		Name:      repo.RepoName,
@@ -256,7 +256,7 @@ func (s *Server) GetRepositoryByName(ctx context.Context,
 		return nil, util.UserVisibleError(codes.InvalidArgument, "invalid repository name, needs to have the format: owner/name")
 	}
 
-	projectID, err := getProjectFromRequestOrDefault(ctx, in)
+	projectID, err := getProjectFromRequestOrDefault(ctx, in.Context)
 	if err != nil {
 		return nil, util.UserVisibleError(codes.InvalidArgument, err.Error())
 	}
@@ -266,7 +266,7 @@ func (s *Server) GetRepositoryByName(ctx context.Context,
 		return nil, err
 	}
 
-	provider, err := getProviderFromRequestOrDefault(ctx, s.store, in, projectID)
+	provider, err := getProviderFromRequestOrDefault(ctx, s.store, in.Context, projectID)
 	if err != nil {
 		return nil, providerError(fmt.Errorf("provider error: %w", err))
 	}
@@ -293,7 +293,7 @@ func (s *Server) GetRepositoryByName(ctx context.Context,
 		Id: &id,
 		Context: &pb.Context{
 			Project:  &projID,
-			Provider: &repo.Provider,
+			Provider: repo.Provider,
 		},
 		Owner:     repo.RepoOwner,
 		Name:      repo.RepoName,
@@ -349,7 +349,7 @@ func (s *Server) DeleteRepositoryByName(ctx context.Context,
 		return nil, util.UserVisibleError(codes.InvalidArgument, "invalid repository name, needs to have the format: owner/name")
 	}
 
-	projectID, err := getProjectFromRequestOrDefault(ctx, in)
+	projectID, err := getProjectFromRequestOrDefault(ctx, in.Context)
 	if err != nil {
 		return nil, util.UserVisibleError(codes.InvalidArgument, err.Error())
 	}
@@ -359,7 +359,7 @@ func (s *Server) DeleteRepositoryByName(ctx context.Context,
 		return nil, err
 	}
 
-	provider, err := getProviderFromRequestOrDefault(ctx, s.store, in, projectID)
+	provider, err := getProviderFromRequestOrDefault(ctx, s.store, in.Context, projectID)
 	if err != nil {
 		return nil, providerError(fmt.Errorf("provider error: %w", err))
 	}
@@ -393,7 +393,7 @@ func (s *Server) ListRemoteRepositoriesFromProvider(
 	ctx context.Context,
 	in *pb.ListRemoteRepositoriesFromProviderRequest,
 ) (*pb.ListRemoteRepositoriesFromProviderResponse, error) {
-	projectID, err := getProjectFromRequestOrDefault(ctx, in)
+	projectID, err := getProjectFromRequestOrDefault(ctx, in.Context)
 	if err != nil {
 		return nil, util.UserVisibleError(codes.InvalidArgument, err.Error())
 	}
@@ -404,11 +404,11 @@ func (s *Server) ListRemoteRepositoriesFromProvider(
 	}
 
 	zerolog.Ctx(ctx).Debug().
-		Str("provider", in.Provider).
+		Str("provider", in.Context.Provider).
 		Str("projectID", projectID.String()).
-		Msgf("listing repositories for provider: %s", in.Provider)
+		Msgf("listing repositories for provider: %s", in.Context.Provider)
 
-	provider, err := getProviderFromRequestOrDefault(ctx, s.store, in, projectID)
+	provider, err := getProviderFromRequestOrDefault(ctx, s.store, in.Context, projectID)
 	if err != nil {
 		return nil, providerError(fmt.Errorf("provider error: %w", err))
 	}

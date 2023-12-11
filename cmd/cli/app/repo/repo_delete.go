@@ -70,7 +70,13 @@ var repoDeleteCmd = &cobra.Command{
 			}
 
 			// delete repo by name
-			resp, err := client.DeleteRepositoryByName(ctx, &pb.DeleteRepositoryByNameRequest{Provider: provider, Name: name})
+			resp, err := client.DeleteRepositoryByName(ctx, &pb.DeleteRepositoryByNameRequest{
+				Context: &pb.Context{
+					Provider: provider,
+				},
+				Name: name,
+			},
+			)
 			util.ExitNicelyOnError(err, "Error deleting repo by name")
 			deletedRepoName = resp
 		}

@@ -191,7 +191,7 @@ this normally refers to a combination of the provider, organization and project.
 
 | Field | Type | Label | Description |
 | ----- | ---- | ----- | ----------- |
-| provider | [string](#string) | optional |  |
+| provider | [string](#string) |  |  |
 | project | [string](#string) | optional |  |
 | retired_organization | [string](#string) | optional |  |
 
@@ -228,6 +228,7 @@ Profile service
 
 | Field | Type | Label | Description |
 | ----- | ---- | ----- | ----------- |
+| context | [Context](#minder-v1-Context) |  |  |
 | profile | [Profile](#minder-v1-Profile) |  |  |
 
 
@@ -250,6 +251,7 @@ CreateRuleTypeRequest is the request to create a rule type.
 
 | Field | Type | Label | Description |
 | ----- | ---- | ----- | ----------- |
+| context | [Context](#minder-v1-Context) |  |  |
 | rule_type | [RuleType](#minder-v1-RuleType) |  | rule_type is the rule type to be created. |
 
 
@@ -268,6 +270,11 @@ CreateRuleTypeResponse is the response to create a rule type.
 
 #### CreateUserRequest
 User service
+
+
+| Field | Type | Label | Description |
+| ----- | ---- | ----- | ----------- |
+| context | [Context](#minder-v1-Context) |  |  |
 
 
 <a name="minder-v1-CreateUserResponse"></a>
@@ -313,6 +320,7 @@ User service
 
 | Field | Type | Label | Description |
 | ----- | ---- | ----- | ----------- |
+| context | [Context](#minder-v1-Context) |  |  |
 | repository_id | [string](#string) |  |  |
 
 
@@ -335,9 +343,10 @@ User service
 
 | Field | Type | Label | Description |
 | ----- | ---- | ----- | ----------- |
-| provider | [string](#string) |  |  |
-| project_id | [string](#string) |  |  |
+| context | [Context](#minder-v1-Context) |  |  |
 | name | [string](#string) |  |  |
+| retired_provider | [string](#string) | optional |  |
+| retired_project_id | [string](#string) | optional |  |
 
 
 <a name="minder-v1-DeleteRepositoryByNameResponse"></a>
@@ -373,6 +382,11 @@ DeleteRuleTypeResponse is the response to delete a rule type.
 
 #### DeleteUserRequest
 
+
+
+| Field | Type | Label | Description |
+| ----- | ---- | ----- | ----------- |
+| context | [Context](#minder-v1-Context) |  |  |
 
 
 <a name="minder-v1-DeleteUserResponse"></a>
@@ -425,11 +439,12 @@ DiffType defines the diff data ingester.
 
 | Field | Type | Label | Description |
 | ----- | ---- | ----- | ----------- |
-| provider | [string](#string) |  |  |
-| project_id | [string](#string) |  |  |
+| context | [Context](#minder-v1-Context) |  |  |
 | code | [string](#string) |  |  |
 | state | [string](#string) |  |  |
 | redirect_uri | [string](#string) |  |  |
+| retired_provider | [string](#string) | optional |  |
+| retired_project_id | [string](#string) | optional |  |
 
 
 <a name="minder-v1-ExchangeCodeForTokenWEBRequest"></a>
@@ -440,10 +455,11 @@ DiffType defines the diff data ingester.
 
 | Field | Type | Label | Description |
 | ----- | ---- | ----- | ----------- |
-| provider | [string](#string) |  |  |
-| project_id | [string](#string) |  |  |
+| context | [Context](#minder-v1-Context) |  |  |
 | code | [string](#string) |  |  |
 | redirect_uri | [string](#string) |  |  |
+| retired_provider | [string](#string) | optional |  |
+| retired_project_id | [string](#string) | optional |  |
 
 
 <a name="minder-v1-ExchangeCodeForTokenWEBResponse"></a>
@@ -468,6 +484,7 @@ DiffType defines the diff data ingester.
 
 | Field | Type | Label | Description |
 | ----- | ---- | ----- | ----------- |
+| context | [Context](#minder-v1-Context) |  |  |
 | id | [string](#string) |  |  |
 | latest_versions | [int32](#int32) |  |  |
 | tag | [string](#string) |  |  |
@@ -493,11 +510,12 @@ DiffType defines the diff data ingester.
 
 | Field | Type | Label | Description |
 | ----- | ---- | ----- | ----------- |
-| provider | [string](#string) |  |  |
-| project_id | [string](#string) |  |  |
+| context | [Context](#minder-v1-Context) |  |  |
 | cli | [bool](#bool) |  |  |
 | port | [int32](#int32) |  |  |
 | owner | [string](#string) | optional |  |
+| retired_provider | [string](#string) | optional |  |
+| retired_project_id | [string](#string) | optional |  |
 
 
 <a name="minder-v1-GetAuthorizationURLResponse"></a>
@@ -644,6 +662,7 @@ if the struct is reused in other messages, it should be moved to a top-level def
 
 | Field | Type | Label | Description |
 | ----- | ---- | ----- | ----------- |
+| context | [Context](#minder-v1-Context) |  |  |
 | repository_id | [string](#string) |  |  |
 
 
@@ -666,9 +685,10 @@ if the struct is reused in other messages, it should be moved to a top-level def
 
 | Field | Type | Label | Description |
 | ----- | ---- | ----- | ----------- |
-| provider | [string](#string) |  |  |
-| project_id | [string](#string) |  |  |
+| context | [Context](#minder-v1-Context) |  |  |
 | name | [string](#string) |  |  |
+| retired_provider | [string](#string) | optional |  |
+| retired_project_id | [string](#string) | optional |  |
 
 
 <a name="minder-v1-GetRepositoryByNameResponse"></a>
@@ -774,6 +794,11 @@ GetRuleTypeByNameResponse is the response to get a rule type by name.
 #### GetUserRequest
 list users
 get user
+
+
+| Field | Type | Label | Description |
+| ----- | ---- | ----- | ----------- |
+| context | [Context](#minder-v1-Context) |  |  |
 
 
 <a name="minder-v1-GetUserResponse"></a>
@@ -889,8 +914,9 @@ GitType defines the git data ingester.
 
 | Field | Type | Label | Description |
 | ----- | ---- | ----- | ----------- |
-| provider | [string](#string) |  |  |
-| project_id | [string](#string) |  |  |
+| context | [Context](#minder-v1-Context) |  |  |
+| retired_provider | [string](#string) | optional |  |
+| retired_project_id | [string](#string) | optional |  |
 
 
 <a name="minder-v1-ListArtifactsResponse"></a>
@@ -934,8 +960,9 @@ list profiles
 
 | Field | Type | Label | Description |
 | ----- | ---- | ----- | ----------- |
-| provider | [string](#string) |  |  |
-| project_id | [string](#string) |  |  |
+| context | [Context](#minder-v1-Context) |  |  |
+| retired_provider | [string](#string) | optional |  |
+| retired_project_id | [string](#string) | optional |  |
 
 
 <a name="minder-v1-ListRemoteRepositoriesFromProviderResponse"></a>
@@ -957,10 +984,11 @@ list profiles
 
 | Field | Type | Label | Description |
 | ----- | ---- | ----- | ----------- |
-| provider | [string](#string) |  |  |
-| project_id | [string](#string) |  |  |
+| context | [Context](#minder-v1-Context) |  |  |
 | limit | [int32](#int32) |  |  |
 | offset | [int32](#int32) |  |  |
+| retired_provider | [string](#string) | optional |  |
+| retired_project_id | [string](#string) | optional |  |
 
 
 <a name="minder-v1-ListRepositoriesResponse"></a>
@@ -1202,9 +1230,10 @@ RESTProviderConfig contains the configuration for the REST provider.
 
 | Field | Type | Label | Description |
 | ----- | ---- | ----- | ----------- |
-| provider | [string](#string) |  |  |
-| project_id | [string](#string) |  |  |
+| context | [Context](#minder-v1-Context) |  |  |
 | repository | [UpstreamRepositoryRef](#minder-v1-UpstreamRepositoryRef) |  |  |
+| retired_provider | [string](#string) | optional |  |
+| retired_project_id | [string](#string) | optional |  |
 
 
 <a name="minder-v1-RegisterRepositoryResponse"></a>
@@ -1579,10 +1608,11 @@ the name stutters a bit but we already use a PullRequest message for handling PR
 
 | Field | Type | Label | Description |
 | ----- | ---- | ----- | ----------- |
-| provider | [string](#string) |  |  |
-| project_id | [string](#string) |  |  |
+| context | [Context](#minder-v1-Context) |  |  |
 | access_token | [string](#string) |  |  |
 | owner | [string](#string) | optional |  |
+| retired_provider | [string](#string) | optional |  |
+| retired_project_id | [string](#string) | optional |  |
 
 
 <a name="minder-v1-StoreProviderTokenResponse"></a>
@@ -1599,6 +1629,7 @@ the name stutters a bit but we already use a PullRequest message for handling PR
 
 | Field | Type | Label | Description |
 | ----- | ---- | ----- | ----------- |
+| context | [Context](#minder-v1-Context) |  |  |
 | profile | [Profile](#minder-v1-Profile) |  |  |
 
 
@@ -1621,6 +1652,7 @@ UpdateRuleTypeRequest is the request to update a rule type.
 
 | Field | Type | Label | Description |
 | ----- | ---- | ----- | ----------- |
+| context | [Context](#minder-v1-Context) |  |  |
 | rule_type | [RuleType](#minder-v1-RuleType) |  | rule_type is the rule type to be updated. |
 
 
@@ -1671,9 +1703,10 @@ user record to be returned
 
 | Field | Type | Label | Description |
 | ----- | ---- | ----- | ----------- |
-| provider | [string](#string) |  |  |
-| project_id | [string](#string) |  |  |
+| context | [Context](#minder-v1-Context) |  |  |
 | timestamp | [google.protobuf.Timestamp](#google-protobuf-Timestamp) |  |  |
+| retired_provider | [string](#string) | optional |  |
+| retired_project_id | [string](#string) | optional |  |
 
 
 <a name="minder-v1-VerifyProviderTokenFromResponse"></a>

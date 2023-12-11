@@ -168,7 +168,7 @@ func MergeDatabaseListIntoProfiles(ppl []db.ListProfilesByProjectIDRow, ectx *En
 				Id:   &profileID,
 				Name: p.Name,
 				Context: &pb.Context{
-					Provider: &ectx.Provider.Name,
+					Provider: ectx.Provider.Name,
 					Project:  &ectx.Project.Name,
 				},
 			}
@@ -211,7 +211,7 @@ func MergeDatabaseGetIntoProfiles(ppl []db.GetProfileByProjectAndIDRow, ectx *En
 				Id:   &profileID,
 				Name: p.Name,
 				Context: &pb.Context{
-					Provider: &ectx.Provider.Name,
+					Provider: ectx.Provider.Name,
 					Project:  &ectx.Project.Name,
 				},
 			}

@@ -86,7 +86,12 @@ var repo_getCmd = &cobra.Command{
 			}
 
 			// check repo by name
-			resp, err := client.GetRepositoryByName(ctx, &pb.GetRepositoryByNameRequest{Provider: provider, Name: name})
+			resp, err := client.GetRepositoryByName(ctx, &pb.GetRepositoryByNameRequest{
+				Context: &pb.Context{
+					Provider: provider,
+				},
+				Name: name,
+			})
 			util.ExitNicelyOnError(err, "Error getting repo by id")
 			repository = resp.Repository
 		}

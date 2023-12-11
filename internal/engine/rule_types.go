@@ -203,7 +203,7 @@ func NewRuleTypeEngine(
 	rte := &RuleTypeEngine{
 		Meta: RuleMeta{
 			Name:     rt.Name,
-			Provider: *rt.Context.Provider,
+			Provider: rt.Context.Provider,
 		},
 		rval:        rval,
 		rdi:         rdi,
@@ -304,7 +304,7 @@ func RuleTypePBFromDB(rt *db.RuleType, ectx *EntityContext) (*minderv1.RuleType,
 		Id:   &id,
 		Name: rt.Name,
 		Context: &minderv1.Context{
-			Provider: &name,
+			Provider: name,
 			Project:  &gname,
 		},
 		Description: rt.Description,

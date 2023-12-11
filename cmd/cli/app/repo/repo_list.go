@@ -55,8 +55,10 @@ var repo_listCmd = &cobra.Command{
 		client := pb.NewRepositoryServiceClient(conn)
 
 		resp, err := client.ListRepositories(ctx, &pb.ListRepositoriesRequest{
-			Provider:  provider,
-			ProjectId: projectID,
+			Context: &pb.Context{
+				Provider: provider,
+				Project:  &projectID,
+			},
 		})
 		if err != nil {
 			fmt.Fprintf(os.Stderr, "Error getting repo of repos: %s\n", err)
@@ -79,7 +81,7 @@ var repo_listCmd = &cobra.Command{
 				row := table.Row{
 					*v.Id,
 					*v.Context.Project,
-					*v.Context.Provider,
+					v.Context.Provider,
 					fmt.Sprintf("%d", v.GetRepoId()),
 					v.GetOwner(),
 					v.GetName(),

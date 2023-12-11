@@ -92,7 +92,7 @@ func testCmdRun(cmd *cobra.Command, _ []string) error {
 	provider := "test"
 	rootProject := "00000000-0000-0000-0000-000000000002"
 	rt.Context = &minderv1.Context{
-		Provider: &provider,
+		Provider: provider,
 		Project:  &rootProject,
 	}
 

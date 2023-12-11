@@ -42,7 +42,7 @@ import (
 // and a boolean indicating whether the client is a CLI or web client
 func (s *Server) GetAuthorizationURL(ctx context.Context,
 	req *pb.GetAuthorizationURLRequest) (*pb.GetAuthorizationURLResponse, error) {
-	projectID, err := getProjectFromRequestOrDefault(ctx, req)
+	projectID, err := getProjectFromRequestOrDefault(ctx, req.Context)
 	if err != nil {
 		return nil, util.UserVisibleError(codes.InvalidArgument, err.Error())
 	}
@@ -55,11 +55,11 @@ func (s *Server) GetAuthorizationURL(ctx context.Context,
 	// trace call to AuthCodeURL
 	span := trace.SpanFromContext(ctx)
 	span.SetName("server.GetAuthorizationURL")
-	span.SetAttributes(attribute.Key("provider").String(req.Provider))
+	span.SetAttributes(attribute.Key("provider").String(req.Context.Provider))
 	defer span.End()
 
 	// get provider info
-	provider, err := getProviderFromRequestOrDefault(ctx, s.store, req, projectID)
+	provider, err := getProviderFromRequestOrDefault(ctx, s.store, req.Context, projectID)
 	if err != nil {
 		return nil, providerError(fmt.Errorf("provider error: %w", err))
 	}
@@ -150,13 +150,13 @@ func (s *Server) ExchangeCodeForTokenCLI(ctx context.Context,
 	}
 
 	// get provider
-	provider, err := getProviderFromRequestOrDefault(ctx, s.store, in, stateData.ProjectID)
+	provider, err := getProviderFromRequestOrDefault(ctx, s.store, in.Context, stateData.ProjectID)
 	if err != nil {
 		return nil, providerError(fmt.Errorf("provider error: %w", err))
 	}
 
 	// generate a new OAuth2 config for the given provider
-	oauthConfig, err := auth.NewOAuthConfig(in.Provider, true)
+	oauthConfig, err := auth.NewOAuthConfig(in.Context.Provider, true)
 	if err != nil {
 		return nil, err
 	}
@@ -228,7 +228,7 @@ func (s *Server) ExchangeCodeForTokenCLI(ctx context.Context,
 //revive:disable:unused-receiver
 func (s *Server) ExchangeCodeForTokenWEB(ctx context.Context,
 	in *pb.ExchangeCodeForTokenWEBRequest) (*pb.ExchangeCodeForTokenWEBResponse, error) {
-	oauthConfig, err := auth.NewOAuthConfig(in.Provider, false)
+	oauthConfig, err := auth.NewOAuthConfig(in.Context.Provider, false)
 	if err != nil {
 		return nil, err
 	}
@@ -278,7 +278,7 @@ func (s *Server) getProviderAccessToken(ctx context.Context, provider string,
 // StoreProviderToken stores the provider token for a project
 func (s *Server) StoreProviderToken(ctx context.Context,
 	in *pb.StoreProviderTokenRequest) (*pb.StoreProviderTokenResponse, error) {
-	projectID, err := getProjectFromRequestOrDefault(ctx, in)
+	projectID, err := getProjectFromRequestOrDefault(ctx, in.Context)
 	if err != nil {
 		return nil, util.UserVisibleError(codes.InvalidArgument, err.Error())
 	}
@@ -288,13 +288,13 @@ func (s *Server) StoreProviderToken(ctx context.Context,
 		return nil, err
 	}
 
-	provider, err := getProviderFromRequestOrDefault(ctx, s.store, in, projectID)
+	provider, err := getProviderFromRequestOrDefault(ctx, s.store, in.Context, projectID)
 	if err != nil {
 		return nil, providerError(fmt.Errorf("provider error: %w", err))
 	}
 
 	// validate token
-	err = auth.ValidateProviderToken(ctx, in.Provider, in.AccessToken)
+	err = auth.ValidateProviderToken(ctx, in.Context.Provider, in.AccessToken)
 	if err != nil {
 		return nil, status.Errorf(codes.InvalidArgument, "invalid token provided")
 	}
@@ -339,7 +339,7 @@ func (s *Server) StoreProviderToken(ctx context.Context,
 // VerifyProviderTokenFrom verifies the provider token since a timestamp
 func (s *Server) VerifyProviderTokenFrom(ctx context.Context,
 	in *pb.VerifyProviderTokenFromRequest) (*pb.VerifyProviderTokenFromResponse, error) {
-	projectID, err := getProjectFromRequestOrDefault(ctx, in)
+	projectID, err := getProjectFromRequestOrDefault(ctx, in.Context)
 	if err != nil {
 		return nil, util.UserVisibleError(codes.InvalidArgument, err.Error())
 	}
@@ -349,7 +349,7 @@ func (s *Server) VerifyProviderTokenFrom(ctx context.Context,
 		return nil, err
 	}
 
-	provider, err := getProviderFromRequestOrDefault(ctx, s.store, in, projectID)
+	provider, err := getProviderFromRequestOrDefault(ctx, s.store, in.Context, projectID)
 	if err != nil {
 		return nil, providerError(fmt.Errorf("provider error: %w", err))
 	}

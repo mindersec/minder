@@ -96,8 +96,14 @@ func callBackServer(ctx context.Context, provider string, project string, port s
 			defer cancel()
 
 			// todo: check if token has been created. We need an endpoint to pass an state and check if token is created
-			res, err := client.VerifyProviderTokenFrom(clientCtx,
-				&pb.VerifyProviderTokenFromRequest{Provider: provider, ProjectId: project, Timestamp: timestamppb.New(t)})
+			verifyProviderTokenFromRequest := &pb.VerifyProviderTokenFromRequest{
+				Context: &pb.Context{
+					Provider: provider,
+					Project:  &project,
+				},
+				Timestamp: timestamppb.New(t),
+			}
+			res, err := client.VerifyProviderTokenFrom(clientCtx, verifyProviderTokenFromRequest)
 			if err == nil && res.Status == "OK" {
 				return
 			}
@@ -153,8 +159,15 @@ func EnrollProviderCmd(ctx context.Context, cmd *cobra.Command, conn *grpc.Clien
 
 	if pat != "" {
 		// use pat for enrollment
-		_, err := client.StoreProviderToken(context.Background(),
-			&pb.StoreProviderTokenRequest{Provider: provider, ProjectId: project, AccessToken: pat, Owner: &owner})
+		storeProviderTokenRequest := &pb.StoreProviderTokenRequest{
+			Context: &pb.Context{
+				Provider: provider,
+				Project:  &project,
+			},
+			AccessToken: pat,
+			Owner:       &owner,
+		}
+		_, err := client.StoreProviderToken(context.Background(), storeProviderTokenRequest)
 		if err != nil {
 			return fmt.Errorf("error storing token: %w", err)
 		}
@@ -170,11 +183,13 @@ func EnrollProviderCmd(ctx context.Context, cmd *cobra.Command, conn *grpc.Clien
 	}
 
 	resp, err := client.GetAuthorizationURL(ctx, &pb.GetAuthorizationURLRequest{
-		Provider:  provider,
-		ProjectId: project,
-		Cli:       true,
-		Port:      int32(port),
-		Owner:     &owner,
+		Context: &pb.Context{
+			Provider: provider,
+			Project:  &project,
+		},
+		Cli:   true,
+		Port:  int32(port),
+		Owner: &owner,
 	})
 	if err != nil {
 		return fmt.Errorf("error getting authorization URL: %w", err)

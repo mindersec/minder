@@ -50,7 +50,7 @@ func local_request_HealthService_CheckHealth_0(ctx context.Context, marshaler ru
 }
 
 var (
-	filter_ArtifactService_ListArtifacts_0 = &utilities.DoubleArray{Encoding: map[string]int{"provider": 0}, Base: []int{1, 2, 0, 0}, Check: []int{0, 1, 2, 2}}
+	filter_ArtifactService_ListArtifacts_0 = &utilities.DoubleArray{Encoding: map[string]int{"context": 0, "provider": 1}, Base: []int{1, 2, 3, 2, 0, 0}, Check: []int{0, 1, 1, 2, 4, 3}}
 )
 
 func request_ArtifactService_ListArtifacts_0(ctx context.Context, marshaler runtime.Marshaler, client ArtifactServiceClient, req *http.Request, pathParams map[string]string) (proto.Message, runtime.ServerMetadata, error) {
@@ -64,14 +64,14 @@ func request_ArtifactService_ListArtifacts_0(ctx context.Context, marshaler runt
 		_   = err
 	)
 
-	val, ok = pathParams["provider"]
+	val, ok = pathParams["context.provider"]
 	if !ok {
-		return nil, metadata, status.Errorf(codes.InvalidArgument, "missing parameter %s", "provider")
+		return nil, metadata, status.Errorf(codes.InvalidArgument, "missing parameter %s", "context.provider")
 	}
 
-	protoReq.Provider, err = runtime.String(val)
+	err = runtime.PopulateFieldFromPath(&protoReq, "context.provider", val)
 	if err != nil {
-		return nil, metadata, status.Errorf(codes.InvalidArgument, "type mismatch, parameter: %s, error: %v", "provider", err)
+		return nil, metadata, status.Errorf(codes.InvalidArgument, "type mismatch, parameter: %s, error: %v", "context.provider", err)
 	}
 
 	if err := req.ParseForm(); err != nil {
@@ -97,14 +97,14 @@ func local_request_ArtifactService_ListArtifacts_0(ctx context.Context, marshale
 		_   = err
 	)
 
-	val, ok = pathParams["provider"]
+	val, ok = pathParams["context.provider"]
 	if !ok {
-		return nil, metadata, status.Errorf(codes.InvalidArgument, "missing parameter %s", "provider")
+		return nil, metadata, status.Errorf(codes.InvalidArgument, "missing parameter %s", "context.provider")
 	}
 
-	protoReq.Provider, err = runtime.String(val)
+	err = runtime.PopulateFieldFromPath(&protoReq, "context.provider", val)
 	if err != nil {
-		return nil, metadata, status.Errorf(codes.InvalidArgument, "type mismatch, parameter: %s, error: %v", "provider", err)
+		return nil, metadata, status.Errorf(codes.InvalidArgument, "type mismatch, parameter: %s, error: %v", "context.provider", err)
 	}
 
 	if err := req.ParseForm(); err != nil {
@@ -226,7 +226,7 @@ func local_request_OAuthService_GetAuthorizationURL_0(ctx context.Context, marsh
 }
 
 var (
-	filter_OAuthService_ExchangeCodeForTokenCLI_0 = &utilities.DoubleArray{Encoding: map[string]int{"provider": 0}, Base: []int{1, 2, 0, 0}, Check: []int{0, 1, 2, 2}}
+	filter_OAuthService_ExchangeCodeForTokenCLI_0 = &utilities.DoubleArray{Encoding: map[string]int{"context": 0, "provider": 1}, Base: []int{1, 2, 3, 2, 0, 0}, Check: []int{0, 1, 1, 2, 4, 3}}
 )
 
 func request_OAuthService_ExchangeCodeForTokenCLI_0(ctx context.Context, marshaler runtime.Marshaler, client OAuthServiceClient, req *http.Request, pathParams map[string]string) (proto.Message, runtime.ServerMetadata, error) {
@@ -240,14 +240,14 @@ func request_OAuthService_ExchangeCodeForTokenCLI_0(ctx context.Context, marshal
 		_   = err
 	)
 
-	val, ok = pathParams["provider"]
+	val, ok = pathParams["context.provider"]
 	if !ok {
-		return nil, metadata, status.Errorf(codes.InvalidArgument, "missing parameter %s", "provider")
+		return nil, metadata, status.Errorf(codes.InvalidArgument, "missing parameter %s", "context.provider")
 	}
 
-	protoReq.Provider, err = runtime.String(val)
+	err = runtime.PopulateFieldFromPath(&protoReq, "context.provider", val)
 	if err != nil {
-		return nil, metadata, status.Errorf(codes.InvalidArgument, "type mismatch, parameter: %s, error: %v", "provider", err)
+		return nil, metadata, status.Errorf(codes.InvalidArgument, "type mismatch, parameter: %s, error: %v", "context.provider", err)
 	}
 
 	if err := req.ParseForm(); err != nil {
@@ -273,14 +273,14 @@ func local_request_OAuthService_ExchangeCodeForTokenCLI_0(ctx context.Context, m
 		_   = err
 	)
 
-	val, ok = pathParams["provider"]
+	val, ok = pathParams["context.provider"]
 	if !ok {
-		return nil, metadata, status.Errorf(codes.InvalidArgument, "missing parameter %s", "provider")
+		return nil, metadata, status.Errorf(codes.InvalidArgument, "missing parameter %s", "context.provider")
 	}
 
-	protoReq.Provider, err = runtime.String(val)
+	err = runtime.PopulateFieldFromPath(&protoReq, "context.provider", val)
 	if err != nil {
-		return nil, metadata, status.Errorf(codes.InvalidArgument, "type mismatch, parameter: %s, error: %v", "provider", err)
+		return nil, metadata, status.Errorf(codes.InvalidArgument, "type mismatch, parameter: %s, error: %v", "context.provider", err)
 	}
 
 	if err := req.ParseForm(); err != nil {
@@ -296,7 +296,7 @@ func local_request_OAuthService_ExchangeCodeForTokenCLI_0(ctx context.Context, m
 }
 
 var (
-	filter_OAuthService_ExchangeCodeForTokenWEB_0 = &utilities.DoubleArray{Encoding: map[string]int{"provider": 0}, Base: []int{1, 2, 0, 0}, Check: []int{0, 1, 2, 2}}
+	filter_OAuthService_ExchangeCodeForTokenWEB_0 = &utilities.DoubleArray{Encoding: map[string]int{"context": 0, "provider": 1}, Base: []int{1, 2, 3, 2, 0, 0}, Check: []int{0, 1, 1, 2, 4, 3}}
 )
 
 func request_OAuthService_ExchangeCodeForTokenWEB_0(ctx context.Context, marshaler runtime.Marshaler, client OAuthServiceClient, req *http.Request, pathParams map[string]string) (proto.Message, runtime.ServerMetadata, error) {
@@ -310,14 +310,14 @@ func request_OAuthService_ExchangeCodeForTokenWEB_0(ctx context.Context, marshal
 		_   = err
 	)
 
-	val, ok = pathParams["provider"]
+	val, ok = pathParams["context.provider"]
 	if !ok {
-		return nil, metadata, status.Errorf(codes.InvalidArgument, "missing parameter %s", "provider")
+		return nil, metadata, status.Errorf(codes.InvalidArgument, "missing parameter %s", "context.provider")
 	}
 
-	protoReq.Provider, err = runtime.String(val)
+	err = runtime.PopulateFieldFromPath(&protoReq, "context.provider", val)
 	if err != nil {
-		return nil, metadata, status.Errorf(codes.InvalidArgument, "type mismatch, parameter: %s, error: %v", "provider", err)
+		return nil, metadata, status.Errorf(codes.InvalidArgument, "type mismatch, parameter: %s, error: %v", "context.provider", err)
 	}
 
 	if err := req.ParseForm(); err != nil {
@@ -343,14 +343,14 @@ func local_request_OAuthService_ExchangeCodeForTokenWEB_0(ctx context.Context, m
 		_   = err
 	)
 
-	val, ok = pathParams["provider"]
+	val, ok = pathParams["context.provider"]
 	if !ok {
-		return nil, metadata, status.Errorf(codes.InvalidArgument, "missing parameter %s", "provider")
+		return nil, metadata, status.Errorf(codes.InvalidArgument, "missing parameter %s", "context.provider")
 	}
 
-	protoReq.Provider, err = runtime.String(val)
+	err = runtime.PopulateFieldFromPath(&protoReq, "context.provider", val)
 	if err != nil {
-		return nil, metadata, status.Errorf(codes.InvalidArgument, "type mismatch, parameter: %s, error: %v", "provider", err)
+		return nil, metadata, status.Errorf(codes.InvalidArgument, "type mismatch, parameter: %s, error: %v", "context.provider", err)
 	}
 
 	if err := req.ParseForm(); err != nil {
@@ -384,14 +384,14 @@ func request_OAuthService_StoreProviderToken_0(ctx context.Context, marshaler ru
 		_   = err
 	)
 
-	val, ok = pathParams["provider"]
+	val, ok = pathParams["context.provider"]
 	if !ok {
-		return nil, metadata, status.Errorf(codes.InvalidArgument, "missing parameter %s", "provider")
+		return nil, metadata, status.Errorf(codes.InvalidArgument, "missing parameter %s", "context.provider")
 	}
 
-	protoReq.Provider, err = runtime.String(val)
+	err = runtime.PopulateFieldFromPath(&protoReq, "context.provider", val)
 	if err != nil {
-		return nil, metadata, status.Errorf(codes.InvalidArgument, "type mismatch, parameter: %s, error: %v", "provider", err)
+		return nil, metadata, status.Errorf(codes.InvalidArgument, "type mismatch, parameter: %s, error: %v", "context.provider", err)
 	}
 
 	msg, err := client.StoreProviderToken(ctx, &protoReq, grpc.Header(&metadata.HeaderMD), grpc.Trailer(&metadata.TrailerMD))
@@ -418,14 +418,14 @@ func local_request_OAuthService_StoreProviderToken_0(ctx context.Context, marsha
 		_   = err
 	)
 
-	val, ok = pathParams["provider"]
+	val, ok = pathParams["context.provider"]
 	if !ok {
-		return nil, metadata, status.Errorf(codes.InvalidArgument, "missing parameter %s", "provider")
+		return nil, metadata, status.Errorf(codes.InvalidArgument, "missing parameter %s", "context.provider")
 	}
 
-	protoReq.Provider, err = runtime.String(val)
+	err = runtime.PopulateFieldFromPath(&protoReq, "context.provider", val)
 	if err != nil {
-		return nil, metadata, status.Errorf(codes.InvalidArgument, "type mismatch, parameter: %s, error: %v", "provider", err)
+		return nil, metadata, status.Errorf(codes.InvalidArgument, "type mismatch, parameter: %s, error: %v", "context.provider", err)
 	}
 
 	msg, err := server.StoreProviderToken(ctx, &protoReq)
@@ -434,7 +434,7 @@ func local_request_OAuthService_StoreProviderToken_0(ctx context.Context, marsha
 }
 
 var (
-	filter_OAuthService_VerifyProviderTokenFrom_0 = &utilities.DoubleArray{Encoding: map[string]int{"provider": 0, "timestamp": 1}, Base: []int{1, 2, 4, 0, 0, 0, 0}, Check: []int{0, 1, 1, 2, 2, 3, 3}}
+	filter_OAuthService_VerifyProviderTokenFrom_0 = &utilities.DoubleArray{Encoding: map[string]int{"context": 0, "provider": 1, "timestamp": 2}, Base: []int{1, 3, 3, 5, 2, 0, 0, 0, 0}, Check: []int{0, 1, 1, 1, 2, 5, 3, 4, 4}}
 )
 
 func request_OAuthService_VerifyProviderTokenFrom_0(ctx context.Context, marshaler runtime.Marshaler, client OAuthServiceClient, req *http.Request, pathParams map[string]string) (proto.Message, runtime.ServerMetadata, error) {
@@ -448,14 +448,14 @@ func request_OAuthService_VerifyProviderTokenFrom_0(ctx context.Context, marshal
 		_   = err
 	)
 
-	val, ok = pathParams["provider"]
+	val, ok = pathParams["context.provider"]
 	if !ok {
-		return nil, metadata, status.Errorf(codes.InvalidArgument, "missing parameter %s", "provider")
+		return nil, metadata, status.Errorf(codes.InvalidArgument, "missing parameter %s", "context.provider")
 	}
 
-	protoReq.Provider, err = runtime.String(val)
+	err = runtime.PopulateFieldFromPath(&protoReq, "context.provider", val)
 	if err != nil {
-		return nil, metadata, status.Errorf(codes.InvalidArgument, "type mismatch, parameter: %s, error: %v", "provider", err)
+		return nil, metadata, status.Errorf(codes.InvalidArgument, "type mismatch, parameter: %s, error: %v", "context.provider", err)
 	}
 
 	val, ok = pathParams["timestamp"]
@@ -491,14 +491,14 @@ func local_request_OAuthService_VerifyProviderTokenFrom_0(ctx context.Context, m
 		_   = err
 	)
 
-	val, ok = pathParams["provider"]
+	val, ok = pathParams["context.provider"]
 	if !ok {
-		return nil, metadata, status.Errorf(codes.InvalidArgument, "missing parameter %s", "provider")
+		return nil, metadata, status.Errorf(codes.InvalidArgument, "missing parameter %s", "context.provider")
 	}
 
-	protoReq.Provider, err = runtime.String(val)
+	err = runtime.PopulateFieldFromPath(&protoReq, "context.provider", val)
 	if err != nil {
-		return nil, metadata, status.Errorf(codes.InvalidArgument, "type mismatch, parameter: %s, error: %v", "provider", err)
+		return nil, metadata, status.Errorf(codes.InvalidArgument, "type mismatch, parameter: %s, error: %v", "context.provider", err)
 	}
 
 	val, ok = pathParams["timestamp"]
@@ -542,14 +542,14 @@ func request_RepositoryService_RegisterRepository_0(ctx context.Context, marshal
 		_   = err
 	)
 
-	val, ok = pathParams["provider"]
+	val, ok = pathParams["context.provider"]
 	if !ok {
-		return nil, metadata, status.Errorf(codes.InvalidArgument, "missing parameter %s", "provider")
+		return nil, metadata, status.Errorf(codes.InvalidArgument, "missing parameter %s", "context.provider")
 	}
 
-	protoReq.Provider, err = runtime.String(val)
+	err = runtime.PopulateFieldFromPath(&protoReq, "context.provider", val)
 	if err != nil {
-		return nil, metadata, status.Errorf(codes.InvalidArgument, "type mismatch, parameter: %s, error: %v", "provider", err)
+		return nil, metadata, status.Errorf(codes.InvalidArgument, "type mismatch, parameter: %s, error: %v", "context.provider", err)
 	}
 
 	msg, err := client.RegisterRepository(ctx, &protoReq, grpc.Header(&metadata.HeaderMD), grpc.Trailer(&metadata.TrailerMD))
@@ -576,14 +576,14 @@ func local_request_RepositoryService_RegisterRepository_0(ctx context.Context, m
 		_   = err
 	)
 
-	val, ok = pathParams["provider"]
+	val, ok = pathParams["context.provider"]
 	if !ok {
-		return nil, metadata, status.Errorf(codes.InvalidArgument, "missing parameter %s", "provider")
+		return nil, metadata, status.Errorf(codes.InvalidArgument, "missing parameter %s", "context.provider")
 	}
 
-	protoReq.Provider, err = runtime.String(val)
+	err = runtime.PopulateFieldFromPath(&protoReq, "context.provider", val)
 	if err != nil {
-		return nil, metadata, status.Errorf(codes.InvalidArgument, "type mismatch, parameter: %s, error: %v", "provider", err)
+		return nil, metadata, status.Errorf(codes.InvalidArgument, "type mismatch, parameter: %s, error: %v", "context.provider", err)
 	}
 
 	msg, err := server.RegisterRepository(ctx, &protoReq)
@@ -592,7 +592,7 @@ func local_request_RepositoryService_RegisterRepository_0(ctx context.Context, m
 }
 
 var (
-	filter_RepositoryService_ListRemoteRepositoriesFromProvider_0 = &utilities.DoubleArray{Encoding: map[string]int{"provider": 0}, Base: []int{1, 2, 0, 0}, Check: []int{0, 1, 2, 2}}
+	filter_RepositoryService_ListRemoteRepositoriesFromProvider_0 = &utilities.DoubleArray{Encoding: map[string]int{"context": 0, "provider": 1}, Base: []int{1, 2, 3, 2, 0, 0}, Check: []int{0, 1, 1, 2, 4, 3}}
 )
 
 func request_RepositoryService_ListRemoteRepositoriesFromProvider_0(ctx context.Context, marshaler runtime.Marshaler, client RepositoryServiceClient, req *http.Request, pathParams map[string]string) (proto.Message, runtime.ServerMetadata, error) {
@@ -606,14 +606,14 @@ func request_RepositoryService_ListRemoteRepositoriesFromProvider_0(ctx context.
 		_   = err
 	)
 
-	val, ok = pathParams["provider"]
+	val, ok = pathParams["context.provider"]
 	if !ok {
-		return nil, metadata, status.Errorf(codes.InvalidArgument, "missing parameter %s", "provider")
+		return nil, metadata, status.Errorf(codes.InvalidArgument, "missing parameter %s", "context.provider")
 	}
 
-	protoReq.Provider, err = runtime.String(val)
+	err = runtime.PopulateFieldFromPath(&protoReq, "context.provider", val)
 	if err != nil {
-		return nil, metadata, status.Errorf(codes.InvalidArgument, "type mismatch, parameter: %s, error: %v", "provider", err)
+		return nil, metadata, status.Errorf(codes.InvalidArgument, "type mismatch, parameter: %s, error: %v", "context.provider", err)
 	}
 
 	if err := req.ParseForm(); err != nil {
@@ -639,14 +639,14 @@ func local_request_RepositoryService_ListRemoteRepositoriesFromProvider_0(ctx co
 		_   = err
 	)
 
-	val, ok = pathParams["provider"]
+	val, ok = pathParams["context.provider"]
 	if !ok {
-		return nil, metadata, status.Errorf(codes.InvalidArgument, "missing parameter %s", "provider")
+		return nil, metadata, status.Errorf(codes.InvalidArgument, "missing parameter %s", "context.provider")
 	}
 
-	protoReq.Provider, err = runtime.String(val)
+	err = runtime.PopulateFieldFromPath(&protoReq, "context.provider", val)
 	if err != nil {
-		return nil, metadata, status.Errorf(codes.InvalidArgument, "type mismatch, parameter: %s, error: %v", "provider", err)
+		return nil, metadata, status.Errorf(codes.InvalidArgument, "type mismatch, parameter: %s, error: %v", "context.provider", err)
 	}
 
 	if err := req.ParseForm(); err != nil {
@@ -662,7 +662,7 @@ func local_request_RepositoryService_ListRemoteRepositoriesFromProvider_0(ctx co
 }
 
 var (
-	filter_RepositoryService_ListRepositories_0 = &utilities.DoubleArray{Encoding: map[string]int{"provider": 0}, Base: []int{1, 2, 0, 0}, Check: []int{0, 1, 2, 2}}
+	filter_RepositoryService_ListRepositories_0 = &utilities.DoubleArray{Encoding: map[string]int{"context": 0, "provider": 1}, Base: []int{1, 2, 3, 2, 0, 0}, Check: []int{0, 1, 1, 2, 4, 3}}
 )
 
 func request_RepositoryService_ListRepositories_0(ctx context.Context, marshaler runtime.Marshaler, client RepositoryServiceClient, req *http.Request, pathParams map[string]string) (proto.Message, runtime.ServerMetadata, error) {
@@ -676,14 +676,14 @@ func request_RepositoryService_ListRepositories_0(ctx context.Context, marshaler
 		_   = err
 	)
 
-	val, ok = pathParams["provider"]
+	val, ok = pathParams["context.provider"]
 	if !ok {
-		return nil, metadata, status.Errorf(codes.InvalidArgument, "missing parameter %s", "provider")
+		return nil, metadata, status.Errorf(codes.InvalidArgument, "missing parameter %s", "context.provider")
 	}
 
-	protoReq.Provider, err = runtime.String(val)
+	err = runtime.PopulateFieldFromPath(&protoReq, "context.provider", val)
 	if err != nil {
-		return nil, metadata, status.Errorf(codes.InvalidArgument, "type mismatch, parameter: %s, error: %v", "provider", err)
+		return nil, metadata, status.Errorf(codes.InvalidArgument, "type mismatch, parameter: %s, error: %v", "context.provider", err)
 	}
 
 	if err := req.ParseForm(); err != nil {
@@ -709,14 +709,14 @@ func local_request_RepositoryService_ListRepositories_0(ctx context.Context, mar
 		_   = err
 	)
 
-	val, ok = pathParams["provider"]
+	val, ok = pathParams["context.provider"]
 	if !ok {
-		return nil, metadata, status.Errorf(codes.InvalidArgument, "missing parameter %s", "provider")
+		return nil, metadata, status.Errorf(codes.InvalidArgument, "missing parameter %s", "context.provider")
 	}
 
-	protoReq.Provider, err = runtime.String(val)
+	err = runtime.PopulateFieldFromPath(&protoReq, "context.provider", val)
 	if err != nil {
-		return nil, metadata, status.Errorf(codes.InvalidArgument, "type mismatch, parameter: %s, error: %v", "provider", err)
+		return nil, metadata, status.Errorf(codes.InvalidArgument, "type mismatch, parameter: %s, error: %v", "context.provider", err)
 	}
 
 	if err := req.ParseForm(); err != nil {
@@ -730,6 +730,10 @@ func local_request_RepositoryService_ListRepositories_0(ctx context.Context, mar
 	return msg, metadata, err
 
 }
+
+var (
+	filter_RepositoryService_GetRepositoryById_0 = &utilities.DoubleArray{Encoding: map[string]int{"repository_id": 0, "repositoryId": 1}, Base: []int{1, 1, 2, 0, 0}, Check: []int{0, 1, 1, 2, 3}}
+)
 
 func request_RepositoryService_GetRepositoryById_0(ctx context.Context, marshaler runtime.Marshaler, client RepositoryServiceClient, req *http.Request, pathParams map[string]string) (proto.Message, runtime.ServerMetadata, error) {
 	var protoReq GetRepositoryByIdRequest
@@ -750,6 +754,13 @@ func request_RepositoryService_GetRepositoryById_0(ctx context.Context, marshale
 	protoReq.RepositoryId, err = runtime.String(val)
 	if err != nil {
 		return nil, metadata, status.Errorf(codes.InvalidArgument, "type mismatch, parameter: %s, error: %v", "repository_id", err)
+	}
+
+	if err := req.ParseForm(); err != nil {
+		return nil, metadata, status.Errorf(codes.InvalidArgument, "%v", err)
+	}
+	if err := runtime.PopulateQueryParameters(&protoReq, req.Form, filter_RepositoryService_GetRepositoryById_0); err != nil {
+		return nil, metadata, status.Errorf(codes.InvalidArgument, "%v", err)
 	}
 
 	msg, err := client.GetRepositoryById(ctx, &protoReq, grpc.Header(&metadata.HeaderMD), grpc.Trailer(&metadata.TrailerMD))
@@ -778,13 +789,20 @@ func local_request_RepositoryService_GetRepositoryById_0(ctx context.Context, ma
 		return nil, metadata, status.Errorf(codes.InvalidArgument, "type mismatch, parameter: %s, error: %v", "repository_id", err)
 	}
 
+	if err := req.ParseForm(); err != nil {
+		return nil, metadata, status.Errorf(codes.InvalidArgument, "%v", err)
+	}
+	if err := runtime.PopulateQueryParameters(&protoReq, req.Form, filter_RepositoryService_GetRepositoryById_0); err != nil {
+		return nil, metadata, status.Errorf(codes.InvalidArgument, "%v", err)
+	}
+
 	msg, err := server.GetRepositoryById(ctx, &protoReq)
 	return msg, metadata, err
 
 }
 
 var (
-	filter_RepositoryService_GetRepositoryByName_0 = &utilities.DoubleArray{Encoding: map[string]int{"provider": 0, "name": 1}, Base: []int{1, 2, 4, 0, 0, 0, 0}, Check: []int{0, 1, 1, 2, 2, 3, 3}}
+	filter_RepositoryService_GetRepositoryByName_0 = &utilities.DoubleArray{Encoding: map[string]int{"context": 0, "provider": 1, "name": 2}, Base: []int{1, 3, 3, 5, 2, 0, 0, 0, 0}, Check: []int{0, 1, 1, 1, 2, 5, 3, 4, 4}}
 )
 
 func request_RepositoryService_GetRepositoryByName_0(ctx context.Context, marshaler runtime.Marshaler, client RepositoryServiceClient, req *http.Request, pathParams map[string]string) (proto.Message, runtime.ServerMetadata, error) {
@@ -798,14 +816,14 @@ func request_RepositoryService_GetRepositoryByName_0(ctx context.Context, marsha
 		_   = err
 	)
 
-	val, ok = pathParams["provider"]
+	val, ok = pathParams["context.provider"]
 	if !ok {
-		return nil, metadata, status.Errorf(codes.InvalidArgument, "missing parameter %s", "provider")
+		return nil, metadata, status.Errorf(codes.InvalidArgument, "missing parameter %s", "context.provider")
 	}
 
-	protoReq.Provider, err = runtime.String(val)
+	err = runtime.PopulateFieldFromPath(&protoReq, "context.provider", val)
 	if err != nil {
-		return nil, metadata, status.Errorf(codes.InvalidArgument, "type mismatch, parameter: %s, error: %v", "provider", err)
+		return nil, metadata, status.Errorf(codes.InvalidArgument, "type mismatch, parameter: %s, error: %v", "context.provider", err)
 	}
 
 	val, ok = pathParams["name"]
@@ -841,14 +859,14 @@ func local_request_RepositoryService_GetRepositoryByName_0(ctx context.Context, 
 		_   = err
 	)
 
-	val, ok = pathParams["provider"]
+	val, ok = pathParams["context.provider"]
 	if !ok {
-		return nil, metadata, status.Errorf(codes.InvalidArgument, "missing parameter %s", "provider")
+		return nil, metadata, status.Errorf(codes.InvalidArgument, "missing parameter %s", "context.provider")
 	}
 
-	protoReq.Provider, err = runtime.String(val)
+	err = runtime.PopulateFieldFromPath(&protoReq, "context.provider", val)
 	if err != nil {
-		return nil, metadata, status.Errorf(codes.InvalidArgument, "type mismatch, parameter: %s, error: %v", "provider", err)
+		return nil, metadata, status.Errorf(codes.InvalidArgument, "type mismatch, parameter: %s, error: %v", "context.provider", err)
 	}
 
 	val, ok = pathParams["name"]
@@ -873,6 +891,10 @@ func local_request_RepositoryService_GetRepositoryByName_0(ctx context.Context, 
 
 }
 
+var (
+	filter_RepositoryService_DeleteRepositoryById_0 = &utilities.DoubleArray{Encoding: map[string]int{"repository_id": 0, "repositoryId": 1}, Base: []int{1, 1, 2, 0, 0}, Check: []int{0, 1, 1, 2, 3}}
+)
+
 func request_RepositoryService_DeleteRepositoryById_0(ctx context.Context, marshaler runtime.Marshaler, client RepositoryServiceClient, req *http.Request, pathParams map[string]string) (proto.Message, runtime.ServerMetadata, error) {
 	var protoReq DeleteRepositoryByIdRequest
 	var metadata runtime.ServerMetadata
@@ -892,6 +914,13 @@ func request_RepositoryService_DeleteRepositoryById_0(ctx context.Context, marsh
 	protoReq.RepositoryId, err = runtime.String(val)
 	if err != nil {
 		return nil, metadata, status.Errorf(codes.InvalidArgument, "type mismatch, parameter: %s, error: %v", "repository_id", err)
+	}
+
+	if err := req.ParseForm(); err != nil {
+		return nil, metadata, status.Errorf(codes.InvalidArgument, "%v", err)
+	}
+	if err := runtime.PopulateQueryParameters(&protoReq, req.Form, filter_RepositoryService_DeleteRepositoryById_0); err != nil {
+		return nil, metadata, status.Errorf(codes.InvalidArgument, "%v", err)
 	}
 
 	msg, err := client.DeleteRepositoryById(ctx, &protoReq, grpc.Header(&metadata.HeaderMD), grpc.Trailer(&metadata.TrailerMD))
@@ -920,13 +949,20 @@ func local_request_RepositoryService_DeleteRepositoryById_0(ctx context.Context,
 		return nil, metadata, status.Errorf(codes.InvalidArgument, "type mismatch, parameter: %s, error: %v", "repository_id", err)
 	}
 
+	if err := req.ParseForm(); err != nil {
+		return nil, metadata, status.Errorf(codes.InvalidArgument, "%v", err)
+	}
+	if err := runtime.PopulateQueryParameters(&protoReq, req.Form, filter_RepositoryService_DeleteRepositoryById_0); err != nil {
+		return nil, metadata, status.Errorf(codes.InvalidArgument, "%v", err)
+	}
+
 	msg, err := server.DeleteRepositoryById(ctx, &protoReq)
 	return msg, metadata, err
 
 }
 
 var (
-	filter_RepositoryService_DeleteRepositoryByName_0 = &utilities.DoubleArray{Encoding: map[string]int{"provider": 0, "name": 1}, Base: []int{1, 2, 4, 0, 0, 0, 0}, Check: []int{0, 1, 1, 2, 2, 3, 3}}
+	filter_RepositoryService_DeleteRepositoryByName_0 = &utilities.DoubleArray{Encoding: map[string]int{"context": 0, "provider": 1, "name": 2}, Base: []int{1, 3, 3, 5, 2, 0, 0, 0, 0}, Check: []int{0, 1, 1, 1, 2, 5, 3, 4, 4}}
 )
 
 func request_RepositoryService_DeleteRepositoryByName_0(ctx context.Context, marshaler runtime.Marshaler, client RepositoryServiceClient, req *http.Request, pathParams map[string]string) (proto.Message, runtime.ServerMetadata, error) {
@@ -940,14 +976,14 @@ func request_RepositoryService_DeleteRepositoryByName_0(ctx context.Context, mar
 		_   = err
 	)
 
-	val, ok = pathParams["provider"]
+	val, ok = pathParams["context.provider"]
 	if !ok {
-		return nil, metadata, status.Errorf(codes.InvalidArgument, "missing parameter %s", "provider")
+		return nil, metadata, status.Errorf(codes.InvalidArgument, "missing parameter %s", "context.provider")
 	}
 
-	protoReq.Provider, err = runtime.String(val)
+	err = runtime.PopulateFieldFromPath(&protoReq, "context.provider", val)
 	if err != nil {
-		return nil, metadata, status.Errorf(codes.InvalidArgument, "type mismatch, parameter: %s, error: %v", "provider", err)
+		return nil, metadata, status.Errorf(codes.InvalidArgument, "type mismatch, parameter: %s, error: %v", "context.provider", err)
 	}
 
 	val, ok = pathParams["name"]
@@ -983,14 +1019,14 @@ func local_request_RepositoryService_DeleteRepositoryByName_0(ctx context.Contex
 		_   = err
 	)
 
-	val, ok = pathParams["provider"]
+	val, ok = pathParams["context.provider"]
 	if !ok {
-		return nil, metadata, status.Errorf(codes.InvalidArgument, "missing parameter %s", "provider")
+		return nil, metadata, status.Errorf(codes.InvalidArgument, "missing parameter %s", "context.provider")
 	}
 
-	protoReq.Provider, err = runtime.String(val)
+	err = runtime.PopulateFieldFromPath(&protoReq, "context.provider", val)
 	if err != nil {
-		return nil, metadata, status.Errorf(codes.InvalidArgument, "type mismatch, parameter: %s, error: %v", "provider", err)
+		return nil, metadata, status.Errorf(codes.InvalidArgument, "type mismatch, parameter: %s, error: %v", "context.provider", err)
 	}
 
 	val, ok = pathParams["name"]
@@ -1049,9 +1085,20 @@ func local_request_UserService_CreateUser_0(ctx context.Context, marshaler runti
 
 }
 
+var (
+	filter_UserService_DeleteUser_0 = &utilities.DoubleArray{Encoding: map[string]int{}, Base: []int(nil), Check: []int(nil)}
+)
+
 func request_UserService_DeleteUser_0(ctx context.Context, marshaler runtime.Marshaler, client UserServiceClient, req *http.Request, pathParams map[string]string) (proto.Message, runtime.ServerMetadata, error) {
 	var protoReq DeleteUserRequest
 	var metadata runtime.ServerMetadata
+
+	if err := req.ParseForm(); err != nil {
+		return nil, metadata, status.Errorf(codes.InvalidArgument, "%v", err)
+	}
+	if err := runtime.PopulateQueryParameters(&protoReq, req.Form, filter_UserService_DeleteUser_0); err != nil {
+		return nil, metadata, status.Errorf(codes.InvalidArgument, "%v", err)
+	}
 
 	msg, err := client.DeleteUser(ctx, &protoReq, grpc.Header(&metadata.HeaderMD), grpc.Trailer(&metadata.TrailerMD))
 	return msg, metadata, err
@@ -1062,14 +1109,32 @@ func local_request_UserService_DeleteUser_0(ctx context.Context, marshaler runti
 	var protoReq DeleteUserRequest
 	var metadata runtime.ServerMetadata
 
+	if err := req.ParseForm(); err != nil {
+		return nil, metadata, status.Errorf(codes.InvalidArgument, "%v", err)
+	}
+	if err := runtime.PopulateQueryParameters(&protoReq, req.Form, filter_UserService_DeleteUser_0); err != nil {
+		return nil, metadata, status.Errorf(codes.InvalidArgument, "%v", err)
+	}
+
 	msg, err := server.DeleteUser(ctx, &protoReq)
 	return msg, metadata, err
 
 }
 
+var (
+	filter_UserService_GetUser_0 = &utilities.DoubleArray{Encoding: map[string]int{}, Base: []int(nil), Check: []int(nil)}
+)
+
 func request_UserService_GetUser_0(ctx context.Context, marshaler runtime.Marshaler, client UserServiceClient, req *http.Request, pathParams map[string]string) (proto.Message, runtime.ServerMetadata, error) {
 	var protoReq GetUserRequest
 	var metadata runtime.ServerMetadata
+
+	if err := req.ParseForm(); err != nil {
+		return nil, metadata, status.Errorf(codes.InvalidArgument, "%v", err)
+	}
+	if err := runtime.PopulateQueryParameters(&protoReq, req.Form, filter_UserService_GetUser_0); err != nil {
+		return nil, metadata, status.Errorf(codes.InvalidArgument, "%v", err)
+	}
 
 	msg, err := client.GetUser(ctx, &protoReq, grpc.Header(&metadata.HeaderMD), grpc.Trailer(&metadata.TrailerMD))
 	return msg, metadata, err
@@ -1079,6 +1144,13 @@ func request_UserService_GetUser_0(ctx context.Context, marshaler runtime.Marsha
 func local_request_UserService_GetUser_0(ctx context.Context, marshaler runtime.Marshaler, server UserServiceServer, req *http.Request, pathParams map[string]string) (proto.Message, runtime.ServerMetadata, error) {
 	var protoReq GetUserRequest
 	var metadata runtime.ServerMetadata
+
+	if err := req.ParseForm(); err != nil {
+		return nil, metadata, status.Errorf(codes.InvalidArgument, "%v", err)
+	}
+	if err := runtime.PopulateQueryParameters(&protoReq, req.Form, filter_UserService_GetUser_0); err != nil {
+		return nil, metadata, status.Errorf(codes.InvalidArgument, "%v", err)
+	}
 
 	msg, err := server.GetUser(ctx, &protoReq)
 	return msg, metadata, err
@@ -1797,7 +1869,7 @@ func RegisterArtifactServiceHandlerServer(ctx context.Context, mux *runtime.Serv
 		inboundMarshaler, outboundMarshaler := runtime.MarshalerForRequest(mux, req)
 		var err error
 		var annotatedContext context.Context
-		annotatedContext, err = runtime.AnnotateIncomingContext(ctx, mux, req, "/minder.v1.ArtifactService/ListArtifacts", runtime.WithHTTPPathPattern("/api/v1/artifacts/{provider}"))
+		annotatedContext, err = runtime.AnnotateIncomingContext(ctx, mux, req, "/minder.v1.ArtifactService/ListArtifacts", runtime.WithHTTPPathPattern("/api/v1/artifacts/{context.provider}"))
 		if err != nil {
 			runtime.HTTPError(ctx, mux, outboundMarshaler, w, req, err)
 			return
@@ -1881,7 +1953,7 @@ func RegisterOAuthServiceHandlerServer(ctx context.Context, mux *runtime.ServeMu
 		inboundMarshaler, outboundMarshaler := runtime.MarshalerForRequest(mux, req)
 		var err error
 		var annotatedContext context.Context
-		annotatedContext, err = runtime.AnnotateIncomingContext(ctx, mux, req, "/minder.v1.OAuthService/ExchangeCodeForTokenCLI", runtime.WithHTTPPathPattern("/api/v1/auth/callback/{provider}/cli"))
+		annotatedContext, err = runtime.AnnotateIncomingContext(ctx, mux, req, "/minder.v1.OAuthService/ExchangeCodeForTokenCLI", runtime.WithHTTPPathPattern("/api/v1/auth/callback/{context.provider}/cli"))
 		if err != nil {
 			runtime.HTTPError(ctx, mux, outboundMarshaler, w, req, err)
 			return
@@ -1906,7 +1978,7 @@ func RegisterOAuthServiceHandlerServer(ctx context.Context, mux *runtime.ServeMu
 		inboundMarshaler, outboundMarshaler := runtime.MarshalerForRequest(mux, req)
 		var err error
 		var annotatedContext context.Context
-		annotatedContext, err = runtime.AnnotateIncomingContext(ctx, mux, req, "/minder.v1.OAuthService/ExchangeCodeForTokenWEB", runtime.WithHTTPPathPattern("/api/v1/auth/callback/{provider}/web"))
+		annotatedContext, err = runtime.AnnotateIncomingContext(ctx, mux, req, "/minder.v1.OAuthService/ExchangeCodeForTokenWEB", runtime.WithHTTPPathPattern("/api/v1/auth/callback/{context.provider}/web"))
 		if err != nil {
 			runtime.HTTPError(ctx, mux, outboundMarshaler, w, req, err)
 			return
@@ -1931,7 +2003,7 @@ func RegisterOAuthServiceHandlerServer(ctx context.Context, mux *runtime.ServeMu
 		inboundMarshaler, outboundMarshaler := runtime.MarshalerForRequest(mux, req)
 		var err error
 		var annotatedContext context.Context
-		annotatedContext, err = runtime.AnnotateIncomingContext(ctx, mux, req, "/minder.v1.OAuthService/StoreProviderToken", runtime.WithHTTPPathPattern("/api/v1/auth/{provider}/token"))
+		annotatedContext, err = runtime.AnnotateIncomingContext(ctx, mux, req, "/minder.v1.OAuthService/StoreProviderToken", runtime.WithHTTPPathPattern("/api/v1/auth/{context.provider}/token"))
 		if err != nil {
 			runtime.HTTPError(ctx, mux, outboundMarshaler, w, req, err)
 			return
@@ -1956,7 +2028,7 @@ func RegisterOAuthServiceHandlerServer(ctx context.Context, mux *runtime.ServeMu
 		inboundMarshaler, outboundMarshaler := runtime.MarshalerForRequest(mux, req)
 		var err error
 		var annotatedContext context.Context
-		annotatedContext, err = runtime.AnnotateIncomingContext(ctx, mux, req, "/minder.v1.OAuthService/VerifyProviderTokenFrom", runtime.WithHTTPPathPattern("/api/v1/auth/verify/{provider}/{timestamp}"))
+		annotatedContext, err = runtime.AnnotateIncomingContext(ctx, mux, req, "/minder.v1.OAuthService/VerifyProviderTokenFrom", runtime.WithHTTPPathPattern("/api/v1/auth/verify/{context.provider}/{timestamp}"))
 		if err != nil {
 			runtime.HTTPError(ctx, mux, outboundMarshaler, w, req, err)
 			return
@@ -1990,7 +2062,7 @@ func RegisterRepositoryServiceHandlerServer(ctx context.Context, mux *runtime.Se
 		inboundMarshaler, outboundMarshaler := runtime.MarshalerForRequest(mux, req)
 		var err error
 		var annotatedContext context.Context
-		annotatedContext, err = runtime.AnnotateIncomingContext(ctx, mux, req, "/minder.v1.RepositoryService/RegisterRepository", runtime.WithHTTPPathPattern("/api/v1/repository/provider/{provider}/register"))
+		annotatedContext, err = runtime.AnnotateIncomingContext(ctx, mux, req, "/minder.v1.RepositoryService/RegisterRepository", runtime.WithHTTPPathPattern("/api/v1/repository/provider/{context.provider}/register"))
 		if err != nil {
 			runtime.HTTPError(ctx, mux, outboundMarshaler, w, req, err)
 			return
@@ -2015,7 +2087,7 @@ func RegisterRepositoryServiceHandlerServer(ctx context.Context, mux *runtime.Se
 		inboundMarshaler, outboundMarshaler := runtime.MarshalerForRequest(mux, req)
 		var err error
 		var annotatedContext context.Context
-		annotatedContext, err = runtime.AnnotateIncomingContext(ctx, mux, req, "/minder.v1.RepositoryService/ListRemoteRepositoriesFromProvider", runtime.WithHTTPPathPattern("/api/v1/repositories/provider/{provider}/remote"))
+		annotatedContext, err = runtime.AnnotateIncomingContext(ctx, mux, req, "/minder.v1.RepositoryService/ListRemoteRepositoriesFromProvider", runtime.WithHTTPPathPattern("/api/v1/repositories/provider/{context.provider}/remote"))
 		if err != nil {
 			runtime.HTTPError(ctx, mux, outboundMarshaler, w, req, err)
 			return
@@ -2040,7 +2112,7 @@ func RegisterRepositoryServiceHandlerServer(ctx context.Context, mux *runtime.Se
 		inboundMarshaler, outboundMarshaler := runtime.MarshalerForRequest(mux, req)
 		var err error
 		var annotatedContext context.Context
-		annotatedContext, err = runtime.AnnotateIncomingContext(ctx, mux, req, "/minder.v1.RepositoryService/ListRepositories", runtime.WithHTTPPathPattern("/api/v1/repositories/provider/{provider}"))
+		annotatedContext, err = runtime.AnnotateIncomingContext(ctx, mux, req, "/minder.v1.RepositoryService/ListRepositories", runtime.WithHTTPPathPattern("/api/v1/repositories/provider/{context.provider}"))
 		if err != nil {
 			runtime.HTTPError(ctx, mux, outboundMarshaler, w, req, err)
 			return
@@ -2090,7 +2162,7 @@ func RegisterRepositoryServiceHandlerServer(ctx context.Context, mux *runtime.Se
 		inboundMarshaler, outboundMarshaler := runtime.MarshalerForRequest(mux, req)
 		var err error
 		var annotatedContext context.Context
-		annotatedContext, err = runtime.AnnotateIncomingContext(ctx, mux, req, "/minder.v1.RepositoryService/GetRepositoryByName", runtime.WithHTTPPathPattern("/api/v1/repository/provider/{provider}/name/{name}"))
+		annotatedContext, err = runtime.AnnotateIncomingContext(ctx, mux, req, "/minder.v1.RepositoryService/GetRepositoryByName", runtime.WithHTTPPathPattern("/api/v1/repository/provider/{context.provider}/name/{name}"))
 		if err != nil {
 			runtime.HTTPError(ctx, mux, outboundMarshaler, w, req, err)
 			return
@@ -2140,7 +2212,7 @@ func RegisterRepositoryServiceHandlerServer(ctx context.Context, mux *runtime.Se
 		inboundMarshaler, outboundMarshaler := runtime.MarshalerForRequest(mux, req)
 		var err error
 		var annotatedContext context.Context
-		annotatedContext, err = runtime.AnnotateIncomingContext(ctx, mux, req, "/minder.v1.RepositoryService/DeleteRepositoryByName", runtime.WithHTTPPathPattern("/api/v1/repository/provider/{provider}/name/{name}"))
+		annotatedContext, err = runtime.AnnotateIncomingContext(ctx, mux, req, "/minder.v1.RepositoryService/DeleteRepositoryByName", runtime.WithHTTPPathPattern("/api/v1/repository/provider/{context.provider}/name/{name}"))
 		if err != nil {
 			runtime.HTTPError(ctx, mux, outboundMarshaler, w, req, err)
 			return
@@ -2693,7 +2765,7 @@ func RegisterArtifactServiceHandlerClient(ctx context.Context, mux *runtime.Serv
 		inboundMarshaler, outboundMarshaler := runtime.MarshalerForRequest(mux, req)
 		var err error
 		var annotatedContext context.Context
-		annotatedContext, err = runtime.AnnotateContext(ctx, mux, req, "/minder.v1.ArtifactService/ListArtifacts", runtime.WithHTTPPathPattern("/api/v1/artifacts/{provider}"))
+		annotatedContext, err = runtime.AnnotateContext(ctx, mux, req, "/minder.v1.ArtifactService/ListArtifacts", runtime.WithHTTPPathPattern("/api/v1/artifacts/{context.provider}"))
 		if err != nil {
 			runtime.HTTPError(ctx, mux, outboundMarshaler, w, req, err)
 			return
@@ -2735,7 +2807,7 @@ func RegisterArtifactServiceHandlerClient(ctx context.Context, mux *runtime.Serv
 }
 
 var (
-	pattern_ArtifactService_ListArtifacts_0 = runtime.MustPattern(runtime.NewPattern(1, []int{2, 0, 2, 1, 2, 2, 1, 0, 4, 1, 5, 3}, []string{"api", "v1", "artifacts", "provider"}, ""))
+	pattern_ArtifactService_ListArtifacts_0 = runtime.MustPattern(runtime.NewPattern(1, []int{2, 0, 2, 1, 2, 2, 1, 0, 4, 1, 5, 3}, []string{"api", "v1", "artifacts", "context.provider"}, ""))
 
 	pattern_ArtifactService_GetArtifactById_0 = runtime.MustPattern(runtime.NewPattern(1, []int{2, 0, 2, 1, 2, 2, 1, 0, 4, 1, 5, 3}, []string{"api", "v1", "artifact", "id"}, ""))
 )
@@ -2812,7 +2884,7 @@ func RegisterOAuthServiceHandlerClient(ctx context.Context, mux *runtime.ServeMu
 		inboundMarshaler, outboundMarshaler := runtime.MarshalerForRequest(mux, req)
 		var err error
 		var annotatedContext context.Context
-		annotatedContext, err = runtime.AnnotateContext(ctx, mux, req, "/minder.v1.OAuthService/ExchangeCodeForTokenCLI", runtime.WithHTTPPathPattern("/api/v1/auth/callback/{provider}/cli"))
+		annotatedContext, err = runtime.AnnotateContext(ctx, mux, req, "/minder.v1.OAuthService/ExchangeCodeForTokenCLI", runtime.WithHTTPPathPattern("/api/v1/auth/callback/{context.provider}/cli"))
 		if err != nil {
 			runtime.HTTPError(ctx, mux, outboundMarshaler, w, req, err)
 			return
@@ -2834,7 +2906,7 @@ func RegisterOAuthServiceHandlerClient(ctx context.Context, mux *runtime.ServeMu
 		inboundMarshaler, outboundMarshaler := runtime.MarshalerForRequest(mux, req)
 		var err error
 		var annotatedContext context.Context
-		annotatedContext, err = runtime.AnnotateContext(ctx, mux, req, "/minder.v1.OAuthService/ExchangeCodeForTokenWEB", runtime.WithHTTPPathPattern("/api/v1/auth/callback/{provider}/web"))
+		annotatedContext, err = runtime.AnnotateContext(ctx, mux, req, "/minder.v1.OAuthService/ExchangeCodeForTokenWEB", runtime.WithHTTPPathPattern("/api/v1/auth/callback/{context.provider}/web"))
 		if err != nil {
 			runtime.HTTPError(ctx, mux, outboundMarshaler, w, req, err)
 			return
@@ -2856,7 +2928,7 @@ func RegisterOAuthServiceHandlerClient(ctx context.Context, mux *runtime.ServeMu
 		inboundMarshaler, outboundMarshaler := runtime.MarshalerForRequest(mux, req)
 		var err error
 		var annotatedContext context.Context
-		annotatedContext, err = runtime.AnnotateContext(ctx, mux, req, "/minder.v1.OAuthService/StoreProviderToken", runtime.WithHTTPPathPattern("/api/v1/auth/{provider}/token"))
+		annotatedContext, err = runtime.AnnotateContext(ctx, mux, req, "/minder.v1.OAuthService/StoreProviderToken", runtime.WithHTTPPathPattern("/api/v1/auth/{context.provider}/token"))
 		if err != nil {
 			runtime.HTTPError(ctx, mux, outboundMarshaler, w, req, err)
 			return
@@ -2878,7 +2950,7 @@ func RegisterOAuthServiceHandlerClient(ctx context.Context, mux *runtime.ServeMu
 		inboundMarshaler, outboundMarshaler := runtime.MarshalerForRequest(mux, req)
 		var err error
 		var annotatedContext context.Context
-		annotatedContext, err = runtime.AnnotateContext(ctx, mux, req, "/minder.v1.OAuthService/VerifyProviderTokenFrom", runtime.WithHTTPPathPattern("/api/v1/auth/verify/{provider}/{timestamp}"))
+		annotatedContext, err = runtime.AnnotateContext(ctx, mux, req, "/minder.v1.OAuthService/VerifyProviderTokenFrom", runtime.WithHTTPPathPattern("/api/v1/auth/verify/{context.provider}/{timestamp}"))
 		if err != nil {
 			runtime.HTTPError(ctx, mux, outboundMarshaler, w, req, err)
 			return
@@ -2900,13 +2972,13 @@ func RegisterOAuthServiceHandlerClient(ctx context.Context, mux *runtime.ServeMu
 var (
 	pattern_OAuthService_GetAuthorizationURL_0 = runtime.MustPattern(runtime.NewPattern(1, []int{2, 0, 2, 1, 2, 2, 2, 3}, []string{"api", "v1", "auth", "url"}, ""))
 
-	pattern_OAuthService_ExchangeCodeForTokenCLI_0 = runtime.MustPattern(runtime.NewPattern(1, []int{2, 0, 2, 1, 2, 2, 2, 3, 1, 0, 4, 1, 5, 4, 2, 5}, []string{"api", "v1", "auth", "callback", "provider", "cli"}, ""))
+	pattern_OAuthService_ExchangeCodeForTokenCLI_0 = runtime.MustPattern(runtime.NewPattern(1, []int{2, 0, 2, 1, 2, 2, 2, 3, 1, 0, 4, 1, 5, 4, 2, 5}, []string{"api", "v1", "auth", "callback", "context.provider", "cli"}, ""))
 
-	pattern_OAuthService_ExchangeCodeForTokenWEB_0 = runtime.MustPattern(runtime.NewPattern(1, []int{2, 0, 2, 1, 2, 2, 2, 3, 1, 0, 4, 1, 5, 4, 2, 5}, []string{"api", "v1", "auth", "callback", "provider", "web"}, ""))
+	pattern_OAuthService_ExchangeCodeForTokenWEB_0 = runtime.MustPattern(runtime.NewPattern(1, []int{2, 0, 2, 1, 2, 2, 2, 3, 1, 0, 4, 1, 5, 4, 2, 5}, []string{"api", "v1", "auth", "callback", "context.provider", "web"}, ""))
 
-	pattern_OAuthService_StoreProviderToken_0 = runtime.MustPattern(runtime.NewPattern(1, []int{2, 0, 2, 1, 2, 2, 1, 0, 4, 1, 5, 3, 2, 4}, []string{"api", "v1", "auth", "provider", "token"}, ""))
+	pattern_OAuthService_StoreProviderToken_0 = runtime.MustPattern(runtime.NewPattern(1, []int{2, 0, 2, 1, 2, 2, 1, 0, 4, 1, 5, 3, 2, 4}, []string{"api", "v1", "auth", "context.provider", "token"}, ""))
 
-	pattern_OAuthService_VerifyProviderTokenFrom_0 = runtime.MustPattern(runtime.NewPattern(1, []int{2, 0, 2, 1, 2, 2, 2, 3, 1, 0, 4, 1, 5, 4, 1, 0, 4, 1, 5, 5}, []string{"api", "v1", "auth", "verify", "provider", "timestamp"}, ""))
+	pattern_OAuthService_VerifyProviderTokenFrom_0 = runtime.MustPattern(runtime.NewPattern(1, []int{2, 0, 2, 1, 2, 2, 2, 3, 1, 0, 4, 1, 5, 4, 1, 0, 4, 1, 5, 5}, []string{"api", "v1", "auth", "verify", "context.provider", "timestamp"}, ""))
 )
 
 var (
@@ -2965,7 +3037,7 @@ func RegisterRepositoryServiceHandlerClient(ctx context.Context, mux *runtime.Se
 		inboundMarshaler, outboundMarshaler := runtime.MarshalerForRequest(mux, req)
 		var err error
 		var annotatedContext context.Context
-		annotatedContext, err = runtime.AnnotateContext(ctx, mux, req, "/minder.v1.RepositoryService/RegisterRepository", runtime.WithHTTPPathPattern("/api/v1/repository/provider/{provider}/register"))
+		annotatedContext, err = runtime.AnnotateContext(ctx, mux, req, "/minder.v1.RepositoryService/RegisterRepository", runtime.WithHTTPPathPattern("/api/v1/repository/provider/{context.provider}/register"))
 		if err != nil {
 			runtime.HTTPError(ctx, mux, outboundMarshaler, w, req, err)
 			return
@@ -2987,7 +3059,7 @@ func RegisterRepositoryServiceHandlerClient(ctx context.Context, mux *runtime.Se
 		inboundMarshaler, outboundMarshaler := runtime.MarshalerForRequest(mux, req)
 		var err error
 		var annotatedContext context.Context
-		annotatedContext, err = runtime.AnnotateContext(ctx, mux, req, "/minder.v1.RepositoryService/ListRemoteRepositoriesFromProvider", runtime.WithHTTPPathPattern("/api/v1/repositories/provider/{provider}/remote"))
+		annotatedContext, err = runtime.AnnotateContext(ctx, mux, req, "/minder.v1.RepositoryService/ListRemoteRepositoriesFromProvider", runtime.WithHTTPPathPattern("/api/v1/repositories/provider/{context.provider}/remote"))
 		if err != nil {
 			runtime.HTTPError(ctx, mux, outboundMarshaler, w, req, err)
 			return
@@ -3009,7 +3081,7 @@ func RegisterRepositoryServiceHandlerClient(ctx context.Context, mux *runtime.Se
 		inboundMarshaler, outboundMarshaler := runtime.MarshalerForRequest(mux, req)
 		var err error
 		var annotatedContext context.Context
-		annotatedContext, err = runtime.AnnotateContext(ctx, mux, req, "/minder.v1.RepositoryService/ListRepositories", runtime.WithHTTPPathPattern("/api/v1/repositories/provider/{provider}"))
+		annotatedContext, err = runtime.AnnotateContext(ctx, mux, req, "/minder.v1.RepositoryService/ListRepositories", runtime.WithHTTPPathPattern("/api/v1/repositories/provider/{context.provider}"))
 		if err != nil {
 			runtime.HTTPError(ctx, mux, outboundMarshaler, w, req, err)
 			return
@@ -3053,7 +3125,7 @@ func RegisterRepositoryServiceHandlerClient(ctx context.Context, mux *runtime.Se
 		inboundMarshaler, outboundMarshaler := runtime.MarshalerForRequest(mux, req)
 		var err error
 		var annotatedContext context.Context
-		annotatedContext, err = runtime.AnnotateContext(ctx, mux, req, "/minder.v1.RepositoryService/GetRepositoryByName", runtime.WithHTTPPathPattern("/api/v1/repository/provider/{provider}/name/{name}"))
+		annotatedContext, err = runtime.AnnotateContext(ctx, mux, req, "/minder.v1.RepositoryService/GetRepositoryByName", runtime.WithHTTPPathPattern("/api/v1/repository/provider/{context.provider}/name/{name}"))
 		if err != nil {
 			runtime.HTTPError(ctx, mux, outboundMarshaler, w, req, err)
 			return
@@ -3097,7 +3169,7 @@ func RegisterRepositoryServiceHandlerClient(ctx context.Context, mux *runtime.Se
 		inboundMarshaler, outboundMarshaler := runtime.MarshalerForRequest(mux, req)
 		var err error
 		var annotatedContext context.Context
-		annotatedContext, err = runtime.AnnotateContext(ctx, mux, req, "/minder.v1.RepositoryService/DeleteRepositoryByName", runtime.WithHTTPPathPattern("/api/v1/repository/provider/{provider}/name/{name}"))
+		annotatedContext, err = runtime.AnnotateContext(ctx, mux, req, "/minder.v1.RepositoryService/DeleteRepositoryByName", runtime.WithHTTPPathPattern("/api/v1/repository/provider/{context.provider}/name/{name}"))
 		if err != nil {
 			runtime.HTTPError(ctx, mux, outboundMarshaler, w, req, err)
 			return
@@ -3117,19 +3189,19 @@ func RegisterRepositoryServiceHandlerClient(ctx context.Context, mux *runtime.Se
 }
 
 var (
-	pattern_RepositoryService_RegisterRepository_0 = runtime.MustPattern(runtime.NewPattern(1, []int{2, 0, 2, 1, 2, 2, 2, 3, 1, 0, 4, 1, 5, 3, 2, 4}, []string{"api", "v1", "repository", "provider", "register"}, ""))
+	pattern_RepositoryService_RegisterRepository_0 = runtime.MustPattern(runtime.NewPattern(1, []int{2, 0, 2, 1, 2, 2, 2, 3, 1, 0, 4, 1, 5, 4, 2, 5}, []string{"api", "v1", "repository", "provider", "context.provider", "register"}, ""))
 
-	pattern_RepositoryService_ListRemoteRepositoriesFromProvider_0 = runtime.MustPattern(runtime.NewPattern(1, []int{2, 0, 2, 1, 2, 2, 2, 3, 1, 0, 4, 1, 5, 3, 2, 4}, []string{"api", "v1", "repositories", "provider", "remote"}, ""))
+	pattern_RepositoryService_ListRemoteRepositoriesFromProvider_0 = runtime.MustPattern(runtime.NewPattern(1, []int{2, 0, 2, 1, 2, 2, 2, 3, 1, 0, 4, 1, 5, 4, 2, 5}, []string{"api", "v1", "repositories", "provider", "context.provider", "remote"}, ""))
 
-	pattern_RepositoryService_ListRepositories_0 = runtime.MustPattern(runtime.NewPattern(1, []int{2, 0, 2, 1, 2, 2, 2, 3, 1, 0, 4, 1, 5, 3}, []string{"api", "v1", "repositories", "provider"}, ""))
+	pattern_RepositoryService_ListRepositories_0 = runtime.MustPattern(runtime.NewPattern(1, []int{2, 0, 2, 1, 2, 2, 2, 3, 1, 0, 4, 1, 5, 4}, []string{"api", "v1", "repositories", "provider", "context.provider"}, ""))
 
 	pattern_RepositoryService_GetRepositoryById_0 = runtime.MustPattern(runtime.NewPattern(1, []int{2, 0, 2, 1, 2, 2, 2, 3, 1, 0, 4, 1, 5, 4}, []string{"api", "v1", "repository", "id", "repository_id"}, ""))
 
-	pattern_RepositoryService_GetRepositoryByName_0 = runtime.MustPattern(runtime.NewPattern(1, []int{2, 0, 2, 1, 2, 2, 2, 3, 1, 0, 4, 1, 5, 3, 2, 4, 1, 0, 4, 1, 5, 4}, []string{"api", "v1", "repository", "provider", "name"}, ""))
+	pattern_RepositoryService_GetRepositoryByName_0 = runtime.MustPattern(runtime.NewPattern(1, []int{2, 0, 2, 1, 2, 2, 2, 3, 1, 0, 4, 1, 5, 4, 2, 5, 1, 0, 4, 1, 5, 5}, []string{"api", "v1", "repository", "provider", "context.provider", "name"}, ""))
 
 	pattern_RepositoryService_DeleteRepositoryById_0 = runtime.MustPattern(runtime.NewPattern(1, []int{2, 0, 2, 1, 2, 2, 2, 3, 1, 0, 4, 1, 5, 4}, []string{"api", "v1", "repository", "id", "repository_id"}, ""))
 
-	pattern_RepositoryService_DeleteRepositoryByName_0 = runtime.MustPattern(runtime.NewPattern(1, []int{2, 0, 2, 1, 2, 2, 2, 3, 1, 0, 4, 1, 5, 3, 2, 4, 1, 0, 4, 1, 5, 4}, []string{"api", "v1", "repository", "provider", "name"}, ""))
+	pattern_RepositoryService_DeleteRepositoryByName_0 = runtime.MustPattern(runtime.NewPattern(1, []int{2, 0, 2, 1, 2, 2, 2, 3, 1, 0, 4, 1, 5, 4, 2, 5, 1, 0, 4, 1, 5, 5}, []string{"api", "v1", "repository", "provider", "context.provider", "name"}, ""))
 )
 
 var (

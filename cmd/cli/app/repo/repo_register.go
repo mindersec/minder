@@ -152,8 +152,10 @@ func RegisterCmd(ctx context.Context, cmd *cobra.Command, conn *grpc.ClientConn)
 
 	// Get the list of repos
 	listResp, err := client.ListRepositories(ctx, &pb.ListRepositoriesRequest{
-		Provider:  provider,
-		ProjectId: projectID,
+		Context: &pb.Context{
+			Provider: provider,
+			Project:  &projectID,
+		},
 	})
 	if err != nil {
 		msg := "Error getting list of repos"
@@ -162,8 +164,10 @@ func RegisterCmd(ctx context.Context, cmd *cobra.Command, conn *grpc.ClientConn)
 
 	// Get a list of remote repos
 	remoteListResp, err := client.ListRemoteRepositoriesFromProvider(ctx, &pb.ListRemoteRepositoriesFromProviderRequest{
-		Provider:  provider,
-		ProjectId: projectID,
+		Context: &pb.Context{
+			Provider: provider,
+			Project:  &projectID,
+		},
 	})
 	if err != nil {
 		msg := "Error getting list of remote repos"
@@ -204,9 +208,11 @@ func RegisterCmd(ctx context.Context, cmd *cobra.Command, conn *grpc.ClientConn)
 		repo := selectedRepos[idx]
 		// Construct the RegisterRepositoryRequest
 		request := &pb.RegisterRepositoryRequest{
-			Provider:   provider,
+			Context: &pb.Context{
+				Provider: provider,
+				Project:  &projectID,
+			},
 			Repository: repo,
-			ProjectId:  projectID,
 		}
 
 		result, err := client.RegisterRepository(context.Background(), request)

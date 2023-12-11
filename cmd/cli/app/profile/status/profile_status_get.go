@@ -57,7 +57,7 @@ minder control plane for an specific provider/project or profile id, entity type
 
 		req := &minderv1.GetProfileStatusByNameRequest{
 			Context: &minderv1.Context{
-				Provider: &provider,
+				Provider: provider,
 			},
 			Name: profileName,
 			Entity: &minderv1.GetProfileStatusByNameRequest_EntityTypedId{

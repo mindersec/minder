@@ -59,8 +59,10 @@ var artifact_listCmd = &cobra.Command{
 		artifacts, err := client.ListArtifacts(
 			ctx,
 			&pb.ListArtifactsRequest{
-				Provider:  provider,
-				ProjectId: projectID,
+				Context: &pb.Context{
+					Provider: provider,
+					Project:  &projectID,
+				},
 			},
 		)
 

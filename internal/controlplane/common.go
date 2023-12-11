@@ -33,8 +33,8 @@ import (
 
 // ProjectIDGetter is an interface that can be implemented by a request
 type ProjectIDGetter interface {
-	// GetProjectId returns the project ID
-	GetProjectId() string
+	// GetProject returns the project ID
+	GetProject() string
 }
 
 // ProviderNameGetter is an interface that can be implemented by a request
@@ -52,7 +52,7 @@ func providerError(err error) error {
 
 func getProjectFromRequestOrDefault(ctx context.Context, in ProjectIDGetter) (uuid.UUID, error) {
 	// if we do not have a project ID, check if we can infer it
-	if in.GetProjectId() == "" {
+	if in.GetProject() == "" {
 		proj, err := auth.GetDefaultProject(ctx)
 		if err != nil {
 			return uuid.UUID{}, status.Errorf(codes.InvalidArgument, "cannot infer project id: %s", err)
@@ -61,7 +61,7 @@ func getProjectFromRequestOrDefault(ctx context.Context, in ProjectIDGetter) (uu
 		return proj, err
 	}
 
-	parsedProjectID, err := uuid.Parse(in.GetProjectId())
+	parsedProjectID, err := uuid.Parse(in.GetProject())
 	if err != nil {
 		return uuid.UUID{}, util.UserVisibleError(codes.InvalidArgument, "malformed project ID")
 	}

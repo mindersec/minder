@@ -36,7 +36,7 @@ func getProjectTableRows(projects []*minderv1.Project) []table.Row {
 		if len(projects) > 1 {
 			projectKey = fmt.Sprintf("Project #%d", idx+1)
 		}
-		projectVal := fmt.Sprintf("%s / %s", project.GetName(), project.GetProjectId())
+		projectVal := fmt.Sprintf("%s / %s", project.GetName(), project.GetProject())
 		rows = append(rows, table.Row{projectKey, projectVal})
 	}
 	return rows
