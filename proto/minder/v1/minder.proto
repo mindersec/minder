@@ -114,7 +114,7 @@ message SignatureVerification {
     optional string cert_identity = 4;
     optional string cert_issuer = 5;
     optional string rekor_log_id = 6;
-    optional int32 rekor_log_index = 7;
+    optional int64 rekor_log_index = 7;
     optional google.protobuf.Timestamp signature_time = 8;
 }
 

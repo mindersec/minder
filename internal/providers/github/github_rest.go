@@ -160,7 +160,7 @@ func (c *RestClient) ListAllPackages(ctx context.Context, isOrg bool, owner stri
 	return allContainers, nil
 }
 
-// ListPackagesByRepository returns a list of all packages for an specific repository
+// ListPackagesByRepository returns a list of all packages for a specific repository
 func (c *RestClient) ListPackagesByRepository(ctx context.Context, isOrg bool, owner string, artifactType string,
 	repositoryId int64, pageNumber int, itemsPerPage int) ([]*github.Package, error) {
 	opt := &github.PackageListOptions{
@@ -206,6 +206,78 @@ func (c *RestClient) ListPackagesByRepository(ctx context.Context, isOrg bool, o
 	return allContainers, nil
 }
 
+// GetPackageVersions returns a list of all package versions for the authenticated user or org
+func (c *RestClient) GetPackageVersions(ctx context.Context, isOrg bool, owner string, package_type string,
+	package_name string) ([]*github.PackageVersion, error) {
+	state := "active"
+
+	opt := &github.PackageListOptions{
+		PackageType: &package_type,
+		State:       &state,
+		ListOptions: github.ListOptions{
+			Page:    1,
+			PerPage: 100,
+		},
+	}
+
+	// escape the package name
+	package_name = url.PathEscape(package_name)
+
+	// create a slice to hold the versions
+	var allVersions []*github.PackageVersion
+
+	// loop until we get all package versions
+	for {
+		var v []*github.PackageVersion
+		var resp *github.Response
+		var err error
+		if isOrg {
+			v, resp, err = c.client.Organizations.PackageGetAllVersions(ctx, owner, package_type, package_name, opt)
+		} else {
+			v, resp, err = c.client.Users.PackageGetAllVersions(ctx, "", package_type, package_name, opt)
+		}
+		if err != nil {
+			return nil, err
+		}
+
+		// append to the slice
+		allVersions = append(allVersions, v...)
+
+		// if there is no next page, break
+		if resp.NextPage == 0 {
+			break
+		}
+
+		// update the page
+		opt.Page = resp.NextPage
+	}
+
+	// return the slice
+	return allVersions, nil
+}
+
+// GetPackageVersionByTag returns a single package version for the specific tag
+func (c *RestClient) GetPackageVersionByTag(ctx context.Context, isOrg bool, owner string, package_type string,
+	package_name string, tag string) (*github.PackageVersion, error) {
+	// get all versions
+	versions, err := c.GetPackageVersions(ctx, isOrg, owner, package_type, package_name)
+	if err != nil {
+		return nil, err
+	}
+
+	// iterate for all versions until we find the specific tag
+	for _, version := range versions {
+		tags := version.Metadata.Container.Tags
+		for _, t := range tags {
+			if t == tag {
+				return version, nil
+			}
+		}
+	}
+	return nil, nil
+
+}
+
 // GetPackageByName returns a single package for the authenticated user or for the org
 func (c *RestClient) GetPackageByName(ctx context.Context, isOrg bool, owner string, package_type string,
 	package_name string) (*github.Package, error) {
@@ -225,67 +297,6 @@ func (c *RestClient) GetPackageByName(ctx context.Context, isOrg bool, owner str
 		}
 	}
 	return pkg, nil
-}
-
-// GetPackageVersions returns a list of all package versions for the authenticated user or org
-func (c *RestClient) GetPackageVersions(ctx context.Context, isOrg bool, owner string, package_type string,
-	package_name string) ([]*github.PackageVersion, error) {
-	var versions []*github.PackageVersion
-	var err error
-	state := "active"
-
-	package_name = url.PathEscape(package_name)
-	if isOrg {
-		versions, _, err = c.client.Organizations.PackageGetAllVersions(ctx, owner, package_type,
-			package_name, &github.PackageListOptions{PackageType: &package_type, State: &state})
-		if err != nil {
-			return nil, err
-		}
-	} else {
-		versions, _, err = c.client.Users.PackageGetAllVersions(ctx, "", package_type,
-			package_name, &github.PackageListOptions{PackageType: &package_type, State: &state})
-		if err != nil {
-			return nil, err
-		}
-	}
-
-	return versions, nil
-}
-
-// GetPackageVersionByTag returns a single package version for the specific tag
-func (c *RestClient) GetPackageVersionByTag(ctx context.Context, isOrg bool, owner string, package_type string,
-	package_name string, tag string) (*github.PackageVersion, error) {
-	var versions []*github.PackageVersion
-	var err error
-	state := "active"
-
-	package_name = url.PathEscape(package_name)
-
-	if isOrg {
-		versions, _, err = c.client.Organizations.PackageGetAllVersions(ctx, owner, package_type,
-			package_name, &github.PackageListOptions{PackageType: &package_type, State: &state})
-		if err != nil {
-			return nil, err
-		}
-	} else {
-		versions, _, err = c.client.Users.PackageGetAllVersions(ctx, "", package_type,
-			package_name, &github.PackageListOptions{PackageType: &package_type, State: &state})
-		if err != nil {
-			return nil, err
-		}
-	}
-
-	// iterate for all versions until we find the specific tag
-	for _, version := range versions {
-		tags := version.Metadata.Container.Tags
-		for _, t := range tags {
-			if t == tag {
-				return version, nil
-			}
-		}
-	}
-	return nil, nil
-
 }
 
 // GetPackageVersionById returns a single package version for the specific id

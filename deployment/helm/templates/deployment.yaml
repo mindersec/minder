@@ -64,8 +64,6 @@ spec:
             value: "/secrets/identity/identity_client_secret"
           - name: "MINDER_UNSTABLE_TRUSTY_ENDPOINT"
             value: "{{ .Values.trusty.endpoint }}"
-          - name: "SIGSTORE_NO_CACHE"
-            value: "true"
           {{- if .Values.deploymentSettings.extraEnv }}
           {{- toYaml .Values.deploymentSettings.extraEnv | nindent 10 }}
           {{- end }}
@@ -102,6 +100,8 @@ spec:
             mountPath: /secrets/app
           - name: identity-secrets
             mountPath: /secrets/identity
+          - name: sigstore-tuf-cache
+            mountPath: /tmp/minder-cache
           {{- if .Values.deploymentSettings.extraVolumeMounts }}
           {{- toYaml .Values.deploymentSettings.extraVolumeMounts | nindent 10 }}
           {{- end }}
@@ -126,6 +126,9 @@ spec:
       - name: identity-secrets
         secret:
           secretName: {{ .Values.deploymentSettings.secrets.identitySecretName }}
+      - name: sigstore-tuf-cache
+        emptyDir:
+          sizeLimit: 500Mi
       {{- if .Values.deploymentSettings.extraVolumes }}
       {{- toYaml .Values.deploymentSettings.extraVolumes | nindent 6 }}
       {{- end }}
