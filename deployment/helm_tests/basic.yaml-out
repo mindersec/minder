@@ -89,24 +89,6 @@ data:
     auth:
       token_key: "./.ssh/token_key_passphrase"
     
-    # Password Salting, these values are using argon2id
-    # https://en.wikipedia.org/wiki/Argon2
-    # Argon has resistance against side-channel timing attacks and tradeoff attacks
-    # but it is computationally expensive.
-    # If this is a problematic, we could use bcrypt instead.
-    # https://en.wikipedia.org/wiki/Bcrypt
-    salt:
-      # The amount of memory used by the algorithm (in kibibytes).
-      memory: 65536
-      # the amount of iterations
-      iterations:  50
-      # degree of parallelism (number of threads)
-      parallelism: 4
-      # the length of the salt to be used
-      salt_length: 16
-      # the desired number of returned bytes
-      key_length: 32
-    
     # Webhook Configuration
     # change example.com to an exposed IP / domain
     # webhook_secret is set withing the webhook sent to github. Github then signs
@@ -693,24 +675,6 @@ data:
     #   openssl rand -base64 32 > .ssh/token_key_passphrase
     auth:
       token_key: "./.ssh/token_key_passphrase"
-    
-    # Password Salting, these values are using argon2id
-    # https://en.wikipedia.org/wiki/Argon2
-    # Argon has resistance against side-channel timing attacks and tradeoff attacks
-    # but it is computationally expensive.
-    # If this is a problematic, we could use bcrypt instead.
-    # https://en.wikipedia.org/wiki/Bcrypt
-    salt:
-      # The amount of memory used by the algorithm (in kibibytes).
-      memory: 65536
-      # the amount of iterations
-      iterations:  50
-      # degree of parallelism (number of threads)
-      parallelism: 4
-      # the length of the salt to be used
-      salt_length: 16
-      # the desired number of returned bytes
-      key_length: 32
     
     # Webhook Configuration
     # change example.com to an exposed IP / domain

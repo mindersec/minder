@@ -37,7 +37,6 @@ type Config struct {
 	Metrics       MetricsConfig      `mapstructure:"metrics"`
 	Database      DatabaseConfig     `mapstructure:"database"`
 	Identity      IdentityConfig     `mapstructure:"identity"`
-	Salt          CryptoConfig       `mapstructure:"salt"`
 	Auth          AuthConfig         `mapstructure:"auth"`
 	WebhookConfig WebhookConfig      `mapstructure:"webhook-config"`
 	Events        EventConfig        `mapstructure:"events"`
