@@ -26,7 +26,7 @@ import (
 	"github.com/spf13/viper"
 
 	"github.com/stacklok/minder/cmd/cli/app"
-	"github.com/stacklok/minder/internal/util"
+	"github.com/stacklok/minder/internal/util/cli"
 )
 
 // DocsCmd generates documentation
@@ -34,11 +34,13 @@ var DocsCmd = &cobra.Command{
 	Use:   "docs",
 	Short: "Generates documentation for the client",
 	Long:  `Generates documentation for the client.`,
-	PreRun: func(cmd *cobra.Command, args []string) {
-		err := viper.BindPFlags(cmd.Flags())
-		util.ExitNicelyOnError(err, "Error binding flags")
+	PreRunE: func(cmd *cobra.Command, args []string) error {
+		if err := viper.BindPFlags(cmd.Flags()); err != nil {
+			return cli.MessageAndError(cmd, "Error binding flags", err)
+		}
+		return nil
 	},
-	Run: func(cmd *cobra.Command, args []string) {
+	RunE: func(cmd *cobra.Command, args []string) error {
 		// We auto-generate the docs daily, so don't include the date at the bottom.
 		app.RootCmd.DisableAutoGenTag = true
 		// We need to add header material, since GenMarkdownTree always
@@ -51,10 +53,7 @@ var DocsCmd = &cobra.Command{
 			return fmt.Sprintf("---\ntitle: %s\n---\n", cmdString)
 		}
 		identity := func(s string) string { return s }
-		err := doc.GenMarkdownTreeCustom(app.RootCmd, "./docs/docs/ref/cli", prefix, identity)
-		if err != nil {
-			panic(err)
-		}
+		return doc.GenMarkdownTreeCustom(app.RootCmd, "./docs/docs/ref/cli", prefix, identity)
 	},
 }
 

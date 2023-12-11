@@ -27,6 +27,7 @@ import (
 	"fmt"
 	"net/http"
 	"net/url"
+	"os"
 	"time"
 
 	"github.com/charmbracelet/bubbles/table"
@@ -60,7 +61,7 @@ func userRegistered(ctx context.Context, client pb.UserServiceClient) (bool, *pb
 				return false, nil, nil
 			}
 		}
-		return false, nil, fmt.Errorf("error retrieving user %v", err)
+		return false, nil, fmt.Errorf("error retrieving user %w", err)
 	}
 	return true, res, nil
 }
@@ -76,7 +77,7 @@ will be saved to $XDG_CONFIG_HOME/minder/credentials.json`,
 			cli.Print(cmd.ErrOrStderr(), "Error binding flags: %s\n", err)
 		}
 	},
-	Run: func(cmd *cobra.Command, args []string) {
+	RunE: func(cmd *cobra.Command, args []string) error {
 		ctx := context.Background()
 
 		issuerUrlStr := util.GetConfigValue(viper.GetViper(), "identity.cli.issuer_url", "identity-url", cmd,
@@ -84,7 +85,10 @@ will be saved to $XDG_CONFIG_HOME/minder/credentials.json`,
 		clientID := util.GetConfigValue(viper.GetViper(), "identity.cli.client_id", "identity-client", cmd, "minder-cli").(string)
 
 		parsedURL, err := url.Parse(issuerUrlStr)
-		util.ExitNicelyOnError(err, "Error parsing issuer URL")
+		if err != nil {
+			return cli.MessageAndError(cmd, "Error parsing issuer URL", err)
+		}
+
 		issuerUrl := parsedURL.JoinPath("realms/stacklok")
 		scopes := []string{"openid"}
 		callbackPath := "/auth/callback"
@@ -102,18 +106,27 @@ will be saved to $XDG_CONFIG_HOME/minder/credentials.json`,
 
 		// Get random port
 		port, err := rand.GetRandomPort()
-		util.ExitNicelyOnError(err, "Error getting random port")
+		if err != nil {
+			return cli.MessageAndError(cmd, "Error getting random port", err)
+		}
 
 		parsedURL, err = url.Parse(fmt.Sprintf("http://localhost:%v", port))
-		util.ExitNicelyOnError(err, "Error creating callback server")
+		if err != nil {
+			return cli.MessageAndError(cmd, "Error parsing callback URL", err)
+		}
 		redirectURI := parsedURL.JoinPath(callbackPath)
 
 		provider, err := rp.NewRelyingPartyOIDC(issuerUrl.String(), clientID, "", redirectURI.String(), scopes, options...)
-		util.ExitNicelyOnError(err, "error creating identity provider reference")
+		if err != nil {
+			return cli.MessageAndError(cmd, "Error creating relying party", err)
+		}
 
 		stateFn := func() string {
 			state, err := mcrypto.GenerateNonce()
-			util.ExitNicelyOnError(err, "error generating state for login")
+			if err != nil {
+				cmd.PrintErrln("error generating state for login")
+				os.Exit(1)
+			}
 			return state
 		}
 
@@ -166,22 +179,28 @@ will be saved to $XDG_CONFIG_HOME/minder/credentials.json`,
 			AccessTokenExpiresAt: token.Expiry,
 		})
 		if err != nil {
-			fmt.Println(err)
+			cli.Print(cmd.ErrOrStderr(), "couldn't save credentials: %s\n", err)
 		}
 
 		conn, err := cli.GrpcForCommand(cmd, viper.GetViper())
-		util.ExitNicelyOnError(err, "Error getting grpc connection")
+		if err != nil {
+			return cli.MessageAndError(cmd, "Error getting grpc connection", err)
+		}
 		defer conn.Close()
 		client := pb.NewUserServiceClient(conn)
 
 		// check if the user already exists in the local database
 		registered, userInfo, err := userRegistered(ctx, client)
-		util.ExitNicelyOnError(err, "Error fetching user")
+		if err != nil {
+			return cli.MessageAndError(cmd, "Error checking if user exists", err)
+		}
 
 		if !registered {
 			cli.PrintCmd(cmd, "First login, registering user...\n")
 			newUser, err := client.CreateUser(ctx, &pb.CreateUserRequest{})
-			util.ExitNicelyOnError(err, "Error registering user")
+			if err != nil {
+				return cli.MessageAndError(cmd, "Error registering user", err)
+			}
 
 			cli.PrintCmd(cmd, cli.SuccessBanner.Render(
 				"You have been successfully registered. Welcome!"))
@@ -203,8 +222,8 @@ will be saved to $XDG_CONFIG_HOME/minder/credentials.json`,
 		cli.PrintCmd(cmd, "Your access credentials have been saved to %s", filePath)
 
 		// shut down the HTTP server
-		err = server.Shutdown(context.Background())
-		util.ExitNicelyOnError(err, "Failed to shut down server")
+		// TODO: should this use the app context?
+		return server.Shutdown(context.Background())
 	},
 }
 

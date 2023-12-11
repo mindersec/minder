@@ -37,19 +37,23 @@ var auth_logoutCmd = &cobra.Command{
 	Use:   "logout",
 	Short: "Logout from minder control plane.",
 	Long:  `Logout from minder control plane. Credentials will be removed from $XDG_CONFIG_HOME/minder/credentials.json`,
-	Run: func(cmd *cobra.Command, args []string) {
-		err := util.RemoveCredentials()
-		util.ExitNicelyOnError(err, "Error removing credentials")
+	RunE: func(cmd *cobra.Command, args []string) error {
+		if err := util.RemoveCredentials(); err != nil {
+			return cli.MessageAndError(cmd, "Error removing credentials", err)
+		}
 
 		issuerUrlStr := util.GetConfigValue(viper.GetViper(), "identity.cli.issuer_url", "identity-url", cmd,
 			constants.IdentitySeverURL).(string)
 
 		parsedURL, err := url.Parse(issuerUrlStr)
-		util.ExitNicelyOnError(err, "Error parsing issuer URL")
+		if err != nil {
+			return cli.MessageAndError(cmd, "Error parsing issuer URL", err)
+		}
 
 		logoutUrl := parsedURL.JoinPath("realms/stacklok/protocol/openid-connect/logout")
 		cli.PrintCmd(cmd, cli.SuccessBanner.Render("You have successfully logged out of the CLI."))
 		cli.PrintCmd(cmd, "If you would like to log out of the browser, you can visit %s", logoutUrl.String())
+		return nil
 	},
 }
 

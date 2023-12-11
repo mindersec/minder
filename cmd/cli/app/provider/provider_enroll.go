@@ -122,8 +122,7 @@ actions such as adding repositories.`,
 func EnrollProviderCmd(ctx context.Context, cmd *cobra.Command, conn *grpc.ClientConn) error {
 	provider := util.GetConfigValue(viper.GetViper(), "provider", "provider", cmd, "").(string)
 	if provider != ghclient.Github {
-		msg := fmt.Sprintf("Only %s is supported at this time", ghclient.Github)
-		return fmt.Errorf(msg)
+		return fmt.Errorf("Only %s is supported at this time", ghclient.Github)
 	}
 	project := viper.GetString("project")
 	pat := util.GetConfigValue(viper.GetViper(), "token", "token", cmd, "").(string)
@@ -156,7 +155,7 @@ func EnrollProviderCmd(ctx context.Context, cmd *cobra.Command, conn *grpc.Clien
 		_, err := client.StoreProviderToken(context.Background(),
 			&pb.StoreProviderTokenRequest{Provider: provider, ProjectId: project, AccessToken: pat, Owner: &owner})
 		if err != nil {
-			return fmt.Errorf("error storing token: %w", err)
+			return cli.MessageAndError(cmd, "Error storing token", err)
 		}
 
 		cli.PrintCmd(cmd, "Provider enrolled successfully")
@@ -177,7 +176,7 @@ func EnrollProviderCmd(ctx context.Context, cmd *cobra.Command, conn *grpc.Clien
 		Owner:     &owner,
 	})
 	if err != nil {
-		return fmt.Errorf("error getting authorization URL: %w", err)
+		return cli.MessageAndError(cmd, "error getting authorization URL", err)
 	}
 
 	fmt.Printf("Your browser will now be opened to: %s\n", resp.GetUrl())

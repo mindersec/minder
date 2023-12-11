@@ -76,12 +76,16 @@ minder control plane for an specific provider/project or profile id.`,
 		switch format {
 		case app.JSON:
 			out, err := util.GetJsonFromProto(resp)
-			util.ExitNicelyOnError(err, "Error getting json from proto")
-			fmt.Println(out)
+			if err != nil {
+				return cli.MessageAndError(cmd, "Error getting json from proto", err)
+			}
+			cli.PrintCmd(cmd, out)
 		case app.YAML:
 			out, err := util.GetYamlFromProto(resp)
-			util.ExitNicelyOnError(err, "Error getting yaml from proto")
-			fmt.Println(out)
+			if err != nil {
+				return cli.MessageAndError(cmd, "Error getting yaml from proto", err)
+			}
+			cli.PrintCmd(cmd, out)
 		case app.Table:
 			handleProfileStatusListTable(cmd, resp)
 

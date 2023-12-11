@@ -57,18 +57,18 @@ within a minder control plane.`,
 			st, ok := status.FromError(err)
 			if !ok {
 				// We can't parse the error, so just return it
-				return nil, fmt.Errorf("error creating rule type from %s: %w", f, err)
+				return nil, cli.MessageAndError(cmd, fmt.Sprintf("error creating rule type from %s", f), err)
 			}
 
 			if st.Code() != codes.AlreadyExists {
-				return nil, fmt.Errorf("error creating rule type from %s: %w", f, err)
+				return nil, cli.MessageAndError(cmd, fmt.Sprintf("error creating rule type from %s", f), err)
 			}
 
 			updateResp, err := client.UpdateProfile(ctx, &pb.UpdateProfileRequest{
 				Profile: p,
 			})
 			if err != nil {
-				return nil, fmt.Errorf("error updating rule type from %s: %w", f, err)
+				return nil, cli.MessageAndError(cmd, fmt.Sprintf("error updating rule type from %s", f), err)
 			}
 
 			return updateResp.GetProfile(), nil

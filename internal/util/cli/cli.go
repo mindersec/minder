@@ -119,3 +119,9 @@ func GRPCClientWrapRunE(
 		return runEFunc(ctx, cmd, c)
 	}
 }
+
+// MessageAndError prints a message and returns an error.
+func MessageAndError(cmd *cobra.Command, msg string, err error) error {
+	Print(cmd.ErrOrStderr(), msg)
+	return err
+}

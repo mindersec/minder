@@ -17,6 +17,7 @@ package artifact
 
 import (
 	"context"
+	"errors"
 	"fmt"
 	"os"
 
@@ -40,8 +41,7 @@ var artifact_getCmd = &cobra.Command{
 
 		// tag and latest versions cannot be set at same time
 		if tag != "" && latest_versions != 1 {
-			fmt.Fprintf(os.Stderr, "tag and latest versions cannot be set at the same time")
-			os.Exit(1)
+			return errors.New("tag and latest versions cannot be set at the same time")
 		}
 
 		client := pb.NewArtifactServiceClient(conn)
@@ -52,10 +52,15 @@ var artifact_getCmd = &cobra.Command{
 			LatestVersions: latest_versions,
 			Tag:            tag,
 		})
-		util.ExitNicelyOnError(err, "Error getting repo by id")
+		if err != nil {
+			return cli.MessageAndError(cmd, "Error getting artifact by id", err)
+		}
+
 		out, err := util.GetJsonFromProto(art)
-		util.ExitNicelyOnError(err, "Error getting json from proto")
-		fmt.Println(out)
+		if err != nil {
+			return cli.MessageAndError(cmd, "Error getting json from proto", err)
+		}
+		cli.Print(cmd.OutOrStdout(), out)
 		return nil
 	}),
 }
