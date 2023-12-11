@@ -1560,6 +1560,36 @@
         }
       }
     },
+    "RuleTypeDefinition": {
+      "type": "object",
+      "properties": {
+        "inEntity": {
+          "type": "string",
+          "description": "in_entity is the entity in which the rule is evaluated.\nThis can be repository, build_environment or artifact."
+        },
+        "ruleSchema": {
+          "type": "object",
+          "description": "rule_schema is the schema of the rule. This is expressed in JSON Schema."
+        },
+        "paramSchema": {
+          "type": "object",
+          "description": "param_schema is the schema of the parameters that are passed to the rule.\nThis is expressed in JSON Schema."
+        },
+        "ingest": {
+          "$ref": "#/definitions/DefinitionIngest"
+        },
+        "eval": {
+          "$ref": "#/definitions/DefinitionEval"
+        },
+        "remediate": {
+          "$ref": "#/definitions/DefinitionRemediate"
+        },
+        "alert": {
+          "$ref": "#/definitions/DefinitionAlert"
+        }
+      },
+      "description": "Definition defines the rule type. It encompases the schema and the data evaluation."
+    },
     "apiHttpBody": {
       "type": "object",
       "properties": {
@@ -2366,7 +2396,7 @@
           "description": "context is the context in which the rule is evaluated."
         },
         "def": {
-          "$ref": "#/definitions/v1RuleTypeDefinition",
+          "$ref": "#/definitions/RuleTypeDefinition",
           "description": "def is the definition of the rule type."
         },
         "description": {
@@ -2379,36 +2409,6 @@
         }
       },
       "description": "RuleType defines rules that may or may not be user defined.\nThe version is assumed from the folder's version."
-    },
-    "v1RuleTypeDefinition": {
-      "type": "object",
-      "properties": {
-        "inEntity": {
-          "type": "string",
-          "description": "in_entity is the entity in which the rule is evaluated.\nThis can be repository, build_environment or artifact."
-        },
-        "ruleSchema": {
-          "type": "object",
-          "description": "rule_schema is the schema of the rule. This is expressed in JSON Schema."
-        },
-        "paramSchema": {
-          "type": "object",
-          "description": "param_schema is the schema of the parameters that are passed to the rule.\nThis is expressed in JSON Schema."
-        },
-        "ingest": {
-          "$ref": "#/definitions/DefinitionIngest"
-        },
-        "eval": {
-          "$ref": "#/definitions/DefinitionEval"
-        },
-        "remediate": {
-          "$ref": "#/definitions/DefinitionRemediate"
-        },
-        "alert": {
-          "$ref": "#/definitions/DefinitionAlert"
-        }
-      },
-      "description": "Definition defines the rule type. It encompases the schema and the data evaluation."
     },
     "v1SignatureVerification": {
       "type": "object",
