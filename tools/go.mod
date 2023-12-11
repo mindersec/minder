@@ -7,7 +7,7 @@ toolchain go1.21.3
 require (
 	github.com/bufbuild/buf v1.28.1
 	github.com/daixiang0/gci v0.11.2
-	github.com/go-critic/go-critic v0.9.0
+	github.com/go-critic/go-critic v0.10.0
 	github.com/golangci/golangci-lint v1.55.2
 	github.com/gotesttools/gotestfmt/v2 v2.5.0
 	github.com/grpc-ecosystem/grpc-gateway/v2 v2.18.1
@@ -71,7 +71,7 @@ require (
 	github.com/chavacava/garif v0.1.0 // indirect
 	github.com/containerd/stargz-snapshotter/estargz v0.15.1 // indirect
 	github.com/cpuguy83/go-md2man/v2 v2.0.3 // indirect
-	github.com/cristalhq/acmd v0.11.1 // indirect
+	github.com/cristalhq/acmd v0.11.2 // indirect
 	github.com/cubicdaiya/gonp v1.0.4 // indirect
 	github.com/curioswitch/go-reassign v0.2.0 // indirect
 	github.com/cznic/mathutil v0.0.0-20181122101859-297441e03548 // indirect
