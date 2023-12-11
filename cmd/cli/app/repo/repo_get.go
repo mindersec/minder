@@ -105,13 +105,13 @@ var repo_getCmd = &cobra.Command{
 				if err != nil {
 					return cli.MessageAndError(cmd, "Error getting json from proto", err)
 				}
-				cli.PrintCmd(cmd, out)
+				cmd.Println(out)
 			} else {
 				out, err := util.GetYamlFromProto(repository)
 				if err != nil {
 					return cli.MessageAndError(cmd, "Error getting yaml from proto", err)
 				}
-				cli.PrintCmd(cmd, out)
+				cmd.Println(out)
 			}
 		}
 		return nil

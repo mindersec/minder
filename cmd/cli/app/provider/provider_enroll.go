@@ -52,7 +52,7 @@ const MAX_CALLS = 300
 
 // callBackServer starts a server and handler to listen for the OAuth callback.
 // It will wait for either a success or failure response from the server.
-func callBackServer(ctx context.Context, provider string, project string, port string,
+func callBackServer(ctx context.Context, cmd *cobra.Command, provider string, project string, port string,
 	wg *sync.WaitGroup, client pb.OAuthServiceClient, since int64) {
 	server := &http.Server{
 		Addr:              fmt.Sprintf(":%s", port),
@@ -64,12 +64,12 @@ func callBackServer(ctx context.Context, provider string, project string, port s
 		err := server.Close()
 		if err != nil {
 			// Handle the error appropriately, such as logging or returning an error message.
-			fmt.Printf("Error closing server: %s", err)
+			cmd.Printf("Error closing server: %s", err)
 		}
 	}()
 
 	// Start the server in a goroutine
-	fmt.Println("Listening for OAuth Login flow to complete on port", port)
+	cmd.Println("Listening for OAuth Login flow to complete on port", port)
 	go func() {
 		_ = server.ListenAndServe()
 	}()
@@ -158,7 +158,7 @@ func EnrollProviderCmd(ctx context.Context, cmd *cobra.Command, conn *grpc.Clien
 			return cli.MessageAndError(cmd, "Error storing token", err)
 		}
 
-		cli.PrintCmd(cmd, "Provider enrolled successfully")
+		cmd.Println("Provider enrolled successfully")
 		return nil
 	}
 
@@ -179,24 +179,24 @@ func EnrollProviderCmd(ctx context.Context, cmd *cobra.Command, conn *grpc.Clien
 		return cli.MessageAndError(cmd, "error getting authorization URL", err)
 	}
 
-	fmt.Printf("Your browser will now be opened to: %s\n", resp.GetUrl())
-	fmt.Println("Please follow the instructions on the page to complete the OAuth flow.")
-	fmt.Println("Once the flow is complete, the CLI will close")
-	fmt.Println("If this is a headless environment, please copy and paste the URL into a browser on a different machine.")
+	cmd.Printf("Your browser will now be opened to: %s\n", resp.GetUrl())
+	cmd.Println("Please follow the instructions on the page to complete the OAuth flow.")
+	cmd.Println("Once the flow is complete, the CLI will close")
+	cmd.Println("If this is a headless environment, please copy and paste the URL into a browser on a different machine.")
 
 	if err := browser.OpenURL(resp.GetUrl()); err != nil {
 		fmt.Fprintf(os.Stderr, "Error opening browser: %s\n", err)
-		fmt.Println("Please copy and paste the URL into a browser.")
+		cmd.Println("Please copy and paste the URL into a browser.")
 	}
 	openTime := time.Now().Unix()
 
 	var wg sync.WaitGroup
 	wg.Add(1)
 
-	go callBackServer(oAuthCallbackCtx, provider, project, fmt.Sprintf("%d", port), &wg, client, openTime)
+	go callBackServer(oAuthCallbackCtx, cmd, provider, project, fmt.Sprintf("%d", port), &wg, client, openTime)
 	wg.Wait()
 
-	cli.PrintCmd(cmd, "Provider enrolled successfully")
+	cmd.Println("Provider enrolled successfully")
 	return nil
 }
 

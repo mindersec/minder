@@ -79,13 +79,13 @@ minder control plane for an specific provider/project or profile id.`,
 			if err != nil {
 				return cli.MessageAndError(cmd, "Error getting json from proto", err)
 			}
-			cli.PrintCmd(cmd, out)
+			cmd.Println(out)
 		case app.YAML:
 			out, err := util.GetYamlFromProto(resp)
 			if err != nil {
 				return cli.MessageAndError(cmd, "Error getting yaml from proto", err)
 			}
-			cli.PrintCmd(cmd, out)
+			cmd.Println(out)
 		case app.Table:
 			handleProfileStatusListTable(cmd, resp)
 

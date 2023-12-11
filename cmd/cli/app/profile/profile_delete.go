@@ -17,7 +17,6 @@ package profile
 
 import (
 	"context"
-	"fmt"
 	"os"
 
 	"github.com/spf13/cobra"
@@ -61,7 +60,7 @@ func init() {
 	profile_deleteCmd.Flags().StringP("id", "i", "", "ID of profile to delete")
 	profile_deleteCmd.Flags().StringP("provider", "p", "github", "Provider for the profile")
 	if err := profile_deleteCmd.MarkFlagRequired("id"); err != nil {
-		fmt.Printf("Error marking flag as required: %s", err)
+		profile_deleteCmd.Printf("Error marking flag as required: %s", err)
 		os.Exit(1)
 	}
 	// TODO: add a flag for the profile name

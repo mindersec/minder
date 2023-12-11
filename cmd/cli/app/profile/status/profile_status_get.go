@@ -82,13 +82,13 @@ minder control plane for an specific provider/project or profile id, entity type
 			if err != nil {
 				return cli.MessageAndError(cmd, "Error getting json from proto", err)
 			}
-			cli.PrintCmd(cmd, out)
+			cmd.Println(out)
 		case app.YAML:
 			out, err := util.GetYamlFromProto(resp)
 			if err != nil {
 				return cli.MessageAndError(cmd, "Error getting yaml from proto", err)
 			}
-			cli.PrintCmd(cmd, out)
+			cmd.Println(out)
 		case app.Table:
 			handleProfileStatusListTable(cmd, resp)
 		}
@@ -109,11 +109,11 @@ func init() {
 
 	// mark as required
 	if err := profilestatus_getCmd.MarkFlagRequired("profile"); err != nil {
-		fmt.Printf("Error marking flag as required: %s", err)
+		profilestatus_getCmd.Printf("Error marking flag as required: %s", err)
 		os.Exit(1)
 	}
 	if err := profilestatus_getCmd.MarkFlagRequired("entity"); err != nil {
-		fmt.Printf("Error marking flag as required: %s", err)
+		profilestatus_getCmd.Printf("Error marking flag as required: %s", err)
 		os.Exit(1)
 	}
 }

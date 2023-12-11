@@ -51,8 +51,8 @@ var auth_logoutCmd = &cobra.Command{
 		}
 
 		logoutUrl := parsedURL.JoinPath("realms/stacklok/protocol/openid-connect/logout")
-		cli.PrintCmd(cmd, cli.SuccessBanner.Render("You have successfully logged out of the CLI."))
-		cli.PrintCmd(cmd, "If you would like to log out of the browser, you can visit %s", logoutUrl.String())
+		cmd.Println(cli.SuccessBanner.Render("You have successfully logged out of the CLI."))
+		cmd.Printf("If you would like to log out of the browser, you can visit %s\n", logoutUrl.String())
 		return nil
 	},
 }

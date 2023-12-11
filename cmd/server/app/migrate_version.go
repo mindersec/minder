@@ -54,17 +54,17 @@ var versionCmd = &cobra.Command{
 		configPath := getMigrateConfigPath()
 		m, err := migrate.New(configPath, connString)
 		if err != nil {
-			fmt.Printf("Error while creating migration instance (%s): %v\n", configPath, err)
+			cmd.Printf("Error while creating migration instance (%s): %v\n", configPath, err)
 			os.Exit(1)
 		}
 
 		version, dirty, err := m.Version()
 		if err != nil {
-			fmt.Printf("Error while getting migration version: %v\n", err)
+			cmd.Printf("Error while getting migration version: %v\n", err)
 			os.Exit(1)
 		}
 
-		fmt.Printf("Version=%v dirty=%v\n", version, dirty)
+		cmd.Printf("Version=%v dirty=%v\n", version, dirty)
 		return nil
 	},
 }

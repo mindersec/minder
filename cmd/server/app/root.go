@@ -19,6 +19,7 @@ package app
 import (
 	"fmt"
 	"log"
+	"os"
 
 	"github.com/spf13/cobra"
 	"github.com/spf13/viper"
@@ -41,6 +42,8 @@ var (
 // Execute adds all child commands to the root command and sets flags appropriately.
 // This is called by main.main(). It only needs to happen once to the rootCmd.
 func Execute() {
+	RootCmd.SetOut(os.Stdout)
+	RootCmd.SetErr(os.Stderr)
 	err := RootCmd.Execute()
 	util.ExitNicelyOnError(err, "Error executing root command")
 }

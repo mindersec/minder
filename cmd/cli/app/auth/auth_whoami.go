@@ -39,7 +39,7 @@ var authWhoamiCmd = &cobra.Command{
 			return cli.MessageAndError(cmd, "Error getting information for user", err)
 		}
 
-		cli.PrintCmd(cmd, cli.Header.Render("Here are your details:"))
+		cmd.Println(cli.Header.Render("Here are your details:"))
 		renderUserInfoWhoami(cmd, conn, userInfo)
 		return nil
 	}),

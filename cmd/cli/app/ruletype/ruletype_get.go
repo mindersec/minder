@@ -69,13 +69,13 @@ minder control plane.`,
 			if err != nil {
 				return fmt.Errorf("error getting yaml from proto: %w", err)
 			}
-			cli.PrintCmd(cmd, out)
+			cmd.Println(out)
 		case app.JSON:
 			out, err := util.GetJsonFromProto(rtype)
 			if err != nil {
 				return fmt.Errorf("error getting json from proto: %w", err)
 			}
-			cli.PrintCmd(cmd, out)
+			cmd.Println(out)
 		case app.Table:
 			handleGetTableOutput(cmd, rtype.GetRuleType())
 		}

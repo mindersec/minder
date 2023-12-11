@@ -89,19 +89,19 @@ var repo_listCmd = &cobra.Command{
 				table.WithStyles(cli.TableHiddenSelectStyles),
 			)
 
-			cli.PrintCmd(cmd, cli.TableRender(t))
+			cmd.Println(cli.TableRender(t))
 		case "json":
 			out, err := util.GetJsonFromProto(resp)
 			if err != nil {
 				return cli.MessageAndError(cmd, "Error getting json from proto", err)
 			}
-			cli.PrintCmd(cmd, out)
+			cmd.Println(out)
 		case "yaml":
 			out, err := util.GetYamlFromProto(resp)
 			if err != nil {
 				return cli.MessageAndError(cmd, "Error getting yaml from proto", err)
 			}
-			cli.PrintCmd(cmd, out)
+			cmd.Println(out)
 		}
 		return nil
 	}),

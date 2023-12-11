@@ -18,6 +18,7 @@ package app
 
 import (
 	"fmt"
+	"os"
 
 	"github.com/spf13/cobra"
 	"github.com/spf13/viper"
@@ -40,6 +41,8 @@ https://docs.stacklok.com/minder`,
 
 // Execute adds all child commands to the root command and sets flags appropriately.
 func Execute() {
+	RootCmd.SetOut(os.Stdout)
+	RootCmd.SetErr(os.Stderr)
 	err := RootCmd.Execute()
 	util.ExitNicelyOnError(err, "Error on execute")
 }
