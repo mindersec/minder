@@ -22,6 +22,8 @@ import (
 	"testing"
 
 	"github.com/stretchr/testify/assert"
+	"google.golang.org/grpc/codes"
+	"google.golang.org/grpc/status"
 )
 
 func TestGetCert(t *testing.T) {
@@ -69,6 +71,14 @@ func TestEncryptDecryptBytes(t *testing.T) {
 	decrypted, err := decryptBytes("test", encrypted)
 	assert.Nil(t, err)
 	assert.Equal(t, "test", string(decrypted))
+}
+
+func TestEncryptTooLarge(t *testing.T) {
+	t.Parallel()
+
+	large := make([]byte, 34000000) // More than 32 MB
+	_, err := EncryptBytes("test", large)
+	assert.ErrorIs(t, err, status.Error(codes.InvalidArgument, "data is too large (>32MB)"))
 }
 
 func TestGenerateNonce(t *testing.T) {
