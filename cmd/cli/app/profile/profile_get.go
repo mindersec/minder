@@ -64,13 +64,13 @@ minder control plane.`,
 			if err != nil {
 				return cli.MessageAndError(cmd, "Error getting yaml from proto", err)
 			}
-			fmt.Println(out)
+			cmd.Println(out)
 		case app.JSON:
 			out, err := util.GetJsonFromProto(profile)
 			if err != nil {
 				return cli.MessageAndError(cmd, "Error getting json from proto", err)
 			}
-			fmt.Println(out)
+			cmd.Println(out)
 		case app.Table:
 			p := profile.GetProfile()
 			handleGetTableOutput(cmd, p)

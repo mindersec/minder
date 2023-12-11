@@ -60,7 +60,7 @@ var artifact_getCmd = &cobra.Command{
 		if err != nil {
 			return cli.MessageAndError(cmd, "Error getting json from proto", err)
 		}
-		cli.Print(cmd.OutOrStdout(), out)
+		cmd.Println(out)
 		return nil
 	}),
 }

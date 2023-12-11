@@ -88,13 +88,13 @@ var artifact_listCmd = &cobra.Command{
 			if err != nil {
 				return cli.MessageAndError(cmd, "Error getting json from proto", err)
 			}
-			cli.PrintCmd(cmd, out)
+			cmd.Println(out)
 		case "yaml":
 			out, err := util.GetYamlFromProto(artifacts)
 			if err != nil {
 				return cli.MessageAndError(cmd, "Error getting yaml from proto", err)
 			}
-			cli.PrintCmd(cmd, out)
+			cmd.Println(out)
 		}
 
 		return nil

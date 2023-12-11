@@ -16,7 +16,6 @@
 package auth
 
 import (
-	"fmt"
 	"testing"
 
 	"github.com/spf13/viper"
@@ -51,7 +50,6 @@ func TestCobraMain(t *testing.T) {
 			viper.AddConfigPath("../../../..")
 			viper.SetConfigType("yaml")
 			viper.AutomaticEnv()
-			fmt.Println(viper.GetViper().ConfigFileUsed())
 
 			tw := &util.TestWriter{}
 			app.RootCmd.SetOut(tw) // stub to capture eventual output

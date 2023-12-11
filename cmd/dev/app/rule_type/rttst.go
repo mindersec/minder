@@ -80,8 +80,8 @@ func testCmdRun(cmd *cobra.Command, _ []string) error {
 
 	// set rego env variable for debugging
 	if err := os.Setenv(rego.EnablePrintEnvVar, "true"); err != nil {
-		fmt.Printf("Unable to set %s environment variable: %s\n", rego.EnablePrintEnvVar, err)
-		fmt.Println("If the rule you're testing is rego-based, you will not be able to use `print` statements for debugging.")
+		cmd.Printf("Unable to set %s environment variable: %s\n", rego.EnablePrintEnvVar, err)
+		cmd.Println("If the rule you're testing is rego-based, you will not be able to use `print` statements for debugging.")
 	}
 
 	rt, err := readRuleTypeFromFile(rtpath.Value.String())
@@ -140,10 +140,11 @@ func testCmdRun(cmd *cobra.Command, _ []string) error {
 		return fmt.Errorf("no rules found with type %s", rt.Name)
 	}
 
-	return runEvaluationForRules(eng, inf, rules)
+	return runEvaluationForRules(cmd, eng, inf, rules)
 }
 
 func runEvaluationForRules(
+	cmd *cobra.Command,
 	eng *engine.RuleTypeEngine,
 	inf *engine.EntityInfoWrapper,
 	frags []*minderv1.Profile_Rule,
@@ -156,7 +157,7 @@ func runEvaluationForRules(
 		if err != nil {
 			return fmt.Errorf("error validating rule against schema: %w", err)
 		}
-		fmt.Printf("Profile valid according to the JSON schema!\n")
+		cmd.Printf("Profile valid according to the JSON schema!\n")
 
 		if err := val.ValidateParamsAgainstSchema(frag.GetParams()); err != nil {
 			return fmt.Errorf("error validating params against schema: %w", err)
@@ -173,14 +174,14 @@ func runEvaluationForRules(
 		evalStatus.SetActionsErr(context.Background(), eng.Actions(context.Background(), inf, evalStatus))
 
 		if errors.IsActionFatalError(evalStatus.GetActionsErr().RemediateErr) {
-			fmt.Printf("Remediation failed with fatal error: %s", evalStatus.GetActionsErr().RemediateErr)
+			cmd.Printf("Remediation failed with fatal error: %s", evalStatus.GetActionsErr().RemediateErr)
 		}
 
 		if evalStatus.GetEvalErr() != nil {
 			return fmt.Errorf("error evaluating rule type: %w", evalStatus.GetEvalErr())
 		}
 
-		fmt.Printf("The rule type is valid and the entity conforms to it\n")
+		cmd.Printf("The rule type is valid and the entity conforms to it\n")
 	}
 
 	return nil

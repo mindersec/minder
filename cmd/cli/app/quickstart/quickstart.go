@@ -287,11 +287,11 @@ var cmd = &cobra.Command{
 		}
 
 		// Finish - Confirm profile creation
-		cli.PrintCmd(cmd, cli.WarningBanner.Render(stepPromptMsgFinish))
+		cmd.Println(cli.WarningBanner.Render(stepPromptMsgFinish))
 
 		// Print the "profile already exists" message, if needed
 		if alreadyExists != "" {
-			cli.PrintCmd(cmd, cli.WarningBanner.Render(alreadyExists))
+			cmd.Println(cli.WarningBanner.Render(alreadyExists))
 		} else {
 			// Print the profile create result table
 			cmd.Println("Profile details (minder profile list -p github):")

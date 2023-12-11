@@ -25,7 +25,6 @@ package cli
 import (
 	"context"
 	"fmt"
-	"io"
 	"time"
 
 	"github.com/erikgeiser/promptkit/confirmation"
@@ -38,20 +37,10 @@ import (
 	"github.com/stacklok/minder/internal/util/cli/useragent"
 )
 
-// PrintCmd prints a message using the output defined in the cobra Command
-func PrintCmd(cmd *cobra.Command, msg string, args ...interface{}) {
-	Print(cmd.OutOrStdout(), msg, args...)
-}
-
-// Print prints a message using the given io.Writer
-func Print(out io.Writer, msg string, args ...interface{}) {
-	fmt.Fprintf(out, msg+"\n", args...)
-}
-
 // PrintYesNoPrompt prints a yes/no prompt to the user and returns false if the user did not respond with yes or y
 func PrintYesNoPrompt(cmd *cobra.Command, promptMsg, confirmMsg, fallbackMsg string, defaultYes bool) bool {
 	// Print the warning banner with the prompt message
-	PrintCmd(cmd, WarningBanner.Render(promptMsg))
+	cmd.Println(WarningBanner.Render(promptMsg))
 
 	// Determine the default confirmation value
 	defConf := confirmation.No
@@ -63,13 +52,13 @@ func PrintYesNoPrompt(cmd *cobra.Command, promptMsg, confirmMsg, fallbackMsg str
 	input := confirmation.New(confirmMsg, defConf)
 	ok, err := input.RunPrompt()
 	if err != nil {
-		PrintCmd(cmd, WarningBanner.Render(fmt.Sprintf("Error reading input: %v", err)))
+		cmd.Println(WarningBanner.Render(fmt.Sprintf("Error reading input: %v", err)))
 		ok = false
 	}
 
 	// If the user did not confirm, print the fallback message
 	if !ok {
-		PrintCmd(cmd, Header.Render(fallbackMsg))
+		cmd.Println(Header.Render(fallbackMsg))
 	}
 	return ok
 }
@@ -122,6 +111,6 @@ func GRPCClientWrapRunE(
 
 // MessageAndError prints a message and returns an error.
 func MessageAndError(cmd *cobra.Command, msg string, err error) error {
-	Print(cmd.ErrOrStderr(), msg)
+	cmd.PrintErrln(msg)
 	return err
 }

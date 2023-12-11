@@ -50,6 +50,8 @@ const Table = "table"
 
 // Execute adds all child commands to the root command and sets flags appropriately.
 func Execute() {
+	RootCmd.SetOut(os.Stdout)
+	RootCmd.SetErr(os.Stderr)
 	err := RootCmd.Execute()
 	util.ExitNicelyOnError(err, "")
 }

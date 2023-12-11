@@ -191,7 +191,7 @@ func RegisterCmd(ctx context.Context, cmd *cobra.Command, conn *grpc.ClientConn)
 		}
 	}
 
-	cli.PrintCmd(cmd, "Found %d remote repositories: %d registered and %d unregistered.\n",
+	cmd.Printf("Found %d remote repositories: %d registered and %d unregistered.\n",
 		len(remoteListResp.Results), len(listResp.Results), len(unregisteredRepos))
 
 	// Get the selected repos
@@ -257,6 +257,6 @@ func RegisterCmd(ctx context.Context, cmd *cobra.Command, conn *grpc.ClientConn)
 		table.WithStyles(cli.TableHiddenSelectStyles),
 	)
 
-	cli.PrintCmd(cmd, cli.TableRender(t))
+	cmd.Println(cli.TableRender(t))
 	return registeredRepos, "", nil
 }

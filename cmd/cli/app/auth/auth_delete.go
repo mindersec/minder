@@ -72,9 +72,9 @@ var auth_deleteCmd = &cobra.Command{
 		// directly related to user deletion because the token will expire after 5 minutes and cannot be refreshed
 		err = util.RemoveCredentials()
 		if err != nil {
-			cli.PrintCmd(cmd, cli.WarningBanner.Render("Failed to remove locally stored credentials."))
+			cmd.Println(cli.WarningBanner.Render("Failed to remove locally stored credentials."))
 		}
-		cli.PrintCmd(cmd, cli.SuccessBanner.Render("Successfully deleted account. It may take up to 48 hours for "+
+		cmd.Println(cli.SuccessBanner.Render("Successfully deleted account. It may take up to 48 hours for " +
 			"all data to be removed."))
 
 		return nil
