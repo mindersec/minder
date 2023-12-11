@@ -23,7 +23,6 @@ import (
 	"github.com/spf13/viper"
 	"google.golang.org/grpc"
 
-	github "github.com/stacklok/minder/internal/providers/github"
 	"github.com/stacklok/minder/internal/util"
 	"github.com/stacklok/minder/internal/util/cli"
 	pb "github.com/stacklok/minder/pkg/api/protobuf/go/minder/v1"
@@ -62,22 +61,21 @@ var repoDeleteCmd = &cobra.Command{
 			resp, err := client.DeleteRepositoryById(ctx, &pb.DeleteRepositoryByIdRequest{
 				RepositoryId: repoid,
 			})
-			util.ExitNicelyOnError(err, "Error deleting repo by id")
+			if err != nil {
+				return cli.MessageAndError(cmd, "Error deleting repo by id", err)
+			}
 			deletedRepoID = resp
 		} else {
-			if provider != github.Github {
-				return fmt.Errorf("only %s is supported at this time", github.Github)
-			}
-
 			// delete repo by name
 			resp, err := client.DeleteRepositoryByName(ctx, &pb.DeleteRepositoryByNameRequest{
 				Context: &pb.Context{
 					Provider: provider,
 				},
 				Name: name,
-			},
-			)
-			util.ExitNicelyOnError(err, "Error deleting repo by name")
+			})
+			if err != nil {
+				return cli.MessageAndError(cmd, "Error deleting repo by name", err)
+			}
 			deletedRepoName = resp
 		}
 

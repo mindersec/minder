@@ -54,16 +54,22 @@ minder control plane.`,
 			},
 			Id: id,
 		})
-		util.ExitNicelyOnError(err, "Error getting profile")
+		if err != nil {
+			return cli.MessageAndError(cmd, "Error getting profile", err)
+		}
 
 		switch format {
 		case app.YAML:
 			out, err := util.GetYamlFromProto(profile)
-			util.ExitNicelyOnError(err, "Error getting yaml from proto")
+			if err != nil {
+				return cli.MessageAndError(cmd, "Error getting yaml from proto", err)
+			}
 			fmt.Println(out)
 		case app.JSON:
 			out, err := util.GetJsonFromProto(profile)
-			util.ExitNicelyOnError(err, "Error getting json from proto")
+			if err != nil {
+				return cli.MessageAndError(cmd, "Error getting json from proto", err)
+			}
 			fmt.Println(out)
 		case app.Table:
 			p := profile.GetProfile()

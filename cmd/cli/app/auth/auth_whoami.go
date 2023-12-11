@@ -22,7 +22,6 @@ import (
 	"github.com/spf13/cobra"
 	"google.golang.org/grpc"
 
-	"github.com/stacklok/minder/internal/util"
 	"github.com/stacklok/minder/internal/util/cli"
 	pb "github.com/stacklok/minder/pkg/api/protobuf/go/minder/v1"
 )
@@ -36,7 +35,9 @@ var authWhoamiCmd = &cobra.Command{
 		client := pb.NewUserServiceClient(conn)
 
 		userInfo, err := client.GetUser(ctx, &pb.GetUserRequest{})
-		util.ExitNicelyOnError(err, "Error getting information for user")
+		if err != nil {
+			return cli.MessageAndError(cmd, "Error getting information for user", err)
+		}
 
 		cli.PrintCmd(cmd, cli.Header.Render("Here are your details:"))
 		renderUserInfoWhoami(cmd, conn, userInfo)

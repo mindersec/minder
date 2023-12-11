@@ -18,7 +18,6 @@ package ruletype
 import (
 	"context"
 	"errors"
-	"fmt"
 
 	"github.com/spf13/cobra"
 	"github.com/spf13/viper"
@@ -77,7 +76,7 @@ minder control plane.`,
 				Id: id,
 			})
 			if err != nil {
-				return fmt.Errorf("Error getting rule type: %w", err)
+				return cli.MessageAndError(cmd, "Error getting rule type", err)
 			}
 			// Add the rule type for deletion
 			rulesToDelete = append(rulesToDelete, rtype.RuleType)
@@ -92,7 +91,7 @@ minder control plane.`,
 				},
 			})
 			if err != nil {
-				return fmt.Errorf("Error listing rule types: %w", err)
+				return cli.MessageAndError(cmd, "Error listing rule types", err)
 			}
 			rulesToDelete = append(rulesToDelete, resp.RuleTypes...)
 		}

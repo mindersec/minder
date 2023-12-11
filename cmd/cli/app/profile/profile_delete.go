@@ -17,12 +17,13 @@ package profile
 
 import (
 	"context"
+	"fmt"
+	"os"
 
 	"github.com/spf13/cobra"
 	"github.com/spf13/viper"
 	"google.golang.org/grpc"
 
-	"github.com/stacklok/minder/internal/util"
 	"github.com/stacklok/minder/internal/util/cli"
 	pb "github.com/stacklok/minder/pkg/api/protobuf/go/minder/v1"
 )
@@ -45,8 +46,10 @@ minder control plane.`,
 			},
 			Id: id,
 		})
+		if err != nil {
+			return cli.MessageAndError(cmd, "Error deleting profile", err)
+		}
 
-		util.ExitNicelyOnError(err, "Error deleting profile")
 		cmd.Println("Successfully deleted profile with id:", id)
 
 		return nil
@@ -57,7 +60,9 @@ func init() {
 	ProfileCmd.AddCommand(profile_deleteCmd)
 	profile_deleteCmd.Flags().StringP("id", "i", "", "ID of profile to delete")
 	profile_deleteCmd.Flags().StringP("provider", "p", "github", "Provider for the profile")
-	err := profile_deleteCmd.MarkFlagRequired("id")
-	util.ExitNicelyOnError(err, "Error marking flag as required")
+	if err := profile_deleteCmd.MarkFlagRequired("id"); err != nil {
+		fmt.Printf("Error marking flag as required: %s", err)
+		os.Exit(1)
+	}
 	// TODO: add a flag for the profile name
 }

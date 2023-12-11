@@ -39,11 +39,15 @@ var auth_deleteCmd = &cobra.Command{
 
 		// Ensure the user already exists in the local database
 		_, _, err := userRegistered(ctx, client)
-		util.ExitNicelyOnError(err, "Error fetching user")
+		if err != nil {
+			return cli.MessageAndError(cmd, "Error checking if user exists", err)
+		}
 
 		// Get user details - name, email from the jwt token
 		userDetails, err := auth.GetUserDetails(ctx, cmd, viper.GetViper())
-		util.ExitNicelyOnError(err, "Error fetching user details")
+		if err != nil {
+			return cli.MessageAndError(cmd, "Error fetching user details", err)
+		}
 
 		// Confirm user wants to delete their account
 		yes := cli.PrintYesNoPrompt(cmd,
@@ -60,7 +64,9 @@ var auth_deleteCmd = &cobra.Command{
 		}
 
 		_, err = client.DeleteUser(ctx, &pb.DeleteUserRequest{})
-		util.ExitNicelyOnError(err, "Error registering user")
+		if err != nil {
+			return cli.MessageAndError(cmd, "Error deleting user", err)
+		}
 
 		// This step is added to avoid confusing the users by seeing their credentials locally, however it is not
 		// directly related to user deletion because the token will expire after 5 minutes and cannot be refreshed

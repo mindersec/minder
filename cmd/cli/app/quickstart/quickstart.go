@@ -34,7 +34,6 @@ import (
 	minderprov "github.com/stacklok/minder/cmd/cli/app/provider"
 	"github.com/stacklok/minder/cmd/cli/app/repo"
 	"github.com/stacklok/minder/internal/engine"
-	"github.com/stacklok/minder/internal/util"
 	"github.com/stacklok/minder/internal/util/cli"
 	minderv1 "github.com/stacklok/minder/pkg/api/protobuf/go/minder/v1"
 )
@@ -172,7 +171,9 @@ var cmd = &cobra.Command{
 
 		// Prompt to register repositories
 		results, msg, err := repo.RegisterCmd(ctx, cmd, conn)
-		util.ExitNicelyOnError(err, msg)
+		if err != nil {
+			return cli.MessageAndError(cmd, msg, err)
+		}
 
 		var registeredRepos []string
 		for _, result := range results {

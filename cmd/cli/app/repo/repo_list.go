@@ -18,14 +18,12 @@ package repo
 import (
 	"context"
 	"fmt"
-	"os"
 
 	"github.com/charmbracelet/bubbles/table"
 	"github.com/spf13/cobra"
 	"github.com/spf13/viper"
 	"google.golang.org/grpc"
 
-	github "github.com/stacklok/minder/internal/providers/github"
 	"github.com/stacklok/minder/internal/util"
 	"github.com/stacklok/minder/internal/util/cli"
 	pb "github.com/stacklok/minder/pkg/api/protobuf/go/minder/v1"
@@ -37,9 +35,6 @@ var repo_listCmd = &cobra.Command{
 	Long:  `Repo list is used to register a repo with the minder control plane`,
 	RunE: cli.GRPCClientWrapRunE(func(ctx context.Context, cmd *cobra.Command, conn *grpc.ClientConn) error {
 		provider := util.GetConfigValue(viper.GetViper(), "provider", "provider", cmd, "").(string)
-		if provider != github.Github {
-			return fmt.Errorf("only %s is supported at this time", github.Github)
-		}
 		projectID := viper.GetString("project-id")
 		format := viper.GetString("output")
 
@@ -61,8 +56,7 @@ var repo_listCmd = &cobra.Command{
 			},
 		})
 		if err != nil {
-			fmt.Fprintf(os.Stderr, "Error getting repo of repos: %s\n", err)
-			os.Exit(1)
+			return cli.MessageAndError(cmd, "Error getting repo of repos", err)
 		}
 
 		switch format {
@@ -100,12 +94,16 @@ var repo_listCmd = &cobra.Command{
 			cli.PrintCmd(cmd, cli.TableRender(t))
 		case "json":
 			out, err := util.GetJsonFromProto(resp)
-			util.ExitNicelyOnError(err, "Error getting json from proto")
-			fmt.Println(out)
+			if err != nil {
+				return cli.MessageAndError(cmd, "Error getting json from proto", err)
+			}
+			cli.PrintCmd(cmd, out)
 		case "yaml":
 			out, err := util.GetYamlFromProto(resp)
-			util.ExitNicelyOnError(err, "Error getting yaml from proto")
-			fmt.Println(out)
+			if err != nil {
+				return cli.MessageAndError(cmd, "Error getting yaml from proto", err)
+			}
+			cli.PrintCmd(cmd, out)
 		}
 		return nil
 	}),

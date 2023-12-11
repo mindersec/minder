@@ -78,7 +78,9 @@ var repo_getCmd = &cobra.Command{
 			resp, err := client.GetRepositoryById(ctx, &pb.GetRepositoryByIdRequest{
 				RepositoryId: repoid,
 			})
-			util.ExitNicelyOnError(err, "Error getting repo by id")
+			if err != nil {
+				return cli.MessageAndError(cmd, "Error getting repo by id", err)
+			}
 			repository = resp.Repository
 		} else {
 			if provider != github.Github {
@@ -92,7 +94,9 @@ var repo_getCmd = &cobra.Command{
 				},
 				Name: name,
 			})
-			util.ExitNicelyOnError(err, "Error getting repo by id")
+			if err != nil {
+				return cli.MessageAndError(cmd, "Error getting repo by name", err)
+			}
 			repository = resp.Repository
 		}
 
@@ -103,12 +107,16 @@ var repo_getCmd = &cobra.Command{
 			// print result just in JSON or YAML
 			if format == "" || format == formatJSON {
 				out, err := util.GetJsonFromProto(repository)
-				util.ExitNicelyOnError(err, "Error getting json from proto")
-				fmt.Println(out)
+				if err != nil {
+					return cli.MessageAndError(cmd, "Error getting json from proto", err)
+				}
+				cli.PrintCmd(cmd, out)
 			} else {
 				out, err := util.GetYamlFromProto(repository)
-				util.ExitNicelyOnError(err, "Error getting json from proto")
-				fmt.Println(out)
+				if err != nil {
+					return cli.MessageAndError(cmd, "Error getting yaml from proto", err)
+				}
+				cli.PrintCmd(cmd, out)
 			}
 		}
 		return nil

@@ -66,12 +66,16 @@ minder control plane.`,
 		switch format {
 		case app.YAML:
 			out, err := util.GetYamlFromProto(rtype)
-			util.ExitNicelyOnError(err, "Error getting json from proto")
-			fmt.Println(out)
+			if err != nil {
+				return fmt.Errorf("error getting yaml from proto: %w", err)
+			}
+			cli.PrintCmd(cmd, out)
 		case app.JSON:
 			out, err := util.GetJsonFromProto(rtype)
-			util.ExitNicelyOnError(err, "Error getting json from proto")
-			fmt.Println(out)
+			if err != nil {
+				return fmt.Errorf("error getting json from proto: %w", err)
+			}
+			cli.PrintCmd(cmd, out)
 		case app.Table:
 			handleGetTableOutput(cmd, rtype.GetRuleType())
 		}

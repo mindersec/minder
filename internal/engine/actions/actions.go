@@ -148,11 +148,6 @@ func (rae *RuleActionsEngine) processAction(
 func shouldRemediate(prevEvalFromDb *db.ListRuleEvaluationsByProfileIdRow, evalErr error) engif.ActionCmd {
 	_ = prevEvalFromDb
 	_ = evalErr
-	// To be used in the future in case we decide to implement specific condition handling for performing a remediation
-	// that is not solely based on the current evaluation error.
-	// Example: Skip remediation if remediate_type is PR, the evalErr is failing, but we already have the last
-	// remediate status set to "success", meaning we created a PR remediation,
-	// it's just not merged yet so no need to create another one
 	return engif.ActionCmdOn
 }
 
@@ -247,6 +242,8 @@ func (rae *RuleActionsEngine) isSkippable(ctx context.Context, actionType engif.
 			errors.Is(evalErr, enginerr.ErrEvaluationSkipped) ||
 				// rule evaluation was skipped silently, skip action
 				errors.Is(evalErr, enginerr.ErrEvaluationSkipSilently) ||
+				// skip if the error is not a failure and the action type is remediate
+				(!errors.Is(evalErr, enginerr.ErrEvaluationFailed) && actionType == remediate.ActionType) ||
 				// rule evaluation had no error, skip action if actionType IS NOT alert
 				(evalErr == nil && actionType != alert.ActionType)
 	}
