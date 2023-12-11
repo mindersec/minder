@@ -2432,8 +2432,8 @@
           "type": "string"
         },
         "rekorLogIndex": {
-          "type": "number",
-          "format": "double"
+          "type": "string",
+          "format": "int64"
         },
         "signatureTime": {
           "type": "string",

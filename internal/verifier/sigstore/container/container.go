@@ -302,6 +302,7 @@ func getVerificationMaterialTlogEntries(params *verifyResult, manifestLayer *v1.
 	if !ok {
 		return nil, fmt.Errorf("error getting logIndex")
 	}
+	logIndexInt64 := int64(logIndex)
 	li, ok := jsonData["Payload"].(map[string]interface{})["logID"].(string)
 	if !ok {
 		return nil, fmt.Errorf("error getting logID")
@@ -339,11 +340,11 @@ func getVerificationMaterialTlogEntries(params *verifyResult, manifestLayer *v1.
 	kind := jsonData["kind"].(string)
 	// 4. Store the log index and log ID from Rekor
 	params.si.RekorLogId = &li
-	params.si.RekorLogIndex = &logIndex
+	params.si.RekorLogIndex = &logIndexInt64
 	// 5. Construct the transparency log entry list
 	return []*protorekor.TransparencyLogEntry{
 		{
-			LogIndex: int64(logIndex),
+			LogIndex: logIndexInt64,
 			LogId: &protocommon.LogId{
 				KeyId: logID,
 			},
