@@ -24,10 +24,10 @@ import (
 	"io"
 	"os"
 	"path/filepath"
-	"strconv"
 	"text/template"
 
 	"github.com/go-git/go-billy/v5"
+	"github.com/go-git/go-git/v5/plumbing/filemode"
 	"github.com/rs/zerolog/log"
 	fzconfig "github.com/stacklok/frizbee/pkg/config"
 	"github.com/stacklok/frizbee/pkg/ghactions"
@@ -59,17 +59,25 @@ type fsEntry struct {
 }
 
 func (fe *fsEntry) write(fs billy.Filesystem) error {
-	if err := fs.MkdirAll(filepath.Dir(fe.Path), 0755); err != nil {
+	dirOsMode, err := filemode.Dir.ToOSFileMode()
+	if err != nil {
+		return fmt.Errorf("cannot get directory mode: %w", err)
+	}
+	if err := fs.MkdirAll(filepath.Dir(fe.Path), dirOsMode); err != nil {
 		return fmt.Errorf("cannot create directory: %w", err)
 	}
 
 	// Parse the string as an octal integer
-	perms, err := strconv.ParseUint(fe.Mode, 8, 32)
+	parsedGitMode, err := filemode.New(fe.Mode)
 	if err != nil {
 		return fmt.Errorf("cannot parse mode: %w", err)
 	}
+	parsedOsMode, err := parsedGitMode.ToOSFileMode()
+	if err != nil {
+		return fmt.Errorf("cannot convert file mode: %w", err)
+	}
 
-	f, err := fs.OpenFile(fe.Path, os.O_RDWR|os.O_CREATE|os.O_TRUNC, os.FileMode(perms))
+	f, err := fs.OpenFile(fe.Path, os.O_RDWR|os.O_CREATE|os.O_TRUNC, parsedOsMode)
 	if err != nil {
 		return fmt.Errorf("cannot create file: %w", err)
 	}
@@ -324,7 +332,7 @@ func (ftr *frizbeeTagResolveModification) createFsModEntries(ctx context.Context
 			entries = append(entries, &fsEntry{
 				Path:    path,
 				Content: buf.String(),
-				Mode:    "0644",
+				Mode:    filemode.Regular.String(),
 			})
 		}
 

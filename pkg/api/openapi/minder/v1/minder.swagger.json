@@ -1515,7 +1515,7 @@
         },
         "mode": {
           "type": "string",
-          "title": "The UNIX file permissions to set on the file"
+          "title": "the GIT mode of the file. Not UNIX mode! String because the GH API also uses strings\nthe usual modes are: 100644 for regular files, 100755 for executable files and\n040000 for submodules (which we don't use but now you know the meaning of the 1 in 100644)\nsee e.g. https://github.com/go-git/go-git/blob/32e0172851c35ae2fac495069c923330040903d2/plumbing/filemode/filemode.go#L16"
         }
       }
     },

@@ -1520,7 +1520,7 @@ the name stutters a bit but we already use a PullRequest message for handling PR
 | path | [string](#string) |  | the file to patch |
 | action | [string](#string) |  | how to patch the file. For now, only replace is supported |
 | content | [string](#string) |  | the content of the file |
-| mode | [string](#string) | optional | The UNIX file permissions to set on the file |
+| mode | [string](#string) | optional | the GIT mode of the file. Not UNIX mode! String because the GH API also uses strings the usual modes are: 100644 for regular files, 100755 for executable files and 040000 for submodules (which we don't use but now you know the meaning of the 1 in 100644) see e.g. https://github.com/go-git/go-git/blob/32e0172851c35ae2fac495069c923330040903d2/plumbing/filemode/filemode.go#L16 |
 
 
 <a name="minder-v1-SignatureVerification"></a>

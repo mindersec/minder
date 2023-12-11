@@ -7686,7 +7686,10 @@ type RuleType_Definition_Remediate_PullRequestRemediation_Content struct {
 	Action string `protobuf:"bytes,2,opt,name=action,proto3" json:"action,omitempty"`
 	// the content of the file
 	Content string `protobuf:"bytes,4,opt,name=content,proto3" json:"content,omitempty"`
-	// The UNIX file permissions to set on the file
+	// the GIT mode of the file. Not UNIX mode! String because the GH API also uses strings
+	// the usual modes are: 100644 for regular files, 100755 for executable files and
+	// 040000 for submodules (which we don't use but now you know the meaning of the 1 in 100644)
+	// see e.g. https://github.com/go-git/go-git/blob/32e0172851c35ae2fac495069c923330040903d2/plumbing/filemode/filemode.go#L16
 	Mode *string `protobuf:"bytes,3,opt,name=mode,proto3,oneof" json:"mode,omitempty"`
 }
 
