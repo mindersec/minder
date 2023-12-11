@@ -456,13 +456,14 @@ func (c *RestClient) Do(ctx context.Context, req *http.Request) (*http.Response,
 	// The GitHub client closes the response body, so we need to capture it
 	// in a buffer so that we can return it to the caller
 	resp, err := c.client.Do(ctx, req, &buf)
-	if err != nil {
+	if err != nil && resp == nil {
 		return nil, err
 	}
 
-	resp.Response.Body = io.NopCloser(&buf)
-
-	return resp.Response, nil
+	if resp.Response != nil {
+		resp.Response.Body = io.NopCloser(&buf)
+	}
+	return resp.Response, err
 }
 
 // GetToken returns the token used to authenticate with the GitHub API
