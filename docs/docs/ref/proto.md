@@ -1093,37 +1093,6 @@ Project API Objects
 | updated_at | [google.protobuf.Timestamp](#google-protobuf-Timestamp) |  |  |
 
 
-<a name="minder-v1-Provider"></a>
-
-#### Provider
-Provider defines a provider that is used to connect to a certain service.
-This is used to define the context in which a rule is evaluated and serves
-as a data ingestion point. They are top level entities and are scoped to
-an organization.
-
-
-| Field | Type | Label | Description |
-| ----- | ---- | ----- | ----------- |
-| name | [string](#string) |  |  |
-| context | [Context](#minder-v1-Context) |  |  |
-| version | [string](#string) |  | Version defines the version of the provider. Currently only v1 is supported. |
-| implements | [string](#string) | repeated | Implements defines the provider types that this provider implements. This is used to determine the interface to use to interact with the provider. This is a required field and must be set. currently, the following interfaces are supported: - rest - github - git |
-| def | [Provider.Definition](#minder-v1-Provider-Definition) |  |  |
-
-
-<a name="minder-v1-Provider-Definition"></a>
-
-#### Provider.Definition
-Definition defines the definition of the provider.
-This is used to define the connection to the provider.
-
-
-| Field | Type | Label | Description |
-| ----- | ---- | ----- | ----------- |
-| rest | [RESTProviderConfig](#minder-v1-RESTProviderConfig) | optional | rest is the REST provider configuration. |
-| github | [GitHubProviderConfig](#minder-v1-GitHubProviderConfig) | optional | github is the GitHub provider configuration. |
-
-
 <a name="minder-v1-PullRequest"></a>
 
 #### PullRequest
