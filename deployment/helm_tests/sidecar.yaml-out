@@ -87,6 +87,7 @@ data:
     # The token key can be generated with:
     #   openssl rand -base64 32 > .ssh/token_key_passphrase
     auth:
+      nonce_period: 3600
       token_key: "./.ssh/token_key_passphrase"
     
     # Webhook Configuration
@@ -696,6 +697,7 @@ data:
     # The token key can be generated with:
     #   openssl rand -base64 32 > .ssh/token_key_passphrase
     auth:
+      nonce_period: 3600
       token_key: "./.ssh/token_key_passphrase"
     
     # Webhook Configuration

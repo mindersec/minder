@@ -34,7 +34,6 @@ import (
 
 	"github.com/secure-systems-lab/go-securesystemslib/encrypted"
 	"github.com/sigstore/sigstore/pkg/signature"
-	"github.com/spf13/viper"
 	"golang.org/x/crypto/argon2"
 	"golang.org/x/oauth2"
 	"google.golang.org/grpc/codes"
@@ -233,7 +232,7 @@ func GenerateNonce() (string, error) {
 }
 
 // IsNonceValid checks if a nonce is valid. A nonce is valid if it is a base64 encoded string
-func IsNonceValid(nonce string) (bool, error) {
+func IsNonceValid(nonce string, noncePeriod int64) (bool, error) {
 	nonceBytes, err := base64.RawURLEncoding.DecodeString(nonce)
 	if err != nil {
 		return false, err
@@ -247,7 +246,7 @@ func IsNonceValid(nonce string) (bool, error) {
 	currentTimestamp := time.Now().Unix()
 	timeDiff := currentTimestamp - storedTimestamp
 
-	if timeDiff > viper.GetInt64("auth.nonce_period") { // 5 minutes = 300 seconds
+	if timeDiff > noncePeriod { // 5 minutes = 300 seconds
 		return false, nil
 	}
 
