@@ -67,6 +67,24 @@
             "in": "query",
             "required": false,
             "type": "string"
+          },
+          {
+            "name": "context.provider",
+            "in": "query",
+            "required": false,
+            "type": "string"
+          },
+          {
+            "name": "context.project",
+            "in": "query",
+            "required": false,
+            "type": "string"
+          },
+          {
+            "name": "context.retiredOrganization",
+            "in": "query",
+            "required": false,
+            "type": "string"
           }
         ],
         "tags": [
@@ -100,6 +118,24 @@
           },
           {
             "name": "projectId",
+            "in": "query",
+            "required": false,
+            "type": "string"
+          },
+          {
+            "name": "context.provider",
+            "in": "query",
+            "required": false,
+            "type": "string"
+          },
+          {
+            "name": "context.project",
+            "in": "query",
+            "required": false,
+            "type": "string"
+          },
+          {
+            "name": "context.retiredOrganization",
             "in": "query",
             "required": false,
             "type": "string"
@@ -159,6 +195,24 @@
             "in": "query",
             "required": false,
             "type": "string"
+          },
+          {
+            "name": "context.provider",
+            "in": "query",
+            "required": false,
+            "type": "string"
+          },
+          {
+            "name": "context.project",
+            "in": "query",
+            "required": false,
+            "type": "string"
+          },
+          {
+            "name": "context.retiredOrganization",
+            "in": "query",
+            "required": false,
+            "type": "string"
           }
         ],
         "tags": [
@@ -204,6 +258,24 @@
           },
           {
             "name": "redirectUri",
+            "in": "query",
+            "required": false,
+            "type": "string"
+          },
+          {
+            "name": "context.provider",
+            "in": "query",
+            "required": false,
+            "type": "string"
+          },
+          {
+            "name": "context.project",
+            "in": "query",
+            "required": false,
+            "type": "string"
+          },
+          {
+            "name": "context.retiredOrganization",
             "in": "query",
             "required": false,
             "type": "string"
@@ -262,6 +334,24 @@
             "in": "query",
             "required": false,
             "type": "string"
+          },
+          {
+            "name": "context.provider",
+            "in": "query",
+            "required": false,
+            "type": "string"
+          },
+          {
+            "name": "context.project",
+            "in": "query",
+            "required": false,
+            "type": "string"
+          },
+          {
+            "name": "context.retiredOrganization",
+            "in": "query",
+            "required": false,
+            "type": "string"
           }
         ],
         "tags": [
@@ -303,6 +393,24 @@
           },
           {
             "name": "projectId",
+            "in": "query",
+            "required": false,
+            "type": "string"
+          },
+          {
+            "name": "context.provider",
+            "in": "query",
+            "required": false,
+            "type": "string"
+          },
+          {
+            "name": "context.project",
+            "in": "query",
+            "required": false,
+            "type": "string"
+          },
+          {
+            "name": "context.retiredOrganization",
             "in": "query",
             "required": false,
             "type": "string"
@@ -352,6 +460,9 @@
                 },
                 "owner": {
                   "type": "string"
+                },
+                "context": {
+                  "$ref": "#/definitions/v1Context"
                 }
               }
             }
@@ -752,6 +863,24 @@
             "required": false,
             "type": "integer",
             "format": "int32"
+          },
+          {
+            "name": "context.provider",
+            "in": "query",
+            "required": false,
+            "type": "string"
+          },
+          {
+            "name": "context.project",
+            "in": "query",
+            "required": false,
+            "type": "string"
+          },
+          {
+            "name": "context.retiredOrganization",
+            "in": "query",
+            "required": false,
+            "type": "string"
           }
         ],
         "tags": [
@@ -788,6 +917,24 @@
             "in": "query",
             "required": false,
             "type": "string"
+          },
+          {
+            "name": "context.provider",
+            "in": "query",
+            "required": false,
+            "type": "string"
+          },
+          {
+            "name": "context.project",
+            "in": "query",
+            "required": false,
+            "type": "string"
+          },
+          {
+            "name": "context.retiredOrganization",
+            "in": "query",
+            "required": false,
+            "type": "string"
           }
         ],
         "tags": [
@@ -818,6 +965,24 @@
             "in": "path",
             "required": true,
             "type": "string"
+          },
+          {
+            "name": "context.provider",
+            "in": "query",
+            "required": false,
+            "type": "string"
+          },
+          {
+            "name": "context.project",
+            "in": "query",
+            "required": false,
+            "type": "string"
+          },
+          {
+            "name": "context.retiredOrganization",
+            "in": "query",
+            "required": false,
+            "type": "string"
           }
         ],
         "tags": [
@@ -845,6 +1010,24 @@
             "name": "repositoryId",
             "in": "path",
             "required": true,
+            "type": "string"
+          },
+          {
+            "name": "context.provider",
+            "in": "query",
+            "required": false,
+            "type": "string"
+          },
+          {
+            "name": "context.project",
+            "in": "query",
+            "required": false,
+            "type": "string"
+          },
+          {
+            "name": "context.retiredOrganization",
+            "in": "query",
+            "required": false,
             "type": "string"
           }
         ],
@@ -888,6 +1071,24 @@
             "in": "query",
             "required": false,
             "type": "string"
+          },
+          {
+            "name": "context.provider",
+            "in": "query",
+            "required": false,
+            "type": "string"
+          },
+          {
+            "name": "context.project",
+            "in": "query",
+            "required": false,
+            "type": "string"
+          },
+          {
+            "name": "context.retiredOrganization",
+            "in": "query",
+            "required": false,
+            "type": "string"
           }
         ],
         "tags": [
@@ -925,6 +1126,24 @@
           },
           {
             "name": "projectId",
+            "in": "query",
+            "required": false,
+            "type": "string"
+          },
+          {
+            "name": "context.provider",
+            "in": "query",
+            "required": false,
+            "type": "string"
+          },
+          {
+            "name": "context.project",
+            "in": "query",
+            "required": false,
+            "type": "string"
+          },
+          {
+            "name": "context.retiredOrganization",
             "in": "query",
             "required": false,
             "type": "string"
@@ -971,6 +1190,9 @@
                 },
                 "repository": {
                   "$ref": "#/definitions/v1UpstreamRepositoryRef"
+                },
+                "context": {
+                  "$ref": "#/definitions/v1Context"
                 }
               }
             }
@@ -1249,6 +1471,26 @@
             }
           }
         },
+        "parameters": [
+          {
+            "name": "context.provider",
+            "in": "query",
+            "required": false,
+            "type": "string"
+          },
+          {
+            "name": "context.project",
+            "in": "query",
+            "required": false,
+            "type": "string"
+          },
+          {
+            "name": "context.retiredOrganization",
+            "in": "query",
+            "required": false,
+            "type": "string"
+          }
+        ],
         "tags": [
           "UserService"
         ]
@@ -1269,6 +1511,26 @@
             }
           }
         },
+        "parameters": [
+          {
+            "name": "context.provider",
+            "in": "query",
+            "required": false,
+            "type": "string"
+          },
+          {
+            "name": "context.project",
+            "in": "query",
+            "required": false,
+            "type": "string"
+          },
+          {
+            "name": "context.retiredOrganization",
+            "in": "query",
+            "required": false,
+            "type": "string"
+          }
+        ],
         "tags": [
           "UserService"
         ]
@@ -1758,6 +2020,9 @@
       "properties": {
         "profile": {
           "$ref": "#/definitions/v1Profile"
+        },
+        "context": {
+          "$ref": "#/definitions/v1Context"
         }
       },
       "title": "Profile service"
@@ -1776,6 +2041,9 @@
         "ruleType": {
           "$ref": "#/definitions/v1RuleType",
           "description": "rule_type is the rule type to be created."
+        },
+        "context": {
+          "$ref": "#/definitions/v1Context"
         }
       },
       "description": "CreateRuleTypeRequest is the request to create a rule type."
@@ -1819,6 +2087,9 @@
         "createdAt": {
           "type": "string",
           "format": "date-time"
+        },
+        "context": {
+          "$ref": "#/definitions/v1Context"
         }
       }
     },
@@ -2453,6 +2724,9 @@
       "properties": {
         "profile": {
           "$ref": "#/definitions/v1Profile"
+        },
+        "context": {
+          "$ref": "#/definitions/v1Context"
         }
       }
     },
@@ -2470,6 +2744,9 @@
         "ruleType": {
           "$ref": "#/definitions/v1RuleType",
           "description": "rule_type is the rule type to be updated."
+        },
+        "context": {
+          "$ref": "#/definitions/v1Context"
         }
       },
       "description": "UpdateRuleTypeRequest is the request to update a rule type."
