@@ -237,7 +237,7 @@ func (e *EEA) FlushAll(ctx context.Context) error {
 		}
 
 		eiw, err := e.buildEntityWrapper(ctx, cache.Entity,
-			cache.RepositoryID, r.ProjectID, cache.ArtifactID, cache.PullRequestID)
+			cache.RepositoryID, r.ProjectID, r.Provider, cache.ArtifactID, cache.PullRequestID)
 		if err != nil && errors.Is(err, sql.ErrNoRows) {
 			continue
 		} else if err != nil {
@@ -264,15 +264,16 @@ func (e *EEA) buildEntityWrapper(
 	entity db.Entities,
 	repoID uuid.UUID,
 	projID uuid.UUID,
+	provider string,
 	artID, prID uuid.NullUUID,
 ) (*engine.EntityInfoWrapper, error) {
 	switch entity {
 	case db.EntitiesRepository:
-		return e.buildRepositoryInfoWrapper(ctx, repoID, projID)
+		return e.buildRepositoryInfoWrapper(ctx, repoID, projID, provider)
 	case db.EntitiesArtifact:
-		return e.buildArtifactInfoWrapper(ctx, repoID, projID, artID)
+		return e.buildArtifactInfoWrapper(ctx, repoID, projID, provider, artID)
 	case db.EntitiesPullRequest:
-		return e.buildPullRequestInfoWrapper(ctx, repoID, projID, prID)
+		return e.buildPullRequestInfoWrapper(ctx, repoID, projID, provider, prID)
 	case db.EntitiesBuildEnvironment:
 		return nil, fmt.Errorf("build environment entity not supported")
 	default:
@@ -284,6 +285,7 @@ func (e *EEA) buildRepositoryInfoWrapper(
 	ctx context.Context,
 	repoID uuid.UUID,
 	projID uuid.UUID,
+	provider string,
 ) (*engine.EntityInfoWrapper, error) {
 	r, err := util.GetRepository(ctx, e.querier, repoID)
 	if err != nil {
@@ -293,13 +295,15 @@ func (e *EEA) buildRepositoryInfoWrapper(
 	return engine.NewEntityInfoWrapper().
 		WithRepository(r).
 		WithRepositoryID(repoID).
-		WithProjectID(projID), nil
+		WithProjectID(projID).
+		WithProvider(provider), nil
 }
 
 func (e *EEA) buildArtifactInfoWrapper(
 	ctx context.Context,
 	repoID uuid.UUID,
 	projID uuid.UUID,
+	provider string,
 	artID uuid.NullUUID,
 ) (*engine.EntityInfoWrapper, error) {
 	a, err := util.GetArtifactWithVersions(ctx, e.querier, repoID, artID.UUID)
@@ -311,13 +315,15 @@ func (e *EEA) buildArtifactInfoWrapper(
 		WithRepositoryID(repoID).
 		WithProjectID(projID).
 		WithArtifact(a).
-		WithArtifactID(artID.UUID), nil
+		WithArtifactID(artID.UUID).
+		WithProvider(provider), nil
 }
 
 func (e *EEA) buildPullRequestInfoWrapper(
 	ctx context.Context,
 	repoID uuid.UUID,
 	projID uuid.UUID,
+	provider string,
 	prID uuid.NullUUID,
 ) (*engine.EntityInfoWrapper, error) {
 	pr, err := util.GetPullRequest(ctx, e.querier, repoID, prID.UUID)
@@ -329,5 +335,6 @@ func (e *EEA) buildPullRequestInfoWrapper(
 		WithRepositoryID(repoID).
 		WithProjectID(projID).
 		WithPullRequest(pr).
-		WithPullRequestID(prID.UUID), nil
+		WithPullRequestID(prID.UUID).
+		WithProvider(provider), nil
 }
