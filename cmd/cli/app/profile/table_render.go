@@ -81,7 +81,7 @@ func renderRuleTable(
 	row := []string{
 		*p.Id,
 		p.Name,
-		*p.Context.Provider,
+		p.Context.Provider,
 		entType.String(),
 		rule.Type,
 		params,

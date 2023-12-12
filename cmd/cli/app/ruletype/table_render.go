@@ -39,8 +39,8 @@ func renderRuleTypeTable(
 	table *tablewriter.Table,
 ) {
 	row := []string{
-		*rt.Context.Provider,
-		*rt.Context.Project,
+		rt.Context.Provider,
+		rt.Context.Project,
 		*rt.Id,
 		rt.Name,
 		rt.Description,

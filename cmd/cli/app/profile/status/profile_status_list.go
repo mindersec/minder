@@ -57,7 +57,7 @@ minder control plane for an specific provider/project or profile id.`,
 
 		req := &pb.GetProfileStatusByNameRequest{
 			Context: &pb.Context{
-				Provider: &provider,
+				Provider: provider,
 			},
 			Name: profileName,
 			All:  all,
@@ -65,7 +65,7 @@ minder control plane for an specific provider/project or profile id.`,
 		}
 
 		if project != "" {
-			req.Context.Project = &project
+			req.Context.Project = project
 		}
 
 		resp, err := client.GetProfileStatusByName(ctx, req)

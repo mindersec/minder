@@ -209,11 +209,11 @@ var cmd = &cobra.Command{
 		}
 
 		if proj != "" {
-			rt.Context.Project = &proj
+			rt.Context.Project = proj
 		}
 
 		if provider != "" {
-			rt.Context.Provider = &provider
+			rt.Context.Provider = provider
 		}
 
 		// Create the rule type in minder (new context, so we don't time out)
@@ -259,11 +259,11 @@ var cmd = &cobra.Command{
 		}
 
 		if proj != "" {
-			p.Context.Project = &proj
+			p.Context.Project = proj
 		}
 
 		if provider != "" {
-			p.Context.Provider = &provider
+			p.Context.Provider = provider
 		}
 
 		// Create the profile in minder (new context, so we don't time out)

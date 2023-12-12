@@ -86,7 +86,7 @@ func (s *Server) ensureDefaultProjectForContext(ctx context.Context, inout *mind
 		return status.Errorf(codes.InvalidArgument, "cannot infer project id")
 	}
 
-	inout.Project = &g.Name
+	inout.Project = g.Name
 	return nil
 }
 

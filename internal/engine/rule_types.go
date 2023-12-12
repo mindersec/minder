@@ -203,7 +203,7 @@ func NewRuleTypeEngine(
 	rte := &RuleTypeEngine{
 		Meta: RuleMeta{
 			Name:     rt.Name,
-			Provider: *rt.Context.Provider,
+			Provider: rt.Context.Provider,
 		},
 		rval:        rval,
 		rdi:         rdi,
@@ -214,8 +214,8 @@ func NewRuleTypeEngine(
 		ingestCache: ingestcache.NewNoopCache(),
 	}
 
-	if rt.Context.Project != nil && *rt.Context.Project != "" {
-		prj := strings.Clone(*rt.Context.Project)
+	if rt.Context.Project != "" {
+		prj := strings.Clone(rt.Context.Project)
 		rte.Meta.Project = &prj
 	} else {
 		return nil, fmt.Errorf("rule type context must have a project")
@@ -304,8 +304,8 @@ func RuleTypePBFromDB(rt *db.RuleType, ectx *EntityContext) (*minderv1.RuleType,
 		Id:   &id,
 		Name: rt.Name,
 		Context: &minderv1.Context{
-			Provider: &name,
-			Project:  &gname,
+			Provider: name,
+			Project:  gname,
 		},
 		Description: rt.Description,
 		Guidance:    rt.Guidance,

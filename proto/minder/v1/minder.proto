@@ -962,8 +962,8 @@ message GitHubProviderConfig {
 // Context defines the context in which a rule is evaluated.
 // this normally refers to a combination of the provider, organization and project.
 message Context {
-    optional string provider = 1;
-    optional string project = 3;
+    string provider = 1;
+    string project = 3;
 
     optional string retired_organization = 2;
 }

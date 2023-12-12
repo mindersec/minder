@@ -300,7 +300,7 @@ func (s *Server) DeleteRuleType(
 		return nil, status.Errorf(codes.Unknown, "failed to get provider: %s", err)
 	}
 
-	in.Context.Provider = &prov.Name
+	in.Context.Provider = prov.Name
 
 	ctx, err = s.authAndContextValidation(ctx, in.GetContext())
 	if err != nil {
