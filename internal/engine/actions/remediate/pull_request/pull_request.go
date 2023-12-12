@@ -368,7 +368,7 @@ func (_ *Remediator) prMagicComment(modifier fsModifier) (string, error) {
 		return "", err
 	}
 
-	contentSha, err := modifier.sha1sum()
+	contentSha, err := modifier.hash()
 	if err != nil {
 		return "", fmt.Errorf("cannot get content sha1: %w", err)
 	}

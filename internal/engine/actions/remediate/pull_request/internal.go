@@ -45,11 +45,6 @@ const (
 	minderFrizbeeTagResolve   = "minder.actions.replace_tags_with_sha"
 )
 
-type fsChanges interface {
-	sha1sum() (string, error)
-	writeSummary(out io.Writer) error
-}
-
 type fsEntry struct {
 	contentTemplate *template.Template
 
@@ -67,7 +62,6 @@ func (fe *fsEntry) write(fs billy.Filesystem) error {
 		return fmt.Errorf("cannot create directory: %w", err)
 	}
 
-	// Parse the string as an octal integer
 	parsedGitMode, err := filemode.New(fe.Mode)
 	if err != nil {
 		return fmt.Errorf("cannot parse mode: %w", err)
@@ -113,7 +107,7 @@ func (fcs *fsChangeSet) writeEntries() error {
 	return nil
 }
 
-func (fcs *fsChangeSet) sha1sum() (string, error) {
+func (fcs *fsChangeSet) hash() (string, error) {
 	if fcs.entries == nil {
 		return "", fmt.Errorf("no entries")
 	}
@@ -141,13 +135,14 @@ func (fcs *fsChangeSet) writeSummary(out io.Writer) error {
 	if err != nil {
 		return fmt.Errorf("cannot marshal entries: %w", err)
 	}
-	fmt.Fprintf(out, "%s\n", b)
+	fmt.Fprintln(out, b)
 
 	return nil
 }
 
 type fsModifier interface {
-	fsChanges
+	hash() (string, error)
+	writeSummary(out io.Writer) error
 	createFsModEntries(ctx context.Context, params interfaces.ActionsParams) error
 	modifyFs(ctx context.Context, params interfaces.ActionsParams) ([]*fsEntry, error)
 }
@@ -208,8 +203,7 @@ func newContentModification(
 		return nil, fmt.Errorf("pull request config contents cannot be empty")
 	}
 
-	for i := range params.prCfg.Contents {
-		cnt := params.prCfg.Contents[i]
+	for _, cnt := range params.prCfg.Contents {
 		if cnt.Path == "" {
 			return nil, fmt.Errorf("pull request config contents path cannot be empty")
 		}
@@ -218,46 +212,24 @@ func newContentModification(
 		}
 	}
 
+	entries, err := prConfigToEntries(params.prCfg)
+	if err != nil {
+		return nil, fmt.Errorf("cannot create PR entries: %w", err)
+	}
+
 	return &contentModification{
 		prCfg: params.prCfg,
 		fsChangeSet: fsChangeSet{
-			fs: params.bfs,
+			entries: entries,
+			fs:      params.bfs,
 		},
 	}, nil
 }
 
-func (ca *contentModification) createFsModEntries(
-	_ context.Context,
-	params interfaces.ActionsParams,
-) error {
-	entries, err := ca.prConfigToEntries()
-	if err != nil {
-		return fmt.Errorf("cannot create PR entries: %w", err)
-	}
-
-	data := map[string]interface{}{
-		"Params":  params.GetRule().Params.AsMap(),
-		"Profile": params.GetRule().Def.AsMap(),
-	}
-	for i := range entries {
-		entry := entries[i]
-		content := new(bytes.Buffer)
-
-		if err := entry.contentTemplate.Execute(content, data); err != nil {
-			return fmt.Errorf("cannot execute content template (index %d): %w", i, err)
-		}
-		entry.Content = content.String()
-	}
-
-	ca.entries = entries
-	return nil
-
-}
-
-func (ca *contentModification) prConfigToEntries() ([]*fsEntry, error) {
-	entries := make([]*fsEntry, len(ca.prCfg.Contents))
-	for i := range ca.prCfg.Contents {
-		cnt := ca.prCfg.Contents[i]
+func prConfigToEntries(prCfg *pb.RuleType_Definition_Remediate_PullRequestRemediation) ([]*fsEntry, error) {
+	entries := make([]*fsEntry, len(prCfg.Contents))
+	for i := range prCfg.Contents {
+		cnt := prCfg.Contents[i]
 
 		contentTemplate, err := util.ParseNewTextTemplate(&cnt.Content, fmt.Sprintf("Content[%d]", i))
 		if err != nil {
@@ -277,6 +249,27 @@ func (ca *contentModification) prConfigToEntries() ([]*fsEntry, error) {
 	}
 
 	return entries, nil
+}
+
+func (ca *contentModification) createFsModEntries(
+	_ context.Context,
+	params interfaces.ActionsParams,
+) error {
+	data := map[string]interface{}{
+		"Params":  params.GetRule().Params.AsMap(),
+		"Profile": params.GetRule().Def.AsMap(),
+	}
+	for i, entry := range ca.entries {
+		content := new(bytes.Buffer)
+
+		if err := entry.contentTemplate.Execute(content, data); err != nil {
+			return fmt.Errorf("cannot execute content template (index %d): %w", i, err)
+		}
+		entry.Content = content.String()
+	}
+
+	return nil
+
 }
 
 func (ca *contentModification) modifyFs(ctx context.Context, params interfaces.ActionsParams) ([]*fsEntry, error) {
