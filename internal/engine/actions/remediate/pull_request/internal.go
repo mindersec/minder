@@ -237,7 +237,7 @@ func prConfigToEntries(prCfg *pb.RuleType_Definition_Remediate_PullRequestRemedi
 		}
 
 		mode := ghModeNonExecFile
-		if cnt.Mode != nil {
+		if cnt.GetMode() != "" {
 			mode = *cnt.Mode
 		}
 
