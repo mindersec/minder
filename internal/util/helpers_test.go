@@ -77,7 +77,7 @@ func TestGetConfigValue(t *testing.T) {
 
 			v := viper.New()
 
-			v.Set(tc.key, tc.defaultValue)
+			v.SetDefault(tc.key, tc.defaultValue)
 
 			cmd := &cobra.Command{}
 			switch tc.defaultValue.(type) {
@@ -86,7 +86,11 @@ func TestGetConfigValue(t *testing.T) {
 			case int:
 				cmd.Flags().Int(tc.flagName, tc.defaultValue.(int), "")
 			}
-
+			// bind the flag to viper
+			err := v.BindPFlag(tc.key, cmd.Flags().Lookup(tc.flagName))
+			if err != nil {
+				t.Fatalf("Error binding flag %s: %v", tc.flagName, err)
+			}
 			if tc.flagSet {
 				switch tc.flagValue.(type) {
 				case string:
@@ -102,7 +106,7 @@ func TestGetConfigValue(t *testing.T) {
 				}
 			}
 
-			result := util.GetConfigValue(v, tc.key, tc.flagName, cmd, tc.defaultValue)
+			result := v.Get(tc.key)
 			assert.Equal(t, tc.expected, result)
 		})
 	}

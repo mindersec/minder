@@ -24,7 +24,6 @@ package cli
 import (
 	"os"
 
-	"github.com/charmbracelet/bubbles/table"
 	"github.com/charmbracelet/lipgloss"
 	"golang.org/x/term"
 )
@@ -33,7 +32,7 @@ import (
 var (
 	// PrimaryColor is the primary color for the cli.
 	PrimaryColor = lipgloss.Color("#00BBBE")
-	// Secondary is the secondary color for the cli.
+	// SecondaryColor is the secondary color for the cli.
 	SecondaryColor = lipgloss.Color("#59CFA8")
 	// AccentColor is the accent color for the cli.
 	AccentColor = lipgloss.Color("#3D34E0")
@@ -41,10 +40,6 @@ var (
 	WhiteColor = lipgloss.Color("#FFFFFF")
 	// BlackColor is the black color for the cli.
 	BlackColor = lipgloss.Color("#000000")
-)
-
-const (
-	keyWidth = 15
 )
 
 // Styles
@@ -80,31 +75,6 @@ var (
 			PaddingLeft(4).
 			PaddingRight(4).
 			Width(DefaultBannerWidth)
-	// Table is the style to use for tables
-	Table = lipgloss.NewStyle().
-		BorderStyle(lipgloss.NormalBorder()).
-		BorderForeground(AccentColor)
-	// TableStyles is the style to use for tables
-	TableStyles = table.Styles{
-		Selected: lipgloss.NewStyle().Bold(true).Foreground(SecondaryColor),
-		Header:   lipgloss.NewStyle().Bold(true).Padding(0, 1).Foreground(PrimaryColor),
-		Cell:     lipgloss.NewStyle().Padding(0, 1),
-	}
-	// TableHiddenSelectStyles is the style to use for tables. It hides the selection
-	// indicator.
-	TableHiddenSelectStyles = table.Styles{
-		Header:   lipgloss.NewStyle().Bold(true).Padding(0, 1).Foreground(PrimaryColor),
-		Cell:     lipgloss.NewStyle().Padding(0, 1),
-		Selected: lipgloss.NewStyle(),
-	}
-
-	KeyValTableWidths = struct {
-		Key   int
-		Value int
-	}{
-		Key:   keyWidth,
-		Value: DefaultBannerWidth - keyWidth - 6, // 6 characters for padding
-	}
 )
 
 func init() {
@@ -112,11 +82,5 @@ func init() {
 	w, _, err := term.GetSize(int(os.Stdout.Fd()))
 	if err == nil {
 		DefaultBannerWidth = w
-		KeyValTableWidths.Value = w - keyWidth - 6
 	}
-}
-
-// TableRender renders a table given a table model
-func TableRender(t table.Model) string {
-	return Table.Render(t.View())
 }

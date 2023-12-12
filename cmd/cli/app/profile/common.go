@@ -1,11 +1,10 @@
-//
 // Copyright 2023 Stacklok, Inc.
 //
 // Licensed under the Apache License, Version 2.0 (the "License");
 // you may not use this file except in compliance with the License.
 // You may obtain a copy of the License at
 //
-//     http://www.apache.org/licenses/LICENSE-2.0
+//	http://www.apache.org/licenses/LICENSE-2.0
 //
 // Unless required by applicable law or agreed to in writing, software
 // distributed under the License is distributed on an "AS IS" BASIS,
@@ -19,18 +18,14 @@ import (
 	"fmt"
 	"io"
 
-	"github.com/olekukonko/tablewriter"
-
 	"github.com/stacklok/minder/internal/engine"
 	"github.com/stacklok/minder/internal/util"
+	"github.com/stacklok/minder/internal/util/cli/table"
 	minderv1 "github.com/stacklok/minder/pkg/api/protobuf/go/minder/v1"
 )
 
-func execOnOneProfile(
-	table *tablewriter.Table,
-	f string,
-	dashOpen io.Reader,
-	project string,
+// ExecOnOneProfile is a helper function to execute a function on a single profile
+func ExecOnOneProfile(t table.Table, f string, dashOpen io.Reader, project string,
 	exec func(string, *minderv1.Profile) (*minderv1.Profile, error),
 ) error {
 	preader, closer, err := util.OpenFileArg(f, dashOpen)
@@ -50,7 +45,7 @@ func execOnOneProfile(
 		return err
 	}
 
-	RenderProfileTable(respprof, table)
+	RenderProfileTable(respprof, t)
 	return nil
 }
 

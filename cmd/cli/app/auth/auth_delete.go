@@ -26,61 +26,66 @@ import (
 	"github.com/stacklok/minder/internal/auth"
 	"github.com/stacklok/minder/internal/util"
 	"github.com/stacklok/minder/internal/util/cli"
-	pb "github.com/stacklok/minder/pkg/api/protobuf/go/minder/v1"
+	minderv1 "github.com/stacklok/minder/pkg/api/protobuf/go/minder/v1"
 )
 
-// auth_deleteCmd represents the account deletion command
-var auth_deleteCmd = &cobra.Command{
+// deleteCmd represents the account deletion command
+var deleteCmd = &cobra.Command{
 	Use:   "delete",
 	Short: "Permanently delete account",
 	Long:  `Permanently delete account. All associated user data will be permanently removed.`,
-	RunE: cli.GRPCClientWrapRunE(func(ctx context.Context, cmd *cobra.Command, conn *grpc.ClientConn) error {
-		client := pb.NewUserServiceClient(conn)
+	RunE:  cli.GRPCClientWrapRunE(deleteCommand),
+}
 
-		// Ensure the user already exists in the local database
-		_, _, err := userRegistered(ctx, client)
-		if err != nil {
-			return cli.MessageAndError(cmd, "Error checking if user exists", err)
-		}
+// deleteCommand is the account deletion subcommand
+func deleteCommand(ctx context.Context, cmd *cobra.Command, conn *grpc.ClientConn) error {
+	client := minderv1.NewUserServiceClient(conn)
 
-		// Get user details - name, email from the jwt token
-		userDetails, err := auth.GetUserDetails(ctx, cmd, viper.GetViper())
-		if err != nil {
-			return cli.MessageAndError(cmd, "Error fetching user details", err)
-		}
+	issuerUrl := viper.GetString("identity.cli.issuer_url")
+	clientId := viper.GetString("identity.cli.client_id")
 
-		// Confirm user wants to delete their account
-		yes := cli.PrintYesNoPrompt(cmd,
-			fmt.Sprintf(
-				"You are about to permanently delete your account. \n\nName: %s\nEmail: %s",
-				userDetails.Name,
-				userDetails.Email,
-			),
-			"Are you sure?",
-			"Delete account operation cancelled.",
-			false)
-		if !yes {
-			return nil
-		}
+	// Ensure the user already exists in the local database
+	_, _, err := userRegistered(ctx, client)
+	if err != nil {
+		return cli.MessageAndError("Error checking if user exists", err)
+	}
 
-		_, err = client.DeleteUser(ctx, &pb.DeleteUserRequest{})
-		if err != nil {
-			return cli.MessageAndError(cmd, "Error deleting user", err)
-		}
+	// Get user details - name, email from the jwt token
+	userDetails, err := auth.GetUserDetails(ctx, issuerUrl, clientId)
+	if err != nil {
+		return cli.MessageAndError("Error fetching user details", err)
+	}
 
-		// This step is added to avoid confusing the users by seeing their credentials locally, however it is not
-		// directly related to user deletion because the token will expire after 5 minutes and cannot be refreshed
-		err = util.RemoveCredentials()
-		if err != nil {
-			cmd.Println(cli.WarningBanner.Render("Failed to remove locally stored credentials."))
-		}
-		cmd.Println(cli.SuccessBanner.Render("Successfully deleted account. It may take up to 48 hours for " +
-			"all data to be removed."))
-
+	// Confirm user wants to delete their account
+	yes := cli.PrintYesNoPrompt(cmd,
+		fmt.Sprintf(
+			"You are about to permanently delete your account. \n\nName: %s\nEmail: %s",
+			userDetails.Name,
+			userDetails.Email,
+		),
+		"Are you sure?",
+		"Delete account operation cancelled.",
+		false)
+	if !yes {
 		return nil
-	}),
+	}
+
+	_, err = client.DeleteUser(ctx, &minderv1.DeleteUserRequest{})
+	if err != nil {
+		return cli.MessageAndError("Error deleting user", err)
+	}
+
+	// This step is added to avoid confusing the users by seeing their credentials locally, however it is not
+	// directly related to user deletion because the token will expire after 5 minutes and cannot be refreshed
+	err = util.RemoveCredentials()
+	if err != nil {
+		cmd.Println(cli.WarningBanner.Render("Failed to remove locally stored credentials."))
+	}
+	cmd.Println(cli.SuccessBanner.Render("Successfully deleted account. It may take up to 48 hours for " +
+		"all data to be removed."))
+	return nil
 }
 
 func init() {
-	AuthCmd.AddCommand(auth_deleteCmd)
+	AuthCmd.AddCommand(deleteCmd)
 }

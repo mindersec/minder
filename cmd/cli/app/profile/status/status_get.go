@@ -13,37 +13,41 @@
 // See the License for the specific language governing permissions and
 // limitations under the License.
 
-package repo
+package status
 
 import (
 	"context"
 	"fmt"
-	"strings"
+	"os"
 
 	"github.com/spf13/cobra"
 	"github.com/spf13/viper"
 	"google.golang.org/grpc"
 
 	"github.com/stacklok/minder/cmd/cli/app"
+	"github.com/stacklok/minder/cmd/cli/app/profile"
+	"github.com/stacklok/minder/internal/entities"
 	"github.com/stacklok/minder/internal/util"
 	"github.com/stacklok/minder/internal/util/cli"
-	"github.com/stacklok/minder/internal/util/cli/table"
 	minderv1 "github.com/stacklok/minder/pkg/api/protobuf/go/minder/v1"
 )
 
-var listCmd = &cobra.Command{
-	Use:   "list",
-	Short: "List repositories",
-	Long:  `The repo list subcommand is used to list registered repositories within Minder.`,
-	RunE:  cli.GRPCClientWrapRunE(listCommand),
+var getCmd = &cobra.Command{
+	Use:   "get",
+	Short: "Get profile status",
+	Long:  `The profile status get subcommand lets you get profile status within Minder.`,
+	RunE:  cli.GRPCClientWrapRunE(getCommand),
 }
 
-// listCommand is the repo list subcommand
-func listCommand(ctx context.Context, cmd *cobra.Command, conn *grpc.ClientConn) error {
-	client := minderv1.NewRepositoryServiceClient(conn)
+// getCommand is the profile "get" subcommand
+func getCommand(ctx context.Context, cmd *cobra.Command, conn *grpc.ClientConn) error {
+	client := minderv1.NewProfileServiceClient(conn)
 
 	provider := viper.GetString("provider")
 	project := viper.GetString("project")
+	profileName := viper.GetString("name")
+	entityId := viper.GetString("entity")
+	entityType := viper.GetString("entity-type")
 	format := viper.GetString("output")
 
 	// Ensure provider is supported
@@ -56,30 +60,19 @@ func listCommand(ctx context.Context, cmd *cobra.Command, conn *grpc.ClientConn)
 		return cli.MessageAndError(fmt.Sprintf("Output format %s not supported", format), fmt.Errorf("invalid argument"))
 	}
 
-	resp, err := client.ListRepositories(ctx, &minderv1.ListRepositoriesRequest{
+	resp, err := client.GetProfileStatusByName(ctx, &minderv1.GetProfileStatusByNameRequest{
 		Context: &minderv1.Context{Provider: &provider, Project: &project},
-		// keep this until we decide to delete them from the payload and rely only on the context
-		Provider:  provider,
-		ProjectId: project,
+		Name:    profileName,
+		Entity: &minderv1.GetProfileStatusByNameRequest_EntityTypedId{
+			Id:   entityId,
+			Type: minderv1.EntityFromString(entityType),
+		},
 	})
 	if err != nil {
-		return cli.MessageAndError("Error listing repositories", err)
+		return cli.MessageAndError("Error getting profile status", err)
 	}
 
 	switch format {
-	case app.Table:
-		t := table.New(table.Simple, "repolist", nil)
-		for _, v := range resp.Results {
-			t.AddRow([]string{
-				*v.Id,
-				*v.Context.Project,
-				*v.Context.Provider,
-				fmt.Sprintf("%d", v.GetRepoId()),
-				v.GetOwner(),
-				v.GetName(),
-			})
-		}
-		t.Render()
 	case app.JSON:
 		out, err := util.GetJsonFromProto(resp)
 		if err != nil {
@@ -92,13 +85,25 @@ func listCommand(ctx context.Context, cmd *cobra.Command, conn *grpc.ClientConn)
 			return cli.MessageAndError("Error getting yaml from proto", err)
 		}
 		cmd.Println(out)
+	case app.Table:
+		table := profile.NewProfileStatusTable()
+		profile.RenderProfileStatusTable(resp.ProfileStatus, table)
+		table.Render()
 	}
+
 	return nil
 }
 
 func init() {
-	RepoCmd.AddCommand(listCmd)
+	profileStatusCmd.AddCommand(getCmd)
 	// Flags
-	listCmd.Flags().StringP("output", "o", app.Table,
-		fmt.Sprintf("Output format (one of %s)", strings.Join(app.SupportedOutputFormats(), ",")))
+	getCmd.Flags().StringP("entity", "e", "", "Entity ID to get profile status for")
+	getCmd.Flags().StringP("entity-type", "t", "",
+		fmt.Sprintf("the entity type to get profile status for (one of %s)", entities.KnownTypesCSV()))
+	// Required
+	if err := getCmd.MarkFlagRequired("entity"); err != nil {
+		getCmd.Printf("Error marking flag required: %s", err)
+		os.Exit(1)
+	}
+
 }

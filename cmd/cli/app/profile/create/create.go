@@ -13,7 +13,8 @@
 // See the License for the specific language governing permissions and
 // limitations under the License.
 
-package ruletype
+// Package create provides the profile create subcommand for the minder CLI
+package create
 
 import (
 	"context"
@@ -25,7 +26,7 @@ import (
 	"google.golang.org/grpc"
 
 	"github.com/stacklok/minder/cmd/cli/app"
-	"github.com/stacklok/minder/internal/util"
+	"github.com/stacklok/minder/cmd/cli/app/profile"
 	"github.com/stacklok/minder/internal/util/cli"
 	minderv1 "github.com/stacklok/minder/pkg/api/protobuf/go/minder/v1"
 )
@@ -33,70 +34,50 @@ import (
 // createCmd represents the profile create command
 var createCmd = &cobra.Command{
 	Use:   "create",
-	Short: "Create a rule type",
-	Long:  `The ruletype create subcommand lets you create new rule types for a project within Minder.`,
+	Short: "Create a profile",
+	Long:  `The profile create subcommand lets you create new profiles for a project within Minder.`,
 	RunE:  cli.GRPCClientWrapRunE(createCommand),
 }
 
 // createCommand is the profile create subcommand
-func createCommand(_ context.Context, cmd *cobra.Command, conn *grpc.ClientConn) error {
+func createCommand(ctx context.Context, cmd *cobra.Command, conn *grpc.ClientConn) error {
 	client := minderv1.NewProfileServiceClient(conn)
 
 	provider := viper.GetString("provider")
 	project := viper.GetString("project")
+	f := viper.GetString("file")
 
 	// Ensure provider is supported
 	if !app.IsProviderSupported(provider) {
 		return cli.MessageAndError(fmt.Sprintf("Provider %s is not supported yet", provider), fmt.Errorf("invalid argument"))
 	}
 
-	fileFlag, err := cmd.Flags().GetStringArray("file")
-	if err != nil {
-		return cli.MessageAndError("Error parsing file flag", err)
-	}
+	table := profile.NewProfileTable()
 
-	if err = validateFilesArg(fileFlag); err != nil {
-		return cli.MessageAndError("Error validating file flag", err)
-	}
-
-	files, err := util.ExpandFileArgs(fileFlag)
-	if err != nil {
-		return cli.MessageAndError("Error expanding file args", err)
-	}
-
-	table := initializeTable()
-
-	createFunc := func(ctx context.Context, fileName string, rt *minderv1.RuleType) (*minderv1.RuleType, error) {
-		resprt, err := client.CreateRuleType(ctx, &minderv1.CreateRuleTypeRequest{
-			Context:  &minderv1.Context{Provider: &provider, Project: &project},
-			RuleType: rt,
+	createFunc := func(f string, p *minderv1.Profile) (*minderv1.Profile, error) {
+		// create a profile
+		resp, err := client.CreateProfile(ctx, &minderv1.CreateProfileRequest{
+			Context: &minderv1.Context{Provider: &provider, Project: &project},
+			Profile: p,
 		})
 		if err != nil {
 			return nil, err
 		}
-
-		return resprt.RuleType, nil
+		return resp.GetProfile(), nil
 	}
 
-	for _, f := range files {
-		if shouldSkipFile(f) {
-			continue
-		}
-		// cmd.Context() is the root context. We need to create a new context for each file
-		// so we can avoid the timeout.
-		if err = execOnOneRuleType(cmd.Context(), table, f, os.Stdin, createFunc); err != nil {
-			return cli.MessageAndError(fmt.Sprintf("Error creating rule type from %s", f), err)
-		}
+	if err := profile.ExecOnOneProfile(table, f, cmd.InOrStdin(), project, createFunc); err != nil {
+		return cli.MessageAndError(fmt.Sprintf("error creating profile from %s", f), err)
 	}
-	// Render the table
+
 	table.Render()
 	return nil
 }
+
 func init() {
-	ruleTypeCmd.AddCommand(createCmd)
+	profile.ProfileCmd.AddCommand(createCmd)
 	// Flags
-	createCmd.Flags().StringArrayP("file", "f", []string{},
-		"Path to the YAML defining the rule type (or - for stdin). Can be specified multiple times. Can be a directory.")
+	createCmd.Flags().StringP("file", "f", "", "Path to the YAML defining the profile (or - for stdin)")
 	// Required
 	if err := createCmd.MarkFlagRequired("file"); err != nil {
 		createCmd.Printf("Error marking flag required: %s", err)

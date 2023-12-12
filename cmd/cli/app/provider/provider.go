@@ -26,6 +26,7 @@ import (
 	"github.com/spf13/cobra"
 
 	"github.com/stacklok/minder/cmd/cli/app"
+	ghclient "github.com/stacklok/minder/internal/providers/github"
 )
 
 // ProviderCmd is the root command for the provider subcommands
@@ -40,4 +41,7 @@ var ProviderCmd = &cobra.Command{
 
 func init() {
 	app.RootCmd.AddCommand(ProviderCmd)
+	// Flags for all subcommands
+	ProviderCmd.PersistentFlags().StringP("provider", "p", ghclient.Github, "Name of the provider, i.e. github")
+	ProviderCmd.PersistentFlags().StringP("project", "j", "", "ID of the project")
 }

@@ -23,49 +23,149 @@ package repo
 
 import (
 	"context"
-	"errors"
 	"fmt"
 	"os"
 	"slices"
 	"strings"
 
 	"github.com/AlecAivazis/survey/v2"
-	"github.com/charmbracelet/bubbles/table"
 	"github.com/spf13/cobra"
 	"github.com/spf13/viper"
 	"google.golang.org/grpc"
 
-	github "github.com/stacklok/minder/internal/providers/github"
-	"github.com/stacklok/minder/internal/util"
+	"github.com/stacklok/minder/cmd/cli/app"
 	"github.com/stacklok/minder/internal/util/cli"
-	pb "github.com/stacklok/minder/pkg/api/protobuf/go/minder/v1"
+	"github.com/stacklok/minder/internal/util/cli/table"
+	minderv1 "github.com/stacklok/minder/pkg/api/protobuf/go/minder/v1"
 )
 
-var errNoRepositoriesSelected = errors.New("No repositories selected")
-var cfgFlagRepos string
-
-// repoRegisterCmd represents the register command to register a repo with the
-// minder control plane
 var repoRegisterCmd = &cobra.Command{
 	Use:   "register",
-	Short: "Register a repo with the minder control plane",
-	Long:  `Repo register is used to register a repo with the minder control plane`,
-	RunE: cli.GRPCClientWrapRunE(func(ctx context.Context, cmd *cobra.Command, conn *grpc.ClientConn) error {
-		if _, msg, err := RegisterCmd(ctx, cmd, conn); err != nil {
-			return cli.MessageAndError(cmd, msg, err)
+	Short: "Register a repository",
+	Long:  `The repo register subcommand is used to register a repo within Minder.`,
+	RunE:  cli.GRPCClientWrapRunE(registerCommand),
+}
+
+// registerCommand is the repo register subcommand
+func registerCommand(ctx context.Context, cmd *cobra.Command, conn *grpc.ClientConn) error {
+	if _, msg, err := RegisterCmd(ctx, cmd, conn); err != nil {
+		return cli.MessageAndError(msg, err)
+	}
+	return nil
+}
+
+// RegisterCmd represents the register command to register a repo with minder
+//
+//nolint:gocyclo
+func RegisterCmd(ctx context.Context, cmd *cobra.Command, conn *grpc.ClientConn) ([]*minderv1.RegisterRepoResult, string, error) {
+	client := minderv1.NewRepositoryServiceClient(conn)
+
+	provider := viper.GetString("provider")
+	project := viper.GetString("project")
+	repoList := viper.GetString("name")
+
+	// Ensure provider is supported
+	if !app.IsProviderSupported(provider) {
+		return nil, fmt.Sprintf("provider %s is not supported yet", provider), fmt.Errorf("invalid argument")
+	}
+
+	// Get the list of repos
+	listResp, err := client.ListRepositories(ctx, &minderv1.ListRepositoriesRequest{
+		Context: &minderv1.Context{Provider: &provider, Project: &project},
+		// keep this until we decide to delete them from the payload and rely only on the context
+		Provider:  provider,
+		ProjectId: project,
+	})
+	if err != nil {
+		return nil, "Error getting list of repos", err
+	}
+
+	// Get a list of remote repos
+	remoteListResp, err := client.ListRemoteRepositoriesFromProvider(ctx, &minderv1.ListRemoteRepositoriesFromProviderRequest{
+		Context: &minderv1.Context{Provider: &provider, Project: &project},
+		// keep this until we decide to delete them from the payload and rely only on the context
+		Provider:  provider,
+		ProjectId: project,
+	})
+	if err != nil {
+		return nil, "Error getting list of remote repos", err
+	}
+
+	// Unregistered repos are in remoteListResp but not in listResp
+	// build a list of unregistered repos
+	var unregisteredRepos []*minderv1.UpstreamRepositoryRef
+	for _, remoteRepo := range remoteListResp.Results {
+		found := false
+		for _, repo := range listResp.Results {
+			if remoteRepo.Owner == repo.Owner && remoteRepo.Name == repo.Name {
+				found = true
+				break
+			}
 		}
-		return nil
-	}),
+		if !found {
+			unregisteredRepos = append(unregisteredRepos, &minderv1.UpstreamRepositoryRef{
+				Owner:  remoteRepo.Owner,
+				Name:   remoteRepo.Name,
+				RepoId: remoteRepo.RepoId,
+			})
+		}
+	}
+
+	cmd.Printf("Found %d remote repositories: %d registered and %d unregistered.\n",
+		len(remoteListResp.Results), len(listResp.Results), len(unregisteredRepos))
+
+	// Get the selected repos
+	selectedRepos, err := getSelectedRepositories(unregisteredRepos, repoList)
+	if err != nil {
+		return nil, "Error getting selected repositories", err
+	}
+
+	var results []*minderv1.RegisterRepoResult
+	for idx := range selectedRepos {
+		repo := selectedRepos[idx]
+
+		result, err := client.RegisterRepository(context.Background(), &minderv1.RegisterRepositoryRequest{
+			Context: &minderv1.Context{Provider: &provider, Project: &project},
+			// keep this until we decide to delete them from the payload and rely only on the context
+			Provider:   provider,
+			ProjectId:  project,
+			Repository: repo,
+		})
+		if err != nil {
+			_, _ = fmt.Fprintf(os.Stderr, "Error registering repository %s: %s\n", repo.Name, err)
+			continue
+		}
+
+		results = append(results, result.Result)
+	}
+
+	// Register the repos
+	// The result gives a list of repositories with the registration status
+	// Let's parse the results and print the status
+	t := table.New(table.Simple, "", []string{"Repository", "Status", "Message"})
+	var registeredRepos []*minderv1.RegisterRepoResult
+	for _, result := range results {
+		row := []string{fmt.Sprintf("%s/%s", result.Repository.Owner, result.Repository.Name)}
+		if result.Status.Success {
+			row = append(row, "Registered")
+			registeredRepos = append(registeredRepos, result)
+		} else {
+			row = append(row, "Failed")
+		}
+
+		if result.Status.Error != nil {
+			row = append(row, *result.Status.Error)
+		} else {
+			row = append(row, "")
+		}
+		t.AddRow(row)
+	}
+	t.Render()
+	return registeredRepos, "", nil
 }
 
-func init() {
-	RepoCmd.AddCommand(repoRegisterCmd)
-	repoRegisterCmd.Flags().StringP("provider", "p", "github", "Name for the provider to enroll")
-	repoRegisterCmd.Flags().StringP("project-id", "g", "", "ID of the project for repo registration")
-	repoRegisterCmd.Flags().StringVar(&cfgFlagRepos, "repo", "", "List of repositories to register, i.e owner/repo,owner/repo")
-}
-
-func getSelectedRepositories(repoList []*pb.UpstreamRepositoryRef, flagRepos string) ([]*pb.UpstreamRepositoryRef, error) {
+func getSelectedRepositories(repoList []*minderv1.UpstreamRepositoryRef, flagRepos string) (
+	[]*minderv1.UpstreamRepositoryRef, error) {
 	// If no repos are found, exit
 	if len(repoList) == 0 {
 		return nil, fmt.Errorf("no repositories found")
@@ -116,11 +216,11 @@ func getSelectedRepositories(repoList []*pb.UpstreamRepositoryRef, flagRepos str
 
 	// If no repos were selected, exit
 	if len(allSelectedRepos) == 0 {
-		return nil, errNoRepositoriesSelected
+		return nil, fmt.Errorf("no repositories selected")
 	}
 
 	// Create a slice of Repositories protobufs
-	protoRepos := make([]*pb.UpstreamRepositoryRef, len(allSelectedRepos))
+	protoRepos := make([]*minderv1.UpstreamRepositoryRef, len(allSelectedRepos))
 
 	// Convert the selected repos into a slice of Repositories protobufs
 	for i, repo := range allSelectedRepos {
@@ -129,7 +229,7 @@ func getSelectedRepositories(repoList []*pb.UpstreamRepositoryRef, flagRepos str
 			_, _ = fmt.Fprintf(os.Stderr, "Unexpected repository name format: %s, skipping registration\n", repo)
 			continue
 		}
-		protoRepos[i] = &pb.UpstreamRepositoryRef{
+		protoRepos[i] = &minderv1.UpstreamRepositoryRef{
 			Owner:  splitRepo[0],
 			Name:   splitRepo[1],
 			RepoId: repoIDs[repo],
@@ -138,125 +238,8 @@ func getSelectedRepositories(repoList []*pb.UpstreamRepositoryRef, flagRepos str
 	return protoRepos, nil
 }
 
-// RegisterCmd represents the register command to register a repo with minder
-//
-//nolint:gocyclo
-func RegisterCmd(ctx context.Context, cmd *cobra.Command, conn *grpc.ClientConn) ([]*pb.RegisterRepoResult, string, error) {
-	provider := util.GetConfigValue(viper.GetViper(), "provider", "provider", cmd, "").(string)
-	if provider != github.Github {
-		msg := fmt.Sprintf("Only %s is supported at this time", github.Github)
-		return nil, "", fmt.Errorf(msg)
-	}
-	projectID := viper.GetString("project-id")
-
-	client := pb.NewRepositoryServiceClient(conn)
-
-	// Get the list of repos
-	listResp, err := client.ListRepositories(ctx, &pb.ListRepositoriesRequest{
-		Provider:  provider,
-		ProjectId: projectID,
-	})
-	if err != nil {
-		msg := "Error getting list of repos"
-		return nil, msg, err
-	}
-
-	// Get a list of remote repos
-	remoteListResp, err := client.ListRemoteRepositoriesFromProvider(ctx, &pb.ListRemoteRepositoriesFromProviderRequest{
-		Provider:  provider,
-		ProjectId: projectID,
-	})
-	if err != nil {
-		msg := "Error getting list of remote repos"
-		return nil, msg, err
-	}
-
-	// Unregistered repos are in remoteListResp but not in listResp
-	// build a list of unregistered repos
-	var unregisteredRepos []*pb.UpstreamRepositoryRef
-	for _, remoteRepo := range remoteListResp.Results {
-		found := false
-		for _, repo := range listResp.Results {
-			if remoteRepo.Owner == repo.Owner && remoteRepo.Name == repo.Name {
-				found = true
-				break
-			}
-		}
-		if !found {
-			unregisteredRepos = append(unregisteredRepos, &pb.UpstreamRepositoryRef{
-				Owner:  remoteRepo.Owner,
-				Name:   remoteRepo.Name,
-				RepoId: remoteRepo.RepoId,
-			})
-		}
-	}
-
-	cmd.Printf("Found %d remote repositories: %d registered and %d unregistered.\n",
-		len(remoteListResp.Results), len(listResp.Results), len(unregisteredRepos))
-
-	// Get the selected repos
-	selectedRepos, err := getSelectedRepositories(unregisteredRepos, cfgFlagRepos)
-	if err != nil {
-		return nil, "", err
-	}
-
-	results := []*pb.RegisterRepoResult{}
-	for idx := range selectedRepos {
-		repo := selectedRepos[idx]
-		// Construct the RegisterRepositoryRequest
-		request := &pb.RegisterRepositoryRequest{
-			Provider:   provider,
-			Repository: repo,
-			ProjectId:  projectID,
-		}
-
-		result, err := client.RegisterRepository(context.Background(), request)
-		if err != nil {
-			_, _ = fmt.Fprintf(os.Stderr, "Error registering repository %s: %s\n", repo.Name, err)
-			continue
-		}
-
-		results = append(results, result.Result)
-	}
-
-	// Register the repos
-	// The result gives a list of repositories with the registration status
-	// Let's parse the results and print the status
-	columns := []table.Column{
-		{Title: "Repository", Width: 35},
-		{Title: "Status", Width: 15},
-		{Title: "Message", Width: 60},
-	}
-
-	rows := make([]table.Row, len(results))
-	var registeredRepos []*pb.RegisterRepoResult
-	for i, result := range results {
-		rows[i] = table.Row{
-			fmt.Sprintf("%s/%s", result.Repository.Owner, result.Repository.Name),
-		}
-
-		if result.Status.Success {
-			rows[i] = append(rows[i], "Registered")
-			registeredRepos = append(registeredRepos, result)
-		} else {
-			rows[i] = append(rows[i], "Failed")
-		}
-
-		if result.Status.Error != nil {
-			rows[i] = append(rows[i], *result.Status.Error)
-		} else {
-			rows[i] = append(rows[i], "")
-		}
-	}
-
-	t := table.New(
-		table.WithColumns(columns),
-		table.WithRows(rows),
-		table.WithFocused(false),
-		table.WithHeight(len(rows)),
-		table.WithStyles(cli.TableHiddenSelectStyles),
-	)
-
-	cmd.Println(cli.TableRender(t))
-	return registeredRepos, "", nil
+func init() {
+	RepoCmd.AddCommand(repoRegisterCmd)
+	// Flags
+	repoRegisterCmd.Flags().StringP("name", "n", "", "List of repository names to register, i.e owner/repo,owner/repo")
 }

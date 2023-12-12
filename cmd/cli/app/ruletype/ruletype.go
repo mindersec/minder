@@ -20,14 +20,14 @@ import (
 	"github.com/spf13/cobra"
 
 	"github.com/stacklok/minder/cmd/cli/app"
+	ghclient "github.com/stacklok/minder/internal/providers/github"
 )
 
 // ruleTypeCmd is the root command for the rule subcommands
 var ruleTypeCmd = &cobra.Command{
 	Use:   "ruletype",
-	Short: "Manage rule types within a minder control plane",
-	Long: `The minder ruletype subcommands allows the management of rule types within
-a minder control plane.`,
+	Short: "Manage rule types",
+	Long:  `The ruletype subcommands allows the management of rule types within Minder.`,
 	RunE: func(cmd *cobra.Command, args []string) error {
 		return cmd.Usage()
 	},
@@ -35,4 +35,7 @@ a minder control plane.`,
 
 func init() {
 	app.RootCmd.AddCommand(ruleTypeCmd)
+	// Flags for all subcommands
+	ruleTypeCmd.PersistentFlags().StringP("provider", "p", ghclient.Github, "Name of the provider, i.e. github")
+	ruleTypeCmd.PersistentFlags().StringP("project", "j", "", "ID of the project")
 }

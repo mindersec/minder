@@ -20,14 +20,14 @@ import (
 	"github.com/spf13/cobra"
 
 	"github.com/stacklok/minder/cmd/cli/app"
+	ghclient "github.com/stacklok/minder/internal/providers/github"
 )
 
 // ProfileCmd is the root command for the profile subcommands
 var ProfileCmd = &cobra.Command{
 	Use:   "profile",
-	Short: "Manage profiles within a minder control plane",
-	Long: `The minder profile subcommands allows the management of profiles within
-a minder controlplane.`,
+	Short: "Manage profiles",
+	Long:  `The profile subcommands allows the management of profiles within Minder.`,
 	RunE: func(cmd *cobra.Command, args []string) error {
 		return cmd.Usage()
 	},
@@ -35,4 +35,7 @@ a minder controlplane.`,
 
 func init() {
 	app.RootCmd.AddCommand(ProfileCmd)
+	// Flags for all subcommands
+	ProfileCmd.PersistentFlags().StringP("provider", "p", ghclient.Github, "Name of the provider, i.e. github")
+	ProfileCmd.PersistentFlags().StringP("project", "j", "", "ID of the project")
 }

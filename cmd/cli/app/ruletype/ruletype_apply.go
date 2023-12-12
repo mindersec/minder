@@ -21,94 +21,107 @@ import (
 	"os"
 
 	"github.com/spf13/cobra"
+	"github.com/spf13/viper"
 	"google.golang.org/grpc"
 	"google.golang.org/grpc/codes"
 	"google.golang.org/grpc/status"
 
+	"github.com/stacklok/minder/cmd/cli/app"
 	"github.com/stacklok/minder/internal/util"
 	"github.com/stacklok/minder/internal/util/cli"
 	minderv1 "github.com/stacklok/minder/pkg/api/protobuf/go/minder/v1"
 )
 
-// RuleType_applyCmd represents the profile create command
-var RuleType_applyCmd = &cobra.Command{
+var applyCmd = &cobra.Command{
 	Use:   "apply",
-	Short: "Apply a rule type within a minder control plane",
-	Long: `The minder rule type apply subcommand lets you create or update rule types for a project
-within a minder control plane.`,
-	RunE: cli.GRPCClientWrapRunE(func(_ context.Context, cmd *cobra.Command, conn *grpc.ClientConn) error {
-		files, err := cmd.Flags().GetStringArray("file")
+	Short: "Apply a rule type",
+	Long:  `The ruletype apply subcommand lets you create or update rule types for a project within Minder.`,
+	RunE:  cli.GRPCClientWrapRunE(applyCommand),
+}
+
+// applyCommand is the "rule type" apply subcommand
+func applyCommand(_ context.Context, cmd *cobra.Command, conn *grpc.ClientConn) error {
+	client := minderv1.NewProfileServiceClient(conn)
+
+	provider := viper.GetString("provider")
+	project := viper.GetString("project")
+
+	// Ensure provider is supported
+	if !app.IsProviderSupported(provider) {
+		return cli.MessageAndError(fmt.Sprintf("Provider %s is not supported yet", provider), fmt.Errorf("invalid argument"))
+	}
+
+	fileFlag, err := cmd.Flags().GetStringArray("file")
+	if err != nil {
+		return cli.MessageAndError("Error parsing file flag", err)
+	}
+
+	if err = validateFilesArg(fileFlag); err != nil {
+		return cli.MessageAndError("Error validating file flag", err)
+	}
+
+	files, err := util.ExpandFileArgs(fileFlag)
+	if err != nil {
+		return cli.MessageAndError("Error expanding file args", err)
+	}
+
+	table := initializeTable()
+
+	applyFunc := func(ctx context.Context, fileName string, rt *minderv1.RuleType) (*minderv1.RuleType, error) {
+		createResp, err := client.CreateRuleType(ctx, &minderv1.CreateRuleTypeRequest{
+			Context:  &minderv1.Context{Provider: &provider, Project: &project},
+			RuleType: rt,
+		})
+
+		if err == nil {
+			return createResp.RuleType, nil
+		}
+
+		st, ok := status.FromError(err)
+		if !ok {
+			// We can't parse the error, so just return it
+			return nil, fmt.Errorf("error creating rule type from %s: %w", fileName, err)
+		}
+
+		if st.Code() != codes.AlreadyExists {
+			return nil, fmt.Errorf("error creating rule type from %s: %w", fileName, err)
+		}
+
+		updateResp, err := client.UpdateRuleType(ctx, &minderv1.UpdateRuleTypeRequest{
+			Context:  &minderv1.Context{Provider: &provider, Project: &project},
+			RuleType: rt,
+		})
+
 		if err != nil {
-			return fmt.Errorf("error getting file flag: %w", err)
+			return nil, fmt.Errorf("error updating rule type from %s: %w", fileName, err)
 		}
 
-		if err := validateFilesArg(files); err != nil {
-			return fmt.Errorf("error validating file arg: %w", err)
+		return updateResp.RuleType, nil
+	}
+
+	for _, f := range files {
+		if shouldSkipFile(f) {
+			continue
 		}
-
-		client := minderv1.NewProfileServiceClient(conn)
-
-		expfiles, err := util.ExpandFileArgs(files)
-		if err != nil {
-			return fmt.Errorf("error expanding file args: %w", err)
+		// cmd.Context() is the root context. We need to create a new context for each file
+		// so we can avoid the timeout.
+		if err = execOnOneRuleType(cmd.Context(), table, f, os.Stdin, applyFunc); err != nil {
+			return cli.MessageAndError(fmt.Sprintf("error applying rule type from %s", f), err)
 		}
-
-		table := initializeTable(cmd)
-
-		applyFunc := func(
-			ctx context.Context,
-			fileName string,
-			rt *minderv1.RuleType,
-		) (*minderv1.RuleType, error) {
-			createResp, err := client.CreateRuleType(ctx, &minderv1.CreateRuleTypeRequest{
-				RuleType: rt,
-			})
-
-			if err == nil {
-				return createResp.RuleType, nil
-			}
-
-			st, ok := status.FromError(err)
-			if !ok {
-				// We can't parse the error, so just return it
-				return nil, fmt.Errorf("error creating rule type from %s: %w", fileName, err)
-			}
-
-			if st.Code() != codes.AlreadyExists {
-				return nil, fmt.Errorf("error creating rule type from %s: %w", fileName, err)
-			}
-
-			updateResp, err := client.UpdateRuleType(ctx, &minderv1.UpdateRuleTypeRequest{
-				RuleType: rt,
-			})
-
-			if err != nil {
-				return nil, fmt.Errorf("error updating rule type from %s: %w", fileName, err)
-			}
-
-			return updateResp.RuleType, nil
-		}
-
-		for _, f := range expfiles {
-			if shouldSkipFile(f) {
-				continue
-			}
-
-			// cmd.Context() is the root context. We need to create a new context for each file
-			// so we can avoid the timeout.
-			if err := execOnOneRuleType(cmd.Context(), table, f, os.Stdin, applyFunc); err != nil {
-				return fmt.Errorf("error creating rule type %s: %w", f, err)
-			}
-		}
-
-		table.Render()
-
-		return nil
-	}),
+	}
+	// Render the table
+	table.Render()
+	return nil
 }
 
 func init() {
-	ruleTypeCmd.AddCommand(RuleType_applyCmd)
-	RuleType_applyCmd.Flags().StringArrayP("file", "f", []string{},
+	ruleTypeCmd.AddCommand(applyCmd)
+	// Flags
+	applyCmd.Flags().StringArrayP("file", "f", []string{},
 		"Path to the YAML defining the rule type (or - for stdin). Can be specified multiple times. Can be a directory.")
+	// Required
+	if err := applyCmd.MarkFlagRequired("file"); err != nil {
+		applyCmd.Printf("Error marking flag required: %s", err)
+		os.Exit(1)
+	}
 }

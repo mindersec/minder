@@ -17,22 +17,35 @@
 package status
 
 import (
+	"fmt"
+	"os"
+	"strings"
+
 	"github.com/spf13/cobra"
 
+	"github.com/stacklok/minder/cmd/cli/app"
 	"github.com/stacklok/minder/cmd/cli/app/profile"
 )
 
-// ProfileStatusCmd is the root command for the profile_status subcommands
-var ProfileStatusCmd = &cobra.Command{
+// profileStatusCmd is the root command for the profile_status subcommands
+var profileStatusCmd = &cobra.Command{
 	Use:   "status",
-	Short: "Manage profile status within a minder control plane",
-	Long: `The minder profile status subcommand allows the management of profile status within
-a minder control plane.`,
+	Short: "Manage profile status",
+	Long:  `The profile status subcommand allows management of profile status within Minder.`,
 	RunE: func(cmd *cobra.Command, args []string) error {
 		return cmd.Usage()
 	},
 }
 
 func init() {
-	profile.ProfileCmd.AddCommand(ProfileStatusCmd)
+	profile.ProfileCmd.AddCommand(profileStatusCmd)
+	// Flags
+	profileStatusCmd.PersistentFlags().StringP("name", "n", "", "Profile name to get profile status for")
+	profileStatusCmd.PersistentFlags().StringP("output", "o", app.Table,
+		fmt.Sprintf("Output format (one of %s)", strings.Join(app.SupportedOutputFormats(), ",")))
+	// Required
+	if err := profileStatusCmd.MarkPersistentFlagRequired("name"); err != nil {
+		profileStatusCmd.Printf("Error marking flag required: %s", err)
+		os.Exit(1)
+	}
 }

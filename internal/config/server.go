@@ -20,8 +20,6 @@ import (
 
 	"github.com/spf13/pflag"
 	"github.com/spf13/viper"
-
-	"github.com/stacklok/minder/internal/util"
 )
 
 // HTTPServerConfig is the configuration for the HTTP server
@@ -81,36 +79,36 @@ func RegisterServerFlags(v *viper.Viper, flags *pflag.FlagSet) error {
 
 // registerHTTPServerFlags registers the flags for the HTTP server
 func registerHTTPServerFlags(v *viper.Viper, flags *pflag.FlagSet) error {
-	err := util.BindConfigFlag(v, flags, "http_server.host", "http-host", "",
+	err := BindConfigFlag(v, flags, "http_server.host", "http-host", "",
 		"The host to bind to for the HTTP server", flags.String)
 	if err != nil {
 		return err
 	}
 
-	return util.BindConfigFlag(v, flags, "http_server.port", "http-port", 8080,
+	return BindConfigFlag(v, flags, "http_server.port", "http-port", 8080,
 		"The port to bind to for the HTTP server", flags.Int)
 }
 
 // registerGRPCServerFlags registers the flags for the gRPC server
 func registerGRPCServerFlags(v *viper.Viper, flags *pflag.FlagSet) error {
-	err := util.BindConfigFlag(v, flags, "grpc_server.host", "grpc-host", "",
+	err := BindConfigFlag(v, flags, "grpc_server.host", "grpc-host", "",
 		"The host to bind to for the gRPC server", flags.String)
 	if err != nil {
 		return err
 	}
 
-	return util.BindConfigFlag(v, flags, "grpc_server.port", "grpc-port", 8090,
+	return BindConfigFlag(v, flags, "grpc_server.port", "grpc-port", 8090,
 		"The port to bind to for the gRPC server", flags.Int)
 }
 
 // registerMetricServerFlags registers the flags for the metric server
 func registerMetricServerFlags(v *viper.Viper, flags *pflag.FlagSet) error {
-	err := util.BindConfigFlag(v, flags, "metric_server.host", "metric-host", "",
+	err := BindConfigFlag(v, flags, "metric_server.host", "metric-host", "",
 		"The host to bind to for the metric server", flags.String)
 	if err != nil {
 		return err
 	}
 
-	return util.BindConfigFlag(v, flags, "metric_server.port", "metric-port", 9090,
+	return BindConfigFlag(v, flags, "metric_server.port", "metric-port", 9090,
 		"The port to bind to for the metric server", flags.Int)
 }

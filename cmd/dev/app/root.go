@@ -24,7 +24,7 @@ import (
 	"github.com/spf13/viper"
 
 	"github.com/stacklok/minder/cmd/dev/app/rule_type"
-	"github.com/stacklok/minder/internal/util"
+	"github.com/stacklok/minder/internal/util/cli"
 )
 
 var (
@@ -44,7 +44,7 @@ func Execute() {
 	RootCmd.SetOut(os.Stdout)
 	RootCmd.SetErr(os.Stderr)
 	err := RootCmd.Execute()
-	util.ExitNicelyOnError(err, "Error on execute")
+	cli.ExitNicelyOnError(err, "Error on execute")
 }
 
 func init() {

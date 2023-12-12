@@ -13,38 +13,40 @@
 // See the License for the specific language governing permissions and
 // limitations under the License.
 
-package repo
+package status
 
 import (
 	"context"
 	"fmt"
-	"strings"
 
 	"github.com/spf13/cobra"
 	"github.com/spf13/viper"
 	"google.golang.org/grpc"
 
 	"github.com/stacklok/minder/cmd/cli/app"
+	"github.com/stacklok/minder/cmd/cli/app/profile"
 	"github.com/stacklok/minder/internal/util"
 	"github.com/stacklok/minder/internal/util/cli"
-	"github.com/stacklok/minder/internal/util/cli/table"
 	minderv1 "github.com/stacklok/minder/pkg/api/protobuf/go/minder/v1"
 )
 
 var listCmd = &cobra.Command{
 	Use:   "list",
-	Short: "List repositories",
-	Long:  `The repo list subcommand is used to list registered repositories within Minder.`,
+	Short: "List profile status",
+	Long:  `The profile status list subcommand lets you list profile status within Minder.`,
 	RunE:  cli.GRPCClientWrapRunE(listCommand),
 }
 
-// listCommand is the repo list subcommand
+// listCommand is the profile "list" subcommand
 func listCommand(ctx context.Context, cmd *cobra.Command, conn *grpc.ClientConn) error {
-	client := minderv1.NewRepositoryServiceClient(conn)
+	client := minderv1.NewProfileServiceClient(conn)
 
 	provider := viper.GetString("provider")
 	project := viper.GetString("project")
+	profileName := viper.GetString("name")
 	format := viper.GetString("output")
+	all := viper.GetBool("detailed")
+	rule := viper.GetString("rule")
 
 	// Ensure provider is supported
 	if !app.IsProviderSupported(provider) {
@@ -56,30 +58,17 @@ func listCommand(ctx context.Context, cmd *cobra.Command, conn *grpc.ClientConn)
 		return cli.MessageAndError(fmt.Sprintf("Output format %s not supported", format), fmt.Errorf("invalid argument"))
 	}
 
-	resp, err := client.ListRepositories(ctx, &minderv1.ListRepositoriesRequest{
+	resp, err := client.GetProfileStatusByName(ctx, &minderv1.GetProfileStatusByNameRequest{
 		Context: &minderv1.Context{Provider: &provider, Project: &project},
-		// keep this until we decide to delete them from the payload and rely only on the context
-		Provider:  provider,
-		ProjectId: project,
+		Name:    profileName,
+		All:     all,
+		Rule:    rule,
 	})
 	if err != nil {
-		return cli.MessageAndError("Error listing repositories", err)
+		return cli.MessageAndError("Error getting profile status", err)
 	}
 
 	switch format {
-	case app.Table:
-		t := table.New(table.Simple, "repolist", nil)
-		for _, v := range resp.Results {
-			t.AddRow([]string{
-				*v.Id,
-				*v.Context.Project,
-				*v.Context.Provider,
-				fmt.Sprintf("%d", v.GetRepoId()),
-				v.GetOwner(),
-				v.GetName(),
-			})
-		}
-		t.Render()
 	case app.JSON:
 		out, err := util.GetJsonFromProto(resp)
 		if err != nil {
@@ -92,13 +81,22 @@ func listCommand(ctx context.Context, cmd *cobra.Command, conn *grpc.ClientConn)
 			return cli.MessageAndError("Error getting yaml from proto", err)
 		}
 		cmd.Println(out)
+	case app.Table:
+		table := profile.NewProfileStatusTable()
+		profile.RenderProfileStatusTable(resp.ProfileStatus, table)
+		table.Render()
+		if all {
+			table = profile.NewRuleEvaluationsTable()
+			profile.RenderRuleEvaluationStatusTable(resp.RuleEvaluationStatus, table)
+			table.Render()
+		}
 	}
 	return nil
 }
 
 func init() {
-	RepoCmd.AddCommand(listCmd)
+	profileStatusCmd.AddCommand(listCmd)
 	// Flags
-	listCmd.Flags().StringP("output", "o", app.Table,
-		fmt.Sprintf("Output format (one of %s)", strings.Join(app.SupportedOutputFormats(), ",")))
+	listCmd.Flags().BoolP("detailed", "d", false, "List all profile violations")
+	listCmd.Flags().StringP("rule", "r", "", "Filter profile status list by rule")
 }

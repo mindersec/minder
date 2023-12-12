@@ -18,7 +18,7 @@ package ruletype
 import (
 	"context"
 	"fmt"
-	"os"
+	"strings"
 
 	"github.com/spf13/cobra"
 	"github.com/spf13/viper"
@@ -30,72 +30,71 @@ import (
 	minderv1 "github.com/stacklok/minder/pkg/api/protobuf/go/minder/v1"
 )
 
-var ruleType_listCmd = &cobra.Command{
+var listCmd = &cobra.Command{
 	Use:   "list",
-	Short: "List rule types within a minder control plane",
-	Long: `The minder ruletype list subcommand lets you list rule type within a
-minder control plane for an specific project.`,
-	RunE: cli.GRPCClientWrapRunE(func(ctx context.Context, cmd *cobra.Command, conn *grpc.ClientConn) error {
-		format := viper.GetString("output")
+	Short: "List rule types",
+	Long:  `The ruletype list subcommand lets you list rule type within Minder.`,
+	RunE:  cli.GRPCClientWrapRunE(listCommand),
+}
 
-		client := minderv1.NewProfileServiceClient(conn)
+// listCommand is the ruletype list subcommand
+func listCommand(ctx context.Context, cmd *cobra.Command, conn *grpc.ClientConn) error {
+	client := minderv1.NewProfileServiceClient(conn)
 
-		provider := viper.GetString("provider")
+	provider := viper.GetString("provider")
+	project := viper.GetString("project")
+	format := viper.GetString("output")
 
-		switch format {
-		case app.JSON:
-		case app.YAML:
-		case app.Table:
-		default:
-			fmt.Fprintf(os.Stderr, "Error: invalid format: %s\n", format)
-		}
+	// Ensure provider is supported
+	if !app.IsProviderSupported(provider) {
+		return cli.MessageAndError(fmt.Sprintf("Provider %s is not supported yet", provider), fmt.Errorf("invalid argument"))
+	}
 
-		resp, err := client.ListRuleTypes(ctx, &minderv1.ListRuleTypesRequest{
-			Context: &minderv1.Context{
-				Provider: &provider,
-				// TODO set up project if specified
-				// Currently it's inferred from the authorization token
-			},
-		})
+	// Ensure the output format is supported
+	if !app.IsOutputFormatSupported(format) {
+		return cli.MessageAndError(fmt.Sprintf("Output format %s not supported", format), fmt.Errorf("invalid argument"))
+	}
+
+	resp, err := client.ListRuleTypes(ctx, &minderv1.ListRuleTypesRequest{
+		Context: &minderv1.Context{Provider: &provider, Project: &project},
+	})
+	if err != nil {
+		return cli.MessageAndError("Error listing rule types", err)
+	}
+
+	switch format {
+	case app.JSON:
+		out, err := util.GetJsonFromProto(resp)
 		if err != nil {
-			return fmt.Errorf("error getting profiles: %w", err)
+			return cli.MessageAndError("Error getting json from proto", err)
 		}
-
-		switch format {
-		case app.JSON:
-			out, err := util.GetJsonFromProto(resp)
-			if err != nil {
-				return fmt.Errorf("error getting json from proto: %w", err)
-			}
-			cmd.Println(out)
-		case app.YAML:
-			out, err := util.GetYamlFromProto(resp)
-			if err != nil {
-				return fmt.Errorf("error getting yaml from proto: %w", err)
-			}
-			cmd.Println(out)
-		case app.Table:
-			handleListTableOutput(cmd, resp)
+		cmd.Println(out)
+	case app.YAML:
+		out, err := util.GetYamlFromProto(resp)
+		if err != nil {
+			return cli.MessageAndError("Error getting yaml from proto", err)
 		}
-
-		// this is unreachable
-		return nil
-	}),
+		cmd.Println(out)
+	case app.Table:
+		table := initializeTable()
+		for _, rt := range resp.RuleTypes {
+			table.AddRow([]string{
+				*rt.Context.Provider,
+				*rt.Context.Project,
+				*rt.Id,
+				rt.Name,
+				rt.Description,
+			})
+		}
+		table.Render()
+	}
+	// this is unreachable
+	return nil
 }
 
 func init() {
-	ruleTypeCmd.AddCommand(ruleType_listCmd)
-	ruleType_listCmd.Flags().StringP("provider", "p", "github", "Provider to list rule types for")
-	ruleType_listCmd.Flags().StringP("output", "o", app.Table, "Output format (json, yaml or table)")
-	// TODO: Take project ID into account
-	// ruleType_listCmd.Flags().Int32P("project-id", "g", 0, "project id to list roles for")
-}
-
-func handleListTableOutput(cmd *cobra.Command, resp *minderv1.ListRuleTypesResponse) {
-	table := initializeTable(cmd)
-
-	for _, v := range resp.RuleTypes {
-		renderRuleTypeTable(v, table)
-	}
-	table.Render()
+	ruleTypeCmd.AddCommand(listCmd)
+	// Flags
+	listCmd.Flags().StringP("output", "o", app.Table,
+		fmt.Sprintf("Output format (one of %s)", strings.Join(app.SupportedOutputFormats(), ",")))
 }

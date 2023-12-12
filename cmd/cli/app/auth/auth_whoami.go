@@ -18,58 +18,35 @@ package auth
 import (
 	"context"
 
-	"github.com/charmbracelet/bubbles/table"
 	"github.com/spf13/cobra"
 	"google.golang.org/grpc"
 
 	"github.com/stacklok/minder/internal/util/cli"
-	pb "github.com/stacklok/minder/pkg/api/protobuf/go/minder/v1"
+	minderv1 "github.com/stacklok/minder/pkg/api/protobuf/go/minder/v1"
 )
 
-// authWhoamiCmd represents the whoami command
-var authWhoamiCmd = &cobra.Command{
+// whoamiCmd represents the whoami command
+var whoamiCmd = &cobra.Command{
 	Use:   "whoami",
 	Short: "whoami for current user",
 	Long:  `whoami gets information about the current user from the minder server`,
-	RunE: cli.GRPCClientWrapRunE(func(ctx context.Context, cmd *cobra.Command, conn *grpc.ClientConn) error {
-		client := pb.NewUserServiceClient(conn)
+	RunE:  cli.GRPCClientWrapRunE(whoamiCommand),
+}
 
-		userInfo, err := client.GetUser(ctx, &pb.GetUserRequest{})
-		if err != nil {
-			return cli.MessageAndError(cmd, "Error getting information for user", err)
-		}
+// whoamiCommand is the whoami subcommand
+func whoamiCommand(ctx context.Context, cmd *cobra.Command, conn *grpc.ClientConn) error {
+	client := minderv1.NewUserServiceClient(conn)
 
-		cmd.Println(cli.Header.Render("Here are your details:"))
-		renderUserInfoWhoami(cmd, conn, userInfo)
-		return nil
-	}),
+	userInfo, err := client.GetUser(ctx, &minderv1.GetUserRequest{})
+	if err != nil {
+		return cli.MessageAndError("Error getting information for user", err)
+	}
+
+	cmd.Println(cli.Header.Render("Here are your details:"))
+	renderUserInfoWhoami(conn.Target(), userInfo)
+	return nil
 }
 
 func init() {
-	AuthCmd.AddCommand(authWhoamiCmd)
-}
-
-func renderUserInfoWhoami(cmd *cobra.Command, conn *grpc.ClientConn, user *pb.GetUserResponse) {
-	subjectKey := "Subject"
-	createdKey := "Created At"
-	updatedKey := "Updated At"
-	minderSrvKey := "Minder Server"
-	rows := []table.Row{
-		{
-			subjectKey, user.GetUser().GetIdentitySubject(),
-		},
-		{
-			createdKey, user.GetUser().GetCreatedAt().AsTime().String(),
-		},
-		{
-			updatedKey, user.GetUser().GetUpdatedAt().AsTime().String(),
-		},
-		{
-			minderSrvKey, conn.Target(),
-		},
-	}
-
-	rows = append(rows, getProjectTableRows(user.Projects)...)
-
-	renderUserToTable(cmd, rows)
+	AuthCmd.AddCommand(whoamiCmd)
 }

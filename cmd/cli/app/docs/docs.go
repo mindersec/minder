@@ -36,7 +36,7 @@ var DocsCmd = &cobra.Command{
 	Long:  `Generates documentation for the client.`,
 	PreRunE: func(cmd *cobra.Command, args []string) error {
 		if err := viper.BindPFlags(cmd.Flags()); err != nil {
-			return cli.MessageAndError(cmd, "Error binding flags", err)
+			return cli.MessageAndError("Error binding flags", err)
 		}
 		return nil
 	},
