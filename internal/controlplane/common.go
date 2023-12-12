@@ -44,6 +44,7 @@ type ProviderNameGetter interface {
 	GetProvider() string
 }
 
+// HasProtoContext is an interface that can be implemented by a request
 type HasProtoContext interface {
 	GetContext() *pb.Context
 }
