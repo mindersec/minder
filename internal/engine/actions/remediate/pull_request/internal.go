@@ -144,7 +144,7 @@ type fsModifier interface {
 	hash() (string, error)
 	writeSummary(out io.Writer) error
 	createFsModEntries(ctx context.Context, params interfaces.ActionsParams) error
-	modifyFs(ctx context.Context, params interfaces.ActionsParams) ([]*fsEntry, error)
+	modifyFs() ([]*fsEntry, error)
 }
 
 type modificationConstructorParams struct {
@@ -272,13 +272,8 @@ func (ca *contentModification) createFsModEntries(
 
 }
 
-func (ca *contentModification) modifyFs(ctx context.Context, params interfaces.ActionsParams) ([]*fsEntry, error) {
-	err := ca.createFsModEntries(ctx, params)
-	if err != nil {
-		return nil, fmt.Errorf("cannot get fs entry modifications: %w", err)
-	}
-
-	err = ca.writeEntries()
+func (ca *contentModification) modifyFs() ([]*fsEntry, error) {
+	err := ca.fsChangeSet.writeEntries()
 	if err != nil {
 		return nil, fmt.Errorf("cannot write entries: %w", err)
 	}
@@ -339,13 +334,8 @@ func (ftr *frizbeeTagResolveModification) createFsModEntries(ctx context.Context
 	return nil
 }
 
-func (ftr *frizbeeTagResolveModification) modifyFs(ctx context.Context, params interfaces.ActionsParams) ([]*fsEntry, error) {
-	err := ftr.createFsModEntries(ctx, params)
-	if err != nil {
-		return nil, fmt.Errorf("cannot gather changes: %w", err)
-	}
-
-	err = ftr.writeEntries()
+func (ftr *frizbeeTagResolveModification) modifyFs() ([]*fsEntry, error) {
+	err := ftr.fsChangeSet.writeEntries()
 	if err != nil {
 		return nil, fmt.Errorf("cannot write entries: %w", err)
 	}

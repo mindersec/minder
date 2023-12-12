@@ -214,7 +214,7 @@ func (r *Remediator) Do(
 			zerolog.Ctx(ctx).Info().Msg("PR already exists, won't create a new one")
 			return nil, nil
 		}
-		remErr = r.runGit(ctx, ingested.Fs, ingested.Storer, modification, params, repo, title.String(), prFullBodyText)
+		remErr = r.runGit(ctx, ingested.Fs, ingested.Storer, modification, repo, title.String(), prFullBodyText)
 	case interfaces.ActionOptDryRun:
 		r.dryRun(modification, title.String(), prFullBodyText)
 		remErr = nil
@@ -240,7 +240,6 @@ func (r *Remediator) runGit(
 	fs billy.Filesystem,
 	storer storage.Storer,
 	modifier fsModifier,
-	params interfaces.ActionsParams,
 	pbRepo *pb.Repository,
 	title, body string,
 ) error {
@@ -272,7 +271,7 @@ func (r *Remediator) runGit(
 	}
 
 	logger.Debug().Msg("Creating file entries")
-	changeEntries, err := modifier.modifyFs(ctx, params)
+	changeEntries, err := modifier.modifyFs()
 	if err != nil {
 		return fmt.Errorf("cannot modifyFs: %w", err)
 	}
