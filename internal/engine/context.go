@@ -91,17 +91,17 @@ func (c *EntityContext) GetProvider() Provider {
 // input is the context from the gRPC request which merely holds
 // user-friendly information about an object.
 func GetContextFromInput(ctx context.Context, in *pb.Context, q db.Querier) (*EntityContext, error) {
-	if in.Project == "" {
+	if in.Project == nil || *in.Project == "" {
 		return nil, fmt.Errorf("invalid context: missing project")
 	}
 
-	project, err := q.GetProjectByName(ctx, in.Project)
+	project, err := q.GetProjectByName(ctx, *in.Project)
 	if err != nil {
 		return nil, fmt.Errorf("unable to get context: %w", err)
 	}
 
 	prov, err := q.GetProviderByName(ctx, db.GetProviderByNameParams{
-		Name:      in.Provider,
+		Name:      *in.Provider,
 		ProjectID: project.ID,
 	})
 	if err != nil {

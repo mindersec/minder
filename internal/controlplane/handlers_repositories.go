@@ -178,8 +178,8 @@ func (s *Server) ListRepositories(ctx context.Context,
 		results = append(results, &pb.Repository{
 			Id: &id,
 			Context: &pb.Context{
-				Project:  projID,
-				Provider: repo.Provider,
+				Project:  &projID,
+				Provider: &repo.Provider,
 			},
 			Owner:     repo.RepoOwner,
 			Name:      repo.RepoName,
@@ -228,8 +228,8 @@ func (s *Server) GetRepositoryById(ctx context.Context,
 	return &pb.GetRepositoryByIdResponse{Repository: &pb.Repository{
 		Id: &id,
 		Context: &pb.Context{
-			Project:  projID,
-			Provider: repo.Provider,
+			Project:  &projID,
+			Provider: &repo.Provider,
 		},
 		Owner:     repo.RepoOwner,
 		Name:      repo.RepoName,
@@ -292,8 +292,8 @@ func (s *Server) GetRepositoryByName(ctx context.Context,
 	return &pb.GetRepositoryByNameResponse{Repository: &pb.Repository{
 		Id: &id,
 		Context: &pb.Context{
-			Project:  projID,
-			Provider: repo.Provider,
+			Project:  &projID,
+			Provider: &repo.Provider,
 		},
 		Owner:     repo.RepoOwner,
 		Name:      repo.RepoName,

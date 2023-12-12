@@ -144,7 +144,7 @@ artifact:
 			want: &minderv1.Profile{
 				Name: "acme-github-profile",
 				Context: &minderv1.Context{
-					Provider: defaultProvider,
+					Provider: &defaultProvider,
 				},
 				Repository: []*minderv1.Profile_Rule{
 					{
@@ -227,7 +227,7 @@ repository:
 			want: &minderv1.Profile{
 				Name: "acme-github-profile",
 				Context: &minderv1.Context{
-					Provider: defaultProvider,
+					Provider: &defaultProvider,
 				},
 				Repository: []*minderv1.Profile_Rule{
 					{
@@ -340,7 +340,7 @@ func TestGetRulesForEntity(t *testing.T) {
 	pol := &minderv1.Profile{
 		Name: "acme-github-profile",
 		Context: &minderv1.Context{
-			Provider: defaultProvider,
+			Provider: &defaultProvider,
 		},
 		Repository: []*minderv1.Profile_Rule{
 			{

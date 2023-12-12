@@ -65,7 +65,7 @@ func parseProfile(r io.Reader, proj string) (*minderv1.Profile, error) {
 			p.Context = &minderv1.Context{}
 		}
 
-		p.Context.Project = proj
+		p.Context.Project = &proj
 	}
 
 	return p, nil

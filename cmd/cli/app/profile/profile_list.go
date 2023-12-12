@@ -51,7 +51,7 @@ minder control plane for an specific project.`,
 
 		resp, err := client.ListProfiles(ctx, &pb.ListProfilesRequest{
 			Context: &pb.Context{
-				Provider: provider,
+				Provider: &provider,
 				// TODO set up project if specified
 				// Currently it's inferred from the authorization token
 			},

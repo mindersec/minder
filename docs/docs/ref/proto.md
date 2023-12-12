@@ -191,8 +191,8 @@ this normally refers to a combination of the provider, organization and project.
 
 | Field | Type | Label | Description |
 | ----- | ---- | ----- | ----------- |
-| provider | [string](#string) |  |  |
-| project | [string](#string) |  |  |
+| provider | [string](#string) | optional |  |
+| project | [string](#string) | optional |  |
 | retired_organization | [string](#string) | optional |  |
 
 
