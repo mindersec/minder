@@ -18,15 +18,11 @@ package pull_request
 import (
 	"bytes"
 	"context"
-	"crypto/sha1" // #nosec G505 - we're not using sha1 for crypto, only to quickly compare contents
 	"encoding/json"
 	"errors"
 	"fmt"
 	htmltemplate "html/template"
-	"io"
-	"log"
 	"os"
-	"path/filepath"
 	"strings"
 	"text/template"
 	"time"
@@ -58,7 +54,6 @@ const (
 	// if no Mode is specified, create a regular file with 0644 UNIX permissions
 	ghModeNonExecFile = "100644"
 	dflBranchBaseName = "minder"
-	dflBranchFrom     = "main"
 	dflBranchTo       = "main"
 )
 
@@ -68,23 +63,7 @@ const (
 
 	prTemplateName = "prBody"
 	prBodyTmplStr  = "{{.MagicComment}}\n\n{{.PrText}}"
-
-	dryRunTemplateName = "dryRun"
-	dryRunTmpl         = `{{- range . }}
-Path: {{ .Path }}
-Content: {{ .Content }}
-Mode: {{ .Mode }}
---------------------------
-{{- end }}
-`
 )
-
-type prEntry struct {
-	Path            string
-	contentTemplate *template.Template
-	Content         string
-	Mode            string
-}
 
 // Remediator is the remediation engine for the Pull Request remediation type
 type Remediator struct {
@@ -92,9 +71,11 @@ type Remediator struct {
 	gitCli     provifv1.Git
 	actionType interfaces.ActionType
 
+	prCfg                *pb.RuleType_Definition_Remediate_PullRequestRemediation
+	modificationRegistry modificationRegistry
+
 	titleTemplate *htmltemplate.Template
 	bodyTemplate  *htmltemplate.Template
-	entries       []prEntry
 }
 
 // NewPullRequestRemediate creates a new PR remediation engine
@@ -128,45 +109,19 @@ func NewPullRequestRemediate(
 		return nil, fmt.Errorf("failed to get git client: %w", err)
 	}
 
-	entries, err := prConfigToEntries(prCfg)
-	if err != nil {
-		return nil, fmt.Errorf("cannot create PR entries: %w", err)
-	}
+	modRegistry := newModificationRegistry()
+	modRegistry.registerBuiltIn()
 
 	return &Remediator{
-		ghCli:      ghCli,
-		gitCli:     gitCli,
-		actionType: actionType,
+		ghCli:                ghCli,
+		gitCli:               gitCli,
+		prCfg:                prCfg,
+		actionType:           actionType,
+		modificationRegistry: modRegistry,
 
 		titleTemplate: titleTmpl,
 		bodyTemplate:  bodyTmpl,
-		entries:       entries,
 	}, nil
-}
-
-func prConfigToEntries(prCfg *pb.RuleType_Definition_Remediate_PullRequestRemediation) ([]prEntry, error) {
-	entries := make([]prEntry, len(prCfg.Contents))
-	for i := range prCfg.Contents {
-		cnt := prCfg.Contents[i]
-
-		contentTemplate, err := util.ParseNewTextTemplate(&cnt.Content, fmt.Sprintf("Content[%d]", i))
-		if err != nil {
-			return nil, fmt.Errorf("cannot parse content template (index %d): %w", i, err)
-		}
-
-		mode := ghModeNonExecFile
-		if cnt.Mode != nil {
-			mode = *cnt.Mode
-		}
-
-		entries[i] = prEntry{
-			Path:            cnt.Path,
-			Mode:            mode,
-			contentTemplate: contentTemplate,
-		}
-	}
-
-	return entries, nil
 }
 
 // PrTemplateParams is the parameters for the PR templates
@@ -224,11 +179,26 @@ func (r *Remediator) Do(
 		return nil, fmt.Errorf("cannot execute title template: %w", err)
 	}
 
-	if err := r.expandContents(tmplParams); err != nil {
-		return nil, fmt.Errorf("cannot expand contents: %w", err)
+	modification, err := r.modificationRegistry.getModification(getMethod(r.prCfg), &modificationConstructorParams{
+		prCfg: r.prCfg,
+		ghCli: r.ghCli,
+		bfs:   ingested.Fs,
+	})
+	if err != nil {
+		return nil, fmt.Errorf("cannot get modification: %w", err)
 	}
 
-	prFullBodyText, magicComment, err := r.getPrBodyText(tmplParams)
+	err = modification.createFsModEntries(ctx, params)
+	if err != nil {
+		return nil, fmt.Errorf("cannot create PR entries: %w", err)
+	}
+
+	magicComment, err := r.prMagicComment(modification)
+	if err != nil {
+		return nil, fmt.Errorf("cannot create PR magic comment: %w", err)
+	}
+
+	prFullBodyText, err := r.getPrBodyText(tmplParams, magicComment)
 	if err != nil {
 		return nil, fmt.Errorf("cannot create PR full body text: %w", err)
 	}
@@ -244,9 +214,9 @@ func (r *Remediator) Do(
 			zerolog.Ctx(ctx).Info().Msg("PR already exists, won't create a new one")
 			return nil, nil
 		}
-		remErr = r.runGit(ctx, ingested.Fs, ingested.Storer, repo, title.String(), prFullBodyText)
+		remErr = r.runGit(ctx, ingested.Fs, ingested.Storer, modification, repo, title.String(), prFullBodyText)
 	case interfaces.ActionOptDryRun:
-		dryRun(title.String(), prFullBodyText, r.entries)
+		r.dryRun(modification, title.String(), prFullBodyText)
 		remErr = nil
 	case interfaces.ActionOptOff, interfaces.ActionOptUnknown:
 		remErr = errors.New("unexpected action")
@@ -254,17 +224,14 @@ func (r *Remediator) Do(
 	return nil, remErr
 }
 
-func dryRun(title, body string, entries []prEntry) {
-	tmpl, err := template.New(dryRunTemplateName).Option("missingkey=error").Parse(dryRunTmpl)
-	if err != nil {
-		log.Fatalf("Error parsing template: %v", err)
-	}
-
+func (_ *Remediator) dryRun(modifier fsModifier, title, body string) {
+	// TODO: jsonize too
 	fmt.Printf("title:\n%s\n", title)
 	fmt.Printf("body:\n%s\n", body)
 
-	if err := tmpl.Execute(os.Stdout, entries); err != nil {
-		log.Fatalf("Error executing template: %v", err)
+	err := modifier.writeSummary(os.Stdout)
+	if err != nil {
+		fmt.Printf("cannot write summary: %s\n", err)
 	}
 }
 
@@ -272,6 +239,7 @@ func (r *Remediator) runGit(
 	ctx context.Context,
 	fs billy.Filesystem,
 	storer storage.Storer,
+	modifier fsModifier,
 	pbRepo *pb.Repository,
 	title, body string,
 ) error {
@@ -303,12 +271,13 @@ func (r *Remediator) runGit(
 	}
 
 	logger.Debug().Msg("Creating file entries")
-	if err := r.createEntries(fs); err != nil {
-		return fmt.Errorf("cannot create entries: %w", err)
+	changeEntries, err := modifier.modifyFs()
+	if err != nil {
+		return fmt.Errorf("cannot modifyFs: %w", err)
 	}
 
 	logger.Debug().Msg("Staging changes")
-	for _, entry := range r.entries {
+	for _, entry := range changeEntries {
 		if _, err := wt.Add(entry.Path); err != nil {
 			return fmt.Errorf("cannot add file %s: %w", entry.Path, err)
 		}
@@ -382,51 +351,8 @@ func guessRemote(gitRepo *git.Repository) string {
 	return remotes[0].Config().Name
 }
 
-func (r *Remediator) createEntries(fs billy.Filesystem) error {
-	for _, entry := range r.entries {
-		if err := writeEntry(entry, fs); err != nil {
-			return fmt.Errorf("cannot write entry %s: %w", entry.Path, err)
-		}
-	}
-	return nil
-}
-
-func writeEntry(entry prEntry, fs billy.Filesystem) error {
-	if err := fs.MkdirAll(filepath.Dir(entry.Path), 0755); err != nil {
-		return fmt.Errorf("cannot create directory: %w", err)
-	}
-
-	f, err := fs.Create(entry.Path)
-	if err != nil {
-		return fmt.Errorf("cannot create file: %w", err)
-	}
-	defer f.Close()
-
-	_, err = io.WriteString(f, entry.Content)
-	if err != nil {
-		return fmt.Errorf("cannot write to file: %w", err)
-	}
-
-	return nil
-}
-
 func refFromBranch(branchFrom string) string {
 	return fmt.Sprintf("refs/heads/%s", branchFrom)
-}
-
-func (r *Remediator) expandContents(
-	tmplParams *PrTemplateParams,
-) error {
-	for i := range r.entries {
-		entry := &r.entries[i]
-		content := new(bytes.Buffer)
-		if err := entry.contentTemplate.Execute(content, tmplParams); err != nil {
-			return fmt.Errorf("cannot execute content template (index %d): %w", i, err)
-		}
-		entry.Content = content.String()
-	}
-
-	return nil
 }
 
 func branchBaseName(prTitle string) string {
@@ -435,28 +361,13 @@ func branchBaseName(prTitle string) string {
 	return fmt.Sprintf("%s_%s", baseName, normalizedPrTitle)
 }
 
-func (r *Remediator) contentSha1() (string, error) {
-	var combinedContents string
-
-	for i := range r.entries {
-		if len(r.entries[i].Content) == 0 {
-			// just making sure we call contentSha1() after expandContents()
-			return "", fmt.Errorf("content (index %d) is empty", i)
-		}
-		combinedContents += r.entries[i].Path + r.entries[i].Content
-	}
-
-	// #nosec G401 - we're not using sha1 for crypto, only to quickly compare contents
-	return fmt.Sprintf("%x", sha1.Sum([]byte(combinedContents))), nil
-}
-
-func (r *Remediator) prMagicComment() (string, error) {
+func (_ *Remediator) prMagicComment(modifier fsModifier) (string, error) {
 	tmpl, err := template.New(prMagicTemplateName).Option("missingkey=error").Parse(prBodyMagicTemplate)
 	if err != nil {
 		return "", err
 	}
 
-	contentSha, err := r.contentSha1()
+	contentSha, err := modifier.hash()
 	if err != nil {
 		return "", fmt.Errorf("cannot get content sha1: %w", err)
 	}
@@ -476,23 +387,26 @@ func (r *Remediator) prMagicComment() (string, error) {
 	return buf.String(), nil
 }
 
-func (r *Remediator) getPrBodyText(tmplParams *PrTemplateParams) (string, string, error) {
+func (r *Remediator) getPrBodyText(tmplParams *PrTemplateParams, magicComment string) (string, error) {
 	body := new(bytes.Buffer)
 	if err := r.bodyTemplate.Execute(body, tmplParams); err != nil {
-		return "", "", fmt.Errorf("cannot execute body template: %w", err)
-	}
-
-	magicComment, err := r.prMagicComment()
-	if err != nil {
-		return "", "", fmt.Errorf("cannot create PR magic comment: %w", err)
+		return "", fmt.Errorf("cannot execute body template: %w", err)
 	}
 
 	prFullBodyText, err := createReviewBody(body.String(), magicComment)
 	if err != nil {
-		return "", "", fmt.Errorf("cannot create PR full body text: %w", err)
+		return "", fmt.Errorf("cannot create PR full body text: %w", err)
 	}
 
-	return prFullBodyText, magicComment, nil
+	return prFullBodyText, nil
+}
+
+func getMethod(prCfg *pb.RuleType_Definition_Remediate_PullRequestRemediation) string {
+	if prCfg.Method == "" {
+		return minderContentModification
+	}
+
+	return prCfg.Method
 }
 
 func createReviewBody(prText, magicComment string) (string, error) {

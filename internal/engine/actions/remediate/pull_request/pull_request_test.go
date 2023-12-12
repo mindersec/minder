@@ -16,10 +16,12 @@
 package pull_request
 
 import (
+	"bytes"
 	"context"
 	"encoding/json"
 	"fmt"
-	"strings"
+	"io"
+	"net/http"
 	"testing"
 	"time"
 
@@ -57,14 +59,37 @@ Adds Dependabot configuration for gomod`
 
 	authorLogin = "stacklok-bot"
 	authorEmail = "bot@stacklok.com"
+
+	frizbeeCommitTitle = "Replace tags with sha"
+	frizbeePrBody      = `<!-- minder: pr-remediation-body: { "ContentSha": "198f40869c1a66030129bdb4c22e8b91f8fe3979" } -->
+
+This PR replaces tags with sha`
+
+	actionWithTags = `
+on:
+  workflow_call:
+jobs:
+  build:
+    name: Verify build
+    runs-on: ubuntu-latest
+    steps:
+      - uses: actions/checkout@v4 # v3.5.0
+      - name: Extract version of Go to use
+        run: echo "GOVERSION=$(sed -n 's/^go \([0-9.]*\)/\1/p' go.mod)" >> $GITHUB_ENV
+      - uses: actions/setup-go@v5 # v4.0.0
+        with:
+          go-version-file: 'go.mod'
+      - name: build
+        run: make build
+`
+	checkoutV4Ref = "da39a3ee5e6b4b0d3255bfef95601890afd80709"
+	setupV5Ref    = "1041e57c2fac284bdb7827ce55c6e3cb609e97b9"
 )
 
 var TestActionTypeValid interfaces.ActionType = "remediate-test"
 
-func testGithubProviderBuilder(baseURL string) *providers.ProviderBuilder {
-	if !strings.HasSuffix(baseURL, "/") {
-		baseURL = baseURL + "/"
-	}
+func testGithubProviderBuilder() *providers.ProviderBuilder {
+	baseURL := ghApiUrl + "/"
 
 	definitionJSON := `{
 		"github": {
@@ -86,8 +111,9 @@ func testGithubProviderBuilder(baseURL string) *providers.ProviderBuilder {
 
 func dependabotPrRem() *pb.RuleType_Definition_Remediate_PullRequestRemediation {
 	return &pb.RuleType_Definition_Remediate_PullRequestRemediation{
-		Title: "Add Dependabot configuration for {{.Profile.package_ecosystem }}",
-		Body:  "Adds Dependabot configuration for {{.Profile.package_ecosystem }}",
+		Method: "minder.content",
+		Title:  "Add Dependabot configuration for {{.Profile.package_ecosystem }}",
+		Body:   "Adds Dependabot configuration for {{.Profile.package_ecosystem }}",
 		Contents: []*pb.RuleType_Definition_Remediate_PullRequestRemediation_Content{
 			{
 				Path:    ".github/dependabot.yml",
@@ -98,6 +124,14 @@ func dependabotPrRem() *pb.RuleType_Definition_Remediate_PullRequestRemediation 
 				Content: "This project uses dependabot",
 			},
 		},
+	}
+}
+
+func frizbeePrRem() *pb.RuleType_Definition_Remediate_PullRequestRemediation {
+	return &pb.RuleType_Definition_Remediate_PullRequestRemediation{
+		Method: "minder.actions.replace_tags_with_sha",
+		Title:  frizbeeCommitTitle,
+		Body:   "This PR replaces tags with sha",
 	}
 }
 
@@ -139,6 +173,29 @@ func happyPathMockSetup(mockGitHub *mock_ghclient.MockGitHub) {
 		GetToken().Return("token")
 }
 
+func resolveActionMockSetup(t *testing.T, mockGitHub *mock_ghclient.MockGitHub, url, ref string) {
+	t.Helper()
+
+	mockGitHub.EXPECT().
+		NewRequest(http.MethodGet, url, nil).
+		Return(&http.Request{}, nil)
+
+	checkoutRef := github.Reference{
+		Object: &github.GitObject{
+			SHA: github.String(ref),
+		},
+	}
+	jsonCheckoutRef, err := json.Marshal(checkoutRef)
+	require.NoError(t, err, "unexpected error marshalling checkout ref")
+
+	mockGitHub.EXPECT().
+		Do(gomock.Any(), gomock.Any()).
+		Return(&http.Response{
+			Body:       io.NopCloser(bytes.NewBuffer(jsonCheckoutRef)),
+			StatusCode: http.StatusOK,
+		}, nil)
+
+}
 func mockRepoSetup(t *testing.T, postSetupHooks ...hookFunc) (*git.Repository, error) {
 	t.Helper()
 
@@ -190,6 +247,21 @@ func mockUpstreamSetup(t *testing.T, postSetupHooks ...hookFunc) (*git.Repositor
 	}
 
 	_, err = wt.Add(".gitignore")
+	if err != nil {
+		return nil, err
+	}
+
+	f, err = wt.Filesystem.Create(".github/workflows/build.yml")
+	if err != nil {
+		return nil, err
+	}
+
+	_, err = f.Write([]byte(actionWithTags))
+	if err != nil {
+		return nil, err
+	}
+
+	_, err = wt.Add(".github/workflows/build.yml")
 	if err != nil {
 		return nil, err
 	}
@@ -288,7 +360,7 @@ func TestPullRequestRemediate(t *testing.T) {
 			name: "open a PR",
 			newRemArgs: &newPullRequestRemediateArgs{
 				prRem:      dependabotPrRem(),
-				pbuild:     testGithubProviderBuilder(ghApiUrl),
+				pbuild:     testGithubProviderBuilder(),
 				actionType: TestActionTypeValid,
 			},
 			remArgs:   createTestRemArgs(),
@@ -309,7 +381,7 @@ func TestPullRequestRemediate(t *testing.T) {
 			name: "update an existing PR branch with a force-push",
 			newRemArgs: &newPullRequestRemediateArgs{
 				prRem:      dependabotPrRem(),
-				pbuild:     testGithubProviderBuilder(ghApiUrl),
+				pbuild:     testGithubProviderBuilder(),
 				actionType: TestActionTypeValid,
 			},
 			remArgs:   createTestRemArgs(),
@@ -330,7 +402,7 @@ func TestPullRequestRemediate(t *testing.T) {
 			name: "A PR with the same content already exists",
 			newRemArgs: &newPullRequestRemediateArgs{
 				prRem:      dependabotPrRem(),
-				pbuild:     testGithubProviderBuilder(ghApiUrl),
+				pbuild:     testGithubProviderBuilder(),
 				actionType: TestActionTypeValid,
 			},
 			remArgs:   createTestRemArgs(),
@@ -343,6 +415,30 @@ func TestPullRequestRemediate(t *testing.T) {
 							Body: github.String(prBody),
 						},
 					}, nil)
+			},
+		},
+		{
+			name: "resolve tags using frizbee",
+			newRemArgs: &newPullRequestRemediateArgs{
+				prRem:      frizbeePrRem(),
+				pbuild:     testGithubProviderBuilder(),
+				actionType: TestActionTypeValid,
+			},
+			remArgs:   createTestRemArgs(),
+			repoSetup: defaultMockRepoSetup,
+			mockSetup: func(mockGitHub *mock_ghclient.MockGitHub) {
+				happyPathMockSetup(mockGitHub)
+
+				resolveActionMockSetup(t, mockGitHub, "repos/actions/checkout/git/refs/tags/v4", checkoutV4Ref)
+				resolveActionMockSetup(t, mockGitHub, "repos/actions/setup-go/git/refs/tags/v5", setupV5Ref)
+
+				mockGitHub.EXPECT().
+					CreatePullRequest(
+						gomock.Any(),
+						repoOwner, repoName,
+						frizbeeCommitTitle, frizbeePrBody,
+						refFromBranch(branchBaseName(frizbeeCommitTitle)), dflBranchTo).
+					Return(nil, nil)
 			},
 		},
 	}
