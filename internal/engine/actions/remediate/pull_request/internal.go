@@ -40,9 +40,12 @@ import (
 	v1 "github.com/stacklok/minder/pkg/providers/v1"
 )
 
+// See minder.proto for more detailed documentation
 const (
+	// minderContentModification replaces the contents of a file with the given template
 	minderContentModification = "minder.content"
-	minderFrizbeeTagResolve   = "minder.actions.replace_tags_with_sha"
+	// minderFrizbeeTagResolve replaces a github action tag with the appropriate checksum
+	minderFrizbeeTagResolve = "minder.actions.replace_tags_with_sha"
 )
 
 type fsEntry struct {
