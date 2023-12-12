@@ -83,6 +83,7 @@ service ArtifactService {
 message ListArtifactsRequest {
     string provider = 1;
     string project_id = 2;
+    Context context = 3;
 }
 
 message ListArtifactsResponse {
@@ -131,6 +132,7 @@ message GetArtifactByIdRequest {
     string id = 1;
     int32 latest_versions = 5;
     string tag = 6;
+    Context context = 7;
 }
 
 message GetArtifactByIdResponse {
@@ -507,6 +509,7 @@ message GetAuthorizationURLRequest {
     bool  cli = 3;
     int32  port = 4;
     optional string owner = 5;
+    Context context = 6;
 }
 
 message GetAuthorizationURLResponse {
@@ -519,6 +522,7 @@ message ExchangeCodeForTokenCLIRequest {
     string code = 3;
     string state = 4;
     string redirect_uri = 5;
+    Context context = 6;
 }
 
 message StoreProviderTokenRequest {
@@ -526,6 +530,7 @@ message StoreProviderTokenRequest {
     string project_id = 2;
     string access_token = 3;
     optional string owner = 4;
+    Context context = 5;
 }
 
 message StoreProviderTokenResponse {    
@@ -536,6 +541,7 @@ message ExchangeCodeForTokenWEBRequest{
     string project_id = 2;
     string code = 3;
     string redirect_uri = 4;
+    Context context = 5;
 }
 
 message ExchangeCodeForTokenWEBResponse {
@@ -582,6 +588,7 @@ message Project {
 message ListRemoteRepositoriesFromProviderRequest {
     string provider = 1;
     string project_id = 2;
+    Context context = 3;
 }
 
 message ListRemoteRepositoriesFromProviderResponse {
@@ -618,6 +625,7 @@ message RegisterRepositoryRequest {
     string provider = 1;
     string project_id = 2;
     UpstreamRepositoryRef repository = 3;
+    Context context = 4;
 }
 
 message RegisterRepoResult {
@@ -636,6 +644,7 @@ message RegisterRepositoryResponse {
 
 message GetRepositoryByIdRequest {
     string repository_id = 1;
+    Context context = 2;
 }
 
 message GetRepositoryByIdResponse {
@@ -644,6 +653,7 @@ message GetRepositoryByIdResponse {
 
 message DeleteRepositoryByIdRequest {
     string repository_id = 1;
+    Context context = 2;
 }
 
 message DeleteRepositoryByIdResponse {
@@ -654,6 +664,7 @@ message GetRepositoryByNameRequest {
     string provider = 1;
     string project_id = 2;
     string name = 3;
+    Context context = 4;
 }
 
 message GetRepositoryByNameResponse {
@@ -664,6 +675,7 @@ message DeleteRepositoryByNameRequest {
     string provider = 1;
     string project_id = 2;
     string name = 3;
+    Context context = 4;
 }
 
 message DeleteRepositoryByNameResponse {
@@ -675,6 +687,7 @@ message ListRepositoriesRequest {
     string project_id = 2;
     int32 limit = 3;
     int32 offset = 4;
+    Context context = 5;
 }
 
 message ListRepositoriesResponse {
@@ -685,6 +698,7 @@ message VerifyProviderTokenFromRequest {
     string provider = 1;
     string project_id = 2;
     google.protobuf.Timestamp timestamp = 3;
+    Context context = 4;
 }
 
 message VerifyProviderTokenFromResponse {
@@ -759,9 +773,11 @@ message CreateUserResponse {
     string project_name = 5;
     string identity_subject = 6;
     google.protobuf.Timestamp created_at = 7;
+    Context context = 8;
 }
 
 message DeleteUserRequest {
+    Context context = 1;
 }
 
 message DeleteUserResponse {
@@ -779,6 +795,7 @@ message UserRecord {
 // list users
 // get user
 message GetUserRequest {
+    Context context = 1;
 }
 
 message GetUserResponse {
@@ -789,6 +806,7 @@ message GetUserResponse {
 // Profile service
 message CreateProfileRequest {
     Profile profile = 1;
+    Context context = 2;
 }
 
 message CreateProfileResponse {
@@ -797,6 +815,7 @@ message CreateProfileResponse {
 
 message UpdateProfileRequest {
     Profile profile = 1;
+    Context context = 2;
 }
 
 message UpdateProfileResponse {
@@ -1014,6 +1033,7 @@ message GetRuleTypeByIdResponse {
 message CreateRuleTypeRequest {
     // rule_type is the rule type to be created.
     RuleType rule_type = 1;
+    Context context = 2;
 }
 
 // CreateRuleTypeResponse is the response to create a rule type.
@@ -1026,6 +1046,7 @@ message CreateRuleTypeResponse {
 message UpdateRuleTypeRequest {
     // rule_type is the rule type to be updated.
     RuleType rule_type = 2;
+    Context context = 3;
 }
 
 // UpdateRuleTypeResponse is the response to update a rule type.

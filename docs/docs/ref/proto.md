@@ -229,6 +229,7 @@ Profile service
 | Field | Type | Label | Description |
 | ----- | ---- | ----- | ----------- |
 | profile | [Profile](#minder-v1-Profile) |  |  |
+| context | [Context](#minder-v1-Context) |  |  |
 
 
 <a name="minder-v1-CreateProfileResponse"></a>
@@ -251,6 +252,7 @@ CreateRuleTypeRequest is the request to create a rule type.
 | Field | Type | Label | Description |
 | ----- | ---- | ----- | ----------- |
 | rule_type | [RuleType](#minder-v1-RuleType) |  | rule_type is the rule type to be created. |
+| context | [Context](#minder-v1-Context) |  |  |
 
 
 <a name="minder-v1-CreateRuleTypeResponse"></a>
@@ -285,6 +287,7 @@ User service
 | project_name | [string](#string) |  |  |
 | identity_subject | [string](#string) |  |  |
 | created_at | [google.protobuf.Timestamp](#google-protobuf-Timestamp) |  |  |
+| context | [Context](#minder-v1-Context) |  |  |
 
 
 <a name="minder-v1-DeleteProfileRequest"></a>
@@ -314,6 +317,7 @@ User service
 | Field | Type | Label | Description |
 | ----- | ---- | ----- | ----------- |
 | repository_id | [string](#string) |  |  |
+| context | [Context](#minder-v1-Context) |  |  |
 
 
 <a name="minder-v1-DeleteRepositoryByIdResponse"></a>
@@ -338,6 +342,7 @@ User service
 | provider | [string](#string) |  |  |
 | project_id | [string](#string) |  |  |
 | name | [string](#string) |  |  |
+| context | [Context](#minder-v1-Context) |  |  |
 
 
 <a name="minder-v1-DeleteRepositoryByNameResponse"></a>
@@ -373,6 +378,11 @@ DeleteRuleTypeResponse is the response to delete a rule type.
 
 #### DeleteUserRequest
 
+
+
+| Field | Type | Label | Description |
+| ----- | ---- | ----- | ----------- |
+| context | [Context](#minder-v1-Context) |  |  |
 
 
 <a name="minder-v1-DeleteUserResponse"></a>
@@ -430,6 +440,7 @@ DiffType defines the diff data ingester.
 | code | [string](#string) |  |  |
 | state | [string](#string) |  |  |
 | redirect_uri | [string](#string) |  |  |
+| context | [Context](#minder-v1-Context) |  |  |
 
 
 <a name="minder-v1-ExchangeCodeForTokenWEBRequest"></a>
@@ -444,6 +455,7 @@ DiffType defines the diff data ingester.
 | project_id | [string](#string) |  |  |
 | code | [string](#string) |  |  |
 | redirect_uri | [string](#string) |  |  |
+| context | [Context](#minder-v1-Context) |  |  |
 
 
 <a name="minder-v1-ExchangeCodeForTokenWEBResponse"></a>
@@ -471,6 +483,7 @@ DiffType defines the diff data ingester.
 | id | [string](#string) |  |  |
 | latest_versions | [int32](#int32) |  |  |
 | tag | [string](#string) |  |  |
+| context | [Context](#minder-v1-Context) |  |  |
 
 
 <a name="minder-v1-GetArtifactByIdResponse"></a>
@@ -498,6 +511,7 @@ DiffType defines the diff data ingester.
 | cli | [bool](#bool) |  |  |
 | port | [int32](#int32) |  |  |
 | owner | [string](#string) | optional |  |
+| context | [Context](#minder-v1-Context) |  |  |
 
 
 <a name="minder-v1-GetAuthorizationURLResponse"></a>
@@ -645,6 +659,7 @@ if the struct is reused in other messages, it should be moved to a top-level def
 | Field | Type | Label | Description |
 | ----- | ---- | ----- | ----------- |
 | repository_id | [string](#string) |  |  |
+| context | [Context](#minder-v1-Context) |  |  |
 
 
 <a name="minder-v1-GetRepositoryByIdResponse"></a>
@@ -669,6 +684,7 @@ if the struct is reused in other messages, it should be moved to a top-level def
 | provider | [string](#string) |  |  |
 | project_id | [string](#string) |  |  |
 | name | [string](#string) |  |  |
+| context | [Context](#minder-v1-Context) |  |  |
 
 
 <a name="minder-v1-GetRepositoryByNameResponse"></a>
@@ -774,6 +790,11 @@ GetRuleTypeByNameResponse is the response to get a rule type by name.
 #### GetUserRequest
 list users
 get user
+
+
+| Field | Type | Label | Description |
+| ----- | ---- | ----- | ----------- |
+| context | [Context](#minder-v1-Context) |  |  |
 
 
 <a name="minder-v1-GetUserResponse"></a>
@@ -891,6 +912,7 @@ GitType defines the git data ingester.
 | ----- | ---- | ----- | ----------- |
 | provider | [string](#string) |  |  |
 | project_id | [string](#string) |  |  |
+| context | [Context](#minder-v1-Context) |  |  |
 
 
 <a name="minder-v1-ListArtifactsResponse"></a>
@@ -936,6 +958,7 @@ list profiles
 | ----- | ---- | ----- | ----------- |
 | provider | [string](#string) |  |  |
 | project_id | [string](#string) |  |  |
+| context | [Context](#minder-v1-Context) |  |  |
 
 
 <a name="minder-v1-ListRemoteRepositoriesFromProviderResponse"></a>
@@ -961,6 +984,7 @@ list profiles
 | project_id | [string](#string) |  |  |
 | limit | [int32](#int32) |  |  |
 | offset | [int32](#int32) |  |  |
+| context | [Context](#minder-v1-Context) |  |  |
 
 
 <a name="minder-v1-ListRepositoriesResponse"></a>
@@ -1174,6 +1198,7 @@ RESTProviderConfig contains the configuration for the REST provider.
 | provider | [string](#string) |  |  |
 | project_id | [string](#string) |  |  |
 | repository | [UpstreamRepositoryRef](#minder-v1-UpstreamRepositoryRef) |  |  |
+| context | [Context](#minder-v1-Context) |  |  |
 
 
 <a name="minder-v1-RegisterRepositoryResponse"></a>
@@ -1553,6 +1578,7 @@ the name stutters a bit but we already use a PullRequest message for handling PR
 | project_id | [string](#string) |  |  |
 | access_token | [string](#string) |  |  |
 | owner | [string](#string) | optional |  |
+| context | [Context](#minder-v1-Context) |  |  |
 
 
 <a name="minder-v1-StoreProviderTokenResponse"></a>
@@ -1570,6 +1596,7 @@ the name stutters a bit but we already use a PullRequest message for handling PR
 | Field | Type | Label | Description |
 | ----- | ---- | ----- | ----------- |
 | profile | [Profile](#minder-v1-Profile) |  |  |
+| context | [Context](#minder-v1-Context) |  |  |
 
 
 <a name="minder-v1-UpdateProfileResponse"></a>
@@ -1592,6 +1619,7 @@ UpdateRuleTypeRequest is the request to update a rule type.
 | Field | Type | Label | Description |
 | ----- | ---- | ----- | ----------- |
 | rule_type | [RuleType](#minder-v1-RuleType) |  | rule_type is the rule type to be updated. |
+| context | [Context](#minder-v1-Context) |  |  |
 
 
 <a name="minder-v1-UpdateRuleTypeResponse"></a>
@@ -1644,6 +1672,7 @@ user record to be returned
 | provider | [string](#string) |  |  |
 | project_id | [string](#string) |  |  |
 | timestamp | [google.protobuf.Timestamp](#google-protobuf-Timestamp) |  |  |
+| context | [Context](#minder-v1-Context) |  |  |
 
 
 <a name="minder-v1-VerifyProviderTokenFromResponse"></a>

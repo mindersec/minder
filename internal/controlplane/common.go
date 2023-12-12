@@ -29,6 +29,7 @@ import (
 	"github.com/stacklok/minder/internal/auth"
 	"github.com/stacklok/minder/internal/db"
 	"github.com/stacklok/minder/internal/util"
+	pb "github.com/stacklok/minder/pkg/api/protobuf/go/minder/v1"
 )
 
 // ProjectIDGetter is an interface that can be implemented by a request
@@ -43,6 +44,10 @@ type ProviderNameGetter interface {
 	GetProvider() string
 }
 
+type HasProtoContext interface {
+	GetContext() *pb.Context
+}
+
 func providerError(err error) error {
 	if errors.Is(err, sql.ErrNoRows) {
 		return util.UserVisibleError(codes.NotFound, "provider not found")
@@ -51,8 +56,17 @@ func providerError(err error) error {
 }
 
 func getProjectFromRequestOrDefault(ctx context.Context, in ProjectIDGetter) (uuid.UUID, error) {
-	// if we do not have a project ID, check if we can infer it
-	if in.GetProjectId() == "" {
+	var requestedProject string
+
+	// Prefer the context message from the protobuf
+	pbContext, ok := in.(HasProtoContext)
+	if ok && pbContext.GetContext().GetProject() != "" {
+		requestedProject = pbContext.GetContext().GetProject()
+	} else if in.GetProjectId() != "" {
+		requestedProject = in.GetProjectId()
+	}
+
+	if requestedProject == "" {
 		proj, err := auth.GetDefaultProject(ctx)
 		if err != nil {
 			return uuid.UUID{}, status.Errorf(codes.InvalidArgument, "cannot infer project id: %s", err)
@@ -61,7 +75,7 @@ func getProjectFromRequestOrDefault(ctx context.Context, in ProjectIDGetter) (uu
 		return proj, err
 	}
 
-	parsedProjectID, err := uuid.Parse(in.GetProjectId())
+	parsedProjectID, err := uuid.Parse(requestedProject)
 	if err != nil {
 		return uuid.UUID{}, util.UserVisibleError(codes.InvalidArgument, "malformed project ID")
 	}
