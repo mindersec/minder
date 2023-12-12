@@ -355,6 +355,7 @@ func (s *Server) registerWebhookForRepository(
 	regResult.Repository.HookUuid = urlUUID
 	regResult.Repository.IsPrivate = repoGet.GetPrivate()
 	regResult.Repository.IsFork = repoGet.GetFork()
+	regResult.Repository.DefaultBranch = repoGet.GetDefaultBranch()
 
 	return regResult, nil
 }
@@ -426,17 +427,7 @@ func parseRepoEvent(
 	providerName string,
 ) error {
 	// protobufs are our API, so we always execute on these instead of the DB directly.
-	repo := &pb.Repository{
-		Owner:     dbrepo.RepoOwner,
-		Name:      dbrepo.RepoName,
-		RepoId:    dbrepo.RepoID,
-		HookUrl:   dbrepo.WebhookUrl,
-		DeployUrl: dbrepo.DeployUrl,
-		CloneUrl:  dbrepo.CloneUrl,
-		CreatedAt: timestamppb.New(dbrepo.CreatedAt),
-		UpdatedAt: timestamppb.New(dbrepo.UpdatedAt),
-	}
-
+	repo := util.PBRepositoryFromDB(dbrepo)
 	eiw := engine.NewEntityInfoWrapper().
 		WithProvider(providerName).
 		WithRepository(repo).

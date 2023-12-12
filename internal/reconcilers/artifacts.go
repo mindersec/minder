@@ -34,6 +34,7 @@ import (
 	"github.com/stacklok/minder/internal/engine"
 	"github.com/stacklok/minder/internal/providers"
 	"github.com/stacklok/minder/internal/providers/github"
+	"github.com/stacklok/minder/internal/util"
 	"github.com/stacklok/minder/internal/verifier"
 	pb "github.com/stacklok/minder/pkg/api/protobuf/go/minder/v1"
 )
@@ -116,16 +117,7 @@ func (e *Reconciler) handleArtifactsReconcilerEvent(ctx context.Context, evt *Re
 	}
 
 	// evaluate profile for repo
-	repo := &pb.Repository{
-		Owner:     repository.RepoOwner,
-		Name:      repository.RepoName,
-		RepoId:    repository.RepoID,
-		HookUrl:   repository.WebhookUrl,
-		DeployUrl: repository.DeployUrl,
-		CloneUrl:  repository.CloneUrl,
-		CreatedAt: timestamppb.New(repository.CreatedAt),
-		UpdatedAt: timestamppb.New(repository.UpdatedAt),
-	}
+	repo := util.PBRepositoryFromDB(repository)
 
 	err = engine.NewEntityInfoWrapper().
 		WithProvider(prov.Name).

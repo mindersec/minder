@@ -26,7 +26,6 @@ import (
 	"github.com/rs/zerolog"
 	"google.golang.org/grpc/codes"
 	"google.golang.org/grpc/status"
-	"google.golang.org/protobuf/types/known/timestamppb"
 
 	"github.com/stacklok/minder/internal/db"
 	"github.com/stacklok/minder/internal/providers"
@@ -106,6 +105,10 @@ func (s *Server) RegisterRepository(ctx context.Context,
 		CloneUrl:   r.CloneUrl,
 		WebhookUrl: r.HookUrl,
 		DeployUrl:  r.DeployUrl,
+		DefaultBranch: sql.NullString{
+			String: r.DefaultBranch,
+			Valid:  true,
+		},
 	})
 	// even if we set the webhook, if we couldn't create it in the database, we'll return an error
 	if err != nil {
@@ -173,25 +176,13 @@ func (s *Server) ListRepositories(ctx context.Context,
 	for _, repo := range repos {
 		repo := repo
 
-		id := repo.ID.String()
 		projID := repo.ProjectID.String()
-		results = append(results, &pb.Repository{
-			Id: &id,
-			Context: &pb.Context{
-				Project:  &projID,
-				Provider: &repo.Provider,
-			},
-			Owner:     repo.RepoOwner,
-			Name:      repo.RepoName,
-			RepoId:    repo.RepoID,
-			IsPrivate: repo.IsPrivate,
-			IsFork:    repo.IsFork,
-			HookUrl:   repo.WebhookUrl,
-			DeployUrl: repo.DeployUrl,
-			CloneUrl:  repo.CloneUrl,
-			CreatedAt: timestamppb.New(repo.CreatedAt),
-			UpdatedAt: timestamppb.New(repo.UpdatedAt),
-		})
+		r := util.PBRepositoryFromDB(repo)
+		r.Context = &pb.Context{
+			Project:  &projID,
+			Provider: &repo.Provider,
+		}
+		results = append(results, r)
 	}
 
 	resp.Results = results
@@ -220,28 +211,13 @@ func (s *Server) GetRepositoryById(ctx context.Context,
 		return nil, err
 	}
 
-	createdAt := timestamppb.New(repo.CreatedAt)
-	updatedat := timestamppb.New(repo.UpdatedAt)
-
-	id := repo.ID.String()
 	projID := repo.ProjectID.String()
-	return &pb.GetRepositoryByIdResponse{Repository: &pb.Repository{
-		Id: &id,
-		Context: &pb.Context{
-			Project:  &projID,
-			Provider: &repo.Provider,
-		},
-		Owner:     repo.RepoOwner,
-		Name:      repo.RepoName,
-		RepoId:    repo.RepoID,
-		IsPrivate: repo.IsPrivate,
-		IsFork:    repo.IsFork,
-		HookUrl:   repo.WebhookUrl,
-		DeployUrl: repo.DeployUrl,
-		CloneUrl:  repo.CloneUrl,
-		CreatedAt: createdAt,
-		UpdatedAt: updatedat,
-	}}, nil
+	r := util.PBRepositoryFromDB(repo)
+	r.Context = &pb.Context{
+		Project:  &projID,
+		Provider: &repo.Provider,
+	}
+	return &pb.GetRepositoryByIdResponse{Repository: r}, nil
 }
 
 // GetRepositoryByName returns information about a repository.
@@ -284,28 +260,13 @@ func (s *Server) GetRepositoryByName(ctx context.Context,
 		return nil, err
 	}
 
-	createdAt := timestamppb.New(repo.CreatedAt)
-	updatedat := timestamppb.New(repo.UpdatedAt)
-
-	id := repo.ID.String()
 	projID := repo.ProjectID.String()
-	return &pb.GetRepositoryByNameResponse{Repository: &pb.Repository{
-		Id: &id,
-		Context: &pb.Context{
-			Project:  &projID,
-			Provider: &repo.Provider,
-		},
-		Owner:     repo.RepoOwner,
-		Name:      repo.RepoName,
-		RepoId:    repo.RepoID,
-		IsPrivate: repo.IsPrivate,
-		IsFork:    repo.IsFork,
-		HookUrl:   repo.WebhookUrl,
-		DeployUrl: repo.DeployUrl,
-		CloneUrl:  repo.CloneUrl,
-		CreatedAt: createdAt,
-		UpdatedAt: updatedat,
-	}}, nil
+	r := util.PBRepositoryFromDB(repo)
+	r.Context = &pb.Context{
+		Project:  &projID,
+		Provider: &repo.Provider,
+	}
+	return &pb.GetRepositoryByNameResponse{Repository: r}, nil
 }
 
 // DeleteRepositoryById deletes a repository by name

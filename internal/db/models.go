@@ -411,20 +411,21 @@ type PullRequest struct {
 }
 
 type Repository struct {
-	ID         uuid.UUID     `json:"id"`
-	Provider   string        `json:"provider"`
-	ProjectID  uuid.UUID     `json:"project_id"`
-	RepoOwner  string        `json:"repo_owner"`
-	RepoName   string        `json:"repo_name"`
-	RepoID     int32         `json:"repo_id"`
-	IsPrivate  bool          `json:"is_private"`
-	IsFork     bool          `json:"is_fork"`
-	WebhookID  sql.NullInt32 `json:"webhook_id"`
-	WebhookUrl string        `json:"webhook_url"`
-	DeployUrl  string        `json:"deploy_url"`
-	CloneUrl   string        `json:"clone_url"`
-	CreatedAt  time.Time     `json:"created_at"`
-	UpdatedAt  time.Time     `json:"updated_at"`
+	ID            uuid.UUID      `json:"id"`
+	Provider      string         `json:"provider"`
+	ProjectID     uuid.UUID      `json:"project_id"`
+	RepoOwner     string         `json:"repo_owner"`
+	RepoName      string         `json:"repo_name"`
+	RepoID        int32          `json:"repo_id"`
+	IsPrivate     bool           `json:"is_private"`
+	IsFork        bool           `json:"is_fork"`
+	WebhookID     sql.NullInt32  `json:"webhook_id"`
+	WebhookUrl    string         `json:"webhook_url"`
+	DeployUrl     string         `json:"deploy_url"`
+	CloneUrl      string         `json:"clone_url"`
+	CreatedAt     time.Time      `json:"created_at"`
+	UpdatedAt     time.Time      `json:"updated_at"`
+	DefaultBranch sql.NullString `json:"default_branch"`
 }
 
 type Role struct {

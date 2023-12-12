@@ -499,6 +499,27 @@ func Int32FromString(v string) (int32, error) {
 	return int32(asInt32), nil
 }
 
+// PBRepositoryFromDB converts a database repository to a protobuf
+// Note this doesn't set the context as that's assumed to be set
+// on the caller's side.
+func PBRepositoryFromDB(dbrepo db.Repository) *minderv1.Repository {
+	strRepoID := dbrepo.ID.String()
+	return &minderv1.Repository{
+		Id:            &strRepoID,
+		Owner:         dbrepo.RepoOwner,
+		Name:          dbrepo.RepoName,
+		RepoId:        dbrepo.RepoID,
+		IsPrivate:     dbrepo.IsPrivate,
+		IsFork:        dbrepo.IsFork,
+		HookUrl:       dbrepo.WebhookUrl,
+		DeployUrl:     dbrepo.DeployUrl,
+		CloneUrl:      dbrepo.CloneUrl,
+		DefaultBranch: dbrepo.DefaultBranch.String,
+		CreatedAt:     timestamppb.New(dbrepo.CreatedAt),
+		UpdatedAt:     timestamppb.New(dbrepo.UpdatedAt),
+	}
+}
+
 // GetRepository retrieves a repository from the database
 // and converts it to a protobuf
 func GetRepository(ctx context.Context, store db.ExtendQuerier, repoID uuid.UUID) (*minderv1.Repository, error) {
@@ -507,18 +528,7 @@ func GetRepository(ctx context.Context, store db.ExtendQuerier, repoID uuid.UUID
 		return nil, fmt.Errorf("error getting repository: %w", err)
 	}
 
-	strRepoID := repoID.String()
-	return &minderv1.Repository{
-		Id:        &strRepoID,
-		Owner:     dbrepo.RepoOwner,
-		Name:      dbrepo.RepoName,
-		RepoId:    dbrepo.RepoID,
-		HookUrl:   dbrepo.WebhookUrl,
-		DeployUrl: dbrepo.DeployUrl,
-		CloneUrl:  dbrepo.CloneUrl,
-		CreatedAt: timestamppb.New(dbrepo.CreatedAt),
-		UpdatedAt: timestamppb.New(dbrepo.UpdatedAt),
-	}, nil
+	return PBRepositoryFromDB(dbrepo), nil
 }
 
 // GetArtifactWithVersions retrieves an artifact and its versions from the database

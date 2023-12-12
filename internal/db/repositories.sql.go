@@ -35,21 +35,23 @@ INSERT INTO repositories (
     webhook_id,
     webhook_url,
     deploy_url,
-    clone_url) VALUES ($1, $2, $3, $4, $5, $6, $7, $8, $9, $10, $11) RETURNING id, provider, project_id, repo_owner, repo_name, repo_id, is_private, is_fork, webhook_id, webhook_url, deploy_url, clone_url, created_at, updated_at
+    clone_url,
+    default_branch) VALUES ($1, $2, $3, $4, $5, $6, $7, $8, $9, $10, $11, $12) RETURNING id, provider, project_id, repo_owner, repo_name, repo_id, is_private, is_fork, webhook_id, webhook_url, deploy_url, clone_url, created_at, updated_at, default_branch
 `
 
 type CreateRepositoryParams struct {
-	Provider   string        `json:"provider"`
-	ProjectID  uuid.UUID     `json:"project_id"`
-	RepoOwner  string        `json:"repo_owner"`
-	RepoName   string        `json:"repo_name"`
-	RepoID     int32         `json:"repo_id"`
-	IsPrivate  bool          `json:"is_private"`
-	IsFork     bool          `json:"is_fork"`
-	WebhookID  sql.NullInt32 `json:"webhook_id"`
-	WebhookUrl string        `json:"webhook_url"`
-	DeployUrl  string        `json:"deploy_url"`
-	CloneUrl   string        `json:"clone_url"`
+	Provider      string         `json:"provider"`
+	ProjectID     uuid.UUID      `json:"project_id"`
+	RepoOwner     string         `json:"repo_owner"`
+	RepoName      string         `json:"repo_name"`
+	RepoID        int32          `json:"repo_id"`
+	IsPrivate     bool           `json:"is_private"`
+	IsFork        bool           `json:"is_fork"`
+	WebhookID     sql.NullInt32  `json:"webhook_id"`
+	WebhookUrl    string         `json:"webhook_url"`
+	DeployUrl     string         `json:"deploy_url"`
+	CloneUrl      string         `json:"clone_url"`
+	DefaultBranch sql.NullString `json:"default_branch"`
 }
 
 func (q *Queries) CreateRepository(ctx context.Context, arg CreateRepositoryParams) (Repository, error) {
@@ -65,6 +67,7 @@ func (q *Queries) CreateRepository(ctx context.Context, arg CreateRepositoryPara
 		arg.WebhookUrl,
 		arg.DeployUrl,
 		arg.CloneUrl,
+		arg.DefaultBranch,
 	)
 	var i Repository
 	err := row.Scan(
@@ -82,6 +85,7 @@ func (q *Queries) CreateRepository(ctx context.Context, arg CreateRepositoryPara
 		&i.CloneUrl,
 		&i.CreatedAt,
 		&i.UpdatedAt,
+		&i.DefaultBranch,
 	)
 	return i, err
 }
@@ -97,7 +101,7 @@ func (q *Queries) DeleteRepository(ctx context.Context, id uuid.UUID) error {
 }
 
 const getRepositoryByID = `-- name: GetRepositoryByID :one
-SELECT id, provider, project_id, repo_owner, repo_name, repo_id, is_private, is_fork, webhook_id, webhook_url, deploy_url, clone_url, created_at, updated_at FROM repositories WHERE id = $1
+SELECT id, provider, project_id, repo_owner, repo_name, repo_id, is_private, is_fork, webhook_id, webhook_url, deploy_url, clone_url, created_at, updated_at, default_branch FROM repositories WHERE id = $1
 `
 
 func (q *Queries) GetRepositoryByID(ctx context.Context, id uuid.UUID) (Repository, error) {
@@ -118,12 +122,13 @@ func (q *Queries) GetRepositoryByID(ctx context.Context, id uuid.UUID) (Reposito
 		&i.CloneUrl,
 		&i.CreatedAt,
 		&i.UpdatedAt,
+		&i.DefaultBranch,
 	)
 	return i, err
 }
 
 const getRepositoryByIDAndProject = `-- name: GetRepositoryByIDAndProject :one
-SELECT id, provider, project_id, repo_owner, repo_name, repo_id, is_private, is_fork, webhook_id, webhook_url, deploy_url, clone_url, created_at, updated_at FROM repositories WHERE provider = $1 AND repo_id = $2 AND project_id = $3
+SELECT id, provider, project_id, repo_owner, repo_name, repo_id, is_private, is_fork, webhook_id, webhook_url, deploy_url, clone_url, created_at, updated_at, default_branch FROM repositories WHERE provider = $1 AND repo_id = $2 AND project_id = $3
 `
 
 type GetRepositoryByIDAndProjectParams struct {
@@ -150,12 +155,13 @@ func (q *Queries) GetRepositoryByIDAndProject(ctx context.Context, arg GetReposi
 		&i.CloneUrl,
 		&i.CreatedAt,
 		&i.UpdatedAt,
+		&i.DefaultBranch,
 	)
 	return i, err
 }
 
 const getRepositoryByRepoID = `-- name: GetRepositoryByRepoID :one
-SELECT id, provider, project_id, repo_owner, repo_name, repo_id, is_private, is_fork, webhook_id, webhook_url, deploy_url, clone_url, created_at, updated_at FROM repositories WHERE repo_id = $1
+SELECT id, provider, project_id, repo_owner, repo_name, repo_id, is_private, is_fork, webhook_id, webhook_url, deploy_url, clone_url, created_at, updated_at, default_branch FROM repositories WHERE repo_id = $1
 `
 
 func (q *Queries) GetRepositoryByRepoID(ctx context.Context, repoID int32) (Repository, error) {
@@ -176,12 +182,13 @@ func (q *Queries) GetRepositoryByRepoID(ctx context.Context, repoID int32) (Repo
 		&i.CloneUrl,
 		&i.CreatedAt,
 		&i.UpdatedAt,
+		&i.DefaultBranch,
 	)
 	return i, err
 }
 
 const getRepositoryByRepoName = `-- name: GetRepositoryByRepoName :one
-SELECT id, provider, project_id, repo_owner, repo_name, repo_id, is_private, is_fork, webhook_id, webhook_url, deploy_url, clone_url, created_at, updated_at FROM repositories WHERE provider = $1 AND repo_owner = $2 AND repo_name = $3
+SELECT id, provider, project_id, repo_owner, repo_name, repo_id, is_private, is_fork, webhook_id, webhook_url, deploy_url, clone_url, created_at, updated_at, default_branch FROM repositories WHERE provider = $1 AND repo_owner = $2 AND repo_name = $3
 `
 
 type GetRepositoryByRepoNameParams struct {
@@ -208,12 +215,13 @@ func (q *Queries) GetRepositoryByRepoName(ctx context.Context, arg GetRepository
 		&i.CloneUrl,
 		&i.CreatedAt,
 		&i.UpdatedAt,
+		&i.DefaultBranch,
 	)
 	return i, err
 }
 
 const listAllRepositories = `-- name: ListAllRepositories :many
-SELECT id, provider, project_id, repo_owner, repo_name, repo_id, is_private, is_fork, webhook_id, webhook_url, deploy_url, clone_url, created_at, updated_at FROM repositories WHERE provider = $1
+SELECT id, provider, project_id, repo_owner, repo_name, repo_id, is_private, is_fork, webhook_id, webhook_url, deploy_url, clone_url, created_at, updated_at, default_branch FROM repositories WHERE provider = $1
 ORDER BY repo_name
 `
 
@@ -241,6 +249,7 @@ func (q *Queries) ListAllRepositories(ctx context.Context, provider string) ([]R
 			&i.CloneUrl,
 			&i.CreatedAt,
 			&i.UpdatedAt,
+			&i.DefaultBranch,
 		); err != nil {
 			return nil, err
 		}
@@ -256,7 +265,7 @@ func (q *Queries) ListAllRepositories(ctx context.Context, provider string) ([]R
 }
 
 const listRegisteredRepositoriesByProjectIDAndProvider = `-- name: ListRegisteredRepositoriesByProjectIDAndProvider :many
-SELECT id, provider, project_id, repo_owner, repo_name, repo_id, is_private, is_fork, webhook_id, webhook_url, deploy_url, clone_url, created_at, updated_at FROM repositories
+SELECT id, provider, project_id, repo_owner, repo_name, repo_id, is_private, is_fork, webhook_id, webhook_url, deploy_url, clone_url, created_at, updated_at, default_branch FROM repositories
 WHERE provider = $1 AND project_id = $2 AND webhook_id IS NOT NULL
 ORDER BY repo_name
 `
@@ -290,6 +299,7 @@ func (q *Queries) ListRegisteredRepositoriesByProjectIDAndProvider(ctx context.C
 			&i.CloneUrl,
 			&i.CreatedAt,
 			&i.UpdatedAt,
+			&i.DefaultBranch,
 		); err != nil {
 			return nil, err
 		}
@@ -305,7 +315,7 @@ func (q *Queries) ListRegisteredRepositoriesByProjectIDAndProvider(ctx context.C
 }
 
 const listRepositoriesByOwner = `-- name: ListRepositoriesByOwner :many
-SELECT id, provider, project_id, repo_owner, repo_name, repo_id, is_private, is_fork, webhook_id, webhook_url, deploy_url, clone_url, created_at, updated_at FROM repositories
+SELECT id, provider, project_id, repo_owner, repo_name, repo_id, is_private, is_fork, webhook_id, webhook_url, deploy_url, clone_url, created_at, updated_at, default_branch FROM repositories
 WHERE provider = $1 AND repo_owner = $2
 ORDER BY repo_name
 LIMIT $3
@@ -348,6 +358,7 @@ func (q *Queries) ListRepositoriesByOwner(ctx context.Context, arg ListRepositor
 			&i.CloneUrl,
 			&i.CreatedAt,
 			&i.UpdatedAt,
+			&i.DefaultBranch,
 		); err != nil {
 			return nil, err
 		}
@@ -363,7 +374,7 @@ func (q *Queries) ListRepositoriesByOwner(ctx context.Context, arg ListRepositor
 }
 
 const listRepositoriesByProjectID = `-- name: ListRepositoriesByProjectID :many
-SELECT id, provider, project_id, repo_owner, repo_name, repo_id, is_private, is_fork, webhook_id, webhook_url, deploy_url, clone_url, created_at, updated_at FROM repositories
+SELECT id, provider, project_id, repo_owner, repo_name, repo_id, is_private, is_fork, webhook_id, webhook_url, deploy_url, clone_url, created_at, updated_at, default_branch FROM repositories
 WHERE provider = $1 AND project_id = $2
 ORDER BY repo_name
 `
@@ -397,6 +408,7 @@ func (q *Queries) ListRepositoriesByProjectID(ctx context.Context, arg ListRepos
 			&i.CloneUrl,
 			&i.CreatedAt,
 			&i.UpdatedAt,
+			&i.DefaultBranch,
 		); err != nil {
 			return nil, err
 		}
@@ -424,23 +436,25 @@ webhook_url = $9,
 deploy_url = $10, 
 provider = $11,
 clone_url = CASE WHEN $12::text = '' THEN clone_url ELSE $12::text END,
-updated_at = NOW() 
-WHERE id = $1 RETURNING id, provider, project_id, repo_owner, repo_name, repo_id, is_private, is_fork, webhook_id, webhook_url, deploy_url, clone_url, created_at, updated_at
+updated_at = NOW(),
+default_branch = $13
+WHERE id = $1 RETURNING id, provider, project_id, repo_owner, repo_name, repo_id, is_private, is_fork, webhook_id, webhook_url, deploy_url, clone_url, created_at, updated_at, default_branch
 `
 
 type UpdateRepositoryParams struct {
-	ID         uuid.UUID     `json:"id"`
-	ProjectID  uuid.UUID     `json:"project_id"`
-	RepoOwner  string        `json:"repo_owner"`
-	RepoName   string        `json:"repo_name"`
-	RepoID     int32         `json:"repo_id"`
-	IsPrivate  bool          `json:"is_private"`
-	IsFork     bool          `json:"is_fork"`
-	WebhookID  sql.NullInt32 `json:"webhook_id"`
-	WebhookUrl string        `json:"webhook_url"`
-	DeployUrl  string        `json:"deploy_url"`
-	Provider   string        `json:"provider"`
-	CloneUrl   string        `json:"clone_url"`
+	ID            uuid.UUID      `json:"id"`
+	ProjectID     uuid.UUID      `json:"project_id"`
+	RepoOwner     string         `json:"repo_owner"`
+	RepoName      string         `json:"repo_name"`
+	RepoID        int32          `json:"repo_id"`
+	IsPrivate     bool           `json:"is_private"`
+	IsFork        bool           `json:"is_fork"`
+	WebhookID     sql.NullInt32  `json:"webhook_id"`
+	WebhookUrl    string         `json:"webhook_url"`
+	DeployUrl     string         `json:"deploy_url"`
+	Provider      string         `json:"provider"`
+	CloneUrl      string         `json:"clone_url"`
+	DefaultBranch sql.NullString `json:"default_branch"`
 }
 
 // set clone_url if the value is not an empty string
@@ -458,6 +472,7 @@ func (q *Queries) UpdateRepository(ctx context.Context, arg UpdateRepositoryPara
 		arg.DeployUrl,
 		arg.Provider,
 		arg.CloneUrl,
+		arg.DefaultBranch,
 	)
 	var i Repository
 	err := row.Scan(
@@ -475,6 +490,7 @@ func (q *Queries) UpdateRepository(ctx context.Context, arg UpdateRepositoryPara
 		&i.CloneUrl,
 		&i.CreatedAt,
 		&i.UpdatedAt,
+		&i.DefaultBranch,
 	)
 	return i, err
 }
@@ -491,22 +507,24 @@ webhook_url = $8,
 deploy_url = $9, 
 provider = $10,
 clone_url = CASE WHEN $11::text = '' THEN clone_url ELSE $11::text END,
-updated_at = NOW() 
-WHERE repo_id = $1 RETURNING id, provider, project_id, repo_owner, repo_name, repo_id, is_private, is_fork, webhook_id, webhook_url, deploy_url, clone_url, created_at, updated_at
+updated_at = NOW(),
+default_branch = $12
+WHERE repo_id = $1 RETURNING id, provider, project_id, repo_owner, repo_name, repo_id, is_private, is_fork, webhook_id, webhook_url, deploy_url, clone_url, created_at, updated_at, default_branch
 `
 
 type UpdateRepositoryByIDParams struct {
-	RepoID     int32         `json:"repo_id"`
-	ProjectID  uuid.UUID     `json:"project_id"`
-	RepoOwner  string        `json:"repo_owner"`
-	RepoName   string        `json:"repo_name"`
-	IsPrivate  bool          `json:"is_private"`
-	IsFork     bool          `json:"is_fork"`
-	WebhookID  sql.NullInt32 `json:"webhook_id"`
-	WebhookUrl string        `json:"webhook_url"`
-	DeployUrl  string        `json:"deploy_url"`
-	Provider   string        `json:"provider"`
-	CloneUrl   string        `json:"clone_url"`
+	RepoID        int32          `json:"repo_id"`
+	ProjectID     uuid.UUID      `json:"project_id"`
+	RepoOwner     string         `json:"repo_owner"`
+	RepoName      string         `json:"repo_name"`
+	IsPrivate     bool           `json:"is_private"`
+	IsFork        bool           `json:"is_fork"`
+	WebhookID     sql.NullInt32  `json:"webhook_id"`
+	WebhookUrl    string         `json:"webhook_url"`
+	DeployUrl     string         `json:"deploy_url"`
+	Provider      string         `json:"provider"`
+	CloneUrl      string         `json:"clone_url"`
+	DefaultBranch sql.NullString `json:"default_branch"`
 }
 
 func (q *Queries) UpdateRepositoryByID(ctx context.Context, arg UpdateRepositoryByIDParams) (Repository, error) {
@@ -522,6 +540,7 @@ func (q *Queries) UpdateRepositoryByID(ctx context.Context, arg UpdateRepository
 		arg.DeployUrl,
 		arg.Provider,
 		arg.CloneUrl,
+		arg.DefaultBranch,
 	)
 	var i Repository
 	err := row.Scan(
@@ -539,6 +558,7 @@ func (q *Queries) UpdateRepositoryByID(ctx context.Context, arg UpdateRepository
 		&i.CloneUrl,
 		&i.CreatedAt,
 		&i.UpdatedAt,
+		&i.DefaultBranch,
 	)
 	return i, err
 }
