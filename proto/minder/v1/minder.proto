@@ -981,6 +981,8 @@ message GitHubProviderConfig {
 // Context defines the context in which a rule is evaluated.
 // this normally refers to a combination of the provider, organization and project.
 message Context {
+    // Removing the 'optional' keyword from the following two fields below will break
+    // buf compatibility checks.
     optional string provider = 1;
     optional string project = 3;
 
