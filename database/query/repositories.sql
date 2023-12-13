@@ -10,7 +10,8 @@ INSERT INTO repositories (
     webhook_id,
     webhook_url,
     deploy_url,
-    clone_url) VALUES ($1, $2, $3, $4, $5, $6, $7, $8, $9, $10, $11) RETURNING *;
+    clone_url,
+    default_branch) VALUES ($1, $2, $3, $4, $5, $6, $7, $8, $9, $10, $11, sqlc.arg(default_branch)) RETURNING *;
 
 -- name: GetRepositoryByID :one
 SELECT * FROM repositories WHERE id = $1;
@@ -60,7 +61,8 @@ deploy_url = $10,
 provider = $11,
 -- set clone_url if the value is not an empty string
 clone_url = CASE WHEN sqlc.arg(clone_url)::text = '' THEN clone_url ELSE sqlc.arg(clone_url)::text END,
-updated_at = NOW() 
+updated_at = NOW(),
+default_branch = sqlc.arg(default_branch)
 WHERE id = $1 RETURNING *;
 
 -- name: UpdateRepositoryByID :one
@@ -75,7 +77,8 @@ webhook_url = $8,
 deploy_url = $9, 
 provider = $10,
 clone_url = CASE WHEN sqlc.arg(clone_url)::text = '' THEN clone_url ELSE sqlc.arg(clone_url)::text END,
-updated_at = NOW() 
+updated_at = NOW(),
+default_branch = sqlc.arg(default_branch)
 WHERE repo_id = $1 RETURNING *;
 
 

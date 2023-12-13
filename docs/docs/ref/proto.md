@@ -191,7 +191,7 @@ this normally refers to a combination of the provider, organization and project.
 
 | Field | Type | Label | Description |
 | ----- | ---- | ----- | ----------- |
-| provider | [string](#string) | optional |  |
+| provider | [string](#string) | optional | Removing the 'optional' keyword from the following two fields below will break buf compatibility checks. |
 | project | [string](#string) | optional |  |
 | retired_organization | [string](#string) | optional |  |
 
@@ -1237,6 +1237,7 @@ RESTProviderConfig contains the configuration for the REST provider.
 | registered | [bool](#bool) |  |  |
 | created_at | [google.protobuf.Timestamp](#google-protobuf-Timestamp) |  |  |
 | updated_at | [google.protobuf.Timestamp](#google-protobuf-Timestamp) |  |  |
+| default_branch | [string](#string) |  |  |
 
 
 <a name="minder-v1-RestType"></a>

@@ -26,13 +26,11 @@ import (
 	"github.com/go-playground/validator/v10"
 	"github.com/google/uuid"
 	"github.com/rs/zerolog"
-	"google.golang.org/protobuf/types/known/timestamppb"
 
 	"github.com/stacklok/minder/internal/db"
 	"github.com/stacklok/minder/internal/engine"
 	"github.com/stacklok/minder/internal/events"
 	"github.com/stacklok/minder/internal/util"
-	pb "github.com/stacklok/minder/pkg/api/protobuf/go/minder/v1"
 )
 
 // ProfileInitEvent is an event that is sent to the reconciler topic
@@ -133,17 +131,7 @@ func (s *Reconciler) publishProfileInitEvents(
 
 	for _, dbrepo := range dbrepos {
 		// protobufs are our API, so we always execute on these instead of the DB directly.
-		repo := &pb.Repository{
-			Owner:     dbrepo.RepoOwner,
-			Name:      dbrepo.RepoName,
-			RepoId:    dbrepo.RepoID,
-			HookUrl:   dbrepo.WebhookUrl,
-			DeployUrl: dbrepo.DeployUrl,
-			CloneUrl:  dbrepo.CloneUrl,
-			CreatedAt: timestamppb.New(dbrepo.CreatedAt),
-			UpdatedAt: timestamppb.New(dbrepo.UpdatedAt),
-		}
-
+		repo := util.PBRepositoryFromDB(dbrepo)
 		err := engine.NewEntityInfoWrapper().
 			WithProvider(ectx.Provider.Name).
 			WithProjectID(ectx.Project.ID).
