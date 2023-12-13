@@ -40,7 +40,7 @@ COPY --chown=65534:65534 --from=builder /app /app
 WORKDIR /app
 
 # Copy database directory and config. This is needed for the migration sub-command to work.
-ADD --chown=65534:65534 ./cmd/server/kodata/config.yaml /app
+ADD --chown=65534:65534 ./cmd/server/kodata/server-config.yaml /app
 ADD --chown=65534:65534 ./cmd/server/kodata/database/migrations /app/database/migrations
 
 COPY --from=builder /opt/app-root/src/minder-server /usr/bin/minder-server

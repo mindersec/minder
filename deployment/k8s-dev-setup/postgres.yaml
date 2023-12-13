@@ -39,7 +39,7 @@ metadata:
     app: postgres
 type: Opaque
 data:
-  # 'postgres' from config/config.yaml.example
+  # 'postgres' from config/server-config.yaml.example
   password: cG9zdGdyZXM=
 ---
 apiVersion: v1
@@ -111,5 +111,5 @@ metadata:
     app: postgres
 type: Opaque
 data:
-  # 'p6ssw0rd' from config/config.yaml.example
+  # 'p6ssw0rd' from config/server-config.yaml.example
   password: cDZzc3cwcmQ=

@@ -44,8 +44,8 @@ metadata:
     app.kubernetes.io/version: "{{ .Chart.AppVersion }}"
     app.kubernetes.io/managed-by: "{{ .Release.Service }}"
 data:
-  config.yaml: |
-    {{ .Files.Get "config.yaml.example" | nindent 4 }}
+  server-config.yaml: |
+    {{ .Files.Get "server-config.yaml.example" | nindent 4 }}
   overrides.yaml: |
     {{ .Values.extra_config_migrate | nindent 4}}
 
@@ -91,7 +91,7 @@ spec:
           - "up"
           - "--yes"
           - "--db-host={{ .Values.db.host }}"
-          - "--config=/config/config.yaml"
+          - "--config=/config/server-config.yaml"
           # We use two config files, one with all the defaults, and one with
           # additional override values from helm.  (This is a viper feature.)
           - "--config=/config/overrides.yaml"
@@ -118,8 +118,8 @@ spec:
         configMap:
           name: db-update-config
           items:
-          - key: config.yaml
-            path: config.yaml
+          - key: server-config.yaml
+            path: server-config.yaml
           - key: overrides.yaml
             path: overrides.yaml
       {{- if .Values.migrationSettings.extraVolumes }}

@@ -178,10 +178,16 @@ If you want to run `minder` against a local `minder-server` instance, proceed wi
 
 #### Initial configuration
 
-Create the initial configuration file for `minder` and `minder-server`. You may do so by doing.
+Create the initial configuration file for `minder`. You may do so by doing.
 
 ```bash
 cp config/config.yaml.example config.yaml
+```
+
+Create the initial configuration file for `minder-server`. You may do so by doing.
+
+```bash
+cp config/server-config.yaml.example server-config.yaml
 ```
 
 You'd also have to set up an OAuth2 application for `minder-server` to use.

@@ -124,7 +124,7 @@ deploymentSettings:
   sidecarContainers: null
 
 
-# -- (string) Additional configuration yaml beyond what's in config.yaml.example
+# -- (string) Additional configuration yaml beyond what's in server-config.yaml.example
 extra_config: |
   # Add content here
 

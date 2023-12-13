@@ -49,16 +49,16 @@ This will create two binaries, `bin/minder-server` and `bin/minder`.
 
 You may now copy these into a location on your path, or run them directly from the `bin` directory.
 
-You will also need a configuration file. You can copy the example configuration file from `configs/config.yaml.example` to `$(PWD)/config.yaml`.
+You will also need a configuration file. You can copy the example configuration file from `configs/server-config.yaml.example` to `$(PWD)/server-config.yaml`.
 
 If you prefer to use a different file name or location, you can specify this using the `--config` 
-flag, e.g. `minder-server --config /file/path/config.yaml serve` when you later run the application.
+flag, e.g. `minder-server --config /file/path/server-config.yaml serve` when you later run the application.
 
 ## Database creation
 
 Minder requires a PostgreSQL database to be running. You can install this locally, or use a container.
 
-Should you install locally, you will need to set certain configuration options in your `config.yaml` file, to reflect your local database configuration.
+Should you install locally, you will need to set certain configuration options in your `server-config.yaml` file, to reflect your local database configuration.
 
 ```yaml
 database:
@@ -101,16 +101,21 @@ You will need the following:
 - A registered public client with the redirect URI `http://localhost/*`. This is used for the minder CLI.
 - A registered confidential client with a service account that can manage users and view events. This is used for the minder server.
 
-You will also need to set certain configuration options in your `config.yaml` file, to reflect your local Keycloak configuration.
+You will also need to set certain configuration options in your `server-config.yaml` file, to reflect your local Keycloak configuration.
+```yaml
+identity:
+  server:
+    issuer_url: http://localhost:8081
+    client_id: minder-server
+    client_secret: secret
+```
+
+Similarly, for the CLI `config.yaml`.
 ```yaml
 identity:
   cli:
     issuer_url: http://localhost:8081
     client_id: minder-cli
-  server:
-    issuer_url: http://localhost:8081
-    client_id: minder-server
-    client_secret: secret
 ```
 
 ### Using a container
@@ -132,7 +137,7 @@ Once you have a Keycloak instance running locally, you can set up GitHub authent
 4. Select "New OAuth App"
 5. Enter the following details:
     - Application Name: `Stacklok Identity Provider`
-    - Homepage URL: `http://localhost:8081` or the URL you specified as the `issuer_url` in your `config.yaml`
+    - Homepage URL: `http://localhost:8081` or the URL you specified as the `issuer_url` in your `server-config.yaml`
     - Authorization callback URL: `http://localhost:8081/realms/stacklok/broker/github/endpoint`
 6. Select "Register Application"
 7. Generate a client secret
@@ -164,7 +169,7 @@ You can create the passphrase using the `openssl` CLI tool.
 openssl rand -base64 32 > .ssh/token_key_passphrase
 ```
 
-If your key lives in a directory other than `.ssh`, you can specify the location of the key in the `config.yaml` file.
+If your key lives in a directory other than `.ssh`, you can specify the location of the key in the `server-config.yaml` file.
 
 ```yaml
 auth:
