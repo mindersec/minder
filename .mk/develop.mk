@@ -66,9 +66,10 @@ bootstrap: ## install build deps
 			github.com/pseudomuto/protoc-gen-doc/cmd/protoc-gen-doc \
 			github.com/sqlc-dev/sqlc \
 			github.com/norwoodj/helm-docs/cmd/helm-docs
-	# Create a config.yaml if it doesn't exist
+	# Create a config.yaml and server-config.yaml if they don't exist
 	# TODO: remove this when all config is handled in internal/config
 	cp -n config/config.yaml.example ./config.yaml || echo "config.yaml already exists, not overwriting"
+	cp -n config/server-config.yaml.example ./server-config.yaml || echo "server-config.yaml already exists, not overwriting"
 	# Create keys:
 	mkdir -p .ssh
 	@echo "Generating token key passphrase"

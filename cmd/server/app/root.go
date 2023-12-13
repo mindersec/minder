@@ -30,7 +30,7 @@ import (
 )
 
 var (
-	cfgFile string // config file (default is $PWD/config.yaml)
+	cfgFile string // config file (default is $PWD/server-config.yaml)
 	// RootCmd represents the base command when called without any subcommands
 	RootCmd = &cobra.Command{
 		Use:   "minder-server",
@@ -50,7 +50,7 @@ func Execute() {
 
 func init() {
 	cobra.OnInitialize(initConfig)
-	RootCmd.PersistentFlags().StringVar(&cfgFile, "config", "", "config file (default is $PWD/config.yaml)")
+	RootCmd.PersistentFlags().StringVar(&cfgFile, "config", "", "config file (default is $PWD/server-config.yaml)")
 	if err := config.RegisterDatabaseFlags(viper.GetViper(), RootCmd.PersistentFlags()); err != nil {
 		log.Fatal(err)
 	}
@@ -66,7 +66,7 @@ func initConfig() {
 		viper.SetConfigFile(cfgFile)
 	} else {
 		// use defaults
-		viper.SetConfigName("config")
+		viper.SetConfigName("server-config")
 		viper.AddConfigPath(".")
 	}
 	viper.SetConfigType("yaml")

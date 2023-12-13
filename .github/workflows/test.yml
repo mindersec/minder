@@ -26,7 +26,7 @@ jobs:
 
       # copy config file into place
       - name: Copy config file
-        run: cp config/config.yaml.example ./config.yaml
+        run: cp config/server-config.yaml.example ./server-config.yaml
 
       # Run the tests
       - name: Run tests

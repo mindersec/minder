@@ -23,16 +23,7 @@ import (
 
 // IdentityConfig is the configuration for the identity provider
 type IdentityConfig struct {
-	Cli    CliIdentityConfig    `mapstructure:"cli"`
 	Server ServerIdentityConfig `mapstructure:"server"`
-}
-
-// CliIdentityConfig is the configuration for the identity provider in the minder cli
-type CliIdentityConfig struct {
-	// IssuerUrl is the base URL where the identity server is running
-	IssuerUrl string `mapstructure:"issuer_url" default:"http://localhost:8081"`
-	// ClientId is the client ID that identifies the minder CLI
-	ClientId string `mapstructure:"client_id" default:"minder-cli"`
 }
 
 // ServerIdentityConfig is the configuration for the identity provider in minder server

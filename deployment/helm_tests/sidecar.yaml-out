@@ -26,7 +26,7 @@ metadata:
     app.kubernetes.io/version: "2023-07-31"
     helm.sh/chart: minder-0.1.0
 data:
-  config.yaml: |
+  server-config.yaml: |
     
     #
     # Copyright 2023 Stacklok, Inc.
@@ -75,9 +75,6 @@ data:
       sslmode: disable
     
     identity:
-      cli:
-        issuer_url: http://localhost:8081
-        client_id: minder-cli
       server:
         issuer_url: http://keycloak:8080 # Use http://localhost:8081 instead for running minder outside of docker-compose
         client_id: minder-server
@@ -288,7 +285,7 @@ spec:
           args:
           - "serve"
           - "--db-host=postgres.postgres.svc"
-          - "--config=/config/config.yaml"
+          - "--config=/config/server-config.yaml"
           # We use two config files, one with all the defaults, and one with
           # additional override values from helm.  (This is a viper feature.)
           - "--config=/config/overrides.yaml"
@@ -364,8 +361,8 @@ spec:
         configMap:
           name: minder-config
           items:
-          - key: config.yaml
-            path: config.yaml
+          - key: server-config.yaml
+            path: server-config.yaml
           - key: overrides.yaml
             path: overrides.yaml
       - name: auth-secrets
@@ -636,7 +633,7 @@ metadata:
     app.kubernetes.io/version: "2023-07-31"
     app.kubernetes.io/managed-by: "Helm"
 data:
-  config.yaml: |
+  server-config.yaml: |
     
     #
     # Copyright 2023 Stacklok, Inc.
@@ -685,9 +682,6 @@ data:
       sslmode: disable
     
     identity:
-      cli:
-        issuer_url: http://localhost:8081
-        client_id: minder-cli
       server:
         issuer_url: http://keycloak:8080 # Use http://localhost:8081 instead for running minder outside of docker-compose
         client_id: minder-server
@@ -773,7 +767,7 @@ spec:
           - "up"
           - "--yes"
           - "--db-host=postgres.postgres.svc"
-          - "--config=/config/config.yaml"
+          - "--config=/config/server-config.yaml"
           # We use two config files, one with all the defaults, and one with
           # additional override values from helm.  (This is a viper feature.)
           - "--config=/config/overrides.yaml"
@@ -811,8 +805,8 @@ spec:
         configMap:
           name: db-update-config
           items:
-          - key: config.yaml
-            path: config.yaml
+          - key: server-config.yaml
+            path: server-config.yaml
           - key: overrides.yaml
             path: overrides.yaml
       - emptyDir:

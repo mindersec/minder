@@ -81,7 +81,8 @@ make test
 
 ## Install tools
 
-You may bootstrap the whole development environment, which includes initializing the `config.yaml` file with:
+You may bootstrap the whole development environment, which includes initializing the `config.yaml` and `server-config.yaml`
+files with:
 
 ```bash
 make bootstrap
@@ -145,9 +146,11 @@ make migratedown
 
 Minder uses [viper](https://github.com/spf13/viper) for configuration.
 
-An example configuration file is `config/config.yaml.example`.
+An example CLI configuration file is `config/config.yaml.example`.
+
+An example server configuration file is `config/server-config.yaml.example`.
 
 Most values should be quite self-explanatory.
 
 Before running the app, please copy the content of `config/config.yaml.example` into `$PWD/config.yaml` file,
-and modify to use your own settings.
+and `config/server-config.yaml.example` into `$PWD/server-config.yaml` file, and modify to use your own settings.
