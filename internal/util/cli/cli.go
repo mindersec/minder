@@ -79,7 +79,12 @@ func GrpcForCommand(cmd *cobra.Command, v *viper.Viper) (*grpc.ClientConn, error
 
 // GetAppContext is a helper for getting the cmd app context
 func GetAppContext(ctx context.Context, v *viper.Viper) (context.Context, context.CancelFunc) {
-	v.SetDefault("cli.context_timeout", 10)
+	return GetAppContextWithTimeoutDuration(ctx, v, 10)
+}
+
+// GetAppContextWithTimeoutDuration is a helper for getting the cmd app context with a custom timeout
+func GetAppContextWithTimeoutDuration(ctx context.Context, v *viper.Viper, tout int) (context.Context, context.CancelFunc) {
+	v.SetDefault("cli.context_timeout", tout)
 	timeout := v.GetInt("cli.context_timeout")
 
 	ctx, cancel := context.WithTimeout(ctx, time.Duration(timeout)*time.Second)
