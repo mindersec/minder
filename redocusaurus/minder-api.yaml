@@ -40,6 +40,23 @@ paths:
           in: query
           required: false
           type: string
+        - name: context.provider
+          description: >-
+            Removing the 'optional' keyword from the following two fields below
+            will break
+
+            buf compatibility checks.
+          in: query
+          required: false
+          type: string
+        - name: context.project
+          in: query
+          required: false
+          type: string
+        - name: context.retiredOrganization
+          in: query
+          required: false
+          type: string
       tags:
         - ArtifactService
   /api/v1/artifacts/{provider}:
@@ -60,6 +77,23 @@ paths:
           required: true
           type: string
         - name: projectId
+          in: query
+          required: false
+          type: string
+        - name: context.provider
+          description: >-
+            Removing the 'optional' keyword from the following two fields below
+            will break
+
+            buf compatibility checks.
+          in: query
+          required: false
+          type: string
+        - name: context.project
+          in: query
+          required: false
+          type: string
+        - name: context.retiredOrganization
           in: query
           required: false
           type: string
@@ -100,6 +134,23 @@ paths:
           in: query
           required: false
           type: string
+        - name: context.provider
+          description: >-
+            Removing the 'optional' keyword from the following two fields below
+            will break
+
+            buf compatibility checks.
+          in: query
+          required: false
+          type: string
+        - name: context.project
+          in: query
+          required: false
+          type: string
+        - name: context.retiredOrganization
+          in: query
+          required: false
+          type: string
       tags:
         - OAuthService
   /api/v1/auth/callback/{provider}/web:
@@ -128,6 +179,23 @@ paths:
           required: false
           type: string
         - name: redirectUri
+          in: query
+          required: false
+          type: string
+        - name: context.provider
+          description: >-
+            Removing the 'optional' keyword from the following two fields below
+            will break
+
+            buf compatibility checks.
+          in: query
+          required: false
+          type: string
+        - name: context.project
+          in: query
+          required: false
+          type: string
+        - name: context.retiredOrganization
           in: query
           required: false
           type: string
@@ -167,6 +235,23 @@ paths:
           in: query
           required: false
           type: string
+        - name: context.provider
+          description: >-
+            Removing the 'optional' keyword from the following two fields below
+            will break
+
+            buf compatibility checks.
+          in: query
+          required: false
+          type: string
+        - name: context.project
+          in: query
+          required: false
+          type: string
+        - name: context.retiredOrganization
+          in: query
+          required: false
+          type: string
       tags:
         - OAuthService
   /api/v1/auth/verify/{provider}/{timestamp}:
@@ -195,6 +280,23 @@ paths:
           type: string
           format: date-time
         - name: projectId
+          in: query
+          required: false
+          type: string
+        - name: context.provider
+          description: >-
+            Removing the 'optional' keyword from the following two fields below
+            will break
+
+            buf compatibility checks.
+          in: query
+          required: false
+          type: string
+        - name: context.project
+          in: query
+          required: false
+          type: string
+        - name: context.retiredOrganization
           in: query
           required: false
           type: string
@@ -229,6 +331,8 @@ paths:
                 type: string
               owner:
                 type: string
+              context:
+                $ref: '#/definitions/v1Context'
       tags:
         - OAuthService
   /api/v1/health:
@@ -303,6 +407,11 @@ paths:
           required: true
           type: string
         - name: context.provider
+          description: >-
+            Removing the 'optional' keyword from the following two fields below
+            will break
+
+            buf compatibility checks.
           in: query
           required: false
           type: string
@@ -362,6 +471,11 @@ paths:
           required: true
           type: string
         - name: context.provider
+          description: >-
+            Removing the 'optional' keyword from the following two fields below
+            will break
+
+            buf compatibility checks.
           in: query
           required: false
           type: string
@@ -393,6 +507,11 @@ paths:
           required: true
           type: string
         - name: context.provider
+          description: >-
+            Removing the 'optional' keyword from the following two fields below
+            will break
+
+            buf compatibility checks.
           in: query
           required: false
           type: string
@@ -420,6 +539,11 @@ paths:
             $ref: '#/definitions/googlerpcStatus'
       parameters:
         - name: context.provider
+          description: >-
+            Removing the 'optional' keyword from the following two fields below
+            will break
+
+            buf compatibility checks.
           in: query
           required: false
           type: string
@@ -447,6 +571,11 @@ paths:
             $ref: '#/definitions/googlerpcStatus'
       parameters:
         - name: context.provider
+          description: >-
+            Removing the 'optional' keyword from the following two fields below
+            will break
+
+            buf compatibility checks.
           in: query
           required: false
           type: string
@@ -491,6 +620,23 @@ paths:
           required: false
           type: integer
           format: int32
+        - name: context.provider
+          description: >-
+            Removing the 'optional' keyword from the following two fields below
+            will break
+
+            buf compatibility checks.
+          in: query
+          required: false
+          type: string
+        - name: context.project
+          in: query
+          required: false
+          type: string
+        - name: context.retiredOrganization
+          in: query
+          required: false
+          type: string
       tags:
         - RepositoryService
   /api/v1/repositories/provider/{provider}/remote:
@@ -514,6 +660,23 @@ paths:
           in: query
           required: false
           type: string
+        - name: context.provider
+          description: >-
+            Removing the 'optional' keyword from the following two fields below
+            will break
+
+            buf compatibility checks.
+          in: query
+          required: false
+          type: string
+        - name: context.project
+          in: query
+          required: false
+          type: string
+        - name: context.retiredOrganization
+          in: query
+          required: false
+          type: string
       tags:
         - RepositoryService
   /api/v1/repository/id/{repositoryId}:
@@ -533,6 +696,23 @@ paths:
           in: path
           required: true
           type: string
+        - name: context.provider
+          description: >-
+            Removing the 'optional' keyword from the following two fields below
+            will break
+
+            buf compatibility checks.
+          in: query
+          required: false
+          type: string
+        - name: context.project
+          in: query
+          required: false
+          type: string
+        - name: context.retiredOrganization
+          in: query
+          required: false
+          type: string
       tags:
         - RepositoryService
     delete:
@@ -550,6 +730,23 @@ paths:
         - name: repositoryId
           in: path
           required: true
+          type: string
+        - name: context.provider
+          description: >-
+            Removing the 'optional' keyword from the following two fields below
+            will break
+
+            buf compatibility checks.
+          in: query
+          required: false
+          type: string
+        - name: context.project
+          in: query
+          required: false
+          type: string
+        - name: context.retiredOrganization
+          in: query
+          required: false
           type: string
       tags:
         - RepositoryService
@@ -578,6 +775,23 @@ paths:
           in: query
           required: false
           type: string
+        - name: context.provider
+          description: >-
+            Removing the 'optional' keyword from the following two fields below
+            will break
+
+            buf compatibility checks.
+          in: query
+          required: false
+          type: string
+        - name: context.project
+          in: query
+          required: false
+          type: string
+        - name: context.retiredOrganization
+          in: query
+          required: false
+          type: string
       tags:
         - RepositoryService
     delete:
@@ -601,6 +815,23 @@ paths:
           required: true
           type: string
         - name: projectId
+          in: query
+          required: false
+          type: string
+        - name: context.provider
+          description: >-
+            Removing the 'optional' keyword from the following two fields below
+            will break
+
+            buf compatibility checks.
+          in: query
+          required: false
+          type: string
+        - name: context.project
+          in: query
+          required: false
+          type: string
+        - name: context.retiredOrganization
           in: query
           required: false
           type: string
@@ -633,6 +864,8 @@ paths:
                 type: string
               repository:
                 $ref: '#/definitions/v1UpstreamRepositoryRef'
+              context:
+                $ref: '#/definitions/v1Context'
       tags:
         - RepositoryService
   /api/v1/rule_type:
@@ -695,6 +928,11 @@ paths:
           required: true
           type: string
         - name: context.provider
+          description: >-
+            Removing the 'optional' keyword from the following two fields below
+            will break
+
+            buf compatibility checks.
           in: query
           required: false
           type: string
@@ -727,6 +965,11 @@ paths:
           required: true
           type: string
         - name: context.provider
+          description: >-
+            Removing the 'optional' keyword from the following two fields below
+            will break
+
+            buf compatibility checks.
           in: query
           required: false
           type: string
@@ -758,6 +1001,11 @@ paths:
           required: true
           type: string
         - name: context.provider
+          description: >-
+            Removing the 'optional' keyword from the following two fields below
+            will break
+
+            buf compatibility checks.
           in: query
           required: false
           type: string
@@ -785,6 +1033,11 @@ paths:
             $ref: '#/definitions/googlerpcStatus'
       parameters:
         - name: context.provider
+          description: >-
+            Removing the 'optional' keyword from the following two fields below
+            will break
+
+            buf compatibility checks.
           in: query
           required: false
           type: string
@@ -810,6 +1063,24 @@ paths:
           description: An unexpected error response.
           schema:
             $ref: '#/definitions/googlerpcStatus'
+      parameters:
+        - name: context.provider
+          description: >-
+            Removing the 'optional' keyword from the following two fields below
+            will break
+
+            buf compatibility checks.
+          in: query
+          required: false
+          type: string
+        - name: context.project
+          in: query
+          required: false
+          type: string
+        - name: context.retiredOrganization
+          in: query
+          required: false
+          type: string
       tags:
         - UserService
     delete:
@@ -823,6 +1094,24 @@ paths:
           description: An unexpected error response.
           schema:
             $ref: '#/definitions/googlerpcStatus'
+      parameters:
+        - name: context.provider
+          description: >-
+            Removing the 'optional' keyword from the following two fields below
+            will break
+
+            buf compatibility checks.
+          in: query
+          required: false
+          type: string
+        - name: context.project
+          in: query
+          required: false
+          type: string
+        - name: context.retiredOrganization
+          in: query
+          required: false
+          type: string
       tags:
         - UserService
     post:
@@ -1016,6 +1305,14 @@ definitions:
           def is the definition of the rule.
           This depends on the rule type.
     description: Rule defines the individual call of a certain rule type.
+  PullRequestRemediationActionsReplaceTagsWithSha:
+    type: object
+    properties:
+      exclude:
+        type: array
+        items:
+          type: string
+        title: List of actions to exclude from the replacement
   PullRequestRemediationContent:
     type: object
     properties:
@@ -1039,6 +1336,9 @@ definitions:
 
           040000 for submodules (which we don't use but now you know the meaning
           of the 1 in 100644)
+
+          see e.g.
+          https://github.com/go-git/go-git/blob/32e0172851c35ae2fac495069c923330040903d2/plumbing/filemode/filemode.go#L16
   RemediateGhBranchProtectionType:
     type: object
     properties:
@@ -1058,6 +1358,24 @@ definitions:
         items:
           type: object
           $ref: '#/definitions/PullRequestRemediationContent'
+      method:
+        type: string
+        title: >-
+          the method to use to create the PR. For now, these are supported:
+
+          -- minder.content - ensures that the content of the file is exactly as
+          specified
+                              refer to the Content message for more details
+          -- minder.actions.replace_tags_with_sha - finds any github actions
+          within a workflow
+                                                    file and replaces the tag with the SHA
+      actionsReplaceTagsWithSha:
+        $ref: '#/definitions/PullRequestRemediationActionsReplaceTagsWithSha'
+        title: >-
+          If the method is minder.actions.replace_tags_with_sha, this is the
+          configuration
+
+          for that method
     title: >-
       the name stutters a bit but we already use a PullRequest message for
       handling PR entities
@@ -1069,6 +1387,37 @@ definitions:
         format: int32
       body:
         type: string
+  RuleTypeDefinition:
+    type: object
+    properties:
+      inEntity:
+        type: string
+        description: |-
+          in_entity is the entity in which the rule is evaluated.
+          This can be repository, build_environment or artifact.
+      ruleSchema:
+        type: object
+        description: >-
+          rule_schema is the schema of the rule. This is expressed in JSON
+          Schema.
+      paramSchema:
+        type: object
+        description: >-
+          param_schema is the schema of the parameters that are passed to the
+          rule.
+
+          This is expressed in JSON Schema.
+      ingest:
+        $ref: '#/definitions/DefinitionIngest'
+      eval:
+        $ref: '#/definitions/DefinitionEval'
+      remediate:
+        $ref: '#/definitions/DefinitionRemediate'
+      alert:
+        $ref: '#/definitions/DefinitionAlert'
+    description: >-
+      Definition defines the rule type. It encompases the schema and the data
+      evaluation.
   apiHttpBody:
     type: object
     properties:
@@ -1204,7 +1553,10 @@ definitions:
 
           protobuf release, and it is not used for type URLs beginning with
 
-          type.googleapis.com.
+          type.googleapis.com. As of May 2023, there are no widely used type
+          server
+
+          implementations and no plans to implement one.
 
 
           Schemes other than `http`, `https` (or the empty scheme) might be
@@ -1246,7 +1598,7 @@ definitions:
             foo = any.unpack(Foo.getDefaultInstance());
           }
 
-      Example 3: Pack and unpack a message in Python.
+       Example 3: Pack and unpack a message in Python.
 
           foo = Foo(...)
           any = Any()
@@ -1256,7 +1608,7 @@ definitions:
             any.Unpack(foo)
             ...
 
-      Example 4: Pack and unpack a message in Go
+       Example 4: Pack and unpack a message in Go
 
            foo := &pb.Foo{...}
            any, err := anypb.New(foo)
@@ -1282,6 +1634,7 @@ definitions:
 
       JSON
 
+      ====
 
       The JSON representation of an `Any` value uses the regular
 
@@ -1322,7 +1675,7 @@ definitions:
       `NullValue` is a singleton enumeration to represent the null value for the
       `Value` type union.
 
-       The JSON representation for `NullValue` is JSON `null`.
+      The JSON representation for `NullValue` is JSON `null`.
 
        - NULL_VALUE: Null value.
   v1Artifact:
@@ -1386,6 +1739,11 @@ definitions:
     properties:
       provider:
         type: string
+        description: >-
+          Removing the 'optional' keyword from the following two fields below
+          will break
+
+          buf compatibility checks.
       project:
         type: string
       retiredOrganization:
@@ -1400,6 +1758,8 @@ definitions:
     properties:
       profile:
         $ref: '#/definitions/v1Profile'
+      context:
+        $ref: '#/definitions/v1Context'
     title: Profile service
   v1CreateProfileResponse:
     type: object
@@ -1412,6 +1772,8 @@ definitions:
       ruleType:
         $ref: '#/definitions/v1RuleType'
         description: rule_type is the rule type to be created.
+      context:
+        $ref: '#/definitions/v1Context'
     description: CreateRuleTypeRequest is the request to create a rule type.
   v1CreateRuleTypeResponse:
     type: object
@@ -1442,6 +1804,8 @@ definitions:
       createdAt:
         type: string
         format: date-time
+      context:
+        $ref: '#/definitions/v1Context'
   v1DeleteProfileResponse:
     type: object
   v1DeleteRepositoryByIdResponse:
@@ -1673,6 +2037,14 @@ definitions:
         title: |-
           whether and how to alert (on,off,dry_run)
           this is optional as the default is set by the system
+      type:
+        type: string
+        description: >-
+          type is a placeholder for the object type. It should always be set to
+          "profile".
+      version:
+        type: string
+        title: version is the version of the profile type. In this case, it is "v1"
     description: Profile defines a profile that is user defined.
   v1ProfileStatus:
     type: object
@@ -1768,6 +2140,8 @@ definitions:
       updatedAt:
         type: string
         format: date-time
+      defaultBranch:
+        type: string
   v1RestType:
     type: object
     properties:
@@ -1867,7 +2241,7 @@ definitions:
         $ref: '#/definitions/v1Context'
         description: context is the context in which the rule is evaluated.
       def:
-        $ref: '#/definitions/v1RuleTypeDefinition'
+        $ref: '#/definitions/RuleTypeDefinition'
         description: def is the definition of the rule type.
       description:
         type: string
@@ -1878,37 +2252,6 @@ definitions:
     description: |-
       RuleType defines rules that may or may not be user defined.
       The version is assumed from the folder's version.
-  v1RuleTypeDefinition:
-    type: object
-    properties:
-      inEntity:
-        type: string
-        description: |-
-          in_entity is the entity in which the rule is evaluated.
-          This can be repository, build_environment or artifact.
-      ruleSchema:
-        type: object
-        description: >-
-          rule_schema is the schema of the rule. This is expressed in JSON
-          Schema.
-      paramSchema:
-        type: object
-        description: >-
-          param_schema is the schema of the parameters that are passed to the
-          rule.
-
-          This is expressed in JSON Schema.
-      ingest:
-        $ref: '#/definitions/DefinitionIngest'
-      eval:
-        $ref: '#/definitions/DefinitionEval'
-      remediate:
-        $ref: '#/definitions/DefinitionRemediate'
-      alert:
-        $ref: '#/definitions/DefinitionAlert'
-    description: >-
-      Definition defines the rule type. It encompases the schema and the data
-      evaluation.
   v1SignatureVerification:
     type: object
     properties:
@@ -1925,8 +2268,8 @@ definitions:
       rekorLogId:
         type: string
       rekorLogIndex:
-        type: integer
-        format: int32
+        type: string
+        format: int64
       signatureTime:
         type: string
         format: date-time
@@ -1937,6 +2280,8 @@ definitions:
     properties:
       profile:
         $ref: '#/definitions/v1Profile'
+      context:
+        $ref: '#/definitions/v1Context'
   v1UpdateProfileResponse:
     type: object
     properties:
@@ -1948,6 +2293,8 @@ definitions:
       ruleType:
         $ref: '#/definitions/v1RuleType'
         description: rule_type is the rule type to be updated.
+      context:
+        $ref: '#/definitions/v1Context'
     description: UpdateRuleTypeRequest is the request to update a rule type.
   v1UpdateRuleTypeResponse:
     type: object
