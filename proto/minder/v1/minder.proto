@@ -402,7 +402,12 @@ service ProfileService {
     rpc GetProfileById (GetProfileByIdRequest) returns (GetProfileByIdResponse) {
         option (google.api.http) = {
             get: "/api/v1/profile/{id}"
-            };    
+        };    
+
+        option (rpc_options) = {
+            auth_scope: OBJECT_OWNER_PROJECT
+            owner_only: false
+        };
     }
 
     rpc GetProfileStatusByName (GetProfileStatusByNameRequest) returns (GetProfileStatusByNameResponse) {
