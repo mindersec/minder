@@ -44,7 +44,9 @@ func newFrizbeeTagResolveModification(
 	params *modificationConstructorParams,
 ) (fsModifier, error) {
 	exclude := []string{}
-	if ex := params.prCfg.GetActionsReplaceTagsWithSha().GetExclude(); ex != nil {
+	if ex := parseExcludeFromDef(params.def); ex != nil {
+		exclude = ex
+	} else if ex := params.prCfg.GetActionsReplaceTagsWithSha().GetExclude(); ex != nil {
 		exclude = ex
 	}
 	return &frizbeeTagResolveModification{
@@ -98,4 +100,32 @@ func (ftr *frizbeeTagResolveModification) modifyFs() ([]*fsEntry, error) {
 		return nil, fmt.Errorf("cannot write entries: %w", err)
 	}
 	return ftr.entries, nil
+}
+
+func parseExcludeFromDef(def map[string]any) []string {
+	if def == nil {
+		return nil
+	}
+
+	exclude, ok := def["exclude"]
+	if !ok {
+		return nil
+	}
+
+	excludeSlice, ok := exclude.([]interface{})
+	if !ok {
+		return nil
+	}
+
+	excludeStrings := []string{}
+	for _, ex := range excludeSlice {
+		excludeStr, ok := ex.(string)
+		if !ok {
+			return nil
+		}
+
+		excludeStrings = append(excludeStrings, excludeStr)
+	}
+
+	return excludeStrings
 }
