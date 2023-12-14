@@ -159,7 +159,10 @@ var cmd = &cobra.Command{
 			return err
 		}
 
-		// Step 2 - Confirm repository registration
+		// Step 2 - Confirm repository registration (new context, so we don't time out)
+		ctx, cancel := getQuickstartContext(cmd.Context(), viper.GetViper())
+		defer cancel()
+
 		yes = cli.PrintYesNoPrompt(cmd,
 			stepPromptMsgRegister,
 			"Proceed?",
@@ -217,7 +220,7 @@ var cmd = &cobra.Command{
 		}
 
 		// Create the rule type in minder (new context, so we don't time out)
-		ctx, cancel := cli.GetAppContext(cmd.Context(), viper.GetViper())
+		ctx, cancel = getQuickstartContext(cmd.Context(), viper.GetViper())
 		defer cancel()
 
 		_, err = client.CreateRuleType(ctx, &minderv1.CreateRuleTypeRequest{
@@ -267,7 +270,7 @@ var cmd = &cobra.Command{
 		}
 
 		// Create the profile in minder (new context, so we don't time out)
-		ctx, cancel = cli.GetAppContext(cmd.Context(), viper.GetViper())
+		ctx, cancel = getQuickstartContext(cmd.Context(), viper.GetViper())
 		defer cancel()
 
 		alreadyExists := ""
@@ -309,4 +312,8 @@ func init() {
 	cmd.Flags().StringP("provider", "p", "github", "Name of the provider")
 	cmd.Flags().StringP("token", "t", "", "Personal Access Token (PAT) to use for enrollment")
 	cmd.Flags().StringP("owner", "o", "", "Owner to filter on for provider resources")
+}
+
+func getQuickstartContext(ctx context.Context, v *viper.Viper) (context.Context, context.CancelFunc) {
+	return cli.GetAppContextWithTimeoutDuration(ctx, v, 20)
 }
