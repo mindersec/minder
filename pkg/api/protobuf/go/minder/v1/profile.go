@@ -13,3 +13,10 @@
 // limitations under the License.
 
 package v1
+
+const (
+	// ProfileType is the type of the profile resource.
+	ProfileType = "profile"
+	// ProfileTypeVersion is the version of the profile resource.
+	ProfileTypeVersion = "v1"
+)

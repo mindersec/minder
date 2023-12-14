@@ -120,6 +120,14 @@ func (def *RuleType_Definition) Validate() error {
 
 // Validate validates a pipeline profile
 func (p *Profile) Validate() error {
+	if p.Type != ProfileType {
+		return fmt.Errorf("%w: profile type is invalid: %s. Did you parse the wrong file?",
+			ErrValidationFailed, p.Type)
+	}
+	if p.Version != ProfileTypeVersion {
+		return fmt.Errorf("%w: profile version is invalid: %s", ErrValidationFailed, p.Version)
+	}
+
 	if p.Name == "" {
 		return fmt.Errorf("%w: profile name cannot be empty", ErrValidationFailed)
 	}

@@ -1358,4 +1358,10 @@ message Profile {
     // whether and how to alert (on,off,dry_run)
     // this is optional as the default is set by the system
     optional string alert = 9;
+
+    // type is a placeholder for the object type. It should always be set to "profile".
+    string type = 10;
+
+    // version is the version of the profile type. In this case, it is "v1"
+    string version = 11;
 }
