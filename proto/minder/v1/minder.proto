@@ -1272,6 +1272,11 @@ message RuleType {
                     optional string mode = 3;
                 }
 
+                message ActionsReplaceTagsWithSha {
+                    // List of actions to exclude from the replacement
+                    repeated string exclude = 1;
+                }
+
                 // the title of the PR
                 string title = 1;
                 // the body of the PR
@@ -1283,6 +1288,10 @@ message RuleType {
                 // -- minder.actions.replace_tags_with_sha - finds any github actions within a workflow
                 //                                           file and replaces the tag with the SHA
                 string method = 4;
+
+                // If the method is minder.actions.replace_tags_with_sha, this is the configuration
+                // for that method
+                optional ActionsReplaceTagsWithSha actions_replace_tags_with_sha = 5;
             }
 
             optional RestType rest = 2;

@@ -1533,6 +1533,18 @@ the name stutters a bit but we already use a PullRequest message for handling PR
 | body | [string](#string) |  | the body of the PR |
 | contents | [RuleType.Definition.Remediate.PullRequestRemediation.Content](#minder-v1-RuleType-Definition-Remediate-PullRequestRemediation-Content) | repeated |  |
 | method | [string](#string) |  | the method to use to create the PR. For now, these are supported: -- minder.content - ensures that the content of the file is exactly as specified refer to the Content message for more details -- minder.actions.replace_tags_with_sha - finds any github actions within a workflow file and replaces the tag with the SHA |
+| actions_replace_tags_with_sha | [RuleType.Definition.Remediate.PullRequestRemediation.ActionsReplaceTagsWithSha](#minder-v1-RuleType-Definition-Remediate-PullRequestRemediation-ActionsReplaceTagsWithSha) | optional | If the method is minder.actions.replace_tags_with_sha, this is the configuration for that method |
+
+
+<a name="minder-v1-RuleType-Definition-Remediate-PullRequestRemediation-ActionsReplaceTagsWithSha"></a>
+
+#### RuleType.Definition.Remediate.PullRequestRemediation.ActionsReplaceTagsWithSha
+
+
+
+| Field | Type | Label | Description |
+| ----- | ---- | ----- | ----------- |
+| exclude | [string](#string) | repeated | List of actions to exclude from the replacement |
 
 
 <a name="minder-v1-RuleType-Definition-Remediate-PullRequestRemediation-Content"></a>

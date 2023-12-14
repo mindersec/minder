@@ -1783,6 +1783,18 @@
       },
       "description": "Rule defines the individual call of a certain rule type."
     },
+    "PullRequestRemediationActionsReplaceTagsWithSha": {
+      "type": "object",
+      "properties": {
+        "exclude": {
+          "type": "array",
+          "items": {
+            "type": "string"
+          },
+          "title": "List of actions to exclude from the replacement"
+        }
+      }
+    },
     "PullRequestRemediationContent": {
       "type": "object",
       "properties": {
@@ -1833,6 +1845,10 @@
         "method": {
           "type": "string",
           "title": "the method to use to create the PR. For now, these are supported:\n-- minder.content - ensures that the content of the file is exactly as specified\n                    refer to the Content message for more details\n-- minder.actions.replace_tags_with_sha - finds any github actions within a workflow\n                                          file and replaces the tag with the SHA"
+        },
+        "actionsReplaceTagsWithSha": {
+          "$ref": "#/definitions/PullRequestRemediationActionsReplaceTagsWithSha",
+          "title": "If the method is minder.actions.replace_tags_with_sha, this is the configuration\nfor that method"
         }
       },
       "title": "the name stutters a bit but we already use a PullRequest message for handling PR entities"
