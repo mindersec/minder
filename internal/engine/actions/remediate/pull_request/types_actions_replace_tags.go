@@ -33,6 +33,8 @@ var _ fsModifier = (*frizbeeTagResolveModification)(nil)
 type frizbeeTagResolveModification struct {
 	fsChangeSet
 
+	fzcfg *fzconfig.GHActions
+
 	ghCli v1.GitHub
 }
 
@@ -40,10 +42,19 @@ var _ modificationConstructor = newFrizbeeTagResolveModification
 
 func newFrizbeeTagResolveModification(
 	params *modificationConstructorParams,
-) (fsModifier, error) { // nolint:unparam // we need to match the interface
+) (fsModifier, error) {
+	exclude := []string{}
+	if ex := params.prCfg.GetActionsReplaceTagsWithSha().GetExclude(); ex != nil {
+		exclude = ex
+	}
 	return &frizbeeTagResolveModification{
 		fsChangeSet: fsChangeSet{
 			fs: params.bfs,
+		},
+		fzcfg: &fzconfig.GHActions{
+			Filter: fzconfig.Filter{
+				Exclude: exclude,
+			},
 		},
 		ghCli: params.ghCli,
 	}, nil
@@ -53,7 +64,7 @@ func (ftr *frizbeeTagResolveModification) createFsModEntries(ctx context.Context
 	entries := []*fsEntry{}
 
 	err := ghactions.TraverseGitHubActionWorkflows(ftr.fs, ".github/workflows", func(path string, wflow *yaml.Node) error {
-		m, err := ghactions.ModifyReferencesInYAML(ctx, ftr.ghCli, wflow, &fzconfig.GHActions{})
+		m, err := ghactions.ModifyReferencesInYAML(ctx, ftr.ghCli, wflow, ftr.fzcfg)
 		if err != nil {
 			return fmt.Errorf("failed to process YAML file %s: %w", path, err)
 		}

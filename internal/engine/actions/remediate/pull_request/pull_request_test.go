@@ -64,6 +64,9 @@ Adds Dependabot configuration for gomod`
 	frizbeePrBody      = `<!-- minder: pr-remediation-body: { "ContentSha": "198f40869c1a66030129bdb4c22e8b91f8fe3979" } -->
 
 This PR replaces tags with sha`
+	frizbeePrBodyWithExcludes = `<!-- minder: pr-remediation-body: { "ContentSha": "287e445dad8fae5a16a5f39050e13e5d3750c2d3" } -->
+
+This PR replaces tags with sha`
 
 	actionWithTags = `
 on:
@@ -132,6 +135,17 @@ func frizbeePrRem() *pb.RuleType_Definition_Remediate_PullRequestRemediation {
 		Method: "minder.actions.replace_tags_with_sha",
 		Title:  frizbeeCommitTitle,
 		Body:   "This PR replaces tags with sha",
+	}
+}
+
+func frizbeePrRemWithExcludes(e []string) *pb.RuleType_Definition_Remediate_PullRequestRemediation {
+	return &pb.RuleType_Definition_Remediate_PullRequestRemediation{
+		Method: "minder.actions.replace_tags_with_sha",
+		Title:  frizbeeCommitTitle,
+		Body:   "This PR replaces tags with sha",
+		ActionsReplaceTagsWithSha: &pb.RuleType_Definition_Remediate_PullRequestRemediation_ActionsReplaceTagsWithSha{
+			Exclude: e,
+		},
 	}
 }
 
@@ -336,11 +350,6 @@ func mockRepoSetupWithBranch(t *testing.T) (*git.Repository, error) {
 func TestPullRequestRemediate(t *testing.T) {
 	t.Parallel()
 
-	ctrl := gomock.NewController(t)
-	t.Cleanup(func() {
-		ctrl.Finish()
-	})
-
 	type newPullRequestRemediateArgs struct {
 		prRem      *pb.RuleType_Definition_Remediate_PullRequestRemediation
 		pbuild     *providers.ProviderBuilder
@@ -352,7 +361,7 @@ func TestPullRequestRemediate(t *testing.T) {
 		newRemArgs  *newPullRequestRemediateArgs
 		remArgs     *remediateArgs
 		repoSetup   func(*testing.T) (*git.Repository, error)
-		mockSetup   func(*mock_ghclient.MockGitHub)
+		mockSetup   func(*testing.T, *mock_ghclient.MockGitHub)
 		wantErr     bool
 		wantInitErr bool
 	}{
@@ -365,7 +374,7 @@ func TestPullRequestRemediate(t *testing.T) {
 			},
 			remArgs:   createTestRemArgs(),
 			repoSetup: defaultMockRepoSetup,
-			mockSetup: func(mockGitHub *mock_ghclient.MockGitHub) {
+			mockSetup: func(_ *testing.T, mockGitHub *mock_ghclient.MockGitHub) {
 				happyPathMockSetup(mockGitHub)
 
 				mockGitHub.EXPECT().
@@ -386,7 +395,7 @@ func TestPullRequestRemediate(t *testing.T) {
 			},
 			remArgs:   createTestRemArgs(),
 			repoSetup: mockRepoSetupWithBranch,
-			mockSetup: func(mockGitHub *mock_ghclient.MockGitHub) {
+			mockSetup: func(_ *testing.T, mockGitHub *mock_ghclient.MockGitHub) {
 				happyPathMockSetup(mockGitHub)
 
 				mockGitHub.EXPECT().
@@ -407,7 +416,7 @@ func TestPullRequestRemediate(t *testing.T) {
 			},
 			remArgs:   createTestRemArgs(),
 			repoSetup: defaultMockRepoSetup,
-			mockSetup: func(mockGitHub *mock_ghclient.MockGitHub) {
+			mockSetup: func(_ *testing.T, mockGitHub *mock_ghclient.MockGitHub) {
 				mockGitHub.EXPECT().
 					ListPullRequests(gomock.Any(), repoOwner, repoName, gomock.Any()).
 					Return([]*github.PullRequest{
@@ -426,7 +435,9 @@ func TestPullRequestRemediate(t *testing.T) {
 			},
 			remArgs:   createTestRemArgs(),
 			repoSetup: defaultMockRepoSetup,
-			mockSetup: func(mockGitHub *mock_ghclient.MockGitHub) {
+			mockSetup: func(t *testing.T, mockGitHub *mock_ghclient.MockGitHub) {
+				t.Helper()
+
 				happyPathMockSetup(mockGitHub)
 
 				resolveActionMockSetup(t, mockGitHub, "repos/actions/checkout/git/refs/tags/v4", checkoutV4Ref)
@@ -441,14 +452,45 @@ func TestPullRequestRemediate(t *testing.T) {
 					Return(nil, nil)
 			},
 		},
+		{
+			name: "resolve tags using frizbee with excludes",
+			newRemArgs: &newPullRequestRemediateArgs{
+				prRem:      frizbeePrRemWithExcludes([]string{"actions/setup-go@v5"}),
+				pbuild:     testGithubProviderBuilder(),
+				actionType: TestActionTypeValid,
+			},
+			remArgs:   createTestRemArgs(),
+			repoSetup: defaultMockRepoSetup,
+			mockSetup: func(t *testing.T, mockGitHub *mock_ghclient.MockGitHub) {
+				t.Helper()
+
+				happyPathMockSetup(mockGitHub)
+
+				resolveActionMockSetup(t, mockGitHub, "repos/actions/checkout/git/refs/tags/v4", checkoutV4Ref)
+
+				mockGitHub.EXPECT().
+					CreatePullRequest(
+						gomock.Any(),
+						repoOwner, repoName,
+						frizbeeCommitTitle, frizbeePrBodyWithExcludes,
+						refFromBranch(branchBaseName(frizbeeCommitTitle)), dflBranchTo).
+					Return(nil, nil)
+			},
+		},
 	}
 
-	mockClient := mock_ghclient.NewMockGitHub(ctrl)
 	for _, tt := range tests {
 		tt := tt
 
 		t.Run(tt.name, func(t *testing.T) {
 			t.Parallel()
+
+			ctrl := gomock.NewController(t)
+			t.Cleanup(func() {
+				ctrl.Finish()
+			})
+
+			mockClient := mock_ghclient.NewMockGitHub(ctrl)
 
 			engine, err := NewPullRequestRemediate(tt.newRemArgs.actionType, tt.newRemArgs.prRem, tt.newRemArgs.pbuild)
 			if tt.wantInitErr {
@@ -463,7 +505,7 @@ func TestPullRequestRemediate(t *testing.T) {
 			require.NoError(t, err, "unexpected error creating remediate engine")
 			require.NotNil(t, engine, "expected non-nil remediate engine")
 
-			tt.mockSetup(mockClient)
+			tt.mockSetup(t, mockClient)
 
 			structPol, err := structpb.NewStruct(tt.remArgs.pol)
 			if err != nil {
