@@ -2458,6 +2458,14 @@
         "alert": {
           "type": "string",
           "title": "whether and how to alert (on,off,dry_run)\nthis is optional as the default is set by the system"
+        },
+        "type": {
+          "type": "string",
+          "description": "type is a placeholder for the object type. It should always be set to \"profile\"."
+        },
+        "version": {
+          "type": "string",
+          "title": "version is the version of the profile type. In this case, it is \"v1\""
         }
       },
       "description": "Profile defines a profile that is user defined."

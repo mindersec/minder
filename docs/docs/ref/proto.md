@@ -1073,6 +1073,8 @@ Profile defines a profile that is user defined.
 | pull_request | [Profile.Rule](#minder-v1-Profile-Rule) | repeated |  |
 | remediate | [string](#string) | optional | whether and how to remediate (on,off,dry_run) this is optional as the default is set by the system |
 | alert | [string](#string) | optional | whether and how to alert (on,off,dry_run) this is optional as the default is set by the system |
+| type | [string](#string) |  | type is a placeholder for the object type. It should always be set to "profile". |
+| version | [string](#string) |  | version is the version of the profile type. In this case, it is "v1" |
 
 
 <a name="minder-v1-Profile-Rule"></a>
