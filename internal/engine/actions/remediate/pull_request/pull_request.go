@@ -183,6 +183,7 @@ func (r *Remediator) Do(
 		prCfg: r.prCfg,
 		ghCli: r.ghCli,
 		bfs:   ingested.Fs,
+		def:   params.GetRule().Def.AsMap(),
 	})
 	if err != nil {
 		return nil, fmt.Errorf("cannot get modification: %w", err)

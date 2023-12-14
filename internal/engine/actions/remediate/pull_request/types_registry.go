@@ -37,6 +37,7 @@ type modificationConstructorParams struct {
 	prCfg *pb.RuleType_Definition_Remediate_PullRequestRemediation
 	ghCli v1.GitHub
 	bfs   billy.Filesystem
+	def   map[string]any
 }
 
 type modificationConstructor func(*modificationConstructorParams) (fsModifier, error)

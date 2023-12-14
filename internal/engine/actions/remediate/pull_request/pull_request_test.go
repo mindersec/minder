@@ -174,6 +174,23 @@ func createTestRemArgs() *remediateArgs {
 	}
 }
 
+func createTestRemArgsWithExcludes() *remediateArgs {
+	return &remediateArgs{
+		remAction: interfaces.ActionOptOn,
+		ent: &pb.Repository{
+			Owner: repoOwner,
+			Name:  repoName,
+		},
+		pol: map[string]any{
+			"exclude": []any{"actions/setup-go@v5"},
+		},
+		params: map[string]any{
+			// explicitly test non-default branch
+			"branch": "dependabot/gomod",
+		},
+	}
+}
+
 func happyPathMockSetup(mockGitHub *mock_ghclient.MockGitHub) {
 	// no pull requst so far
 	mockGitHub.EXPECT().
@@ -460,6 +477,31 @@ func TestPullRequestRemediate(t *testing.T) {
 				actionType: TestActionTypeValid,
 			},
 			remArgs:   createTestRemArgs(),
+			repoSetup: defaultMockRepoSetup,
+			mockSetup: func(t *testing.T, mockGitHub *mock_ghclient.MockGitHub) {
+				t.Helper()
+
+				happyPathMockSetup(mockGitHub)
+
+				resolveActionMockSetup(t, mockGitHub, "repos/actions/checkout/git/refs/tags/v4", checkoutV4Ref)
+
+				mockGitHub.EXPECT().
+					CreatePullRequest(
+						gomock.Any(),
+						repoOwner, repoName,
+						frizbeeCommitTitle, frizbeePrBodyWithExcludes,
+						refFromBranch(branchBaseName(frizbeeCommitTitle)), dflBranchTo).
+					Return(nil, nil)
+			},
+		},
+		{
+			name: "resolve tags using frizbee with excludes from rule",
+			newRemArgs: &newPullRequestRemediateArgs{
+				prRem:      frizbeePrRem(),
+				pbuild:     testGithubProviderBuilder(),
+				actionType: TestActionTypeValid,
+			},
+			remArgs:   createTestRemArgsWithExcludes(),
 			repoSetup: defaultMockRepoSetup,
 			mockSetup: func(t *testing.T, mockGitHub *mock_ghclient.MockGitHub) {
 				t.Helper()
