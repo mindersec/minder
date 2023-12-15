@@ -36,7 +36,7 @@ var RuleType_applyCmd = &cobra.Command{
 	Short: "Apply a rule type within a minder control plane",
 	Long: `The minder rule type apply subcommand lets you create or update rule types for a project
 within a minder control plane.`,
-	RunE: cli.GRPCClientWrapRunE(func(ctx context.Context, cmd *cobra.Command, conn *grpc.ClientConn) error {
+	RunE: cli.GRPCClientWrapRunE(func(_ context.Context, cmd *cobra.Command, conn *grpc.ClientConn) error {
 		files, err := cmd.Flags().GetStringArray("file")
 		if err != nil {
 			return fmt.Errorf("error getting file flag: %w", err)
@@ -55,7 +55,11 @@ within a minder control plane.`,
 
 		table := initializeTable(cmd)
 
-		applyFunc := func(fileName string, rt *minderv1.RuleType) (*minderv1.RuleType, error) {
+		applyFunc := func(
+			ctx context.Context,
+			fileName string,
+			rt *minderv1.RuleType,
+		) (*minderv1.RuleType, error) {
 			createResp, err := client.CreateRuleType(ctx, &minderv1.CreateRuleTypeRequest{
 				RuleType: rt,
 			})
@@ -90,7 +94,9 @@ within a minder control plane.`,
 				continue
 			}
 
-			if err := execOnOneRuleType(table, f, os.Stdin, applyFunc); err != nil {
+			// cmd.Context() is the root context. We need to create a new context for each file
+			// so we can avoid the timeout.
+			if err := execOnOneRuleType(cmd.Context(), table, f, os.Stdin, applyFunc); err != nil {
 				return fmt.Errorf("error creating rule type %s: %w", f, err)
 			}
 		}

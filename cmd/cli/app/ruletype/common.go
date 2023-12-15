@@ -16,24 +16,31 @@
 package ruletype
 
 import (
+	"context"
 	"fmt"
 	"io"
 	"os"
 	"path/filepath"
 
 	"github.com/olekukonko/tablewriter"
+	"github.com/spf13/viper"
 	"golang.org/x/exp/slices"
 
 	"github.com/stacklok/minder/internal/util"
+	"github.com/stacklok/minder/internal/util/cli"
 	minderv1 "github.com/stacklok/minder/pkg/api/protobuf/go/minder/v1"
 )
 
 func execOnOneRuleType(
+	ctx context.Context,
 	table *tablewriter.Table,
 	f string,
 	dashOpen io.Reader,
-	exec func(string, *minderv1.RuleType) (*minderv1.RuleType, error),
+	exec func(context.Context, string, *minderv1.RuleType) (*minderv1.RuleType, error),
 ) error {
+	ctx, cancel := cli.GetAppContext(ctx, viper.GetViper())
+	defer cancel()
+
 	preader, closer, err := util.OpenFileArg(f, dashOpen)
 	if err != nil {
 		return fmt.Errorf("error opening file arg: %w", err)
@@ -46,7 +53,7 @@ func execOnOneRuleType(
 	}
 
 	// create a rule
-	resprt, err := exec(f, r)
+	resprt, err := exec(ctx, f, r)
 	if err != nil {
 		return err
 	}
