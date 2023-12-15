@@ -188,11 +188,14 @@ BuiltinType defines the builtin data evaluation.
 Context defines the context in which a rule is evaluated.
 this normally refers to a combination of the provider, organization and project.
 
+Removing the 'optional' keyword from the following two fields below will break
+buf compatibility checks.
+
 
 | Field | Type | Label | Description |
 | ----- | ---- | ----- | ----------- |
-| provider | [string](#string) | optional | Removing the 'optional' keyword from the following two fields below will break buf compatibility checks. |
-| project | [string](#string) | optional |  |
+| provider | [string](#string) | optional | name of the provider |
+| project | [string](#string) | optional | name of the project |
 | retired_organization | [string](#string) | optional |  |
 
 

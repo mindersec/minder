@@ -989,7 +989,10 @@ message GitHubProviderConfig {
 message Context {
     // Removing the 'optional' keyword from the following two fields below will break
     // buf compatibility checks.
+
+    // name of the provider
     optional string provider = 1;
+    // name of the project
     optional string project = 3;
 
     optional string retired_organization = 2;
