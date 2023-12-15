@@ -70,13 +70,14 @@
           },
           {
             "name": "context.provider",
-            "description": "Removing the 'optional' keyword from the following two fields below will break\nbuf compatibility checks.",
+            "description": "name of the provider",
             "in": "query",
             "required": false,
             "type": "string"
           },
           {
             "name": "context.project",
+            "description": "name of the project",
             "in": "query",
             "required": false,
             "type": "string"
@@ -125,13 +126,14 @@
           },
           {
             "name": "context.provider",
-            "description": "Removing the 'optional' keyword from the following two fields below will break\nbuf compatibility checks.",
+            "description": "name of the provider",
             "in": "query",
             "required": false,
             "type": "string"
           },
           {
             "name": "context.project",
+            "description": "name of the project",
             "in": "query",
             "required": false,
             "type": "string"
@@ -200,13 +202,14 @@
           },
           {
             "name": "context.provider",
-            "description": "Removing the 'optional' keyword from the following two fields below will break\nbuf compatibility checks.",
+            "description": "name of the provider",
             "in": "query",
             "required": false,
             "type": "string"
           },
           {
             "name": "context.project",
+            "description": "name of the project",
             "in": "query",
             "required": false,
             "type": "string"
@@ -267,13 +270,14 @@
           },
           {
             "name": "context.provider",
-            "description": "Removing the 'optional' keyword from the following two fields below will break\nbuf compatibility checks.",
+            "description": "name of the provider",
             "in": "query",
             "required": false,
             "type": "string"
           },
           {
             "name": "context.project",
+            "description": "name of the project",
             "in": "query",
             "required": false,
             "type": "string"
@@ -341,13 +345,14 @@
           },
           {
             "name": "context.provider",
-            "description": "Removing the 'optional' keyword from the following two fields below will break\nbuf compatibility checks.",
+            "description": "name of the provider",
             "in": "query",
             "required": false,
             "type": "string"
           },
           {
             "name": "context.project",
+            "description": "name of the project",
             "in": "query",
             "required": false,
             "type": "string"
@@ -404,13 +409,14 @@
           },
           {
             "name": "context.provider",
-            "description": "Removing the 'optional' keyword from the following two fields below will break\nbuf compatibility checks.",
+            "description": "name of the provider",
             "in": "query",
             "required": false,
             "type": "string"
           },
           {
             "name": "context.project",
+            "description": "name of the project",
             "in": "query",
             "required": false,
             "type": "string"
@@ -590,13 +596,14 @@
           },
           {
             "name": "context.provider",
-            "description": "Removing the 'optional' keyword from the following two fields below will break\nbuf compatibility checks.",
+            "description": "name of the provider",
             "in": "query",
             "required": false,
             "type": "string"
           },
           {
             "name": "context.project",
+            "description": "name of the project",
             "in": "query",
             "required": false,
             "type": "string"
@@ -674,13 +681,14 @@
           },
           {
             "name": "context.provider",
-            "description": "Removing the 'optional' keyword from the following two fields below will break\nbuf compatibility checks.",
+            "description": "name of the provider",
             "in": "query",
             "required": false,
             "type": "string"
           },
           {
             "name": "context.project",
+            "description": "name of the project",
             "in": "query",
             "required": false,
             "type": "string"
@@ -722,13 +730,14 @@
           },
           {
             "name": "context.provider",
-            "description": "Removing the 'optional' keyword from the following two fields below will break\nbuf compatibility checks.",
+            "description": "name of the provider",
             "in": "query",
             "required": false,
             "type": "string"
           },
           {
             "name": "context.project",
+            "description": "name of the project",
             "in": "query",
             "required": false,
             "type": "string"
@@ -765,13 +774,14 @@
         "parameters": [
           {
             "name": "context.provider",
-            "description": "Removing the 'optional' keyword from the following two fields below will break\nbuf compatibility checks.",
+            "description": "name of the provider",
             "in": "query",
             "required": false,
             "type": "string"
           },
           {
             "name": "context.project",
+            "description": "name of the project",
             "in": "query",
             "required": false,
             "type": "string"
@@ -808,13 +818,14 @@
         "parameters": [
           {
             "name": "context.provider",
-            "description": "Removing the 'optional' keyword from the following two fields below will break\nbuf compatibility checks.",
+            "description": "name of the provider",
             "in": "query",
             "required": false,
             "type": "string"
           },
           {
             "name": "context.project",
+            "description": "name of the project",
             "in": "query",
             "required": false,
             "type": "string"
@@ -877,13 +888,14 @@
           },
           {
             "name": "context.provider",
-            "description": "Removing the 'optional' keyword from the following two fields below will break\nbuf compatibility checks.",
+            "description": "name of the provider",
             "in": "query",
             "required": false,
             "type": "string"
           },
           {
             "name": "context.project",
+            "description": "name of the project",
             "in": "query",
             "required": false,
             "type": "string"
@@ -932,13 +944,14 @@
           },
           {
             "name": "context.provider",
-            "description": "Removing the 'optional' keyword from the following two fields below will break\nbuf compatibility checks.",
+            "description": "name of the provider",
             "in": "query",
             "required": false,
             "type": "string"
           },
           {
             "name": "context.project",
+            "description": "name of the project",
             "in": "query",
             "required": false,
             "type": "string"
@@ -981,13 +994,14 @@
           },
           {
             "name": "context.provider",
-            "description": "Removing the 'optional' keyword from the following two fields below will break\nbuf compatibility checks.",
+            "description": "name of the provider",
             "in": "query",
             "required": false,
             "type": "string"
           },
           {
             "name": "context.project",
+            "description": "name of the project",
             "in": "query",
             "required": false,
             "type": "string"
@@ -1028,13 +1042,14 @@
           },
           {
             "name": "context.provider",
-            "description": "Removing the 'optional' keyword from the following two fields below will break\nbuf compatibility checks.",
+            "description": "name of the provider",
             "in": "query",
             "required": false,
             "type": "string"
           },
           {
             "name": "context.project",
+            "description": "name of the project",
             "in": "query",
             "required": false,
             "type": "string"
@@ -1089,13 +1104,14 @@
           },
           {
             "name": "context.provider",
-            "description": "Removing the 'optional' keyword from the following two fields below will break\nbuf compatibility checks.",
+            "description": "name of the provider",
             "in": "query",
             "required": false,
             "type": "string"
           },
           {
             "name": "context.project",
+            "description": "name of the project",
             "in": "query",
             "required": false,
             "type": "string"
@@ -1148,13 +1164,14 @@
           },
           {
             "name": "context.provider",
-            "description": "Removing the 'optional' keyword from the following two fields below will break\nbuf compatibility checks.",
+            "description": "name of the provider",
             "in": "query",
             "required": false,
             "type": "string"
           },
           {
             "name": "context.project",
+            "description": "name of the project",
             "in": "query",
             "required": false,
             "type": "string"
@@ -1311,13 +1328,14 @@
           },
           {
             "name": "context.provider",
-            "description": "Removing the 'optional' keyword from the following two fields below will break\nbuf compatibility checks.",
+            "description": "name of the provider",
             "in": "query",
             "required": false,
             "type": "string"
           },
           {
             "name": "context.project",
+            "description": "name of the project",
             "in": "query",
             "required": false,
             "type": "string"
@@ -1361,13 +1379,14 @@
           },
           {
             "name": "context.provider",
-            "description": "Removing the 'optional' keyword from the following two fields below will break\nbuf compatibility checks.",
+            "description": "name of the provider",
             "in": "query",
             "required": false,
             "type": "string"
           },
           {
             "name": "context.project",
+            "description": "name of the project",
             "in": "query",
             "required": false,
             "type": "string"
@@ -1409,13 +1428,14 @@
           },
           {
             "name": "context.provider",
-            "description": "Removing the 'optional' keyword from the following two fields below will break\nbuf compatibility checks.",
+            "description": "name of the provider",
             "in": "query",
             "required": false,
             "type": "string"
           },
           {
             "name": "context.project",
+            "description": "name of the project",
             "in": "query",
             "required": false,
             "type": "string"
@@ -1452,13 +1472,14 @@
         "parameters": [
           {
             "name": "context.provider",
-            "description": "Removing the 'optional' keyword from the following two fields below will break\nbuf compatibility checks.",
+            "description": "name of the provider",
             "in": "query",
             "required": false,
             "type": "string"
           },
           {
             "name": "context.project",
+            "description": "name of the project",
             "in": "query",
             "required": false,
             "type": "string"
@@ -1495,13 +1516,14 @@
         "parameters": [
           {
             "name": "context.provider",
-            "description": "Removing the 'optional' keyword from the following two fields below will break\nbuf compatibility checks.",
+            "description": "name of the provider",
             "in": "query",
             "required": false,
             "type": "string"
           },
           {
             "name": "context.project",
+            "description": "name of the project",
             "in": "query",
             "required": false,
             "type": "string"
@@ -1536,13 +1558,14 @@
         "parameters": [
           {
             "name": "context.provider",
-            "description": "Removing the 'optional' keyword from the following two fields below will break\nbuf compatibility checks.",
+            "description": "name of the provider",
             "in": "query",
             "required": false,
             "type": "string"
           },
           {
             "name": "context.project",
+            "description": "name of the project",
             "in": "query",
             "required": false,
             "type": "string"
@@ -2044,16 +2067,17 @@
       "properties": {
         "provider": {
           "type": "string",
-          "description": "Removing the 'optional' keyword from the following two fields below will break\nbuf compatibility checks."
+          "title": "name of the provider"
         },
         "project": {
-          "type": "string"
+          "type": "string",
+          "title": "name of the project"
         },
         "retiredOrganization": {
           "type": "string"
         }
       },
-      "description": "Context defines the context in which a rule is evaluated.\nthis normally refers to a combination of the provider, organization and project."
+      "description": "Context defines the context in which a rule is evaluated.\nthis normally refers to a combination of the provider, organization and project.\n\nRemoving the 'optional' keyword from the following two fields below will break\n buf compatibility checks."
     },
     "v1CreateProfileRequest": {
       "type": "object",
