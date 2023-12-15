@@ -18,6 +18,7 @@ import (
 	"context"
 	"fmt"
 
+	"github.com/go-git/go-billy/v5"
 	"github.com/go-git/go-git/v5/plumbing/filemode"
 	fzconfig "github.com/stacklok/frizbee/pkg/config"
 	"github.com/stacklok/frizbee/pkg/ghactions"
@@ -44,7 +45,9 @@ func newFrizbeeTagResolveModification(
 	params *modificationConstructorParams,
 ) (fsModifier, error) {
 	exclude := []string{}
-	if ex := parseExcludeFromDef(params.def); ex != nil {
+	if ex := parseExcludesFromRepoConfig(params.bfs); ex != nil {
+		exclude = ex
+	} else if ex := parseExcludeFromDef(params.def); ex != nil {
 		exclude = ex
 	} else if ex := params.prCfg.GetActionsReplaceTagsWithSha().GetExclude(); ex != nil {
 		exclude = ex
@@ -128,4 +131,16 @@ func parseExcludeFromDef(def map[string]any) []string {
 	}
 
 	return excludeStrings
+}
+
+func parseExcludesFromRepoConfig(fs billy.Filesystem) []string {
+	for _, fname := range []string{".frizbee.yml", ".frizbee.yaml"} {
+		cfg, err := fzconfig.ParseConfigFileFromFS(fs, fname)
+		if err != nil {
+			continue
+		}
+
+		return cfg.GHActions.Filter.Exclude
+	}
+	return nil
 }
