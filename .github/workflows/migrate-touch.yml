@@ -1,43 +1,38 @@
----
 # This test verifies that Pull Requests don't touch the merged database migrations.
 # Folks should now only be adding new migrations to the `database/migrations/` directory.
 name: Database Migrations Untouched
-
 on:
   pull_request:
     paths:
       - 'database/migrations/*'
       - '.github/workflows/migrate-touch.yml'
-
 jobs:
   verify-migrations:
     name: Don't touch existing migrations
     runs-on: ubuntu-latest
-
     steps:
-    - name: Checkout code
-      uses: actions/checkout@v4
-      with:
-        fetch-depth: 0
+      - name: Checkout code
+        uses: actions/checkout@b4ffde65f46336ab88eb53be808477a3936bae11 # v4
+        with:
+          fetch-depth: 0
+      - name: Verify Migration Files
+        run: |
+          # Check out the base branch
+          git checkout $GITHUB_BASE_REF
+          # Get files in migration directory before our changes
+          BEFORE=$(find database/migrations/ -type f | sort)
+          echo "Files before: $BEFORE"
 
-    - name: Verify Migration Files
-      run: |
-        # Check out the base branch
-        git checkout $GITHUB_BASE_REF
-        # Get files in migration directory before our changes
-        BEFORE=$(find database/migrations/ -type f | sort)
-        echo "Files before: $BEFORE"
+          # Check out our changes
+          git checkout $GITHUB_SHA -- database/migrations/
 
-        # Check out our changes
-        git checkout $GITHUB_SHA -- database/migrations/
-
-        # Verify that the existing migration files were not touched by the new changes
-        modified=$(git diff --name-only origin/$GITHUB_BASE_REF $GITHUB_SHA -- database/migrations/)
-        echo "Files modified: $modified"
-        for file in $modified; do
-          if [[ $BEFORE == *"$file"* ]]; then
-            echo "ERROR: $file was modified by this PR. Please only add new migrations to the database/migrations/ directory."
-            exit 1
-          fi
-        done
-      shell: bash
+          # Verify that the existing migration files were not touched by the new changes
+          modified=$(git diff --name-only origin/$GITHUB_BASE_REF $GITHUB_SHA -- database/migrations/)
+          echo "Files modified: $modified"
+          for file in $modified; do
+            if [[ $BEFORE == *"$file"* ]]; then
+              echo "ERROR: $file was modified by this PR. Please only add new migrations to the database/migrations/ directory."
+              exit 1
+            fi
+          done
+        shell: bash

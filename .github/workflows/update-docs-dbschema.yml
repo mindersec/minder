@@ -6,21 +6,17 @@ on:
       - main
     paths:
       - "database/migrations/**"
-
 jobs:
   update-docs-dbschema:
     runs-on: ubuntu-latest
     permissions: write-all
-
     steps:
       # Checkout your project with git
       - name: Checkout
-        uses: actions/checkout@v4
-
+        uses: actions/checkout@b4ffde65f46336ab88eb53be808477a3936bae11 # v4
       # generate db schema
       - name: Generate db schema
         run: make dbschema
-
       - name: Extract Commit SHA and Details
         id: extract_commit_details
         run: |
@@ -30,9 +26,8 @@ jobs:
           echo "commit_sha=$COMMIT_SHA" >> $GITHUB_OUTPUT
           echo "commit_date=$COMMIT_DATE" >> $GITHUB_OUTPUT
           echo "commit_author=$COMMIT_AUTHOR" >> $GITHUB_OUTPUT
-
       - name: Commit and push changes
-        uses: peter-evans/create-pull-request@v5
+        uses: peter-evans/create-pull-request@153407881ec5c347639a548ade7d8ad1d6740e38 # v5
         with:
           commit-message: Update DB schema
           committer: GitHub <noreply@github.com>

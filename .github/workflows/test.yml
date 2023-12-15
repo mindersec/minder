@@ -7,27 +7,22 @@ jobs:
     steps:
       # Checkout your project with git
       - name: Checkout
-        uses: actions/checkout@v4
-
+        uses: actions/checkout@b4ffde65f46336ab88eb53be808477a3936bae11 # v4
       # Install Go on the VM running the action.
       - name: Set up Go
-        uses: actions/setup-go@v5
+        uses: actions/setup-go@0c52d547c9bc32b1aa3301fd7a9cb496313a4491 # v5
         with:
           go-version-file: 'go.mod'
-
       - name: Set up helm (test dependency)
-        uses: azure/setup-helm@v3
-
+        uses: azure/setup-helm@5119fcb9089d432beecbf79bb2c7915207344b78 # v3
       # Install gotestfmt on the VM running the action.
       - name: Set up gotestfmt
-        uses: GoTestTools/gotestfmt-action@v2
+        uses: GoTestTools/gotestfmt-action@02b936e80bd5b0e515b98eb8f7d998a60ccca462 # v2
         with:
           token: ${{ secrets.GITHUB_TOKEN }}
-
       # copy config file into place
       - name: Copy config file
         run: cp config/server-config.yaml.example ./server-config.yaml
-
       # Run the tests
       - name: Run tests
         run: make test-silent

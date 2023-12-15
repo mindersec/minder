@@ -1,74 +1,58 @@
 on:
   workflow_call: {}
-
 jobs:
   image:
     name: Image build
     runs-on: ubuntu-latest
-
     steps:
       - name: Checkout
-        uses: actions/checkout@v4
-
+        uses: actions/checkout@b4ffde65f46336ab88eb53be808477a3936bae11 # v4
       - name: Setup Go
-        uses: actions/setup-go@v5
+        uses: actions/setup-go@0c52d547c9bc32b1aa3301fd7a9cb496313a4491 # v5
         with:
           go-version-file: 'go.mod'
-
-      - uses: ko-build/setup-ko@v0.6
-
+      - uses: ko-build/setup-ko@ace48d793556083a76f1e3e6068850c1f4a369aa # v0.6
       - run: |
           ko build --platform=linux/amd64,linux/arm64 --push=false ./cmd/server \
             --image-label=org.opencontainers.image.source=https://github.com/stacklok/minder,org.opencontainers.image.title="Stacklok Minder",org.opencontainers.image.licenses=Apache-2.0,org.opencontainers.image.vendor=Stacklok
         env:
           KO_DOCKER_REPO: "ko.local"
-
   check-helm:
     name: Build Helm chart
     # TODO: remove the 'image' build once helm build is stable, because ko resolve will build the image
     runs-on: ubuntu-latest
-
     permissions:
       contents: read
       packages: none
-
     steps:
       - name: Checkout
-        uses: actions/checkout@v4
-
+        uses: actions/checkout@b4ffde65f46336ab88eb53be808477a3936bae11 # v4
       - name: Setup Go
-        uses: actions/setup-go@v5
+        uses: actions/setup-go@0c52d547c9bc32b1aa3301fd7a9cb496313a4491 # v5
         with:
           go-version-file: 'go.mod'
-
-      - uses: ko-build/setup-ko@v0.6
-
-      - uses: azure/setup-helm@v3
+      - uses: ko-build/setup-ko@ace48d793556083a76f1e3e6068850c1f4a369aa # v0.6
+      - uses: azure/setup-helm@5119fcb9089d432beecbf79bb2c7915207344b78 # v3
         with:
           version: v3.12.2
-
       - run: |
           make helm
         env:
           KO_DOCKER_REPO: "ko.local"
           KO_PUSH_IMAGE: "false"
-
   docker-image:
     name: Check docker image build
     runs-on: ubuntu-latest
-
     steps:
       - name: Checkout
-        uses: actions/checkout@v4
-
+        uses: actions/checkout@b4ffde65f46336ab88eb53be808477a3936bae11 # v4
       - name: Set up Docker Buildx
-        uses: docker/setup-buildx-action@v3
-
+        uses: docker/setup-buildx-action@f95db51fddba0c2d1ec667646a06c2ce06100226 # v3
       - name: Test build on x86
         id: docker_build
-        uses: docker/build-push-action@v5
+        uses: docker/build-push-action@4a13e500e55cf31b7a5d59a38ab2040ab0f42f56 # v5
         with:
           context: .
           file: Dockerfile
           platforms: linux/amd64
-          push: false  # Only attempt to build, to verify the Dockerfile is working
+          push: false # Only attempt to build, to verify the Dockerfile is working
