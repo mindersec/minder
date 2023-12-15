@@ -32,7 +32,7 @@ rule type and create a profile which enables secret scanning for the selected re
 To see the status of your profile, run:
 
 ```bash
-minder profile_status list --profile quickstart-profile --detailed
+minder profile status list --profile quickstart-profile --detailed
 ```
 
 You should see the overall profile status and a detailed view of the rule evaluation statuses for each of your registered repositories.

@@ -50,7 +50,7 @@ minder profile create -f profile-remediate.yaml
 
 Check the status of the profile:
 ```
-minder profile_status list --profile github-profile-remediate
+minder profile status list --profile github-profile-remediate
 ```
 
 With remediation on, the profile status should be "Success" when the repository has been updated to match the profile.
