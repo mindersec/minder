@@ -1,11 +1,20 @@
-# You can run these tests with:
-# `fga model test --tests ./auth/tests/simple.tests.yaml`
 #
-# Unfortunately, the FGA CLI installation through `go get` produces a binary called `cli`
-# So I didn't automate running this yet.
+# Copyright 2023 Stacklok, Inc.
+#
+# Licensed under the Apache License, Version 2.0 (the "License");
+# you may not use this file except in compliance with the License.
+# You may obtain a copy of the License at
+#
+#     http://www.apache.org/licenses/LICENSE-2.0
+#
+# Unless required by applicable law or agreed to in writing, software
+# distributed under the License is distributed on an "AS IS" BASIS,
+# WITHOUT WARRANTIES OR CONDITIONS OF ANY KIND, either express or implied.
+# See the License for the specific language governing permissions and
+# limitations under the License.
 
 name: Auth tests
-model_file: ../model.fga
+model_file: ../minder.fga
 
 tuples:
 - user: project:001
@@ -62,33 +71,33 @@ tests:
   - user: user:admin1-a
     object: project:002
     assertions:
-      creator: true
-      viewer: true
-      repo_updater: true
-      provider_creator: true
-      artifact_updater: true
+      create: true
+      get: true
+      repo_update: true
+      provider_create: true
+      artifact_update: true
   - user: user:admin1-m
     object: project:002
     assertions:
-      creator: true
-      viewer: true
-      repo_updater: true
-      provider_creator: true
-      artifact_updater: true
+      create: true
+      get: true
+      repo_update: true
+      provider_create: true
+      artifact_update: true
   - user: user:user1-a
     object: project:001
     assertions:
-      creator: false
-      viewer: false
-      repo_updater: false
-      provider_creator: false
-      artifact_updater: false
+      create: false
+      get: false
+      repo_update: false
+      provider_create: false
+      artifact_update: false
   - user: user:user1-a
     object: project:002
     assertions:
-      creator: false
-      viewer: true
-      repo_updater: true
-      provider_creator: false
-      artifact_updater: true
-      provider_getter: true
+      create: false
+      get: true
+      repo_update: true
+      provider_create: false
+      artifact_update: true
+      provider_get: true

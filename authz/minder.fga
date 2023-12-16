@@ -1,0 +1,72 @@
+#
+# Copyright 2023 Stacklok, Inc.
+#
+# Licensed under the Apache License, Version 2.0 (the "License")
+# you may not use this file except in compliance with the License.
+# You may obtain a copy of the License at
+#
+#     http://www.apache.org/licenses/LICENSE-2.0
+#
+# Unless required by applicable law or agreed to in writing, software
+# distributed under the License is distributed on an "AS IS" BASIS,
+# WITHOUT WARRANTIES OR CONDITIONS OF ANY KIND, either express or implied.
+# See the License for the specific language governing permissions and
+# limitations under the License.
+
+# N.B. The OpenFGA language parser is a bit finicky, and does not like
+# un-terminated apostrophes, and only allows comments at the beginning
+# of blocks.  I am sure these will be fixed over time.
+#
+# See https://github.com/openfga/language/issues/24 for some details.
+
+model
+  schema 1.1
+
+type user
+
+type group
+  relations
+    define member: [user, group#member] or admin
+    define admin: [user, group#member]
+
+# We use per-resource-type permissions off of "project" because
+# we do not allow granting permissions on individual resources, only
+# on projects.  This allows us to minimize the amount of state we
+# need to keep consistent between OpenFGA and the main database.
+type project
+  relations
+    define parent: [project]
+
+    define admin: [user, group#member] or admin from parent
+    define editor: [user, group#member] or admin or editor from parent
+    define viewer: [user, group#member] or editor or viewer from parent
+
+    define get: viewer
+    define create: admin
+    define update: admin
+    define delete: admin
+
+    define repo_get: viewer
+    define repo_create: editor
+    define repo_update: editor
+    define repo_delete: editor
+
+    define artifact_get: viewer
+    define artifact_create: editor
+    define artifact_update: editor
+    define artifact_delete: editor
+
+    define pr_get: viewer
+    define pr_create: editor
+    define pr_update: editor
+    define pr_delete: editor
+
+    define provider_get: viewer
+    define provider_create: admin
+    define provider_update: admin
+    define provider_delete: admin
+
+    define rule_type_get: viewer
+    define rule_type_create: editor
+    define rule_type_update: editor
+    define rule_type_delete: editor
