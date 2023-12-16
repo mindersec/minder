@@ -22,8 +22,11 @@
 package cli
 
 import (
+	"os"
+
 	"github.com/charmbracelet/bubbles/table"
 	"github.com/charmbracelet/lipgloss"
+	"golang.org/x/term"
 )
 
 // Color Palette
@@ -41,12 +44,13 @@ var (
 )
 
 const (
-	// DefaultBannerWidth is the default width for a banner
-	DefaultBannerWidth = 100
+	keyWidth = 15
 )
 
 // Styles
 var (
+	// DefaultBannerWidth is the default width for a banner
+	DefaultBannerWidth = 80
 	// Header is the style to use for headers
 	Header = lipgloss.NewStyle().
 		Bold(true).
@@ -98,10 +102,19 @@ var (
 		Key   int
 		Value int
 	}{
-		Key:   27, // 30 - 3 for padding
-		Value: 67, // 70 - 3 for padding
+		Key:   keyWidth,
+		Value: DefaultBannerWidth - keyWidth - 6, // 6 characters for padding
 	}
 )
+
+func init() {
+	// Get the terminal width, if available, and set widths based on terminal width
+	w, _, err := term.GetSize(int(os.Stdout.Fd()))
+	if err == nil {
+		DefaultBannerWidth = w
+		KeyValTableWidths.Value = w - keyWidth - 6
+	}
+}
 
 // TableRender renders a table given a table model
 func TableRender(t table.Model) string {

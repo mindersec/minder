@@ -16,14 +16,16 @@
 package profile
 
 import (
+	"context"
 	"fmt"
-	"os"
 
 	"github.com/spf13/cobra"
 	"github.com/spf13/viper"
+	"google.golang.org/grpc"
 
 	"github.com/stacklok/minder/cmd/cli/app"
 	"github.com/stacklok/minder/internal/util"
+	"github.com/stacklok/minder/internal/util/cli"
 	pb "github.com/stacklok/minder/pkg/api/protobuf/go/minder/v1"
 )
 
@@ -32,23 +34,10 @@ var profile_listCmd = &cobra.Command{
 	Short: "List profiles within a minder control plane",
 	Long: `The minder profile list subcommand lets you list profiles within a
 minder control plane for an specific project.`,
-	PreRun: func(cmd *cobra.Command, args []string) {
-		if err := viper.BindPFlags(cmd.Flags()); err != nil {
-			fmt.Fprintf(os.Stderr, "Error binding flags: %s\n", err)
-		}
-	},
-	RunE: func(cmd *cobra.Command, args []string) error {
+	RunE: cli.GRPCClientWrapRunE(func(ctx context.Context, cmd *cobra.Command, conn *grpc.ClientConn) error {
 		format := viper.GetString("output")
 
-		conn, err := util.GrpcForCommand(cmd, viper.GetViper())
-		if err != nil {
-			return fmt.Errorf("error getting grpc connection: %w", err)
-		}
-		defer conn.Close()
-
 		client := pb.NewProfileServiceClient(conn)
-		ctx, cancel := util.GetAppContext()
-		defer cancel()
 
 		provider := viper.GetString("provider")
 
@@ -62,24 +51,28 @@ minder control plane for an specific project.`,
 
 		resp, err := client.ListProfiles(ctx, &pb.ListProfilesRequest{
 			Context: &pb.Context{
-				Provider: provider,
+				Provider: &provider,
 				// TODO set up project if specified
 				// Currently it's inferred from the authorization token
 			},
 		})
 		if err != nil {
-			return fmt.Errorf("error getting profiles: %w", err)
+			return cli.MessageAndError(cmd, "Error getting profiles", err)
 		}
 
 		switch format {
 		case app.JSON:
 			out, err := util.GetJsonFromProto(resp)
-			util.ExitNicelyOnError(err, "Error getting json from proto")
-			fmt.Println(out)
+			if err != nil {
+				return fmt.Errorf("error getting json from proto: %w", err)
+			}
+			cmd.Println(out)
 		case app.YAML:
 			out, err := util.GetYamlFromProto(resp)
-			util.ExitNicelyOnError(err, "Error getting json from proto")
-			fmt.Println(out)
+			if err != nil {
+				return fmt.Errorf("error getting yaml from proto: %w", err)
+			}
+			cmd.Println(out)
 		case app.Table:
 			handleListTableOutput(cmd, resp)
 			return nil
@@ -87,20 +80,15 @@ minder control plane for an specific project.`,
 
 		// this is unreachable
 		return nil
-	},
+	}),
 }
 
 func init() {
 	ProfileCmd.AddCommand(profile_listCmd)
-	profile_listCmd.Flags().StringP("provider", "p", "", "Provider to list profiles for")
+	profile_listCmd.Flags().StringP("provider", "p", "github", "Provider to list profiles for")
 	profile_listCmd.Flags().StringP("output", "o", app.Table, "Output format (json, yaml or table)")
 	// TODO: Take project ID into account
 	// profile_listCmd.Flags().Int32P("project-id", "g", 0, "project id to list roles for")
-
-	if err := profile_listCmd.MarkFlagRequired("provider"); err != nil {
-		fmt.Fprintf(os.Stderr, "Error marking flag as required: %s\n", err)
-		os.Exit(1)
-	}
 }
 
 func handleListTableOutput(cmd *cobra.Command, resp *pb.ListProfilesResponse) {

@@ -105,14 +105,11 @@ func TestGetAuthorizationURL(t *testing.T) {
 			},
 			buildStubs: func(store *mockdb.MockStore) {
 				store.EXPECT().
-					GetProviderByName(gomock.Any(), db.GetProviderByNameParams{
-						Name:      "github",
-						ProjectID: projectID,
-					}).
-					Return(db.Provider{
+					ListProvidersByProjectID(gomock.Any(), projectID).
+					Return([]db.Provider{{
 						ID:   providerID,
 						Name: "github",
-					}, nil)
+					}}, nil)
 				store.EXPECT().
 					CreateSessionState(gomock.Any(), gomock.Any()).
 					Return(db.SessionStore{

@@ -20,11 +20,8 @@ import (
 	"database/sql"
 	"fmt"
 	"net/url"
-	"sync"
 	"time"
 
-	"github.com/aws/aws-sdk-go-v2/config"
-	"github.com/aws/aws-sdk-go-v2/feature/rds/auth"
 	"github.com/rs/zerolog"
 	"github.com/signalfx/splunk-otel-go/instrumentation/database/sql/splunksql"
 	"github.com/spf13/pflag"
@@ -32,8 +29,6 @@ import (
 
 	"github.com/stacklok/minder/internal/util"
 )
-
-const awsCredsProvider = "aws"
 
 // DatabaseConfig is the configuration for the database
 type DatabaseConfig struct {
@@ -43,63 +38,13 @@ type DatabaseConfig struct {
 	Password string `mapstructure:"dbpass" default:"postgres"`
 	Name     string `mapstructure:"dbname" default:"minder"`
 	SSLMode  string `mapstructure:"sslmode" default:"disable"`
-
-	// If set, use credentials from the specified cloud provider.
-	// Currently supported values are `aws`
-	CloudProviderCredentials string `mapstructure:"cloud_provider_credentials"`
-
-	AWSRegion string `mapstructure:"aws_region"`
-
-	// credential configuration from environment
-	credsOnce sync.Once
-
-	// connection string
-	connString string
-}
-
-// getDBCreds fetches the database credentials from the AWS environment or
-// returns the statically-configured password from DatabaseConfig if not in
-// a cloud environment.
-func (c *DatabaseConfig) getDBCreds(ctx context.Context) string {
-	if c.CloudProviderCredentials == "" {
-		zerolog.Ctx(ctx).Info().Msg("No cloud provider credentials specified, using password")
-		return c.Password
-	}
-	if c.CloudProviderCredentials == awsCredsProvider {
-		zerolog.Ctx(ctx).Info().Msg("Using AWS credentials")
-		cfg, err := config.LoadDefaultConfig(ctx)
-		if err != nil {
-			// May not be running on AWS, so skip
-			zerolog.Ctx(ctx).Warn().Err(err).Msg("Unable to load AWS config")
-			return c.Password
-		}
-		authToken, err := auth.BuildAuthToken(
-			ctx, fmt.Sprintf("%s:%d", c.Host, c.Port), c.AWSRegion, c.User, cfg.Credentials)
-		if err != nil {
-			zerolog.Ctx(ctx).Err(err).Msg("Unable to build auth token")
-			return c.Password
-		}
-		return authToken
-	}
-	zerolog.Ctx(ctx).Info().Msgf("Unrecoginized cloud provider %q, using password", c.CloudProviderCredentials)
-	return c.Password
-}
-
-// GetDBURI returns the database URI
-func (c *DatabaseConfig) GetDBURI(ctx context.Context) string {
-	c.credsOnce.Do(func() {
-		authToken := c.getDBCreds(ctx)
-
-		c.connString = fmt.Sprintf("postgres://%s:%s@%s:%d/%s?sslmode=%s",
-			c.User, url.QueryEscape(authToken), c.Host, c.Port, c.Name, c.SSLMode)
-	})
-
-	return c.connString
 }
 
 // GetDBConnection returns a connection to the database
 func (c *DatabaseConfig) GetDBConnection(ctx context.Context) (*sql.DB, string, error) {
-	uri := c.GetDBURI(ctx)
+	uri := fmt.Sprintf("postgres://%s:%s@%s:%d/%s?sslmode=%s",
+		c.User, url.QueryEscape(c.Password), c.Host, c.Port, c.Name, c.SSLMode)
+
 	conn, err := splunksql.Open("postgres", uri)
 	if err != nil {
 		return nil, "", err

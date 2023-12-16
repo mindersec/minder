@@ -16,16 +16,16 @@
 package profile
 
 import (
+	"context"
 	"fmt"
-	"io"
 	"os"
-	"path/filepath"
 
 	"github.com/spf13/cobra"
 	"github.com/spf13/viper"
+	"google.golang.org/grpc"
 
-	"github.com/stacklok/minder/internal/engine"
 	"github.com/stacklok/minder/internal/util"
+	"github.com/stacklok/minder/internal/util/cli"
 	pb "github.com/stacklok/minder/pkg/api/protobuf/go/minder/v1"
 )
 
@@ -35,75 +35,41 @@ var Profile_createCmd = &cobra.Command{
 	Short: "Create a profile within a minder control plane",
 	Long: `The minder profile create subcommand lets you create new profiles for a project
 within a minder control plane.`,
-	PreRun: func(cmd *cobra.Command, args []string) {
-		if err := viper.BindPFlags(cmd.Flags()); err != nil {
-			fmt.Fprintf(os.Stderr, "Error binding flags: %s\n", err)
-		}
-	},
-	RunE: func(cmd *cobra.Command, args []string) error {
+	RunE: cli.GRPCClientWrapRunE(func(ctx context.Context, cmd *cobra.Command, conn *grpc.ClientConn) error {
 		f := util.GetConfigValue(viper.GetViper(), "file", "file", cmd, "").(string)
 		proj := viper.GetString("project")
 
-		var err error
-
-		var preader io.Reader
-
-		if f == "" {
-			return fmt.Errorf("error: file must be set")
-		}
-
-		if f == "-" {
-			preader = os.Stdin
-		} else {
-			f = filepath.Clean(f)
-			fopen, err := os.Open(f)
-			if err != nil {
-				return fmt.Errorf("error opening file: %w", err)
-			}
-
-			defer fopen.Close()
-
-			preader = fopen
-		}
-
-		conn, err := util.GrpcForCommand(cmd, viper.GetViper())
-		util.ExitNicelyOnError(err, "Error getting grpc connection")
-		defer conn.Close()
-
 		client := pb.NewProfileServiceClient(conn)
-		ctx, cancel := util.GetAppContext()
-		defer cancel()
-
-		p, err := engine.ParseYAML(preader)
-		if err != nil {
-			return fmt.Errorf("error reading profile from file: %w", err)
-		}
-
-		if proj != "" {
-			if p.Context == nil {
-				p.Context = &pb.Context{}
-			}
-
-			p.Context.Project = &proj
-		}
-
-		// create a profile
-		resp, err := client.CreateProfile(ctx, &pb.CreateProfileRequest{
-			Profile: p,
-		})
-		if err != nil {
-			return fmt.Errorf("error creating profile: %w", err)
-		}
 
 		table := InitializeTable(cmd)
-		RenderProfileTable(resp.GetProfile(), table)
+
+		createFunc := func(f string, p *pb.Profile) (*pb.Profile, error) {
+			// create a profile
+			resp, err := client.CreateProfile(ctx, &pb.CreateProfileRequest{
+				Profile: p,
+			})
+			if err != nil {
+				return nil, err
+			}
+
+			return resp.GetProfile(), nil
+		}
+
+		if err := execOnOneProfile(table, f, cmd.InOrStdin(), proj, createFunc); err != nil {
+			return err
+		}
+
 		table.Render()
 		return nil
-	},
+	}),
 }
 
 func init() {
 	ProfileCmd.AddCommand(Profile_createCmd)
 	Profile_createCmd.Flags().StringP("file", "f", "", "Path to the YAML defining the profile (or - for stdin)")
+	if err := Profile_createCmd.MarkFlagRequired("file"); err != nil {
+		fmt.Fprintf(os.Stderr, "Error marking flag required: %s\n", err)
+		os.Exit(1)
+	}
 	Profile_createCmd.Flags().StringP("project", "p", "", "Project to create the profile in")
 }

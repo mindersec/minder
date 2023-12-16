@@ -147,10 +147,8 @@ func TestCreateUserDBMock(t *testing.T) {
 			crypeng := crypto.NewEngine("test")
 
 			server := &Server{
-				store: mockStore,
-				cfg: &config.Config{
-					Salt: config.DefaultConfigForTest().Salt,
-				},
+				store:        mockStore,
+				cfg:          &config.Config{},
 				cryptoEngine: crypeng,
 				vldtr:        mockJwtValidator,
 			}
@@ -264,7 +262,6 @@ func TestCreateUser_gRPC(t *testing.T) {
 			})
 			require.NoError(t, err, "failed to setup eventer")
 			server, err := NewServer(mockStore, evt, NewMetrics(), &config.Config{
-				Salt: config.DefaultConfigForTest().Salt,
 				Auth: config.AuthConfig{
 					TokenKey: generateTokenKey(t),
 				},
@@ -351,11 +348,9 @@ func TestDeleteUserDBMock(t *testing.T) {
 	server := &Server{
 		store: mockStore,
 		cfg: &config.Config{
-			Salt: config.DefaultConfigForTest().Salt,
 			Identity: config.IdentityConfig{
 				Server: config.ServerIdentityConfig{
 					IssuerUrl:    testServer.URL,
-					Realm:        "stacklok",
 					ClientId:     "client-id",
 					ClientSecret: "client-secret",
 				},
@@ -471,14 +466,12 @@ func TestDeleteUser_gRPC(t *testing.T) {
 			})
 			require.NoError(t, err, "failed to setup eventer")
 			server, err := NewServer(mockStore, evt, NewMetrics(), &config.Config{
-				Salt: config.DefaultConfigForTest().Salt,
 				Auth: config.AuthConfig{
 					TokenKey: generateTokenKey(t),
 				},
 				Identity: config.IdentityConfig{
 					Server: config.ServerIdentityConfig{
 						IssuerUrl:    testServer.URL,
-						Realm:        "stacklok",
 						ClientId:     "client-id",
 						ClientSecret: "client-secret",
 					},

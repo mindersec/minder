@@ -16,14 +16,14 @@
 package repo
 
 import (
+	"context"
 	"fmt"
-	"os"
 
 	"github.com/charmbracelet/bubbles/table"
 	"github.com/spf13/cobra"
 	"github.com/spf13/viper"
+	"google.golang.org/grpc"
 
-	github "github.com/stacklok/minder/internal/providers/github"
 	"github.com/stacklok/minder/internal/util"
 	"github.com/stacklok/minder/internal/util/cli"
 	pb "github.com/stacklok/minder/pkg/api/protobuf/go/minder/v1"
@@ -33,17 +33,8 @@ var repo_listCmd = &cobra.Command{
 	Use:   "list",
 	Short: "List repositories in the minder control plane",
 	Long:  `Repo list is used to register a repo with the minder control plane`,
-	PreRun: func(cmd *cobra.Command, args []string) {
-		if err := viper.BindPFlags(cmd.Flags()); err != nil {
-			fmt.Fprintf(os.Stderr, "error binding flags: %s", err)
-		}
-	},
-	RunE: func(cmd *cobra.Command, args []string) error {
-
+	RunE: cli.GRPCClientWrapRunE(func(ctx context.Context, cmd *cobra.Command, conn *grpc.ClientConn) error {
 		provider := util.GetConfigValue(viper.GetViper(), "provider", "provider", cmd, "").(string)
-		if provider != github.Github {
-			return fmt.Errorf("only %s is supported at this time", github.Github)
-		}
 		projectID := viper.GetString("project-id")
 		format := viper.GetString("output")
 
@@ -56,21 +47,14 @@ var repo_listCmd = &cobra.Command{
 			return fmt.Errorf("invalid output format: %s", format)
 		}
 
-		conn, err := util.GrpcForCommand(cmd, viper.GetViper())
-		util.ExitNicelyOnError(err, "Error getting grpc connection")
-		defer conn.Close()
-
 		client := pb.NewRepositoryServiceClient(conn)
-		ctx, cancel := util.GetAppContext()
-		defer cancel()
 
 		resp, err := client.ListRepositories(ctx, &pb.ListRepositoriesRequest{
 			Provider:  provider,
 			ProjectId: projectID,
 		})
 		if err != nil {
-			fmt.Fprintf(os.Stderr, "Error getting repo of repos: %s\n", err)
-			os.Exit(1)
+			return cli.MessageAndError(cmd, "Error getting repo of repos", err)
 		}
 
 		switch format {
@@ -89,7 +73,7 @@ var repo_listCmd = &cobra.Command{
 				row := table.Row{
 					*v.Id,
 					*v.Context.Project,
-					v.Context.Provider,
+					*v.Context.Provider,
 					fmt.Sprintf("%d", v.GetRepoId()),
 					v.GetOwner(),
 					v.GetName(),
@@ -105,26 +89,27 @@ var repo_listCmd = &cobra.Command{
 				table.WithStyles(cli.TableHiddenSelectStyles),
 			)
 
-			cli.PrintCmd(cmd, cli.TableRender(t))
+			cmd.Println(cli.TableRender(t))
 		case "json":
 			out, err := util.GetJsonFromProto(resp)
-			util.ExitNicelyOnError(err, "Error getting json from proto")
-			fmt.Println(out)
+			if err != nil {
+				return cli.MessageAndError(cmd, "Error getting json from proto", err)
+			}
+			cmd.Println(out)
 		case "yaml":
 			out, err := util.GetYamlFromProto(resp)
-			util.ExitNicelyOnError(err, "Error getting yaml from proto")
-			fmt.Println(out)
+			if err != nil {
+				return cli.MessageAndError(cmd, "Error getting yaml from proto", err)
+			}
+			cmd.Println(out)
 		}
 		return nil
-	},
+	}),
 }
 
 func init() {
 	RepoCmd.AddCommand(repo_listCmd)
 	repo_listCmd.Flags().StringP("output", "f", "", "Output format (json or yaml)")
-	repo_listCmd.Flags().StringP("provider", "p", "", "Name for the provider to enroll")
+	repo_listCmd.Flags().StringP("provider", "p", "github", "Name for the provider to enroll")
 	repo_listCmd.Flags().StringP("project-id", "g", "", "ID of the project for repo registration")
-	if err := repo_listCmd.MarkFlagRequired("provider"); err != nil {
-		fmt.Fprintf(os.Stderr, "Error marking flag as required: %s\n", err)
-	}
 }

@@ -26,13 +26,14 @@ import (
 	"errors"
 	"fmt"
 	"os"
+	"slices"
 	"strings"
 
 	"github.com/AlecAivazis/survey/v2"
 	"github.com/charmbracelet/bubbles/table"
 	"github.com/spf13/cobra"
 	"github.com/spf13/viper"
-	"k8s.io/utils/strings/slices"
+	"google.golang.org/grpc"
 
 	github "github.com/stacklok/minder/internal/providers/github"
 	"github.com/stacklok/minder/internal/util"
@@ -49,25 +50,19 @@ var repoRegisterCmd = &cobra.Command{
 	Use:   "register",
 	Short: "Register a repo with the minder control plane",
 	Long:  `Repo register is used to register a repo with the minder control plane`,
-	PreRun: func(cmd *cobra.Command, args []string) {
-		if err := viper.BindPFlags(cmd.Flags()); err != nil {
-			fmt.Fprintf(os.Stderr, "Error binding flags: %s\n", err)
+	RunE: cli.GRPCClientWrapRunE(func(ctx context.Context, cmd *cobra.Command, conn *grpc.ClientConn) error {
+		if _, msg, err := RegisterCmd(ctx, cmd, conn); err != nil {
+			return cli.MessageAndError(cmd, msg, err)
 		}
-	},
-	Run: func(cmd *cobra.Command, args []string) {
-		_, msg, err := RegisterCmd(cmd, args)
-		util.ExitNicelyOnError(err, msg)
-	},
+		return nil
+	}),
 }
 
 func init() {
 	RepoCmd.AddCommand(repoRegisterCmd)
-	repoRegisterCmd.Flags().StringP("provider", "p", "", "Name for the provider to enroll")
+	repoRegisterCmd.Flags().StringP("provider", "p", "github", "Name for the provider to enroll")
 	repoRegisterCmd.Flags().StringP("project-id", "g", "", "ID of the project for repo registration")
 	repoRegisterCmd.Flags().StringVar(&cfgFlagRepos, "repo", "", "List of repositories to register, i.e owner/repo,owner/repo")
-	if err := repoRegisterCmd.MarkFlagRequired("provider"); err != nil {
-		_, _ = fmt.Fprintf(os.Stderr, "Error marking flag as required: %s\n", err)
-	}
 }
 
 func getSelectedRepositories(repoList []*pb.UpstreamRepositoryRef, flagRepos string) ([]*pb.UpstreamRepositoryRef, error) {
@@ -146,7 +141,7 @@ func getSelectedRepositories(repoList []*pb.UpstreamRepositoryRef, flagRepos str
 // RegisterCmd represents the register command to register a repo with minder
 //
 //nolint:gocyclo
-func RegisterCmd(cmd *cobra.Command, _ []string) ([]*pb.RegisterRepoResult, string, error) {
+func RegisterCmd(ctx context.Context, cmd *cobra.Command, conn *grpc.ClientConn) ([]*pb.RegisterRepoResult, string, error) {
 	provider := util.GetConfigValue(viper.GetViper(), "provider", "provider", cmd, "").(string)
 	if provider != github.Github {
 		msg := fmt.Sprintf("Only %s is supported at this time", github.Github)
@@ -154,16 +149,7 @@ func RegisterCmd(cmd *cobra.Command, _ []string) ([]*pb.RegisterRepoResult, stri
 	}
 	projectID := viper.GetString("project-id")
 
-	conn, err := util.GrpcForCommand(cmd, viper.GetViper())
-	if err != nil {
-		msg := "Error getting grpc connection"
-		return nil, msg, err
-	}
-	defer conn.Close()
-
 	client := pb.NewRepositoryServiceClient(conn)
-	ctx, cancel := util.GetAppContext()
-	defer cancel()
 
 	// Get the list of repos
 	listResp, err := client.ListRepositories(ctx, &pb.ListRepositoriesRequest{
@@ -205,7 +191,7 @@ func RegisterCmd(cmd *cobra.Command, _ []string) ([]*pb.RegisterRepoResult, stri
 		}
 	}
 
-	cli.PrintCmd(cmd, "Found %d remote repositories: %d registered and %d unregistered.\n",
+	cmd.Printf("Found %d remote repositories: %d registered and %d unregistered.\n",
 		len(remoteListResp.Results), len(listResp.Results), len(unregisteredRepos))
 
 	// Get the selected repos
@@ -271,6 +257,6 @@ func RegisterCmd(cmd *cobra.Command, _ []string) ([]*pb.RegisterRepoResult, stri
 		table.WithStyles(cli.TableHiddenSelectStyles),
 	)
 
-	cli.PrintCmd(cmd, cli.TableRender(t))
+	cmd.Println(cli.TableRender(t))
 	return registeredRepos, "", nil
 }

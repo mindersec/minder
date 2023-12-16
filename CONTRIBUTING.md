@@ -12,7 +12,6 @@ First off, thank you for taking the time to contribute to Minder! :+1: :tada: Mi
   - [Pull Request Process](#pull-request-process)
   - [Contributing to docs](#contributing-to-docs)
   - [Commit Message Guidelines](#commit-message-guidelines)
-  
 
 ## Code of Conduct
 This project adheres to the [Contributor Covenant](https://github.com/stacklok/minder/blob/main/CODE_OF_CONDUCT.md) code of conduct. By participating, you are expected to uphold this code. Please report unacceptable behavior to code-of-conduct@stacklok.dev.
@@ -48,4 +47,11 @@ PRs to resolve existing issues are greatly appreciated and issues labeled as ["g
 Follow [this guide](https://github.com/stacklok/minder/blob/main/docs/README.md) for instructions on building, running, and previewing Miner's documentation.
 
 ### Commit Message Guidelines
-We follow the commit formatting recommendations found on [Chris Beams' How to Write a Git Commit Message article](https://chris.beams.io/posts/git-commit/).
+We follow the commit formatting recommendations found on [Chris Beams' How to Write a Git Commit Message article](https://chris.beams.io/posts/git-commit/):
+
+1. Separate subject from body with a blank line
+1. Limit the subject line to 50 characters
+1. Capitalize the subject line
+1. Do not end the subject line with a period
+1. Use the imperative mood in the subject line
+1. Use the body to explain what and why vs. how

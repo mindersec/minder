@@ -104,7 +104,7 @@ rule type and create a profile which enables secret scanning for the selected re
 To see the status of your profile, run:
 
 ```bash
-minder profile_status list --profile quickstart-profile --detailed
+minder profile status list --profile quickstart-profile --detailed
 ```
 
 You should see the overall profile status and a detailed view of the rule evaluation statuses for each of your registered repositories.
@@ -148,6 +148,10 @@ This section describes how to build and run Minder from source.
 
 You'd need the following tools available - [Go](https://golang.org/doc/install), [Docker](https://docs.docker.com/get-docker/) and [Docker Compose](https://docs.docker.com/compose/install/).
 
+To build and run `minder-server`, you will also need [ko](https://ko.build/install/).
+
+To run the test suite via `make test`, you will need [gotestfmt](https://github.com/GoTestTools/gotestfmt#installing) and [helm](https://github.com/helm/helm/releases).
+
 ### Clone the repository
 
 ```bash
@@ -156,7 +160,7 @@ git clone git@github.com:stacklok/minder.git
 
 ## Build 
 
-Run the following to build `minder` and `minder-server`(binaries will be present at `./bin/`)
+Run the following to build `minder` and `minder-server` (binaries will be present at `./bin/`)
 
 ```bash
 make build
@@ -174,10 +178,16 @@ If you want to run `minder` against a local `minder-server` instance, proceed wi
 
 #### Initial configuration
 
-Create the initial configuration file for `minder` and `minder-server`. You may do so by doing.
+Create the initial configuration file for `minder`. You may do so by doing.
 
 ```bash
 cp config/config.yaml.example config.yaml
+```
+
+Create the initial configuration file for `minder-server`. You may do so by doing.
+
+```bash
+cp config/server-config.yaml.example server-config.yaml
 ```
 
 You'd also have to set up an OAuth2 application for `minder-server` to use.

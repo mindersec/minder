@@ -32,6 +32,7 @@ import (
 	"github.com/pkg/browser"
 	"github.com/spf13/cobra"
 	"github.com/spf13/viper"
+	"google.golang.org/grpc"
 	"google.golang.org/protobuf/types/known/timestamppb"
 
 	ghclient "github.com/stacklok/minder/internal/providers/github"
@@ -51,7 +52,7 @@ const MAX_CALLS = 300
 
 // callBackServer starts a server and handler to listen for the OAuth callback.
 // It will wait for either a success or failure response from the server.
-func callBackServer(ctx context.Context, provider string, project string, port string,
+func callBackServer(ctx context.Context, cmd *cobra.Command, provider string, project string, port string,
 	wg *sync.WaitGroup, client pb.OAuthServiceClient, since int64) {
 	server := &http.Server{
 		Addr:              fmt.Sprintf(":%s", port),
@@ -63,12 +64,12 @@ func callBackServer(ctx context.Context, provider string, project string, port s
 		err := server.Close()
 		if err != nil {
 			// Handle the error appropriately, such as logging or returning an error message.
-			fmt.Printf("Error closing server: %s", err)
+			cmd.Printf("Error closing server: %s", err)
 		}
 	}()
 
 	// Start the server in a goroutine
-	fmt.Println("Listening for OAuth Login flow to complete on port", port)
+	cmd.Println("Listening for OAuth Login flow to complete on port", port)
 	go func() {
 		_ = server.ListenAndServe()
 	}()
@@ -114,23 +115,14 @@ var enrollProviderCmd = &cobra.Command{
 	Long: `The minder provider enroll command allows a user to enroll a provider
 such as GitHub into the minder control plane. Once enrolled, users can perform
 actions such as adding repositories.`,
-	PreRun: func(cmd *cobra.Command, args []string) {
-		if err := viper.BindPFlags(cmd.Flags()); err != nil {
-			fmt.Fprintf(os.Stderr, "Error binding flags: %s\n", err)
-		}
-	},
-	Run: func(cmd *cobra.Command, args []string) {
-		msg, err := EnrollProviderCmd(cmd, args)
-		util.ExitNicelyOnError(err, msg)
-	},
+	RunE: cli.GRPCClientWrapRunE(EnrollProviderCmd),
 }
 
 // EnrollProviderCmd is the command for enrolling a provider
-func EnrollProviderCmd(cmd *cobra.Command, _ []string) (string, error) {
+func EnrollProviderCmd(ctx context.Context, cmd *cobra.Command, conn *grpc.ClientConn) error {
 	provider := util.GetConfigValue(viper.GetViper(), "provider", "provider", cmd, "").(string)
 	if provider != ghclient.Github {
-		msg := fmt.Sprintf("Only %s is supported at this time", ghclient.Github)
-		return "", fmt.Errorf(msg)
+		return fmt.Errorf("Only %s is supported at this time", ghclient.Github)
 	}
 	project := viper.GetString("project")
 	pat := util.GetConfigValue(viper.GetViper(), "token", "token", cmd, "").(string)
@@ -150,19 +142,11 @@ func EnrollProviderCmd(cmd *cobra.Command, _ []string) (string, error) {
 			"Enroll operation cancelled.",
 			true)
 		if !yes {
-			return "", nil
+			return nil
 		}
 	}
 
-	conn, err := util.GrpcForCommand(cmd, viper.GetViper())
-	if err != nil {
-		return "Error getting grpc connection", err
-	}
-	defer conn.Close()
-
 	client := pb.NewOAuthServiceClient(conn)
-	ctx, cancel := util.GetAppContext()
-	defer cancel()
 	oAuthCallbackCtx, oAuthCancel := context.WithTimeout(context.Background(), MAX_CALLS*time.Second)
 	defer oAuthCancel()
 
@@ -171,17 +155,17 @@ func EnrollProviderCmd(cmd *cobra.Command, _ []string) (string, error) {
 		_, err := client.StoreProviderToken(context.Background(),
 			&pb.StoreProviderTokenRequest{Provider: provider, ProjectId: project, AccessToken: pat, Owner: &owner})
 		if err != nil {
-			return "Error storing token", err
+			return cli.MessageAndError(cmd, "Error storing token", err)
 		}
 
-		cli.PrintCmd(cmd, "Provider enrolled successfully")
-		return "", nil
+		cmd.Println("Provider enrolled successfully")
+		return nil
 	}
 
 	// Get random port
 	port, err := rand.GetRandomPort()
 	if err != nil {
-		return "Error getting random port", err
+		return fmt.Errorf("error getting random port: %w", err)
 	}
 
 	resp, err := client.GetAuthorizationURL(ctx, &pb.GetAuthorizationURLRequest{
@@ -192,28 +176,28 @@ func EnrollProviderCmd(cmd *cobra.Command, _ []string) (string, error) {
 		Owner:     &owner,
 	})
 	if err != nil {
-		return "Error getting authorization URL", err
+		return cli.MessageAndError(cmd, "error getting authorization URL", err)
 	}
 
-	fmt.Printf("Your browser will now be opened to: %s\n", resp.GetUrl())
-	fmt.Println("Please follow the instructions on the page to complete the OAuth flow.")
-	fmt.Println("Once the flow is complete, the CLI will close")
-	fmt.Println("If this is a headless environment, please copy and paste the URL into a browser on a different machine.")
+	cmd.Printf("Your browser will now be opened to: %s\n", resp.GetUrl())
+	cmd.Println("Please follow the instructions on the page to complete the OAuth flow.")
+	cmd.Println("Once the flow is complete, the CLI will close")
+	cmd.Println("If this is a headless environment, please copy and paste the URL into a browser on a different machine.")
 
 	if err := browser.OpenURL(resp.GetUrl()); err != nil {
 		fmt.Fprintf(os.Stderr, "Error opening browser: %s\n", err)
-		fmt.Println("Please copy and paste the URL into a browser.")
+		cmd.Println("Please copy and paste the URL into a browser.")
 	}
 	openTime := time.Now().Unix()
 
 	var wg sync.WaitGroup
 	wg.Add(1)
 
-	go callBackServer(oAuthCallbackCtx, provider, project, fmt.Sprintf("%d", port), &wg, client, openTime)
+	go callBackServer(oAuthCallbackCtx, cmd, provider, project, fmt.Sprintf("%d", port), &wg, client, openTime)
 	wg.Wait()
 
-	cli.PrintCmd(cmd, "Provider enrolled successfully")
-	return "", nil
+	cmd.Println("Provider enrolled successfully")
+	return nil
 }
 
 func init() {

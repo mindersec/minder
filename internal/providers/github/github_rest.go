@@ -24,7 +24,7 @@ import (
 	"net/http"
 	"net/url"
 
-	"github.com/google/go-github/v53/github"
+	"github.com/google/go-github/v56/github"
 
 	engerrors "github.com/stacklok/minder/internal/engine/errors"
 	minderv1 "github.com/stacklok/minder/pkg/api/protobuf/go/minder/v1"
@@ -160,7 +160,7 @@ func (c *RestClient) ListAllPackages(ctx context.Context, isOrg bool, owner stri
 	return allContainers, nil
 }
 
-// ListPackagesByRepository returns a list of all packages for an specific repository
+// ListPackagesByRepository returns a list of all packages for a specific repository
 func (c *RestClient) ListPackagesByRepository(ctx context.Context, isOrg bool, owner string, artifactType string,
 	repositoryId int64, pageNumber int, itemsPerPage int) ([]*github.Package, error) {
 	opt := &github.PackageListOptions{
@@ -206,6 +206,78 @@ func (c *RestClient) ListPackagesByRepository(ctx context.Context, isOrg bool, o
 	return allContainers, nil
 }
 
+// GetPackageVersions returns a list of all package versions for the authenticated user or org
+func (c *RestClient) GetPackageVersions(ctx context.Context, isOrg bool, owner string, package_type string,
+	package_name string) ([]*github.PackageVersion, error) {
+	state := "active"
+
+	opt := &github.PackageListOptions{
+		PackageType: &package_type,
+		State:       &state,
+		ListOptions: github.ListOptions{
+			Page:    1,
+			PerPage: 100,
+		},
+	}
+
+	// escape the package name
+	package_name = url.PathEscape(package_name)
+
+	// create a slice to hold the versions
+	var allVersions []*github.PackageVersion
+
+	// loop until we get all package versions
+	for {
+		var v []*github.PackageVersion
+		var resp *github.Response
+		var err error
+		if isOrg {
+			v, resp, err = c.client.Organizations.PackageGetAllVersions(ctx, owner, package_type, package_name, opt)
+		} else {
+			v, resp, err = c.client.Users.PackageGetAllVersions(ctx, "", package_type, package_name, opt)
+		}
+		if err != nil {
+			return nil, err
+		}
+
+		// append to the slice
+		allVersions = append(allVersions, v...)
+
+		// if there is no next page, break
+		if resp.NextPage == 0 {
+			break
+		}
+
+		// update the page
+		opt.Page = resp.NextPage
+	}
+
+	// return the slice
+	return allVersions, nil
+}
+
+// GetPackageVersionByTag returns a single package version for the specific tag
+func (c *RestClient) GetPackageVersionByTag(ctx context.Context, isOrg bool, owner string, package_type string,
+	package_name string, tag string) (*github.PackageVersion, error) {
+	// get all versions
+	versions, err := c.GetPackageVersions(ctx, isOrg, owner, package_type, package_name)
+	if err != nil {
+		return nil, err
+	}
+
+	// iterate for all versions until we find the specific tag
+	for _, version := range versions {
+		tags := version.Metadata.Container.Tags
+		for _, t := range tags {
+			if t == tag {
+				return version, nil
+			}
+		}
+	}
+	return nil, nil
+
+}
+
 // GetPackageByName returns a single package for the authenticated user or for the org
 func (c *RestClient) GetPackageByName(ctx context.Context, isOrg bool, owner string, package_type string,
 	package_name string) (*github.Package, error) {
@@ -225,67 +297,6 @@ func (c *RestClient) GetPackageByName(ctx context.Context, isOrg bool, owner str
 		}
 	}
 	return pkg, nil
-}
-
-// GetPackageVersions returns a list of all package versions for the authenticated user or org
-func (c *RestClient) GetPackageVersions(ctx context.Context, isOrg bool, owner string, package_type string,
-	package_name string) ([]*github.PackageVersion, error) {
-	var versions []*github.PackageVersion
-	var err error
-	state := "active"
-
-	package_name = url.PathEscape(package_name)
-	if isOrg {
-		versions, _, err = c.client.Organizations.PackageGetAllVersions(ctx, owner, package_type,
-			package_name, &github.PackageListOptions{PackageType: &package_type, State: &state})
-		if err != nil {
-			return nil, err
-		}
-	} else {
-		versions, _, err = c.client.Users.PackageGetAllVersions(ctx, "", package_type,
-			package_name, &github.PackageListOptions{PackageType: &package_type, State: &state})
-		if err != nil {
-			return nil, err
-		}
-	}
-
-	return versions, nil
-}
-
-// GetPackageVersionByTag returns a single package version for the specific tag
-func (c *RestClient) GetPackageVersionByTag(ctx context.Context, isOrg bool, owner string, package_type string,
-	package_name string, tag string) (*github.PackageVersion, error) {
-	var versions []*github.PackageVersion
-	var err error
-	state := "active"
-
-	package_name = url.PathEscape(package_name)
-
-	if isOrg {
-		versions, _, err = c.client.Organizations.PackageGetAllVersions(ctx, owner, package_type,
-			package_name, &github.PackageListOptions{PackageType: &package_type, State: &state})
-		if err != nil {
-			return nil, err
-		}
-	} else {
-		versions, _, err = c.client.Users.PackageGetAllVersions(ctx, "", package_type,
-			package_name, &github.PackageListOptions{PackageType: &package_type, State: &state})
-		if err != nil {
-			return nil, err
-		}
-	}
-
-	// iterate for all versions until we find the specific tag
-	for _, version := range versions {
-		tags := version.Metadata.Container.Tags
-		for _, t := range tags {
-			if t == tag {
-				return version, nil
-			}
-		}
-	}
-	return nil, nil
-
 }
 
 // GetPackageVersionById returns a single package version for the specific id
@@ -456,13 +467,14 @@ func (c *RestClient) Do(ctx context.Context, req *http.Request) (*http.Response,
 	// The GitHub client closes the response body, so we need to capture it
 	// in a buffer so that we can return it to the caller
 	resp, err := c.client.Do(ctx, req, &buf)
-	if err != nil {
+	if err != nil && resp == nil {
 		return nil, err
 	}
 
-	resp.Response.Body = io.NopCloser(&buf)
-
-	return resp.Response, nil
+	if resp.Response != nil {
+		resp.Response.Body = io.NopCloser(&buf)
+	}
+	return resp.Response, err
 }
 
 // GetToken returns the token used to authenticate with the GitHub API
@@ -560,103 +572,6 @@ func (c *RestClient) CloseSecurityAdvisory(ctx context.Context, owner, repo, id 
 	}
 	// Translate the HTTP status code to an error, nil if between 200 and 299
 	return engerrors.HTTPErrorCodeToErr(resp.StatusCode)
-}
-
-// GetRef fetches a single reference in a repository.
-func (c *RestClient) GetRef(ctx context.Context, owner, repo, refString string) (*github.Reference, error) {
-	ref, _, err := c.client.Git.GetRef(ctx, owner, repo, refString)
-	if err != nil {
-		return nil, err
-	}
-
-	return ref, nil
-}
-
-// GetCommit fetches a single commit in a repository.
-func (c *RestClient) GetCommit(ctx context.Context, owner, repo, commitSHA string) (*github.Commit, error) {
-	commit, _, err := c.client.Git.GetCommit(ctx, owner, repo, commitSHA)
-	if err != nil {
-		return nil, err
-	}
-
-	return commit, nil
-}
-
-// CreateBlob creates a blob in a repository.
-func (c *RestClient) CreateBlob(ctx context.Context, owner, repo string, blob *github.Blob) (*github.Blob, error) {
-	b, _, err := c.client.Git.CreateBlob(ctx, owner, repo, blob)
-	if err != nil {
-		return nil, err
-	}
-
-	return b, nil
-}
-
-// CreateTree creates a tree in a repository.
-func (c *RestClient) CreateTree(
-	ctx context.Context,
-	owner, repo, base string,
-	entries []*github.TreeEntry,
-) (*github.Tree, error) {
-	t, _, err := c.client.Git.CreateTree(ctx, owner, repo, base, entries)
-	if err != nil {
-		return nil, err
-	}
-
-	return t, nil
-}
-
-// CreateCommit creates a commit in a repository.
-func (c *RestClient) CreateCommit(
-	ctx context.Context,
-	owner, repo, message string,
-	tree *github.Tree,
-	parentSha string,
-) (*github.Commit, error) {
-	commit, _, err := c.client.Git.CreateCommit(ctx, owner, repo, &github.Commit{
-		Message: github.String(message),
-		Tree:    tree,
-		Parents: []*github.Commit{
-			{
-				SHA: github.String(parentSha),
-			},
-		},
-	})
-	if err != nil {
-		return nil, err
-	}
-
-	return commit, nil
-}
-
-// CreateRef creates a reference in a repository.
-func (c *RestClient) CreateRef(ctx context.Context, owner, repo, ref, sha string) (*github.Reference, error) {
-	r, _, err := c.client.Git.CreateRef(ctx, owner, repo, &github.Reference{
-		Ref: github.String(ref),
-		Object: &github.GitObject{
-			SHA: github.String(sha),
-		},
-	})
-	if err != nil {
-		return nil, err
-	}
-
-	return r, nil
-}
-
-// UpdateRef updates a reference in a repository.
-func (c *RestClient) UpdateRef(ctx context.Context, owner, repo, ref, sha string, force bool) (*github.Reference, error) {
-	r, _, err := c.client.Git.UpdateRef(ctx, owner, repo, &github.Reference{
-		Ref: github.String(ref),
-		Object: &github.GitObject{
-			SHA: github.String(sha),
-		},
-	}, force)
-	if err != nil {
-		return nil, err
-	}
-
-	return r, nil
 }
 
 // CreatePullRequest creates a pull request in a repository.

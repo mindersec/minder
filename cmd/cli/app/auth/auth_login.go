@@ -27,6 +27,7 @@ import (
 	"fmt"
 	"net/http"
 	"net/url"
+	"os"
 	"time"
 
 	"github.com/charmbracelet/bubbles/table"
@@ -60,7 +61,7 @@ func userRegistered(ctx context.Context, client pb.UserServiceClient) (bool, *pb
 				return false, nil, nil
 			}
 		}
-		return false, nil, fmt.Errorf("error retrieving user %v", err)
+		return false, nil, fmt.Errorf("error retrieving user %w", err)
 	}
 	return true, res, nil
 }
@@ -73,20 +74,22 @@ var auth_loginCmd = &cobra.Command{
 will be saved to $XDG_CONFIG_HOME/minder/credentials.json`,
 	PreRun: func(cmd *cobra.Command, args []string) {
 		if err := viper.BindPFlags(cmd.Flags()); err != nil {
-			cli.Print(cmd.ErrOrStderr(), "Error binding flags: %s\n", err)
+			cmd.PrintErrf("Error binding flags: %s\n", err)
 		}
 	},
-	Run: func(cmd *cobra.Command, args []string) {
+	RunE: func(cmd *cobra.Command, args []string) error {
 		ctx := context.Background()
 
 		issuerUrlStr := util.GetConfigValue(viper.GetViper(), "identity.cli.issuer_url", "identity-url", cmd,
 			constants.IdentitySeverURL).(string)
-		realm := util.GetConfigValue(viper.GetViper(), "identity.cli.realm", "identity-realm", cmd, "stacklok").(string)
 		clientID := util.GetConfigValue(viper.GetViper(), "identity.cli.client_id", "identity-client", cmd, "minder-cli").(string)
 
 		parsedURL, err := url.Parse(issuerUrlStr)
-		util.ExitNicelyOnError(err, "Error parsing issuer URL")
-		issuerUrl := parsedURL.JoinPath("realms", realm)
+		if err != nil {
+			return cli.MessageAndError(cmd, "Error parsing issuer URL", err)
+		}
+
+		issuerUrl := parsedURL.JoinPath("realms/stacklok")
 		scopes := []string{"openid"}
 		callbackPath := "/auth/callback"
 
@@ -103,18 +106,27 @@ will be saved to $XDG_CONFIG_HOME/minder/credentials.json`,
 
 		// Get random port
 		port, err := rand.GetRandomPort()
-		util.ExitNicelyOnError(err, "Error getting random port")
+		if err != nil {
+			return cli.MessageAndError(cmd, "Error getting random port", err)
+		}
 
 		parsedURL, err = url.Parse(fmt.Sprintf("http://localhost:%v", port))
-		util.ExitNicelyOnError(err, "Error creating callback server")
+		if err != nil {
+			return cli.MessageAndError(cmd, "Error parsing callback URL", err)
+		}
 		redirectURI := parsedURL.JoinPath(callbackPath)
 
 		provider, err := rp.NewRelyingPartyOIDC(issuerUrl.String(), clientID, "", redirectURI.String(), scopes, options...)
-		util.ExitNicelyOnError(err, "error creating identity provider reference")
+		if err != nil {
+			return cli.MessageAndError(cmd, "Error creating relying party", err)
+		}
 
 		stateFn := func() string {
 			state, err := mcrypto.GenerateNonce()
-			util.ExitNicelyOnError(err, "error generating state for login")
+			if err != nil {
+				cmd.PrintErrln("error generating state for login")
+				os.Exit(1)
+			}
 			return state
 		}
 
@@ -129,7 +141,7 @@ will be saved to $XDG_CONFIG_HOME/minder/credentials.json`,
 			_, err := w.Write(loginSuccessHtml)
 			if err != nil {
 				// if we cannot display the success page, just print a success message
-				cli.PrintCmd(cmd, "Authentication Successful")
+				cmd.Println("Authentication Successful")
 			}
 		}
 		http.Handle("/login", rp.AuthURLHandler(stateFn, provider))
@@ -147,15 +159,15 @@ will be saved to $XDG_CONFIG_HOME/minder/credentials.json`,
 		loginUrl := fmt.Sprintf("http://localhost:%v/login", port)
 
 		// Redirect user to provider to log in
-		cli.PrintCmd(cmd, "Your browser will now be opened to: %s", loginUrl)
-		cli.PrintCmd(cmd, "Please follow the instructions on the page to log in.")
+		cmd.Printf("Your browser will now be opened to: %s\n", loginUrl)
+		cmd.Println("Please follow the instructions on the page to log in.")
 
 		// open user's browser to login page
 		if err := browser.OpenURL(loginUrl); err != nil {
-			cli.PrintCmd(cmd, "You may login by pasting this URL into your browser: %s", loginUrl)
+			cmd.Printf("You may login by pasting this URL into your browser: %s\n", loginUrl)
 		}
 
-		cli.PrintCmd(cmd, "Waiting for token...\n")
+		cmd.Println("Waiting for token...")
 
 		// wait for the token to be received
 		token := <-tokenChan
@@ -167,45 +179,51 @@ will be saved to $XDG_CONFIG_HOME/minder/credentials.json`,
 			AccessTokenExpiresAt: token.Expiry,
 		})
 		if err != nil {
-			fmt.Println(err)
+			cmd.PrintErrf("couldn't save credentials: %s\n", err)
 		}
 
-		conn, err := util.GrpcForCommand(cmd, viper.GetViper())
-		util.ExitNicelyOnError(err, "Error getting grpc connection")
+		conn, err := cli.GrpcForCommand(cmd, viper.GetViper())
+		if err != nil {
+			return cli.MessageAndError(cmd, "Error getting grpc connection", err)
+		}
 		defer conn.Close()
 		client := pb.NewUserServiceClient(conn)
 
 		// check if the user already exists in the local database
 		registered, userInfo, err := userRegistered(ctx, client)
-		util.ExitNicelyOnError(err, "Error fetching user")
+		if err != nil {
+			return cli.MessageAndError(cmd, "Error checking if user exists", err)
+		}
 
 		if !registered {
-			cli.PrintCmd(cmd, "First login, registering user...\n")
+			cmd.Println("First login, registering user...")
 			newUser, err := client.CreateUser(ctx, &pb.CreateUserRequest{})
-			util.ExitNicelyOnError(err, "Error registering user")
+			if err != nil {
+				return cli.MessageAndError(cmd, "Error registering user", err)
+			}
 
-			cli.PrintCmd(cmd, cli.SuccessBanner.Render(
+			cmd.Println(cli.SuccessBanner.Render(
 				"You have been successfully registered. Welcome!"))
-			cli.PrintCmd(cmd, cli.WarningBanner.Render(
-				"Minder is currently under active development and considered experimental, "+
+			cmd.Println(cli.WarningBanner.Render(
+				"Minder is currently under active development and considered experimental, " +
 					" we therefore provide no data retention or service stability guarantees.",
 			))
-			cli.PrintCmd(cmd, cli.Header.Render("Here are your details:"))
+			cmd.Println(cli.Header.Render("Here are your details:"))
 
 			renderNewUser(cmd, conn, newUser)
 		} else {
-			cli.PrintCmd(cmd, cli.SuccessBanner.Render(
+			cmd.Println(cli.SuccessBanner.Render(
 				"You have successfully logged in."))
 
-			cli.PrintCmd(cmd, cli.Header.Render("Here are your details:"))
+			cmd.Println(cli.Header.Render("Here are your details:"))
 			renderUserInfo(cmd, conn, userInfo)
 		}
 
-		cli.PrintCmd(cmd, "Your access credentials have been saved to %s", filePath)
+		cmd.Printf("Your access credentials have been saved to %s\n", filePath)
 
 		// shut down the HTTP server
-		err = server.Shutdown(context.Background())
-		util.ExitNicelyOnError(err, "Failed to shut down server")
+		// TODO: should this use the app context?
+		return server.Shutdown(context.Background())
 	},
 }
 
@@ -247,7 +265,7 @@ func renderUserToTable(cmd *cobra.Command, rows []table.Row) {
 		table.WithStyles(cli.TableHiddenSelectStyles),
 	)
 
-	cli.PrintCmd(cmd, cli.TableRender(t))
+	cmd.Println(cli.TableRender(t))
 }
 
 func init() {

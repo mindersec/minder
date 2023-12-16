@@ -183,11 +183,11 @@ Profile status will inform about:
 Profile status can be checked using the following commands
 
 ```bash
-minder profile_status list --profile 1
+minder profile status list --profile github-profile
 ```
 
 To view all of the rule evaluations, use the following
 
 ```bash
-minder profile_status list --profile 1 --detailed
+minder profile status list --profile github-profile --detailed
 ```

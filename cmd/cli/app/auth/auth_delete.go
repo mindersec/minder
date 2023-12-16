@@ -16,11 +16,12 @@
 package auth
 
 import (
+	"context"
 	"fmt"
-	"os"
 
 	"github.com/spf13/cobra"
 	"github.com/spf13/viper"
+	"google.golang.org/grpc"
 
 	"github.com/stacklok/minder/internal/auth"
 	"github.com/stacklok/minder/internal/util"
@@ -33,27 +34,20 @@ var auth_deleteCmd = &cobra.Command{
 	Use:   "delete",
 	Short: "Permanently delete account",
 	Long:  `Permanently delete account. All associated user data will be permanently removed.`,
-	PreRun: func(cmd *cobra.Command, args []string) {
-		if err := viper.BindPFlags(cmd.Flags()); err != nil {
-			fmt.Fprintf(os.Stderr, "Error binding flags: %s\n", err)
-		}
-	},
-	Run: func(cmd *cobra.Command, args []string) {
-		ctx, cancel := util.GetAppContext()
-		defer cancel()
-
-		conn, err := util.GrpcForCommand(cmd, viper.GetViper())
-		util.ExitNicelyOnError(err, "Error getting grpc connection")
-		defer conn.Close()
+	RunE: cli.GRPCClientWrapRunE(func(ctx context.Context, cmd *cobra.Command, conn *grpc.ClientConn) error {
 		client := pb.NewUserServiceClient(conn)
 
 		// Ensure the user already exists in the local database
-		_, _, err = userRegistered(ctx, client)
-		util.ExitNicelyOnError(err, "Error fetching user")
+		_, _, err := userRegistered(ctx, client)
+		if err != nil {
+			return cli.MessageAndError(cmd, "Error checking if user exists", err)
+		}
 
 		// Get user details - name, email from the jwt token
 		userDetails, err := auth.GetUserDetails(ctx, cmd, viper.GetViper())
-		util.ExitNicelyOnError(err, "Error fetching user details")
+		if err != nil {
+			return cli.MessageAndError(cmd, "Error fetching user details", err)
+		}
 
 		// Confirm user wants to delete their account
 		yes := cli.PrintYesNoPrompt(cmd,
@@ -66,21 +60,25 @@ var auth_deleteCmd = &cobra.Command{
 			"Delete account operation cancelled.",
 			false)
 		if !yes {
-			return
+			return nil
 		}
 
 		_, err = client.DeleteUser(ctx, &pb.DeleteUserRequest{})
-		util.ExitNicelyOnError(err, "Error registering user")
+		if err != nil {
+			return cli.MessageAndError(cmd, "Error deleting user", err)
+		}
 
 		// This step is added to avoid confusing the users by seeing their credentials locally, however it is not
 		// directly related to user deletion because the token will expire after 5 minutes and cannot be refreshed
 		err = util.RemoveCredentials()
 		if err != nil {
-			cli.PrintCmd(cmd, cli.WarningBanner.Render("Failed to remove locally stored credentials."))
+			cmd.Println(cli.WarningBanner.Render("Failed to remove locally stored credentials."))
 		}
-		cli.PrintCmd(cmd, cli.SuccessBanner.Render("Successfully deleted account. It may take up to 48 hours for "+
+		cmd.Println(cli.SuccessBanner.Render("Successfully deleted account. It may take up to 48 hours for " +
 			"all data to be removed."))
-	},
+
+		return nil
+	}),
 }
 
 func init() {

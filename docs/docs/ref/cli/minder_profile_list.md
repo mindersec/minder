@@ -19,7 +19,7 @@ minder profile list [flags]
 ```
   -h, --help              help for list
   -o, --output string     Output format (json, yaml or table) (default "table")
-  -p, --provider string   Provider to list profiles for
+  -p, --provider string   Provider to list profiles for (default "github")
 ```
 
 ### Options inherited from parent commands
@@ -30,7 +30,6 @@ minder profile list [flags]
       --grpc-insecure            Allow establishing insecure connections
       --grpc-port int            Server port (default 443)
       --identity-client string   Identity server client ID (default "minder-cli")
-      --identity-realm string    Identity server realm (default "stacklok")
       --identity-url string      Identity server issuer URL (default "https://auth.stacklok.com")
 ```
 

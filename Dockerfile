@@ -13,7 +13,7 @@
 # See the License for the specific language governing permissions and
 # limitations under the License.
 
-FROM golang:1.21.4@sha256:9baee0edab4139ae9b108fffabb8e2e98a67f0b259fd25283c2a084bd74fea0d AS builder
+FROM golang:1.21.5@sha256:2ff79bcdaff74368a9fdcb06f6599e54a71caf520fd2357a55feddd504bcaffb AS builder
 ENV APP_ROOT=/opt/app-root
 ENV GOPATH=$APP_ROOT
 
@@ -40,7 +40,7 @@ COPY --chown=65534:65534 --from=builder /app /app
 WORKDIR /app
 
 # Copy database directory and config. This is needed for the migration sub-command to work.
-ADD --chown=65534:65534 ./cmd/server/kodata/config.yaml /app
+ADD --chown=65534:65534 ./cmd/server/kodata/server-config.yaml /app
 ADD --chown=65534:65534 ./cmd/server/kodata/database/migrations /app/database/migrations
 
 COPY --from=builder /opt/app-root/src/minder-server /usr/bin/minder-server

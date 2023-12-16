@@ -16,14 +16,15 @@
 package repo
 
 import (
+	"context"
 	"fmt"
-	"os"
 
 	"github.com/spf13/cobra"
 	"github.com/spf13/viper"
+	"google.golang.org/grpc"
 
-	github "github.com/stacklok/minder/internal/providers/github"
 	"github.com/stacklok/minder/internal/util"
+	"github.com/stacklok/minder/internal/util/cli"
 	pb "github.com/stacklok/minder/pkg/api/protobuf/go/minder/v1"
 )
 
@@ -31,13 +32,7 @@ var repoDeleteCmd = &cobra.Command{
 	Use:   "delete",
 	Short: "delete repository",
 	Long:  `Repo delete is used to delete a repository within the minder control plane`,
-	PreRun: func(cmd *cobra.Command, args []string) {
-		if err := viper.BindPFlags(cmd.Flags()); err != nil {
-			fmt.Fprintf(os.Stderr, "error binding flags: %s", err)
-		}
-	},
-	RunE: func(cmd *cobra.Command, args []string) error {
-
+	RunE: cli.GRPCClientWrapRunE(func(ctx context.Context, cmd *cobra.Command, conn *grpc.ClientConn) error {
 		provider := util.GetConfigValue(viper.GetViper(), "provider", "provider", cmd, "").(string)
 		repoid := viper.GetString("repo-id")
 		name := util.GetConfigValue(viper.GetViper(), "name", "name", cmd, "").(string)
@@ -57,13 +52,7 @@ var repoDeleteCmd = &cobra.Command{
 			return fmt.Errorf("provider needs to be set if name is set")
 		}
 
-		conn, err := util.GrpcForCommand(cmd, viper.GetViper())
-		util.ExitNicelyOnError(err, "Error getting grpc connection")
-		defer conn.Close()
-
 		client := pb.NewRepositoryServiceClient(conn)
-		ctx, cancel := util.GetAppContext()
-		defer cancel()
 
 		deletedRepoID := &pb.DeleteRepositoryByIdResponse{}
 		deletedRepoName := &pb.DeleteRepositoryByNameResponse{}
@@ -72,16 +61,16 @@ var repoDeleteCmd = &cobra.Command{
 			resp, err := client.DeleteRepositoryById(ctx, &pb.DeleteRepositoryByIdRequest{
 				RepositoryId: repoid,
 			})
-			util.ExitNicelyOnError(err, "Error deleting repo by id")
+			if err != nil {
+				return cli.MessageAndError(cmd, "Error deleting repo by id", err)
+			}
 			deletedRepoID = resp
 		} else {
-			if provider != github.Github {
-				return fmt.Errorf("only %s is supported at this time", github.Github)
-			}
-
 			// delete repo by name
 			resp, err := client.DeleteRepositoryByName(ctx, &pb.DeleteRepositoryByNameRequest{Provider: provider, Name: name})
-			util.ExitNicelyOnError(err, "Error deleting repo by name")
+			if err != nil {
+				return cli.MessageAndError(cmd, "Error deleting repo by name", err)
+			}
 			deletedRepoName = resp
 		}
 
@@ -96,12 +85,12 @@ var repoDeleteCmd = &cobra.Command{
 			}
 		}
 		return nil
-	},
+	}),
 }
 
 func init() {
 	RepoCmd.AddCommand(repoDeleteCmd)
-	repoDeleteCmd.Flags().StringP("provider", "p", "", "Name of the enrolled provider")
+	repoDeleteCmd.Flags().StringP("provider", "p", "github", "Name of the enrolled provider")
 	repoDeleteCmd.Flags().StringP("name", "n", "", "Name of the repository (owner/name format)")
 	repoDeleteCmd.Flags().StringP("repo-id", "r", "", "ID of the repo to delete")
 	repoDeleteCmd.Flags().BoolP("status", "s", false, "Only return the status of the profiles associated to this repo")

@@ -54,10 +54,10 @@ var upCmd = &cobra.Command{
 
 		yes, err := cmd.Flags().GetBool("yes")
 		if err != nil {
-			fmt.Printf("Error while getting yes flag: %v", err)
+			cmd.Printf("Error while getting yes flag: %v", err)
 		}
 		if !yes {
-			fmt.Print("WARNING: Running this command will change the database structure. Are you want to continue? (y/n): ")
+			cmd.Print("WARNING: Running this command will change the database structure. Are you want to continue? (y/n): ")
 			var response string
 			_, err := fmt.Scanln(&response)
 			if err != nil {
@@ -65,7 +65,7 @@ var upCmd = &cobra.Command{
 			}
 
 			if response == "n" {
-				fmt.Printf("Exiting...")
+				cmd.Printf("Exiting...")
 				return nil
 			}
 		}
@@ -73,14 +73,14 @@ var upCmd = &cobra.Command{
 		configPath := getMigrateConfigPath()
 		m, err := migrate.New(configPath, connString)
 		if err != nil {
-			fmt.Printf("Error while creating migration instance (%s): %v\n", configPath, err)
+			cmd.Printf("Error while creating migration instance (%s): %v\n", configPath, err)
 			os.Exit(1)
 		}
 
 		var usteps uint
 		usteps, err = cmd.Flags().GetUint("num-steps")
 		if err != nil {
-			fmt.Printf("Error while getting num-steps flag: %v", err)
+			cmd.Printf("Error while getting num-steps flag: %v", err)
 		}
 
 		if usteps == 0 {
@@ -91,14 +91,14 @@ var upCmd = &cobra.Command{
 
 		if err != nil {
 			if !errors.Is(err, migrate.ErrNoChange) {
-				fmt.Printf("Error while migrating database: %v\n", err)
+				cmd.Printf("Error while migrating database: %v\n", err)
 				os.Exit(1)
 			} else {
-				fmt.Println("Database already up-to-date")
+				cmd.Println("Database already up-to-date")
 			}
 		}
 
-		fmt.Println("Database migration completed successfully")
+		cmd.Println("Database migration completed successfully")
 		return nil
 	},
 }

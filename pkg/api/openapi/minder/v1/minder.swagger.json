@@ -67,6 +67,26 @@
             "in": "query",
             "required": false,
             "type": "string"
+          },
+          {
+            "name": "context.provider",
+            "description": "name of the provider",
+            "in": "query",
+            "required": false,
+            "type": "string"
+          },
+          {
+            "name": "context.project",
+            "description": "name of the project",
+            "in": "query",
+            "required": false,
+            "type": "string"
+          },
+          {
+            "name": "context.retiredOrganization",
+            "in": "query",
+            "required": false,
+            "type": "string"
           }
         ],
         "tags": [
@@ -100,6 +120,26 @@
           },
           {
             "name": "projectId",
+            "in": "query",
+            "required": false,
+            "type": "string"
+          },
+          {
+            "name": "context.provider",
+            "description": "name of the provider",
+            "in": "query",
+            "required": false,
+            "type": "string"
+          },
+          {
+            "name": "context.project",
+            "description": "name of the project",
+            "in": "query",
+            "required": false,
+            "type": "string"
+          },
+          {
+            "name": "context.retiredOrganization",
             "in": "query",
             "required": false,
             "type": "string"
@@ -159,6 +199,26 @@
             "in": "query",
             "required": false,
             "type": "string"
+          },
+          {
+            "name": "context.provider",
+            "description": "name of the provider",
+            "in": "query",
+            "required": false,
+            "type": "string"
+          },
+          {
+            "name": "context.project",
+            "description": "name of the project",
+            "in": "query",
+            "required": false,
+            "type": "string"
+          },
+          {
+            "name": "context.retiredOrganization",
+            "in": "query",
+            "required": false,
+            "type": "string"
           }
         ],
         "tags": [
@@ -204,6 +264,26 @@
           },
           {
             "name": "redirectUri",
+            "in": "query",
+            "required": false,
+            "type": "string"
+          },
+          {
+            "name": "context.provider",
+            "description": "name of the provider",
+            "in": "query",
+            "required": false,
+            "type": "string"
+          },
+          {
+            "name": "context.project",
+            "description": "name of the project",
+            "in": "query",
+            "required": false,
+            "type": "string"
+          },
+          {
+            "name": "context.retiredOrganization",
             "in": "query",
             "required": false,
             "type": "string"
@@ -262,6 +342,26 @@
             "in": "query",
             "required": false,
             "type": "string"
+          },
+          {
+            "name": "context.provider",
+            "description": "name of the provider",
+            "in": "query",
+            "required": false,
+            "type": "string"
+          },
+          {
+            "name": "context.project",
+            "description": "name of the project",
+            "in": "query",
+            "required": false,
+            "type": "string"
+          },
+          {
+            "name": "context.retiredOrganization",
+            "in": "query",
+            "required": false,
+            "type": "string"
           }
         ],
         "tags": [
@@ -303,6 +403,26 @@
           },
           {
             "name": "projectId",
+            "in": "query",
+            "required": false,
+            "type": "string"
+          },
+          {
+            "name": "context.provider",
+            "description": "name of the provider",
+            "in": "query",
+            "required": false,
+            "type": "string"
+          },
+          {
+            "name": "context.project",
+            "description": "name of the project",
+            "in": "query",
+            "required": false,
+            "type": "string"
+          },
+          {
+            "name": "context.retiredOrganization",
             "in": "query",
             "required": false,
             "type": "string"
@@ -352,6 +472,9 @@
                 },
                 "owner": {
                   "type": "string"
+                },
+                "context": {
+                  "$ref": "#/definitions/v1Context"
                 }
               }
             }
@@ -473,18 +596,20 @@
           },
           {
             "name": "context.provider",
-            "in": "query",
-            "required": false,
-            "type": "string"
-          },
-          {
-            "name": "context.organization",
+            "description": "name of the provider",
             "in": "query",
             "required": false,
             "type": "string"
           },
           {
             "name": "context.project",
+            "description": "name of the project",
+            "in": "query",
+            "required": false,
+            "type": "string"
+          },
+          {
+            "name": "context.retiredOrganization",
             "in": "query",
             "required": false,
             "type": "string"
@@ -556,18 +681,20 @@
           },
           {
             "name": "context.provider",
-            "in": "query",
-            "required": false,
-            "type": "string"
-          },
-          {
-            "name": "context.organization",
+            "description": "name of the provider",
             "in": "query",
             "required": false,
             "type": "string"
           },
           {
             "name": "context.project",
+            "description": "name of the project",
+            "in": "query",
+            "required": false,
+            "type": "string"
+          },
+          {
+            "name": "context.retiredOrganization",
             "in": "query",
             "required": false,
             "type": "string"
@@ -603,18 +730,20 @@
           },
           {
             "name": "context.provider",
-            "in": "query",
-            "required": false,
-            "type": "string"
-          },
-          {
-            "name": "context.organization",
+            "description": "name of the provider",
             "in": "query",
             "required": false,
             "type": "string"
           },
           {
             "name": "context.project",
+            "description": "name of the project",
+            "in": "query",
+            "required": false,
+            "type": "string"
+          },
+          {
+            "name": "context.retiredOrganization",
             "in": "query",
             "required": false,
             "type": "string"
@@ -645,18 +774,20 @@
         "parameters": [
           {
             "name": "context.provider",
-            "in": "query",
-            "required": false,
-            "type": "string"
-          },
-          {
-            "name": "context.organization",
+            "description": "name of the provider",
             "in": "query",
             "required": false,
             "type": "string"
           },
           {
             "name": "context.project",
+            "description": "name of the project",
+            "in": "query",
+            "required": false,
+            "type": "string"
+          },
+          {
+            "name": "context.retiredOrganization",
             "in": "query",
             "required": false,
             "type": "string"
@@ -687,18 +818,20 @@
         "parameters": [
           {
             "name": "context.provider",
-            "in": "query",
-            "required": false,
-            "type": "string"
-          },
-          {
-            "name": "context.organization",
+            "description": "name of the provider",
             "in": "query",
             "required": false,
             "type": "string"
           },
           {
             "name": "context.project",
+            "description": "name of the project",
+            "in": "query",
+            "required": false,
+            "type": "string"
+          },
+          {
+            "name": "context.retiredOrganization",
             "in": "query",
             "required": false,
             "type": "string"
@@ -752,6 +885,26 @@
             "required": false,
             "type": "integer",
             "format": "int32"
+          },
+          {
+            "name": "context.provider",
+            "description": "name of the provider",
+            "in": "query",
+            "required": false,
+            "type": "string"
+          },
+          {
+            "name": "context.project",
+            "description": "name of the project",
+            "in": "query",
+            "required": false,
+            "type": "string"
+          },
+          {
+            "name": "context.retiredOrganization",
+            "in": "query",
+            "required": false,
+            "type": "string"
           }
         ],
         "tags": [
@@ -788,6 +941,26 @@
             "in": "query",
             "required": false,
             "type": "string"
+          },
+          {
+            "name": "context.provider",
+            "description": "name of the provider",
+            "in": "query",
+            "required": false,
+            "type": "string"
+          },
+          {
+            "name": "context.project",
+            "description": "name of the project",
+            "in": "query",
+            "required": false,
+            "type": "string"
+          },
+          {
+            "name": "context.retiredOrganization",
+            "in": "query",
+            "required": false,
+            "type": "string"
           }
         ],
         "tags": [
@@ -818,6 +991,26 @@
             "in": "path",
             "required": true,
             "type": "string"
+          },
+          {
+            "name": "context.provider",
+            "description": "name of the provider",
+            "in": "query",
+            "required": false,
+            "type": "string"
+          },
+          {
+            "name": "context.project",
+            "description": "name of the project",
+            "in": "query",
+            "required": false,
+            "type": "string"
+          },
+          {
+            "name": "context.retiredOrganization",
+            "in": "query",
+            "required": false,
+            "type": "string"
           }
         ],
         "tags": [
@@ -845,6 +1038,26 @@
             "name": "repositoryId",
             "in": "path",
             "required": true,
+            "type": "string"
+          },
+          {
+            "name": "context.provider",
+            "description": "name of the provider",
+            "in": "query",
+            "required": false,
+            "type": "string"
+          },
+          {
+            "name": "context.project",
+            "description": "name of the project",
+            "in": "query",
+            "required": false,
+            "type": "string"
+          },
+          {
+            "name": "context.retiredOrganization",
+            "in": "query",
+            "required": false,
             "type": "string"
           }
         ],
@@ -888,6 +1101,26 @@
             "in": "query",
             "required": false,
             "type": "string"
+          },
+          {
+            "name": "context.provider",
+            "description": "name of the provider",
+            "in": "query",
+            "required": false,
+            "type": "string"
+          },
+          {
+            "name": "context.project",
+            "description": "name of the project",
+            "in": "query",
+            "required": false,
+            "type": "string"
+          },
+          {
+            "name": "context.retiredOrganization",
+            "in": "query",
+            "required": false,
+            "type": "string"
           }
         ],
         "tags": [
@@ -925,6 +1158,26 @@
           },
           {
             "name": "projectId",
+            "in": "query",
+            "required": false,
+            "type": "string"
+          },
+          {
+            "name": "context.provider",
+            "description": "name of the provider",
+            "in": "query",
+            "required": false,
+            "type": "string"
+          },
+          {
+            "name": "context.project",
+            "description": "name of the project",
+            "in": "query",
+            "required": false,
+            "type": "string"
+          },
+          {
+            "name": "context.retiredOrganization",
             "in": "query",
             "required": false,
             "type": "string"
@@ -971,6 +1224,9 @@
                 },
                 "repository": {
                   "$ref": "#/definitions/v1UpstreamRepositoryRef"
+                },
+                "context": {
+                  "$ref": "#/definitions/v1Context"
                 }
               }
             }
@@ -1072,18 +1328,20 @@
           },
           {
             "name": "context.provider",
-            "in": "query",
-            "required": false,
-            "type": "string"
-          },
-          {
-            "name": "context.organization",
+            "description": "name of the provider",
             "in": "query",
             "required": false,
             "type": "string"
           },
           {
             "name": "context.project",
+            "description": "name of the project",
+            "in": "query",
+            "required": false,
+            "type": "string"
+          },
+          {
+            "name": "context.retiredOrganization",
             "in": "query",
             "required": false,
             "type": "string"
@@ -1121,18 +1379,20 @@
           },
           {
             "name": "context.provider",
-            "in": "query",
-            "required": false,
-            "type": "string"
-          },
-          {
-            "name": "context.organization",
+            "description": "name of the provider",
             "in": "query",
             "required": false,
             "type": "string"
           },
           {
             "name": "context.project",
+            "description": "name of the project",
+            "in": "query",
+            "required": false,
+            "type": "string"
+          },
+          {
+            "name": "context.retiredOrganization",
             "in": "query",
             "required": false,
             "type": "string"
@@ -1168,18 +1428,20 @@
           },
           {
             "name": "context.provider",
-            "in": "query",
-            "required": false,
-            "type": "string"
-          },
-          {
-            "name": "context.organization",
+            "description": "name of the provider",
             "in": "query",
             "required": false,
             "type": "string"
           },
           {
             "name": "context.project",
+            "description": "name of the project",
+            "in": "query",
+            "required": false,
+            "type": "string"
+          },
+          {
+            "name": "context.retiredOrganization",
             "in": "query",
             "required": false,
             "type": "string"
@@ -1210,18 +1472,20 @@
         "parameters": [
           {
             "name": "context.provider",
-            "in": "query",
-            "required": false,
-            "type": "string"
-          },
-          {
-            "name": "context.organization",
+            "description": "name of the provider",
             "in": "query",
             "required": false,
             "type": "string"
           },
           {
             "name": "context.project",
+            "description": "name of the project",
+            "in": "query",
+            "required": false,
+            "type": "string"
+          },
+          {
+            "name": "context.retiredOrganization",
             "in": "query",
             "required": false,
             "type": "string"
@@ -1249,6 +1513,28 @@
             }
           }
         },
+        "parameters": [
+          {
+            "name": "context.provider",
+            "description": "name of the provider",
+            "in": "query",
+            "required": false,
+            "type": "string"
+          },
+          {
+            "name": "context.project",
+            "description": "name of the project",
+            "in": "query",
+            "required": false,
+            "type": "string"
+          },
+          {
+            "name": "context.retiredOrganization",
+            "in": "query",
+            "required": false,
+            "type": "string"
+          }
+        ],
         "tags": [
           "UserService"
         ]
@@ -1269,6 +1555,28 @@
             }
           }
         },
+        "parameters": [
+          {
+            "name": "context.provider",
+            "description": "name of the provider",
+            "in": "query",
+            "required": false,
+            "type": "string"
+          },
+          {
+            "name": "context.project",
+            "description": "name of the project",
+            "in": "query",
+            "required": false,
+            "type": "string"
+          },
+          {
+            "name": "context.retiredOrganization",
+            "in": "query",
+            "required": false,
+            "type": "string"
+          }
+        ],
         "tags": [
           "UserService"
         ]
@@ -1498,6 +1806,18 @@
       },
       "description": "Rule defines the individual call of a certain rule type."
     },
+    "PullRequestRemediationActionsReplaceTagsWithSha": {
+      "type": "object",
+      "properties": {
+        "exclude": {
+          "type": "array",
+          "items": {
+            "type": "string"
+          },
+          "title": "List of actions to exclude from the replacement"
+        }
+      }
+    },
     "PullRequestRemediationContent": {
       "type": "object",
       "properties": {
@@ -1515,7 +1835,7 @@
         },
         "mode": {
           "type": "string",
-          "title": "the GIT mode of the file. Not UNIX mode! String because the GH API also uses strings\nthe usual modes are: 100644 for regular files, 100755 for executable files and\n040000 for submodules (which we don't use but now you know the meaning of the 1 in 100644)"
+          "title": "the GIT mode of the file. Not UNIX mode! String because the GH API also uses strings\nthe usual modes are: 100644 for regular files, 100755 for executable files and\n040000 for submodules (which we don't use but now you know the meaning of the 1 in 100644)\nsee e.g. https://github.com/go-git/go-git/blob/32e0172851c35ae2fac495069c923330040903d2/plumbing/filemode/filemode.go#L16"
         }
       }
     },
@@ -1544,6 +1864,14 @@
             "type": "object",
             "$ref": "#/definitions/PullRequestRemediationContent"
           }
+        },
+        "method": {
+          "type": "string",
+          "title": "the method to use to create the PR. For now, these are supported:\n-- minder.content - ensures that the content of the file is exactly as specified\n                    refer to the Content message for more details\n-- minder.actions.replace_tags_with_sha - finds any github actions within a workflow\n                                          file and replaces the tag with the SHA"
+        },
+        "actionsReplaceTagsWithSha": {
+          "$ref": "#/definitions/PullRequestRemediationActionsReplaceTagsWithSha",
+          "title": "If the method is minder.actions.replace_tags_with_sha, this is the configuration\nfor that method"
         }
       },
       "title": "the name stutters a bit but we already use a PullRequest message for handling PR entities"
@@ -1559,6 +1887,36 @@
           "type": "string"
         }
       }
+    },
+    "RuleTypeDefinition": {
+      "type": "object",
+      "properties": {
+        "inEntity": {
+          "type": "string",
+          "description": "in_entity is the entity in which the rule is evaluated.\nThis can be repository, build_environment or artifact."
+        },
+        "ruleSchema": {
+          "type": "object",
+          "description": "rule_schema is the schema of the rule. This is expressed in JSON Schema."
+        },
+        "paramSchema": {
+          "type": "object",
+          "description": "param_schema is the schema of the parameters that are passed to the rule.\nThis is expressed in JSON Schema."
+        },
+        "ingest": {
+          "$ref": "#/definitions/DefinitionIngest"
+        },
+        "eval": {
+          "$ref": "#/definitions/DefinitionEval"
+        },
+        "remediate": {
+          "$ref": "#/definitions/DefinitionRemediate"
+        },
+        "alert": {
+          "$ref": "#/definitions/DefinitionAlert"
+        }
+      },
+      "description": "Definition defines the rule type. It encompases the schema and the data evaluation."
     },
     "apiHttpBody": {
       "type": "object",
@@ -1601,21 +1959,6 @@
           }
         }
       }
-    },
-    "minderv1Context": {
-      "type": "object",
-      "properties": {
-        "provider": {
-          "type": "string"
-        },
-        "organization": {
-          "type": "string"
-        },
-        "project": {
-          "type": "string"
-        }
-      },
-      "description": "Context defines the context in which a rule is evaluated.\nthis normally refers to a combination of the provider, organization and project."
     },
     "protobufAny": {
       "type": "object",
@@ -1719,11 +2062,31 @@
         }
       }
     },
+    "v1Context": {
+      "type": "object",
+      "properties": {
+        "provider": {
+          "type": "string",
+          "title": "name of the provider"
+        },
+        "project": {
+          "type": "string",
+          "title": "name of the project"
+        },
+        "retiredOrganization": {
+          "type": "string"
+        }
+      },
+      "description": "Context defines the context in which a rule is evaluated.\nthis normally refers to a combination of the provider, organization and project.\n\nRemoving the 'optional' keyword from the following two fields below will break\n buf compatibility checks."
+    },
     "v1CreateProfileRequest": {
       "type": "object",
       "properties": {
         "profile": {
           "$ref": "#/definitions/v1Profile"
+        },
+        "context": {
+          "$ref": "#/definitions/v1Context"
         }
       },
       "title": "Profile service"
@@ -1742,6 +2105,9 @@
         "ruleType": {
           "$ref": "#/definitions/v1RuleType",
           "description": "rule_type is the rule type to be created."
+        },
+        "context": {
+          "$ref": "#/definitions/v1Context"
         }
       },
       "description": "CreateRuleTypeRequest is the request to create a rule type."
@@ -1785,6 +2151,9 @@
         "createdAt": {
           "type": "string",
           "format": "date-time"
+        },
+        "context": {
+          "$ref": "#/definitions/v1Context"
         }
       }
     },
@@ -2066,7 +2435,7 @@
       "type": "object",
       "properties": {
         "context": {
-          "$ref": "#/definitions/minderv1Context",
+          "$ref": "#/definitions/v1Context",
           "description": "context is the context in which the profile is evaluated."
         },
         "id": {
@@ -2113,6 +2482,14 @@
         "alert": {
           "type": "string",
           "title": "whether and how to alert (on,off,dry_run)\nthis is optional as the default is set by the system"
+        },
+        "type": {
+          "type": "string",
+          "description": "type is a placeholder for the object type. It should always be set to \"profile\"."
+        },
+        "version": {
+          "type": "string",
+          "title": "version is the version of the profile type. In this case, it is \"v1\""
         }
       },
       "description": "Profile defines a profile that is user defined."
@@ -2201,7 +2578,7 @@
           "title": "This is optional when returning remote repositories"
         },
         "context": {
-          "$ref": "#/definitions/minderv1Context"
+          "$ref": "#/definitions/v1Context"
         },
         "owner": {
           "type": "string"
@@ -2251,6 +2628,9 @@
         "updatedAt": {
           "type": "string",
           "format": "date-time"
+        },
+        "defaultBranch": {
+          "type": "string"
         }
       }
     },
@@ -2362,11 +2742,11 @@
           "description": "name is the name of the rule type."
         },
         "context": {
-          "$ref": "#/definitions/minderv1Context",
+          "$ref": "#/definitions/v1Context",
           "description": "context is the context in which the rule is evaluated."
         },
         "def": {
-          "$ref": "#/definitions/v1RuleTypeDefinition",
+          "$ref": "#/definitions/RuleTypeDefinition",
           "description": "def is the definition of the rule type."
         },
         "description": {
@@ -2379,36 +2759,6 @@
         }
       },
       "description": "RuleType defines rules that may or may not be user defined.\nThe version is assumed from the folder's version."
-    },
-    "v1RuleTypeDefinition": {
-      "type": "object",
-      "properties": {
-        "inEntity": {
-          "type": "string",
-          "description": "in_entity is the entity in which the rule is evaluated.\nThis can be repository, build_environment or artifact."
-        },
-        "ruleSchema": {
-          "type": "object",
-          "description": "rule_schema is the schema of the rule. This is expressed in JSON Schema."
-        },
-        "paramSchema": {
-          "type": "object",
-          "description": "param_schema is the schema of the parameters that are passed to the rule.\nThis is expressed in JSON Schema."
-        },
-        "ingest": {
-          "$ref": "#/definitions/DefinitionIngest"
-        },
-        "eval": {
-          "$ref": "#/definitions/DefinitionEval"
-        },
-        "remediate": {
-          "$ref": "#/definitions/DefinitionRemediate"
-        },
-        "alert": {
-          "$ref": "#/definitions/DefinitionAlert"
-        }
-      },
-      "description": "Definition defines the rule type. It encompases the schema and the data evaluation."
     },
     "v1SignatureVerification": {
       "type": "object",
@@ -2432,8 +2782,8 @@
           "type": "string"
         },
         "rekorLogIndex": {
-          "type": "integer",
-          "format": "int32"
+          "type": "string",
+          "format": "int64"
         },
         "signatureTime": {
           "type": "string",
@@ -2449,6 +2799,9 @@
       "properties": {
         "profile": {
           "$ref": "#/definitions/v1Profile"
+        },
+        "context": {
+          "$ref": "#/definitions/v1Context"
         }
       }
     },
@@ -2466,6 +2819,9 @@
         "ruleType": {
           "$ref": "#/definitions/v1RuleType",
           "description": "rule_type is the rule type to be updated."
+        },
+        "context": {
+          "$ref": "#/definitions/v1Context"
         }
       },
       "description": "UpdateRuleTypeRequest is the request to update a rule type."

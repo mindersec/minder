@@ -16,14 +16,17 @@
 package profile
 
 import (
+	"context"
 	"fmt"
 	"os"
 
 	"github.com/spf13/cobra"
 	"github.com/spf13/viper"
+	"google.golang.org/grpc"
 
 	"github.com/stacklok/minder/cmd/cli/app"
 	"github.com/stacklok/minder/internal/util"
+	"github.com/stacklok/minder/internal/util/cli"
 	pb "github.com/stacklok/minder/pkg/api/protobuf/go/minder/v1"
 )
 
@@ -32,12 +35,7 @@ var profile_getCmd = &cobra.Command{
 	Short: "Get details for a profile within a minder control plane",
 	Long: `The minder profile get subcommand lets you retrieve details for a profile within a
 minder control plane.`,
-	PreRun: func(cmd *cobra.Command, args []string) {
-		if err := viper.BindPFlags(cmd.Flags()); err != nil {
-			fmt.Fprintf(os.Stderr, "Error binding flags: %s\n", err)
-		}
-	},
-	RunE: func(cmd *cobra.Command, args []string) error {
+	RunE: cli.GRPCClientWrapRunE(func(ctx context.Context, cmd *cobra.Command, conn *grpc.ClientConn) error {
 		provider := viper.GetString("provider")
 		format := viper.GetString("output")
 
@@ -45,41 +43,41 @@ minder control plane.`,
 			return fmt.Errorf("error: invalid format: %s", format)
 		}
 
-		conn, err := util.GrpcForCommand(cmd, viper.GetViper())
-		util.ExitNicelyOnError(err, "Error getting grpc connection")
-		defer conn.Close()
-
 		client := pb.NewProfileServiceClient(conn)
-		ctx, cancel := util.GetAppContext()
-		defer cancel()
 
 		id := viper.GetString("id")
 		profile, err := client.GetProfileById(ctx, &pb.GetProfileByIdRequest{
 			Context: &pb.Context{
-				Provider: provider,
+				Provider: &provider,
 				// TODO set up project if specified
 				// Currently it's inferred from the authorization token
 			},
 			Id: id,
 		})
-		util.ExitNicelyOnError(err, "Error getting profile")
+		if err != nil {
+			return cli.MessageAndError(cmd, "Error getting profile", err)
+		}
 
 		switch format {
 		case app.YAML:
 			out, err := util.GetYamlFromProto(profile)
-			util.ExitNicelyOnError(err, "Error getting yaml from proto")
-			fmt.Println(out)
+			if err != nil {
+				return cli.MessageAndError(cmd, "Error getting yaml from proto", err)
+			}
+			cmd.Println(out)
 		case app.JSON:
 			out, err := util.GetJsonFromProto(profile)
-			util.ExitNicelyOnError(err, "Error getting json from proto")
-			fmt.Println(out)
+			if err != nil {
+				return cli.MessageAndError(cmd, "Error getting json from proto", err)
+			}
+			cmd.Println(out)
 		case app.Table:
 			p := profile.GetProfile()
 			handleGetTableOutput(cmd, p)
 		}
 
 		return nil
-	},
+	}),
 }
 
 func init() {

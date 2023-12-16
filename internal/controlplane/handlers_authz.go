@@ -79,14 +79,14 @@ func lookupUserPermissions(ctx context.Context, store db.Store, tok openid.Token
 		return emptyPermissions, fmt.Errorf("failed to read user")
 	}
 
-	// read groups and add id to claims
+	// read projects and add id to claims
 	gs, err := store.GetUserProjects(ctx, userInfo.ID)
 	if err != nil {
-		return emptyPermissions, fmt.Errorf("failed to get groups")
+		return emptyPermissions, fmt.Errorf("failed to get projects")
 	}
-	var groups []uuid.UUID
+	var projects []uuid.UUID
 	for _, g := range gs {
-		groups = append(groups, g.ID)
+		projects = append(projects, g.ID)
 	}
 
 	// read roles and add details to claims
@@ -112,7 +112,7 @@ func lookupUserPermissions(ctx context.Context, store db.Store, tok openid.Token
 	claims := auth.UserPermissions{
 		UserId:         userInfo.ID,
 		Roles:          roles,
-		ProjectIds:     groups,
+		ProjectIds:     projects,
 		OrganizationId: userInfo.OrganizationID,
 		IsStaff:        containsSuperadminRole(tok),
 	}
@@ -121,7 +121,7 @@ func lookupUserPermissions(ctx context.Context, store db.Store, tok openid.Token
 }
 
 // AuthorizedOnProject checks if the request is authorized for the given
-// group, and returns an error if the request is not authorized.
+// project, and returns an error if the request is not authorized.
 func AuthorizedOnProject(ctx context.Context, projectID uuid.UUID) error {
 	claims := auth.GetPermissionsFromContext(ctx)
 	if isSuperadmin(claims) {
@@ -129,7 +129,7 @@ func AuthorizedOnProject(ctx context.Context, projectID uuid.UUID) error {
 	}
 	opts := getRpcOptions(ctx)
 	if opts.GetAuthScope() != minder.ObjectOwner_OBJECT_OWNER_PROJECT {
-		return status.Errorf(codes.Internal, "Called IsProjectAuthorized on non-group method, should be %v", opts.GetAuthScope())
+		return status.Errorf(codes.Internal, "Called IsProjectAuthorized on non-project method, should be %v", opts.GetAuthScope())
 	}
 
 	if !slices.Contains(claims.ProjectIds, projectID) {
@@ -141,7 +141,7 @@ func AuthorizedOnProject(ctx context.Context, projectID uuid.UUID) error {
 		}
 		return *role.ProjectID == projectID && role.IsAdmin
 	}
-	// check if is admin of group
+	// check if is admin of project
 	if opts.GetOwnerOnly() && !slices.ContainsFunc(claims.Roles, isOwner) {
 		return util.UserVisibleError(codes.PermissionDenied, "user is not an administrator on this project")
 	}

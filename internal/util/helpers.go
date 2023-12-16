@@ -54,9 +54,7 @@ import (
 	"google.golang.org/protobuf/reflect/protoreflect"
 	"google.golang.org/protobuf/types/known/timestamppb"
 
-	"github.com/stacklok/minder/internal/constants"
 	"github.com/stacklok/minder/internal/db"
-	"github.com/stacklok/minder/internal/util/cli/useragent"
 	"github.com/stacklok/minder/internal/util/jsonyaml"
 	minderv1 "github.com/stacklok/minder/pkg/api/protobuf/go/minder/v1"
 )
@@ -142,33 +140,18 @@ func (JWTTokenCredentials) RequireTransportSecurity() bool {
 	return false
 }
 
-// GrpcForCommand is a helper for getting a testing connection from cobra flags
-func GrpcForCommand(cmd *cobra.Command, v *viper.Viper) (*grpc.ClientConn, error) {
-	grpc_host := GetConfigValue(v, "grpc_server.host", "grpc-host", cmd, constants.MinderGRPCHost).(string)
-	grpc_port := GetConfigValue(v, "grpc_server.port", "grpc-port", cmd, 443).(int)
-	insecureDefault := grpc_host == "localhost" || grpc_host == "127.0.0.1" || grpc_host == "::1"
-	allowInsecure := GetConfigValue(v, "grpc_server.insecure", "grpc-insecure", cmd, insecureDefault).(bool)
-
-	issuerUrl := GetConfigValue(v, "identity.cli.issuer_url", "identity-url", cmd, constants.IdentitySeverURL).(string)
-	realm := GetConfigValue(v, "identity.cli.realm", "identity-realm", cmd, "stacklok").(string)
-	clientId := GetConfigValue(v, "identity.cli.client_id", "identity-client", cmd, "minder-cli").(string)
-
-	return GetGrpcConnection(
-		grpc_host, grpc_port, allowInsecure, issuerUrl, realm, clientId, grpc.WithUserAgent(useragent.GetUserAgent()))
-}
-
 // GetGrpcConnection is a helper for getting a testing connection for grpc
 func GetGrpcConnection(
 	grpc_host string, grpc_port int,
 	allowInsecure bool,
-	issuerUrl string, realm string, clientId string,
+	issuerUrl string, clientId string,
 	opts ...grpc.DialOption) (
 	*grpc.ClientConn, error) {
 	address := fmt.Sprintf("%s:%d", grpc_host, grpc_port)
 
 	// read credentials
 	token := ""
-	t, err := GetToken(issuerUrl, realm, clientId)
+	t, err := GetToken(issuerUrl, clientId)
 	if err == nil {
 		token = t
 	}
@@ -252,7 +235,7 @@ func RemoveCredentials() error {
 }
 
 // GetToken retrieves the access token from the credentials file and refreshes it if necessary
-func GetToken(issuerUrl string, realm string, clientId string) (string, error) {
+func GetToken(issuerUrl string, clientId string) (string, error) {
 	refreshLimit := 10
 	creds, err := LoadCredentials()
 	if err != nil {
@@ -261,7 +244,7 @@ func GetToken(issuerUrl string, realm string, clientId string) (string, error) {
 	needsRefresh := time.Now().Add(time.Duration(refreshLimit) * time.Second).After(creds.AccessTokenExpiresAt)
 
 	if needsRefresh {
-		updatedCreds, err := RefreshCredentials(creds.RefreshToken, issuerUrl, realm, clientId)
+		updatedCreds, err := RefreshCredentials(creds.RefreshToken, issuerUrl, clientId)
 		if err != nil {
 			return "", fmt.Errorf("error refreshing credentials: %v", err)
 		}
@@ -278,13 +261,13 @@ type refreshTokenResponse struct {
 }
 
 // RefreshCredentials uses a refresh token to get and save a new set of credentials
-func RefreshCredentials(refreshToken string, issuerUrl string, realm string, clientId string) (OpenIdCredentials, error) {
+func RefreshCredentials(refreshToken string, issuerUrl string, clientId string) (OpenIdCredentials, error) {
 
 	parsedURL, err := url.Parse(issuerUrl)
 	if err != nil {
 		return OpenIdCredentials{}, fmt.Errorf("error parsing issuer URL: %v", err)
 	}
-	logoutUrl := parsedURL.JoinPath("realms", realm, "protocol/openid-connect/token")
+	logoutUrl := parsedURL.JoinPath("realms/stacklok/protocol/openid-connect/token")
 
 	data := url.Values{}
 	data.Set("client_id", clientId)
@@ -342,15 +325,6 @@ func LoadCredentials() (OpenIdCredentials, error) {
 		return OpenIdCredentials{}, fmt.Errorf("error unmarshaling credentials: %v", err)
 	}
 	return creds, nil
-}
-
-// GetAppContext is a helper for getting the cmd app context
-func GetAppContext() (context.Context, context.CancelFunc) {
-	viper.SetDefault("cli.context_timeout", 10)
-	timeout := viper.GetInt("cli.context_timeout")
-
-	ctx, cancel := context.WithTimeout(context.Background(), time.Duration(timeout)*time.Second)
-	return ctx, cancel
 }
 
 // WriteToFile writes the content to a file if the out parameter is not empty.
@@ -525,6 +499,27 @@ func Int32FromString(v string) (int32, error) {
 	return int32(asInt32), nil
 }
 
+// PBRepositoryFromDB converts a database repository to a protobuf
+// Note this doesn't set the context as that's assumed to be set
+// on the caller's side.
+func PBRepositoryFromDB(dbrepo db.Repository) *minderv1.Repository {
+	strRepoID := dbrepo.ID.String()
+	return &minderv1.Repository{
+		Id:            &strRepoID,
+		Owner:         dbrepo.RepoOwner,
+		Name:          dbrepo.RepoName,
+		RepoId:        dbrepo.RepoID,
+		IsPrivate:     dbrepo.IsPrivate,
+		IsFork:        dbrepo.IsFork,
+		HookUrl:       dbrepo.WebhookUrl,
+		DeployUrl:     dbrepo.DeployUrl,
+		CloneUrl:      dbrepo.CloneUrl,
+		DefaultBranch: dbrepo.DefaultBranch.String,
+		CreatedAt:     timestamppb.New(dbrepo.CreatedAt),
+		UpdatedAt:     timestamppb.New(dbrepo.UpdatedAt),
+	}
+}
+
 // GetRepository retrieves a repository from the database
 // and converts it to a protobuf
 func GetRepository(ctx context.Context, store db.ExtendQuerier, repoID uuid.UUID) (*minderv1.Repository, error) {
@@ -533,18 +528,7 @@ func GetRepository(ctx context.Context, store db.ExtendQuerier, repoID uuid.UUID
 		return nil, fmt.Errorf("error getting repository: %w", err)
 	}
 
-	strRepoID := repoID.String()
-	return &minderv1.Repository{
-		Id:        &strRepoID,
-		Owner:     dbrepo.RepoOwner,
-		Name:      dbrepo.RepoName,
-		RepoId:    dbrepo.RepoID,
-		HookUrl:   dbrepo.WebhookUrl,
-		DeployUrl: dbrepo.DeployUrl,
-		CloneUrl:  dbrepo.CloneUrl,
-		CreatedAt: timestamppb.New(dbrepo.CreatedAt),
-		UpdatedAt: timestamppb.New(dbrepo.UpdatedAt),
-	}, nil
+	return PBRepositoryFromDB(dbrepo), nil
 }
 
 // GetArtifactWithVersions retrieves an artifact and its versions from the database

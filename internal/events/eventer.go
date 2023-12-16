@@ -132,18 +132,6 @@ func Setup(ctx context.Context, cfg *config.EventConfig) (*Eventer, error) {
 	router.AddMiddleware(
 		// CorrelationID will copy the correlation id from the incoming message's metadata to the produced messages
 		middleware.CorrelationID,
-
-		// The handler function is retried if it returns an error.
-		// After MaxRetries, the message is Nacked and it's up to the PubSub to resend it.
-		middleware.Retry{
-			MaxRetries:      3,
-			InitialInterval: time.Millisecond * 100,
-			Logger:          l,
-		}.Middleware,
-
-		// Recoverer handles panics from handlers.
-		// In this case, it passes them as errors to the Retry middleware.
-		middleware.Recoverer,
 	)
 
 	pub, sub, cl, err := instantiateDriver(ctx, cfg.Driver, cfg)
@@ -293,20 +281,13 @@ func (e *Eventer) Register(
 		e.webhookSubscriber,
 		func(msg *message.Message) error {
 			if err := handler(msg); err != nil {
-				retriable := errors.Is(err, ErrRetriable)
 				e.router.Logger().Error("Found error handling message", err, watermill.LogFields{
 					"message_uuid": msg.UUID,
 					"topic":        topic,
 					"handler":      funcName,
-					"retriable":    retriable,
 				})
 
-				if retriable {
-					// if the error is retriable, return it so that the message is retried
-					return err
-				}
-				// otherwise, we've done all we can, so return nil so that the message is acked
-				return nil
+				return err
 			}
 
 			return nil

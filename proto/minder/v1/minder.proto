@@ -83,6 +83,7 @@ service ArtifactService {
 message ListArtifactsRequest {
     string provider = 1;
     string project_id = 2;
+    Context context = 3;
 }
 
 message ListArtifactsResponse {
@@ -114,7 +115,7 @@ message SignatureVerification {
     optional string cert_identity = 4;
     optional string cert_issuer = 5;
     optional string rekor_log_id = 6;
-    optional int32 rekor_log_index = 7;
+    optional int64 rekor_log_index = 7;
     optional google.protobuf.Timestamp signature_time = 8;
 }
 
@@ -131,6 +132,7 @@ message GetArtifactByIdRequest {
     string id = 1;
     int32 latest_versions = 5;
     string tag = 6;
+    Context context = 7;
 }
 
 message GetArtifactByIdResponse {
@@ -400,7 +402,12 @@ service ProfileService {
     rpc GetProfileById (GetProfileByIdRequest) returns (GetProfileByIdResponse) {
         option (google.api.http) = {
             get: "/api/v1/profile/{id}"
-            };    
+        };    
+
+        option (rpc_options) = {
+            auth_scope: OBJECT_OWNER_PROJECT
+            owner_only: false
+        };
     }
 
     rpc GetProfileStatusByName (GetProfileStatusByNameRequest) returns (GetProfileStatusByNameResponse) {
@@ -507,6 +514,7 @@ message GetAuthorizationURLRequest {
     bool  cli = 3;
     int32  port = 4;
     optional string owner = 5;
+    Context context = 6;
 }
 
 message GetAuthorizationURLResponse {
@@ -519,6 +527,7 @@ message ExchangeCodeForTokenCLIRequest {
     string code = 3;
     string state = 4;
     string redirect_uri = 5;
+    Context context = 6;
 }
 
 message StoreProviderTokenRequest {
@@ -526,6 +535,7 @@ message StoreProviderTokenRequest {
     string project_id = 2;
     string access_token = 3;
     optional string owner = 4;
+    Context context = 5;
 }
 
 message StoreProviderTokenResponse {    
@@ -536,6 +546,7 @@ message ExchangeCodeForTokenWEBRequest{
     string project_id = 2;
     string code = 3;
     string redirect_uri = 4;
+    Context context = 5;
 }
 
 message ExchangeCodeForTokenWEBResponse {
@@ -582,6 +593,7 @@ message Project {
 message ListRemoteRepositoriesFromProviderRequest {
     string provider = 1;
     string project_id = 2;
+    Context context = 3;
 }
 
 message ListRemoteRepositoriesFromProviderResponse {
@@ -612,12 +624,14 @@ message Repository {
     bool registered = 15;
     google.protobuf.Timestamp created_at = 16;
     google.protobuf.Timestamp updated_at = 17;
+    string default_branch = 18;
 }
 
 message RegisterRepositoryRequest {
     string provider = 1;
     string project_id = 2;
     UpstreamRepositoryRef repository = 3;
+    Context context = 4;
 }
 
 message RegisterRepoResult {
@@ -636,6 +650,7 @@ message RegisterRepositoryResponse {
 
 message GetRepositoryByIdRequest {
     string repository_id = 1;
+    Context context = 2;
 }
 
 message GetRepositoryByIdResponse {
@@ -644,6 +659,7 @@ message GetRepositoryByIdResponse {
 
 message DeleteRepositoryByIdRequest {
     string repository_id = 1;
+    Context context = 2;
 }
 
 message DeleteRepositoryByIdResponse {
@@ -654,6 +670,7 @@ message GetRepositoryByNameRequest {
     string provider = 1;
     string project_id = 2;
     string name = 3;
+    Context context = 4;
 }
 
 message GetRepositoryByNameResponse {
@@ -664,6 +681,7 @@ message DeleteRepositoryByNameRequest {
     string provider = 1;
     string project_id = 2;
     string name = 3;
+    Context context = 4;
 }
 
 message DeleteRepositoryByNameResponse {
@@ -675,6 +693,7 @@ message ListRepositoriesRequest {
     string project_id = 2;
     int32 limit = 3;
     int32 offset = 4;
+    Context context = 5;
 }
 
 message ListRepositoriesResponse {
@@ -685,6 +704,7 @@ message VerifyProviderTokenFromRequest {
     string provider = 1;
     string project_id = 2;
     google.protobuf.Timestamp timestamp = 3;
+    Context context = 4;
 }
 
 message VerifyProviderTokenFromResponse {
@@ -759,9 +779,11 @@ message CreateUserResponse {
     string project_name = 5;
     string identity_subject = 6;
     google.protobuf.Timestamp created_at = 7;
+    Context context = 8;
 }
 
 message DeleteUserRequest {
+    Context context = 1;
 }
 
 message DeleteUserResponse {
@@ -779,6 +801,7 @@ message UserRecord {
 // list users
 // get user
 message GetUserRequest {
+    Context context = 1;
 }
 
 message GetUserResponse {
@@ -789,6 +812,7 @@ message GetUserResponse {
 // Profile service
 message CreateProfileRequest {
     Profile profile = 1;
+    Context context = 2;
 }
 
 message CreateProfileResponse {
@@ -797,6 +821,7 @@ message CreateProfileResponse {
 
 message UpdateProfileRequest {
     Profile profile = 1;
+    Context context = 2;
 }
 
 message UpdateProfileResponse {
@@ -959,54 +984,18 @@ message GitHubProviderConfig {
 	string endpoint = 1;
 }
 
-// Provider defines a provider that is used to connect to a certain service.
-// This is used to define the context in which a rule is evaluated and serves
-// as a data ingestion point. They are top level entities and are scoped to
-// an organization.
-message Provider {
-    string name = 1;
-
-    // Context defines the context in which a provider is evaluated.
-    // Given thta a provider is a top level entity, it may only be scoped to
-    // an organization.
-    message Context {
-        string organization = 1;
-        string project = 2;
-    }
-
-    Context context = 2;
-
-    // Version defines the version of the provider. Currently only v1 is supported.
-    string version = 3;
-
-    // Implements defines the provider types that this provider implements.
-    // This is used to determine the interface to use to interact with the provider.
-    // This is a required field and must be set.
-    // currently, the following interfaces are supported:
-    // - rest
-    // - github
-    // - git
-    repeated string implements = 4;
-
-    // Definition defines the definition of the provider.
-    // This is used to define the connection to the provider.
-    message Definition {
-        // rest is the REST provider configuration.
-        optional RESTProviderConfig rest = 1;
-
-        // github is the GitHub provider configuration.
-        optional GitHubProviderConfig github = 2;
-    }
-
-    Definition def = 5;
-}
-
 // Context defines the context in which a rule is evaluated.
 // this normally refers to a combination of the provider, organization and project.
 message Context {
-    string provider = 1;
-    optional string organization = 2;
+    // Removing the 'optional' keyword from the following two fields below will break
+    // buf compatibility checks.
+
+    // name of the provider
+    optional string provider = 1;
+    // name of the project
     optional string project = 3;
+
+    optional string retired_organization = 2;
 }
 
 // --- START RuleType CRUD definitions
@@ -1055,6 +1044,7 @@ message GetRuleTypeByIdResponse {
 message CreateRuleTypeRequest {
     // rule_type is the rule type to be created.
     RuleType rule_type = 1;
+    Context context = 2;
 }
 
 // CreateRuleTypeResponse is the response to create a rule type.
@@ -1067,6 +1057,7 @@ message CreateRuleTypeResponse {
 message UpdateRuleTypeRequest {
     // rule_type is the rule type to be updated.
     RuleType rule_type = 2;
+    Context context = 3;
 }
 
 // UpdateRuleTypeResponse is the response to update a rule type.
@@ -1285,7 +1276,13 @@ message RuleType {
                     // the GIT mode of the file. Not UNIX mode! String because the GH API also uses strings
                     // the usual modes are: 100644 for regular files, 100755 for executable files and
                     // 040000 for submodules (which we don't use but now you know the meaning of the 1 in 100644)
+                    // see e.g. https://github.com/go-git/go-git/blob/32e0172851c35ae2fac495069c923330040903d2/plumbing/filemode/filemode.go#L16
                     optional string mode = 3;
+                }
+
+                message ActionsReplaceTagsWithSha {
+                    // List of actions to exclude from the replacement
+                    repeated string exclude = 1;
                 }
 
                 // the title of the PR
@@ -1293,6 +1290,16 @@ message RuleType {
                 // the body of the PR
                 string body = 2;
                 repeated Content contents = 3;
+                // the method to use to create the PR. For now, these are supported:
+                // -- minder.content - ensures that the content of the file is exactly as specified
+                //                     refer to the Content message for more details
+                // -- minder.actions.replace_tags_with_sha - finds any github actions within a workflow
+                //                                           file and replaces the tag with the SHA
+                string method = 4;
+
+                // If the method is minder.actions.replace_tags_with_sha, this is the configuration
+                // for that method
+                optional ActionsReplaceTagsWithSha actions_replace_tags_with_sha = 5;
             }
 
             optional RestType rest = 2;
@@ -1359,4 +1366,10 @@ message Profile {
     // whether and how to alert (on,off,dry_run)
     // this is optional as the default is set by the system
     optional string alert = 9;
+
+    // type is a placeholder for the object type. It should always be set to "profile".
+    string type = 10;
+
+    // version is the version of the profile type. In this case, it is "v1"
+    string version = 11;
 }

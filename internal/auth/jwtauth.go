@@ -27,7 +27,6 @@ import (
 	"github.com/lestrrat-go/jwx/v2/jwt/openid"
 	"github.com/spf13/cobra"
 	"github.com/spf13/viper"
-	"golang.org/x/exp/slices"
 
 	"github.com/stacklok/minder/internal/constants"
 	"github.com/stacklok/minder/internal/util"
@@ -143,26 +142,13 @@ func WithPermissionsContext(ctx context.Context, claims UserPermissions) context
 	return context.WithValue(ctx, tokenContextKey, claims)
 }
 
-// GetDefaultProject returns the default group id for the user
+// GetDefaultProject returns the default project id for the user
 func GetDefaultProject(ctx context.Context) (uuid.UUID, error) {
 	permissions := GetPermissionsFromContext(ctx)
 	if len(permissions.ProjectIds) != 1 {
-		return uuid.UUID{}, errors.New("cannot get default group")
+		return uuid.UUID{}, errors.New("cannot get default project")
 	}
 	return permissions.ProjectIds[0], nil
-}
-
-// IsAuthorizedForProject returns true if the user is authorized for the given group
-func IsAuthorizedForProject(ctx context.Context, projectID uuid.UUID) bool {
-	permissions := GetPermissionsFromContext(ctx)
-
-	return slices.Contains(permissions.ProjectIds, projectID)
-}
-
-// GetUserProjects returns all the groups where an user belongs to
-func GetUserProjects(ctx context.Context) ([]uuid.UUID, error) {
-	permissions := GetPermissionsFromContext(ctx)
-	return permissions.ProjectIds, nil
 }
 
 // UserDetails is a helper struct for getting user details
@@ -175,10 +161,9 @@ type UserDetails struct {
 func GetUserDetails(ctx context.Context, cmd *cobra.Command, v *viper.Viper) (*UserDetails, error) {
 	// Extract the config details
 	issuerUrl := util.GetConfigValue(v, "identity.cli.issuer_url", "identity-url", cmd, constants.IdentitySeverURL).(string)
-	realm := util.GetConfigValue(v, "identity.cli.realm", "identity-realm", cmd, "stacklok").(string)
 	clientId := util.GetConfigValue(v, "identity.cli.client_id", "identity-client", cmd, "minder-cli").(string)
 
-	t, err := util.GetToken(issuerUrl, realm, clientId)
+	t, err := util.GetToken(issuerUrl, clientId)
 	if err != nil {
 		return nil, err
 	}
@@ -186,7 +171,7 @@ func GetUserDetails(ctx context.Context, cmd *cobra.Command, v *viper.Viper) (*U
 	if err != nil {
 		return nil, fmt.Errorf("failed to parse issuer URL: %w\n", err)
 	}
-	jwksUrl := parsedURL.JoinPath("realms", realm, "protocol/openid-connect/certs")
+	jwksUrl := parsedURL.JoinPath("realms/stacklok/protocol/openid-connect/certs")
 	vldtr, err := NewJwtValidator(ctx, jwksUrl.String())
 	if err != nil {
 		return nil, fmt.Errorf("failed to fetch and cache identity provider JWKS: %w\n", err)

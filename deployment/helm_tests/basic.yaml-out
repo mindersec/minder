@@ -26,7 +26,7 @@ metadata:
     app.kubernetes.io/version: "2023-07-31"
     helm.sh/chart: minder-0.1.0
 data:
-  config.yaml: |
+  server-config.yaml: |
     
     #
     # Copyright 2023 Stacklok, Inc.
@@ -75,13 +75,8 @@ data:
       sslmode: disable
     
     identity:
-      cli:
-        issuer_url: http://localhost:8081
-        realm: stacklok
-        client_id: minder-cli
       server:
         issuer_url: http://keycloak:8080 # Use http://localhost:8081 instead for running minder outside of docker-compose
-        realm: stacklok
         client_id: minder-server
         client_secret: secret
     
@@ -89,25 +84,8 @@ data:
     # The token key can be generated with:
     #   openssl rand -base64 32 > .ssh/token_key_passphrase
     auth:
+      nonce_period: 3600
       token_key: "./.ssh/token_key_passphrase"
-    
-    # Password Salting, these values are using argon2id
-    # https://en.wikipedia.org/wiki/Argon2
-    # Argon has resistance against side-channel timing attacks and tradeoff attacks
-    # but it is computationally expensive.
-    # If this is a problematic, we could use bcrypt instead.
-    # https://en.wikipedia.org/wiki/Bcrypt
-    salt:
-      # The amount of memory used by the algorithm (in kibibytes).
-      memory: 65536
-      # the amount of iterations
-      iterations:  50
-      # degree of parallelism (number of threads)
-      parallelism: 4
-      # the length of the salt to be used
-      salt_length: 16
-      # the desired number of returned bytes
-      key_length: 32
     
     # Webhook Configuration
     # change example.com to an exposed IP / domain
@@ -126,7 +104,7 @@ data:
         payload_secret: "your-password"
         redirect_uri: "http://localhost:8080/api/v1/auth/callback/github"
         # [*] for all events. It can also be a list such as [push,branch_protection_rule].
-        # Please check complete list on https://docs.github.com/es/webhooks-and-events/webhooks/webhook-events-and-payloads
+        # Please check complete list on https://docs.github.com/en/webhooks-and-events/webhooks/webhook-events-and-payloads
         events: ["*"]
     
     events:
@@ -144,7 +122,6 @@ data:
     identity:
       server:
         issuer_url: http://keycloak-deployment.keycloak.svc:80
-        realm: minder
         client_id: minder-server
     
     github:
@@ -308,7 +285,7 @@ spec:
           args:
           - "serve"
           - "--db-host=postgres.postgres.svc"
-          - "--config=/config/config.yaml"
+          - "--config=/config/server-config.yaml"
           # We use two config files, one with all the defaults, and one with
           # additional override values from helm.  (This is a viper feature.)
           - "--config=/config/overrides.yaml"
@@ -323,9 +300,7 @@ spec:
           - name: "MINDER_IDENTITY_SERVER_CLIENT_SECRET_FILE"
             value: "/secrets/identity/identity_client_secret"
           - name: "MINDER_UNSTABLE_TRUSTY_ENDPOINT"
-            value: "http://pi.pi:8000"
-          - name: "SIGSTORE_NO_CACHE"
-            value: "true"
+            value: "http://trusty.trusty:8080"
           
           # ko will always specify a digest, so we don't need to worry about
           # CRI image caching
@@ -364,13 +339,15 @@ spec:
             mountPath: /secrets/app
           - name: identity-secrets
             mountPath: /secrets/identity
+          - name: sigstore-tuf-cache
+            mountPath: /tmp/minder-cache
       volumes:
       - name: config
         configMap:
           name: minder-config
           items:
-          - key: config.yaml
-            path: config.yaml
+          - key: server-config.yaml
+            path: server-config.yaml
           - key: overrides.yaml
             path: overrides.yaml
       - name: auth-secrets
@@ -382,6 +359,9 @@ spec:
       - name: identity-secrets
         secret:
           secretName: minder-identity-secrets
+      - name: sigstore-tuf-cache
+        emptyDir:
+          sizeLimit: 500Mi
 ---
 # Source: minder/templates/hpa.yaml
 # Copyright 2023 Stacklok, Inc
@@ -634,7 +614,7 @@ metadata:
     app.kubernetes.io/version: "2023-07-31"
     app.kubernetes.io/managed-by: "Helm"
 data:
-  config.yaml: |
+  server-config.yaml: |
     
     #
     # Copyright 2023 Stacklok, Inc.
@@ -683,13 +663,8 @@ data:
       sslmode: disable
     
     identity:
-      cli:
-        issuer_url: http://localhost:8081
-        realm: stacklok
-        client_id: minder-cli
       server:
         issuer_url: http://keycloak:8080 # Use http://localhost:8081 instead for running minder outside of docker-compose
-        realm: stacklok
         client_id: minder-server
         client_secret: secret
     
@@ -697,25 +672,8 @@ data:
     # The token key can be generated with:
     #   openssl rand -base64 32 > .ssh/token_key_passphrase
     auth:
+      nonce_period: 3600
       token_key: "./.ssh/token_key_passphrase"
-    
-    # Password Salting, these values are using argon2id
-    # https://en.wikipedia.org/wiki/Argon2
-    # Argon has resistance against side-channel timing attacks and tradeoff attacks
-    # but it is computationally expensive.
-    # If this is a problematic, we could use bcrypt instead.
-    # https://en.wikipedia.org/wiki/Bcrypt
-    salt:
-      # The amount of memory used by the algorithm (in kibibytes).
-      memory: 65536
-      # the amount of iterations
-      iterations:  50
-      # degree of parallelism (number of threads)
-      parallelism: 4
-      # the length of the salt to be used
-      salt_length: 16
-      # the desired number of returned bytes
-      key_length: 32
     
     # Webhook Configuration
     # change example.com to an exposed IP / domain
@@ -734,7 +692,7 @@ data:
         payload_secret: "your-password"
         redirect_uri: "http://localhost:8080/api/v1/auth/callback/github"
         # [*] for all events. It can also be a list such as [push,branch_protection_rule].
-        # Please check complete list on https://docs.github.com/es/webhooks-and-events/webhooks/webhook-events-and-payloads
+        # Please check complete list on https://docs.github.com/en/webhooks-and-events/webhooks/webhook-events-and-payloads
         events: ["*"]
     
     events:
@@ -790,7 +748,7 @@ spec:
           - "up"
           - "--yes"
           - "--db-host=postgres.postgres.svc"
-          - "--config=/config/config.yaml"
+          - "--config=/config/server-config.yaml"
           # We use two config files, one with all the defaults, and one with
           # additional override values from helm.  (This is a viper feature.)
           - "--config=/config/overrides.yaml"
@@ -812,7 +770,7 @@ spec:
         configMap:
           name: db-update-config
           items:
-          - key: config.yaml
-            path: config.yaml
+          - key: server-config.yaml
+            path: server-config.yaml
           - key: overrides.yaml
             path: overrides.yaml

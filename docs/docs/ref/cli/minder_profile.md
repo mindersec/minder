@@ -28,16 +28,16 @@ minder profile [flags]
       --grpc-insecure            Allow establishing insecure connections
       --grpc-port int            Server port (default 443)
       --identity-client string   Identity server client ID (default "minder-cli")
-      --identity-realm string    Identity server realm (default "stacklok")
       --identity-url string      Identity server issuer URL (default "https://auth.stacklok.com")
 ```
 
 ### SEE ALSO
 
 * [minder](minder.md)	 - Minder controls the hosted minder service
+* [minder profile apply](minder_profile_apply.md)	 - Create or update a profile within a minder control plane
 * [minder profile create](minder_profile_create.md)	 - Create a profile within a minder control plane
 * [minder profile delete](minder_profile_delete.md)	 - Delete a profile within a minder control plane
 * [minder profile get](minder_profile_get.md)	 - Get details for a profile within a minder control plane
 * [minder profile list](minder_profile_list.md)	 - List profiles within a minder control plane
-* [minder profile update](minder_profile_update.md)	 - Update a profile within a minder control plane
+* [minder profile status](minder_profile_status.md)	 - Manage profile status within a minder control plane
 

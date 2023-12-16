@@ -20,19 +20,33 @@ import (
 	"database/sql"
 	"errors"
 	"fmt"
+	"slices"
 
 	"github.com/google/uuid"
 	"google.golang.org/grpc/codes"
 	"google.golang.org/grpc/status"
 
 	"github.com/stacklok/minder/internal/auth"
+	"github.com/stacklok/minder/internal/db"
 	"github.com/stacklok/minder/internal/util"
+	pb "github.com/stacklok/minder/pkg/api/protobuf/go/minder/v1"
 )
 
 // ProjectIDGetter is an interface that can be implemented by a request
 type ProjectIDGetter interface {
 	// GetProjectId returns the project ID
 	GetProjectId() string
+}
+
+// ProviderNameGetter is an interface that can be implemented by a request
+type ProviderNameGetter interface {
+	// GetProvider returns the provider name
+	GetProvider() string
+}
+
+// HasProtoContext is an interface that can be implemented by a request
+type HasProtoContext interface {
+	GetContext() *pb.Context
 }
 
 func providerError(err error) error {
@@ -43,8 +57,17 @@ func providerError(err error) error {
 }
 
 func getProjectFromRequestOrDefault(ctx context.Context, in ProjectIDGetter) (uuid.UUID, error) {
-	// if we do not have a group, check if we can infer it
-	if in.GetProjectId() == "" {
+	var requestedProject string
+
+	// Prefer the context message from the protobuf
+	pbContext, ok := in.(HasProtoContext)
+	if ok && pbContext.GetContext().GetProject() != "" {
+		requestedProject = pbContext.GetContext().GetProject()
+	} else if in.GetProjectId() != "" {
+		requestedProject = in.GetProjectId()
+	}
+
+	if requestedProject == "" {
 		proj, err := auth.GetDefaultProject(ctx)
 		if err != nil {
 			return uuid.UUID{}, status.Errorf(codes.InvalidArgument, "cannot infer project id: %s", err)
@@ -53,9 +76,39 @@ func getProjectFromRequestOrDefault(ctx context.Context, in ProjectIDGetter) (uu
 		return proj, err
 	}
 
-	parsedProjectID, err := uuid.Parse(in.GetProjectId())
+	parsedProjectID, err := uuid.Parse(requestedProject)
 	if err != nil {
 		return uuid.UUID{}, util.UserVisibleError(codes.InvalidArgument, "malformed project ID")
 	}
 	return parsedProjectID, nil
+}
+
+func getProviderFromRequestOrDefault(
+	ctx context.Context,
+	store db.Store,
+	in ProviderNameGetter,
+	projectId uuid.UUID,
+) (db.Provider, error) {
+	providers, err := store.ListProvidersByProjectID(ctx, projectId)
+	if err != nil {
+		return db.Provider{}, status.Errorf(codes.InvalidArgument, "cannot retrieve providers: %s", err)
+	}
+	// if we do not have a provider name, check if we can infer it
+	if in.GetProvider() == "" {
+		if len(providers) == 1 {
+			return providers[0], nil
+		}
+		return db.Provider{}, util.UserVisibleError(codes.InvalidArgument, "cannot infer provider, there are %d providers available",
+			len(providers))
+	}
+
+	matchesName := func(provider db.Provider) bool {
+		return provider.Name == in.GetProvider()
+	}
+
+	i := slices.IndexFunc(providers, matchesName)
+	if i == -1 {
+		return db.Provider{}, util.UserVisibleError(codes.InvalidArgument, "invalid provider name: %s", in.GetProvider())
+	}
+	return providers[i], nil
 }

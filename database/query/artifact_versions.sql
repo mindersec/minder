@@ -59,4 +59,5 @@ WHERE id = $1;
 
 -- name: DeleteOldArtifactVersions :exec
 DELETE FROM artifact_versions
-WHERE artifact_id = $1 AND created_at <= $2;
+WHERE artifact_id = $1
+  AND (created_at <= $2 OR tags IS NULL OR tags = '');

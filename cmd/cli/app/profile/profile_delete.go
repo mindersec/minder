@@ -16,13 +16,14 @@
 package profile
 
 import (
-	"fmt"
+	"context"
 	"os"
 
 	"github.com/spf13/cobra"
 	"github.com/spf13/viper"
+	"google.golang.org/grpc"
 
-	"github.com/stacklok/minder/internal/util"
+	"github.com/stacklok/minder/internal/util/cli"
 	pb "github.com/stacklok/minder/pkg/api/protobuf/go/minder/v1"
 )
 
@@ -31,42 +32,36 @@ var profile_deleteCmd = &cobra.Command{
 	Short: "Delete a profile within a minder control plane",
 	Long: `The minder profile delete subcommand lets you delete profiles within a
 minder control plane.`,
-	PreRun: func(cmd *cobra.Command, args []string) {
-		if err := viper.BindPFlags(cmd.Flags()); err != nil {
-			fmt.Fprintf(os.Stderr, "Error binding flags: %s\n", err)
-		}
-	},
-	Run: func(cmd *cobra.Command, args []string) {
+	RunE: cli.GRPCClientWrapRunE(func(ctx context.Context, cmd *cobra.Command, conn *grpc.ClientConn) error {
 		// delete the profile via GRPC
 		id := viper.GetString("id")
 		provider := viper.GetString("provider")
 
-		conn, err := util.GrpcForCommand(cmd, viper.GetViper())
-
-		util.ExitNicelyOnError(err, "Error getting grpc connection")
-		defer conn.Close()
-
 		client := pb.NewProfileServiceClient(conn)
-		ctx, cancel := util.GetAppContext()
-		defer cancel()
 
-		_, err = client.DeleteProfile(ctx, &pb.DeleteProfileRequest{
+		_, err := client.DeleteProfile(ctx, &pb.DeleteProfileRequest{
 			Context: &pb.Context{
-				Provider: provider,
+				Provider: &provider,
 			},
 			Id: id,
 		})
+		if err != nil {
+			return cli.MessageAndError(cmd, "Error deleting profile", err)
+		}
 
-		util.ExitNicelyOnError(err, "Error deleting profile")
 		cmd.Println("Successfully deleted profile with id:", id)
-	},
+
+		return nil
+	}),
 }
 
 func init() {
 	ProfileCmd.AddCommand(profile_deleteCmd)
 	profile_deleteCmd.Flags().StringP("id", "i", "", "ID of profile to delete")
 	profile_deleteCmd.Flags().StringP("provider", "p", "github", "Provider for the profile")
-	err := profile_deleteCmd.MarkFlagRequired("id")
-	util.ExitNicelyOnError(err, "Error marking flag as required")
+	if err := profile_deleteCmd.MarkFlagRequired("id"); err != nil {
+		profile_deleteCmd.Printf("Error marking flag as required: %s", err)
+		os.Exit(1)
+	}
 	// TODO: add a flag for the profile name
 }

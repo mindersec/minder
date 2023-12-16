@@ -11,7 +11,7 @@ jobs:
 
       # Install Go on the VM running the action.
       - name: Set up Go
-        uses: actions/setup-go@v4
+        uses: actions/setup-go@v5
         with:
           go-version-file: 'go.mod'
 
@@ -26,8 +26,8 @@ jobs:
 
       # copy config file into place
       - name: Copy config file
-        run: cp config/config.yaml.example ./config.yaml
+        run: cp config/server-config.yaml.example ./server-config.yaml
 
       # Run the tests
       - name: Run tests
-        run: make test
+        run: make test-silent

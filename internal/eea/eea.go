@@ -76,6 +76,7 @@ func (e *EEA) AggregateMiddleware(h message.HandlerFunc) message.HandlerFunc {
 	}
 }
 
+// nolint:gocyclo // TODO: hacking in the TODO about foreign keys pushed this over the limit.
 func (e *EEA) aggregate(msg *message.Message) (*message.Message, error) {
 	ctx := msg.Context()
 	inf, err := engine.ParseEntityEvent(msg)
@@ -85,6 +86,36 @@ func (e *EEA) aggregate(msg *message.Message) (*message.Message, error) {
 
 	repoID, artifactID, pullRequestID := inf.GetEntityDBIDs()
 
+	logger := zerolog.Ctx(ctx).Info()
+	logger = logger.Str("event", msg.UUID).
+		Str("entity", inf.Type.ToString()).
+		Str("repository_id", repoID.String())
+
+	// We need to check that the resources still exist before attempting to lock them.
+	// TODO: consider whether we need foreign key checks on the locks.
+	if _, err := e.querier.GetRepositoryByID(ctx, repoID); err != nil {
+		if errors.Is(err, sql.ErrNoRows) {
+			logger.Msg("Skipping event because repository no longer exists")
+			return nil, nil
+		}
+	}
+	if artifactID.Valid {
+		if _, err := e.querier.GetArtifactByID(ctx, artifactID.UUID); err != nil {
+			if errors.Is(err, sql.ErrNoRows) {
+				logger.Msg("Skipping event because artifact no longer exists")
+				return nil, nil
+			}
+		}
+	}
+	if pullRequestID.Valid {
+		if _, err := e.querier.GetPullRequestByID(ctx, pullRequestID.UUID); err != nil {
+			if errors.Is(err, sql.ErrNoRows) {
+				logger.Msg("Skipping event because pull request no longer exists")
+				return nil, nil
+			}
+		}
+	}
+
 	res, err := e.querier.LockIfThresholdNotExceeded(ctx, db.LockIfThresholdNotExceededParams{
 		Entity:        entities.EntityTypeToDB(inf.Type),
 		RepositoryID:  repoID,
@@ -92,11 +123,6 @@ func (e *EEA) aggregate(msg *message.Message) (*message.Message, error) {
 		PullRequestID: pullRequestID,
 		Interval:      fmt.Sprintf("%d", e.cfg.LockInterval),
 	})
-
-	logger := zerolog.Ctx(ctx).Info()
-	logger = logger.Str("event", msg.UUID).
-		Str("entity", inf.Type.ToString()).
-		Str("repository_id", repoID.String())
 
 	if artifactID.Valid {
 		logger = logger.Str("artifact_id", artifactID.UUID.String())
@@ -200,23 +226,33 @@ func (e *EEA) FlushAll(ctx context.Context) error {
 	for _, cache := range caches {
 		cache := cache
 
+		// ensure that the eiw has a project ID (invariant checked elsewhere)
+		r, err := e.querier.GetRepositoryByID(ctx, cache.RepositoryID)
+		if err != nil {
+			if errors.Is(err, sql.ErrNoRows) {
+				zerolog.Ctx(ctx).Info().Msg("No project found for repository, skipping")
+				continue
+			}
+			return fmt.Errorf("unable to look up project for repository %s: %w", cache.RepositoryID, err)
+		}
+
 		eiw, err := e.buildEntityWrapper(ctx, cache.Entity,
-			cache.RepositoryID, cache.ArtifactID, cache.PullRequestID)
+			cache.RepositoryID, r.ProjectID, r.Provider, cache.ArtifactID, cache.PullRequestID)
 		if err != nil && errors.Is(err, sql.ErrNoRows) {
 			continue
 		} else if err != nil {
-			return fmt.Errorf("error flushing cache: %w", err)
+			return fmt.Errorf("error building entity wrapper: %w", err)
 		}
 
 		msg, err := eiw.BuildMessage()
 		if err != nil {
-			return fmt.Errorf("error flushing cache: %w", err)
+			return fmt.Errorf("error building message: %w", err)
 		}
 
 		msg.SetContext(ctx)
 
 		if err := e.FlushMessageHandler(msg); err != nil {
-			return fmt.Errorf("error flushing cache: %w", err)
+			return fmt.Errorf("error flushing messages: %w", err)
 		}
 	}
 
@@ -227,15 +263,17 @@ func (e *EEA) buildEntityWrapper(
 	ctx context.Context,
 	entity db.Entities,
 	repoID uuid.UUID,
+	projID uuid.UUID,
+	provider string,
 	artID, prID uuid.NullUUID,
 ) (*engine.EntityInfoWrapper, error) {
 	switch entity {
 	case db.EntitiesRepository:
-		return e.buildRepositoryInfoWrapper(ctx, repoID)
+		return e.buildRepositoryInfoWrapper(ctx, repoID, projID, provider)
 	case db.EntitiesArtifact:
-		return e.buildArtifactInfoWrapper(ctx, repoID, artID)
+		return e.buildArtifactInfoWrapper(ctx, repoID, projID, provider, artID)
 	case db.EntitiesPullRequest:
-		return e.buildPullRequestInfoWrapper(ctx, repoID, prID)
+		return e.buildPullRequestInfoWrapper(ctx, repoID, projID, provider, prID)
 	case db.EntitiesBuildEnvironment:
 		return nil, fmt.Errorf("build environment entity not supported")
 	default:
@@ -246,6 +284,8 @@ func (e *EEA) buildEntityWrapper(
 func (e *EEA) buildRepositoryInfoWrapper(
 	ctx context.Context,
 	repoID uuid.UUID,
+	projID uuid.UUID,
+	provider string,
 ) (*engine.EntityInfoWrapper, error) {
 	r, err := util.GetRepository(ctx, e.querier, repoID)
 	if err != nil {
@@ -254,12 +294,16 @@ func (e *EEA) buildRepositoryInfoWrapper(
 
 	return engine.NewEntityInfoWrapper().
 		WithRepository(r).
-		WithRepositoryID(repoID), nil
+		WithRepositoryID(repoID).
+		WithProjectID(projID).
+		WithProvider(provider), nil
 }
 
 func (e *EEA) buildArtifactInfoWrapper(
 	ctx context.Context,
 	repoID uuid.UUID,
+	projID uuid.UUID,
+	provider string,
 	artID uuid.NullUUID,
 ) (*engine.EntityInfoWrapper, error) {
 	a, err := util.GetArtifactWithVersions(ctx, e.querier, repoID, artID.UUID)
@@ -269,13 +313,17 @@ func (e *EEA) buildArtifactInfoWrapper(
 
 	return engine.NewEntityInfoWrapper().
 		WithRepositoryID(repoID).
+		WithProjectID(projID).
 		WithArtifact(a).
-		WithArtifactID(artID.UUID), nil
+		WithArtifactID(artID.UUID).
+		WithProvider(provider), nil
 }
 
 func (e *EEA) buildPullRequestInfoWrapper(
 	ctx context.Context,
 	repoID uuid.UUID,
+	projID uuid.UUID,
+	provider string,
 	prID uuid.NullUUID,
 ) (*engine.EntityInfoWrapper, error) {
 	pr, err := util.GetPullRequest(ctx, e.querier, repoID, prID.UUID)
@@ -285,6 +333,8 @@ func (e *EEA) buildPullRequestInfoWrapper(
 
 	return engine.NewEntityInfoWrapper().
 		WithRepositoryID(repoID).
+		WithProjectID(projID).
 		WithPullRequest(pr).
-		WithPullRequestID(prID.UUID), nil
+		WithPullRequestID(prID.UUID).
+		WithProvider(provider), nil
 }

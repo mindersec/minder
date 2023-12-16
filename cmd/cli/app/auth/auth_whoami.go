@@ -16,15 +16,12 @@
 package auth
 
 import (
-	"fmt"
-	"os"
+	"context"
 
 	"github.com/charmbracelet/bubbles/table"
 	"github.com/spf13/cobra"
-	"github.com/spf13/viper"
 	"google.golang.org/grpc"
 
-	"github.com/stacklok/minder/internal/util"
 	"github.com/stacklok/minder/internal/util/cli"
 	pb "github.com/stacklok/minder/pkg/api/protobuf/go/minder/v1"
 )
@@ -34,27 +31,18 @@ var authWhoamiCmd = &cobra.Command{
 	Use:   "whoami",
 	Short: "whoami for current user",
 	Long:  `whoami gets information about the current user from the minder server`,
-	PreRun: func(cmd *cobra.Command, args []string) {
-		if err := viper.BindPFlags(cmd.Flags()); err != nil {
-			fmt.Fprintf(os.Stderr, "Error binding flags: %s\n", err)
-		}
-	},
-	Run: func(cmd *cobra.Command, args []string) {
-		ctx, cancel := util.GetAppContext()
-		defer cancel()
-
-		conn, err := util.GrpcForCommand(cmd, viper.GetViper())
-		util.ExitNicelyOnError(err, "Error getting grpc connection")
-		defer conn.Close()
-
+	RunE: cli.GRPCClientWrapRunE(func(ctx context.Context, cmd *cobra.Command, conn *grpc.ClientConn) error {
 		client := pb.NewUserServiceClient(conn)
 
 		userInfo, err := client.GetUser(ctx, &pb.GetUserRequest{})
-		util.ExitNicelyOnError(err, "Error getting information for user")
+		if err != nil {
+			return cli.MessageAndError(cmd, "Error getting information for user", err)
+		}
 
-		cli.PrintCmd(cmd, cli.Header.Render("Here are your details:"))
+		cmd.Println(cli.Header.Render("Here are your details:"))
 		renderUserInfoWhoami(cmd, conn, userInfo)
-	},
+		return nil
+	}),
 }
 
 func init() {

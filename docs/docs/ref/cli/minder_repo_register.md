@@ -18,7 +18,7 @@ minder repo register [flags]
 ```
   -h, --help                help for register
   -g, --project-id string   ID of the project for repo registration
-  -p, --provider string     Name for the provider to enroll
+  -p, --provider string     Name for the provider to enroll (default "github")
       --repo string         List of repositories to register, i.e owner/repo,owner/repo
 ```
 
@@ -30,7 +30,6 @@ minder repo register [flags]
       --grpc-insecure            Allow establishing insecure connections
       --grpc-port int            Server port (default 443)
       --identity-client string   Identity server client ID (default "minder-cli")
-      --identity-realm string    Identity server realm (default "stacklok")
       --identity-url string      Identity server issuer URL (default "https://auth.stacklok.com")
 ```
 

@@ -28,7 +28,7 @@ import (
 	"os"
 	"path/filepath"
 
-	go_github "github.com/google/go-github/v53/github"
+	go_github "github.com/google/go-github/v56/github"
 	"github.com/spf13/pflag"
 	"github.com/spf13/viper"
 	"golang.org/x/oauth2"

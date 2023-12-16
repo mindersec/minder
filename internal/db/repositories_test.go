@@ -94,18 +94,18 @@ func TestRepository(t *testing.T) {
 	t.Parallel()
 
 	org := createRandomOrganization(t)
-	group := createRandomProject(t, org.ID)
-	prov := createRandomProvider(t, group.ID)
-	createRandomRepository(t, group.ID, prov.Name)
+	project := createRandomProject(t, org.ID)
+	prov := createRandomProvider(t, project.ID)
+	createRandomRepository(t, project.ID, prov.Name)
 }
 
 func TestGetRepositoryByID(t *testing.T) {
 	t.Parallel()
 
 	org := createRandomOrganization(t)
-	group := createRandomProject(t, org.ID)
-	prov := createRandomProvider(t, group.ID)
-	repo1 := createRandomRepository(t, group.ID, prov.Name)
+	project := createRandomProject(t, org.ID)
+	prov := createRandomProvider(t, project.ID)
+	repo1 := createRandomRepository(t, project.ID, prov.Name)
 
 	repo2, err := testQueries.GetRepositoryByID(context.Background(), repo1.ID)
 	require.NoError(t, err)
@@ -130,9 +130,9 @@ func TestGetRepositoryByRepoName(t *testing.T) {
 	t.Parallel()
 
 	org := createRandomOrganization(t)
-	group := createRandomProject(t, org.ID)
-	prov := createRandomProvider(t, group.ID)
-	repo1 := createRandomRepository(t, group.ID, prov.Name)
+	project := createRandomProject(t, org.ID)
+	prov := createRandomProvider(t, project.ID)
+	repo1 := createRandomRepository(t, project.ID, prov.Name)
 
 	repo2, err := testQueries.GetRepositoryByRepoName(context.Background(), GetRepositoryByRepoNameParams{
 		Provider: repo1.Provider, RepoOwner: repo1.RepoOwner, RepoName: repo1.RepoName})
@@ -158,19 +158,19 @@ func TestListRepositoriesByProjectID(t *testing.T) {
 	t.Parallel()
 
 	org := createRandomOrganization(t)
-	group := createRandomProject(t, org.ID)
-	prov := createRandomProvider(t, group.ID)
-	createRandomRepository(t, group.ID, prov.Name)
+	project := createRandomProject(t, org.ID)
+	prov := createRandomProvider(t, project.ID)
+	createRandomRepository(t, project.ID, prov.Name)
 
 	for i := int32(1001); i < 1020; i++ {
-		createRandomRepository(t, group.ID, prov.Name, func(r *CreateRepositoryParams) {
+		createRandomRepository(t, project.ID, prov.Name, func(r *CreateRepositoryParams) {
 			r.RepoID = int32(i)
 		})
 	}
 
 	arg := ListRepositoriesByProjectIDParams{
 		Provider:  prov.Name,
-		ProjectID: group.ID,
+		ProjectID: project.ID,
 	}
 
 	repos, err := testQueries.ListRepositoriesByProjectID(context.Background(), arg)
@@ -187,9 +187,9 @@ func TestUpdateRepository(t *testing.T) {
 	t.Parallel()
 
 	org := createRandomOrganization(t)
-	group := createRandomProject(t, org.ID)
-	prov := createRandomProvider(t, group.ID)
-	repo1 := createRandomRepository(t, group.ID, prov.Name)
+	project := createRandomProject(t, org.ID)
+	prov := createRandomProvider(t, project.ID)
+	repo1 := createRandomRepository(t, project.ID, prov.Name)
 
 	arg := UpdateRepositoryParams{
 		ID:         repo1.ID,
@@ -228,9 +228,9 @@ func TestUpdateRepositoryByRepoId(t *testing.T) {
 	t.Parallel()
 
 	org := createRandomOrganization(t)
-	group := createRandomProject(t, org.ID)
-	prov := createRandomProvider(t, group.ID)
-	repo1 := createRandomRepository(t, group.ID, prov.Name)
+	project := createRandomProject(t, org.ID)
+	prov := createRandomProvider(t, project.ID)
+	repo1 := createRandomRepository(t, project.ID, prov.Name)
 
 	arg := UpdateRepositoryByIDParams{
 		RepoID:     repo1.RepoID,
@@ -268,9 +268,9 @@ func TestDeleteRepository(t *testing.T) {
 	t.Parallel()
 
 	org := createRandomOrganization(t)
-	group := createRandomProject(t, org.ID)
-	prov := createRandomProvider(t, group.ID)
-	repo1 := createRandomRepository(t, group.ID, prov.Name)
+	project := createRandomProject(t, org.ID)
+	prov := createRandomProvider(t, project.ID)
+	repo1 := createRandomRepository(t, project.ID, prov.Name)
 
 	err := testQueries.DeleteRepository(context.Background(), repo1.ID)
 	require.NoError(t, err)

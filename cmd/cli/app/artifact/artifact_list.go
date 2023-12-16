@@ -16,6 +16,7 @@
 package artifact
 
 import (
+	"context"
 	"fmt"
 	"os"
 	"time"
@@ -23,9 +24,10 @@ import (
 	"github.com/olekukonko/tablewriter"
 	"github.com/spf13/cobra"
 	"github.com/spf13/viper"
+	"google.golang.org/grpc"
 
-	"github.com/stacklok/minder/internal/auth"
 	"github.com/stacklok/minder/internal/util"
+	"github.com/stacklok/minder/internal/util/cli"
 	pb "github.com/stacklok/minder/pkg/api/protobuf/go/minder/v1"
 )
 
@@ -33,18 +35,10 @@ var artifact_listCmd = &cobra.Command{
 	Use:   "list",
 	Short: "List artifacts from a provider",
 	Long:  `Artifact list will list artifacts from a provider`,
-	PreRun: func(cmd *cobra.Command, args []string) {
-		if err := viper.BindPFlags(cmd.Flags()); err != nil {
-			fmt.Fprintf(os.Stderr, "error binding flags: %s", err)
-		}
-	},
-	RunE: func(cmd *cobra.Command, args []string) error {
+	RunE: cli.GRPCClientWrapRunE(func(ctx context.Context, cmd *cobra.Command, conn *grpc.ClientConn) error {
 		format := viper.GetString("output")
 
 		provider := util.GetConfigValue(viper.GetViper(), "provider", "provider", cmd, "").(string)
-		if provider != auth.Github {
-			return fmt.Errorf("only %s is supported at this time", auth.Github)
-		}
 		projectID := viper.GetString("project-id")
 
 		switch format {
@@ -56,13 +50,7 @@ var artifact_listCmd = &cobra.Command{
 			return fmt.Errorf("invalid output format: %s", format)
 		}
 
-		conn, err := util.GrpcForCommand(cmd, viper.GetViper())
-		util.ExitNicelyOnError(err, "Error getting grpc connection")
-		defer conn.Close()
-
 		client := pb.NewArtifactServiceClient(conn)
-		ctx, cancel := util.GetAppContext()
-		defer cancel()
 
 		artifacts, err := client.ListArtifacts(
 			ctx,
@@ -73,7 +61,7 @@ var artifact_listCmd = &cobra.Command{
 		)
 
 		if err != nil {
-			return fmt.Errorf("error getting artifacts: %s", err)
+			return cli.MessageAndError(cmd, "Couldn't list artifacts", err)
 		}
 
 		switch format {
@@ -97,25 +85,25 @@ var artifact_listCmd = &cobra.Command{
 			table.Render()
 		case "json":
 			out, err := util.GetJsonFromProto(artifacts)
-			util.ExitNicelyOnError(err, "Error getting json from proto")
-			fmt.Println(out)
+			if err != nil {
+				return cli.MessageAndError(cmd, "Error getting json from proto", err)
+			}
+			cmd.Println(out)
 		case "yaml":
 			out, err := util.GetYamlFromProto(artifacts)
-			util.ExitNicelyOnError(err, "Error getting yaml from proto")
-			fmt.Println(out)
+			if err != nil {
+				return cli.MessageAndError(cmd, "Error getting yaml from proto", err)
+			}
+			cmd.Println(out)
 		}
 
 		return nil
-	},
+	}),
 }
 
 func init() {
 	ArtifactCmd.AddCommand(artifact_listCmd)
 	artifact_listCmd.Flags().StringP("output", "f", "", "Output format (json or yaml)")
-	artifact_listCmd.Flags().StringP("provider", "p", "", "Name for the provider to enroll")
+	artifact_listCmd.Flags().StringP("provider", "p", "github", "Name for the provider to enroll")
 	artifact_listCmd.Flags().StringP("project-id", "g", "", "ID of the project for repo registration")
-
-	if err := artifact_listCmd.MarkFlagRequired("provider"); err != nil {
-		fmt.Fprintf(os.Stderr, "Error marking flag as required: %s\n", err)
-	}
 }

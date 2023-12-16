@@ -94,7 +94,7 @@ func TestExecutor_handleEntityEvent(t *testing.T) {
 		gomock.Any(),
 	).Return(db.ListRuleEvaluationsByProfileIdRow{}, nil)
 
-	// get group information
+	// get project information
 	mockStore.EXPECT().
 		GetProjectByID(gomock.Any(), projectID).
 		Return(db.Project{

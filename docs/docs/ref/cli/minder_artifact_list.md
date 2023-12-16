@@ -19,7 +19,7 @@ minder artifact list [flags]
   -h, --help                help for list
   -f, --output string       Output format (json or yaml)
   -g, --project-id string   ID of the project for repo registration
-  -p, --provider string     Name for the provider to enroll
+  -p, --provider string     Name for the provider to enroll (default "github")
 ```
 
 ### Options inherited from parent commands
@@ -30,7 +30,6 @@ minder artifact list [flags]
       --grpc-insecure            Allow establishing insecure connections
       --grpc-port int            Server port (default 443)
       --identity-client string   Identity server client ID (default "minder-cli")
-      --identity-realm string    Identity server realm (default "stacklok")
       --identity-url string      Identity server issuer URL (default "https://auth.stacklok.com")
 ```
 

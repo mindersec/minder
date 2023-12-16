@@ -22,9 +22,7 @@
 package auth
 
 import (
-	"fmt"
 	"net/url"
-	"os"
 
 	"github.com/spf13/cobra"
 	"github.com/spf13/viper"
@@ -39,25 +37,23 @@ var auth_logoutCmd = &cobra.Command{
 	Use:   "logout",
 	Short: "Logout from minder control plane.",
 	Long:  `Logout from minder control plane. Credentials will be removed from $XDG_CONFIG_HOME/minder/credentials.json`,
-	PreRun: func(cmd *cobra.Command, args []string) {
-		if err := viper.BindPFlags(cmd.Flags()); err != nil {
-			fmt.Fprintf(os.Stderr, "Error binding flags: %s\n", err)
+	RunE: func(cmd *cobra.Command, args []string) error {
+		if err := util.RemoveCredentials(); err != nil {
+			return cli.MessageAndError(cmd, "Error removing credentials", err)
 		}
-	},
-	Run: func(cmd *cobra.Command, args []string) {
-		err := util.RemoveCredentials()
-		util.ExitNicelyOnError(err, "Error removing credentials")
 
 		issuerUrlStr := util.GetConfigValue(viper.GetViper(), "identity.cli.issuer_url", "identity-url", cmd,
 			constants.IdentitySeverURL).(string)
-		realm := util.GetConfigValue(viper.GetViper(), "identity.cli.realm", "identity-realm", cmd, "stacklok").(string)
 
 		parsedURL, err := url.Parse(issuerUrlStr)
-		util.ExitNicelyOnError(err, "Error parsing issuer URL")
+		if err != nil {
+			return cli.MessageAndError(cmd, "Error parsing issuer URL", err)
+		}
 
-		logoutUrl := parsedURL.JoinPath("realms", realm, "protocol/openid-connect/logout")
-		cli.PrintCmd(cmd, cli.SuccessBanner.Render("You have successfully logged out of the CLI."))
-		cli.PrintCmd(cmd, "If you would like to log out of the browser, you can visit %s", logoutUrl.String())
+		logoutUrl := parsedURL.JoinPath("realms/stacklok/protocol/openid-connect/logout")
+		cmd.Println(cli.SuccessBanner.Render("You have successfully logged out of the CLI."))
+		cmd.Printf("If you would like to log out of the browser, you can visit %s\n", logoutUrl.String())
+		return nil
 	},
 }
 

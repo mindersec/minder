@@ -18,7 +18,7 @@ minder repo delete [flags]
 ```
   -h, --help              help for delete
   -n, --name string       Name of the repository (owner/name format)
-  -p, --provider string   Name of the enrolled provider
+  -p, --provider string   Name of the enrolled provider (default "github")
   -r, --repo-id string    ID of the repo to delete
   -s, --status            Only return the status of the profiles associated to this repo
 ```
@@ -31,7 +31,6 @@ minder repo delete [flags]
       --grpc-insecure            Allow establishing insecure connections
       --grpc-port int            Server port (default 443)
       --identity-client string   Identity server client ID (default "minder-cli")
-      --identity-realm string    Identity server realm (default "stacklok")
       --identity-url string      Identity server issuer URL (default "https://auth.stacklok.com")
 ```
 

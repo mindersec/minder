@@ -120,6 +120,14 @@ func (def *RuleType_Definition) Validate() error {
 
 // Validate validates a pipeline profile
 func (p *Profile) Validate() error {
+	if p.Type != ProfileType {
+		return fmt.Errorf("%w: profile type is invalid: %s. Did you parse the wrong file?",
+			ErrValidationFailed, p.Type)
+	}
+	if p.Version != ProfileTypeVersion {
+		return fmt.Errorf("%w: profile version is invalid: %s", ErrValidationFailed, p.Version)
+	}
+
 	if p.Name == "" {
 		return fmt.Errorf("%w: profile name cannot be empty", ErrValidationFailed)
 	}
@@ -188,35 +196,6 @@ func (prRem *RuleType_Definition_Remediate_PullRequestRemediation) Validate() er
 
 	if prRem.Body == "" {
 		return errors.New("body is required")
-	}
-
-	if len(prRem.Contents) == 0 {
-		return errors.New("contents are required")
-	}
-
-	for i := range prRem.Contents {
-		cnt := prRem.Contents[i]
-		if cnt == nil {
-			return fmt.Errorf("content (index %d) is nil", i)
-		}
-		if err := cnt.Validate(); err != nil {
-			return err
-		}
-	}
-
-	return nil
-}
-
-var _ Validator = (*RuleType_Definition_Remediate_PullRequestRemediation_Content)(nil)
-
-// Validate validates a pull request remediation content
-func (prContent *RuleType_Definition_Remediate_PullRequestRemediation_Content) Validate() error {
-	if prContent.Path == "" {
-		return fmt.Errorf("content path is required")
-	}
-
-	if prContent.Content == "" {
-		return fmt.Errorf("content is required")
 	}
 
 	return nil

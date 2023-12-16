@@ -18,10 +18,12 @@ package app
 
 import (
 	"fmt"
+	"os"
 
 	"github.com/spf13/cobra"
 	"github.com/spf13/viper"
 
+	"github.com/stacklok/minder/cmd/dev/app/rule_type"
 	"github.com/stacklok/minder/internal/util"
 )
 
@@ -39,6 +41,8 @@ https://docs.stacklok.com/minder`,
 
 // Execute adds all child commands to the root command and sets flags appropriately.
 func Execute() {
+	RootCmd.SetOut(os.Stdout)
+	RootCmd.SetErr(os.Stderr)
 	err := RootCmd.Execute()
 	util.ExitNicelyOnError(err, "Error on execute")
 }
@@ -46,6 +50,8 @@ func Execute() {
 func init() {
 	cobra.OnInitialize(initConfig)
 	RootCmd.PersistentFlags().StringVar(&cfgFile, "config", "", "config file (default is $PWD/config.yaml)")
+
+	RootCmd.AddCommand(rule_type.CmdRuleType())
 }
 
 func initConfig() {

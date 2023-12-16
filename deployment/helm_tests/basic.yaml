@@ -16,6 +16,9 @@ hostname: "minder-test.example.com"
 db:
   host: postgres.postgres.svc
 
+trusty:
+  endpoint: http://trusty.trusty:8080
+
 serviceAccounts:
   server: minder
   migrate: migrate-job
@@ -53,7 +56,6 @@ extra_config: |
   identity:
     server:
       issuer_url: http://keycloak-deployment.keycloak.svc:80
-      realm: minder
       client_id: minder-server
 
   github:

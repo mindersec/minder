@@ -22,6 +22,8 @@ import (
 	"testing"
 
 	"github.com/stretchr/testify/assert"
+	"google.golang.org/grpc/codes"
+	"google.golang.org/grpc/status"
 )
 
 func TestGetCert(t *testing.T) {
@@ -71,6 +73,14 @@ func TestEncryptDecryptBytes(t *testing.T) {
 	assert.Equal(t, "test", string(decrypted))
 }
 
+func TestEncryptTooLarge(t *testing.T) {
+	t.Parallel()
+
+	large := make([]byte, 34000000) // More than 32 MB
+	_, err := EncryptBytes("test", large)
+	assert.ErrorIs(t, err, status.Error(codes.InvalidArgument, "data is too large (>32MB)"))
+}
+
 func TestGenerateNonce(t *testing.T) {
 	t.Parallel()
 
@@ -92,7 +102,7 @@ func TestIsNonceValid(t *testing.T) {
 		t.Errorf("Error in generateState: %v", err)
 	}
 
-	valid, err := IsNonceValid(nonce)
+	valid, err := IsNonceValid(nonce, 3600)
 	if err != nil {
 		t.Errorf("Error in isNonceValid: %v", err)
 	}
@@ -103,7 +113,7 @@ func TestIsNonceValid(t *testing.T) {
 
 	invalid := "AAAAAGSDmJ_tKMkuUmeoOBdSQGWXq3BE_Zp7IrUFVUau5HcPa-yvzQ"
 
-	valid, err = IsNonceValid(invalid)
+	valid, err = IsNonceValid(invalid, 3600)
 	if err != nil {
 		t.Errorf("Error in isNonceValid: %v", err)
 	}

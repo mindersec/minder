@@ -73,7 +73,7 @@ func HandleEvents(ctx context.Context, store db.Store, cfg *config.Config) {
 		return
 	}
 
-	tokenUrl := parsedURL.JoinPath("realms", cfg.Identity.Server.Realm, "protocol/openid-connect/token")
+	tokenUrl := parsedURL.JoinPath("realms/stacklok/protocol/openid-connect/token")
 
 	clientSecret, err := cfg.Identity.Server.GetClientSecret()
 	if err != nil {
@@ -93,7 +93,7 @@ func HandleEvents(ctx context.Context, store db.Store, cfg *config.Config) {
 		return
 	}
 
-	eventsUrl := parsedURL.JoinPath("admin/realms", cfg.Identity.Server.Realm, "events")
+	eventsUrl := parsedURL.JoinPath("admin/realms/stacklok/events")
 	request, err := http.NewRequest("GET", eventsUrl.String(), nil)
 	if err != nil {
 		zerolog.Ctx(ctx).Error().Msgf("events chron: error constructing events request: %v", err)

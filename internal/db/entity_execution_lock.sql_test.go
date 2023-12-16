@@ -33,9 +33,9 @@ func TestQueries_LockIfThresholdNotExceeded(t *testing.T) {
 	t.Parallel()
 
 	org := createRandomOrganization(t)
-	group := createRandomProject(t, org.ID)
-	prov := createRandomProvider(t, group.ID)
-	repo := createRandomRepository(t, group.ID, prov.Name)
+	project := createRandomProject(t, org.ID)
+	prov := createRandomProvider(t, project.ID)
+	repo := createRandomRepository(t, project.ID, prov.Name)
 
 	threshold := 1
 	concurrentCalls := 10

@@ -18,13 +18,14 @@
 package quickstart
 
 import (
+	"context"
 	"embed"
 	"fmt"
-	"os"
 	"strings"
 
 	"github.com/spf13/cobra"
 	"github.com/spf13/viper"
+	"google.golang.org/grpc"
 	"google.golang.org/grpc/codes"
 	"google.golang.org/grpc/status"
 
@@ -33,7 +34,6 @@ import (
 	minderprov "github.com/stacklok/minder/cmd/cli/app/provider"
 	"github.com/stacklok/minder/cmd/cli/app/repo"
 	"github.com/stacklok/minder/internal/engine"
-	"github.com/stacklok/minder/internal/util"
 	"github.com/stacklok/minder/internal/util/cli"
 	minderv1 "github.com/stacklok/minder/pkg/api/protobuf/go/minder/v1"
 )
@@ -129,12 +129,7 @@ var cmd = &cobra.Command{
 	Use:   "quickstart",
 	Short: "Quickstart minder",
 	Long:  "The quickstart command provide the means to quickly get started with minder",
-	PreRun: func(cmd *cobra.Command, args []string) {
-		if err := viper.BindPFlags(cmd.Flags()); err != nil {
-			fmt.Fprintf(os.Stderr, "Error binding flags: %s\n", err)
-		}
-	},
-	RunE: func(cmd *cobra.Command, args []string) error {
+	RunE: cli.GRPCClientWrapRunE(func(ctx context.Context, cmd *cobra.Command, conn *grpc.ClientConn) error {
 		proj := viper.GetString("project")
 		provider := viper.GetString("provider")
 
@@ -159,19 +154,15 @@ var cmd = &cobra.Command{
 		}
 
 		// Enroll provider
-		msg, err := minderprov.EnrollProviderCmd(cmd, args)
+		err := minderprov.EnrollProviderCmd(ctx, cmd, conn)
 		if err != nil {
-			return fmt.Errorf("%s: %w", msg, err)
+			return err
 		}
 
-		// Get the grpc connection and other resources
-		conn, err := util.GrpcForCommand(cmd, viper.GetViper())
-		if err != nil {
-			return fmt.Errorf("error getting grpc connection: %w", err)
-		}
-		defer conn.Close()
+		// Step 2 - Confirm repository registration (new context, so we don't time out)
+		ctx, cancel := getQuickstartContext(cmd.Context(), viper.GetViper())
+		defer cancel()
 
-		// Step 2 - Confirm repository registration
 		yes = cli.PrintYesNoPrompt(cmd,
 			stepPromptMsgRegister,
 			"Proceed?",
@@ -182,8 +173,10 @@ var cmd = &cobra.Command{
 		}
 
 		// Prompt to register repositories
-		results, msg, err := repo.RegisterCmd(cmd, args)
-		util.ExitNicelyOnError(err, msg)
+		results, msg, err := repo.RegisterCmd(ctx, cmd, conn)
+		if err != nil {
+			return cli.MessageAndError(cmd, msg, err)
+		}
 
 		var registeredRepos []string
 		for _, result := range results {
@@ -223,11 +216,11 @@ var cmd = &cobra.Command{
 		}
 
 		if provider != "" {
-			rt.Context.Provider = provider
+			rt.Context.Provider = &provider
 		}
 
 		// Create the rule type in minder (new context, so we don't time out)
-		ctx, cancel := util.GetAppContext()
+		ctx, cancel = getQuickstartContext(cmd.Context(), viper.GetViper())
 		defer cancel()
 
 		_, err = client.CreateRuleType(ctx, &minderv1.CreateRuleTypeRequest{
@@ -273,11 +266,11 @@ var cmd = &cobra.Command{
 		}
 
 		if provider != "" {
-			p.Context.Provider = provider
+			p.Context.Provider = &provider
 		}
 
 		// Create the profile in minder (new context, so we don't time out)
-		ctx, cancel = util.GetAppContext()
+		ctx, cancel = getQuickstartContext(cmd.Context(), viper.GetViper())
 		defer cancel()
 
 		alreadyExists := ""
@@ -297,11 +290,11 @@ var cmd = &cobra.Command{
 		}
 
 		// Finish - Confirm profile creation
-		cli.PrintCmd(cmd, cli.WarningBanner.Render(stepPromptMsgFinish))
+		cmd.Println(cli.WarningBanner.Render(stepPromptMsgFinish))
 
 		// Print the "profile already exists" message, if needed
 		if alreadyExists != "" {
-			cli.PrintCmd(cmd, cli.WarningBanner.Render(alreadyExists))
+			cmd.Println(cli.WarningBanner.Render(alreadyExists))
 		} else {
 			// Print the profile create result table
 			cmd.Println("Profile details (minder profile list -p github):")
@@ -310,7 +303,7 @@ var cmd = &cobra.Command{
 			table.Render()
 		}
 		return nil
-	},
+	}),
 }
 
 func init() {
@@ -319,4 +312,8 @@ func init() {
 	cmd.Flags().StringP("provider", "p", "github", "Name of the provider")
 	cmd.Flags().StringP("token", "t", "", "Personal Access Token (PAT) to use for enrollment")
 	cmd.Flags().StringP("owner", "o", "", "Owner to filter on for provider resources")
+}
+
+func getQuickstartContext(ctx context.Context, v *viper.Viper) (context.Context, context.CancelFunc) {
+	return cli.GetAppContextWithTimeoutDuration(ctx, v, 20)
 }

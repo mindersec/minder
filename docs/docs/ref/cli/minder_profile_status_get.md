@@ -1,17 +1,17 @@
 ---
 title: minder profile status get
 ---
-## minder profile_status get
+## minder profile status get
 
 Get profile status within a minder control plane
 
 ### Synopsis
 
-The minder profile_status get subcommand lets you get profile status within a
+The minder profile status get subcommand lets you get profile status within a
 minder control plane for an specific provider/project or profile id, entity type and entity id.
 
 ```
-minder profile_status get [flags]
+minder profile status get [flags]
 ```
 
 ### Options
@@ -34,11 +34,10 @@ minder profile_status get [flags]
       --grpc-insecure            Allow establishing insecure connections
       --grpc-port int            Server port (default 443)
       --identity-client string   Identity server client ID (default "minder-cli")
-      --identity-realm string    Identity server realm (default "stacklok")
       --identity-url string      Identity server issuer URL (default "https://auth.stacklok.com")
 ```
 
 ### SEE ALSO
 
-* [minder profile_status](minder_profile_status.md)	 - Manage profile status within a minder control plane
+* [minder profile status](minder_profile_status.md)	 - Manage profile status within a minder control plane
 
