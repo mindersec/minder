@@ -201,6 +201,13 @@ func happyPathMockSetup(mockGitHub *mock_ghclient.MockGitHub) {
 		Login: github.String("stacklok-bot"),
 	}, nil)
 	mockGitHub.EXPECT().
+		ListEmails(gomock.Any(), gomock.Any()).Return([]*github.UserEmail{
+		{
+			Email:   github.String("test@stacklok.com"),
+			Primary: github.Bool(true),
+		},
+	}, nil)
+	mockGitHub.EXPECT().
 		GetToken().Return("token")
 	mockGitHub.EXPECT().
 		ListPullRequests(gomock.Any(), repoOwner, repoName, gomock.Any()).Return([]*github.PullRequest{}, nil)
@@ -463,6 +470,14 @@ func TestPullRequestRemediate(t *testing.T) {
 					GetAuthenticatedUser(gomock.Any()).Return(&github.User{
 					Email: github.String("test@stacklok.com"),
 					Login: github.String("stacklok-bot"),
+				}, nil)
+				// likewise we need to update the branch with a valid e-mail
+				mockGitHub.EXPECT().
+					ListEmails(gomock.Any(), gomock.Any()).Return([]*github.UserEmail{
+					{
+						Email:   github.String("test@stacklok.com"),
+						Primary: github.Bool(true),
+					},
 				}, nil)
 				mockGitHub.EXPECT().
 					GetToken().Return("token")
