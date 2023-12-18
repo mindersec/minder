@@ -42,7 +42,7 @@ var applyCmd = &cobra.Command{
 }
 
 // applyCommand is the profile apply subcommand
-func applyCommand(ctx context.Context, cmd *cobra.Command, conn *grpc.ClientConn) error {
+func applyCommand(_ context.Context, cmd *cobra.Command, conn *grpc.ClientConn) error {
 	client := minderv1.NewProfileServiceClient(conn)
 
 	provider := viper.GetString("provider")
@@ -56,7 +56,7 @@ func applyCommand(ctx context.Context, cmd *cobra.Command, conn *grpc.ClientConn
 
 	table := profile.NewProfileTable()
 
-	applyFunc := func(f string, p *minderv1.Profile) (*minderv1.Profile, error) {
+	applyFunc := func(ctx context.Context, f string, p *minderv1.Profile) (*minderv1.Profile, error) {
 		// create a profile
 		resp, err := client.CreateProfile(ctx, &minderv1.CreateProfileRequest{
 			Context: &minderv1.Context{Provider: &provider, Project: &project},
@@ -86,8 +86,9 @@ func applyCommand(ctx context.Context, cmd *cobra.Command, conn *grpc.ClientConn
 
 		return updateResp.GetProfile(), nil
 	}
-
-	if err := profile.ExecOnOneProfile(table, f, cmd.InOrStdin(), project, applyFunc); err != nil {
+	// cmd.Context() is the root context. We need to create a new context for each file
+	// so we can avoid the timeout.
+	if err := profile.ExecOnOneProfile(cmd.Context(), table, f, cmd.InOrStdin(), project, applyFunc); err != nil {
 		return cli.MessageAndError(fmt.Sprintf("error applying profile from %s", f), err)
 	}
 
