@@ -62,9 +62,9 @@ These steps should be completed within the 1-7 days of Disclosure.
 - Add collaborators from codeowners team only (outside members can only be added after approval from the  security team)
 - The reporter may be added to the issue to assist with review, but **only reporters who have contacted the security team using a private channel**.
 - Select 'Request CVE'
-![Request CVE](/images/cve.png)
+![Request CVE](/docs/static/img/cve.png)
 - The security team / Fix Team create a private temporary fork
-![Security Fork](/images/fork.png)
+![Security Fork](/docs/static/img/fork.png)
 - The Fix team performs all work in a 'security advisory' within its temporary fork
 - CI can be checked locally using the [act](https://github.com/nektos/act) project
 - All communication happens within the security advisory, it is *not* discussed in slack channels or non private issues.
