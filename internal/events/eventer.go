@@ -290,6 +290,12 @@ func (e *Eventer) Register(
 				return err
 			}
 
+			e.router.Logger().Info("Handled message", watermill.LogFields{
+				"message_uuid": msg.UUID,
+				"topic":        topic,
+				"handler":      funcName,
+			})
+
 			return nil
 		},
 	)
