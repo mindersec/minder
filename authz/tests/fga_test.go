@@ -20,6 +20,7 @@ package tests
 import (
 	"bytes"
 	"path/filepath"
+	"sync"
 	"testing"
 
 	// We need the init() function here, but we can't copy rootCmd because it is private
@@ -28,6 +29,7 @@ import (
 )
 
 func TestFGA(t *testing.T) {
+	t.Parallel()
 	files, err := filepath.Glob("*.tests.yaml")
 	if err != nil {
 		t.Fatal(err)
@@ -38,10 +40,7 @@ func TestFGA(t *testing.T) {
 	for _, f := range files {
 		file := f
 		t.Run(file, func(t *testing.T) {
-			// We invoke cobra commands directly, which references some global state in FGA.
-			// Call .SetEnv here to hint to paralleltest that this can't be parallelized.
-			// See https://github.com/kunwardeep/paralleltest/pull/33
-			t.Setenv("PARALLELTEST_NO_PARALLEL", "true")
+			t.Parallel()
 
 			output, err := runFgaModelTest(file)
 			if err != nil {
@@ -53,6 +52,9 @@ func TestFGA(t *testing.T) {
 	}
 }
 
+// We invoke cobra commands directly, which references some global state in FGA.
+var runMutex = sync.Mutex{}
+
 // This is a little slimy, but we pull in the FGA CLI which implements "model test"
 // directly here, so we don't need to bootstrap the external command.
 //
@@ -63,6 +65,8 @@ func runFgaModelTest(filename string) ([]byte, error) {
 	buffer := new(bytes.Buffer)
 	cmd.SetOutput(buffer)
 
+	runMutex.Lock()
+	defer runMutex.Unlock()
 	if err := cmd.Execute(); err != nil {
 		return buffer.Bytes(), err
 	}
