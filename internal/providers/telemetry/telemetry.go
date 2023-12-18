@@ -17,11 +17,11 @@ package telemetry
 
 import (
 	"fmt"
-	"log"
 	"net/http"
 	"time"
 
 	"github.com/puzpuzpuz/xsync"
+	"github.com/rs/zerolog/log"
 	"go.opentelemetry.io/otel"
 	"go.opentelemetry.io/otel/attribute"
 	"go.opentelemetry.io/otel/metric"

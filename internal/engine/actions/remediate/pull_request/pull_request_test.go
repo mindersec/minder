@@ -201,7 +201,16 @@ func happyPathMockSetup(mockGitHub *mock_ghclient.MockGitHub) {
 		Login: github.String("stacklok-bot"),
 	}, nil)
 	mockGitHub.EXPECT().
+		ListEmails(gomock.Any(), gomock.Any()).Return([]*github.UserEmail{
+		{
+			Email:   github.String("test@stacklok.com"),
+			Primary: github.Bool(true),
+		},
+	}, nil)
+	mockGitHub.EXPECT().
 		GetToken().Return("token")
+	mockGitHub.EXPECT().
+		ListPullRequests(gomock.Any(), repoOwner, repoName, gomock.Any()).Return([]*github.PullRequest{}, nil)
 }
 
 func resolveActionMockSetup(t *testing.T, mockGitHub *mock_ghclient.MockGitHub, url, ref string) {
@@ -441,6 +450,46 @@ func TestPullRequestRemediate(t *testing.T) {
 							Body: github.String(prBody),
 						},
 					}, nil)
+			},
+		},
+		{
+			name: "A branch for this PR already exists, shouldn't open a new PR, but only update the branch",
+			newRemArgs: &newPullRequestRemediateArgs{
+				prRem:      dependabotPrRem(),
+				pbuild:     testGithubProviderBuilder(),
+				actionType: TestActionTypeValid,
+			},
+			remArgs:   createTestRemArgs(),
+			repoSetup: defaultMockRepoSetup,
+			mockSetup: func(_ *testing.T, mockGitHub *mock_ghclient.MockGitHub) {
+				// no pull requst so far
+				mockGitHub.EXPECT().
+					ListPullRequests(gomock.Any(), repoOwner, repoName, gomock.Any()).Return([]*github.PullRequest{}, nil)
+				// we need to get the user information and update the branch
+				mockGitHub.EXPECT().
+					GetAuthenticatedUser(gomock.Any()).Return(&github.User{
+					Email: github.String("test@stacklok.com"),
+					Login: github.String("stacklok-bot"),
+				}, nil)
+				// likewise we need to update the branch with a valid e-mail
+				mockGitHub.EXPECT().
+					ListEmails(gomock.Any(), gomock.Any()).Return([]*github.UserEmail{
+					{
+						Email:   github.String("test@stacklok.com"),
+						Primary: github.Bool(true),
+					},
+				}, nil)
+				mockGitHub.EXPECT().
+					GetToken().Return("token")
+				// this is the last call we expect to make. It returns existing PRs from this branch, so we
+				// stop after having updated the branch
+				mockGitHub.EXPECT().
+					ListPullRequests(gomock.Any(), repoOwner, repoName, gomock.Any()).Return([]*github.PullRequest{
+					// it doesn't matter what we return here, we just need to return a non-empty list
+					{
+						Number: github.Int(1),
+					},
+				}, nil)
 			},
 		},
 		{

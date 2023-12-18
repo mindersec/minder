@@ -18,9 +18,9 @@ package app
 
 import (
 	"fmt"
-	"log"
 	"os"
 
+	"github.com/rs/zerolog/log"
 	"github.com/spf13/cobra"
 	"github.com/spf13/viper"
 
@@ -52,10 +52,10 @@ func init() {
 	cobra.OnInitialize(initConfig)
 	RootCmd.PersistentFlags().StringVar(&cfgFile, "config", "", "config file (default is $PWD/server-config.yaml)")
 	if err := config.RegisterDatabaseFlags(viper.GetViper(), RootCmd.PersistentFlags()); err != nil {
-		log.Fatal(err)
+		log.Fatal().Err(err).Msg("Error registering database flags")
 	}
 	if err := auth.RegisterOAuthFlags(viper.GetViper(), RootCmd.PersistentFlags()); err != nil {
-		log.Fatal(err)
+		log.Fatal().Err(err).Msg("Error registering oauth flags")
 	}
 }
 

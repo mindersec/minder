@@ -19,9 +19,9 @@ import (
 	"crypto/sha512"
 	"errors"
 	"fmt"
-	"log"
 
 	"github.com/puzpuzpuz/xsync"
+	"github.com/rs/zerolog/log"
 	"google.golang.org/protobuf/encoding/protojson"
 	"google.golang.org/protobuf/reflect/protoreflect"
 	"google.golang.org/protobuf/types/known/structpb"

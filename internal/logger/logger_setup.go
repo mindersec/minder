@@ -16,11 +16,11 @@ package logger
 
 import (
 	"io"
-	"log"
 	"os"
 	"path/filepath"
 
 	"github.com/rs/zerolog"
+	"github.com/rs/zerolog/log"
 
 	"github.com/stacklok/minder/internal/config"
 )
@@ -45,7 +45,7 @@ func FromFlags(cfg config.LoggingConfig) zerolog.Logger {
 		file, err := os.OpenFile(cfg.LogFile, os.O_CREATE|os.O_WRONLY|os.O_APPEND, 0600)
 		// NOTE: we are leaking the open file here
 		if err != nil {
-			log.Println("Failed to open log file, defaulting to stdout")
+			log.Err(err).Msg("Failed to open log file, defaulting to stdout")
 		} else {
 			loggers = append(loggers, file)
 		}
@@ -59,8 +59,6 @@ func FromFlags(cfg config.LoggingConfig) zerolog.Logger {
 
 	logger := zerolog.New(zerolog.MultiLevelWriter(loggers...)).With().Timestamp().Logger()
 
-	// Send logs from go's log package to zerolog
-	log.SetOutput(logger)
 	// Use this logger when calling zerolog.Ctx(nil), etc
 	zerolog.DefaultContextLogger = &logger
 	return logger

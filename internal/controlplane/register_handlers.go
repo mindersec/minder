@@ -17,9 +17,9 @@ package controlplane
 
 import (
 	"context"
-	"log"
 
 	"github.com/grpc-ecosystem/grpc-gateway/v2/runtime"
+	"github.com/rs/zerolog/log"
 	"google.golang.org/grpc"
 
 	pb "github.com/stacklok/minder/pkg/api/protobuf/go/minder/v1"
@@ -29,32 +29,32 @@ import (
 func RegisterGatewayHTTPHandlers(ctx context.Context, gwmux *runtime.ServeMux, grpcAddress string, opts []grpc.DialOption) {
 	// Register HealthService handler
 	if err := pb.RegisterHealthServiceHandlerFromEndpoint(ctx, gwmux, grpcAddress, opts); err != nil {
-		log.Fatalf("failed to register gateway: %v", err)
+		log.Fatal().Err(err).Msg("failed to register gateway")
 	}
 
 	// Register CallBackService handler
 	if err := pb.RegisterOAuthServiceHandlerFromEndpoint(ctx, gwmux, grpcAddress, opts); err != nil {
-		log.Fatalf("failed to register gateway: %v", err)
+		log.Fatal().Err(err).Msg("failed to register gateway")
 	}
 
 	// Register UserService handler
 	if err := pb.RegisterUserServiceHandlerFromEndpoint(ctx, gwmux, grpcAddress, opts); err != nil {
-		log.Fatalf("failed to register gateway: %v", err)
+		log.Fatal().Err(err).Msg("failed to register gateway")
 	}
 
 	// Register the Repository service
 	if err := pb.RegisterRepositoryServiceHandlerFromEndpoint(ctx, gwmux, grpcAddress, opts); err != nil {
-		log.Fatalf("failed to register gateway: %v", err)
+		log.Fatal().Err(err).Msg("failed to register gateway")
 	}
 
 	// Register the Profile service
 	if err := pb.RegisterProfileServiceHandlerFromEndpoint(ctx, gwmux, grpcAddress, opts); err != nil {
-		log.Fatalf("failed to register gateway: %v", err)
+		log.Fatal().Err(err).Msg("failed to register gateway")
 	}
 
 	// Register the Package service
 	if err := pb.RegisterArtifactServiceHandlerFromEndpoint(ctx, gwmux, grpcAddress, opts); err != nil {
-		log.Fatalf("failed to register gateway: %v", err)
+		log.Fatal().Err(err).Msg("failed to register gateway")
 	}
 }
 

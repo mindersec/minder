@@ -21,12 +21,12 @@ import (
 	"encoding/json"
 	"errors"
 	"fmt"
-	"log"
 	"net/http"
 	"text/template"
 
 	"github.com/google/go-github/v56/github"
 	"github.com/rs/zerolog"
+	"github.com/rs/zerolog/log"
 	"google.golang.org/protobuf/reflect/protoreflect"
 
 	engerrors "github.com/stacklok/minder/internal/engine/errors"

@@ -20,12 +20,12 @@ import (
 	"encoding/json"
 	"errors"
 	"fmt"
-	"log"
 
 	"github.com/ThreeDotsLabs/watermill/message"
 	"github.com/go-playground/validator/v10"
 	"github.com/google/uuid"
 	"github.com/rs/zerolog"
+	"github.com/rs/zerolog/log"
 
 	"github.com/stacklok/minder/internal/db"
 	"github.com/stacklok/minder/internal/engine"
@@ -39,7 +39,7 @@ import (
 // and sending a profile evaluation event for each one.
 type ProfileInitEvent struct {
 	// Project is the project that the event is relevant to
-	Project uuid.UUID `json:"project" validate:"gte=0"`
+	Project uuid.UUID `json:"project"`
 }
 
 // NewProfileInitMessage creates a new repos init event

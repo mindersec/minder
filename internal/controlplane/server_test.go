@@ -17,7 +17,6 @@ package controlplane
 
 import (
 	"context"
-	"log"
 	"net/http"
 	"net/http/httptest"
 	"os"
@@ -26,6 +25,7 @@ import (
 	"time"
 
 	"github.com/golang/mock/gomock"
+	"github.com/rs/zerolog/log"
 	"github.com/stretchr/testify/require"
 	"google.golang.org/grpc"
 	"google.golang.org/grpc/test/bufconn"
@@ -55,7 +55,7 @@ func init() {
 	})
 	go func() {
 		if err := s.Serve(lis); err != nil {
-			log.Fatalf("Server exited with error: %v", err)
+			log.Fatal().Err(err).Msg("Server exited with error")
 		}
 	}()
 	// HTTP server

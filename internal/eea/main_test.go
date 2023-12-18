@@ -17,7 +17,6 @@ package eea_test
 
 import (
 	"database/sql"
-	"log"
 	"os"
 	"testing"
 
@@ -26,6 +25,7 @@ import (
 	_ "github.com/golang-migrate/migrate/v4/database/postgres" // nolint
 	_ "github.com/golang-migrate/migrate/v4/source/file"       // nolint
 	_ "github.com/lib/pq"
+	"github.com/rs/zerolog/log"
 
 	"github.com/stacklok/minder/internal/db"
 )
@@ -40,13 +40,13 @@ func TestMain(m *testing.M) {
 func runTestWithInProcessPostgres(m *testing.M) int {
 	tmpName, err := os.MkdirTemp("", "mediator-db-test")
 	if err != nil {
-		log.Println("cannot create tmpdir:", err)
+		log.Err(err).Msg("cannot create tmpdir")
 		return -1
 	}
 
 	defer func() {
 		if err := os.RemoveAll(tmpName); err != nil {
-			log.Println("cannot remove tmpdir:", err)
+			log.Err(err).Msg("cannot remove tmpdir")
 		}
 	}()
 
@@ -57,36 +57,36 @@ func runTestWithInProcessPostgres(m *testing.M) int {
 	postgres := embeddedpostgres.NewDatabase(dbCfg)
 
 	if err := postgres.Start(); err != nil {
-		log.Println("cannot start postgres:", err)
+		log.Err(err).Msg("cannot start postgres")
 		return -1
 	}
 	defer func() {
 		if err := postgres.Stop(); err != nil {
-			log.Println("cannot stop postgres:", err)
+			log.Err(err).Msg("cannot stop postgres")
 		}
 	}()
 
 	testDB, err = sql.Open("postgres", "user=postgres dbname=mediator password=postgres host=localhost port=5434 sslmode=disable")
 	if err != nil {
-		log.Println("cannot connect to db test instance:", err)
+		log.Err(err).Msg("cannot connect to db test instance")
 		return -1
 	}
 
 	configPath := "file://../../database/migrations"
 	mig, err := migrate.New(configPath, dbCfg.GetConnectionURL()+"?sslmode=disable")
 	if err != nil {
-		log.Printf("Error while creating migration instance (%s): %v\n", configPath, err)
+		log.Err(err).Msgf("Error while creating migration instance (%s)", configPath)
 		return -1
 	}
 
 	if err := mig.Up(); err != nil {
-		log.Println("cannot run db migrations:", err)
+		log.Err(err).Msg("cannot run db migrations")
 		return -1
 	}
 
 	defer func() {
 		if err := testDB.Close(); err != nil {
-			log.Println("cannot close test db:", err)
+			log.Err(err).Msg("cannot close test db")
 		}
 	}()
 

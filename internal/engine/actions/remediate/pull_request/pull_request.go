@@ -207,7 +207,7 @@ func (r *Remediator) Do(
 	var remErr error
 	switch remAction {
 	case interfaces.ActionOptOn:
-		alreadyExists, err := prAlreadyExists(ctx, r.ghCli, repo, magicComment)
+		alreadyExists, err := prWithContentAlreadyExists(ctx, r.ghCli, repo, magicComment)
 		if err != nil {
 			return nil, fmt.Errorf("cannot check if PR already exists: %w", err)
 		}
@@ -262,6 +262,11 @@ func (r *Remediator) runGit(
 		return fmt.Errorf("cannot get authenticated user: %w", err)
 	}
 
+	email, err := getPrimaryEmail(ctx, r.ghCli)
+	if err != nil {
+		return fmt.Errorf("cannot get primary email: %w", err)
+	}
+
 	logger.Debug().Str("branch", branchBaseName(title)).Msg("Checking out branch")
 	err = wt.Checkout(&git.CheckoutOptions{
 		Branch: plumbing.NewBranchReferenceName(branchBaseName(title)),
@@ -288,7 +293,7 @@ func (r *Remediator) runGit(
 	_, err = wt.Commit(title, &git.CommitOptions{
 		Author: &object.Signature{
 			Name:  u.GetName(),
-			Email: u.GetEmail(),
+			Email: email,
 			When:  time.Now(),
 		},
 	})
@@ -318,6 +323,19 @@ func (r *Remediator) runGit(
 		return fmt.Errorf("cannot push: %w", err)
 	}
 	zerolog.Ctx(ctx).Debug().Msgf("Push output: %s", b.String())
+
+	// if a PR from this branch already exists, don't create a new one
+	// this handles the case where the content changed (e.g. profile changed)
+	// but the PR was not closed
+	prAlreadyExists, err := prFromBranchAlreadyExists(ctx, r.ghCli, pbRepo, branchBaseName(title))
+	if err != nil {
+		return fmt.Errorf("cannot check if PR from branch already exists: %w", err)
+	}
+
+	if prAlreadyExists {
+		zerolog.Ctx(ctx).Info().Msg("PR from branch already exists, won't create a new one")
+		return nil
+	}
 
 	_, err = r.ghCli.CreatePullRequest(
 		ctx, pbRepo.GetOwner(), pbRepo.GetName(),
@@ -434,13 +452,12 @@ func createReviewBody(prText, magicComment string) (string, error) {
 }
 
 // returns true if an open PR with the magic comment already exists
-func prAlreadyExists(
+func prWithContentAlreadyExists(
 	ctx context.Context,
 	cli provifv1.GitHub,
 	repo *pb.Repository,
 	magicComment string,
 ) (bool, error) {
-	// TODO(jakub): pagination
 	openPrs, err := cli.ListPullRequests(ctx, repo.GetOwner(), repo.GetName(), &github.PullRequestListOptions{})
 	if err != nil {
 		return false, fmt.Errorf("cannot list pull requests: %w", err)
@@ -452,4 +469,42 @@ func prAlreadyExists(
 		}
 	}
 	return false, nil
+}
+
+func prFromBranchAlreadyExists(
+	ctx context.Context,
+	cli provifv1.GitHub,
+	repo *pb.Repository,
+	branchName string,
+) (bool, error) {
+	// TODO(jakub): pagination
+	opts := &github.PullRequestListOptions{
+		Head: branchName,
+	}
+
+	openPrs, err := cli.ListPullRequests(ctx, repo.GetOwner(), repo.GetName(), opts)
+	if err != nil {
+		return false, fmt.Errorf("cannot list pull requests: %w", err)
+	}
+
+	return len(openPrs) > 0, nil
+}
+
+func getPrimaryEmail(ctx context.Context, cli provifv1.GitHub) (string, error) {
+	emails, err := cli.ListEmails(ctx, &github.ListOptions{})
+	if err != nil {
+		return "", fmt.Errorf("cannot get email: %w", err)
+	}
+
+	fallback := ""
+	for _, email := range emails {
+		if fallback == "" {
+			fallback = email.GetEmail()
+		}
+		if email.GetPrimary() {
+			return email.GetEmail(), nil
+		}
+	}
+
+	return fallback, nil
 }

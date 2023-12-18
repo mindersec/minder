@@ -21,7 +21,6 @@ import (
 	"context"
 	"errors"
 	"fmt"
-	"log"
 	"reflect"
 	"runtime"
 	"time"
@@ -35,6 +34,7 @@ import (
 	"github.com/alexdrl/zerowater"
 	promgo "github.com/prometheus/client_golang/prometheus"
 	"github.com/rs/zerolog"
+	"github.com/rs/zerolog/log"
 
 	"github.com/stacklok/minder/internal/config"
 )
@@ -289,6 +289,12 @@ func (e *Eventer) Register(
 
 				return err
 			}
+
+			e.router.Logger().Info("Handled message", watermill.LogFields{
+				"message_uuid": msg.UUID,
+				"topic":        topic,
+				"handler":      funcName,
+			})
 
 			return nil
 		},

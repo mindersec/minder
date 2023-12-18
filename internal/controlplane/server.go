@@ -18,7 +18,6 @@ package controlplane
 import (
 	"context"
 	"fmt"
-	"log"
 	"net"
 	"net/http"
 	"time"
@@ -26,6 +25,7 @@ import (
 	"github.com/ThreeDotsLabs/watermill/message"
 	"github.com/grpc-ecosystem/grpc-gateway/v2/runtime"
 	"github.com/prometheus/client_golang/prometheus/promhttp"
+	"github.com/rs/zerolog/log"
 	_ "github.com/signalfx/splunk-otel-go/instrumentation/github.com/lib/pq/splunkpq" // Auto-instrumented version of lib/pq
 	"go.opentelemetry.io/contrib/instrumentation/google.golang.org/grpc/otelgrpc"
 	"go.opentelemetry.io/contrib/instrumentation/net/http/otelhttp"
@@ -189,7 +189,7 @@ func initMetrics(r sdkmetric.Reader) *sdkmetric.MeterProvider {
 func (s *Server) StartGRPCServer(ctx context.Context) error {
 	lis, err := net.Listen("tcp", s.cfg.GRPCServer.GetAddress())
 	if err != nil {
-		log.Fatalf("failed to listen: %v", err)
+		return fmt.Errorf("failed to listen: %v", err)
 	}
 
 	// add logger and tracing (if enabled)
@@ -395,6 +395,6 @@ func shutdownHandler(component string, sdf shutdowner) {
 	log.Printf("shutting down '%s'", component)
 
 	if err := sdf(shutdownCtx); err != nil {
-		log.Fatalf("error shutting down '%s': %+v", component, err)
+		log.Fatal().Msgf("error shutting down '%s': %+v", component, err)
 	}
 }
