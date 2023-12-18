@@ -262,6 +262,11 @@ func (r *Remediator) runGit(
 		return fmt.Errorf("cannot get authenticated user: %w", err)
 	}
 
+	email, err := getPrimaryEmail(ctx, r.ghCli)
+	if err != nil {
+		return fmt.Errorf("cannot get primary email: %w", err)
+	}
+
 	logger.Debug().Str("branch", branchBaseName(title)).Msg("Checking out branch")
 	err = wt.Checkout(&git.CheckoutOptions{
 		Branch: plumbing.NewBranchReferenceName(branchBaseName(title)),
@@ -288,7 +293,7 @@ func (r *Remediator) runGit(
 	_, err = wt.Commit(title, &git.CommitOptions{
 		Author: &object.Signature{
 			Name:  u.GetName(),
-			Email: u.GetEmail(),
+			Email: email,
 			When:  time.Now(),
 		},
 	})
@@ -483,4 +488,23 @@ func prFromBranchAlreadyExists(
 	}
 
 	return len(openPrs) > 0, nil
+}
+
+func getPrimaryEmail(ctx context.Context, cli provifv1.GitHub) (string, error) {
+	emails, err := cli.ListEmails(ctx, &github.ListOptions{})
+	if err != nil {
+		return "", fmt.Errorf("cannot get email: %w", err)
+	}
+
+	fallback := ""
+	for _, email := range emails {
+		if fallback == "" {
+			fallback = email.GetEmail()
+		}
+		if email.GetPrimary() {
+			return email.GetEmail(), nil
+		}
+	}
+
+	return fallback, nil
 }

@@ -599,6 +599,21 @@ func (mr *MockGitHubMockRecorder) ListAllRepositories(arg0, arg1, arg2 interface
 	return mr.mock.ctrl.RecordCallWithMethodType(mr.mock, "ListAllRepositories", reflect.TypeOf((*MockGitHub)(nil).ListAllRepositories), arg0, arg1, arg2)
 }
 
+// ListEmails mocks base method.
+func (m *MockGitHub) ListEmails(ctx context.Context, opts *github.ListOptions) ([]*github.UserEmail, error) {
+	m.ctrl.T.Helper()
+	ret := m.ctrl.Call(m, "ListEmails", ctx, opts)
+	ret0, _ := ret[0].([]*github.UserEmail)
+	ret1, _ := ret[1].(error)
+	return ret0, ret1
+}
+
+// ListEmails indicates an expected call of ListEmails.
+func (mr *MockGitHubMockRecorder) ListEmails(ctx, opts interface{}) *gomock.Call {
+	mr.mock.ctrl.T.Helper()
+	return mr.mock.ctrl.RecordCallWithMethodType(mr.mock, "ListEmails", reflect.TypeOf((*MockGitHub)(nil).ListEmails), ctx, opts)
+}
+
 // ListFiles mocks base method.
 func (m *MockGitHub) ListFiles(ctx context.Context, owner, repo string, prNumber, perPage, pageNumber int) ([]*github.CommitFile, *github.Response, error) {
 	m.ctrl.T.Helper()

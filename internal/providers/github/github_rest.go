@@ -614,3 +614,12 @@ func (c *RestClient) CreateComment(ctx context.Context, owner, repo string, numb
 	})
 	return err
 }
+
+// ListEmails lists all emails for the authenticated user.
+func (c *RestClient) ListEmails(ctx context.Context, opts *github.ListOptions) ([]*github.UserEmail, error) {
+	emails, _, err := c.client.Users.ListEmails(ctx, opts)
+	if err != nil {
+		return nil, err
+	}
+	return emails, nil
+}
