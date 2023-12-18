@@ -39,7 +39,7 @@ import (
 // and sending a profile evaluation event for each one.
 type ProfileInitEvent struct {
 	// Project is the project that the event is relevant to
-	Project uuid.UUID `json:"project" validate:"gte=0"`
+	Project uuid.UUID `json:"project"`
 }
 
 // NewProfileInitMessage creates a new repos init event
