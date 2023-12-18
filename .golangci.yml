@@ -52,12 +52,25 @@ linters-settings:
       - G114 # for the moment we need to use listenandserve that has no support for timeouts
       - G404 # use unsafe random generator until logic change is discussed
       - G307 # Deferring unsafe method "Close" on type "io.ReadCloser"
+  depguard:
+    rules:
+      prevent_unmaintained_packages:
+        list-mode: lax # allow unless explicitely denied
+        files:
+          - $all
+          - "!$test"
+        deny:
+          - pkg: "log"
+            desc: "We should use zerolog instead"
+          - pkg: io/ioutil
+            desc: "this is deprecated"
 
 linters:
   disable-all: true
   enable:
     - lll
     - exhaustive
+    - depguard
     - goconst
     - gocyclo
     - gofmt

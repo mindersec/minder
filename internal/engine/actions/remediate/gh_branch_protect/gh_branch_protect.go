@@ -21,13 +21,13 @@ import (
 	"encoding/json"
 	"errors"
 	"fmt"
-	"log"
 	"net/http"
 	"text/template"
 
 	jsonpatch "github.com/evanphx/json-patch/v5"
 	"github.com/google/go-github/v56/github"
 	"github.com/rs/zerolog"
+	"github.com/rs/zerolog/log"
 	"google.golang.org/protobuf/reflect/protoreflect"
 
 	"github.com/stacklok/minder/internal/engine/interfaces"
@@ -164,7 +164,9 @@ func (r *GhBranchProtectRemediator) Do(
 func dryRun(baseUrl, owner, repo, branch string, req *github.ProtectionRequest) error {
 	jsonReq, err := json.Marshal(req)
 	if err != nil {
-		log.Fatalf("Error marshalling data: %v", err)
+		// this should not be fatal
+		log.Err(err).Msg("Error marshalling data")
+		return fmt.Errorf("error marshalling data: %w", err)
 	}
 
 	endpoint := fmt.Sprintf("repos/%v/%v/branches/%v/protection", owner, repo, branch)

@@ -22,7 +22,6 @@ package db
 
 import (
 	"database/sql"
-	"log"
 	"os"
 	"testing"
 
@@ -31,6 +30,7 @@ import (
 	_ "github.com/golang-migrate/migrate/v4/database/postgres" // nolint
 	_ "github.com/golang-migrate/migrate/v4/source/file"       // nolint
 	_ "github.com/lib/pq"
+	"github.com/rs/zerolog/log"
 )
 
 const (
@@ -46,7 +46,7 @@ var testDB *sql.DB
 func TestMain(m *testing.M) {
 	var runDBTests = runTestWithInProcessPostgres
 	if useExternalDB() {
-		log.Println("Using external database for tests")
+		log.Print("Using external database for tests")
 		runDBTests = runTestWithExternalPostgres
 	}
 	os.Exit(runDBTests(m))
@@ -57,7 +57,7 @@ func runTestWithExternalPostgres(m *testing.M) int {
 
 	testDB, err := sql.Open("postgres", connStr)
 	if err != nil {
-		log.Fatal("cannot connect to db test instance:", err)
+		log.Fatal().Err(err).Msg("cannot connect to db test instance")
 	}
 
 	testQueries = New(testDB)
@@ -68,13 +68,13 @@ func runTestWithExternalPostgres(m *testing.M) int {
 func runTestWithInProcessPostgres(m *testing.M) int {
 	tmpName, err := os.MkdirTemp("", "minder-db-test")
 	if err != nil {
-		log.Println("cannot create tmpdir:", err)
+		log.Err(err).Msg("cannot create tmpdir")
 		return -1
 	}
 
 	defer func() {
 		if err := os.RemoveAll(tmpName); err != nil {
-			log.Println("cannot remove tmpdir:", err)
+			log.Err(err).Msg("cannot remove tmpdir")
 		}
 	}()
 
@@ -85,18 +85,18 @@ func runTestWithInProcessPostgres(m *testing.M) int {
 	postgres := embeddedpostgres.NewDatabase(dbCfg)
 
 	if err := postgres.Start(); err != nil {
-		log.Println("cannot start postgres:", err)
+		log.Err(err).Msg("cannot start postgres")
 		return -1
 	}
 	defer func() {
 		if err := postgres.Stop(); err != nil {
-			log.Println("cannot stop postgres:", err)
+			log.Err(err).Msg("cannot stop postgres")
 		}
 	}()
 
 	testDB, err = sql.Open("postgres", "user=postgres dbname=minder password=postgres host=localhost port=5433 sslmode=disable")
 	if err != nil {
-		log.Println("cannot connect to db test instance:", err)
+		log.Err(err).Msg("cannot connect to db test instance")
 		return -1
 	}
 
@@ -108,13 +108,13 @@ func runTestWithInProcessPostgres(m *testing.M) int {
 	}
 
 	if err := mig.Up(); err != nil {
-		log.Println("cannot run db migrations:", err)
+		log.Err(err).Msg("cannot run db migrations")
 		return -1
 	}
 
 	defer func() {
 		if err := testDB.Close(); err != nil {
-			log.Println("cannot close test db:", err)
+			log.Err(err).Msg("cannot close test db")
 		}
 	}()
 

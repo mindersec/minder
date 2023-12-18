@@ -20,10 +20,10 @@ import (
 	"encoding/json"
 	"errors"
 	"fmt"
-	"log"
 	"strings"
 
 	"github.com/google/uuid"
+	"github.com/rs/zerolog/log"
 	"google.golang.org/grpc/codes"
 	"google.golang.org/grpc/status"
 	"google.golang.org/protobuf/types/known/timestamppb"
@@ -485,7 +485,7 @@ func (s *Server) GetProfileStatusByName(ctx context.Context,
 
 			// make sure all fields are valid
 			if !rs.EvalStatus.Valid || !rs.EvalDetails.Valid || !rs.RemStatus.Valid || !rs.RemDetails.Valid || !rs.EvalLastUpdated.Valid {
-				log.Println("error rule evaluation value not valid")
+				log.Print("error rule evaluation value not valid")
 				continue
 			}
 

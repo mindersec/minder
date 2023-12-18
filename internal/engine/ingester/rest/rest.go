@@ -22,13 +22,13 @@ import (
 	"errors"
 	"fmt"
 	"io"
-	"log"
 	"net/http"
 	"strings"
 	"text/template"
 
 	"github.com/google/go-github/v56/github"
 	"github.com/rs/zerolog"
+	"github.com/rs/zerolog/log"
 	"google.golang.org/protobuf/reflect/protoreflect"
 
 	engif "github.com/stacklok/minder/internal/engine/interfaces"

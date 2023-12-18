@@ -18,9 +18,9 @@ package engine
 import (
 	"context"
 	"fmt"
-	"log"
 	"strings"
 
+	"github.com/rs/zerolog/log"
 	"github.com/xeipuuv/gojsonschema"
 	"google.golang.org/protobuf/encoding/protojson"
 	"google.golang.org/protobuf/types/known/structpb"

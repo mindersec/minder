@@ -19,10 +19,10 @@ import (
 	"context"
 	"encoding/json"
 	"fmt"
-	"log"
 	"os"
 	"strings"
 
+	"github.com/rs/zerolog/log"
 	"google.golang.org/protobuf/encoding/protojson"
 
 	"github.com/stacklok/minder/internal/verifier/sigstore"
@@ -132,7 +132,7 @@ func (v *Verifier) Verify(ctx context.Context, artifactType ArtifactType, regist
 // This is temporary until sigstore-go supports in-memory verification
 func (v *Verifier) ClearCache() {
 	if err := os.RemoveAll(v.cacheDir); err != nil {
-		log.Println("error deleting temporary sigstore cache directory:", err)
+		log.Err(err).Msg("error deleting temporary sigstore cache directory")
 	}
 }
 
