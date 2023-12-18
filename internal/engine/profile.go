@@ -20,9 +20,10 @@ import (
 	"encoding/json"
 	"fmt"
 	"io"
-	"log"
 	"os"
 	"path/filepath"
+
+	"github.com/rs/zerolog/log"
 
 	"github.com/stacklok/minder/internal/db"
 	"github.com/stacklok/minder/internal/entities"

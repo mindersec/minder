@@ -18,12 +18,12 @@ package app
 import (
 	"database/sql"
 	"fmt"
-	"log"
 	"net/url"
 	"os"
 	"os/signal"
 
 	"github.com/rs/zerolog"
+	"github.com/rs/zerolog/log"
 	"github.com/spf13/cobra"
 	"github.com/spf13/viper"
 	"golang.org/x/sync/errgroup"
@@ -165,7 +165,7 @@ func init() {
 
 	// Register flags for the server - http, grpc, metrics
 	if err := config.RegisterServerFlags(v, serveCmd.Flags()); err != nil {
-		log.Fatal(err)
+		log.Fatal().Err(err).Msg("Error registering server flags")
 	}
 
 	serveCmd.Flags().String("logging", "", "Log Level")
