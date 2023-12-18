@@ -35,6 +35,8 @@ import (
 	promgo "github.com/prometheus/client_golang/prometheus"
 	"github.com/rs/zerolog"
 	"github.com/rs/zerolog/log"
+	"go.opentelemetry.io/otel"
+	"go.opentelemetry.io/otel/metric"
 
 	"github.com/stacklok/minder/internal/config"
 )
@@ -50,6 +52,7 @@ const (
 	SQLDriver       = "sql"
 
 	DeadLetterQueueTopic = "dead_letter_queue"
+	PublishedKey         = "published_at"
 )
 
 const (
@@ -100,8 +103,14 @@ type Eventer struct {
 	// webhookSubscriber will subscribe to the webhook topic and handle incoming events
 	webhookSubscriber message.Subscriber
 	// TODO: We'll have a Final publisher that will publish to the final topic
+	metrics *messageInstruments
 
 	closer driverCloser
+}
+
+type messageInstruments struct {
+	// message processing time duration histogram
+	messageProcessingTimeHistogram metric.Int64Histogram
 }
 
 var _ Registrar = (*Eventer)(nil)
@@ -129,6 +138,26 @@ func Setup(ctx context.Context, cfg *config.EventConfig) (*Eventer, error) {
 		metricsNamespace,
 		metricsSubsystem)
 	metricsBuilder.AddPrometheusRouterMetrics(router)
+
+	meter := otel.Meter("eventer")
+	histogram, err := meter.Int64Histogram("messages.processing_delay",
+		metric.WithDescription("Duration between a message being enqueued and dequeued for processing"),
+		metric.WithUnit("ms"),
+	)
+	if err != nil {
+		return nil, fmt.Errorf("failed to create message processing histogram: %w", err)
+	}
+
+	metricInstruments := messageInstruments{
+		messageProcessingTimeHistogram: histogram,
+	}
+
+	// Router level middleware are executed for every message sent to the router
+	router.AddMiddleware(
+		recordMetrics(metricInstruments),
+		// CorrelationID will copy the correlation id from the incoming message's metadata to the produced messages
+		middleware.CorrelationID,
+	)
 
 	pub, sub, cl, err := instantiateDriver(ctx, cfg.Driver, cfg)
 	if err != nil {
@@ -173,7 +202,28 @@ func Setup(ctx context.Context, cfg *config.EventConfig) (*Eventer, error) {
 			// driver close
 			cl()
 		},
+		metrics: &metricInstruments,
 	}, nil
+}
+
+func recordMetrics(m messageInstruments) func(h message.HandlerFunc) message.HandlerFunc {
+	metricsFunc := func(h message.HandlerFunc) message.HandlerFunc {
+		return func(message *message.Message) ([]*message.Message, error) {
+			producedMessages, err := h(message)
+
+			for _, msg := range producedMessages {
+				if publishedAt := msg.Metadata.Get(PublishedKey); publishedAt != "" {
+					if parsedTime, err := time.Parse(time.RFC3339, publishedAt); err == nil {
+						processingTime := time.Since(parsedTime)
+						m.messageProcessingTimeHistogram.Record(msg.Context(), processingTime.Milliseconds())
+					}
+				}
+			}
+
+			return producedMessages, err
+		}
+	}
+	return metricsFunc
 }
 
 func instantiateDriver(
@@ -273,6 +323,7 @@ func (e *Eventer) Publish(topic string, messages ...*message.Message) error {
 				"topic":        topic,
 				"handler":      details.Name(),
 			})
+			msg.Metadata.Set(PublishedKey, time.Now().Format(time.RFC3339))
 		}
 	}
 
