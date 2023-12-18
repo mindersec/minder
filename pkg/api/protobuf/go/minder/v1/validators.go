@@ -118,13 +118,29 @@ func (def *RuleType_Definition) Validate() error {
 	return nil
 }
 
+func (p *Profile) getTypeWithDefault() string {
+	pt := p.GetType()
+	if pt == "" {
+		return ProfileType
+	}
+	return pt
+}
+
+func (p *Profile) getVersionWithDefault() string {
+	pv := p.GetVersion()
+	if pv == "" {
+		return ProfileTypeVersion
+	}
+	return pv
+}
+
 // Validate validates a pipeline profile
 func (p *Profile) Validate() error {
-	if p.Type != ProfileType {
+	if p.getTypeWithDefault() != ProfileType {
 		return fmt.Errorf("%w: profile type is invalid: %s. Did you parse the wrong file?",
 			ErrValidationFailed, p.Type)
 	}
-	if p.Version != ProfileTypeVersion {
+	if p.getVersionWithDefault() != ProfileTypeVersion {
 		return fmt.Errorf("%w: profile version is invalid: %s", ErrValidationFailed, p.Version)
 	}
 
