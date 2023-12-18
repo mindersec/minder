@@ -47,7 +47,7 @@ var (
 // RepoReconcilerEvent is an event that is sent to the reconciler topic
 type RepoReconcilerEvent struct {
 	// Project is the project that the event is relevant to
-	Project uuid.UUID `json:"group" validate:"gte=0"`
+	Project uuid.UUID `json:"project"`
 	// Repository is the repository to be reconciled
 	Repository int32 `json:"repository" validate:"gte=0"`
 }
