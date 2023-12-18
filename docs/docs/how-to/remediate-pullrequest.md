@@ -49,7 +49,7 @@ cd minder-rules-and-profiles
 Create the `dependabot_configured` rule type in Minder:
 
 ```bash
-minder rule_type create -f rule-types/github/dependabot_configured.yaml
+minder ruletype create -f rule-types/github/dependabot_configured.yaml
 ```
 
 ## Create a profile

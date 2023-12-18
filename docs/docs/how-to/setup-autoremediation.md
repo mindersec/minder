@@ -40,7 +40,7 @@ cd minder-rules-and-profiles
 Create the `branch_protection_allow_force_pushes` rule type in Minder:
 
 ```bash
-minder rule_type create -f rule-types/github/branch_protection_allow_force_pushes.yaml
+minder ruletype create -f rule-types/github/branch_protection_allow_force_pushes.yaml
 ```
 
 ## Create a profile

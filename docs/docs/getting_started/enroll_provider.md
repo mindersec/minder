@@ -19,7 +19,7 @@ Once you have authenticated to Minder, you'll want to enroll your GitHub credent
 To enroll your GitHub credentials in your Minder account, run:
 
 ```bash
-minder provider enroll --provider github
+minder provider enroll
 ```
 
 A browser session will open, and you will be prompted to login to your GitHub account.
@@ -30,7 +30,7 @@ Once you have granted Minder access, you will be redirected back, and the user w
 
 When enrolling an organization, use the `--owner` flag of the `minder provider enroll` command to specify the organization name:
 ```bash
-minder provider enroll --provider github --owner test-org
+minder provider enroll --owner test-org
 ```
 The `--owner` flag is not required when enrolling repositories from your personal account.
 

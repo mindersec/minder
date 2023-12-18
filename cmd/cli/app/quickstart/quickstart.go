@@ -64,7 +64,7 @@ Currently Minder works with Github, but we are planning support for other provid
 
 The command we are about to do is the following:
 
-minder provider enroll --provider github
+minder provider enroll
 `
 	// nolint:lll
 	stepPromptMsgRegister = `
@@ -74,7 +74,7 @@ Now that you have enrolled your provider successfully, you can register your rep
 
 The command we are about to do is the following:
 
-minder repo register --provider github
+minder repo register
 `
 	// nolint:lll
 	stepPromptMsgRuleType = `
@@ -87,7 +87,7 @@ Secret scanning is about protecting you from accidentally leaking secrets in you
 
 The command we are about to do is the following:
 
-minder rule_type create -f secret_scanning.yaml
+minder ruletype create -f secret_scanning.yaml
 `
 	// nolint:lll
 	stepPromptMsgProfile = `
@@ -320,7 +320,7 @@ func quickstartCommand(_ context.Context, cmd *cobra.Command, conn *grpc.ClientC
 		cmd.Println(cli.WarningBanner.Render(alreadyExists))
 	} else {
 		// Print the profile create result table
-		cmd.Println("Profile details (minder profile list -p github):")
+		cmd.Println("Profile details (minder profile list):")
 		table := profile.NewProfileTable()
 		profile.RenderProfileTable(resp.GetProfile(), table)
 		table.Render()

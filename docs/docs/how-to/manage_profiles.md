@@ -124,7 +124,7 @@ Covered rule types are now:
 You can list all profile types registered in Minder:
 
 ```bash
-minder rule_type list --provider github
+minder ruletype list
 ```
 
 By default, a rule type is providing some recommended default values, so users can create profiles
@@ -137,7 +137,7 @@ Before creating a profile, we need to ensure that all rule types exist in Minder
 A rule type can be created by pointing to a directory (or file) containing the rule type definition:
 
 ```bash
-minder rule_type create -f ./examples/github/rule-types
+minder ruletype create -f ./examples/github/rule-types
 ```
 
 Where the yaml files in the directory `rule-types` may look as the example above.
@@ -183,11 +183,11 @@ Profile status will inform about:
 Profile status can be checked using the following commands
 
 ```bash
-minder profile status list --profile github-profile
+minder profile status list --name github-profile
 ```
 
 To view all of the rule evaluations, use the following
 
 ```bash
-minder profile status list --profile github-profile --detailed
+minder profile status list --name github-profile --detailed
 ```
