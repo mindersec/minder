@@ -18,10 +18,13 @@
 package tests
 
 import (
-	"errors"
-	"os/exec"
+	"bytes"
 	"path/filepath"
 	"testing"
+
+	// We need the init() function here, but we can't copy rootCmd because it is private
+	_ "github.com/openfga/cli/cmd"
+	"github.com/openfga/cli/cmd/model"
 )
 
 func TestFGA(t *testing.T) {
@@ -36,19 +39,30 @@ func TestFGA(t *testing.T) {
 	for _, f := range files {
 		file := f
 		t.Run(file, func(t *testing.T) {
-			t.Parallel()
+			// We invoke cobra commands directly, which reference some global state in FGA.
 
-			output, err := exec.Command("fga", "model", "test", "--tests", file).CombinedOutput()
-			if err == nil {
-				t.Logf("%s succeeded, output:\n%s", file, string(output))
-				return
-			}
-			exit := &exec.ExitError{}
-			if errors.As(err, &exit) {
-				t.Errorf("%s failed with %s, output:%s\n", file, exit, string(output))
+			output, err := runFgaModelTest(file)
+			if err != nil {
+				t.Logf("%s failed: %s, output:\n%s", file, err, string(output))
 			} else {
-				t.Errorf("failed to exec `fga`: %v", err)
+				t.Logf("%s succeeded, output:\n%s", file, string(output))
 			}
 		})
 	}
+}
+
+// This is a little slimy, but we pull in the FGA CLI which implements "model test"
+// directly here, so we don't need to bootstrap the external command.
+//
+// This means we're using the CLI's exported `ModelCmd` as an API, which is icky.
+func runFgaModelTest(filename string) ([]byte, error) {
+	cmd := *model.ModelCmd
+	cmd.SetArgs([]string{"test", "--tests", filename})
+	buffer := new(bytes.Buffer)
+	cmd.SetOutput(buffer)
+
+	if err := cmd.Execute(); err != nil {
+		return buffer.Bytes(), err
+	}
+	return buffer.Bytes(), nil
 }

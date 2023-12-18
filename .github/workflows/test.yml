@@ -15,9 +15,6 @@ jobs:
         with:
           go-version-file: 'go.mod'
 
-      - name: Bootstrap
-        run: make bootstrap
-
       - name: Set up helm (test dependency)
         uses: azure/setup-helm@v3
 

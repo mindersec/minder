@@ -27,7 +27,6 @@ package tools
 //go:generate go install github.com/sqlc-dev/sqlc/cmd/sqlc
 //go:generate go install github.com/bufbuild/buf/cmd/buf
 //go:generate go install github.com/norwoodj/helm-docs/cmd/helm-docs
-//go:generate go install github.com/stacklok/minder/cmd/fga
 
 // nolint
 
@@ -42,7 +41,6 @@ import (
 	_ "github.com/norwoodj/helm-docs/cmd/helm-docs"
 	_ "github.com/pseudomuto/protoc-gen-doc/cmd/protoc-gen-doc"
 	_ "github.com/sqlc-dev/sqlc/cmd/sqlc"
-	_ "github.com/stacklok/minder/cmd/fga"
 	_ "golang.org/x/lint/golint"
 	_ "golang.org/x/tools/cmd/goimports"
 	_ "google.golang.org/grpc/cmd/protoc-gen-go-grpc"
