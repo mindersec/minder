@@ -16,6 +16,7 @@ minder artifact list [flags]
 ### Options
 
 ```
+      --from string         Filter artifacts from a source, example: from=repository=owner/repo
   -h, --help                help for list
   -f, --output string       Output format (json or yaml)
   -g, --project-id string   ID of the project for repo registration
