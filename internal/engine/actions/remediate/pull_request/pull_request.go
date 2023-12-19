@@ -479,7 +479,7 @@ func prFromBranchAlreadyExists(
 ) (bool, error) {
 	// TODO(jakub): pagination
 	opts := &github.PullRequestListOptions{
-		Head: branchName,
+		Head: fmt.Sprintf("%s:%s", repo.GetOwner(), branchName),
 	}
 
 	openPrs, err := cli.ListPullRequests(ctx, repo.GetOwner(), repo.GetName(), opts)
