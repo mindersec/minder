@@ -17,7 +17,6 @@ package artifact
 
 import (
 	"context"
-	"errors"
 	"fmt"
 	"os"
 
@@ -25,52 +24,64 @@ import (
 	"github.com/spf13/viper"
 	"google.golang.org/grpc"
 
+	"github.com/stacklok/minder/cmd/cli/app"
 	"github.com/stacklok/minder/internal/util"
 	"github.com/stacklok/minder/internal/util/cli"
-	pb "github.com/stacklok/minder/pkg/api/protobuf/go/minder/v1"
+	minderv1 "github.com/stacklok/minder/pkg/api/protobuf/go/minder/v1"
 )
 
-var artifact_getCmd = &cobra.Command{
+var getCmd = &cobra.Command{
 	Use:   "get",
 	Short: "Get artifact details",
-	Long:  `Artifact get will get artifact details from an artifact, for a given ID`,
-	RunE: cli.GRPCClientWrapRunE(func(ctx context.Context, cmd *cobra.Command, conn *grpc.ClientConn) error {
-		tag := util.GetConfigValue(viper.GetViper(), "tag", "tag", cmd, "").(string)
-		artifactID := viper.GetString("id")
-		latest_versions := viper.GetInt32("latest-versions")
+	Long:  `The artifact get subcommand will get artifact details from an artifact, for a given ID.`,
+	RunE:  cli.GRPCClientWrapRunE(getCommand),
+}
 
-		// tag and latest versions cannot be set at same time
-		if tag != "" && latest_versions != 1 {
-			return errors.New("tag and latest versions cannot be set at the same time")
-		}
+// getCommand is the artifact get subcommand
+func getCommand(ctx context.Context, cmd *cobra.Command, conn *grpc.ClientConn) error {
+	client := minderv1.NewArtifactServiceClient(conn)
 
-		client := pb.NewArtifactServiceClient(conn)
+	provider := viper.GetString("provider")
+	project := viper.GetString("project")
+	tag := viper.GetString("tag")
+	artifactID := viper.GetString("id")
+	latestVersions := viper.GetInt32("versions")
 
-		// check artifact by name
-		art, err := client.GetArtifactById(ctx, &pb.GetArtifactByIdRequest{
-			Id:             artifactID,
-			LatestVersions: latest_versions,
-			Tag:            tag,
-		})
-		if err != nil {
-			return cli.MessageAndError(cmd, "Error getting artifact by id", err)
-		}
+	// Ensure provider is supported
+	if !app.IsProviderSupported(provider) {
+		return cli.MessageAndError(fmt.Sprintf("Provider %s is not supported yet", provider), fmt.Errorf("invalid argument"))
+	}
 
-		out, err := util.GetJsonFromProto(art)
-		if err != nil {
-			return cli.MessageAndError(cmd, "Error getting json from proto", err)
-		}
-		cmd.Println(out)
-		return nil
-	}),
+	// check artifact by name
+	art, err := client.GetArtifactById(ctx, &minderv1.GetArtifactByIdRequest{
+		Context:        &minderv1.Context{Provider: &provider, Project: &project},
+		Id:             artifactID,
+		LatestVersions: latestVersions,
+		Tag:            tag,
+	})
+	if err != nil {
+		return cli.MessageAndError("Error getting artifact by id", err)
+	}
+
+	out, err := util.GetJsonFromProto(art)
+	if err != nil {
+		return cli.MessageAndError("Error getting json from proto", err)
+	}
+	cmd.Println(out)
+	return nil
 }
 
 func init() {
-	ArtifactCmd.AddCommand(artifact_getCmd)
-	artifact_getCmd.Flags().StringP("id", "i", "", "ID of the artifact to get info from")
-	artifact_getCmd.Flags().Int32P("latest-versions", "v", 1, "Latest artifact versions to retrieve")
-	artifact_getCmd.Flags().StringP("tag", "", "", "Specific artifact tag to retrieve")
-	if err := artifact_getCmd.MarkFlagRequired("id"); err != nil {
-		fmt.Fprintf(os.Stderr, "Error marking flag as required: %s\n", err)
+	ArtifactCmd.AddCommand(getCmd)
+	// Flags
+	getCmd.Flags().StringP("id", "i", "", "ID of the artifact to get info from")
+	getCmd.Flags().Int32P("versions", "v", 1, "Latest artifact versions to retrieve")
+	getCmd.Flags().StringP("tag", "", "", "Specific artifact tag to retrieve")
+	// Required
+	if err := getCmd.MarkFlagRequired("id"); err != nil {
+		getCmd.Printf("Error marking flag as required: %s", err)
+		os.Exit(1)
 	}
+	// Exclusive
+	getCmd.MarkFlagsMutuallyExclusive("versions", "tag")
 }

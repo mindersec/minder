@@ -18,111 +18,96 @@ package repo
 import (
 	"context"
 	"fmt"
+	"strings"
 
 	"github.com/spf13/cobra"
 	"github.com/spf13/viper"
 	"google.golang.org/grpc"
 
 	"github.com/stacklok/minder/cmd/cli/app"
-	github "github.com/stacklok/minder/internal/providers/github"
 	"github.com/stacklok/minder/internal/util"
 	"github.com/stacklok/minder/internal/util/cli"
-	pb "github.com/stacklok/minder/pkg/api/protobuf/go/minder/v1"
+	minderv1 "github.com/stacklok/minder/pkg/api/protobuf/go/minder/v1"
 )
 
-const (
-	formatJSON    = app.JSON
-	formatYAML    = app.YAML
-	formatTable   = "table"
-	formatDefault = "" // it actually defaults to table
-)
-
-var repo_getCmd = &cobra.Command{
+var getCmd = &cobra.Command{
 	Use:   "get",
-	Short: "Get repository in the minder control plane",
-	Long:  `Repo get is used to get a repo with the minder control plane`,
-	RunE: cli.GRPCClientWrapRunE(func(ctx context.Context, cmd *cobra.Command, conn *grpc.ClientConn) error {
-		provider := util.GetConfigValue(viper.GetViper(), "provider", "provider", cmd, "").(string)
-		repoid := viper.GetString("repo-id")
-		format := viper.GetString("output")
-		name := util.GetConfigValue(viper.GetViper(), "name", "name", cmd, "").(string)
-
-		// if name is set, repo-id cannot be set
-		if name != "" && repoid != "" {
-			return fmt.Errorf("cannot set both name and repo-id")
-		}
-
-		// either name or repoid needs to be set
-		if name == "" && repoid == "" {
-			return fmt.Errorf("either name or repo-id needs to be set")
-		}
-
-		// if name is set, provider needs to be set
-		if name != "" && provider == "" {
-			return fmt.Errorf("provider needs to be set if name is set")
-		}
-
-		switch format {
-		case formatJSON:
-		case formatYAML:
-		case formatDefault:
-		default:
-			return fmt.Errorf("invalid output format: %s", format)
-		}
-
-		client := pb.NewRepositoryServiceClient(conn)
-
-		// check repo by id
-		var repository *pb.Repository
-		if repoid != "" {
-			resp, err := client.GetRepositoryById(ctx, &pb.GetRepositoryByIdRequest{
-				RepositoryId: repoid,
-			})
-			if err != nil {
-				return cli.MessageAndError(cmd, "Error getting repo by id", err)
-			}
-			repository = resp.Repository
-		} else {
-			if provider != github.Github {
-				return fmt.Errorf("only %s is supported at this time", github.Github)
-			}
-
-			// check repo by name
-			resp, err := client.GetRepositoryByName(ctx, &pb.GetRepositoryByNameRequest{Provider: provider, Name: name})
-			if err != nil {
-				return cli.MessageAndError(cmd, "Error getting repo by name", err)
-			}
-			repository = resp.Repository
-		}
-
-		status := util.GetConfigValue(viper.GetViper(), "status", "status", cmd, false).(bool)
-		if status {
-			// TODO: implement this
-		} else {
-			// print result just in JSON or YAML
-			if format == "" || format == formatJSON {
-				out, err := util.GetJsonFromProto(repository)
-				if err != nil {
-					return cli.MessageAndError(cmd, "Error getting json from proto", err)
-				}
-				cmd.Println(out)
-			} else {
-				out, err := util.GetYamlFromProto(repository)
-				if err != nil {
-					return cli.MessageAndError(cmd, "Error getting yaml from proto", err)
-				}
-				cmd.Println(out)
-			}
-		}
-		return nil
-	}),
+	Short: "Get repository details",
+	Long:  `The repo get subcommand is used to get details for a registered repository within Minder.`,
+	RunE:  cli.GRPCClientWrapRunE(getCommand),
 }
 
+// getCommand is the repo get subcommand
+func getCommand(ctx context.Context, cmd *cobra.Command, conn *grpc.ClientConn) error {
+	client := minderv1.NewRepositoryServiceClient(conn)
+
+	provider := viper.GetString("provider")
+	project := viper.GetString("project")
+	format := viper.GetString("output")
+	repoid := viper.GetString("id")
+	name := viper.GetString("name")
+
+	// Ensure provider is supported
+	if !app.IsProviderSupported(provider) {
+		return cli.MessageAndError(fmt.Sprintf("Provider %s is not supported yet", provider), fmt.Errorf("invalid argument"))
+	}
+
+	// Ensure the output format is supported
+	if !app.IsOutputFormatSupported(format) || format == app.Table {
+		return cli.MessageAndError(fmt.Sprintf("Output format %s not supported", format), fmt.Errorf("invalid argument"))
+	}
+
+	var repository *minderv1.Repository
+	// check repo by id
+	if repoid != "" {
+		resp, err := client.GetRepositoryById(ctx, &minderv1.GetRepositoryByIdRequest{
+			Context:      &minderv1.Context{Provider: &provider, Project: &project},
+			RepositoryId: repoid,
+		})
+		if err != nil {
+			return cli.MessageAndError("Error getting repo by id", err)
+		}
+		repository = resp.Repository
+	} else {
+		// check repo by name
+		resp, err := client.GetRepositoryByName(ctx, &minderv1.GetRepositoryByNameRequest{
+			Context: &minderv1.Context{Provider: &provider, Project: &project},
+			// keep this until we decide to remove it from the proto and rely on the context instead
+			Provider: provider,
+			Name:     name,
+		})
+		if err != nil {
+			return cli.MessageAndError("Error getting repo by name", err)
+		}
+		repository = resp.Repository
+	}
+
+	// print result just in JSON or YAML
+	switch format {
+	case app.JSON:
+		out, err := util.GetJsonFromProto(repository)
+		if err != nil {
+			return cli.MessageAndError("Error getting json from proto", err)
+		}
+		cmd.Println(out)
+	case app.YAML:
+		out, err := util.GetYamlFromProto(repository)
+		if err != nil {
+			return cli.MessageAndError("Error getting yaml from proto", err)
+		}
+		cmd.Println(out)
+	}
+
+	return nil
+}
 func init() {
-	RepoCmd.AddCommand(repo_getCmd)
-	repo_getCmd.Flags().StringP("output", "f", "", "Output format (json or yaml)")
-	repo_getCmd.Flags().StringP("provider", "p", "github", "Name for the provider to enroll")
-	repo_getCmd.Flags().StringP("name", "n", "", "Name of the repository (owner/name format)")
-	repo_getCmd.Flags().StringP("repo-id", "r", "", "ID of the repo to query")
-	repo_getCmd.Flags().BoolP("status", "s", false, "Only return the status of the profiles associated to this repo")
+	RepoCmd.AddCommand(getCmd)
+	// Flags
+	getCmd.Flags().StringP("output", "o", app.JSON,
+		fmt.Sprintf("Output format (one of %s)", strings.Join([]string{app.JSON, app.YAML}, ",")))
+	getCmd.Flags().StringP("name", "n", "", "Name of the repository (owner/name format)")
+	getCmd.Flags().StringP("id", "i", "", "ID of the repo to query")
+	// Required
+	getCmd.MarkFlagsOneRequired("name", "id")
+	getCmd.MarkFlagsMutuallyExclusive("name", "id")
 }

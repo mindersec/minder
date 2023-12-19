@@ -19,6 +19,7 @@ import (
 	"context"
 	"fmt"
 	"os"
+	"strings"
 
 	"github.com/spf13/cobra"
 	"github.com/spf13/viper"
@@ -30,77 +31,80 @@ import (
 	minderv1 "github.com/stacklok/minder/pkg/api/protobuf/go/minder/v1"
 )
 
-var ruleType_getCmd = &cobra.Command{
+var getCmd = &cobra.Command{
 	Use:   "get",
-	Short: "Get details for a rule type within a minder control plane",
-	Long: `The minder ruletype get subcommand lets you retrieve details for a rule type within a
-minder control plane.`,
-	RunE: cli.GRPCClientWrapRunE(func(ctx context.Context, cmd *cobra.Command, conn *grpc.ClientConn) error {
-		provider := viper.GetString("provider")
-		format := viper.GetString("output")
+	Short: "Get details for a rule type",
+	Long:  `The ruletype get subcommand lets you retrieve details for a rule type within Minder.`,
+	RunE:  cli.GRPCClientWrapRunE(getCommand),
+}
 
-		switch format {
-		case app.JSON:
-		case app.YAML:
-		case app.Table:
-		default:
-			return fmt.Errorf("error: invalid format: %s", format)
-		}
+// getCommand is the ruletype get subcommand
+func getCommand(ctx context.Context, cmd *cobra.Command, conn *grpc.ClientConn) error {
+	client := minderv1.NewProfileServiceClient(conn)
 
-		client := minderv1.NewProfileServiceClient(conn)
+	provider := viper.GetString("provider")
+	project := viper.GetString("project")
+	format := viper.GetString("output")
+	id := viper.GetString("id")
 
-		id := viper.GetString("id")
+	// Ensure provider is supported
+	if !app.IsProviderSupported(provider) {
+		return cli.MessageAndError(fmt.Sprintf("Provider %s is not supported yet", provider), fmt.Errorf("invalid argument"))
+	}
 
-		rtype, err := client.GetRuleTypeById(ctx, &minderv1.GetRuleTypeByIdRequest{
-			Context: &minderv1.Context{
-				Provider: &provider,
-				// TODO set up project if specified
-				// Currently it's inferred from the authorization token
-			},
-			Id: id,
-		})
+	// Ensure the output format is supported
+	if !app.IsOutputFormatSupported(format) {
+		return cli.MessageAndError(fmt.Sprintf("Output format %s not supported", format), fmt.Errorf("invalid argument"))
+	}
+
+	rtype, err := client.GetRuleTypeById(ctx, &minderv1.GetRuleTypeByIdRequest{
+		Context: &minderv1.Context{Provider: &provider, Project: &project},
+		Id:      id,
+	})
+	if err != nil {
+		return cli.MessageAndError("Error getting rule type", err)
+	}
+
+	switch format {
+	case app.YAML:
+		out, err := util.GetYamlFromProto(rtype)
 		if err != nil {
-			return fmt.Errorf("error getting rule type: %w", err)
+			return cli.MessageAndError("Error getting yaml from proto", err)
 		}
-
-		switch format {
-		case app.YAML:
-			out, err := util.GetYamlFromProto(rtype)
-			if err != nil {
-				return fmt.Errorf("error getting yaml from proto: %w", err)
-			}
-			cmd.Println(out)
-		case app.JSON:
-			out, err := util.GetJsonFromProto(rtype)
-			if err != nil {
-				return fmt.Errorf("error getting json from proto: %w", err)
-			}
-			cmd.Println(out)
-		case app.Table:
-			handleGetTableOutput(cmd, rtype.GetRuleType())
+		cmd.Println(out)
+	case app.JSON:
+		out, err := util.GetJsonFromProto(rtype)
+		if err != nil {
+			return cli.MessageAndError("Error getting json from proto", err)
 		}
-		return nil
-	}),
+		cmd.Println(out)
+	case app.Table:
+		// Initialize the table
+		table := initializeTable()
+		rt := rtype.GetRuleType()
+		// add the rule type to the table rows
+		table.AddRow([]string{
+			*rt.Context.Provider,
+			*rt.Context.Project,
+			*rt.Id,
+			rt.Name,
+			rt.Description,
+		})
+		table.Render()
+	}
+	return nil
 }
 
 func init() {
-	ruleTypeCmd.AddCommand(ruleType_getCmd)
-	ruleType_getCmd.Flags().StringP("id", "i", "", "ID for the profile to query")
-	ruleType_getCmd.Flags().StringP("output", "o", app.Table, "Output format (json, yaml or table)")
-	ruleType_getCmd.Flags().StringP("provider", "p", "github", "Provider for the profile")
-	// TODO set up project if specified
-
-	if err := ruleType_getCmd.MarkFlagRequired("id"); err != nil {
-		fmt.Fprintf(os.Stderr, "Error marking flag as required: %s\n", err)
+	ruleTypeCmd.AddCommand(getCmd)
+	// Flags
+	getCmd.Flags().StringP("id", "i", "", "ID for the rule type to query")
+	getCmd.Flags().StringP("output", "o", app.Table,
+		fmt.Sprintf("Output format (one of %s)", strings.Join(app.SupportedOutputFormats(), ",")))
+	// Required
+	if err := getCmd.MarkFlagRequired("id"); err != nil {
+		getCmd.Printf("Error marking flag required: %s", err)
 		os.Exit(1)
 	}
 
-}
-
-func handleGetTableOutput(cmd *cobra.Command, rtype *minderv1.RuleType) {
-	table := initializeTable(cmd)
-
-	renderRuleTypeTable(rtype, table)
-
-	table.Render()
 }

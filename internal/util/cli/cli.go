@@ -24,18 +24,30 @@ package cli
 
 import (
 	"context"
+	"errors"
 	"fmt"
+	"os"
 	"time"
 
 	"github.com/erikgeiser/promptkit/confirmation"
 	"github.com/spf13/cobra"
 	"github.com/spf13/viper"
 	"google.golang.org/grpc"
+	"google.golang.org/grpc/status"
 
-	"github.com/stacklok/minder/internal/constants"
 	"github.com/stacklok/minder/internal/util"
 	"github.com/stacklok/minder/internal/util/cli/useragent"
 )
+
+// ErrWrappedCLIError is an error that wraps another error and provides a message used from within the CLI
+type ErrWrappedCLIError struct {
+	Message string
+	Err     error
+}
+
+func (e *ErrWrappedCLIError) Error() string {
+	return e.Err.Error()
+}
 
 // PrintYesNoPrompt prints a yes/no prompt to the user and returns false if the user did not respond with yes or y
 func PrintYesNoPrompt(cmd *cobra.Command, promptMsg, confirmMsg, fallbackMsg string, defaultYes bool) bool {
@@ -64,17 +76,17 @@ func PrintYesNoPrompt(cmd *cobra.Command, promptMsg, confirmMsg, fallbackMsg str
 }
 
 // GrpcForCommand is a helper for getting a testing connection from cobra flags
-func GrpcForCommand(cmd *cobra.Command, v *viper.Viper) (*grpc.ClientConn, error) {
-	grpc_host := util.GetConfigValue(v, "grpc_server.host", "grpc-host", cmd, constants.MinderGRPCHost).(string)
-	grpc_port := util.GetConfigValue(v, "grpc_server.port", "grpc-port", cmd, 443).(int)
-	insecureDefault := grpc_host == "localhost" || grpc_host == "127.0.0.1" || grpc_host == "::1"
-	allowInsecure := util.GetConfigValue(v, "grpc_server.insecure", "grpc-insecure", cmd, insecureDefault).(bool)
+func GrpcForCommand(v *viper.Viper) (*grpc.ClientConn, error) {
+	grpcHost := v.GetString("grpc_server.host")
+	grpcPort := v.GetInt("grpc_server.port")
+	insecureDefault := grpcHost == "localhost" || grpcHost == "127.0.0.1" || grpcHost == "::1"
+	allowInsecure := v.GetBool("grpc_server.insecure") || insecureDefault
 
-	issuerUrl := util.GetConfigValue(v, "identity.cli.issuer_url", "identity-url", cmd, constants.IdentitySeverURL).(string)
-	clientId := util.GetConfigValue(v, "identity.cli.client_id", "identity-client", cmd, "minder-cli").(string)
+	issuerUrl := v.GetString("identity.cli.issuer_url")
+	clientId := v.GetString("identity.cli.client_id")
 
 	return util.GetGrpcConnection(
-		grpc_host, grpc_port, allowInsecure, issuerUrl, clientId, grpc.WithUserAgent(useragent.GetUserAgent()))
+		grpcHost, grpcPort, allowInsecure, issuerUrl, clientId, grpc.WithUserAgent(useragent.GetUserAgent()))
 }
 
 // GetAppContext is a helper for getting the cmd app context
@@ -103,7 +115,7 @@ func GRPCClientWrapRunE(
 		ctx, cancel := GetAppContext(cmd.Context(), viper.GetViper())
 		defer cancel()
 
-		c, err := GrpcForCommand(cmd, viper.GetViper())
+		c, err := GrpcForCommand(viper.GetViper())
 		if err != nil {
 			return err
 		}
@@ -115,7 +127,32 @@ func GRPCClientWrapRunE(
 }
 
 // MessageAndError prints a message and returns an error.
-func MessageAndError(cmd *cobra.Command, msg string, err error) error {
-	cmd.PrintErrln(msg)
-	return err
+func MessageAndError(msg string, err error) error {
+	return &ErrWrappedCLIError{Message: msg, Err: err}
+}
+
+// ExitNicelyOnError print a message and exit with the right code
+func ExitNicelyOnError(err error, message string) {
+	if err != nil {
+		if message != "" {
+			fmt.Fprintf(os.Stderr, "Message: %s\n", message)
+		}
+		// Check if the error is wrapped
+		var wrappedErr *ErrWrappedCLIError
+		if errors.As(err, &wrappedErr) {
+			// Print the wrapped message
+			fmt.Fprintf(os.Stderr, "Message: %s\n", wrappedErr.Message)
+			// Continue processing the wrapped error
+			err = wrappedErr.Err
+		}
+		// Check if the error is a grpc status
+		if rpcStatus, ok := status.FromError(err); ok {
+			nice := util.FromRpcError(rpcStatus)
+			fmt.Fprintf(os.Stderr, "Details: %s\n", nice.Description)
+			os.Exit(int(nice.Code))
+		} else {
+			fmt.Fprintf(os.Stderr, "Details: %s\n", err)
+			os.Exit(1)
+		}
+	}
 }

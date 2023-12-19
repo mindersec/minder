@@ -27,27 +27,25 @@ import (
 	"github.com/spf13/cobra"
 	"github.com/spf13/viper"
 
-	"github.com/stacklok/minder/internal/constants"
 	"github.com/stacklok/minder/internal/util"
 	"github.com/stacklok/minder/internal/util/cli"
 )
 
-// auth_logoutCmd represents the logout command
-var auth_logoutCmd = &cobra.Command{
+// logoutCmd represents the logout command
+var logoutCmd = &cobra.Command{
 	Use:   "logout",
 	Short: "Logout from minder control plane.",
 	Long:  `Logout from minder control plane. Credentials will be removed from $XDG_CONFIG_HOME/minder/credentials.json`,
 	RunE: func(cmd *cobra.Command, args []string) error {
 		if err := util.RemoveCredentials(); err != nil {
-			return cli.MessageAndError(cmd, "Error removing credentials", err)
+			return cli.MessageAndError("Error removing credentials", err)
 		}
 
-		issuerUrlStr := util.GetConfigValue(viper.GetViper(), "identity.cli.issuer_url", "identity-url", cmd,
-			constants.IdentitySeverURL).(string)
+		issuerUrlStr := viper.GetString("identity.cli.issuer_url")
 
 		parsedURL, err := url.Parse(issuerUrlStr)
 		if err != nil {
-			return cli.MessageAndError(cmd, "Error parsing issuer URL", err)
+			return cli.MessageAndError("Error parsing issuer URL", err)
 		}
 
 		logoutUrl := parsedURL.JoinPath("realms/stacklok/protocol/openid-connect/logout")
@@ -58,6 +56,5 @@ var auth_logoutCmd = &cobra.Command{
 }
 
 func init() {
-	AuthCmd.AddCommand(auth_logoutCmd)
-
+	AuthCmd.AddCommand(logoutCmd)
 }

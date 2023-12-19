@@ -26,14 +26,14 @@ import (
 	"github.com/spf13/cobra"
 
 	"github.com/stacklok/minder/cmd/cli/app"
+	ghclient "github.com/stacklok/minder/internal/providers/github"
 )
 
 // RepoCmd is the root command for the repo subcommands
 var RepoCmd = &cobra.Command{
 	Use:   "repo",
-	Short: "Manage repositories within a minder control plane",
-	Long: `The minder repo commands allow the management of repositories within a 
-minder control plane.`,
+	Short: "Manage repositories",
+	Long:  `The repo commands allow the management of repositories within Minder.`,
 	RunE: func(cmd *cobra.Command, args []string) error {
 		return cmd.Usage()
 	},
@@ -41,4 +41,7 @@ minder control plane.`,
 
 func init() {
 	app.RootCmd.AddCommand(RepoCmd)
+	// Flags for all subcommands
+	RepoCmd.PersistentFlags().StringP("provider", "p", ghclient.Github, "Name of the provider, i.e. github")
+	RepoCmd.PersistentFlags().StringP("project", "j", "", "ID of the project")
 }

@@ -35,7 +35,7 @@ import (
 	"golang.org/x/oauth2/github"
 	"golang.org/x/oauth2/google"
 
-	"github.com/stacklok/minder/internal/util"
+	"github.com/stacklok/minder/internal/config"
 )
 
 const (
@@ -175,11 +175,11 @@ func RegisterOAuthFlags(v *viper.Viper, flags *pflag.FlagSet) error {
 		secretFileKey := fmt.Sprintf("%s.client_secret_file", provider)
 		secretFileFlag := fmt.Sprintf("%s-client-secret-file", provider)
 		secretFileDesc := fmt.Sprintf("File containing %s client secret", provider)
-		if err := util.BindConfigFlag(
+		if err := config.BindConfigFlag(
 			v, flags, idFileKey, idFileFlag, "", idFileDesc, flags.String); err != nil {
 			return err
 		}
-		if err := util.BindConfigFlag(
+		if err := config.BindConfigFlag(
 			v, flags, secretFileKey, secretFileFlag, "", secretFileDesc, flags.String); err != nil {
 			return err
 		}

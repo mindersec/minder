@@ -26,7 +26,7 @@ import (
 
 	"github.com/stacklok/minder/internal/auth"
 	"github.com/stacklok/minder/internal/config"
-	"github.com/stacklok/minder/internal/util"
+	"github.com/stacklok/minder/internal/util/cli"
 )
 
 var (
@@ -45,7 +45,7 @@ func Execute() {
 	RootCmd.SetOut(os.Stdout)
 	RootCmd.SetErr(os.Stderr)
 	err := RootCmd.Execute()
-	util.ExitNicelyOnError(err, "Error executing root command")
+	cli.ExitNicelyOnError(err, "Error executing root command")
 }
 
 func init() {

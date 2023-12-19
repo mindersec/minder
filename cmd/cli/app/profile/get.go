@@ -13,11 +13,12 @@
 // See the License for the specific language governing permissions and
 // limitations under the License.
 
-package repo
+package profile
 
 import (
 	"context"
 	"fmt"
+	"os"
 	"strings"
 
 	"github.com/spf13/cobra"
@@ -27,24 +28,24 @@ import (
 	"github.com/stacklok/minder/cmd/cli/app"
 	"github.com/stacklok/minder/internal/util"
 	"github.com/stacklok/minder/internal/util/cli"
-	"github.com/stacklok/minder/internal/util/cli/table"
 	minderv1 "github.com/stacklok/minder/pkg/api/protobuf/go/minder/v1"
 )
 
-var listCmd = &cobra.Command{
-	Use:   "list",
-	Short: "List repositories",
-	Long:  `The repo list subcommand is used to list registered repositories within Minder.`,
-	RunE:  cli.GRPCClientWrapRunE(listCommand),
+var getCmd = &cobra.Command{
+	Use:   "get",
+	Short: "Get details for a profile",
+	Long:  `The profile get subcommand lets you retrieve details for a profile within Minder.`,
+	RunE:  cli.GRPCClientWrapRunE(getCommand),
 }
 
-// listCommand is the repo list subcommand
-func listCommand(ctx context.Context, cmd *cobra.Command, conn *grpc.ClientConn) error {
-	client := minderv1.NewRepositoryServiceClient(conn)
+// getCommand is the profile "get" subcommand
+func getCommand(ctx context.Context, cmd *cobra.Command, conn *grpc.ClientConn) error {
+	client := minderv1.NewProfileServiceClient(conn)
 
 	provider := viper.GetString("provider")
 	project := viper.GetString("project")
 	format := viper.GetString("output")
+	id := viper.GetString("id")
 
 	// Ensure provider is supported
 	if !app.IsProviderSupported(provider) {
@@ -56,49 +57,45 @@ func listCommand(ctx context.Context, cmd *cobra.Command, conn *grpc.ClientConn)
 		return cli.MessageAndError(fmt.Sprintf("Output format %s not supported", format), fmt.Errorf("invalid argument"))
 	}
 
-	resp, err := client.ListRepositories(ctx, &minderv1.ListRepositoriesRequest{
+	p, err := client.GetProfileById(ctx, &minderv1.GetProfileByIdRequest{
 		Context: &minderv1.Context{Provider: &provider, Project: &project},
-		// keep this until we decide to delete them from the payload and rely only on the context
-		Provider:  provider,
-		ProjectId: project,
+		Id:      id,
 	})
 	if err != nil {
-		return cli.MessageAndError("Error listing repositories", err)
+		return cli.MessageAndError("Error getting profile", err)
 	}
 
 	switch format {
-	case app.Table:
-		t := table.New(table.Simple, "repolist", nil)
-		for _, v := range resp.Results {
-			t.AddRow([]string{
-				*v.Id,
-				*v.Context.Project,
-				*v.Context.Provider,
-				fmt.Sprintf("%d", v.GetRepoId()),
-				v.GetOwner(),
-				v.GetName(),
-			})
-		}
-		t.Render()
-	case app.JSON:
-		out, err := util.GetJsonFromProto(resp)
-		if err != nil {
-			return cli.MessageAndError("Error getting json from proto", err)
-		}
-		cmd.Println(out)
 	case app.YAML:
-		out, err := util.GetYamlFromProto(resp)
+		out, err := util.GetYamlFromProto(p)
 		if err != nil {
 			return cli.MessageAndError("Error getting yaml from proto", err)
 		}
 		cmd.Println(out)
+	case app.JSON:
+		out, err := util.GetJsonFromProto(p)
+		if err != nil {
+			return cli.MessageAndError("Error getting json from proto", err)
+		}
+		cmd.Println(out)
+	case app.Table:
+		table := NewProfileTable()
+		RenderProfileTable(p.GetProfile(), table)
+		table.Render()
 	}
 	return nil
 }
 
 func init() {
-	RepoCmd.AddCommand(listCmd)
+	ProfileCmd.AddCommand(getCmd)
 	// Flags
-	listCmd.Flags().StringP("output", "o", app.Table,
+	getCmd.Flags().StringP("id", "i", "", "ID for the profile to query")
+	getCmd.Flags().StringP("output", "o", app.Table,
 		fmt.Sprintf("Output format (one of %s)", strings.Join(app.SupportedOutputFormats(), ",")))
+	// Required
+	if err := getCmd.MarkFlagRequired("id"); err != nil {
+		getCmd.Printf("Error marking flag required: %s", err)
+		os.Exit(1)
+	}
+
 }

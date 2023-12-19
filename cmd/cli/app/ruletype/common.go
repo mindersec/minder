@@ -22,18 +22,18 @@ import (
 	"os"
 	"path/filepath"
 
-	"github.com/olekukonko/tablewriter"
 	"github.com/spf13/viper"
 	"golang.org/x/exp/slices"
 
 	"github.com/stacklok/minder/internal/util"
 	"github.com/stacklok/minder/internal/util/cli"
+	"github.com/stacklok/minder/internal/util/cli/table"
 	minderv1 "github.com/stacklok/minder/pkg/api/protobuf/go/minder/v1"
 )
 
 func execOnOneRuleType(
 	ctx context.Context,
-	table *tablewriter.Table,
+	t table.Table,
 	f string,
 	dashOpen io.Reader,
 	exec func(context.Context, string, *minderv1.RuleType) (*minderv1.RuleType, error),
@@ -41,24 +41,31 @@ func execOnOneRuleType(
 	ctx, cancel := cli.GetAppContext(ctx, viper.GetViper())
 	defer cancel()
 
-	preader, closer, err := util.OpenFileArg(f, dashOpen)
+	reader, closer, err := util.OpenFileArg(f, dashOpen)
 	if err != nil {
 		return fmt.Errorf("error opening file arg: %w", err)
 	}
 	defer closer()
 
-	r, err := minderv1.ParseRuleType(preader)
+	r, err := minderv1.ParseRuleType(reader)
 	if err != nil {
 		return fmt.Errorf("error parsing rule type: %w", err)
 	}
 
 	// create a rule
-	resprt, err := exec(ctx, f, r)
+	rt, err := exec(ctx, f, r)
 	if err != nil {
 		return err
 	}
 
-	renderRuleTypeTable(resprt, table)
+	// add the rule type to the table rows
+	t.AddRow([]string{
+		*rt.Context.Provider,
+		*rt.Context.Project,
+		*rt.Id,
+		rt.Name,
+		rt.Description,
+	})
 	return nil
 }
 
@@ -89,4 +96,9 @@ func shouldSkipFile(f string) bool {
 		fmt.Fprintf(os.Stderr, "Skipping file %s: not a yaml or json file\n", f)
 		return true
 	}
+}
+
+// initializeTable initializes the table for the rule type
+func initializeTable() table.Table {
+	return table.New(table.Simple, "ruletype", nil)
 }

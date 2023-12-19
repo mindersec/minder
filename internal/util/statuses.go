@@ -25,7 +25,6 @@ package util
 import (
 	"context"
 	"fmt"
-	"os"
 
 	"google.golang.org/grpc"
 	"google.golang.org/grpc/codes"
@@ -181,23 +180,6 @@ func (s *NiceStatus) Error() string {
 		return s.String()
 	}
 	return "OK"
-}
-
-// ExitNicelyOnError print a message and exit with the right code
-func ExitNicelyOnError(err error, message string) {
-	if err != nil {
-		if message != "" {
-			fmt.Fprintf(os.Stderr, "%s: ", message)
-		}
-		if rpcStatus, ok := status.FromError(err); ok {
-			nice := FromRpcError(rpcStatus)
-			fmt.Fprintf(os.Stderr, "%s\n", nice)
-			os.Exit(int(nice.Code))
-		} else {
-			fmt.Fprintf(os.Stderr, "%s\n", err)
-			os.Exit(1)
-		}
-	}
 }
 
 // SanitizingInterceptor sanitized error statuses which do not conform to NiceStatus, ensuring

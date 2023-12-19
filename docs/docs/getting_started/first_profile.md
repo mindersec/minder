@@ -28,7 +28,7 @@ a security advisory alert if secret scanning is not enabled.
 This is a reference rule provided by the Minder team in the [minder-rules-and-profiles repository](https://github.com/stacklok/minder-rules-and-profiles).
 
 For this exercise, we're going to download just the `secret_scanning.yaml`
-rule, and then use `minder rule_type create` to define the secret scanning rule.
+rule, and then use `minder ruletype create` to define the secret scanning rule.
 
 ```bash
 curl -LO https://raw.githubusercontent.com/stacklok/minder-rules-and-profiles/main/rule-types/github/secret_scanning.yaml
@@ -37,7 +37,7 @@ curl -LO https://raw.githubusercontent.com/stacklok/minder-rules-and-profiles/ma
 Once you've downloaded the rule definition, you can create it in your Minder account:
 
 ```bash
-minder rule_type create -f secret_scanning.yaml
+minder ruletype create -f secret_scanning.yaml
 ```
 
 Next, create a profile that applies the secret scanning rule.
@@ -103,9 +103,10 @@ Navigate to the repository on GitHub, click on the Security tab and view the Sec
 Notice that the advisory titled `minder: profile github-profile failed with rule secret_scanning` is now closed.
 
 ## Delete registered repositories
+
 If you want to stop monitoring a repository, you can delete it from Minder by using the `repo delete` command:
 ```bash
-minder repo delete --provider github --name $REPO_NAME
+minder repo delete --name ${REPO_NAME}
 ```
 where `$REPO_NAME` is the fully-qualified name (`owner/name`) of the repository you wish to delete, for example `testorg/testrepo`.
 

@@ -39,7 +39,7 @@ cd minder-rules-and-profiles
 
 Create the `pr_vulnerability_check` rule type in Minder:
 ```
-minder rule_type create -f rule-types/github/pr_vulnerability_check.yaml
+minder ruletype create -f rule-types/github/pr_vulnerability_check.yaml
 ```
 
 ## Create a profile

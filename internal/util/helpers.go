@@ -44,8 +44,6 @@ import (
 	"github.com/google/uuid"
 	"github.com/rs/zerolog/log"
 	_ "github.com/signalfx/splunk-otel-go/instrumentation/github.com/lib/pq/splunkpq" // nolint
-	"github.com/spf13/cobra"
-	"github.com/spf13/viper"
 	"golang.org/x/term"
 	"google.golang.org/grpc"
 	"google.golang.org/grpc/credentials"
@@ -66,38 +64,6 @@ var (
 	// PyRequestsNameRegexp is a regexp to match a line in a requirements.txt file, parsing out the package name
 	PyRequestsNameRegexp = regexp.MustCompile(`\s*(>=|<=|==|>|<|!=)`)
 )
-
-// GetConfigValue is a helper function that retrieves a configuration value
-// and updates it if the corresponding flag is set.
-//
-// Parameters:
-// - key: The key used to retrieve the configuration value from Viper.
-// - flagName: The flag name used to check if the flag has been set and to retrieve its value.
-// - cmd: The cobra.Command object to access the flags.
-// - defaultValue: A default value used to determine the type of the flag (string, int, etc.).
-//
-// Returns:
-// - The updated configuration value based on the flag, if it is set, or the original value otherwise.
-func GetConfigValue(v *viper.Viper, key string, flagName string, cmd *cobra.Command, defaultValue interface{}) interface{} {
-	value := v.Get(key)
-	if cmd.Flags().Changed(flagName) {
-		switch defaultValue.(type) {
-		case string:
-			value, _ = cmd.Flags().GetString(flagName)
-		case int:
-			value, _ = cmd.Flags().GetInt(flagName)
-		case int32:
-			value, _ = cmd.Flags().GetInt32(flagName)
-		case bool:
-			value, _ = cmd.Flags().GetBool(flagName)
-			// add additional cases here for other types you need to handle
-		}
-	}
-	if value != nil {
-		return value
-	}
-	return defaultValue
-}
 
 // OpenIdCredentials is a struct to hold the access and refresh tokens
 type OpenIdCredentials struct {

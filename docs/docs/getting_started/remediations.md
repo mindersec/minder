@@ -59,10 +59,10 @@ feature is enabled. Toggling the feature off should trigger a new profile status
 secret scanning feature should be enabled again in GitHub.
 
 ## Current limitations
-At the time of writing, not all `rule_type` objects support remediation. To find out which
+At the time of writing, not all `rule-type` objects support remediation. To find out which
 rule types support remediation, you can run:
 ```shell
-minder rule_type get -i $ID -oyaml
+minder ruletype get -i ${ID} -oyaml
 ```
 and look for the `remediate` attribute. If it's not present, the rule type doesn't support
 remediation. Alternatively, browse the [rule types directory](https://github.com/stacklok/minder-rules-and-profiles/tree/main/rule-types/github)

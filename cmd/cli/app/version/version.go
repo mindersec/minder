@@ -27,7 +27,7 @@ import (
 // VersionCmd is the version command
 var VersionCmd = &cobra.Command{
 	Use:   "version",
-	Short: "Print the version of the minder CLI",
+	Short: "Print minder CLI version",
 	Long:  `The minder version command prints the version of the minder CLI.`,
 	Run: func(cmd *cobra.Command, _ []string) {
 		cmd.Println(constants.VerboseCLIVersion)

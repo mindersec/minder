@@ -26,7 +26,7 @@ cd minder-rules-and-profiles
 
 Create the `secret_scanning` rule type in Minder:
 ```
-minder rule_type create -f rule-types/github/secret_scanning.yaml
+minder ruletype create -f rule-types/github/secret_scanning.yaml
 ```
 
 ## Write your own rule
@@ -182,7 +182,7 @@ def:
 
 Finally, create the `secret_scanning` rule in Minder:
 ```
-minder rule_type create -f secret_scanning.yaml
+minder ruletype create -f secret_scanning.yaml
 ```
 
 ## Create a profile
@@ -241,7 +241,7 @@ minder profile create -f profile.yaml
 
 Check the status of your profile and see which repositories satisfy the rules by running:
 ```bash
-minder profile status list --profile my-first-profile --detailed
+minder profile status list --name my-first-profile --detailed
 ```
 
 At the moment, the `profile status list` with the `--detailed` flag lists all the repositories that match the rules.
@@ -249,5 +249,5 @@ To get a more detailed view of the profile status, use the `-o json` flag to get
 filter the output using `jq`. For example, to get all rules that pertain to the repository `minder` and have failed,
 run the following command:
 ```bash
-minder profile status list --provider=github -i stacklok-remediate-profile -d -ojson 2>/dev/null | jq  -C '.ruleEvaluationStatus | map(select(.entityInfo.repo_name == "minder" and .status == "failure"))'
+minder profile status list --name stacklok-remediate-profile -d -ojson 2>/dev/null | jq  -C '.ruleEvaluationStatus | map(select(.entityInfo.repo_name == "minder" and .status == "failure"))'
 ```
