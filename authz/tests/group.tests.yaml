@@ -1,0 +1,103 @@
+#
+# Copyright 2023 Stacklok, Inc.
+#
+# Licensed under the Apache License, Version 2.0 (the "License");
+# you may not use this file except in compliance with the License.
+# You may obtain a copy of the License at
+#
+#     http://www.apache.org/licenses/LICENSE-2.0
+#
+# Unless required by applicable law or agreed to in writing, software
+# distributed under the License is distributed on an "AS IS" BASIS,
+# WITHOUT WARRANTIES OR CONDITIONS OF ANY KIND, either express or implied.
+# See the License for the specific language governing permissions and
+# limitations under the License.
+
+name: Auth tests
+model_file: ../minder.fga
+
+tuples:
+- user: project:001
+  relation: parent
+  object: project:002
+
+# Set up two groups: org1-admin and org1-users; all users are members of org1-users
+- user: user:admin1-a
+  relation: admin
+  object: group:org1-admin
+- user: user:admin1-m
+  relation: member
+  object: group:org1-admin
+- user: group:org1-admin#member
+  relation: admin
+  object: group:org1-users
+- user: user:user1-a
+  relation: member
+  object: group:org1-users
+
+# Just two memberships: org1-admin is admin over project 1, and org1-users is an editor of project 2
+- user: group:org1-users#member
+  relation: editor
+  object: project:002
+- user: group:org1-admin#member
+  relation: admin
+  object: project:001
+
+tests:
+- name: check-groups
+  check:
+  - user: user:admin1-a
+    object: group:org1-admin
+    assertions:
+      member: true
+      admin: true
+  - user: user:admin1-m
+    object: group:org1-admin
+    assertions:
+      member: true
+      admin: false
+  - user: user:admin1-m
+    object: group:org1-users
+    assertions:
+      member: true
+      admin: true
+  - user: user:user1-a
+    object: group:org1-users
+    assertions:
+      member: true
+      admin: false
+- name: check-projects
+  check:
+  - user: user:admin1-a
+    object: project:002
+    assertions:
+      create: true
+      get: true
+      repo_update: true
+      provider_create: true
+      artifact_update: true
+  - user: user:admin1-m
+    object: project:002
+    assertions:
+      create: true
+      get: true
+      repo_update: true
+      provider_create: true
+      artifact_update: true
+  - user: user:user1-a
+    object: project:001
+    assertions:
+      create: false
+      get: false
+      repo_update: false
+      provider_create: false
+      artifact_update: false
+  - user: user:user1-a
+    object: project:002
+    assertions:
+      create: false
+      get: true
+      repo_update: true
+      provider_create: false
+      artifact_update: true
+      provider_get: true
