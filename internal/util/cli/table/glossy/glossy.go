@@ -49,39 +49,41 @@ var (
 
 // Table is a wrapper around tablewriter.Table
 type Table struct {
-	header     []table.Column
-	rows       []table.Row
-	valueWidth int
-	tableWidth int
+	header      []table.Column
+	rows        []table.Row
+	columnWidth int
+	tableWidth  int
 }
 
 // New creates a new table with the given header
 func New(layout string, header []string) *Table {
 	var columns []table.Column
-	tableWidth, columnWidth := getTableAndColumnWidths(layout, header)
+	var columnWidth int
 
+	tableWidth := cli.DefaultBannerWidth
 	switch layout {
 	case "keyvalue":
-		columns = keyValueLayout(columnWidth)
+		columns, columnWidth = defaultLayout([]string{"Key", "Value"}, tableWidth)
 	case "repolist":
-		columns = repoListLayout()
+		columns, columnWidth = defaultLayout([]string{"ID", "Project", "Provider", "Upstream ID", "Owner", "Name"}, tableWidth)
+	case "ruletype":
+		columns, columnWidth = defaultLayout([]string{"Provider", "Project", "ID", "Name", "Description"}, tableWidth)
+	case "profile":
+		columns, columnWidth = defaultLayout([]string{
+			"Id", "Name", "Provider", "Entity", "Rule", "Rule Params", "Rule Definition"}, tableWidth)
+	case "profile_status":
+		columns, columnWidth = defaultLayout([]string{"Id", "Name", "Overall Status", "Last Updated"}, tableWidth)
+	case "rule_evaluations":
+		columns, columnWidth = defaultLayout([]string{
+			"Rule ID", "Rule Name", "Entity", "Status", "Remediation Status", "Entity Info", "Guidance"}, tableWidth)
 	default:
-		columns = defaultLayout(header, columnWidth)
+		columns, columnWidth = defaultLayout(header, tableWidth)
 	}
 	return &Table{
-		header:     columns,
-		tableWidth: tableWidth,
-		valueWidth: columnWidth,
+		header:      columns,
+		tableWidth:  tableWidth,
+		columnWidth: columnWidth,
 	}
-}
-
-func getTableAndColumnWidths(layout string, header []string) (int, int) {
-	tableWidth := cli.DefaultBannerWidth
-	columnWidth := tableWidth - KeyWidth - 6
-	if header != nil && layout == "" {
-		columnWidth = (tableWidth / len(header)) - 3
-	}
-	return tableWidth, columnWidth
 }
 
 // AddRow adds a row
@@ -96,6 +98,12 @@ func (t *Table) AddRowWithColor(row []string, _ []string) {
 
 // Render renders the table
 func (t *Table) Render() {
+	// resize if needed
+	for _, row := range t.rows {
+		for i := range row {
+			t.header[i].Width = t.columnWidth
+		}
+	}
 	r := table.New(
 		table.WithColumns(t.header),
 		table.WithRows(t.rows),
@@ -106,31 +114,14 @@ func (t *Table) Render() {
 	fmt.Println(MainTableStyle.Render(r.View()))
 }
 
-func keyValueLayout(valueWidth int) []table.Column {
-	return []table.Column{
-		{Title: "Key", Width: KeyWidth},
-		{Title: "Value", Width: valueWidth},
-	}
-}
-
-func repoListLayout() []table.Column {
-	return []table.Column{
-		{Title: "ID", Width: 40},
-		{Title: "Project", Width: 40},
-		{Title: "Provider", Width: 15},
-		{Title: "Upstream ID", Width: 15},
-		{Title: "Owner", Width: 15},
-		{Title: "Name", Width: 15},
-	}
-}
-
-func defaultLayout(header []string, valueWidth int) []table.Column {
+func defaultLayout(header []string, tableWidth int) ([]table.Column, int) {
 	var columns []table.Column
+	columnWidth := (tableWidth / len(header)) - 3
 	for i := range header {
 		columns = append(columns, table.Column{
 			Title: header[i],
-			Width: valueWidth,
+			Width: columnWidth,
 		})
 	}
-	return columns
+	return columns, columnWidth
 }
