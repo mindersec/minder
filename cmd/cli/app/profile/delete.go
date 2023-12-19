@@ -13,8 +13,7 @@
 // See the License for the specific language governing permissions and
 // limitations under the License.
 
-// Package delete provides the profile delete subcommand for the minder CLI
-package delete
+package profile
 
 import (
 	"context"
@@ -26,7 +25,6 @@ import (
 	"google.golang.org/grpc"
 
 	"github.com/stacklok/minder/cmd/cli/app"
-	"github.com/stacklok/minder/cmd/cli/app/profile"
 	"github.com/stacklok/minder/internal/util/cli"
 	minderv1 "github.com/stacklok/minder/pkg/api/protobuf/go/minder/v1"
 )
@@ -66,7 +64,7 @@ func deleteCommand(ctx context.Context, cmd *cobra.Command, conn *grpc.ClientCon
 }
 
 func init() {
-	profile.ProfileCmd.AddCommand(deleteCmd)
+	ProfileCmd.AddCommand(deleteCmd)
 	// Flags
 	deleteCmd.Flags().StringP("id", "i", "", "ID of profile to delete")
 	// TODO: add a flag for the profile name

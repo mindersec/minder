@@ -122,4 +122,7 @@ func ruleTypeLayout(table *tablewriter.Table) {
 	defaultLayout(table)
 	table.SetHeader([]string{"Provider", "Project Name", "Id", "Name", "Description"})
 	table.SetAutoMergeCellsByColumnIndex([]int{0, 1, 2, 3})
+	// This is needed for the rule definition and rule parameters
+	table.SetAutoWrapText(false)
+
 }

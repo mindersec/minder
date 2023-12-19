@@ -13,8 +13,7 @@
 // See the License for the specific language governing permissions and
 // limitations under the License.
 
-// Package apply provides the profile apply subcommand for the minder CLI
-package apply
+package profile
 
 import (
 	"context"
@@ -28,7 +27,6 @@ import (
 	"google.golang.org/grpc/status"
 
 	"github.com/stacklok/minder/cmd/cli/app"
-	"github.com/stacklok/minder/cmd/cli/app/profile"
 	"github.com/stacklok/minder/internal/util/cli"
 	minderv1 "github.com/stacklok/minder/pkg/api/protobuf/go/minder/v1"
 )
@@ -54,7 +52,7 @@ func applyCommand(_ context.Context, cmd *cobra.Command, conn *grpc.ClientConn) 
 		return cli.MessageAndError(fmt.Sprintf("Provider %s is not supported yet", provider), fmt.Errorf("invalid argument"))
 	}
 
-	table := profile.NewProfileTable()
+	table := NewProfileTable()
 
 	applyFunc := func(ctx context.Context, f string, p *minderv1.Profile) (*minderv1.Profile, error) {
 		// create a profile
@@ -88,7 +86,7 @@ func applyCommand(_ context.Context, cmd *cobra.Command, conn *grpc.ClientConn) 
 	}
 	// cmd.Context() is the root context. We need to create a new context for each file
 	// so we can avoid the timeout.
-	if err := profile.ExecOnOneProfile(cmd.Context(), table, f, cmd.InOrStdin(), project, applyFunc); err != nil {
+	if err := ExecOnOneProfile(cmd.Context(), table, f, cmd.InOrStdin(), project, applyFunc); err != nil {
 		return cli.MessageAndError(fmt.Sprintf("error applying profile from %s", f), err)
 	}
 
@@ -97,7 +95,7 @@ func applyCommand(_ context.Context, cmd *cobra.Command, conn *grpc.ClientConn) 
 }
 
 func init() {
-	profile.ProfileCmd.AddCommand(applyCmd)
+	ProfileCmd.AddCommand(applyCmd)
 	// Flags
 	applyCmd.Flags().StringP("file", "f", "", "Path to the YAML defining the profile (or - for stdin)")
 	// Required

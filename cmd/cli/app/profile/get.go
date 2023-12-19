@@ -13,12 +13,12 @@
 // See the License for the specific language governing permissions and
 // limitations under the License.
 
-// Package list provides the profile list subcommand for the minder CLI
-package list
+package profile
 
 import (
 	"context"
 	"fmt"
+	"os"
 	"strings"
 
 	"github.com/spf13/cobra"
@@ -26,26 +26,26 @@ import (
 	"google.golang.org/grpc"
 
 	"github.com/stacklok/minder/cmd/cli/app"
-	"github.com/stacklok/minder/cmd/cli/app/profile"
 	"github.com/stacklok/minder/internal/util"
 	"github.com/stacklok/minder/internal/util/cli"
 	minderv1 "github.com/stacklok/minder/pkg/api/protobuf/go/minder/v1"
 )
 
-var listCmd = &cobra.Command{
-	Use:   "list",
-	Short: "List profiles",
-	Long:  `The profile list subcommand lets you list profiles within Minder.`,
-	RunE:  cli.GRPCClientWrapRunE(listCommand),
+var getCmd = &cobra.Command{
+	Use:   "get",
+	Short: "Get details for a profile",
+	Long:  `The profile get subcommand lets you retrieve details for a profile within Minder.`,
+	RunE:  cli.GRPCClientWrapRunE(getCommand),
 }
 
-// listCommand is the profile "list" subcommand
-func listCommand(ctx context.Context, cmd *cobra.Command, conn *grpc.ClientConn) error {
+// getCommand is the profile "get" subcommand
+func getCommand(ctx context.Context, cmd *cobra.Command, conn *grpc.ClientConn) error {
 	client := minderv1.NewProfileServiceClient(conn)
 
 	provider := viper.GetString("provider")
 	project := viper.GetString("project")
 	format := viper.GetString("output")
+	id := viper.GetString("id")
 
 	// Ensure provider is supported
 	if !app.IsProviderSupported(provider) {
@@ -57,41 +57,45 @@ func listCommand(ctx context.Context, cmd *cobra.Command, conn *grpc.ClientConn)
 		return cli.MessageAndError(fmt.Sprintf("Output format %s not supported", format), fmt.Errorf("invalid argument"))
 	}
 
-	resp, err := client.ListProfiles(ctx, &minderv1.ListProfilesRequest{
+	p, err := client.GetProfileById(ctx, &minderv1.GetProfileByIdRequest{
 		Context: &minderv1.Context{Provider: &provider, Project: &project},
+		Id:      id,
 	})
 	if err != nil {
-		return cli.MessageAndError("Error getting profiles", err)
+		return cli.MessageAndError("Error getting profile", err)
 	}
 
 	switch format {
-	case app.JSON:
-		out, err := util.GetJsonFromProto(resp)
+	case app.YAML:
+		out, err := util.GetYamlFromProto(p)
 		if err != nil {
-			return fmt.Errorf("error getting json from proto: %w", err)
+			return cli.MessageAndError("Error getting yaml from proto", err)
 		}
 		cmd.Println(out)
-	case app.YAML:
-		out, err := util.GetYamlFromProto(resp)
+	case app.JSON:
+		out, err := util.GetJsonFromProto(p)
 		if err != nil {
-			return fmt.Errorf("error getting yaml from proto: %w", err)
+			return cli.MessageAndError("Error getting json from proto", err)
 		}
 		cmd.Println(out)
 	case app.Table:
-		table := profile.NewProfileTable()
-		for _, v := range resp.Profiles {
-			profile.RenderProfileTable(v, table)
-		}
+		table := NewProfileTable()
+		RenderProfileTable(p.GetProfile(), table)
 		table.Render()
-		return nil
 	}
-	// this is unreachable
 	return nil
 }
 
 func init() {
-	profile.ProfileCmd.AddCommand(listCmd)
+	ProfileCmd.AddCommand(getCmd)
 	// Flags
-	listCmd.Flags().StringP("output", "o", app.Table,
+	getCmd.Flags().StringP("id", "i", "", "ID for the profile to query")
+	getCmd.Flags().StringP("output", "o", app.Table,
 		fmt.Sprintf("Output format (one of %s)", strings.Join(app.SupportedOutputFormats(), ",")))
+	// Required
+	if err := getCmd.MarkFlagRequired("id"); err != nil {
+		getCmd.Printf("Error marking flag required: %s", err)
+		os.Exit(1)
+	}
+
 }
