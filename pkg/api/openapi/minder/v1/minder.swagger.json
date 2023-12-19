@@ -143,6 +143,12 @@
             "in": "query",
             "required": false,
             "type": "string"
+          },
+          {
+            "name": "from",
+            "in": "query",
+            "required": false,
+            "type": "string"
           }
         ],
         "tags": [
