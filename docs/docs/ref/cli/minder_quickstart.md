@@ -18,8 +18,8 @@ minder quickstart [flags]
 ```
   -h, --help              help for quickstart
   -o, --owner string      Owner to filter on for provider resources
-  -r, --project string    Project to create the quickstart profile in
-  -p, --provider string   Name of the provider (default "github")
+  -j, --project string    ID of the project
+  -p, --provider string   Name of the provider, i.e. github (default "github")
   -t, --token string      Personal Access Token (PAT) to use for enrollment
 ```
 

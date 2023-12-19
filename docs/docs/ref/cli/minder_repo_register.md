@@ -3,11 +3,11 @@ title: minder repo register
 ---
 ## minder repo register
 
-Register a repo with the minder control plane
+Register a repository
 
 ### Synopsis
 
-Repo register is used to register a repo with the minder control plane
+The repo register subcommand is used to register a repo within Minder.
 
 ```
 minder repo register [flags]
@@ -16,10 +16,8 @@ minder repo register [flags]
 ### Options
 
 ```
-  -h, --help                help for register
-  -g, --project-id string   ID of the project for repo registration
-  -p, --provider string     Name for the provider to enroll (default "github")
-      --repo string         List of repositories to register, i.e owner/repo,owner/repo
+  -h, --help          help for register
+  -n, --name string   List of repository names to register, i.e owner/repo,owner/repo
 ```
 
 ### Options inherited from parent commands
@@ -31,9 +29,11 @@ minder repo register [flags]
       --grpc-port int            Server port (default 443)
       --identity-client string   Identity server client ID (default "minder-cli")
       --identity-url string      Identity server issuer URL (default "https://auth.stacklok.com")
+  -j, --project string           ID of the project
+  -p, --provider string          Name of the provider, i.e. github (default "github")
 ```
 
 ### SEE ALSO
 
-* [minder repo](minder_repo.md)	 - Manage repositories within a minder control plane
+* [minder repo](minder_repo.md)	 - Manage repositories
 

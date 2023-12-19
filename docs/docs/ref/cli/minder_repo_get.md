@@ -3,11 +3,11 @@ title: minder repo get
 ---
 ## minder repo get
 
-Get repository in the minder control plane
+Get repository details
 
 ### Synopsis
 
-Repo get is used to get a repo with the minder control plane
+The repo get subcommand is used to get details for a registered repository within Minder.
 
 ```
 minder repo get [flags]
@@ -16,12 +16,10 @@ minder repo get [flags]
 ### Options
 
 ```
-  -h, --help              help for get
-  -n, --name string       Name of the repository (owner/name format)
-  -f, --output string     Output format (json or yaml)
-  -p, --provider string   Name for the provider to enroll (default "github")
-  -r, --repo-id string    ID of the repo to query
-  -s, --status            Only return the status of the profiles associated to this repo
+  -h, --help            help for get
+  -i, --id string       ID of the repo to query
+  -n, --name string     Name of the repository (owner/name format)
+  -o, --output string   Output format (one of json,yaml) (default "json")
 ```
 
 ### Options inherited from parent commands
@@ -33,9 +31,11 @@ minder repo get [flags]
       --grpc-port int            Server port (default 443)
       --identity-client string   Identity server client ID (default "minder-cli")
       --identity-url string      Identity server issuer URL (default "https://auth.stacklok.com")
+  -j, --project string           ID of the project
+  -p, --provider string          Name of the provider, i.e. github (default "github")
 ```
 
 ### SEE ALSO
 
-* [minder repo](minder_repo.md)	 - Manage repositories within a minder control plane
+* [minder repo](minder_repo.md)	 - Manage repositories
 

@@ -3,12 +3,11 @@ title: minder profile get
 ---
 ## minder profile get
 
-Get details for a profile within a minder control plane
+Get details for a profile
 
 ### Synopsis
 
-The minder profile get subcommand lets you retrieve details for a profile within a
-minder control plane.
+The profile get subcommand lets you retrieve details for a profile within Minder.
 
 ```
 minder profile get [flags]
@@ -17,10 +16,9 @@ minder profile get [flags]
 ### Options
 
 ```
-  -h, --help              help for get
-  -i, --id string         ID for the profile to query
-  -o, --output string     Output format (json, yaml or table) (default "table")
-  -p, --provider string   Provider for the profile (default "github")
+  -h, --help            help for get
+  -i, --id string       ID for the profile to query
+  -o, --output string   Output format (one of json,yaml,table) (default "table")
 ```
 
 ### Options inherited from parent commands
@@ -32,9 +30,11 @@ minder profile get [flags]
       --grpc-port int            Server port (default 443)
       --identity-client string   Identity server client ID (default "minder-cli")
       --identity-url string      Identity server issuer URL (default "https://auth.stacklok.com")
+  -j, --project string           ID of the project
+  -p, --provider string          Name of the provider, i.e. github (default "github")
 ```
 
 ### SEE ALSO
 
-* [minder profile](minder_profile.md)	 - Manage profiles within a minder control plane
+* [minder profile](minder_profile.md)	 - Manage profiles
 

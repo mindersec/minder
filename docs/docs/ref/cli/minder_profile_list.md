@@ -3,12 +3,11 @@ title: minder profile list
 ---
 ## minder profile list
 
-List profiles within a minder control plane
+List profiles
 
 ### Synopsis
 
-The minder profile list subcommand lets you list profiles within a
-minder control plane for an specific project.
+The profile list subcommand lets you list profiles within Minder.
 
 ```
 minder profile list [flags]
@@ -17,9 +16,8 @@ minder profile list [flags]
 ### Options
 
 ```
-  -h, --help              help for list
-  -o, --output string     Output format (json, yaml or table) (default "table")
-  -p, --provider string   Provider to list profiles for (default "github")
+  -h, --help            help for list
+  -o, --output string   Output format (one of json,yaml,table) (default "table")
 ```
 
 ### Options inherited from parent commands
@@ -31,9 +29,11 @@ minder profile list [flags]
       --grpc-port int            Server port (default 443)
       --identity-client string   Identity server client ID (default "minder-cli")
       --identity-url string      Identity server issuer URL (default "https://auth.stacklok.com")
+  -j, --project string           ID of the project
+  -p, --provider string          Name of the provider, i.e. github (default "github")
 ```
 
 ### SEE ALSO
 
-* [minder profile](minder_profile.md)	 - Manage profiles within a minder control plane
+* [minder profile](minder_profile.md)	 - Manage profiles
 

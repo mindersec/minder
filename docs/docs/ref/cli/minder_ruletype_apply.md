@@ -3,12 +3,11 @@ title: minder ruletype apply
 ---
 ## minder ruletype apply
 
-Apply a rule type within a minder control plane
+Apply a rule type
 
 ### Synopsis
 
-The minder rule type apply subcommand lets you create or update rule types for a project
-within a minder control plane.
+The ruletype apply subcommand lets you create or update rule types for a project within Minder.
 
 ```
 minder ruletype apply [flags]
@@ -30,9 +29,11 @@ minder ruletype apply [flags]
       --grpc-port int            Server port (default 443)
       --identity-client string   Identity server client ID (default "minder-cli")
       --identity-url string      Identity server issuer URL (default "https://auth.stacklok.com")
+  -j, --project string           ID of the project
+  -p, --provider string          Name of the provider, i.e. github (default "github")
 ```
 
 ### SEE ALSO
 
-* [minder ruletype](minder_ruletype.md)	 - Manage rule types within a minder control plane
+* [minder ruletype](minder_ruletype.md)	 - Manage rule types
 

@@ -3,12 +3,11 @@ title: minder ruletype create
 ---
 ## minder ruletype create
 
-Create a rule type within a minder control plane
+Create a rule type
 
 ### Synopsis
 
-The minder rule type create subcommand lets you create new rule types for a project
-within a minder control plane.
+The ruletype create subcommand lets you create new rule types for a project within Minder.
 
 ```
 minder ruletype create [flags]
@@ -30,9 +29,11 @@ minder ruletype create [flags]
       --grpc-port int            Server port (default 443)
       --identity-client string   Identity server client ID (default "minder-cli")
       --identity-url string      Identity server issuer URL (default "https://auth.stacklok.com")
+  -j, --project string           ID of the project
+  -p, --provider string          Name of the provider, i.e. github (default "github")
 ```
 
 ### SEE ALSO
 
-* [minder ruletype](minder_ruletype.md)	 - Manage rule types within a minder control plane
+* [minder ruletype](minder_ruletype.md)	 - Manage rule types
 

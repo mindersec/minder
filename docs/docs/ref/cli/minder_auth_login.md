@@ -3,12 +3,12 @@ title: minder auth login
 ---
 ## minder auth login
 
-Login to a minder control plane.
+Login to Minder
 
 ### Synopsis
 
-Login to a minder control plane. Upon successful login, credentials
-will be saved to $XDG_CONFIG_HOME/minder/credentials.json
+The login command allows for logging in to Minder. Upon successful login, credentials will be saved to
+$XDG_CONFIG_HOME/minder/credentials.json
 
 ```
 minder auth login [flags]

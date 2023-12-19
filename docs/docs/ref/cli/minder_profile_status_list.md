@@ -3,12 +3,11 @@ title: minder profile status list
 ---
 ## minder profile status list
 
-List profile status within a minder control plane
+List profile status
 
 ### Synopsis
 
-The minder profile status list subcommand lets you list profile status within a
-minder control plane for an specific provider/project or profile id.
+The profile status list subcommand lets you list profile status within Minder.
 
 ```
 minder profile status list [flags]
@@ -17,13 +16,9 @@ minder profile status list [flags]
 ### Options
 
 ```
-  -d, --detailed          List all profile violations
-  -h, --help              help for list
-  -o, --output string     Output format (json, yaml or table) (default "table")
-  -i, --profile string    Profile name to list profile status for
-  -g, --project string    Project ID to list profile status for
-  -p, --provider string   Provider to list profile status for (default "github")
-  -r, --rule string       Filter profile status list by rule
+  -d, --detailed      List all profile violations
+  -h, --help          help for list
+  -r, --rule string   Filter profile status list by rule
 ```
 
 ### Options inherited from parent commands
@@ -35,9 +30,13 @@ minder profile status list [flags]
       --grpc-port int            Server port (default 443)
       --identity-client string   Identity server client ID (default "minder-cli")
       --identity-url string      Identity server issuer URL (default "https://auth.stacklok.com")
+  -n, --name string              Profile name to get profile status for
+  -o, --output string            Output format (one of json,yaml,table) (default "table")
+  -j, --project string           ID of the project
+  -p, --provider string          Name of the provider, i.e. github (default "github")
 ```
 
 ### SEE ALSO
 
-* [minder profile status](minder_profile_status.md)	 - Manage profile status within a minder control plane
+* [minder profile status](minder_profile_status.md)	 - Manage profile status
 

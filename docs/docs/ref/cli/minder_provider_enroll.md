@@ -18,12 +18,10 @@ minder provider enroll [flags]
 ### Options
 
 ```
-  -h, --help              help for enroll
-  -o, --owner string      Owner to filter on for provider resources
-  -r, --project string    ID of the project for enrolling the provider
-  -p, --provider string   Name for the provider to enroll
-  -t, --token string      Personal Access Token (PAT) to use for enrollment
-  -y, --yes               Bypass yes/no prompt when enrolling new provider
+  -h, --help           help for enroll
+  -o, --owner string   Owner to filter on for provider resources
+  -t, --token string   Personal Access Token (PAT) to use for enrollment
+  -y, --yes            Bypass yes/no prompt when enrolling new provider
 ```
 
 ### Options inherited from parent commands
@@ -35,6 +33,8 @@ minder provider enroll [flags]
       --grpc-port int            Server port (default 443)
       --identity-client string   Identity server client ID (default "minder-cli")
       --identity-url string      Identity server issuer URL (default "https://auth.stacklok.com")
+  -j, --project string           ID of the project
+  -p, --provider string          Name of the provider, i.e. github (default "github")
 ```
 
 ### SEE ALSO

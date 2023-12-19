@@ -3,7 +3,7 @@ title: minder version
 ---
 ## minder version
 
-Print the version of the minder CLI
+Print minder CLI version
 
 ### Synopsis
 

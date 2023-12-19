@@ -3,12 +3,11 @@ title: minder profile status
 ---
 ## minder profile status
 
-Manage profile status within a minder control plane
+Manage profile status
 
 ### Synopsis
 
-The minder profile status subcommand allows the management of profile status within
-a minder control plane.
+The profile status subcommand allows management of profile status within Minder.
 
 ```
 minder profile status [flags]
@@ -17,7 +16,9 @@ minder profile status [flags]
 ### Options
 
 ```
-  -h, --help   help for status
+  -h, --help            help for status
+  -n, --name string     Profile name to get profile status for
+  -o, --output string   Output format (one of json,yaml,table) (default "table")
 ```
 
 ### Options inherited from parent commands
@@ -29,11 +30,13 @@ minder profile status [flags]
       --grpc-port int            Server port (default 443)
       --identity-client string   Identity server client ID (default "minder-cli")
       --identity-url string      Identity server issuer URL (default "https://auth.stacklok.com")
+  -j, --project string           ID of the project
+  -p, --provider string          Name of the provider, i.e. github (default "github")
 ```
 
 ### SEE ALSO
 
-* [minder profile](minder_profile.md)	 - Manage profiles within a minder control plane
-* [minder profile status get](minder_profile_status_get.md)	 - Get profile status within a minder control plane
-* [minder profile status list](minder_profile_status_list.md)	 - List profile status within a minder control plane
+* [minder profile](minder_profile.md)	 - Manage profiles
+* [minder profile status get](minder_profile_status_get.md)	 - Get profile status
+* [minder profile status list](minder_profile_status_list.md)	 - List profile status
 
