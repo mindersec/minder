@@ -668,6 +668,8 @@ github.com/sqlc-dev/pqtype v0.3.0 h1:b09TewZ3cSnO5+M1Kqq05y0+OjqIptxELaSayg7bmqk
 github.com/sqlc-dev/pqtype v0.3.0/go.mod h1:oyUjp5981ctiL9UYvj1bVvCKi8OXkCa0u645hce7CAs=
 github.com/stacklok/frizbee v0.0.11 h1:6b8x9o8qfaZrY9eqQ5FpIZh86mQ0TZZatO87Evh+EZ0=
 github.com/stacklok/frizbee v0.0.11/go.mod h1:9XyydA69E/rjwAYKyuEpI/Flt4APhhzfHbFoYstaLOc=
+github.com/stacklok/frizbee v0.0.12 h1:3qGcNCncEDZd5kynj3KxQkiMnsHLA5PJLxy0LZXAe70=
+github.com/stacklok/frizbee v0.0.12/go.mod h1:9XyydA69E/rjwAYKyuEpI/Flt4APhhzfHbFoYstaLOc=
 github.com/stretchr/objx v0.1.0/go.mod h1:HFkY916IF+rwdDfMAkV7OtwuqBVzrE8GR6GFx+wExME=
 github.com/stretchr/objx v0.1.1/go.mod h1:HFkY916IF+rwdDfMAkV7OtwuqBVzrE8GR6GFx+wExME=
 github.com/stretchr/objx v0.4.0/go.mod h1:YvHI0jy2hoMjB+UWwv71VJQ9isScKT/TqJzVSSt89Yw=
