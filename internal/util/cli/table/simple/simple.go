@@ -88,6 +88,7 @@ func defaultLayout(table *tablewriter.Table) {
 func keyValueLayout(table *tablewriter.Table) {
 	defaultLayout(table)
 	table.SetHeader([]string{"Key", "Value"})
+	table.SetColMinWidth(0, 25)
 }
 
 func profileLayout(table *tablewriter.Table) {
