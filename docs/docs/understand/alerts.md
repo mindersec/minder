@@ -43,18 +43,20 @@ def:
 Alerts are configured in the `alert` section of the profile yaml file. The following example shows how to configure
 alerts for a profile:
 
-    ```yaml
-    ---
-    version: v1
-    type: profile
-    name: github-profile
-    context:
-      provider: github
-    alert: "on"
-    repository:
-      - type: secret_scanning
-        def:
-          enabled: true
-    ```
+```yaml
+---
+version: v1
+type: profile
+name: github-profile
+context:
+  provider: github
+alert: "on"
+repository:
+  - type: secret_scanning
+    def:
+      enabled: true
+```
 
-The `alert` section can be configured with the following values: `on`, `off` and `dry_run`. The default value is `on`.
+The `alert` section can be configured with the following values: `on` (default), `off` and `dry_run`. Dry run would be
+useful for testing. In `dry_run` Minder will process the alert conditions and output the resulted REST call, but it
+won't execute it.
