@@ -3,12 +3,11 @@ title: minder ruletype
 ---
 ## minder ruletype
 
-Manage rule types within a minder control plane
+Manage rule types
 
 ### Synopsis
 
-The minder ruletype subcommands allows the management of rule types within
-a minder control plane.
+The ruletype subcommands allows the management of rule types within Minder.
 
 ```
 minder ruletype [flags]
@@ -17,7 +16,9 @@ minder ruletype [flags]
 ### Options
 
 ```
-  -h, --help   help for ruletype
+  -h, --help              help for ruletype
+  -j, --project string    ID of the project
+  -p, --provider string   Name of the provider, i.e. github (default "github")
 ```
 
 ### Options inherited from parent commands
@@ -34,9 +35,9 @@ minder ruletype [flags]
 ### SEE ALSO
 
 * [minder](minder.md)	 - Minder controls the hosted minder service
-* [minder ruletype apply](minder_ruletype_apply.md)	 - Apply a rule type within a minder control plane
-* [minder ruletype create](minder_ruletype_create.md)	 - Create a rule type within a minder control plane
+* [minder ruletype apply](minder_ruletype_apply.md)	 - Apply a rule type
+* [minder ruletype create](minder_ruletype_create.md)	 - Create a rule type
 * [minder ruletype delete](minder_ruletype_delete.md)	 - Delete a rule type
-* [minder ruletype get](minder_ruletype_get.md)	 - Get details for a rule type within a minder control plane
-* [minder ruletype list](minder_ruletype_list.md)	 - List rule types within a minder control plane
+* [minder ruletype get](minder_ruletype_get.md)	 - Get details for a rule type
+* [minder ruletype list](minder_ruletype_list.md)	 - List rule types
 

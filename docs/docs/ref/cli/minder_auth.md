@@ -35,7 +35,7 @@ minder auth [flags]
 
 * [minder](minder.md)	 - Minder controls the hosted minder service
 * [minder auth delete](minder_auth_delete.md)	 - Permanently delete account
-* [minder auth login](minder_auth_login.md)	 - Login to a minder control plane.
+* [minder auth login](minder_auth_login.md)	 - Login to Minder
 * [minder auth logout](minder_auth_logout.md)	 - Logout from minder control plane.
 * [minder auth whoami](minder_auth_whoami.md)	 - whoami for current user
 

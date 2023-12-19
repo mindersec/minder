@@ -7,7 +7,7 @@ Get artifact details
 
 ### Synopsis
 
-Artifact get will get artifact details from an artifact, for a given ID
+The artifact get subcommand will get artifact details from an artifact, for a given ID.
 
 ```
 minder artifact get [flags]
@@ -16,10 +16,10 @@ minder artifact get [flags]
 ### Options
 
 ```
-  -h, --help                    help for get
-  -i, --id string               ID of the artifact to get info from
-  -v, --latest-versions int32   Latest artifact versions to retrieve (default 1)
-      --tag string              Specific artifact tag to retrieve
+  -h, --help             help for get
+  -i, --id string        ID of the artifact to get info from
+      --tag string       Specific artifact tag to retrieve
+  -v, --versions int32   Latest artifact versions to retrieve (default 1)
 ```
 
 ### Options inherited from parent commands
@@ -31,6 +31,8 @@ minder artifact get [flags]
       --grpc-port int            Server port (default 443)
       --identity-client string   Identity server client ID (default "minder-cli")
       --identity-url string      Identity server issuer URL (default "https://auth.stacklok.com")
+  -j, --project string           ID of the project
+  -p, --provider string          Name of the provider, i.e. github (default "github")
 ```
 
 ### SEE ALSO

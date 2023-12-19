@@ -16,7 +16,9 @@ minder artifact [flags]
 ### Options
 
 ```
-  -h, --help   help for artifact
+  -h, --help              help for artifact
+  -j, --project string    ID of the project
+  -p, --provider string   Name of the provider, i.e. github (default "github")
 ```
 
 ### Options inherited from parent commands

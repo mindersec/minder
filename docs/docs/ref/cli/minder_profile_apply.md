@@ -3,12 +3,11 @@ title: minder profile apply
 ---
 ## minder profile apply
 
-Create or update a profile within a minder control plane
+Create or update a profile
 
 ### Synopsis
 
-The minder profile apply subcommand lets you create or update new profiles for a project
-within a minder control plane.
+The profile apply subcommand lets you create or update new profiles for a project within Minder.
 
 ```
 minder profile apply [flags]
@@ -17,9 +16,8 @@ minder profile apply [flags]
 ### Options
 
 ```
-  -f, --file string      Path to the YAML defining the profile (or - for stdin)
-  -h, --help             help for apply
-  -p, --project string   Project to create the profile in
+  -f, --file string   Path to the YAML defining the profile (or - for stdin)
+  -h, --help          help for apply
 ```
 
 ### Options inherited from parent commands
@@ -31,9 +29,11 @@ minder profile apply [flags]
       --grpc-port int            Server port (default 443)
       --identity-client string   Identity server client ID (default "minder-cli")
       --identity-url string      Identity server issuer URL (default "https://auth.stacklok.com")
+  -j, --project string           ID of the project
+  -p, --provider string          Name of the provider, i.e. github (default "github")
 ```
 
 ### SEE ALSO
 
-* [minder profile](minder_profile.md)	 - Manage profiles within a minder control plane
+* [minder profile](minder_profile.md)	 - Manage profiles
 

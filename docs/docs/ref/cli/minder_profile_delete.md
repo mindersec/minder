@@ -3,12 +3,11 @@ title: minder profile delete
 ---
 ## minder profile delete
 
-Delete a profile within a minder control plane
+Delete a profile
 
 ### Synopsis
 
-The minder profile delete subcommand lets you delete profiles within a
-minder control plane.
+The profile delete subcommand lets you delete profiles within Minder.
 
 ```
 minder profile delete [flags]
@@ -17,9 +16,8 @@ minder profile delete [flags]
 ### Options
 
 ```
-  -h, --help              help for delete
-  -i, --id string         ID of profile to delete
-  -p, --provider string   Provider for the profile (default "github")
+  -h, --help        help for delete
+  -i, --id string   ID of profile to delete
 ```
 
 ### Options inherited from parent commands
@@ -31,9 +29,11 @@ minder profile delete [flags]
       --grpc-port int            Server port (default 443)
       --identity-client string   Identity server client ID (default "minder-cli")
       --identity-url string      Identity server issuer URL (default "https://auth.stacklok.com")
+  -j, --project string           ID of the project
+  -p, --provider string          Name of the provider, i.e. github (default "github")
 ```
 
 ### SEE ALSO
 
-* [minder profile](minder_profile.md)	 - Manage profiles within a minder control plane
+* [minder profile](minder_profile.md)	 - Manage profiles
 

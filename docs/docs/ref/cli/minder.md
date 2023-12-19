@@ -28,10 +28,10 @@ https://docs.stacklok.com/minder
 * [minder auth](minder_auth.md)	 - Authorize and manage accounts within a minder control plane
 * [minder completion](minder_completion.md)	 - Generate the autocompletion script for the specified shell
 * [minder docs](minder_docs.md)	 - Generates documentation for the client
-* [minder profile](minder_profile.md)	 - Manage profiles within a minder control plane
+* [minder profile](minder_profile.md)	 - Manage profiles
 * [minder provider](minder_provider.md)	 - Manage providers within a minder control plane
 * [minder quickstart](minder_quickstart.md)	 - Quickstart minder
-* [minder repo](minder_repo.md)	 - Manage repositories within a minder control plane
-* [minder ruletype](minder_ruletype.md)	 - Manage rule types within a minder control plane
-* [minder version](minder_version.md)	 - Print the version of the minder CLI
+* [minder repo](minder_repo.md)	 - Manage repositories
+* [minder ruletype](minder_ruletype.md)	 - Manage rule types
+* [minder version](minder_version.md)	 - Print minder CLI version
 

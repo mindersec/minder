@@ -3,12 +3,11 @@ title: minder profile status get
 ---
 ## minder profile status get
 
-Get profile status within a minder control plane
+Get profile status
 
 ### Synopsis
 
-The minder profile status get subcommand lets you get profile status within a
-minder control plane for an specific provider/project or profile id, entity type and entity id.
+The profile status get subcommand lets you get profile status within Minder.
 
 ```
 minder profile status get [flags]
@@ -20,10 +19,6 @@ minder profile status get [flags]
   -e, --entity string        Entity ID to get profile status for
   -t, --entity-type string   the entity type to get profile status for (one of artifact,build_environment,repository)
   -h, --help                 help for get
-  -o, --output string        Output format (json, yaml or table) (default "table")
-  -i, --profile string       Profile name to get profile status for
-  -g, --project string       Project ID to get profile status for
-  -p, --provider string      Provider to get profile status for (default "github")
 ```
 
 ### Options inherited from parent commands
@@ -35,9 +30,13 @@ minder profile status get [flags]
       --grpc-port int            Server port (default 443)
       --identity-client string   Identity server client ID (default "minder-cli")
       --identity-url string      Identity server issuer URL (default "https://auth.stacklok.com")
+  -n, --name string              Profile name to get profile status for
+  -o, --output string            Output format (one of json,yaml,table) (default "table")
+  -j, --project string           ID of the project
+  -p, --provider string          Name of the provider, i.e. github (default "github")
 ```
 
 ### SEE ALSO
 
-* [minder profile status](minder_profile_status.md)	 - Manage profile status within a minder control plane
+* [minder profile status](minder_profile_status.md)	 - Manage profile status
 

@@ -3,11 +3,11 @@ title: minder repo delete
 ---
 ## minder repo delete
 
-delete repository
+Delete a repository
 
 ### Synopsis
 
-Repo delete is used to delete a repository within the minder control plane
+The repo delete subcommand is used to delete a registered repository within Minder.
 
 ```
 minder repo delete [flags]
@@ -16,11 +16,9 @@ minder repo delete [flags]
 ### Options
 
 ```
-  -h, --help              help for delete
-  -n, --name string       Name of the repository (owner/name format)
-  -p, --provider string   Name of the enrolled provider (default "github")
-  -r, --repo-id string    ID of the repo to delete
-  -s, --status            Only return the status of the profiles associated to this repo
+  -h, --help          help for delete
+  -i, --id string     ID of the repo to delete
+  -n, --name string   Name of the repository (owner/name format) to delete
 ```
 
 ### Options inherited from parent commands
@@ -32,9 +30,11 @@ minder repo delete [flags]
       --grpc-port int            Server port (default 443)
       --identity-client string   Identity server client ID (default "minder-cli")
       --identity-url string      Identity server issuer URL (default "https://auth.stacklok.com")
+  -j, --project string           ID of the project
+  -p, --provider string          Name of the provider, i.e. github (default "github")
 ```
 
 ### SEE ALSO
 
-* [minder repo](minder_repo.md)	 - Manage repositories within a minder control plane
+* [minder repo](minder_repo.md)	 - Manage repositories
 

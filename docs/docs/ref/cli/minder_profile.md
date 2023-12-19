@@ -3,12 +3,11 @@ title: minder profile
 ---
 ## minder profile
 
-Manage profiles within a minder control plane
+Manage profiles
 
 ### Synopsis
 
-The minder profile subcommands allows the management of profiles within
-a minder controlplane.
+The profile subcommands allows the management of profiles within Minder.
 
 ```
 minder profile [flags]
@@ -17,7 +16,9 @@ minder profile [flags]
 ### Options
 
 ```
-  -h, --help   help for profile
+  -h, --help              help for profile
+  -j, --project string    ID of the project
+  -p, --provider string   Name of the provider, i.e. github (default "github")
 ```
 
 ### Options inherited from parent commands
@@ -34,10 +35,10 @@ minder profile [flags]
 ### SEE ALSO
 
 * [minder](minder.md)	 - Minder controls the hosted minder service
-* [minder profile apply](minder_profile_apply.md)	 - Create or update a profile within a minder control plane
-* [minder profile create](minder_profile_create.md)	 - Create a profile within a minder control plane
-* [minder profile delete](minder_profile_delete.md)	 - Delete a profile within a minder control plane
-* [minder profile get](minder_profile_get.md)	 - Get details for a profile within a minder control plane
-* [minder profile list](minder_profile_list.md)	 - List profiles within a minder control plane
-* [minder profile status](minder_profile_status.md)	 - Manage profile status within a minder control plane
+* [minder profile apply](minder_profile_apply.md)	 - Create or update a profile
+* [minder profile create](minder_profile_create.md)	 - Create a profile
+* [minder profile delete](minder_profile_delete.md)	 - Delete a profile
+* [minder profile get](minder_profile_get.md)	 - Get details for a profile
+* [minder profile list](minder_profile_list.md)	 - List profiles
+* [minder profile status](minder_profile_status.md)	 - Manage profile status
 

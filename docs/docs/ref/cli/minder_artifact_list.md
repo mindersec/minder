@@ -7,7 +7,7 @@ List artifacts from a provider
 
 ### Synopsis
 
-Artifact list will list artifacts from a provider
+The artifact list subcommand will list artifacts from a provider.
 
 ```
 minder artifact list [flags]
@@ -16,11 +16,9 @@ minder artifact list [flags]
 ### Options
 
 ```
-      --from string         Filter artifacts from a source, example: from=repository=owner/repo
-  -h, --help                help for list
-  -f, --output string       Output format (json or yaml)
-  -g, --project-id string   ID of the project for repo registration
-  -p, --provider string     Name for the provider to enroll (default "github")
+      --from string     Filter artifacts from a source, example: from=repository=owner/repo
+  -h, --help            help for list
+  -o, --output string   Output format (one of json,yaml,table) (default "table")
 ```
 
 ### Options inherited from parent commands
@@ -32,6 +30,8 @@ minder artifact list [flags]
       --grpc-port int            Server port (default 443)
       --identity-client string   Identity server client ID (default "minder-cli")
       --identity-url string      Identity server issuer URL (default "https://auth.stacklok.com")
+  -j, --project string           ID of the project
+  -p, --provider string          Name of the provider, i.e. github (default "github")
 ```
 
 ### SEE ALSO
