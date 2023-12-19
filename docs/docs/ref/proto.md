@@ -916,6 +916,7 @@ GitType defines the git data ingester.
 | provider | [string](#string) |  |  |
 | project_id | [string](#string) |  |  |
 | context | [Context](#minder-v1-Context) |  |  |
+| from | [string](#string) |  |  |
 
 
 <a name="minder-v1-ListArtifactsResponse"></a>

@@ -84,6 +84,7 @@ message ListArtifactsRequest {
     string provider = 1;
     string project_id = 2;
     Context context = 3;
+    string from = 4;
 }
 
 message ListArtifactsResponse {

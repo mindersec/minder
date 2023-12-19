@@ -57,6 +57,7 @@ var artifact_listCmd = &cobra.Command{
 			&pb.ListArtifactsRequest{
 				Provider:  provider,
 				ProjectId: projectID,
+				From:      viper.GetString("from"),
 			},
 		)
 
@@ -106,4 +107,5 @@ func init() {
 	artifact_listCmd.Flags().StringP("output", "f", "", "Output format (json or yaml)")
 	artifact_listCmd.Flags().StringP("provider", "p", "github", "Name for the provider to enroll")
 	artifact_listCmd.Flags().StringP("project-id", "g", "", "ID of the project for repo registration")
+	artifact_listCmd.Flags().String("from", "", "Filter artifacts from a source, example: from=repository=owner/repo")
 }
