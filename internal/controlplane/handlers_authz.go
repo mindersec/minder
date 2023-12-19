@@ -169,6 +169,9 @@ func AuthUnaryInterceptor(ctx context.Context, req interface{}, info *grpc.Unary
 
 	token, err := gauth.AuthFromMD(ctx, "bearer")
 	if err != nil {
+		if statusErr, ok := status.FromError(err); ok {
+			return nil, util.FromRpcError(statusErr)
+		}
 		return nil, status.Errorf(codes.Unauthenticated, "no auth token: %v", err)
 	}
 
