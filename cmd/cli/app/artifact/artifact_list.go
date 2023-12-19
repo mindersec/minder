@@ -46,6 +46,7 @@ func listCommand(ctx context.Context, cmd *cobra.Command, conn *grpc.ClientConn)
 	provider := viper.GetString("provider")
 	project := viper.GetString("project")
 	format := viper.GetString("output")
+	fromFilter := viper.GetString("from")
 
 	// Ensure provider is supported
 	if !app.IsProviderSupported(provider) {
@@ -62,7 +63,7 @@ func listCommand(ctx context.Context, cmd *cobra.Command, conn *grpc.ClientConn)
 		// keep those until we decide to delete them from the payload and leave the context only
 		Provider:  provider,
 		ProjectId: project,
-		From:      viper.GetString("from"),
+		From:      fromFilter,
 	},
 	)
 
