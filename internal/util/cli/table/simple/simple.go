@@ -88,12 +88,13 @@ func defaultLayout(table *tablewriter.Table) {
 func keyValueLayout(table *tablewriter.Table) {
 	defaultLayout(table)
 	table.SetHeader([]string{"Key", "Value"})
-	table.SetColMinWidth(0, 25)
+	table.SetColMinWidth(0, 50)
+	table.SetColMinWidth(1, 50)
 }
 
 func profileLayout(table *tablewriter.Table) {
 	defaultLayout(table)
-	table.SetHeader([]string{"Id", "Name", "Provider", "Entity", "Rule", "Rule Params", "Rule Definition"})
+	table.SetHeader([]string{"ID", "Name", "Provider", "Entity", "Rule", "Rule Params", "Rule Definition"})
 	table.SetAutoMergeCellsByColumnIndex([]int{0, 1, 2, 3, 4})
 	// This is needed for the rule definition and rule parameters
 	table.SetAutoWrapText(false)
@@ -101,7 +102,7 @@ func profileLayout(table *tablewriter.Table) {
 
 func profileStatusLayout(table *tablewriter.Table) {
 	defaultLayout(table)
-	table.SetHeader([]string{"Id", "Name", "Overall Status", "Last Updated"})
+	table.SetHeader([]string{"ID", "Name", "Overall Status", "Last Updated"})
 	table.SetReflowDuringAutoWrap(true)
 }
 
@@ -121,7 +122,7 @@ func repoListLayout(table *tablewriter.Table) {
 
 func ruleTypeLayout(table *tablewriter.Table) {
 	defaultLayout(table)
-	table.SetHeader([]string{"Provider", "Project Name", "Id", "Name", "Description"})
+	table.SetHeader([]string{"Provider", "Project Name", "ID", "Name", "Description"})
 	table.SetAutoMergeCellsByColumnIndex([]int{0, 1, 2, 3})
 	// This is needed for the rule definition and rule parameters
 	table.SetAutoWrapText(false)
