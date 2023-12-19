@@ -33,6 +33,7 @@ import (
 	"github.com/spf13/viper"
 	"google.golang.org/grpc"
 
+	"github.com/stacklok/minder/cmd/cli/app"
 	"github.com/stacklok/minder/internal/util/cli"
 	"github.com/stacklok/minder/internal/util/cli/table"
 	minderv1 "github.com/stacklok/minder/pkg/api/protobuf/go/minder/v1"
@@ -62,6 +63,11 @@ func RegisterCmd(ctx context.Context, cmd *cobra.Command, conn *grpc.ClientConn)
 	provider := viper.GetString("provider")
 	project := viper.GetString("project")
 	repoList := viper.GetString("name")
+
+	// Ensure provider is supported
+	if !app.IsProviderSupported(provider) {
+		return nil, fmt.Sprintf("provider %s is not supported yet", provider), fmt.Errorf("invalid argument")
+	}
 
 	// Get the list of repos
 	listResp, err := client.ListRepositories(ctx, &minderv1.ListRepositoriesRequest{
