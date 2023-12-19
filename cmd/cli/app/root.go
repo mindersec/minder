@@ -23,7 +23,6 @@ import (
 	"github.com/spf13/viper"
 
 	"github.com/stacklok/minder/internal/constants"
-	ghclient "github.com/stacklok/minder/internal/providers/github"
 	"github.com/stacklok/minder/internal/util/cli"
 )
 
@@ -125,19 +124,4 @@ func IsOutputFormatSupported(output string) bool {
 // SupportedOutputFormats returns the supported output formats
 func SupportedOutputFormats() []string {
 	return []string{JSON, YAML, Table}
-}
-
-// IsProviderSupported returns true if the provider is supported
-func IsProviderSupported(provider string) bool {
-	for _, p := range SupportedProviders() {
-		if provider == p {
-			return true
-		}
-	}
-	return false
-}
-
-// SupportedProviders returns the supported providers list
-func SupportedProviders() []string {
-	return []string{ghclient.Github}
 }

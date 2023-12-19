@@ -26,7 +26,6 @@ import (
 	"google.golang.org/grpc/codes"
 	"google.golang.org/grpc/status"
 
-	"github.com/stacklok/minder/cmd/cli/app"
 	"github.com/stacklok/minder/internal/util"
 	"github.com/stacklok/minder/internal/util/cli"
 	minderv1 "github.com/stacklok/minder/pkg/api/protobuf/go/minder/v1"
@@ -45,11 +44,6 @@ func applyCommand(_ context.Context, cmd *cobra.Command, conn *grpc.ClientConn) 
 
 	provider := viper.GetString("provider")
 	project := viper.GetString("project")
-
-	// Ensure provider is supported
-	if !app.IsProviderSupported(provider) {
-		return cli.MessageAndError(fmt.Sprintf("Provider %s is not supported yet", provider), fmt.Errorf("invalid argument"))
-	}
 
 	fileFlag, err := cmd.Flags().GetStringArray("file")
 	if err != nil {

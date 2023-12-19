@@ -141,11 +141,6 @@ func quickstartCommand(_ context.Context, cmd *cobra.Command, conn *grpc.ClientC
 	project := viper.GetString("project")
 	provider := viper.GetString("provider")
 
-	// Ensure provider is supported
-	if !app.IsProviderSupported(provider) {
-		return cli.MessageAndError(fmt.Sprintf("Provider %s is not supported yet", provider), fmt.Errorf("invalid argument"))
-	}
-
 	// Confirm user wants to go through the quickstart process
 	yes := cli.PrintYesNoPrompt(cmd,
 		stepPromptMsgWelcome,

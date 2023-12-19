@@ -35,7 +35,6 @@ import (
 	"google.golang.org/grpc"
 	"google.golang.org/protobuf/types/known/timestamppb"
 
-	"github.com/stacklok/minder/cmd/cli/app"
 	"github.com/stacklok/minder/internal/util/cli"
 	"github.com/stacklok/minder/internal/util/rand"
 	minderv1 "github.com/stacklok/minder/pkg/api/protobuf/go/minder/v1"
@@ -67,11 +66,6 @@ func EnrollProviderCommand(ctx context.Context, cmd *cobra.Command, conn *grpc.C
 	token := viper.GetString("token")
 	owner := viper.GetString("owner")
 	yesFlag := viper.GetBool("yes")
-
-	// Ensure provider is supported
-	if !app.IsProviderSupported(provider) {
-		return cli.MessageAndError(fmt.Sprintf("Provider %s is not supported yet", provider), fmt.Errorf("invalid argument"))
-	}
 
 	// Ask for confirmation if an owner is set on purpose
 	ownerPromptStr := "your personal account"
