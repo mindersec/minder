@@ -47,7 +47,7 @@ require (
 	github.com/sigstore/sigstore-go v0.0.0-20231207195651-6a8bf18a9f9a
 	github.com/spf13/cobra v1.8.0
 	github.com/spf13/pflag v1.0.5
-	github.com/spf13/viper v1.18.1
+	github.com/spf13/viper v1.18.2
 	github.com/sqlc-dev/pqtype v0.3.0
 	github.com/stacklok/frizbee v0.0.11
 	github.com/stretchr/testify v1.8.4
