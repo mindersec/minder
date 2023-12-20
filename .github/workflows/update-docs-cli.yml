@@ -9,22 +9,18 @@ jobs:
   update-docs-cli:
     runs-on: ubuntu-latest
     permissions: write-all
-
     steps:
       - name: Checkout repository
-        uses: actions/checkout@v4
-
+        uses: actions/checkout@b4ffde65f46336ab88eb53be808477a3936bae11 # v4
       - name: Set up Go
-        uses: actions/setup-go@v5
+        uses: actions/setup-go@0c52d547c9bc32b1aa3301fd7a9cb496313a4491 # v5
         with:
           go-version-file: "go.mod"
-
       - name: Update documentation
         shell: bash
         run: |
           cp config/config.yaml.example config.yaml
           TARGET_ENV=prod make cli-docs
-
       - name: Extract Commit SHA and Details
         id: extract_commit_details
         run: |
@@ -34,9 +30,8 @@ jobs:
           echo "commit_sha=$COMMIT_SHA" >> $GITHUB_OUTPUT
           echo "commit_date=$COMMIT_DATE" >> $GITHUB_OUTPUT
           echo "commit_author=$COMMIT_AUTHOR" >> $GITHUB_OUTPUT
-
       - name: Commit and push changes
-        uses: peter-evans/create-pull-request@v5
+        uses: peter-evans/create-pull-request@153407881ec5c347639a548ade7d8ad1d6740e38 # v5
         with:
           commit-message: Update documentation
           committer: GitHub <noreply@github.com>
