@@ -17,6 +17,7 @@ package artifact
 
 import (
 	"context"
+	"errors"
 	"fmt"
 	"strings"
 	"time"
@@ -66,44 +67,9 @@ func getCommand(ctx context.Context, cmd *cobra.Command, conn *grpc.ClientConn) 
 		return cli.MessageAndError("Either artifact ID or artifact name must be specified", fmt.Errorf("invalid argument"))
 	}
 
-	var pbArt protoreflect.ProtoMessage
-	var art *minderv1.Artifact
-	var versions []*minderv1.ArtifactVersion
-
-	if artifactName != "" {
-		// check artifact by Name
-		artByName, err := client.GetArtifactByName(ctx, &minderv1.GetArtifactByNameRequest{
-			Context:        &minderv1.Context{Provider: &provider, Project: &project},
-			Name:           artifactName,
-			LatestVersions: latestVersions,
-			Tag:            tag,
-		})
-		if err != nil {
-			return cli.MessageAndError("Error getting artifact by name", err)
-		}
-		pbArt = artByName
-		art = artByName.GetArtifact()
-		versions = artByName.GetVersions()
-	}
-
-	if artifactID != "" {
-		// check artifact by ID
-		artById, err := client.GetArtifactById(ctx, &minderv1.GetArtifactByIdRequest{
-			Context:        &minderv1.Context{Provider: &provider, Project: &project},
-			Id:             artifactID,
-			LatestVersions: latestVersions,
-			Tag:            tag,
-		})
-		if err != nil {
-			return cli.MessageAndError("Error getting artifact by id", err)
-		}
-		pbArt = artById
-		art = artById.GetArtifact()
-		versions = artById.GetVersions()
-	}
-
-	if art == nil || versions == nil {
-		return cli.MessageAndError("Error getting artifact", fmt.Errorf("invalid argument"))
+	pbArt, art, versions, err := artifactGet(ctx, client, provider, project, artifactID, artifactName, latestVersions, tag)
+	if err != nil {
+		return cli.MessageAndError("Error getting artifact", err)
 	}
 
 	switch format {
@@ -146,6 +112,51 @@ func getCommand(ctx context.Context, cmd *cobra.Command, conn *grpc.ClientConn) 
 	}
 
 	return nil
+}
+
+func artifactGet(
+	ctx context.Context,
+	client minderv1.ArtifactServiceClient,
+	provider string, project string,
+	artifactID string, artifactName string, latestVersions int32, tag string,
+) (pbArt protoreflect.ProtoMessage, art *minderv1.Artifact, versions []*minderv1.ArtifactVersion, err error) {
+
+	if artifactName != "" {
+		// check artifact by Name
+		artByName, errGet := client.GetArtifactByName(ctx, &minderv1.GetArtifactByNameRequest{
+			Context:        &minderv1.Context{Provider: &provider, Project: &project},
+			Name:           artifactName,
+			LatestVersions: latestVersions,
+			Tag:            tag,
+		})
+		if errGet != nil {
+			err = fmt.Errorf("error getting artifact by name: %w", errGet)
+			return
+		}
+		pbArt = artByName
+		art = artByName.GetArtifact()
+		versions = artByName.GetVersions()
+		return
+	} else if artifactID != "" {
+		// check artifact by ID
+		artById, errGet := client.GetArtifactById(ctx, &minderv1.GetArtifactByIdRequest{
+			Context:        &minderv1.Context{Provider: &provider, Project: &project},
+			Id:             artifactID,
+			LatestVersions: latestVersions,
+			Tag:            tag,
+		})
+		if errGet != nil {
+			err = fmt.Errorf("error getting artifact by id: %w", errGet)
+			return
+		}
+		pbArt = artById
+		art = artById.GetArtifact()
+		versions = artById.GetVersions()
+		return
+	}
+
+	err = errors.New("neither name nor ID set")
+	return
 }
 
 func getSignatureStatusText(sigVer *minderv1.SignatureVerification) string {
