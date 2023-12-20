@@ -17,55 +17,33 @@
 package app
 
 import (
-	"fmt"
 	"os"
 
 	"github.com/spf13/cobra"
-	"github.com/spf13/viper"
 
 	"github.com/stacklok/minder/cmd/dev/app/rule_type"
 	"github.com/stacklok/minder/internal/util/cli"
 )
 
-var (
-	cfgFile string // config file (default is $PWD/config.yaml)
-
-	// RootCmd represents the base command when called without any subcommands
-	RootCmd = &cobra.Command{
+// CmdRoot represents the base command when called without any subcommands
+func CmdRoot() *cobra.Command {
+	cmd := &cobra.Command{
 		Use:   "mindev",
 		Short: "mindev provides developer tooling for minder",
 		Long: `For more information about minder, please visit:
 https://docs.stacklok.com/minder`,
 	}
-)
+
+	cmd.AddCommand(rule_type.CmdRuleType())
+
+	return cmd
+}
 
 // Execute adds all child commands to the root command and sets flags appropriately.
 func Execute() {
-	RootCmd.SetOut(os.Stdout)
-	RootCmd.SetErr(os.Stderr)
-	err := RootCmd.Execute()
+	cmd := CmdRoot()
+	cmd.SetOut(os.Stdout)
+	cmd.SetErr(os.Stderr)
+	err := cmd.Execute()
 	cli.ExitNicelyOnError(err, "Error on execute")
-}
-
-func init() {
-	cobra.OnInitialize(initConfig)
-	RootCmd.PersistentFlags().StringVar(&cfgFile, "config", "", "config file (default is $PWD/config.yaml)")
-
-	RootCmd.AddCommand(rule_type.CmdRuleType())
-}
-
-func initConfig() {
-	if cfgFile != "" {
-		viper.SetConfigFile(cfgFile)
-	} else {
-		// use defaults
-		viper.SetConfigName("config")
-		viper.AddConfigPath(".")
-	}
-	viper.SetConfigType("yaml")
-	viper.AutomaticEnv()
-
-	if err := viper.ReadInConfig(); err != nil {
-		fmt.Println("Error reading config file:", err)
-	}
 }
