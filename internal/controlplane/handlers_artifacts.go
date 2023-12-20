@@ -64,6 +64,76 @@ func (s *Server) ListArtifacts(ctx context.Context, in *pb.ListArtifactsRequest)
 	return &pb.ListArtifactsResponse{Results: results}, nil
 }
 
+// GetArtifactByName gets an artifact by name
+// nolint:gocyclo
+func (s *Server) GetArtifactByName(ctx context.Context, in *pb.GetArtifactByNameRequest) (*pb.GetArtifactByNameResponse, error) {
+	// tag and latest versions cannot be set at same time
+	if in.Tag != "" && in.LatestVersions > 1 {
+		return nil, status.Errorf(codes.InvalidArgument, "tag and latest versions cannot be set at same time")
+	}
+
+	if in.LatestVersions < 1 || in.LatestVersions > 10 {
+		return nil, status.Errorf(codes.InvalidArgument, "latest versions must be between 1 and 10")
+	}
+
+	// get artifact versions
+	if in.LatestVersions <= 0 {
+		in.LatestVersions = 10
+	}
+
+	nameParts := strings.Split(in.Name, "/")
+	if len(nameParts) < 3 {
+		return nil, util.UserVisibleError(codes.InvalidArgument, "invalid artifact name user repoOwner/repoName/artifactName")
+	}
+
+	repo, err := s.store.GetRepositoryByRepoName(ctx, db.GetRepositoryByRepoNameParams{
+		Provider:  in.GetContext().GetProvider(),
+		RepoOwner: nameParts[0],
+		RepoName:  nameParts[1],
+	})
+	if err != nil {
+		if errors.Is(err, sql.ErrNoRows) {
+			return nil, util.UserVisibleError(codes.NotFound, "repository not found")
+		}
+		return nil, status.Errorf(codes.Unknown, "failed to get repository: %s", err)
+	}
+
+	// the artifact name is the rest of the parts
+	artifactName := strings.Join(nameParts[2:], "/")
+	artifact, err := s.store.GetArtifactByName(ctx, db.GetArtifactByNameParams{
+		RepositoryID: repo.ID,
+		ArtifactName: artifactName,
+	})
+	if err != nil {
+		if errors.Is(err, sql.ErrNoRows) {
+			return nil, status.Errorf(codes.NotFound, "artifact not found")
+		}
+		return nil, status.Errorf(codes.Unknown, "failed to get artifact: %s", err)
+	}
+
+	// check if user is authorized
+	if err := AuthorizedOnProject(ctx, artifact.ProjectID); err != nil {
+		return nil, err
+	}
+
+	pbVersions, err := getPbArtifactVersions(ctx, s.store, artifact.ID, in.Tag, in.LatestVersions)
+	if err != nil {
+		return nil, status.Errorf(codes.Unknown, "failed to get artifact versions: %s", err)
+	}
+
+	return &pb.GetArtifactByNameResponse{Artifact: &pb.Artifact{
+		ArtifactPk: artifact.ID.String(),
+		Owner:      artifact.RepoOwner,
+		Name:       artifact.ArtifactName,
+		Type:       artifact.ArtifactType,
+		Visibility: artifact.ArtifactVisibility,
+		Repository: artifact.RepoName,
+		CreatedAt:  timestamppb.New(artifact.CreatedAt),
+	},
+		Versions: pbVersions,
+	}, nil
+}
+
 // GetArtifactById gets an artifact by id
 // nolint:gocyclo
 func (s *Server) GetArtifactById(ctx context.Context, in *pb.GetArtifactByIdRequest) (*pb.GetArtifactByIdResponse, error) {
@@ -100,23 +170,40 @@ func (s *Server) GetArtifactById(ctx context.Context, in *pb.GetArtifactByIdRequ
 		in.LatestVersions = 10
 	}
 
-	var versions []db.ArtifactVersion
-	if in.Tag != "" {
-		versions, err = s.store.ListArtifactVersionsByArtifactIDAndTag(ctx,
-			db.ListArtifactVersionsByArtifactIDAndTagParams{ArtifactID: parsedArtifactID,
-				Tags:  sql.NullString{Valid: true, String: in.Tag},
-				Limit: sql.NullInt32{Valid: true, Int32: in.LatestVersions}})
-
-	} else {
-		versions, err = s.store.ListArtifactVersionsByArtifactID(ctx,
-			db.ListArtifactVersionsByArtifactIDParams{ArtifactID: parsedArtifactID,
-				Limit: sql.NullInt32{Valid: true, Int32: in.LatestVersions}})
-	}
-
+	pbVersions, err := getPbArtifactVersions(ctx, s.store, parsedArtifactID, in.Tag, in.LatestVersions)
 	if err != nil {
 		return nil, status.Errorf(codes.Unknown, "failed to get artifact versions: %s", err)
 	}
 
+	return &pb.GetArtifactByIdResponse{Artifact: &pb.Artifact{
+		ArtifactPk: artifact.ID.String(),
+		Owner:      artifact.RepoOwner,
+		Name:       artifact.ArtifactName,
+		Type:       artifact.ArtifactType,
+		Visibility: artifact.ArtifactVisibility,
+		Repository: artifact.RepoName,
+		CreatedAt:  timestamppb.New(artifact.CreatedAt),
+	},
+		Versions: pbVersions,
+	}, nil
+}
+
+func getDbArtifactVersions(
+	ctx context.Context, store db.Store, artifactID uuid.UUID, tag string, limit int32,
+) ([]db.ArtifactVersion, error) {
+	if tag != "" {
+		return store.ListArtifactVersionsByArtifactIDAndTag(ctx,
+			db.ListArtifactVersionsByArtifactIDAndTagParams{ArtifactID: artifactID,
+				Tags:  sql.NullString{Valid: true, String: tag},
+				Limit: sql.NullInt32{Valid: true, Int32: limit}})
+	}
+
+	return store.ListArtifactVersionsByArtifactID(ctx,
+		db.ListArtifactVersionsByArtifactIDParams{ArtifactID: artifactID,
+			Limit: sql.NullInt32{Valid: true, Int32: limit}})
+}
+
+func artifactVersionsDbToPb(versions []db.ArtifactVersion) ([]*pb.ArtifactVersion, error) {
 	final_versions := []*pb.ArtifactVersion{}
 	for _, version := range versions {
 		tags := []string{}
@@ -149,17 +236,18 @@ func (s *Server) GetArtifactById(ctx context.Context, in *pb.GetArtifactByIdRequ
 
 	}
 
-	return &pb.GetArtifactByIdResponse{Artifact: &pb.Artifact{
-		ArtifactPk: artifact.ID.String(),
-		Owner:      artifact.RepoOwner,
-		Name:       artifact.ArtifactName,
-		Type:       artifact.ArtifactType,
-		Visibility: artifact.ArtifactVisibility,
-		Repository: artifact.RepoName,
-		CreatedAt:  timestamppb.New(artifact.CreatedAt),
-	},
-		Versions: final_versions,
-	}, nil
+	return final_versions, nil
+}
+
+func getPbArtifactVersions(
+	ctx context.Context, store db.Store, artifactID uuid.UUID, tag string, limit int32,
+) ([]*pb.ArtifactVersion, error) {
+	versions, err := getDbArtifactVersions(ctx, store, artifactID, tag, limit)
+	if err != nil {
+		return nil, err
+	}
+
+	return artifactVersionsDbToPb(versions)
 }
 
 type artifactSource string
