@@ -39,7 +39,7 @@ require (
 	github.com/puzpuzpuz/xsync v1.5.2
 	github.com/robfig/cron/v3 v3.0.1
 	github.com/rs/zerolog v1.31.0
-	github.com/secure-systems-lab/go-securesystemslib v0.7.0
+	github.com/secure-systems-lab/go-securesystemslib v0.8.0
 	github.com/signalfx/splunk-otel-go/instrumentation/database/sql/splunksql v1.11.0
 	github.com/signalfx/splunk-otel-go/instrumentation/github.com/lib/pq/splunkpq v1.11.0
 	github.com/sigstore/protobuf-specs v0.2.1
