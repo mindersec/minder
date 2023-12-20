@@ -129,20 +129,20 @@ docker-compose up -d keycloak
 ### Social login
 Once you have a Keycloak instance running locally, you can set up GitHub authentication.
 
-#### Create a GitHub OAuth Application
+#### Create a GitHub OAuth Application for Social Login
 
 1. Navigate to [GitHub Developer Settings](https://github.com/settings/profile)
 2. Select "Developer Settings" from the left hand menu
 3. Select "OAuth Apps" from the left hand menu
 4. Select "New OAuth App"
 5. Enter the following details:
-    - Application Name: `Stacklok Identity Provider`
+    - Application Name: `Stacklok Identity Provider` (or any other name you like)
     - Homepage URL: `http://localhost:8081` or the URL you specified as the `issuer_url` in your `server-config.yaml`
     - Authorization callback URL: `http://localhost:8081/realms/stacklok/broker/github/endpoint`
 6. Select "Register Application"
 7. Generate a client secret
 
-![github oauth2 page](./images/github-settings-application.png)
+![github oauth2 page](./images/minder-social-login-github.png)
 
 #### Enable GitHub login
 

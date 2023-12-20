@@ -20,7 +20,7 @@ Minder uses OAuth2 to authenticate users. This means that you will need to confi
 3. Select "OAuth Apps" from the left hand menu
 4. Select "New OAuth App"
 5. Enter the following details:
-   - Application Name: `Minder`
+   - Application Name: `Minder` (or any other name you like)
    - Homepage URL: `http://localhost:8080`
    - Authorization callback URL: `http://localhost:8080/api/v1/auth/callback/github`
 6. Select "Register Application"
@@ -28,4 +28,4 @@ Minder uses OAuth2 to authenticate users. This means that you will need to confi
 7. Copy the "Client ID" , "Client Secret" and "Authorization callback URL" values
    into your `./server-config.yaml` file, under the `github` section.
 
-![github oauth2 page](./images/github-settings-application.png)
+![github oauth2 page](./images/minder-server-oauth.png)
