@@ -63,10 +63,6 @@ func getCommand(ctx context.Context, cmd *cobra.Command, conn *grpc.ClientConn) 
 		return cli.MessageAndError(fmt.Sprintf("Output format %s not supported", format), fmt.Errorf("invalid argument"))
 	}
 
-	if artifactID == "" && artifactName == "" {
-		return cli.MessageAndError("Either artifact ID or artifact name must be specified", fmt.Errorf("invalid argument"))
-	}
-
 	pbArt, art, versions, err := artifactGet(ctx, client, provider, project, artifactID, artifactName, latestVersions, tag)
 	if err != nil {
 		return cli.MessageAndError("Error getting artifact", err)
@@ -181,8 +177,10 @@ func init() {
 	getCmd.Flags().StringP("id", "i", "", "ID of the artifact to get info from")
 	getCmd.Flags().Int32P("versions", "v", 1, "Latest artifact versions to retrieve")
 	getCmd.Flags().StringP("tag", "", "", "Specific artifact tag to retrieve")
-	// Exclusive
+	// We allow searching by either versions or tags but not both. It's OK to not specify either, in which case
+	// we return all the versions and tags
 	getCmd.MarkFlagsMutuallyExclusive("versions", "tag")
-	// Exclusive
+	// We allow searching by name or ID but not both. One of them must be specified.
 	getCmd.MarkFlagsMutuallyExclusive("name", "id")
+	getCmd.MarkFlagsOneRequired("name", "id")
 }
