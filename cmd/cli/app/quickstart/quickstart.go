@@ -138,6 +138,9 @@ var cmd = &cobra.Command{
 //
 //nolint:gocyclo
 func quickstartCommand(_ context.Context, cmd *cobra.Command, conn *grpc.ClientConn) error {
+	repoClient := minderv1.NewRepositoryServiceClient(conn)
+	client := minderv1.NewProfileServiceClient(conn)
+
 	project := viper.GetString("project")
 	provider := viper.GetString("provider")
 
@@ -191,14 +194,29 @@ func quickstartCommand(_ context.Context, cmd *cobra.Command, conn *grpc.ClientC
 	defer cancel()
 
 	// Prompt to register repositories
-	results, msg, err := repo.RegisterCmd(ctx, cmd, conn)
+	err = repo.RegisterCmd(ctx, cmd, conn)
 	if err != nil {
-		return cli.MessageAndError(msg, err)
+		return cli.MessageAndError("Error registering repositories", err)
+	}
+
+	// New context so we don't time out between steps
+	ctx, cancel = getQuickstartContext(cmd.Context(), viper.GetViper())
+	defer cancel()
+
+	// Get the list of all registered repositories
+	listResp, err := repoClient.ListRepositories(ctx, &minderv1.ListRepositoriesRequest{
+		Context: &minderv1.Context{Provider: &provider, Project: &project},
+		// keep this until we decide to delete them from the payload and rely only on the context
+		Provider:  provider,
+		ProjectId: project,
+	})
+	if err != nil {
+		return cli.MessageAndError("Error getting list of repos", err)
 	}
 
 	var registeredRepos []string
-	for _, result := range results {
-		r := fmt.Sprintf("%s/%s", result.Repository.Owner, result.Repository.Name)
+	for _, result := range listResp.Results {
+		r := fmt.Sprintf("%s/%s", result.Owner, result.Name)
 		registeredRepos = append(registeredRepos, r)
 	}
 
@@ -211,9 +229,6 @@ func quickstartCommand(_ context.Context, cmd *cobra.Command, conn *grpc.ClientC
 	if !yes {
 		return nil
 	}
-
-	// Create a client for the profile and rule type service
-	client := minderv1.NewProfileServiceClient(conn)
 
 	// Creating the rule type
 	cmd.Println("Creating rule type...")
@@ -347,5 +362,5 @@ func init() {
 }
 
 func getQuickstartContext(ctx context.Context, v *viper.Viper) (context.Context, context.CancelFunc) {
-	return cli.GetAppContextWithTimeoutDuration(ctx, v, 20)
+	return cli.GetAppContextWithTimeoutDuration(ctx, v, 30)
 }

@@ -43,21 +43,13 @@ var repoRegisterCmd = &cobra.Command{
 	Use:   "register",
 	Short: "Register a repository",
 	Long:  `The repo register subcommand is used to register a repo within Minder.`,
-	RunE:  cli.GRPCClientWrapRunE(registerCommand),
-}
-
-// registerCommand is the repo register subcommand
-func registerCommand(ctx context.Context, cmd *cobra.Command, conn *grpc.ClientConn) error {
-	if _, msg, err := RegisterCmd(ctx, cmd, conn); err != nil {
-		return cli.MessageAndError(msg, err)
-	}
-	return nil
+	RunE:  cli.GRPCClientWrapRunE(RegisterCmd),
 }
 
 // RegisterCmd represents the register command to register a repo with minder
 //
 //nolint:gocyclo
-func RegisterCmd(ctx context.Context, cmd *cobra.Command, conn *grpc.ClientConn) ([]*minderv1.RegisterRepoResult, string, error) {
+func RegisterCmd(ctx context.Context, cmd *cobra.Command, conn *grpc.ClientConn) error {
 	client := minderv1.NewRepositoryServiceClient(conn)
 
 	provider := viper.GetString("provider")
@@ -66,7 +58,7 @@ func RegisterCmd(ctx context.Context, cmd *cobra.Command, conn *grpc.ClientConn)
 
 	// Ensure provider is supported
 	if !app.IsProviderSupported(provider) {
-		return nil, fmt.Sprintf("provider %s is not supported yet", provider), fmt.Errorf("invalid argument")
+		return cli.MessageAndError(fmt.Sprintf("Provider %s is not supported yet", provider), fmt.Errorf("invalid argument"))
 	}
 
 	// Get the list of repos
@@ -77,7 +69,7 @@ func RegisterCmd(ctx context.Context, cmd *cobra.Command, conn *grpc.ClientConn)
 		ProjectId: project,
 	})
 	if err != nil {
-		return nil, "Error getting list of repos", err
+		return cli.MessageAndError("Error getting list of repos", err)
 	}
 
 	// Get a list of remote repos
@@ -88,7 +80,7 @@ func RegisterCmd(ctx context.Context, cmd *cobra.Command, conn *grpc.ClientConn)
 		ProjectId: project,
 	})
 	if err != nil {
-		return nil, "Error getting list of remote repos", err
+		return cli.MessageAndError("Error getting list of remote repos", err)
 	}
 
 	// Unregistered repos are in remoteListResp but not in listResp
@@ -117,7 +109,7 @@ func RegisterCmd(ctx context.Context, cmd *cobra.Command, conn *grpc.ClientConn)
 	// Get the selected repos
 	selectedRepos, err := getSelectedRepositories(unregisteredRepos, repoList)
 	if err != nil {
-		return nil, "Error getting selected repositories", err
+		return cli.MessageAndError("Error getting selected repositories", err)
 	}
 
 	var results []*minderv1.RegisterRepoResult
@@ -143,12 +135,10 @@ func RegisterCmd(ctx context.Context, cmd *cobra.Command, conn *grpc.ClientConn)
 	// The result gives a list of repositories with the registration status
 	// Let's parse the results and print the status
 	t := table.New(table.Simple, "", []string{"Repository", "Status", "Message"})
-	var registeredRepos []*minderv1.RegisterRepoResult
 	for _, result := range results {
 		row := []string{fmt.Sprintf("%s/%s", result.Repository.Owner, result.Repository.Name)}
 		if result.Status.Success {
 			row = append(row, "Registered")
-			registeredRepos = append(registeredRepos, result)
 		} else {
 			row = append(row, "Failed")
 		}
@@ -161,7 +151,7 @@ func RegisterCmd(ctx context.Context, cmd *cobra.Command, conn *grpc.ClientConn)
 		t.AddRow(row)
 	}
 	t.Render()
-	return registeredRepos, "", nil
+	return nil
 }
 
 func getSelectedRepositories(repoList []*minderv1.UpstreamRepositoryRef, flagRepos string) (
