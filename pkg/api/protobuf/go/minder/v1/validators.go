@@ -109,6 +109,8 @@ func (def *RuleType_Definition) Validate() error {
 
 	if def.Ingest == nil {
 		return fmt.Errorf("%w: data ingest is nil", ErrInvalidRuleTypeDefinition)
+	} else if err := def.Ingest.Validate(); err != nil {
+		return err
 	}
 
 	if def.Eval == nil {
@@ -116,6 +118,44 @@ func (def *RuleType_Definition) Validate() error {
 	}
 
 	return nil
+}
+
+// Validate validates a rule type definition ingest
+func (ing *RuleType_Definition_Ingest) Validate() error {
+	if ing == nil {
+		return fmt.Errorf("%w: ingest is nil", ErrInvalidRuleTypeDefinition)
+	}
+
+	if ing.Type == IngestTypeDiff {
+		if ing.GetDiff() == nil {
+			return fmt.Errorf("%w: diff ingest is nil", ErrInvalidRuleTypeDefinition)
+		} else if err := ing.GetDiff().Validate(); err != nil {
+			return err
+		}
+	}
+
+	return nil
+}
+
+// Validate validates a rule type definition ingest diff
+func (diffing *DiffType) Validate() error {
+	if diffing == nil {
+		return fmt.Errorf("%w: diffing is nil", ErrInvalidRuleTypeDefinition)
+	}
+
+	if diffing.getTypeOrDefault() != DiffTypeDep {
+		return fmt.Errorf("%w: diffing type is invalid: %s", ErrInvalidRuleTypeDefinition, diffing.GetType())
+	}
+
+	return nil
+}
+
+func (diffing *DiffType) getTypeOrDefault() string {
+	if diffing.GetType() != "" {
+		return diffing.GetType()
+	}
+
+	return DiffTypeDep
 }
 
 func (p *Profile) getTypeWithDefault() string {

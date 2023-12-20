@@ -415,7 +415,8 @@ DiffType defines the diff data ingester.
 
 | Field | Type | Label | Description |
 | ----- | ---- | ----- | ----------- |
-| ecosystems | [DiffType.Ecosystem](#minder-v1-DiffType-Ecosystem) | repeated |  |
+| ecosystems | [DiffType.Ecosystem](#minder-v1-DiffType-Ecosystem) | repeated | ecosystems is the list of ecosystems to be used for the "dep" diff type. |
+| type | [string](#string) |  | type is the type of diff ingestor to use. The default is "dep" which will leverage the ecosystems array. |
 
 
 <a name="minder-v1-DiffType-Ecosystem"></a>
