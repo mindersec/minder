@@ -19,6 +19,8 @@ import (
 	"context"
 	"fmt"
 	"os"
+	"strings"
+	"time"
 
 	"github.com/spf13/cobra"
 	"github.com/spf13/viper"
@@ -27,6 +29,7 @@ import (
 	"github.com/stacklok/minder/cmd/cli/app"
 	"github.com/stacklok/minder/internal/util"
 	"github.com/stacklok/minder/internal/util/cli"
+	"github.com/stacklok/minder/internal/util/cli/table"
 	minderv1 "github.com/stacklok/minder/pkg/api/protobuf/go/minder/v1"
 )
 
@@ -46,6 +49,7 @@ func getCommand(ctx context.Context, cmd *cobra.Command, conn *grpc.ClientConn) 
 	tag := viper.GetString("tag")
 	artifactID := viper.GetString("id")
 	latestVersions := viper.GetInt32("versions")
+	format := viper.GetString("output")
 
 	// Ensure provider is supported
 	if !app.IsProviderSupported(provider) {
@@ -63,17 +67,66 @@ func getCommand(ctx context.Context, cmd *cobra.Command, conn *grpc.ClientConn) 
 		return cli.MessageAndError("Error getting artifact by id", err)
 	}
 
-	out, err := util.GetJsonFromProto(art)
-	if err != nil {
-		return cli.MessageAndError("Error getting json from proto", err)
+	switch format {
+	case app.Table:
+		ta := table.New(table.Simple, "", []string{"ID", "Type", "Owner", "Name", "Repository", "Visibility", "Creation date"})
+		ta.AddRow([]string{
+			art.Artifact.ArtifactPk,
+			art.Artifact.Type,
+			art.Artifact.GetOwner(),
+			art.Artifact.GetName(),
+			art.Artifact.Repository,
+			art.Artifact.Visibility,
+			art.Artifact.CreatedAt.AsTime().Format(time.RFC3339),
+		})
+		ta.Render()
+
+		tv := table.New(table.Simple, "", []string{"ID", "Tags", "Signature", "Identity", "Creation date"})
+		for _, version := range art.Versions {
+			tv.AddRow([]string{
+				fmt.Sprintf("%d", version.VersionId),
+				strings.Join(version.Tags, ","),
+				getSignatureStatusText(version.SignatureVerification),
+				version.GetSignatureVerification().GetCertIdentity(),
+				version.CreatedAt.AsTime().Format(time.RFC3339),
+			})
+		}
+		tv.Render()
+	case app.JSON:
+		out, err := util.GetJsonFromProto(art)
+		if err != nil {
+			return cli.MessageAndError("Error getting json from proto", err)
+		}
+		cmd.Println(out)
+	case app.YAML:
+		out, err := util.GetYamlFromProto(art)
+		if err != nil {
+			return cli.MessageAndError("Error getting yaml from proto", err)
+		}
+		cmd.Println(out)
 	}
-	cmd.Println(out)
+
 	return nil
+}
+
+func getSignatureStatusText(sigVer *minderv1.SignatureVerification) string {
+	if !sigVer.IsSigned {
+		return "❌ not signed"
+	}
+	if !sigVer.IsVerified {
+		return "❌ signature not verified"
+	}
+	if !sigVer.IsBundleVerified {
+		return "❌ bundle signature not verified"
+	}
+	return "✅ Success"
 }
 
 func init() {
 	ArtifactCmd.AddCommand(getCmd)
 	// Flags
+	getCmd.Flags().StringP("output", "o", app.Table,
+		fmt.Sprintf("Output format (one of %s)", strings.Join(app.SupportedOutputFormats(), ",")))
 	getCmd.Flags().StringP("id", "i", "", "ID of the artifact to get info from")
 	getCmd.Flags().Int32P("versions", "v", 1, "Latest artifact versions to retrieve")
 	getCmd.Flags().StringP("tag", "", "", "Specific artifact tag to retrieve")
