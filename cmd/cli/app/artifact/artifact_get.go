@@ -18,13 +18,13 @@ package artifact
 import (
 	"context"
 	"fmt"
-	"os"
 	"strings"
 	"time"
 
 	"github.com/spf13/cobra"
 	"github.com/spf13/viper"
 	"google.golang.org/grpc"
+	"google.golang.org/protobuf/reflect/protoreflect"
 
 	"github.com/stacklok/minder/cmd/cli/app"
 	"github.com/stacklok/minder/internal/util"
@@ -48,6 +48,7 @@ func getCommand(ctx context.Context, cmd *cobra.Command, conn *grpc.ClientConn) 
 	project := viper.GetString("project")
 	tag := viper.GetString("tag")
 	artifactID := viper.GetString("id")
+	artifactName := viper.GetString("name")
 	latestVersions := viper.GetInt32("versions")
 	format := viper.GetString("output")
 
@@ -61,33 +62,66 @@ func getCommand(ctx context.Context, cmd *cobra.Command, conn *grpc.ClientConn) 
 		return cli.MessageAndError(fmt.Sprintf("Output format %s not supported", format), fmt.Errorf("invalid argument"))
 	}
 
-	// check artifact by name
-	art, err := client.GetArtifactById(ctx, &minderv1.GetArtifactByIdRequest{
-		Context:        &minderv1.Context{Provider: &provider, Project: &project},
-		Id:             artifactID,
-		LatestVersions: latestVersions,
-		Tag:            tag,
-	})
-	if err != nil {
-		return cli.MessageAndError("Error getting artifact by id", err)
+	if artifactID == "" && artifactName == "" {
+		return cli.MessageAndError("Either artifact ID or artifact name must be specified", fmt.Errorf("invalid argument"))
+	}
+
+	var pbArt protoreflect.ProtoMessage
+	var art *minderv1.Artifact
+	var versions []*minderv1.ArtifactVersion
+
+	if artifactName != "" {
+		// check artifact by Name
+		artByName, err := client.GetArtifactByName(ctx, &minderv1.GetArtifactByNameRequest{
+			Context:        &minderv1.Context{Provider: &provider, Project: &project},
+			Name:           artifactName,
+			LatestVersions: latestVersions,
+			Tag:            tag,
+		})
+		if err != nil {
+			return cli.MessageAndError("Error getting artifact by name", err)
+		}
+		pbArt = artByName
+		art = artByName.GetArtifact()
+		versions = artByName.GetVersions()
+	}
+
+	if artifactID != "" {
+		// check artifact by ID
+		artById, err := client.GetArtifactById(ctx, &minderv1.GetArtifactByIdRequest{
+			Context:        &minderv1.Context{Provider: &provider, Project: &project},
+			Id:             artifactID,
+			LatestVersions: latestVersions,
+			Tag:            tag,
+		})
+		if err != nil {
+			return cli.MessageAndError("Error getting artifact by id", err)
+		}
+		pbArt = artById
+		art = artById.GetArtifact()
+		versions = artById.GetVersions()
+	}
+
+	if art == nil || versions == nil {
+		return cli.MessageAndError("Error getting artifact", fmt.Errorf("invalid argument"))
 	}
 
 	switch format {
 	case app.Table:
 		ta := table.New(table.Simple, "", []string{"ID", "Type", "Owner", "Name", "Repository", "Visibility", "Creation date"})
 		ta.AddRow([]string{
-			art.Artifact.ArtifactPk,
-			art.Artifact.Type,
-			art.Artifact.GetOwner(),
-			art.Artifact.GetName(),
-			art.Artifact.Repository,
-			art.Artifact.Visibility,
-			art.Artifact.CreatedAt.AsTime().Format(time.RFC3339),
+			art.ArtifactPk,
+			art.Type,
+			art.GetOwner(),
+			art.GetName(),
+			art.Repository,
+			art.Visibility,
+			art.CreatedAt.AsTime().Format(time.RFC3339),
 		})
 		ta.Render()
 
 		tv := table.New(table.Simple, "", []string{"ID", "Tags", "Signature", "Identity", "Creation date"})
-		for _, version := range art.Versions {
+		for _, version := range versions {
 			tv.AddRow([]string{
 				fmt.Sprintf("%d", version.VersionId),
 				strings.Join(version.Tags, ","),
@@ -98,13 +132,13 @@ func getCommand(ctx context.Context, cmd *cobra.Command, conn *grpc.ClientConn) 
 		}
 		tv.Render()
 	case app.JSON:
-		out, err := util.GetJsonFromProto(art)
+		out, err := util.GetJsonFromProto(pbArt)
 		if err != nil {
 			return cli.MessageAndError("Error getting json from proto", err)
 		}
 		cmd.Println(out)
 	case app.YAML:
-		out, err := util.GetYamlFromProto(art)
+		out, err := util.GetYamlFromProto(pbArt)
 		if err != nil {
 			return cli.MessageAndError("Error getting yaml from proto", err)
 		}
@@ -132,14 +166,12 @@ func init() {
 	// Flags
 	getCmd.Flags().StringP("output", "o", app.Table,
 		fmt.Sprintf("Output format (one of %s)", strings.Join(app.SupportedOutputFormats(), ",")))
+	getCmd.Flags().StringP("name", "n", "", "name of the artifact to get info from in the form repoOwner/repoName/artifactName")
 	getCmd.Flags().StringP("id", "i", "", "ID of the artifact to get info from")
 	getCmd.Flags().Int32P("versions", "v", 1, "Latest artifact versions to retrieve")
 	getCmd.Flags().StringP("tag", "", "", "Specific artifact tag to retrieve")
-	// Required
-	if err := getCmd.MarkFlagRequired("id"); err != nil {
-		getCmd.Printf("Error marking flag as required: %s", err)
-		os.Exit(1)
-	}
 	// Exclusive
 	getCmd.MarkFlagsMutuallyExclusive("versions", "tag")
+	// Exclusive
+	getCmd.MarkFlagsMutuallyExclusive("name", "id")
 }
