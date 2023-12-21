@@ -35,7 +35,7 @@ const (
 
 // Table is an interface for rendering tables
 type Table interface {
-	AddRow(row []string)
+	AddRow(row ...string)
 	AddRowWithColor(row []string, rowColors []string)
 	Render()
 }

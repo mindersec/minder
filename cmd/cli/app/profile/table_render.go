@@ -60,11 +60,11 @@ func NewProfileSettingsTable() table.Table {
 
 // RenderProfileSettingsTable renders the profile settings table
 func RenderProfileSettingsTable(p *minderv1.Profile, t table.Table) {
-	t.AddRow([]string{"ID", p.GetId()})
-	t.AddRow([]string{"Name", p.GetName()})
-	t.AddRow([]string{"Provider", p.GetContext().GetProvider()})
-	t.AddRow([]string{"Alert", p.GetAlert()})
-	t.AddRow([]string{"Remediate", p.GetRemediate()})
+	t.AddRow("ID", p.GetId())
+	t.AddRow("Name", p.GetName())
+	t.AddRow("Provider", p.GetContext().GetProvider())
+	t.AddRow("Alert", p.GetAlert())
+	t.AddRow("Remediate", p.GetRemediate())
 }
 
 // NewProfileTable creates a new table for rendering profiles
@@ -99,13 +99,12 @@ func renderRuleTable(entType minderv1.EntityType, rule *minderv1.Profile_Rule, t
 	params := marshalStructOrEmpty(rule.Params)
 	def := marshalStructOrEmpty(rule.Def)
 
-	row := []string{
+	t.AddRow(
 		entType.String(),
 		rule.Type,
 		params,
 		def,
-	}
-	t.AddRow(row)
+	)
 }
 
 // NewProfileStatusTable creates a new table for rendering profile status
