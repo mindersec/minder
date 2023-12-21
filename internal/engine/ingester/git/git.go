@@ -18,12 +18,14 @@ package git
 
 import (
 	"context"
+	"errors"
 	"fmt"
 
 	"github.com/mitchellh/mapstructure"
 	"google.golang.org/protobuf/reflect/protoreflect"
 
 	"github.com/stacklok/minder/internal/db"
+	engerrors "github.com/stacklok/minder/internal/engine/errors"
 	engif "github.com/stacklok/minder/internal/engine/interfaces"
 	"github.com/stacklok/minder/internal/providers"
 	pb "github.com/stacklok/minder/pkg/api/protobuf/go/minder/v1"
@@ -97,7 +99,11 @@ func (gi *Git) Ingest(ctx context.Context, ent protoreflect.ProtoMessage, params
 	// where we don't have access to the underlying filesystem.
 	r, err := gi.gitprov.Clone(ctx, url, branch)
 	if err != nil {
-		return nil, fmt.Errorf("could not clone repo: %w", err)
+		if errors.Is(err, provifv1.ErrProviderGitBranchNotFound) {
+			return nil, fmt.Errorf("%w: %s: branch %s", engerrors.ErrEvaluationFailed,
+				provifv1.ErrProviderGitBranchNotFound, branch)
+		}
+		return nil, err
 	}
 
 	wt, err := r.Worktree()
