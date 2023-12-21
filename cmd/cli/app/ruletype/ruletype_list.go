@@ -78,13 +78,13 @@ func listCommand(ctx context.Context, cmd *cobra.Command, conn *grpc.ClientConn)
 	case app.Table:
 		table := initializeTable()
 		for _, rt := range resp.RuleTypes {
-			table.AddRow(
+			table.AddRow([]string{
 				*rt.Context.Provider,
 				*rt.Context.Project,
 				*rt.Id,
 				rt.Name,
 				rt.Description,
-			)
+			})
 		}
 		table.Render()
 	}
