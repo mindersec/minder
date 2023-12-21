@@ -17,6 +17,7 @@ package events_test
 
 import (
 	"context"
+	"errors"
 	"testing"
 
 	"github.com/ThreeDotsLabs/watermill/message"
@@ -60,6 +61,11 @@ func fakeHandler(id string, out chan eventPair) events.Handler {
 		return nil
 	}
 }
+
+func alwaysFailingHandler(_ *message.Message) error {
+	return errors.New("handler always fails")
+}
+
 func TestEventer(t *testing.T) {
 	t.Parallel()
 
@@ -110,6 +116,25 @@ func TestEventer(t *testing.T) {
 							return nil
 						}
 					},
+				},
+			},
+		},
+		{
+			name:    "handler fails, message goes to DLQ",
+			publish: []eventPair{{"a", &message.Message{}}},
+			want: map[string][]message.Message{
+				events.DeadLetterQueueTopic: {{}},
+			},
+			consumers: []fakeConsumer{
+				{
+					topics: []string{"a"},
+					makeHandler: func(_ string, out chan eventPair) events.Handler {
+						return alwaysFailingHandler
+					},
+				},
+				{
+					topics:      []string{events.DeadLetterQueueTopic},
+					makeHandler: fakeHandler,
 				},
 			},
 		},
