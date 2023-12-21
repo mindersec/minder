@@ -2197,7 +2197,12 @@
           "items": {
             "type": "object",
             "$ref": "#/definitions/DiffTypeEcosystem"
-          }
+          },
+          "description": "ecosystems is the list of ecosystems to be used\nfor the \"dep\" diff type."
+        },
+        "type": {
+          "type": "string",
+          "description": "type is the type of diff ingestor to use.\nThe default is \"dep\" which will leverage\nthe ecosystems array."
         }
       },
       "description": "DiffType defines the diff data ingester."

@@ -1139,7 +1139,15 @@ message DiffType {
         // depfile is the file that contains the dependencies for this ecosystem
         string depfile = 2;
     }
+
+    // ecosystems is the list of ecosystems to be used
+    // for the "dep" diff type.
     repeated Ecosystem ecosystems = 1;
+
+    // type is the type of diff ingestor to use.
+    // The default is "dep" which will leverage
+    // the ecosystems array.
+    string type = 2;
 }
 
 // RuleType defines rules that may or may not be user defined.
