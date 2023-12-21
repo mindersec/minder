@@ -77,7 +77,7 @@ func listCommand(ctx context.Context, cmd *cobra.Command, conn *grpc.ClientConn)
 		t := table.New(table.Simple, layouts.Default,
 			[]string{"ID", "Type", "Owner", "Name", "Repository", "Visibility", "Creation date"})
 		for _, artifact := range artifactList.Results {
-			t.AddRow([]string{
+			t.AddRow(
 				artifact.ArtifactPk,
 				artifact.Type,
 				artifact.GetOwner(),
@@ -85,7 +85,7 @@ func listCommand(ctx context.Context, cmd *cobra.Command, conn *grpc.ClientConn)
 				artifact.Repository,
 				artifact.Visibility,
 				artifact.CreatedAt.AsTime().Format(time.RFC3339),
-			})
+			)
 
 		}
 		t.Render()
