@@ -14,6 +14,48 @@ consumes:
 produces:
   - application/json
 paths:
+  /api/v1/artifact/name/{name}:
+    get:
+      operationId: ArtifactService_GetArtifactByName
+      responses:
+        '200':
+          description: A successful response.
+          schema:
+            $ref: '#/definitions/v1GetArtifactByNameResponse'
+        default:
+          description: An unexpected error response.
+          schema:
+            $ref: '#/definitions/googlerpcStatus'
+      parameters:
+        - name: name
+          in: path
+          required: true
+          type: string
+        - name: latestVersions
+          in: query
+          required: false
+          type: integer
+          format: int32
+        - name: tag
+          in: query
+          required: false
+          type: string
+        - name: context.provider
+          description: name of the provider
+          in: query
+          required: false
+          type: string
+        - name: context.project
+          description: name of the project
+          in: query
+          required: false
+          type: string
+        - name: context.retiredOrganization
+          in: query
+          required: false
+          type: string
+      tags:
+        - ArtifactService
   /api/v1/artifact/{id}:
     get:
       operationId: ArtifactService_GetArtifactById
@@ -1488,10 +1530,7 @@ definitions:
 
           protobuf release, and it is not used for type URLs beginning with
 
-          type.googleapis.com. As of May 2023, there are no widely used type
-          server
-
-          implementations and no plans to implement one.
+          type.googleapis.com.
 
 
           Schemes other than `http`, `https` (or the empty scheme) might be
@@ -1533,7 +1572,7 @@ definitions:
             foo = any.unpack(Foo.getDefaultInstance());
           }
 
-       Example 3: Pack and unpack a message in Python.
+      Example 3: Pack and unpack a message in Python.
 
           foo = Foo(...)
           any = Any()
@@ -1543,7 +1582,7 @@ definitions:
             any.Unpack(foo)
             ...
 
-       Example 4: Pack and unpack a message in Go
+      Example 4: Pack and unpack a message in Go
 
            foo := &pb.Foo{...}
            any, err := anypb.New(foo)
@@ -1569,7 +1608,6 @@ definitions:
 
       JSON
 
-      ====
 
       The JSON representation of an `Any` value uses the regular
 
@@ -1610,7 +1648,7 @@ definitions:
       `NullValue` is a singleton enumeration to represent the null value for the
       `Value` type union.
 
-      The JSON representation for `NullValue` is JSON `null`.
+       The JSON representation for `NullValue` is JSON `null`.
 
        - NULL_VALUE: Null value.
   v1Artifact:
@@ -1801,6 +1839,16 @@ definitions:
       status:
         type: string
   v1GetArtifactByIdResponse:
+    type: object
+    properties:
+      artifact:
+        $ref: '#/definitions/v1Artifact'
+      versions:
+        type: array
+        items:
+          type: object
+          $ref: '#/definitions/v1ArtifactVersion'
+  v1GetArtifactByNameResponse:
     type: object
     properties:
       artifact:
