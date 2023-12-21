@@ -62,18 +62,25 @@ func fakeHandler(id string, out chan eventPair) events.Handler {
 	}
 }
 
-func alwaysFailingHandler(_ *message.Message) error {
-	return errors.New("handler always fails")
+var failureCounter int
+
+func countFailuresHandler(counter *int) events.Handler {
+	return func(_ *message.Message) error {
+		defer func() { failureCounter = *counter }()
+		*counter++
+		return errors.New("handler always fails")
+	}
 }
 
 func TestEventer(t *testing.T) {
 	t.Parallel()
 
 	tests := []struct {
-		name      string
-		publish   []eventPair
-		want      map[string][]message.Message
-		consumers []fakeConsumer
+		name       string
+		publish    []eventPair
+		want       map[string][]message.Message
+		consumers  []fakeConsumer
+		wantsCalls int
 	}{
 		{
 			name:    "single topic",
@@ -129,7 +136,8 @@ func TestEventer(t *testing.T) {
 				{
 					topics: []string{"a"},
 					makeHandler: func(_ string, out chan eventPair) events.Handler {
-						return alwaysFailingHandler
+						counter := new(int)
+						return countFailuresHandler(counter)
 					},
 				},
 				{
@@ -137,6 +145,7 @@ func TestEventer(t *testing.T) {
 					makeHandler: fakeHandler,
 				},
 			},
+			wantsCalls: 4,
 		},
 	}
 	for _, tt := range tests {
@@ -201,6 +210,11 @@ func TestEventer(t *testing.T) {
 					t.Errorf("wanted %d messages for topic %q, got %d", len(msgs), topic, len(received[topic]))
 				}
 			}
+
+			if tt.wantsCalls != 0 && failureCounter != tt.wantsCalls {
+				t.Errorf("expected %d calls to failure handler, got %d", tt.wantsCalls, failureCounter)
+			}
+			failureCounter = 0
 		})
 	}
 }
