@@ -78,6 +78,16 @@ service ArtifactService {
             auth_scope: OBJECT_OWNER_PROJECT
         };
     }
+
+    rpc GetArtifactByName (GetArtifactByNameRequest) returns (GetArtifactByNameResponse) {
+        option (google.api.http) = {
+            get: "/api/v1/artifact/name/{name}"
+        };
+
+        option (rpc_options) = {
+            auth_scope: OBJECT_OWNER_PROJECT
+        };
+    }
 }
 
 message ListArtifactsRequest {
@@ -137,6 +147,18 @@ message GetArtifactByIdRequest {
 }
 
 message GetArtifactByIdResponse {
+    Artifact artifact = 1;
+    repeated ArtifactVersion versions = 2;
+}
+
+message GetArtifactByNameRequest {
+    string name = 1;
+    int32 latest_versions = 2;
+    string tag = 3;
+    Context context = 4;
+}
+
+message GetArtifactByNameResponse {
     Artifact artifact = 1;
     repeated ArtifactVersion versions = 2;
 }
@@ -1139,7 +1161,15 @@ message DiffType {
         // depfile is the file that contains the dependencies for this ecosystem
         string depfile = 2;
     }
+
+    // ecosystems is the list of ecosystems to be used
+    // for the "dep" diff type.
     repeated Ecosystem ecosystems = 1;
+
+    // type is the type of diff ingestor to use.
+    // The default is "dep" which will leverage
+    // the ecosystems array.
+    string type = 2;
 }
 
 // RuleType defines rules that may or may not be user defined.

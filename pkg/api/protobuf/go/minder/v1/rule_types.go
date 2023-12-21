@@ -23,6 +23,16 @@ import (
 	"github.com/stacklok/minder/internal/util/jsonyaml"
 )
 
+const (
+	// IngestTypeDiff is the ingest type for a diff
+	IngestTypeDiff = "diff"
+)
+
+const (
+	// DiffTypeDep is the diff type for a dependency
+	DiffTypeDep = "dep"
+)
+
 // ParseRuleType parses a rule type from a reader
 func ParseRuleType(r io.Reader) (*RuleType, error) {
 	// We transcode to JSON so we can decode it straight to the protobuf structure

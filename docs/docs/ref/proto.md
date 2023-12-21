@@ -23,6 +23,7 @@ toc_max_heading_level: 4
 | ----------- | ------------ | ------------- | ------------|
 | ListArtifacts | [ListArtifactsRequest](#minder-v1-ListArtifactsRequest) | [ListArtifactsResponse](#minder-v1-ListArtifactsResponse) |  |
 | GetArtifactById | [GetArtifactByIdRequest](#minder-v1-GetArtifactByIdRequest) | [GetArtifactByIdResponse](#minder-v1-GetArtifactByIdResponse) |  |
+| GetArtifactByName | [GetArtifactByNameRequest](#minder-v1-GetArtifactByNameRequest) | [GetArtifactByNameResponse](#minder-v1-GetArtifactByNameResponse) |  |
 
 
 <a name="minder-v1-HealthService"></a>
@@ -415,7 +416,8 @@ DiffType defines the diff data ingester.
 
 | Field | Type | Label | Description |
 | ----- | ---- | ----- | ----------- |
-| ecosystems | [DiffType.Ecosystem](#minder-v1-DiffType-Ecosystem) | repeated |  |
+| ecosystems | [DiffType.Ecosystem](#minder-v1-DiffType-Ecosystem) | repeated | ecosystems is the list of ecosystems to be used for the "dep" diff type. |
+| type | [string](#string) |  | type is the type of diff ingestor to use. The default is "dep" which will leverage the ecosystems array. |
 
 
 <a name="minder-v1-DiffType-Ecosystem"></a>
@@ -492,6 +494,32 @@ DiffType defines the diff data ingester.
 <a name="minder-v1-GetArtifactByIdResponse"></a>
 
 #### GetArtifactByIdResponse
+
+
+
+| Field | Type | Label | Description |
+| ----- | ---- | ----- | ----------- |
+| artifact | [Artifact](#minder-v1-Artifact) |  |  |
+| versions | [ArtifactVersion](#minder-v1-ArtifactVersion) | repeated |  |
+
+
+<a name="minder-v1-GetArtifactByNameRequest"></a>
+
+#### GetArtifactByNameRequest
+
+
+
+| Field | Type | Label | Description |
+| ----- | ---- | ----- | ----------- |
+| name | [string](#string) |  |  |
+| latest_versions | [int32](#int32) |  |  |
+| tag | [string](#string) |  |  |
+| context | [Context](#minder-v1-Context) |  |  |
+
+
+<a name="minder-v1-GetArtifactByNameResponse"></a>
+
+#### GetArtifactByNameResponse
 
 
 

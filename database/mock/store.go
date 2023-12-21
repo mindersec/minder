@@ -767,6 +767,21 @@ func (mr *MockStoreMockRecorder) GetArtifactByID(arg0, arg1 interface{}) *gomock
 	return mr.mock.ctrl.RecordCallWithMethodType(mr.mock, "GetArtifactByID", reflect.TypeOf((*MockStore)(nil).GetArtifactByID), arg0, arg1)
 }
 
+// GetArtifactByName mocks base method.
+func (m *MockStore) GetArtifactByName(arg0 context.Context, arg1 db.GetArtifactByNameParams) (db.GetArtifactByNameRow, error) {
+	m.ctrl.T.Helper()
+	ret := m.ctrl.Call(m, "GetArtifactByName", arg0, arg1)
+	ret0, _ := ret[0].(db.GetArtifactByNameRow)
+	ret1, _ := ret[1].(error)
+	return ret0, ret1
+}
+
+// GetArtifactByName indicates an expected call of GetArtifactByName.
+func (mr *MockStoreMockRecorder) GetArtifactByName(arg0, arg1 interface{}) *gomock.Call {
+	mr.mock.ctrl.T.Helper()
+	return mr.mock.ctrl.RecordCallWithMethodType(mr.mock, "GetArtifactByName", reflect.TypeOf((*MockStore)(nil).GetArtifactByName), arg0, arg1)
+}
+
 // GetArtifactVersionByID mocks base method.
 func (m *MockStore) GetArtifactVersionByID(arg0 context.Context, arg1 uuid.UUID) (db.ArtifactVersion, error) {
 	m.ctrl.T.Helper()
