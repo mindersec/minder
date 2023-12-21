@@ -27,8 +27,9 @@ import (
 )
 
 type fakeConsumer struct {
-	topics      []string
-	makeHandler func(string, chan eventPair) events.Handler
+	topics            []string
+	makeHandler       func(string, chan eventPair) events.Handler
+	shouldFailHandler bool
 	// Filled in by test later
 	out chan eventPair
 }
@@ -62,11 +63,8 @@ func fakeHandler(id string, out chan eventPair) events.Handler {
 	}
 }
 
-var failureCounter int
-
 func countFailuresHandler(counter *int) events.Handler {
 	return func(_ *message.Message) error {
-		defer func() { failureCounter = *counter }()
 		*counter++
 		return errors.New("handler always fails")
 	}
@@ -128,17 +126,14 @@ func TestEventer(t *testing.T) {
 		},
 		{
 			name:    "handler fails, message goes to DLQ",
-			publish: []eventPair{{"a", &message.Message{}}},
+			publish: []eventPair{{"test_dlq", &message.Message{}}},
 			want: map[string][]message.Message{
 				events.DeadLetterQueueTopic: {{}},
 			},
 			consumers: []fakeConsumer{
 				{
-					topics: []string{"a"},
-					makeHandler: func(_ string, out chan eventPair) events.Handler {
-						counter := new(int)
-						return countFailuresHandler(counter)
-					},
+					topics:            []string{"test_dlq"},
+					shouldFailHandler: true,
 				},
 				{
 					topics:      []string{events.DeadLetterQueueTopic},
@@ -166,10 +161,17 @@ func TestEventer(t *testing.T) {
 				return
 			}
 
-			for _, c := range tt.consumers {
+			failureCounters := make([]int, len(tt.consumers))
+			for i, c := range tt.consumers {
 				c.out = out
 				if c.makeHandler == nil {
-					c.makeHandler = fakeHandler
+					if c.shouldFailHandler {
+						c.makeHandler = func(_ string, out chan eventPair) events.Handler {
+							return countFailuresHandler(&failureCounters[i])
+						}
+					} else {
+						c.makeHandler = fakeHandler
+					}
 				}
 				local := c // Avoid aliasing
 				eventer.ConsumeEvents(&local)
@@ -211,10 +213,11 @@ func TestEventer(t *testing.T) {
 				}
 			}
 
-			if tt.wantsCalls != 0 && failureCounter != tt.wantsCalls {
-				t.Errorf("expected %d calls to failure handler, got %d", tt.wantsCalls, failureCounter)
+			for i, c := range tt.consumers {
+				if c.shouldFailHandler && failureCounters[i] != tt.wantsCalls {
+					t.Errorf("expected %d calls to failure handler, got %d", tt.wantsCalls, failureCounters[i])
+				}
 			}
-			failureCounter = 0
 		})
 	}
 }
