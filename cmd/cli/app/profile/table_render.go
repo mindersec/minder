@@ -114,33 +114,28 @@ func NewProfileStatusTable() table.Table {
 
 // RenderProfileStatusTable renders the profile status table
 func RenderProfileStatusTable(ps *minderv1.ProfileStatus, t table.Table) {
-	row := []string{
-		ps.ProfileId,
-		ps.ProfileName,
-		getEvalStatusText(ps.ProfileStatus),
-		ps.LastUpdated.AsTime().Format(time.RFC3339),
-	}
-	t.AddRowWithColor(row, []string{
-		"",
-		"",
-		getEvalStatusColor(ps.ProfileStatus),
-		"",
-	})
+	t.AddRowWithColor(
+		layouts.NoColor(ps.ProfileId),
+		layouts.NoColor(ps.ProfileName),
+		getColoredEvalStatus(ps.ProfileStatus),
+		layouts.NoColor(ps.LastUpdated.AsTime().Format(time.RFC3339)),
+	)
 }
 
-func getEvalStatusColor(status string) string {
+func getColoredEvalStatus(status string) layouts.ColoredColumn {
+	txt := getEvalStatusText(status)
 	// eval statuses can be 'success', 'failure', 'error', 'skipped', 'pending'
 	switch strings.ToLower(status) {
 	case successStatus:
-		return table.ColorGreen
+		return layouts.GreenColumn(txt)
 	case failureStatus:
-		return table.ColorRed
+		return layouts.RedColumn(txt)
 	case errorStatus:
-		return table.ColorRed
+		return layouts.RedColumn(txt)
 	case skippedStatus:
-		return table.ColorYellow
+		return layouts.YellowColumn(txt)
 	default:
-		return ""
+		return layouts.NoColor(txt)
 	}
 }
 
@@ -155,42 +150,32 @@ func RenderRuleEvaluationStatusTable(
 	t table.Table,
 ) {
 	for _, eval := range statuses {
-		row := []string{
-			eval.RuleId,
-			eval.RuleName,
-			eval.Entity,
-			getEvalStatusText(eval.Status),
-			getRemediationStatusText(eval.RemediationStatus),
-			mapToYAMLOrEmpty(eval.EntityInfo),
-			guidanceOrEncouragement(eval.Status, eval.Guidance),
-		}
-
-		t.AddRowWithColor(row, []string{
-			"",
-			"",
-			"",
-			"",
-			getEvalStatusColor(eval.Status),
+		t.AddRowWithColor(
+			layouts.NoColor(eval.RuleId),
+			layouts.NoColor(eval.RuleName),
+			layouts.NoColor(eval.Entity),
+			getColoredEvalStatus(eval.Status),
 			getRemediateStatusColor(eval.RemediationStatus),
-			"",
-			"",
-		})
+			layouts.NoColor(mapToYAMLOrEmpty(eval.EntityInfo)),
+			layouts.NoColor(guidanceOrEncouragement(eval.Status, eval.Guidance)),
+		)
 	}
 }
 
-func getRemediateStatusColor(status string) string {
+func getRemediateStatusColor(status string) layouts.ColoredColumn {
+	txt := getRemediationStatusText(status)
 	// remediation statuses can be 'success', 'failure', 'error', 'skipped', 'not supported'
 	switch strings.ToLower(status) {
 	case successStatus:
-		return table.ColorGreen
+		return layouts.GreenColumn(txt)
 	case failureStatus:
-		return table.ColorRed
+		return layouts.RedColumn(txt)
 	case errorStatus:
-		return table.ColorRed
+		return layouts.RedColumn(txt)
 	case notAvailableStatus:
-		return table.ColorYellow
+		return layouts.YellowColumn(txt)
 	default:
-		return ""
+		return layouts.NoColor(txt)
 	}
 }
 
