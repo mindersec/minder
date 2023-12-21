@@ -16,15 +16,12 @@
 package table
 
 import (
-	"github.com/stacklok/minder/internal/util/cli/table/glossy"
 	"github.com/stacklok/minder/internal/util/cli/table/simple"
 )
 
 const (
 	// Simple is a simple table
 	Simple = "simple"
-	// Glossy is a glossy table
-	Glossy = "glossy"
 )
 const (
 	// ColorRed is the color red
@@ -47,8 +44,6 @@ func New(tableType, layout string, header []string) Table {
 	switch tableType {
 	case Simple:
 		return simple.New(layout, header)
-	case Glossy:
-		return glossy.New(layout, header)
 	default:
 		return simple.New(layout, header)
 	}
