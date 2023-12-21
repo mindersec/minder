@@ -1,8 +1,9 @@
 name: Deploy docs to GitHub Pages
 on:
   workflow_dispatch:
-  release:
-    types: [created]
+  push:
+    branches:
+      - main
 permissions:
   contents: write
 jobs:
