@@ -163,18 +163,7 @@ func TestEventer(t *testing.T) {
 
 			failureCounters := make([]int, len(tt.consumers))
 			for i, c := range tt.consumers {
-				c.out = out
-				if c.makeHandler == nil {
-					if c.shouldFailHandler {
-						c.makeHandler = func(_ string, out chan eventPair) events.Handler {
-							return countFailuresHandler(&failureCounters[i])
-						}
-					} else {
-						c.makeHandler = fakeHandler
-					}
-				}
-				local := c // Avoid aliasing
-				eventer.ConsumeEvents(&local)
+				setupConsumer(&c, out, failureCounters, i, *eventer)
 			}
 
 			go eventer.Run(ctx)
@@ -219,5 +208,23 @@ func TestEventer(t *testing.T) {
 				}
 			}
 		})
+	}
+}
+
+func setupConsumer(c *fakeConsumer, out chan eventPair, failureCounters []int, i int, eventer events.Eventer) {
+	c.out = out
+	if c.makeHandler == nil {
+		if c.shouldFailHandler {
+			c.makeHandler = makeFailingHandler(&failureCounters[i])
+		} else {
+			c.makeHandler = fakeHandler
+		}
+	}
+	eventer.ConsumeEvents(c)
+}
+
+func makeFailingHandler(counter *int) func(_ string, out chan eventPair) events.Handler {
+	return func(_ string, out chan eventPair) events.Handler {
+		return countFailuresHandler(counter)
 	}
 }
