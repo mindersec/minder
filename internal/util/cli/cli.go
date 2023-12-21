@@ -148,7 +148,7 @@ func ExitNicelyOnError(err error, message string) {
 		// Check if the error is a grpc status
 		if rpcStatus, ok := status.FromError(err); ok {
 			nice := util.FromRpcError(rpcStatus)
-			fmt.Fprintf(os.Stderr, "Details: %s\n", nice.Description)
+			fmt.Fprintf(os.Stderr, "Details: %s\n", nice.Details)
 			os.Exit(int(nice.Code))
 		} else {
 			fmt.Fprintf(os.Stderr, "Details: %s\n", err)
