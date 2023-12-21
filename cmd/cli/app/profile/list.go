@@ -76,6 +76,11 @@ func listCommand(ctx context.Context, cmd *cobra.Command, conn *grpc.ClientConn)
 		}
 		cmd.Println(out)
 	case app.Table:
+		if len(resp.Profiles) == 0 {
+			settable := NewProfileSettingsTable()
+			settable.Render()
+		}
+
 		for _, v := range resp.Profiles {
 			settable := NewProfileSettingsTable()
 			RenderProfileSettingsTable(v, settable)
