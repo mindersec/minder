@@ -18,7 +18,7 @@ require (
 	github.com/go-git/go-git/v5 v5.11.0
 	github.com/go-playground/validator/v10 v10.16.0
 	github.com/goccy/go-json v0.10.2
-	github.com/golang-migrate/migrate/v4 v4.16.2
+	github.com/golang-migrate/migrate/v4 v4.17.0
 	github.com/golang/mock v1.6.0
 	github.com/google/go-cmp v0.6.0
 	github.com/google/go-containerregistry v0.17.0
