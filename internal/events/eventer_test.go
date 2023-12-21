@@ -163,7 +163,9 @@ func TestEventer(t *testing.T) {
 
 			failureCounters := make([]int, len(tt.consumers))
 			for i, c := range tt.consumers {
-				setupConsumer(&c, out, failureCounters, i, *eventer)
+				localConsumer := c
+				localIdx := i
+				setupConsumer(&localConsumer, out, failureCounters, localIdx, *eventer)
 			}
 
 			go eventer.Run(ctx)
