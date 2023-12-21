@@ -41,15 +41,12 @@ paths:
           required: false
           type: string
         - name: context.provider
-          description: >-
-            Removing the 'optional' keyword from the following two fields below
-            will break
-
-            buf compatibility checks.
+          description: name of the provider
           in: query
           required: false
           type: string
         - name: context.project
+          description: name of the project
           in: query
           required: false
           type: string
@@ -81,19 +78,20 @@ paths:
           required: false
           type: string
         - name: context.provider
-          description: >-
-            Removing the 'optional' keyword from the following two fields below
-            will break
-
-            buf compatibility checks.
+          description: name of the provider
           in: query
           required: false
           type: string
         - name: context.project
+          description: name of the project
           in: query
           required: false
           type: string
         - name: context.retiredOrganization
+          in: query
+          required: false
+          type: string
+        - name: from
           in: query
           required: false
           type: string
@@ -135,15 +133,12 @@ paths:
           required: false
           type: string
         - name: context.provider
-          description: >-
-            Removing the 'optional' keyword from the following two fields below
-            will break
-
-            buf compatibility checks.
+          description: name of the provider
           in: query
           required: false
           type: string
         - name: context.project
+          description: name of the project
           in: query
           required: false
           type: string
@@ -183,15 +178,12 @@ paths:
           required: false
           type: string
         - name: context.provider
-          description: >-
-            Removing the 'optional' keyword from the following two fields below
-            will break
-
-            buf compatibility checks.
+          description: name of the provider
           in: query
           required: false
           type: string
         - name: context.project
+          description: name of the project
           in: query
           required: false
           type: string
@@ -236,15 +228,12 @@ paths:
           required: false
           type: string
         - name: context.provider
-          description: >-
-            Removing the 'optional' keyword from the following two fields below
-            will break
-
-            buf compatibility checks.
+          description: name of the provider
           in: query
           required: false
           type: string
         - name: context.project
+          description: name of the project
           in: query
           required: false
           type: string
@@ -284,15 +273,12 @@ paths:
           required: false
           type: string
         - name: context.provider
-          description: >-
-            Removing the 'optional' keyword from the following two fields below
-            will break
-
-            buf compatibility checks.
+          description: name of the provider
           in: query
           required: false
           type: string
         - name: context.project
+          description: name of the project
           in: query
           required: false
           type: string
@@ -407,15 +393,12 @@ paths:
           required: true
           type: string
         - name: context.provider
-          description: >-
-            Removing the 'optional' keyword from the following two fields below
-            will break
-
-            buf compatibility checks.
+          description: name of the provider
           in: query
           required: false
           type: string
         - name: context.project
+          description: name of the project
           in: query
           required: false
           type: string
@@ -471,15 +454,12 @@ paths:
           required: true
           type: string
         - name: context.provider
-          description: >-
-            Removing the 'optional' keyword from the following two fields below
-            will break
-
-            buf compatibility checks.
+          description: name of the provider
           in: query
           required: false
           type: string
         - name: context.project
+          description: name of the project
           in: query
           required: false
           type: string
@@ -507,15 +487,12 @@ paths:
           required: true
           type: string
         - name: context.provider
-          description: >-
-            Removing the 'optional' keyword from the following two fields below
-            will break
-
-            buf compatibility checks.
+          description: name of the provider
           in: query
           required: false
           type: string
         - name: context.project
+          description: name of the project
           in: query
           required: false
           type: string
@@ -539,15 +516,12 @@ paths:
             $ref: '#/definitions/googlerpcStatus'
       parameters:
         - name: context.provider
-          description: >-
-            Removing the 'optional' keyword from the following two fields below
-            will break
-
-            buf compatibility checks.
+          description: name of the provider
           in: query
           required: false
           type: string
         - name: context.project
+          description: name of the project
           in: query
           required: false
           type: string
@@ -571,15 +545,12 @@ paths:
             $ref: '#/definitions/googlerpcStatus'
       parameters:
         - name: context.provider
-          description: >-
-            Removing the 'optional' keyword from the following two fields below
-            will break
-
-            buf compatibility checks.
+          description: name of the provider
           in: query
           required: false
           type: string
         - name: context.project
+          description: name of the project
           in: query
           required: false
           type: string
@@ -621,15 +592,12 @@ paths:
           type: integer
           format: int32
         - name: context.provider
-          description: >-
-            Removing the 'optional' keyword from the following two fields below
-            will break
-
-            buf compatibility checks.
+          description: name of the provider
           in: query
           required: false
           type: string
         - name: context.project
+          description: name of the project
           in: query
           required: false
           type: string
@@ -661,15 +629,12 @@ paths:
           required: false
           type: string
         - name: context.provider
-          description: >-
-            Removing the 'optional' keyword from the following two fields below
-            will break
-
-            buf compatibility checks.
+          description: name of the provider
           in: query
           required: false
           type: string
         - name: context.project
+          description: name of the project
           in: query
           required: false
           type: string
@@ -697,15 +662,12 @@ paths:
           required: true
           type: string
         - name: context.provider
-          description: >-
-            Removing the 'optional' keyword from the following two fields below
-            will break
-
-            buf compatibility checks.
+          description: name of the provider
           in: query
           required: false
           type: string
         - name: context.project
+          description: name of the project
           in: query
           required: false
           type: string
@@ -732,15 +694,12 @@ paths:
           required: true
           type: string
         - name: context.provider
-          description: >-
-            Removing the 'optional' keyword from the following two fields below
-            will break
-
-            buf compatibility checks.
+          description: name of the provider
           in: query
           required: false
           type: string
         - name: context.project
+          description: name of the project
           in: query
           required: false
           type: string
@@ -776,15 +735,12 @@ paths:
           required: false
           type: string
         - name: context.provider
-          description: >-
-            Removing the 'optional' keyword from the following two fields below
-            will break
-
-            buf compatibility checks.
+          description: name of the provider
           in: query
           required: false
           type: string
         - name: context.project
+          description: name of the project
           in: query
           required: false
           type: string
@@ -819,15 +775,12 @@ paths:
           required: false
           type: string
         - name: context.provider
-          description: >-
-            Removing the 'optional' keyword from the following two fields below
-            will break
-
-            buf compatibility checks.
+          description: name of the provider
           in: query
           required: false
           type: string
         - name: context.project
+          description: name of the project
           in: query
           required: false
           type: string
@@ -928,15 +881,12 @@ paths:
           required: true
           type: string
         - name: context.provider
-          description: >-
-            Removing the 'optional' keyword from the following two fields below
-            will break
-
-            buf compatibility checks.
+          description: name of the provider
           in: query
           required: false
           type: string
         - name: context.project
+          description: name of the project
           in: query
           required: false
           type: string
@@ -965,15 +915,12 @@ paths:
           required: true
           type: string
         - name: context.provider
-          description: >-
-            Removing the 'optional' keyword from the following two fields below
-            will break
-
-            buf compatibility checks.
+          description: name of the provider
           in: query
           required: false
           type: string
         - name: context.project
+          description: name of the project
           in: query
           required: false
           type: string
@@ -1001,15 +948,12 @@ paths:
           required: true
           type: string
         - name: context.provider
-          description: >-
-            Removing the 'optional' keyword from the following two fields below
-            will break
-
-            buf compatibility checks.
+          description: name of the provider
           in: query
           required: false
           type: string
         - name: context.project
+          description: name of the project
           in: query
           required: false
           type: string
@@ -1033,15 +977,12 @@ paths:
             $ref: '#/definitions/googlerpcStatus'
       parameters:
         - name: context.provider
-          description: >-
-            Removing the 'optional' keyword from the following two fields below
-            will break
-
-            buf compatibility checks.
+          description: name of the provider
           in: query
           required: false
           type: string
         - name: context.project
+          description: name of the project
           in: query
           required: false
           type: string
@@ -1065,15 +1006,12 @@ paths:
             $ref: '#/definitions/googlerpcStatus'
       parameters:
         - name: context.provider
-          description: >-
-            Removing the 'optional' keyword from the following two fields below
-            will break
-
-            buf compatibility checks.
+          description: name of the provider
           in: query
           required: false
           type: string
         - name: context.project
+          description: name of the project
           in: query
           required: false
           type: string
@@ -1096,15 +1034,12 @@ paths:
             $ref: '#/definitions/googlerpcStatus'
       parameters:
         - name: context.provider
-          description: >-
-            Removing the 'optional' keyword from the following two fields below
-            will break
-
-            buf compatibility checks.
+          description: name of the provider
           in: query
           required: false
           type: string
         - name: context.project
+          description: name of the project
           in: query
           required: false
           type: string
@@ -1739,13 +1674,10 @@ definitions:
     properties:
       provider:
         type: string
-        description: >-
-          Removing the 'optional' keyword from the following two fields below
-          will break
-
-          buf compatibility checks.
+        title: name of the provider
       project:
         type: string
+        title: name of the project
       retiredOrganization:
         type: string
     description: >-
@@ -1753,6 +1685,11 @@ definitions:
 
       this normally refers to a combination of the provider, organization and
       project.
+
+
+      Removing the 'optional' keyword from the following two fields below will
+      break
+       buf compatibility checks.
   v1CreateProfileRequest:
     type: object
     properties:
@@ -1831,6 +1768,15 @@ definitions:
         items:
           type: object
           $ref: '#/definitions/DiffTypeEcosystem'
+        description: |-
+          ecosystems is the list of ecosystems to be used
+          for the "dep" diff type.
+      type:
+        type: string
+        description: |-
+          type is the type of diff ingestor to use.
+          The default is "dep" which will leverage
+          the ecosystems array.
     description: DiffType defines the diff data ingester.
   v1Entity:
     type: string
