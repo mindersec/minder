@@ -60,13 +60,13 @@ func execOnOneRuleType(
 	}
 
 	// add the rule type to the table rows
-	t.AddRow(
+	t.AddRow([]string{
 		*rt.Context.Provider,
 		*rt.Context.Project,
 		*rt.Id,
 		rt.Name,
 		rt.Description,
-	)
+	})
 	return nil
 }
 

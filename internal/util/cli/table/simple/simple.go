@@ -59,7 +59,7 @@ func New(layout layouts.TableLayout, header []string) *Table {
 }
 
 // AddRow adds a row
-func (t *Table) AddRow(row ...string) {
+func (t *Table) AddRow(row []string) {
 	t.table.Append(row)
 }
 

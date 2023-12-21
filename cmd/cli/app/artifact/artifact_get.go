@@ -73,7 +73,7 @@ func getCommand(ctx context.Context, cmd *cobra.Command, conn *grpc.ClientConn) 
 	case app.Table:
 		ta := table.New(table.Simple, layouts.Default,
 			[]string{"ID", "Type", "Owner", "Name", "Repository", "Visibility", "Creation date"})
-		ta.AddRow(
+		ta.AddRow([]string{
 			art.ArtifactPk,
 			art.Type,
 			art.GetOwner(),
@@ -81,19 +81,19 @@ func getCommand(ctx context.Context, cmd *cobra.Command, conn *grpc.ClientConn) 
 			art.Repository,
 			art.Visibility,
 			art.CreatedAt.AsTime().Format(time.RFC3339),
-		)
+		})
 		ta.Render()
 
 		tv := table.New(table.Simple, layouts.Default,
 			[]string{"ID", "Tags", "Signature", "Identity", "Creation date"})
 		for _, version := range versions {
-			tv.AddRow(
+			tv.AddRow([]string{
 				fmt.Sprintf("%d", version.VersionId),
 				strings.Join(version.Tags, ","),
 				getSignatureStatusText(version.SignatureVerification),
 				version.GetSignatureVerification().GetCertIdentity(),
 				version.CreatedAt.AsTime().Format(time.RFC3339),
-			)
+			})
 		}
 		tv.Render()
 	case app.JSON:

@@ -71,14 +71,14 @@ func listCommand(ctx context.Context, cmd *cobra.Command, conn *grpc.ClientConn)
 	case app.Table:
 		t := table.New(table.Simple, layouts.RepoList, nil)
 		for _, v := range resp.Results {
-			t.AddRow(
+			t.AddRow([]string{
 				*v.Id,
 				*v.Context.Project,
 				*v.Context.Provider,
 				fmt.Sprintf("%d", v.GetRepoId()),
 				v.GetOwner(),
 				v.GetName(),
-			)
+			})
 		}
 		t.Render()
 	case app.JSON:
