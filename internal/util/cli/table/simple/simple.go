@@ -64,21 +64,8 @@ func (t *Table) AddRow(row ...string) {
 }
 
 // AddRowWithColor adds a row with the given colors
-func (t *Table) AddRowWithColor(row []string, rowColors []string) {
-	colors := make([]tablewriter.Colors, len(rowColors))
-	for i := range rowColors {
-		switch rowColors[i] {
-		case "red":
-			colors[i] = tablewriter.Colors{tablewriter.FgRedColor}
-		case "green":
-			colors[i] = tablewriter.Colors{tablewriter.FgGreenColor}
-		case "yellow":
-			colors[i] = tablewriter.Colors{tablewriter.FgYellowColor}
-		default:
-			colors[i] = tablewriter.Colors{}
-		}
-	}
-	t.table.Rich(row, colors)
+func (t *Table) AddRowWithColor(row ...layouts.ColoredColumn) {
+	t.table.Rich(layouts.RowsFromColoredColumns(row), layouts.ColorsFromColoredColumns(row))
 }
 
 // Render renders the table
