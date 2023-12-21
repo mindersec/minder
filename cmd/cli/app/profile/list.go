@@ -76,11 +76,16 @@ func listCommand(ctx context.Context, cmd *cobra.Command, conn *grpc.ClientConn)
 		}
 		cmd.Println(out)
 	case app.Table:
-		table := NewProfileTable()
-		for _, v := range resp.Profiles {
-			RenderProfileTable(v, table)
+		if len(resp.Profiles) == 0 {
+			settable := NewProfileSettingsTable()
+			settable.Render()
 		}
-		table.Render()
+
+		for _, v := range resp.Profiles {
+			settable := NewProfileSettingsTable()
+			RenderProfileSettingsTable(v, settable)
+			settable.Render()
+		}
 		return nil
 	}
 	// this is unreachable

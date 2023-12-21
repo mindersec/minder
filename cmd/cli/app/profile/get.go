@@ -79,6 +79,9 @@ func getCommand(ctx context.Context, cmd *cobra.Command, conn *grpc.ClientConn) 
 		}
 		cmd.Println(out)
 	case app.Table:
+		settable := NewProfileSettingsTable()
+		RenderProfileSettingsTable(p.GetProfile(), settable)
+		settable.Render()
 		table := NewProfileTable()
 		RenderProfileTable(p.GetProfile(), table)
 		table.Render()

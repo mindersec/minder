@@ -34,6 +34,8 @@ func New(layout string, header []string) *Table {
 		keyValueLayout(table)
 	case "ruletype":
 		ruleTypeLayout(table)
+	case "profile_settings":
+		profileSettingsLayout(table)
 	case "profile":
 		profileLayout(table)
 	case "repolist":
@@ -92,10 +94,17 @@ func keyValueLayout(table *tablewriter.Table) {
 	table.SetColMinWidth(1, 50)
 }
 
+func profileSettingsLayout(table *tablewriter.Table) {
+	defaultLayout(table)
+	table.SetHeader([]string{"Profile Summary"})
+	table.SetColMinWidth(0, 50)
+	table.SetColMinWidth(1, 50)
+}
+
 func profileLayout(table *tablewriter.Table) {
 	defaultLayout(table)
-	table.SetHeader([]string{"ID", "Name", "Provider", "Entity", "Rule", "Rule Params", "Rule Definition"})
-	table.SetAutoMergeCellsByColumnIndex([]int{0, 1, 2, 3, 4})
+	table.SetHeader([]string{"Entity", "Rule", "Rule Params", "Rule Definition"})
+	table.SetAutoMergeCellsByColumnIndex([]int{0, 1})
 	// This is needed for the rule definition and rule parameters
 	table.SetAutoWrapText(false)
 }
