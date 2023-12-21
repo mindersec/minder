@@ -34,6 +34,8 @@ func New(layout string, header []string) *Table {
 		keyValueLayout(table)
 	case "ruletype":
 		ruleTypeLayout(table)
+	case "profile_settings":
+		profileSettingsLayout(table)
 	case "profile":
 		profileLayout(table)
 	case "repolist":
@@ -88,6 +90,13 @@ func defaultLayout(table *tablewriter.Table) {
 func keyValueLayout(table *tablewriter.Table) {
 	defaultLayout(table)
 	table.SetHeader([]string{"Key", "Value"})
+	table.SetColMinWidth(0, 50)
+	table.SetColMinWidth(1, 50)
+}
+
+func profileSettingsLayout(table *tablewriter.Table) {
+	defaultLayout(table)
+	table.SetHeader([]string{"Profile Summary"})
 	table.SetColMinWidth(0, 50)
 	table.SetColMinWidth(1, 50)
 }

@@ -53,7 +53,7 @@ const (
 )
 
 func NewProfileSettingsTable() table.Table {
-	return table.New(table.Simple, "keyvalue", nil)
+	return table.New(table.Simple, "profile_settings", nil)
 }
 
 func RenderProfileSettingsTable(p *minderv1.Profile, t table.Table) {
