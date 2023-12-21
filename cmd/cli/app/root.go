@@ -104,7 +104,7 @@ func initConfig() {
 	if err := viper.ReadInConfig(); err != nil {
 		if _, ok := err.(viper.ConfigFileNotFoundError); ok {
 			// Config file not found; use default values
-			RootCmd.Println("No config file present, using default values.")
+			RootCmd.PrintErr("No config file present, using default values.")
 		} else {
 			// Some other error occurred
 			RootCmd.Printf("Error reading config file: %s", err)
