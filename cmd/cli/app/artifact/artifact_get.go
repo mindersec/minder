@@ -31,6 +31,7 @@ import (
 	"github.com/stacklok/minder/internal/util"
 	"github.com/stacklok/minder/internal/util/cli"
 	"github.com/stacklok/minder/internal/util/cli/table"
+	"github.com/stacklok/minder/internal/util/cli/table/layouts"
 	minderv1 "github.com/stacklok/minder/pkg/api/protobuf/go/minder/v1"
 )
 
@@ -70,7 +71,8 @@ func getCommand(ctx context.Context, cmd *cobra.Command, conn *grpc.ClientConn) 
 
 	switch format {
 	case app.Table:
-		ta := table.New(table.Simple, "", []string{"ID", "Type", "Owner", "Name", "Repository", "Visibility", "Creation date"})
+		ta := table.New(table.Simple, layouts.Default,
+			[]string{"ID", "Type", "Owner", "Name", "Repository", "Visibility", "Creation date"})
 		ta.AddRow([]string{
 			art.ArtifactPk,
 			art.Type,
@@ -82,7 +84,8 @@ func getCommand(ctx context.Context, cmd *cobra.Command, conn *grpc.ClientConn) 
 		})
 		ta.Render()
 
-		tv := table.New(table.Simple, "", []string{"ID", "Tags", "Signature", "Identity", "Creation date"})
+		tv := table.New(table.Simple, layouts.Default,
+			[]string{"ID", "Tags", "Signature", "Identity", "Creation date"})
 		for _, version := range versions {
 			tv.AddRow([]string{
 				fmt.Sprintf("%d", version.VersionId),

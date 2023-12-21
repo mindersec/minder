@@ -16,6 +16,7 @@
 package table
 
 import (
+	"github.com/stacklok/minder/internal/util/cli/table/layouts"
 	"github.com/stacklok/minder/internal/util/cli/table/simple"
 )
 
@@ -40,11 +41,6 @@ type Table interface {
 }
 
 // New creates a new table
-func New(tableType, layout string, header []string) Table {
-	switch tableType {
-	case Simple:
-		return simple.New(layout, header)
-	default:
-		return simple.New(layout, header)
-	}
+func New(_ string, layout layouts.TableLayout, header []string) Table {
+	return simple.New(layout, header)
 }
