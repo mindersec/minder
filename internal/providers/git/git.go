@@ -17,6 +17,7 @@ package git
 
 import (
 	"context"
+	"errors"
 	"fmt"
 
 	"github.com/go-git/go-billy/v5/memfs"
@@ -79,6 +80,10 @@ func (g *Git) Clone(ctx context.Context, url, branch string) (*git.Repository, e
 	// where we don't have access to the underlying filesystem.
 	r, err := git.CloneContext(ctx, storer, fs, opts)
 	if err != nil {
+		var refspecerr git.NoMatchingRefSpecError
+		if errors.Is(err, git.ErrBranchNotFound) || refspecerr.Is(err) {
+			return nil, provifv1.ErrProviderGitBranchNotFound
+		}
 		return nil, fmt.Errorf("could not clone repo: %w", err)
 	}
 

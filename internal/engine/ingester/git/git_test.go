@@ -23,6 +23,7 @@ import (
 	"github.com/stretchr/testify/require"
 
 	"github.com/stacklok/minder/internal/db"
+	engerrors "github.com/stacklok/minder/internal/engine/errors"
 	gitengine "github.com/stacklok/minder/internal/engine/ingester/git"
 	"github.com/stacklok/minder/internal/providers"
 	pb "github.com/stacklok/minder/pkg/api/protobuf/go/minder/v1"
@@ -145,6 +146,35 @@ func TestGitIngestWithCustomBranchFromParams(t *testing.T) {
 	require.NoError(t, err, "expected no error")
 
 	require.Contains(t, buf.String(), "Hello World", "expected README.md to contain Hello World")
+}
+
+func TestGitIngestWithUnexistentBranchFromParams(t *testing.T) {
+	t.Parallel()
+
+	gi, err := gitengine.NewGitIngester(&pb.GitType{
+		Branch: "master",
+	}, providers.NewProviderBuilder(
+		&db.Provider{
+			Name:    "github",
+			Version: provifv1.V1,
+			Implements: []db.ProviderType{
+				"git",
+				"rest",
+				"github",
+			},
+		},
+		db.ProviderAccessToken{},
+		"",
+	))
+	require.NoError(t, err, "expected no error")
+
+	got, err := gi.Ingest(context.Background(), &pb.Artifact{}, map[string]any{
+		"clone_url": "https://github.com/octocat/Hello-World.git",
+		"branch":    "unexistent-branch",
+	})
+	require.Error(t, err, "expected error")
+	require.ErrorIs(t, err, engerrors.ErrEvaluationFailed, "expected ErrActionFailed")
+	require.Nil(t, got, "expected non-nil result")
 }
 
 func TestGitIngestFailsBecauseOfAuthorization(t *testing.T) {
