@@ -261,9 +261,6 @@ func (e *Eventer) Publish(topic string, messages ...*message.Message) error {
 	if ok && details != nil {
 		for idx := range messages {
 			msg := messages[idx]
-			if msg.Metadata == nil {
-				msg.Metadata = make(message.Metadata)
-			}
 			msg.Metadata.Set(MessageRetryCountKey, "0")
 			// TODO: This should probably be debugging info
 			e.router.Logger().Info("Publishing messages", watermill.LogFields{
@@ -290,15 +287,10 @@ func (e *Eventer) Register(
 		topic,
 		e.webhookSubscriber,
 		func(msg *message.Message) error {
-			if msg.Metadata == nil {
-				msg.Metadata = make(message.Metadata)
-			}
-
 			messageRetryCount := msg.Metadata.Get(MessageRetryCountKey)
 
 			// This check will most certainly never be true as currently the metadata is being added to every message,
 			// but it doesn't hurt to have it here as a failsafe.
-			// Same goes for the map initialisation above.
 			if messageRetryCount == "" {
 				messageRetryCount = "0"
 			}
