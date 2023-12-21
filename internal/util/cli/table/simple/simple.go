@@ -19,6 +19,8 @@ import (
 	"os"
 
 	"github.com/olekukonko/tablewriter"
+
+	"github.com/stacklok/minder/internal/util/cli/table/layouts"
 )
 
 // Table is a wrapper around tablewriter.Table
@@ -27,23 +29,26 @@ type Table struct {
 }
 
 // New creates a new table with the given header
-func New(layout string, header []string) *Table {
+func New(layout layouts.TableLayout, header []string) *Table {
 	table := tablewriter.NewWriter(os.Stdout)
 	switch layout {
-	case "keyvalue":
+	case layouts.KeyValue:
 		keyValueLayout(table)
-	case "ruletype":
+	case layouts.RuleType:
 		ruleTypeLayout(table)
-	case "profile_settings":
+	case layouts.ProfileSettings:
 		profileSettingsLayout(table)
-	case "profile":
+	case layouts.Profile:
 		profileLayout(table)
-	case "repolist":
+	case layouts.RepoList:
 		repoListLayout(table)
-	case "profile_status":
+	case layouts.ProfileStatus:
 		profileStatusLayout(table)
-	case "rule_evaluations":
+	case layouts.RuleEvaluations:
 		ruleEvaluationsLayout(table)
+	case layouts.Default:
+		table.SetHeader(header)
+		defaultLayout(table)
 	default:
 		table.SetHeader(header)
 		defaultLayout(table)

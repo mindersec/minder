@@ -28,6 +28,7 @@ import (
 	"github.com/stacklok/minder/internal/util"
 	"github.com/stacklok/minder/internal/util/cli"
 	"github.com/stacklok/minder/internal/util/cli/table"
+	"github.com/stacklok/minder/internal/util/cli/table/layouts"
 	minderv1 "github.com/stacklok/minder/pkg/api/protobuf/go/minder/v1"
 )
 
@@ -100,5 +101,5 @@ func shouldSkipFile(f string) bool {
 
 // initializeTable initializes the table for the rule type
 func initializeTable() table.Table {
-	return table.New(table.Simple, "ruletype", nil)
+	return table.New(table.Simple, layouts.RuleType, nil)
 }

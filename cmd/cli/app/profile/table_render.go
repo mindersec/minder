@@ -24,6 +24,7 @@ import (
 	"gopkg.in/yaml.v2"
 
 	"github.com/stacklok/minder/internal/util/cli/table"
+	"github.com/stacklok/minder/internal/util/cli/table/layouts"
 	minderv1 "github.com/stacklok/minder/pkg/api/protobuf/go/minder/v1"
 )
 
@@ -54,7 +55,7 @@ const (
 
 // NewProfileSettingsTable creates a new table for rendering profile settings
 func NewProfileSettingsTable() table.Table {
-	return table.New(table.Simple, "profile_settings", nil)
+	return table.New(table.Simple, layouts.ProfileSettings, nil)
 }
 
 // RenderProfileSettingsTable renders the profile settings table
@@ -68,7 +69,7 @@ func RenderProfileSettingsTable(p *minderv1.Profile, t table.Table) {
 
 // NewProfileTable creates a new table for rendering profiles
 func NewProfileTable() table.Table {
-	return table.New(table.Simple, "profile", nil)
+	return table.New(table.Simple, layouts.Profile, nil)
 }
 
 // RenderProfileTable renders the profile table
@@ -109,7 +110,7 @@ func renderRuleTable(entType minderv1.EntityType, rule *minderv1.Profile_Rule, t
 
 // NewProfileStatusTable creates a new table for rendering profile status
 func NewProfileStatusTable() table.Table {
-	return table.New(table.Simple, "profile_status", nil)
+	return table.New(table.Simple, layouts.ProfileStatus, nil)
 }
 
 // RenderProfileStatusTable renders the profile status table
@@ -146,7 +147,7 @@ func getEvalStatusColor(status string) string {
 
 // NewRuleEvaluationsTable creates a new table for rendering rule evaluations
 func NewRuleEvaluationsTable() table.Table {
-	return table.New(table.Simple, "rule_evaluations", nil)
+	return table.New(table.Simple, layouts.RuleEvaluations, nil)
 }
 
 // RenderRuleEvaluationStatusTable renders the rule evaluations table

@@ -36,6 +36,7 @@ import (
 	"github.com/stacklok/minder/cmd/cli/app"
 	"github.com/stacklok/minder/internal/util/cli"
 	"github.com/stacklok/minder/internal/util/cli/table"
+	"github.com/stacklok/minder/internal/util/cli/table/layouts"
 	minderv1 "github.com/stacklok/minder/pkg/api/protobuf/go/minder/v1"
 )
 
@@ -134,7 +135,7 @@ func RegisterCmd(ctx context.Context, cmd *cobra.Command, conn *grpc.ClientConn)
 	// Register the repos
 	// The result gives a list of repositories with the registration status
 	// Let's parse the results and print the status
-	t := table.New(table.Simple, "", []string{"Repository", "Status", "Message"})
+	t := table.New(table.Simple, layouts.Default, []string{"Repository", "Status", "Message"})
 	for _, result := range results {
 		row := []string{fmt.Sprintf("%s/%s", result.Repository.Owner, result.Repository.Name)}
 		if result.Status.Success {

@@ -22,6 +22,7 @@ import (
 	"google.golang.org/grpc/status"
 
 	"github.com/stacklok/minder/internal/util/cli/table"
+	"github.com/stacklok/minder/internal/util/cli/table/layouts"
 	minderv1 "github.com/stacklok/minder/pkg/api/protobuf/go/minder/v1"
 )
 
@@ -39,7 +40,7 @@ func userRegistered(ctx context.Context, client minderv1.UserServiceClient) (boo
 }
 
 func renderNewUser(conn string, newUser *minderv1.CreateUserResponse) {
-	t := table.New(table.Simple, "keyvalue", nil)
+	t := table.New(table.Simple, layouts.KeyValue, nil)
 	t.AddRow([]string{"Project ID", newUser.ProjectId})
 	t.AddRow([]string{"Project Name", newUser.ProjectName})
 	t.AddRow([]string{"Minder Server", conn})
@@ -47,7 +48,7 @@ func renderNewUser(conn string, newUser *minderv1.CreateUserResponse) {
 }
 
 func renderUserInfo(conn string, user *minderv1.GetUserResponse) {
-	t := table.New(table.Simple, "keyvalue", nil)
+	t := table.New(table.Simple, layouts.KeyValue, nil)
 	t.AddRow([]string{"Minder Server", conn})
 	for _, project := range getProjectTableRows(user.Projects) {
 		t.AddRow(project)
@@ -56,7 +57,7 @@ func renderUserInfo(conn string, user *minderv1.GetUserResponse) {
 }
 
 func renderUserInfoWhoami(conn string, user *minderv1.GetUserResponse) {
-	t := table.New(table.Simple, "keyvalue", nil)
+	t := table.New(table.Simple, layouts.KeyValue, nil)
 	t.AddRow([]string{"Subject", user.GetUser().GetIdentitySubject()})
 	t.AddRow([]string{"Created At", user.GetUser().GetCreatedAt().AsTime().String()})
 	t.AddRow([]string{"Updated At", user.GetUser().GetUpdatedAt().AsTime().String()})

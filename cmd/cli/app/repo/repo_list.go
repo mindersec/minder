@@ -28,6 +28,7 @@ import (
 	"github.com/stacklok/minder/internal/util"
 	"github.com/stacklok/minder/internal/util/cli"
 	"github.com/stacklok/minder/internal/util/cli/table"
+	"github.com/stacklok/minder/internal/util/cli/table/layouts"
 	minderv1 "github.com/stacklok/minder/pkg/api/protobuf/go/minder/v1"
 )
 
@@ -68,7 +69,7 @@ func listCommand(ctx context.Context, cmd *cobra.Command, conn *grpc.ClientConn)
 
 	switch format {
 	case app.Table:
-		t := table.New(table.Simple, "repolist", nil)
+		t := table.New(table.Simple, layouts.RepoList, nil)
 		for _, v := range resp.Results {
 			t.AddRow([]string{
 				*v.Id,
