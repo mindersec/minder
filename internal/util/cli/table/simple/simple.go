@@ -94,8 +94,8 @@ func keyValueLayout(table *tablewriter.Table) {
 
 func profileLayout(table *tablewriter.Table) {
 	defaultLayout(table)
-	table.SetHeader([]string{"ID", "Name", "Provider", "Entity", "Rule", "Rule Params", "Rule Definition"})
-	table.SetAutoMergeCellsByColumnIndex([]int{0, 1, 2, 3, 4})
+	table.SetHeader([]string{"Entity", "Rule", "Rule Params", "Rule Definition"})
+	table.SetAutoMergeCellsByColumnIndex([]int{0, 1})
 	// This is needed for the rule definition and rule parameters
 	table.SetAutoWrapText(false)
 }

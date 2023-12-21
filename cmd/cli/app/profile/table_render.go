@@ -52,6 +52,18 @@ const (
 	notAvailableStatus = "not_available"
 )
 
+func NewProfileSettingsTable() table.Table {
+	return table.New(table.Simple, "keyvalue", nil)
+}
+
+func RenderProfileSettingsTable(p *minderv1.Profile, t table.Table) {
+	t.AddRow([]string{"ID", p.GetId()})
+	t.AddRow([]string{"Name", p.GetName()})
+	t.AddRow([]string{"Provider", p.GetContext().GetProvider()})
+	t.AddRow([]string{"Alert", p.GetAlert()})
+	t.AddRow([]string{"Remediate", p.GetRemediate()})
+}
+
 // NewProfileTable creates a new table for rendering profiles
 func NewProfileTable() table.Table {
 	return table.New(table.Simple, "profile", nil)
@@ -85,9 +97,6 @@ func renderRuleTable(p *minderv1.Profile, entType minderv1.EntityType, rule *min
 	def := marshalStructOrEmpty(rule.Def)
 
 	row := []string{
-		*p.Id,
-		p.Name,
-		*p.Context.Provider,
 		entType.String(),
 		rule.Type,
 		params,
