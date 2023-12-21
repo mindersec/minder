@@ -23,7 +23,6 @@ import (
 	"fmt"
 	"reflect"
 	"runtime"
-	"strconv"
 	"time"
 
 	"github.com/ThreeDotsLabs/watermill"
@@ -49,16 +48,11 @@ const (
 
 	GoChannelDriver = "go-channel"
 	SQLDriver       = "sql"
-
-	MessageRetryCountKey = "message_retry_count"
-	DeadLetterQueueTopic = "dead_letter_queue"
 )
 
 const (
 	metricsNamespace = "minder"
 	metricsSubsystem = "eventer"
-
-	maxMessageRetries = 10
 )
 
 // Handler is an alias for the watermill handler type, which is both wordy and may be
@@ -261,7 +255,6 @@ func (e *Eventer) Publish(topic string, messages ...*message.Message) error {
 	if ok && details != nil {
 		for idx := range messages {
 			msg := messages[idx]
-			msg.Metadata.Set(MessageRetryCountKey, "0")
 			// TODO: This should probably be debugging info
 			e.router.Logger().Info("Publishing messages", watermill.LogFields{
 				"message_uuid": msg.UUID,
@@ -287,50 +280,7 @@ func (e *Eventer) Register(
 		topic,
 		e.webhookSubscriber,
 		func(msg *message.Message) error {
-			messageRetryCount := msg.Metadata.Get(MessageRetryCountKey)
-
-			// This check will most certainly never be true as currently the metadata is being added to every message,
-			// but it doesn't hurt to have it here as a failsafe.
-			if messageRetryCount == "" {
-				messageRetryCount = "0"
-			}
-
-			messageRetryCountNumber, err := strconv.Atoi(messageRetryCount)
-			if err != nil {
-				e.router.Logger().Error("unable to convert messageRetryCount to int", err, watermill.LogFields{
-					"message_uuid": msg.UUID,
-					"topic":        topic,
-					"handler":      funcName,
-				})
-				return err
-			}
-
-			if messageRetryCountNumber >= maxMessageRetries {
-				e.router.Logger().Debug("maximum retries for message reached: adding message to DLQ", watermill.LogFields{
-					"message_uuid": msg.UUID,
-					"topic":        topic,
-					"handler":      funcName,
-					"max_retries":  maxMessageRetries,
-				})
-
-				err = e.webhookPublisher.Publish(DeadLetterQueueTopic, msg)
-				if err != nil {
-					e.router.Logger().Error("unable to publish message to dlq", err, watermill.LogFields{
-						"message_uuid": msg.UUID,
-						"topic":        topic,
-						"handler":      funcName,
-						"max_retries":  maxMessageRetries,
-					})
-					return err
-				}
-
-				return nil
-			}
-
-			messageRetryCountNumber++
-			msg.Metadata.Set(MessageRetryCountKey, fmt.Sprintf("%d", messageRetryCountNumber))
-
-			if err = handler(msg); err != nil {
+			if err := handler(msg); err != nil {
 				e.router.Logger().Error("Found error handling message", err, watermill.LogFields{
 					"message_uuid": msg.UUID,
 					"topic":        topic,
