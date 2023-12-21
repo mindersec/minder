@@ -31,14 +31,14 @@
     "application/json"
   ],
   "paths": {
-    "/api/v1/artifact/{id}": {
+    "/api/v1/artifact/name/{name}": {
       "get": {
-        "operationId": "ArtifactService_GetArtifactById",
+        "operationId": "ArtifactService_GetArtifactByName",
         "responses": {
           "200": {
             "description": "A successful response.",
             "schema": {
-              "$ref": "#/definitions/v1GetArtifactByIdResponse"
+              "$ref": "#/definitions/v1GetArtifactByNameResponse"
             }
           },
           "default": {
@@ -50,7 +50,7 @@
         },
         "parameters": [
           {
-            "name": "id",
+            "name": "name",
             "in": "path",
             "required": true,
             "type": "string"
@@ -94,14 +94,14 @@
         ]
       }
     },
-    "/api/v1/artifact/{name}": {
+    "/api/v1/artifact/{id}": {
       "get": {
-        "operationId": "ArtifactService_GetArtifactByName",
+        "operationId": "ArtifactService_GetArtifactById",
         "responses": {
           "200": {
             "description": "A successful response.",
             "schema": {
-              "$ref": "#/definitions/v1GetArtifactByNameResponse"
+              "$ref": "#/definitions/v1GetArtifactByIdResponse"
             }
           },
           "default": {
@@ -113,7 +113,7 @@
         },
         "parameters": [
           {
-            "name": "name",
+            "name": "id",
             "in": "path",
             "required": true,
             "type": "string"
