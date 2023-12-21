@@ -61,6 +61,7 @@ type Querier interface {
 	GetAccessTokenByProvider(ctx context.Context, provider string) ([]ProviderAccessToken, error)
 	GetAccessTokenSinceDate(ctx context.Context, arg GetAccessTokenSinceDateParams) (ProviderAccessToken, error)
 	GetArtifactByID(ctx context.Context, id uuid.UUID) (GetArtifactByIDRow, error)
+	GetArtifactByName(ctx context.Context, arg GetArtifactByNameParams) (GetArtifactByNameRow, error)
 	GetArtifactVersionByID(ctx context.Context, id uuid.UUID) (ArtifactVersion, error)
 	GetArtifactVersionBySha(ctx context.Context, sha string) (ArtifactVersion, error)
 	GetChildrenProjects(ctx context.Context, id uuid.UUID) ([]GetChildrenProjectsRow, error)
