@@ -60,11 +60,17 @@ func NewProfileSettingsTable() table.Table {
 
 // RenderProfileSettingsTable renders the profile settings table
 func RenderProfileSettingsTable(p *minderv1.Profile, t table.Table) {
-	t.AddRow("ID", p.GetId())
-	t.AddRow("Name", p.GetName())
-	t.AddRow("Provider", p.GetContext().GetProvider())
-	t.AddRow("Alert", p.GetAlert())
-	t.AddRow("Remediate", p.GetRemediate())
+	// if alert is not set in the profile definition, default to its minder behaviour which is "on"
+	alert := p.GetAlert()
+	if alert == "" {
+		alert = "on"
+	}
+	// if remediation is not set in the profile definition, default to its minder behaviour which is "off"
+	remediate := p.GetRemediate()
+	if remediate == "" {
+		remediate = "off"
+	}
+	t.AddRow(p.GetId(), p.GetName(), p.GetContext().GetProvider(), alert, remediate)
 }
 
 // NewProfileTable creates a new table for rendering profiles
