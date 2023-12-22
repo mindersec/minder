@@ -31,6 +31,7 @@ import (
 	"testing"
 	"time"
 
+	"github.com/cenkalti/backoff/v4"
 	"github.com/golang/mock/gomock"
 	"github.com/google/go-github/v56/github"
 	"github.com/google/uuid"
@@ -130,7 +131,7 @@ func (s *UnitTestSuite) TestHandleWebHookPing() {
 	req.Header.Add("X-GitHub-Event", "ping")
 	req.Header.Add("X-GitHub-Delivery", "12345")
 	req.Header.Add("Content-Type", "application/json")
-	resp, err := client.Do(req)
+	resp, err := httpDoWithRetry(client, req)
 	require.NoError(t, err, "failed to make request")
 	assert.Equal(t, http.StatusOK, resp.StatusCode, "unexpected status code")
 	assert.Len(t, queued, 0, "unexpected number of queued events")
@@ -196,7 +197,7 @@ func (s *UnitTestSuite) TestHandleWebHookUnexistentRepository() {
 	req.Header.Add("X-GitHub-Event", "meta")
 	req.Header.Add("X-GitHub-Delivery", "12345")
 	req.Header.Add("Content-Type", "application/json")
-	resp, err := client.Do(req)
+	resp, err := httpDoWithRetry(client, req)
 	require.NoError(t, err, "failed to make request")
 	// We expect OK since we don't want to leak information about registered repositories
 	require.Equal(t, http.StatusOK, resp.StatusCode, "unexpected status code")
@@ -302,7 +303,7 @@ func (s *UnitTestSuite) TestHandleWebHookRepository() {
 	req.Header.Add("X-GitHub-Event", "meta")
 	req.Header.Add("X-GitHub-Delivery", "12345")
 	req.Header.Add("Content-Type", "application/json")
-	resp, err := client.Do(req)
+	resp, err := httpDoWithRetry(client, req)
 	require.NoError(t, err, "failed to make request")
 	// We expect OK since we don't want to leak information about registered repositories
 	require.Equal(t, http.StatusOK, resp.StatusCode, "unexpected status code")
@@ -380,7 +381,7 @@ func (s *UnitTestSuite) TestHandleWebHookUnexistentRepoPackage() {
 	req.Header.Add("X-GitHub-Event", "meta")
 	req.Header.Add("X-GitHub-Delivery", "12345")
 	req.Header.Add("Content-Type", "application/json")
-	resp, err := client.Do(req)
+	resp, err := httpDoWithRetry(client, req)
 	require.NoError(t, err, "failed to make request")
 	// We expect OK since we don't want to leak information about registered repositories
 	require.Equal(t, http.StatusOK, resp.StatusCode, "unexpected status code")
@@ -392,4 +393,15 @@ func TestAll(t *testing.T) {
 
 	RunUnitTestSuite(t)
 	// Call other test runner functions for additional test suites
+}
+
+func httpDoWithRetry(client *http.Client, req *http.Request) (*http.Response, error) {
+	var resp *http.Response
+	err := backoff.Retry(func() error {
+		var err error
+		resp, err = client.Do(req)
+		return err
+	}, backoff.WithMaxRetries(backoff.NewConstantBackOff(time.Second), 3))
+
+	return resp, err
 }
