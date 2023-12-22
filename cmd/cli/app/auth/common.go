@@ -41,29 +41,29 @@ func userRegistered(ctx context.Context, client minderv1.UserServiceClient) (boo
 
 func renderNewUser(conn string, newUser *minderv1.CreateUserResponse) {
 	t := table.New(table.Simple, layouts.KeyValue, nil)
-	t.AddRow([]string{"Project ID", newUser.ProjectId})
-	t.AddRow([]string{"Project Name", newUser.ProjectName})
-	t.AddRow([]string{"Minder Server", conn})
+	t.AddRow("Project ID", newUser.ProjectId)
+	t.AddRow("Project Name", newUser.ProjectName)
+	t.AddRow("Minder Server", conn)
 	t.Render()
 }
 
 func renderUserInfo(conn string, user *minderv1.GetUserResponse) {
 	t := table.New(table.Simple, layouts.KeyValue, nil)
-	t.AddRow([]string{"Minder Server", conn})
+	t.AddRow("Minder Server", conn)
 	for _, project := range getProjectTableRows(user.Projects) {
-		t.AddRow(project)
+		t.AddRow(project...)
 	}
 	t.Render()
 }
 
 func renderUserInfoWhoami(conn string, user *minderv1.GetUserResponse) {
 	t := table.New(table.Simple, layouts.KeyValue, nil)
-	t.AddRow([]string{"Subject", user.GetUser().GetIdentitySubject()})
-	t.AddRow([]string{"Created At", user.GetUser().GetCreatedAt().AsTime().String()})
-	t.AddRow([]string{"Updated At", user.GetUser().GetUpdatedAt().AsTime().String()})
-	t.AddRow([]string{"Minder Server", conn})
+	t.AddRow("Subject", user.GetUser().GetIdentitySubject())
+	t.AddRow("Created At", user.GetUser().GetCreatedAt().AsTime().String())
+	t.AddRow("Updated At", user.GetUser().GetUpdatedAt().AsTime().String())
+	t.AddRow("Minder Server", conn)
 	for _, project := range getProjectTableRows(user.Projects) {
-		t.AddRow(project)
+		t.AddRow(project...)
 	}
 	t.Render()
 }
