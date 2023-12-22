@@ -16,7 +16,8 @@ minder auth delete [flags]
 ### Options
 
 ```
-  -h, --help   help for delete
+  -h, --help                    help for delete
+      --yes-delete-my-account   Bypass yes/no prompt when deleting the account
 ```
 
 ### Options inherited from parent commands
