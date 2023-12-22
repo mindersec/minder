@@ -301,14 +301,14 @@ default allow = true`,
 	msg, err := eiw.BuildMessage()
 	require.NoError(t, err, "expected no error")
 
+	t.Log("waiting for eventer to start")
+	<-evt.Running()
+
 	// Run in the background
 	go func() {
 		t.Log("Running entity event handler")
 		require.NoError(t, e.HandleEntityEvent(msg), "expected no error")
 	}()
-
-	t.Log("waiting for eventer to start")
-	<-evt.Running()
 
 	// expect flush
 	t.Log("waiting for flush")
@@ -316,5 +316,6 @@ default allow = true`,
 
 	require.NoError(t, evt.Close(), "expected no error")
 
+	t.Log("waiting for executor to finish")
 	e.Wait()
 }
