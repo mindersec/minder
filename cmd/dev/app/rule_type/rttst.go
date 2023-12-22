@@ -109,7 +109,6 @@ func testCmdRun(cmd *cobra.Command, _ []string) error {
 	// Disable actions
 	off := "off"
 	p.Alert = &off
-	p.Remediate = &off
 
 	rules, err := engine.GetRulesFromProfileOfType(p, rt)
 	if err != nil {
