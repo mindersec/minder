@@ -57,6 +57,9 @@ func init() {
 	if err := auth.RegisterOAuthFlags(viper.GetViper(), RootCmd.PersistentFlags()); err != nil {
 		log.Fatal().Err(err).Msg("Error registering oauth flags")
 	}
+	if err := config.RegisterIdentityFlags(viper.GetViper(), RootCmd.PersistentFlags()); err != nil {
+		log.Fatal().Err(err).Msg("Error registering identity flags")
+	}
 }
 
 func initConfig() {

@@ -25,6 +25,7 @@ services:
       "--http-host=0.0.0.0",
       "--metric-host=0.0.0.0",
       "--db-host=postgres",
+      "--issuer-url=http://keycloak:8080",
       "--config=/app/server-config.yaml",
       # If you don't want to store your GitHub client ID and secret in the main
       # config file, point to them here:
