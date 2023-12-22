@@ -27,8 +27,8 @@ permissions:
 jobs:
   license-check:
     uses: ./.github/workflows/license-check.yml
-  golangci-lint:
-    uses: ./.github/workflows/golangci-lint.yml
+  lint:
+    uses: ./.github/workflows/lint.yml
   build:
     uses: ./.github/workflows/build.yml
   test:
