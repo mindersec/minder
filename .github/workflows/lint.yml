@@ -1,4 +1,4 @@
-name: golangci-lint
+name: Lint
 on:
   workflow_call:
 permissions:
@@ -19,3 +19,20 @@ jobs:
         uses: golangci/golangci-lint-action@3a919529898de77ec3da873e3063ca4b10e7f5cc # v3
         with:
           version: v1.55.2
+
+  mod-tidy:
+    name: Go mod tidy
+    runs-on: ubuntu-latest
+    steps:
+      - uses: actions/checkout@b4ffde65f46336ab88eb53be808477a3936bae11 # v4
+      - uses: actions/setup-go@0c52d547c9bc32b1aa3301fd7a9cb496313a4491 # v5
+        with:
+          go-version-file: 'go.mod'
+          cache: false
+      - name: go mod tidy
+        run: go mod tidy
+      - name: git diff
+        run: git diff --exit-code
+      - name: Output message
+        if: ${{ failure() }}
+        run: echo "Please run 'go mod tidy' and commit changes"
