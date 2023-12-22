@@ -91,7 +91,7 @@ func (s *UnitTestSuite) TestHandleWebHookPing() {
 	srv := newDefaultServer(t, mockStore)
 	defer srv.evt.Close()
 
-	pq := testqueue.NewPassthroughQueue()
+	pq := testqueue.NewPassthroughQueue(t)
 	queued := pq.GetQueue()
 
 	srv.evt.Register(engine.ExecuteEntityEventTopic, pq.Pass)
@@ -144,7 +144,7 @@ func (s *UnitTestSuite) TestHandleWebHookUnexistentRepository() {
 	srv := newDefaultServer(t, mockStore)
 	defer srv.evt.Close()
 
-	pq := testqueue.NewPassthroughQueue()
+	pq := testqueue.NewPassthroughQueue(t)
 	queued := pq.GetQueue()
 
 	srv.evt.Register(engine.ExecuteEntityEventTopic, pq.Pass)
@@ -210,7 +210,7 @@ func (s *UnitTestSuite) TestHandleWebHookRepository() {
 	srv := newDefaultServer(t, mockStore)
 	defer srv.evt.Close()
 
-	pq := testqueue.NewPassthroughQueue()
+	pq := testqueue.NewPassthroughQueue(t)
 	queued := pq.GetQueue()
 
 	srv.evt.Register(engine.ExecuteEntityEventTopic, pq.Pass)
@@ -327,7 +327,7 @@ func (s *UnitTestSuite) TestHandleWebHookUnexistentRepoPackage() {
 	srv := newDefaultServer(t, mockStore)
 	defer srv.evt.Close()
 
-	pq := testqueue.NewPassthroughQueue()
+	pq := testqueue.NewPassthroughQueue(t)
 	queued := pq.GetQueue()
 
 	srv.evt.Register(engine.ExecuteEntityEventTopic, pq.Pass)

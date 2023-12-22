@@ -274,7 +274,7 @@ default allow = true`,
 		require.NoError(t, err, "failed to run eventer")
 	}()
 
-	pq := testqueue.NewPassthroughQueue()
+	pq := testqueue.NewPassthroughQueue(t)
 	queued := pq.GetQueue()
 
 	testTimeout := 5 * time.Second
