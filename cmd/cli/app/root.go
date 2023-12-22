@@ -38,6 +38,27 @@ var (
 https://docs.stacklok.com/minder`,
 		SilenceErrors: true, // don't print errors twice, we handle them in cli.ExitNicelyOnError
 	}
+
+	// This is a "help topic", which is represented as a command with no "Run" function.
+	// See https://github.com/spf13/cobra/issues/393#issuecomment-282741924 and
+	// https://pkg.go.dev/github.com/spf13/cobra#Command.IsAdditionalHelpTopicCommand
+	configHelpCmd = &cobra.Command{
+		Use:   "config",
+		Short: "How to manage minder CLI configuration",
+		Long: `In addition to the command-line flags, many minder options can be set via a configuration file in the YAML format.
+
+Configuration options include:
+- provider
+- project
+- output
+- grpc_server.host
+- grpc_server.port
+- grpc_server.insecure
+- identity.cli.issuer_url
+- identity.cli.client_id
+
+By default, we look for the file as $PWD/config.yaml. You can specify a custom path via the --config flag, or by setting the MINDER_CONFIG environment variable.`,
+	}
 )
 
 const (
@@ -88,11 +109,15 @@ func init() {
 		RootCmd.Printf("error: %s", err)
 		os.Exit(1)
 	}
+
+	RootCmd.AddCommand(configHelpCmd)
 }
 
 func initConfig() {
 	if cfgFile != "" {
 		viper.SetConfigFile(cfgFile)
+	} else if os.Getenv("MINDER_CONFIG") != "" {
+		viper.SetConfigFile(os.Getenv("MINDER_CONFIG"))
 	} else {
 		// use defaults
 		viper.SetConfigName("config")
