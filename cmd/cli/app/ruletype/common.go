@@ -99,7 +99,34 @@ func shouldSkipFile(f string) bool {
 	}
 }
 
-// initializeTable initializes the table for the rule type
-func initializeTable() table.Table {
-	return table.New(table.Simple, layouts.RuleType, nil)
+// initializeTableForList initializes the table for the rule type
+func initializeTableForList() table.Table {
+	return table.New(table.Simple, layouts.RuleTypeList, nil)
+}
+
+// initializeTableForList initializes the table for the rule type
+func initializeTableForOne() table.Table {
+	return table.New(table.Simple, layouts.RuleTypeOne, nil)
+}
+
+func oneRuleTypeToRows(t table.Table, rt *minderv1.RuleType) {
+	t.AddRow("ID", *rt.Id)
+	t.AddRow("Name", rt.Name)
+	t.AddRow("Provider", *rt.Context.Provider)
+	t.AddRow("Project", *rt.Context.Project)
+	t.AddRow("Description", rt.Description)
+	t.AddRow("Ingest type", rt.Def.Ingest.Type)
+	t.AddRow("Eval type", rt.Def.Eval.Type)
+	rem := "unsupported"
+	if rt.Def.GetRemediate() != nil {
+		rem = rt.Def.GetRemediate().Type
+	}
+	t.AddRow("Remediation", rem)
+
+	alert := "unsupported"
+	if rt.Def.GetAlert() != nil {
+		alert = rt.Def.GetAlert().Type
+	}
+
+	t.AddRow("Alert", alert)
 }

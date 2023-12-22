@@ -34,8 +34,10 @@ func New(layout layouts.TableLayout, header []string) *Table {
 	switch layout {
 	case layouts.KeyValue:
 		keyValueLayout(table)
-	case layouts.RuleType:
+	case layouts.RuleTypeOne:
 		ruleTypeLayout(table)
+	case layouts.RuleTypeList:
+		ruleTypeListLayout(table)
 	case layouts.ProfileSettings:
 		profileSettingsLayout(table)
 	case layouts.Profile:
@@ -120,11 +122,17 @@ func repoListLayout(table *tablewriter.Table) {
 	table.SetHeader([]string{"ID", "Project", "Provider", "Upstream ID", "Owner", "Name"})
 }
 
-func ruleTypeLayout(table *tablewriter.Table) {
+func ruleTypeListLayout(table *tablewriter.Table) {
 	defaultLayout(table)
 	table.SetHeader([]string{"Provider", "Project Name", "ID", "Name", "Description"})
 	table.SetAutoMergeCellsByColumnIndex([]int{0, 1, 2, 3})
 	// This is needed for the rule definition and rule parameters
 	table.SetAutoWrapText(false)
+}
 
+func ruleTypeLayout(table *tablewriter.Table) {
+	defaultLayout(table)
+	table.SetHeader([]string{"Rule Type"})
+	// This is needed for the rule definition and rule parameters
+	table.SetAutoWrapText(false)
 }

@@ -23,8 +23,10 @@ type TableLayout string
 const (
 	// KeyValue is the key value table layout
 	KeyValue TableLayout = "keyvalue"
-	// RuleType is the rule type table layout
-	RuleType TableLayout = "ruletype"
+	// RuleTypeOne is the rule type table layout
+	RuleTypeOne TableLayout = "ruletype"
+	// RuleTypeList is the rule type table layout
+	RuleTypeList TableLayout = "ruletype_list"
 	// ProfileSettings is the profile settings table layout
 	ProfileSettings TableLayout = "profile_settings"
 	// Profile is the profile table layout

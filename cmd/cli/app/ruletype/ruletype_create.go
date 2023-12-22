@@ -64,7 +64,7 @@ func createCommand(_ context.Context, cmd *cobra.Command, conn *grpc.ClientConn)
 		return cli.MessageAndError("Error expanding file args", err)
 	}
 
-	table := initializeTable()
+	table := initializeTableForList()
 
 	createFunc := func(ctx context.Context, fileName string, rt *minderv1.RuleType) (*minderv1.RuleType, error) {
 		resprt, err := client.CreateRuleType(ctx, &minderv1.CreateRuleTypeRequest{
