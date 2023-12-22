@@ -170,7 +170,6 @@ func RenderRuleEvaluationStatusTable(
 			"",
 			"",
 			"",
-			"",
 			getEvalStatusColor(eval.Status),
 			getRemediateStatusColor(eval.RemediationStatus),
 			"",
