@@ -1256,8 +1256,8 @@ github.com/nishanths/exhaustive v0.11.0 h1:T3I8nUGhl/Cwu5Z2hfc92l0e04D2GEW6e0l8p
 github.com/nishanths/exhaustive v0.11.0/go.mod h1:RqwDsZ1xY0dNdqHho2z6X+bgzizwbLYOWnZbbl2wLB4=
 github.com/nishanths/predeclared v0.2.2 h1:V2EPdZPliZymNAn79T8RkNApBjMmVKh5XRpLm/w98Vk=
 github.com/nishanths/predeclared v0.2.2/go.mod h1:RROzoN6TnGQupbC+lqggsOlcgysk3LMK/HI84Mp280c=
-github.com/norwoodj/helm-docs v1.11.3 h1:8dwJUOkZY+PrnMeGfJh0HjjnQAHRPIgb2qabW4MSzXk=
-github.com/norwoodj/helm-docs v1.11.3/go.mod h1:pSD2NcqopI4luhnVbdX6gwnwrWP8BTTaWTY7yPlm9xY=
+github.com/norwoodj/helm-docs v1.12.0 h1:loTBTwaed0vYShJDRZZ/MmD+0XqiiNpVva4CUBvCsuw=
+github.com/norwoodj/helm-docs v1.12.0/go.mod h1:pSD2NcqopI4luhnVbdX6gwnwrWP8BTTaWTY7yPlm9xY=
 github.com/nunnatsa/ginkgolinter v0.14.1 h1:khx0CqR5U4ghsscjJ+lZVthp3zjIFytRXPTaQ/TMiyA=
 github.com/nunnatsa/ginkgolinter v0.14.1/go.mod h1:nY0pafUSst7v7F637e7fymaMlQqI9c0Wka2fGsDkzWg=
 github.com/olekukonko/tablewriter v0.0.5 h1:P2Ga83D34wi1o9J6Wh1mRuqd4mF/x/lgBS7N7AbDhec=
