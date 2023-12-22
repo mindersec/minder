@@ -13,12 +13,6 @@
 // See the License for the specific language governing permissions and
 // limitations under the License.
 
-// NOTE: This file is for stubbing out client code for proof of concept
-// purposes. It will / should be removed in the future.
-// Until then, it is not covered by unit tests and should not be used
-// It does make a good example of how to use the generated client code
-// for others to use as a reference.
-
 // Package auth provides the auth command project for the minder CLI.
 package auth
 
