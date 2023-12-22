@@ -106,6 +106,11 @@ func testCmdRun(cmd *cobra.Command, _ []string) error {
 		return fmt.Errorf("error reading fragment from file: %w", err)
 	}
 
+	// Disable actions
+	off := "off"
+	p.Alert = &off
+	p.Remediate = &off
+
 	rules, err := engine.GetRulesFromProfileOfType(p, rt)
 	if err != nil {
 		return fmt.Errorf("error getting relevant fragment: %w", err)
