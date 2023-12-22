@@ -82,7 +82,7 @@ func TestEventer(t *testing.T) {
 	}{
 		{
 			name:    "single topic",
-			publish: []eventPair{{"a", &message.Message{}}},
+			publish: []eventPair{{"a", &message.Message{Metadata: map[string]string{}}}},
 			want:    map[string][]message.Message{"a": {}},
 			consumers: []fakeConsumer{
 				{topics: []string{"a"}},
@@ -90,7 +90,7 @@ func TestEventer(t *testing.T) {
 		},
 		{
 			name:    "two subscribers",
-			publish: []eventPair{{"a", &message.Message{}}, {"b", &message.Message{}}, {"a", &message.Message{}}},
+			publish: []eventPair{{"a", &message.Message{Metadata: map[string]string{}}}, {"b", &message.Message{Metadata: map[string]string{}}}, {"a", &message.Message{Metadata: map[string]string{}}}},
 			want: map[string][]message.Message{
 				"a": {{}, {}},
 				"b": {{}},
@@ -102,7 +102,7 @@ func TestEventer(t *testing.T) {
 		},
 		{
 			name:    "two subscribers to topic",
-			publish: []eventPair{{"a", &message.Message{}}, {"b", &message.Message{}}},
+			publish: []eventPair{{"a", &message.Message{Metadata: map[string]string{}}}, {"b", &message.Message{Metadata: map[string]string{}}}},
 			want: map[string][]message.Message{
 				"a":     {{}},
 				"b":     {{}},
@@ -126,7 +126,7 @@ func TestEventer(t *testing.T) {
 		},
 		{
 			name:    "handler fails, message goes to DLQ",
-			publish: []eventPair{{"test_dlq", &message.Message{}}},
+			publish: []eventPair{{"test_dlq", &message.Message{Metadata: map[string]string{}}}},
 			want: map[string][]message.Message{
 				events.DeadLetterQueueTopic: {{}},
 			},
