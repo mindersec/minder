@@ -17,6 +17,7 @@ package events_test
 
 import (
 	"context"
+	"errors"
 	"testing"
 
 	"github.com/ThreeDotsLabs/watermill/message"
@@ -26,8 +27,9 @@ import (
 )
 
 type fakeConsumer struct {
-	topics      []string
-	makeHandler func(string, chan eventPair) events.Handler
+	topics            []string
+	makeHandler       func(string, chan eventPair) events.Handler
+	shouldFailHandler bool
 	// Filled in by test later
 	out chan eventPair
 }
@@ -60,14 +62,23 @@ func fakeHandler(id string, out chan eventPair) events.Handler {
 		return nil
 	}
 }
+
+func countFailuresHandler(counter *int) events.Handler {
+	return func(_ *message.Message) error {
+		*counter++
+		return errors.New("handler always fails")
+	}
+}
+
 func TestEventer(t *testing.T) {
 	t.Parallel()
 
 	tests := []struct {
-		name      string
-		publish   []eventPair
-		want      map[string][]message.Message
-		consumers []fakeConsumer
+		name       string
+		publish    []eventPair
+		want       map[string][]message.Message
+		consumers  []fakeConsumer
+		wantsCalls int
 	}{
 		{
 			name:    "single topic",
@@ -113,6 +124,24 @@ func TestEventer(t *testing.T) {
 				},
 			},
 		},
+		{
+			name:    "handler fails, message goes to DLQ",
+			publish: []eventPair{{"test_dlq", &message.Message{}}},
+			want: map[string][]message.Message{
+				events.DeadLetterQueueTopic: {{}},
+			},
+			consumers: []fakeConsumer{
+				{
+					topics:            []string{"test_dlq"},
+					shouldFailHandler: true,
+				},
+				{
+					topics:      []string{events.DeadLetterQueueTopic},
+					makeHandler: fakeHandler,
+				},
+			},
+			wantsCalls: 4,
+		},
 	}
 	for _, tt := range tests {
 		tt := tt
@@ -132,13 +161,11 @@ func TestEventer(t *testing.T) {
 				return
 			}
 
-			for _, c := range tt.consumers {
-				c.out = out
-				if c.makeHandler == nil {
-					c.makeHandler = fakeHandler
-				}
-				local := c // Avoid aliasing
-				eventer.ConsumeEvents(&local)
+			failureCounters := make([]int, len(tt.consumers))
+			for i, c := range tt.consumers {
+				localConsumer := c
+				localIdx := i
+				setupConsumer(&localConsumer, out, failureCounters, localIdx, *eventer)
 			}
 
 			go eventer.Run(ctx)
@@ -176,6 +203,30 @@ func TestEventer(t *testing.T) {
 					t.Errorf("wanted %d messages for topic %q, got %d", len(msgs), topic, len(received[topic]))
 				}
 			}
+
+			for i, c := range tt.consumers {
+				if c.shouldFailHandler && failureCounters[i] != tt.wantsCalls {
+					t.Errorf("expected %d calls to failure handler, got %d", tt.wantsCalls, failureCounters[i])
+				}
+			}
 		})
+	}
+}
+
+func setupConsumer(c *fakeConsumer, out chan eventPair, failureCounters []int, i int, eventer events.Eventer) {
+	c.out = out
+	if c.makeHandler == nil {
+		if c.shouldFailHandler {
+			c.makeHandler = makeFailingHandler(&failureCounters[i])
+		} else {
+			c.makeHandler = fakeHandler
+		}
+	}
+	eventer.ConsumeEvents(c)
+}
+
+func makeFailingHandler(counter *int) func(_ string, out chan eventPair) events.Handler {
+	return func(_ string, out chan eventPair) events.Handler {
+		return countFailuresHandler(counter)
 	}
 }

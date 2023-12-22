@@ -48,6 +48,8 @@ const (
 
 	GoChannelDriver = "go-channel"
 	SQLDriver       = "sql"
+
+	DeadLetterQueueTopic = "dead_letter_queue"
 )
 
 const (
@@ -128,16 +130,26 @@ func Setup(ctx context.Context, cfg *config.EventConfig) (*Eventer, error) {
 		metricsSubsystem)
 	metricsBuilder.AddPrometheusRouterMetrics(router)
 
-	// Router level middleware are executed for every message sent to the router
-	router.AddMiddleware(
-		// CorrelationID will copy the correlation id from the incoming message's metadata to the produced messages
-		middleware.CorrelationID,
-	)
-
 	pub, sub, cl, err := instantiateDriver(ctx, cfg.Driver, cfg)
 	if err != nil {
 		return nil, fmt.Errorf("failed instantiating driver: %w", err)
 	}
+
+	pq, err := middleware.PoisonQueue(pub, DeadLetterQueueTopic)
+	if err != nil {
+		return nil, fmt.Errorf("failed instantiating poison queue: %w", err)
+	}
+	// Router level middleware are executed for every message sent to the router
+	router.AddMiddleware(
+		pq,
+		middleware.Retry{
+			MaxRetries:      3,
+			InitialInterval: time.Millisecond * 100,
+			Logger:          l,
+		}.Middleware,
+		// CorrelationID will copy the correlation id from the incoming message's metadata to the produced messages
+		middleware.CorrelationID,
+	)
 
 	pubWithMetrics, err := metricsBuilder.DecoratePublisher(pub)
 	if err != nil {
