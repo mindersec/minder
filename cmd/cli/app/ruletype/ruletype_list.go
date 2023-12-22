@@ -76,7 +76,7 @@ func listCommand(ctx context.Context, cmd *cobra.Command, conn *grpc.ClientConn)
 		}
 		cmd.Println(out)
 	case app.Table:
-		table := initializeTable()
+		table := initializeTableForList()
 		for _, rt := range resp.RuleTypes {
 			table.AddRow(
 				*rt.Context.Provider,
