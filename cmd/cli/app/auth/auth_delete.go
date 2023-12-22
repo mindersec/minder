@@ -43,6 +43,7 @@ func deleteCommand(ctx context.Context, cmd *cobra.Command, conn *grpc.ClientCon
 
 	issuerUrl := viper.GetString("identity.cli.issuer_url")
 	clientId := viper.GetString("identity.cli.client_id")
+	yesFlag := viper.GetBool("yes-delete-my-account")
 
 	// Ensure the user already exists in the local database
 	_, _, err := userRegistered(ctx, client)
@@ -57,17 +58,19 @@ func deleteCommand(ctx context.Context, cmd *cobra.Command, conn *grpc.ClientCon
 	}
 
 	// Confirm user wants to delete their account
-	yes := cli.PrintYesNoPrompt(cmd,
-		fmt.Sprintf(
-			"You are about to permanently delete your account. \n\nName: %s\nEmail: %s",
-			userDetails.Name,
-			userDetails.Email,
-		),
-		"Are you sure?",
-		"Delete account operation cancelled.",
-		false)
-	if !yes {
-		return nil
+	if !yesFlag {
+		yes := cli.PrintYesNoPrompt(cmd,
+			fmt.Sprintf(
+				"You are about to permanently delete your account. \n\nName: %s\nEmail: %s",
+				userDetails.Name,
+				userDetails.Email,
+			),
+			"Are you sure?",
+			"Delete account operation cancelled.",
+			false)
+		if !yes {
+			return nil
+		}
 	}
 
 	_, err = client.DeleteUser(ctx, &minderv1.DeleteUserRequest{})
@@ -88,4 +91,5 @@ func deleteCommand(ctx context.Context, cmd *cobra.Command, conn *grpc.ClientCon
 
 func init() {
 	AuthCmd.AddCommand(deleteCmd)
+	deleteCmd.Flags().Bool("yes-delete-my-account", false, "Bypass yes/no prompt when deleting the account")
 }
