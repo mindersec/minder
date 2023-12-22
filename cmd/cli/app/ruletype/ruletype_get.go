@@ -83,13 +83,13 @@ func getCommand(ctx context.Context, cmd *cobra.Command, conn *grpc.ClientConn) 
 		table := initializeTable()
 		rt := rtype.GetRuleType()
 		// add the rule type to the table rows
-		table.AddRow([]string{
+		table.AddRow(
 			*rt.Context.Provider,
 			*rt.Context.Project,
 			*rt.Id,
 			rt.Name,
 			rt.Description,
-		})
+		)
 		table.Render()
 	}
 	return nil

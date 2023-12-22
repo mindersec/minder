@@ -24,19 +24,11 @@ const (
 	// Simple is a simple table
 	Simple = "simple"
 )
-const (
-	// ColorRed is the color red
-	ColorRed = "red"
-	// ColorGreen is the color green
-	ColorGreen = "green"
-	// ColorYellow is the color yellow
-	ColorYellow = "yellow"
-)
 
 // Table is an interface for rendering tables
 type Table interface {
-	AddRow(row []string)
-	AddRowWithColor(row []string, rowColors []string)
+	AddRow(row ...string)
+	AddRowWithColor(row ...layouts.ColoredColumn)
 	Render()
 }
 

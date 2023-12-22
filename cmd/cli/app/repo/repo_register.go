@@ -143,7 +143,7 @@ func RegisterCmd(ctx context.Context, cmd *cobra.Command, conn *grpc.ClientConn)
 		} else {
 			row = append(row, "")
 		}
-		t.AddRow(row)
+		t.AddRow(row...)
 	}
 	t.Render()
 	return nil
