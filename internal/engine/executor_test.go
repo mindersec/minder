@@ -268,14 +268,15 @@ default allow = true`,
 	})
 	require.NoError(t, err, "failed to setup eventer")
 
+	pq := testqueue.NewPassthroughQueue(t)
+	queued := pq.GetQueue()
+
 	go func() {
 		t.Log("Running eventer")
+		evt.Register(engine.FlushEntityEventTopic, pq.Pass)
 		err := evt.Run(context.Background())
 		require.NoError(t, err, "failed to run eventer")
 	}()
-
-	pq := testqueue.NewPassthroughQueue(t)
-	queued := pq.GetQueue()
 
 	testTimeout := 5 * time.Second
 	ctx, cancel := context.WithTimeout(context.Background(), testTimeout)
@@ -285,8 +286,6 @@ default allow = true`,
 		TokenKey: tokenKeyPath,
 	}, evt)
 	require.NoError(t, err, "expected no error")
-
-	evt.Register(engine.FlushEntityEventTopic, pq.Pass)
 
 	eiw := engine.NewEntityInfoWrapper().
 		WithProvider(providerName).
