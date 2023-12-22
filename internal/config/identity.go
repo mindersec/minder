@@ -19,6 +19,9 @@ import (
 	"fmt"
 	"os"
 	"path/filepath"
+
+	"github.com/spf13/pflag"
+	"github.com/spf13/viper"
 )
 
 // IdentityConfig is the configuration for the identity provider
@@ -48,4 +51,10 @@ func (sic *ServerIdentityConfig) GetClientSecret() (string, error) {
 		return string(data), nil
 	}
 	return sic.ClientSecret, nil
+}
+
+// RegisterIdentityFlags registers the flags for the identity server
+func RegisterIdentityFlags(v *viper.Viper, flags *pflag.FlagSet) error {
+	return BindConfigFlag(v, flags, "identity.server.issuer_url", "issuer-url", "",
+		"The base URL where the identity server is running", flags.String)
 }
