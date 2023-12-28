@@ -35,7 +35,7 @@ require (
 	github.com/open-policy-agent/opa v0.60.0
 	github.com/openfga/cli v0.2.1
 	github.com/pkg/browser v0.0.0-20210911075715-681adbf594b8
-	github.com/prometheus/client_golang v1.17.0
+	github.com/prometheus/client_golang v1.18.0
 	github.com/puzpuzpuz/xsync v1.5.2
 	github.com/robfig/cron/v3 v3.0.1
 	github.com/rs/zerolog v1.31.0
