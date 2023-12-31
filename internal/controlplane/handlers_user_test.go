@@ -35,7 +35,7 @@ import (
 	mockdb "github.com/stacklok/minder/database/mock"
 	"github.com/stacklok/minder/internal/auth"
 	mockjwt "github.com/stacklok/minder/internal/auth/mock"
-	"github.com/stacklok/minder/internal/config"
+	serverconfig "github.com/stacklok/minder/internal/config/server"
 	"github.com/stacklok/minder/internal/crypto"
 	"github.com/stacklok/minder/internal/db"
 	"github.com/stacklok/minder/internal/events"
@@ -148,7 +148,7 @@ func TestCreateUserDBMock(t *testing.T) {
 
 			server := &Server{
 				store:        mockStore,
-				cfg:          &config.Config{},
+				cfg:          &serverconfig.Config{},
 				cryptoEngine: crypeng,
 				vldtr:        mockJwtValidator,
 			}
@@ -256,13 +256,13 @@ func TestCreateUser_gRPC(t *testing.T) {
 			mockStore := mockdb.NewMockStore(ctrl)
 			mockJwtValidator := mockjwt.NewMockJwtValidator(ctrl)
 			tc.buildStubs(mockStore, mockJwtValidator)
-			evt, err := events.Setup(context.Background(), &config.EventConfig{
+			evt, err := events.Setup(context.Background(), &serverconfig.EventConfig{
 				Driver:    "go-channel",
-				GoChannel: config.GoChannelEventConfig{},
+				GoChannel: serverconfig.GoChannelEventConfig{},
 			})
 			require.NoError(t, err, "failed to setup eventer")
-			server, err := NewServer(mockStore, evt, NewMetrics(), &config.Config{
-				Auth: config.AuthConfig{
+			server, err := NewServer(mockStore, evt, NewMetrics(), &serverconfig.Config{
+				Auth: serverconfig.AuthConfig{
 					TokenKey: generateTokenKey(t),
 				},
 			}, mockJwtValidator)
@@ -347,9 +347,9 @@ func TestDeleteUserDBMock(t *testing.T) {
 
 	server := &Server{
 		store: mockStore,
-		cfg: &config.Config{
-			Identity: config.IdentityConfig{
-				Server: config.ServerIdentityConfig{
+		cfg: &serverconfig.Config{
+			Identity: serverconfig.IdentityConfigWrapper{
+				Server: serverconfig.IdentityConfig{
 					IssuerUrl:    testServer.URL,
 					ClientId:     "client-id",
 					ClientSecret: "client-secret",
@@ -460,17 +460,17 @@ func TestDeleteUser_gRPC(t *testing.T) {
 			}))
 			defer testServer.Close()
 
-			evt, err := events.Setup(context.Background(), &config.EventConfig{
+			evt, err := events.Setup(context.Background(), &serverconfig.EventConfig{
 				Driver:    "go-channel",
-				GoChannel: config.GoChannelEventConfig{},
+				GoChannel: serverconfig.GoChannelEventConfig{},
 			})
 			require.NoError(t, err, "failed to setup eventer")
-			server, err := NewServer(mockStore, evt, NewMetrics(), &config.Config{
-				Auth: config.AuthConfig{
+			server, err := NewServer(mockStore, evt, NewMetrics(), &serverconfig.Config{
+				Auth: serverconfig.AuthConfig{
 					TokenKey: generateTokenKey(t),
 				},
-				Identity: config.IdentityConfig{
-					Server: config.ServerIdentityConfig{
+				Identity: serverconfig.IdentityConfigWrapper{
+					Server: serverconfig.IdentityConfig{
 						IssuerUrl:    testServer.URL,
 						ClientId:     "client-id",
 						ClientSecret: "client-secret",

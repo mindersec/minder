@@ -13,7 +13,7 @@
 // See the License for the specific language governing permissions and
 // limitations under the License.
 
-package config
+package server
 
 // EventConfig is the configuration for minder's eventing system.
 type EventConfig struct {

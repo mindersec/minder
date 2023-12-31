@@ -32,7 +32,7 @@ import (
 
 	mockdb "github.com/stacklok/minder/database/mock"
 	mockjwt "github.com/stacklok/minder/internal/auth/mock"
-	"github.com/stacklok/minder/internal/config"
+	serverconfig "github.com/stacklok/minder/internal/config/server"
 	"github.com/stacklok/minder/internal/events"
 	pb "github.com/stacklok/minder/pkg/api/protobuf/go/minder/v1"
 )
@@ -70,16 +70,16 @@ func init() {
 func newDefaultServer(t *testing.T, mockStore *mockdb.MockStore) *Server {
 	t.Helper()
 
-	evt, err := events.Setup(context.Background(), &config.EventConfig{
+	evt, err := events.Setup(context.Background(), &serverconfig.EventConfig{
 		Driver:    "go-channel",
-		GoChannel: config.GoChannelEventConfig{},
+		GoChannel: serverconfig.GoChannelEventConfig{},
 	})
 	require.NoError(t, err, "failed to setup eventer")
 
-	var c *config.Config
+	var c *serverconfig.Config
 	tokenKeyPath := generateTokenKey(t)
-	c = &config.Config{
-		Auth: config.AuthConfig{
+	c = &serverconfig.Config{
+		Auth: serverconfig.AuthConfig{
 			TokenKey: tokenKeyPath,
 		},
 	}

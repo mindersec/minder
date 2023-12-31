@@ -13,11 +13,12 @@
 // See the License for the specific language governing permissions and
 // limitations under the License.
 
-package config
+package server
 
-// LoggingConfig is the configuration for the logging package
-type LoggingConfig struct {
-	Level   string `mapstructure:"level" default:"debug"`
-	Format  string `mapstructure:"format" default:"json"`
-	LogFile string `mapstructure:"logFile" default:""`
+// TracingConfig is the configuration for our tracing capabilities
+type TracingConfig struct {
+	Enabled bool `mapstructure:"enabled" default:"false"`
+	// for the demonstration, we use AlwaysSmaple sampler to take all spans.
+	// do not use this option in production.
+	SampleRatio float64 `mapstructure:"sample_ratio" default:"0.1"`
 }

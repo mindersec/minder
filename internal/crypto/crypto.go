@@ -33,7 +33,7 @@ import (
 	"google.golang.org/grpc/codes"
 	"google.golang.org/grpc/status"
 
-	"github.com/stacklok/minder/internal/config"
+	serverconfig "github.com/stacklok/minder/internal/config/server"
 )
 
 // Engine is a structure that allows controller access to cryptographic functions.
@@ -44,7 +44,7 @@ type Engine struct {
 }
 
 // EngineFromAuthConfig creates a new crypto engine from an auth config
-func EngineFromAuthConfig(authConfig *config.AuthConfig) (*Engine, error) {
+func EngineFromAuthConfig(authConfig *serverconfig.AuthConfig) (*Engine, error) {
 	if authConfig == nil {
 		return nil, errors.New("auth config is nil")
 	}

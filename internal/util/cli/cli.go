@@ -29,6 +29,7 @@ import (
 	"google.golang.org/grpc"
 	"google.golang.org/grpc/status"
 
+	clientconfig "github.com/stacklok/minder/internal/config/client"
 	"github.com/stacklok/minder/internal/util"
 	"github.com/stacklok/minder/internal/util/cli/useragent"
 )
@@ -71,13 +72,18 @@ func PrintYesNoPrompt(cmd *cobra.Command, promptMsg, confirmMsg, fallbackMsg str
 
 // GrpcForCommand is a helper for getting a testing connection from cobra flags
 func GrpcForCommand(v *viper.Viper) (*grpc.ClientConn, error) {
-	grpcHost := v.GetString("grpc_server.host")
-	grpcPort := v.GetInt("grpc_server.port")
-	insecureDefault := grpcHost == "localhost" || grpcHost == "127.0.0.1" || grpcHost == "::1"
-	allowInsecure := v.GetBool("grpc_server.insecure") || insecureDefault
+	clientConfig, err := clientconfig.ReadConfigFromViper(v)
+	if err != nil {
+		return nil, fmt.Errorf("unable to read config: %w", err)
+	}
 
-	issuerUrl := v.GetString("identity.cli.issuer_url")
-	clientId := v.GetString("identity.cli.client_id")
+	grpcHost := clientConfig.GRPCClientConfig.Host
+	grpcPort := clientConfig.GRPCClientConfig.Port
+	insecureDefault := grpcHost == "localhost" || grpcHost == "127.0.0.1" || grpcHost == "::1"
+	allowInsecure := clientConfig.GRPCClientConfig.Insecure || insecureDefault
+
+	issuerUrl := clientConfig.Identity.CLI.IssuerUrl
+	clientId := clientConfig.Identity.CLI.ClientId
 
 	return util.GetGrpcConnection(
 		grpcHost, grpcPort, allowInsecure, issuerUrl, clientId, grpc.WithUserAgent(useragent.GetUserAgent()))

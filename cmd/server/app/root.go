@@ -25,7 +25,7 @@ import (
 	"github.com/spf13/viper"
 
 	"github.com/stacklok/minder/internal/auth"
-	"github.com/stacklok/minder/internal/config"
+	serverconfig "github.com/stacklok/minder/internal/config/server"
 	"github.com/stacklok/minder/internal/util/cli"
 )
 
@@ -51,19 +51,19 @@ func Execute() {
 func init() {
 	cobra.OnInitialize(initConfig)
 	RootCmd.PersistentFlags().StringVar(&cfgFile, "config", "", "config file (default is $PWD/server-config.yaml)")
-	if err := config.RegisterDatabaseFlags(viper.GetViper(), RootCmd.PersistentFlags()); err != nil {
+	if err := serverconfig.RegisterDatabaseFlags(viper.GetViper(), RootCmd.PersistentFlags()); err != nil {
 		log.Fatal().Err(err).Msg("Error registering database flags")
 	}
 	if err := auth.RegisterOAuthFlags(viper.GetViper(), RootCmd.PersistentFlags()); err != nil {
 		log.Fatal().Err(err).Msg("Error registering oauth flags")
 	}
-	if err := config.RegisterIdentityFlags(viper.GetViper(), RootCmd.PersistentFlags()); err != nil {
+	if err := serverconfig.RegisterIdentityFlags(viper.GetViper(), RootCmd.PersistentFlags()); err != nil {
 		log.Fatal().Err(err).Msg("Error registering identity flags")
 	}
 }
 
 func initConfig() {
-	config.SetViperDefaults(viper.GetViper())
+	serverconfig.SetViperDefaults(viper.GetViper())
 
 	if cfgFile != "" {
 		viper.SetConfigFile(cfgFile)
