@@ -176,10 +176,66 @@ auth:
    token_key: "./.ssh/token_key_passphrase"
 ```
 
+## Configure the Repository Provider
+
+At this point, you should have the following:
+
+- A running PostgreSQL database, with the `minder` database created
+- A running Keycloak instance
+- A GitHub OAuth application configured for social login using Keycloak
+
+**Prior to running the application**, you need to configure your repository provider. Currently, Minder only supports GitHub.
+See [Configure Repository Provider](./config_oauth.md) for more information.
+
+## Updating the Webhook Configuration
+
+Minder requires a webhook to be configured on the repository provider. Currently, Minder only supports GitHub. 
+The webhook allows GitHub to notify Minder when certain events occur in your repositories.
+To configure the webhook, Minder needs to be accessible from the internet. If you are running the server locally, you 
+can use a service like [ngrok](https://ngrok.com/) to expose your local server to the internet.
+
+Here are the steps to configure the webhook:
+
+1. **Expose your local server:** If you are running the server locally, start ngrok or a similar service to expose your 
+local server to the internet. Note down the URL provided by ngrok (it will look something like `https://<random-hash>.ngrok.io`).
+Make sure to expose the port that Minder is running on (by default, this is port `8080`).
+
+2. **Update the Minder configuration:** Open your `server-config.yaml` file and update the `webhook-config` section with 
+the ngrok URL Minder is running on. The `external_webhook_url` should point to the `/api/v1/webhook/github`
+endpoint on your Minder server, and the `external_ping_url` should point to the `/api/v1/health` endpoint. The `webhook_secret`
+should match the secret configured in the GitHub webhook (under `github.payload_secret`).
+
+```yaml
+webhook-config:
+    external_webhook_url: "https://<ngrok-url>/api/v1/webhook/github"
+    external_ping_url: "https://<ngrok-url>/api/v1/health"
+    webhook_secret: "your-password" # Should match the secret configured in the GitHub webhook (github.payload_secret)
+```
+
+After these steps, your Minder server should be ready to receive webhook events from GitHub, and add webhooks to repositories.
+
 ## Run the application
 
 ```bash
 minder-server serve
+```
+
+If the application is configured using `docker compose`, you need to modify the `server-config.yaml` file to reflect the database host url.
+
+```yaml
+database:
+  dbhost: "postgres" # Changed from localhost to postgres
+  dbport: 5432
+  dbuser: postgres
+  dbpass: postgres
+  dbname: minder
+  sslmode: disable
+```
+
+After configuring `server-config.yaml`, you can run the application using `docker compose`.
+
+```bash
+docker compose up -d minder
 ```
 
 The application will be available on `http://localhost:8080` and gRPC on `localhost:8090`.
