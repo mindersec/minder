@@ -216,7 +216,7 @@ func recordMetrics(m *messageInstruments) func(h message.HandlerFunc) message.Ha
 	return metricsFunc
 }
 
-func poisonQueueTracking(ctx context.Context, msgInstruments *messageInstruments) func(h message.HandlerFunc) message.HandlerFunc {
+func poisonQueueTracking(ctx context.Context, instr *messageInstruments) func(h message.HandlerFunc) message.HandlerFunc {
 	metricsFunc := func(h message.HandlerFunc) message.HandlerFunc {
 		return func(msg *message.Message) ([]*message.Message, error) {
 			// Defer the tracking logic to after the message has been processed by other middlewares,
@@ -224,7 +224,7 @@ func poisonQueueTracking(ctx context.Context, msgInstruments *messageInstruments
 			// so that we can check if it has been poisoned or not.
 			defer func() {
 				if poisoned := msg.Metadata.Get(middleware.ReasonForPoisonedKey); poisoned != "" {
-					msgInstruments.poisonQueueCounter.Add(ctx, 1)
+					instr.poisonQueueCounter.Add(ctx, 1)
 				}
 			}()
 
