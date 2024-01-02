@@ -111,6 +111,8 @@ type Eventer struct {
 type messageInstruments struct {
 	// message processing time duration histogram
 	messageProcessingTimeHistogram metric.Int64Histogram
+	// poison queue counter
+	poisonQueueCounter metric.Int64Counter
 }
 
 var _ Registrar = (*Eventer)(nil)
@@ -140,16 +142,9 @@ func Setup(ctx context.Context, cfg *config.EventConfig) (*Eventer, error) {
 	metricsBuilder.AddPrometheusRouterMetrics(router)
 
 	meter := otel.Meter("eventer")
-	histogram, err := meter.Int64Histogram("messages.processing_delay",
-		metric.WithDescription("Duration between a message being enqueued and dequeued for processing"),
-		metric.WithUnit("ms"),
-	)
+	metricInstruments, err := initMetricsInstruments(meter)
 	if err != nil {
-		return nil, fmt.Errorf("failed to create message processing histogram: %w", err)
-	}
-
-	metricInstruments := messageInstruments{
-		messageProcessingTimeHistogram: histogram,
+		return nil, err
 	}
 
 	pub, sub, cl, err := instantiateDriver(ctx, cfg.Driver, cfg)
@@ -157,14 +152,15 @@ func Setup(ctx context.Context, cfg *config.EventConfig) (*Eventer, error) {
 		return nil, fmt.Errorf("failed instantiating driver: %w", err)
 	}
 
-	pq, err := middleware.PoisonQueue(pub, DeadLetterQueueTopic)
+	poisonQueueMiddleware, err := middleware.PoisonQueue(pub, DeadLetterQueueTopic)
 	if err != nil {
 		return nil, fmt.Errorf("failed instantiating poison queue: %w", err)
 	}
 	// Router level middleware are executed for every message sent to the router
 	router.AddMiddleware(
-		recordMetrics(metricInstruments),
-		pq,
+		recordMetricsMiddleware(metricInstruments),
+		poisonQueueMiddleware,
+		poisonQueueTrackingMiddleware(ctx, metricInstruments),
 		middleware.Retry{
 			MaxRetries:      3,
 			InitialInterval: time.Millisecond * 100,
@@ -196,11 +192,11 @@ func Setup(ctx context.Context, cfg *config.EventConfig) (*Eventer, error) {
 			// driver close
 			cl()
 		},
-		metrics: &metricInstruments,
+		metrics: metricInstruments,
 	}, nil
 }
 
-func recordMetrics(m messageInstruments) func(h message.HandlerFunc) message.HandlerFunc {
+func recordMetricsMiddleware(m *messageInstruments) func(h message.HandlerFunc) message.HandlerFunc {
 	metricsFunc := func(h message.HandlerFunc) message.HandlerFunc {
 		return func(message *message.Message) ([]*message.Message, error) {
 			producedMessages, err := h(message)
@@ -217,6 +213,25 @@ func recordMetrics(m messageInstruments) func(h message.HandlerFunc) message.Han
 			return producedMessages, err
 		}
 	}
+	return metricsFunc
+}
+
+func poisonQueueTrackingMiddleware(ctx context.Context, metrics *messageInstruments) func(h message.HandlerFunc) message.HandlerFunc {
+	metricsFunc := func(h message.HandlerFunc) message.HandlerFunc {
+		return func(msg *message.Message) ([]*message.Message, error) {
+			// Defer the tracking logic to after the message has been processed by other middlewares,
+			// including the deferred PoisonQueue middleware functionality,
+			// so that we can check if it has been poisoned or not.
+			defer func() {
+				if poisoned := msg.Metadata.Get(middleware.ReasonForPoisonedKey); poisoned != "" {
+					metrics.poisonQueueCounter.Add(ctx, 1)
+				}
+			}()
+
+			return h(msg)
+		}
+	}
+
 	return metricsFunc
 }
 
@@ -367,4 +382,42 @@ func (e *Eventer) ConsumeEvents(consumers ...Consumer) {
 	for _, c := range consumers {
 		c.Register(e)
 	}
+}
+
+func initMetricsInstruments(meter metric.Meter) (*messageInstruments, error) {
+	histogram, err := createHistogram(meter)
+	if err != nil {
+		return nil, err
+	}
+	poisonQueueCounter, err := createPoisonQueueCounter(meter)
+	if err != nil {
+		return nil, err
+	}
+
+	return &messageInstruments{
+		messageProcessingTimeHistogram: histogram,
+		poisonQueueCounter:             poisonQueueCounter,
+	}, nil
+}
+
+func createHistogram(meter metric.Meter) (metric.Int64Histogram, error) {
+	histogram, err := meter.Int64Histogram("messages.processing_delay",
+		metric.WithDescription("Duration between a message being enqueued and dequeued for processing"),
+		metric.WithUnit("ms"),
+	)
+	if err != nil {
+		return nil, fmt.Errorf("failed to create message processing histogram: %w", err)
+	}
+	return histogram, nil
+}
+
+func createPoisonQueueCounter(meter metric.Meter) (metric.Int64Counter, error) {
+	poisonQueueCounter, err := meter.Int64Counter("messages.poison_queue",
+		metric.WithDescription("Number of messages that have been sent to the poison queue"),
+		metric.WithUnit("messages"),
+	)
+	if err != nil {
+		return nil, fmt.Errorf("failed to create poison queue counter: %w", err)
+	}
+	return poisonQueueCounter, nil
 }
