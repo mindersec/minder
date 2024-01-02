@@ -152,13 +152,6 @@ func Setup(ctx context.Context, cfg *config.EventConfig) (*Eventer, error) {
 		messageProcessingTimeHistogram: histogram,
 	}
 
-	// Router level middleware are executed for every message sent to the router
-	router.AddMiddleware(
-		recordMetrics(metricInstruments),
-		// CorrelationID will copy the correlation id from the incoming message's metadata to the produced messages
-		middleware.CorrelationID,
-	)
-
 	pub, sub, cl, err := instantiateDriver(ctx, cfg.Driver, cfg)
 	if err != nil {
 		return nil, fmt.Errorf("failed instantiating driver: %w", err)
@@ -170,6 +163,7 @@ func Setup(ctx context.Context, cfg *config.EventConfig) (*Eventer, error) {
 	}
 	// Router level middleware are executed for every message sent to the router
 	router.AddMiddleware(
+		recordMetrics(metricInstruments),
 		pq,
 		middleware.Retry{
 			MaxRetries:      3,
