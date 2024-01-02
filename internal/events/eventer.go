@@ -103,7 +103,7 @@ type Eventer struct {
 	// webhookSubscriber will subscribe to the webhook topic and handle incoming events
 	webhookSubscriber message.Subscriber
 	// TODO: We'll have a Final publisher that will publish to the final topic
-	metrics *messageInstruments
+	msgInstruments *messageInstruments
 
 	closer driverCloser
 }
@@ -192,7 +192,7 @@ func Setup(ctx context.Context, cfg *config.EventConfig) (*Eventer, error) {
 			// driver close
 			cl()
 		},
-		metrics: metricInstruments,
+		msgInstruments: metricInstruments,
 	}, nil
 }
 
@@ -216,7 +216,7 @@ func recordMetrics(m *messageInstruments) func(h message.HandlerFunc) message.Ha
 	return metricsFunc
 }
 
-func poisonQueueTracking(ctx context.Context, metrics *messageInstruments) func(h message.HandlerFunc) message.HandlerFunc {
+func poisonQueueTracking(ctx context.Context, msgInstruments *messageInstruments) func(h message.HandlerFunc) message.HandlerFunc {
 	metricsFunc := func(h message.HandlerFunc) message.HandlerFunc {
 		return func(msg *message.Message) ([]*message.Message, error) {
 			// Defer the tracking logic to after the message has been processed by other middlewares,
@@ -224,7 +224,7 @@ func poisonQueueTracking(ctx context.Context, metrics *messageInstruments) func(
 			// so that we can check if it has been poisoned or not.
 			defer func() {
 				if poisoned := msg.Metadata.Get(middleware.ReasonForPoisonedKey); poisoned != "" {
-					metrics.poisonQueueCounter.Add(ctx, 1)
+					msgInstruments.poisonQueueCounter.Add(ctx, 1)
 				}
 			}()
 
