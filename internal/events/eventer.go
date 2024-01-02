@@ -158,9 +158,9 @@ func Setup(ctx context.Context, cfg *config.EventConfig) (*Eventer, error) {
 	}
 	// Router level middleware are executed for every message sent to the router
 	router.AddMiddleware(
-		recordMetricsMiddleware(metricInstruments),
+		recordMetrics(metricInstruments),
 		poisonQueueMiddleware,
-		poisonQueueTrackingMiddleware(ctx, metricInstruments),
+		poisonQueueTracking(ctx, metricInstruments),
 		middleware.Retry{
 			MaxRetries:      3,
 			InitialInterval: time.Millisecond * 100,
@@ -196,7 +196,7 @@ func Setup(ctx context.Context, cfg *config.EventConfig) (*Eventer, error) {
 	}, nil
 }
 
-func recordMetricsMiddleware(m *messageInstruments) func(h message.HandlerFunc) message.HandlerFunc {
+func recordMetrics(m *messageInstruments) func(h message.HandlerFunc) message.HandlerFunc {
 	metricsFunc := func(h message.HandlerFunc) message.HandlerFunc {
 		return func(message *message.Message) ([]*message.Message, error) {
 			producedMessages, err := h(message)
@@ -216,7 +216,7 @@ func recordMetricsMiddleware(m *messageInstruments) func(h message.HandlerFunc) 
 	return metricsFunc
 }
 
-func poisonQueueTrackingMiddleware(ctx context.Context, metrics *messageInstruments) func(h message.HandlerFunc) message.HandlerFunc {
+func poisonQueueTracking(ctx context.Context, metrics *messageInstruments) func(h message.HandlerFunc) message.HandlerFunc {
 	metricsFunc := func(h message.HandlerFunc) message.HandlerFunc {
 		return func(msg *message.Message) ([]*message.Message, error) {
 			// Defer the tracking logic to after the message has been processed by other middlewares,
