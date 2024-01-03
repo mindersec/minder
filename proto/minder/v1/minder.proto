@@ -1015,7 +1015,7 @@ message Context {
 
     // name of the provider
     optional string provider = 1;
-    // name of the project
+    // ID of the project
     optional string project = 3;
 
     optional string retired_organization = 2;
