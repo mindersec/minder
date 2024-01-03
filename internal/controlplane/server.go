@@ -46,7 +46,7 @@ import (
 
 	"github.com/stacklok/minder/internal/assets"
 	"github.com/stacklok/minder/internal/auth"
-	"github.com/stacklok/minder/internal/config"
+	serverconfig "github.com/stacklok/minder/internal/config/server"
 	"github.com/stacklok/minder/internal/crypto"
 	"github.com/stacklok/minder/internal/db"
 	"github.com/stacklok/minder/internal/events"
@@ -65,7 +65,7 @@ var (
 // Server represents the controlplane server
 type Server struct {
 	store      db.Store
-	cfg        *config.Config
+	cfg        *serverconfig.Config
 	evt        *events.Eventer
 	mt         *metrics
 	provMt     provtelemetry.ProviderMetrics
@@ -98,7 +98,7 @@ func NewServer(
 	store db.Store,
 	evt *events.Eventer,
 	cpm *metrics,
-	cfg *config.Config,
+	cfg *serverconfig.Config,
 	vldtr auth.JwtValidator,
 	opts ...ServerOption,
 ) (*Server, error) {

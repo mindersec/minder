@@ -17,7 +17,7 @@
 package reconcilers
 
 import (
-	"github.com/stacklok/minder/internal/config"
+	serverconfig "github.com/stacklok/minder/internal/config/server"
 	"github.com/stacklok/minder/internal/crypto"
 	"github.com/stacklok/minder/internal/db"
 	"github.com/stacklok/minder/internal/events"
@@ -53,7 +53,7 @@ func WithProviderMetrics(mt providertelemetry.ProviderMetrics) ReconcilerOption 
 func NewReconciler(
 	store db.Store,
 	evt *events.Eventer,
-	authCfg *config.AuthConfig,
+	authCfg *serverconfig.AuthConfig,
 	opts ...ReconcilerOption,
 ) (*Reconciler, error) {
 	crypteng, err := crypto.EngineFromAuthConfig(authCfg)

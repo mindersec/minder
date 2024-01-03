@@ -38,7 +38,7 @@ import (
 	"go.opentelemetry.io/otel"
 	"go.opentelemetry.io/otel/metric"
 
-	"github.com/stacklok/minder/internal/config"
+	serverconfig "github.com/stacklok/minder/internal/config/server"
 )
 
 // Metadata added to Messages
@@ -118,7 +118,7 @@ var _ message.Publisher = (*Eventer)(nil)
 
 // Setup creates an Eventer object which isolates the watermill setup code
 // TODO: pass in logger
-func Setup(ctx context.Context, cfg *config.EventConfig) (*Eventer, error) {
+func Setup(ctx context.Context, cfg *serverconfig.EventConfig) (*Eventer, error) {
 	if cfg == nil {
 		return nil, errors.New("event config is nil")
 	}
@@ -223,7 +223,7 @@ func recordMetrics(m messageInstruments) func(h message.HandlerFunc) message.Han
 func instantiateDriver(
 	ctx context.Context,
 	driver string,
-	cfg *config.EventConfig,
+	cfg *serverconfig.EventConfig,
 ) (message.Publisher, message.Subscriber, driverCloser, error) {
 	switch driver {
 	case GoChannelDriver:
@@ -235,7 +235,7 @@ func instantiateDriver(
 	}
 }
 
-func buildGoChannelDriver(cfg *config.EventConfig) (message.Publisher, message.Subscriber, driverCloser, error) {
+func buildGoChannelDriver(cfg *serverconfig.EventConfig) (message.Publisher, message.Subscriber, driverCloser, error) {
 	pubsub := gochannel.NewGoChannel(gochannel.Config{
 		OutputChannelBuffer: cfg.GoChannel.BufferSize,
 		Persistent:          cfg.GoChannel.PersistEvents,
@@ -246,7 +246,7 @@ func buildGoChannelDriver(cfg *config.EventConfig) (message.Publisher, message.S
 
 func buildPostgreSQLDriver(
 	ctx context.Context,
-	cfg *config.EventConfig,
+	cfg *serverconfig.EventConfig,
 ) (message.Publisher, message.Subscriber, driverCloser, error) {
 	db, _, err := cfg.SQLPubSub.Connection.GetDBConnection(ctx)
 	if err != nil {
