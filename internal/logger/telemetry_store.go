@@ -16,6 +16,9 @@ package logger
 
 import (
 	"context"
+	"encoding/json"
+	"fmt"
+	"time"
 
 	"github.com/rs/zerolog"
 )
@@ -47,6 +50,43 @@ func BusinessRecord(ctx context.Context) map[string]any {
 	// Intentionally allowing aliasing here, we want to collect all data for one
 	// from different execution points, then write it out at completion.
 	return ts.data
+}
+
+// ================== ALTERNATE IMPLEMENTATION OPTION ==================
+
+// Recordable represents a simple type that we can record for telemetry.
+type Recordable interface {
+	int | int32 | int64 | float32 | float64 | ~string | bool | time.Time | time.Duration
+}
+
+// BusinessRecord2 provides the ability to store simple values.
+// We can't add json.Marshaller to the Recordable type, so there's
+// also BusinessRecord3 for complex types.
+func BusinessRecord2[T Recordable](ctx context.Context, key string, data T) error {
+	ts, ok := ctx.Value(telemetryContextKey).(*TelemetryStore)
+	if !ok {
+		// No telemetry in context -- allow to pass through
+		return nil
+	}
+	if ts.data[key] != nil {
+		return fmt.Errorf("key %q already recorded", key)
+	}
+	ts.data[key] = data
+	return nil
+}
+
+// BusinessRecord3 provides the ability to store complex data that can be marshalled as JSON.
+func BusinessRecord3(ctx context.Context, key string, data json.Marshaler) error {
+	ts, ok := ctx.Value(telemetryContextKey).(*TelemetryStore)
+	if !ok {
+		// No telemetry in context -- allow to pass through
+		return nil
+	}
+	if ts.data[key] != nil {
+		return fmt.Errorf("key %q already recorded", key)
+	}
+	ts.data[key] = data
+	return nil
 }
 
 // WithTelemetry enriches the current context with a TelemetryStore which will

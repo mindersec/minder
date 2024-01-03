@@ -20,11 +20,25 @@ import (
 	"encoding/json"
 	"reflect"
 	"testing"
+	"time"
 
 	"github.com/rs/zerolog"
 
 	"github.com/stacklok/minder/internal/logger"
 )
+
+type testData struct {
+	Data   string `json:"data"`
+	Number int    `json:"number"`
+}
+
+func (t *testData) MarshalJSON() ([]byte, error) {
+	// N.B. you can't use json.Marshal(t), because that will recurse infinitely
+	return json.Marshal(map[string]any{
+		"data":   t.Data,
+		"number": t.Number,
+	})
+}
 
 func TestTelemetryStore_Record(t *testing.T) {
 	t.Parallel()
@@ -38,6 +52,10 @@ func TestTelemetryStore_Record(t *testing.T) {
 		name:      "standard telemetry",
 		telemetry: &logger.TelemetryStore{},
 		expected:  `{"foo":"bar","foo2":{"foo":"bar"}}`,
+	}, {
+		name:      "typed recording telemetry",
+		telemetry: &logger.TelemetryStore{},
+		expected:  `{"duration": 3000, "count": 200, "complex": {"data": "test", "number": 1}}`,
 	}}
 
 	count := len(cases)
@@ -59,6 +77,15 @@ func TestTelemetryStore_Record(t *testing.T) {
 				Foo string `json:"foo"`
 			}{"bar"}
 			logger.BusinessRecord(ctx)["foo2"] = data
+			if err := logger.BusinessRecord2(ctx, "duration", time.Second*3); err != nil {
+				t.Fatal("Unable to record duration:", err)
+			}
+			if err := logger.BusinessRecord2(ctx, "count", 200); err != nil {
+				t.Fatal("Unable to record count:", err)
+			}
+			if err := logger.BusinessRecord3(ctx, "complex", &testData{Data: "test", Number: 1}); err != nil {
+				t.Fatal("Unable to record complex data:", err)
+			}
 
 			tc.telemetry.Record(zlog.Info()).Send()
 
