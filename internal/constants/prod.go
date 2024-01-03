@@ -18,6 +18,7 @@
 package constants
 
 const (
+	TargetEnv = "prod"
 	// IdentitySeverURL is the URL of the identity server
 	IdentitySeverURL = "https://auth.stacklok.com"
 	// MinderGRPCHost is the host of the minder gRPC server

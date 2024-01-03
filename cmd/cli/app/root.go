@@ -17,12 +17,15 @@
 package app
 
 import (
+	"fmt"
 	"os"
 
 	"github.com/spf13/cobra"
 	"github.com/spf13/viper"
 
+	"github.com/stacklok/minder/internal/config"
 	"github.com/stacklok/minder/internal/constants"
+	"github.com/stacklok/minder/internal/logger"
 	ghclient "github.com/stacklok/minder/internal/providers/github"
 	"github.com/stacklok/minder/internal/util/cli"
 )
@@ -37,6 +40,19 @@ var (
 		Long: `For more information about minder, please visit:
 https://docs.stacklok.com/minder`,
 		SilenceErrors: true, // don't print errors twice, we handle them in cli.ExitNicelyOnError
+		PersistentPreRunE: func(cmd *cobra.Command, args []string) error {
+
+			cfg, err := config.ReadConfigFromViper(viper.GetViper())
+			if err != nil {
+				return fmt.Errorf("unable to read config: %w", err)
+			}
+
+			l := logger.FromFlags(cfg.LoggingConfig)
+			if constants.TargetEnv == "staging" {
+				l.Warn().Msgf("This build uses a test environment and may not be stable")
+			}
+			return nil
+		},
 	}
 )
 
