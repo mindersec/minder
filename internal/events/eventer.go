@@ -212,7 +212,7 @@ func recordMetrics(instruments *messageInstruments) func(h message.HandlerFunc) 
 				instruments.messageProcessingTimeHistogram.Record(
 					msg.Context(),
 					processingTime.Milliseconds(),
-					metric.WithAttributes(attribute.Bool("is_poisoned", isPoisoned)),
+					metric.WithAttributes(attribute.Bool("poison", isPoisoned)),
 				)
 			}()
 
